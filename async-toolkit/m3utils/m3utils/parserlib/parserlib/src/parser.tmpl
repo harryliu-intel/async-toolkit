@@ -9,11 +9,13 @@ if not defined("_PARSER_CMDS")
 	_PARSER_SOURCES = []
 end
 
-%readonly proc _exec(cmd) is
-%	local ret = exec(cmd)
-%	write (cmd, CR)
-%	if not equal(ret, 0) error("command failed with error code: ", ret) end
-%end
+if not defined("_exec")
+    readonly proc _exec(cmd) is
+	local ret = exec(cmd)
+	write (cmd, CR)
+	if not equal(ret, 0) error("command failed with error code: ", ret) end
+    end
+end
 
 readonly proc _xCons(tok_nm, tok_spec, out_nm, out_spec, kind, vis) is
    if not defined("_clean")
