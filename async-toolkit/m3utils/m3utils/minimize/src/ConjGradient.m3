@@ -17,6 +17,7 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
     g, h, xi := NEW(Matrix.Vector, NUMBER(p^));
     fp, dgg, gg, gam : LONGREAL;
     its := 0;
+    numberP := NUMBER(p^)+0; (* without this, CM3 crashes *)
   BEGIN
     fp := func.eval(p);
     xi := dfunc.eval(p);
@@ -58,7 +59,7 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
       INC(its);
 
       (* how quickly is it supposed to converge? *)
-      IF its >= ItMax + NUMBER(p^) DIV 5 THEN EXIT END
+      IF its >= ItMax + numberP DIV 5 THEN EXIT END;
     END;
     Debug.Warning("Too many iterations in ConjGradient.Minimize.\nBest so far = " & Fmt.LongReal(fp));
     RAISE TooManyIterations

@@ -1,6 +1,6 @@
 /* $Id$ */
-m3_option("-g")
-m3_option("-times")
+/*m3_option("-g")*/
+/*m3_option("-times")*/
 /*m3_option("-X2@-pg@")*/
 /*m3_option("-Z")*/
 /*remove_m3_option("-O")*/
