@@ -1,3 +1,5 @@
+/* $Id$ */
+
 m3_option("-X2@-pg@")
 m3_option("-g")
 remove_m3_option("-O")
@@ -8,7 +10,10 @@ Module("Debug")
 Module("TextUtils")
 implementation("TextUtilsFmt")
 Generic_module("OpenArrayTable")
+Generic_module("DblTable")
+Generic_interface("BrandedSet")
 Module("SIsuffix")
 table("Suffix", "Char", "SIsuffix")
-library("cit_util")
+template("dbltable")
+Library("cit_util")
 

@@ -1,0 +1,45 @@
+%
+% $Id$
+%
+import("set")
+readonly proc Dbltable(nm, k, v) is
+	local nam = nm & "Tbl"
+
+	mkSet(k & "Dbl" , k)
+	mkSetDef(k & "Dbl" , k)
+	table(k & "DblRef", k, "Refany")
+
+	local ks = k & "DblSetDef"
+	local bks = "Branded" & ks
+	build_generic_intf(bks, "BrandedSet", [k, ks], HIDDEN)
+
+	table(k & v & "Single", k, v)
+	local kvt = k & v & "SingleTbl"
+
+	table(v & ks & "Single", v, bks)
+	local vkst = v & ks & "SingleTbl"
+
+	build_generic_intf(nam, "DblTable", [k, v, kvt, bks], VISIBLE)
+	build_generic_impl(nam, "DblTable", [k, v, kvt, vkst, bks])
+end
+
+readonly proc dbltable(nm, k, v) is
+	local nam = nm & "Tbl"
+
+	mkSet(k & "Dbl" , k)
+	mkSetDef(k & "Dbl" , k)
+	table(k & "DblRef", k, "Refany")
+
+	local ks = k & "DblSetDef"
+	local bks = "Branded" & ks
+	build_generic_intf(bks, "BrandedSet", [k, ks], HIDDEN)
+
+	table(k & v & "Single", k, v)
+	local kvt = k & v & "SingleTbl"
+
+	table(v & ks & "Single", v, bks)
+	local vkst = v & ks & "SingleTbl"
+
+	build_generic_intf(nam, "DblTable", [k, v, kvt, bks], HIDDEN)
+	build_generic_impl(nam, "DblTable", [k, v, kvt, vkst, bks])
+end
