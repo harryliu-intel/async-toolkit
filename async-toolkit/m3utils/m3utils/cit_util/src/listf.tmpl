@@ -9,3 +9,9 @@ readonly proc _listf (nm, elt, vis) is
   
 readonly proc Listf (nm, elt) is _listf (nm, elt, VISIBLE) end
 readonly proc listf (nm, elt) is _listf (nm, elt, HIDDEN)  end
+
+readonly proc TextListF(elt) is
+    module(elt)
+    build_generic_intf("TextListF", "ListF", [elt, "TextList"], VISIBLE)
+    build_generic_impl("TextListF", "ListF", [elt, "TextList"])
+  end

@@ -74,6 +74,8 @@ Module("Pointe")
 
 template("listf")
 generic_module("ListF")
+TextListF("ATextInterfaceWithAFormatProcedureSoThatItWorksWithListF")
+
 
 List("Char","Char")
 
