@@ -3,7 +3,9 @@
 (* $Id$ *)
 
 INTERFACE PathnameUtils;
+IMPORT OSError;
 IMPORT Pathname;
+IMPORT Wr;
 TYPE
   T = Pathname.T;
 
@@ -19,5 +21,9 @@ PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T;
 
 PROCEDURE DirOf(pn: T): T;
 (* like "Pathname.Prefix", but returns "." if pn has no slash. *)
+
+PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE): Wr.T RAISES {OSError.E};
+(* make all containing directories needed to write "pn",
+   and open "pn" for writing. *)
 
 END PathnameUtils. 

@@ -3,10 +3,13 @@
 (* $Id$ *)
 
 MODULE PathnameUtils;
+IMPORT Debug;
+IMPORT FileWr;
 IMPORT FS;
 IMPORT OSError;
 IMPORT Text;
 IMPORT Pathname;
+IMPORT Wr;
 
 PROCEDURE CompleteE(t: T): T RAISES {OSError.E} =
   VAR
@@ -64,6 +67,46 @@ PROCEDURE DirOf(pn: T): T =
     IF Text.Equal(res, "") THEN RETURN "."; END;
     RETURN res;
   END DirOf;
+
+PROCEDURE CreatedDir(pn: TEXT) =
+  BEGIN
+    Debug.S("created directory: "  & pn, 0);
+  END CreatedDir;
+
+PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE): Wr.T RAISES {OSError.E} =
+  VAR
+    cur: TEXT;
+    error: BOOLEAN;
+  BEGIN
+    TRY
+      RETURN FileWr.Open(pn);
+    EXCEPT OSError.E =>
+    END;
+    LOOP
+      cur := DirOf(pn);
+      TRY
+        FS.CreateDirectory(cur);
+        IF verbose THEN CreatedDir(cur); END;
+        RETURN FileWr.Open(pn);
+      EXCEPT OSError.E =>
+      END;
+      error := TRUE;
+      WHILE Text.FindChar(cur, '/') # -1 DO
+        cur := DirOf(cur);
+        TRY
+          FS.CreateDirectory(cur);
+          IF verbose THEN CreatedDir(cur); END;
+          error := FALSE;
+          EXIT;
+        EXCEPT OSError.E =>
+        END;
+      END;
+      IF error THEN
+        RAISE OSError.E(NIL);
+      END;
+    END;
+  END OpenMakingDirs;
+
 
 BEGIN
 END PathnameUtils.

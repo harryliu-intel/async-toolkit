@@ -79,6 +79,7 @@ Gmodule("Equivalence")
 Table("TextTextList", "Text", "TextList")
 Equivalence("Text", "Text", "TextList", "TextTextTbl", "TextTextListTbl")
 Module("TextTextTblExtras")
+Module("TextTextListTblExtras")
 module("FewerDotsTextPref")
 Table("TextBoolean", "Text", "Boolean")
 
