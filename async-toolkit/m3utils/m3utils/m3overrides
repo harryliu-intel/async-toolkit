@@ -7,7 +7,7 @@ include(".top")
 /* this is even more true if we want to move the binaries or */
 /* clean.. */
 
-if equal(M3_VERSION,"PM3 experimental")
+if equal(M3_VERSION,"1.1.14")
 	option("standalone","T")
 else
 	m3_option ("-X2@-static@")
