@@ -9,6 +9,12 @@ shift
 DIRS=$*
 DIRSEXIST=""
 
+if [ -x /usr/bin/tac ]; then
+	REVCMD=/usr/bin/tac
+else
+	REVCMD="tail -r"
+fi
+
 for dir in $DIRS; do
 	if [ -d $dir ]; then
 		DIRSEXIST="${DIRSEXIST} ${dir}"
@@ -18,7 +24,7 @@ done
 if [ "X${PRINTDIRECTION}" = "X-f" ]; then
 	echo ${DIRSEXIST}
 elif [ "X${PRINTDIRECTION}" = "X-r" ]; then 
-	echo ${DIRSEXIST} | xargs -n1 echo | tail -r | xargs echo
+	echo ${DIRSEXIST} | xargs -n1 echo | ${REVCMD} | xargs echo
 else
 	echo "ERROR, wrong args"
 	exit 1
