@@ -10,7 +10,7 @@ IMPORT Wr,Fmt,Stdio,Env;
 
 PROCEDURE S(s: TEXT) =
   BEGIN
-    Wr.PutText(Stdio.stdout,s&"\n");Wr.Flush(Stdio.stdout);
+    Wr.PutText(Stdio.stdout,"SeekRd: " &s&"\n");Wr.Flush(Stdio.stdout);
   END S;
 
 VAR
@@ -174,7 +174,11 @@ PROCEDURE Init(self: T; h: File.T): FileRd.T RAISES {OSError.E} =
 PROCEDURE DiscardPrevious(self: T) =
   VAR
     next := self.past;
-  BEGIN   Check(self);
+  BEGIN
+    IF Debug THEN
+      Check(self);
+      S("forgetting before " & Fmt.Int(self.cur));
+    END;
     self.firstSeekablePos := self.cur;
     WHILE next # NIL DO
       next := self.past.tail;
