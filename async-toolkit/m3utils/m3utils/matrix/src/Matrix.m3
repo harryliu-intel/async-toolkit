@@ -378,6 +378,26 @@ PROCEDURE SetCol(m : T; c : CARDINAL; col : Vector) =
     END
   END SetCol;
 
+PROCEDURE CopyIn(from, to : T) =
+  BEGIN
+    FOR r := 0 TO LAST(from^) DO
+      FOR c := 0 TO LAST(from[0]) DO
+        to[r,c] := from[r,c]
+      END
+    END
+  END CopyIn;
+
+PROCEDURE Measure(colVector, squareMatrix : T) : LONGREAL RAISES { DimensionMismatch }=
+  VAR
+    temp := Mul(squareMatrix,colVector);
+    sum := 0.0d0;
+  BEGIN
+    FOR r := 0 TO LAST(colVector^) DO
+      sum := sum + colVector[r,0] * temp[r,0]
+    END;
+    RETURN sum
+  END Measure;
+
 BEGIN
 
 END Matrix.

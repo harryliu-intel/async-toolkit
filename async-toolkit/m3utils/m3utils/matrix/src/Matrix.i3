@@ -67,6 +67,11 @@ PROCEDURE MeanSq(m : T) : LONGREAL;
 PROCEDURE DevSq(m : T) : LONGREAL; (* sum of deviations from mean *)
 PROCEDURE SumSq(m : T) : LONGREAL;
 
+PROCEDURE CopyIn(from, to : T);
+
+PROCEDURE Measure(colVector : T; squareMatrix : T) : LONGREAL RAISES { DimensionMismatch };
+(* compute colVector^T x squareMatrix x colVector *)
+
 END Matrix.
 
 
