@@ -20,6 +20,7 @@ end
 override("prsparse",TOP)
 override("magic",TOP)
 override("magicextras",TOP)
+override("cit_common",TOP)
 override("cit_util",TOP)
 override("bdd",TOP)
 override("cptr",TOP)
