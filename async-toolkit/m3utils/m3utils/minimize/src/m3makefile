@@ -11,5 +11,6 @@ import("cit_util")
 
 Module("Bracket")
 Module("Compress")
+Module("Powell")
 
 library("minimize")
