@@ -73,4 +73,6 @@ PROCEDURE BreakLongLines(t: TEXT; atCol := 79): TEXT;
 PROCEDURE GetLines(t: TEXT; n: INTEGER; firstBreakLongAtCol:=79): TEXT;
 (* positive "n" for first "n" lines; negative for last "|n|" lines; *)
 
+PROCEDURE Assemble(t: TextList.T; postDelim:=" "; skipLastDelim:=TRUE): TEXT;
+
 END TextUtils.

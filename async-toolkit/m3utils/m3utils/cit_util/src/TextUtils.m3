@@ -276,4 +276,15 @@ PROCEDURE GetLines(t: TEXT; n: INTEGER;  firstBreakLongAtCol:=79): TEXT =
     END;
   END GetLines;
 
+PROCEDURE Assemble(t: TextList.T; postDelim:=" "; skipLastDelim:=TRUE): TEXT =
+  BEGIN
+    IF t = NIL THEN
+      RETURN "";
+    ELSIF (t.tail = NIL) AND skipLastDelim THEN
+      RETURN t.head;
+    ELSE
+      RETURN t.head & postDelim & Assemble(t.tail, postDelim, skipLastDelim);
+    END;
+  END Assemble;
+
 BEGIN END TextUtils.
