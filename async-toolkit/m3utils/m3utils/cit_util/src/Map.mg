@@ -18,6 +18,7 @@ REVEAL
   OVERRIDES
     wrap := Wrap;  
     eval := DEval;
+    evalHint := EvalHint;
   END;
 
 PROCEDURE THash(<*UNUSED*>a : T) : Word.T = BEGIN RETURN 1 END THash;
@@ -32,6 +33,9 @@ PROCEDURE Wrap(a : Default; f : F) : T =
     a.f := f;
     RETURN a
   END Wrap;
+
+PROCEDURE EvalHint(<*UNUSED*>a : Default; <*UNUSED*>x : From.T) = 
+  BEGIN END EvalHint;
 
 PROCEDURE DEval(a : Default; x : From.T) : To.T =
   BEGIN RETURN a.f(x) END DEval;

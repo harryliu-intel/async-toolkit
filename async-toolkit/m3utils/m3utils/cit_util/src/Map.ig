@@ -21,6 +21,20 @@ TYPE
                                         inefficient default impl. is
                                         provided *)
 
+    (* evalHint provides a rudimentary way to parallelize the evaluation
+       of slow functions.
+       
+       A client may call evalHint to indicate that it intends to evaluate
+       the map in the future.  An implementation may use this information
+       to evaluate the map early and memoize it, so that it knows the
+       answer when the eval call comes.  The eval call is not guaranteed
+       to occur, so the implementation should be careful not to store
+       too much information. 
+       
+       The default implementation of evalHint is a No-op
+    *)
+    evalHint(x : From.T);
+
     hash() : Word.T; (* may override this if desired *)
   END;
 
