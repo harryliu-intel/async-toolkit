@@ -1,6 +1,7 @@
 GENERIC INTERFACE Equivalence(Elem);
-
 (*
+$Id$
+
 A "T" represents an equivalence relation on the set of all "Elem.T"s.
 A newly created "Default" has each "Elem.T" in its own equivalence
 class.
@@ -11,7 +12,8 @@ Interface "Elem" is expected to have the following declaration:
 
 which defines the a priori equality of two elements.
 
-The "Default" implementation also expects an "ElemElemTbl".
+The "Default" implementation (Union-Find with path compression using
+hash tables) also expects an "ElemElemTbl".
 *)
 
 TYPE
