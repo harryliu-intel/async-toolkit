@@ -24,5 +24,10 @@ PROCEDURE AssertMyLock(m: MUTEX) =
     <* ASSERT CheckMyLock(m) *>
   END AssertMyLock;
 
+PROCEDURE GetHolder(m: MUTEX): Thread.T =
+  BEGIN
+    RETURN LOOPHOLE(m, IKnowWhatMutexIs).holder;
+  END GetHolder;
+
 BEGIN
 END UnsafeMutex.
