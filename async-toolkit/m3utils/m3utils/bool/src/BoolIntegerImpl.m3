@@ -113,10 +113,8 @@ PROCEDURE Pack(self : T) =
   BEGIN
     (* find largest necessary index *)
     FOR i := LAST(self.bits^) - 1 TO FIRST(self.bits^) BY -1 DO
-      IF self.bits[i] # top THEN
-        msb := i + 1;
-        EXIT
-      END
+      msb := i + 1;
+      IF self.bits[i] # top THEN EXIT END
     END;
     IF msb # LAST(self.bits^) THEN
       VAR
@@ -327,6 +325,7 @@ PROCEDURE CheckCache(a : T) : T =
       IF cache.get(a,try) THEN 
         RETURN try
       ELSE
+        <* ASSERT NUMBER(a.bits^) <= Word.Size *>
         EVAL cache.put(a,a);
         RETURN a
       END
