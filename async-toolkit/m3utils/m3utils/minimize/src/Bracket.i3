@@ -1,6 +1,8 @@
 (* $Id$ *)
 
 INTERFACE Bracket;
+IMPORT Fmt;
+IMPORT LongReal AS LR;
 
 TYPE Function = PROCEDURE (a : LONGREAL) : LONGREAL;
 TYPE Trio = RECORD a, b, c : LONGREAL END;
@@ -13,5 +15,9 @@ PROCEDURE Initial(VAR bracket : Trio; func : Function) : Trio;
 
 PROCEDURE Brent(bracket : Trio; f : Function; tol : LONGREAL; 
                 VAR xmin : LONGREAL) : LONGREAL;
+
+PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
+                 prec: CARDINAL := LR.MaxSignifDigits - 1;
+                 literal := FALSE) : TEXT;
 
 END Bracket.

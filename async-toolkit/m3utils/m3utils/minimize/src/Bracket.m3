@@ -2,6 +2,8 @@
 
 MODULE Bracket;
 IMPORT Debug;
+IMPORT Fmt;
+IMPORT LongReal AS LR;
 
 CONST Gold = 1.618034d0;
 CONST GLimit = 100.0d0;
@@ -139,5 +141,15 @@ PROCEDURE Brent(bracket : Trio; f : Function; tol : LONGREAL;
       END
     END (* WITH ... *)
   END Brent;
+
+PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
+                 prec: CARDINAL := LR.MaxSignifDigits - 1;
+                 literal := FALSE) : TEXT =
+  BEGIN
+    RETURN "{ " & Fmt.LongReal(bracket.a,style,prec,literal) & ", " &
+                  Fmt.LongReal(bracket.b,style,prec,literal) & ", " &
+                  Fmt.LongReal(bracket.c,style,prec,literal) & " " &
+           " }"
+  END Format;
 
 BEGIN END Bracket.

@@ -23,13 +23,12 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
       ibig := 0;
       del := 0.0d0;
       FOR i := FIRST(p^) TO LAST(p^) DO
-        FOR j := FIRST(p^) TO LAST(p^) DO
-          fptt := fret;
-          fret := Compress.LinMin(p,xit,func);
-          IF ABS(fptt - fret) > del THEN
-            del := ABS(fptt - fret);
-            ibig := i
-          END
+        FOR j := FIRST(p^) TO LAST(p^) DO xit[j] := xi[j,i] END;
+        fptt := fret;
+        fret := Compress.LinMin(p,xit,func);
+        IF ABS(fptt - fret) > del THEN
+          del := ABS(fptt - fret);
+          ibig := i
         END
       END;
 
@@ -40,7 +39,7 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
       END;
 
       FOR j := FIRST(p^) TO LAST(p^) DO
-        ptt[j] := 3.0d0 * p[j] - pt[j];
+        ptt[j] := 2.0d0 * p[j] - pt[j];
         xit[j] := p[j] - pt[j];
         pt[j] := p[j]
       END;
