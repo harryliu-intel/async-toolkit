@@ -126,6 +126,7 @@ Gmodule("ArrayHash")
 ArrayHash("Int", "Integer")
 
 Module("CITRandom")
+Module("ProcUtils")
 
 Library("cit_util")
 
