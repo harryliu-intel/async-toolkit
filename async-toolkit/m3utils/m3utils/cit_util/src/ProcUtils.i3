@@ -12,7 +12,7 @@ TYPE
 PROCEDURE ToText(source: T;
                  stderr: Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT;
+                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure } ;
 
 PROCEDURE RdToRd(source: Rd.T;
                  stderr: Writer := NIL;

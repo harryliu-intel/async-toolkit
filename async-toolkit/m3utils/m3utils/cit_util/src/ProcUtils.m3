@@ -1,3 +1,5 @@
+(* $Id$ *)
+
 MODULE ProcUtils;
 IMPORT Debug;
 IMPORT FS;
@@ -17,7 +19,8 @@ IMPORT Thread;
 IMPORT Wr;
 IMPORT OSError;
 
-<* FATAL Rd.Failure, Wr.Failure, Thread.Alerted, OSError.E *>
+<* FATAL Thread.Alerted *>
+
 
 TYPE
   PrivateCompletion = Completion OBJECT
@@ -47,8 +50,13 @@ PROCEDURE SSApply(self: SSClosure): REFANY =
         Wr.PutText(self.ss.wr,Rd.GetText(self.ss.rd,
                                          Rd.CharsReady(self.ss.rd)));
       END;
-    EXCEPT Rd.EndOfFile => RETURN NIL;
+    EXCEPT 
+      Rd.EndOfFile => RETURN NIL;
+    |
+      Rd.Failure, Wr.Failure => 
+         Process.Crash("I/O Error in ProcUtils.SSApply.")
     END;
+    <* ASSERT FALSE *>
   END SSApply;
 
 PROCEDURE ForkWriter(w: Writer): Writer =
@@ -103,16 +111,21 @@ PROCEDURE Apply(self: MainClosure): REFANY =
 
   PROCEDURE PutArg() =
     BEGIN
-      CASE rMode OF
-      | '>' => stdout := FS.OpenFile(p);
-      | '&' => stdout := FS.OpenFile(p); stderr := stdout;
-      | '<' => stdin := FS.OpenFileReadonly(p);
-      ELSE
-        l := TextList.Cons(p, l);
-      END;
+      TRY
+        CASE rMode OF
+        | '>' => stdout := FS.OpenFile(p);
+        | '&' => stdout := FS.OpenFile(p); stderr := stdout;
+        | '<' => stdin := FS.OpenFileReadonly(p);
+        ELSE
+          l := TextList.Cons(p, l);
+        END
+      EXCEPT
+        OSError.E => Process.Crash("ProcUtils.Run.PutArg: problems opening file \"" & p & "\"!")
+      END
+
     END PutArg;
 
-  PROCEDURE Exec() =
+  PROCEDURE Exec() RAISES { Rd.Failure, OSError.E } =
     BEGIN
       IF c = '|' THEN
         TRY
@@ -144,70 +157,81 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         IF Text.Equal(l.head, "cd") THEN
           wd := Pathname.Join(wd, l.head);
         ELSE
-          VAR
-            code := Process.Wait(Process.Create(l.head, params^,
-                                                NIL, wd,stdin, stdout,stderr));
-          BEGIN
-            IF code # 0 THEN
-              Debug.Error("Process exited with code " & Fmt.Int(code));
-            END;
-          END;
-        END;
-      END;
+          TRY
+            VAR
+              code := Process.Wait(Process.Create(l.head, params^,
+                                                  NIL, wd,stdin, stdout,stderr));
+            BEGIN
+              IF code # 0 THEN
+                Debug.Error("Process exited with code " & Fmt.Int(code));
+              END
+            END
+          EXCEPT
+            OSError.E => 
+              Process.Crash("ProcUtils.Apply.Exec: Couldn't exec command \"" & l.head & "\"!")
+          END
+        END
+      END
     END Exec;
 
   BEGIN
     IF wd = NIL THEN wd := "."; END;
     TRY
-      (* default input *)
-      IF cm.pi = NIL THEN i2:=NIL ELSE i2:=cm.pi.f; END;
-      c := Rd.GetChar(rd);
-      LOOP
-        (* set up default i/o *)
-        stdin := i2;
-        IF cm.po # NIL THEN stdout := cm.po.f; END;
-        IF cm.pe # NIL THEN stderr := cm.pe.f; END;
-        l := NIL;
-        WHILE c IN WB DO c := Rd.GetChar(rd); END;
-        REPEAT
-          IF c IN ReDir THEN
-            rMode := c;
-            IF c = '>' THEN
-              WHILE c IN White DO c := Rd.GetChar(rd); END;
-              IF c = '&' THEN
-                c := Rd.GetChar(rd);
-                rMode := '&';
+      TRY
+        (* default input *)
+        IF cm.pi = NIL THEN i2:=NIL ELSE i2:=cm.pi.f; END;
+        c := Rd.GetChar(rd);
+        LOOP
+          (* set up default i/o *)
+          stdin := i2;
+          IF cm.po # NIL THEN stdout := cm.po.f; END;
+          IF cm.pe # NIL THEN stderr := cm.pe.f; END;
+          l := NIL;
+          WHILE c IN WB DO c := Rd.GetChar(rd); END;
+          REPEAT
+            IF c IN ReDir THEN
+              rMode := c;
+              IF c = '>' THEN
+                WHILE c IN White DO c := Rd.GetChar(rd); END;
+                IF c = '&' THEN
+                  c := Rd.GetChar(rd);
+                  rMode := '&';
+                END;
               END;
+            ELSE
+              rMode := '-';
             END;
-          ELSE
-            rMode := '-';
-          END;
-          p := "";
-          CASE c OF
-          | '\'' =>
-            WHILE c # '\'' DO p:=p&Fmt.Char(c); END;
-          | '`' =>
-            WHILE c # '`' DO p:=p&Fmt.Char(c); END;
-            p := ToText(p, wd0:=wd);
-          ELSE
-            WHILE NOT c IN Special DO p:=p&Fmt.Char(c); c:=Rd.GetChar(rd); END;
-          END;
-          WHILE c IN White DO c := Rd.GetChar(rd); END;
-          PutArg();
-        UNTIL c IN Break1;
+            p := "";
+            CASE c OF
+            | '\'' =>
+              WHILE c # '\'' DO p:=p&Fmt.Char(c); END;
+            | '`' =>
+              WHILE c # '`' DO p:=p&Fmt.Char(c); END;
+              p := ToText(p, wd0:=wd);
+            ELSE
+              WHILE NOT c IN Special DO p:=p&Fmt.Char(c); c:=Rd.GetChar(rd); END;
+            END;
+            WHILE c IN White DO c := Rd.GetChar(rd); END;
+            PutArg();
+          UNTIL c IN Break1;
+          Exec();
+        END;
+      EXCEPT Rd.EndOfFile =>
+        PutArg();
+        c := ';';
         Exec();
       END;
-    EXCEPT Rd.EndOfFile =>
-      PutArg();
-      c := ';';
-      Exec();
+      
+      (* close i/o *)
+      IF cm.po#NIL AND cm.po.close THEN cm.po.f.close(); END;
+      IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN cm.pe.f.close(); END;
+      IF cm.pi#NIL AND cm.pi.close THEN cm.pi.f.close(); END;
+      RETURN NIL;
+    EXCEPT
+      OSError.E, Rd.Failure => 
+        Process.Crash("I/O error in ProcUtils.Apply.")
     END;
-
-    (* close i/o *)
-    IF cm.po#NIL AND cm.po.close THEN cm.po.f.close(); END;
-    IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN cm.pe.f.close(); END;
-    IF cm.pi#NIL AND cm.pi.close THEN cm.pi.f.close(); END;
-    RETURN NIL;
+    <* ASSERT FALSE *>
   END Apply;
 
 PROCEDURE Wait(c: PrivateCompletion) =
@@ -221,7 +245,7 @@ PROCEDURE Wait(c: PrivateCompletion) =
 PROCEDURE ToText(source: T;
                  stderr:  Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT =
+                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure } =
   VAR
     rd: Rd.T;
     comp := RdToRd(TextRd.New(source), stderr, stdin, wd0, rd);
@@ -270,8 +294,12 @@ PROCEDURE GimmeRd(VAR rd: Rd.T): Writer =
   VAR
     hr,hw: Pipe.T;
   BEGIN
-    Pipe.Open(hr, hw);
-    rd := NEW(FileRd.T).init(hr);
+    TRY
+      Pipe.Open(hr, hw);
+      rd := NEW(FileRd.T).init(hr)
+    EXCEPT 
+      OSError.E => Process.Crash("ProcUtils.GimmeRd: trouble opening pipe!")
+    END;
     RETURN NEW(Writer,f:=hw,ss:=NIL,close:=TRUE);
   END GimmeRd;
 
@@ -308,8 +336,12 @@ PROCEDURE GimmeWr(VAR wr: Wr.T): Reader =
   VAR
     hr,hw: Pipe.T;
   BEGIN
-    Pipe.Open(hr, hw);
-    wr := NEW(FileWr.T).init(hw);
+    TRY
+      Pipe.Open(hr, hw);
+      wr := NEW(FileWr.T).init(hw)
+    EXCEPT
+      OSError.E => Process.Crash("ProcUtils.GimmeWr: trouble opening pipe!")
+    END;
     RETURN NEW(Reader,f:=hr,ss:=NIL,close:=TRUE);
   END GimmeWr;
 
