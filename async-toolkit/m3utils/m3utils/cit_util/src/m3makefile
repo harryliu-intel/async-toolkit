@@ -60,7 +60,7 @@ Module("TextTextTblExtras")
 template("map")
 generic_module("Map")
 
-Interface("LRVector")
+Module("LRVector")
 Interface("LRPoint")
 
 Map("LRFunction","LongrealType","LongrealType")
