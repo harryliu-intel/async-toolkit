@@ -60,16 +60,21 @@ extra cleaning required if these commands are used
 in a template imported by m3makefile!
 */
 
-readonly proc gmodule_template(nm) is
+readonly proc gmodule_template(nm, src) is
 	local makefile = path_of("m3makefile")
 	local f = nm & ".tmpl"
 	local g = nm & ".generate_tmpl"
-	local intf = path_of(nm & ".ig")
-	local impl = path_of(nm & ".mg")
+	local intf = src & ".ig"
+	local impl = src & ".mg"
+        if equal(nm, src)
+          intf = path_of(intf)
+          impl = path_of(impl)
+        end
 	local sources = [makefile, intf, impl]
 	if stale(f, sources) or stale(g, sources)
 		> g in
 			write("module", CR)
+                        write(nm, CR)
 			write(intf, CR)
 			write(impl, CR)
 		end
@@ -79,16 +84,17 @@ readonly proc gmodule_template(nm) is
 	derived_template(nm)
 end
 
-readonly proc gother_template(nm,kind,ext) is
+readonly proc gother_template(nm,src,kind,ext) is
 	local makefile = path_of("m3makefile")
 	local base = nm & "_" & kind
 	local f = base & ".tmpl"
 	local g = base & ".generate_tmpl"
-	local source = path_of(nm & "." & ext)
+	local source = path_of(src & "." & ext)
 	local sources = [makefile, source]
 	if stale(f, sources) or stale(g, sources)
 		> g in
 			write(kind, CR)
+                        write(nm, CR)
 			write(source, CR)
 		end
 		_exec([_M3TMPLHACK,g])
@@ -99,22 +105,22 @@ end
 
 readonly proc gmodule(nm) is
 	generic_module(nm)
-	gmodule_template(nm)
+	gmodule_template(nm,nm)
 end
 
 readonly proc Gmodule(nm) is
 	Generic_module(nm)
-	gmodule_template(nm)
+	gmodule_template(nm,nm)
 end
 
 readonly proc ginterface(nm) is
 	generic_interface(nm)
-	gother_template(nm, "interface", "ig")
+	gother_template(nm,nm, "interface", "ig")
 end
 
 readonly proc Ginterface(nm) is
 	Generic_interface(nm)
-	gother_template(nm, "interface", "ig")
+	gother_template(nm,nm, "interface", "ig")
 end
 
 readonly proc gimplementation(nm) is
@@ -127,10 +133,10 @@ readonly proc Gimplementation(nm) is
 	gother_template(nm, "implementation", "mg")
 end
 
-
 readonly proc gmojule(nm) is
-	generic_mojule(nm)
-	gmodule_template(nm)
+	local rename = nm & "_2"
+	generic_mojule(nm, rename)
+	gmodule_template(nm, rename)
 end
 
 readonly proc Gmojule(nm) is
