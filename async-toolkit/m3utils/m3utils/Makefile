@@ -44,14 +44,14 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 # We need to make sure that we clean them in reverse order of 
 # building since they may depend on other libraries (1 way only)
 #
-SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop boxes simplegrid rpc router layout cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree celldb matcher sysiphus sysiphus_parse
+SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop boxes simplegrid rpc router layout cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree celldb matcher sysiphus/sysiphus_parse 
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 # These are built last
-M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen`
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
