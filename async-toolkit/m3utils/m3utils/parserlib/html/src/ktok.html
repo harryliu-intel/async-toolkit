@@ -1,0 +1,84 @@
+PL_BEGIN(ktok: defining the token)
+
+A lexer and parser are _IT(compatible) if they use the same token
+interface. A _IT(token interface) and its implementation are generated
+automatically by m3build by running the command
+
+_C(_TT(tok mylang.t  [ -o mylangTok.i3 ].))
+
+where _TT(mylang.t) is a _IT(token specification), and
+_TT(mylangTok.i3) is the generated token interface.
+
+_A(spec)_H(token specification)
+
+A _IT(token specification) is a file with the _TT(.t) suffix which
+specifies which tokens will be passed from a lexer to a parser. Each
+line of the file must have one of the following forms:
+<P>
+
+#define _TR(form) <TR><TD>_TT(form)</TD><TD>
+#define _END </TD></TR>
+<TABLE>
+
+_TR(TOKEN1 TOKEN2 ...)
+The given list of tokens are extendable types that can be returned by
+a lexer.  The list is optionally preceded by _TT(%token).
+_END
+
+_TR(%const TOKEN1 TOKEN2)
+The given list of tokens can be returned by a lexer, but these tokens
+cannot be extended to contain a value.
+_END
+
+_TR(%char [chars])
+The lex-style set of characters enclosed in _TT([]) can be returned by
+a lexer, and behave like _TT(%const).
+_END
+
+</TABLE>
+
+_A(intf)_H(token interface)
+
+A token interface is a Modula-3 interface generated from a
+_LN(#spec, token specification) which can be imported by generated
+lexers and parsers.
+<P>
+
+
+The token interface defines _TT(BRANDED OBJECT) types with the
+following subtype relationship:
+
+_C(_TT(Token <: ParseType))
+
+In addition, each token declared nonconstant in the token
+specification becomes a subtype of _TT(Token).
+<P>
+
+If a generated parser imports the token interface, then
+all arguments and return types of parser reduction methods are
+subtypes of _TT(ParseType).
+If a generated lexer imports the token interface, then each
+expression method returns a _TT(Token).
+<P>
+
+Any lexer (generated or handwritten) must be a subtype of the
+_TT(Lexer) type defined in the token interface, which is defined
+generically as follows:
+
+<PRE>
+  Lexer = OBJECT METHODS
+    get(): Token RAISES {Rd.EndOfFile};
+    (* get next token, or raise Rd.EndOfFile if token cannot be formed
+       from remaining input *)
+
+    unget();
+    (* will be called at most once after get(), and only when lookahead is
+       required after last token when parsing without exhausting input *)
+
+    error(message: TEXT);
+    (* might print file name, line number, and message, and exit *)
+  END;
+</PRE>
+
+
+PL_END

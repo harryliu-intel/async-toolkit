@@ -1,0 +1,4 @@
+#!/bin/sh -x
+for file in *.html; do
+	cpp -P -imacros html.h <$file >../$file
+done
