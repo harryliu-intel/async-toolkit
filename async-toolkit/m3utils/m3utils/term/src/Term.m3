@@ -1,6 +1,6 @@
 (* $Id$ *)
 
-UNSAFE MODULE Term;
+UNSAFE MODULE Term EXPORTS Term, TermHooks;
 IMPORT Debug;
 IMPORT Stdio;
 IMPORT Wr AS Wrr;
@@ -80,11 +80,19 @@ PROCEDURE GetCharE(special: TEXT): CHAR RAISES {SpecialChar} =
     END;
   END GetCharE;
 
+VAR
+  gcHook: CharGetter := NIL;
 PROCEDURE GetChar(): CHAR =
   BEGIN
+    IF gcHook # NIL THEN RETURN gcHook.get(); END;
     Wrr.Flush(Stdio.stdout);
     RETURN Rd.GetChar(Stdio.stdin);
   END GetChar;
+
+PROCEDURE SetCharInput(c: CharGetter) =
+  BEGIN
+    gcHook := c;
+  END SetCharInput;
 
 PROCEDURE Wr0(wr: Wrr.T; s: TEXT) =
 
