@@ -13,7 +13,7 @@ PROCEDURE Open(p: Pathname.T; searchDirs: TextList.T := NIL): T;
       otherwise try list of prefixes
   *)
 
-PROCEDURE E(rd: T; message: TEXT);
+PROCEDURE E(rd: T; message: TEXT; fatal := TRUE);
   (*  To stderr:
       print file name (if rd was openned using FileRdErr.Open),
       line number (if rd not NIL and seekable),
