@@ -101,6 +101,7 @@ Gmodule("Rational")
 Rational("Int","IntForRat")
 Rational("Big", "BigInt")
 Module("UnsafeMutex")
+Module("CatRd")
 
 Module("ObjectFactory")
 Generic_module("Factory")
