@@ -146,6 +146,8 @@ list("Flag", "Config")
 template("tree")
 Generic_module("Tree")
 
+module("UnixUtils")
+
 Library("cit_util")
 
 
