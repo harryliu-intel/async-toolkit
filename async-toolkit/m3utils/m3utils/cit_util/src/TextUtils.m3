@@ -89,6 +89,16 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
     RETURN FALSE
   END FindSub;
 
+PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
+                      VAR pos: CARDINAL; start := 0): BOOLEAN =
+  BEGIN
+    WHILE start < Text.Length(in) DO
+      IF Text.GetChar(in, start) IN c THEN pos := start; RETURN TRUE END;
+      INC(start);
+    END;
+    RETURN FALSE;
+  END FindAnyChar;
+
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN = 
   VAR x : CARDINAL; BEGIN RETURN FindSub(in, sub, x) END HaveSub;
 
@@ -185,7 +195,7 @@ PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
     END;
     FOR j := Text.Length(in)-1 TO 0 BY -1 DO
       IF NOT Text.GetChar(in, j) IN remove THEN
-        RETURN Text.Sub(in, i, j-1+1);
+        RETURN Text.Sub(in, i, j-i+1);
       END;
     END;
     <* ASSERT FALSE *>

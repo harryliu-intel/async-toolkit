@@ -34,6 +34,8 @@ PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
 
 (* find first occurrence of sub in in *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
+PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
+                      VAR pos: CARDINAL; start := 0): BOOLEAN;
 
 (* have substr? *)
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN;
