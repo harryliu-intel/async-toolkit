@@ -28,8 +28,8 @@ EXCEPTION
 TYPE
   T <: Public;
 
-(* all the methods of a "TextReader.T" leave the reader in a state
-   to parse further untouched tokens *)
+(* All the methods of a "TextReader.T" leave the reader in a state
+   to parse further untouched tokens. *)
 
   Public = OBJECT METHODS
 

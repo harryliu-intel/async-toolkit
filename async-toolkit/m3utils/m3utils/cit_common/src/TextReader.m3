@@ -20,6 +20,7 @@ REVEAL
     initFromRd := InitFromRd;
     isEmpty := IsEmpty;
     shatter := Shatter;
+    pushBackText := PushBackText;
   END;
 
 PROCEDURE NextE(self : T; 
@@ -131,5 +132,15 @@ PROCEDURE Shatter(self : T; listDelims : TEXT;
     END;
     RETURN res
   END Shatter;
+
+PROCEDURE PushBackText(self: T; t: TEXT) =
+  BEGIN
+    IF self.start # 0 THEN
+      self.line := Text.Sub(self.line, self.start);
+      self.start := 0;
+    END;
+    <* ASSERT self.start = 0 *>
+    self.line := t & self.line;
+  END PushBackText;
 
 BEGIN END TextReader.
