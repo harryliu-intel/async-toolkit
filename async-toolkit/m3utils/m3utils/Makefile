@@ -12,7 +12,7 @@ SHIPDIRS=cit_util magic bdd cptr bool
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
-SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
+SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse prsparse`
 M3SUBS= `./dirsexist.sh -f boxes magraster`
 
 M3BUILDOPTS= -O
