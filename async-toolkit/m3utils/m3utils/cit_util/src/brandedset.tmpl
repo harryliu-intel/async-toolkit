@@ -1,10 +1,8 @@
 /* $Id$ */
 readonly proc brandedSet(nm, elem, set) is
-	build_generic_intf(nm, "BrandedSet", [elem, set], HIDDEN)
-	build_generic_impl(nm, "BrandedSet", [elem])
+	build_generic_module(nm, "BrandedSet", [elem, set], [elem])
 end
 
 readonly proc BrandedSet(nm, elem, set) is
-	build_generic_intf(nm, "BrandedSet", [elem, set], VISIBLE)
-	build_generic_impl(nm, "BrandedSet", [elem])
+	Build_generic_module(nm, "BrandedSet", [elem, set], [elem])
 end

@@ -1,16 +1,11 @@
 %
 % $Id$
 %
-readonly proc KeyPair(nm, k1, k2) is
-	local nam = nm & "Pair"
 
-	build_generic_intf(nam, "KeyPair", [k1, k2], VISIBLE)
-	build_generic_impl(nam, "KeyPair", [k1, k2])
+readonly proc KeyPair(nm, k1, k2) is
+	Build_generic_module(nm & "Pair", "KeyPair", [k1, k2], [k1, k2])
 end
 
 readonly proc keyPair(nm, k1, k2) is
-	local nam = nm & "Pair"
-
-	build_generic_intf(nam, "KeyPair", [k1, k2], HIDDEN)
-	build_generic_impl(nam, "KeyPair", [k1, k2])
+	build_generic_module(nm & "Pair", "KeyPair", [k1, k2], [k1, k2])
 end
