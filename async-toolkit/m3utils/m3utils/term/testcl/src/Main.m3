@@ -1,13 +1,17 @@
 MODULE Main;
 IMPORT FloatMode;
 IMPORT Term;
-IMPORT MyCommandLoop;
 IMPORT TextList;
 IMPORT Lex;
 IMPORT Scan;
-IMPORT MyContext;
 IMPORT Fmt;
 FROM CommandLoop IMPORT Error;
+
+(* custom-context command-loop created using generics;
+   see m3makefile
+*)
+IMPORT MyContext;
+IMPORT MyCommandLoop;
 
 PROCEDURE Print(ctx: MyContext.T;
                 <*UNUSED*>args: TextList.T;
