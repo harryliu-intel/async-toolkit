@@ -73,6 +73,8 @@ Module("Pointe")
 template("listf")
 generic_module("ListF")
 
+List("Char","Char")
+
 Library("cit_util")
 
 
