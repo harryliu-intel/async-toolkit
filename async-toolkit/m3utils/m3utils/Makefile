@@ -77,8 +77,8 @@ faster: fastprep .lesstodo .fastmake
 .m3deps:
 	grep ^import\ \*\( */src/m3makefile */*/src/m3makefile | \
 	sed s/\ //g | \
-	sed -e s/:import\(\"/:/g -e s/\"\)\.\*//g -e s./src/m3makefile..g \
-	> .m3deps
+	sed -e s/:import\(\"/:/g -e s/\"\)\.\*//g -e s./src/m3makefile..g | \
+	sed s/:ktoklib/:parserlib/g > .m3deps
 	grep -v -e ^# otherdeps | grep : >> .m3deps
 
 .todo:
