@@ -100,6 +100,7 @@ Interval("LR", "LongrealType")
 gmodule("SettableRef")
 SettableRef_named("LongRealRef", "LongrealType")
 List("LongRealRef", "LongRealRef")
+Table("TextLongRealRef", "Text", "LongRealRef")
 
 Interface("Threadd")
 Sequence("Thread","Threadd")

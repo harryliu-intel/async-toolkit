@@ -9,5 +9,15 @@ PROCEDURE Normalize(p: T; newLength: LONGREAL): T =
     RETURN T{p.h*s, p.v*s};
   END Normalize;
 
+PROCEDURE Add(a,b: T): T =
+  BEGIN
+    RETURN T{a.h+a.v, b.h+b.v};
+  END Add;
+
+PROCEDURE Sub(a,b: T): T =
+  BEGIN
+    RETURN T{a.h-a.v, b.h-b.v};
+  END Sub;
+
 BEGIN
 END LRPt.

@@ -9,5 +9,7 @@ TYPE T = RECORD h, v : LONGREAL END;
 CONST Brand = "LRPt";
 
 PROCEDURE Normalize(p: T; newLength: LONGREAL): T;
+PROCEDURE Add(a,b: T): T;
+PROCEDURE Sub(a,b: T): T;
 
 END LRPt.
