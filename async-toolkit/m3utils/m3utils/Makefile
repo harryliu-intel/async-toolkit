@@ -21,11 +21,7 @@ subs:
 	done
 
 
-links:
-	ln -sf /ufs/mika/mika/mylibs/bool.[hc] bool/src
-	ln -sf /ufs/mika/mika/mylibs/misc.[hc] bool/src
-
-ships: links
+ships: 
 	@for s in $(SHIPS); do\
 		echo "===> $$s";\
 		cd $$s; m3build; m3ship; cd .. ;  \

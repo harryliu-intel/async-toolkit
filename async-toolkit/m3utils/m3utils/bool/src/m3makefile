@@ -1,27 +1,27 @@
-import (libm3)
-import (cptr)
-import (set)
-import (cit_util)
+import ("libm3")
+import ("cptr")
+import ("set")
+import ("cit_util")
 
 /* the whole Bool deal */
-c_source(misc) 
-c_source(bool) 
+c_source("misc") 
+c_source("bool") 
 
-Module(Bool) 
-Module(Cbool) 
-interface(CboolImpl)
-Interface(BoolImpl) 
+Module("Bool") 
+Module("Cbool") 
+interface("CboolImpl")
+Interface("BoolImpl") 
 /* This is a bit tricky:  The use of CPtr (CPtr.T = Bool.T) in the BoolTextTbl
    allows BoolTextTbl to be imported by Bool.T! */
-Table(BoolText, CPtr, Text)
+Table("BoolText", "CPtr", "Text")
 
-Interface(BoolVector)
-implementation(BoolVectorImpl)
-implementation(BoolVector)
+Interface("BoolVector")
+implementation("BoolVectorImpl")
+implementation("BoolVector")
 
-table(BoolRef, Bool, Refany)
+table("BoolRef", "Bool", "Refany")
 
-MkSet(Bool, CPtr)
-MkSetDef(Bool, CPtr)
+MkSet("Bool", "CPtr")
+MkSetDef("Bool", "CPtr")
 
-library(bool)
+library("bool")
