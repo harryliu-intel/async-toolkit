@@ -125,6 +125,8 @@ IntOps("Lil", "IntForRat", "TextIntTbl")
 IntOps("Big", "BigInt", "TextBigIntTbl")
 Module("UnsafeMutex")
 Module("CatRd")
+Module("FileReWr")
+
 
 Module("ObjectFactory")
 Interface("ObjectFactoryClass")
