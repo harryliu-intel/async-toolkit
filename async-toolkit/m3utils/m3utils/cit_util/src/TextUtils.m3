@@ -259,7 +259,7 @@ PROCEDURE GetLines(t: TEXT; n: INTEGER;  firstBreakLongAtCol:=79): TEXT =
       pos := 0;
       FOR i := 1 TO n DO
         pos := Text.FindChar(t, '\n', pos) + 1;
-        IF pos = -1 THEN
+        IF pos = 0 THEN
           pos := Text.Length(t);
           EXIT;
         END;
