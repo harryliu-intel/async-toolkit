@@ -6,6 +6,7 @@ import ("cit_util")
 /* the whole Bool deal */
 c_source("misc") 
 c_source("bool") 
+c_source("bool_stub") 
 
 Module("Bool") 
 Module("Cbool") 

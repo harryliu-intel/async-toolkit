@@ -12,6 +12,8 @@ TYPE
   T <: Public;
 
   Public = OBJECT METHODS
+
+    (* initialize a new T with min value 0 and max value maxValue *)
     init(maxValue : CARDINAL) : T;
 
     getMinValue() : INTEGER;
@@ -54,7 +56,7 @@ PROCEDURE BitwiseNot(a : T) : T;
 (* general bitwise op *)
 PROCEDURE BitwiseOp(a, b : T; op : PROCEDURE(a, b : Bool.T) : Bool.T) : T;
 
-(* shifts (by powers of 2) *)
+(* shifts by a constant amount (in base 2) *)
 PROCEDURE ShiftLeft(a : T; sa : CARDINAL) : T;
 PROCEDURE UnsignedShiftRight(a : T; sa : CARDINAL) : T;
 PROCEDURE SignedShiftRight(a : T; sa : CARDINAL) : T ;

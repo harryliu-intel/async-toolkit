@@ -8,7 +8,7 @@ TYPE Array = REF ARRAY OF Bool.T;
 REVEAL 
   T = Public BRANDED Brand OBJECT
     (* two's complement *)
-    bits : Array;
+    bits : Array; (* CONST *)
   METHODS
     (* extend to width *)
     extend(nbits : CARDINAL) := SignExtend;
@@ -22,17 +22,26 @@ REVEAL
     isConstant := IsConstant;
     extract := Extract;
     init := Init;
+    isEqual := IsEqual;
   END;
+
+(* inefficient but simple first impl. *)
+PROCEDURE IsEqual(a : T; n : INTEGER) : Bool.T = 
+  BEGIN RETURN Equals(a, Constant(n)) END IsEqual;
 
 PROCEDURE Init(res: T; maxValue : CARDINAL) : T =
   VAR
     bits : CARDINAL;
     inrange : Bool.T;
   BEGIN
-    FOR i := 0 TO Word.Size DO
+    FOR i := 0 TO Word.Size - 1 DO
       IF Word.Shift(1,i) > maxValue THEN bits := i; EXIT END
     END;
     <* ASSERT bits < Word.Size *>
+
+    (* make room for the sign bit *)
+    INC(bits);
+
     res := NEW(T, bits := NEW(Array, bits));
     
     (* a bit goofy...
@@ -41,17 +50,18 @@ PROCEDURE Init(res: T; maxValue : CARDINAL) : T =
 
        then we build the inrange expression
 
-       then we And every bit with the inrange expression
+       then we And the MSB with the inrange expression
 
        We end up with a number that must be in range!
     *)
 
-    FOR i := 0 TO bits - 1 DO res.bits[i] := Bool.New() END;
+    FOR i := 0 TO bits - 2 DO res.bits[i] := Bool.New() END;
+
+    res.bits[bits-1] := Bool.False();
 
     inrange := LessThanOrEqual(res,Constant(maxValue));
 
-    res.bits[LAST(res.bits^)] := 
-        Bool.And(res.bits[LAST(res.bits^)],inrange);
+    res.bits[bits-2] := Bool.And(res.bits[bits-2],inrange);
     
     <* ASSERT GreaterThan(res, Constant(maxValue)) = Bool.False() AND
               LessThan(res, Zero) = Bool.False() *>
@@ -77,7 +87,7 @@ PROCEDURE GetMaxValue(a : T) : INTEGER =
   BEGIN
     a.pack();
     r := Word.Shift(1,NUMBER(a.bits^));
-    FOR i := r TO -r DO
+    FOR i := r TO -r BY -1 DO
       IF Equals(Constant(i),a) # Bool.False() THEN RETURN i END
     END;
     <* ASSERT FALSE *>
@@ -105,25 +115,28 @@ PROCEDURE Extract(a : T; bit : CARDINAL) : Bool.T =
 PROCEDURE SignExtend(self : T; nbits : CARDINAL) =
   VAR
     newBits := NEW(Array, nbits);
+    top := self.bits[LAST(self.bits^)];
   BEGIN
     self.pack();
     <* ASSERT nbits >= NUMBER(self.bits^) *>
-    newBits^ := self.bits^;
+    SUBARRAY(newBits^,0,NUMBER(self.bits^)) := self.bits^;
     FOR i := LAST(self.bits^) + 1 TO LAST(newBits^) DO
-      newBits[i] := self.bits[LAST(self.bits^)]
+      newBits[i] := top
     END;
-    self.bits := newBits
+    self.bits := newBits;
+    <* ASSERT top = self.bits[LAST(self.bits^)] *>
   END SignExtend;
 
 PROCEDURE Pack(self : T) =
   VAR
     top := self.bits[LAST(self.bits^)];
-    msb : CARDINAL;
+    msb : CARDINAL := LAST(self.bits^);
   BEGIN
     (* find largest necessary index *)
     FOR i := LAST(self.bits^) - 1 TO FIRST(self.bits^) BY -1 DO
       IF self.bits[i] # top THEN
-        msb := i + 1
+        msb := i + 1;
+        EXIT
       END
     END;
     IF msb # LAST(self.bits^) THEN
@@ -132,9 +145,11 @@ PROCEDURE Pack(self : T) =
       BEGIN
         <* ASSERT NUMBER(new^) < NUMBER(self.bits^) *>
         new^ := SUBARRAY(self.bits^,FIRST(self.bits^), NUMBER(new^));
+        <* ASSERT self.bits[LAST(self.bits^)] = new[LAST(new^)] *>
         self.bits := new
       END
-    END
+    END;
+    <* ASSERT top = self.bits[LAST(self.bits^)] *>
   END Pack;
 
 PROCEDURE Add(a, b : T) : T =
@@ -284,7 +299,7 @@ PROCEDURE Constant(c : INTEGER) : T =
     w : Word.T := c;
     res := NEW(T, bits := NEW(Array,Word.Size));
   BEGIN
-    FOR i := 0 TO Word.Size DO 
+    FOR i := 0 TO Word.Size - 1 DO 
       IF Word.Extract(w,i,1) = 1 THEN
         res.bits[i] := Bool.True()
       ELSE
