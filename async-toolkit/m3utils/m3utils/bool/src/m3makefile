@@ -23,7 +23,7 @@ Interface("BoolVector")
 implementation("BoolVectorImpl")
 implementation("BoolVector")
 
-table("BoolRef", "Bool", "Refany")
+Table("BoolRef", "Bool", "Refany")
 
 MkSet("Bool", "CPtr")
 MkSetDef("Bool", "CPtr")
