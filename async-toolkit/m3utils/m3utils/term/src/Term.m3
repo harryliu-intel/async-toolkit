@@ -109,10 +109,13 @@ PROCEDURE Wr(s: TEXT) =
     END;
   END Wr;
 
-PROCEDURE WrLn(s: TEXT) =
+PROCEDURE WrLn(s: TEXT; flush := FALSE) =
   BEGIN
     Wrr.PutText(Stdio.stdout, s);
     Wrr.PutText(Stdio.stdout, Endl);
+    IF flush THEN
+      Wrr.Flush(Stdio.stdout);
+    END;
   END WrLn;
 
 BEGIN END Term.

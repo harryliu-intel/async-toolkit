@@ -38,7 +38,7 @@ PROCEDURE GetLine(<*UNUSED*>self: T; prompt := ">"): TEXT =
 
 PROCEDURE PutLine(<*UNUSED*>self: T; t: TEXT) =
   BEGIN
-    Term.WrLn(t);
+    Term.WrLn(t, TRUE);
   END PutLine;
 
 PROCEDURE PutText(<*UNUSED*>self: T; t: TEXT) =
