@@ -15,6 +15,7 @@ end
 
 /* these are the packages that are part of this distribution */
 
+override("prsparse",TOP)
 override("magic",TOP)
 override("cit_util",TOP)
 override("bdd",TOP)

@@ -7,7 +7,7 @@ readonly proc Dbltable(nm, k, v) is
 
 	mkSet(k & "Dbl" , k)
 	mkSetDef(k & "Dbl" , k)
-	table(k & "DblRef", k, "Refany")
+	table(k & "DblRef", k, "DblRefany")
 
 	local ks = k & "DblSetDef"
 	local bks = "Branded" & ks
@@ -28,7 +28,7 @@ readonly proc dbltable(nm, k, v) is
 
 	mkSet(k & "Dbl" , k)
 	mkSetDef(k & "Dbl" , k)
-	table(k & "DblRef", k, "Refany")
+	table(k & "DblRef", k, "DblRefany")
 
 	local ks = k & "DblSetDef"
 	local bks = "Branded" & ks
