@@ -106,3 +106,10 @@ readonly proc Gimplementation(nm, args) is
 	Generic_implementation(nm)
 	gother_template(nm, args, "implementation")
 end
+
+readonly proc g_module(nm) is gmodule(nm,["e"],["e"]) end
+readonly proc G_module(nm) is Gmodule(nm,["e"],["e"]) end
+readonly proc g_interface(nm) is ginterface(nm,["e"]) end
+readonly proc G_interface(nm) is Ginterface(nm,["e"]) end
+readonly proc g_implementation(nm) is gimplementation(nm,["e"]) end
+readonly proc G_implementation(nm) is Gimplementation(nm,["e"]) end
