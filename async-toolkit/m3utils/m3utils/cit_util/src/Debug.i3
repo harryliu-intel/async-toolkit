@@ -28,7 +28,14 @@ PROCEDURE Warning(t : TEXT);
 PROCEDURE Error(t : TEXT);
 PROCEDURE UnNil(text : TEXT) : TEXT;
 
-VAR
-  level : CARDINAL; (* default 0 *)
+(* apart from these procedures, the debug level is also set from the
+   env. variable DEBUGLEVEL *)
+
+(* if nothing else, it defaults to zero *)
+
+PROCEDURE RaiseLevel(newLevel : CARDINAL);
+PROCEDURE LowerLevel(newLevel : CARDINAL);
+PROCEDURE SetLevel(newLevel : CARDINAL);
+PROCEDURE GetLevel() : CARDINAL;
 
 END Debug.

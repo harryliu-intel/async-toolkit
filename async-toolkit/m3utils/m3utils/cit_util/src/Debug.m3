@@ -24,9 +24,10 @@
 MODULE Debug;
 IMPORT Wr;
 FROM Stdio IMPORT stderr;
+IMPORT Env, Scan;
+IMPORT FloatMode, Lex;
 
-EXCEPTION
-  ABORT;
+EXCEPTION ABORT;
 
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
   BEGIN
@@ -59,4 +60,31 @@ PROCEDURE Error(t: TEXT) =
 PROCEDURE UnNil(text : TEXT) : TEXT =
   BEGIN IF text = NIL THEN RETURN "(NIL)" ELSE RETURN text END END UnNil;
 
-BEGIN level := 0 END Debug.
+PROCEDURE RaiseLevel(newLevel : CARDINAL) = 
+  BEGIN
+    IF newLevel > level THEN level := newLevel END
+  END RaiseLevel;
+
+PROCEDURE LowerLevel(newLevel : CARDINAL) = 
+  BEGIN
+    IF newLevel < level THEN level := newLevel END
+  END LowerLevel;
+
+PROCEDURE SetLevel(newLevel : CARDINAL) = BEGIN level := newLevel END SetLevel;
+  
+PROCEDURE GetLevel() : CARDINAL = BEGIN RETURN level END GetLevel;
+
+VAR level := 0;
+
+BEGIN 
+  VAR
+    debugStr := Env.Get("DEBUGLEVEL");
+  BEGIN
+    TRY
+      IF debugStr # NIL THEN level := Scan.Int(debugStr) END
+    EXCEPT
+      Lex.Error, FloatMode.Trap => 
+        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"")
+    END
+  END
+END Debug.
