@@ -14,6 +14,13 @@ TYPE
   PlotStyle = { X, Y, Parametric };
 
   (* A ParametricSpline.T is an abstract type *)
+  (* It defines the methods we want on a definition *)
+  (* of two-dimensional splines *)
+
+  (* Eventually, we might do n-dimensional splines... *)
+
+  (* This interface can profitably be used together with the *)
+  (* ParametricSplineImpl generic *)
 
   T = OBJECT METHODS
     (* coords are to be fed in order along curve *)
