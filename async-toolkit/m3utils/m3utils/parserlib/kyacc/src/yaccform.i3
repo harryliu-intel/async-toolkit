@@ -17,6 +17,7 @@ TYPE
   Public = OBJECT
   METHODS
     setLex(lex: %tok.Lexer): T;
+    getLex(): %tok.Lexer;
     parse(exhaustInput: BOOLEAN := TRUE): StartType;
 
     (* rules *)

@@ -38,6 +38,7 @@ REVEAL
 %alloc\
   OVERRIDES
     setLex := SetLex;
+    getLex := GetLex;
     parse := Parse;
     purge := Purge;
 %ovr\
@@ -92,6 +93,8 @@ VAR
 
 PROCEDURE SetLex(self: T; lex: %tok.Lexer): T =
   BEGIN self.lex := lex; RETURN self; END SetLex;
+PROCEDURE GetLex(self: T): %tok.Lexer =
+  BEGIN RETURN self.lex; END GetLex;
 
 PROCEDURE Init(self: T) =
   BEGIN (* called on first parse *)
