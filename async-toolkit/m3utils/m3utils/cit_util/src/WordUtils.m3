@@ -3,15 +3,15 @@ MODULE WordUtils;
 IMPORT Wr, Fmt;
 FROM Stdio IMPORT stderr;
 
-PROCEDURE FromBits(READONLY bits: Bits): T =
+PROCEDURE FromRails(READONLY rails: Rails): T =
   VAR
     acc := 0;
   BEGIN
-    FOR i := 0 TO LAST(bits)  DO
-      acc := acc + ORD(bits[i]) *i;
+    FOR i := 0 TO LAST(rails)  DO
+      acc := acc + ORD(rails[i]) *i;
     END;
     RETURN acc;
-  END FromBits;
+  END FromRails;
 
 BEGIN
 END WordUtils.
