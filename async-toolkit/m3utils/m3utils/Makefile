@@ -72,7 +72,7 @@ faster: fastprep .lesstodo .fastmake
 
 .top:
 	echo TOP=\"`pwd`\" > .top
-	echo BINDIR=\"`cat .bindir`\" >> .top
+#	echo BINDIR=\"`cat .bindir`\" >> .top # superceded by BUILD_DIR
 
 .m3deps:
 	grep ^import\ \*\( */src/m3makefile */*/src/m3makefile | \
