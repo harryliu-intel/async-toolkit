@@ -21,7 +21,7 @@
 (*                                                                           *)
 (* $Id$ *)
 INTERFACE TextUtils;
-IMPORT TextList;
+IMPORT TextList, TextSet;
 
 (* replace every occurrence of "old" by "new" in "in" *)
 PROCEDURE Replace(in, old, new : TEXT) : TEXT;
@@ -38,5 +38,7 @@ PROCEDURE InfixFormat(sep : TEXT; list : TextList.T; ignoreNulls := FALSE) : TEX
 PROCEDURE Pluralize(noun : TEXT; count : INTEGER; 
                     ending := "s"; printNum := TRUE) : TEXT ;
 
+PROCEDURE ListToSet(list : TextList.T) : TextSet.T;
+PROCEDURE SetToList(set : TextSet.T) : TextList.T;
 
 END TextUtils.

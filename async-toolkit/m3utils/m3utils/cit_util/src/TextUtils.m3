@@ -24,6 +24,7 @@
 MODULE TextUtils;
 IMPORT Text;
 IMPORT Fmt;
+IMPORT TextSet, TextSetDef, TextList;
 
 PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
   VAR
@@ -85,5 +86,23 @@ PROCEDURE Pluralize(noun : TEXT; n : INTEGER;
     IF printNum THEN res := Fmt.Int(n) & " " ELSE res := "" END;
     IF n = 1 THEN RETURN res & noun ELSE RETURN res & noun & ending END 
   END Pluralize;
+
+PROCEDURE ListToSet(l : TextList.T) : TextSet.T =
+  VAR
+    res := NEW(TextSetDef.T).init();
+  BEGIN
+    WHILE l # NIL DO EVAL res.insert(l.head); l := l.tail END;
+    RETURN res
+  END ListToSet;
+  
+PROCEDURE SetToList(set : TextSet.T) : TextList.T =
+  VAR
+    iter := set.iterate();
+    t : TEXT;
+    res : TextList.T := NIL;
+  BEGIN
+    WHILE iter.next(t) DO res := TextList.Cons(t,res) END;
+    RETURN res
+  END SetToList;
 
 BEGIN END TextUtils.
