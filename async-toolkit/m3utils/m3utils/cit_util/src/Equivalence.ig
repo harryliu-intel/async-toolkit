@@ -64,6 +64,10 @@ TYPE
 
     toRevTable(): ElemElemListTbl.T;
 (* return a table mapping canonical elements to lists of aliases. *)
+
+    initCopy(toCopy : T) : T;
+(* initialize as a copy of toCopy; for a Default, call standard init first,
+   e.g., write new := NEW(Default).init().initCopy(old) *)
   END;
   Iterator = OBJECT METHODS
     next(VAR alias, canon: Elem.T): BOOLEAN;

@@ -49,6 +49,7 @@ REVEAL
     getClass := GetClass;
     toTable := ToTable;
     toRevTable := ToRevTable;
+    initCopy := InitCopy;
   END;
 
 PROCEDURE Init(self: Default;
@@ -155,5 +156,20 @@ PROCEDURE ToRevTable(self: Default): ElemElemListTbl.T =
     RETURN self.r;
   END ToRevTable;
 
+PROCEDURE InitCopy(t, toCopy : T) : T =
+  VAR
+    iter := toCopy.iterate();
+    a1, a2 : Elem.T;
+  BEGIN
+    WHILE iter.next(a1,a2) DO
+      EVAL t.identify(a1,a2)
+    END;
+    RETURN t
+  END InitCopy;
+
 BEGIN
 END Equivalence.
+
+
+
+
