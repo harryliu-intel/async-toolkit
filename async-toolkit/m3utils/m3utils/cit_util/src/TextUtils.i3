@@ -26,6 +26,7 @@ IMPORT TextList, TextSet;
 (* replace every occurrence of "old" by "new" in "in" *)
 PROCEDURE Replace(in, old, new : TEXT) : TEXT;
 PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT;
+PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL;
 
 (* find first occurrence of sub in in *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
@@ -40,5 +41,6 @@ PROCEDURE Pluralize(noun : TEXT; count : INTEGER;
 
 PROCEDURE ListToSet(list : TextList.T) : TextSet.T;
 PROCEDURE SetToList(set : TextSet.T) : TextList.T;
+
 
 END TextUtils.

@@ -26,6 +26,18 @@ IMPORT Text;
 IMPORT Fmt;
 IMPORT TextSet, TextSetDef, TextList;
 
+PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL =
+  VAR
+    count := 0;
+  BEGIN
+    FOR i := 0 TO Text.Length(in) - 1 DO
+      IF Text.GetChar(in,i) = c THEN
+        INC(count);
+      END;
+    END;
+    RETURN count;
+  END CountCharOccurences;
+
 PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
   VAR
     res := NEW(REF ARRAY OF CHAR, Text.Length(in));
