@@ -16,35 +16,39 @@
 # $Id$
 #
 
-# there's a nasty hack here:
-# cit_util is entirely in Modula-3, but since it is req'd by prsparse,
-# we need to build it first.
 #
-# The solution would be either:
-# 1. to use Make all-around (for the top-level at least)
-# 2. to use m3build all-around (ditto)
-# 3. to allow a list of m3build and Make target dirs to be mixed in any order
+# Build order has been revised as of 1/13/2005
 #
-
+# New build order reduces dependencies of Modula-3 on C, builds
+# Modula-3 first, then C.  Default behavior is to build ONLY
+# Modula-3 code in BIN_DIR subdirectories and not to touch
+# shared directories.
 #
 # currently, this is the build order:
-# 0. <some hacks: .bindir, .top ... >
-# 1. COMMONDIRS   --   C libraries
-# 2. SHIPDIRS     --   Modula-3 libraries
-# 3. SUBDIRS      --   C programs
-# 4. M3SUBS       --   Modula-3 programs
-# 5. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
-# 6. binlinks     --   make symlinks to programs that were built
+#
+# Phase I.    Target "std"
+# 0. <a hack: .top>
+# 1. SHIPDIRS     --   Modula-3 libraries
+# 2. M3SUBS       --   Modula-3 programs
+#
+# Phase II.   Target "withlinks"
+# 00. <another hack: .bindir>
+# 3. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
+# 4. binlinks     --   make symlinks to programs that were built
+#
+# Phase III.  Target "all"
+# 5. COMMONDIRS   --   C libraries
+# 6. SUBDIRS      --   C programs
+#
+#
+#
+# In the long run, we'd like to get rid of COMMONDIRS and SUBDIRS and
+# put everything under the control of m3build.
+#
 
-COMMONDIRS=processor crt m3yacc cit_common m3tmplhack m3texthack cit_util m3browserhack prsparse term parserlib 
-#COMMONDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack term parserlib 
-#COMMONDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack 
-COMMONDIRS=
+COMMONDIRS=processor crt m3yacc prsparse
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
-
-NONPORTABLES=processor crt m3yacc prsparse
-
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
@@ -60,7 +64,6 @@ REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
-# These are built last
 M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix acat router/pauls router/pauls2 router/pauls3 router/pauls4 router/gentest verif dagflat allias myrope colc/pl2xprs ld2layout colc/pl22m33 magic/magsize playfile calarm calarm/getquotes calarm/transpose_rates decimate cpdag magicextras/testslasher ld/fixdag`
 
 
@@ -70,11 +73,14 @@ M3SHIP= echo
 
 BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
 
+
+#
+# RULES BELOW HERE
+#
+
 std: .top ships m3subs
 withlinks: std .bindir browserexps binlinks
 all: withlinks commons subs
-#all: .bindir .top commons ships subs m3subs browserexps binlinks
-
 
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
 fastprep: .top .m3deps
