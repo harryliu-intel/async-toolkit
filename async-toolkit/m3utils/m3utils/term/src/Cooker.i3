@@ -8,7 +8,8 @@ PROCEDURE Input(prompt:="> ";
                 completer: Completer := NIL;
                 previous: TextList.T := NIL;
                 default:="";
-                fatalControl:=TRUE): TEXT;
+                fatalControl:=TRUE;
+                emptySelectsLast:=FALSE): TEXT;
 
 PROCEDURE Print(t:="");
 

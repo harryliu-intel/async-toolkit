@@ -9,7 +9,7 @@ IMPORT Term;
 
 PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
                 previous: TextList.T := NIL; default:="";
-                fatalControl:=TRUE): TEXT =
+                fatalControl:=TRUE; emptySelectsLast:=FALSE): TEXT =
   VAR
     c: CHAR;
     t := default;
@@ -100,7 +100,12 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
           RETURN Text.FromChar(c);
         END;
       | '\011' => IF completer#NIL THEN completer.do(t); WipeLine(); END;
-      | '\015' => Term.WrLn("",TRUE); RETURN t;
+      | '\015' =>
+        IF emptySelectsLast AND Text.Equal(t,"") AND previous#NIL THEN 
+          t:=previous.head; Print(t); RETURN t;
+        ELSE
+          Term.WrLn("",TRUE); RETURN t;
+        END;
       | '\013' => Term.Wr("\033[K"); t:=Text.Sub(t,0,p);
       | '\006' => p:=MIN(Text.Length(t),p+1);
       | '\002' => p:=MAX(0,p-1);
