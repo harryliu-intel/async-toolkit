@@ -3,7 +3,7 @@
 (*                                                                           *)
 (*  Debugging output and aborting the program.                               *)
 (*                                                                           *)
-(*  Copyright (c) 2000 California Institute of Technology                    *)
+(*  Copyright (c) 2002 California Institute of Technology                    *)
 (*  All rights reserved.                                                     *)
 (*  Department of Computer Science                                           *)
 (*  Pasadena, CA 91125.                                                      *)
