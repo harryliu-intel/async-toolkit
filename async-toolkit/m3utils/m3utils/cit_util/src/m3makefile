@@ -75,6 +75,16 @@ generic_module("ListF")
 
 List("Char","Char")
 
+Module("Cardinal")
+Sequence("Card","Cardinal")
+Sequence("Char","Char")
+
+Module("IntForRat")
+Module("BigInt")
+Gmodule("Rational")
+Rational("Int","IntForRat")
+Rational("Big", "BigInt")
+
 Library("cit_util")
 
 

@@ -52,7 +52,8 @@ TYPE
      *)
     clone(VAR clonedFree : FreeVariable) : BoolRemap.T;
 
-    (* remap a variable to a target... target must be same size *)
+    (* return remapper that would remap the variable to targetFree... 
+       targetFree must be same size *)
     makemap(targetFree : FreeVariable) : BoolRemap.T;
     
     isRepBaseBit(b : Bool.T; VAR which : CARDINAL) : BOOLEAN; (* for debugging *)
