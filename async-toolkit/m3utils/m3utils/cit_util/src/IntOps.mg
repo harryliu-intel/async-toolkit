@@ -112,11 +112,9 @@ PROCEDURE MultiExp(base, exp, mod: T; useMod: BOOLEAN): T =
         t: T;
       BEGIN
         IF Odd(exp) THEN
-          t := Mul(base, MultiExp(base, Add(exp, New(-1)), 
-                                  mod, useMod));
+          t := Mul(base, MultiExp(base, Pred(exp), mod, useMod));
         ELSE
-          t := Square(MultiExp(base, Div(exp, New(2)),
-                               mod, useMod));
+          t := Square(MultiExp(base, Half(exp), mod, useMod));
         END;
         IF useMod THEN
           t := Mod(t, mod);
@@ -126,23 +124,6 @@ PROCEDURE MultiExp(base, exp, mod: T; useMod: BOOLEAN): T =
     END;
   END MultiExp;
 
-PROCEDURE ProbablyPrime(p: T): BOOLEAN =
-  BEGIN
-    RETURN Equal(ModExp(New(19), Add(p, New(-1)), p), Int.One);
-  END ProbablyPrime;
-
-PROCEDURE Negate(a: T): T =
-  BEGIN
-    RETURN Mul(New(-1), a);
-  END Negate;
-
-PROCEDURE Sub(a, b: T): T =
-  BEGIN
-    RETURN Add(a, Negate(b));
-  END Sub;
-
-PROCEDURE Square(a: T): T = BEGIN RETURN Mul(a,a); END Square;
-
 PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists} =
   VAR
     aCoeff, bCoeff, g: T;
@@ -151,18 +132,6 @@ PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists} =
     IF NOT Equal(g, Int.One) THEN RAISE NoneExists; END;
     RETURN aCoeff;
   END ModInverse;
-
-PROCEDURE Odd(a: T): BOOLEAN =
-  BEGIN
-    RETURN Equal(Mod(a, New(2)),Int.One);
-  END Odd;
-
-PROCEDURE GCD(a, b: T): T =
-  VAR
-    ac,bc: T;
-  BEGIN
-    RETURN ExtendedGCD(a,b,ac,bc);
-  END GCD;
 
 PROCEDURE Read(fn: Pathname.T): TextIntTbl.T =
   VAR
@@ -195,5 +164,22 @@ PROCEDURE Write(fn: Pathname.T; tbl: TextIntTbl.T) =
     END;
     Wr.Close(wr);
   END Write;
+
+PROCEDURE ProbablyPrime(p: T): BOOLEAN =
+  BEGIN RETURN Equal(ModExp(New(19), Pred(p), p), Int.One); END ProbablyPrime;
+PROCEDURE Negate(a: T): T =
+  BEGIN RETURN Mul(New(-1), a); END Negate;
+PROCEDURE Sub(a, b: T): T =
+  BEGIN RETURN Add(a, Negate(b)); END Sub;
+PROCEDURE Square(a: T): T = BEGIN RETURN Mul(a,a); END Square;
+PROCEDURE Odd(a: T): BOOLEAN =
+  BEGIN RETURN Equal(Mod(a, New(2)),Int.One); END Odd;
+PROCEDURE Pred(x: T): T = BEGIN RETURN Add(x, New(-1)); END Pred;
+PROCEDURE Half(x: T): T = BEGIN RETURN Div(x, New(2)); END Half;
+PROCEDURE GCD(a, b: T): T =
+  VAR ac,bc: T; BEGIN RETURN ExtendedGCD(a,b,ac,bc); END GCD;
+PROCEDURE IsOne(x: T): BOOLEAN = BEGIN RETURN Equal(x, Int.One); END IsOne;
+PROCEDURE One(): T = BEGIN RETURN Int.One; END One;
+PROCEDURE Zero(): T = BEGIN RETURN Int.Zero; END Zero;
 
 BEGIN END IntOps.

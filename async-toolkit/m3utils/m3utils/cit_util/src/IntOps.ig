@@ -34,6 +34,7 @@ CONST
   Sign = Int.Sign;
   Compare = Int.Compare;
   Equal = Int.Equal;
+  Divide = Int.Divide;
 PROCEDURE Negate(a: T): T;
 PROCEDURE Sub(a, b: T): T;
 
@@ -48,7 +49,12 @@ PROCEDURE GCD(a, b: T): T;
 PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T;
 PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists};
 PROCEDURE Odd(a: T): BOOLEAN;
-PROCEDURE Square(a: T): T;
+PROCEDURE Square(a: T): T; (* x^2 *)
+PROCEDURE Pred(x: T): T;   (* x-1 *)
+PROCEDURE Half(x: T): T;   (* x/2 *)
+PROCEDURE IsOne(x: T): BOOLEAN;
+PROCEDURE One(): T;
+PROCEDURE Zero(): T;
 
 
 (* file I/O *)
