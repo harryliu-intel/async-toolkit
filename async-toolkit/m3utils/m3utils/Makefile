@@ -59,14 +59,11 @@ M3SHIP= echo
 
 BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
 
-all: .bindir .top commons ships subs m3subs browserexps
+all: .top commons ships subs m3subs browserexps
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
-fastprep: .bindir .top .m3deps
+fastprep: .top .m3deps
 fast: fastprep .todo .fastmake
 faster: fastprep .lesstodo .fastmake
-
-.bindir:
-	cd hack ; echo `./bindir.sh` > ../.bindir
 
 .top:
 	echo TOP=\"`pwd`\" > .top
