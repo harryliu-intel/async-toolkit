@@ -34,7 +34,7 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
     IF minLevel > level THEN RETURN END;
 
     TRY
-      Wr.PutText(stderr,t & "\n");
+      Wr.PutText(stderr, UnNil(t) & "\n");
       Wr.Flush(stderr);
     EXCEPT ELSE END;
   END Out;
@@ -42,7 +42,7 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
 PROCEDURE Warning(t: TEXT) =
   BEGIN
     TRY
-      Wr.PutText(stderr,"WARNING: " & t & "\n");
+      Wr.PutText(stderr,"WARNING: " & UnNil(t) & "\n");
       Wr.Flush(stderr);
     EXCEPT ELSE END;
   END Warning;
@@ -51,7 +51,7 @@ PROCEDURE Error(t: TEXT) =
 <*FATAL ABORT*>
   BEGIN
     TRY
-      Wr.PutText(stderr,"ERROR: " & t & "\n");
+      Wr.PutText(stderr,"ERROR: " & UnNil(t) & "\n");
       Wr.Flush(stderr);
     EXCEPT ELSE END;
     RAISE ABORT;
