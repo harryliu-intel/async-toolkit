@@ -7,7 +7,7 @@ IMPORT FileRd;
 IMPORT TextList;
 IMPORT Pathname;
 IMPORT Stdio;
-IMPORT Process;
+(* IMPORT Process; *)
 IMPORT OSError;
 IMPORT Rd, Wr;
 IMPORT Fmt;
@@ -25,7 +25,8 @@ PROCEDURE Error(message: TEXT; fatal := TRUE) =
   BEGIN
     Wr.PutText(Stdio.stderr, message & "\n");
     IF fatal THEN
-      Process.Exit(1);
+(*      Process.Exit(1); *)
+      <* ASSERT FALSE *>
     END;
   END Error;
 

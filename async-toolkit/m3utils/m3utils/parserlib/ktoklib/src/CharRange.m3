@@ -35,9 +35,10 @@ PROCEDURE FromText(t: TEXT): T =
             left := c;
           END;
         END;
+        (* cm3 bug workaround *)
+        IF negate THEN IF rd = NIL THEN FileRdErr.E(NIL, ""); END; END;
       END;
-    EXCEPT
-      Rd.EndOfFile =>
+    EXCEPT Rd.EndOfFile =>
       IF range THEN
         FileRdErr.E(NIL, "CharRange should not end in '-'");
       END;
