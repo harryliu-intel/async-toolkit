@@ -54,6 +54,8 @@ module("TextSubsClause")
 list("TextSubsClause", "TextSubsClause")
 table("TextSubsClauseList", "Char", "TextSubsClauseList")
 
+Gmodule("Equivalence")
+Equivalence("Text", "Text", "TextTextTbl")
 
 Library("cit_util")
 
