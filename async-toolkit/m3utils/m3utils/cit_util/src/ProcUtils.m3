@@ -198,7 +198,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
 
     (* close i/o *)
     IF cm.po#NIL AND cm.po.close THEN cm.po.f.close(); END;
-    IF cm.pe#NIL AND cm.pe.close THEN cm.pe.f.close(); END;
+    IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN cm.pe.f.close(); END;
     IF cm.pi#NIL AND cm.pi.close THEN cm.pi.f.close(); END;
     RETURN NIL;
   END Apply;
