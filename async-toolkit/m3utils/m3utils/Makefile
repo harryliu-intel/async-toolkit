@@ -2,7 +2,7 @@
 # $Id$
 #
 
-COMMONDIRS= `./dirsexist.sh -f processor crt`
+COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc`
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
