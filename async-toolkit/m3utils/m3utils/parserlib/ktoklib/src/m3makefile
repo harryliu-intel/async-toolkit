@@ -1,11 +1,13 @@
 
-import("parseparams")
+/*import("parseparams")*/
+
 import("libm3")
 import("term")
 import("cit_util")
 
 /*template("listf")*/
 /*generic_module("ListF") */
+Module("ParseParams") /* compiler bug? */
 
 Module("CharRange")
 Module("CharCodes")
