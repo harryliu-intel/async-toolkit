@@ -7,9 +7,11 @@ include(".top")
 /* this is even more true if we want to move the binaries or */
 /* clean.. */
 
-if defined("pm3_version")
+if defined("pm3_version") 
+      	/* Polytechnique de Montreal Modula-3 */
 	option("shared_lib","")
-else
+else 
+	/* SRC Modula-3 */
 	m3_option ("-X2@-static@")
 end
 
