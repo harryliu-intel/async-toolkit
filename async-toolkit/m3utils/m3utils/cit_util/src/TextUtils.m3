@@ -104,6 +104,12 @@ PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN =
     RETURN pos >= 0 AND Text.Equal(Text.Sub(in, pos), suffix);
   END HaveSuffix;
 
+PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT =
+  BEGIN
+    <* ASSERT Text.Equal(Text.Sub(in, 0, Text.Length(prefix)),prefix) *>
+    RETURN Text.Sub(in, Text.Length(prefix));
+  END RemovePrefix;
+
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT =
   VAR
     pos := Text.Length(in) - Text.Length(suffix);

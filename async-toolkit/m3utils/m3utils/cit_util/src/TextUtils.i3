@@ -35,6 +35,7 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN;
 PROCEDURE HavePrefix(in, prefix: TEXT): BOOLEAN;
 PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN;
+PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT;
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
 
 PROCEDURE InfixFormat(sep : TEXT; list : TextList.T; ignoreNulls := FALSE) : TEXT;
