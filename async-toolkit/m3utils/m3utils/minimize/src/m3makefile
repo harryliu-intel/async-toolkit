@@ -13,5 +13,6 @@ Module("Bracket")
 Module("Compress")
 Module("Powell")
 Module("ConjGradient")
+Module("Solve")
 
 library("minimize")
