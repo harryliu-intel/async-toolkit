@@ -117,8 +117,9 @@ PROCEDURE Next(self: PrivateIter; VAR alias, canon: Elem.T): BOOLEAN =
     dummy: Elem.T;
     result := self.iter.next(alias, dummy);
   BEGIN
+    IF NOT result THEN RETURN FALSE; END;
     canon := CanonNonMutating(self.tbl, alias);
-    RETURN result;
+    RETURN TRUE;
   END Next;
 
 PROCEDURE GetClass(self: Default; e: Elem.T): ElemList.T =

@@ -47,7 +47,9 @@ TYPE
    return "TRUE" iff they are already equal. *)
 
     canon(e: Elem.T): Elem.T;
-(* return the canonical representative of the class containing "e". *)
+(* return the canonical representative of the class containing "e".
+    canon may change the data structure, so unmonitored concurrent calls
+    are not allowed. *)
 
     iterate(): Iterator;
 (* For each element which is not its own canonical representative,
