@@ -1,0 +1,16 @@
+/* $Id$ */
+
+/* these packages are needed in order to build this distribution */
+/* warning: some of these packages may include an overrides file, */
+/* which better not conflict with the ones at the end of this file */
+include("../.top")
+override("cit_util", TOP)
+override("term", TOP)
+
+/* these are the packages that are part of this distribution */
+/* .parsertop is made by the Makefile before building anything */
+include(".parsertop")
+override("ktoklib", _PARSER_TOP)
+override("klexlib", _PARSER_TOP)
+override("kyacclib", _PARSER_TOP)
+override("parserlib", _PARSER_TOP)

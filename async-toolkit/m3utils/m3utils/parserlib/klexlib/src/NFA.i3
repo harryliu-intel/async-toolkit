@@ -1,0 +1,24 @@
+INTERFACE NFA;
+IMPORT Interval;
+IMPORT CharRange;
+CONST
+  OrMore = LAST(INTEGER);
+  Brand = "NFA";
+TYPE
+  T <: REFANY;
+
+PROCEDURE Copy(a: T): T;
+PROCEDURE Empty(): T;
+PROCEDURE FromString(s: TEXT): T;
+PROCEDURE FromRange(c: CharRange.T): T;
+PROCEDURE FromChar(c: CHAR): T;
+
+(* These procs destroy a,b to produce new NFA.T result *)
+PROCEDURE Concat(a, b: T): T;
+PROCEDURE Or(a, b: T; endCap: BOOLEAN := TRUE): T;
+PROCEDURE Rept(a: T; count: Interval.T): T;
+PROCEDURE Output(a: T; code: INTEGER): T;
+
+(* Must assign IDs before calling NFAState.Step *)
+PROCEDURE AssignIDs(a: T): INTEGER;
+END NFA.
