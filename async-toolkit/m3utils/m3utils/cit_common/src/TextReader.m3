@@ -37,6 +37,7 @@ REVEAL
     start : CARDINAL := 0;
   OVERRIDES
     next := Next;
+    nextS := NextS;
     nextE := NextE;
     init := Init;
     initFromRd := InitFromRd;
