@@ -33,8 +33,25 @@ IMPORT Wr;
 FROM Stdio IMPORT stderr;
 IMPORT Env, Scan;
 IMPORT FloatMode, Lex;
+IMPORT Fmt;
 
 EXCEPTION ABORT;
+
+PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
+
+  PROCEDURE HaveEnv(e : TEXT) : BOOLEAN = 
+    BEGIN RETURN Env.Get(e) # NIL END HaveEnv;
+
+  VAR
+    env := "DEBUG" & this;
+    res := HaveEnv("DEBUGEVERYTHING") AND NOT HaveEnv("NO" & env) OR 
+           HaveEnv(env) AND NOT HaveEnv("DEBUGNOTHING");
+  BEGIN
+    IF level > 0 THEN
+      Out("DebugThis: " & env & " = " & Fmt.Bool(res),0)
+    END;
+    RETURN res
+  END DebugThis;
 
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
   BEGIN

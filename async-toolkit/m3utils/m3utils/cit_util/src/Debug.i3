@@ -49,4 +49,17 @@ PROCEDURE RegisterErrorHook(err: OutHook);
 PROCEDURE FmtAddress(p : ADDRESS; base : Fmt.Base := 16) : TEXT;
 PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;
 
+(* should we debug "this"?  if the environment variable "DEBUG" & this
+   is defined, then yes; else no.
+
+   Also: if DEBUGEVERYTHING is defined and NODEBUG & this is not defined,
+   then yes
+
+   Also: if DEBUG & this is defined but DEBUGNOTHING is defined, then no
+   (unless DEBUGEVERYTHING and not NODEBUG & this)...
+
+*)
+
+PROCEDURE DebugThis(this : TEXT) : BOOLEAN;
+
 END Debug.
