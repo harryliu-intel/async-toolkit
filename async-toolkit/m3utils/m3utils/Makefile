@@ -20,7 +20,7 @@
 # 3. SUBDIRS      --   C programs
 # 4. M3SUBS       --   Modula-3 programs
 
-COMMONDIRS=processor crt m3yacc cit_util prsparse parserlib
+COMMONDIRS=processor crt m3yacc cit_util prsparse term parserlib
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
@@ -31,7 +31,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 #
 # m3texthack is a program, but it depends only on cit_util.
 #
-SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout cit_parse
+SHIPDIRS=tasks matrix m3texthack magic magicextras bdd cptr bool boxes simplegrid rpc router layout cit_parse
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
