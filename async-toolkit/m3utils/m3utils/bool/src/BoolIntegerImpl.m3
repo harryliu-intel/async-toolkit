@@ -72,7 +72,7 @@ PROCEDURE Clone(self : FreeVariable; VAR clone : FreeVariable) : BoolRemap.T =
   BEGIN
     clone := NEW(FreeVariable, 
                  bits := NEW(Array, NUMBER(self.bits^)),
-                 baseBits := NEW(Array, NUMBER(self.bits^)-1)).setId();
+                 baseBits := NEW(Array, NUMBER(self.baseBits^))).setId();
     
     FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
       clone.baseBits[i] := Bool.New()
