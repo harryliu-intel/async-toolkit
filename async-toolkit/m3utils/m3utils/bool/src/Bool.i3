@@ -33,7 +33,7 @@ PROCEDURE True     () : T;
 PROCEDURE False    () : T;
 
 (* initialize global lattice *)
-PROCEDURE Init(); 
+<*OBSOLETE*>PROCEDURE Init(); 
 
 (* hint to garbage collect *)
 PROCEDURE GC();
