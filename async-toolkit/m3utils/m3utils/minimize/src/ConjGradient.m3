@@ -4,13 +4,13 @@ MODULE ConjGradient;
 IMPORT Matrix, Compress, Debug;
 IMPORT Fmt;
 
-CONST ItMax = 5000;
+CONST ItMax = 200;
 CONST Eps = 1.0d-10;
 
 PROCEDURE Minimize(VAR p : Matrix.Vector;
                    ftol : LONGREAL;
                    func : Compress.MultiFunc;
-                   dfunc : Compress.GradMultiFunc) : LONGREAL =
+                   dfunc : Compress.GradMultiFunc) : LONGREAL RAISES { TooManyIterations } =
   VAR 
     fret : LONGREAL;
     g, h, xi := NEW(Matrix.Vector, NUMBER(p^));
@@ -60,8 +60,8 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
       (* how quickly is it supposed to converge? *)
       IF its >= ItMax + NUMBER(p^) DIV 5 THEN EXIT END
     END;
-    Debug.Error("Too many iterations in ConjGradient.Minimize.\nBest so far = " & Fmt.LongReal(fp));
-    <* ASSERT FALSE *>
+    Debug.Warning("Too many iterations in ConjGradient.Minimize.\nBest so far = " & Fmt.LongReal(fp));
+    RAISE TooManyIterations
   END Minimize;
 
 BEGIN END ConjGradient.
