@@ -18,6 +18,8 @@ TYPE
     iterateVals() : ValueKeySetTbl.Iterator;
   END;
 
+  Iterator = KeyValueTbl.Iterator;
+
   Default <: T OBJECT METHODS
     valueEqual(READONLY v1, v2: Value.T) : BOOLEAN;
     valueHash(READONLY v : Value.T) : Word.T
