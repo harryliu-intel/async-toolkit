@@ -2,7 +2,7 @@
 %left '*' '/'
 %nonassoc uminus_expr
 
-%start list
+%start stat
 
 list:
   empty
