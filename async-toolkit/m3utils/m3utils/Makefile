@@ -63,6 +63,7 @@ BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs cit_parse/testchp paneman/kem
 
 all: .bindir .top commons ships subs m3subs browserexps
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
+fast: .bindir .top .m3deps .todo makehack
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
@@ -71,6 +72,25 @@ clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
 	echo TOP=\"`pwd`\" > .top
 	echo BINDIR=\"`cat .bindir`\" >> .top
 
+.m3deps:
+	grep ^import\ \*\( */src/m3makefile */*/src/m3makefile | \
+	sed s/\ //g | \
+	sed -e s/:import\(\"/:/g -e s/\"\)\.\*//g -e s./src/m3makefile..g \
+	> .m3deps
+	grep -v -e ^# otherdeps | grep : >> .m3deps
+
+.todo:
+	@echo GROUP COMMONS $(COMMONS) >> .todo
+	@echo GROUP SHIPS $(SHIPS) >> .todo
+	@echo GROUP SUBS $(SUBS) >> .todo
+	@echo GROUP M3SUBS $(M3SUBS) >> .todo
+	@echo M3DIRS $(SHIPS) $(M3SUBS) >> .todo
+	@echo M3OPTS $(M3BUILDOPTS) >> .todo
+
+makehack:
+	(cd makehack; m3build)
+	cat .todo .m3deps | makehack/`cat .bindir`/makehack > .fast
+	sh .fast
 
 cleanthis:
 	find . -name `cat .bindir` -print | xargs rm -rf 
