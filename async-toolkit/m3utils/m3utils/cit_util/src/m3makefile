@@ -79,6 +79,7 @@ Table("TextTextList", "Text", "TextList")
 Equivalence("Text", "Text", "TextList", "TextTextTbl", "TextTextListTbl")
 Module("TextTextTblExtras")
 module("FewerDotsTextPref")
+Table("TextBoolean", "Text", "Boolean")
 
 template("map")
 generic_module("Map")
