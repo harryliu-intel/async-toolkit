@@ -56,7 +56,7 @@ PROCEDURE WriteProcs(commaArgs, instArgs: TEXT; doSuffix := TRUE) =
     WriteProc(commaArgs, instArgs, "Build", nm & suffix);
   END WriteProcs;
 
-PROCEDURE Braquefy(a: TEXT): TEXT =
+PROCEDURE Braquefy(a: TEXT; prefix: TEXT := ", "): TEXT =
   VAR
     in := a;
   BEGIN
@@ -64,7 +64,7 @@ PROCEDURE Braquefy(a: TEXT): TEXT =
       in := Text.Sub(in, 2, LAST(INTEGER));
       (* strip leading comma *)
     END;
-    RETURN ", [" & in & "]";
+    RETURN prefix & "[" & in & "]";
   END Braquefy;
 
 PROCEDURE ConvertArgs(fn: TEXT): TEXT =
@@ -120,7 +120,7 @@ PROCEDURE DoModule() =
     (* 0 = common, 1 = interface, 2 = implementation *)
   BEGIN
     Wr.PutText(out, "\n/* DoModule()\n   intf_args = \""&line1 &
-      "\",\n   impl_args = \""&line2&"\"\n   the shared arguments");
+      "\",\n   impl_args = \""&line2&"\"\n   shared_args = ");
     TRY
       WHILE Text.Equal(args1.nextE(Delims, TRUE),
                        args2.nextE(Delims, TRUE)) DO
@@ -136,7 +136,7 @@ PROCEDURE DoModule() =
     bracket[1] := Braquefy(comma[0] & comma[1]);
     bracket[2] := Braquefy(comma[0] & comma[2]);
 
-    Wr.PutText(out, comma[0] & " */\n");
+    Wr.PutText(out, Braquefy(comma[0],"") & " */\n");
 
     WriteProcs(comma[0] & comma[1] & comma[2], bracket[1] & bracket[2], FALSE);
     mode := "interface";
