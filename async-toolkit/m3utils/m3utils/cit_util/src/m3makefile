@@ -168,6 +168,7 @@ MkSetDef("Stuff","Stuff")
 Table("StuffRef","Stuff", "Refany")
 
 Module("PMPTimer")
+List("Point", "Pointe")
 
 Library("cit_util")
 
