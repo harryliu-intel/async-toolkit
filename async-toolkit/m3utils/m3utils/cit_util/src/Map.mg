@@ -15,9 +15,8 @@ TYPE
 REVEAL 
   Default = PublicDef BRANDED "Default " & Brand OBJECT 
     f : F := NIL;
-  METHODS
-    wrap(f : PROCEDURE (x : From.T) : To.T) : T := Wrap;  
   OVERRIDES
+    wrap := Wrap;  
     eval := DEval;
   END;
 
