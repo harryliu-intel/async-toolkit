@@ -152,25 +152,30 @@ else	return( (struct Site *)NULL);
 }
 
 
-struct memdata {
-  struct memdata *next;
-  char *ptr;
-};
-
 char *mem=NULL;
+
+/* what we do is this...
+
+   every block of memory allocated has a pointer at the head
+
+   ptr -> ptr -> NULL      
+    D      D
+    A      A
+    T      T
+    A      A
+
+   this saves half our mallocs.  when we're done we just go down
+   the pointers and free everything...
+
+   --Mika
+   
+   P.S. I hate C programming!!!!
+ */
 
 char *memmalloc(siz)
      int siz;
 {
   char *res=mymalloc(siz+sizeof(char *));
-
-  /*
-  struct memdata *n=mymalloc(sizeof(struct memdata));
-
-  n->next=mem;
-  n->ptr=res;
-  mem=n;
-  */
 
   *((char **)res) = mem;
   mem=res;
@@ -181,7 +186,6 @@ char *memmalloc(siz)
 mod3_finish()
 {
   char *q;
-  
   
   while (mem) {
     q=*(char**)mem;
