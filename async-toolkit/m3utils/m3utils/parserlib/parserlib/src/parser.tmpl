@@ -34,8 +34,14 @@ readonly proc _xCons(tok_nm, tok_spec, out_nm, out_spec, kind, vis) is
 	end
 	if equal(vis, VISIBLE)
 		local include_source = out_spec & "_" & kind
-		> include_source & ".tmpl" in
+		if defined("CM3_VERSION")
+			_exec("echo _PARSER_SOURCES +='\"'`pwd`/" &
+				out_source &
+				"'\"' > " & include_source & ".tmpl")
+		else	
+		   > include_source & ".tmpl" in
 			write("_PARSER_SOURCES += \"" & out_source & "\"",CR)
+		   end
 		end
 		template("../" & BUILD_DIR & "/" & include_source)
 		%%% LibExport(out_source)
