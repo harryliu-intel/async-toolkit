@@ -1,11 +1,5 @@
-readonly proc toRefany(type) is
-	build_generic_module(type & "ToRefany", "ToRefany", [], [type])
-end 
-
-readonly proc ref(nm, type) is
-	build_generic_module(nm & "Ref", "Ref", [type], [type])
-end
-
-readonly proc Ref(nm, type) is
-	Build_generic_module(nm & "Ref", "Ref", [type], [type])
+readonly proc ord_to_refany(nm, type) is
+	local ref = nm & "Ref"
+	Ref(nm, type)
+	ToRefany(ref, ref)
 end

@@ -1,13 +1,7 @@
 /* $Id$ */
-
-m3_option("-X2@-pg@")
-m3_option("-g")
-remove_m3_option("-O")
-m3_option("-times")
-import ("libm3")
+import("cit_common")
 template("generics")
 Interface("DblRefany")
-Module("TextReader")
 Module("Debug")
 Module("TextUtils")
 implementation("TextUtilsFmt")
@@ -28,10 +22,10 @@ Module("RTBrand")
 
 Module("ToRefany")
 
-Generic_module("ToRefany")
+gmodule("Ref", ["type"], ["type"])
+Gmodule("ToRefany", [], ["type"])
 Interface("ToRefanyClass")
 table("ToRefany","Integer","ToRefanyClass")
-template("to_refany")
 
 
 /* this is a dumb hack.  to ensure that initialization code gets run,
@@ -39,21 +33,12 @@ template("to_refany")
    module that does get run). */
 
 implementation("ToRefanyPrivate")
-
-Ref("Int", "Integer")
-toRefany("IntRef")
-
-Ref("Bool", "Boolean")
-toRefany("BoolRef")
-
-Ref("Char", "Char")
-toRefany("CharRef")
-
-Ref("Real", "RealType")
-toRefany("RealRef")
-
-Ref("Longreal", "LongrealType")
-toRefany("LongrealRef")
+template("to_refany")
+ord_to_refany("Int", "Integer")
+ord_to_refany("Bool", "Boolean")
+ord_to_refany("Char", "Char")
+ord_to_refany("Real", "RealType")
+ord_to_refany("Longreal", "LongrealType")
 
 /* new stuff */
 MkSet("IntPair", "IntPair")
