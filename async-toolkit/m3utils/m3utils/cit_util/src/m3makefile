@@ -77,7 +77,7 @@ template("listf")
 generic_module("ListF")
 TextListF("TextFF")
 
-
+Interface("CharF")
 List("Char","Char")
 
 Module("Cardinal")
