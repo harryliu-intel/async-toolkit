@@ -264,5 +264,5 @@ PROCEDURE Test(self: T) =
 
 BEGIN
   (* stderr := NEW(FileWr.T).init(FilePosix.New(2, FilePosix.Write)); *)
-  Wr.PutText(stderr, "Warning: here we are.\n");
+  (* Wr.PutText(stderr, "Warning: here we are.\n"); *)
 END LexFmt.
