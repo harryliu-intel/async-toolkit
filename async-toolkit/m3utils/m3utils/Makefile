@@ -79,7 +79,7 @@ faster: fastprep .lesstodo .fastmake
 	sed s/\ //g | \
 	sed -e s/:import\(\"/:/g -e s/\"\)\.\*//g -e s./src/m3makefile..g | \
 	sed s/:ktoklib/:parserlib/g > .m3deps
-	grep -v -e ^# otherdeps | grep : >> .m3deps
+	grep -v -e ^# otherdeps >> .m3deps
 
 .todo:
 	@echo GROUP COMMONS $(COMMONS) > .todo
