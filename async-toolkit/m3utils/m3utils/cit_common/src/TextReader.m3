@@ -98,6 +98,18 @@ PROCEDURE NextS(self : T;
 *)
 
     self.start := min+1;
+
+    (* clear out any stray delimiters after the end, if skipNulls is true *)
+    IF skipNulls THEN
+      VAR
+        len := Text.Length(self.line);
+      BEGIN
+        WHILE len > self.start AND Text.GetChar(self.line, self.start) IN delims DO
+          INC(self.start)
+        END
+      END
+    END;
+
     IF Text.Length(self.line) <= self.start THEN
       self.line := "";
       self.start := 0;
