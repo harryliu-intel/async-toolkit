@@ -3,6 +3,7 @@
 (* $Id$ *)
 
 MODULE LexFmt;
+IMPORT FileWr, FilePosix;
 IMPORT Wr, Thread;
 IMPORT Rd, TokSpec;
 IMPORT LexParse;
@@ -262,4 +263,6 @@ PROCEDURE Test(self: T) =
   END Test;
 
 BEGIN
+  (* stderr := NEW(FileWr.T).init(FilePosix.New(2, FilePosix.Write)); *)
+  Wr.PutText(stderr, "Warning: here we are.\n");
 END LexFmt.
