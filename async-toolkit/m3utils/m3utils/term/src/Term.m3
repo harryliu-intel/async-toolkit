@@ -7,6 +7,9 @@ IMPORT Rd;
 IMPORT Termios;
 IMPORT Text;
 IMPORT RTCollector;
+IMPORT Thread;
+
+<* FATAL Thread.Alerted, Wrr.Failure, Rd.Failure, Rd.EndOfFile *>
 
 VAR
   Endl: TEXT := "\n";
@@ -55,6 +58,7 @@ PROCEDURE GetCharDR(): CHAR RAISES {SpecialChar} =
   END GetCharDR;
 
 PROCEDURE GetCharD(): CHAR =
+  <* FATAL SpecialChar *>
   BEGIN
     IF Raw THEN
       RETURN GetCharDR()
