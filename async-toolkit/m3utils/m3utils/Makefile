@@ -31,6 +31,7 @@ clean: cleansubs cleanm3 cleancommons cleanships cleanthis
 
 cleanthis:
 	rm -f .bindir .top
+	rm -rf hack/.hidden
 
 commons:
 	@for s in $(COMMONDIRS); do\
