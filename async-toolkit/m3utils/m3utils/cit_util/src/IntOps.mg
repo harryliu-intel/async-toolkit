@@ -1,7 +1,6 @@
 GENERIC MODULE IntOps(Int, TextIntTbl);
 IMPORT Text;
 IMPORT Scan AS yScan;
-IMPORT Debug;
 IMPORT Random;
 IMPORT FloatMode, Lex;
 IMPORT Pathname;
@@ -108,7 +107,6 @@ PROCEDURE ModExp(base, exp, mod: T): T =
 
 PROCEDURE MultiExp(base, exp, mod: T; useMod: BOOLEAN): T =
   BEGIN
-    Debug.S(Int.Format(exp), 0);
     CASE Sign(exp) OF
     | 0 => RETURN Int.One;
     | -1 => <* ASSERT FALSE *>
@@ -189,5 +187,6 @@ PROCEDURE One(): T = BEGIN RETURN Int.One; END One;
 PROCEDURE Zero(): T = BEGIN RETURN Int.Zero; END Zero;
 PROCEDURE RelPrime(a,b: T): BOOLEAN=BEGIN RETURN IsOne(GCD(a,b));END RelPrime;
 PROCEDURE Old(a: T): INTEGER = BEGIN RETURN ROUND(Int.ToLongReal(a)); END Old;
+PROCEDURE Log2(a: T): T = BEGIN RETURN New(Text.Length(Format(a,2))); END Log2;
 
 BEGIN END IntOps.

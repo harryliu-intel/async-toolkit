@@ -24,6 +24,7 @@ PROCEDURE ProbablyPrime(p: T): BOOLEAN;
 
 PROCEDURE RelPrime(a,b: T): BOOLEAN;
 
+PROCEDURE Log2(a: T): T;
 
 (* complete basic arithmetic *)
 
@@ -37,6 +38,7 @@ CONST
   Compare = Int.Compare;
   Equal = Int.Equal;
   Divide = Int.Divide;
+  Format = Int.Format;
 PROCEDURE Negate(a: T): T;
 PROCEDURE Sub(a, b: T): T;
 PROCEDURE Old(a: T): INTEGER; (* convert small ints back to INTEGER *)

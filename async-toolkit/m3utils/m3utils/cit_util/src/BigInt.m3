@@ -358,14 +358,16 @@ PROCEDURE AddSeqs(s, t : NSeq) : NSeq =
 (* s must be .ge. t *)
 PROCEDURE SubSeqs(s, t : NSeq) : NSeq =
   VAR
-    m := MAX(s.size(),t.size());
+    tsiz := t.size();
+    m := MAX(s.size(),tsiz);
     r := NEW(NSeq).init(m+1);
     borrow := 0;
   BEGIN
     FOR i := 0 TO m - 1 DO
       VAR
-        diff := s.a[i] - t.a[i] + borrow;
+        diff := s.a[i] + borrow;
       BEGIN
+        IF i<tsiz THEN DEC(diff, t.a[i]); END;
         borrow := 0;
 
         WHILE diff < 0 DO
