@@ -1,4 +1,7 @@
-(* $Id$ *)
+(* $Id$
+   For complete documentation, see IntForRat.i3.
+   There is practically no size limitation on "BigInt.T"s, however.
+*)
 INTERFACE BigInt;
 IMPORT Word;
 

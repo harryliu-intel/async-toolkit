@@ -177,13 +177,25 @@ PROCEDURE Sign(a : T) : CompRet =
   END Sign;
 
 PROCEDURE Divide(a, b : T; VAR q, r : T) = 
+  (* first do a C-style divide *)
   VAR
     sign := a.sign * b.sign;
     aa := Abs(a);
     bb := Abs(b);
   BEGIN
     DivideUnsigned(aa,bb,q,r);
-    IF sign < 0 THEN q := Neg(q); r := Neg(r) END
+    IF sign < 0 THEN q := Neg(q); r := Neg(r) END;
+
+    (* if the remainder is not 0 we need to fix up the result *)
+    IF r.rep.siz # 0 THEN
+
+      (* r in [0,b) *)
+      IF sign # b.sign THEN r := Add(r, b); END;
+
+      (* a-r=b*q *)
+      IF sign = -1 THEN q := Sub(q, One); END;
+
+    END;
   END Divide;
 
 PROCEDURE Div(a, b : T) : T =
