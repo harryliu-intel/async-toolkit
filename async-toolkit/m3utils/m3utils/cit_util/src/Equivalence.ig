@@ -36,8 +36,12 @@ TYPE
   END;
 
   Default <: T OBJECT METHODS
-    init(sizeHint: CARDINAL := 0): Default;
+    init(sizeHint: CARDINAL := 0;
+         leaderPreference: Preference := NIL): Default;
   END;
 
+  Preference = OBJECT METHODS
+    is(thisBetter, thanThis: Elem.T): BOOLEAN;
+  END;
 
 END Equivalence.

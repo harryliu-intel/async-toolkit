@@ -2,7 +2,8 @@ GENERIC MODULE Equivalence(Elem, ElemElemTbl);
 
 TYPE
   Public = T OBJECT METHODS
-    init(sizeHint: CARDINAL := 0): Default;
+    init(sizeHint: CARDINAL := 0;
+         leaderPreference: Preference := NIL): Default;
   END;
 
   PrivateIter = Iterator BRANDED "DefEquivIter(" & Elem.Brand & ")" OBJECT
@@ -14,6 +15,7 @@ TYPE
 REVEAL
   Default = Public BRANDED "DefEquiv(" & Elem.Brand & ")" OBJECT
     t: ElemElemTbl.T;
+    p: Preference;
   OVERRIDES
     init := Init;
     equal := Equal;
@@ -22,9 +24,12 @@ REVEAL
     iterate := Iterate;
   END;
 
-PROCEDURE Init(self: Default; sizeHint: CARDINAL := 0): Default =
+PROCEDURE Init(self: Default;
+               sizeHint: CARDINAL := 0;
+               leaderPreference: Preference := NIL): Default =
   BEGIN
     self.t := NEW(ElemElemTbl.Default).init(sizeHint);
+    self.p := leaderPreference;
     RETURN self;
   END Init;
 
@@ -37,11 +42,17 @@ PROCEDURE Identify(self: Default; e1, e2: Elem.T): BOOLEAN =
   VAR
     c1 := Canon(self, e1);
     c2 := Canon(self, e2);
+    not: BOOLEAN;
   BEGIN
     IF Elem.Equal(c1, c2) THEN
       RETURN TRUE;
     ELSE
-      WITH y = NOT self.t.put(c1, c2) DO <* ASSERT y *> END;
+      IF self.p = NIL OR self.p.is(c1, c2) THEN
+        not := self.t.put(c1, c2);
+      ELSE
+        not := self.t.put(c2, c1);
+      END;
+      <* ASSERT not *>
       RETURN FALSE;
     END;
   END Identify;
