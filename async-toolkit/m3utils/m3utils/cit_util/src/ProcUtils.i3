@@ -1,3 +1,5 @@
+(* $Id$ *)
+
 INTERFACE ProcUtils;
 IMPORT Rd, Wr, Pathname;
 TYPE
