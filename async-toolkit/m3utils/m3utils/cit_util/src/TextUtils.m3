@@ -22,10 +22,12 @@
 (* $Id$ *)
 
 MODULE TextUtils;
+IMPORT IntList, ScanList;
 IMPORT TextReader;
 IMPORT Text;
 IMPORT Fmt;
 IMPORT TextSet, TextSetDef, TextList;
+IMPORT Lex, FloatMode;
 
 PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL =
   VAR
@@ -161,6 +163,14 @@ PROCEDURE Shatter(t: TEXT; delims:="\t "; endDelims:="\n;#%";
   BEGIN
     RETURN NEW(TextReader.T).init(t).shatter(delims, endDelims, skipNulls);
   END Shatter;
+
+
+PROCEDURE ShatterInts(t: TEXT; delims:=":.\t, "; endDelims:="\n;#%";
+                      skipNulls:=TRUE; defaultBase:=10): IntList.T =
+  <* FATAL Lex.Error, FloatMode.Trap *>
+  BEGIN
+    RETURN ScanList.Int(Shatter(t, delims, endDelims, skipNulls), defaultBase);
+  END ShatterInts;
 
 PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT =
   VAR

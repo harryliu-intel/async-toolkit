@@ -21,7 +21,7 @@
 (*                                                                           *)
 (* $Id$ *)
 INTERFACE TextUtils;
-IMPORT TextList, TextSet;
+IMPORT TextList, TextSet, IntList;
 
 (* replace every occurrence of "old" by "new" in "in" *)
 PROCEDURE Replace(in, old, new : TEXT) : TEXT;
@@ -58,5 +58,11 @@ PROCEDURE Shatter(t: TEXT;
                   skipNulls:=TRUE): TextList.T;
 (* E.g. "TRY LOOP l:=TextUtils.Shatter(Rd.GetLine(rd)); ... "
    parses lines of words, ignoring comments. *)
+
+PROCEDURE ShatterInts(t: TEXT;
+                      delims      := ":.\t, ";
+                      endDelims   := "\n;#%";
+                      skipNulls   := TRUE;
+                      defaultBase := 10): IntList.T;
 
 END TextUtils.
