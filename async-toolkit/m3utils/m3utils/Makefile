@@ -2,13 +2,31 @@
 # $Id$
 #
 
-COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc prsparse` 
+# there's a nasty hack here:
+# cit_util is entirely in Modula-3, but since it is req'd by prsparse,
+# we need to build it first.
+#
+# The solution would be either:
+# 1. to use Make all-around (for the top-level at least)
+# 2. to use m3build all-around (ditto)
+# 3. to allow a list of m3build and Make target dirs to be mixed in any order
+#
+
+#
+# currently, this is the build order:
+# 0. <some hacks: .bindir, .top ... >
+# 1. COMMONDIRS   --   C libraries
+# 2. SHIPDIRS     --   Modula-3 libraries
+# 3. SUBDIRS      --   C programs
+# 4. M3SUBS       --   Modula-3 programs
+
+COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc cit_util prsparse` 
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
 # We need to make sure that we clean them in reverse order of 
 # building since they may depend on other libraries (1 way only)
-SHIPDIRS=cit_util term magic bdd cptr bool boxes simplegrid rpc router layout ktoklib
+SHIPDIRS=term magic bdd cptr bool boxes simplegrid rpc router layout ktoklib
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
