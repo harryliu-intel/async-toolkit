@@ -37,4 +37,5 @@ PROCEDURE InfixFormat(sep : TEXT; list : TextList.T; ignoreNulls := FALSE) : TEX
 PROCEDURE Pluralize(noun : TEXT; count : INTEGER; 
                     ending := "s"; printNum := TRUE) : TEXT ;
 
+
 END TextUtils.
