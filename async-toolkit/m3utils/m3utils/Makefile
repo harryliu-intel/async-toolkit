@@ -31,11 +31,11 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 #
 # m3texthack is a program, but it depends only on cit_util.
 #
-SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout ktoklib
+SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout ktoklib kyacclib
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
-SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse ktok klex kyacc`
+SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse klexlib ktok klex kyacc`
 
 # These are built last
 M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest`
