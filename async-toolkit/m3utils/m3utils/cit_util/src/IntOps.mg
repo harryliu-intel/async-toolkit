@@ -187,6 +187,8 @@ PROCEDURE One(): T = BEGIN RETURN Int.One; END One;
 PROCEDURE Zero(): T = BEGIN RETURN Int.Zero; END Zero;
 PROCEDURE RelPrime(a,b: T): BOOLEAN=BEGIN RETURN IsOne(GCD(a,b));END RelPrime;
 PROCEDURE Old(a: T): INTEGER = BEGIN RETURN ROUND(Int.ToLongReal(a)); END Old;
-PROCEDURE Log2(a: T): T = BEGIN RETURN New(Text.Length(Format(a,2))); END Log2;
+PROCEDURE Log2i(a: T):INTEGER=BEGIN RETURN Text.Length(Format(a,2)); END Log2i;
+PROCEDURE Exp2i(i: INTEGER): T = BEGIN RETURN Exp(New(2),New(i)); END Exp2i;
+PROCEDURE Log2(a: T): T = BEGIN RETURN New(Log2i(a)); END Log2;
 
 BEGIN END IntOps.

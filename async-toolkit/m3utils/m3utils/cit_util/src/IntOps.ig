@@ -26,6 +26,9 @@ PROCEDURE RelPrime(a,b: T): BOOLEAN;
 
 PROCEDURE Log2(a: T): T;
 
+PROCEDURE Log2i(a: T): INTEGER;
+PROCEDURE Exp2i(i: INTEGER): T;
+
 (* complete basic arithmetic *)
 
 CONST
