@@ -5,29 +5,31 @@ Interface("DblRefany")
 Module("Debug")
 Module("TextUtils")
 implementation("TextUtilsFmt")
+
 Generic_module("OpenArrayTable")
+template("dbltable")
 Generic_module("DblTable")
+
 Generic_module("BrandedSet")
 template("brandedset")
-Generic_module("KeyPair")
-template("keypair")
+Module("RTBrand")
+
 Module("SIsuffix")
 table("Suffix", "Char", "SIsuffix")
-template("dbltable")
 
+Generic_module("KeyPair")
+template("keypair")
 KeyPair("Int", "Integer", "Integer")
 List("IntPair", "IntPair")
 
-Module("RTBrand")
-
-Module("ToRefany")
-
 gmodule("Ref")
 gmodule("ArrayRef")
+ArrayRef("Int", "Integer")
+
+Module("ToRefany")
 Gmodule("ToRefany")
 Interface("ToRefanyClass")
 table("ToRefany","Integer","ToRefanyClass")
-
 
 /* this is a dumb hack.  to ensure that initialization code gets run,
    you MUST import xToRefany in ToRefanyPrivate (or in some other 
