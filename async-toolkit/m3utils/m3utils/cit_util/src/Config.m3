@@ -18,6 +18,15 @@ BEGIN
 END DefineFlag;
 
 PROCEDURE CheckInput(usageMsg : TEXT) =
+BEGIN
+  TRY
+    ReadInFlags();
+  EXCEPT
+    UsageError(s) => Abort(s & "\n" & usageMsg);
+  END;
+END CheckInput;
+
+PROCEDURE ReadInFlags() RAISES {UsageError} =
 VAR
   i : CARDINAL := 1;
 BEGIN
@@ -35,7 +44,7 @@ BEGIN
               | OptionType.integer =>
                 INC(i);
                 IF i = Params.Count THEN
-                   Abort("ERROR: Integer parameter expected to follow " & flag & "\n" & usageMsg);
+                   RAISE UsageError("ERROR: Integer parameter expected to follow " & flag);
                 END;
                 TRY
                   WITH param = Scan.Int(Params.Get(i)) DO
@@ -44,12 +53,12 @@ BEGIN
                   END;
                 EXCEPT
                 | Lex.Error, FloatMode.Trap =>
-                    Abort("ERROR: Integer parameter expected to follow " & flag & "\n" & usageMsg);
+                    RAISE UsageError("ERROR: Integer parameter expected to follow " & flag);
                 END;
               | OptionType.string =>
                 INC(i);
                 IF i = Params.Count THEN
-                   Abort("ERROR: String parameter expected to follow " & flag & "\n" & usageMsg);
+                   RAISE UsageError("ERROR: String parameter expected to follow " & flag);
                 END;
                 WITH param = Params.Get(i) DO
                   EVAL boolSettings.insert(flagList.head.id);
@@ -64,7 +73,7 @@ BEGIN
             flagList := flagList.tail;
           END;
           IF flagList = NIL THEN
-            Abort(usageMsg);
+            RAISE UsageError("");
           END;
         END;
         lastFlagID := i + 1;
@@ -72,7 +81,8 @@ BEGIN
 		END;
     INC(i);
 	END;
-END CheckInput;
+END ReadInFlags;
+
 
 PROCEDURE LastIndex() : CARDINAL =
 BEGIN
