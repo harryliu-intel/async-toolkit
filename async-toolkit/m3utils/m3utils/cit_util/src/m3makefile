@@ -5,5 +5,7 @@ m3_option("-times")
 import ("libm3")
 Module(TextReader)
 Module(Debug)
+Module(TextUtils)
+implementation(TextUtilsFmt)
 library("cit_util")
 
