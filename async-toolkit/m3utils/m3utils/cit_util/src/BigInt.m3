@@ -392,13 +392,16 @@ PROCEDURE Neg(a : T) : T =
 
 PROCEDURE Format(a : T; base : CARDINAL) : TEXT = 
   <* FATAL Wr.Failure, Thread.Alerted *>
+  CONST
+    HexChars = ARRAY OF CHAR{'0','1','2','3','4','5','6','7','8','9',
+                             'A','B','C','D','E','F'};
   VAR
     c := NEW(CharSeq.T).init();
     s := Sign(a);
     wr := NEW(TextWr.T).init();
     MyBase := New(base);
   BEGIN
-    <* ASSERT base <= 10 *>
+    <* ASSERT base <= 16 *>
     a := Abs(a);
 
     WHILE NOT Equal(a,Zero) DO
@@ -407,7 +410,7 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
       BEGIN
         DivideUnsigned(a,MyBase,a,d);
         <* ASSERT Compare(d,Zero) >= 0 AND Compare(d,MyBase) < 1 *>
-        c.addlo(VAL(ORD('0') + d.rep.a[0], CHAR))
+        c.addlo(HexChars[d.rep.a[0]]);
       END
     END;
     IF s = -1 THEN c.addlo('-') END;
