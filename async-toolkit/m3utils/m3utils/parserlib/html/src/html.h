@@ -71,13 +71,13 @@ _BLN(m3build,m3build) \
 #define _YS _LN(kyacc.html#spec, parser specification)
 #define _YI _LN(kyacc.html#intf, parser interface)
 
-#define LY_BEGIN(lex, klex, lexer, MylangLex, Lexer, l) \
+#define LY_BEGIN(lex, klex, lexer, MyLangLex, Lexer, l) \
 PL_BEGIN(klex: defining the lexer) \
 A _IT(lexer interface) and its implementation are generated \
 _LN(m3build.html,automatically) by m3build by running the command \
-_C(_TT(lex mylang.l  [ -t mylang.t [-ti3 mylangTok.i3] ]  [ -o mylangLex.i3 ])) \
-where _TT(Mylang.t) is a _TS, _TT(MylangTok.i3) is a _TI, _TT(Mylang.l) is a \
-_IT(lexer specification), and _TT(MylangLex.i3) is the generated lexer \
+_C(_TT(lex MyLang.l  [ -t MyLang.t [-ti3 MyLangTok.i3] ]  [ -o MyLangLex.i3 ])) \
+where _TT(MyLang.t) is a _TS, _TT(MyLangTok.i3) is a _TI, _TT(MyLang.l) is a \
+_IT(lexer specification), and _TT(MyLangLex.i3) is the generated lexer \
 interface. \
 _A(spec)_H(lexer specification) \
 
