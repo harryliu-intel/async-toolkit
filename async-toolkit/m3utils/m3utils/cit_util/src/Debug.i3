@@ -23,8 +23,8 @@
 
 INTERFACE Debug;
 
-PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10);
-PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5);
+PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
+PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
 PROCEDURE Warning(t : TEXT);
 PROCEDURE Error(t : TEXT);
 PROCEDURE UnNil(text : TEXT) : TEXT;
@@ -38,5 +38,10 @@ PROCEDURE RaiseLevel(newLevel : CARDINAL);
 PROCEDURE LowerLevel(newLevel : CARDINAL);
 PROCEDURE SetLevel(newLevel : CARDINAL);
 PROCEDURE GetLevel() : CARDINAL;
+
+(* output hook: support for raw terminals, etc. *)
+TYPE
+  OutHook = PROCEDURE(t: TEXT);
+PROCEDURE RegisterHook(out: OutHook; level:=0);
 
 END Debug.

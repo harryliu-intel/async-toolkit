@@ -36,7 +36,7 @@ IMPORT FloatMode, Lex;
 
 EXCEPTION ABORT;
 
-PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
+PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
   BEGIN
     IF minLevel > level THEN RETURN END;
     IF debugFilter THEN
@@ -44,13 +44,14 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
         BreakHere.Please();
       END;
     END;
-    TRY
-      Wr.PutText(stderr, UnNil(t) & "\n");
-      Wr.Flush(stderr);
-    EXCEPT ELSE END;
+    t:=UnNil(t);
+    IF cr THEN
+      t:=t&"\n";
+    END;
+    outHook(t);
   END Out;
 
-PROCEDURE S(t: TEXT; minLevel : CARDINAL) = BEGIN Out(t, minLevel); END S;
+PROCEDURE S(t:TEXT;minLevel:CARDINAL;cr:=TRUE)=BEGIN Out(t,minLevel,cr);END S;
 
 PROCEDURE Warning(t: TEXT) =
   BEGIN
@@ -80,6 +81,31 @@ PROCEDURE LowerLevel(newLevel : CARDINAL) =
 PROCEDURE SetLevel(newLevel : CARDINAL) = BEGIN level := newLevel END SetLevel;
   
 PROCEDURE GetLevel() : CARDINAL = BEGIN RETURN level END GetLevel;
+
+(* outHook *)
+VAR
+  outHook := DefaultOut;
+  outHookLevel:=-1;
+
+PROCEDURE DefaultOut(t: TEXT) =
+  BEGIN
+    TRY
+      Wr.PutText(stderr, t);
+      Wr.Flush(stderr);
+    EXCEPT ELSE END;
+  END DefaultOut;
+
+PROCEDURE RegisterHook(out: OutHook; level:=0) =
+  BEGIN
+    <* ASSERT level#outHookLevel *>
+    IF level>outHookLevel THEN
+      outHookLevel:=level;
+      outHook := out;
+    END;
+  END RegisterHook;
+
+
+(* debugFilter *)
 
 VAR
   level := 0;
