@@ -16,7 +16,7 @@ IMPORT Text;
 IMPORT TextList;
 IMPORT TextRd;
 IMPORT Thread;
-IMPORT Wr;
+IMPORT Wr, TextWr;
 IMPORT OSError;
 
 <* FATAL Thread.Alerted *>
@@ -41,6 +41,19 @@ TYPE
   END;
 
   SSClosure = Thread.Closure OBJECT ss: SS; OVERRIDES apply:=SSApply; END;
+
+PROCEDURE DebugFormat(cmd : TEXT; READONLY params : ARRAY OF TEXT) : TEXT =
+  <* FATAL Wr.Failure *>
+  VAR
+    wr := NEW(TextWr.T).init();
+  BEGIN
+    Wr.PutText(wr, cmd);
+    FOR i := 0 TO LAST(params) DO
+      Wr.PutChar(wr, ' ');
+      Wr.PutText(wr, params[i])
+    END;
+    RETURN TextWr.ToText(wr)
+  END DebugFormat;
 
 PROCEDURE SSApply(self: SSClosure): REFANY =
   BEGIN
@@ -163,12 +176,13 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                                                   NIL, wd,stdin, stdout,stderr));
             BEGIN
               IF code # 0 THEN
-                Debug.Error("Process exited with code " & Fmt.Int(code));
+                Debug.Error("Process exited with code " & Fmt.Int(code) & 
+                  "\ncommand: \"" & DebugFormat(l.head,params^) & "\"")
               END
             END
           EXCEPT
             OSError.E => 
-              Process.Crash("ProcUtils.Apply.Exec: Couldn't exec command \"" & l.head & "\"!")
+              Process.Crash("ProcUtils.Apply.Exec: Couldn't exec command \"" & DebugFormat(l.head,params^) & "\"!")
           END
         END
       END
