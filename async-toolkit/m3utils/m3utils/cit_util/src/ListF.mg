@@ -61,7 +61,7 @@ PROCEDURE MemberDelD(VAR l: T; e: Elem.T): BOOLEAN =
     IF l = NIL THEN
       RETURN FALSE;
     ELSIF Elem.Equal(l.head, e) THEN
-      l := NIL;
+      l := l.tail;
       RETURN TRUE;
     ELSE
       prev := l;
