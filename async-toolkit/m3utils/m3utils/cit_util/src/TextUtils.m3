@@ -93,7 +93,7 @@ PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN =
 
 PROCEDURE HavePrefix(in, prefix: TEXT): BOOLEAN =
   BEGIN
-    RETURN Text.Equal(Text.Sub(in, Text.Length(prefix)), prefix);
+    RETURN Text.Equal(Text.Sub(in, 0, Text.Length(prefix)), prefix);
   END HavePrefix;
 
 PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN =
