@@ -127,3 +127,33 @@ readonly proc Gimplementation(nm) is
 	gother_template(nm, "implementation", "mg")
 end
 
+
+readonly proc gmojule(nm) is
+	generic_mojule(nm)
+	gmodule_template(nm)
+end
+
+readonly proc Gmojule(nm) is
+	Generic_mojule(nm)
+	gmodule_template(nm)
+end
+
+readonly proc gjnterface(nm) is
+	generic_jnterface(nm)
+	gother_template(nm, "interface", "ig")
+end
+
+readonly proc Gjnterface(nm) is
+	Generic_jnterface(nm)
+	gother_template(nm, "interface", "ig")
+end
+
+readonly proc gjmplementation(nm) is
+	generic_jmplementation(nm)
+	gother_template(nm, "implementation", "mg")
+end
+
+readonly proc Gjmplementation(nm) is
+	Generic_jmplementation(nm)
+	gother_template(nm, "implementation", "mg")
+end

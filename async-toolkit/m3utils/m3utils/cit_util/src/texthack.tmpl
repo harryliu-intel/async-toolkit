@@ -1,12 +1,28 @@
 % $Id$
 _M3TEXTHACK = TOP & "/m3texthack/" & BUILD_DIR & "/m3texthack"
+readonly proc Generic_intexterface(nm) is
+	local f = nm & ".ig"
+	local g = path_of(f)
+	if stale(f, [g])
+		_exec([_M3TEXTHACK,g,f])
+	end
+	derived_generic_interface(nm, VISIBLE)
+end
+readonly proc generic_implementextation(nm) is
+	local f = nm & ".mg"
+	local g = path_of(f)
+	if stale(f, [g])
+		_exec([_M3TEXTHACK,g,f])
+	end
+	derived_generic_implementation(nm)
+end
 readonly proc Intexterface(nm) is
 	local f = nm & ".i3"
 	local g = path_of(f)
 	if stale(f, [g])
 		_exec([_M3TEXTHACK,g,f])
 	end
-	derived_interface(nm, VISIBLE)
+	derived_generic_interface(nm, VISIBLE)
 end
 readonly proc implementextation(nm) is
 	local f = nm & ".m3"
@@ -20,6 +36,13 @@ readonly proc mojule(nm) is
 	Intexterface(nm)
 	implementextation(nm)
 end
+readonly proc generic_mojule(nm) is
+	Generic_intexterface(nm)
+	generic_implementextation(nm)
+end
 Mojule = mojule
 Jnterface = Intexterface
 jmplementation = implementextation
+Generic_mojule = generic_mojule
+Generic_jnterface = Generic_intexterface
+generic_jmplementation = generic_implementextation
