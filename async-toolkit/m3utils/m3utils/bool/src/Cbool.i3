@@ -1,3 +1,5 @@
+(* $Id$ *)
+
 INTERFACE Cbool;
 FROM Ctypes IMPORT void_star;
 IMPORT Word;
@@ -72,6 +74,8 @@ PROCEDURE getid(b : t) : INTEGER;
 
 <*EXTERNAL bool_refs*>
 PROCEDURE refs(B : T; b : t) : INTEGER;
+
+<*EXTERNAL*>VAR B : T; 
 
 END Cbool.
 

@@ -52,8 +52,6 @@ PROCEDURE Format(b : T; symTab : BoolTextTbl.T) : TEXT;
 VAR
   frees : CARDINAL;
 
-<*EXTERNAL*>VAR B : Cbool.T; (* ho hum -- this means that you MUST initialize
-                                externally *)
 
 END Bool.
 

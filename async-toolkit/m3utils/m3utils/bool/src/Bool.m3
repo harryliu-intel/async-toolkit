@@ -1,3 +1,5 @@
+(* $Id$ *)
+
 MODULE Bool EXPORTS Bool, BoolImpl;
 IMPORT Cbool, CboolImpl;
 IMPORT CPtr;
@@ -6,6 +8,7 @@ IMPORT Debug;
 IMPORT BoolSet, BoolSetDef;
 IMPORT BoolTextTbl;
 IMPORT Fmt;
+FROM Cbool IMPORT B;
 
 CONST
   gcRate = 100;
@@ -156,4 +159,7 @@ PROCEDURE Format(b : T; symTab : BoolTextTbl.T) : TEXT =
     END
   END Format; 
 
-BEGIN frees := 0 END Bool.
+BEGIN 
+  Init();
+  frees := 0 
+END Bool.
