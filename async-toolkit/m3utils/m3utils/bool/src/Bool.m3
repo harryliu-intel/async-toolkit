@@ -109,6 +109,9 @@ PROCEDURE GC() = BEGIN LOCK mu DO Cbool.gc(B) END END GC;
 PROCEDURE Equal(a, b : T) : BOOLEAN =
   BEGIN RETURN a = b END Equal;
 
+PROCEDURE Choose(c : T; it, if : T) : T =
+  BEGIN RETURN Or(And(c,it), And(Not(c),if)) END Choose;
+
 (* this is really no good! --- we can probably hash on the pointer *)
 PROCEDURE Hash(<*UNUSED*>a : T) : Word.T = BEGIN RETURN 1 END Hash;
 

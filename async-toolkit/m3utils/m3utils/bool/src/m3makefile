@@ -25,6 +25,9 @@ table("BoolRef", "Bool", "Refany")
 MkSet("Bool", "CPtr")
 MkSetDef("Bool", "CPtr")
 
+implementation("BoolIntegerImpl")
 Module("BoolInteger")
+Table("BoolInteger","BoolInteger","BoolInteger")
+Table("IntBoolInteger","Integer","BoolInteger")
 
 library("bool")

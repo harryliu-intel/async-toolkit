@@ -23,6 +23,9 @@ PROCEDURE Implies  (a , b : T) : T;
 PROCEDURE MakeTrue (a , v : T) : T;
 PROCEDURE MakeFalse(a , v : T) : T;
 
+(* choose "if" if c is false, "it" if c is true *)
+PROCEDURE Choose(c : T; it, if : T) : T;
+
 (* for debugging *)
 PROCEDURE Print(a : T); 
 

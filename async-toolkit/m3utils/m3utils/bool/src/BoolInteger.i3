@@ -4,17 +4,18 @@ INTERFACE BoolInteger;
 IMPORT Bool, BoolSet;
 IMPORT Word;
 
-(* A BoolInteger.T represents an integer expression that can have a
-   value over a range from some minimum value minValue to some maximum
-   value maxValue *)
+(* A BoolInteger.T represents the non-empty set of values that an
+   integer expression can take on. *)
 
 TYPE
-  T <: Public;
+  T <: Private;
+
+  Private <: Public;
 
   Public = OBJECT METHODS
 
-    (* initialize a new T with min value 0 and max value maxValue *)
-    init(maxValue : CARDINAL) : T;
+    (* initialize a new T as a range with min value and max value *)
+    init(max : INTEGER; min : INTEGER := 0) : T;
 
     getMinValue() : INTEGER;
     getMaxValue() : INTEGER;
@@ -23,12 +24,17 @@ TYPE
     extract(bit : CARDINAL) : Bool.T;
 
     isEqual(value : INTEGER) : Bool.T;
+
+    (* return an upper bound on how many bits it takes to represent
+       the number in two's complement *)
+    repbits() : CARDINAL;
   END;
 
 CONST Brand = "BoolInteger";
 
-(* This is a different Equal, only tests pointer equivalence; for generics *)
-PROCEDURE Equal(a, b : T) : BOOLEAN;
+(* Equal(x,y) is equivalent to Equals(x,y) = Bool.True() *)
+(* because the objects are cached, this is also equivalent to a = b *)
+PROCEDURE Equal(a, b : T) : BOOLEAN; 
 PROCEDURE Hash(a : T) : Word.T;
 
 (* some useful constants... *)
@@ -45,7 +51,12 @@ PROCEDURE LessThanOrEqual(a, b : T) : Bool.T;
 (* arithmetic *)
 PROCEDURE Add(a, b : T) : T;
 PROCEDURE Neg(a : T) : T;
-PROCEDURE Minus(a, b : T) : T;
+PROCEDURE Sub(a, b : T) : T;
+PROCEDURE Abs(a : T) : T;
+PROCEDURE Mul(a, b : T) : T;
+
+(* Sign returns true for a negative number, false for a positive one *)
+PROCEDURE Sign(a : T) : Bool.T;
 
 (* bitwise ops *)
 PROCEDURE BitwiseAnd(a, b : T) : T;
@@ -60,6 +71,16 @@ PROCEDURE BitwiseOp(a, b : T; op : PROCEDURE(a, b : Bool.T) : Bool.T) : T;
 PROCEDURE ShiftLeft(a : T; sa : CARDINAL) : T;
 PROCEDURE UnsignedShiftRight(a : T; sa : CARDINAL) : T;
 PROCEDURE SignedShiftRight(a : T; sa : CARDINAL) : T ;
+
+(* positive shifts are left, negative shifts are right *)
+PROCEDURE UnsignedShift(a : T; sa : INTEGER) : T;
+PROCEDURE SignedShift(a : T; sa : INTEGER) : T;
+PROCEDURE UnsignedShiftV(a : T; sa : T) : T;
+PROCEDURE SignedShiftV(a : T; sa : T) : T;
+
+
+(* choose "if" if c is false, "it" if c is true *)
+PROCEDURE Choose(c : Bool.T; if, it : T) : T;
 
 PROCEDURE Constant(c : INTEGER) : T;
 PROCEDURE Vars(a : T) : BoolSet.T;
