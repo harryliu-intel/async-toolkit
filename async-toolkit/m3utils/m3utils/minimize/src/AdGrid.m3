@@ -16,31 +16,61 @@ CONST
   NoChildren = ARRAY Child OF M { NIL, .. };
 
 TYPE 
+  Funcs = REF ARRAY OF LRScalarField.T;
+  Vals = ARRAY Child OF REF ARRAY OF LONGREAL;
+
   M = AdGridQ.T OBJECT
-    master : T;
+    f : Funcs;
     up : M;
     ll, ur : LRPoint.T;
-    vals : ARRAY Child OF LONGREAL;
+    vals : Vals;
     children : ARRAY Child OF M := NoChildren;
   METHODS
-    maxCorner() : Child := MaxCorner;
-    minCorner() : Child := MinCorner;
+    maxCorner(master : T) : Child := MaxCorner;
+    minCorner(master : T) : Child := MinCorner;
   OVERRIDES
     corner := MCorner;
+    getLbound := GetLbound;
+    getUbound := GetUbound;
+    subdivide := SubdivideSet;
   END;
+
+PROCEDURE NewVals(n : CARDINAL) : Vals = 
+  VAR
+    r : Vals;
+  BEGIN
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      r[i] := NEW(REF ARRAY OF LONGREAL, n)
+    END;
+    RETURN r
+  END NewVals;
 
 REVEAL 
   T = Public BRANDED Brand OBJECT
     root : M;
-    f : LRScalarField.T;
+    me : CARDINAL;
+    f : Funcs;
     prec := 0.01d0;
+    next : T := NIL; (* circular list of Ts that share same mesh *)
   OVERRIDES
     evalP := Eval;
     init := Init;
     setPrec := SetPrec;
     eval := EvalLRSF;
     getQuadsContainingLevel := GetLeafTilesContainingLevel;
+    mapNewLRSF := MapNewLRSF;
   END;
+
+PROCEDURE EvalF(f : REF ARRAY OF LRScalarField.T;
+                v : LRVector.T) : REF ARRAY OF LONGREAL =
+  VAR
+    r := NEW(REF ARRAY OF LONGREAL, NUMBER(f^));
+  BEGIN
+    FOR i := FIRST(r^) TO LAST(r^) DO
+      r[i] := f[i].eval(v)
+    END;
+    RETURN r
+  END EvalF;
 
 PROCEDURE SetPrec(a : T; prec : LONGREAL) = BEGIN a.prec := prec END SetPrec;
 
@@ -66,8 +96,42 @@ PROCEDURE MCorner(m : M ; c : Child) : LRPoint.T =
     END
   END MCorner;
 
+PROCEDURE GetLbound(m : M; gridP : REFANY) : LONGREAL =
+  BEGIN
+    WITH grid = NARROW(gridP,T) DO
+      RETURN m.vals[m.minCorner(grid)][grid.me]
+    END
+  END GetLbound;
 
-PROCEDURE SubdivideM(f : LRScalarField.T; m : M; levels : CARDINAL := 1) =
+PROCEDURE GetUbound(m : M; gridP : REFANY) : LONGREAL =
+  BEGIN
+    WITH grid = NARROW(gridP,T) DO
+      RETURN m.vals[m.maxCorner(grid)][grid.me]
+    END
+  END GetUbound;
+
+PROCEDURE SubdivideSet(m : M; levels : CARDINAL := 1) : REFANY =
+  PROCEDURE Recurse(m : M) =
+    BEGIN
+      IF m.children = NoChildren THEN
+        (* base case *)
+        EVAL set.insert(m)
+      ELSE
+        (* recursion case *)
+        FOR i := FIRST(Child) TO LAST(Child) DO
+          Recurse(m.children[i])
+        END
+      END
+    END Recurse;
+  VAR
+    set := NEW(AdGridQSetDef.T).init();
+  BEGIN
+    SubdivideM(m,levels);
+    Recurse(m);
+    RETURN set
+  END SubdivideSet;
+
+PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
   BEGIN
     IF levels = 0 THEN RETURN END;
 
@@ -76,7 +140,7 @@ PROCEDURE SubdivideM(f : LRScalarField.T; m : M; levels : CARDINAL := 1) =
                           (m.ll.y + m.ur.y) / 2.0d0 } DO
       FOR i := FIRST(Child) TO LAST(Child) DO
         WITH c = m.children[i] DO
-          c := NEW(M, up := m, master := m.master);
+          c := NEW(M, up := m, f := m.f);
           c.vals[i] := m.vals[i];
           CASE i OF
             UL => c.ll := LRPoint.T { m.ll.x, mm.y }; 
@@ -92,11 +156,12 @@ PROCEDURE SubdivideM(f : LRScalarField.T; m : M; levels : CARDINAL := 1) =
         END
       END;
       (* fill in new points *)
-      WITH ml = m.children[UL].corner(LL), mlz = f.eval(PointToVector(ml)),
-           mr = m.children[LR].corner(UR), mrz = f.eval(PointToVector(mr)),
-           mb = m.children[LR].corner(LL), mbz = f.eval(PointToVector(mb)),
-           mt = m.children[UL].corner(UR), mtz = f.eval(PointToVector(mt)),
-           mmz = f.eval(PointToVector(mm))
+      WITH f = m.f,
+           ml = m.children[UL].corner(LL), mlz = EvalF(f,PointToVector(ml)),
+           mr = m.children[LR].corner(UR), mrz = EvalF(f,PointToVector(mr)),
+           mb = m.children[LR].corner(LL), mbz = EvalF(f,PointToVector(mb)),
+           mt = m.children[UL].corner(UR), mtz = EvalF(f,PointToVector(mt)),
+           mmz = EvalF(f,PointToVector(mm))
        DO
         m.children[UL].vals[LL] := mlz; m.children[LL].vals[UL] := mlz;
         m.children[UL].vals[UR] := mtz; m.children[UR].vals[UL] := mtz;
@@ -110,7 +175,7 @@ PROCEDURE SubdivideM(f : LRScalarField.T; m : M; levels : CARDINAL := 1) =
       END
     END;
     FOR i := FIRST(Child) TO LAST(Child) DO
-      SubdivideM(f,m.children[i],levels - 1) 
+      SubdivideM(m.children[i],levels - 1) 
     END
   END SubdivideM;
 
@@ -129,21 +194,21 @@ PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
           WITH alpha = (at.x - m.ll.x) / (m.ur.x - m.ll.x),
                beta  = (at.y - m.ll.y) / (m.ur.y - m.ll.y),
                res = beta * 
-                       (alpha * m.vals[UR] + 
-                       (1.0d0-alpha)*m.vals[UL]) +
+                       (alpha * m.vals[UR][t.me] + 
+                       (1.0d0-alpha)*m.vals[UL][t.me]) +
                      (1.0d0-beta) * 
-                       (alpha * m.vals[LR] + 
-                       (1.0d0-alpha)*m.vals[LL]) DO
+                       (alpha * m.vals[LR][t.me] + 
+                       (1.0d0-alpha)*m.vals[LL][t.me]) DO
             VAR
               maxdiff := 0.0d0;
             BEGIN
               FOR i := FIRST(Child) TO LAST(Child) DO
-                maxdiff := MAX(maxdiff, ABS(m.vals[i]-res))
+                maxdiff := MAX(maxdiff, ABS(m.vals[i][t.me]-res))
               END;
               IF maxdiff < prec THEN 
                 RETURN res
               ELSE
-                SubdivideM(t.f, m);
+                SubdivideM(m);
                 RETURN EvalM(m)
               END
             END
@@ -171,10 +236,10 @@ PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
         <* ASSERT FALSE *>
       END;
 
-      new := NewM(t.f, ll, ur);
+      new := NewM(ll, ur, t.f);
 
       (* subdivide it once *)
-      SubdivideM(t.f,new);
+      SubdivideM(new);
 
       t.root.up := new;
 
@@ -199,71 +264,137 @@ PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
     END
   END Eval;
 
-PROCEDURE NewM(f : LRScalarField.T; ll, ur : LRPoint.T; master : T) : M =
+PROCEDURE NewM(ll, ur : LRPoint.T; f : Funcs) : M =
   VAR
-    res := NEW(M, ll := ll, ur := ur, up := NIL, master := master);
+    res := NEW(M, ll := ll, ur := ur, up := NIL, 
+               f := f, vals := NewVals(NUMBER(f^)));
   BEGIN
-    FOR i := FIRST(Child) TO LAST(Child) DO
-      res.vals[i] := f.eval(PointToVector(res.corner(i)))
-    END;
+    FOR j := FIRST(f^) TO LAST(f^) DO
+      FOR i := FIRST(Child) TO LAST(Child) DO
+        res.vals[i][j] := f[j].eval(PointToVector(res.corner(i)))
+      END
+    END; 
     RETURN res
   END NewM;
 
 PROCEDURE Init(self : T; 
                f : LRScalarField.T; ll, ur : LRPoint.T; initLevels := 0) : T =
   BEGIN
-    self.f := f;
-    self.root := NewM(f, ll, ur, self);
-    SubdivideM(f,self.root,initLevels);
+    self.me := 0; (* index of function in f *)
+    self.f := NEW(Funcs, 1);
+    self.f[0] := f;
+    self.root := NewM(ll, ur, self.f);
+    self.next := self;
+    SubdivideM(self.root,initLevels);
     RETURN self
   END Init;
 
 PROCEDURE GetLeafTilesContainingLevel(self : T; 
-                                      level : LONGREAL) : AdGridQSet.T = 
+                                      level : LONGREAL;
+                                      set : AdGridQSet.T) : AdGridQSet.T = 
 
-  PROCEDURE GetLeafTilesContainingLevelM(m : M) =
+  VAR
+    delSet := NEW(AdGridQSetDef.T).init();
+    iter : AdGridQSet.Iterator;
+    mp : AdGridQ.T;
+  BEGIN
+    IF set = NIL THEN set := GetLeafTiles(self) END;
+    iter := set.iterate();
+
+    WHILE iter.next(mp) DO WITH m = NARROW(mp,M) DO
+      IF NOT( level >= m.vals[m.minCorner(self)][self.me] AND 
+              level <= m.vals[m.maxCorner(self)][self.me]) THEN
+        EVAL delSet.insert(m)
+      END
+    END END;
+    RETURN set.diff(delSet)
+  END GetLeafTilesContainingLevel;
+
+PROCEDURE GetLeafTiles(self : T) : AdGridQSet.T = 
+
+  PROCEDURE Recurse(m : M) =
     BEGIN
       IF m.children = NoChildren THEN
         (* base case *)
-        IF level >= m.vals[m.minCorner()] AND 
-           level <= m.vals[m.maxCorner()] THEN
-          EVAL set.insert(m)
-        END
+        EVAL set.insert(m)
       ELSE
         (* recursion case *)
         FOR i := FIRST(Child) TO LAST(Child) DO
-          GetLeafTilesContainingLevelM(m.children[i])
+          Recurse(m.children[i])
         END
       END
-    END GetLeafTilesContainingLevelM;
+    END Recurse;
 
   VAR
     set := NEW(AdGridQSetDef.T).init();
   BEGIN
-    GetLeafTilesContainingLevelM(self.root);
+    Recurse(self.root);
     RETURN set
-  END GetLeafTilesContainingLevel;
+  END GetLeafTiles;
 
-PROCEDURE MaxCorner(m : M) : Child =
+PROCEDURE MaxCorner(m : M; master : T) : Child =
   VAR
     c := UL;
     v := FIRST(LONGREAL);
   BEGIN
     FOR i := FIRST(Child) TO LAST(Child) DO
-      IF m.vals[i] >= v THEN v := m.vals[i]; c := i END
+      IF m.vals[i][master.me] >= v THEN v := m.vals[i][master.me]; c := i END
     END;
     RETURN c
   END MaxCorner;
 
-PROCEDURE MinCorner(m : M) : Child =
+PROCEDURE MinCorner(m : M; master : T) : Child =
   VAR
     c := UL;
     v := LAST(LONGREAL);
   BEGIN
     FOR i := FIRST(Child) TO LAST(Child) DO
-      IF m.vals[i] <= v THEN v := m.vals[i]; c := i END
+      IF m.vals[i][master.me] <= v THEN v := m.vals[i][master.me]; c := i END
     END;
     RETURN c
   END MinCorner;
+
+PROCEDURE MapNewLRSF(self : T; newf : LRScalarField.T) : T = 
+
+  PROCEDURE Recurse(m : M) =
+    VAR
+      newVals := NewVals(n);
+    BEGIN
+      m.f := self.f;
+      FOR i := FIRST(Child) TO LAST(Child) DO 
+        SUBARRAY(newVals[i]^,0,n - 1) := m.vals[i]^;
+        newVals[i][n-1] := newf.eval(PointToVector(m.corner(i)))
+      END;
+      m.vals := newVals;
+
+      IF m.children # NoChildren THEN
+        FOR i := FIRST(Child) TO LAST(Child) DO
+          Recurse(m.children[i])
+        END
+      END
+    END Recurse;
+
+  VAR
+    n := NUMBER(self.f^) + 1;
+    newF := NEW(Funcs, n);
+    res : T;
+    p : T;
+  BEGIN
+    SUBARRAY(newF^,0,n - 1) := self.f^;
+    newF[n-1] := newf;
+    res := NEW(T, root := self.root, me := n - 1, next := self.next);
+    self.next := res;
+
+    (* update the Ts that share mesh *)
+    p := self;
+    REPEAT
+      p.f := newF;
+      p := p.next
+    UNTIL p = self;
+
+    (* update mesh itself *)
+    Recurse(self.root);
+    RETURN res
+  END MapNewLRSF;
 
 BEGIN END AdGrid.
