@@ -1,10 +1,129 @@
-PL_BEGIN(klex: defining the lexer)
+LY_BEGIN(lex, klex, lexer, MylangLex, Lexer,l)
 
-_TT(lex mylang.l  [ -t mylang.t [-ti3 mylangTok.i3] ]  [ -o mylangLex.i3 ])
+A _IT(lexer specification) is a file with the _TT(.l) suffix which
+specifies regular expressions to be converted to tokens. The syntax
+differs from that of a UNIX _TT(.l) file in that each regular
+expression is associated with an _IT(expression method), which must be
+given a name:
+<P>
 
-_A(spec)_H(lexer specification)
+<TABLE>
+
+_TRP(%expr {
+bare_STRING   RegExp1
+quoted_STRING RegExp2
+})
+define the expression methods named _TT(bare_STRING) and _TT(quoted_STRING),
+which will be called whenever the respective expressions _TT(RegExp1)
+and _TT(RegExp2) are matched. The longest suffix of the method name
+matching a token name causes that token type to be returned by
+default. In this example, if there is a token named _TT(STRING), then
+that token will be returned by both default methods. This behavior is
+overridden using _EXT.
+_TRE
+
+_TR(METHOD1 RegExp1)
+same as above, i.e. the _TT(%expr{}) is optional.
+_TRE
+
+_TRP(%macro {
+MACRO1  RegExp1
+MACRO2  RegExp2
+})
+define _TT({MACRO1}) to stand for _TT(RegExp1), and
+define _TT({MACRO2}) to stand for _TT(RegExp2).
+_TRE
+
+_TR(%macro MACRO RegExp)
+alternate syntax, same meaning as above.
+_TRE
+
+</TABLE>
+<P>
+
+
+
+
+_BF(klex) supports the following subset of _LN(#bib,flex) regular
+expressions, in order of decreasing precedence:
+<P>
+
+#define _RS _IT(R)s
+#define _R  _IT(R)
+#define _Q(x) _TT('x')
+
+<TABLE>
+_TR(x)         match the character _Q(x) _TRE
+_TR(.)         any character (byte) except newline _TRE
+_TR([xyz])     a "character class"; in this case, the pattern
+  matches either an _Q(x), a _Q(y), or a _Q(z) _TRE
+_TR([abj-oZ])  a "character class" with a range in it; matches
+  an _Q(a), a _Q(b), any letter from _Q(j) through _Q(o), or a _Q(Z) _TRE
+_TR([^A-Z])    a "negated character class", i.e., any character
+  but those in the class.  In this case, any
+  character EXCEPT an uppercase letter. _TRE
+_TR([^A-Z\n])  any character EXCEPT an uppercase letter or a newline
+_TRE
+_TR(r*)        zero or more _RS, where _R is any regular expression _TRE
+_TR(r+)        one or more _RS _TRE
+_TR(r?)        zero or one _RS (that is, an optional _R) _TRE
+_TR2(r{2,5})    anywhere from two to five _RS _TRE
+_TR2(r{2,})     two or more _RS _TRE
+_TR(r{4})      exactly 4 _RS _TRE
+_TR({NAME})    the expansion of macro _TT(NAME) _TRE
+_TR("[xyz]\"foo") the literal string: <TT>[xyz]"foo</TT> _TRE
+_TR(\X)        if _TT(X) is an _Q(n) or _Q(t),
+  then the ANSI-C interpretation of _TT(\x).
+  Otherwise, a literal _Q(X) (used to escape
+  operators such as _Q(*)) _TRE
+_TR(\123)      the character with octal value 123 _TRE
+_TR((r))       match an r; parentheses are used to override
+  precedence _TRE
+_TR(rs)        the regular expression r followed by the
+  regular expression s; called "concatenation" _TRE
+_TR(r|s)       either an r or an s _TRE
+</TABLE>
 
 _A(intf)_H(lexer interface)
 
+A lexer interface is a Modula-3 interface that can be passed as an
+argument to a parser initialization method (or extended
+using _EXT), and is itself generated from a _LN(#spec, lexer
+specification).
+<P>
+
+The lexer consits of a type _TT(T) declared as an opaque subtype of
+the
+_LN(ktok.html#RdLexer,_TT(RdLexer))
+instantiated in the token interface. Hence the following
+uses are possible:
+<P>
+
+<CENTER>
+<TABLE><TR><TD>
+_TT(myLexer := NEW(MylangLex.T).setRd(rd);)
+</TD</TR><TR><TD>
+Initialize the new lexer _TT(myLexer), assuming there is a reader
+_TT(rd: Rd.T).
+</TD></TR><TR><TD>&nbsp
+</TD></TR><TR><TD>
+_TT(start := myParser.parse(NEW(MylangLex.T).fromText(text));)
+</TD</TR><TR><TD>
+Use parser _TT(myParse) to parse _TT(text: TEXT) using a new lexer.
+</TD></TR></TABLE></CENTER><P>
+
+
+There is no method named _TT(init), to allow
+customized initialization parameters in extended lexers.
+
+_A(bib)_H(see also)
+
+M. E. Lesk and E. Schmidt, _IT(LEX - Lexical Analyzer Generator)
+<P>
+Vern Paxson et. al., _IT(flex - fast lexical analyzer generator)
+<P>
+Alfred Aho, Ravi Sethi and Jeffrey Ullman,
+<I>Compilers: Principles, Techniques and Tools</I>
 
 PL_END
+$Id$
