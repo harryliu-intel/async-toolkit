@@ -5,6 +5,9 @@ IMPORT TextList;
 TYPE
   T = Rd.T;
 
+(* this is FileRdErr.i3 in ktoklib. This interface exists only to avoid
+   bootstrapping issues. You should use SeekRd.i3 in parserlib instead.  *)
+
 PROCEDURE Open(p: Pathname.T; searchDirs: TextList.T := NIL): T;
   (*  Like FileRd.Open, but if the file cannot be openned then
       print a meaningful error and exit. also see "E" below.
