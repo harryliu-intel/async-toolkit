@@ -43,7 +43,7 @@ TYPE
        
        a_remap := a.remap(a.cloneFreeVariable())
      *)
-    clone() : BoolBoolTbl.T;
+    clone(VAR clonedFree : FreeVariable) : BoolBoolTbl.T;
   END;
 
   FreeVariable <: PublicFreeVariable;

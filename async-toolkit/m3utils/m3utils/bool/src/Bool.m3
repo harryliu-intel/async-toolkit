@@ -155,10 +155,19 @@ PROCEDURE Remap(map : BoolBoolTbl.T; e : T; check : BOOLEAN) : T =
   
   PROCEDURE Recurse(e : T) : T =
     VAR
-      o := NodeVar(e);
+      o : T;
       n : T;
-      gotIt := map.get(o,n);
+      gotIt : BOOLEAN;
     BEGIN
+      IF    e = False() THEN 
+        RETURN False()
+      ELSIF e = True() THEN
+        RETURN True()
+      END;
+
+      o := NodeVar(e);
+      gotIt := map.get(o,n);
+
       (* rename current *)
       IF NOT gotIt  AND check AND NOT o = False() AND NOT o = True() THEN
         Debug.Error("No mapping for Bool.")

@@ -34,13 +34,24 @@ REVEAL
   END;
   
 
-PROCEDURE Clone(self : FreeVariable) : BoolBoolTbl.T =
+PROCEDURE Clone(self : FreeVariable; VAR clone : FreeVariable) : BoolBoolTbl.T =
   VAR 
     map := NEW(BoolBoolTbl.Default).init();
   BEGIN
+    clone := NEW(FreeVariable, 
+                 bits := NEW(Array, NUMBER(self.bits^)),
+                 baseBits := NEW(Array, NUMBER(self.bits^)-1));
     FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
-      EVAL map.put(self.baseBits[i],Bool.New())
+      clone.baseBits[i] := Bool.New();
+      EVAL map.put(self.baseBits[i],clone.baseBits[i])
     END;
+    
+    WITH o = self.bits^, n = clone.bits^ DO
+      FOR i := FIRST(o) TO LAST(o) DO
+        n[i] := BoolRemap.Remap(map,o[i],TRUE)
+      END
+    END;
+
     RETURN map
   END Clone;
 
@@ -49,14 +60,17 @@ PROCEDURE Clone(self : FreeVariable) : BoolBoolTbl.T =
 PROCEDURE Init(res : FreeVariable; max, min : INTEGER) : T =
   VAR
     range := max - min;
+    initRange : FreeVariable;
   BEGIN
     <* ASSERT max >= min *>
-    res.bits := Add(Constant(min),InitRange(res,range)).bits;
+    initRange := InitRange(res,range);
+    res.bits := Add(Constant(min),initRange).bits;
+    res.baseBits := initRange.baseBits;
 
     RETURN res
   END Init;
 
-PROCEDURE InitRange(res: FreeVariable; range : CARDINAL) : T =
+PROCEDURE InitRange(res: FreeVariable; range : CARDINAL) : FreeVariable =
   VAR
     bits : CARDINAL;
     inrange : Bool.T;
