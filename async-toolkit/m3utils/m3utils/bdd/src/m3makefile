@@ -1,10 +1,11 @@
-/*m3_option("-g")*/
+m3_option("-g")
+m3_option("-times")
 /*m3_option("-X2@-pg@")*/
 /*m3_option("-Z")*/
 /*remove_m3_option("-O")*/
-module(Debug)
+import(cit_util)
 
-module(BDD)
+Module(BDD)
 implementation(BDDImpl)
 module(BDDTripleHash)
 module(BDDPair)
@@ -13,6 +14,7 @@ interface(BDDPrivate)
 generic_module(ProcTable)
 
 import("libm3")
+library(bdd)
 implementation(BDDTest)
 
 program(bddtest)
