@@ -20,10 +20,12 @@ Module("BracedCode")
 Module("IntInt")
 Array_sort("IntInt", "IntInt")
 
+/* moved to cit_util
 module("TextSubsClause")
 list("TextSubsClause", "TextSubsClause")
 table("TextSubsClauseList", "Char", "TextSubsClauseList")
 Module("TextSubs")
+*/
 
 Module("FmtTable")
 
