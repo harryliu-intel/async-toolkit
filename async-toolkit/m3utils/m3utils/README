@@ -1,0 +1,14 @@
+$Id$
+
+m3build/m3ship are a bit tricky to deal with.
+
+To get m3ship to install things where you want them to go, use
+PKG_INSTALL="dest dir"
+
+Remember to check if build_standalone is necessary if you're not
+going to m3ship to /usr/local.
+
+This all needs to be set up so that we can "build" a final version
+or a working version w/o clobbering /usr/local...
+
+
