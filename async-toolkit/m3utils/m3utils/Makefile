@@ -46,7 +46,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 # building since they may depend on other libraries (1 way only)
 #
 #SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop boxes simplegrid rpc router layout cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree celldb matcher sysiphus/sysiphus_parse
-SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib colc/cnetwork verif/tuple 
+SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib colc/cnetwork verif/tuple cast 
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
@@ -54,7 +54,7 @@ SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 # These are built last
 #M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus`
-M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix acat router/pauls verif dagflat allias myrope colc/pl2prs ld2layout`
+M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix acat router/pauls verif dagflat allias myrope colc/pl2xprs ld2layout`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
