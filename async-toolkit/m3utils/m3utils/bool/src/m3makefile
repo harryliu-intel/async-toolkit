@@ -35,4 +35,6 @@ Table("IntBoolInteger","Integer","BoolInteger")
 
 Table("BoolBool", "Bool", "Bool")
 
+Table("TextBool", "Text", "Bool") /* for symbol tables, e.g. */
+
 library("bool")

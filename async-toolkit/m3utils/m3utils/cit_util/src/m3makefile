@@ -114,6 +114,7 @@ Module("UnsafeMutex")
 Module("CatRd")
 
 Module("ObjectFactory")
+Interface("ObjectFactoryClass")
 Generic_module("Factory")
 template("factory")
 

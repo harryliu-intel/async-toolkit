@@ -3,6 +3,7 @@
 GENERIC MODULE Factory(Of);
 IMPORT Word, Text;
 IMPORT ObjectFactory AS Super;
+IMPORT ObjectFactoryClass;
 
 REVEAL
   T = Public BRANDED Brand OBJECT OVERRIDES
