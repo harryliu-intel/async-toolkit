@@ -174,4 +174,21 @@ PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
     RETURN Filter(in, SET OF CHAR{FIRST(CHAR) .. LAST(CHAR)} - remove);
   END FilterOut;
 
+PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
+  VAR
+    i := 0;
+  BEGIN
+    LOOP
+      IF i = Text.Length(in) THEN RETURN ""; END;
+      IF NOT Text.GetChar(in, i) IN remove THEN EXIT END;
+      INC(i);
+    END;
+    FOR j := Text.Length(in)-1 TO 0 BY -1 DO
+      IF NOT Text.GetChar(in, j) IN remove THEN
+        RETURN Text.Sub(in, i, j-1+1);
+      END;
+    END;
+    <* ASSERT FALSE *>
+  END FilterEdges;
+
 BEGIN END TextUtils.
