@@ -8,6 +8,7 @@ implementation("DebugFmtPointer")
 Module("BreakHere")
 Module("TextUtils")
 implementation("TextUtilsFmt")
+Module("PrefixDB")
 Pqueue("Longreal","LongrealType")
 
 Generic_module("OpenArrayTable")
