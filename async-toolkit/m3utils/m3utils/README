@@ -25,6 +25,15 @@ directories at the top level in order for packages using cit_util to work:
 - m3subdir.mk
 - m3tmplhack
 
+##################################
+# Deprecated 20050126 by jd
+# HOWTOSHIPATCALTECH:
+# ~kp/bin/devup [modules]
 
-HOWTOSHIPATCALTECH:
-~kp/bin/devup [modules]
+# m3arch.sh
+# Is a script which determines the modula3 build directory based on the
+#	information provided by uname.  This is done without creating 
+#	test directories.
+
+# Exporting
+make install-to-async
