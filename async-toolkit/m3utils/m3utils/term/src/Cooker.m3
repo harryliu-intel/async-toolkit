@@ -58,6 +58,12 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
         END;
       END;
     END FWord;
+  PROCEDURE FDel() =
+    BEGIN
+      t := Text.Sub(t, 0, p) & Text.Sub(t, p+1);
+      Term.Wr(Text.Sub(t, p)&" ");
+      p0:=Text.Length(t)+1;
+    END FDel;
   BEGIN
     prev := previous;
     next := NIL;
@@ -86,7 +92,9 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
       | '\020' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
       | '\016' => Recall(next, prev);
       | '\004','\003','\032' =>
-        IF fatalControl THEN
+        IF c='\004' AND Text.Length(t)#0 THEN
+          FDel();
+        ELSIF fatalControl THEN
           Print(); Print("^C"); Process.Exit(1);
         ELSE
           RETURN Text.FromChar(c);
@@ -100,13 +108,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
       | '\005' => p:=Text.Length(t);
       | '\302','\342','\210' => BWord(c='\210');
       | '\306','\346','\304','\344' => FWord(c='\304' OR c='\344');
-      | '\177','\010'=>
-        IF p>0 THEN
-          DEC(p);
-          t := Text.Sub(t, 0, p) & Text.Sub(t, p+1);
-          Term.Wr("\010"&Text.Sub(t, p)&" ");
-          p0:=Text.Length(t)+1;
-        END;
+      | '\177','\010'=> IF p>0 THEN DEC(p); Term.Wr("\010"); FDel(); END;
       ELSE
         IF ORD(c)>=32 AND ORD(c)<128 THEN
           Term.Wr(Text.FromChar(c));INC(p0);
