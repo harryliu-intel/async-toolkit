@@ -71,7 +71,7 @@ readonly proc gother_template(nm,kind) is
 	local sources = [makefile, source]
 	if stale(f, sources) or stale(g, sources)
 		> g in
-			write("module", CR)
+			write(kind, CR)
 			write(source, CR)
 		end
 		_exec([_M3TMPLHACK,g])
