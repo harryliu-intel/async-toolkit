@@ -10,11 +10,12 @@ FROM RT0 IMPORT Typecode;
 IMPORT IntPQ;
 
 TYPE
+  Counts = REF ARRAY OF R;
   R = RECORD
     count, size := 0;
   END;
   T = RTHeapRep.RefVisitor OBJECT
-    x: REF ARRAY OF R;
+    x: Counts;
   OVERRIDES
     visit := Visit;
   END;
