@@ -236,10 +236,10 @@ PROCEDURE Parse(self: T; exhaustInput: BOOLEAN := TRUE): StartType =
         DebugPrint("parsing stopped with singleton start symbol on stack");
         <* ASSERT stack.ptr = 1 *>
         IF exhaustInput AND preservedToken = NoToken THEN
-          symbol := NextToken(self);
+          preservedToken := NextToken(self);
           DebugPrint("getting token to check that it's an EOF");
         END;
-        IF symbol.code # 0 THEN
+        IF preservedToken.code # 0 THEN
           IF exhaustInput THEN
             DebugPrint("Error: last token was not EOF");
             self.lex.unget();
