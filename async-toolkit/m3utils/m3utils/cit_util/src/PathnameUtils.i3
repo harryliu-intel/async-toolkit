@@ -7,6 +7,9 @@ IMPORT Pathname;
 TYPE
   T = Pathname.T;
 
+PROCEDURE Slashify(path: T): T;
+(* make "path" end in "/" *)
+
 PROCEDURE SlashedPrefix(path: T): T;
 PROCEDURE Complete(path: T): T;
 

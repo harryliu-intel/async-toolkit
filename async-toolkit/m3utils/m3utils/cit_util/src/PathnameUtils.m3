@@ -32,15 +32,18 @@ PROCEDURE Complete(t: T): T =
     END;
   END Complete;
 
-PROCEDURE SlashedPrefix(t: T): T =
-  VAR
-    path := Pathname.Prefix(t);
+PROCEDURE Slashify(path: T): T =
   BEGIN
     IF Text.Length(path)#0 AND
       Text.GetChar(path,Text.Length(path)-1) # '/' THEN
       path := path & "/";
     END;
     RETURN path;
+  END Slashify;
+
+PROCEDURE SlashedPrefix(t: T): T =
+  BEGIN
+    RETURN Slashify(Pathname.Prefix(t));
   END SlashedPrefix;
 
 PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T =
