@@ -42,6 +42,7 @@ PROCEDURE Hash(a : T) : Word.T;
 
 (* comparisons *)
 PROCEDURE Equals(a, b : T) : Bool.T;
+PROCEDURE NotEquals(a, b : T) : Bool.T;
 PROCEDURE LessThanZero(a : T) : Bool.T;
 PROCEDURE GreaterThan(a, b : T) : Bool.T;
 PROCEDURE LessThan(a, b : T) : Bool.T;

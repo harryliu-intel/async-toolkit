@@ -18,6 +18,9 @@ PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;
 PROCEDURE IsEqual(a : Public; n : INTEGER) : Bool.T = 
   BEGIN RETURN Equals(a, Constant(n)) END IsEqual;
 
+PROCEDURE NotEquals(a, b : T) : Bool.T = 
+  BEGIN RETURN Bool.Not(Equals(a,b)) END NotEquals;
+
 PROCEDURE GetMaxValue(a : Public) : INTEGER =
   VAR
     top,bot : INTEGER;
