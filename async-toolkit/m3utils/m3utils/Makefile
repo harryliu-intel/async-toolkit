@@ -56,7 +56,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 # building since they may depend on other libraries (1 way only)
 
 PARSERLIBS=parserlib/ktoklib parserlib/kyacclib parserlib/klexlib parserlib/ktok parserlib/klex parserlib/kyacc parserlib/kext parserlib/parserlib
-SHIPDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack term $(PARSERLIBS) tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib verif/tuple calarm/finlib voronoi ld/ld_parse ld cs2/cs2
+SHIPDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack term $(PARSERLIBS) tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib verif/tuple calarm/finlib calarm/keylib voronoi ld/ld_parse ld cs2/cs2
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
