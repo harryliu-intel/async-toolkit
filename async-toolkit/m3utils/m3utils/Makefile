@@ -13,6 +13,8 @@ SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f prsparse bas newsim psim pslnew m3hier Parse`
+
+# These depend on nothing else
 M3SUBS= `./dirsexist.sh -f boxes magraster router`
 
 M3BUILDOPTS= -O
@@ -20,7 +22,7 @@ M3BUILD= m3build $(M3BUILDOPTS)
 M3SHIP= echo
 
 all: .bindir .top commons ships subs m3subs
-clean: cleansubs cleanm3 cleancommons cleanships cleanbuilddirs cleanthis 
+clean: cleanm3 cleansubs cleancommons cleanships cleanbuilddirs cleanthis 
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir

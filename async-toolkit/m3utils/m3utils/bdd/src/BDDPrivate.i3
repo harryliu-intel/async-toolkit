@@ -1,3 +1,4 @@
+(* $Id$ *)
 INTERFACE BDDPrivate;
 IMPORT BDD;
 

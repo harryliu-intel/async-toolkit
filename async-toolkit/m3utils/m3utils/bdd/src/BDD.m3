@@ -1,3 +1,4 @@
+(* $Id$ *)
 MODULE BDD;
 
 (* this module implements higher-level BDD routines. *)

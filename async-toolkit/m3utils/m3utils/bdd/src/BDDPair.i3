@@ -1,3 +1,4 @@
+(* $Id$ *)
 INTERFACE BDDPair;
 IMPORT BDD, Word;
 

@@ -1,7 +1,8 @@
+(* $Id$ *)
 MODULE BDDPair;
 IMPORT BDD;
 IMPORT Word;
-IMPORT Debug, Fmt;
+(*IMPORT Debug, Fmt;*)
 
 PROCEDURE Equal( a, b : T ) : BOOLEAN = 
   BEGIN RETURN a[0] = b[0] AND a[1] = b[1] END Equal;

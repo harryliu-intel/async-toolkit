@@ -1,3 +1,4 @@
+(* $Id$ *)
 (* simple BDD package *)
 
 INTERFACE BDD;

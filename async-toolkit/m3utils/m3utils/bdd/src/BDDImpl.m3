@@ -1,3 +1,4 @@
+(* $Id$ *)
 (* revelation of BDD.T *)
 MODULE BDDImpl EXPORTS BDD, BDDPrivate;
 IMPORT BDDPair;
