@@ -6,6 +6,10 @@ import("cit_util")
 
 Interface("Spline")
 Module("CubicSpline")
-Module("ParametricSpline")
+Interface("ParametricSpline")
+
+Generic_module("ParametricSplineImpl")
+template("parametricspline")
+ParametricSpline("CubicSpline","CubicSpline")
 
 library("splines")

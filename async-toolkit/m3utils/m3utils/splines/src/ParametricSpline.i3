@@ -13,9 +13,9 @@ CONST Brand = "ParametricSpline";
 TYPE
   PlotStyle = { X, Y, Parametric };
 
-  T <: Public;
+  (* A ParametricSpline.T is an abstract type *)
 
-  Public = OBJECT METHODS
+  T = OBJECT METHODS
     (* coords are to be fed in order along curve *)
     init(READONLY coords : ARRAY OF Coord) : T;
     

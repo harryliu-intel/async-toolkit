@@ -1,14 +1,15 @@
 (* $Id$ *)
 
-MODULE ParametricSpline;
-IMPORT Spline, CubicSpline;
+GENERIC MODULE ParametricSplineImpl(BaseSpline);
+IMPORT Spline, ParametricSpline;
+FROM ParametricSpline IMPORT PlotStyle, Coord;
 IMPORT Math;
 IMPORT Debug,Fmt;
 
 CONST EPS = 1.0d-8;
 
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = ParametricSpline.T BRANDED Brand OBJECT
     xSpline, ySpline : Spline.T;
   OVERRIDES
     init := Init;
@@ -21,7 +22,7 @@ PROCEDURE FormatCoord(c : Coord) : TEXT =
     RETURN "(" & Fmt.LongReal(c.x) & "," & Fmt.LongReal(c.y) & ")" 
   END FormatCoord;
 
-PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : T =
+PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : ParametricSpline.T =
 
   PROCEDURE ComputeWeight(READONLY a, b : Coord) : LONGREAL =
     CONST MinW = 1.0d-8; (* a bit of a hack... *)
@@ -68,8 +69,8 @@ PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : T =
 
     (* build underlying spline functions *)
 
-    self.xSpline := NEW(CubicSpline.T).init(px^);
-    self.ySpline := NEW(CubicSpline.T).init(py^);
+    self.xSpline := NEW(BaseSpline.T).init(px^);
+    self.ySpline := NEW(BaseSpline.T).init(py^);
     
     RETURN self
   END Init;
@@ -105,4 +106,4 @@ PROCEDURE GnuPlotFormat(self : T;
     RETURN res
   END GnuPlotFormat;
 
-BEGIN END ParametricSpline.
+BEGIN END ParametricSplineImpl.
