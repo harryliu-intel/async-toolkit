@@ -4,5 +4,5 @@ import("term")
 Interface("MyContext")
 CommandLoop("My", "MyContext")
 
-implementation("Main")
+jmplementation("Main")
 program("testcl")

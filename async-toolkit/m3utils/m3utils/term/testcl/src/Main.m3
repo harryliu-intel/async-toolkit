@@ -44,7 +44,12 @@ PROCEDURE Run(context: MyContext.T) =
 
     (* define commands *)
     cl.c(Print,"print","-- display accumulator value");
-    cl.c(Add,  "+ add","<val> -- add <val> to accumulator");
+    cl.c(Add,  "+ add","<val> -- add <val> to accumulator",
+         %TEXT\%
+add command: extended help
+The accumulator is written with a new value,
+which is the old value of the accumulator plus <val>.
+%END%);
 
     cl.run();
   END Run;
