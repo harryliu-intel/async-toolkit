@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 UNSAFE MODULE Term;
+IMPORT Debug;
 IMPORT Stdio;
 IMPORT Wr AS Wrr;
 IMPORT Rd;
@@ -85,7 +86,7 @@ PROCEDURE GetChar(): CHAR =
     RETURN Rd.GetChar(Stdio.stdin);
   END GetChar;
 
-PROCEDURE Wr(s: TEXT) =
+PROCEDURE Wr0(wr: Wrr.T; s: TEXT) =
 
   BEGIN
     IF Raw THEN
@@ -95,19 +96,26 @@ PROCEDURE Wr(s: TEXT) =
         REPEAT
           j := Text.FindChar(s, '\n', i);
           IF j # -1 THEN
-            Wrr.PutText(Stdio.stdout, Text.Sub(s, i, j - i));
-            Wrr.PutText(Stdio.stdout, Endl);
+            Wrr.PutText(wr, Text.Sub(s, i, j - i));
+            Wrr.PutText(wr, Endl);
             i := j + 1;
           END;
         UNTIL j = -1;
         IF i # Text.Length(s) THEN
-          Wrr.PutText(Stdio.stdout, Text.Sub(s, i, LAST(CARDINAL)));
+          Wrr.PutText(wr, Text.Sub(s, i, LAST(CARDINAL)));
         END;
       END;
     ELSE
-      Wrr.PutText(Stdio.stdout, s);
+      Wrr.PutText(wr, s);
     END;
-  END Wr;
+  END Wr0;
+
+PROCEDURE Wr(s: TEXT) = BEGIN Wr0(Stdio.stdout, s); END Wr;
+PROCEDURE Wr1(s: TEXT) =
+  BEGIN
+    Wr0(Stdio.stderr, s);
+    Wrr.Flush(Stdio.stderr);
+  END Wr1;
 
 PROCEDURE WrLn(s: TEXT; flush := FALSE) =
   BEGIN
@@ -118,4 +126,7 @@ PROCEDURE WrLn(s: TEXT; flush := FALSE) =
     END;
   END WrLn;
 
-BEGIN END Term.
+
+BEGIN
+  Debug.RegisterHook(Wr1);
+END Term.

@@ -100,7 +100,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
           RETURN Text.FromChar(c);
         END;
       | '\011' => IF completer#NIL THEN completer.do(t); WipeLine(); END;
-      | '\015' => Print(); RETURN t;
+      | '\015' => Term.WrLn("",TRUE); RETURN t;
       | '\013' => Term.Wr("\033[K"); t:=Text.Sub(t,0,p);
       | '\006' => p:=MIN(Text.Length(t),p+1);
       | '\002' => p:=MAX(0,p-1);
