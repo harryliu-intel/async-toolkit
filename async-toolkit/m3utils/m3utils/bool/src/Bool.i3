@@ -1,11 +1,12 @@
+(* $Id$ *)
+
 INTERFACE Bool;
 IMPORT CPtr, Cbool;
 IMPORT Word;
 IMPORT BoolSet;
 IMPORT BoolTextTbl;
 
-CONST
-  Brand = "Bool from Rajit";
+CONST Brand = "Bool from Rajit";
 
 TYPE 
   T = CPtr.T;
