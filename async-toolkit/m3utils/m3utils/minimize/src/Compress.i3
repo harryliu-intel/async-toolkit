@@ -5,6 +5,10 @@ IMPORT Matrix;
 
 TYPE MultiFunc = PROCEDURE (a : Matrix.Vector) : LONGREAL;
 
+(* gradient of MultiFunc *)
+TYPE GradMultiFunc = PROCEDURE (a : Matrix.Vector; 
+                                VAR gradient : Matrix.Vector);
+
 
 (* Minimize a multivariate function func along the direction xi starting from
    the point p.

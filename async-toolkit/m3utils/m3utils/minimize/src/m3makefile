@@ -12,5 +12,6 @@ import("cit_util")
 Module("Bracket")
 Module("Compress")
 Module("Powell")
+Module("ConjGradient")
 
 library("minimize")

@@ -4,7 +4,7 @@ MODULE Compress;
 IMPORT Matrix;
 IMPORT Bracket;
 
-CONST Tol = 2.0d-4;
+CONST Tol = 2.0d-8;
 
 (* mutex and therewith protected globals *)
 VAR mu := NEW(MUTEX);
