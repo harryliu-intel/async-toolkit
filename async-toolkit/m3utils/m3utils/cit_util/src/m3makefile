@@ -63,6 +63,8 @@ generic_module("Map")
 Module("LRVector")
 Interface("LRPoint")
 
+Interface("Threadd")
+Sequence("Thread","Threadd")
 Map("LRFunction","LongrealType","LongrealType")
 Map("LRScalarField","LRVector","LongrealType")
 Map("LRVectorField","LRVector","LRVector")

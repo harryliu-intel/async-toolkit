@@ -11,9 +11,12 @@ PROCEDURE WDB(f : LRFunction.T;
     c, d, e, fc, p, q, r, s, tol1, xm : LONGREAL;
     a := x1;
     b := x2;
+    fa, fb : LONGREAL; 
+  BEGIN
+    f.evalHint(b);
+
     fa := f.eval(a);
     fb := f.eval(b);
-  BEGIN
     IF fa > 0.0d0 AND fb > 0.0d0 OR fa < 0.0d0 AND fb < 0.0d0 THEN
       Debug.Error("Solve.WDB: van Wijngaarden-Dekker-Brent method requires bracketed input!")
     END;

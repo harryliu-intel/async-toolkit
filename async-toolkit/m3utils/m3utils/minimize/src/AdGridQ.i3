@@ -4,7 +4,8 @@ INTERFACE AdGridQ;
 IMPORT Word, AdGridChild AS Child;
 IMPORT LRPoint;
 
-(* "adaptive grid quadrilateral *)
+(* "adaptive grid quadrilateral"; this is the tile over which AdGrid.Ts are
+   defined.  *)
 
 TYPE 
   T = OBJECT METHODS
@@ -19,16 +20,26 @@ TYPE
     subdivide(levels : CARDINAL := 1) : REFANY; (* returns AdGridQSet.T 
                                                    of new tiles *)
 
-    (* find the neighbor tile in the specified direction.
-       Three possibilities: 1. neighbor tile of same size
-                            2. neighbor tile of larger size
-                            3. NIL *)
+    (* starting from at in m, find smallest neighboring tile in dir;
+       NIL if no neighbor *)
     neighbor(at : LRPoint.T; dir : Dir) : T;
 
+    allNeighborsAlongEdge(dir : Dir) : REFANY (*AdGridQSet.T*); 
+
+    (* get linearly interpolated crossings where a level curve enters and
+       leaves a given tile *)
     getCrossings(adGridP : REFANY; of : LONGREAL): ARRAY Dir OF REF LRPoint.T;
+    
+    (* is this tile larger in extent than "than"? *)
+    larger(than : T) : BOOLEAN;
+
+    (* absolute range of values across the corners of a tile *)
+    range(adGridP : REFANY) : LONGREAL;
   END;
 
   Dir = { N, E, W, S };
+
+CONST OppositeDir = ARRAY Dir OF Dir { Dir.S, Dir.W, Dir.E, Dir.N };
 
 PROCEDURE Hash(a : T) : Word.T;
 PROCEDURE Equal(a, b : T) : BOOLEAN;

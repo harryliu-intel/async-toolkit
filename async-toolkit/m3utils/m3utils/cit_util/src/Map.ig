@@ -2,6 +2,8 @@
 
 GENERIC INTERFACE Map(From,To);
 IMPORT Word;
+IMPORT Thread;
+
 (* A Map.T is a wrapper for a 
    PROCEDURE (x : From.T) : To.T;
 
@@ -17,6 +19,10 @@ TYPE
   Public = OBJECT 
     doHints := FALSE; (* should the hint routine be called 
                          before evaluating? *)
+    hintsByForking := FALSE; (* should a hint be implemented by forking
+                                and evaluating, throwing away the result? *)
+    maxThreads : CARDINAL := 10; (* max. no of threads in case we do hints
+                                    by forking. *)
   METHODS
     eval(x : From.T) : To.T; (* must override this *)
 
@@ -34,9 +40,20 @@ TYPE
        to occur, so the implementation should be careful not to store
        too much information. 
        
-       The default implementation of evalHint is a No-op
+       The default implementation of evalHint is a No-op unless hintsByForking
+       is TRUE, in which case evalHint is a forked eval whose result is
+       discarded.
     *)
     evalHint(x : From.T);
+
+    (* if you override hint, you probably want to generate extra threads
+       of your own.  Instead of waiting for them yourself, you can 
+       simply add them to the internal threads queue. *)
+    registerThread(t : Thread.T);
+
+    (* to avoid generating too many threads, call waitForSomeThreads
+       before spawning new ones. *)
+    waitForSomeThreads();
 
     hash() : Word.T; (* may override this if desired *)
   END;

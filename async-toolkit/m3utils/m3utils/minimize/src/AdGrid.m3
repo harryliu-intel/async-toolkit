@@ -33,11 +33,14 @@ TYPE
     corner := MCorner;
     getLbound := GetLbound;
     getUbound := GetUbound;
-    subdivide := SubdivideSet;
+    subdivide := Subdivide;
 
     neighbor := Neighbor;
+    allNeighborsAlongEdge := AllNeighborsAlongEdge;
     getCornerValues := GetCornerValues;
     getCrossings := GetCrossings;
+    larger := Larger;
+    range := Range;
   END;
 
 PROCEDURE GetCornerValues(m : M; adGridP : REFANY) : ARRAY Child OF LONGREAL =
@@ -61,8 +64,8 @@ PROCEDURE GetCrossings(m : M;
 
   PROCEDURE MixPts(a, b : LRPoint.T; alpha : LONGREAL) : LRPoint.T =
     BEGIN
-      RETURN LRPoint.T { alpha * b.x + (1.0d0 - alpha * a.x) ,
-                         alpha * b.y + (1.0d0 - alpha * a.y) }
+      RETURN LRPoint.T { alpha * b.x + (1.0d0 - alpha) * a.x ,
+                         alpha * b.y + (1.0d0 - alpha) * a.y }
     END MixPts;
 
   CONST
@@ -114,7 +117,8 @@ PROCEDURE UpNeighbor(m : M; dir : Dir) : M =
       | 
         LR => IF dir = N THEN r:= sibs[UR] ELSIF dir = W THEN r:= sibs[LL] END
       END;
-      IF r # NIL THEN RETURN r ELSE RETURN UpNeighbor(dad,dir) END
+      IF r = NIL THEN r := UpNeighbor(dad,dir) END;
+      RETURN r
     END
   END UpNeighbor;
 
@@ -124,68 +128,156 @@ PROCEDURE Neighbor(m : M; at : LRPoint.T; dir : Dir) : AdGridQ.T =
         W = Dir.W; S = Dir.S; 
 
   PROCEDURE RecurseX(c : M; x : LONGREAL; dir : Dir) : M =
+    VAR 
+      next : M;
     BEGIN
       IF c.children = NoChildren THEN RETURN c END;
       
       WITH mmx = (c.ll.x + c.ur.x) / 2.0d0 DO
         IF x < mmx THEN
           IF    dir = N THEN 
-            RETURN c.children[LL]
+            next := c.children[LL]
           ELSIF dir = S THEN
-            RETURN c.children[UL]
+            next := c.children[UL]
           ELSE
             <* ASSERT FALSE *>
           END
         ELSE
           IF    dir = N THEN 
-            RETURN c.children[LR]
+            next := c.children[LR]
           ELSIF dir = S THEN
-            RETURN c.children[UR]
+            next := c.children[UR]
           ELSE
             <* ASSERT FALSE *>
           END
         END
-      END
+      END;
+      RETURN RecurseX(next,x,dir)
     END RecurseX;
 
   PROCEDURE RecurseY(c : M; y : LONGREAL; dir : Dir) : M =
+    VAR
+      next : M;
     BEGIN
       IF c.children = NoChildren THEN RETURN c END;
       
       WITH mmy = (c.ll.y + c.ur.y) / 2.0d0 DO
         IF y < mmy THEN
           IF    dir = E THEN 
-            RETURN c.children[LL]
+            next := c.children[LL]
           ELSIF dir = W THEN
-            RETURN c.children[LR]
+            next := c.children[LR]
           ELSE
             <* ASSERT FALSE *>
           END
         ELSE
           IF    dir = E THEN 
-            RETURN c.children[UL]
+            next := c.children[UL]
           ELSIF dir = W THEN
-            RETURN c.children[UR]
+            next := c.children[UR]
           ELSE
             <* ASSERT FALSE *>
           END
         END
-      END
+      END;
+      RETURN RecurseY(next,y,dir)
     END RecurseY;
 
   VAR
     upNeighbor := UpNeighbor(m,dir);
+    r : M;
   BEGIN
     (* if no neighbor at all, that's that. *)
     IF upNeighbor = NIL THEN RETURN NIL END;
 
     (* else find the closest tile along the line defined by at. *)
     CASE dir OF
-      N, S => RETURN RecurseX(upNeighbor, at.x, dir)
+      N, S => r := RecurseX(upNeighbor, at.x, dir)
     |
-      E, W => RETURN RecurseY(upNeighbor, at.y, dir)
-    END
-  END Neighbor;
+      E, W => r := RecurseY(upNeighbor, at.y, dir)
+    END;
+    <* ASSERT r.children = NoChildren *>
+    RETURN r
+ END Neighbor;
+
+PROCEDURE AllLeavesAlongEdge(m : M; dir : Dir) : AdGridQSet.T =
+  CONST N = Dir.N; E = Dir.E; 
+        W = Dir.W; S = Dir.S; 
+
+  PROCEDURE Recurse(mm : M) =
+    BEGIN
+      WITH c = mm.children DO
+        IF c = NoChildren THEN 
+          EVAL set.insert(mm) 
+        ELSE
+          CASE dir OF 
+            N => Recurse(c[UL]); Recurse(c[UR])
+          |
+            E => Recurse(c[UR]); Recurse(c[LR])
+          |
+            W => Recurse(c[UL]); Recurse(c[LL])
+          |
+            S => Recurse(c[LL]); Recurse(c[LR])
+          END
+        END
+      END
+    END Recurse;
+
+  VAR
+    set := NEW(AdGridQSetDef.T).init();
+  BEGIN 
+    Recurse(m); 
+    RETURN set 
+  END AllLeavesAlongEdge;
+
+PROCEDURE AllNeighborsAlongEdge(m : M; dir : Dir) : REFANY =
+  CONST N = Dir.N; E = Dir.E; 
+        W = Dir.W; S = Dir.S; 
+
+  PROCEDURE XOverlap(a, b : M) : BOOLEAN =
+    BEGIN
+      WITH au = a.ur.x, bu = b.ur.x, al = a.ll.x, bl = b.ll.x,
+           aw = au - al, bw = bu - bl, mw = MIN(aw,bw) DO
+        IF au < bu THEN
+          RETURN au - MAX(bl,al) > mw/2.0d0
+        ELSE
+          RETURN bu - MAX(al,bl) > mw/2.0d0
+        END
+      END
+    END XOverlap;
+
+  PROCEDURE YOverlap(a, b : M) : BOOLEAN =
+    BEGIN
+      WITH au = a.ur.y, bu = b.ur.y, al = a.ll.y, bl = b.ll.y,
+           ah = au - al, bh = bu - bl, mh = MIN(ah,bh) DO
+        IF au < bu THEN
+          RETURN au - MAX(bl,al) > mh/2.0d0
+        ELSE
+          RETURN bu - MAX(al,bl) > mh/2.0d0
+        END
+      END
+    END YOverlap;
+
+  VAR
+    upN := UpNeighbor(m,dir);
+    set := NEW(AdGridQSetDef.T).init();
+    n : AdGridQ.T;
+    pI : AdGridQSet.Iterator;
+  BEGIN
+    IF upN = NIL THEN 
+      RETURN set
+    ELSE
+      pI := AllLeavesAlongEdge(upN,AdGridQ.OppositeDir[dir]).iterate();
+      WHILE pI.next(n) DO
+        IF (dir = N OR dir = S) AND XOverlap(m,n) THEN
+          EVAL set.insert(n)
+        ELSIF (dir = E OR dir = W) AND YOverlap(m,n) THEN
+          EVAL set.insert(n)
+        END
+      END
+    END;
+    RETURN set
+  END AllNeighborsAlongEdge;
 
 PROCEDURE NewVals(n : CARDINAL) : Vals = 
   VAR
@@ -210,6 +302,9 @@ REVEAL
     setPrec := SetPrec;
     eval := EvalLRSF;
     getQuadsContainingLevel := GetLeafTilesContainingLevel;
+    getQuadsContainingLevelOrLower := GetLeafTilesContainingLevelOrLower;
+    getQuadsContainingLevelOrHigher := GetLeafTilesContainingLevelOrHigher;
+    getAllQuads := GetLeafTiles;
     mapNewLRSF := MapNewLRSF;
   END;
 
@@ -223,6 +318,16 @@ PROCEDURE EvalF(f : REF ARRAY OF LRScalarField.T;
     END;
     RETURN r
   END EvalF;
+
+PROCEDURE EvalFHint(f : REF ARRAY OF LRScalarField.T;
+                v : LRVector.T)  =
+  BEGIN
+    FOR i := FIRST(f^) TO LAST(f^) DO
+      IF f[i].doHints THEN
+        f[i].evalHint(v)
+      END
+    END
+  END EvalFHint;
 
 PROCEDURE SetPrec(a : T; prec : LONGREAL) = BEGIN a.prec := prec END SetPrec;
 
@@ -262,7 +367,28 @@ PROCEDURE GetUbound(m : M; gridP : REFANY) : LONGREAL =
     END
   END GetUbound;
 
-PROCEDURE SubdivideSet(m : M; levels : CARDINAL := 1) : REFANY =
+PROCEDURE SubdivideSet(set : AdGridQSet.T; levels : CARDINAL) =
+  VAR
+    i := set.iterate();
+    m : AdGridQ.T;
+  BEGIN
+    WHILE i.next(m) DO
+      <* ASSERT NARROW(m,M).children = NoChildren *>
+      SubdivideM1Build(m,levels);
+    END;
+
+    i := set.iterate();
+    WHILE i.next(m) DO
+      SubdivideM2Hint(m,levels)
+    END;
+
+    i := set.iterate();
+    WHILE i.next(m) DO
+      SubdivideM3Eval(m,levels)
+    END
+  END SubdivideSet;
+
+PROCEDURE Subdivide(m : M; levels : CARDINAL := 1) : REFANY =
   PROCEDURE Recurse(m : M) =
     BEGIN
       IF m.children = NoChildren THEN
@@ -278,12 +404,14 @@ PROCEDURE SubdivideSet(m : M; levels : CARDINAL := 1) : REFANY =
   VAR
     set := NEW(AdGridQSetDef.T).init();
   BEGIN
-    SubdivideM(m,levels);
+    SubdivideM1Build(m,levels);
+    SubdivideM2Hint(m,levels);
+    SubdivideM3Eval(m,levels);
     Recurse(m);
     RETURN set
-  END SubdivideSet;
+  END Subdivide;
 
-PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
+PROCEDURE SubdivideM1Build(m : M; levels : CARDINAL := 1) =
   BEGIN
     IF levels = 0 THEN RETURN END;
 
@@ -293,7 +421,6 @@ PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
       FOR i := FIRST(Child) TO LAST(Child) DO
         WITH c = m.children[i] DO
           c := NEW(M, up := m, f := m.f);
-          c.vals[i] := m.vals[i];
           CASE i OF
             UL => c.ll := LRPoint.T { m.ll.x, mm.y }; 
                   c.ur := LRPoint.T { mm.x, m.ur.y }
@@ -304,9 +431,54 @@ PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
           |
             LR => c.ll := LRPoint.T { mm.x, m.ll.y }; 
                   c.ur := LRPoint.T { m.ur.x, mm.y }
-          END;
+          END
         END
-      END;
+      END
+    END;
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      SubdivideM1Build(m.children[i],levels - 1) 
+    END
+  END SubdivideM1Build;
+
+PROCEDURE SubdivideM2Hint(m : M; levels : CARDINAL := 1) =
+  BEGIN
+    IF levels = 0 THEN RETURN END;
+
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      m.children[i].vals[i] := m.vals[i]
+    END;
+
+    WITH mm = LRPoint.T { (m.ll.x + m.ur.x) / 2.0d0 , 
+                          (m.ll.y + m.ur.y) / 2.0d0 } DO
+      (* fill in new points *)
+      WITH f = m.f,
+           ml = m.children[UL].corner(LL),
+           mr = m.children[LR].corner(UR),
+           mb = m.children[LR].corner(LL),
+           mt = m.children[UL].corner(UR)
+       DO
+        EvalFHint(f,PointToVector(ml));
+        EvalFHint(f,PointToVector(mr));
+        EvalFHint(f,PointToVector(mb));
+        EvalFHint(f,PointToVector(mt));
+        EvalFHint(f,PointToVector(mm))
+      END
+    END;
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      SubdivideM2Hint(m.children[i],levels - 1) 
+    END
+  END SubdivideM2Hint;
+
+PROCEDURE SubdivideM3Eval(m : M; levels : CARDINAL := 1) =
+  BEGIN
+    IF levels = 0 THEN RETURN END;
+
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      m.children[i].vals[i] := m.vals[i]
+    END;
+
+    WITH mm = LRPoint.T { (m.ll.x + m.ur.x) / 2.0d0 , 
+                          (m.ll.y + m.ur.y) / 2.0d0 } DO
       (* fill in new points *)
       WITH f = m.f,
            ml = m.children[UL].corner(LL), mlz = EvalF(f,PointToVector(ml)),
@@ -327,9 +499,10 @@ PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
       END
     END;
     FOR i := FIRST(Child) TO LAST(Child) DO
-      SubdivideM(m.children[i],levels - 1) 
+      SubdivideM3Eval(m.children[i],levels - 1) 
     END
-  END SubdivideM;
+  END SubdivideM3Eval;
+
 
 PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
   PROCEDURE EvalM(m : M) : LONGREAL =
@@ -358,7 +531,9 @@ PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
               IF maxdiff < prec THEN 
                 RETURN res
               ELSE
-                SubdivideM(m);
+                SubdivideM1Build(m);
+                SubdivideM2Hint(m);
+                SubdivideM3Eval(m);
                 RETURN EvalM(m)
               END
             END
@@ -389,7 +564,9 @@ PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
       new := NewM(ll, ur, t.f);
 
       (* subdivide it once *)
-      SubdivideM(new);
+      SubdivideM1Build(new);
+      SubdivideM2Hint(new);
+      SubdivideM3Eval(new);
 
       t.root.up := new;
 
@@ -435,7 +612,9 @@ PROCEDURE Init(self : T;
     self.f[0] := f;
     self.root := NewM(ll, ur, self.f);
     self.next := self;
-    SubdivideM(self.root,initLevels);
+    SubdivideM1Build(self.root,initLevels);
+    SubdivideM2Hint(self.root,initLevels);
+    SubdivideM3Eval(self.root,initLevels);
     RETURN self
   END Init;
 
@@ -459,6 +638,46 @@ PROCEDURE GetLeafTilesContainingLevel(self : T;
     END END;
     RETURN set.diff(delSet)
   END GetLeafTilesContainingLevel;
+
+PROCEDURE GetLeafTilesContainingLevelOrLower(self : T; 
+                                      level : LONGREAL;
+                                      set : AdGridQSet.T) : AdGridQSet.T = 
+
+  VAR
+    delSet := NEW(AdGridQSetDef.T).init();
+    iter : AdGridQSet.Iterator;
+    mp : AdGridQ.T;
+  BEGIN
+    IF set = NIL THEN set := GetLeafTiles(self) END;
+    iter := set.iterate();
+
+    WHILE iter.next(mp) DO WITH m = NARROW(mp,M) DO
+      IF NOT( level >= m.vals[m.minCorner(self)][self.me]) THEN
+        EVAL delSet.insert(m)
+      END
+    END END;
+    RETURN set.diff(delSet)
+  END GetLeafTilesContainingLevelOrLower;
+
+PROCEDURE GetLeafTilesContainingLevelOrHigher(self : T; 
+                                      level : LONGREAL;
+                                      set : AdGridQSet.T) : AdGridQSet.T = 
+
+  VAR
+    delSet := NEW(AdGridQSetDef.T).init();
+    iter : AdGridQSet.Iterator;
+    mp : AdGridQ.T;
+  BEGIN
+    IF set = NIL THEN set := GetLeafTiles(self) END;
+    iter := set.iterate();
+
+    WHILE iter.next(mp) DO WITH m = NARROW(mp,M) DO
+      IF NOT(level <= m.vals[m.maxCorner(self)][self.me]) THEN
+        EVAL delSet.insert(m)
+      END
+    END END;
+    RETURN set.diff(delSet)
+  END GetLeafTilesContainingLevelOrHigher;
 
 PROCEDURE GetLeafTiles(self : T) : AdGridQSet.T = 
 
@@ -524,6 +743,19 @@ PROCEDURE MapNewLRSF(self : T; newf : LRScalarField.T) : T =
       END
     END Recurse;
 
+  PROCEDURE RecurseHints(m : M) =
+    BEGIN
+      FOR i := FIRST(Child) TO LAST(Child) DO 
+        newf.evalHint(PointToVector(m.corner(i)))
+      END;
+
+      IF m.children # NoChildren THEN
+        FOR i := FIRST(Child) TO LAST(Child) DO
+          RecurseHints(m.children[i])
+        END
+      END
+    END RecurseHints;
+
   VAR
     n := NUMBER(self.f^) + 1;
     newF := NEW(Funcs, n);
@@ -543,8 +775,33 @@ PROCEDURE MapNewLRSF(self : T; newf : LRScalarField.T) : T =
     UNTIL p = self;
 
     (* update mesh itself *)
+    IF newf.doHints THEN RecurseHints(self.root) END;
+
     Recurse(self.root);
     RETURN res
   END MapNewLRSF;
+
+PROCEDURE Larger(m :M; than : AdGridQ.T) : BOOLEAN = 
+  BEGIN 
+    WITH tm = NARROW(than,M) DO
+      RETURN m.ur.x - m.ll.x > tm.ur.x - tm.ll.x 
+    END
+  END Larger;
+
+PROCEDURE Range(m : M; adGridP : REFANY) : LONGREAL =
+  VAR
+    smallest := LAST(LONGREAL);
+    largest := FIRST(LONGREAL);
+  BEGIN
+    WITH me = NARROW(adGridP,T).me DO
+      FOR i := FIRST(Child) TO LAST(Child) DO
+        WITH vi = m.vals[i][me] DO
+          IF vi < smallest THEN smallest := vi END;
+          IF vi > largest THEN largest := vi END
+        END
+      END
+    END;
+    RETURN largest - smallest
+  END Range;
 
 BEGIN END AdGrid.
