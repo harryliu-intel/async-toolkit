@@ -57,6 +57,7 @@ Table("TextTextList", "Text", "TextList")
 Equivalence("Text", "Text", "TextList", "TextTextTbl", "TextTextListTbl")
 Module("TextTextTblExtras")
 Module("Function")
+Module("Pointe")
 
 template("listf")
 generic_module("ListF")
