@@ -9,6 +9,7 @@ echo "// generated macroizations" > ../macroizations
 ./macroize CalcParseTree.e CPT
 ./macroize Main.m3 MM
 ./macroize m3makefile MF
+./macroize ../../src/SeekRd.i3 SR
 rm itemp
 rm itemp2
 for file in *.html; do

@@ -7,6 +7,27 @@
 #define _A(name) \
 <A NAME = "name"></A>
 
+
+
+#define _H(title) <H3>title</H3>
+#define _TT(text) <TT>text</TT>
+#define _IT(text) <I>text</I>
+#define _BF(text) <B>text</B>
+#define _C(text) <P><CENTER>text</CENTER><P>
+
+
+#define _BLN(link,text) _LN(link.html,[text])
+
+#define _BANNER \
+_BLN(index,parserlib page) \
+_BLN(ktok,ktok) \
+_BLN(klex,klex) \
+_BLN(kyacc,kyacc) \
+_BLN(kext,kext) \
+_BLN(m3build,m3build) \
+
+#define PL_END <HR> _BANNER <P>
+
 #define _HTML_BEGIN(title) \
 <HTML> \
 <HEAD> \
@@ -17,17 +38,7 @@
 <H2>title</H2> \
 <P> \
 
-#define _H(title) <H3>title</H3>
-#define _TT(text) <TT>text</TT>
-#define _IT(text) <I>text</I>
-#define _BF(text) <B>text</B>
-#define _C(text) <P><CENTER>text</CENTER><P>
-
 #define PL_BEGIN(title) _HTML_BEGIN(parserlib: title)
-
-#define PL_END \
-<HR> \
-<A HREF = "index.html">[parserlib page]</A> \
 
 #define HTML_END </BODY></HTML> 
 

@@ -20,6 +20,7 @@ _TT(returnType), which will be returned by any of the following
 reduction methods.
 _TRE
 
+_A(reducmeth)
 _TR(ruleName sym1 'c')
 Declare a reduction method which reduces _TT(sym1) followed by _Q(c)
 to the last declared symbol _TT(returnType).
@@ -83,6 +84,7 @@ There is no method named _TT(init), to allow
 customized initialization parameters in extended lexers.
 <P>
 
+_A(exhaust)
 If _TT(parse) is called with _TT(exhaustInput = FALSE), then the
 parser will continue reading tokens until reading another token would cause
 a syntax error (this may or may not require peeking ahead one
