@@ -4,6 +4,7 @@ m3_option("-times")
 
 import("cit_util")
 
+Interface("Spline")
 Module("CubicSpline")
 
 library("splines")

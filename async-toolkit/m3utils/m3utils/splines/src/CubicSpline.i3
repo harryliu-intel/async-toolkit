@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 INTERFACE CubicSpline;
+IMPORT Spline;
 
 CONST NaturalSpline = 1.0d30;
 CONST Brand = "NaturalCubicSpline";
@@ -24,10 +25,9 @@ TYPE
      be in increasing order.
    *)
 
-  Public = OBJECT METHODS
+  Public = Spline.T OBJECT METHODS
     init(READONLY coords : ARRAY OF Coord;
          firstDeriv,lastDeriv := NaturalSpline) : T;
-    eval(at : LONGREAL) : LONGREAL;
   END;
 
 END CubicSpline.
