@@ -196,6 +196,11 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         (* default input *)
         IF cm.pi = NIL THEN i2:=NIL ELSE i2:=cm.pi.f; END;
         c := Rd.GetChar(rd);
+        (* loop invariant:
+           c is the character just before
+           the mark,
+           and everything before that has been processed and then added to p
+        *)
         LOOP
           (* set up default i/o *)
           stdin := i2;
@@ -221,11 +226,11 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             | '\'' =>
               c := Rd.GetChar(rd);
               WHILE c # '\'' DO p:=p&Fmt.Char(c); c := Rd.GetChar(rd) END;
-              c := Rd.GetChar(rd) (* seems like a bug, but... *)
+              c := Rd.GetChar(rd) (* to maintain loop invariant *)
             | '`' =>
               c := Rd.GetChar(rd);
               WHILE c # '`' DO p:=p&Fmt.Char(c); c := Rd.GetChar(rd) END;
-              c := Rd.GetChar(rd); (* seems like a bug, but... *)
+              c := Rd.GetChar(rd); (* to maintain loop invariant *)
               p := ToText(p, wd0:=wd);
             ELSE
               WHILE NOT c IN Special DO p:=p&Fmt.Char(c); c:=Rd.GetChar(rd); END;
