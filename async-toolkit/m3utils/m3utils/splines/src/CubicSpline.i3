@@ -7,10 +7,7 @@ CONST NaturalSpline = 1.0d30;
 CONST Brand = "NaturalCubicSpline";
 
 TYPE 
-  Coord = RECORD
-    x, y : LONGREAL
-  END;
-
+  Coord = Spline.Coord;
   T <: Public;
 
   (* firstDeriv and lastDeriv set the derivatives at the 

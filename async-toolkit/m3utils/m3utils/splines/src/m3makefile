@@ -6,5 +6,6 @@ import("cit_util")
 
 Interface("Spline")
 Module("CubicSpline")
+Module("ParametricSpline")
 
 library("splines")
