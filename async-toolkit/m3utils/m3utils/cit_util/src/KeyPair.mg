@@ -7,8 +7,11 @@ PROCEDURE Equal(READONLY a , b : T) : BOOLEAN =
   END Equal;
 
 PROCEDURE Hash(READONLY a : T) : Word.T =
+  VAR
+    x := Word.Times(Key1.Hash(a.k1),169066571);
+    y := Key2.Hash(a.k2);
   BEGIN 
-    RETURN Word.Times(Key1.Hash(a.k1),Key2.Hash(a.k2))
+    RETURN Word.Plus(x,y)
   END Hash;
 
 BEGIN END KeyPair.
