@@ -1,4 +1,7 @@
 INTERFACE TermIO;
+
+(* todo: make this object extend Term.T *)
+
 TYPE
   T = OBJECT METHODS
     getChar(): CHAR;

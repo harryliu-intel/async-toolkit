@@ -9,7 +9,8 @@ IMPORT Term;
 
 PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
                 previous: TextList.T := NIL; default:="";
-                fatalControl:=TRUE; emptySelectsLast:=FALSE): TEXT =
+                fatalControl:=TRUE; emptySelectsLast:=FALSE;
+                term: Term.T := NIL): TEXT =
   VAR
     c: CHAR;
     t := default;
@@ -19,7 +20,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
     shadow := t;
   PROCEDURE WipeLine() =
     BEGIN
-      p0 := Text.Length(t); Term.Wr("\015"&prompt&t&"\033[K"); p:=p0;
+      p0 := Text.Length(t); term.wr("\015"&prompt&t&"\033[K"); p:=p0;
     END WipeLine;
   PROCEDURE Recall(VAR from, to: TextList.T) =
     BEGIN
@@ -38,7 +39,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
         WHILE p#0 AND Text.GetChar(t,p-1)#' ' DO DEC(p); END;
         IF del THEN
           t:=Text.Sub(t,0,p)&Text.Sub(t,p0);
-          Term.Wr("\033["&Fmt.Int(p0-p)&"D"&Text.Sub(t,p)&"\033[K");
+          term.wr("\033["&Fmt.Int(p0-p)&"D"&Text.Sub(t,p)&"\033[K");
           p0:=Text.Length(t);
         END;
       END;
@@ -53,7 +54,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
         IF del THEN
           t:=Text.Sub(t,0,p0)&Text.Sub(t,p);
           p:=p0;
-          Term.Wr(Text.Sub(t,p)&"\033[K");
+          term.wr(Text.Sub(t,p)&"\033[K");
           p0:=Text.Length(t);
         END;
       END;
@@ -61,23 +62,25 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
   PROCEDURE FDel() =
     BEGIN
       t := Text.Sub(t, 0, p) & Text.Sub(t, p+1);
-      Term.Wr(Text.Sub(t, p)&" ");
+      term.wr(Text.Sub(t, p)&" ");
       p0:=Text.Length(t)+1;
     END FDel;
   BEGIN
     prev := previous;
     next := NIL;
-    Term.MakeRaw(TRUE);
-    Term.Wr(prompt & default);
+    IF term = NIL THEN
+      term := Term.Default();
+    END;
+    term.wr(prompt & default);
     LOOP
       p0:=p;
-      c := Term.GetChar();
+      c := term.getChar();
       CASE c OF
       | '\033' =>
-        c := Term.GetChar();
+        c := term.getChar();
         CASE c OF
         | '[' =>
-          c := Term.GetChar();
+          c := term.getChar();
           CASE c OF
           | 'A' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
           | 'B' => Recall(next, prev);
@@ -104,23 +107,23 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
         IF emptySelectsLast AND Text.Equal(t,"") AND previous#NIL THEN 
           t:=previous.head; Print(t); RETURN t;
         ELSE
-          Term.WrLn("",TRUE); RETURN t;
+          term.wr("",TRUE,TRUE); RETURN t;
         END;
-      | '\013' => Term.Wr("\033[K"); t:=Text.Sub(t,0,p);
+      | '\013' => term.wr("\033[K"); t:=Text.Sub(t,0,p);
       | '\006' => p:=MIN(Text.Length(t),p+1);
       | '\002' => p:=MAX(0,p-1);
       | '\001' => p:=0;
       | '\005' => p:=Text.Length(t);
       | '\302','\342','\210' => BWord(c='\210');
       | '\306','\346','\304','\344' => FWord(c='\304' OR c='\344');
-      | '\177','\010'=> IF p>0 THEN DEC(p); Term.Wr("\010"); FDel(); END;
+      | '\177','\010'=> IF p>0 THEN DEC(p); term.wr("\010"); FDel(); END;
       ELSE
         IF ORD(c)>=32 AND ORD(c)<128 THEN
-          Term.Wr(Text.FromChar(c));INC(p0);
+          term.wr(Text.FromChar(c));INC(p0);
           t:=Text.Sub(t,0,p)&Text.FromChar(c)&Text.Sub(t,p);
           INC(p);
           IF p#Text.Length(t) THEN
-            Term.Wr(Text.Sub(t,p));
+            term.wr(Text.Sub(t,p));
             p0:=Text.Length(t);
           END;
 (*
@@ -131,9 +134,9 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
       END;
       (* Fix Cursor *)
       IF p<p0 THEN
-        Term.Wr("\033["&Fmt.Int(p0-p)&"D");
+        term.wr("\033["&Fmt.Int(p0-p)&"D");
       ELSIF p>p0 THEN
-        Term.Wr("\033["&Fmt.Int(p-p0)&"C");
+        term.wr("\033["&Fmt.Int(p-p0)&"C");
       END;
     END;
   END Input;

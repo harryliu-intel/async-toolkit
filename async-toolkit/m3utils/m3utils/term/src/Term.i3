@@ -13,4 +13,18 @@ PROCEDURE Wr(s: TEXT);
 PROCEDURE WrLn(s: TEXT; flush := FALSE);
 PROCEDURE MakeRaw(flag: BOOLEAN);
 
+
+TYPE
+  T <: Public; (* a null terminal *)
+  Public = OBJECT
+  METHODS
+    getChar(): CHAR;
+    wr(s: TEXT; ln, flush := FALSE);
+  END;
+
+PROCEDURE Default(raw := TRUE): T;
+(* stdin & stdout, using the above procedures. *)
+
+
+
 END Term.

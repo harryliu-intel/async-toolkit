@@ -1,10 +1,31 @@
 
 import("libm3")
 import("cit_util")
+
+
+% system header glue
+
 h_source("termios")
 interface("Termios")
-Module("Term")
 Interface("TermHooks")
+
+
+% terminal interfaces
+
+Module("Term")
 Module("TermIO")
+implementation("TermObject")
+
+
+% command line utilities
+
 Module("Cooker")
+Module("CommandLoop")
+implementation("CommandLoopDefaultCommand")
+Interface("BrandedCommand")
+Table("TextCommand", "Text", "BrandedCommand")
+List("Command", "BrandedCommand")
+Table("TextCommandList", "Text", "CommandList")
+
+
 library("term")

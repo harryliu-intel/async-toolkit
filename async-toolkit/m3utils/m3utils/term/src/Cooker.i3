@@ -1,4 +1,5 @@
 INTERFACE Cooker;
+IMPORT Term;
 IMPORT TextList;
 
 TYPE
@@ -9,7 +10,9 @@ PROCEDURE Input(prompt:="> ";
                 previous: TextList.T := NIL;
                 default:="";
                 fatalControl:=TRUE;
-                emptySelectsLast:=FALSE): TEXT;
+                emptySelectsLast:=FALSE;
+                term: Term.T := NIL): TEXT;
+
 
 PROCEDURE Print(t:="");
 
