@@ -38,7 +38,7 @@ REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 # These are built last
-M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest ktok klex kyacc kext parserlib parserlib/test`
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest ktok klex kyacc kext parserlib parserlib/test cit_parse cit_parse/testprs`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
