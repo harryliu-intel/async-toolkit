@@ -83,7 +83,7 @@ PROCEDURE BackSubstitute(READONLY m : Matrix.T;
 
   (* MODIFIES b *)
   VAR
-    ii := 0;
+    ii := -1;
     last := LAST(m^);
   BEGIN
     <* ASSERT FIRST(m^) = 0 AND 
@@ -95,7 +95,7 @@ PROCEDURE BackSubstitute(READONLY m : Matrix.T;
         sum := b[ll];
       BEGIN
         b[ll] := b[row];
-        IF ii # 0 THEN 
+        IF ii # -1 THEN 
           FOR col := ii TO row - 1 DO
             sum := sum - m[row,col] * b[col];
           END;

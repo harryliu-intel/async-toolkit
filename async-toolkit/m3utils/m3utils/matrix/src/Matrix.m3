@@ -70,15 +70,17 @@ PROCEDURE Sub(a,b : T): T            RAISES { DimensionMismatch } =
 PROCEDURE Mul(a,b : T): T            RAISES { DimensionMismatch } =
   VAR
     prod : T;
+    aDim := GetDim(a);
+    bDim := GetDim(b);
   BEGIN
     IF GetDim(a).cols # GetDim(b).rows THEN RAISE DimensionMismatch END;
-    prod := New(Dim{ GetDim(a).rows, GetDim(b).cols });
-    FOR row:= 0 TO GetDim(prod).rows - 1 DO
-      FOR col:= 0 TO GetDim(prod).cols - 1 DO
+    prod := New(Dim{ aDim.rows, bDim.cols });
+    FOR row:= 0 TO aDim.rows - 1 DO
+      FOR col:= 0 TO bDim.cols - 1 DO
         VAR
           element := 0.0d0;
         BEGIN
-          FOR term := 0 TO GetDim(a).cols - 1 DO
+          FOR term := 0 TO aDim.cols - 1 DO
             element := element + a[row,term] * b[term,col];
           END;
           prod[row,col] := element;
@@ -88,6 +90,66 @@ PROCEDURE Mul(a,b : T): T            RAISES { DimensionMismatch } =
     RETURN prod;
   END Mul;
 
+PROCEDURE Trace(m : T) : LONGREAL RAISES { NotSquare } =
+  VAR
+    res := 0.0d0;
+  BEGIN
+    IF GetDim(m).rows # GetDim(m).cols THEN
+      RAISE NotSquare
+    END;
+
+    FOR i := 0 TO GetDim(m).rows - 1 DO
+      res := res + m[i,i]
+    END;
+    RETURN res
+  END Trace;
+
+PROCEDURE Mean(m : T) : LONGREAL =
+  VAR
+    res := 0.0d0;
+    rows := GetDim(m).rows;
+    cols := GetDim(m).cols;
+  BEGIN
+    FOR r := 0 TO rows - 1 DO
+      FOR c := 0 TO cols - 1 DO
+        res := res + m[r,c]
+      END
+    END;
+    RETURN res / FLOAT(rows, LONGREAL)
+  END Mean;
+
+PROCEDURE MeanSq(m : T) : LONGREAL =
+  VAR
+    res := 0.0d0;
+    rows := GetDim(m).rows;
+    cols := GetDim(m).cols;
+  BEGIN
+    FOR r := 0 TO rows - 1 DO
+      FOR c := 0 TO cols - 1 DO
+        res := res + m[r,c] * m[r,c]
+      END
+    END;
+    RETURN res / FLOAT(rows, LONGREAL)
+  END MeanSq;
+
+PROCEDURE DevSq(m : T) : LONGREAL =
+  VAR
+    mm := 0.0d0;
+    msq := 0.0d0;
+    rows := GetDim(m).rows;
+    cols := GetDim(m).cols;
+    n := FLOAT(rows * cols, LONGREAL);
+  BEGIN
+    FOR r := 0 TO rows - 1 DO
+      FOR c := 0 TO cols - 1 DO
+        mm := mm + m[r,c];
+        msq := msq + m[r,c] * m[r,c]
+      END
+    END;
+    
+    RETURN msq - mm * mm/n
+  END DevSq;
+    
 PROCEDURE Det(m : T): LONGREAL       RAISES { NotSquare } =
 
   PROCEDURE Small(b : T; skipCol : INTEGER) : T =
@@ -170,6 +232,17 @@ PROCEDURE Format(m : T) : TEXT =
     END;
     RETURN str;
   END Format;
+
+PROCEDURE FormatVector(v : Vector) : TEXT =
+  VAR
+    str := "";
+  BEGIN
+    FOR i := FIRST(v^) TO LAST(v^) DO
+      str := str & Fmt.LongReal(v[i],style := Fmt.Style.Sci, 
+                                prec := 3 ) & " ";
+    END;
+    RETURN str;
+  END FormatVector;
 
 PROCEDURE Transpose(a : T): T =
   VAR
@@ -255,7 +328,7 @@ PROCEDURE ExtractColAsVector(m : T; c : CARDINAL) : Vector =
     res := NEW(Vector, rows);
   BEGIN
     FOR r := 0 TO rows-1 DO
-      res[c] := m[r,c]
+      res[r] := m[r,c]
     END;
     RETURN res
   END ExtractColAsVector;

@@ -26,6 +26,7 @@ PROCEDURE Sub(a,b : T): T            RAISES { DimensionMismatch };
 PROCEDURE Mul(a,b : T): T            RAISES { DimensionMismatch };
 PROCEDURE Scale(a : LONGREAL; m : T) : T;
 PROCEDURE Det(a : T): LONGREAL       RAISES { NotSquare };
+PROCEDURE Trace(a : T): LONGREAL       RAISES { NotSquare };
 
 (* return a unit matrix of the specified size *)
 PROCEDURE Unit(dim : Dim) : T RAISES { NotSquare } ;
@@ -40,6 +41,7 @@ PROCEDURE GetDim(m : T) : Dim;
 
 (* format a matrix for printing *)
 PROCEDURE Format(m : T) : TEXT;
+PROCEDURE FormatVector(v : Vector) : TEXT;
 
 PROCEDURE Transpose(a : T): T;
 
@@ -59,4 +61,14 @@ PROCEDURE ExtractCol(m : T; c : CARDINAL) : T;
 
 PROCEDURE SetCol(m : T; c : CARDINAL; col : Vector);
 
+(* mean and variance of all the matrix elements... *)
+PROCEDURE Mean(m : T) : LONGREAL;
+PROCEDURE MeanSq(m : T) : LONGREAL;
+PROCEDURE DevSq(m : T) : LONGREAL; (* sum of deviations from mean *)
+
 END Matrix.
+
+
+
+
+
