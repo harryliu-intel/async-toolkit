@@ -31,9 +31,13 @@ Build_generic_implementation = build_generic_impl
 
 if not defined("_exec")
     readonly proc _exec(cmd) is
-        local ret = exec(cmd)
-        write (cmd, CR)
-        if not equal(ret, 0) error("command failed with error code: ", ret) end
+	write (cmd, CR)
+	if defined("CM3_VERSION")
+		exec(cmd)
+	else
+	        local ret = exec(cmd)
+	        if not equal(ret, 0) error("command failed with error code: ", ret) end
+	end
     end
 end
 

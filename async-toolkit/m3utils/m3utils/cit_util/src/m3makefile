@@ -13,7 +13,12 @@ Generic_module("DblTable")
 
 Generic_module("BrandedSet")
 template("brandedset")
-Module("RTBrand")
+Interface("RTBrand")
+if defined("CM3_VERSION")
+	implementation("RTBrandCM3")
+else
+	implementation("RTBrand")
+end
 Module("RefRecord")
 
 Module("SIsuffix")
