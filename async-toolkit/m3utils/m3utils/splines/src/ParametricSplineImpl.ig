@@ -1,9 +1,10 @@
 (* $Id$ *)
 
-GENERIC INTERFACE ParametricSplineImpl(Spline);
+GENERIC INTERFACE ParametricSplineImpl(BaseSpline);
+IMPORT Spline;
 IMPORT ParametricSpline;
 
-CONST Brand = "Parametric" & Spline.Brand;
+CONST Brand = "Parametric" & BaseSpline.Brand;
 
 TYPE T <: ParametricSpline.T;
 
