@@ -11,4 +11,10 @@ TYPE
 PROCEDURE Format(l: T): TEXT; (* assumes Elem.Format exists *)
 PROCEDURE Equal(l1,l2: T): BOOLEAN;
 PROCEDURE Hash(l: T): Word.T;  (* assumes Elem.Hash *)
+
+(* the following used to be in ListExtras.ig *)
+PROCEDURE MemberDelD(VAR l: T; e: Elem.T): BOOLEAN;
+PROCEDURE LastDelD(VAR l: T): Elem.T;
+
+PROCEDURE DeleteD(l: T; READONLY e: Elem.T): T;
 END ListF.
