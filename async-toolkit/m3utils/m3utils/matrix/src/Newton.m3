@@ -29,9 +29,9 @@ PROCEDURE EvaluateVector(v : Quantity.Vector) : Vector
     values := NEW(Vector, NUMBER(v^));
   BEGIN
     FOR i:= FIRST(values^) TO LAST(values^) DO
-      values[i] := v[i].value();
+      values[i] := v[i].value()
     END;
-    RETURN values;
+    RETURN values
   END EvaluateVector;
 
 PROCEDURE EvaluateMatrix(m : Quantity.Matrix) : Matrix.T
@@ -41,10 +41,10 @@ PROCEDURE EvaluateMatrix(m : Quantity.Matrix) : Matrix.T
   BEGIN
     FOR row := FIRST(values^) TO LAST(values^) DO
       FOR col := FIRST(values[0]) TO LAST(values[0]) DO
-        values[row,col] := m[row,col].value();
-      END;
+        values[row,col] := m[row,col].value()
+      END
     END;
-    RETURN values;
+    RETURN values
   END EvaluateMatrix;
 
 
