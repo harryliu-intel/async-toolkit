@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 INTERFACE BoolInteger;
-IMPORT Bool, BoolSet;
+IMPORT Bool, BoolSet, BoolBoolTbl;
 IMPORT Word;
 
 (* A BoolInteger.T represents the non-empty set of values that an
@@ -14,9 +14,6 @@ TYPE
 
   Public = OBJECT METHODS
 
-    (* initialize a new T as a range with min value and max value *)
-    init(max : INTEGER; min : INTEGER := 0) : T;
-
     getMinValue() : INTEGER;
     getMaxValue() : INTEGER;
     isConstant() : BOOLEAN;
@@ -28,7 +25,29 @@ TYPE
     (* return an upper bound on how many bits it takes to represent
        the number in two's complement *)
     repbits() : CARDINAL;
+
+    (* return a new T, remapped according to the following 
+       mapping: all keys will be replaced to the entries *)
+    (* if check = TRUE then check that mapping is complete *)
+    remap(map : BoolBoolTbl.T; check := FALSE) : T;
+    
   END;
+
+  PublicFreeVariable = T OBJECT METHODS
+    (* initialize a new T as a range with min value and max value *)
+    init(max : INTEGER; min : INTEGER := 0) : T;
+
+    (* if self is a free variable, clone its representation and
+       return the map that will allow remapping any expression;
+       e.g., remapping a free variable would proceed as:
+       
+       a_remap := a.remap(a.cloneFreeVariable())
+     *)
+    clone() : BoolBoolTbl.T;
+  END;
+
+  FreeVariable <: PublicFreeVariable;
+
 
 CONST Brand = "BoolInteger";
 

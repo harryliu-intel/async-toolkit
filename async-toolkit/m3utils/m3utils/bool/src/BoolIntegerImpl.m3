@@ -1,7 +1,8 @@
 (* $Id$ *)
 
 MODULE BoolIntegerImpl EXPORTS BoolInteger;
-IMPORT Bool, BoolSet, Word, BoolSetDef, BoolIntegerTbl, IntBoolIntegerTbl;
+IMPORT Bool, BoolRemap, BoolSet, Word, BoolSetDef, BoolIntegerTbl, IntBoolIntegerTbl;
+IMPORT BoolBoolTbl;
 
 TYPE Array = REF ARRAY OF Bool.T;
 
@@ -19,20 +20,43 @@ REVEAL
   OVERRIDES
     isConstant := IsConstant;
     extract := Extract;
-    init := Init;
     repbits := RepBits;
+    remap := Remap;
   END;
 
+REVEAL
+  FreeVariable = PublicFreeVariable BRANDED Brand & "Free Variable" OBJECT
+    baseBits : Array;
+  OVERRIDES
+    init := Init;
+    remap := FreeRemap;
+    clone := Clone
+  END;
+  
 
-PROCEDURE Init(res : T; max, min : INTEGER) : T =
+PROCEDURE Clone(self : FreeVariable) : BoolBoolTbl.T =
+  VAR 
+    map := NEW(BoolBoolTbl.Default).init();
+  BEGIN
+    FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
+      EVAL map.put(self.baseBits[i],Bool.New())
+    END;
+    RETURN map
+  END Clone;
+
+(* this is ugly... we have to do something special to maintain 
+   res's "FreeVariable-ness"... *)
+PROCEDURE Init(res : FreeVariable; max, min : INTEGER) : T =
   VAR
     range := max - min;
   BEGIN
     <* ASSERT max >= min *>
-    RETURN Add(Constant(min),InitRange(res,range))
+    res.bits := Add(Constant(min),InitRange(res,range)).bits;
+
+    RETURN res
   END Init;
 
-PROCEDURE InitRange(res: T; range : CARDINAL) : T =
+PROCEDURE InitRange(res: FreeVariable; range : CARDINAL) : T =
   VAR
     bits : CARDINAL;
     inrange : Bool.T;
@@ -45,7 +69,7 @@ PROCEDURE InitRange(res: T; range : CARDINAL) : T =
     (* make room for the sign bit *)
     INC(bits);
 
-    res := NEW(T, bits := NEW(Array, bits));
+    res := NEW(FreeVariable, bits := NEW(Array, bits), baseBits := NEW(Array, bits-1));
     
     (* a bit goofy...
 
@@ -58,7 +82,11 @@ PROCEDURE InitRange(res: T; range : CARDINAL) : T =
        We end up with a number that must be in range!
     *)
 
-    FOR i := 0 TO bits - 2 DO res.bits[i] := Bool.New() END;
+    FOR i := FIRST(res.baseBits^) TO LAST(res.baseBits^) DO
+      res.baseBits[i] := Bool.New()
+    END;
+
+    FOR i := 0 TO bits - 2 DO res.bits[i] := res.baseBits[i] END;
 
     res.bits[bits-1] := Bool.False();
 
@@ -334,6 +362,35 @@ PROCEDURE CheckCache(a : T) : T =
 
 PROCEDURE RepBits(a : T) : CARDINAL = 
   BEGIN RETURN NUMBER(a.bits^) END RepBits;
+
+PROCEDURE Remap(a : T; m : BoolBoolTbl.T; check : BOOLEAN) : T =
+  VAR
+    res := NEW(T, bits := NEW(Array, NUMBER(a.bits^)));
+  BEGIN
+    WITH o = a.bits^, n = res.bits^ DO
+      FOR i := FIRST(o) TO LAST(o) DO
+        n[i] := BoolRemap.Remap(m,o[i],check)
+      END
+    END;
+    RETURN CheckCache(res)
+  END Remap;
+
+PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
+  VAR
+    res := NEW(FreeVariable, bits := NEW(Array, NUMBER(a.bits^)), baseBits := NEW(Array, NUMBER(a.baseBits^)));
+  BEGIN
+    WITH o = a.bits^, n = res.bits^ DO
+      FOR i := FIRST(o) TO LAST(o) DO
+        n[i] := BoolRemap.Remap(m,o[i],check)
+      END
+    END;
+    WITH o = a.baseBits^, n = res.baseBits^ DO
+      FOR i := FIRST(o) TO LAST(o) DO
+        n[i] := BoolRemap.Remap(m,o[i],check)
+      END
+    END;
+    RETURN CheckCache(res)
+  END FreeRemap;
 
 (* The cache is a special BoolIntegerSetDef with the representation-checking
    Equals as its equal method.  It is used by the Cached() procedure to

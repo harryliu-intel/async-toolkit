@@ -1,12 +1,12 @@
 (* $Id$ *)
 
-MODULE Bool EXPORTS Bool, BoolImpl;
+MODULE Bool EXPORTS Bool, BoolImpl, BoolRemap;
 IMPORT Cbool, CboolImpl;
 IMPORT CPtr;
 IMPORT Word;
 IMPORT Debug;
 IMPORT BoolSet, BoolSetDef;
-IMPORT BoolTextTbl;
+IMPORT BoolTextTbl, BoolBoolTbl;
 IMPORT Fmt;
 FROM Cbool IMPORT B;
 
@@ -150,6 +150,36 @@ PROCEDURE Vars(a : T) : BoolSet.T =
     VarsRecurse(set, a);
     RETURN set
   END Vars;
+
+PROCEDURE Remap(map : BoolBoolTbl.T; e : T; check : BOOLEAN) : T =
+  
+  PROCEDURE Recurse(e : T) : T =
+    VAR
+      o := NodeVar(e);
+      n : T;
+      gotIt := map.get(o,n);
+    BEGIN
+      (* rename current *)
+      IF NOT gotIt  AND check AND NOT o = False() AND NOT o = True() THEN
+        Debug.Error("No mapping for Bool.")
+      END;
+      
+      IF NOT gotIt THEN n := o END;
+
+      (* prepare to recurse *)
+      VAR
+        r := Right(e);
+        l := Left(e);
+        nr, nl : T;
+      BEGIN
+        IF r = NIL THEN nr := False() ELSE nr := Recurse(r) END;
+        IF l = NIL THEN nl := True()  ELSE nl := Recurse(l) END;
+
+        RETURN Or(And(n,nl),And(Not(n),nr))
+      END
+    END Recurse;
+
+  BEGIN RETURN Recurse(e) END Remap;
 
 PROCEDURE Format(b : T; symTab : BoolTextTbl.T) : TEXT =
   VAR 

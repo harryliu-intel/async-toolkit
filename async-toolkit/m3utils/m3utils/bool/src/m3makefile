@@ -9,6 +9,7 @@ c_source("bool")
 c_source("bool_stub") 
 
 Module("Bool") 
+Interface("BoolRemap")
 Module("Cbool") 
 interface("CboolImpl")
 Interface("BoolImpl") 
@@ -29,5 +30,7 @@ implementation("BoolIntegerImpl")
 Module("BoolInteger")
 Table("BoolInteger","BoolInteger","BoolInteger")
 Table("IntBoolInteger","Integer","BoolInteger")
+
+Table("BoolBool", "Bool", "Bool")
 
 library("bool")
