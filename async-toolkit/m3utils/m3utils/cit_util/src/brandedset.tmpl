@@ -1,0 +1,8 @@
+/* $Id$ */
+readonly proc brandedSet(nm, elem, set) is
+	build_generic_intf(nm, "BrandedSet", [elem, set], HIDDEN)
+end
+
+readonly proc BrandedSet(nm, elem, set) is
+	build_generic_intf(nm, "BrandedSet", [elem, set], VISIBLE)
+end
