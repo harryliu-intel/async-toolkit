@@ -110,6 +110,7 @@ PROCEDURE DoHelp(helpCmd: BuiltInCommand; args: TextList.T; term: Term.T)
     IF args.tail = NIL THEN
       WITH iter = self.commands.iterate() DO
         WHILE iter.next(name, cmd) DO
+          term.wr(name); term.wr(" ");
           term.wr(cmd.help(TextList.List1(name)), TRUE);
         END;
       END;
@@ -134,7 +135,7 @@ PROCEDURE DoSave(cmd: BuiltInCommand; args: TextList.T; <*UNUSED*>term: Term.T)
         VAR
           fn := args.tail.head;
           wr := FileWr.Open(fn);
-          cur := cmd.loop.prev;
+          cur := TextList.Reverse(cmd.loop.prev);
         BEGIN
           WHILE cur # NIL DO
             Wr.PutText(wr, cur.head);
@@ -287,6 +288,7 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
           ELSE
             IF Text.Equal(line,"\004") THEN
               line := "^D";
+              self.term.wr("", TRUE, TRUE);
             END;
             VAR
               tr := NEW(TextReader.T).init(line);
@@ -298,7 +300,12 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
                 args := NEW(TextReader.T).init(portion).shatter(": ","",TRUE);
                 IF args # NIL THEN
                   CASE Lookup(self, args.head, cmd) OF
-                  | LURes.WasPrefix,LURes.Found =>cmd.execute(args, self.term);
+                  | LURes.WasPrefix,LURes.Found =>
+                    TYPECASE cmd OF QuitCommand =>
+                      RETURN;
+                    ELSE
+                      cmd.execute(args, self.term);
+                    END;
                   | LURes.NotFound =>
                     RAISE Error("command not found; try `help'.");
                   | LURes.Ambiguous =>
@@ -313,8 +320,8 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
       EXCEPT Error(e) =>
         IF self.inputStack # NIL THEN
           self.inputStack := self.inputStack.tail;
-          self.term.wr("error: " & e, TRUE, TRUE);
         END;
+        self.term.wr("error: " & e, TRUE, TRUE);
       END;
     END;
   END Run;
