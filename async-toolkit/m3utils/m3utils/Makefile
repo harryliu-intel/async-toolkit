@@ -8,14 +8,14 @@ COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc`
 # would normally be shipped to /usr/local/lib/m3.
 # We need to make sure that we clean them in reverse order of 
 # building since they may depend on other libraries (1 way only)
-SHIPDIRS=cit_util magic bdd cptr bool 
+SHIPDIRS=cit_util magic bdd cptr bool boxes
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f prsparse bas newsim psim pslnew m3hier Parse`
 
 # These depend on nothing else
-M3SUBS= `./dirsexist.sh -f boxes magraster router`
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster router`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
