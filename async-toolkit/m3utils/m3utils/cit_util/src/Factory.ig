@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 GENERIC INTERFACE Factory(Of);
-IMPORT Word, ObjectFactory;
+IMPORT ObjectFactory;
 (* A Factory.T is an object that allocates objects of the type Of.T *)
 (* Call the build() method to allocate an object (ObjectFactory interface) *)
 TYPE
