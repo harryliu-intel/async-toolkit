@@ -24,6 +24,7 @@
 INTERFACE Debug;
 
 PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10);
+PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5);
 PROCEDURE Warning(t : TEXT);
 PROCEDURE Error(t : TEXT);
 PROCEDURE UnNil(text : TEXT) : TEXT;

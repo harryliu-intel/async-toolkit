@@ -39,6 +39,8 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
     EXCEPT ELSE END;
   END Out;
 
+PROCEDURE S(t: TEXT; minLevel : CARDINAL) = BEGIN Out(t, minLevel); END S;
+
 PROCEDURE Warning(t: TEXT) =
   BEGIN
     TRY
