@@ -29,7 +29,7 @@ COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc cit_util prsparse`
 #
 # m3texthack is a program, but it depends only on cit_util.
 #
-SHIPDIRS=matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout ktoklib
+SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout ktoklib
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
