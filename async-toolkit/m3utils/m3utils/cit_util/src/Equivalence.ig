@@ -8,7 +8,7 @@
 (*  Department of Computer Science                                           *)
 (*  Pasadena, CA 91125.                                                      *)
 (*                                                                           *)
-(*  Author: Karl Papadantonakis <kp@caltech.edu                              *)
+(*  Author: Karl Papadantonakis <kp@caltech.edu>                             *)
 (*                                                                           *)
 (*  Permission to use, copy, modify, and distribute this software            *)
 (*  and its documentation for any purpose and without fee is hereby          *)
