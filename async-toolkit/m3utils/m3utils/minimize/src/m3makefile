@@ -17,5 +17,11 @@ Module("Solve")
 
 /* adaptive grid */
 Module("AdGrid")
+Module("AdGridQ")
+MkSet("AdGridQ","AdGridQ")
+MkSetDef("AdGridQ","AdGridQ")
+Table("AdGridQRef","AdGridQ","Refany")
+
+Interface("AdGridChild")
 
 library("minimize")

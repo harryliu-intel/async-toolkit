@@ -1,10 +1,11 @@
 (* $Id$ *)
 
-MODULE AdGrid;
-IMPORT LRPoint, LRVector, LRScalarField;
+MODULE AdGrid EXPORTS AdGrid;
+IMPORT AdGridChild;
+IMPORT LRPoint, LRVector, LRScalarField, AdGridQ, AdGridQSet, AdGridQSetDef;
 
 TYPE
-  Child = { UL, UR, LL, LR }; (* top left, top right, etc. *)
+  Child = AdGridChild.T; (* top left, top right, etc. *)
 
 CONST 
   UL = Child.UL; UR = Child.UR; LL = Child.LL; LR = Child.LR;
@@ -12,15 +13,20 @@ CONST
     ARRAY BOOLEAN OF Child {LL,UL}, 
     ARRAY BOOLEAN OF Child {LR, UR} 
   };
+  NoChildren = ARRAY Child OF M { NIL, .. };
 
 TYPE 
-  M = OBJECT
+  M = AdGridQ.T OBJECT
+    master : T;
     up : M;
     ll, ur : LRPoint.T;
     vals : ARRAY Child OF LONGREAL;
-    children : ARRAY Child OF M := ARRAY Child OF M { NIL, .. };
+    children : ARRAY Child OF M := NoChildren;
   METHODS
-    corner(c : Child) : LRPoint.T := MCorner;
+    maxCorner() : Child := MaxCorner;
+    minCorner() : Child := MinCorner;
+  OVERRIDES
+    corner := MCorner;
   END;
 
 REVEAL 
@@ -33,6 +39,7 @@ REVEAL
     init := Init;
     setPrec := SetPrec;
     eval := EvalLRSF;
+    getQuadsContainingLevel := GetLeafTilesContainingLevel;
   END;
 
 PROCEDURE SetPrec(a : T; prec : LONGREAL) = BEGIN a.prec := prec END SetPrec;
@@ -53,21 +60,23 @@ PROCEDURE MCorner(m : M ; c : Child) : LRPoint.T =
          urx = m.ur.x,
          lly = m.ll.y,
          ury = m.ur.y,
-         xs = ARRAY Child OF LONGREAL { llx, urx, llx, urx }, 
-         ys = ARRAY Child OF LONGREAL { ury, ury, lly, lly } DO
+         xs = ARRAY Child OF LONGREAL { llx, llx, urx, urx }, 
+         ys = ARRAY Child OF LONGREAL { lly, ury, ury, lly } DO
       RETURN LRPoint.T { xs[c], ys[c] }
     END
   END MCorner;
 
 
-PROCEDURE SubdivideM(f : LRScalarField.T; m : M) =
+PROCEDURE SubdivideM(f : LRScalarField.T; m : M; levels : CARDINAL := 1) =
   BEGIN
+    IF levels = 0 THEN RETURN END;
+
     <* ASSERT m.children = ARRAY Child OF M { NIL, .. } *>
     WITH mm = LRPoint.T { (m.ll.x + m.ur.x) / 2.0d0 , 
                           (m.ll.y + m.ur.y) / 2.0d0 } DO
       FOR i := FIRST(Child) TO LAST(Child) DO
         WITH c = m.children[i] DO
-          c := NEW(M, up := m);
+          c := NEW(M, up := m, master := m.master);
           c.vals[i] := m.vals[i];
           CASE i OF
             UL => c.ll := LRPoint.T { m.ll.x, mm.y }; 
@@ -99,6 +108,9 @@ PROCEDURE SubdivideM(f : LRScalarField.T; m : M) =
         m.children[LR].vals[UL] := mmz;
         m.children[LL].vals[UR] := mmz
       END
+    END;
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      SubdivideM(f,m.children[i],levels - 1) 
     END
   END SubdivideM;
 
@@ -187,9 +199,9 @@ PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
     END
   END Eval;
 
-PROCEDURE NewM(f : LRScalarField.T; ll, ur : LRPoint.T) : M =
+PROCEDURE NewM(f : LRScalarField.T; ll, ur : LRPoint.T; master : T) : M =
   VAR
-    res := NEW(M, ll := ll, ur := ur, up := NIL);
+    res := NEW(M, ll := ll, ur := ur, up := NIL, master := master);
   BEGIN
     FOR i := FIRST(Child) TO LAST(Child) DO
       res.vals[i] := f.eval(PointToVector(res.corner(i)))
@@ -197,11 +209,61 @@ PROCEDURE NewM(f : LRScalarField.T; ll, ur : LRPoint.T) : M =
     RETURN res
   END NewM;
 
-PROCEDURE Init(self : T; f : LRScalarField.T; ll, ur : LRPoint.T) : T =
+PROCEDURE Init(self : T; 
+               f : LRScalarField.T; ll, ur : LRPoint.T; initLevels := 0) : T =
   BEGIN
     self.f := f;
-    self.root := NewM(f, ll, ur);
+    self.root := NewM(f, ll, ur, self);
+    SubdivideM(f,self.root,initLevels);
     RETURN self
   END Init;
+
+PROCEDURE GetLeafTilesContainingLevel(self : T; 
+                                      level : LONGREAL) : AdGridQSet.T = 
+
+  PROCEDURE GetLeafTilesContainingLevelM(m : M) =
+    BEGIN
+      IF m.children = NoChildren THEN
+        (* base case *)
+        IF level >= m.vals[m.minCorner()] AND 
+           level <= m.vals[m.maxCorner()] THEN
+          EVAL set.insert(m)
+        END
+      ELSE
+        (* recursion case *)
+        FOR i := FIRST(Child) TO LAST(Child) DO
+          GetLeafTilesContainingLevelM(m.children[i])
+        END
+      END
+    END GetLeafTilesContainingLevelM;
+
+  VAR
+    set := NEW(AdGridQSetDef.T).init();
+  BEGIN
+    GetLeafTilesContainingLevelM(self.root);
+    RETURN set
+  END GetLeafTilesContainingLevel;
+
+PROCEDURE MaxCorner(m : M) : Child =
+  VAR
+    c := UL;
+    v := FIRST(LONGREAL);
+  BEGIN
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      IF m.vals[i] >= v THEN v := m.vals[i]; c := i END
+    END;
+    RETURN c
+  END MaxCorner;
+
+PROCEDURE MinCorner(m : M) : Child =
+  VAR
+    c := UL;
+    v := LAST(LONGREAL);
+  BEGIN
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      IF m.vals[i] <= v THEN v := m.vals[i]; c := i END
+    END;
+    RETURN c
+  END MinCorner;
 
 BEGIN END AdGrid.
