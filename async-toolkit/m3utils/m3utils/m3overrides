@@ -3,6 +3,14 @@
 /* .top is made by the Makefile before building anything */
 include(".top")
 
+/* when overriding, ld.so doesn't know where to find libraries */
+/* this is even more true if we want to move the binaries or */
+/* clean.. */
+
+option("standalone","T")
+
+/* these are the packages that are part of this distribution */
+
 override("magic",TOP)
 override("cit_util",TOP)
 override("bdd",TOP)

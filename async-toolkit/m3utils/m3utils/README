@@ -8,7 +8,7 @@ PKG_INSTALL="dest dir"
 Remember to check if build_standalone is necessary if you're not
 going to m3ship to /usr/local.
 
-This all needs to be set up so that we can "build" a final version
-or a working version w/o clobbering /usr/local...
-
+To distribute just part of this repository, just delete the directories
+you don't want to distribute.  The dirsexist.sh shell script will make
+sure that only the right things are built.
 

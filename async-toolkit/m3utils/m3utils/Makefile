@@ -2,17 +2,18 @@
 # $Id$
 #
 
-COMMONDIRS= `./dirsexist.sh processor crt`
+COMMONDIRS= `./dirsexist.sh -f processor crt`
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
 # We need to make sure that we clean them in reverse order of 
 # building since they may depend on other libraries (1 way only)
-SHIPS=`./dirsexist.sh cit_util magic bdd cptr bool`
-REVSHIPS=`echo ${SHIPS} | xargs -n1 echo | tail -r | xargs echo`
+SHIPDIRS=cit_util magic bdd cptr bool
+SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
+REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
-SUBDIRS= `./dirsexist.sh bas newsim psim pslnew m3hier Parse`
-M3SUBS= `./dirsexist.sh boxes magraster`
+SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
+M3SUBS= `./dirsexist.sh -f boxes magraster`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
