@@ -6,4 +6,11 @@ m3_option("-times")
 import ("libm3")
 Module("TextReader") /* needed by m3tmplhack, must be compiled before cit_util. */
 
+Generic_interface("CITextTable")
+Generic_implementation("CITextTable")
+
+Module("CITextRefTbl")
+Module("Args")
+Module("OTextExtras")
+
 Library("cit_common")
