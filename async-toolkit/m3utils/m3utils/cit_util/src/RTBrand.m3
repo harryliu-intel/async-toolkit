@@ -14,8 +14,9 @@ PROCEDURE Get(x : REFANY) : TEXT RAISES { NotBranded } =
   END Get;
 
 
-PROCEDURE GetByTC(b : RT0.Typecode) : TEXT RAISES { NotBranded } = 
+PROCEDURE GetByTC(c : RT0.Typecode) : TEXT RAISES { NotBranded } = 
   VAR
+    b := RTType.Get(c).brand;
     s := LOOPHOLE(b, Ctypes.char_star);
   BEGIN 
     IF LOOPHOLE(s,INTEGER) = 0 THEN RAISE NotBranded END;

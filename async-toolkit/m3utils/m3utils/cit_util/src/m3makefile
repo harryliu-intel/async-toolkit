@@ -26,12 +26,18 @@ List("IntPair", "IntPair")
 Module("RTBrand")
 
 Module("ToRefany")
+
 Generic_module("ToRefany")
 Interface("ToRefanyClass")
 table("ToRefany","Integer","ToRefanyClass")
 template("to_refany")
 
-toRefany("Text")
+
+/* this is a dumb hack.  to ensure that initialization code gets run,
+   you MUST import xToRefany in ToRefanyPrivate (or in some other 
+   module that does get run). */
+
+implementation("ToRefanyPrivate")
 
 Ref("Int", "Integer")
 toRefany("IntRef")
