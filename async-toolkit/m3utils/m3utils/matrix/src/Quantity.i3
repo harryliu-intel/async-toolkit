@@ -21,6 +21,9 @@ TYPE
 
     (* shouldnt really let the REF LONGREALs slip out like this *)
     variables(): RefSet.T RAISES { Recursive };                    (* RefSet of variables *)
+
+    (* can set: only if a literal! *)
+    set(newValue : LONGREAL);
   END;
   
 PROCEDURE Mul(x,y:T) : T ;

@@ -1,7 +1,7 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
 (* $Id$ *)
 MODULE Quantity;
-IMPORT RefSet,RefSetDef,Fmt;
+IMPORT RefSet,RefSetList AS RefSetDef ,Fmt;
 IMPORT Math; (* exp, log, ... *)
 IMPORT Debug;
 
@@ -28,6 +28,7 @@ REVEAL
     derivative := Derivative;
     variables := Variables;
     format := Format;
+    set := Set;
   END;
 
 (* should do generic Set, and specific LongRealSet *)
@@ -131,6 +132,12 @@ PROCEDURE Format(self : T; printValues : BOOLEAN) : TEXT RAISES { Recursive } =
       Unlock(self);
     END;
   END Format;
+
+PROCEDURE Set(self : T; value : LONGREAL) =
+  BEGIN
+    <* ASSERT self.type = Op.Value *>
+    self.base^ := value
+  END Set;
 
 PROCEDURE Init(self: T; type : Op; l : T; r : T; base : REF LONGREAL := NIL ;
                name : TEXT) 

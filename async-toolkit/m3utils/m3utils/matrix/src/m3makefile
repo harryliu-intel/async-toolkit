@@ -1,7 +1,8 @@
 /* $Id$ */
 import("libm3")
 import("cit_util")
-mkSetDef("Ref","Refany")
+/* making a SetDef with Refanys can't work since we can't hash those */
+/*mkSetDef("Ref","Refany")*/
 
 Module("Quantity")
 Module("Matrix")
