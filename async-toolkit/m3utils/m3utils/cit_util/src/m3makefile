@@ -88,7 +88,7 @@ Module("BigInt")
 Gmodule("Rational")
 Rational("Int","IntForRat")
 Rational("Big", "BigInt")
-
+Module("UnsafeMutex")
 Library("cit_util")
 
 

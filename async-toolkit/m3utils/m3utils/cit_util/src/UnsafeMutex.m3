@@ -1,6 +1,6 @@
 UNSAFE MODULE UnsafeMutex;
 IMPORT Thread;
-IMPORT RTCollextor;
+IMPORT RTCollector;
 
 TYPE
   IKnowWhatMutexIs = OBJECT
@@ -10,6 +10,7 @@ TYPE
 PROCEDURE CheckMyLock(m: MUTEX): BOOLEAN =
   VAR
     mutex: IKnowWhatMutexIs;
+    result: BOOLEAN;
   BEGIN
     RTCollector.Disable();
     mutex := LOOPHOLE(m, IKnowWhatMutexIs);
