@@ -59,10 +59,8 @@ PROCEDURE Warning(t: TEXT) =
   END Warning;
 
 PROCEDURE Error(t: TEXT) =
-<*FATAL ABORT*>
   BEGIN
-    S("ERROR: " & UnNil(t), 0);
-    RAISE ABORT;
+    errHook(t);
   END Error;
 
 PROCEDURE UnNil(text : TEXT) : TEXT =
@@ -84,6 +82,7 @@ PROCEDURE GetLevel() : CARDINAL = BEGIN RETURN level END GetLevel;
 
 (* outHook *)
 VAR
+  errHook := DefaultError;
   outHook := DefaultOut;
   outHookLevel:=-1;
 
@@ -95,6 +94,13 @@ PROCEDURE DefaultOut(t: TEXT) =
     EXCEPT ELSE END;
   END DefaultOut;
 
+PROCEDURE DefaultError(t: TEXT) =
+<*FATAL ABORT*>
+  BEGIN
+    S("ERROR: " & UnNil(t), 0);
+    RAISE ABORT;
+  END DefaultError; 
+
 PROCEDURE RegisterHook(out: OutHook; level:=0) =
   BEGIN
     <* ASSERT level#outHookLevel *>
@@ -104,6 +110,10 @@ PROCEDURE RegisterHook(out: OutHook; level:=0) =
     END;
   END RegisterHook;
 
+PROCEDURE RegisterErrorHook(err: OutHook) =
+  BEGIN
+    errHook := err;
+  END RegisterErrorHook;
 
 (* debugFilter *)
 

@@ -43,5 +43,6 @@ PROCEDURE GetLevel() : CARDINAL;
 TYPE
   OutHook = PROCEDURE(t: TEXT);
 PROCEDURE RegisterHook(out: OutHook; level:=0);
+PROCEDURE RegisterErrorHook(err: OutHook);
 
 END Debug.
