@@ -14,7 +14,7 @@ Module("PrefixDB")
 List("Longreal", "LongrealType")
 Pqueue("Longreal","LongrealType")
 module("ScanList")
-list("LongrealRef", "LongrealRef")
+List("LongrealRef", "LongrealRef")
 
 Generic_module("OpenArrayTable")
 template("dbltable")
