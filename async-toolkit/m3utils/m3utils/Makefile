@@ -78,13 +78,13 @@ subs:
 ships: 
 	@for s in $(SHIPS); do\
 		echo "===> $$s";\
-		cd $$s; $(M3BUILD); $(M3SHIP); cd .. ;  \
+		(cd $$s; $(M3BUILD); $(M3SHIP));  \
 	done
 
 m3subs:
 	@for s in $(M3SUBS); do\
 		echo "===> $$s";\
-		cd $$s; $(M3BUILD); cd .. ;  \
+		(cd $$s; $(M3BUILD));  \
 	done
 
 cleanships:
