@@ -6,6 +6,7 @@ IMPORT LRPoint, LRVector, LRScalarField, AdGridQ, AdGridQSet, AdGridQSetDef;
 
 TYPE
   Child = AdGridChild.T; (* top left, top right, etc. *)
+  Dir = AdGridQ.Dir;
 
 CONST 
   UL = Child.UL; UR = Child.UR; LL = Child.LL; LR = Child.LR;
@@ -33,7 +34,158 @@ TYPE
     getLbound := GetLbound;
     getUbound := GetUbound;
     subdivide := SubdivideSet;
+
+    neighbor := Neighbor;
+    getCornerValues := GetCornerValues;
+    getCrossings := GetCrossings;
   END;
+
+PROCEDURE GetCornerValues(m : M; adGridP : REFANY) : ARRAY Child OF LONGREAL =
+  VAR
+    r : ARRAY Child OF LONGREAL;
+  BEGIN
+    WITH a = NARROW(adGridP, T) DO
+      FOR i := FIRST(Child) TO LAST(Child) DO
+        r[i] := m.vals[i][a.me]
+      END
+    END;
+    RETURN r
+  END GetCornerValues;
+
+PROCEDURE GetCrossings(m : M; 
+                       adGridP : REFANY; 
+                       of : LONGREAL): ARRAY Dir OF REF LRPoint.T =
+
+  CONST N = Dir.N; E = Dir.E; 
+        W = Dir.W; S = Dir.S; 
+
+  PROCEDURE MixPts(a, b : LRPoint.T; alpha : LONGREAL) : LRPoint.T =
+    BEGIN
+      RETURN LRPoint.T { alpha * b.x + (1.0d0 - alpha * a.x) ,
+                         alpha * b.y + (1.0d0 - alpha * a.y) }
+    END MixPts;
+
+  CONST
+    Dirs = ARRAY Child OF Dir { W, N, E, S };
+  VAR
+    r := ARRAY Dir OF REF LRPoint.T { NIL, .. };
+    me := NARROW(adGridP,T).me;
+  BEGIN
+    FOR i := FIRST(Child) TO LAST(Child) DO
+      WITH j = VAL((ORD(i) + 1) MOD NUMBER(Child),Child), 
+           zi = m.vals[i][me], 
+           zj = m.vals[j][me], 
+           p = r[Dirs[i]] DO
+        IF of <= MAX(zi,zj) AND of >= MIN(zi,zj) THEN
+          p := NEW(REF LRPoint.T);
+          p^ := MixPts(m.corner(i),m.corner(j), (of - zi) / (zj - zi))
+        END
+      END
+    END;
+    RETURN r
+  END GetCrossings;
+
+(*
+PROCEDURE GetChild(m : M; c : Child) : M = 
+  BEGIN RETURN m.children[c] END GetChild;
+*)
+
+PROCEDURE UpNeighbor(m : M; dir : Dir) : M =
+  CONST N = Dir.N; E = Dir.E; 
+        W = Dir.W; S = Dir.S; 
+  VAR
+    dad := m.up;
+    iAm : Child;
+    r : M := NIL;
+  BEGIN
+    IF dad = NIL THEN RETURN NIL END;
+
+    WITH sibs = dad.children DO
+      FOR i := FIRST(Child) TO LAST(Child) DO
+        IF sibs[i] = m THEN iAm := i END
+      END;
+      
+      CASE iAm OF 
+        UL => IF dir = S THEN r:= sibs[LL] ELSIF dir = E THEN r:= sibs[UR] END
+      |
+        UR => IF dir = S THEN r:= sibs[LR] ELSIF dir = W THEN r:= sibs[UL] END
+      | 
+        LL => IF dir = N THEN r:= sibs[UL] ELSIF dir = E THEN r:= sibs[LR] END
+      | 
+        LR => IF dir = N THEN r:= sibs[UR] ELSIF dir = W THEN r:= sibs[LL] END
+      END;
+      IF r # NIL THEN RETURN r ELSE RETURN UpNeighbor(dad,dir) END
+    END
+  END UpNeighbor;
+
+(* starting from at in m, find smallest neighboring tile in dir *)
+PROCEDURE Neighbor(m : M; at : LRPoint.T; dir : Dir) : AdGridQ.T =
+  CONST N = Dir.N; E = Dir.E; 
+        W = Dir.W; S = Dir.S; 
+
+  PROCEDURE RecurseX(c : M; x : LONGREAL; dir : Dir) : M =
+    BEGIN
+      IF c.children = NoChildren THEN RETURN c END;
+      
+      WITH mmx = (c.ll.x + c.ur.x) / 2.0d0 DO
+        IF x < mmx THEN
+          IF    dir = N THEN 
+            RETURN c.children[LL]
+          ELSIF dir = S THEN
+            RETURN c.children[UL]
+          ELSE
+            <* ASSERT FALSE *>
+          END
+        ELSE
+          IF    dir = N THEN 
+            RETURN c.children[LR]
+          ELSIF dir = S THEN
+            RETURN c.children[UR]
+          ELSE
+            <* ASSERT FALSE *>
+          END
+        END
+      END
+    END RecurseX;
+
+  PROCEDURE RecurseY(c : M; y : LONGREAL; dir : Dir) : M =
+    BEGIN
+      IF c.children = NoChildren THEN RETURN c END;
+      
+      WITH mmy = (c.ll.y + c.ur.y) / 2.0d0 DO
+        IF y < mmy THEN
+          IF    dir = E THEN 
+            RETURN c.children[LL]
+          ELSIF dir = W THEN
+            RETURN c.children[LR]
+          ELSE
+            <* ASSERT FALSE *>
+          END
+        ELSE
+          IF    dir = E THEN 
+            RETURN c.children[UL]
+          ELSIF dir = W THEN
+            RETURN c.children[UR]
+          ELSE
+            <* ASSERT FALSE *>
+          END
+        END
+      END
+    END RecurseY;
+
+  VAR
+    upNeighbor := UpNeighbor(m,dir);
+  BEGIN
+    (* if no neighbor at all, that's that. *)
+    IF upNeighbor = NIL THEN RETURN NIL END;
+
+    (* else find the closest tile along the line defined by at. *)
+    CASE dir OF
+      N, S => RETURN RecurseX(upNeighbor, at.x, dir)
+    |
+      E, W => RETURN RecurseY(upNeighbor, at.y, dir)
+    END
+  END Neighbor;
 
 PROCEDURE NewVals(n : CARDINAL) : Vals = 
   VAR
