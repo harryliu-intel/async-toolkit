@@ -170,7 +170,11 @@ PROCEDURE New(x : INTEGER) : T =
     END
   END New;
 
-PROCEDURE Sign(a : T) : CompRet = BEGIN RETURN a.sign END Sign;
+PROCEDURE Sign(a : T) : CompRet =
+  BEGIN
+    IF a.rep.siz = 0 THEN RETURN 0; END;
+    RETURN a.sign;
+  END Sign;
 
 PROCEDURE Divide(a, b : T; VAR q, r : T) = 
   VAR

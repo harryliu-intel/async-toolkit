@@ -39,6 +39,7 @@ CONST
   Divide = Int.Divide;
 PROCEDURE Negate(a: T): T;
 PROCEDURE Sub(a, b: T): T;
+PROCEDURE Old(a: T): INTEGER; (* convert small ints back to INTEGER *)
 
 
 (* misc *)
