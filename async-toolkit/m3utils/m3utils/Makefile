@@ -12,7 +12,7 @@ SHIPDIRS=cit_util magic bdd cptr bool boxes
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
-SUBDIRS= `./dirsexist.sh -f prsparse bas newsim psim pslnew m3hier Parse`
+SUBDIRS= `./dirsexist.sh -f prsparse bas newsim psim pslnew m3hier Parse klex`
 
 # These depend on nothing else
 M3SUBS= `./dirsexist.sh -f boxesdriver magraster router`
