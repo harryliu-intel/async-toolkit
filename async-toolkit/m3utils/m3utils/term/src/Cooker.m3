@@ -1,0 +1,127 @@
+MODULE Cooker;
+IMPORT Text;
+IMPORT TextList;
+IMPORT Process;
+IMPORT Fmt;
+IMPORT Term;
+
+(* terminal I/O utilities *)
+
+PROCEDURE Input(prompt:=">"; completer: Completer := NIL;
+                previous: TextList.T := NIL; default:=""): TEXT =
+  VAR
+    c: CHAR;
+    t := default;
+    p := Text.Length(t);
+    p0 := p;
+    prev, next: TextList.T;
+    shadow := t;
+  PROCEDURE WipeLine() =
+    BEGIN
+      p0 := Text.Length(t); Term.Wr("\015"&prompt&t&"\033[K"); p:=p0;
+    END WipeLine;
+  PROCEDURE Recall(VAR from, to: TextList.T) =
+    BEGIN
+      IF from#NIL THEN
+        to := TextList.Cons(shadow, to);
+        shadow := from.head;
+        from := from.tail;
+        t := shadow;
+        WipeLine();
+      END;
+    END Recall;
+  PROCEDURE BWord(del: BOOLEAN) =
+    BEGIN
+      WHILE p#0 AND Text.GetChar(t,p-1)=' ' DO DEC(p); END;
+      WHILE p#0 AND Text.GetChar(t,p-1)#' ' DO DEC(p); END;
+      IF del THEN
+        t:=Text.Sub(t,0,p)&Text.Sub(t,p0);
+        Term.Wr("\033["&Fmt.Int(p0-p)&"D"&Text.Sub(t,p)&"\033[K");
+        p0:=Text.Length(t);
+      END;
+    END BWord;
+  PROCEDURE FWord(del: BOOLEAN) =
+    BEGIN
+      IF p#Text.Length(t) THEN
+        INC(p);
+        WHILE p#Text.Length(t) AND Text.GetChar(t,p-1)#' ' DO INC(p); END;
+        WHILE p#Text.Length(t) AND (p=1 OR Text.GetChar(t,p-2)=' ') DO
+          INC(p); END;
+        IF del THEN
+          t:=Text.Sub(t,0,p0)&Text.Sub(t,p);
+          p:=p0;
+          Term.Wr(Text.Sub(t,p)&"\033[K");
+          p0:=Text.Length(t);
+        END;
+      END;
+    END FWord;
+  BEGIN
+    prev := previous;
+    next := NIL;
+    Term.Wr(prompt & default);
+    LOOP
+      p0:=p;
+      c := Term.GetChar();
+      CASE c OF
+      | '\033' =>
+        c := Term.GetChar();
+        CASE c OF
+        | '[' =>
+          c := Term.GetChar();
+          CASE c OF
+          | 'A' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
+          | 'B' => Recall(next, prev);
+          | 'C' => p:=MAX(Text.Length(t),p+1);
+          | 'D' => p:=MIN(0,p-1);
+          ELSE
+          END;
+        | 'B','b','\177','\010' => BWord(c='\177' OR c= '\010');
+        | 'F','f','D','d' => FWord(c='D' OR c='d');
+        ELSE
+        END;
+      | '\004','\003','\032' => Print(); Print("^C"); Process.Exit(1);
+      | '\011' => IF completer#NIL THEN completer.do(t); WipeLine(); END;
+      | '\015' => Print(); RETURN t;
+      | '\013' => Term.Wr("\033[K"); t:=Text.Sub(t,0,p);
+      | '\006' => p:=MAX(Text.Length(t),p+1);
+      | '\002' => p:=MIN(0,p-1);
+      | '\001' => p:=0;
+      | '\005' => p:=Text.Length(t);
+      | '\302','\342','\210' => BWord(c='\210');
+      | '\306','\346','\304','\344' => FWord(c='\304' OR c='\344');
+      | '\177','\010'=>
+        IF p>0 THEN
+          DEC(p);
+          t := Text.Sub(t, 0, p) & Text.Sub(t, p+1);
+          Term.Wr("\010"&Text.Sub(t, p)&" ");
+          p0:=Text.Length(t)+1;
+        END;
+      ELSE
+        IF ORD(c)>=32 AND ORD(c)<128 THEN
+          Term.Wr(Text.FromChar(c));INC(p0);
+          t:=Text.Sub(t,0,p)&Text.FromChar(c)&Text.Sub(t,p);
+          INC(p);
+          IF p#Text.Length(t) THEN
+            Term.Wr(Text.Sub(t,p));
+            p0:=Text.Length(t);
+          END;
+        ELSE
+          Print(); Print("Charcode:" & Fmt.Unsigned(ORD(c),base:=8)); Print();
+        END;
+      END;
+      (* Fix Cursor *)
+      IF p<p0 THEN
+        Term.Wr("\033["&Fmt.Int(p0-p)&"D");
+      ELSIF p>p0 THEN
+        Term.Wr("\033["&Fmt.Int(p-p0)&"C");
+      END;
+    END;
+  END Input;
+
+PROCEDURE Print(t:="") =
+  BEGIN
+    Term.WrLn(t);
+  END Print;
+
+BEGIN
+END Cooker.
