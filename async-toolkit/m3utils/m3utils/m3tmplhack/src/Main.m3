@@ -17,11 +17,11 @@ VAR
 
 PROCEDURE FormatNames(args: TextReader.T; countLimit := LAST(INTEGER)): TEXT =
   VAR
-    result: TEXT;
+    result: TEXT := "";
   BEGIN
     TRY
       FOR i := 1 TO countLimit DO
-        result := result & args.nextE(Delims, TRUE);
+        result := result & ", " & args.nextE(Delims, TRUE);
       END;
     EXCEPT ELSE END;
     RETURN result;
@@ -39,6 +39,17 @@ PROCEDURE WriteProcs(commaArgs, instArgs, suffix: TEXT := "") =
     WriteProc(commaArgs, instArgs, "build", lowNM & suffix);
     WriteProc(commaArgs, instArgs, "Build", nm & suffix);
   END WriteProcs;
+
+PROCEDURE Braquefy(a: TEXT): TEXT =
+  VAR
+    in := a;
+  BEGIN
+    IF Text.Length(in) # 0 THEN
+      in := Text.Sub(in, 2, LAST(INTEGER));
+      (* strip leading comma *)
+    END;
+    RETURN ", [" & in & "]";
+  END Braquefy;
 
 PROCEDURE DoModule() =
   VAR
@@ -64,8 +75,8 @@ PROCEDURE DoModule() =
     comma[0] := FormatNames(args2, com);
     comma[1] := FormatNames(args1);
     comma[2] := FormatNames(args2);
-    bracket[1] := ", [" & comma[0] & comma[1] & "]";
-    bracket[2] := ", [" & comma[0] & comma[2] & "]";
+    bracket[1] := Braquefy(comma[0] & comma[1]);
+    bracket[2] := Braquefy(comma[0] & comma[2]);
     WriteProcs(comma[0] & comma[1] & comma[2], bracket[1] & bracket[2]);
     mode := "interface";
     WriteProcs(comma[0] & comma[1], bracket[1], "_intf");
@@ -83,7 +94,7 @@ PROCEDURE DoOther() =
     <* ASSERT Text.Equal(mode, "interface") OR
     Text.Equal(mode, "implementation") *>
     comma := FormatNames(args);
-    WriteProcs(comma,", [" & comma & "]");
+    WriteProcs(comma, Braquefy(comma));
   END DoOther;
 
 PROCEDURE LowerFirst(a: TEXT): TEXT =
