@@ -1,5 +1,5 @@
 (* $Id$ *)
-GENERIC MODULE BrandedSet(Elem, Set);
+GENERIC MODULE BrandedSet(Elem);
 IMPORT Word;
 
 PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a.equal(b) END Equal;
@@ -15,3 +15,4 @@ PROCEDURE Hash(a : T) : Word.T =
   END Hash;
 
 BEGIN END BrandedSet.
+

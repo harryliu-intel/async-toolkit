@@ -11,8 +11,7 @@ readonly proc Dbltable(nm, k, v) is
 
 	local ks = k & "DblSetDef"
 	local bks = "Branded" & ks
-	build_generic_intf(bks, "BrandedSet", [k, ks], VISIBLE)
-	build_generic_impl(bks, "BrandedSet", [k, ks])
+        BrandedSet(bks,k,ks)
 
 	Table(k & v & "Single", k, v)
 	local kvt = k & v & "SingleTbl"
@@ -33,8 +32,7 @@ readonly proc dbltable(nm, k, v) is
 
 	local ks = k & "DblSetDef"
 	local bks = "Branded" & ks
-	build_generic_intf(bks, "BrandedSet", [k, ks], HIDDEN)
-	build_generic_impl(bks, "BrandedSet", [k, ks])
+        brandedSet(bks,k,ks)
 
 	table(k & v & "Single", k, v)
 	local kvt = k & v & "SingleTbl"
