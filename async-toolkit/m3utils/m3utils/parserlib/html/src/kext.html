@@ -64,7 +64,8 @@ been _TT(discard())ed but not _TT(detach())ed (see below).
 
 As in other _BF(lex)es, the type of the result can depend upon the
 matched text, so long as the result is a _TT(Token). This means, for
-example, that the returned type need not be the same as in the default method.
+example, that the returned type need not be the same as in the default
+method. To skip passing the matched text to the parser, _TT(RETURN NIL).
 
 _H(extending parsers)
 

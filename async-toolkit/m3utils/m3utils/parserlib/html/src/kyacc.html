@@ -45,6 +45,14 @@ _TRE
 </TABLE>
 <P>
 
+If a precedence is assigned to a rule using _TT(ruleName_returnType),
+then any precedence assigned to that rule by assigning precedence to
+one of its symbols is overridden. Each symbol can be assigned only one
+precedence; hence if for example two rules (involving binary and unary
+minus) must have different precedences, then only one can be assigned
+a precedence by assigning a precedence to the _TT('-') symbol.
+<P>
+
 The set of valid grammar symbols consists of whatever tokens were
 declared in the _TI, plus whatever reduction method return types are
 declared as above.
