@@ -2,6 +2,8 @@
 
 MODULE BoolInteger;
 IMPORT Bool,Word;
+IMPORT Fmt, BoolFormatter;
+IMPORT TextWr, Wr, Thread;
 
 REVEAL 
   Private = Public BRANDED Brand & "Private" OBJECT
@@ -9,7 +11,23 @@ REVEAL
     getMinValue := GetMinValue;
     getMaxValue := GetMaxValue;
     isEqual := IsEqual;
+    format := Format;
   END;
+
+PROCEDURE Format(a : Private; bf : BoolFormatter.T) : TEXT =
+  <* FATAL Thread.Alerted, Wr.Failure *>
+  VAR
+    wr := NEW(TextWr.T).init();
+  BEGIN
+    FOR i := 0 TO a.repbits() DO
+      Wr.PutText(wr,"bit "); 
+      Wr.PutText(wr,Fmt.Int(i)); 
+      Wr.PutText(wr," : ");
+      Wr.PutText(wr,bf.fmt(a.extract(i)));
+      Wr.PutChar(wr,'\n')
+    END;
+    RETURN TextWr.ToText(wr)
+  END Format;
 
 (* for generics *)
 PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;

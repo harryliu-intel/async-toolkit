@@ -25,6 +25,7 @@ REVEAL
     repbits := RepBits;
     remap := Remap;
     vars := Vars;
+    substitute := Substitute;
   END;
 
 REVEAL
@@ -33,9 +34,19 @@ REVEAL
   OVERRIDES
     init := Init;
     remap := FreeRemap;
-    clone := Clone
+    clone := Clone;
+    isRepBaseBit := FVIsRepBaseBit;
   END;
   
+PROCEDURE FVIsRepBaseBit(self : FreeVariable; 
+                         b : Bool.T; VAR which : CARDINAL) : BOOLEAN =
+  BEGIN
+    FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
+      IF b = self.baseBits[i] THEN which := i; RETURN TRUE END
+    END;
+    RETURN FALSE
+  END FVIsRepBaseBit;
+
 VAR
   idmu := NEW(MUTEX);
   id : Word.T := 0;
@@ -383,6 +394,18 @@ PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
     END;
     RETURN CheckCache(res)
   END FreeRemap;
+
+PROCEDURE Substitute(self : T; f : FreeVariable; val : T) : T =
+  VAR
+    boolBoolTbl := NEW(BoolBoolTbl.Default).init();
+  BEGIN
+    <* ASSERT val.getMinValue() >= f.getMinValue() AND
+              val.getMaxValue() <= f.getMaxValue() *>
+    FOR i := FIRST(f.baseBits^) TO LAST(f.baseBits^) DO
+      EVAL boolBoolTbl.put(f.baseBits[i],val.extract(i))
+    END;
+    RETURN self.remap(boolBoolTbl)
+  END Substitute;
 
 PROCEDURE AbstractEqual(<*UNUSED*>self : BoolIntegerTbl.T; 
                         READONLY a , b : T) : BOOLEAN =

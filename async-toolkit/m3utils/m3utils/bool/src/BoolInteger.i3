@@ -3,6 +3,7 @@
 INTERFACE BoolInteger;
 IMPORT Bool, BoolSet, BoolBoolTbl;
 IMPORT Word;
+IMPORT BoolFormatter;
 
 (* A BoolInteger.T represents the non-empty set of values that an
    integer expression can take on. *)
@@ -32,6 +33,11 @@ TYPE
     remap(map : BoolBoolTbl.T; check := FALSE) : T;
     
     vars() : BoolSet.T; (* Vars, below *)
+    
+    (* substitute an expression (can be a constant) for a free variable *)
+    substitute(f : FreeVariable; val : T) : T;
+
+    format(bf : BoolFormatter.T) : TEXT;
   END;
 
   PublicFreeVariable = T OBJECT METHODS
@@ -45,6 +51,8 @@ TYPE
        a_remap := a.remap(a.cloneFreeVariable())
      *)
     clone(VAR clonedFree : FreeVariable) : BoolBoolTbl.T;
+    
+    isRepBaseBit(b : Bool.T; VAR which : CARDINAL) : BOOLEAN; (* for debugging *)
   END;
 
   FreeVariable <: PublicFreeVariable;

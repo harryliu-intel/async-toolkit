@@ -9,6 +9,7 @@ c_source("bool")
 c_source("bool_stub") 
 
 Module("Bool") 
+Interface("BoolFormatter")
 Module("BoolRemap")
 Module("Cbool") 
 interface("CboolImpl")
