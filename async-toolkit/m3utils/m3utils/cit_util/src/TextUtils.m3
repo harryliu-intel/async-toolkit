@@ -25,9 +25,14 @@ MODULE TextUtils;
 IMPORT IntList, ScanList;
 IMPORT TextReader;
 IMPORT Text;
+IMPORT TextRd, TextWr;
+IMPORT Rd, Wr;
 IMPORT Fmt;
 IMPORT TextSet, TextSetDef, TextList;
 IMPORT Lex, FloatMode;
+IMPORT Thread;
+
+<* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *>
 
 PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL =
   VAR
@@ -224,5 +229,51 @@ PROCEDURE Capitalize(t: TEXT; uniqueSuffix := ""): TEXT =
     END;
   END Capitalize;
 
+PROCEDURE BreakLongLines(t: TEXT; atCol := 79): TEXT =
+  VAR
+    rd := TextRd.New(t);
+    wr := TextWr.New();
+    line: TEXT;
+  BEGIN
+    IF atCol = 0 THEN RETURN t; END;
+    TRY
+      LOOP
+        line := Rd.GetLine(rd);
+        WHILE Text.Length(line) > atCol DO
+          Wr.PutText(wr, Text.Sub(line, 0, atCol) & "\n");
+          line := Text.Sub(line, atCol);
+        END;
+        Wr.PutText(wr, line & "\n");
+      END;
+    EXCEPT Rd.EndOfFile =>
+    END;
+    RETURN TextWr.ToText(wr);
+  END BreakLongLines;
+
+PROCEDURE GetLines(t: TEXT; n: INTEGER;  firstBreakLongAtCol:=79): TEXT =
+  VAR
+    pos: INTEGER;
+  BEGIN
+    t := BreakLongLines(t, firstBreakLongAtCol);
+    IF n > 0 THEN
+      pos := 0;
+      FOR i := 1 TO n DO
+        pos := Text.FindChar(t, '\n', pos) + 1;
+        IF pos = -1 THEN
+          pos := Text.Length(t);
+          EXIT;
+        END;
+      END;
+      RETURN Text.Sub(t,0,pos);
+    ELSE
+      pos := LAST(INTEGER);
+      FOR i := 0 TO -n DO
+        pos := Text.FindCharR(t, '\n', pos-1);
+        IF pos = -1 THEN EXIT END;
+      END;
+      INC(pos);
+      RETURN Text.Sub(t,pos);
+    END;
+  END GetLines;
 
 BEGIN END TextUtils.

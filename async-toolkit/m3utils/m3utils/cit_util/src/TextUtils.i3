@@ -67,4 +67,10 @@ PROCEDURE ShatterInts(t: TEXT;
 PROCEDURE Capitalize(t: TEXT; uniqueSuffix := ""): TEXT;
 (* capitalize "t"; if result would be equal to "t", append "uniqueSuffix". *)
 
+PROCEDURE BreakLongLines(t: TEXT; atCol := 79): TEXT;
+(* Break lines longer than "atCol" chars. "atCol=0" does nothing. *)
+
+PROCEDURE GetLines(t: TEXT; n: INTEGER; firstBreakLongAtCol:=79): TEXT;
+(* positive "n" for first "n" lines; negative for last "|n|" lines; *)
+
 END TextUtils.
