@@ -140,8 +140,9 @@ readonly proc gmojule(nm) is
 end
 
 readonly proc Gmojule(nm) is
-	Generic_mojule(nm)
-	gmodule_template(nm)
+	local rename = nm & "_2"
+	Generic_mojule(nm, rename)
+	gmodule_template(nm, rename)
 end
 
 readonly proc gjnterface(nm) is
