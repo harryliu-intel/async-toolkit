@@ -4,7 +4,7 @@ MODULE ConjGradient;
 IMPORT Matrix, Compress, Debug;
 IMPORT Fmt;
 
-CONST ItMax = 200;
+CONST ItMax = 5000;
 CONST Eps = 1.0d-10;
 
 PROCEDURE Minimize(VAR p : Matrix.Vector;
@@ -58,9 +58,9 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
       INC(its);
 
       (* how quickly is it supposed to converge? *)
-      IF its >= ItMax + NUMBER(p^) DIV 10 THEN EXIT END
+      IF its >= ItMax + NUMBER(p^) DIV 5 THEN EXIT END
     END;
-    Debug.Error("Too many iterations in ConjGradient.Minimize.");
+    Debug.Error("Too many iterations in ConjGradient.Minimize.\nBest so far = " & Fmt.LongReal(fp));
     <* ASSERT FALSE *>
   END Minimize;
 
