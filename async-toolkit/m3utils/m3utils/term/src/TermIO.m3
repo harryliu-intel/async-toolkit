@@ -6,6 +6,9 @@ IMPORT Thread;
 
 <* FATAL Rd.EndOfFile, Rd.Failure, Thread.Alerted *>
 
+VAR
+  rawMutex := NEW(MUTEX);
+
 TYPE
   Private = T OBJECT
   OVERRIDES
@@ -19,9 +22,11 @@ PROCEDURE GetChar(<*UNUSED*>self: T): CHAR =
   VAR
     result: CHAR;
   BEGIN
-    Term.MakeRaw(TRUE);
-    result := Term.GetCharD();
-    Term.MakeRaw(FALSE);
+    LOCK rawMutex DO
+      Term.MakeRaw(TRUE);
+      result := Term.GetCharD();
+      Term.MakeRaw(FALSE);
+    END;
     RETURN result;
   END GetChar;
 
