@@ -19,8 +19,9 @@
 # 2. SHIPDIRS     --   Modula-3 libraries
 # 3. SUBDIRS      --   C programs
 # 4. M3SUBS       --   Modula-3 programs
+# 5. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
 
-COMMONDIRS=processor crt m3yacc cit_common m3tmplhack cit_util prsparse term parserlib
+COMMONDIRS=processor crt m3yacc cit_common m3tmplhack m3browserhack cit_util prsparse term parserlib
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
@@ -44,8 +45,10 @@ M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
 M3SHIP= echo
 
-all: .bindir .top commons ships subs m3subs
-clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis 
+BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs cit_parse/testchp paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
+
+all: .bindir .top commons ships subs m3subs browserexps
+clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
@@ -59,6 +62,7 @@ cleanthis:
 	find . -name `cat .bindir` -print | xargs rm -rf 
 	rm -f .bindir .top
 	rm -rf hack/.hidden
+	rm -rf .browserhack*
 
 cleanbuilddirs:
 
@@ -86,6 +90,10 @@ m3subs:
 		echo "===> $$s";\
 		(cd $$s; $(M3BUILD));  \
 	done
+
+browserexps:
+	m3browserhack/export.sh $(BROWSEREXPS)
+
 
 cleanships:
 	@for s in $(REVSHIPS); do\
