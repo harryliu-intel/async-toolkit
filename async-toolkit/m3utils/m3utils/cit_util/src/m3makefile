@@ -3,6 +3,7 @@ import("cit_common")
 template("generics")
 Interface("DblRefany")
 Module("Debug")
+Module("BreakHere")
 Module("TextUtils")
 implementation("TextUtilsFmt")
 

@@ -22,6 +22,13 @@
 (* $Id$ *)
 
 MODULE Debug;
+IMPORT TextSet;
+IMPORT TextSetDef;
+IMPORT FileRd;
+IMPORT Rd;
+IMPORT BreakHere;
+IMPORT Thread;
+IMPORT OSError;
 IMPORT Wr;
 FROM Stdio IMPORT stderr;
 IMPORT Env, Scan;
@@ -32,7 +39,11 @@ EXCEPTION ABORT;
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL) =
   BEGIN
     IF minLevel > level THEN RETURN END;
-
+    IF debugFilter THEN
+      IF triggers.member(t) THEN
+        BreakHere.Please();
+      END;
+    END;
     TRY
       Wr.PutText(stderr, UnNil(t) & "\n");
       Wr.Flush(stderr);
@@ -43,19 +54,13 @@ PROCEDURE S(t: TEXT; minLevel : CARDINAL) = BEGIN Out(t, minLevel); END S;
 
 PROCEDURE Warning(t: TEXT) =
   BEGIN
-    TRY
-      Wr.PutText(stderr,"WARNING: " & UnNil(t) & "\n");
-      Wr.Flush(stderr);
-    EXCEPT ELSE END;
+    S("WARNING: " & UnNil(t), 0);
   END Warning;
 
 PROCEDURE Error(t: TEXT) =
 <*FATAL ABORT*>
   BEGIN
-    TRY
-      Wr.PutText(stderr,"ERROR: " & UnNil(t) & "\n");
-      Wr.Flush(stderr);
-    EXCEPT ELSE END;
+    S("ERROR: " & UnNil(t), 0);
     RAISE ABORT;
   END Error;
 
@@ -76,7 +81,10 @@ PROCEDURE SetLevel(newLevel : CARDINAL) = BEGIN level := newLevel END SetLevel;
   
 PROCEDURE GetLevel() : CARDINAL = BEGIN RETURN level END GetLevel;
 
-VAR level := 0;
+VAR
+  level := 0;
+  debugFilter := Env.Get("DEBUGFILTER")#NIL;
+  triggers: TextSet.T;
 
 BEGIN 
   VAR
@@ -88,5 +96,24 @@ BEGIN
       Lex.Error, FloatMode.Trap => 
         Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"")
     END
-  END
+  END;
+  IF debugFilter THEN
+    triggers := NEW(TextSetDef.T).init();
+    VAR
+      in: Rd.T;
+      line: TEXT;
+      <* FATAL Rd.Failure, Thread.Alerted *>
+    BEGIN
+      TRY
+        in := FileRd.Open("debugfilter");
+        LOOP
+          line := Rd.GetLine(in);
+          EVAL triggers.insert(line);
+        END;
+      EXCEPT
+      | Rd.EndOfFile =>
+      | OSError.E => Error("Can't find file `debugfilter'.");
+      END;
+    END;
+  END;
 END Debug.
