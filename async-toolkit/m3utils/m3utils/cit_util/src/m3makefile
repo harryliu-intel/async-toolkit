@@ -22,8 +22,8 @@ Module("RTBrand")
 
 Module("ToRefany")
 
-gmodule("Ref", ["type"], ["type"])
-Gmodule("ToRefany", [], ["type"])
+gmodule("Ref")
+Gmodule("ToRefany")
 Interface("ToRefanyClass")
 table("ToRefany","Integer","ToRefanyClass")
 
