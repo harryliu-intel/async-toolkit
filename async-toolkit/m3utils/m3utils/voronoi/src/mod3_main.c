@@ -153,35 +153,39 @@ else	return( (struct Site *)NULL);
 
 
 struct memdata {
-  char *ptr;
   struct memdata *next;
+  char *ptr;
 };
 
-struct memdata *mem=NULL;
+char *mem=NULL;
 
 char *memmalloc(siz)
      int siz;
 {
-  char *res=mymalloc(siz);
+  char *res=mymalloc(siz+sizeof(char *));
+
+  /*
   struct memdata *n=mymalloc(sizeof(struct memdata));
 
   n->next=mem;
   n->ptr=res;
   mem=n;
+  */
 
-  return res;
+  *((char **)res) = mem;
+  mem=res;
+  return res+sizeof(char*);
 }
 
 /* clear it all out */
 mod3_finish()
 {
-  struct memdata *q;
+  char *q;
   
   
   while (mem) {
-    myfree(mem->ptr);
-    q=mem;
-    mem=mem->next;
-    myfree(q);
+    q=*(char**)mem;
+    myfree(mem);
+    mem=q;
   }
 }
