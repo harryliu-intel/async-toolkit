@@ -22,10 +22,15 @@ PROCEDURE Sign(a : T) : CompRet;
 
 PROCEDURE Format(a : T; base : CARDINAL := 10) : TEXT;
 
+CONST
+  Zero = 0;
+  One = 1;
+
 PROCEDURE Hash(a : T) : Word.T;
 
 PROCEDURE ToLongReal(a : T) : LONGREAL;
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
+PROCEDURE Divide(a, b : T; VAR q, r : T);
 
 END IntForRat.

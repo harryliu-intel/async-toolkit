@@ -30,5 +30,6 @@ PROCEDURE Hash(a : T) : Word.T;
 PROCEDURE ToLongReal(a : T) : LONGREAL;
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
+PROCEDURE Divide(a, b : T; VAR q, r : T);
 
 END BigInt.

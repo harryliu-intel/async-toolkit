@@ -36,5 +36,7 @@ PROCEDURE Min(a, b : T) : T = BEGIN RETURN MIN(a,b) END Min;
 PROCEDURE ToLongReal(a : T) : LONGREAL = 
   BEGIN RETURN FLOAT(a,LONGREAL) END ToLongReal;
 
+PROCEDURE Divide(a, b : T; VAR q, r : T) =
+  BEGIN q:=a DIV b; r:=a MOD b; END Divide;
 BEGIN END IntForRat.
 
