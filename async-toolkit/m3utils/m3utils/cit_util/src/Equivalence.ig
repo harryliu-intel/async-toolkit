@@ -1,7 +1,28 @@
+(*                                                                           *)
+(*  Equivalence.ig                                                           *)
+(*                                                                           *)
+(*  Generic equivalence classes                                              *)
+(*                                                                           *)
+(*  Copyright (c) 2000 California Institute of Technology                    *)
+(*  All rights reserved.                                                     *)
+(*  Department of Computer Science                                           *)
+(*  Pasadena, CA 91125.                                                      *)
+(*                                                                           *)
+(*  Author: Karl Papadantonakis <kp@caltech.edu                              *)
+(*                                                                           *)
+(*  Permission to use, copy, modify, and distribute this software            *)
+(*  and its documentation for any purpose and without fee is hereby          *)
+(*  granted, provided that the above copyright notice appear in all          *)
+(*  copies. The California Institute of Technology makes no representations  *)
+(*  about the suitability of this software for any purpose. It is            *)
+(*  provided "as is" without express or implied warranty. Export of this     *)
+(*  software outside of the United States of America may require an          *)
+(*  export license.                                                          *)
+(* $Id$ *)
+
 GENERIC INTERFACE Equivalence(Elem);
 
-(* $Id$
-
+(*
 A "T" represents an equivalence relation on the set of all "Elem.T"s.
 A newly created "Default" has each "Elem.T" in its own equivalence
 class.
