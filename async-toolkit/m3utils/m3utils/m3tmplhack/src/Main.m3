@@ -1,11 +1,11 @@
 MODULE Main;
+IMPORT Args;
 IMPORT Wr, Rd;
-IMPORT FileWr;
+IMPORT FileWr, FileRd;
 IMPORT Text;
 IMPORT TextReader;
 IMPORT Thread;
 IMPORT OSError;
-FROM Stdio IMPORT stdin;
 
 <* FATAL Wr.Failure, Thread.Alerted, Rd.EndOfFile, Rd.Failure, OSError.E *>
 
@@ -15,33 +15,17 @@ CONST
 VAR
   Version := Text.Sub(RawVers, 15, Text.Length(RawVers) - 17);
 
-PROCEDURE FormatNames(args: TextReader.T; VAR comma, space: TEXT;
-                      countLimit := LAST(INTEGER)) =
+PROCEDURE FormatNames(args: TextReader.T; countLimit := LAST(INTEGER)): TEXT =
   VAR
-    s: TEXT;
+    result: TEXT;
   BEGIN
-    comma := "";
-    space := NIL;
     TRY
       FOR i := 1 TO countLimit DO
-        s := args.nextE(Delims, TRUE);
-        comma := comma & ", " & s;
-        IF space = NIL THEN
-          space := s;
-        ELSE
-          space := space & " " & s;
-        END;
+        result := result & args.nextE(Delims, TRUE);
       END;
     EXCEPT ELSE END;
-    IF space = NIL THEN space := ""; END;
+    RETURN result;
   END FormatNames;
-
-PROCEDURE SpaceCat(a, b: TEXT): TEXT =
-  BEGIN
-    IF Text.Length(a) = 0 THEN RETURN b; END;
-    IF Text.Length(b) = 0 THEN RETURN a; END;
-    RETURN a & " " & b;
-  END SpaceCat;
 
 PROCEDURE WriteProc(commaArgs, instArgs, build, name: TEXT) =
   BEGIN
@@ -58,12 +42,12 @@ PROCEDURE WriteProcs(commaArgs, instArgs, suffix: TEXT := "") =
 
 PROCEDURE DoModule() =
   VAR
-    line1 := Rd.GetLine(stdin);
-    line2 := Rd.GetLine(stdin);    
+    line1 := Rd.GetLine(in);
+    line2 := Rd.GetLine(in);    
     args1 := NEW(TextReader.T).init(line1);
     args2 := NEW(TextReader.T).init(line2);
     com := 0;
-    comma,space: ARRAY [0..2] OF TEXT;
+    comma, bracket: ARRAY [0..2] OF TEXT;
     (* 0 = common, 1 = interface, 2 = implementation *)
   BEGIN
     Wr.PutText(out, "/* intf_args = \""&line1 &
@@ -76,30 +60,30 @@ PROCEDURE DoModule() =
     EXCEPT ELSE END;
     args1 := NEW(TextReader.T).init(line1);
     args2 := NEW(TextReader.T).init(line2);
-    FormatNames(args1, comma[0], space[0], com);
-    FormatNames(args2, comma[0], space[0], com);
-    FormatNames(args1, comma[1], space[1]);
-    FormatNames(args2, comma[2], space[2]);
-    space[1] := ", [" & SpaceCat(space[0],space[1]) & "]";
-    space[2] := ", [" & SpaceCat(space[0],space[2]) & "]";
-    WriteProcs(comma[0] & comma[1] & comma[2], space[1] & space[2]);
+    comma[0] := FormatNames(args1, com);
+    comma[0] := FormatNames(args2, com);
+    comma[1] := FormatNames(args1);
+    comma[2] := FormatNames(args2);
+    bracket[1] := ", [" & comma[0] & comma[1] & "]";
+    bracket[2] := ", [" & comma[0] & comma[2] & "]";
+    WriteProcs(comma[0] & comma[1] & comma[2], bracket[1] & bracket[2]);
     mode := "interface";
-    WriteProcs(comma[0] & comma[1], space[1], "_intf");
+    WriteProcs(comma[0] & comma[1], bracket[1], "_intf");
     mode := "implementation";
-    WriteProcs(comma[0] & comma[2], space[2], "_impl");
+    WriteProcs(comma[0] & comma[2], bracket[2], "_impl");
   END DoModule;
 
 PROCEDURE DoOther() =
   VAR
-    line := Rd.GetLine(stdin);
+    line := Rd.GetLine(in);
     args := NEW(TextReader.T).init(line);
-    comma,space: TEXT;
+    comma: TEXT;
   BEGIN
     Wr.PutText(out, "/* args = \""&line&"\" */\n");
     <* ASSERT Text.Equal(mode, "interface") OR
     Text.Equal(mode, "implementation") *>
-    FormatNames(args, comma, space);
-    WriteProcs(comma,", [" & space & "]");
+    comma := FormatNames(args);
+    WriteProcs(comma,", [" & comma & "]");
   END DoOther;
 
 PROCEDURE LowerFirst(a: TEXT): TEXT =
@@ -112,8 +96,9 @@ PROCEDURE LowerFirst(a: TEXT): TEXT =
   END LowerFirst;
 
 VAR
-  mode := Rd.GetLine(stdin);
-  nm := Rd.GetLine(stdin);
+  in := FileRd.Open(Args.CommandLine()[0]);
+  mode := Rd.GetLine(in);
+  nm := Rd.GetLine(in);
   lowNM := LowerFirst(nm);
   out := FileWr.Open(nm & ".tmpl");
 BEGIN
