@@ -132,6 +132,7 @@ ArrayHash("Int", "Integer")
 
 Module("CITRandom")
 Module("ProcUtils")
+Module("PathnameUtils")
 
 Library("cit_util")
 
