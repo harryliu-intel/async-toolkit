@@ -65,6 +65,7 @@ PROCEDURE SetCol(m : T; c : CARDINAL; col : Vector);
 PROCEDURE Mean(m : T) : LONGREAL;
 PROCEDURE MeanSq(m : T) : LONGREAL;
 PROCEDURE DevSq(m : T) : LONGREAL; (* sum of deviations from mean *)
+PROCEDURE SumSq(m : T) : LONGREAL;
 
 END Matrix.
 

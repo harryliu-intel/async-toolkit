@@ -150,6 +150,21 @@ PROCEDURE DevSq(m : T) : LONGREAL =
     RETURN msq - mm * mm/n
   END DevSq;
     
+PROCEDURE SumSq(m : T) : LONGREAL =
+  VAR
+    msq := 0.0d0;
+    rows := GetDim(m).rows;
+    cols := GetDim(m).cols;
+  BEGIN
+    FOR r := 0 TO rows - 1 DO
+      FOR c := 0 TO cols - 1 DO
+        msq := msq + m[r,c] * m[r,c]
+      END
+    END;
+    
+    RETURN msq 
+  END SumSq;
+    
 PROCEDURE Det(m : T): LONGREAL       RAISES { NotSquare } =
 
   PROCEDURE Small(b : T; skipCol : INTEGER) : T =
