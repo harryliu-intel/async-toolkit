@@ -39,10 +39,15 @@ PROCEDURE FormatNames(args: TextReader.T; countLimit := LAST(INTEGER)): TEXT =
   END FormatNames;
 
 PROCEDURE WriteProc(commaArgs, instArgs, build, name: TEXT) =
-  BEGIN
-    Wr.PutText(out, "\nreadonly proc " & name & "(nm" &
+  PROCEDURE Write1(nmExt, pnameExt: TEXT) =
+    BEGIN
+    Wr.PutText(out, "\nreadonly proc " & name & pnameExt & "(nm" &
       commaArgs & ") is\n    " & build & "_generic_" & mode &
-      "(nm & \"" & nm & "\", \"" & nm & "\"" & instArgs & ")\nend\n");
+      "(nm" & nmExt & ", \"" & nm & "\"" & instArgs & ")\nend\n");
+    END Write1;
+  BEGIN
+    Write1(" & \"" & nm & "\"", "");
+    Write1("", "_named");
   END WriteProc;
 
 PROCEDURE WriteProcs(commaArgs, instArgs: TEXT; doSuffix := TRUE) =
@@ -145,10 +150,12 @@ PROCEDURE DoModule() =
     WriteProcs(comma[0] & comma[2], bracket[2]);
   END DoModule;
 
-PROCEDURE Shorthand(short: TEXT) =
+PROCEDURE Shorthand(short, ext: TEXT := "") =
+  VAR
+    newName := short & ext;
   BEGIN
-    Wr.PutText(out, "if not defined(\"" & short & "\") " &
-      short & " = " & short & "_" & mode & " end\n");
+    Wr.PutText(out, "if not defined(\"" & newName & "\") " &
+      newName & " = " & short & "_" & mode & ext &" end\n");
   END Shorthand;
 
 PROCEDURE DoOther() =
@@ -165,6 +172,8 @@ PROCEDURE DoOther() =
     Wr.PutText(out, "\n/* shorthand */\n");
     Shorthand(lowNM);
     Shorthand(nm);
+    Shorthand(lowNM, "_named");
+    Shorthand(nm, "_named");
   END DoOther;
 
 PROCEDURE LowerFirst(a: TEXT): TEXT =
