@@ -133,7 +133,7 @@ PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists} =
   BEGIN
     g := ExtendedGCD(a,mod,aCoeff,bCoeff);
     IF NOT Equal(g, Int.One) THEN RAISE NoneExists; END;
-    RETURN aCoeff;
+    RETURN Mod(aCoeff, mod);
   END ModInverse;
 
 PROCEDURE Read(fn: Pathname.T): TextIntTbl.T =
