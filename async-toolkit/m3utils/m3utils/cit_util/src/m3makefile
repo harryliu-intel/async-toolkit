@@ -7,5 +7,6 @@ Module("TextReader")
 Module("Debug")
 Module("TextUtils")
 implementation("TextUtilsFmt")
+Generic_module("OpenArrayTable")
 library("cit_util")
 
