@@ -220,10 +220,6 @@ PROCEDURE Equals(a, b : T) : Bool.T =
     RETURN t
   END Equals;
 
-
-PROCEDURE LessThanZero(a : T) : Bool.T =
-  BEGIN RETURN a.bits[LAST(a.bits^)] END LessThanZero;
-
 PROCEDURE Vars(a : T) : BoolSet.T = 
   VAR
     s := NEW(BoolSetDef.T).init();
@@ -333,34 +329,6 @@ PROCEDURE Choose(c : Bool.T; it, if : T) : T =
     RETURN CheckCache(res)
   END Choose;
 
-PROCEDURE Sign(a : T) : Bool.T =
-  BEGIN RETURN a.bits[LAST(a.bits^)] END Sign;
-
-PROCEDURE Mul(a, b : T) : T =
-  VAR
-    absa := Abs(a);
-    absb := Abs(b);
-
-    sgna := Sign(a);
-    sgnb := Sign(b);
-
-    sgnr := Bool.Xor(sgna,sgnb);
-    r := Zero;
-  BEGIN
-    FOR i := 0 TO LAST(absa.bits^) DO
-      VAR
-        term := Choose(absa.bits[i],ShiftLeft(absb,i),Zero);
-      BEGIN
-        r := Add(r,term)
-      END
-    END;
-    RETURN CheckCache(Choose(sgnr,Neg(r),r))
-  END Mul;
-
-PROCEDURE AbstractEqual(<*UNUSED*>self : BoolIntegerTbl.T; 
-                        READONLY a , b : T) : BOOLEAN =
-  BEGIN RETURN Equals(a,b) = Bool.True() END AbstractEqual;
-
 PROCEDURE CheckCache(a : T) : T =
   VAR
     try : T;
@@ -408,6 +376,10 @@ PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
     END;
     RETURN CheckCache(res)
   END FreeRemap;
+
+PROCEDURE AbstractEqual(<*UNUSED*>self : BoolIntegerTbl.T; 
+                        READONLY a , b : T) : BOOLEAN =
+  BEGIN RETURN Equals(a,b) = Bool.True() END AbstractEqual;
 
 (* The cache is a special BoolIntegerSetDef with the representation-checking
    Equals as its equal method.  It is used by the Cached() procedure to

@@ -106,8 +106,7 @@ PROCEDURE GetId(a : T) : INTEGER = BEGIN RETURN Cbool.getid(a.get()) END GetId;
 
 PROCEDURE GC() = BEGIN LOCK mu DO Cbool.gc(B) END END GC;
 
-PROCEDURE Equal(a, b : T) : BOOLEAN =
-  BEGIN RETURN a = b END Equal;
+PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;
 
 PROCEDURE Choose(c : T; it, if : T) : T =
   BEGIN RETURN Or(And(c,it), And(Not(c),if)) END Choose;

@@ -132,6 +132,33 @@ PROCEDURE SignedShiftV(a : T; sa : T) : T =
     RETURN res
   END SignedShiftV;
 
+PROCEDURE Sign(a : T) : Bool.T =
+  BEGIN RETURN a.extract(a.repbits() - 1) END Sign;
+
+PROCEDURE LessThanZero(a : T) : Bool.T =
+  BEGIN RETURN Sign(a) END LessThanZero;
+
+PROCEDURE Mul(a, b : T) : T =
+  VAR
+    absa := Abs(a);
+    absb := Abs(b);
+
+    sgna := Sign(a);
+    sgnb := Sign(b);
+
+    sgnr := Bool.Xor(sgna,sgnb);
+    r := Zero;
+  BEGIN
+    FOR i := 0 TO absa.repbits() - 1 DO
+      VAR
+        term := Choose(absa.extract(i),ShiftLeft(absb,i),Zero);
+      BEGIN
+        r := Add(r,term)
+      END
+    END;
+    RETURN Choose(sgnr,Neg(r),r)
+  END Mul;
+
 BEGIN 
   (* can't do anything here because we need to set things up in 
      BoolIntegerImpl first *)
