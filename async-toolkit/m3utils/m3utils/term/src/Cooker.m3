@@ -7,7 +7,7 @@ IMPORT Term;
 
 (* terminal I/O utilities *)
 
-PROCEDURE Input(prompt:=">"; completer: Completer := NIL;
+PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
                 previous: TextList.T := NIL; default:="";
                 fatalControl:=TRUE): TEXT =
   VAR
