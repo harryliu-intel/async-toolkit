@@ -31,9 +31,19 @@ PROCEDURE Visit(self: T; tc: Typecode;
 TYPE
   E = IntPQ.Elt OBJECT tc, count: INTEGER; END;
 
+PROCEDURE Line(tc: INTEGER; name: TEXT; size, count: INTEGER) =
+  BEGIN
+          S(Fmt.Pad(Fmt.Int(tc),5) & "  " &
+            Fmt.Pad(name,40,' ',Fmt.Align.Left) &
+            Fmt.Pad(Fmt.Int(size),10) &
+            Fmt.Pad(Fmt.Int(count),8) &
+            Fmt.Pad(Fmt.Int(size DIV count),9),
+            0);
+  END Line;
+
 PROCEDURE ReportReachable() =
   VAR
-    n := RTType.MaxTypecode();
+    n := RTType.MaxTypecode()+1;
     self := NEW(T, x := NEW(REF ARRAY OF R, n));
   BEGIN
     S("visiting references...", 0);
@@ -42,6 +52,7 @@ PROCEDURE ReportReachable() =
     VAR
       q := NEW(IntPQ.Default).init();
       e: E;
+      totalCount, totalSize := 0;
     BEGIN
       FOR tc := 0 TO n-1 DO
         IF self.x[tc].count # 0 THEN
@@ -55,14 +66,13 @@ PROCEDURE ReportReachable() =
       TRY
         LOOP
           e := q.deleteMin();
-          S(Fmt.Pad(Fmt.Int(e.tc),5) & "  " &
-            Fmt.Pad(RTName.GetByTC(e.tc),40,' ',Fmt.Align.Left) &
-            Fmt.Pad(Fmt.Int(e.priority),10) &
-            Fmt.Pad(Fmt.Int(e.count),8) &
-            Fmt.Pad(Fmt.Int(e.priority DIV e.count),9),
-            0);
+          Line(e.tc, RTName.GetByTC(e.tc), e.priority, e.count);
+          INC(totalCount, e.count);
+          INC(totalSize, e.priority);
         END;
       EXCEPT IntPQ.Empty =>
+        Line(n, "<- Number of typecodes         totals ->",
+             totalSize,totalCount);
       END;
     END;
   END ReportReachable;
