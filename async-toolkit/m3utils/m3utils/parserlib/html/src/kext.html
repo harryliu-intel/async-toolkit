@@ -1,0 +1,61 @@
+PL_BEGIN(kext: extending tokens&#044; lexers&#044; and parsers)
+
+Using _BF(kext),
+generated _TI<!-- -->s, _LI<!-- -->s, and _YI<!-- -->s are
+extended to produce new interfaces with extended _TT(ParseType)s.
+Additionally, user code can extend lexer expression
+methods and parser reduction methods. Declarations and code can also
+be added to the body of the new interface and implementation.
+<P>
+
+_A(input)_H(ext file)
+
+An _IT(ext file) is a file having the _TT(.e) suffix, and which begins with
+the following two lines
+
+<PRE>
+%source MyLang.t [MyLang.l] [MyLang.y]
+%import MyLangTok [MyLangLex] [MyLangParse]
+</PRE>
+
+where _TT([]) indicates optional arguments.
+
+The _TT(%source) line names the specifications of the interfaces to be
+extended, and the _TT(%import) line gives the names of those
+interfaces. The output interface is always a _TI, and if a _LI or _YI
+was _TT(%import)ed as a second argument, then the output interface
+will also be the same kind of interface. This allows tokens to be
+extended alone in a _TI, or if desired in a _LI or _YI.
+<P>
+
+As with any lexer or parser, an extended lexer or parser is
+_LN(ktok.html#compat, compatible) with another lexer or parser if it
+imports the same _TI, even if the _TI is itself a _LI or _YI.
+<P>
+
+_H(extending _TT(ParseType)s)
+
+<PRE>
+parseType: {val: INTEGER; t: TEXT}
+
+
+</PRE>
+
+_H(extending lexers)
+
+exprName {RETURN NEW(STRING, val := $)}
+exprName {$R STRING{$$ := $}}
+
+
+_H(extending parsers)
+
+ruleName {$$ := $1 + $2}
+ruleName {$$ := $1.detach()}
+
+
+The following file named _TT(CalcParseTree.e) is an example of how
+
+
+PL_END
+$Id$
+HTML_END

@@ -1,4 +1,6 @@
 
+#include "../macroizations"
+
 #define _LN(link, text) \
 <A HREF = "link">text</A>
 
@@ -8,6 +10,7 @@
 #define _HTML_BEGIN(title) \
 <HTML> \
 <HEAD> \
+<!-- this file has been processed by the C preprocessor --> \
 <TITLE>title</TITLE> \
 </HEAD> \
 <BODY BGCOLOR="#ffffff" VLINK="#006633"> \
@@ -25,7 +28,8 @@
 #define PL_END \
 <HR> \
 <A HREF = "index.html">[parserlib page]</A> \
-</BODY></HTML> \
+
+#define HTML_END </BODY></HTML> 
 
 
 // tables
@@ -36,7 +40,7 @@
 #define TR_ </TD></TR>
 #define _TRE </TD></TR>
 
-
+#define _Q(x) _TT('x')
 
 // tok
 
@@ -50,6 +54,11 @@
 
 
 // lex and yacc
+
+#define _LS _LN(klex.html#spec, lexer specification)
+#define _LI _LN(klex.html#intf, lexer interface)
+#define _YS _LN(kyacc.html#spec, parser specification)
+#define _YI _LN(kyacc.html#intf, parser interface)
 
 #define LY_BEGIN(lex, klex, lexer, MylangLex, Lexer, l) \
 PL_BEGIN(klex: defining the lexer) \
