@@ -63,7 +63,9 @@ BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs cit_parse/testchp paneman/kem
 
 all: .bindir .top commons ships subs m3subs browserexps
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
-fast: .bindir .top .m3deps .todo .fastmake
+fastprep: .bindir .top .m3deps
+fast: fastprep .todo .fastmake
+faster fastprep .lesstodo .fastmake
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
@@ -80,10 +82,15 @@ fast: .bindir .top .m3deps .todo .fastmake
 	grep -v -e ^# otherdeps | grep : >> .m3deps
 
 .todo:
-	@echo GROUP COMMONS $(COMMONS) >> .todo
+	@echo GROUP COMMONS $(COMMONS) > .todo
 	@echo GROUP SHIPS $(SHIPS) >> .todo
 	@echo GROUP SUBS $(SUBS) >> .todo
 	@echo GROUP M3SUBS $(M3SUBS) >> .todo
+	@echo M3DIRS $(SHIPS) $(M3SUBS) >> .todo
+	@echo M3OPTS $(M3BUILDOPTS) >> .todo
+
+.lesstodo:
+	@echo GROUP ALL $(COMMONS) $(SHIPS) $(SUBS) $(M3SUBS) > .todo
 	@echo M3DIRS $(SHIPS) $(M3SUBS) >> .todo
 	@echo M3OPTS $(M3BUILDOPTS) >> .todo
 
