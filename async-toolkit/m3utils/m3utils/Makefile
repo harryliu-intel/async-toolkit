@@ -65,3 +65,4 @@ cleansubs:
 		cd $$s; make clean; cd .. ;  \
 	done
 
+# this is the end of the Makefile
