@@ -1,5 +1,6 @@
 /* $Id$ */
 import("cit_common")
+template("texthack")
 template("generics")
 Interface("DblRefany")
 Module("Debug")

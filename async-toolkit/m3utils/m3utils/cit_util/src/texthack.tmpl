@@ -1,0 +1,24 @@
+_M3TEXTHACK = TOP & "/m3texthack/" & BUILD_DIR & "/m3texthack"
+readonly proc Intexterface(nm) is
+	local f = nm & ".i3"
+	local g = path_of(f)
+	if stale(f, [g])
+		_exec([_M3TEXTHACK,g,f])
+	end
+	derived_interface(nm, VISIBLE)
+end
+readonly proc implementextation(nm) is
+	local f = nm & ".m3"
+	local g = path_of(f)
+	if stale(f, [g])
+		_exec([_M3TEXTHACK,g,f])
+	end
+	derived_implementation(nm)
+end
+readonly proc mojule(nm) is
+	Intexterface(nm)
+	implementextation(nm)
+end
+Mojule = mojule
+Jnterface = Intexterface
+implementation = implementextation
