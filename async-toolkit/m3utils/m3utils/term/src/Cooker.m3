@@ -73,8 +73,8 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
           CASE c OF
           | 'A' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
           | 'B' => Recall(next, prev);
-          | 'C' => p:=MAX(Text.Length(t),p+1);
-          | 'D' => p:=MIN(0,p-1);
+          | 'C' => p:=MIN(Text.Length(t),p+1);
+          | 'D' => p:=MAX(0,p-1);
           ELSE
           END;
         | 'B','b','\177','\010' => BWord(c='\177' OR c= '\010');
@@ -92,8 +92,8 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
       | '\011' => IF completer#NIL THEN completer.do(t); WipeLine(); END;
       | '\015' => Print(); RETURN t;
       | '\013' => Term.Wr("\033[K"); t:=Text.Sub(t,0,p);
-      | '\006' => p:=MAX(Text.Length(t),p+1);
-      | '\002' => p:=MIN(0,p-1);
+      | '\006' => p:=MIN(Text.Length(t),p+1);
+      | '\002' => p:=MAX(0,p-1);
       | '\001' => p:=0;
       | '\005' => p:=Text.Length(t);
       | '\302','\342','\210' => BWord(c='\210');
