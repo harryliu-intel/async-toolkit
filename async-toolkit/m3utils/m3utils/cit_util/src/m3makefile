@@ -104,6 +104,7 @@ List("Rd","BrandedRd")
 Interface("CharF")
 Module("RefanyF")
 List("Char","Char")
+List("Bool","Boolean")
 
 Module("Cardinal")
 Sequence("Card","Cardinal")

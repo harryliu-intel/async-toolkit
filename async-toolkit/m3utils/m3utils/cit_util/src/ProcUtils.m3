@@ -1,4 +1,5 @@
 MODULE ProcUtils;
+IMPORT Debug;
 IMPORT FS;
 IMPORT File;
 IMPORT FileRd;
@@ -143,8 +144,14 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         IF Text.Equal(l.head, "cd") THEN
           wd := Pathname.Join(wd, l.head);
         ELSE
-          EVAL Process.Wait(Process.Create(l.head, params^,
-                                           NIL, wd, stdin, stdout, stderr));
+          VAR
+            code := Process.Wait(Process.Create(l.head, params^,
+                                                NIL, wd,stdin, stdout,stderr));
+          BEGIN
+            IF code # 0 THEN
+              Debug.Error("Process exited with code " & Fmt.Int(code));
+            END;
+          END;
         END;
       END;
     END Exec;
