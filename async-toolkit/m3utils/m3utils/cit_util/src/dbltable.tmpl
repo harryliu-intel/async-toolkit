@@ -5,18 +5,18 @@ import("set")
 readonly proc Dbltable(nm, k, v) is
 	local nam = nm & "Tbl"
 
-	mkSet(k & "Dbl" , k)
-	mkSetDef(k & "Dbl" , k)
-	table(k & "DblRef", k, "DblRefany")
+	MkSet(k & "Dbl" , k)
+	MkSetDef(k & "Dbl" , k)
+	Table(k & "DblRef", k, "DblRefany")
 
 	local ks = k & "DblSetDef"
 	local bks = "Branded" & ks
-	build_generic_intf(bks, "BrandedSet", [k, ks], HIDDEN)
+	build_generic_intf(bks, "BrandedSet", [k, ks], VISIBLE)
 
-	table(k & v & "Single", k, v)
+	Table(k & v & "Single", k, v)
 	local kvt = k & v & "SingleTbl"
 
-	table(v & ks & "Single", v, bks)
+	Table(v & ks & "Single", v, bks)
 	local vkst = v & ks & "SingleTbl"
 
 	build_generic_intf(nam, "DblTable", [k, v, kvt, vkst, bks], VISIBLE)

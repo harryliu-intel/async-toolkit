@@ -25,6 +25,18 @@ MODULE TextUtils;
 IMPORT Text;
 IMPORT Fmt;
 
+PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
+  VAR
+    res := NEW(REF ARRAY OF CHAR, Text.Length(in));
+  BEGIN
+    FOR i := 0 TO Text.Length(in) - 1 DO
+      WITH char = Text.GetChar(in,i) DO
+        IF char = old THEN res[i] := new ELSE res[i] := char END
+      END
+    END;
+    RETURN Text.FromChars(res^)
+  END ReplaceChar;
+
 PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   VAR 
     startpos := 0;

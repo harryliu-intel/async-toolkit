@@ -25,6 +25,7 @@ IMPORT TextList;
 
 (* replace every occurrence of "old" by "new" in "in" *)
 PROCEDURE Replace(in, old, new : TEXT) : TEXT;
+PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT;
 
 (* find first occurrence of sub in in *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
