@@ -11,7 +11,9 @@ FROM Stdio IMPORT stdin;
 
 CONST
   Delims = " ";
-  Version = "$Id$";
+  RawVers = "$Id$";
+VAR
+  Version := Text.Sub(RawVers, 15, Text.Length(RawVers) - 17);
 
 PROCEDURE FormatNames(args: TextReader.T; VAR comma, space: TEXT;
                       countLimit := LAST(INTEGER)) =
