@@ -45,8 +45,13 @@ PROCEDURE WriteProc(commaArgs, instArgs, build, name: TEXT) =
       "(nm & \"" & nm & "\", \"" & nm & "\"" & instArgs & ")\nend\n");
   END WriteProc;
 
-PROCEDURE WriteProcs(commaArgs, instArgs, suffix: TEXT := "") =
+PROCEDURE WriteProcs(commaArgs, instArgs: TEXT; doSuffix := TRUE) =
+  VAR
+    suffix := "";
   BEGIN
+    IF doSuffix THEN
+      suffix := "_" & mode;
+    END;
     WriteProc(commaArgs, instArgs, "build", lowNM & suffix);
     WriteProc(commaArgs, instArgs, "Build", nm & suffix);
   END WriteProcs;
@@ -133,12 +138,18 @@ PROCEDURE DoModule() =
 
     Wr.PutText(out, comma[0] & " */\n");
 
-    WriteProcs(comma[0] & comma[1] & comma[2], bracket[1] & bracket[2]);
+    WriteProcs(comma[0] & comma[1] & comma[2], bracket[1] & bracket[2], FALSE);
     mode := "interface";
-    WriteProcs(comma[0] & comma[1], bracket[1], "_intf");
+    WriteProcs(comma[0] & comma[1], bracket[1]);
     mode := "implementation";
-    WriteProcs(comma[0] & comma[2], bracket[2], "_impl");
+    WriteProcs(comma[0] & comma[2], bracket[2]);
   END DoModule;
+
+PROCEDURE Shorthand(short: TEXT) =
+  BEGIN
+    Wr.PutText(out, "if not defined(\"" & short & "\") " &
+      short & " = " & short & "_" & mode & " end\n");
+  END Shorthand;
 
 PROCEDURE DoOther() =
   VAR
@@ -151,6 +162,9 @@ PROCEDURE DoOther() =
     Text.Equal(mode, "implementation") *>
     comma := FormatNames(args);
     WriteProcs(comma, Braquefy(comma));
+    Wr.PutText(out, "\n/* shorthand */\n");
+    Shorthand(lowNM);
+    Shorthand(nm);
   END DoOther;
 
 PROCEDURE LowerFirst(a: TEXT): TEXT =
