@@ -37,8 +37,14 @@
 # 6. binlinks     --   make symlinks to programs that were built
 
 COMMONDIRS=processor crt m3yacc cit_common m3tmplhack m3texthack cit_util m3browserhack prsparse term parserlib 
+#COMMONDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack term parserlib 
+#COMMONDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack 
+COMMONDIRS=
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
+
+NONPORTABLES=processor crt m3yacc prsparse
+
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
@@ -46,14 +52,15 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 # building since they may depend on other libraries (1 way only)
 #
 #SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop boxes simplegrid rpc router layout cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree celldb matcher sysiphus/sysiphus_parse
-SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib cast colc/cnetwork verif/tuple calarm/finlib voronoi ld/ld_parse ld
+#SHIPDIRS=tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib cast colc/cnetwork verif/tuple calarm/finlib voronoi ld/ld_parse ld
+PARSERLIBS=parserlib/ktoklib parserlib/kyacclib parserlib/klexlib parserlib/ktok parserlib/klex parserlib/kyacc parserlib/kext parserlib/parserlib
+SHIPDIRS=cit_common m3tmplhack m3texthack cit_util m3browserhack term $(PARSERLIBS) tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib cast colc/cnetwork verif/tuple calarm/finlib voronoi ld/ld_parse ld
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 # These are built last
-#M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack matcher/xprslint stackgen sysiphus`
 M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix acat router/pauls router/pauls2 router/pauls3 router/pauls4 router/gentest verif dagflat allias myrope colc/pl2xprs ld2layout colc/pl22m33 magic/magsize playfile calarm calarm/getquotes calarm/transpose_rates decimate cpdag magicextras/testslasher ld/fixdag`
 
 
@@ -63,7 +70,12 @@ M3SHIP= echo
 
 BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
 
-all: .bindir .top commons ships subs m3subs browserexps binlinks
+std: .top ships m3subs
+withlinks: std .bindir browserexps binlinks
+all: withlinks commons subs
+#all: .bindir .top commons ships subs m3subs browserexps binlinks
+
+
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
 fastprep: .top .m3deps
 fast: fastprep .todo .fastmake
