@@ -179,6 +179,7 @@ PROCEDURE Square(a: T): T = BEGIN RETURN Mul(a,a); END Square;
 PROCEDURE Odd(a: T): BOOLEAN =
   BEGIN RETURN Equal(Mod(a, New(2)),Int.One); END Odd;
 PROCEDURE Pred(x: T): T = BEGIN RETURN Add(x, New(-1)); END Pred;
+PROCEDURE Succ(x: T): T = BEGIN RETURN Add(x, Int.One); END Succ;
 PROCEDURE Half(x: T): T = BEGIN RETURN Div(x, New(2)); END Half;
 PROCEDURE GCD(a, b: T): T =
   VAR ac,bc: T; BEGIN RETURN ExtendedGCD(a,b,ac,bc); END GCD;
