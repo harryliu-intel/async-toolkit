@@ -52,7 +52,7 @@ PROCEDURE Identify(self: Default; e1, e2: Elem.T): BOOLEAN =
       ELSE
         not := self.t.put(c2, c1);
       END;
-      <* ASSERT not *>
+      <* ASSERT NOT not *>
       RETURN FALSE;
     END;
   END Identify;
