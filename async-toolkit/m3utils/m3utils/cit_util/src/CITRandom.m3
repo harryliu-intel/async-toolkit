@@ -41,6 +41,7 @@ PROCEDURE Seed(t:T) : INTEGER = BEGIN RETURN t.mySeed END Seed;
 
 PROCEDURE Init (t: T;  fixed: BOOLEAN; seed : INTEGER): T =
   BEGIN
+    <* ASSERT seed # 0 *>
     IF (t = NIL) THEN t := NEW (T) END;
     IF fixed THEN 
       t.mySeed := Normalize(seed) 
