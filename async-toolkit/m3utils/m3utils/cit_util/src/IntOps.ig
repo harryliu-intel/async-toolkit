@@ -1,5 +1,6 @@
-GENERIC INTERFACE IntOps(Int);
+GENERIC INTERFACE IntOps(Int, TextIntTbl);
 IMPORT Random;
+IMPORT Pathname;
 (* $Id$ *)
 
 TYPE
@@ -25,6 +26,7 @@ PROCEDURE ProbablyPrime(p: T): BOOLEAN;
 (* complete basic arithmetic *)
 
 CONST
+  New = Int.New;
   Add = Int.Add;
   Mul = Int.Mul;
   Mod = Int.Mod;
@@ -47,5 +49,11 @@ PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T;
 PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists};
 PROCEDURE Odd(a: T): BOOLEAN;
 PROCEDURE Square(a: T): T;
+
+
+(* file I/O *)
+
+PROCEDURE Read(fn: Pathname.T): TextIntTbl.T;
+PROCEDURE Write(fn: Pathname.T; tbl: TextIntTbl.T);
 
 END IntOps.

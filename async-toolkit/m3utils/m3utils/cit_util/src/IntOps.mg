@@ -1,10 +1,17 @@
-GENERIC MODULE IntOps(Int);
+GENERIC MODULE IntOps(Int, TextIntTbl);
 IMPORT Text;
 IMPORT Scan AS yScan;
 IMPORT Random;
 IMPORT FloatMode, Lex;
+IMPORT Pathname;
+IMPORT FileRd;
+IMPORT Rd;
+IMPORT FileWr;
+IMPORT Wr;
+IMPORT OSError;
+IMPORT Thread;
 
-<* FATAL FloatMode.Trap, Lex.Error *>
+<* FATAL FloatMode.Trap, Lex.Error, Rd.Failure, Wr.Failure, Thread.Alerted, OSError.E *>
 
 PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T =
   BEGIN
@@ -49,8 +56,8 @@ PROCEDURE EGCD(a,b: T; VAR aCoeff,bCoeff: T): T =
 
 PROCEDURE Random1(source: Random.T; largerThan: T) : T =
   VAR
-    chunkBase := Int.New(16_100000);
-    r := Int.New(source.integer(0, 16_100000));
+    chunkBase := New(16_100000);
+    r := New(source.integer(0, 16_100000));
   BEGIN
     IF Compare(largerThan, chunkBase) = -1 THEN
       RETURN r;
@@ -60,25 +67,25 @@ PROCEDURE Random1(source: Random.T; largerThan: T) : T =
 
 PROCEDURE Rand(source: Random.T; lessThan: T) : T =
   BEGIN
-    RETURN Mod(Random1(source, Int.Mul(lessThan, Int.New(99999))), lessThan);
+    RETURN Mod(Random1(source, Mul(lessThan, New(99999))), lessThan);
   END Rand;
 
 PROCEDURE Scan(t: TEXT; base : CARDINAL := 10) : T =
   VAR
     chunkDigits := 5;
     sb:=base*base;
-    chunkBase := Int.New(sb*sb*base);
+    chunkBase := New(sb*sb*base);
     l := Text.Length(t);
   BEGIN
     IF l <= chunkDigits THEN
-      RETURN Int.New(yScan.Int(t, base));
+      RETURN New(yScan.Int(t, base));
     END;
     IF Text.GetChar(t, 0) = '-' THEN
       RETURN Negate(Scan(Text.Sub(t, 1), base));
     END;
     DEC(l, chunkDigits);
     RETURN Add(Mul(chunkBase, Scan(Text.Sub(t, 0, l),base)),
-               Int.New(yScan.Int(Text.Sub(t, l),base)));
+               New(yScan.Int(Text.Sub(t, l),base)));
   END Scan;
 
 PROCEDURE Exp(base, exp: T): T =
@@ -105,10 +112,10 @@ PROCEDURE MultiExp(base, exp, mod: T; useMod: BOOLEAN): T =
         t: T;
       BEGIN
         IF Odd(exp) THEN
-          t := Mul(base, MultiExp(base, Int.Add(exp, Int.New(-1)), 
+          t := Mul(base, MultiExp(base, Add(exp, New(-1)), 
                                   mod, useMod));
         ELSE
-          t := Square(MultiExp(base, Int.Div(exp, Int.New(2)),
+          t := Square(MultiExp(base, Div(exp, New(2)),
                                mod, useMod));
         END;
         IF useMod THEN
@@ -121,12 +128,12 @@ PROCEDURE MultiExp(base, exp, mod: T; useMod: BOOLEAN): T =
 
 PROCEDURE ProbablyPrime(p: T): BOOLEAN =
   BEGIN
-    RETURN Equal(ModExp(Int.New(19), Int.Add(p, Int.New(-1)), p), Int.One);
+    RETURN Equal(ModExp(New(19), Add(p, New(-1)), p), Int.One);
   END ProbablyPrime;
 
 PROCEDURE Negate(a: T): T =
   BEGIN
-    RETURN Mul(Int.New(-1), a);
+    RETURN Mul(New(-1), a);
   END Negate;
 
 PROCEDURE Sub(a, b: T): T =
@@ -147,7 +154,7 @@ PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists} =
 
 PROCEDURE Odd(a: T): BOOLEAN =
   BEGIN
-    RETURN Equal(Mod(a, Int.New(2)),Int.One);
+    RETURN Equal(Mod(a, New(2)),Int.One);
   END Odd;
 
 PROCEDURE GCD(a, b: T): T =
@@ -156,5 +163,37 @@ PROCEDURE GCD(a, b: T): T =
   BEGIN
     RETURN ExtendedGCD(a,b,ac,bc);
   END GCD;
+
+PROCEDURE Read(fn: Pathname.T): TextIntTbl.T =
+  VAR
+    rd := FileRd.Open(fn);
+    t: TEXT;
+    i: INTEGER;
+    tbl := NEW(TextIntTbl.Default).init();
+  BEGIN
+    TRY
+      LOOP
+        t := Rd.GetLine(rd);
+        i := Text.FindChar(t, '=');
+        EVAL tbl.put(Text.Sub(t,0,i), Scan(Text.Sub(t,i+1)));
+      END;
+    EXCEPT Rd.EndOfFile =>
+    END;
+    Rd.Close(rd);
+    RETURN tbl;
+  END Read;
+
+PROCEDURE Write(fn: Pathname.T; tbl: TextIntTbl.T) =
+  VAR
+    iter := tbl.iterate();
+    key: TEXT;
+    val: T;
+    wr := FileWr.Open(fn);
+  BEGIN
+    WHILE iter.next(key, val) DO
+      Wr.PutText(wr, key & "=" & Int.Format(val) & "\n");
+    END;
+    Wr.Close(wr);
+  END Write;
 
 BEGIN END IntOps.
