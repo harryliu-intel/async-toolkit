@@ -109,4 +109,7 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
 PROCEDURE Hash(a : T) : Word.T = 
   BEGIN RETURN Word.Plus(BaseInt.Hash(a.n),BaseInt.Hash(a.d)) END Hash;
 
+PROCEDURE ToLongReal(a : T) : LONGREAL =
+  BEGIN RETURN BaseInt.ToLongReal(a.n)/BaseInt.ToLongReal(a.d) END ToLongReal;
+
 BEGIN END Rational.

@@ -435,6 +435,17 @@ PROCEDURE Max(a, b : T) : T =
 PROCEDURE Min(a, b : T) : T = 
   BEGIN IF Compare(a,b) = -1 THEN RETURN a ELSE RETURN b END END Min;
 
+PROCEDURE ToLongReal(a : T) : LONGREAL = 
+  VAR
+    res := FLOAT(a.rep.a[a.rep.siz-1],LONGREAL);
+  BEGIN
+    FOR i := a.rep.siz - 2 TO 0 BY -1 DO
+      res := res * FLOAT(Base,LONGREAL);
+      res := res + FLOAT(a.rep.a[i],LONGREAL)
+    END;
+    RETURN res
+  END ToLongReal;
+
 BEGIN 
   Zero := New(0);
   One := New(1);

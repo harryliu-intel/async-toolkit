@@ -32,6 +32,9 @@ PROCEDURE Hash(a : T) : Word.T = BEGIN RETURN Integer.Hash(a) END Hash;
 PROCEDURE Max(a, b : T) : T = BEGIN RETURN MAX(a,b) END Max;
 
 PROCEDURE Min(a, b : T) : T = BEGIN RETURN MIN(a,b) END Min;
- 
+
+PROCEDURE ToLongReal(a : T) : LONGREAL = 
+  BEGIN RETURN FLOAT(a,LONGREAL) END ToLongReal;
+
 BEGIN END IntForRat.
 

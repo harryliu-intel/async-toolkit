@@ -27,6 +27,7 @@ VAR (* CONST *) Zero, One : T;
 
 PROCEDURE Hash(a : T) : Word.T;
 
+PROCEDURE ToLongReal(a : T) : LONGREAL;
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
 
