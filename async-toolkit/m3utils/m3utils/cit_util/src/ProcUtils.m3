@@ -18,6 +18,7 @@ IMPORT TextRd;
 IMPORT Thread;
 IMPORT Wr, TextWr;
 IMPORT OSError;
+IMPORT Atom;
 
 <* FATAL Thread.Alerted *>
 
@@ -133,7 +134,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           l := TextList.Cons(p, l);
         END
       EXCEPT
-        OSError.E => Process.Crash("ProcUtils.Run.PutArg: problems opening file \"" & p & "\"!")
+        OSError.E(e) => Process.Crash("ProcUtils.Run.PutArg: problems opening file \"" & p & "\"!" & "\n" & FormatOSError(e))
       END
 
     END PutArg;
@@ -181,8 +182,8 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               END
             END
           EXCEPT
-            OSError.E => 
-              Process.Crash("ProcUtils.Apply.Exec: Couldn't exec command \"" & DebugFormat(l.head,params^) & "\"!")
+            OSError.E(e) => 
+              Process.Crash("ProcUtils.Apply.Exec: Couldn't exec command \"" & DebugFormat(l.head,params^) & "\"!"& "\n" & FormatOSError(e))
           END
         END
       END
@@ -242,8 +243,11 @@ PROCEDURE Apply(self: MainClosure): REFANY =
       IF cm.pi#NIL AND cm.pi.close THEN cm.pi.f.close(); END;
       RETURN NIL;
     EXCEPT
-      OSError.E, Rd.Failure => 
-        Process.Crash("I/O error in ProcUtils.Apply.")
+      OSError.E(e) => 
+        Process.Crash("I/O error in ProcUtils.Apply."& "\n" & FormatOSError(e))
+    |
+      Rd.Failure => 
+      Process.Crash("I/O error in ProcUtils.Apply.")
     END;
     <* ASSERT FALSE *>
   END Apply;
@@ -312,7 +316,7 @@ PROCEDURE GimmeRd(VAR rd: Rd.T): Writer =
       Pipe.Open(hr, hw);
       rd := NEW(FileRd.T).init(hr)
     EXCEPT 
-      OSError.E => Process.Crash("ProcUtils.GimmeRd: trouble opening pipe!")
+      OSError.E(e) => Process.Crash("ProcUtils.GimmeRd: trouble opening pipe!"& "\n" & FormatOSError(e))
     END;
     RETURN NEW(Writer,f:=hw,ss:=NIL,close:=TRUE);
   END GimmeRd;
@@ -354,7 +358,7 @@ PROCEDURE GimmeWr(VAR wr: Wr.T): Reader =
       Pipe.Open(hr, hw);
       wr := NEW(FileWr.T).init(hw)
     EXCEPT
-      OSError.E => Process.Crash("ProcUtils.GimmeWr: trouble opening pipe!")
+      OSError.E(e) => Process.Crash("ProcUtils.GimmeWr: trouble opening pipe!"& "\n" & FormatOSError(e))
     END;
     RETURN NEW(Reader,f:=hr,ss:=NIL,close:=TRUE);
   END GimmeWr;
@@ -363,6 +367,18 @@ PROCEDURE Stdin(): Reader =
   BEGIN
     RETURN NEW(Reader,f:=si,ss:=NIL,close:=FALSE);
   END Stdin; 
+
+PROCEDURE FormatOSError(e : OSError.Code) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    WHILE e # NIL DO
+      res := res & Atom.ToText(e.head);
+      IF e.tail # NIL THEN res := res & " " END;
+      e := e.tail
+    END;
+    RETURN res
+  END FormatOSError;
 
 VAR
   so,si,se: File.T;
