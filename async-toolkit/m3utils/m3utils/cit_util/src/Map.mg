@@ -4,7 +4,10 @@ GENERIC MODULE Map(From, To);
 IMPORT Word;
 
 REVEAL 
-  T = Public BRANDED Brand OBJECT OVERRIDES hash := THash END;
+  T = Public BRANDED Brand OBJECT OVERRIDES 
+    hash := THash;
+    evalD := TEvalD;
+  END;
 
 TYPE
   PublicDef = T OBJECT METHODS wrap(f : F) : T END;
@@ -33,5 +36,18 @@ PROCEDURE Wrap(a : Default; f : F) : T =
 
 PROCEDURE DEval(a : Default; x : From.T) : To.T =
   BEGIN RETURN a.f(x) END DEval;
- 
+
+(* The following is an inefficient, but correct, implementation of
+   by-reference-return evaluation.
+
+   An efficient implementation would do the evaluation in-place in y,
+   destroying y's previous contents. *)
+
+PROCEDURE TEvalD(self : T; x : From.T; VAR y : To.T) =
+  VAR
+    yy := self.eval(x);
+  BEGIN
+    y := yy
+  END TEvalD;
+
 BEGIN END Map.

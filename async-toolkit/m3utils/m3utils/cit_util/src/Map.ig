@@ -16,7 +16,12 @@ TYPE
 
   Public = OBJECT METHODS
     eval(x : From.T) : To.T; (* must override this *)
-    hash() : Word.T; (* can override this if desired *)
+
+    evalD(x : From.T; VAR y : To.T); (* may override this if desired;
+                                        inefficient default impl. is
+                                        provided *)
+
+    hash() : Word.T; (* may override this if desired *)
   END;
 
   (* sometimes all you need is a simple thing;
