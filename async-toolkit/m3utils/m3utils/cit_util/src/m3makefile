@@ -121,6 +121,8 @@ template("factory")
 Gmodule("ArrayHash")
 ArrayHash("Int", "Integer")
 
+Module("CITRandom")
+
 Library("cit_util")
 
 
