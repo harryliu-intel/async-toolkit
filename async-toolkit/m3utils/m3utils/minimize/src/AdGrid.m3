@@ -20,11 +20,11 @@ TYPE
   Vals = ARRAY Child OF REF ARRAY OF LONGREAL;
 
   M = AdGridQ.T OBJECT
-    f : Funcs;
-    up : M;
-    ll, ur : LRPoint.T;
-    vals : Vals;
-    children : ARRAY Child OF M := NoChildren;
+    f : Funcs;  (* pointer to functions stored in this mesh *)
+    up : M;     (* pointer to my parent UNUSED ??? *) 
+    ll, ur : LRPoint.T;  (* my corners *)
+    vals : Vals; (* my values (for EACH f) *)
+    children : ARRAY Child OF M := NoChildren; (* my children *)
   METHODS
     maxCorner(master : T) : Child := MaxCorner;
     minCorner(master : T) : Child := MinCorner;
@@ -47,10 +47,10 @@ PROCEDURE NewVals(n : CARDINAL) : Vals =
 
 REVEAL 
   T = Public BRANDED Brand OBJECT
-    root : M;
-    me : CARDINAL;
-    f : Funcs;
-    prec := 0.01d0;
+    root : M;      (* pointer to root of mesh *)
+    me : CARDINAL; (* index of the function I represent *)
+    f : Funcs;     (* pointer to the set of functions evaluated in this mesh *)
+    prec := 0.01d0; (* precision ??? *)
     next : T := NIL; (* circular list of Ts that share same mesh *)
   OVERRIDES
     evalP := Eval;
@@ -151,7 +151,7 @@ PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
             LL => c.ll := m.ll; c.ur := mm
           |
             LR => c.ll := LRPoint.T { mm.x, m.ll.y }; 
-            c.ur := LRPoint.T { m.ur.x, mm.y }
+                  c.ur := LRPoint.T { m.ur.x, mm.y }
           END;
         END
       END;
@@ -180,8 +180,6 @@ PROCEDURE SubdivideM(m : M; levels : CARDINAL := 1) =
   END SubdivideM;
 
 PROCEDURE Eval(t : T; READONLY at : LRPoint.T; prec : LONGREAL) : LONGREAL =
-
-
   PROCEDURE EvalM(m : M) : LONGREAL =
     BEGIN
       WITH mm = LRPoint.T {(m.ll.x+m.ur.x)/2.0d0, (m.ll.y+m.ur.y)/2.0d0},
