@@ -11,9 +11,9 @@ if defined("pm3_version")
       	/* Polytechnique de Montreal Modula-3 */
 	option("shared_lib","")
 else
- if defined("cm3_version")
+ if defined("CM3_VERSION")
       	/* Critical Mass Modula-3 */
-	m3_option("shared_lib","")
+% see http://www.elegosoft.com/cm3/doc/help/cm3/cm3.html
  else 
 	/* SRC Modula-3 */
 	m3_option ("-X2@-static@")
