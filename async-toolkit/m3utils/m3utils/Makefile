@@ -34,6 +34,7 @@
 # 3. SUBDIRS      --   C programs
 # 4. M3SUBS       --   Modula-3 programs
 # 5. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
+# 6. binlinks     --   make symlinks to programs that were built
 
 COMMONDIRS=processor crt m3yacc cit_common m3tmplhack m3texthack cit_util m3browserhack prsparse term parserlib 
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
@@ -61,7 +62,7 @@ M3SHIP= echo
 
 BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
 
-all: .bindir .top commons ships subs m3subs browserexps
+all: .bindir .top commons ships subs m3subs browserexps binlinks
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
 fastprep: .top .m3deps
 fast: fastprep .todo .fastmake
@@ -117,6 +118,9 @@ subs:
 		echo "===> $$s";\
 		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\"; cd .. ;  \
 	done
+
+binlinks:
+	(cd bin; make)
 
 
 ships: 
