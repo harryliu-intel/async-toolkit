@@ -33,7 +33,7 @@ PROCEDURE CopySeq(s : Seq) : Seq =
 PROCEDURE ClearTop(s : Seq) =
   BEGIN
     FOR i := s.size() - 1 TO 0 BY -1 DO
-      IF s.get(i) # 0 THEN RETURN END;
+      IF CardSeq.T.get(s,i) # 0 THEN RETURN END;
       EVAL s.remhi()
     END
   END ClearTop;
@@ -54,6 +54,69 @@ PROCEDURE MyGet(s : Seq; i : CARDINAL) : CARDINAL =
       s.clearTop()
     END
   END MyGet;
+
+(* other sequence impl *)
+
+TYPE 
+  NArry = REF ARRAY OF CARDINAL;
+
+  NSeq = OBJECT
+    siz : CARDINAL;
+    a : NArry;
+  METHODS
+    init(hintSize : CARDINAL) : NSeq := InitN;
+    shift(sa : CARDINAL) := ShiftN;
+    clearTop() := CTN;
+    extend(toBits : CARDINAL) := ExtendN;
+    copy() : NSeq := CopyN;
+    size() : CARDINAL := SizeN;
+  END;
+
+PROCEDURE InitN(s : NSeq; hintSize : CARDINAL) : NSeq =
+  BEGIN
+    s.siz := 0;
+    s.a := NEW(NArry, hintSize);
+    FOR i := FIRST(s.a^) TO LAST(s.a^) DO s.a[i] := 0 END;
+    RETURN s
+  END InitN;
+
+PROCEDURE ShiftN(s : NSeq; sa : CARDINAL) =
+  BEGIN
+    INC(s.siz,sa);
+    s.extend(s.siz)
+  END ShiftN;
+
+PROCEDURE ExtendN(s : NSeq; toBits : CARDINAL) =
+  BEGIN
+    IF s.siz < toBits THEN
+      VAR 
+        na := NEW(NArry,toBits);
+      BEGIN
+        SUBARRAY(na^,0,NUMBER(s.a^)) := s.a^;
+
+        FOR i := NUMBER(s.a^) TO LAST(na^) DO na[i] := 0 END;
+
+        s.a := na
+      END
+    END
+  END ExtendN;
+
+PROCEDURE SizeN(s : NSeq) : CARDINAL = BEGIN RETURN s.siz END SizeN;
+
+PROCEDURE CopyN(s : NSeq) : NSeq =
+  VAR
+    na := NEW(NArry, NUMBER(s.a^));
+  BEGIN 
+    na^ := s.a^;
+    RETURN NEW(NSeq, siz := s.siz, a := na) 
+  END CopyN;
+
+PROCEDURE CTN(s : NSeq) = 
+  BEGIN 
+    FOR i := s.siz - 1 TO 0 BY -1 DO
+      IF s.a[i] = 0 THEN s.siz := i ELSE EXIT END
+    END
+  END CTN;
 
 (********************* bignum type *********************)
 
@@ -92,6 +155,8 @@ PROCEDURE New(x : INTEGER) : T =
     s := NEW(Seq).init();
   BEGIN 
     s.addlo(c);
+
+    Renormalize(s);
 
     IF x >= 0 THEN
       RETURN NEW(T, sign := 1, rep := s)
@@ -136,16 +201,16 @@ PROCEDURE Shift(a : T; sa : CARDINAL) : T =
     RETURN NEW(T, sign := a.sign, rep := seq)
   END Shift;
 
-PROCEDURE DivideUnsigned(a, b : T; VAR q, r : T) =
+PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
   VAR
     s : T;
     lo, hi : CARDINAL;
   BEGIN
     q := Zero;
-    r := a;
-    <* ASSERT a.sign = 1 AND b.sign = 1 *>
+    r := aparm;
+    <* ASSERT aparm.sign = 1 AND b.sign = 1 *>
     
-    FOR sa := 0 TO a.rep.size() - b.rep.size() DO
+    FOR sa := aparm.rep.size() - b.rep.size() TO 0 BY -1 DO
       s := Shift(b,sa);
       
       (* search for digit ... *)
@@ -156,16 +221,19 @@ PROCEDURE DivideUnsigned(a, b : T; VAR q, r : T) =
         VAR
           mid  := (lo + hi) DIV 2;
 
-          loM  := Mul(New(lo),s);
-          hiM  := Mul(New(hi),s);
+          (*
+            loM  := Mul(New(lo),s);
+            hiM  := Mul(New(hi),s);
+          *)
+
           midM := Mul(New(mid),s);
-          midC := Compare(midM,a);
+          midC := Compare(midM,r);
         BEGIN
-          <* ASSERT Compare(loM,a) <= 0 AND Compare(hiM,a) >= 0 *>
+          (*<* ASSERT Compare(loM,r) <= 0 AND Compare(hiM,r) >= 0 *>*)
           CASE midC OF
             -1 => lo := mid
           |
-             0 => q := Add(Shift(New(mid),sa),q); r := Zero
+             0 => q := Add(Shift(New(mid),sa),q); r := Zero; RETURN
           |
              1 => hi := mid
           END
@@ -174,7 +242,8 @@ PROCEDURE DivideUnsigned(a, b : T; VAR q, r : T) =
 
       q := Add(Shift(New(lo),sa),q);
       r := Sub(r, Mul(New(lo),s))
-    END
+    END;
+    <* ASSERT Equal(aparm,Add(r,Mul(q,b))) *>
   END DivideUnsigned;
 
 PROCEDURE Mul(a, b : T) : T =
@@ -252,7 +321,7 @@ PROCEDURE Sub(a, b : T) : T =
 (* unsigned addition of underlying sequences *)
 PROCEDURE AddSeqs(s, t : Seq) : Seq =
   VAR
-    r := NEW(Seq).init();
+    r := NEW(Seq).init(MAX(s.size(),t.size()));
   BEGIN
     FOR i := 0 TO MAX(s.size(),t.size()) - 1 DO
       r.put(i,s.get(i) + t.get(i))
@@ -269,7 +338,7 @@ PROCEDURE SubSeqs(s, t : Seq) : Seq =
   BEGIN
     FOR i := 0 TO MAX(s.size(),t.size()) - 1 DO
       VAR
-        diff := s.get(i) + t.get(i) + borrow;
+        diff := s.get(i) - t.get(i) + borrow;
       BEGIN
         borrow := 0;
 
@@ -310,7 +379,7 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
     c := NEW(CharSeq.T).init();
     s := Sign(a);
     wr := NEW(TextWr.T).init();
-    Base := New(base);
+    MyBase := New(base);
   BEGIN
     <* ASSERT base <= 10 *>
     a := Abs(a);
@@ -319,8 +388,8 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
       VAR
         d : T;
       BEGIN
-        DivideUnsigned(a,Base,a,d);
-        <* ASSERT d.rep.size() = 1 *>
+        DivideUnsigned(a,MyBase,a,d);
+        <* ASSERT Compare(d,Zero) >= 0 AND Compare(d,MyBase) < 1 *>
         c.addlo(VAL(ORD('0') + d.rep.get(0), CHAR))
       END
     END;
@@ -342,6 +411,12 @@ PROCEDURE Hash(a : T) : Word.T =
     END;
     RETURN res
   END Hash;
+
+PROCEDURE Max(a, b : T) : T =
+  BEGIN IF Compare(a,b) = 1 THEN RETURN a ELSE RETURN b END END Max;
+
+PROCEDURE Min(a, b : T) : T = 
+  BEGIN IF Compare(a,b) = -1 THEN RETURN a ELSE RETURN b END END Min;
 
 BEGIN 
   Zero := New(0);

@@ -57,7 +57,14 @@ PROCEDURE Sub(READONLY a, b : T) : T;
 PROCEDURE Div(READONLY a, b : T) : T;
 PROCEDURE Reciprocal(READONLY a : T) : T;
 
+(* make a new T representing the integer a *)
 PROCEDURE NewInt(READONLY a : BaseInt.T) : T;
+
+(* make a new T representing the fraction n/d *)
+PROCEDURE New(READONLY n : BaseInt.T; READONLY d : BaseInt.Natural) : T;
+
+(* make a new T representing the fraction n/d, where n and d are INTEGERs *)
+PROCEDURE NewSimple(n : INTEGER; d : [1..LAST(CARDINAL)]) : T;
 
 (* some bonus things... *)
 PROCEDURE BaseGCD(a, b : BaseInt.T) : BaseInt.T;

@@ -5,7 +5,7 @@ IMPORT Word;
 CONST Brand = "BigInt";
 
 TYPE T        <: Public;
-TYPE Natural  <: T;
+TYPE Natural  = T;
 
 TYPE Public = ROOT;
 
@@ -26,5 +26,8 @@ PROCEDURE Format(a : T; base : CARDINAL := 10) : TEXT;
 VAR (* CONST *) Zero, One : T;
 
 PROCEDURE Hash(a : T) : Word.T;
+
+PROCEDURE Max(a, b : T) : T;
+PROCEDURE Min(a, b : T) : T;
 
 END BigInt.

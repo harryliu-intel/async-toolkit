@@ -5,7 +5,8 @@ IMPORT Word;
 PROCEDURE CheckInvariant(READONLY x : T) : T =
   BEGIN
     (* in lowest terms *)
-    <* ASSERT NOT BaseInt.Equal(BaseInt.Mod(x.n,x.d), BaseInt.New(0)) *>
+    <* ASSERT NOT BaseInt.Equal(BaseInt.Mod(x.n,x.d), BaseInt.New(0)) OR
+                  BaseInt.Equal(x.d,BaseInt.New(1)) *>
 
     (* check that denominator actually is a nat'l number. *)
     <* ASSERT BaseInt.Compare(x.d, BaseInt.New(0)) = 1 *>
@@ -15,6 +16,12 @@ PROCEDURE CheckInvariant(READONLY x : T) : T =
     
 PROCEDURE NewInt(READONLY a : BaseInt.T) : T =
   BEGIN RETURN CheckInvariant(T { a, BaseInt.New(1) }) END NewInt;
+
+PROCEDURE New(READONLY n : BaseInt.T; READONLY d : BaseInt.Natural) : T =
+  BEGIN RETURN CheckInvariant(LowestTerms(T { n, d })) END New;
+
+PROCEDURE NewSimple(n : INTEGER; d : [1..LAST(CARDINAL)]) : T =
+  BEGIN RETURN New(BaseInt.New(n),BaseInt.New(d)) END NewSimple;
 
 PROCEDURE Equal(READONLY a, b : T) : BOOLEAN = 
   BEGIN RETURN Compare(a,b) = 0 END Equal;
@@ -64,25 +71,25 @@ PROCEDURE Reciprocal(READONLY a : T) : T =
     RETURN CheckInvariant(T { BaseInt.Mul(BaseInt.New(BaseInt.Sign(a.n)),a.d), BaseInt.Abs(a.n) } )
   END Reciprocal;
 
+VAR
+  Bzero := BaseInt.New(0);
+
 PROCEDURE BaseGCD(a, b : BaseInt.T) : BaseInt.T =
   VAR
-    ap := a; bp := b;
     c : CompRet;
   BEGIN
-    LOOP
-      c := BaseInt.Compare(a, b);
-      CASE c OF
-        1 => a := BaseInt.Mod(a,b)
-      |
-       -1 => b := BaseInt.Mod(b,a)
-      |
-        0 => EXIT
-      END;
-      <* ASSERT BaseInt.Equal(BaseInt.Mod(a,ap), BaseInt.New(0)) AND
-                BaseInt.Equal(BaseInt.Mod(b,bp), BaseInt.New(0)) *>
+    IF BaseInt.Equal(a,Bzero) OR BaseInt.Equal(b,Bzero) THEN 
+      RETURN BaseInt.Max(a,b)
     END;
-    <* ASSERT BaseInt.Equal(a,b) *>
-    RETURN a
+      
+    c := BaseInt.Compare(a, b);
+    CASE c OF
+      1 => RETURN BaseGCD(BaseInt.Mod(a,b),b)
+    |
+      -1 => RETURN BaseGCD(a,BaseInt.Mod(b,a))
+    |
+      0 => RETURN a (* really unnecessary to test for this... *)
+    END
   END BaseGCD;
 
 PROCEDURE BaseLCM(a, b : BaseInt.T) : BaseInt.T =

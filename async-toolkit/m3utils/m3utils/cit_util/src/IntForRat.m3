@@ -29,5 +29,9 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
 
 PROCEDURE Hash(a : T) : Word.T = BEGIN RETURN Integer.Hash(a) END Hash;
 
+PROCEDURE Max(a, b : T) : T = BEGIN RETURN MAX(a,b) END Max;
+
+PROCEDURE Min(a, b : T) : T = BEGIN RETURN MIN(a,b) END Min;
+ 
 BEGIN END IntForRat.
 

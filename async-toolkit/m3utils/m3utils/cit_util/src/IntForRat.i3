@@ -24,4 +24,7 @@ PROCEDURE Format(a : T; base : CARDINAL := 10) : TEXT;
 
 PROCEDURE Hash(a : T) : Word.T;
 
+PROCEDURE Max(a, b : T) : T;
+PROCEDURE Min(a, b : T) : T;
+
 END IntForRat.
