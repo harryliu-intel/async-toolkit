@@ -202,6 +202,12 @@ PROCEDURE Format(b : T; symTab : BoolTextTbl.T) : TEXT =
     END
   END Format; 
 
+PROCEDURE Difference(f, x : T) : T =
+  BEGIN RETURN Xor(MakeTrue(f,x),MakeFalse(f,x)) END Difference;
+
+PROCEDURE Smooth(f, x : T) : T =
+  BEGIN RETURN Or(MakeTrue(f,x),MakeFalse(f,x)) END Smooth;
+
 BEGIN 
   Init();
   frees := 0 

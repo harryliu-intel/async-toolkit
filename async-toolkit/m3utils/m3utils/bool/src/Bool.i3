@@ -19,9 +19,15 @@ PROCEDURE Not      (a : T) : T;
 PROCEDURE Copy     (a : T) : T;
 PROCEDURE Implies  (a , b : T) : T;
 
-(* make variable "v" true or false *)
+(* make variable "v" true or false in the expression "a" *)
 PROCEDURE MakeTrue (a , v : T) : T;
 PROCEDURE MakeFalse(a , v : T) : T;
+
+(* Boolean difference df/dx *)
+PROCEDURE Difference(f, x : T) : T;
+
+(* Boolean smoothing S_x f *)
+PROCEDURE Smooth(f, x : T) : T;
 
 (* choose "if" if c is false, "it" if c is true *)
 PROCEDURE Choose(c : T; it, if : T) : T;
