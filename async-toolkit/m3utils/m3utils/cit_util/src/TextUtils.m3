@@ -90,6 +90,21 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN = 
   VAR x : CARDINAL; BEGIN RETURN FindSub(in, sub, x) END HaveSub;
 
+PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN =
+  VAR
+    pos := Text.Length(in) - Text.Length(suffix);
+  BEGIN
+    RETURN pos >= 0 AND Text.Equal(Text.Sub(in, pos), suffix);
+  END HaveSuffix;
+
+PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT =
+  VAR
+    pos := Text.Length(in) - Text.Length(suffix);
+  BEGIN
+    <* ASSERT pos >= 0 AND Text.Equal(Text.Sub(in, pos), suffix) *>
+    RETURN Text.Sub(in, 0, pos);
+  END RemoveSuffix;
+
 PROCEDURE Pluralize(noun : TEXT; n : INTEGER; 
                     ending : TEXT; printNum : BOOLEAN) : TEXT =
   VAR
