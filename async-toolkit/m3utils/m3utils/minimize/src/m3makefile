@@ -15,4 +15,7 @@ Module("Powell")
 Module("ConjGradient")
 Module("Solve")
 
+/* adaptive grid */
+Module("AdGrid")
+
 library("minimize")

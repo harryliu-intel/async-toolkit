@@ -20,7 +20,7 @@ PROCEDURE WDB(f : LRFunction.T;
 
     c := b; fc := fb;
     FOR iter := 1 TO ItMax DO
-      IF fb > 0.0d0 AND fc > 0.0d0 OR fa < 0.0d0 AND fb < 0.0d0 THEN
+      IF fb > 0.0d0 AND fc > 0.0d0 OR fb < 0.0d0 AND fc < 0.0d0 THEN
         c := a; fc := fa; d := b-a; e := d
       END;
       IF ABS(fc) < ABS(fb) THEN
@@ -56,7 +56,7 @@ PROCEDURE WDB(f : LRFunction.T;
         b := b+d
       ELSE
         b := b + ABS(tol1) * ARRAY BOOLEAN OF LONGREAL 
-                             { -1.0d0, 1.0d0 } [xm >= 0.0d0]
+                             { -1.0d0, 1.0d0 } [xm >= 0.0d0] 
       END;
       fb := f.eval(b)
     END;
