@@ -20,7 +20,7 @@
 # 3. SUBDIRS      --   C programs
 # 4. M3SUBS       --   Modula-3 programs
 
-COMMONDIRS=processor crt m3yacc cit_util prsparse 
+COMMONDIRS=processor crt m3yacc cit_util prsparse parserlib
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
@@ -31,14 +31,14 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 #
 # m3texthack is a program, but it depends only on cit_util.
 #
-SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout ktoklib kyacclib klexlib
+SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simplegrid rpc router layout cit_parse
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 # These are built last
-M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest ktok klex kyacc kext parserlib parserlib/test cit_parse cit_parse/testprs cit_parse/testchp`
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs cit_parse/testchp`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
