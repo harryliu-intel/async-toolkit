@@ -50,5 +50,13 @@ PROCEDURE L(m : T) : T;
 (* Zap small entries *)
 PROCEDURE Zap(m : T; threshold : LONGREAL ) : T;
 
+(* extract row, col *)
+PROCEDURE ExtractRowAsVector(m : T; r : CARDINAL) : Vector;
+PROCEDURE ExtractColAsVector(m : T; c : CARDINAL) : Vector;
+
+PROCEDURE ExtractRow(m : T; r : CARDINAL) : T;
+PROCEDURE ExtractCol(m : T; c : CARDINAL) : T;
+
+PROCEDURE SetCol(m : T; c : CARDINAL; col : Vector);
 
 END Matrix.

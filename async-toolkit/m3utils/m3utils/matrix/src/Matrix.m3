@@ -238,7 +238,57 @@ PROCEDURE U(m : T) : T = (* get U part of LU matrix *)
     RETURN res
   END U;
 
+PROCEDURE ExtractRowAsVector(m : T; r : CARDINAL) : Vector =
+  VAR
+    cols := GetDim(m).cols;
+    res := NEW(Vector, cols);
+  BEGIN
+    FOR c := 0 TO cols-1 DO
+      res[c] := m[r,c]
+    END;
+    RETURN res
+  END ExtractRowAsVector;
 
+PROCEDURE ExtractColAsVector(m : T; c : CARDINAL) : Vector =
+  VAR
+    rows := GetDim(m).rows;
+    res := NEW(Vector, rows);
+  BEGIN
+    FOR r := 0 TO rows-1 DO
+      res[c] := m[r,c]
+    END;
+    RETURN res
+  END ExtractColAsVector;
+
+PROCEDURE ExtractRow(m : T; r : CARDINAL) : T =
+  VAR
+    cols := GetDim(m).cols;
+    res := NEW(T, 1, cols);
+  BEGIN
+    FOR c := 0 TO cols-1 DO
+      res[0,c] := m[r,c]
+    END;
+    RETURN res
+  END ExtractRow;
+
+PROCEDURE ExtractCol(m : T; c : CARDINAL) : T=
+  VAR
+    rows := GetDim(m).rows;
+    res := NEW(T, rows, 1);
+  BEGIN
+    FOR r := 0 TO rows-1 DO
+      res[r, 0] := m[r,c]
+    END;
+    RETURN res
+  END ExtractCol;
+
+PROCEDURE SetCol(m : T; c : CARDINAL; col : Vector) =
+  BEGIN
+    <* ASSERT NUMBER(col^) = GetDim(m).rows *>
+    FOR r := 0 TO NUMBER(col^) - 1 DO
+      m[r, c] := col[r]
+    END
+  END SetCol;
 
 BEGIN
 
