@@ -22,6 +22,7 @@
 (* $Id$ *)
 
 MODULE TextUtils;
+IMPORT TextReader;
 IMPORT Text;
 IMPORT Fmt;
 IMPORT TextSet, TextSetDef, TextList;
@@ -144,5 +145,11 @@ PROCEDURE SetToList(set : TextSet.T) : TextList.T =
     WHILE iter.next(t) DO res := TextList.Cons(t,res) END;
     RETURN res
   END SetToList;
+
+PROCEDURE Shatter(t: TEXT; delims:="\t "; endDelims:="\n;#%";
+                  skipNulls:=TRUE): TextList.T =
+  BEGIN
+    RETURN NEW(TextReader.T).init(t).shatter(delims, endDelims, skipNulls);
+  END Shatter;
 
 BEGIN END TextUtils.

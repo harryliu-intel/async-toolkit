@@ -46,5 +46,11 @@ PROCEDURE Pluralize(noun : TEXT; count : INTEGER;
 PROCEDURE ListToSet(list : TextList.T) : TextSet.T;
 PROCEDURE SetToList(set : TextSet.T) : TextList.T;
 
+PROCEDURE Shatter(t: TEXT;
+                  delims:="\t ";
+                  endDelims:="\n;#%";
+                  skipNulls:=TRUE): TextList.T;
+(* E.g. "TRY LOOP l:=TextUtils.Shatter(Rd.GetLine(rd)); ... "
+   parses lines of words, ignoring comments. *)
 
 END TextUtils.
