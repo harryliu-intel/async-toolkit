@@ -92,7 +92,10 @@ PROCEDURE InitRange(res: FreeVariable; range : CARDINAL) : T =
 
     inrange := LessThanOrEqual(res,Constant(range));
 
-    res.bits[bits-2] := Bool.And(res.bits[bits-2],inrange);
+    (* must check for zero-range datum *)
+    IF bits > 1 THEN
+      res.bits[bits-2] := Bool.And(res.bits[bits-2],inrange)
+    END;
     
     <* ASSERT GreaterThan(res, Constant(range)) = Bool.False() AND
               LessThan(res, Zero) = Bool.False() *>
