@@ -2,6 +2,7 @@ MODULE TextTextTblExtras;
 IMPORT TextTextTbl;
 IMPORT TextReader;
 IMPORT TextList;
+IMPORT Text;
 FROM Debug IMPORT S;
 
 CONST
@@ -37,13 +38,33 @@ PROCEDURE ScanMore(src: TEXT; dest: T) =
     END;
   END ScanMore;
 
-PROCEDURE Scan(src: TEXT; sizeHint: CARDINAL := 0): T =
+PROCEDURE Scan(src: TEXT): T =
   VAR
+    sizeHint := Text.Length(src) DIV 20;
     result := NEW(TextTextTbl.Default).init(sizeHint);
   BEGIN
     ScanMore(src, result);
     RETURN result;
   END Scan;
+
+PROCEDURE ReverseMore(tbl: T; dest: T) =
+  VAR
+    iter := tbl.iterate();
+    key, value: TEXT;
+  BEGIN
+    WHILE iter.next(key, value) DO
+      EVAL dest.put(value, key);
+    END;
+  END ReverseMore;
+
+PROCEDURE Reverse(tbl: T): T =
+  VAR
+    sizeHint := tbl.size();
+    result := NEW(TextTextTbl.Default).init(sizeHint);
+  BEGIN
+    ReverseMore(tbl, result);
+    RETURN result;
+  END Reverse;
 
 BEGIN
 END TextTextTblExtras.
