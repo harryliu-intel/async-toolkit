@@ -73,6 +73,9 @@ PROCEDURE E(rd: T; message: TEXT; fatal := TRUE) =
     acc := "";
     pos: INTEGER;
   BEGIN
+    IF NOT fatal THEN
+      acc := "Warning: ";
+    END;
     IF rd # NIL THEN
       IF ISTYPE(rd, NamedRd) THEN
         acc := acc & NARROW(rd, NamedRd).p & " ";
