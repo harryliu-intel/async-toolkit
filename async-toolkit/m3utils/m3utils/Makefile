@@ -1,7 +1,8 @@
 # $Id$
 COMMONDIRS= processor crt
-SHIPS=cit_util magic bdd
+SHIPS=cit_util magic bdd cptr bool
 SUBDIRS= bas newsim psim pslnew m3hier
+M3SUBS= boxes
 
 all: commons ships subs m3subs
 clean: cleanships cleanm3 cleansubs cleancommons
@@ -19,7 +20,12 @@ subs:
 		cd $$s; make; cd .. ;  \
 	done
 
-ships:
+
+links:
+	ln -sf /ufs/mika/mika/mylibs/bool.[hc] bool/src
+	ln -sf /ufs/mika/mika/mylibs/misc.[hc] bool/src
+
+ships: links
 	@for s in $(SHIPS); do\
 		echo "===> $$s";\
 		cd $$s; m3build; m3ship; cd .. ;  \
