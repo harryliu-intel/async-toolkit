@@ -152,4 +152,26 @@ PROCEDURE Shatter(t: TEXT; delims:="\t "; endDelims:="\n;#%";
     RETURN NEW(TextReader.T).init(t).shatter(delims, endDelims, skipNulls);
   END Shatter;
 
+PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT =
+  VAR
+    result := NEW(REF ARRAY OF CHAR, Text.Length(in));
+    len := 0;
+    last := Text.Length(in) - 1;
+    c: CHAR;
+  BEGIN
+    FOR i := 0 TO last DO
+      c := Text.GetChar(in, i);
+      IF c IN keep THEN
+        result[len] := c;
+        INC(len);
+      END;
+    END;
+    RETURN Text.FromChars(SUBARRAY(result^, 0, len));
+  END Filter;
+
+PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
+  BEGIN
+    RETURN Filter(in, SET OF CHAR{FIRST(CHAR) .. LAST(CHAR)} - remove);
+  END FilterOut;
+
 BEGIN END TextUtils.

@@ -28,6 +28,9 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT;
 PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT;
 PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL;
 
+PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT;
+PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
+
 (* find first occurrence of sub in in *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
 
