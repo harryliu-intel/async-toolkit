@@ -233,8 +233,8 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             WHILE c IN White DO c := Rd.GetChar(rd); END;
             PutArg();
           UNTIL c IN Break1;
-          Exec();
-        END;
+          Exec()
+        END
       EXCEPT Rd.EndOfFile =>
         PutArg();
         c := ';';
