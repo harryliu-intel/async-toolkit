@@ -1,22 +1,14 @@
 (* $Id$ *)
 
 GENERIC INTERFACE Factory(Of);
-IMPORT Word;
+IMPORT Word, ObjectFactory;
 (* A Factory.T is an object that allocates objects of the type Of.T *)
-
+(* Call the build() method to allocate an object (ObjectFactory interface) *)
 TYPE
   T <: Public;
 
-  Public = OBJECT METHODS
-    build() : Of.T
-  END;
+  Public = ObjectFactory.T OBJECT END;
 
 CONST Brand = "Factory of " & Of.Brand;
-
-PROCEDURE Hash(a : T) : Word.T; 
-
-(* Equal returns TRUE ... *)
-PROCEDURE Equal(a, b : T) : BOOLEAN;
-
 
 END Factory.

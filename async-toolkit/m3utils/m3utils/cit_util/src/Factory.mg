@@ -2,19 +2,26 @@
 
 GENERIC MODULE Factory(Of);
 IMPORT Word, Text;
+IMPORT ObjectFactory AS Super;
 
 REVEAL
-  T = Public BRANDED Brand OBJECT 
-  OVERRIDES
+  T = Public BRANDED Brand OBJECT OVERRIDES
     build := Build;
+    hash := Hash;
+    init := Init;
+    equal := Equal;
   END;
 
 PROCEDURE Hash(<*UNUSED*>a : T) : Word.T = 
   BEGIN RETURN Text.Hash(Brand) END Hash;
 
-PROCEDURE Equal(<*UNUSED*>a, b : T) : BOOLEAN = BEGIN RETURN TRUE END Equal;
+PROCEDURE Equal(a : T;  b : Super.T) : BOOLEAN = 
+  BEGIN RETURN a.code = b.code END Equal;
 
-PROCEDURE Build(<*UNUSED*>a : T) : Of.T = BEGIN RETURN NEW(Of.T) END Build;
+PROCEDURE Build(<*UNUSED*>a : T) : REFANY = BEGIN RETURN NEW(Of.T) END Build;
+
+PROCEDURE Init(self : T) : Super.T = 
+  BEGIN self.code := TYPECODE(Of.T); RETURN self END Init;
 
 BEGIN END Factory.
 

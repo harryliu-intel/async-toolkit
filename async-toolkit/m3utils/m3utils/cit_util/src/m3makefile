@@ -91,6 +91,7 @@ Rational("Int","IntForRat")
 Rational("Big", "BigInt")
 Module("UnsafeMutex")
 
+Module("ObjectFactory")
 Generic_module("Factory")
 template("factory")
 
