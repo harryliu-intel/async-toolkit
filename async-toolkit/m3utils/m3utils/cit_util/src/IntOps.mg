@@ -8,6 +8,14 @@ IMPORT FloatMode, Lex;
 
 PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T =
   BEGIN
+    IF Compare(a,Int.Zero) = -1 THEN
+      VAR
+        g := ExtendedGCD(b,Negate(a),bCoeff,aCoeff);
+      BEGIN
+        aCoeff := Negate(aCoeff);
+        RETURN g;
+      END;
+    END;
     CASE Compare(a,b) OF
     | -1 => RETURN EGCD(a,b,aCoeff,bCoeff);
     | 0 => aCoeff:=Int.One; bCoeff:=Int.Zero; RETURN a;
@@ -15,7 +23,7 @@ PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T =
     END;
   END ExtendedGCD;
 
-(* assumes a<b *)
+(* assumes 0<=a<b *)
 PROCEDURE EGCD(a,b: T; VAR aCoeff,bCoeff: T): T =
   BEGIN
     IF Equal(a, Int.Zero) THEN
@@ -141,5 +149,12 @@ PROCEDURE Odd(a: T): BOOLEAN =
   BEGIN
     RETURN Equal(Mod(a, Int.New(2)),Int.One);
   END Odd;
+
+PROCEDURE GCD(a, b: T): T =
+  VAR
+    ac,bc: T;
+  BEGIN
+    RETURN ExtendedGCD(a,b,ac,bc);
+  END GCD;
 
 BEGIN END IntOps.

@@ -42,6 +42,7 @@ EXCEPTION
   NoneExists;
 CONST
   Brand = "Ops(" & Int.Brand & ")";
+PROCEDURE GCD(a, b: T): T;
 PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T;
 PROCEDURE ModInverse(a, mod: T): T RAISES {NoneExists};
 PROCEDURE Odd(a: T): BOOLEAN;
