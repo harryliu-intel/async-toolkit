@@ -91,7 +91,6 @@ faster: fastprep .lesstodo .fastmake
 	cd hack ; echo `./bindir.sh` > ../.bindir
 .top:
 	echo TOP=\"$(PWD)\" > .top
-#	echo BINDIR=\"`cat .bindir`\" >> .top # superceded by BUILD_DIR
 
 .m3deps:
 	grep ^import\ \*\( */src/m3makefile */*/src/m3makefile | \
@@ -119,6 +118,8 @@ faster: fastprep .lesstodo .fastmake
 	sh .fast
 
 cleanthis:
+	rm -f .bindir
+	make .bindir
 	find . -name `cat .bindir` -print | xargs rm -rf 
 	rm -f .bindir .top
 	rm -rf hack/.hidden
