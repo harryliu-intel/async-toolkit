@@ -14,4 +14,7 @@ PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T;
 (* like "Pathname.Join", but just returns (possibly extended) base
    (instead of crashing) in the case that base is absolute. *)
 
+PROCEDURE DirOf(pn: T): T;
+(* like "Pathname.Prefix", but returns "." if pn has no slash. *)
+
 END PathnameUtils. 

@@ -54,5 +54,13 @@ PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T =
     END;
   END Join;
 
+PROCEDURE DirOf(pn: T): T =
+  VAR
+    res := Pathname.Prefix(pn);
+  BEGIN
+    IF Text.Equal(res, "") THEN RETURN "."; END;
+    RETURN res;
+  END DirOf;
+
 BEGIN
 END PathnameUtils.
