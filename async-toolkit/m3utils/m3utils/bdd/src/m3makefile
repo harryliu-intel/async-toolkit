@@ -16,6 +16,3 @@ generic_module("ProcTable")
 
 import("libm3")
 library("bdd")
-/*implementation("BDDTest")*/
-
-/*program("bddtest")*/
