@@ -1,0 +1,9 @@
+readonly proc Build_generic_module(nam, gen, args1, args2) is
+	build_generic_intf(nam, gen, args1, VISIBLE)
+	build_generic_impl(nam, gen, args2)
+end
+
+readonly proc build_generic_module(nam, gen, args1, args2) is
+	build_generic_intf(nam, gen, args1, HIDDEN)
+	build_generic_impl(nam, gen, args2)
+end
