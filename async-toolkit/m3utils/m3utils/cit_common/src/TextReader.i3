@@ -62,7 +62,7 @@ TYPE
    It is a checked runtime error for there to be an overlap between
    "listDelims" and "endDelims" *)
 
-    pushBackText(t: TEXT);
+    pushBack(t: TEXT);
 (* insert "t" before remaining unread "TEXT". "t" must end in
    delimiter(s) if the next call to "next" is not to run past the
    end of "t". *)
