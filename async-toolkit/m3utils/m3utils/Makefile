@@ -3,66 +3,81 @@
 #
 
 COMMONDIRS= processor crt
+
+# "SHIPS" are subdirectories containing Modula-3 libraries that
+# would normally be shipped to /usr/local/lib/m3.
+# We need to make sure that we clean them in reverse order of 
+# building since they may depend on other libraries (1 way only)
 SHIPS=cit_util magic bdd cptr bool
+REVSHIPS=`echo ${SHIPS} | xargs -n1 echo | tail -r | xargs echo`
+
 SUBDIRS= bas newsim psim pslnew m3hier Parse
 M3SUBS= boxes magraster
 
-all: .bindir commons ships subs m3subs
-clean: cleanships cleanm3 cleansubs cleancommons cleanthis
+M3BUILDOPTS= -O
+M3BUILD= m3build $(M3BUILDOPTS)
+M3SHIP= echo
+
+all: .bindir .top commons ships subs m3subs
+clean: cleansubs cleanm3 cleancommons cleanships cleanthis
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
 
+.top:
+	echo TOP=\"`pwd`\" > .top
+
+
 cleanthis:
-	rm -f .bindir
+	rm -f .bindir .top
 
 commons:
 	@for s in $(COMMONDIRS); do\
 		echo "===> $$s";\
-		cd $$s; make; cd .. ;  \
+		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\"; cd .. ;  \
 	done
 
 subs:
 	@for s in $(SUBDIRS); do\
 		echo "===> $$s";\
-		cd $$s; make; cd .. ;  \
+		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\"; cd .. ;  \
 	done
 
 
 ships: 
 	@for s in $(SHIPS); do\
 		echo "===> $$s";\
-		cd $$s; m3build; m3ship; cd .. ;  \
+		cd $$s; $(M3BUILD); $(M3SHIP); cd .. ;  \
 	done
 
 m3subs:
 	@for s in $(M3SUBS); do\
 		echo "===> $$s";\
-		cd $$s; m3build; cd .. ;  \
+		cd $$s; $(M3BUILD); cd .. ;  \
 	done
 
 cleanships:
-	@for s in $(SHIPS); do\
+	@for s in $(REVSHIPS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; m3build clean; cd .. ;  \
+		cd $$s; $(M3BUILD) clean || true; cd .. ;  \
 	done
 
 cleanm3:
 	@for s in $(M3SUBS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; m3build clean; cd .. ;  \
+		cd $$s; $(M3BUILD) clean || true ; cd .. ;  \
 	done
 
 cleancommons:
 	@for s in $(COMMONDIRS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; make clean; cd .. ;  \
+		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\" clean; cd .. ;  \
 	done
 
 cleansubs:
 	@for s in $(SUBDIRS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; make clean; cd .. ;  \
+		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\" clean; cd .. ;  \
 	done
 
 # this is the end of the Makefile

@@ -1,0 +1,10 @@
+/* $Id$ */
+
+/* .top is made by the Makefile before building anything */
+include(".top")
+
+override("magic",TOP)
+override("cit_util",TOP)
+override("bdd",TOP)
+override("cptr",TOP)
+override("bool",TOP)
