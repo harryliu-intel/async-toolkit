@@ -23,10 +23,10 @@ FROM Stdio IMPORT stdout;
 PROCEDURE Format(e: expr): TEXT =
   BEGIN
     CASE e.kind OF
-    | 'U' => RETURN "uminus(" & Format(e.e1) & ")";
+    | 'U' => RETURN "(uminus " & Format(e.e1) & ")";
     | '+','-','*','/' =>
-      RETURN Fmt.Char(e.kind) & "(" &
-             Format(e.e1) & "," & Format(e.e2) & ")";
+      RETURN "(" & Fmt.Char(e.kind) & " " &
+             Format(e.e1) & " " & Format(e.e2) & ")";
     | 'N' => RETURN Fmt.Int(e.val);
     ELSE
       RETURN Fmt.Char(e.kind);
