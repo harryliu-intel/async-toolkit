@@ -1,0 +1,6 @@
+INTERFACE BDDPrivate;
+IMPORT BDD;
+
+PROCEDURE GetId(self : BDD.T) : CARDINAL;
+
+END BDDPrivate.
