@@ -112,6 +112,18 @@ an _TT(RdLexer), which provides the following additional methods:
 </PRE>
 
 
+_A(char)_H(Using _TT(%char))
+
+_TT(%char) means just two things:
+<OL>
+  <LI> symbols in _TT(.y) file
+  <LI> macros in a _TT(.l) file
+</OL>
+
+Therefore you can have something in _TT(%char) in the .t file that can
+also be used in identifiers in the .l file. Mika discovered this.
+
+
 PL_END
 $Id$
 HTML_END
