@@ -1,0 +1,11 @@
+/* $Id$ */
+import("libm3")
+import("cit_util")
+mkSetDef("Ref","Refany")
+
+Module("Quantity")
+Module("Matrix")
+Module("LU")
+Module("Newton")
+
+Library("matrix")
