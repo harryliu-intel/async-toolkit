@@ -59,6 +59,7 @@ PROCEDURE Input(prompt:=">"; completer: Completer := NIL;
   BEGIN
     prev := previous;
     next := NIL;
+    Term.MakeRaw(TRUE);
     Term.Wr(prompt & default);
     LOOP
       p0:=p;
