@@ -4,8 +4,6 @@ The <B>parserlib</B> package defines m3build procedures that build
 interfaces for tokens, lexers, and parsers.
 <P>
 
-#define _TS _LN(ktok.html#spec, token specification)
-#define _TI _LN(ktok.html#intf, token interface)
 #define _LS _LN(klex.html#spec, lexer specification)
 #define _LI _LN(klex.html#intf, lexer interface)
 #define _YS _LN(kyacc.html#spec, parser specification)
@@ -24,7 +22,7 @@ named <TT>spec.l</TT>, and generates an extendable _YI named
 <TT>specLex.i3</TT> which imports the _TI <TT>specTok.i3</TT>. <P>
 
 <B>extended(nm)</B> reads the source specifications specified in
-the <A HREF = "#ext">ext</A> file named <TT>nm.e</TT>, and
+the <A HREF = "kext.html">ext</A> file named <TT>nm.e</TT>, and
 generates an extended token, lexer, or parser interface named
 <TT>nm.i3</TT>. <P>
 
@@ -51,3 +49,4 @@ the input specification and generated interface available to importers
 outside the current package. <P>
 
 PL_END
+$Id$
