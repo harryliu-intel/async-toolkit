@@ -21,4 +21,3 @@ override("bdd",TOP)
 override("cptr",TOP)
 override("bool",TOP)
 
-option("standalone", "T")
