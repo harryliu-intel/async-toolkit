@@ -7,6 +7,7 @@ import("cit_util")
 Module("Quantity")
 Module("Matrix")
 Module("LU")
+Module("SVD")
 Module("Newton")
 
 Library("matrix")
