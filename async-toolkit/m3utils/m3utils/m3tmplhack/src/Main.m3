@@ -112,7 +112,7 @@ PROCEDURE Base(): TEXT =
     IF Text.Equal(mode, ModuleMode) THEN
       RETURN nm;
     ELSE
-      RETURN nm & "_mode";
+      RETURN nm & "_" & mode;
     END;
   END Base;
 
