@@ -1,11 +1,14 @@
 INTERFACE TextTextTblExtras;
 IMPORT TextTextTbl;
+IMPORT TextSet;
 
 TYPE
   T = TextTextTbl.T;
 
-PROCEDURE Scan(src: TEXT): T;
-PROCEDURE ScanMore(src: TEXT; dest: T);
+PROCEDURE Scan(src: TEXT; valueLast := TRUE): T;
+PROCEDURE ScanMore(src: TEXT; dest: T;
+                   valueLast := TRUE;
+                   captureAll: TextSet.T := NIL);
 
 (* Input format:
 | targ1 [[=] targ2 [[=] ...]] [=] value
