@@ -90,13 +90,13 @@ m3subs:
 cleanships:
 	@for s in $(REVSHIPS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; $(M3BUILD) clean || true; cd .. ;  \
+		(cd $$s; $(M3BUILD) clean || true);  \
 	done
 
 cleanm3:
 	@for s in $(M3SUBS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; $(M3BUILD) clean || true ; cd .. ;  \
+		(cd $$s; $(M3BUILD) clean || true);  \
 	done
 
 cleancommons:
