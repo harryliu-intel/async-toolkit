@@ -2,6 +2,7 @@ UNSAFE MODULE RefRecord;
 (*IMPORT Stdio;*)
 
 IMPORT Wr;
+IMPORT Text;
 IMPORT Fmt;
 IMPORT TextWr;
 IMPORT RTTipe;
@@ -144,6 +145,8 @@ PROCEDURE Test() =
     (* result: 1.2345679 TRUE c 0 1 {10 20} -3 (a 3.1 (FALSE)) 010 {FALSE TRUE TRUE} 100 5 300 *)
   END Test;
 *)
+PROCEDURE Hash(a: T): INTEGER = BEGIN RETURN Text.Hash(Format(a)); END Hash;
+PROCEDURE Equal(a,b:T): BOOLEAN = BEGIN RETURN Text.Equal(Format(a),Format(b));END Equal;
 
 BEGIN
   (* Test(); *)

@@ -91,6 +91,8 @@ Map("LRParametricCurve", "LongrealType", "LRPoint")
 
 Module("Pointe")
 
+Interface("BoolF")
+
 template("listf")
 generic_module("ListF")
 TextListF("TextFF")
