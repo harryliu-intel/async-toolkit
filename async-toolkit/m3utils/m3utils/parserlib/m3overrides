@@ -1,5 +1,8 @@
 /* $Id$ */
 
+/* Copyright (c) 2000 California Institute of Technology */
+/* All rights reserved. See the file COPYRIGHT for a full description. */
+
 /* these packages are needed in order to build this distribution */
 /* warning: some of these packages may include an overrides file, */
 /* which better not conflict with the ones at the end of this file */
