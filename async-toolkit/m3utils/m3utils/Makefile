@@ -106,8 +106,9 @@ m3subs:
 	done
 
 browserexps:
-	m3browserhack/export.sh $(BROWSEREXPS)
-
+	if [ -x m3browserhack ]; then \
+		m3browserhack/export.sh $(BROWSEREXPS); \
+	fi
 
 cleanships:
 	@for s in $(REVSHIPS); do\
