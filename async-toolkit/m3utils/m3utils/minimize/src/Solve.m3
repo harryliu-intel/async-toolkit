@@ -13,7 +13,7 @@ PROCEDURE WDB(f : LRFunction.T;
     b := x2;
     fa, fb : LONGREAL; 
   BEGIN
-    f.evalHint(b);
+    IF f.doHints THEN f.evalHint(b) END;
 
     fa := f.eval(a);
     fb := f.eval(b);

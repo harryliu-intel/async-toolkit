@@ -64,6 +64,7 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   END Replace;
 
 (* find first occurrence of sub in in *)
+(* not a good algorithm: if necessary, code up Knuth-Morris-Pratt instead. *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
   VAR
     inA := NEW(REF ARRAY OF CHAR, Text.Length(in));
