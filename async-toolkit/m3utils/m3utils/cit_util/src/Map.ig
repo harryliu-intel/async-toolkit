@@ -14,7 +14,10 @@ TYPE
 
   T <: Public;
 
-  Public = OBJECT METHODS
+  Public = OBJECT 
+    doHints := FALSE; (* should the hint routine be called 
+                         before evaluating? *)
+  METHODS
     eval(x : From.T) : To.T; (* must override this *)
 
     evalD(x : From.T; VAR y : To.T); (* may override this if desired;
