@@ -2,7 +2,6 @@
 
 MODULE BoolIntegerImpl EXPORTS BoolInteger;
 IMPORT Bool, BoolRemap, BoolSet, Word, BoolSetDef, BoolIntegerTbl, IntBoolIntegerTbl;
-IMPORT BoolBoolTbl;
 
 TYPE Array = REF ARRAY OF Bool.T;
 
@@ -35,6 +34,7 @@ REVEAL
     init := Init;
     remap := FreeRemap;
     clone := Clone;
+    makemap := Makemap;
     isRepBaseBit := FVIsRepBaseBit;
   END;
   
@@ -54,21 +54,34 @@ VAR
 PROCEDURE SetId(s : T) : T = 
   BEGIN LOCK idmu DO s.id := id; INC(id) END; RETURN s END SetId;
 
-PROCEDURE Clone(self : FreeVariable; VAR clone : FreeVariable) : BoolBoolTbl.T =
+PROCEDURE Makemap(self : FreeVariable; tgt : FreeVariable) : BoolRemap.T =
   VAR 
-    map := NEW(BoolBoolTbl.Default).init();
+    map := NEW(BoolRemap.T).init();
+  BEGIN
+    <* ASSERT NUMBER(self.baseBits^) = NUMBER(tgt.baseBits^) *>
+    FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
+      EVAL map.put(self.baseBits[i],tgt.baseBits[i])
+    END;
+    RETURN map
+  END Makemap;
+
+PROCEDURE Clone(self : FreeVariable; VAR clone : FreeVariable) : BoolRemap.T =
+  VAR 
+    map : BoolRemap.T;
   BEGIN
     clone := NEW(FreeVariable, 
                  bits := NEW(Array, NUMBER(self.bits^)),
                  baseBits := NEW(Array, NUMBER(self.bits^)-1)).setId();
+    
     FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
-      clone.baseBits[i] := Bool.New();
-      EVAL map.put(self.baseBits[i],clone.baseBits[i])
+      clone.baseBits[i] := Bool.New()
     END;
+
+    map := self.makemap(clone);
     
     WITH o = self.bits^, n = clone.bits^ DO
       FOR i := FIRST(o) TO LAST(o) DO
-        n[i] := BoolRemap.Remap(map,o[i],TRUE)
+        n[i] := map.remap(o[i],TRUE)
       END
     END;
 
@@ -366,30 +379,30 @@ PROCEDURE CheckCache(a : T) : T =
 PROCEDURE RepBits(a : T) : CARDINAL = 
   BEGIN RETURN NUMBER(a.bits^) END RepBits;
 
-PROCEDURE Remap(a : T; m : BoolBoolTbl.T; check : BOOLEAN) : T =
+PROCEDURE Remap(a : T; m : BoolRemap.T; check : BOOLEAN) : T =
   VAR
     res := NEW(T, bits := NEW(Array, NUMBER(a.bits^))).setId();
   BEGIN
     WITH o = a.bits^, n = res.bits^ DO
       FOR i := FIRST(o) TO LAST(o) DO
-        n[i] := BoolRemap.Remap(m,o[i],check)
+        n[i] := m.remap(o[i],check)
       END
     END;
     RETURN CheckCache(res)
   END Remap;
 
-PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
+PROCEDURE FreeRemap(a : FreeVariable; m : BoolRemap.T; check : BOOLEAN) : T =
   VAR
     res : FreeVariable := NEW(FreeVariable, bits := NEW(Array, NUMBER(a.bits^)), baseBits := NEW(Array, NUMBER(a.baseBits^))).setId();
   BEGIN
     WITH o = a.bits^, n = res.bits^ DO
       FOR i := FIRST(o) TO LAST(o) DO
-        n[i] := BoolRemap.Remap(m,o[i],check)
+        n[i] := m.remap(o[i],check)
       END
     END;
     WITH o = a.baseBits^, n = res.baseBits^ DO
       FOR i := FIRST(o) TO LAST(o) DO
-        n[i] := BoolRemap.Remap(m,o[i],check)
+        n[i] := m.remap(o[i],check)
       END
     END;
     RETURN CheckCache(res)
@@ -397,14 +410,14 @@ PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
 
 PROCEDURE Substitute(self : T; f : FreeVariable; val : T) : T =
   VAR
-    boolBoolTbl := NEW(BoolBoolTbl.Default).init();
+    map := NEW(BoolRemap.T).init();
   BEGIN
     <* ASSERT val.getMinValue() >= f.getMinValue() AND
               val.getMaxValue() <= f.getMaxValue() *>
     FOR i := FIRST(f.baseBits^) TO LAST(f.baseBits^) DO
-      EVAL boolBoolTbl.put(f.baseBits[i],val.extract(i))
+      EVAL map.put(f.baseBits[i],val.extract(i))
     END;
-    RETURN self.remap(boolBoolTbl)
+    RETURN self.remap(map)
   END Substitute;
 
 PROCEDURE AbstractEqual(<*UNUSED*>self : BoolIntegerTbl.T; 

@@ -1,6 +1,6 @@
 (* $Id$ *)
 
-MODULE Bool EXPORTS Bool, BoolImpl, BoolRemap;
+MODULE Bool EXPORTS Bool, BoolImpl, BoolRemapImpl;
 IMPORT Cbool, CboolImpl;
 IMPORT CPtr;
 IMPORT Word;

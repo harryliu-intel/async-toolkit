@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 INTERFACE BoolInteger;
-IMPORT Bool, BoolSet, BoolBoolTbl;
+IMPORT Bool, BoolSet, BoolRemap;
 IMPORT Word;
 IMPORT BoolFormatter;
 
@@ -30,7 +30,7 @@ TYPE
     (* return a new T, remapped according to the following 
        mapping: all keys will be replaced to the entries *)
     (* if check = TRUE then check that mapping is complete *)
-    remap(map : BoolBoolTbl.T; check := FALSE) : T;
+    remap(map : BoolRemap.T; check := FALSE) : T;
     
     vars() : BoolSet.T; (* Vars, below *)
     
@@ -50,7 +50,10 @@ TYPE
        
        a_remap := a.remap(a.cloneFreeVariable())
      *)
-    clone(VAR clonedFree : FreeVariable) : BoolBoolTbl.T;
+    clone(VAR clonedFree : FreeVariable) : BoolRemap.T;
+
+    (* remap a variable to a target... target must be same size *)
+    makemap(targetFree : FreeVariable) : BoolRemap.T;
     
     isRepBaseBit(b : Bool.T; VAR which : CARDINAL) : BOOLEAN; (* for debugging *)
   END;
