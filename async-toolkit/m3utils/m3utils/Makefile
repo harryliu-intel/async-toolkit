@@ -43,7 +43,7 @@ M3BUILD= m3build $(M3BUILDOPTS)
 M3SHIP= echo
 
 all: .bindir .top commons ships subs m3subs
-clean: cleanm3 cleansubs cleancommons cleanships cleanbuilddirs cleanthis 
+clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis 
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
