@@ -12,12 +12,16 @@ Module("TextUtils")
 implementation("TextUtilsFmt")
 Generic_module("OpenArrayTable")
 Generic_module("DblTable")
-Generic_interface("BrandedSet")
+Generic_module("BrandedSet")
 template("brandedset")
 Generic_module("KeyPair")
 template("keypair")
 Module("SIsuffix")
 table("Suffix", "Char", "SIsuffix")
 template("dbltable")
+
+KeyPair("Int", "Integer", "Integer")
+List("IntPair", "IntPair")
+
 Library("cit_util")
 
