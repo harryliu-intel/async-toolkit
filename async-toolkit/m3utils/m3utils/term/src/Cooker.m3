@@ -33,12 +33,14 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
     END Recall;
   PROCEDURE BWord(del: BOOLEAN) =
     BEGIN
-      WHILE p#0 AND Text.GetChar(t,p-1)=' ' DO DEC(p); END;
-      WHILE p#0 AND Text.GetChar(t,p-1)#' ' DO DEC(p); END;
-      IF del THEN
-        t:=Text.Sub(t,0,p)&Text.Sub(t,p0);
-        Term.Wr("\033["&Fmt.Int(p0-p)&"D"&Text.Sub(t,p)&"\033[K");
-        p0:=Text.Length(t);
+      IF p#0 THEN
+        WHILE p#0 AND Text.GetChar(t,p-1)=' ' DO DEC(p); END;
+        WHILE p#0 AND Text.GetChar(t,p-1)#' ' DO DEC(p); END;
+        IF del THEN
+          t:=Text.Sub(t,0,p)&Text.Sub(t,p0);
+          Term.Wr("\033["&Fmt.Int(p0-p)&"D"&Text.Sub(t,p)&"\033[K");
+          p0:=Text.Length(t);
+        END;
       END;
     END BWord;
   PROCEDURE FWord(del: BOOLEAN) =
