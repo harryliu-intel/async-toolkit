@@ -27,15 +27,21 @@ PROCEDURE ScanLine(src: TEXT; dest: T) =
     END;
   END ScanLine;
 
-PROCEDURE Scan(src: TEXT): T =
+PROCEDURE ScanMore(src: TEXT; dest: T) =
   VAR
-    result := NEW(TextTextTbl.Default).init();
     tr := NEW(TextReader.T).init(src);
     line: TEXT;
   BEGIN
     WHILE tr.next(",\n", line, TRUE) DO
-      ScanLine(line, result);
+      ScanLine(line, dest);
     END;
+  END ScanMore;
+
+PROCEDURE Scan(src: TEXT; sizeHint: CARDINAL := 0): T =
+  VAR
+    result := NEW(TextTextTbl.Default).init(sizeHint);
+  BEGIN
+    ScanMore(src, result);
     RETURN result;
   END Scan;
 
