@@ -11,12 +11,12 @@ PROCEDURE Normalize(p: T; newLength: LONGREAL): T =
 
 PROCEDURE Add(a,b: T): T =
   BEGIN
-    RETURN T{a.h+a.v, b.h+b.v};
+    RETURN T{a.h+b.h, a.v+b.v};
   END Add;
 
 PROCEDURE Sub(a,b: T): T =
   BEGIN
-    RETURN T{a.h-a.v, b.h-b.v};
+    RETURN T{a.h-b.h, a.v-b.v};
   END Sub;
 
 BEGIN
