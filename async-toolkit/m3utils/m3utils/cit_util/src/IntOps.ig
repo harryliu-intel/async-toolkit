@@ -45,6 +45,8 @@ CONST
 PROCEDURE Negate(a: T): T;
 PROCEDURE Sub(a, b: T): T;
 PROCEDURE Old(a: T): INTEGER; (* convert small ints back to INTEGER *)
+PROCEDURE ModDiv(a,b, mod: T): T;
+PROCEDURE ModMul(a,b, mod: T): T;
 
 
 (* misc *)

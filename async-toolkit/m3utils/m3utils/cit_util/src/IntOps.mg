@@ -190,5 +190,9 @@ PROCEDURE Old(a: T): INTEGER = BEGIN RETURN ROUND(Int.ToLongReal(a)); END Old;
 PROCEDURE Log2i(a: T):INTEGER=BEGIN RETURN Text.Length(Format(a,2)); END Log2i;
 PROCEDURE Exp2i(i: INTEGER): T = BEGIN RETURN Exp(New(2),New(i)); END Exp2i;
 PROCEDURE Log2(a: T): T = BEGIN RETURN New(Log2i(a)); END Log2;
+PROCEDURE ModMul(a,b,mod: T): T = BEGIN RETURN Mod(Mul(a,b),mod); END ModMul;
+PROCEDURE ModDiv(a,b,mod: T): T = <* FATAL NoneExists *>
+  BEGIN RETURN ModMul(a, ModInverse(b, mod), mod); END ModDiv;
+
 
 BEGIN END IntOps.
