@@ -65,7 +65,10 @@ TYPE
     pushBack(t: TEXT);
 (* insert "t" before remaining unread "TEXT". "t" must end in
    delimiter(s) if the next call to "next" is not to run past the
-   end of "t". *)
+   end of "t". Current implementation may or may not insert an
+   extra invisible delimiter after "t" in some cases. This will not
+   be seen if "skipNulls" is always "TRUE" and "t" always ends in a
+   delimiter anyway. *)
 
   END;
 END TextReader.
