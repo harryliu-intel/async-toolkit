@@ -33,6 +33,8 @@ PROCEDURE Cat(READONLY a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,
       INC(index);
     UNTIL size = 0;
     result := NEW(T, totalSize);
+    totalSize := 0;
+    index := 0;
     REPEAT
       Scan();
       INC(index);
