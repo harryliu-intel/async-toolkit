@@ -32,6 +32,7 @@ clean: cleanm3 cleansubs cleancommons cleanships cleanbuilddirs cleanthis
 
 
 cleanthis:
+	find . -name `cat .bindir` -exec rm -rf {} \; -print
 	rm -f .bindir .top
 	rm -rf hack/.hidden
 
