@@ -19,7 +19,7 @@ readonly proc Dbltable(nm, k, v) is
 	table(v & ks & "Single", v, bks)
 	local vkst = v & ks & "SingleTbl"
 
-	build_generic_intf(nam, "DblTable", [k, v, kvt, bks], VISIBLE)
+	build_generic_intf(nam, "DblTable", [k, v, kvt, vkst, bks], VISIBLE)
 	build_generic_impl(nam, "DblTable", [k, v, kvt, vkst, bks])
 end
 
@@ -40,6 +40,6 @@ readonly proc dbltable(nm, k, v) is
 	table(v & ks & "Single", v, bks)
 	local vkst = v & ks & "SingleTbl"
 
-	build_generic_intf(nam, "DblTable", [k, v, kvt, bks], HIDDEN)
+	build_generic_intf(nam, "DblTable", [k, v, kvt, vkst, bks], HIDDEN)
 	build_generic_impl(nam, "DblTable", [k, v, kvt, vkst, bks])
 end

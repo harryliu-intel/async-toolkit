@@ -24,8 +24,12 @@ REVEAL
     getKeys := GetKeys;
     valueEqual := ValueEqual;
     valueHash := ValueHash;
+    iterateVals := IterateVals;
   END;
     
+PROCEDURE IterateVals(self : Default) : ValueKeySetTbl.Iterator =
+  BEGIN RETURN self.revTbl.iterate() END IterateVals;
+
 PROCEDURE GetKeys(self : Default; READONLY v : Value.T; VAR s : KeySet.T) : BOOLEAN =
   BEGIN RETURN self.revTbl.get(v,s) END GetKeys;
 

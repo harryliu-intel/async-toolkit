@@ -1,4 +1,4 @@
-GENERIC INTERFACE DblTable(Key, Value, KeyValueTbl, KeySet);
+GENERIC INTERFACE DblTable(Key, Value, KeyValueTbl, ValueKeySetTbl, KeySet);
 IMPORT Word;
 
 (* Key, Value, and KeyValueTbl go together as in the old Table.ig *)
@@ -6,6 +6,7 @@ IMPORT Word;
 TYPE
   T = KeyValueTbl.Default OBJECT METHODS
     getKeys(READONLY v : Value.T; VAR s : KeySet.T) : BOOLEAN;
+    iterateVals() : ValueKeySetTbl.Iterator;
   END;
 
   Default <: T OBJECT METHODS
