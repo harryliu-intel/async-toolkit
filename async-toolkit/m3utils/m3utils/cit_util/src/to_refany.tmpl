@@ -1,0 +1,15 @@
+readonly proc toRefany(type) is
+	build_generic_intf(type & "ToRefany", "ToRefany", [], HIDDEN)
+	build_generic_impl(type & "ToRefany", "ToRefany", [type])
+end 
+
+
+readonly proc ref(nm, type) is
+	build_generic_intf(nm & "Ref", "Ref", [type], HIDDEN)
+	build_generic_impl(nm & "Ref", "Ref", [type])
+end
+
+readonly proc Ref(nm, type) is
+	build_generic_intf(nm & "Ref", "Ref", [type], VISIBLE)
+	build_generic_impl(nm & "Ref", "Ref", [type])
+end

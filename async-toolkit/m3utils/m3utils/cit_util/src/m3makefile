@@ -23,5 +23,32 @@ template("dbltable")
 KeyPair("Int", "Integer", "Integer")
 List("IntPair", "IntPair")
 
+Module("RTBrand")
+
+Module("ToRefany")
+Generic_module("ToRefany")
+Interface("ToRefanyClass")
+table("ToRefany","Integer","ToRefanyClass")
+template("to_refany")
+
+toRefany("Text")
+
+Ref("Int", "Integer")
+toRefany("IntRef")
+
+Ref("Bool", "Boolean")
+toRefany("BoolRef")
+
+Ref("Char", "Char")
+toRefany("CharRef")
+
+Ref("Real", "RealType")
+toRefany("RealRef")
+
+Ref("Longreal", "LongrealType")
+toRefany("LongrealRef")
+
 Library("cit_util")
+
+
 
