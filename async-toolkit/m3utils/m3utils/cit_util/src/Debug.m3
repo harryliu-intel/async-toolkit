@@ -34,6 +34,7 @@ FROM Stdio IMPORT stderr;
 IMPORT Env, Scan;
 IMPORT FloatMode, Lex;
 IMPORT Fmt;
+IMPORT Process;
 
 EXCEPTION ABORT;
 
@@ -112,10 +113,9 @@ PROCEDURE DefaultOut(t: TEXT) =
   END DefaultOut;
 
 PROCEDURE DefaultError(t: TEXT) =
-<*FATAL ABORT*>
   BEGIN
     S("ERROR: " & UnNil(t), 0);
-    RAISE ABORT;
+    Process.Exit(2);
   END DefaultError; 
 
 PROCEDURE RegisterHook(out: OutHook; level:=0) =
