@@ -1,0 +1,6 @@
+
+import("libm3")
+h_source("termios")
+interface("Termios")
+Module("Term")
+library("term")
