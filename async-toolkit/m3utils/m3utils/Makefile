@@ -1,7 +1,7 @@
 # $Id$
 COMMONDIRS= processor crt
 SHIPS=cit_util magic bdd cptr bool
-SUBDIRS= bas newsim psim pslnew m3hier
+SUBDIRS= bas newsim psim pslnew m3hier Parse
 M3SUBS= boxes magraster
 
 all: commons ships subs m3subs
