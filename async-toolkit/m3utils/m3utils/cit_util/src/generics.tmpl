@@ -18,6 +18,17 @@ readonly proc build_generic_module(nam, gen, args1, args2) is
         build_generic_impl(nam, gen, args2)
 end
 
+readonly proc Build_generic_interface(nam, gen, args) is
+	build_generic_intf(nam, gen, args, VISIBLE)
+end
+
+readonly proc build_generic_interface(nam, gen, args) is
+	build_generic_intf(nam, gen, args, HIDDEN)
+end
+
+build_generic_implementation = build_generic_impl
+Build_generic_implementation = build_generic_impl
+
 readonly proc _exec(cmd) is
         local ret = exec(cmd)
         write (cmd, CR)
@@ -77,7 +88,7 @@ readonly proc gother_template(nm,kind) is
 		_exec([_M3TMPLHACK,g])
 	end
 	_check_clean(g)
-	derived_template(nm)
+	derived_template(base)
 end
 
 readonly proc gmodule(nm) is
