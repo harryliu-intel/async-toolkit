@@ -94,6 +94,9 @@ generic_module("Map")
 
 Module("LRVector")
 Interface("LRPoint")
+Module("LRPt")
+gmodule("Interval")
+Interval("LR", "LongrealType")
 
 Interface("Threadd")
 Sequence("Thread","Threadd")
