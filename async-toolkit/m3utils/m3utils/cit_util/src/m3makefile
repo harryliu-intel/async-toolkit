@@ -76,6 +76,8 @@ Module("Pointe")
 template("listf")
 generic_module("ListF")
 TextListF("TextFF")
+Interface("BrandedRd")
+List("Rd","BrandedRd")
 
 Interface("CharF")
 Module("RefanyF")
