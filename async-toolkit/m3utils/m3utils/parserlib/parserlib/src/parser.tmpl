@@ -1,9 +1,4 @@
-
-include ("../../.top")
-
-if not defined("PARSER_TOP")
-	_PARSER_TOP = TOP
-end
+include ("../../.parsertop")
 
 if not defined("_PARSER_CMDS")
 	local _TOK = _PARSER_TOP & "/ktok/" & BUILD_DIR & "/tok"
