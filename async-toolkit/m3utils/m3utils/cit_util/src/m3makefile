@@ -17,8 +17,10 @@ Interface("RTBrand")
 if defined("CM3_VERSION")
 	implementation("RTBrandCM3")
 	import("patternmatching")
+	template("cm3")
 else
 	implementation("RTBrand")
+	template("non-cm3")
 end
 Module("RefRecord")
 
