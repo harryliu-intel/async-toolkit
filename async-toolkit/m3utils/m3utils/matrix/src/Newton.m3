@@ -57,6 +57,7 @@ PROCEDURE Solve(vars : REF ARRAY OF REF LONGREAL;
   (* XXX not done: Quantity.IllegalOperands SHOULD BE CAUGHT HERE.
      We could make a reliable solver that simply recovers from division
      by zero or logs of negative numbers... *)
+  <* FATAL Matrix.DimensionMismatch *>
   VAR
     jacobian := Jacobian(funcs, vars);
   BEGIN TRY

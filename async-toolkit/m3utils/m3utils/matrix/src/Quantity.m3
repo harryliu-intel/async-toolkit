@@ -9,7 +9,6 @@ TYPE
   Op = { Sum, Product, Difference, Quotient, Value,  Constant,
          Logarithm, Exponential, Sqrt,   Sqr };
 CONST
-  Tiny = 1.0d-6;
   OpName = ARRAY Op OF TEXT 
        { "+", "*",     "-",        "/",      "eval", "const", 
          "log",     "exp",       "sqrt", "sqr" }; 
@@ -87,22 +86,22 @@ PROCEDURE Value(self: T) : LONGREAL RAISES { Recursive, IllegalOperands } =
           *)
           RETURN self.l.value() / self.r.value() 
         END
-      | Op.Sqr => RETURN self.l.value() * self.l.value();
-      | Op.Exponential =>    RETURN Math.exp(self.l.value());
+      | Op.Sqr => RETURN self.l.value() * self.l.value()
+      | Op.Exponential =>    RETURN Math.exp(self.l.value())
       | Op.Logarithm =>      
         IF self.l.value() <= 0.0d0 THEN RAISE IllegalOperands(self.l)
         ELSE RETURN Math.log(self.l.value()) END
       | Op.Sqrt =>
         IF self.l.value() <= 0.0d0 THEN RAISE IllegalOperands(self.l)
         ELSE RETURN Math.exp(0.5d0*Math.log(self.l.value())) END
-      | Op.Value =>          RETURN self.base^;
-      | Op.Constant =>       RETURN self.base^;
+      | Op.Value =>          RETURN self.base^
+      | Op.Constant =>       RETURN self.base^
       ELSE
         <* ASSERT FALSE *>
       END;
     FINALLY
-      Unlock(self);
-    END;
+      Unlock(self)
+    END
   END Value;
 
 PROCEDURE Format(self : T; printValues : BOOLEAN) : TEXT RAISES { Recursive } =
@@ -232,6 +231,7 @@ PROCEDURE Div(x,y:T) : T =
 
 PROCEDURE Equivalent(x,y : T) : BOOLEAN =
   (* returns true if x and y are ALWAYS the same *)
+  <* FATAL Recursive, IllegalOperands *>
   BEGIN
     IF x = y OR 
       x.type = Op.Constant AND y.type = Op.Constant AND 
@@ -266,11 +266,9 @@ PROCEDURE Constant(x : LONGREAL) : T =
 
 (* compound ops *)
 
-PROCEDURE Square(x:T) : T =
-  BEGIN RETURN NEW(T).init(Op.Sqr,x) END Square;
+PROCEDURE Square(x:T) : T = BEGIN RETURN NEW(T).init(Op.Sqr,x) END Square;
 
-PROCEDURE Pow(x,p:T) : T =
-  BEGIN RETURN Exp(Mul(p,Log(x))) END Pow;
+PROCEDURE Pow(x,p:T) : T = BEGIN RETURN Exp(Mul(p,Log(x))) END Pow;
 
 BEGIN
   Zero := Constant(0.0d0);
