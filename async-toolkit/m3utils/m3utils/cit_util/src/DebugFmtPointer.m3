@@ -1,5 +1,5 @@
 (*                                                                           *)
-(*  Debug.i3                                                                 *)
+(*  DebugFmtPointer.m3                                                       *)
 (*                                                                           *)
 (*  Debugging output and aborting the program.                               *)
 (*                                                                           *)
@@ -21,32 +21,17 @@
 (*                                                                           *)
 (* $Id$ *)
 
-INTERFACE Debug;
-IMPORT Fmt;
+UNSAFE MODULE DebugFmtPointer EXPORTS Debug;
+IMPORT Word, Fmt;
 
-PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
-PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
-PROCEDURE Warning(t : TEXT);
-PROCEDURE Error(t : TEXT);
-PROCEDURE UnNil(text : TEXT) : TEXT;
+PROCEDURE FmtAddress(p : ADDRESS; base : Fmt.Base) : TEXT =
+  BEGIN
+    RETURN Fmt.Unsigned(LOOPHOLE(p,Word.T), base)
+  END FmtAddress;
 
-(* apart from these procedures, the debug level is also set from the
-   env. variable DEBUGLEVEL *)
+PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base) : TEXT =
+  BEGIN
+    RETURN Fmt.Unsigned(LOOPHOLE(p,Word.T), base)
+  END FmtPointer;
 
-(* if nothing else, it defaults to zero *)
-
-PROCEDURE RaiseLevel(newLevel : CARDINAL);
-PROCEDURE LowerLevel(newLevel : CARDINAL);
-PROCEDURE SetLevel(newLevel : CARDINAL);
-PROCEDURE GetLevel() : CARDINAL;
-
-(* output hook: support for raw terminals, etc. *)
-TYPE
-  OutHook = PROCEDURE(t: TEXT);
-PROCEDURE RegisterHook(out: OutHook; level:=0);
-PROCEDURE RegisterErrorHook(err: OutHook);
-
-PROCEDURE FmtAddress(p : ADDRESS; base : Fmt.Base := 16) : TEXT;
-PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;
-
-END Debug.
+BEGIN END DebugFmtPointer.
