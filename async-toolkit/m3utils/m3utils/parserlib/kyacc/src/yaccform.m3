@@ -31,7 +31,7 @@ TYPE
   END;
 
 REVEAL
-  T = Public BRANDED "%yacc" OBJECT
+  T = Public BRANDED Brand OBJECT
     lex: %tok.Lexer;
     tokenLookup: IntIntTbl.T := NIL; (* M3 type code -> SymCode *)
     symbols: IntTextTbl.T;           (* SymCode -> name *)
@@ -277,6 +277,10 @@ PROCEDURE Purge(self: T): INTEGER =
   BEGIN
     RETURN 0%purge;
   END Purge;
+
+(* generics stuff *)
+PROCEDURE Hash(<*UNUSED*>a: T): INTEGER = BEGIN RETURN 0; END Hash;
+PROCEDURE Equal(a,b:T): BOOLEAN = BEGIN RETURN a=b; END Equal;
 
 (* default methods *)
 %defimpl\

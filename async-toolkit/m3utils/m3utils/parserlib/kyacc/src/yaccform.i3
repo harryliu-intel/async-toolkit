@@ -36,4 +36,9 @@ TYPE
   (* ... and without importing the original token *)
 %tokOrig\
 
+(* generics stuff *)
+CONST
+  Brand = "%yacc";
+PROCEDURE Hash(a: T): INTEGER;
+PROCEDURE Equal(a,b:T): BOOLEAN;
 END %yacc.
