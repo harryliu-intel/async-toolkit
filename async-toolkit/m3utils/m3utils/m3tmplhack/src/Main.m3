@@ -97,10 +97,16 @@ PROCEDURE ConvertArgs(fn: TEXT): TEXT =
     REPEAT
       line := Rd.GetLine(rd);
       leftPos := Text.FindChar(line, '(');
-    UNTIL leftPos > 0; (* should skip comments, too. oh well. *)
+    UNTIL (leftPos > 0) OR Text.FindChar(line,';')#-1;
+    (* should skip comments, too. oh well.
+       We have some comments starting in column 0...*)
     Rd.Close(rd);
     rightPos := Text.FindChar(line, ')');
-    sym := Text.Sub(line, leftPos+1, rightPos-leftPos-1);
+    IF rightPos=-1 THEN
+      sym := "";
+    ELSE
+      sym := Text.Sub(line, leftPos+1, rightPos-leftPos-1);
+    END;
     reader := NEW(TextReader.T).init(sym);
     result := "";
     WHILE reader.next(", \t", sym, TRUE) DO
