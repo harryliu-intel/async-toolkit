@@ -20,7 +20,7 @@
 # 3. SUBDIRS      --   C programs
 # 4. M3SUBS       --   Modula-3 programs
 
-COMMONDIRS=processor crt m3yacc cit_util prsparse term parserlib
+COMMONDIRS=processor crt m3yacc cit_common m3tmplhack cit_util prsparse term parserlib
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
