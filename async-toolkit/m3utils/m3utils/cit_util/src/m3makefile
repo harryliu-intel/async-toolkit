@@ -53,7 +53,7 @@ Table("IntPairRef", "IntPair", "Refany")
 Module("TextSubs")
 
 Gmodule("Equivalence")
-table("TextTextList", "Text", "TextList")
+Table("TextTextList", "Text", "TextList")
 Equivalence("Text", "Text", "TextList", "TextTextTbl", "TextTextListTbl")
 Module("TextTextTblExtras")
 
