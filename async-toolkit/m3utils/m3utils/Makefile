@@ -53,13 +53,13 @@ REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 # These are built last
-M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs cit_parse/testchp paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test`
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
 M3SHIP= echo
 
-BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs cit_parse/testchp paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
+BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
 
 all: .bindir .top commons ships subs m3subs browserexps
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
