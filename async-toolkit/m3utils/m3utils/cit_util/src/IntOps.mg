@@ -30,7 +30,7 @@ PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T =
     END;
   END ExtendedGCD;
 
-(* assumes 0<=a<b *)
+(* assumes 0<=a<ABS(b) *)
 PROCEDURE EGCD(a,b: T; VAR aCoeff,bCoeff: T): T =
   BEGIN
     IF Equal(a, Int.Zero) THEN
