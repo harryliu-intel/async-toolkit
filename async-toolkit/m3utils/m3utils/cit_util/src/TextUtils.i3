@@ -64,4 +64,7 @@ PROCEDURE ShatterInts(t: TEXT;
                       delims      := ":.\t, ";
                       endDelims   := "\n;#%"): IntList.T;
 
+PROCEDURE Capitalize(t: TEXT; uniqueSuffix := ""): TEXT;
+(* capitalize "t"; if result would be equal to "t", append "uniqueSuffix". *)
+
 END TextUtils.

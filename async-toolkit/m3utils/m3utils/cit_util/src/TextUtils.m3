@@ -211,4 +211,18 @@ PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
     <* ASSERT FALSE *>
   END FilterEdges;
 
+PROCEDURE Capitalize(t: TEXT; uniqueSuffix := ""): TEXT =
+  VAR
+    l := Text.GetChar(t, 0);
+  BEGIN
+    IF l >= 'a' AND l <= 'z' THEN
+      WITH u = VAL(ORD(l) - ORD('a') + ORD('A'), CHAR) DO
+        RETURN Text.FromChar(u) & Text.Sub(t, 1);
+      END;
+    ELSE
+      RETURN t & uniqueSuffix;
+    END;
+  END Capitalize;
+
+
 BEGIN END TextUtils.
