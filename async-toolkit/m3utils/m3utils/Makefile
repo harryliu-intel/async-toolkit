@@ -21,7 +21,7 @@
 # 4. M3SUBS       --   Modula-3 programs
 # 5. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
 
-COMMONDIRS=processor crt m3yacc cit_common m3tmplhack m3browserhack cit_util prsparse term parserlib
+COMMONDIRS=processor crt m3yacc cit_common m3tmplhack cit_util m3browserhack prsparse term parserlib
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
