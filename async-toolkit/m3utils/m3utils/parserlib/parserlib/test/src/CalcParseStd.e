@@ -23,6 +23,7 @@ expr:	{val: INTEGER}
   sub		{$$ := $1 - $2}
   mul		{$$ := $1 * $2}
   div		{$$ := $1 DIV $2}
+  mod		{$$ := $1 MOD $2}
   uminus	{$$ := -$1}
   ident		{$$ := self.regs[$1]}
   num		{$$ := $1}

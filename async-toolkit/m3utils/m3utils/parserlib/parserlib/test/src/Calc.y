@@ -1,5 +1,5 @@
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
 %nonassoc uminus_expr
 
 %start list
@@ -10,7 +10,11 @@ list:
 
 stat:
   eval		expr
-  assign	LETTER ASSIGN expr
+  assign	LETTER ASSIGN expr null
+
+null:
+  silly         ASSIGN
+  no
 
 expr:
   paren		'(' expr ')'
@@ -18,6 +22,7 @@ expr:
   sub		expr '-' expr
   mul		expr '*' expr
   div		expr '/' expr
+  mod		expr '%' expr
   uminus	'-' expr
   ident		LETTER
   num		number
