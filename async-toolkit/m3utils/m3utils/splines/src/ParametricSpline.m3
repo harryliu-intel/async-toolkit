@@ -6,8 +6,10 @@ IMPORT IntegrateTrap, DerivRidders;
 REVEAL 
   T = Public BRANDED Brand OBJECT
   OVERRIDES 
-    length := Length;
+    area := Area;
   END;
+
+CONST EPS = 1.0d-8;
 
 VAR
   mu := NEW(MUTEX);
@@ -33,11 +35,11 @@ PROCEDURE GetX(x : LONGREAL) : LONGREAL =
   END GetX;
 
 (* $$\int_{s=0}^{s=1} y(s) {dx\over ds} \,ds$$ *)
-PROCEDURE Length(self : T; minParam, maxParam : LONGREAL) : LONGREAL =
+PROCEDURE Area(self : T) : LONGREAL =
 
   PROCEDURE Integrate() : LONGREAL = 
     BEGIN
-      RETURN IntegrateTrap.IntegrateE(IntFunc, minParam, maxParam)
+      RETURN IntegrateTrap.IntegrateE(IntFunc, 0.0d0, 1.0d0)
     END Integrate;
     
   BEGIN
@@ -53,6 +55,6 @@ PROCEDURE Length(self : T; minParam, maxParam : LONGREAL) : LONGREAL =
         held := FALSE
       END
     END
-  END Length;
+  END Area;
 
 BEGIN END ParametricSpline.

@@ -77,7 +77,9 @@ PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : ParametricSpline.T 
 
 PROCEDURE GetParametricPoint(self : T; param : LONGREAL) : Coord =
   BEGIN
-    <* ASSERT 0.0d0-EPS <= param AND param <= 1.0d0+EPS *>
+    (*<* ASSERT 0.0d0-EPS <= param AND param <= 1.0d0+EPS *>*)
+    (* Ok: spline is only valid from -1 to 1, but there's no real objection
+       to evaluating outside.  Needed for num. derivatives anyhow. *)
     RETURN Coord { self.xSpline.eval(param), self.ySpline.eval(param) }
   END GetParametricPoint;
 

@@ -36,6 +36,7 @@ TYPE
                   plotStyle := PlotStyle.Parametric) : TEXT;
     
     length(minParam := 0.0d0; maxParam := 1.0d0) : LONGREAL;
+    area() : LONGREAL;
   END;
 
 END ParametricSpline.
