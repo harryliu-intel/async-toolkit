@@ -2,7 +2,7 @@
 # $Id$
 #
 
-COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc`
+COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc prsparse` 
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
@@ -12,7 +12,7 @@ SHIPDIRS=cit_util term magic bdd cptr bool boxes simplegrid rpc router layout
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
-SUBDIRS= `./dirsexist.sh -f prsparse bas newsim psim pslnew m3hier Parse klex`
+SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse klex`
 
 # These are built last
 M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv`
