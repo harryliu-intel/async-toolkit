@@ -14,8 +14,8 @@ REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
 SUBDIRS= `./dirsexist.sh -f prsparse bas newsim psim pslnew m3hier Parse klex`
 
-# These depend on nothing else
-M3SUBS= `./dirsexist.sh -f boxesdriver magraster router`
+# These are built last
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster router finite_diff deriv`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
