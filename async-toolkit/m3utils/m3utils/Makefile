@@ -65,7 +65,7 @@ all: .bindir .top commons ships subs m3subs browserexps
 clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
 fastprep: .bindir .top .m3deps
 fast: fastprep .todo .fastmake
-faster fastprep .lesstodo .fastmake
+faster: fastprep .lesstodo .fastmake
 
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
