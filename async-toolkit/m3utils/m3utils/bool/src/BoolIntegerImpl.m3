@@ -10,6 +10,7 @@ REVEAL
   T = Private BRANDED Brand OBJECT
     (* two's complement *)
     bits : Array; (* CONST *)
+    id : Word.T;
   METHODS
     (* extend to width *)
     extend(nbits : CARDINAL) := SignExtend;
@@ -17,11 +18,13 @@ REVEAL
     (* pack into minimum req'd width; leave a "guard bit" so we know
        the sign of the number *)
     pack() := Pack;
+    setId() : T := SetId;
   OVERRIDES
     isConstant := IsConstant;
     extract := Extract;
     repbits := RepBits;
     remap := Remap;
+    vars := Vars;
   END;
 
 REVEAL
@@ -33,6 +36,12 @@ REVEAL
     clone := Clone
   END;
   
+VAR
+  idmu := NEW(MUTEX);
+  id : Word.T := 0;
+
+PROCEDURE SetId(s : T) : T = 
+  BEGIN LOCK idmu DO s.id := id; INC(id) END; RETURN s END SetId;
 
 PROCEDURE Clone(self : FreeVariable; VAR clone : FreeVariable) : BoolBoolTbl.T =
   VAR 
@@ -40,7 +49,7 @@ PROCEDURE Clone(self : FreeVariable; VAR clone : FreeVariable) : BoolBoolTbl.T =
   BEGIN
     clone := NEW(FreeVariable, 
                  bits := NEW(Array, NUMBER(self.bits^)),
-                 baseBits := NEW(Array, NUMBER(self.bits^)-1));
+                 baseBits := NEW(Array, NUMBER(self.bits^)-1)).setId();
     FOR i := FIRST(self.baseBits^) TO LAST(self.baseBits^) DO
       clone.baseBits[i] := Bool.New();
       EVAL map.put(self.baseBits[i],clone.baseBits[i])
@@ -83,7 +92,7 @@ PROCEDURE InitRange(res: FreeVariable; range : CARDINAL) : FreeVariable =
     (* make room for the sign bit *)
     INC(bits);
 
-    res := NEW(FreeVariable, bits := NEW(Array, bits), baseBits := NEW(Array, bits-1));
+    res := NEW(FreeVariable, bits := NEW(Array, bits), baseBits := NEW(Array, bits-1)).setId();
     
     (* a bit goofy...
 
@@ -177,7 +186,7 @@ PROCEDURE Pack(self : T) =
 PROCEDURE Add(a, b : T) : T =
   VAR
     bits := MAX(NUMBER(a.bits^),NUMBER(b.bits^)) + 2;
-    res := NEW(T, bits := NEW(Array, bits));
+    res := NEW(T, bits := NEW(Array, bits)).setId();
     carry := Bool.False();
   BEGIN
     (* extend operands *)
@@ -198,7 +207,7 @@ PROCEDURE Add(a, b : T) : T =
 
 PROCEDURE Neg(a : T) : T =
   VAR
-    res := NEW(T, bits := NEW(Array, NUMBER(a.bits^)));
+    res := NEW(T, bits := NEW(Array, NUMBER(a.bits^))).setId();
   BEGIN
     FOR i := FIRST(a.bits^) TO LAST(a.bits^) DO
       res.bits[i] := Bool.Not(a.bits[i])
@@ -233,7 +242,7 @@ PROCEDURE Vars(a : T) : BoolSet.T =
 PROCEDURE BitwiseOp(a, b : T; op : PROCEDURE(a, b : Bool.T) : Bool.T) : T =
   VAR
     bits := MAX(NUMBER(a.bits^),NUMBER(b.bits^));
-    res := NEW(T, bits := NEW(Array, bits));
+    res := NEW(T, bits := NEW(Array, bits)).setId();
   BEGIN
     a.extend(bits); b.extend(bits);
     FOR i := 0 TO bits - 1 DO
@@ -246,7 +255,7 @@ PROCEDURE BitwiseOp(a, b : T; op : PROCEDURE(a, b : Bool.T) : Bool.T) : T =
 PROCEDURE ShiftLeft(a : T; sa : CARDINAL) : T =
   VAR
     bits := NUMBER(a.bits^) + sa;
-    res := NEW(T, bits := NEW(Array, bits));
+    res := NEW(T, bits := NEW(Array, bits)).setId();
   BEGIN
     FOR i := 0 TO sa - 1 DO
       res.bits[i] := Bool.False();
@@ -260,7 +269,7 @@ PROCEDURE ShiftLeft(a : T; sa : CARDINAL) : T =
 PROCEDURE UnsignedShiftRight(a : T; sa : CARDINAL) : T =
   VAR
     bits := NUMBER(a.bits^) - sa + 1;
-    res := NEW(T, bits := NEW(Array, bits));
+    res := NEW(T, bits := NEW(Array, bits)).setId();
   BEGIN
     FOR i := 0 TO bits - 2 DO
       res.bits[i] := a.bits[i+sa]
@@ -272,7 +281,7 @@ PROCEDURE UnsignedShiftRight(a : T; sa : CARDINAL) : T =
 PROCEDURE SignedShiftRight(a : T; sa : CARDINAL) : T =
   VAR
     bits := NUMBER(a.bits^) - sa;
-    res := NEW(T, bits := NEW(Array, bits));
+    res := NEW(T, bits := NEW(Array, bits)).setId();
   BEGIN
     FOR i := 0 TO bits - 1 DO
       res.bits[i] := a.bits[i+sa]
@@ -293,7 +302,7 @@ PROCEDURE Constant(c : INTEGER) : T =
       IF constCache.get(c,res) THEN RETURN res END
     END;
 
-    res := NEW(T, bits := NEW(Array,Word.Size));
+    res := NEW(T, bits := NEW(Array,Word.Size)).setId();
     FOR i := 0 TO Word.Size - 1 DO 
       IF Word.Extract(w,i,1) = 1 THEN
         res.bits[i] := Bool.True()
@@ -311,15 +320,13 @@ PROCEDURE Constant(c : INTEGER) : T =
     RETURN res
   END Constant;
 
-PROCEDURE Hash(<*UNUSED*>a : T) : Word.T =
-  BEGIN
-    RETURN 0
-  END Hash;
+PROCEDURE Hash(a : T) : Word.T =
+  BEGIN RETURN a.id  END Hash;
 
 PROCEDURE Choose(c : Bool.T; it, if : T) : T =
   VAR
     l := MAX(NUMBER(if.bits^),NUMBER(it.bits^));
-    res := NEW(T, bits := NEW(Array, l));
+    res := NEW(T, bits := NEW(Array, l)).setId();
   BEGIN
     if.extend(l); it.extend(l);
     FOR i := 0 TO l - 1 DO
@@ -350,7 +357,7 @@ PROCEDURE RepBits(a : T) : CARDINAL =
 
 PROCEDURE Remap(a : T; m : BoolBoolTbl.T; check : BOOLEAN) : T =
   VAR
-    res := NEW(T, bits := NEW(Array, NUMBER(a.bits^)));
+    res := NEW(T, bits := NEW(Array, NUMBER(a.bits^))).setId();
   BEGIN
     WITH o = a.bits^, n = res.bits^ DO
       FOR i := FIRST(o) TO LAST(o) DO
@@ -362,7 +369,7 @@ PROCEDURE Remap(a : T; m : BoolBoolTbl.T; check : BOOLEAN) : T =
 
 PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
   VAR
-    res := NEW(FreeVariable, bits := NEW(Array, NUMBER(a.bits^)), baseBits := NEW(Array, NUMBER(a.baseBits^)));
+    res : FreeVariable := NEW(FreeVariable, bits := NEW(Array, NUMBER(a.bits^)), baseBits := NEW(Array, NUMBER(a.baseBits^))).setId();
   BEGIN
     WITH o = a.bits^, n = res.bits^ DO
       FOR i := FIRST(o) TO LAST(o) DO
@@ -379,7 +386,17 @@ PROCEDURE FreeRemap(a : FreeVariable; m : BoolBoolTbl.T; check : BOOLEAN) : T =
 
 PROCEDURE AbstractEqual(<*UNUSED*>self : BoolIntegerTbl.T; 
                         READONLY a , b : T) : BOOLEAN =
-  BEGIN RETURN Equals(a,b) = Bool.True() END AbstractEqual;
+  VAR
+    max := MAX(NUMBER(a.bits^),NUMBER(b.bits^));
+  BEGIN
+    a.extend(max); b.extend(max);
+    FOR i := 0 TO max - 1 DO
+      IF a.bits[i] # b.bits[i] THEN RETURN FALSE END;
+    END;
+    a.pack(); b.pack(); (* why are these necessary? *)
+
+    RETURN TRUE
+  END  AbstractEqual;
 
 (* The cache is a special BoolIntegerSetDef with the representation-checking
    Equals as its equal method.  It is used by the Cached() procedure to

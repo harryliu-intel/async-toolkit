@@ -31,6 +31,7 @@ TYPE
     (* if check = TRUE then check that mapping is complete *)
     remap(map : BoolBoolTbl.T; check := FALSE) : T;
     
+    vars() : BoolSet.T; (* Vars, below *)
   END;
 
   PublicFreeVariable = T OBJECT METHODS

@@ -133,20 +133,22 @@ PROCEDURE NodeVar(a : T) : T =
 
 PROCEDURE Vars(a : T) : BoolSet.T =
 
-  PROCEDURE VarsRecurse(set : BoolSet.T; a : T) =
+  PROCEDURE VarsRecurse(a : T) =
     VAR
+      r, l : T; 
+    BEGIN
+      IF a = True() OR a = False() THEN RETURN END;
       r := Right(a);
       l := Left(a);
-    BEGIN
       EVAL set.insert(NodeVar(a));
-      IF r # NIL THEN VarsRecurse(set, r) END;
-      IF l # NIL THEN VarsRecurse(set, l) END
+      IF r # NIL THEN VarsRecurse(r) END;
+      IF l # NIL THEN VarsRecurse(l) END
     END VarsRecurse;
 
   VAR
     set := NEW(BoolSetDef.T).init();
   BEGIN
-    VarsRecurse(set, a);
+    VarsRecurse(a);
     RETURN set
   END Vars;
 
