@@ -73,12 +73,12 @@ readonly proc gmodule_template(nm) is
 	derived_template(nm)
 end
 
-readonly proc gother_template(nm,kind) is
+readonly proc gother_template(nm,kind,ext) is
 	local makefile = path_of("m3makefile")
 	local base = nm & "_" & kind
 	local f = base & ".tmpl"
 	local g = base & ".generate_tmpl"
-	local source = path_of(nm & ".ig")
+	local source = path_of(nm & "." & ext)
 	local sources = [makefile, source]
 	if stale(f, sources) or stale(g, sources)
 		> g in
@@ -103,20 +103,21 @@ end
 
 readonly proc ginterface(nm) is
 	generic_interface(nm)
-	gother_template(nm, "interface")
+	gother_template(nm, "interface", "ig")
 end
 
 readonly proc Ginterface(nm) is
 	Generic_interface(nm)
-	gother_template(nm, "interface")
+	gother_template(nm, "interface", "ig")
 end
 
 readonly proc gimplementation(nm) is
 	generic_implementation(nm)
-	gother_template(nm, "implementation")
+	gother_template(nm, "implementation", "mg")
 end
 
 readonly proc Gimplementation(nm) is
 	Generic_implementation(nm)
-	gother_template(nm, "implementation")
+	gother_template(nm, "implementation", "mg")
 end
+
