@@ -35,10 +35,10 @@ SHIPDIRS=tasks matrix m3texthack term magic magicextras bdd cptr bool boxes simp
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
-SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse klexlib ktok klex kyacc`
+SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse klexlib`
 
 # These are built last
-M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest`
+M3SUBS= `./dirsexist.sh -f boxesdriver magraster routerdriver finite_diff deriv layoutd layoutdemo tasktest ktok klex kyacc`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
