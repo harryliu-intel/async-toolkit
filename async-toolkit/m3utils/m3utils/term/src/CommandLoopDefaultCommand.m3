@@ -1,4 +1,6 @@
 MODULE CommandLoopDefaultCommand EXPORTS CommandLoop;
+IMPORT Term;
+IMPORT TextList;
 
 
 REVEAL

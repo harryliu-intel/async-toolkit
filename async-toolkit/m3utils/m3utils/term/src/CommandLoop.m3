@@ -1,13 +1,30 @@
 MODULE CommandLoop;
+IMPORT TextCommandTbl;
+IMPORT TextUtils;
+IMPORT TextTextListTbl;
+IMPORT Text;
+IMPORT FileRd;
+IMPORT Term;
+IMPORT Thread;
+IMPORT FileWr;
+IMPORT TextReader;
+IMPORT Pathname;
+IMPORT OSError;
+IMPORT Cooker;
+IMPORT RdList;
+IMPORT Rd;
+IMPORT TextList;
+IMPORT Wr;
 
 REVEAL
   T = Public BRANDED OBJECT
     prompt: TEXT;
     commands: TextCommandTbl.T;
-    prefixes: TextTextTbl.T;
-    prev: TextList.T;           (* previously executed commands *)
-    term: Term.T;               (* terminal used in "run"       *)
-    inputStack: RdList.T;       (* sourcefile readers           *)
+    prefixes: TextTextListTbl.T; (* prefix -> possible command names *)
+    prev: TextList.T;            (* previously executed commands     *)
+    term: Term.T;                (* terminal used in "run"           *)
+    inputStack: RdList.T;        (* sourcefile readers               *)
+    load: BuiltInCommand;
   OVERRIDES
     init                := Init;
     putCommand          := PutCommand;
@@ -30,7 +47,7 @@ PROCEDURE Init(self: T;
     self.prompt := prompt;
     self.prev := NIL;
     self.commands := NEW(TextCommandTbl.Default).init();
-    self.prefixes := NEW(TextCommandListTbl.Default).init();
+    self.prefixes := NEW(TextTextListTbl.Default).init();
 
     self.putCommand(help, NEW(BuiltInCommand,
                               loop := self,
@@ -42,10 +59,11 @@ PROCEDURE Init(self: T;
                simpleHelp:="<filename> -- save previously-executed commands",
                execute := DoSave));
 
-    self.putCommand(load, NEW(BuiltInCommand,
-               loop := self,
-               simpleHelp := "<filename> -- execute commands from a file",
-               execute := DoLoad));
+    self.load := NEW(BuiltInCommand,
+                     loop := self,
+                     simpleHelp:= "<filename> -- execute commands from a file",
+                     execute := DoLoad);
+    self.putCommand(load, self.load);
 
     self.putCommand(quit, NEW(QuitCommand,
                               simpleHelp := "-- exit the command loop"));
@@ -53,12 +71,12 @@ PROCEDURE Init(self: T;
     RETURN self;
   END Init;
 
-PROCEDURE PreRegister(prefixes: TextCommandListTbl.T; prefix, name: TEXT) =
+PROCEDURE PreRegister(prefixes: TextTextListTbl.T; prefix, name: TEXT) =
   VAR
-    l: CommandList.T := NIL;
+    l: TextList.T := NIL;
   BEGIN
     EVAL prefixes.get(prefix, l);
-    EVAL prefixes.put(prefix, CommandList.Cons(cmd,l));
+    EVAL prefixes.put(prefix, TextList.Cons(name,l));
     IF Text.Length(prefix)#0 THEN
       PreRegister(prefixes, Text.Sub(prefix,0,Text.Length(prefix)-1), name);
     END;
@@ -82,10 +100,10 @@ PROCEDURE PutCommand(self: T; names: TEXT; cmd: Command) =
  *                                                                           *
  *****************************************************************************)
 
-PROCEDURE DoHelp(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
+PROCEDURE DoHelp(helpCmd: BuiltInCommand; args: TextList.T; term: Term.T)
   RAISES {Error} =
   VAR
-    self := cmd.loop;
+    self := helpCmd.loop;
     name: TEXT;
     cmd: Command;
   BEGIN
@@ -99,18 +117,18 @@ PROCEDURE DoHelp(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
       name := args.tail.head;
       CASE Lookup(self, name, cmd) OF
       | LURes.WasPrefix, LURes.Found =>
-        cmd.help(TextList.Cons(cmd, args.tail.tail));
+        term.wr(cmd.help(TextList.Cons(name, args.tail.tail)), TRUE);
       | LURes.NotFound => RAISE Error("command not found");
       | LURes.Ambiguous => RAISE Error("command ambiguous");
       END;
     END;
   END DoHelp;
 
-PROCEDURE DoSave(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
+PROCEDURE DoSave(cmd: BuiltInCommand; args: TextList.T; <*UNUSED*>term: Term.T)
   RAISES {Error} =
   BEGIN
-    IF List.Length(args) # 2 THEN
-      RETURN "single argument expected."
+    IF TextList.Length(args) # 2 THEN
+      RAISE Error("single argument expected.")
     ELSE
       TRY
         VAR
@@ -123,7 +141,7 @@ PROCEDURE DoSave(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
             Wr.PutChar(wr, '\n');
             cur := cur.tail;
           END;
-          Wr.Close(fn);
+          Wr.Close(wr);
         END;
       EXCEPT OSError.E, Wr.Failure, Thread.Alerted =>
         RAISE Error("bad output file");
@@ -131,7 +149,7 @@ PROCEDURE DoSave(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
     END;
   END DoSave;
 
-PROCEDURE DoLoad(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
+PROCEDURE DoLoad(cmd: BuiltInCommand; args: TextList.T; <*UNUSED*>term: Term.T)
   RAISES {Error} =
   BEGIN
     IF args.tail = NIL THEN RAISE Error("filename missing."); END;
@@ -156,9 +174,9 @@ PROCEDURE DoLoad(cmd: BuiltInCommand; args: TextList.T; term: Term.T)
 TYPE
   LURes = {Found, WasPrefix, NotFound, Ambiguous};
 
-PROCEDURE Lookup(self: T; VAR name: TEXT; VAR cmd: T): LURes =
+PROCEDURE Lookup(self: T; VAR name: TEXT; VAR cmd: Command): LURes =
   VAR
-    l: CommandList.T;
+    l: TextList.T;
   BEGIN
     IF self.commands.get(name, cmd) THEN
       RETURN LURes.Found;
@@ -192,7 +210,7 @@ PROCEDURE Complete(comp: StdCompleter; VAR t: TEXT) =
   VAR
     p:=Text.FindChar(t, ' ');
     name := t;
-    q: Command.T;
+    q: Command;
     term := comp.loop.term;
   BEGIN
     IF p#-1 THEN
@@ -238,7 +256,7 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
     LOOP
       TRY
         IF source # NIL THEN
-          DoLoad(self.load, TextList.List2("",source));
+          DoLoad(self.load, TextList.List2("",source), self.term);
           source := NIL;
         ELSE
           IF self.inputStack = NIL THEN
@@ -250,17 +268,19 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
               IF Text.Equal(line, "") OR Text.GetChar(line,0) IN Comment THEN
                 line := "";
               ELSE
-                self.term.wr(Prompt & line, TRUE, TRUE);
+                self.term.wr(self.prompt & line, TRUE, TRUE);
               END;
-            EXCEPT Rd.EndOfFile =>
+            EXCEPT
+            | Rd.EndOfFile =>
               self.inputStack := self.inputStack.tail;
               line := "";
+            | Rd.Failure, Thread.Alerted =>
+              RAISE Error("bad input file");
             END;
           END;
           
           IF Text.Equal(line,"\003") THEN
             self.term.wr("quit", TRUE, TRUE);
-          ELS
           ELSIF Text.Equal(line,"\032") THEN
             self.term.wr("\nSuspended\njust kidding - I don't know how to do that.\n");
           ELSIF Text.Equal(line,"") THEN
@@ -272,21 +292,22 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
               tr := NEW(TextReader.T).init(line);
               portion: TEXT;
               args: TextList.T;
+              cmd: Command;
             BEGIN
               WHILE tr.next(";",portion,TRUE) DO
                 args := NEW(TextReader.T).init(portion).shatter(": ","",TRUE);
                 IF args # NIL THEN
-                  CASE Quommand.Lookup(args.head, q) OF
-                  | LURes.WasPrefix, LURes.Found => q.execute(args, self.term);
+                  CASE Lookup(self, args.head, cmd) OF
+                  | LURes.WasPrefix,LURes.Found =>cmd.execute(args, self.term);
                   | LURes.NotFound =>
                     RAISE Error("command not found; try `help'.");
-                  | LURes.Ambiguous =
+                  | LURes.Ambiguous =>
                     RAISE Error("command ambiguous; try `help'.");
                   END;
                 END;
               END;
             END;
-            prev := TextList.Cons(line, prev);
+            self.prev := TextList.Cons(line, self.prev);
           END;
         END;
       EXCEPT Error(e) =>

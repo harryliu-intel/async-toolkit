@@ -1,4 +1,5 @@
 MODULE TermObject EXPORTS Term;
+IMPORT Thread;
 
 REVEAL
   T = Public BRANDED OBJECT

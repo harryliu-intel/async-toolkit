@@ -1,4 +1,7 @@
 INTERFACE CommandLoop;
+IMPORT Term;
+IMPORT Pathname;
+IMPORT TextList;
 TYPE
   T <: Public;
   Public = OBJECT METHODS

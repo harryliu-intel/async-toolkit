@@ -24,8 +24,8 @@ Module("CommandLoop")
 implementation("CommandLoopDefaultCommand")
 Interface("BrandedCommand")
 Table("TextCommand", "Text", "BrandedCommand")
-List("Command", "BrandedCommand")
-Table("TextCommandList", "Text", "CommandList")
+%List("Command", "BrandedCommand")
+%Table("TextCommandList", "Text", "CommandList")
 
 
 library("term")
