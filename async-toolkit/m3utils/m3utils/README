@@ -24,3 +24,7 @@ directories at the top level in order for packages using cit_util to work:
 - m3overrides
 - m3subdir.mk
 - m3tmplhack
+
+
+HOWTOSHIPATCALTECH:
+~kp/bin/devup [modules]
