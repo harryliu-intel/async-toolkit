@@ -1,1 +1,1 @@
-.include "../m3subdir.mk"
+include ../m3subdir.mk

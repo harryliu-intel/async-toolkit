@@ -56,6 +56,28 @@ PROCEDURE LongReal(text : TEXT; mode : Mode) : LONGREAL RAISES { UnknownSuffix, 
 VAR tbl := NEW(SuffixTbl.Default).init();
 
 BEGIN 
+
+  List := ARRAY OF T { 
+    T { 'a' , 1.0d-18, "atto" } ,
+    T { 'f' , 1.0d-15, "femto" } ,
+    T { 'p' , 1.0d-12, "pico" } ,
+    T { 'n' , 1.0d-9 , "nano" } ,
+    T { 'u' , 1.0d-6 , "micro" } ,
+    T { 'm' , 1.0d-3 , "milli" } ,
+    T { 'c' , 1.0d-2 , "centi" } ,
+    T { 'd' , 1.0d-1 , "deci" } ,
+    T { 'D' , 1.0d1  , "deka" } ,
+    T { 'h' , 1.0d2  , "hecto" } ,
+    T { 'k' , 1.0d3  , "kilo", KiloGeek } ,
+    T { 'M' , 1.0d6  , "mega", KiloGeek * KiloGeek } ,
+    T { 'G' , 1.0d9  , "giga", KiloGeek * KiloGeek * KiloGeek } ,
+    T { 'T' , 1.0d12 , "tera", KiloGeek * KiloGeek * KiloGeek * KiloGeek } ,
+    T { 'P' , 1.0d15 , "peta", 
+        KiloGeek * KiloGeek * KiloGeek * KiloGeek * KiloGeek } ,
+    T { 'E' , 1.0d18 , "exa", 
+        KiloGeek * KiloGeek * KiloGeek * KiloGeek * KiloGeek * KiloGeek } 
+  };
+
   FOR i := FIRST(List) TO LAST(List) DO
     VAR
       x : BOOLEAN;
