@@ -90,6 +90,12 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN = 
   VAR x : CARDINAL; BEGIN RETURN FindSub(in, sub, x) END HaveSub;
 
+
+PROCEDURE HavePrefix(in, prefix: TEXT): BOOLEAN =
+  BEGIN
+    RETURN Text.Equal(Text.Sub(in, Text.Length(prefix)), prefix);
+  END HavePrefix;
+
 PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN =
   VAR
     pos := Text.Length(in) - Text.Length(suffix);

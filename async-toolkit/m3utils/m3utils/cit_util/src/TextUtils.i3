@@ -33,6 +33,7 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
 
 (* have substr? *)
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN;
+PROCEDURE HavePrefix(in, prefix: TEXT): BOOLEAN;
 PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN;
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
 

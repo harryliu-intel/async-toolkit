@@ -1,18 +1,21 @@
 MODULE TextSubs;
+IMPORT SortedTextTextTbl;
 IMPORT Text;
-IMPORT TextSubsClause;
-IMPORT TextSubsClauseList;
-IMPORT TextSubsClauseListTbl;
 IMPORT TextWr;
 IMPORT Wr, Thread;
 IMPORT Fmt;
-(* IMPORT Term; *)
+
+(*
+FROM Debug IMPORT S;
+CONST
+  DebugLevel = 0;
+*)
+
 <* FATAL Wr.Failure, Thread.Alerted *>
-TYPE
-  CharSearchArray = REF ARRAY CHAR OF TextSubsClauseList.T;
 REVEAL
   T = Public BRANDED OBJECT
-    tab: TextSubsClauseListTbl.T;
+    starts: SET OF CHAR;
+    tbl: SortedTextTextTbl.T;
   OVERRIDES
     init := Init;
     add := Add;
@@ -20,37 +23,18 @@ REVEAL
     apply := Apply;
   END;
 
-PROCEDURE GetSearchChars(self: T): CharSearchArray =
-  VAR
-    result := NEW(CharSearchArray);
-    iterate := self.tab.iterate();
-    c: CHAR;
-    l: TextSubsClauseList.T;
-  BEGIN
-    FOR i := FIRST(CHAR) TO LAST(CHAR) DO
-      result[i] := NIL;
-    END;
-    WHILE iterate.next(c, l) DO
-      result[c] := l;
-    END;
-    RETURN result;
-  END GetSearchChars;
-
 PROCEDURE Init(self: T): T =
   BEGIN
-    self.tab := NEW(TextSubsClauseListTbl.Default).init();
+    self.tbl := NEW(SortedTextTextTbl.Default).init();
+    self.starts := SET OF CHAR{};
     RETURN self;
   END Init;
 
 PROCEDURE Add(self: T; original, replacement: TEXT) =
-  VAR
-    c := Text.GetChar(original, 0);
-    l: TextSubsClauseList.T := NIL;
-    ts := TextSubsClause.T{original, replacement};
   BEGIN
-    EVAL self.tab.get(c, l);
-    l := TextSubsClauseList.Cons(ts, l);
-    EVAL self.tab.put(c, l);
+    <* ASSERT Text.Length(original) > 0 *>
+    self.starts := self.starts + SET OF CHAR{Text.GetChar(original, 0)};
+    EVAL self.tbl.put(original, replacement);
   END Add;
 
 PROCEDURE Int(self: T; original: TEXT; replacement: INTEGER) =
@@ -62,11 +46,11 @@ PROCEDURE Apply(self: T; src: TEXT): TEXT =
   VAR
     wr := TextWr.New();
     c: CHAR;
-    ca := GetSearchChars(self);
-    pos, lastFlushed: INTEGER := 0;
-    cur: TextSubsClauseList.T;
-    orig, actual: TEXT;
+    ind, pos, lastFlushed: INTEGER := 0;
     textLen := Text.Length(src);
+    iter: SortedTextTextTbl.Iterator;
+    original, replacement: TEXT;
+    key, prefix: TEXT;
   PROCEDURE Flush() =
     BEGIN
       Wr.PutText(wr, Text.Sub(src, lastFlushed, pos - lastFlushed));
@@ -74,22 +58,50 @@ PROCEDURE Apply(self: T; src: TEXT): TEXT =
   BEGIN
     WHILE pos < textLen DO
       c := Text.GetChar(src, pos);
-      cur := ca[c];
-      WHILE cur # NIL DO
-        orig := cur.head.original;
-        actual := Text.Sub(src, pos, Text.Length(orig));
-        (* Term.WrLn("orig = \"" & orig & "\"\n");
-           Term.WrLn("actual = \"" & actual & "\"\n"); *)
-        IF Text.Equal(orig, actual) THEN
-          (* Term.WrLn("replacing with " & cur.head.replacement & "\n"); *)
+      IF c IN self.starts THEN
+        (* S("analysing: " & Text.Sub(src, pos), DebugLevel); *)
+        iter := self.tbl.iterateOrdered();
+        ind := pos;
+        original := "";
+        REPEAT
+          INC(ind);
+          key := Text.Sub(src, pos, ind-pos);
+          (* S("key = " & key, DebugLevel); *)
+          prefix := Text.Sub(original, 0, ind-pos);
+          CASE Text.Compare(prefix, key) OF
+          | -1 =>
+            VAR
+              lastOriginal := original;
+              lastReplacement := replacement;
+            BEGIN
+              iter.seek(key);
+              IF iter.next(original, replacement) THEN
+                (* S("found: " & original, DebugLevel); *)
+              ELSE
+                original := Text.FromChar(LAST(CHAR));
+              END;
+              prefix := Text.Sub(original, 0, ind-pos);
+              IF NOT Text.Equal(prefix, key) THEN
+                (* S("exiting", DebugLevel); *)
+                original := lastOriginal;
+                replacement := lastReplacement;
+                ind := textLen;
+              END;
+            END;
+          | 1 =>
+            ind := textLen;
+            (* S("exiting", DebugLevel); *)
+          | 0 =>
+            (* S("holding", DebugLevel); *)
+          END;
+        UNTIL ind = textLen;
+        IF Text.Length(original) > 0 AND
+          Text.Equal(Text.Sub(src, pos, Text.Length(original)), original) THEN
           Flush();
-          Wr.PutText(wr, cur.head.replacement);
-          pos := pos + Text.Length(orig);
+          Wr.PutText(wr, replacement);
+          INC(pos, Text.Length(original));
           lastFlushed := pos;
-          cur := NIL;
           DEC(pos);
-        ELSE
-          cur := cur.tail;
         END;
       END;
       INC(pos);
