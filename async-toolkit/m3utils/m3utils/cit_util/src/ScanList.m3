@@ -15,7 +15,7 @@ PROCEDURE Int(l: TextList.T; defaultBase: [2..16] := 10): IntList.T
       res := IntList.Cons(Scan.Int(l.head, defaultBase), res);
       l := l.tail;
     END;
-    RETURN res;
+    RETURN IntList.ReverseD(res);
   END Int;
 
 PROCEDURE LongReal(l: TextList.T): LongrealList.T  
@@ -27,7 +27,7 @@ PROCEDURE LongReal(l: TextList.T): LongrealList.T
       res := LongrealList.Cons(Scan.LongReal(l.head), res);
       l := l.tail;
     END;
-    RETURN res;
+    RETURN LongrealList.ReverseD(res);
   END LongReal;
 
 BEGIN
