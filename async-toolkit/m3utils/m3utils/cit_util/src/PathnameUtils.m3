@@ -10,6 +10,7 @@ IMPORT OSError;
 IMPORT Text;
 IMPORT Pathname;
 IMPORT Wr;
+IMPORT Env;
 
 PROCEDURE CompleteE(t: T): T RAISES {OSError.E} =
   VAR
@@ -73,26 +74,43 @@ PROCEDURE CreatedDir(pn: TEXT) =
     Debug.S("created directory: "  & pn, 0);
   END CreatedDir;
 
-PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE): Wr.T RAISES {OSError.E} =
+VAR
+  DirDebug := Env.Get("DIRDEBUG") # NIL;
+
+PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE;
+                         open := TRUE): Wr.T RAISES {OSError.E} =
   VAR
     cur: TEXT;
     error: BOOLEAN;
   BEGIN
-    TRY
-      RETURN FileWr.Open(pn);
-    EXCEPT OSError.E =>
+    IF DirDebug THEN
+      Debug.S("DIRDEBUG: attempting pn = " & pn, 0);
+    END;
+    IF open THEN
+      TRY
+        RETURN FileWr.Open(pn);
+      EXCEPT OSError.E =>
+      END;
     END;
     LOOP
       cur := DirOf(pn);
       TRY
+        IF DirDebug THEN
+          Debug.S("DIRDEBUG: pn = " & pn &": attempting to create " & cur, 0);
+        END;
         FS.CreateDirectory(cur);
         IF verbose THEN CreatedDir(cur); END;
-        RETURN FileWr.Open(pn);
+        IF open THEN
+          RETURN FileWr.Open(pn);
+        END;
       EXCEPT OSError.E =>
       END;
       error := TRUE;
-      WHILE Text.FindChar(cur, '/') # -1 DO
+      REPEAT
         cur := DirOf(cur);
+        IF DirDebug THEN
+          Debug.S("DIRDEBUG: pn = " & pn & ", prefix = " & cur, 0);
+        END;
         TRY
           FS.CreateDirectory(cur);
           IF verbose THEN CreatedDir(cur); END;
@@ -100,13 +118,22 @@ PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE): Wr.T RAISES {OSError.E} =
           EXIT;
         EXCEPT OSError.E =>
         END;
-      END;
+      UNTIL Text.FindCharR(cur, '/') <= 0;
       IF error THEN
-        RAISE OSError.E(NIL);
+        IF open THEN
+          RAISE OSError.E(NIL);
+        ELSE
+          RETURN NIL;
+          (* how do we check for an error in this case? *)
+        END;
       END;
     END;
   END OpenMakingDirs;
 
+PROCEDURE IsRoot(t: T): BOOLEAN =
+  BEGIN
+    RETURN Text.FindCharR(t, '/') = 0;
+  END IsRoot;
 
 BEGIN
 END PathnameUtils.

@@ -22,8 +22,12 @@ PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T;
 PROCEDURE DirOf(pn: T): T;
 (* like "Pathname.Prefix", but returns "." if pn has no slash. *)
 
-PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE): Wr.T RAISES {OSError.E};
+PROCEDURE OpenMakingDirs(pn: T;
+                         verbose := FALSE;
+                         open := TRUE): Wr.T RAISES {OSError.E};
 (* make all containing directories needed to write "pn",
-   and open "pn" for writing. *)
+   and open "pn" for writing. If "open = FALSE", return NIL
+   and don't touch the file, but still make the directories
+   if necessary. *)
 
 END PathnameUtils. 
