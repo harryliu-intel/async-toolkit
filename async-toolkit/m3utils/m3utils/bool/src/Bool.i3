@@ -51,6 +51,7 @@ PROCEDURE GC();
 (* for debugging *)
 PROCEDURE GetId(a : T) : INTEGER;
 
+(* equal is for generics, not for generating Ts (use Equivalent for that) *)
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE Hash(a : T) : Word.T;
 

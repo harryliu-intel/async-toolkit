@@ -424,6 +424,18 @@ PROCEDURE Substitute(self : T; f : FreeVariable; val : T) : T =
     RETURN self.remap(map)
   END Substitute;
 
+PROCEDURE SubstituteInBool(bool : Bool.T; f : FreeVariable; val : T) : Bool.T =
+  VAR
+    map := NEW(BoolRemap.T).init();
+  BEGIN
+    <* ASSERT val.getMinValue() >= f.getMinValue() AND
+              val.getMaxValue() <= f.getMaxValue() *>
+    FOR i := FIRST(f.baseBits^) TO LAST(f.baseBits^) DO
+      EVAL map.put(f.baseBits[i],val.extract(i))
+    END;
+    RETURN map.remap(bool)
+  END SubstituteInBool;
+
 PROCEDURE AbstractEqual(<*UNUSED*>self : BoolIntegerTbl.T; 
                         READONLY a , b : T) : BOOLEAN =
   VAR

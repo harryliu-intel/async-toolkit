@@ -120,4 +120,7 @@ PROCEDURE Choose(c : Bool.T; it, if : T) : T;
 PROCEDURE Constant(c : INTEGER) : T;
 PROCEDURE Vars(a : T) : BoolSet.T;
 
+PROCEDURE SubstituteInBool(bool : Bool.T; f : FreeVariable; val : T) : Bool.T;
+(* substitute val for f in a given Bool.T *)
+
 END BoolInteger.
