@@ -16,7 +16,7 @@ readonly proc generic_implementextation(nm, rename) is
 	local g = path_of(nm & ".mg")
 	if stale(f, [g])
 		_exec([_M3TEXTHACK,g,f])
-                _exec([_DERIVGEN,rename,lib,tmpl&".tmpl"])
+                _exec([_DERIVGEN,rename,lib,tmpl&".tmpl",nm,TOP])
 	end
 	derived_template(tmpl)
         import(lib)
@@ -30,7 +30,7 @@ readonly proc generic_mojule(nm, rename) is
 	if stale(f, [g, h])
 		_exec([_M3TEXTHACK,g,f])
                 _exec(["cp",h,rename&".ig"])
-                _exec([_DERIVGEN,rename,lib,tmpl&".tmpl",nm])
+                _exec([_DERIVGEN,rename,lib,tmpl&".tmpl",nm,TOP])
 	end
 	derived_template(tmpl)
         import(lib)
