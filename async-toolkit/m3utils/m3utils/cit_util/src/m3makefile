@@ -56,7 +56,9 @@ Gmodule("Equivalence")
 Equivalence("Text", "Text", "TextTextTbl")
 Module("TextTextTblExtras")
 
-Library("cit_util")
+template("listf")
+generic_module("ListF")
 
+Library("cit_util")
 
 

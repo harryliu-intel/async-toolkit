@@ -35,7 +35,7 @@
 # 4. M3SUBS       --   Modula-3 programs
 # 5. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
 
-COMMONDIRS=processor crt m3yacc cit_common m3tmplhack cit_util m3browserhack prsparse term parserlib
+COMMONDIRS=processor crt m3yacc cit_common m3tmplhack cit_util m3browserhack prsparse term parserlib 
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
 REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
@@ -46,7 +46,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 #
 # m3texthack is a program, but it depends only on cit_util.
 #
-SHIPDIRS=tasks matrix m3texthack magic magicextras bdd cptr bool boxes simplegrid rpc router layout cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize
+SHIPDIRS=tasks matrix m3texthack magic magicextras bdd cptr bool boxes simplegrid rpc router layout cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 

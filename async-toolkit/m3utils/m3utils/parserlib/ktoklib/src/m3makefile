@@ -4,8 +4,8 @@ import("libm3")
 import("term")
 import("cit_util")
 
-template("listf")
-generic_module("ListF")
+/*template("listf")*/
+/*generic_module("ListF") */
 
 table("TextTextList", "Text", "TextList")
 Module("CharRange")
