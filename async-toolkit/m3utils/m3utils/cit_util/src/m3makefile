@@ -59,6 +59,13 @@ MkSet("IntPair", "IntPair")
 MkSetDef("IntPair", "IntPair")
 Table("IntPairRef", "IntPair", "Refany")
 
+/* used to be in ktoklib */
+Module("TextSubs")
+module("TextSubsClause")
+list("TextSubsClause", "TextSubsClause")
+table("TextSubsClauseList", "Char", "TextSubsClauseList")
+
+
 Library("cit_util")
 
 
