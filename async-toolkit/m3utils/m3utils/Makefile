@@ -72,7 +72,7 @@ faster: fastprep .lesstodo .fastmake
 .bindir:
 	cd hack ; echo `./bindir.sh` > ../.bindir
 .top:
-	echo TOP=\"`pwd`\" > .top
+	echo TOP=\"`pwd -L`\" > .top
 #	echo BINDIR=\"`cat .bindir`\" >> .top # superceded by BUILD_DIR
 
 .m3deps:
