@@ -46,6 +46,11 @@ template("keypair")
 KeyPair("Int", "Integer", "Integer")
 List("IntPair", "IntPair")
 
+KeyPair("Card", "Cardinal", "Cardinal")
+MkSet("CardPair", "CardPair")
+MkSetDef("CardPair", "CardPair")
+Table("CardPairRef", "CardPair", "Refany")
+
 gmodule("Ref")
 gmodule("ArrayRef")
 ArrayRef("Int", "Integer")
