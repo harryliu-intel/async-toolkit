@@ -33,22 +33,26 @@ PROCEDURE Voronoi();
 
 (* how to use this code: 
 
-   Init();
+   LOCK mu DO 
+     Init();
 
-   AddSite(p0);
-   AddSite(p1);
-   ...
-   AddSite(pn-1);
-
-   Setup();
-
-   Delaunay();
-
-   WHILE NextTriple(t) DO
+     AddSite(p0);
+     AddSite(p1);
      ...
-   END;
+     AddSite(pn-1);
 
-   Finish()
+     Setup();
+
+     Delaunay();
+
+     WHILE NextTriple(t) DO
+       ...
+     END;
+
+     Finish()
+   END
 *)
+
+VAR mu : MUTEX;
 
 END Voronoi.

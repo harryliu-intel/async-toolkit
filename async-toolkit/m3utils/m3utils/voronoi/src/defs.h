@@ -84,3 +84,8 @@ int PQempty();
 
 char *memmalloc();
 
+/* free lists */
+struct Triple *tfl;
+struct Halfedge *hfl;
+struct Site *sfl;
+struct Edge *efl;

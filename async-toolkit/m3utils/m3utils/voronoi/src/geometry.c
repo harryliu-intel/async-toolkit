@@ -16,14 +16,21 @@ float sn;
 	deltax = xmax - xmin;
 }
 
+#define EALLOC 100
+static int ep=100;
 
 struct Edge *bisect(s1,s2)
 struct	Site *s1,*s2;
 {
-float dx,dy,adx,ady;
-struct Edge *newedge;
-
-	newedge = (struct Edge *) memmalloc(sizeof(struct Edge));
+  float dx,dy,adx,ady;
+  struct Edge *newedge;
+  
+  if (!efl || ep == EALLOC) {
+    efl=(struct Edge *)memmalloc(sizeof(struct Edge)*EALLOC);
+    ep=0;
+  }
+   
+  newedge=(struct Edge *)efl+(ep++);
 
 	newedge -> reg[0] = s1;
 	newedge -> reg[1] = s2;
@@ -48,6 +55,8 @@ struct Edge *newedge;
 	return(newedge);
 }
 
+#define SALLOC 100
+static int sp=0;
 
 struct Site *intersect(el1, el2, p)
 struct Halfedge *el1, *el2;
@@ -81,7 +90,11 @@ struct Site *v;
 	if ((right_of_site && el -> ELpm == le) ||
 	   (!right_of_site && el -> ELpm == re)) return ((struct Site *) NULL);
 
-	v = (struct Site *) memmalloc(sizeof(struct Site));
+	if (!sfl || sp==SALLOC) {
+	  sfl = (struct Site *)memmalloc(sizeof(struct Site)*SALLOC);
+	  sp=0;
+	}
+	    v = (struct Site *)sfl+(sp++);
 	v -> refcnt = 0;
 	v -> coord.x = xint;
 	v -> coord.y = yint;

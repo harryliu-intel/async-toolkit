@@ -31,6 +31,11 @@ mod3_start()
   setup=0;
   nsites = 0;
   sites = (struct Site *) memmalloc(4000*sizeof *sites);
+
+  tfl=NULL;
+  hfl=NULL;
+  sfl=NULL;
+  efl=NULL;
 }
 
 

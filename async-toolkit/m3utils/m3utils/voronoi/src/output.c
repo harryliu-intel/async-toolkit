@@ -58,13 +58,19 @@ if(debug)
 	printf("site (%d) at %f %f\n", s->sitenbr, s->coord.x, s->coord.y);
 }
 
+#define TALLOC 100
+static int tp=0;
 
 out_triple(s1, s2, s3)
 struct Site *s1, *s2, *s3;
 {
   struct Triple *t;
 
-  t=(struct Triple *)memmalloc(sizeof(struct Triple));
+  if (!tfl || tp==TALLOC) {
+    tfl=(struct Triple *)memmalloc(sizeof(struct Triple)*TALLOC);
+    tp=0;
+  }
+  t=(struct Triple *)tfl+(tp++);
 
   t->next=triples;
   t->d.s1 = s1->sitenbr;

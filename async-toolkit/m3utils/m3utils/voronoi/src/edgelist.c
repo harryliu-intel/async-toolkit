@@ -22,13 +22,21 @@ int i;
 	ELhash[ELhashsize-1] = ELrightend;
 }
 
+#define HALLOC 100
+static int hp=0;
 
 struct Halfedge *HEcreate(e, pm)
 struct Edge *e;
 int pm;
 {
-struct Halfedge *answer;
-        answer = (struct Halfedge *) memmalloc(sizeof(struct Halfedge));
+  struct Halfedge *answer;
+ 
+  if (!hfl || hp==HALLOC) {
+    hfl=(struct Halfedge *)memmalloc(sizeof(struct Halfedge)*HALLOC);
+    hp=0;
+  }
+  answer=(struct Halfedge *)hfl+(hp++);
+
 	answer -> ELedge = e;
 	answer -> ELpm = pm;
 	answer -> PQnext = (struct Halfedge *) NULL;

@@ -3,7 +3,7 @@ import ("libm3")
 import ("cit_util")
 import ("set")
 
-Interface("Voronoi")
+Module("Voronoi")
 
 c_source("edgelist")
 c_source("geometry")
