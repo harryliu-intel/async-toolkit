@@ -43,5 +43,16 @@ PROCEDURE SlashedPrefix(t: T): T =
     RETURN path;
   END SlashedPrefix;
 
+PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T =
+  BEGIN
+    IF Pathname.Absolute(base) THEN
+      RETURN Pathname.Join(pn, base, ext);
+    ELSIF ext = NIL THEN
+      RETURN base;
+    ELSE
+      RETURN base & ext;
+    END;
+  END Join;
+
 BEGIN
 END PathnameUtils.

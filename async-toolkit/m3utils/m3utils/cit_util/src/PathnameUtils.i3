@@ -10,4 +10,8 @@ TYPE
 PROCEDURE SlashedPrefix(path: T): T;
 PROCEDURE Complete(path: T): T;
 
+PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T;
+(* like "Pathname.Join", but just returns (possibly extended) base
+   (instead of crashing) in the case that base is absolute. *)
+
 END PathnameUtils. 
