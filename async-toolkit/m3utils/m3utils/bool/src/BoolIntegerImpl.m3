@@ -36,6 +36,7 @@ REVEAL
     clone := Clone;
     makemap := Makemap;
     isRepBaseBit := FVIsRepBaseBit;
+    extractBaseBit := ExtractBaseBit;
   END;
   
 PROCEDURE FVIsRepBaseBit(self : FreeVariable; 
@@ -168,6 +169,9 @@ PROCEDURE Extract(a : T; bit : CARDINAL) : Bool.T =
       RETURN a.bits[LAST(a.bits^)]
     END
   END Extract;
+
+PROCEDURE ExtractBaseBit(a : FreeVariable; bit : CARDINAL) : Bool.T = 
+  BEGIN RETURN a.baseBits[bit] END ExtractBaseBit;
 
 PROCEDURE SignExtend(self : T; nbits : CARDINAL) =
   VAR

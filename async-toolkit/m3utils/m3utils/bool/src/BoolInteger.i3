@@ -57,6 +57,8 @@ TYPE
     makemap(targetFree : FreeVariable) : BoolRemap.T;
     
     isRepBaseBit(b : Bool.T; VAR which : CARDINAL) : BOOLEAN; (* for debugging *)
+    extractBaseBit(bit : CARDINAL) : Bool.T;
+    
   END;
 
   FreeVariable <: PublicFreeVariable;
