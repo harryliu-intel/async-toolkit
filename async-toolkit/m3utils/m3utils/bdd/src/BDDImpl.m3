@@ -34,10 +34,11 @@ TYPE
   END;
 
 VAR
+  mu := NEW(MUTEX);
   nextTag := 0;
   
 PROCEDURE Init(self : T) : T = 
-  BEGIN self.tag := nextTag; INC(nextTag); RETURN self END Init;
+  BEGIN LOCK mu DO self.tag := nextTag; INC(nextTag) END; RETURN self END Init;
 
 PROCEDURE GetId(self : T) : CARDINAL = BEGIN RETURN self.root.id END GetId;
 
