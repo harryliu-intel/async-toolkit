@@ -5,6 +5,8 @@ IMPORT Wr;
 REVEAL
   T = TextWr.T BRANDED "WxDefault" OBJECT END;
 
+PROCEDURE New (): T =
+  BEGIN RETURN TextWr.New(); END New;
 PROCEDURE PutChar (t: T;  ch: CHAR) =
   BEGIN Wr.PutChar(t, ch); END PutChar;
 PROCEDURE PutText (t: T;  txt: TEXT) =
