@@ -24,22 +24,30 @@ readonly proc _exec(cmd) is
         if not equal(ret, 0) error("command failed with error code: ", ret) end
 end
 
-readonly proc _delete2(f,g) is
-	write("delete " & g & " " & f, CR)
-	delete_file(g)
-	delete_file(f)
-end
-
 readonly proc derived_template(nm) is
 	template("../" & BUILD_DIR & "/" & nm)
 end
 
+readonly proc _check_clean(g) is
+	if defined("_clean")
+		write("delete " & g, CR)
+		/* deleting this file causes staleness, 
+			which is desired effect of clean. */
+		delete_file(g)
+	end
+end
+
+/*
+assumption: templates need only be generated when m3makefile changes.
+extra cleaning required if these commands are used 
+in a template imported by m3makefile!
+*/
+
 readonly proc gmodule_template(nm, intf_args, impl_args) is
+	local source = path_of("m3makefile")
 	local f = nm & ".tmpl"
 	local g = nm & ".generate_tmpl"
-	if defined("_clean")
-		delete2(f,g)
-	else
+	if stale(f, source) or stale(g, source)
 		> g in
 			write("module", CR)
 			write(nm, CR)
@@ -47,25 +55,26 @@ readonly proc gmodule_template(nm, intf_args, impl_args) is
 			write(impl_args, CR)
 		end
 		_exec([_M3TMPLHACK,g])
-		derived_template(nm)
 	end
+	_check_clean(g)
+	derived_template(nm)
 end
 
 readonly proc gother_template(nm, args, kind) is
+	local source = path_of("m3makefile")
 	local base = nm & "_" & kind
 	local f = base & ".tmpl"
 	local g = base & ".generate_tmpl"
-	if defined("_clean")
-		delete2(f,g)
-	else
+	if stale(f, source) or stale(g, source)
 		> g in
 			write(kind, CR)
 			write(nm, CR)
 			write(args, CR)
 		end
 		_exec([_M3TMPLHACK,g])
-		derived_template(base)
 	end
+	_check_clean(g)
+	derived_template(base)
 end
 
 readonly proc gmodule(nm, intf_args, impl_args) is
