@@ -78,6 +78,7 @@ generic_module("ListF")
 TextListF("TextFF")
 
 Interface("CharF")
+Module("RefanyF")
 List("Char","Char")
 
 Module("Cardinal")
