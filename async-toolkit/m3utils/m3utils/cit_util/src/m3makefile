@@ -1,5 +1,7 @@
 /* $Id$ */
 import("cit_common")
+import("m3markup")
+%gives us the Wx interface. Warning: cm3 will want a different version
 template("texthack")
 template("generics")
 Interface("DblRefany")
