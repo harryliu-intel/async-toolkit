@@ -20,7 +20,9 @@
 # 3. SUBDIRS      --   C programs
 # 4. M3SUBS       --   Modula-3 programs
 
-COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc cit_util prsparse` 
+COMMONDIRS=processor crt m3yacc cit_util prsparse 
+COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
+REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
 # "SHIPS" are subdirectories containing Modula-3 libraries that
 # would normally be shipped to /usr/local/lib/m3.
@@ -61,7 +63,7 @@ cleanthis:
 cleanbuilddirs:
 
 commons:
-	@for s in $(COMMONDIRS); do\
+	@for s in $(COMMONS); do\
 		echo "===> $$s";\
 		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\"; cd .. ;  \
 	done
@@ -98,7 +100,7 @@ cleanm3:
 	done
 
 cleancommons:
-	@for s in $(COMMONDIRS); do\
+	@for s in $(REVCOMMONS); do\
 		echo "(cleaning) ===> $$s";\
 		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\" clean; cd .. ;  \
 	done
