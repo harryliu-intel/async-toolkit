@@ -118,6 +118,9 @@ Interface("ObjectFactoryClass")
 Generic_module("Factory")
 template("factory")
 
+Gmodule("ArrayHash")
+ArrayHash("Int", "Integer")
+
 Library("cit_util")
 
 
