@@ -80,7 +80,8 @@ PROCEDURE GetParametricPoint(self : T; param : LONGREAL) : Coord =
     RETURN Coord { self.xSpline.eval(param), self.ySpline.eval(param) }
   END GetParametricPoint;
 
-PROCEDURE GnuPlotFormat(self : T; steps : CARDINAL) : TEXT =
+PROCEDURE GnuPlotFormat(self : T; 
+                        steps : CARDINAL; plotStyle : PlotStyle) : TEXT =
   VAR 
     res := "";
   BEGIN
@@ -90,7 +91,15 @@ PROCEDURE GnuPlotFormat(self : T; steps : CARDINAL) : TEXT =
         p := FLOAT(i,LONGREAL)/FLOAT(steps,LONGREAL);
         pt := self.getParametricPoint(p);
       BEGIN
-        res := res & Fmt.LongReal(pt.x) & " " & Fmt.LongReal(pt.y) & "\n"
+        IF plotStyle = PlotStyle.Parametric THEN
+          res := res & Fmt.LongReal(pt.x) & " " & Fmt.LongReal(pt.y) & "\n"
+        ELSIF plotStyle = PlotStyle.X THEN
+          res := res & Fmt.LongReal(p) & " " & Fmt.LongReal(pt.x) & "\n"
+        ELSIF plotStyle = PlotStyle.Y THEN
+          res := res & Fmt.LongReal(p) & " " & Fmt.LongReal(pt.y) & "\n"
+        ELSE
+          <* ASSERT FALSE *>
+        END
       END
     END;
     RETURN res
