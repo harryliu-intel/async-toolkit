@@ -22,7 +22,7 @@ readonly proc Intexterface(nm) is
 	if stale(f, [g])
 		_exec([_M3TEXTHACK,g,f])
 	end
-	derived_generic_interface(nm, VISIBLE)
+	derived_interface(nm, VISIBLE)
 end
 readonly proc implementextation(nm) is
 	local f = nm & ".m3"
