@@ -109,7 +109,7 @@ PROCEDURE SignedShiftV(a : T; sa : T) : T;
 
 
 (* choose "if" if c is false, "it" if c is true *)
-PROCEDURE Choose(c : Bool.T; if, it : T) : T;
+PROCEDURE Choose(c : Bool.T; it, if : T) : T;
 
 PROCEDURE Constant(c : INTEGER) : T;
 PROCEDURE Vars(a : T) : BoolSet.T;
