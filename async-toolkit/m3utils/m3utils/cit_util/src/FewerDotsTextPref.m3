@@ -4,7 +4,7 @@ IMPORT TextUtils;
 IMPORT Integer;
 IMPORT Text;
 
-TYPE
+REVEAL
   T = TextEquivalence.Preference BRANDED "FewerDotsIsBetter" OBJECT
   OVERRIDES
     is := Is;

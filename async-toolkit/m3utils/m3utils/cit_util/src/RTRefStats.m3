@@ -8,6 +8,8 @@ IMPORT RTType;
 IMPORT RTName;
 FROM RT0 IMPORT Typecode;
 IMPORT IntPQ;
+IMPORT Cprintf;
+IMPORT M3toC;
 
 TYPE
   Counts = REF ARRAY OF R;
@@ -16,13 +18,17 @@ TYPE
   END;
   T = RTHeapRep.RefVisitor OBJECT
     x: Counts;
+    printTexts: BOOLEAN;
   OVERRIDES
     visit := Visit;
   END;
 
 PROCEDURE Visit(self: T; tc: Typecode;
-                <*UNUSED*>r: REFANY; size: CARDINAL): BOOLEAN =
+                r: REFANY; size: CARDINAL): BOOLEAN =
   BEGIN
+    IF self.printTexts AND ISTYPE(r, TEXT) THEN
+      Cprintf.prints(M3toC.TtoS(r));
+    END;
     INC(self.x[tc].count);
     INC(self.x[tc].size, size);
     RETURN TRUE;
@@ -41,10 +47,10 @@ PROCEDURE Line(tc: INTEGER; name: TEXT; size, count: INTEGER) =
             0);
   END Line;
 
-PROCEDURE ReportReachable() =
+PROCEDURE ReportReachable(printTexts := FALSE) =
   VAR
     n := RTType.MaxTypecode()+1;
-    self := NEW(T, x := NEW(REF ARRAY OF R, n));
+    self := NEW(T, x := NEW(REF ARRAY OF R, n), printTexts:=printTexts);
   BEGIN
     S("visiting references...", 0);
     RTHeapRep.VisitAllRefs(self);

@@ -27,6 +27,8 @@ else
 	implementation("RTBrand")
 	template("non-cm3")
 end
+c_source("printf")
+interface("Cprintf")
 Module("RTRefStats")
 Module("RTName")
 Module("RefRecord")
