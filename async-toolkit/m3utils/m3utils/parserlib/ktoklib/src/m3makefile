@@ -7,7 +7,6 @@ import("cit_util")
 /*template("listf")*/
 /*generic_module("ListF") */
 
-table("TextTextList", "Text", "TextList")
 Module("CharRange")
 Module("CharCodes")
 Module("Import")
@@ -21,6 +20,7 @@ Module("IntInt")
 Array_sort("IntInt", "IntInt")
 
 /* moved to cit_util
+table("TextTextList", "Text", "TextList")
 module("TextSubsClause")
 list("TextSubsClause", "TextSubsClause")
 table("TextSubsClauseList", "Char", "TextSubsClauseList")
