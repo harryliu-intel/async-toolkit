@@ -54,6 +54,11 @@ toRefany("RealRef")
 Ref("Longreal", "LongrealType")
 toRefany("LongrealRef")
 
+/* new stuff */
+MkSet("IntPair", "IntPair")
+MkSetDef("IntPair", "IntPair")
+Table("IntPairRef", "IntPair", "Refany")
+
 Library("cit_util")
 
 
