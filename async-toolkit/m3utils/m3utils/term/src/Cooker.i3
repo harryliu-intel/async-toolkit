@@ -6,8 +6,11 @@ IMPORT TextList;
 TYPE
   Completer = OBJECT METHODS do(VAR input: TEXT); END;
 
-PROCEDURE Input(prompt:=">"; c: Completer := NIL;
-                previous: TextList.T := NIL; default:=""): TEXT;
+PROCEDURE Input(prompt:=">";
+                completer: Completer := NIL;
+                previous: TextList.T := NIL;
+                default:="";
+                fatalControl:=TRUE): TEXT;
 
 PROCEDURE Print(t:="");
 

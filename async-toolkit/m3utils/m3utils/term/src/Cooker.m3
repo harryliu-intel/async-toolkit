@@ -8,7 +8,8 @@ IMPORT Term;
 (* terminal I/O utilities *)
 
 PROCEDURE Input(prompt:=">"; completer: Completer := NIL;
-                previous: TextList.T := NIL; default:=""): TEXT =
+                previous: TextList.T := NIL; default:="";
+                fatalControl:=TRUE): TEXT =
   VAR
     c: CHAR;
     t := default;
@@ -79,7 +80,14 @@ PROCEDURE Input(prompt:=">"; completer: Completer := NIL;
         | 'F','f','D','d' => FWord(c='D' OR c='d');
         ELSE
         END;
-      | '\004','\003','\032' => Print(); Print("^C"); Process.Exit(1);
+      | '\020' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
+      | '\016' => Recall(next, prev);
+      | '\004','\003','\032' =>
+        IF fatalControl THEN
+          Print(); Print("^C"); Process.Exit(1);
+        ELSE
+          RETURN Text.FromChar(c);
+        END;
       | '\011' => IF completer#NIL THEN completer.do(t); WipeLine(); END;
       | '\015' => Print(); RETURN t;
       | '\013' => Term.Wr("\033[K"); t:=Text.Sub(t,0,p);
@@ -105,8 +113,10 @@ PROCEDURE Input(prompt:=">"; completer: Completer := NIL;
             Term.Wr(Text.Sub(t,p));
             p0:=Text.Length(t);
           END;
+(*
         ELSE
           Print(); Print("Charcode:" & Fmt.Unsigned(ORD(c),base:=8)); Print();
+*)
         END;
       END;
       (* Fix Cursor *)
