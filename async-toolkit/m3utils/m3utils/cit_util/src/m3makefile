@@ -1,7 +1,5 @@
 /* $Id$ */
 import("cit_common")
-import("m3markup")
-%gives us the Wx interface. Warning: cm3 will want a different version
 template("texthack")
 template("generics")
 Interface("DblRefany")
@@ -23,6 +21,7 @@ if defined("CM3_VERSION")
 	import("patternmatching")
 	template("cm3")
 else
+        Module("Wx")
 	implementation("RTBrand")
 	template("non-cm3")
 end
