@@ -26,7 +26,10 @@ COMMONDIRS= `./dirsexist.sh -f processor crt m3yacc cit_util prsparse`
 # would normally be shipped to /usr/local/lib/m3.
 # We need to make sure that we clean them in reverse order of 
 # building since they may depend on other libraries (1 way only)
-SHIPDIRS=matrix term magic bdd cptr bool boxes simplegrid rpc router layout ktoklib
+#
+# m3texthack is a program, but it depends only on cit_util.
+#
+SHIPDIRS=matrix m3texthack term magic bdd cptr bool boxes simplegrid rpc router layout ktoklib
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 
@@ -47,6 +50,7 @@ clean: cleanm3 cleansubs cleancommons cleanships cleanbuilddirs cleanthis
 
 .top:
 	echo TOP=\"`pwd`\" > .top
+	echo BINDIR=\"`cat .bindir`\" >> .top
 
 
 cleanthis:
