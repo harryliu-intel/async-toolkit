@@ -3,9 +3,11 @@
 INTERFACE Compress;
 IMPORT Matrix;
 
+(* could be more efficient if we used READONLY *)
 TYPE MultiFunc = PROCEDURE (a : Matrix.Vector) : LONGREAL;
 
 (* gradient of MultiFunc *)
+(* could be more efficient if we used READONLY *)
 TYPE GradMultiFunc = PROCEDURE (a : Matrix.Vector; 
                                 VAR gradient : Matrix.Vector);
 
