@@ -10,8 +10,17 @@ TYPE
     x, y : LONGREAL
   END;
 
-  T = OBJECT METHODS
+  T <: Public;
+
+  Public = OBJECT METHODS
     eval(at : LONGREAL) : LONGREAL;
+    deriv(at : LONGREAL) : LONGREAL; (* take derivative; uses Ridders 
+                                        algorithm by default;
+                                        implementors are urged to 
+                                        provide analytic derivatives if
+                                        possible *)
   END;
+
+CONST Brand = "Spline";
 
 END Spline.

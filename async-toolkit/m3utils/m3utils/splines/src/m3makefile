@@ -3,8 +3,9 @@ m3_option("-g")
 m3_option("-times")
 
 import("cit_util")
+import("integrate")
 
-Interface("Spline")
+Module("Spline")
 Module("CubicSpline")
 Interface("ParametricSpline")
 
