@@ -23,6 +23,7 @@ Module("RTBrand")
 Module("ToRefany")
 
 gmodule("Ref")
+gmodule("ArrayRef")
 Gmodule("ToRefany")
 Interface("ToRefanyClass")
 table("ToRefany","Integer","ToRefanyClass")
