@@ -1,60 +1,39 @@
 (* $Id$ *)
 
 MODULE ParametricSpline;
-IMPORT IntegrateTrap, DerivRidders;
+IMPORT ParametricSplineRep;
+IMPORT IntegrateTrap;
+IMPORT LRFunction;
 
 REVEAL 
-  T = Public BRANDED Brand OBJECT
+  T = ParametricSplineRep.T BRANDED Brand OBJECT
   OVERRIDES 
     area := Area;
   END;
 
-CONST EPS = 1.0d-8;
-
-VAR
-  mu := NEW(MUTEX);
-  held := FALSE;
-  intObj : T;
 
 <* FATAL IntegrateTrap.NoConvergence *>
 
-PROCEDURE IntFunc(x : LONGREAL) : LONGREAL =
-  VAR
-    dummy : LONGREAL;
-    y := intObj.getParametricPoint(x).y;
-    dx_ds := DerivRidders.Deriv(GetX, x, 1.0d0, dummy);
-  BEGIN
-    <* ASSERT held *>
-    RETURN y * dx_ds
-  END IntFunc;
+TYPE
+  IntObj = LRFunction.T OBJECT
+    spline : T;
+  OVERRIDES
+    eval := IntObjEval
+  END;
 
-PROCEDURE GetX(x : LONGREAL) : LONGREAL =
+PROCEDURE IntObjEval(self : IntObj; p : LONGREAL) : LONGREAL =
+  VAR
+    y := self.spline.getParametricPoint(p).y;
+    dx_ds := self.spline.xSpline.deriv(p);
   BEGIN
-    <* ASSERT held *>
-    RETURN intObj.getParametricPoint(x).x
-  END GetX;
+    RETURN y * dx_ds
+  END IntObjEval;
 
 (* $$\int_{s=0}^{s=1} y(s) {dx\over ds} \,ds$$ *)
 PROCEDURE Area(self : T) : LONGREAL =
-
-  PROCEDURE Integrate() : LONGREAL = 
-    BEGIN
-      RETURN IntegrateTrap.IntegrateE(IntFunc, 0.0d0, 1.0d0)
-    END Integrate;
-    
   BEGIN
-    LOCK mu DO
-      intObj := self;
-      <* ASSERT NOT held *>
-      held := TRUE;
-      TRY
-        RETURN Integrate()
-      FINALLY
-        intObj := NIL;
-        <* ASSERT held *>
-        held := FALSE
-      END
-    END
+    RETURN IntegrateTrap.IntegrateE(NEW(IntObj, spline := self), 
+                                    0.0d0, 1.0d0)
   END Area;
 
 BEGIN END ParametricSpline.

@@ -1,20 +1,18 @@
 (* $Id$ *)
 
 INTERFACE Spline;
+IMPORT LRFunction, LRPoint;
 
 (* this interface just defines the basic operations on splines *)
 (* an implementation can override the methods or add more *)
 
 TYPE
-  Coord = RECORD
-    x, y : LONGREAL
-  END;
+  Coord = LRPoint.T;
 
   T <: Public;
 
-  Public = OBJECT METHODS
-    eval(at : LONGREAL) : LONGREAL;
-    deriv(at : LONGREAL) : LONGREAL; (* take derivative; uses Ridders 
+  Public = LRFunction.T OBJECT METHODS
+    deriv(at : LONGREAL) : LONGREAL; (* take derivative; uses Ridders's
                                         algorithm by default;
                                         implementors are urged to 
                                         provide analytic derivatives if

@@ -56,7 +56,18 @@ Gmodule("Equivalence")
 Table("TextTextList", "Text", "TextList")
 Equivalence("Text", "Text", "TextList", "TextTextTbl", "TextTextListTbl")
 Module("TextTextTblExtras")
-Module("Function")
+
+template("map")
+generic_module("Map")
+
+Interface("LRVector")
+Interface("LRPoint")
+
+Map("LRFunction","LongrealType","LongrealType")
+Map("LRScalarField","LRVector","LongrealType")
+Map("LRVectorField","LRVector","LRVector")
+Map("LRParametricCurve", "LongrealType", "LRPoint")
+
 Module("Pointe")
 
 template("listf")

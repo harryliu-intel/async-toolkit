@@ -3,23 +3,23 @@
 MODULE ConjGradient;
 IMPORT Matrix, Compress, Debug;
 IMPORT Fmt;
+IMPORT LRScalarField, LRVectorField;
 
 CONST ItMax = 200;
 CONST Eps = 1.0d-10;
 
 PROCEDURE Minimize(VAR p : Matrix.Vector;
                    ftol : LONGREAL;
-                   func : Compress.MultiFunc;
-                   dfunc : Compress.GradMultiFunc) : LONGREAL RAISES { TooManyIterations } =
+                   func : LRScalarField.T;
+                   dfunc : LRVectorField.T) : LONGREAL RAISES { TooManyIterations } =
   VAR 
     fret : LONGREAL;
     g, h, xi := NEW(Matrix.Vector, NUMBER(p^));
     fp, dgg, gg, gam : LONGREAL;
     its := 0;
   BEGIN
-    fp := func(p);
-    xi := NEW(Matrix.Vector, NUMBER(p^));
-    dfunc(p,xi);
+    fp := func.eval(p);
+    xi := dfunc.eval(p);
     FOR j := FIRST(xi^) TO LAST(xi^) DO
       g[j] := -xi[j];
       h[j] := g[j];
@@ -34,8 +34,8 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
         RETURN fret
       END;
       
-      fp := func(p);
-      dfunc(p,xi);
+      fp := func.eval(p);
+      xi := dfunc.eval(p);
       Debug.Out("Conjgradient.Minimize: " & Fmt.LongReal(fp),100);
 
       gg := 0.0d0; dgg := 0.0d0;

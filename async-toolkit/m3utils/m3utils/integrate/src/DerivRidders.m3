@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 MODULE DerivRidders; (* num. rec. /c 2nd pp. 188--189 *)
+IMPORT LRFunction AS Function;
 
 CONST
   Con   = 1.4d0;
@@ -9,14 +10,14 @@ CONST
   Ntab  = 10;
   Safe  = 2.0d0;
 
-PROCEDURE Deriv(func : Func; 
+PROCEDURE Deriv(func : Function.T; 
                 x : LONGREAL;      
                 h : LONGREAL;      
                 VAR err : LONGREAL 
                ) : LONGREAL =
 
   PROCEDURE MidPoint(x, hh : LONGREAL) : LONGREAL =
-    BEGIN RETURN (func(x+hh) - func(x-hh))/(2.0d0*hh) END MidPoint;
+    BEGIN RETURN (func.eval(x+hh) - func.eval(x-hh))/(2.0d0*hh) END MidPoint;
 
   VAR
     a : ARRAY [0..Ntab-1] OF ARRAY [0..Ntab-1] OF LONGREAL;

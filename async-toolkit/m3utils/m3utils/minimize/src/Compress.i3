@@ -2,15 +2,7 @@
 
 INTERFACE Compress;
 IMPORT Matrix;
-
-(* could be more efficient if we used READONLY *)
-TYPE MultiFunc = PROCEDURE (a : Matrix.Vector) : LONGREAL;
-
-(* gradient of MultiFunc *)
-(* could be more efficient if we used READONLY *)
-TYPE GradMultiFunc = PROCEDURE (a : Matrix.Vector; 
-                                VAR gradient : Matrix.Vector);
-
+IMPORT LRScalarField;
 
 (* Minimize a multivariate function func along the direction xi starting from
    the point p.
@@ -23,6 +15,6 @@ TYPE GradMultiFunc = PROCEDURE (a : Matrix.Vector;
 PROCEDURE LinMin(VAR p : Matrix.Vector; (* initial and final point *)
                  VAR xi : Matrix.Vector; (* search direction, 
                                             replaced with change in p *)
-                 func : MultiFunc) : LONGREAL (* returns min. value *);
+                 func : LRScalarField.T) : LONGREAL (* returns min. value *);
 
 END Compress.

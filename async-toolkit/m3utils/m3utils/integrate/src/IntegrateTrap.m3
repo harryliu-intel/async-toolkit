@@ -1,8 +1,9 @@
 (* $Id$ *)
 
 MODULE IntegrateTrap;
+IMPORT LRFunction AS Function;
 
-PROCEDURE Integrate(func   : Func; 
+PROCEDURE Integrate(func   : Function.T; 
                      a , b : LONGREAL;
                      n     : CARDINAL;
 
@@ -12,7 +13,7 @@ PROCEDURE Integrate(func   : Func;
   BEGIN
     IF n = 1 THEN
       it := 1;
-      s := 0.5d0*(b-a)*(func(a) + func(b))
+      s := 0.5d0*(b-a)*(func.eval(a) + func.eval(b))
     ELSE
       VAR
         tnm := FLOAT(it,LONGREAL);
@@ -21,7 +22,7 @@ PROCEDURE Integrate(func   : Func;
         sum := 0.0d0;
       BEGIN
         FOR j := 1 TO it DO
-          sum := sum + func(x);
+          sum := sum + func.eval(x);
           x := x + del
         END;
         it := it*2;
@@ -32,7 +33,7 @@ PROCEDURE Integrate(func   : Func;
   END Integrate;
 
 
-PROCEDURE IntegrateN(func  : Func; 
+PROCEDURE IntegrateN(func  : Function.T; 
                      a , b : LONGREAL;
                      n     : CARDINAL) : LONGREAL =
   VAR
@@ -45,7 +46,7 @@ PROCEDURE IntegrateN(func  : Func;
     RETURN s
   END IntegrateN;
 
-PROCEDURE IntegrateE(func  : Func; 
+PROCEDURE IntegrateE(func  : Function.T; 
                      a , b : LONGREAL;
                      eps   : LONGREAL;
                      jmax  : CARDINAL) : LONGREAL RAISES { NoConvergence } =
@@ -62,7 +63,7 @@ PROCEDURE IntegrateE(func  : Func;
   END IntegrateE;
 
 
-PROCEDURE SimpsonE(func  : Func; 
+PROCEDURE SimpsonE(func  : Function.T; 
                    a , b : LONGREAL;
                    eps   : LONGREAL;
                    jmax  : CARDINAL) : LONGREAL RAISES { NoConvergence } =

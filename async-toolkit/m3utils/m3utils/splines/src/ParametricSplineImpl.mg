@@ -1,16 +1,13 @@
 (* $Id$ *)
 
 GENERIC MODULE ParametricSplineImpl(BaseSpline);
-IMPORT Spline, ParametricSpline;
+IMPORT ParametricSpline, ParametricSplineRep;
 FROM ParametricSpline IMPORT PlotStyle, Coord;
 IMPORT Math;
 IMPORT Debug,Fmt;
 
-CONST EPS = 1.0d-8;
-
 REVEAL
   T = ParametricSpline.T BRANDED Brand OBJECT
-    xSpline, ySpline : Spline.T;
   OVERRIDES
     init := Init;
     getParametricPoint := GetParametricPoint;

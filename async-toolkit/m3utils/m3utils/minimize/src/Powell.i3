@@ -1,11 +1,13 @@
 (* $Id$ *)
 
 INTERFACE Powell;
-IMPORT Matrix, Compress;
+IMPORT Matrix;
+IMPORT LRScalarField;
+IMPORT LRVector;
 
-PROCEDURE Minimize(VAR p : Matrix.Vector;
+PROCEDURE Minimize(VAR p : LRVector.T;
                    VAR xi : Matrix.T;
                    ftol : LONGREAL;
-                   func : Compress.MultiFunc) : LONGREAL;
+                   func : LRScalarField.T) : LONGREAL;
 
 END Powell.

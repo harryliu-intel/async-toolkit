@@ -4,6 +4,7 @@ MODULE Bracket;
 IMPORT Debug;
 IMPORT Fmt;
 IMPORT LongReal AS LR;
+IMPORT LRFunction AS Function;
 
 CONST Gold = 1.618034d0;
 CONST GLimit = 100.0d0;
@@ -21,24 +22,26 @@ PROCEDURE Shft(VAR a, b, c : LONGREAL; READONLY d : LONGREAL) =
   BEGIN a := b; b := c; c := d END Shft;
         
 PROCEDURE Initial(VAR bracket : Trio;
-                  func : Function) : Trio = 
+                  func : Function.T) : Trio = 
   BEGIN
     WITH ax = bracket.a, bx = bracket.b, cx = bracket.c DO
+
       VAR
         ulim, u, r, q, fu: LONGREAL;
         fa, fb, fc : LONGREAL;
         
       VAR
         dum : LONGREAL;
+
       PROCEDURE Swap(VAR a, b : LONGREAL) =
         BEGIN dum := a; a := b; b := dum END Swap;
         
       BEGIN
-        fa := func(ax);
-        fb := func(bx);
+        fa := func.eval(ax);
+        fb := func.eval(bx);
         IF fb > fa THEN Swap(ax,bx); Swap(fb,fa) END;
         cx := bx + Gold * (bx-ax);
-        fc := func(cx);
+        fc := func.eval(cx);
         
         WHILE fb > fc DO
           r := (bx-ax) * (fb-fc);
@@ -47,24 +50,24 @@ PROCEDURE Initial(VAR bracket : Trio;
           ulim := bx+GLimit*(cx-bx);
           
           IF((bx-u)*(u-cx)>0.0d0) THEN
-            fu := func(u);
+            fu := func.eval(u);
             IF fu < fc THEN 
               ax := bx; bx := u; fa := fb; fb := fu; RETURN Trio { fa,fb,fc }
             ELSIF fu > fb THEN
               cx := u; fc := fu; RETURN Trio { fa,fb,fc }
             END;
             u := cx + Gold * (cx-bx);
-            fu := func(u);
+            fu := func.eval(u);
           ELSIF (cx-u)*(u-ulim) > 0.0d0 THEN
-            fu := func(u);
+            fu := func.eval(u);
             IF fu < fc THEN
               Shft(bx,cx,u,cx+Gold*(cx-bx));
-              Shft(fb,fc,fu,func(u));
+              Shft(fb,fc,fu,func.eval(u));
             END
           ELSIF (u-ulim)*(ulim-cx) >= 0.0d0 THEN
-            u := ulim; fu := func(u)
+            u := ulim; fu := func.eval(u)
           ELSE
-            u := cx + Gold*(cx-bx); fu := func(u)
+            u := cx + Gold*(cx-bx); fu := func.eval(u)
           END;
           Shft(ax,bx,cx,u);
           Shft(fa,fb,fc,fu)
@@ -74,7 +77,7 @@ PROCEDURE Initial(VAR bracket : Trio;
     END
   END Initial;
 
-PROCEDURE Brent(bracket : Trio; f : Function; tol : LONGREAL; 
+PROCEDURE Brent(bracket : Trio; f : Function.T; tol : LONGREAL; 
                 VAR xmin : LONGREAL) : LONGREAL =
 
   BEGIN
@@ -87,7 +90,7 @@ PROCEDURE Brent(bracket : Trio; f : Function; tol : LONGREAL;
         IF ax < cx THEN a := ax ELSE a := cx END;
         IF ax > cx THEN b := ax ELSE b := cx END;
         v := bx; w := bx; x := bx;
-        fx := f(x); fv := fx; fw := fx;
+        fx := f.eval(x); fv := fx; fw := fx;
         
         FOR iter := 1 TO ItMax DO
           xm := 0.5d0*(a+b);
@@ -123,7 +126,7 @@ PROCEDURE Brent(bracket : Trio; f : Function; tol : LONGREAL;
             d := CGold * e;
           END;
           IF ABS(d) >= tol1 THEN u := x+d ELSE u := x + Sign(tol1,d) END;
-          fu := f(u);
+          fu := f.eval(u);
           IF fu <= fx THEN
             IF u >= x THEN a := x ELSE b := x END;
             Shft(v,w,x,u); Shft(fv,fw,fx,fu)

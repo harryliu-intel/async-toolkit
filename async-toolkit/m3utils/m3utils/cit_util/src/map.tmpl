@@ -1,0 +1,7 @@
+readonly proc _map (nm, from, to, vis) is
+	build_generic_intf(nm, "Map", [from, to], vis)	
+	build_generic_impl(nm, "Map", [from, to])
+end
+
+readonly proc Map (nm, from, to) is _map (nm, from, to, VISIBLE) end
+readonly proc map (nm, from, to) is _map (nm, from, to, HIDDEN) end

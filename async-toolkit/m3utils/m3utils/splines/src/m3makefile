@@ -8,6 +8,7 @@ import("integrate")
 Module("Spline")
 Module("CubicSpline")
 Module("ParametricSpline")
+interface("ParametricSplineRep")
 
 Generic_module("ParametricSplineImpl")
 template("parametricspline")

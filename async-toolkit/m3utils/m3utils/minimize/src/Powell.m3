@@ -3,18 +3,19 @@
 MODULE Powell;
 IMPORT Matrix, Compress;
 IMPORT Debug;
+IMPORT LRVector,LRScalarField;
 
 CONST ItMax = 200;
 
-PROCEDURE Minimize(VAR p : Matrix.Vector;
+PROCEDURE Minimize(VAR p : LRVector.T;
                    VAR xi : Matrix.T;
                    ftol : LONGREAL;
-                   func : Compress.MultiFunc) : LONGREAL =
+                   func : LRScalarField.T) : LONGREAL =
   VAR 
-    pt, ptt, xit := NEW(Matrix.Vector, NUMBER(p^));
+    pt, ptt, xit := NEW(LRVector.T, NUMBER(p^));
     t, fptt, fp, del : LONGREAL;
     ibig : INTEGER;
-    fret := func(p);
+    fret := func.eval(p);
     iter : INTEGER;
   BEGIN
     <* ASSERT NUMBER(xi^)  = NUMBER(p^) AND NUMBER(xi[0]) = NUMBER(p^) *>
@@ -44,7 +45,7 @@ PROCEDURE Minimize(VAR p : Matrix.Vector;
         pt[j] := p[j]
       END;
       
-      fptt := func(ptt);
+      fptt := func.eval(ptt);
       IF fptt < fp THEN
         t := 2.0d0*(fp - 2.0d0*fret + fptt)*(fp-fret-del)*(fp-fret-del) - 
              del*(fp-fptt)*(fp-fptt)

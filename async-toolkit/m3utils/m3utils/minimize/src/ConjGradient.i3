@@ -1,13 +1,13 @@
 (* $Id$ *)
 
 INTERFACE ConjGradient;
-IMPORT Matrix, Compress;
+IMPORT LRVector, LRScalarField, LRVectorField;
 
 EXCEPTION TooManyIterations;
 
-PROCEDURE Minimize(VAR p : Matrix.Vector;
+PROCEDURE Minimize(VAR p : LRVector.T;
                    ftol : LONGREAL;
-                   func : Compress.MultiFunc;
-                   dfunc : Compress.GradMultiFunc) : LONGREAL RAISES { TooManyIterations };
+                   func : LRScalarField.T;
+                   dfunc : LRVectorField.T) : LONGREAL RAISES { TooManyIterations };
 
 END ConjGradient.

@@ -1,6 +1,7 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
 (* $Id$ *)
 INTERFACE Matrix;
+IMPORT LRVector;
 
 EXCEPTION
   DimensionMismatch;
@@ -9,7 +10,7 @@ EXCEPTION
 
 TYPE 
   T = REF ARRAY OF ARRAY OF LONGREAL;
-  Vector = REF ARRAY OF LONGREAL;
+  Vector = LRVector.T;
   Dim = RECORD
     rows,cols : INTEGER;
   END;
