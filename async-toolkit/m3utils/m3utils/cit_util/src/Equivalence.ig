@@ -20,7 +20,7 @@
 (*  export license.                                                          *)
 (* $Id$ *)
 
-GENERIC INTERFACE Equivalence(Elem);
+GENERIC INTERFACE Equivalence(Elem, ElemList, ElemElemTbl, ElemElemListTbl);
 
 (*
 A "T" represents an equivalence relation on the set of all "Elem.T"s.
@@ -33,8 +33,8 @@ Interface "Elem" is expected to have the following declaration:
 
 which defines the a priori equality of two elements.
 
-The "Default" implementation (union-find with path compression using
-hash tables) also expects an "ElemElemTbl".
+The "Default" implementation is union-find with path compression using
+hash tables.
 *)
 
 TYPE
@@ -53,6 +53,15 @@ TYPE
 (* For each element which is not its own canonical representative,
    obtain that element as "alias", and
    its canonical representative as "canon". *)
+
+    getClass(e: Elem.T): ElemList.T;
+(* return a list of all elements in the class containing "e". *)
+
+    toTable(): ElemElemTbl.T;
+(* return a table mapping aliases to canonical elements. *)
+
+    toRevTable(): ElemElemListTbl.T;
+(* return a table mapping canonical elements to lists of aliases. *)
   END;
   Iterator = OBJECT METHODS
     next(VAR alias, canon: Elem.T): BOOLEAN;

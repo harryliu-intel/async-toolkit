@@ -53,7 +53,8 @@ Table("IntPairRef", "IntPair", "Refany")
 Module("TextSubs")
 
 Gmodule("Equivalence")
-Equivalence("Text", "Text", "TextTextTbl")
+table("TextTextList", "Text", "TextList")
+Equivalence("Text", "Text", "TextList", "TextTextTbl", "TextTextListTbl")
 Module("TextTextTblExtras")
 
 template("listf")
