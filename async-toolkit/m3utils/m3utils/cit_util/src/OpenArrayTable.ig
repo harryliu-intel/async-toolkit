@@ -24,6 +24,7 @@ GENERIC INTERFACE OpenArrayTable(Key, Value);
 
 | PROCEDURE Equal(k1, k2: Key.T): BOOLEAN;
 | PROCEDURE Hash(k: Key.T): Word.T;
+| PROCEDURE Clone(k : Key.T) : REF Key.T;
 
    "Brand" must be a text constant. It will be used to construct a brand for
    the opaque type "Table.Default" and any generic types instantiated with the
@@ -36,6 +37,9 @@ GENERIC INTERFACE OpenArrayTable(Key, Value);
 
    "Hash" and "Equal" may be declared with a parameter mode of either
    "VALUE" or "READONLY", but not "VAR".
+
+   "Clone" must return a reference to an object of the same size as "k."  
+   This object must not be referenced later.
 *)
 
 IMPORT Word;

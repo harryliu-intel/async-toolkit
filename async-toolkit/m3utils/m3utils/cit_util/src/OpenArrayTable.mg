@@ -124,7 +124,7 @@ PROCEDURE Put(tbl: Default; READONLY key: Key.T; READONLY val: Value.T)
         RETURN TRUE
       ELSE
         first :=
-          NEW(EntryList, key := NEW(REF Key.T, NUMBER(key)), value := val, tail := first);
+          NEW(EntryList, key := Key.Clone(key), value := val, tail := first);
         first.key^ := key;
         INC(tbl.numEntries);
         IF tbl.logBuckets < MaxLogBuckets
