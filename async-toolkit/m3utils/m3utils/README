@@ -12,3 +12,15 @@ To distribute just part of this repository, just delete the directories
 you don't want to distribute.  The dirsexist.sh shell script will make
 sure that only the right things are built.
 
+
+Any pared down version of the repository needs the following files and
+directories at the top level in order for packages using cit_util to work:
+
+- Makefile  
+- cit_common
+- cit_util
+- dirsexist.sh
+- hack
+- m3overrides
+- m3subdir.mk
+- m3tmplhack
