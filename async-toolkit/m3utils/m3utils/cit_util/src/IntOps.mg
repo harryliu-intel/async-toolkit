@@ -23,6 +23,9 @@ PROCEDURE ExtendedGCD(a, b: T; VAR aCoeff, bCoeff: T): T =
         RETURN g;
       END;
     END;
+    IF Compare(b,Int.Zero) = -1 THEN
+      RETURN ExtendedGCD(b,a,bCoeff,aCoeff);
+    END;
     CASE Compare(a,b) OF
     | -1 => RETURN EGCD(a,b,aCoeff,bCoeff);
     | 0 => aCoeff:=Int.One; bCoeff:=Int.Zero; RETURN a;
@@ -166,7 +169,8 @@ PROCEDURE Write(fn: Pathname.T; tbl: TextIntTbl.T) =
   END Write;
 
 PROCEDURE ProbablyPrime(p: T): BOOLEAN =
-  BEGIN RETURN Equal(ModExp(New(19), Pred(p), p), Int.One); END ProbablyPrime;
+  BEGIN RETURN Equal(ModExp(New(17), Pred(p), p), Int.One) AND
+               Equal(ModExp(New(19), Pred(p), p), Int.One); END ProbablyPrime;
 PROCEDURE Negate(a: T): T =
   BEGIN RETURN Mul(New(-1), a); END Negate;
 PROCEDURE Sub(a, b: T): T =
@@ -181,5 +185,6 @@ PROCEDURE GCD(a, b: T): T =
 PROCEDURE IsOne(x: T): BOOLEAN = BEGIN RETURN Equal(x, Int.One); END IsOne;
 PROCEDURE One(): T = BEGIN RETURN Int.One; END One;
 PROCEDURE Zero(): T = BEGIN RETURN Int.Zero; END Zero;
+PROCEDURE RelPrime(a,b: T): BOOLEAN=BEGIN RETURN IsOne(GCD(a,b));END RelPrime;
 
 BEGIN END IntOps.

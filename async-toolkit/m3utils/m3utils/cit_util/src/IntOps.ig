@@ -22,6 +22,8 @@ PROCEDURE Rand(source: Random.T; lessThan: T): T;
 PROCEDURE ProbablyPrime(p: T): BOOLEAN;
 (* returns FALSE for most composites; always TRUE for primes *)
 
+PROCEDURE RelPrime(a,b: T): BOOLEAN;
+
 
 (* complete basic arithmetic *)
 
