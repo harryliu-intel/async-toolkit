@@ -165,11 +165,11 @@ PROCEDURE Shatter(t: TEXT; delims:="\t "; endDelims:="\n;#%";
   END Shatter;
 
 
-PROCEDURE ShatterInts(t: TEXT; delims:=":.\t, "; endDelims:="\n;#%";
-                      skipNulls:=TRUE; defaultBase:=10): IntList.T =
+PROCEDURE ShatterInts(t: TEXT; defaultBase := 10;
+                      delims := ":.\t, "; endDelims := "\n;#%"): IntList.T = 
   <* FATAL Lex.Error, FloatMode.Trap *>
   BEGIN
-    RETURN ScanList.Int(Shatter(t, delims, endDelims, skipNulls), defaultBase);
+    RETURN ScanList.Int(Shatter(t, delims, endDelims), defaultBase);
   END ShatterInts;
 
 PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT =

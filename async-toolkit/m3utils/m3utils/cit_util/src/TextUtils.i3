@@ -60,9 +60,8 @@ PROCEDURE Shatter(t: TEXT;
    parses lines of words, ignoring comments. *)
 
 PROCEDURE ShatterInts(t: TEXT;
+                      defaultBase := 10;
                       delims      := ":.\t, ";
-                      endDelims   := "\n;#%";
-                      skipNulls   := TRUE;
-                      defaultBase := 10): IntList.T;
+                      endDelims   := "\n;#%"): IntList.T;
 
 END TextUtils.
