@@ -1,7 +1,5 @@
+(* $Id$ *)
 MODULE WordUtils;
-
-IMPORT Wr, Fmt;
-FROM Stdio IMPORT stderr;
 
 PROCEDURE FromRails(READONLY rails: Rails): T =
   VAR
