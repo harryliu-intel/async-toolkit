@@ -8,6 +8,7 @@ TYPE
 
   PrivateIter = Iterator BRANDED "DefEquivIter(" & Elem.Brand & ")" OBJECT
     iter: ElemElemTbl.Iterator;
+    tbl: Default;
   OVERRIDES
     next := Next;
   END;
@@ -57,6 +58,12 @@ PROCEDURE Identify(self: Default; e1, e2: Elem.T): BOOLEAN =
     END;
   END Identify;
 
+PROCEDURE CanonNonMutating(self: Default; cur: Elem.T): Elem.T =
+  BEGIN
+    WHILE self.t.get(cur, cur) DO END;
+    RETURN cur;
+  END CanonNonMutating;
+
 PROCEDURE Canon(self: Default; e: Elem.T): Elem.T =
   VAR
     cur := e;
@@ -74,12 +81,16 @@ PROCEDURE Canon(self: Default; e: Elem.T): Elem.T =
 
 PROCEDURE Iterate(self: Default): Iterator =
   BEGIN
-    RETURN NEW(PrivateIter, iter := self.t.iterate());
+    RETURN NEW(PrivateIter, iter := self.t.iterate(), tbl := self);
   END Iterate;
 
 PROCEDURE Next(self: PrivateIter; VAR alias, canon: Elem.T): BOOLEAN =
+  VAR
+    dummy: Elem.T;
+    result := self.iter.next(alias, dummy);
   BEGIN
-    RETURN self.iter.next(alias, canon);
+    canon := CanonNonMutating(self.tbl, alias);
+    RETURN result;
   END Next;
 
 BEGIN
