@@ -5,7 +5,7 @@ FROM Debug IMPORT S;
 IMPORT Fmt;
 IMPORT RTHeapRep;
 IMPORT RTType;
-IMPORT RTBrand;
+IMPORT RTName;
 FROM RT0 IMPORT Typecode;
 IMPORT IntPQ;
 
@@ -41,7 +41,6 @@ PROCEDURE ReportReachable() =
     VAR
       q := NEW(IntPQ.Default).init();
       e: E;
-      brand: TEXT;
     BEGIN
       FOR tc := 0 TO n-1 DO
         IF self.x[tc].count # 0 THEN
@@ -51,17 +50,12 @@ PROCEDURE ReportReachable() =
                        tc := tc));
         END;
       END;
-      S("   TC  Brand                                    totalSize   count  avgSize",0);
+      S("   TC  Name                                     totalSize   count  avgSize",0);
       TRY
         LOOP
           e := q.deleteMin();
-          TRY
-            brand := RTBrand.GetByTC(e.tc);
-          EXCEPT RTBrand.NotBranded =>
-            brand := "??";
-          END;
           S(Fmt.Pad(Fmt.Int(e.tc),5) & "  " &
-            Fmt.Pad(brand,40,' ',Fmt.Align.Left) &
+            Fmt.Pad(RTName.GetByTC(e.tc),40,' ',Fmt.Align.Left) &
             Fmt.Pad(Fmt.Int(e.priority),10) &
             Fmt.Pad(Fmt.Int(e.count),8) &
             Fmt.Pad(Fmt.Int(e.priority DIV e.count),9),

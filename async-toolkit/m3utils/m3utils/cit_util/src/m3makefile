@@ -28,6 +28,7 @@ else
 	template("non-cm3")
 end
 Module("RTRefStats")
+Module("RTName")
 Module("RefRecord")
 
 Module("SIsuffix")
