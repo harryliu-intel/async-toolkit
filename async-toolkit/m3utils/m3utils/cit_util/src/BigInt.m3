@@ -61,10 +61,10 @@ TYPE
   NArry = REF ARRAY OF CARDINAL;
 
   NSeq = OBJECT
-    siz : CARDINAL;
+    siz : CARDINAL; (* # of significant digits *)
     a : NArry;
   METHODS
-    init(hintSize : CARDINAL) : NSeq := InitN;
+    init(hintSize : CARDINAL := 5) : NSeq := InitN;
     shift(sa : CARDINAL) := ShiftN;
     clearTop() := CTN;
     extend(toBits : CARDINAL) := ExtendN;
@@ -81,16 +81,20 @@ PROCEDURE InitN(s : NSeq; hintSize : CARDINAL) : NSeq =
   END InitN;
 
 PROCEDURE ShiftN(s : NSeq; sa : CARDINAL) =
+  VAR
+    os := s.siz;
   BEGIN
     INC(s.siz,sa);
-    s.extend(s.siz)
+    s.extend(s.siz);
+    SUBARRAY(s.a^,sa,os) := SUBARRAY(s.a^,0,os);
+    FOR i := 0 TO sa - 1 DO s.a[i] := 0 END;
   END ShiftN;
 
-PROCEDURE ExtendN(s : NSeq; toBits : CARDINAL) =
+PROCEDURE ExtendN(s : NSeq; toDigits : CARDINAL) =
   BEGIN
-    IF s.siz < toBits THEN
+    IF NUMBER(s.a^) < toDigits THEN
       VAR 
-        na := NEW(NArry,toBits);
+        na := NEW(NArry,toDigits);
       BEGIN
         SUBARRAY(na^,0,NUMBER(s.a^)) := s.a^;
 
@@ -113,7 +117,7 @@ PROCEDURE CopyN(s : NSeq) : NSeq =
 
 PROCEDURE CTN(s : NSeq) = 
   BEGIN 
-    FOR i := s.siz - 1 TO 0 BY -1 DO
+    FOR i := LAST(s.a^) TO 0 BY -1 DO
       IF s.a[i] = 0 THEN s.siz := i ELSE EXIT END
     END
   END CTN;
@@ -123,7 +127,7 @@ PROCEDURE CTN(s : NSeq) =
 REVEAL 
   T = Public BRANDED Brand OBJECT
     sign : [-1..1];
-    rep : Seq;
+    rep : NSeq;
   END;
 
 PROCEDURE Compare(a, b : T) : CompRet =
@@ -138,7 +142,7 @@ PROCEDURE Compare(a, b : T) : CompRet =
 
     FOR i := a.rep.size() - 1 TO 0 BY -1 DO
       VAR
-        c := Integer.Compare(a.rep.get(i),b.rep.get(i));
+        c := Integer.Compare(a.rep.a[i],b.rep.a[i]);
       BEGIN
         IF c # 0 THEN RETURN a.sign * c END
       END
@@ -152,9 +156,10 @@ PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 PROCEDURE New(x : INTEGER) : T =
   VAR
     c := ABS(x);
-    s := NEW(Seq).init();
+    s := NEW(NSeq).init(1);
   BEGIN 
-    s.addlo(c);
+    s.a[0] := c;
+    s.siz := 1;
 
     Renormalize(s);
 
@@ -197,7 +202,7 @@ PROCEDURE Shift(a : T; sa : CARDINAL) : T =
   VAR
     seq := a.rep.copy();
   BEGIN
-    FOR i := 1 TO sa DO seq.addlo(0) END;
+    seq.shift(sa);
     RETURN NEW(T, sign := a.sign, rep := seq)
   END Shift;
 
@@ -251,28 +256,29 @@ PROCEDURE Mul(a, b : T) : T =
     RETURN NEW(T, sign := a.sign * b.sign, rep := MulSeqs(a.rep,b.rep))
   END Mul;
 
-PROCEDURE MulSeqs(a, b : Seq) : Seq =
+PROCEDURE MulSeqs(a, b : NSeq) : NSeq =
   VAR 
-    res := NEW(Seq).init();
+    res := NEW(NSeq).init(a.size()+b.size()+1);
     idx : CARDINAL;
     s : CARDINAL;
   BEGIN
     FOR i := 0 TO a.size() - 1 DO
       FOR j := 0 TO b.size() - 1 DO
         idx := i+j;
-        s := a.get(i) * b.get(j);
+        s := a.a[i] * b.a[j];
         WHILE s # 0 DO
           VAR
-            o := res.get(idx);
+            o := res.a[idx];
           BEGIN
             s := s + o;
-            res.put(idx, s MOD Base);
+            res.a[idx] := s MOD Base;
             s := s DIV Base;
             INC(idx)
           END
         END
       END
     END;
+    Renormalize(res);
     RETURN res
   END MulSeqs;
 
@@ -319,26 +325,30 @@ PROCEDURE Sub(a, b : T) : T =
   END Sub;
 
 (* unsigned addition of underlying sequences *)
-PROCEDURE AddSeqs(s, t : Seq) : Seq =
+PROCEDURE AddSeqs(s, t : NSeq) : NSeq =
   VAR
-    r := NEW(Seq).init(MAX(s.size(),t.size()));
+    m := MAX(s.size(),t.size());
+    r := NEW(NSeq).init(m+1);
   BEGIN
-    FOR i := 0 TO MAX(s.size(),t.size()) - 1 DO
-      r.put(i,s.get(i) + t.get(i))
+    s.extend(m); t.extend(m);
+    FOR i := 0 TO m - 1 DO
+      r.a[i] := s.a[i] + t.a[i]
     END;
+    s.clearTop(); t.clearTop();
     RETURN r
   END AddSeqs;
 
 (* unsigned subtraction of underlying sequences *)
 (* s must be .ge. t *)
-PROCEDURE SubSeqs(s, t : Seq) : Seq =
+PROCEDURE SubSeqs(s, t : NSeq) : NSeq =
   VAR
-    r := NEW(Seq).init();
+    m := MAX(s.size(),t.size());
+    r := NEW(NSeq).init(m+1);
     borrow := 0;
   BEGIN
-    FOR i := 0 TO MAX(s.size(),t.size()) - 1 DO
+    FOR i := 0 TO m - 1 DO
       VAR
-        diff := s.get(i) - t.get(i) + borrow;
+        diff := s.a[i] - t.a[i] + borrow;
       BEGIN
         borrow := 0;
 
@@ -346,7 +356,7 @@ PROCEDURE SubSeqs(s, t : Seq) : Seq =
           diff := diff + Base;
           borrow := borrow - 1
         END;
-        r.put(i,diff)
+        r.a[i] := diff
       END
     END;
     <* ASSERT borrow = 0 *>
@@ -356,15 +366,22 @@ PROCEDURE SubSeqs(s, t : Seq) : Seq =
 PROCEDURE Abs(a : T) : T = 
   BEGIN RETURN NEW(T, sign := 1, rep := a.rep) END Abs;
 
-PROCEDURE Renormalize(a : Seq) = 
+PROCEDURE Renormalize(a : NSeq) = 
   VAR
     carry := 0;
     o : CARDINAL;
     i := 0;
   BEGIN
-    WHILE i < a.size() OR carry # 0 DO
-      o := a.get(i) + carry;
-      a.put(i,o MOD Base);
+    a.clearTop();
+
+    WHILE i < a.siz OR carry # 0 DO
+      
+      IF i >= NUMBER(a.a^) THEN a.extend(NUMBER(a.a^)+4) END;
+      o := a.a[i] + carry;
+      a.a[i] := o MOD Base;
+
+      IF i >= a.siz AND a.a[i] # 0 THEN a.siz := i + 1 END;
+
       carry := o DIV Base;
       INC(i)
     END;
@@ -390,7 +407,7 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
       BEGIN
         DivideUnsigned(a,MyBase,a,d);
         <* ASSERT Compare(d,Zero) >= 0 AND Compare(d,MyBase) < 1 *>
-        c.addlo(VAL(ORD('0') + d.rep.get(0), CHAR))
+        c.addlo(VAL(ORD('0') + d.rep.a[0], CHAR))
       END
     END;
     IF s = -1 THEN c.addlo('-') END;
@@ -407,7 +424,7 @@ PROCEDURE Hash(a : T) : Word.T =
     res : Word.T := 0;
   BEGIN
     FOR i := 0 TO a.rep.size() - 1 DO
-      res := Word.Plus(res,a.rep.get(i))
+      res := Word.Plus(res,a.rep.a[i])
     END;
     RETURN res
   END Hash;
