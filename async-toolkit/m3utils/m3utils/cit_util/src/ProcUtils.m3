@@ -219,9 +219,13 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             p := "";
             CASE c OF
             | '\'' =>
-              WHILE c # '\'' DO p:=p&Fmt.Char(c); END;
+              c := Rd.GetChar(rd);
+              WHILE c # '\'' DO p:=p&Fmt.Char(c); c := Rd.GetChar(rd) END;
+              c := Rd.GetChar(rd) (* seems like a bug, but... *)
             | '`' =>
-              WHILE c # '`' DO p:=p&Fmt.Char(c); END;
+              c := Rd.GetChar(rd);
+              WHILE c # '`' DO p:=p&Fmt.Char(c); c := Rd.GetChar(rd) END;
+              c := Rd.GetChar(rd); (* seems like a bug, but... *)
               p := ToText(p, wd0:=wd);
             ELSE
               WHILE NOT c IN Special DO p:=p&Fmt.Char(c); c:=Rd.GetChar(rd); END;
