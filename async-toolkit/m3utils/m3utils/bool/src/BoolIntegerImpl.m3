@@ -212,7 +212,7 @@ PROCEDURE ShiftLeft(a : T; sa : CARDINAL) : T =
     FOR i := 0 TO sa - 1 DO
       res.bits[i] := Bool.False();
     END;
-    FOR i := sa TO bits DO
+    FOR i := sa TO bits - 1 DO
       res.bits[i] := a.bits[i - sa]
     END;
     RETURN CheckCache(res)
@@ -272,7 +272,7 @@ PROCEDURE Constant(c : INTEGER) : T =
     RETURN res
   END Constant;
 
-PROCEDURE Hash(a : T) : Word.T =
+PROCEDURE Hash(<*UNUSED*>a : T) : Word.T =
   BEGIN
     RETURN 0
   END Hash;
@@ -282,6 +282,7 @@ PROCEDURE Choose(c : Bool.T; it, if : T) : T =
     l := MAX(NUMBER(if.bits^),NUMBER(it.bits^));
     res := NEW(T, bits := NEW(Array, l));
   BEGIN
+    if.extend(l); it.extend(l);
     FOR i := 0 TO l - 1 DO
       res.bits[i] := Bool.Choose(c,it.bits[i],if.bits[i])
     END;

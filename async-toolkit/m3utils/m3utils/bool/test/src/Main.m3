@@ -30,7 +30,7 @@ BEGIN
     Fmt.Bool(b.isEqual(201) = Bool.False()));
 
   Debug.Out(
-      Fmt.Bool((BoolInteger.Add(BoolInteger.Constant(3),BoolInteger.Constant(8))= BoolInteger.Constant(11)) )
+      Fmt.Bool((BoolInteger.Mul(BoolInteger.Constant(3),BoolInteger.Constant(8))= BoolInteger.Constant(24)) )
   );
 
 END Main.
