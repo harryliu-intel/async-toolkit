@@ -47,7 +47,7 @@ PROCEDURE Identify(self: Default; e1, e2: Elem.T): BOOLEAN =
     IF Elem.Equal(c1, c2) THEN
       RETURN TRUE;
     ELSE
-      IF self.p = NIL OR self.p.is(c1, c2) THEN
+      IF self.p = NIL OR self.p.is(c2, c1) THEN
         not := self.t.put(c1, c2);
       ELSE
         not := self.t.put(c2, c1);
