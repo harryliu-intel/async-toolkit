@@ -9,9 +9,11 @@ EXCEPTION IncompatibleDelimiters;
 REVEAL 
   T = Public BRANDED "TextReader" OBJECT
 
+    (* the remaining text is represented as (pushback & Sub(line, start)) *)
+
     (* for efficiency, we can advance in the text without reallocating *)
     (* the line contains valid data from character 0 to Text.Length(line) *)
-    line : TEXT;
+    pushback, line : TEXT;
     start : CARDINAL := 0;
   OVERRIDES
     next := Next;
@@ -34,62 +36,80 @@ PROCEDURE NextE(self : T;
 PROCEDURE IsEmpty(self : T) : BOOLEAN = 
   BEGIN RETURN Text.Length(self.line) <= self.start END IsEmpty;
 
-PROCEDURE Next(self : T; 
-               delims : TEXT; VAR res : TEXT; skipNulls : BOOLEAN) : BOOLEAN =
+PROCEDURE NextS(self : T; 
+                READONLY delims: SET OF CHAR;
+                VAR res : TEXT; skipNulls : BOOLEAN) : BOOLEAN =
   VAR
-    darr := NEW(REF ARRAY OF CHAR, Text.Length(delims));
-    min := Text.Length(self.line);
+    min, lineLen: INTEGER;
   BEGIN
-    Text.SetChars(darr^,delims);
-    FOR i := 0 TO LAST(darr^) DO
+    IF Text.Length(self.pushback) > 0 THEN
       VAR
-        where := Text.FindChar(self.line,darr[i], self.start);
+        saveLine := self.line;
+        (* savePB := self.pushback; *)
+        saveStart := self.start;
+        found: BOOLEAN;
       BEGIN
-        IF where >= 0 AND where < min THEN min := where END;
+        self.start := 0;
+        self.line := self.pushback;
+        self.pushback := "";
+        found := NextS(self, delims, res, skipNulls);
+        self.pushback := Text.Sub(self.line, self.start);
+        self.line := saveLine;
+        self.start := saveStart;
+        IF found THEN
+          (* actually could merge with next. oops. *)
+          RETURN TRUE;
+        ELSE
+          <* ASSERT skipNulls *>
+        END;
       END;
     END;
-    res := Text.Sub(self.line,self.start,min);
+    min := self.start;
+    lineLen := Text.Length(self.line);
+    WHILE min < lineLen AND NOT Text.GetChar(self.line, min) IN delims DO
+      INC(min); (* this loop a little tighter than it used to be *)
+    END;
+    res := Text.Sub(self.line,self.start,min - (*Mika forgot*)self.start);
 
+(*
     (* this can be implemented simply by increasing self.start *)
     self.line := Text.Sub(self.line,min+1,LAST(CARDINAL)); (* save rest *)
-    IF Text.Length(res) = 0 AND Text.Length(self.line) <= self.start THEN 
-      RETURN FALSE 
+*)
+
+    self.start := min+1;
+    IF Text.Length(self.line) <= self.start THEN
+      self.line := "";
+      self.start := 0;
+      IF Text.Length(res) = 0 THEN 
+        RETURN FALSE;
+      END;
     END;
     
     IF Text.Length(res) = 0 AND skipNulls THEN
-      RETURN Next(self,delims,res,skipNulls)
+      RETURN NextS(self,delims,res,skipNulls)
     END;
 
     RETURN TRUE
+  END NextS; 
+
+PROCEDURE Next(self : T; 
+               delims : TEXT; VAR res : TEXT; skipNulls : BOOLEAN) : BOOLEAN =
+  VAR
+    dset := SET OF CHAR{};
+  BEGIN
+    FOR i := 0 TO Text.Length(delims)-1 DO
+      dset := dset + SET OF CHAR{Text.GetChar(delims, i)};
+    END;
+    RETURN NextS(self, dset, res, skipNulls);
   END Next;
 
-PROCEDURE NextS(self : T; 
-                delims : SET OF CHAR; 
-                VAR res : TEXT; 
-                skipNulls : BOOLEAN) : BOOLEAN =
-  BEGIN
-    FOR i := self.start TO Text.Length(self.line) DO
-      IF Text.GetChar(self.line, i) IN delims THEN
-        res := Text.Sub(self.line, self.start, i);
-        self.line := Text.Sub(self.line, i+1, LAST(CARDINAL));
-
-        IF i # self.start OR NOT skipNulls THEN 
-          RETURN TRUE 
-        ELSE
-          RETURN NextS(self,delims,res,skipNulls)
-        END
-      END
-    END;
-
-    (* fall-through case: return everything since we can't find a 
-       delimiter ... *)
-
-    res := self.line;
-    RETURN FALSE
-  END NextS;
-
 PROCEDURE Init(self: T; line : TEXT) : T =
-  BEGIN self.line := line; RETURN self END Init;
+  BEGIN
+    self.line := line;
+    self.start := 0;
+    self.pushback := "";
+    RETURN self;
+  END Init;
 
 PROCEDURE InitFromRd(self : T; rd : Rd.T) : T RAISES { Rd.Failure, Thread.Alerted } =
   <* FATAL Wr.Failure *> (* cant happen *)
@@ -133,14 +153,23 @@ PROCEDURE Shatter(self : T; listDelims : TEXT;
     RETURN res
   END Shatter;
 
-PROCEDURE PushBack(self: T; t: TEXT) =
+(*
+PROCEDURE Simplify(self: T) =
   BEGIN
     IF self.start # 0 THEN
       self.line := Text.Sub(self.line, self.start);
       self.start := 0;
     END;
-    <* ASSERT self.start = 0 *>
-    self.line := t & self.line;
+    IF Text.Length(self.pushback) > 0 THEN
+      self.line := self.pushback & self.line;
+      self.pushback := "";
+    END;
+  END Simplify;
+*)
+
+PROCEDURE PushBack(self: T; t: TEXT) =
+  BEGIN
+    self.pushback := t & self.pushback;
   END PushBack; 
 
 BEGIN END TextReader.

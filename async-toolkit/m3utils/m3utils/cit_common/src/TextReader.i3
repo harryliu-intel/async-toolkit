@@ -39,9 +39,9 @@ TYPE
        if call succeeded.  If nothing was left, call fails, and returns
        "FALSE". *)
 
-    nextS(delims : SET OF CHAR; 
+    nextS(READONLY delims : SET OF CHAR; 
           VAR chunk : TEXT; skipNulls := FALSE) : BOOLEAN;
-(* untested as yet *)
+(* "next" actually calls "nextS". *)
 
     nextE(delims : TEXT; skipNulls := FALSE) : TEXT RAISES { NoMore };
 (* same as "next", except failure is signalled thru an exception *)
