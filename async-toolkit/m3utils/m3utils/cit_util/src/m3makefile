@@ -1,5 +1,6 @@
 /* $Id$ */
 import("cit_common")
+import("set")
 template("texthack")
 template("generics")
 Interface("DblRefany")
@@ -153,6 +154,11 @@ template("tree")
 Generic_module("Tree")
 
 module("UnixUtils")
+
+Module("Stuff")
+MkSet("Stuff","Stuff")
+MkSetDef("Stuff","Stuff")
+Table("StuffRef","Stuff", "Refany")
 
 Library("cit_util")
 
