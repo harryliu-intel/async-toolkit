@@ -12,7 +12,7 @@ Interface "Elem" is expected to have the following declaration:
 
 which defines the a priori equality of two elements.
 
-The "Default" implementation (Union-Find with path compression using
+The "Default" implementation (union-find with path compression using
 hash tables) also expects an "ElemElemTbl".
 *)
 
