@@ -1,6 +1,6 @@
 GENERIC INTERFACE Equivalence(Elem);
-(*
-$Id$
+
+(* $Id$
 
 A "T" represents an equivalence relation on the set of all "Elem.T"s.
 A newly created "Default" has each "Elem.T" in its own equivalence
