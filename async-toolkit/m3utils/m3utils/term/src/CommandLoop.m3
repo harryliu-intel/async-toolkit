@@ -25,6 +25,7 @@ REVEAL
     term: Term.T;                (* terminal used in "run"           *)
     inputStack: RdList.T;        (* sourcefile readers               *)
     load: BuiltInCommand;
+    extHelpCatalog: TextList.T;
   OVERRIDES
     init                := Init;
     putCommand          := PutCommand;
@@ -43,6 +44,7 @@ PROCEDURE Init(self: T;
                load := "load input source";
                save := "save") : T =
   BEGIN
+    self.extHelpCatalog := NIL;
     self.inputStack := NIL;
     self.prompt := prompt;
     self.prev := NIL;
@@ -86,6 +88,9 @@ PROCEDURE PutCommand(self: T; names: TEXT; cmd: Command) =
   VAR
     cur := TextUtils.Shatter(names);
   BEGIN
+    IF cmd.hasExtendedHelp THEN
+      self.extHelpCatalog := TextList.Append(cur, self.extHelpCatalog);
+    END;
     WHILE cur # NIL DO
       EVAL self.commands.put(cur.head, cmd);
       PreRegister(self.prefixes, cur.head, cur.head);
@@ -111,14 +116,21 @@ PROCEDURE DoHelp(helpCmd: BuiltInCommand; args: TextList.T; term: Term.T)
       WITH iter = self.commands.iterate() DO
         WHILE iter.next(name, cmd) DO
           term.wr(name); term.wr(" ");
-          term.wr(cmd.help(TextList.List1(name)), TRUE);
+          IF cmd.simpleHelp = NIL THEN
+            term.wr("-- no help provided.\n");
+          END;
+          term.wr(cmd.simpleHelp, TRUE);
         END;
+      END;
+      IF self.extHelpCatalog # NIL THEN
+        term.wr("help <command> -- extended help is available for the following commands:", TRUE);
+        term.wr(TextUtils.Assemble(self.extHelpCatalog), TRUE);
       END;
     ELSE
       name := args.tail.head;
       CASE Lookup(self, name, cmd) OF
       | LURes.WasPrefix, LURes.Found =>
-        term.wr(cmd.help(TextList.Cons(name, args.tail.tail)), TRUE);
+        term.wr(cmd.extendedHelp(TextList.Cons(name, args.tail.tail)), TRUE);
       | LURes.NotFound => RAISE Error("command not found");
       | LURes.Ambiguous => RAISE Error("command ambiguous");
       END;

@@ -11,7 +11,8 @@ TYPE
   METHODS
     init(ctx: Context.T; prompt := "> "): T;
 
-    c(cmd: Command; names, help: TEXT);
+    c(cmd: Command; names: TEXT;
+      simpleHelp, extendedHelp: TEXT := NIL);
     (* define a new command *)
 
     run();

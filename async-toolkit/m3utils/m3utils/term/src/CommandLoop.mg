@@ -24,11 +24,15 @@ PROCEDURE Init(self: T; ctx: Context.T; prompt := "> "): T =
     RETURN self;
   END Init;
 
-PROCEDURE PutCommand(self: T; cmd: Command; names, help: TEXT) =
+PROCEDURE PutCommand(self: T; cmd: Command; names: TEXT;
+                     simpleHelp, extendedHelp: TEXT := NIL) =
+
   BEGIN
     self.cl.putCommand(names, NEW(CommandObject,
                                   cmd:=cmd,
-                                  simpleHelp:=help,
+                                  simpleHelp:=simpleHelp,
+                                  extHelp := extendedHelp,
+                                  hasExtendedHelp := (extendedHelp # NIL),
                                   ctx := self.ctx));
   END PutCommand;
 
@@ -36,8 +40,10 @@ TYPE
   CommandObject = CommandLoop.Command OBJECT
     ctx: Context.T;
     cmd: Command;
+    extHelp: TEXT;
   OVERRIDES
     execute := Execute;
+    extendedHelp := ExtendedHelp;
   END;
 
 PROCEDURE Execute(co: CommandObject;
@@ -48,6 +54,14 @@ PROCEDURE Execute(co: CommandObject;
     co.cmd(co.ctx, args, term);
   END Execute;
 
+PROCEDURE ExtendedHelp(co: CommandObject;
+                       <*UNUSED*>args: TextList.T): TEXT RAISES {Error} =
+  BEGIN
+    IF co.extHelp = NIL THEN
+      RAISE Error("No extended help provided for this command.");
+    END;
+    RETURN co.extHelp;
+  END ExtendedHelp;
 
 PROCEDURE Run(self: T) =
   BEGIN

@@ -23,7 +23,6 @@ TYPE
 
   (* User object.
      Default "execute" and "complete" gracefully do nothing.
-     Default "help" uses "simpleHelp".
 
      Typically, the user will override "Command" adding a context field,
      which the user initializes to some object
@@ -31,15 +30,15 @@ TYPE
   *)
   Command <: CommandPublic;
   CommandPublic = OBJECT
-    simpleHelp: TEXT := NIL;
+    simpleHelp: TEXT:=NIL;(* one-line help: "<arg1> <arg2>.. -- explanation" *)
+    hasExtendedHelp := FALSE;
+
   METHODS
     execute(args: TextList.T; term: Term.T) RAISES {Error};
     (* "args.head" is the command name. *)
 
-    help(args: TextList.T): TEXT RAISES {Error};
-    (* "args.head" is the command name.
-       result should have this form:
-       "<arg1> <arg2> .. -- explanation" *) 
+    extendedHelp(args: TextList.T): TEXT RAISES {Error};
+    (* "args.head" is the command name. *)
 
     complete(VAR input: TEXT) RAISES {Error};
   END;
