@@ -97,7 +97,7 @@ PROCEDURE ConvertArgs(fn: TEXT): TEXT =
     REPEAT
       line := Rd.GetLine(rd);
       leftPos := Text.FindChar(line, '(');
-    UNTIL leftPos # -1;
+    UNTIL leftPos > 0; (* should skip comments, too. oh well. *)
     Rd.Close(rd);
     rightPos := Text.FindChar(line, ')');
     sym := Text.Sub(line, leftPos+1, rightPos-leftPos-1);
