@@ -138,6 +138,11 @@ Module("CITRandom")
 Module("ProcUtils")
 Module("PathnameUtils")
 
+Module("Config")
+list("Flag", "Config")
+
+
+
 Library("cit_util")
 
 
