@@ -3,13 +3,23 @@
 MODULE ParametricSpline;
 IMPORT Spline, CubicSpline;
 IMPORT Math;
+IMPORT Debug,Fmt;
+
+CONST EPS = 1.0d-8;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     xSpline, ySpline : Spline.T;
   OVERRIDES
     init := Init;
+    getParametricPoint := GetParametricPoint;
+    gnuPlotFormat := GnuPlotFormat;
   END;
+
+PROCEDURE FormatCoord(c : Coord) : TEXT = 
+  BEGIN 
+    RETURN "(" & Fmt.LongReal(c.x) & "," & Fmt.LongReal(c.y) & ")" 
+  END FormatCoord;
 
 PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : T =
 
@@ -41,13 +51,18 @@ PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : T =
       cur := 0.0d0;
     BEGIN
       px[0].x := cur; px[0].y := coords[0].x;
+      Debug.Out("Parametric px[0] at " & FormatCoord(px[0]));
       py[0].x := cur; py[0].y := coords[0].y;
+      Debug.Out("Parametric py[0] at " & FormatCoord(px[0]));
 
       FOR i := FIRST(coords) + 1 TO LAST(coords) DO
-        cur := cur + ComputeWeight(coords[i-1],coords[i]);
+        cur := cur + ComputeWeight(coords[i-1],coords[i])/wTot;
 
         px[i].x := cur; px[i].y := coords[i].x;
+        Debug.Out("Parametric px["&Fmt.Int(i)&"] at " & FormatCoord(px[i]));
         py[i].x := cur; py[i].y := coords[i].y;
+        Debug.Out("Parametric py["&Fmt.Int(i)&"] at " & FormatCoord(py[i]));
+
       END
     END;
 
@@ -58,5 +73,27 @@ PROCEDURE Init(self : T; READONLY coords : ARRAY OF Coord) : T =
     
     RETURN self
   END Init;
+
+PROCEDURE GetParametricPoint(self : T; param : LONGREAL) : Coord =
+  BEGIN
+    <* ASSERT 0.0d0-EPS <= param AND param <= 1.0d0+EPS *>
+    RETURN Coord { self.xSpline.eval(param), self.ySpline.eval(param) }
+  END GetParametricPoint;
+
+PROCEDURE GnuPlotFormat(self : T; steps : CARDINAL) : TEXT =
+  VAR 
+    res := "";
+  BEGIN
+    (* eval at steps + 1 points *)
+    FOR i := 0 TO steps DO
+      VAR
+        p := FLOAT(i,LONGREAL)/FLOAT(steps,LONGREAL);
+        pt := self.getParametricPoint(p);
+      BEGIN
+        res := res & Fmt.LongReal(pt.x) & " " & Fmt.LongReal(pt.y) & "\n"
+      END
+    END;
+    RETURN res
+  END GnuPlotFormat;
 
 BEGIN END ParametricSpline.
