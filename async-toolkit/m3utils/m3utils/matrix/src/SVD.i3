@@ -36,5 +36,14 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
      Numerical recipes in Fortran 77, p. 59
     *)
 
+PROCEDURE BackSubstitute(u : Matrix.T;
+                         w : Matrix.Vector;
+                         v : Matrix.T;
+
+                         b : Matrix.Vector;
+                         (* OUT *) x : Matrix.Vector);
+(* compute sol'n x to Ax = b using SVD data from above.
+   In order to use it effectively, zero out singular values that
+   are too small before calling. *)
 
 END SVD.

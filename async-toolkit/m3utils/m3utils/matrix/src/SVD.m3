@@ -245,4 +245,35 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
     END (* 49 *)
   END Decompose;
 
+PROCEDURE BackSubstitute(u : Matrix.T;
+                         w : Matrix.Vector;
+                         v : Matrix.T;
+
+                         b : Matrix.Vector;
+                         (* OUT *) x : Matrix.Vector) =
+  VAR
+    m := NUMBER(u^);
+    n := NUMBER(u[0]);
+    s : LONGREAL;
+    tmp := NEW(REF ARRAY OF LONGREAL, n);
+  BEGIN
+    FOR j := 0 TO n - 1 DO
+      s := 0.0d0;
+      IF w[j] # 0.0d0 THEN
+        FOR i := 0 TO m-1 DO
+          s := s + u[i,j]*b[i]
+        END;
+        s := s/w[j]
+      END;
+      tmp[j] := s
+    END; (* 12 *)
+    FOR j := 0 TO n - 1 DO
+      s := 0.0d0;
+      FOR jj := 0 TO n - 1 DO
+        s := s + v[j,jj]*tmp[jj]
+      END;
+      x[j] := s
+    END
+  END BackSubstitute;
+
 BEGIN END SVD.

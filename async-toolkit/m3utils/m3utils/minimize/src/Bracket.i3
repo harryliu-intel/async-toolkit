@@ -21,3 +21,4 @@ PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
                  literal := FALSE) : TEXT;
 
 END Bracket.
+

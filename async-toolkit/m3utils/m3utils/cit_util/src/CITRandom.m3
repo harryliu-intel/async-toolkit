@@ -124,7 +124,9 @@ CONST
 PROCEDURE Integer (t: T;  min, max: INTEGER): INTEGER =
   VAR x, rem, range: INTEGER;
   BEGIN
-    <*ASSERT min <= max *>
+    IF min > max THEN
+      <*ASSERT min <= max *>
+    END;
     LOOP
       LOOP
         DEC (t.i);
