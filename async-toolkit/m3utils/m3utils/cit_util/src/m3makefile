@@ -13,6 +13,7 @@ Generic_module("DblTable")
 Generic_module("BrandedSet")
 template("brandedset")
 Module("RTBrand")
+Module("RefRecord")
 
 Module("SIsuffix")
 table("Suffix", "Char", "SIsuffix")
