@@ -90,6 +90,10 @@ Gmodule("Rational")
 Rational("Int","IntForRat")
 Rational("Big", "BigInt")
 Module("UnsafeMutex")
+
+Generic_module("Factory")
+template("factory")
+
 Library("cit_util")
 
 
