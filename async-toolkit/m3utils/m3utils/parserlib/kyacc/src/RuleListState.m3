@@ -90,8 +90,9 @@ PROCEDURE AddMark(self: T; READONLY mark: Mark.T) =
     IF mark.current.cell = NIL THEN
       (* return without adding to table *)
       IF mark.return.rule = NIL THEN
-        <* ASSERT mark.return.index # -1 *>
-        self.finish := mark.current.rule;
+        IF mark.return.index # -1 THEN
+          self.finish := mark.current.rule;
+        END;
       ELSE
         first := mark.first;
         IF first = NIL THEN
