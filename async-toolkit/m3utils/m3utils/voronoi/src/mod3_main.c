@@ -45,7 +45,6 @@ mod3_addsite(p)
   assert(!setup);
   sites[nsites].coord = p;
   sites[nsites].sitenbr = nsites;
-  sites[nsites].refcnt = 0;
   nsites += 1;
   if (nsites % 4000 == 0) {
     struct Site *newsites = (struct Site *) memmalloc(sites,(nsites+4000)*sizeof*sites);

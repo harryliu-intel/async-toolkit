@@ -77,7 +77,6 @@ while(1)
 		bisector = HEcreate(e, pm);
 		ELinsert(llbnd, bisector);
 		endpoint(e, re-pm, v);
-		deref(v);
 		if((p = intersect(llbnd, bisector)) != (struct Site *) NULL)
 		{	PQdelete(llbnd);
 			PQinsert(llbnd, p, dist(p,bot));

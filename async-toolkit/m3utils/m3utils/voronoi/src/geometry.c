@@ -34,8 +34,6 @@ struct	Site *s1,*s2;
 
 	newedge -> reg[0] = s1;
 	newedge -> reg[1] = s2;
-	ref(s1); 
-	ref(s2);
 	newedge -> ep[0] = (struct Site *) NULL;
 	newedge -> ep[1] = (struct Site *) NULL;
 
@@ -95,7 +93,6 @@ struct Site *v;
 	  sp=0;
 	}
 	    v = (struct Site *)sfl+(sp++);
-	v -> refcnt = 0;
 	v -> coord.x = xint;
 	v -> coord.y = yint;
 	return(v);
@@ -154,11 +151,8 @@ int	lr;
 struct Site *s;
 {
 e -> ep[lr] = s;
-ref(s);
 if(e -> ep[re-lr]== (struct Site *) NULL) return;
 out_ep(e);
-deref(e->reg[le]);
-deref(e->reg[re]);
 }
 
 
@@ -180,15 +174,3 @@ nvertices += 1;
 out_vertex(v);
 }
 
-
-deref(v)
-struct	Site *v;
-{
-v -> refcnt -= 1;
-}
-
-ref(v)
-struct Site *v;
-{
-v -> refcnt += 1;
-}

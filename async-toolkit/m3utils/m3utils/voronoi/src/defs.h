@@ -17,7 +17,6 @@ float x,y;
 struct Site	{
 struct	Point	coord;
 int		sitenbr;
-int		refcnt;
 };
 
 
@@ -61,7 +60,6 @@ struct Edge *bisect();
 struct Halfedge {
 struct Halfedge	*ELleft, *ELright;
 struct Edge	*ELedge;
-int		ELrefcnt;
 char		ELpm;
 struct	Site	*vertex;
 float		ystar;

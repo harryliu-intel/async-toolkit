@@ -41,7 +41,6 @@ int pm;
 	answer -> ELpm = pm;
 	answer -> PQnext = (struct Halfedge *) NULL;
 	answer -> vertex = (struct Site *) NULL;
-	answer -> ELrefcnt = 0;
 	return(answer);
 }
 
@@ -100,10 +99,8 @@ struct Halfedge *he;
 
 /* Update hash table and reference counts */
 	if(bucket > 0 && bucket <ELhashsize-1)
-	{	if(ELhash[bucket] != (struct Halfedge *) NULL) 
-			ELhash[bucket] -> ELrefcnt -= 1;
+	{
 		ELhash[bucket] = he;
-		ELhash[bucket] -> ELrefcnt += 1;
 	};
 	return (he);
 }

@@ -11,7 +11,6 @@ float 	offset;
 struct Halfedge *last, *next;
 
 he -> vertex = v;
-ref(v);
 he -> ystar = v -> coord.y + offset;
 last = &PQhash[PQbucket(he)];
 while ((next = last -> PQnext) != (struct Halfedge *) NULL &&
@@ -33,7 +32,6 @@ if(he ->  vertex != (struct Site *) NULL)
 	while (last -> PQnext != he) last = last -> PQnext;
 	last -> PQnext = he -> PQnext;
 	PQcount -= 1;
-	deref(he -> vertex);
 	he -> vertex = (struct Site *) NULL;
 };
 }
