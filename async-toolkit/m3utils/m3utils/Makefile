@@ -2,7 +2,7 @@
 COMMONDIRS= processor crt
 SHIPS=cit_util magic bdd cptr bool
 SUBDIRS= bas newsim psim pslnew m3hier
-M3SUBS= boxes
+M3SUBS= boxes magraster
 
 all: commons ships subs m3subs
 clean: cleanships cleanm3 cleansubs cleancommons
