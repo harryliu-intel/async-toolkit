@@ -8,7 +8,7 @@ TYPE
     init(prompt := "> ";
          help := "help ?";
          quit := "quit ^D";
-         load := "load input source";
+         load := "input source";
          save := "save"): T;
     (* builtin features can be disabled by passing the empty TEXT. *)
 
