@@ -25,7 +25,11 @@ PROCEDURE PutCommand(cl: CommandLoop.T;
     IF desc = NIL THEN
       desc := typeName & " variable `" & name & "'";
     END;
-    cmd.simpleHelp := "[<val>] -- view/set " & desc;
+    IF userChange THEN
+      cmd.simpleHelp := "[<val>] -- display/set " & desc;
+    ELSE
+      cmd.simpleHelp := "-- display " & desc;
+    END;
     cl.putCommand(name, cmd);
   END PutCommand;
 
@@ -35,6 +39,8 @@ PROCEDURE Execute(self: Command; args: TextList.T; term: Term.T)
     IF args.tail = NIL THEN
       (* view variable *)
       term.wr(self.varName & " = " & self.fs.fmt(), TRUE);
+    ELSIF NOT self.chg THEN
+      RAISE Error("Too many arguments.");
     ELSE
       (* set variable *)
       TRY
