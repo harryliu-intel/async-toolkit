@@ -1,4 +1,5 @@
 MODULE Main;
+IMPORT Debug;
 IMPORT FloatMode;
 IMPORT Term;
 IMPORT TextList;
@@ -40,6 +41,7 @@ PROCEDURE Add(ctx: MyContext.T;
 PROCEDURE Run(context: MyContext.T) =
   VAR
     cl := NEW(MyCommandLoop.T).init(context, "cl-test> ");
+    temp := cl.longReal("temperature", "temperature in kelvins", 3.0D2);
   BEGIN
 
     (* define commands *)
@@ -52,6 +54,7 @@ which is the old value of the accumulator plus <val>.
 %END%);
 
     cl.run();
+    Debug.S("final temperature = " & Fmt.LongReal(temp^), 0);
   END Run;
 
 BEGIN
