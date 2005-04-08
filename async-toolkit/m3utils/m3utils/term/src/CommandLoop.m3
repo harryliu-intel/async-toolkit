@@ -130,7 +130,12 @@ PROCEDURE DoHelp(helpCmd: BuiltInCommand; args: TextList.T; term: Term.T)
       name := args.tail.head;
       CASE Lookup(self, name, cmd) OF
       | LURes.WasPrefix, LURes.Found =>
-        term.wr(cmd.extendedHelp(TextList.Cons(name, args.tail.tail)), TRUE);
+        IF cmd.hasExtendedHelp THEN
+          term.wr(cmd.extendedHelp(TextList.Cons(name, args.tail.tail)), TRUE);
+        ELSE
+          term.wr(name & " " & cmd.simpleHelp, TRUE);
+          term.wr("(no extended help provided)", TRUE);
+        END;
       | LURes.NotFound => RAISE Error("command not found");
       | LURes.Ambiguous => RAISE Error("command ambiguous");
       END;
