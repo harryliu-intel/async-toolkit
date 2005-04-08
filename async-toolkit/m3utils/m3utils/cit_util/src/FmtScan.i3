@@ -9,14 +9,16 @@ IMPORT Fmt;
      scan(t: TEXT): Elem.T RAISES {FmtScan.Error};
    END;
 
+   This interface sucks. Use "FmtScanVar" instead.
+
 *)
 
 EXCEPTION
   Error;
 
-PROCEDURE Int(base: INTEGER): IntT;
-PROCEDURE Bool(): BoolT;
-PROCEDURE LongReal(digits: CARDINAL; style: Fmt.Style): LongRealT;
+<*OBSOLETE*>PROCEDURE Int(base: INTEGER): IntT;
+<*OBSOLETE*>PROCEDURE Bool(): BoolT;
+<*OBSOLETE*>PROCEDURE LongReal(digits: CARDINAL; style: Fmt.Style): LongRealT;
 
 TYPE
   IntT = OBJECT METHODS

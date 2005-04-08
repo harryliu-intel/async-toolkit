@@ -167,7 +167,7 @@ MkSet("Stuff","Stuff")
 MkSetDef("Stuff","Stuff")
 Table("StuffRef","Stuff", "Refany")
 
-Module("FmtScan")
+Module("FmtScanVar")
 
 Module("PMPTimer")
 List("Point", "Pointe")
