@@ -13,15 +13,16 @@ IMPORT Scan;
  *                                                                           *
  *****************************************************************************)
 
-PROCEDURE Int(var: REF INTEGER; base: INTEGER) : T =
+PROCEDURE Int(var: REF INTEGER; base, lo, hi: INTEGER) : T =
   BEGIN
-    RETURN NEW(IntPrivate, var:=var, base:=base);
+    RETURN NEW(IntPrivate, var:=var, base:=base, lo:=lo, hi:=hi);
   END Int;
 
 TYPE
   IntPrivate = T OBJECT
     var: REF INTEGER;
     base: CARDINAL;
+    lo,hi: INTEGER;
   OVERRIDES
     fmt := FmtInt;
     scan := ScanInt;
@@ -33,12 +34,19 @@ PROCEDURE FmtInt(self: IntPrivate): TEXT =
   END FmtInt;
 
 PROCEDURE ScanInt(self: IntPrivate; t: TEXT) RAISES {Error} =
+  VAR
+    res: INTEGER;
   BEGIN
     TRY
-      self.var^ := Scan.Int(t, self.base);
+      res := Scan.Int(t, self.base);
     EXCEPT Lex.Error, FloatMode.Trap =>
-      RAISE Error;
+      RAISE Error("integer expected.");
     END;
+    IF (res < self.lo) OR (res > self.hi) THEN
+      RAISE Error("expected value in range [" & Fmt.Int(self.lo) & "," &
+            Fmt.Int(self.hi) & "]");
+    END;
+    self.var^ := res;
   END ScanInt;
 
 
@@ -74,7 +82,7 @@ PROCEDURE ScanBool(self: BoolPrivate; t: TEXT) RAISES {Error} =
     TRY
       self.var^ := Scan.Bool(t);
     EXCEPT Lex.Error =>
-      RAISE Error;
+      RAISE Error("boolean expected.");
     END;
   END ScanBool;
 
@@ -114,7 +122,7 @@ PROCEDURE ScanLongReal(self: LongRealPrivate; t: TEXT)
     TRY
       self.var^ := Scan.LongReal(t);
     EXCEPT Lex.Error, FloatMode.Trap =>
-      RAISE Error;
+      RAISE Error("number expected.");
     END;
   END ScanLongReal;
 

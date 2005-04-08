@@ -8,9 +8,9 @@ TYPE
   END;
 
 EXCEPTION
-  Error;
+  Error(TEXT);
 
-PROCEDURE Int(var: REF INTEGER; base: INTEGER): T;
+PROCEDURE Int(var: REF INTEGER; base, lo, hi: INTEGER): T;
 PROCEDURE Bool(var: REF BOOLEAN): T;
 PROCEDURE LongReal(var: REF LONGREAL; digits: CARDINAL; style: Fmt.Style): T;
 
