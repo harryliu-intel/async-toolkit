@@ -1,4 +1,5 @@
 GENERIC INTERFACE CommandLoop(Context);
+IMPORT Fmt;
 IMPORT TextList;
 IMPORT Term;
 FROM CommandLoop IMPORT Error;
@@ -11,9 +12,37 @@ TYPE
   METHODS
     init(ctx: Context.T; prompt := "> "): T;
 
+
+    (* define a new command *)
+
     c(cmd: Command; names: TEXT;
       simpleHelp, extendedHelp: TEXT := NIL);
-    (* define a new command *)
+
+
+    (* Define variables of various types.
+       Return values should be stored in "ctx" and used as needed.
+    *)
+
+    integer(name: TEXT;
+            desc: TEXT    := NIL;
+            default       := 0;
+            lo            := FIRST(INTEGER);
+            hi            := LAST(INTEGER);
+            base          := 10;
+            userCanChange := TRUE           ): REF INTEGER;
+
+    boolean(name: TEXT;
+            desc: TEXT := NIL;
+            default    := FALSE;
+            chg        := TRUE   ): REF BOOLEAN;
+
+    longReal(name: TEXT;
+             desc: TEXT := NIL;
+             default    := 0.0D0;
+             style      := Fmt.Style.Auto;
+             digits     := 10;
+             chg        := TRUE  ): REF LONGREAL;
+
 
     run();
   END;

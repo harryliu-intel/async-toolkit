@@ -1,6 +1,9 @@
 GENERIC MODULE CommandLoop(Context);
 FROM CommandLoop IMPORT Error;
 IMPORT CommandLoop;
+IMPORT FmtScanVar;
+IMPORT ScalarVar;
+IMPORT Fmt;
 IMPORT TextList;
 IMPORT Term;
 
@@ -11,9 +14,12 @@ REVEAL
     ctx:  Context.T;
     cl: CommandLoop.T;
   OVERRIDES
-    init := Init;
-    c := PutCommand;
-    run := Run;
+    init     := Init;
+    c        := PutCommand;
+    integer  := Integer;
+    longReal := LongReal;
+    boolean  := Boolean;
+    run      := Run;
   END;
 
 
@@ -67,6 +73,54 @@ PROCEDURE Run(self: T) =
   BEGIN
     self.cl.run();
   END Run;
+
+
+
+
+(*****************************************************************************
+ *                                                                           *
+ *                        commands to change variables                       *
+ *                                                                           *
+ *****************************************************************************)
+
+PROCEDURE Integer(self: T;
+                  name: TEXT; desc: TEXT := NIL;
+                  default := 0;
+                  lo := FIRST(INTEGER);
+                  hi := LAST(INTEGER);
+                  base := 10;
+                  userCanChange := TRUE): REF INTEGER =
+  VAR
+    res := NEW(REF INTEGER);
+    fs := FmtScanVar.Int(res, base, lo, hi);
+  BEGIN
+    res^ := default;
+    ScalarVar.PutCommand(self.cl, fs, "integer", name, desc, userCanChange);
+    RETURN res;
+  END Integer;
+  
+PROCEDURE Boolean(self: T; name: TEXT;desc:TEXT:=NIL;
+                  default:=FALSE;chg:=TRUE): REF BOOLEAN =
+  VAR
+    res := NEW(REF BOOLEAN);
+    fs := FmtScanVar.Bool(res);
+  BEGIN
+    res^ := default;
+    ScalarVar.PutCommand(self.cl, fs, "boolean", name, desc, chg);
+    RETURN res;
+  END Boolean;
+
+PROCEDURE LongReal(self: T; name: TEXT;desc:TEXT:=NIL;
+                   default:=0.0D0;style:=Fmt.Style.Auto;
+                   digits:=10;chg:=TRUE):REF LONGREAL=
+  VAR
+    res := NEW(REF LONGREAL);
+    fs := FmtScanVar.LongReal(res, digits, style);
+  BEGIN
+    res^ := default;
+    ScalarVar.PutCommand(self.cl, fs, "number", name, desc, chg);
+    RETURN res;                              
+  END LongReal;
 
 BEGIN
 END CommandLoop.
