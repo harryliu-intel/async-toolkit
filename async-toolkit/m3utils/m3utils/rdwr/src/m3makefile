@@ -1,0 +1,13 @@
+/* $Id$ */
+
+import("netobj")
+import("tcp")
+import("libm3")
+
+Table ("Refany", "Text", "Refany")
+
+Module("RdWrPipe")
+Module("SimpleMsgRW")
+Module("TeeWr")
+
+Library("rdwr")
