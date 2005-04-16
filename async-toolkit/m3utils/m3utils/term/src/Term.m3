@@ -118,7 +118,14 @@ PROCEDURE Wr0(wr: Wrr.T; s: TEXT) =
     END;
   END Wr0;
 
-PROCEDURE Wr(s: TEXT) = BEGIN Wr0(Stdio.stdout, s); END Wr;
+PROCEDURE Wr(s: TEXT; flush := FALSE) =
+  BEGIN
+    Wr0(Stdio.stdout, s);
+    IF flush THEN
+      Wrr.Flush(Stdio.stdout);
+    END;
+  END Wr;
+
 PROCEDURE Wr1(s: TEXT) =
   BEGIN
     Wr0(Stdio.stderr, s);

@@ -321,7 +321,9 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
                     TYPECASE cmd OF QuitCommand =>
                       RETURN;
                     ELSE
+                      Term.MakeRaw(FALSE); (* hack: ^C support *)
                       cmd.execute(args, self.term);
+                      Term.MakeRaw(TRUE);
                     END;
                   | LURes.NotFound =>
                     RAISE Error("command not found; try `help'.");

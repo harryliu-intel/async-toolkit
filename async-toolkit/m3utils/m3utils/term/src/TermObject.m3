@@ -39,9 +39,7 @@ PROCEDURE DefWr(<*UNUSED*>self: T;
     IF ln THEN
       WrLn(s, flush);
     ELSE
-      Wr(s);
-      <* ASSERT NOT flush *>
-      (* not implemented yet *)
+      Wr(s, flush);
     END;
   END DefWr;
 
