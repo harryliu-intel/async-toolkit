@@ -1,6 +1,6 @@
 /* $Id$ */
 
-import("netobj")
+/*import("netobj")*/
 import("tcp")
 import("libm3")
 
