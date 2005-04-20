@@ -9,5 +9,7 @@ Module("Matrix")
 Module("LU")
 Module("SVD")
 Module("Newton")
+Module("Fortran")
+Module("Tridiagonal")
 
 Library("matrix")

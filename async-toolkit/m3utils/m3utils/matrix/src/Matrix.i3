@@ -9,7 +9,8 @@ EXCEPTION
   Singular(CARDINAL);  (* arg is index of bad func. *)
 
 TYPE 
-  T = REF ARRAY OF ARRAY OF LONGREAL;
+  S = ARRAY OF ARRAY OF LONGREAL;
+  T = REF S;
   Vector = LRVector.T;
   Dim = RECORD
     rows,cols : INTEGER;

@@ -3,27 +3,7 @@
 MODULE SVD;
 IMPORT Matrix;
 FROM Math IMPORT sqrt;
-
-PROCEDURE Sign(READONLY a, b : LONGREAL) : LONGREAL =
-  BEGIN
-    IF b > 0.0d0 THEN RETURN ABS(a) ELSE RETURN -ABS(a) END
-  END Sign;
-
-PROCEDURE pythag(a, b : LONGREAL) : LONGREAL =
-  VAR
-    absa := ABS(a);
-    absb := ABS(b);
-  BEGIN
-    IF absa > absb THEN
-      RETURN absa * sqrt(1.0d0 + (absb/absa)*(absb/absa))
-    ELSE
-      IF absb = 0.0d0 THEN
-        RETURN 0.0d0
-      ELSE
-        RETURN absb * sqrt(1.0d0 + (absa/absb)*(absa/absb))
-      END
-    END
-  END pythag;
+IMPORT Fortran;
 
 PROCEDURE Decompose((* INOUT *) a : Matrix.T;
                     (* OUT *) w : Matrix.Vector;
@@ -54,7 +34,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             s := s + a[k,i]*a[k,i]
           END;
           f := a[i,i];
-          g := -Sign(sqrt(s),f);
+          g := -Fortran.Sign(sqrt(s),f);
           h := f*g-s;
           a[i,i] := f-g;
           FOR j := l TO n-1 DO
@@ -87,7 +67,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             s := s + a[i,k]*a[i,k]
           END;
           f := a[i,l];
-          g := -Sign(sqrt(s),f);
+          g := -Fortran.Sign(sqrt(s),f);
           h := f*g-s;
           a[i,l] := f-g;
           FOR k := l TO n - 1 DO
@@ -175,7 +155,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             rv1[i] := c * rv1[i];
             IF ABS(f) + anorm = anorm THEN EXIT END;
             g := w[i];
-            h := pythag(f,g);
+            h := Fortran.pythag(f,g);
             w[i] := h;
             h := 1.0d0/h;
             c := g*h;
@@ -201,14 +181,14 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
         IF its = Iters THEN RAISE NoConvergence END;
         x := w[l]; nm := k-1; y := w[nm]; g := rv1[nm]; h := rv1[k];
         f := ((y-z)*(y+z)+(g-h)*(g+h))/(2.0d0*h*y);
-        g := pythag(f,1.0d0);
-        f := ((x-z)*(x+z)+h*((y/(f+Sign(g,f)))-h))/x;
+        g := Fortran.pythag(f,1.0d0);
+        f := ((x-z)*(x+z)+h*((y/(f+Fortran.Sign(g,f)))-h))/x;
         c := 1.0d0; s := 1.0d0;
         FOR j := l TO nm DO
           VAR
             i := j+1;
           BEGIN
-            g := rv1[i]; y := w[i]; h := s*g; g := c*g; z := pythag(f,h);
+            g := rv1[i]; y := w[i]; h := s*g; g := c*g; z := Fortran.pythag(f,h);
             rv1[j] := z; c := f/z; s := h/z;
             f :=  (x*c)+(g*s);
             g := -(x*s)+(g*c);
@@ -220,7 +200,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
               v[jj,j] :=  (x*c)+(z*s);
               v[jj,i] := -(x*s)+(z*c)
             END;
-            z := pythag(f,h);
+            z := Fortran.pythag(f,h);
             w[j] := z;
             IF z # 0.0d0 THEN
               z := 1.0d0/z;
