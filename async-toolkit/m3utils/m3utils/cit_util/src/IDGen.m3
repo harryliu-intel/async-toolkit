@@ -39,14 +39,14 @@ PROCEDURE AllocLow1(self: Low; lo, hi: ID; VAR res: ID): BOOLEAN =
       IF Region.OverlapRect(r1, self.fr) THEN
         IF mid = lo+1 THEN
           res := lo;
-          self.fr := Region.JoinRect(r1, self.fr);
+          self.fr := Region.Difference(self.fr, Region.FromRect(r1));
           RETURN TRUE;
         END;
         RETURN AllocLow1(self, lo, mid, res);
       ELSIF Region.OverlapRect(r2, self.fr) THEN
         IF hi = mid+1 THEN
           res := mid;
-          self.fr := Region.JoinRect(r2, self.fr);
+          self.fr := Region.Difference(self.fr, Region.FromRect(r2));
           RETURN TRUE;
         END;
         RETURN AllocLow1(self, mid, hi, res);
