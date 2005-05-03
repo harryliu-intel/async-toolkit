@@ -172,6 +172,10 @@ Module("FmtScanVar")
 Module("PMPTimer")
 List("Point", "Pointe")
 
+template("cache")
+Generic_module("Cache")
+Cache("IntInt", "Integer", "Integer", "IntRefTbl")
+
 Library("cit_util")
 
 
