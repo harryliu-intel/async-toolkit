@@ -11,8 +11,11 @@ TYPE
     get(idx : Key.T) : Value.T;
     (* get value *)
     
-    compute(idx : Key.T) : Value.T;
-    (* override this *)
+    compute(idx : Key.T; staleValue : Value.T) : Value.T;
+    (* override this---staleValue is an old, dirty value that has
+       been evicted from the cache.  Can be used for object recycling
+       as long as references from get aren't reused by client.
+       (or ignored) *)
 
     haveCachedData(idx : Key.T) : BOOLEAN;
     (* use for optimizations *)

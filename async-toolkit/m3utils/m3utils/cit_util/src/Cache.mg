@@ -85,7 +85,7 @@ PROCEDURE Get(t : T; idx : Key.T) : Value.T =
         s := NEW(S);
       END;
       
-      s.value := t.compute(idx);
+      s.value := t.compute(idx,s.value);
       EVAL t.data.put(idx, s);
 
       (* update l accordingly *)
