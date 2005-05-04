@@ -33,6 +33,8 @@ PROCEDURE AllocLow(self: Low; force:=-1): ID =
     RETURN res;
   END AllocLow;
 
+(* TODO: isn't there a Region.BoundingBox or something?
+   That would be much more efficient, probably. *)
 PROCEDURE AllocLow1(self: Low; lo, hi: ID; VAR res: ID): BOOLEAN =
   BEGIN
     <* ASSERT lo # hi *>
