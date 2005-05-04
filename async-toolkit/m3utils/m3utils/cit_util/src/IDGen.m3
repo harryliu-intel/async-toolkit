@@ -19,14 +19,17 @@ PROCEDURE InitLow(self: Low): Low =
     RETURN self;
   END InitLow; 
 
-PROCEDURE AllocLow(self: Low): ID =
+PROCEDURE AllocLow(self: Low; force:=-1): ID =
   VAR
     res: ID;
   BEGIN
-    IF NOT AllocLow1(self, 0, LAST(INTEGER), res) THEN
+    IF force>=0 THEN
+      res := force;
+    ELSIF NOT AllocLow1(self, 0, LAST(INTEGER), res) THEN
       <* ASSERT FALSE *>
       (* out of IDs *)
     END;
+    self.fr := Region.Difference(self.fr, Region.FromPoint(Point.T{res,0}));
     RETURN res;
   END AllocLow;
 
@@ -39,14 +42,12 @@ PROCEDURE AllocLow1(self: Low; lo, hi: ID; VAR res: ID): BOOLEAN =
       IF Region.OverlapRect(r1, self.fr) THEN
         IF mid = lo+1 THEN
           res := lo;
-          self.fr := Region.Difference(self.fr, Region.FromRect(r1));
           RETURN TRUE;
         END;
         RETURN AllocLow1(self, lo, mid, res);
       ELSIF Region.OverlapRect(r2, self.fr) THEN
         IF hi = mid+1 THEN
           res := mid;
-          self.fr := Region.Difference(self.fr, Region.FromRect(r2));
           RETURN TRUE;
         END;
         RETURN AllocLow1(self, mid, hi, res);
@@ -83,9 +84,13 @@ PROCEDURE InitUnique(self: Unique): Unique =
     RETURN self;
   END InitUnique; 
 
-PROCEDURE AllocUnique(self: Unique): ID =
+PROCEDURE AllocUnique(self: Unique; force:=-1): ID =
   BEGIN
     WITH res = self.cur DO
+      IF force >= 0 THEN
+        res := MAX(res, force);
+        RETURN force;
+      END;
       INC(self.cur);
       RETURN res;
     END;

@@ -3,7 +3,7 @@ INTERFACE IDGen;
 
 TYPE
   T = OBJECT METHODS
-    alloc(): ID;
+    alloc(force := -1): ID; (* if "force>=0" then must return "force". *)
     free(id: ID);
   END;
 
@@ -13,7 +13,7 @@ TYPE
 (* "Low"
 
    Use a "Low" to allocate the lowest non-negative ID
-   that is not *currently* in use.
+   that is not *currently* in use (unless "force" is used).
 
    Memory consumption is at most proportional to the number of IDs currently
    in use, and delay is often sublinear (at least as good as "Region.T").
@@ -29,7 +29,7 @@ TYPE
 
 (* "Unique"
 
-   A "unique" never returns the same ID twice.
+   A "unique" never returns the same ID twice (unless "force" is used)
 
 *)
 

@@ -176,7 +176,12 @@ template("cache")
 Generic_module("Cache")
 Cache("IntInt", "Integer", "Integer", "IntRefTbl")
 
-module("IDGen")
+Module("IDGen")
+Gmodule("IDTbl")
+IDTbl_named("IDTextTbl", "Text", "IntTextTbl")
+
+Gmodule("QueueTbl")
+QueueTbl("IDText", "IDTextTbl", "Integer", "Text", "IntRefTbl")
 
 Library("cit_util")
 
