@@ -23,4 +23,8 @@ TYPE
 
 CONST Brand = "Cache (" & Key.Brand & "," & Value.Brand & ")";
 
+(* adaptive caching is false by def. *)
+PROCEDURE EnableAdaptiveCaching(maxSize : CARDINAL; targetHitRate := 0.95d0);
+PROCEDURE DisableAdaptiveCaching();
+
 END Cache.

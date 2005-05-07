@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 GENERIC MODULE Cache(Key, Value, KeyRefTbl);
+IMPORT Thread;
 
 TYPE
   LRU = OBJECT
@@ -42,6 +43,9 @@ PROCEDURE Get(t : T; idx : Key.T) : Value.T =
     res : REFANY;
   BEGIN
     IF t.data.get(idx,res) THEN 
+      LOCK mu DO
+        hitRate := decay*1.0d0 + (1.0d0-decay) * hitRate
+      END;
       WITH rec = NARROW(res,S) DO
         (* update LRU *)
 
@@ -61,6 +65,10 @@ PROCEDURE Get(t : T; idx : Key.T) : Value.T =
 
         RETURN rec.value
       END
+    ELSE
+      LOCK mu DO
+        hitRate := decay*0.0d0 + (1.0d0-decay) * hitRate
+      END;
     END;
 
     (* figure out which one to evict, if any *)
@@ -69,20 +77,30 @@ PROCEDURE Get(t : T; idx : Key.T) : Value.T =
       l : LRU;
       x : BOOLEAN;
       s : S;
+      maxCache : CARDINAL;
     BEGIN
-      <* ASSERT t.data.size() <= t.maxCache *>
-      IF t.data.size() = t.maxCache THEN
-        (* evict record at tail *)
-        l := t.lru.prev;
-        t.lru.prev := l.prev;
-        l.prev.next := t.lru;
-
-        VAR r : REFANY; BEGIN x := t.data.delete(l.which,r); s:=r END;
-
-        <* ASSERT x *>
-      ELSE
-        l := NEW(LRU);
-        s := NEW(S);
+      LOCK mu DO
+        adjusted := TRUE;
+        IF adaptive = -1 THEN
+          maxCache := t.maxCache
+        ELSE
+          maxCache := maxSize
+        END;
+        IF t.data.size() >= maxCache THEN
+          REPEAT
+            (* evict record at tail *)
+            l := t.lru.prev;
+            t.lru.prev := l.prev;
+            l.prev.next := t.lru;
+            
+            VAR r : REFANY; BEGIN x := t.data.delete(l.which,r); s:=r END;
+            
+            <* ASSERT x *>
+          UNTIL t.data.size() < maxCache
+        ELSE
+          l := NEW(LRU);
+          s := NEW(S);
+        END
       END;
       
       s.value := t.compute(idx,s.value);
@@ -108,7 +126,63 @@ PROCEDURE Get(t : T; idx : Key.T) : Value.T =
 PROCEDURE HaveCachedData(t : T; idx : Key.T) : BOOLEAN =
   VAR dummy : REFANY; BEGIN RETURN t.data.get(idx,dummy) END HaveCachedData;
 
-BEGIN END Cache.
+VAR
+  adaptive : [-1..LAST(CARDINAL)] := -1;
+  maxSize : CARDINAL;
+  mu := NEW(MUTEX);
+  hitRate := 1.0d0;
+  decay := 0.001d0;
+  target : LONGREAL;
+  pause := 1.0d0;
+  running := FALSE;
+  adjusted := TRUE;
+  
+PROCEDURE EnableAdaptiveCaching(maxSizeS : CARDINAL; targetHitRate : LONGREAL) =
+  BEGIN 
+    LOCK mu DO
+      IF NOT running THEN 
+        running := TRUE;
+        EVAL Thread.Fork(NEW(AdaptiveClosure))
+      END;
+      target := targetHitRate;
+      adaptive := maxSizeS;
+      maxSize := maxSizeS
+    END
+  END EnableAdaptiveCaching;
+
+PROCEDURE DisableAdaptiveCaching() = 
+  BEGIN 
+    LOCK mu DO
+      adaptive := -1 
+    END
+  END DisableAdaptiveCaching;
+
+TYPE
+  AdaptiveClosure = Thread.Closure OBJECT OVERRIDES
+    apply := ACApply
+  END;
+
+PROCEDURE ACApply(<*UNUSED*>cl : AdaptiveClosure) : REFANY =
+  BEGIN
+    LOOP
+      LOCK mu DO
+        IF adjusted THEN
+          IF hitRate >= target THEN
+            maxSize := MAX(1,
+                           MIN(maxSize-1,
+                               ROUND(FLOAT(maxSize,LONGREAL)*0.99d0)))
+          ELSE
+            maxSize := MIN(adaptive,2*maxSize)
+          END;
+          adjusted := FALSE
+        END
+      END;
+      Thread.Pause(pause)
+    END
+  END ACApply;
+    
+BEGIN 
+END Cache.
 
 
 
