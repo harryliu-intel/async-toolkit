@@ -137,7 +137,9 @@ VAR
   running := FALSE;
   adjusted := TRUE;
   
-PROCEDURE EnableAdaptiveCaching(maxSizeS : CARDINAL; targetHitRate : LONGREAL) =
+PROCEDURE EnableAdaptiveCaching(maxSizeS : CARDINAL; 
+                                targetHitRate : LONGREAL;
+                                startRatio : LONGREAL) =
   BEGIN 
     LOCK mu DO
       IF NOT running THEN 
@@ -146,7 +148,8 @@ PROCEDURE EnableAdaptiveCaching(maxSizeS : CARDINAL; targetHitRate : LONGREAL) =
       END;
       target := targetHitRate;
       adaptive := maxSizeS;
-      maxSize := maxSizeS
+      maxSize := MAX(1,
+                     ROUND(FLOAT(maxSizeS,LONGREAL)*startRatio))
     END
   END EnableAdaptiveCaching;
 
@@ -172,7 +175,8 @@ PROCEDURE ACApply(<*UNUSED*>cl : AdaptiveClosure) : REFANY =
                            MIN(maxSize-1,
                                ROUND(FLOAT(maxSize,LONGREAL)*0.99d0)))
           ELSE
-            maxSize := MIN(adaptive,2*maxSize)
+            maxSize := MIN(adaptive,
+                           MAX(maxSize+1, 3*maxSize DIV 2))
           END;
           adjusted := FALSE
         END

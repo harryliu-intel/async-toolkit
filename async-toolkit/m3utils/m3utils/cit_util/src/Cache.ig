@@ -7,6 +7,7 @@ TYPE
 
   Public = OBJECT METHODS
     init(cacheSize : CARDINAL := 10) : T;
+    (* cacheSize is ignored if adaptive caching is enabled, see below *)
 
     get(idx : Key.T) : Value.T;
     (* get value *)
@@ -24,7 +25,15 @@ TYPE
 CONST Brand = "Cache (" & Key.Brand & "," & Value.Brand & ")";
 
 (* adaptive caching is false by def. *)
-PROCEDURE EnableAdaptiveCaching(maxSize : CARDINAL; targetHitRate := 0.95d0);
+PROCEDURE EnableAdaptiveCaching(maxSize : CARDINAL; 
+                                targetHitRate := 0.95d0;
+                                startRatio := 0.33d0);
+  (* enable adaptive cache size (adaptive caching).
+     maxSize is the max size the cache is permitted to grow to.
+     targetHitRate is the hit rate we seek.
+     startRatio is the proportion of the maxSize we start with. *)
+
 PROCEDURE DisableAdaptiveCaching();
+  (* disable adaptive cache size *)
 
 END Cache.
