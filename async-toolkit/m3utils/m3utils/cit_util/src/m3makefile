@@ -183,6 +183,9 @@ IDTbl_named("IDTextTbl", "Text", "IntTextTbl")
 Gmodule("QueueTbl")
 QueueTbl("IDText", "IDTextTbl", "Integer", "Text", "IntRefTbl")
 
+Module("KeyObject")
+Table("KeyRef", "KeyObject", "Refany")
+
 Library("cit_util")
 
 
