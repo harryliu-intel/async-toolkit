@@ -184,7 +184,7 @@ Gmodule("QueueTbl")
 QueueTbl("IDText", "IDTextTbl", "Integer", "Text", "IntRefTbl")
 
 Module("KeyObject")
-Table("KeyRef", "KeyObject", "Refany")
+Table("KeyObjectRef", "KeyObject", "Refany")
 
 Library("cit_util")
 
