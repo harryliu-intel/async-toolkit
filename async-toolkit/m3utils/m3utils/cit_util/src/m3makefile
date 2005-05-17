@@ -186,6 +186,9 @@ QueueTbl("IDText", "IDTextTbl", "Integer", "Text", "IntRefTbl")
 Module("KeyObject")
 Table("KeyObjectRef", "KeyObject", "Refany")
 
+Gmodule("SetUtils")
+SetUtils("Text", "TextFF", "TextSet")
+
 Library("cit_util")
 
 
