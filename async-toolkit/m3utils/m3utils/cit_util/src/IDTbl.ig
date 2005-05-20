@@ -23,7 +23,8 @@ TYPE
        is used for "IntElemTbl.Default" initialization),
        the ID generator is "NEW(IDGen.Low).init()". *)
 
-    autoPut(READONLY value: Elem.T);
+    autoPut(READONLY value: Elem.T): INTEGER;
+    (* returns key that was used in automatic insertion *)
   END;
   Default = T;
   Iterator = IntElemTbl.Iterator;
