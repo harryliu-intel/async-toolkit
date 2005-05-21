@@ -1,5 +1,6 @@
 GENERIC MODULE QueueTbl(Tbl, Key, Value, KeyRefTbl);
 IMPORT IntPQ;
+(* IMPORT Debug, Fmt; *)
 
 
 REVEAL
@@ -26,11 +27,13 @@ PROCEDURE Put(self: T; READONLY k: Key.T; READONLY v: Value.T): BOOLEAN =
   BEGIN
     Init(self);
     IF Public.put(self, k, v) THEN
+      (* Debug.S("re-put " & Fmt.Int(k), 0); *)
       RETURN TRUE;
     ELSE
       WITH e = NEW(Elt, priority:=self.curP, k:=k) DO
         self.pq.insert(e);
         EVAL self.getElt.put(k, e);
+        (* Debug.S("put " & Fmt.Int(k), 0); *)
       END;
       INC(self.curP);
       RETURN FALSE;
@@ -40,11 +43,12 @@ PROCEDURE Put(self: T; READONLY k: Key.T; READONLY v: Value.T): BOOLEAN =
 PROCEDURE Delete(self: T; READONLY k: Key.T; VAR v: Value.T): BOOLEAN =
   BEGIN
     Init(self);
-    IF self.get(k, v) THEN
+    IF Public.delete(self, k, v) THEN
       VAR
         e: REFANY;
       BEGIN
-        IF NOT self.getElt.get(k, e) THEN
+        (* Debug.S("delete " & Fmt.Int(k), 0); *)
+        IF NOT self.getElt.delete(k, e) THEN
           <* ASSERT FALSE *>
         END;
         TRY
@@ -53,7 +57,7 @@ PROCEDURE Delete(self: T; READONLY k: Key.T; VAR v: Value.T): BOOLEAN =
           <* ASSERT FALSE *>
         END;
       END;
-      RETURN self.delete(k, v);
+      RETURN TRUE;
     END;
     RETURN FALSE;
   END Delete;

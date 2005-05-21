@@ -31,7 +31,10 @@ PROCEDURE AutoPut(self: T; READONLY value: Elem.T): INTEGER =
   BEGIN
     Init(self);
     WITH key = self.idGen.alloc() DO
-      EVAL Public.put(self, key, value);
+      EVAL self.put(key, value);
+      (* it is important to use "self.put",
+         which may be overridden by a subclass.
+         Do not use "Public.put" here. *)
       RETURN key;
     END;
   END AutoPut;
@@ -39,9 +42,9 @@ PROCEDURE AutoPut(self: T; READONLY value: Elem.T): INTEGER =
 PROCEDURE Delete(self: T; READONLY k: Key.T; VAR v: Value_T): BOOLEAN =
   BEGIN
     Init(self);
-    IF self.get(k, v) THEN
+    IF Public.delete(self, k, v) THEN
       self.idGen.free(k);
-      RETURN self.delete(k, v);
+      RETURN TRUE;
     ELSE
       RETURN FALSE;
     END;
