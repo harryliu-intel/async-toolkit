@@ -93,7 +93,6 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
         | 'F','f','D','d' => FWord(c='D' OR c='d');
         ELSE
         END;
-      | '\377' => BWord(TRUE);
       | '\020' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
       | '\016' => Recall(next, prev);
       | '\004','\003','\032' =>
@@ -116,7 +115,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
       | '\002' => p:=MAX(0,p-1);
       | '\001' => p:=0;
       | '\005' => p:=Text.Length(t);
-      | '\302','\342','\210' => BWord(c='\210');
+      | '\302','\342','\210','\377' => BWord(c='\210' OR c='\377');
       | '\306','\346','\304','\344' => FWord(c='\304' OR c='\344');
       | '\177','\010'=> IF p>0 THEN DEC(p); term.wr("\010"); FDel(); END;
       ELSE
