@@ -25,6 +25,8 @@ Gmodule("CommandLoop")
 implementation("CommandLoopDefaultCommand")
 Interface("BrandedCommand")
 Table("TextCommand", "Text", "BrandedCommand")
+QueueTbl("TextCommand", "TextCommandTbl", "Text",
+	"BrandedCommand", "TextRefTbl")
 Module("ScalarVar")
 
 library("term")

@@ -1,5 +1,5 @@
 MODULE CommandLoop;
-IMPORT TextCommandTbl;
+IMPORT TextCommandQueueTbl;
 IMPORT TextUtils;
 IMPORT TextTextListTbl;
 IMPORT Text;
@@ -19,7 +19,7 @@ IMPORT Wr;
 REVEAL
   T = Public BRANDED OBJECT
     prompt: TEXT;
-    commands: TextCommandTbl.T;
+    commands: TextCommandQueueTbl.T;
     prefixes: TextTextListTbl.T; (* prefix -> possible command names *)
     prev: TextList.T;            (* previously executed commands     *)
     term: Term.T;                (* terminal used in "run"           *)
@@ -48,7 +48,7 @@ PROCEDURE Init(self: T;
     self.inputStack := NIL;
     self.prompt := prompt;
     self.prev := NIL;
-    self.commands := NEW(TextCommandTbl.Default).init();
+    self.commands := NEW(TextCommandQueueTbl.Default).init();
     self.prefixes := NEW(TextTextListTbl.Default).init();
 
     self.putCommand(help, NEW(BuiltInCommand,
@@ -113,7 +113,7 @@ PROCEDURE DoHelp(helpCmd: BuiltInCommand; args: TextList.T; term: Term.T)
     cmd: Command;
   BEGIN
     IF args.tail = NIL THEN
-      WITH iter = self.commands.iterate() DO
+      WITH iter = self.commands.iterateQOrdered() DO
         WHILE iter.next(name, cmd) DO
           term.wr(name); term.wr(" ");
           IF cmd.simpleHelp = NIL THEN

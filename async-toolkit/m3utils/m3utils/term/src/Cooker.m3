@@ -1,4 +1,5 @@
 MODULE Cooker;
+IMPORT Env;
 IMPORT Text;
 IMPORT TextList;
 IMPORT Process;
@@ -92,6 +93,7 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
         | 'F','f','D','d' => FWord(c='D' OR c='d');
         ELSE
         END;
+      | '\377' => BWord(TRUE);
       | '\020' => IF next=NIL THEN shadow:=t; END; Recall(prev, next);
       | '\016' => Recall(next, prev);
       | '\004','\003','\032' =>
@@ -126,10 +128,8 @@ PROCEDURE Input(prompt:="> "; completer: Completer := NIL;
             term.wr(Text.Sub(t,p));
             p0:=Text.Length(t);
           END;
-(*
-        ELSE
-          Print(); Print("Charcode:" & Fmt.Unsigned(ORD(c),base:=8)); Print();
-*)
+        ELSIF CookerDebug THEN
+          Print(); Print("COOKERDEBUG: Charcode=" & Fmt.Unsigned(ORD(c),base:=8)); Print();
         END;
       END;
       (* Fix Cursor *)
@@ -145,6 +145,9 @@ PROCEDURE Print(t:="") =
   BEGIN
     Term.WrLn(t);
   END Print;
+
+VAR
+  CookerDebug := Env.Get("COOKERDEBUG") # NIL;
 
 BEGIN
 END Cooker.
