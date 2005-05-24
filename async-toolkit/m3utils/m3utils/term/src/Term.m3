@@ -136,10 +136,10 @@ PROCEDURE WrLn(s: TEXT; flush := FALSE) =
   BEGIN
     IF Text.FindChar(s, '\n') = -1 THEN
       Wrr.PutText(Stdio.stdout, s);
-      Wrr.PutText(Stdio.stdout, Endl);
     ELSE
       Wr0(Stdio.stdout, s);
     END;
+    Wrr.PutText(Stdio.stdout, Endl);
     IF flush THEN
       Wrr.Flush(Stdio.stdout);
     END;
