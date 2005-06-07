@@ -2,6 +2,7 @@ GENERIC INTERFACE CommandLoop(Context);
 IMPORT Fmt;
 IMPORT TextList;
 IMPORT Term;
+IMPORT Pathname;
 FROM CommandLoop IMPORT Error;
 
 (* "CommandLoop"s for the Layman *)
@@ -13,7 +14,7 @@ TYPE
     init(ctx: Context.T; prompt := "> "): T;
 
 
-    (* define a new command *)
+    (* define a new command; "NIL" means do nothing besides pre/post steps *)
 
     c(cmd: Command; names: TEXT;
       simpleHelp, extendedHelp: TEXT := NIL);
@@ -44,7 +45,16 @@ TYPE
              chg        := TRUE  ): REF LONGREAL;
 
 
-    run();
+    (* set steps that will run before/after all subsequently defined
+       commands (until the next step is set); turn off with "NIL" *)
+
+    setPreStep(cmd: Command := NIL);
+    setPostStep(cmd: Command := NIL);
+
+
+    (* run the commandloop *)
+
+    run(sourcePath: Pathname.T := NIL);
   END;
 
   Command = PROCEDURE (ctx: Context.T;  

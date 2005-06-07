@@ -1,5 +1,6 @@
 GENERIC MODULE CommandLoop(Context);
 FROM CommandLoop IMPORT Error;
+IMPORT Pathname;
 IMPORT CommandLoop;
 IMPORT FmtScanVar;
 IMPORT ScalarVar;
@@ -11,15 +12,17 @@ IMPORT Term;
 
 REVEAL
   T = Public BRANDED OBJECT
-    ctx:  Context.T;
-    cl: CommandLoop.T;
+    ctx  : Context.T;
+    cl   : CommandLoop.T;
   OVERRIDES
-    init     := Init;
-    c        := PutCommand;
-    integer  := Integer;
-    longReal := LongReal;
-    boolean  := Boolean;
-    run      := Run;
+    init       := Init;
+    c          := PutCommand;
+    integer    := Integer;
+    longReal   := LongReal;
+    boolean    := Boolean;
+    run        := Run;
+    setPreStep := SetPreStep;
+    setPostStep:= SetPostStep;
   END;
 
 
@@ -57,7 +60,9 @@ PROCEDURE Execute(co: CommandObject;
                   term: Term.T)
   RAISES {Error} =
   BEGIN
-    co.cmd(co.ctx, args, term);
+    IF co.cmd # NIL THEN
+      co.cmd(co.ctx, args, term);
+    END;
   END Execute;
 
 PROCEDURE ExtendedHelp(co: CommandObject;
@@ -69,11 +74,28 @@ PROCEDURE ExtendedHelp(co: CommandObject;
     RETURN co.extHelp;
   END ExtendedHelp;
 
-PROCEDURE Run(self: T) =
+PROCEDURE Run(self: T; sourcePath: Pathname.T := NIL) =
   BEGIN
-    self.cl.run();
+    self.cl.run(sourcePath);
   END Run;
 
+PROCEDURE SetPreStep(self: T; cmd: Command := NIL) =
+  BEGIN
+    IF cmd = NIL THEN
+      self.cl.setPreStep(NIL);
+    ELSE
+      self.cl.setPreStep(NEW(CommandObject, cmd:=cmd, ctx:=self.ctx));
+    END;
+  END SetPreStep;
+
+PROCEDURE SetPostStep(self: T; cmd: Command := NIL) =
+  BEGIN
+    IF cmd = NIL THEN
+      self.cl.setPostStep(NIL);
+    ELSE
+      self.cl.setPostStep(NEW(CommandObject, cmd:=cmd, ctx:=self.ctx));
+    END;
+  END SetPostStep;
 
 
 

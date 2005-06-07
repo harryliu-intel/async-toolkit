@@ -8,16 +8,25 @@ TYPE
     init(prompt := "> ";
          help := "help ?";
          quit := "quit ^D";
-         load := "input source";
+         input := "input source";
          save := "save"): T;
     (* builtin features can be disabled by passing the empty TEXT. *)
 
     putCommand(names: TEXT; cmd: Command);
-    (* "names" is a space-separated list of variants. *)
+    (* "names" is a space-separated list of variants.
+       "cmd" must not be "NIL".
+    *)
 
     run(source: Pathname.T := NIL; term: Term.T := NIL);
     (* If "source#NIL" then read from file instead of from terminal.
        If "term=NIL" then use "Term.Default()". *)
+
+    setPreStep(cmd: Command := NIL);
+    setPostStep(cmd: Command := NIL);
+    (* set steps that will run before/after all subsequently defined
+       commands (until the next step is set); turn off with "NIL".
+       These commands are anonymous and can act quietly if desired.
+    *)
   END;
 
 
@@ -32,6 +41,7 @@ TYPE
   CommandPublic = OBJECT
     simpleHelp: TEXT:=NIL;(* one-line help: "<arg1> <arg2>.. -- explanation" *)
     hasExtendedHelp := FALSE;
+    pre, post: Command := NIL; (* automatically set by "putCommand" *)
 
   METHODS
     execute(args: TextList.T; term: Term.T) RAISES {Error};

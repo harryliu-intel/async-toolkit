@@ -19,6 +19,7 @@ IMPORT Wr;
 REVEAL
   T = Public BRANDED OBJECT
     prompt: TEXT;
+    pre, post: Command;
     commands: TextCommandQueueTbl.T;
     prefixes: TextTextListTbl.T; (* prefix -> possible command names *)
     prev: TextList.T;            (* previously executed commands     *)
@@ -30,6 +31,8 @@ REVEAL
     init                := Init;
     putCommand          := PutCommand;
     run                 := Run;
+    setPreStep          := SetPreStep;
+    setPostStep         := SetPostStep;
   END;
 
 TYPE
@@ -41,15 +44,17 @@ PROCEDURE Init(self: T;
                prompt := "> ";
                help := "help ?";
                quit := "quit ^D";
-               load := "load input source";
+               input := "input source";
                save := "save") : T =
   BEGIN
+    self.prompt         := prompt;
     self.extHelpCatalog := NIL;
-    self.inputStack := NIL;
-    self.prompt := prompt;
-    self.prev := NIL;
-    self.commands := NEW(TextCommandQueueTbl.Default).init();
-    self.prefixes := NEW(TextTextListTbl.Default).init();
+    self.inputStack     := NIL;
+    self.prev           := NIL;
+    self.pre            := NIL;
+    self.post           := NIL;
+    self.commands       := NEW(TextCommandQueueTbl.Default).init();
+    self.prefixes       := NEW(TextTextListTbl.Default).init();
 
     self.putCommand(help, NEW(BuiltInCommand,
                               loop := self,
@@ -65,7 +70,7 @@ PROCEDURE Init(self: T;
                      loop := self,
                      simpleHelp:= "<filename> -- execute commands from a file",
                      execute := DoLoad);
-    self.putCommand(load, self.load);
+    self.putCommand(input, self.load);
 
     self.putCommand(quit, NEW(QuitCommand,
                               simpleHelp := "-- exit the command loop"));
@@ -88,6 +93,8 @@ PROCEDURE PutCommand(self: T; names: TEXT; cmd: Command) =
   VAR
     cur := TextUtils.Shatter(names);
   BEGIN
+    cmd.pre := self.pre;
+    cmd.post := self.post;
     IF cmd.hasExtendedHelp THEN
       self.extHelpCatalog := TextList.Append(cur, self.extHelpCatalog);
     END;
@@ -250,6 +257,16 @@ PROCEDURE Complete(comp: StdCompleter; VAR t: TEXT) =
     END;
   END Complete;
 
+PROCEDURE SetPreStep(self: T; cmd: Command := NIL) =
+  BEGIN
+    self.pre := cmd;
+  END SetPreStep;
+
+PROCEDURE SetPostStep(self: T; cmd: Command := NIL) =
+  BEGIN
+    self.post := cmd;
+  END SetPostStep;
+
 
 
 (*****************************************************************************
@@ -322,7 +339,13 @@ PROCEDURE Run(self: T; source: Pathname.T := NIL; term: Term.T := NIL) =
                       RETURN;
                     ELSE
                       Term.MakeRaw(FALSE); (* hack: ^C support *)
+                      IF cmd.pre # NIL THEN
+                        cmd.pre.execute(args, self.term);
+                      END;
                       cmd.execute(args, self.term);
+                      IF cmd.post # NIL THEN
+                        cmd.post.execute(args, self.term);
+                      END;
                       Term.MakeRaw(TRUE);
                     END;
                   | LURes.NotFound =>
