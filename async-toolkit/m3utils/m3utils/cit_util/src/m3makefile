@@ -190,6 +190,10 @@ Table("KeyObjectRef", "KeyObject", "Refany")
 Gmodule("SetUtils")
 SetUtils("Text", "TextFF", "TextSet")
 
+Gmodule("ListMultiTbl")
+ListMultiTbl("TextTextListMultiTbl",
+	"Text", "Text", "TextList", "TextTextListTbl")
+
 Library("cit_util")
 
 
