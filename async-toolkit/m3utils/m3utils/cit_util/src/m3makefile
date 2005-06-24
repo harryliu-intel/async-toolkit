@@ -193,6 +193,7 @@ SetUtils("Text", "TextFF", "TextSet")
 Gmodule("ListMultiTbl")
 ListMultiTbl("TextTextListMultiTbl",
 	"Text", "Text", "TextList", "TextTextListTbl")
+Interface("BrandedWr")
 
 Library("cit_util")
 
