@@ -20,6 +20,10 @@ TYPE
 
     haveCachedData(idx : Key.T) : BOOLEAN;
     (* use for optimizations *)
+
+    purge();
+    (* empty cache *)
+
   END;
 
 CONST Brand = "Cache (" & Key.Brand & "," & Value.Brand & ")";

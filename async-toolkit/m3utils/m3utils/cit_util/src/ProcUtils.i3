@@ -11,10 +11,22 @@ TYPE
 
 (* run the command(s) and return their output text *)
 
+EXCEPTION ErrorExit(Error);
+
+TYPE Error = OBJECT END; 
+     (* generic errors, e.g., Rd.Failure *)
+
+     OS = Error OBJECT error : TEXT END;
+     (* OSError.E *)
+
+     ExitCode = Error OBJECT code : INTEGER END;
+     (* process set non-zero exit code *)
+  
+
 PROCEDURE ToText(source: T;
                  stderr: Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure } ;
+                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure, ErrorExit } ;
 
 PROCEDURE RdToRd(source: Rd.T;
                  stderr: Writer := NIL;
@@ -23,7 +35,7 @@ PROCEDURE RdToRd(source: Rd.T;
                  VAR rd: Rd.T): Completion;
 
 TYPE
-  Completion = OBJECT METHODS wait(); END;
+  Completion = OBJECT METHODS wait() RAISES { ErrorExit }; END;
 
 
 (* for more control over i/o: *)
@@ -31,7 +43,7 @@ TYPE
 PROCEDURE Run(source: Rd.T;
               stdout,stderr: Writer := NIL;
               stdin: Reader := NIL;
-              wd0: Pathname.T := NIL): Completion;
+              wd0: Pathname.T := NIL): Completion RAISES { ErrorExit };
 
 TYPE
   Reader <: ROOT;
@@ -46,5 +58,7 @@ PROCEDURE ReadHere(rd: Rd.T): Reader;
 PROCEDURE ReadThis(t: TEXT): Reader;
 PROCEDURE GimmeWr(VAR wr: Wr.T): Reader;
 PROCEDURE Stdin(): Reader;
+
+CONST Brand = "ProcUtils";
 
 END ProcUtils.

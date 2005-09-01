@@ -1,7 +1,6 @@
 (* $Id$ *)
 
 MODULE ProcUtils;
-IMPORT Debug;
 IMPORT FS;
 IMPORT File;
 IMPORT FileRd;
@@ -139,7 +138,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
 
     END PutArg;
 
-  PROCEDURE Exec() RAISES { Rd.Failure, OSError.E } =
+  PROCEDURE Exec() RAISES { Rd.Failure, OSError.E, ErrorExit } =
     BEGIN
       IF c = '|' THEN
         TRY
@@ -177,8 +176,11 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                                                   NIL, wd,stdin, stdout,stderr));
             BEGIN
               IF code # 0 THEN
+                RAISE ErrorExit(NEW(ExitCode, code := code))
+(*
                 Debug.Error("Process exited with code " & Fmt.Int(code) & 
                   "\ncommand: \"" & DebugFormat(l.head,params^) & "\"")
+*)
               END
             END
           EXCEPT
@@ -192,6 +194,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
   BEGIN
     IF wd = NIL THEN wd := "."; END;
     TRY
+      TRY
       TRY
         (* default input *)
         IF cm.pi = NIL THEN i2:=NIL ELSE i2:=cm.pi.f; END;
@@ -246,24 +249,35 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         Exec();
       END;
       
+      FINALLY
       (* close i/o *)
-      IF cm.po#NIL AND cm.po.close THEN cm.po.f.close(); END;
-      IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN cm.pe.f.close(); END;
-      IF cm.pi#NIL AND cm.pi.close THEN cm.pi.f.close(); END;
+        IF cm.po#NIL AND cm.po.close THEN 
+          TRY cm.po.f.close() EXCEPT ELSE END 
+        END;
+        IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN 
+          TRY cm.pe.f.close() EXCEPT ELSE END
+        END;
+        IF cm.pi#NIL AND cm.pi.close THEN 
+          TRY cm.pi.f.close() EXCEPT ELSE END
+        END
+      END;
       RETURN NIL;
     EXCEPT
+      ErrorExit(ee) => RETURN ee
+    |
       OSError.E(e) => 
-        Process.Crash("I/O error in ProcUtils.Apply."& "\n" & FormatOSError(e))
+        RETURN NEW(OS, error := FormatOSError(e))
     |
       Rd.Failure => 
-      Process.Crash("I/O error in ProcUtils.Apply.")
-    END;
-    <* ASSERT FALSE *>
+        RETURN NEW(Error)
+    END
   END Apply;
 
-PROCEDURE Wait(c: PrivateCompletion) =
+PROCEDURE Wait(c: PrivateCompletion) RAISES { ErrorExit } =
+  VAR
+    r := Thread.Join(c.th);
   BEGIN
-    EVAL Thread.Join(c.th);
+    IF r # NIL AND ISTYPE(r,Error) THEN RAISE ErrorExit(r) END
   END Wait;
 
 
@@ -272,13 +286,14 @@ PROCEDURE Wait(c: PrivateCompletion) =
 PROCEDURE ToText(source: T;
                  stderr:  Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure } =
+                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure, ErrorExit } =
   VAR
     rd: Rd.T;
     comp := RdToRd(TextRd.New(source), stderr, stdin, wd0, rd);
     res := Rd.GetText(rd, LAST(INTEGER));
   BEGIN
     comp.wait();
+    TRY Rd.Close(rd) EXCEPT ELSE END;
     RETURN res;
   END ToText;
 
@@ -287,8 +302,10 @@ PROCEDURE RdToRd(source: Rd.T;
                  stdin: Reader := NIL;
                  wd0: Pathname.T := NIL;
                  VAR rd: Rd.T): Completion =
+  VAR
+    myWriter := GimmeRd(rd);
   BEGIN
-    RETURN Run(source, GimmeRd(rd), stderr, stdin, wd0);
+    RETURN Run(source, myWriter, stderr, stdin, wd0)
   END RdToRd;
 
 
