@@ -24,6 +24,7 @@ REVEAL
     init := Init;
     get := Get;
     haveCachedData := HaveCachedData;
+    purge := Purge;
   END;
 
 PROCEDURE Init(t : T; cacheSize : CARDINAL) : T =
@@ -37,6 +38,9 @@ PROCEDURE Init(t : T; cacheSize : CARDINAL) : T =
     t.lru.next := t.lru;
     RETURN t
   END Init;
+
+PROCEDURE Purge(t : T) =
+  BEGIN EVAL t.init(t.maxCache) END Purge;
 
 PROCEDURE Get(t : T; idx : Key.T) : Value.T =
   VAR

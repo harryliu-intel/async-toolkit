@@ -75,4 +75,9 @@ PROCEDURE GetLines(t: TEXT; n: INTEGER; firstBreakLongAtCol:=79): TEXT;
 
 PROCEDURE Assemble(t: TextList.T; postDelim:=" "; skipLastDelim:=TRUE): TEXT;
 
+(* the following from "htmltable.Utils": *)
+PROCEDURE SplitText(text : TEXT; at : CHAR; VAR beg, end : TEXT);
+PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL;
+
+
 END TextUtils.

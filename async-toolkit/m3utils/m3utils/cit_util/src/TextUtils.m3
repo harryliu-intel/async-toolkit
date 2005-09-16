@@ -287,4 +287,32 @@ PROCEDURE Assemble(t: TextList.T; postDelim:=" "; skipLastDelim:=TRUE): TEXT =
     END;
   END Assemble;
 
+(* split string at first "at" *)
+PROCEDURE SplitText(text : TEXT; at : CHAR; VAR beg, end : TEXT) =
+  VAR
+    index : INTEGER;
+  BEGIN
+    IF text = NIL THEN beg := NIL; end := NIL; RETURN END;
+    index := Text.FindChar(text,at);
+    IF index < 0 THEN beg := text; end := NIL; RETURN END;
+    beg := Text.Sub(text, 0, index);
+
+    (* this must be last so that text and end may point to the same *)
+    end := Text.Sub(text, index + 1)
+  END SplitText;
+
+PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL =
+  VAR
+    res := 0;
+    i := 0;
+  BEGIN
+    WHILE i < Text.Length(text) DO
+      i := Text.FindChar(text, what, i) + 1;
+
+      IF i <= 0 THEN EXIT END;
+      res := res + 1
+    END;
+    RETURN res
+  END CountChars;
+
 BEGIN END TextUtils.
