@@ -45,19 +45,39 @@ PROCEDURE Run(source: Rd.T;
               stdin: Reader := NIL;
               wd0: Pathname.T := NIL): Completion RAISES { ErrorExit };
 
+PROCEDURE RunText(source: TEXT;
+              stdout,stderr: Writer := NIL;
+              stdin: Reader := NIL;
+              wd0: Pathname.T := NIL): Completion RAISES { ErrorExit };
+
+(* the following are helpers for Reader/Writer threads *)
 TYPE
   Reader <: ROOT;
   Writer <: ROOT;
 
 PROCEDURE WriteHere(wr: Wr.T): Writer;
+  (* allocate a Writer that writes to wr *)
+
 PROCEDURE GimmeRd(VAR rd: Rd.T): Writer;
+  (* allocate a Writer that writes to the read stream of rd *)
+
 PROCEDURE Stdout(): Writer;
+  (* allocate a Writer that writes to Stdio.stdout *)
+
 PROCEDURE Stderr(): Writer;
+  (* allocate a Writer that writes to Stdio.stderr *)
 
 PROCEDURE ReadHere(rd: Rd.T): Reader;
+  (* allocate a Reader that reads from rd *)
+
 PROCEDURE ReadThis(t: TEXT): Reader;
+  (* allocate a Reader that reads from the TEXT t *)
+
 PROCEDURE GimmeWr(VAR wr: Wr.T): Reader;
+  (* allocate a Reader that reads from the output stream of wr *)
+
 PROCEDURE Stdin(): Reader;
+  (* allocate a Reader that reads from Stdio.stdin *)
 
 CONST Brand = "ProcUtils";
 

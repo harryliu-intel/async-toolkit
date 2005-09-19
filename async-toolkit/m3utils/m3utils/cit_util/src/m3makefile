@@ -195,6 +195,9 @@ ListMultiTbl("TextTextListMultiTbl",
 	"Text", "Text", "TextList", "TextTextListTbl")
 Interface("BrandedWr")
 
+Module("UnixFilter")
+Module("SlowTextCompress")
+
 Library("cit_util")
 
 

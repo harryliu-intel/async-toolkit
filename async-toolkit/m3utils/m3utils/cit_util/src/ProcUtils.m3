@@ -88,6 +88,12 @@ PROCEDURE ForkReader(r: Reader): Reader =
     RETURN r;
   END ForkReader;
 
+PROCEDURE RunText(source: TEXT;
+                  stdout,stderr: Writer;
+                  stdin: Reader;
+                  wd0: Pathname.T): Completion RAISES { ErrorExit } =
+  BEGIN RETURN Run(TextRd.New(source),stdout,stderr,stdin,wd0) END RunText;
+
 PROCEDURE Run(source: Rd.T;
               stdout,stderr: Writer := NIL;
               stdin: Reader := NIL;
