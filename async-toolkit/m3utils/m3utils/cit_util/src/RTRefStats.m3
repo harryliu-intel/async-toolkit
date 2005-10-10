@@ -27,7 +27,12 @@ PROCEDURE Visit(self: T; tc: Typecode;
                 r: REFANY; size: CARDINAL): BOOLEAN =
   BEGIN
     IF self.printTexts AND ISTYPE(r, TEXT) THEN
-      Cprintf.prints(M3toC.TtoS(r));
+      VAR
+        s := M3toC.CopyTtoS(r);
+      BEGIN
+        Cprintf.prints(s);
+        M3toC.FreeCopiedS(s)
+      END
     END;
     INC(self.x[tc].count);
     INC(self.x[tc].size, size);

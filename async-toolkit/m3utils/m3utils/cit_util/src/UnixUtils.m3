@@ -8,16 +8,24 @@ VAR
   buf : ARRAY[0..999] OF CHAR;
 PROCEDURE SymLink(name1, name2: Pathname.T) RAISES {OSError.E} =
   BEGIN
-    IF Unix.symlink(M3toC.TtoS(name1), M3toC.TtoS(name2)) # 0 THEN
-      (* already exists? *)
-
-      (*
-      IF Unix.readlink (M3toC.TtoS(name2), ADR(buf), 1000) # 0 THEN
-        RAISE OSError.E(NIL);
-      END;
-
-      Why isn't this working??
-      *)
+    VAR
+      s1 := M3toC.CopyTtoS(name1); s2 := M3toC.CopyTtoS(name2);
+    BEGIN
+      TRY
+        IF Unix.symlink(s1,s2) # 0 THEN
+          (* already exists? *)
+  
+          (*
+          IF Unix.readlink (M3toC.TtoS(name2), ADR(buf), 1000) # 0 THEN
+            RAISE OSError.E(NIL);
+          END;
+  
+          Why isn't this working??
+..        *)
+        END
+      FINALLY
+        M3toC.FreeCopiedS(s1); M3toC.FreeCopiedS(s2)
+      END
     END;
   END SymLink;
 

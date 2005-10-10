@@ -18,9 +18,7 @@ TYPE
     put(READONLY k: Key.T; READONLY v: Value.T);
     iterate(): Iterator;
   END;
-  Iterator = OBJECT METHODS
-    next(VAR k: Key.T; VAR v: ValueList.T): BOOLEAN
-  END;
+  Iterator = KeyValueListTbl.Iterator;
   Default <: T OBJECT METHODS
     init(sizeHint: CARDINAL := 0): Default;
     getRep(): KeyValueListTbl.T;

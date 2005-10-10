@@ -10,7 +10,8 @@ PROCEDURE Get(x : REFANY) : TEXT RAISES { NotBranded } =
   END Get;
 
 
-PROCEDURE GetByTC(c : RT0.Typecode) : TEXT RAISES { NotBranded } = 
+PROCEDURE GetByTC(c : RT0.Typecode;
+                  nameIfNotBranded := FALSE) : TEXT RAISES { NotBranded } = 
   VAR
     b := RTType.Get(c).brand_ptr;
   BEGIN 
