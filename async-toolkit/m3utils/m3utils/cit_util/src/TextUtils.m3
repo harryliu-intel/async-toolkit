@@ -315,4 +315,12 @@ PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL =
     RETURN res
   END CountChars;
 
+PROCEDURE ToChars(text: TEXT): REF ARRAY OF CHAR =
+VAR
+  result := NEW(REF ARRAY OF CHAR, Text.Length(text));
+BEGIN
+    Text.SetChars(result^, text);
+    RETURN result;
+END ToChars;
+
 BEGIN END TextUtils.

@@ -79,5 +79,6 @@ PROCEDURE Assemble(t: TextList.T; postDelim:=" "; skipLastDelim:=TRUE): TEXT;
 PROCEDURE SplitText(text : TEXT; at : CHAR; VAR beg, end : TEXT);
 PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL;
 
+PROCEDURE ToChars(text: TEXT): REF ARRAY OF CHAR;
 
 END TextUtils.
