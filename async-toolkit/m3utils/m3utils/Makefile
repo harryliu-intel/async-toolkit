@@ -68,7 +68,7 @@ CS2TARGETS=cs2/othello/digest cs2/othello/play cs2/othello/random cs2/othello/re
 M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix sysiphus/sudafed acat router/pauls router/pauls2 router/pauls3 router/pauls4 router/gentest router/conflictdensity verif dagflat allias myrope magic/magsize playfile calarm calarm/getquotes calarm/transpose_rates decimate cpdag magicextras/testslasher ld/fixdag ld/ld2layoutd $(CS2TARGETS) calarm/keypaste`
 
 
-REGSUBS= `./dirsexist.sh -f calarm/gridctl calarm/regress calarm/anova/program calarm/picktickers`
+REGSUBS= `./dirsexist.sh -f calarm/gridctl calarm/regress calarm/anova/program calarm/picktickers calarm/twslib`
 
 M3BUILDOPTS= -O
 M3BUILD= m3build $(M3BUILDOPTS)
