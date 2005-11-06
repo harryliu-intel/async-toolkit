@@ -31,6 +31,7 @@ IMPORT Fmt;
 IMPORT TextSet, TextSetDef, TextList;
 IMPORT Lex, FloatMode;
 IMPORT Thread;
+IMPORT ASCII;
 
 <* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *>
 
@@ -322,5 +323,32 @@ BEGIN
     Text.SetChars(result^, text);
     RETURN result;
 END ToChars;
+
+PROCEDURE ToUpper(x : TEXT) : TEXT =
+  VAR
+    l := Text.Length(x);
+    a := NEW(REF ARRAY OF CHAR, l);
+  BEGIN
+    FOR i := 0 TO l-1 DO
+      a[i] := ASCII.Upper[Text.GetChar(x,i)]
+    END;
+    RETURN Text.FromChars(a^)
+  END ToUpper;
+
+PROCEDURE ToLower(x : TEXT) : TEXT =
+  VAR
+    l := Text.Length(x);
+    a := NEW(REF ARRAY OF CHAR, l);
+  BEGIN
+    FOR i := 0 TO l-1 DO
+      a[i] := ASCII.Lower[Text.GetChar(x,i)]
+    END;
+    RETURN Text.FromChars(a^)
+  END ToLower;
+
+PROCEDURE EqualIgnoringCase(t1, t2 : TEXT) : BOOLEAN =
+  BEGIN
+    RETURN Text.Equal(ToUpper(t1),ToUpper(t2)) 
+  END EqualIgnoringCase;
 
 BEGIN END TextUtils.

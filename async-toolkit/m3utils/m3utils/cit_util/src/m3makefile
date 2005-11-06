@@ -93,6 +93,9 @@ Table("TextBoolean", "Text", "Boolean")
 template("map")
 generic_module("Map")
 
+template("fifo")
+generic_module("Fifo")
+
 Module("LRVector")
 Interface("LRPoint")
 Module("LRPt")
@@ -197,6 +200,8 @@ Interface("BrandedWr")
 
 Module("UnixFilter")
 Module("SlowTextCompress")
+
+Fifo("Text", "Text")
 
 Library("cit_util")
 

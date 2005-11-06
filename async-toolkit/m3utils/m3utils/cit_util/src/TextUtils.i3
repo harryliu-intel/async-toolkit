@@ -81,4 +81,9 @@ PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL;
 
 PROCEDURE ToChars(text: TEXT): REF ARRAY OF CHAR;
 
+PROCEDURE ToUpper(text : TEXT) : TEXT;
+PROCEDURE ToLower(text : TEXT) : TEXT;
+
+PROCEDURE EqualIgnoringCase(t1, t2 : TEXT) : BOOLEAN;
+
 END TextUtils.
