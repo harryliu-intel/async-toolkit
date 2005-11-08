@@ -21,6 +21,13 @@ TYPE
     haveCachedData(idx : Key.T) : BOOLEAN;
     (* use for optimizations *)
 
+    noCache(idx : Key.T);
+    (* do not cache for given value of key;
+       instead, recompute every time *)
+
+    flushMatching(idx : Key.T);
+    (* flush entries for idx *)
+
     purge();
     (* empty cache *)
 

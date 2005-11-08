@@ -15,17 +15,43 @@ TYPE
     value : Value.T;
   END;
 
+  KeyList = OBJECT
+    key : Key.T;
+    next : KeyList;
+  END;
+
 REVEAL
   T = Public BRANDED Brand OBJECT
     maxCache : CARDINAL;
     data : KeyRefTbl.T;
     lru : LRU;
+    volatile : KeyList;
   OVERRIDES
     init := Init;
     get := Get;
     haveCachedData := HaveCachedData;
     purge := Purge;
+    noCache := NoCache;
+    flushMatching := FlushMatching;
   END;
+
+PROCEDURE FlushMatching(t : T; key : Key.T) =
+  VAR
+    old : REFANY;
+  BEGIN
+    IF t.data.delete(key,old) THEN
+      WITH rec = NARROW(old,S) DO
+        (* update LRU *)
+        VAR
+          l := rec.lru;
+        BEGIN
+          (* delete l from its old position *)
+          l.prev.next := l.next;
+          l.next.prev := l.prev
+        END
+      END
+    END
+  END FlushMatching;
 
 PROCEDURE Init(t : T; cacheSize : CARDINAL) : T =
   BEGIN
@@ -36,16 +62,43 @@ PROCEDURE Init(t : T; cacheSize : CARDINAL) : T =
     t.lru := NEW(LRU);
     t.lru.prev := t.lru;
     t.lru.next := t.lru;
+
+    t.volatile := NIL;
+
     RETURN t
   END Init;
 
 PROCEDURE Purge(t : T) =
   BEGIN EVAL t.init(t.maxCache) END Purge;
 
+PROCEDURE NoCache(t : T; idx : Key.T) =
+  VAR 
+    p := t.volatile;
+  BEGIN
+    WHILE p # NIL DO
+      IF Key.Equal(idx,p.key) THEN RETURN END;
+      p := p.next
+    END;
+    t.volatile := NEW(KeyList, key := idx, next := t.volatile)
+  END NoCache;
+
 PROCEDURE Get(t : T; idx : Key.T) : Value.T =
   VAR
     res : REFANY;
   BEGIN
+
+    (* check if key value is volatile; if so, don't cache *)
+    VAR
+      p := t.volatile;
+    BEGIN
+      WHILE p # NIL DO
+        IF Key.Equal(idx,p.key) THEN
+          RETURN t.compute(idx, NEW(S).value) 
+        END;
+        p := p.next
+      END
+    END;       
+
     IF t.data.get(idx,res) THEN 
       LOCK mu DO
         hitRate := decay*1.0d0 + (1.0d0-decay) * hitRate
