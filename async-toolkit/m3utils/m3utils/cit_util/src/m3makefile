@@ -53,6 +53,11 @@ MkSet("CardPair", "CardPair")
 MkSetDef("CardPair", "CardPair")
 Table("CardPairRef", "CardPair", "Refany")
 
+List("Card", "Cardinal")
+MkSet("Card", "Cardinal")
+MkSetDef("Card", "Cardinal")
+Table("CardRef", "Cardinal", "Refany")
+
 gmodule("Ref")
 gmodule("ArrayRef")
 ArrayRef("Int", "Integer")
@@ -202,6 +207,10 @@ Module("UnixFilter")
 Module("SlowTextCompress")
 
 Fifo("Text", "Text")
+Fifo("Ref", "Refany")
+Fifo("Char", "Char")
+Fifo("Int", "Integer")
+Fifo("LongReal", "LongrealType")
 
 Library("cit_util")
 

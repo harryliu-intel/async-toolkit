@@ -2,6 +2,16 @@
 
 GENERIC INTERFACE Fifo(Elem);
 
+(* fifo of Elem.T; 
+   Elem must export
+   
+   Equal(a, b : Elem.T) : BOOLEAN;
+   where the mode of a, b can be VALUE, VAR, or READONLY
+
+   and a text constant
+   Elem.Brand
+*)
+
 TYPE 
   T <: Public;
 
@@ -19,6 +29,6 @@ TYPE
     size() : CARDINAL;
   END;
 
-CONST Brand = "Fifo";
+CONST Brand = Elem.Brand & " Fifo";
 
 END Fifo.

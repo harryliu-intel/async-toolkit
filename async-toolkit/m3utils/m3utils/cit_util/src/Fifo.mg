@@ -23,7 +23,7 @@ TYPE
 PROCEDURE Init(t : T) : T =
   BEGIN
     (* allocate sentinel *)
-    t.data := NEW(Rec, txt := NIL);
+    t.data := NEW(Rec (*, txt := Elem.NilValue *));
     t.data.nxt := t.data;
     t.data.prv := t.data;
     RETURN t
