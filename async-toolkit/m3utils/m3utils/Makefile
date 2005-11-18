@@ -56,7 +56,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 # building since they may depend on other libraries (1 way only)
 
 PARSERLIBS=parserlib/ktoklib parserlib/kyacclib parserlib/klexlib parserlib/ktok parserlib/klex parserlib/kyacc parserlib/kext parserlib/parserlib
-SHIPDIRS=commandrw cit_common m3tmplhack m3texthack cit_util m3browserhack term $(PARSERLIBS) tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib verif/tuple calarm/finlib calarm/keylib calarm/alarm calarm/anova calarm/postgresql calarm/htmltable voronoi ld/ld_parse ld cs2/cs2 rdwr labeltest 
+SHIPDIRS=commandrw cit_common m3tmplhack m3texthack cit_util m3browserhack term $(PARSERLIBS) tasks angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib verif/tuple calarm/finlib calarm/keylib calarm/alarm calarm/anova calarm/postgresql calarm/htmltable voronoi ld/ld_parse ld cs2/cs2 rdwr labeltest m3curses
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 M33STUFF=m3-3
@@ -65,7 +65,7 @@ SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
 
 CS2TARGETS=cs2/othello/digest cs2/othello/play cs2/othello/random cs2/othello/recursive2 cs2/othello/recursive4 cs2/othello/recursive6 cs2/othello/recursive7 cs2/othello/referee cs2/othello/setup
 
-M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix sysiphus/sudafed acat router/pauls router/pauls2 router/pauls3 router/pauls4 router/gentest router/conflictdensity verif dagflat allias myrope magic/magsize playfile calarm calarm/getquotes calarm/transpose_rates decimate cpdag magicextras/testslasher ld/fixdag ld/ld2layoutd $(CS2TARGETS) calarm/keypaste`
+M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testprs paneman/kemacs drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache et2 testsplines gatematrix/gm angbrmacro/ab cit_util/test_rats cit_util/test_bigs tree/test prlink matcher/xprs2stack stackgen sysiphus sysiphus/sysiphlat sysiphus/sysiphix sysiphus/sudafed acat router/pauls router/pauls2 router/pauls3 router/pauls4 router/gentest router/conflictdensity verif dagflat allias myrope magic/magsize playfile calarm calarm/getquotes calarm/transpose_rates decimate cpdag magicextras/testslasher ld/fixdag ld/ld2layoutd $(CS2TARGETS) calarm/keypaste m3curses/test`
 
 
 REGSUBS= `./dirsexist.sh -f calarm/twslib calarm/gridctl calarm/regress calarm/anova/program calarm/picktickers  calarm/twslib/test calarm/twslib/testpm`
