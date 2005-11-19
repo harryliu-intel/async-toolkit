@@ -78,10 +78,6 @@ M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testpr
 
 REGSUBS= `./dirsexist.sh -f calarm/twslib calarm/gridctl calarm/regress calarm/anova/program calarm/picktickers  calarm/twslib/test calarm/twslib/testpm`
 
-M3BUILDOPTS= -O
-#M3BUILDPROGRAM= cm3
-M3BUILD= $(M3BUILDPROGRAM) $(M3BUILDOPTS)
-M3SHIP= echo
 
 BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
 
@@ -182,25 +178,25 @@ browserexps:
 cleanships:
 	@for s in $(REVSHIPS); do\
 		echo "(cleaning) ===> $$s";\
-		(cd $$s; $(M3BUILD) clean || true);  \
+		(cd $$s; $(M3BUILDCLEAN) || true);  \
 	done
 
 cleanm3:
 	@for s in $(M3SUBS); do\
 		echo "(cleaning) ===> $$s";\
-		(cd $$s; $(M3BUILD) clean || true);  \
+		(cd $$s; $(M3BUILDCLEAN) || true);  \
 	done
 
 cleancommons:
 	@for s in $(REVCOMMONS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\" clean; cd .. ;  \
+		cd $$s; make clean; cd .. ;  \
 	done
 
 cleansubs:
 	@for s in $(SUBDIRS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\" clean; cd .. ;  \
+		cd $$s; make clean; cd .. ;  \
 	done
 
 # this is the end of the Makefile
