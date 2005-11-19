@@ -1,0 +1,5 @@
+# $Id$ 
+
+#M3BUILDPROGRAM=cm3
+M3BUILDPROGRAM=m3build
+

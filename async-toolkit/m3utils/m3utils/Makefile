@@ -35,16 +35,24 @@
 # 00. <another hack: .bindir>
 # 3. BROWSEREXPS  --   Export misc programs in subdirectories for m3browser
 # 4. binlinks     --   make symlinks to programs that were built
+# 
+# Phase IIb.  Target "regress"
+# 3. REGSUBS      --   Modula-3 programs
 #
 # Phase III.  Target "all"
 # 5. COMMONDIRS   --   C libraries
 # 6. SUBDIRS      --   C programs
+#
+# The default target is "std"
 #
 #
 #
 # In the long run, we'd like to get rid of COMMONDIRS and SUBDIRS and
 # put everything under the control of m3build.
 #
+
+# global defs, esp. M3BUILDPROGRAM
+.include "Make.defs"
 
 COMMONDIRS=processor crt m3yacc prsparse
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
@@ -71,7 +79,8 @@ M3SUBS= `./dirsexist.sh -f magraster finite_diff deriv tasktest cit_parse/testpr
 REGSUBS= `./dirsexist.sh -f calarm/twslib calarm/gridctl calarm/regress calarm/anova/program calarm/picktickers  calarm/twslib/test calarm/twslib/testpm`
 
 M3BUILDOPTS= -O
-M3BUILD= m3build $(M3BUILDOPTS)
+#M3BUILDPROGRAM= cm3
+M3BUILD= $(M3BUILDPROGRAM) $(M3BUILDOPTS)
 M3SHIP= echo
 
 BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dcpane drawcontext/test drawcontext/kgv m3-3/display m3-3/bufchain m3-3/icache`
@@ -117,7 +126,7 @@ faster: fastprep .lesstodo .fastmake
 	@echo M3OPTS $(M3BUILDOPTS) >> .todo
 
 .fastmake:
-	(cd makehack; m3build)
+	(cd makehack; $(M3BUILDPROGRAM))
 	cat .todo .m3deps | makehack/`cat .bindir`/makehack > .fast
 	sh .fast
 
