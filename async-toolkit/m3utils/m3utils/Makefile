@@ -45,6 +45,10 @@
 #
 # The default target is "std"
 #
+# default is to make with m3build (PM3)
+# if you prefer CM3, run "make -DCM3"
+# if you want make to continue past errors, run "make -DPROCEED"
+#
 #
 #
 # In the long run, we'd like to get rid of COMMONDIRS and SUBDIRS and
@@ -53,6 +57,12 @@
 
 # global defs, esp. M3BUILDPROGRAM
 .include "Make.defs"
+
+.ifdef(PROCEED)
+PROCEEDCMD="true"
+.else
+PROCEEDCMD="false"
+.endif
 
 COMMONDIRS=processor crt m3yacc prsparse
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
@@ -139,13 +149,13 @@ cleanbuilddirs:
 commons:
 	@for s in $(COMMONS); do\
 		echo "===> $$s";\
-		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\"; cd .. ;  \
+		cd $$s; make ; cd .. ;  \
 	done
 
 subs:
 	@for s in $(SUBDIRS); do\
 		echo "===> $$s";\
-		cd $$s; make M3BUILDOPTS=\"$(M3BUILDOPTS)\"; cd .. ;  \
+		cd $$s; make ; cd .. ;  \
 	done
 
 binlinks:
@@ -155,19 +165,19 @@ binlinks:
 ships: 
 	@for s in $(SHIPS); do\
 		echo "===> $$s";\
-		(cd $$s; $(M3BUILD); $(M3SHIP));  \
+		(cd $$s; $(M3BUILD) || $(PROCEEDCMD); $(M3SHIP));  \
 	done
 
 m3subs:
 	@for s in $(M3SUBS); do\
 		echo "===> $$s";\
-		(cd $$s; $(M3BUILD));  \
+		(cd $$s; $(M3BUILD) || $(PROCEEDCMD));  \
 	done
 
 regsubs: 
 	@for s in $(REGSUBS); do\
 		echo "===> $$s";\
-		(cd $$s; $(M3BUILD); $(M3SHIP));  \
+		(cd $$s; $(M3BUILD) || $(PROCEEDCMD); $(M3SHIP));  \
 	done
 
 browserexps:
