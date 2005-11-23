@@ -8,7 +8,8 @@ IMPORT Debug;
 IMPORT BoolSet, BoolSetDef;
 IMPORT BoolTextTbl, BoolBoolTbl;
 IMPORT Fmt;
-FROM Cbool IMPORT B;
+
+VAR B : Cbool.T := NIL;
 
 CONST
   gcRate = 100;

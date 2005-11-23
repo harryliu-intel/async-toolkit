@@ -75,8 +75,6 @@ PROCEDURE getid(b : t) : INTEGER;
 <*EXTERNAL bool_refs*>
 PROCEDURE refs(B : T; b : t) : INTEGER;
 
-<*EXTERNAL*>VAR B : T; 
-
 END Cbool.
 
 
