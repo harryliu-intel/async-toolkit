@@ -2,7 +2,9 @@
 #include "defs.h"
 #include "mymalloc.h"
 
-int ntry, totalsearch;
+static int ntry, totalsearch;
+
+int ELhashsize;
 
 ELinitialize()
 {

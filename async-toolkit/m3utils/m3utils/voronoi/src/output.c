@@ -9,7 +9,7 @@ line(){}
 circle(){}
 range(){}
 
-float pxmin, pxmax, pymin, pymax, cradius;
+static float pxmin, pxmax, pymin, pymax, cradius;
 
 out_bisector(e)
 struct Edge *e;

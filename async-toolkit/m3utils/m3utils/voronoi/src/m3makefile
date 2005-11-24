@@ -13,5 +13,6 @@ c_source("mod3_main")
 c_source("output")
 c_source("voronoi")
 c_source("mymalloc")
+c_source("defs")
 
 library("voronoi")
