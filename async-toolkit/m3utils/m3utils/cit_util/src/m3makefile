@@ -28,11 +28,9 @@ if defined("CM3_VERSION")
 	implementation("WxDefault")
 	implementation("RTBrandCM3")
 	import("patternmatching")
-	template("cm3")
 else
         implementation("Wx")
 	implementation("RTBrand")
-	template("non-cm3")
 end
 c_source("printf")
 interface("Cprintf")

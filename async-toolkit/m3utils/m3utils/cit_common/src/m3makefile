@@ -13,4 +13,10 @@ Module("TextReader") /* needed by m3tmplhack, must be compiled before cit_util. 
 Module("Args")
 %Module("OTextExtras")
 
+if defined("CM3_VERSION")
+	template("cm3")
+else
+	template("non-cm3")
+end
+
 Library("cit_common")

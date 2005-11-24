@@ -1,5 +1,5 @@
 /* $Id$ */
 import("cit_common")
 implementation("Main")
-build_standalone()
+standalone("")
 program("m3tmplhack")
