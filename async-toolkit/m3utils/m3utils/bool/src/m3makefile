@@ -1,3 +1,5 @@
+/* $Id$ */
+
 import ("libm3")
 import ("cptr")
 import ("set")
@@ -6,7 +8,6 @@ import ("cit_util")
 /* the whole Bool deal */
 c_source("misc") 
 c_source("bool") 
-c_source("bool_stub") 
 
 Module("Bool") 
 Interface("BoolFormatter")
