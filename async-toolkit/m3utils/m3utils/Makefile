@@ -56,13 +56,13 @@
 #
 
 # global defs, esp. M3BUILDPROGRAM
-.include "Make.defs"
+include Make.defs
 
-.ifdef(PROCEED)
+ifdef PROCEED
 PROCEEDCMD="true"
-.else
+else
 PROCEEDCMD="false"
-.endif
+endif
 
 COMMONDIRS=processor crt m3yacc prsparse
 COMMONS=`./dirsexist.sh -f $(COMMONDIRS)`
@@ -138,7 +138,7 @@ faster: fastprep .lesstodo .fastmake
 
 cleanthis:
 	rm -f .bindir
-	make .bindir
+	$(MAKE) .bindir
 	find . -name `cat .bindir` -print | xargs rm -rf 
 	rm -f .bindir .top
 	rm -rf hack/.hidden
@@ -149,17 +149,17 @@ cleanbuilddirs:
 commons:
 	@for s in $(COMMONS); do\
 		echo "===> $$s";\
-		cd $$s; make ; cd .. ;  \
+		cd $$s; $(MAKE) ; cd .. ;  \
 	done
 
 subs:
 	@for s in $(SUBDIRS); do\
 		echo "===> $$s";\
-		cd $$s; make ; cd .. ;  \
+		cd $$s; $(MAKE) ; cd .. ;  \
 	done
 
 binlinks:
-	(cd bin; make)
+	(cd bin; $(MAKE))
 
 
 ships: 
@@ -200,13 +200,13 @@ cleanm3:
 cleancommons:
 	@for s in $(REVCOMMONS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; make clean; cd .. ;  \
+		cd $$s; $(MAKE) clean; cd .. ;  \
 	done
 
 cleansubs:
 	@for s in $(SUBDIRS); do\
 		echo "(cleaning) ===> $$s";\
-		cd $$s; make clean; cd .. ;  \
+		cd $$s; $(MAKE) clean; cd .. ;  \
 	done
 
 # this is the end of the Makefile
