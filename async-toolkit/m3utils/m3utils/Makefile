@@ -16,6 +16,8 @@
 # $Id$
 #
 
+# THIS Makefile IS FOR GNU MAKE ("gmake")
+
 #
 # Build order has been revised as of 1/13/2005
 #
