@@ -212,6 +212,10 @@ Fifo("Char", "Char")
 Fifo("Int", "Integer")
 Fifo("LongReal", "LongrealType")
 
+Array_sort("Longreal", "LongrealType")
+
+Module("LongrealSort")
+
 Library("cit_util")
 
 
