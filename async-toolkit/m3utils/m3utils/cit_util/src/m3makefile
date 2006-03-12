@@ -216,6 +216,8 @@ Array_sort("Longreal", "LongrealType")
 
 Module("LongrealSort")
 
+Module("Chmod")
+
 Library("cit_util")
 
 
