@@ -47,8 +47,17 @@ mod3_addsite(p)
   sites[nsites].sitenbr = nsites;
   nsites += 1;
   if (nsites % 4000 == 0) {
-    struct Site *newsites = (struct Site *) memmalloc(sites,(nsites+4000)*sizeof*sites);
+    /* let's just free this here, as it is such a large data structure */
+
+    /* the following code is wrong anyway (two args to memmalloc) */
+    /* struct Site *newsites = (struct Site *) memmalloc(sites,(nsites+4000)*sizeof*sites); */
+
+    struct Site *newsites = (struct Site *) mymalloc((nsites+4000)*sizeof*sites);
     bcopy(sites,newsites,nsites*sizeof*sites);
+
+    /* don't free first time, as the first block as allocated by memmalloc */
+    if (nsites!=4000) myfree(sites);
+
     sites=newsites;
   }
 
