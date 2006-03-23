@@ -214,6 +214,8 @@ Fifo("LongReal", "LongrealType")
 
 Array_sort("Longreal", "LongrealType")
 
+Sequence("LongReal", "LongrealType") 
+
 Module("LongrealSort")
 
 Module("Chmod")
