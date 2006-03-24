@@ -220,6 +220,11 @@ Module("LongrealSort")
 
 Module("Chmod")
 
+template("sharedseq")
+generic_module("SharedSequence")
+
+SharedSequence("LongReal", "LongrealType", "LongRealSeq")
+
 Library("cit_util")
 
 
