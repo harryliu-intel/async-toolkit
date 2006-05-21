@@ -25,6 +25,16 @@ PROCEDURE RowVector(vector : Vector) : T;
 PROCEDURE Add(a,b : T): T            RAISES { DimensionMismatch };
 PROCEDURE Sub(a,b : T): T            RAISES { DimensionMismatch };
 PROCEDURE Mul(a,b : T): T            RAISES { DimensionMismatch };
+
+PROCEDURE MulD(a,b,c : T)            RAISES { DimensionMismatch };
+  (* returns ab in c *)
+
+PROCEDURE MulTranspose(a,b : T): T            RAISES { DimensionMismatch };
+  (* returns aTb *)
+
+PROCEDURE MulTransposeD(a,b,c : T)            RAISES { DimensionMismatch };
+  (* returns aTb in c *)
+
 PROCEDURE Scale(a : LONGREAL; m : T) : T;
 PROCEDURE Det(a : T): LONGREAL       RAISES { NotSquare };
 PROCEDURE Trace(a : T): LONGREAL       RAISES { NotSquare };
@@ -54,6 +64,7 @@ PROCEDURE L(m : T) : T;
 PROCEDURE Zap(m : T; threshold : LONGREAL ) : T;
 
 (* extract row, col *)
+PROCEDURE ExtractRowAsVectorD(m : T; r : CARDINAL; res : Vector);
 PROCEDURE ExtractRowAsVector(m : T; r : CARDINAL) : Vector;
 PROCEDURE ExtractColAsVector(m : T; c : CARDINAL) : Vector;
 
@@ -67,11 +78,18 @@ PROCEDURE Mean(m : T) : LONGREAL;
 PROCEDURE MeanSq(m : T) : LONGREAL;
 PROCEDURE DevSq(m : T) : LONGREAL; (* sum of deviations from mean *)
 PROCEDURE SumSq(m : T) : LONGREAL;
+PROCEDURE SumDiffSq(m, n : T) : LONGREAL; (* sum of sq. differences *)
 
 PROCEDURE CopyIn(from, to : T);
 
 PROCEDURE Measure(colVector : T; squareMatrix : T) : LONGREAL RAISES { DimensionMismatch };
+
 (* compute colVector^T x squareMatrix x colVector *)
+
+(* DESTRUCTIVE OPS *)
+
+PROCEDURE AddToDiagonal(m : T; a : LONGREAL) RAISES { NotSquare };
+(* add a to each diagonal element, checks that m is square *)
 
 END Matrix.
 

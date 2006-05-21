@@ -27,7 +27,7 @@ IMPORT Fmt;
 PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
 PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
 PROCEDURE Warning(t : TEXT);
-PROCEDURE Error(t : TEXT);
+PROCEDURE Error(t : TEXT; exit := TRUE);
 PROCEDURE UnNil(text : TEXT) : TEXT;
 
 (* apart from these procedures, the debug level is also set from the

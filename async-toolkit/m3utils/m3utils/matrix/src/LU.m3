@@ -6,6 +6,15 @@ IMPORT Matrix;
 (* there has got to be a better way to code these things *)
 
 PROCEDURE Decompose(m : Matrix.T; indx : REF ARRAY OF INTEGER; VAR d : LONGREAL) RAISES { Matrix.Singular } =
+  VAR
+    vv := NEW(Matrix.Vector, NUMBER(m^));
+  BEGIN
+    DecomposeR(m,vv,indx,d)
+  END Decompose;
+
+PROCEDURE DecomposeR(m : Matrix.T; vv : Matrix.Vector;
+                    indx : REF ARRAY OF INTEGER; 
+                    VAR d : LONGREAL) RAISES { Matrix.Singular } =
   (* LU decomposition of a square matrix by Crout's method *)
   (* Numerical Recipes in FORTRAN 2nd ed. pp. 38--39 *)
   (* numbers in comments refer to ENDDO statements in the book *)
@@ -16,7 +25,6 @@ PROCEDURE Decompose(m : Matrix.T; indx : REF ARRAY OF INTEGER; VAR d : LONGREAL)
   CONST
     Tiny = 1.0d-20;
   VAR
-    vv := NEW(Matrix.Vector, NUMBER(m^));
     imax :=  -1; (* make it something that will crash if wrong *) 
     last := LAST(m^);
   BEGIN
@@ -71,7 +79,7 @@ PROCEDURE Decompose(m : Matrix.T; indx : REF ARRAY OF INTEGER; VAR d : LONGREAL)
           FOR row:=col + 1 TO last DO m[row,col] := m[row,col] * dum END
       END END
     END (* FOR col *) (* 19 *)
-  END Decompose;
+  END DecomposeR;
   
 PROCEDURE BackSubstitute(READONLY m : Matrix.T; 
                            READONLY indx : REF ARRAY OF INTEGER; 
@@ -112,6 +120,46 @@ PROCEDURE BackSubstitute(READONLY m : Matrix.T;
     END END; (* FOR row *)
 
   END BackSubstitute;
+
+PROCEDURE BackSubstituteArray(READONLY m : Matrix.T; 
+                           READONLY indx : REF ARRAY OF INTEGER; 
+                           VAR b : ARRAY OF LONGREAL) =
+  (* LU back-substitution to solve system of linear equations *)
+  (* m should be the LU decomposition of a matrix M established by *)
+  (* LUdecompose, above *)
+  (* Num. Rec. FORTRAN 2nd ed. p. 39 *)
+
+  (* MODIFIES b *)
+  VAR
+    ii := -1;
+    last := LAST(m^);
+  BEGIN
+    <* ASSERT FIRST(m^) = 0 AND 
+              FIRST(m^) = FIRST(m[0]) AND 
+              LAST(m^) = LAST(m[0]) *>
+    FOR row := 0 TO last DO
+      VAR
+        ll := indx[row];
+        sum := b[ll];
+      BEGIN
+        b[ll] := b[row];
+        IF ii # -1 THEN 
+          FOR col := ii TO row - 1 DO
+            sum := sum - m[row,col] * b[col];
+          END;
+        ELSIF sum # 0.0d0 THEN
+          ii := row;
+        END; (* IF *)
+        b[row] := sum;
+      END;
+    END; (* FOR row *)
+
+    FOR row := last TO 0 BY -1 DO VAR sum := b[row]; BEGIN
+      FOR col := row + 1 TO last DO sum := sum - m[row,col] * b[col] END;
+      b[row] := sum / m[row,row];
+    END END; (* FOR row *)
+
+  END BackSubstituteArray;
 
 BEGIN
 END LU.

@@ -225,6 +225,8 @@ generic_module("SharedSequence")
 
 SharedSequence("LongReal", "LongrealType", "LongRealSeq")
 
+Module("LRArrayOps")
+
 Library("cit_util")
 
 

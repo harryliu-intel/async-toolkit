@@ -36,8 +36,6 @@ IMPORT FloatMode, Lex;
 IMPORT Fmt;
 IMPORT Process;
 
-EXCEPTION ABORT;
-
 PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
 
   PROCEDURE HaveEnv(e : TEXT) : BOOLEAN = 
@@ -76,9 +74,13 @@ PROCEDURE Warning(t: TEXT) =
     S("WARNING: " & UnNil(t), 0);
   END Warning;
 
-PROCEDURE Error(t: TEXT) =
+PROCEDURE Error(t: TEXT; exit : BOOLEAN) =
   BEGIN
-    errHook(t);
+    IF exit THEN
+      errHook(t)
+    ELSE
+      S("ERROR: " & UnNil(t), 0)
+    END
   END Error;
 
 PROCEDURE UnNil(text : TEXT) : TEXT =
@@ -147,7 +149,7 @@ BEGIN
       IF debugStr # NIL THEN level := Scan.Int(debugStr) END
     EXCEPT
       Lex.Error, FloatMode.Trap => 
-        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"")
+        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE)
     END
   END;
   IF debugFilter THEN
@@ -165,7 +167,7 @@ BEGIN
         END;
       EXCEPT
       | Rd.EndOfFile =>
-      | OSError.E => Error("Can't find file `debugfilter'.");
+      | OSError.E => Error("Can't find file `debugfilter'.",TRUE);
       END;
     END;
   END;

@@ -90,6 +90,91 @@ PROCEDURE Mul(a,b : T): T            RAISES { DimensionMismatch } =
     RETURN prod;
   END Mul;
 
+PROCEDURE MulD(a,b, prod : T)            RAISES { DimensionMismatch } =
+  VAR
+    aDim := GetDim(a);
+    bDim := GetDim(b);
+  BEGIN
+    IF GetDim(a).cols # GetDim(b).rows THEN RAISE DimensionMismatch END;
+
+    IF GetDim(prod).rows # GetDim(a).rows OR
+      GetDim(prod).cols # GetDim(b).cols THEN
+      RAISE DimensionMismatch
+    END;
+
+    FOR row:= 0 TO aDim.rows - 1 DO
+      FOR col:= 0 TO bDim.cols - 1 DO
+        VAR
+          element := 0.0d0;
+        BEGIN
+          FOR term := 0 TO aDim.cols - 1 DO
+            element := element + a[row,term] * b[term,col];
+          END;
+          prod[row,col] := element;
+        END;
+      END;
+    END
+  END MulD;
+
+PROCEDURE MulTranspose(a,b : T): T            RAISES { DimensionMismatch } =
+  VAR
+    prod : T;
+    aDim := GetDim(a);
+    bDim := GetDim(b);
+  BEGIN
+    IF GetDim(a).rows # GetDim(b).rows THEN RAISE DimensionMismatch END;
+    prod := New(Dim{ aDim.cols, bDim.cols });
+    FOR row:= 0 TO aDim.cols - 1 DO
+      FOR col:= 0 TO bDim.cols - 1 DO
+        VAR
+          element := 0.0d0;
+        BEGIN
+          FOR term := 0 TO aDim.rows - 1 DO
+            element := element + a[term,row] * b[term,col];
+          END;
+          prod[row,col] := element;
+        END;
+      END;
+    END;
+    RETURN prod;
+  END MulTranspose;
+
+PROCEDURE MulTransposeD(a,b,prod : T)            RAISES { DimensionMismatch } =
+  VAR
+    aDim := GetDim(a);
+    bDim := GetDim(b);
+  BEGIN
+    IF GetDim(a).rows # GetDim(b).rows THEN RAISE DimensionMismatch END;
+
+    IF GetDim(prod).rows # aDim.cols OR GetDim(prod).cols # bDim.cols THEN
+      RAISE DimensionMismatch 
+    END;
+      
+    FOR row:= 0 TO aDim.cols - 1 DO
+      FOR col:= 0 TO bDim.cols - 1 DO
+        VAR
+          element := 0.0d0;
+        BEGIN
+          FOR term := 0 TO aDim.rows - 1 DO
+            element := element + a[term,row] * b[term,col];
+          END;
+          prod[row,col] := element;
+        END;
+      END;
+    END
+  END MulTransposeD;
+
+PROCEDURE AddToDiagonal(m : T; a : LONGREAL) RAISES { NotSquare } =
+  BEGIN
+    IF GetDim(m).rows # GetDim(m).cols THEN
+      RAISE NotSquare
+    END;
+
+    FOR i := 0 TO GetDim(m).rows - 1 DO
+      m[i,i] := a + m[i,i]
+    END
+  END AddToDiagonal;
+
 PROCEDURE Trace(m : T) : LONGREAL RAISES { NotSquare } =
   VAR
     res := 0.0d0;
@@ -164,6 +249,27 @@ PROCEDURE SumSq(m : T) : LONGREAL =
     
     RETURN msq 
   END SumSq;
+    
+PROCEDURE SumDiffSq(m,n : T) : LONGREAL =
+  VAR
+    msq := 0.0d0;
+    rows := GetDim(m).rows;
+    cols := GetDim(m).cols;
+  BEGIN
+    WITH ndim = GetDim(n) DO
+      <* ASSERT ndim.rows = rows AND ndim.cols = cols *>
+    END;
+
+    FOR r := 0 TO rows - 1 DO
+      FOR c := 0 TO cols - 1 DO
+        WITH diff = m[r,c]-n[r,c] DO
+          msq := msq + diff*diff
+        END
+      END
+    END;
+    
+    RETURN msq 
+  END SumDiffSq;
     
 PROCEDURE Det(m : T): LONGREAL       RAISES { NotSquare } =
 
@@ -336,6 +442,13 @@ PROCEDURE ExtractRowAsVector(m : T; r : CARDINAL) : Vector =
     END;
     RETURN res
   END ExtractRowAsVector;
+
+PROCEDURE ExtractRowAsVectorD(m : T; r : CARDINAL; res : Vector) =
+  VAR
+    cols := GetDim(m).cols;
+  BEGIN
+    FOR c := 0 TO cols-1 DO res[c] := m[r,c] END
+  END ExtractRowAsVectorD;
 
 PROCEDURE ExtractColAsVector(m : T; c : CARDINAL) : Vector =
   VAR
