@@ -28,4 +28,36 @@ PROCEDURE Percentile(READONLY a : ARRAY OF LONGREAL; p : LONGREAL) : LONGREAL =
 PROCEDURE Sort(VAR a : ARRAY OF LONGREAL) =
   BEGIN LongrealArraySort.Sort(a) END Sort;
 
+PROCEDURE TrimmedMean(READONLY a : ARRAY OF LONGREAL;
+                      weight : LONGREAL) : LONGREAL =
+  VAR 
+    sum,cnt : LONGREAL;
+  BEGIN
+    <* ASSERT weight > 0.0d0 AND weight <= 1.0d0 *>
+    WITH n = FLOAT(NUMBER(a),LONGREAL),
+         lo = 0.50d0-weight/2.0d0,
+         hi = 0.50d0+weight/2.0d0,
+
+         p = lo * n,
+         q = hi * n,
+
+         pfl = FLOOR(p),     pflf = FLOAT(pfl,LONGREAL),
+         qfl = CEILING(q)-1, qflf = FLOAT(qfl,LONGREAL),
+
+         pfrac = 1.0d0 - (p - pflf),
+         qfrac = q - qflf DO
+      sum := pfrac*a[pfl];
+
+      FOR i := pfl+1 TO qfl-1 DO
+        sum := sum + a[i]
+      END;
+
+      sum := sum + qfrac*a[qfl];
+
+      cnt := pfrac + (qflf-1.0d0)-(pflf+1.0d0)+1.0d0 + qfrac
+    END;
+
+    RETURN sum/cnt
+  END TrimmedMean;
+
 BEGIN END LRArrayOps.
