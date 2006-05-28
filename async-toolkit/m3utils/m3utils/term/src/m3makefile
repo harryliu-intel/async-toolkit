@@ -29,4 +29,7 @@ QueueTbl("TextCommand", "TextCommandTbl", "Text",
 	"BrandedCommand", "TextRefTbl")
 Module("ScalarVar")
 
+if equal(TARGET,"NT386GNU")
+  c_source("termiosNTextra.c")
+end
 library("term")
