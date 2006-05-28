@@ -3,7 +3,7 @@
 (* $Id$ *)
 
 MODULE LexFmt;
-IMPORT FileWr, FilePosix;
+IMPORT FileWr;
 IMPORT Wr, Thread;
 IMPORT Rd, TokSpec;
 IMPORT LexParse;
