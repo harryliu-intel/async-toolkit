@@ -1,4 +1,8 @@
-include ("../../.parsertop")
+/* on NT, m3build predefines TOP and _PARSER_TOP */
+if not equal(TARGET,"NT386GNU") 
+  include ("../../.parsertop")
+end
+
 
 if not defined("_PARSER_CMDS")
 	local _TOK = _PARSER_TOP & "/ktok/" & BUILD_DIR & "/tok"
@@ -39,9 +43,12 @@ readonly proc _xCons(tok_nm, tok_spec, out_nm, out_spec, kind, vis) is
 				out_source &
 				"'\"' > " & include_source & ".tmpl")
 		else	
+                   local nama = [include_source & ".tmpl"]
+                   local fixcmd = TOP & "\\cygwinhacks\\fixparsetmpl.sh"
 		   > include_source & ".tmpl" in
 			write("_PARSER_SOURCES += \"" & out_source & "\"",CR)
 		   end
+                   _exec(["sh", fixcmd, nama])
 		end
 		template("../" & BUILD_DIR & "/" & include_source)
 		%%% LibExport(out_source)

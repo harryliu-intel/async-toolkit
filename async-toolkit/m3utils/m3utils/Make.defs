@@ -1,5 +1,18 @@
 # $Id$ 
 
+ifdef CYGWIN
+# CYGWIN
+
+M3BUILDPROGRAM=m3build
+M3BUILDOPTS= -F  \\cygwin\\home\\mika\\t\\.top -F \\cygwin\\home\\mika\\t\\parserlib\\.parsertop
+M3BUILDCLEANTARGET= clean
+M3SHIPPROGRAM=/home/mika/t/cygwinhacks/m3ship.sh
+M3SHIPOPTS=
+SHIP=1
+
+else 
+# UNIX
+
 ifdef CM3
 M3BUILDPROGRAM=cm3
 M3BUILDOPTS= -override
@@ -13,6 +26,9 @@ M3BUILDCLEANTARGET= clean
 M3SHIPPROGRAM=m3ship
 M3SHIPOPTS=
 endif
+endif
+
+# all targets:
 
 ifdef SHIP
 M3SHIP=$(M3SHIPPROGRAM) $(M3SHIPOPTS)

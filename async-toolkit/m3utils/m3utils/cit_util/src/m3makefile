@@ -227,6 +227,11 @@ SharedSequence("LongReal", "LongrealType", "LongRealSeq")
 
 Module("LRArrayOps")
 
+if equal(TARGET,"NT386GNU") 
+  Interface("Unix")
+  Interface("Utypes")
+end
+
 Library("cit_util")
 
 
