@@ -48,7 +48,9 @@ readonly proc _xCons(tok_nm, tok_spec, out_nm, out_spec, kind, vis) is
 		   > include_source & ".tmpl" in
 			write("_PARSER_SOURCES += \"" & out_source & "\"",CR)
 		   end
-                   _exec(["sh", fixcmd, nama])
+                   if equal(TARGET,"NT386GNU")
+                      _exec(["sh", fixcmd, nama])
+                   end
 		end
 		template("../" & BUILD_DIR & "/" & include_source)
 		%%% LibExport(out_source)
