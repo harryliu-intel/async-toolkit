@@ -2,7 +2,8 @@
 
 MODULE SlowTextCompress;
 IMPORT Rd, Wr, UnixFilter, ProcUtils;
-IMPORT TextRd, TextWr;
+IMPORT TextRd, TextWr, Debug;
+IMPORT Process, Fmt;
 
 CONST Command = ARRAY Mode OF TEXT { "bzip2 -cz", "bzip2 -cd" };
 
@@ -37,5 +38,40 @@ PROCEDURE Text(mode : Mode; in : TEXT) : TEXT =
     c.wait();
     RETURN TextWr.ToText(wr)
   END Text;
+
+PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) =
+  VAR
+    writer := ProcUtils.WriteHere(out);
+    wrIn : Wr.T;
+    c : ProcUtils.Completion;
+  BEGIN
+    Debug.Out("SlowTextCompress.RdWr starting");
+    c := ProcUtils.RunText(Command[mode], 
+                           stdout := writer, 
+                           stdin := ProcUtils.GimmeWr(wrIn));
+
+    TRY
+      LOOP
+        WITH c = Rd.GetChar(in) DO Wr.PutChar(wrIn,c) END
+      END
+    EXCEPT
+      Rd.EndOfFile => Rd.Close(in); Wr.Close(wrIn)
+    END;
+    
+    TRY
+      c.wait()
+    EXCEPT
+      ProcUtils.ErrorExit(e) =>
+      TYPECASE(e) OF
+        ProcUtils.ExitCode(ec) => Process.Crash(Command[mode] & 
+          " exited with error code " & Fmt.Int(ec.code))
+      |
+        ProcUtils.OS(os) => Process.Crash("Caught error " & os.error)
+      END
+    END;
+
+    Debug.Out("SlowTextCompress.RdWr done");
+    Wr.Close(out)
+  END RdWr;
 
 BEGIN END SlowTextCompress.
