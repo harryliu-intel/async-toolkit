@@ -2,8 +2,7 @@
 
 MODULE SlowTextCompress;
 IMPORT Rd, Wr, UnixFilter, ProcUtils;
-IMPORT TextRd, TextWr, Debug;
-IMPORT Process, Fmt;
+IMPORT TextWr, Debug;
 
 CONST Command = ARRAY Mode OF TEXT { "bzip2 -cz", "bzip2 -cd" };
 
@@ -22,7 +21,7 @@ PROCEDURE RW(mode : Mode; source : Rd.T; target : Wr.T) =
     UnixFilter.RW(Command[mode],source, target)
   END RW;
 
-PROCEDURE Text(mode : Mode; in : TEXT) : TEXT =
+PROCEDURE Text(mode : Mode; in : TEXT) : TEXT  RAISES { ProcUtils.ErrorExit } =
   VAR
     wrIn : Wr.T;
     wr := NEW(TextWr.T).init();
@@ -39,7 +38,7 @@ PROCEDURE Text(mode : Mode; in : TEXT) : TEXT =
     RETURN TextWr.ToText(wr)
   END Text;
 
-PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) =
+PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) RAISES { ProcUtils.ErrorExit } =
   VAR
     writer := ProcUtils.WriteHere(out);
     wrIn : Wr.T;
@@ -58,17 +57,7 @@ PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) =
       Rd.EndOfFile => Rd.Close(in); Wr.Close(wrIn)
     END;
     
-    TRY
-      c.wait()
-    EXCEPT
-      ProcUtils.ErrorExit(e) =>
-      TYPECASE(e) OF
-        ProcUtils.ExitCode(ec) => Process.Crash(Command[mode] & 
-          " exited with error code " & Fmt.Int(ec.code))
-      |
-        ProcUtils.OS(os) => Process.Crash("Caught error " & os.error)
-      END
-    END;
+    c.wait();
 
     Debug.Out("SlowTextCompress.RdWr done");
     Wr.Close(out)
