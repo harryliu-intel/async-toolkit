@@ -51,6 +51,8 @@ MkSet("CardPair", "CardPair")
 MkSetDef("CardPair", "CardPair")
 Table("CardPairRef", "CardPair", "Refany")
 
+Table("CardCard", "Cardinal", "Cardinal")
+
 List("CardPair", "CardPair")
 
 List("Card", "Cardinal")
