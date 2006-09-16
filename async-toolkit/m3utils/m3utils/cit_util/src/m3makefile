@@ -215,6 +215,7 @@ Fifo("Int", "Integer")
 Fifo("LongReal", "LongrealType")
 
 Array_sort("Longreal", "LongrealType")
+Array_sort("Refany", "Refany")
 
 Sequence("LongReal", "LongrealType") 
 
