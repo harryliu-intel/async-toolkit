@@ -42,6 +42,7 @@ REVEAL
     init := Init;
     initFromRd := InitFromRd;
     isEmpty := IsEmpty;
+    empty := IsEmpty;
     shatter := Shatter;
     pushBack := PushBack;
   END;

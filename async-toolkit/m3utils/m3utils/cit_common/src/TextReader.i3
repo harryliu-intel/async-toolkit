@@ -76,6 +76,9 @@ TYPE
     isEmpty() : BOOLEAN;
 (* probe a "TextReader.T" *)
 
+    empty() : BOOLEAN;
+(* alias for above *)
+
     shatter(listDelims : TEXT; 
             endDelims : TEXT; skipNulls := FALSE) : TextList.T;
 (* tokenize a line into "TEXT" tokens until EOT or an endDelim.
