@@ -36,6 +36,13 @@ IMPORT FloatMode, Lex;
 IMPORT Fmt;
 IMPORT Process;
 
+VAR options := SET OF Options {};
+
+PROCEDURE SetOptions(newOptions : SET OF Options) =
+  BEGIN options := newOptions END SetOptions;
+
+PROCEDURE GetOptions() : SET OF Options = BEGIN RETURN options END GetOptions;
+
 PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
 
   PROCEDURE HaveEnv(e : TEXT) : BOOLEAN = 
@@ -52,6 +59,8 @@ PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
     RETURN res
   END DebugThis;
 
+VAR pidText := "(" & Fmt.Int(Process.GetMyID()) & ") ";
+ 
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
   BEGIN
     IF minLevel > level THEN RETURN END;
@@ -60,6 +69,11 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
         BreakHere.Please();
       END;
     END;
+
+    IF Options.PrintPID IN options THEN
+      t := pidText & t
+    END;
+
     t:=UnNil(t);
     IF cr THEN
       t:=t&"\n";

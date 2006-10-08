@@ -35,11 +35,14 @@ IMPORT ASCII;
 
 <* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *>
 
+CONST TE = Text.Equal;
+      TL = Text.Length;
+
 PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL =
   VAR
     count := 0;
   BEGIN
-    FOR i := 0 TO Text.Length(in) - 1 DO
+    FOR i := 0 TO TL(in) - 1 DO
       IF Text.GetChar(in,i) = c THEN
         INC(count);
       END;
@@ -49,9 +52,9 @@ PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL =
 
 PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
   VAR
-    res := NEW(REF ARRAY OF CHAR, Text.Length(in));
+    res := NEW(REF ARRAY OF CHAR, TL(in));
   BEGIN
-    FOR i := 0 TO Text.Length(in) - 1 DO
+    FOR i := 0 TO TL(in) - 1 DO
       WITH char = Text.GetChar(in,i) DO
         IF char = old THEN res[i] := new ELSE res[i] := char END
       END
@@ -66,8 +69,8 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   BEGIN
     WHILE FindSub(in, old, nextpos, startpos) DO
       in := Text.Sub(in, 0, nextpos) & new & 
-                 Text.Sub(in, nextpos + Text.Length(old));
-      startpos := nextpos + Text.Length(old) - Text.Length(new)
+                 Text.Sub(in, nextpos + TL(old));
+      startpos := nextpos + TL(old) - TL(new)
     END;
     RETURN in
   END Replace;
@@ -76,8 +79,8 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
 (* not a good algorithm: if necessary, code up Knuth-Morris-Pratt instead. *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
   VAR
-    inA := NEW(REF ARRAY OF CHAR, Text.Length(in));
-    subA := NEW(REF ARRAY OF CHAR, Text.Length(sub));
+    inA := NEW(REF ARRAY OF CHAR, TL(in));
+    subA := NEW(REF ARRAY OF CHAR, TL(sub));
   BEGIN
     Text.SetChars(inA^,in);
     Text.SetChars(subA^,sub);
@@ -100,7 +103,7 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
 PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
                       VAR pos: CARDINAL; start := 0): BOOLEAN =
   BEGIN
-    WHILE start < Text.Length(in) DO
+    WHILE start < TL(in) DO
       IF Text.GetChar(in, start) IN c THEN pos := start; RETURN TRUE END;
       INC(start);
     END;
@@ -113,29 +116,44 @@ PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN =
 
 PROCEDURE HavePrefix(in, prefix: TEXT): BOOLEAN =
   BEGIN
-    RETURN Text.Equal(Text.Sub(in, 0, Text.Length(prefix)), prefix);
+    RETURN TE(Text.Sub(in, 0, TL(prefix)), prefix);
   END HavePrefix;
 
 PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN =
   VAR
-    pos := Text.Length(in) - Text.Length(suffix);
+    pos := TL(in) - TL(suffix);
   BEGIN
-    RETURN pos >= 0 AND Text.Equal(Text.Sub(in, pos), suffix);
+    RETURN pos >= 0 AND TE(Text.Sub(in, pos), suffix);
   END HaveSuffix;
 
 PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT =
   BEGIN
-    <* ASSERT Text.Equal(Text.Sub(in, 0, Text.Length(prefix)),prefix) *>
-    RETURN Text.Sub(in, Text.Length(prefix));
+    <* ASSERT TE(Text.Sub(in, 0, TL(prefix)),prefix) *>
+    RETURN Text.Sub(in, TL(prefix));
   END RemovePrefix;
 
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT =
   VAR
-    pos := Text.Length(in) - Text.Length(suffix);
+    pos := TL(in) - TL(suffix);
   BEGIN
-    <* ASSERT pos >= 0 AND Text.Equal(Text.Sub(in, pos), suffix) *>
+    <* ASSERT pos >= 0 AND TE(Text.Sub(in, pos), suffix) *>
     RETURN Text.Sub(in, 0, pos);
   END RemoveSuffix;
+
+PROCEDURE RemoveSuffixes(fn : TEXT; READONLY exts : ARRAY OF TEXT) : TEXT =
+  (* remove extension, if any from list *)
+  BEGIN
+    FOR i := FIRST(exts) TO LAST(exts) DO
+      WITH e = exts[i],
+           lf = TL(fn),
+           le = TL(e) DO
+        IF lf > le AND TE(e, Text.Sub(fn, lf-le, le)) THEN
+          RETURN Text.Sub(fn,0,lf-le)
+        END
+      END
+    END;
+    RETURN fn
+  END RemoveSuffixes;
 
 PROCEDURE Pluralize(noun : TEXT; n : INTEGER; 
                     ending : TEXT; printNum : BOOLEAN) : TEXT =
@@ -180,9 +198,9 @@ PROCEDURE ShatterInts(t: TEXT; defaultBase := 10;
 
 PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT =
   VAR
-    result := NEW(REF ARRAY OF CHAR, Text.Length(in));
+    result := NEW(REF ARRAY OF CHAR, TL(in));
     len := 0;
-    last := Text.Length(in) - 1;
+    last := TL(in) - 1;
     c: CHAR;
   BEGIN
     FOR i := 0 TO last DO
@@ -205,11 +223,11 @@ PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT =
     i := 0;
   BEGIN
     LOOP
-      IF i = Text.Length(in) THEN RETURN ""; END;
+      IF i = TL(in) THEN RETURN ""; END;
       IF NOT Text.GetChar(in, i) IN remove THEN EXIT END;
       INC(i);
     END;
-    FOR j := Text.Length(in)-1 TO 0 BY -1 DO
+    FOR j := TL(in)-1 TO 0 BY -1 DO
       IF NOT Text.GetChar(in, j) IN remove THEN
         RETURN Text.Sub(in, i, j-i+1);
       END;
@@ -240,7 +258,7 @@ PROCEDURE BreakLongLines(t: TEXT; atCol := 79): TEXT =
     TRY
       LOOP
         line := Rd.GetLine(rd);
-        WHILE Text.Length(line) > atCol DO
+        WHILE TL(line) > atCol DO
           Wr.PutText(wr, Text.Sub(line, 0, atCol) & "\n");
           line := Text.Sub(line, atCol);
         END;
@@ -261,7 +279,7 @@ PROCEDURE GetLines(t: TEXT; n: INTEGER;  firstBreakLongAtCol:=79): TEXT =
       FOR i := 1 TO n DO
         pos := Text.FindChar(t, '\n', pos) + 1;
         IF pos = 0 THEN
-          pos := Text.Length(t);
+          pos := TL(t);
           EXIT;
         END;
       END;
@@ -307,7 +325,7 @@ PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL =
     res := 0;
     i := 0;
   BEGIN
-    WHILE i < Text.Length(text) DO
+    WHILE i < TL(text) DO
       i := Text.FindChar(text, what, i) + 1;
 
       IF i <= 0 THEN EXIT END;
@@ -318,7 +336,7 @@ PROCEDURE CountChars(text: TEXT; what : CHAR) : CARDINAL =
 
 PROCEDURE ToChars(text: TEXT): REF ARRAY OF CHAR =
 VAR
-  result := NEW(REF ARRAY OF CHAR, Text.Length(text));
+  result := NEW(REF ARRAY OF CHAR, TL(text));
 BEGIN
     Text.SetChars(result^, text);
     RETURN result;
@@ -326,7 +344,7 @@ END ToChars;
 
 PROCEDURE ToUpper(x : TEXT) : TEXT =
   VAR
-    l := Text.Length(x);
+    l := TL(x);
     a := NEW(REF ARRAY OF CHAR, l);
   BEGIN
     FOR i := 0 TO l-1 DO
@@ -337,7 +355,7 @@ PROCEDURE ToUpper(x : TEXT) : TEXT =
 
 PROCEDURE ToLower(x : TEXT) : TEXT =
   VAR
-    l := Text.Length(x);
+    l := TL(x);
     a := NEW(REF ARRAY OF CHAR, l);
   BEGIN
     FOR i := 0 TO l-1 DO
@@ -348,7 +366,7 @@ PROCEDURE ToLower(x : TEXT) : TEXT =
 
 PROCEDURE EqualIgnoringCase(t1, t2 : TEXT) : BOOLEAN =
   BEGIN
-    RETURN Text.Equal(ToUpper(t1),ToUpper(t2)) 
+    RETURN TE(ToUpper(t1),ToUpper(t2)) 
   END EqualIgnoringCase;
 
 BEGIN END TextUtils.

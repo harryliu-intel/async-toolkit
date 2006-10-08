@@ -32,19 +32,29 @@ PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT;
 PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
 PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
 
-(* find first occurrence of sub in in *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
+(* find first occurrence of sub in in *)
+
 PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
                       VAR pos: CARDINAL; start := 0): BOOLEAN;
 
-(* have substr? *)
 PROCEDURE HaveSub(in, sub : TEXT) : BOOLEAN;
+  (* have substr? *)
+
 PROCEDURE HavePrefix(in, prefix: TEXT): BOOLEAN;
 PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN;
-PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT;
-PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
 
-PROCEDURE InfixFormat(sep : TEXT; list : TextList.T; ignoreNulls := FALSE) : TEXT;
+PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT;
+  (* checked runtime error for prefix not to be as stated *)
+
+PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
+  (* checked runtime error for suffix not to be as stated *)
+
+PROCEDURE RemoveSuffixes(in : TEXT; READONLY suffixes : ARRAY OF TEXT):TEXT;
+  (* removes any matching suffix; do nothing if no match *)
+
+PROCEDURE InfixFormat(sep : TEXT; 
+                      list : TextList.T; ignoreNulls := FALSE) : TEXT;
 
 PROCEDURE Pluralize(noun : TEXT; count : INTEGER; 
                     ending := "s"; printNum := TRUE) : TEXT ;
