@@ -304,7 +304,7 @@ PROCEDURE Det(m : T): LONGREAL       RAISES { NotSquare } =
       BEGIN
         FOR col := 0 TO GetDim(m).cols - 1 DO
           IF col MOD 2 = 0 THEN mult := 1.0d0 ELSE mult := -1.0d0 END;
-          det := det + mult * Det(Small(m,col));
+          det := det + mult * m[0,col] * Det(Small(m,col));
         END;
         RETURN det;
       END;
