@@ -203,7 +203,18 @@ PROCEDURE Simplify(self: T) =
 
 PROCEDURE PushBack(self: T; t: TEXT) =
   BEGIN
-    self.pushback := t & self.pushback;
+    (* this is buggy if we change delimiters 
+       self.pushback := t & self.pushback;
+    *)
+    (* less efficient, but: *)
+    self.line := Text.Sub(self.line,0,self.start) & t & Text.Sub(self.line,self.start)
   END PushBack; 
 
 BEGIN END TextReader.
+
+
+
+
+
+
+
