@@ -2,6 +2,9 @@
 
 GENERIC INTERFACE Fifo(Elem);
 
+(* Copyright (c) 2005-2006, Generation Capital Ltd.  All rights reserved. *)
+(* Author: Mika Nystrom <mika@gcapltd.com> *)
+
 (* fifo of Elem.T; 
    Elem must export
    
@@ -11,6 +14,8 @@ GENERIC INTERFACE Fifo(Elem);
    and a text constant
    Elem.Brand
 *)
+
+(* ALL METHODS ARE UNMONITORED, You have to lock things yourself! *)
 
 TYPE 
   T <: Public;

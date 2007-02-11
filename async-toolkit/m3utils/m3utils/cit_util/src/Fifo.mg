@@ -2,6 +2,9 @@
 
 GENERIC MODULE Fifo(Elem);
 
+(* Copyright (c) 2005-2006, Generation Capital Ltd.  All rights reserved. *)
+(* Author: Mika Nystrom <mika@gcapltd.com> *)
+
 REVEAL
   T = Public BRANDED Brand OBJECT
     data : Rec;
