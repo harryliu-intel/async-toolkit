@@ -22,7 +22,7 @@
 (* $Id$ *)
 
 INTERFACE Debug;
-IMPORT Fmt;
+IMPORT Fmt, Wr;
 
 PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
 PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
@@ -46,6 +46,11 @@ TYPE
 PROCEDURE RegisterHook(out: OutHook; level:=0);
 PROCEDURE RegisterErrorHook(err: OutHook);
 
+(* another mechanism for changing output: AddStream.
+   This will change only the default output method; if you override it
+   using output hook above, this will be ignored *)
+PROCEDURE AddStream(newStream : Wr.T);
+
 PROCEDURE FmtAddress(p : ADDRESS; base : Fmt.Base := 16) : TEXT;
 PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;
 
@@ -62,7 +67,7 @@ PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;
 
 PROCEDURE DebugThis(this : TEXT) : BOOLEAN;
 
-TYPE Options = { PrintPID };
+TYPE Options = { PrintPID, PrintThreadID };
 
 PROCEDURE SetOptions(options : SET OF Options);
 PROCEDURE GetOptions() : SET OF Options;

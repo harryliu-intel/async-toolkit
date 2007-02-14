@@ -35,6 +35,8 @@ IMPORT Env, Scan;
 IMPORT FloatMode, Lex;
 IMPORT Fmt;
 IMPORT Process;
+IMPORT ThreadF;
+IMPORT RefList;
 
 VAR options := SET OF Options {};
 
@@ -68,6 +70,12 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
       IF triggers.member(t) THEN
         BreakHere.Please();
       END;
+    END;
+
+    IF Options.PrintThreadID IN options THEN
+      WITH threadText = "((" & Fmt.Int(ThreadF.MyId()) & ")) " DO
+        t := threadText & t
+      END
     END;
 
     IF Options.PrintPID IN options THEN
@@ -121,12 +129,19 @@ VAR
   outHookLevel:=-1;
 
 PROCEDURE DefaultOut(t: TEXT) =
+  VAR
+    p := streams;
   BEGIN
-    TRY
-      Wr.PutText(stderr, t);
-      Wr.Flush(stderr);
-    EXCEPT ELSE END;
+    WHILE p # NIL DO
+      TRY
+        Wr.PutText(p.head, t); Wr.Flush(p.head);
+      EXCEPT ELSE END;
+      p := p.tail
+    END
   END DefaultOut;
+
+PROCEDURE AddStream(wr : Wr.T) = 
+  BEGIN streams := RefList.Cons(wr, streams) END AddStream;
 
 PROCEDURE DefaultError(t: TEXT) =
   BEGIN
@@ -154,6 +169,7 @@ VAR
   level := 0;
   debugFilter := Env.Get("DEBUGFILTER")#NIL;
   triggers: TextSet.T;
+  streams := RefList.List1(stderr);
 
 BEGIN 
   VAR
