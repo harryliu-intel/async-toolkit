@@ -1,0 +1,76 @@
+/* $Id$ */
+import ("libm3")
+import ("cit_util")
+import ("set")
+
+/* THE SX ("Spreadsheet eXpression") system */
+
+interface("SXRoot")
+interface("SXClass")
+module("SX")
+interface("SXSelect")
+
+/* most of the code in SX is generic: */
+template("sxtype")
+
+generic_module("SXType")              /* base type */
+
+/* math interfaces: the use of these REQUIRES instantiation of SxFuncOps
+   with the SAME naming conventions, as well as Bool and Int versions of same.
+   
+   They are instantiated using "SxRealOps" or "SxIntOps" templates.
+
+   Example:
+
+      This is OK on its own:
+	SxType("LongReal", "LongrealType")  
+        
+      But to instantiate:
+	SxRealOps("LR", "SXLongReal")
+      The following are also req'd:
+	SxFuncOps("LR_LR", "SXLongReal", "SXLongReal")
+	SxFuncOps("LR_Int", "SXLongReal", "SXInt")
+	SxFuncOps("LR_Bool", "SXLongReal", "SXBool")
+	SxFuncOps("LR_LR", "SXLongReal", "SXLongReal")
+*/
+
+generic_interface("SXNumOps")         /* overloaded numerical ops */
+generic_implementation("SXIntOps")    /* integer-type overloaded ops */
+generic_implementation("SXRealOps")   /* real-type overloaded ops */
+generic_implementation("SXNumOps")    /* common overloaded ops */
+
+generic_module("SXFuncOps")           /* general function operations */
+
+SxType("LongReal", "LongrealType")
+SxType("Real", "RealType")
+SxType("Int", "Integer")              /* required */
+SxType("Bool", "Boolean")             /* required */
+SxType("Ref", "Refany")
+
+/* all desired unary and binary function types... */
+SxFuncOps("Int_Int", "SXInt", "SXInt")
+
+SxFuncOps("Int_Bool", "SXInt", "SXBool")
+SxFuncOps("Bool_Bool", "SXBool", "SXBool")
+
+SxFuncOps("Real_Real", "SXReal", "SXReal")
+SxFuncOps("Real_Int", "SXReal", "SXInt")
+SxFuncOps("Real_Bool", "SXReal", "SXBool")
+
+SxFuncOps("LR_LR", "SXLongReal", "SXLongReal")
+SxFuncOps("LR_Int", "SXLongReal", "SXInt")
+SxFuncOps("LR_Bool", "SXLongReal", "SXBool")
+
+Module("SXBoolOps")
+
+SxRealOps("LR", "SXLongReal")
+SxRealOps("Real", "SXReal")
+SxIntOps("Int", "SXInt")
+
+module("SXTest") /* testing code for SX stuff */
+
+library ("sx")
+
+
+
+

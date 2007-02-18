@@ -1,0 +1,196 @@
+(* $Id$ *)
+
+MODULE SX EXPORTS SX, SXSelect;
+IMPORT SXClass;
+IMPORT Thread, ThreadF;
+IMPORT Time;
+IMPORT IntSet, IntSetDef;
+IMPORT IntRefTbl;
+IMPORT Debug;
+IMPORT Fmt;
+IMPORT RefList;
+IMPORT SXRef;
+
+(* methods for garbage collecting...?  Would imply using WeakRef. *)
+
+(* 
+   XXX XXX
+
+   I'm worried about race conditions in the locking.  Some of these
+   don't matter, if the signals are delivered "eventually", but some 
+   probably are bad.  The problem is that we can go to sleep with an 
+   idea that the old value has changed, but with an actual new value
+   of the variable.  Might have to use the single global lock for
+   sleeping.  Or grab it recursively, up and down the tree.
+
+   XXX XXX
+*)
+
+REVEAL
+  T = SXClass.Private BRANDED Brand OBJECT
+    selecters : IntSet.T; (* set of thread IDs *)
+    c : Thread.Condition;
+    when : Time.T;
+    dependers : RefList.T; (* of type T *)
+    dMu : MUTEX;
+  OVERRIDES
+    depends := Depends;
+    propagate := Propagate;
+    touch := Touch;
+    init := InitT;
+    wait := WaitT;
+  END;
+
+PROCEDURE Depends(t : T; depender : T) =
+  BEGIN
+    LOCK t.dMu DO
+      t.dependers := RefList.Cons(depender,t.dependers)
+    END
+  END Depends;
+
+PROCEDURE WaitT(t : T) =
+  BEGIN Thread.Wait(t.mu,t.c) END WaitT;
+
+PROCEDURE InitT(t : T) : T =
+  BEGIN 
+    t.mu := NEW(MUTEX); t.c := NEW(Thread.Condition);
+    t.dMu := NEW(MUTEX);
+    t.dependers := NIL;
+    t.selecters := NEW(IntSetDef.T).init();
+    RETURN t 
+  END InitT;
+
+PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) = 
+  
+  PROCEDURE DoIt() = 
+    BEGIN
+      IF t.selecters.size() > 0 THEN
+        VAR
+          s := t.selecters.iterate();
+          i : INTEGER;
+          c : REFANY;
+        BEGIN
+          WHILE s.next(i) DO
+            IF threadCondTbl.get(i,c) THEN
+              Thread.Broadcast(NARROW(c,ThreadLock).c)
+            ELSE
+              Debug.Warning("No condition variable found for thread #" & 
+                Fmt.Int(i))
+            END
+          END
+        END
+      END
+    END DoIt;
+
+  VAR
+    d : RefList.T;
+  BEGIN
+
+    Thread.Broadcast(t.c);
+
+    LOCK t.dMu DO
+      d := t.dependers;
+      WHILE d # NIL DO
+        NARROW(d.head,T).touch(when,locked);
+        d := d.tail
+      END
+    END;
+
+    IF locked THEN
+      DoIt()
+    ELSE
+      LOCK t.mu DO DoIt() END
+    END
+  END Propagate;
+
+PROCEDURE Touch(t : T; when : Time.T; locked : BOOLEAN) =
+  BEGIN
+    IF t.recalc(when) THEN t.propagate(when,locked) END
+  END Touch;
+
+PROCEDURE Wait(READONLY on : ARRAY OF T) = 
+  <* FATAL Exception *>
+  BEGIN WaitE(on,NIL) END Wait;
+
+PROCEDURE WaitE(READONLY on : ARRAY OF T; 
+                except : SXRef.T) RAISES { Exception } =
+  VAR
+    r : REFANY;
+  BEGIN
+    (* set up my waiting condition *)
+    LOCK gMu DO
+      IF NOT threadCondTbl.get(ThreadF.MyId(),r) THEN
+        r := NEW(ThreadLock, tMu := NEW(MUTEX), c := NEW(Thread.Condition));
+        EVAL threadCondTbl.put(ThreadF.MyId(),r)
+      END
+    END;
+
+    IF except # NIL THEN
+      TRY
+        WITH val = except.value() DO
+          IF val # NIL THEN RAISE Exception(val) END
+        END
+      EXCEPT
+        Uninitialized => (* skip *)
+      END;
+
+      EVAL except.selecters.insert(ThreadF.MyId())
+    END;
+
+    FOR i := FIRST(on) TO LAST(on) DO
+      WITH t = on[i] DO
+        EVAL t.selecters.insert(ThreadF.MyId())
+      END
+    END;
+
+    WITH l = NARROW(r,ThreadLock) DO
+
+      (* here we need to atomically unlock all the variables we're
+         waiting on -- a kind of multi-wait *)
+      LOCK l.tMu DO 
+        (* unlock variables *)
+        FOR i := FIRST(on) TO LAST(on) DO Thread.Release(on[i].mu) END;
+        IF except # NIL THEN Thread.Release(except.mu) END;
+
+        Thread.Wait(l.tMu,l.c); 
+
+        (* lock them again *)
+        FOR i := FIRST(on) TO LAST(on) DO Thread.Acquire(on[i].mu) END;
+        IF except # NIL THEN Thread.Acquire(except.mu) END;
+      END
+    END;
+
+    (* done waiting, delete me from wait list *)
+    FOR i := FIRST(on) TO LAST(on) DO
+      WITH t = on[i] DO
+        EVAL t.selecters.delete(ThreadF.MyId())
+      END
+    END;
+
+    IF except # NIL THEN
+      EVAL except.selecters.delete(ThreadF.MyId());
+
+      TRY
+        WITH val = except.value() DO
+          IF val # NIL THEN RAISE Exception(val) END
+        END
+      EXCEPT
+        Uninitialized => (* skip *)
+      END
+    END
+  END WaitE;
+
+TYPE 
+  ThreadLock = OBJECT
+    c : Thread.Condition;
+    tMu : MUTEX;
+  END;
+
+VAR gMu := NEW(MUTEX);
+VAR threadCondTbl := NEW(IntRefTbl.Default).init(); 
+    (* holds cond vars for each thread *)
+
+BEGIN 
+  mu := NEW(MUTEX);
+END SX.
+
