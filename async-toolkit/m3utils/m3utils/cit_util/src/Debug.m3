@@ -105,6 +105,9 @@ PROCEDURE Error(t: TEXT; exit : BOOLEAN) =
     END
   END Error;
 
+PROCEDURE Check(b : BOOLEAN; msg : TEXT; exit : BOOLEAN) =
+  BEGIN IF NOT b THEN Error(msg,exit) END END Check;
+
 PROCEDURE UnNil(text : TEXT) : TEXT =
   BEGIN IF text = NIL THEN RETURN "(NIL)" ELSE RETURN text END END UnNil;
 

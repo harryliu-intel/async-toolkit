@@ -28,6 +28,11 @@ PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
 PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
 PROCEDURE Warning(t : TEXT);
 PROCEDURE Error(t : TEXT; exit := TRUE);
+
+PROCEDURE Check(b : BOOLEAN; msg : TEXT; exit := TRUE);
+  (* if b is TRUE, do nothing
+     if b is FALSE, same as Error(msg,exit) *)
+
 PROCEDURE UnNil(text : TEXT) : TEXT;
 
 (* apart from these procedures, the debug level is also set from the
