@@ -112,6 +112,8 @@ PROCEDURE Wait(READONLY on : ARRAY OF T) =
   <* FATAL Exception *>
   BEGIN WaitE(on,NIL) END Wait;
 
+PROCEDURE Wait1(on : T) = BEGIN Wait(ARRAY OF T { on }) END Wait1;
+
 PROCEDURE WaitE(READONLY on : ARRAY OF T; 
                 except : SXRef.T) RAISES { Exception } =
   VAR

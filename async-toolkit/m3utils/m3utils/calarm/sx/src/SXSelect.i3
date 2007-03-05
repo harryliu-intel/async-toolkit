@@ -5,6 +5,9 @@ IMPORT SX, SXRef;
 
 PROCEDURE Wait(READONLY on : ARRAY OF SX.T);
 (* normal Wait: returns as soon as any of the elements of on changes *)
+
+PROCEDURE Wait1(on : SX.T); 
+(* as above, for a single variable *)
   
 PROCEDURE WaitE(READONLY on : ARRAY OF SX.T; 
                 except : SXRef.T) RAISES { Exception };
