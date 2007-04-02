@@ -55,10 +55,17 @@ Table("CardCard", "Cardinal", "Cardinal")
 
 List("CardPair", "CardPair")
 
+KeyPair ("Text", "Text", "Text")
+List("TextPair", "TextPair")
+
 List("Card", "Cardinal")
 MkSet("Card", "Cardinal")
 MkSetDef("Card", "Cardinal")
 Table("CardRef", "Cardinal", "Refany")
+
+MkSet("LongReal", "LongrealType")
+MkSetDef("LongReal", "LongrealType")
+Table("LongRealRef", "LongrealType", "Refany")
 
 gmodule("Ref")
 gmodule("ArrayRef")
