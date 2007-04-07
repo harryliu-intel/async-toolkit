@@ -12,6 +12,7 @@ REVEAL
     init := Init;
     put := Put;
     get := Get;
+    peek := Peek;
     empty := Empty;
     member := Member;
     size := Size;
@@ -60,6 +61,16 @@ PROCEDURE Get(t : T) : Elem.T =
     
     RETURN rec.txt
   END Get;
+
+PROCEDURE Peek(t : T) : Elem.T =
+  VAR
+    rec := t.data.nxt;
+  BEGIN
+    (* peek at head *)
+    <* ASSERT rec # t.data *>
+    
+    RETURN rec.txt
+  END Peek;
 
 PROCEDURE Empty(t : T) : BOOLEAN =
   BEGIN RETURN t.data.nxt = t.data END Empty;

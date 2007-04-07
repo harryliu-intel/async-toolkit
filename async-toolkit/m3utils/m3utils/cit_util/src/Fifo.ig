@@ -22,16 +22,26 @@ TYPE
 
   Public = MUTEX OBJECT METHODS
     init() : T;
+    (* must be called on a new fifo; can be called to re-initialize
+       an existing fifo, too (empty it) *)
 
     put(t : Elem.T);
+    (* add new element to fifo *)
 
     get() : Elem.T;
+    (* delete first-added element from fifo, returning it *)
+
+    peek() : Elem.T;
+    (* return first-added element, without deleting it *)
 
     empty() : BOOLEAN;
+    (* return TRUE if fifo empty *)
 
     member(t : Elem.T) : BOOLEAN;
+    (* is t a member of fifo, under equality as def'd by Elem.Equal *)
 
     size() : CARDINAL;
+    (* return # of members of fifo *)
   END;
 
 CONST Brand = Elem.Brand & " Fifo";
