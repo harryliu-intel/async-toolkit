@@ -25,7 +25,7 @@ ifdef CYGWIN
     USER=mika
   endif # !DRAKKAR
 
-  M3BUILDOPTS= -F  \\cygwin\\home\\$(USER)\\t\\.top -F \\cygwin\\home\\$(USER)\\t\\parserlib\\.parsertop
+  M3BUILDOPTS= -F  \\home\\$(USER)\\t\\.top -F \\home\\$(USER)\\t\\parserlib\\.parsertop
   M3SHIPPROGRAM=/home/$(USER)/t/cygwinhacks/m3ship.sh
 
 else #### !CYGWIN => UNIX ####
