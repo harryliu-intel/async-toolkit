@@ -238,9 +238,12 @@ SharedSequence("LongReal", "LongrealType", "LongRealSeq")
 Module("LRArrayOps")
 
 if equal(TARGET,"NT386GNU") 
+  /* the following interfaces are from FreeBSD and seem to 
+     do the trick on Cygwin */
   Interface("Unix")
   Interface("Utypes")
   Interface("Usignal")
+  Interface("Utime")
 end
 
 Library("cit_util")
