@@ -240,6 +240,7 @@ Module("LRArrayOps")
 if equal(TARGET,"NT386GNU") 
   Interface("Unix")
   Interface("Utypes")
+  Interface("Usignal")
 end
 
 Library("cit_util")
