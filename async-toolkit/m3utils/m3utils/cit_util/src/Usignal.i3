@@ -154,7 +154,9 @@ VAR (*CONST*)
 
 
 (* Convert a signal number to a mask suitable for sigblock(). *)
+(*  (* no Usignal.m3 for windows... not needed yet, anyhow *)
 <*INLINE*> PROCEDURE sigmask (n: int): int;
+*)
 
 
 (*** kill(2) - send signal to a process ***)
