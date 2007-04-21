@@ -46,12 +46,14 @@ int Depth;
 typedef void (startCall)(void *stuff, const char *el);
 typedef void (endCall)(void *stuff);
 typedef void (attrCall)(void *stuff, const char *tag, const char *attr);
+typedef void (charDataCall)(void *stuff, int len, const char *data);
 
 typedef struct {
   void *stuff;
   startCall *s;
   attrCall *a;
   endCall *e;
+  charDataCall *c;
 } UD;
 
 static void XMLCALL
@@ -93,9 +95,17 @@ end(void *data, const char *el)
   Depth--;
 }
 
+static void XMLCALL
+characterdata(void *data, const char *s, int len)
+{
+  UD *m3callbacks = data;
+
+  if (m3callbacks->c) m3callbacks->c(m3callbacks->stuff, len, s);
+}
+
 int
 xmlParserMain(const char *path,
-	      void *stuff, startCall s, attrCall a, endCall e)
+	      void *stuff, startCall s, attrCall a, endCall e, charDataCall c)
 {
   FILE *ifp;
 
@@ -119,10 +129,12 @@ xmlParserMain(const char *path,
   m3callbacks->s = s;
   m3callbacks->a = a;
   m3callbacks->e = e;
+  m3callbacks->c = c;
 
   XML_SetUserData(p,m3callbacks);
 
   XML_SetElementHandler(p, start, end);
+  XML_SetCharacterDataHandler(p, characterdata);
 
   { 
     int done;

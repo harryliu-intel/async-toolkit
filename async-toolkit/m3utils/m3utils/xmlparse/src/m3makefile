@@ -11,7 +11,7 @@ import_lib ("expat", "/usr/local/lib")
 c_source("xmlParser")
 interface("xmlParser")
 
-module("XMLParse")
+Module("XMLParse")
 
 library("xmlparse")
 
