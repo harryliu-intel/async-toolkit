@@ -246,6 +246,8 @@ if equal(TARGET,"NT386GNU")
   Interface("Utime")
 end
 
+Module("FileUtils")
+
 Library("cit_util")
 
 
