@@ -93,6 +93,7 @@ PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE) =
   <* FATAL Thread.Alerted, Wr.Failure *>
   CONST 
     BackSlash = VAL(8_134, CHAR);
+    brax = TRUE;
   VAR
     wr := NEW(TextWr.T).init();
   CONST
@@ -103,8 +104,11 @@ PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE) =
         IF c IN OK THEN 
           Wr.PutChar(wr,c) 
         ELSE 
-          Wr.PutChar(wr, BackSlash);
-          Wr.PutText(wr, Fmt.F("%03s",Fmt.Int(ORD(c))))
+          IF brax THEN
+            Wr.PutText(wr, Fmt.F("[\\%03s]",Fmt.Int(ORD(c))))
+          ELSE
+            Wr.PutText(wr, Fmt.F("\\%03s",Fmt.Int(ORD(c))))
+          END
         END
       END
     END;
