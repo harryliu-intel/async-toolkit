@@ -106,9 +106,9 @@ PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE) =
           Wr.PutChar(wr, BackSlash);
           Wr.PutText(wr, Fmt.F("%03s",Fmt.Int(ORD(c))))
         END
-      END;
-      Out(TextWr.ToText(wr),minLevel,cr)
-    END
+      END
+    END;
+    Out(TextWr.ToText(wr),minLevel,cr)
   END HexOut;
 
 PROCEDURE S(t:TEXT;minLevel:CARDINAL;cr:=TRUE)=BEGIN Out(t,minLevel,cr);END S;
