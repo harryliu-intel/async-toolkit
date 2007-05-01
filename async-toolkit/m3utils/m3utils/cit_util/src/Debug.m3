@@ -29,7 +29,7 @@ IMPORT Rd;
 IMPORT BreakHere;
 IMPORT Thread;
 IMPORT OSError;
-IMPORT Wr;
+IMPORT Wr, TextWr, Text;
 FROM Stdio IMPORT stderr;
 IMPORT Env, Scan;
 IMPORT FloatMode, Lex;
@@ -88,6 +88,28 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
     END;
     outHook(t);
   END Out;
+
+PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE) =
+  <* FATAL Thread.Alerted, Wr.Failure *>
+  CONST 
+    BackSlash = VAL(8_134, CHAR);
+  VAR
+    wr := NEW(TextWr.T).init();
+  CONST
+    OK = SET OF CHAR { ' '..'~' }; (* the whole standard printable set *)
+  BEGIN
+    FOR i := 0 TO Text.Length(t)-1 DO
+      WITH c = Text.GetChar(t,i) DO
+        IF c IN OK THEN 
+          Wr.PutChar(wr,c) 
+        ELSE 
+          Wr.PutChar(wr, BackSlash);
+          Wr.PutText(wr, Fmt.F("%03s",Fmt.Int(ORD(c))))
+        END
+      END;
+      Out(TextWr.ToText(wr),minLevel,cr)
+    END
+  END HexOut;
 
 PROCEDURE S(t:TEXT;minLevel:CARDINAL;cr:=TRUE)=BEGIN Out(t,minLevel,cr);END S;
 

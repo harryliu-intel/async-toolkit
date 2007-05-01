@@ -25,6 +25,9 @@ INTERFACE Debug;
 IMPORT Fmt, Wr;
 
 PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
+PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
+(* produce output in ASCII of printable characters, hex for the rest *)
+
 PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
 PROCEDURE Warning(t : TEXT);
 PROCEDURE Error(t : TEXT; exit := TRUE);
