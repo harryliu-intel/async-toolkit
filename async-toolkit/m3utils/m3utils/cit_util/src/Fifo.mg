@@ -16,6 +16,7 @@ REVEAL
     empty := Empty;
     member := Member;
     size := Size;
+    iterate := Iterate;
   END;
 
 TYPE
@@ -97,6 +98,33 @@ PROCEDURE Size(t : T) : CARDINAL =
     END;
     RETURN i
   END Size;
+
+(**********************************************************************)
+
+REVEAL
+  Iterator = PubIterator BRANDED Brand & " Iterator" OBJECT
+    t : T;
+    p : Rec;
+  OVERRIDES
+    next := INext;
+  END;
+
+PROCEDURE INext(i : Iterator; VAR e : Elem.T) : BOOLEAN =
+  BEGIN
+    IF i.p = i.t.data THEN 
+      RETURN FALSE
+    ELSE
+      TRY 
+        e := i.p.txt;
+        RETURN TRUE
+      FINALLY
+        i.p := i.p.nxt
+      END
+    END
+  END INext;
+
+PROCEDURE Iterate(t : T) : Iterator =
+  BEGIN RETURN NEW(Iterator, t := t, p := t.data.nxt) END Iterate;
 
 BEGIN END Fifo.
   

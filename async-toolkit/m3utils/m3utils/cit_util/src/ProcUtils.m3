@@ -1,6 +1,10 @@
 (* $Id$ *)
 
 MODULE ProcUtils;
+
+(* wrapper to simplify starting and running of Unix processes under
+   Modula-3.  Authors: Karl Papadantonakis, Mika Nystrom *)
+
 IMPORT FS;
 IMPORT File;
 IMPORT FileRd;
@@ -91,7 +95,7 @@ PROCEDURE ForkReader(r: Reader): Reader =
 PROCEDURE RunText(source: TEXT;
                   stdout,stderr: Writer;
                   stdin: Reader;
-                  wd0: Pathname.T): Completion RAISES { ErrorExit } =
+                  wd0: Pathname.T): Completion =
   BEGIN RETURN Run(TextRd.New(source),stdout,stderr,stdin,wd0) END RunText;
 
 PROCEDURE Run(source: Rd.T;

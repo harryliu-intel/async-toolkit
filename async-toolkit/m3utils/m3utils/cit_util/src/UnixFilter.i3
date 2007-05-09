@@ -1,18 +1,18 @@
 (* $Id$ *)
 
 INTERFACE UnixFilter;
-IMPORT Rd, Wr, Thread, Pathname;
+IMPORT Rd, Wr, Pathname;
 
-PROCEDURE RR(cmd : TEXT; source : Rd.T; wd0 : Pathname.T := NIL) : Rd.T RAISES { Rd.Failure, 
-                                                        Thread.Alerted };
+(* I don't think these routines work properly.  They certainly do not
+   handle errors correctly (or at all) *)
+
+PROCEDURE RR(cmd : TEXT; source : Rd.T; wd0 : Pathname.T := NIL) : Rd.T;
   (* read filter *)
 
-PROCEDURE WW(cmd : TEXT; target : Wr.T; wd0 : Pathname.T := NIL) : Wr.T RAISES { Wr.Failure };
+PROCEDURE WW(cmd : TEXT; target : Wr.T; wd0 : Pathname.T := NIL) : Wr.T;
   (* write filter *)
 
-PROCEDURE RW(cmd : TEXT; source :Rd.T; target :Wr.T; wd0 : Pathname.T := NIL) RAISES { Rd.Failure,
-                                                              Wr.Failure,
-                                                              Thread.Alerted };
+PROCEDURE RW(cmd : TEXT; source :Rd.T; target :Wr.T; wd0 : Pathname.T := NIL);
   (* from rd to wr until Rd.EndOfFile *)
 
 END UnixFilter.

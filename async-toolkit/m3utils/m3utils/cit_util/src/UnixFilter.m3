@@ -1,11 +1,10 @@
 (* $Id$ *)
 
 MODULE UnixFilter;
-IMPORT Rd, Wr, Thread;
+IMPORT Rd, Wr;
 IMPORT Pathname, ProcUtils;
 
-PROCEDURE RR(cmd : TEXT; source : Rd.T; wd0 : Pathname.T) : Rd.T RAISES { Rd.Failure, 
-                                                        Thread.Alerted } =
+PROCEDURE RR(cmd : TEXT; source : Rd.T; wd0 : Pathname.T) : Rd.T =
   VAR
     rd : Rd.T;
     writer := ProcUtils.GimmeRd(rd);
@@ -15,7 +14,7 @@ PROCEDURE RR(cmd : TEXT; source : Rd.T; wd0 : Pathname.T) : Rd.T RAISES { Rd.Fai
     RETURN rd
   END RR;
 
-PROCEDURE WW(cmd : TEXT; target : Wr.T; wd0 : Pathname.T) : Wr.T RAISES { Wr.Failure } =
+PROCEDURE WW(cmd : TEXT; target : Wr.T; wd0 : Pathname.T) : Wr.T =
   VAR
     wr : Wr.T;
     reader := ProcUtils.GimmeWr(wr);
@@ -26,7 +25,7 @@ PROCEDURE WW(cmd : TEXT; target : Wr.T; wd0 : Pathname.T) : Wr.T RAISES { Wr.Fai
   END WW;
 
 PROCEDURE RW(cmd : TEXT; source :Rd.T; target :Wr.T; 
-             wd0 : Pathname.T) RAISES { Rd.Failure,Wr.Failure,Thread.Alerted }=
+             wd0 : Pathname.T) =
   VAR
     reader := ProcUtils.ReadHere(source);
     writer := ProcUtils.WriteHere(target);

@@ -2,7 +2,9 @@
 
 MODULE SlowTextCompress;
 IMPORT Rd, Wr, UnixFilter, ProcUtils;
-IMPORT TextWr, Debug;
+IMPORT TextWr, Debug, Thread;
+
+<* FATAL Thread.Alerted *>
 
 CONST Command = ARRAY Mode OF TEXT { "bzip2 -cz", "bzip2 -cd" };
 

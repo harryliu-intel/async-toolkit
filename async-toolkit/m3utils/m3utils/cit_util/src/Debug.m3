@@ -89,10 +89,15 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
     outHook(t);
   END Out;
 
-PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE) =
+PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL; cr : BOOLEAN; 
+                 toHex : PROCEDURE (t : TEXT) : TEXT) =
+    BEGIN Out(toHex(t), minLevel, cr) END HexOut;
+
+PROCEDURE ToHex(t : TEXT) : TEXT =
   <* FATAL Thread.Alerted, Wr.Failure *>
-  CONST 
-    BackSlash = VAL(8_134, CHAR);
+  <*UNUSED*> CONST 
+    BackSlash = VAL(8_134, CHAR); 
+  CONST
     brax = TRUE;
   VAR
     wr := NEW(TextWr.T).init();
@@ -112,8 +117,8 @@ PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE) =
         END
       END
     END;
-    Out(TextWr.ToText(wr),minLevel,cr)
-  END HexOut;
+    RETURN TextWr.ToText(wr)
+  END ToHex;  
 
 PROCEDURE S(t:TEXT;minLevel:CARDINAL;cr:=TRUE)=BEGIN Out(t,minLevel,cr);END S;
 

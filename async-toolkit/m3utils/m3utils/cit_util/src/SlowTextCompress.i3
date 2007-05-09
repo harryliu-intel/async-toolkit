@@ -11,3 +11,4 @@ PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) RAISES { ProcUtils.ErrorExit 
   (* read from reader, write to write, and close both in and out *)
 
 END SlowTextCompress.
+

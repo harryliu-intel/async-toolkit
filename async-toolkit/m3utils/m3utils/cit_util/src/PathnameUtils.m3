@@ -130,10 +130,4 @@ PROCEDURE OpenMakingDirs(pn: T; verbose := FALSE;
     END;
   END OpenMakingDirs;
 
-PROCEDURE IsRoot(t: T): BOOLEAN =
-  BEGIN
-    RETURN Text.FindCharR(t, '/') = 0;
-  END IsRoot;
-
-BEGIN
-END PathnameUtils.
+BEGIN END PathnameUtils.

@@ -42,6 +42,16 @@ TYPE
 
     size() : CARDINAL;
     (* return # of members of fifo *)
+
+    iterate() : Iterator;
+    (* iterate through fifo without changing it *)
+  END;
+
+TYPE 
+  Iterator <: PubIterator;
+
+  PubIterator = OBJECT METHODS
+    next(VAR e : Elem.T) : BOOLEAN;
   END;
 
 CONST Brand = Elem.Brand & " Fifo";

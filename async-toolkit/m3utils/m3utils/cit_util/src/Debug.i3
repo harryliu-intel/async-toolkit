@@ -25,8 +25,10 @@ INTERFACE Debug;
 IMPORT Fmt, Wr;
 
 PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
-PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
-(* produce output in ASCII of printable characters, hex for the rest *)
+PROCEDURE ToHex(t : TEXT) : TEXT;
+  (* routine to convert t to printable characters *)
+PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE; toHex:=ToHex);
+(* produce output in ASCII using ToHex or another readability routine *)
 
 PROCEDURE S(t: TEXT; minLevel : CARDINAL := 5; cr:=TRUE);
 PROCEDURE Warning(t : TEXT);
