@@ -1,10 +1,6 @@
 /* $Id$ */
 import ("libm3")
 import ("cit_util")
-import ("matrix")
-import ("htmltable")
-import ("set")
-import ("twslib")
 
 import_lib ("expat", "/usr/local/lib")
 
