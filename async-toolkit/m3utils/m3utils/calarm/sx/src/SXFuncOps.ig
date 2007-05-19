@@ -8,4 +8,7 @@ PROCEDURE UnaryFunc(a : Arg.T; f : F1) : Result.T;
 TYPE F2 = PROCEDURE(a, b : Arg.Base) : Result.Base;
 PROCEDURE BinaryFunc(a, b : Arg.T; f : F2) : Result.T;
 
+TYPE FN = PROCEDURE(READONLY a : ARRAY OF Arg.Base) : Result.Base;
+PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN) : Result.T;
+
 END SXFuncOps.
