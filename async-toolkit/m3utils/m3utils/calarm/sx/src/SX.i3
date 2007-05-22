@@ -20,5 +20,17 @@ VAR mu : MUTEX;
        way around, as only this mu would then be needed and the program
        would become entirely synchronous---maybe not an entirely bad idea.) *)
 
+
+TYPE Array = ARRAY OF T;
+
+PROCEDURE Lock(READONLY arr : Array);
+  (* safely lock more than one T *)
+
+PROCEDURE Unlock(READONLY arr : Array);
+  (* unlock array *)
+
+PROCEDURE Lock1(t : T);
+PROCEDURE Unlock1(t : T);
+
 END SX.
   

@@ -8,6 +8,7 @@ REVEAL SXRoot.T <: Private;
 
 TYPE
   Private = SXRoot.Public OBJECT
+    mu : MUTEX; (* only for single locking---to lock multiple, use SX.Lock *)
     updated : Time.T;
   METHODS
     depends(depender : SXRoot.T);

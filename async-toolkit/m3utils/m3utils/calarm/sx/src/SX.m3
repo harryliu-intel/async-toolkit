@@ -10,6 +10,7 @@ IMPORT Debug;
 IMPORT Fmt;
 IMPORT RefList;
 IMPORT SXRef;
+IMPORT Integer, RefanyArraySort;
 
 (* methods for garbage collecting...?  Would imply using WeakRef. *)
 
@@ -39,11 +40,11 @@ IMPORT SXRef;
    based on an id field defined in this module.  All user code would
    then have the following appearance...
 
-   AcquireLocks(onVars);
+   Lock(onVars);
    TRY
      doCalcs(onVars)
    FINALLY
-     ReleaseLocks(onVars)
+     Unlock(onVars)
    END
 
    XXX XXX
@@ -51,6 +52,7 @@ IMPORT SXRef;
 
 REVEAL
   T = SXClass.Private BRANDED Brand OBJECT
+    id : CARDINAL;
     selecters : IntSet.T; (* set of thread IDs *)
     c : Thread.Condition;
     when : Time.T;
@@ -74,8 +76,14 @@ PROCEDURE Depends(t : T; depender : T) =
 PROCEDURE WaitT(t : T) =
   BEGIN Thread.Wait(t.mu,t.c) END WaitT;
 
+VAR idMu := NEW(MUTEX);
+VAR nextId : CARDINAL := 1;
+
 PROCEDURE InitT(t : T) : T =
   BEGIN 
+    LOCK idMu DO
+      t.id := nextId; INC(nextId) 
+    END;
     t.mu := NEW(MUTEX); t.c := NEW(Thread.Condition);
     t.dMu := NEW(MUTEX);
     t.dependers := NIL;
@@ -174,13 +182,13 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
          waiting on -- a kind of multi-wait *)
       LOCK l.tMu DO 
         (* unlock variables *)
-        FOR i := FIRST(on) TO LAST(on) DO Thread.Release(on[i].mu) END;
+        Unlock(on);
         IF except # NIL THEN Thread.Release(except.mu) END;
 
         Thread.Wait(l.tMu,l.c); 
 
         (* lock them again *)
-        FOR i := FIRST(on) TO LAST(on) DO Thread.Acquire(on[i].mu) END;
+        Lock(on);
         IF except # NIL THEN Thread.Acquire(except.mu) END;
       END
     END;
@@ -214,6 +222,38 @@ TYPE
 VAR gMu := NEW(MUTEX);
 VAR threadCondTbl := NEW(IntRefTbl.Default).init(); 
     (* holds cond vars for each thread *)
+
+PROCEDURE IdCompare(a, b : REFANY) : [-1..1] = 
+  BEGIN
+    WITH an = NARROW(a, T), bn = NARROW(b, T) DO
+      RETURN Integer.Compare(an.id,bn.id) 
+    END
+  END IdCompare;
+
+PROCEDURE Lock(READONLY arr : Array) =
+  VAR
+    a := NEW(REF ARRAY OF REFANY, NUMBER(arr));
+  BEGIN
+    FOR i := FIRST(arr) TO LAST(arr) DO 
+      a[i] := arr[i]
+    END;
+    RefanyArraySort.Sort(a^,IdCompare);
+
+    FOR i := FIRST(a^) TO LAST(a^) DO
+      Thread.Acquire(NARROW(a[i],T).mu)
+    END
+  END Lock;
+
+PROCEDURE Lock1(t : T) = BEGIN Thread.Acquire(t.mu) END Lock1;
+
+PROCEDURE Unlock1(t : T) = BEGIN Thread.Release(t.mu) END Unlock1;
+
+PROCEDURE Unlock(READONLY arr : Array) =
+  BEGIN
+    FOR i := FIRST(arr) TO LAST(arr) DO
+      Thread.Release(arr[i].mu)
+    END
+  END Unlock;
 
 BEGIN 
   mu := NEW(MUTEX);

@@ -7,7 +7,7 @@ TYPE
   T <: Public;
   
   Public = OBJECT 
-    mu : MUTEX;
+
   METHODS
     init() : T;
 

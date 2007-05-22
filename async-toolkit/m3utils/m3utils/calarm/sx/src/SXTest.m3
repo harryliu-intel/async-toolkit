@@ -20,13 +20,16 @@ TYPE
 PROCEDURE PApply(cl : PClosure) : REFANY =
   <* FATAL SX.Uninitialized *>
   BEGIN
-    LOCK cl.x.mu DO
+    SX.Lock(SX.Array { cl.x });
+    TRY
       LOOP
         Debug.Out("Waiting...");
         cl.x.wait();
         Debug.Out("After wait...");
         Debug.Out("Changed: " & Fmt.LongReal(cl.x.value()))
       END
+    FINALLY
+      SX.Unlock(SX.Array { cl.x })
     END
   END PApply;
 
@@ -34,14 +37,15 @@ PROCEDURE P2Apply(cl : P2Closure) : REFANY =
   <* FATAL SX.Uninitialized *>
   BEGIN
     LOOP
-      LOCK cl.x.mu DO
-        LOCK cl.y.mu DO
-          Debug.Out("P2 Waiting...");
-          SXSelect.Wait(ARRAY OF SX.T {cl.x,cl.y});
-          Debug.Out("P2 After wait...");
-          Debug.Out("P2 Changed: " & Fmt.LongReal(cl.x.value()) & " "&
-            Fmt.LongReal(cl.y.value()))
-        END
+      SX.Lock(SX.Array { cl.x, cl.y });
+      TRY
+        Debug.Out("P2 Waiting...");
+        SXSelect.Wait(ARRAY OF SX.T {cl.x,cl.y});
+        Debug.Out("P2 After wait...");
+        Debug.Out("P2 Changed: " & Fmt.LongReal(cl.x.value()) & " "&
+          Fmt.LongReal(cl.y.value()))
+      FINALLY
+        SX.Unlock(SX.Array { cl.x, cl.y })
       END
     END
   END P2Apply;

@@ -103,4 +103,7 @@ PROCEDURE InitConst(c : Const; value : Elem.T) : Const =
 PROCEDURE BaseCompare(a, b : Base) : INTEGER =
   BEGIN RETURN Elem.Compare(a,b) END BaseCompare;
 
+PROCEDURE NewConst(v : Elem.T) : Const = 
+  BEGIN RETURN NEW(Const).init(v) END NewConst;
+
 BEGIN END SXType.

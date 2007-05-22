@@ -63,4 +63,6 @@ CONST BaseEqual = Elem.Equal;
 PROCEDURE BaseCompare(a, b : Base) : INTEGER;
   (* same as Elem.Compare, but type-wrapped *)
 
+PROCEDURE NewConst(value : Elem.T) : Const;
+
 END SXType.

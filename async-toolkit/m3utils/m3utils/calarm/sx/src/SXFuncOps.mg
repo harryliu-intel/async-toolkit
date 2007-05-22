@@ -2,8 +2,9 @@
 
 GENERIC MODULE SXFuncOps(Arg, Result);
 IMPORT SXClass;
-IMPORT Time, Thread;
+IMPORT Time;
 FROM SX IMPORT Uninitialized;
+IMPORT SX;
 
 TYPE 
   Unary = Result.T OBJECT
@@ -67,9 +68,12 @@ PROCEDURE NAryRecalc(n : NAry; when : Time.T) : BOOLEAN =
 PROCEDURE UnaryFunc(a : Arg.T; f : F1) : Result.T =
   BEGIN 
     WITH res = NEW(Unary, f := f, a := a).init() DO
-      LOCK a.mu DO
+      SX.Lock(SX.Array { a });
+      TRY
         EVAL UnaryRecalc(res, a.updated);
         a.depends(res)
+      FINALLY
+        SX.Unlock(SX.Array { a })
       END;
       RETURN res
     END
@@ -78,10 +82,13 @@ PROCEDURE UnaryFunc(a : Arg.T; f : F1) : Result.T =
 PROCEDURE BinaryFunc(a, b : Arg.T; f : F2) : Result.T =
   BEGIN 
     WITH res = NEW(Binary, f := f, a := a, b := b).init() DO
-      LOCK a.mu DO LOCK b.mu DO
+      SX.Lock( SX.Array { a, b }) ;
+      TRY
         EVAL BinaryRecalc(res, MAX(a.updated,b.updated));
         a.depends(res); b.depends(res)
-      END END;
+      FINALLY
+        SX.Unlock(SX.Array { a,b })
+      END;
       RETURN res
     END
   END BinaryFunc;
@@ -95,18 +102,23 @@ PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN) : Result.T =
                           f := f, 
                           a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a)), 
                           av := NEW(REF ARRAY OF Arg.Base, NUMBER(a))).init(),
-                      NAry) DO
+                      NAry),
+         sa = NEW(REF SX.Array, NUMBER(a))^ DO
       
       FOR i := FIRST(a) TO LAST(a) DO
+        sa[i] := a[i];
         res.a[i] := a[i]; 
-        Thread.Acquire(a[i].mu);
         max := MAX(max, a[i].updated)
       END;
 
-      EVAL NAryRecalc(res, max);
-      FOR i := FIRST(a) TO LAST(a) DO
-        a[i].depends(res);
-        Thread.Release(a[i].mu)
+      SX.Lock(sa);
+      TRY
+        EVAL NAryRecalc(res, max);
+        FOR i := FIRST(a) TO LAST(a) DO
+          a[i].depends(res);
+        END
+      FINALLY
+        SX.Unlock(sa)
       END;
 
       RETURN res
