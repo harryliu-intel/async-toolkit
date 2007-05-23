@@ -39,6 +39,7 @@ REVEAL
     next := Next;
     nextS := NextS;
     nextE := NextE;
+    nextSE := NextSE;
     init := Init;
     initFromRd := InitFromRd;
     isEmpty := IsEmpty;
@@ -54,6 +55,15 @@ PROCEDURE NextE(self : T;
     ELSE RAISE NoMore
     END
   END NextE;
+
+PROCEDURE NextSE(self : T; 
+                READONLY delims : SET OF CHAR; 
+                skipNulls : BOOLEAN) : TEXT RAISES { NoMore } = 
+  VAR res : TEXT; BEGIN 
+    IF self.nextS(delims,res,skipNulls) THEN RETURN res
+    ELSE RAISE NoMore
+    END
+  END NextSE;
 
 PROCEDURE IsEmpty(self : T) : BOOLEAN = 
   BEGIN RETURN Text.Length(self.line) <= self.start END IsEmpty;
