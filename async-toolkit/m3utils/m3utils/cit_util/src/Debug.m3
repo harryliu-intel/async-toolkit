@@ -37,6 +37,7 @@ IMPORT Fmt;
 IMPORT Process;
 IMPORT ThreadF;
 IMPORT RefList;
+IMPORT Pathname;
 
 VAR options := SET OF Options {};
 
@@ -63,6 +64,13 @@ PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
 
 VAR pidText := "(" & Fmt.Int(Process.GetMyID()) & ") ";
  
+PROCEDURE OutFilePos(file : Pathname.T; pos : CARDINAL;
+                     t: TEXT; minLevel : CARDINAL; cr:=TRUE) = 
+  BEGIN
+    (* for now... *)
+    Out(file & ":" & Fmt.Int(pos) & ": " & t,minLevel,cr)
+  END OutFilePos;
+
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
   BEGIN
     IF minLevel > level THEN RETURN END;

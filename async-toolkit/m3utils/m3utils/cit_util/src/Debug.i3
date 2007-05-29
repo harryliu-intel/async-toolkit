@@ -22,9 +22,12 @@
 (* $Id$ *)
 
 INTERFACE Debug;
-IMPORT Fmt, Wr;
+IMPORT Fmt, Wr, Pathname;
 
 PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
+PROCEDURE OutFilePos(file : Pathname.T; pos : CARDINAL; t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
+  (* used by m3texthack generated code *)
+
 PROCEDURE ToHex(t : TEXT) : TEXT;
   (* routine to convert t to printable characters *)
 PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE; toHex:=ToHex);
