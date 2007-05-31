@@ -405,8 +405,12 @@ PROCEDURE Resize(t : T; newSize : CARDINAL)
       END;
       
       (* dummy is a faithful, but bigger, copy *)
-      IF t.rd # NIL THEN Rd.Close(t.rd) END; 
-      IF t.wr # NIL THEN Wr.Close(t.wr) END;
+      IF t.rd # NIL THEN Rd.Close(t.rd); t.rd := NIL END; 
+      IF t.wr # NIL THEN Wr.Close(t.wr); t.wr := NIL END;
+
+      (* this is windows baloney, can't rename an open file *)
+      IF dummy.rd # NIL THEN Rd.Close(dummy.rd); dummy.rd := NIL END;
+      IF dummy.wr # NIL THEN Wr.Close(dummy.wr); dummy.wr := NIL END;
 
       FS.Rename(fn,t.path);
       t.dir := dummy.dir;
