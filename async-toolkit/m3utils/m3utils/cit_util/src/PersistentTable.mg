@@ -36,6 +36,8 @@ IMPORT IntInt, IntIntArraySort;
    <DLEN> denotes the total length of the directory (in records)
 
    <IndexWidth> and <DLEN> are written in the same format.
+
+   THIS CODE HAS PROBLEMS ON WINDOWS: rd and wr open at the same time.
  *)
 
 CONST IndexWidth = 10; (* large enough for 32-bit *)
