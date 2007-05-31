@@ -241,6 +241,11 @@ Module("LRArrayOps")
 
 Module("ObjectStore")
 
+generic_module("PersistentTable")
+template("persistbl")
+
+PersistentTable("IntRef", "Refany", "IntRefTbl")
+
 if equal(TARGET,"NT386GNU") 
   /* the following interfaces are from FreeBSD and seem to 
      do the trick on Cygwin */
