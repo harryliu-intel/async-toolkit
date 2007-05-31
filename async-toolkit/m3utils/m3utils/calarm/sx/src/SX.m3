@@ -147,6 +147,22 @@ PROCEDURE Wait1(on : T) = BEGIN Wait(ARRAY OF T { on }) END Wait1;
 
 PROCEDURE WaitE(READONLY on : ARRAY OF T; 
                 except : SXRef.T) RAISES { Exception } =
+
+  PROCEDURE CheckExcept() RAISES { Exception } = 
+    BEGIN
+      IF except # NIL THEN
+        TRY
+          WITH val = except.value() DO
+            IF val # NIL THEN RAISE Exception(val) END
+          END
+        EXCEPT
+          Uninitialized => (* skip *)
+        END;
+        
+        EVAL except.selecters.insert(ThreadF.MyId())
+      END
+    END CheckExcept;
+
   VAR
     r : REFANY;
   BEGIN
@@ -158,17 +174,7 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
       END
     END;
 
-    IF except # NIL THEN
-      TRY
-        WITH val = except.value() DO
-          IF val # NIL THEN RAISE Exception(val) END
-        END
-      EXCEPT
-        Uninitialized => (* skip *)
-      END;
-
-      EVAL except.selecters.insert(ThreadF.MyId())
-    END;
+    CheckExcept();
 
     FOR i := FIRST(on) TO LAST(on) DO
       WITH t = on[i] DO
@@ -200,17 +206,7 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
       END
     END;
 
-    IF except # NIL THEN
-      EVAL except.selecters.delete(ThreadF.MyId());
-
-      TRY
-        WITH val = except.value() DO
-          IF val # NIL THEN RAISE Exception(val) END
-        END
-      EXCEPT
-        Uninitialized => (* skip *)
-      END
-    END
+    CheckExcept()
   END WaitE;
 
 TYPE 
