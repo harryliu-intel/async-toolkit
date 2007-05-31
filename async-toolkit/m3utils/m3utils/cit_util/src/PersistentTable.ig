@@ -39,6 +39,9 @@ TYPE
        return an Iterator, but this one is more strongly typed *)
     
     keyEqual(READONLY a, b : INTEGER) : BOOLEAN;
+
+    close() RAISES { Rd.Failure, Wr.Failure };
+    (* you don't---STRICTLY SPEAKING---need this on Unix *)
   END;
 
 TYPE 

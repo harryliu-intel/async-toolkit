@@ -68,6 +68,7 @@ BEGIN
     |
       5 => Debug.Out("Init()"); 
       WITH sz = store.size() DO
+        store.close();
         store := NEW(ObjectStore.T).init(Path, initSize := InitSize);
         <* ASSERT store.size() = sz *>
       END

@@ -71,7 +71,14 @@ REVEAL
 
     size := Size;
     keyEqual := KeyEqual;
+    close := Close;
   END;
+
+PROCEDURE Close(t : T) RAISES { Rd.Failure, Wr.Failure } = 
+  BEGIN 
+    IF t.rd # NIL THEN Rd.Close(t.rd); t.rd := NIL END;
+    IF t.wr # NIL THEN Wr.Close(t.wr); t.wr := NIL END
+  END Close;
 
 VAR Windows := NOT FileSharing.SimultaneousReadersAndWritersAreOK;
 
