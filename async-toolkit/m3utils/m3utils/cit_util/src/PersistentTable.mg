@@ -13,6 +13,7 @@ IMPORT Pickle;
 IMPORT FS;
 IMPORT Random;
 IMPORT IntInt, IntIntArraySort;
+IMPORT FileSharing;
 
 <* FATAL Thread.Alerted *>
 
@@ -53,6 +54,9 @@ REVEAL
     dirSize : CARDINAL; (* size of directory segment in records *)
   METHODS
     resize(newSize : CARDINAL) RAISES { Wr.Failure, OSError.E, Rd.Failure, Error, Pickle.Error, Rd.EndOfFile } := Resize;
+    
+    reading() RAISES { OSError.E, Wr.Failure } := SetReading;
+    writing() RAISES { OSError.E, Rd.Failure } := SetWriting;
   OVERRIDES 
     init := Init;
     putE := PutE;
@@ -68,6 +72,24 @@ REVEAL
     size := Size;
     keyEqual := KeyEqual;
   END;
+
+VAR Windows := NOT FileSharing.SimultaneousReadersAndWritersAreOK;
+
+PROCEDURE SetReading(t : T) RAISES { OSError.E, Wr.Failure } =
+  BEGIN
+    IF t.rd = NIL THEN 
+      IF Windows AND t.wr # NIL THEN Wr.Close(t.wr); t.wr := NIL END;
+      t.rd := FileRd.Open(t.path) 
+    END
+  END SetReading;
+
+PROCEDURE SetWriting(t : T) RAISES { OSError.E, Rd.Failure } =
+  BEGIN
+    IF t.wr = NIL THEN 
+      IF Windows AND t.rd # NIL THEN Rd.Close(t.rd); t.rd := NIL END;
+      t.wr := FileWr.OpenAppend(t.path) 
+    END
+  END SetWriting;
 
 PROCEDURE KeyEqual(<*UNUSED*>t : T; READONLY a, b : INTEGER) : BOOLEAN =
   (* just the default KeyEqual; may be overridden *)
@@ -170,20 +192,22 @@ PROCEDURE Init(t : T;
     IF mode = Mode.ExistingOrCreate THEN
       TRY
         t.rd := FileRd.Open(path);
+        Rd.Close(t.rd); t.rd := NIL;
+
         t.wr := FileWr.OpenAppend(path);
+        Wr.Close(t.wr); t.wr := NIL;
 
         mode := Mode.ExistingOnly;
 
-        Rd.Close(t.rd); Wr.Close(t.wr)
       EXCEPT
         OSError.E => mode := Mode.Replace
       END
     END;
 
     IF mode = Mode.Replace THEN
-      t.wr := FileWr.Open(path); (* create new *)
-      t.rd := FileRd.Open(path);
+      t.writing();
 
+      Wr.Seek(t.wr, 0);
       (* write header and empty directory *)
       WriteInt(t.wr, IndexWidth);
       WriteInt(t.wr, t.dirSize);
@@ -194,9 +218,8 @@ PROCEDURE Init(t : T;
          t.freeMap.insert(NEW(IntPQ.Elt, priority := i))
       END
     ELSE (* ExistingOnly *)
-      t.rd := FileRd.Open(path);
-      t.wr := FileWr.OpenAppend(path);
-      
+      t.reading();
+
       WITH iw = ReadInt(t.rd) DO
         IF iw # IndexWidth THEN 
           RAISE Error("IndexWidth in compiled ObjectStore doesn't match that in archive \"" & path & "\"") 
@@ -234,12 +257,13 @@ PROCEDURE WriteData(wr : Wr.T; data : Elem.T) : CARDINAL
   END WriteData;
 
 PROCEDURE GetE(t : T; READONLY key : INTEGER; VAR value : Elem.T) : BOOLEAN
-  RAISES { Rd.Failure, Pickle.Error, Rd.EndOfFile } = 
+  RAISES { Rd.Failure, Pickle.Error, Rd.EndOfFile, Wr.Failure, OSError.E } = 
   VAR
     triple : IntTriple.T;
   BEGIN
     WITH res = t.dir.get(key,triple) DO
       IF res THEN 
+        t.reading();
         Rd.Seek(t.rd, triple.k2);
         value := Pickle.Read(t.rd)
       END;
@@ -248,7 +272,7 @@ PROCEDURE GetE(t : T; READONLY key : INTEGER; VAR value : Elem.T) : BOOLEAN
   END GetE;
 
 PROCEDURE Get(t : T; READONLY key : INTEGER; VAR value : Elem.T) : BOOLEAN =
-  <* FATAL Rd.Failure, Pickle.Error, Rd.EndOfFile *>
+  <* FATAL Rd.Failure, Pickle.Error, Rd.EndOfFile, OSError.E, Wr.Failure *>
   BEGIN RETURN t.getE(key,value) END Get;
 
 PROCEDURE PutE(t : T; 
@@ -261,6 +285,7 @@ PROCEDURE PutE(t : T;
     (* check to see if we already have it *)
     IF t.dir.get(key,triple) THEN
       (* we already had this key, just update the old record *)
+      t.writing();
       Wr.Seek(t.wr, LAST(CARDINAL));
       start := Wr.Index(t.wr);
       len := WriteData(t.wr, value);
@@ -298,6 +323,7 @@ PROCEDURE PutE(t : T;
         END;
 
         (* write data, note that if we resized, it goes to the NEW file *)
+        t.writing();
         Wr.Seek(t.wr, LAST(CARDINAL));
         start := Wr.Index(t.wr);
         len := WriteData(t.wr, value);
@@ -326,11 +352,11 @@ PROCEDURE Put(t : T; READONLY key : INTEGER;
 
 PROCEDURE Delete(t : T; READONLY key : INTEGER; 
                  VAR value : Elem.T) : BOOLEAN =
-  <* FATAL Rd.Failure, Rd.EndOfFile, Pickle.Error, Wr.Failure, Error *>
+  <* FATAL Rd.Failure, Rd.EndOfFile, Pickle.Error, Wr.Failure, Error, OSError.E *>
   BEGIN RETURN t.deleteE(key,value) END Delete;
 
 PROCEDURE DeleteE(t : T; READONLY key : INTEGER; VAR value : Elem.T) : BOOLEAN 
-  RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error, Wr.Failure, Error } =
+  RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error, Wr.Failure, Error, OSError.E } =
   VAR
     triple : IntTriple.T;
   BEGIN
@@ -342,9 +368,11 @@ PROCEDURE DeleteE(t : T; READONLY key : INTEGER; VAR value : Elem.T) : BOOLEAN
         beginning of directory     3*triple.k1*IndexWidth
         my own key                 IndexWidth 
       *)
+      t.writing();
       Wr.Seek(t.wr, DirOffset + 3 * triple.k1 * IndexWidth + IndexWidth);
       WriteInt(t.wr, 0);
 
+      t.reading();
       Rd.Seek(t.rd, triple.k2);
       value := Pickle.Read(t.rd);
 
@@ -377,7 +405,8 @@ PROCEDURE Resize(t : T; newSize : CARDINAL)
       END;
       
       (* dummy is a faithful, but bigger, copy *)
-      Rd.Close(t.rd); Wr.Close(t.wr);
+      IF t.rd # NIL THEN Rd.Close(t.rd) END; 
+      IF t.wr # NIL THEN Wr.Close(t.wr) END;
 
       FS.Rename(fn,t.path);
       t.dir := dummy.dir;
@@ -401,11 +430,11 @@ REVEAL
   END;
 
 PROCEDURE INext(iter : Iterator; VAR k : INTEGER; VAR r : Elem.T) : BOOLEAN =
-  <* FATAL Rd.Failure, Pickle.Error, Rd.EndOfFile *>
+  <* FATAL Rd.Failure, Pickle.Error, Rd.EndOfFile, OSError.E, Wr.Failure *>
   BEGIN RETURN iter.nextE(k,r) END INext;
 
 PROCEDURE INextE(iter : Iterator; VAR k : INTEGER; VAR r : Elem.T) : BOOLEAN 
-  RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error } =
+  RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error, OSError.E, Wr.Failure } =
   BEGIN 
     IF iter.i = NUMBER(iter.it^) THEN RETURN FALSE END;
     

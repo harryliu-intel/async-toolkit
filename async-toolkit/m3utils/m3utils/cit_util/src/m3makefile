@@ -244,6 +244,8 @@ template("persistbl")
 
 PersistentTable("IntRef", "Refany", "IntRefTbl")
 
+Interface("FileSharing")
+
 if equal(TARGET,"NT386GNU") 
   /* the following interfaces are from FreeBSD and seem to 
      do the trick on Cygwin */
@@ -251,6 +253,9 @@ if equal(TARGET,"NT386GNU")
   Interface("Utypes")
   Interface("Usignal")
   Interface("Utime")
+  implementation("FileSharingWindows")
+else
+  implementation("FileSharingPOSIX")
 end
 
 Module("FileUtils")

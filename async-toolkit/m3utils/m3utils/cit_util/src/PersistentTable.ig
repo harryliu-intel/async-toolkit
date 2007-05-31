@@ -23,13 +23,13 @@ TYPE
                                                               Error };
 
     getE(READONLY key : INTEGER; VAR val : Elem.T) : BOOLEAN 
-      RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error };
+      RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error, Wr.Failure, OSError.E };
 
     putE(READONLY key : INTEGER; READONLY val : Elem.T) : BOOLEAN 
       RAISES { Rd.Failure, Rd.EndOfFile, Wr.Failure, Pickle.Error, Error, OSError.E };
 
     deleteE(READONLY key : INTEGER; VAR val : Elem.T) : BOOLEAN 
-      RAISES { Rd.Failure, Rd.EndOfFile, Wr.Failure, Pickle.Error, Error };
+      RAISES { Rd.Failure, Rd.EndOfFile, Wr.Failure, Pickle.Error, Error, OSError.E };
 
     (* the standard, inherited put and get work like these but abort
        in case of difficulty *)
@@ -45,7 +45,7 @@ TYPE
   Iterator <: PubIterator;
 
   PubIterator = IntElemTbl.Iterator OBJECT METHODS
-    nextE(VAR k : INTEGER; VAR r : Elem.T) : BOOLEAN RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error };
+    nextE(VAR k : INTEGER; VAR r : Elem.T) : BOOLEAN RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error, OSError.E, Wr.Failure };
   END;
 
 TYPE Default = T; (* some clients need this so names match with std impl *)
