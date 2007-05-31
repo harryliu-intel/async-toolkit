@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE Main;
-IMPORT ObjectStore;
+IMPORT PersistentIntRefTbl AS ObjectStore;
 IMPORT Debug;
 IMPORT Fmt;
 IMPORT Random;

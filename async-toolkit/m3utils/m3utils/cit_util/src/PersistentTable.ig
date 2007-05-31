@@ -48,6 +48,8 @@ TYPE
     nextE(VAR k : INTEGER; VAR r : Elem.T) : BOOLEAN RAISES { Rd.Failure, Rd.EndOfFile, Pickle.Error };
   END;
 
+TYPE Default = T; (* some clients need this so names match with std impl *)
+
 CONST Brand = "ObjectStore";
 
 END PersistentTable.
