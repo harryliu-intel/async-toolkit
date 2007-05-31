@@ -45,6 +45,8 @@ Generic_module("KeyPair")
 template("keypair")
 KeyPair("Int", "Integer", "Integer")
 List("IntPair", "IntPair")
+Interface("IntTriple")
+Table("Int_IntTriple", "Integer", "IntTriple")
 
 KeyPair("Card", "Cardinal", "Cardinal")
 MkSet("CardPair", "CardPair")
@@ -237,6 +239,8 @@ SharedSequence("LongReal", "LongrealType", "LongRealSeq")
 
 Module("LRArrayOps")
 
+Module("ObjectStore")
+
 if equal(TARGET,"NT386GNU") 
   /* the following interfaces are from FreeBSD and seem to 
      do the trick on Cygwin */
@@ -247,6 +251,9 @@ if equal(TARGET,"NT386GNU")
 end
 
 Module("FileUtils")
+
+Module("IntInt")
+Array_sort("IntInt", "IntInt")
 
 Library("cit_util")
 

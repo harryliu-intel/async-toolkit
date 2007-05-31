@@ -17,8 +17,10 @@ Module("TokParams")
 Module("FileRdErr")
 Module("BracedCode")
 
+/* moved to cit_util
 Module("IntInt")
 Array_sort("IntInt", "IntInt")
+*/
 
 /* moved to cit_util
 table("TextTextList", "Text", "TextList")
