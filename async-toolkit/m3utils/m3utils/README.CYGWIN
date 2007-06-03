@@ -2,6 +2,19 @@
 # $Id$
 #
 
+===== Basic instructions =====
+
+If you are just building, not maintaining, just 
+
+export CYGWIN=1
+
+before compiling.
+
+If you are not building as user "mika", you will have to make some
+changes to Make.defs (please look at that file).
+
+===== From-Scratch Installation =====
+
 Installing this system on Cygwin can be a little tricky.  So far, it's
 only been tested with the old PM3 distribution from Klagenfurt (?).
 This PM3 comes on 44 "floppies" and is installed in accordance with the
