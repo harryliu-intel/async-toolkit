@@ -71,6 +71,26 @@ PROCEDURE OutFilePos(file : Pathname.T; pos : CARDINAL;
     Out(file & ":" & Fmt.Int(pos) & ": " & t,minLevel,cr)
   END OutFilePos;
 
+PROCEDURE PrependText(pre, t : TEXT) : TEXT =
+
+  PROCEDURE Find() : [-1..LAST(CARDINAL) ] =
+    BEGIN
+      found := Text.FindChar(t, '\n');
+      RETURN found
+    END Find; 
+
+  VAR
+    res := pre;
+    found : [-1..LAST(CARDINAL) ];
+  BEGIN
+    WHILE Find() # -1 DO
+      res := res & Text.Sub(t, 0, found+1);
+      t := pre & Text.Sub(t, found+1)
+    END;
+    res := res & t;
+    RETURN res
+  END PrependText;
+
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
   BEGIN
     IF minLevel > level THEN RETURN END;
@@ -82,12 +102,12 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
 
     IF Options.PrintThreadID IN options THEN
       WITH threadText = "((" & Fmt.Int(ThreadF.MyId()) & ")) " DO
-        t := threadText & t
+        t := PrependText(threadText,t)
       END
     END;
 
     IF Options.PrintPID IN options THEN
-      t := pidText & t
+      t := PrependText(pidText,t)
     END;
 
     t:=UnNil(t);
