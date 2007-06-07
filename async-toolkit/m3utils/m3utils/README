@@ -37,3 +37,10 @@ directories at the top level in order for packages using cit_util to work:
 
 # Exporting
 make install-to-async
+
+##################################
+
+I have upgraded everything to use PM3-1.1.15's libraries.  The
+reason for this is that we use parseparams all over the place, and
+it's silly to import Karl's version for this.  Also Network Objects
+are in the newer PM3 distributions.
