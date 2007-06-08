@@ -5,15 +5,15 @@ import ("set")
 
 /* THE SX ("Spreadsheet eXpression") system */
 
-interface("SXRoot")
-interface("SXClass")
-module("SX")
-interface("SXSelect")
+Interface("SXRoot")
+Interface("SXClass")
+Module("SX")
+Interface("SXSelect")
 
 /* most of the code in SX is generic: */
 template("sxtype")
 
-generic_module("SXType")              /* base type */
+Generic_module("SXType")              /* base type */
 
 /* math interfaces: the use of these REQUIRES instantiation of SxFuncOps
    with the SAME naming conventions, as well as Bool and Int versions of same.
@@ -34,12 +34,12 @@ generic_module("SXType")              /* base type */
 	SxFuncOps("LR_LR", "SXLongReal", "SXLongReal")
 */
 
-generic_interface("SXNumOps")         /* overloaded numerical ops */
-generic_implementation("SXIntOps")    /* integer-type overloaded ops */
-generic_implementation("SXRealOps")   /* real-type overloaded ops */
-generic_implementation("SXNumOps")    /* common overloaded ops */
+Generic_interface("SXNumOps")         /* overloaded numerical ops */
+Generic_implementation("SXIntOps")    /* integer-type overloaded ops */
+Generic_implementation("SXRealOps")   /* real-type overloaded ops */
+Generic_implementation("SXNumOps")    /* common overloaded ops */
 
-generic_module("SXFuncOps")           /* general function operations */
+Generic_module("SXFuncOps")           /* general function operations */
 
 SxType("LongReal", "LongrealType")
 SxType("Real", "RealType")
