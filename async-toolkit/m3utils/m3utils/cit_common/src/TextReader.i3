@@ -69,6 +69,9 @@ TYPE
     nextSE(READONLY delims : SET OF CHAR; skipNulls := FALSE) : TEXT RAISES { NoMore };
 (* same as "nextS", except failure is signalled thru an exception *)
 
+    get() : TEXT RAISES { NoMore };
+(* same as nextE(" \t\n\r", skipNulls := TRUE) *)
+
     init(line : TEXT) : T;
 (* initialize a new "TextReader.T" *)
 

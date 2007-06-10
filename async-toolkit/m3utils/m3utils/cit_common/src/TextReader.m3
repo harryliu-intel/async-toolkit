@@ -39,6 +39,7 @@ REVEAL
     next := Next;
     nextS := NextS;
     nextE := NextE;
+    get := Get;
     nextSE := NextSE;
     init := Init;
     initFromRd := InitFromRd;
@@ -47,6 +48,15 @@ REVEAL
     shatter := Shatter;
     pushBack := PushBack;
   END;
+
+PROCEDURE Get(self : T) : TEXT RAISES { NoMore } = 
+  CONST
+    Delims = SET OF CHAR { ' ', '\t', '\n', '\r' };
+  BEGIN
+    RETURN self.nextSE(Delims,TRUE)
+  END Get;
+
+              
 
 PROCEDURE NextE(self : T; 
                 delims : TEXT; skipNulls : BOOLEAN) : TEXT RAISES { NoMore } = 
