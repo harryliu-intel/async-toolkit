@@ -99,6 +99,14 @@ TYPE
    be seen if "skipNulls" is always "TRUE" and "t" always ends in a
    delimiter anyway. *)
 
+    save() : Continuation;
+    continue(from : Continuation);
+(* permits parsing and returning to an old state *)
   END;
+
+TYPE Continuation <: ROOT;
+
+CONST Brand = "TextReader";
+
 END TextReader.
     

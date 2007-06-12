@@ -27,7 +27,7 @@ IMPORT Rd, Wr, Thread, RdCopy, TextWr;
 EXCEPTION IncompatibleDelimiters;
 
 REVEAL 
-  T = Public BRANDED "TextReader" OBJECT
+  T = Public BRANDED Brand OBJECT
 
     (* the remaining text is represented as (pushback & Sub(line, start)) *)
 
@@ -47,7 +47,40 @@ REVEAL
     empty := IsEmpty;
     shatter := Shatter;
     pushBack := PushBack;
+
+    save := Save;
+    continue := Unwind;
   END;
+
+(**********************************************************************)
+
+REVEAL
+  Continuation = BRANDED Brand & " Continuation" OBJECT
+    t : T;
+    pushback, line : TEXT;
+    start : CARDINAL;
+  END;
+
+PROCEDURE Save(t : T) : Continuation =
+  BEGIN 
+    WITH c = NEW(Continuation) DO
+      c.t := t;
+      c.pushback := t.pushback;
+      c.line := t.line;
+      c.start := t.start;
+      RETURN c
+    END
+  END Save;
+
+PROCEDURE Unwind(t : T; to : Continuation) =
+  BEGIN
+    <* ASSERT t = to.t *>
+    t.pushback := to.pushback;
+    t.line := to.line;
+    t.start := to.start
+  END Unwind;
+
+(**********************************************************************)
 
 PROCEDURE Get(self : T) : TEXT RAISES { NoMore } = 
   CONST
@@ -55,8 +88,6 @@ PROCEDURE Get(self : T) : TEXT RAISES { NoMore } =
   BEGIN
     RETURN self.nextSE(Delims,TRUE)
   END Get;
-
-              
 
 PROCEDURE NextE(self : T; 
                 delims : TEXT; skipNulls : BOOLEAN) : TEXT RAISES { NoMore } = 
