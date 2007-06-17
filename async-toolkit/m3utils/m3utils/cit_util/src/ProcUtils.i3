@@ -13,10 +13,10 @@ TYPE
 
 EXCEPTION ErrorExit(Error);
 
-TYPE Error = OBJECT END; 
+TYPE Error = OBJECT error : TEXT END; 
      (* generic errors, e.g., Rd.Failure *)
 
-     OS = Error OBJECT error : TEXT END;
+     OS = Error BRANDED OBJECT END;
      (* OSError.E *)
 
      ExitCode = Error OBJECT code : INTEGER END;

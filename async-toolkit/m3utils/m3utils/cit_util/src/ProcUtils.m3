@@ -278,8 +278,8 @@ PROCEDURE Apply(self: MainClosure): REFANY =
       OSError.E(e) => 
         RETURN NEW(OS, error := FormatOSError(e))
     |
-      Rd.Failure => 
-        RETURN NEW(Error)
+      Rd.Failure(e) => 
+        RETURN NEW(Error, error := FormatOSError(e))
     END
   END Apply;
 
