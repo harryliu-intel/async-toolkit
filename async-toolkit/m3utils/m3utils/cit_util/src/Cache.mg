@@ -185,6 +185,7 @@ PROCEDURE HaveCachedData(t : T; idx : Key.T) : BOOLEAN =
 
 VAR
   adaptive : [-1..LAST(CARDINAL)] := -1;
+  adaptiveMin : [1..LAST(CARDINAL)] := 1;
   maxSize : CARDINAL;
   mu := NEW(MUTEX);
   hitRate := 1.0d0;
@@ -194,10 +195,12 @@ VAR
   running := FALSE;
   adjusted := TRUE;
   
-PROCEDURE EnableAdaptiveCaching(maxSizeS : CARDINAL; 
+PROCEDURE EnableAdaptiveCaching(maxSizeS : [1..LAST(CARDINAL)]; 
                                 targetHitRate : LONGREAL;
-                                startRatio : LONGREAL) =
+                                startRatio : LONGREAL;
+                                minSizeS : [1..LAST(CARDINAL)]) =
   BEGIN 
+    <* ASSERT maxSizeS >= minSizeS *>
     LOCK mu DO
       IF NOT running THEN 
         running := TRUE;
@@ -205,6 +208,7 @@ PROCEDURE EnableAdaptiveCaching(maxSizeS : CARDINAL;
       END;
       target := targetHitRate;
       adaptive := maxSizeS;
+      adaptiveMin := minSizeS;
       maxSize := MAX(1,
                      ROUND(FLOAT(maxSizeS,LONGREAL)*startRatio))
     END
@@ -228,7 +232,7 @@ PROCEDURE ACApply(<*UNUSED*>cl : AdaptiveClosure) : REFANY =
       LOCK mu DO
         IF adjusted THEN
           IF hitRate >= target THEN
-            maxSize := MAX(1,
+            maxSize := MAX(adaptiveMin,
                            MIN(maxSize-1,
                                ROUND(FLOAT(maxSize,LONGREAL)*0.99d0)))
           ELSE

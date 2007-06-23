@@ -36,11 +36,13 @@ TYPE
 CONST Brand = "Cache (" & Key.Brand & "," & Value.Brand & ")";
 
 (* adaptive caching is false by def. *)
-PROCEDURE EnableAdaptiveCaching(maxSize : CARDINAL; 
+PROCEDURE EnableAdaptiveCaching(maxSize : [1..LAST(CARDINAL)]; 
                                 targetHitRate := 0.95d0;
-                                startRatio := 0.33d0);
+                                startRatio := 0.33d0;
+                                minSize : [1..LAST(CARDINAL)] := 1);
   (* enable adaptive cache size (adaptive caching).
      maxSize is the max size the cache is permitted to grow to.
+     minSize is the min size permitted.
      targetHitRate is the hit rate we seek.
      startRatio is the proportion of the maxSize we start with. *)
 
