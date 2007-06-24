@@ -22,6 +22,10 @@ Generic_module("DblTable")
 
 Generic_module("BrandedSet")
 template("brandedset")
+
+template("arrayset")
+Generic_module("SetArray")
+
 Interface("RTBrand")
 Interface("Wx")
 if defined("CM3_VERSION")
@@ -63,6 +67,7 @@ List("TextPair", "TextPair")
 List("Card", "Cardinal")
 MkSet("Card", "Cardinal")
 MkSetDef("Card", "Cardinal")
+MkSetArray("Card", "Cardinal", "CardSet")
 Table("CardRef", "Cardinal", "Refany")
 
 MkSet("LongReal", "LongrealType")
