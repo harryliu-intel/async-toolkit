@@ -15,6 +15,7 @@ TYPE
 
   Public = SXRoot.T OBJECT METHODS
     value() : Elem.T RAISES { Uninitialized };
+    
     waitFor(val : Elem.T);
 
     update(newValue : Elem.T; when : Time.T) : BOOLEAN;
