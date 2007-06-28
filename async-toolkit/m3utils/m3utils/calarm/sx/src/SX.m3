@@ -84,6 +84,9 @@ PROCEDURE InitT(t : T) : T =
     LOCK idMu DO
       t.id := nextId; INC(nextId) 
     END;
+
+    Debug.Out("SX.InitT, id = " & Fmt.Int(t.id));
+
     t.mu := NEW(MUTEX); t.c := NEW(Thread.Condition);
     t.dMu := NEW(MUTEX);
     t.dependers := NIL;
@@ -176,6 +179,11 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
     CheckExcept();
 
+    (*
+    Debug.Out("Adding thread " & Fmt.Int(ThreadF.MyId()) & 
+      " to " & Fmt.Int(NUMBER(on)) & " selecter lists");
+    *)
+
     FOR i := FIRST(on) TO LAST(on) DO
       WITH t = on[i] DO
         EVAL t.selecters.insert(ThreadF.MyId())
@@ -200,6 +208,11 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
     END;
 
     (* done waiting, delete me from wait list *)
+    (*
+    Debug.Out("Deleting thread " & Fmt.Int(ThreadF.MyId()) & 
+      " from " & Fmt.Int(NUMBER(on)) & " selecter lists");
+    *)
+
     FOR i := FIRST(on) TO LAST(on) DO
       WITH t = on[i] DO
         EVAL t.selecters.delete(ThreadF.MyId())

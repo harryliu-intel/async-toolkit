@@ -17,6 +17,9 @@ TYPE
        with this method. *)
 
     destroy();  (* a freeing mechanism, might want WeakRef instead *)
+
+    uninitialize(); 
+    (* set so that value() RAISES Uninitialized *)
   END;
 
 (*

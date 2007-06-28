@@ -14,6 +14,7 @@ REVEAL
     value := GetValue;
     waitFor := WaitFor;
     numUpdates := NumUpdates;
+    uninitialize := Uninitialize;
   END;
 
   Var = PublicVar BRANDED Brand & " Var" OBJECT 
@@ -27,6 +28,8 @@ REVEAL
   OVERRIDES
     init := InitConst;
   END;
+
+PROCEDURE Uninitialize(t : T) = BEGIN t.updates := 0 END Uninitialize;
 
 PROCEDURE InitVal(var : Var; val : Elem.T) : Var =
   BEGIN
