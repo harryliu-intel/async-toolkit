@@ -38,7 +38,10 @@ IMPORT FileSharing;
 
    <IndexWidth> and <DLEN> are written in the same format.
 
-   THIS CODE HAS PROBLEMS ON WINDOWS: rd and wr open at the same time.
+   For this code to work on windows, it is essential that rd and wr
+   never be open simultaneously.  The invariant is that rd is open 
+   unless it is NIL, and similarly for wr.  Every open must be preceded
+   by a check that the other is closed, and that the open is necessary.
  *)
 
 CONST IndexWidth = 10; (* large enough for 32-bit *)
@@ -195,6 +198,12 @@ PROCEDURE Init(t : T;
     t.dir := NEW(Directory, t := t).init();
     t.freeMap := NEW(IntPQ.Default).init();
     t.dirSize := initSize;
+
+    (* N.B. init can be called at any time, therefore we have to close
+       rd and wr first, if they are open *)
+    
+    IF t.rd # NIL THEN Rd.Close(t.rd); t.rd := NIL END;
+    IF t.wr # NIL THEN Wr.Close(t.wr); t.wr := NIL END;
 
     IF mode = Mode.ExistingOrCreate THEN
       TRY
