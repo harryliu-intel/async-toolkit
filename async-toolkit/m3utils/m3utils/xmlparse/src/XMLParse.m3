@@ -8,7 +8,6 @@ IMPORT xmlParser;
 IMPORT Ctypes, M3toC, Debug, RefSeq, TextWr, Wr;
 IMPORT Text;
 IMPORT Pathname;
-IMPORT TextF, Cstring; (* this isn't REALLY what we want, to be honest *)
 
 IMPORT Thread;
 
@@ -67,20 +66,20 @@ PROCEDURE End(stuff : REFANY) =
     Debug.Out("End.",11)
   END End;
 
-PROCEDURE CopyCStoT (s: Ctypes.const_char_star; len : INTEGER): TEXT =
-  VAR t := NEW (TEXT, len+1);
-  BEGIN
-    EVAL Cstring.memcpy (ADR (t[0]), s, len);
-    t[len] := '\000';
-    RETURN t;
-  END CopyCStoT;
-
 PROCEDURE CharData(stuff : REFANY; len : CARDINAL; data : Ctypes.const_char_star) =
   <* FATAL Thread.Alerted, Wr.Failure *>
+  VAR
+    cp : REF CHAR;
   BEGIN
-    WITH u = NARROW(stuff, REF U)^,
-         t = CopyCStoT(data,len) DO
-      Wr.PutText(u.charWr,t)
+    WITH u = NARROW(stuff, REF U)^ DO
+      VAR x := LOOPHOLE(data,ADDRESS); BEGIN
+        WHILE x < data + len DO
+          cp := LOOPHOLE(x,REF CHAR);
+          Wr.PutChar(u.charWr,cp^);
+          INC(x)
+        END
+      END; 
+      (*Wr.PutChar(u.charWr, '\000')*)
     END
   END CharData;
 
@@ -90,8 +89,13 @@ PROCEDURE DoIt(p : Pathname.T) : T =
   BEGIN
     ru^ := NIL;
 
-    EVAL xmlParser.xmlParserMain(M3toC.TtoS(p),
-             ru, Start, AttrP, End, CharData);
+    WITH s = M3toC.CopyTtoS(p) DO
+      TRY
+        EVAL xmlParser.xmlParserMain(s, ru, Start, AttrP, End, CharData)
+      FINALLY
+        M3toC.FreeCopiedS(s)
+      END
+    END;
 
     RETURN ru^
   END DoIt;
