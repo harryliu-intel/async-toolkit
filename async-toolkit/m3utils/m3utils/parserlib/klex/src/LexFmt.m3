@@ -142,6 +142,21 @@ PROCEDURE FmtTrans(trans: DFATrans.T): TEXT =
 
 TYPE
   TableKind = {First, States, Trans};
+
+PROCEDURE FmtCharCmt(c : CHAR) : TEXT = 
+  VAR res := "(* "; BEGIN
+    IF ORD(c) >= 32 AND ORD(c) <= 126 THEN
+      res := res & "'" & Text.FromChar(c) & "'"
+    ELSIF c = '\n' THEN
+      res := res & "'\\n'"
+    ELSIF c = '\t' THEN
+      res := res & "'\\t'"
+    ELSIF c = '\r' THEN
+      res := res & "'\\r'"
+    END;
+    RETURN res & " *)"
+  END FmtCharCmt;
+
 PROCEDURE FmtTable(self: T; kind: TableKind): TEXT =
   CONST
     lmargin = "    ";
@@ -169,7 +184,7 @@ PROCEDURE FmtTable(self: T; kind: TableKind): TEXT =
     CASE kind OF
     | TableKind.First =>
       FOR i := FIRST(CHAR) TO LAST(CHAR) DO
-        PutEntry(Fmt.Int(ORD(dfa.first[i])));
+        PutEntry(FmtCharCmt(i)& " " & Fmt.Int(ORD(dfa.first[i])));
       END;
     | TableKind.States =>
       FOR i := 1 TO dfa.numStates DO
