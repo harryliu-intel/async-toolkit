@@ -62,6 +62,8 @@ Table("CardCard", "Cardinal", "Cardinal")
 List("CardPair", "CardPair")
 
 KeyPair ("Text", "Text", "Text")
+KeyPair ("LongReal", "LongrealType", "LongrealType")
+
 List("TextPair", "TextPair")
 
 List("Card", "Cardinal")
@@ -269,6 +271,8 @@ Module("IntInt")
 Array_sort("IntInt", "IntInt")
 
 Module("AL")
+Module("LineMatcher")
+Module("StepFunction")
 
 Library("cit_util")
 
