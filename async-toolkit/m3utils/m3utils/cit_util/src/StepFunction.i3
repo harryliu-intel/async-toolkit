@@ -39,8 +39,6 @@ PROCEDURE ScalarMul(a : LONGREAL; b : T) : T;   (* ab *)
 PROCEDURE One(from := FIRST(LONGREAL); (* support *)
               to := LAST(LONGREAL)) : T;        (* 1 *)
 
-PROCEDURE ShiftSteps(a : T; by : LONGREAL) : T;
-
 TYPE Func = PROCEDURE(a : LONGREAL) : LONGREAL;
 
 PROCEDURE G(f : Func; b : T) : T;               (* f(b) *)
@@ -61,5 +59,14 @@ TYPE
     init() : Default;
     add(x, y : LONGREAL);
   END;
+
+
+(**********************************************************************)
+(* special operations *)
+
+PROCEDURE ShiftSteps(a : T; by : LONGREAL) : T;
+
+PROCEDURE Project(a : T; on : T) : T;
+  (* project a on only the points also in on *)
 
 END StepFunction.

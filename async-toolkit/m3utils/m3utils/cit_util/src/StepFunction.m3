@@ -303,6 +303,21 @@ PROCEDURE ShiftSteps(a : T; by : LONGREAL) : T =
     WHILE iter.next(x) DO res.add(x+by,a.eval(x)) END;
     RETURN res
   END ShiftSteps;
-    
+
+PROCEDURE Project(a, on : T) : T =
+  <*FATAL DomainError*>
+  VAR
+    res := NEW(Default).init();
+    iter := on.iterateSteps();
+    x : LONGREAL;
+  BEGIN
+    WHILE iter.next(x) DO
+      IF x >= a.domain().k1 AND x <= a.domain().k2 THEN
+        res.add(x,a.eval(x))
+      END
+    END;
+    RETURN res
+  END Project;
+
 BEGIN END StepFunction.
 
