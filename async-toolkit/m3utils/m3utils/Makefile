@@ -41,6 +41,9 @@
 # Phase IIb.  Target "regress"
 # 3. REGSUBS      --   Modula-3 programs
 #
+# Phase IIc.  Target "regressfix"
+# 3. fix REGSUBS  --   Modula-3 programs
+#
 # Phase III.  Target "all"
 # 5. COMMONDIRS   --   C libraries
 # 6. SUBDIRS      --   C programs
@@ -100,6 +103,7 @@ BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dc
 
 std: .top ships m3subs
 regress: std regsubs
+regressfix: fix regress
 withlinks: std .bindir browserexps binlinks
 all: withlinks commons subs
 
@@ -211,6 +215,7 @@ cleansubs:
 		cd $$s; $(MAKE) clean; cd .. ;  \
 	done
 
-
+fix:
+	cd calarm/fix/gen/src; ./gen.sh
 
 # this is the end of the Makefile
