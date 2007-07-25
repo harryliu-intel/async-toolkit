@@ -23,6 +23,7 @@ MODULE TextReader;
 IMPORT Text, TextList;
 (*IMPORT Debug,Fmt;*)
 IMPORT Rd, Wr, Thread, RdCopy, TextWr;
+IMPORT FloatMode, Lex, Scan;
 
 EXCEPTION IncompatibleDelimiters;
 
@@ -40,6 +41,9 @@ REVEAL
     nextS := NextS;
     nextE := NextE;
     get := Get;
+    getLR := GetLR;
+    getInt := GetInt;
+    getCard := GetCard;
     nextSE := NextSE;
     init := Init;
     initFromRd := InitFromRd;
@@ -260,6 +264,26 @@ PROCEDURE PushBack(self: T; t: TEXT) =
     (* less efficient, but: *)
     self.line := Text.Sub(self.line,0,self.start) & t & Text.Sub(self.line,self.start)
   END PushBack; 
+
+(**********************************************************************)
+
+PROCEDURE GetLR(t : T) : LONGREAL RAISES { NoMore, Lex.Error, FloatMode.Trap }=
+  BEGIN RETURN Scan.LongReal(t.get()) END GetLR;
+
+PROCEDURE GetInt(t : T) : INTEGER
+  RAISES { NoMore, Lex.Error, FloatMode.Trap }=
+  BEGIN RETURN Scan.Int(t.get()) END GetInt;
+
+PROCEDURE GetCard(t : T) : CARDINAL 
+  RAISES { NoMore, Lex.Error, FloatMode.Trap }=
+  BEGIN 
+    WITH res = Scan.Int(t.get()) DO
+      IF res < FIRST(CARDINAL) OR res > LAST(CARDINAL) THEN
+        RAISE Lex.Error
+      END;
+      RETURN res
+    END
+  END GetCard;
 
 BEGIN END TextReader.
 

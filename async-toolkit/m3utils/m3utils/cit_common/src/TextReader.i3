@@ -22,6 +22,7 @@
 INTERFACE TextReader;
 IMPORT TextList, Rd;
 IMPORT Thread;
+IMPORT FloatMode, Lex;
 
 (* Think ``strtok''. A "TextReader.T" is initialized with 
 |  txtRd := NEW(TextReader.T).init(string);
@@ -71,6 +72,10 @@ TYPE
 
     get() : TEXT RAISES { NoMore };
 (* same as nextE(" \t\n\r", skipNulls := TRUE) *)
+
+    getLR() : LONGREAL RAISES { NoMore, Lex.Error, FloatMode.Trap };
+    getInt() : INTEGER RAISES { NoMore, Lex.Error, FloatMode.Trap };
+    getCard() : CARDINAL RAISES { NoMore, Lex.Error, FloatMode.Trap };
 
     init(line : TEXT) : T;
 (* initialize a new "TextReader.T" *)
