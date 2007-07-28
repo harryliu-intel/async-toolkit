@@ -48,6 +48,12 @@ under DOS and then link to it from within the Cygwin hierarchy.
 
 Therefore:
 
+Move the users' home directories to 
+
+C:\home
+
+and make the links as follows:
+
     Cygwin link                                DOS equivalent
  /home -> /cygdrive/c/home                 C:\cygwin\home -> C:\home
  
@@ -56,3 +62,6 @@ etc.
 The filenames are still occasionally polluted by DOS things like
 backslashes and drive letters.  The scripts in cygwinhacks should take
 care of most of the remaining problems of this sort.
+
+I am not sure this system can be made to work if your system disk
+is called anything other than C:.  Best not to try.
