@@ -1,13 +1,13 @@
 #
 # Copyright (c) 1999-2006 California Institute of Technology
+# Copyright (c) 2006-2007 Generation Capital, Ltd.
 # All rights reserved.
-# Department of Computer Science
-# Pasadena, CA 91125, U.S.A.
 #
 # Permission to use, copy, modify, and distribute this software
 # and its documentation for any purpose and without fee is hereby
 # granted, provided that the above copyright notice appear in all
-# copies. The California Institute of Technology makes no representations
+# copies. The California Institute of Technology and 
+# Generation Capital, Ltd. make no representations
 # about the suitability of this software for any purpose. It is
 # provided "as is" without express or implied warranty. Export of this
 # software outside of the United States of America may require an
