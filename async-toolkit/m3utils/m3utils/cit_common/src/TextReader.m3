@@ -42,8 +42,10 @@ REVEAL
     nextE := NextE;
     get := Get;
     getLR := GetLR;
+    getLongReal := GetLR;
     getInt := GetInt;
     getCard := GetCard;
+    getBool := GetBool;
     nextSE := NextSE;
     init := Init;
     initFromRd := InitFromRd;
@@ -273,6 +275,10 @@ PROCEDURE GetLR(t : T) : LONGREAL RAISES { NoMore, Lex.Error, FloatMode.Trap }=
 PROCEDURE GetInt(t : T) : INTEGER
   RAISES { NoMore, Lex.Error, FloatMode.Trap }=
   BEGIN RETURN Scan.Int(t.get()) END GetInt;
+
+PROCEDURE GetBool(t : T) : BOOLEAN
+  RAISES { NoMore, Lex.Error } =
+  BEGIN RETURN Scan.Bool(t.get()) END GetBool;
 
 PROCEDURE GetCard(t : T) : CARDINAL 
   RAISES { NoMore, Lex.Error, FloatMode.Trap }=

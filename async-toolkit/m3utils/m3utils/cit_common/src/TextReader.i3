@@ -74,8 +74,10 @@ TYPE
 (* same as nextE(" \t\n\r", skipNulls := TRUE) *)
 
     getLR() : LONGREAL RAISES { NoMore, Lex.Error, FloatMode.Trap };
+    getLongReal() : LONGREAL RAISES { NoMore, Lex.Error, FloatMode.Trap };
     getInt() : INTEGER RAISES { NoMore, Lex.Error, FloatMode.Trap };
     getCard() : CARDINAL RAISES { NoMore, Lex.Error, FloatMode.Trap };
+    getBool() : BOOLEAN RAISES { NoMore, Lex.Error };
 
     init(line : TEXT) : T;
 (* initialize a new "TextReader.T" *)
