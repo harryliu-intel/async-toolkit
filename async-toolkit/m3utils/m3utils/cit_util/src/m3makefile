@@ -265,6 +265,8 @@ else
   implementation("FileSharingPOSIX")
 end
 
+Interface("UtimeR") /* re-entrant "_r" routines in Utime */
+
 Module("FileUtils")
 
 Module("IntInt")
