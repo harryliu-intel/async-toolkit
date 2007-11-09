@@ -261,9 +261,16 @@ if equal(TARGET,"NT386GNU")
   Interface("Usignal")
   Interface("Utime")
   implementation("FileSharingWindows")
+  implementation("SysPerfWindows")
 else
   implementation("FileSharingPOSIX")
+  implementation("SysPerf")
+  interface("c_SysPerf")
+  c_source("getloadavg_glue")
+  c_source("diskAvail")
 end
+
+Interface("SysPerf")
 
 Interface("UtimeR") /* re-entrant "_r" routines in Utime */
 
