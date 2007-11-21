@@ -46,6 +46,7 @@ SxType("Real", "RealType")
 SxType("Int", "Integer")              /* required */
 SxType("Bool", "Boolean")             /* required */
 SxType("Ref", "Refany")
+SxType("Text", "Text")
 
 /* all desired unary and binary function types... */
 SxFuncOps("Int_Int", "SXInt", "SXInt")
