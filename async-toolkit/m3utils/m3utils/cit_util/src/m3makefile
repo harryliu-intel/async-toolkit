@@ -1,4 +1,5 @@
 /* $Id$ */
+import ("netobj")
 import("cit_common")
 import("set")
 template("texthack")
@@ -282,6 +283,8 @@ Array_sort("IntInt", "IntInt")
 Module("AL")
 Module("LineMatcher")
 Module("StepFunction")
+
+Module("TCPMaker")
 
 Library("cit_util")
 
