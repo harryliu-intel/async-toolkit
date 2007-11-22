@@ -67,3 +67,4 @@ PROCEDURE BaseCompare(a, b : Base) : INTEGER;
 PROCEDURE NewConst(value : Elem.T) : Const;
 
 END SXType.
+
