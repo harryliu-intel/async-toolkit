@@ -72,5 +72,12 @@ PROCEDURE GE(a, b : Elem.T) : SXBool.T =
 PROCEDURE LE(a, b : Elem.T) : SXBool.T =
   BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, LEB) END LE;
 
+(**********************************************************************)
+
+PROCEDURE AbsB(a : Elem.Base) : Elem.Base =
+  BEGIN RETURN ABS(a) END AbsB;
+
+PROCEDURE Abs(a : Elem.T) : Elem.T =
+  BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, AbsB) END Abs;
 
 BEGIN END SXNumOps.

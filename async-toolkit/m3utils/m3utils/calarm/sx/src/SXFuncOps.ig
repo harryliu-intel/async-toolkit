@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 GENERIC INTERFACE SXFuncOps(Arg, Result);
+IMPORT SXInt;
 
 TYPE F1 = PROCEDURE(a : Arg.Base) : Result.Base;
 PROCEDURE UnaryFunc(a : Arg.T; f : F1) : Result.T;
@@ -10,5 +11,10 @@ PROCEDURE BinaryFunc(a, b : Arg.T; f : F2) : Result.T;
 
 TYPE FN = PROCEDURE(READONLY a : ARRAY OF Arg.Base) : Result.Base;
 PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN) : Result.T;
+
+TYPE FI = PROCEDURE(i : INTEGER;
+                    READONLY a : ARRAY OF Arg.Base) : Result.Base;
+PROCEDURE IAryFunc(i : SXInt.T;
+                   READONLY a : ARRAY OF Arg.T; f : FI) : Result.T;
 
 END SXFuncOps.

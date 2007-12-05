@@ -40,6 +40,7 @@ Generic_implementation("SXRealOps")   /* real-type overloaded ops */
 Generic_implementation("SXNumOps")    /* common overloaded ops */
 
 Generic_module("SXFuncOps")           /* general function operations */
+Generic_module("SXGenOps")            /* very generic stuff */
 
 SxType("LongReal", "LongrealType")
 SxType("Real", "RealType")
@@ -47,6 +48,13 @@ SxType("Int", "Integer")              /* required */
 SxType("Bool", "Boolean")             /* required */
 SxType("Ref", "Refany")
 SxType("Text", "Text")
+
+SxGenOps2("LongReal","SXLongReal","SXLR_LRFuncOps")
+SxGenOps("Real","SXReal")
+SxGenOps("Int","SXInt")
+SxGenOps("Bool","SXBool")
+SxGenOps("Ref","SXRef")
+SxGenOps("Text","SXText")
 
 /* all desired unary and binary function types... */
 SxFuncOps("Int_Int", "SXInt", "SXInt")
@@ -61,6 +69,12 @@ SxFuncOps("Real_Bool", "SXReal", "SXBool")
 SxFuncOps("LR_LR", "SXLongReal", "SXLongReal")
 SxFuncOps("LR_Int", "SXLongReal", "SXInt")
 SxFuncOps("LR_Bool", "SXLongReal", "SXBool")
+
+SxFuncOps("Ref_Ref", "SXRef", "SXRef")
+SxFuncOps("Text_Text", "SXText", "SXText")
+
+/* Bool_IntOps required for SXGenOps */
+SxFuncOps("Bool_Int", "SXBool", "SXInt")
 
 Module("SXBoolOps")
 

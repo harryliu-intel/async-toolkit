@@ -3,6 +3,8 @@
 GENERIC INTERFACE SXNumOps(Elem);
 IMPORT SXBool, SXInt;
 
+PROCEDURE Abs(a : Elem.T) : Elem.T;
+
 PROCEDURE Times(a, b : Elem.T) : Elem.T;
 PROCEDURE Plus(a, b : Elem.T) : Elem.T;
 PROCEDURE Minus(a, b : Elem.T) : Elem.T;

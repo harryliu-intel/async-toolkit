@@ -5,6 +5,7 @@ IMPORT SXClass;
 IMPORT Time;
 FROM SX IMPORT Uninitialized;
 IMPORT SX;
+IMPORT SXInt;
 
 TYPE 
   Unary = Result.T OBJECT
@@ -28,6 +29,16 @@ TYPE
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := NAryRecalc;
+  END;
+
+  IAry = Result.T OBJECT
+    mu : MUTEX;
+    f : FI;
+    i : SXInt.T;
+    a : REF ARRAY OF Arg.T;
+    av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
+  OVERRIDES
+    recalc := IAryRecalc;
   END;
 
 PROCEDURE UnaryRecalc(u : Unary; when : Time.T) : BOOLEAN =
@@ -62,6 +73,21 @@ PROCEDURE NAryRecalc(n : NAry; when : Time.T) : BOOLEAN =
       Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
     END
   END NAryRecalc;      
+
+PROCEDURE IAryRecalc(n : IAry; when : Time.T) : BOOLEAN =
+  BEGIN
+    TRY
+      (* prepare av *)
+      LOCK n.mu DO
+        FOR i := FIRST(n.a^) TO LAST(n.a^) DO
+          n.av[i] := n.a[i].value()
+        END;
+        RETURN n.update(n.f(n.i.value(),n.av^),when)
+      END
+    EXCEPT
+      Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
+    END
+  END IAryRecalc;      
 
 (**********************************************************************)
 
@@ -124,5 +150,40 @@ PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN) : Result.T =
       RETURN res
     END
   END NAryFunc;
+
+PROCEDURE IAryFunc(int : SXInt.T;
+                   READONLY a : ARRAY OF Arg.T; f : FI) : Result.T =
+  VAR 
+    max := FIRST(Time.T);
+  BEGIN 
+    WITH res = NARROW(NEW(IAry, 
+                          mu := NEW(MUTEX),
+                          i := int,
+                          f := f, 
+                          a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a)), 
+                          av := NEW(REF ARRAY OF Arg.Base, NUMBER(a))).init(),
+                      IAry),
+         sa = NEW(REF SX.Array, NUMBER(a)+1)^ DO
+      
+      FOR i := FIRST(a) TO LAST(a) DO
+        sa[i] := a[i];
+        res.a[i] := a[i]; 
+        max := MAX(max, a[i].updated)
+      END;
+      sa[LAST(sa)] := int;
+
+      SX.Lock(sa);
+      TRY
+        EVAL IAryRecalc(res, max);
+        FOR i := FIRST(a) TO LAST(a) DO
+          a[i].depends(res);
+        END
+      FINALLY
+        SX.Unlock(sa)
+      END;
+
+      RETURN res
+    END
+  END IAryFunc;
 
 BEGIN END SXFuncOps.

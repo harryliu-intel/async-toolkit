@@ -88,3 +88,41 @@ readonly proc sxFuncOps (nm, arg, result) is
 	_sxFuncOps(nm, arg, result, HIDDEN)
 end
 
+/**********************************************************************/
+
+readonly proc _sxGenOps (nm, elem, vis) is
+        local meme = "SX" & nm & "_" & nm & "FuncOps" 
+
+	build_generic_intf("SX" & nm & "GenOps", "SXGenOps", [elem], vis)
+	build_generic_impl("SX" & nm & "GenOps", "SXGenOps", [elem, meme])
+end
+
+readonly proc SxGenOps (nm, arg) is
+	_sxGenOps(nm, arg, VISIBLE)
+end
+
+readonly proc sxGenOps (nm, arg) is
+	_sxGenOps(nm, arg, HIDDEN)
+end
+
+readonly proc _sxGenOps2 (nm, elem, meme, vis) is
+	build_generic_intf("SX" & nm & "GenOps", "SXGenOps", [elem], vis)
+	build_generic_impl("SX" & nm & "GenOps", "SXGenOps", [elem, meme])
+end
+
+readonly proc SxGenOps2 (nm, arg, meme) is
+	_sxGenOps2(nm, arg, meme, VISIBLE)
+end
+
+readonly proc sxGenOps2 (nm, arg, meme) is
+	_sxGenOps2(nm, arg, meme, HIDDEN)
+end
+
+
+
+
+
+
+
+
+
