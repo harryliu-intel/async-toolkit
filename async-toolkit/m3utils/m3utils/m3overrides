@@ -102,11 +102,15 @@ override("commandrw", TOP)
 override("m3curses", TOP)
 override("xmlparse", TOP)
 override("gnuplotter", TOP & "/calarm/anova")
+
+% FIX stuff...
+override("fixcommon", TOP & "/calarm/fix")
 override("fix40", TOP & "/calarm/fix")
 override("fix41", TOP & "/calarm/fix")
 override("fix42", TOP & "/calarm/fix")
 override("fix43", TOP & "/calarm/fix")
 override("fix44", TOP & "/calarm/fix")
+
 %override("testtrade2", TOP & "/calarm/twslib")  % broken up into the following libraries...
 override("twslogger", TOP & "/calarm/twslib")
 override("inventory", TOP & "/calarm/twslib/testtrade2")

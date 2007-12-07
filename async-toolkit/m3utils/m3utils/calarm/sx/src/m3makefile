@@ -49,7 +49,7 @@ SxType("Bool", "Boolean")             /* required */
 SxType("Ref", "Refany")
 SxType("Text", "Text")
 
-SxGenOps2("LongReal","SXLongReal","SXLR_LRFuncOps")
+SxGenOps2("LR","SXLongReal","SXLR_LRFuncOps")
 SxGenOps("Real","SXReal")
 SxGenOps("Int","SXInt")
 SxGenOps("Bool","SXBool")
