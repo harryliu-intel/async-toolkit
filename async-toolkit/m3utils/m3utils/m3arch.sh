@@ -1,9 +1,13 @@
 #!/bin/sh
+#
+# $Id$
+#
 UNAME=uname
 TR=tr
 
 OS=`${UNAME} -s`
 PROCESSOR=`${UNAME} -m`
+PROCESSOR2=`${UNAME} -p`
 # FreeBSD Specific Assumptions at work
 VERSION=`${UNAME} -r`
 MAJORNUM=`echo $VERSION | awk 'BEGIN {FS=""} {print $1}'`
@@ -17,6 +21,10 @@ if [  "x$OS" = "xFreeBSD" ]; then
       M3ARCH="FreeBSD4"
     fi
   fi
+elif [ "x$OS$PROCESSOR2" = "xDarwini386" ]; then
+  M3ARCH="I386_DARWIN"
+elif [ "x$OS$PROCESSOR2" = "xDarwinpowerpc" ]; then
+  M3ARCH="PPC_DARWIN"
 elif [ "x$OS" = "xLinux" ]; then
   M3ARCH="LINUXLIBC6"
 else
