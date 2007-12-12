@@ -249,7 +249,10 @@ PROCEDURE Lock(READONLY arr : Array) =
     RefanyArraySort.Sort(a^,IdCompare);
 
     FOR i := FIRST(a^) TO LAST(a^) DO
-      Thread.Acquire(NARROW(a[i],T).mu)
+      (* allow specifying same var multiple times *)
+      IF i = FIRST(a^) OR a[i] # a[i-1] THEN
+        Thread.Acquire(NARROW(a[i],T).mu)
+      END
     END
   END Lock;
 
@@ -260,7 +263,10 @@ PROCEDURE Unlock1(t : T) = BEGIN Thread.Release(t.mu) END Unlock1;
 PROCEDURE Unlock(READONLY arr : Array) =
   BEGIN
     FOR i := FIRST(arr) TO LAST(arr) DO
-      Thread.Release(arr[i].mu)
+      (* allow specifying same var multiple times *)
+      IF i = FIRST(arr) OR arr[i] # arr[i-1] THEN
+        Thread.Release(arr[i].mu)
+      END
     END
   END Unlock;
 
