@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <strings.h>
 #include "defs.h"
 #include "mymalloc.h"
 
