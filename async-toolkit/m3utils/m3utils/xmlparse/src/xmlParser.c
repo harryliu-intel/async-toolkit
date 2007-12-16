@@ -23,7 +23,13 @@
 
 
 #include <stdio.h>
-#include "/usr/local/include/expat.h"
+
+/* linux sticks just about EVERYTHING in /usr (not /usr/local like BSD) */
+#ifdef linux
+# include <expat.h>
+#else
+# include "/usr/local/include/expat.h"
+#endif
 
 #define DEBUG 0
 
