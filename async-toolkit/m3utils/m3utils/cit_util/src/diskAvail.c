@@ -1,3 +1,7 @@
+#ifdef linux
+# include <sys/statfs.h>
+#endif
+
 #include <sys/param.h>
 #include <sys/mount.h>
 
