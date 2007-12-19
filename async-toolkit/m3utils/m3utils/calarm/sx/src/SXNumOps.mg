@@ -80,4 +80,10 @@ PROCEDURE AbsB(a : Elem.Base) : Elem.Base =
 PROCEDURE Abs(a : Elem.T) : Elem.T =
   BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, AbsB) END Abs;
 
+PROCEDURE UMinusB(a : Elem.Base) : Elem.Base =
+  BEGIN RETURN -a END UMinusB;
+
+PROCEDURE UMinus(a : Elem.T) : Elem.T =
+  BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, UMinusB) END UMinus;
+
 BEGIN END SXNumOps.
