@@ -8,21 +8,30 @@ IMPORT SX;
 IMPORT SXInt;
 
 TYPE 
-  Unary = Result.T OBJECT
+  Unary = OpResult OBJECT
     f : F1;
     a : Arg.T;
   OVERRIDES
     recalc := UnaryRecalc;
   END;
 
-  Binary = Result.T OBJECT
+  Binary = OpResult OBJECT
     f : F2;
     a, b : Arg.T;
   OVERRIDES
     recalc := BinaryRecalc;
   END;
 
-  NAry = Result.T OBJECT
+  BinaryShortCircuit = OpResult OBJECT
+    f : F2;
+    a, b : Arg.T;
+    ssOp : Arg.Base;
+    ssRes : Result.Base;
+  OVERRIDES
+    recalc := BinarySSRecalc;
+  END;
+
+  NAry = OpResult OBJECT
     mu : MUTEX;
     f : FN;
     a : REF ARRAY OF Arg.T;
@@ -31,7 +40,7 @@ TYPE
     recalc := NAryRecalc;
   END;
 
-  IAry = Result.T OBJECT
+  IAry = OpResult OBJECT
     mu : MUTEX;
     f : FI;
     i : SXInt.T;
@@ -58,6 +67,27 @@ PROCEDURE BinaryRecalc(b : Binary; when : Time.T) : BOOLEAN =
       Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
     END
   END BinaryRecalc;
+
+PROCEDURE BinarySSRecalc(b : BinaryShortCircuit; when : Time.T) : BOOLEAN = 
+  BEGIN
+    TRY
+      IF b.a.value() = b.ssOp THEN RETURN b.update(b.ssRes, when) END
+    EXCEPT
+      Uninitialized => (* skip *)
+    END;
+
+    TRY
+      IF b.b.value() = b.ssOp THEN RETURN b.update(b.ssRes, when) END
+    EXCEPT
+      Uninitialized => (* skip *)
+    END;
+
+    TRY
+      RETURN b.update(b.f(b.a.value(),b.b.value()),when)
+    EXCEPT
+      Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
+    END
+  END BinarySSRecalc;
 
 PROCEDURE NAryRecalc(n : NAry; when : Time.T) : BOOLEAN =
   BEGIN
@@ -91,9 +121,9 @@ PROCEDURE IAryRecalc(n : IAry; when : Time.T) : BOOLEAN =
 
 (**********************************************************************)
 
-PROCEDURE UnaryFunc(a : Arg.T; f : F1) : Result.T =
+PROCEDURE UnaryFunc(a : Arg.T; f : F1; opName : TEXT := NIL) : Result.T =
   BEGIN 
-    WITH res = NEW(Unary, f := f, a := a).init() DO
+    WITH res = NEW(Unary, opName := opName, f := f, a := a).init() DO
       SX.Lock(SX.Array { a });
       TRY
         EVAL UnaryRecalc(res, a.updated);
@@ -105,9 +135,9 @@ PROCEDURE UnaryFunc(a : Arg.T; f : F1) : Result.T =
     END
   END UnaryFunc;
 
-PROCEDURE BinaryFunc(a, b : Arg.T; f : F2) : Result.T =
+PROCEDURE BinaryFunc(a, b : Arg.T; f : F2; opName : TEXT := NIL) : Result.T =
   BEGIN 
-    WITH res = NEW(Binary, f := f, a := a, b := b).init() DO
+    WITH res = NEW(Binary, opName := opName, f := f, a := a, b := b).init() DO
       SX.Lock( SX.Array { a, b }) ;
       TRY
         EVAL BinaryRecalc(res, MAX(a.updated,b.updated));
@@ -119,11 +149,31 @@ PROCEDURE BinaryFunc(a, b : Arg.T; f : F2) : Result.T =
     END
   END BinaryFunc;
 
-PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN) : Result.T =
+PROCEDURE BinarySymmetricShortCircuitFunc(a, b : Arg.T; f : F2; 
+                                          ssOp : Arg.Base; ssRes : Result.Base;
+                                          opName : TEXT := NIL) : Result.T =
+  BEGIN 
+    WITH res = NEW(BinaryShortCircuit, 
+                   opName := opName, 
+                   ssOp := ssOp, ssRes := ssRes,
+                   f := f, a := a, b := b).init() DO
+      SX.Lock( SX.Array { a, b }) ;
+      TRY
+        EVAL BinarySSRecalc(res, MAX(a.updated,b.updated));
+        a.depends(res); b.depends(res)
+      FINALLY
+        SX.Unlock(SX.Array { a,b })
+      END;
+      RETURN res
+    END
+  END BinarySymmetricShortCircuitFunc;
+
+PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : Result.T =
   VAR 
     max := FIRST(Time.T);
   BEGIN 
     WITH res = NARROW(NEW(NAry, 
+                          opName := opName,
                           mu := NEW(MUTEX),
                           f := f, 
                           a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a)), 
@@ -152,11 +202,13 @@ PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN) : Result.T =
   END NAryFunc;
 
 PROCEDURE IAryFunc(int : SXInt.T;
-                   READONLY a : ARRAY OF Arg.T; f : FI) : Result.T =
+                   READONLY a : ARRAY OF Arg.T; f : FI;
+                   opName : TEXT) : Result.T =
   VAR 
     max := FIRST(Time.T);
   BEGIN 
     WITH res = NARROW(NEW(IAry, 
+                          opName := opName,
                           mu := NEW(MUTEX),
                           i := int,
                           f := f, 

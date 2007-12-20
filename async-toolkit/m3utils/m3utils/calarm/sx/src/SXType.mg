@@ -8,6 +8,7 @@ REVEAL
   T = Public BRANDED Brand OBJECT
     v : Elem.T;
     updates : CARDINAL := 0;
+    name : TEXT;
   OVERRIDES 
     update := Update;
     updateLocked := UpdateLocked;
@@ -15,6 +16,7 @@ REVEAL
     waitFor := WaitFor;
     numUpdates := NumUpdates;
     uninitialize := Uninitialize;
+    attachName := AttachName;
   END;
 
   Var = PublicVar BRANDED Brand & " Var" OBJECT 
@@ -39,6 +41,9 @@ PROCEDURE InitVal(var : Var; val : Elem.T) : Var =
       RETURN me
     END
   END InitVal;
+
+PROCEDURE AttachName(t : T; name : TEXT) =
+  BEGIN t.name := name END AttachName;
 
 PROCEDURE NumUpdates(t : T) : CARDINAL =
   BEGIN RETURN t.updates END NumUpdates;

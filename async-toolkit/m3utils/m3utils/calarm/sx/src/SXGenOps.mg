@@ -5,7 +5,7 @@ IMPORT SXBool, SXInt, SXBool_IntFuncOps;
 
 PROCEDURE Index(on : SXInt.T; READONLY arr : ARRAY OF Elem.T) : Elem.T =
   BEGIN
-    RETURN Elem_ElemFuncOps.IAryFunc(on,arr,IndexB)
+    RETURN Elem_ElemFuncOps.IAryFunc(on,arr,IndexB,"Index")
   END Index;
 
 PROCEDURE IndexB(i : INTEGER; READONLY a : ARRAY OF Elem.Base) : Elem.Base =
@@ -20,7 +20,7 @@ PROCEDURE Choose(on : SXBool.T; ifTrue, ifFalse : Elem.T) : Elem.T =
 
 PROCEDURE BoolToInt(bool : SXBool.T) : SXInt.T =
   BEGIN
-    RETURN SXBool_IntFuncOps.UnaryFunc(bool,BoolToIntB)
+    RETURN SXBool_IntFuncOps.UnaryFunc(bool,BoolToIntB,"BoolToInt")
   END BoolToInt;
 
 PROCEDURE BoolToIntB(b : BOOLEAN) : INTEGER = 

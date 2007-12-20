@@ -36,41 +36,49 @@ PROCEDURE LEB(a, b : Elem.Base) : BOOLEAN =
 
 (**********************************************************************)
 
-PROCEDURE Times(a, b : Elem.T) : Elem.T =
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,TimesB) END Times;
+PROCEDURE Times(a, b : Elem.T; ss : BOOLEAN) : Elem.T =
+  BEGIN 
+    IF ss THEN
+      RETURN Elem_ElemFuncOps.BinarySymmetricShortCircuitFunc(a,b,TimesB,
+                                                              Zero, Zero,
+                                                              "Times") 
+    ELSE
+      RETURN Elem_ElemFuncOps.BinaryFunc(a,b,TimesB,"Times") 
+    END
+  END Times;
 
 PROCEDURE Mod(a, b : Elem.T) : Elem.T =
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,ModB) END Mod;
+  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,ModB,"Mod") END Mod;
 
 PROCEDURE Plus(a, b : Elem.T) : Elem.T=
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,PlusB) END Plus;
+  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,PlusB,"Plus") END Plus;
 
 PROCEDURE Minus(a, b : Elem.T) : Elem.T=
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,MinusB) END Minus;
+  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,MinusB,"Minus") END Minus;
 
 PROCEDURE Min(a, b : Elem.T) : Elem.T=
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,MinB) END Min;
+  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,MinB,"Min") END Min;
 
 PROCEDURE Max(a, b : Elem.T) : Elem.T=
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,MaxB) END Max;
+  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,MaxB,"Max") END Max;
 
 PROCEDURE Equal(a, b : Elem.T) : SXBool.T =
-  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, Elem.BaseEqual) END Equal;
+  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, Elem.BaseEqual,"Equal") END Equal;
 
 PROCEDURE Compare(a, b : Elem.T) : SXInt.T =
-  BEGIN RETURN Elem_IntFuncOps.BinaryFunc(a, b, Elem.BaseCompare) END Compare;
+  BEGIN RETURN Elem_IntFuncOps.BinaryFunc(a, b, Elem.BaseCompare, "Compare") END Compare;
 
 PROCEDURE GT(a, b : Elem.T) : SXBool.T =
-  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, GTB) END GT;
+  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, GTB,"GT") END GT;
 
 PROCEDURE LT(a, b : Elem.T) : SXBool.T =
-  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, LTB) END LT;
+  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, LTB,"LT") END LT;
 
 PROCEDURE GE(a, b : Elem.T) : SXBool.T =
-  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, GEB) END GE;
+  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, GEB,"GE") END GE;
 
 PROCEDURE LE(a, b : Elem.T) : SXBool.T =
-  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, LEB) END LE;
+  BEGIN RETURN Elem_BoolFuncOps.BinaryFunc(a, b, LEB,"LE") END LE;
 
 (**********************************************************************)
 
@@ -78,12 +86,12 @@ PROCEDURE AbsB(a : Elem.Base) : Elem.Base =
   BEGIN RETURN ABS(a) END AbsB;
 
 PROCEDURE Abs(a : Elem.T) : Elem.T =
-  BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, AbsB) END Abs;
+  BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, AbsB,"Abs") END Abs;
 
 PROCEDURE UMinusB(a : Elem.Base) : Elem.Base =
   BEGIN RETURN -a END UMinusB;
 
 PROCEDURE UMinus(a : Elem.T) : Elem.T =
-  BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, UMinusB) END UMinus;
+  BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, UMinusB,"UMinus") END UMinus;
 
-BEGIN END SXNumOps.
+BEGIN VAR q : Elem.Base; BEGIN Zero := q-q END END SXNumOps.

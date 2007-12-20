@@ -36,6 +36,7 @@ TYPE
     initialized() : BOOLEAN;
     (* TRUE if numUpdates > 0 *)
 
+    attachName(name : TEXT);
   END;
 
   Var <: PublicVar;
