@@ -56,7 +56,7 @@ PROCEDURE DecomposeR(m : Matrix.T; vv : Matrix.Vector;
           BEGIN
             FOR k:= 0 TO col - 1 DO sum := sum - m[row,k] * m[k,col] END;
             m[row,col] := sum;
-            <* ASSERT vv[row] >= 0.0d0 *>
+            (*<* ASSERT vv[row] >= 0.0d0 *>*)
             WITH dum = vv[row] * ABS(sum) DO IF dum >= aamax THEN
               imax := row;
               aamax := dum
@@ -64,7 +64,6 @@ PROCEDURE DecomposeR(m : Matrix.T; vv : Matrix.Vector;
           END
         END (* 16 *)
       END;
-
 
       IF col # imax THEN
         FOR k:= 0 TO last DO VAR dum := m[imax,k]; BEGIN
@@ -161,6 +160,5 @@ PROCEDURE BackSubstituteArray(READONLY m : Matrix.T;
 
   END BackSubstituteArray;
 
-BEGIN
-END LU.
+BEGIN END LU.
 
