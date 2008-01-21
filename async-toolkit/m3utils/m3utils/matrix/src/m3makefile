@@ -1,8 +1,6 @@
 /* $Id$ */
 import("libm3")
 import("cit_util")
-/* making a SetDef with Refanys can't work since we can't hash those */
-/*mkSetDef("Ref","Refany")*/
 
 Module("Quantity")
 Module("Matrix")
@@ -11,5 +9,15 @@ Module("SVD")
 Module("Newton")
 Module("Fortran")
 Module("Tridiagonal")
+
+implementation("MatrixM3")
+
+/*
+
+interface("MatrixF")	
+implementation("MatrixFGlue") 
+import_obj("muld.o")
+
+*/
 
 Library("matrix")
