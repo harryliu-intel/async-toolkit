@@ -15,6 +15,8 @@ Module("MatrixM3")
 if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
   interface("MatrixF")		
   implementation("MatrixFGlue") 
+
+  % muld.s compiled with "ifort -msse2 -axTPSW"
   s_source("muld")
 else
   implementation("MatrixM3_only")
