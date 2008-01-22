@@ -29,6 +29,9 @@ readonly proc _matrix2(nm, elem, LUfortran, M2fortran, vis) is
 	% the fortran arg contains the name of the glue intf for the
 	% optional fortran code 	
  	%
+        % to disable the Fortran, just pass in the Modula-3 interface
+        % to the same code instead.
+        %
 	local mName = nm & "Matrix2"
 
 	build_generic_intf(mName, "Matrix2", [elem], vis)
@@ -61,8 +64,34 @@ Module("Matrix2RType")
 Module("Matrix2LRType")
 Matrix2("LR", "Matrix2LRType", "LRLU2M3", "LRMatrix2")
 
+/* 
+	The Fortran code was compiled on Debian Linux with
+
+	ifort -msse2 -axTPSW
+
+   	It compiles on LINUXLIBC6, FreeBSD4.  
+
+	It only actually runs on Linux and FreeBSD 5 systems
+	(the latter of which normally uses the "FreeBSD4"
+	Modula-3 distribution)
+
+	For other targets we have to turn off the assembly 
+	sources.
+*/
+
 if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
 	Matrix2("R",  "Matrix2RType", "LU2_F_sp", "M2_F_sp")
+
+        /* naming scheme:
+
+ 	   M2               : Matrix2 interface
+ 	     _F             : coded in Fortran
+               _sp          : single precision
+
+ 	mulmv               : Multiply Matrix times Vector
+	mul_mtransposem     : Matrix-transpose times Matrix
+ 	lu2_backsubstitute  : LU.BackSubstitute
+	*/ 
 
 	module("M2_F_sp")
 	module("LU2_F_sp")
