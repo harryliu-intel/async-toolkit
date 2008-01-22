@@ -60,12 +60,17 @@ end
 Module("Matrix2RType")
 Module("Matrix2LRType")
 Matrix2("LR", "Matrix2LRType", "LRLU2M3", "LRMatrix2")
-Matrix2("R",  "Matrix2RType", "LU2_F_sp", "M2_F_sp")
 
-module("M2_F_sp")
-module("LU2_F_sp")
-s_source("mulmv_sp")
-s_source("mul_mtransposem_sp")
-s_source("lu2_backsubstitute_sp")
+if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
+	Matrix2("R",  "Matrix2RType", "LU2_F_sp", "M2_F_sp")
+
+	module("M2_F_sp")
+	module("LU2_F_sp")
+	s_source("mulmv_sp")
+	s_source("mul_mtransposem_sp")
+	s_source("lu2_backsubstitute_sp")
+else
+	Matrix2("R",  "Matrix2RType", "RLU2M3", "RMatrix2")
+end
 
 Library("matrix")
