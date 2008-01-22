@@ -65,6 +65,7 @@ Matrix2("R",  "Matrix2RType", "LU2_F_sp", "M2_F_sp")
 module("M2_F_sp")
 module("LU2_F_sp")
 s_source("mulmv_sp")
+s_source("mul_mtransposem_sp")
 s_source("lu2_backsubstitute_sp")
 
 Library("matrix")
