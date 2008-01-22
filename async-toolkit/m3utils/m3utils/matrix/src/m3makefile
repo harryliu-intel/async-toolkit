@@ -10,14 +10,14 @@ Module("Newton")
 Module("Fortran")
 Module("Tridiagonal")
 
-implementation("MatrixM3")
+Module("MatrixM3")
 
-/*
-
-interface("MatrixF")	
-implementation("MatrixFGlue") 
-import_obj("muld.o")
-
-*/
+if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
+  interface("MatrixF")		
+  implementation("MatrixFGlue") 
+  s_source("muld")
+else
+  implementation("MatrixM3_only")
+end
 
 Library("matrix")

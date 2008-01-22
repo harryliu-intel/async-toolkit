@@ -1,6 +1,7 @@
 (* $Id$ *)
 
-MODULE MatrixM3 EXPORTS Matrix;
+MODULE MatrixM3;
+FROM Matrix IMPORT T, GetDim, DimensionMismatch;
 
 PROCEDURE MulD(a,b, prod : T)            RAISES { DimensionMismatch } =
   VAR

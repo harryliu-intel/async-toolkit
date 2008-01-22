@@ -1,13 +1,19 @@
 (* $Id$ *)
 
 UNSAFE MODULE MatrixFGlue EXPORTS Matrix;
+IMPORT MatrixM3;
 FROM MatrixF IMPORT muld_;
+IMPORT Env;
+
+VAR UseFortran := Env.Get("FORTRANMATH") # NIL;
 
 PROCEDURE MulD(a,b, prod : T)            RAISES { DimensionMismatch } =
   VAR
     aDim := GetDim(a);
     bDim := GetDim(b);
   BEGIN
+    IF NOT UseFortran THEN MatrixM3.MulD(a,b,prod); RETURN END;
+
     IF GetDim(a).cols # GetDim(b).rows THEN RAISE DimensionMismatch END;
 
     IF GetDim(prod).rows # GetDim(a).rows OR
