@@ -11,7 +11,7 @@ PROCEDURE mulmv_sp_(a, v, r, rows, cols : ADDRESS);
 <*EXTERNAL lu2_backsubstitute_sp_*>
 PROCEDURE lu2_backsubstitute_sp_(m, indx, b, n : ADDRESS);
 
-<*EXTERNAL mul_mtransposem_sp__*>
+<*EXTERNAL mul_mtransposem_sp_*>
 PROCEDURE mul_mtransposem_sp_(a, b, c, arows, acols, bcols : ADDRESS);
 
 END MatrixF.
