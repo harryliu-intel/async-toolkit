@@ -22,4 +22,49 @@ else
   implementation("MatrixM3_only")
 end
 
+Generic_module("Matrix2")
+
+readonly proc _matrix2(nm, elem, LUfortran, M2fortran, vis) is
+	%
+	% the fortran arg contains the name of the glue intf for the
+	% optional fortran code 	
+ 	%
+	local mName = nm & "Matrix2"
+
+	build_generic_intf(mName, "Matrix2", [elem], vis)
+	build_generic_impl(mName, "Matrix2", [elem, nm & "M2M3", M2fortran])
+
+	build_generic_intf(nm & "M2M3", "M2M3", [mName], vis)
+	build_generic_impl(nm & "M2M3", "M2M3", [mName])
+
+	build_generic_intf(nm & "LU2", "LU2", [mName], vis)
+	build_generic_impl(nm & "LU2", "LU2", [mName, nm & "LU2M3", LUfortran])
+
+	build_generic_intf(nm & "LU2M3", "LU2M3", [mName], vis)
+	build_generic_impl(nm & "LU2M3", "LU2M3", [mName])
+
+end
+
+%if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
+%  implementation("LU2FGlue")
+%end
+
+readonly proc Matrix2(nm, elem, LUfortran, M2fortran) is 
+	_matrix2(nm, elem, LUfortran, M2fortran, VISIBLE)
+end
+
+readonly proc matrix2(nm, elem, LUfortran, M2fortran) is 
+	_matrix2(nm, elem, LUfortran, M2fortran, HIDDEN)
+end
+
+Module("Matrix2RType")
+Module("Matrix2LRType")
+Matrix2("LR", "Matrix2LRType", "LRLU2M3", "LRMatrix2")
+Matrix2("R",  "Matrix2RType", "LU2_F_sp", "M2_F_sp")
+
+module("M2_F_sp")
+module("LU2_F_sp")
+s_source("mulmv_sp")
+s_source("lu2_backsubstitute_sp")
+
 Library("matrix")
