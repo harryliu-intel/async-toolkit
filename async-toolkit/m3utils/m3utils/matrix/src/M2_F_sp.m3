@@ -52,7 +52,7 @@ PROCEDURE IndexedDot(READONLY v : M2.V;
     res : M2.Base;
   BEGIN
     <* ASSERT n = NUMBER(w) *>
-    MatrixF.indexeddot_sp_(ADR(v),ADR(idx),ADR(n),ADR(w),ADR(res));
+    MatrixF.indexeddot_sp_(ADR(v[0]),ADR(idx[0]),ADR(n),ADR(w[0]),ADR(res));
     RETURN res
   END IndexedDot;
 
