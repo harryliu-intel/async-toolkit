@@ -63,7 +63,6 @@ end
 Module("Matrix2RType")
 Module("Matrix2LRType")
 Module("Matrix2XType")
-Matrix2("LR", "Matrix2LRType", "LRLU2M3", "LRMatrix2")
 Matrix2("X", "Matrix2XType", "XLU2M3", "XMatrix2")
 
 /* 
@@ -83,12 +82,14 @@ Matrix2("X", "Matrix2XType", "XLU2M3", "XMatrix2")
 
 if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
 	Matrix2("R",  "Matrix2RType", "LU2_F_sp", "M2_F_sp")
+	Matrix2("LR", "Matrix2LRType", "LU2_F_dp", "M2_F_dp")
 
         /* naming scheme:
 
 	   M2               : Matrix2 interface
 	     _F             : coded in Fortran
 	       _sp          : single precision
+	       _dp          : double precision
 
 	mulmv               : Multiply Matrix times Vector
 	mul_mtransposem     : Matrix-transpose times Matrix
@@ -102,6 +103,7 @@ if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
         include ("assem.m3k")
 else
 	Matrix2("R",  "Matrix2RType", "RLU2M3", "RMatrix2")
+	Matrix2("LR", "Matrix2LRType", "LRLU2M3", "LRMatrix2")
 end
 
 Library("matrix")

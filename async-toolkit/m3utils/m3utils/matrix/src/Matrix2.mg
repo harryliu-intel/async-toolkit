@@ -1,6 +1,17 @@
 GENERIC MODULE Matrix2(Elem, M3, F);
 IMPORT Env;
 
+PROCEDURE IndexedDot(READONLY v : V; 
+                     READONLY idx : ARRAY OF CARDINAL;
+                     READONLY w : V) : Elem.T =
+  VAR sum := FLOAT(0,Elem.T);
+  BEGIN
+    FOR i := FIRST(idx) TO LAST(idx) DO
+      sum := sum + v[idx[i]]*w[i]
+    END;
+    RETURN sum
+  END IndexedDot;
+
 PROCEDURE MulMM(READONLY a, b : M; VAR prod : M) =
   BEGIN
     WITH aRows = NUMBER(a),

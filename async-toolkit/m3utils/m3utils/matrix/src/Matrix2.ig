@@ -52,6 +52,13 @@ TYPE
 PROCEDURE FormatM(READONLY m : M) : TEXT;
 PROCEDURE FormatV(READONLY v : V) : TEXT;
 
+PROCEDURE IndexedDot(READONLY v : V; 
+                     READONLY idx : ARRAY OF CARDINAL;
+                     READONLY w : V) : Elem.T;
+  (* FOR c := 0 TO n DO 
+       sum := sum + v[idx[c]]*w[c]
+     END *)
+
 (**********************************************************************)
 
 PROCEDURE MulTransposeMM(READONLY a,b : M; VAR c : M);
