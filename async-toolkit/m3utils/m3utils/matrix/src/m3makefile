@@ -97,6 +97,8 @@ if equal(TARGET, "FreeBSD4") or equal(TARGET, "LINUXLIBC6")
 
 	module("M2_F_sp")
 	module("LU2_F_sp")
+	module("M2_F_dp")
+	module("LU2_F_dp")
         include ("assem.m3k")
 else
 	Matrix2("R",  "Matrix2RType", "RLU2M3", "RMatrix2")
