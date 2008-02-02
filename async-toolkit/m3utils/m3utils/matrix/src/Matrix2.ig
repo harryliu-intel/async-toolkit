@@ -59,6 +59,9 @@ PROCEDURE IndexedDot(READONLY v : V;
        sum := sum + v[idx[c]]*w[c]
      END *)
 
+PROCEDURE Delta(READONLY v : V; VAR d : V);
+  (* produces the v[i+1]-v[i] in d[i] forall i *)
+
 (**********************************************************************)
 
 PROCEDURE MulTransposeMM(READONLY a,b : M; VAR c : M);

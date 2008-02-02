@@ -1,6 +1,13 @@
 GENERIC MODULE Matrix2(Elem, M3, F);
 IMPORT Env;
 
+PROCEDURE Delta(READONLY v : V; VAR d : V) =
+  BEGIN
+    FOR i := FIRST(d) TO LAST(d) DO
+      d[i] := v[i+1]-v[i]
+    END
+  END Delta;
+
 PROCEDURE IndexedDot(READONLY v : V; 
                      READONLY idx : ARRAY OF CARDINAL;
                      READONLY w : V) : Elem.T =
