@@ -4,11 +4,11 @@
 	.file "mul_mtransposem_dp.f"
 	.text
 ..TXTST0:
-# -- Begin  mul_mtransposem_sp_
+# -- Begin  mul_mtransposem_dp_
 # mark_begin;
        .align    2,0x90
-	.globl mul_mtransposem_sp_
-mul_mtransposem_sp_:
+	.globl mul_mtransposem_dp_
+mul_mtransposem_dp_:
 # parameter 1: 76 + %esp
 # parameter 2: 80 + %esp
 # parameter 3: 84 + %esp
@@ -384,10 +384,10 @@ mul_mtransposem_sp_:
         .align    2,0x90
                                 # LOE eax edx ecx ebx ebp xmm0
 # mark_end;
-	.type	mul_mtransposem_sp_,@function
-	.size	mul_mtransposem_sp_,.-mul_mtransposem_sp_
+	.type	mul_mtransposem_dp_,@function
+	.size	mul_mtransposem_dp_,.-mul_mtransposem_dp_
 	.data
-# -- End  mul_mtransposem_sp_
+# -- End  mul_mtransposem_dp_
 	.data
 	.section .note.GNU-stack, ""
 # End

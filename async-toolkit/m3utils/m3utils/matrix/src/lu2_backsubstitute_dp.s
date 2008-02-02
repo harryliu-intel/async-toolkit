@@ -4,11 +4,11 @@
 	.file "lu2_backsubstitute_dp.f"
 	.text
 ..TXTST0:
-# -- Begin  lu2_backsubstitute_sp_
+# -- Begin  lu2_backsubstitute_dp_
 # mark_begin;
        .align    2,0x90
-	.globl lu2_backsubstitute_sp_
-lu2_backsubstitute_sp_:
+	.globl lu2_backsubstitute_dp_
+lu2_backsubstitute_dp_:
 # parameter 1: 56 + %esp
 # parameter 2: 60 + %esp
 # parameter 3: 64 + %esp
@@ -464,10 +464,10 @@ lu2_backsubstitute_sp_:
         .align    2,0x90
                                 # LOE edx ecx ebp xmm1
 # mark_end;
-	.type	lu2_backsubstitute_sp_,@function
-	.size	lu2_backsubstitute_sp_,.-lu2_backsubstitute_sp_
+	.type	lu2_backsubstitute_dp_,@function
+	.size	lu2_backsubstitute_dp_,.-lu2_backsubstitute_dp_
 	.data
-# -- End  lu2_backsubstitute_sp_
+# -- End  lu2_backsubstitute_dp_
 	.data
 	.section .note.GNU-stack, ""
 # End

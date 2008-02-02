@@ -4,11 +4,11 @@
 	.file "mulmv_dp.f"
 	.text
 ..TXTST0:
-# -- Begin  mulmv_sp_
+# -- Begin  mulmv_dp_
 # mark_begin;
        .align    2,0x90
-	.globl mulmv_sp_
-mulmv_sp_:
+	.globl mulmv_dp_
+mulmv_dp_:
 # parameter 1: 52 + %esp
 # parameter 2: 56 + %esp
 # parameter 3: 60 + %esp
@@ -233,10 +233,10 @@ mulmv_sp_:
         .align    2,0x90
                                 # LOE eax edx ebp
 # mark_end;
-	.type	mulmv_sp_,@function
-	.size	mulmv_sp_,.-mulmv_sp_
+	.type	mulmv_dp_,@function
+	.size	mulmv_dp_,.-mulmv_dp_
 	.data
-# -- End  mulmv_sp_
+# -- End  mulmv_dp_
 	.data
 	.section .note.GNU-stack, ""
 # End

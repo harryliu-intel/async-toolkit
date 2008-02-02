@@ -14,6 +14,7 @@ function process_file(fn,extension,type) {
 
   while (cmd | getline) {
     gsub(/ TYPE /, " " type " ");
+    gsub(/_EXTENSION/, "_" extension);
     print $0 > newname;
   }
   close(cmd);
