@@ -11,6 +11,26 @@ PROCEDURE MulMV(READONLY a : M2.M; READONLY b : M2.V; VAR prod : M2.V) =
     MatrixF.mulmv_sp_(ADR(a[0,0]),ADR(b[0]),ADR(prod[0]),ADR(rows),ADR(cols))
   END MulMV;
 
+PROCEDURE MulMC(READONLY a : M2.M; READONLY b : M2.M; VAR prod : M2.V) =
+  VAR cols := NUMBER(a[0]);
+      rows := NUMBER(a);
+  BEGIN
+    <* ASSERT cols = NUMBER(b) *>
+    <* ASSERT rows = NUMBER(prod) *>
+    <* ASSERT NUMBER(b[0]) = 1 *>
+    MatrixF.mulmv_sp_(ADR(a[0,0]),ADR(b[0,0]),ADR(prod[0]),ADR(rows),ADR(cols))
+  END MulMC;
+
+PROCEDURE MulMVC(READONLY a : M2.M; READONLY b : M2.V; VAR prod : M2.M) =
+  VAR cols := NUMBER(a[0]);
+      rows := NUMBER(a);
+  BEGIN
+    <* ASSERT cols = NUMBER(b) *>
+    <* ASSERT rows = NUMBER(prod) *>
+    <* ASSERT NUMBER(prod[0]) = 1 *>
+    MatrixF.mulmv_sp_(ADR(a[0,0]),ADR(b[0]),ADR(prod[0,0]),ADR(rows),ADR(cols))
+  END MulMVC;
+
 PROCEDURE MulTransposeMM(READONLY a,b : M2.M; VAR prod : M2.M) =
   VAR
     aDim := M2.GetDim(a);

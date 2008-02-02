@@ -27,6 +27,24 @@ PROCEDURE MulMV(READONLY a : M; READONLY b : V; VAR prod : V) =
     END
   END MulMV;
 
+PROCEDURE MulMC(READONLY a : M; READONLY b : M; VAR res : V) =
+  BEGIN
+    IF UseFortran THEN
+      F.MulMC(a,b,res)
+    ELSE
+      M3.MulMC(a,b,res)
+    END
+  END MulMC;
+
+PROCEDURE MulMVC(READONLY a : M; READONLY b : V; VAR res : M) =
+  BEGIN
+    IF UseFortran THEN
+      F.MulMVC(a,b,res)
+    ELSE
+      M3.MulMVC(a,b,res)
+    END
+  END MulMVC;
+
 (**********************************************************************)
 
 PROCEDURE MeanM(READONLY m : M) : Elem.T =
@@ -204,6 +222,9 @@ PROCEDURE GetDim(READONLY m : M) : Dim =
 PROCEDURE NewM(dims : Dim) : REF M =
   BEGIN RETURN NEW(REF M, dims.rows, dims.cols) END NewM;
 
+PROCEDURE NewV(s : CARDINAL) : REF V =
+  BEGIN RETURN NEW(REF V, s) END NewV;
+
 PROCEDURE FormatM(READONLY m : M) : TEXT =
   VAR
     str := "";
@@ -300,9 +321,14 @@ PROCEDURE SetCol(VAR m : M; c : CARDINAL; READONLY col : V) =
   END SetCol;
 
 PROCEDURE ExtractRowAsVector(READONLY m : M; r : CARDINAL; VAR res : V) =
+  BEGIN res := m[r] END ExtractRowAsVector;
+
+PROCEDURE ExtractColAsVector(READONLY m : M; c : CARDINAL; VAR res : V) =
   BEGIN
-    res := m[r]
-  END ExtractRowAsVector;
+    FOR r := FIRST(m) TO LAST(m) DO
+      res[r] := m[r,c]
+    END
+  END ExtractColAsVector;
 
 BEGIN END Matrix2.
 
