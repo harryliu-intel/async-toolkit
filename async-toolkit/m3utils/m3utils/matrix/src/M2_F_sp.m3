@@ -44,4 +44,14 @@ PROCEDURE MulTransposeMM(READONLY a,b : M2.M; VAR prod : M2.M) =
                                 ADR(aDim.rows), ADR(aDim.cols), ADR(bDim.cols))
   END MulTransposeMM;
 
+PROCEDURE IndexedDot(READONLY v : M2.V; 
+                     READONLY idx : ARRAY OF CARDINAL;
+                     READONLY w : M2.V) : M2.Base =
+  VAR
+    n := NUMBER(idx);
+  BEGIN
+    <* ASSERT n = NUMBER(w) *>
+    RETURN MatrixF.indexeddot_sp_(ADR(v),ADR(idx),ADR(n),ADR(w))
+  END IndexedDot;
+
 BEGIN END M2_F_sp.

@@ -6,6 +6,7 @@ PROCEDURE IndexedDot(READONLY v : V;
                      READONLY w : V) : Elem.T =
   BEGIN
     IF UseFortran THEN
+      RETURN F.IndexedDot(v,idx,w)
     ELSE
       RETURN M3.IndexedDot(v,idx,w)
     END
