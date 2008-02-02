@@ -52,4 +52,11 @@ PROCEDURE IndexedDot(READONLY v : M2.V;
     RETURN sum
   END IndexedDot;
 
+PROCEDURE Delta(READONLY v : M2.V; VAR d : M2.V) =
+  BEGIN
+    FOR i := FIRST(d) TO LAST(d) DO
+      d[i] := v[i+1]-v[i]
+    END
+  END Delta;
+
 BEGIN END M2M3.

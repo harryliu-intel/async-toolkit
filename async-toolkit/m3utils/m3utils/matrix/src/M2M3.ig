@@ -9,4 +9,7 @@ PROCEDURE MulMVC(READONLY a : M2.M; READONLY b : M2.V; VAR res : M2.M);
 PROCEDURE IndexedDot(READONLY v : M2.V; 
                      READONLY idx : ARRAY OF CARDINAL;
                      READONLY w : M2.V) : M2.Base;
+
+PROCEDURE Delta(READONLY v : M2.V; VAR d : M2.V);
+
 END M2M3.

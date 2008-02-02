@@ -58,4 +58,12 @@ PROCEDURE IndexedDot(READONLY v : M2.V;
     RETURN res
   END IndexedDot;
 
+PROCEDURE Delta(READONLY v : M2.V; VAR d : M2.V) =
+  VAR
+    n := NUMBER(d);
+  BEGIN
+    <* ASSERT NUMBER(v) - 1 = n *>
+    MatrixF.delta_dp_(ADR(v[0]),ADR(d[0]),ADR(n))
+  END Delta;
+
 BEGIN END M2_F_dp.

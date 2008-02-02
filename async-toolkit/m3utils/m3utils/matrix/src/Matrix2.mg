@@ -3,8 +3,10 @@ IMPORT Env;
 
 PROCEDURE Delta(READONLY v : V; VAR d : V) =
   BEGIN
-    FOR i := FIRST(d) TO LAST(d) DO
-      d[i] := v[i+1]-v[i]
+    IF UseFortran THEN
+      F.Delta(v,d)
+    ELSE
+      M3.Delta(v,d)
     END
   END Delta;
 

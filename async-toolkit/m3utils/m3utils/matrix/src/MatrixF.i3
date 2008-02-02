@@ -29,4 +29,10 @@ PROCEDURE indexeddot_sp_(v, idx, n, w, res : ADDRESS);
 <*EXTERNAL*>
 PROCEDURE indexeddot_dp_(v, idx, n, w, res : ADDRESS);
 
+<*EXTERNAL*>
+PROCEDURE delta_sp_(v, d, n : ADDRESS);
+
+<*EXTERNAL*>
+PROCEDURE delta_dp_(v, d, n : ADDRESS);
+
 END MatrixF.
