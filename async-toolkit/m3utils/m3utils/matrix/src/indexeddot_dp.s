@@ -9,56 +9,54 @@
        .align    2,0x90
 	.globl indexeddot_dp_
 indexeddot_dp_:
-# parameter 1: 8 + %ebp
-# parameter 2: 12 + %ebp
-# parameter 3: 16 + %ebp
-# parameter 4: 20 + %ebp
+# parameter 1: 16 + %esp
+# parameter 2: 20 + %esp
+# parameter 3: 24 + %esp
+# parameter 4: 28 + %esp
+# parameter 5: 32 + %esp
 ..B1.1:                         # Preds ..B1.0
-        pushl     %ebp                                          #4.33
-        movl      %esp, %ebp                                    #4.33
-        andl      $-8, %esp                                     #4.33
-        subl      $24, %esp                                     #4.33
-        movl      8(%ebp), %ecx                                 #4.33
-        movl      16(%ebp), %eax                                #4.33
+        subl      $12, %esp                                     #4.18
+        movl      16(%esp), %ecx                                #4.18
+        movl      24(%esp), %eax                                #4.18
         movl      (%eax), %edx                                  #11.10
         testl     %edx, %edx                                    #11.10
-        jle       ..B1.6        # Prob 2%                       #11.10
-                                # LOE edx ecx ebx esi edi
+        pxor      %xmm0, %xmm0                                  #9.7
+        jle       ..B1.6        # Prob 1%                       #11.10
+                                # LOE edx ecx ebx ebp esi edi xmm0
 ..B1.2:                         # Preds ..B1.1
-        movl      %esi, 16(%esp)                                #
-        movl      20(%ebp), %esi                                #
-        movl      %edi, 12(%esp)                                #
-        movl      12(%ebp), %edi                                #
-        movl      %ebx, 8(%esp)                                 #
-        movl      $1, %eax                                      #
-        pxor      %xmm0, %xmm0                                  #
-                                # LOE eax edx ecx esi edi xmm0
+        movl      %esi, 8(%esp)                                 #
+        movl      28(%esp), %esi                                #
+        movl      %edi, 4(%esp)                                 #
+        movl      20(%esp), %edi                                #
+        movl      %ebx, (%esp)                                  #
+        xorl      %eax, %eax                                    #
+                                # LOE eax edx ecx ebp esi edi xmm0
 ..B1.3:                         # Preds ..B1.3 ..B1.2
-        movl      -4(%edi,%eax,4), %ebx                         #12.22
+        movl      (%edi,%eax,4), %ebx                           #12.22
         movsd     -8(%ecx,%ebx,8), %xmm1                        #12.22
-        mulsd     -8(%esi,%eax,8), %xmm1                        #12.32
+        mulsd     (%esi,%eax,8), %xmm1                          #12.32
         addl      $1, %eax                                      #11.10
         cmpl      %edx, %eax                                    #11.10
         addsd     %xmm1, %xmm0                                  #12.10
-        jle       ..B1.3        # Prob 82%                      #11.10
-                                # LOE eax edx ecx esi edi xmm0
+        jb        ..B1.3        # Prob 99%                      #11.10
+                                # LOE eax edx ecx ebp esi edi xmm0
 ..B1.4:                         # Preds ..B1.3
-        movl      16(%esp), %esi                                #
-        movl      12(%esp), %edi                                #
-        movl      8(%esp), %ebx                                 #
-                                # LOE ebx esi edi xmm0
+        movl      8(%esp), %esi                                 #
+        movl      4(%esp), %edi                                 #
+        movl      (%esp), %ebx                                  #
+        movl      32(%esp), %eax                                #12.10
+        movsd     %xmm0, (%eax)                                 #12.10
+                                # LOE ebx ebp esi edi
 ..B1.5:                         # Preds ..B1.4 ..B1.6
-        movsd     %xmm0, (%esp)                                 #15.7
-        fldl      (%esp)                                        #15.7
-        movl      %ebp, %esp                                    #15.7
-        popl      %ebp                                          #15.7
-        ret                                                     #15.7
+        addl      $12, %esp                                     #14.7
+        ret                                                     #14.7
                                 # LOE
 ..B1.6:                         # Preds ..B1.1                  # Infreq
-        pxor      %xmm0, %xmm0                                  #
-        jmp       ..B1.5        # Prob 100%                     #
+        movl      32(%esp), %eax                                #12.10
+        movsd     %xmm0, (%eax)                                 #12.10
+        jmp       ..B1.5        # Prob 100%                     #12.10
         .align    2,0x90
-                                # LOE ebx esi edi xmm0
+                                # LOE ebx ebp esi edi
 # mark_end;
 	.type	indexeddot_dp_,@function
 	.size	indexeddot_dp_,.-indexeddot_dp_
