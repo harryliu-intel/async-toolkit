@@ -1,7 +1,7 @@
 c
 c     $Id$
 c	
-      TYPE function indexeddot_EXTENSION(v, idx, n, w)
+      subroutine indexeddot_EXTENSION(v, idx, n, w, res)
       implicit none
       integer n, idx(n), i
       TYPE v(*), w(n), res
@@ -11,6 +11,5 @@ c
       do 100 i=1,n
          res = res + v(idx(i)) * w(i)
  100  continue
-      indexeddot_EXTENSION = res
       end
 	

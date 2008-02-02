@@ -51,9 +51,11 @@ PROCEDURE IndexedDot(READONLY v : M2.V;
                      READONLY w : M2.V) : M2.Base =
   VAR
     n := NUMBER(idx);
+    res : M2.Base;
   BEGIN
     <* ASSERT n = NUMBER(w) *>
-    RETURN MatrixF.indexeddot_dp_(ADR(v),ADR(idx),ADR(n),ADR(w))
+    MatrixF.indexeddot_dp_(ADR(v),ADR(idx),ADR(n),ADR(w),ADR(res));
+    RETURN res
   END IndexedDot;
 
 BEGIN END M2_F_dp.

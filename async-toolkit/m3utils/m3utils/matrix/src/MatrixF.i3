@@ -24,9 +24,9 @@ PROCEDURE lu2_backsubstitute_dp_(m, indx, b, n : ADDRESS);
 PROCEDURE mul_mtransposem_dp_(a, b, c, arows, acols, bcols : ADDRESS);
 
 <*EXTERNAL*>
-PROCEDURE indexeddot_sp_(v, idx, n, w : ADDRESS)  : REAL;
+PROCEDURE indexeddot_sp_(v, idx, n, w, res : ADDRESS);
 
 <*EXTERNAL*>
-PROCEDURE indexeddot_dp_(v, idx, n, w : ADDRESS) : LONGREAL;
+PROCEDURE indexeddot_dp_(v, idx, n, w, res : ADDRESS);
 
 END MatrixF.
