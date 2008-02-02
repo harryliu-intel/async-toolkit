@@ -41,6 +41,7 @@ BEGIN {
   forfiles[0] = "mul_mtransposem.f.tmpl";
   forfiles[1] = "mulmv.f.tmpl";
   forfiles[2] = "lu2_backsubstitute.f.tmpl";
+  forfiles[2] = "indexeddot.f.tmpl";
 
   for (i in forfiles) {
     process_file(forfiles[i], "sp", "real"); 

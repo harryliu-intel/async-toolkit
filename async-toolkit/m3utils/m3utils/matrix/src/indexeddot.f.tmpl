@@ -1,0 +1,16 @@
+c
+c     $Id$
+c	
+      TYPE function indexeddot_EXTENSION(v, idx, n, w)
+      implicit none
+      integer n, idx(n)
+      TYPE v(*), w(n), res
+      
+      res = 0.0
+
+      do 100 i=1,n
+         res = res + v(idx(i)) * w(i)
+ 100  continue
+      indexeddot_EXTENSION = res
+      end
+	

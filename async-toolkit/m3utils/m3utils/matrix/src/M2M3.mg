@@ -41,4 +41,15 @@ PROCEDURE MulMVC(READONLY a : M2.M; READONLY b : M2.V; VAR prod : M2.M) =
     END
   END MulMVC;
 
+PROCEDURE IndexedDot(READONLY v : M2.V; 
+                     READONLY idx : ARRAY OF CARDINAL;
+                     READONLY w : M2.V) : M2.Base =
+  VAR sum := FLOAT(0,M2.Base);
+  BEGIN
+    FOR i := FIRST(idx) TO LAST(idx) DO
+      sum := sum + v[idx[i]]*w[i]
+    END;
+    RETURN sum
+  END IndexedDot;
+
 BEGIN END M2M3.
