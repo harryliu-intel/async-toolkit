@@ -12,8 +12,6 @@ PROCEDURE IndexedDot(READONLY v : M2.V;
                      READONLY idx : ARRAY OF CARDINAL;
                      READONLY w : M2.V) : M2.Base;
 
-
 PROCEDURE Delta(READONLY v : M2.V; VAR d : M2.V);
-
 
 END M2_F_sp.

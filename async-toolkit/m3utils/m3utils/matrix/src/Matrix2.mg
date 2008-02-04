@@ -1,6 +1,15 @@
 GENERIC MODULE Matrix2(Elem, M3, F);
 IMPORT Env;
 
+PROCEDURE MulTransposeMM(READONLY a,b : M; VAR prod : M) =
+  BEGIN
+    IF UseFortran THEN
+      F.MulTransposeMM(a,b,prod)
+    ELSE
+      M3.MulTransposeMM(a,b,prod)
+    END
+  END MulTransposeMM;
+
 PROCEDURE Delta(READONLY v : V; VAR d : V) =
   BEGIN
     IF UseFortran THEN
@@ -29,8 +38,13 @@ PROCEDURE MulMM(READONLY a, b : M; VAR prod : M) =
          bCols = NUMBER(b[0]) DO
       FOR row:= 0 TO aRows - 1 DO
         FOR col:= 0 TO bCols - 1 DO
-          FOR term := 0 TO aCols - 1 DO
-            prod[row,col] := prod[row,col] + a[row,term] * b[term,col];
+          VAR
+            element := FLOAT(0,Base);
+          BEGIN
+            FOR term := 0 TO aCols - 1 DO
+              element := element + a[row,term] * b[term,col];
+            END;
+            prod[row,col] := element;
           END
         END
       END
@@ -269,24 +283,6 @@ PROCEDURE FormatV(READONLY m : V) : TEXT =
     RETURN str;
   END FormatV;
 
-PROCEDURE MulTransposeMM(READONLY a,b : M; VAR prod : M) =
-  VAR
-    aDim := GetDim(a);
-    bDim := GetDim(b);
-  BEGIN
-    FOR row:= 0 TO aDim.cols - 1 DO
-      FOR col:= 0 TO bDim.cols - 1 DO
-        VAR
-          element := FLOAT(0,Base);
-        BEGIN
-          FOR term := 0 TO aDim.rows - 1 DO
-            element := element + a[term,row] * b[term,col];
-          END;
-          prod[row,col] := element
-        END;
-      END;
-    END
-  END MulTransposeMM;
 
 PROCEDURE AddToDiagonal(VAR m : M; a : Base) =
   BEGIN

@@ -7,9 +7,13 @@ PROCEDURE MulMV(READONLY a : M2.M; READONLY b : M2.V; VAR prod : M2.V) =
     WITH aRows = NUMBER(a),
          aCols = NUMBER(a[0]) DO
       FOR row:= 0 TO aRows - 1 DO
-        prod[row] := FLOAT(0,M2.Base);
-        FOR term := 0 TO aCols - 1 DO
-          prod[row] := prod[row] + a[row,term] * b[term]
+        VAR
+          element := FLOAT(0,M2.Base);
+        BEGIN
+          FOR term := 0 TO aCols - 1 DO
+            element := element + a[row,term] * b[term]
+          END;
+          prod[row] := element
         END
       END
     END
@@ -20,9 +24,13 @@ PROCEDURE MulMC(READONLY a : M2.M; READONLY b : M2.M; VAR prod : M2.V) =
     WITH aRows = NUMBER(a),
          aCols = NUMBER(a[0]) DO
       FOR row:= 0 TO aRows - 1 DO
-        prod[row] := FLOAT(0,M2.Base);
-        FOR term := 0 TO aCols - 1 DO
-          prod[row] := prod[row] + a[row,term] * b[term,0]
+        VAR
+          element := FLOAT(0,M2.Base);
+        BEGIN
+          FOR term := 0 TO aCols - 1 DO
+            element := element + a[row,term] * b[term,0]
+          END;
+          prod[row] := element
         END
       END
     END
@@ -33,9 +41,13 @@ PROCEDURE MulMVC(READONLY a : M2.M; READONLY b : M2.V; VAR prod : M2.M) =
     WITH aRows = NUMBER(a),
          aCols = NUMBER(a[0]) DO
       FOR row:= 0 TO aRows - 1 DO
-        prod[row,0] := FLOAT(0,M2.Base);
-        FOR term := 0 TO aCols - 1 DO
-          prod[row,0] := prod[row,0] + a[row,term] * b[term]
+        VAR
+          element:= FLOAT(0,M2.Base);
+        BEGIN
+          FOR term := 0 TO aCols - 1 DO
+            element := element + a[row,term] * b[term]
+          END;
+          prod[row,0] := element
         END
       END
     END
@@ -58,5 +70,25 @@ PROCEDURE Delta(READONLY v : M2.V; VAR d : M2.V) =
       d[i] := v[i+1]-v[i]
     END
   END Delta;
+
+PROCEDURE MulTransposeMM(READONLY a,b : M2.M; VAR prod : M2.M) =
+  VAR
+    aDim := M2.GetDim(a);
+    bDim := M2.GetDim(b);
+  BEGIN
+    FOR row:= 0 TO aDim.cols - 1 DO
+      FOR col:= 0 TO bDim.cols - 1 DO
+        VAR
+          element := FLOAT(0,M2.Base);
+        BEGIN
+          FOR term := 0 TO aDim.rows - 1 DO
+            element := element + a[term,row] * b[term,col];
+          END;
+          prod[row,col] := element
+        END;
+      END;
+    END
+  END MulTransposeMM;
+
 
 BEGIN END M2M3.

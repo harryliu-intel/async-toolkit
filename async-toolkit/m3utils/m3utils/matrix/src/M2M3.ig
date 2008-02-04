@@ -12,4 +12,6 @@ PROCEDURE IndexedDot(READONLY v : M2.V;
 
 PROCEDURE Delta(READONLY v : M2.V; VAR d : M2.V);
 
+PROCEDURE MulTransposeMM(READONLY a,b : M2.M; VAR prod : M2.M);
+
 END M2M3.

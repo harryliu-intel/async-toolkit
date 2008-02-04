@@ -9,7 +9,10 @@ c
       res = 0.0
 
       do 100 i=1,n
-         res = res + v(idx(i)) * w(i)
+
+c      	note Modula-3 array indexing here.. idx(i)+1 gives the Fortran index
+
+         res = res + v(idx(i)+1) * w(i)
  100  continue
       end
 	

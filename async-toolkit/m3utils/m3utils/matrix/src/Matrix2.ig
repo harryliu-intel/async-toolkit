@@ -11,6 +11,7 @@ TYPE M = ARRAY OF ARRAY OF Elem.T;
 TYPE V = ARRAY OF          Elem.T;
 
 CONST Format = Elem.Format;
+CONST Rand   = Elem.Rand;
 
 PROCEDURE MulMM(READONLY a, b : M; VAR res : M);
 
