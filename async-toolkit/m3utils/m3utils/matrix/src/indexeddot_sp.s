@@ -32,30 +32,30 @@ indexeddot_sp_:
         xorl      %eax, %eax                                    #
                                 # LOE eax edx ecx ebp esi edi xmm0
 ..B1.3:                         # Preds ..B1.3 ..B1.2
-        movl      (%edi,%eax,4), %ebx                           #12.22
-        movss     -4(%ecx,%ebx,4), %xmm1                        #12.22
-        mulss     (%esi,%eax,4), %xmm1                          #12.32
+        movl      (%edi,%eax,4), %ebx                           #15.10
+        movss     (%ecx,%ebx,4), %xmm1                          #15.22
+        mulss     (%esi,%eax,4), %xmm1                          #15.34
         addl      $1, %eax                                      #11.10
         cmpl      %edx, %eax                                    #11.10
-        addss     %xmm1, %xmm0                                  #12.10
+        addss     %xmm1, %xmm0                                  #15.10
         jb        ..B1.3        # Prob 99%                      #11.10
                                 # LOE eax edx ecx ebp esi edi xmm0
 ..B1.4:                         # Preds ..B1.3
         movl      8(%esp), %ebx                                 #
         movl      4(%esp), %esi                                 #
         movl      (%esp), %edi                                  #
-        movl      32(%esp), %eax                                #12.10
-        movss     %xmm0, (%eax)                                 #12.10
+        movl      32(%esp), %eax                                #15.10
+        movss     %xmm0, (%eax)                                 #15.10
                                 # LOE ebx ebp esi edi
 ..B1.5:                         # Preds ..B1.4 ..B1.6
-        addl      $12, %esp                                     #14.7
-        ret                                                     #14.7
+        addl      $12, %esp                                     #17.7
+        ret                                                     #17.7
                                 # LOE
 ..B1.6:                         # Preds ..B1.1                  # Infreq
-        movl      32(%esp), %edx                                #12.10
-        xorl      %eax, %eax                                    #12.10
-        movl      %eax, (%edx)                                  #12.10
-        jmp       ..B1.5        # Prob 100%                     #12.10
+        movl      32(%esp), %edx                                #15.10
+        xorl      %eax, %eax                                    #15.10
+        movl      %eax, (%edx)                                  #15.10
+        jmp       ..B1.5        # Prob 100%                     #15.10
         .align    2,0x90
                                 # LOE ebx ebp esi edi
 # mark_end;
