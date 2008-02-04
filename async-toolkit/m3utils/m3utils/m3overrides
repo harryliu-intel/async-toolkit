@@ -10,6 +10,7 @@ include(".top")
 if defined("pm3_version") 
       	/* Polytechnique de Montreal Modula-3 */
 	option("shared_lib","")
+	option("optimization","T")
 else
  if defined("CM3_VERSION")
       	/* Critical Mass Modula-3 */
