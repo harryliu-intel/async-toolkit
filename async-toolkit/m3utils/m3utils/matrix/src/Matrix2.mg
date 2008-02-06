@@ -97,6 +97,26 @@ PROCEDURE MulMC(READONLY a : M; READONLY b : M; VAR res : V) =
     END
   END MulMC;
 
+PROCEDURE MulMC2(READONLY a : M; READONLY b : M; VAR prod, psq : V) =
+  BEGIN
+    WITH aRows = NUMBER(a),
+         aCols = NUMBER(a[0]) DO
+      FOR row:= 0 TO aRows - 1 DO
+        VAR
+          element, e2 := FLOAT(0,Base);
+        BEGIN
+          FOR term := 0 TO aCols - 1 DO
+            VAR part := a[row,term] * b[term,0]; BEGIN
+              element := element + part;
+              e2 := e2 + part * part
+            END
+          END;
+          prod[row] := element; psq[row] := e2
+        END
+      END
+    END
+  END MulMC2;
+
 PROCEDURE MulMVC(READONLY a : M; READONLY b : V; VAR res : M) =
   BEGIN
     IF UseFortran THEN

@@ -13,11 +13,11 @@ c     local vars
 c     indices
       integer row, col
 
-      ii = -1
+      ii = 0
 
       do 300 row = 1, n
 
-c     remember, we're using Modula-3/C addressing conventions thruout...
+c     remember, we're using Modula-3/C addressing conventions in interface
 c
 c                         |
 c                         v
@@ -25,7 +25,7 @@ c
          ll = indx(row) + 1
          sum = b(ll)
          b(ll) = b(row)
-         if (ii .ne. -1) then
+         if (ii .ne. 0) then
             do 100 col = ii, row-1
                sum = sum - m(col,row)*b(col)
  100        continue

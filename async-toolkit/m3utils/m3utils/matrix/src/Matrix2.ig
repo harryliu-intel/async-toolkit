@@ -25,6 +25,11 @@ PROCEDURE MulMC(READONLY a : M; READONLY b : M; VAR res : V);
   (* multiplies matrix a by column 0 of single-column matrix b and 
      puts result in res *)
 
+PROCEDURE MulMC2(READONLY a : M; READONLY b : M; VAR res, res2 : V);
+  (* multiplies matrix a by column 0 of single-column matrix b and 
+     puts results in res and res2
+     res2 contains sum of squares *)
+
 PROCEDURE MulMVC(READONLY a : M; READONLY b : V; VAR res : M);
   (* multiplies matrix a by column vector b and 
      puts result in column 0 of single-column matrix res *)
