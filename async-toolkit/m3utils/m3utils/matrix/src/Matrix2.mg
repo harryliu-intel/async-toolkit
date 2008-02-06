@@ -31,6 +31,32 @@ PROCEDURE IndexedDot(READONLY v : V;
   END IndexedDot;
 
 
+PROCEDURE Copy(READONLY a : M; VAR b : M) =
+  BEGIN
+    FOR r := FIRST(a) TO LAST(a) DO
+      FOR c := FIRST(a[0]) TO LAST(a[0]) DO
+        b[r,c] := a[r,c]
+      END
+    END
+  END Copy;
+
+PROCEDURE Zero(VAR a : M) =
+  BEGIN
+    FOR r := FIRST(a) TO LAST(a) DO
+      FOR c := FIRST(a[0]) TO LAST(a[0]) DO
+        a[r,0] := FLOAT(0,Base)
+      END
+    END
+  END Zero;
+
+PROCEDURE MakeUnit(VAR a : M) =
+  BEGIN
+    Zero(a);
+    FOR r := FIRST(a) TO LAST(a) DO
+      a[r,r] := FLOAT(1,Base)
+    END
+  END MakeUnit;
+
 PROCEDURE MulMM(READONLY a, b : M; VAR prod : M) =
   BEGIN
     WITH aRows = NUMBER(a),
@@ -346,6 +372,20 @@ PROCEDURE ExtractColAsVector(READONLY m : M; c : CARDINAL; VAR res : V) =
       res[r] := m[r,c]
     END
   END ExtractColAsVector;
+
+PROCEDURE SubV(READONLY a, b : V; VAR c : V) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      c[i] := a[i] - b[i] 
+    END
+  END SubV;
+
+PROCEDURE AddV(READONLY a, b : V; VAR c : V) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      c[i] := a[i] + b[i] 
+    END
+  END AddV;
 
 BEGIN END Matrix2.
 

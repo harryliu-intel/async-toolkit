@@ -3,6 +3,7 @@
 GENERIC MODULE LU2(M, M3, F);
 FROM Matrix IMPORT Singular;
 IMPORT Env;
+IMPORT IO;
 
 (* there has got to be a better way to code these things *)
 PROCEDURE DecomposeR(VAR m : M.M; 
@@ -85,6 +86,60 @@ PROCEDURE BackSubstitute(READONLY m : M.M;
       M3.BackSubstitute(m,indx,b)
     END
   END BackSubstitute;
+
+PROCEDURE BackSubstitute2(READONLY m : M.M; 
+                         READONLY indx : REF ARRAY OF INTEGER; 
+                         VAR b : M.V;
+                         VAR y : M.V) =
+  (* LU back-substitution to solve system of linear equations *)
+  (* m should be the LU decomposition of a matrix M established by *)
+  (* LUdecompose, above *)
+  (* Num. Rec. FORTRAN 2nd ed. p. 39 *)
+  VAR
+    ii := -1;
+    last := LAST(m);
+  CONST
+    Special = FIRST(M.Base);
+  BEGIN
+    <* ASSERT FIRST(m) = 0 AND 
+              FIRST(m) = FIRST(m[0]) AND 
+              LAST(m) = LAST(m[0]) *>
+
+    FOR i := 0 TO last DO y[i] := Special END;
+
+    FOR row := 0 TO last DO
+      VAR
+        ll := indx[row];
+        sum : M.Base;
+      BEGIN
+        IF y[ll] # Special THEN
+          sum := y[ll]; IO.Put("A")
+        ELSE
+          sum := b[ll]; IO.Put("B")
+        END;
+
+        IF y[row] # Special THEN
+          y[ll] := y[row]; IO.Put("C")
+        ELSE
+          y[ll] := b[row]; IO.Put("D")
+        END;
+
+        IF ii # -1 THEN 
+          FOR col := ii TO row - 1 DO
+            sum := sum - m[row,col] * y[col]
+          END;
+        ELSIF sum # FLOAT(0,M.Base) THEN
+          ii := row;
+        END; (* IF *)
+        y[row] := sum;
+      END;
+    END; (* FOR row *)
+
+    FOR row := last TO 0 BY -1 DO VAR sum := y[row]; BEGIN
+      FOR col := row + 1 TO last DO sum := sum - m[row,col] * y[col] END;
+      y[row] := sum / m[row,row];
+    END END; (* FOR row *)
+  END BackSubstitute2;
 
 VAR UseFortran := Env.Get("FORTRANMATH") # NIL;
 

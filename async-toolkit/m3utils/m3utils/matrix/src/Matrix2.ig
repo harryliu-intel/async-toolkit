@@ -13,6 +13,10 @@ TYPE V = ARRAY OF          Elem.T;
 CONST Format = Elem.Format;
 CONST Rand   = Elem.Rand;
 
+PROCEDURE Copy(READONLY a : M; VAR b : M);
+PROCEDURE Zero(VAR a : M);
+PROCEDURE MakeUnit(VAR a : M);
+
 PROCEDURE MulMM(READONLY a, b : M; VAR res : M);
 
 PROCEDURE MulMV(READONLY a : M; READONLY v : V; VAR res : V);
@@ -78,5 +82,7 @@ PROCEDURE ExtractColAsVector(READONLY m : M; c : CARDINAL; VAR res : V);
 
 PROCEDURE SetCol(VAR m : M; c : CARDINAL; READONLY col : V);
 
+PROCEDURE SubV(READONLY a, b : V; VAR c : V);
+PROCEDURE AddV(READONLY a, b : V; VAR c : V);
 
 END Matrix2.

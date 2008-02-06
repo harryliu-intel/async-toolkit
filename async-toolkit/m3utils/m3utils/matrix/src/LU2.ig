@@ -6,6 +6,11 @@ FROM Matrix IMPORT Singular;
 PROCEDURE BackSubstitute(READONLY m : M.M; 
                          READONLY indx : REF ARRAY OF INTEGER; 
                          VAR b : M.V);
+
+PROCEDURE BackSubstitute2(READONLY m : M.M; 
+                         READONLY indx : REF ARRAY OF INTEGER; 
+                         VAR b : M.V;
+                         VAR bout : M.V);
   
 PROCEDURE DecomposeR(VAR m : M.M; 
                      VAR vv : M.V;
