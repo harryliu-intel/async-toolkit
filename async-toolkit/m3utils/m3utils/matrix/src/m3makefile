@@ -22,8 +22,10 @@ else
   implementation("MatrixM3_only")
 end
 
-Generic_module("LU2")
 Generic_module("Matrix2")
+Generic_module("M2M3")
+Generic_module("LU2M3")
+Generic_module("LU2")
 
 readonly proc _matrix2(nm, elem, LUfortran, M2fortran, vis) is
 	%
