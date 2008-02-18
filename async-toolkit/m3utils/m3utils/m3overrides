@@ -86,6 +86,7 @@ override("commandrw", TOP)
 override("m3curses", TOP)
 override("xmlparse", TOP)
 override("stabletable", TOP)
+override("trie", TOP)
 
 override("anova", TOP & "/calarm")
 override("wavelets", TOP & "/calarm")
