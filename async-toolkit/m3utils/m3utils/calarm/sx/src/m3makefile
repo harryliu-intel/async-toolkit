@@ -49,6 +49,9 @@ SxType("Bool", "Boolean")             /* required */
 SxType("Ref", "Refany")
 SxType("Text", "Text")
 
+interface("LRP")
+SxType("LongRealPair", "LRP")
+
 SxGenOps2("LR","SXLongReal","SXLR_LRFuncOps")
 SxGenOps("Real","SXReal")
 SxGenOps("Int","SXInt")

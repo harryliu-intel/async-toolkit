@@ -6,7 +6,16 @@ FROM SX IMPORT Uninitialized;
 IMPORT SXRoot;
 IMPORT Time;
 
-(* locking order: SX.mu must be locked after self.mu in all cases *)
+(* 
+   "Spreadsheet expressions" generic interface.
+
+   The interface Elem must export a type T and PROCEDUREs Equal and
+   Compare, as well as a constant Brand, according to the usual rules.
+
+   locking order: SX.mu must be locked after self.mu in all cases.
+
+   See SXRoot.i3 for more (Elem-type-independent) details.
+*)
 
 TYPE 
   Base = Elem.T;
@@ -37,6 +46,7 @@ TYPE
     (* TRUE if numUpdates > 0 *)
 
     attachName(name : TEXT);
+    (* attach a name for debugging purposes *)
   END;
 
   Var <: PublicVar;
@@ -66,6 +76,7 @@ PROCEDURE BaseCompare(a, b : Base) : INTEGER;
   (* same as Elem.Compare, but type-wrapped *)
 
 PROCEDURE NewConst(value : Elem.T) : Const;
+  (* make a new constant *)
 
 END SXType.
 
