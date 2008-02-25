@@ -49,7 +49,7 @@ SxType("Bool", "Boolean")             /* required */
 SxType("Ref", "Refany")
 SxType("Text", "Text")
 
-interface("LRP")
+Interface("LRP")
 SxType("LongRealPair", "LRP")
 
 SxGenOps2("LR","SXLongReal","SXLR_LRFuncOps")
