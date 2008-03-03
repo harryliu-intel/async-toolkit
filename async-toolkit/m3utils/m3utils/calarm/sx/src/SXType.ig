@@ -47,6 +47,11 @@ TYPE
 
     attachName(name : TEXT);
     (* attach a name for debugging purposes *)
+
+    setValidator(validator : Validator);
+    (* the validator can validate the value settings.  This is really
+       only for debugging, we don't do anything in this module with the
+       return value of the validator *)
   END;
 
   Var <: PublicVar;
@@ -60,12 +65,19 @@ TYPE
 
     initVal(initValue : Elem.T) : Var; 
     (* initialize with value, and updates = 1 *)
+    
   END;
 
   Const <: PublicConst;
 
   PublicConst = T OBJECT METHODS
     init(value : Elem.T) : Const;
+  END;
+
+  Validator = OBJECT METHODS
+    validQ(new : Elem.T) : BOOLEAN; 
+    (* validQ is called on every set, whether the value of the Var is
+       changed or not.  It is called with SX.mu and v.mu already locked. *)
   END;
 
 CONST Brand = "SXType(" & Elem.Brand & ")";

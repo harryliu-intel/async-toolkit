@@ -9,6 +9,7 @@ REVEAL
     v : Elem.T;
     updates : CARDINAL := 0;
     name : TEXT;
+    validator : Validator := NIL;
   OVERRIDES 
     update := Update;
     updateLocked := UpdateLocked;
@@ -17,6 +18,7 @@ REVEAL
     numUpdates := NumUpdates;
     uninitialize := Uninitialize;
     attachName := AttachName;
+    setValidator := SetValidator;
   END;
 
   Var = PublicVar BRANDED Brand & " Var" OBJECT 
@@ -36,11 +38,15 @@ PROCEDURE Uninitialize(t : T) = BEGIN t.updates := 0 END Uninitialize;
 PROCEDURE InitVal(var : Var; val : Elem.T) : Var =
   BEGIN
     WITH me = NARROW(T.init(var),Var) DO
+      IF me.validator # NIL THEN EVAL me.validator.validQ(val) END;
       me.v := val;
       me.updates := 1;
       RETURN me
     END
   END InitVal;
+
+PROCEDURE SetValidator(t : T; v : Validator) = 
+  BEGIN t.validator := v END SetValidator;
 
 PROCEDURE AttachName(t : T; name : TEXT) =
   BEGIN t.name := name END AttachName;
@@ -76,6 +82,7 @@ PROCEDURE Update(v : T; newValue : Elem.T; when : Time.T) : BOOLEAN =
 PROCEDURE UpdateLocked(v : T; newValue : Elem.T; when : Time.T) : BOOLEAN =
   BEGIN 
     LOCK SX.mu DO
+      IF v.validator # NIL THEN EVAL v.validator.validQ(newValue) END;
       IF v.v = newValue AND v.updates > 0 THEN
         RETURN FALSE
       ELSE
@@ -115,3 +122,13 @@ PROCEDURE NewConst(v : Elem.T) : Const =
   BEGIN RETURN NEW(Const).init(v) END NewConst;
 
 BEGIN END SXType.
+
+
+
+
+
+
+
+
+
+
