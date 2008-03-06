@@ -10,7 +10,9 @@ include(".top")
 if defined("pm3_version") 
       	/* Polytechnique de Montreal Modula-3 */
 	option("shared_lib","")
-	option("optimization","T")
+	if not equal(TARGET,"NT386GNU")
+		option("optimization","T")
+	end
 else
  if defined("CM3_VERSION")
       	/* Critical Mass Modula-3 */
