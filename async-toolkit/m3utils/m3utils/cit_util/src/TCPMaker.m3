@@ -62,5 +62,19 @@ REVEAL
 PROCEDURE MMT(m : Default) : TCP.T RAISES { IP.Error } = 
   <* FATAL Thread.Alerted *>
   BEGIN RETURN TCP.Connect(m.ep) END MMT;
-    
+
+REVEAL
+  Simple = PubSimple BRANDED Brand & " Simple" OBJECT
+    tcp : TCP.T;
+  OVERRIDES
+    makeTCP := SMT;
+    init := InitSimple;
+  END;
+
+PROCEDURE InitSimple(s : Simple; tcp : TCP.T) : Simple =
+  BEGIN s.tcp := tcp; RETURN s END InitSimple;
+
+PROCEDURE SMT(s : Simple) : TCP.T = 
+  BEGIN RETURN s.tcp END SMT;
+
 BEGIN END TCPMaker.
