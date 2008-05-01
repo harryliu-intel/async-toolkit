@@ -8,7 +8,7 @@ TYPE
   T <: Public;
 
   Public = OBJECT METHODS
-    init() : T;
+    init() : Public;
     build() : REFANY;
     hash() : Word.T;
     equal(a : T) : BOOLEAN;
