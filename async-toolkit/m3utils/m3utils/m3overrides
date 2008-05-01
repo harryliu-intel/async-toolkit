@@ -108,6 +108,7 @@ override("readline", TOP & "/calarm")
 override("excelrtd", TOP & "/calarm")
 override("mktsim", TOP & "/calarm")
 override("gnuplotter", TOP & "/calarm/anova")
+override("gw", TOP & "/calarm")
 
 % FIX stuff...
 override("fixcommon", TOP & "/calarm/fix")
