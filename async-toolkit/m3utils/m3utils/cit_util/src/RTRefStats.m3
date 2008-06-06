@@ -53,6 +53,7 @@ PROCEDURE Line(tc: INTEGER; name: TEXT; size, count: INTEGER) =
   END Line;
 
 PROCEDURE ReportReachable(printTexts := FALSE) =
+  <* FATAL IntPQ.Empty *>
   VAR
     n := RTType.MaxTypecode()+1;
     self := NEW(T, x := NEW(REF ARRAY OF R, n), printTexts:=printTexts);
@@ -74,18 +75,15 @@ PROCEDURE ReportReachable(printTexts := FALSE) =
         END;
       END;
       S("   TC  Name                                     totalSize   count  avgSize",0);
-      TRY
-        LOOP
-          e := q.deleteMin();
-          Line(e.tc, RTName.GetByTC(e.tc), e.priority, e.count);
-          INC(totalCount, e.count);
-          INC(totalSize, e.priority);
-        END;
-      EXCEPT IntPQ.Empty =>
-        Line(n, "<- Number of typecodes         totals ->",
-             totalSize,totalCount);
+      WHILE q.size() > 0 DO
+        e := q.deleteMin();
+        Line(e.tc, RTName.GetByTC(e.tc), e.priority, e.count);
+        INC(totalCount, e.count);
+        INC(totalSize, e.priority);
       END;
-    END;
+      Line(n, "<- Number of typecodes         totals ->",
+           totalSize,totalCount)
+    END
   END ReportReachable;
 
 BEGIN
