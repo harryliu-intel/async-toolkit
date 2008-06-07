@@ -286,6 +286,8 @@ Module("StepFunction")
 
 Module("TCPMaker")
 
+Module("FancyFmt")
+
 Library("cit_util")
 
 
