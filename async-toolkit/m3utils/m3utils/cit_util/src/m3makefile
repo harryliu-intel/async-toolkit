@@ -288,6 +288,9 @@ Module("TCPMaker")
 
 Module("FancyFmt")
 
+Module("AttrWr")
+Sequence("AttrWr","AttrWr")
+
 Library("cit_util")
 
 
