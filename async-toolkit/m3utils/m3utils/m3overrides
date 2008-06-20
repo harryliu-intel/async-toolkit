@@ -75,6 +75,7 @@ override("tuple",TOP & "/verif")
 override("ld2layout", TOP)
 override("gdsII", TOP)
 override("voronoi", TOP)
+override("voronoi2", TOP) /* replacement for above.. better? */
 override("color", TOP)
 override("mst", TOP)
 override("ld", TOP)
