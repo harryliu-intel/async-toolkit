@@ -233,6 +233,7 @@ Fifo("LongReal", "LongrealType")
 
 Array_sort("Longreal", "LongrealType")
 Array_sort("Refany", "Refany")
+Array_sort("Card", "Cardinal")
 
 Sequence("LongReal", "LongrealType") 
 
