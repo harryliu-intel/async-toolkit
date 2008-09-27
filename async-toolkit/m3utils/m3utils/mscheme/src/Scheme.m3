@@ -3,6 +3,7 @@
 MODULE Scheme;
 IMPORT SchemeInputPort, SchemeEnvironment, SchemePrimitives, SchemePrimitive;
 IMPORT SchemeBoolean, SchemeSymbol, SchemeMacro;
+IMPORT SchemeClosure, SchemeClosureClass, SchemeProcedure;
 IMPORT Pathname, Stdio;
 IMPORT Wr, TextRd;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
@@ -14,6 +15,7 @@ REVEAL
     globalEnvironment : SchemeEnvironment.T;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) := ReadInitialFiles;
+    reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object := ReduceCond;
   OVERRIDES
     init              :=  Init;
     defineInGlobalEnv :=  DefineInGlobalEnv;
@@ -87,7 +89,9 @@ PROCEDURE LoadPort(t : T; in : SchemeInputPort.T) : Object =
   END LoadPort;
 
 PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
-  TYPE  Macro = SchemeMacro.T;
+  TYPE  Macro     = SchemeMacro.T;
+        Closure   = SchemeClosure.T;
+        Procedure = SchemeProcedure.T;
 
   CONST First  = SchemeUtils.First;
         Second = SchemeUtils.Second;
@@ -95,6 +99,8 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
         Rest   = SchemeUtils.Rest;
         Cons   = SchemeUtils.Cons;
         SymEq  = SchemeSymbol.SymEq;
+        Sym    = SchemeSymbol.Symbol;
+        TruthO = SchemeBoolean.TruthO;
 
   BEGIN
     LOOP
@@ -103,8 +109,10 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
       ELSIF NOT ISTYPE(x,Pair) THEN 
         RETURN x
       ELSE
-        WITH fn   = First(x), 
-             args = Rest(x) DO
+        VAR
+          fn   := First(x);
+          args := Rest(x); 
+        BEGIN
           IF    SymEq(fn, "quote") THEN
             RETURN First(args)
           ELSIF SymEq(fn, "begin") THEN
@@ -116,7 +124,7 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
           ELSIF SymEq(fn, "define") THEN
             IF ISTYPE(First(args), Pair) THEN
               RETURN env.define(First(First(args)),
-                                t.eval(Cons(Symbol("lambda"),
+                                t.eval(Cons(Sym("lambda"),
                                             Cons(Rest(First(args)), 
                                                  Rest(args))), env))
             ELSE
@@ -126,7 +134,7 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
           ELSIF SymEq(fn, "set!") THEN
             RETURN env.set(First(args), t.eval(Second(args), env))
           ELSIF SymEq(fn, "if") THEN
-            IF Truth(t.eval(First(args), env)) THEN
+            IF TruthO(t.eval(First(args), env))^ THEN
               x := Second(args) 
             ELSE
               x := Third(args)
@@ -149,11 +157,14 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
               Macro(m) => x := m.expand(t, x, args)
             |
               Closure(c) => x := c.body; 
-              env := NEW(SchemeEnvironment.T).init(c.parms, 
+              env := NEW(SchemeEnvironment.T).init(c.params, 
                                                    t.evalList(args,env),
                                                    c.env)
+            |
+              Procedure(p) =>
+              RETURN p.apply(t, t.evalList(args,env))
             ELSE
-              RETURN Procedure.Proc(fn).apply(t, t.evalList(args,env))
+              <* ASSERT FALSE *>  (* hmm? *)
             END
           END
         END
@@ -171,7 +182,7 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironment.T) : Pair =
         RETURN NIL
       ELSIF NOT ISTYPE(list, Pair) THEN
         RAISE E("Illegal arg list: " & SchemeUtils.DebugFormat(list));
-        RETURN NIL
+        (* notreached *)
       ELSE
         RETURN SchemeUtils.Cons(t.eval(SchemeUtils.First(list), env), 
                                 t.evalList(SchemeUtils.Rest(list), env))
@@ -183,6 +194,53 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironment.T) : Pair =
         RAISE E(ex)
     END
   END EvalList;
+
+PROCEDURE ReduceCond(t : T; 
+                     clauses : Object; env : SchemeEnvironment.T) : Object =
+
+  CONST First  = SchemeUtils.First;
+        Second = SchemeUtils.Second;
+        Third  = SchemeUtils.Second;
+        Rest   = SchemeUtils.Rest;
+        Cons   = SchemeUtils.Cons;
+        List2  = SchemeUtils.List2;
+        SymEq  = SchemeSymbol.SymEq;
+        Sym    = SchemeSymbol.Symbol;
+        TruthO = SchemeBoolean.TruthO;
+
+  VAR result : Object := NIL;
+
+  BEGIN
+    LOOP
+      IF clauses = NIL THEN RETURN SchemeBoolean.False() END;
+      
+      WITH clause = First(clauses) DO
+        clauses := Rest(clauses);
+        VAR
+          success := FALSE;
+        BEGIN
+          IF SymEq(First(clause),"else") THEN
+            success := TRUE
+          ELSE 
+            result := t.eval(First(clause),env);
+            (* is this a bug? we overwrite result even if we don't succeed,
+               Norvig's SILK does this too... *)
+            IF TruthO(result)^ THEN success := TRUE END; 
+          END;
+
+          IF success THEN
+            IF Rest(clause) = NIL THEN
+              RETURN List2(Sym("quote"),result)
+            ELSIF SymEq(Second(clause),"=>") THEN
+              RETURN List2(Third(clause),List2(Sym("quote"),result))
+            ELSE 
+              RETURN Cons(Sym("begin"), Rest(clause))
+            END
+          END
+        END
+      END
+    END
+  END ReduceCond;
 
 BEGIN END Scheme.
 

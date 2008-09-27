@@ -8,7 +8,7 @@ TYPE
   T <: Public;
 
   Public = OBJECT
-    first, rest : REFANY;
+    first, rest : SchemeObject.T;
   METHODS
     init(first, rest : SchemeObject.T) : T;
     equals(x : SchemeObject.T) : BOOLEAN;
