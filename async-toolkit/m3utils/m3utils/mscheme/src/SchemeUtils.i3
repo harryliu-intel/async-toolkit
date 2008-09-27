@@ -1,25 +1,13 @@
 (* $Id$ *)
 
 INTERFACE SchemeUtils;
-FROM Scheme IMPORT Boolean, Character, String, Object, Symbol, Vector, Pair, E;
+FROM Scheme IMPORT String, Object, Symbol, Vector, Pair, E;
+IMPORT Scheme, SchemeInputPort;
+IMPORT Wr, Wx;
 
 (* in JScheme, SchemeUtils is an abstract class but it has no non-static
    methods... see Peter Norvig's comments on this, about "unqualifying"
-   names.  *)
-
-PROCEDURE Truth(x : BOOLEAN) : Boolean;
-
-PROCEDURE TruthO(x : REFANY) : Boolean;
-
-PROCEDURE LongReal(x : LONGREAL) : LongReal;
-
-PROCEDURE LongRealO(x : REFANY) : LongReal;
-
-PROCEDURE LongRealT(t : TEXT) : LongReal; (* my add'n *)
-
-PROCEDURE Char(x : Object) : CHAR;
-  
-PROCEDURE Character(c : CHAR) : Character;
+   names.  It's just a Java hack that's not relevant for Modula-3. *)
 
 PROCEDURE Str(x : Object) : String;
 
@@ -27,9 +15,9 @@ PROCEDURE Sym(x : Object) : Symbol;
 
 PROCEDURE Vec(x : Object) : Vector;
 
-PROCEDURE InPort(x : Object; interp : T) : SchemeInputPort.T;
+PROCEDURE InPort(x : Object; interp : Scheme.T) : SchemeInputPort.T;
 
-(* PROCEDURE outPort(x : SchemeObject; interp : T) : ??? *)
+(* PROCEDURE outPort(x : SchemeObject; interp : Scheme.T) : ??? *)
 
 PROCEDURE Error(message : TEXT) : Object RAISES { E };
 
@@ -64,14 +52,18 @@ PROCEDURE ListToString(chars: Object) : String;
 
 PROCEDURE ListToVector(objs : Object) : Vector;
 
-PROCEDURE Write(x : Object; port : PrintWriter; quoted : BOOLEAN) : Object;
+PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object;
 
 PROCEDURE VectorToList(x : Object) : Pair;
+
+PROCEDURE P(x : Object) : Object; (* for debugging *)
 
 PROCEDURE Stringify(x : Object) : TEXT;
 PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT;
 PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T);
 
-PROCEDURE P(x : Object) : Object; (* for debugging *)
+PROCEDURE DebugFormat(x : Object) : TEXT;
+  (* for debugging, something not really needed in the Java version since
+     everything has a .toString there *)
 
 END SchemeUtils.

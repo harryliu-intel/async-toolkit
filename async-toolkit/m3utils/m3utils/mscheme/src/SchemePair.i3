@@ -1,8 +1,8 @@
 (* $Id$ *)
 
 INTERFACE SchemePair;
-IMPORT SchemeUtils, Wx;
-FROM Scheme IMPORT Object;
+IMPORT Wx;
+IMPORT SchemeObject;
 
 TYPE
   T <: Public;
@@ -10,8 +10,8 @@ TYPE
   Public = OBJECT
     first, rest : REFANY;
   METHODS
-    init(first, rest : Object) : T;
-    equals(x : Object) : BOOLEAN;
+    init(first, rest : SchemeObject.T) : T;
+    equals(x : SchemeObject.T) : BOOLEAN;
     format() : TEXT;
     stringifyPair(quoted : BOOLEAN; buf : Wx.T);
   END;

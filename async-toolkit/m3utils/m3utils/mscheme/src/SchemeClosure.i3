@@ -2,12 +2,13 @@
 
 INTERFACE SchemeClosure;
 IMPORT SchemeProcedure, SchemeEnvironment;
+IMPORT SchemeObject;
 
 TYPE
   T <: Public;
 
-  Public = SchemeProcedure.T OBJECT
-    init(parms, body : Object; env : SchemeEnvironment.T) : T;
+  Public = SchemeProcedure.T OBJECT METHODS
+    init(parms, body : SchemeObject.T; env : SchemeEnvironment.T) : T;
   END;
 
 CONST Brand = "SchemeClosure";

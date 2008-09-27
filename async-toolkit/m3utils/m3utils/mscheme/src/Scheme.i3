@@ -1,7 +1,9 @@
 (* $Id$ *)
 
 INTERFACE Scheme;
-IMPORT SchemeInputPort, SchemeEnvironment, SchemePair;
+IMPORT SchemeInputPort, SchemeEnvironment, SchemePair, SchemeObject;
+IMPORT SchemeBoolean, SchemeLongReal, SchemeChar, SchemeSymbol;
+IMPORT SchemeString, SchemeVector;
 IMPORT Pathname;
 IMPORT Rd;
 
@@ -9,14 +11,14 @@ EXCEPTION E(TEXT);
 
 TYPE 
   (* aliases for basic Scheme types *)
-  Object   = REFANY;
-  Boolean  = REF BOOLEAN
-  LongReal = REF LONGREAL;
-  Char     = REF CHAR;
-  Symbol   = Atom.T;
-  String   = REF ARRAY OF CHAR;
-  Vector   = REF ARRAY OF Object;
-  Pair     = SchemePair.T;
+  Object    = SchemeObject.T;
+  Boolean   = SchemeBoolean.T;
+  LongReal  = SchemeLongReal.T;
+  Character = SchemeChar.T;
+  Symbol    = SchemeSymbol.T;
+  String    = SchemeString.T;
+  Vector    = SchemeVector.T;
+  Pair      = SchemePair.T;
 
   (* a Scheme interpreter *)
   T <: Public;
@@ -28,7 +30,7 @@ TYPE
 
     readEvalWriteLoop();
 
-    loadFile(fn : Pathname.T) : Object;
+    loadFile(fn : Object) : Object;
 
     loadRd(rd : Rd.T) : Object;
 

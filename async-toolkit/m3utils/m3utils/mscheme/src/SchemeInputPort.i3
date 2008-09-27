@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 INTERFACE SchemeInputPort;
-IMPORT Rd, Scheme;
+IMPORT Rd, SchemeObject, SchemeBoolean;
 
 TYPE
   T <: Public;
@@ -9,17 +9,17 @@ TYPE
   Public = OBJECT METHODS
     init(rd : Rd.T) : T;
 
-    readChar() : Scheme.Object;
-    peekChar() : Scheme.Object;
+    readChar() : SchemeObject.T;
+    peekChar() : SchemeObject.T;
     pushChar(ch : INTEGER);
     popChar() : INTEGER;
     peekCh() : INTEGER;
-    read() : Scheme.Object;
+    read() : SchemeObject.T;
 
-    close() : Scheme.Boolean; (* Norvig has Scheme.Object *)
+    close() : SchemeBoolean.T; (* Norvig has Scheme.Object *)
   END;
 
-PROCEDURE IsEOF(x : Scheme.Object) : BOOLEAN;
+PROCEDURE IsEOF(x : SchemeObject.T) : BOOLEAN;
 
 CONST Brand = "SchemeInputPort";
     

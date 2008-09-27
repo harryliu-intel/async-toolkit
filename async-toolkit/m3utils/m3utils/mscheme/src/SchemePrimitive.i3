@@ -1,12 +1,12 @@
 (* $Id$ *)
 
 INTERFACE SchemePrimitive;
-IMPORT SchemeEnvironment;
+IMPORT SchemeEnvironment, SchemeProcedure;
 
 TYPE 
   T <: Public;
 
-  Public = SchemeProcedure.T OBJECT
+  Public = SchemeProcedure.T OBJECT METHODS
     init(id : INTEGER; minArgs, maxArgs : CARDINAL) : T;
   END;
 
