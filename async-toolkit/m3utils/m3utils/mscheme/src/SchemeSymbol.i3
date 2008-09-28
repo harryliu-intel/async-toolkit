@@ -2,11 +2,12 @@
 
 INTERFACE SchemeSymbol;
 IMPORT Atom;
+IMPORT SchemeObject;
 
 TYPE T = Atom.T;
 
-PROCEDURE SymEq(a : T; b : TEXT) : BOOLEAN;
-  (* check if a symbol is equal to a TEXT *)
+PROCEDURE SymEq(a : SchemeObject.T; b : TEXT) : BOOLEAN;
+  (* check if a symbol (is a symbol and) is equal to a TEXT *)
 
 CONST Symbol = Atom.FromText;
 

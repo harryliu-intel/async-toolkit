@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 MODULE Scheme;
+IMPORT SchemeClass;
 IMPORT SchemeInputPort, SchemeEnvironment, SchemePrimitives, SchemePrimitive;
 IMPORT SchemeBoolean, SchemeSymbol, SchemeMacro;
 IMPORT SchemeClosure, SchemeClosureClass, SchemeProcedure;
@@ -9,9 +10,7 @@ IMPORT Wr, TextRd;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 
 REVEAL
-  T = Public BRANDED Brand OBJECT
-    input : SchemeInputPort.T;
-    output : Wr.T;
+  T = SchemeClass.Private BRANDED Brand OBJECT
     globalEnvironment : SchemeEnvironment.T;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) := ReadInitialFiles;
@@ -176,13 +175,14 @@ PROCEDURE EvalInGlobalEnv(t : T; x : Object) : Object =
   BEGIN RETURN t.eval(x, t.globalEnvironment) END EvalInGlobalEnv;
 
 PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironment.T) : Pair =
+  CONST Error = SchemeUtils.Error;
   BEGIN
     TRY
       IF list = NIL THEN
         RETURN NIL
       ELSIF NOT ISTYPE(list, Pair) THEN
-        RAISE E("Illegal arg list: " & SchemeUtils.DebugFormat(list));
-        (* notreached *)
+        EVAL Error("Illegal arg list: " & SchemeUtils.DebugFormat(list));
+        RETURN NIL (*notreached*)
       ELSE
         RETURN SchemeUtils.Cons(t.eval(SchemeUtils.First(list), env), 
                                 t.evalList(SchemeUtils.Rest(list), env))
@@ -191,7 +191,7 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironment.T) : Pair =
       E(ex) => 
         Wr.PutText(Stdio.stdout, "Scheme.evalList raising E, evaluating " &
           SchemeUtils.DebugFormat(list));
-        RAISE E(ex)
+          EVAL Error(ex); RETURN NIL (*notreached*)
     END
   END EvalList;
 

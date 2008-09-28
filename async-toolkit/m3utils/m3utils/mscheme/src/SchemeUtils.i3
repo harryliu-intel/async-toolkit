@@ -30,9 +30,9 @@ PROCEDURE Third(x : Object) : Object;
 PROCEDURE PedanticFirst(x : Object) : Object;
 PROCEDURE PedanticRest(x : Object) : Object;
 
-PROCEDURE SetFirst(x, y : Object);
+PROCEDURE SetFirst(x, y : Object) : Object;
 
-PROCEDURE SetRest(x, y : Object);
+PROCEDURE SetRest(x, y : Object) : Object;
 
 PROCEDURE List1(x : Object) : Pair;
 PROCEDURE List2(x, y : Object) : Pair;
@@ -56,7 +56,7 @@ PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object;
 
 PROCEDURE VectorToList(x : Object) : Pair;
 
-PROCEDURE P(x : Object) : Object; (* for debugging *)
+PROCEDURE P(msg : TEXT; x : Object) : Object; (* for debugging *)
 
 PROCEDURE Stringify(x : Object) : TEXT;
 PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT;
