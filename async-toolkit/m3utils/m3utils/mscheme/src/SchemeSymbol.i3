@@ -11,6 +11,8 @@ PROCEDURE SymEq(a : SchemeObject.T; b : TEXT) : BOOLEAN;
 
 CONST Symbol = Atom.FromText;
 
+CONST ToText = Atom.ToText;
+
 CONST Brand = "SchemeSymbol";
 
 END SchemeSymbol.

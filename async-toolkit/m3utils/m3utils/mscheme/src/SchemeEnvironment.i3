@@ -12,10 +12,10 @@ TYPE
     lookup(sym : SchemeSymbol.T) : SchemeObject.T;
     define(var, val : SchemeObject.T) : SchemeObject.T;
     set(var, val : SchemeObject.T) : SchemeObject.T;
-    defPrim(nam : TEXT; 
+    defPrim(nam : TEXT;
             id : INTEGER; 
-            minArgs : INTEGER; 
-            maxArgs := LAST(INTEGER)) : T;
+            minArgs : CARDINAL; 
+            maxArgs : CARDINAL := LAST(CARDINAL)) : T;
   END;
 
 CONST Brand = "SchemeEnvironment";

@@ -5,13 +5,16 @@ IMPORT Scheme;
 FROM Scheme IMPORT Object;
 
 TYPE
-  T = OBJECT METHODS
+  T <: Public;
+
+  Public = OBJECT METHODS
     format() : TEXT;
     apply(interp : Scheme.T; args : Object) : Object; (* abstract *)
-    proc(x : Object) : T; (* init method *)
   END;
 
 CONST Brand = "SchemeProcedure";
+
+PROCEDURE Proc(x : Object) : T; 
 
 END SchemeProcedure.
     
