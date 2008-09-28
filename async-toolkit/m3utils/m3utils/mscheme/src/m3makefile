@@ -5,24 +5,40 @@ import ("cit_util")
 
 Module("Scheme")
 interface("SchemeClass")
+
 Module("SchemePair")
+
 Module("SchemeUtils")
+implementation("SchemeUtilsFormat")
+
 interface("SchemePrimitives")
+
 Module("SchemeProcedure")
 interface("SchemeProcedureClass")
+
 Module("SchemeClosure")
 interface("SchemeClosureClass")
+
 Module("SchemeMacro")
+
 module("SchemePrimitive")
+
 Module("SchemeEnvironment")
+
 Module("SchemeInputPort")
 
 Interface("SchemeObject")
-Interface("SchemeBoolean")
-Interface("SchemeLongReal")
-Interface("SchemeChar")
-Interface("SchemeSymbol")
+
+Module("SchemeBoolean")
+
+Module("SchemeLongReal")
+
+Module("SchemeChar")
+
+Module("SchemeSymbol")
+
 Interface("SchemeString")
+
 Interface("SchemeVector")
 
 library ("mscheme")

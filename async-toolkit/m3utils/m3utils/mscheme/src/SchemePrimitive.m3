@@ -3,6 +3,19 @@
 MODULE SchemePrimitive;
 IMPORT SchemeEnvironment;
 
+REVEAL
+  T = Public BRANDED Brand OBJECT
+    minArgs, maxArgs : CARDINAL;
+    idNumber : INTEGER;
+  OVERRIDES
+    init := Init;
+  END;
+
+PROCEDURE Init(t : T; id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
+  BEGIN 
+    t.minArgs := minArgs; t.maxArgs := maxArgs; t.idNumber := id; RETURN t
+  END Init;
+
 TYPE
   P = { Eq, Lt, Gt, Ge, Le,
         Abs, EofObject, EqQ, EqualQ, Force,

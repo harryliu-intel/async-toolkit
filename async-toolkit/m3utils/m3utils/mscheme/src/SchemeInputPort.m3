@@ -9,7 +9,7 @@ IMPORT SchemeBoolean, SchemeSymbol;
 IMPORT CharSeq;
 IMPORT Text;
 IMPORT Scan, FloatMode, Lex, TextUtils, Wx;
-FROM SchemeChar IMPORT Chr, Character;
+FROM SchemeChar IMPORT IChr, Character;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -58,11 +58,11 @@ PROCEDURE ReadChar(t : T) : Object =
         IF t.pushedChar = -1 THEN 
           RETURN EOF
         ELSE
-          RETURN Chr(t.pushedChar)
+          RETURN IChr(t.pushedChar)
         END
       ELSE
         WITH ch = t.getCh() DO
-          IF ch = -1 THEN RETURN EOF ELSE RETURN Chr(t.getCh()) END
+          IF ch = -1 THEN RETURN EOF ELSE RETURN IChr(t.getCh()) END
         END
       END
     EXCEPT
@@ -75,7 +75,7 @@ PROCEDURE ReadChar(t : T) : Object =
 PROCEDURE PeekChar(t : T) : Object =
   BEGIN
     WITH p = t.peekCh() DO
-      IF p = -1 THEN RETURN EOF ELSE RETURN Chr(p) END
+      IF p = -1 THEN RETURN EOF ELSE RETURN IChr(p) END
     END
   END PeekChar;
 
@@ -249,11 +249,11 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
                 ELSE
                   t.isPushedToken := TRUE;
                   t.pushedToken := token;
-                  RETURN Chr(ch)
+                  RETURN IChr(ch)
                 END
               END
             ELSE
-              RETURN Chr(ch)
+              RETURN IChr(ch)
             END
         |
           ORD('e'), ORD('i'), ORD('d') => RETURN t.nextToken()

@@ -5,6 +5,7 @@ IMPORT Scheme, SchemeInputPort, SchemeClass;
 IMPORT Wr, Fmt, Wx, Stdio;
 FROM Scheme IMPORT Object, E, Symbol, Vector, String, Pair, Character, 
                    LongReal, Boolean;
+FROM SchemeChar IMPORT Char, Chr;
 
 (* the return Str(Error...) is really quite bizarre; also in the Sym
    and Vec routines below... *)
@@ -15,13 +16,6 @@ PROCEDURE Str(x : Object) : String =
     ELSE RETURN Str(Error("expected a string, got: " & DebugFormat(x)))
     END
   END Str;
-
-PROCEDURE Chr(x : Object) : Character =
-  BEGIN
-    IF ISTYPE(x,Character) THEN RETURN x 
-    ELSE RETURN Chr(Error("expected a character, got: " & DebugFormat(x)))
-    END
-  END Chr;
 
 PROCEDURE Sym(x : Object) : Symbol =
   BEGIN
@@ -189,9 +183,7 @@ PROCEDURE Eqv(x, y : Object) : BOOLEAN =
     TYPECASE x OF
       LongReal(lx) => 
       TYPECASE y OF LongReal(ly) => RETURN lx^ = ly^ ELSE RETURN FALSE END
-    |
-      Character(cx) =>
-      TYPECASE y OF Character(cy) => RETURN cx^ = cy^ ELSE RETURN FALSE END
+      (* chars are shared in our system, no need to check values here *)
     ELSE
       RETURN x = y
     END
@@ -209,7 +201,7 @@ PROCEDURE ListToString(chars: Object) : String =
       i := 0;
   BEGIN
     WHILE ISTYPE(chars,Pair) DO
-      str[i] := Chr(First(chars))^;
+      str[i] := Char(First(chars));
       chars := Rest(chars);
       INC(i)
     END;
@@ -288,7 +280,7 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) =
       |
         Character(c) =>
         IF quoted THEN Put("#" & BS) END;
-        PutC(c^)
+        PutC(Char(c))
       |
         Pair(p) => p.stringifyPair(quoted,buf)
       |
@@ -319,13 +311,6 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) =
       END
     END
   END StringifyB;
-
-PROCEDURE DebugFormat(x : Object) : TEXT =
-  (* for debugging, something not really needed in the Java version since
-     everything has a .toString there *)
-  BEGIN
-    RETURN "<DebugFormat>" (* ho hum... *)
-  END DebugFormat;
 
 (* special characters below, they mess up auto-indentation in emacs... *)
 CONST BS = "\\"; DQC = '"'; BSC= '\\';
