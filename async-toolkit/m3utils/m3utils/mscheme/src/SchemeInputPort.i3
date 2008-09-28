@@ -11,7 +11,7 @@ TYPE
 
     readChar() : SchemeObject.T;
     peekChar() : SchemeObject.T;
-    pushChar(ch : INTEGER);
+    pushChar(ch : INTEGER) : INTEGER;
     popChar() : INTEGER;
     peekCh() : INTEGER;
     read() : SchemeObject.T;

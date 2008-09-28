@@ -2,12 +2,14 @@
 
 MODULE SchemeInputPort;
 IMPORT AL, Rd;
-FROM SchemeUtils IMPORT Error, Warn, Cons, List2;
-FROM Scheme IMPORT Symbol, Object, String;
+FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector;
+FROM Scheme IMPORT Object, String, Boolean, LongReal;
 FROM SchemeSymbol IMPORT SymEq;
 IMPORT SchemeBoolean, SchemeSymbol;
 IMPORT CharSeq;
 IMPORT Text;
+IMPORT Scan, FloatMode, Lex, TextUtils, Wx;
+FROM SchemeChar IMPORT Chr, Character;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -16,7 +18,13 @@ REVEAL
     pushedToken : Object := NIL;
     pushedChar : INTEGER := -1;
   METHODS
-    getCh() : INTEGER := GetCh; (* java style Reader.read *)
+    getCh() : INTEGER RAISES { Rd.Failure } := GetCh; 
+    (* java style Reader.read *)
+
+    nextToken() : Object RAISES { Rd.Failure } := NextToken;
+
+    readTail(dotOK : BOOLEAN) : Object RAISES { Rd.Failure } := ReadTail;
+
   OVERRIDES
     init     :=  Init;
     readChar :=  ReadChar;
@@ -30,10 +38,13 @@ REVEAL
 
 VAR (*CONST*) EOF := SchemeSymbol.Symbol("#!EOF");
 
+PROCEDURE Init(t : T; rd : Rd.T) : T = 
+  BEGIN t.rd := rd; RETURN t END Init;
+
 PROCEDURE GetCh(t : T) : INTEGER RAISES { Rd.Failure } =
   BEGIN
     TRY
-      RETURN ORD(Rd.GetChar(t.in))
+      RETURN ORD(Rd.GetChar(t.rd))
     EXCEPT
       Rd.EndOfFile => RETURN -1 
     END
@@ -44,19 +55,19 @@ PROCEDURE ReadChar(t : T) : Object =
     TRY
       IF t.isPushedChar THEN
         t.isPushedChar := FALSE;
-        IF t.isPushedChar = -1 THEN 
+        IF t.pushedChar = -1 THEN 
           RETURN EOF
         ELSE
-          RETURN Char(t.pushedChar)
+          RETURN Chr(t.pushedChar)
         END
       ELSE
         WITH ch = t.getCh() DO
-          IF ch = -1 THEN RETURN EOF ELSE RETURN Char(t.getCh()) END
+          IF ch = -1 THEN RETURN EOF ELSE RETURN Chr(t.getCh()) END
         END
       END
     EXCEPT
       Rd.Failure(err) =>
-        Warn("On input, exception: " & AL.Format(err));
+        EVAL Warn("On input, exception: " & AL.Format(err));
         RETURN EOF
     END
   END ReadChar;
@@ -64,7 +75,7 @@ PROCEDURE ReadChar(t : T) : Object =
 PROCEDURE PeekChar(t : T) : Object =
   BEGIN
     WITH p = t.peekCh() DO
-      IF p = -1 THEN RETURN EOF ELSE RETURN Char(p) END
+      IF p = -1 THEN RETURN EOF ELSE RETURN Chr(p) END
     END
   END PeekChar;
 
@@ -91,12 +102,15 @@ PROCEDURE PeekCh(t : T) : INTEGER =
       END
     EXCEPT
       Rd.Failure(err) => 
-        Warn("On input, exception: " & AL.Format(err));
+        EVAL Warn("On input, exception: " & AL.Format(err));
         RETURN -1
     END
   END PeekCh;
 
 PROCEDURE Read(t : T) : Object =
+
+  CONST Symbol = SchemeSymbol.Symbol;
+
   BEGIN
     TRY
       WITH token = t.nextToken() DO
@@ -107,28 +121,28 @@ PROCEDURE Read(t : T) : Object =
         ELSIF SymEq(token, ".") THEN
           EVAL Warn("Extra . ignored."); RETURN t.read()
         ELSIF SymEq(token, "'") THEN
-          RETURN List2(Symbol("quote", t.read()))
+          RETURN List2(Symbol("quote"), t.read())
         ELSIF SymEq(token, "`") THEN
-          RETURN List2(Symbol("quasiquote", t.read()))
+          RETURN List2(Symbol("quasiquote"), t.read())
         ELSIF SymEq(token, ",") THEN
-          RETURN List2(Symbol("unquote", t.read()))
+          RETURN List2(Symbol("unquote"), t.read())
         ELSIF SymEq(token, ",@") THEN
-          RETURN List2(Symbol("unquote-splicing", t.read()))
+          RETURN List2(Symbol("unquote-splicing"), t.read())
         ELSE
           RETURN token
         END
       END
     EXCEPT
       Rd.Failure(err) => 
-        Warn("On input, exception: " & AL.Format(err));
+        EVAL Warn("On input, exception: " & AL.Format(err));
         RETURN EOF
     END
   END Read;
 
-PROCEDURE Close(t : T) : Object =
+PROCEDURE Close(t : T) : Boolean =
   BEGIN
     TRY
-      Rd.Close(t.in);
+      Rd.Close(t.rd);
       RETURN SchemeBoolean.True();
     EXCEPT
       Rd.Failure(err) => RETURN Error("IOException: " & AL.Format(err))
@@ -137,7 +151,8 @@ PROCEDURE Close(t : T) : Object =
 
 PROCEDURE IsEOF(x : Object) : BOOLEAN = BEGIN RETURN x = EOF END IsEOF;
 
-PROCEDURE ReadTail(t : T; dotOK : BOOLEAN) RAISES { Rd.Failure } =
+PROCEDURE ReadTail(t : T; 
+                   <*UNUSED*>dotOK : BOOLEAN) : Object RAISES { Rd.Failure } =
   VAR token := t.nextToken();
   BEGIN
     IF    token = EOF THEN
@@ -148,7 +163,7 @@ PROCEDURE ReadTail(t : T; dotOK : BOOLEAN) RAISES { Rd.Failure } =
       WITH result = t.read() DO
         token := t.nextToken();
         IF NOT SymEq(token, ")") THEN
-          Warn("Where's the ')'?  Got " & Symbol.ToText(token) &
+          EVAL Warn("Where's the ')'?  Got " & SchemeSymbol.ToText(token) &
             " after .")
         END;
         RETURN result
@@ -161,7 +176,11 @@ PROCEDURE ReadTail(t : T; dotOK : BOOLEAN) RAISES { Rd.Failure } =
   END ReadTail;
 
 PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
+
+  CONST Symbol = SchemeSymbol.Symbol;
+
   VAR ch : INTEGER;
+
   BEGIN
     IF t.isPushedToken THEN
       t.isPushedToken := FALSE;
@@ -185,7 +204,7 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
         IF ch = ORD('@') THEN
           RETURN Symbol(",@") 
         ELSE
-          t.pushChar(ch); RETURN Symbol(",")
+          EVAL t.pushChar(ch); RETURN Symbol(",")
         END
     |
       ORD(';') =>
@@ -199,7 +218,7 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
           LOOP
             ch := t.getCh();
             IF ch = ORD(QMC) OR ch = -1 THEN EXIT END;
-            IF ch = BSC THEN
+            IF ch = ORD(BSC) THEN
               buff.addhi(VAL(t.getCh(),CHAR))
             ELSE
               buff.addhi(VAL(ch,CHAR))
@@ -210,9 +229,69 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
         END
     |
       ORD('#') =>
-        (* NOT FINISHED *)
+        ch := t.getCh();
+        CASE ch OF
+          ORD('t'), ORD('T') => RETURN SchemeBoolean.True()
+        |
+          ORD('f'), ORD('F') => RETURN SchemeBoolean.False()
+        |
+          ORD('(') =>
+            EVAL t.pushChar(ch);
+            RETURN ListToVector(t.read())
+        | 
+          ORD(BSC) =>
+            ch := t.getCh();
+            IF VAL(ch,CHAR) IN SET OF CHAR { 's', 'S', 'n', 'N' } THEN
+              EVAL t.pushChar(ch);
+              WITH token = t.nextToken() DO
+                IF    SymEq(token, "space") THEN RETURN Character(' ') 
+                ELSIF SymEq(token, "newline") THEN RETURN Character('\n')
+                ELSE
+                  t.isPushedToken := TRUE;
+                  t.pushedToken := token;
+                  RETURN Chr(ch)
+                END
+              END
+            ELSE
+              RETURN Chr(ch)
+            END
+        |
+          ORD('e'), ORD('i'), ORD('d') => RETURN t.nextToken()
+        |
+          ORD('b'), ORD('o'), ORD('x') =>
+            EVAL Warn("#" & Text.FromChar(VAL(ch,CHAR)) & 
+                      " not implemented, ignored.");
+            RETURN t.nextToken()
+        ELSE
+          EVAL Warn("#" & Text.FromChar(VAL(ch,CHAR)) & 
+                    " not recognized, ignored.");
+          RETURN t.nextToken()
+        END
     ELSE
-      (* NOT FINISHED *)
+      WITH wx = Wx.New(),
+           c  = VAL(ch,CHAR) DO
+        REPEAT
+          Wx.PutChar(wx, VAL(ch, CHAR));
+          ch := t.getCh()
+        UNTIL
+          VAL(ch,CHAR) IN White OR ch = -1 OR VAL(ch,CHAR) IN Delims;
+
+        EVAL t.pushChar(ch);
+
+        IF c IN NumberChars THEN
+          TRY
+            WITH lr = Scan.LongReal(Wx.ToText(wx)),
+                 lrp = NEW(LongReal) DO
+              lrp^ := lr;
+              RETURN lrp
+            END
+          EXCEPT
+            Lex.Error, FloatMode.Trap => (* skip *)
+          END
+        END;
+
+        RETURN Symbol(TextUtils.ToLower(Wx.ToText(wx)))
+      END
     END
   END NextToken;
 
@@ -227,6 +306,10 @@ PROCEDURE CharSeqToArray(seq : CharSeq.T) : String =
   END CharSeqToArray;
 
 CONST White = SET OF CHAR { '\t', ' ', '\n', '\r' };
+
+      Delims = SET OF CHAR { '(', ')', '\'', ';', '"', ',', '`' };
+      
+      NumberChars = SET OF CHAR { '.', '+', '-', '0' .. '9' };
 
 CONST BSC = '\\'; QMC = '"';
 
