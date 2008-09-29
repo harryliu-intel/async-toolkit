@@ -12,21 +12,21 @@ FROM SchemeChar IMPORT Char, Chr;
 
 PROCEDURE Str(x : Object) : String =
   BEGIN
-    IF ISTYPE(x,String) THEN RETURN x 
+    IF x # NIL AND ISTYPE(x,String) THEN RETURN x 
     ELSE RETURN Str(Error("expected a string, got: " & DebugFormat(x)))
     END
   END Str;
 
 PROCEDURE Sym(x : Object) : Symbol =
   BEGIN
-    IF ISTYPE(x,Symbol) THEN RETURN x 
+    IF x # NIL AND ISTYPE(x,Symbol) THEN RETURN x 
     ELSE RETURN Sym(Error("expected a symbol, got: " & DebugFormat(x)))
     END
   END Sym;
 
 PROCEDURE Vec(x : Object) : Vector =
   BEGIN
-    IF ISTYPE(x,Vector) THEN RETURN x 
+    IF x # NIL AND ISTYPE(x,Vector) THEN RETURN x 
     ELSE RETURN Vec(Error("expected a vector, got: " & DebugFormat(x)))
     END
   END Vec;
@@ -136,7 +136,7 @@ PROCEDURE Cons(a, b : Object) : Pair =
 PROCEDURE Reverse(x : Object) : Object =
   VAR result : Object := NIL;
   BEGIN
-    WHILE ISTYPE(x,Pair) DO
+    WHILE x # NIL AND ISTYPE(x,Pair) DO
       result := Cons(First(x), result); 
       x := Rest(x)
     END;
@@ -192,7 +192,7 @@ PROCEDURE Eqv(x, y : Object) : BOOLEAN =
 PROCEDURE Length(x : Object) : CARDINAL =
   VAR len := 0;
   BEGIN
-    WHILE ISTYPE(x,Pair) DO INC(len); x := Rest(x) END;
+    WHILE x # NIL AND ISTYPE(x,Pair) DO INC(len); x := Rest(x) END;
     RETURN len
   END Length;
 
@@ -200,7 +200,7 @@ PROCEDURE ListToString(chars: Object) : String =
   VAR str := NEW(String, Length(chars));
       i := 0;
   BEGIN
-    WHILE ISTYPE(chars,Pair) DO
+    WHILE chars # NIL AND ISTYPE(chars,Pair) DO
       str[i] := Char(First(chars));
       chars := Rest(chars);
       INC(i)
@@ -212,7 +212,7 @@ PROCEDURE ListToVector(objs : Object) : Vector =
   VAR vec := NEW(Vector, Length(objs));
       i := 0;
   BEGIN
-    WHILE ISTYPE(objs,Pair) DO
+    WHILE objs # NIL AND ISTYPE(objs,Pair) DO
       vec[i] := Chr(First(objs));
       objs := Rest(objs);
       INC(i)

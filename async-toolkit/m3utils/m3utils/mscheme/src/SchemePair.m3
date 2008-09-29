@@ -20,7 +20,7 @@ PROCEDURE Equals(t : T; x : SchemeObject.T) : BOOLEAN =
   BEGIN
     IF    t = x THEN
       RETURN TRUE
-    ELSIF NOT ISTYPE(x,T) THEN
+    ELSIF NOT ISTYPE(x,T) OR x = NIL THEN
       RETURN FALSE
     ELSE
       WITH that = NARROW(x,T) DO
@@ -43,7 +43,7 @@ PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T) =
   VAR special : TEXT := NIL;
 
   BEGIN
-    IF ISTYPE(t.rest,T) AND Rest(t.rest) = NIL THEN
+    IF t.rest # NIL AND ISTYPE(t.rest,T) AND Rest(t.rest) = NIL THEN
 
       IF    SymEq(t.first, "quote") THEN             special := "'"
       ELSIF SymEq(t.first, "quasiquote") THEN        special := "`"
@@ -61,7 +61,7 @@ PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T) =
       StringifyB(t.first, quoted, buf);
       VAR tail := t.rest; 
       BEGIN
-        WHILE ISTYPE(tail,T) DO
+        WHILE tail # NIL AND ISTYPE(tail,T) DO
           Wx.PutChar(buf, ' ');
           StringifyB(NARROW(tail,T).first, quoted, buf);
           tail := NARROW(tail,T).rest

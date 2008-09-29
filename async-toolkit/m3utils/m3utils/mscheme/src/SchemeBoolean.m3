@@ -11,7 +11,7 @@ PROCEDURE Truth(x : BOOLEAN) : T =
 
 PROCEDURE TruthO(x : Object) : T =
   BEGIN
-    IF ISTYPE(x,T) THEN RETURN x 
+    IF x # NIL AND ISTYPE(x,T) THEN RETURN x 
     ELSE RETURN TruthO(Error("expected a boolean, got: " & DebugFormat(x)))
     END
   END TruthO;

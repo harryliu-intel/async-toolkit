@@ -16,7 +16,7 @@ PROCEDURE Format(t : T) : TEXT =
 
 PROCEDURE Proc(x : Object) : T =
   BEGIN
-    IF ISTYPE(x,T) THEN RETURN x 
+    IF x # NIL AND ISTYPE(x,T) THEN RETURN x 
     ELSE RETURN Proc(Error("Not a procedure: " & Stringify(x))) 
     END
   END Proc;

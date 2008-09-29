@@ -8,14 +8,14 @@ REVEAL T = BRANDED Brand REF CHAR;
 
 PROCEDURE Char(x : SchemeObject.T) : CHAR =
   BEGIN
-    IF ISTYPE(x, T) THEN RETURN NARROW(x,T)^ 
+    IF x # NIL AND ISTYPE(x, T) THEN RETURN NARROW(x,T)^ 
     ELSE RETURN Char(Error("expected a char, got: " & DebugFormat(x))) 
     END
   END Char;
 
 PROCEDURE Chr(x : SchemeObject.T) : T =
   BEGIN
-    IF ISTYPE(x, T) THEN RETURN x
+    IF x # NIL AND ISTYPE(x, T) THEN RETURN x
     ELSE RETURN Chr(Error("expected a char, got: " & DebugFormat(x))) 
     END
   END Chr;

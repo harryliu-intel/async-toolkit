@@ -30,10 +30,10 @@ PROCEDURE Expand(t : T;
 
 PROCEDURE MacroExpand(interpreter : Scheme.T; x : Object) : Object =
   BEGIN
-    IF NOT ISTYPE(x,Pair) THEN RETURN x END;
+    IF x = NIL OR NOT ISTYPE(x,Pair) THEN RETURN x END;
 
     WITH fn = interpreter.evalInGlobalEnv(First(x)) DO
-      IF NOT ISTYPE(fn,T) THEN RETURN x END;
+      IF fn = NIL OR NOT ISTYPE(fn,T) THEN RETURN x END;
       RETURN NARROW(fn,T).expand(interpreter, x, Rest(x))
     END
   END MacroExpand;

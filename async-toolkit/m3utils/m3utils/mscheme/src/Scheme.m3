@@ -103,9 +103,9 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
 
   BEGIN
     LOOP
-      IF ISTYPE(x,Symbol) THEN
+      IF x # NIL AND ISTYPE(x,Symbol) THEN
         RETURN env.lookup(x)
-      ELSIF NOT ISTYPE(x,Pair) THEN 
+      ELSIF x = NIL OR NOT ISTYPE(x,Pair) THEN 
         RETURN x
       ELSE
         VAR
@@ -121,7 +121,7 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
             END;
             x := First(args)
           ELSIF SymEq(fn, "define") THEN
-            IF ISTYPE(First(args), Pair) THEN
+            IF First(args) # NIL AND ISTYPE(First(args), Pair) THEN
               RETURN env.define(First(First(args)),
                                 t.eval(Cons(Sym("lambda"),
                                             Cons(Rest(First(args)), 

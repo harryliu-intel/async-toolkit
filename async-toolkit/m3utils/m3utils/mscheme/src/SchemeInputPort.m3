@@ -191,7 +191,7 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
       ch := t.getCh()
     END;
 
-    WHILE VAL(ch,CHAR) IN White DO ch := t.getCh() END;
+    WHILE ch # -1 AND VAL(ch,CHAR) IN White DO ch := t.getCh() END;
 
     CASE ch OF
       -1 => RETURN EOF;
@@ -279,14 +279,17 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
         EVAL t.pushChar(ch);
 
         IF c IN NumberChars THEN
-          TRY
-            WITH lr = Scan.LongReal(Wx.ToText(wx)),
-                 lrp = NEW(LongReal) DO
-              lrp^ := lr;
-              RETURN lrp
+          WITH txt = Wx.ToText(wx) DO
+            TRY
+              WITH lr = Scan.LongReal(txt), 
+                   lrp = NEW(LongReal) DO
+                lrp^ := lr;
+                RETURN lrp
+              END
+            EXCEPT
+              Lex.Error, FloatMode.Trap => 
+                Wx.PutText(wx, txt) (* restore it *)
             END
-          EXCEPT
-            Lex.Error, FloatMode.Trap => (* skip *)
           END
         END;
 

@@ -1,14 +1,30 @@
 (* $Id$ *)
 
 MODULE SchemePrimitive;
-IMPORT SchemeEnvironment;
+IMPORT SchemeEnvironment, SchemeProcedureClass;
+IMPORT Scheme;
+IMPORT SchemeSymbol;
+
+FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String;
+
+FROM SchemeUtils IMPORT Length, First, Second, Third,
+                        Stringify, StringifyQ, Error, Warn, Equal, Eqv,
+                        Rest, PedanticFirst, PedanticRest, Cons, 
+                        SetFirst, SetRest, Reverse, Str;
+
+FROM SchemeBoolean IMPORT Truth, False, True;
+FROM SchemeLongReal IMPORT FromLR, FromO, Zero, One;
+
+IMPORT Fmt, Text;
+IMPORT Math, Scan, Lex, FloatMode;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     minArgs, maxArgs : CARDINAL;
     idNumber : INTEGER;
   OVERRIDES
-    init := Init;
+    init  := Init;
+    apply := Apply;
   END;
 
 PROCEDURE Init(t : T; id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
@@ -258,5 +274,618 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
     RETURN env;
 
   END InstallPrimitives;
+
+PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
+  BEGIN
+    WITH nArgs = Length(args) DO
+      IF    nArgs < t.minArgs THEN
+        RETURN Error("too few args, " & Fmt.Int(nArgs) & 
+               ", for " & t.name & ": " & Stringify(args))
+      ELSIF nArgs > t.maxArgs THEN
+        RETURN Error("too many args, " & Fmt.Int(nArgs) & 
+               ", for " & t.name & ": " & Stringify(args))
+      END
+    END;
+
+    WITH x = First(args),
+         y = Second(args) DO
+      CASE VAL(t.idNumber,P) OF
+          P.Eq => RETURN NumCompare(args, '=')
+        |
+          P.Lt => RETURN NumCompare(args, '<')
+        |
+          P.Gt => RETURN NumCompare(args, '>')
+        |
+          P.Ge => RETURN NumCompare(args, 'G')
+        | 
+          P.Le => RETURN NumCompare(args, 'L')
+        |
+          P.Abs =>  RETURN FromLR(ABS(FromO(x)))
+        |
+          P.EofObject => 
+        |
+          P.EqQ => RETURN Truth(x = y)
+        |
+          P.EqualQ => RETURN Truth(Equal(x,y))
+        |
+          P.Force =>
+        |
+          
+          P.Car => RETURN PedanticFirst(x)
+        |
+          P.Floor => RETURN FromLR(FLOAT(FLOOR(FromO(x)),LONGREAL))
+        |
+          P.Ceiling => RETURN FromLR(FLOAT(CEILING(FromO(x)),LONGREAL))
+        |
+          P.Cons => RETURN Cons(x,y)
+        |
+          
+          P.Divide => RETURN NumCompute(Rest(args), '/', FromO(x))
+        |
+          P.Length => RETURN FromLR(FLOAT(Length(x),LONGREAL))
+        |
+          P.List => RETURN args
+        |
+          P.ListQ => RETURN Truth(IsList(x))
+        |
+          P.Apply =>
+        |
+          
+          P.Max => RETURN NumCompute(args, 'X', FromO(x))
+        |
+          P.Min => RETURN NumCompute(args, 'N', FromO(x))
+        |
+          P.Minus => RETURN NumCompute(Rest(args), '-', FromO(x))
+        |
+          P.Newline =>
+        |
+          
+          P.Not => RETURN Truth(x = False())
+        |
+          P.NullQ => RETURN Truth(x = NIL)
+        |
+          P.NumberQ => RETURN Truth(x # NIL AND ISTYPE(x, LongReal))
+        |
+          P.PairQ => RETURN Truth(x # NIL AND ISTYPE(x,Pair))
+        |
+          P.Plus => RETURN NumCompute(args, '+', 0.0d0)
+        |
+          
+          P.ProcedureQ =>
+        |
+          P.Read =>
+        |
+          P.Cdr => RETURN PedanticRest(x)
+        |
+          P.Round => RETURN FromLR(FLOAT(ROUND(FromO(x)),LONGREAL))
+        |
+          P.Second => RETURN Second(x)
+        |
+          
+          P.SymbolQ => RETURN Truth(x # NIL AND ISTYPE(x,String))
+        |
+          P.Times => RETURN NumCompute(args, '*', 1.0d0)
+        |
+          P.Truncate => RETURN FromLR(FLOAT(TRUNC(FromO(x)),LONGREAL))
+        |
+          P.Write =>
+        |
+          P.Append => 
+          IF args = NIL THEN RETURN NIL
+          ELSE RETURN Append(args)
+          END
+        |
+          
+          P.BooleanQ => RETURN Truth(x = True() OR x = False())
+        |
+          P.Sqrt =>
+        |
+          P.Expt =>
+        |
+          P.Reverse => RETURN Reverse(x)
+        |
+          P.Assoc => RETURN MemberAssoc(x, y, 'a', ' ')
+        |
+          P.AssQ => RETURN MemberAssoc(x, y, 'a', 'q')
+        |
+          P.AssV => RETURN MemberAssoc(x, y, 'a', 'v')
+        |
+          P.Member =>RETURN MemberAssoc(x, y, 'm', ' ')
+        |
+          P.MemQ => RETURN MemberAssoc(x, y, 'm', 'q')
+        |
+          P.MemV => RETURN MemberAssoc(x, y, 'm', 'v')
+        |
+          P.EqvQ => RETURN Truth(Eqv(x,y))
+        |
+          
+          P.ListRef =>  
+          VAR p := x; BEGIN
+            FOR k := TRUNC(FromO(y)) TO 1 BY -1 DO p:= Rest(p) END;
+            RETURN First(p)
+          END
+        |
+          P.ListTail =>           
+          VAR p := x; BEGIN
+            FOR k := TRUNC(FromO(y)) TO 1 BY -1 DO p:= Rest(p) END;
+            RETURN p
+          END
+        |
+          P.StringQ =>
+        |
+          P.MakeString =>
+        |
+          P.String =>
+        |
+          
+          P.StringLength =>
+        |
+          P.StringRef =>
+        |
+          P.StringSet =>
+        |
+          P.Substring =>
+        |
+          
+          P.StringAppend =>
+        |
+          P.StringToList =>
+        |
+          P.ListToString =>
+        |
+          P.SymbolToString => 
+          IF x = NIL OR NOT ISTYPE(x, Symbol) THEN
+            RETURN Error("Not a symbol") 
+          END;
+          RETURN TextToCharArray(SchemeSymbol.ToText(x))
+        |
+          P.StringToSymbol => 
+            RETURN SchemeSymbol.Symbol(Text.FromChars(Str(x)^))
+        |
+          P.Exp => RETURN FromLR(Math.exp(FromO(x)))
+        |
+          P.Log => RETURN FromLR(Math.log(FromO(x)))
+        |
+          P.Sin => RETURN FromLR(Math.sin(FromO(x)))
+        |
+          P.Cos => RETURN FromLR(Math.cos(FromO(x)))
+        |
+          P.Tan => RETURN FromLR(Math.tan(FromO(x)))
+        |
+          P.Acos => RETURN FromLR(Math.acos(FromO(x)))
+        |
+          P.Asin => RETURN FromLR(Math.asin(FromO(x)))
+        |
+          P.Atan => RETURN FromLR(Math.atan(FromO(x)))
+        |
+          
+          P.NumberToString => RETURN NumberToString(x,y)
+        |
+          P.StringToNumber => RETURN StringToNumber(x,y)
+        |
+          P.CharQ =>
+        |
+          
+          P.CharAlphabeticQ =>
+        |
+          P.CharNumericQ =>
+        |
+          P.CharWhitespaceQ =>
+        |
+          
+          P.CharUppercaseQ =>
+        |
+          P.CharLowercaseQ =>
+        |
+          P.CharToInteger =>
+        |
+          
+          P.IntegerToChar =>
+        |
+          P.CharUpcase =>
+        |
+          P.CharDowncase =>
+        |
+          
+          P.VectorQ =>
+        |
+          P.MakeVector =>
+        |
+          P.Vector =>
+        |
+          P.VectorLength =>
+        |
+          
+          P.VectorRef =>
+        |
+          P.VectorSet =>
+        |
+          P.ListToVector =>
+        |
+          P.Map =>
+        |
+          
+          P.Foreach =>
+        |
+          P.CallCC =>
+        |
+          P.VectorToList =>
+        |
+          P.Load =>
+        |
+          P.Display =>
+        |
+          
+          P.InputportQ =>
+        |
+          P.CurrentInputPort =>
+        |
+          P.OpenInputFile =>
+        |
+          
+          P.CloseInputPort =>
+        |
+          P.OutputportQ =>
+        |
+          P.CurrentOutputPort =>
+        |
+          
+          P.OpenOutputFile =>
+        |
+          P.CloseOutputPort =>
+        |
+          P.ReadChar =>
+        |
+          P.PeekChar =>
+        |
+          P.Eval =>
+        |
+          P.Quotient =>
+          VAR d := FromO(x) / FromO(y); BEGIN
+            IF d > 0.0d0 THEN
+              RETURN FromLR(FLOAT(FLOOR(d),LONGREAL))
+            ELSE
+              RETURN FromLR(FLOAT(CEILING(d),LONGREAL))
+            END
+          END
+        |
+          P.Remainder => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
+                         (* this must be wrong for negative y *)
+        |
+          P.Modulo => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
+        |
+          P.Third => RETURN Third(x)
+        |
+          P.EofObjectQ =>
+        |
+          P.Gcd =>
+          IF args = NIL THEN RETURN Zero ELSE RETURN Gcd(args) END
+        |
+          P.Lcm =>
+          IF args = NIL THEN RETURN One ELSE RETURN Gcd(args) END
+        |
+          P.Cxr =>
+          VAR p := x; BEGIN
+            FOR i := Text.Length(t.name)-1 TO 1 BY -1 DO
+              IF Text.GetChar(t.name,i) = 'a' THEN
+                p := PedanticFirst(p)
+              ELSE
+                p := PedanticRest(p)
+              END
+            END;
+            RETURN p
+          END
+        |
+          P.OddQ => RETURN Truth(ABS(TRUNC(FromO(x)) MOD 2) # 0)
+        |
+          P.EvenQ => RETURN Truth(ABS(TRUNC(FromO(x)) MOD 2) = 0)
+        |
+          P.ZeroQ => RETURN Truth(FromO(x) = 0.0d0)
+        |
+          P.PositiveQ => RETURN Truth(FromO(x) > 0.0d0)
+        |
+          P.NegativeQ => RETURN Truth(FromO(x) < 0.0d0)
+        |
+          P.CharCmpEq =>
+        |
+          P.CharCmpLt =>
+        |
+          P.CharCmpGt =>
+        |
+          P.CharCmpGe =>
+        |
+          P.CharCmpLe =>
+        |
+          P.CharCiCmpEq =>
+        |
+          P.CharCiCmpLt =>
+        |
+          P.CharCiCmpGt =>
+        |
+          P.CharCiCmpGe =>
+        |
+          P.CharCiCmpLe =>
+        |
+          P.StringCmpEq =>
+        |
+          P.StringCmpLt =>
+        |
+          P.StringCmpGt =>
+        |
+          P.StringCmpGe =>
+        |
+          P.StringCmpLe =>
+        |
+          P.StringCiCmpEq =>
+        |
+          P.StringCiCmpLt =>
+        |
+          P.StringCiCmpGt =>
+        |
+          P.StringCiCmpGe =>
+        |
+          P.StringCiCmpLe =>
+        |
+          P.ExactQ =>
+        |
+          P.InexactQ => RETURN Truth(NOT IsExact(x))
+        |
+          P.IntegerQ => RETURN Truth(IsExact(x))
+        |
+          P.CallWithInputFile =>
+        |
+          P.CallWithOutputFile =>
+        |
+          P.Tanh =>
+        |
+          P.New =>
+        |
+          P.Class =>
+        |
+          P.Method =>
+        |
+          P.Exit =>
+        |
+          P.SetCar => RETURN SetFirst(x,y)
+        |
+          P.SetCdr => RETURN SetRest(x,y)
+        |
+          P.TimeCall =>
+        |
+          P.MacroExpand =>
+        |
+          P.Error =>
+        |
+          P.ListStar =>
+      END
+    END
+
+  END Apply;
+
+PROCEDURE IsList(x : Object) : BOOLEAN =
+  VAR
+    slow, fast := x;
+  BEGIN
+    LOOP
+      IF fast = NIL THEN RETURN TRUE END;
+      IF slow = Rest(fast) OR NOT ISTYPE(fast, Pair) OR 
+         slow = NIL OR NOT ISTYPE(slow, Pair) THEN
+        RETURN FALSE
+      END;
+      slow := Rest(slow);
+      fast := Rest(fast);
+      IF fast = NIL THEN RETURN TRUE END;
+      IF NOT ISTYPE(fast, Pair) THEN RETURN FALSE END;
+      fast := Rest(fast)
+    END
+  END IsList;
+
+PROCEDURE Append(args : Object) : Object =
+  BEGIN
+    IF Rest(args) = NIL THEN RETURN First(args) 
+    ELSE RETURN Append2(First(args), Append(Rest(args)))
+    END
+  END Append;
+
+PROCEDURE Append2(x, y : Object) : Object =
+  BEGIN
+    IF x # NIL AND ISTYPE(x,Pair) THEN RETURN Cons(First(x),
+                                                   Append2(Rest(x),y))
+    ELSE RETURN y
+    END
+  END Append2;
+
+PROCEDURE IsExact(x : Object) : BOOLEAN =
+  BEGIN
+    IF x = NIL OR NOT ISTYPE(x, LongReal) THEN RETURN FALSE END;
+    WITH d = FromO(x) DO
+      RETURN d = FLOAT(ROUND(d),LONGREAL) AND 
+             ABS(d) < 102962884861573423.0d0 (* ??? *)
+    END
+  END IsExact;
+
+PROCEDURE MemberAssoc(obj, list : Object; m, eq : CHAR) : Object =
+  BEGIN
+    WHILE list # NIL AND ISTYPE(list, Pair) DO
+      VAR target : Object; 
+          found : BOOLEAN;
+      BEGIN
+        IF m = 'm' THEN target := First(list) ELSE 
+          target := First(First(list)) 
+        END;
+
+        CASE eq OF
+          'q' => found := target = obj
+        |
+          'v' => found := Eqv(target,obj)
+        |
+          ' ' => found := Equal(target,obj)
+        ELSE
+          EVAL Warn("Bad option to memberAssoc:" & Text.FromChar(eq)); 
+          RETURN False()
+        END;
+        
+        IF found THEN
+          IF m = 'm' THEN RETURN list ELSE RETURN First(list) END
+        END;
+
+        list := Rest(list)
+      END
+    END;
+    RETURN False()
+  END MemberAssoc;
+
+PROCEDURE NumCompare(args : Object; op : CHAR) : Object =
+  BEGIN
+    WHILE Rest(args) # NIL AND ISTYPE(Rest(args), Pair) DO
+      VAR
+        x := FromO(First(args));
+        y : LONGREAL;
+      BEGIN
+        args := Rest(args);
+        y := FromO(First(args));
+
+        CASE op OF
+          '>' => IF NOT x >  y THEN RETURN False() END
+        |
+          '<' => IF NOT x <  y THEN RETURN False() END
+        |
+          '=' => IF NOT x =  y THEN RETURN False() END
+        |
+          'L' => IF NOT x <= y THEN RETURN False() END
+        |
+          'G' => IF NOT x >= y THEN RETURN False() END
+        ELSE
+          <* ASSERT FALSE *>
+        END
+      END
+    END;
+    RETURN True()
+  END NumCompare;
+      
+PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object =
+  BEGIN
+    IF args = NIL THEN
+      CASE op OF
+        '-' => RETURN FromLR(0.0d0 - result)
+      |
+        '/' => RETURN FromLR(1.0d0 / result)
+      ELSE
+        RETURN FromLR(result)
+      END
+    ELSE
+      WHILE args # NIL AND ISTYPE(args, Pair) DO
+        VAR
+          x := FromO(First(args));
+        BEGIN
+          args := Rest(args);
+          CASE op OF 
+            'X' => IF x > result THEN result := x END
+          |
+            'N' => IF x < result THEN result := x END
+          |
+            '+' => result := result + x
+          |
+            '-' => result := result - x
+          |
+            '*' => result := result * x
+          |
+            '/' => result := result / x
+          ELSE
+            <* ASSERT FALSE *>
+          END
+        END
+      END;
+      RETURN FromLR(result)
+    END
+  END NumCompute;
+
+PROCEDURE NumberToString(x, y : Object) : Object =
+  VAR
+    base : INTEGER;
+  BEGIN
+    IF y # NIL AND ISTYPE(y, LongReal) THEN
+      base := ROUND(FromO(y))
+    ELSE
+      base := 10
+    END;
+
+    IF base < 2 THEN base := 2 ELSIF base > 16 THEN base := 16 END;
+
+    IF base # 10 OR FromO(x) = FLOAT(ROUND(FromO(x)),LONGREAL) THEN
+      RETURN TextToCharArray(Fmt.Int(ROUND(FromO(x)), base := base))
+    ELSE
+      RETURN TextToCharArray(Fmt.LongReal(FromO(x)))
+    END
+  END NumberToString;
+
+PROCEDURE TextToCharArray(txt : TEXT) : String =
+  VAR     str := NEW(String, Text.Length(txt));
+  BEGIN
+    FOR i := FIRST(str^) TO LAST(str^) DO
+      str[i] := Text.GetChar(txt,i)
+    END;
+    RETURN str
+  END TextToCharArray;
+
+PROCEDURE StringToNumber(x, y : Object) : Object = 
+  VAR base : INTEGER;
+  BEGIN
+    IF y # NIL AND ISTYPE(y, LongReal) THEN
+      base := ROUND(FromO(y))
+    ELSE
+      base := 10
+    END;
+
+    IF base < 2 THEN base := 2 ELSIF base > 16 THEN base := 16 END;
+
+    TRY
+      IF base = 10 THEN
+        RETURN FromLR(Scan.LongReal(StringifyQ(x,FALSE)))
+      ELSE
+        RETURN FromLR(FLOAT(Scan.Int(StringifyQ(x,FALSE), defaultBase := base),
+                            LONGREAL))
+      END
+    EXCEPT
+      FloatMode.Trap, Lex.Error => RETURN False()
+    END
+  END StringToNumber;
+
+PROCEDURE Gcd(args : Object) : Object =
+  VAR
+    gcd := 0;
+
+  BEGIN
+    WHILE args # NIL AND ISTYPE(args, Pair) DO
+      gcd := Gcd2(ROUND(ABS(FromO(First(args)))), gcd);
+      args := Rest(args)
+    END;
+    RETURN FromLR(FLOAT(gcd,LONGREAL))
+  END Gcd;
+
+PROCEDURE Gcd2(a, b : INTEGER) : INTEGER =
+  BEGIN 
+    IF b = 0 THEN RETURN a 
+    ELSE RETURN Gcd2(b, a MOD b)
+    END
+  END Gcd2;
+
+PROCEDURE Lcm(args : Object) : Object =
+  VAR
+    L, g := 1;
+  BEGIN
+    WHILE args # NIL AND ISTYPE(args, Pair) DO
+      WITH n = ABS(ROUND(FromO(First(args)))) DO
+        g := Gcd2(n, L);
+        IF g = 0 THEN
+          L := g 
+        ELSE
+          L := (n DIV g) * L
+        END;
+        args := Rest(args)
+      END
+    END;
+    RETURN FromLR(FLOAT(L,LONGREAL))
+  END Lcm;
 
 BEGIN END SchemePrimitive.

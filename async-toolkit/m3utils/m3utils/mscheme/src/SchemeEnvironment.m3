@@ -48,12 +48,13 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
   BEGIN
     IF vars = NIL AND vals = NIL THEN 
       RETURN TRUE 
-    ELSIF ISTYPE(vars, Symbol) THEN
+    ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
       EVAL t.dictionary.put(vars, vals);
       RETURN TRUE
-    ELSIF ISTYPE(vars, Pair) AND ISTYPE(vals, Pair) THEN
+    ELSIF vars # NIL AND vals # NIL AND 
+          ISTYPE(vars, Pair) AND ISTYPE(vals, Pair) THEN
       WITH varp = NARROW(vars,Pair), valp = NARROW(vals,Pair) DO
-        IF ISTYPE(varp.first,Symbol) THEN
+        IF varp.first # NIL AND ISTYPE(varp.first,Symbol) THEN
           EVAL t.dictionary.put(varp.first, valp.first)
         END;
         RETURN InitDict(t, varp.rest, valp.rest)
@@ -77,7 +78,7 @@ PROCEDURE Lookup(t : T; symbol : Symbol) : Object =
 
 PROCEDURE Define(t : T; var, val : Object) : Object =
   BEGIN
-    IF NOT ISTYPE(var, Symbol) THEN RETURN var END;
+    IF var = NIL OR NOT ISTYPE(var, Symbol) THEN RETURN var END;
 
     EVAL t.dictionary.put(var,val);
 
@@ -95,7 +96,7 @@ PROCEDURE Define(t : T; var, val : Object) : Object =
 PROCEDURE Set(t : T; var, val : Object) : Object =
   VAR dummy : Object;
   BEGIN
-    IF NOT ISTYPE(var, Symbol) THEN
+    IF var = NIL OR NOT ISTYPE(var, Symbol) THEN
       RETURN Error("Attempt to set a non-symbol: " &
              SchemeUtils.Stringify(var))
     END;

@@ -1,5 +1,7 @@
 /* $Id$ */
 
+option("optimization","") /* for debugging */
+
 import ("libm3")
 import ("cit_util")
 
