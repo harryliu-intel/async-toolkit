@@ -9,7 +9,7 @@ IMPORT SchemeBoolean, SchemeSymbol;
 IMPORT CharSeq;
 IMPORT Text;
 IMPORT Scan, FloatMode, Lex, TextUtils, Wx;
-FROM SchemeChar IMPORT IChr, Character;
+FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -308,11 +308,6 @@ PROCEDURE CharSeqToArray(seq : CharSeq.T) : String =
     END
   END CharSeqToArray;
 
-CONST White = SET OF CHAR { '\t', ' ', '\n', '\r' };
-
-      Delims = SET OF CHAR { '(', ')', '\'', ';', '"', ',', '`' };
-      
-      NumberChars = SET OF CHAR { '.', '+', '-', '0' .. '9' };
 
 CONST BSC = '\\'; QMC = '"';
 

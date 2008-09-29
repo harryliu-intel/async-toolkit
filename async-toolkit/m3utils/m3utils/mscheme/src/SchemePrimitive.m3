@@ -10,10 +10,13 @@ FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String;
 FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Stringify, StringifyQ, Error, Warn, Equal, Eqv,
                         Rest, PedanticFirst, PedanticRest, Cons, 
-                        SetFirst, SetRest, Reverse, Str;
+                        SetFirst, SetRest, Reverse, Str, List2, ListToString;
 
 FROM SchemeBoolean IMPORT Truth, False, True;
 FROM SchemeLongReal IMPORT FromLR, FromO, Zero, One;
+FROM SchemeChar IMPORT Character, Char, IChr, LowerCase, UpperCase, Digits,
+                       White, Upcase, Downcase, Chr;
+IMPORT SchemeChar;
 
 IMPORT Fmt, Text;
 IMPORT Math, Scan, Lex, FloatMode;
@@ -380,7 +383,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Sqrt =>
         |
-          P.Expt =>
+          P.Expt => RETURN FromLR(Math.pow(FromO(x),FromO(y)))
         |
           P.Reverse => RETURN Reverse(x)
         |
@@ -411,25 +414,77 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
             RETURN p
           END
         |
-          P.StringQ =>
+          P.StringQ => RETURN Truth(x # NIL AND ISTYPE(x,String))
         |
           P.MakeString =>
+          VAR
+            str := NEW(String, TRUNC(FromO(x)));
+          BEGIN
+            IF y # NIL THEN
+              WITH c = Char(y) DO
+                FOR i := FIRST(str^) TO LAST(str^) DO
+                  str[i] := c
+                END
+              END
+            END;
+            RETURN str
+          END
         |
-          P.String =>
+          P.String => RETURN ListToString(args)
         |
-          
-          P.StringLength =>
+          P.StringLength => RETURN FromLR(FLOAT(NUMBER(Str(x)^),LONGREAL))
         |
-          P.StringRef =>
+          P.StringRef => 
+          WITH str = Str(x)^, yi = TRUNC(FromO(y)) DO
+            IF yi < FIRST(str) OR yi > LAST(str) THEN
+              RETURN Error("string index out of bounds")
+            ELSE
+              RETURN Character(str[yi])
+            END
+          END
         |
           P.StringSet =>
+          WITH z = Third(args), str = Str(x)^, yi = TRUNC(FromO(y)) DO
+            IF yi < FIRST(str) OR yi > LAST(str) THEN
+              RETURN Error("string index out of bounds")
+            ELSE
+              str[yi] := Char(z);
+              RETURN z
+            END
+          END
         |
           P.Substring =>
+          VAR 
+            str := Str(x)^;
+            start := TRUNC(FromO(y));
+            end := TRUNC(FromO(Third(args)));
+          BEGIN
+            (* crimp pointers *)
+            start := MAX(start, 0);
+            start := MIN(start, LAST(str));
+
+            end := MAX(end, LAST(str));
+            end := MAX(end,start);
+
+            WITH res = NEW(String, end-start) DO
+              res^ := SUBARRAY(str, start, end-start);
+              RETURN res
+            END
+          END
         |
           
-          P.StringAppend =>
+          P.StringAppend => RETURN StringAppend(args)
         |
           P.StringToList =>
+          VAR
+            result : Pair := NIL;
+            str := Str(x)^;
+          BEGIN
+            FOR i := LAST(str) TO FIRST(str) BY -1 DO
+              result := Cons(Character(str[i]),result)
+            END;
+            RETURN result
+          END
         |
           P.ListToString =>
         |
@@ -463,28 +518,28 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.StringToNumber => RETURN StringToNumber(x,y)
         |
-          P.CharQ =>
+          P.CharQ => RETURN Truth(x # NIL AND ISTYPE(x, SchemeChar.T))
         |
           
-          P.CharAlphabeticQ =>
+          P.CharAlphabeticQ => RETURN Truth(Char(x) IN LowerCase + UpperCase)
         |
-          P.CharNumericQ =>
+          P.CharNumericQ => RETURN Truth(Char(x) IN Digits)
         |
-          P.CharWhitespaceQ =>
-        |
-          
-          P.CharUppercaseQ =>
-        |
-          P.CharLowercaseQ =>
-        |
-          P.CharToInteger =>
+          P.CharWhitespaceQ => RETURN Truth(Char(x) IN White)
         |
           
-          P.IntegerToChar =>
+          P.CharUppercaseQ => RETURN Truth(Char(x) IN UpperCase)
         |
-          P.CharUpcase =>
+          P.CharLowercaseQ => RETURN Truth(Char(x) IN LowerCase)
         |
-          P.CharDowncase =>
+          P.CharToInteger => RETURN FromLR(FLOAT(ORD(Char(x)),LONGREAL))
+        |
+          
+          P.IntegerToChar => RETURN IChr(TRUNC(FromO(x)))
+        |
+          P.CharUpcase => RETURN Character(Upcase(Char(x)))
+        |
+          P.CharDowncase => RETURN Character(Downcase(Char(x)))
         |
           
           P.VectorQ =>
@@ -562,7 +617,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           IF args = NIL THEN RETURN Zero ELSE RETURN Gcd(args) END
         |
           P.Lcm =>
-          IF args = NIL THEN RETURN One ELSE RETURN Gcd(args) END
+          IF args = NIL THEN RETURN One ELSE RETURN Lcm(args) END
         |
           P.Cxr =>
           VAR p := x; BEGIN
@@ -586,25 +641,25 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.NegativeQ => RETURN Truth(FromO(x) < 0.0d0)
         |
-          P.CharCmpEq =>
+          P.CharCmpEq => RETURN Truth(CharCompare(x, y, FALSE) =  0)
         |
-          P.CharCmpLt =>
+          P.CharCmpLt => RETURN Truth(CharCompare(x, y, FALSE) <  0)
         |
-          P.CharCmpGt =>
+          P.CharCmpGt =>RETURN Truth(CharCompare(x, y, FALSE) >  0)
         |
-          P.CharCmpGe =>
+          P.CharCmpGe => RETURN Truth(CharCompare(x, y, FALSE) >=  0)
         |
-          P.CharCmpLe =>
+          P.CharCmpLe =>RETURN Truth(CharCompare(x, y, FALSE) <=  0)
         |
-          P.CharCiCmpEq =>
+          P.CharCiCmpEq =>RETURN Truth(CharCompare(x, y, TRUE) =  0)
         |
-          P.CharCiCmpLt =>
+          P.CharCiCmpLt =>RETURN Truth(CharCompare(x, y, TRUE) <  0)
         |
-          P.CharCiCmpGt =>
+          P.CharCiCmpGt =>RETURN Truth(CharCompare(x, y, TRUE) >  0)
         |
-          P.CharCiCmpGe =>
+          P.CharCiCmpGe =>RETURN Truth(CharCompare(x, y, TRUE) >=  0)
         |
-          P.CharCiCmpLe =>
+          P.CharCiCmpLe =>RETURN Truth(CharCompare(x, y, TRUE) <=  0)
         |
           P.StringCmpEq =>
         |
@@ -654,7 +709,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.MacroExpand =>
         |
-          P.Error =>
+          P.Error => RETURN Error(Stringify(args))
         |
           P.ListStar =>
       END
@@ -887,5 +942,35 @@ PROCEDURE Lcm(args : Object) : Object =
     END;
     RETURN FromLR(FLOAT(L,LONGREAL))
   END Lcm;
+
+PROCEDURE CharCompare(x, y : Object; ci : BOOLEAN) : INTEGER =
+  BEGIN
+    IF ci THEN RETURN ORD(Downcase(Char(x))) - ORD(Downcase(Char(y)))
+    ELSE       RETURN ORD(Char(x)) - ORD(Char(y))
+    END         
+  END CharCompare;
+
+PROCEDURE StringCompare(x, y : Object; ci : BOOLEAN) : INTEGER =
+  BEGIN
+    IF x # NIL AND y # NIL AND ISTYPE(x, String) AND ISTYPE(y, String) THEN
+      WITH xc = NARROW(x,String), yc = NARROW(y, String) DO
+        FOR i := 0 TO MIN(LAST(xc^),LAST(yc^)) DO
+          VAR diff : INTEGER; BEGIN
+            IF ci THEN
+              diff := ORD(Upcase(xc[i])) - ORD(Upcase(yc[i]))
+            ELSE
+              diff := ORD(xc[i]) - ORD(yc[i])
+            END;
+            IF diff # 0 THEN RETURN diff END
+          END
+        END;
+        
+        RETURN NUMBER(xc^) - NUMBER(yc^)
+      END
+    ELSE
+      EVAL Error("expected two strings, got: " & Stringify(List2(x, y)));
+      RETURN 0
+    END
+  END StringCompare;
 
 BEGIN END SchemePrimitive.

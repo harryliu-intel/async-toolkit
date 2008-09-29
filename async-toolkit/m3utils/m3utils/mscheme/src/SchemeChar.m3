@@ -26,6 +26,24 @@ PROCEDURE IChr(x : INTEGER) : T =
 PROCEDURE Character(c : CHAR) : T =
   BEGIN RETURN Array[c] END Character;
 
+PROCEDURE Upcase(c : CHAR) : CHAR =
+  BEGIN 
+    IF c IN LowerCase THEN 
+      RETURN VAL(ORD(c) - ORD('a') + ORD('A'),CHAR)
+    ELSE
+      RETURN c
+    END
+  END Upcase;
+
+PROCEDURE Downcase(c : CHAR) : CHAR =
+  BEGIN 
+    IF c IN LowerCase THEN 
+      RETURN VAL(ORD(c) - ORD('A') + ORD('a'),CHAR)
+    ELSE
+      RETURN c
+    END
+  END Downcase;
+
 VAR (* CONST *) Array := NEW(REF ARRAY CHAR OF T);
 
 BEGIN 
