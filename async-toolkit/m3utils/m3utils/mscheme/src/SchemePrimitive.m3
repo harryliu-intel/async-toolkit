@@ -5,7 +5,7 @@ IMPORT SchemeEnvironment, SchemeProcedureClass;
 IMPORT Scheme;
 IMPORT SchemeSymbol;
 
-FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String;
+FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String, Vector;
 
 FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Stringify, StringifyQ, Error, Warn, Equal, Eqv,
@@ -18,7 +18,7 @@ FROM SchemeChar IMPORT Character, Char, IChr, LowerCase, UpperCase, Digits,
                        White, Upcase, Downcase, Chr;
 IMPORT SchemeChar;
 
-IMPORT Fmt, Text;
+IMPORT Fmt, Text, Wx;
 IMPORT Math, Scan, Lex, FloatMode;
 
 REVEAL
@@ -455,19 +455,19 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Substring =>
           VAR 
-            str := Str(x)^;
+            str := Str(x);
             start := TRUNC(FromO(y));
             end := TRUNC(FromO(Third(args)));
           BEGIN
             (* crimp pointers *)
             start := MAX(start, 0);
-            start := MIN(start, LAST(str));
+            start := MIN(start, LAST(str^));
 
-            end := MAX(end, LAST(str));
+            end := MAX(end, LAST(str^));
             end := MAX(end,start);
 
             WITH res = NEW(String, end-start) DO
-              res^ := SUBARRAY(str, start, end-start);
+              res^ := SUBARRAY(str^, start, end-start);
               RETURN res
             END
           END
@@ -478,9 +478,9 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           P.StringToList =>
           VAR
             result : Pair := NIL;
-            str := Str(x)^;
+            str := Str(x);
           BEGIN
-            FOR i := LAST(str) TO FIRST(str) BY -1 DO
+            FOR i := LAST(str^) TO FIRST(str^) BY -1 DO
               result := Cons(Character(str[i]),result)
             END;
             RETURN result
@@ -542,7 +542,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           P.CharDowncase => RETURN Character(Downcase(Char(x)))
         |
           
-          P.VectorQ =>
+          P.VectorQ => RETURN Truth(x # NIL AND ISTYPE(x, Vector))
         |
           P.MakeVector =>
         |
@@ -661,25 +661,25 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.CharCiCmpLe =>RETURN Truth(CharCompare(x, y, TRUE) <=  0)
         |
-          P.StringCmpEq =>
+          P.StringCmpEq => RETURN Truth(StringCompare(x, y, FALSE) =  0)
         |
-          P.StringCmpLt =>
+          P.StringCmpLt => RETURN Truth(StringCompare(x, y, FALSE) <  0)
         |
-          P.StringCmpGt =>
+          P.StringCmpGt => RETURN Truth(StringCompare(x, y, FALSE) >  0)
         |
-          P.StringCmpGe =>
+          P.StringCmpGe => RETURN Truth(StringCompare(x, y, FALSE) >= 0)
         |
-          P.StringCmpLe =>
+          P.StringCmpLe => RETURN Truth(StringCompare(x, y, FALSE) <= 0)
         |
-          P.StringCiCmpEq =>
+          P.StringCiCmpEq => RETURN Truth(StringCompare(x, y, TRUE) =  0)
         |
-          P.StringCiCmpLt =>
+          P.StringCiCmpLt => RETURN Truth(StringCompare(x, y, TRUE) <  0)
         |
-          P.StringCiCmpGt =>
+          P.StringCiCmpGt => RETURN Truth(StringCompare(x, y, TRUE) >  0)
         |
-          P.StringCiCmpGe =>
+          P.StringCiCmpGe => RETURN Truth(StringCompare(x, y, TRUE) >= 0)
         |
-          P.StringCiCmpLe =>
+          P.StringCiCmpLe => RETURN Truth(StringCompare(x, y, TRUE) <= 0)
         |
           P.ExactQ =>
         |
@@ -972,5 +972,14 @@ PROCEDURE StringCompare(x, y : Object; ci : BOOLEAN) : INTEGER =
       RETURN 0
     END
   END StringCompare;
+
+PROCEDURE StringAppend(args : Object) : String =
+  VAR res := Wx.New();
+  BEGIN
+    WHILE args # NIL AND ISTYPE(args,Pair) DO
+      Wx.PutText(res,StringifyQ(First(args),FALSE))
+    END;
+    RETURN Str(Wx.ToText(res))
+  END StringAppend;
 
 BEGIN END SchemePrimitive.
