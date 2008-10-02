@@ -2,7 +2,7 @@
 
 MODULE SchemeMacro;
 IMPORT Scheme, SchemeSymbol;
-FROM Scheme IMPORT Object, Pair;
+FROM Scheme IMPORT Object, E;
 FROM SchemeUtils IMPORT Cons, First, Rest;
 
 REVEAL
@@ -13,7 +13,7 @@ REVEAL
 
 PROCEDURE Expand(t : T; 
                  interpreter : Scheme.T; 
-                 oldPair : Pair; args : Object) : Pair =
+                 oldPair : Pair; args : Object) : Pair RAISES { E } =
   BEGIN
     WITH expansion = t.apply(interpreter,args) DO
       TYPECASE expansion OF
@@ -28,7 +28,7 @@ PROCEDURE Expand(t : T;
     RETURN oldPair
   END Expand;
 
-PROCEDURE MacroExpand(interpreter : Scheme.T; x : Object) : Object =
+PROCEDURE MacroExpand(interpreter : Scheme.T; x : Object) : Object RAISES { E } =
   BEGIN
     IF x = NIL OR NOT ISTYPE(x,Pair) THEN RETURN x END;
 

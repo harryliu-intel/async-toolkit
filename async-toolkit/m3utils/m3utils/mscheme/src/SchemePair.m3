@@ -3,6 +3,7 @@
 MODULE SchemePair;
 IMPORT Wx;
 IMPORT SchemeObject, SchemeUtils, SchemeSymbol;
+FROM Scheme IMPORT E;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -30,10 +31,10 @@ PROCEDURE Equals(t : T; x : SchemeObject.T) : BOOLEAN =
     END
   END Equals;
 
-PROCEDURE Format(t : T) : TEXT =
+PROCEDURE Format(t : T) : TEXT  RAISES { E } =
   BEGIN RETURN SchemeUtils.StringifyQ(t, TRUE) END Format;
 
-PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T) =
+PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E } =
 
   CONST SymEq      = SchemeSymbol.SymEq;
         StringifyB = SchemeUtils.StringifyB;

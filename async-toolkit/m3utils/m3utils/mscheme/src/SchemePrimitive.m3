@@ -4,7 +4,7 @@ MODULE SchemePrimitive;
 IMPORT SchemeEnvironment, SchemeProcedureClass;
 IMPORT Scheme, SchemeClass;
 
-FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String, Vector, E;
+FROM Scheme IMPORT Object, Symbol, String, Vector, E;
 
 FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Stringify, StringifyQ, Error, Warn, Equal, Eqv,
@@ -21,11 +21,18 @@ FROM SchemeChar IMPORT Character, Char, IChr, LowerCase, UpperCase, Digits,
                        White, Upcase, Downcase;
 IMPORT SchemeChar;
 IMPORT SchemeSymbol;
+IMPORT SchemeLongReal;
 
 IMPORT Fmt, Text, Wx, Wr;
 IMPORT Math, Scan, Lex, FloatMode;
 IMPORT Process;
 IMPORT OSError, FileWr, FileRd, AL;
+IMPORT Thread;
+IMPORT SchemePair;
+
+TYPE Pair = SchemePair.T;
+
+<* FATAL Thread.Alerted *>
 
 TYPE Procedure = SchemeProcedure.T;
 
@@ -286,7 +293,8 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
 
   END InstallPrimitives;
 
-PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
+PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object 
+  RAISES { E } =
   VAR z : Object;
   BEGIN
     WITH nArgs = Length(args) DO
@@ -352,16 +360,21 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Minus => RETURN NumCompute(Rest(args), '-', FromO(x))
         |
-          P.Newline => Wr.PutChar(OutPort(x,interp), '\n');
-                       Wr.Flush(OutPort(x,interp));
-                       RETURN True()
+          P.Newline => 
+          TRY
+            Wr.PutChar(OutPort(x,interp), '\n');
+            Wr.Flush(OutPort(x,interp));
+            RETURN True()
+          EXCEPT
+            Wr.Failure(err) => RAISE E("newline: Wr.Failure: " & AL.Format(err))
+          END
         |
           
           P.Not => RETURN Truth(x = False())
         |
           P.NullQ => RETURN Truth(x = NIL)
         |
-          P.NumberQ => RETURN Truth(x # NIL AND ISTYPE(x, LongReal))
+          P.NumberQ => RETURN Truth(x # NIL AND ISTYPE(x, SchemeLongReal.T))
         |
           P.PairQ => RETURN Truth(x # NIL AND ISTYPE(x,Pair))
         |
@@ -395,7 +408,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           
           P.BooleanQ => RETURN Truth(x = True() OR x = False())
         |
-          P.Sqrt =>
+          P.Sqrt => RETURN FromLR(Math.sqrt(FromO(x)))
         |
           P.Expt => RETURN FromLR(Math.pow(FromO(x),FromO(y)))
         |
@@ -500,7 +513,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
             RETURN result
           END
         |
-          P.ListToString =>
+          P.ListToString => RETURN ListToString(x)
         |
           P.SymbolToString => 
           IF x = NIL OR NOT ISTYPE(x, Symbol) THEN
@@ -626,7 +639,13 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           
           P.OpenOutputFile => RETURN OpenOutputFile(x)
         |
-          P.CloseOutputPort => Wr.Close(OutPort(x, interp)); RETURN True()
+          P.CloseOutputPort => 
+          TRY
+            Wr.Close(OutPort(x, interp)); RETURN True()
+          EXCEPT
+            Wr.Failure(err) => RAISE E("close-output-port: Wr.Failure: " & AL.Format(err))
+          END
+
         |
           P.ReadChar => RETURN InPort(x, interp).readChar()
         |
@@ -720,11 +739,9 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.StringCiCmpLe => RETURN Truth(StringCompare(x, y, TRUE) <= 0)
         |
-          P.ExactQ =>
-        |
           P.InexactQ => RETURN Truth(NOT IsExact(x))
         |
-          P.IntegerQ => RETURN Truth(IsExact(x))
+          P.ExactQ, P.IntegerQ => RETURN Truth(IsExact(x))
         |
           P.CallWithInputFile =>
           VAR p : SchemeInputPort.T := NIL;
@@ -743,7 +760,14 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
             TRY p := OpenOutputFile(x);
                 z := Proc(y).apply(interp, List1(p))
             FINALLY
-                IF p # NIL THEN Wr.Close(p) END
+                IF p # NIL THEN 
+                  TRY
+                    Wr.Close(p) 
+                  EXCEPT
+                    Wr.Failure(err) => RAISE E("call-with-output-file: on close, Wr.Failure: " & AL.Format(err))
+
+                  END
+                END
             END;
             RETURN z
           END
@@ -759,7 +783,8 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           P.Exit => 
           IF x = NIL THEN Process.Exit(0) 
           ELSE Process.Exit(TRUNC(FromO(x)))
-          END
+          END;
+          <* ASSERT FALSE *>
         |
           P.SetCar => RETURN SetFirst(x,y)
         |
@@ -810,9 +835,9 @@ PROCEDURE Append2(x, y : Object) : Object =
     END
   END Append2;
 
-PROCEDURE IsExact(x : Object) : BOOLEAN =
+PROCEDURE IsExact(x : Object) : BOOLEAN RAISES { E } =
   BEGIN
-    IF x = NIL OR NOT ISTYPE(x, LongReal) THEN RETURN FALSE END;
+    IF x = NIL OR NOT ISTYPE(x, SchemeLongReal.T) THEN RETURN FALSE END;
     WITH d = FromO(x) DO
       RETURN d = FLOAT(ROUND(d),LONGREAL) AND 
              ABS(d) < 102962884861573423.0d0 (* ??? *)
@@ -850,7 +875,7 @@ PROCEDURE MemberAssoc(obj, list : Object; m, eq : CHAR) : Object =
     RETURN False()
   END MemberAssoc;
 
-PROCEDURE NumCompare(args : Object; op : CHAR) : Object =
+PROCEDURE NumCompare(args : Object; op : CHAR) : Object RAISES { E } =
   BEGIN
     WHILE Rest(args) # NIL AND ISTYPE(Rest(args), Pair) DO
       VAR
@@ -878,7 +903,8 @@ PROCEDURE NumCompare(args : Object; op : CHAR) : Object =
     RETURN True()
   END NumCompare;
       
-PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object =
+PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object 
+  RAISES { E } =
   BEGIN
     IF args = NIL THEN
       CASE op OF
@@ -915,11 +941,11 @@ PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object =
     END
   END NumCompute;
 
-PROCEDURE NumberToString(x, y : Object) : Object =
+PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
   VAR
     base : INTEGER;
   BEGIN
-    IF y # NIL AND ISTYPE(y, LongReal) THEN
+    IF y # NIL AND ISTYPE(y, SchemeLongReal.T) THEN
       base := ROUND(FromO(y))
     ELSE
       base := 10
@@ -934,10 +960,10 @@ PROCEDURE NumberToString(x, y : Object) : Object =
     END
   END NumberToString;
 
-PROCEDURE StringToNumber(x, y : Object) : Object = 
+PROCEDURE StringToNumber(x, y : Object) : Object RAISES { E } = 
   VAR base : INTEGER;
   BEGIN
-    IF y # NIL AND ISTYPE(y, LongReal) THEN
+    IF y # NIL AND ISTYPE(y, SchemeLongReal.T) THEN
       base := ROUND(FromO(y))
     ELSE
       base := 10
@@ -957,7 +983,7 @@ PROCEDURE StringToNumber(x, y : Object) : Object =
     END
   END StringToNumber;
 
-PROCEDURE Gcd(args : Object) : Object =
+PROCEDURE Gcd(args : Object) : Object RAISES { E } =
   VAR
     gcd := 0;
 
@@ -976,7 +1002,7 @@ PROCEDURE Gcd2(a, b : INTEGER) : INTEGER =
     END
   END Gcd2;
 
-PROCEDURE Lcm(args : Object) : Object =
+PROCEDURE Lcm(args : Object) : Object RAISES { E } =
   VAR
     L, g := 1;
   BEGIN
@@ -994,14 +1020,14 @@ PROCEDURE Lcm(args : Object) : Object =
     RETURN FromLR(FLOAT(L,LONGREAL))
   END Lcm;
 
-PROCEDURE CharCompare(x, y : Object; ci : BOOLEAN) : INTEGER =
+PROCEDURE CharCompare(x, y : Object; ci : BOOLEAN) : INTEGER RAISES { E } =
   BEGIN
     IF ci THEN RETURN ORD(Downcase(Char(x))) - ORD(Downcase(Char(y)))
     ELSE       RETURN ORD(Char(x)) - ORD(Char(y))
     END         
   END CharCompare;
 
-PROCEDURE StringCompare(x, y : Object; ci : BOOLEAN) : INTEGER =
+PROCEDURE StringCompare(x, y : Object; ci : BOOLEAN) : INTEGER RAISES { E } =
   BEGIN
     IF x # NIL AND y # NIL AND ISTYPE(x, String) AND ISTYPE(y, String) THEN
       WITH xc = NARROW(x,String), yc = NARROW(y, String) DO
@@ -1024,7 +1050,7 @@ PROCEDURE StringCompare(x, y : Object; ci : BOOLEAN) : INTEGER =
     END
   END StringCompare;
 
-PROCEDURE StringAppend(args : Object) : String =
+PROCEDURE StringAppend(args : Object) : String  RAISES { E } =
   VAR res := Wx.New();
   BEGIN
     WHILE args # NIL AND ISTYPE(args,Pair) DO
@@ -1033,7 +1059,7 @@ PROCEDURE StringAppend(args : Object) : String =
     RETURN Str(Wx.ToText(res))
   END StringAppend;
 
-PROCEDURE OpenOutputFile(filename : Object) : Wr.T =
+PROCEDURE OpenOutputFile(filename : Object) : Wr.T RAISES { E } =
   BEGIN
     TRY
       RETURN FileWr.Open(StringifyQ(filename, FALSE)) 
@@ -1043,7 +1069,7 @@ PROCEDURE OpenOutputFile(filename : Object) : Wr.T =
     END
   END OpenOutputFile;
 
-PROCEDURE OpenInputFile(filename : Object) : SchemeInputPort.T =
+PROCEDURE OpenInputFile(filename : Object) : SchemeInputPort.T RAISES { E } =
   BEGIN
     TRY
       WITH rd = FileRd.Open(StringifyQ(filename, FALSE)) DO
@@ -1058,7 +1084,7 @@ PROCEDURE OpenInputFile(filename : Object) : SchemeInputPort.T =
 PROCEDURE Map(proc : SchemeProcedure.T;
               args : Object;
               interp : Scheme.T;
-              result : Pair) : Pair =
+              result : Pair) : Pair RAISES { E } =
   VAR
     accum := result;
   BEGIN

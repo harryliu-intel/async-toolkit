@@ -2,6 +2,7 @@
 
 INTERFACE SchemeInputPort;
 IMPORT Rd, SchemeObject, SchemeBoolean, SchemeSymbol;
+FROM Scheme IMPORT E;
 
 TYPE
   T <: Public;
@@ -14,9 +15,9 @@ TYPE
     pushChar(ch : INTEGER) : INTEGER;
     popChar() : INTEGER;
     peekCh() : INTEGER;
-    read() : SchemeObject.T;
+    read() : SchemeObject.T RAISES { E };
 
-    close() : SchemeBoolean.T; (* Norvig has Scheme.Object *)
+    close() : SchemeBoolean.T RAISES { E }; (* Norvig has Scheme.Object *)
   END;
 
 PROCEDURE IsEOF(x : SchemeObject.T) : BOOLEAN;

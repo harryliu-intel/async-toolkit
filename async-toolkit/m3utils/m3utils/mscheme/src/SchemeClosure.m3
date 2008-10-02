@@ -3,9 +3,12 @@
 MODULE SchemeClosure;
 IMPORT SchemeClosureClass;
 IMPORT SchemeEnvironment;
-FROM Scheme IMPORT Pair, Object;
+FROM Scheme IMPORT Object;
 FROM SchemeUtils IMPORT Cons, First, Rest;
 FROM SchemeSymbol IMPORT Symbol;
+IMPORT SchemePair;
+
+TYPE Pair = SchemePair.T;
 
 REVEAL
   T = SchemeClosureClass.Private BRANDED Brand OBJECT

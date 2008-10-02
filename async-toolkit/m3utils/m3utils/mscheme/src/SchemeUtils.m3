@@ -3,35 +3,42 @@
 MODULE SchemeUtils;
 IMPORT Scheme, SchemeInputPort, SchemeClass;
 IMPORT Wr, Fmt, Wx, Stdio;
-FROM Scheme IMPORT Object, E, Symbol, Vector, String, Pair, Character, 
-                   LongReal, Boolean;
+FROM Scheme IMPORT Object, E, Symbol, Vector, String;
 FROM SchemeChar IMPORT Char, Chr;
+IMPORT SchemeLongReal, SchemeChar;
+IMPORT AL;
+IMPORT Thread;
+IMPORT SchemeBoolean;
+
+TYPE Boolean = SchemeBoolean.T;
+
+<* FATAL Thread.Alerted *>
 
 (* the return Str(Error...) is really quite bizarre; also in the Sym
    and Vec routines below... *)
 
-PROCEDURE Str(x : Object) : String =
+PROCEDURE Str(x : Object) : String RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,String) THEN RETURN x 
     ELSE RETURN Str(Error("expected a string, got: " & DebugFormat(x)))
     END
   END Str;
 
-PROCEDURE Sym(x : Object) : Symbol =
+PROCEDURE Sym(x : Object) : Symbol RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,Symbol) THEN RETURN x 
     ELSE RETURN Sym(Error("expected a symbol, got: " & DebugFormat(x)))
     END
   END Sym;
 
-PROCEDURE Vec(x : Object) : Vector =
+PROCEDURE Vec(x : Object) : Vector RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,Vector) THEN RETURN x 
     ELSE RETURN Vec(Error("expected a vector, got: " & DebugFormat(x)))
     END
   END Vec;
 
-PROCEDURE InPort(x : Object; interp : Scheme.T) : SchemeInputPort.T =
+PROCEDURE InPort(x : Object; interp : Scheme.T) : SchemeInputPort.T RAISES { E } =
   BEGIN
     IF x = NIL THEN RETURN interp.input END;
     IF ISTYPE(x,SchemeInputPort.T) THEN RETURN x 
@@ -41,7 +48,7 @@ PROCEDURE InPort(x : Object; interp : Scheme.T) : SchemeInputPort.T =
     END
   END InPort;
 
-PROCEDURE OutPort(x : Object; interp : Scheme.T) : Wr.T =
+PROCEDURE OutPort(x : Object; interp : Scheme.T) : Wr.T RAISES { E } =
   BEGIN
     IF x = NIL THEN RETURN interp.output END;
     IF ISTYPE(x,Wr.T) THEN RETURN x 
@@ -53,13 +60,13 @@ PROCEDURE OutPort(x : Object; interp : Scheme.T) : Wr.T =
 
 PROCEDURE Error(message : TEXT) : Object RAISES { E } =
   BEGIN
-    Wr.PutText(Stdio.stderr, "**** ERROR: " & message);
+    TRY Wr.PutText(Stdio.stderr, "**** ERROR: " & message) EXCEPT ELSE END;
     RAISE E(message)
   END Error;
 
 PROCEDURE Warn(message : TEXT) : Object =
   BEGIN
-    Wr.PutText(Stdio.stderr, "**** WARNING: " & message);
+    TRY Wr.PutText(Stdio.stderr, "**** WARNING: " & message) EXCEPT ELSE END;
     RETURN "<warn>"
   END Warn;
 
@@ -83,7 +90,7 @@ PROCEDURE Second(x : Object) : Object =
 PROCEDURE Third(x : Object) : Object = 
   BEGIN RETURN First(Rest(Rest(x))) END Third;
 
-PROCEDURE PedanticFirst(x : Object) : Object =
+PROCEDURE PedanticFirst(x : Object) : Object RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, Pair) THEN 
       RETURN NARROW(x,Pair).first
@@ -92,7 +99,7 @@ PROCEDURE PedanticFirst(x : Object) : Object =
     END
   END PedanticFirst;
 
-PROCEDURE PedanticRest(x : Object) : Object =
+PROCEDURE PedanticRest(x : Object) : Object RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, Pair) THEN 
       RETURN NARROW(x,Pair).rest
@@ -101,7 +108,7 @@ PROCEDURE PedanticRest(x : Object) : Object =
     END
   END PedanticRest;
 
-PROCEDURE SetFirst(x, y : Object) : Object =
+PROCEDURE SetFirst(x, y : Object) : Object RAISES { E } =
   BEGIN
     TYPECASE x OF 
       Pair(p) => p.first := y; RETURN y
@@ -110,7 +117,7 @@ PROCEDURE SetFirst(x, y : Object) : Object =
     END
   END SetFirst;
 
-PROCEDURE SetRest(x, y : Object) : Object =
+PROCEDURE SetRest(x, y : Object) : Object RAISES { E } =
   BEGIN
     TYPECASE x OF 
       Pair(p) => p.rest := y; RETURN y
@@ -185,8 +192,8 @@ PROCEDURE Equal(x, y : Object) : BOOLEAN =
 PROCEDURE Eqv(x, y : Object) : BOOLEAN =
   BEGIN
     TYPECASE x OF
-      LongReal(lx) => 
-      TYPECASE y OF LongReal(ly) => RETURN lx^ = ly^ ELSE RETURN FALSE END
+      SchemeLongReal.T(lx) => 
+      TYPECASE y OF SchemeLongReal.T(ly) => RETURN lx^ = ly^ ELSE RETURN FALSE END
       (* chars are shared in our system, no need to check values here *)
     ELSE
       RETURN x = y
@@ -200,7 +207,7 @@ PROCEDURE Length(x : Object) : CARDINAL =
     RETURN len
   END Length;
 
-PROCEDURE ListToString(chars: Object) : String =
+PROCEDURE ListToString(chars: Object) : String RAISES { E } =
   VAR str := NEW(String, Length(chars));
       i := 0;
   BEGIN
@@ -212,7 +219,7 @@ PROCEDURE ListToString(chars: Object) : String =
     RETURN str
   END ListToString;
 
-PROCEDURE ListToVector(objs : Object) : Vector =
+PROCEDURE ListToVector(objs : Object) : Vector RAISES { E } =
   VAR vec := NEW(Vector, Length(objs));
       i := 0;
   BEGIN
@@ -224,14 +231,18 @@ PROCEDURE ListToVector(objs : Object) : Vector =
     RETURN vec
   END ListToVector;
 
-PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object =
+PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object RAISES { E } =
   BEGIN
-    Wr.PutText(port, StringifyQ(x, quoted));
-    Wr.Flush(port);
-    RETURN x
+    TRY
+      Wr.PutText(port, StringifyQ(x, quoted));
+      Wr.Flush(port);
+      RETURN x
+    EXCEPT
+      Wr.Failure(err) => RETURN Error("Write: Wr.Failure: " & AL.Format(err))
+    END
   END Write;
 
-PROCEDURE VectorToList(x : Object) : Pair =
+PROCEDURE VectorToList(x : Object) : Pair RAISES { E } =
   BEGIN
     TYPECASE x OF
       Vector(vec) =>
@@ -250,14 +261,15 @@ PROCEDURE VectorToList(x : Object) : Pair =
 PROCEDURE P(msg : TEXT; x : Object) : Object =
   (* for debugging *)
   BEGIN
-    Wr.PutText(Stdio.stdout, msg & ": " & Stringify(x));
+    TRY Wr.PutText(Stdio.stdout, msg & ": " & Stringify(x))
+    EXCEPT ELSE END;
     RETURN x
   END P;
 
-PROCEDURE Stringify(x : Object) : TEXT =
+PROCEDURE Stringify(x : Object) : TEXT RAISES { E } =
   BEGIN RETURN StringifyQ(x,TRUE) END Stringify;
 
-PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT =
+PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT RAISES { E } =
   BEGIN
     WITH buf = Wx.New() DO
       StringifyB(x, quoted, buf);
@@ -265,7 +277,7 @@ PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT =
     END
   END StringifyQ;
 
-PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) =
+PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E } =
 
   PROCEDURE Put(txt : TEXT) = BEGIN Wx.PutText(buf,txt) END Put;
   PROCEDURE PutC(c : CHAR) = BEGIN Wx.PutChar(buf,c) END PutC;
@@ -276,14 +288,14 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) =
     ELSE
       <* ASSERT NOT ISTYPE(x,TEXT) *>
       TYPECASE x OF
-        LongReal(lr) =>
+        SchemeLongReal.T(lr) =>
         IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
           Put(Fmt.Int(ROUND(lr^)))
         ELSE
           Put(Fmt.LongReal(lr^))
         END
       |
-        Character(c) =>
+        SchemeChar.T(c) =>
         IF quoted THEN Put("#" & BS) END;
         PutC(Char(c))
       |

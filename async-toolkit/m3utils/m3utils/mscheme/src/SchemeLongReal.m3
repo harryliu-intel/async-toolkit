@@ -3,7 +3,8 @@
 MODULE SchemeLongReal;
 IMPORT Scan;
 FROM SchemeUtils IMPORT Error, DebugFormat;
-FROM Scheme IMPORT Object;
+FROM Scheme IMPORT Object, E;
+IMPORT Lex, FloatMode;
 
 PROCEDURE FromLR(x : LONGREAL) : T =
   BEGIN
@@ -17,16 +18,22 @@ PROCEDURE FromLR(x : LONGREAL) : T =
     END
   END FromLR;
 
-PROCEDURE FromO(x : Object) : LONGREAL =
+PROCEDURE FromO(x : Object) : LONGREAL RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,T) THEN RETURN NARROW(x,T)^ 
     ELSE RETURN FromO(Error("expected a double, got: " & DebugFormat(x)))
     END
   END FromO;
 
-PROCEDURE FromT(t : TEXT) : T =
-  BEGIN RETURN FromLR(Scan.LongReal(t)) END FromT;
-
+PROCEDURE FromT(t : TEXT) : T RAISES { E }=
+  BEGIN 
+    TRY
+      RETURN FromLR(Scan.LongReal(t)) 
+    EXCEPT
+      FloatMode.Trap, Lex.Error =>
+      RETURN Error("Not a number: " & t) 
+    END
+  END FromT;
 
 BEGIN 
   Zero := NEW(T);

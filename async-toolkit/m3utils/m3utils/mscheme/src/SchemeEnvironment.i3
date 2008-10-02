@@ -1,17 +1,18 @@
 (* $Id$ *)
 
 INTERFACE SchemeEnvironment;
-IMPORT SchemeObject, SchemeSymbol;
+IMPORT SchemeObject, SchemeSymbol, SchemeEnvironmentSuper;
+FROM Scheme IMPORT E;
 
 TYPE
   T <: Public;
 
-  Public = OBJECT METHODS
+  Public = SchemeEnvironmentSuper.T OBJECT METHODS
     init(vars, vals : SchemeObject.T; parent : T) : T;
     initEmpty() : T;
-    lookup(sym : SchemeSymbol.T) : SchemeObject.T;
+    lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
     define(var, val : SchemeObject.T) : SchemeObject.T;
-    set(var, val : SchemeObject.T) : SchemeObject.T;
+    set(var, val : SchemeObject.T) : SchemeObject.T RAISES { E };
     defPrim(nam : TEXT;
             id : INTEGER; 
             minArgs : CARDINAL; 

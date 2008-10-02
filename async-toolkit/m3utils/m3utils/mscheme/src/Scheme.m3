@@ -3,18 +3,25 @@
 MODULE Scheme;
 IMPORT SchemeClass;
 IMPORT SchemeInputPort, SchemeEnvironment, SchemePrimitives, SchemePrimitive;
+IMPORT SchemeEnvironmentSuper;
 IMPORT SchemeBoolean, SchemeSymbol, SchemeMacro;
 IMPORT SchemeClosure, SchemeClosureClass, SchemeProcedure, SchemeString;
 IMPORT Pathname, Stdio;
-IMPORT Wr, TextRd;
+IMPORT Wr, TextRd, Thread;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
+FROM SchemeUtils IMPORT Stringify;
+IMPORT SchemePair;
+
+TYPE Pair = SchemePair.T;
+
+<* FATAL Thread.Alerted *>
 
 REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
     globalEnvironment : SchemeEnvironment.T;
   METHODS
-    readInitialFiles(READONLY files : ARRAY OF Pathname.T) := ReadInitialFiles;
-    reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object := ReduceCond;
+    readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
+    reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
   OVERRIDES
     init              :=  Init;
     defineInGlobalEnv :=  DefineInGlobalEnv;
@@ -27,7 +34,8 @@ REVEAL
     evalList          :=  EvalList;
   END;
 
-PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T =
+PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T 
+  RAISES { E } =
   BEGIN
     t.input := NEW(SchemeInputPort.T).init(Stdio.stdin);
     t.output := Stdio.stdout;
@@ -37,7 +45,7 @@ PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T =
     RETURN t
   END Init;
 
-PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) =
+PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) RAISES { E } =
   BEGIN
     EVAL t.loadRd(NEW(TextRd.T).init(SchemePrimitives.Code));
     FOR i := FIRST(files) TO LAST(files) DO
@@ -48,46 +56,60 @@ PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) =
 PROCEDURE DefineInGlobalEnv(t : T; var, val : Object) =
   BEGIN EVAL t.globalEnvironment.define(var,val) END DefineInGlobalEnv;
 
-PROCEDURE ReadEvalWriteLoop(t : T) =
+PROCEDURE ReadEvalWriteLoop(t : T) RAISES { Wr.Failure } =
   BEGIN
+    TRY
     LOOP
       Wr.PutText(t.output, ">"); Wr.Flush(t.output);
       WITH x = t.input.read() DO
         IF SchemeInputPort.IsEOF(x) THEN RETURN END;
-
-        EVAL SchemeUtils.Write(t.evalInGlobalEnv(x), t.output, TRUE);
+        TRY
+          EVAL SchemeUtils.Write(t.evalInGlobalEnv(x), t.output, TRUE);
+        EXCEPT
+          E(e) => Wr.PutText(t.output, "EXCEPTION! " & e & "\n")
+        END;
         Wr.PutText(t.output, "\n"); Wr.Flush(t.output)
       END
     END
+    EXCEPT
+      E(e) =>
+      (* only way we can get here is if we have a failure in t.input.read() *)
+      TRY Wr.PutText(t.output, "READ FAILURE : "&e&" .\n") EXCEPT ELSE END;
+      RETURN
+    END
   END ReadEvalWriteLoop;
 
-PROCEDURE LoadRd(t : T; rd : Rd.T) : Object =
+PROCEDURE LoadRd(t : T; rd : Rd.T) : Object RAISES { E } =
   BEGIN RETURN t.loadPort(NEW(SchemeInputPort.T).init(rd)) END LoadRd;
 
-PROCEDURE LoadFile(t : T; fileName : Object) : Object =
+PROCEDURE LoadFile(t : T; fileName : Object) : Object RAISES { E } =
   BEGIN
     WITH name = SchemeUtils.StringifyQ(fileName,FALSE) DO
       TRY
         RETURN t.loadRd(FileRd.Open(name))
       EXCEPT
         OSError.E(err) => RETURN SchemeUtils.Error("can't load " & name & " : OSError.E : " & AL.Format(err))
-      |
-        Rd.Failure(err) => RETURN SchemeUtils.Error("can't load " & name & " : Rd.Failure : " & AL.Format(err))
       END
     END
   END LoadFile;
 
-PROCEDURE LoadPort(t : T; in : SchemeInputPort.T) : Object =
+PROCEDURE LoadPort(t : T; in : Object) : Object 
+  RAISES { E } =
   BEGIN
+    IF in = NIL OR NOT ISTYPE(in, SchemeInputPort.T) THEN
+      RAISE E("Not an input port: " & Stringify(in))
+    END;
+
     LOOP
-      WITH x = in.read() DO
+      WITH x = NARROW(in,SchemeInputPort.T).read() DO
         IF SchemeInputPort.IsEOF(x) THEN RETURN SchemeBoolean.True() END;
         EVAL t.evalInGlobalEnv(x)
       END
     END
   END LoadPort;
 
-PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
+PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
+  RAISES { E } =
   TYPE  Macro     = SchemeMacro.T;
         Closure   = SchemeClosure.T;
         Procedure = SchemeProcedure.T;
@@ -100,6 +122,8 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
         Sym    = SchemeSymbol.Symbol;
         TruthO = SchemeBoolean.TruthO;
 
+  VAR
+    env := NARROW(envP, SchemeEnvironment.T);
   BEGIN
     LOOP
       IF x # NIL AND ISTYPE(x,Symbol) THEN
@@ -170,10 +194,11 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
     END
   END Eval;
 
-PROCEDURE EvalInGlobalEnv(t : T; x : Object) : Object =
+PROCEDURE EvalInGlobalEnv(t : T; x : Object) : Object RAISES { E } =
   BEGIN RETURN t.eval(x, t.globalEnvironment) END EvalInGlobalEnv;
 
-PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironment.T) : Pair =
+PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Object 
+  RAISES { E } =
   CONST Error = SchemeUtils.Error;
   BEGIN
     TRY
@@ -188,14 +213,17 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironment.T) : Pair =
       END
     EXCEPT
       E(ex) => 
+      TRY
         Wr.PutText(Stdio.stdout, "Scheme.evalList raising E, evaluating " &
           SchemeUtils.DebugFormat(list));
-          EVAL Error(ex); RETURN NIL (*notreached*)
+      EXCEPT ELSE END;
+      EVAL Error(ex); RETURN NIL (*notreached*)
     END
   END EvalList;
 
 PROCEDURE ReduceCond(t : T; 
-                     clauses : Object; env : SchemeEnvironment.T) : Object =
+                     clauses : Object; env : SchemeEnvironment.T) : Object 
+  RAISES { E } =
 
   CONST First  = SchemeUtils.First;
         Second = SchemeUtils.Second;

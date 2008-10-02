@@ -28,6 +28,7 @@ Module("SchemeMacro")
 module("SchemePrimitive")
 
 Module("SchemeEnvironment")
+Interface("SchemeEnvironmentSuper")
 
 Module("SchemeInputPort")
 

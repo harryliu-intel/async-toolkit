@@ -2,12 +2,13 @@
 
 INTERFACE SchemeBoolean;
 IMPORT SchemeObject;
+FROM Scheme IMPORT E;
 
 TYPE T = REF BOOLEAN;
 
 PROCEDURE Truth(x : BOOLEAN) : T;
 
-PROCEDURE TruthO(x : SchemeObject.T) : T;
+PROCEDURE TruthO(x : SchemeObject.T) : T RAISES { E };
 
 PROCEDURE True() : T; 
   (* constant TRUE *)

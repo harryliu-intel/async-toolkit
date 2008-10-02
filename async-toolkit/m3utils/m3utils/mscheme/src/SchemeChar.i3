@@ -2,14 +2,15 @@
 
 INTERFACE SchemeChar;
 IMPORT SchemeObject;
+FROM Scheme IMPORT E;
 
 TYPE T <: REFANY;
 
 (* all chars here are SHARED, so don't overwrite them, eh? *)
 
-PROCEDURE Char(x : SchemeObject.T) : CHAR;
+PROCEDURE Char(x : SchemeObject.T) : CHAR RAISES { E };
 
-PROCEDURE Chr(x : SchemeObject.T) : T;
+PROCEDURE Chr(x : SchemeObject.T) : T RAISES { E };
 
 PROCEDURE IChr(x : INTEGER) : T;
   

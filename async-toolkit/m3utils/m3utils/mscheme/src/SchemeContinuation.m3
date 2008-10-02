@@ -15,7 +15,8 @@ REVEAL
 PROCEDURE Init(t : T; cc : TEXT) : T = 
   BEGIN t.cc := cc; RETURN t END Init;
 
-PROCEDURE Apply(t : T; <*UNUSED*>interp : Scheme.T; args : Object) : Object =
+PROCEDURE Apply(t : T; <*UNUSED*>interp : Scheme.T; args : Object) : Object 
+  RAISES { E } =
   BEGIN
     t.value := First(args);
     RAISE E(t.cc)

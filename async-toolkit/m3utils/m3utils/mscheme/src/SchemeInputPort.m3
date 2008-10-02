@@ -3,13 +3,19 @@
 MODULE SchemeInputPort;
 IMPORT AL, Rd;
 FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector;
-FROM Scheme IMPORT Object, String, Boolean, LongReal;
+FROM Scheme IMPORT Object, String, E;
+IMPORT SchemeLongReal;
 FROM SchemeSymbol IMPORT SymEq;
 IMPORT SchemeBoolean, SchemeSymbol;
 IMPORT CharSeq;
 IMPORT Text;
 IMPORT Scan, FloatMode, Lex, TextUtils, Wx;
 FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
+IMPORT Thread;
+
+TYPE Boolean = SchemeBoolean.T;
+
+<* FATAL Thread.Alerted *>
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -18,12 +24,12 @@ REVEAL
     pushedToken : Object := NIL;
     pushedChar : INTEGER := -1;
   METHODS
-    getCh() : INTEGER RAISES { Rd.Failure } := GetCh; 
+    getCh() : INTEGER := GetCh; 
     (* java style Reader.read *)
 
-    nextToken() : Object RAISES { Rd.Failure } := NextToken;
+    nextToken() : Object RAISES { E } := NextToken;
 
-    readTail(dotOK : BOOLEAN) : Object RAISES { Rd.Failure } := ReadTail;
+    readTail(dotOK : BOOLEAN) : Object RAISES { E } := ReadTail;
 
   OVERRIDES
     init     :=  Init;
@@ -39,18 +45,24 @@ REVEAL
 PROCEDURE Init(t : T; rd : Rd.T) : T = 
   BEGIN t.rd := rd; RETURN t END Init;
 
-PROCEDURE GetCh(t : T) : INTEGER RAISES { Rd.Failure } =
+PROCEDURE GetCh(t : T) : INTEGER =
   BEGIN
     TRY
       RETURN ORD(Rd.GetChar(t.rd))
     EXCEPT
       Rd.EndOfFile => RETURN -1 
+    |
+      Rd.Failure(err) =>
+      EVAL Warn("Rd.Failure : " & AL.Format(err));
+      RETURN -1
     END
   END GetCh;
 
 PROCEDURE ReadChar(t : T) : Object =
   BEGIN
+(*
     TRY
+*)
       IF t.isPushedChar THEN
         t.isPushedChar := FALSE;
         IF t.pushedChar = -1 THEN 
@@ -63,11 +75,13 @@ PROCEDURE ReadChar(t : T) : Object =
           IF ch = -1 THEN RETURN EOF ELSE RETURN IChr(t.getCh()) END
         END
       END
+(*
     EXCEPT
       Rd.Failure(err) =>
         EVAL Warn("On input, exception: " & AL.Format(err));
         RETURN EOF
     END
+*)
   END ReadChar;
 
 PROCEDURE PeekChar(t : T) : Object =
@@ -92,25 +106,31 @@ PROCEDURE PopChar(t : T) : INTEGER =
 
 PROCEDURE PeekCh(t : T) : INTEGER =
   BEGIN
+(*
     TRY
+*)
       IF t.isPushedChar THEN
         RETURN t.pushedChar
       ELSE
         RETURN t.pushChar(t.getCh())
       END
+(*
     EXCEPT
       Rd.Failure(err) => 
         EVAL Warn("On input, exception: " & AL.Format(err));
         RETURN -1
     END
+*)
   END PeekCh;
 
-PROCEDURE Read(t : T) : Object =
+PROCEDURE Read(t : T) : Object RAISES { E } =
 
   CONST Symbol = SchemeSymbol.Symbol;
 
   BEGIN
+(*
     TRY
+*)
       WITH token = t.nextToken() DO
         IF    SymEq(token, "(") THEN
           RETURN t.readTail(FALSE)
@@ -130,14 +150,16 @@ PROCEDURE Read(t : T) : Object =
           RETURN token
         END
       END
+(*
     EXCEPT
       Rd.Failure(err) => 
         EVAL Warn("On input, exception: " & AL.Format(err));
         RETURN EOF
     END
+*)
   END Read;
 
-PROCEDURE Close(t : T) : Boolean =
+PROCEDURE Close(t : T) : Boolean RAISES { E } =
   BEGIN
     TRY
       Rd.Close(t.rd);
@@ -150,7 +172,7 @@ PROCEDURE Close(t : T) : Boolean =
 PROCEDURE IsEOF(x : Object) : BOOLEAN = BEGIN RETURN x = EOF END IsEOF;
 
 PROCEDURE ReadTail(t : T; 
-                   <*UNUSED*>dotOK : BOOLEAN) : Object RAISES { Rd.Failure } =
+                   <*UNUSED*>dotOK : BOOLEAN) : Object RAISES { E } =
   VAR token := t.nextToken();
   BEGIN
     IF    token = EOF THEN
@@ -173,7 +195,7 @@ PROCEDURE ReadTail(t : T;
     END
   END ReadTail;
 
-PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
+PROCEDURE NextToken(t : T) : Object RAISES { E } =
 
   CONST Symbol = SchemeSymbol.Symbol;
 
@@ -280,7 +302,7 @@ PROCEDURE NextToken(t : T) : Object RAISES { Rd.Failure } =
           WITH txt = Wx.ToText(wx) DO
             TRY
               WITH lr = Scan.LongReal(txt), 
-                   lrp = NEW(LongReal) DO
+                   lrp = NEW(SchemeLongReal.T) DO
                 lrp^ := lr;
                 RETURN lrp
               END

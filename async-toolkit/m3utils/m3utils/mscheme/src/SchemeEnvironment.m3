@@ -7,10 +7,13 @@ MODULE SchemeEnvironment;
 IMPORT AtomRefTbl;
 IMPORT SchemePrimitive, SchemeSymbol, SchemeProcedure;
 IMPORT SchemeProcedureClass;
-FROM Scheme IMPORT Symbol, Object, Pair;
+FROM Scheme IMPORT Symbol, Object, E;
 FROM SchemeUtils IMPORT Error, Warn, DebugFormat;
 IMPORT SchemeUtils;
 IMPORT Text;
+IMPORT SchemePair;
+
+TYPE Pair = SchemePair.T;
 
 CONST TE = Text.Equal;
 
@@ -64,7 +67,7 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
     END
   END InitDict;
 
-PROCEDURE Lookup(t : T; symbol : Symbol) : Object =
+PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
     IF t.dictionary.get(symbol,o) THEN 
@@ -93,7 +96,7 @@ PROCEDURE Define(t : T; var, val : Object) : Object =
     RETURN var
   END Define;
 
-PROCEDURE Set(t : T; var, val : Object) : Object =
+PROCEDURE Set(t : T; var, val : Object) : Object RAISES { E } =
   VAR dummy : Object;
   BEGIN
     IF var = NIL OR NOT ISTYPE(var, Symbol) THEN

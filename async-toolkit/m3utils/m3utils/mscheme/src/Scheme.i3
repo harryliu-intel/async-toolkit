@@ -1,24 +1,20 @@
 (* $Id$ *)
 
 INTERFACE Scheme;
-IMPORT SchemeInputPort, SchemeEnvironment, SchemePair, SchemeObject;
-IMPORT SchemeBoolean, SchemeLongReal, SchemeChar, SchemeSymbol;
+IMPORT SchemeEnvironmentSuper, SchemeObject;
+IMPORT SchemeSymbol;
 IMPORT SchemeString, SchemeVector;
 IMPORT Pathname;
-IMPORT Rd;
+IMPORT Rd, OSError, Wr;
 
 EXCEPTION E(TEXT);
 
 TYPE 
   (* aliases for basic Scheme types *)
   Object    = SchemeObject.T;
-  Boolean   = SchemeBoolean.T;
-  LongReal  = SchemeLongReal.T;
-  Character = SchemeChar.T;
   Symbol    = SchemeSymbol.T;
   String    = SchemeString.T;
   Vector    = SchemeVector.T;
-  Pair      = SchemePair.T;
 
   (* a Scheme interpreter *)
   T <: Public;
@@ -26,21 +22,22 @@ TYPE
   Public = OBJECT METHODS
     defineInGlobalEnv(var, val : Object);
 
-    init(READONLY files : ARRAY OF Pathname.T) : T;
+    init(READONLY files : ARRAY OF Pathname.T) : T RAISES { E, OSError.E };
 
-    readEvalWriteLoop();
+    readEvalWriteLoop() RAISES { Wr.Failure };
 
-    loadFile(fn : Object) : Object;
+    loadFile(fn : Object) : Object RAISES { E };
 
-    loadRd(rd : Rd.T) : Object;
+    loadRd(rd : Rd.T) : Object RAISES { E } ;
 
-    loadPort(port : SchemeInputPort.T) : Object;
+    loadPort(port : Object (* must be SchemeInputPort *)) : Object RAISES { E };
 
-    eval(x : REFANY; env : SchemeEnvironment.T) : Object;
+    eval(x : REFANY; env : SchemeEnvironmentSuper.T) : Object RAISES { E };
 
-    evalInGlobalEnv(x : Object) : Object;
+    evalInGlobalEnv(x : Object) : Object RAISES { E };
 
-    evalList(list : Object; env : SchemeEnvironment.T) : SchemePair.T;
+    evalList(list : Object; env : SchemeEnvironmentSuper.T) : Object RAISES { E };
+    (* always a SchemePair *)
 
   END;
 

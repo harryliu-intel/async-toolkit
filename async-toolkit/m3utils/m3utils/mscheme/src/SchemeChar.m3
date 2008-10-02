@@ -3,17 +3,18 @@
 MODULE SchemeChar;
 FROM SchemeUtils IMPORT DebugFormat, Error;
 IMPORT SchemeObject;
+FROM Scheme IMPORT E;
 
 REVEAL T = BRANDED Brand REF CHAR;
 
-PROCEDURE Char(x : SchemeObject.T) : CHAR =
+PROCEDURE Char(x : SchemeObject.T) : CHAR RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, T) THEN RETURN NARROW(x,T)^ 
     ELSE RETURN Char(Error("expected a char, got: " & DebugFormat(x))) 
     END
   END Char;
 
-PROCEDURE Chr(x : SchemeObject.T) : T =
+PROCEDURE Chr(x : SchemeObject.T) : T RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, T) THEN RETURN x
     ELSE RETURN Chr(Error("expected a char, got: " & DebugFormat(x))) 
