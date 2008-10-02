@@ -41,7 +41,7 @@ Module("SchemeChar")
 
 Module("SchemeSymbol")
 
-Interface("SchemeString")
+Module("SchemeString")
 
 Interface("SchemeVector")
 

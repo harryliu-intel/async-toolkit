@@ -13,7 +13,7 @@ FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Vec, InPort, OutPort, List1, ListToVector, ListStar,
                         VectorToList, Write;
 
-IMPORT SchemeInputPort, SchemeContinuation, SchemeMacro;
+IMPORT SchemeInputPort, SchemeContinuation, SchemeMacro, SchemeString;
 FROM SchemeBoolean IMPORT Truth, False, True;
 FROM SchemeProcedure IMPORT Proc; IMPORT SchemeProcedure;
 FROM SchemeLongReal IMPORT FromLR, FromO, Zero, One;
@@ -506,7 +506,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           IF x = NIL OR NOT ISTYPE(x, Symbol) THEN
             RETURN Error("Not a symbol") 
           END;
-          RETURN TextToCharArray(SchemeSymbol.ToText(x))
+          RETURN SchemeString.FromText(SchemeSymbol.ToText(x))
         |
           P.StringToSymbol => 
             RETURN SchemeSymbol.Symbol(Text.FromChars(Str(x)^))
@@ -928,20 +928,11 @@ PROCEDURE NumberToString(x, y : Object) : Object =
     IF base < 2 THEN base := 2 ELSIF base > 16 THEN base := 16 END;
 
     IF base # 10 OR FromO(x) = FLOAT(ROUND(FromO(x)),LONGREAL) THEN
-      RETURN TextToCharArray(Fmt.Int(ROUND(FromO(x)), base := base))
+      RETURN SchemeString.FromText(Fmt.Int(ROUND(FromO(x)), base := base))
     ELSE
-      RETURN TextToCharArray(Fmt.LongReal(FromO(x)))
+      RETURN SchemeString.FromText(Fmt.LongReal(FromO(x)))
     END
   END NumberToString;
-
-PROCEDURE TextToCharArray(txt : TEXT) : String =
-  VAR     str := NEW(String, Text.Length(txt));
-  BEGIN
-    FOR i := FIRST(str^) TO LAST(str^) DO
-      str[i] := Text.GetChar(txt,i)
-    END;
-    RETURN str
-  END TextToCharArray;
 
 PROCEDURE StringToNumber(x, y : Object) : Object = 
   VAR base : INTEGER;

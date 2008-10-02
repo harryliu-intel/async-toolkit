@@ -4,7 +4,7 @@ MODULE Scheme;
 IMPORT SchemeClass;
 IMPORT SchemeInputPort, SchemeEnvironment, SchemePrimitives, SchemePrimitive;
 IMPORT SchemeBoolean, SchemeSymbol, SchemeMacro;
-IMPORT SchemeClosure, SchemeClosureClass, SchemeProcedure;
+IMPORT SchemeClosure, SchemeClosureClass, SchemeProcedure, SchemeString;
 IMPORT Pathname, Stdio;
 IMPORT Wr, TextRd;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
@@ -41,7 +41,7 @@ PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) =
   BEGIN
     EVAL t.loadRd(NEW(TextRd.T).init(SchemePrimitives.Code));
     FOR i := FIRST(files) TO LAST(files) DO
-      EVAL t.loadFile(files[i])
+      EVAL t.loadFile(SchemeString.FromText(files[i]))
     END
   END ReadInitialFiles;
 
@@ -66,7 +66,7 @@ PROCEDURE LoadRd(t : T; rd : Rd.T) : Object =
 
 PROCEDURE LoadFile(t : T; fileName : Object) : Object =
   BEGIN
-    WITH name = SchemeUtils.Stringify(fileName) DO
+    WITH name = SchemeUtils.StringifyQ(fileName,FALSE) DO
       TRY
         RETURN t.loadRd(FileRd.Open(name))
       EXCEPT
@@ -94,10 +94,9 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
 
   CONST First  = SchemeUtils.First;
         Second = SchemeUtils.Second;
-        Third  = SchemeUtils.Second;
+        Third  = SchemeUtils.Third;
         Rest   = SchemeUtils.Rest;
         Cons   = SchemeUtils.Cons;
-        SymEq  = SchemeSymbol.SymEq;
         Sym    = SchemeSymbol.Symbol;
         TruthO = SchemeBoolean.TruthO;
 
@@ -112,15 +111,15 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
           fn   := First(x);
           args := Rest(x); 
         BEGIN
-          IF    SymEq(fn, "quote") THEN
+          IF    fn = SYMquote THEN
             RETURN First(args)
-          ELSIF SymEq(fn, "begin") THEN
+          ELSIF fn = SYMbegin THEN
             WHILE Rest(args) # NIL DO
               EVAL t.eval(First(args),env);
               args := Rest(args)
             END;
             x := First(args)
-          ELSIF SymEq(fn, "define") THEN
+          ELSIF fn = SYMdefine THEN
             IF First(args) # NIL AND ISTYPE(First(args), Pair) THEN
               RETURN env.define(First(First(args)),
                                 t.eval(Cons(Sym("lambda"),
@@ -130,21 +129,21 @@ PROCEDURE Eval(t : T; x : Object; env : SchemeEnvironment.T) : Object =
               RETURN env.define(First(args),
                                 t.eval(Second(args), env))
             END
-          ELSIF SymEq(fn, "set!") THEN
+          ELSIF fn = SYMsetB THEN
             RETURN env.set(First(args), t.eval(Second(args), env))
-          ELSIF SymEq(fn, "if") THEN
+          ELSIF fn = SYMif THEN
             IF TruthO(t.eval(First(args), env))^ THEN
               x := Second(args) 
             ELSE
               x := Third(args)
             END
-          ELSIF SymEq(fn, "cond") THEN
+          ELSIF fn = SYMcond THEN
             x := t.reduceCond(args, env)
-          ELSIF SymEq(fn, "lambda") THEN
+          ELSIF fn = SYMlambda THEN
             RETURN NEW(SchemeClosure.T).init(First(args), 
                                              Rest(args),
                                              env)
-          ELSIF SymEq(fn, "macro") THEN
+          ELSIF fn = SYMmacro THEN
             RETURN NEW(Macro).init(First(args),
                                    Rest(args),
                                    env)
@@ -204,7 +203,6 @@ PROCEDURE ReduceCond(t : T;
         Rest   = SchemeUtils.Rest;
         Cons   = SchemeUtils.Cons;
         List2  = SchemeUtils.List2;
-        SymEq  = SchemeSymbol.SymEq;
         Sym    = SchemeSymbol.Symbol;
         TruthO = SchemeBoolean.TruthO;
 
@@ -219,7 +217,7 @@ PROCEDURE ReduceCond(t : T;
         VAR
           success := FALSE;
         BEGIN
-          IF SymEq(First(clause),"else") THEN
+          IF First(clause) = SYMelse THEN
             success := TRUE
           ELSE 
             result := t.eval(First(clause),env);
@@ -231,7 +229,7 @@ PROCEDURE ReduceCond(t : T;
           IF success THEN
             IF Rest(clause) = NIL THEN
               RETURN List2(Sym("quote"),result)
-            ELSIF SymEq(Second(clause),"=>") THEN
+            ELSIF Second(clause) = SYMarrow THEN
               RETURN List2(Third(clause),List2(Sym("quote"),result))
             ELSE 
               RETURN Cons(Sym("begin"), Rest(clause))
@@ -241,6 +239,18 @@ PROCEDURE ReduceCond(t : T;
       END
     END
   END ReduceCond;
+
+VAR
+  SYMquote := SchemeSymbol.Symbol("quote");
+  SYMbegin := SchemeSymbol.Symbol("begin");
+  SYMdefine := SchemeSymbol.Symbol("define");
+  SYMsetB := SchemeSymbol.Symbol("set!");
+  SYMif := SchemeSymbol.Symbol("if");
+  SYMcond := SchemeSymbol.Symbol("cond");
+  SYMlambda := SchemeSymbol.Symbol("lambda");
+  SYMmacro := SchemeSymbol.Symbol("macro");
+  SYMelse := SchemeSymbol.Symbol("else");
+  SYMarrow := SchemeSymbol.Symbol("=>");
 
 BEGIN END Scheme.
 

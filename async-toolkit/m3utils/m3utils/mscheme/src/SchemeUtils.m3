@@ -65,11 +65,15 @@ PROCEDURE Warn(message : TEXT) : Object =
 
 PROCEDURE First(x : Object) : Object =
   BEGIN
+    IF x = NIL THEN RETURN NIL END;
+
     TYPECASE x OF Pair(p) => RETURN p.first ELSE RETURN NIL END
   END First;
 
 PROCEDURE Rest(x : Object) : Object =
   BEGIN
+    IF x = NIL THEN RETURN NIL END;
+
     TYPECASE x OF Pair(p) => RETURN p.rest ELSE RETURN NIL END
   END Rest;
 
@@ -81,8 +85,8 @@ PROCEDURE Third(x : Object) : Object =
 
 PROCEDURE PedanticFirst(x : Object) : Object =
   BEGIN
-    TYPECASE x OF 
-      Pair(p) => RETURN p.first 
+    IF x # NIL AND ISTYPE(x, Pair) THEN 
+      RETURN NARROW(x,Pair).first
     ELSE 
       RETURN Error("Attempt to car of a non-Pair:" & Stringify(x)) 
     END
@@ -90,8 +94,8 @@ PROCEDURE PedanticFirst(x : Object) : Object =
 
 PROCEDURE PedanticRest(x : Object) : Object =
   BEGIN
-    TYPECASE x OF 
-      Pair(p) => RETURN p.rest 
+    IF x # NIL AND ISTYPE(x, Pair) THEN 
+      RETURN NARROW(x,Pair).rest
     ELSE 
       RETURN Error("Attempt to cdr of a non-Pair:" & Stringify(x)) 
     END
@@ -270,6 +274,7 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) =
     IF x = NIL THEN 
       Put("()")
     ELSE
+      <* ASSERT NOT ISTYPE(x,TEXT) *>
       TYPECASE x OF
         LongReal(lr) =>
         IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
