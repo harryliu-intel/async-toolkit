@@ -91,6 +91,7 @@ override("xmlparse", TOP)
 override("stabletable", TOP)
 override("trie", TOP)
 override("marching", TOP)
+override("mscheme", TOP)
 
 override("anova", TOP & "/calarm")
 override("wavelets", TOP & "/calarm")
