@@ -45,4 +45,6 @@ Interface("SchemeString")
 
 Interface("SchemeVector")
 
+Module("SchemeContinuation")
+
 library ("mscheme")

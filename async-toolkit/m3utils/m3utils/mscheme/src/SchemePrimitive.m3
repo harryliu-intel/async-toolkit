@@ -2,24 +2,32 @@
 
 MODULE SchemePrimitive;
 IMPORT SchemeEnvironment, SchemeProcedureClass;
-IMPORT Scheme;
-IMPORT SchemeSymbol;
+IMPORT Scheme, SchemeClass;
 
-FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String, Vector;
+FROM Scheme IMPORT Object, Pair, Symbol, LongReal, String, Vector, E;
 
 FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Stringify, StringifyQ, Error, Warn, Equal, Eqv,
                         Rest, PedanticFirst, PedanticRest, Cons, 
-                        SetFirst, SetRest, Reverse, Str, List2, ListToString;
+                        SetFirst, SetRest, Reverse, Str, List2, ListToString,
+                        Vec, InPort, OutPort, List1, ListToVector, ListStar,
+                        VectorToList, Write;
 
+IMPORT SchemeInputPort, SchemeContinuation, SchemeMacro;
 FROM SchemeBoolean IMPORT Truth, False, True;
+FROM SchemeProcedure IMPORT Proc; IMPORT SchemeProcedure;
 FROM SchemeLongReal IMPORT FromLR, FromO, Zero, One;
 FROM SchemeChar IMPORT Character, Char, IChr, LowerCase, UpperCase, Digits,
-                       White, Upcase, Downcase, Chr;
+                       White, Upcase, Downcase;
 IMPORT SchemeChar;
+IMPORT SchemeSymbol;
 
-IMPORT Fmt, Text, Wx;
+IMPORT Fmt, Text, Wx, Wr;
 IMPORT Math, Scan, Lex, FloatMode;
+IMPORT Process;
+IMPORT OSError, FileWr, FileRd, AL;
+
+TYPE Procedure = SchemeProcedure.T;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -58,7 +66,7 @@ TYPE
         VectorQ, MakeVector, Vector, VectorLength,
         VectorRef, VectorSet, ListToVector, Map, 
         Foreach, CallCC, VectorToList, Load, Display,
-        InputportQ, CurrentInputPort, OpenInputFile, 
+        InputPortQ, CurrentInputPort, OpenInputFile, 
         CloseInputPort, OutputportQ, CurrentOutputPort,
         OpenOutputFile, CloseOutputPort, ReadChar,
         PeekChar, Eval, Quotient, Remainder,
@@ -180,7 +188,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("for-each",       ORD(P.Foreach),   1, n)
      .defPrim("gcd",            ORD(P.Gcd),       0, n)
      .defPrim("inexact?",       ORD(P.InexactQ),  1)
-     .defPrim("input-port?",    ORD(P.InputportQ), 1)
+     .defPrim("input-port?",    ORD(P.InputPortQ), 1)
      .defPrim("integer->char",  ORD(P.IntegerToChar),      1)
      .defPrim("integer?",       ORD(P.IntegerQ),  1)
      .defPrim("lcm",            ORD(P.Lcm),       0, n)
@@ -279,6 +287,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
   END InstallPrimitives;
 
 PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
+  VAR z : Object;
   BEGIN
     WITH nArgs = Length(args) DO
       IF    nArgs < t.minArgs THEN
@@ -305,13 +314,16 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Abs =>  RETURN FromLR(ABS(FromO(x)))
         |
-          P.EofObject => 
+          P.EofObject =>  RETURN Truth(SchemeInputPort.IsEOF(x))
         |
           P.EqQ => RETURN Truth(x = y)
         |
           P.EqualQ => RETURN Truth(Equal(x,y))
         |
-          P.Force =>
+          P.Force => 
+          IF x = NIL OR NOT ISTYPE(x,Procedure) THEN RETURN x
+          ELSE RETURN Proc(x).apply(interp,NIL)
+          END
         |
           
           P.Car => RETURN PedanticFirst(x)
@@ -331,7 +343,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.ListQ => RETURN Truth(IsList(x))
         |
-          P.Apply =>
+          P.Apply => RETURN Proc(x).apply(interp,ListStar(Rest(args)))
         |
           
           P.Max => RETURN NumCompute(args, 'X', FromO(x))
@@ -340,7 +352,9 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Minus => RETURN NumCompute(Rest(args), '-', FromO(x))
         |
-          P.Newline =>
+          P.Newline => Wr.PutChar(OutPort(x,interp), '\n');
+                       Wr.Flush(OutPort(x,interp));
+                       RETURN True()
         |
           
           P.Not => RETURN Truth(x = False())
@@ -354,9 +368,9 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           P.Plus => RETURN NumCompute(args, '+', 0.0d0)
         |
           
-          P.ProcedureQ =>
+          P.ProcedureQ => RETURN Truth(x # NIL AND ISTYPE(x,Procedure))
         |
-          P.Read =>
+          P.Read => RETURN InPort(x, interp).read()
         |
           P.Cdr => RETURN PedanticRest(x)
         |
@@ -371,7 +385,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Truncate => RETURN FromLR(FLOAT(TRUNC(FromO(x)),LONGREAL))
         |
-          P.Write =>
+          P.Write => RETURN Write(x, OutPort(y, interp), TRUE)
         |
           P.Append => 
           IF args = NIL THEN RETURN NIL
@@ -545,55 +559,80 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           P.VectorQ => RETURN Truth(x # NIL AND ISTYPE(x, Vector))
         |
           P.MakeVector =>
+          WITH num = TRUNC(FromO(x)) DO
+            IF num < 0 THEN
+              RETURN Error("Can't make vector of size " & Fmt.Int(num))
+            END;
+            WITH vec = NEW(Vector, num) DO
+              IF y # NIL THEN
+                FOR i := 0 TO num-1 DO
+                  vec[i] := y
+                END
+              END;
+              RETURN vec
+            END
+          END
         |
-          P.Vector =>
+          P.Vector => RETURN ListToVector(args)
         |
-          P.VectorLength =>
+          P.VectorLength => RETURN FromLR(FLOAT(NUMBER(Vec(x)^),LONGREAL))
         |
           
-          P.VectorRef =>
+          P.VectorRef => RETURN Vec(x)[TRUNC(FromO(y))]
         |
-          P.VectorSet =>
+          P.VectorSet => 
+          WITH v = Third(args) DO
+            Vec(x)[TRUNC(FromO(y))] := v;
+            RETURN v 
+          END
         |
-          P.ListToVector =>
+          P.ListToVector => RETURN ListToVector(x)
         |
-          P.Map =>
+          P.Map => RETURN Map(Proc(x), Rest(args), interp, List1(NIL))
         |
           
-          P.Foreach =>
+          P.Foreach =>RETURN Map(Proc(x), Rest(args), interp, NIL)
         |
           P.CallCC =>
+          (* make a new arbitrary text *)
+          WITH txt = "CallCC" & Fmt.Int(123),
+               proc =  NEW(SchemeContinuation.T).init(txt) DO
+            TRY RETURN Proc(x).apply(interp, List1(proc))
+            EXCEPT E(e) => IF e = txt THEN RETURN proc.value ELSE RAISE E(e) END
+            END
+          END
+        
         |
-          P.VectorToList =>
+          P.VectorToList => RETURN VectorToList(x)
         |
-          P.Load =>
+          P.Load => RETURN interp.loadFile(x)
         |
-          P.Display =>
-        |
-          
-          P.InputportQ =>
-        |
-          P.CurrentInputPort =>
-        |
-          P.OpenInputFile =>
-        |
-          
-          P.CloseInputPort =>
-        |
-          P.OutputportQ =>
-        |
-          P.CurrentOutputPort =>
+          P.Display => RETURN Write(x, OutPort(y, interp), FALSE)
         |
           
-          P.OpenOutputFile =>
+          P.InputPortQ => RETURN Truth(x # NIL AND ISTYPE(x,SchemeInputPort.T))
         |
-          P.CloseOutputPort =>
+          P.CurrentInputPort => RETURN interp.input
         |
-          P.ReadChar =>
+          P.OpenInputFile => RETURN OpenInputFile(x)
         |
-          P.PeekChar =>
+          
+          P.CloseInputPort => RETURN InPort(x, interp).close()
         |
-          P.Eval =>
+          P.OutputportQ => RETURN Truth(x # NIL AND ISTYPE(x,Wr.T))
+        |
+          P.CurrentOutputPort => RETURN interp.output
+        |
+          
+          P.OpenOutputFile => RETURN OpenOutputFile(x)
+        |
+          P.CloseOutputPort => Wr.Close(OutPort(x, interp)); RETURN True()
+        |
+          P.ReadChar => RETURN InPort(x, interp).readChar()
+        |
+          P.PeekChar => RETURN InPort(x, interp).peekChar()
+        |
+          P.Eval => RETURN interp.evalInGlobalEnv(x)
         |
           P.Quotient =>
           VAR d := FromO(x) / FromO(y); BEGIN
@@ -611,7 +650,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
         |
           P.Third => RETURN Third(x)
         |
-          P.EofObjectQ =>
+          P.EofObjectQ => RETURN Truth(x = SchemeInputPort.EOF)
         |
           P.Gcd =>
           IF args = NIL THEN RETURN Zero ELSE RETURN Gcd(args) END
@@ -688,30 +727,51 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object =
           P.IntegerQ => RETURN Truth(IsExact(x))
         |
           P.CallWithInputFile =>
+          VAR p : SchemeInputPort.T := NIL;
+          BEGIN
+            TRY p := OpenInputFile(x);
+                z := Proc(y).apply(interp, List1(p)) 
+            FINALLY
+                IF p # NIL THEN EVAL p.close() END
+            END;
+            RETURN z
+          END
         |
-          P.CallWithOutputFile =>
+          P.CallWithOutputFile => 
+          VAR p : Wr.T := NIL;
+          BEGIN
+            TRY p := OpenOutputFile(x);
+                z := Proc(y).apply(interp, List1(p))
+            FINALLY
+                IF p # NIL THEN Wr.Close(p) END
+            END;
+            RETURN z
+          END
         |
-          P.Tanh =>
+          P.Tanh => RETURN FromLR(Math.tanh(FromO(x)))
         |
-          P.New =>
+          P.New => RETURN False() (* not impl *)
         |
-          P.Class =>
+          P.Class => RETURN False() (* not impl *)
         |
-          P.Method =>
+          P.Method => RETURN False() (* not impl *)
         |
-          P.Exit =>
+          P.Exit => 
+          IF x = NIL THEN Process.Exit(0) 
+          ELSE Process.Exit(TRUNC(FromO(x)))
+          END
         |
           P.SetCar => RETURN SetFirst(x,y)
         |
           P.SetCdr => RETURN SetRest(x,y)
         |
-          P.TimeCall =>
+          P.TimeCall => RETURN False() (* not impl *)
         |
-          P.MacroExpand =>
+          P.MacroExpand => RETURN SchemeMacro.MacroExpand(interp,x)
         |
           P.Error => RETURN Error(Stringify(args))
         |
-          P.ListStar =>
+          P.ListStar => RETURN ListStar(args)
       END
     END
 
@@ -982,4 +1042,61 @@ PROCEDURE StringAppend(args : Object) : String =
     RETURN Str(Wx.ToText(res))
   END StringAppend;
 
+PROCEDURE OpenOutputFile(filename : Object) : Wr.T =
+  BEGIN
+    TRY
+      RETURN FileWr.Open(StringifyQ(filename, FALSE)) 
+    EXCEPT
+      OSError.E(err) => RETURN Error("Error opening " & Stringify(filename) & " : "&
+                                     AL.Format(err))
+    END
+  END OpenOutputFile;
+
+PROCEDURE OpenInputFile(filename : Object) : SchemeInputPort.T =
+  BEGIN
+    TRY
+      WITH rd = FileRd.Open(StringifyQ(filename, FALSE)) DO
+        RETURN NEW(SchemeInputPort.T).init(rd)
+      END
+    EXCEPT
+      OSError.E(err) => RETURN Error("Error opening " & Stringify(filename) & " : "&
+                                     AL.Format(err))
+    END 
+  END OpenInputFile;
+
+PROCEDURE Map(proc : SchemeProcedure.T;
+              args : Object;
+              interp : Scheme.T;
+              result : Pair) : Pair =
+  VAR
+    accum := result;
+  BEGIN
+    IF Rest(args) = NIL THEN
+      args := First(args);
+      WHILE args # NIL AND ISTYPE(args, Pair) DO
+        WITH x = proc.apply(interp, List1(First(args))) DO
+          IF accum # NIL THEN 
+            accum.rest := List1(x);
+            accum := accum.rest;
+          END;
+          args := Rest(args)
+        END
+      END
+    ELSE
+      WITH car = Proc(interp.evalInGlobalEnv(SchemeSymbol.Symbol("car"))),
+           cdr = Proc(interp.evalInGlobalEnv(SchemeSymbol.Symbol("cdr"))) DO
+        WHILE First(args) # NIL AND ISTYPE(First(args),Pair) DO
+          WITH x = proc.apply(interp, Map(car, List1(args), interp, List1(NIL))) DO
+            IF accum # NIL THEN 
+              accum.rest := List1(x);
+              accum := accum.rest;
+            END
+          END;
+          args := Map(cdr, List1(args), interp, List1(NIL))
+        END
+      END
+    END;
+    RETURN Rest(result)
+  END Map;
+       
 BEGIN END SchemePrimitive.

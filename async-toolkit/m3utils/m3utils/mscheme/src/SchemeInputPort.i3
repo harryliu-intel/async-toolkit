@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 INTERFACE SchemeInputPort;
-IMPORT Rd, SchemeObject, SchemeBoolean;
+IMPORT Rd, SchemeObject, SchemeBoolean, SchemeSymbol;
 
 TYPE
   T <: Public;
@@ -22,5 +22,7 @@ TYPE
 PROCEDURE IsEOF(x : SchemeObject.T) : BOOLEAN;
 
 CONST Brand = "SchemeInputPort";
+
+VAR (* CONST *) EOF : SchemeSymbol.T;
     
 END SchemeInputPort.

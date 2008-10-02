@@ -36,8 +36,6 @@ REVEAL
     close    :=  Close;
   END;
 
-VAR (*CONST*) EOF := SchemeSymbol.Symbol("#!EOF");
-
 PROCEDURE Init(t : T; rd : Rd.T) : T = 
   BEGIN t.rd := rd; RETURN t END Init;
 
@@ -311,4 +309,6 @@ PROCEDURE CharSeqToArray(seq : CharSeq.T) : String =
 
 CONST BSC = '\\'; QMC = '"';
 
-BEGIN END SchemeInputPort.
+BEGIN
+  EOF := SchemeSymbol.Symbol("#!EOF");
+END SchemeInputPort.

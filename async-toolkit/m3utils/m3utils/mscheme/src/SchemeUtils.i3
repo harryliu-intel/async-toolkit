@@ -17,7 +17,7 @@ PROCEDURE Vec(x : Object) : Vector;
 
 PROCEDURE InPort(x : Object; interp : Scheme.T) : SchemeInputPort.T;
 
-(* PROCEDURE outPort(x : SchemeObject; interp : Scheme.T) : ??? *)
+PROCEDURE OutPort(x : Object; interp : Scheme.T) : Wr.T;
 
 PROCEDURE Error(message : TEXT) : Object RAISES { E };
 
