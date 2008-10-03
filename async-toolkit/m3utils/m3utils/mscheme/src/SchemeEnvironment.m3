@@ -17,10 +17,17 @@ TYPE Pair = SchemePair.T;
 
 CONST TE = Text.Equal;
 
+CONST QuickVars = 5;
+
+TYPE QuickMap = RECORD var : Symbol; val : Object END;
+
 REVEAL
   T = Public BRANDED Brand OBJECT
     (* vars, vals not necessary *)
-    dictionary : AtomRefTbl.T;
+    dictionary : AtomRefTbl.T := NIL;
+
+    quick : ARRAY [0..QuickVars - 1] OF QuickMap;
+
     parent : T := NIL;
   METHODS
     initDict(vars, vals : Object) : BOOLEAN := InitDict;
@@ -34,7 +41,45 @@ REVEAL
   END;
 
 PROCEDURE InitEmpty(t : T) : T =
-  BEGIN t.dictionary := NEW(AtomRefTbl.Default).init(); RETURN t END InitEmpty;
+  BEGIN 
+    (*t.dictionary := NEW(AtomRefTbl.Default).init(); *)
+    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+      t.quick[i] := QuickMap { NIL, NIL };
+    END;
+    RETURN t 
+  END InitEmpty;
+
+PROCEDURE Get(t : T; var : Symbol; VAR val : Object) : BOOLEAN =
+  BEGIN 
+    IF t.dictionary # NIL THEN
+      RETURN t.dictionary.get(var,val) 
+    ELSE
+      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+        IF t.quick[i].var = var THEN val := t.quick[i].val; RETURN TRUE END
+      END;
+      RETURN FALSE
+    END
+  END Get;
+
+PROCEDURE Put(t : T; var : Symbol; READONLY val : Object) =
+  BEGIN 
+    IF t.dictionary # NIL THEN
+      EVAL t.dictionary.put(var,val) 
+    ELSE
+      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+        IF t.quick[i].var = var OR t.quick[i].var = NIL THEN 
+          t.quick[i].var := var; 
+          t.quick[i].val := val;
+          RETURN
+        END
+      END;
+      (* failed *)
+      t.dictionary := NEW(AtomRefTbl.Default).init();
+      FOR i := LAST(t.quick) TO FIRST(t.quick) BY -1 DO
+        EVAL t.dictionary.put(t.quick[i].var,t.quick[i].val)
+      END
+    END
+  END Put;
 
 PROCEDURE Init(t : T; vars, vals : Object; parent : T) : T =
   BEGIN
@@ -52,13 +97,13 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
     IF vars = NIL AND vals = NIL THEN 
       RETURN TRUE 
     ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
-      EVAL t.dictionary.put(vars, vals);
+      Put(t,vars,vals);
       RETURN TRUE
     ELSIF vars # NIL AND vals # NIL AND 
           ISTYPE(vars, Pair) AND ISTYPE(vals, Pair) THEN
       WITH varp = NARROW(vars,Pair), valp = NARROW(vals,Pair) DO
         IF varp.first # NIL AND ISTYPE(varp.first,Symbol) THEN
-          EVAL t.dictionary.put(varp.first, valp.first)
+          Put(t, varp.first, valp.first);
         END;
         RETURN InitDict(t, varp.rest, valp.rest)
       END
@@ -70,7 +115,7 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
 PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
-    IF t.dictionary.get(symbol,o) THEN 
+    IF Get(t,symbol,o) THEN
       RETURN o
     END;
 
@@ -83,7 +128,7 @@ PROCEDURE Define(t : T; var, val : Object) : Object =
   BEGIN
     IF var = NIL OR NOT ISTYPE(var, Symbol) THEN RETURN var END;
 
-    EVAL t.dictionary.put(var,val);
+    Put(t,var,val);
 
     TYPECASE val OF
       SchemeProcedure.T(p) => 
@@ -104,8 +149,8 @@ PROCEDURE Set(t : T; var, val : Object) : Object RAISES { E } =
              SchemeUtils.Stringify(var))
     END;
 
-    IF t.dictionary.get(var, dummy) THEN
-      EVAL t.dictionary.put(var, val);
+    IF Get(t, var, dummy) THEN
+      Put(t,var, val);
       RETURN val (* ?? *)
     END;
 

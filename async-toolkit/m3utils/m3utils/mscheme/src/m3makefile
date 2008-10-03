@@ -1,8 +1,10 @@
 /* $Id$ */
 
+
 if defined("pm3_version")
-	option("optimization","") /* for debugging */
+	option("optimization","") 
 end
+
 
 import ("libm3")
 import ("cit_util")
