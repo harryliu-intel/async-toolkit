@@ -42,7 +42,6 @@ REVEAL
 
 PROCEDURE InitEmpty(t : T) : T =
   BEGIN 
-    (*t.dictionary := NEW(AtomRefTbl.Default).init(); *)
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
       t.quick[i] := QuickMap { NIL, NIL };
     END;
