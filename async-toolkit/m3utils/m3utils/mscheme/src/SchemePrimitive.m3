@@ -98,7 +98,9 @@ TYPE
 
         New, Class, Method, Exit,
         SetCar, SetCdr, TimeCall, MacroExpand,
-        Error, ListStar };
+        Error, ListStar,
+	
+	JailBreak };
 
 PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
   CONST n = LAST(CARDINAL);
@@ -288,6 +290,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("error",    	    ORD(P.Error),     0, n)
      .defPrim("time-call",          ORD(P.TimeCall),  1, 2)
      .defPrim("_list*",             ORD(P.ListStar),  0, n)
+     .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
        ;
 
     RETURN env;
@@ -798,6 +801,13 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
           P.Error => RETURN Error(Stringify(args))
         |
           P.ListStar => RETURN ListStar(args)
+	|
+	  P.JailBreak =>
+	    IF interp.jailBreak = NIL THEN
+	      RETURN Error("No jailbreak defined")
+	    ELSE
+	      RETURN interp.jailBreak.apply(args)
+	    END
       END
     END
 

@@ -14,6 +14,7 @@ import ("cit_util")
 
 Module("Scheme")
 interface("SchemeClass")
+Interface("SchemeJailBreak")
 
 Module("SchemePair")
 
