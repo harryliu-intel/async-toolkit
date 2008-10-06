@@ -9,18 +9,25 @@
 MODULE SchemeClosure;
 IMPORT SchemeClosureClass;
 IMPORT SchemeEnvironment;
-FROM Scheme IMPORT Object;
+FROM Scheme IMPORT Object, E;
 FROM SchemeUtils IMPORT Cons, First, Rest;
 FROM SchemeSymbol IMPORT Symbol;
-IMPORT SchemePair;
+IMPORT SchemePair, Scheme;
 
 TYPE Pair = SchemePair.T;
 
 REVEAL
   T = SchemeClosureClass.Private BRANDED Brand OBJECT
   OVERRIDES
-    init := Init;
+    init  := Init;
+    apply := Apply;
   END;
+
+PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object 
+  RAISES { E } =
+  BEGIN RETURN interp.eval(t.body, 
+                         NEW(SchemeEnvironment.T).init(t.params, args, t.env))
+  END Apply;
 
 PROCEDURE Init(t : T; 
                params, body : Object;
@@ -28,7 +35,7 @@ PROCEDURE Init(t : T;
   BEGIN
     t.params := params;
     t.env := env;
-    IF body # NIL AND ISTYPE(body, Pair) AND Rest(body) # NIL THEN
+    IF body # NIL AND ISTYPE(body, Pair) AND Rest(body) = NIL THEN
       t.body := First(body)
     ELSE
       t.body := Cons(Symbol("begin"), body)

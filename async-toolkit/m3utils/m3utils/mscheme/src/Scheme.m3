@@ -162,7 +162,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
           ELSIF fn = SYMsetB THEN
             RETURN env.set(First(args), t.eval(Second(args), env))
           ELSIF fn = SYMif THEN
-            IF TruthO(t.eval(First(args), env))^ THEN
+            IF TruthO(t.eval(First(args), env)) THEN
               x := Second(args) 
             ELSE
               x := Third(args)
@@ -257,7 +257,7 @@ PROCEDURE ReduceCond(t : T;
             result := t.eval(First(clause),env);
             (* is this a bug? we overwrite result even if we don't succeed,
                Norvig's SILK does this too... *)
-            IF TruthO(result)^ THEN success := TRUE END; 
+            IF TruthO(result) THEN success := TRUE END; 
           END;
 
           IF success THEN

@@ -7,7 +7,7 @@
 *)
 
 MODULE SchemeUtils;
-IMPORT Scheme, SchemeInputPort, SchemeClass;
+IMPORT Scheme, SchemeInputPort, SchemeClass, SchemeSymbol;
 IMPORT Wr, Fmt, Wx, Stdio;
 FROM Scheme IMPORT Object, E, Symbol, Vector, String;
 FROM SchemeChar IMPORT Char, Chr;
@@ -15,6 +15,7 @@ IMPORT SchemeLongReal, SchemeChar;
 IMPORT AL;
 IMPORT Thread;
 IMPORT SchemeBoolean;
+IMPORT SchemeProcedure,SchemeProcedureClass;
 
 TYPE Boolean = SchemeBoolean.T;
 
@@ -305,6 +306,12 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E } =
           Put(Fmt.LongReal(lr^))
         END
       |
+        SchemeProcedure.T(p) =>
+        PutC('{'); Put(p.name); PutC('}')
+      |
+        SchemeSymbol.T(sym) =>
+        Put(SchemeSymbol.ToText(sym))
+      |
         SchemeChar.T(c) =>
         IF quoted THEN Put("#" & BS) END;
         PutC(Char(c))
@@ -328,7 +335,7 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E } =
         PutC(')')
       |
         Boolean(b) =>
-        CASE b^ OF
+        CASE SchemeBoolean.TruthO(b) OF
           TRUE => Put("#t")
         |
           FALSE => Put("#f")

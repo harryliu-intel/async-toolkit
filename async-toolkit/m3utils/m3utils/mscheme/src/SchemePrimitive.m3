@@ -21,7 +21,7 @@ FROM SchemeUtils IMPORT Length, First, Second, Third,
                         VectorToList, Write;
 
 IMPORT SchemeInputPort, SchemeContinuation, SchemeMacro, SchemeString;
-FROM SchemeBoolean IMPORT Truth, False, True;
+FROM SchemeBoolean IMPORT Truth, False, True, TruthO;
 FROM SchemeProcedure IMPORT Proc; IMPORT SchemeProcedure;
 FROM SchemeLongReal IMPORT FromLR, FromO, Zero, One;
 FROM SchemeChar IMPORT Character, Char, IChr, LowerCase, UpperCase, Digits,
@@ -402,7 +402,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
           P.Second => RETURN Second(x)
         |
           
-          P.SymbolQ => RETURN Truth(x # NIL AND ISTYPE(x,String))
+          P.SymbolQ => RETURN Truth(x # NIL AND ISTYPE(x,Symbol))
         |
           P.Times => RETURN NumCompute(args, '*', 1.0d0)
         |
@@ -938,7 +938,7 @@ PROCEDURE NumCompute(args : Object;
     ELSE
       WHILE args # NIL AND ISTYPE(args, Pair) DO
         WITH x = FromO(First(args)) DO
-          IF False()^ THEN
+          IF TruthO(False()) THEN
             (* force a register spill, work around a compiler bug... *)
             Debug.Out(Fmt.LongReal(result) & " " & Fmt.LongReal(x))
           END;

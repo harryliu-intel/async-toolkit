@@ -22,10 +22,11 @@ PROCEDURE Expand(t : T;
                  oldPair : Pair; args : Object) : Pair RAISES { E } =
   BEGIN
     WITH expansion = t.apply(interpreter,args) DO
-      TYPECASE expansion OF
-        Pair(p) =>
-        oldPair.first := p.first;
-        oldPair.rest := p.rest
+      IF expansion # NIL AND ISTYPE(expansion,Pair) THEN
+        WITH p = NARROW(expansion, Pair) DO
+          oldPair.first := p.first;
+          oldPair.rest := p.rest
+        END
       ELSE
         oldPair.first := SchemeSymbol.Symbol("begin");
         oldPair.rest := Cons(expansion,NIL)

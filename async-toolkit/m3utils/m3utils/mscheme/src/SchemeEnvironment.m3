@@ -81,8 +81,10 @@ PROCEDURE Put(t : T; var : Symbol; READONLY val : Object) =
       (* failed *)
       t.dictionary := NEW(AtomRefTbl.Default).init();
       FOR i := LAST(t.quick) TO FIRST(t.quick) BY -1 DO
-        EVAL t.dictionary.put(t.quick[i].var,t.quick[i].val)
-      END
+        Put(t, t.quick[i].var, t.quick[i].val)
+      END;
+
+      Put(t, var, val)
     END
   END Put;
 
@@ -124,8 +126,10 @@ PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
       RETURN o
     END;
 
-    IF t.parent # NIL THEN RETURN t.parent.lookup(symbol) 
-    ELSE RETURN Error("Unbound variable: " & SchemeSymbol.ToText(symbol)) 
+    IF t.parent # NIL THEN 
+      RETURN t.parent.lookup(symbol) 
+    ELSE 
+      RETURN Error("Unbound variable: " & SchemeSymbol.ToText(symbol)) 
     END
   END Lookup;
 
