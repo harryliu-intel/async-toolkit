@@ -17,6 +17,7 @@ IMPORT Wr, TextRd, Thread;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
+IMPORT Debug;
 
 TYPE Pair = SchemePair.T;
 
@@ -182,7 +183,13 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
             fn := t.eval(fn, env);
             
             TYPECASE fn OF
-              Macro(m) => x := m.expand(t, x, args)
+              Macro(m) => 
+(*
+              Debug.Out("x = " & Stringify(x));
+              Debug.Out("args = " & Stringify(args));
+              Debug.Out("-------");
+*)
+              x := m.expand(t, x, args)
             |
               Closure(c) => x := c.body; 
               env := NEW(SchemeEnvironment.T).init(c.params, 

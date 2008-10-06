@@ -689,7 +689,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
         |
           P.Cxr =>
           VAR p := x; BEGIN
-            FOR i := Text.Length(t.name)-1 TO 1 BY -1 DO
+            FOR i := Text.Length(t.name)-2 TO 1 BY -1 DO
               IF Text.GetChar(t.name,i) = 'a' THEN
                 p := PedanticFirst(p)
               ELSE
@@ -1077,7 +1077,8 @@ PROCEDURE StringAppend(args : Object) : String  RAISES { E } =
   VAR res := Wx.New();
   BEGIN
     WHILE args # NIL AND ISTYPE(args,Pair) DO
-      Wx.PutText(res,StringifyQ(First(args),FALSE))
+      Wx.PutText(res,StringifyQ(First(args),FALSE));
+      args := Rest(args)
     END;
     RETURN Str(Wx.ToText(res))
   END StringAppend;
