@@ -1,5 +1,11 @@
 (* $Id$ *)
 
+(*
+  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+
+  Author: Mika Nystrom <mika@alum.mit.edu>
+*)
+
 MODULE SchemeEnvironment;
 
 (* One of the few things not taken directly from Norvig... *)

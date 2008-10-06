@@ -1,5 +1,11 @@
 (* $Id$ *)
 
+(*
+  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+
+  Author: Mika Nystrom <mika@alum.mit.edu>
+*)
+
 MODULE SchemeInputPort;
 IMPORT AL, Rd;
 FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector;

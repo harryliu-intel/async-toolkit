@@ -1,5 +1,11 @@
 (* $Id$ *)
 
+(*
+  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+
+  Author: Mika Nystrom <mika@alum.mit.edu>
+*)
+
 INTERFACE SchemeInputPort;
 IMPORT Rd, SchemeObject, SchemeBoolean, SchemeSymbol;
 FROM Scheme IMPORT E;

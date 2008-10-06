@@ -1,5 +1,11 @@
 (* $Id$ *)
 
+(*
+  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+
+  Author: Mika Nystrom <mika@alum.mit.edu>
+*)
+
 MODULE SchemeBoolean;
 FROM SchemeUtils IMPORT DebugFormat, Error;
 FROM Scheme IMPORT Object, E;

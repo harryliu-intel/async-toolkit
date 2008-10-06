@@ -1,5 +1,11 @@
 (* $Id$ *)
 
+(*
+  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+
+  Author: Mika Nystrom <mika@alum.mit.edu>
+*)
+
 INTERFACE SchemeEnvironment;
 IMPORT SchemeObject, SchemeSymbol, SchemeEnvironmentSuper;
 FROM Scheme IMPORT E;

@@ -14,8 +14,8 @@ character	REF CHAR
 symbol		Atom.T
 vector		REF ARRAY OF REFANY
 procedure	(as in JScheme)
-input port	SchemeInputPort.T ??
-output port	??
+input port	SchemeInputPort.T 
+output port	Wr.T
 interpreter	Scheme.T
 environment	SchemeEnvironment.T
 continuation	SchemeContinuation.T
