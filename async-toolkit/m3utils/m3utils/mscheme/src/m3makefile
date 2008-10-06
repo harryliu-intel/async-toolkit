@@ -2,9 +2,11 @@
 
 
 
+/*
 if defined("pm3_version")
 	option("optimization","") 
 end
+*/
 
 
 import ("libm3")

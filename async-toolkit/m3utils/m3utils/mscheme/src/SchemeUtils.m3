@@ -72,9 +72,13 @@ PROCEDURE Warn(message : TEXT) : Object =
 
 PROCEDURE First(x : Object) : Object =
   BEGIN
-    IF x = NIL THEN RETURN NIL END;
-
-    TYPECASE x OF Pair(p) => RETURN p.first ELSE RETURN NIL END
+    TYPECASE x OF 
+      NULL => RETURN NIL
+    |
+      Pair(p) => RETURN p.first 
+    ELSE 
+      RETURN NIL 
+    END
   END First;
 
 PROCEDURE Rest(x : Object) : Object =

@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 MODULE SchemePrimitive;
+IMPORT Debug;
 IMPORT SchemeEnvironment, SchemeProcedureClass;
 IMPORT Scheme, SchemeClass;
 
@@ -903,8 +904,12 @@ PROCEDURE NumCompare(args : Object; op : CHAR) : Object RAISES { E } =
     RETURN True()
   END NumCompare;
       
-PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object 
+PROCEDURE NumCompute(args : Object; 
+                     op : CHAR; 
+                     READONLY start : LONGREAL) : Object 
   RAISES { E } =
+  VAR 
+    result := start;
   BEGIN
     IF args = NIL THEN
       CASE op OF
@@ -916,10 +921,11 @@ PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object
       END
     ELSE
       WHILE args # NIL AND ISTYPE(args, Pair) DO
-        VAR
-          x := FromO(First(args));
-        BEGIN
-          args := Rest(args);
+        WITH x = FromO(First(args)) DO
+          IF False()^ THEN
+            (* force a register spill, work around a compiler bug... *)
+            Debug.Out(Fmt.LongReal(result) & " " & Fmt.LongReal(x))
+          END;
           CASE op OF 
             'X' => IF x > result THEN result := x END
           |
@@ -935,7 +941,8 @@ PROCEDURE NumCompute(args : Object; op : CHAR; result : LONGREAL) : Object
           ELSE
             <* ASSERT FALSE *>
           END
-        END
+        END;
+        args := Rest(args)
       END;
       RETURN FromLR(result)
     END
