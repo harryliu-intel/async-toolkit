@@ -17,6 +17,7 @@ Any pared down version of the repository needs the following files and
 directories at the top level in order for packages using cit_util to work:
 
 - Makefile  
+- Make.defs
 - cit_common
 - cit_util
 - dirsexist.sh
