@@ -128,3 +128,6 @@ override("tradecore", TOP & "/calarm/twslib/testtrade2")
 override("fixmonitor", TOP & "/calarm/twslib/testtrade2")
 override("twsmonitor", TOP & "/calarm/twslib/testtrade2")
 override("tradingstrategy", TOP & "/calarm/twslib/testtrade2")
+
+% Ohai
+override("ohailog", TOP & "/ohai")
