@@ -140,6 +140,15 @@ PROCEDURE SetRest(x, y : Object) : Object RAISES { E } =
 PROCEDURE List1(x : Object) : Pair =
   BEGIN RETURN NEW(Pair, first := x, rest := NIL) END List1;
 
+PROCEDURE MakeList(READONLY a : ARRAY OF Object) : Pair =
+  VAR res : Pair := NIL;
+  BEGIN
+    FOR i := LAST(a) TO FIRST(a) BY -1 DO
+      res := NEW(Pair, first := a[i], rest := res)
+    END;
+    RETURN res
+  END MakeList;
+
 PROCEDURE List2(x, y : Object) : Pair =
   BEGIN 
     RETURN NEW(Pair, first := x, rest := NEW(Pair,first := y, rest := NIL))

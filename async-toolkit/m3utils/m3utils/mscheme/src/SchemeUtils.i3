@@ -47,6 +47,8 @@ PROCEDURE List1(x : Object) : Pair;
 PROCEDURE List2(x, y : Object) : Pair;
 PROCEDURE ListStar(x : Object) : Object;
 
+PROCEDURE MakeList(READONLY a : ARRAY OF Object) : Pair;
+
 PROCEDURE Cons(a, b : Object) : Pair;
 
 PROCEDURE Reverse(x : Object) : Object;

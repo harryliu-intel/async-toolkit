@@ -14,6 +14,8 @@ TYPE T = REF LONGREAL;
 
 PROCEDURE FromLR(x : LONGREAL) : T;
 
+PROCEDURE FromI(x : INTEGER) : T;
+
 PROCEDURE FromO(x : SchemeObject.T) : LONGREAL RAISES { E };
 
 CONST Brand = "SchemeLongReal";

@@ -15,6 +15,9 @@ end
 import ("libm3")
 import ("cit_util")
 
+Generic_module("SchemeAutoTbl")
+template ("schemeautotbl")
+
 Module("Scheme")
 Interface("SchemeClass")
 Interface("SchemeJailBreak")
@@ -62,5 +65,7 @@ Module ("SchemeM3TableOps")
 KeyPair("CardAtom", "Cardinal", "Atom")
 
 table("CARef", "CardAtomPair", "Refany")
+
+Module("M3toSTextString")
 
 library ("mscheme")

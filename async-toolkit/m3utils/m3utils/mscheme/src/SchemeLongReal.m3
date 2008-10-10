@@ -12,6 +12,9 @@ FROM SchemeUtils IMPORT Error, DebugFormat;
 FROM Scheme IMPORT Object, E;
 IMPORT Lex, FloatMode;
 
+PROCEDURE FromI(x : INTEGER) : T = 
+  BEGIN RETURN FromLR(FLOAT(x,LONGREAL)) END FromI;
+
 PROCEDURE FromLR(x : LONGREAL) : T =
   BEGIN
     IF    x = 0.0d0 THEN RETURN Zero

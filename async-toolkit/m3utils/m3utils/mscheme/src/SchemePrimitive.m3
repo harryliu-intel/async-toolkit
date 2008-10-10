@@ -298,7 +298,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("time-call",          ORD(P.TimeCall),  1, 2)
      .defPrim("_list*",             ORD(P.ListStar),  0, n)
      .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
-     .defPrim("modula-3-op",  ORD(P.M3Op), 3, 3)
+     .defPrim("modula-3-op",  ORD(P.M3Op), 2, 3) (* ok to have no args *)
        ;
 
     RETURN env;
