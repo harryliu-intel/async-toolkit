@@ -16,7 +16,7 @@ import ("libm3")
 import ("cit_util")
 
 Module("Scheme")
-interface("SchemeClass")
+Interface("SchemeClass")
 Interface("SchemeJailBreak")
 
 Module("SchemePair")
@@ -56,5 +56,11 @@ Module("SchemeString")
 Interface("SchemeVector")
 
 Module("SchemeContinuation")
+
+Module ("SchemeM3TableOps")
+
+KeyPair("CardAtom", "Cardinal", "Atom")
+
+table("CARef", "CardAtomPair", "Refany")
 
 library ("mscheme")

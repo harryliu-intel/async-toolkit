@@ -17,7 +17,8 @@ IMPORT Wr, TextRd, Thread;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
-IMPORT Debug;
+<*NOWARN*>IMPORT Debug;
+IMPORT SchemeM3TableOps;
 
 TYPE Pair = SchemePair.T;
 
@@ -39,7 +40,15 @@ REVEAL
     eval              :=  Eval;
     evalInGlobalEnv   :=  EvalInGlobalEnv;
     evalList          :=  EvalList;
+    bind              :=  Bind;
+    setTableOps       :=  SetTableOps;
   END;
+
+PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
+  BEGIN t.m3TableOps := to END SetTableOps;
+
+PROCEDURE Bind(t : T; var : Symbol; val : Object) =
+  BEGIN EVAL t.globalEnvironment.define(var,val) END Bind;
 
 PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T 
   RAISES { E } =

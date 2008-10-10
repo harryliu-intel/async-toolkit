@@ -106,7 +106,8 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
 	
-	JailBreak };
+	JailBreak,
+  M3Op};
 
 PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
   CONST n = LAST(CARDINAL);
@@ -297,6 +298,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("time-call",          ORD(P.TimeCall),  1, 2)
      .defPrim("_list*",             ORD(P.ListStar),  0, n)
      .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
+     .defPrim("modula-3-op",  ORD(P.M3Op), 3, 3)
        ;
 
     RETURN env;
@@ -807,16 +809,22 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
           P.Error => RETURN Error(Stringify(args))
         |
           P.ListStar => RETURN ListStar(args)
-	|
-	  P.JailBreak =>
-	    IF interp.jailBreak = NIL THEN
-	      RETURN Error("No jailbreak defined")
-	    ELSE
-	      RETURN interp.jailBreak.apply(args)
-	    END
-      END
+        |
+          P.JailBreak =>
+          IF interp.jailBreak = NIL THEN
+            RETURN Error("No jailbreak defined")
+          ELSE
+            RETURN interp.jailBreak.apply(args)
+          END
+        |
+          P.M3Op =>
+          IF interp.m3TableOps = NIL THEN
+            RETURN Error("No table ops defined")
+          ELSE
+            RETURN interp.m3TableOps.apply(args)
+          END
+        END
     END
-
   END Apply;
 
 PROCEDURE IsList(x : Object) : BOOLEAN =

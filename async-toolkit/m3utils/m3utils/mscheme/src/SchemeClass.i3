@@ -8,7 +8,7 @@
 *)
 INTERFACE SchemeClass;
 IMPORT Scheme, SchemeInputPort, Wr;
-IMPORT SchemeJailBreak;
+IMPORT SchemeJailBreak, SchemeM3TableOps;
 
 REVEAL Scheme.T <: Private;
 
@@ -18,6 +18,9 @@ TYPE
     output : Wr.T;
     
     jailBreak : SchemeJailBreak.T := NIL;
+    m3TableOps : SchemeM3TableOps.T := NIL;
+  METHODS
+    setTableOps(to : SchemeM3TableOps.T);
   END;
 
 END SchemeClass.

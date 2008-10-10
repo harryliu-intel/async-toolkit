@@ -48,6 +48,10 @@ TYPE
      
     setJailBreak(jb : SchemeJailBreak.T);
 
+
+    bind(var : Symbol; val : Object);
+    (* bind some object to symbol in var from Modula-3 *)
+
   END;
 
 CONST Brand = "Scheme";
