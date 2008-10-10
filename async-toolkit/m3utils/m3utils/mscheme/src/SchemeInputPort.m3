@@ -273,8 +273,21 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
                 IF    SymEq(token, "space") THEN RETURN Character(' ') 
                 ELSIF SymEq(token, "newline") THEN RETURN Character('\n')
                 ELSE
+                  (* this isn't right.. if we're parsing "#\n", for
+                     instance, we'd be pushing the token "n"... *)
+                  (*
                   t.isPushedToken := TRUE;
                   t.pushedToken := token;
+                  *)
+
+                  (* lop off start of token *)
+                  WITH txt = SchemeSymbol.ToText(token) DO
+                    IF Text.Length(txt) > 1 THEN
+                      t.isPushedToken := TRUE;
+                      t.pushedToken := SchemeSymbol.Symbol(Text.Sub(txt,1))
+                    END
+                  END;
+
                   RETURN IChr(ch)
                 END
               END

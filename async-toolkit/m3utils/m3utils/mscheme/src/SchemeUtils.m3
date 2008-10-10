@@ -10,7 +10,7 @@ MODULE SchemeUtils;
 IMPORT Scheme, SchemeInputPort, SchemeClass, SchemeSymbol;
 IMPORT Wr, Fmt, Wx, Stdio;
 FROM Scheme IMPORT Object, E, Symbol, Vector, String;
-FROM SchemeChar IMPORT Char, Chr;
+FROM SchemeChar IMPORT Char;
 IMPORT SchemeLongReal, SchemeChar;
 IMPORT AL;
 IMPORT Thread;
@@ -257,7 +257,7 @@ PROCEDURE ListToString(chars: Object) : String RAISES { E } =
     RETURN str
   END ListToString;
 
-PROCEDURE ListToVector(objs : Object) : Vector RAISES { E } =
+PROCEDURE ListToVector(objs : Object) : Vector =
   VAR vec := NEW(Vector, Length(objs));
       i := 0;
   BEGIN
