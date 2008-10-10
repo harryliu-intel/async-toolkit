@@ -10,12 +10,16 @@ MODULE SchemeString;
 IMPORT Text;
 
 PROCEDURE FromText(txt : TEXT) : T =
-  VAR     str := NEW(T, Text.Length(txt));
   BEGIN
-    FOR i := FIRST(str^) TO LAST(str^) DO
-      str[i] := Text.GetChar(txt,i)
-    END;
-    RETURN str
+    IF txt = NIL THEN RETURN NIL END;
+
+    VAR     str := NEW(T, Text.Length(txt));
+    BEGIN
+      FOR i := FIRST(str^) TO LAST(str^) DO
+        str[i] := Text.GetChar(txt,i)
+      END;
+      RETURN str
+    END
   END FromText;
 
 BEGIN END SchemeString.

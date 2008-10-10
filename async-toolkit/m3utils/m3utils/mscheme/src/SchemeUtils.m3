@@ -18,6 +18,7 @@ IMPORT SchemeBoolean;
 IMPORT SchemeProcedure,SchemeProcedureClass;
 
 TYPE Boolean = SchemeBoolean.T;
+     LongReal = SchemeLongReal.T;
 
 <* FATAL Thread.Alerted *>
 
@@ -181,10 +182,22 @@ PROCEDURE Reverse(x : Object) : Object =
 
 PROCEDURE Equal(x, y : Object) : BOOLEAN =
   BEGIN
+    IF x = y THEN RETURN TRUE END;
+
     IF x = NIL OR y = NIL THEN 
       RETURN x = y
     ELSE
       TYPECASE x OF
+        LongReal(lr) =>
+        IF NOT ISTYPE(y,LongReal) THEN RETURN FALSE END;
+        RETURN lr^ = NARROW(y,LongReal)^
+      |
+        Pair(p) =>
+        IF NOT ISTYPE(y,Pair) THEN RETURN FALSE END;
+        WITH that = NARROW(y,Pair) DO
+          RETURN Equal(p.first,that.first) AND Equal(p.rest,that.rest)
+        END
+      |
         String(sx) =>
         TYPECASE y OF 
           String(sy) =>

@@ -209,7 +209,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
               Procedure(p) =>
               RETURN p.apply(t, t.evalList(args,env))
             ELSE
-              <* ASSERT FALSE *>  (* hmm? *)
+              RAISE E("Not a procedure: " & Stringify(fn))
             END
           END
         END
