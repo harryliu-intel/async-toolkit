@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE RemoteFileRd;
-IMPORT Pathname, Rd, OSError, ProcUtils, Text, FileRd;
+IMPORT Pathname, Rd, OSError, ProcUtils, Text, FileRd, TextRd;
 
 PROCEDURE Open(p : Pathname.T) : Rd.T RAISES { OSError.E } =
   BEGIN
@@ -14,7 +14,7 @@ PROCEDURE Open(p : Pathname.T) : Rd.T RAISES { OSError.E } =
                remFile = Text.Sub(p, idx + 1),
                cmd = "ssh " & remSpec & " cat '" &  remFile & "'",
                completion =  ProcUtils.RunText(cmd,
-                                            stdin := ProcUtils.Stdin(),
+                                            stdin := ProcUtils.ReadHere(NEW(TextRd.T).init("")),
                                             stderr := ProcUtils.Stderr(),
                                             stdout := ProcUtils.GimmeRd(rd)) DO
             (* really should spawn a reaper here? *) 
