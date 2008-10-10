@@ -33,7 +33,7 @@ IMPORT SchemeLongReal;
 IMPORT Fmt, Text, Wx, Wr;
 IMPORT Math, Scan, Lex, FloatMode;
 IMPORT Process;
-IMPORT OSError, FileWr, FileRd, AL;
+IMPORT OSError, FileWr, FileRd, AL, Time;
 IMPORT Thread;
 IMPORT SchemePair;
 
@@ -106,6 +106,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
 	
+	TimeNow,
 	JailBreak,
   M3Op};
 
@@ -298,6 +299,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("time-call",          ORD(P.TimeCall),  1, 2)
      .defPrim("_list*",             ORD(P.ListStar),  0, n)
      .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
+     .defPrim("timenow",	    ORD(P.TimeNow), 0, 0)
      .defPrim("modula-3-op",  ORD(P.M3Op), 2, 3) (* ok to have no args *)
        ;
 
@@ -809,6 +811,8 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
           P.Error => RETURN Error(Stringify(args))
         |
           P.ListStar => RETURN ListStar(args)
+	|
+	  P.TimeNow => RETURN SchemeLongReal.FromLR(Time.Now())
         |
           P.JailBreak =>
           IF interp.jailBreak = NIL THEN
