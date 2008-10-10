@@ -262,7 +262,7 @@ PROCEDURE ListToVector(objs : Object) : Vector RAISES { E } =
       i := 0;
   BEGIN
     WHILE objs # NIL AND ISTYPE(objs,Pair) DO
-      vec[i] := Chr(First(objs));
+      vec[i] := First(objs);
       objs := Rest(objs);
       INC(i)
     END;
