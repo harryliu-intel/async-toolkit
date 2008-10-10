@@ -180,6 +180,7 @@ ArrayHash("Int", "Integer")
 
 Module("CITRandom")
 Module("ProcUtils")
+Module("RemoteFileRd")
 Module("PathnameUtils")
 
 Module("Config")
