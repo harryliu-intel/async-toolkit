@@ -19,6 +19,7 @@ FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
 <*NOWARN*>IMPORT Debug;
 IMPORT SchemeM3TableOps;
+IMPORT TextRefSchemeAutoTbl;
 
 TYPE Pair = SchemePair.T;
 
@@ -302,7 +303,9 @@ VAR
   SYMelse := SchemeSymbol.Symbol("else");
   SYMarrow := SchemeSymbol.Symbol("=>");
 
-BEGIN END Scheme.
+BEGIN 
+  TextRefSchemeAutoTbl.Register();
+END Scheme.
 
 
 

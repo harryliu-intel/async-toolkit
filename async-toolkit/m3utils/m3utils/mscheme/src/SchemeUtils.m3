@@ -154,6 +154,11 @@ PROCEDURE List2(x, y : Object) : Pair =
     RETURN NEW(Pair, first := x, rest := NEW(Pair,first := y, rest := NIL))
   END List2;
 
+PROCEDURE List3(x, y, z : Object) : Pair =
+  BEGIN 
+    RETURN NEW(Pair, first := x, rest := NEW(Pair,first := y, rest := NEW(Pair,first := z, rest := NIL)))
+  END List3;
+
 PROCEDURE ListStar(x : Object) : Object =
   BEGIN
     IF Rest(x) = NIL THEN RETURN First(x) 

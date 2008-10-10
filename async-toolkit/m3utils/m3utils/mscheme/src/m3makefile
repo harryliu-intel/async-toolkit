@@ -68,4 +68,7 @@ table("CARef", "CardAtomPair", "Refany")
 
 Module("M3toSTextString")
 
+Module("M3toSRefany")
+SchemeAutoTbl("TextRef", "TextRefTbl", "M3toSTextString", "M3toSRefany")
+
 library ("mscheme")

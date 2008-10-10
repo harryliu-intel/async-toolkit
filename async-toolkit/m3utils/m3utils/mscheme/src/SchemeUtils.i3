@@ -45,6 +45,7 @@ PROCEDURE SetRest(x, y : Object) : Object RAISES { E };
 
 PROCEDURE List1(x : Object) : Pair;
 PROCEDURE List2(x, y : Object) : Pair;
+PROCEDURE List3(x, y, z : Object) : Pair;
 PROCEDURE ListStar(x : Object) : Object;
 
 PROCEDURE MakeList(READONLY a : ARRAY OF Object) : Pair;
