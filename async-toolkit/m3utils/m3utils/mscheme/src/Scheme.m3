@@ -194,6 +194,9 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
             fn := t.eval(fn, env);
             
             TYPECASE fn OF
+              Macro(m) => 
+              x := m.expand(t, x, args)
+            |
               Closure(c) => 
               (* can we check here if this is the last thing we
                  eval, in which case we can just re-init the
@@ -202,7 +205,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
 
 
               (* this is a teeny tiny tail call optimization.. *)
-              IF envIsLocal THEN
+              IF envIsLocal AND c.env # env THEN
                 INC(envsKilled);
                 EVAL env.init(c.params,
                               t.evalList(args,env),
@@ -216,9 +219,6 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
               
               envIsLocal := TRUE
 
-            |
-              Macro(m) => 
-              x := m.expand(t, x, args)
             |
               Procedure(p) =>
               RETURN p.apply(t, t.evalList(args,env))

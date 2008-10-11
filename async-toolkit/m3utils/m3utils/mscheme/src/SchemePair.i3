@@ -12,7 +12,7 @@ IMPORT SchemeObject;
 FROM Scheme IMPORT E;
 
 TYPE
-  T = REF RECORD
+  T = BRANDED Brand REF RECORD
     first, rest : SchemeObject.T;
   END;
 
