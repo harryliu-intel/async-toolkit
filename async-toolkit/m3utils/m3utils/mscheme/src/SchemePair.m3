@@ -11,15 +11,6 @@ IMPORT Wx;
 IMPORT SchemeObject, SchemeUtils, SchemeSymbol;
 FROM Scheme IMPORT E;
 
-REVEAL
-  T = Public BRANDED Brand OBJECT
-  OVERRIDES
-    init          :=   Init;
-    equals        :=   Equals;
-    format        :=   Format;
-    stringifyPair := StringifyPair;
-  END;
-
 PROCEDURE Init(t : T; first, rest : SchemeObject.T) : T =
   BEGIN t.first := first; t.rest := rest; RETURN t END Init;
 

@@ -194,9 +194,6 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
             fn := t.eval(fn, env);
             
             TYPECASE fn OF
-              Macro(m) => 
-              x := m.expand(t, x, args)
-            |
               Closure(c) => 
               (* can we check here if this is the last thing we
                  eval, in which case we can just re-init the
@@ -219,6 +216,9 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
               
               envIsLocal := TRUE
 
+            |
+              Macro(m) => 
+              x := m.expand(t, x, args)
             |
               Procedure(p) =>
               RETURN p.apply(t, t.evalList(args,env))
@@ -249,8 +249,9 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Objec
         RETURN NIL (*notreached*)
       ELSE
         WITH pair = NARROW(list,Pair) DO
-          RETURN SchemeUtils.Cons(t.eval(pair.first), env), 
-                                  t.evalList(pair.rest), env))
+          RETURN SchemeUtils.Cons(t.eval(pair.first, env), 
+                                  t.evalList(pair.rest, env))
+        END
       END
     EXCEPT
       E(ex) => 

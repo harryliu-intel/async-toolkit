@@ -11,7 +11,7 @@ IMPORT Scheme, SchemeInputPort, SchemeClass, SchemeSymbol;
 IMPORT Wr, Fmt, Wx, Stdio;
 FROM Scheme IMPORT Object, E, Symbol, Vector, String;
 FROM SchemeChar IMPORT Char;
-IMPORT SchemeLongReal, SchemeChar;
+IMPORT SchemeLongReal, SchemeChar, SchemePair;
 IMPORT AL;
 IMPORT Thread;
 IMPORT SchemeBoolean;
@@ -343,7 +343,7 @@ PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E } =
         IF quoted THEN Put("#" & BS) END;
         PutC(Char(c))
       |
-        Pair(p) => p.stringifyPair(quoted,buf)
+        Pair(p) => SchemePair.StringifyPair(p,quoted,buf)
       |
         String(s) =>
         IF quoted THEN PutC(DQC) END;

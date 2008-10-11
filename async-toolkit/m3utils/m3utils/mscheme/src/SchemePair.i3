@@ -12,16 +12,11 @@ IMPORT SchemeObject;
 FROM Scheme IMPORT E;
 
 TYPE
-  T <: Public;
-
-  Public = OBJECT
+  T = REF RECORD
     first, rest : SchemeObject.T;
-  METHODS
-    init(first, rest : SchemeObject.T) : T;
-    equals(x : SchemeObject.T) : BOOLEAN;
-    format() : TEXT RAISES { E };
-    stringifyPair(quoted : BOOLEAN; buf : Wx.T) RAISES { E };
   END;
+
+PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E };
 
 CONST Brand = "SchemePair";
 
