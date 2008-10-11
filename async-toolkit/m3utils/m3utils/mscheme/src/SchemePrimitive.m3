@@ -33,7 +33,7 @@ IMPORT SchemeLongReal;
 IMPORT Fmt, Text, Wx, Wr;
 IMPORT Math, Scan, Lex, FloatMode;
 IMPORT Process;
-IMPORT OSError, FileWr, FileRd, AL, Time;
+IMPORT OSError, FileWr, FileRd, AL, Time, Date;
 IMPORT Thread;
 IMPORT SchemePair;
 
@@ -106,7 +106,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
 	
-	TimeNow,
+	TimeNow, TimeToString,
 	JailBreak,
   M3Op};
 
@@ -300,6 +300,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("_list*",             ORD(P.ListStar),  0, n)
      .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
      .defPrim("timenow",	    ORD(P.TimeNow), 0, 0)
+    .defPrim("time->string", ORD(P.TimeToString), 1, 1)
      .defPrim("modula-3-op",  ORD(P.M3Op), 2, 3) (* ok to have no args *)
        ;
 
@@ -813,6 +814,28 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
           P.ListStar => RETURN ListStar(args)
 	|
 	  P.TimeNow => RETURN SchemeLongReal.FromLR(Time.Now())
+  |
+    P.TimeToString => 
+    CONST
+      Months = ARRAY Date.Month OF TEXT {
+      "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
+      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" 
+      };
+    VAR
+      t := SchemeLongReal.FromO(x);
+      d := Date.FromTime(t);
+    BEGIN
+      RETURN SchemeString.FromText(Fmt.F("%04s-%3s-%02s ",
+                                         Fmt.Int(d.year),
+                                         Months[d.month],
+                                         Fmt.Int(d.day)) &
+                                   Fmt.F("%02s:%02s:%02s.%03s",
+                                         Fmt.Int(d.hour),
+                                         Fmt.Int(d.minute),
+                                         Fmt.Int(d.second),
+                                         Fmt.Int(TRUNC((t - FLOAT(TRUNC(t),Time.T))*1000.0d0))))
+    END
+
         |
           P.JailBreak =>
           IF interp.jailBreak = NIL THEN

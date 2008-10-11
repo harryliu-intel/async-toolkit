@@ -76,12 +76,17 @@ PROCEDURE DefineInGlobalEnv(t : T; var, val : Object) =
 PROCEDURE ReadEvalWriteLoop(t : T) RAISES { Wr.Failure } =
   BEGIN
     TRY
+      t.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
+
     LOOP
       Wr.PutText(t.output, ">"); Wr.Flush(t.output);
       WITH x = t.input.read() DO
         IF SchemeInputPort.IsEOF(x) THEN RETURN END;
         TRY
-          EVAL SchemeUtils.Write(t.evalInGlobalEnv(x), t.output, TRUE);
+          WITH res = t.evalInGlobalEnv(x) DO
+            EVAL SchemeUtils.Write(res, t.output, TRUE);
+            EVAL t.globalEnvironment.set(SchemeSymbol.Symbol("bang-bang"),res)
+          END
         EXCEPT
           E(e) => Wr.PutText(t.output, "EXCEPTION! " & e & "\n")
         END;

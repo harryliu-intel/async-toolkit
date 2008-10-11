@@ -148,6 +148,8 @@ PROCEDURE Define(t : T; var, val : Object) : Object =
     Put(t,var,val);
 
     TYPECASE val OF
+      NULL => (* skip *)
+    |
       SchemeProcedure.T(p) => 
       IF TE(p.name, SchemeProcedureClass.DefaultName) THEN
         p.name := SchemeSymbol.ToText(var)
