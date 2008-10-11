@@ -125,7 +125,7 @@ PROCEDURE LoadPort(t : T; in : Object) : Object
     END
   END LoadPort;
 
-PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
+PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T; isTailCall : BOOLEAN) : Object 
   RAISES { E } =
   TYPE  Macro     = SchemeMacro.T;
         Closure   = SchemeClosure.T;
@@ -201,7 +201,14 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
 *)
               x := m.expand(t, x, args)
             |
-              Closure(c) => x := c.body; 
+              Closure(c) => 
+              (* can we check here if this is the last thing we
+                 eval, in which case we can just re-init the
+                 environment?  it won't be re-used, right? *)
+              x := c.body; 
+
+              env.markAsDead();
+
               env := NEW(SchemeEnvironment.T).init(c.params, 
                                                    t.evalList(args,env),
                                                    c.env)

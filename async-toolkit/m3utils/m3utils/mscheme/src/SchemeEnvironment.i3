@@ -23,6 +23,7 @@ TYPE
             id : INTEGER; 
             minArgs : CARDINAL; 
             maxArgs : CARDINAL := LAST(CARDINAL)) : T;
+    markAsDead(); (* a debugging thing *)
   END;
 
 CONST Brand = "SchemeEnvironment";

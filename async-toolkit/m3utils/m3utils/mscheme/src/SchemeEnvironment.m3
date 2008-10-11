@@ -30,11 +30,13 @@ TYPE QuickMap = RECORD var : Symbol; val : Object END;
 REVEAL
   T = Public BRANDED Brand OBJECT
     (* vars, vals not necessary *)
-    dictionary : AtomRefTbl.T := NIL;
+    dictionary : AtomRefTbl.T;
 
     quick : ARRAY [0..QuickVars - 1] OF QuickMap;
 
-    parent : T := NIL;
+    parent : T;
+
+    dead := FALSE; (* for debugging *)
   METHODS
     initDict(vars, vals : Object) : BOOLEAN := InitDict;
   OVERRIDES
@@ -44,10 +46,14 @@ REVEAL
     define    :=  Define;
     set       :=  Set;
     defPrim   :=  DefPrim;
+    markAsDead:=  MarkAsDead;
   END;
+
+PROCEDURE MarkAsDead(t : T) = BEGIN t.dead := TRUE END MarkAsDead;
 
 PROCEDURE InitEmpty(t : T) : T =
   BEGIN 
+    t.dictionary := NIL;
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
       t.quick[i] := QuickMap { NIL, NIL };
     END;
@@ -122,6 +128,7 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
 PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
+    <*ASSERT NOT t.dead*>
     IF Get(t,symbol,o) THEN
       RETURN o
     END;
@@ -135,6 +142,7 @@ PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
 
 PROCEDURE Define(t : T; var, val : Object) : Object =
   BEGIN
+    <*ASSERT NOT t.dead*>
     IF var = NIL OR NOT ISTYPE(var, Symbol) THEN RETURN var END;
 
     Put(t,var,val);
@@ -153,6 +161,7 @@ PROCEDURE Define(t : T; var, val : Object) : Object =
 PROCEDURE Set(t : T; var, val : Object) : Object RAISES { E } =
   VAR dummy : Object;
   BEGIN
+    <*ASSERT NOT t.dead*>
     IF var = NIL OR NOT ISTYPE(var, Symbol) THEN
       RETURN Error("Attempt to set a non-symbol: " &
              SchemeUtils.Stringify(var))
@@ -174,6 +183,7 @@ PROCEDURE DefPrim(t : T;
                   name : TEXT; 
                   id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
   BEGIN
+    <*ASSERT NOT t.dead*>
     EVAL t.define(SchemeSymbol.Symbol(name), 
                   NEW(SchemePrimitive.T).init(id, minArgs, maxArgs));
     RETURN t
