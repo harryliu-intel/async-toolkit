@@ -125,7 +125,7 @@ PROCEDURE LoadPort(t : T; in : Object) : Object
     END
   END LoadPort;
 
-PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T; isTailCall : BOOLEAN) : Object 
+PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
   RAISES { E } =
   TYPE  Macro     = SchemeMacro.T;
         Closure   = SchemeClosure.T;
@@ -141,6 +141,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T; isTailCall : 
 
   VAR
     env := NARROW(envP, SchemeEnvironment.T);
+    envIsLocal := FALSE;
   BEGIN
     LOOP
       IF x # NIL AND ISTYPE(x,Symbol) THEN
@@ -194,11 +195,6 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T; isTailCall : 
             
             TYPECASE fn OF
               Macro(m) => 
-(*
-              Debug.Out("x = " & Stringify(x));
-              Debug.Out("args = " & Stringify(args));
-              Debug.Out("-------");
-*)
               x := m.expand(t, x, args)
             |
               Closure(c) => 
@@ -207,11 +203,21 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T; isTailCall : 
                  environment?  it won't be re-used, right? *)
               x := c.body; 
 
-              env.markAsDead();
 
-              env := NEW(SchemeEnvironment.T).init(c.params, 
-                                                   t.evalList(args,env),
-                                                   c.env)
+              IF envIsLocal THEN
+                INC(envsKilled);
+                EVAL env.init(c.params,
+                              t.evalList(args,env),
+                              c.env)
+              ELSE
+                INC(envsMade);
+                env := NEW(SchemeEnvironment.T).init(c.params, 
+                                                     t.evalList(args,env),
+                                                     c.env)
+              END;
+              
+              envIsLocal := TRUE
+
             |
               Procedure(p) =>
               RETURN p.apply(t, t.evalList(args,env))
@@ -223,6 +229,9 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T; isTailCall : 
       END
     END
   END Eval;
+
+VAR envsMade := 0;
+    envsKilled := 0;
 
 PROCEDURE EvalInGlobalEnv(t : T; x : Object) : Object RAISES { E } =
   BEGIN RETURN t.eval(x, t.globalEnvironment) END EvalInGlobalEnv;

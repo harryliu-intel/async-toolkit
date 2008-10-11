@@ -39,7 +39,7 @@ TYPE
 
     loadPort(port : Object (* must be SchemeInputPort *)) : Object RAISES { E };
 
-    eval(x : REFANY; env : SchemeEnvironmentSuper.T; isTailCall := FALSE) : Object RAISES { E };
+    eval(x : REFANY; env : SchemeEnvironmentSuper.T) : Object RAISES { E };
 
     evalInGlobalEnv(x : Object) : Object RAISES { E };
 
