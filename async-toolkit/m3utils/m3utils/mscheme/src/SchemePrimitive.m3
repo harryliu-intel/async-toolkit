@@ -1092,7 +1092,7 @@ PROCEDURE StringAppend(args : Object) : String  RAISES { E } =
       Wx.PutText(res,StringifyQ(First(args),FALSE));
       args := Rest(args)
     END;
-    RETURN Str(Wx.ToText(res))
+    RETURN SchemeString.FromText(Wx.ToText(res))
   END StringAppend;
 
 PROCEDURE OpenOutputFile(filename : Object) : Wr.T RAISES { E } =
