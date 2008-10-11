@@ -204,6 +204,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
               x := c.body; 
 
 
+              (* this is a teeny tiny tail call optimization.. *)
               IF envIsLocal THEN
                 INC(envsKilled);
                 EVAL env.init(c.params,
@@ -247,8 +248,9 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Objec
         EVAL Error("Illegal arg list: " & SchemeUtils.DebugFormat(list));
         RETURN NIL (*notreached*)
       ELSE
-        RETURN SchemeUtils.Cons(t.eval(SchemeUtils.First(list), env), 
-                                t.evalList(SchemeUtils.Rest(list), env))
+        WITH pair = NARROW(list,Pair) DO
+          RETURN SchemeUtils.Cons(t.eval(pair.first), env), 
+                                  t.evalList(pair.rest), env))
       END
     EXCEPT
       E(ex) => 
