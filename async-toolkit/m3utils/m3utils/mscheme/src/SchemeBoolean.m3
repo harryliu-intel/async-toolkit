@@ -7,7 +7,6 @@
 *)
 
 MODULE SchemeBoolean;
-FROM SchemeUtils IMPORT DebugFormat, Error;
 FROM Scheme IMPORT Object;
 
 REVEAL T = BRANDED Brand REF BOOLEAN;

@@ -8,7 +8,7 @@
 
 MODULE SchemeLongReal;
 IMPORT Scan;
-FROM SchemeUtils IMPORT Error, DebugFormat;
+FROM SchemeUtils IMPORT Error, StringifyT;
 FROM Scheme IMPORT Object, E;
 IMPORT Lex, FloatMode;
 
@@ -30,7 +30,7 @@ PROCEDURE FromLR(x : LONGREAL) : T =
 PROCEDURE FromO(x : Object) : LONGREAL RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,T) THEN RETURN NARROW(x,T)^ 
-    ELSE RETURN FromO(Error("expected a double, got: " & DebugFormat(x)))
+    ELSE RETURN FromO(Error("expected a double, got: " & StringifyT(x)))
     END
   END FromO;
 

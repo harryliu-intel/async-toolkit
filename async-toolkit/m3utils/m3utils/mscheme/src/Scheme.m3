@@ -28,6 +28,7 @@ TYPE Pair = SchemePair.T;
 REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
     globalEnvironment : SchemeEnvironment.T;
+    interrupter : Interrupter := NIL;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
     reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
@@ -73,8 +74,10 @@ PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) RAISES {
 PROCEDURE DefineInGlobalEnv(t : T; var, val : Object) =
   BEGIN EVAL t.globalEnvironment.define(var,val) END DefineInGlobalEnv;
 
-PROCEDURE ReadEvalWriteLoop(t : T) RAISES { Wr.Failure } =
+PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
   BEGIN
+    t.interrupter := int;
+
     TRY
       t.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
 
@@ -149,6 +152,10 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
     envIsLocal := FALSE;
   BEGIN
     LOOP
+      IF t.interrupter # NIL AND t.interrupter.interrupt() THEN
+        RAISE E("Command interrupted")
+      END;
+
       IF x # NIL AND ISTYPE(x,Symbol) THEN
         RETURN env.lookup(x)
       ELSIF x = NIL OR NOT ISTYPE(x,Pair) THEN 
@@ -250,7 +257,7 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Objec
       IF list = NIL THEN
         RETURN NIL
       ELSIF NOT ISTYPE(list, Pair) THEN
-        EVAL Error("Illegal arg list: " & SchemeUtils.DebugFormat(list));
+        EVAL Error("Illegal arg list: " & SchemeUtils.StringifyT(list));
         RETURN NIL (*notreached*)
       ELSE
         WITH pair = NARROW(list,Pair) DO
@@ -260,10 +267,12 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Objec
       END
     EXCEPT
       E(ex) => 
+(*
       TRY
         Wr.PutText(Stdio.stdout, "Scheme.evalList raising E, evaluating " &
           SchemeUtils.DebugFormat(list));
       EXCEPT ELSE END;
+*)
       EVAL Error(ex); RETURN NIL (*notreached*)
     END
   END EvalList;

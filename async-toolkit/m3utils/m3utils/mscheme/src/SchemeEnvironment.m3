@@ -14,7 +14,7 @@ IMPORT AtomRefTbl;
 IMPORT SchemePrimitive, SchemeSymbol, SchemeProcedure;
 IMPORT SchemeProcedureClass;
 FROM Scheme IMPORT Symbol, Object, E;
-FROM SchemeUtils IMPORT Error, Warn, DebugFormat;
+FROM SchemeUtils IMPORT Error, Warn, StringifyT;
 IMPORT SchemeUtils;
 IMPORT Text;
 IMPORT SchemePair;
@@ -99,8 +99,12 @@ PROCEDURE Init(t : T; vars, vals : Object; parent : T) : T =
     EVAL t.initEmpty();
     t.parent := parent;
     IF NOT t.initDict(vars,vals) THEN
-      EVAL Warn("wrong number of arguments: expected " &
-                DebugFormat(vars) & " got " & DebugFormat(vals))
+      TRY
+        EVAL Warn("wrong number of arguments: expected " &
+          StringifyT(vars) & " got " & StringifyT(vals))
+      EXCEPT
+      ELSE
+      END
     END;
     RETURN t
   END Init;

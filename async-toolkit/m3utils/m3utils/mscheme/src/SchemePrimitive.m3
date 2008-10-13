@@ -35,7 +35,7 @@ IMPORT Math, Scan, Lex, FloatMode;
 IMPORT Process;
 IMPORT OSError, FileWr, FileRd, AL, Time, Date;
 IMPORT Thread;
-IMPORT SchemePair;
+IMPORT SchemePair, RTCollector;
 
 TYPE Pair = SchemePair.T;
 
@@ -110,7 +110,8 @@ TYPE
 	JailBreak,
   Stringify,
   M3Op,
-  FmtReal
+  FmtReal,
+  GC
   };
 
 PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
@@ -304,6 +305,7 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
     .defPrim("stringify",           ORD(P.Stringify), 1, 1)
     .defPrim("fmtreal",           ORD(P.FmtReal), 3, 3)
+    .defPrim("gc", ORD(P.GC), 0, 0)
      .defPrim("timenow",	    ORD(P.TimeNow), 0, 0)
     .defPrim("time->string", ORD(P.TimeToString), 1, 1)
      .defPrim("modula-3-op",  ORD(P.M3Op), 2, 3) (* ok to have no args *)
@@ -828,8 +830,13 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
       };
     VAR
       t := SchemeLongReal.FromO(x);
-      d := Date.FromTime(t);
+      d : Date.T;
     BEGIN
+      IF t > FLOAT(LAST(CARDINAL),Time.T) OR t < 0.0d0 THEN
+        RETURN Error("Time out of range " & Fmt.LongReal(t))
+      END;
+
+      d := Date.FromTime(t);
       RETURN SchemeString.FromText(Fmt.F("%04s-%3s-%02s ",
                                          Fmt.Int(d.year),
                                          Months[d.month],
@@ -840,6 +847,8 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
                                          Fmt.Int(d.second),
                                          Fmt.Int(TRUNC((t - FLOAT(TRUNC(t),Time.T))*1000.0d0))))
     END
+    |
+      P.GC => RTCollector.Collect(); RETURN True()
     |
       P.FmtReal =>
       WITH z = Third(args) DO

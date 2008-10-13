@@ -31,7 +31,7 @@ TYPE
 
     init(READONLY files : ARRAY OF Pathname.T) : T RAISES { E, OSError.E };
 
-    readEvalWriteLoop() RAISES { Wr.Failure };
+    readEvalWriteLoop(interrupter : Interrupter := NIL) RAISES { Wr.Failure };
 
     loadFile(fn : Object) : Object RAISES { E };
 
@@ -53,6 +53,10 @@ TYPE
     (* bind some object to symbol in var from Modula-3 *)
 
   END;
+
+TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;
+     (* if passed in, interpreter will call interrupt at regular 
+        intervals, and if it returns TRUE, will interrupt evaluation *)
 
 CONST Brand = "Scheme";
 

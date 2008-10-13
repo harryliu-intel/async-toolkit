@@ -7,7 +7,7 @@
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 MODULE SchemeChar;
-FROM SchemeUtils IMPORT DebugFormat, Error;
+FROM SchemeUtils IMPORT StringifyT, Error;
 IMPORT SchemeObject;
 FROM Scheme IMPORT E;
 
@@ -16,14 +16,14 @@ REVEAL T = BRANDED Brand REF CHAR;
 PROCEDURE Char(x : SchemeObject.T) : CHAR RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, T) THEN RETURN NARROW(x,T)^ 
-    ELSE RETURN Char(Error("expected a char, got: " & DebugFormat(x))) 
+    ELSE RETURN Char(Error("expected a char, got: " & StringifyT(x))) 
     END
   END Char;
 
 PROCEDURE Chr(x : SchemeObject.T) : T RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, T) THEN RETURN x
-    ELSE RETURN Chr(Error("expected a char, got: " & DebugFormat(x))) 
+    ELSE RETURN Chr(Error("expected a char, got: " & StringifyT(x))) 
     END
   END Chr;
 

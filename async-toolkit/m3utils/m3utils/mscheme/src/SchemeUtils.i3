@@ -74,8 +74,13 @@ PROCEDURE Stringify(x : Object) : TEXT RAISES { E };
 PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT RAISES { E };
 PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E };
 
+PROCEDURE StringifyT(x : Object) : TEXT RAISES { E };
+
 PROCEDURE DebugFormat(x : Object) : TEXT;
   (* for debugging, something not really needed in the Java version since
-     everything has a .toString there *)
+     everything has a .toString there 
+
+     call this sparingly, as it doesn't print Scheme structures properly
+  *)
 
 END SchemeUtils.

@@ -11,6 +11,8 @@ import("libm3")
 import("cit_util")
 import("mscheme")
 
+interface("Csighandler")
+c_source("sighandler")
 implementation("Main")
 
 program("mscheme")

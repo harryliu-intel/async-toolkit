@@ -25,24 +25,27 @@ TYPE Boolean = SchemeBoolean.T;
 (* the return Str(Error...) is really quite bizarre; also in the Sym
    and Vec routines below... *)
 
+PROCEDURE StringifyT(x : Object) : TEXT RAISES { E } =
+  BEGIN RETURN StringifyQ(x, FALSE) END StringifyT;
+
 PROCEDURE Str(x : Object) : String RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,String) THEN RETURN x 
-    ELSE RETURN Str(Error("expected a string, got: " & DebugFormat(x)))
+    ELSE RETURN Str(Error("expected a string, got: " & StringifyT(x)))
     END
   END Str;
 
 PROCEDURE Sym(x : Object) : Symbol RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,Symbol) THEN RETURN x 
-    ELSE RETURN Sym(Error("expected a symbol, got: " & DebugFormat(x)))
+    ELSE RETURN Sym(Error("expected a symbol, got: " & StringifyT(x)))
     END
   END Sym;
 
 PROCEDURE Vec(x : Object) : Vector RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,Vector) THEN RETURN x 
-    ELSE RETURN Vec(Error("expected a vector, got: " & DebugFormat(x)))
+    ELSE RETURN Vec(Error("expected a vector, got: " & StringifyT(x)))
     END
   END Vec;
 
@@ -52,7 +55,7 @@ PROCEDURE InPort(x : Object; interp : Scheme.T) : SchemeInputPort.T RAISES { E }
     IF ISTYPE(x,SchemeInputPort.T) THEN RETURN x 
     ELSE 
       RETURN InPort(Error("expected a schemeInputPort, got: " & 
-                          DebugFormat(x)), interp)
+                          StringifyT(x)), interp)
     END
   END InPort;
 
@@ -62,13 +65,13 @@ PROCEDURE OutPort(x : Object; interp : Scheme.T) : Wr.T RAISES { E } =
     IF ISTYPE(x,Wr.T) THEN RETURN x 
     ELSE 
       RETURN OutPort(Error("expected an output port, got: " & 
-                           DebugFormat(x)), interp)
+                           StringifyT(x)), interp)
     END
   END OutPort;
 
 PROCEDURE Error(message : TEXT) : Object RAISES { E } =
   BEGIN
-    TRY Wr.PutText(Stdio.stderr, "**** ERROR: " & message) EXCEPT ELSE END;
+(*    TRY Wr.PutText(Stdio.stderr, "**** ERROR: " & message) EXCEPT ELSE END;*)
     RAISE E(message)
   END Error;
 
@@ -291,7 +294,7 @@ PROCEDURE VectorToList(x : Object) : Pair RAISES { E } =
         RETURN result
       END
     ELSE
-      EVAL Error("expected a vector, got: " & DebugFormat(x));
+      EVAL Error("expected a vector, got: " & StringifyT(x));
       RETURN NIL
     END
   END VectorToList;
