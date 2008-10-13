@@ -108,7 +108,10 @@ TYPE
 	
 	TimeNow, TimeToString,
 	JailBreak,
-  M3Op};
+  Stringify,
+  M3Op,
+  FmtReal
+  };
 
 PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
   CONST n = LAST(CARDINAL);
@@ -299,6 +302,8 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
      .defPrim("time-call",          ORD(P.TimeCall),  1, 2)
      .defPrim("_list*",             ORD(P.ListStar),  0, n)
      .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
+    .defPrim("stringify",           ORD(P.Stringify), 1, 1)
+    .defPrim("fmtreal",           ORD(P.FmtReal), 3, 3)
      .defPrim("timenow",	    ORD(P.TimeNow), 0, 0)
     .defPrim("time->string", ORD(P.TimeToString), 1, 1)
      .defPrim("modula-3-op",  ORD(P.M3Op), 2, 3) (* ok to have no args *)
@@ -835,6 +840,28 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
                                          Fmt.Int(d.second),
                                          Fmt.Int(TRUNC((t - FLOAT(TRUNC(t),Time.T))*1000.0d0))))
     END
+    |
+      P.FmtReal =>
+      WITH z = Third(args) DO
+        VAR
+          style : Fmt.Style;
+        BEGIN
+          IF    SchemeSymbol.SymEq(y, "auto") THEN
+            style := Fmt.Style.Auto
+          ELSIF SchemeSymbol.SymEq(y, "fix") THEN
+            style := Fmt.Style.Fix
+          ELSIF SchemeSymbol.SymEq(y, "sci") THEN
+            style := Fmt.Style.Sci
+          ELSE
+            RETURN Error("Unknown formatting style " & Stringify(y))
+          END;
+
+          RETURN SchemeString.FromText(Fmt.LongReal(FromO(x),
+                                                    style,
+                                                    TRUNC(FromO(z))))
+        END
+      END
+  | P.Stringify => RETURN SchemeString.FromText(Stringify(x))
 
         |
           P.JailBreak =>
