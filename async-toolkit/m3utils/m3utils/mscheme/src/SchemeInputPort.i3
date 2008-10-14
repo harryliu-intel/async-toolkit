@@ -24,7 +24,12 @@ TYPE
     read() : SchemeObject.T RAISES { E };
 
     close() : SchemeBoolean.T RAISES { E }; (* Norvig has Scheme.Object *)
+
+    getCh() : INTEGER;     (* java style Reader.read *)
+                           (* override this if desired, see ChEOF *)
   END;
+
+CONST ChEOF = -1;
 
 PROCEDURE IsEOF(x : SchemeObject.T) : BOOLEAN;
 

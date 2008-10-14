@@ -92,6 +92,7 @@ override("stabletable", TOP)
 override("trie", TOP)
 override("marching", TOP)
 override("mscheme", TOP)
+override("schemesig", TOP & "/mscheme")
 
 override("anova", TOP & "/calarm")
 override("wavelets", TOP & "/calarm")

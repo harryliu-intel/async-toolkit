@@ -33,6 +33,8 @@ TYPE
 
     readEvalWriteLoop(interrupter : Interrupter := NIL) RAISES { Wr.Failure };
 
+    setInterrupter(interrupter : Interrupter);
+
     loadFile(fn : Object) : Object RAISES { E };
 
     loadRd(rd : Rd.T) : Object RAISES { E } ;
@@ -48,9 +50,11 @@ TYPE
      
     setJailBreak(jb : SchemeJailBreak.T);
 
-
     bind(var : Symbol; val : Object);
-    (* bind some object to symbol in var from Modula-3 *)
+    (* bind (define) some object to symbol in var from Modula-3 *)
+    
+    setInGlobalEnv(var : Symbol; val : Object) RAISES { E };
+    (* set! var val *)
 
   END;
 

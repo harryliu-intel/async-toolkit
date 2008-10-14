@@ -36,6 +36,7 @@ REVEAL
     init              :=  Init;
     defineInGlobalEnv :=  DefineInGlobalEnv;
     readEvalWriteLoop :=  ReadEvalWriteLoop;
+    setInterrupter    :=  SetInterrupter;
     loadFile          :=  LoadFile;
     loadPort          :=  LoadPort;
     loadRd            :=  LoadRd;
@@ -43,6 +44,7 @@ REVEAL
     evalInGlobalEnv   :=  EvalInGlobalEnv;
     evalList          :=  EvalList;
     bind              :=  Bind;
+    setInGlobalEnv    :=  SetInGlobalEnv;
     setTableOps       :=  SetTableOps;
   END;
 
@@ -51,6 +53,9 @@ PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
 
 PROCEDURE Bind(t : T; var : Symbol; val : Object) =
   BEGIN EVAL t.globalEnvironment.define(var,val) END Bind;
+
+PROCEDURE SetInGlobalEnv(t : T; var : Symbol; val : Object) RAISES { E } =
+  BEGIN EVAL t.globalEnvironment.set(var,val) END SetInGlobalEnv;
 
 PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T 
   RAISES { E } =
@@ -74,9 +79,12 @@ PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) RAISES {
 PROCEDURE DefineInGlobalEnv(t : T; var, val : Object) =
   BEGIN EVAL t.globalEnvironment.define(var,val) END DefineInGlobalEnv;
 
+PROCEDURE SetInterrupter(t : T; i : Interrupter) =
+  BEGIN t.interrupter := i END SetInterrupter;
+
 PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
   BEGIN
-    t.interrupter := int;
+    t.setInterrupter(int);
 
     TRY
       t.bind(SchemeSymbol.Symbol("bang-bang"), NIL);

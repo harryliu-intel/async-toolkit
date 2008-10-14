@@ -30,14 +30,13 @@ REVEAL
     pushedToken : Object := NIL;
     pushedChar : INTEGER := -1;
   METHODS
-    getCh() : INTEGER := GetCh; 
-    (* java style Reader.read *)
 
     nextToken() : Object RAISES { E } := NextToken;
 
     readTail(dotOK : BOOLEAN) : Object RAISES { E } := ReadTail;
 
   OVERRIDES
+    getCh    :=  GetCh; 
     init     :=  Init;
     readChar :=  ReadChar;
     peekChar :=  PeekChar;
@@ -56,11 +55,11 @@ PROCEDURE GetCh(t : T) : INTEGER =
     TRY
       RETURN ORD(Rd.GetChar(t.rd))
     EXCEPT
-      Rd.EndOfFile => RETURN -1 
+      Rd.EndOfFile => RETURN ChEOF 
     |
       Rd.Failure(err) =>
       EVAL Warn("Rd.Failure : " & AL.Format(err));
-      RETURN -1
+      RETURN ChEOF
     END
   END GetCh;
 
@@ -71,14 +70,14 @@ PROCEDURE ReadChar(t : T) : Object =
 *)
       IF t.isPushedChar THEN
         t.isPushedChar := FALSE;
-        IF t.pushedChar = -1 THEN 
+        IF t.pushedChar = ChEOF THEN 
           RETURN EOF
         ELSE
           RETURN IChr(t.pushedChar)
         END
       ELSE
         WITH ch = t.getCh() DO
-          IF ch = -1 THEN RETURN EOF ELSE RETURN IChr(t.getCh()) END
+          IF ch = ChEOF THEN RETURN EOF ELSE RETURN IChr(t.getCh()) END
         END
       END
 (*
@@ -93,7 +92,7 @@ PROCEDURE ReadChar(t : T) : Object =
 PROCEDURE PeekChar(t : T) : Object =
   BEGIN
     WITH p = t.peekCh() DO
-      IF p = -1 THEN RETURN EOF ELSE RETURN IChr(p) END
+      IF p = ChEOF THEN RETURN EOF ELSE RETURN IChr(p) END
     END
   END PeekChar;
 
@@ -124,7 +123,7 @@ PROCEDURE PeekCh(t : T) : INTEGER =
     EXCEPT
       Rd.Failure(err) => 
         EVAL Warn("On input, exception: " & AL.Format(err));
-        RETURN -1
+        RETURN ChEOF
     END
 *)
   END PeekCh;
@@ -217,10 +216,10 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
       ch := t.getCh()
     END;
 
-    WHILE ch # -1 AND VAL(ch,CHAR) IN White DO ch := t.getCh() END;
+    WHILE ch # ChEOF AND VAL(ch,CHAR) IN White DO ch := t.getCh() END;
 
     CASE ch OF
-      -1 => RETURN EOF;
+      ChEOF => RETURN EOF;
     |
       ORD('('), ORD(')'), ORD('\''), ORD('`') => 
         RETURN Symbol(Text.FromChar(VAL(ch,CHAR)))
@@ -234,7 +233,7 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
         END
     |
       ORD(';') =>
-        WHILE ch # -1 AND ch # ORD('\n') AND ch # ORD('\r') DO
+        WHILE ch # ChEOF AND ch # ORD('\n') AND ch # ORD('\r') DO
           ch := t.getCh()
         END;
         RETURN t.nextToken()
@@ -243,14 +242,14 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
         WITH buff = NEW(CharSeq.T).init() DO
           LOOP
             ch := t.getCh();
-            IF ch = ORD(QMC) OR ch = -1 THEN EXIT END;
+            IF ch = ORD(QMC) OR ch = ChEOF THEN EXIT END;
             IF ch = ORD(BSC) THEN
               buff.addhi(VAL(t.getCh(),CHAR))
             ELSE
               buff.addhi(VAL(ch,CHAR))
             END
           END;
-          IF ch = -1 THEN EVAL Warn("EOF inside of a string.") END;
+          IF ch = ChEOF THEN EVAL Warn("EOF inside of a string.") END;
           RETURN CharSeqToArray(buff)
         END
     |
@@ -313,7 +312,7 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
           Wx.PutChar(wx, VAL(ch, CHAR));
           ch := t.getCh()
         UNTIL
-          VAL(ch,CHAR) IN White OR ch = -1 OR VAL(ch,CHAR) IN Delims;
+          ch = ChEOF OR VAL(ch,CHAR) IN White OR VAL(ch,CHAR) IN Delims;
 
         EVAL t.pushChar(ch);
 

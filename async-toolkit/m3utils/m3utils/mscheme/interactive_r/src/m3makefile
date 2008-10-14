@@ -11,6 +11,8 @@ import("libm3")
 import("cit_util")
 import("mscheme")
 import("schemesig")
+import("readline")
+import("rdwr")
 
 implementation("Main")
 
