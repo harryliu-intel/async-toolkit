@@ -116,6 +116,7 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
           IF SchemeInputPort.IsEOF(x) THEN RETURN END;
           TRY
             IF DebugALL THEN Debug.Out("Eval!") END;
+            Csighandler.clear_signal();
             WITH res = scm.evalInGlobalEnv(x) DO
               WITH wr = NEW(TextWr.T).init() DO
                 EVAL SchemeUtils.Write(res, wr, TRUE);
