@@ -77,7 +77,7 @@ PROCEDURE ReadChar(t : T) : Object =
         END
       ELSE
         WITH ch = t.getCh() DO
-          IF ch = ChEOF THEN RETURN EOF ELSE RETURN IChr(t.getCh()) END
+          IF ch = ChEOF THEN RETURN EOF ELSE RETURN IChr(ch) END
         END
       END
 (*
