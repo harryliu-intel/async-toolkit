@@ -50,6 +50,8 @@ REVEAL
   OVERRIDES
     init  := Init;
     apply := Apply;
+    apply1 := Apply1;
+    apply2 := Apply2;
   END;
 
 PROCEDURE Init(t : T; id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
@@ -317,7 +319,8 @@ PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
 
 PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object 
   RAISES { E } =
-  VAR z : Object;
+  VAR
+    dummy : BOOLEAN;
   BEGIN
     WITH nArgs = Length(args) DO
       IF    nArgs < t.minArgs THEN
@@ -331,6 +334,102 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
 
     WITH x = First(args),
          y = Second(args) DO
+      RETURN Prims(t, interp, args, x, y,dummy)
+    END
+  END Apply;
+
+PROCEDURE Apply1(t : T; interp : Scheme.T; a1 : Object) : Object 
+  RAISES { E } =
+  BEGIN
+    WITH nArgs = 1 DO
+      IF    nArgs < t.minArgs THEN
+        RETURN Error("too few args, " & Fmt.Int(nArgs) & 
+               ", for " & t.name & ": " & Stringify(List1(a1)))
+      ELSIF nArgs > t.maxArgs THEN
+        RETURN Error("too many args, " & Fmt.Int(nArgs) & 
+               ", for " & t.name & ": " & Stringify(List1(a1)))
+      END
+    END;
+
+    VAR 
+      d1 := GetCons();
+      free := DefFree;
+    BEGIN
+      d1.first := a1;
+      d1.rest := NIL;
+      
+      WITH res = Prims(t, interp, d1, a1, NIL, free) DO
+        IF free THEN ReturnCons(d1) END;
+        RETURN res
+      END
+    END
+  END Apply1;
+    
+PROCEDURE Apply2(t : T; interp : Scheme.T; a1, a2 : Object) : Object 
+  RAISES { E } =
+  BEGIN
+    WITH nArgs = 2 DO
+      IF    nArgs < t.minArgs THEN
+        RETURN Error("too few args, " & Fmt.Int(nArgs) & 
+               ", for " & t.name & ": " & Stringify(List2(a1,a2)))
+      ELSIF nArgs > t.maxArgs THEN
+        RETURN Error("too many args, " & Fmt.Int(nArgs) & 
+               ", for " & t.name & ": " & Stringify(List2(a1,a2)))
+      END
+    END;
+    
+    VAR
+      d1, d2 := GetCons();
+      free := DefFree;
+    BEGIN
+      d1.first := a1;
+      d1.rest := d2;
+      d2.first := a2;
+      d2.rest := NIL;
+      
+      WITH res = Prims(t, interp, d1, a1, a2, free) DO
+        IF free THEN
+          ReturnCons(d1); ReturnCons(d2)
+        END;
+        RETURN res
+      END
+    END
+  END Apply2;
+
+CONST DefFree = TRUE;
+
+VAR
+  mu := NEW(MUTEX);
+  free : Pair := NIL;
+
+PROCEDURE GetCons() : Pair =
+  BEGIN
+    LOCK mu DO
+      IF free # NIL THEN
+        TRY
+          RETURN free
+        FINALLY
+          free := free.rest
+        END
+      END
+    END;
+    RETURN NEW(Pair)
+  END GetCons;
+
+PROCEDURE ReturnCons(cons : Pair) = 
+  BEGIN
+    cons.first := NIL;
+    LOCK mu DO
+      cons.rest := free;
+      free := cons
+    END
+  END ReturnCons;
+    
+PROCEDURE Prims(t : T; interp : Scheme.T; args, x, y : Object; 
+                VAR free : BOOLEAN) : Object
+  RAISES { E } =
+  VAR z : Object;
+  BEGIN
       CASE VAL(t.idNumber,P) OF
           P.Eq => RETURN NumCompare(args, '=')
         |
@@ -369,11 +468,12 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
         |
           P.Length => RETURN FromLR(FLOAT(Length(x),LONGREAL))
         |
-          P.List => RETURN args
+          P.List => free := FALSE; RETURN args
         |
           P.ListQ => RETURN Truth(IsList(x))
         |
-          P.Apply => RETURN Proc(x).apply(interp,ListStar(Rest(args)))
+          P.Apply => free := FALSE; 
+          RETURN Proc(x).apply(interp,ListStar(Rest(args)))
         |
           
           P.Max => RETURN NumCompute(args, 'X', FromO(x))
@@ -422,7 +522,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
         |
           P.Write => RETURN Write(x, OutPort(y, interp), TRUE)
         |
-          P.Append => 
+          P.Append => free := FALSE; 
           IF args = NIL THEN RETURN NIL
           ELSE RETURN Append(args)
           END
@@ -623,10 +723,10 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
         |
           P.ListToVector => RETURN ListToVector(x)
         |
-          P.Map => RETURN Map(Proc(x), Rest(args), interp, List1(NIL))
+          P.Map => free := FALSE; RETURN Map(Proc(x), Rest(args), interp, List1(NIL))
         |
           
-          P.Foreach =>RETURN Map(Proc(x), Rest(args), interp, NIL)
+          P.Foreach =>free := FALSE; RETURN Map(Proc(x), Rest(args), interp, NIL)
         |
           P.CallCC =>
           (* make a new arbitrary text *)
@@ -818,7 +918,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
         |
           P.Error => RETURN Error(Stringify(args))
         |
-          P.ListStar => RETURN ListStar(args)
+          P.ListStar => free := FALSE; RETURN ListStar(args)
 	|
 	  P.TimeNow => RETURN SchemeLongReal.FromLR(Time.Now())
   |
@@ -877,18 +977,17 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
           IF interp.jailBreak = NIL THEN
             RETURN Error("No jailbreak defined")
           ELSE
-            RETURN interp.jailBreak.apply(args)
+            free := FALSE; RETURN interp.jailBreak.apply(args)
           END
         |
           P.M3Op =>
           IF interp.m3TableOps = NIL THEN
             RETURN Error("No table ops defined")
           ELSE
-            RETURN interp.m3TableOps.apply(args)
+            free := FALSE; RETURN interp.m3TableOps.apply(args)
           END
         END
-    END
-  END Apply;
+  END Prims;
 
 PROCEDURE IsList(x : Object) : BOOLEAN =
   VAR

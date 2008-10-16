@@ -75,6 +75,7 @@ PROCEDURE GetCh(p : InputPort) : INTEGER =
       WHILE p.buff.size() = 0 DO
         TRY
           WITH txt = p.rl.readLine() DO
+            p.rl.setPrompt("- ");
             FOR i := 0 TO Text.Length(txt) - 1 DO
               p.buff.addhi(ORD(Text.GetChar(txt,i)))
             END;
@@ -103,7 +104,7 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
   BEGIN
     rl.startProc();
     rl.display("M-Scheme interpreter (readline) ready.\n");
-    rl.setPrompt(">");
+    rl.setPrompt("> ");
     sip := NEW(InputPort).init(rl);
 
     scm.setInterrupter(NEW(Interrupter));
@@ -113,6 +114,7 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
 
       LOOP
         WITH x = sip.read() DO
+          rl.setPrompt("> ");
           IF SchemeInputPort.IsEOF(x) THEN RETURN END;
           TRY
             IF DebugALL THEN Debug.Out("Eval!") END;

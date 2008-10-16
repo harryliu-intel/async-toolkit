@@ -18,6 +18,7 @@ FROM SchemeUtils IMPORT Error, Warn, StringifyT;
 IMPORT SchemeUtils;
 IMPORT Text;
 IMPORT SchemePair;
+IMPORT Scheme;
 
 TYPE Pair = SchemePair.T;
 
@@ -39,9 +40,13 @@ REVEAL
     dead := FALSE; (* for debugging *)
   METHODS
     initDict(vars, vals : Object) : BOOLEAN := InitDict;
+    initDictEval(vars, argsToEval : Object;
+                 evalEnv : T;
+                 interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval;
   OVERRIDES
     initEmpty :=  InitEmpty;
     init      :=  Init;
+    initEval  :=  InitEval;
     lookup    :=  Lookup;
     define    :=  Define;
     set       :=  Set;
@@ -109,6 +114,24 @@ PROCEDURE Init(t : T; vars, vals : Object; parent : T) : T =
     RETURN t
   END Init;
 
+PROCEDURE InitEval(t : T; vars, argsToEval : Object;
+                   evalEnv : T; 
+                   interp : Scheme.T;
+                   parent : T) : T RAISES { E } =
+  BEGIN
+    EVAL t.initEmpty();
+    t.parent := parent;
+    IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp) THEN
+      TRY
+        EVAL Warn("wrong number of arguments: expected " &
+          StringifyT(vars) & " got " & StringifyT(interp.evalList(argsToEval,evalEnv)))
+      EXCEPT
+      ELSE
+      END
+    END;
+    RETURN t
+  END InitEval;
+
 PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
   BEGIN
     IF vars = NIL AND vals = NIL THEN 
@@ -128,6 +151,29 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
       RETURN FALSE
     END
   END InitDict;
+
+PROCEDURE InitDictEval(t : T; 
+                       vars, argsToEval : Object; 
+                       evalEnv : T;
+                       interp : Scheme.T) : BOOLEAN RAISES { E }=
+  BEGIN
+    IF vars = NIL AND argsToEval = NIL THEN 
+      RETURN TRUE 
+    ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
+      Put(t,vars,interp.eval(argsToEval,evalEnv));
+      RETURN TRUE
+    ELSIF vars # NIL AND argsToEval # NIL AND 
+          ISTYPE(vars, Pair) AND ISTYPE(argsToEval, Pair) THEN
+      WITH varp = NARROW(vars,Pair), argp = NARROW(argsToEval,Pair) DO
+        IF varp.first # NIL AND ISTYPE(varp.first,Symbol) THEN
+          Put(t, varp.first, interp.eval(argp.first,evalEnv));
+        END;
+        RETURN InitDictEval(t, varp.rest, argp.rest, evalEnv, interp)
+      END
+    ELSE
+      RETURN FALSE
+    END
+  END InitDictEval;
 
 PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;

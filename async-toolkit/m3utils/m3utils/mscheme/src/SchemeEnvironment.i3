@@ -9,12 +9,20 @@
 INTERFACE SchemeEnvironment;
 IMPORT SchemeObject, SchemeSymbol, SchemeEnvironmentSuper;
 FROM Scheme IMPORT E;
+IMPORT Scheme;
 
 TYPE
   T <: Public;
 
   Public = SchemeEnvironmentSuper.T OBJECT METHODS
     init(vars, vals : SchemeObject.T; parent : T) : T;
+
+    initEval(vars : SchemeObject.T; 
+             argsToEval : SchemeObject.T;
+             evalEnv : T;
+             interp : Scheme.T;
+             parent : T) : T RAISES { E };
+
     initEmpty() : T;
     lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
     define(var, val : SchemeObject.T) : SchemeObject.T;

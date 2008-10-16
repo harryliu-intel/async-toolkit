@@ -7,7 +7,7 @@
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 INTERFACE SchemeClass;
-IMPORT Scheme, SchemeInputPort, Wr;
+IMPORT Scheme, SchemeInputPort, Wr, SchemePair;
 IMPORT SchemeJailBreak, SchemeM3TableOps;
 
 REVEAL Scheme.T <: Private;

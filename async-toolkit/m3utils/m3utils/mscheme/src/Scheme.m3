@@ -232,15 +232,28 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                               c.env)
               ELSE
                 INC(envsMade);
-                env := NEW(SchemeEnvironment.T).init(c.params, 
-                                                     t.evalList(args,env),
-                                                     c.env)
+                env := NEW(SchemeEnvironment.T).initEval(c.params,
+                                                         args,env,t,
+                                                         c.env)
               END;
               
               envIsLocal := TRUE
 
             |
               Procedure(p) =>
+              TYPECASE args OF
+                NULL => 
+              |
+                Pair(pp) =>
+                IF pp.rest = NIL THEN
+                  RETURN p.apply1(t, t.eval(pp.first, env))
+                ELSIF ISTYPE(pp.rest,Pair) 
+                  AND NARROW(pp.rest,Pair).rest = NIL THEN
+                  RETURN p.apply2(t, 
+                                  t.eval(pp.first,env),
+                                  t.eval(NARROW(pp.rest,Pair).first, env))
+                END
+              ELSE END;
               RETURN p.apply(t, t.evalList(args,env))
             ELSE
               RAISE E("Not a procedure: " & Stringify(fn))
@@ -261,27 +274,16 @@ PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Objec
   RAISES { E } =
   CONST Error = SchemeUtils.Error;
   BEGIN
-    TRY
-      IF list = NIL THEN
-        RETURN NIL
-      ELSIF NOT ISTYPE(list, Pair) THEN
-        EVAL Error("Illegal arg list: " & SchemeUtils.StringifyT(list));
-        RETURN NIL (*notreached*)
-      ELSE
-        WITH pair = NARROW(list,Pair) DO
-          RETURN SchemeUtils.Cons(t.eval(pair.first, env), 
-                                  t.evalList(pair.rest, env))
-        END
+    IF list = NIL THEN
+      RETURN NIL
+    ELSIF NOT ISTYPE(list, Pair) THEN
+      EVAL Error("Illegal arg list: " & SchemeUtils.StringifyT(list));
+      RETURN NIL (*notreached*)
+    ELSE
+      WITH pair = NARROW(list,Pair) DO
+        RETURN SchemeUtils.Cons(t.eval(pair.first, env), 
+                                t.evalList(pair.rest, env))
       END
-    EXCEPT
-      E(ex) => 
-(*
-      TRY
-        Wr.PutText(Stdio.stdout, "Scheme.evalList raising E, evaluating " &
-          SchemeUtils.DebugFormat(list));
-      EXCEPT ELSE END;
-*)
-      EVAL Error(ex); RETURN NIL (*notreached*)
     END
   END EvalList;
 

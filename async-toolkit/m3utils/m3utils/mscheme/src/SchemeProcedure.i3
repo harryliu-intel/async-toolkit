@@ -18,6 +18,11 @@ TYPE
 
     apply(interp : Scheme.T; args : Object) : Object RAISES { E }; 
     (* abstract *)
+
+    (* optimizations, standard one just calls apply above *)
+    apply2(interp : Scheme.T; a1, a2 : Object) : Object RAISES { E };
+
+    apply1(interp : Scheme.T; a1 : Object) : Object RAISES { E };
   END;
 
 CONST Brand = "SchemeProcedure";
