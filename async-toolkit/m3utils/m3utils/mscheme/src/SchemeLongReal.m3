@@ -17,13 +17,16 @@ PROCEDURE FromI(x : INTEGER) : T =
 
 PROCEDURE FromLR(x : LONGREAL) : T =
   BEGIN
-    IF    x = 0.0d0 THEN RETURN Zero
-    ELSIF x = 1.0d0 THEN RETURN One
-    ELSE
-      WITH new = NEW(T) DO
-        new^ := x;
-        RETURN new
+    IF x >= -1.0d0 AND x <= 2.0d0 THEN
+      IF    x = 0.0d0 THEN RETURN Zero
+      ELSIF x = 1.0d0 THEN RETURN One
+      ELSIF x = -1.0d0 THEN RETURN NegOne
+      ELSIF x = 2.0d0 THEN RETURN Two
+      ELSE
+        WITH new = NEW(T) DO new^ := x; RETURN new END
       END
+    ELSE
+      WITH new = NEW(T) DO new^ := x; RETURN new END
     END
   END FromLR;
 
@@ -45,10 +48,11 @@ PROCEDURE FromT(t : TEXT) : T RAISES { E }=
   END FromT;
 
 BEGIN 
-  Zero := NEW(T);
-  One := NEW(T);
+  NegOne, Zero, One, Two := NEW(T);
+  NegOne^ := -1.0d0;
   Zero^ := 0.0d0;
   One^  := 1.0d0;
+  Two^ := 2.0d0;
 END SchemeLongReal.
 
 
