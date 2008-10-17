@@ -258,11 +258,14 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                 END
               ELSE
                 INC(envsMade);
+                
+                (* this is a LOCAL environment.  No need for it to
+                   use synchronized methods *)
+                
                 env := NEW(SchemeEnvironment.Unsafe).initEval(c.params,
                                                               args,env,t,
                                                               c.env)
               END;
-
               
               envIsLocal := TRUE
 
