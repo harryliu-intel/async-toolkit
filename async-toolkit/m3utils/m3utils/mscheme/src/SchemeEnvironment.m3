@@ -110,10 +110,20 @@ PROCEDURE SafePut(t : T; var : Symbol; READONLY val : Object) =
 
 (**********************************************************************)
 
-PROCEDURE InitEmptyUnsafe(t : T) : T =
-  BEGIN EVAL InitEmpty(t); t.mu := NIL; RETURN t END InitEmptyUnsafe;
-
 PROCEDURE MarkAsDead(t : T) = BEGIN t.dead := TRUE END MarkAsDead;
+
+PROCEDURE InitEmptyUnsafe(t : T) : T =
+  BEGIN 
+    t.mu := NIL;
+    (* why lock it? well if it's a safe version, it might still
+       be accessed from other threads *)
+    t.dictionary := NIL;
+    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+      t.quick[i] := QuickMap { NIL, NIL };
+    END;
+
+    RETURN t 
+  END InitEmptyUnsafe;
 
 PROCEDURE InitEmpty(t : T) : T =
   BEGIN 

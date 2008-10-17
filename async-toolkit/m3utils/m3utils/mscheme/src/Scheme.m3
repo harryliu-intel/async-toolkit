@@ -62,7 +62,7 @@ PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T
   BEGIN
     t.input := NEW(SchemeInputPort.T).init(Stdio.stdin);
     t.output := Stdio.stdout;
-    t.globalEnvironment := NEW(SchemeEnvironment.T).initEmpty();
+    t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty();
     EVAL SchemePrimitive.InstallPrimitives(t.globalEnvironment);
     t.readInitialFiles(files);
     RETURN t
