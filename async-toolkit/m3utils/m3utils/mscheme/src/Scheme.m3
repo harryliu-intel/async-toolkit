@@ -258,9 +258,9 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                 END
               ELSE
                 INC(envsMade);
-                env := NEW(SchemeEnvironment.T).initEval(c.params,
-                                                         args,env,t,
-                                                         c.env)
+                env := NEW(SchemeEnvironment.Unsafe).initEval(c.params,
+                                                              args,env,t,
+                                                              c.env)
               END;
 
               
