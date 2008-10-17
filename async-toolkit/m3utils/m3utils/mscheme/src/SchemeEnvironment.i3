@@ -24,7 +24,14 @@ TYPE
              parent : T) : T RAISES { E };
 
     initEmpty() : T;
+
     lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
+    (* this method CANNOT, as it stands, be overridden.
+       If it in future needs to be overridden, create a 
+       Class interface and export put and get methods (plz. see
+       SchemeEnvironment.m3 source code)
+    *)
+
     define(var, val : SchemeObject.T) : SchemeObject.T;
     set(var, val : SchemeObject.T) : SchemeObject.T RAISES { E };
     defPrim(nam : TEXT;

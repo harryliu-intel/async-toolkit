@@ -245,15 +245,17 @@ PROCEDURE InitDictEval2(t : T;
 PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
-    <*ASSERT NOT t.dead*>
-    IF t.get(symbol,o) THEN
-      RETURN o
-    END;
-
-    IF t.parent # NIL THEN 
-      RETURN t.parent.lookup(symbol) 
-    ELSE 
-      RETURN Error("Unbound variable: " & SchemeSymbol.ToText(symbol)) 
+    LOOP
+      <*ASSERT NOT t.dead*>
+      IF t.get(symbol,o) THEN
+        RETURN o
+      END;
+      
+      IF t.parent # NIL THEN 
+        t := t.parent
+      ELSE 
+        RETURN Error("Unbound variable: " & SchemeSymbol.ToText(symbol)) 
+      END
     END
   END Lookup;
 
