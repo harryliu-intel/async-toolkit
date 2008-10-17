@@ -91,10 +91,10 @@ PROCEDURE UnsafePut(t : T; var : Symbol; READONLY val : Object) =
       (* failed *)
       t.dictionary := NEW(AtomRefTbl.Default).init();
       FOR i := LAST(t.quick) TO FIRST(t.quick) BY -1 DO
-        t.put(t.quick[i].var, t.quick[i].val)
+        UnsafePut(t,t.quick[i].var, t.quick[i].val)
       END;
 
-      t.put(var, val)
+      UnsafePut(t, var, val)
     END
   END UnsafePut;
 
