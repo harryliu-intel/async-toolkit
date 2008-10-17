@@ -12,6 +12,7 @@ IMPORT SchemeEnvironment, SchemeProcedureClass;
 IMPORT Scheme, SchemeClass;
 
 FROM Scheme IMPORT Object, Symbol, String, Vector, E;
+FROM SchemeClass IMPORT GetCons, ReturnCons;
 
 FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Stringify, StringifyQ, Error, Warn, Equal, Eqv,
@@ -352,14 +353,14 @@ PROCEDURE Apply1(t : T; interp : Scheme.T; a1 : Object) : Object
     END;
 
     VAR 
-      d1 := GetCons();
+      d1 := GetCons(interp);
       free := DefFree;
     BEGIN
       d1.first := a1;
       d1.rest := NIL;
       
       WITH res = Prims(t, interp, d1, a1, NIL, free) DO
-        IF free THEN ReturnCons(d1) END;
+        IF free THEN ReturnCons(interp,d1) END;
         RETURN res
       END
     END
@@ -379,7 +380,7 @@ PROCEDURE Apply2(t : T; interp : Scheme.T; a1, a2 : Object) : Object
     END;
     
     VAR
-      d1, d2 := GetCons();
+      d1, d2 := GetCons(interp);
       free := DefFree;
     BEGIN
       d1.first := a1;
@@ -389,7 +390,7 @@ PROCEDURE Apply2(t : T; interp : Scheme.T; a1, a2 : Object) : Object
       
       WITH res = Prims(t, interp, d1, a1, a2, free) DO
         IF free THEN
-          ReturnCons(d1); ReturnCons(d2)
+          ReturnCons(interp,d1)
         END;
         RETURN res
       END
@@ -398,33 +399,6 @@ PROCEDURE Apply2(t : T; interp : Scheme.T; a1, a2 : Object) : Object
 
 CONST DefFree = TRUE;
 
-VAR
-  mu := NEW(MUTEX);
-  free : Pair := NIL;
-
-PROCEDURE GetCons() : Pair =
-  BEGIN
-    LOCK mu DO
-      IF free # NIL THEN
-        TRY
-          RETURN free
-        FINALLY
-          free := free.rest
-        END
-      END
-    END;
-    RETURN NEW(Pair)
-  END GetCons;
-
-PROCEDURE ReturnCons(cons : Pair) = 
-  BEGIN
-    cons.first := NIL;
-    LOCK mu DO
-      cons.rest := free;
-      free := cons
-    END
-  END ReturnCons;
-    
 PROCEDURE Prims(t : T; interp : Scheme.T; args, x, y : Object; 
                 VAR free : BOOLEAN) : Object
   RAISES { E } =
@@ -1107,7 +1081,7 @@ PROCEDURE NumCompute(args : Object;
       END
     ELSE
       WHILE args # NIL AND ISTYPE(args, Pair) DO
-        WITH x = FromO(First(args)) DO
+        WITH x = FromO(NARROW(args,Pair).first) DO
           IF TruthO(False()) THEN
             (* force a register spill, work around a compiler bug... *)
             Debug.Out(Fmt.LongReal(result) & " " & Fmt.LongReal(x))

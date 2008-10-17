@@ -19,8 +19,17 @@ TYPE
     
     jailBreak : SchemeJailBreak.T := NIL;
     m3TableOps : SchemeM3TableOps.T := NIL;
+
+    freePairs : SchemePair.T := NIL;
+    (* this is a list of free pairs that can be used "freely" by the
+       interpreter for recycling memory w/o GC *)
   METHODS
     setTableOps(to : SchemeM3TableOps.T);
   END;
+
+(* recycling routines for cons cells *)
+PROCEDURE GetCons(t : Scheme.T) : SchemePair.T;
+
+PROCEDURE ReturnCons(t : Scheme.T; cons : SchemePair.T);
 
 END SchemeClass.

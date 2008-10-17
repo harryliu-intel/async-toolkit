@@ -42,7 +42,7 @@ REVEAL
     initDict(vars, vals : Object) : BOOLEAN := InitDict;
     initDictEval(vars, argsToEval : Object;
                  evalEnv : T;
-                 interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval;
+                 interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
   OVERRIDES
     initEmpty :=  InitEmpty;
     init      :=  Init;
@@ -174,6 +174,31 @@ PROCEDURE InitDictEval(t : T;
       RETURN FALSE
     END
   END InitDictEval;
+
+PROCEDURE InitDictEval2(t : T; 
+                        vars, argsToEval : Object; 
+                        evalEnv : T;
+                        interp : Scheme.T) : BOOLEAN RAISES { E }=
+  BEGIN
+    LOOP
+      IF vars = NIL AND argsToEval = NIL THEN 
+        RETURN TRUE 
+      ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
+        Put(t,vars,interp.eval(argsToEval,evalEnv));
+        RETURN TRUE
+      ELSIF vars # NIL AND argsToEval # NIL AND 
+        ISTYPE(vars, Pair) AND ISTYPE(argsToEval, Pair) THEN
+        WITH varp = NARROW(vars,Pair), argp = NARROW(argsToEval,Pair) DO
+          IF varp.first # NIL AND ISTYPE(varp.first,Symbol) THEN
+            Put(t, varp.first, interp.eval(argp.first,evalEnv));
+          END;
+          vars := varp.rest ; argsToEval := argp.rest
+        END
+      ELSE
+        RETURN FALSE
+      END
+    END
+  END InitDictEval2;
 
 PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;

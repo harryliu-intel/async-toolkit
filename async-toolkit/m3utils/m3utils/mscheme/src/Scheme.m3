@@ -6,7 +6,7 @@
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
-MODULE Scheme;
+MODULE Scheme EXPORTS Scheme, SchemeClass;
 IMPORT SchemeClass;
 IMPORT SchemeInputPort, SchemeEnvironment, SchemePrimitives, SchemePrimitive;
 IMPORT SchemeEnvironmentSuper;
@@ -42,7 +42,7 @@ REVEAL
     loadRd            :=  LoadRd;
     eval              :=  Eval;
     evalInGlobalEnv   :=  EvalInGlobalEnv;
-    evalList          :=  EvalList;
+    evalList          :=  EvalList2;
     bind              :=  Bind;
     setInGlobalEnv    :=  SetInGlobalEnv;
     setTableOps       :=  SetTableOps;
@@ -170,8 +170,8 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
         RETURN x
       ELSE
         VAR
-          fn   := First(x);
-          args := Rest(x); 
+          fn   := NARROW(x,Pair).first;
+          args := NARROW(x,Pair).rest; 
         BEGIN
           IF    fn = SYMquote THEN
             RETURN First(args)
@@ -227,9 +227,12 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
               (* this is a teeny tiny tail call optimization.. *)
               IF envIsLocal AND c.env # env THEN
                 INC(envsKilled);
-                EVAL env.init(c.params,
-                              t.evalList(args,env),
-                              c.env)
+                WITH lst = t.evalList(args,env) DO
+                  EVAL env.init(c.params,
+                                lst,
+                                c.env);
+                  ReturnCons(t,lst)
+                END
               ELSE
                 INC(envsMade);
                 env := NEW(SchemeEnvironment.T).initEval(c.params,
@@ -270,22 +273,38 @@ VAR envsMade := 0;
 PROCEDURE EvalInGlobalEnv(t : T; x : Object) : Object RAISES { E } =
   BEGIN RETURN t.eval(x, t.globalEnvironment) END EvalInGlobalEnv;
 
-PROCEDURE EvalList(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Object 
+PROCEDURE EvalList2(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Object 
   RAISES { E } =
   CONST Error = SchemeUtils.Error;
+  VAR
+    res : Pair := NIL;
+    ptr : Pair;
   BEGIN
-    IF list = NIL THEN
-      RETURN NIL
-    ELSIF NOT ISTYPE(list, Pair) THEN
-      EVAL Error("Illegal arg list: " & SchemeUtils.StringifyT(list));
-      RETURN NIL (*notreached*)
-    ELSE
-      WITH pair = NARROW(list,Pair) DO
-        RETURN SchemeUtils.Cons(t.eval(pair.first, env), 
-                                t.evalList(pair.rest, env))
+    LOOP
+      IF list = NIL THEN
+        RETURN res
+      ELSIF NOT ISTYPE(list, Pair) THEN
+        EVAL Error("Illegal arg list: " & SchemeUtils.StringifyT(list));
+        RETURN NIL (*notreached*)
+      ELSE
+        WITH pair = NARROW(list,Pair) DO
+          WITH new = GetCons(t) DO
+            new.first := t.eval(pair.first, env);
+            new.rest := NIL;
+
+            IF res = NIL THEN
+              ptr := new;
+              res := ptr
+            ELSE
+              ptr.rest := new;
+              ptr := new
+            END;
+            list := pair.rest
+          END
+        END
       END
     END
-  END EvalList;
+  END EvalList2;
 
 PROCEDURE ReduceCond(t : T; 
                      clauses : Object; env : SchemeEnvironment.T) : Object 
@@ -334,6 +353,35 @@ PROCEDURE ReduceCond(t : T;
     END
   END ReduceCond;
 
+PROCEDURE GetCons(t : T) : Pair =
+  BEGIN
+    IF t.freePairs # NIL THEN
+      VAR 
+        res := t.freePairs;
+        next := res.rest;
+      BEGIN
+        t.freePairs := next;
+        RETURN res
+      END
+    END;
+    RETURN NEW(Pair)
+  END GetCons;
+
+PROCEDURE ReturnCons(t : T; cons : Pair) = 
+  BEGIN
+    IF cons = NIL THEN RETURN END;
+
+    VAR p : Pair := cons; BEGIN
+      WHILE p.rest # NIL DO
+        p.first := NIL;
+        p := p.rest
+      END;
+
+      p.rest := t.freePairs;
+      t.freePairs := cons
+    END
+  END ReturnCons;
+    
 VAR
   SYMquote := SchemeSymbol.Symbol("quote");
   SYMbegin := SchemeSymbol.Symbol("begin");

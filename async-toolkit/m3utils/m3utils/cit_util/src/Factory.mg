@@ -21,7 +21,7 @@ PROCEDURE Equal(a : T;  b : Super.T) : BOOLEAN =
 
 PROCEDURE Build(<*UNUSED*>a : T) : REFANY = BEGIN RETURN NEW(Of.T) END Build;
 
-PROCEDURE Init(self : T) : Super.T = 
+PROCEDURE Init(self : T) : Super.Public = 
   BEGIN self.code := TYPECODE(Of.T); RETURN self END Init;
 
 BEGIN END Factory.
