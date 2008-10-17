@@ -11,6 +11,32 @@ IMPORT SchemeObject, SchemeSymbol, SchemeEnvironmentSuper;
 FROM Scheme IMPORT E;
 IMPORT Scheme;
 
+(* XXX
+   
+   The type structure here should be modified.
+
+   A SchemeEnvironment.T should probably just be a prototype, so that
+   it can be subtyped in various interesting ways (say, why not an
+   SQL-based version?)
+
+   Then a Common could include various of the methods in this
+   interface.
+
+   Finally, concrete implementations Safe (= the current T) and Unsafe
+   would be the ones allocated (or else user-implemented versions).
+
+   The methods that need to be handled most carefully are:
+
+   put, get (not revealed here yet, internal to implementation, but
+             really should be in a Class interface)
+
+   lookup   which currently calls itself in a loop, not via the method
+            mechanism, as an optimization.  It should be possible to
+            turn off this optimization, or else at least implement
+            it in terms of put and get properly.
+*)
+   
+
 TYPE
   T <: Public;
 

@@ -213,6 +213,8 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
             fn := t.eval(fn, env);
             
             TYPECASE fn OF
+              NULL => RAISE E("Not a procedure: " & Stringify(fn))
+            |
               Macro(m) => 
               x := m.expand(t, x, args)
             |
@@ -285,7 +287,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                  with slow GC.
               *)
               TYPECASE args OF
-                NULL => 
+                NULL =>
               |
                 Pair(pp) =>
                 IF pp.rest = NIL THEN
