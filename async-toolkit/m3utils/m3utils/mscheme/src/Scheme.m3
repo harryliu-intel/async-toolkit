@@ -184,7 +184,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
           ELSIF fn = SYMdefine THEN
             IF First(args) # NIL AND ISTYPE(First(args), Pair) THEN
               RETURN env.define(First(First(args)),
-                                t.eval(Cons(Sym("lambda"),
+                                t.eval(Cons(SYMlambda,
                                             Cons(Rest(First(args)), 
                                                  Rest(args))), env))
             ELSE
@@ -341,11 +341,11 @@ PROCEDURE ReduceCond(t : T;
 
           IF success THEN
             IF Rest(clause) = NIL THEN
-              RETURN List2(Sym("quote"),result)
+              RETURN List2(SYMquote,result)
             ELSIF Second(clause) = SYMarrow THEN
-              RETURN List2(Third(clause),List2(Sym("quote"),result))
+              RETURN List2(Third(clause),List2(SYMquote,result))
             ELSE 
-              RETURN Cons(Sym("begin"), Rest(clause))
+              RETURN Cons(SYMbegin, Rest(clause))
             END
           END
         END
