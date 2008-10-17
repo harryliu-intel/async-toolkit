@@ -435,7 +435,7 @@ PROCEDURE Prims(t : T; interp : Scheme.T; args, x, y : Object;
         |
           P.Ceiling => RETURN FromLR(FLOAT(CEILING(FromO(x)),LONGREAL))
         |
-          P.Cons => RETURN Cons(x,y)
+          P.Cons => RETURN Cons(x,y,interp)
         |
           
           P.Divide => RETURN NumCompute(Rest(args), '/', FromO(x))
@@ -604,7 +604,7 @@ PROCEDURE Prims(t : T; interp : Scheme.T; args, x, y : Object;
             str := Str(x);
           BEGIN
             FOR i := LAST(str^) TO FIRST(str^) BY -1 DO
-              result := Cons(Character(str[i]),result)
+              result := Cons(Character(str[i]),result,interp)
             END;
             RETURN result
           END
@@ -981,17 +981,18 @@ PROCEDURE IsList(x : Object) : BOOLEAN =
     END
   END IsList;
 
-PROCEDURE Append(args : Object) : Object =
+PROCEDURE Append(args : Object; interp : Scheme.T := NIL) : Object =
   BEGIN
     IF Rest(args) = NIL THEN RETURN First(args) 
-    ELSE RETURN Append2(First(args), Append(Rest(args)))
+    ELSE RETURN Append2(First(args), Append(Rest(args)),interp)
     END
   END Append;
 
-PROCEDURE Append2(x, y : Object) : Object =
+PROCEDURE Append2(x, y : Object; interp : Scheme.T := NIL) : Object =
   BEGIN
     IF x # NIL AND ISTYPE(x,Pair) THEN RETURN Cons(First(x),
-                                                   Append2(Rest(x),y))
+                                                   Append2(Rest(x),y,interp),
+                                                   interp)
     ELSE RETURN y
     END
   END Append2;

@@ -50,7 +50,7 @@ PROCEDURE ListStar(x : Object) : Object;
 
 PROCEDURE MakeList(READONLY a : ARRAY OF Object) : Pair;
 
-PROCEDURE Cons(a, b : Object) : Pair;
+PROCEDURE Cons(a, b : Object; interp : Scheme.T := NIL) : Pair;
 
 PROCEDURE Reverse(x : Object) : Object;
 

@@ -170,8 +170,14 @@ PROCEDURE ListStar(x : Object) : Object =
     END
   END ListStar;
   
-PROCEDURE Cons(a, b : Object) : Pair = 
-  BEGIN RETURN NEW(Pair, first := a, rest := b) END Cons;
+PROCEDURE Cons(a, b : Object; t : Scheme.T := NIL) : Pair = 
+  VAR pair : Pair;
+  BEGIN 
+    IF t = NIL THEN pair := NEW(Pair) ELSE pair := SchemeClass.GetCons(t) END;
+    pair.first := a;
+    pair.rest := b;
+    RETURN pair
+  END Cons;
 
 PROCEDURE Reverse(x : Object) : Object =
   VAR result : Object := NIL;
