@@ -339,11 +339,11 @@ PROCEDURE ReduceCond(t : T;
 
           IF success THEN
             IF Rest(clause) = NIL THEN
-              RETURN List2(SYMquote,result)
+              RETURN List2(SYMquote,result,t)
             ELSIF Second(clause) = SYMarrow THEN
-              RETURN List2(Third(clause),List2(SYMquote,result))
+              RETURN List2(Third(clause),List2(SYMquote,result),t)
             ELSE 
-              RETURN Cons(SYMbegin, Rest(clause))
+              RETURN Cons(SYMbegin, Rest(clause),t)
             END
           END
         END

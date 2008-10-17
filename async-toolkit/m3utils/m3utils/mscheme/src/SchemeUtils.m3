@@ -141,32 +141,71 @@ PROCEDURE SetRest(x, y : Object) : Object RAISES { E } =
     END
   END SetRest;
 
-PROCEDURE List1(x : Object) : Pair =
-  BEGIN RETURN NEW(Pair, first := x, rest := NIL) END List1;
+PROCEDURE List1(x : Object; t : Scheme.T := NIL) : Pair =
+  VAR res : Pair; BEGIN 
+    IF t = NIL THEN res := NEW(Pair) ELSE res := SchemeClass.GetCons(t) END;
+    res.first := x; res.rest := NIL;
+    RETURN res
+  END List1;
 
-PROCEDURE MakeList(READONLY a : ARRAY OF Object) : Pair =
+PROCEDURE MakeList(READONLY a : ARRAY OF Object; t : Scheme.T := NIL) : Pair =
   VAR res : Pair := NIL;
   BEGIN
-    FOR i := LAST(a) TO FIRST(a) BY -1 DO
-      res := NEW(Pair, first := a[i], rest := res)
+    IF t = NIL THEN
+      FOR i := LAST(a) TO FIRST(a) BY -1 DO
+        res := NEW(Pair, first := a[i], rest := res)
+      END
+    ELSE
+      FOR i := LAST(a) TO FIRST(a) BY -1 DO
+        WITH pair = SchemeClass.GetCons(t) DO
+          pair.first := a[i]; pair.rest := res;
+          res := pair
+        END
+      END
     END;
     RETURN res
   END MakeList;
 
-PROCEDURE List2(x, y : Object) : Pair =
+PROCEDURE List2(x, y : Object; t : Scheme.T := NIL) : Pair =
+  VAR
+    p1, p2 : Pair;
   BEGIN 
-    RETURN NEW(Pair, first := x, rest := NEW(Pair,first := y, rest := NIL))
+    IF t = NIL THEN 
+      p1 := NEW(Pair);
+      p2 := NEW(Pair)
+    ELSE
+      p1 := SchemeClass.GetCons(t);
+      p2 := SchemeClass.GetCons(t)
+    END;
+    p1.first := x; p2.first := y; 
+    p1.rest := p2; p2.rest := NIL;
+    
+    RETURN p1
   END List2;
 
-PROCEDURE List3(x, y, z : Object) : Pair =
+PROCEDURE List3(x, y, z : Object; t : Scheme.T := NIL) : Pair =
+  VAR
+    p1, p2, p3 : Pair;
   BEGIN 
-    RETURN NEW(Pair, first := x, rest := NEW(Pair,first := y, rest := NEW(Pair,first := z, rest := NIL)))
+    IF t = NIL THEN 
+      p1 := NEW(Pair);
+      p2 := NEW(Pair);
+      p3 := NEW(Pair)
+    ELSE
+      p1 := SchemeClass.GetCons(t);
+      p2 := SchemeClass.GetCons(t);
+      p3 := SchemeClass.GetCons(t)
+    END;
+    p1.first := x; p2.first := y; p3.first := z;
+    p1.rest := p2; p2.rest := p3; p3.rest := NIL;
+    
+    RETURN p1
   END List3;
 
-PROCEDURE ListStar(x : Object) : Object =
+PROCEDURE ListStar(x : Object; t : Scheme.T := NIL) : Object =
   BEGIN
     IF Rest(x) = NIL THEN RETURN First(x) 
-    ELSE RETURN Cons(First(x), ListStar(Rest(x)))
+    ELSE RETURN Cons(First(x), ListStar(Rest(x), t), t)
     END
   END ListStar;
   
@@ -289,13 +328,13 @@ PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object RAISES { E }
     END
   END Write;
 
-PROCEDURE VectorToList(x : Object) : Pair RAISES { E } =
+PROCEDURE VectorToList(x : Object; t : Scheme.T := NIL) : Pair RAISES { E } =
   BEGIN
     TYPECASE x OF
       Vector(vec) =>
       VAR result : Pair := NIL; BEGIN
         FOR i := LAST(vec^) TO FIRST(vec^) BY -1 DO
-          result := Cons(vec[i],result)
+          result := Cons(vec[i],result,t)
         END;
         RETURN result
       END

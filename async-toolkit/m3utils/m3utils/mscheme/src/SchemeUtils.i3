@@ -43,12 +43,12 @@ PROCEDURE SetFirst(x, y : Object) : Object RAISES { E };
 
 PROCEDURE SetRest(x, y : Object) : Object RAISES { E };
 
-PROCEDURE List1(x : Object) : Pair;
-PROCEDURE List2(x, y : Object) : Pair;
-PROCEDURE List3(x, y, z : Object) : Pair;
-PROCEDURE ListStar(x : Object) : Object;
+PROCEDURE List1(x : Object; t : Scheme.T := NIL) : Pair;
+PROCEDURE List2(x, y : Object; t : Scheme.T := NIL) : Pair;
+PROCEDURE List3(x, y, z : Object; t : Scheme.T := NIL) : Pair;
+PROCEDURE ListStar(x : Object; t : Scheme.T := NIL) : Object;
 
-PROCEDURE MakeList(READONLY a : ARRAY OF Object) : Pair;
+PROCEDURE MakeList(READONLY a : ARRAY OF Object; t : Scheme.T := NIL) : Pair;
 
 PROCEDURE Cons(a, b : Object; interp : Scheme.T := NIL) : Pair;
 
@@ -66,7 +66,7 @@ PROCEDURE ListToVector(objs : Object) : Vector RAISES { E };
 
 PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object RAISES { E };
 
-PROCEDURE VectorToList(x : Object) : Pair RAISES { E };
+PROCEDURE VectorToList(x : Object; t : Scheme.T := NIL) : Pair RAISES { E };
 
 PROCEDURE P(msg : TEXT; x : Object) : Object; (* for debugging *)
 
