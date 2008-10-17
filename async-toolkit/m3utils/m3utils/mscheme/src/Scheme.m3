@@ -152,7 +152,6 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
         Third  = SchemeUtils.Third;
         Rest   = SchemeUtils.Rest;
         Cons   = SchemeUtils.Cons;
-        Sym    = SchemeSymbol.Symbol;
         TruthO = SchemeBoolean.TruthO;
 
   VAR
@@ -316,7 +315,6 @@ PROCEDURE ReduceCond(t : T;
         Rest   = SchemeUtils.Rest;
         Cons   = SchemeUtils.Cons;
         List2  = SchemeUtils.List2;
-        Sym    = SchemeSymbol.Symbol;
         TruthO = SchemeBoolean.TruthO;
 
   VAR result : Object := NIL;
