@@ -34,6 +34,8 @@ TYPE
     markAsDead(); (* a debugging thing *)
   END;
 
+  Unsafe <: T; (* unsynchronized version *)
+
 CONST Brand = "SchemeEnvironment";
 
 END SchemeEnvironment.
