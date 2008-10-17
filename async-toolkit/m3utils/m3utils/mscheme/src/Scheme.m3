@@ -224,6 +224,30 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
 
 
               (* this is a teeny tiny tail call optimization.. *)
+
+              (* the following code is a bit tricky and highly
+                 optimized.
+
+                 First: we know that the environment can't escape
+                 this routine if it is locally manufactured. 
+                 (We cannot overwrite passed-in environments, because
+                 who knows where else those are used.)  Therefore,
+                 if the environment has been allocated locally (on
+                 a previous tail call, for instance), we take
+                 the liberty to overwrite it instead of allocating
+                 a new one.  This is a major performance optimization
+                 on systems with slow garbage collectors!
+
+                 Secondly: we see about a 2-4% increase in performance
+                 tests by using initEval instead of evalList. 
+                 InitEval skips the allocation of the list and instead
+                 evaluates the arg list "in place" inside the environment.
+                 This optimization is of more dubious value as most
+                 of its advantages are already provided by the recycling
+                 of cons cells that we do with the "ReturnCons"
+                 mechanism. 
+              *)
+
               IF envIsLocal AND c.env # env THEN
                 INC(envsKilled);
                 WITH lst = t.evalList(args,env) DO
@@ -238,11 +262,25 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                                                          args,env,t,
                                                          c.env)
               END;
+
               
               envIsLocal := TRUE
 
             |
               Procedure(p) =>
+
+              (* more micro-optimizations:
+                 
+                 apply1 and apply2 unconditionally recycle their
+                 list objects internally.
+
+                 at present, this optimization is only provided in
+                 SchemePrimitive.m3
+
+                 Yes the code looks messy but at present it can be
+                 as much as a 25% performance improvement on machines
+                 with slow GC.
+              *)
               TYPECASE args OF
                 NULL => 
               |

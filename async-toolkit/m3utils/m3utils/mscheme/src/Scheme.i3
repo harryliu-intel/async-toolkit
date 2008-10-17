@@ -16,6 +16,28 @@ IMPORT SchemeJailBreak;
 
 EXCEPTION E(TEXT);
 
+(* 
+
+   IMPORTANT NOTE ON CONCURRENCY ISSUES IN THE DESIGN OF THE SCHEME
+   INTERPRETER---
+
+   The MScheme system is intended for multi-threaded operation.
+   It is intended that different Scheme interpreters could share
+   a global environment (even over a network or via a database system,
+   if desired).
+
+   However, a SINGLE Scheme.T (less its environment) is ALWAYS a
+   single-threaded machine, and its methods are not intended to be
+   called concurrently from different execution threads. Accordingly,
+   none of its methods are synchronized, and while a Scheme.T itself
+   has no visible state, it does have internal state used for optimizing
+   various aspects of its operation (mainly to reduce the cost of
+   garbage-collected memory management).
+
+*)
+   
+
+
 TYPE 
   (* aliases for basic Scheme types *)
   Object    = SchemeObject.T;

@@ -19,7 +19,11 @@ TYPE
     apply(interp : Scheme.T; args : Object) : Object RAISES { E }; 
     (* abstract *)
 
-    (* optimizations, standard one just calls apply above *)
+    (* optimizations, standard one just calls apply above 
+       Please see a comment inside Scheme.m3: Scheme.Eval to 
+       explain what this is about; also see the implementation
+       in SchemePrimitive.m3.
+    *)
     apply2(interp : Scheme.T; a1, a2 : Object) : Object RAISES { E };
 
     apply1(interp : Scheme.T; a1 : Object) : Object RAISES { E };
