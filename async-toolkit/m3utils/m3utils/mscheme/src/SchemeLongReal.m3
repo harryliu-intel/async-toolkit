@@ -47,8 +47,11 @@ PROCEDURE FromT(t : TEXT) : T RAISES { E }=
     END
   END FromT;
 
+VAR
+  NegOne, Two := NEW(T);
+
 BEGIN 
-  NegOne, Zero, One, Two := NEW(T);
+  Zero := NEW(T); One := NEW(T);
   NegOne^ := -1.0d0;
   Zero^ := 0.0d0;
   One^  := 1.0d0;
