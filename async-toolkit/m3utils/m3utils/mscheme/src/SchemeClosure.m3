@@ -25,8 +25,10 @@ REVEAL
 
 PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object 
   RAISES { E } =
+  VAR dummy : BOOLEAN;
   BEGIN RETURN interp.eval(t.body, 
-                         NEW(SchemeEnvironment.T).init(t.params, args, t.env))
+                         NEW(SchemeEnvironment.T).init(t.params, args, t.env,
+                                                       dummy))
   END Apply;
 
 PROCEDURE Init(t : T; 

@@ -41,13 +41,15 @@ TYPE
   T <: Public;
 
   Public = SchemeEnvironmentSuper.T OBJECT METHODS
-    init(vars, vals : SchemeObject.T; parent : T) : T;
+    init(vars, vals : SchemeObject.T; parent : T; 
+         VAR canRecyclePairs : BOOLEAN) : T;
 
     initEval(vars : SchemeObject.T; 
              argsToEval : SchemeObject.T;
              evalEnv : T;
              interp : Scheme.T;
-             parent : T) : T RAISES { E };
+             parent : T; 
+         VAR canRecyclePairs : BOOLEAN) : T RAISES { E };
 
     initEmpty() : T;
 

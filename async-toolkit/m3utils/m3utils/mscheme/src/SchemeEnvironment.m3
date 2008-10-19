@@ -40,10 +40,12 @@ REVEAL
 
     dead := FALSE; (* for debugging *)
   METHODS
-    initDict(vars, vals : Object) : BOOLEAN := InitDict;
+    initDict(vars, vals : Object; 
+         VAR canRecyclePairs : BOOLEAN) : BOOLEAN := InitDict;
     initDictEval(vars, argsToEval : Object;
                  evalEnv : T;
-                 interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
+                 interp : Scheme.T; 
+         VAR canRecyclePairs : BOOLEAN) : BOOLEAN RAISES { E } := InitDictEval2;
     
     put(var : Symbol; READONLY val : Object) := SafePut;
     get(var : Symbol; VAR val : Object) : BOOLEAN := SafeGet;
@@ -141,11 +143,12 @@ PROCEDURE InitEmpty(t : T) : T =
     RETURN t 
   END InitEmpty;
 
-PROCEDURE Init(t : T; vars, vals : Object; parent : T) : T =
+PROCEDURE Init(t : T; vars, vals : Object; parent : T;
+                   VAR canRecyclePairs : BOOLEAN) : T =
   BEGIN
     EVAL t.initEmpty();
     t.parent := parent;
-    IF NOT t.initDict(vars,vals) THEN
+    IF NOT t.initDict(vars,vals,canRecyclePairs) THEN
       TRY
         EVAL Warn("wrong number of arguments: expected " &
           StringifyT(vars) & " got " & StringifyT(vals))
@@ -159,11 +162,12 @@ PROCEDURE Init(t : T; vars, vals : Object; parent : T) : T =
 PROCEDURE InitEval(t : T; vars, argsToEval : Object;
                    evalEnv : T; 
                    interp : Scheme.T;
-                   parent : T) : T RAISES { E } =
+                   parent : T;
+                   VAR canRecyclePairs : BOOLEAN) : T RAISES { E } =
   BEGIN
     EVAL t.initEmpty();
     t.parent := parent;
-    IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp) THEN
+    IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp, canRecyclePairs) THEN
       TRY
         EVAL Warn("wrong number of arguments: expected " &
           StringifyT(vars) & " got " & StringifyT(interp.evalList(argsToEval,evalEnv)))
@@ -174,11 +178,13 @@ PROCEDURE InitEval(t : T; vars, argsToEval : Object;
     RETURN t
   END InitEval;
 
-PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
+PROCEDURE InitDict(t : T; vars, vals : Object;
+                   VAR canRecyclePairs : BOOLEAN) : BOOLEAN =
   BEGIN
     IF vars = NIL AND vals = NIL THEN 
       RETURN TRUE 
     ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
+      canRecyclePairs := FALSE;
       t.put(vars,vals);
       RETURN TRUE
     ELSIF vars # NIL AND vals # NIL AND 
@@ -187,46 +193,25 @@ PROCEDURE InitDict(t : T; vars, vals : Object) : BOOLEAN =
         IF varp.first # NIL AND ISTYPE(varp.first,Symbol) THEN
           t.put(varp.first, valp.first);
         END;
-        RETURN InitDict(t, varp.rest, valp.rest)
+        RETURN InitDict(t, varp.rest, valp.rest, canRecyclePairs)
       END
     ELSE
       RETURN FALSE
     END
   END InitDict;
 
-PROCEDURE InitDictEval(t : T; 
-                       vars, argsToEval : Object; 
-                       evalEnv : T;
-                       interp : Scheme.T) : BOOLEAN RAISES { E }=
-  BEGIN
-    IF vars = NIL AND argsToEval = NIL THEN 
-      RETURN TRUE 
-    ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
-      t.put(vars,interp.eval(argsToEval,evalEnv));
-      RETURN TRUE
-    ELSIF vars # NIL AND argsToEval # NIL AND 
-          ISTYPE(vars, Pair) AND ISTYPE(argsToEval, Pair) THEN
-      WITH varp = NARROW(vars,Pair), argp = NARROW(argsToEval,Pair) DO
-        IF varp.first # NIL AND ISTYPE(varp.first,Symbol) THEN
-          t.put(varp.first, interp.eval(argp.first,evalEnv));
-        END;
-        RETURN InitDictEval(t, varp.rest, argp.rest, evalEnv, interp)
-      END
-    ELSE
-      RETURN FALSE
-    END
-  END InitDictEval;
-
 PROCEDURE InitDictEval2(t : T; 
                         vars, argsToEval : Object; 
                         evalEnv : T;
-                        interp : Scheme.T) : BOOLEAN RAISES { E }=
+                        interp : Scheme.T;
+                        VAR canRecyclePairs : BOOLEAN) : BOOLEAN RAISES { E }=
   BEGIN
     LOOP
       IF vars = NIL AND argsToEval = NIL THEN 
         RETURN TRUE 
       ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
-        t.put(vars,interp.eval(argsToEval,evalEnv));
+        t.put(vars,interp.evalList(argsToEval,evalEnv));
+        canRecyclePairs := FALSE;
         RETURN TRUE
       ELSIF vars # NIL AND argsToEval # NIL AND 
         ISTYPE(vars, Pair) AND ISTYPE(argsToEval, Pair) THEN

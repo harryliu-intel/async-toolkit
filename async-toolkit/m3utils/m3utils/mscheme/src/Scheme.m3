@@ -157,8 +157,12 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
   VAR
     env := NARROW(envP, SchemeEnvironment.T);
     envIsLocal := FALSE;
+    DebugLevel := Debug.GetLevel();
   BEGIN
     LOOP
+      IF DebugLevel >= 20 THEN Debug.Out("EVAL: " & Stringify(x)) END;
+
+
       IF t.interrupter # NIL AND t.interrupter.interrupt() THEN
         RAISE E("Command interrupted")
       END;
@@ -249,14 +253,17 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                  of cons cells that we do with the "ReturnCons"
                  mechanism. 
               *)
-
+              VAR
+                canRecyclePairs := TRUE;
+              BEGIN
               IF envIsLocal AND c.env # env THEN
                 INC(envsKilled);
                 WITH lst = t.evalList(args,env) DO
                   EVAL env.init(c.params,
                                 lst,
-                                c.env);
-                  ReturnCons(t,lst)
+                                c.env,
+                                canRecyclePairs);
+                  IF canRecyclePairs THEN ReturnCons(t,lst) END
                 END
               ELSE
                 INC(envsMade);
@@ -266,7 +273,10 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                 
                 env := NEW(SchemeEnvironment.Unsafe).initEval(c.params,
                                                               args,env,t,
-                                                              c.env)
+                                                              c.env,
+                                                              canRecyclePairs)
+
+              END
               END;
               
               envIsLocal := TRUE
@@ -414,9 +424,11 @@ PROCEDURE ReturnCons(t : T; cons : Pair) =
 
     VAR p : Pair := cons; BEGIN
       WHILE p.rest # NIL DO
-        p.first := NIL;
+        p.first := SYMrip;
         p := p.rest
       END;
+
+      p.first := SYMrip;
 
       p.rest := t.freePairs;
       t.freePairs := cons
@@ -434,6 +446,7 @@ VAR
   SYMmacro := SchemeSymbol.Symbol("macro");
   SYMelse := SchemeSymbol.Symbol("else");
   SYMarrow := SchemeSymbol.Symbol("=>");
+  SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
 
 BEGIN 
   TextRefSchemeAutoTbl.Register();

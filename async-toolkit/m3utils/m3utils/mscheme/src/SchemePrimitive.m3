@@ -47,7 +47,7 @@ TYPE Procedure = SchemeProcedure.T;
 REVEAL
   T = Public BRANDED Brand OBJECT
     minArgs, maxArgs : CARDINAL;
-    idNumber : INTEGER;
+    id : P;
   OVERRIDES
     init  := Init;
     apply := Apply;
@@ -57,7 +57,10 @@ REVEAL
 
 PROCEDURE Init(t : T; id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
   BEGIN 
-    t.minArgs := minArgs; t.maxArgs := maxArgs; t.idNumber := id; RETURN t
+    t.minArgs := minArgs; 
+    t.maxArgs := maxArgs; 
+    t.id := VAL(id,P); 
+    RETURN t
   END Init;
 
 TYPE
@@ -404,7 +407,7 @@ PROCEDURE Prims(t : T; interp : Scheme.T; args, x, y : Object;
   RAISES { E } =
   VAR z : Object;
   BEGIN
-      CASE VAL(t.idNumber,P) OF
+      CASE t.id OF
           P.Eq => RETURN NumCompare(args, '=')
         |
           P.Lt => RETURN NumCompare(args, '<')
@@ -1260,9 +1263,9 @@ PROCEDURE Map(proc : SchemeProcedure.T;
     IF Rest(args) = NIL THEN
       args := First(args);
       WHILE args # NIL AND ISTYPE(args, Pair) DO
-        WITH x = proc.apply(interp, List1(First(args))) DO
+        WITH x = proc.apply(interp, List1(First(args),interp)) DO
           IF accum # NIL THEN 
-            accum.rest := List1(x);
+            accum.rest := List1(x,interp);
             accum := accum.rest;
           END;
           args := Rest(args)
@@ -1272,13 +1275,13 @@ PROCEDURE Map(proc : SchemeProcedure.T;
       WITH car = Proc(interp.evalInGlobalEnv(SchemeSymbol.Symbol("car"))),
            cdr = Proc(interp.evalInGlobalEnv(SchemeSymbol.Symbol("cdr"))) DO
         WHILE First(args) # NIL AND ISTYPE(First(args),Pair) DO
-          WITH x = proc.apply(interp, Map(car, List1(args), interp, List1(NIL))) DO
+          WITH x = proc.apply(interp, Map(car, List1(args,interp), interp, List1(NIL,interp))) DO
             IF accum # NIL THEN 
-              accum.rest := List1(x);
+              accum.rest := List1(x,interp);
               accum := accum.rest;
             END
           END;
-          args := Map(cdr, List1(args), interp, List1(NIL))
+          args := Map(cdr, List1(args,interp), interp, List1(NIL,interp))
         END
       END
     END;
