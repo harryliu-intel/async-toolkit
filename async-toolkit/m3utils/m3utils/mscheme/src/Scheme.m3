@@ -273,8 +273,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
                 
                 env := NEW(SchemeEnvironment.Unsafe).initEval(c.params,
                                                               args,env,t,
-                                                              c.env,
-                                                              canRecyclePairs)
+                                                              c.env)
 
               END
               END;

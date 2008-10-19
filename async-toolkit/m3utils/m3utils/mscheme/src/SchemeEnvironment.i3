@@ -44,12 +44,16 @@ TYPE
     init(vars, vals : SchemeObject.T; parent : T; 
          VAR canRecyclePairs : BOOLEAN) : T;
 
+    (* canRecyclePairs is set to FALSE if the pairs sent in via 
+       vals are stored in the environment; if it's unchanged,
+       that means that the environment did not keep references to
+       the pairs (and so they can probably be freed) *)
+
     initEval(vars : SchemeObject.T; 
              argsToEval : SchemeObject.T;
              evalEnv : T;
              interp : Scheme.T;
-             parent : T; 
-         VAR canRecyclePairs : BOOLEAN) : T RAISES { E };
+             parent : T) : T RAISES { E };
 
     initEmpty() : T;
 

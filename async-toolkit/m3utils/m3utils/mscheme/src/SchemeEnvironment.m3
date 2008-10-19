@@ -44,8 +44,7 @@ REVEAL
          VAR canRecyclePairs : BOOLEAN) : BOOLEAN := InitDict;
     initDictEval(vars, argsToEval : Object;
                  evalEnv : T;
-                 interp : Scheme.T; 
-         VAR canRecyclePairs : BOOLEAN) : BOOLEAN RAISES { E } := InitDictEval2;
+                 interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
     
     put(var : Symbol; READONLY val : Object) := SafePut;
     get(var : Symbol; VAR val : Object) : BOOLEAN := SafeGet;
@@ -162,12 +161,11 @@ PROCEDURE Init(t : T; vars, vals : Object; parent : T;
 PROCEDURE InitEval(t : T; vars, argsToEval : Object;
                    evalEnv : T; 
                    interp : Scheme.T;
-                   parent : T;
-                   VAR canRecyclePairs : BOOLEAN) : T RAISES { E } =
+                   parent : T) : T RAISES { E } =
   BEGIN
     EVAL t.initEmpty();
     t.parent := parent;
-    IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp, canRecyclePairs) THEN
+    IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp) THEN
       TRY
         EVAL Warn("wrong number of arguments: expected " &
           StringifyT(vars) & " got " & StringifyT(interp.evalList(argsToEval,evalEnv)))
@@ -203,15 +201,13 @@ PROCEDURE InitDict(t : T; vars, vals : Object;
 PROCEDURE InitDictEval2(t : T; 
                         vars, argsToEval : Object; 
                         evalEnv : T;
-                        interp : Scheme.T;
-                        VAR canRecyclePairs : BOOLEAN) : BOOLEAN RAISES { E }=
+                        interp : Scheme.T) : BOOLEAN RAISES { E }=
   BEGIN
     LOOP
       IF vars = NIL AND argsToEval = NIL THEN 
         RETURN TRUE 
       ELSIF vars # NIL AND ISTYPE(vars, Symbol) THEN
         t.put(vars,interp.evalList(argsToEval,evalEnv));
-        canRecyclePairs := FALSE;
         RETURN TRUE
       ELSIF vars # NIL AND argsToEval # NIL AND 
         ISTYPE(vars, Pair) AND ISTYPE(argsToEval, Pair) THEN
