@@ -1,0 +1,11 @@
+/* $Id$ */
+
+import("libm3")
+import("cit_util")
+import("mscheme")
+import("schemesig")
+import("readline")
+
+Module("SchemeReadLine")
+
+library("schemereadline")
