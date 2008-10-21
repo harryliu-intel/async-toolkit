@@ -12,6 +12,7 @@ import("cit_util")
 import("mscheme")
 import("schemesig")
 import("readline")
+import("schemereadline")
 
 implementation("Main")
 

@@ -30,10 +30,8 @@ IMPORT Scheme;
    put, get (not revealed here yet, internal to implementation, but
              really should be in a Class interface)
 
-   lookup   which currently calls itself in a loop, not via the method
-            mechanism, as an optimization.  It should be possible to
-            turn off this optimization, or else at least implement
-            it in terms of put and get properly.
+   lookup
+
 *)
    
 
@@ -58,11 +56,6 @@ TYPE
     initEmpty() : T;
 
     lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
-    (* this method CANNOT, as it stands, be overridden.
-       If it in future needs to be overridden, create a 
-       Class interface and export put and get methods (plz. see
-       SchemeEnvironment.m3 source code)
-    *)
 
     define(var, val : SchemeObject.T) : SchemeObject.T;
     set(var, val : SchemeObject.T) : SchemeObject.T RAISES { E };

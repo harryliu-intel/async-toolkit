@@ -20,4 +20,4 @@
   (let ((s (timenow)))
     (- (timenow) s)))
 
-(display (timeit 1000 job) '())
+(display (timeit 10000 job) '())

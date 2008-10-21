@@ -116,8 +116,7 @@ PROCEDURE MarkAsDead(t : T) = BEGIN t.dead := TRUE END MarkAsDead;
 PROCEDURE InitEmptyUnsafe(t : T) : T =
   BEGIN 
     t.mu := NIL;
-    (* why lock it? well if it's a safe version, it might still
-       be accessed from other threads *)
+
     t.dictionary := NIL;
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
       t.quick[i] := QuickMap { NIL, NIL };
@@ -233,7 +232,7 @@ PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
       END;
       
       IF t.parent # NIL THEN 
-        t := t.parent
+        RETURN t.parent.lookup(symbol)
       ELSE 
         RETURN Error("Unbound variable: " & SchemeSymbol.ToText(symbol)) 
       END
