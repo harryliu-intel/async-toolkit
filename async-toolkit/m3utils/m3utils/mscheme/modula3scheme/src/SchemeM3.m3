@@ -15,6 +15,7 @@ IMPORT SchemeString, SchemeLongReal;
 FROM SchemeLongReal IMPORT FromO;
 FROM SchemeBoolean IMPORT True;
 IMPORT Fmt;
+IMPORT TextRefSchemeAutoTbl;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -166,5 +167,6 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
 VAR 
   prims := NEW(SchemePrimitive.ExtDefiner).init();
 BEGIN 
+  TextRefSchemeAutoTbl.Register(); (* vide module initialization order *)
   ExtendWithM3(prims)
 END SchemeM3.
