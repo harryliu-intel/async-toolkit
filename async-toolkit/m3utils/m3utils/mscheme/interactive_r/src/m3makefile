@@ -10,6 +10,7 @@ end
 import("libm3")
 import("cit_util")
 import("mscheme")
+import("modula3scheme")
 import("schemesig")
 import("readline")
 import("schemereadline")

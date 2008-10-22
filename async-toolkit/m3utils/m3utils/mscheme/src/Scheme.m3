@@ -27,7 +27,7 @@ REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
     globalEnvironment : SchemeEnvironment.T;
     interrupter : Interrupter := NIL;
-    prims : SchemePrimitive.Definer;
+    prims : SchemePrimitive.Definer := NIL;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
     reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
@@ -62,7 +62,11 @@ PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T
     t.input := NEW(SchemeInputPort.T).init(Stdio.stdin);
     t.output := Stdio.stdout;
     t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty();
-    EVAL NEW(SchemePrimitive.DefaultDefiner).installPrimitives(t.globalEnvironment);
+    IF t.prims = NIL THEN
+      EVAL NEW(SchemePrimitive.DefaultDefiner).installPrimitives(t.globalEnvironment)
+    ELSE
+      EVAL t.prims.installPrimitives(t.globalEnvironment)
+    END;
     t.readInitialFiles(files);
     RETURN t
   END Init;
