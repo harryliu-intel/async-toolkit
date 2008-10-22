@@ -1,0 +1,24 @@
+/* $Id$ */
+
+import ("libm3")
+import ("mscheme")
+
+Generic_module("SchemeAutoTbl")
+template ("schemeautotbl")
+
+Interface("SchemeJailBreak")
+
+Module ("SchemeM3TableOps")
+
+Module("M3toSTextString")
+
+Module("M3toSRefany")
+SchemeAutoTbl("TextRef", "TextRefTbl", "M3toSTextString", "M3toSRefany")
+
+KeyPair("CardAtom", "Cardinal", "Atom")
+
+table("CARef", "CardAtomPair", "Refany")
+
+Module("SchemeM3")
+
+library ("modula3scheme")

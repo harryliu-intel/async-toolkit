@@ -34,9 +34,10 @@ IMPORT SchemeLongReal;
 IMPORT Fmt, Text, Wx, Wr;
 IMPORT Math, Scan, Lex, FloatMode;
 IMPORT Process;
-IMPORT OSError, FileWr, FileRd, AL, Time, Date;
+IMPORT OSError, FileWr, FileRd, AL;
 IMPORT Thread;
-IMPORT SchemePair, RTCollector;
+IMPORT SchemePair;
+IMPORT CardRefTbl, Random;
 
 TYPE Pair = SchemePair.T;
 
@@ -47,7 +48,8 @@ TYPE Procedure = SchemeProcedure.T;
 REVEAL
   T = Public BRANDED Brand OBJECT
     minArgs, maxArgs : CARDINAL;
-    id : P;
+    definer : Definer;
+    id : CARDINAL;
   OVERRIDES
     init  := Init;
     apply := Apply;
@@ -55,11 +57,15 @@ REVEAL
     apply2 := Apply2;
   END;
 
-PROCEDURE Init(t : T; id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
+PROCEDURE Init(t : T; 
+               id : CARDINAL;
+               definer : Definer; 
+               minArgs, maxArgs : CARDINAL) : T =
   BEGIN 
     t.minArgs := minArgs; 
     t.maxArgs := maxArgs; 
-    t.id := VAL(id,P); 
+    t.definer := definer;
+    t.id := id; 
     RETURN t
   END Init;
 
@@ -110,212 +116,280 @@ TYPE
 
         New, Class, Method, Exit,
         SetCar, SetCdr, TimeCall, MacroExpand,
-        Error, ListStar,
-	
-	TimeNow, TimeToString,
-	JailBreak,
-  Stringify,
-  M3Op,
-  FmtReal,
-  GC
+        Error, ListStar
   };
 
-PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T =
+REVEAL 
+  Definer = PubDefiner BRANDED Brand & " Definer" OBJECT
+  END;
+
+  DefaultDefiner = Definer BRANDED Brand & " Default Definer" OBJECT 
+  OVERRIDES
+    installPrimitives := InstallPrimitives;
+  END;
+
+  ExtDefiner = PubExtensibleDefiner BRANDED Brand & " Extensible Definer" OBJECT
+    tbl : CardRefTbl.T := NIL;
+    random : Random.T;
+  METHODS
+    apply(t : T; interp : Scheme.T; args : Object) : Object 
+        RAISES { E } := EDApply;
+  OVERRIDES
+    init := InitED;
+    addPrim := AddPrim;
+    installPrimitives := EDInstallPrimitives;
+  END;
+
+PROCEDURE InitED(ed : ExtDefiner) : ExtDefiner =
+  BEGIN
+    ed.random := NEW(Random.Default).init();
+    ed.tbl := NEW(CardRefTbl.Default).init();
+    RETURN ed
+  END InitED;
+
+TYPE
+  PrimRec = OBJECT
+    name : TEXT;
+    proc : SchemeProcedure.T;
+    minArgs, maxArgs : CARDINAL;
+  END;
+
+PROCEDURE AddPrim(ed : ExtDefiner; 
+                  name : TEXT; 
+                  proc : SchemeProcedure.T;
+                  minArgs, maxArgs : CARDINAL) =
+  VAR 
+    id : CARDINAL;
+    dummy : REFANY;
+  BEGIN
+    REPEAT
+      id := ed.random.integer(ORD(LAST(P))+1,LAST(CARDINAL))
+    UNTIL NOT ed.tbl.get(id,dummy);
+    
+    EVAL ed.tbl.put(id, NEW(PrimRec, name := name, proc := proc,
+                            minArgs := minArgs, maxArgs := maxArgs))
+  END AddPrim;
+
+PROCEDURE EDApply(ed : ExtDefiner; 
+                  t : T; interp : Scheme.T; args : Object) : Object
+  RAISES { E } = 
+  VAR ref : REFANY;
+  BEGIN
+    IF ed.tbl.get(t.id, ref) THEN
+      RETURN NARROW(ref, PrimRec).proc.apply(interp,args)
+    ELSE
+      RAISE E("INTERNAL ERROR: NO PRIMITIVE DEFINED FOR id = " & Fmt.Int(t.id)&
+            ", PLEASE CALL A WIZARD IMMEDIATELY.")
+    END
+  END EDApply;
+
+PROCEDURE EDInstallPrimitives(ed : ExtDefiner; 
+                              env : SchemeEnvironment.T) : SchemeEnvironment.T=
+  BEGIN
+    EVAL InstallPrimitives(ed,env);
+    VAR
+      iter := ed.tbl.iterate();
+      id : CARDINAL;
+      ref : REFANY;
+    BEGIN
+      WHILE iter.next(id,ref) DO
+        WITH rec = NARROW(ref,PrimRec) DO
+          EVAL env.defPrim(rec.name, id, ed, rec.minArgs, rec.maxArgs)
+        END
+      END
+    END;
+    RETURN env
+  END EDInstallPrimitives;
+
+PROCEDURE InstallPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T =
   CONST n = LAST(CARDINAL);
   BEGIN
     EVAL env
-     .defPrim("*",       	ORD(P.Times),     0, n)
-     .defPrim("+",       	ORD(P.Plus),      0, n)
-     .defPrim("-",       	ORD(P.Minus),     1, n)
-     .defPrim("/",       	ORD(P.Divide),    1, n)
-     .defPrim("<",       	ORD(P.Lt),        2, n)
-     .defPrim("<=",      	ORD(P.Le),        2, n)
-     .defPrim("=",       	ORD(P.Eq),        2, n)
-     .defPrim(">",       	ORD(P.Gt),        2, n)
-     .defPrim(">=",      	ORD(P.Ge),        2, n)
-     .defPrim("abs",     	ORD(P.Abs),       1)
-     .defPrim("acos",    	ORD(P.Acos),      1)
-     .defPrim("append",         ORD(P.Append),    0, n)
-     .defPrim("apply",   	ORD(P.Apply),     2, n)
-     .defPrim("asin",    	ORD(P.Asin),      1)
-     .defPrim("assoc",   	ORD(P.Assoc),     2)
-     .defPrim("assq",    	ORD(P.AssQ),      2)
-     .defPrim("assv",    	ORD(P.AssV),      2)
-     .defPrim("atan",    	ORD(P.Atan),      1)
-     .defPrim("boolean?",	ORD(P.BooleanQ),  1)
-     .defPrim("caaaar",         ORD(P.Cxr),       1)
-     .defPrim("caaadr",         ORD(P.Cxr),       1)
-     .defPrim("caaar",          ORD(P.Cxr),       1)
-     .defPrim("caadar",         ORD(P.Cxr),       1)
-     .defPrim("caaddr",         ORD(P.Cxr),       1)
-     .defPrim("caadr",          ORD(P.Cxr),       1)
-     .defPrim("caar",           ORD(P.Cxr),       1)
-     .defPrim("cadaar",         ORD(P.Cxr),       1)
-     .defPrim("cadadr",         ORD(P.Cxr),       1)
-     .defPrim("cadar",          ORD(P.Cxr),       1)
-     .defPrim("caddar",         ORD(P.Cxr),       1)
-     .defPrim("cadddr",         ORD(P.Cxr),       1)
-     .defPrim("caddr",     	ORD(P.Third),     1)
-     .defPrim("cadr",  	        ORD(P.Second),    1)
-     .defPrim("call-with-current-continuation",        ORD(P.CallCC),    1)
-     .defPrim("call-with-input-file", ORD(P.CallWithInputFile), 2)
-     .defPrim("call-with-output-file", ORD(P.CallWithOutputFile), 2)
-     .defPrim("car",     	ORD(P.Car),       1)
-     .defPrim("cdaaar",         ORD(P.Cxr),       1)
-     .defPrim("cdaadr",         ORD(P.Cxr),       1)
-     .defPrim("cdaar",          ORD(P.Cxr),       1)
-     .defPrim("cdadar",         ORD(P.Cxr),       1)
-     .defPrim("cdaddr",         ORD(P.Cxr),       1)
-     .defPrim("cdadr",          ORD(P.Cxr),       1)
-     .defPrim("cdar",           ORD(P.Cxr),       1)
-     .defPrim("cddaar",         ORD(P.Cxr),       1)
-     .defPrim("cddadr",         ORD(P.Cxr),       1)
-     .defPrim("cddar",          ORD(P.Cxr),       1)
-     .defPrim("cdddar",         ORD(P.Cxr),       1)
-     .defPrim("cddddr",         ORD(P.Cxr),       1)
-     .defPrim("cdddr",          ORD(P.Cxr),       1)
-     .defPrim("cddr",           ORD(P.Cxr),       1)
-     .defPrim("cdr",     	ORD(P.Cdr),       1)
-     .defPrim("char->integer",  ORD(P.CharToInteger),      1)
-     .defPrim("char-alphabetic?",ORD(P.CharAlphabeticQ),      1)
-     .defPrim("char-ci<=?",     ORD(P.CharCiCmpLe), 2)
-     .defPrim("char-ci<?" ,     ORD(P.CharCiCmpLt), 2)
-     .defPrim("char-ci=?" ,     ORD(P.CharCiCmpEq), 2)
-     .defPrim("char-ci>=?",     ORD(P.CharCiCmpGe), 2)
-     .defPrim("char-ci>?" ,     ORD(P.CharCiCmpGt), 2)
-     .defPrim("char-downcase",  ORD(P.CharDowncase),      1)
-     .defPrim("char-lower-case?",ORD(P.CharLowercaseQ),      1)
-     .defPrim("char-numeric?",  ORD(P.CharNumericQ),      1)
-     .defPrim("char-upcase",    ORD(P.CharUpcase),      1)
-     .defPrim("char-upper-case?",ORD(P.CharUppercaseQ),      1)
-     .defPrim("char-whitespace?",ORD(P.CharWhitespaceQ),      1)
-     .defPrim("char<=?",        ORD(P.CharCmpLe), 2)
-     .defPrim("char<?",         ORD(P.CharCmpLt), 2)
-     .defPrim("char=?",         ORD(P.CharCmpEq), 2)
-     .defPrim("char>=?",        ORD(P.CharCmpGe), 2)
-     .defPrim("char>?",         ORD(P.CharCmpGt), 2)
-     .defPrim("char?",   	ORD(P.CharQ),     1)
-     .defPrim("close-input-port", ORD(P.CloseInputPort), 1)
-     .defPrim("close-output-port", ORD(P.CloseOutputPort), 1)
-     .defPrim("complex?", 	ORD(P.NumberQ),   1)
-     .defPrim("cons",    	ORD(P.Cons),      2)
-     .defPrim("cos",     	ORD(P.Cos),       1)
-     .defPrim("current-input-port", ORD(P.CurrentInputPort), 0)
-     .defPrim("current-output-port", ORD(P.CurrentOutputPort), 0)
-     .defPrim("display",        ORD(P.Display),   1, 2)
-     .defPrim("eof-object?",    ORD(P.EofObjectQ), 1)
-     .defPrim("eq?",     	ORD(P.EqQ),       2)
-     .defPrim("equal?",  	ORD(P.EqualQ),    2)
-     .defPrim("eqv?",    	ORD(P.EqvQ),      2)
-     .defPrim("eval",           ORD(P.Eval),      1, 2)
-     .defPrim("even?",          ORD(P.EvenQ),     1)
-     .defPrim("exact?",         ORD(P.IntegerQ),  1)
-     .defPrim("exp",     	ORD(P.Exp),       1)
-     .defPrim("expt",    	ORD(P.Expt),      2)
-     .defPrim("force",          ORD(P.Force),     1)
-     .defPrim("for-each",       ORD(P.Foreach),   1, n)
-     .defPrim("gcd",            ORD(P.Gcd),       0, n)
-     .defPrim("inexact?",       ORD(P.InexactQ),  1)
-     .defPrim("input-port?",    ORD(P.InputPortQ), 1)
-     .defPrim("integer->char",  ORD(P.IntegerToChar),      1)
-     .defPrim("integer?",       ORD(P.IntegerQ),  1)
-     .defPrim("lcm",            ORD(P.Lcm),       0, n)
-     .defPrim("length",  	ORD(P.Length),    1)
-     .defPrim("list",    	ORD(P.List),      0, n)
-     .defPrim("list->string", 	ORD(P.ListToString), 1)
-     .defPrim("list->vector",   ORD(P.ListToVector),      1)
-     .defPrim("list-ref", 	ORD(P.ListRef),   2)
-     .defPrim("list-tail", 	ORD(P.ListTail),  2)
-     .defPrim("list?",          ORD(P.ListQ),     1)
-     .defPrim("load",           ORD(P.Load),      1)
-     .defPrim("log",     	ORD(P.Log),       1)
-     .defPrim("macro-expand",   ORD(P.MacroExpand),1)
-     .defPrim("make-string", 	ORD(P.MakeString),1, 2)
-     .defPrim("make-vector",    ORD(P.MakeVector),1, 2)
-     .defPrim("map",            ORD(P.Map),       1, n)
-     .defPrim("max",     	ORD(P.Max),       1, n)
-     .defPrim("member",  	ORD(P.Member),    2)
-     .defPrim("memq",    	ORD(P.MemQ),      2)
-     .defPrim("memv",    	ORD(P.MemV),      2)
-     .defPrim("min",     	ORD(P.Min),       1, n)
-     .defPrim("modulo",         ORD(P.Modulo),    2)
-     .defPrim("negative?",      ORD(P.NegativeQ), 1)
-     .defPrim("newline", 	ORD(P.Newline),   0, 1)
-     .defPrim("not",     	ORD(P.Not),       1)
-     .defPrim("null?",   	ORD(P.NullQ),     1)
-     .defPrim("number->string", ORD(P.NumberToString),   1, 2)
-     .defPrim("number?", 	ORD(P.NumberQ),   1)
-     .defPrim("odd?",           ORD(P.OddQ),      1)
-     .defPrim("open-input-file",ORD(P.OpenInputFile), 1)
-     .defPrim("open-output-file", ORD(P.OpenOutputFile), 1)
-     .defPrim("output-port?",   ORD(P.OutputportQ), 1)
-     .defPrim("pair?",   	ORD(P.PairQ),     1)
-     .defPrim("peek-char",      ORD(P.PeekChar),  0, 1)
-     .defPrim("positive?",      ORD(P.PositiveQ), 1)
-     .defPrim("procedure?", 	ORD(P.ProcedureQ),1)
-     .defPrim("quotient",       ORD(P.Quotient),  2)
-     .defPrim("rational?",      ORD(P.IntegerQ), 1)
-     .defPrim("read",    	ORD(P.Read),      0, 1)
-     .defPrim("read-char",      ORD(P.ReadChar),  0, 1)
-     .defPrim("real?", 	        ORD(P.NumberQ),   1)
-     .defPrim("remainder",      ORD(P.Remainder), 2)
-     .defPrim("reverse", 	ORD(P.Reverse),   1)
-     .defPrim("round",  	ORD(P.Round),     1)
-     .defPrim("set-car!",	ORD(P.SetCar),    2)
-     .defPrim("set-cdr!",	ORD(P.SetCdr),    2)
-     .defPrim("sin",     	ORD(P.Sin),       1)
-     .defPrim("sqrt",    	ORD(P.Sqrt),      1)
-     .defPrim("string", 	ORD(P.String),    0, n)
-     .defPrim("string->list", 	ORD(P.StringToList), 1)
-     .defPrim("string->number", ORD(P.StringToNumber),   1, 2)
-     .defPrim("string->symbol", ORD(P.StringToSymbol),   1)
-     .defPrim("string-append",  ORD(P.StringAppend), 0, n)
-     .defPrim("string-ci<=?",   ORD(P.StringCiCmpLe), 2)
-     .defPrim("string-ci<?" ,   ORD(P.StringCiCmpLt), 2)
-     .defPrim("string-ci=?" ,   ORD(P.StringCiCmpEq), 2)
-     .defPrim("string-ci>=?",   ORD(P.StringCiCmpGe), 2)
-     .defPrim("string-ci>?" ,   ORD(P.StringCiCmpGt), 2)
-     .defPrim("string-length",  ORD(P.StringLength),   1)
-     .defPrim("string-ref", 	ORD(P.StringRef), 2)
-     .defPrim("string-set!", 	ORD(P.StringSet), 3)
-     .defPrim("string<=?",      ORD(P.StringCmpLe), 2)
-     .defPrim("string<?",       ORD(P.StringCmpLt), 2)
-     .defPrim("string=?",       ORD(P.StringCmpEq), 2)
-     .defPrim("string>=?",      ORD(P.StringCmpGe), 2)
-     .defPrim("string>?",       ORD(P.StringCmpGt), 2)
-     .defPrim("string?", 	ORD(P.StringQ),   1)
-     .defPrim("substring", 	ORD(P.Substring), 3)
-     .defPrim("symbol->string", ORD(P.SymbolToString),   1)
-     .defPrim("symbol?", 	ORD(P.SymbolQ),   1)
-     .defPrim("tan",     	ORD(P.Tan),       1)
-     .defPrim("tanh",     	ORD(P.Tanh),      1)
-     .defPrim("vector",    	ORD(P.Vector),    0, n)
-     .defPrim("vector->list",   ORD(P.VectorToList), 1)
-     .defPrim("vector-length",  ORD(P.VectorLength), 1)
-     .defPrim("vector-ref",     ORD(P.VectorRef), 2)
-     .defPrim("vector-set!",    ORD(P.VectorSet), 3)
-     .defPrim("vector?",    	ORD(P.VectorQ),   1)
-     .defPrim("write",   	ORD(P.Write),     1, 2)
-     .defPrim("write-char",   	ORD(P.Display),   1, 2)
-     .defPrim("zero?",          ORD(P.ZeroQ),     1)
-	      
-     (*///////////// Extensions ////////////////*)
+    .defPrim("*",              ORD(P.Times), dd,    0, n)
+    .defPrim("+",              ORD(P.Plus), dd,     0, n)
+    .defPrim("-",              ORD(P.Minus), dd,    1, n)
+    .defPrim("/",              ORD(P.Divide), dd,   1, n)
+    .defPrim("<",              ORD(P.Lt), dd,       2, n)
+    .defPrim("<=",             ORD(P.Le), dd,       2, n)
+    .defPrim("=",              ORD(P.Eq), dd,       2, n)
+    .defPrim(">",              ORD(P.Gt), dd,       2, n)
+    .defPrim(">=",             ORD(P.Ge), dd,       2, n)
+    .defPrim("abs",            ORD(P.Abs), dd,      1)
+    .defPrim("acos",           ORD(P.Acos), dd,     1)
+    .defPrim("append",         ORD(P.Append), dd,   0, n)
+    .defPrim("apply",          ORD(P.Apply), dd,    2, n)
+    .defPrim("asin",           ORD(P.Asin), dd,     1)
+    .defPrim("assoc",          ORD(P.Assoc), dd,    2)
+    .defPrim("assq",           ORD(P.AssQ), dd,     2)
+    .defPrim("assv",           ORD(P.AssV), dd,     2)
+    .defPrim("atan",           ORD(P.Atan), dd,     1)
+    .defPrim("boolean?",       ORD(P.BooleanQ), dd, 1)
+    .defPrim("caaaar",         ORD(P.Cxr), dd,      1)
+    .defPrim("caaadr",         ORD(P.Cxr), dd,      1)
+    .defPrim("caaar",          ORD(P.Cxr), dd,      1)
+    .defPrim("caadar",         ORD(P.Cxr), dd,      1)
+    .defPrim("caaddr",         ORD(P.Cxr), dd,      1)
+    .defPrim("caadr",          ORD(P.Cxr), dd,      1)
+    .defPrim("caar",           ORD(P.Cxr), dd,      1)
+    .defPrim("cadaar",         ORD(P.Cxr), dd,      1)
+    .defPrim("cadadr",         ORD(P.Cxr), dd,      1)
+    .defPrim("cadar",          ORD(P.Cxr), dd,      1)
+    .defPrim("caddar",         ORD(P.Cxr), dd,      1)
+    .defPrim("cadddr",         ORD(P.Cxr), dd,      1)
+    .defPrim("caddr",          ORD(P.Third), dd,    1)
+    .defPrim("cadr",           ORD(P.Second), dd,   1)
+    .defPrim("call-with-current-continuation",        ORD(P.CallCC), dd,   1)
+    .defPrim("call-with-input-file", ORD(P.CallWithInputFile), dd,2)
+    .defPrim("call-with-output-file", ORD(P.CallWithOutputFile), dd,2)
+    .defPrim("car",            ORD(P.Car), dd,      1)
+    .defPrim("cdaaar",         ORD(P.Cxr), dd,      1)
+    .defPrim("cdaadr",         ORD(P.Cxr), dd,      1)
+    .defPrim("cdaar",          ORD(P.Cxr), dd,      1)
+    .defPrim("cdadar",         ORD(P.Cxr), dd,      1)
+    .defPrim("cdaddr",         ORD(P.Cxr), dd,      1)
+    .defPrim("cdadr",          ORD(P.Cxr), dd,      1)
+    .defPrim("cdar",           ORD(P.Cxr), dd,      1)
+    .defPrim("cddaar",         ORD(P.Cxr), dd,      1)
+    .defPrim("cddadr",         ORD(P.Cxr), dd,      1)
+    .defPrim("cddar",          ORD(P.Cxr), dd,      1)
+    .defPrim("cdddar",         ORD(P.Cxr), dd,      1)
+    .defPrim("cddddr",         ORD(P.Cxr), dd,      1)
+    .defPrim("cdddr",          ORD(P.Cxr), dd,      1)
+    .defPrim("cddr",           ORD(P.Cxr), dd,      1)
+    .defPrim("cdr",            ORD(P.Cdr), dd,      1)
+    .defPrim("char->integer",  ORD(P.CharToInteger), dd,     1)
+    .defPrim("char-alphabetic?",ORD(P.CharAlphabeticQ), dd,     1)
+    .defPrim("char-ci<=?",     ORD(P.CharCiCmpLe), dd,2)
+    .defPrim("char-ci<?" ,     ORD(P.CharCiCmpLt), dd,2)
+    .defPrim("char-ci=?" ,     ORD(P.CharCiCmpEq), dd,2)
+    .defPrim("char-ci>=?",     ORD(P.CharCiCmpGe), dd,2)
+    .defPrim("char-ci>?" ,     ORD(P.CharCiCmpGt), dd,2)
+    .defPrim("char-downcase",  ORD(P.CharDowncase), dd,     1)
+    .defPrim("char-lower-case?",ORD(P.CharLowercaseQ), dd,     1)
+    .defPrim("char-numeric?",  ORD(P.CharNumericQ), dd,     1)
+    .defPrim("char-upcase",    ORD(P.CharUpcase), dd,     1)
+    .defPrim("char-upper-case?",ORD(P.CharUppercaseQ), dd,     1)
+    .defPrim("char-whitespace?",ORD(P.CharWhitespaceQ), dd,     1)
+    .defPrim("char<=?",        ORD(P.CharCmpLe), dd,2)
+    .defPrim("char<?",         ORD(P.CharCmpLt), dd,2)
+    .defPrim("char=?",         ORD(P.CharCmpEq), dd,2)
+    .defPrim("char>=?",        ORD(P.CharCmpGe), dd,2)
+    .defPrim("char>?",         ORD(P.CharCmpGt), dd,2)
+    .defPrim("char?",          ORD(P.CharQ), dd,    1)
+    .defPrim("close-input-port", ORD(P.CloseInputPort), dd,1)
+    .defPrim("close-output-port", ORD(P.CloseOutputPort), dd,1)
+    .defPrim("complex?",       ORD(P.NumberQ), dd,  1)
+    .defPrim("cons",           ORD(P.Cons), dd,     2)
+    .defPrim("cos",            ORD(P.Cos), dd,      1)
+    .defPrim("current-input-port", ORD(P.CurrentInputPort), dd,0)
+    .defPrim("current-output-port", ORD(P.CurrentOutputPort), dd,0)
+    .defPrim("display",        ORD(P.Display), dd,  1, 2)
+    .defPrim("eof-object?",    ORD(P.EofObjectQ), dd,1)
+    .defPrim("eq?",            ORD(P.EqQ), dd,      2)
+    .defPrim("equal?",         ORD(P.EqualQ), dd,   2)
+    .defPrim("eqv?",           ORD(P.EqvQ), dd,     2)
+    .defPrim("eval",           ORD(P.Eval), dd,     1, 2)
+    .defPrim("even?",          ORD(P.EvenQ), dd,    1)
+    .defPrim("exact?",         ORD(P.IntegerQ), dd, 1)
+    .defPrim("exp",            ORD(P.Exp), dd,      1)
+    .defPrim("expt",           ORD(P.Expt), dd,     2)
+    .defPrim("force",          ORD(P.Force), dd,    1)
+    .defPrim("for-each",       ORD(P.Foreach), dd,  1, n)
+    .defPrim("gcd",            ORD(P.Gcd), dd,      0, n)
+    .defPrim("inexact?",       ORD(P.InexactQ), dd, 1)
+    .defPrim("input-port?",    ORD(P.InputPortQ), dd,1)
+    .defPrim("integer->char",  ORD(P.IntegerToChar), dd,     1)
+    .defPrim("integer?",       ORD(P.IntegerQ), dd, 1)
+    .defPrim("lcm",            ORD(P.Lcm), dd,      0, n)
+    .defPrim("length",         ORD(P.Length), dd,   1)
+    .defPrim("list",           ORD(P.List), dd,     0, n)
+    .defPrim("list->string",   ORD(P.ListToString), dd,1)
+    .defPrim("list->vector",   ORD(P.ListToVector), dd,     1)
+    .defPrim("list-ref",       ORD(P.ListRef), dd,  2)
+    .defPrim("list-tail",      ORD(P.ListTail), dd, 2)
+    .defPrim("list?",          ORD(P.ListQ), dd,    1)
+    .defPrim("load",           ORD(P.Load), dd,     1)
+    .defPrim("log",            ORD(P.Log), dd,      1)
+    .defPrim("macro-expand",   ORD(P.MacroExpand),dd, 1)
+    .defPrim("make-string",    ORD(P.MakeString),dd,1, 2)
+    .defPrim("make-vector",    ORD(P.MakeVector),dd ,1, 2)
+    .defPrim("map",            ORD(P.Map), dd,      1, n)
+    .defPrim("max",            ORD(P.Max), dd,      1, n)
+    .defPrim("member",         ORD(P.Member), dd,   2)
+    .defPrim("memq",           ORD(P.MemQ), dd,     2)
+    .defPrim("memv",           ORD(P.MemV), dd,     2)
+    .defPrim("min",            ORD(P.Min), dd,      1, n)
+    .defPrim("modulo",         ORD(P.Modulo), dd,   2)
+    .defPrim("negative?",      ORD(P.NegativeQ), dd,1)
+    .defPrim("newline",        ORD(P.Newline), dd,  0, 1)
+    .defPrim("not",            ORD(P.Not), dd,      1)
+    .defPrim("null?",          ORD(P.NullQ), dd,    1)
+    .defPrim("number->string", ORD(P.NumberToString), dd,  1, 2)
+    .defPrim("number?",        ORD(P.NumberQ), dd,  1)
+    .defPrim("odd?",           ORD(P.OddQ), dd,     1)
+    .defPrim("open-input-file",ORD(P.OpenInputFile), dd,1)
+    .defPrim("open-output-file", ORD(P.OpenOutputFile), dd,1)
+    .defPrim("output-port?",   ORD(P.OutputportQ), dd,1)
+    .defPrim("pair?",          ORD(P.PairQ), dd,    1)
+    .defPrim("peek-char",      ORD(P.PeekChar), dd, 0, 1)
+    .defPrim("positive?",      ORD(P.PositiveQ), dd,1)
+    .defPrim("procedure?",     ORD(P.ProcedureQ),dd,1)
+    .defPrim("quotient",       ORD(P.Quotient), dd, 2)
+    .defPrim("rational?",      ORD(P.IntegerQ), dd,1)
+    .defPrim("read",           ORD(P.Read), dd,     0, 1)
+    .defPrim("read-char",      ORD(P.ReadChar), dd, 0, 1)
+    .defPrim("real?",          ORD(P.NumberQ), dd,  1)
+    .defPrim("remainder",      ORD(P.Remainder), dd,2)
+    .defPrim("reverse",        ORD(P.Reverse), dd,  1)
+    .defPrim("round",          ORD(P.Round), dd,    1)
+    .defPrim("set-car!",       ORD(P.SetCar), dd,   2)
+    .defPrim("set-cdr!",       ORD(P.SetCdr), dd,   2)
+    .defPrim("sin",            ORD(P.Sin), dd,      1)
+    .defPrim("sqrt",           ORD(P.Sqrt), dd,     1)
+    .defPrim("string",         ORD(P.String), dd,   0, n)
+    .defPrim("string->list",   ORD(P.StringToList), dd,1)
+    .defPrim("string->number", ORD(P.StringToNumber), dd,  1, 2)
+    .defPrim("string->symbol", ORD(P.StringToSymbol), dd,  1)
+    .defPrim("string-append",  ORD(P.StringAppend), dd,0, n)
+    .defPrim("string-ci<=?",   ORD(P.StringCiCmpLe), dd,2)
+    .defPrim("string-ci<?" ,   ORD(P.StringCiCmpLt), dd,2)
+    .defPrim("string-ci=?" ,   ORD(P.StringCiCmpEq), dd,2)
+    .defPrim("string-ci>=?",   ORD(P.StringCiCmpGe), dd,2)
+    .defPrim("string-ci>?" ,   ORD(P.StringCiCmpGt), dd,2)
+    .defPrim("string-length",  ORD(P.StringLength), dd,  1)
+    .defPrim("string-ref",     ORD(P.StringRef), dd,2)
+    .defPrim("string-set!",    ORD(P.StringSet), dd,3)
+    .defPrim("string<=?",      ORD(P.StringCmpLe), dd,2)
+    .defPrim("string<?",       ORD(P.StringCmpLt), dd,2)
+    .defPrim("string=?",       ORD(P.StringCmpEq), dd,2)
+    .defPrim("string>=?",      ORD(P.StringCmpGe), dd,2)
+    .defPrim("string>?",       ORD(P.StringCmpGt), dd,2)
+    .defPrim("string?",        ORD(P.StringQ), dd,  1)
+    .defPrim("substring",      ORD(P.Substring), dd,3)
+    .defPrim("symbol->string", ORD(P.SymbolToString), dd,  1)
+    .defPrim("symbol?",        ORD(P.SymbolQ), dd,  1)
+    .defPrim("tan",            ORD(P.Tan), dd,      1)
+    .defPrim("tanh",           ORD(P.Tanh), dd,     1)
+    .defPrim("vector",         ORD(P.Vector), dd,   0, n)
+    .defPrim("vector->list",   ORD(P.VectorToList), dd,1)
+    .defPrim("vector-length",  ORD(P.VectorLength), dd,1)
+    .defPrim("vector-ref",     ORD(P.VectorRef), dd,2)
+    .defPrim("vector-set!",    ORD(P.VectorSet), dd,3)
+    .defPrim("vector?",        ORD(P.VectorQ), dd,  1)
+    .defPrim("write",          ORD(P.Write), dd,    1, 2)
+    .defPrim("write-char",     ORD(P.Display), dd,  1, 2)
+    .defPrim("zero?",          ORD(P.ZeroQ), dd,    1)
+    
+    (*///////////// Extensions ////////////////*)
 
-     .defPrim("new",     	    ORD(P.New),       1)
-     .defPrim("class",   	    ORD(P.Class),     1)
-     .defPrim("method",  	    ORD(P.Method),    2, n)
-     .defPrim("exit",    	    ORD(P.Exit),      0, 1)
-     .defPrim("error",    	    ORD(P.Error),     0, n)
-     .defPrim("time-call",          ORD(P.TimeCall),  1, 2)
-     .defPrim("_list*",             ORD(P.ListStar),  0, n)
-     .defPrim("jailbreak",          ORD(P.JailBreak),  1, 1)
-    .defPrim("stringify",           ORD(P.Stringify), 1, 1)
-    .defPrim("fmtreal",           ORD(P.FmtReal), 3, 3)
-    .defPrim("gc", ORD(P.GC), 0, 0)
-     .defPrim("timenow",	    ORD(P.TimeNow), 0, 0)
-    .defPrim("time->string", ORD(P.TimeToString), 1, 1)
-     .defPrim("modula-3-op",  ORD(P.M3Op), 2, 3) (* ok to have no args *)
-       ;
+    .defPrim("new",                ORD(P.New), dd,      1)
+    .defPrim("class",              ORD(P.Class), dd,    1)
+    .defPrim("method",             ORD(P.Method), dd,   2, n)
+    .defPrim("exit",               ORD(P.Exit), dd,     0, 1)
+    .defPrim("error",              ORD(P.Error), dd,    0, n)
+    .defPrim("time-call",          ORD(P.TimeCall), dd, 1, 2)
+    .defPrim("_list*",             ORD(P.ListStar), dd, 0, n);
 
     RETURN env;
 
@@ -338,7 +412,7 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
 
     WITH x = First(args),
          y = Second(args) DO
-      RETURN Prims(t, interp, args, x, y,dummy)
+      RETURN Prims(t, interp, args, x, y, dummy)
     END
   END Apply;
 
@@ -402,568 +476,512 @@ PROCEDURE Apply2(t : T; interp : Scheme.T; a1, a2 : Object) : Object
 
 CONST DefFree = TRUE;
 
-PROCEDURE Prims(t : T; interp : Scheme.T; args, x, y : Object; 
+PROCEDURE Prims(t : T; 
+                interp : Scheme.T; 
+                args, x, y : Object; 
                 VAR free : BOOLEAN) : Object
   RAISES { E } =
   VAR z : Object;
   BEGIN
-      CASE t.id OF
-          P.Eq => RETURN NumCompare(args, '=')
-        |
-          P.Lt => RETURN NumCompare(args, '<')
-        |
-          P.Gt => RETURN NumCompare(args, '>')
-        |
-          P.Ge => RETURN NumCompare(args, 'G')
-        | 
-          P.Le => RETURN NumCompare(args, 'L')
-        |
-          P.Abs =>  RETURN FromLR(ABS(FromO(x)))
-        |
-          P.EofObject =>  RETURN Truth(SchemeInputPort.IsEOF(x))
-        |
-          P.EqQ => RETURN Truth(x = y)
-        |
-          P.EqualQ => RETURN Truth(Equal(x,y))
-        |
-          P.Force => 
-          IF x = NIL OR NOT ISTYPE(x,Procedure) THEN RETURN x
-          ELSE RETURN Proc(x).apply(interp,NIL)
-          END
-        |
-          
-          P.Car => RETURN PedanticFirst(x)
-        |
-          P.Floor => RETURN FromLR(FLOAT(FLOOR(FromO(x)),LONGREAL))
-        |
-          P.Ceiling => RETURN FromLR(FLOAT(CEILING(FromO(x)),LONGREAL))
-        |
-          P.Cons => RETURN Cons(x,y,interp)
-        |
-          
-          P.Divide => RETURN NumCompute(Rest(args), '/', FromO(x))
-        |
-          P.Length => RETURN FromLR(FLOAT(Length(x),LONGREAL))
-        |
-          P.List => free := FALSE; RETURN args
-        |
-          P.ListQ => RETURN Truth(IsList(x))
-        |
-          P.Apply => free := FALSE; 
-          RETURN Proc(x).apply(interp,ListStar(Rest(args)))
-        |
-          
-          P.Max => RETURN NumCompute(args, 'X', FromO(x))
-        |
-          P.Min => RETURN NumCompute(args, 'N', FromO(x))
-        |
-          P.Minus => RETURN NumCompute(Rest(args), '-', FromO(x))
-        |
-          P.Newline => 
-          TRY
-            Wr.PutChar(OutPort(x,interp), '\n');
-            Wr.Flush(OutPort(x,interp));
-            RETURN True()
-          EXCEPT
-            Wr.Failure(err) => RAISE E("newline: Wr.Failure: " & AL.Format(err))
-          END
-        |
-          
-          P.Not => RETURN Truth(x = False())
-        |
-          P.NullQ => RETURN Truth(x = NIL)
-        |
-          P.NumberQ => RETURN Truth(x # NIL AND ISTYPE(x, SchemeLongReal.T))
-        |
-          P.PairQ => RETURN Truth(x # NIL AND ISTYPE(x,Pair))
-        |
-          P.Plus => RETURN NumCompute(args, '+', 0.0d0)
-        |
-          
-          P.ProcedureQ => RETURN Truth(x # NIL AND ISTYPE(x,Procedure))
-        |
-          P.Read => RETURN InPort(x, interp).read()
-        |
-          P.Cdr => RETURN PedanticRest(x)
-        |
-          P.Round => RETURN FromLR(FLOAT(ROUND(FromO(x)),LONGREAL))
-        |
-          P.Second => RETURN Second(x)
-        |
-          
-          P.SymbolQ => RETURN Truth(x # NIL AND ISTYPE(x,Symbol))
-        |
-          P.Times => RETURN NumCompute(args, '*', 1.0d0)
-        |
-          P.Truncate => RETURN FromLR(FLOAT(TRUNC(FromO(x)),LONGREAL))
-        |
-          P.Write => RETURN Write(x, OutPort(y, interp), TRUE)
-        |
-          P.Append => free := FALSE; 
-          IF args = NIL THEN RETURN NIL
-          ELSE RETURN Append(args)
-          END
-        |
-          
-          P.BooleanQ => RETURN Truth(x = True() OR x = False())
-        |
-          P.Sqrt => RETURN FromLR(Math.sqrt(FromO(x)))
-        |
-          P.Expt => RETURN FromLR(Math.pow(FromO(x),FromO(y)))
-        |
-          P.Reverse => RETURN Reverse(x)
-        |
-          P.Assoc => RETURN MemberAssoc(x, y, 'a', ' ')
-        |
-          P.AssQ => RETURN MemberAssoc(x, y, 'a', 'q')
-        |
-          P.AssV => RETURN MemberAssoc(x, y, 'a', 'v')
-        |
-          P.Member =>RETURN MemberAssoc(x, y, 'm', ' ')
-        |
-          P.MemQ => RETURN MemberAssoc(x, y, 'm', 'q')
-        |
-          P.MemV => RETURN MemberAssoc(x, y, 'm', 'v')
-        |
-          P.EqvQ => RETURN Truth(Eqv(x,y))
-        |
-          
-          P.ListRef =>  
-          VAR p := x; BEGIN
-            FOR k := TRUNC(FromO(y)) TO 1 BY -1 DO p:= Rest(p) END;
-            RETURN First(p)
-          END
-        |
-          P.ListTail =>           
-          VAR p := x; BEGIN
-            FOR k := TRUNC(FromO(y)) TO 1 BY -1 DO p:= Rest(p) END;
-            RETURN p
-          END
-        |
-          P.StringQ => RETURN Truth(x # NIL AND ISTYPE(x,String))
-        |
-          P.MakeString =>
-          VAR
-            str := NEW(String, TRUNC(FromO(x)));
-          BEGIN
-            IF y # NIL THEN
-              WITH c = Char(y) DO
-                FOR i := FIRST(str^) TO LAST(str^) DO
-                  str[i] := c
-                END
-              END
-            END;
-            RETURN str
-          END
-        |
-          P.String => RETURN ListToString(args)
-        |
-          P.StringLength => RETURN FromLR(FLOAT(NUMBER(Str(x)^),LONGREAL))
-        |
-          P.StringRef => 
-          WITH str = Str(x)^, yi = TRUNC(FromO(y)) DO
-            IF yi < FIRST(str) OR yi > LAST(str) THEN
-              RETURN Error("string index out of bounds")
-            ELSE
-              RETURN Character(str[yi])
-            END
-          END
-        |
-          P.StringSet =>
-          WITH z = Third(args), str = Str(x)^, yi = TRUNC(FromO(y)) DO
-            IF yi < FIRST(str) OR yi > LAST(str) THEN
-              RETURN Error("string index out of bounds")
-            ELSE
-              str[yi] := Char(z);
-              RETURN z
-            END
-          END
-        |
-          P.Substring =>
-          VAR 
-            str := Str(x);
-            start := TRUNC(FromO(y));
-            end := TRUNC(FromO(Third(args)));
-          BEGIN
-            (* crimp pointers *)
-            start := MAX(start, 0);
-            start := MIN(start, LAST(str^));
+    IF t.id > ORD(LAST(P)) THEN
+      (* call definer method *)
+      <* ASSERT ISTYPE(t.definer, ExtDefiner) *>
+      free := FALSE;
+      RETURN NARROW(t.definer,ExtDefiner).apply(t,interp,args)
+    ELSE
+      (* t.id <= ORD(LAST(P)) *)
 
-            end := MAX(end, LAST(str^));
-            end := MAX(end,start);
-
-            WITH res = NEW(String, end-start) DO
-              res^ := SUBARRAY(str^, start, end-start);
-              RETURN res
-            END
-          END
-        |
-          
-          P.StringAppend => RETURN StringAppend(args)
-        |
-          P.StringToList =>
-          VAR
-            result : Pair := NIL;
-            str := Str(x);
-          BEGIN
-            FOR i := LAST(str^) TO FIRST(str^) BY -1 DO
-              result := Cons(Character(str[i]),result,interp)
-            END;
-            RETURN result
-          END
-        |
-          P.ListToString => RETURN ListToString(x)
-        |
-          P.SymbolToString => 
-          IF x = NIL OR NOT ISTYPE(x, Symbol) THEN
-            RETURN Error("Not a symbol") 
-          END;
-          RETURN SchemeString.FromText(SchemeSymbol.ToText(x))
-        |
-          P.StringToSymbol => 
-            RETURN SchemeSymbol.Symbol(Text.FromChars(Str(x)^))
-        |
-          P.Exp => RETURN FromLR(Math.exp(FromO(x)))
-        |
-          P.Log => RETURN FromLR(Math.log(FromO(x)))
-        |
-          P.Sin => RETURN FromLR(Math.sin(FromO(x)))
-        |
-          P.Cos => RETURN FromLR(Math.cos(FromO(x)))
-        |
-          P.Tan => RETURN FromLR(Math.tan(FromO(x)))
-        |
-          P.Acos => RETURN FromLR(Math.acos(FromO(x)))
-        |
-          P.Asin => RETURN FromLR(Math.asin(FromO(x)))
-        |
-          P.Atan => RETURN FromLR(Math.atan(FromO(x)))
-        |
-          
-          P.NumberToString => RETURN NumberToString(x,y)
-        |
-          P.StringToNumber => RETURN StringToNumber(x,y)
-        |
-          P.CharQ => RETURN Truth(x # NIL AND ISTYPE(x, SchemeChar.T))
-        |
-          
-          P.CharAlphabeticQ => RETURN Truth(Char(x) IN LowerCase + UpperCase)
-        |
-          P.CharNumericQ => RETURN Truth(Char(x) IN Digits)
-        |
-          P.CharWhitespaceQ => RETURN Truth(Char(x) IN White)
-        |
-          
-          P.CharUppercaseQ => RETURN Truth(Char(x) IN UpperCase)
-        |
-          P.CharLowercaseQ => RETURN Truth(Char(x) IN LowerCase)
-        |
-          P.CharToInteger => RETURN FromLR(FLOAT(ORD(Char(x)),LONGREAL))
-        |
-          
-          P.IntegerToChar => RETURN IChr(TRUNC(FromO(x)))
-        |
-          P.CharUpcase => RETURN Character(Upcase(Char(x)))
-        |
-          P.CharDowncase => RETURN Character(Downcase(Char(x)))
-        |
-          
-          P.VectorQ => RETURN Truth(x # NIL AND ISTYPE(x, Vector))
-        |
-          P.MakeVector =>
-          WITH num = TRUNC(FromO(x)) DO
-            IF num < 0 THEN
-              RETURN Error("Can't make vector of size " & Fmt.Int(num))
-            END;
-            WITH vec = NEW(Vector, num) DO
-              IF y # NIL THEN
-                FOR i := 0 TO num-1 DO
-                  vec[i] := y
-                END
-              END;
-              RETURN vec
-            END
-          END
-        |
-          P.Vector => RETURN ListToVector(args)
-        |
-          P.VectorLength => RETURN FromLR(FLOAT(NUMBER(Vec(x)^),LONGREAL))
-        |
-          
-          P.VectorRef => RETURN Vec(x)[TRUNC(FromO(y))]
-        |
-          P.VectorSet => 
-          WITH v = Third(args) DO
-            Vec(x)[TRUNC(FromO(y))] := v;
-            RETURN v 
-          END
-        |
-          P.ListToVector => RETURN ListToVector(x)
-        |
-          P.Map => free := FALSE; RETURN Map(Proc(x), Rest(args), interp, List1(NIL))
-        |
-          
-          P.Foreach =>free := FALSE; RETURN Map(Proc(x), Rest(args), interp, NIL)
-        |
-          P.CallCC =>
-          (* make a new arbitrary text *)
-          WITH txt = "CallCC" & Fmt.Int(123),
-               proc =  NEW(SchemeContinuation.T).init(txt) DO
-            TRY RETURN Proc(x).apply(interp, List1(proc))
-            EXCEPT E(e) => IF e = txt THEN RETURN proc.value ELSE RAISE E(e) END
-            END
-          END
+      CASE VAL(t.id,P) OF
+        P.Eq => RETURN NumCompare(args, '=')
+      |
+        P.Lt => RETURN NumCompare(args, '<')
+      |
+        P.Gt => RETURN NumCompare(args, '>')
+      |
+        P.Ge => RETURN NumCompare(args, 'G')
+      | 
+        P.Le => RETURN NumCompare(args, 'L')
+      |
+        P.Abs =>  RETURN FromLR(ABS(FromO(x)))
+      |
+        P.EofObject =>  RETURN Truth(SchemeInputPort.IsEOF(x))
+      |
+        P.EqQ => RETURN Truth(x = y)
+      |
+        P.EqualQ => RETURN Truth(Equal(x,y))
+      |
+        P.Force => 
+        IF x = NIL OR NOT ISTYPE(x,Procedure) THEN RETURN x
+        ELSE RETURN Proc(x).apply(interp,NIL)
+        END
+      |
         
-        |
-          P.VectorToList => RETURN VectorToList(x)
-        |
-          P.Load => RETURN interp.loadFile(x)
-        |
-          P.Display => RETURN Write(x, OutPort(y, interp), FALSE)
-        |
-          
-          P.InputPortQ => RETURN Truth(x # NIL AND ISTYPE(x,SchemeInputPort.T))
-        |
-          P.CurrentInputPort => RETURN interp.input
-        |
-          P.OpenInputFile => RETURN OpenInputFile(x)
-        |
-          
-          P.CloseInputPort => RETURN InPort(x, interp).close()
-        |
-          P.OutputportQ => RETURN Truth(x # NIL AND ISTYPE(x,Wr.T))
-        |
-          P.CurrentOutputPort => RETURN interp.output
-        |
-          
-          P.OpenOutputFile => RETURN OpenOutputFile(x)
-        |
-          P.CloseOutputPort => 
-          TRY
-            Wr.Close(OutPort(x, interp)); RETURN True()
-          EXCEPT
-            Wr.Failure(err) => RAISE E("close-output-port: Wr.Failure: " & AL.Format(err))
-          END
-
-        |
-          P.ReadChar => RETURN InPort(x, interp).readChar()
-        |
-          P.PeekChar => RETURN InPort(x, interp).peekChar()
-        |
-          P.Eval => RETURN interp.evalInGlobalEnv(x)
-        |
-          P.Quotient =>
-          VAR d := FromO(x) / FromO(y); BEGIN
-            IF d > 0.0d0 THEN
-              RETURN FromLR(FLOAT(FLOOR(d),LONGREAL))
-            ELSE
-              RETURN FromLR(FLOAT(CEILING(d),LONGREAL))
+        P.Car => RETURN PedanticFirst(x)
+      |
+        P.Floor => RETURN FromLR(FLOAT(FLOOR(FromO(x)),LONGREAL))
+      |
+        P.Ceiling => RETURN FromLR(FLOAT(CEILING(FromO(x)),LONGREAL))
+      |
+        P.Cons => RETURN Cons(x,y,interp)
+      |
+        
+        P.Divide => RETURN NumCompute(Rest(args), '/', FromO(x))
+      |
+        P.Length => RETURN FromLR(FLOAT(Length(x),LONGREAL))
+      |
+        P.List => free := FALSE; RETURN args
+      |
+        P.ListQ => RETURN Truth(IsList(x))
+      |
+        P.Apply => free := FALSE; 
+        RETURN Proc(x).apply(interp,ListStar(Rest(args)))
+      |
+        
+        P.Max => RETURN NumCompute(args, 'X', FromO(x))
+      |
+        P.Min => RETURN NumCompute(args, 'N', FromO(x))
+      |
+        P.Minus => RETURN NumCompute(Rest(args), '-', FromO(x))
+      |
+        P.Newline => 
+        TRY
+          Wr.PutChar(OutPort(x,interp), '\n');
+          Wr.Flush(OutPort(x,interp));
+          RETURN True()
+        EXCEPT
+          Wr.Failure(err) => RAISE E("newline: Wr.Failure: " & AL.Format(err))
+        END
+      |
+        
+        P.Not => RETURN Truth(x = False())
+      |
+        P.NullQ => RETURN Truth(x = NIL)
+      |
+        P.NumberQ => RETURN Truth(x # NIL AND ISTYPE(x, SchemeLongReal.T))
+      |
+        P.PairQ => RETURN Truth(x # NIL AND ISTYPE(x,Pair))
+      |
+        P.Plus => RETURN NumCompute(args, '+', 0.0d0)
+      |
+        
+        P.ProcedureQ => RETURN Truth(x # NIL AND ISTYPE(x,Procedure))
+      |
+        P.Read => RETURN InPort(x, interp).read()
+      |
+        P.Cdr => RETURN PedanticRest(x)
+      |
+        P.Round => RETURN FromLR(FLOAT(ROUND(FromO(x)),LONGREAL))
+      |
+        P.Second => RETURN Second(x)
+      |
+        
+        P.SymbolQ => RETURN Truth(x # NIL AND ISTYPE(x,Symbol))
+      |
+        P.Times => RETURN NumCompute(args, '*', 1.0d0)
+      |
+        P.Truncate => RETURN FromLR(FLOAT(TRUNC(FromO(x)),LONGREAL))
+      |
+        P.Write => RETURN Write(x, OutPort(y, interp), TRUE)
+      |
+        P.Append => free := FALSE; 
+        IF args = NIL THEN RETURN NIL
+        ELSE RETURN Append(args)
+        END
+      |
+        
+        P.BooleanQ => RETURN Truth(x = True() OR x = False())
+      |
+        P.Sqrt => RETURN FromLR(Math.sqrt(FromO(x)))
+      |
+        P.Expt => RETURN FromLR(Math.pow(FromO(x),FromO(y)))
+      |
+        P.Reverse => RETURN Reverse(x)
+      |
+        P.Assoc => RETURN MemberAssoc(x, y, 'a', ' ')
+      |
+        P.AssQ => RETURN MemberAssoc(x, y, 'a', 'q')
+      |
+        P.AssV => RETURN MemberAssoc(x, y, 'a', 'v')
+      |
+        P.Member =>RETURN MemberAssoc(x, y, 'm', ' ')
+      |
+        P.MemQ => RETURN MemberAssoc(x, y, 'm', 'q')
+      |
+        P.MemV => RETURN MemberAssoc(x, y, 'm', 'v')
+      |
+        P.EqvQ => RETURN Truth(Eqv(x,y))
+      |
+        
+        P.ListRef =>  
+        VAR p := x; BEGIN
+          FOR k := TRUNC(FromO(y)) TO 1 BY -1 DO p:= Rest(p) END;
+          RETURN First(p)
+        END
+      |
+        P.ListTail =>           
+        VAR p := x; BEGIN
+          FOR k := TRUNC(FromO(y)) TO 1 BY -1 DO p:= Rest(p) END;
+          RETURN p
+        END
+      |
+        P.StringQ => RETURN Truth(x # NIL AND ISTYPE(x,String))
+      |
+        P.MakeString =>
+        VAR
+          str := NEW(String, TRUNC(FromO(x)));
+        BEGIN
+          IF y # NIL THEN
+            WITH c = Char(y) DO
+              FOR i := FIRST(str^) TO LAST(str^) DO
+                str[i] := c
+              END
             END
+          END;
+          RETURN str
+        END
+      |
+        P.String => RETURN ListToString(args)
+      |
+        P.StringLength => RETURN FromLR(FLOAT(NUMBER(Str(x)^),LONGREAL))
+      |
+        P.StringRef => 
+        WITH str = Str(x)^, yi = TRUNC(FromO(y)) DO
+          IF yi < FIRST(str) OR yi > LAST(str) THEN
+            RETURN Error("string index out of bounds")
+          ELSE
+            RETURN Character(str[yi])
           END
-        |
-          P.Remainder => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
-                         (* this must be wrong for negative y *)
-        |
-          P.Modulo => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
-        |
-          P.Third => RETURN Third(x)
-        |
-          P.EofObjectQ => RETURN Truth(x = SchemeInputPort.EOF)
-        |
-          P.Gcd =>
-          IF args = NIL THEN RETURN Zero ELSE RETURN Gcd(args) END
-        |
-          P.Lcm =>
-          IF args = NIL THEN RETURN One ELSE RETURN Lcm(args) END
-        |
-          P.Cxr =>
-          VAR p := x; BEGIN
-            FOR i := Text.Length(t.name)-2 TO 1 BY -1 DO
-              IF Text.GetChar(t.name,i) = 'a' THEN
-                p := PedanticFirst(p)
-              ELSE
-                p := PedanticRest(p)
+        END
+      |
+        P.StringSet =>
+        WITH z = Third(args), str = Str(x)^, yi = TRUNC(FromO(y)) DO
+          IF yi < FIRST(str) OR yi > LAST(str) THEN
+            RETURN Error("string index out of bounds")
+          ELSE
+            str[yi] := Char(z);
+            RETURN z
+          END
+        END
+      |
+        P.Substring =>
+        VAR 
+          str := Str(x);
+          start := TRUNC(FromO(y));
+          end := TRUNC(FromO(Third(args)));
+        BEGIN
+          (* crimp pointers *)
+          start := MAX(start, 0);
+          start := MIN(start, LAST(str^));
+
+          end := MAX(end, LAST(str^));
+          end := MAX(end,start);
+
+          WITH res = NEW(String, end-start) DO
+            res^ := SUBARRAY(str^, start, end-start);
+            RETURN res
+          END
+        END
+      |
+        
+        P.StringAppend => RETURN StringAppend(args)
+      |
+        P.StringToList =>
+        VAR
+          result : Pair := NIL;
+          str := Str(x);
+        BEGIN
+          FOR i := LAST(str^) TO FIRST(str^) BY -1 DO
+            result := Cons(Character(str[i]),result,interp)
+          END;
+          RETURN result
+        END
+      |
+        P.ListToString => RETURN ListToString(x)
+      |
+        P.SymbolToString => 
+        IF x = NIL OR NOT ISTYPE(x, Symbol) THEN
+          RETURN Error("Not a symbol") 
+        END;
+        RETURN SchemeString.FromText(SchemeSymbol.ToText(x))
+      |
+        P.StringToSymbol => 
+        RETURN SchemeSymbol.Symbol(Text.FromChars(Str(x)^))
+      |
+        P.Exp => RETURN FromLR(Math.exp(FromO(x)))
+      |
+        P.Log => RETURN FromLR(Math.log(FromO(x)))
+      |
+        P.Sin => RETURN FromLR(Math.sin(FromO(x)))
+      |
+        P.Cos => RETURN FromLR(Math.cos(FromO(x)))
+      |
+        P.Tan => RETURN FromLR(Math.tan(FromO(x)))
+      |
+        P.Acos => RETURN FromLR(Math.acos(FromO(x)))
+      |
+        P.Asin => RETURN FromLR(Math.asin(FromO(x)))
+      |
+        P.Atan => RETURN FromLR(Math.atan(FromO(x)))
+      |
+        
+        P.NumberToString => RETURN NumberToString(x,y)
+      |
+        P.StringToNumber => RETURN StringToNumber(x,y)
+      |
+        P.CharQ => RETURN Truth(x # NIL AND ISTYPE(x, SchemeChar.T))
+      |
+        
+        P.CharAlphabeticQ => RETURN Truth(Char(x) IN LowerCase + UpperCase)
+      |
+        P.CharNumericQ => RETURN Truth(Char(x) IN Digits)
+      |
+        P.CharWhitespaceQ => RETURN Truth(Char(x) IN White)
+      |
+        
+        P.CharUppercaseQ => RETURN Truth(Char(x) IN UpperCase)
+      |
+        P.CharLowercaseQ => RETURN Truth(Char(x) IN LowerCase)
+      |
+        P.CharToInteger => RETURN FromLR(FLOAT(ORD(Char(x)),LONGREAL))
+      |
+        
+        P.IntegerToChar => RETURN IChr(TRUNC(FromO(x)))
+      |
+        P.CharUpcase => RETURN Character(Upcase(Char(x)))
+      |
+        P.CharDowncase => RETURN Character(Downcase(Char(x)))
+      |
+        
+        P.VectorQ => RETURN Truth(x # NIL AND ISTYPE(x, Vector))
+      |
+        P.MakeVector =>
+        WITH num = TRUNC(FromO(x)) DO
+          IF num < 0 THEN
+            RETURN Error("Can't make vector of size " & Fmt.Int(num))
+          END;
+          WITH vec = NEW(Vector, num) DO
+            IF y # NIL THEN
+              FOR i := 0 TO num-1 DO
+                vec[i] := y
               END
             END;
-            RETURN p
+            RETURN vec
           END
-        |
-          P.OddQ => RETURN Truth(ABS(TRUNC(FromO(x)) MOD 2) # 0)
-        |
-          P.EvenQ => RETURN Truth(ABS(TRUNC(FromO(x)) MOD 2) = 0)
-        |
-          P.ZeroQ => RETURN Truth(FromO(x) = 0.0d0)
-        |
-          P.PositiveQ => RETURN Truth(FromO(x) > 0.0d0)
-        |
-          P.NegativeQ => RETURN Truth(FromO(x) < 0.0d0)
-        |
-          P.CharCmpEq => RETURN Truth(CharCompare(x, y, FALSE) =  0)
-        |
-          P.CharCmpLt => RETURN Truth(CharCompare(x, y, FALSE) <  0)
-        |
-          P.CharCmpGt =>RETURN Truth(CharCompare(x, y, FALSE) >  0)
-        |
-          P.CharCmpGe => RETURN Truth(CharCompare(x, y, FALSE) >=  0)
-        |
-          P.CharCmpLe =>RETURN Truth(CharCompare(x, y, FALSE) <=  0)
-        |
-          P.CharCiCmpEq =>RETURN Truth(CharCompare(x, y, TRUE) =  0)
-        |
-          P.CharCiCmpLt =>RETURN Truth(CharCompare(x, y, TRUE) <  0)
-        |
-          P.CharCiCmpGt =>RETURN Truth(CharCompare(x, y, TRUE) >  0)
-        |
-          P.CharCiCmpGe =>RETURN Truth(CharCompare(x, y, TRUE) >=  0)
-        |
-          P.CharCiCmpLe =>RETURN Truth(CharCompare(x, y, TRUE) <=  0)
-        |
-          P.StringCmpEq => RETURN Truth(StringCompare(x, y, FALSE) =  0)
-        |
-          P.StringCmpLt => RETURN Truth(StringCompare(x, y, FALSE) <  0)
-        |
-          P.StringCmpGt => RETURN Truth(StringCompare(x, y, FALSE) >  0)
-        |
-          P.StringCmpGe => RETURN Truth(StringCompare(x, y, FALSE) >= 0)
-        |
-          P.StringCmpLe => RETURN Truth(StringCompare(x, y, FALSE) <= 0)
-        |
-          P.StringCiCmpEq => RETURN Truth(StringCompare(x, y, TRUE) =  0)
-        |
-          P.StringCiCmpLt => RETURN Truth(StringCompare(x, y, TRUE) <  0)
-        |
-          P.StringCiCmpGt => RETURN Truth(StringCompare(x, y, TRUE) >  0)
-        |
-          P.StringCiCmpGe => RETURN Truth(StringCompare(x, y, TRUE) >= 0)
-        |
-          P.StringCiCmpLe => RETURN Truth(StringCompare(x, y, TRUE) <= 0)
-        |
-          P.InexactQ => RETURN Truth(NOT IsExact(x))
-        |
-          P.ExactQ, P.IntegerQ => RETURN Truth(IsExact(x))
-        |
-          P.CallWithInputFile =>
-          VAR p : SchemeInputPort.T := NIL;
-          BEGIN
-            TRY p := OpenInputFile(x);
-                z := Proc(y).apply(interp, List1(p)) 
-            FINALLY
-                IF p # NIL THEN EVAL p.close() END
-            END;
-            RETURN z
+        END
+      |
+        P.Vector => RETURN ListToVector(args)
+      |
+        P.VectorLength => RETURN FromLR(FLOAT(NUMBER(Vec(x)^),LONGREAL))
+      |
+        
+        P.VectorRef => RETURN Vec(x)[TRUNC(FromO(y))]
+      |
+        P.VectorSet => 
+        WITH v = Third(args) DO
+          Vec(x)[TRUNC(FromO(y))] := v;
+          RETURN v 
+        END
+      |
+        P.ListToVector => RETURN ListToVector(x)
+      |
+        P.Map => free := FALSE; RETURN Map(Proc(x), Rest(args), interp, List1(NIL))
+      |
+        
+        P.Foreach =>free := FALSE; RETURN Map(Proc(x), Rest(args), interp, NIL)
+      |
+        P.CallCC =>
+        (* make a new arbitrary text *)
+        WITH txt = "CallCC" & Fmt.Int(123),
+             proc =  NEW(SchemeContinuation.T).init(txt) DO
+          TRY RETURN Proc(x).apply(interp, List1(proc))
+          EXCEPT E(e) => IF e = txt THEN RETURN proc.value ELSE RAISE E(e) END
           END
-        |
-          P.CallWithOutputFile => 
-          VAR p : Wr.T := NIL;
-          BEGIN
-            TRY p := OpenOutputFile(x);
-                z := Proc(y).apply(interp, List1(p))
-            FINALLY
-                IF p # NIL THEN 
-                  TRY
-                    Wr.Close(p) 
-                  EXCEPT
-                    Wr.Failure(err) => RAISE E("call-with-output-file: on close, Wr.Failure: " & AL.Format(err))
+        END
+        
+      |
+        P.VectorToList => RETURN VectorToList(x)
+      |
+        P.Load => RETURN interp.loadFile(x)
+      |
+        P.Display => RETURN Write(x, OutPort(y, interp), FALSE)
+      |
+        
+        P.InputPortQ => RETURN Truth(x # NIL AND ISTYPE(x,SchemeInputPort.T))
+      |
+        P.CurrentInputPort => RETURN interp.input
+      |
+        P.OpenInputFile => RETURN OpenInputFile(x)
+      |
+        
+        P.CloseInputPort => RETURN InPort(x, interp).close()
+      |
+        P.OutputportQ => RETURN Truth(x # NIL AND ISTYPE(x,Wr.T))
+      |
+        P.CurrentOutputPort => RETURN interp.output
+      |
+        
+        P.OpenOutputFile => RETURN OpenOutputFile(x)
+      |
+        P.CloseOutputPort => 
+        TRY
+          Wr.Close(OutPort(x, interp)); RETURN True()
+        EXCEPT
+          Wr.Failure(err) => RAISE E("close-output-port: Wr.Failure: " & AL.Format(err))
+        END
 
-                  END
-                END
-            END;
-            RETURN z
+      |
+        P.ReadChar => RETURN InPort(x, interp).readChar()
+      |
+        P.PeekChar => RETURN InPort(x, interp).peekChar()
+      |
+        P.Eval => RETURN interp.evalInGlobalEnv(x)
+      |
+        P.Quotient =>
+        VAR d := FromO(x) / FromO(y); BEGIN
+          IF d > 0.0d0 THEN
+            RETURN FromLR(FLOAT(FLOOR(d),LONGREAL))
+          ELSE
+            RETURN FromLR(FLOAT(CEILING(d),LONGREAL))
           END
-        |
-          P.Tanh => RETURN FromLR(Math.tanh(FromO(x)))
-        |
-          P.New => RETURN False() (* not impl *)
-        |
-          P.Class => RETURN False() (* not impl *)
-        |
-          P.Method => RETURN False() (* not impl *)
-        |
-          P.Exit => 
-          IF x = NIL THEN Process.Exit(0) 
-          ELSE Process.Exit(TRUNC(FromO(x)))
+        END
+      |
+        P.Remainder => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
+        (* this must be wrong for negative y *)
+      |
+        P.Modulo => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
+      |
+        P.Third => RETURN Third(x)
+      |
+        P.EofObjectQ => RETURN Truth(x = SchemeInputPort.EOF)
+      |
+        P.Gcd =>
+        IF args = NIL THEN RETURN Zero ELSE RETURN Gcd(args) END
+      |
+        P.Lcm =>
+        IF args = NIL THEN RETURN One ELSE RETURN Lcm(args) END
+      |
+        P.Cxr =>
+        VAR p := x; BEGIN
+          FOR i := Text.Length(t.name)-2 TO 1 BY -1 DO
+            IF Text.GetChar(t.name,i) = 'a' THEN
+              p := PedanticFirst(p)
+            ELSE
+              p := PedanticRest(p)
+            END
           END;
-          <* ASSERT FALSE *>
-        |
-          P.SetCar => RETURN SetFirst(x,y)
-        |
-          P.SetCdr => RETURN SetRest(x,y)
-        |
-          P.TimeCall => RETURN False() (* not impl *)
-        |
-          P.MacroExpand => RETURN SchemeMacro.MacroExpand(interp,x)
-        |
-          P.Error => RETURN Error(Stringify(args))
-        |
-          P.ListStar => free := FALSE; RETURN ListStar(args)
-	|
-	  P.TimeNow => RETURN SchemeLongReal.FromLR(Time.Now())
-  |
-    P.TimeToString => 
-    CONST
-      Months = ARRAY Date.Month OF TEXT {
-      "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
-      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" 
-      };
-    VAR
-      t := SchemeLongReal.FromO(x);
-      d : Date.T;
-    BEGIN
-      IF t > FLOAT(LAST(CARDINAL),Time.T) OR t < 0.0d0 THEN
-        RETURN Error("Time out of range " & Fmt.LongReal(t))
-      END;
-
-      d := Date.FromTime(t);
-      RETURN SchemeString.FromText(Fmt.F("%04s-%3s-%02s ",
-                                         Fmt.Int(d.year),
-                                         Months[d.month],
-                                         Fmt.Int(d.day)) &
-                                   Fmt.F("%02s:%02s:%02s.%03s",
-                                         Fmt.Int(d.hour),
-                                         Fmt.Int(d.minute),
-                                         Fmt.Int(d.second),
-                                         Fmt.Int(TRUNC((t - FLOAT(TRUNC(t),Time.T))*1000.0d0))))
-    END
-    |
-      P.GC => RTCollector.Collect(); RETURN True()
-    |
-      P.FmtReal =>
-      WITH z = Third(args) DO
-        VAR
-          style : Fmt.Style;
+          RETURN p
+        END
+      |
+        P.OddQ => RETURN Truth(ABS(TRUNC(FromO(x)) MOD 2) # 0)
+      |
+        P.EvenQ => RETURN Truth(ABS(TRUNC(FromO(x)) MOD 2) = 0)
+      |
+        P.ZeroQ => RETURN Truth(FromO(x) = 0.0d0)
+      |
+        P.PositiveQ => RETURN Truth(FromO(x) > 0.0d0)
+      |
+        P.NegativeQ => RETURN Truth(FromO(x) < 0.0d0)
+      |
+        P.CharCmpEq => RETURN Truth(CharCompare(x, y, FALSE) =  0)
+      |
+        P.CharCmpLt => RETURN Truth(CharCompare(x, y, FALSE) <  0)
+      |
+        P.CharCmpGt =>RETURN Truth(CharCompare(x, y, FALSE) >  0)
+      |
+        P.CharCmpGe => RETURN Truth(CharCompare(x, y, FALSE) >=  0)
+      |
+        P.CharCmpLe =>RETURN Truth(CharCompare(x, y, FALSE) <=  0)
+      |
+        P.CharCiCmpEq =>RETURN Truth(CharCompare(x, y, TRUE) =  0)
+      |
+        P.CharCiCmpLt =>RETURN Truth(CharCompare(x, y, TRUE) <  0)
+      |
+        P.CharCiCmpGt =>RETURN Truth(CharCompare(x, y, TRUE) >  0)
+      |
+        P.CharCiCmpGe =>RETURN Truth(CharCompare(x, y, TRUE) >=  0)
+      |
+        P.CharCiCmpLe =>RETURN Truth(CharCompare(x, y, TRUE) <=  0)
+      |
+        P.StringCmpEq => RETURN Truth(StringCompare(x, y, FALSE) =  0)
+      |
+        P.StringCmpLt => RETURN Truth(StringCompare(x, y, FALSE) <  0)
+      |
+        P.StringCmpGt => RETURN Truth(StringCompare(x, y, FALSE) >  0)
+      |
+        P.StringCmpGe => RETURN Truth(StringCompare(x, y, FALSE) >= 0)
+      |
+        P.StringCmpLe => RETURN Truth(StringCompare(x, y, FALSE) <= 0)
+      |
+        P.StringCiCmpEq => RETURN Truth(StringCompare(x, y, TRUE) =  0)
+      |
+        P.StringCiCmpLt => RETURN Truth(StringCompare(x, y, TRUE) <  0)
+      |
+        P.StringCiCmpGt => RETURN Truth(StringCompare(x, y, TRUE) >  0)
+      |
+        P.StringCiCmpGe => RETURN Truth(StringCompare(x, y, TRUE) >= 0)
+      |
+        P.StringCiCmpLe => RETURN Truth(StringCompare(x, y, TRUE) <= 0)
+      |
+        P.InexactQ => RETURN Truth(NOT IsExact(x))
+      |
+        P.ExactQ, P.IntegerQ => RETURN Truth(IsExact(x))
+      |
+        P.CallWithInputFile =>
+        VAR p : SchemeInputPort.T := NIL;
         BEGIN
-          IF    SchemeSymbol.SymEq(y, "auto") THEN
-            style := Fmt.Style.Auto
-          ELSIF SchemeSymbol.SymEq(y, "fix") THEN
-            style := Fmt.Style.Fix
-          ELSIF SchemeSymbol.SymEq(y, "sci") THEN
-            style := Fmt.Style.Sci
-          ELSE
-            RETURN Error("Unknown formatting style " & Stringify(y))
+          TRY p := OpenInputFile(x);
+            z := Proc(y).apply(interp, List1(p)) 
+          FINALLY
+            IF p # NIL THEN EVAL p.close() END
           END;
-
-          RETURN SchemeString.FromText(Fmt.LongReal(FromO(x),
-                                                    style,
-                                                    TRUNC(FromO(z))))
+          RETURN z
         END
+      |
+        P.CallWithOutputFile => 
+        VAR p : Wr.T := NIL;
+        BEGIN
+          TRY p := OpenOutputFile(x);
+            z := Proc(y).apply(interp, List1(p))
+          FINALLY
+            IF p # NIL THEN 
+              TRY
+                Wr.Close(p) 
+              EXCEPT
+                Wr.Failure(err) => RAISE E("call-with-output-file: on close, Wr.Failure: " & AL.Format(err))
+
+              END
+            END
+          END;
+          RETURN z
+        END
+      |
+        P.Tanh => RETURN FromLR(Math.tanh(FromO(x)))
+      |
+        P.New => RETURN False() (* not impl *)
+      |
+        P.Class => RETURN False() (* not impl *)
+      |
+        P.Method => RETURN False() (* not impl *)
+      |
+        P.Exit => 
+        IF x = NIL THEN Process.Exit(0) 
+        ELSE Process.Exit(TRUNC(FromO(x)))
+        END;
+        <* ASSERT FALSE *>
+      |
+        P.SetCar => RETURN SetFirst(x,y)
+      |
+        P.SetCdr => RETURN SetRest(x,y)
+      |
+        P.TimeCall => RETURN False() (* not impl *)
+      |
+        P.MacroExpand => RETURN SchemeMacro.MacroExpand(interp,x)
+      |
+        P.Error => RETURN Error(Stringify(args))
+      |
+        P.ListStar => free := FALSE; RETURN ListStar(args)
       END
-  | P.Stringify => RETURN SchemeString.FromText(Stringify(x))
-
-        |
-          P.JailBreak =>
-          IF interp.jailBreak = NIL THEN
-            RETURN Error("No jailbreak defined")
-          ELSE
-            free := FALSE; RETURN interp.jailBreak.apply(args)
-          END
-        |
-          P.M3Op =>
-          IF interp.m3TableOps = NIL THEN
-            RETURN Error("No table ops defined")
-          ELSE
-            free := FALSE; RETURN interp.m3TableOps.apply(args)
-          END
-        END
+    END
   END Prims;
 
 PROCEDURE IsList(x : Object) : BOOLEAN =

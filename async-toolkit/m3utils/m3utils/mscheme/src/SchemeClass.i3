@@ -8,7 +8,6 @@
 *)
 INTERFACE SchemeClass;
 IMPORT Scheme, SchemeInputPort, Wr, SchemePair;
-IMPORT SchemeJailBreak, SchemeM3TableOps;
 
 REVEAL Scheme.T <: Private;
 
@@ -17,14 +16,9 @@ TYPE
     input : SchemeInputPort.T;
     output : Wr.T;
     
-    jailBreak : SchemeJailBreak.T := NIL;
-    m3TableOps : SchemeM3TableOps.T := NIL;
-
     freePairs : SchemePair.T := NIL;
     (* this is a list of free pairs that can be used "freely" by the
        interpreter for recycling memory w/o GC *)
-  METHODS
-    setTableOps(to : SchemeM3TableOps.T);
   END;
 
 (* recycling routines for cons cells *)

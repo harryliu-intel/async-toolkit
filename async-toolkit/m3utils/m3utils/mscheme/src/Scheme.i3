@@ -12,7 +12,6 @@ IMPORT SchemeSymbol;
 IMPORT SchemeString, SchemeVector;
 IMPORT Pathname;
 IMPORT Rd, OSError, Wr;
-IMPORT SchemeJailBreak;
 
 EXCEPTION E(TEXT);
 
@@ -70,13 +69,13 @@ TYPE
     evalList(list : Object; env : SchemeEnvironmentSuper.T) : Object RAISES { E };
     (* always a SchemePair *)
      
-    setJailBreak(jb : SchemeJailBreak.T);
-
     bind(var : Symbol; val : Object);
     (* bind (define) some object to symbol in var from Modula-3 *)
     
     setInGlobalEnv(var : Symbol; val : Object) RAISES { E };
     (* set! var val *)
+
+    setPrimitives(schemePrimDefiner : REFANY (*SchemePrimitive.Definer*));
 
   END;
 

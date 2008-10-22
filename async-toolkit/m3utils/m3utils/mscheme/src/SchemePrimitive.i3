@@ -13,10 +13,27 @@ TYPE
   T <: Public;
 
   Public = SchemeProcedure.T OBJECT METHODS
-    init(id : INTEGER; minArgs, maxArgs : CARDINAL) : T;
+    init(id : CARDINAL; 
+         definer : Definer;  (* used for extension primitives *)
+         minArgs, maxArgs : CARDINAL) : T;
   END;
 
-PROCEDURE InstallPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T;
+  Definer <: PubDefiner;
+
+  PubDefiner = OBJECT METHODS
+    installPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T;
+  END;
+
+  DefaultDefiner <: Definer;
+
+  ExtDefiner <: PubExtensibleDefiner;
+
+  PubExtensibleDefiner = DefaultDefiner OBJECT METHODS
+    init() : ExtDefiner;
+    addPrim(name : TEXT; 
+            proc : SchemeProcedure.T; 
+            minArgs, maxArgs : CARDINAL);
+  END;
 
 CONST Brand = "SchemePrimitive";
 

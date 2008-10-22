@@ -282,11 +282,13 @@ PROCEDURE Set(t : T; var, val : Object) : Object RAISES { E } =
 
 PROCEDURE DefPrim(t : T; 
                   name : TEXT; 
-                  id : INTEGER; minArgs, maxArgs : CARDINAL) : T =
+                  id : INTEGER;
+                  definer : REFANY;
+                  minArgs, maxArgs : CARDINAL) : T =
   BEGIN
     <*ASSERT NOT t.dead*>
     EVAL t.define(SchemeSymbol.Symbol(name), 
-                  NEW(SchemePrimitive.T).init(id, minArgs, maxArgs));
+                  NEW(SchemePrimitive.T).init(id, definer, minArgs, maxArgs));
     RETURN t
   END DefPrim;
     

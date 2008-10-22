@@ -61,6 +61,7 @@ TYPE
     set(var, val : SchemeObject.T) : SchemeObject.T RAISES { E };
     defPrim(nam : TEXT;
             id : INTEGER; 
+            definer : REFANY (* SchemePrimitive.Definer *);
             minArgs : CARDINAL; 
             maxArgs : CARDINAL := LAST(CARDINAL)) : T;
     markAsDead(); (* a debugging thing *)

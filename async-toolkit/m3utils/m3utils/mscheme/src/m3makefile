@@ -16,12 +16,8 @@ end
 import ("libm3")
 import ("cit_util")
 
-Generic_module("SchemeAutoTbl")
-template ("schemeautotbl")
-
 Module("Scheme")
 Interface("SchemeClass")
-Interface("SchemeJailBreak")
 
 Module("SchemePair")
 
@@ -38,7 +34,7 @@ interface("SchemeClosureClass")
 
 Module("SchemeMacro")
 
-module("SchemePrimitive")
+Module("SchemePrimitive")
 
 Module("SchemeEnvironment")
 Interface("SchemeEnvironmentSuper")
@@ -60,16 +56,5 @@ Module("SchemeString")
 Interface("SchemeVector")
 
 Module("SchemeContinuation")
-
-Module ("SchemeM3TableOps")
-
-KeyPair("CardAtom", "Cardinal", "Atom")
-
-table("CARef", "CardAtomPair", "Refany")
-
-Module("M3toSTextString")
-
-Module("M3toSRefany")
-SchemeAutoTbl("TextRef", "TextRefTbl", "M3toSTextString", "M3toSRefany")
 
 library ("mscheme")

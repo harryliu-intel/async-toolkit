@@ -18,8 +18,6 @@ IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
 <*NOWARN*>IMPORT Debug;
-IMPORT SchemeM3TableOps;
-IMPORT TextRefSchemeAutoTbl;
 
 TYPE Pair = SchemePair.T;
 
@@ -29,6 +27,7 @@ REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
     globalEnvironment : SchemeEnvironment.T;
     interrupter : Interrupter := NIL;
+    prims : SchemePrimitive.Definer;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
     reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
@@ -45,11 +44,11 @@ REVEAL
     evalList          :=  EvalList2;
     bind              :=  Bind;
     setInGlobalEnv    :=  SetInGlobalEnv;
-    setTableOps       :=  SetTableOps;
+    setPrimitives     :=  SetPrimitives;
   END;
 
-PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
-  BEGIN t.m3TableOps := to END SetTableOps;
+PROCEDURE SetPrimitives(t : T; spd : REFANY) =
+  BEGIN t.prims := spd END SetPrimitives;
 
 PROCEDURE Bind(t : T; var : Symbol; val : Object) =
   BEGIN EVAL t.globalEnvironment.define(var,val) END Bind;
@@ -63,7 +62,7 @@ PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T
     t.input := NEW(SchemeInputPort.T).init(Stdio.stdin);
     t.output := Stdio.stdout;
     t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty();
-    EVAL SchemePrimitive.InstallPrimitives(t.globalEnvironment);
+    EVAL NEW(SchemePrimitive.DefaultDefiner).installPrimitives(t.globalEnvironment);
     t.readInitialFiles(files);
     RETURN t
   END Init;
@@ -448,7 +447,6 @@ VAR
   SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
 
 BEGIN 
-  TextRefSchemeAutoTbl.Register();
 END Scheme.
 
 
