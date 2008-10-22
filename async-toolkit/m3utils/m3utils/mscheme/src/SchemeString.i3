@@ -14,4 +14,6 @@ CONST Brand = "SchemeString";
 
 PROCEDURE FromText(txt : TEXT) : T;
 
+PROCEDURE ToText(t : T) : TEXT; (* should really check type & raise exc. *)
+
 END SchemeString.

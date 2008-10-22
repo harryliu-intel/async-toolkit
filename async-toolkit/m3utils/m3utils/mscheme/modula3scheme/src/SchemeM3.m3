@@ -16,6 +16,9 @@ FROM SchemeLongReal IMPORT FromO;
 FROM SchemeBoolean IMPORT True;
 IMPORT Fmt;
 IMPORT TextRefSchemeAutoTbl;
+IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
+
+<* FATAL Thread.Alerted *>
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -133,6 +136,69 @@ PROCEDURE TimenowApply(<*UNUSED*>p : SchemeProcedure.T;
     RETURN SchemeLongReal.FromLR(Time.Now())
   END TimenowApply;
 
+PROCEDURE StdioStderrApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                       <*UNUSED*>args : Object) : Object =
+  BEGIN
+    RETURN Stdio.stderr
+  END StdioStderrApply;
+
+PROCEDURE DebugAddstreamApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = First(args) DO
+      IF x = NIL OR NOT ISTYPE(x, Wr.T) THEN
+        RETURN Error ("Not a Wr.T: " & Stringify(x))
+      END;
+      Debug.AddStream(x);
+      RETURN x
+    END
+  END DebugAddstreamApply;
+
+PROCEDURE DebugRemstreamApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = First(args) DO
+      IF x = NIL OR NOT ISTYPE(x, Wr.T) THEN
+        RETURN Error ("Not a Wr.T: " & Stringify(x))
+      END;
+      Debug.RemStream(x);
+      RETURN x
+    END
+  END DebugRemstreamApply;
+
+PROCEDURE FileWrOpenApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = SchemeString.ToText(First(args)) DO
+      TRY
+        RETURN FileWr.Open(x)
+      EXCEPT
+        OSError.E(err) => RETURN Error("FileWrOpenApply : " & AL.Format(err))
+      END
+    END
+  END FileWrOpenApply;
+
+PROCEDURE WrCloseApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = (First(args)) DO
+      TRY
+        IF x = NIL OR NOT ISTYPE(x, Wr.T) THEN
+          RETURN Error("WrCloseApply : type error : " & Stringify(x))
+        END;
+        Wr.Close(x);
+        RETURN True()
+      EXCEPT
+        Wr.Failure(err) => RETURN Error("WrCloseApply : Wr.Failure : " & AL.Format(err))
+      END
+    END
+  END WrCloseApply;
+
 PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
   BEGIN 
     prims.addPrim("jailbreak", NEW(SchemeProcedure.T, 
@@ -162,11 +228,30 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
     prims.addPrim("modula-3-op", NEW(SchemeProcedure.T, 
                                      apply := Modula3OpApply), 
                   2, 3);
+
+    prims.addPrim("stdio-stderr", NEW(SchemeProcedure.T,
+                                      apply := StdioStderrApply), 
+                  0, 0);
+
+    prims.addPrim("debug-addstream", NEW(SchemeProcedure.T,
+                                      apply := DebugAddstreamApply), 
+                  1, 1);
+    prims.addPrim("debug-remstream", NEW(SchemeProcedure.T,
+                                      apply := DebugRemstreamApply), 
+                  1, 1);
+
+    prims.addPrim("filewr-open", NEW(SchemeProcedure.T,
+                                      apply := FileWrOpenApply), 
+                  1, 1);
+    prims.addPrim("wr-close", NEW(SchemeProcedure.T,
+                                      apply := WrCloseApply), 
+                  1, 1);
   END ExtendWithM3;
 
 VAR 
   prims := NEW(SchemePrimitive.ExtDefiner).init();
 BEGIN 
-  TextRefSchemeAutoTbl.Register(); (* vide module initialization order *)
+  TextRefSchemeAutoTbl.Register(); (* vide module initialization order,
+                                      Green Book *)
   ExtendWithM3(prims)
 END SchemeM3.

@@ -59,10 +59,13 @@ TYPE
 PROCEDURE RegisterHook(out: OutHook; level:=0);
 PROCEDURE RegisterErrorHook(err: OutHook);
 
-(* another mechanism for changing output: AddStream.
-   This will change only the default output method; if you override it
-   using output hook above, this will be ignored *)
 PROCEDURE AddStream(newStream : Wr.T);
+  (* another mechanism for changing output: AddStream.
+     This will change only the default output method; if you override it
+     using output hook above, this will be ignored *)
+  
+PROCEDURE RemStream(deadStream : Wr.T);
+  (* no-op if not in current set of streams *)
 
 PROCEDURE FmtAddress(p : ADDRESS; base : Fmt.Base := 16) : TEXT;
 PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;

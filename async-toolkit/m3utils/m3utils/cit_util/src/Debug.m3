@@ -191,19 +191,34 @@ VAR
   outHookLevel:=-1;
 
 PROCEDURE DefaultOut(t: TEXT) =
-  VAR
-    p := streams;
   BEGIN
-    WHILE p # NIL DO
-      TRY
-        Wr.PutText(p.head, t); Wr.Flush(p.head);
-      EXCEPT ELSE END;
-      p := p.tail
+    LOCK mu DO
+      VAR
+        p := streams;
+      BEGIN
+        WHILE p # NIL DO
+          TRY
+            Wr.PutText(p.head, t); Wr.Flush(p.head);
+          EXCEPT ELSE END;
+          p := p.tail
+        END
+      END
     END
   END DefaultOut;
 
 PROCEDURE AddStream(wr : Wr.T) = 
-  BEGIN streams := RefList.Cons(wr, streams) END AddStream;
+  BEGIN LOCK mu DO streams := RefList.Cons(wr, streams) END END AddStream;
+
+PROCEDURE RemStream(wr : Wr.T) =
+  VAR new, p : RefList.T := NIL; BEGIN
+    LOCK mu DO
+      p := streams;
+      WHILE p # NIL DO
+        IF p.head # wr THEN new := RefList.Cons(p.head,new) END;
+        p := p.tail
+      END
+    END
+  END RemStream;
 
 PROCEDURE DefaultError(t: TEXT) =
   BEGIN
@@ -231,7 +246,8 @@ VAR
   level := 0;
   debugFilter := Env.Get("DEBUGFILTER")#NIL;
   triggers: TextSet.T;
-  streams := RefList.List1(stderr);
+  streams := RefList.List1(stderr); (* protected by mu *)
+  mu := NEW(MUTEX);
 
 BEGIN 
   VAR

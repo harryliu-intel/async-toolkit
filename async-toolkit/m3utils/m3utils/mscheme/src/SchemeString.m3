@@ -22,4 +22,7 @@ PROCEDURE FromText(txt : TEXT) : T =
     END
   END FromText;
 
+PROCEDURE ToText(t : T) : TEXT =
+  BEGIN RETURN Text.FromChars(t^) END ToText;
+
 BEGIN END SchemeString.
