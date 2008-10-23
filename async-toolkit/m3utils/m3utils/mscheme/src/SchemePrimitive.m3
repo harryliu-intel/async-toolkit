@@ -125,7 +125,12 @@ REVEAL
 
   DefaultDefiner = Definer BRANDED Brand & " Default Definer" OBJECT 
   OVERRIDES
-    installPrimitives := InstallPrimitives;
+    installPrimitives := InstallDefaultPrimitives;
+  END;
+
+  SandboxDefiner = Definer BRANDED Brand & " Sandbox Definer" OBJECT 
+  OVERRIDES
+    installPrimitives := InstallSandboxPrimitives;
   END;
 
   ExtDefiner = PubExtensibleDefiner BRANDED Brand & " Extensible Definer" OBJECT
@@ -186,7 +191,7 @@ PROCEDURE EDApply(ed : ExtDefiner;
 PROCEDURE EDInstallPrimitives(ed : ExtDefiner; 
                               env : SchemeEnvironment.T) : SchemeEnvironment.T=
   BEGIN
-    EVAL InstallPrimitives(ed,env);
+    EVAL InstallDefaultPrimitives(ed,env);
     VAR
       iter := ed.tbl.iterate();
       id : CARDINAL;
@@ -201,7 +206,27 @@ PROCEDURE EDInstallPrimitives(ed : ExtDefiner;
     RETURN env
   END EDInstallPrimitives;
 
-PROCEDURE InstallPrimitives(dd : Definer;
+PROCEDURE InstallFileIOPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T =
+  BEGIN
+    EVAL env
+    .defPrim("call-with-input-file", ORD(P.CallWithInputFile), dd,2)
+    .defPrim("call-with-output-file", ORD(P.CallWithOutputFile), dd,2)
+    .defPrim("close-input-port", ORD(P.CloseInputPort), dd,1)
+    .defPrim("close-output-port", ORD(P.CloseOutputPort), dd,1)
+    .defPrim("current-input-port", ORD(P.CurrentInputPort), dd,0)
+    .defPrim("current-output-port", ORD(P.CurrentOutputPort), dd,0)
+    .defPrim("eof-object?",    ORD(P.EofObjectQ), dd,1)
+    .defPrim("input-port?",    ORD(P.InputPortQ), dd,1)
+    .defPrim("open-input-file",ORD(P.OpenInputFile), dd,1)
+    .defPrim("open-output-file", ORD(P.OpenOutputFile), dd,1)
+    .defPrim("output-port?",   ORD(P.OutputportQ), dd,1);
+
+    RETURN env
+
+  END InstallFileIOPrimitives;
+
+PROCEDURE InstallSandboxPrimitives(dd : Definer;
                             env : SchemeEnvironment.T) : SchemeEnvironment.T =
   CONST n = LAST(CARDINAL);
   BEGIN
@@ -240,8 +265,6 @@ PROCEDURE InstallPrimitives(dd : Definer;
     .defPrim("caddr",          ORD(P.Third), dd,    1)
     .defPrim("cadr",           ORD(P.Second), dd,   1)
     .defPrim("call-with-current-continuation",        ORD(P.CallCC), dd,   1)
-    .defPrim("call-with-input-file", ORD(P.CallWithInputFile), dd,2)
-    .defPrim("call-with-output-file", ORD(P.CallWithOutputFile), dd,2)
     .defPrim("car",            ORD(P.Car), dd,      1)
     .defPrim("cdaaar",         ORD(P.Cxr), dd,      1)
     .defPrim("cdaadr",         ORD(P.Cxr), dd,      1)
@@ -277,15 +300,10 @@ PROCEDURE InstallPrimitives(dd : Definer;
     .defPrim("char>=?",        ORD(P.CharCmpGe), dd,2)
     .defPrim("char>?",         ORD(P.CharCmpGt), dd,2)
     .defPrim("char?",          ORD(P.CharQ), dd,    1)
-    .defPrim("close-input-port", ORD(P.CloseInputPort), dd,1)
-    .defPrim("close-output-port", ORD(P.CloseOutputPort), dd,1)
     .defPrim("complex?",       ORD(P.NumberQ), dd,  1)
     .defPrim("cons",           ORD(P.Cons), dd,     2)
     .defPrim("cos",            ORD(P.Cos), dd,      1)
-    .defPrim("current-input-port", ORD(P.CurrentInputPort), dd,0)
-    .defPrim("current-output-port", ORD(P.CurrentOutputPort), dd,0)
     .defPrim("display",        ORD(P.Display), dd,  1, 2)
-    .defPrim("eof-object?",    ORD(P.EofObjectQ), dd,1)
     .defPrim("eq?",            ORD(P.EqQ), dd,      2)
     .defPrim("equal?",         ORD(P.EqualQ), dd,   2)
     .defPrim("eqv?",           ORD(P.EqvQ), dd,     2)
@@ -298,7 +316,6 @@ PROCEDURE InstallPrimitives(dd : Definer;
     .defPrim("for-each",       ORD(P.Foreach), dd,  1, n)
     .defPrim("gcd",            ORD(P.Gcd), dd,      0, n)
     .defPrim("inexact?",       ORD(P.InexactQ), dd, 1)
-    .defPrim("input-port?",    ORD(P.InputPortQ), dd,1)
     .defPrim("integer->char",  ORD(P.IntegerToChar), dd,     1)
     .defPrim("integer?",       ORD(P.IntegerQ), dd, 1)
     .defPrim("lcm",            ORD(P.Lcm), dd,      0, n)
@@ -328,9 +345,6 @@ PROCEDURE InstallPrimitives(dd : Definer;
     .defPrim("number->string", ORD(P.NumberToString), dd,  1, 2)
     .defPrim("number?",        ORD(P.NumberQ), dd,  1)
     .defPrim("odd?",           ORD(P.OddQ), dd,     1)
-    .defPrim("open-input-file",ORD(P.OpenInputFile), dd,1)
-    .defPrim("open-output-file", ORD(P.OpenOutputFile), dd,1)
-    .defPrim("output-port?",   ORD(P.OutputportQ), dd,1)
     .defPrim("pair?",          ORD(P.PairQ), dd,    1)
     .defPrim("peek-char",      ORD(P.PeekChar), dd, 0, 1)
     .defPrim("positive?",      ORD(P.PositiveQ), dd,1)
@@ -379,8 +393,17 @@ PROCEDURE InstallPrimitives(dd : Definer;
     .defPrim("vector?",        ORD(P.VectorQ), dd,  1)
     .defPrim("write",          ORD(P.Write), dd,    1, 2)
     .defPrim("write-char",     ORD(P.Display), dd,  1, 2)
-    .defPrim("zero?",          ORD(P.ZeroQ), dd,    1)
+    .defPrim("zero?",          ORD(P.ZeroQ), dd,    1);
     
+    RETURN env
+
+  END InstallSandboxPrimitives;
+
+PROCEDURE InstallNorvigPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T =
+  CONST n = LAST(CARDINAL);
+  BEGIN
+    EVAL env
     (*///////////// Extensions ////////////////*)
 
     .defPrim("new",                ORD(P.New), dd,      1)
@@ -393,7 +416,16 @@ PROCEDURE InstallPrimitives(dd : Definer;
 
     RETURN env;
 
-  END InstallPrimitives;
+  END InstallNorvigPrimitives;
+
+PROCEDURE InstallDefaultPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T =
+  BEGIN
+    env := InstallSandboxPrimitives(dd, env);
+    env := InstallFileIOPrimitives(dd, env);
+    env := InstallNorvigPrimitives(dd, env);
+    RETURN env
+  END InstallDefaultPrimitives;
 
 PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object 
   RAISES { E } =

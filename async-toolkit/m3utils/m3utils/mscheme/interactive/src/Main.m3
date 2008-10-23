@@ -8,7 +8,7 @@
 
 
 MODULE Main;
-IMPORT Scheme, Params, Pathname, Csighandler;
+IMPORT SchemeM3, Scheme, Params, Pathname, Csighandler;
 
 TYPE 
   Interrupter = Scheme.Interrupter OBJECT
@@ -31,7 +31,7 @@ BEGIN
 
   WITH arr = NEW(REF ARRAY OF Pathname.T, Params.Count-1) DO
     FOR i := 1 TO Params.Count-1 DO arr[i-1] := Params.Get(i) END;
-    WITH scm = NEW(Scheme.T).init(arr^) DO
+    WITH scm = NEW(SchemeM3.T).init(arr^) DO
       scm.readEvalWriteLoop(NEW(Interrupter))
     END
   END

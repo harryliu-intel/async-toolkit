@@ -281,7 +281,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
               END
               END;
               
-              envIsLocal := TRUE
+              (*envIsLocal := TRUE*)
 
             |
               Procedure(p) =>

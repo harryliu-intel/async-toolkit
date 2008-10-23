@@ -9,6 +9,8 @@
 INTERFACE SchemePrimitive;
 IMPORT SchemeEnvironment, SchemeProcedure;
 
+(* Routines for installing Scheme primitives in a Scheme environment *)
+
 TYPE 
   T <: Public;
 
@@ -24,17 +26,43 @@ TYPE
     installPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T;
   END;
 
-  DefaultDefiner <: Definer;
+  DefaultDefiner <: Definer;  (* all the normal stuff *)
+  SandboxDefiner <: Definer;  (* no ability to open files *)
 
   ExtDefiner <: PubExtensibleDefiner;
 
   PubExtensibleDefiner = DefaultDefiner OBJECT METHODS
     init() : ExtDefiner;
+
     addPrim(name : TEXT; 
             proc : SchemeProcedure.T; 
             minArgs, maxArgs : CARDINAL);
+    (* add a user-defined primitive *)
   END;
 
 CONST Brand = "SchemePrimitive";
+
+(**********************************************************************)
+(* The following routines of interest to those defining their own Definers *)
+
+PROCEDURE InstallSandboxPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T;
+(* a basic set of Scheme primitives that don't let you escape the system *)
+
+PROCEDURE InstallFileIOPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T;
+(* local file I/O *)
+
+PROCEDURE InstallNorvigPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T;
+(* Norvig's extensions (not fully implemented) *)
+
+PROCEDURE InstallDefaultPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T;
+(* all of the above *)
+
+PROCEDURE EDInstallPrimitives(ed : ExtDefiner; 
+                              env : SchemeEnvironment.T) : SchemeEnvironment.T;
+(* machinery for an extensible Definer *)
 
 END SchemePrimitive.

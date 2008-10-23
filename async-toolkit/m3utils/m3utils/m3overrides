@@ -95,6 +95,7 @@ override("mscheme", TOP)
 override("modula3scheme", TOP & "/mscheme")
 override("schemesig", TOP & "/mscheme")
 override("schemereadline", TOP & "/mscheme")
+override("scodegen", TOP & "/mscheme")
 
 override("anova", TOP & "/calarm")
 override("wavelets", TOP & "/calarm")

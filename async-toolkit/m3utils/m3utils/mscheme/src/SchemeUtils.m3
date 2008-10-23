@@ -77,7 +77,8 @@ PROCEDURE Error(message : TEXT) : Object RAISES { E } =
 
 PROCEDURE Warn(message : TEXT) : Object =
   BEGIN
-    TRY Wr.PutText(Stdio.stderr, "**** WARNING: " & message) EXCEPT ELSE END;
+    TRY Wr.PutText(Stdio.stderr, "**** WARNING: " & message & "\n") 
+    EXCEPT ELSE END;
     RETURN "<warn>"
   END Warn;
 

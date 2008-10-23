@@ -216,7 +216,8 @@ PROCEDURE RemStream(wr : Wr.T) =
       WHILE p # NIL DO
         IF p.head # wr THEN new := RefList.Cons(p.head,new) END;
         p := p.tail
-      END
+      END;
+      streams := new
     END
   END RemStream;
 
