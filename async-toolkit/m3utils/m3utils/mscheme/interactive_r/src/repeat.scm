@@ -2,7 +2,7 @@
 ;; $Id$
 ;;
 
-(load "../../interactive/src/mergesort.scm")
+(load "/home/mika/t/mscheme/scheme-lib/mergesort.scm")
 
 (define (repeat cnt what)
   (if (= cnt 0) #t

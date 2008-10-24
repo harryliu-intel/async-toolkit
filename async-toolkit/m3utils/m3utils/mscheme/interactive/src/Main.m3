@@ -9,6 +9,7 @@
 
 MODULE Main;
 IMPORT SchemeM3, Scheme, Params, Pathname, Csighandler;
+IMPORT Debug, OSError, Wr, AL;
 
 TYPE 
   Interrupter = Scheme.Interrupter OBJECT
@@ -31,8 +32,21 @@ BEGIN
 
   WITH arr = NEW(REF ARRAY OF Pathname.T, Params.Count-1) DO
     FOR i := 1 TO Params.Count-1 DO arr[i-1] := Params.Get(i) END;
-    WITH scm = NEW(SchemeM3.T).init(arr^) DO
-      scm.readEvalWriteLoop(NEW(Interrupter))
+    TRY
+      WITH scm = NEW(SchemeM3.T).init(arr^) DO
+        scm.readEvalWriteLoop(NEW(Interrupter))
+      END
+    EXCEPT
+      Scheme.E(err) =>
+      Debug.Error("Couldn't initialize Scheme interpreter from files : " & err)
+    |
+      OSError.E (err) =>
+      Debug.Error("Main: Couldn't initialize Scheme from files : OSError.E : "&
+        AL.Format(err))
+    |
+      Wr.Failure (err) =>
+      Debug.Error("Main: Couldn't initialize Scheme from files : Wr.Failure : "&
+        AL.Format(err))
     END
   END
 
