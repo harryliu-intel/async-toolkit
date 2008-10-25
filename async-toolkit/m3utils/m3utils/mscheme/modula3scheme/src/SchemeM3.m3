@@ -32,11 +32,13 @@ REVEAL
 PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
   BEGIN t.m3TableOps := to END SetTableOps;
 
-PROCEDURE Init(t : T; READONLY arr : ARRAY OF Pathname.T) : Scheme.T 
+PROCEDURE Init(t : T; 
+               READONLY arr : ARRAY OF Pathname.T; 
+               env : REFANY) : Scheme.T 
   RAISES { E, OSError.E } =
   BEGIN
     t.setPrimitives(prims); (* load in my special primitives *)
-    RETURN Scheme.T.init(t,arr);
+    RETURN Scheme.T.init(t,arr,env);
   END Init;
 
 (**********************************************************************)

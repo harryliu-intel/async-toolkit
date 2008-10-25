@@ -113,11 +113,12 @@ PROCEDURE SafePut(t : T; var : Symbol; READONLY val : Object) =
 
 PROCEDURE MarkAsDead(t : T) = BEGIN t.dead := TRUE END MarkAsDead;
 
-PROCEDURE InitEmptyUnsafe(t : T) : T =
+PROCEDURE InitEmptyUnsafe(t, parent : T) : T =
   BEGIN 
     t.mu := NIL;
 
     t.dictionary := NIL;
+    t.parent := parent;
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
       t.quick[i] := QuickMap { NIL, NIL };
     END;
@@ -125,13 +126,14 @@ PROCEDURE InitEmptyUnsafe(t : T) : T =
     RETURN t 
   END InitEmptyUnsafe;
 
-PROCEDURE InitEmpty(t : T) : T =
+PROCEDURE InitEmpty(t, parent : T) : T =
   BEGIN 
     IF t.mu = NIL THEN t.mu := NEW(MUTEX) END;
 
     (* why lock it? well if it's a safe version, it might still
        be accessed from other threads *)
     LOCK t.mu DO
+      t.parent := parent;
       t.dictionary := NIL;
       FOR i := FIRST(t.quick) TO LAST(t.quick) DO
         t.quick[i] := QuickMap { NIL, NIL };
@@ -144,8 +146,7 @@ PROCEDURE InitEmpty(t : T) : T =
 PROCEDURE Init(t : T; vars, vals : Object; parent : T;
                    VAR canRecyclePairs : BOOLEAN) : T =
   BEGIN
-    EVAL t.initEmpty();
-    t.parent := parent;
+    EVAL t.initEmpty(parent);
     IF NOT t.initDict(vars,vals,canRecyclePairs) THEN
       TRY
         EVAL Warn("wrong number of arguments: expected " &

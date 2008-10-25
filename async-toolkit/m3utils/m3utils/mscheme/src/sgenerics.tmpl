@@ -48,4 +48,9 @@ readonly proc scodegen(nam) is
 	end
 	include (derived_mkf)
 	_check_clean (derived_mkf) /* delete this to keep from errors */
+	_check_clean (derived_scm) /* delete this for the sake of order */
+
+	/* we should also delete the SQL, but our Scheme calling 
+	   convention is as yet not good enough (need to be able to
+	   bind vars on the cmd line, I think) */
 end

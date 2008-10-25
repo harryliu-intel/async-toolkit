@@ -96,7 +96,7 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
   BEGIN
     Csighandler.install_int_handler();
     rl.startProc();
-    rl.display("LITHP ITH LITHENING.\n");
+    rl.display("M-Scheme Experimental\nLITHP ITH LITHENING.\n");
     rl.setPrompt("> ");
     sip := NEW(InputPort).init(rl);
 

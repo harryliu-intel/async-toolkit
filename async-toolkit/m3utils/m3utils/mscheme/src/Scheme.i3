@@ -39,10 +39,11 @@ EXCEPTION E(TEXT);
 
 TYPE 
   (* aliases for basic Scheme types *)
-  Object    = SchemeObject.T;
-  Symbol    = SchemeSymbol.T;
-  String    = SchemeString.T;
-  Vector    = SchemeVector.T;
+  Object      = SchemeObject.T;
+  Symbol      = SchemeSymbol.T;
+  String      = SchemeString.T;
+  Vector      = SchemeVector.T;
+  Environment = REFANY (* SchemeEnvironment.T -- avoid circular deps *);
 
   (* a Scheme interpreter *)
   T <: Public;
@@ -50,7 +51,12 @@ TYPE
   Public = OBJECT METHODS
     defineInGlobalEnv(var, val : Object);
 
-    init(READONLY files : ARRAY OF Pathname.T) : T RAISES { E, OSError.E };
+    init(READONLY files : ARRAY OF Pathname.T;
+         globalEnv : Environment := NIL) : T 
+    RAISES { E, OSError.E };
+    (* we should also be able to pass in Rd.Ts or some other structure
+       that lets us read bundles, among other things.  Or perhaps just
+       an iterator over Rd.Ts. *)
 
     readEvalWriteLoop(interrupter : Interrupter := NIL) RAISES { Wr.Failure };
 

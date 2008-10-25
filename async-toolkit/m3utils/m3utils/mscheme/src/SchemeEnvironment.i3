@@ -39,7 +39,8 @@ TYPE
   T <: Public;
 
   Public = SchemeEnvironmentSuper.T OBJECT METHODS
-    init(vars, vals : SchemeObject.T; parent : T; 
+    init(vars, vals : SchemeObject.T; 
+         parent : T; 
          VAR canRecyclePairs : BOOLEAN) : T;
 
     (* canRecyclePairs is set to FALSE if the pairs sent in via 
@@ -53,7 +54,7 @@ TYPE
              interp : Scheme.T;
              parent : T) : T RAISES { E };
 
-    initEmpty() : T;
+    initEmpty(parent : T := NIL) : T;
 
     lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
 

@@ -13,7 +13,7 @@ IMPORT SchemeEnvironmentSuper;
 IMPORT SchemeBoolean, SchemeSymbol, SchemeMacro;
 IMPORT SchemeClosure, SchemeClosureClass, SchemeProcedure, SchemeString;
 IMPORT Pathname, Stdio;
-IMPORT Wr, TextRd, Thread;
+IMPORT Wr, TextRd, Thread, Text;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
@@ -56,12 +56,19 @@ PROCEDURE Bind(t : T; var : Symbol; val : Object) =
 PROCEDURE SetInGlobalEnv(t : T; var : Symbol; val : Object) RAISES { E } =
   BEGIN EVAL t.globalEnvironment.set(var,val) END SetInGlobalEnv;
 
-PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T 
+PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T;
+               env : REFANY(* SchemeEnvironment.T *)) : T
   RAISES { E } =
   BEGIN
     t.input := NEW(SchemeInputPort.T).init(Stdio.stdin);
     t.output := Stdio.stdout;
-    t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty();
+
+    IF env = NIL THEN
+      t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty()
+    ELSE
+      t.globalEnvironment := env
+    END;
+
     IF t.prims = NIL THEN
       EVAL NEW(SchemePrimitive.DefaultDefiner).installPrimitives(t.globalEnvironment)
     ELSE
@@ -71,7 +78,8 @@ PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T) : T
     RETURN t
   END Init;
 
-PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) RAISES { E } =
+PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) 
+  RAISES { E } =
   BEGIN
     EVAL t.loadRd(NEW(TextRd.T).init(SchemePrimitives.Code));
     FOR i := FIRST(files) TO LAST(files) DO
@@ -144,7 +152,50 @@ PROCEDURE LoadPort(t : T; in : Object) : Object
     END
   END LoadPort;
 
+PROCEDURE TruncateText(txt : TEXT; maxLen : CARDINAL) : TEXT =
+  CONST 
+    Ellipsis     = " ...";
+  BEGIN
+    WITH l = Text.Length(txt) DO
+      IF l > maxLen THEN
+        RETURN Text.Sub(txt,0,maxLen) & Ellipsis
+      ELSE
+        RETURN txt
+      END
+    END(* WITH *)
+  END TruncateText;
+
 PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
+  RAISES { E } =
+  CONST DoTracebacks = TRUE;
+        Ellipsis     = "\n...";
+        MaxTraceback = 4096; (* in bytes of output *)
+        MaxPerLine   =  512; (* also in bytes *)
+  BEGIN
+    IF DoTracebacks THEN
+      TRY
+        RETURN EvalInternal(t, x, envP)
+      EXCEPT
+        E(txt) =>
+        WITH l = Text.Length(txt) DO
+          IF l > MaxTraceback THEN
+            IF NOT Text.Equal(Text.Sub(txt, l - Text.Length(Ellipsis)), 
+                              Ellipsis) THEN
+              RAISE E(txt & Ellipsis)
+            END
+          ELSE
+            RAISE E (txt & "\n(called from) eval " & 
+                  TruncateText(Stringify(x),MaxPerLine))
+          END
+        END(* WITH *);
+        RAISE E(txt)
+      END
+    ELSE
+      RETURN EvalInternal(t, x, envP)
+    END
+  END Eval;
+
+PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
   RAISES { E } =
   TYPE  Macro     = SchemeMacro.T;
         Closure   = SchemeClosure.T;
@@ -319,7 +370,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
         END
       END
     END
-  END Eval;
+  END EvalInternal;
 
 VAR envsMade := 0;
     envsKilled := 0;
