@@ -32,6 +32,7 @@ IMPORT TextSet, TextSetDef, TextList;
 IMPORT Lex, FloatMode;
 IMPORT Thread;
 IMPORT ASCII;
+IMPORT Wx, TextSeq;
 
 <* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *>
 
@@ -368,5 +369,16 @@ PROCEDURE EqualIgnoringCase(t1, t2 : TEXT) : BOOLEAN =
   BEGIN
     RETURN TE(ToUpper(t1),ToUpper(t2)) 
   END EqualIgnoringCase;
+
+PROCEDURE FormatInfix(seq : TextSeq.T; operator : TEXT) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := 0 TO seq.size()-1 DO
+      Wx.PutText(wx, seq.get(i));
+      IF i # seq.size()-1 THEN Wx.PutText(wx,operator) END
+    END;
+    RETURN Wx.ToText(wx)
+  END FormatInfix;
 
 BEGIN END TextUtils.

@@ -22,6 +22,7 @@
 (* $Id$ *)
 INTERFACE TextUtils;
 IMPORT TextList, TextSet, IntList;
+IMPORT TextSeq;
 
 (* replace every occurrence of "old" by "new" in "in" *)
 PROCEDURE Replace(in, old, new : TEXT) : TEXT;
@@ -95,5 +96,9 @@ PROCEDURE ToUpper(text : TEXT) : TEXT;
 PROCEDURE ToLower(text : TEXT) : TEXT;
 
 PROCEDURE EqualIgnoringCase(t1, t2 : TEXT) : BOOLEAN;
+
+PROCEDURE FormatInfix(seq : TextSeq.T; operator : TEXT) : TEXT;
+  (* return a text that consists of the elements in the sequence with
+     the operator inserted between each pair, but not at the end *)
 
 END TextUtils.
