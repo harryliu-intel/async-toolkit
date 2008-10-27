@@ -7,6 +7,7 @@
 *)
 
 INTERFACE SchemeString;
+IMPORT Scheme;
 
 TYPE T = REF ARRAY OF CHAR;
 
@@ -14,6 +15,7 @@ CONST Brand = "SchemeString";
 
 PROCEDURE FromText(txt : TEXT) : T;
 
-PROCEDURE ToText(t : T) : TEXT; (* should really check type & raise exc. *)
+PROCEDURE ToText(t : Scheme.Object) : TEXT 
+  RAISES { Scheme.E };
 
 END SchemeString.

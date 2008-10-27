@@ -7,7 +7,8 @@
 *)
 
 MODULE SchemeString;
-IMPORT Text;
+IMPORT Text, Scheme;
+FROM SchemeUtils IMPORT Error, StringifyT;
 
 PROCEDURE FromText(txt : TEXT) : T =
   BEGIN
@@ -22,7 +23,13 @@ PROCEDURE FromText(txt : TEXT) : T =
     END
   END FromText;
 
-PROCEDURE ToText(t : T) : TEXT =
-  BEGIN RETURN Text.FromChars(t^) END ToText;
+PROCEDURE ToText(t : Scheme.Object) : TEXT RAISES { Scheme.E } =
+  BEGIN 
+    IF t # NIL AND ISTYPE(t, T) THEN 
+      RETURN Text.FromChars(NARROW(t,T)^) 
+    ELSE RETURN ToText(Error("expected a string, got: " & StringifyT(t)))
+    END
+
+  END ToText;
 
 BEGIN END SchemeString.

@@ -9,7 +9,7 @@
 MODULE SchemeUtils;
 IMPORT Scheme, SchemeInputPort, SchemeClass, SchemeSymbol;
 IMPORT Wr, Fmt, Wx, Stdio;
-FROM Scheme IMPORT Object, E, Symbol, Vector, String;
+FROM Scheme IMPORT Object, E, Symbol, Vector;
 FROM SchemeChar IMPORT Char;
 IMPORT SchemeLongReal, SchemeChar, SchemePair;
 IMPORT AL;
@@ -279,6 +279,8 @@ PROCEDURE Equal(x, y : Object) : BOOLEAN =
 PROCEDURE Eqv(x, y : Object) : BOOLEAN =
   BEGIN
     TYPECASE x OF
+      NULL => RETURN x = y
+    |
       SchemeLongReal.T(lx) => 
       TYPECASE y OF SchemeLongReal.T(ly) => RETURN lx^ = ly^ ELSE RETURN FALSE END
       (* chars are shared in our system, no need to check values here *)

@@ -39,6 +39,7 @@ REVEAL
     loadFile          :=  LoadFile;
     loadPort          :=  LoadPort;
     loadRd            :=  LoadRd;
+    loadText          :=  LoadText;
     eval              :=  Eval;
     evalInGlobalEnv   :=  EvalInGlobalEnv;
     evalList          :=  EvalList2;
@@ -151,6 +152,13 @@ PROCEDURE LoadPort(t : T; in : Object) : Object
       END
     END
   END LoadPort;
+
+PROCEDURE LoadText(t : T; txt : TEXT) : Object RAISES { E } = 
+  VAR
+    rd := NEW(TextRd.T).init(txt);
+  BEGIN
+    RETURN t.loadRd(rd)
+  END LoadText;
 
 PROCEDURE TruncateText(txt : TEXT; maxLen : CARDINAL) : TEXT =
   CONST 

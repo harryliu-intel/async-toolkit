@@ -9,11 +9,18 @@
 INTERFACE Scheme;
 IMPORT SchemeEnvironmentSuper, SchemeObject;
 IMPORT SchemeSymbol;
-IMPORT SchemeString, SchemeVector;
+IMPORT SchemeVector;
 IMPORT Pathname;
 IMPORT Rd, OSError, Wr;
 
 EXCEPTION E(TEXT);
+ (* This declaration is, unfortunately, a source of trouble.
+    Since exceptions aren't declarations in Modula-3, putting it here
+    means "everything" has to import this interface, which leads to
+    a lot of circular import possiblities.
+
+    Best would be to move E to a special interface, say SchemeError. 
+ *)
 
 (* 
 
@@ -41,7 +48,6 @@ TYPE
   (* aliases for basic Scheme types *)
   Object      = SchemeObject.T;
   Symbol      = SchemeSymbol.T;
-  String      = SchemeString.T;
   Vector      = SchemeVector.T;
   Environment = REFANY (* SchemeEnvironment.T -- avoid circular deps *);
 
@@ -65,6 +71,8 @@ TYPE
     loadFile(fn : Object) : Object RAISES { E };
 
     loadRd(rd : Rd.T) : Object RAISES { E } ;
+
+    loadText(text : TEXT) : Object RAISES { E };
 
     loadPort(port : Object (* must be SchemeInputPort *)) : Object RAISES { E };
 

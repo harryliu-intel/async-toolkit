@@ -11,7 +11,7 @@ IMPORT Debug;
 IMPORT SchemeEnvironment, SchemeProcedureClass;
 IMPORT Scheme, SchemeClass;
 
-FROM Scheme IMPORT Object, Symbol, String, Vector, E;
+FROM Scheme IMPORT Object, Symbol, Vector, E;
 FROM SchemeClass IMPORT GetCons, ReturnCons;
 
 FROM SchemeUtils IMPORT Length, First, Second, Third,
@@ -39,11 +39,11 @@ IMPORT Thread;
 IMPORT SchemePair;
 IMPORT CardRefTbl, Random;
 
-TYPE Pair = SchemePair.T;
-
 <* FATAL Thread.Alerted *>
 
-TYPE Procedure = SchemeProcedure.T;
+TYPE Pair      =  SchemePair.T;
+     String    =  SchemeString.T;
+     Procedure =  SchemeProcedure.T;
 
 REVEAL
   T = Public BRANDED Brand OBJECT

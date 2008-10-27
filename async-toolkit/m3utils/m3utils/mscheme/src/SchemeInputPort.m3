@@ -9,7 +9,7 @@
 MODULE SchemeInputPort;
 IMPORT AL, Rd;
 FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector;
-FROM Scheme IMPORT Object, String, E;
+FROM Scheme IMPORT Object, E;
 IMPORT SchemeLongReal;
 FROM SchemeSymbol IMPORT SymEq;
 IMPORT SchemeBoolean, SchemeSymbol;
@@ -18,8 +18,10 @@ IMPORT Text;
 IMPORT Scan, FloatMode, Lex, TextUtils, Wx;
 FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
 IMPORT Thread;
+IMPORT SchemeString;
 
 TYPE Boolean = SchemeBoolean.T;
+     String  = SchemeString.T;
 
 <* FATAL Thread.Alerted *>
 
