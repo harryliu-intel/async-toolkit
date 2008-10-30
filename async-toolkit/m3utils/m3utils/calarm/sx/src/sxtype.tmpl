@@ -57,12 +57,16 @@ end
 readonly proc _sxRealOps (nm, elem, vis) is
         local meme = "SX" & nm & "_" & nm & "FuncOps" 
 	local meint = "SX" & nm & "_IntFuncOps" 
+	local intme = "SXInt_" & nm & "FuncOps" 
 	local mebool = "SX" & nm & "_BoolFuncOps" 
 
 	build_generic_intf("SX" & nm & "Ops", "SXNumOps", [elem], vis)
 	build_generic_impl("SX" & nm & "Ops", "SXRealOps", [elem, meme])
 	build_renamed_generic_impl("SX" & nm & "Ops", "SXNumOps", [elem, meme, meint, mebool],
 	                           "SX"  & nm & "Ops2")
+	build_generic_intf("SX" & nm & "ConvertOps", "SXConvertOps", [elem], vis)
+	build_generic_impl("SX" & nm & "ConvertOps", "SXConvertOps", [elem, intme, meint])
+
 end
 
 readonly proc SxRealOps (nm, elem) is

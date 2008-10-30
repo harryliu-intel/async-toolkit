@@ -38,6 +38,8 @@ Generic_interface("SXNumOps")         /* overloaded numerical ops */
 Generic_implementation("SXIntOps")    /* integer-type overloaded ops */
 Generic_implementation("SXRealOps")   /* real-type overloaded ops */
 Generic_implementation("SXNumOps")    /* common overloaded ops */
+Generic_module("SXConvertOps")        /* FLOAT(), need to add ROUND, etc. */
+
 
 Generic_module("SXFuncOps")           /* general function operations */
 Generic_module("SXGenOps")            /* very generic stuff */
@@ -68,6 +70,9 @@ SxFuncOps("Bool_Bool", "SXBool", "SXBool")
 SxFuncOps("Real_Real", "SXReal", "SXReal")
 SxFuncOps("Real_Int", "SXReal", "SXInt")
 SxFuncOps("Real_Bool", "SXReal", "SXBool")
+
+SxFuncOps("Int_LR", "SXInt", "SXLongReal")
+SxFuncOps("Int_Real", "SXInt", "SXReal")
 
 SxFuncOps("LR_LR", "SXLongReal", "SXLongReal")
 SxFuncOps("LR_Int", "SXLongReal", "SXInt")

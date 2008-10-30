@@ -6,6 +6,11 @@ IMPORT SXInt;
 (* everything returned here is really an OpResult *)
 
 TYPE
+  ArgBase = Arg.Base;
+  ResultBase = Result.Base;
+  ArgT = Arg.T;
+  ResultT = Result.T;
+  
   OpResult = Result.T BRANDED OBJECT
     opName : TEXT; (* for debugging *)
   END;
