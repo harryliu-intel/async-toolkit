@@ -1,7 +1,7 @@
 (* $Id$ *)
 
-GENERIC MODULE SXConvertOps(Elem, Int_ElemFuncOps, Elem_IntFuncOps);
-IMPORT SXInt;
+GENERIC MODULE SXConvertOps(Elem, Int_ElemFuncOps, Elem_IntFuncOps, Elem_BoolFuncOps);
+IMPORT SXInt, SXBool;
 
 PROCEDURE FloatB(a : SXInt.Base) : Elem.Base =
   BEGIN RETURN FLOAT(a, Elem.Base) END FloatB;
@@ -32,5 +32,19 @@ PROCEDURE CeilingB(a : Elem.Base) : SXInt.Base =
 
 PROCEDURE Ceiling(a : Elem.T) : SXInt.T =
   BEGIN RETURN Elem_IntFuncOps.UnaryFunc(a, CeilingB, "Ceiling") END Ceiling;
+
+PROCEDURE IntRangeB(a : Elem.Base) : SXBool.Base =
+  BEGIN RETURN a >= FLOAT(FIRST(INTEGER),Elem.Base) AND 
+               a <= FLOAT(LAST(INTEGER), Elem.Base)   END IntRangeB;
+
+PROCEDURE IntRange(a : Elem.T) : SXBool.T =
+  BEGIN RETURN Elem_BoolFuncOps.UnaryFunc(a, IntRangeB, "IntRange") END IntRange;
+
+PROCEDURE CardRangeB(a : Elem.Base) : SXBool.Base =
+  BEGIN RETURN a >= FLOAT(FIRST(INTEGER),Elem.Base) AND 
+               a <= FLOAT(LAST(INTEGER), Elem.Base)   END CardRangeB;
+
+PROCEDURE CardRange(a : Elem.T) : SXBool.T =
+  BEGIN RETURN Elem_BoolFuncOps.UnaryFunc(a, CardRangeB, "CardRange") END CardRange;
 
 BEGIN END SXConvertOps.

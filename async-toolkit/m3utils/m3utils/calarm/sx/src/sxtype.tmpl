@@ -65,7 +65,7 @@ readonly proc _sxRealOps (nm, elem, vis) is
 	build_renamed_generic_impl("SX" & nm & "Ops", "SXNumOps", [elem, meme, meint, mebool],
 	                           "SX"  & nm & "Ops2")
 	build_generic_intf("SX" & nm & "ConvertOps", "SXConvertOps", [elem], vis)
-	build_generic_impl("SX" & nm & "ConvertOps", "SXConvertOps", [elem, intme, meint])
+	build_generic_impl("SX" & nm & "ConvertOps", "SXConvertOps", [elem, intme, meint, mebool])
 
 end
 
