@@ -1,0 +1,5 @@
+import ("libm3")
+
+c_source("lockf")
+
+C_program ("lockf")
