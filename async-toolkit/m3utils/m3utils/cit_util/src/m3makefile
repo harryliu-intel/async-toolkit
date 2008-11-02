@@ -21,6 +21,14 @@ Generic_module("OpenArrayTable")
 template("dbltable")
 Generic_module("DblTable")
 
+Generic_module("LockedTbl")
+template("lockedtbl")
+
+LockedTable("TextRef", "Text", "Refany", "TextRefTbl")
+MkLockedSetDef("Text", "Text")
+
+LockedTable("TextBoolean", "Text", "Boolean", "TextBooleanTbl")
+
 Generic_module("BrandedSet")
 template("brandedset")
 

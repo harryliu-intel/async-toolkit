@@ -66,6 +66,8 @@ TYPE
             minArgs : CARDINAL; 
             maxArgs : CARDINAL := LAST(CARDINAL)) : T;
     markAsDead(); (* a debugging thing *)
+
+    getParent() : T;
   END;
 
   Unsafe <: T; (* unsynchronized version *)

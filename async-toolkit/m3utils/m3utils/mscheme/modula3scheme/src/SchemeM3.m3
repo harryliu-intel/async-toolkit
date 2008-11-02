@@ -13,7 +13,7 @@ IMPORT SchemeSymbol;
 FROM SchemeUtils IMPORT First, Second, Third, Stringify, Error;
 IMPORT SchemeString, SchemeLongReal;
 FROM SchemeLongReal IMPORT FromO;
-FROM SchemeBoolean IMPORT True;
+FROM SchemeBoolean IMPORT True, Truth;
 IMPORT Fmt;
 IMPORT TextRefSchemeAutoTbl;
 IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
@@ -67,25 +67,25 @@ PROCEDURE Modula3OpApply(<*UNUSED*>p : SchemeProcedure.T; interp : Scheme.T; arg
 
 PROCEDURE FmtRealApply(<*UNUSED*>p : SchemeProcedure.T; <*UNUSED*>interp : Scheme.T; args : Object) : Object RAISES { E } =
   BEGIN
-        WITH x = First(args), y = Second(args), z = Third(args) DO
-          VAR
-            style : Fmt.Style;
-          BEGIN
-            IF    SchemeSymbol.SymEq(y, "auto") THEN
-              style := Fmt.Style.Auto
-            ELSIF SchemeSymbol.SymEq(y, "fix") THEN
-              style := Fmt.Style.Fix
-            ELSIF SchemeSymbol.SymEq(y, "sci") THEN
-              style := Fmt.Style.Sci
-            ELSE
-              RETURN Error("Unknown formatting style " & Stringify(y))
-            END;
-
-            RETURN SchemeString.FromText(Fmt.LongReal(FromO(x),
-                                                      style,
-                                                      TRUNC(FromO(z))))
-          END
-        END
+    WITH x = First(args), y = Second(args), z = Third(args) DO
+      VAR
+        style : Fmt.Style;
+      BEGIN
+        IF    SchemeSymbol.SymEq(y, "auto") THEN
+          style := Fmt.Style.Auto
+        ELSIF SchemeSymbol.SymEq(y, "fix") THEN
+          style := Fmt.Style.Fix
+        ELSIF SchemeSymbol.SymEq(y, "sci") THEN
+          style := Fmt.Style.Sci
+        ELSE
+          RETURN Error("Unknown formatting style " & Stringify(y))
+        END;
+        
+        RETURN SchemeString.FromText(Fmt.LongReal(FromO(x),
+                                                  style,
+                                                  TRUNC(FromO(z))))
+      END
+    END
   END FmtRealApply;
 
 PROCEDURE GCApply(<*UNUSED*>p : SchemeProcedure.T; <*UNUSED*>interp : Scheme.T; <*UNUSED*>args : Object) : Object =
@@ -184,6 +184,45 @@ PROCEDURE FileWrOpenApply(<*UNUSED*>p : SchemeProcedure.T;
     END
   END FileWrOpenApply;
 
+PROCEDURE DebugSetEnvApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = SchemeString.ToText(First(args)) DO
+      TRY
+        Debug.SetEnv(x); RETURN True()
+      EXCEPT
+        OSError.E(err) => RETURN Error("DebugSetEnvApply : " & AL.Format(err))
+      END
+    END
+  END DebugSetEnvApply;
+
+PROCEDURE DebugClearEnvApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = SchemeString.ToText(First(args)) DO
+      TRY
+        Debug.ClearEnv(x); RETURN True()
+      EXCEPT
+        OSError.E(err) => RETURN Error("DebugClearEnvApply : " & AL.Format(err))
+      END
+    END
+  END DebugClearEnvApply;
+
+PROCEDURE DebugHaveEnvApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = SchemeString.ToText(First(args)) DO
+      TRY
+        RETURN Truth(Debug.HaveEnv(x))
+      EXCEPT
+        OSError.E(err) => RETURN Error("DebugHaveEnvApply : " & AL.Format(err))
+      END
+    END
+  END DebugHaveEnvApply;
+
 PROCEDURE WrCloseApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
                                  args : Object) : Object RAISES { E } =
@@ -240,6 +279,18 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
                   1, 1);
     prims.addPrim("debug-remstream", NEW(SchemeProcedure.T,
                                       apply := DebugRemstreamApply), 
+                  1, 1);
+
+    prims.addPrim("debug-setenv", NEW(SchemeProcedure.T,
+                                      apply := DebugSetEnvApply),
+                  1, 1);
+
+    prims.addPrim("debug-clearenv", NEW(SchemeProcedure.T,
+                                      apply := DebugClearEnvApply),
+                  1, 1);
+
+    prims.addPrim("debug-haveenv", NEW(SchemeProcedure.T,
+                                      apply := DebugHaveEnvApply),
                   1, 1);
 
     prims.addPrim("filewr-open", NEW(SchemeProcedure.T,

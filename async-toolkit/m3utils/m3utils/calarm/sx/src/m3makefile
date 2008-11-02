@@ -92,6 +92,11 @@ SxIntOps("Int", "SXInt")
 
 module("SXTest") /* testing code for SX stuff */
 
+Sequence("SX", "SX")
+MkSet("SX","SX")
+MkSetDef("SX", "SX")
+Table("SXRef", "SX", "Refany")
+
 library ("sx")
 
 

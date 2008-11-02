@@ -11,6 +11,7 @@ IMPORT Fmt;
 IMPORT RefList;
 IMPORT SXRef;
 IMPORT Integer, RefanyArraySort;
+IMPORT Word;
 
 (* methods for garbage collecting...?  Would imply using WeakRef. *)
 
@@ -65,6 +66,10 @@ REVEAL
     init := InitT;
     wait := WaitT;
   END;
+
+PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;
+
+PROCEDURE Hash(a : T) : Word.T = BEGIN RETURN a.id END Hash;
 
 PROCEDURE Depends(t : T; depender : T) =
   BEGIN

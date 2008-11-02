@@ -24,7 +24,12 @@
 INTERFACE Debug;
 IMPORT Fmt, Wr, Pathname;
 
-PROCEDURE Out(t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
+PROCEDURE Out(t : TEXT; 
+              minLevel : CARDINAL := 10; (* no print at lower levels*)
+              cr:=TRUE;                  (* carriage return yes/no *)
+              this : TEXT := NIL         (* debug if "DebugThis for this" *)
+  );
+
 PROCEDURE OutFilePos(file : Pathname.T; pos : CARDINAL; t : TEXT; minLevel : CARDINAL := 10; cr:=TRUE);
   (* used by m3texthack generated code *)
 
@@ -87,5 +92,15 @@ TYPE Options = { PrintPID, PrintThreadID };
 
 PROCEDURE SetOptions(options : SET OF Options);
 PROCEDURE GetOptions() : SET OF Options;
+
+(* override environment variables programmatically *)
+
+PROCEDURE SetEnv(var : TEXT);
+
+PROCEDURE ClearEnv(var : TEXT);
+
+PROCEDURE HaveEnv(var : TEXT) : BOOLEAN;
+  (* checks overridden value first, and if no override, checks
+     actual system environment. *)
 
 END Debug.

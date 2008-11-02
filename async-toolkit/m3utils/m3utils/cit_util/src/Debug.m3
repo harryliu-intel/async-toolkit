@@ -38,6 +38,7 @@ IMPORT Process;
 IMPORT ThreadF;
 IMPORT RefList;
 IMPORT Pathname;
+IMPORT LockedTextBooleanTbl;
 
 VAR options := SET OF Options {};
 
@@ -46,17 +47,31 @@ PROCEDURE SetOptions(newOptions : SET OF Options) =
 
 PROCEDURE GetOptions() : SET OF Options = BEGIN RETURN options END GetOptions;
 
-PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
+VAR envOverrides := NEW(LockedTextBooleanTbl.Default).init();
 
-  PROCEDURE HaveEnv(e : TEXT) : BOOLEAN = 
-    BEGIN RETURN Env.Get(e) # NIL END HaveEnv;
+PROCEDURE SetEnv(var : TEXT) =
+  BEGIN EVAL envOverrides.put(var,TRUE) END SetEnv;
+
+PROCEDURE ClearEnv(var : TEXT) =
+  BEGIN EVAL envOverrides.put(var,FALSE) END ClearEnv;
+
+PROCEDURE HaveEnv(var : TEXT) : BOOLEAN =
+  VAR b : BOOLEAN; BEGIN
+    IF envOverrides.get(var, b) THEN
+      RETURN b
+    ELSE
+      RETURN Env.Get(var) # NIL
+    END
+  END HaveEnv;
+
+PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
 
   VAR
     env := "DEBUG" & this;
     res := HaveEnv("DEBUGEVERYTHING") AND NOT HaveEnv("NO" & env) OR 
            HaveEnv(env) AND NOT HaveEnv("DEBUGNOTHING");
   BEGIN
-    IF level > 0 THEN
+    IF level > 100 THEN
       Out("DebugThis: " & env & " = " & Fmt.Bool(res),0)
     END;
     RETURN res
@@ -91,8 +106,12 @@ PROCEDURE PrependText(pre, t : TEXT) : TEXT =
     RETURN res
   END PrependText;
 
-PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE) =
+PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
   BEGIN
+    IF this # NIL AND NOT DebugThis(this) THEN 
+      RETURN 
+    END;
+
     IF minLevel > level THEN RETURN END;
     IF debugFilter THEN
       IF triggers.member(t) THEN

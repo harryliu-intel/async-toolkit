@@ -46,7 +46,15 @@ REVEAL
     bind              :=  Bind;
     setInGlobalEnv    :=  SetInGlobalEnv;
     setPrimitives     :=  SetPrimitives;
+    changeGlobalEnvironment := ChangeGlobalEnvironment;
+    getGlobalEnvironment := GetGlobalEnvironment;
   END;
+
+PROCEDURE GetGlobalEnvironment(t : T) : SchemeEnvironmentSuper.T =
+  BEGIN RETURN t.globalEnvironment END GetGlobalEnvironment;
+
+PROCEDURE ChangeGlobalEnvironment(t : T; env : SchemeEnvironmentSuper.T) =
+  BEGIN t.globalEnvironment := env END ChangeGlobalEnvironment;
 
 PROCEDURE SetPrimitives(t : T; spd : REFANY) =
   BEGIN t.prims := spd END SetPrimitives;

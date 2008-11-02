@@ -2,6 +2,7 @@
 
 INTERFACE SX;
 IMPORT SXRoot;
+IMPORT Word;
 
 EXCEPTION Uninitialized;
 
@@ -31,6 +32,12 @@ PROCEDURE Unlock(READONLY arr : Array);
 
 PROCEDURE Lock1(t : T);
 PROCEDURE Unlock1(t : T);
+
+(* for generics: *)
+
+PROCEDURE Equal(a, b : T) : BOOLEAN;
+  
+PROCEDURE Hash(a : T) : Word.T;
 
 END SX.
   

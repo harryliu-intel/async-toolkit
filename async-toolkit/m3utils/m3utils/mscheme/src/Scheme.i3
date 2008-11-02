@@ -91,6 +91,10 @@ TYPE
 
     setPrimitives(schemePrimDefiner : REFANY (*SchemePrimitive.Definer*));
 
+    changeGlobalEnvironment(env : SchemeEnvironmentSuper.T);
+
+    getGlobalEnvironment() : SchemeEnvironmentSuper.T;
+
   END;
 
 TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;

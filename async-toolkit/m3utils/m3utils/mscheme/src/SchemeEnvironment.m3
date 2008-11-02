@@ -10,6 +10,8 @@ MODULE SchemeEnvironment;
 
 (* One of the few things not taken directly from Norvig... *)
 
+IMPORT SchemeEnvironmentClass;
+
 IMPORT AtomRefTbl;
 IMPORT SchemePrimitive, SchemeSymbol, SchemeProcedure;
 IMPORT SchemeProcedureClass;
@@ -29,7 +31,7 @@ CONST QuickVars = 5;
 TYPE QuickMap = RECORD var : Symbol; val : Object END;
 
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = SchemeEnvironmentClass.Private BRANDED Brand OBJECT
     mu : MUTEX := NIL; (* always NIL in Unsafe *)
     (* vars, vals not necessary *)
     dictionary : AtomRefTbl.T;
@@ -46,9 +48,9 @@ REVEAL
                  evalEnv : T;
                  interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
     
-    put(var : Symbol; READONLY val : Object) := SafePut;
-    get(var : Symbol; VAR val : Object) : BOOLEAN := SafeGet;
   OVERRIDES
+    put       :=  SafePut;
+    get       :=  SafeGet;
     initEmpty :=  InitEmpty;
     init      :=  Init;
     initEval  :=  InitEval;
@@ -57,6 +59,7 @@ REVEAL
     set       :=  Set;
     defPrim   :=  DefPrim;
     markAsDead:=  MarkAsDead;
+    getParent :=  GetParent;
   END;
 
   Unsafe = T BRANDED Brand & " Unsafe" OBJECT OVERRIDES
@@ -64,6 +67,8 @@ REVEAL
     put := UnsafePut;
     get := UnsafeGet;
   END;
+
+PROCEDURE GetParent(t : T) : T = BEGIN RETURN t.parent END GetParent;
 
 PROCEDURE UnsafeGet(t : T; var : Symbol; VAR val : Object) : BOOLEAN =
   BEGIN 
