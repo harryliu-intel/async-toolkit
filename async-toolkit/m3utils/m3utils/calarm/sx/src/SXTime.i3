@@ -1,0 +1,15 @@
+(* $Id$ *)
+
+INTERFACE SXTime;
+IMPORT Time, SXLongReal;
+
+CONST CurrentOffset = FIRST(LONGREAL);
+
+PROCEDURE New(interval : Time.T; offset := 0.0d0) : SXLongReal.T;
+(* start a thread that, every interval seconds, updates the output
+   with the current time;
+
+   pass in CurrentOffset to use the offset of the first call.
+*)
+
+END SXTime.

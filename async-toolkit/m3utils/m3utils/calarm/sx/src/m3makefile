@@ -97,6 +97,8 @@ MkSet("SX","SX")
 MkSetDef("SX", "SX")
 Table("SXRef", "SX", "Refany")
 
+Module("SXTime")
+
 library ("sx")
 
 
