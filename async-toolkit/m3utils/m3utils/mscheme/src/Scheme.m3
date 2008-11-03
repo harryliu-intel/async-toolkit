@@ -40,9 +40,14 @@ REVEAL
     loadPort          :=  LoadPort;
     loadRd            :=  LoadRd;
     loadText          :=  LoadText;
+
     eval              :=  Eval;
     evalInGlobalEnv   :=  EvalInGlobalEnv;
     evalList          :=  EvalList2;
+
+    loadEval          :=  LoadEval;
+    loadEvalText      :=  LoadEvalText;
+
     bind              :=  Bind;
     setInGlobalEnv    :=  SetInGlobalEnv;
     setPrimitives     :=  SetPrimitives;
@@ -145,6 +150,30 @@ PROCEDURE LoadFile(t : T; fileName : Object) : Object RAISES { E } =
       END
     END
   END LoadFile;
+
+PROCEDURE LoadEval(t : T; rd : Rd.T) : Object RAISES { E } =
+  VAR
+    port := NEW(SchemeInputPort.T).init(rd);
+    x, res : Object := NIL;
+  BEGIN
+    LOOP
+      x := port.read();
+
+      IF SchemeInputPort.IsEOF(x) THEN 
+        EVAL port.close();
+        RETURN res 
+      END;
+
+      res := t.evalInGlobalEnv(x)
+    END
+  END LoadEval;
+
+PROCEDURE LoadEvalText(t : T; txt : TEXT) : Object RAISES { E } =
+  VAR
+    rd := NEW(TextRd.T).init(txt);
+  BEGIN
+    RETURN t.loadEval(rd)
+  END LoadEvalText;
 
 PROCEDURE LoadPort(t : T; in : Object) : Object 
   RAISES { E } =

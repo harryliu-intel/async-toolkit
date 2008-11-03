@@ -74,9 +74,17 @@ TYPE
 
     loadText(text : TEXT) : Object RAISES { E };
 
-    loadPort(port : Object (* must be SchemeInputPort *)) : Object RAISES { E };
+    loadPort(port : Object (* must be SchemeInputPort *)) : Object 
+      RAISES { E };
+    (* returns True() *)
 
     eval(x : REFANY; env : SchemeEnvironmentSuper.T) : Object RAISES { E };
+
+    loadEval(rd : Rd.T) : Object RAISES { E };
+    (* evaluate data on rd and return last object evaluated *)
+
+    loadEvalText(txt : TEXT) : Object RAISES { E };
+    (* evaluate data in txt and return last object evaluated *)
 
     evalInGlobalEnv(x : Object) : Object RAISES { E };
 
