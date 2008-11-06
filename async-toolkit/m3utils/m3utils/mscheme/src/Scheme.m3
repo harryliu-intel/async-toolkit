@@ -33,6 +33,7 @@ REVEAL
     reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
   OVERRIDES
     init              :=  Init;
+    init2             :=  Init2;
     defineInGlobalEnv :=  DefineInGlobalEnv;
     readEvalWriteLoop :=  ReadEvalWriteLoop;
     setInterrupter    :=  SetInterrupter;
@@ -70,12 +71,21 @@ PROCEDURE Bind(t : T; var : Symbol; val : Object) =
 PROCEDURE SetInGlobalEnv(t : T; var : Symbol; val : Object) RAISES { E } =
   BEGIN EVAL t.globalEnvironment.set(var,val) END SetInGlobalEnv;
 
-PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T;
-               env : REFANY(* SchemeEnvironment.T *)) : T
+PROCEDURE Init(t : T; READONLY  files : ARRAY OF Pathname.T;
+               env : REFANY(* SchemeEnvironment.T *)) : T 
+  RAISES { E } = 
+  BEGIN RETURN t.init2(Stdio.stdin, Stdio.stdout, files, env) END Init;
+
+PROCEDURE Init2(t : T; 
+                input : Rd.T;
+                output : Wr.T;
+                READONLY files : ARRAY OF Pathname.T;
+                env : REFANY(* SchemeEnvironment.T *)) : T
   RAISES { E } =
   BEGIN
-    t.input := NEW(SchemeInputPort.T).init(Stdio.stdin);
-    t.output := Stdio.stdout;
+    t.input := NEW(SchemeInputPort.T).init(input);
+    t.output := output;
+
 
     IF env = NIL THEN
       t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty()
@@ -90,7 +100,7 @@ PROCEDURE Init(t : T; READONLY files : ARRAY OF Pathname.T;
     END;
     t.readInitialFiles(files);
     RETURN t
-  END Init;
+  END Init2;
 
 PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T) 
   RAISES { E } =

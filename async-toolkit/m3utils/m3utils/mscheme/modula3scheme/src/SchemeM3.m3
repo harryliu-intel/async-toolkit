@@ -35,7 +35,7 @@ PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
 PROCEDURE Init(t : T; 
                READONLY arr : ARRAY OF Pathname.T; 
                env : REFANY) : Scheme.T 
-  RAISES { E, OSError.E } =
+  RAISES { E } =
   BEGIN
     t.setPrimitives(prims); (* load in my special primitives *)
     RETURN Scheme.T.init(t,arr,env);
@@ -192,7 +192,9 @@ PROCEDURE DebugSetEnvApply(<*UNUSED*>p : SchemeProcedure.T;
       TRY
         Debug.SetEnv(x); RETURN True()
       EXCEPT
+        (*
         OSError.E(err) => RETURN Error("DebugSetEnvApply : " & AL.Format(err))
+        *)
       END
     END
   END DebugSetEnvApply;
@@ -205,7 +207,9 @@ PROCEDURE DebugClearEnvApply(<*UNUSED*>p : SchemeProcedure.T;
       TRY
         Debug.ClearEnv(x); RETURN True()
       EXCEPT
-        OSError.E(err) => RETURN Error("DebugClearEnvApply : " & AL.Format(err))
+        (*
+          OSError.E(err) => RETURN Error("DebugClearEnvApply : " & AL.Format(err))
+          *)
       END
     END
   END DebugClearEnvApply;
@@ -218,7 +222,9 @@ PROCEDURE DebugHaveEnvApply(<*UNUSED*>p : SchemeProcedure.T;
       TRY
         RETURN Truth(Debug.HaveEnv(x))
       EXCEPT
+        (*
         OSError.E(err) => RETURN Error("DebugHaveEnvApply : " & AL.Format(err))
+        *)
       END
     END
   END DebugHaveEnvApply;

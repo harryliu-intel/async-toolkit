@@ -11,7 +11,7 @@ IMPORT SchemeEnvironmentSuper, SchemeObject;
 IMPORT SchemeSymbol;
 IMPORT SchemeVector;
 IMPORT Pathname;
-IMPORT Rd, OSError, Wr;
+IMPORT Rd, Wr;
 
 EXCEPTION E(TEXT);
  (* This declaration is, unfortunately, a source of trouble.
@@ -59,10 +59,17 @@ TYPE
 
     init(READONLY files : ARRAY OF Pathname.T;
          globalEnv : Environment := NIL) : T 
-    RAISES { E, OSError.E };
+      RAISES { E };
+
     (* we should also be able to pass in Rd.Ts or some other structure
        that lets us read bundles, among other things.  Or perhaps just
        an iterator over Rd.Ts. *)
+
+    init2(input : Rd.T; 
+          output : Wr.T;
+          READONLY files : ARRAY OF Pathname.T;
+          globalEnv : Environment := NIL) : T 
+      RAISES { E };
 
     readEvalWriteLoop(interrupter : Interrupter := NIL) RAISES { Wr.Failure };
 
