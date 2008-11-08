@@ -15,6 +15,7 @@ end
 
 import ("libm3")
 import ("cit_util")
+import ("scheme-lib")
 
 Module("Scheme")
 Interface("SchemeClass")

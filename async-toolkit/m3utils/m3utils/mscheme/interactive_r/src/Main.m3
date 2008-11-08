@@ -18,8 +18,9 @@ IMPORT SchemeM3;
 
 BEGIN 
 
-  WITH arr = NEW(REF ARRAY OF Pathname.T, Params.Count-1) DO
-    FOR i := 1 TO Params.Count-1 DO arr[i-1] := Params.Get(i) END;
+  WITH arr = NEW(REF ARRAY OF Pathname.T, Params.Count) DO
+    arr[0] := "require";
+    FOR i := 1 TO Params.Count-1 DO arr[i] := Params.Get(i) END;
     TRY
       WITH scm = NEW(SchemeM3.T).init(arr^) DO
         MainLoop(NEW(ReadLine.T).init(), scm)

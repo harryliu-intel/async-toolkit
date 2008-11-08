@@ -1,0 +1,13 @@
+/* $Id$ */
+import ("libm3")
+
+resource ("basic-defs.scm")
+resource ("display.scm")
+resource ("mergesort.scm")
+resource ("scodegen.scm")
+resource ("gnuplot.scm")
+resource ("require.scm")
+
+bundle ("SchemeDefsBundle")
+
+library ("scheme-lib")

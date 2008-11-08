@@ -19,6 +19,8 @@ FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
 <*NOWARN*>IMPORT Debug;
 
+IMPORT SchemeDefsBundle, Bundle;
+
 TYPE Pair = SchemePair.T;
 
 <* FATAL Thread.Alerted *>
@@ -154,12 +156,33 @@ PROCEDURE LoadFile(t : T; fileName : Object) : Object RAISES { E } =
   BEGIN
     WITH name = SchemeUtils.StringifyQ(fileName,FALSE) DO
       TRY
-        RETURN t.loadRd(FileRd.Open(name))
+        VAR rd := FileRd.Open(name);
+        BEGIN
+          TRY
+            RETURN t.loadRd(rd)
+          FINALLY
+            Rd.Close(rd) 
+          END
+        END
       EXCEPT
-        OSError.E(err) => RETURN SchemeUtils.Error("can't load " & name & " : OSError.E : " & AL.Format(err))
+        OSError.E(err) => 
+        VAR bundled : TEXT := Bundle.Get(schemeDefs,name & ".scm"); BEGIN
+          IF bundled # NIL THEN
+            RETURN t.loadRd(NEW(TextRd.T).init(bundled))
+          ELSE
+            RETURN SchemeUtils.Error("can't load " & name & 
+                   " : OSError.E : " & AL.Format(err))
+          END
+        END
+        |
+          Rd.Failure(err) =>
+          RETURN SchemeUtils.Error("trouble loading " & name & 
+                 " : Rd.Failure : " & AL.Format(err))
       END
     END
   END LoadFile;
+
+VAR schemeDefs := SchemeDefsBundle.Get();
 
 PROCEDURE LoadEval(t : T; rd : Rd.T) : Object RAISES { E } =
   VAR
