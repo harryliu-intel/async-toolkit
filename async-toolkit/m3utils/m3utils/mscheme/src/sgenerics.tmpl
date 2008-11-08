@@ -1,10 +1,8 @@
 /* $Id$ */
 
 _MSCHEME  = TOP & "/mscheme/interactive/" & BUILD_DIR & "/mscheme"
-_SCODEGEN = TOP & "/mscheme/scheme-lib/scodegen.scm"
-_SEXIT    = TOP & "/mscheme/scheme-lib/exit.scm"
-_SBASIC   = TOP & "/mscheme/scheme-lib/basic-defs.scm"
-_SDISPLAY = TOP & "/mscheme/scheme-lib/display.scm"
+_SCODEGEN = TOP & "/mscheme/scheme-lib/src/scodegen.scm"
+_SEXIT    = TOP & "/mscheme/scheme-lib/src/exit.scm"
 
 readonly proc scodegen(nam) is
 	local makefile = path_of("m3makefile")
@@ -44,7 +42,7 @@ readonly proc scodegen(nam) is
 			4. exit.scm
  		 */
 
-		_exec([_MSCHEME, _SBASIC, _SDISPLAY, derived_scm, _SCODEGEN, g, _SEXIT])
+		_exec([_MSCHEME, derived_scm, _SCODEGEN, g, _SEXIT])
 	end
 	include (derived_mkf)
 	_check_clean (derived_mkf) /* delete this to keep from errors */
