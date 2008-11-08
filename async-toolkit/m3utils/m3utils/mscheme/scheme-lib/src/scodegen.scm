@@ -31,6 +31,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(require-modules "basic-defs")
+
 ;;
 ;; PUBLIC ROUTINES FOR BUILDING THE INPUTS TO THE BELOW CODE
 ;;

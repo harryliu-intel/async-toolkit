@@ -18,8 +18,11 @@
 			(cond ((null? lst) #t)
 						((mem? equal? (car lst) loaded-modules) (iter (cdr lst)))
 						(else 
-						 (load (car lst))
+						 ;; note we have to update loaded-modules first,
+						 ;; or else a module that requires itself would go into
+						 ;; an infinite loop
 						 (set! loaded-modules (cons (car lst) loaded-modules))
+						 (load (car lst))
 						 (iter (cdr lst)))))
 		(iter args))
 

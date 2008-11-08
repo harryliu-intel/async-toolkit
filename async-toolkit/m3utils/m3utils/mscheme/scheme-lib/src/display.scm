@@ -2,6 +2,8 @@
 ;; $Id$
 ;;
 
+(require-modules "basic-defs")
+
 (define dnl #\newline)
 
 (define (dis . x)

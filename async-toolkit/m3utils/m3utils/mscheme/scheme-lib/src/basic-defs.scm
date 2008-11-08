@@ -53,3 +53,12 @@
   (if (null? (cdr lst)) (car lst) (last (cdr lst))))
 
 (define (identity x) x)
+
+(define (head n lst)
+	(if (= n 0) 
+			'()
+			(cons (car lst)
+						(head (- n 1) (cdr lst)))))
+
+(define (tail n lst)
+	(reverse (head n (reverse lst))))

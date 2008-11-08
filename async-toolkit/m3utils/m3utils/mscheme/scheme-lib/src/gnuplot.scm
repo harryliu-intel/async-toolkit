@@ -4,6 +4,7 @@
 ;; basic Scheme definitions for GNUPLOT
 ;;
 
+(require-modules "basic-defs" "display")
 
 (define (make-plot lst nam)
 	(define (iter lst port)
