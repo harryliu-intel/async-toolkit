@@ -473,17 +473,17 @@
 
     (dis "      EVAL db.tExec(\"update " 
 	 tbl-name 
-        " set dirty = \" & Fmt.Bool(to) & \" where row = \" & Fmt.Int(row) & \";\")" 
+        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and row = \" & Fmt.Int(row) & \";\")" 
 	 dnl mp)      
 
     (dis "    ELSE " dnl mp)
 
     (dis "      EVAL db.tExec(\"update " 
 	 tbl-name 
-	 " set dirty = \" & Fmt.Bool(to) & \";\")" 
+	 " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \";\")" 
 	 dnl mp)
 
-    (dis "    END " mp)
+    (dis "    END " dnl mp)
 
     (dis "  END " mp)
 
@@ -614,7 +614,7 @@
 	 (dirtyheader 
 	  (list
 	   "SetDirty" 
-	   "(db : Database.T; to : BOOLEAN; row : [AllRows .. LAST(CARDINAL)]) RAISES { DBerr.Error }"
+	   "(db : Database.T; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\") RAISES { DBerr.Error }"
 	   dis-dirty-m3
 	   ))
 	 
