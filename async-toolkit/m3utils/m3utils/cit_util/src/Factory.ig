@@ -7,7 +7,7 @@ IMPORT ObjectFactory;
 TYPE
   T <: Public;
 
-  Public = ObjectFactory.T OBJECT END;
+  Public = ObjectFactory.T OBJECT METHODS buildT() : Of.T END;
 
 CONST Brand = "Factory of " & Of.Brand;
 
