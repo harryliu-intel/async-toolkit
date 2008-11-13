@@ -84,7 +84,8 @@ PROCEDURE UpEnvApply(<*UNUSED*>p : SchemeProcedure.T;
                      interp : Scheme.T;
                      <*UNUSED*>args : Object) : Object =
   BEGIN
-    WITH env = NARROW(interp.getGlobalEnvironment(),SchemeEnvironment.T).getParent() DO
+    WITH env = NARROW(interp.getGlobalEnvironment(),
+                      SchemeEnvironment.T).getParent() DO
       IF env # NIL THEN
         interp.changeGlobalEnvironment(env)
       END
