@@ -7,6 +7,7 @@ resource ("mergesort.scm")
 resource ("scodegen.scm")
 resource ("gnuplot.scm")
 resource ("require.scm")
+resource ("exit.scm")
 
 bundle ("SchemeDefsBundle")
 
