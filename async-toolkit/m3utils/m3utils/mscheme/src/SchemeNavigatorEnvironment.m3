@@ -38,6 +38,7 @@ PROCEDURE AttachChildEnvironment(t : T;
 PROCEDURE InitEmpty(t : T; parent : Super) : Super =
   BEGIN
     EVAL Super.initEmpty(t,parent);
+
     t.mu := NEW(MUTEX);
     RETURN t
   END InitEmpty;
@@ -96,7 +97,8 @@ PROCEDURE DownEnvApply(<*UNUSED*>p : SchemeProcedure.T;
                        args : Object) : Object RAISES { E } =
   BEGIN
     IF args # NIL AND 
-       ISTYPE(args, Pair) AND 
+       ISTYPE(args, Pair) AND
+       NARROW(args,Pair).first # NIL AND
        ISTYPE(NARROW(args,Pair).first,SchemeEnvironment.T) THEN
       interp.changeGlobalEnvironment(NARROW(args,Pair).first);
       RETURN True()
