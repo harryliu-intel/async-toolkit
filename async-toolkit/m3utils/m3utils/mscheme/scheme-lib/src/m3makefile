@@ -8,6 +8,7 @@ resource ("scodegen.scm")
 resource ("gnuplot.scm")
 resource ("require.scm")
 resource ("exit.scm")
+resource ("hashtable.scm")
 
 bundle ("SchemeDefsBundle")
 
