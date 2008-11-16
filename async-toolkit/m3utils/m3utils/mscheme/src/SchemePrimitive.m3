@@ -508,6 +508,15 @@ PROCEDURE Apply2(t : T; interp : Scheme.T; a1, a2 : Object) : Object
 
 CONST DefFree = TRUE;
 
+PROCEDURE CheckVectorIdx(vec : Vector; idx : INTEGER) RAISES { E } =
+  BEGIN
+    IF idx < FIRST(vec^) OR idx > LAST(vec^) THEN
+      RAISE E("Vector subscript " & Fmt.Int(idx) & 
+            " out of range " & Fmt.Int(FIRST(vec^)) & ".." &
+            Fmt.Int(LAST(vec^)))
+    END
+  END CheckVectorIdx;
+
 PROCEDURE Prims(t : T; 
                 interp : Scheme.T; 
                 args, x, y : Object; 
@@ -806,11 +815,20 @@ PROCEDURE Prims(t : T;
         P.VectorLength => RETURN FromLR(FLOAT(NUMBER(Vec(x)^),LONGREAL))
       |
         
-        P.VectorRef => RETURN Vec(x)[TRUNC(FromO(y))]
+        P.VectorRef => 
+        WITH vec = Vec(x),
+             idx = TRUNC(FromO(y)) DO
+          CheckVectorIdx(vec,idx);
+          RETURN vec[idx]
+        END
       |
         P.VectorSet => 
-        WITH v = Third(args) DO
-          Vec(x)[TRUNC(FromO(y))] := v;
+        WITH v = Third(args),
+             vec = Vec(x),
+             idx = TRUNC(FromO(y)) DO
+
+          CheckVectorIdx(vec,idx);
+          vec[idx] := v;
           RETURN v 
         END
       |
