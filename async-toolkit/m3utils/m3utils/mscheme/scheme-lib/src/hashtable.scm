@@ -42,6 +42,19 @@
                       (loop (cdr bucket)
                             (cons (car bucket) so-far)))))))
 
+					((keys)
+					 (let jloop ((index 0)
+											 (so-far '()))
+
+						 (if (= index size) 
+								 so-far
+								 (let iloop ((bucket (vector-ref table index))
+														 (s2 so-far))
+									 (if (null? bucket) 
+											 (jloop (+ index 1) s2)
+											 (iloop (cdr bucket) (cons (caar bucket) s2)))))))
+						 
+					
           ((display)
            (do ((index 0 (+ index 1)))
                ((= index size))
