@@ -5,7 +5,13 @@
 ;; from John David Stone <stone@math.grin.edu>
 ;;
 ;; http://www.cs.grinnell.edu/~stone/events/scheme-workshop/hash-tables.html
-;; 
+;;
+;; Changes from Stone's version:
+;; * require-modules (used for default string hash function)
+;; * recoded for R4RS (no => in cond)
+;; * added 'keys message
+;; * made a simple default for strings
+;;
 
 (require-modules "basic-defs")
 
