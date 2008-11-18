@@ -62,3 +62,5 @@
 
 (define (tail n lst)
 	(reverse (head n (reverse lst))))
+
+(require-modules "basic-mbe")
