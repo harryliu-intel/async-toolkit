@@ -3,7 +3,7 @@
 ;; downloaded from norvig.com 2008/11/18
 ;;
 ;; moved reverse! and append! to basic-defs.scm
-
+;; removed => (not in early JScheme)
 
 ;Hygienic R5RS macro-by-example for SILK ;-*-scheme-*-
 ;Dorai Sitaram ds26@gte.com http://www.cs.rice.edu/~dorai/
@@ -44,9 +44,9 @@
       ((symbol? e)
         (cond ((eq? e '...) (cons '... al))
           ((memq e kk) (cons e al))
-          ((hyg:rassq e al) =>
-            (lambda (c)
-              (cons (car c) al)))
+          ((hyg:rassq e al) 
+            ((lambda (c)
+              (cons (car c) al)) (hyg:rassq e al))    )
           (else
             (let ((te (gentemp)))
               (cons te (cons (cons te e) al))))))
@@ -115,7 +115,7 @@
         (list->vector
           (hyg:untag-no-tags (vector->list e) al)))
       ((not (symbol? e)) e)
-      ((assq e al) => cdr)
+      ((assq e al)  (cdr (assq e al)) )
       (else e))))
 
 (define hyg:untag-lambda
@@ -194,7 +194,7 @@
           (hyg:untag-vanilla (vector->list e) al tmps)))
       ((not (symbol? e)) e)
       ((memq e tmps) e)
-      ((assq e al) => cdr)
+      ((assq e al)  (cdr (assq e al)))
       (else e))))
 
 (define hyg:flatten
