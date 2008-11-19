@@ -19,7 +19,6 @@ IMPORT Scan, FloatMode, Lex, TextUtils;
 FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
 IMPORT Thread;
 IMPORT SchemeString;
-IMPORT Debug;
 
 TYPE Boolean = SchemeBoolean.T;
      String  = SchemeString.T;
