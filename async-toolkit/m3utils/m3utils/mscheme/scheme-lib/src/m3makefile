@@ -11,6 +11,7 @@ resource ("exit.scm")
 resource ("hashtable.scm")
 resource ("mbe.scm")
 resource ("basic-mbe.scm")
+resource ("time.scm")
 
 bundle ("SchemeDefsBundle")
 
