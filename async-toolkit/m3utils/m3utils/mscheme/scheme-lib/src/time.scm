@@ -24,15 +24,17 @@
 	
 
 (define (seconds->human-time secs)
-	(infixize
-	 (filter (lambda(x) (not (null? x)))
-					 (map (lambda (count suffix)
-									(if (> count 0)
-											(string-append (number->string count) suffix)
-											'()))
-								(convert secs '(7 24 60 60))
-								'("w" "d" "h" "m" "s")))
-	 ":"))
+	(if (= secs 0) 
+			"0s"
+			(infixize
+			 (filter (lambda(x) (not (null? x)))
+							 (map (lambda (count suffix)
+											(if (> count 0)
+													(string-append (number->string count) suffix)
+													'()))
+										(convert secs '(7 24 60 60))
+										'("w" "d" "h" "m" "s")))
+			 ":")))
 
 (define (infixize lst sop)
 	(let loop ((first #t)
