@@ -15,10 +15,11 @@ FROM SchemeSymbol IMPORT SymEq;
 IMPORT SchemeBoolean, SchemeSymbol;
 IMPORT CharSeq;
 IMPORT Text;
-IMPORT Scan, FloatMode, Lex, TextUtils, Wx;
+IMPORT Scan, FloatMode, Lex, TextUtils;
 FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
 IMPORT Thread;
 IMPORT SchemeString;
+IMPORT Debug;
 
 TYPE Boolean = SchemeBoolean.T;
      String  = SchemeString.T;
@@ -33,9 +34,9 @@ REVEAL
     pushedChar : INTEGER := -1;
   METHODS
 
-    nextToken() : Object RAISES { E } := NextToken;
+    nextToken(wx : Wx := NIL) : Object RAISES { E } := NextToken;
 
-    readTail(dotOK : BOOLEAN) : Object RAISES { E } := ReadTail;
+    readTail(dotOK : BOOLEAN; wx : Wx) : Object RAISES { E } := ReadTail;
 
   OVERRIDES
     getCh    :=  GetCh; 
@@ -134,13 +135,14 @@ PROCEDURE Read(t : T) : Object RAISES { E } =
 
   CONST Symbol = SchemeSymbol.Symbol;
 
+  VAR wx := WxReset(NIL);
   BEGIN
 (*
     TRY
 *)
-      WITH token = t.nextToken() DO
+      WITH token = t.nextToken(wx) DO
         IF    SymEq(token, "(") THEN
-          RETURN t.readTail(FALSE)
+          RETURN t.readTail(FALSE,wx)
         ELSIF SymEq(token, ")") THEN
           EVAL Warn("Extra ) ignored."); RETURN t.read()
         ELSIF SymEq(token, ".") THEN
@@ -179,8 +181,9 @@ PROCEDURE Close(t : T) : Boolean RAISES { E } =
 PROCEDURE IsEOF(x : Object) : BOOLEAN = BEGIN RETURN x = EOF END IsEOF;
 
 PROCEDURE ReadTail(t : T; 
-                   <*UNUSED*>dotOK : BOOLEAN) : Object RAISES { E } =
-  VAR token := t.nextToken();
+                   <*UNUSED*>dotOK : BOOLEAN;
+                   wx : Wx) : Object RAISES { E } =
+  VAR token := t.nextToken(wx);
   BEGIN
     IF    token = EOF THEN
       RETURN Error("EOF during read.")
@@ -198,11 +201,11 @@ PROCEDURE ReadTail(t : T;
     ELSE
       t.isPushedToken := TRUE;
       t.pushedToken := token;
-      RETURN Cons(t.read(), t.readTail(TRUE))
+      RETURN Cons(t.read(), t.readTail(TRUE, wx))
     END
   END ReadTail;
 
-PROCEDURE NextToken(t : T) : Object RAISES { E } =
+PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
 
   CONST Symbol = SchemeSymbol.Symbol;
 
@@ -308,10 +311,13 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
           RETURN t.nextToken()
         END
     ELSE
-      WITH wx = Wx.New(),
-           c  = VAL(ch,CHAR) DO
+      WITH c  = VAL(ch,CHAR) DO
+
+        wx := WxReset(wx);
+
         REPEAT
-          Wx.PutChar(wx, VAL(ch, CHAR));
+          WxPutChar(wx, VAL(ch, CHAR));
+
           ch := t.getCh()
         UNTIL
           ch = ChEOF OR VAL(ch,CHAR) IN White OR VAL(ch,CHAR) IN Delims;
@@ -319,7 +325,8 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
         EVAL t.pushChar(ch);
 
         IF c IN NumberChars THEN
-          WITH txt = Wx.ToText(wx) DO
+          WITH txt = WxToText(wx) DO
+            EVAL WxReset(wx);
             TRY
               WITH lr = Scan.LongReal(txt), 
                    lrp = NEW(SchemeLongReal.T) DO
@@ -328,12 +335,12 @@ PROCEDURE NextToken(t : T) : Object RAISES { E } =
               END
             EXCEPT
               Lex.Error, FloatMode.Trap => 
-                Wx.PutText(wx, txt) (* restore it *)
+                WxPutText(wx, txt) (* restore END *);
             END
           END
         END;
 
-        RETURN Symbol(TextUtils.ToLower(Wx.ToText(wx)))
+        RETURN Symbol(TextUtils.ToLower(WxToText(wx)))
       END
     END
   END NextToken;
@@ -348,6 +355,51 @@ PROCEDURE CharSeqToArray(seq : CharSeq.T) : String =
     END
   END CharSeqToArray;
 
+(**********************************************************************)
+
+TYPE
+  Wx = REF RECORD
+    d : REF ARRAY OF CHAR;
+    s : CARDINAL;
+  END;
+
+PROCEDURE WxReset(old : Wx) : Wx =
+  BEGIN
+    IF old = NIL THEN
+      RETURN NEW(Wx, d := NEW(REF ARRAY OF CHAR, 1), s := 0)
+    ELSE
+      old.s := 0;
+      RETURN old
+    END
+  END WxReset;
+
+PROCEDURE WxPutChar(wx : Wx; c : CHAR) =
+  BEGIN
+    IF wx.s = LAST(wx.d^) + 1 THEN
+      VAR 
+        new := NEW(REF ARRAY OF CHAR, NUMBER(wx.d^) * 2);
+      BEGIN
+        SUBARRAY(new^,0,NUMBER(wx.d^)) := wx.d^;
+        wx.d := new
+      END
+    END;
+    wx.d^[wx.s] := c; 
+    INC(wx.s)
+  END WxPutChar;
+
+PROCEDURE WxPutText(wx : Wx; t : TEXT) =
+  BEGIN
+    FOR i := 0 TO Text.Length(t)-1 DO
+      WxPutChar(wx,Text.GetChar(t,i))
+    END
+  END WxPutText;
+
+PROCEDURE WxToText(wx : Wx) : TEXT =
+  BEGIN
+    RETURN Text.FromChars(SUBARRAY(wx.d^,0,wx.s))
+  END WxToText;
+
+(**********************************************************************)
 
 CONST BSC = '\\'; QMC = '"';
 
