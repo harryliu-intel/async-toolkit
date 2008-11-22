@@ -251,6 +251,43 @@
 	 mp)
 ))
     
+(define (put-setter-procedure fld ip mp)
+  (let ((name (car fld))
+	(m3type (type->m3-typename (cadr fld))))
+    (map
+     (lambda(port)
+       (dis "PROCEDURE Set_" name "(VAR t : T; val : " m3type ")"
+	    port))
+     (list ip mp))
+
+    (dis ";" dnl ip)
+
+    (dis " =" dnl 
+	 "  BEGIN" dnl
+	 "    t." name "_isNull := FALSE;" dnl
+   "    t." name " := val" dnl
+   "  END Set_" name ";" dnl dnl
+	 mp)
+))
+    
+(define (put-clearer-procedure fld ip mp)
+  (let ((name (car fld))
+	(m3type (type->m3-typename (cadr fld))))
+    (map
+     (lambda(port)
+       (dis "PROCEDURE Clear_" name "(VAR t : T)"
+	    port))
+     (list ip mp))
+
+    (dis ";" dnl ip)
+
+    (dis " =" dnl 
+	 "  BEGIN" dnl
+	 "    t." name "_isNull := TRUE;" dnl
+   "  END Clear_" name ";" dnl dnl
+	 mp)
+))
+    
 (define (put-have-procedure fld ip mp)
   (let ((name (car fld))
 	(m3type (type->m3-typename (cadr fld))))
@@ -577,11 +614,13 @@
     (dis "END;" dnl ip)
     (dis dnl ip)
 
-    ;; getter procedures
-    (map (lambda (fld) (put-getter-procedure fld ip mp)) fields)
-
-		;; "have" procedures
-    (map (lambda (fld) (put-have-procedure fld ip mp)) fields)
+    ;; the various field-wise procedures
+		(map (lambda(proc)
+					 (map (lambda (fld) (proc fld ip mp)) fields))
+				 (list put-getter-procedure
+							 put-setter-procedure
+							 put-clearer-procedure
+							 put-have-procedure))
 
     (let 
 	;;
