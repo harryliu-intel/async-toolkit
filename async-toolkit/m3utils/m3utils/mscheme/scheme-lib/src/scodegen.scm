@@ -170,6 +170,7 @@
 		  (string-append " default " (stringify-default (cadar lst)))))
 	     ((eq? (car lst) 'not-null) " not null ")
 	     ((eq? (car lst) 'primary-key) " primary key ")
+	     ((eq? (car lst) 'not-updatable) "")
 	     (else (error "Unknown options " lst)))
        (options-string db (cdr lst)))))
 
@@ -229,9 +230,17 @@
 
 ))
 
+
+(define (field-cant-be-null? attr-lst)
+	(or (memq 'not-null attr-lst)
+			(memq 'primary-key attr-lst)))
+
+(define (field-updatable? attr-lst)
+	(not (memq 'not-updatable attr-lst)))
+
 (define (put-getter-procedure fld ip mp)
   (let ((name (car fld))
-				(not-null (memq 'not-null (cddr fld)))
+				(not-null (field-cant-be-null? (cddr fld)))
 				(m3type (type->m3-typename (cadr fld))))
 
 		;;(dis "put-getter-procedure " let " : " fld dnl dnl '())
@@ -259,28 +268,31 @@
     
 (define (put-setter-procedure fld ip mp)
   (let ((name (car fld))
-	(m3type (type->m3-typename (cadr fld))))
-    (map
-     (lambda(port)
-       (dis "PROCEDURE Set_" name "(VAR t : T; val : " m3type ")"
-	    port))
-     (list ip mp))
+				(m3type (type->m3-typename (cadr fld))))
 
-    (dis ";" dnl ip)
-
-    (dis " =" dnl 
-	 "  BEGIN" dnl
-	 "    t." name "_isNull := FALSE;" dnl
-   "    t." name " := val" dnl
-   "  END Set_" name ";" dnl dnl
-	 mp)
-))
+		(if (field-updatable? (cddr fld))
+				(begin
+					(map
+					 (lambda(port)
+						 (dis "PROCEDURE Set_" name "(VAR t : T; val : " m3type ")"
+									port))
+					 (list ip mp))
+					
+					(dis ";" dnl ip)
+					
+					(dis " =" dnl 
+							 "  BEGIN" dnl
+							 "    t." name "_isNull := FALSE;" dnl
+							 "    t." name " := val" dnl
+							 "  END Set_" name ";" dnl dnl
+							 mp)
+					))))
     
 (define (put-clearer-procedure fld ip mp)
   (let ((name (car fld))
-				(not-null (memq 'not-null (cddr fld)))
+				(not-null (field-cant-be-null? (cddr fld)))
 				(m3type (type->m3-typename (cadr fld))))
-		(if not-null #f
+		(if (or not-null (not (field-updatable? (cddr fld)))) #f
 				(begin (map
 								(lambda(port)
 									(dis "PROCEDURE Clear_" name "(VAR t : T)"
@@ -705,8 +717,8 @@
 	      
     (cons name
 	  (append (list
-		   (make-field (string-append name "_id") 'serial 'primary-key)
-		   (make-field "created" 'timestamp 'not-null (list 'default "now()"))
+		   (make-field (string-append name "_id") 'serial 'primary-key 'not-updatable)
+		   (make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
 		   (make-field "updated" 'timestamp (list 'default "now()"))
 		   (make-field "dirty" 'boolean 'not-null (list 'default "true"))
 		   (make-field "active" 'boolean 'not-null (list 'default "false")))
