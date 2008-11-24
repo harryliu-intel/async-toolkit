@@ -510,7 +510,7 @@
 
     (dis "      EVAL db.tExec(\"update " 
 	 tbl-name 
-        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and row = \" & Fmt.Int(row) & \";\")" 
+        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \";\")" 
 	 dnl mp)      
 
     (dis "    ELSE " dnl mp)
