@@ -231,16 +231,22 @@
 
 (define (put-getter-procedure fld ip mp)
   (let ((name (car fld))
-	(m3type (type->m3-typename (cadr fld))))
+				(not-null (memq 'not-null (cddr fld)))
+				(m3type (type->m3-typename (cadr fld))))
+
+		;;(dis "put-getter-procedure " let " : " fld dnl dnl '())
+
     (map
      (lambda(port)
-       (dis "PROCEDURE Get_" name "(READONLY t : T) : " m3type " RAISES { DBTable.IsNull }"
+       (dis "PROCEDURE Get_" name "(READONLY t : T) : " m3type (if not-null "" " RAISES { DBTable.IsNull }")
 	    port))
      (list ip mp))
 
     (dis ";" dnl ip)
 
     (dis " =" dnl 
+				 (if not-null (string-append 
+	 "  <*FATAL DBTable.IsNull*>" dnl) "" )
 	 "  BEGIN" dnl
 	 "    IF t." name "_isNull THEN" dnl
          "      RAISE DBTable.IsNull(TableName & \"." name "\")" dnl
@@ -272,21 +278,23 @@
     
 (define (put-clearer-procedure fld ip mp)
   (let ((name (car fld))
-	(m3type (type->m3-typename (cadr fld))))
-    (map
-     (lambda(port)
-       (dis "PROCEDURE Clear_" name "(VAR t : T)"
-	    port))
-     (list ip mp))
-
-    (dis ";" dnl ip)
-
-    (dis " =" dnl 
-	 "  BEGIN" dnl
-	 "    t." name "_isNull := TRUE;" dnl
-   "  END Clear_" name ";" dnl dnl
-	 mp)
-))
+				(not-null (memq 'not-null (cddr fld)))
+				(m3type (type->m3-typename (cadr fld))))
+		(if not-null #f
+				(begin (map
+								(lambda(port)
+									(dis "PROCEDURE Clear_" name "(VAR t : T)"
+											 port))
+								(list ip mp))
+							 
+							 (dis ";" dnl ip)
+							 
+							 (dis " =" dnl 
+										"  BEGIN" dnl
+										"    t." name "_isNull := TRUE;" dnl
+										"  END Clear_" name ";" dnl dnl
+										mp)
+				))))
     
 (define (put-have-procedure fld ip mp)
   (let ((name (car fld))
