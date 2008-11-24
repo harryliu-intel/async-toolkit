@@ -12,4 +12,8 @@ PROCEDURE New(interval : Time.T; offset := 0.0d0) : SXLongReal.T;
    pass in CurrentOffset to use the offset of the first call.
 *)
 
+PROCEDURE Next(interval, offset : Time.T) : Time.T;
+  (* what is the next time (from now) at a given interval and offset
+     (since the epoch) *)
+
 END SXTime.
