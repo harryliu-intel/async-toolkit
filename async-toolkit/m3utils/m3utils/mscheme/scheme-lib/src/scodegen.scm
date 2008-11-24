@@ -39,7 +39,13 @@
 
 (define (make-table name . x) (cons name x))
 
-(define (make-field name . x) (cons name x))
+(define (make-field written-by name . x) (cons name x))
+;; written-by can have the following values:
+;;
+;;  'client       ;; written only by client
+;;  'server       ;; written only by server
+;;  'both         ;; written by both (ONLY dirty field)
+;;  'read-only    ;; written only by PostgreSQL
 
 (define (make-database name . x) (cons name x))
 
@@ -717,11 +723,11 @@
 	      
     (cons name
 	  (append (list
-		   (make-field (string-append name "_id") 'serial 'primary-key 'not-updatable)
-		   (make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
-		   (make-field "updated" 'timestamp (list 'default "now()"))
-		   (make-field "dirty" 'boolean 'not-null (list 'default "true"))
-		   (make-field "active" 'boolean 'not-null (list 'default "false")))
+		   (make-field 'read-only (string-append name "_id") 'serial 'primary-key 'not-updatable)
+		   (make-field 'read-only "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
+		   (make-field 'server "updated" 'timestamp (list 'default "now()"))
+		   (make-field 'both "dirty" 'boolean 'not-null (list 'default "true"))
+		   (make-field 'client "active" 'boolean 'not-null (list 'default "false")))
 		  fields))))
 
 (define (is-id? field) 
