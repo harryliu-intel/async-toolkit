@@ -1,8 +1,8 @@
 /* $Id$ */
 
 _MSCHEME  = TOP & "/mscheme/interactive/" & BUILD_DIR & "/mscheme"
-_SCODEGEN = TOP & "/mscheme/scheme-lib/src/scodegen.scm"
-_SEXIT    = TOP & "/mscheme/scheme-lib/src/exit.scm"
+_SCODEGEN = TOP & "/mscheme/scheme-lib/src/scodegen.scm" /* for now, easier to modify */
+_SEXIT    = "exit"
 
 readonly proc scodegen(nam) is
 	local makefile = path_of("m3makefile")

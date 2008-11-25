@@ -105,6 +105,14 @@
 	(list (m3-sym "Lex" "Error")
 	      (m3-sym "FloatMode" "Trap"))))
 
+(define lr-conversion
+  ;; convert doubles SQL<->M3
+  (list identity
+	(m3-sym "Fmt" "LongReal")
+	(m3-sym "Scan" "LongReal") 
+	(list (m3-sym "Lex" "Error")
+	      (m3-sym "FloatMode" "Trap"))))
+
 (define bool-conversion
   ;; convert booleans SQL<->M3
   (list identity 
@@ -138,13 +146,14 @@
 (define types
   (list
    ;; sym-name, SQL-name, m3-name, m3-must-import, sql-m3-read
-   (list 'serial       "serial"         "INTEGER"   #f  int-conversion )
-   (list 'varchar      "varchar"        "TEXT"      #f  str-conversion )
-   (list 'integer      "integer"        "INTEGER"   #f  int-conversion )
-   (list 'boolean      "boolean"        "BOOLEAN"   #f  bool-conversion )
-   (list 'timestamp    "timestamp with time zone" 
-                                        "Time"      #t  ts-conversion)
-   (list 'id           "integer"        "INTEGER"   #f  int-conversion)  
+   (list 'serial           "serial"           "INTEGER"   #f  int-conversion )
+   (list 'varchar          "varchar"          "TEXT"      #f  str-conversion )
+   (list 'integer          "integer"          "INTEGER"   #f  int-conversion )
+	 (list 'double-precision "double precision" "LONGREAL"  #f  lr-conversion )
+   (list 'boolean          "boolean"          "BOOLEAN"   #f  bool-conversion )
+   (list 'timestamp        "timestamp with time zone" 
+                                              "Time"      #t  ts-conversion)
+   (list 'id               "integer"          "INTEGER"   #f  int-conversion)  
    )
 )
 

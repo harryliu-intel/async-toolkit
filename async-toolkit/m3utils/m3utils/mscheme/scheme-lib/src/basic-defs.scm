@@ -18,10 +18,10 @@
   ;; element.  Especially useful for infix code generation!
   ;;
   (cond ((null? lst) '())
-	((null? (cdr lst)) (cons (op-last (car lst))
-				(map2 op-not-last op-last (cdr lst))))
-	(else (cons (op-not-last (car lst))
-				 (map2 op-not-last op-last (cdr lst))))))
+				((null? (cdr lst)) (cons (op-last (car lst))
+																 (map2 op-not-last op-last (cdr lst))))
+				(else (cons (op-not-last (car lst))
+										(map2 op-not-last op-last (cdr lst))))))
 
 (define (uniq elem-eq? lst)
   ;; slow... you can do better with mergesort and a unix-style uniq.
