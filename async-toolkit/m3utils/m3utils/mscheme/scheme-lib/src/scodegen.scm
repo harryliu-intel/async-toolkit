@@ -33,6 +33,23 @@
 
 (require-modules "basic-defs" "display" "time")
 
+;; 
+;; The fact that fields can be written by both client and server
+;; can really complicate things.
+;;
+;; Because the server holds an internal cache (in Modula-3),
+;; an incorrect design would have consistency issues.
+;; For this reason, we limit ourselves to a subset of possible read
+;; and write operations.
+;;
+;; Every field falls into one of the following categories:
+;; 
+;; 'server     written only by Modula-3 (central) server
+;; 'client     written only by clients
+;; 'both       ONLY the dirty field -- set by client, cleared by server
+;; 'read-only  initialized by DBMS, not touched subsequently
+;;
+
 (define (map-filter-assoc tag lst)
 	(map cdr (filter (lambda (x) (eq? (car x) tag)) lst)))
 
@@ -65,6 +82,10 @@
 (define (server-may-write? attr-lst)
 	(not (null? (symbol-intersection attr-lst
 																	 '(server both)))))
+
+(define (server-should-read? attr-lst)
+	(not (null? (symbol-intersection attr-lst
+																	 '(client read-only both)))))
 
 (define (make-database name . x) (cons name x))
 
@@ -385,8 +406,8 @@
 (define (ass-sql fld)
   ;; the string corresponding to a SQL assignment (coded in M3)
   (let* ( (name (car fld))
-	  (m3name (string-append "record." name))
-	  (type-name (cadr fld)) )
+					(m3name (string-append "record." name))
+					(type-name (cadr fld)) )
 		
 		(if (server-may-write? (cddr fld))
 
@@ -480,54 +501,68 @@
 	 (query-op (car conv)))
     (string-append (query-op name) " as " name)))
 
-(define (dis-parse-m3-old tbl mp)
-  (let ((tbl-name (car tbl)) 
-	(fields (get-fields (complete-tbl tbl))))
-    (dis "  BEGIN " dnl mp)
-    (dis "    RETURN T { " dnl mp)
-    (map2 (lambda (fld) (dis (ass-m3-old fld) "," dnl mp))
-	  (lambda (fld) (dis (ass-m3-old fld) "" dnl mp)) 
-	  fields)
-    
-    (dis "    }" dnl mp)
-    (dis "  END " mp)
-
-    #t))
-
 (define (ass-m3 fld)
   ;; the string corresponding to an assignment to an M3 var. (starting from
   ;; the output of a SQL query)
   (let* ((name (car fld))
-	 (type (find-type (cadr fld) identity types))
-	 (conv (get-conversion type))
-	 (m3conv (caddr conv))
-	 (query-op (car conv)))
-    (string-append
-     "    res." name "_isNull := row.getIsNull(\"" name "\");" dnl
-     "    IF NOT res." name "_isNull THEN" dnl
-     "      res." name " := "
-     (if (null? m3conv) 
-	 ""
-	 (string-append (car m3conv) "." (cdr m3conv)))
-     "   (row.get(\"" name "\")) " dnl 
-     "    END"
-)))
-     
+				 (type (find-type (cadr fld) identity types))
+				 (not-null (memq 'not-null (cddr fld)))
+				 (conv (get-conversion type))
+				 (m3conv (caddr conv))
+				 (query-op (car conv)))
 
+		(dis "field " name " not-null : " not-null dnl '())
+
+		(cond  
+		 ((server-should-read? (cddr fld))
+			;; tricky, tricky
+			;; if field is written by client or others, always read it
+			;; if field is defined 'not-null and is null, also read it!
+			;; note that one should never have this combination:
+			;; 'server 'default 
+			;; without 'not-null
+			;; (or 'default values will never be read in)
+			
+			(string-append
+			 "    res." name "_isNull := row.getIsNull(\"" name "\");" dnl
+			 "    IF NOT res." name "_isNull THEN" dnl
+			 "      res." name " := "
+			 (if (null? m3conv) 
+					 ""
+					 (string-append (car m3conv) "." (cdr m3conv)))
+			 "   (row.get(\"" name "\")) " dnl 
+			 "    END;" dnl
+			 ))
+		 (not-null
+			(string-append
+			 "    IF res." name "_isNull THEN" dnl  
+			 "      res." name "_isNull := row.getIsNull(\"" name "\");" dnl
+			 "      IF NOT res." name "_isNull THEN" dnl
+			 "        res." name " := "
+  			   (if (null? m3conv) 
+					   ""
+					   (string-append (car m3conv) "." (cdr m3conv)))
+			 "     (row.get(\"" name "\")) " dnl 
+       "      END" dnl
+			 "    END;" dnl
+			))
+		 (else ""))
+))
+				
+     
 (define (dis-parse-m3 tbl mp)
   ;; print the entire routine for parsing a DB row into an M3 RECORD
   (let ((tbl-name (car tbl)) 
-	(fields (get-fields (complete-tbl tbl))))
-    (dis "  VAR res : T; BEGIN " dnl mp)
-    (map (lambda (fld) (dis (ass-m3 fld) ";" dnl mp))
-	  fields)
+				(fields (get-fields (complete-tbl tbl))))
 
+    (dis "  VAR res : T; BEGIN " dnl mp)
+    (map (lambda (fld) (dis (ass-m3 fld) mp))
+				 fields)
+		
     (dis "    RETURN res;" dnl mp)
     (dis "  END " mp)
-
+		
     #t))
-
-
 
 (define (dis-dirty-m3 tbl mp)
   ;; print the entire routine for manipulating the dirty bit
@@ -665,7 +700,7 @@
 		dis-update-m3
 		))
 	 (parseheader 
-	  (list "Parse"
+	  (list "<*NOWARN*>Parse"
 		"(row : DatabaseTable.T) : T RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
 		dis-parse-m3
 		))
