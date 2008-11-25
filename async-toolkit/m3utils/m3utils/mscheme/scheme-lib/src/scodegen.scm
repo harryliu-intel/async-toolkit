@@ -18,7 +18,7 @@
 ;;
 ;; (make-database "db" 
 ;;  (make-table "table1" 
-;;   (make-field "f1" 'data-type1 'data-option1 'data-option2 ...)
+;;   (make-field 'writer "f1" 'data-type1 'data-option1 'data-option2 ...)
 ;;    ...
 ;;  )
 ;; )
@@ -27,7 +27,7 @@
 ;; 1. Database and DatabaseTable Modula-3 interfaces in htmltable lib.
 ;; 2. templates in mscheme library
 ;; 3. generic TableMonitor.{im}g
-;; 4. scheme-lib/scodegen.scm (that is this file, actually!)
+;; 4. scheme-lib/src/scodegen.scm (that is this file, actually!)
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -39,13 +39,26 @@
 
 (define (make-table name . x) (cons name x))
 
-(define (make-field written-by name . x) (cons name x))
+(define (make-field written-by name type . x) 
+	
+	(append (list name type written-by) x)
+	)
+
 ;; written-by can have the following values:
-;;
-;;  'client       ;; written only by client
-;;  'server       ;; written only by server
-;;  'both         ;; written by both (ONLY dirty field)
-;;  'read-only    ;; written only by PostgreSQL
+
+(define written-by-values (list
+  'client       ;; written only by client
+  'server       ;; written only by server
+  'both         ;; written by both (ONLY dirty field)
+  'read-only    ;; written only by PostgreSQL (also cannot change)
+))
+
+(define (symbol-intersection l1 l2)
+	(filter (lambda (x1) (memq x1 l2)) l1))
+
+(define (server-may-write? attr-lst)
+	(not (null? (symbol-intersection attr-lst
+																	 '(server both)))))
 
 (define (make-database name . x) (cons name x))
 
@@ -111,7 +124,7 @@
   (list (lambda (fieldname) (string-append "extract (\'epoch\' from " 
 					   fieldname ")"))
 	(m3-sym "Fmt"
-		(lambda (x) (string-append "Fmt.LongReal(" 
+		(lambda (x) (string-append "\"timestamptz \'epoch\' + \" & Fmt.LongReal(" 
 					    x 
 					    ") & \"* interval \'1 second\'\"")))
 	(m3-sym "Scan" "LongReal") 
@@ -162,6 +175,9 @@
 (define (m3-import? type) (nth (find-type type identity types) 3))
 ;; does the type require extra M3 imports?
 
+(define non-printing-options 
+	(append '(not-updatable) written-by-values))
+
 (define (options-string db lst) 
   ;; SQL column options
   (define (stringify-default def)
@@ -176,8 +192,8 @@
 		  (string-append " default " (stringify-default (cadar lst)))))
 	     ((eq? (car lst) 'not-null) " not null ")
 	     ((eq? (car lst) 'primary-key) " primary key ")
-	     ((eq? (car lst) 'not-updatable) "")
-	     (else (error "Unknown options " lst)))
+	     ((memq (car lst) non-printing-options) "")
+	     (else (error "Unknown option " (car lst))))
        (options-string db (cdr lst)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -316,7 +332,8 @@
     
 (define (put-have-procedure fld ip mp)
   (let ((name (car fld))
-	(m3type (type->m3-typename (cadr fld))))
+				(not-null (field-cant-be-null? (cddr fld)))
+				(m3type (type->m3-typename (cadr fld))))
     (map
      (lambda(port)
        (dis "PROCEDURE Have_" name "(READONLY t : T; VAR " name " : " m3type ") : BOOLEAN "
@@ -328,7 +345,12 @@
     (dis " =" dnl 
 	 "  BEGIN" dnl
 	 "    IF t." name "_isNull THEN" dnl
-   "      RETURN FALSE" dnl
+
+	 (if not-null
+   "      <*ASSERT FALSE*>"
+   "      RETURN FALSE"
+	 ) dnl
+
 	 "    ELSE" dnl
    "      " name " := t." name ";" dnl
 	 "      RETURN TRUE" dnl
@@ -343,57 +365,20 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;
-;; OK, there are some routines marked -old here.  These are no longer
-;; used.  The generated code from these routines is more efficient
-;; than what we have now, but it doesn't work in the presence of
-;; NULLs!  
-;;
-
-(define (ass-sql-old fld)
-  (let* ((name (car fld))
-	 (m3name (string-append "record." name))
-	 (type (find-type (cadr fld) identity types))
-	 (conv (get-conversion type))
-	 (m3->sql (cadr conv)))
-    (string-append name "= \"&"
-		   (cond 
-		    ((procedure? m3->sql) (m3->sql m3name))
-		    ((procedure? (cdr m3->sql))
-		     ((cdr m3->sql) m3name))
-		    (else
-		       (string-append (car m3->sql) "." (cdr m3->sql) "("
-				      m3name ")")))
-		   dnl "      &\"")))
-				      
-(define (dis-update-m3-old tbl mp)
-  (let ((tbl-name (car tbl)) 
-	(fields (get-fields (complete-tbl tbl))))
-    (dis "  BEGIN " dnl mp)
-    (dis "    EVAL db.tExec(\"update " tbl-name " set " mp)
-    (map2 (lambda(fld) (dis (ass-sql-old fld) "," mp))
-	  (lambda(fld) (dis (ass-sql-old fld) " where " tbl-name "_id=\"&Fmt.Int(record." 
-			    tbl-name "_id)&\")" mp))
-	  fields)
-    (dis ";\")" dnl mp)
-    (dis "  END " mp)
-
-    #t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define (ass-sql fld)
   ;; the string corresponding to a SQL assignment (coded in M3)
   (let* ( (name (car fld))
 	  (m3name (string-append "record." name))
 	  (type-name (cadr fld)) )
+		
+		(if (server-may-write? (cddr fld))
 
-    (string-append 
-     "    IF NOT " m3name "_isNull THEN" dnl
-     "      query.addhi(\"" name "=\"&" (format-sql-from-m3 m3name type-name) ")"
-     dnl
-     "    END;" dnl
-     )))
+				(string-append 
+				 "    IF NOT " m3name "_isNull THEN" dnl
+				 "      query.addhi(\"" name "=\"&" (format-sql-from-m3 m3name type-name) ")"
+				 dnl
+				 "    END;" dnl)
+				"")))
 
 
 (define (dis-update-m3 tbl mp)
@@ -746,9 +731,9 @@
 (define (display-constraints tab)
   (let ((tab-name (car tab)))
     (map (lambda (c) (display-constraint tab-name c)) 
-	 (filter is-id? (get-fields tab)))
+				 (filter is-id? (get-fields tab)))
     #t
-))
+		))
     
 (define (display-indexes tab)
   (let ((tab-name (car tab)))
