@@ -323,6 +323,10 @@ PROCEDURE ListToVector(objs : Object) : Vector =
 PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object RAISES { E } =
   BEGIN
     TRY
+      IF port = NIL OR Wr.Closed(port) THEN
+        RETURN Error("Write: port NIL or closed")
+      END;
+
       Wr.PutText(port, StringifyQ(x, quoted));
       Wr.Flush(port);
       RETURN x

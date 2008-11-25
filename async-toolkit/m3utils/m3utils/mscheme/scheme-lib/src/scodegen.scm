@@ -31,18 +31,24 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require-modules "basic-defs" "display")
+(require-modules "basic-defs" "display" "time")
+
+(define (map-filter-assoc tag lst)
+	(map cdr (filter (lambda (x) (eq? (car x) tag)) lst)))
 
 ;;
 ;; PUBLIC ROUTINES FOR BUILDING THE INPUTS TO THE BELOW CODE
 ;;
 
-(define (make-table name . x) (cons name x))
+(define (make-table name . x) (cons 'table (cons name x)))
 
 (define (make-field written-by name type . x) 
 	
-	(append (list name type written-by) x)
+	(append (list 'field name type written-by) x)
 	)
+
+(define (make-index cols . opts)
+	(append (list 'index cols) opts))
 
 ;; written-by can have the following values:
 
@@ -68,9 +74,11 @@
 
 (define (get-table-names db) (map car (cdr db)))
 
-(define (get-tables db)      (cdr db))
+(define (get-tables db)      (map-filter-assoc 'table (cdr db)))
 
-(define (get-fields tab)     (cdr tab))
+(define (get-fields tab)     (map-filter-assoc 'field (cdr tab)))
+
+(define (get-indexes tab)    (map-filter-assoc 'index (cdr tab)))
 
 ;; after setting things up with the above routines, call
 ;;
@@ -713,7 +721,7 @@
   ;; active bit 
   ;;
   (let ((name (car tbl))
-	(fields (get-fields tbl)))
+				(old-data (cdr tbl)))
 	      
     (cons name
 	  (append (list
@@ -722,7 +730,7 @@
 		   (make-field 'server "updated" 'timestamp (list 'default "now()"))
 		   (make-field 'both "dirty" 'boolean 'not-null (list 'default "true"))
 		   (make-field 'client "active" 'boolean 'not-null (list 'default "false")))
-		  fields))))
+		  old-data))))
 
 (define (is-id? field) 
   (and (list? (cadr field)) 
@@ -744,12 +752,28 @@
     #t
 		))
     
+(define (index-code idx tab-name)
+	(let ((fields (car idx))
+				(opts (cdr idx)))
+		(let ((have-unique? (memq 'unique opts))
+					(name         (infixize fields "_"))
+					(colstr       (infixize fields ",")))
+			(string-append
+			 "create "
+			 (if have-unique? "unique " "")
+			 "index "
+			 name
+			 " on " tab-name "(" colstr ");")
+)))
+
 (define (display-indexes tab)
   (let ((tab-name (car tab)))
     (dis 
      "create index " tab-name "_updated_idx on " tab-name "(updated);" dnl
      "create index " tab-name "_dirty_idx on " tab-name "(dirty);" dnl
-	 dnl port)))
+	 dnl port)
+		(map (lambda(i)(dis (index-code i tab-name) dnl port)) (get-indexes tab))
+))
   
 (define (find-constraints db)
 
