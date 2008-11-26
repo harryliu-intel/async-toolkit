@@ -42,12 +42,10 @@
 ;; For this reason, we limit ourselves to a subset of possible read
 ;; and write operations.
 ;;
-;; Every field falls into one of the following categories:
+;; Every table falls into one of the following categories:
 ;; 
 ;; 'server     written only by Modula-3 (central) server
 ;; 'client     written only by clients
-;; 'both       ONLY the dirty field -- set by client, cleared by server
-;; 'read-only  initialized by DBMS, not touched subsequently
 ;;
 
 (define (map-filter-assoc tag lst)
@@ -57,35 +55,13 @@
 ;; PUBLIC ROUTINES FOR BUILDING THE INPUTS TO THE BELOW CODE
 ;;
 
-(define (make-table name . x) (cons 'table (cons name x)))
+(define (make-table name owner . x) (append (list 'table name owner) x))
 
-(define (make-field written-by name type . x) 
-	
-	(append (list 'field name type written-by) x)
-	)
+(define (make-field name type . x) 	(append (list 'field name type) x))
 
-(define (make-index cols . opts)
-	(append (list 'index cols) opts))
+(define (make-index cols . opts)(append (list 'index cols) opts))
 
-;; written-by can have the following values:
-
-(define written-by-values (list
-  'client       ;; written only by client
-  'server       ;; written only by server
-  'both         ;; written by both (ONLY dirty field)
-  'read-only    ;; written only by PostgreSQL (also cannot change)
-))
-
-(define (symbol-intersection l1 l2)
-	(filter (lambda (x1) (memq x1 l2)) l1))
-
-(define (server-may-write? attr-lst)
-	(not (null? (symbol-intersection attr-lst
-																	 '(server both)))))
-
-(define (server-should-read? attr-lst)
-	(not (null? (symbol-intersection attr-lst
-																	 '(client read-only both)))))
+(define (symbol-intersection l1 l2)	(filter (lambda (x1) (memq x1 l2)) l1))
 
 (define (make-database name . x) (cons name x))
 
@@ -97,9 +73,9 @@
 
 (define (get-tables db)      (map-filter-assoc 'table (cdr db)))
 
-(define (get-fields tab)     (map-filter-assoc 'field (cdr tab)))
+(define (get-fields tab)     (map-filter-assoc 'field (cddr tab)))
 
-(define (get-indexes tab)    (map-filter-assoc 'index (cdr tab)))
+(define (get-indexes tab)    (map-filter-assoc 'index (cddr tab)))
 
 ;; after setting things up with the above routines, call
 ;;
@@ -118,9 +94,6 @@
 ;;           INTER-LANGUAGE DATA TYPE DEFINITIONS
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; type conversion from SQL to Modula-3 and back:
-;; (sql->m3-proc m3->sql-proc modula-3-function-name modula-3-exceptions)
 
 (define (m3-sym a b) (cons a b))
 (define (m3-intf s) (car s))
@@ -213,8 +186,7 @@
 (define (m3-import? type) (nth (find-type type identity types) 3))
 ;; does the type require extra M3 imports?
 
-(define non-printing-options 
-	(append '(not-updatable) written-by-values))
+(define non-printing-options (append '(not-updatable)))
 
 (define (options-string db lst) 
   ;; SQL column options
@@ -409,19 +381,39 @@
 					(m3name (string-append "record." name))
 					(type-name (cadr fld)) )
 		
-		(if (server-may-write? (cddr fld))
+		(string-append 
+		 "    IF NOT " m3name "_isNull THEN" dnl
+		 "      query.addhi(\"" name "=\"&" (format-sql-from-m3 m3name type-name) ")"
+		 dnl
+		 "    END;" dnl)))
 
-				(string-append 
-				 "    IF NOT " m3name "_isNull THEN" dnl
-				 "      query.addhi(\"" name "=\"&" (format-sql-from-m3 m3name type-name) ")"
-				 dnl
-				 "    END;" dnl)
-				"")))
 
+(define (dis-update-or-insert-m3 tbl mp)
+	(let ((tbl-name (car tbl)))
+		(dis
+		 "  <*FATAL FloatMode.Trap, Lex.Error*>" dnl
+		 "  BEGIN" dnl
+		 "    WITH cnt = db.tExec(\"select count(*) from " tbl-name " where \"&" dnl
+     "                        restriction).getInt(\"count\") DO" dnl
+		 "      IF cnt > 0 THEN" dnl
+     "        WITH id = db.tExec(\"select " tbl-name "_id from " tbl-name " where \"& restriction).getInt(\"" tbl-name "_id\") DO" dnl
+     "          VAR r := record; BEGIN " dnl
+     "            r." tbl-name "_id := id;" dnl
+     "            Update(db,r)" dnl
+     "           END" dnl
+     "        END" dnl
+     "      ELSE" dnl
+     "        Insert(db,record)" dnl
+     "      END" dnl
+     "    END" dnl
+     "  END" dnl
+		 mp)
+		#t))
 
 (define (dis-update-m3 tbl mp)
   (let ((tbl-name (car tbl)) 
-	(fields (get-fields (complete-tbl tbl))))
+				(fields (get-fields (complete-tbl tbl))))
+		;;(dis "dis-update-m3: " tbl-name " : " fields dnl '())
     (dis "  VAR query := NEW(TextSeq.T).init(); BEGIN " dnl mp)
     (map (lambda(fld) (dis (ass-sql fld) mp)) fields) 
     (dis dnl mp)
@@ -511,43 +503,16 @@
 				 (m3conv (caddr conv))
 				 (query-op (car conv)))
 
-		(dis "field " name " not-null : " not-null dnl '())
-
-		(cond  
-		 ((server-should-read? (cddr fld))
-			;; tricky, tricky
-			;; if field is written by client or others, always read it
-			;; if field is defined 'not-null and is null, also read it!
-			;; note that one should never have this combination:
-			;; 'server 'default 
-			;; without 'not-null
-			;; (or 'default values will never be read in)
-			
-			(string-append
-			 "    res." name "_isNull := row.getIsNull(\"" name "\");" dnl
-			 "    IF NOT res." name "_isNull THEN" dnl
-			 "      res." name " := "
-			 (if (null? m3conv) 
-					 ""
-					 (string-append (car m3conv) "." (cdr m3conv)))
-			 "   (row.get(\"" name "\")) " dnl 
-			 "    END;" dnl
-			 ))
-		 (not-null
-			(string-append
-			 "    IF res." name "_isNull THEN" dnl  
-			 "      res." name "_isNull := row.getIsNull(\"" name "\");" dnl
-			 "      IF NOT res." name "_isNull THEN" dnl
-			 "        res." name " := "
-  			   (if (null? m3conv) 
-					   ""
-					   (string-append (car m3conv) "." (cdr m3conv)))
-			 "     (row.get(\"" name "\")) " dnl 
-       "      END" dnl
-			 "    END;" dnl
-			))
-		 (else ""))
-))
+		(string-append
+		 "    res." name "_isNull := row.getIsNull(\"" name "\");" dnl
+		 "    IF NOT res." name "_isNull THEN" dnl
+		 "      res." name " := "
+		 (if (null? m3conv) 
+				 ""
+				 (string-append (car m3conv) "." (cdr m3conv)))
+		 "   (row.get(\"" name "\")) " dnl 
+		 "    END;" dnl
+		 )))
 				
      
 (define (dis-parse-m3 tbl mp)
@@ -555,11 +520,10 @@
   (let ((tbl-name (car tbl)) 
 				(fields (get-fields (complete-tbl tbl))))
 
-    (dis "  VAR res : T; BEGIN " dnl mp)
+    (dis "  BEGIN " dnl mp)
     (map (lambda (fld) (dis (ass-m3 fld) mp))
 				 fields)
 		
-    (dis "    RETURN res;" dnl mp)
     (dis "  END " mp)
 		
     #t))
@@ -647,7 +611,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define (make-table-m3 tbl db m3mp)
+(define (make-server-table-m3 tbl db m3mp)
 
   ;; generate all the Modula-3 code for accessing a table
 
@@ -660,8 +624,8 @@
 
     (dis "derived_interface(\"" m3name "\",VISIBLE)" dnl m3mp)
     (dis "derived_implementation(\"" m3name "\")" dnl m3mp)
-    (dis "TableMonitor(\"" m3name "\",\"" m3name "\")" dnl dnl m3mp)
-    (dis "Table(\"Int" m3name "\",\"Integer\",\"" m3name "\")" dnl dnl m3mp)
+    ;;(dis "TableMonitor(\"" m3name "\",\"" m3name "\")" dnl dnl m3mp)
+    ;;(dis "Table(\"Int" m3name "\",\"Integer\",\"" m3name "\")" dnl dnl m3mp)
 
     (dis "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl ip)
     (dis "INTERFACE " m3name ";" dnl dnl ip)
@@ -699,15 +663,102 @@
 		"(db : Database.T; READONLY record : T) RAISES { DBerr.Error }"
 		dis-update-m3
 		))
-	 (parseheader 
-	  (list "<*NOWARN*>Parse"
-		"(row : DatabaseTable.T) : T RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
-		dis-parse-m3
-		))
 	 (insert
 	  (list "Insert"
 		"(db : Database.T; READONLY record : T) RAISES { DBerr.Error }"
 		dis-insert-m3
+		))
+
+	 (upinsert
+	  (list "UpdateOrInsert" 
+					"(db : Database.T; READONLY record : T; restriction : TEXT) RAISES { DBerr.Error }"
+					dis-update-or-insert-m3
+					))
+
+	 (getid
+	  (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
+	 
+	 )
+      (dis dnl "CONST AllRows = -1; " dnl ip)
+
+      (map 
+       (lambda(h)
+	 (let (  (pname (car h))
+		 (proto (cadr h))
+		 (dis-code  (caddr h))  )
+	   (dis "PROCEDURE " pname proto ";" dnl dnl ip)
+	   (dis "PROCEDURE " pname proto "=" dnl mp)
+	   (dis-code tbl mp)
+	   (dis pname ";" dnl dnl dnl mp)))
+       (list upheader 
+						 insert 
+						 upinsert
+						 getid)
+       )
+      )
+
+    (dis "CONST Brand = \"" m3name "\";" dnl dnl ip)
+    (dis "CONST TableName = \"" name "\";" dnl dnl ip)
+    (dis "END " m3name "." dnl ip)     (dis "BEGIN END " m3name "." dnl mp)
+
+    (close-output-port ip) (close-output-port mp)
+    #t
+    )
+  )
+
+
+(define (make-client-table-m3 tbl db m3mp)
+
+  ;; generate all the Modula-3 code for accessing a table
+
+  (let* ((name (car tbl))
+	 (dbname (db-name db))
+	 (m3name (string-append "DBTable_" dbname "_" name))
+	 (ip (open-output-file (string-append m3name ".i3")))
+	 (mp (open-output-file (string-append m3name ".m3")))
+	 (fields (get-fields (complete-tbl tbl))))
+
+    (dis "derived_interface(\"" m3name "\",VISIBLE)" dnl m3mp)
+    (dis "derived_implementation(\"" m3name "\")" dnl m3mp)
+    (dis "TableMonitor(\"" m3name "\",\"" m3name "\")" dnl dnl m3mp)
+    (dis "Table(\"Int" m3name "\",\"Integer\",\"" m3name "\")" dnl dnl m3mp)
+
+    (dis "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl ip)
+    (dis "INTERFACE " m3name ";" dnl dnl ip)
+
+    (dis "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl mp)
+    (dis "MODULE " m3name ";" dnl dnl mp)
+
+    (dis-intf-imports fields ip)
+    (dis-modu-imports fields mp)
+
+    (dis "TYPE T = RECORD" dnl ip)
+    (map (lambda (fld) (putm3-field-list fld ip)) fields)
+    (dis "END;" dnl ip)
+    (dis dnl ip)
+
+    ;; the various field-wise procedures
+		(map (lambda(proc)
+					 (map (lambda (fld) (proc fld ip mp)) fields))
+				 (list put-getter-procedure
+							 ;put-setter-procedure
+							 ;put-clearer-procedure
+							 put-have-procedure))
+
+    (let 
+	;;
+	;; define some Modula-3 procedures.
+	;; Update  a row
+	;; Parse   a row
+	;; Insert  a row
+	;; QueryHeader   provide the data spec for the query to Parse
+	;; SetDirty  clear/set dirty bit
+	;;
+	(
+	 (parseheader 
+	  (list "<*NOWARN*>Parse"
+		"(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
+		dis-parse-m3
 		))
 	 (queryheader 
 	  (list "QueryHeader" "() : TEXT" dis-query-m3))
@@ -732,7 +783,10 @@
 	   (dis "PROCEDURE " pname proto "=" dnl mp)
 	   (dis-code tbl mp)
 	   (dis pname ";" dnl dnl dnl mp)))
-       (list upheader parseheader insert queryheader dirtyheader getid)
+       (list ;upheader 
+						 parseheader 
+						 ;insert 
+						 queryheader dirtyheader getid)
        )
       )
 
@@ -744,8 +798,12 @@
     #t
     )
   )
-    
 
+(define (make-table-m3 tbl db m3mp)
+	(cond ((eq? 'client (cadr tbl)) (make-client-table-m3 tbl db m3mp))
+				((eq? 'server (cadr tbl)) (make-server-table-m3 tbl db m3mp))
+				(else (error (string-append "Unknown owner : " (cadr tbl))))))
+    
 (define (complete-tbl tbl)
   ;;
   ;; "complete" the table, adding standard columns
@@ -756,16 +814,22 @@
   ;; active bit 
   ;;
   (let ((name (car tbl))
-				(old-data (cdr tbl)))
+				(owner (cadr tbl))
+				(old-data (cddr tbl)))
 	      
-    (cons name
-	  (append (list
-		   (make-field 'read-only (string-append name "_id") 'serial 'primary-key 'not-updatable)
-		   (make-field 'read-only "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
-		   (make-field 'server "updated" 'timestamp (list 'default "now()"))
-		   (make-field 'both "dirty" 'boolean 'not-null (list 'default "true"))
-		   (make-field 'client "active" 'boolean 'not-null (list 'default "false")))
-		  old-data))))
+    (append 
+		 (list name owner)
+		 (list
+			(make-field (string-append name "_id") 'serial 'primary-key 'not-updatable)
+			(make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
+			(make-field "updated" 'timestamp (list 'default "now()")))
+
+			(if (eq? owner 'client)
+					(list 
+					 (make-field "dirty" 'boolean 'not-null (list 'default "true"))
+					 (make-field "active" 'boolean 'not-null (list 'default "false")))
+					'())
+		 old-data)))
 
 (define (is-id? field) 
   (and (list? (cadr field)) 
@@ -811,7 +875,6 @@
 ))
   
 (define (find-constraints db)
-
   (map display-constraints (get-tables db)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -839,7 +902,6 @@
 
 (define (write-database-m3 db)
   (let ((p (open-output-file scodegen-m3makefile)))
-    (map (lambda (t)
-	   (make-table-m3 t db p)) 
-	 (get-tables db))
+    (map (lambda (t) (make-table-m3 t db p)) (get-tables db))
     (close-output-port p)))
+
