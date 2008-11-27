@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE SXTime;
-IMPORT Time, SXLongReal, Thread;
+IMPORT Time, SXLongReal, Thread, SXInt;
 FROM Math IMPORT log, pow;
 
 PROCEDURE log2(x : LONGREAL) : LONGREAL = 
@@ -11,11 +11,13 @@ TYPE
   Closure = Thread.Closure OBJECT
     interval, next : Time.T;
     sx : SXLongReal.Var;
+    ix : SXInt.Var;
   OVERRIDES
     apply := Apply;
   END;
 
 PROCEDURE Apply(cl : Closure) : REFANY =
+  VAR i := 0;
   BEGIN
     LOOP
       WITH now = Time.Now() DO
@@ -28,6 +30,8 @@ PROCEDURE Apply(cl : Closure) : REFANY =
         ELSE
           (* set the sx *)
           cl.sx.set(now);
+          INC(i);
+          cl.ix.set(i);
 
           (* and find the next wakeup time *)
           WHILE cl.next < now DO 
@@ -63,13 +67,28 @@ PROCEDURE Next(interval, offset : Time.T) : Time.T =
 
 PROCEDURE New(interval, offset : Time.T) : SXLongReal.T =
   BEGIN
-    WITH sx = NEW(SXLongReal.Var).initVal(Time.Now()) DO 
+    WITH sx = NEW(SXLongReal.Var).initVal(Time.Now()),
+         ix = NEW(SXInt.Var).initVal(0) DO 
       EVAL Thread.Fork(NEW(Closure, 
                            interval := interval, 
                            next := Next(interval,offset),
-                           sx := sx));
+                           sx := sx,
+                           ix := ix));
       RETURN sx
     END
   END New;
+
+PROCEDURE NewCounter(interval, offset : Time.T) : SXInt.T =
+  BEGIN
+    WITH sx = NEW(SXLongReal.Var).initVal(Time.Now()),
+         ix = NEW(SXInt.Var).initVal(0) DO 
+      EVAL Thread.Fork(NEW(Closure, 
+                           interval := interval, 
+                           next := Next(interval,offset),
+                           sx := sx,
+                           ix := ix));
+      RETURN ix
+    END
+  END NewCounter;
 
 BEGIN END SXTime.
