@@ -822,11 +822,13 @@
 		 (list
 			(make-field (string-append name "_id") 'serial 'primary-key 'not-updatable)
 			(make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
-			(make-field "updated" 'timestamp (list 'default "now()")))
-
+			(make-field "updated" 'timestamp (list 'default "now()"))
+		  (make-index (list "updated"))
+			)
 			(if (eq? owner 'client)
 					(list 
 					 (make-field "dirty" 'boolean 'not-null (list 'default "true"))
+					 (make-index (list "dirty"))
 					 (make-field "active" 'boolean 'not-null (list 'default "false")))
 					'())
 		 old-data)))
@@ -867,10 +869,6 @@
 
 (define (display-indexes tab)
   (let ((tab-name (car tab)))
-    (dis 
-     "create index " tab-name "_updated_idx on " tab-name "(updated);" dnl
-     "create index " tab-name "_dirty_idx on " tab-name "(dirty);" dnl
-	 dnl port)
 		(map (lambda(i)(dis (index-code i tab-name) dnl port)) (get-indexes tab))
 ))
   
