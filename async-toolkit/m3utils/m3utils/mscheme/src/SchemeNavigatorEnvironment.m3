@@ -52,6 +52,8 @@ PROCEDURE Put(t : T; var : SchemeSymbol.T; READONLY val : SchemeObject.T) =
           t.children := val
         END
       END
+    ELSIF var = ThisSymbol THEN
+      (* skip *)
     ELSE
       Super.put(t,var,val)
     END
@@ -64,12 +66,15 @@ PROCEDURE Get(t : T; var : SchemeSymbol.T;
       LOCK t.mu DO
         val := t.children; RETURN TRUE
       END
+    ELSIF var = ThisSymbol THEN
+      val := t; RETURN TRUE
     ELSE
       RETURN Super.get(t,var,val)
     END
   END Get;
 
 VAR (* CONST *) MagicSymbol := SchemeSymbol.Symbol(MagicEnvironmentVariable);
+                ThisSymbol := SchemeSymbol.Symbol(ThisEnvironmentVariable);
 
 PROCEDURE ExtendWithNavigator(prims : SchemePrimitive.ExtDefiner) =
   BEGIN

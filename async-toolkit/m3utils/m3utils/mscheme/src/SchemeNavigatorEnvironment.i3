@@ -23,5 +23,6 @@ PROCEDURE ExtendWithNavigator(definer : SchemePrimitive.ExtDefiner);
   *)
 
 CONST MagicEnvironmentVariable = "***child-environments***";
+      ThisEnvironmentVariable  = "***this-environment***";
 
 END SchemeNavigatorEnvironment.

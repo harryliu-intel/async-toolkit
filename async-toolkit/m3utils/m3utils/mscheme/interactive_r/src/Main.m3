@@ -13,6 +13,7 @@ IMPORT AL, IP, ReadLine;
 FROM SchemeReadLine IMPORT MainLoop;
 IMPORT Thread;
 IMPORT SchemeM3;
+IMPORT SchemeNavigatorEnvironment;
 
 <*FATAL Thread.Alerted*>
 
@@ -22,7 +23,9 @@ BEGIN
     arr[0] := "require";
     FOR i := 1 TO Params.Count-1 DO arr[i] := Params.Get(i) END;
     TRY
-      WITH scm = NEW(SchemeM3.T).init(arr^) DO
+      WITH scm = NEW(SchemeM3.T).init(arr^, 
+                                      globalEnv := 
+                                NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
         MainLoop(NEW(ReadLine.T).init(), scm)
       END
     EXCEPT

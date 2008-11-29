@@ -18,6 +18,7 @@ IMPORT Fmt;
 IMPORT TextRefSchemeAutoTbl;
 IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
 IMPORT IP, Process;
+IMPORT SchemeEnvironment;
 
 <* FATAL Thread.Alerted *>
 
@@ -343,5 +344,6 @@ VAR
 BEGIN 
   TextRefSchemeAutoTbl.Register(); (* vide module initialization order,
                                       Green Book *)
-  ExtendWithM3(prims)
+  ExtendWithM3(prims);
+  SchemeEnvironment.ExtendWithIntrospectionPrimitives(prims)  
 END SchemeM3.
