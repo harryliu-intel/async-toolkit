@@ -17,6 +17,7 @@ FROM SchemeBoolean IMPORT True, Truth;
 IMPORT Fmt;
 IMPORT TextRefSchemeAutoTbl;
 IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
+IMPORT IP, Process;
 
 <* FATAL Thread.Alerted *>
 
@@ -246,6 +247,27 @@ PROCEDURE WrCloseApply(<*UNUSED*>p : SchemeProcedure.T;
     END
   END WrCloseApply;
 
+PROCEDURE HostnameApply(<*UNUSED*>p : SchemeProcedure.T; 
+                        <*UNUSED*>interp : Scheme.T; 
+                        <*UNUSED*>args : Object) : Object RAISES { E } =
+  BEGIN
+    TRY
+      RETURN SchemeSymbol.Symbol(IP.GetCanonicalByAddr(IP.GetHostAddr()))
+    EXCEPT
+      IP.Error(ec) =>
+      RETURN Error("HostnameApply : IP.Error : " & AL.Format(ec))
+    END
+  END HostnameApply;
+
+PROCEDURE GetUnixPIDApply(<*UNUSED*>p : SchemeProcedure.T; 
+                        <*UNUSED*>interp : Scheme.T; 
+                        <*UNUSED*>args : Object) : Object =
+  BEGIN
+    RETURN SchemeLongReal.FromI(Process.GetMyID())
+  END GetUnixPIDApply;
+
+(**********************************************************************)
+
 PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
   BEGIN 
     prims.addPrim("jailbreak", NEW(SchemeProcedure.T, 
@@ -305,6 +327,15 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
     prims.addPrim("wr-close", NEW(SchemeProcedure.T,
                                       apply := WrCloseApply), 
                   1, 1);
+
+    prims.addPrim("hostname", NEW(SchemeProcedure.T, 
+                                 apply := HostnameApply), 
+                  0, 0);
+
+    prims.addPrim("getunixpid", NEW(SchemeProcedure.T, 
+                                    apply := GetUnixPIDApply), 
+                  0, 0);
+
   END ExtendWithM3;
 
 VAR 

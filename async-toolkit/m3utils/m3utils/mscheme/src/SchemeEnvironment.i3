@@ -74,4 +74,6 @@ TYPE
 
 CONST Brand = "SchemeEnvironment";
 
+PROCEDURE ExtendWithIntrospectionPrimitives(prims : REFANY (*SchemePrimitive.ExtDefiner *));
+
 END SchemeEnvironment.

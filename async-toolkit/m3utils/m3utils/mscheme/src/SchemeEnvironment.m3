@@ -297,5 +297,9 @@ PROCEDURE DefPrim(t : T;
                   NEW(SchemePrimitive.T).init(id, definer, minArgs, maxArgs));
     RETURN t
   END DefPrim;
+
+PROCEDURE ExtendWithIntrospectionPrimitives(prims : REFANY) = 
+  BEGIN
+  END ExtendWithIntrospectionPrimitives;
     
 BEGIN END SchemeEnvironment.
