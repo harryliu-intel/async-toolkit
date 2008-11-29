@@ -55,7 +55,16 @@ REVEAL
     apply := Apply;
     apply1 := Apply1;
     apply2 := Apply2;
+    getMinArgs := GetMinArgs;
+    getMaxArgs := GetMaxArgs;
+    getId := GetId;
   END;
+
+PROCEDURE GetMinArgs(t : T) : CARDINAL = BEGIN RETURN t.minArgs END GetMinArgs;
+
+PROCEDURE GetMaxArgs(t : T) : CARDINAL = BEGIN RETURN t.maxArgs END GetMaxArgs;
+
+PROCEDURE GetId(t : T) : CARDINAL = BEGIN RETURN t.id END GetId;
 
 PROCEDURE Init(t : T; 
                id : CARDINAL;

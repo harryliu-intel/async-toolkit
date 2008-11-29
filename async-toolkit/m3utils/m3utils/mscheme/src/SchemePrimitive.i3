@@ -18,6 +18,10 @@ TYPE
     init(id : CARDINAL; 
          definer : Definer;  (* used for extension primitives *)
          minArgs, maxArgs : CARDINAL) : T;
+
+    getMinArgs() : CARDINAL;
+    getMaxArgs() : CARDINAL;
+    getId() : CARDINAL;
   END;
 
   Definer <: PubDefiner;

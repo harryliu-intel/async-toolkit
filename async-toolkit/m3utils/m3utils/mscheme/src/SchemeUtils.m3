@@ -203,6 +203,27 @@ PROCEDURE List3(x, y, z : Object; t : Scheme.T := NIL) : Pair =
     RETURN p1
   END List3;
 
+PROCEDURE List4(x, y, z, u : Object; t : Scheme.T := NIL) : Pair =
+  VAR
+    p1, p2, p3, p4 : Pair;
+  BEGIN 
+    IF t = NIL THEN 
+      p1 := NEW(Pair);
+      p2 := NEW(Pair);
+      p3 := NEW(Pair);
+      p4 := NEW(Pair)
+    ELSE
+      p1 := SchemeClass.GetCons(t);
+      p2 := SchemeClass.GetCons(t);
+      p3 := SchemeClass.GetCons(t);      
+      p4 := SchemeClass.GetCons(t)
+    END;
+    p1.first := x; p2.first := y; p3.first := z; p4.first := u;
+    p1.rest := p2; p2.rest := p3; p3.rest := p4; p4.rest := NIL;
+    
+    RETURN p1
+  END List4;
+
 PROCEDURE ListStar(x : Object; t : Scheme.T := NIL) : Object =
   BEGIN
     IF Rest(x) = NIL THEN RETURN First(x) 

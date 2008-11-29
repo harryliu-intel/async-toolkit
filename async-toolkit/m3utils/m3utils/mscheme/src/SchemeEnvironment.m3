@@ -16,11 +16,12 @@ IMPORT AtomRefTbl;
 IMPORT SchemePrimitive, SchemeSymbol, SchemeProcedure;
 IMPORT SchemeProcedureClass;
 FROM Scheme IMPORT Symbol, Object, E;
-FROM SchemeUtils IMPORT Error, Warn, StringifyT;
+FROM SchemeUtils IMPORT Error, Warn, StringifyT, First, Stringify;
 IMPORT SchemeUtils;
 IMPORT Text;
 IMPORT SchemePair;
 IMPORT Scheme;
+IMPORT AtomList, SchemeLongReal;
 
 TYPE Pair = SchemePair.T;
 
@@ -298,8 +299,82 @@ PROCEDURE DefPrim(t : T;
     RETURN t
   END DefPrim;
 
-PROCEDURE ExtendWithIntrospectionPrimitives(prims : REFANY) = 
+PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T; 
+                        <*UNUSED*>interp : Scheme.T; 
+                                  args : Object) : Object RAISES { E } =
+
+  PROCEDURE GetLocalNames(e : T) : AtomList.T =
+    VAR res : AtomList.T := NIL;
+    BEGIN
+      IF e.dictionary # NIL THEN
+        WITH iter = e.dictionary.iterate() DO
+          VAR a : SchemeSymbol.T; o : REFANY; BEGIN
+            WHILE iter.next(a,o) DO
+              res := AtomList.Cons(a,res)
+            END
+          END
+        END
+      ELSE
+        FOR i := FIRST(e.quick) TO LAST(e.quick) DO
+          IF e.quick[i].var # NIL THEN 
+            res := AtomList.Cons(e.quick[i].var,res)
+          ELSE
+            EXIT
+          END
+        END
+      END;
+      RETURN res
+    END GetLocalNames;
+
   BEGIN
+    WITH x = First(args) DO
+      IF x = NIL OR NOT ISTYPE(x, T) THEN
+        RETURN Error("Not a SchemeEnvironment.T : " & Stringify(x))
+      END;
+
+      VAR e := NARROW(x,T);
+          names : AtomList.T;
+      BEGIN
+        IF ISTYPE(e, Unsafe) THEN
+          names := GetLocalNames(e)
+        ELSE
+          LOCK e.mu DO names := GetLocalNames(e) END
+        END;
+
+        VAR res : Pair := NIL;
+            p := names;
+        BEGIN
+          WHILE p # NIL DO
+            WITH val = e.lookup(p.head) DO
+              TYPECASE val OF
+                NULL => (* skip *) |
+                SchemePrimitive.T(prim) =>
+                res := NEW(Pair,
+                           first := SchemeUtils.List4(p.head,
+                                       SchemeLongReal.FromI(prim.getId()),
+                                       SchemeLongReal.FromI(prim.getMinArgs()),
+                                       SchemeLongReal.FromI(prim.getMaxArgs())
+                                         ),
+                           rest := res)
+              ELSE
+                (* skip *)
+              END
+            END;
+            p := p.tail
+          END;
+          RETURN res
+        END
+      END
+    END
+  END ListPrimitivesApply;
+
+PROCEDURE ExtendWithIntrospectionPrimitives(pa : REFANY) = 
+  VAR
+    prims := NARROW(pa, SchemePrimitive.ExtDefiner);
+  BEGIN
+    prims.addPrim("list-primitives", NEW(SchemeProcedure.T,
+                                         apply := ListPrimitivesApply),
+                  1, 1)
   END ExtendWithIntrospectionPrimitives;
     
 BEGIN END SchemeEnvironment.
