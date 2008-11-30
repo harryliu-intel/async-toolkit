@@ -67,8 +67,20 @@ PROCEDURE ChangeGlobalEnvironment(t : T; env : SchemeEnvironmentSuper.T) =
 PROCEDURE SetPrimitives(t : T; spd : REFANY) =
   BEGIN t.prims := spd END SetPrimitives;
 
-PROCEDURE Bind(t : T; var : Symbol; val : Object) =
-  BEGIN EVAL t.globalEnvironment.define(var,val) END Bind;
+PROCEDURE Bind(t : T; var : REFANY; val : Object) =
+  BEGIN 
+    TYPECASE var OF
+      NULL => <*ASSERT FALSE*>
+    |
+      TEXT => var := SchemeSymbol.Symbol(var)
+    |
+      SchemeSymbol.T => (* skip *)
+    ELSE
+      <*ASSERT FALSE*>
+    END;
+
+    EVAL t.globalEnvironment.define(var,val) 
+  END Bind;
 
 PROCEDURE SetInGlobalEnv(t : T; var : Symbol; val : Object) RAISES { E } =
   BEGIN EVAL t.globalEnvironment.set(var,val) END SetInGlobalEnv;
@@ -255,6 +267,12 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
         RETURN EvalInternal(t, x, envP)
       EXCEPT
         E(txt) =>
+
+        IF Text.Equal(txt, "CallCC123") THEN 
+          (* don't intercept call/cc, see SchemePrimitive.m3 *)
+          RAISE E(txt) 
+        END;
+
         WITH l = Text.Length(txt) DO
           IF l > MaxTraceback THEN
             IF NOT Text.Equal(Text.Sub(txt, l - Text.Length(Ellipsis)), 

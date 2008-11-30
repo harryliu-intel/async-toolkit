@@ -13,7 +13,7 @@ TYPE
 
 CONST Brand = "SchemeNavigatorEnvironment";
 
-PROCEDURE ExtendWithNavigator(definer : SchemePrimitive.ExtDefiner);
+PROCEDURE ExtendWithNavigator(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefiner;
   (* extend the primitive definer with the following primitives,
      which allow navigating in the environments... 
 

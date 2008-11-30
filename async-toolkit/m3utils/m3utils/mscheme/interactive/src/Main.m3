@@ -10,6 +10,7 @@
 MODULE Main;
 IMPORT SchemeM3, Scheme, Params, Pathname, Csighandler;
 IMPORT Debug, OSError, Wr, AL;
+IMPORT SchemeNavigatorEnvironment;
 
 TYPE 
   Interrupter = Scheme.Interrupter OBJECT
@@ -34,7 +35,8 @@ BEGIN
     arr[0] := "require";
     FOR i := 1 TO Params.Count-1 DO arr[i] := Params.Get(i) END;
     TRY
-      WITH scm = NEW(SchemeM3.T).init(arr^) DO
+      WITH scm = NEW(SchemeM3.T).init(arr^,globalEnv := 
+                                NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
         scm.readEvalWriteLoop(NEW(Interrupter))
       END
     EXCEPT

@@ -98,8 +98,12 @@ TYPE
     evalList(list : Object; env : SchemeEnvironmentSuper.T) : Object RAISES { E };
     (* always a SchemePair *)
      
-    bind(var : Symbol; val : Object);
-    (* bind (define) some object to symbol in var from Modula-3 *)
+    bind(var : REFANY; val : Object);
+    (* 
+       bind (define) some object to symbol in var from Modula-3.
+
+       var should be EITHER a SchemeSymbol.T OR a TEXT 
+    *)
     
     setInGlobalEnv(var : Symbol; val : Object) RAISES { E };
     (* set! var val *)

@@ -16,7 +16,7 @@ TYPE
 
 CONST Brand = "SchemeM3";
 
-PROCEDURE ExtendWithM3(definer : SchemePrimitive.ExtDefiner);
+PROCEDURE ExtendWithM3(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefiner;
   (* extend a given ExtDefiner with the "Modula-3 primitives"
      defined in this module *)
 

@@ -76,13 +76,14 @@ PROCEDURE Get(t : T; var : SchemeSymbol.T;
 VAR (* CONST *) MagicSymbol := SchemeSymbol.Symbol(MagicEnvironmentVariable);
                 ThisSymbol := SchemeSymbol.Symbol(ThisEnvironmentVariable);
 
-PROCEDURE ExtendWithNavigator(prims : SchemePrimitive.ExtDefiner) =
+PROCEDURE ExtendWithNavigator(prims : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefiner =
   BEGIN
     prims.addPrim("up-environment",
                   NEW(SchemeProcedure.T, apply := UpEnvApply), 0, 0);
 
     prims.addPrim("down-environment",
-                  NEW(SchemeProcedure.T, apply := DownEnvApply), 1, 1)
+                  NEW(SchemeProcedure.T, apply := DownEnvApply), 1, 1);
+    RETURN prims
   END ExtendWithNavigator;
 
 PROCEDURE UpEnvApply(<*UNUSED*>p : SchemeProcedure.T;

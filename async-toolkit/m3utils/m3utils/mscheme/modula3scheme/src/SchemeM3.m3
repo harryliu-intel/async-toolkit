@@ -269,7 +269,7 @@ PROCEDURE GetUnixPIDApply(<*UNUSED*>p : SchemeProcedure.T;
 
 (**********************************************************************)
 
-PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
+PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.ExtDefiner =
   BEGIN 
     prims.addPrim("jailbreak", NEW(SchemeProcedure.T, 
                                    apply := JailBreakApply), 
@@ -337,6 +337,7 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner) =
                                     apply := GetUnixPIDApply), 
                   0, 0);
 
+    RETURN prims
   END ExtendWithM3;
 
 VAR 
@@ -344,6 +345,6 @@ VAR
 BEGIN 
   TextRefSchemeAutoTbl.Register(); (* vide module initialization order,
                                       Green Book *)
-  ExtendWithM3(prims);
+  prims := ExtendWithM3(prims);
   SchemeEnvironment.ExtendWithIntrospectionPrimitives(prims)  
 END SchemeM3.

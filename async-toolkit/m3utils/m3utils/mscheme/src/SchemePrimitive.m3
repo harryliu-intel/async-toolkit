@@ -716,15 +716,15 @@ PROCEDURE Prims(t : T;
         P.Substring =>
         VAR 
           str := Str(x);
-          start := TRUNC(FromO(y));
-          end := TRUNC(FromO(Third(args)));
+          start := TRUNC(FromO(y));  (* inclusive *)
+          end   := TRUNC(FromO(Third(args)));
         BEGIN
           (* crimp pointers *)
-          start := MAX(start, 0);
-          start := MIN(start, LAST(str^));
+          start := MAX(start, 0);  (* at least 0 *)
+          start := MIN(start, LAST(str^)); (* no more than last *)
 
-          end := MAX(end, LAST(str^));
-          end := MAX(end,start);
+          end := MIN(end, LAST(str^)+1); (* no more than last+1 *)
+          end := MAX(end, start);        (* no less than start *)
 
           WITH res = NEW(String, end-start) DO
             res^ := SUBARRAY(str^, start, end-start);
@@ -849,11 +849,19 @@ PROCEDURE Prims(t : T;
         P.Foreach =>free := FALSE; RETURN Map(Proc(x), Rest(args), interp, NIL)
       |
         P.CallCC =>
-        (* make a new arbitrary text *)
+        (* make a new arbitrary text --- N.B. changing this string
+           must be synchronized with a modification to Scheme.Eval! *)
         WITH txt = "CallCC" & Fmt.Int(123),
              proc =  NEW(SchemeContinuation.T).init(txt) DO
-          TRY RETURN Proc(x).apply(interp, List1(proc))
-          EXCEPT E(e) => IF e = txt THEN RETURN proc.value ELSE RAISE E(e) END
+          TRY 
+            RETURN Proc(x).apply(interp, List1(proc))
+          EXCEPT 
+            E(e) => 
+            IF e = txt THEN 
+              RETURN proc.value 
+            ELSE 
+              RAISE E(e) 
+            END
           END
         END
         
