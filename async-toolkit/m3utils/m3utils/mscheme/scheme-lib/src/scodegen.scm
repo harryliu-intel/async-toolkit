@@ -820,7 +820,7 @@
     (append 
 		 (list name owner)
 		 (list
-			(make-field (string-append name "_id") 'serial 'primary-key 'not-updatable)
+			(make-field (string-append name "_id") 'serial 'primary-key )
 			(make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
 			(make-field "updated" 'timestamp (list 'default "now()"))
 		  (make-index (list "updated"))
