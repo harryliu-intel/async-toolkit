@@ -3,14 +3,24 @@
 INTERFACE SXSelect;
 IMPORT SX, SXRef;
 
-PROCEDURE Wait(READONLY on : ARRAY OF SX.T);
-(* normal Wait: returns as soon as any of the elements of on changes *)
+PROCEDURE Wait(READONLY on : ARRAY OF SX.T;
+               touched : REF ARRAY OF BOOLEAN := NIL);
+(* normal Wait: returns as soon as any of the elements of on changes.
+   
+   If touched is non-NIL, it will be updated to show which elements of
+   on have changed by setting those to TRUE.
+
+   touched can be any size.  If it is smaller than on, only the first
+   variables will be monitored in this array.  If it is larger, the last
+   few entries will be set to FALSE.
+ *)
 
 PROCEDURE Wait1(on : SX.T); 
 (* as above, for a single variable *)
   
 PROCEDURE WaitE(READONLY on : ARRAY OF SX.T; 
-                except : SXRef.T) RAISES { Exception };
+                except : SXRef.T;
+                touched : REF ARRAY OF BOOLEAN := NIL) RAISES { Exception };
 (* Exception-Wait: behaves same as Wait, except that it also raises 
    an Exception when except becomes non-NIL.  The argument of the
    exception will be the new value of except *)

@@ -147,14 +147,15 @@ PROCEDURE Touch(t : T; when : Time.T; locked : BOOLEAN) =
     IF t.recalc(when) THEN t.propagate(when,locked) END
   END Touch;
 
-PROCEDURE Wait(READONLY on : ARRAY OF T) = 
+PROCEDURE Wait(READONLY on : ARRAY OF T; touched : REF ARRAY OF BOOLEAN) = 
   <* FATAL Exception *>
-  BEGIN WaitE(on,NIL) END Wait;
+  BEGIN WaitE(on, NIL, touched) END Wait;
 
-PROCEDURE Wait1(on : T) = BEGIN Wait(ARRAY OF T { on }) END Wait1;
+PROCEDURE Wait1(on : T) = BEGIN Wait(ARRAY OF T { on }, NIL) END Wait1;
 
 PROCEDURE WaitE(READONLY on : ARRAY OF T; 
-                except : SXRef.T) RAISES { Exception } =
+                except : SXRef.T;
+                touched : REF ARRAY OF BOOLEAN) RAISES { Exception } =
 
   PROCEDURE CheckExcept() RAISES { Exception } = 
     BEGIN
@@ -173,6 +174,7 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
   VAR
     r : REFANY;
+    updates : REF ARRAY OF CARDINAL;
   BEGIN
     (* set up my waiting condition *)
     LOCK gMu DO
@@ -200,6 +202,14 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
       (* here we need to atomically unlock all the variables we're
          waiting on -- a kind of multi-wait *)
       LOCK l.tMu DO 
+        (* record # of updates, if applicable *)
+        IF touched # NIL THEN
+          updates := NEW(REF ARRAY OF CARDINAL, NUMBER(touched^));
+          FOR i := 0 TO MIN(NUMBER(updates^),NUMBER(on))-1 DO
+            updates[i] := on[i].numUpdates()
+          END
+        END;
+
         (* unlock variables *)
         Unlock(on);
         IF except # NIL THEN Thread.Release(except.mu) END;
@@ -208,6 +218,14 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
         (* lock them again *)
         Lock(on);
+
+        IF touched # NIL THEN
+          FOR i := FIRST(touched^) TO LAST(touched^) DO
+            touched[i] := (i <= LAST(updates^)) AND 
+                          on[i].numUpdates() # updates[i]
+          END
+        END;
+
         IF except # NIL THEN Thread.Acquire(except.mu) END;
       END
     END;

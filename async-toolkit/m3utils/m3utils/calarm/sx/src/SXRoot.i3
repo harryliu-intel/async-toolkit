@@ -20,6 +20,16 @@ TYPE
 
     uninitialize(); 
     (* set so that value() RAISES Uninitialized *)
+
+    numUpdates() : CARDINAL;
+    (* how many times updated? *)
+
+    initialized() : BOOLEAN;
+    (* TRUE if numUpdates > 0 *)
+
+    attachName(name : TEXT);
+    (* attach a name for debugging purposes *)
+
   END;
 
 (*

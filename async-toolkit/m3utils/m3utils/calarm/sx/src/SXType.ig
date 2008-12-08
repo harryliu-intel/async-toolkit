@@ -39,14 +39,7 @@ TYPE
     updateLocked(newValue : Elem.T; when : Time.T) : BOOLEAN;
     (* same as update, but self.mu must be locked *)
 
-    numUpdates() : CARDINAL;
-    (* how many times updated? *)
-
-    initialized() : BOOLEAN;
-    (* TRUE if numUpdates > 0 *)
-
-    attachName(name : TEXT);
-    (* attach a name for debugging purposes *)
+    (* numUpdates, attachName, initialized methods moved to SXRoot.T *)
 
     setValidator(validator : Validator);
     (* the validator can validate the value settings.  This is really
