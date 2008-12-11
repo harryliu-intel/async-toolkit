@@ -829,6 +829,7 @@
 					(list 
 					 (make-field "dirty" 'boolean 'not-null (list 'default "true"))
 					 (make-index (list "dirty"))
+					 (make-index (list "active"))
 					 (make-field "active" 'boolean 'not-null (list 'default "false")))
 					'())
 		 old-data)))
@@ -857,7 +858,9 @@
 	(let ((fields (car idx))
 				(opts (cdr idx)))
 		(let ((have-unique? (memq 'unique opts))
-					(name         (infixize fields "_"))
+					(name         (string-append 
+												 (infixize (cons tab-name fields) "_") 
+												 "_idx" ))
 					(colstr       (infixize fields ",")))
 			(string-append
 			 "create "
@@ -869,7 +872,7 @@
 
 (define (display-indexes tab)
   (let ((tab-name (car tab)))
-		(map (lambda(i)(dis (index-code i tab-name) dnl port)) (get-indexes tab))
+		(map (lambda(i)(dis (index-code i tab-name) dnl port)) (get-indexes (complete-tbl tab)))
 ))
   
 (define (find-constraints db)
