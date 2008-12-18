@@ -10,7 +10,9 @@ MODULE SchemePair;
 IMPORT Wx;
 IMPORT SchemeObject, SchemeUtils, SchemeSymbol;
 FROM Scheme IMPORT E;
+FROM SchemeUtils IMPORT Error, StringifyT;
 
+(*
 PROCEDURE Init(t : T; first, rest : SchemeObject.T) : T =
   BEGIN t.first := first; t.rest := rest; RETURN t END Init;
 
@@ -30,6 +32,7 @@ PROCEDURE Equals(t : T; x : SchemeObject.T) : BOOLEAN =
 
 PROCEDURE Format(t : T) : TEXT  RAISES { E } =
   BEGIN RETURN SchemeUtils.StringifyQ(t, TRUE) END Format;
+*)
 
 PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E } =
 
@@ -71,6 +74,14 @@ PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E } =
         Wx.PutChar(buf, ')')
       END
     END
+
   END StringifyPair;
+
+PROCEDURE Pair(x : SchemeObject.T) : T RAISES { E } = 
+  BEGIN
+    IF x # NIL AND ISTYPE(x,T) THEN RETURN x
+    ELSE RETURN Pair(Error("expected a pair, got: " & StringifyT(x)))
+    END
+  END Pair;
 
 BEGIN END SchemePair.

@@ -101,4 +101,7 @@ PROCEDURE FormatInfix(seq : TextSeq.T; operator : TEXT) : TEXT;
   (* return a text that consists of the elements in the sequence with
      the operator inserted between each pair, but not at the end *)
 
+PROCEDURE FormatInfixArr(READONLY arr : ARRAY OF TEXT; operator : TEXT) : TEXT;
+  (* same, for an array *)
+
 END TextUtils.

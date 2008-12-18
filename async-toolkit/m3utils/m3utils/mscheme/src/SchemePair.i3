@@ -18,6 +18,8 @@ TYPE
 
 PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E };
 
+PROCEDURE Pair(t : SchemeObject.T) : T RAISES { E };
+
 CONST Brand = "SchemePair";
 
 END SchemePair.

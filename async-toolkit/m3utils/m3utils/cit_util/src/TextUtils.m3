@@ -381,4 +381,16 @@ PROCEDURE FormatInfix(seq : TextSeq.T; operator : TEXT) : TEXT =
     RETURN Wx.ToText(wx)
   END FormatInfix;
 
+PROCEDURE FormatInfixArr(READONLY seq : ARRAY OF TEXT; 
+                         operator : TEXT) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := FIRST(seq) TO LAST(seq) DO
+      Wx.PutText(wx, seq[i]);
+      IF i # LAST(seq) THEN Wx.PutText(wx,operator) END
+    END;
+    RETURN Wx.ToText(wx)
+  END FormatInfixArr;
+
 BEGIN END TextUtils.
