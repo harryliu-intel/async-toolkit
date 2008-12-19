@@ -41,6 +41,8 @@
    solution is to NEVER delete the lockfile except when you know
    that no instance of lockf is trying to access it.
 
+   "Linux" version also tested on Cygwin under Windows Server 2003.
+
  */
 
 
