@@ -74,12 +74,11 @@ PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E } =
         Wx.PutChar(buf, ')')
       END
     END
-
   END StringifyPair;
 
 PROCEDURE Pair(x : SchemeObject.T) : T RAISES { E } = 
   BEGIN
-    IF x # NIL AND ISTYPE(x,T) THEN RETURN x
+    IF ISTYPE(x,T) THEN RETURN x (* NIL is OK for Pair! *)
     ELSE RETURN Pair(Error("expected a pair, got: " & StringifyT(x)))
     END
   END Pair;

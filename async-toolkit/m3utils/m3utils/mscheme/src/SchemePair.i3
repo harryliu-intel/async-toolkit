@@ -19,6 +19,8 @@ TYPE
 PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E };
 
 PROCEDURE Pair(t : SchemeObject.T) : T RAISES { E };
+  (* unlike most of the coercion functions, Pair does NOT check for NIL.
+     NIL is considered a legal "Pair", as it is a legal list. *)
 
 CONST Brand = "SchemePair";
 
