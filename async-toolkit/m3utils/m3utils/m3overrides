@@ -136,5 +136,8 @@ override("twsmonitor", TOP & "/calarm/twslib/testtrade2")
 override("tradingstrategy", TOP & "/calarm/twslib/testtrade2")
 override("serverframework", TOP & "/calarm/twslib/testtrade2")
 
+override("gcomsdb",  TOP & "/calarm/gcoms")
+override("gcomslib", TOP & "/calarm/gcoms")
+
 % Ohai
 override("ohailog", TOP & "/ohai")
