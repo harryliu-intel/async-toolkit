@@ -300,7 +300,7 @@ Module("FancyFmt")
 
 Module("AttrWr")
 Sequence("AttrWr","AttrWr")
-Module("UTime")
+Module("UCTime")
 
 Library("cit_util")
 
