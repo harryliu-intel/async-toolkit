@@ -125,7 +125,9 @@ TYPE
 
         New, Class, Method, Exit,
         SetCar, SetCdr, TimeCall, MacroExpand,
-        Error, ListStar
+        Error, ListStar,
+        
+        Random, Normal
   };
 
 REVEAL 
@@ -135,6 +137,11 @@ REVEAL
   DefaultDefiner = Definer BRANDED Brand & " Default Definer" OBJECT 
   OVERRIDES
     installPrimitives := InstallDefaultPrimitives;
+  END;
+
+  DefaultExtendedDefiner = Definer BRANDED Brand & " DefaultExtended Definer" OBJECT 
+  OVERRIDES
+    installPrimitives := InstallDefaultExtendedPrimitives;
   END;
 
   SandboxDefiner = Definer BRANDED Brand & " Sandbox Definer" OBJECT 
@@ -427,12 +434,26 @@ PROCEDURE InstallNorvigPrimitives(dd : Definer;
 
   END InstallNorvigPrimitives;
 
+PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T =
+  BEGIN
+    EVAL env
+    (*///////////// Extensions ////////////////*)
+
+    .defPrim("random",                ORD(P.Random), dd,      0, 0)
+    .defPrim("normal",                ORD(P.Normal), dd,      0, 2);
+
+    RETURN env;
+
+  END InstallDefaultExtendedPrimitives;
+
 PROCEDURE InstallDefaultPrimitives(dd : Definer;
                             env : SchemeEnvironment.T) : SchemeEnvironment.T =
   BEGIN
     env := InstallSandboxPrimitives(dd, env);
     env := InstallFileIOPrimitives(dd, env);
     env := InstallNorvigPrimitives(dd, env);
+    env := InstallDefaultExtendedPrimitives(dd,env);
     RETURN env
   END InstallDefaultPrimitives;
 
@@ -1024,6 +1045,18 @@ PROCEDURE Prims(t : T;
       |
         P.Tanh => RETURN FromLR(Math.tanh(FromO(x)))
       |
+        P.Random => RETURN FromLR(NEW(Random.Default).init().longreal(0.0d0,1.0d0))
+      |
+        P.Normal =>
+        VAR mean := 0.0d0;
+            sdev := 1.0d0;
+            rand := NEW(Random.Default).init(); 
+        BEGIN
+          IF x # NIL THEN mean := SchemeLongReal.FromO(x) END;
+          IF y # NIL THEN sdev := SchemeLongReal.FromO(y) END;
+          RETURN FromLR(NormalDeviate(rand, mean, sdev))
+        END
+      |
         P.New => RETURN False() (* not impl *)
       |
         P.Class => RETURN False() (* not impl *)
@@ -1372,5 +1405,22 @@ PROCEDURE Map(proc : SchemeProcedure.T;
     END;
     RETURN Rest(result)
   END Map;
+
+PROCEDURE NormalDeviate(rand : Random.T; mean, sdev : LONGREAL) : LONGREAL =
+  (* this is called a Box-Muller transformation.
+     Num. Recip. in Fortran 77, sec. 7-2 *)
+  VAR
+    v1, v2, rsq : LONGREAL;
+  BEGIN
+    REPEAT
+      v1 := 2.0d0 * rand.longreal(0.0d0,1.0d0)-1.0d0;
+      v2 := 2.0d0 * rand.longreal(0.0d0,1.0d0)-1.0d0;
+      rsq := v1*v1 + v2*v2
+    UNTIL rsq > 0.0d0 AND rsq < 1.0d0;
+    
+    WITH fac = Math.sqrt(-2.0d0*Math.log(rsq)/rsq) DO
+      RETURN mean + sdev*v2*fac
+    END
+  END NormalDeviate;
        
 BEGIN END SchemePrimitive.

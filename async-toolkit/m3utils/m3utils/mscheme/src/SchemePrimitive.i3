@@ -30,6 +30,7 @@ TYPE
     installPrimitives(env : SchemeEnvironment.T) : SchemeEnvironment.T;
   END;
 
+  DefaultExtendedDefiner <: Definer; (* some "normal" extensions *)
   DefaultDefiner <: Definer;  (* all the normal stuff *)
   SandboxDefiner <: Definer;  (* no ability to open files *)
 
@@ -60,6 +61,10 @@ PROCEDURE InstallFileIOPrimitives(dd : Definer;
 PROCEDURE InstallNorvigPrimitives(dd : Definer;
                             env : SchemeEnvironment.T) : SchemeEnvironment.T;
 (* Norvig's extensions (not fully implemented) *)
+
+PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
+                            env : SchemeEnvironment.T) : SchemeEnvironment.T;
+(* a few locally defined primitives: random, normal, ... *)
 
 PROCEDURE InstallDefaultPrimitives(dd : Definer;
                             env : SchemeEnvironment.T) : SchemeEnvironment.T;

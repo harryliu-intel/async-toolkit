@@ -270,7 +270,9 @@ if equal(TARGET,"NT386GNU")
   Interface("Unix")
   Interface("Utypes")
   Interface("Usignal")
-  Interface("Utime")
+  if not defined("CM3_VERSION") 
+    Interface("Utime")
+  end
   implementation("FileSharingWindows")
   implementation("SysPerfWindows")
 else
