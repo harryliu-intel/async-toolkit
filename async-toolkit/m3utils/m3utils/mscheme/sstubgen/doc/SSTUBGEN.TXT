@@ -1,5 +1,8 @@
 $Id$
 
+The latest version of this file can always be found by going to the
+top level of the repository and running "cvs update -d ."...
+
 Basic design of Scheme/Modula-3 stub generator
 ==============================================
 
@@ -271,6 +274,17 @@ by untarring the file (on pluto) ~mika/m3-comm.tgz.  It may not compile
 with m3build, because of the new type LONGINT in the newer compiler that
 it supports.
 
+The best reference on Scheme is probably the 6.001 book, 
+
+http://mitpress.mit.edu/sicp/full-text/book/book.html
+
+but it's not quite complete.  There's a lot of stuff on the Web, but we
+don't really need to concern ourselves with details.  One interesting
+object-oriented system, however, is "Tiny-CLOS".. here's an intro:
 
 
+http://home.adelphi.edu/sbloch/class/archive/272/spring1997/tclos/tutorial.shtml
 
+Tiny-CLOS itself is available from PARC:
+
+http://www2.parc.com/csl/groups/sda/projects/oi/software.html
