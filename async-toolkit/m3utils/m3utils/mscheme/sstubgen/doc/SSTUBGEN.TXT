@@ -32,6 +32,14 @@ mapping of mscheme types to Modula-3 types is specified in the file
 mscheme/src/TYPES.]
 
 
+Running a Scheme interpreter
+----------------------------
+
+~/t/mscheme/interactive_r/FreeBSD4/mscheme
+
+This will bring up the interactive Scheme prompt.
+
+
 Basic Idea
 ----------
 
