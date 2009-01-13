@@ -254,6 +254,45 @@ be possible (and very easy) to define additional code to do further checking
 on parameters.
 
 
+Methods
+-------
+
+It should be possible to override methods in Modula-3 OBJECTs with
+Scheme procedures!  To do this efficiently there might have to be
+two types declared for every visible OBJECT type:
+
+Given:
+
+INTERFACE O;
+
+TYPE T <: OBJECT 
+  METHODS
+    x();
+  END;
+
+We might want to be able to do the following in Scheme: either:
+
+(O 'NEW)
+
+or
+
+(O 'NEWOVERRIDABLE)
+
+where the result of the latter could have its methods overridden, e.g.,
+
+(define o (O 'NEWOVERRIDABLE))
+
+(o 'OVERRIDES 'x (lambda(self) ...))
+
+Note that the use of the keywords NEW and OVERRIDES guarantees we don't
+hide any Modula-3 names, since these are reserved words in M3.
+
+There is furthermore no reason to limit the overrides in Scheme to the
+instantiation time of the object, since Scheme is dynamic enough that
+we can easily change methods at runtime, unlike M3 or Java, but like
+Self(?) or JavaScript(?)
+
+
 Existing Stub Generator Code
 ----------------------------
 
