@@ -31,6 +31,34 @@ into Scheme as opaque objects without further ado.  [Note that the full
 mapping of mscheme types to Modula-3 types is specified in the file
 mscheme/src/TYPES.]
 
+
+Basic Idea
+----------
+
+The basic idea is that we want to be able to "write Modula-3 code in
+Scheme."  That is, anything that can be coded in Modula-3 one should
+be able to code in Scheme, and this in particular includes using
+Modula-3 library code.  
+
+There may be some restrictions on things that are not possible or easy
+to do in Scheme, at least to begin with.  Things that come to mind are
+UNSAFE operations.  Note that in many cases types of Scheme objects
+will have to be inferred, since Scheme has fewer types than Modula-3.
+For instance, Scheme only has a single (user visible) numerical type.
+The stubs will need to convert this one type to one of the appropriate
+Modula-3 numerical types (LONGREAL, INTEGER, REAL, etc.)
+
+One way in which we envision using the Modula-Scheme system is by
+writing the "Main program" for a large application in Scheme.
+Currently, most medium and large sized Modula-3 applications are
+written as a simple Main that imports libraries that implement the
+functionality of the application.  The simple Main is responsible for
+parsing command-line arguments (generally, interacting with the user)
+and "tying together" the libraries.  The underlying idea of Modula-Scheme
+is to move this tying together into the hands of the end user by giving
+him access to this part of the program.
+
+
 Modula-3 Type System
 --------------------
 
@@ -64,6 +92,7 @@ is possible to call Modula-3 routines from Scheme.
 
 Modula-3 is cleanly separated into two types of files: INTERFACE ("header")
 and MODULE ("code") files.  We should only need to look at the INTERFACEs.
+
 
 Text Example
 ------------
@@ -175,6 +204,7 @@ SchemeAutoTbl("TextRef", "TextRefTbl", "M3toSTextString", "M3toSRefany")
 
 to his m3makefile.
 
+
 Modula-3 Types that Need to be Handled
 --------------------------------------
 
@@ -214,6 +244,7 @@ Since Scheme is an interactive system, the stubs should try hard to
 avoid runtime errors, which crash the entire runtime.  Perhaps it should
 be possible (and very easy) to define additional code to do further checking
 on parameters.
+
 
 Existing Stub Generator Code
 ----------------------------
