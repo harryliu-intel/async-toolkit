@@ -339,7 +339,11 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
           END
         END;
 
-        RETURN Symbol(TextUtils.ToLower(WxToText(wx)))
+        IF CaseInsensitive THEN
+          RETURN Symbol(TextUtils.ToLower(WxToText(wx)))
+        ELSE
+          RETURN Symbol(WxToText(wx))
+        END
       END
     END
   END NextToken;

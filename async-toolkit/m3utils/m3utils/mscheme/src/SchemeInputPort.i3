@@ -36,5 +36,9 @@ PROCEDURE IsEOF(x : SchemeObject.T) : BOOLEAN;
 CONST Brand = "SchemeInputPort";
 
 VAR (* CONST *) EOF : SchemeSymbol.T;
+
+CONST CaseInsensitive = FALSE;
+  (* change this to TRUE to make all symbols case insensitive (and forced
+     to lower case) *)
     
 END SchemeInputPort.
