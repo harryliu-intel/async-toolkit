@@ -67,6 +67,53 @@ is to move this tying together into the hands of the end user by giving
 him access to this part of the program.
 
 
+Another View on the Basic Idea
+------------------------------
+
+A Modula-3 program consists of a number of modules, broken into
+interface modules ("header files" in C(++)) and implementation
+modules.  These are often referred to as INTERFACEs and MODULEs,
+respectively.  (They were originally called "INTERFACE MODULE" and
+"IMPLEMENTATION MODULE" but the words "MODULE" and "IMPLEMENTATION"
+were subsequently dropped.)  The structure is explained in section 2.5
+of the Modula-3 definition.
+
+What matters is that code is present in the implementation MODULEs.
+Each such MODULE we say IMPORTs zero or more INTERFACEs.
+
+Let's now state the design problem as follows.  Given a Scheme
+interpreter, written in Modula-3, provide it with the facilities
+needed such that we can write any Modula-3 implementation MODULE in
+Scheme instead.  What does this imply?
+
+* We may assume that Scheme and Modula-3 can "do the same things": so
+  statements, expressions, etc., are not changed in Scheme.
+
+* This leaves only the problems of "using" other Modula-3 INTERFACEs
+  in the way that a Modula-3 implementation MODULE can.
+
+Using an INTERFACE implies several things.  We need to be able to do
+the following:
+
+* Allocate objects of a type declared in an INTERFACE
+
+* Call PROCEDUREs declared in an INTERFACE
+
+  ** This implies we need to be able to pack the procedure arguments,
+     which can be of arbitrary Modula-3 types, as well as unpack the
+     procedure returns
+
+  ** And perhaps map exceptions
+
+* Access constants or variables declared in an INTERFACE
+
+* And (to some extent?) subtype (subclass) types declared in the INTERFACE
+
+Of all these things, most likely the most difficult part is packing and
+unpacking Modula-3 types into Scheme objects, as it has to work for
+more or less arbitrary M3 types.
+
+
 Modula-3 Type System
 --------------------
 
@@ -318,6 +365,10 @@ many other places),
 http://gatekeeper.dec.com/pub/DEC/SRC/research-reports/abstracts/src-rr-052.html
 
 (Report 31 is the original spec, now superseded.)
+
+This might be a good (better, more up to date?) source, too:
+
+http://www.fh-jena.de/~kleine/history/languages/Cardelli-Modula3.pdf
 
 Network Objects are specified in DECSRC 115,
 
