@@ -67,10 +67,11 @@ BEGIN
     arr[0] := "require";
     FOR i := 1 TO Params.Count-1 DO arr[i] := Params.Get(i) END;
     TRY
-      WITH scm = NEW(SchemeM3.T).init(arr^, 
-                                      globalEnv := 
-                                NEW(SchemeNavigatorEnvironment.T).initEmpty())
-       DO
+      WITH scm = NEW(SchemeM3.T) DO
+        EVAL scm.init(arr^, 
+                      globalEnv := 
+                          NEW(SchemeNavigatorEnvironment.T).initEmpty());
+
         DefineEnvironments(scm);
 
         MainLoop(NEW(ReadLine.T).init(), scm)

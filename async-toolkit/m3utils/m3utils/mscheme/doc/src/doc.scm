@@ -20,19 +20,42 @@
 		(dis "(" dnl port)
 		(let loop ((to-go        environment-lst)
 							 (prims-sofar '()))
-			(if (null? to-go) #t
+			(if (null? to-go) 
+					;; null to-go, at end of list
+					#t
+
+					;; non-null to-go
 					(begin
 						(dis "ENV \"" (car to-go) "\"" dnl '())
 						(dis dnl
 								 "  ;;; ENV \"" (car to-go) "\"" dnl 
 								 dnl
 								 port)
-						(let ((done-this-step (do-one (car to-go) prims-sofar port texport)))
+
+						(dis "\\subsection{Environment ``" (car to-go) "''}" dnl texport)
+
+						(dis-tablehead texport)
+						(set! lines 0)
+						(let ((done-this-step 
+									 (do-one (car to-go) prims-sofar port texport)))
+							(dis-tablefoot texport)
+
 							(loop (cdr to-go)
 										(append done-this-step prims-sofar))))))
 		(dis dnl 
 				 ")" dnl      
 				 port)))
+
+(define (dis-tablehead texport)
+	(dis "\\vbox{\\offinterlineskip{\\halign{" dnl
+			 "\\strut#\\hfil\\quad&#\\hfil\\quad&#\\hfil\\quad\\cr" dnl
+			 "\\bf Op & \\bf Category & \\bf Description\\cr" dnl
+			 texport)
+)
+
+(define (dis-tablefoot texport)
+	(dis "}}}" dnl dnl "\\medskip" dnl dnl texport)
+)
 
 (define (get-named-env nam)
   (eval (symbol-append nam "-environment")))
@@ -60,15 +83,32 @@
 (define (dis-screen p port)
 	 (dis "prim: " (car p) dnl port) )
 
+(define lines 0)
+(define max-lines 30)
+
 (define (dis-file p port)
+
 	(dis "(" (car p) 
 			 " \"" (get-cat (car p)) 
 			 "\" \""
 			 (get-desc (car p)) "\""
-			 ")" dnl port))
+			 ")" dnl port)
+
+	)
 
 (define (dis-tex p port)
-	(dis "" port))
+	(begin
+		(set! lines (+ lines 1))
+		(if (> lines max-lines)
+				(begin
+					(set! lines 0)
+					(dis-tablefoot port)
+					(dis-tablehead port)))
+					
+		(dis "%%" dnl 
+				 "%% " p dnl 
+				 "\\verb|" (car p) "| & " (get-cat (car p)) " & " (get-desc (car p)) "\\cr" dnl
+				 port)))
 
 
 (define (get-cat prim) 

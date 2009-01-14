@@ -16,6 +16,8 @@ OTHERSRCS=*.tex
 
 GENFIGURES=
 
+PRIMS=prims.tex
+
 .ps.pdf:
 	ps2pdf $*.ps
 
