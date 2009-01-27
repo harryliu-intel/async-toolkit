@@ -9,7 +9,12 @@ GENERIC INTERFACE Fifo(Elem);
    Elem must export
    
    Equal(a, b : Elem.T) : BOOLEAN;
-   where the mode of a, b can be VALUE, VAR, or READONLY
+   where the mode of a, b can be VALUE, VAR, or READONLY.
+
+   Equal is only called by member, so if you don't use the member
+   method, you can use a declaration like 
+   
+   CONST Equal : PROCEDURE (a, b : Elem.T) : BOOLEAN = NIL;
 
    and a text constant
    Elem.Brand

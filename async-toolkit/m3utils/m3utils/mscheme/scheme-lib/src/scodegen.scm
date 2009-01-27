@@ -25,6 +25,7 @@
 ;;
 ;; This code uses and is synchronized with:
 ;; 1. Database and DatabaseTable Modula-3 interfaces in htmltable lib.
+;; 1a.DesynchronizedDB in ratsql (Rational SQL)
 ;; 2. templates in mscheme library
 ;; 3. generic TableMonitor.{im}g
 ;; 4. scheme-lib/src/scodegen.scm (that is this file, actually!)
@@ -49,7 +50,7 @@
 ;;
 
 (define (map-filter-assoc tag lst)
-	(map cdr (filter (lambda (x) (eq? (car x) tag)) lst)))
+  (map cdr (filter (lambda (x) (eq? (car x) tag)) lst)))
 
 ;;
 ;; PUBLIC ROUTINES FOR BUILDING THE INPUTS TO THE BELOW CODE
@@ -57,11 +58,11 @@
 
 (define (make-table name owner . x) (append (list 'table name owner) x))
 
-(define (make-field name type . x) 	(append (list 'field name type) x))
+(define (make-field name type . x)  (append (list 'field name type) x))
 
 (define (make-index cols . opts)(append (list 'index cols) opts))
 
-(define (symbol-intersection l1 l2)	(filter (lambda (x1) (memq x1 l2)) l1))
+(define (symbol-intersection l1 l2) (filter (lambda (x1) (memq x1 l2)) l1))
 
 (define (make-database name . x) (cons name x))
 
@@ -102,44 +103,44 @@
 (define int-conversion
   ;; convert integers SQL<->M3
   (list identity
-	(m3-sym "Fmt" "Int")
-	(m3-sym "Scan" "Int") 
-	(list (m3-sym "Lex" "Error")
-	      (m3-sym "FloatMode" "Trap"))))
+  (m3-sym "Fmt" "Int")
+  (m3-sym "Scan" "Int") 
+  (list (m3-sym "Lex" "Error")
+        (m3-sym "FloatMode" "Trap"))))
 
 (define lr-conversion
   ;; convert doubles SQL<->M3
   (list identity
-	(m3-sym "Fmt" "LongReal")
-	(m3-sym "Scan" "LongReal") 
-	(list (m3-sym "Lex" "Error")
-	      (m3-sym "FloatMode" "Trap"))))
+  (m3-sym "Fmt" "LongReal")
+  (m3-sym "Scan" "LongReal") 
+  (list (m3-sym "Lex" "Error")
+        (m3-sym "FloatMode" "Trap"))))
 
 (define bool-conversion
   ;; convert booleans SQL<->M3
   (list identity 
-				(m3-sym "Fmt" "Bool")
-				(m3-sym "PGSQLScan" "Bool") 
-				(list (m3-sym "Lex" " Error"))))
+        (m3-sym "Fmt" "Bool")
+        (m3-sym "PGSQLScan" "Bool") 
+        (list (m3-sym "Lex" " Error"))))
 
 (define str-conversion
   ;; convert strings SQL<->M3
   (list identity 
-				(m3-sym "Database" "EscapeQ")
-				(m3-sym "Database" "Unescape")
-				'()))
+        (m3-sym "Database" "EscapeQ")
+        (m3-sym "Database" "Unescape")
+        '()))
 
 (define ts-conversion
   ;; convert timestamps SQL<->M3
   (list (lambda (fieldname) (string-append "extract (\'epoch\' from " 
-					   fieldname ")"))
-	(m3-sym "Fmt"
-		(lambda (x) (string-append "\"timestamptz \'epoch\' + \" & Fmt.LongReal(" 
-					    x 
-					    ") & \"* interval \'1 second\'\"")))
-	(m3-sym "Scan" "LongReal") 
-	(list (m3-sym "Lex" "Error")
-	      (m3-sym "FloatMode" "Trap"))))
+             fieldname ")"))
+  (m3-sym "Fmt"
+    (lambda (x) (string-append "\"timestamptz \'epoch\' + \" & Fmt.LongReal(" 
+              x 
+              ") & \"* interval \'1 second\'\"")))
+  (m3-sym "Scan" "LongReal") 
+  (list (m3-sym "Lex" "Error")
+        (m3-sym "FloatMode" "Trap"))))
 
 ;;
 ;; NOW LIST ALL THE TYPES WE KNOW ABOUT AND CAN HANDLE...
@@ -151,7 +152,7 @@
    (list 'serial           "serial"           "INTEGER"   #f  int-conversion )
    (list 'varchar          "varchar"          "TEXT"      #f  str-conversion )
    (list 'integer          "integer"          "INTEGER"   #f  int-conversion )
-	 (list 'double-precision "double precision" "LONGREAL"  #f  lr-conversion )
+   (list 'double-precision "double precision" "LONGREAL"  #f  lr-conversion )
    (list 'boolean          "boolean"          "BOOLEAN"   #f  bool-conversion )
    (list 'timestamp        "timestamp with time zone" 
                                               "Time"      #t  ts-conversion)
@@ -163,8 +164,8 @@
   ;; extract a type defn from types table
   (define (f lst t)
     (cond ((null? lst) (error "unknown type "  type))
-	  ((eq? (caar lst) t) (action (car lst)))
-	  (else (f (cdr lst) t))))
+    ((eq? (caar lst) t) (action (car lst)))
+    (else (f (cdr lst) t))))
 
   (if (list? type) 
       (f types (car type))
@@ -192,18 +193,18 @@
   ;; SQL column options
   (define (stringify-default def)
     (cond ((string? def) def)
-	  (else (stringify def))))
+    (else (stringify def))))
 
   (if (null? lst) 
       ""
       (string-append
        (cond ((list? (car lst))
-	      (if (eq? (caar lst) 'default) 
-		  (string-append " default " (stringify-default (cadar lst)))))
-	     ((eq? (car lst) 'not-null) " not null ")
-	     ((eq? (car lst) 'primary-key) " primary key ")
-	     ((memq (car lst) non-printing-options) "")
-	     (else (error "Unknown option " (car lst))))
+        (if (eq? (caar lst) 'default) 
+      (string-append " default " (stringify-default (cadar lst)))))
+       ((eq? (car lst) 'not-null) " not null ")
+       ((eq? (car lst) 'primary-key) " primary key ")
+       ((memq (car lst) non-printing-options) "")
+       (else (error "Unknown option " (car lst))))
        (options-string db (cdr lst)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -217,11 +218,11 @@
 
 (define (put-field-list db field)
   (let ((name (car field))
-	(type (cadr field))
-	(options (cddr field)))
+  (type (cadr field))
+  (options (cddr field)))
 
     (dis "  " name " " (type->sql-string type) " " (options-string db options)
-	 port)))
+   port)))
 
 (define (put-field db . x) (put-field-list db x))
 
@@ -239,15 +240,15 @@
 
 (define (make-table-sql tbl db)
   (let ((name (car tbl))
-	(fields (get-fields (complete-tbl tbl))))
+  (fields (get-fields (complete-tbl tbl))))
     
     (put-header db name)
     (map2 (lambda (f) (begin (put-field-list gcoms f)
-			     (dis "," dnl port)))
+           (dis "," dnl port)))
 
-	  (lambda (f) (put-field-list gcoms f))
-	  
-	  fields)
+    (lambda (f) (put-field-list gcoms f))
+    
+    fields)
     (dis dnl port)
     (put-trailer db)
     #t
@@ -255,7 +256,7 @@
 
 (define (putm3-field-list fld port)
     (let ((name (car fld))
-	  (type (cadr fld)))
+    (type (cadr fld)))
 
       (dis "  " name " : " (type->m3-typename type) ";" dnl port)
       (dis "  " name "_isNull : BOOLEAN := TRUE;" dnl port)
@@ -264,109 +265,109 @@
 
 
 (define (field-cant-be-null? attr-lst)
-	(or (memq 'not-null attr-lst)
-			(memq 'primary-key attr-lst)))
+  (or (memq 'not-null attr-lst)
+      (memq 'primary-key attr-lst)))
 
 (define (field-updatable? attr-lst)
-	(not (memq 'not-updatable attr-lst)))
+  (not (memq 'not-updatable attr-lst)))
 
 (define (put-getter-procedure fld ip mp)
   (let ((name (car fld))
-				(not-null (field-cant-be-null? (cddr fld)))
-				(m3type (type->m3-typename (cadr fld))))
+        (not-null (field-cant-be-null? (cddr fld)))
+        (m3type (type->m3-typename (cadr fld))))
 
-		;;(dis "put-getter-procedure " let " : " fld dnl dnl '())
+    ;;(dis "put-getter-procedure " let " : " fld dnl dnl '())
 
     (map
      (lambda(port)
        (dis "PROCEDURE Get_" name "(READONLY t : T) : " m3type (if not-null "" " RAISES { DBTable.IsNull }")
-	    port))
+      port))
      (list ip mp))
 
     (dis ";" dnl ip)
 
     (dis " =" dnl 
-				 (if not-null (string-append 
-	 "  <*FATAL DBTable.IsNull*>" dnl) "" )
-	 "  BEGIN" dnl
-	 "    IF t." name "_isNull THEN" dnl
+         (if not-null (string-append 
+   "  <*FATAL DBTable.IsNull*>" dnl) "" )
+   "  BEGIN" dnl
+   "    IF t." name "_isNull THEN" dnl
          "      RAISE DBTable.IsNull(TableName & \"." name "\")" dnl
-	 "    ELSE" dnl
+   "    ELSE" dnl
          "      RETURN t. " name dnl
-	 "    END" dnl
+   "    END" dnl
          "  END Get_" name ";" dnl dnl
-	 mp)
+   mp)
 ))
     
 (define (put-setter-procedure fld ip mp)
   (let ((name (car fld))
-				(m3type (type->m3-typename (cadr fld))))
+        (m3type (type->m3-typename (cadr fld))))
 
-		(if (field-updatable? (cddr fld))
-				(begin
-					(map
-					 (lambda(port)
-						 (dis "PROCEDURE Set_" name "(VAR t : T; val : " m3type ")"
-									port))
-					 (list ip mp))
-					
-					(dis ";" dnl ip)
-					
-					(dis " =" dnl 
-							 "  BEGIN" dnl
-							 "    t." name "_isNull := FALSE;" dnl
-							 "    t." name " := val" dnl
-							 "  END Set_" name ";" dnl dnl
-							 mp)
-					))))
+    (if (field-updatable? (cddr fld))
+        (begin
+          (map
+           (lambda(port)
+             (dis "PROCEDURE Set_" name "(VAR t : T; val : " m3type ")"
+                  port))
+           (list ip mp))
+          
+          (dis ";" dnl ip)
+          
+          (dis " =" dnl 
+               "  BEGIN" dnl
+               "    t." name "_isNull := FALSE;" dnl
+               "    t." name " := val" dnl
+               "  END Set_" name ";" dnl dnl
+               mp)
+          ))))
     
 (define (put-clearer-procedure fld ip mp)
   (let ((name (car fld))
-				(not-null (field-cant-be-null? (cddr fld)))
-				(m3type (type->m3-typename (cadr fld))))
-		(if (or not-null (not (field-updatable? (cddr fld)))) #f
-				(begin (map
-								(lambda(port)
-									(dis "PROCEDURE Clear_" name "(VAR t : T)"
-											 port))
-								(list ip mp))
-							 
-							 (dis ";" dnl ip)
-							 
-							 (dis " =" dnl 
-										"  BEGIN" dnl
-										"    t." name "_isNull := TRUE;" dnl
-										"  END Clear_" name ";" dnl dnl
-										mp)
-				))))
+        (not-null (field-cant-be-null? (cddr fld)))
+        (m3type (type->m3-typename (cadr fld))))
+    (if (or not-null (not (field-updatable? (cddr fld)))) #f
+        (begin (map
+                (lambda(port)
+                  (dis "PROCEDURE Clear_" name "(VAR t : T)"
+                       port))
+                (list ip mp))
+               
+               (dis ";" dnl ip)
+               
+               (dis " =" dnl 
+                    "  BEGIN" dnl
+                    "    t." name "_isNull := TRUE;" dnl
+                    "  END Clear_" name ";" dnl dnl
+                    mp)
+        ))))
     
 (define (put-have-procedure fld ip mp)
   (let ((name (car fld))
-				(not-null (field-cant-be-null? (cddr fld)))
-				(m3type (type->m3-typename (cadr fld))))
+        (not-null (field-cant-be-null? (cddr fld)))
+        (m3type (type->m3-typename (cadr fld))))
     (map
      (lambda(port)
        (dis "PROCEDURE Have_" name "(READONLY t : T; VAR " name " : " m3type ") : BOOLEAN "
-	    port))
+      port))
      (list ip mp))
 
     (dis ";" dnl ip)
 
     (dis " =" dnl 
-	 "  BEGIN" dnl
-	 "    IF t." name "_isNull THEN" dnl
+   "  BEGIN" dnl
+   "    IF t." name "_isNull THEN" dnl
 
-	 (if not-null
+   (if not-null
    "      <*ASSERT FALSE*>"
    "      RETURN FALSE"
-	 ) dnl
+   ) dnl
 
-	 "    ELSE" dnl
+   "    ELSE" dnl
    "      " name " := t." name ";" dnl
-	 "      RETURN TRUE" dnl
-	 "    END" dnl
+   "      RETURN TRUE" dnl
+   "    END" dnl
    "  END Have_" name ";" dnl dnl
-	 mp)
+   mp)
 ))
     
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -378,47 +379,53 @@
 (define (ass-sql fld)
   ;; the string corresponding to a SQL assignment (coded in M3)
   (let* ( (name (car fld))
-					(m3name (string-append "record." name))
-					(type-name (cadr fld)) )
-		
-		(string-append 
-		 "    IF NOT " m3name "_isNull THEN" dnl
-		 "      query.addhi(\"" name "=\"&" (format-sql-from-m3 m3name type-name) ")"
-		 dnl
-		 "    END;" dnl)))
+          (m3name (string-append "record." name))
+          (type-name (cadr fld)) )
+    
+    (string-append 
+     "    IF NOT " m3name "_isNull THEN" dnl
+     "      query.addhi(\"" name "=\"&" (format-sql-from-m3 m3name type-name) ")"
+     dnl
+     "    END;" dnl)))
 
 
 (define (dis-update-or-insert-m3 tbl mp)
-	(let ((tbl-name (car tbl)))
-		(dis
-		 "  <*FATAL FloatMode.Trap, Lex.Error*>" dnl
-		 "  BEGIN" dnl
-		 "    WITH cnt = db.tExec(\"select count(*) from " tbl-name " where \"&" dnl
-     "                        restriction).getInt(\"count\") DO" dnl
-		 "      IF cnt > 0 THEN" dnl
-     "        WITH id = db.tExec(\"select " tbl-name "_id from " tbl-name " where \"& restriction).getInt(\"" tbl-name "_id\") DO" dnl
+  (let ((tbl-name (car tbl)))
+    (dis
+     "  <*FATAL FloatMode.Trap, Lex.Error*>" dnl
+     "  VAR query := \"select count(*) from " tbl-name " where \"&" dnl
+     "                        restriction;" dnl
+     "  BEGIN" dnl
+     "    TRY" dnl
+     "    db.sync();" dnl
+     "    WITH cnt = db.sExec(query).getInt(\"count\") DO" dnl
+     "      IF cnt > 0 THEN" dnl
+     "        WITH id = db.sExec(\"select " tbl-name "_id from " tbl-name " where \"& restriction).getInt(\"" tbl-name "_id\") DO" dnl
      "          VAR r := record; BEGIN " dnl
      "            r." tbl-name "_id := id;" dnl
-     "            Update(db,r)" dnl
+     "            Update(db,r,ex)" dnl
      "           END" dnl
      "        END" dnl
      "      ELSE" dnl
-     "        Insert(db,record)" dnl
+     "        Insert(db,record,ex)" dnl
      "      END" dnl
+     "    END(*WITH*)" dnl
+     "    EXCEPT" dnl
+     "      DBerr.Error(txt) => ex.exception(query,txt)" dnl
      "    END" dnl
      "  END" dnl
-		 mp)
-		#t))
+     mp)
+    #t))
 
 (define (dis-update-m3 tbl mp)
   (let ((tbl-name (car tbl)) 
-				(fields (get-fields (complete-tbl tbl))))
-		;;(dis "dis-update-m3: " tbl-name " : " fields dnl '())
+        (fields (get-fields (complete-tbl tbl))))
+    ;;(dis "dis-update-m3: " tbl-name " : " fields dnl '())
     (dis "  VAR query := NEW(TextSeq.T).init(); BEGIN " dnl mp)
     (map (lambda(fld) (dis (ass-sql fld) mp)) fields) 
     (dis dnl mp)
-    (dis "    EVAL db.tExec(\"update " tbl-name " set \" & TextUtils.FormatInfix(query,\",\") & \" where " 
-	 tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\")" dnl mp)
+    (dis "    db.aExec(\"update " tbl-name " set dirty=true,\" & TextUtils.FormatInfix(query,\",\") & \" where " 
+   tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db))" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -426,8 +433,8 @@
 
 (define (format-sql-from-m3 m3name type-name)
   (let* ((type (find-type type-name identity types))
-	 (conv (get-conversion type))
-	 (m3->sql (cadr conv)))
+   (conv (get-conversion type))
+   (m3->sql (cadr conv)))
     (cond
       ;;
       ;; there are several legal ways of representing the 
@@ -441,13 +448,13 @@
       ((procedure? (cdr m3->sql)) ((cdr m3->sql) m3name))
       (else
        (string-append (car m3->sql) "." (cdr m3->sql) "("
-		      m3name ")")))))
+          m3name ")")))))
 
 (define (ins-sql fld)
   ;; the string corresponding to a SQL assignment (coded in M3)
   (let* ((name (car fld))
-	 (m3name (string-append "record." name))
-	 (type-name (cadr fld)))
+   (m3name (string-append "record." name))
+   (type-name (cadr fld)))
     (string-append 
      "    IF NOT " m3name "_isNull THEN" dnl
      "      fields.addhi(\" " name "\");" dnl
@@ -457,17 +464,17 @@
 
 (define (dis-insert-m3 tbl mp)
   (let ((tbl-name (car tbl)) 
-	(fields (get-fields (complete-tbl tbl))))
+  (fields (get-fields (complete-tbl tbl))))
     (dis "  VAR fields, values := NEW(TextSeq.T).init();" dnl
          "  BEGIN" dnl mp)
 
     (map (lambda(fld) (dis (ins-sql fld) mp))
-	 fields) 
+   fields) 
 
     (dis dnl mp)
-    (dis "    EVAL db.tExec(\"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \")\"&"
-	 dnl mp)
-    (dis "                 \" values (\"& TextUtils.FormatInfix(values,\",\")&\")\")" dnl mp)
+    (dis "    db.aExec(\"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \")\"&"
+   dnl mp)
+    (dis "                 \" values (\"& TextUtils.FormatInfix(values,\",\")&\")\", ex, MakeResCallback(db))" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -475,57 +482,57 @@
 
 (define (ass-m3-old fld)
   (let* ((name (car fld))
-	 (type (find-type (cadr fld) identity types))
-	 (conv (get-conversion type))
-	 (m3conv (caddr conv))
-	 (query-op (car conv)))
+   (type (find-type (cadr fld) identity types))
+   (conv (get-conversion type))
+   (m3conv (caddr conv))
+   (query-op (car conv)))
     (string-append "      " 
-		   (if (null? m3conv) 
-		       ""
-		       (string-append (car m3conv) "." (cdr m3conv)))
-		   "(row.get(\"" name "\"))")))
+       (if (null? m3conv) 
+           ""
+           (string-append (car m3conv) "." (cdr m3conv)))
+       "(row.get(\"" name "\"))")))
 
 
 (define (ass-q fld)
   (let* ((name (car fld))
-	 (type (find-type (cadr fld) identity types))
-	 (conv (get-conversion type))
-	 (query-op (car conv)))
+   (type (find-type (cadr fld) identity types))
+   (conv (get-conversion type))
+   (query-op (car conv)))
     (string-append (query-op name) " as " name)))
 
 (define (ass-m3 fld)
   ;; the string corresponding to an assignment to an M3 var. (starting from
   ;; the output of a SQL query)
   (let* ((name (car fld))
-				 (type (find-type (cadr fld) identity types))
-				 (not-null (memq 'not-null (cddr fld)))
-				 (conv (get-conversion type))
-				 (m3conv (caddr conv))
-				 (query-op (car conv)))
+         (type (find-type (cadr fld) identity types))
+         (not-null (memq 'not-null (cddr fld)))
+         (conv (get-conversion type))
+         (m3conv (caddr conv))
+         (query-op (car conv)))
 
-		(string-append
-		 "    res." name "_isNull := row.getIsNull(\"" name "\");" dnl
-		 "    IF NOT res." name "_isNull THEN" dnl
-		 "      res." name " := "
-		 (if (null? m3conv) 
-				 ""
-				 (string-append (car m3conv) "." (cdr m3conv)))
-		 "   (row.get(\"" name "\")) " dnl 
-		 "    END;" dnl
-		 )))
-				
+    (string-append
+     "    res." name "_isNull := row.getIsNull(\"" name "\");" dnl
+     "    IF NOT res." name "_isNull THEN" dnl
+     "      res." name " := "
+     (if (null? m3conv) 
+         ""
+         (string-append (car m3conv) "." (cdr m3conv)))
+     "   (row.get(\"" name "\")) " dnl 
+     "    END;" dnl
+     )))
+        
      
 (define (dis-parse-m3 tbl mp)
   ;; print the entire routine for parsing a DB row into an M3 RECORD
   (let ((tbl-name (car tbl)) 
-				(fields (get-fields (complete-tbl tbl))))
+        (fields (get-fields (complete-tbl tbl))))
 
     (dis "  BEGIN " dnl mp)
     (map (lambda (fld) (dis (ass-m3 fld) mp))
-				 fields)
-		
+         fields)
+    
     (dis "  END " mp)
-		
+    
     #t))
 
 (define (dis-dirty-m3 tbl mp)
@@ -535,34 +542,34 @@
 
     (dis "    IF row # AllRows THEN " dnl mp)
 
-    (dis "      EVAL db.tExec(\"update " 
-	 tbl-name 
-        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \";\")" 
-	 dnl mp)      
+    (dis "      db.aExec(\"update " 
+   tbl-name 
+        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \";\", ex)" 
+   dnl mp)      
 
     (dis "    ELSE " dnl mp)
 
-    (dis "      EVAL db.tExec(\"update " 
-	 tbl-name 
-	 " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \";\")" 
-	 dnl mp)
+    (dis "      db.aExec(\"update " 
+   tbl-name 
+   " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \";\", ex)" 
+   dnl mp)
 
     (dis "    END " dnl mp)
 
     (dis "  END " mp)
 
     #t))
-	  
+    
 
 (define (dis-query-m3 tbl mp)
   ;; print the entire routine that generates the 'standard query string'
   (let ((tbl-name (car tbl)) 
-	(fields (get-fields (complete-tbl tbl))))
+  (fields (get-fields (complete-tbl tbl))))
     (dis "  BEGIN " dnl mp)
     (dis "    RETURN \"" mp)
     (map2 (lambda (fld) (dis (ass-q fld) "," mp))
-	  (lambda (fld) (dis (ass-q fld) ""  mp)) 
-	  fields)
+    (lambda (fld) (dis (ass-q fld) ""  mp)) 
+    fields)
     (dis " \"" dnl mp)
     (dis "  END " mp)
     #t
@@ -582,22 +589,23 @@
 (define (dis-imports imports ip)
   (let ((uniq-imports (uniq eqv? imports)))
       (if (not (null? uniq-imports))
-	  (begin 
-	    (dis "<*NOWARN*>IMPORT " ip)
-	    (map2 (lambda (intf) (dis " " intf "," ip))
-		  (lambda (intf) (dis " " intf ";" dnl dnl ip))
-		  uniq-imports))
-	  )
+    (begin 
+      (dis "<*NOWARN*>IMPORT " ip)
+      (map2 (lambda (intf) (dis " " intf "," ip))
+      (lambda (intf) (dis " " intf ";" dnl dnl ip))
+      uniq-imports))
+    )
       )
 )
 
 (define (dis-intf-imports fields ip)
   (let ((imports
-	 (append (list "DBerr" "Database" "DatabaseTable" 
-		       "Scan" "Fmt" "Lex" "FloatMode" "PGSQLScan" "TextSeq"
-		       "TextUtils" "DBTable")
-		 (map type->m3-intfname 
-		      (filter m3-import? (map cadr fields))))))
+   (append (list "DBerr" "Database" "DatabaseTable" "DesynchronizedDB"
+                 "UpdateMonitor"
+           "Scan" "Fmt" "Lex" "FloatMode" "PGSQLScan" "TextSeq"
+           "TextUtils" "DBTable")
+     (map type->m3-intfname 
+          (filter m3-import? (map cadr fields))))))
     (dis-imports imports ip) 
     #t
     ))
@@ -616,11 +624,11 @@
   ;; generate all the Modula-3 code for accessing a table
 
   (let* ((name (car tbl))
-	 (dbname (db-name db))
-	 (m3name (string-append "DBTable_" dbname "_" name))
-	 (ip (open-output-file (string-append m3name ".i3")))
-	 (mp (open-output-file (string-append m3name ".m3")))
-	 (fields (get-fields (complete-tbl tbl))))
+   (dbname (db-name db))
+   (m3name (string-append "DBTable_" dbname "_" name))
+   (ip (open-output-file (string-append m3name ".i3")))
+   (mp (open-output-file (string-append m3name ".m3")))
+   (fields (get-fields (complete-tbl tbl))))
 
     (dis "derived_interface(\"" m3name "\",VISIBLE)" dnl m3mp)
     (dis "derived_implementation(\"" m3name "\")" dnl m3mp)
@@ -642,64 +650,93 @@
     (dis dnl ip)
 
     ;; the various field-wise procedures
-		(map (lambda(proc)
-					 (map (lambda (fld) (proc fld ip mp)) fields))
-				 (list put-getter-procedure
-							 put-setter-procedure
-							 put-clearer-procedure
-							 put-have-procedure))
+    (map (lambda(proc)
+           (map (lambda (fld) (proc fld ip mp)) fields))
+         (list put-getter-procedure
+               put-setter-procedure
+               put-clearer-procedure
+               put-have-procedure))
 
     (let 
-	;;
-	;; define some Modula-3 procedures.
-	;; Update  a row
-	;; Parse   a row
-	;; Insert  a row
-	;; QueryHeader   provide the data spec for the query to Parse
-	;; SetDirty  clear/set dirty bit
-	;;
-	((upheader
-	  (list "Update" 
-		"(db : Database.T; READONLY record : T) RAISES { DBerr.Error }"
-		dis-update-m3
-		))
-	 (insert
-	  (list "Insert"
-		"(db : Database.T; READONLY record : T) RAISES { DBerr.Error }"
-		dis-insert-m3
-		))
+  ;;
+  ;; define some Modula-3 procedures.
+  ;; Update  a row
+  ;; Parse   a row
+  ;; Insert  a row
+  ;; QueryHeader   provide the data spec for the query to Parse
+  ;; SetDirty  clear/set dirty bit
+  ;;
+  ((upheader
+    (list "Update" 
+    "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
+    dis-update-m3
+    ))
+   (insert
+    (list "Insert"
+    "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
+    dis-insert-m3
+    ))
 
-	 (upinsert
-	  (list "UpdateOrInsert" 
-					"(db : Database.T; READONLY record : T; restriction : TEXT) RAISES { DBerr.Error }"
-					dis-update-or-insert-m3
-					))
+   (upinsert
+    (list "UpdateOrInsert" 
+          "(db : DesynchronizedDB.T; READONLY record : T; restriction : TEXT; ex : DesynchronizedDB.ExCallback)"
+          dis-update-or-insert-m3
+          ))
 
-	 (getid
-	  (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
-	 
-	 )
+   (getid
+    (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
+   
+   )
       (dis dnl "CONST AllRows = -1; " dnl ip)
 
       (map 
        (lambda(h)
-	 (let (  (pname (car h))
-		 (proto (cadr h))
-		 (dis-code  (caddr h))  )
-	   (dis "PROCEDURE " pname proto ";" dnl dnl ip)
-	   (dis "PROCEDURE " pname proto "=" dnl mp)
-	   (dis-code tbl mp)
-	   (dis pname ";" dnl dnl dnl mp)))
+   (let (  (pname (car h))
+     (proto (cadr h))
+     (dis-code  (caddr h))  )
+     (dis "PROCEDURE " pname proto ";" dnl dnl ip)
+     (dis "PROCEDURE " pname proto "=" dnl mp)
+     (dis-code tbl mp)
+     (dis pname ";" dnl dnl dnl mp)))
        (list upheader 
-						 insert 
-						 upinsert
-						 getid)
+             insert 
+             upinsert
+             getid)
        )
       )
 
+		;; finish .i3 file
     (dis "CONST Brand = \"" m3name "\";" dnl dnl ip)
     (dis "CONST TableName = \"" name "\";" dnl dnl ip)
-    (dis "END " m3name "." dnl ip)     (dis "BEGIN END " m3name "." dnl mp)
+    (dis "END " m3name "." dnl ip)     
+
+		;; finish .m3 file
+
+		;; exec callback, call update monitor...
+
+		(dis "TYPE" dnl
+				 "  ResCallback = DesynchronizedDB.ResCallback OBJECT" dnl
+				 "    um   : UpdateMonitor.T;" dnl
+				 "  OVERRIDES" dnl
+				 "    result := RCResult" dnl
+         "  END;" dnl 
+				 dnl
+				 "PROCEDURE MakeResCallback(db : DesynchronizedDB.T) : ResCallback =" dnl
+				 "  BEGIN" dnl
+				 "    WITH um = NARROW(db.getAttribute(UpdateMonitor.Brand),UpdateMonitor.T) DO" dnl
+				 "      IF um = NIL THEN RETURN NIL ELSE RETURN NEW(ResCallback, um := um) END" dnl
+         "    END" dnl
+         "  END MakeResCallback;" dnl
+				 dnl
+				 "PROCEDURE RCResult(rc : ResCallback;" dnl
+         "                   <*UNUSED*>dt : DatabaseTable.T) =" dnl
+				 "  BEGIN" dnl
+				 "    rc.um.locallyUpdated(\"" name "\")" dnl
+				 "  END RCResult;" dnl
+				 dnl
+				 mp)
+
+		(dis "BEGIN END " m3name "." dnl mp)
 
     (close-output-port ip) (close-output-port mp)
     #t
@@ -712,11 +749,11 @@
   ;; generate all the Modula-3 code for accessing a table
 
   (let* ((name (car tbl))
-	 (dbname (db-name db))
-	 (m3name (string-append "DBTable_" dbname "_" name))
-	 (ip (open-output-file (string-append m3name ".i3")))
-	 (mp (open-output-file (string-append m3name ".m3")))
-	 (fields (get-fields (complete-tbl tbl))))
+   (dbname (db-name db))
+   (m3name (string-append "DBTable_" dbname "_" name))
+   (ip (open-output-file (string-append m3name ".i3")))
+   (mp (open-output-file (string-append m3name ".m3")))
+   (fields (get-fields (complete-tbl tbl))))
 
     (dis "derived_interface(\"" m3name "\",VISIBLE)" dnl m3mp)
     (dis "derived_implementation(\"" m3name "\")" dnl m3mp)
@@ -738,55 +775,55 @@
     (dis dnl ip)
 
     ;; the various field-wise procedures
-		(map (lambda(proc)
-					 (map (lambda (fld) (proc fld ip mp)) fields))
-				 (list put-getter-procedure
-							 ;put-setter-procedure
-							 ;put-clearer-procedure
-							 put-have-procedure))
+    (map (lambda(proc)
+           (map (lambda (fld) (proc fld ip mp)) fields))
+         (list put-getter-procedure
+               ;put-setter-procedure
+               ;put-clearer-procedure
+               put-have-procedure))
 
     (let 
-	;;
-	;; define some Modula-3 procedures.
-	;; Update  a row
-	;; Parse   a row
-	;; Insert  a row
-	;; QueryHeader   provide the data spec for the query to Parse
-	;; SetDirty  clear/set dirty bit
-	;;
-	(
-	 (parseheader 
-	  (list "<*NOWARN*>Parse"
-		"(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
-		dis-parse-m3
-		))
-	 (queryheader 
-	  (list "QueryHeader" "() : TEXT" dis-query-m3))
-	 (getid
-	  (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
-	 (dirtyheader 
-	  (list
-	   "SetDirty" 
-	   "(db : Database.T; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\") RAISES { DBerr.Error }"
-	   dis-dirty-m3
-	   ))
-	 
-	 )
+  ;;
+  ;; define some Modula-3 procedures.
+  ;; Update  a row
+  ;; Parse   a row
+  ;; Insert  a row
+  ;; QueryHeader   provide the data spec for the query to Parse
+  ;; SetDirty  clear/set dirty bit
+  ;;
+  (
+   (parseheader 
+    (list "<*NOWARN*>Parse"
+    "(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
+    dis-parse-m3
+    ))
+   (queryheader 
+    (list "QueryHeader" "() : TEXT" dis-query-m3))
+   (getid
+    (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
+   (dirtyheader 
+    (list
+     "SetDirty" 
+     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\")"
+     dis-dirty-m3
+     ))
+   
+   )
       (dis dnl "CONST AllRows = -1; " dnl ip)
 
       (map 
        (lambda(h)
-	 (let (  (pname (car h))
-		 (proto (cadr h))
-		 (dis-code  (caddr h))  )
-	   (dis "PROCEDURE " pname proto ";" dnl dnl ip)
-	   (dis "PROCEDURE " pname proto "=" dnl mp)
-	   (dis-code tbl mp)
-	   (dis pname ";" dnl dnl dnl mp)))
+   (let (  (pname (car h))
+     (proto (cadr h))
+     (dis-code  (caddr h))  )
+     (dis "PROCEDURE " pname proto ";" dnl dnl ip)
+     (dis "PROCEDURE " pname proto "=" dnl mp)
+     (dis-code tbl mp)
+     (dis pname ";" dnl dnl dnl mp)))
        (list ;upheader 
-						 parseheader 
-						 ;insert 
-						 queryheader dirtyheader getid)
+             parseheader 
+             ;insert 
+             queryheader dirtyheader getid)
        )
       )
 
@@ -800,9 +837,9 @@
   )
 
 (define (make-table-m3 tbl db m3mp)
-	(cond ((eq? 'client (cadr tbl)) (make-client-table-m3 tbl db m3mp))
-				((eq? 'server (cadr tbl)) (make-server-table-m3 tbl db m3mp))
-				(else (error (string-append "Unknown owner : " (cadr tbl))))))
+  (cond ((eq? 'client (cadr tbl)) (make-client-table-m3 tbl db m3mp))
+        ((eq? 'server (cadr tbl)) (make-server-table-m3 tbl db m3mp))
+        (else (error (string-append "Unknown owner : " (cadr tbl))))))
     
 (define (complete-tbl tbl)
   ;;
@@ -814,25 +851,25 @@
   ;; active bit 
   ;;
   (let ((name (car tbl))
-				(owner (cadr tbl))
-				(old-data (cddr tbl)))
-	      
+        (owner (cadr tbl))
+        (old-data (cddr tbl)))
+        
     (append 
-		 (list name owner)
-		 (list
-			(make-field (string-append name "_id") 'serial 'primary-key )
-			(make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
-			(make-field "updated" 'timestamp (list 'default "now()"))
-		  (make-index (list "updated"))
-			)
-			(if (eq? owner 'client)
-					(list 
-					 (make-field "dirty" 'boolean 'not-null (list 'default "true"))
-					 (make-index (list "dirty"))
-					 (make-index (list "active"))
-					 (make-field "active" 'boolean 'not-null (list 'default "false")))
-					'())
-		 old-data)))
+     (list name owner)
+     (list
+      (make-field (string-append name "_id") 'serial 'primary-key )
+      (make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
+      (make-field "updated" 'timestamp (list 'default "now()"))
+      (make-index (list "updated"))
+      (make-field "dirty" 'boolean 'not-null (list 'default "true"))
+      (make-index (list "dirty"))
+      )
+      (if (eq? owner 'client)
+          (list 
+           (make-index (list "active"))
+           (make-field "active" 'boolean 'not-null (list 'default "false")))
+          '())
+     old-data)))
 
 (define (is-id? field) 
   (and (list? (cadr field)) 
@@ -840,39 +877,39 @@
 
 (define (display-constraint tab-name c)
   (let ((ftab-name (cadadr c))
-	(col-name (car c)))
+  (col-name (car c)))
     (dis dnl
-	 "alter table " tab-name 
-	 " add constraint " tab-name "_" ftab-name "_" col-name "_fk"
-	 " foreign key (" col-name ") references " ftab-name "(" ftab-name 
-	 "_id);" dnl port)))
+   "alter table " tab-name 
+   " add constraint " tab-name "_" ftab-name "_" col-name "_fk"
+   " foreign key (" col-name ") references " ftab-name "(" ftab-name 
+   "_id);" dnl port)))
 
 (define (display-constraints tab)
   (let ((tab-name (car tab)))
     (map (lambda (c) (display-constraint tab-name c)) 
-				 (filter is-id? (get-fields tab)))
+         (filter is-id? (get-fields tab)))
     #t
-		))
+    ))
     
 (define (index-code idx tab-name)
-	(let ((fields (car idx))
-				(opts (cdr idx)))
-		(let ((have-unique? (memq 'unique opts))
-					(name         (string-append 
-												 (infixize (cons tab-name fields) "_") 
-												 "_idx" ))
-					(colstr       (infixize fields ",")))
-			(string-append
-			 "create "
-			 (if have-unique? "unique " "")
-			 "index "
-			 name
-			 " on " tab-name "(" colstr ");")
+  (let ((fields (car idx))
+        (opts (cdr idx)))
+    (let ((have-unique? (memq 'unique opts))
+          (name         (string-append 
+                         (infixize (cons tab-name fields) "_") 
+                         "_idx" ))
+          (colstr       (infixize fields ",")))
+      (string-append
+       "create "
+       (if have-unique? "unique " "")
+       "index "
+       name
+       " on " tab-name "(" colstr ");")
 )))
 
 (define (display-indexes tab)
   (let ((tab-name (car tab)))
-		(map (lambda(i)(dis (index-code i tab-name) dnl port)) (get-indexes (complete-tbl tab)))
+    (map (lambda(i)(dis (index-code i tab-name) dnl port)) (get-indexes (complete-tbl tab)))
 ))
   
 (define (find-constraints db)
