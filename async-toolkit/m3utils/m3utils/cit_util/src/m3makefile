@@ -1,7 +1,10 @@
 /* $Id$ */
+
 import ("netobj")
 import("cit_common")
 import("set")
+import("rdwrreset")
+
 template("texthack")
 template("generics")
 Interface("DblRefany")

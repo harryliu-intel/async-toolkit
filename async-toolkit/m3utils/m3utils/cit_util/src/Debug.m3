@@ -39,6 +39,7 @@ IMPORT ThreadF;
 IMPORT RefList;
 IMPORT Pathname;
 IMPORT LockedTextBooleanTbl;
+IMPORT RdWrReset;
 
 VAR options := SET OF Options {};
 
@@ -210,12 +211,21 @@ VAR
   outHookLevel:=-1;
 
 PROCEDURE DefaultOut(t: TEXT) =
+  VAR
+    reset := FALSE;
   BEGIN
     LOCK mu DO
+      INC(calls);
+      IF calls >= ResetInterval THEN
+        reset := TRUE; calls := 0
+      END;
+
       VAR
         p := streams;
       BEGIN
         WHILE p # NIL DO
+          IF reset = TRUE THEN RdWrReset.Wr(p.head) END;
+
           TRY
             Wr.PutText(p.head, t); Wr.Flush(p.head);
           EXCEPT ELSE END;
@@ -268,6 +278,10 @@ VAR
   triggers: TextSet.T;
   streams := RefList.List1(stderr); (* protected by mu *)
   mu := NEW(MUTEX);
+  calls := 0;
+
+CONST
+  ResetInterval = 1000;
 
 BEGIN 
   VAR
