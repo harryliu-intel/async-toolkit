@@ -13,6 +13,8 @@ TYPE T <: REFANY;
 
 PROCEDURE Truth(x : BOOLEAN) : T;
 
+CONST FromBool = Truth;
+
 PROCEDURE TruthO(x : SchemeObject.T) : BOOLEAN;
 
 PROCEDURE True() : T; 
