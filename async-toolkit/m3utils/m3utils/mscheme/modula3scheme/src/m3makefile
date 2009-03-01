@@ -20,5 +20,6 @@ KeyPair("CardAtom", "Cardinal", "Atom")
 table("CARef", "CardAtomPair", "Refany")
 
 Module("SchemeM3")
+Module("SchemeCommandRunner")
 
 library ("modula3scheme")
