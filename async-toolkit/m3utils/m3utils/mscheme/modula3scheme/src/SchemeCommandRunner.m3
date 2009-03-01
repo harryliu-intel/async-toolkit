@@ -20,15 +20,22 @@ PROCEDURE RunCommandApply(<*UNUSED*>proc : SchemeProcedure.T;
       END
     END;
 
-    WITH wr = NEW(TextWr.T).init(),
-         writer = ProcUtils.WriteHere(wr),
-         completion = ProcUtils.RunText(TextWr.ToText(wr),
+    WITH owr = NEW(TextWr.T).init(),
+         writer = ProcUtils.WriteHere(owr),
+         cmdtext = TextWr.ToText(wr),
+         completion = ProcUtils.RunText(cmdtext,
                                         stdout := writer) DO
 
       TRY
         completion.wait()
       EXCEPT
-        ProcUtils.ErrorExit(err) =>
+        ProcUtils.ErrorExit(err) => RAISE E("ProcUtils.ErrorExit from running \"" & cmdtext & "\"")
+      END;
+
+      (* here we grab the results from running command and parse them...*)
+      WITH result = TextWr.ToText(owr) DO
+        Debug.Out("SchemeCommandRunner.RunCommandApply: cmd=\"" & cmdtext & 
+          "\"; result: \"" & result & "\"")
       END
     END
 
