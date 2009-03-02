@@ -2,6 +2,8 @@
 
 INTERFACE ProcUtils;
 IMPORT Rd, Wr, Pathname;
+IMPORT AtomList;
+
 TYPE
   T = TEXT;
   (* a sequence of newline-separated unix commands with arguments
@@ -16,7 +18,7 @@ EXCEPTION ErrorExit(Error);
 TYPE Error = OBJECT error : TEXT END; 
      (* generic errors, e.g., Rd.Failure *)
 
-     OS = Error BRANDED OBJECT END;
+     OS = Error BRANDED OBJECT al : AtomList.T; END;
      (* OSError.E *)
 
      ExitCode = Error OBJECT code : INTEGER END;

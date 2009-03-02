@@ -20,4 +20,7 @@ PROCEDURE ExtendWithM3(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.E
   (* extend a given ExtDefiner with the "Modula-3 primitives"
      defined in this module *)
 
+PROCEDURE GetPrims() : SchemePrimitive.ExtDefiner;
+  (* can grab this to extend the prims before allocating a new T *)
+
 END SchemeM3.

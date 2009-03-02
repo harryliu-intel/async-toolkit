@@ -340,6 +340,9 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     RETURN prims
   END ExtendWithM3;
 
+PROCEDURE GetPrims() : SchemePrimitive.ExtDefiner = 
+  BEGIN RETURN prims END GetPrims;
+
 VAR 
   prims := NEW(SchemePrimitive.ExtDefiner).init();
 BEGIN 

@@ -195,7 +195,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             END
           EXCEPT
             OSError.E(e) => 
-              Process.Crash("ProcUtils.Apply.Exec: Couldn't exec command \"" & DebugFormat(l.head,params^) & "\"!"& "\n" & FormatOSError(e))
+              RAISE ErrorExit(NEW(OS, al := e))
           END
         END
       END
