@@ -23,6 +23,8 @@ TYPE Error = OBJECT error : TEXT END;
 
      ExitCode = Error OBJECT code : INTEGER END;
      (* process set non-zero exit code *)
+
+PROCEDURE FormatError(e : Error) : TEXT;
   
 
 PROCEDURE ToText(source: T;

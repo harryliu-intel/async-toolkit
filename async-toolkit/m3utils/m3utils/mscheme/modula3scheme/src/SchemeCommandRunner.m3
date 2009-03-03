@@ -22,7 +22,7 @@ PROCEDURE RunCommandApply(proc : Procedure;
   END RunCommandApply;
 
 TYPE
-  Done = { NotDone, Completed, TimedOut };
+  Done = { NotDone, Completed, TimedOut, RaisedException };
 
   Closure = Thread.Closure OBJECT
     c : Thread.Condition;
@@ -32,6 +32,7 @@ TYPE
 
   WaitClosure = Closure OBJECT
     completion : ProcUtils.Completion;
+    err : ProcUtils.Error;
   OVERRIDES
     apply := WCApply;
   END;
@@ -44,10 +45,19 @@ TYPE
 
 PROCEDURE WCApply(wc : WaitClosure) : REFANY =
   BEGIN
-    wc.completion.wait();
-    LOCK wc.mu DO
-      IF wc.done^ = Done.NotDone THEN wc.done^ := Done.Completed END
+    TRY
+      wc.completion.wait();
+      LOCK wc.mu DO
+        IF wc.done^ = Done.NotDone THEN wc.done^ := Done.Completed END
+      END;
+    EXCEPT
+      ProcUtils.ErrorExit(err) => 
+      wc.err := err;
+      LOCK wc.mu DO
+        IF wc.done^ = Done.NotDone THEN wc.done^ := Done.RaisedException END
+      END;
     END;
+
     Thread.Broadcast(wc.c);
     
     RETURN NIL
@@ -73,8 +83,9 @@ PROCEDURE TOCApply(toc : TimeOClosure) : REFANY =
   END TOCApply;
 
 PROCEDURE RunTimeoutCommandApply(proc : Procedure; 
-                          interp : Scheme.T; 
-                          args : Object) : Object RAISES { E } =
+                                 interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  <*FATAL Wr.Failure, Thread.Alerted*>
   VAR p := SchemeUtils.Rest(args);
       timeo := SchemeLongReal.FromO(SchemeUtils.First(args));
       wr := TextWr.New();
@@ -90,9 +101,12 @@ PROCEDURE RunTimeoutCommandApply(proc : Procedure;
 
     WITH owr = NEW(TextWr.T).init(),
          writer = ProcUtils.WriteHere(owr),
+         owr2 = NEW(TextWr.T).init(),
+         writer2 = ProcUtils.WriteHere(owr2),
          cmdtext = TextWr.ToText(wr),
          completion = ProcUtils.RunText(cmdtext,
-                                        stdout := writer) DO
+                                        stdout := writer,
+                                        stderr := writer2) DO
 
       TRY
         IF timeo = LAST(Time.T) THEN
@@ -117,16 +131,18 @@ PROCEDURE RunTimeoutCommandApply(proc : Procedure;
                 CASE done^ OF
                   Done.NotDone => (* skip *)
                 |
-                  Done.TimedOut => RAISE E("Timeout running \""& cmdtext & "\"")
+                  Done.TimedOut => RAISE E("Timeout running \""& cmdtext & "\"" )
                 |
                   Done.Completed => EXIT
+                |
+                  Done.RaisedException => RAISE ProcUtils.ErrorExit(waitCl.err)
                 END
               END
             END
           END
         END
       EXCEPT
-        ProcUtils.ErrorExit(err) => RAISE E("ProcUtils.ErrorExit from running \"" & cmdtext & "\"")
+        ProcUtils.ErrorExit(err) => RAISE E("ProcUtils.ErrorExit from running \"" & cmdtext & "\"; stderr: " & TextWr.ToText(owr2))
       END;
 
       (* here we grab the results from running command and parse them...*)

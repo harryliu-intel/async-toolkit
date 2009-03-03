@@ -22,6 +22,7 @@ IMPORT Thread;
 IMPORT Wr, TextWr;
 IMPORT OSError;
 IMPORT Atom;
+IMPORT AL;
 
 <* FATAL Thread.Alerted *>
 
@@ -415,6 +416,18 @@ PROCEDURE FormatOSError(e : OSError.Code) : TEXT =
     END;
     RETURN res
   END FormatOSError;
+
+PROCEDURE FormatError(e : Error) : TEXT =
+  BEGIN
+    TYPECASE e OF
+      OS(os) => RETURN "ProcUtils.Error.OS: " & e.error & "; " & AL.Format(os.al)
+    |
+      ExitCode(ec) => RETURN "ProcUtils.Error.ExitCode: " & e.error & 
+        " exitCode=" & Fmt.Int(ec.code)
+    |
+      Error => RETURN "ProcUtils.Error.Unknown: " & e.error
+    END
+  END FormatError;
 
 VAR
   so,si,se: File.T;
