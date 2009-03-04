@@ -420,14 +420,17 @@ PROCEDURE FormatOSError(e : OSError.Code) : TEXT =
 PROCEDURE FormatError(e : Error) : TEXT =
   BEGIN
     TYPECASE e OF
-      OS(os) => RETURN "ProcUtils.Error.OS: " & e.error & "; " & AL.Format(os.al)
+      OS(os) => RETURN "ProcUtils.Error.OS: " & UnNil(e.error) & "; " & AL.Format(os.al)
     |
-      ExitCode(ec) => RETURN "ProcUtils.Error.ExitCode: " & e.error & 
+      ExitCode(ec) => RETURN "ProcUtils.Error.ExitCode: " & UnNil(e.error) & 
         " exitCode=" & Fmt.Int(ec.code)
     |
-      Error => RETURN "ProcUtils.Error.Unknown: " & e.error
+      Error => RETURN "ProcUtils.Error.Unknown: " & UnNil(e.error)
     END
   END FormatError;
+
+PROCEDURE UnNil(txt : TEXT) : TEXT = 
+  BEGIN IF txt = NIL THEN RETURN "**NIL**" ELSE RETURN txt END END UnNil;
 
 VAR
   so,si,se: File.T;

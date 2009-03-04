@@ -9,6 +9,9 @@ IMPORT Debug;
 IMPORT TextRd;
 IMPORT Time;
 IMPORT Thread;
+IMPORT SchemeString;
+
+EXCEPTION Timeout(TEXT);
 
 PROCEDURE RunCommandApply(proc : Procedure; 
                           interp : Scheme.T; 
@@ -20,7 +23,7 @@ PROCEDURE RunCommandApply(proc : Procedure;
                                       first := SchemeLongReal.FromLR(LAST(Time.T)),
                                       rest := args))
   END RunCommandApply;
-
+  
 TYPE
   Done = { NotDone, Completed, TimedOut, RaisedException };
 
@@ -82,9 +85,53 @@ PROCEDURE TOCApply(toc : TimeOClosure) : REFANY =
     RETURN NIL
   END TOCApply;
 
+PROCEDURE RunHooksCommandApply(proc : Procedure; 
+                                       interp : Scheme.T; 
+                                       args : Object) : Object RAISES { E } =
+  VAR p := args;
+      timeoutContinuation, errorContinuation : Object;
+  CONST
+    First = SchemeUtils.First;
+    Rest = SchemeUtils.Rest;
+  BEGIN
+    timeoutContinuation := First(p);
+    p := Rest(p);
+    errorContinuation := First(p);
+    p := Rest(p);
+
+    TRY
+      RETURN RealRunTimeoutCommandApply(proc,interp,p)
+    EXCEPT
+      E(err) => 
+      WITH toRun = SchemeUtils.List2(errorContinuation,
+                                     SchemeString.FromText(err)) DO
+        EVAL interp.evalInGlobalEnv(toRun)
+      END
+    |
+      Timeout(err) =>
+      WITH toRun = SchemeUtils.List2(timeoutContinuation,
+                                     SchemeString.FromText(err)) DO
+        EVAL interp.evalInGlobalEnv(toRun)
+      END
+    END;
+    RETURN NIL
+  END RunHooksCommandApply;
+
 PROCEDURE RunTimeoutCommandApply(proc : Procedure; 
                                  interp : Scheme.T; 
                                  args : Object) : Object RAISES { E } =
+  BEGIN
+    TRY
+      RETURN RealRunTimeoutCommandApply(proc,interp,args)
+    EXCEPT
+      Timeout(err) => RAISE E(err)
+    END
+  END RunTimeoutCommandApply;
+
+PROCEDURE RealRunTimeoutCommandApply(proc : Procedure; 
+                                     <*UNUSED*>interp : Scheme.T; 
+                                     args : Object) : Object RAISES { E, 
+                                                                  Timeout } =
   <*FATAL Wr.Failure, Thread.Alerted*>
   VAR p := SchemeUtils.Rest(args);
       timeo := SchemeLongReal.FromO(SchemeUtils.First(args));
@@ -131,7 +178,7 @@ PROCEDURE RunTimeoutCommandApply(proc : Procedure;
                 CASE done^ OF
                   Done.NotDone => (* skip *)
                 |
-                  Done.TimedOut => RAISE E("Timeout running \""& cmdtext & "\"" )
+                  Done.TimedOut => RAISE Timeout("Timeout running \""& cmdtext & "\"" )
                 |
                   Done.Completed => EXIT
                 |
@@ -142,7 +189,9 @@ PROCEDURE RunTimeoutCommandApply(proc : Procedure;
           END
         END
       EXCEPT
-        ProcUtils.ErrorExit(err) => RAISE E("ProcUtils.ErrorExit from running \"" & cmdtext & "\"; stderr: " & TextWr.ToText(owr2))
+        ProcUtils.ErrorExit(err) => RAISE E("ProcUtils.ErrorExit ("&
+          ProcUtils.FormatError(err) &") from running \"" & 
+          cmdtext & "\"; stderr: " & TextWr.ToText(owr2))
       END;
 
       (* here we grab the results from running command and parse them...*)
@@ -153,7 +202,7 @@ PROCEDURE RunTimeoutCommandApply(proc : Procedure;
         RETURN proc.outputParser.parseRd(rd)
       END
     END
-  END RunTimeoutCommandApply;
+  END RealRunTimeoutCommandApply;
 
 TYPE 
   Procedure = SchemeProcedure.T OBJECT
@@ -163,17 +212,32 @@ TYPE
 PROCEDURE Extend(op : OutputParser;
                  definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefiner =
   BEGIN
+
+    (* (run-command <cmd> <arg1> <arg2> ... ) *)
     definer.addPrim("run-command",
                     NEW(Procedure,
                         outputParser := op,
                         apply := RunCommandApply),
                     1, LAST(CARDINAL));
 
+    (* (run-command-with-timeout <timeo> <cmd> <arg1> <arg2> ... ) *)
     definer.addPrim("run-command-with-timeout",
                     NEW(Procedure,
                         outputParser := op,
                         apply := RunTimeoutCommandApply),
                     2, LAST(CARDINAL));
+
+    (* (run-command-with-hooks
+                   <timeout-hook> 
+                   <error-hook> 
+                   <timeo> <cmd> <arg1> <arg2> ... ) *)
+    definer.addPrim("run-command-with-hooks",
+                    NEW(Procedure,
+                        outputParser := op,
+                        apply := RunHooksCommandApply),
+                    4, LAST(CARDINAL));
+
+
 
     RETURN definer
   END Extend;

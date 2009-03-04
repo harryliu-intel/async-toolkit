@@ -8,7 +8,7 @@
 
 MODULE SchemeInputPort;
 IMPORT AL, Rd;
-FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector;
+FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector, Stringify;
 FROM Scheme IMPORT Object, E;
 IMPORT SchemeLongReal;
 FROM SchemeSymbol IMPORT SymEq;
@@ -192,7 +192,7 @@ PROCEDURE ReadTail(t : T;
       WITH result = t.read() DO
         token := t.nextToken();
         IF NOT SymEq(token, ")") THEN
-          EVAL Warn("Where's the ')'?  Got " & SchemeSymbol.ToText(token) &
+          EVAL Warn("Where's the ')'?  Got " & Stringify(token) &
             " after .")
         END;
         RETURN result
