@@ -8,7 +8,7 @@ FROM Scheme IMPORT E, Object, Environment;
 IMPORT Thread;
 IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
-IMPORT SchemePair, SchemeSymbol, SchemeString;
+IMPORT SchemePair, SchemeSymbol, SchemeString, SchemeBoolean;
 IMPORT Debug;
 
 TYPE
@@ -76,12 +76,93 @@ PROCEDURE AtRunApply(<*UNUSED*>proc : SchemeProcedure.T;
     END
   END AtRunApply;
 
+(**********************************************************************)
+
+TYPE 
+  ClockClosure = Thread.Closure OBJECT
+    interval   : LONGREAL;
+    command    : Object;
+    errorHook  : Object;
+    interp     : Scheme.T;
+  OVERRIDES
+    apply := CCApply;
+  END;
+
+PROCEDURE CCApply(cl : ClockClosure) : REFANY =
+  VAR
+    next := Time.Now() + cl.interval;
+  BEGIN
+    LOOP
+      WHILE Time.Now() < next DO 
+        Thread.Pause(MIN(1.0d0, next - Time.Now()))
+      END;
+
+      next := Time.Now() + cl.interval;
+
+      TRY
+        WITH res = cl.interp.evalInGlobalEnv(NEW(SchemePair.T,
+                                                 first := cl.command)) DO
+          IF NOT SchemeBoolean.TruthO(res) THEN
+            RETURN NIL
+          END
+        END
+      EXCEPT
+        E(err) => 
+        Debug.Out("SchemeAtRun.CCApply: caught Scheme.E: " & err);
+        TRY
+          IF cl.errorHook # NIL THEN
+            WITH toRun = SchemeUtils.List2(cl.errorHook, 
+                                           SchemeSymbol.FromText("err")) DO
+              Debug.Out("SchemeAtRun.ClApply: running: " &
+                SchemeUtils.Stringify(toRun));
+              EVAL cl.interp.evalInGlobalEnv(toRun)
+            END
+          END
+        EXCEPT
+          E(e) => (* skip *)
+          Debug.Out("SchemeAtRun.ClApply: caught Scheme.E running resultLambda: " & e)
+        END
+      END
+    END
+  END CCApply;
+
+PROCEDURE ClockRunApply(<*UNUSED*>proc : SchemeProcedure.T; 
+                     interp : Scheme.T; 
+                     args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH interval = SchemeLongReal.FromO(SchemeUtils.First(args)),
+         command = SchemeUtils.Second(args),
+         errorHook = SchemeUtils.Third(args),
+         env = interp.getGlobalEnvironment() DO
+      IF NOT ISTYPE(env, Environment) THEN
+        RAISE E ("SchemeAtRun.AtRunApply: environment type mismatch")
+      END;
+
+      EVAL Thread.Fork(NEW(ClockClosure,
+                           interval := interval,
+                           command := command,
+                           errorHook := errorHook,
+                           interp := interp));
+      RETURN command (* is this right? *)
+    END
+  END ClockRunApply;
+
+(**********************************************************************)
+
 PROCEDURE Extend(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefiner =
   BEGIN
     definer.addPrim("at-run",
                     NEW(SchemeProcedure.T,
                         apply := AtRunApply),
                     2, 3);
+    (* (at-run <time> <cmd> <result-lambda>) *)
+    
+
+    definer.addPrim("clock-run",
+                    NEW(SchemeProcedure.T,
+                        apply := ClockRunApply),
+                    2, 3);
+    (* (clock-run <interval> <cmd> <error-hook>) *)
 
     RETURN definer
   END Extend;
