@@ -2,6 +2,7 @@
 
 import ("libm3")
 import ("mscheme")
+import ("finlib")
 
 Generic_module("SchemeAutoTbl")
 template ("schemeautotbl")

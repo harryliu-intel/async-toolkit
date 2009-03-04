@@ -19,6 +19,7 @@ IMPORT TextRefSchemeAutoTbl;
 IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
 IMPORT IP, Process;
 IMPORT SchemeEnvironment;
+IMPORT TZ, SchemeUtils;
 
 <* FATAL Thread.Alerted *>
 
@@ -103,22 +104,35 @@ PROCEDURE StringifyApply(<*UNUSED*>p : SchemeProcedure.T; <*UNUSED*>interp : Sch
 PROCEDURE TimeToStringApply(<*UNUSED*>p : SchemeProcedure.T; 
                             <*UNUSED*>interp : Scheme.T; 
                                       args : Object) : Object RAISES { E } =
-  BEGIN
     CONST
       Months = ARRAY Date.Month OF TEXT {
       "JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
       "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" 
       };
     VAR
-      x := First(args);
-      t := SchemeLongReal.FromO(x);
-      d : Date.T;
+      x      := First(args);
+      tzName := Second(args);
+      t      := SchemeLongReal.FromO(x);
+      d      : Date.T;
     BEGIN
       IF t > FLOAT(LAST(CARDINAL),Time.T) OR t < 0.0d0 THEN
         RETURN Error("Time out of range " & Fmt.LongReal(t))
       END;
 
-      d := Date.FromTime(t);
+      IF tzName = NIL THEN
+        d := Date.FromTime(t)
+      ELSE
+        TRY
+          WITH tz = NEW(TZ.T).init(SchemeString.ToText(tzName)) DO
+            d := tz.localtime(t)
+          END
+        EXCEPT
+          OSError.E(err) =>
+          RAISE E("Couldn't handle TZ \"" & SchemeString.ToText(tzName) & 
+                "\": OSError.E: " & AL.Format(err))
+        END
+      END;
+
       RETURN SchemeString.FromText(Fmt.F("%04s-%3s-%02s ",
                                          Fmt.Int(d.year),
                                          Months[d.month],
@@ -128,10 +142,52 @@ PROCEDURE TimeToStringApply(<*UNUSED*>p : SchemeProcedure.T;
                                                Fmt.Int(d.minute),
                                                Fmt.Int(d.second),
                                                Fmt.Int(TRUNC((t - FLOAT(TRUNC(t),Time.T))*1000.0d0))))
-    END
 
 
   END TimeToStringApply;
+
+PROCEDURE TimeToListApply(<*UNUSED*>p : SchemeProcedure.T; 
+                            <*UNUSED*>interp : Scheme.T; 
+                                      args : Object) : Object RAISES { E } =
+  CONST 
+    LR = SchemeLongReal.FromLR;
+    I  = SchemeLongReal.FromI;
+  VAR
+    x      := First(args);
+    tzName := Second(args);
+    t      := SchemeLongReal.FromO(x);
+    d      : Date.T;
+  BEGIN
+    IF t > FLOAT(LAST(CARDINAL),Time.T) OR t < 0.0d0 THEN
+      RETURN Error("Time out of range " & Fmt.LongReal(t))
+    END;
+    
+    IF tzName = NIL THEN
+      d := Date.FromTime(t)
+    ELSE
+      TRY
+        WITH tz = NEW(TZ.T).init(SchemeString.ToText(tzName)) DO
+          d := tz.localtime(t)
+        END
+      EXCEPT
+        OSError.E(err) =>
+        RAISE E("Couldn't handle TZ \"" & SchemeString.ToText(tzName) & 
+              "\": OSError.E: " & AL.Format(err))
+      END
+    END;
+    
+    WITH subsecs = t - FLOAT(TRUNC(t),Time.T) DO
+      RETURN SchemeUtils.MakeList(
+                 ARRAY OF Object { I(d.year),
+                                   I(ORD(d.month)+1),
+                                   I(d.day),
+                                   I(ORD(d.weekDay)),
+                                   I(d.hour),
+                                   I(d.minute),
+                                   LR(FLOAT(d.second,LONGREAL)+subsecs) })
+    END
+
+  END TimeToListApply;
 
 PROCEDURE TimenowApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
@@ -293,7 +349,11 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
 
     prims.addPrim("time->string", NEW(SchemeProcedure.T, 
                                       apply := TimeToStringApply), 
-                  1, 1);
+                  1, 2);
+
+    prims.addPrim("time->list", NEW(SchemeProcedure.T, 
+                                      apply := TimeToListApply), 
+                  1, 2);
 
     prims.addPrim("modula-3-op", NEW(SchemeProcedure.T, 
                                      apply := Modula3OpApply), 
