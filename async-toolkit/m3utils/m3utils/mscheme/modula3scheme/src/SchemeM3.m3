@@ -196,6 +196,18 @@ PROCEDURE TimenowApply(<*UNUSED*>p : SchemeProcedure.T;
     RETURN SchemeLongReal.FromLR(Time.Now())
   END TimenowApply;
 
+PROCEDURE NetObjExportGlobalEnvApply(<*UNUSED*>p : SchemeProcedure.T; 
+                                     interp      : Scheme.T; 
+                                     args        : Object) : Object 
+  RAISES { E } =
+  BEGIN
+    WITH nam = First(args) DO
+      NetObj.Export(SchemeString.ToText(nam),
+                    interp.getGlobalEnvironment());
+      RETURN nam
+    END
+  END NetObjExportGlobalEnvApply;
+
 PROCEDURE StdioStderrApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
                        <*UNUSED*>args : Object) : Object =
@@ -396,6 +408,11 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     prims.addPrim("getunixpid", NEW(SchemeProcedure.T, 
                                     apply := GetUnixPIDApply), 
                   0, 0);
+
+    prims.addPrim("netobj-export-global-environment",
+                  NEW(SchemeProcedure.T, 
+                      apply := NetObjExportGlobalEnvApply), 
+                  1, 1);
 
     RETURN prims
   END ExtendWithM3;

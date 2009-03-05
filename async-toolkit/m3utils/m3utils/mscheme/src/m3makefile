@@ -65,4 +65,11 @@ template ("sgenerics")
 
 Module("SchemeAtRun")
 
+Netobj("SchemeEnvironment", "Public")
+
 library ("mscheme")
+
+
+
+
+

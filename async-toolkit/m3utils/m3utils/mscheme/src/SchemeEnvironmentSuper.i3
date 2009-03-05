@@ -7,9 +7,10 @@
 *)
 
 INTERFACE SchemeEnvironmentSuper;
+IMPORT NetObj;
 
 (* this interface exists solely to make Scheme.i3 not have circular imports *)
 
-TYPE T = ROOT;
+TYPE T = NetObj.T;
 
 END SchemeEnvironmentSuper.
