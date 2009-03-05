@@ -112,7 +112,7 @@ PROCEDURE CCApply(cl : ClockClosure) : REFANY =
         TRY
           IF cl.errorHook # NIL THEN
             WITH toRun = SchemeUtils.List2(cl.errorHook, 
-                                           SchemeSymbol.FromText("err")) DO
+                                           SchemeString.FromText(err)) DO
               Debug.Out("SchemeAtRun.ClApply: running: " &
                 SchemeUtils.Stringify(toRun));
               EVAL cl.interp.evalInGlobalEnv(toRun)
@@ -120,7 +120,7 @@ PROCEDURE CCApply(cl : ClockClosure) : REFANY =
           END
         EXCEPT
           E(e) => (* skip *)
-          Debug.Out("SchemeAtRun.ClApply: caught Scheme.E running resultLambda: " & e)
+          Debug.Out("SchemeAtRun.ClApply: caught Scheme.E running errorHook: " & e)
         END
       END
     END
