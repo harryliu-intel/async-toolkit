@@ -20,6 +20,7 @@ IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
 IMPORT IP, Process;
 IMPORT SchemeEnvironment;
 IMPORT TZ, SchemeUtils;
+IMPORT NetObj;
 
 <* FATAL Thread.Alerted *>
 

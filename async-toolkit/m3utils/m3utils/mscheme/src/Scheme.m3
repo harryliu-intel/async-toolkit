@@ -27,12 +27,12 @@ TYPE Pair = SchemePair.T;
 
 REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
-    globalEnvironment : SchemeEnvironment.T;
+    globalEnvironment : SchemeEnvironment.Public;
     interrupter : Interrupter := NIL;
     prims : SchemePrimitive.Definer := NIL;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
-    reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
+    reduceCond(clauses : Object; env : SchemeEnvironment.Public) : Object RAISES { E } := ReduceCond;
   OVERRIDES
     init              :=  Init;
     init2             :=  Init2;
@@ -86,7 +86,7 @@ PROCEDURE SetInGlobalEnv(t : T; var : Symbol; val : Object) RAISES { E } =
   BEGIN EVAL t.globalEnvironment.set(var,val) END SetInGlobalEnv;
 
 PROCEDURE Init(t : T; READONLY  files : ARRAY OF Pathname.T;
-               env : REFANY(* SchemeEnvironment.T *)) : T 
+               env : REFANY(* SchemeEnvironment.Public *)) : T 
   RAISES { E } = 
   BEGIN RETURN t.init2(Stdio.stdin, Stdio.stdout, files, env) END Init;
 
@@ -94,7 +94,7 @@ PROCEDURE Init2(t : T;
                 input : Rd.T;
                 output : Wr.T;
                 READONLY files : ARRAY OF Pathname.T;
-                env : REFANY(* SchemeEnvironment.T *)) : T
+                env : REFANY(* SchemeEnvironment.Public *)) : T
   RAISES { E } =
   BEGIN
     t.input := NEW(SchemeInputPort.T).init(input);
@@ -305,7 +305,7 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
         TruthO = SchemeBoolean.TruthO;
 
   VAR
-    env := NARROW(envP, SchemeEnvironment.T);
+    env := NARROW(envP, SchemeEnvironment.Public);
     envIsLocal := FALSE;
     DebugLevel := Debug.GetLevel();
   BEGIN
@@ -508,7 +508,7 @@ PROCEDURE EvalList2(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Obje
   END EvalList2;
 
 PROCEDURE ReduceCond(t : T; 
-                     clauses : Object; env : SchemeEnvironment.T) : Object 
+                     clauses : Object; env : SchemeEnvironment.Public) : Object 
   RAISES { E } =
 
   CONST First  = SchemeUtils.First;
