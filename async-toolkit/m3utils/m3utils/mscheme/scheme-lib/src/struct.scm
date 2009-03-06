@@ -52,6 +52,8 @@
 ;;    (i 'set! <fn> <nv>)     ;; set field <fn> to new value <nv>
 ;;                                                                     
 ;;    (i 'inc! <fn> [<by>])   ;; for numerical fields: increment by 1 or <by>
+;;                            
+;;    (i 'inc! <fn> <lambda>) ;; apply <lambda> to <fn> and store in <fn>
 ;;
 ;;    (i 'type)               ;; retrieve type object (see above)
 ;;
@@ -59,7 +61,7 @@
 (define struct-type-list '())
 
 (define (make-struct-type name lst)
-  (let ((new-type '()))
+  (let ((new-type '()))   ;; could just use letrec here instead...
     (set! new-type
           (lambda x 
            (case (car x) 
@@ -70,7 +72,7 @@
              ((tag) name)
 
              ((new) 
-              (let ((accessor '())
+              (let ((accessor '())  ;; will overwrite, could use letrec here 2
                     (val
                      (map (lambda (field-def)
                             (let ((initializer (cadr field-def)))
@@ -99,21 +101,29 @@
                           
                           ((inc!) (accessor 'set! 
                                             (cadr y) 
-                                            (+ (accessor 'get (cadr y))
-                                               (if (null? (cddr y)) 
-                                                   1
-                                                   (caddr y)))))
+																						((cond ((null? (cddr y))
+																										(lambda (x) (+ x 1)))
+																									 ((procedure? (caddr y))
+																										(caddr y))
+																									 (else 
+																										(lambda (x) (+ x (caddr y)))))
+
+																						 (accessor 'get (cadr y))
+																						)))
                           
                           ((set!)
                            (let ((fname (cadr y)))
                              (let loop ((vp val)
                                         (np lst))
-                               (cond ((null? np)    (error "Unknown field " fname))
+                               (cond ((null? np)    
+																			(error "Unknown field " fname))
                                      ((eq? fname (caar np)) 
                                       (set-car! vp (caddr y)))
                                      (else 
                                       (loop (cdr vp) (cdr np)))))))
+
                           (else (error "Unknown command " (car x)))
+
                           )
                         )
                       )

@@ -14,6 +14,7 @@ FROM SchemeUtils IMPORT First, Second, Third, Stringify, Error;
 IMPORT SchemeString, SchemeLongReal;
 FROM SchemeLongReal IMPORT FromO;
 FROM SchemeBoolean IMPORT True, Truth;
+IMPORT SchemeBoolean;
 IMPORT Fmt;
 IMPORT TextRefSchemeAutoTbl;
 IMPORT Stdio, Wr, Debug, AL, FileWr, Thread;
@@ -47,7 +48,60 @@ PROCEDURE Init(t : T;
 
 (**********************************************************************)
 
-PROCEDURE JailBreakApply(<*UNUSED*>p : SchemeProcedure.T; interp : Scheme.T; args : Object) : Object RAISES { E } =
+PROCEDURE CheckSymbol(x : Object) : SchemeSymbol.T RAISES { E } =
+  BEGIN
+    IF x # NIL AND ISTYPE(x,SchemeSymbol.T) THEN RETURN x 
+    ELSE  RAISE E("expected a symbol, got: " & 
+                  SchemeUtils.StringifyT(x))
+    END
+  END CheckSymbol;
+
+PROCEDURE HaveGlobalNameApply(<*UNUSED*>p : SchemeProcedure.T; 
+                              interp : Scheme.T; 
+                              args : Object) : Object 
+  RAISES { E } =
+  VAR
+    e : SchemeEnvironment.Public;
+  BEGIN
+    WITH sym = CheckSymbol(First(args)),
+         ee = interp.getGlobalEnvironment() DO
+      IF ISTYPE(ee, SchemeEnvironment.Public) THEN
+        e := ee
+      ELSE
+        RAISE E("Unknown error: global environment of wrong type?")
+      END;
+
+      TRY
+        EVAL e.lookup(sym);
+        RETURN SchemeBoolean.True()
+      EXCEPT
+        E => RETURN SchemeBoolean.False()
+      END
+    END
+  END HaveGlobalNameApply;
+
+PROCEDURE DefineNewGlobal(<*UNUSED*>p : SchemeProcedure.T; 
+                          interp : Scheme.T; 
+                          args : Object) : Object 
+  RAISES { E } =
+  VAR
+    e : SchemeEnvironment.Public;
+  BEGIN
+    WITH sym = CheckSymbol(First(args)),
+         ee = interp.getGlobalEnvironment() DO
+      IF ISTYPE(ee, SchemeEnvironment.Public) THEN
+        e := ee
+      ELSE
+        RAISE E("Unknown error: global environment of wrong type?")
+      END;
+
+      RETURN e.define(sym, Second(args))
+    END
+  END DefineNewGlobal;
+    
+PROCEDURE JailBreakApply(<*UNUSED*>p : SchemeProcedure.T; 
+                         interp : Scheme.T; 
+                         args : Object) : Object RAISES { E } =
   BEGIN
     WITH i = NARROW(interp, T) DO
       IF i.jailBreak = NIL THEN
@@ -229,6 +283,16 @@ PROCEDURE DebugAddstreamApply(<*UNUSED*>p : SchemeProcedure.T;
     END
   END DebugAddstreamApply;
 
+PROCEDURE DebugSetLevelApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = TRUNC(SchemeLongReal.FromO(First(args))) DO
+      Debug.SetLevel(x);
+      RETURN First(args)
+    END
+  END DebugSetLevelApply;
+
 PROCEDURE DebugRemstreamApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
                                  args : Object) : Object RAISES { E } =
@@ -379,6 +443,11 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     prims.addPrim("debug-addstream", NEW(SchemeProcedure.T,
                                       apply := DebugAddstreamApply), 
                   1, 1);
+
+    prims.addPrim("debug-setlevel", NEW(SchemeProcedure.T,
+                                      apply := DebugSetLevelApply), 
+                  1, 1);
+
     prims.addPrim("debug-remstream", NEW(SchemeProcedure.T,
                                       apply := DebugRemstreamApply), 
                   1, 1);
@@ -409,6 +478,14 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     prims.addPrim("getunixpid", NEW(SchemeProcedure.T, 
                                     apply := GetUnixPIDApply), 
                   0, 0);
+
+    prims.addPrim("global-exists?", NEW(SchemeProcedure.T, 
+                                        apply := HaveGlobalNameApply), 
+                  1, 1);
+
+    prims.addPrim("define-global-symbol", NEW(SchemeProcedure.T, 
+                                              apply := DefineNewGlobal), 
+                  2, 2);
 
     prims.addPrim("netobj-export-global-environment",
                   NEW(SchemeProcedure.T, 
