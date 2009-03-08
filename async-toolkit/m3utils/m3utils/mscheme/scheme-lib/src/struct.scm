@@ -64,76 +64,77 @@
   (let ((new-type '()))   ;; could just use letrec here instead...
     (set! new-type
           (lambda x 
-           (case (car x) 
-             ((fields) (map car lst))
+            (case (car x) 
+              ((fields) (map car lst))
+              
+              ((display) lst)
+              
+              ((tag) name)
+              
+              ((new) 
+               (let ((accessor '())  ;; will overwrite, could use letrec here 2
+                     (val
+                      (map (lambda (field-def)
+                             (let ((initializer (cadr field-def)))
+                               (if (procedure? initializer)
+                                   (initializer)
+                                   initializer)))
+                           lst)))
 
-             ((display) lst)
+                 (set! accessor
+                       (lambda y
+                         (case (car y)
+                           ((display) (map cons (map car lst) val))
+                           
+                           ((get)
+                            (let ((fname (cadr y)))
+                              (let loop ((vp val)
+                                         (np lst))
+                                (cond ((null? np)    
+                                       (error "Unknown field " fname))
+                                      ((eq? fname (caar np)) 
+                                       (car vp))
+                                      (else 
+                                       (loop (cdr vp) (cdr np)))))))
 
-             ((tag) name)
+                           ((type) new-type)
+                           
+                           ((inc!) (accessor 'set! 
+                                             (cadr y) 
+                                             ((cond ((null? (cddr y))
+                                                     (lambda (x) (+ x 1)))
+                                                    ((procedure? (caddr y))
+                                                     (caddr y))
+                                                    (else 
+                                                     (lambda (x) (+ x (caddr y)))))
 
-             ((new) 
-              (let ((accessor '())  ;; will overwrite, could use letrec here 2
-                    (val
-                     (map (lambda (field-def)
-                            (let ((initializer (cadr field-def)))
-                              (if (procedure? initializer)
-                                  (initializer)
-                                  initializer)))
-                          lst)))
+                                              (accessor 'get (cadr y))
+                                              )))
+                           
+                           ((set!)
+                            (let ((fname (cadr y)))
+                              (let loop ((vp val)
+                                         (np lst))
+                                (cond ((null? np)    
+                                       (error "Unknown field " fname))
+                                      ((eq? fname (caar np)) 
+                                       (set-car! vp (caddr y)))
+                                      (else 
+                                       (loop (cdr vp) (cdr np)))))))
 
-                (set! accessor
-                      (lambda y
-                        (case (car y)
-                          ((display) val)
-                          
-                          ((get)
-                           (let ((fname (cadr y)))
-                             (let loop ((vp val)
-                                        (np lst))
-                               (cond ((null? np)    
-                                      (error "Unknown field " fname))
-                                     ((eq? fname (caar np)) 
-                                      (car vp))
-                                     (else 
-                                      (loop (cdr vp) (cdr np)))))))
+                           (else (error "Unknown command " (car y)))
 
-                          ((type) new-type)
-                          
-                          ((inc!) (accessor 'set! 
-                                            (cadr y) 
-																						((cond ((null? (cddr y))
-																										(lambda (x) (+ x 1)))
-																									 ((procedure? (caddr y))
-																										(caddr y))
-																									 (else 
-																										(lambda (x) (+ x (caddr y)))))
+                           )
+                         )
+                       )
+                 accessor))
 
-																						 (accessor 'get (cadr y))
-																						)))
-                          
-                          ((set!)
-                           (let ((fname (cadr y)))
-                             (let loop ((vp val)
-                                        (np lst))
-                               (cond ((null? np)    
-																			(error "Unknown field " fname))
-                                     ((eq? fname (caar np)) 
-                                      (set-car! vp (caddr y)))
-                                     (else 
-                                      (loop (cdr vp) (cdr np)))))))
+              (else (error "Unknown command " (car x) " on type " name))
 
-                          (else (error "Unknown command " (car x)))
-
-                          )
-                        )
-                      )
-                accessor))
-
-             (else (error "Unknown command " (car x) " on type " name))
-
-             )))
+              )))
     
-    (set! struct-type-list (cons (cons name new-type) struct-type-list)) ))
+    (set! struct-type-list (cons (cons name new-type) struct-type-list))
+    new-type))
 
 (define (get-struct-type n) (cdr (assoc n struct-type-list)))
 
