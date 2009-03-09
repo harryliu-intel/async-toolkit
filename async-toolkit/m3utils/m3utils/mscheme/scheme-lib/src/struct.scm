@@ -136,5 +136,5 @@
     (set! struct-type-list (cons (cons name new-type) struct-type-list))
     new-type))
 
-(define (get-struct-type n) (cdr (assoc n struct-type-list)))
+(define (get-struct-type n) (cdr (assq n struct-type-list)))
 
