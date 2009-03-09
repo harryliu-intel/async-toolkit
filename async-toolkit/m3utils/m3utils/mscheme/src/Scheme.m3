@@ -328,6 +328,22 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
         BEGIN
           IF    fn = SYMquote THEN
             RETURN First(args)
+          ELSIF fn = SYMunwindProtect THEN
+            WITH protected = First(args),
+                 cleanup   = Second(args),
+                 error     = Third(args) DO
+              x := NIL;
+              TRY
+                TRY
+                  x := t.eval(protected,env)
+                FINALLY
+                  EVAL t.eval(cleanup,env)
+                END
+              EXCEPT
+                E =>
+                EVAL t.eval(error,env)
+              END
+            END
           ELSIF fn = SYMbegin THEN
             WHILE Rest(args) # NIL DO
               EVAL t.eval(First(args),env);
@@ -596,7 +612,7 @@ VAR
   SYMelse := SchemeSymbol.Symbol("else");
   SYMarrow := SchemeSymbol.Symbol("=>");
   SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
-
+  SYMunwindProtect := SchemeSymbol.Symbol("unwind-protect");
 BEGIN 
 END Scheme.
 
