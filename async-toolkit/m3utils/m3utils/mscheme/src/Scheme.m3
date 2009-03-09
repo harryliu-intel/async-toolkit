@@ -529,7 +529,7 @@ PROCEDURE ReduceCond(t : T;
 
   CONST First  = SchemeUtils.First;
         Second = SchemeUtils.Second;
-        Third  = SchemeUtils.Second;
+        Third  = SchemeUtils.Third;
         Rest   = SchemeUtils.Rest;
         Cons   = SchemeUtils.Cons;
         List2  = SchemeUtils.List2;
@@ -538,11 +538,20 @@ PROCEDURE ReduceCond(t : T;
   VAR result : Object := NIL;
 
   BEGIN
+    IF Debug.GetLevel() >= 20 THEN
+      Debug.Out("Scheme.ReduceCond: clauses=" & Stringify(clauses))
+    END;
     LOOP
       IF clauses = NIL THEN RETURN SchemeBoolean.False() END;
       
       WITH clause = First(clauses) DO
         clauses := Rest(clauses);
+        IF Debug.GetLevel() >= 20 THEN
+          Debug.Out("Scheme.ReduceCond: one clause=" & Stringify(clause) &
+                    " First=" & Stringify(First(clause)) & 
+                    " Second=" & Stringify(Second(clause)) & 
+                    " Third=" & Stringify(Third(clause)) )
+        END;
         VAR
           success := FALSE;
         BEGIN
