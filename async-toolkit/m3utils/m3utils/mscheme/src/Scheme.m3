@@ -362,6 +362,12 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
             END
           ELSIF fn = SYMsetB THEN
             RETURN env.set(First(args), t.eval(Second(args), env))
+          ELSIF fn = SYMeval THEN
+            (* eval doesnt really need to be a special form, but it does
+               have to have access to the current environment, so it cant
+               be a Primitive either (with the current design of the interpreter) 
+             *)
+            RETURN t.eval(t.eval(First(args),env),env)
           ELSIF fn = SYMif THEN
             IF TruthO(t.eval(First(args), env)) THEN
               x := Second(args) 
@@ -616,6 +622,7 @@ VAR
   SYMsetB := SchemeSymbol.Symbol("set!");
   SYMif := SchemeSymbol.Symbol("if");
   SYMcond := SchemeSymbol.Symbol("cond");
+  SYMeval := SchemeSymbol.Symbol("eval");
   SYMlambda := SchemeSymbol.Symbol("lambda");
   SYMmacro := SchemeSymbol.Symbol("macro");
   SYMelse := SchemeSymbol.Symbol("else");
