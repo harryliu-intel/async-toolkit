@@ -48,19 +48,19 @@
                       (loop (cdr bucket)
                             (cons (car bucket) so-far)))))))
 
-					((keys)
-					 (let jloop ((index 0)
-											 (so-far '()))
+          ((keys)
+           (let jloop ((index 0)
+                       (so-far '()))
 
-						 (if (= index size) 
-								 so-far
-								 (let iloop ((bucket (vector-ref table index))
-														 (s2 so-far))
-									 (if (null? bucket) 
-											 (jloop (+ index 1) s2)
-											 (iloop (cdr bucket) (cons (caar bucket) s2)))))))
-						 
-					
+             (if (= index size) 
+                 so-far
+                 (let iloop ((bucket (vector-ref table index))
+                             (s2 so-far))
+                   (if (null? bucket) 
+                       (jloop (+ index 1) s2)
+                       (iloop (cdr bucket) (cons (caar bucket) s2)))))))
+          
+          
           ((display)
            (do ((index 0 (+ index 1)))
                ((= index size))
@@ -79,7 +79,8 @@
              (vector-set! table index '()))))))))
 
 (define (make-string-hash-table size)
-	(define (string-hash s) 
-		(modulo (accumulate + 0 (map char->integer (string->list s))) size))
+  (define (string-hash s) 
+    (modulo (accumulate + 0 (map char->integer (string->list s))) size))
 
-	(make-hash-table size string-hash))
+  (make-hash-table size string-hash))
+
