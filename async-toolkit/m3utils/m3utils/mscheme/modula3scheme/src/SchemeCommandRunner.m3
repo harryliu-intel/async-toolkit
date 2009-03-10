@@ -10,9 +10,21 @@ IMPORT TextRd;
 IMPORT Time;
 IMPORT Thread;
 IMPORT SchemeString;
+IMPORT Rd, RdWrPipe, SchemeInputPort;
 
 EXCEPTION Timeout(TEXT);
 
+(* we should change this...
+
+   there are a lot of orthogonal ways of calling unix programs.
+
+   do we want an input port?  or a string?  or parse it?
+
+   do we want a timeout?
+
+   do we want error handling?
+*)
+   
 PROCEDURE RunCommandApply(proc : Procedure; 
                           interp : Scheme.T; 
                           args : Object) : Object RAISES { E } =
@@ -100,7 +112,11 @@ PROCEDURE RunHooksCommandApply(proc : Procedure;
     p := Rest(p);
 
     TRY
-      RETURN RealRunTimeoutCommandApply(proc,interp,p)
+      IF proc.outputParser = NIL THEN
+        RETURN RunRawHooksCommandApply(proc,interp,p)
+      ELSE
+        RETURN RealRunTimeoutCommandApply(proc,interp,p)
+      END
     EXCEPT
       E(err) => 
       WITH toRun = SchemeUtils.List2(errorContinuation,
@@ -204,6 +220,76 @@ PROCEDURE RealRunTimeoutCommandApply(proc : Procedure;
     END
   END RealRunTimeoutCommandApply;
 
+PROCEDURE RunRawHooksCommandApply(<*UNUSED*>proc : Procedure; 
+                                  <*UNUSED*>interp : Scheme.T; 
+                                  args : Object) : Object RAISES { E, 
+                                                                  Timeout } =
+  <*FATAL Wr.Failure, Thread.Alerted*>
+  VAR p := SchemeUtils.Rest(args);
+      timeo := SchemeLongReal.FromO(SchemeUtils.First(args));
+      wr := TextWr.New();
+  BEGIN
+    WHILE ISTYPE(p, SchemePair.T) AND p # NIL DO
+      WITH word = SchemeUtils.StringifyQ(SchemeUtils.First(p),
+                                         quoted := FALSE) DO
+        Wr.PutText(wr, word);
+        p := SchemeUtils.Rest(p);
+        IF p # NIL THEN Wr.PutChar(wr, ' ') END
+      END
+    END;
+
+    WITH owr = NEW(TextWr.T).init(),
+         writer = ProcUtils.WriteHere(owr),
+         owr2 = NEW(TextWr.T).init(),
+         writer2 = ProcUtils.WriteHere(owr2),
+         cmdtext = TextWr.ToText(wr),
+         completion = ProcUtils.RunText(cmdtext,
+                                        stdout := writer,
+                                        stderr := writer2) DO
+
+      TRY
+        IF timeo = LAST(Time.T) THEN
+          completion.wait()
+        ELSE
+          WITH c = NEW(Thread.Condition),
+               mu = NEW(MUTEX),
+               done = NEW(REF Done),
+               waitCl = NEW(WaitClosure, 
+                            c := c, mu := mu, done := done,
+                            completion := completion),
+               timeoCl = NEW(TimeOClosure, 
+                             c := c, mu := mu, done := done,
+                             timeo := timeo) DO
+            done^ := Done.NotDone;
+            
+            EVAL Thread.Fork(waitCl); EVAL Thread.Fork(timeoCl);
+
+            LOCK mu DO
+              LOOP
+                Thread.Wait(mu,c);
+                CASE done^ OF
+                  Done.NotDone => (* skip *)
+                |
+                  Done.TimedOut => RAISE Timeout("Timeout running \""& cmdtext & "\"" )
+                |
+                  Done.Completed => EXIT
+                |
+                  Done.RaisedException => RAISE ProcUtils.ErrorExit(waitCl.err)
+                END
+              END
+            END
+          END
+        END
+      EXCEPT
+        ProcUtils.ErrorExit(err) => RAISE E("ProcUtils.ErrorExit ("&
+          ProcUtils.FormatError(err) &") from running \"" & 
+          cmdtext & "\"; stderr: " & TextWr.ToText(owr2))
+      END;
+
+      RETURN SchemeString.FromText(TextWr.ToText(owr))
+    END
+  END RunRawHooksCommandApply;
+
 TYPE 
   Procedure = SchemeProcedure.T OBJECT
     outputParser : OutputParser;
@@ -234,6 +320,13 @@ PROCEDURE Extend(op : OutputParser;
     definer.addPrim("run-command-with-hooks",
                     NEW(Procedure,
                         outputParser := op,
+                        apply := RunHooksCommandApply),
+                    4, LAST(CARDINAL));
+
+    (* there is some sort of fatal bug with this... *)
+    definer.addPrim("run-raw-command-with-hooks",
+                    NEW(Procedure,
+                        outputParser := NIL,
                         apply := RunHooksCommandApply),
                     4, LAST(CARDINAL));
 
