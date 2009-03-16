@@ -122,4 +122,7 @@ TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;
 
 CONST Brand = "Scheme";
 
+PROCEDURE SymbolCheck(x : Object) : SchemeSymbol.T RAISES { E }; 
+  (* this has to be here because of the declaration of E *)
+
 END Scheme.

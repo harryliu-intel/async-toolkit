@@ -3,7 +3,7 @@
 MODULE SchemeM3;
 
 IMPORT Scheme;
-FROM Scheme IMPORT E, Object;
+FROM Scheme IMPORT E, Object, SymbolCheck;
 
 IMPORT SchemeProcedure, SchemePrimitive;
 IMPORT SchemeJailBreak, SchemeM3TableOps;
@@ -48,14 +48,6 @@ PROCEDURE Init(t : T;
 
 (**********************************************************************)
 
-PROCEDURE CheckSymbol(x : Object) : SchemeSymbol.T RAISES { E } =
-  BEGIN
-    IF x # NIL AND ISTYPE(x,SchemeSymbol.T) THEN RETURN x 
-    ELSE  RAISE E("expected a symbol, got: " & 
-                  SchemeUtils.StringifyT(x))
-    END
-  END CheckSymbol;
-
 PROCEDURE HaveGlobalNameApply(<*UNUSED*>p : SchemeProcedure.T; 
                               interp : Scheme.T; 
                               args : Object) : Object 
@@ -63,7 +55,7 @@ PROCEDURE HaveGlobalNameApply(<*UNUSED*>p : SchemeProcedure.T;
   VAR
     e : SchemeEnvironment.Public;
   BEGIN
-    WITH sym = CheckSymbol(First(args)),
+    WITH sym = SymbolCheck(First(args)),
          ee = interp.getGlobalEnvironment() DO
       IF ISTYPE(ee, SchemeEnvironment.Public) THEN
         e := ee
@@ -87,7 +79,7 @@ PROCEDURE DefineNewGlobal(<*UNUSED*>p : SchemeProcedure.T;
   VAR
     e : SchemeEnvironment.Public;
   BEGIN
-    WITH sym = CheckSymbol(First(args)),
+    WITH sym = SymbolCheck(First(args)),
          ee = interp.getGlobalEnvironment() DO
       IF ISTYPE(ee, SchemeEnvironment.Public) THEN
         e := ee
@@ -309,13 +301,29 @@ PROCEDURE DebugRemstreamApply(<*UNUSED*>p : SchemeProcedure.T;
 PROCEDURE FileWrOpenApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
                                  args : Object) : Object RAISES { E } =
+  VAR
+    fn : Pathname.T;
+    append := FALSE;
   BEGIN
-    WITH x = SchemeString.ToText(First(args)) DO
-      TRY
-        RETURN FileWr.Open(x)
-      EXCEPT
-        OSError.E(err) => RETURN Error("FileWrOpenApply : " & AL.Format(err))
+    IF ISTYPE(First(args),SchemeSymbol.T) THEN
+      WITH sym = First(args) DO
+        IF sym = SchemeSymbol.FromText("append") THEN
+          append := TRUE
+        END
+      END;
+      fn := SchemeString.ToText(Second(args))
+    ELSE
+      fn := SchemeString.ToText(First(args))
+    END;
+
+    TRY
+      IF append THEN
+        RETURN FileWr.OpenAppend(fn)
+      ELSE
+        RETURN FileWr.Open(fn)
       END
+    EXCEPT
+      OSError.E(err) => RETURN Error("FileWrOpenApply : " & AL.Format(err))
     END
   END FileWrOpenApply;
 
@@ -466,7 +474,7 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
 
     prims.addPrim("filewr-open", NEW(SchemeProcedure.T,
                                       apply := FileWrOpenApply), 
-                  1, 1);
+                  1, 2);
     prims.addPrim("wr-close", NEW(SchemeProcedure.T,
                                       apply := WrCloseApply), 
                   1, 1);

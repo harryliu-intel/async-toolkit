@@ -5,7 +5,6 @@
 
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
-
 MODULE SchemeSymbol;
 FROM Scheme IMPORT Object;
 

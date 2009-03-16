@@ -18,6 +18,8 @@ import ("cit_util")
 import ("scheme-lib")
 
 Module("Scheme")
+Module("SchemeProfiler")
+
 Interface("SchemeClass")
 
 Module("SchemePair")

@@ -15,6 +15,8 @@ TYPE T = Atom.T;
 PROCEDURE SymEq(a : SchemeObject.T; b : TEXT) : BOOLEAN;
   (* check if a symbol (is a symbol and) is equal to a TEXT *)
 
+(* check is in Scheme because of the import order *)
+
 CONST Symbol = Atom.FromText;
 
 CONST FromText = Symbol;

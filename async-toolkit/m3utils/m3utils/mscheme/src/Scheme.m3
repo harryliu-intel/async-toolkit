@@ -20,10 +20,13 @@ IMPORT SchemePair;
 <*NOWARN*>IMPORT Debug;
 
 IMPORT SchemeDefsBundle, Bundle;
+IMPORT SchemeProfiler;
 
 TYPE Pair = SchemePair.T;
 
 <* FATAL Thread.Alerted *>
+
+CONST ProfileProcedures = TRUE;
 
 REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
@@ -388,6 +391,11 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
             (* procedure call *)
             fn := t.eval(fn, env);
             
+
+            IF ProfileProcedures AND ISTYPE (fn,Procedure) THEN
+              SchemeProfiler.EnterProcedure(fn)
+            END;
+
             TYPECASE fn OF
               NULL => RAISE E("Not a procedure: " & Stringify(fn))
             |
@@ -467,6 +475,7 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
                  as much as a 25% performance improvement on machines
                  with slow GC.
               *)
+
               TYPECASE args OF
                 NULL =>
               |
@@ -614,7 +623,15 @@ PROCEDURE ReturnCons(t : T; cons : Pair) =
       t.freePairs := cons
     END
   END ReturnCons;
-    
+
+PROCEDURE SymbolCheck(x : Object) : SchemeSymbol.T RAISES { E } =
+  BEGIN
+    IF x # NIL AND ISTYPE(x,SchemeSymbol.T) THEN RETURN x 
+    ELSE  RAISE E("expected a symbol, got: " & 
+                  SchemeUtils.StringifyT(x))
+    END
+  END SymbolCheck;
+
 VAR
   SYMquote := SchemeSymbol.Symbol("quote");
   SYMbegin := SchemeSymbol.Symbol("begin");
