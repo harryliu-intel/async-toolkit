@@ -3,24 +3,25 @@
 MODULE SchemeProfiler;
 IMPORT SchemeProcedure;
 IMPORT Uresource;
-FROM Uresource IMPORT RUSAGE_SELF, struct_rusage_star;
+FROM Uresource IMPORT RUSAGE_SELF, struct_rusage;
 FROM Utime IMPORT struct_timeval;
-IMPORT Uerror, Fmt, Debug;
+IMPORT Fmt, Debug;
 IMPORT LongrealPQ, TextRefTbl;
 IMPORT Time;
 IMPORT TextIntTbl;
+IMPORT SchemeProfilerSysDep;
 
 PROCEDURE EnterProcedure(p : SchemeProcedure.T) =
   BEGIN
     LOCK mu DO
       IF enabled = TRUE THEN
         VAR
-          rusage_retval := Uresource.getrusage(RUSAGE_SELF, rusage);
+          rusage_retval := SchemeProfilerSysDep.getrusage(RUSAGE_SELF, rusage);
           (* RUSAGE_CHILDREN too? *)
         BEGIN
           IF rusage_retval < 0 THEN
             Debug.Warning("SchemeProfiler.EnterProcedure: getrusage failed, disabling profiling, errno=" & 
-              Fmt.Int(Uerror.errno));
+              Fmt.Int(SchemeProfilerSysDep.GetErrno()));
             enabled := FALSE
           ELSE
             (* do calcs *)
@@ -44,7 +45,7 @@ PROCEDURE EnterProcedure(p : SchemeProcedure.T) =
                   PutStats(rec)
                 END
               END;
-              orusage^ := rusage^;
+              orusage := rusage;
               otime := time;
               ooname := oname;
               oname := name;
@@ -76,12 +77,12 @@ PROCEDURE FromTimeval(READONLY tv : struct_timeval) : Time.T =
     RETURN FLOAT(tv.tv_sec,Time.T) + 1.0d-6 * FLOAT(tv.tv_usec,Time.T)
   END FromTimeval;
 
-PROCEDURE Cpu(ru : struct_rusage_star) : Time.T =
+PROCEDURE Cpu(READONLY ru : struct_rusage) : Time.T =
   BEGIN RETURN FromTimeval(ru.ru_utime) + FromTimeval(ru.ru_stime) END Cpu;
 
 VAR mu := NEW(MUTEX);
     enabled := FALSE;
-    rusage, orusage := NEW(struct_rusage_star);
+    rusage, orusage : struct_rusage;
     tab := NEW(TextRefTbl.Default).init();
     first := TRUE;
     otime : Time.T;

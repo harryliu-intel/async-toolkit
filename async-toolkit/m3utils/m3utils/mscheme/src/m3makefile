@@ -69,6 +69,14 @@ Module("SchemeAtRun")
 
 Netobj("SchemeEnvironment", "Public")
 
+interface("SchemeProfilerSysDep")
+
+if defined("CM3_VERSION") 
+  implementation("SchemeProfilerSysDepCM3")
+else
+  implementation("SchemeProfilerSysDepPM3")
+end
+
 library ("mscheme")
 
 
