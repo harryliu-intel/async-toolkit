@@ -21,6 +21,11 @@ FROM Ctypes IMPORT char_star, int, long, long_star;
 
 
 TYPE
+  struct_timeval = RECORD
+    tv_sec: long;          (* seconds *)
+    tv_usec: long;         (* and microseconds *) END;
+
+TYPE
   struct_tm = RECORD
     tm_sec:   int;     (* seconds (0 - 59) *)
     tm_min:   int;     (* minutes (0 - 59) *)
