@@ -50,9 +50,9 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
           E(e) => (* skip *)
           Debug.Out("SchemeAtRun.ClApply: caught Scheme.E running resultLambda: " & e)
         END
-      END
-    END;
-    RETURN NIL
+      END;
+      RETURN res
+    END
   END ClApply;
 
 PROCEDURE AtRunApply(<*UNUSED*>proc : SchemeProcedure.T; 
@@ -64,17 +64,36 @@ PROCEDURE AtRunApply(<*UNUSED*>proc : SchemeProcedure.T;
          resultLambda = SchemeUtils.Third(args),
          env = interp.getGlobalEnvironment() DO
       IF NOT ISTYPE(env, Environment) THEN
-        RAISE E ("SchemeAtRun.AtRunApply: environment type mismatch")
+        RAISE E ("SchemeAtRun.AtRunApply: environment type mismatch: " &
+              SchemeUtils.Stringify(env))
       END;
 
-      EVAL Thread.Fork(NEW(Closure,
-                           time := time,
-                           command := command,
-                           resultLambda := resultLambda,
-                           interp := interp));
-      RETURN resultLambda (* is this right? *)
+      RETURN NEW(Handle, 
+                 t := Thread.Fork(NEW(Closure,
+                                      time := time,
+                                      command := command,
+                                      resultLambda := resultLambda,
+                                      interp := interp)))
     END
   END AtRunApply;
+
+TYPE Handle = OBJECT t : Thread.T; joined := FALSE; res : REFANY END;
+
+PROCEDURE AtJoinApply(<*UNUSED*>proc : SchemeProcedure.T; 
+                      <*UNUSED*>interp : Scheme.T; 
+                      args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = SchemeUtils.First(args) DO
+      IF x = NIL OR NOT ISTYPE(x,Handle) THEN
+        RAISE E("SchemeAtRun.AtWaitApply: not a Handle: " &
+              SchemeUtils.Stringify(x))
+      END;
+      WITH h = NARROW(x, Handle) DO
+        IF NOT h.joined THEN h.joined := TRUE; h.res := Thread.Join(h.t) END;
+        RETURN h.res
+      END
+    END
+  END AtJoinApply;
 
 (**********************************************************************)
 
@@ -155,7 +174,13 @@ PROCEDURE Extend(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefi
                     NEW(SchemeProcedure.T,
                         apply := AtRunApply),
                     2, 3);
-    (* (at-run <time> <cmd> <result-lambda>) *)
+    (* (at-run <time> <cmd> <result-lambda>) returns a joinable *)
+
+    definer.addPrim("at-join",
+                    NEW(SchemeProcedure.T,
+                        apply := AtJoinApply),
+                    1, 1);
+    (* (at-join <joinable>) *)
     
 
     definer.addPrim("clock-run",
@@ -166,6 +191,5 @@ PROCEDURE Extend(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefi
 
     RETURN definer
   END Extend;
-
 
 BEGIN END SchemeAtRun.

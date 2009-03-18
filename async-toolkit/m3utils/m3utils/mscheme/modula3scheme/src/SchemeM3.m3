@@ -22,6 +22,7 @@ IMPORT IP, Process;
 IMPORT SchemeEnvironment;
 IMPORT TZ, SchemeUtils;
 IMPORT NetObj;
+IMPORT FS;
 
 <* FATAL Thread.Alerted *>
 
@@ -327,6 +328,20 @@ PROCEDURE FileWrOpenApply(<*UNUSED*>p : SchemeProcedure.T;
     END
   END FileWrOpenApply;
 
+PROCEDURE FileRmApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH fn = SchemeString.ToText(First(args)) DO
+      TRY
+        FS.DeleteFile(fn)
+      EXCEPT
+        OSError.E(err) => RETURN Error("FileRmApply : " & AL.Format(err))
+      END
+    END;
+    RETURN SchemeBoolean.True()
+  END FileRmApply;
+
 PROCEDURE DebugSetEnvApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
                                  args : Object) : Object RAISES { E } =
@@ -475,6 +490,11 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     prims.addPrim("filewr-open", NEW(SchemeProcedure.T,
                                       apply := FileWrOpenApply), 
                   1, 2);
+
+    prims.addPrim("remove-file", NEW(SchemeProcedure.T,
+                                     apply := FileRmApply),
+                  1, 1);
+
     prims.addPrim("wr-close", NEW(SchemeProcedure.T,
                                       apply := WrCloseApply), 
                   1, 1);
