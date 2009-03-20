@@ -16,6 +16,7 @@ IMPORT AL;
 IMPORT Thread;
 IMPORT SchemeBoolean;
 IMPORT SchemeProcedure,SchemeProcedureClass;
+IMPORT Debug;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -75,12 +76,20 @@ PROCEDURE Error(message : TEXT) : Object RAISES { E } =
     RAISE E(message)
   END Error;
 
-PROCEDURE Warn(message : TEXT) : Object =
+PROCEDURE Warn(message : TEXT) : Object RAISES { E } =
   BEGIN
-    TRY Wr.PutText(Stdio.stderr, "**** WARNING: " & message & "\n") 
-    EXCEPT ELSE END;
-    RETURN "<warn>"
+    IF warningsAreErrors THEN
+      RAISE E("WARNING: " & message)
+    ELSE
+      Debug.Warning("**** " & message & "\n") ;
+      RETURN "<warn>"
+    END
   END Warn;
+
+VAR warningsAreErrors := FALSE;
+
+PROCEDURE SetWarningsAreErrors(to : BOOLEAN) = 
+  BEGIN warningsAreErrors := to END SetWarningsAreErrors;
 
 PROCEDURE First(x : Object) : Object =
   BEGIN

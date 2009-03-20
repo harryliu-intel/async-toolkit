@@ -138,29 +138,22 @@ PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
   BEGIN
     t.setInterrupter(int);
 
-    TRY
-      t.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
+    t.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
 
     LOOP
       Wr.PutText(t.output, ">"); Wr.Flush(t.output);
-      WITH x = t.input.read() DO
-        IF SchemeInputPort.IsEOF(x) THEN RETURN END;
-        TRY
+      TRY
+        WITH x = t.input.read() DO
+          IF SchemeInputPort.IsEOF(x) THEN RETURN END;
           WITH res = t.evalInGlobalEnv(x) DO
             EVAL SchemeUtils.Write(res, t.output, TRUE);
             EVAL t.globalEnvironment.set(SchemeSymbol.Symbol("bang-bang"),res)
           END
-        EXCEPT
-          E(e) => Wr.PutText(t.output, "EXCEPTION! " & e & "\n")
-        END;
-        Wr.PutText(t.output, "\n"); Wr.Flush(t.output)
-      END
-    END
-    EXCEPT
-      E(e) =>
-      (* only way we can get here is if we have a failure in t.input.read() *)
-      TRY Wr.PutText(t.output, "READ FAILURE : "&e&" .\n") EXCEPT ELSE END;
-      RETURN
+        END
+      EXCEPT
+        E(e) => Wr.PutText(t.output, "EXCEPTION! " & e & "\n")
+      END;
+      Wr.PutText(t.output, "\n"); Wr.Flush(t.output)
     END
   END ReadEvalWriteLoop;
 

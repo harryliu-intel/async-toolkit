@@ -19,7 +19,7 @@ IMPORT Text;
 IMPORT TextList;
 IMPORT TextRd;
 IMPORT Thread;
-IMPORT Wr, TextWr;
+IMPORT Wr;
 IMPORT OSError;
 IMPORT Atom;
 IMPORT AL;
@@ -47,19 +47,6 @@ TYPE
 
   SSClosure = Thread.Closure OBJECT ss: SS; OVERRIDES apply:=SSApply; END;
 
-PROCEDURE DebugFormat(cmd : TEXT; READONLY params : ARRAY OF TEXT) : TEXT =
-  <* FATAL Wr.Failure *>
-  VAR
-    wr := NEW(TextWr.T).init();
-  BEGIN
-    Wr.PutText(wr, cmd);
-    FOR i := 0 TO LAST(params) DO
-      Wr.PutChar(wr, ' ');
-      Wr.PutText(wr, params[i])
-    END;
-    RETURN TextWr.ToText(wr)
-  END DebugFormat;
-
 PROCEDURE SSApply(self: SSClosure): REFANY =
   BEGIN
     TRY
@@ -69,7 +56,9 @@ PROCEDURE SSApply(self: SSClosure): REFANY =
                                          Rd.CharsReady(self.ss.rd)));
       END;
     EXCEPT 
-      Rd.EndOfFile => RETURN NIL;
+      Rd.EndOfFile => 
+      TRY Rd.Close(self.ss.rd) EXCEPT ELSE END;
+      RETURN NIL
     |
       Rd.Failure, Wr.Failure => 
          Process.Crash("I/O Error in ProcUtils.SSApply.")
@@ -133,9 +122,8 @@ PROCEDURE Apply(self: MainClosure): REFANY =
     rMode: CHAR;
     l: TextList.T;
 
-  PROCEDURE PutArg() =
+  PROCEDURE PutArg() RAISES { OSError.E } =
     BEGIN
-      TRY
         CASE rMode OF
         | '>' => stdout := FS.OpenFile(p);
         | '&' => stdout := FS.OpenFile(p); stderr := stdout;
@@ -143,10 +131,6 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         ELSE
           l := TextList.Cons(p, l);
         END
-      EXCEPT
-        OSError.E(e) => Process.Crash("ProcUtils.Run.PutArg: problems opening file \"" & p & "\"!" & "\n" & FormatOSError(e))
-      END
-
     END PutArg;
 
   PROCEDURE Exec() RAISES { Rd.Failure, OSError.E, ErrorExit } =
@@ -184,8 +168,23 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           TRY
             VAR
               code := Process.Wait(Process.Create(l.head, params^,
-                                                  NIL, wd,stdin, stdout,stderr));
+                                                  NIL, wd,
+                                                  stdin, stdout,stderr));
             BEGIN
+
+              (* we need to attempt closing all three of stdin, stdout,
+                 and stderr.  Only the LAST exception, if any, will be
+                 reported. *)
+              TRY
+                IF stdin # NIL THEN stdin.close() END
+              FINALLY
+                TRY
+                  IF stdout # NIL THEN stdout.close() END
+                FINALLY
+                  IF stderr # NIL THEN stderr.close() END
+                END
+              END;
+
               IF code # 0 THEN
                 RAISE ErrorExit(NEW(ExitCode, code := code))
 (*
@@ -263,13 +262,28 @@ PROCEDURE Apply(self: MainClosure): REFANY =
       FINALLY
       (* close i/o *)
         IF cm.po#NIL AND cm.po.close THEN 
-          TRY cm.po.f.close() EXCEPT ELSE END 
+          TRY cm.po.f.close() EXCEPT ELSE END; 
+          (*
+          IF cm.po.aux # NIL THEN
+            TRY cm.po.aux.close() EXCEPT ELSE END 
+          END
+          *)
         END;
         IF cm.pe#NIL AND cm.pe.close AND cm.po#cm.pe THEN 
-          TRY cm.pe.f.close() EXCEPT ELSE END
+          TRY cm.pe.f.close() EXCEPT ELSE END;
+          (*
+          IF cm.pe.aux # NIL THEN
+            TRY cm.pe.aux.close() EXCEPT ELSE END 
+          END
+          *)
         END;
         IF cm.pi#NIL AND cm.pi.close THEN 
-          TRY cm.pi.f.close() EXCEPT ELSE END
+          TRY cm.pi.f.close() EXCEPT ELSE END;
+          (*
+          IF cm.pi.aux # NIL THEN
+            TRY cm.pi.aux.close() EXCEPT ELSE END 
+          END
+          *)
         END
       END;
       RETURN NIL;
@@ -297,7 +311,7 @@ PROCEDURE Wait(c: PrivateCompletion) RAISES { ErrorExit } =
 PROCEDURE ToText(source: T;
                  stderr:  Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure, ErrorExit } =
+                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure, ErrorExit, OSError.E } =
   VAR
     rd: Rd.T;
     comp := RdToRd(TextRd.New(source), stderr, stdin, wd0, rd);
@@ -312,7 +326,7 @@ PROCEDURE RdToRd(source: Rd.T;
                  stderr: Writer := NIL;
                  stdin: Reader := NIL;
                  wd0: Pathname.T := NIL;
-                 VAR rd: Rd.T): Completion =
+                 VAR rd: Rd.T): Completion RAISES { OSError.E } =
   VAR
     myWriter := GimmeRd(rd);
   BEGIN
@@ -324,13 +338,15 @@ PROCEDURE RdToRd(source: Rd.T;
 (* I/O control *)
 
 REVEAL
-  Reader = BRANDED "ProcUtilRd" OBJECT f: File.T; close: BOOLEAN; ss: SS; END;
-  Writer = BRANDED "ProcUtilWr" OBJECT f: File.T; close: BOOLEAN; ss: SS; END;
+  Reader = BRANDED "ProcUtilRd" OBJECT 
+    f, aux: File.T := NIL; close: BOOLEAN; ss: SS; END;
+  Writer = BRANDED "ProcUtilWr" OBJECT 
+    f, aux: File.T := NIL; close: BOOLEAN; ss: SS; END;
 
 TYPE
   SS = OBJECT rd: Rd.T; wr: Wr.T; END;
 
-PROCEDURE WriteHere(wr: Wr.T): Writer =
+PROCEDURE WriteHere(wr: Wr.T): Writer RAISES { OSError.E } =
   BEGIN
     IF wr = Stdio.stdout THEN RETURN Stdout();
     ELSIF wr = Stdio.stderr THEN RETURN Stderr();
@@ -345,17 +361,13 @@ PROCEDURE WriteHere(wr: Wr.T): Writer =
     END;
   END WriteHere;
 
-PROCEDURE GimmeRd(VAR rd: Rd.T): Writer =
+PROCEDURE GimmeRd(VAR rd: Rd.T): Writer RAISES { OSError.E } =
   VAR
     hr,hw: Pipe.T;
   BEGIN
-    TRY
-      Pipe.Open(hr, hw);
-      rd := NEW(FileRd.T).init(hr)
-    EXCEPT 
-      OSError.E(e) => Process.Crash("ProcUtils.GimmeRd: trouble opening pipe!"& "\n" & FormatOSError(e))
-    END;
-    RETURN NEW(Writer,f:=hw,ss:=NIL,close:=TRUE);
+    Pipe.Open(hr, hw);
+    rd := NEW(FileRd.T).init(hr);
+    RETURN NEW(Writer,f:=hw,ss:=NIL,aux := hr,close:=TRUE);
   END GimmeRd;
 
 PROCEDURE Stdout(): Writer =
@@ -368,7 +380,7 @@ PROCEDURE Stderr(): Writer =
     RETURN NEW(Writer,f:=se,ss:=NIL,close:=FALSE);
   END Stderr; 
 
-PROCEDURE ReadHere(rd: Rd.T): Reader =
+PROCEDURE ReadHere(rd: Rd.T): Reader  RAISES { OSError.E } =
   BEGIN
     IF rd = Stdio.stdin THEN RETURN Stdin();
     ELSE
@@ -382,27 +394,23 @@ PROCEDURE ReadHere(rd: Rd.T): Reader =
     END;
   END ReadHere;
 
-PROCEDURE ReadThis(t: TEXT): Reader =
+PROCEDURE ReadThis(t: TEXT): Reader  RAISES { OSError.E } =
   BEGIN
     RETURN ReadHere(TextRd.New(t));
   END ReadThis;
 
-PROCEDURE GimmeWr(VAR wr: Wr.T): Reader =
+PROCEDURE GimmeWr(VAR wr: Wr.T): Reader RAISES { OSError.E } =
   VAR
     hr,hw: Pipe.T;
   BEGIN
-    TRY
-      Pipe.Open(hr, hw);
-      wr := NEW(FileWr.T).init(hw)
-    EXCEPT
-      OSError.E(e) => Process.Crash("ProcUtils.GimmeWr: trouble opening pipe!"& "\n" & FormatOSError(e))
-    END;
-    RETURN NEW(Reader,f:=hr,ss:=NIL,close:=TRUE);
+    Pipe.Open(hr, hw);
+    wr := NEW(FileWr.T).init(hw);
+    RETURN NEW(Reader,f:=hr,ss:=NIL,aux:=hw,close:=TRUE);
   END GimmeWr;
 
 PROCEDURE Stdin(): Reader =
   BEGIN
-    RETURN NEW(Reader,f:=si,ss:=NIL,close:=FALSE);
+    RETURN NEW(Reader,f:=si,ss:=NIL,close:=FALSE)
   END Stdin; 
 
 PROCEDURE FormatOSError(e : OSError.Code) : TEXT =

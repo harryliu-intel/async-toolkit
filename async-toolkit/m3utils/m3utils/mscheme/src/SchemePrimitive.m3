@@ -19,7 +19,7 @@ FROM SchemeUtils IMPORT Length, First, Second, Third,
                         Rest, PedanticFirst, PedanticRest, Cons, 
                         SetFirst, SetRest, Reverse, Str, List2, ListToString,
                         Vec, InPort, OutPort, List1, ListToVector, ListStar,
-                        VectorToList, Write;
+                        VectorToList, Write, SetWarningsAreErrors;
 
 IMPORT SchemeInputPort, SchemeContinuation, SchemeMacro, SchemeString;
 FROM SchemeBoolean IMPORT Truth, False, True, TruthO;
@@ -127,7 +127,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
         
-        Random, Normal
+        Random, Normal, SetWarningsAreErrors
   };
 
 REVEAL 
@@ -443,6 +443,7 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     EVAL env
     (*///////////// Extensions ////////////////*)
 
+    .defPrim("set-warnings-are-errors!",     ORD(P.SetWarningsAreErrors), dd,      1, 1)
     .defPrim("random",                ORD(P.Random), dd,      0, 0)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2);
 
@@ -1060,6 +1061,10 @@ PROCEDURE Prims(t : T;
           RETURN FromLR(NormalDeviate(rand, mean, sdev))
         END
       |
+        P.SetWarningsAreErrors =>
+        SetWarningsAreErrors(TruthO(x));
+        RETURN x
+      |
         P.New => RETURN False() (* not impl *)
       |
         P.Class => RETURN False() (* not impl *)
@@ -1130,7 +1135,7 @@ PROCEDURE IsExact(x : Object) : BOOLEAN RAISES { E } =
     END
   END IsExact;
 
-PROCEDURE MemberAssoc(obj, list : Object; m, eq : CHAR) : Object =
+PROCEDURE MemberAssoc(obj, list : Object; m, eq : CHAR) : Object RAISES { E } =
   BEGIN
     WHILE list # NIL AND ISTYPE(list, Pair) DO
       VAR target : Object; 

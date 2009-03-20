@@ -61,6 +61,14 @@
 (define struct-type-list '())
 
 (define (make-struct-type name lst)
+  (define (initial-value)
+    (map (lambda (field-def)
+	   (let ((initializer (cadr field-def)))
+	     (if (procedure? initializer)
+		 (initializer)
+		 initializer)))
+	 lst))
+    
   (let ((new-type '()))   ;; could just use letrec here instead...
     (set! new-type
           (lambda x 
@@ -73,18 +81,14 @@
               
               ((new) 
                (let ((accessor '())  ;; will overwrite, could use letrec here 2
-                     (val
-                      (map (lambda (field-def)
-                             (let ((initializer (cadr field-def)))
-                               (if (procedure? initializer)
-                                   (initializer)
-                                   initializer)))
-                           lst)))
+                     (val (initial-value)))
 
                  (set! accessor
                        (lambda y
                          (case (car y)
                            ((display) (map cons (map car lst) val))
+
+			   ((reset!) (set! val (initial-value)))
                            
                            ((get)
                             (let ((fname (cadr y)))

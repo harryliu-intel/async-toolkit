@@ -89,8 +89,8 @@ PROCEDURE TOCApply(toc : TimeOClosure) : REFANY =
   END TOCApply;
 
 PROCEDURE RunHooksCommandApply(proc : Procedure; 
-                                       interp : Scheme.T; 
-                                       args : Object) : Object RAISES { E } =
+                               interp : Scheme.T; 
+                               args : Object) : Object RAISES { E } =
   VAR p := args;
       timeoutContinuation, errorContinuation : Object;
   CONST

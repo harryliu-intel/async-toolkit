@@ -102,36 +102,27 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
 
     scm.setInterrupter(NEW(Interrupter));
 
-    TRY
-      scm.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
+    scm.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
 
-      LOOP
+    LOOP
+      TRY
         WITH x = sip.read() DO
           rl.setPrompt("> ");
           IF SchemeInputPort.IsEOF(x) THEN RETURN END;
-          TRY
-            IF DebugALL THEN Debug.Out("Eval!") END;
-            Csighandler.clear_signal();
-            WITH res = scm.evalInGlobalEnv(x) DO
-              WITH wr = NEW(TextWr.T).init() DO
-                EVAL SchemeUtils.Write(res, wr, TRUE);
-                rl.display(TextWr.ToText(wr) & "\n")
-              END;
-              scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res)
-            END
-          EXCEPT
-            Scheme.E(e) => rl.display("EXCEPTION! " & e & "\n")
+          IF DebugALL THEN Debug.Out("Eval!") END;
+          Csighandler.clear_signal();
+          WITH res = scm.evalInGlobalEnv(x) DO
+            WITH wr = NEW(TextWr.T).init() DO
+              EVAL SchemeUtils.Write(res, wr, TRUE);
+              rl.display(TextWr.ToText(wr) & "\n")
+            END;
+            scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res)
           END
         END
+      EXCEPT
+        Scheme.E(e) => rl.display("EXCEPTION! " & e & "\n")
       END
-    EXCEPT
-      
-      Scheme.E(e) =>
-      (* only way we can get here is if we have a failure in t.input.read() *)
-      TRY rl.display("READ FAILURE : "&e&" .\n") EXCEPT ELSE END;
-      RETURN
     END
   END MainLoop;
-
 
 BEGIN END SchemeReadLine.

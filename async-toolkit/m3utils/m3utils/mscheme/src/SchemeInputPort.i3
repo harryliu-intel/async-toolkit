@@ -16,16 +16,16 @@ TYPE
   Public = OBJECT METHODS
     init(rd : Rd.T) : T;
 
-    readChar() : SchemeObject.T;
-    peekChar() : SchemeObject.T;
+    readChar() : SchemeObject.T RAISES { E };
+    peekChar() : SchemeObject.T RAISES { E };
     pushChar(ch : INTEGER) : INTEGER;
     popChar() : INTEGER;
-    peekCh() : INTEGER;
+    peekCh() : INTEGER RAISES { E } ;
     read() : SchemeObject.T RAISES { E };
 
     close() : SchemeBoolean.T RAISES { E }; (* Norvig has Scheme.Object *)
 
-    getCh() : INTEGER;     (* java style Reader.read *)
+    getCh() : INTEGER RAISES { E } ;     (* java style Reader.read *)
                            (* override this if desired, see ChEOF *)
   END;
 

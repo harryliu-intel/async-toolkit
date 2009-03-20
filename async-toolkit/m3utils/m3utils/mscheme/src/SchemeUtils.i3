@@ -33,7 +33,7 @@ PROCEDURE OutPort(x : Object; interp : Scheme.T) : Wr.T RAISES { E };
 
 PROCEDURE Error(message : TEXT) : Object RAISES { E };
 
-PROCEDURE Warn(message : TEXT) : Object;
+PROCEDURE Warn(message : TEXT) : Object RAISES { E } ;
 
 PROCEDURE First(x : Object) : Object;
 PROCEDURE Rest(x : Object) : Object;
@@ -86,5 +86,7 @@ PROCEDURE DebugFormat(x : Object) : TEXT;
 
      call this sparingly, as it doesn't print Scheme structures properly
   *)
+
+PROCEDURE SetWarningsAreErrors(to : BOOLEAN);
 
 END SchemeUtils.

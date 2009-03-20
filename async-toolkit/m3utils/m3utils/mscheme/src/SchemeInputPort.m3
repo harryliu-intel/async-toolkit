@@ -52,7 +52,7 @@ REVEAL
 PROCEDURE Init(t : T; rd : Rd.T) : T = 
   BEGIN t.rd := rd; RETURN t END Init;
 
-PROCEDURE GetCh(t : T) : INTEGER =
+PROCEDURE GetCh(t : T) : INTEGER RAISES { E } =
   BEGIN
     TRY
       RETURN ORD(Rd.GetChar(t.rd))
@@ -65,7 +65,7 @@ PROCEDURE GetCh(t : T) : INTEGER =
     END
   END GetCh;
 
-PROCEDURE ReadChar(t : T) : Object =
+PROCEDURE ReadChar(t : T) : Object RAISES { E } =
   BEGIN
 (*
     TRY
@@ -91,7 +91,7 @@ PROCEDURE ReadChar(t : T) : Object =
 *)
   END ReadChar;
 
-PROCEDURE PeekChar(t : T) : Object =
+PROCEDURE PeekChar(t : T) : Object RAISES { E } =
   BEGIN
     WITH p = t.peekCh() DO
       IF p = ChEOF THEN RETURN EOF ELSE RETURN IChr(p) END
@@ -111,7 +111,7 @@ PROCEDURE PopChar(t : T) : INTEGER =
     RETURN t.pushedChar
   END PopChar;
 
-PROCEDURE PeekCh(t : T) : INTEGER =
+PROCEDURE PeekCh(t : T) : INTEGER RAISES { E } =
   BEGIN
 (*
     TRY
