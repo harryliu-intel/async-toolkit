@@ -18,6 +18,7 @@ IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
 <*NOWARN*>IMPORT Debug;
+IMPORT Env, TextReader;
 
 IMPORT SchemeDefsBundle, Bundle;
 IMPORT SchemeProfiler;
@@ -103,12 +104,13 @@ PROCEDURE Init2(t : T;
     t.input := NEW(SchemeInputPort.T).init(input);
     t.output := output;
 
-
     IF env = NIL THEN
-      t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty()
+      t.globalEnvironment := NEW(SchemeEnvironment.Unsafe).initEmpty();
     ELSE
-      t.globalEnvironment := env
+      t.globalEnvironment := env;
     END;
+
+    t.bind(SearchPathName, path);
 
     IF t.prims = NIL THEN
       EVAL NEW(SchemePrimitive.DefaultDefiner).installPrimitives(t.globalEnvironment)
@@ -160,16 +162,60 @@ PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
 PROCEDURE LoadRd(t : T; rd : Rd.T) : Object RAISES { E } =
   BEGIN RETURN t.loadPort(NEW(SchemeInputPort.T).init(rd)) END LoadRd;
 
+VAR path := NEW(Pair, first := SchemeString.FromText("."), rest := NIL);
+
+CONST SearchPathName = "**scheme-load-path**";
+
+TYPE FileRec = RECORD fn : Pathname.T; rd : Rd.T END;
+
+PROCEDURE FileOpen(t : T; name : Pathname.T) : FileRec
+  RAISES { E, OSError.E } =
+  (* N.B. routine raises OSError.E(NIL) if path is NIL *)
+  TYPE
+    XType = { E, OS };
+  VAR
+    p := t.evalInGlobalEnv(SchemeSymbol.FromText(SearchPathName));
+    xArgs : REFANY := NIL;
+    xType := XType.OS;
+  BEGIN
+    WHILE ISTYPE(p,Pair) AND p # NIL DO
+      WITH pa = NARROW(p,Pair) DO
+        TRY
+          WITH path = SchemeString.ToText(pa.first) & "/" & name DO
+            RETURN FileRec { path,
+                             FileRd.Open(path) }
+          END
+        EXCEPT
+          E(x) => xArgs := x; xType := XType.E
+        |
+          OSError.E(x) => xArgs := x; xType := XType.OS
+        END;
+        p := pa.rest
+      END
+    END;
+    CASE xType OF
+      XType.E => RAISE E(xArgs)
+    |
+      XType.OS => RAISE OSError.E(xArgs)
+    END
+  END FileOpen;
+
 PROCEDURE LoadFile(t : T; fileName : Object) : Object RAISES { E } =
   BEGIN
     WITH name = SchemeUtils.StringifyQ(fileName,FALSE) DO
       TRY
-        VAR rd := FileRd.Open(name);
+        VAR rec := FileOpen(t, name);
         BEGIN
           TRY
-            RETURN t.loadRd(rd)
+            WITH res = t.loadRd(rec.rd) DO
+              IF SchemeBoolean.TruthO(res) THEN 
+                RETURN SchemeString.FromText(rec.fn) 
+              ELSE
+                RETURN res
+              END
+            END
           FINALLY
-            Rd.Close(rd) 
+            Rd.Close(rec.rd) 
           END
         END
       EXCEPT
@@ -640,6 +686,21 @@ VAR
   SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
   SYMunwindProtect := SchemeSymbol.Symbol("unwind-protect");
 BEGIN 
+  WITH sPath = Env.Get("MSCHEMEPATH") DO
+    IF sPath # NIL THEN
+      path := NIL;
+      VAR
+        reader := NEW(TextReader.T).init(sPath);
+        p : TEXT;
+      BEGIN
+        WHILE reader.next(":",p) DO
+          path := NEW(Pair, first := SchemeString.FromText(p),
+                      rest := path)
+        END;
+        path := SchemeUtils.Reverse(path)
+      END
+    END
+  END
 END Scheme.
 
 

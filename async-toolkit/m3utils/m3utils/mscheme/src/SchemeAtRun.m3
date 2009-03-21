@@ -10,6 +10,8 @@ IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
 IMPORT SchemePair, SchemeSymbol, SchemeString, SchemeBoolean;
 IMPORT Debug;
+IMPORT RefList;
+FROM SchemeUtils IMPORT First;
 
 TYPE
   Closure = Thread.Closure OBJECT
@@ -21,6 +23,8 @@ TYPE
     apply := ClApply;
   END;
 
+  Pair = SchemePair.T;
+
 PROCEDURE ClApply(cl : Closure) : REFANY =
   BEGIN
     WHILE Time.Now() < cl.time DO
@@ -29,12 +33,12 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
     
     VAR res : Object; BEGIN
       TRY
-        res := cl.interp.evalInGlobalEnv(NEW(SchemePair.T,
+        res := cl.interp.evalInGlobalEnv(NEW(Pair,
                                              first := cl.command))
       EXCEPT
         E(err) => 
         Debug.Out("SchemeAtRun.ClApply: caught Scheme.E: " & err);
-        res := NEW(SchemePair.T,
+        res := NEW(Pair,
                    first:= SchemeSymbol.FromText("**error-result**"),
                    rest := SchemeString.FromText(err))
       END;
@@ -118,8 +122,10 @@ PROCEDURE CCApply(cl : ClockClosure) : REFANY =
 
       next := Time.Now() + cl.interval;
 
+      IF NOT IsActive(cl) THEN RETURN NIL END; (* killed *)
+
       TRY
-        WITH res = cl.interp.evalInGlobalEnv(NEW(SchemePair.T,
+        WITH res = cl.interp.evalInGlobalEnv(NEW(Pair,
                                                  first := cl.command)) DO
           IF NOT SchemeBoolean.TruthO(res) THEN
             RETURN NIL
@@ -157,14 +163,92 @@ PROCEDURE ClockRunApply(<*UNUSED*>proc : SchemeProcedure.T;
         RAISE E ("SchemeAtRun.AtRunApply: environment type mismatch")
       END;
 
-      EVAL Thread.Fork(NEW(ClockClosure,
-                           interval := interval,
-                           command := command,
-                           errorHook := errorHook,
-                           interp := interp));
-      RETURN command (* is this right? *)
+      WITH cl = NEW(ClockClosure,
+                    interval := interval,
+                    command := command,
+                    errorHook := errorHook,
+                    interp := interp) DO
+        MakeActive(cl);
+        EVAL Thread.Fork(cl);
+        RETURN cl
+      END
     END
   END ClockRunApply;
+
+PROCEDURE ClockStopApply(<*UNUSED*>proc : SchemeProcedure.T; 
+                     <*UNUSED*>interp : Scheme.T; 
+                     args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH x = First(args) DO
+      IF x = NIL OR NOT ISTYPE(x,ClockClosure) THEN
+        RAISE E ("SchemeAtRun.ClockStopApply: expected a ClockClosure, got " &
+              SchemeUtils.Stringify(x))
+      END;
+      MakeInactive(x);
+      RETURN x
+    END
+  END ClockStopApply;
+
+PROCEDURE ClockListApply(<*UNUSED*>proc : SchemeProcedure.T; 
+                     <*UNUSED*>interp : Scheme.T; 
+                     <*UNUSED*>args : Object) : Object =
+  BEGIN
+    RETURN ListActives()
+  END ClockListApply;
+
+(**********************************************************************)
+
+VAR ccMu := NEW(MUTEX);
+    lst : RefList.T := NIL;
+
+PROCEDURE MakeActive(cl : ClockClosure) =
+  BEGIN
+    LOCK ccMu DO lst := RefList.Cons(cl,lst) END
+  END MakeActive;
+
+PROCEDURE MakeInactive(cl : ClockClosure) = 
+  BEGIN
+    LOCK ccMu DO
+      VAR p := lst;
+      BEGIN
+        WHILE p # NIL DO
+          IF p.head = cl THEN p.head := NIL; RETURN END;
+          p := p.tail
+        END
+      END
+    END
+  END MakeInactive;
+
+PROCEDURE IsActive(cl : ClockClosure) : BOOLEAN = 
+  BEGIN
+    LOCK ccMu DO
+      VAR p := lst;
+      BEGIN
+        WHILE p # NIL DO
+          IF p.head = cl THEN RETURN TRUE END;
+          p := p.tail
+        END
+      END
+    END;
+    RETURN FALSE
+  END IsActive;
+
+PROCEDURE ListActives() : Pair =
+  BEGIN
+    LOCK ccMu DO
+      VAR p := lst;
+          res : Pair := NIL;
+      BEGIN
+        WHILE p # NIL DO
+          IF p.head # NIL THEN
+            res := NEW(Pair, first := p.head, rest := res)
+          END;
+          p := p.tail
+        END;
+        RETURN res
+      END
+    END
+  END ListActives;
 
 (**********************************************************************)
 
@@ -188,6 +272,17 @@ PROCEDURE Extend(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefi
                         apply := ClockRunApply),
                     2, 3);
     (* (clock-run <interval> <cmd> <error-hook>) *)
+
+    definer.addPrim("clock-stop",
+                    NEW(SchemeProcedure.T,
+                        apply := ClockStopApply),
+                    1, 1);
+    (* (clock-stop <ClockClosure>) *)
+
+    definer.addPrim("clock-list",
+                    NEW(SchemeProcedure.T,
+                        apply := ClockListApply),
+                    0, 0);
 
     RETURN definer
   END Extend;
