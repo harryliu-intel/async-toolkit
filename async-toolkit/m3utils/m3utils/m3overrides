@@ -109,6 +109,8 @@ override("regresslib", TOP & "/calarm")
 override("regressparsing", TOP & "/calarm/regress")
 override("traderulelib", TOP & "/calarm")
 override("smarttraderule", TOP & "/calarm")
+override("marketmakingtestrule", TOP & "/calarm/marketmaking")
+
 override("fasthf", TOP & "/calarm")
 override("fastrw", TOP & "/calarm")
 override("sx", TOP & "/calarm")
