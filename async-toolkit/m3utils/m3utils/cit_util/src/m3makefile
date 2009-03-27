@@ -308,6 +308,7 @@ Module("AttrWr")
 Sequence("AttrWr","AttrWr")
 Module("UCTime")
 
+Module("IntSetBits")
 
 Library("cit_util")
 
