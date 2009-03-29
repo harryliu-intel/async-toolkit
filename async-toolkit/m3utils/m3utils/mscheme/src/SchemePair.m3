@@ -11,6 +11,7 @@ IMPORT Wx;
 IMPORT SchemeObject, SchemeUtils, SchemeSymbol;
 FROM Scheme IMPORT E;
 FROM SchemeUtils IMPORT Error, StringifyT;
+IMPORT RefSeq;
 
 (*
 PROCEDURE Init(t : T; first, rest : SchemeObject.T) : T =
@@ -34,7 +35,7 @@ PROCEDURE Format(t : T) : TEXT  RAISES { E } =
   BEGIN RETURN SchemeUtils.StringifyQ(t, TRUE) END Format;
 *)
 
-PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E } =
+PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T; seen : RefSeq.T)  RAISES { E } =
 
   CONST SymEq      = SchemeSymbol.SymEq;
         StringifyB = SchemeUtils.StringifyB;
@@ -56,20 +57,20 @@ PROCEDURE StringifyPair(t : T; quoted : BOOLEAN; buf : Wx.T)  RAISES { E } =
 
     IF special # NIL THEN
       Wx.PutText(buf, special);
-      StringifyB(Second(t), quoted, buf)
+      StringifyB(Second(t), quoted, buf, seen)
     ELSE
       Wx.PutChar(buf, '(');
-      StringifyB(t.first, quoted, buf);
+      StringifyB(t.first, quoted, buf, seen);
       VAR tail := t.rest; 
       BEGIN
         WHILE tail # NIL AND ISTYPE(tail,T) DO
           Wx.PutChar(buf, ' ');
-          StringifyB(NARROW(tail,T).first, quoted, buf);
+          StringifyB(NARROW(tail,T).first, quoted, buf, seen);
           tail := NARROW(tail,T).rest
         END;
         IF tail # NIL THEN
           Wx.PutText(buf, " . ");
-          StringifyB(tail, quoted, buf)
+          StringifyB(tail, quoted, buf, seen)
         END;
         Wx.PutChar(buf, ')')
       END

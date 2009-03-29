@@ -12,6 +12,7 @@ IMPORT Scheme, SchemeInputPort;
 IMPORT Wr, Wx;
 IMPORT SchemePair;
 IMPORT SchemeString;
+IMPORT RefSeq;
 
 TYPE String = SchemeString.T;
 
@@ -76,7 +77,7 @@ PROCEDURE P(msg : TEXT; x : Object) : Object; (* for debugging *)
 
 PROCEDURE Stringify(x : Object) : TEXT RAISES { E };
 PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT RAISES { E };
-PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E };
+PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T; seen : RefSeq.T := NIL) RAISES { E };
 
 PROCEDURE StringifyT(x : Object) : TEXT RAISES { E };
 

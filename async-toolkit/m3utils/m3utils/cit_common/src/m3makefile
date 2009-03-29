@@ -10,7 +10,7 @@ Module("TextReader") /* needed by m3tmplhack, must be compiled before cit_util. 
 %Generic_implementation("CITextTable")
 
 %Module("CITextRefTbl")
-Module("Args")
+Module("CITArgs")
 %Module("OTextExtras")
 
 if defined("CM3_VERSION")

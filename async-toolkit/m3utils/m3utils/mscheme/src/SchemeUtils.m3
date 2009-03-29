@@ -17,6 +17,7 @@ IMPORT Thread;
 IMPORT SchemeBoolean;
 IMPORT SchemeProcedure,SchemeProcedureClass;
 IMPORT Debug;
+IMPORT RefSeq;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -395,66 +396,80 @@ PROCEDURE Stringify(x : Object) : TEXT RAISES { E } =
 PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT RAISES { E } =
   BEGIN
     WITH buf = Wx.New() DO
-      StringifyB(x, quoted, buf);
+      StringifyB(x, quoted, buf, NIL);
       RETURN Wx.ToText(buf)
     END
   END StringifyQ;
 
-PROCEDURE StringifyB(x : Object; quoted : BOOLEAN; buf : Wx.T) RAISES { E } =
+PROCEDURE StringifyB(x : Object; 
+                     quoted : BOOLEAN; 
+                     buf : Wx.T;
+                     seen : RefSeq.T) RAISES { E } =
 
   PROCEDURE Put(txt : TEXT) = BEGIN Wx.PutText(buf,txt) END Put;
   PROCEDURE PutC(c : CHAR) = BEGIN Wx.PutChar(buf,c) END PutC;
 
   BEGIN
-    IF x = NIL THEN 
-      Put("()")
-    ELSE
-      <* ASSERT NOT ISTYPE(x,TEXT) *>
-      TYPECASE x OF
-        SchemeLongReal.T(lr) =>
-        IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
-          Put(Fmt.Int(ROUND(lr^)))
-        ELSE
-          Put(Fmt.LongReal(lr^))
-        END
-      |
-        SchemeProcedure.T(p) =>
-        PutC('{'); Put(p.name); PutC('}')
-      |
-        SchemeSymbol.T(sym) =>
-        Put(SchemeSymbol.ToText(sym))
-      |
-        SchemeChar.T(c) =>
-        IF quoted THEN Put("#" & BS) END;
-        PutC(Char(c))
-      |
-        Pair(p) => SchemePair.StringifyPair(p,quoted,buf)
-      |
-        String(s) =>
-        IF quoted THEN PutC(DQC) END;
-        FOR i := FIRST(s^) TO LAST(s^) DO
-          IF quoted AND s[i] = DQC THEN PutC(BSC) END;
-          PutC(s[i])
-        END;
-        IF quoted THEN PutC(DQC) END
-      |
-        Vector(v) =>
-        Put("#(");
-        FOR i := FIRST(v^) TO LAST(v^) DO
-          StringifyB(v[i], quoted, buf);
-          IF i # LAST(v^) THEN PutC(' ') END
-        END;
-        PutC(')')
-      |
-        Boolean(b) =>
-        CASE SchemeBoolean.TruthO(b) OF
-          TRUE => Put("#t")
-        |
-          FALSE => Put("#f")
-        END
+    IF seen = NIL THEN seen := NEW(RefSeq.T).init() END;
+
+    FOR i := 0 TO seen.size()-1 DO
+      IF seen.get(i) = x THEN Put("<...>"); RETURN END
+    END;
+    
+    seen.addhi(x);
+    TRY
+      IF x = NIL THEN 
+        Put("()")
       ELSE
-        Put(DebugFormat(x)) (* quoting? *)
+        <* ASSERT NOT ISTYPE(x,TEXT) *>
+        TYPECASE x OF
+          SchemeLongReal.T(lr) =>
+          IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
+            Put(Fmt.Int(ROUND(lr^)))
+          ELSE
+            Put(Fmt.LongReal(lr^))
+          END
+        |
+          SchemeProcedure.T(p) =>
+          PutC('{'); Put(p.name); PutC('}')
+        |
+          SchemeSymbol.T(sym) =>
+          Put(SchemeSymbol.ToText(sym))
+        |
+          SchemeChar.T(c) =>
+          IF quoted THEN Put("#" & BS) END;
+          PutC(Char(c))
+        |
+          Pair(p) => SchemePair.StringifyPair(p,quoted,buf,seen)
+        |
+          String(s) =>
+          IF quoted THEN PutC(DQC) END;
+          FOR i := FIRST(s^) TO LAST(s^) DO
+            IF quoted AND s[i] = DQC THEN PutC(BSC) END;
+            PutC(s[i])
+          END;
+          IF quoted THEN PutC(DQC) END
+        |
+          Vector(v) =>
+          Put("#(");
+          FOR i := FIRST(v^) TO LAST(v^) DO
+            StringifyB(v[i], quoted, buf, seen);
+            IF i # LAST(v^) THEN PutC(' ') END
+          END;
+          PutC(')')
+        |
+          Boolean(b) =>
+          CASE SchemeBoolean.TruthO(b) OF
+            TRUE => Put("#t")
+          |
+            FALSE => Put("#f")
+          END
+        ELSE
+          Put(DebugFormat(x)) (* quoting? *)
+        END
       END
+    FINALLY
+      <*ASSERT seen.remhi() = x *>
     END
   END StringifyB;
 

@@ -1,0 +1,8 @@
+import ("libm3")
+import ("netobj")
+
+Interface("Example")
+Interface("Type")
+Interface("Value")
+
+library ("stubexample")
