@@ -1,6 +1,12 @@
 (* $Id$ *)
 
 MODULE ValueTranslator;
+
+(* 
+ * Copyright (c) 2009, Generation Capital Ltd.  All rights reserved.
+ * Author : Mika Nystrom <mika@alum.mit.edu> 
+ *)
+
 IMPORT SchemePair, SchemeObject;
 IMPORT Value;
 FROM Value IMPORT Ordinal, Float, LongFloat, Extended, Array, Set, Record,

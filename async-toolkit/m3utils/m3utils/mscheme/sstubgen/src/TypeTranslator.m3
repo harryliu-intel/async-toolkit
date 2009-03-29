@@ -1,6 +1,12 @@
 (* $Id$ *)
 
 MODULE TypeTranslator;
+
+(* 
+ * Copyright (c) 2009, Generation Capital Ltd.  All rights reserved.
+ * Author : Mika Nystrom <mika@alum.mit.edu> 
+ *)
+
 IMPORT Type, SchemeObject;
 IMPORT SchemeLongReal, Atom, SchemePair, SchemeSymbol;
 IMPORT SchemeBoolean;
