@@ -2,7 +2,7 @@
 
 MODULE TypeTranslator;
 IMPORT Type, SchemeObject;
-IMPORT SchemeLongReal, Atom, Value, SchemePair, SchemeSymbol;
+IMPORT SchemeLongReal, Atom, SchemePair, SchemeSymbol;
 IMPORT SchemeBoolean;
 FROM Type IMPORT Qid, Field, Method, Signature, Formal, Exception, Mode;
 FROM Type IMPORT MethodDefault, MethodDefault1, MethodDefault2;
