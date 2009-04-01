@@ -40,19 +40,21 @@ Generic_module("SetArray")
 
 Interface("RTBrand")
 Interface("Wx")
+Interface("RefRecord")
 if defined("CM3_VERSION")
 	implementation("WxDefault")
 	implementation("RTBrandCM3")
 	import("patternmatching")
+        implementation("RefRecordCM3")
 else
         implementation("Wx")
 	implementation("RTBrand")
+        implementation("RefRecord")
 end
 c_source("printf")
 interface("Cprintf")
 Module("RTRefStats")
 Module("RTName")
-Module("RefRecord")
 
 Module("SIsuffix")
 table("Suffix", "Char", "SIsuffix")
