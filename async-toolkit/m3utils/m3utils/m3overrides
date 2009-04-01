@@ -98,6 +98,7 @@ override("schemesig", TOP & "/mscheme")
 override("schemereadline", TOP & "/mscheme")
 override("scodegen", TOP & "/mscheme")
 override("scheme-lib", TOP & "/mscheme")
+override("tz", TOP)
 
 override("anova", TOP & "/calarm")
 override("wavelets", TOP & "/calarm")

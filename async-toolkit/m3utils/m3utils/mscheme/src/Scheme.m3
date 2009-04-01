@@ -162,7 +162,7 @@ PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
 PROCEDURE LoadRd(t : T; rd : Rd.T) : Object RAISES { E } =
   BEGIN RETURN t.loadPort(NEW(SchemeInputPort.T).init(rd)) END LoadRd;
 
-VAR path := NEW(Pair, first := SchemeString.FromText("."), rest := NIL);
+VAR path := SchemeUtils.List2(SchemeString.FromText(""), SchemeString.FromText("."));
 
 CONST SearchPathName = "**scheme-load-path**";
 
