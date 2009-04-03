@@ -5,7 +5,7 @@ INTERFACE Example;
 TYPE
   T = OBJECT METHODS
     hello();
-    goodbye()
+    goodbye(s1 : S; s2 : REF W; s3 : W; s4 : INTEGER) : V;
   END;
 
   R = RECORD
