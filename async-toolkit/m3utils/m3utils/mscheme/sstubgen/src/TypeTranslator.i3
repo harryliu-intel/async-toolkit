@@ -11,8 +11,12 @@ INTERFACE TypeTranslator;
    environment *)
 
 IMPORT Type, SchemeObject;
+FROM Type IMPORT Qid;
 
-PROCEDURE Translate(type : Type.T) : SchemeObject.T;
+PROCEDURE Translate(type : Type.T;
+                    alias : Qid) : SchemeObject.T;
+
+PROCEDURE TranslateQid(q : Qid) : SchemeObject.T;
 
 CONST Brand = "TypeTranslator";
 

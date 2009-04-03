@@ -53,7 +53,7 @@ PROCEDURE Insert(t : Type.T; o : SchemeObject.T) =
     recs := NEW(Rec, t := t, u := o, n := recs)
   END Insert;
     
-PROCEDURE Translate(t : Type.T) : SchemeObject.T =
+PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
 
   PROCEDURE M(named : TEXT;
               w0, w1, w2, w3, w4, w5, w6 : SchemeObject.T := NIL) : SchemeObject.T =
@@ -69,6 +69,7 @@ PROCEDURE Translate(t : Type.T) : SchemeObject.T =
     BEGIN
       head.first := SchemeSymbol.FromText(named);
 
+      IF qid # NIL THEN Cons(F("alias",TranslateQid(qid))) END;
       Cons(F("name",TranslateQid(t.name)));
       Cons(F("visited",B(t.visited)));
       Cons(F("brandsOK",B(t.brandsOK)));
@@ -181,11 +182,11 @@ PROCEDURE Translate(t : Type.T) : SchemeObject.T =
     |
       Type.WideChar     => RETURN M("WideChar")
     |
-      Type.Char         => RETURN M("WideChar")
+      Type.Char         => RETURN M("Char")
     |
-      Type.Enumeration  => RETURN M("WideChar")
+      Type.Enumeration  => RETURN M("Enumeration")
     |
-      Type.Ordinal      => RETURN M("WideChar")
+      Type.Ordinal      => RETURN M("Ordinal")
     |
       Type.T            => RETURN M("T")
     END

@@ -20,6 +20,7 @@ IMPORT SeqM3AST_AS_Enum_id, SeqM3AST_AS_Fields,
 IMPORT M3CBackEnd,M3CBackEnd_C;
 IMPORT SchemePair;
 IMPORT TypeTranslator;
+IMPORT RTBrand;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -48,6 +49,8 @@ PROCEDURE NewHandle(wr: Wr.T; intfName: TEXT; context: M3Context.T): Handle=
   END NewHandle;
 
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
+  <*FATAL RTBrand.NotBranded*>
+  CONST Msg = StubUtils.Message;
   VAR h := NewHandle(wr, Atom.ToText(qid.intf), c);
       used_id: M3AST_AS.USED_ID := NEW(M3AST_AS.USED_ID).init();
       def_id: M3AST_AS.DEF_ID;
@@ -55,6 +58,9 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
       ts: M3AST_AS.TYPE_SPEC; 
       returnCode := 0;
   BEGIN
+    Msg("OneStub processing " & Atom.ToText(qid.intf) & "." &
+      Atom.ToText(qid.item) );
+
     used_id.lx_symrep := M3CId.Enter(Atom.ToText(qid.item));
     IF M3Context.FindExact(c, Atom.ToText(qid.intf), 
                            M3CUnit.Type.Interface, cu) THEN
@@ -64,20 +70,51 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
          named qid. *)
       def_id := M3ASTScope.Lookup(cu.as_root.as_id.vSCOPE, used_id);
       IF def_id = NIL THEN
-        StubUtils.Message(Atom.ToText(qid.intf) & "." & Atom.ToText(qid.item) &
+        Msg(Atom.ToText(qid.intf) & "." & Atom.ToText(qid.item) &
           " not defined.");
         RETURN 1;
       END;
+      Msg("def_id is " & RTBrand.GetName(TYPECODE(def_id)));
       ts := NARROW(def_id, M3AST_AS.TYPED_ID).sm_type_spec;
 
-      list := NEW(SchemePair.T, 
-                  first := NEW(SchemePair.T,
-                               first := TypeTranslator.Translate(ProcessScmObj(h, ts, qid)),
-                               rest := c),
-                  rest := list);
+      (* we add on the type alias only when the name we gave refers to
+         a type: else, we'd have expression names showing up as type
+         aliases! *)
+      VAR 
+        alias : Type.Qid;
+      BEGIN
+        IF ISTYPE(def_id, M3AST_AS.Type_id) THEN
+          alias := qid 
+        ELSE 
+          alias := NIL
+        END;
+        typeList := NEW(SchemePair.T, 
+                        first := TypeTranslator.Translate(ProcessScmObj(h, ts, qid),
+                                                          alias),
+                        rest := typeList)
+      END;
+
+      (* was it an expression?  if so remember it on the list of expressions *)
+
+      TYPECASE def_id OF
+        M3AST_AS.Proc_id,
+        M3AST_AS.Var_id,
+        M3AST_AS.Const_id,
+        M3AST_AS.Enum_id =>  
+        Msg("an expression");
+        exprList := NEW(SchemePair.T,
+                        first := NEW(SchemePair.T,
+                                     first := TypeTranslator.TranslateQid(qid),
+                                     rest := NEW(SchemePair.T, 
+                                                 first := typeList.first)),
+                        rest := exprList)
+      ELSE
+        Msg("Not Proc/Var/Const/Enum, must be a type")
+      END;
+
       returnCode := 0
     ELSE
-      returnCode := 1
+      RETURN 1
     END;
     M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
     RETURN returnCode;
@@ -276,13 +313,18 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
                   formals[i].type := 
                       (*                     ProcessM3Type(h, formalParam.as_formal_type); *)
                       ProcessM3Type(h, formalId.sm_type_spec);
-                  (*
-                    IF formalParam.as_default # NIL THEN
-                    formals[i].default := AstToVal.Val(
-                    formalParam.as_default.sm_exp.value,
-                    formals[i].type);
-                    END;
-                  *)
+                  
+
+                  IF formalParam.as_default # NIL THEN
+                    StubUtils.Message("formal default type: " &
+                      RTBrand.GetName(TYPECODE(formalParam)));
+                    formals[i].default := AstToVal.ProcessExp(
+                                              h,
+                                              NARROW(formalParam, 
+                                                     M3AST_AS.Formal_param)
+                                              .as_default)
+                  END;
+                 
                   TYPECASE formalId OF
                     M3AST_AS.F_Value_id => formals[i].mode := Type.Mode.Value;
                   | M3AST_AS.F_Var_id => formals[i].mode := Type.Mode.Var;

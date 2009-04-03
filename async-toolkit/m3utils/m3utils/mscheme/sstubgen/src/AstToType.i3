@@ -5,7 +5,7 @@
 INTERFACE AstToType;
 
 IMPORT Atom, Wr;
-IMPORT AST, ASTWalk, M3Context;
+IMPORT ASTWalk, M3Context;
 IMPORT Type;
 IMPORT SchemePair;
 
@@ -25,7 +25,10 @@ PROCEDURE NewHandle(wr: Wr.T; intf: TEXT; c: M3Context.T): Handle;
  
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER;
 
+(*
+PROCEDURE OneStubScm2(c: M3Context.T; qid: Type.Qid; wr: Wr.T): SchemeObject.T;
+*)
 
-VAR list : SchemePair.T := NIL;
+VAR exprList, typeList : SchemePair.T := NIL;
 
 END AstToType.
