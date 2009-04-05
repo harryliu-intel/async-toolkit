@@ -24,6 +24,7 @@ IMPORT TypeTranslator;
 IMPORT RTBrand;
 IMPORT SchemeObject, SchemeSymbol;
 IMPORT RefSeq, M3ASTScopeNames;
+FROM SchemeUtils IMPORT Cons;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -115,8 +116,15 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
           " not defined.");
         RETURN 1;
       END;
-      Msg("def_id is " & RTBrand.GetName(TYPECODE(def_id)));
-      IF ISTYPE(def_id, M3AST_AS.Exc_id) THEN
+      Msg("OneStub : " & Atom.ToText(qid.intf) & "." &
+        Atom.ToText(qid.item) & 
+        " : def_id is " & RTBrand.GetName(TYPECODE(def_id)));
+      IF    ISTYPE(def_id, M3AST_AS.Interface_id) THEN
+        (* we don't remember interfaces, no need to, since they're 
+           all factored out *)
+        Msg("OneStub found an interface, skipping "  & 
+          Atom.ToText(qid.intf) & "." & Atom.ToText(qid.item))
+      ELSIF ISTYPE(def_id, M3AST_AS.Exc_id) THEN
         VAR exception : Type.Exception;
         BEGIN
           FillInException(h, def_id, qid.item, exception);
@@ -127,52 +135,47 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
       ELSE
         ts := NARROW(def_id, M3AST_AS.TYPED_ID).sm_type_spec;
 
-        (* we add on the type alias only when the name we gave refers to
-           a type: else, we'd have expression names showing up as type
-           aliases! *)
-        BEGIN
-          (* ok this is all a bit screwy.  The type returned from the
-             toolkit may use a base name, or some other "canonical" name.
-             However, the canonical name need not be in a one-to-one mapping
-             with the Modula-3 "type" (anyhow).  
-             So we can add our own field, creating more unique types.
-             
-             This means that type equality checking is going to be 
-             trickier. *)
-          
-          WITH tkType = TypeTranslator.Translate(ProcessScmObj(h, 
-                                                               ts, 
-                                                               qid)),
-               head = tkType.first,
-               rest = tkType.rest,
-               
-               (* so we insert the alias *)
-               
-               ours = NEW(SchemePair.T, 
-                          first := head,
-                          rest := NEW(SchemePair.T,
-                                      first := Tag("alias",
-                                                   TypeTranslator.TranslateQid(qid)),
-                                      rest := rest))
-           DO
+        WITH tkType = TypeTranslator.Translate(ProcessScmObj(h, 
+                                                             ts, 
+                                                             qid)) DO
+          TYPECASE def_id OF
+            M3AST_AS.Proc_id  =>  AddToList(procList,  qid, tkType)
+          |
+            M3AST_AS.Var_id   =>  AddToList(varList,   qid, tkType)
+          |
+            M3AST_AS.Const_id =>  AddToList(constList, qid, tkType)
+          ELSE
+            Msg("Not Proc/Var/Const, must be a type");
             
-            typeList := NEW(SchemePair.T, 
-                            first := ours,
-                            rest := typeList)
+            (* ok this is all a bit screwy.  The type returned from the
+               toolkit may use a base name, or some other "canonical" name.
+               However, the canonical name need not be in a one-to-one mapping
+               with the Modula-3 "type" (anyhow).  
+               So we can add our own field, creating more unique types.
+               
+               This means that type equality checking is going to be 
+               trickier. *)
+            
+            WITH
+              head = tkType.first,
+              rest = tkType.rest,
+              
+              (* so we insert the alias *)
+              
+              ours = NEW(SchemePair.T, 
+                         first := head,
+                         rest := NEW(SchemePair.T,
+                                     first := Tag("alias",
+                                                  TypeTranslator.TranslateQid(qid)),
+                                     rest := rest))
+             DO
+            
+              typeList := NEW(SchemePair.T, 
+                              first := ours,
+                              rest := typeList)
+            END
           END
         END
-      END;
-
-      (* was it an expression?  if so remember it on the list of expressions *)
-
-      TYPECASE def_id OF
-        M3AST_AS.Proc_id  =>  AddToList(procList,  qid, typeList.first)
-      |
-        M3AST_AS.Var_id   =>  AddToList(varList,   qid, typeList.first)
-      |
-        M3AST_AS.Const_id =>  AddToList(constList, qid, typeList.first)
-      ELSE
-        Msg("Not Proc/Var/Const, must be a type")
       END;
 
       returnCode := 0
@@ -187,12 +190,10 @@ PROCEDURE AddToList(VAR list : SchemePair.T;
                     qid : Type.Qid;
                     type : SchemeObject.T) =
   BEGIN
-    list := NEW(SchemePair.T,
-                first := NEW(SchemePair.T,
-                             first := TypeTranslator.TranslateQid(qid),
-                             rest := NEW(SchemePair.T, 
-                                         first := type)),
-                    rest := list)
+    list := 
+        Cons(Cons(TypeTranslator.TranslateQid(qid),
+                  type),
+             list)
   END AddToList;
 
 PROCEDURE ProcessScmObj(h: Handle; 
