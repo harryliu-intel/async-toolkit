@@ -96,7 +96,7 @@ PROCEDURE ToText(t: T; byName: BOOLEAN := TRUE): Text.T =
           END;
           RETURN "ARRAY " & text & " OF " & ToText(arr.element);
       | Packed (p) => 
-          RETURN "BITS " & Fmt.Int(p.size) & "FORF " & ToText(p.base);
+          RETURN "BITS " & Fmt.Int(p.size) & "FOR " & ToText(p.base);
       | Record (rec) => 
             RETURN "RECORD " & FieldsToText(rec.fields) & " END";
       | Set (set) =>
@@ -283,13 +283,15 @@ BEGIN
                  name := NEW(Qid, intf := nullAtm, item := Atom.FromText("ROOT")),
                  traced := TRUE, 
                  fields := NEW(REF ARRAY OF Field, 0),
-                 methods := NEW(REF ARRAY OF Method, 0));
+                 methods := NEW(REF ARRAY OF Method, 0),
+                 overrides := NEW(REF ARRAY OF Override, 0));
   untracedRoot := NEW(Object, 
                       name := NEW(Qid, intf := nullAtm,
                                   item := Atom.FromText("UNTRACED ROOT")),
                       traced := FALSE,
                       fields := NEW(REF ARRAY OF Field, 0),
-                      methods := NEW(REF ARRAY OF Method, 0));
+                      methods := NEW(REF ARRAY OF Method, 0),
+                 overrides := NEW(REF ARRAY OF Override, 0));
   null          := NEW(Reference,
                  name := NEW(Qid, intf := nullAtm, item := Atom.FromText("NULL")));
   text          := NEW(Opaque,

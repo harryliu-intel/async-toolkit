@@ -12,6 +12,7 @@ IMPORT SchemeLongReal, Atom, SchemePair, SchemeSymbol;
 IMPORT SchemeBoolean;
 FROM Type IMPORT Qid, Field, Method, Signature, Formal, Exception, Mode;
 FROM Type IMPORT MethodDefault, MethodDefault1, MethodDefault2;
+FROM Type IMPORT Override;
 IMPORT SchemeUtils;
 IMPORT ValueTranslator;
 
@@ -52,11 +53,14 @@ PROCEDURE Insert(t : Type.T; o : SchemeObject.T) =
   BEGIN
     recs := NEW(Rec, t := t, u := o, n := recs)
   END Insert;
-    
-PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
+
+PROCEDURE Translate(t : Type.T) : SchemePair.T =    
+  BEGIN RETURN Trans(t) END Translate;
+
+PROCEDURE Trans(t : Type.T) : SchemeObject.T =
 
   PROCEDURE M(named : TEXT;
-              w0, w1, w2, w3, w4, w5, w6 : SchemeObject.T := NIL) : SchemeObject.T =
+              w0, w1, w2, w3, w4, w5, w6, w7 : SchemeObject.T := NIL) : SchemeObject.T =
 
     PROCEDURE Cons(what : SchemeObject.T) =
       BEGIN
@@ -69,7 +73,12 @@ PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
     BEGIN
       head.first := SchemeSymbol.FromText(named);
 
-      IF qid # NIL THEN Cons(F("alias",TranslateQid(qid))) END;
+(*
+      IF qid # NIL THEN 
+        Cons(F("alias",TranslateQid(qid))) 
+      END;
+*)
+
       Cons(F("name",TranslateQid(t.name)));
       Cons(F("visited",B(t.visited)));
       Cons(F("brandsOK",B(t.brandsOK)));
@@ -86,7 +95,10 @@ PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
                 IF w5 # NIL THEN
                   Cons(w5);
                   IF w6 # NIL THEN
-                    Cons(w6)
+                    Cons(w6);
+                    IF w7 # NIL THEN
+                      Cons(w7);
+                    END
                   END
                 END
               END
@@ -104,6 +116,8 @@ PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
     r : SchemeObject.T;
     head : SchemePair.T;
   BEGIN
+    IF t = NIL THEN RETURN NIL END;
+
     IF GotIt(t, r) THEN RETURN r END;
 
     head := NEW(SchemePair.T);
@@ -111,53 +125,53 @@ PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
     Insert(t, head);
 
     TYPECASE t OF
-      NULL => RETURN NIL
-    |
       Type.Procedure(p) => RETURN M("Procedure", 
                                     F("sig",TranslateSignature(p.sig)))
     |
-      Type.Set(s)       => RETURN M("Set", F("range",Translate(s.range)))
+      Type.Set(s)       => RETURN M("Set", F("range", Trans(s.range)))
     |
       Type.Record(r)    => RETURN M("Record", F("fields",
                                                 TranslateFieldArray(r.fields^)))
     |
       Type.Packed(p)    => RETURN M("Packed", 
                                     F("size",LRI(p.size)), 
-                                    F("base",Translate(p.base)))
+                                    F("base",Trans(p.base)))
     |
       Type.Object(o)    => RETURN M("Object",
                                     F("traced",B(o.traced)),
                                     F("branded", B(o.branded)),
                                     F("brand", o.brand),
                                     F("revIntf", o.revIntf),
-                                    F("super", Translate(o.super)),
+                                    F("super", Trans(o.super)),
                                     F("fields", TranslateFieldArray(o.fields^)),
-                                    F("methods", TranslateMethodArray(o.methods^)))
+                                    F("methods", TranslateMethodArray(o.methods^)),
+                                    F("overrides", TranslateOverrideArray(o.overrides^))
+)
     |
       Type.Ref(o)       => RETURN M("Ref",
                                     F("traced",B(o.traced)),
                                     F("branded", B(o.branded)),
                                     F("brand", o.brand),
                                     F("revIntf", o.revIntf),
-                                    F("target", Translate(o.target)))
+                                    F("target", Trans(o.target)))
     |
       Type.Opaque(o) => RETURN M("Opaque",
                                     F("traced",B(o.traced)),
                                     F("branded", B(o.branded)),
                                     F("brand", o.brand),
                                     F("revIntf", o.revIntf),
-                                    F("revealedSuperType", Translate(o.revealedSuperType)))
+                                    F("revealedSuperType", Trans(o.revealedSuperType)))
     | 
       Type.OpenArray(a) => RETURN M("OpenArray",
-                                    F("index", Translate(a.index)),
-                                    F("element", Translate(a.element)),
-                                    F("refArray", Translate(a.refArray)),
+                                    F("index", Trans(a.index)),
+                                    F("element", Trans(a.element)),
+                                    F("refArray", Trans(a.refArray)),
                                     F("openDimensions", LRI(a.openDimensions)))
       
     | 
       Type.Array(a) => RETURN M("Array",
-                                    F("index", Translate(a.index)),
-                                    F("element", Translate(a.element)))
+                                    F("index", Trans(a.index)),
+                                    F("element", Trans(a.element)))
       
     |
       Type.Reference(o) => RETURN M("Reference",
@@ -173,7 +187,7 @@ PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
       Type.Real         => RETURN M("Real")
     |
       Type.Subrange(s)  => RETURN M("Subrange",
-                                    F("base", Translate(s.base)),
+                                    F("base", Trans(s.base)),
                                     F("min", ValueTranslator.Translate(s.min)),
                                     F("max", ValueTranslator.Translate(s.max)))
     |
@@ -190,9 +204,9 @@ PROCEDURE Translate(t : Type.T; qid : Qid := NIL) : SchemeObject.T =
     |
       Type.T            => RETURN M("T")
     END
-  END Translate;
+  END Trans;
 
-PROCEDURE TranslateQid(q : Qid) : SchemeObject.T =
+PROCEDURE TranslateQid(q : Qid) : SchemePair.T =
   BEGIN
     IF q = NIL THEN RETURN NIL END;
     RETURN SchemeUtils.MakeList(
@@ -210,12 +224,26 @@ PROCEDURE TranslateFieldArray(READONLY f : ARRAY OF Field) : SchemeObject.T =
                  first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("Field"),
       F("name",f[i].name),
-      F("type",Translate(f[i].type)),
+      F("type",Trans(f[i].type)),
       F("default", ValueTranslator.Translate(f[i].default)) }),
                  rest := res)
     END;
     RETURN res
   END TranslateFieldArray;
+
+PROCEDURE TranslateOverrideArray(READONLY f : ARRAY OF Override) : SchemeObject.T =
+  VAR res : SchemePair.T := NIL;
+  BEGIN 
+    FOR i := LAST(f) TO FIRST(f) BY -1 DO
+      res := NEW(SchemePair.T,
+                 first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
+      SchemeSymbol.FromText("Override"),
+      F("name",f[i].name),
+      F("default", TranslateMethodDefault(f[i].default)) }),
+                 rest := res)
+    END;
+    RETURN res
+  END TranslateOverrideArray;
 
 PROCEDURE TranslateMethodArray(READONLY f : ARRAY OF Method) : SchemeObject.T =
   VAR res : SchemePair.T := NIL;
@@ -245,7 +273,7 @@ PROCEDURE TranslateMethodDefault(d : MethodDefault) : SchemeObject.T =
       MethodDefault2(d2) =>
       RETURN SchemeUtils.MakeList( ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("MethodDefault2"),
-      F("obType", Translate(d2.obType)),
+      F("obType", Trans(d2.obType)),
       F("method", d2.method) })
     ELSE
       <*ASSERT FALSE*>
@@ -268,7 +296,7 @@ PROCEDURE TranslateSignature(sig : Signature) : SchemeObject.T =
     RETURN SchemeUtils.MakeList( ARRAY OF SchemeObject.T {
     SchemeSymbol.FromText("Signature"),
     F("formals", TranslateFormalArray(sig.formals^)),
-    F("result", Translate(sig.result)),
+    F("result", Trans(sig.result)),
     F("raises", TranslateExceptionArray(sig.raises (* sic! *)) 
     (* careful here! -- distinguish between RAISES {} and RAISES ANY*)) })
   END TranslateSignature;
@@ -283,7 +311,7 @@ PROCEDURE TranslateFormalArray(READONLY f : ARRAY OF Formal) : SchemeObject.T=
       F("mode",TranslateMode(f[i].mode)),
       F("outOnly",B(f[i].outOnly)),
       F("name", f[i].name),
-      F("type", Translate(f[i].type)),
+      F("type", Trans(f[i].type)),
       F("default", ValueTranslator.Translate(f[i].default)) }),
       rest := res)
     END;
@@ -300,7 +328,7 @@ PROCEDURE TranslateExceptionArray(f : REF ARRAY OF Exception) : SchemeObject.T=
                  first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("Exception"),
       F("qid",TranslateQid(f[i].qid)),
-      F("arg",Translate(f[i].arg)) }),
+      F("arg",Trans(f[i].arg)) }),
                  rest := res)
     END;
     RETURN SchemeUtils.List1(res)

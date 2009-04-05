@@ -1,7 +1,7 @@
 import ("libm3")
 import ("netobj")
 
-Interface("Example")
+Module("Example")
 Interface("Type")
 Interface("Value")
 

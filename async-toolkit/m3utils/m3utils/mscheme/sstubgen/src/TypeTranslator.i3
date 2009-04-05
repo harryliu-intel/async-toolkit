@@ -10,13 +10,12 @@ INTERFACE TypeTranslator;
 (* Translate the SRC Type.T into a SchemeObject.T for the Mscheme 
    environment *)
 
-IMPORT Type, SchemeObject;
+IMPORT Type, SchemePair;
 FROM Type IMPORT Qid;
 
-PROCEDURE Translate(type : Type.T;
-                    alias : Qid) : SchemeObject.T;
+PROCEDURE Translate(type : Type.T) : SchemePair.T;
 
-PROCEDURE TranslateQid(q : Qid) : SchemeObject.T;
+PROCEDURE TranslateQid(q : Qid) : SchemePair.T;
 
 CONST Brand = "TypeTranslator";
 

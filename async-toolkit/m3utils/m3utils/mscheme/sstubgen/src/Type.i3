@@ -75,6 +75,7 @@ TYPE
     methods : REF ARRAY OF Method;
     (* Note that fields and methods contain only the identifiers 
        declared for this type, and not those of supertypes *)
+    overrides : REF ARRAY OF Override;
   END;
 
   Ref = Reference OBJECT
@@ -126,6 +127,11 @@ TYPE
   Method = REF RECORD
     name    : Atom.T;
     sig     : Signature; (* Not including the Self argument *)
+    default : MethodDefault;
+  END;
+
+  Override = REF RECORD
+    name : Atom.T;
     default : MethodDefault;
   END;
 

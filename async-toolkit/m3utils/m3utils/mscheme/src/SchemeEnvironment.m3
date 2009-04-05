@@ -172,12 +172,14 @@ PROCEDURE InitEval(t : T; vars, argsToEval : Object;
     EVAL t.initEmpty();
     t.parent := parent;
     IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp) THEN
-      TRY
+      (*TRY*)
         EVAL Warn("wrong number of arguments: expected " &
           StringifyT(vars) & " got " & StringifyT(interp.evalList(argsToEval,evalEnv)))
+(*
       EXCEPT
       ELSE
       END
+*)
     END;
     RETURN t
   END InitEval;

@@ -2,10 +2,32 @@
 
 INTERFACE Example;
 
+EXCEPTION X1; EXCEPTION X2;
+
 TYPE
   T = OBJECT METHODS
-    hello();
+    hello() := THello;
+    meow(s1s := FIRST(S); s2integer : INTEGER) : INTEGER RAISES { X1, X2 };
     goodbye(s1 : S; s2 : REF W; s3 : W; s4 : INTEGER) : V;
+    helloAgain(a : [VAL(1,INTEGER)..VAL(3,INTEGER)]; b : ARRAY OF S);
+  END;
+
+  O = T BRANDED "XYZ" OBJECT 
+    f1 : INTEGER;
+    f2 : X;
+  METHODS
+    m();
+    n() := THello;
+  OVERRIDES
+    hello := THello;
+  END;
+  
+  OAB = T BRANDED OBJECT END;
+
+  TT = T OBJECT METHODS
+    ttMethod();
+    x() := THello;
+  OVERRIDES 
   END;
 
   R = RECORD
@@ -29,6 +51,10 @@ TYPE
 
   M = MUTEX;
 
+  X = [S.Two .. S.Three];
+
+  Y = X;
+
 CONST True = BOOLEAN.TRUE;
 
 CONST Brand = "Example";
@@ -40,5 +66,9 @@ CONST PP = TakesS;
 TYPE PType = PROCEDURE (s : S);
 
 CONST AnS = S.Two;
+
+PROCEDURE TTHello(tt : TT);
+
+PROCEDURE THello(t : T);
 
 END Example.

@@ -16,11 +16,13 @@ IMPORT M3AST_AS_F, M3AST_SM, M3AST_SM_F, M3AST_TM_F, M3ASTNext,
        M3CStdTypes, M3CUnit;
 IMPORT SeqM3AST_AS_Enum_id, SeqM3AST_AS_Fields,
        SeqM3AST_AS_Field_id, SeqM3AST_AS_Method, 
+       SeqM3AST_AS_Override,
        SeqM3AST_AS_Qual_used_id, M3CTypesMisc;
 IMPORT M3CBackEnd,M3CBackEnd_C;
 IMPORT SchemePair;
 IMPORT TypeTranslator;
 IMPORT RTBrand;
+IMPORT SchemeObject, SchemeSymbol;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -47,6 +49,13 @@ PROCEDURE NewHandle(wr: Wr.T; intfName: TEXT; context: M3Context.T): Handle=
              astMap := astTable, nameMap := NEW(TextRefTbl.Default).init());
     RETURN h;
   END NewHandle;
+
+PROCEDURE Tag(tag : TEXT; what : SchemeObject.T) : SchemePair.T =
+  BEGIN
+    RETURN NEW(SchemePair.T, 
+               first := SchemeSymbol.FromText(tag),
+               rest := what)
+  END Tag;
 
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
   <*FATAL RTBrand.NotBranded*>
@@ -80,18 +89,36 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
       (* we add on the type alias only when the name we gave refers to
          a type: else, we'd have expression names showing up as type
          aliases! *)
-      VAR 
-        alias : Type.Qid;
       BEGIN
-        IF ISTYPE(def_id, M3AST_AS.Type_id) THEN
-          alias := qid 
-        ELSE 
-          alias := NIL
-        END;
-        typeList := NEW(SchemePair.T, 
-                        first := TypeTranslator.Translate(ProcessScmObj(h, ts, qid),
-                                                          alias),
-                        rest := typeList)
+        (* ok this is all a bit screwy.  The type returned from the
+           toolkit may use a base name, or some other "canonical" name.
+           However, the canonical name need not be in a one-to-one mapping
+           with the Modula-3 "type" (anyhow).  
+           So we can add our own field, creating more unique types.
+           
+           This means that type equality checking is going to be 
+           trickier. *)
+        
+        WITH tkType = TypeTranslator.Translate(ProcessScmObj(h, 
+                                                             ts, 
+                                                             qid)),
+             head = tkType.first,
+             rest = tkType.rest,
+
+             (* so we insert the alias *)
+             
+             ours = NEW(SchemePair.T, 
+                        first := head,
+                        rest := NEW(SchemePair.T,
+                                    first := Tag("alias",
+                                                 TypeTranslator.TranslateQid(qid)),
+                                    rest := rest))
+         DO
+
+          typeList := NEW(SchemePair.T, 
+                          first := ours,
+                          rest := typeList)
+        END
       END;
 
       (* was it an expression?  if so remember it on the list of expressions *)
@@ -123,10 +150,14 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
 PROCEDURE ProcessScmObj(h: Handle; 
                         ts: M3AST_AS.TYPE_SPEC;
                         qid: Type.Qid) : Type.T =
+  CONST Msg = StubUtils.Message;
   BEGIN
     StubUtils.Message("Processing " & Atom.ToText(qid.intf) & "." &
       Atom.ToText(qid.item) );
-    RETURN ProcessM3Type(h, ts);
+    WITH res = ProcessM3Type(h, ts) DO
+      Msg("Type-type is " & RTBrand.GetName(TYPECODE(res)));
+      RETURN res
+    END
   END ProcessScmObj;
 
 PROCEDURE InitAstTable(astTable: RefRefTbl.T) =
@@ -432,9 +463,42 @@ PROCEDURE ProcessObject(h: Handle;
     END;
     t.fields := ProcessFields(h, o.as_fields_s);
     t.methods := ProcessMethods(h, o.as_method_s);
+    t.overrides := ProcessOverrides(o.as_override_s);
     RETURN t;
   END ProcessObject;
 
+PROCEDURE ProcessOverrides(o : SeqM3AST_AS_Override.T):
+  REF ARRAY OF Type.Override =
+  VAR nOverrides:= SeqM3AST_AS_Override.Length(o);
+      overrides: REF ARRAY OF Type.Override;
+      iter := SeqM3AST_AS_Override.NewIter(o);
+      astOverride: M3AST_AS.Override;
+  BEGIN
+    overrides := NEW(REF ARRAY OF Type.Override, nOverrides);
+    FOR i := 0 TO nOverrides-1 DO
+      EVAL SeqM3AST_AS_Override.Next(iter, astOverride);
+      overrides[i] := NEW(Type.Override);
+      overrides[i].name := 
+          Atom.FromText(M3CId.ToText(astOverride.as_id.lx_symrep));
+      IF astOverride.as_default # NIL THEN
+        overrides[i].default := ProcessMethodDefault(astOverride.as_default)
+      END
+        (*overrides[i].default := AstToVal.Val(
+          astOverride.vINIT_ID.sm_init_exp,
+          overrides[i].type).sm_exp_value   *)
+    END;
+    RETURN overrides;
+  END ProcessOverrides;
+
+PROCEDURE ProcessMethodDefault(as_default : M3AST_AS_F.Exp_used_id) : Type.MethodDefault =
+  BEGIN
+    WITH used_id = as_default.vUSED_ID,
+         intf = Atom.FromText(M3CId.ToText(used_id.sm_def.tmp_unit_id.lx_symrep)),
+         item = Atom.FromText(M3CId.ToText(used_id.lx_symrep)) DO
+      RETURN NEW(Type.MethodDefault1,
+                 qid := NEW(Type.Qid, intf:= intf, item:= item))
+    END
+  END ProcessMethodDefault;
 
 PROCEDURE ProcessFields(h: Handle; f: SeqM3AST_AS_Fields.T): 
   REF ARRAY OF Type.Field =
@@ -487,6 +551,7 @@ PROCEDURE ProcessMethods(h: Handle; m: SeqM3AST_AS_Method.T):
       methods[i].sig := NARROW(ProcessTypeSpec(h, astMethod.as_type), 
                                Type.Procedure).sig;
       IF astMethod.as_default # NIL THEN
+        methods[i].default := ProcessMethodDefault(astMethod.as_default)
         (*methods[i].default := AstToVal.Val(
           astMethod.vINIT_ID.sm_init_exp,
           methods[i].type).sm_exp_value   *)

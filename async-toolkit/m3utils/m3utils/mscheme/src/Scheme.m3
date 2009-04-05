@@ -162,7 +162,7 @@ PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
 PROCEDURE LoadRd(t : T; rd : Rd.T) : Object RAISES { E } =
   BEGIN RETURN t.loadPort(NEW(SchemeInputPort.T).init(rd)) END LoadRd;
 
-VAR path := SchemeUtils.List2(SchemeString.FromText(""), SchemeString.FromText("."));
+VAR path := SchemeUtils.List1(SchemeString.FromText("."));
 
 CONST SearchPathName = "**scheme-load-path**";
 
@@ -178,21 +178,31 @@ PROCEDURE FileOpen(t : T; name : Pathname.T) : FileRec
     xArgs : REFANY := NIL;
     xType := XType.OS;
   BEGIN
-    WHILE ISTYPE(p,Pair) AND p # NIL DO
-      WITH pa = NARROW(p,Pair) DO
-        TRY
-          WITH path = SchemeString.ToText(pa.first) & "/" & name DO
-            RETURN FileRec { path,
-                             FileRd.Open(path) }
-          END
-        EXCEPT
-          E(x) => xArgs := x; xType := XType.E
-        |
-          OSError.E(x) => xArgs := x; xType := XType.OS
-        END;
-        p := pa.rest
+    IF Text.GetChar(name, 0) = '/' THEN
+      TRY
+        RETURN FileRec { name,
+                         FileRd.Open(name) }
+      EXCEPT
+        OSError.E(x) => xArgs := x; xType := XType.OS
+      END;
+    ELSE
+      WHILE ISTYPE(p,Pair) AND p # NIL DO
+        WITH pa = NARROW(p,Pair) DO
+          TRY
+            WITH path = SchemeString.ToText(pa.first) & "/" & name DO
+              RETURN FileRec { path,
+                               FileRd.Open(path) }
+            END
+          EXCEPT
+            E(x) => xArgs := x; xType := XType.E
+          |
+            OSError.E(x) => xArgs := x; xType := XType.OS
+          END;
+          p := pa.rest
+        END
       END
     END;
+
     CASE xType OF
       XType.E => RAISE E(xArgs)
     |
