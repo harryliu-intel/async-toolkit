@@ -25,6 +25,11 @@ PROCEDURE Init()=
     M3CGo.AddExtension(NEW(Extension));
   END Init;
 
+PROCEDURE N(x : REF ARRAY OF Type.Qid) : CARDINAL = 
+  BEGIN
+    IF x = NIL THEN RETURN 0 ELSE RETURN NUMBER(x^) END
+  END N;
+
 PROCEDURE GetArgs(tool: M3Args.T)=
   VAR strings, intfs, newarg: REF ARRAY OF TEXT;
       n, m, nextArg := 0;
@@ -39,18 +44,39 @@ PROCEDURE GetArgs(tool: M3Args.T)=
     stubTypes := GetQidList(strings);
     strings := M3Args.GetStringList(tool, StubGenExists_Arg);
     useTypes := GetQidList(strings);
-    IF stubTypes # NIL THEN
-      intfs := NEW(REF ARRAY OF TEXT, NUMBER(stubTypes^));
-      FOR i := 0 TO LAST(stubTypes^) DO 
-        IF stubTypes[i] # NIL AND stubTypes[i].intf # NIL THEN
-          intfs[n] := Atom.ToText(stubTypes[i].intf);
-          found := FALSE;
-          FOR j := 0 TO n-1 DO
-            IF Text.Equal(intfs[j], intfs[n]) THEN found := TRUE; END;
-          END;
-          IF NOT found THEN INC(n) END;
-        END;
+
+    strings := M3Args.GetStringList(tool, StubGenInterfaces_Arg);
+    stubInterfaces := GetIntfQidList(strings);
+
+    IF stubTypes # NIL OR stubInterfaces # NIL THEN
+      intfs := NEW(REF ARRAY OF TEXT, 
+                   N(stubTypes) + N(stubInterfaces));
+      IF stubTypes # NIL THEN
+        FOR i := 0 TO LAST(stubTypes^) DO 
+          IF stubTypes[i] # NIL AND stubTypes[i].intf # NIL THEN
+            intfs[n] := Atom.ToText(stubTypes[i].intf);
+            found := FALSE;
+            FOR j := 0 TO n-1 DO
+              IF Text.Equal(intfs[j], intfs[n]) THEN found := TRUE; END;
+            END;
+            IF NOT found THEN INC(n) END;
+          END
+        END
       END;
+
+      IF stubInterfaces # NIL THEN
+        FOR i := 0 TO LAST(stubInterfaces^) DO 
+          IF stubInterfaces[i] # NIL AND stubInterfaces[i].intf # NIL THEN
+            intfs[n] := Atom.ToText(stubInterfaces[i].intf);
+            found := FALSE;
+            FOR j := 0 TO n-1 DO
+              IF Text.Equal(intfs[j], intfs[n]) THEN found := TRUE; END
+            END;
+            IF NOT found THEN INC(n) END
+          END
+        END
+      END;
+
       m := n;
       strings := M3Args.GetStringList(tool, M3CFETool.Interfaces_Arg);
       IF strings = NIL THEN
@@ -109,6 +135,27 @@ PROCEDURE GetQidList(strings: REF ARRAY OF TEXT): REF ARRAY OF Type.Qid =
     RETURN qids;
   END GetQidList;
 
+PROCEDURE GetIntfQidList(strings: REF ARRAY OF TEXT): REF ARRAY OF Type.Qid =
+  VAR qids: REF ARRAY OF Type.Qid;
+      dotpos: INTEGER;
+  BEGIN
+    IF strings = NIL THEN RETURN NIL END;
+    qids := NEW(REF ARRAY OF Type.Qid, NUMBER(strings^));
+    FOR i := 0 TO LAST(strings^) DO
+      dotpos := Text.FindChar(strings[i], '.');
+      IF dotpos >= 1 THEN 
+        StubUtils.Message(
+            "Invalid argument \"" & strings[i] &"\".  " &
+            "Interface should not be qualified id.");
+      ELSE
+        qids[i] := NEW(Type.Qid, 
+                       intf := Atom.FromText(strings[i]),
+                       item := NIL);
+      END
+    END;
+    RETURN qids;
+  END GetIntfQidList;
+
 PROCEDURE StubGen(<*UNUSED*> e      : Extension;
                              context: M3Context.T;
                              cu     : M3AST_AS.Compilation_Unit;
@@ -162,12 +209,13 @@ PROCEDURE Set(context: M3Context.T; cu: M3AST_AS.Compilation_Unit)=
 
 BEGIN
   tool_g := M3Args.New("stubs", 
-               "Generate stubs for network objects", Version,
+               "Process M3 interfaces", Version,
                master := TRUE);
   M3Args.RegisterFlag(tool_g, StubGen_Arg, "stub generate");
   M3Args.RegisterFlag(tool_g, StubGen_V1_Arg, "protocol version 1");
   M3Args.RegisterFlag(tool_g, StubGen_V2_Arg, "protocol version 2");
   M3Args.RegisterStringList(tool_g, StubGenTypes_Arg, "list of types");
+  M3Args.RegisterStringList(tool_g, StubGenInterfaces_Arg, "list of interfaces");
   M3Args.RegisterStringList(tool_g, StubGenExists_Arg,
                             "list of existing types");
   M3Args.RegisterFlag(tool_g, StubGenPerf_Arg, "performance monitoring");

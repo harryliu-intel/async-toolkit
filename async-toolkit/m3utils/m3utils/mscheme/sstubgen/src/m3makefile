@@ -37,6 +37,8 @@ module("StubGenTool")
 module("StubUtils")
 module("FRefRefTbl")
 
+module("M3ASTScopeNames")
+
 implementation("Main")
 
 %build_standalone()

@@ -8,6 +8,7 @@ IMPORT Atom, Wr;
 IMPORT ASTWalk, M3Context;
 IMPORT Type;
 IMPORT SchemePair;
+IMPORT RefSeq;
 
 TYPE
   Handle <: Public;
@@ -25,10 +26,8 @@ PROCEDURE NewHandle(wr: Wr.T; intf: TEXT; c: M3Context.T): Handle;
  
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER;
 
-(*
-PROCEDURE OneStubScm2(c: M3Context.T; qid: Type.Qid; wr: Wr.T): SchemeObject.T;
-*)
+VAR varList, procList, constList, typeList, exceptionList : SchemePair.T := NIL;
 
-VAR exprList, typeList : SchemePair.T := NIL;
+PROCEDURE GetNames(c : M3Context.T; qid: Type.Qid) : RefSeq.T;
 
 END AstToType.

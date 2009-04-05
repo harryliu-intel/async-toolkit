@@ -23,6 +23,7 @@ IMPORT SchemePair;
 IMPORT TypeTranslator;
 IMPORT RTBrand;
 IMPORT SchemeObject, SchemeSymbol;
+IMPORT RefSeq, M3ASTScopeNames;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -57,6 +58,37 @@ PROCEDURE Tag(tag : TEXT; what : SchemeObject.T) : SchemePair.T =
                rest := what)
   END Tag;
 
+PROCEDURE GetNames(c : M3Context.T; 
+                   qid: Type.Qid) : RefSeq.T =
+  <*FATAL RTBrand.NotBranded*>
+  CONST Msg = StubUtils.Message;
+  VAR cu : M3AST_AS.Compilation_Unit;
+      res : RefSeq.T := NIL;
+  BEGIN
+    Msg("GetNames processing " & Atom.ToText(qid.intf));
+
+    IF M3Context.FindExact(c, 
+                           Atom.ToText(qid.intf), 
+                           M3CUnit.Type.Interface, cu) THEN
+      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Entry);
+
+      WITH syms = M3ASTScopeNames.Names(cu.as_root.as_id.vSCOPE) DO
+        IF syms = NIL THEN 
+          res := NIL
+        ELSE
+          res := NEW(RefSeq.T).init();
+          FOR i := 0 TO syms.size() - 1 DO
+            WITH def_id = NARROW(syms.get(i),M3AST_AS.DEF_ID) DO
+              res.addhi(Atom.FromText(M3CId.ToText(def_id.lx_symrep)))
+            END
+          END
+        END
+      END
+    END;
+    M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
+    RETURN res
+  END GetNames;
+
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
   <*FATAL RTBrand.NotBranded*>
   CONST Msg = StubUtils.Message;
@@ -84,59 +116,63 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
         RETURN 1;
       END;
       Msg("def_id is " & RTBrand.GetName(TYPECODE(def_id)));
-      ts := NARROW(def_id, M3AST_AS.TYPED_ID).sm_type_spec;
+      IF ISTYPE(def_id, M3AST_AS.Exc_id) THEN
+        VAR exception : Type.Exception;
+        BEGIN
+          FillInException(h, def_id, qid.item, exception);
+          exceptionList := NEW(SchemePair.T,
+                               first := TypeTranslator.TranslateException(exception),
+                               rest := exceptionList)
+        END
+      ELSE
+        ts := NARROW(def_id, M3AST_AS.TYPED_ID).sm_type_spec;
 
-      (* we add on the type alias only when the name we gave refers to
-         a type: else, we'd have expression names showing up as type
-         aliases! *)
-      BEGIN
-        (* ok this is all a bit screwy.  The type returned from the
-           toolkit may use a base name, or some other "canonical" name.
-           However, the canonical name need not be in a one-to-one mapping
-           with the Modula-3 "type" (anyhow).  
-           So we can add our own field, creating more unique types.
-           
-           This means that type equality checking is going to be 
-           trickier. *)
-        
-        WITH tkType = TypeTranslator.Translate(ProcessScmObj(h, 
-                                                             ts, 
-                                                             qid)),
-             head = tkType.first,
-             rest = tkType.rest,
-
-             (* so we insert the alias *)
+        (* we add on the type alias only when the name we gave refers to
+           a type: else, we'd have expression names showing up as type
+           aliases! *)
+        BEGIN
+          (* ok this is all a bit screwy.  The type returned from the
+             toolkit may use a base name, or some other "canonical" name.
+             However, the canonical name need not be in a one-to-one mapping
+             with the Modula-3 "type" (anyhow).  
+             So we can add our own field, creating more unique types.
              
-             ours = NEW(SchemePair.T, 
-                        first := head,
-                        rest := NEW(SchemePair.T,
-                                    first := Tag("alias",
-                                                 TypeTranslator.TranslateQid(qid)),
-                                    rest := rest))
-         DO
-
-          typeList := NEW(SchemePair.T, 
-                          first := ours,
-                          rest := typeList)
+             This means that type equality checking is going to be 
+             trickier. *)
+          
+          WITH tkType = TypeTranslator.Translate(ProcessScmObj(h, 
+                                                               ts, 
+                                                               qid)),
+               head = tkType.first,
+               rest = tkType.rest,
+               
+               (* so we insert the alias *)
+               
+               ours = NEW(SchemePair.T, 
+                          first := head,
+                          rest := NEW(SchemePair.T,
+                                      first := Tag("alias",
+                                                   TypeTranslator.TranslateQid(qid)),
+                                      rest := rest))
+           DO
+            
+            typeList := NEW(SchemePair.T, 
+                            first := ours,
+                            rest := typeList)
+          END
         END
       END;
 
       (* was it an expression?  if so remember it on the list of expressions *)
 
       TYPECASE def_id OF
-        M3AST_AS.Proc_id,
-        M3AST_AS.Var_id,
-        M3AST_AS.Const_id,
-        M3AST_AS.Enum_id =>  
-        Msg("an expression");
-        exprList := NEW(SchemePair.T,
-                        first := NEW(SchemePair.T,
-                                     first := TypeTranslator.TranslateQid(qid),
-                                     rest := NEW(SchemePair.T, 
-                                                 first := typeList.first)),
-                        rest := exprList)
+        M3AST_AS.Proc_id  =>  AddToList(procList,  qid, typeList.first)
+      |
+        M3AST_AS.Var_id   =>  AddToList(varList,   qid, typeList.first)
+      |
+        M3AST_AS.Const_id =>  AddToList(constList, qid, typeList.first)
       ELSE
-        Msg("Not Proc/Var/Const/Enum, must be a type")
+        Msg("Not Proc/Var/Const, must be a type")
       END;
 
       returnCode := 0
@@ -146,6 +182,18 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
     M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
     RETURN returnCode;
   END OneStubScm;
+
+PROCEDURE AddToList(VAR list : SchemePair.T;
+                    qid : Type.Qid;
+                    type : SchemeObject.T) =
+  BEGIN
+    list := NEW(SchemePair.T,
+                first := NEW(SchemePair.T,
+                             first := TypeTranslator.TranslateQid(qid),
+                             rest := NEW(SchemePair.T, 
+                                         first := type)),
+                    rest := list)
+  END AddToList;
 
 PROCEDURE ProcessScmObj(h: Handle; 
                         ts: M3AST_AS.TYPE_SPEC;
@@ -190,36 +238,33 @@ PROCEDURE ProcessM3Type(h: Handle; m3type: M3AST_AS.M3TYPE): Type.T =
     RETURN ProcessTypeSpec(h, ts);
   END ProcessM3Type;
 
+PROCEDURE FillInException(h : Handle;
+                          sm_def : M3AST_AS.Exc_id;
+                          item : Atom.T;
+                          VAR exception : Type.Exception) =
+
+  VAR  argType: Type.T;
+  BEGIN
+    exception := NEW(Type.Exception);
+    exception.qid := NEW(Type.Qid);
+    WITH qid = exception.qid DO
+      qid.intf := Atom.FromText(M3CId.ToText(
+                                    sm_def.tmp_unit_id.lx_symrep));
+      qid.item := item;
+    END;
+    IF sm_def.tmp_type = NIL THEN
+      exception.arg := NIL;
+    ELSE
+      argType := ProcessM3Type(h, sm_def.tmp_type);
+      exception.arg := argType
+    END
+  END FillInException;
+                          
 PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
   VAR r: REFANY;
   VAR t: Type.T;
-  BEGIN
-    IF h.astMap.get(ts, r) THEN
-      RETURN NARROW(r, Type.T);
-    ELSE
-      TYPECASE ts OF
-      |  M3AST_AS.Real_type => t := Type.real;
-      |  M3AST_AS.LongReal_type => t := Type.longreal;
-      |  M3AST_AS.Extended_type => t := Type.extended;
-      |  M3AST_AS.Integer_type => t := Type.integer;
-        (*
-          |  M3AST_AS.WideChar_type => t := Type.widechar;
-          (* CM3 new *)
-        *)
-      |  M3AST_AS.Null_type => t := Type.null;
-      |  M3AST_AS.RefAny_type => t := Type.refany;
-      |  M3AST_AS.Address_type => t := Type.address;
-      |  M3AST_AS.Root_type(rt) => 
-        TYPECASE rt.as_trace_mode OF
-        | NULL => t := Type.root
-        ELSE t :=  Type.untracedRoot
-        END;
-      |  M3AST_AS.Packed_type (pt) =>
-        t := NEW(Type.Packed, 
-                 size := NARROW(pt.as_exp.sm_exp_value,
-                                M3CBackEnd_C.Integer_value).sm_value,
-                 base := ProcessM3Type(h, pt.as_type));
-      |  M3AST_AS.Array_type (at) => 
+      
+  PROCEDURE DoArray_type(at : M3AST_AS.Array_type) =
         VAR ASTindexType: M3AST_SM.TYPE_SPEC_UNSET;
             eltTypeSpec: M3AST_SM.TYPE_SPEC_UNSET;
             openArray: BOOLEAN;
@@ -245,86 +290,24 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
                      index := ProcessM3Type(h, ASTindexType),
                      element := ProcessTypeSpec(h, eltTypeSpec));
           END;
-        END;
-      |  M3AST_AS.Enumeration_type (enum) =>
-        VAR enumt:= NEW(Type.UserDefined, elts :=
-                        NEW(REF ARRAY OF Atom.T, enum.sm_num_elements));
-            iter := SeqM3AST_AS_Enum_id.NewIter(enum.as_id_s);
-            elem: M3AST_AS.Enum_id; 
-        BEGIN
-          FOR i := 1 TO enum.sm_num_elements DO
-            EVAL SeqM3AST_AS_Enum_id.Next(iter, elem);
-            enumt.elts[i-1] := Atom.FromText(M3CId.ToText(elem.lx_symrep));
-          END;
-          t := enumt;
-        END;
-            |  M3AST_AS.Set_type (set) => 
-              t := NEW(Type.Set, range := ProcessM3Type(h, set.as_type));
-            |  M3AST_AS.Subrange_type (sub) =>
-              VAR  e1, e2: M3AST_AS.EXP;
-                   i1, i2: INTEGER;
-                   baseType: Type.T;
-              BEGIN 
-                baseType := ProcessTypeSpec(h, sub.sm_base_type_spec);
-                e1 := NARROW(sub.as_range, M3AST_AS.Range).as_exp1;
-                e2 := NARROW(sub.as_range,  M3AST_AS.Range).as_exp2;
-                EVAL M3CBackEnd.Ord(e1.sm_exp_value, i1);
-                EVAL M3CBackEnd.Ord(e2.sm_exp_value, i2);
-                t := NEW(Type.Subrange, base := baseType,
-                         min := NEW(Value.Ordinal, ord := i1),
-                         max := NEW(Value.Ordinal, ord := i2));
-              END
-            |  M3AST_AS.Record_type (rec) => 
-              t := NEW(Type.Record, 
-                       fields := ProcessFields(h, rec.as_fields_s));
-            |  M3AST_AS.BRANDED_TYPE (bt) =>
-              VAR brandName: Atom.T := NIL;
-                  branded := FALSE;
-                  trace: BOOLEAN;
-              BEGIN
-                IF bt.as_brand # NIL THEN
-                  IF bt.as_brand.as_exp # NIL THEN
-                    brandName := Atom.FromText(NARROW(bt.as_brand.as_exp.
-                    sm_exp_value,
-                    M3CBackEnd_C.Text_value).sm_value);
-                  END;
-                  branded := TRUE
-                END;
-                TYPECASE bt OF
-                |  M3AST_AS.Ref_type (ref) => 
-                  TYPECASE ref.as_trace_mode OF
-                  | NULL => trace := TRUE;
-                  ELSE trace := FALSE;
-                  END;
-                  t := NEW(Type.Ref, traced := trace, branded := branded,
-                           brand := brandName);
-                  AddToTable(h, ts, t);
-                  NARROW(t, Type.Ref).target := 
-                      ProcessM3Type(h, ref.as_type);
-                |  M3AST_AS.Object_type (ob) => 
-                  t := ProcessObject(h, ob, branded, brandName, trace);
-                ELSE StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized reference type");
-                END;
-              END;
-            |  M3AST_AS.Opaque_type (o) => 
-              IF o.sm_concrete_type_spec = NIL THEN
-                WITH revSuperTs = M3CConcTypeSpec.CurrentReveal(o),
-                     revSuperType = 
-                     NARROW(ProcessTypeSpec(h, revSuperTs), Type.Reference) DO
-                  t := NEW(Type.Opaque, 
-                           revealedSuperType := revSuperType);
-                END;
-              ELSE
-                WITH revTs = o.sm_concrete_type_spec DO
-                  t := ProcessTypeSpec(h, revTs);
-                  WITH tt = NARROW(t, Type.Object) DO
-                    tt.revIntf := Atom.FromText(
-                                      M3CId.ToText(revTs.tmp_unit_id.lx_symrep));
-                  END;
-                END;
-              END;
-            |  M3AST_AS.Procedure_type (proc) =>
-              VAR formals: REF ARRAY OF Type.Formal;
+        END DoArray_type;
+
+  PROCEDURE DoEnumeration_type(enum : M3AST_AS.Enumeration_type) =
+
+    VAR enumt:= NEW(Type.UserDefined, elts :=
+                    NEW(REF ARRAY OF Atom.T, enum.sm_num_elements));
+        iter := SeqM3AST_AS_Enum_id.NewIter(enum.as_id_s);
+        elem: M3AST_AS.Enum_id; 
+    BEGIN
+      FOR i := 1 TO enum.sm_num_elements DO
+        EVAL SeqM3AST_AS_Enum_id.Next(iter, elem);
+        enumt.elts[i-1] := Atom.FromText(M3CId.ToText(elem.lx_symrep));
+      END;
+      t := enumt;
+    END DoEnumeration_type;
+
+  PROCEDURE DoProcedure_type(proc : M3AST_AS.Procedure_type) =
+                  VAR formals: REF ARRAY OF Type.Formal;
                   nFormals: INTEGER := 0;
                   iter := M3ASTNext.NewIterFormal(proc.as_formal_param_s);
                   formalParam: M3AST_AS.Formal_param;
@@ -353,9 +336,9 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
                                               h,
                                               NARROW(formalParam, 
                                                      M3AST_AS.Formal_param)
-                                              .as_default)
+                    .as_default)
                   END;
-                 
+                  
                   TYPECASE formalId OF
                     M3AST_AS.F_Value_id => formals[i].mode := Type.Mode.Value;
                   | M3AST_AS.F_Var_id => formals[i].mode := Type.Mode.Var;
@@ -381,51 +364,125 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
                         nRaises := 
                             SeqM3AST_AS_Qual_used_id.Length(r.as_raisees_s);
                         raisee: M3AST_AS.Qual_used_id;
-                        arg: M3AST_AS.Exc_id;
-                        argType: Type.T;
                     BEGIN
                       signature.raises := NEW(REF ARRAY OF 
                       Type.Exception, nRaises);
                       FOR i := 0 TO nRaises-1 DO
                         EVAL SeqM3AST_AS_Qual_used_id.Next(iter, raisee);
-                        signature.raises[i] := NEW(Type.Exception);
-                        signature.raises[i].qid := NEW(Type.Qid);
-                        WITH qid = signature.raises[i].qid DO
-                          qid.intf := Atom.FromText(M3CId.ToText(
-                                                        raisee.as_id.sm_def.tmp_unit_id.lx_symrep));
-                          qid.item := Atom.FromText(
-                                          M3CId.ToText(raisee.as_id.lx_symrep));
-                        END;
-                        IF raisee.as_id.sm_def = NIL THEN
-                          signature.raises[i].arg := NIL
-                        ELSE
-                          arg := 
-                              NARROW(raisee.as_id.sm_def, M3AST_AS.Exc_id);
-                          IF arg.tmp_type = NIL THEN
-                            signature.raises[i].arg := NIL;
-                          ELSE
-                            argType := ProcessM3Type(h, arg.tmp_type);
-                            signature.raises[i].arg := argType;
-                            (*    IF argType.name = NIL THEN
-                                  argType.name := NEW(Type.Qid);
-                                  WITH id = NARROW(arg, M3AST_AS.Qual_used_id) DO
-                                  FillInIntf(h, argType.name, id.as_intf_id);
-                                  argType.name.item := Atom.FromText(
-                                  M3CId.ToText(id.as_id.lx_symrep));  
-                                  END;
-                                  END;  *)
-                          END;
-                        END;
-                      END;
+                        FillInException(h, 
+                                        raisee.as_id.sm_def,
+                          Atom.FromText(M3CId.ToText(raisee.as_id.lx_symrep)),
+                                        signature.raises[i])
+                      END
                     END;
                   | M3AST_AS.Raisees_any => 
                   ELSE signature.raises := NEW(REF ARRAY OF Type.Exception, 0)
                   END;
                 END;
                 t := NEW(Type.Procedure, sig := signature);
-              END;
-                  ELSE
-                  END;
+              END DoProcedure_type;
+
+
+  BEGIN
+    IF h.astMap.get(ts, r) THEN
+      RETURN NARROW(r, Type.T);
+    ELSE
+      TYPECASE ts OF
+      |  M3AST_AS.Real_type => t := Type.real;
+      |  M3AST_AS.LongReal_type => t := Type.longreal;
+      |  M3AST_AS.Extended_type => t := Type.extended;
+      |  M3AST_AS.Integer_type => t := Type.integer;
+        (*
+          |  M3AST_AS.WideChar_type => t := Type.widechar;
+          (* CM3 new *)
+        *)
+      |  M3AST_AS.Null_type => t := Type.null;
+      |  M3AST_AS.RefAny_type => t := Type.refany;
+      |  M3AST_AS.Address_type => t := Type.address;
+      |  M3AST_AS.Root_type(rt) => 
+        TYPECASE rt.as_trace_mode OF
+        | NULL => t := Type.root
+        ELSE t :=  Type.untracedRoot
+        END;
+      |  M3AST_AS.Packed_type (pt) =>
+        t := NEW(Type.Packed, 
+                 size := NARROW(pt.as_exp.sm_exp_value,
+                                M3CBackEnd_C.Integer_value).sm_value,
+                 base := ProcessM3Type(h, pt.as_type));
+      |  M3AST_AS.Array_type (at) => DoArray_type(at)
+        
+      |  M3AST_AS.Enumeration_type (enum) =>
+        DoEnumeration_type(enum)
+      |  M3AST_AS.Set_type (set) => 
+        t := NEW(Type.Set, range := ProcessM3Type(h, set.as_type));
+      |  M3AST_AS.Subrange_type (sub) =>
+        VAR  e1, e2: M3AST_AS.EXP;
+             i1, i2: INTEGER;
+             baseType: Type.T;
+        BEGIN 
+          baseType := ProcessTypeSpec(h, sub.sm_base_type_spec);
+          e1 := NARROW(sub.as_range, M3AST_AS.Range).as_exp1;
+          e2 := NARROW(sub.as_range,  M3AST_AS.Range).as_exp2;
+          EVAL M3CBackEnd.Ord(e1.sm_exp_value, i1);
+          EVAL M3CBackEnd.Ord(e2.sm_exp_value, i2);
+          t := NEW(Type.Subrange, base := baseType,
+                   min := NEW(Value.Ordinal, ord := i1),
+                   max := NEW(Value.Ordinal, ord := i2));
+        END
+      |  M3AST_AS.Record_type (rec) => 
+        t := NEW(Type.Record, 
+                 fields := ProcessFields(h, rec.as_fields_s));
+      |  M3AST_AS.BRANDED_TYPE (bt) =>
+        VAR brandName: Atom.T := NIL;
+            branded := FALSE;
+            trace: BOOLEAN;
+        BEGIN
+          IF bt.as_brand # NIL THEN
+            IF bt.as_brand.as_exp # NIL THEN
+              brandName := Atom.FromText(NARROW(bt.as_brand.as_exp.
+              sm_exp_value,
+              M3CBackEnd_C.Text_value).sm_value);
+            END;
+            branded := TRUE
+          END;
+          TYPECASE bt OF
+          |  M3AST_AS.Ref_type (ref) => 
+            TYPECASE ref.as_trace_mode OF
+            | NULL => trace := TRUE;
+            ELSE trace := FALSE;
+            END;
+            t := NEW(Type.Ref, traced := trace, branded := branded,
+                     brand := brandName);
+            AddToTable(h, ts, t);
+            NARROW(t, Type.Ref).target := 
+                ProcessM3Type(h, ref.as_type);
+          |  M3AST_AS.Object_type (ob) => 
+            t := ProcessObject(h, ob, branded, brandName, trace);
+          ELSE StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized reference type");
+          END;
+        END;
+      |  M3AST_AS.Opaque_type (o) => 
+        IF o.sm_concrete_type_spec = NIL THEN
+          WITH revSuperTs = M3CConcTypeSpec.CurrentReveal(o),
+               revSuperType = 
+               NARROW(ProcessTypeSpec(h, revSuperTs), Type.Reference) DO
+            t := NEW(Type.Opaque, 
+                     revealedSuperType := revSuperType);
+          END;
+        ELSE
+          WITH revTs = o.sm_concrete_type_spec DO
+            t := ProcessTypeSpec(h, revTs);
+            WITH tt = NARROW(t, Type.Object) DO
+              tt.revIntf := Atom.FromText(
+                                M3CId.ToText(revTs.tmp_unit_id.lx_symrep));
+            END;
+          END;
+        END;
+      |  M3AST_AS.Procedure_type (proc) =>
+        DoProcedure_type(proc)
+      ELSE 
+        StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized Modula-3 construct : " & RTBrand.GetName(TYPECODE(ts)))
+      END;
     END;
     AddToTable(h, ts, t);
     RETURN t;
@@ -483,9 +540,9 @@ PROCEDURE ProcessOverrides(o : SeqM3AST_AS_Override.T):
       IF astOverride.as_default # NIL THEN
         overrides[i].default := ProcessMethodDefault(astOverride.as_default)
       END
-        (*overrides[i].default := AstToVal.Val(
-          astOverride.vINIT_ID.sm_init_exp,
-          overrides[i].type).sm_exp_value   *)
+      (*overrides[i].default := AstToVal.Val(
+        astOverride.vINIT_ID.sm_init_exp,
+        overrides[i].type).sm_exp_value   *)
     END;
     RETURN overrides;
   END ProcessOverrides;
@@ -561,8 +618,6 @@ PROCEDURE ProcessMethods(h: Handle; m: SeqM3AST_AS_Method.T):
   END ProcessMethods;
 
 BEGIN
-
-
 END AstToType.
 
 

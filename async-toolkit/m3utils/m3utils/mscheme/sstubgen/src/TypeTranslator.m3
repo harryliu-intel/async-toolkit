@@ -13,7 +13,7 @@ IMPORT SchemeBoolean;
 FROM Type IMPORT Qid, Field, Method, Signature, Formal, Exception, Mode;
 FROM Type IMPORT MethodDefault, MethodDefault1, MethodDefault2;
 FROM Type IMPORT Override;
-IMPORT SchemeUtils;
+FROM SchemeUtils IMPORT Cons, MakeList, List1, Reverse;
 IMPORT ValueTranslator;
 
 PROCEDURE F(name : TEXT;
@@ -107,7 +107,7 @@ PROCEDURE Trans(t : Type.T) : SchemeObject.T =
         END
       END;
 
-      head.rest := SchemeUtils.Reverse(res);
+      head.rest := Reverse(res);
 
       RETURN head
     END M;
@@ -209,7 +209,7 @@ PROCEDURE Trans(t : Type.T) : SchemeObject.T =
 PROCEDURE TranslateQid(q : Qid) : SchemePair.T =
   BEGIN
     IF q = NIL THEN RETURN NIL END;
-    RETURN SchemeUtils.MakeList(
+    RETURN MakeList(
                ARRAY OF SchemeObject.T {
     SchemeSymbol.FromText("Qid"),
     F("intf", q.intf),
@@ -221,7 +221,7 @@ PROCEDURE TranslateFieldArray(READONLY f : ARRAY OF Field) : SchemeObject.T =
   BEGIN 
     FOR i := LAST(f) TO FIRST(f) BY -1 DO
       res := NEW(SchemePair.T,
-                 first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
+                 first := MakeList(ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("Field"),
       F("name",f[i].name),
       F("type",Trans(f[i].type)),
@@ -236,7 +236,7 @@ PROCEDURE TranslateOverrideArray(READONLY f : ARRAY OF Override) : SchemeObject.
   BEGIN 
     FOR i := LAST(f) TO FIRST(f) BY -1 DO
       res := NEW(SchemePair.T,
-                 first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
+                 first := MakeList(ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("Override"),
       F("name",f[i].name),
       F("default", TranslateMethodDefault(f[i].default)) }),
@@ -250,7 +250,7 @@ PROCEDURE TranslateMethodArray(READONLY f : ARRAY OF Method) : SchemeObject.T =
   BEGIN 
     FOR i := LAST(f) TO FIRST(f) BY -1 DO
       res := NEW(SchemePair.T,
-                 first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
+                 first := MakeList(ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("Method"),
       F("name",f[i].name),
       F("sig",TranslateSignature(f[i].sig)),
@@ -266,12 +266,12 @@ PROCEDURE TranslateMethodDefault(d : MethodDefault) : SchemeObject.T =
       NULL => RETURN NIL
     |
       MethodDefault1(d1) =>
-      RETURN SchemeUtils.MakeList( ARRAY OF SchemeObject.T {
+      RETURN MakeList( ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("MethodDefault1"),
       F("qid", TranslateQid(d1.qid)) })
     |
       MethodDefault2(d2) =>
-      RETURN SchemeUtils.MakeList( ARRAY OF SchemeObject.T {
+      RETURN MakeList( ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("MethodDefault2"),
       F("obType", Trans(d2.obType)),
       F("method", d2.method) })
@@ -293,7 +293,7 @@ PROCEDURE TranslateAtomArray(READONLY f : ARRAY OF Atom.T) : SchemeObject.T =
 
 PROCEDURE TranslateSignature(sig : Signature) : SchemeObject.T =
   BEGIN 
-    RETURN SchemeUtils.MakeList( ARRAY OF SchemeObject.T {
+    RETURN MakeList( ARRAY OF SchemeObject.T {
     SchemeSymbol.FromText("Signature"),
     F("formals", TranslateFormalArray(sig.formals^)),
     F("result", Trans(sig.result)),
@@ -306,7 +306,7 @@ PROCEDURE TranslateFormalArray(READONLY f : ARRAY OF Formal) : SchemeObject.T=
   BEGIN 
     FOR i := LAST(f) TO FIRST(f) BY -1 DO
       res := NEW(SchemePair.T,
-                 first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
+                 first := MakeList(ARRAY OF SchemeObject.T {
       SchemeSymbol.FromText("Formal"),
       F("mode",TranslateMode(f[i].mode)),
       F("outOnly",B(f[i].outOnly)),
@@ -318,6 +318,14 @@ PROCEDURE TranslateFormalArray(READONLY f : ARRAY OF Formal) : SchemeObject.T=
     RETURN res
   END TranslateFormalArray;
 
+PROCEDURE TranslateException(x : Exception) : SchemePair.T =
+  BEGIN
+    RETURN MakeList(ARRAY OF SchemeObject.T {
+                       SchemeSymbol.FromText("Exception"),
+                       F("qid",TranslateQid(x.qid)),
+                       F("arg",Trans(x.arg)) })
+  END TranslateException;
+
 PROCEDURE TranslateExceptionArray(f : REF ARRAY OF Exception) : SchemeObject.T=
   VAR
     res : SchemePair.T := NIL;
@@ -325,13 +333,10 @@ PROCEDURE TranslateExceptionArray(f : REF ARRAY OF Exception) : SchemeObject.T=
     IF f = NIL THEN RETURN NIL END;
     FOR i := LAST(f^) TO FIRST(f^) BY -1 DO
       res := NEW(SchemePair.T,
-                 first := SchemeUtils.MakeList(ARRAY OF SchemeObject.T {
-      SchemeSymbol.FromText("Exception"),
-      F("qid",TranslateQid(f[i].qid)),
-      F("arg",Trans(f[i].arg)) }),
+                 first := TranslateException(f[i]),
                  rest := res)
     END;
-    RETURN SchemeUtils.List1(res)
+    RETURN List1(res)
   END TranslateExceptionArray;
 
 PROCEDURE TranslateMode(m : Mode) : SchemeObject.T =
@@ -343,5 +348,80 @@ PROCEDURE TranslateMode(m : Mode) : SchemeObject.T =
     END
   END TranslateMode;
 
-BEGIN END TypeTranslator.
+PROCEDURE AddProtos() =
+
+  PROCEDURE Add(name : TEXT; what : SchemeObject.T) =
+    BEGIN
+      protoList := Cons(Cons(SchemeSymbol.FromText(name),
+                             Translate(what)),
+                        protoList);
+    END Add;
+
+  BEGIN
+    (*
+    Add("T",                    Translate(NEW(Type.T)));
+
+    Add("Ordinal",              Translate(NEW(Type.Ordinal)));
+    Add("Enumeration",              Translate(NEW(Type.Ordinal)));
+    Add("Char",              Translate(NEW(Type.Ordinal)));
+    Add("WideChar",              Translate(NEW(Type.Ordinal)));
+    Add("UserDefined",              Translate(NEW(Type.Ordinal)));
+    Add("Subrange",              Translate(NEW(Type.Ordinal)));
+    Add("Real",               Translate(NEW(Type.Ordinal)));
+    Add("LongReal",               Translate(NEW(Type.Ordinal)));
+    Add("Extended",               Translate(NEW(Type.Ordinal)));
+    Add("Reference",               Translate(NEW(Type.Ordinal)));
+    Add("Ref",               Translate(NEW(Type.Ordinal)));
+    Add("Opaque",               Translate(NEW(Type.Ordinal)));
+    Add("Array",               Translate(NEW(Type.Ordinal)));
+
+    Add("OpenArray",               Translate(NEW(Type.Ordinal)));
+    Add("Packed",               Translate(NEW(Type.Ordinal)));
+    Add("Record",               Translate(NEW(Type.Ordinal)));
+    Add("Set",               Translate(NEW(Type.Ordinal)));
+    Add("Procedure",               Translate(NEW(Type.Ordinal)));
+    (************************************************************)
+
+    Add("Field",               Translate(NEW(Type.Ordinal)));
+    *)
+
+  END AddProtos;
+
+PROCEDURE AddBasetypes() =
+
+  PROCEDURE Add(name : TEXT; what : Type.T) =
+    BEGIN
+      basetypeList := Cons(Cons(SchemeSymbol.FromText(name),
+                                Translate(what)),
+                           basetypeList);
+    END Add;
+
+  BEGIN
+    Add("INTEGER",      Type.integer);
+    Add("CARDINAL",     Type.cardinal);
+    Add("BOOLEAN",      Type.boolean);
+    Add("CHAR",         Type.char);
+    Add("WIDECHAR",     Type.widechar);
+    Add("REAL",         Type.real);
+    Add("LONGREAL",     Type.longreal);
+    Add("EXTENDED",     Type.extended);
+    Add("REFANY",       Type.refany);
+    Add("ADDRESS",      Type.address);
+    Add("ROOT",         Type.root);
+
+    Add("UNTRACEDROOT", Type.untracedRoot);
+    (*
+    Add("UNTRACED_ROOT",Type.untracedRoot);
+    Add("UNTRACED ROOT",Type.untracedRoot);
+    *)
+
+    Add("NULL",         Type.null);
+    Add("TEXT",         Type.text);
+    Add("MUTEX",        Type.mutex)
+  END AddBasetypes;
+
+BEGIN
+  AddProtos();
+  AddBasetypes()
+END TypeTranslator.
 

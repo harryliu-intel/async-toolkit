@@ -11,12 +11,16 @@ INTERFACE TypeTranslator;
    environment *)
 
 IMPORT Type, SchemePair;
-FROM Type IMPORT Qid;
+FROM Type IMPORT Qid, Exception;
 
 PROCEDURE Translate(type : Type.T) : SchemePair.T;
 
 PROCEDURE TranslateQid(q : Qid) : SchemePair.T;
 
+PROCEDURE TranslateException(x : Exception) : SchemePair.T;
+
 CONST Brand = "TypeTranslator";
+
+VAR protoList, basetypeList : SchemePair.T := NIL;
 
 END TypeTranslator.
