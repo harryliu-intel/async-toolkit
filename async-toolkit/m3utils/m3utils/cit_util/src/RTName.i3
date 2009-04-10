@@ -1,3 +1,5 @@
+(* $Id$ *)
+
 INTERFACE RTName;
 IMPORT RT0;
 
