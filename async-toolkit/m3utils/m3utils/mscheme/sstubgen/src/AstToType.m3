@@ -24,7 +24,8 @@ IMPORT TypeTranslator;
 IMPORT RTBrand;
 IMPORT SchemeObject, SchemeSymbol;
 IMPORT RefSeq, M3ASTScopeNames;
-FROM SchemeUtils IMPORT Cons;
+FROM SchemeUtils IMPORT Cons, List2;
+IMPORT ValueTranslator;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -143,7 +144,13 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
           |
             M3AST_AS.Var_id   =>  AddToList(varList,   qid, tkType)
           |
-            M3AST_AS.Const_id =>  AddToList(constList, qid, tkType)
+            M3AST_AS.Const_id(cid) =>  
+            WITH astValue = cid.vINIT_ID.sm_init_exp,
+                 valValue = AstToVal.ProcessExp(h, astValue),
+                 scmValue = ValueTranslator.Translate(valValue) DO
+              
+              AddToList(constList, qid, List2(tkType, scmValue))
+            END
           ELSE
             Msg("Not Proc/Var/Const, must be a type");
             
@@ -201,7 +208,7 @@ PROCEDURE ProcessScmObj(h: Handle;
                         qid: Type.Qid) : Type.T =
   CONST Msg = StubUtils.Message;
   BEGIN
-    StubUtils.Message("Processing " & Atom.ToText(qid.intf) & "." &
+    Msg("Processing " & Atom.ToText(qid.intf) & "." &
       Atom.ToText(qid.item) );
     WITH res = ProcessM3Type(h, ts) DO
       Msg("Type-type is " & RTBrand.GetName(TYPECODE(res)));
@@ -308,81 +315,80 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
     END DoEnumeration_type;
 
   PROCEDURE DoProcedure_type(proc : M3AST_AS.Procedure_type) =
-                  VAR formals: REF ARRAY OF Type.Formal;
-                  nFormals: INTEGER := 0;
-                  iter := M3ASTNext.NewIterFormal(proc.as_formal_param_s);
-                  formalParam: M3AST_AS.Formal_param;
-                  formalId: M3AST_AS.FORMAL_ID;
-                  signature: Type.Signature;
-              BEGIN
-                WHILE M3ASTNext.Formal(iter, formalParam, formalId) DO
-                  INC(nFormals) 
-                END;
-                formals := NEW(REF ARRAY OF Type.Formal, nFormals);
-                iter := M3ASTNext.NewIterFormal(proc.as_formal_param_s);
-                FOR i := 0 TO nFormals-1 DO
-                  EVAL M3ASTNext.Formal(iter, formalParam, formalId);
-                  formals[i] := NEW(Type.Formal);
-                  formals[i].name := 
-                      Atom.FromText(M3CId.ToText(formalId.lx_symrep));
-                  formals[i].type := 
-                      (*                     ProcessM3Type(h, formalParam.as_formal_type); *)
-                      ProcessM3Type(h, formalId.sm_type_spec);
-                  
+    VAR formals: REF ARRAY OF Type.Formal;
+        nFormals: INTEGER := 0;
+        iter := M3ASTNext.NewIterFormal(proc.as_formal_param_s);
+        formalParam: M3AST_AS.Formal_param;
+        formalId: M3AST_AS.FORMAL_ID;
+        signature: Type.Signature;
+    BEGIN
+      WHILE M3ASTNext.Formal(iter, formalParam, formalId) DO
+        INC(nFormals) 
+      END;
+      formals := NEW(REF ARRAY OF Type.Formal, nFormals);
+      iter := M3ASTNext.NewIterFormal(proc.as_formal_param_s);
+      FOR i := 0 TO nFormals-1 DO
+        EVAL M3ASTNext.Formal(iter, formalParam, formalId);
+        formals[i] := NEW(Type.Formal);
+        formals[i].name := 
+            Atom.FromText(M3CId.ToText(formalId.lx_symrep));
+        formals[i].type := 
+            (*                     ProcessM3Type(h, formalParam.as_formal_type); *)
+            ProcessM3Type(h, formalId.sm_type_spec);
+        
 
-                  IF formalParam.as_default # NIL THEN
-                    StubUtils.Message("formal default type: " &
-                      RTBrand.GetName(TYPECODE(formalParam)));
-                    formals[i].default := AstToVal.ProcessExp(
-                                              h,
-                                              NARROW(formalParam, 
-                                                     M3AST_AS.Formal_param)
-                    .as_default)
-                  END;
-                  
-                  TYPECASE formalId OF
-                    M3AST_AS.F_Value_id => formals[i].mode := Type.Mode.Value;
-                  | M3AST_AS.F_Var_id => formals[i].mode := Type.Mode.Var;
-                  | M3AST_AS.F_Readonly_id => formals[i].mode := 
-                      Type.Mode.Readonly;
-                  ELSE
-                    StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized parameter mode");
-                  END;
-                  formals[i].outOnly := FALSE;
-                  (* Change to depend on  <*OUTPUT*> *)
-                END;
-                signature.formals := formals;
-                IF proc.as_result_type # NIL THEN
-                  signature.result := ProcessM3Type(h, proc.as_result_type);
-                END;
-                IF proc.as_raises = NIL THEN
-                  signature.raises := NEW(REF ARRAY OF Type.Exception, 0)
-                ELSE
-                  TYPECASE proc.as_raises OF
-                    M3AST_AS.Raisees_some (r) => 
-                    VAR iter:= 
-                        SeqM3AST_AS_Qual_used_id.NewIter(r.as_raisees_s);
-                        nRaises := 
-                            SeqM3AST_AS_Qual_used_id.Length(r.as_raisees_s);
-                        raisee: M3AST_AS.Qual_used_id;
-                    BEGIN
-                      signature.raises := NEW(REF ARRAY OF 
-                      Type.Exception, nRaises);
-                      FOR i := 0 TO nRaises-1 DO
-                        EVAL SeqM3AST_AS_Qual_used_id.Next(iter, raisee);
-                        FillInException(h, 
-                                        raisee.as_id.sm_def,
-                          Atom.FromText(M3CId.ToText(raisee.as_id.lx_symrep)),
-                                        signature.raises[i])
-                      END
-                    END;
-                  | M3AST_AS.Raisees_any => 
-                  ELSE signature.raises := NEW(REF ARRAY OF Type.Exception, 0)
-                  END;
-                END;
-                t := NEW(Type.Procedure, sig := signature);
-              END DoProcedure_type;
-
+        IF formalParam.as_default # NIL THEN
+          StubUtils.Message("formal default type: " &
+            RTBrand.GetName(TYPECODE(formalParam)));
+          formals[i].default := AstToVal.ProcessExp(
+                                    h,
+                                    NARROW(formalParam, 
+                                           M3AST_AS.Formal_param)
+          .as_default)
+        END;
+        
+        TYPECASE formalId OF
+          M3AST_AS.F_Value_id => formals[i].mode := Type.Mode.Value;
+        | M3AST_AS.F_Var_id => formals[i].mode := Type.Mode.Var;
+        | M3AST_AS.F_Readonly_id => formals[i].mode := 
+            Type.Mode.Readonly;
+        ELSE
+          StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized parameter mode");
+        END;
+        formals[i].outOnly := FALSE;
+        (* Change to depend on  <*OUTPUT*> *)
+      END;
+      signature.formals := formals;
+      IF proc.as_result_type # NIL THEN
+        signature.result := ProcessM3Type(h, proc.as_result_type);
+      END;
+      IF proc.as_raises = NIL THEN
+        signature.raises := NEW(REF ARRAY OF Type.Exception, 0)
+      ELSE
+        TYPECASE proc.as_raises OF
+          M3AST_AS.Raisees_some (r) => 
+          VAR iter:= 
+              SeqM3AST_AS_Qual_used_id.NewIter(r.as_raisees_s);
+              nRaises := 
+                  SeqM3AST_AS_Qual_used_id.Length(r.as_raisees_s);
+              raisee: M3AST_AS.Qual_used_id;
+          BEGIN
+            signature.raises := NEW(REF ARRAY OF 
+            Type.Exception, nRaises);
+            FOR i := 0 TO nRaises-1 DO
+              EVAL SeqM3AST_AS_Qual_used_id.Next(iter, raisee);
+              FillInException(h, 
+                              raisee.as_id.sm_def,
+                              Atom.FromText(M3CId.ToText(raisee.as_id.lx_symrep)),
+                              signature.raises[i])
+            END
+          END;
+        | M3AST_AS.Raisees_any => 
+        ELSE signature.raises := NEW(REF ARRAY OF Type.Exception, 0)
+        END;
+      END;
+      t := NEW(Type.Procedure, sig := signature);
+    END DoProcedure_type;
 
   BEGIN
     IF h.astMap.get(ts, r) THEN

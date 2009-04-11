@@ -3,6 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 INTERFACE Value;
+IMPORT Atom;
 
 (* A Value.T is a representation for a Modula-3 value; it is intended 
    to be used in conjunction with the typed Abstract Syntax Tree 
@@ -15,7 +16,7 @@ INTERFACE Value;
 
 TYPE 
   T <: ROOT;
-  (* Ordinal | Float | LongFloat | Extended | Array | Set | Record | 
+  (* Ordinal | Float | LongFloat | Extended | ArrayOrRecord | Set | 
      Text | Null *)
 
     Ordinal = T OBJECT ord: INTEGER END;
@@ -27,17 +28,31 @@ TYPE
 
     Extended  = T OBJECT val: EXTENDED END;
 
-    Array = T OBJECT elements: REF ARRAY OF T END;
+    ArrayOrRecord = T OBJECT elements: REF ARRAY OF T END;
+    (* for array, elements can be either a normal T or a Propagate. 
+       for record, he field values in the order the fields are declared. *)
+       
 
-    Set = T OBJECT elements: REF ARRAY OF BOOLEAN END;
+    Propagate = T BRANDED OBJECT END; (* if the last init. is propagated *)
 
-    Record = T OBJECT elements: REF ARRAY OF T END;
-    (* The field values in the order the fields are declared. *)
+    Set = T OBJECT elements: REF ARRAY OF Ordinal END;
+    (* the ordinals corresponding to the base type of the set.
+       note that this declaration has changed from what's in the SRC
+       code, because 
+       (1) AstToValue doesn't have enough information to generate the 
+           old format
+       (2) The old format can grow exponentially with the program text
+           (TYPE S = SET OF [0..1024*1024]), whereas this version only 
+           grows linearly with the program text.
+    *)
+
 
     Txt = T OBJECT val: TEXT END;
 
     Null = T OBJECT END;
     (* The value NIL. *)
+
+    Proc = T OBJECT intf, item : Atom.T END;
 
 END Value.
 

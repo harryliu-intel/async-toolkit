@@ -46,49 +46,55 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
           RETURN Text.Sub(txt, 0, pos) & "X" & 
                  Text.Sub(txt, pos+1, Text.Length(txt));
         END;
-    | Array (arr) =>
+    | ArrayOrRecord (aor) =>
+      (* arrays and records use same format for initialization *)
+      TYPECASE type OF
+        Type.Array(arrType) =>
         VAR eltList: TEXT;
-            eltType: Type.T := NARROW(type, Type.Array).element;
+            eltType:= arrType.element;
         BEGIN 
-          IF NUMBER(arr.elements^) = 0 THEN 
+          IF NUMBER(aor.elements^) = 0 THEN 
             eltList := "";
           ELSE
-            eltList := ToText(arr.elements[0], eltType);
-            FOR i := 1 TO LAST(arr.elements^) DO
+            eltList := ToText(aor.elements[0], eltType);
+            FOR i := 1 TO LAST(aor.elements^) DO
               eltList := eltList & ", " & 
-                 ToText(arr.elements[i], eltType);
+                             ToText(aor.elements[i], eltType);
             END;
           END;
           RETURN Type.ToText(type) & "{" & eltList & "}";
         END;
+      |
+        Type.Record(recType) =>
+        VAR fieldList: TEXT := "";
+            notFirst := FALSE;
+        BEGIN
+          FOR i := 0 TO LAST(aor.elements^) DO
+            IF notFirst THEN fieldList := fieldList & ", "; END;
+            notFirst := TRUE;
+            fieldList := fieldList & 
+               ToText(aor.elements[i], recType.fields[i].type);
+          END;
+          RETURN Type.ToText(type) & "{" & fieldList & "}";          
+        END;
+      ELSE
+        StubUtils.Die("Value.ToText: Array or record constructor but type isn't Type.Array or Type.Record")
+      END
     | Set (set) =>
         VAR eltList: TEXT := "";
             baseType: Type.T := NARROW(type, Type.Set).range;
             notFirst := FALSE;
         BEGIN 
           FOR i := 0 TO LAST(set.elements^) DO
-            IF set.elements[i] THEN
-              IF notFirst THEN eltList := eltList & ", "; END;
-              notFirst := TRUE;
-              eltList := eltList & 
-                 ToText(NEW(Ordinal, ord:=i), baseType);
-            END;
+            IF notFirst THEN eltList := eltList & ", "; END;
+            notFirst := TRUE;
+            eltList := eltList & 
+                           ToText(NEW(Ordinal, 
+                                      ord:=set.elements[i].ord), baseType);
           END;
           RETURN Type.ToText(type) & "{" & eltList & "}";
         END;
-    | Record (rec) =>
-        VAR fieldList: TEXT := "";
-            recType := NARROW(type, Type.Record);
-            notFirst := FALSE;
-        BEGIN
-          FOR i := 0 TO LAST(rec.elements^) DO
-            IF notFirst THEN fieldList := fieldList & ", "; END;
-            notFirst := TRUE;
-            fieldList := fieldList & 
-               ToText(rec.elements[i], recType.fields[i].type);
-          END;
-          RETURN Type.ToText(type) & "{" & fieldList & "}";          
-        END;
+    | Propagate => RETURN ".." (* propagate array initializer *)
     | Txt (text) => RETURN "\"" & text.val & "\"";
     | Null  => RETURN "NIL";
     ELSE StubUtils.Die("Value.ToText: unsupported type");

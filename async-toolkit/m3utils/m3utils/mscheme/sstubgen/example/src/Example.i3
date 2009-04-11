@@ -1,6 +1,7 @@
 (* $Id$ *)
 
 INTERFACE Example;
+IMPORT Text;
 
 EXCEPTION X1; EXCEPTION X2;
 
@@ -70,5 +71,21 @@ CONST AnS = S.Two;
 PROCEDURE TTHello(tt : TT);
 
 PROCEDURE THello(t : T);
+
+CONST x = 1;
+
+CONST TE = Text.Equal;
+
+TYPE RR = RECORD x, y : LONGREAL END;
+
+CONST rr = RR { 1.0d0, -1.0d0 };
+
+CONST sss = SET OF Q { 1950 };
+
+CONST qqq = ARRAY OF CARDINAL { 1, LAST(CARDINAL), LAST(CARDINAL) DIV 2, 0 };
+
+CONST a1 = ARRAY OF CARDINAL { 1, 2, 3 };
+
+CONST a2 = ARRAY [0..5] OF CARDINAL { 19, .. };
 
 END Example.
