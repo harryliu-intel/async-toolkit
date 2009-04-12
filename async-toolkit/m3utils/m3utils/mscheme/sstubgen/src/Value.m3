@@ -56,10 +56,10 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
           IF NUMBER(aor.elements^) = 0 THEN 
             eltList := "";
           ELSE
-            eltList := ToText(aor.elements[0], eltType);
+            eltList := ArrayOrRecordElemToText(aor.elements[0], eltType);
             FOR i := 1 TO LAST(aor.elements^) DO
               eltList := eltList & ", " & 
-                             ToText(aor.elements[i], eltType);
+                             ArrayOrRecordElemToText(aor.elements[i], eltType);
             END;
           END;
           RETURN Type.ToText(type) & "{" & eltList & "}";
@@ -73,7 +73,7 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
             IF notFirst THEN fieldList := fieldList & ", "; END;
             notFirst := TRUE;
             fieldList := fieldList & 
-               ToText(aor.elements[i], recType.fields[i].type);
+               ArrayOrRecordElemToText(aor.elements[i], recType.fields[i].type);
           END;
           RETURN Type.ToText(type) & "{" & fieldList & "}";          
         END;
@@ -94,7 +94,6 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
           END;
           RETURN Type.ToText(type) & "{" & eltList & "}";
         END;
-    | Propagate => RETURN ".." (* propagate array initializer *)
     | Txt (text) => RETURN "\"" & text.val & "\"";
     | Null  => RETURN "NIL";
     ELSE StubUtils.Die("Value.ToText: unsupported type");
@@ -102,6 +101,19 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
 
     RETURN NIL;
   END ToText;
+
+PROCEDURE ArrayOrRecordElemToText(elem : Element; type : Type.T) : TEXT =
+  BEGIN
+    TYPECASE elem OF
+      Propagate => RETURN ".." (* propagate array initializer *)
+    |
+      Range(ran) => RETURN ToText(ran.val, type)
+    |
+      Actual(act) => RETURN Atom.ToText(act.field) & " := " & ToText(act.val, type)
+    ELSE StubUtils.Die("Value.ArrayOrRecordElemToText: unsupported type");
+      <*ASSERT FALSE *>
+    END
+  END ArrayOrRecordElemToText;
 
 BEGIN
 END Value.

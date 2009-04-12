@@ -28,13 +28,10 @@ TYPE
 
     Extended  = T OBJECT val: EXTENDED END;
 
-    ArrayOrRecord = T OBJECT elements: REF ARRAY OF T END;
+    ArrayOrRecord = T OBJECT elements: REF ARRAY OF Element END;
     (* for array, elements can be either a normal T or a Propagate. 
        for record, he field values in the order the fields are declared. *)
        
-
-    Propagate = T BRANDED OBJECT END; (* if the last init. is propagated *)
-
     Set = T OBJECT elements: REF ARRAY OF Ordinal END;
     (* the ordinals corresponding to the base type of the set.
        note that this declaration has changed from what's in the SRC
@@ -54,5 +51,18 @@ TYPE
 
     Proc = T OBJECT intf, item : Atom.T END;
 
+    (************************************************************)
+
+    (* special things for ArrayOrRecord *)
+    Element = BRANDED OBJECT END;
+
+    Propagate = Element BRANDED OBJECT END; (* the last init. is propagated *)
+
+    Range = Element OBJECT val : T END;
+
+    Actual = Range OBJECT field : Atom.T END; 
+    (* really not quite right, an Actual can also be a TYPE, but
+       not in this context *)
+    
 END Value.
 

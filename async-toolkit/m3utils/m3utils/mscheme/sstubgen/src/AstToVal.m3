@@ -61,25 +61,37 @@ PROCEDURE ProcessExp(h: AstToType.Handle; exp: M3AST_AS.EXP): Value.T =
           VAR
             iter := SeqM3AST_AS_CONS_ELEM.NewIter(con.as_element_s);
             cons_elem : M3AST_AS.CONS_ELEM;
-            elements : REF ARRAY OF Value.T;
+            elements : REF ARRAY OF Value.Element;
             p := 0;
           BEGIN
             IF con.as_propagate # NIL THEN
               Debug.Out("Propagate!",0);
-              elements := NEW(REF ARRAY OF Value.T, 
+              elements := NEW(REF ARRAY OF Value.Element, 
                       SeqM3AST_AS_CONS_ELEM.Length(con.as_element_s)+1);
               elements[LAST(elements^)] := NEW(Value.Propagate);
             ELSE
-              elements := NEW(REF ARRAY OF Value.T, 
+              elements := NEW(REF ARRAY OF Value.Element, 
                       SeqM3AST_AS_CONS_ELEM.Length(con.as_element_s))
             END;
 
             WHILE SeqM3AST_AS_CONS_ELEM.Next(iter, cons_elem) DO
               Debug.Out(RTBrand.GetName(TYPECODE(cons_elem)),0);
-              WITH range = NARROW(cons_elem,
-                                  M3AST_AS.RANGE_EXP_elem).as_range_exp DO
-                elements[p] := ProcessExp(h,
-                           NARROW(range,M3AST_AS.Range_EXP).as_exp)
+              TYPECASE cons_elem OF
+                M3AST_AS.RANGE_EXP_elem(re) => 
+                elements[p] := NEW(Value.Range,
+                                   val := ProcessExp(h,NARROW(re.as_range_exp,
+                                                   M3AST_AS.Range_EXP).as_exp))
+              |
+                M3AST_AS.Actual_elem(ae) =>
+                WITH fUsedId = NARROW(ae.as_actual.as_id, M3AST_AS_F.Exp_used_id),
+                     fieldName = Atom.FromText(M3CId.ToText(fUsedId.vUSED_ID.lx_symrep)) DO
+                  elements[p] := NEW(Value.Actual,
+                                     field := fieldName,
+                                     val := ProcessExp(h,
+                                                  ae.as_actual.as_exp_type))
+                END
+              ELSE
+                StubUtils.Die("AstToVal.ProcessExp: unknown element in Array_or_record_constructor_value of type: " & RTBrand.GetName(TYPECODE(cons_elem)))
               END;
               INC(p)
             END;

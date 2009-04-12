@@ -88,4 +88,20 @@ CONST a1 = ARRAY OF CARDINAL { 1, 2, 3 };
 
 CONST a2 = ARRAY [0..5] OF CARDINAL { 19, .. };
 
+CONST rrr = R { 3.0d0, 11 };
+
+CONST rrrr = R { second := 23, first := 42.0d0 };
+
+CONST BigArray = ARRAY OF ARRAY OF CARDINAL {
+  ARRAY OF CARDINAL { 0, 1, 2 },
+  ARRAY OF CARDINAL { 4, 5, 6 },
+  ARRAY OF CARDINAL { 7, 8, 9 }};
+
+TYPE Color = { Red, Green, Blue };
+
+CONST ColArray = ARRAY Color OF ARRAY [0..2] OF CARDINAL {
+  ARRAY OF CARDINAL { 0, 1, 2 },
+  ARRAY OF CARDINAL { 4, 5, 6 },
+  ARRAY OF CARDINAL { 7, 8, 9 }};
+
 END Example.

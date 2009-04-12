@@ -127,7 +127,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
         
-        Random, Normal, SetWarningsAreErrors
+        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL
   };
 
 REVEAL 
@@ -445,6 +445,7 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
 
     .defPrim("set-warnings-are-errors!",     ORD(P.SetWarningsAreErrors), dd,      1, 1)
     .defPrim("random",                ORD(P.Random), dd,      0, 0)
+    .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2);
 
     RETURN env;
@@ -1051,6 +1052,8 @@ PROCEDURE Prims(t : T;
       |
         P.Random => RETURN FromLR(NEW(Random.Default).init().longreal(0.0d0,1.0d0))
       |
+        P.NumberToLONGREAL => RETURN NumberToLONGREAL(x)
+      |
         P.Normal =>
         VAR mean := 0.0d0;
             sdev := 1.0d0;
@@ -1237,6 +1240,11 @@ PROCEDURE NumCompute(args : Object;
       RETURN FromLR(result)
     END
   END NumCompute;
+
+PROCEDURE NumberToLONGREAL(x : Object) : Object RAISES { E } =
+  BEGIN
+    RETURN SchemeString.FromText(Fmt.LongReal(FromO(x), literal := TRUE))
+  END NumberToLONGREAL;
 
 PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
   VAR

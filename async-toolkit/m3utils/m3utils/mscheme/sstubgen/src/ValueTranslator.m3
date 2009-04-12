@@ -10,10 +10,11 @@ MODULE ValueTranslator;
 IMPORT SchemePair, SchemeObject;
 IMPORT Value;
 FROM Value IMPORT Ordinal, Float, LongFloat, Extended, ArrayOrRecord, Set,
-                  Txt, Null, Propagate, Proc;
+                  Txt, Null, Proc;
 IMPORT SchemeString, SchemeLongReal, SchemeSymbol;
 IMPORT TypeTranslator;
 IMPORT Type;
+FROM SchemeUtils IMPORT List2;
 
 (* things here can't loop, since we're representing M3 constants! *)
 
@@ -30,7 +31,6 @@ PROCEDURE Translate(value : Value.T) : SchemeObject.T =
     | Set(s)        => RETURN P("Set",       ConvertSetArray(s.elements^))
     | Txt(t)        => RETURN P("Txt",       SchemeString.FromText(t.val))
     | Null          => RETURN P("Null",      NIL)
-    | Propagate     => RETURN P("Propagate", NIL)
     | Proc(p)       => RETURN P("Proc",      ProcedureName(p))
     ELSE
       <*ASSERT FALSE *>
@@ -45,16 +45,30 @@ PROCEDURE ProcedureName(p : Proc) : SchemeObject.T =
                    item := p.item))
   END ProcedureName;
 
-PROCEDURE ConvertArray(READONLY a : ARRAY OF Value.T) : SchemeObject.T =
+PROCEDURE ConvertArray(READONLY a : ARRAY OF Value.Element) : SchemeObject.T =
   VAR res : SchemePair.T := NIL;
   BEGIN
     FOR i := LAST(a) TO FIRST(a) BY -1 DO
       res := NEW(SchemePair.T, 
-                 first := Translate(a[i]),
+                 first := TranslateElement(a[i]),
                  rest := res)
     END;
     RETURN res
   END ConvertArray;
+
+PROCEDURE TranslateElement(e : Value.Element) : SchemeObject.T =
+  BEGIN
+    TYPECASE e OF 
+      Value.Propagate => RETURN P("Propagate", NIL)
+    |
+      Value.Actual(act) => RETURN P("Actual", List2(act.field,
+                                                    Translate(act.val)))
+    |
+      Value.Range(ran) => RETURN P("Range", Translate(ran.val))
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END TranslateElement;
 
 PROCEDURE ConvertSetArray(READONLY a: ARRAY OF Value.Ordinal):SchemeObject.T =
   VAR res : SchemePair.T := NIL;  BEGIN
@@ -80,3 +94,4 @@ PROCEDURE P(tag : TEXT; what : SchemeObject.T) : SchemePair.T =
   END P;
 
 BEGIN END ValueTranslator.
+

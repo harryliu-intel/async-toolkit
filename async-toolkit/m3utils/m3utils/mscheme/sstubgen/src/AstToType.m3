@@ -147,9 +147,15 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
             M3AST_AS.Const_id(cid) =>  
             WITH astValue = cid.vINIT_ID.sm_init_exp,
                  valValue = AstToVal.ProcessExp(h, astValue),
-                 scmValue = ValueTranslator.Translate(valValue) DO
+                 scmValue = ValueTranslator.Translate(valValue),
+                 typeSYM = Atom.FromText("type"),
+                 valueSYM = Atom.FromText("value") DO
               
-              AddToList(constList, qid, List2(tkType, scmValue))
+              AddToList(constList, 
+                        qid, 
+                        List2(
+                            Cons(typeSYM,tkType),
+                            Cons(valueSYM,scmValue)))
             END
           ELSE
             Msg("Not Proc/Var/Const, must be a type");
