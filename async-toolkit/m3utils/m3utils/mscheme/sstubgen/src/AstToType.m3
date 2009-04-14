@@ -87,6 +87,11 @@ PROCEDURE GetNames(c : M3Context.T;
         END
       END
     END;
+
+    IF cu = NIL THEN
+      StubUtils.Die("AstToType.GetNames: cu is NIL; no such interface/type?")
+    END;
+
     M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
     RETURN res
   END GetNames;

@@ -46,10 +46,14 @@
 ;; 2. instance objects, with operations:
 ;;    
 ;;    (i 'display)            ;; debug display
+;;   
+;;    (i 'copy)               ;; make copy
 ;;
 ;;    (i 'get <fn>)           ;; get field <fn>
 ;;
 ;;    (i 'set! <fn> <nv>)     ;; set field <fn> to new value <nv>
+;;
+;;    (i 'set <fn> <nv>)      ;; return new i with <fn> = <nv>
 ;;                                                                     
 ;;    (i 'inc! <fn> [<by>])   ;; for numerical fields: increment by 1 or <by>
 ;;                            
@@ -63,12 +67,12 @@
 (define (make-struct-type name lst)
   (define (initial-value)
     (map (lambda (field-def)
-	   (let ((initializer (cadr field-def)))
-	     (if (procedure? initializer)
-		 (initializer)
-		 initializer)))
-	 lst))
-    
+					 (let ((initializer (cadr field-def)))
+						 (if (procedure? initializer)
+								 (initializer)
+								 initializer)))
+				 lst))
+	
   (let ((new-type '()))   ;; could just use letrec here instead...
     (set! new-type
           (lambda x 
@@ -88,8 +92,15 @@
                          (case (car y)
                            ((display) (map cons (map car lst) val))
 
-			   ((reset!) (set! val (initial-value)))
-                           
+													 ((reset!) (set! val (initial-value)))
+
+                           ((copy)
+														(let ((new (new-type 'new)))
+															(map (lambda (fld)
+																		 (new 'set! fld (accessor 'get fld)))
+																	 (map car lst))
+															new))
+
                            ((get)
                             (let ((fname (cadr y)))
                               (let loop ((vp val)
@@ -114,6 +125,11 @@
 
                                               (accessor 'get (cadr y))
                                               )))
+
+													 ((set)
+														(let ((new (accessor 'copy)))
+															(new 'set! (cadr y) (caddr y))
+															new))
                            
                            ((set!)
                             (let ((fname (cadr y)))
