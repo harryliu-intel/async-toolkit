@@ -27,7 +27,6 @@ PROCEDURE NewHandle(wr: Wr.T; intf: TEXT; c: M3Context.T): Handle;
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER;
 
 VAR varList, procList, constList, typeList, exceptionList : SchemePair.T := NIL;
-
 PROCEDURE GetNames(c : M3Context.T; qid: Type.Qid) : RefSeq.T;
 
 END AstToType.

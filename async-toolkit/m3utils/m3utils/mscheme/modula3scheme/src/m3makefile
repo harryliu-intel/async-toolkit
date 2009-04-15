@@ -25,4 +25,6 @@ table("CARef", "CardAtomPair", "Refany")
 Module("SchemeM3")
 Module("SchemeCommandRunner")
 
+Module("SchemeModula3Types")
+
 library ("modula3scheme")
