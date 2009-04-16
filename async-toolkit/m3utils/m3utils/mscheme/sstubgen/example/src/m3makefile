@@ -5,5 +5,6 @@ Module("Example")
 Interface("Example2")
 Interface("Type")
 Interface("Value")
+Module("Bubble")
 
 library ("stubexample")
