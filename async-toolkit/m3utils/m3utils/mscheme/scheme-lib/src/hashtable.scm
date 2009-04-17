@@ -15,72 +15,104 @@
 
 (require-modules "basic-defs")
 
-(define make-hash-table
-  (lambda (size hash-function)
-    (let ((table (make-vector size '())))
-      (lambda (message . args)
-        (case message
+(define (make-hash-table size hash-function)
 
-          ((add-entry!)
-           (let* ((key (car args))
-                  (index (hash-function key)))
-             (vector-set! table
-                          index
-                          (cons (cons key (cadr args))
-                                (vector-ref table index)))))
+	(define (copy-elements! from to)
+		(map (lambda (a) (to 'add-entry! (car a) (cdr a)))
+				 (map (lambda (k) (cons k (from 'retrieve k))) (from 'keys)) ))
 
-          ((retrieve)
-           (let* ((key (car args))
-                  (index (hash-function key)))
-             (cond ( (assoc key (vector-ref table index))  (cdr (assoc key (vector-ref table index))))
-                   (else '*hash-table-search-failed*))))
+	(define (hash-index-function x) ;; the actual function to use for indexing
+		(modulo (hash-function x) size))
 
-          ((delete-entry!)
-           (let* ((key (car args))
-                  (index (hash-function key)))
-             (let loop ((bucket (vector-ref table index))
-                        (so-far '()))
-               (cond ((null? bucket)
-                      (vector-set! table index (reverse so-far)))
-                     ((equal? key (caar bucket))
-                      (loop (cdr bucket) so-far))
-                     (else
-                      (loop (cdr bucket)
-                            (cons (car bucket) so-far)))))))
+	(let ((me '()))
+		(let ((table (make-vector size '())))
+			(set! 
+			 me
+			 (lambda (message . args)
+				 (case message
+					 ((size) (length (me 'keys)))
 
-          ((keys)
-           (let jloop ((index 0)
-                       (so-far '()))
+					 ((add-entry!)
+						(let* ((key (car args))
+									 (index (hash-index-function key)))
+							(vector-set! table
+													 index
+													 (cons (cons key (cadr args))
+																 (vector-ref table index)))))
 
-             (if (= index size) 
-                 so-far
-                 (let iloop ((bucket (vector-ref table index))
-                             (s2 so-far))
-                   (if (null? bucket) 
-                       (jloop (+ index 1) s2)
-                       (iloop (cdr bucket) (cons (caar bucket) s2)))))))
-          
-          
-          ((display)
-           (do ((index 0 (+ index 1)))
-               ((= index size))
-             (let ((bucket (vector-ref table index)))
-               (if (not (null? bucket))
-                   (begin
-                     (display "Bucket #")
-                     (display index)
-                     (display ": ")
-                     (display bucket)
-                     (newline))))))
+					 ((update-entry!)
+						(let* ((key (car args)))
+							(me 'delete-entry! key)
+							(me 'add-entry! key (cadr args))))
 
-          ((clear!)
-           (do ((index 0 (+ index 1)))
-               ((= index size))
-             (vector-set! table index '()))))))))
+					 ((rehash!)
+						(let ((new-size (car args))
+									(temp (make-hash-table size hash-function)))
+							(copy-elements! me temp)
+							(set! size new-size)
+							(set! table (make-vector size '()))
+							(copy-elements! temp me)
+							))
+
+					 ((retrieve)
+						(let* ((key (car args))
+									 (index (hash-index-function key)))
+							(cond ( (assoc key (vector-ref table index))  (cdr (assoc key (vector-ref table index))))
+										(else '*hash-table-search-failed*))))
+
+					 ((delete-entry!)
+						(let* ((key (car args))
+									 (index (hash-index-function key)))
+							(let loop ((bucket (vector-ref table index))
+												 (so-far '()))
+								(cond ((null? bucket)
+											 (vector-set! table index (reverse so-far)))
+											((equal? key (caar bucket))
+											 (loop (cdr bucket) so-far))
+											(else
+											 (loop (cdr bucket)
+														 (cons (car bucket) so-far)))))))
+
+					 ((keys)
+						(let jloop ((index 0)
+												(so-far '()))
+
+							(if (= index size) 
+									so-far
+									(let iloop ((bucket (vector-ref table index))
+															(s2 so-far))
+										(if (null? bucket) 
+												(jloop (+ index 1) s2)
+												(iloop (cdr bucket) (cons (caar bucket) s2)))))))
+					 
+					 
+					 ((display)
+						(do ((index 0 (+ index 1)))
+								((= index size))
+							(let ((bucket (vector-ref table index)))
+								(if (not (null? bucket))
+										(begin
+											(display "Bucket #")
+											(display index)
+											(display ": ")
+											(display bucket)
+											(newline))))))
+
+					 ((clear!)
+						(do ((index 0 (+ index 1)))
+								((= index size))
+							(vector-set! table index '())))
+
+					 (else (error "hashtable : unknown message : " message))
+					 )
+				 )
+			 )
+			)
+		me))
 
 (define (make-string-hash-table size)
   (define (string-hash s) 
-    (modulo (accumulate + 0 (map char->integer (string->list s))) size))
+    (accumulate + 0 (map char->integer (string->list s))))
 
   (make-hash-table size string-hash))
 

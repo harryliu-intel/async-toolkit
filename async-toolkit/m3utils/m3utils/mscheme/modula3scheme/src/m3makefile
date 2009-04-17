@@ -27,4 +27,6 @@ Module("SchemeCommandRunner")
 
 Module("SchemeModula3Types")
 
+Module("SchemeApply")
+
 library ("modula3scheme")

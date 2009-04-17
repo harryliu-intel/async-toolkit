@@ -25,7 +25,32 @@
                  result))
 
               ((size)     (length (hashtable 'keys)))
-              ((keys clear! display)     (hashtable message))
+
+              ((rehash! keys clear! display)     (hashtable message))
+
+							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+							
+							((intersection)
+							 (let ((new (make-set make-hash-table)))
+								 (map (lambda(k)(new 'insert! k))
+											(filter (lambda(x)(res 'member? x)) 
+															((car args) 'keys)))
+								 new))
+
+							((union)
+							 (let ((new (make-set make-hash-table)))
+								 (map (lambda(k)(new 'insert! k)) 
+											(append (res 'keys) ((car args) 'keys)))
+								 new))
+
+							((diff)
+							 (let ((new (make-set make-hash-table)))
+								 (map (lambda(k)(new 'insert! k)) 
+											(res 'keys))
+								 (map (lambda(k)(new 'delete! k))
+											((car args) 'keys))
+								 new))
+
               (else (error "Unknown message " message))
               )))
     res))
@@ -37,11 +62,11 @@
 
 (define (make-symbol-hash-table size)
   (define (symbol-hash s) 
-    (modulo (accumulate + 
+    (accumulate + 
 												0 
 												(map char->integer 
-														 (string->list (symbol->string s)))) 
-						size))
+														 (string->list (symbol->string s)))) )
+						
 
   (make-hash-table size symbol-hash))
 
