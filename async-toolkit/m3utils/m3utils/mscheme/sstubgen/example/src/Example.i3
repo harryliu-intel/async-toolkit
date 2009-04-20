@@ -7,7 +7,7 @@ EXCEPTION X1; EXCEPTION X2;
 
 TYPE
   T = OBJECT METHODS
-    hello() := THello;
+    hello() (*:= THello*);
     meow(s1s := FIRST(S); s2integer : INTEGER) : INTEGER RAISES { X1, X2 };
     goodbye(s1 : S; s2 : REF W; s3 : W; s4 : INTEGER) : V;
     helloAgain(a : [VAL(1,INTEGER)..VAL(3,INTEGER)]; b : ARRAY OF S);
@@ -18,9 +18,10 @@ TYPE
     f2 : X;
   METHODS
     m();
-    n() := THello;
+    n() (*:= THello;
   OVERRIDES
     hello := THello;
+ *)
   END;
   
   OAB = T BRANDED OBJECT END;
@@ -60,9 +61,9 @@ CONST True = BOOLEAN.TRUE;
 
 CONST Brand = "Example";
 
-PROCEDURE TakesS(s : S := S.Two);
+(*PROCEDURE TakesS(s : S := S.Two);*)
 
-CONST PP = TakesS;
+(*CONST PP = TakesS;*)
 
 TYPE PType = PROCEDURE (s : S);
 

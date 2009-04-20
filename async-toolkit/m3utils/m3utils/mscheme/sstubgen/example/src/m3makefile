@@ -1,10 +1,26 @@
+/* $Id$ */
+import ("cit_util")
+import ("mscheme")
+import ("modula3scheme")
 import ("libm3")
 import ("netobj")
+import ("readline")
+import ("schemereadline")
+import ("sstubgen")
 
 Module("Example")
 Interface("Example2")
-Interface("Type")
-Interface("Value")
+%Interface("Type")
+%Interface("Value")
 Module("Bubble")
 
-library ("stubexample")
+SchemeStubs("Bubble")
+SchemeStubs("Example")
+
+ExportSchemeStubs("stubexample") % export OUR scheme stubs
+
+importSchemeStubs()              % import ALL scheme stubs
+
+implementation("Main")
+
+program ("stubexample")

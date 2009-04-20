@@ -30,6 +30,7 @@ FROM SchemeChar IMPORT Character, Char, IChr, LowerCase, UpperCase, Digits,
 IMPORT SchemeChar;
 IMPORT SchemeSymbol;
 IMPORT SchemeLongReal;
+IMPORT SchemeBoolean, TextUtils;
 
 IMPORT Fmt, Text, Wx, Wr;
 IMPORT Math, Scan, Lex, FloatMode;
@@ -127,7 +128,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
         
-        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL
+        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub
   };
 
 REVEAL 
@@ -446,6 +447,7 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     .defPrim("set-warnings-are-errors!",     ORD(P.SetWarningsAreErrors), dd,      1, 1)
     .defPrim("random",                ORD(P.Random), dd,      0, 0)
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
+    .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2);
 
     RETURN env;
@@ -1053,6 +1055,10 @@ PROCEDURE Prims(t : T;
         P.Random => RETURN FromLR(NEW(Random.Default).init().longreal(0.0d0,1.0d0))
       |
         P.NumberToLONGREAL => RETURN NumberToLONGREAL(x)
+      |
+        P.StringHaveSub =>
+        RETURN SchemeBoolean.Truth(TextUtils.HaveSub(SchemeString.ToText(x),
+                                                     SchemeString.ToText(y)))
       |
         P.Normal =>
         VAR mean := 0.0d0;

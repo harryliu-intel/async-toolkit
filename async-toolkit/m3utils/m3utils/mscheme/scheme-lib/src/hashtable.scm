@@ -84,7 +84,9 @@
 										(if (null? bucket) 
 												(jloop (+ index 1) s2)
 												(iloop (cdr bucket) (cons (caar bucket) s2)))))))
-					 
+
+					 ((values)
+						(map (lambda(k)(me 'retrieve k)) (me 'keys)))
 					 
 					 ((display)
 						(do ((index 0 (+ index 1)))

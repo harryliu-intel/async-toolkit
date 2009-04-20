@@ -29,4 +29,6 @@ Module("SchemeModula3Types")
 
 Module("SchemeApply")
 
+Module("SchemeProcedureStubs")
+
 library ("modula3scheme")

@@ -13,7 +13,7 @@
           (lambda (message . args)
             (case message
               ((insert!)  (let ((result (res 'member? (car args))))
-                            (if (not result)
+														(if (not result)
                                 (hashtable 'add-entry! (car args)))
                             result))
 
@@ -35,6 +35,12 @@
 								 (map (lambda(k)(new 'insert! k))
 											(filter (lambda(x)(res 'member? x)) 
 															((car args) 'keys)))
+								 new))
+
+							((copy)
+							 (let ((new (make-set make-hash-table)))
+								 (map (lambda(k)(new 'insert! k)) 
+											(res 'keys))
 								 new))
 
 							((union)

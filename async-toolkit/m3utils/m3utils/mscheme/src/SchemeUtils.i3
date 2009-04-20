@@ -22,6 +22,8 @@ TYPE Pair = SchemePair.T;
    methods... see Peter Norvig's comments on this, about "unqualifying"
    names.  It's just a Java hack that's not relevant for Modula-3. *)
 
+PROCEDURE CheckNonNil(x : Object) : Object RAISES { E };
+ 
 PROCEDURE Str(x : Object) : String RAISES { E };
 
 PROCEDURE Sym(x : Object) : Symbol RAISES { E };

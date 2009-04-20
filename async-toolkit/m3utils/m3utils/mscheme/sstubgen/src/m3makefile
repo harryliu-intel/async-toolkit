@@ -21,34 +21,22 @@ import("cit_util")
 interface("ValueProc")
 interface("SProtocol")
 
-module("TypeTranslator")
-module("ValueTranslator")
+Module("TypeTranslator")
+Module("ValueTranslator")
 
-module("TypeNames")
-module("Type")
-module("Value")
-module("AstToVal")
-module("AstToType")
-%module("StubCode")
-%module("CodeForType")
-%module("ModuleStubCode")
-%module("IntfStubCode")
-module("StubGenTool")
-module("StubUtils")
-module("FRefRefTbl")
+Module("TypeNames")
+Module("Type")
+Module("Value")
+Module("AstToVal")
+Module("AstToType")
+Module("StubGenTool")
+Module("StubUtils")
+Module("FRefRefTbl")
 
 module("M3ASTScopeNames")
 
-implementation("Main")
+template("schemestubs")
 
-%build_standalone()
-Program("sstubgen")
-
-% if "TRUE"
-%   local stubgenv1 = program_name ("stubgenv1")
-%   link_file (program_name ("stubgen"), stubgenv1)
-%   install_derived (stubgenv1)
-%   install_link_to_derived (stubgenv1, BIN_INSTALL)
-% end
+library("sstubgen")
 
 

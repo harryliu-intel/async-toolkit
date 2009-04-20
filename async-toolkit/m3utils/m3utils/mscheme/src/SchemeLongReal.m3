@@ -37,6 +37,24 @@ PROCEDURE FromO(x : Object) : LONGREAL RAISES { E } =
     END
   END FromO;
 
+PROCEDURE Int(x : Object; roundOK : BOOLEAN) : INTEGER RAISES { E } =
+  BEGIN
+    WITH lr = FromO(x) DO
+      IF lr < FLOAT(FIRST(INTEGER),LONGREAL) 
+        OR 
+         lr > FLOAT(LAST(INTEGER),LONGREAL) THEN
+        RETURN Int(Error("number out of range : " & StringifyT(x)),FALSE)
+      END;
+
+      WITH res = ROUND(lr) DO
+        IF NOT roundOK AND FLOAT(res,LONGREAL) # lr THEN
+          RETURN Int(Error("not an integer : " & StringifyT(x)),FALSE)
+        END;
+        RETURN res
+      END
+    END
+  END Int;
+
 PROCEDURE FromT(t : TEXT) : T RAISES { E }=
   BEGIN 
     TRY

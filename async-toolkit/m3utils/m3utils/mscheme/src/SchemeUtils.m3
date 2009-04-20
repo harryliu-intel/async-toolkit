@@ -30,6 +30,13 @@ TYPE Boolean = SchemeBoolean.T;
 PROCEDURE StringifyT(x : Object) : TEXT RAISES { E } =
   BEGIN RETURN StringifyQ(x, FALSE) END StringifyT;
 
+PROCEDURE CheckNonNil(x : Object) : Object RAISES { E } =
+  BEGIN
+    IF x # NIL THEN RETURN x 
+    ELSE RETURN Error("NIL object in context requiring non-NIL object")
+    END
+  END CheckNonNil;
+
 PROCEDURE Str(x : Object) : String RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x,String) THEN RETURN x 

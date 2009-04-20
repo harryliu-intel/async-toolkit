@@ -23,6 +23,8 @@ IMPORT SchemeEnvironment;
 IMPORT TZ, SchemeUtils;
 IMPORT NetObj;
 IMPORT FS;
+IMPORT SchemeProcedureStubs;
+IMPORT RTType;
 
 <* FATAL Thread.Alerted *>
 
@@ -250,9 +252,13 @@ PROCEDURE NetObjExportGlobalEnvApply(<*UNUSED*>p : SchemeProcedure.T;
   RAISES { E } =
   BEGIN
     WITH nam = First(args) DO
-      NetObj.Export(SchemeString.ToText(nam),
-                    interp.getGlobalEnvironment());
-      RETURN nam
+      TRY
+        NetObj.Export(SchemeString.ToText(nam),
+                      interp.getGlobalEnvironment());
+        RETURN nam
+      EXCEPT
+        NetObj.Error(err) => RAISE E("NetObjExportGlobalEnv: caught NetObj.Error : " & AL.Format(err))
+      END
     END
   END NetObjExportGlobalEnvApply;
 
@@ -425,6 +431,70 @@ PROCEDURE GetUnixPIDApply(<*UNUSED*>p : SchemeProcedure.T;
 
 (**********************************************************************)
 
+PROCEDURE TypecodeApply(<*UNUSED*>p : SchemeProcedure.T; 
+                        <*UNUSED*>interp : Scheme.T; 
+                        args : Object) : Object =
+  BEGIN
+    RETURN SchemeLongReal.FromI(TYPECODE(First(args)))
+  END TypecodeApply;
+
+PROCEDURE MaxTypecodeApply(<*UNUSED*>p : SchemeProcedure.T; 
+                           <*UNUSED*>interp : Scheme.T; 
+                           <*UNUSED*>args : Object) : Object =
+  BEGIN
+    RETURN SchemeLongReal.FromI(RTType.MaxTypecode())
+  END MaxTypecodeApply;
+
+PROCEDURE SupertypeApply(<*UNUSED*>p : SchemeProcedure.T; 
+                         <*UNUSED*>interp : Scheme.T; 
+                         args : Object) : Object RAISES { E } =
+  VAR
+    tc := SchemeLongReal.Int(First(args));
+  BEGIN
+    IF tc < FIRST(RTType.Typecode) OR 
+       tc > LAST(RTType.Typecode) OR
+       tc > RTType.MaxTypecode() THEN
+      RAISE E("SchemeM3.SupertypeApply: typecode out of range: " & Stringify(First(args)))
+    END;
+    RETURN SchemeLongReal.FromI(RTType.Supertype(tc))
+  END SupertypeApply;
+
+PROCEDURE IsSubtypeApply(<*UNUSED*>p : SchemeProcedure.T; 
+                         <*UNUSED*>interp : Scheme.T; 
+                         args : Object) : Object RAISES { E } =
+  VAR
+    tca := SchemeLongReal.Int(First(args));
+    tcb := SchemeLongReal.Int(Second(args));
+  BEGIN
+    IF tca < FIRST(RTType.Typecode) OR 
+       tca > LAST(RTType.Typecode) OR
+       tca > RTType.MaxTypecode() THEN
+      RAISE E("SchemeM3.SupertypeApply: typecode out of range: " & Stringify(First(args)))
+    END;
+    IF tcb < FIRST(RTType.Typecode) OR 
+       tcb > LAST(RTType.Typecode) OR
+       tcb > RTType.MaxTypecode() THEN
+      RAISE E("SchemeM3.SupertypeApply: typecode out of range: " & Stringify(Second(args)))
+    END;
+    RETURN SchemeBoolean.Truth(RTType.IsSubtype(tca,tcb))
+  END IsSubtypeApply;
+
+PROCEDURE GetNDimensionsApply(<*UNUSED*>p : SchemeProcedure.T; 
+                              <*UNUSED*>interp : Scheme.T; 
+                              args : Object) : Object RAISES { E } =
+  VAR
+    tc := SchemeLongReal.Int(First(args));
+  BEGIN
+    IF tc < FIRST(RTType.Typecode) OR 
+       tc > LAST(RTType.Typecode) OR
+       tc > RTType.MaxTypecode() THEN
+      RAISE E("SchemeM3.GetNDimensionsApply: typecode out of range: " & Stringify(First(args)))
+    END;
+    RETURN SchemeLongReal.FromI(RTType.GetNDimensions(tc))
+  END GetNDimensionsApply;
+
+(**********************************************************************)
+
 PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.ExtDefiner =
   BEGIN 
     prims.addPrim("jailbreak", NEW(SchemeProcedure.T, 
@@ -515,6 +585,30 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
                                               apply := DefineNewGlobal), 
                   2, 2);
 
+    (* RTType things *)
+
+    prims.addPrim("rttype-typecode", NEW(SchemeProcedure.T,
+                                         apply := TypecodeApply),
+                  1, 1);
+
+    prims.addPrim("rttype-maxtypecode", NEW(SchemeProcedure.T,
+                                            apply := MaxTypecodeApply),
+                  0, 0);
+    
+    prims.addPrim("rttype-supertype", NEW(SchemeProcedure.T,
+                                          apply := SupertypeApply),
+                  1, 1);
+
+    prims.addPrim("rttype-issubtype?", NEW(SchemeProcedure.T,
+                                          apply := IsSubtypeApply),
+                  2, 2);
+
+    prims.addPrim("rttype-ndimensions", NEW(SchemeProcedure.T,
+                                            apply := GetNDimensionsApply),
+                  1, 1);
+
+    (****************************************)
+
     prims.addPrim("netobj-export-global-environment",
                   NEW(SchemeProcedure.T, 
                       apply := NetObjExportGlobalEnvApply), 
@@ -532,5 +626,6 @@ BEGIN
   TextRefSchemeAutoTbl.Register(); (* vide module initialization order,
                                       Green Book *)
   prims := ExtendWithM3(prims);
-  SchemeEnvironment.ExtendWithIntrospectionPrimitives(prims)  
+  SchemeEnvironment.ExtendWithIntrospectionPrimitives(prims)  ;
+  EVAL SchemeProcedureStubs.Extend(prims)
 END SchemeM3.

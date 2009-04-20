@@ -18,6 +18,9 @@ PROCEDURE FromI(x : INTEGER) : T;
 
 PROCEDURE FromO(x : SchemeObject.T) : LONGREAL RAISES { E };
 
+PROCEDURE Int(x : SchemeObject.T; roundOK := FALSE) : INTEGER RAISES { E };
+  (* checks that operand is an integer if roundOK is FALSE *)
+
 CONST Brand = "SchemeLongReal";
 
 PROCEDURE FromT(t : TEXT) : T RAISES { E }; (* my add'n *)
