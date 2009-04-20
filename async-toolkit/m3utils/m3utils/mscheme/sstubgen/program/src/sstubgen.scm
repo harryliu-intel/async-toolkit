@@ -1444,7 +1444,10 @@
 
 		(define (make-default-method m)
 			(let* ((sig (extract-field 'sig m))
-						 (have-return (not (null? (extract-field 'result sig))))
+						 (have-return 
+							(if (null? (extract-field 'result sig)) 
+									#f
+									(extract-field 'result sig)))
 						 (name (extract-field 'name m)))
 
 				(define (format-punt-call) 
@@ -1460,9 +1463,33 @@
 						)
 					)
 
+				(define (format-arg-to-scheme f)
+					(string-append
+					 "        __args := SchemeUtils.Cons("
+					 (to-scheme-proc-name (extract-field 'type f) env)
+					 "(" (extract-field 'name f) ")"
+						",__args);" dnl
+					 )
+					)
+
 				(define (format-override-call) 
 					(string-append
 					 "      (* method overriden by Scheme code *)" dnl
+					 "      VAR" dnl
+					 "        __args : SchemePair.T := NEW(SchemePair.T, first := __object, rest := NIL);" dnl
+					 "      BEGIN" dnl
+					 (apply string-append
+									(map format-arg-to-scheme (extract-field 'formals sig)))
+					 "        __args := SchemeUtils.Reverse(__args);" dnl
+
+					 "        " (if have-return 
+												 (string-append "RETURN " (to-modula-proc-name have-return env ) "(")
+												 "EVAL (")
+					         "SchemeProcedureStubs.CallScheme(__object.interp, "
+					         "__object."(scheme-slot-name m)", "
+									 "__args))" dnl
+					 "        (* and this is where we need to unpack VAR params *)" dnl
+					 "      END" dnl
 					 )
 					)
 
@@ -1483,15 +1510,82 @@
 			 
 				 )
 			))
+
+		(define (make-object-ops)
+
+			(define (format-field-initializer f)
+				(let ((type (extract-field 'type f))
+							(name (extract-field 'name f)))
+					(string-append
+					 "          IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+					 "             res." name " := "(to-modula-proc-name type env)"(r.rest)" dnl
+					 "          END;" dnl
+					 )))
+
+					
+			(define (format-field-initializers) 
+				(apply string-append
+							 (map format-field-initializer (extract-field 'fields type))
+							 )
+				)
+
+			(define (format-method-override m)
+				(let ((name (extract-field 'name m)))
+					(string-append
+					 "          IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+					 "             res." (scheme-slot-name m) " := r.rest" dnl
+					 "          END;" dnl
+					 )))
+
+			(define (format-method-overrides) 
+				(apply string-append
+							 (map format-method-override methods)
+							 )
+				)
+
+			(string-append
+			 "PROCEDURE New_" m3ti "(interp : Scheme.T; inits : SchemeObject.T : SchemeObject.T) RAISES { Scheme.E } =" dnl
+			 "  VAR" dnl
+			 "    p := SchemePair.Pair(inits);" dnl
+			 "  BEGIN" dnl
+			 "    WITH res = NEW("surrogate-type-name") DO" dnl
+			 "      WHILE p # NIL DO" dnl
+			 "        WITH r = SchemePair.Pair(p.first) DO" dnl
+			 (format-field-initializers)
+			 (format-method-overrides)
+       "        END;" dnl
+			 "        p := SchemePair.Pair(p.rest)" dnl
+			 "      END" dnl
+			 "    RETURN res" dnl
+			 "    END" dnl
+			 "  END New_" m3ti ";" dnl
+			 ))
 		
 		(cons
-		 (make-object-surrogate-decl)
-		 (map make-default-method methods)
+		 (make-object-ops)
+		 (cons
+			(make-object-surrogate-decl)
+			(map make-default-method methods)
+			)
 		 )
-
 		)
-
 )
+
+(define (make-object-registrations obj-type env)
+	;; print those things that need to be registered for an object
+	;; type
+	(let* ((m3tn (type-formatter obj-type env))
+				 (m3ti (m3type->m3identifier m3tn))
+				 (alias (cleanup-qid (extract-field 'alias obj-type)))
+				 (name (cleanup-qid (extract-field 'alias obj-type)))
+				 
+				 (new-name (string-append "New_" m3ti)))
+		(string-append
+		 "    SchemeProcedureStubs.RegisterNew(SchemeProcedureStubs.Qid{ intf := Atom.FromText(\""(car alias)"\"), item := Atom.FromText(\""(cdr alias)"\")}, "new-name");" dnl
+		 )
+		)
+		 
+	)
 
 (define (visible-methods obj-type)
 	;; a type can only have methods if its opaque or object
