@@ -681,6 +681,14 @@ PROCEDURE SymbolCheck(x : Object) : SchemeSymbol.T RAISES { E } =
     END
   END SymbolCheck;
 
+PROCEDURE VectorCheck(t : Object) : Vector RAISES { E } = 
+  BEGIN
+    IF t = NIL OR NOT ISTYPE(t, Vector) THEN
+      RAISE E("expected a vector : " & SchemeUtils.Stringify(t))
+    END;
+    RETURN t
+  END VectorCheck;
+
 VAR
   SYMquote := SchemeSymbol.Symbol("quote");
   SYMbegin := SchemeSymbol.Symbol("begin");

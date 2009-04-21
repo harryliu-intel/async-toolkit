@@ -125,4 +125,7 @@ CONST Brand = "Scheme";
 PROCEDURE SymbolCheck(x : Object) : SchemeSymbol.T RAISES { E }; 
   (* this has to be here because of the declaration of E *)
 
+PROCEDURE VectorCheck(x : Object) : SchemeVector.T RAISES { E };
+  (* same reason *)
+
 END Scheme.
