@@ -26,6 +26,7 @@ IMPORT SchemeObject, SchemeSymbol;
 IMPORT RefSeq, M3ASTScopeNames;
 FROM SchemeUtils IMPORT Cons, List2;
 IMPORT ValueTranslator;
+IMPORT Debug;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -67,7 +68,7 @@ PROCEDURE GetNames(c : M3Context.T;
   VAR cu : M3AST_AS.Compilation_Unit;
       res : RefSeq.T := NIL;
   BEGIN
-    Msg("GetNames processing " & Atom.ToText(qid.intf));
+    Debug.Out("GetNames processing " & Atom.ToText(qid.intf));
 
     IF M3Context.FindExact(c, 
                            Atom.ToText(qid.intf), 
@@ -106,7 +107,7 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
       ts: M3AST_AS.TYPE_SPEC; 
       returnCode := 0;
   BEGIN
-    Msg("OneStub processing " & Atom.ToText(qid.intf) & "." &
+    Debug.Out("OneStub processing " & Atom.ToText(qid.intf) & "." &
       Atom.ToText(qid.item) );
 
     used_id.lx_symrep := M3CId.Enter(Atom.ToText(qid.item));
@@ -118,17 +119,17 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
          named qid. *)
       def_id := M3ASTScope.Lookup(cu.as_root.as_id.vSCOPE, used_id);
       IF def_id = NIL THEN
-        Msg(Atom.ToText(qid.intf) & "." & Atom.ToText(qid.item) &
+        Debug.Out(Atom.ToText(qid.intf) & "." & Atom.ToText(qid.item) &
           " not defined.");
         RETURN 1;
       END;
-      Msg("OneStub : " & Atom.ToText(qid.intf) & "." &
+      Debug.Out("OneStub : " & Atom.ToText(qid.intf) & "." &
         Atom.ToText(qid.item) & 
         " : def_id is " & RTBrand.GetName(TYPECODE(def_id)));
       IF    ISTYPE(def_id, M3AST_AS.Interface_id) THEN
         (* we don't remember interfaces, no need to, since they're 
            all factored out *)
-        Msg("OneStub found an interface, skipping "  & 
+        Debug.Out("OneStub found an interface, skipping "  & 
           Atom.ToText(qid.intf) & "." & Atom.ToText(qid.item))
       ELSIF ISTYPE(def_id, M3AST_AS.Exc_id) THEN
         VAR exception : Type.Exception;
@@ -163,7 +164,7 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
                             Cons(valueSYM,scmValue)))
             END
           ELSE
-            Msg("Not Proc/Var/Const, must be a type");
+            Debug.Out("Not Proc/Var/Const, must be a type");
             
             (* ok this is all a bit screwy.  The type returned from the
                toolkit may use a base name, or some other "canonical" name.
@@ -219,10 +220,10 @@ PROCEDURE ProcessScmObj(h: Handle;
                         qid: Type.Qid) : Type.T =
   CONST Msg = StubUtils.Message;
   BEGIN
-    Msg("Processing " & Atom.ToText(qid.intf) & "." &
+    Debug.Out("Processing " & Atom.ToText(qid.intf) & "." &
       Atom.ToText(qid.item) );
     WITH res = ProcessM3Type(h, ts) DO
-      Msg("Type-type is " & RTBrand.GetName(TYPECODE(res)));
+      Debug.Out("Type-type is " & RTBrand.GetName(TYPECODE(res)));
       RETURN res
     END
   END ProcessScmObj;
@@ -349,7 +350,7 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
         
 
         IF formalParam.as_default # NIL THEN
-          StubUtils.Message("formal default type: " &
+          Debug.Out("formal default type: " &
             RTBrand.GetName(TYPECODE(formalParam)));
           formals[i].default := AstToVal.ProcessExp(
                                     h,

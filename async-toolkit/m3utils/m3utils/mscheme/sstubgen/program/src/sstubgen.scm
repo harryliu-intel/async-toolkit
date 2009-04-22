@@ -568,11 +568,21 @@
 
 (define (is-basetype type)
   ;; returns string name of basetype or #f
-  (let ((unnamed-type (strip-names type)))
-    (let loop ((p the-basetypes))
-      (cond ((null? p) #f)
-            ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
-            (else (loop (cdr p)))))))
+
+	(define (is-opaque-basetype)
+		;; special handling for opaques, by name
+		(let loop ((p the-basetypes))
+			(cond ((null? p) #f)
+						((equal? (cdar p) type) (caar p))
+						(else (loop (cdr p))))))
+
+	(if (eq? 'Opaque (car type))
+			(is-opaque-basetype)
+			(let ((unnamed-type (strip-names type)))
+				(let loop ((p the-basetypes))
+					(cond ((null? p) #f)
+								((equal? (strip-names (cdar p)) unnamed-type) (caar p))
+								(else (loop (cdr p))))))))
   
 (define (string-quote s) (string-append "\"" s "\""))
 
@@ -616,7 +626,11 @@
 
          (proto (string-append
                  "PROCEDURE " pname "(READONLY x : " m3tn 
-                       ") : SchemeObject.T RAISES { Scheme.E }"
+								 ") : SchemeObject.T RAISES {"
+								 (if (member? (car type) '(Ref Procedure Object Opaque))
+										 ""
+										 " Scheme.E")
+								 " }"
                        )
                 )
          )
@@ -1014,24 +1028,49 @@
 
     (if (null? arg)
         (string-append 
-         "        | " xname " => SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\", NIL)))" dnl
+         "      | " xname " => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\"), NIL))" dnl
          )
         (let ((xarg->scm (to-scheme-proc-name arg env)))
 
           (string-append
-           "        | " xname "(xarg) => SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\", " xarg->scm "(xarg))))" dnl
+           "      | " xname "(xarg) => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\"), " xarg->scm "(xarg)))" dnl
            )
           )
         )
     )
   )
 
+(define (filter-tree tree match-list converter)
+	;; very generic routine to search a tree for a "path" and
+	;; call converter on everything found down that path.
+	;; see prefix-formals for an example
+	(map 
+	 (lambda (p) 
+		 (if (and (pair? p) 
+							(eq? (car match-list) (car p)))  ;; any match?
+				 (if (null? (cdr match-list))          ;; final match?
+						 (cons (car p) (converter (cdr p)));; yes - convert 
+						 (cons (car p)                     ;; no - recurse
+									 (filter-tree (cdr p) (cdr match-list) converter)))
+				 p ;; anything else
+				 ))
+	 tree))
+
+(define (prefix-formals prefix proc-type)
+	;; add a prefix to all the formals of a procedure (or method?) 
+	;; declaration
+	(filter-tree proc-type 
+							 '(sig formals Formal name)
+							 (lambda(formal-name)
+								 (string->symbol (string-append prefix formal-name)))))
+							 
+
 (define (make-procedure-call-stub proc env)
   (let* ((qid (car proc))
          (m3pn (stringify-qid (cleanup-qid qid) "." env))
          (u3pn (stringify-qid (cleanup-qid qid) "_" env))
          (stub-name (string-append "CallStub_" u3pn))
-         (proc-type (cdr proc))
+         (proc-type (prefix-formals 'formal_ (cdr proc)))
          (imports (env 'get 'imports))
          (sig (extract-field 'sig proc-type)))
 
@@ -1085,18 +1124,18 @@
           (string-append
            (if (eq? (extract-field 'mode f) 'Mode.Var)
                (string-append
-                "        EVAL SchemeUtils.SetFirst(p," (to-scheme-proc-name arg-type env)"(" arg-name deref-caret"));" dnl
+                "        EVAL SchemeUtils.SetFirst(p__," (to-scheme-proc-name arg-type env)"(" arg-name deref-caret"));" dnl
                 )
                ""
                )
-           "        EVAL Next();" 
+           "        EVAL Next();" dnl 
            )
           ))
 
         (define (unpack-var-params) 
           ;; fill this in
           (string-append
-           "        p := SchemePair.Pair(args);" dnl
+           "        p__ := SchemePair.Pair(args);" dnl
            (apply string-append (map unpack-var formals))
            )
           )
@@ -1104,10 +1143,10 @@
         (string-append 
          "      (* unpack formals *)" dnl
          "      WITH "
-         (infixize (map make-formal-temp formals) 
-                   (string-append "," dnl "             ")) " DO" dnl
+         (infixize (cons "<*NOWARN*>junk__ = 0" (map make-formal-temp formals))
+                   (string-append "," dnl "           ")) " DO" dnl
 
-         "        (* carry out NIL checks *)" dnl
+         "        (* carry out NIL checks for open arrays *)" dnl
          (format-nil-checks) dnl
 
          "        (* make procedure call *)" dnl
@@ -1170,16 +1209,17 @@
      " " dnl
      "  PROCEDURE Next() : SchemeObject.T RAISES { Scheme.E } = " dnl
      "    BEGIN" dnl
-     "      TRY RETURN SchemeUtils.First(p) FINALLY p := SchemePair.Pair(SchemeUtils.Rest(p)) END" dnl
+     "      TRY RETURN SchemeUtils.First(p__) FINALLY p__ := SchemePair.Pair(SchemeUtils.Rest(p__)) END" dnl
      "    END Next;" dnl  
      " " dnl
-     "  VAR p := SchemePair.Pair(args);" dnl
+     "  VAR p__ := SchemePair.Pair(args);" dnl
      "  BEGIN" dnl
      "    TRY" dnl
      (format-call)
      "    EXCEPT" dnl
      (format-exception-handling)
-     "    END" dnl
+     "    END;" dnl
+		 "    <*NOWARN*>RETURN SchemeBoolean.False()" dnl
      "  END " stub-name ";"  dnl
     )))
 
@@ -1362,7 +1402,7 @@
       )
 
     (define (make-default-method m)
-      (let* ((sig (extract-field 'sig m))
+      (let* ((sig (extract-field 'sig (prefix-formals 'formal_ m)))
              (have-return 
               (if (null? (extract-field 'result sig)) 
                   #f
@@ -1475,7 +1515,7 @@
        '(SchemePair Scheme SchemeObject))
       
       (string-append
-       "PROCEDURE New_" m3ti "(interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+       "PROCEDURE New_" m3ti "(<*UNUSED*>interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
        "  VAR" dnl
        "    p := SchemePair.Pair(inits);" dnl
 			 "    gobbled : BOOLEAN;" dnl

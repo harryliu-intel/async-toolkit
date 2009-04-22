@@ -7,6 +7,7 @@ import ("netobj")
 import ("readline")
 import ("schemereadline")
 import ("sstubgen")
+import ("traderulelib")
 
 Module("Example")
 Interface("Example2")
@@ -16,6 +17,17 @@ Module("Bubble")
 
 SchemeStubs("Bubble")
 SchemeStubs("Example")
+
+SchemeStubs("Wr")
+SchemeStubs("TextWr")
+SchemeStubs("TextRd")
+SchemeStubs("FileWr")
+SchemeStubs("Rd")
+SchemeStubs("FileRd")
+SchemeStubs("Pickle")
+%SchemeStubs("MarketData")  % why doesnt THIS work
+
+%SchemeStubs("TextRefTbl") % doesnt work yet
 
 ExportSchemeStubs("stubexample") % export OUR scheme stubs
 
