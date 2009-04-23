@@ -167,7 +167,15 @@
          (item (extract-field 'item qid)))
     (stringify-qid (cons intf item) "." env)))
 
-(define (format-formal f env) (format-field f env))
+(define (format-formal f env) 
+  (let ( (mode (extract-field 'mode f)) )
+    (string-append
+     (case mode
+       ((Mode.Var) "VAR ")
+       ((Mode.Value) "VALUE ")
+       ((Mode.Readonly) "READONLY ")
+       (else (error "unknown mode " mode)))
+		 (format-field f env))))
 
 (define (format-exceptions x env)
   (infixize (map (lambda(xx)(extract-and-format-qid xx env)) x) ", "))
@@ -330,14 +338,24 @@
 
 (define bad-values '())
 
+(define (is-reference-type? type)
+	(member? (car type) '(Opaque Ref Procedure Object)))
+
 (define (format-type-value type value env)
   (case (car value)
 
     ((Ordinal) 
-     (string-append 
-      " VAL(" 
-      (number->string (cdr value))", "  (type-formatter type env)
-      ")"))
+		 ;; special case for NIL: (Ordinal . 0)
+		 
+		 (if (is-reference-type? type)
+				 (if (not (= (cdr value) 0))
+						 (error "Ordinal initializer for Ref, non-zero value : " type 
+										", " value)
+						 " NIL")
+				 (string-append 
+					" VAL(" 
+					(number->string (cdr value))", "  (type-formatter type env)
+					")")))
     
     ((LongFloat)
      (string-append
@@ -1540,6 +1558,7 @@
 			 dnl
        "PROCEDURE GenNew_" m3ti "(interp : Scheme.T; <*UNUSED*>obj : SchemeObject.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
 			 "  BEGIN RETURN New_" m3ti "(interp,inits) END GenNew_" m3ti ";" dnl
+			 dnl
        ))
     
     (cons

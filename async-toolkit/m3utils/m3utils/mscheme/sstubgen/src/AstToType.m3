@@ -398,13 +398,31 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
         
 
         IF formalParam.as_default # NIL THEN
-          Debug.Out("formal default type: " &
+          Debug.Out("formal type: " &
             RTBrand.GetName(TYPECODE(formalParam)));
           formals[i].default := AstToVal.ProcessExp(
                                     h,
                                     NARROW(formalParam, 
                                            M3AST_AS.Formal_param)
-          .as_default)
+          .as_default);
+
+          WITH def = NARROW(formalParam, M3AST_AS.Formal_param).as_default DO
+            Debug.Out("formal.as_default type : "&
+              RTBrand.GetName(TYPECODE(def)));
+
+            Debug.Out("formal.as_default.sm_exp_value type : " &
+              RTBrand.GetName(TYPECODE(def.sm_exp_value)));
+            
+            Debug.Out("formal.as_default.sm_exp_type_spec type : " &
+              RTBrand.GetName(TYPECODE(def.sm_exp_type_spec)));
+(*
+            Debug.Out("formal.as_default.as_callexp type : " &
+              RTBrand.GetName(TYPECODE(def.as_callexp)));
+*)
+            
+            
+          END
+
         END;
         
         TYPECASE formalId OF

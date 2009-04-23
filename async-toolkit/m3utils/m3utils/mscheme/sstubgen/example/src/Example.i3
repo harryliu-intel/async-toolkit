@@ -2,14 +2,13 @@
 
 INTERFACE Example;
 IMPORT Text;
-IMPORT TextRefTbl;
 
 EXCEPTION X1; EXCEPTION X2;
 
 TYPE
-  TRT = TextRefTbl.T;
 
   T = OBJECT METHODS
+    xyz(a : LONGREAL := LAST(LONGREAL));
     hello() (*:= THello*);
     meow(s1s := FIRST(S); s2integer : INTEGER) : INTEGER RAISES { X1, X2 };
     goodbye(s1 : S; s2 : REF W; s3 : W; s4 : INTEGER) : V;

@@ -16,6 +16,9 @@ IMPORT M3CId;
 
 PROCEDURE ProcessExp(h: AstToType.Handle; exp: M3AST_AS.EXP): Value.T =
   BEGIN
+    Debug.Out("AstToVal.ProcessExp : exp.sm_exp_value is " & 
+      RTBrand.GetName(TYPECODE(exp.sm_exp_value)));
+
     TYPECASE exp.sm_exp_value OF
       |  M3CBackEnd_C.Integer_value (int) =>
            RETURN NEW(Value.Ordinal, ord := int.sm_value)
