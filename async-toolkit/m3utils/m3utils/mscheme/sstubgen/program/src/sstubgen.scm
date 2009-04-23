@@ -604,6 +604,16 @@
   
 (define (string-quote s) (string-append "\"" s "\""))
 
+(define (format-imports env)
+	(let ((keys ((env 'get 'imports) 'keys)))
+		(if (null? keys) 
+				""
+				(apply string-append
+							 (map (lambda (i) 
+											(string-append 
+											 "IMPORT " i ";" dnl)) 
+										keys)))))
+
 (define (make-modules name              ;; name of interface
                       interface-decls   ;; stuff for .i3
                       module-decls      ;; stuff for .m3
@@ -613,11 +623,9 @@
       (error "not member of exports : " name))
   (string-append
    "MODULE " name ";" dnl
-   (apply string-append
-          (map (lambda (i) 
-                 (string-append 
-                  "IMPORT " i ";" dnl))
-                 ((env 'get 'imports) 'keys)))
+
+	 (format-imports env)
+
    dnl
    module-decls
    dnl
@@ -1277,22 +1285,21 @@
 )
 
 (define (spit-out-intf intf-name proc-stubs converter-intfs env)
-  (let ((imports ((env 'get 'imports) 'copy)))
-    (string-append
-     "INTERFACE " intf-name ";" dnl
-     "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
-     "IMPORT " (infixize (imports 'keys) ", ") ";" dnl
-     dnl
-     "PROCEDURE RegisterStubs();" dnl
-     dnl
-     (infixize converter-intfs dnldnl)
-     dnl
-     "CONST Brand = \"" intf-name "\";" dnl
-     dnl
-     "END " intf-name "." dnl
-     )
-    )
-)
+	(string-append
+	 "INTERFACE " intf-name ";" dnl
+	 "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
+	 (format-imports env)
+	 dnl
+	 "PROCEDURE RegisterStubs();" dnl
+	 dnl
+	 (infixize converter-intfs dnldnl)
+	 dnl
+	 "CONST Brand = \"" intf-name "\";" dnl
+	 dnl
+	 "END " intf-name "." dnl
+	 )
+	)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1343,7 +1350,7 @@
     (string-append
      "MODULE " intf-name ";" dnl
      "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
-     "IMPORT " (infixize (imports 'keys) ", ") ";" dnl
+		 (format-imports env)
      dnl
      (infixize proc-stubs dnl) dnl
      dnl
@@ -1677,7 +1684,9 @@
      (string-append
       "MODULE "intf-name";" dnl
       "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
-      "IMPORT " (infixize intfs ", ") ";" dnl
+      (if (null? intfs) 
+					"" 
+					(string-append "IMPORT " (infixize intfs ", ") ";" dnl))
       dnl
       "PROCEDURE RegisterStubs() =" dnl
       "  BEGIN" dnl
