@@ -16,7 +16,18 @@ PROCEDURE GetByTC(c : RT0.Typecode;
   VAR
     b := RTType.Get(c).brand_ptr;
   BEGIN 
-    IF LOOPHOLE(b,INTEGER) = 0 OR b.length = 0 THEN RAISE NotBranded END;
+    IF LOOPHOLE(b,INTEGER) = 0 OR b.length = 0 THEN 
+      IF nameIfNotBranded THEN
+        WITH b = RTType.Get(c).name,
+             s = LOOPHOLE(b, Ctypes.char_star) DO
+          IF LOOPHOLE(s,INTEGER) = 0 THEN
+            RAISE NotBranded
+          END
+        END
+      ELSE
+        RAISE NotBranded 
+      END
+    END;
     RETURN Text.FromChars(SUBARRAY(b.chars, 0, b.length));
   END GetByTC;
 
