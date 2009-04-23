@@ -81,7 +81,7 @@ PROCEDURE DoRun(<*UNUSED*> w: M3ToolFrame.Worker;
               END
             END
           END
-        END;
+        END
       END;
 
       IF StubGenTool.stubTypes # NIL THEN
@@ -89,13 +89,13 @@ PROCEDURE DoRun(<*UNUSED*> w: M3ToolFrame.Worker;
           FOR i := 0 TO LAST(objects^) DO
             IF objects[i] # NIL THEN
               returnCode := AstToType.OneStubScm(c, objects[i], Stdio.stdout)
-            END;
-          END;
-        END;
+            END
+          END
+        END
       END;
-      RTCollector.EnableMotion(); 
+      RTCollector.EnableMotion();
     END;
-    RETURN returnCode;
+    RETURN returnCode
   END DoRun;
 
 PROCEDURE ScmArgsOrZeroLength() : REF ARRAY OF TEXT =

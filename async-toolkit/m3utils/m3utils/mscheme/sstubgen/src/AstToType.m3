@@ -65,15 +65,12 @@ PROCEDURE GetNames(c : M3Context.T;
                    qid: Type.Qid) : RefSeq.T =
   <*FATAL RTBrand.NotBranded*>
   CONST Msg = StubUtils.Message;
-  VAR cu : M3AST_AS.Compilation_Unit;
-      res : RefSeq.T := NIL;
-  BEGIN
-    Debug.Out("GetNames processing " & Atom.ToText(qid.intf));
 
-    IF M3Context.FindExact(c, 
-                           Atom.ToText(qid.intf), 
-                           M3CUnit.Type.Interface, cu) THEN
-      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Entry);
+  PROCEDURE ProcessUnit() =
+    BEGIN
+      Debug.Out("AstToType.GetNames : cu is " & RTBrand.GetName(TYPECODE(cu)));
+      Debug.Out("AstToType.GetNames : cu.as_root is " & 
+        RTBrand.GetName(TYPECODE(cu.as_root)));
 
       WITH syms = M3ASTScopeNames.Names(cu.as_root.as_id.vSCOPE) DO
         IF syms = NIL THEN 
@@ -87,32 +84,61 @@ PROCEDURE GetNames(c : M3Context.T;
           END
         END
       END
+    END ProcessUnit;
+
+  VAR cu : M3AST_AS.Compilation_Unit;
+      res : RefSeq.T := NIL;
+  BEGIN
+    Debug.Out("GetNames processing " & Atom.ToText(qid.intf));
+
+    (* the following code is a bit fishy..
+
+       M3ConcTypeSpec.SetCurrentReveal crashes on a generic 
+       instantiation (even though I think this ought to be legal?
+       -- so we skip it for those.
+
+       But the code above (in ProcessUnit()) doesn't seem to find
+       any names for generic instances, anyhow, so it doesn't help
+       much. 
+
+       What's going on?
+    *)
+
+
+    IF M3Context.FindExact(c, 
+                           Atom.ToText(qid.intf), 
+                           M3CUnit.Type.Interface, cu) THEN
+      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Entry);
+      ProcessUnit();
+      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit)
+
+    ELSIF M3Context.FindExact(c, 
+                           Atom.ToText(qid.intf), 
+                           M3CUnit.Type.Interface_gen_ins, cu) THEN
+
+      cu := NARROW(cu.as_root,M3AST_AS.Interface_gen_ins).sm_ins_comp_unit;
+      (* this seems to give us access to all the right names... *)
+
+      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Entry);
+      ProcessUnit();
+      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit)
+
+    ELSE
+      StubUtils.Die("AstToType.GetNames: M3Context.FindExact failed")
     END;
 
     IF cu = NIL THEN
       StubUtils.Die("AstToType.GetNames: cu is NIL; no such interface/type?")
     END;
 
-    M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
     RETURN res
   END GetNames;
 
 PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
   <*FATAL RTBrand.NotBranded*>
-  CONST Msg = StubUtils.Message;
-  VAR h := NewHandle(wr, Atom.ToText(qid.intf), c);
-      used_id: M3AST_AS.USED_ID := NEW(M3AST_AS.USED_ID).init();
-      def_id: M3AST_AS.DEF_ID;
-      cu : M3AST_AS.Compilation_Unit;
-      ts: M3AST_AS.TYPE_SPEC; 
-      returnCode := 0;
-  BEGIN
-    Debug.Out("OneStub processing " & Atom.ToText(qid.intf) & "." &
-      Atom.ToText(qid.item) );
 
-    used_id.lx_symrep := M3CId.Enter(Atom.ToText(qid.item));
-    IF M3Context.FindExact(c, Atom.ToText(qid.intf), 
-                           M3CUnit.Type.Interface, cu) THEN
+  PROCEDURE ProcessOne() : CARDINAL = 
+    BEGIN
       M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Entry);
       (* M3CSearch.Export(cu.as_root, used_id);*)
       (* used_id.sm_def is now bound to the Type_id for the object
@@ -126,7 +152,8 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
       Debug.Out("OneStub : " & Atom.ToText(qid.intf) & "." &
         Atom.ToText(qid.item) & 
         " : def_id is " & RTBrand.GetName(TYPECODE(def_id)));
-      IF    ISTYPE(def_id, M3AST_AS.Interface_id) THEN
+      IF    ISTYPE(def_id, M3AST_AS.Interface_id) OR 
+            ISTYPE(def_id, M3AST_AS.Interface_AS_id) THEN
         (* we don't remember interfaces, no need to, since they're 
            all factored out *)
         Debug.Out("OneStub found an interface, skipping "  & 
@@ -196,13 +223,34 @@ PROCEDURE OneStubScm(c: M3Context.T; qid: Type.Qid; wr: Wr.T): INTEGER =
           END
         END
       END;
+      M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
 
-      returnCode := 0
+      RETURN 0
+    END ProcessOne;
+
+  CONST Msg = StubUtils.Message;
+  VAR h := NewHandle(wr, Atom.ToText(qid.intf), c);
+      used_id: M3AST_AS.USED_ID := NEW(M3AST_AS.USED_ID).init();
+      def_id: M3AST_AS.DEF_ID;
+      cu : M3AST_AS.Compilation_Unit;
+      ts: M3AST_AS.TYPE_SPEC; 
+  BEGIN
+    Debug.Out("OneStub processing " & Atom.ToText(qid.intf) & "." &
+      Atom.ToText(qid.item) );
+
+    used_id.lx_symrep := M3CId.Enter(Atom.ToText(qid.item));
+    IF M3Context.FindExact(c, Atom.ToText(qid.intf), 
+                           M3CUnit.Type.Interface, cu) THEN
+      RETURN ProcessOne()
+    ELSIF M3Context.FindExact(c, 
+                           Atom.ToText(qid.intf), 
+                           M3CUnit.Type.Interface_gen_ins, cu) THEN
+
+      cu := NARROW(cu.as_root,M3AST_AS.Interface_gen_ins).sm_ins_comp_unit;
+      RETURN ProcessOne()
     ELSE
       RETURN 1
-    END;
-    M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit);
-    RETURN returnCode;
+    END
   END OneStubScm;
 
 PROCEDURE AddToList(VAR list : SchemePair.T;
