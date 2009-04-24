@@ -33,4 +33,4 @@ interface("SXConversion")
 
 Netobj("ReadLine", "Public")
 
-library("readline")
+library("m3readline")

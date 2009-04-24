@@ -2,7 +2,7 @@
 import ("libm3")
 import ("cit_util")
 import ("tcp")
-import ("readline")
+import ("m3readline")
 
 implementation ("Main")
 

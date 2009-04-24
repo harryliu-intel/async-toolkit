@@ -12,7 +12,7 @@ import("cit_util")
 import("mscheme")
 import("modula3scheme")
 import("schemesig")
-import("readline")
+import("m3readline")
 import("schemereadline")
 
 implementation("Main")

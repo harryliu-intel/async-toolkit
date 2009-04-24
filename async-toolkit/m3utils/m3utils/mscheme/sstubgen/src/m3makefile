@@ -15,7 +15,7 @@ import("m3tk")
 import("mscheme")
 import("modula3scheme")
 import("schemereadline")
-import("readline")
+import("m3readline")
 import("cit_util")
 
 interface("ValueProc")
