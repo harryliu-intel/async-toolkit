@@ -1,0 +1,12 @@
+/* $Id$ */
+import_lib ("readline","/usr/local/lib")
+
+if equal(TARGET, "PPC_DARWIN")
+	import_lib ("ncurses","/usr/lib")
+end
+
+import ("libm3")
+
+c_source ("program")
+
+C_program("readlinefe")
