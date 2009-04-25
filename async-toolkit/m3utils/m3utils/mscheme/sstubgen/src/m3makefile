@@ -38,8 +38,13 @@ module("M3ASTScopeNames")
 template("schemestubs")
 
 interface("CM3Extensions")
-implementation("CM3Extensions")
-implementation("TypeCM3")
+
+if defined("CM3_VERSION")
+  implementation("TypeCM3")
+	implementation("CM3Extensions")
+else
+	implementation("CM3ExtensionsPM3")
+end
 
 library("sstubgen")
 

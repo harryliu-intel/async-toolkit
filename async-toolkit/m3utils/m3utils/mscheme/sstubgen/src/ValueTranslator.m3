@@ -15,6 +15,7 @@ IMPORT SchemeString, SchemeLongReal, SchemeSymbol;
 IMPORT TypeTranslator;
 IMPORT Type;
 FROM SchemeUtils IMPORT List2;
+IMPORT CM3Extensions;
 
 (* things here can't loop, since we're representing M3 constants! *)
 
@@ -23,7 +24,7 @@ PROCEDURE Translate(value : Value.T) : SchemeObject.T =
     TYPECASE value OF
       NULL =>RETURN NIL
     | Ordinal(o)    => RETURN P("Ordinal",   LRI(o.ord))
-    | Longint(l)    => RETURN P("Longint",   LRLI(l.val))
+    | Longint(l)    => RETURN P("Longint",   CM3Extensions.TranslateLongintRef(l.val))
     | Float(f)      => RETURN P("Float",     LR(FLOAT(f.val,LONGREAL)))
     | LongFloat(lf) => RETURN P("LongFloat", LR(lf.val))
     | Extended(x)   => RETURN P("Extended",  LR(FLOAT(x.val,LONGREAL)))
@@ -86,9 +87,6 @@ PROCEDURE LR(f : LONGREAL) : SchemeObject.T =
 
 PROCEDURE LRI(i : INTEGER) : SchemeObject.T = 
   BEGIN RETURN SchemeLongReal.FromI(i) END LRI;
-
-PROCEDURE LRLI(l : LONGINT) : SchemeObject.T =
-  BEGIN RETURN SchemeLongReal.FromLR(FLOAT(l,LONGREAL)) END LRLI;
 
 PROCEDURE P(tag : TEXT; what : SchemeObject.T) : SchemePair.T =
   BEGIN

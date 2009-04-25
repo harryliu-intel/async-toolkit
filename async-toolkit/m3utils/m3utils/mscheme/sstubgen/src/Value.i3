@@ -22,7 +22,7 @@ TYPE
     Ordinal = T OBJECT ord: INTEGER END;
     (* ORD(the value) *)
 
-    Longint = T OBJECT val: LONGINT END;
+    Longint = T OBJECT val: REFANY (* REF LONGINT *) END;
 
     Float = T OBJECT val: REAL END;
 

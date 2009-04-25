@@ -4,6 +4,7 @@ import ("netobj")
 import("cit_common")
 import("set")
 import("rdwrreset")
+
 if defined("CM3_VERSION")
 	import ("libbuf")
 end
