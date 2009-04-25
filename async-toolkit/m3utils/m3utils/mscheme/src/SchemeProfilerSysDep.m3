@@ -2,9 +2,8 @@
 MODULE SchemeProfilerSysDep;
 IMPORT SchemeUnixDeps;
 FROM Ctypes IMPORT int;
-IMPORT Cerrno;
 
-PROCEDURE GetErrno() : INTEGER = BEGIN RETURN Cerrno.GetErrno() END GetErrno;
+PROCEDURE GetErrno() : INTEGER = BEGIN RETURN SchemeUnixDeps.errno END GetErrno;
 
 PROCEDURE getrusage(who: int; VAR r: SchemeUnixDeps.struct_rusage): int = 
   BEGIN RETURN SchemeUnixDeps.getrusage(who,r) END getrusage;
