@@ -21,13 +21,21 @@ readonly proc SchemeStubs(intf) is
 %	if stale("build1.scm", sources) 
 %	end
 
-	> "build1.scm" in
- 		write (cmd, CR)
+% problem here: we can build SchemeStubs for things *not* in this
+% package.  stale() doesn't seem to catch those, at least not the
+% way we've coded it here.
+
+	if stale(nam & ".i3", path_of(intf & ".i3"))
+		generate_tfile()
+
+		> "build1.scm" in
+ 			write (cmd, CR)
+		end
+
+		intfs=intfs & " " & nam
+
+		_exec([_SSTUBGEN, "-nointeractive", "-si", intf, "-T.M3IMPTAB", "-scm", _SSTUBGENSCM, "build1.scm", _SEXIT])
 	end
-
-	intfs=intfs & " " & nam
-
-	_exec([_SSTUBGEN, "-nointeractive", "-si", intf, "-T.M3IMPTAB", "-scm", _SSTUBGENSCM, "build1.scm", _SEXIT])
 
 	derived_interface(nam, VISIBLE)
 	derived_implementation(nam)
