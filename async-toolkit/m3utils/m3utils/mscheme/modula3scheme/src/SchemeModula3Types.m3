@@ -4,6 +4,10 @@ MODULE SchemeModula3Types;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT Scheme;
 IMPORT SchemeObject, SchemeString, SchemeBoolean, SchemeLongReal, SchemeChar;
+IMPORT SchemePrimitive;
+FROM Scheme IMPORT E, Object;
+IMPORT SchemeProcedure, SchemeSymbol;
+FROM SchemeUtils IMPORT First;
 
 PROCEDURE ToScheme_MUTEX(m : MUTEX) : SchemeObject.T =
   BEGIN RETURN m END ToScheme_MUTEX;
@@ -131,5 +135,32 @@ PROCEDURE ToModula_INTEGER(c : SchemeObject.T) : INTEGER RAISES { Scheme.E }=
       END
     END
   END ToModula_INTEGER;
+
+PROCEDURE Extend(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.ExtDefiner =
+  BEGIN 
+    prims.addPrim("scheme-modula-conversion-mode", NEW(SchemeProcedure.T, 
+                                                       apply := ConversionModeApply), 
+                  1, 1);
+    RETURN prims
+  END Extend;
+
+PROCEDURE ConversionModeApply(<*UNUSED*>p : SchemeProcedure.T; 
+                              <*UNUSED*>interp : Scheme.T; 
+                              args : Object) : Object RAISES { E } =
+  VAR
+    s := Scheme.SymbolCheck(First(args));
+  BEGIN
+    FOR i := FIRST(Name) TO LAST(Name) DO
+      IF s = SchemeSymbol.FromText(Name[i]) THEN
+        CASE ProcMode[i] OF
+          Mode.Reference => RETURN SchemeSymbol.FromText("Reference")
+        |
+          Mode.Concrete =>  RETURN SchemeSymbol.FromText("Concrete")
+        END
+      END
+    END;
+
+    RAISE Scheme.E("Cant find type to convert : " & Stringify(s))
+  END ConversionModeApply;
 
 BEGIN END SchemeModula3Types.

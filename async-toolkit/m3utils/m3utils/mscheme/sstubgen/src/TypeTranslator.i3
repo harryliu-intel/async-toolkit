@@ -11,6 +11,8 @@ INTERFACE TypeTranslator;
    environment *)
 
 IMPORT Type, SchemePair;
+IMPORT M3AST_all;
+
 FROM Type IMPORT Qid, Exception;
 
 PROCEDURE Translate(type : Type.T) : SchemePair.T;

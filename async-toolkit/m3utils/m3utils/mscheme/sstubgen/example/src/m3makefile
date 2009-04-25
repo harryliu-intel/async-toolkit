@@ -18,6 +18,7 @@ Module("Bubble")
 SchemeStubs("Bubble")
 SchemeStubs("Example")
 
+SchemeStubs("Fmt")
 SchemeStubs("Wr")
 SchemeStubs("TextWr")
 SchemeStubs("TextRd")

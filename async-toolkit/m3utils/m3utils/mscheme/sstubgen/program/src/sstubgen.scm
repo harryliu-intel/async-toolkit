@@ -570,7 +570,9 @@
   ;; if it's a base type, we call the base type conversion library
   ;; else we make the converter ourselves.
 	;;
-  (if (is-basetype type)
+  (if (and (is-basetype type) 
+					 (eq? (scheme-modula-conversion-mode (is-basetype type))
+								'Concrete))
       (begin
         (stringify-qid
          (cons 'SchemeModula3Types
@@ -636,7 +638,7 @@
   
   
 
-(define (make-to-scheme type env)
+(define (make-to-scheme-nonbase type env)
 
   (define (push-make type)(to-scheme-proc-name type env))
 
@@ -660,6 +662,8 @@
                        )
                 )
          )
+
+		(if (is-basetype type) (error "shouldnt call make-to-scheme-nonbase on base type" type))
 
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
     ;; remember that we're building pname, so we dont try to
@@ -802,6 +806,16 @@
           "RETURN x" ;; just let it represent itself
           )
 
+				 ((WideChar)
+					(imports 'insert! 'SchemeModula3Types)
+					(string-append
+					 "WITH ref = NEW(REF WIDECHAR) DO" dnl
+					 "  ref^ := x;" dnl
+					 "  RETURN SchemeModula3Types.ToScheme_WIDECHAR(ref)"
+					 "END"
+					 )
+					)
+
          (else (error "unknown type header " (car type)))
 
          )               
@@ -813,7 +827,7 @@
     
     (cons (make-intf) (make-impl))
     ))
-  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -821,7 +835,9 @@
 (define (to-modula-proc-name type env)
   ;; if it's a base type, we call the base type conversion library
   ;; else we make the converter ourselves.
-  (if (is-basetype type)
+  (if (and (is-basetype type) 
+					 (eq? (scheme-modula-conversion-mode (is-basetype type))
+								'Concrete))
       (begin
         (stringify-qid
          (cons 'SchemeModula3Types
@@ -835,7 +851,7 @@
         (convert-req 'update-entry! (string->symbol res) type)
         res)))
 
-(define (make-to-modula type env)
+(define (make-to-modula-nonbase type env)
 
   (define (push-make type) (to-modula-proc-name type env))
 
@@ -855,6 +871,8 @@
                        )
                 )
          )
+
+		(if (is-basetype type) (error "shouldnt call make-to-modula-nonbase on base type" type))
 
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
     ;; remember that we're building pname, so we dont try to
@@ -1016,6 +1034,10 @@
            )
           )
 
+				 ((WideChar)
+					(imports 'insert! 'SchemeModula3Types)
+					"RETURN NARROW(SchemeModula3Types.ToModula_WIDECHAR(x),REF WIDECHAR)^")
+
          (else (error "unknown type header " (car type)))
 
          )               
@@ -1027,6 +1049,105 @@
     
     (cons (make-intf) (make-impl))
     ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-to-modula-baseref basename env)
+  (let* ((type (extract-field basename the-basetypes))
+				 (m3tn                       ;; type name
+          (type-formatter type env))
+
+         (m3ti                       ;; identifier mangled from tn
+          (m3type->m3identifier (type-formatter type env)))
+
+         (pname (to-modula-proc-name type env))
+
+         (imports (env 'get 'imports))
+
+         (proto (string-append
+                 "PROCEDURE " pname "(x : SchemeObject.T) : " m3tn 
+                       " RAISES { Scheme.E }"
+                       )
+                )
+         )
+    ((env 'get 'convert-blt) 'insert! (string->symbol pname))
+
+    (define (make-intf) (string-append proto ";"))
+	
+    (define (make-impl)
+      (string-append
+       proto " = " dnl
+       "  BEGIN" dnl
+			 "    WITH ref = SchemeModula3Types.ToModula_"basename"(x) DO" dnl
+			 "      RETURN NARROW(ref, REF "basename")^" dnl
+			 "    END" dnl
+			 "  END " pname ";" dnl
+			 ))
+		(cons (make-intf) (make-impl))))
+
+(define (make-to-modula type env)
+	;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
+	;; and compound types
+	(if (is-basetype type)
+			;; special handling for extension types
+			(make-to-modula-baseref (is-basetype type) env)
+
+			(make-to-modula-nonbase type env)))
+
+(define (make-to-scheme-baseref basename env)
+  (let* ((type (extract-field basename the-basetypes))
+				 (m3tn                       ;; type name
+          (type-formatter type env))
+
+         (m3ti                       ;; identifier mangled from tn
+          (m3type->m3identifier (type-formatter type env)))
+
+         (pname (to-scheme-proc-name type env))
+
+         (imports (env 'get 'imports))
+
+         (proto (string-append
+                 "PROCEDURE " pname "(READONLY x : " m3tn 
+								 ") : SchemeObject.T RAISES {"
+								 (if (member? (car type) '(Ref Procedure Object Opaque))
+										 ""
+										 " Scheme.E")
+								 " }"
+                       )
+                )
+         )
+    ((env 'get 'convert-blt) 'insert! (string->symbol pname))
+
+    (define (make-intf) (string-append proto ";"))
+
+    (define (make-impl)
+      (string-append
+       proto " = " dnl
+       "  BEGIN" dnl
+			 "    WITH ref = NEW(REF " basename ") DO" dnl
+			 "      ref^ := x;" dnl
+			 "      RETURN SchemeModula3Types.ToScheme_" basename "(ref)" dnl
+			 "    END" dnl
+			 "  END " pname ";" dnl
+			 ))
+
+		(cons (make-intf) (make-impl))))
+
+
+(define (make-to-scheme type env)
+	;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
+	;; and compound types
+	(if (is-basetype type)
+			;; special handling for extension types
+			(make-to-scheme-baseref (is-basetype type) env)
+
+			(make-to-scheme-nonbase type env)))
+
+ 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-conversion-routines type env)
   ;; make only the legal conversion routines

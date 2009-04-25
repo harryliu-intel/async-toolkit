@@ -16,11 +16,13 @@ IMPORT Atom;
 
 TYPE 
   T <: ROOT;
-  (* Ordinal | Float | LongFloat | Extended | ArrayOrRecord | Set | 
+  (* Ordinal | Longint | Float | LongFloat | Extended | ArrayOrRecord | Set | 
      Text | Null *)
 
     Ordinal = T OBJECT ord: INTEGER END;
     (* ORD(the value) *)
+
+    Longint = T OBJECT val: LONGINT END;
 
     Float = T OBJECT val: REAL END;
 

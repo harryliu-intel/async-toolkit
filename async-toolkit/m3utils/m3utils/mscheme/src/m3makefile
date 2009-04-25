@@ -14,6 +14,7 @@ end
 
 
 import ("libm3")
+import ("m3core")
 import ("cit_util")
 import ("scheme-lib")
 
@@ -69,13 +70,8 @@ Module("SchemeAtRun")
 
 Netobj("SchemeEnvironment", "Public")
 
-interface("SchemeProfilerSysDep")
-
-if defined("CM3_VERSION") 
-  implementation("SchemeProfilerSysDepCM3")
-else
-  implementation("SchemeProfilerSysDepPM3")
-end
+Interface("SchemeUnixDeps")
+module("SchemeProfilerSysDep")
 
 library ("mscheme")
 

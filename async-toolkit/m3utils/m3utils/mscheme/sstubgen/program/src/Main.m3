@@ -30,6 +30,7 @@ IMPORT TypeTranslator;
 IMPORT Atom, Type;
 IMPORT SchemeString; 
 IMPORT Csighandler; (* no-readline *)
+IMPORT SchemeModula3Types;
 
 TYPE ContextClosure = M3Context.Closure OBJECT
     wr: Wr.T;
@@ -138,6 +139,8 @@ BEGIN
                        compile := FALSE)) DO
 
     IF res # 0 THEN Process.Exit(res) END;
+
+    EVAL SchemeModula3Types.Extend(SchemeM3.GetPrims());
 
     WITH  args = ScmArgsOrZeroLength()^ DO
       TRY

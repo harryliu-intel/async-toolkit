@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 INTERFACE SchemeProfilerSysDep;
-FROM Uresource IMPORT struct_rusage;
+FROM SchemeUnixDeps IMPORT struct_rusage;
 FROM Ctypes IMPORT int;
 
 PROCEDURE GetErrno() : INTEGER;

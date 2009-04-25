@@ -13,6 +13,12 @@ Interface("SchemeJailBreak")
 
 Module ("SchemeM3TableOps")
 
+if defined("CM3_VERSION")
+	implementation("SchemeModula3TypesCM3")
+else 
+	implementation("SchemeModula3TypesPM3")
+end
+
 Module("M3toSTextString")
 
 Module("M3toSRefany")

@@ -27,6 +27,7 @@ IMPORT RefSeq, M3ASTScopeNames;
 FROM SchemeUtils IMPORT Cons, List2;
 IMPORT ValueTranslator;
 IMPORT Debug;
+IMPORT CM3Extensions;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -289,14 +290,12 @@ PROCEDURE InitAstTable(astTable: RefRefTbl.T) =
     EVAL astTable.put(M3CStdTypes.Untraced_Root(),
                       Type.untracedRoot);
     EVAL astTable.put(M3CStdTypes.Char(), Type.char);
-    (*
-      EVAL astTable.put(M3CStdTypes.WideChar(), Type.widechar);
-      (* this is for the new CM3 WIDECHAR type, not in PM3 *)
-    *)
     EVAL astTable.put(M3CStdTypes.Text(), Type.text);
     EVAL astTable.put(M3CStdTypes.Cardinal(), Type.cardinal);
     EVAL astTable.put(M3CStdTypes.Boolean(), Type.boolean);
     EVAL astTable.put(M3CStdTypes.Mutex(), Type.mutex);
+
+    CM3Extensions.InitAstTable(astTable);
   END InitAstTable;
 
 PROCEDURE ProcessM3Type(h: Handle; m3type: M3AST_AS.M3TYPE): Type.T =
@@ -477,10 +476,6 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
       |  M3AST_AS.LongReal_type => t := Type.longreal;
       |  M3AST_AS.Extended_type => t := Type.extended;
       |  M3AST_AS.Integer_type => t := Type.integer;
-        (*
-          |  M3AST_AS.WideChar_type => t := Type.widechar;
-          (* CM3 new *)
-        *)
       |  M3AST_AS.Null_type => t := Type.null;
       |  M3AST_AS.RefAny_type => t := Type.refany;
       |  M3AST_AS.Address_type => t := Type.address;
@@ -566,7 +561,13 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
       |  M3AST_AS.Procedure_type (proc) =>
         DoProcedure_type(proc)
       ELSE 
-        StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized Modula-3 construct : " & RTBrand.GetName(TYPECODE(ts)))
+        WITH res = CM3Extensions.ProcessTypeSpec(h, ts) DO
+          IF res = NIL THEN
+            StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized Modula-3 construct : " & RTBrand.GetName(TYPECODE(ts)))
+          ELSE
+            t := res
+          END
+        END
       END;
     END;
     AddToTable(h, ts, t);

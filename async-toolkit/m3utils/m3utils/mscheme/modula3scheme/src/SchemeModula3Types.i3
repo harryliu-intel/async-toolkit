@@ -1,7 +1,7 @@
-(* $Id *)
+(* $Id$ *)
 
 INTERFACE SchemeModula3Types;
-IMPORT SchemeObject, Scheme;
+IMPORT SchemeObject, Scheme, SchemePrimitive;
 
 (* convert to and from Modula-3 base types *)
 
@@ -73,5 +73,54 @@ PROCEDURE ToModula_CARDINAL(c : SchemeObject.T) : CARDINAL RAISES { Scheme.E };
 PROCEDURE ToModula_INTEGER(i : SchemeObject.T) : INTEGER RAISES { Scheme.E };
 
 CONST Brand = "SchemeModula3Types";
+
+TYPE 
+  Type = { T_LONGINT, T_WIDECHAR,
+         
+           T_MUTEX , T_TEXT ,
+           T_UNTRACED_ROOT , T_ROOT , T_ADDRESS ,
+           T_REFANY , T_EXTENDED , T_REAL ,
+           T_LONGREAL , T_CHAR , T_BOOLEAN ,
+           T_CARDINAL , T_INTEGER,
+           T_NULL};
+
+CONST Name = ARRAY Type OF TEXT { "LONGINT", "WIDECHAR",
+                                  
+                                  "MUTEX" , "TEXT" ,
+                                  "UNTRACEDROOT" , "ROOT" , "ADDRESS" ,
+                                  "REFANY" , "EXTENDED" , "REAL" ,
+                                  "LONGREAL" , "CHAR" , "BOOLEAN" ,
+                                  "CARDINAL" , "INTEGER",
+                                  "NULL" };
+
+TYPE 
+  Mode = { Reference, Concrete }; 
+  (* is the input/return value of the routine the actual value or 
+     a reference to it -- used to support language extensions *)
+
+PROCEDURE ToModula_LONGINT(c : SchemeObject.T) : REFANY RAISES { Scheme.E };
+
+PROCEDURE ToModula_WIDECHAR(i : SchemeObject.T) : REFANY RAISES { Scheme.E };
+
+PROCEDURE ToScheme_LONGINT(i : REFANY) : SchemeObject.T;
+  (* checked runtime error if it's not a REF LONGINT *)
+
+PROCEDURE ToScheme_WIDECHAR(i : REFANY) : SchemeObject.T;
+  (* checked runtime error if it's not a REF WIDECHAR *)
+  
+CONST
+  ProcMode = ARRAY Type OF Mode {
+  Mode.Reference, Mode.Reference,
+
+  Mode.Concrete, ..
+  };
+
+PROCEDURE Extend(definer : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefiner;
+  (* extend with primitives:
+
+     (scheme-modula-conversion-mode <type-symbol-name>)
+     ;; returns 'Reference or 'Concrete 
+  *)
+  
 
 END SchemeModula3Types.

@@ -398,6 +398,7 @@ PROCEDURE AddBasetypes() =
 
   BEGIN
     Add("INTEGER",      Type.integer);
+    Add("LONGINT",      Type.longint);
     Add("CARDINAL",     Type.cardinal);
     Add("BOOLEAN",      Type.boolean);
     Add("CHAR",         Type.char);
