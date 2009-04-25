@@ -8,6 +8,7 @@
 *)
 INTERFACE SchemeClass;
 IMPORT Scheme, SchemeInputPort, Wr, SchemePair;
+IMPORT Wx;
 
 REVEAL Scheme.T <: Private;
 
@@ -19,6 +20,8 @@ TYPE
     freePairs : SchemePair.T := NIL;
     (* this is a list of free pairs that can be used "freely" by the
        interpreter for recycling memory w/o GC *)
+
+    wx : Wx.T := NIL; (* this is a wx for use by string-append etc *)
   END;
 
 (* recycling routines for cons cells *)

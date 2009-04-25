@@ -15,7 +15,8 @@ FROM Scheme IMPORT Object, Symbol, Vector, E;
 FROM SchemeClass IMPORT GetCons, ReturnCons;
 
 FROM SchemeUtils IMPORT Length, First, Second, Third,
-                        Stringify, StringifyQ, Error, Warn, Equal, Eqv,
+                        Stringify, StringifyQ, StringifyB,
+                        Error, Warn, Equal, Eqv,
                         Rest, PedanticFirst, PedanticRest, Cons, 
                         SetFirst, SetRest, Reverse, Str, List2, ListToString,
                         Vec, InPort, OutPort, List1, ListToVector, ListStar,
@@ -761,7 +762,7 @@ PROCEDURE Prims(t : T;
         END
       |
         
-        P.StringAppend => RETURN StringAppend(args)
+        P.StringAppend => RETURN StringAppend(interp, args)
       |
         P.StringToList =>
         VAR
@@ -1361,14 +1362,16 @@ PROCEDURE StringCompare(x, y : Object; ci : BOOLEAN) : INTEGER RAISES { E } =
     END
   END StringCompare;
 
-PROCEDURE StringAppend(args : Object) : String  RAISES { E } =
-  VAR res := Wx.New();
+PROCEDURE StringAppend(interp : Scheme.T;
+                       args : Object) : String  RAISES { E } =
   BEGIN
+    IF interp.wx = NIL THEN interp.wx := Wx.New() END;
+
     WHILE args # NIL AND ISTYPE(args,Pair) DO
-      Wx.PutText(res,StringifyQ(First(args),FALSE));
+      StringifyB(First(args),FALSE,interp.wx,NIL);
       args := Rest(args)
     END;
-    RETURN SchemeString.FromText(Wx.ToText(res))
+    RETURN SchemeString.FromText(Wx.ToText(interp.wx))
   END StringAppend;
 
 PROCEDURE OpenOutputFile(filename : Object) : Wr.T RAISES { E } =
