@@ -18,6 +18,7 @@ else
       	/* Critical Mass Modula-3 */
 % see http://www.elegosoft.com/cm3/doc/help/cm3/cm3.html
 %     build_standalone()
+      m3_optimize("")
  else 
 	/* SRC Modula-3 */
 	m3_option ("-X2@-static@")

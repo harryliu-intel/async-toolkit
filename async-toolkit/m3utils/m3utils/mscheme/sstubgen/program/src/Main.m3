@@ -31,6 +31,7 @@ IMPORT Atom, Type;
 IMPORT SchemeString; 
 IMPORT Csighandler; (* no-readline *)
 IMPORT SchemeModula3Types;
+IMPORT SchemeEnvironment;
 
 TYPE ContextClosure = M3Context.Closure OBJECT
     wr: Wr.T;
@@ -114,6 +115,8 @@ CONST NoReadlineFlag = "noreadline";
 
 CONST NoInteractiveFlag = "nointeractive";
 
+CONST UnsafeFlag = "unsafe";
+
 TYPE 
   Interrupter = Scheme.Interrupter OBJECT
   OVERRIDES
@@ -130,10 +133,14 @@ PROCEDURE Interrupt(<*UNUSED*>i : Interrupter) : BOOLEAN =
     END
   END Interrupt;
 
+VAR
+  env := NEW(SchemeNavigatorEnvironment.T).initEmpty();
 BEGIN
   M3Args.RegisterStringList(StubGenTool.tool_g, ScmFlag, "scheme command file", shared := FALSE);
   M3Args.RegisterFlag(StubGenTool.tool_g, NoReadlineFlag, "no readline support", shared := FALSE);
   M3Args.RegisterFlag(StubGenTool.tool_g, NoInteractiveFlag, "no interactive support", shared := FALSE);
+  M3Args.RegisterFlag(StubGenTool.tool_g, UnsafeFlag, "unsafe Scheme environment (no thread locking)", shared := FALSE);
+
   WITH res = ABS(M3ToolFrame.Startup(
                        NEW(M3ToolFrame.Worker, work := DoRun),
                        compile := FALSE)) DO
@@ -144,9 +151,12 @@ BEGIN
 
     WITH  args = ScmArgsOrZeroLength()^ DO
       TRY
+        IF M3Args.GetFlag(StubGenTool.tool_g, UnsafeFlag) THEN
+          env := NEW(SchemeEnvironment.Unsafe).initEmpty()
+        END;
+
         WITH scm = NEW(SchemeM3.T).init(ARRAY OF Pathname.T { "require" }, 
-                                        globalEnv := 
-                                            NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
+                                        globalEnv := env) DO
           scm.bind("the-types", AstToType.typeList);
           scm.bind("the-exceptions", AstToType.exceptionList);
           scm.bind("the-vars", AstToType.varList);
@@ -182,8 +192,6 @@ BEGIN
           AL.Format(err))
       END
     END;
-
-
     Process.Exit(res)
   END
 END Main.

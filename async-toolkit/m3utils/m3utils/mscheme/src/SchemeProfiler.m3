@@ -12,8 +12,8 @@ IMPORT SchemeProfilerSysDep;
 
 PROCEDURE EnterProcedure(p : SchemeProcedure.T) =
   BEGIN
-    LOCK mu DO
-      IF enabled = TRUE THEN
+    IF enabled = TRUE THEN
+      LOCK mu DO
         VAR
           rusage_retval := SchemeProfilerSysDep.getrusage(RUSAGE_SELF, rusage);
           (* RUSAGE_CHILDREN too? *)

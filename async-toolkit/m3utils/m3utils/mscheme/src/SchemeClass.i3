@@ -8,7 +8,7 @@
 *)
 INTERFACE SchemeClass;
 IMPORT Scheme, SchemeInputPort, Wr, SchemePair;
-IMPORT Wx;
+IMPORT Wx, RefSeq;
 
 REVEAL Scheme.T <: Private;
 
@@ -22,6 +22,7 @@ TYPE
        interpreter for recycling memory w/o GC *)
 
     wx : Wx.T := NIL; (* this is a wx for use by string-append etc *)
+    refseq : RefSeq.T := NIL;
   END;
 
 (* recycling routines for cons cells *)

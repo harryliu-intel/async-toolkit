@@ -7,11 +7,10 @@
 *)
 
 MODULE SchemeInputPort;
-IMPORT AL, Rd;
+IMPORT AL, Rd, UnsafeRd, RdClass;
 FROM SchemeUtils IMPORT Error, Warn, Cons, List2, ListToVector, Stringify;
 FROM Scheme IMPORT Object, E;
 IMPORT SchemeLongReal;
-FROM SchemeSymbol IMPORT SymEq;
 IMPORT SchemeBoolean, SchemeSymbol;
 IMPORT CharSeq;
 IMPORT Text;
@@ -19,6 +18,9 @@ IMPORT Scan, FloatMode, Lex, TextUtils;
 FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
 IMPORT Thread;
 IMPORT SchemeString;
+IMPORT SchemePair, SchemeUtils;
+
+REVEAL RdClass.Private <: MUTEX; (* see cryptic SRC comments *)
 
 TYPE Boolean = SchemeBoolean.T;
      String  = SchemeString.T;
@@ -35,8 +37,9 @@ REVEAL
 
     nextToken(wx : Wx := NIL) : Object RAISES { E } := NextToken;
 
-    readTail(dotOK : BOOLEAN; wx : Wx) : Object RAISES { E } := ReadTail;
+    readTail(wx : Wx) : Object RAISES { E } := ReadTail2;
 
+    fastGetCh() : INTEGER RAISES { E } := FastGetCh;
   OVERRIDES
     getCh    :=  GetCh; 
     init     :=  Init;
@@ -64,6 +67,19 @@ PROCEDURE GetCh(t : T) : INTEGER RAISES { E } =
       RETURN ChEOF
     END
   END GetCh;
+
+PROCEDURE FastGetCh(t : T) : INTEGER RAISES { E } =
+  BEGIN
+    TRY
+      RETURN ORD(UnsafeRd.FastGetChar(t.rd))
+    EXCEPT
+      Rd.EndOfFile => RETURN ChEOF 
+    |
+      Rd.Failure(err) =>
+      EVAL Warn("Rd.Failure : " & AL.Format(err));
+      RETURN ChEOF
+    END
+  END FastGetCh;
 
 PROCEDURE ReadChar(t : T) : Object RAISES { E } =
   BEGIN
@@ -140,19 +156,19 @@ PROCEDURE Read(t : T) : Object RAISES { E } =
     TRY
 *)
       WITH token = t.nextToken(wx) DO
-        IF    SymEq(token, "(") THEN
-          RETURN t.readTail(FALSE,wx)
-        ELSIF SymEq(token, ")") THEN
+        IF    token = LP THEN
+          RETURN t.readTail(wx)
+        ELSIF token = RP THEN
           EVAL Warn("Extra ) ignored."); RETURN t.read()
-        ELSIF SymEq(token, ".") THEN
+        ELSIF token = DOT THEN
           EVAL Warn("Extra . ignored."); RETURN t.read()
-        ELSIF SymEq(token, "'") THEN
+        ELSIF token = SQ THEN
           RETURN List2(Symbol("quote"), t.read())
-        ELSIF SymEq(token, "`") THEN
+        ELSIF token = BQ THEN
           RETURN List2(Symbol("quasiquote"), t.read())
-        ELSIF SymEq(token, ",") THEN
+        ELSIF token = COM THEN
           RETURN List2(Symbol("unquote"), t.read())
-        ELSIF SymEq(token, ",@") THEN
+        ELSIF token = COMAT THEN
           RETURN List2(Symbol("unquote-splicing"), t.read())
         ELSE
           RETURN token
@@ -179,19 +195,68 @@ PROCEDURE Close(t : T) : Boolean RAISES { E } =
 
 PROCEDURE IsEOF(x : Object) : BOOLEAN = BEGIN RETURN x = EOF END IsEOF;
 
+PROCEDURE ReadTail2(t : T; 
+                   wx : Wx) : Object RAISES { E } =
+  VAR token := t.nextToken(wx);
+      res : SchemePair.T := NIL;
+      ret : Object;
+  BEGIN
+    LOOP
+    IF    token = EOF THEN
+      RETURN Error("EOF during read.")
+    ELSIF token = RP THEN
+      ret := NIL ; EXIT
+    ELSIF token = DOT THEN
+      WITH result = t.read() DO
+        token := t.nextToken();
+        IF token # RP THEN
+          EVAL Warn("Where's the ')'?  Got " & Stringify(token) &
+            " after .")
+        END;
+        ret :=  result ; EXIT
+      END
+    ELSE
+      t.isPushedToken := TRUE;
+      t.pushedToken := token;
+      res:= Cons(t.read(), res) ; token := t.nextToken(wx)
+    END
+    END;
+
+    VAR p := res; BEGIN
+     res := ReverseD(res);
+     IF p # NIL THEN
+       p.rest := ret;
+       RETURN res
+     ELSE
+       RETURN ret
+     END;
+    END
+  END ReadTail2;
+
+PROCEDURE ReverseD(p : SchemePair.T) : SchemePair.T =
+  VAR q : SchemePair.T := NIL; t : SchemePair.T;
+  BEGIN
+    WHILE p # NIL DO
+      t := p.rest;
+      p.rest := q;
+      q := p;
+      p := t
+    END;
+    RETURN q
+  END ReverseD;
+
 PROCEDURE ReadTail(t : T; 
-                   <*UNUSED*>dotOK : BOOLEAN;
                    wx : Wx) : Object RAISES { E } =
   VAR token := t.nextToken(wx);
   BEGIN
     IF    token = EOF THEN
       RETURN Error("EOF during read.")
-    ELSIF SymEq(token,")") THEN
+    ELSIF token = RP THEN
       RETURN NIL
-    ELSIF SymEq(token,".") THEN
+    ELSIF token = DOT THEN
       WITH result = t.read() DO
         token := t.nextToken();
-        IF NOT SymEq(token, ")") THEN
+        IF token # RP THEN
           EVAL Warn("Where's the ')'?  Got " & Stringify(token) &
             " after .")
         END;
@@ -200,7 +265,7 @@ PROCEDURE ReadTail(t : T;
     ELSE
       t.isPushedToken := TRUE;
       t.pushedToken := token;
-      RETURN Cons(t.read(), t.readTail(TRUE, wx))
+      RETURN Cons(t.read(), t.readTail(wx))
     END
   END ReadTail;
 
@@ -211,50 +276,69 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
   VAR ch : INTEGER;
 
   BEGIN
-    IF t.isPushedToken THEN
-      t.isPushedToken := FALSE;
-      RETURN t.pushedToken
-    ELSIF t.isPushedChar THEN
-      ch := t.popChar()
-    ELSE
-      ch := t.getCh()
-    END;
+    TRY
+      RdClass.Lock(t.rd);
+      IF t.isPushedToken THEN
+        t.isPushedToken := FALSE;
+        RETURN t.pushedToken
+      ELSIF t.isPushedChar THEN
+        ch := t.popChar()
+      ELSE
+        ch := t.fastGetCh()
+      END;
 
-    WHILE ch # ChEOF AND VAL(ch,CHAR) IN White DO ch := t.getCh() END;
+      WHILE ch # ChEOF AND VAL(ch,CHAR) IN White DO ch := t.fastGetCh() END;
+    FINALLY
+      RdClass.Unlock(t.rd)
+    END;
 
     CASE ch OF
       ChEOF => RETURN EOF;
     |
-      ORD('('), ORD(')'), ORD('\''), ORD('`') => 
+      ORD('(') => RETURN LP
+    |
+      ORD(')') => RETURN RP 
+    | 
+      ORD('\''), ORD('`') => 
         RETURN Symbol(Text.FromChar(VAL(ch,CHAR)))
     |
       ORD(',') =>
         ch := t.getCh();
         IF ch = ORD('@') THEN
-          RETURN Symbol(",@") 
+          RETURN COMAT
         ELSE
-          EVAL t.pushChar(ch); RETURN Symbol(",")
+          EVAL t.pushChar(ch); RETURN COM
         END
     |
       ORD(';') =>
-        WHILE ch # ChEOF AND ch # ORD('\n') AND ch # ORD('\r') DO
-          ch := t.getCh()
+        TRY
+          RdClass.Lock(t.rd);
+          WHILE ch # ChEOF AND ch # ORD('\n') AND ch # ORD('\r') DO
+            ch := t.fastGetCh()
+          END
+        FINALLY
+          RdClass.Unlock(t.rd)
         END;
         RETURN t.nextToken()
     |
       ORD(QMC) =>
         WITH buff = NEW(CharSeq.T).init() DO
-          LOOP
-            ch := t.getCh();
-            IF ch = ORD(QMC) OR ch = ChEOF THEN EXIT END;
-            IF ch = ORD(BSC) THEN
-              buff.addhi(VAL(t.getCh(),CHAR))
-            ELSE
-              buff.addhi(VAL(ch,CHAR))
-            END
-          END;
-          IF ch = ChEOF THEN EVAL Warn("EOF inside of a string.") END;
-          RETURN CharSeqToArray(buff)
+          TRY
+            RdClass.Lock(t.rd);
+            LOOP
+              ch := t.fastGetCh();
+              IF ch = ORD(QMC) OR ch = ChEOF THEN EXIT END;
+              IF ch = ORD(BSC) THEN
+                buff.addhi(VAL(t.fastGetCh(),CHAR))
+              ELSE
+                buff.addhi(VAL(ch,CHAR))
+              END
+            END;
+            IF ch = ChEOF THEN EVAL Warn("EOF inside of a string.") END;
+            RETURN CharSeqToArray(buff)
+          FINALLY
+            RdClass.Unlock(t.rd)
+          END
         END
     |
       ORD('#') =>
@@ -273,8 +357,8 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
             IF VAL(ch,CHAR) IN SET OF CHAR { 's', 'S', 'n', 'N' } THEN
               EVAL t.pushChar(ch);
               WITH token = t.nextToken() DO
-                IF    SymEq(token, "space") THEN RETURN Character(' ') 
-                ELSIF SymEq(token, "newline") THEN RETURN Character('\n')
+                IF    token = SPACE THEN RETURN Character(' ') 
+                ELSIF token = NEWLINE THEN RETURN Character('\n')
                 ELSE
                   (* this isn't right.. if we're parsing "#\n", for
                      instance, we'd be pushing the token "n"... *)
@@ -314,12 +398,18 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
 
         wx := WxReset(wx);
 
-        REPEAT
-          WxPutChar(wx, VAL(ch, CHAR));
-
-          ch := t.getCh()
-        UNTIL
-          ch = ChEOF OR VAL(ch,CHAR) IN White OR VAL(ch,CHAR) IN Delims;
+        
+        TRY
+          RdClass.Lock(t.rd);
+          REPEAT
+            WxPutChar(wx, VAL(ch, CHAR));
+            
+            ch := t.fastGetCh()
+          UNTIL
+            ch = ChEOF OR VAL(ch,CHAR) IN White OR VAL(ch,CHAR) IN Delims;
+        FINALLY
+          RdClass.Unlock(t.rd)
+        END;
 
         EVAL t.pushChar(ch);
 
@@ -406,6 +496,16 @@ PROCEDURE WxToText(wx : Wx) : TEXT =
 
 CONST BSC = '\\'; QMC = '"';
 
+VAR 
+  LP := SchemeSymbol.Symbol("(");
+  RP := SchemeSymbol.Symbol(")");
+  DOT := SchemeSymbol.Symbol(".");
+  SQ := SchemeSymbol.Symbol("'");
+  BQ := SchemeSymbol.Symbol("`");
+  COM := SchemeSymbol.Symbol(",");
+  COMAT := SchemeSymbol.Symbol(",@");
+  SPACE := SchemeSymbol.Symbol("space");
+  NEWLINE := SchemeSymbol.Symbol("newline");
 BEGIN
   EOF := SchemeSymbol.Symbol("#!EOF");
 END SchemeInputPort.

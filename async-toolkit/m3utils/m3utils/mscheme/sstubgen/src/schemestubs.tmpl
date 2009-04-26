@@ -34,7 +34,7 @@ readonly proc SchemeStubs(intf) is
 
 		intfs=intfs & " " & nam
 
-		_exec([_SSTUBGEN, "-nointeractive", "-si", intf, "-T.M3IMPTAB", "-scm", _SSTUBGENSCM, "build1.scm", _SEXIT])
+		_exec([_SSTUBGEN, "-nointeractive", "-unsafe", "-si", intf, "-T.M3IMPTAB", "-scm", _SSTUBGENSCM, "build1.scm", _SEXIT])
 	end
 
 	derived_interface(nam, VISIBLE)
@@ -54,7 +54,7 @@ readonly proc ExportSchemeStubs(package) is
 		write (cmd, CR)
   end
 
-	_exec([_SSTUBGEN, "-nointeractive", "-scm", _SSTUBGENSCM, "build2.scm", _SEXIT])
+	_exec([_SSTUBGEN, "-nointeractive", "-unsafe", "-scm", _SSTUBGENSCM, "build2.scm", _SEXIT])
 	
 	derived_interface(tgt, VISIBLE)
 	derived_implementation(tgt)
@@ -69,7 +69,7 @@ readonly proc importSchemeStubs() is
  		write (cmd, CR)
 	end
 
-	_exec([_SSTUBGEN, "-nointeractive", "-scm", _SSTUBGENSCM, "build3.scm", _SEXIT])
+	_exec([_SSTUBGEN, "-nointeractive", "-unsafe", "-scm", _SSTUBGENSCM, "build3.scm", _SEXIT])
 
 	derived_interface("SchemeStubs",VISIBLE)
 	derived_implementation("SchemeStubs")

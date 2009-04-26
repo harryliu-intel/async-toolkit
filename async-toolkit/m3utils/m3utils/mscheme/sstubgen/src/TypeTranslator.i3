@@ -9,9 +9,9 @@ INTERFACE TypeTranslator;
 
 (* Translate the SRC Type.T into a SchemeObject.T for the Mscheme 
    environment *)
+IMPORT M3AST_all; (* compiler bug *)
 
 IMPORT Type, SchemePair;
-IMPORT M3AST_all;
 
 FROM Type IMPORT Qid, Exception;
 

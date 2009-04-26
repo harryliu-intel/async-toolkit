@@ -40,6 +40,7 @@ IMPORT OSError, FileWr, FileRd, AL;
 IMPORT Thread;
 IMPORT SchemePair;
 IMPORT CardRefTbl, Random;
+IMPORT RefSeq;
 
 <* FATAL Thread.Alerted *>
 
@@ -1366,9 +1367,12 @@ PROCEDURE StringAppend(interp : Scheme.T;
                        args : Object) : String  RAISES { E } =
   BEGIN
     IF interp.wx = NIL THEN interp.wx := Wx.New() END;
+    IF interp.refseq = NIL THEN interp.refseq := NEW(RefSeq.T) END;
+
+    EVAL interp.refseq.init();
 
     WHILE args # NIL AND ISTYPE(args,Pair) DO
-      StringifyB(First(args),FALSE,interp.wx,NIL);
+      StringifyB(First(args),FALSE,interp.wx,interp.refseq);
       args := Rest(args)
     END;
     RETURN SchemeString.FromText(Wx.ToText(interp.wx))

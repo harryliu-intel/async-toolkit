@@ -530,12 +530,12 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
               |
                 Pair(pp) =>
                 IF pp.rest = NIL THEN
-                  RETURN p.apply1(t, t.eval(pp.first, env))
+                  RETURN p.apply1(t, EvalInternal(t,pp.first, env))
                 ELSIF ISTYPE(pp.rest,Pair) 
                   AND NARROW(pp.rest,Pair).rest = NIL THEN
                   RETURN p.apply2(t, 
-                                  t.eval(pp.first,env),
-                                  t.eval(NARROW(pp.rest,Pair).first, env))
+                                  EvalInternal(t,pp.first,env),
+                                  EvalInternal(t,NARROW(pp.rest,Pair).first, env))
                 END
               ELSE END;
               RETURN p.apply(t, t.evalList(args,env))
