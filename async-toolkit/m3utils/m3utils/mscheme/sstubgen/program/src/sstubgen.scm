@@ -490,7 +490,7 @@
     #t
     ))
 
-(define (reload) (load "/home/mika/t/mscheme/sstubgen/program/src/sstubgen.scm"))
+(define (reload) (load "/home/mika/t-cm3/mscheme/sstubgen/program/src/sstubgen.scm"))
 
 (set-warnings-are-errors! #t)
 
@@ -1774,11 +1774,27 @@
     proc-stubs
     ))
         
+(define (stale-output? intf-name)
+	(let ((stale #f)
+				(srcs the-sourcefiles)
+				(tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
+		(unwind-protect
+		 (set! stale (< (apply min (map fs-status-modificationtime tgts))
+										(apply max (map fs-status-modificationtime srcs))))
+		 '()
+		 (set! stale #t))
+		stale))
+					
+		
     
 (define (make-standard-stuff intf-name)
   ;; build all the Scheme interfaces for a given M3 interface
-  (set! global-env (env-type 'new))
-  (write-files intf-name the-procs the-types global-env)
+	(if (stale-output? intf-name) 
+			(begin
+				(set! global-env (env-type 'new))
+				(write-files intf-name the-procs the-types global-env)
+				)
+			(dis "Scheme stubs up to date: " intf-name dnl))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1850,7 +1866,7 @@
                     (loop (read in) (cons (strip-extension next) res))
                     (loop (read in) res)))))))
                   
-    (write-scheme-package-exports  (get-matches)
+    (write-scheme-package-exports  (append (get-matches) local-exports)
                                    output-path)
 
     (close-input-port in))

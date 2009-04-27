@@ -41,6 +41,7 @@ IMPORT Thread;
 IMPORT SchemePair;
 IMPORT CardRefTbl, Random;
 IMPORT RefSeq;
+IMPORT Time;
 
 <* FATAL Thread.Alerted *>
 
@@ -1092,7 +1093,12 @@ PROCEDURE Prims(t : T;
       |
         P.SetCdr => RETURN SetRest(x,y)
       |
-        P.TimeCall => RETURN False() (* not impl *)
+        P.TimeCall => 
+        WITH start = Time.Now(),
+             p = SchemeProcedure.Proc(x) DO
+          EVAL p.apply(interp,Rest(args));
+          RETURN SchemeLongReal.FromLR(Time.Now()-start)
+        END
       |
         P.MacroExpand => RETURN SchemeMacro.MacroExpand(interp,x)
       |

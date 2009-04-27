@@ -42,7 +42,7 @@ readonly proc scodegen(nam) is
 			4. exit.scm
  		 */
 
-		_exec([_MSCHEME, derived_scm, _SCODEGEN, g, _SEXIT])
+		_exec([_MSCHEME, "-unsafeenv", derived_scm, _SCODEGEN, g, _SEXIT])
 	end
 	include (derived_mkf)
 	_check_clean (derived_mkf) /* delete this to keep from errors */

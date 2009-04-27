@@ -7,9 +7,10 @@
 */
 
 
-
 if defined("pm3_version")
 	option("optimization","") 
+else 
+	m3_optimize("T")
 end
 
 
@@ -47,6 +48,7 @@ Interface("SchemeEnvironmentSuper")
 Module("SchemeNavigatorEnvironment")
 
 Module("SchemeInputPort")
+Interface("SchemeInputPortClass")
 
 Interface("SchemeObject")
 

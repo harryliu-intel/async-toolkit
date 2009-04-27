@@ -29,6 +29,9 @@ TYPE
                            (* override this if desired, see ChEOF *)
   END;
 
+  (* overriders need to override the methods in 
+     SchemeInputPortClass.Private as well *)
+
 CONST ChEOF = -1;
 
 PROCEDURE IsEOF(x : SchemeObject.T) : BOOLEAN;

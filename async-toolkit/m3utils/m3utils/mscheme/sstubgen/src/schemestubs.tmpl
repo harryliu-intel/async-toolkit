@@ -25,6 +25,10 @@ readonly proc SchemeStubs(intf) is
 % package.  stale() doesn't seem to catch those, at least not the
 % way we've coded it here.
 
+	intfs=intfs & " " & nam
+	
+	%write(path_of(intf & ".i3"), CR)
+
 	if stale(nam & ".i3", path_of(intf & ".i3"))
 		generate_tfile()
 
@@ -32,7 +36,6 @@ readonly proc SchemeStubs(intf) is
  			write (cmd, CR)
 		end
 
-		intfs=intfs & " " & nam
 
 		_exec([_SSTUBGEN, "-nointeractive", "-unsafe", "-si", intf, "-T.M3IMPTAB", "-scm", _SSTUBGENSCM, "build1.scm", _SEXIT])
 	end

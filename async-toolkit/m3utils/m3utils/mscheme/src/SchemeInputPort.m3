@@ -19,6 +19,7 @@ FROM SchemeChar IMPORT IChr, Character, Delims, White, NumberChars;
 IMPORT Thread;
 IMPORT SchemeString;
 IMPORT SchemePair, SchemeUtils;
+IMPORT SchemeInputPortClass;
 
 REVEAL RdClass.Private <: MUTEX; (* see cryptic SRC comments *)
 
@@ -28,7 +29,7 @@ TYPE Boolean = SchemeBoolean.T;
 <* FATAL Thread.Alerted *>
 
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = SchemeInputPortClass.Private BRANDED Brand OBJECT
     rd : Rd.T;
     isPushedToken, isPushedChar := FALSE;
     pushedToken : Object := NIL;
@@ -39,8 +40,11 @@ REVEAL
 
     readTail(wx : Wx) : Object RAISES { E } := ReadTail2;
 
-    fastGetCh() : INTEGER RAISES { E } := FastGetCh;
   OVERRIDES
+    fastGetCh := FastGetCh;
+    lock      := Lock;
+    unlock    := Unlock;
+
     getCh    :=  GetCh; 
     init     :=  Init;
     readChar :=  ReadChar;
@@ -51,6 +55,10 @@ REVEAL
     read     :=  Read;
     close    :=  Close;
   END;
+
+PROCEDURE Lock(t : T) = BEGIN RdClass.Lock(t.rd) END Lock;
+
+PROCEDURE Unlock(t : T) = BEGIN RdClass.Unlock(t.rd) END Unlock;
 
 PROCEDURE Init(t : T; rd : Rd.T) : T = 
   BEGIN t.rd := rd; RETURN t END Init;
@@ -277,7 +285,7 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
 
   BEGIN
     TRY
-      RdClass.Lock(t.rd);
+      t.lock();
       IF t.isPushedToken THEN
         t.isPushedToken := FALSE;
         RETURN t.pushedToken
@@ -289,7 +297,7 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
 
       WHILE ch # ChEOF AND VAL(ch,CHAR) IN White DO ch := t.fastGetCh() END;
     FINALLY
-      RdClass.Unlock(t.rd)
+      t.unlock()
     END;
 
     CASE ch OF
@@ -312,19 +320,19 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
     |
       ORD(';') =>
         TRY
-          RdClass.Lock(t.rd);
+          t.lock();
           WHILE ch # ChEOF AND ch # ORD('\n') AND ch # ORD('\r') DO
             ch := t.fastGetCh()
           END
         FINALLY
-          RdClass.Unlock(t.rd)
+          t.unlock()
         END;
         RETURN t.nextToken()
     |
       ORD(QMC) =>
         WITH buff = NEW(CharSeq.T).init() DO
           TRY
-            RdClass.Lock(t.rd);
+            t.lock();
             LOOP
               ch := t.fastGetCh();
               IF ch = ORD(QMC) OR ch = ChEOF THEN EXIT END;
@@ -337,7 +345,7 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
             IF ch = ChEOF THEN EVAL Warn("EOF inside of a string.") END;
             RETURN CharSeqToArray(buff)
           FINALLY
-            RdClass.Unlock(t.rd)
+            t.unlock()
           END
         END
     |
@@ -400,7 +408,7 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
 
         
         TRY
-          RdClass.Lock(t.rd);
+          t.lock();
           REPEAT
             WxPutChar(wx, VAL(ch, CHAR));
             
@@ -408,7 +416,7 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
           UNTIL
             ch = ChEOF OR VAL(ch,CHAR) IN White OR VAL(ch,CHAR) IN Delims;
         FINALLY
-          RdClass.Unlock(t.rd)
+          t.unlock()
         END;
 
         EVAL t.pushChar(ch);

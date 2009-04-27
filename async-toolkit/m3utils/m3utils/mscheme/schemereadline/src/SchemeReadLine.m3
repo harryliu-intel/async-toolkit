@@ -5,6 +5,7 @@ IMPORT Scheme, Csighandler;
 IMPORT NetObj, Thread;
 IMPORT ReadLine, ReadLineError;
 IMPORT SchemeInputPort, SchemeSymbol, SchemeUtils;
+IMPORT SchemeInputPortClass;
 IMPORT Rd, AL, Debug;
 IMPORT TextWr;
 IMPORT Text, IntSeq;
@@ -37,7 +38,13 @@ TYPE
   OVERRIDES
     getCh := GetCh;
     (* should override close, too *)
+
+    fastGetCh := GetCh;
+    lock := NopDummy;
+    unlock := NopDummy;
   END;
+
+PROCEDURE NopDummy(<*UNUSED*>p : InputPort) = BEGIN (*skip*) END NopDummy;
 
 PROCEDURE InitPort(p : InputPort; rl : ReadLine.T) : InputPort =
   BEGIN

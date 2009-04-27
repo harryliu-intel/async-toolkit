@@ -493,6 +493,19 @@ PROCEDURE GetNDimensionsApply(<*UNUSED*>p : SchemeProcedure.T;
     RETURN SchemeLongReal.FromI(RTType.GetNDimensions(tc))
   END GetNDimensionsApply;
 
+PROCEDURE FSStatusModificationTimeApply(<*UNUSED*>p : SchemeProcedure.T; 
+                              <*UNUSED*>interp : Scheme.T; 
+                              args : Object) : Object RAISES { E } =
+  BEGIN
+    TRY
+      WITH status = FS.Status(SchemeString.ToText(First(args))) DO
+        RETURN SchemeLongReal.FromLR(status.modificationTime)
+      END
+    EXCEPT
+      OSError.E(al) => RAISE E("FSStatusModificationTimeApply: OSError.E: " & AL.Format(al))
+    END
+  END FSStatusModificationTimeApply;
+
 (**********************************************************************)
 
 PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.ExtDefiner =
@@ -606,6 +619,11 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     prims.addPrim("rttype-ndimensions", NEW(SchemeProcedure.T,
                                             apply := GetNDimensionsApply),
                   1, 1);
+
+    prims.addPrim("fs-status-modificationtime",NEW(SchemeProcedure.T,
+                                            apply := FSStatusModificationTimeApply),
+                  1, 1);
+
 
     (****************************************)
 

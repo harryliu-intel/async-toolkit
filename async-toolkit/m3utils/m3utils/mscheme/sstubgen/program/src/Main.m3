@@ -164,6 +164,7 @@ BEGIN
           scm.bind("the-consts", AstToType.constList);
           scm.bind("the-protos", TypeTranslator.protoList);
           scm.bind("the-basetypes", TypeTranslator.basetypeList);
+          scm.bind("the-sourcefiles", AstToType.filenames);
           FOR i := FIRST(args) TO LAST(args) DO
             Debug.Out("Loading SCM file " & args[i]);
             WITH str = SchemeString.FromText(args[i]) DO

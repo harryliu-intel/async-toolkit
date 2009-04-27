@@ -7,13 +7,13 @@ MODULE AstToType;
 IMPORT Atom, Wr, PropertyV, RefRefTbl, FRefRefTbl, TextRefTbl,
        StubUtils;
 IMPORT ASTWalk;
-IMPORT M3AST_AS, M3ASTScope;
+IMPORT M3AST_AS, M3ASTScope, M3AST_FE_F;
 IMPORT M3CId;
 IMPORT AstToVal, Type, Value;
 IMPORT M3AST_AS_F, M3AST_SM, M3AST_SM_F, M3AST_TM_F, M3ASTNext,
        M3AST_TL_F, M3AST_LX, 
        M3Context, M3CConcTypeSpec,
-       M3CStdTypes, M3CUnit;
+       M3CStdTypes, M3CUnit, M3CUnitRep;
 IMPORT SeqM3AST_AS_Enum_id, SeqM3AST_AS_Fields,
        SeqM3AST_AS_Field_id, SeqM3AST_AS_Method, 
        SeqM3AST_AS_Override,
@@ -25,6 +25,7 @@ IMPORT RTBrand;
 IMPORT SchemeObject, SchemeSymbol;
 IMPORT RefSeq, M3ASTScopeNames;
 FROM SchemeUtils IMPORT Cons, List2;
+IMPORT SchemeString;
 IMPORT ValueTranslator;
 IMPORT Debug;
 IMPORT CM3Extensions;
@@ -72,6 +73,9 @@ PROCEDURE GetNames(c : M3Context.T;
       Debug.Out("AstToType.GetNames : cu is " & RTBrand.GetName(TYPECODE(cu)));
       Debug.Out("AstToType.GetNames : cu.as_root is " & 
         RTBrand.GetName(TYPECODE(cu.as_root)));
+
+      filenames := Cons(SchemeString.FromText(NARROW(cu.fe_uid,M3CUnit.Uid).filename),
+                                 filenames);
 
       WITH syms = M3ASTScopeNames.Names(cu.as_root.as_id.vSCOPE) DO
         IF syms = NIL THEN 
