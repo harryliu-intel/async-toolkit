@@ -309,7 +309,7 @@ PROCEDURE TruncateText(txt : TEXT; maxLen : CARDINAL) : TEXT =
 
 PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
   RAISES { E } =
-  CONST DoTracebacks = TRUE;
+  CONST
         Ellipsis     = "\n...";
         MaxTraceback = 4096; (* in bytes of output *)
         MaxPerLine   =  512; (* also in bytes *)

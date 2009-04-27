@@ -128,4 +128,6 @@ PROCEDURE SymbolCheck(x : Object) : SchemeSymbol.T RAISES { E };
 PROCEDURE VectorCheck(x : Object) : SchemeVector.T RAISES { E };
   (* same reason *)
 
+VAR DoTracebacks := TRUE;
+
 END Scheme.
