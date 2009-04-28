@@ -573,6 +573,8 @@ PROCEDURE EvalList2(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Obje
             new.first := t.eval(pair.first, env);
             new.rest := NIL;
 
+            (* "cons" on the *tail* of the result so we dont have to
+               reverse it later *)
             IF res = NIL THEN
               ptr := new;
               res := ptr

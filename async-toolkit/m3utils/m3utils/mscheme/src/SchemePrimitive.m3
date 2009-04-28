@@ -132,7 +132,7 @@ TYPE
         Error, ListStar,
         
         Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub,
-        ToggleTracebacks
+        EnableTracebacks, DisableTracebacks
   };
 
 REVEAL 
@@ -450,7 +450,8 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
 
     .defPrim("set-warnings-are-errors!",     ORD(P.SetWarningsAreErrors), dd,      1, 1)
     .defPrim("random",                ORD(P.Random), dd,      0, 0)
-    .defPrim("toggle-tracebacks!",                ORD(P.ToggleTracebacks), dd,      0, 0)
+    .defPrim("enable-tracebacks!",                ORD(P.EnableTracebacks), dd,      0, 0)
+    .defPrim("disable-tracebacks!",                ORD(P.DisableTracebacks), dd,      0, 0)
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
     .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2);
@@ -1065,8 +1066,12 @@ PROCEDURE Prims(t : T;
         RETURN SchemeBoolean.Truth(TextUtils.HaveSub(SchemeString.ToText(x),
                                                      SchemeString.ToText(y)))
       | 
-        P.ToggleTracebacks =>
-        Scheme.DoTracebacks := NOT Scheme.DoTracebacks;
+        P.EnableTracebacks =>
+        Scheme.DoTracebacks := TRUE;
+        RETURN SchemeBoolean.Truth(Scheme.DoTracebacks)
+      | 
+        P.DisableTracebacks =>
+        Scheme.DoTracebacks := FALSE;
         RETURN SchemeBoolean.Truth(Scheme.DoTracebacks)
       |
         P.Normal =>
