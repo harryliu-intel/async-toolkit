@@ -72,8 +72,10 @@ Module("SchemeAtRun")
 
 Netobj("SchemeEnvironment", "Public")
 
-Interface("SchemeUnixDeps")
+Module("SchemeUnixDeps")
 module("SchemeProfilerSysDep")
+
+c_source("schemeUnixDeps")
 
 library ("mscheme")
 

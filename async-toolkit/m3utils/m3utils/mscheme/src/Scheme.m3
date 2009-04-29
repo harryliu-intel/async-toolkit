@@ -22,6 +22,7 @@ IMPORT Env, TextReader;
 
 IMPORT SchemeDefsBundle, Bundle;
 IMPORT SchemeProfiler;
+IMPORT SchemeUnixDeps;
 
 TYPE Pair = SchemePair.T;
 
@@ -185,6 +186,26 @@ PROCEDURE FileOpen(t : T; name : Pathname.T) : FileRec
       EXCEPT
         OSError.E(x) => xArgs := x; xType := XType.OS
       END;
+    ELSIF Text.GetChar(name, 0) = '~' THEN
+      VAR pos := Text.FindChar(name, '/', 1); 
+          user, rest : TEXT;
+          homeDir : Pathname.T;
+      BEGIN
+        TRY
+          IF pos < 2 THEN
+            user := SchemeUnixDeps.GetCurrentUser();
+            rest := Text.Sub(name, 1)
+          ELSE
+            user := Text.Sub(name, 1, pos-1);
+            rest := Text.Sub(name, pos)
+          END;
+          homeDir := SchemeUnixDeps.GetHomeDir(user);
+        EXCEPT
+          SchemeUnixDeps.Error => RAISE E ("error expanding ~ home directory")
+        END;
+
+        RETURN FileOpen(t, homeDir & rest)
+      END
     ELSE
       WHILE ISTYPE(p,Pair) AND p # NIL DO
         WITH pa = NARROW(p,Pair) DO

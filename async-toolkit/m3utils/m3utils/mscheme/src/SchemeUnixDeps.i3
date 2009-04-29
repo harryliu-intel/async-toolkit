@@ -8,8 +8,9 @@
 
 INTERFACE SchemeUnixDeps;
 
-FROM Ctypes IMPORT int, long;
+FROM Ctypes IMPORT int, long, char_star;
 IMPORT Utime;
+IMPORT Pathname;
 
 (*** <sys/resource.h> ***)
 
@@ -48,5 +49,19 @@ TYPE
 <*EXTERNAL*> PROCEDURE getrusage (who: int; VAR rus: struct_rusage): int;
 
 <*EXTERNAL errno*>VAR errno : INTEGER;
+
+PROCEDURE GetCurrentUser() : TEXT RAISES { Error };
+  (* string name of current user *)
+
+PROCEDURE GetHomeDir(user : TEXT) : Pathname.T RAISES { Error };
+  (* home directory of specified user *)
+
+EXCEPTION Error;
+  
+<*EXTERNAL SchemeUnixDeps__getCurrentUserWrapper*>
+PROCEDURE getCurrentUserWrapper() : char_star;
+
+<*EXTERNAL SchemeUnixDeps__getHomeDirWrapper*>
+PROCEDURE getHomeDirWrapper(user : char_star) : char_star;
 
 END SchemeUnixDeps.
