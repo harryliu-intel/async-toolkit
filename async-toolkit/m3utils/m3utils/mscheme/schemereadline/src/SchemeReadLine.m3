@@ -9,6 +9,7 @@ IMPORT SchemeInputPortClass;
 IMPORT Rd, AL, Debug;
 IMPORT TextWr;
 IMPORT Text, IntSeq;
+IMPORT RuntimeError;
 
 <* FATAL Thread.Alerted *>
 
@@ -127,6 +128,9 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
           END
         END
       EXCEPT
+        RuntimeError.E(err) => rl.display("EXCEPTION! RuntimeError! " & 
+          RuntimeError.Tag(err))
+      |
         Scheme.E(e) => rl.display("EXCEPTION! " & e & "\n")
       END
     END

@@ -7,6 +7,7 @@ import("rdwrreset")
 
 if defined("CM3_VERSION")
 	import ("libbuf")
+	m3_optimize("T")
 end
 
 template("texthack")
@@ -50,6 +51,7 @@ if defined("CM3_VERSION")
 	import("patternmatching")
         implementation("RefRecordCM3")
 else
+	Interface("RuntimeError")
 	Interface("Wx")
         implementation("Wx")
 	implementation("RTBrand")
