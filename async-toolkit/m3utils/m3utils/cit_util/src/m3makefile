@@ -51,7 +51,7 @@ if defined("CM3_VERSION")
 	import("patternmatching")
         implementation("RefRecordCM3")
 else
-	Interface("RuntimeError")
+%	Interface("RuntimeError")
 	Interface("Wx")
         implementation("Wx")
 	implementation("RTBrand")
