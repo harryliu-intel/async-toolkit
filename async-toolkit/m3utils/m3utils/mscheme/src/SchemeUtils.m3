@@ -358,15 +358,26 @@ PROCEDURE ListToVector(objs : Object) : Vector =
     RETURN vec
   END ListToVector;
 
-PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object RAISES { E } =
+PROCEDURE Write(x : Object; 
+                port : Wr.T; 
+                quoted : BOOLEAN;
+                interp : Scheme.T := NIL;
+                flush := TRUE) : Object RAISES { E } =
   BEGIN
     TRY
       IF port = NIL OR Wr.Closed(port) THEN
         RETURN Error("Write: port NIL or closed")
       END;
 
-      Wr.PutText(port, StringifyQ(x, quoted));
-      Wr.Flush(port);
+      IF interp = NIL OR interp.wx = NIL THEN
+        Wr.PutText(port, StringifyQ(x, quoted))
+      ELSE
+        StringifyB(x, quoted, interp.wx, interp.refseq);
+        Wr.PutText(port, Wx.ToText(interp.wx))
+      END;
+      IF flush THEN
+        Wr.Flush(port)
+      END;
       RETURN x
     EXCEPT
       Wr.Failure(err) => RETURN Error("Write: Wr.Failure: " & AL.Format(err))

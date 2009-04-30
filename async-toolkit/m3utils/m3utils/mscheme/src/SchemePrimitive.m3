@@ -132,7 +132,9 @@ TYPE
         Error, ListStar,
         
         Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub,
-        EnableTracebacks, DisableTracebacks
+        EnableTracebacks, DisableTracebacks,
+
+        DisplayNoFlush, WriteNoFlush
   };
 
 REVEAL 
@@ -325,6 +327,7 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("cons",           ORD(P.Cons), dd,     2)
     .defPrim("cos",            ORD(P.Cos), dd,      1)
     .defPrim("display",        ORD(P.Display), dd,  1, 2)
+    .defPrim("display-noflush",        ORD(P.DisplayNoFlush), dd,  1, 2)
     .defPrim("eq?",            ORD(P.EqQ), dd,      2)
     .defPrim("equal?",         ORD(P.EqualQ), dd,   2)
     .defPrim("eqv?",           ORD(P.EqvQ), dd,     2)
@@ -416,7 +419,9 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("vector-set!",    ORD(P.VectorSet), dd,3)
     .defPrim("vector?",        ORD(P.VectorQ), dd,  1)
     .defPrim("write",          ORD(P.Write), dd,    1, 2)
+    .defPrim("write-noflush",          ORD(P.WriteNoFlush), dd,    1, 2)
     .defPrim("write-char",     ORD(P.Display), dd,  1, 2)
+    .defPrim("write-char-noflush",     ORD(P.DisplayNoFlush), dd,  1, 2)
     .defPrim("zero?",          ORD(P.ZeroQ), dd,    1);
     
     RETURN env
@@ -665,7 +670,11 @@ PROCEDURE Prims(t : T;
       |
         P.Truncate => RETURN FromLR(FLOAT(TRUNC(FromO(x)),LONGREAL))
       |
-        P.Write => RETURN Write(x, OutPort(y, interp), TRUE)
+        P.Write => RETURN Write(x, OutPort(y, interp), TRUE,
+                                interp := interp)
+      |
+        P.WriteNoFlush => RETURN Write(x, OutPort(y, interp), TRUE,
+                                interp := interp, flush := FALSE)
       |
         P.Append => free := FALSE; 
         IF args = NIL THEN RETURN NIL
@@ -904,7 +913,12 @@ PROCEDURE Prims(t : T;
       |
         P.Load => RETURN interp.loadFile(x)
       |
-        P.Display => RETURN Write(x, OutPort(y, interp), FALSE)
+        P.Display => RETURN Write(x, OutPort(y, interp), FALSE,
+                                  interp := interp)
+      |
+        P.DisplayNoFlush => RETURN Write(x, OutPort(y, interp), FALSE,
+                                  interp := interp,
+                                  flush := FALSE)
       |
         
         P.InputPortQ => RETURN Truth(x # NIL AND ISTYPE(x,SchemeInputPort.T))

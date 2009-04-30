@@ -22,6 +22,7 @@
 (* $Id$ *)
 
 MODULE Debug;
+FROM DebugClass IMPORT level;
 IMPORT TextSet;
 IMPORT TextSetDef;
 IMPORT FileRd;
@@ -86,6 +87,16 @@ PROCEDURE OutFilePos(file : Pathname.T; pos : CARDINAL;
     (* for now... *)
     Out(file & ":" & Fmt.Int(pos) & ": " & t,minLevel,cr)
   END OutFilePos;
+
+
+(* 
+   The code below here is very inefficient.
+   
+   Project for future: change code so that text can either be 
+   written left to right or else make a small virtual machine that
+   can figure out exactly how to assemble the text left to right
+   at the end. 
+*)
 
 PROCEDURE PrependText(pre, t : TEXT) : TEXT =
 
@@ -227,7 +238,11 @@ PROCEDURE DefaultOut(t: TEXT) =
           IF reset = TRUE THEN RdWrReset.Wr(p.head) END;
 
           TRY
-            Wr.PutText(p.head, t); Wr.Flush(p.head);
+            Wr.PutText(p.head, t); 
+
+            (* this isn't right.  We should have an option to 
+               flush the stream asynchronously. *)
+            Wr.Flush(p.head)
           EXCEPT ELSE END;
           p := p.tail
         END
@@ -273,7 +288,6 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 (* debugFilter *)
 
 VAR
-  level := 0;
   debugFilter := Env.Get("DEBUGFILTER")#NIL;
   triggers: TextSet.T;
   streams := RefList.List1(stderr); (* protected by mu *)

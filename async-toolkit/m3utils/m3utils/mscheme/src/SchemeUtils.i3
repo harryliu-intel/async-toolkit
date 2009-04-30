@@ -71,7 +71,12 @@ PROCEDURE ListToString(chars: Object) : String RAISES { E };
 
 PROCEDURE ListToVector(objs : Object) : Vector RAISES { E };
 
-PROCEDURE Write(x : Object; port : Wr.T; quoted : BOOLEAN) : Object RAISES { E };
+PROCEDURE Write(x : Object; 
+                port : Wr.T; 
+                quoted : BOOLEAN;
+                interp : Scheme.T := NIL;
+                flush := TRUE) : Object 
+  RAISES { E };
 
 PROCEDURE VectorToList(x : Object; t : Scheme.T := NIL) : Pair RAISES { E };
 

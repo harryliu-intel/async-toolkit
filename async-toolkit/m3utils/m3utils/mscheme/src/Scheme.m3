@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 (*
-  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+  Copyright (c) 2008, 2009, Generation Capital Ltd.  All rights reserved.
 
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
@@ -17,7 +17,7 @@ IMPORT Wr, TextRd, Thread, Text;
 IMPORT AL, FileRd, Rd, OSError, SchemeUtils;
 FROM SchemeUtils IMPORT Stringify;
 IMPORT SchemePair;
-<*NOWARN*>IMPORT Debug;
+IMPORT Debug, DebugClass;
 IMPORT Env, TextReader;
 
 IMPORT SchemeDefsBundle, Bundle;
@@ -380,7 +380,7 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
   VAR
     env := NARROW(envP, SchemeEnvironment.Public);
     envIsLocal := FALSE;
-    DebugLevel := Debug.GetLevel();
+    DebugLevel := DebugClass.level;
   BEGIN
     LOOP
       IF DebugLevel >= 20 THEN Debug.Out("EVAL: " & Stringify(x)) END;
