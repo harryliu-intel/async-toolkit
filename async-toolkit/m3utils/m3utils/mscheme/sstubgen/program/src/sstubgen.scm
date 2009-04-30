@@ -175,7 +175,7 @@
        ((Mode.Value) "VALUE ")
        ((Mode.Readonly) "READONLY ")
        (else (error "unknown mode " mode)))
-		 (format-field f env))))
+     (format-field f env))))
 
 (define (format-exceptions x env)
   (infixize (map (lambda(xx)(extract-and-format-qid xx env)) x) ", "))
@@ -339,23 +339,23 @@
 (define bad-values '())
 
 (define (is-reference-type? type)
-	(member? (car type) '(Opaque Ref Procedure Object)))
+  (member? (car type) '(Opaque Ref Procedure Object)))
 
 (define (format-type-value type value env)
   (case (car value)
 
     ((Ordinal) 
-		 ;; special case for NIL: (Ordinal . 0)
-		 
-		 (if (is-reference-type? type)
-				 (if (not (= (cdr value) 0))
-						 (error "Ordinal initializer for Ref, non-zero value : " type 
-										", " value)
-						 " NIL")
-				 (string-append 
-					" VAL(" 
-					(number->string (cdr value))", "  (type-formatter type env)
-					")")))
+     ;; special case for NIL: (Ordinal . 0)
+     
+     (if (is-reference-type? type)
+         (if (not (= (cdr value) 0))
+             (error "Ordinal initializer for Ref, non-zero value : " type 
+                    ", " value)
+             " NIL")
+         (string-append 
+          " VAL(" 
+          (number->string (cdr value))", "  (type-formatter type env)
+          ")")))
     
     ((LongFloat)
      (string-append
@@ -490,7 +490,7 @@
     #t
     ))
 
-(define (reload) (load "/home/mika/t-cm3/mscheme/sstubgen/program/src/sstubgen.scm"))
+(define (reload) (load "../../program/src/sstubgen.scm"))
 
 (set-warnings-are-errors! #t)
 
@@ -551,10 +551,10 @@
 ;;(map global-format (map strip-names the-types))
 
 (define (m3type->m3identifier s)
-	;;
-	;; turn a legal Modula-3 type specifier into a legal Modula-3 identifier
-	;; (by hook or by crook)
-	;;
+  ;;
+  ;; turn a legal Modula-3 type specifier into a legal Modula-3 identifier
+  ;; (by hook or by crook)
+  ;;
   (list->string
    (filter 
     (lambda (c) (or (char=? c #\_)
@@ -566,13 +566,13 @@
      (string->list s)))))
 
 (define (to-scheme-proc-name type env)
-	;;
+  ;;
   ;; if it's a base type, we call the base type conversion library
   ;; else we make the converter ourselves.
-	;;
+  ;;
   (if (and (is-basetype type) 
-					 (eq? (scheme-modula-conversion-mode (is-basetype type))
-								'Concrete))
+           (eq? (scheme-modula-conversion-mode (is-basetype type))
+                'Concrete))
       (begin
         (stringify-qid
          (cons 'SchemeModula3Types
@@ -589,32 +589,32 @@
 (define (is-basetype type)
   ;; returns string name of basetype or #f
 
-	(define (is-opaque-basetype)
-		;; special handling for opaques, by name
-		(let loop ((p the-basetypes))
-			(cond ((null? p) #f)
-						((equal? (cdar p) type) (caar p))
-						(else (loop (cdr p))))))
+  (define (is-opaque-basetype)
+    ;; special handling for opaques, by name
+    (let loop ((p the-basetypes))
+      (cond ((null? p) #f)
+            ((equal? (cdar p) type) (caar p))
+            (else (loop (cdr p))))))
 
-	(if (eq? 'Opaque (car type))
-			(is-opaque-basetype)
-			(let ((unnamed-type (strip-names type)))
-				(let loop ((p the-basetypes))
-					(cond ((null? p) #f)
-								((equal? (strip-names (cdar p)) unnamed-type) (caar p))
-								(else (loop (cdr p))))))))
+  (if (eq? 'Opaque (car type))
+      (is-opaque-basetype)
+      (let ((unnamed-type (strip-names type)))
+        (let loop ((p the-basetypes))
+          (cond ((null? p) #f)
+                ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
+                (else (loop (cdr p))))))))
   
 (define (string-quote s) (string-append "\"" s "\""))
 
 (define (format-imports env)
-	(let ((keys ((env 'get 'imports) 'keys)))
-		(if (null? keys) 
-				""
-				(apply string-append
-							 (map (lambda (i) 
-											(string-append 
-											 "IMPORT " i ";" dnl)) 
-										keys)))))
+  (let ((keys ((env 'get 'imports) 'keys)))
+    (if (null? keys) 
+        ""
+        (apply string-append
+               (map (lambda (i) 
+                      (string-append 
+                       "IMPORT " i ";" dnl)) 
+                    keys)))))
 
 (define (make-modules name              ;; name of interface
                       interface-decls   ;; stuff for .i3
@@ -626,7 +626,7 @@
   (string-append
    "MODULE " name ";" dnl
 
-	 (format-imports env)
+   (format-imports env)
 
    dnl
    module-decls
@@ -654,16 +654,16 @@
 
          (proto (string-append
                  "PROCEDURE " pname "(READONLY x : " m3tn 
-								 ") : SchemeObject.T RAISES {"
-								 (if (member? (car type) '(Ref Procedure Object Opaque))
-										 ""
-										 " Scheme.E")
-								 " }"
+                 ") : SchemeObject.T RAISES {"
+                 (if (member? (car type) '(Ref Procedure Object Opaque))
+                     ""
+                     " Scheme.E")
+                 " }"
                        )
                 )
          )
 
-		(if (is-basetype type) (error "shouldnt call make-to-scheme-nonbase on base type" type))
+    (if (is-basetype type) (error "shouldnt call make-to-scheme-nonbase on base type" type))
 
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
     ;; remember that we're building pname, so we dont try to
@@ -806,15 +806,15 @@
           "RETURN x" ;; just let it represent itself
           )
 
-				 ((WideChar)
-					(imports 'insert! 'SchemeModula3Types)
-					(string-append
-					 "WITH ref = NEW(REF WIDECHAR) DO" dnl
-					 "  ref^ := x;" dnl
-					 "  RETURN SchemeModula3Types.ToScheme_WIDECHAR(ref)"
-					 "END"
-					 )
-					)
+         ((WideChar)
+          (imports 'insert! 'SchemeModula3Types)
+          (string-append
+           "WITH ref = NEW(REF WIDECHAR) DO" dnl
+           "  ref^ := x;" dnl
+           "  RETURN SchemeModula3Types.ToScheme_WIDECHAR(ref)"
+           "END"
+           )
+          )
 
          (else (error "unknown type header " (car type)))
 
@@ -836,8 +836,8 @@
   ;; if it's a base type, we call the base type conversion library
   ;; else we make the converter ourselves.
   (if (and (is-basetype type) 
-					 (eq? (scheme-modula-conversion-mode (is-basetype type))
-								'Concrete))
+           (eq? (scheme-modula-conversion-mode (is-basetype type))
+                'Concrete))
       (begin
         (stringify-qid
          (cons 'SchemeModula3Types
@@ -872,7 +872,7 @@
                 )
          )
 
-		(if (is-basetype type) (error "shouldnt call make-to-modula-nonbase on base type" type))
+    (if (is-basetype type) (error "shouldnt call make-to-modula-nonbase on base type" type))
 
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
     ;; remember that we're building pname, so we dont try to
@@ -1034,9 +1034,9 @@
            )
           )
 
-				 ((WideChar)
-					(imports 'insert! 'SchemeModula3Types)
-					"RETURN NARROW(SchemeModula3Types.ToModula_WIDECHAR(x),REF WIDECHAR)^")
+         ((WideChar)
+          (imports 'insert! 'SchemeModula3Types)
+          "RETURN NARROW(SchemeModula3Types.ToModula_WIDECHAR(x),REF WIDECHAR)^")
 
          (else (error "unknown type header " (car type)))
 
@@ -1056,7 +1056,7 @@
 
 (define (make-to-modula-baseref basename env)
   (let* ((type (extract-field basename the-basetypes))
-				 (m3tn                       ;; type name
+         (m3tn                       ;; type name
           (type-formatter type env))
 
          (m3ti                       ;; identifier mangled from tn
@@ -1075,30 +1075,30 @@
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
 
     (define (make-intf) (string-append proto ";"))
-	
+  
     (define (make-impl)
       (string-append
        proto " = " dnl
        "  BEGIN" dnl
-			 "    WITH ref = SchemeModula3Types.ToModula_"basename"(x) DO" dnl
-			 "      RETURN NARROW(ref, REF "basename")^" dnl
-			 "    END" dnl
-			 "  END " pname ";" dnl
-			 ))
-		(cons (make-intf) (make-impl))))
+       "    WITH ref = SchemeModula3Types.ToModula_"basename"(x) DO" dnl
+       "      RETURN NARROW(ref, REF "basename")^" dnl
+       "    END" dnl
+       "  END " pname ";" dnl
+       ))
+    (cons (make-intf) (make-impl))))
 
 (define (make-to-modula type env)
-	;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
-	;; and compound types
-	(if (is-basetype type)
-			;; special handling for extension types
-			(make-to-modula-baseref (is-basetype type) env)
+  ;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
+  ;; and compound types
+  (if (is-basetype type)
+      ;; special handling for extension types
+      (make-to-modula-baseref (is-basetype type) env)
 
-			(make-to-modula-nonbase type env)))
+      (make-to-modula-nonbase type env)))
 
 (define (make-to-scheme-baseref basename env)
   (let* ((type (extract-field basename the-basetypes))
-				 (m3tn                       ;; type name
+         (m3tn                       ;; type name
           (type-formatter type env))
 
          (m3ti                       ;; identifier mangled from tn
@@ -1110,11 +1110,11 @@
 
          (proto (string-append
                  "PROCEDURE " pname "(READONLY x : " m3tn 
-								 ") : SchemeObject.T RAISES {"
-								 (if (member? (car type) '(Ref Procedure Object Opaque))
-										 ""
-										 " Scheme.E")
-								 " }"
+                 ") : SchemeObject.T RAISES {"
+                 (if (member? (car type) '(Ref Procedure Object Opaque))
+                     ""
+                     " Scheme.E")
+                 " }"
                        )
                 )
          )
@@ -1126,24 +1126,24 @@
       (string-append
        proto " = " dnl
        "  BEGIN" dnl
-			 "    WITH ref = NEW(REF " basename ") DO" dnl
-			 "      ref^ := x;" dnl
-			 "      RETURN SchemeModula3Types.ToScheme_" basename "(ref)" dnl
-			 "    END" dnl
-			 "  END " pname ";" dnl
-			 ))
+       "    WITH ref = NEW(REF " basename ") DO" dnl
+       "      ref^ := x;" dnl
+       "      RETURN SchemeModula3Types.ToScheme_" basename "(ref)" dnl
+       "    END" dnl
+       "  END " pname ";" dnl
+       ))
 
-		(cons (make-intf) (make-impl))))
+    (cons (make-intf) (make-impl))))
 
 
 (define (make-to-scheme type env)
-	;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
-	;; and compound types
-	(if (is-basetype type)
-			;; special handling for extension types
-			(make-to-scheme-baseref (is-basetype type) env)
+  ;; this routine ONLY gets called for extension types (WIDECHAR, LONGINT)
+  ;; and compound types
+  (if (is-basetype type)
+      ;; special handling for extension types
+      (make-to-scheme-baseref (is-basetype type) env)
 
-			(make-to-scheme-nonbase type env)))
+      (make-to-scheme-nonbase type env)))
 
  
 
@@ -1188,29 +1188,32 @@
   )
 
 (define (filter-tree tree match-list converter)
-	;; very generic routine to search a tree for a "path" and
-	;; call converter on everything found down that path.
-	;; see prefix-formals for an example
-	(map 
-	 (lambda (p) 
-		 (if (and (pair? p) 
-							(eq? (car match-list) (car p)))  ;; any match?
-				 (if (null? (cdr match-list))          ;; final match?
-						 (cons (car p) (converter (cdr p)));; yes - convert 
-						 (cons (car p)                     ;; no - recurse
-									 (filter-tree (cdr p) (cdr match-list) converter)))
-				 p ;; anything else
-				 ))
-	 tree))
+  ;; very generic routine to search a tree for a "path" and
+  ;; call converter on everything found down that path.
+  ;; see prefix-formals for an example
+  (map 
+   (lambda (p) 
+     (if (and (pair? p) 
+              (eq? (car match-list) (car p)))  ;; any match?
+         (if (null? (cdr match-list))          ;; final match?
+             (cons (car p) (converter (cdr p)));; yes - convert 
+             (cons (car p)                     ;; no - recurse
+                   (filter-tree (cdr p) (cdr match-list) converter)))
+         p ;; anything else
+         ))
+   tree))
+
+(define (make-formal mode name type . default)
+  `(Formal (mode . ,mode)(outOnly . #f)(name . ,name) (type . ,type) (default . , default)))
 
 (define (prefix-formals prefix proc-type)
-	;; add a prefix to all the formals of a procedure (or method?) 
-	;; declaration
-	(filter-tree proc-type 
-							 '(sig formals Formal name)
-							 (lambda(formal-name)
-								 (string->symbol (string-append prefix formal-name)))))
-							 
+  ;; add a prefix to all the formals of a procedure (or method?) 
+  ;; declaration
+  (filter-tree proc-type 
+               '(sig formals Formal name)
+               (lambda(formal-name)
+                 (string->symbol (string-append prefix formal-name)))))
+               
 
 (define (make-procedure-call-stub proc env)
   (let* ((qid (car proc))
@@ -1218,9 +1221,27 @@
          (u3pn (stringify-qid (cleanup-qid qid) "_" env))
          (stub-name (string-append "CallStub_" u3pn))
          (proc-type (prefix-formals 'formal_ (cdr proc)))
-         (imports (env 'get 'imports))
-         (sig (extract-field 'sig proc-type)))
+         )
 
+    (let ((stubs (env 'get 'procedure-call-stubs))
+          (qualified-name (cleanup-qid qid)) 
+          )
+      (stubs 'delete-entry! qualified-name)
+      (stubs 'add-entry! qualified-name stub-name))
+
+    (make-named-procedure-call-stub proc-type m3pn u3pn stub-name env)))
+
+(define ( make-named-procedure-call-stub 
+          proc-type ;; definition
+          m3pn      ;; modula-3 name for procedure to call
+          u3pn      ;; name to use for making parts of stub
+          stub-name ;; name for actual stub
+          env )
+  ;; idea is that this can be used with method definitions too
+
+  (let* ((imports (env 'get 'imports))
+         (sig (extract-field 'sig proc-type)))
+    
     (define (formal-type-converter type)
       (case (car type)
         ((OpenArray) (formal-type-converter `(Ref (target . ,type))))
@@ -1229,7 +1250,7 @@
     (define (make-formal-temp f)
       (string-append
        (extract-field 'name f)
-       " = "
+       " := "
        (formal-type-converter (extract-field 'type f))
        "(Next())"
        ))
@@ -1289,9 +1310,9 @@
 
         (string-append 
          "      (* unpack formals *)" dnl
-         "      WITH "
-         (infixize (cons "<*NOWARN*>junk__ = 0" (map make-formal-temp formals))
-                   (string-append "," dnl "           ")) " DO" dnl
+         "      VAR "
+         (infixize (cons "<*NOWARN*>junk__ := 0" (map make-formal-temp formals))
+                   (string-append ";" dnl "           ")) "; BEGIN" dnl
 
          "        (* carry out NIL checks for open arrays *)" dnl
          (format-nil-checks) dnl
@@ -1342,12 +1363,6 @@
     (imports 'insert! 'SchemePair)
     (imports 'insert! 'SchemeBoolean)
 
-    (let ((stubs (env 'get 'procedure-call-stubs))
-          (qualified-name (cleanup-qid qid)) 
-          )
-      (stubs 'delete-entry! qualified-name)
-      (stubs 'add-entry! qualified-name stub-name))
-
     (string-append
      "PROCEDURE "stub-name"(interp : Scheme.T;" dnl
      "                      args : SchemeObject.T;" dnl
@@ -1366,7 +1381,7 @@
      "    EXCEPT" dnl
      (format-exception-handling)
      "    END;" dnl
-		 "    <*NOWARN*>RETURN SchemeBoolean.False()" dnl
+     "    <*NOWARN*>RETURN SchemeBoolean.False()" dnl
      "  END " stub-name ";"  dnl
     )))
 
@@ -1406,20 +1421,20 @@
 )
 
 (define (spit-out-intf intf-name proc-stubs converter-intfs env)
-	(string-append
-	 "INTERFACE " intf-name ";" dnl
-	 "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
-	 (format-imports env)
-	 dnl
-	 "PROCEDURE RegisterStubs();" dnl
-	 dnl
-	 (infixize converter-intfs dnldnl)
-	 dnl
-	 "CONST Brand = \"" intf-name "\";" dnl
-	 dnl
-	 "END " intf-name "." dnl
-	 )
-	)
+  (string-append
+   "INTERFACE " intf-name ";" dnl
+   "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
+   (format-imports env)
+   dnl
+   "PROCEDURE RegisterStubs();" dnl
+   dnl
+   (infixize converter-intfs dnldnl)
+   dnl
+   "CONST Brand = \"" intf-name "\";" dnl
+   dnl
+   "END " intf-name "." dnl
+   )
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1440,7 +1455,7 @@
   (string-flatten
    "PROCEDURE RegisterStubs() = " dnl
    "  BEGIN" dnl
-	 input-registrations
+   input-registrations
    (let* ((stubs (env 'get 'procedure-call-stubs))
           (qids (stubs 'keys)))
      
@@ -1455,10 +1470,17 @@
     "  END RegisterStubs;" dnl
    ))
 
+(define (is-object-type? type)
+  (and 
+   (pair? type)
+   (or 
+    (eq? (car type) 'Object)
+    (and (eq? (car type) 'Opaque)
+         (is-object-type? (extract-field 'revealedSuperType type))))))
 
 (define (spit-out-impl intf-name proc-stubs converter-impls types env)
   (let* ((imports (env 'get 'imports))
-         (object-types (filter (lambda(t)(eq? (car t) 'Object)) types))
+         (object-types (filter is-object-type? types))
          (object-stubs (map (lambda(t)(make-object-surrogate t env)) 
                             object-types))
          (object-new-registrations 
@@ -1471,7 +1493,7 @@
     (string-append
      "MODULE " intf-name ";" dnl
      "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
-		 (format-imports env)
+     (format-imports env)
      dnl
      (infixize proc-stubs dnl) dnl
      dnl
@@ -1637,7 +1659,7 @@
           
       (define (format-field-initializers) 
         (apply string-append
-               (map format-field-initializer (extract-field 'fields type))
+               (map format-field-initializer (visible-fields type))
                )
         )
 
@@ -1656,63 +1678,120 @@
                )
         )
 
+
       (map 
        (lambda(i)(imports 'insert! i))
        '(SchemePair Scheme SchemeObject))
       
-      (string-append
+      (string-flatten
        "PROCEDURE New_" m3ti "(<*UNUSED*>interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
        "  VAR" dnl
        "    p := SchemePair.Pair(inits);" dnl
-			 "    gobbled : BOOLEAN;" dnl
+       "    gobbled : BOOLEAN;" dnl
        "  BEGIN" dnl
        "    WITH res = NEW("surrogate-type-name") DO" dnl
        "      WHILE p # NIL DO" dnl
        "        WITH r = SchemePair.Pair(p.first) DO" dnl
-			 "          gobbled := FALSE;" dnl
-			 "          IF r # NIL THEN" dnl
+       "          gobbled := FALSE;" dnl
+       "          IF r # NIL THEN" dnl
        (format-field-initializers)
        (format-method-overrides)
-			 "          END;" dnl
-			 "          IF NOT gobbled THEN" dnl
-			 "            RAISE Scheme.E(\"Unknown field/method in \" & SchemeUtils.Stringify(inits))" dnl
-			 "          END" dnl
+       "          END;" dnl
+       "          IF NOT gobbled THEN" dnl
+       "            RAISE Scheme.E(\"Unknown field/method in \" & SchemeUtils.Stringify(inits))" dnl
+       "          END" dnl
        "        END;" dnl
        "        p := SchemePair.Pair(p.rest)" dnl
        "      END;" dnl
        "      RETURN res" dnl
        "    END" dnl
        "  END New_" m3ti ";" dnl
-			 dnl
+       dnl
+
        "PROCEDURE GenNew_" m3ti "(interp : Scheme.T; <*UNUSED*>obj : SchemeObject.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-			 "  BEGIN RETURN New_" m3ti "(interp,inits) END GenNew_" m3ti ";" dnl
-			 dnl
+       "  BEGIN RETURN New_" m3ti "(interp,inits) END GenNew_" m3ti ";" dnl
+       dnl
+
        ))
+
+    (define (make-method-dispatcher)
+      (imports 'insert! 'SchemeSymbol)
+      (imports 'insert! 'SchemeUtils)
+
+      (define (make-dispatch-method meth-name)
+        (string-append
+         "    ELSIF methName = SchemeSymbol.FromText(\""meth-name"\") THEN"dnl
+         "      RETURN MethodStub_" m3ti "_" meth-name "(interp,obj,methArgs)" dnl
+         ))
+
+      (string-flatten
+       "PROCEDURE MethodDispatcher_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+       "  VAR" dnl
+       "    methName := Scheme.SymbolCheck(SchemeUtils.First(args));" dnl
+       "    methArgs := SchemeUtils.Rest(args);" dnl
+       "  BEGIN" dnl
+       "    IF FALSE THEN <*ASSERT FALSE*>" dnl
+       (map make-dispatch-method ((visible-methods type) 'keys))
+       "    ELSE" dnl
+       "      RAISE Scheme.E(\"unknown method \"&SchemeSymbol.ToText(methName)&\" for type "m3tn"\");" dnl
+       "    END" dnl
+       "  END MethodDispatcher_" m3ti ";" dnl
+       dnl
+       ))
+
+    (define (make-method-dispatch method)
+      ;; make dispatch for a single method 
+      (let* ((name              (extract-field 'name method))
+             (meth-sig          (make-method-call-sig method type))
+             (method-call-name  (string-append m3tn "." name))
+             )
+        (make-named-procedure-call-stub meth-sig 
+                                        method-call-name
+                                        (m3type->m3identifier
+                                         method-call-name)
+                                        (string-append
+                                         "MethodStub_" m3ti "_" name)
+                                        env)
+      ))
     
     (cons
      (make-object-ops)
-     (cons
-      (make-object-surrogate-decl)
+     (append
+      (list
+       (make-object-surrogate-decl)
+       (make-method-dispatcher)
+       )
       (map make-default-method methods)
+      (map make-method-dispatch methods)
       )
      )
     )
 )
 
+(define (make-method-call-sig method type)
+  (let* ((proc-type (prefix-formals 'formal_ method)))
+
+  (filter-tree proc-type
+               '(sig formals)
+               (lambda(formals)
+                 (cons (make-formal 'Mode.Value 'this type) formals))
+               )
+))
+
 (define (make-an-op-registration type name proc-name env)
-	((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
-	(string-append
-	 "    SchemeProcedureStubs.RegisterOp(TYPECODE("
-	 (type-formatter type env)
-	 "),\"" name  "\"," proc-name");" dnl
-	 ))
+  ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
+  (string-append
+   "    SchemeProcedureStubs.RegisterOp(TYPECODE("
+   (type-formatter type env)
+   "),\"" name  "\"," proc-name");" dnl
+   ))
 
 (define (make-a-tc-registration type name env)
-	((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
-	(string-append
-	 "    SchemeProcedureStubs.RegisterTC(TYPECODE("(type-formatter type env)
-	 "),\"" name "\");" dnl
-	 ))
+  ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
+  (string-append
+   "    SchemeProcedureStubs.RegisterTC(TYPECODE("(type-formatter type env)
+   "),\"" name "\");" dnl
+   ))
 
 (define (make-object-registrations obj-type env)
   ;; print those things that need to be registered for an object
@@ -1724,36 +1803,46 @@
          
          (new-name (string-append "New_" m3ti))
          (gen-new-name (string-append "GenNew_" m3ti))
-				 )
+         (dispatcher-name (string-append "MethodDispatcher_" m3ti))
+         )
     ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
     ((env 'get 'imports) 'insert! 'Atom)
     (string-flatten
      "    SchemeProcedureStubs.RegisterNew(NEW(SchemeProcedureStubs.Qid, intf := Atom.FromText(\""(car alias)"\"), item := Atom.FromText(\""(cdr alias)"\")), "new-name");" dnl
-		 (make-an-op-registration obj-type 'new gen-new-name env)
+     (make-an-op-registration obj-type 'new gen-new-name env)
+     (make-an-op-registration obj-type 'call-method dispatcher-name env)
 
-		 (make-a-tc-registration obj-type (type-formatter obj-type env) env)
-		 ;; we can introduce type aliases here as well
+     (make-a-tc-registration obj-type (type-formatter obj-type env) env)
+     ;; we can introduce type aliases here as well
 
      )
     )
      
   )
 
-(define (visible-methods obj-type)
-  ;; a type can only have methods if its opaque or object
-  (cond ((null? obj-type) (make-symbol-hash-table 100))
-        ((eq? (car obj-type) 'Object)
-         (let ((super-visible 
-                (visible-methods (extract-field 'super obj-type))))
-           (map (lambda(m)
-                  (super-visible 'update-entry!
-                                 (extract-field 'name m)
-                                 m))
-                (extract-field 'methods obj-type))
-           super-visible))
-        ((eq? (car obj-type) 'Opaque)
-         (visible-methods (extract-field 'revealedSuperType obj-type)))
-        (else (error "Cant get methods from " obj-type))))
+(define (visible-what what)
+  (let ((res '()))
+    (set! res
+          (lambda(obj-type)
+            ;; a type can only have methods if its opaque or object
+            (cond ((null? obj-type) (make-symbol-hash-table 100))
+                  ((eq? (car obj-type) 'Object)
+                   (let ((super-visible 
+                          (res (extract-field 'super obj-type))))
+                     (map (lambda(m)
+                            (super-visible 'update-entry!
+                                           (extract-field 'name m)
+                                           m))
+                          (extract-field what obj-type))
+                     super-visible))
+                  ((eq? (car obj-type) 'Opaque)
+                   (res (extract-field 'revealedSuperType obj-type)))
+                  (else (error "Cant get " what " from " obj-type)))))
+    res))
+
+(define visible-methods (visible-what 'methods))
+
+(define visible-fields (visible-what 'fields))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1775,26 +1864,26 @@
     ))
         
 (define (stale-output? intf-name)
-	(let ((stale #f)
-				(srcs the-sourcefiles)
-				(tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
-		(unwind-protect
-		 (set! stale (< (apply min (map fs-status-modificationtime tgts))
-										(apply max (map fs-status-modificationtime srcs))))
-		 '()
-		 (set! stale #t))
-		stale))
-					
-		
+  (let ((stale #f)
+        (srcs the-sourcefiles)
+        (tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
+    (unwind-protect
+     (set! stale (< (apply min (map fs-status-modificationtime tgts))
+                    (apply max (map fs-status-modificationtime srcs))))
+     '()
+     (set! stale #t))
+    stale))
+          
+    
     
 (define (make-standard-stuff intf-name)
   ;; build all the Scheme interfaces for a given M3 interface
-	(if (stale-output? intf-name) 
-			(begin
-				(set! global-env (env-type 'new))
-				(write-files intf-name the-procs the-types global-env)
-				)
-			(dis "Scheme stubs up to date: " intf-name dnl))
+  (if (stale-output? intf-name) 
+      (begin
+        (set! global-env (env-type 'new))
+        (write-files intf-name the-procs the-types global-env)
+        )
+      (dis "Scheme stubs up to date: " intf-name dnl))
   )
 
  (define (stale-output? x) #t) ;; for testing
@@ -1824,8 +1913,8 @@
       "MODULE "intf-name";" dnl
       "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
       (if (null? intfs) 
-					"" 
-					(string-append "IMPORT " (infixize intfs ", ") ";" dnl))
+          "" 
+          (string-append "IMPORT " (infixize intfs ", ") ";" dnl))
       dnl
       "PROCEDURE RegisterStubs() =" dnl
       "  BEGIN" dnl
@@ -1881,6 +1970,8 @@
    (car (pregexp-split "\\." 
                        (symbol->string sym)))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; pure testing code...
 (define (make-list n . x) 
