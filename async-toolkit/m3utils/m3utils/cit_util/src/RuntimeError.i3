@@ -13,7 +13,6 @@ INTERFACE RuntimeError;
 
 IMPORT RT0;
 
-<*IMPLICIT*>
 EXCEPTION E (T);
 (* Because "E" is implicit, the compiler does not warn about
    where it might occur and the runtime allows it to escape
@@ -56,7 +55,7 @@ TYPE
   (* NOTE: This enumeration must be kept in synch with the version
      of M3CG.RuntimeError used by the compiler. *)
 
-CONST Tag = PROCEDURE (t: T): TEXT = NIL;
+CONST Tag : PROCEDURE (t: T): TEXT = NIL;
 (* Returns a message describing "t". *)
 
 END RuntimeError.
