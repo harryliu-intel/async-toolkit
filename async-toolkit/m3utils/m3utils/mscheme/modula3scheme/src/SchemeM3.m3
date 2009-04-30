@@ -410,23 +410,37 @@ PROCEDURE WrCloseApply(<*UNUSED*>p : SchemeProcedure.T;
     END
   END WrCloseApply;
 
+(* this is sort-of thread safe *)
+VAR myHostName : SchemeSymbol.T := NIL;
+
 PROCEDURE HostnameApply(<*UNUSED*>p : SchemeProcedure.T; 
                         <*UNUSED*>interp : Scheme.T; 
                         <*UNUSED*>args : Object) : Object RAISES { E } =
   BEGIN
+    IF myHostName # NIL THEN RETURN myHostName END;
+
     TRY
-      RETURN SchemeSymbol.Symbol(IP.GetCanonicalByAddr(IP.GetHostAddr()))
+      myHostName :=
+        SchemeSymbol.Symbol(IP.GetCanonicalByAddr(IP.GetHostAddr()));
+      RETURN myHostName
     EXCEPT
       IP.Error(ec) =>
       RETURN Error("HostnameApply : IP.Error : " & AL.Format(ec))
     END
   END HostnameApply;
 
+(* this is sort-of thread safe *)
+VAR myUnixPID : SchemeLongReal.T := NIL;
+
 PROCEDURE GetUnixPIDApply(<*UNUSED*>p : SchemeProcedure.T; 
                         <*UNUSED*>interp : Scheme.T; 
                         <*UNUSED*>args : Object) : Object =
   BEGIN
-    RETURN SchemeLongReal.FromI(Process.GetMyID())
+    IF myUnixPID # NIL THEN RETURN myUnixPID END;
+
+    myUnixPID := SchemeLongReal.FromI(Process.GetMyID());
+    
+    RETURN myUnixPID
   END GetUnixPIDApply;
 
 (**********************************************************************)
