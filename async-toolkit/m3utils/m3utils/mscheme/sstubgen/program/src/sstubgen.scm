@@ -1078,7 +1078,7 @@
          ((Ref)
           ;; several possibilities.  either we have the correct type
           ;; already, or else we may have to build it, if a Ref OpenArray
-          (string-append
+          (string-flatten
            "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
 
            (let* ((target (extract-field 'target type)))
@@ -1096,10 +1096,10 @@
                     "        INC(i)" dnl
                     "      END;" dnl
                     "      RETURN arr" dnl
-                    "    END"
+                    "    END;" dnl
                     ))
-                 ""
-                 ))
+								 (string-append
+									"    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
            )
           )
          
@@ -1663,19 +1663,40 @@
     (and (eq? (car type) 'Opaque)
          (is-object-type? (extract-field 'revealedSuperType type))))))
 
+(define (is-ref-record-type? type)
+	(and 
+	 (pair? type)
+	 (eq? (car type) 'Ref)
+	 (eq? (car (extract-field 'target type)) 'Record)))
+
 (define (spit-out-impl intf-name proc-stubs converter-impls types env)
   (let* ((imports (env 'get 'imports))
+
+				 ;; REF RECORD types
+				 (ref-record-types (filter is-ref-record-type? types))
+				 (ref-record-registrations 
+					(map (lambda(t)(make-ref-record-registrations t env))
+							 ref-record-types))
+				 (ref-record-ops (map (lambda(t)(make-ref-record-ops t env))
+															ref-record-types))
+				 (ref-record-field-stubs
+					(map (lambda(t)(make-field-stubs t env))
+							 ref-record-types))
+
+ 				 ;; types <: OBJECT END
          (object-types (filter is-object-type? types))
          (object-stubs (map (lambda(t)(make-object-surrogate t env)) 
                             object-types))
-         (object-new-registrations 
+				 (object-field-stubs (map (lambda(t)(make-field-stubs t env))
+																	object-types))
+         (object-registrations 
                        (map (lambda(t)(make-object-registrations t env)) 
                             object-types)))
       
     (imports 'insert! 'SchemeProcedureStubs)
     (imports 'insert! 'Atom)
     
-    (string-append
+    (string-flatten
      "MODULE " intf-name ";" dnl
      "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
      (format-imports env)
@@ -1684,11 +1705,22 @@
      dnl
      
      (string-flatten
-      (make-register-stubs object-new-registrations env)
+      (make-register-stubs 
+			 (append
+				ref-record-registrations
+				object-registrations 
+				)
+			 env)
       dnl
       object-stubs
+			dnl
+			object-field-stubs
+			dnl
+			ref-record-field-stubs
+			dnl
+			ref-record-ops
       )
-       
+
      dnl
 
      (infixize converter-impls dnldnl)
@@ -1702,6 +1734,72 @@
      )
     )
 )
+
+(define (make-field-stubs type env)
+  (let ((m3tn (type-formatter type env))
+        (m3ti (m3type->m3identifier (type-formatter type env)))
+        (imports (env 'get 'imports))
+				(fields (visible-fields type))
+				)
+
+		(define (make-field-getter fname)
+			(let* ((field (fields 'retrieve fname))
+						 (ftype (extract-field 'type field)))
+				(string-append
+				 "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
+				 "      RETURN "(to-scheme-proc-name ftype env)"(narrow." fname")" dnl
+				 )))
+
+		(define (make-field-setter fname)
+			(let* ((field (fields 'retrieve fname))
+						 (ftype (extract-field 'type field)))
+				(string-append
+				 "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
+				 "      res := "(to-scheme-proc-name ftype env)"(narrow." fname");" dnl
+				 "      narrow." fname" := "(to-modula-proc-name ftype env)"(value)" dnl
+				 )))
+
+		(string-flatten
+		 "PROCEDURE FieldGet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+		 "  VAR" dnl
+		 "    field   := SchemeUtils.First(args);" dnl
+		 "    narrow : " m3tn ";" dnl
+		 "  BEGIN" dnl
+		 "    IF NOT ISTYPE(obj,"m3tn") OR obj=NIL THEN" dnl
+		 "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(obj))" dnl
+		 "    END;" dnl
+		 "    narrow := NARROW(obj,"m3tn");" dnl
+		 "    IF FALSE THEN <*ASSERT FALSE*>" dnl
+		 (map make-field-getter (fields 'keys))
+		 "    ELSE RAISE Scheme.E(\"Unknown field \" & SchemeUtils.Stringify(field))" dnl
+		 "    END" dnl
+		 "  END FieldGet_" m3ti ";" dnl
+		 dnl
+
+		 "PROCEDURE FieldSet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+		 "  VAR" dnl
+		 "    field   := SchemeUtils.First(args);" dnl
+		 "    value   := SchemeUtils.First(SchemeUtils.Rest(args));" dnl
+		 "    narrow : " m3tn ";" dnl
+		 "    res : SchemeObject.T;" dnl
+		 "  BEGIN" dnl
+		 "    IF NOT ISTYPE(obj,"m3tn") OR obj=NIL THEN" dnl
+		 "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(obj))" dnl
+		 "    END;" dnl
+		 "    narrow := NARROW(obj,"m3tn");" dnl
+		 "    IF FALSE THEN <*ASSERT FALSE*>" dnl
+		 (map make-field-setter (fields 'keys))
+		 "    ELSE RAISE Scheme.E(\"Unknown field \" & SchemeUtils.Stringify(field))" dnl
+		 "    END;" dnl
+		 "    RETURN res" dnl
+		 "  END FieldSet_" m3ti ";" dnl
+		 dnl
+
+		 )
+		)
+				
+)
+	
 
 (define (make-object-surrogate type env)
   (let ((m3tn (type-formatter type env))
@@ -1841,13 +1939,13 @@
            "            END;" dnl
            )))
 
+			(define (format-field-initializers) 
+				(apply string-append
+							 (map format-field-initializer  
+										((visible-fields type) 'values))))
+										
+									 
           
-      (define (format-field-initializers) 
-        (apply string-append
-               (map format-field-initializer (visible-fields type))
-               )
-        )
-
       (define (format-method-override m)
         (imports 'insert! 'SchemeSymbol)
         (let ((name (extract-field 'name m)))
@@ -1978,51 +2076,143 @@
    "),\"" name "\");" dnl
    ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-ref-record-ops type env)
+  (let ((m3tn (type-formatter type env))
+        (m3ti (m3type->m3identifier (type-formatter type env)))
+        (imports (env 'get 'imports)))
+		
+		(define (format-field-initializer f)
+			(let ((type (extract-field 'type f))
+						(name (extract-field 'name f)))
+				(imports 'insert! 'SchemeSymbol)
+				(string-append
+				 "            IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+				 "              res." name " := "(to-modula-proc-name type env)"(r.rest); gobbled := TRUE" dnl
+				 "            END;" dnl
+				 )))
+		
+		
+		(define (format-field-initializers) 
+			(apply string-append
+						 (map format-field-initializer  
+									((visible-fields type) 'values))))
+		
+		(map 
+		 (lambda(i)(imports 'insert! i))
+		 '(SchemePair Scheme SchemeObject))
+		
+		(string-flatten
+		 "PROCEDURE New_" m3ti "(<*UNUSED*>interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+		 "  VAR" dnl
+		 "    p := SchemePair.Pair(inits);" dnl
+		 "    gobbled : BOOLEAN;" dnl
+		 "  BEGIN" dnl
+		 "    WITH res = NEW("m3tn") DO" dnl
+		 "      WHILE p # NIL DO" dnl
+		 "        WITH r = SchemePair.Pair(p.first) DO" dnl
+		 "          gobbled := FALSE;" dnl
+		 "          IF r # NIL THEN" dnl
+		 (format-field-initializers)
+		 "          END;" dnl
+		 "          IF NOT gobbled THEN" dnl
+		 "            RAISE Scheme.E(\"Unknown field in \" & SchemeUtils.Stringify(inits))" dnl
+		 "          END" dnl
+		 "        END;" dnl
+		 "        p := SchemePair.Pair(p.rest)" dnl
+		 "      END;" dnl
+		 "      RETURN res" dnl
+		 "    END" dnl
+		 "  END New_" m3ti ";" dnl
+		 dnl
+		 
+		 "PROCEDURE GenNew_" m3ti "(interp : Scheme.T; <*UNUSED*>obj : SchemeObject.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+		 "  BEGIN RETURN New_" m3ti "(interp,inits) END GenNew_" m3ti ";" dnl
+		 dnl
+		 
+		 ))
+	)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (make-object-registrations obj-type env)
-  ;; print those things that need to be registered for an object
-  ;; type
-  (let* ((m3tn (type-formatter obj-type env))
-         (m3ti (m3type->m3identifier m3tn))
+  (let* ((m3tn  (type-formatter obj-type env))
+         (m3ti  (m3type->m3identifier m3tn))
+
+				 (dispatcher-name (string-append "MethodDispatcher_" m3ti))
+				 )
+
+		(string-flatten
+		 (make-an-op-registration obj-type 'call-method dispatcher-name env)
+		 (make-ref-record-registrations obj-type env))))
+
+(define (make-ref-record-registrations obj-type env)
+  (let* ((m3tn  (type-formatter obj-type env))
+         (m3ti  (m3type->m3identifier m3tn))
          (alias (cleanup-qid (extract-field 'alias obj-type)))
-         (name (cleanup-qid (extract-field 'alias obj-type)))
+         (name  (cleanup-qid (extract-field 'alias obj-type)))
          
-         (new-name (string-append "New_" m3ti))
-         (gen-new-name (string-append "GenNew_" m3ti))
-         (dispatcher-name (string-append "MethodDispatcher_" m3ti))
+         (new-name        (string-append "New_" m3ti))
+         (gen-new-name    (string-append "GenNew_" m3ti))
+				 (setter-name     (string-append "FieldSet_" m3ti))
+				 (getter-name     (string-append "FieldGet_" m3ti))
          )
     ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
     ((env 'get 'imports) 'insert! 'Atom)
     (string-flatten
      "    SchemeProcedureStubs.RegisterNew(NEW(SchemeProcedureStubs.Qid, intf := Atom.FromText(\""(car alias)"\"), item := Atom.FromText(\""(cdr alias)"\")), "new-name");" dnl
      (make-an-op-registration obj-type 'new gen-new-name env)
-     (make-an-op-registration obj-type 'call-method dispatcher-name env)
+     (make-an-op-registration obj-type 'get-field getter-name env)
+     (make-an-op-registration obj-type 'set-field! setter-name env)
 
      (make-a-tc-registration obj-type (type-formatter obj-type env) env)
      ;; we can introduce type aliases here as well
 
      )
     )
-     
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (visible-what what)
   (let ((res '()))
     (set! res
           (lambda(obj-type)
             ;; a type can only have methods if its opaque or object
-            (cond ((null? obj-type) (make-symbol-hash-table 100))
-                  ((eq? (car obj-type) 'Object)
+            (if (null? obj-type) 
+								(make-symbol-hash-table 100)
+
+								(case (car obj-type)
+									((Ref)
+									 (let ((target (extract-field 'target obj-type))
+												 (res (make-symbol-hash-table 100)))
+										 (if (not (eq? (car target) 'Record))
+												 (error "Cant get " what " from " obj-type))
+										 (map (lambda(m)
+														(res 'update-entry!
+																 (extract-field 'name m)
+																 m))
+													(extract-field what target))
+										 res))
+
+                  ((Object)
                    (let ((super-visible 
                           (res (extract-field 'super obj-type))))
-                     (map (lambda(m)
-                            (super-visible 'update-entry!
-                                           (extract-field 'name m)
-                                           m))
-                          (extract-field what obj-type))
+                     (map 
+											(lambda(m)
+												(super-visible 'update-entry!
+																			 (extract-field 'name m)
+																			 m))
+											
+											(extract-field what obj-type))
                      super-visible))
-                  ((eq? (car obj-type) 'Opaque)
+
+                  ((Opaque)
                    (res (extract-field 'revealedSuperType obj-type)))
-                  (else (error "Cant get " what " from " obj-type)))))
+
+                  (else (error "Cant get " what " from " obj-type))))))
     res))
 
 (define visible-methods (visible-what 'methods))

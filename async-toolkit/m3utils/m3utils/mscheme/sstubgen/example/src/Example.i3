@@ -25,6 +25,8 @@ TYPE
     hello := THello;
  *)
   END;
+
+  RRR = REF R;
   
   OAB = T BRANDED OBJECT END;
 
