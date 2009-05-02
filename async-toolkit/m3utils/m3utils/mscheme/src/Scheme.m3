@@ -160,8 +160,8 @@ PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
     END
   END ReadEvalWriteLoop;
 
-PROCEDURE LoadRd(t : T; rd : Rd.T) : Object RAISES { E } =
-  BEGIN RETURN t.loadPort(NEW(SchemeInputPort.T).init(rd)) END LoadRd;
+PROCEDURE LoadRd(t : T; rd : Rd.T; fn : Pathname.T) : Object RAISES { E } =
+  BEGIN RETURN t.loadPort(NEW(SchemeInputPort.T).init(rd, fn)) END LoadRd;
 
 VAR path := SchemeUtils.List1(SchemeString.FromText("."));
 
@@ -238,7 +238,7 @@ PROCEDURE LoadFile(t : T; fileName : Object) : Object RAISES { E } =
         VAR rec := FileOpen(t, name);
         BEGIN
           TRY
-            WITH res = t.loadRd(rec.rd) DO
+            WITH res = t.loadRd(rec.rd, name) DO
               IF SchemeBoolean.TruthO(res) THEN 
                 RETURN SchemeString.FromText(rec.fn) 
               ELSE
@@ -253,7 +253,8 @@ PROCEDURE LoadFile(t : T; fileName : Object) : Object RAISES { E } =
         OSError.E(err) => 
         VAR bundled : TEXT := Bundle.Get(schemeDefs,name & ".scm"); BEGIN
           IF bundled # NIL THEN
-            RETURN t.loadRd(NEW(TextRd.T).init(bundled))
+            RETURN t.loadRd(NEW(TextRd.T).init(bundled),
+                            "SchemeDefsBundle:" & name)
           ELSE
             RETURN SchemeUtils.Error("can't load " & name & 
                    " : OSError.E : " & AL.Format(err))
@@ -312,7 +313,7 @@ PROCEDURE LoadText(t : T; txt : TEXT) : Object RAISES { E } =
   VAR
     rd := NEW(TextRd.T).init(txt);
   BEGIN
-    RETURN t.loadRd(rd)
+    RETURN t.loadRd(rd, "LOCAL")
   END LoadText;
 
 PROCEDURE TruncateText(txt : TEXT; maxLen : CARDINAL) : TEXT =

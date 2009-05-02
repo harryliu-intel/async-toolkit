@@ -77,7 +77,7 @@ TYPE
 
     loadFile(fn : Object) : Object RAISES { E };
 
-    loadRd(rd : Rd.T) : Object RAISES { E } ;
+    loadRd(rd : Rd.T; fileName : Pathname.T := NIL) : Object RAISES { E } ;
 
     loadText(text : TEXT) : Object RAISES { E };
 

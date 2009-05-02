@@ -1073,6 +1073,11 @@
 (define (to-modula-proc-name type env)
   ;; if it's a base type, we call the base type conversion library
   ;; else we make the converter ourselves.
+
+	;; we want to warn early if were trying to do something stupid
+	(if (eq? (car type) 'OpenArray)
+			(error "dont try to make open array directly from Scheme object, use REF type instead"))
+
   (if (and (is-basetype type) 
            (eq? (scheme-modula-conversion-mode (is-basetype type))
                 'Concrete))
@@ -2324,6 +2329,28 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (make-ref-type target)
+	(list 'Ref 
+				(cons 'target target)
+				))
+
+(define (convert-value-to-modula type value env)
+	(case (car type)
+		((OpenArray)
+		 (string-append
+			(to-modula-proc-name (make-ref-type type)
+													 env)
+			"(" value ")^")
+		 )
+
+		(else
+		 (string-append 
+			(to-modula-proc-name type env) "(" value ")"))
+		)
+	)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (array-dimensions type)
 	(case (car type)
 		((OpenArray)
@@ -2334,12 +2361,79 @@
 					 (array-dimensions (extract-field 'element type))))
 		(else '())))
 
-(define (make-ref-array-ops type env)
-  (let ((m3tn (type-formatter type env))
-        (m3ti (m3type->m3identifier (type-formatter type env)))
-				(dims (array-dimensions type))
+(define (skip n lst)
+	(if (= n 0) 
+			lst
+			(skip (- n 1) (cdr lst))))
 
-        (imports (env 'get 'imports)))
+(define (make-assigner specified-indices array-type env)
+
+	(define (first-elem d arr)
+		(if (= d 0) 
+				arr
+				(let ((next (first-elem (- d 1) arr)))
+					(string-append 
+					 next "[FIRST(" next ")]"
+				 ))))
+
+	(define (check-dims n)
+		;; checks one more than n.  n is the dims to "traverse" before checking
+		(if (< n 0) 
+				""
+				(string-flatten
+				 (check-dims (- n 1))
+				 "      IF NUMBER("(first-elem n "tgt")") # NUMBER("(first-elem n "src")") THEN" dnl
+				 "        RAISE Scheme.E(\"array shape mismatch\")" dnl
+				 "      END;" dnl
+				 ))
+		)
+
+	(define (reduce-dimension atype n)
+		(if (= n 0) 
+				atype 
+				(reduce-dimension (extract-field 'element atype) (- n 1))))
+
+	(let* ((dims (array-dimensions array-type))
+				 (assigner-type (reduce-dimension array-type specified-indices))
+				 (tn (type-formatter assigner-type env))
+				 (dims-to-traverse (- (length dims) specified-indices 1))
+				)
+		(string-flatten
+		 "  PROCEDURE Assign"specified-indices"(VAR tgt : " tn "; READONLY src : " tn ") " 
+
+		 (if (= -1 dims-to-traverse) 
+				 "" 
+				 "RAISES { Scheme.E } ") 
+
+		 "= " dnl
+		 "    BEGIN" dnl
+		 "      (* max. dims-to-traverse = " dims-to-traverse " *)" dnl
+		 (check-dims dims-to-traverse)
+		 "      tgt := src" dnl
+		 "    END Assign"specified-indices";" dnl
+		 dnl
+		 )
+		)
+	)
+
+
+(define (make-assigners array-type env)
+	(let loop ((d (length (array-dimensions array-type))))
+		(if (< d 0) 
+				""
+				(string-flatten (make-assigner d array-type env)
+												(loop (- d 1))))
+		))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-ref-array-ops type env)
+  (let* ((m3tn (type-formatter type env))
+				 (m3ti (m3type->m3identifier (type-formatter type env)))
+				 (atype (extract-field 'target type))
+				 (dims (array-dimensions atype))
+				 
+				 (imports (env 'get 'imports)))
 
 		(define (index-decls)
 			(let loop ((i 0)
@@ -2357,7 +2451,7 @@
 
 		(define (format-pre i)
 			(if (= 0 i) 
-					"a"
+					"a^"
 					(string-append "a["(format-dims i)"]")
 					))
 
@@ -2384,7 +2478,7 @@
 			 "    CASE indices OF" dnl
 			 (let loop ((i 1)
 									(d dims)
-									(t type))
+									(t atype))
 				 (if (null? d) '()
 						 (cons
 							(string-append
@@ -2404,11 +2498,14 @@
 			 "    CASE indices OF" dnl
 			 (let loop ((i 1)
 									(d dims)
-									(t type))
+									(t atype))
 				 (if (null? d) '()
 						 (cons
 							(string-append
-							 "    | " i " => "(format-pre i)" := "(to-modula-proc-name (extract-field 'element t) env)"(val)" dnl
+							 "    | " i " => Assign"i"("(format-pre i)", "(convert-value-to-modula 
+																									 (extract-field 'element t) 
+																									 "val"
+																										 env) ")" dnl
 							 )
 							(loop (+ i 1) (cdr d) (extract-field 'element t)))
 							)
@@ -2442,10 +2539,12 @@
 			(string-flatten
 			 "PROCEDURE "proc-prefix"_"m3ti"(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
 			 "  VAR" dnl
-			 "    indices := SchemeUtils.Length(args);" dnl
+			 "    indices := SchemeUtils.Length(args);" dnl	
+			 "    a : " m3tn ";" dnl
 			 (index-decls)
 			 "  BEGIN"dnl
 			 (check-non-nil-type "obj" m3tn env)
+			 "    a := obj;" dnl
 			 (make-limit op)
 			 "  END "proc-prefix"_"m3ti";" dnl
 			 dnl
@@ -2460,8 +2559,10 @@
 		 "  VAR" dnl
 		 "    indices := SchemeUtils.Length(args);" dnl
 		 (index-decls)
+		 "    a : " m3tn ";" dnl
 		 "  BEGIN" dnl
 		 (check-non-nil-type "obj" m3tn env)
+		 "    a := obj;" dnl
 		 "    IF indices = 0 THEN" dnl
 		 "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
 		 "    END;" dnl
@@ -2480,13 +2581,17 @@
 		 "      IF c < FIRST(CARDINAL) THEN RAISE Scheme.E(\"not a cardinal\") END;" dnl
 		 "      RETURN c" dnl
 		 "    END CheckCard;" dnl
+		 dnl
+		 (make-assigners atype env)
 		 "  VAR" dnl
 		 "    n       := SchemeUtils.Length(args);" dnl
 		 "    indices := CheckCard(n - 1);" dnl
 		 (index-decls)
 		 "    val     := SchemeUtils.Nth(args,indices);" dnl
+		 "    a : " m3tn ";" dnl
 		 "  BEGIN" dnl
 		 (check-non-nil-type "obj" m3tn env)
+		 "    a := obj;" dnl
 		 "    IF indices = 0 THEN" dnl
 		 "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
 		 "    END;" dnl
@@ -2503,7 +2608,11 @@
          (m3ti  (m3type->m3identifier m3tn))
          (alias (cleanup-qid (extract-field 'alias arr-type)))
          (name  (cleanup-qid (extract-field 'alias arr-type)))
-         
+
+         (last-name       (string-append "Last_" m3ti))         
+				 (first-name       (string-append "First_" m3ti))
+				 (number-name       (string-append "Number_" m3ti))
+
 				 (setter-name     (string-append "SetElement_" m3ti))
 				 (getter-name     (string-append "GetElement_" m3ti))
          )
@@ -2512,6 +2621,10 @@
     (string-flatten
      (make-an-op-registration arr-type 'get-element getter-name env)
      (make-an-op-registration arr-type 'set-element! setter-name env)
+
+     (make-an-op-registration arr-type 'last last-name env)
+     (make-an-op-registration arr-type 'first first-name env)
+     (make-an-op-registration arr-type 'number number-name env)
 
      (make-a-tc-registration arr-type m3tn env)
      ;; we can introduce type aliases here as well

@@ -20,6 +20,7 @@ IMPORT Thread;
 IMPORT SchemeString;
 IMPORT SchemePair, SchemeUtils;
 IMPORT SchemeInputPortClass;
+IMPORT Fmt;
 
 REVEAL RdClass.Private <: MUTEX; (* see cryptic SRC comments *)
 
@@ -34,11 +35,15 @@ REVEAL
     isPushedToken, isPushedChar := FALSE;
     pushedToken : Object := NIL;
     pushedChar : INTEGER := -1;
+    lNo := 1;
+    helpfulText : TEXT := NIL;
   METHODS
 
     nextToken(wx : Wx := NIL) : Object RAISES { E } := NextToken;
 
     readTail(wx : Wx) : Object RAISES { E } := ReadTail2;
+
+    warn(msg : TEXT) RAISES { E } := MyWarn;
 
   OVERRIDES
     fastGetCh := FastGetCh;
@@ -56,35 +61,41 @@ REVEAL
     close    :=  Close;
   END;
 
+PROCEDURE UnNil( txt : TEXT) : TEXT = 
+  BEGIN IF txt = NIL THEN RETURN "<NIL>" ELSE RETURN txt END END UnNil;
+
+PROCEDURE MyWarn(t : T; msg : TEXT) RAISES { E } =
+  BEGIN
+    EVAL Warn(msg & ", " & UnNil(t.helpfulText) & ", line " & Fmt.Int(t.lNo))
+  END MyWarn;
+
 PROCEDURE Lock(t : T) = BEGIN RdClass.Lock(t.rd) END Lock;
 
 PROCEDURE Unlock(t : T) = BEGIN RdClass.Unlock(t.rd) END Unlock;
 
-PROCEDURE Init(t : T; rd : Rd.T) : T = 
-  BEGIN t.rd := rd; RETURN t END Init;
+PROCEDURE Init(t : T; rd : Rd.T; warnText : TEXT) : T = 
+  BEGIN t.helpfulText := warnText; t.rd := rd; RETURN t END Init;
 
 PROCEDURE GetCh(t : T) : INTEGER RAISES { E } =
   BEGIN
-    TRY
-      RETURN ORD(Rd.GetChar(t.rd))
-    EXCEPT
-      Rd.EndOfFile => RETURN ChEOF 
-    |
-      Rd.Failure(err) =>
-      EVAL Warn("Rd.Failure : " & AL.Format(err));
-      RETURN ChEOF
+    LOCK t.rd DO
+      RETURN t.fastGetCh()
     END
   END GetCh;
 
 PROCEDURE FastGetCh(t : T) : INTEGER RAISES { E } =
   BEGIN
     TRY
-      RETURN ORD(UnsafeRd.FastGetChar(t.rd))
+      WITH chr = UnsafeRd.FastGetChar(t.rd) DO
+        IF chr = '\n' THEN INC(t.lNo) END;
+
+        RETURN ORD(chr)
+      END
     EXCEPT
       Rd.EndOfFile => RETURN ChEOF 
     |
       Rd.Failure(err) =>
-      EVAL Warn("Rd.Failure : " & AL.Format(err));
+      t.warn("Rd.Failure : " & AL.Format(err));
       RETURN ChEOF
     END
   END FastGetCh;
@@ -109,7 +120,7 @@ PROCEDURE ReadChar(t : T) : Object RAISES { E } =
 (*
     EXCEPT
       Rd.Failure(err) =>
-        EVAL Warn("On input, exception: " & AL.Format(err));
+        t.warn("On input, exception: " & AL.Format(err));
         RETURN EOF
     END
 *)
@@ -148,7 +159,7 @@ PROCEDURE PeekCh(t : T) : INTEGER RAISES { E } =
 (*
     EXCEPT
       Rd.Failure(err) => 
-        EVAL Warn("On input, exception: " & AL.Format(err));
+        t.warn("On input, exception: " & AL.Format(err));
         RETURN ChEOF
     END
 *)
@@ -167,9 +178,9 @@ PROCEDURE Read(t : T) : Object RAISES { E } =
         IF    token = LP THEN
           RETURN t.readTail(wx)
         ELSIF token = RP THEN
-          EVAL Warn("Extra ) ignored."); RETURN t.read()
+          t.warn("Extra ) ignored"); RETURN t.read()
         ELSIF token = DOT THEN
-          EVAL Warn("Extra . ignored."); RETURN t.read()
+          t.warn("Extra . ignored"); RETURN t.read()
         ELSIF token = SQ THEN
           RETURN List2(Symbol("quote"), t.read())
         ELSIF token = BQ THEN
@@ -185,7 +196,7 @@ PROCEDURE Read(t : T) : Object RAISES { E } =
 (*
     EXCEPT
       Rd.Failure(err) => 
-        EVAL Warn("On input, exception: " & AL.Format(err));
+        t.warn("On input, exception: " & AL.Format(err));
         RETURN EOF
     END
 *)
@@ -218,7 +229,7 @@ PROCEDURE ReadTail2(t : T;
       WITH result = t.read() DO
         token := t.nextToken();
         IF token # RP THEN
-          EVAL Warn("Where's the ')'?  Got " & Stringify(token) &
+          t.warn("Where's the ')'?  Got " & Stringify(token) &
             " after .")
         END;
         ret :=  result ; EXIT
@@ -265,8 +276,8 @@ PROCEDURE ReadTail(t : T;
       WITH result = t.read() DO
         token := t.nextToken();
         IF token # RP THEN
-          EVAL Warn("Where's the ')'?  Got " & Stringify(token) &
-            " after .")
+          t.warn("Where's the ')'?  Got " & Stringify(token) &
+            " after . ")
         END;
         RETURN result
       END
@@ -342,7 +353,7 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
                 buff.addhi(VAL(ch,CHAR))
               END
             END;
-            IF ch = ChEOF THEN EVAL Warn("EOF inside of a string.") END;
+            IF ch = ChEOF THEN t.warn("EOF inside a string") END;
             RETURN CharSeqToArray(buff)
           FINALLY
             t.unlock()
@@ -393,12 +404,12 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
           ORD('e'), ORD('i'), ORD('d') => RETURN t.nextToken()
         |
           ORD('b'), ORD('o'), ORD('x') =>
-            EVAL Warn("#" & Text.FromChar(VAL(ch,CHAR)) & 
-                      " not implemented, ignored.");
+            t.warn("#" & Text.FromChar(VAL(ch,CHAR)) & 
+                      " not implemented, ignored");
             RETURN t.nextToken()
         ELSE
-          EVAL Warn("#" & Text.FromChar(VAL(ch,CHAR)) & 
-                    " not recognized, ignored.");
+          t.warn("#" & Text.FromChar(VAL(ch,CHAR)) & 
+                    " not recognized, ignored");
           RETURN t.nextToken()
         END
     ELSE

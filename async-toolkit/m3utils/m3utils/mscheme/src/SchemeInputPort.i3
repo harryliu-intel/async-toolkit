@@ -14,7 +14,7 @@ TYPE
   T <: Public;
 
   Public = OBJECT METHODS
-    init(rd : Rd.T) : T;
+    init(rd : Rd.T; warnText : TEXT := NIL) : T;
 
     readChar() : SchemeObject.T RAISES { E };
     peekChar() : SchemeObject.T RAISES { E };
