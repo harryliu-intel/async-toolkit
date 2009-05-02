@@ -1,9 +1,13 @@
 ;;
 ;; $Id$
 ;;
-
 ;;
 ;; Process Modula-3 interfaces in Scheme
+;;
+;; 
+;; Copyright (c) 2009, Generation Capital Ltd.  All rights reserved.
+;;
+;; Author : Mika Nystrom <mika@alum.mit.edu>
 ;;
 
 (require-modules "basic-defs" "display" "hashtable" "struct" "set" 
@@ -39,7 +43,8 @@
 ;;
 
 ;;
-;; Dependencies.  The code in this file depends on 
+;; Dependencies.  The code in this file depends on (at least) the
+;;                following Modula-3 interfaces.
 ;;
 ;;   TypeTranslator
 ;;   ValueTranslator
@@ -49,6 +54,52 @@
 ;;          [which depend on]
 ;;             AST interfaces in m3tk
 ;;
+;; Utility functions for conversion to and from Modula are
+;; in SchemeProcedureStubs.
+;;
+;; calling conventions are defined by Main.m3 in the sstubgen/program
+;; directory.
+;;
+;; The following lists are assumed to exist on startup:
+;;
+;; the-types
+;; the-exceptions
+;; the-vars
+;; the-procs
+;; the-consts
+;; the-protos
+;; the-basetypes
+;; the-sourcefiles
+;;
+;;  ;;;   explanation of individual variables   ;;;
+;;
+;; the-types
+;;     s-expressions for each of the types mentioned in the interface
+;;
+;; the-exceptions
+;;     s-expressions for each of the exceptions mentioned in the interface
+;;
+;; the-vars
+;;     s-expressions for each of the variables declared in the interface
+;;
+;; the-procs
+;;     s-expressions for each of the procedures declared in the interface
+;;
+;; the-consts
+;;     s-expressions for each of the constants declared in the interface
+;;
+;; the-protos
+;;     s-expressions for empty type expressions as declared in Type 
+;;     interface
+;;
+;; the-basetypes
+;;     s-expressions for the Modula-3 base types
+;;
+;; the-sourcefiles
+;;     list of filenames for interfaces processed.  Normally just one
+;;     filename, if the Quake template has been used.
+;;
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;                            ;;;;;;;;;;;;;;;;;;;;
@@ -185,6 +236,11 @@
 ;; set this to #t to check file staleness before rebuilding,
 ;; otherwise rebuilding always happens
 
+(define (reload) (load "../../program/src/sstubgen.scm"))
+;; utility function for interactive testing
+
+(set-warnings-are-errors! #t)
+;; for debugging
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -675,10 +731,6 @@
     (map (lambda(x) (begin (lp x)(dis "----------------------" dnl)) #t) xx)
     #t
     ))
-
-(define (reload) (load "../../program/src/sstubgen.scm"))
-
-(set-warnings-are-errors! #t)
 
 (define (make-pair-hash-table size) ;; silly
   (define (pair-hash p) 0)
@@ -1773,7 +1825,7 @@
 					(env-map make-ref-array-ops ref-array-types))
 
 				 (ref-array-registrations
-					(env-map make-array-registrations ref-array-types))
+					(env-map make-ref-array-registrations ref-array-types))
 
 
 				 ;;;;;;;;;;;; REF RECORD types ;;;;;;;;;;;;
@@ -1856,6 +1908,22 @@
     )
 )
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (check-non-nil-type varname typename env)
+	((env 'get 'imports) 'insert! 'Scheme)
+	((env 'get 'imports) 'insert! 'SchemeUtils)
+
+	(string-append
+		 "    IF NOT ISTYPE("varname","typename") OR "varname"=NIL THEN" dnl
+		 "      RAISE Scheme.E(\"Not of type "typename" : \" & SchemeUtils.Stringify("varname"))" dnl
+		 "    END;" dnl
+		 )
+	)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (make-field-stubs type env)
   (let ((m3tn (type-formatter type env))
         (m3ti (m3type->m3identifier (type-formatter type env)))
@@ -1890,9 +1958,7 @@
 		 "    field   := SchemeUtils.First(args);" dnl
 		 "    narrow : " m3tn ";" dnl
 		 "  BEGIN" dnl
-		 "    IF NOT ISTYPE(obj,"m3tn") OR obj=NIL THEN" dnl
-		 "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(obj))" dnl
-		 "    END;" dnl
+		 (check-non-nil-type "obj" m3tn env)
 		 "    narrow := NARROW(obj,"m3tn");" dnl
 		 "    IF FALSE THEN <*ASSERT FALSE*>" dnl
 		 (map make-field-getter (fields 'keys))
@@ -1908,9 +1974,7 @@
 		 "    narrow : " m3tn ";" dnl
 		 "    res : SchemeObject.T;" dnl
 		 "  BEGIN" dnl
-		 "    IF NOT ISTYPE(obj,"m3tn") OR obj=NIL THEN" dnl
-		 "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(obj))" dnl
-		 "    END;" dnl
+		 (check-non-nil-type "obj" m3tn env)
 		 "    narrow := NARROW(obj,"m3tn");" dnl
 		 "    IF FALSE THEN <*ASSERT FALSE*>" dnl
 		 (map make-field-setter (fields 'keys))
@@ -1922,7 +1986,6 @@
 
 		 )
 		)
-				
 )
 
 (define (make-object-surrogate type env)
@@ -2356,6 +2419,38 @@
 			 "    END" dnl
 			 ))
 
+		(define (make-limit op)
+			(string-flatten
+			 "    CASE indices OF" dnl
+			 (let loop ((i 0))
+				 (if (= (length dims) i)
+						 (string-append
+							"    ELSE" dnl
+							"      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
+							"    END" dnl
+							)
+						 (cons
+							(string-append
+							 "    | " i " => RETURN SchemeLongReal.FromI("op"("(format-pre i)"))" dnl
+							 )
+							(loop (+ i 1))
+							)
+				 )
+			 )))
+
+		(define (make-limit-op proc-prefix op)
+			(string-flatten
+			 "PROCEDURE "proc-prefix"_"m3ti"(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+			 "  VAR" dnl
+			 "    indices := SchemeUtils.Length(args);" dnl
+			 (index-decls)
+			 "  BEGIN"dnl
+			 (check-non-nil-type "obj" m3tn env)
+			 (make-limit op)
+			 "  END "proc-prefix"_"m3ti";" dnl
+			 dnl
+			 ))
+
 		(imports 'insert! 'Scheme)
 		(imports 'insert! 'SchemeObject)
 		(imports 'insert! 'SchemeUtils)
@@ -2366,6 +2461,7 @@
 		 "    indices := SchemeUtils.Length(args);" dnl
 		 (index-decls)
 		 "  BEGIN" dnl
+		 (check-non-nil-type "obj" m3tn env)
 		 "    IF indices = 0 THEN" dnl
 		 "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
 		 "    END;" dnl
@@ -2374,13 +2470,23 @@
 		 "  END GetElement_" m3ti ";" dnl
 		 dnl
 
+		 (make-limit-op "Last" "LAST")
+		 (make-limit-op "First" "FIRST")
+		 (make-limit-op "Number" "NUMBER")
+
 		 "PROCEDURE SetElement_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+		 "  PROCEDURE CheckCard(c : INTEGER) : CARDINAL RAISES { Scheme.E } = "dnl
+		 "    BEGIN" dnl
+		 "      IF c < FIRST(CARDINAL) THEN RAISE Scheme.E(\"not a cardinal\") END;" dnl
+		 "      RETURN c" dnl
+		 "    END CheckCard;" dnl
 		 "  VAR" dnl
 		 "    n       := SchemeUtils.Length(args);" dnl
-		 "    indices := n - 1;" dnl
+		 "    indices := CheckCard(n - 1);" dnl
 		 (index-decls)
 		 "    val     := SchemeUtils.Nth(args,indices);" dnl
 		 "  BEGIN" dnl
+		 (check-non-nil-type "obj" m3tn env)
 		 "    IF indices = 0 THEN" dnl
 		 "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
 		 "    END;" dnl
@@ -2391,6 +2497,28 @@
 
 		 )
 ))
+
+(define (make-ref-array-registrations arr-type env)
+  (let* ((m3tn  (type-formatter arr-type env))
+         (m3ti  (m3type->m3identifier m3tn))
+         (alias (cleanup-qid (extract-field 'alias arr-type)))
+         (name  (cleanup-qid (extract-field 'alias arr-type)))
+         
+				 (setter-name     (string-append "SetElement_" m3ti))
+				 (getter-name     (string-append "GetElement_" m3ti))
+         )
+    ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
+    ((env 'get 'imports) 'insert! 'Atom)
+    (string-flatten
+     (make-an-op-registration arr-type 'get-element getter-name env)
+     (make-an-op-registration arr-type 'set-element! setter-name env)
+
+     (make-a-tc-registration arr-type m3tn env)
+     ;; we can introduce type aliases here as well
+
+     )
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2421,15 +2549,10 @@
 		(string-flatten
 		 "PROCEDURE DeRef_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
 		 "  BEGIN" dnl
-		 "    IF obj = NIL THEN" dnl
-		 "      RAISE Scheme.E(\"cant deref NIL value of type "m3tn"\")" dnl
-		 "    END;" dnl
-		 "    TYPECASE obj OF" dnl
-		 "      " m3tn "(x) =>" dnl
+		 (check-non-nil-type "obj" m3tn env)
+		 "    WITH x = NARROW(obj, "m3tn") DO" dnl
 		 "      RETURN " (to-scheme-proc-name target env) "(x^)" dnl
-		 "    ELSE" dnl
-		 "      RAISE Scheme.E(\"expected a "m3tn" : \" & SchemeUtils.Stringify(obj))" dnl
-		 "    END" dnl
+     "    END" dnl
 		 "  END DeRef_" m3ti ";" dnl
 		 dnl
 
@@ -2442,13 +2565,6 @@
 		 dnl
 
 		 )))
-
-
-
-
-
-
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
