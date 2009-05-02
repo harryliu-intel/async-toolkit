@@ -10,6 +10,7 @@ IMPORT Rd, AL, Debug;
 IMPORT TextWr;
 IMPORT Text, IntSeq;
 IMPORT RuntimeError;
+IMPORT SchemeClass, Wr;
 
 <* FATAL Thread.Alerted *>
 
@@ -99,39 +100,73 @@ PROCEDURE GetCh(p : InputPort) : INTEGER =
   
 PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
                                                              ReadLineError.E }=
+  <*FATAL Wr.Failure*> (* no point in trying to put errors to a broken pipe *)
+
+  PROCEDURE Display(what : TEXT) RAISES { Wr.Failure, 
+                                          NetObj.Error, 
+                                          ReadLineError.E } =
+    BEGIN
+      IF doReadLine THEN
+        rl.display(what)
+      ELSE
+        Wr.PutText(scm.output, what)
+      END
+    END Display;
+
   VAR
     sip : SchemeInputPort.T;
+    doReadLine := rl # NIL;
   BEGIN
     Csighandler.install_int_handler();
-    rl.startProc();
-    rl.display("M-Scheme Experimental\nLITHP ITH LITHENING.\n");
-    rl.setPrompt("> ");
-    sip := NEW(InputPort).init(rl);
+    IF doReadLine THEN
+      rl.startProc();
+      rl.display("M-Scheme Experimental\nLITHP ITH LITHENING.\n");
+      rl.setPrompt("> ");
+      sip := NEW(InputPort).init(rl)
+    ELSE
+      sip := scm.input
+    END;
 
     scm.setInterrupter(NEW(Interrupter));
 
     scm.bind(SchemeSymbol.Symbol("bang-bang"), NIL);
 
     LOOP
+      IF doReadLine THEN
+        rl.setPrompt("> ");
+      ELSE
+        Wr.PutText(scm.output, ">"); Wr.Flush(scm.output)
+      END;
+
       TRY
         WITH x = sip.read() DO
-          rl.setPrompt("> ");
           IF SchemeInputPort.IsEOF(x) THEN RETURN END;
+            
           IF DebugALL THEN Debug.Out("Eval!") END;
           Csighandler.clear_signal();
           WITH res = scm.evalInGlobalEnv(x) DO
-            WITH wr = NEW(TextWr.T).init() DO
-              EVAL SchemeUtils.Write(res, wr, TRUE);
-              rl.display(TextWr.ToText(wr) & "\n")
+            IF doReadLine THEN
+              WITH wr = NEW(TextWr.T).init() DO
+                EVAL SchemeUtils.Write(res, wr, TRUE);
+                rl.display(TextWr.ToText(wr) & "\n")
+              END
+            ELSE
+              EVAL SchemeUtils.Write(res, scm.output, TRUE)
             END;
+
             scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res)
           END
         END
       EXCEPT
-        RuntimeError.E(err) => rl.display("EXCEPTION! RuntimeError! " & 
+        <*NOWARN*>RuntimeError.E(err) => 
+        Display("EXCEPTION! RuntimeError! " & 
           RuntimeError.Tag(err))
       |
-        Scheme.E(e) => rl.display("EXCEPTION! " & e & "\n")
+        Scheme.E(e) => Display("EXCEPTION! " & e & "\n")
+      END;
+
+      IF NOT doReadLine THEN
+        Wr.PutText(scm.output, "\n"); Wr.Flush(scm.output)
       END
     END
   END MainLoop;

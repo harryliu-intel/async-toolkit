@@ -17,7 +17,7 @@ IMPORT Thread;
 IMPORT SchemeBoolean;
 IMPORT SchemeProcedure,SchemeProcedureClass;
 IMPORT Debug;
-IMPORT RefSeq;
+IMPORT RefSeq, RefPair, RefPairSeq;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -267,13 +267,13 @@ PROCEDURE Reverse(x : Object) : Object =
     RETURN result
   END Reverse;
 
-PROCEDURE Equal(x, y : Object; stack : RefSeq.T := NIL) : BOOLEAN =
+PROCEDURE Equal(x, y : Object; stack : RefPairSeq.T := NIL) : BOOLEAN =
 
   PROCEDURE HaveSeen(x : Object; VAR y : Object) : BOOLEAN =
     BEGIN
       FOR i := 0 TO stack.size()-1 DO
-        WITH entry = NARROW(stack.get(i),StackElem) DO
-          IF entry.x = x THEN y := entry.y; RETURN TRUE END
+        WITH entry = stack.get(i) DO
+          IF entry.k1 = x THEN y := entry.k2; RETURN TRUE END
         END
       END;
       RETURN FALSE
@@ -281,15 +281,13 @@ PROCEDURE Equal(x, y : Object; stack : RefSeq.T := NIL) : BOOLEAN =
 
   PROCEDURE Push(x, y : Object) =
     BEGIN
-      stack.addhi(NEW(StackElem, x := x, y := y))
+      stack.addhi(RefPair.T {x, y})
     END Push;
 
   PROCEDURE Pop() = BEGIN EVAL stack.remhi() END Pop;
 
-  TYPE StackElem = REF RECORD x, y : Object END;
-
   BEGIN
-    IF stack = NIL THEN stack := NEW(RefSeq.T).init() END;
+    IF stack = NIL THEN stack := NEW(RefPairSeq.T).init() END;
 
     IF x = y THEN RETURN TRUE END;
     

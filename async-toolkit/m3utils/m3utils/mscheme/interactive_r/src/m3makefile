@@ -14,6 +14,7 @@ import("modula3scheme")
 import("schemesig")
 import("m3readline")
 import("schemereadline")
+import("parseparams")
 
 implementation("Main")
 

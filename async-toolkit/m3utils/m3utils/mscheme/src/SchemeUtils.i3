@@ -12,7 +12,7 @@ IMPORT Scheme, SchemeInputPort;
 IMPORT Wr, Wx;
 IMPORT SchemePair;
 IMPORT SchemeString;
-IMPORT RefSeq;
+IMPORT RefSeq, RefPairSeq;
 
 TYPE String = SchemeString.T;
 
@@ -61,7 +61,7 @@ PROCEDURE Cons(a, b : Object; interp : Scheme.T := NIL) : Pair;
 
 PROCEDURE Reverse(x : Object) : Object;
 
-PROCEDURE Equal(x, y : Object; stack : RefSeq.T := NIL) : BOOLEAN;
+PROCEDURE Equal(x, y : Object; stack : RefPairSeq.T := NIL) : BOOLEAN;
 
 PROCEDURE Eqv(x, y : Object) : BOOLEAN;
 

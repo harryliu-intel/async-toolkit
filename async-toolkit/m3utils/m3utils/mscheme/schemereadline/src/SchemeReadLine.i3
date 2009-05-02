@@ -3,8 +3,9 @@
 INTERFACE SchemeReadLine;
 IMPORT ReadLine, Scheme, NetObj, ReadLineError;
 
-PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
-                                                             ReadLineError.E };
+PROCEDURE MainLoop(rl : ReadLine.T; 
+                   scm : Scheme.T) RAISES { NetObj.Error,
+                                            ReadLineError.E };
 
 CONST Brand = "SchemeReadline";
 
