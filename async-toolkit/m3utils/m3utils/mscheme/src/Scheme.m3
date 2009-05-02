@@ -192,6 +192,8 @@ PROCEDURE FileOpen(t : T; name : Pathname.T) : FileRec
           homeDir : Pathname.T;
       BEGIN
         TRY
+          IF pos = -1 THEN pos := LAST(CARDINAL) END;
+
           IF pos < 2 THEN
             user := SchemeUnixDeps.GetCurrentUser();
             rest := Text.Sub(name, 1)
