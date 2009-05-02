@@ -6,7 +6,7 @@
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
-MODULE SchemeBoolean EXPORTS SchemeBoolean, SchemeBooleanPickle;
+MODULE SchemeBoolean EXPORTS SchemeBoolean;
 FROM Scheme IMPORT Object;
 IMPORT Pickle;
 IMPORT Rd, Thread, Wr;
