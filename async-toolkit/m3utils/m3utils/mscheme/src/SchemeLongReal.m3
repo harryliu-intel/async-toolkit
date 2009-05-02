@@ -37,6 +37,16 @@ PROCEDURE FromO(x : Object) : LONGREAL RAISES { E } =
     END
   END FromO;
 
+PROCEDURE Card(x : Object; roundOK : BOOLEAN) : CARDINAL RAISES { E } =
+  BEGIN
+    WITH int = Int(x,roundOK) DO
+      IF int < FIRST(CARDINAL) OR int > LAST(CARDINAL) THEN
+        RETURN Int(Error("number out of range : " & StringifyT(x)),FALSE)
+      END;
+      RETURN int
+    END
+  END Card;
+
 PROCEDURE Int(x : Object; roundOK : BOOLEAN) : INTEGER RAISES { E } =
   BEGIN
     WITH lr = FromO(x) DO

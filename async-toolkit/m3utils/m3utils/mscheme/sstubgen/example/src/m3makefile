@@ -15,8 +15,12 @@ Interface("Example2")
 %Interface("Value")
 Module("Bubble")
 
+Interface("ExampleRef")
+
 SchemeStubs("Bubble")
 SchemeStubs("Example")
+SchemeStubs("Example2")
+SchemeStubs("ExampleRef")
 
 SchemeStubs("Fmt")
 SchemeStubs("Wr")

@@ -15,6 +15,8 @@ IMPORT AtomCardTbl;
 IMPORT SchemeBoolean;
 IMPORT Pickle, SchemeVector, TextRd, TextWr, Text;
 IMPORT Thread, Rd, Wr;
+IMPORT AtomRefTbl, IntRefTbl;
+IMPORT SchemeSymbol;
 
 TYPE
   T = OBJECT
@@ -142,7 +144,7 @@ PROCEDURE Extend(prims : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefine
 
     prims.addPrim("modula-type-op",
                   NEW(SchemeProcedure.T, apply := ModulaTypeOpApply),
-                  3, LAST(CARDINAL));
+                  2, LAST(CARDINAL));
 
     prims.addPrim("list-modula-type-ops",
                   NEW(SchemeProcedure.T, apply := ListTypeOpsApply),
@@ -161,6 +163,10 @@ PROCEDURE Extend(prims : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefine
                   1, 1);
     prims.addPrim("decode-pickle-vector",
                   NEW(SchemeProcedure.T, apply := ReadPickleApply),
+                  1, 1);
+
+    prims.addPrim("modula-type-class",
+                  NEW(SchemeProcedure.T, apply := ModulaTypeClassApply),
                   1, 1);
 
     RETURN prims
@@ -361,6 +367,54 @@ PROCEDURE ReadPickleApply(<*UNUSED*>proc : SchemeProcedure.T;
     END
   END ReadPickleApply;
 
+VAR typesByName := NEW(AtomRefTbl.Default).init();
+    typesByTC   := NEW(IntRefTbl.Default).init();
 
+PROCEDURE RegisterTypePickle(READONLY typeCodes : ARRAY OF [-1..LAST(RT0.Typecode)];
+                             READONLY names : ARRAY OF TEXT;
+                             READONLY pickle : ARRAY OF CHAR) =
+
+  PROCEDURE Error(msg : TEXT) =
+    BEGIN
+      Debug.Error("SchemeProcedureStubs.RegisterTypePickle : couldnt initialize MScheme runtime type stubs : " & msg)
+    END Error;
+
+  VAR
+    theTypes : SchemePair.T ;
+  BEGIN
+    TRY
+      theTypes := Pickle.Read(NEW(TextRd.T).init(Text.FromChars(pickle)));
+
+      IF NUMBER(typeCodes) # NUMBER(names) THEN Error("type count mismatch") END;
+      FOR i := FIRST(names) TO LAST(names) DO
+        EVAL typesByName.put(Atom.FromText(names[i]),theTypes.first);
+        EVAL typesByTC.put(typeCodes[i],theTypes.first);
+        theTypes := theTypes.rest
+      END;
+      IF theTypes # NIL THEN Error("too many types") END;
+    EXCEPT
+      Rd.EndOfFile, Rd.Failure, Thread.Alerted, Pickle.Error =>
+      Error("pickle problem")
+    END
+  END RegisterTypePickle;
+
+PROCEDURE ModulaTypeClassApply(<*UNUSED*>proc : SchemeProcedure.T; 
+                           <*UNUSED*>interp : Scheme.T; 
+                           args : Object) : Object RAISES { E } =
+  VAR
+    type := First(args);
+    res : REFANY := SchemeBoolean.False();
+  BEGIN
+    TYPECASE type OF
+      SchemeSymbol.T(sym) =>
+      EVAL typesByName.get(sym,res)
+    |
+      SchemeLongReal.T(lr) =>
+      EVAL typesByTC.get(SchemeLongReal.Card(lr),res)
+    ELSE
+      RAISE E("expected symbol or integer : " & Stringify(type))
+    END;
+    RETURN res
+  END ModulaTypeClassApply;
 
 BEGIN END SchemeProcedureStubs.

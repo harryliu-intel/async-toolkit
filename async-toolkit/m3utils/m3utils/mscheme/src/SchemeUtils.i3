@@ -67,6 +67,8 @@ PROCEDURE Eqv(x, y : Object) : BOOLEAN;
 
 PROCEDURE Length(x : Object) : CARDINAL;
 
+PROCEDURE Nth(x : Object; n : CARDINAL) : Object;
+
 PROCEDURE ListToString(chars: Object) : String RAISES { E };
 
 PROCEDURE ListToVector(objs : Object) : Vector RAISES { E };

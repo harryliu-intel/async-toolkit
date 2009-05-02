@@ -39,4 +39,11 @@ TYPE OpProc = PROCEDURE (interp : Scheme.T;
 
 PROCEDURE RegisterTC(tc : RT0.Typecode; name : TEXT);
 
+PROCEDURE RegisterTypePickle(READONLY typeCodes : ARRAY OF [-1..LAST(RT0.Typecode)];
+                             READONLY names : ARRAY OF TEXT;
+                             READONLY pickle : ARRAY OF CHAR);
+  (* types is a list of typecodes, or -1 for non-reference types *)
+  (* pickle is a Scheme list of the type descriptors for each of the
+     types listed *)
+
 END SchemeProcedureStubs.

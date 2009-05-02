@@ -375,6 +375,12 @@ PROCEDURE Length(x : Object) : CARDINAL =
     RETURN len
   END Length;
 
+PROCEDURE Nth(x : Object; n : CARDINAL) : Object =
+  BEGIN
+    WHILE n > 0 DO x := Rest(x); DEC(n) END;
+    RETURN First(x)
+  END Nth;
+
 PROCEDURE ListToString(chars: Object) : String RAISES { E } =
   VAR str := NEW(String, Length(chars));
       i := 0;
