@@ -267,52 +267,95 @@ PROCEDURE Reverse(x : Object) : Object =
     RETURN result
   END Reverse;
 
-PROCEDURE Equal(x, y : Object) : BOOLEAN =
-  BEGIN
-    IF x = y THEN RETURN TRUE END;
+PROCEDURE Equal(x, y : Object; stack : RefSeq.T := NIL) : BOOLEAN =
 
-    IF x = NIL OR y = NIL THEN 
-      RETURN x = y
-    ELSE
-      TYPECASE x OF
-        LongReal(lr) =>
-        IF NOT ISTYPE(y,LongReal) THEN RETURN FALSE END;
-        RETURN lr^ = NARROW(y,LongReal)^
-      |
-        Pair(p) =>
-        IF NOT ISTYPE(y,Pair) THEN RETURN FALSE END;
-        WITH that = NARROW(y,Pair) DO
-          RETURN Equal(p.first,that.first) AND Equal(p.rest,that.rest)
+  PROCEDURE HaveSeen(x : Object; VAR y : Object) : BOOLEAN =
+    BEGIN
+      FOR i := 0 TO stack.size()-1 DO
+        WITH entry = NARROW(stack.get(i),StackElem) DO
+          IF entry.x = x THEN y := entry.y; RETURN TRUE END
         END
-      |
-        String(sx) =>
-        TYPECASE y OF 
-          String(sy) =>
-          IF NUMBER(sx^) # NUMBER(sy^) THEN RETURN FALSE END;
-          FOR i := FIRST(sx^) TO LAST(sx^) DO
-            IF sx[i] # sy[i] THEN RETURN FALSE END
-          END;
-          RETURN TRUE
-        ELSE (* y not string *)
-          RETURN FALSE
-        END
-      |
-        Vector(vx) =>
-        TYPECASE y OF 
-          Vector(vy) =>
-          IF NUMBER(vx^) # NUMBER(vy^) THEN RETURN FALSE END;
-          FOR i := FIRST(vx^) TO LAST(vx^) DO
-            IF vx[i] # vy[i] THEN RETURN FALSE END
-          END;
-          RETURN TRUE
-        ELSE (* y not string *)
-          RETURN FALSE
-        END
+      END;
+      RETURN FALSE
+    END HaveSeen;
+
+  PROCEDURE Push(x, y : Object) =
+    BEGIN
+      stack.addhi(NEW(StackElem, x := x, y := y))
+    END Push;
+
+  PROCEDURE Pop() = BEGIN EVAL stack.remhi() END Pop;
+
+  TYPE StackElem = REF RECORD x, y : Object END;
+
+  BEGIN
+    IF stack = NIL THEN stack := NEW(RefSeq.T).init() END;
+
+    IF x = y THEN RETURN TRUE END;
+    
+    VAR seenY : Object;
+    BEGIN
+      IF HaveSeen(x, seenY) THEN 
+        RETURN y = seenY 
       ELSE
-        RETURN x = y (* right? *)
+        Push(x, y)
       END
+    END;
+
+    (* if we get here, last thing was Push *)
+    TRY
+      IF x = NIL OR y = NIL THEN 
+        RETURN x = y
+      ELSE
+        TYPECASE x OF
+          Pair(p) =>
+          IF NOT ISTYPE(y,Pair) THEN RETURN FALSE END;
+          WITH that = NARROW(y,Pair) DO
+            RETURN Equal(p.first,that.first,stack) AND Equal(p.rest,that.rest,stack)
+          END
+        |
+          Vector(vx) =>
+          TYPECASE y OF 
+            Vector(vy) =>
+            IF NUMBER(vx^) # NUMBER(vy^) THEN RETURN FALSE END;
+            FOR i := FIRST(vx^) TO LAST(vx^) DO
+              IF Equal(vx[i],vy[i],stack) THEN RETURN FALSE END
+            END;
+            RETURN TRUE
+          ELSE (* y not vector *)
+            RETURN FALSE
+          END
+        ELSE
+          RETURN EqualLeaf(x, y)
+        END
+      END
+    FINALLY
+      Pop()
     END
   END Equal;
+
+PROCEDURE EqualLeaf(x, y : Object) : BOOLEAN =
+  BEGIN
+    TYPECASE x OF
+      LongReal(lr) =>
+      IF NOT ISTYPE(y,LongReal) THEN RETURN FALSE END;
+      RETURN lr^ = NARROW(y,LongReal)^
+    |
+      String(sx) =>
+      TYPECASE y OF 
+        String(sy) =>
+        IF NUMBER(sx^) # NUMBER(sy^) THEN RETURN FALSE END;
+        FOR i := FIRST(sx^) TO LAST(sx^) DO
+          IF sx[i] # sy[i] THEN RETURN FALSE END
+        END;
+        RETURN TRUE
+      ELSE (* y not string *)
+        RETURN FALSE
+      END
+    ELSE
+      RETURN x = y (* right? *)
+    END
+  END EqualLeaf;
 
 PROCEDURE Eqv(x, y : Object) : BOOLEAN =
   BEGIN

@@ -354,7 +354,8 @@ PROCEDURE ReadPickleApply(<*UNUSED*>proc : SchemeProcedure.T;
     END;
 
     TRY
-      RETURN Pickle.Read(NEW(TextRd.T).init(Text.FromChars(chars^)))
+      RETURN NEW(Pickle.Reader, 
+                 rd := NEW(TextRd.T).init(Text.FromChars(chars^))).read()
     EXCEPT
       Pickle.Error(e) => RAISE E("Pickle error : " & e)
     END

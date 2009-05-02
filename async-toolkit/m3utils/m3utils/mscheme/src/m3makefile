@@ -53,6 +53,7 @@ Interface("SchemeInputPortClass")
 Interface("SchemeObject")
 
 Module("SchemeBoolean")
+Interface("SchemeBooleanPickle")
 
 Module("SchemeLongReal")
 

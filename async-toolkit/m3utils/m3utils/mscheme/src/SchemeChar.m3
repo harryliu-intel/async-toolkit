@@ -10,6 +10,7 @@ MODULE SchemeChar;
 FROM SchemeUtils IMPORT StringifyT, Error;
 IMPORT SchemeObject;
 FROM Scheme IMPORT E;
+IMPORT Rd, Wr, Pickle, Thread;
 
 REVEAL T = BRANDED Brand REF CHAR;
 
@@ -51,11 +52,40 @@ PROCEDURE Downcase(c : CHAR) : CHAR =
     END
   END Downcase;
 
+PROCEDURE CharPklWrite (
+    <*UNUSED*> sp: Pickle.Special;
+    r: REFANY; writer: Pickle.Writer)
+    RAISES { Wr.Failure, Thread.Alerted } =
+  BEGIN
+    writer.writeInt(ORD(NARROW(r,T)^))
+  END CharPklWrite;
+
+PROCEDURE CharPklRead (
+    <*UNUSED*> sp: Pickle.Special;
+    reader: Pickle.Reader;
+    <*UNUSED*> id: Pickle.RefID) : REFANY
+    RAISES { Pickle.Error, Rd.EndOfFile, Rd.Failure, Thread.Alerted } =
+  BEGIN
+    WITH res = reader.readInt() DO
+      CASE res OF
+        ORD(FIRST(CHAR))..ORD(LAST(CHAR)) => RETURN Array[VAL(res,CHAR)]
+      ELSE
+        RAISE Pickle.Error("bad value")
+      END
+    END
+  END CharPklRead;
+
+
 VAR (* CONST *) Array := NEW(REF ARRAY CHAR OF T);
 
 BEGIN 
   FOR i := FIRST(CHAR) TO LAST(CHAR) DO
     Array[i] := NEW(T);
     Array[i]^ := i
-  END
+  END;
+
+  Pickle.RegisterSpecial (NEW (Pickle.Special, sc := TYPECODE (T),
+    write := CharPklWrite,
+    read  := CharPklRead 
+));
 END SchemeChar.
