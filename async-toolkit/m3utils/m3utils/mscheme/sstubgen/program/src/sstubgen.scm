@@ -110,10 +110,10 @@
 
 
 (define (make-standard-stuff intf-name)
-	;;
-	;; phase 1 of stub generation.  
+  ;;
+  ;; phase 1 of stub generation.  
   ;; build all the Scheme stubs for a given M3 interface
-	;;
+  ;;
   (if (stale-output? intf-name) 
       (begin
         (set! global-env (env-type 'new))
@@ -123,24 +123,24 @@
   )
 
 (define (write-scheme-package-exports 
-				 intfs      ;; list of interfaces we want to export
-				 intf-name  ;; name of interface in which to export them
-				 )
-	;;
-	;; phase 2 of stub generation.
-	;; Generate exports into the intf-name file.
-	;;
-	;; example.
-	;;
-	;; (define scm-intfs '( BubbleSchemeStubs ExampleSchemeStubs 
-	;;                      FmtSchemeStubs WrSchemeStubs TextWrSchemeStubs 
-	;;                      TextRdSchemeStubs FileWrSchemeStubs RdSchemeStubs 
-	;;                      FileRdSchemeStubs PickleSchemeStubs 
-	;;                      MarketDataSchemeStubs TextSetSchemeStubs 
-	;;                      TextSetDefSchemeStubs))
-	;;
-	;; (write-scheme-package-exports scm-intfs "stubexample__SCHEMEEXPORTS__")
-	;;
+         intfs      ;; list of interfaces we want to export
+         intf-name  ;; name of interface in which to export them
+         )
+  ;;
+  ;; phase 2 of stub generation.
+  ;; Generate exports into the intf-name file.
+  ;;
+  ;; example.
+  ;;
+  ;; (define scm-intfs '( BubbleSchemeStubs ExampleSchemeStubs 
+  ;;                      FmtSchemeStubs WrSchemeStubs TextWrSchemeStubs 
+  ;;                      TextRdSchemeStubs FileWrSchemeStubs RdSchemeStubs 
+  ;;                      FileRdSchemeStubs PickleSchemeStubs 
+  ;;                      MarketDataSchemeStubs TextSetSchemeStubs 
+  ;;                      TextSetDefSchemeStubs))
+  ;;
+  ;; (write-scheme-package-exports scm-intfs "stubexample__SCHEMEEXPORTS__")
+  ;;
 
   (let* ((iwr (open-output-file (string-append intf-name ".i3")))
          (mwr (open-output-file (string-append intf-name ".m3"))))
@@ -188,19 +188,19 @@
                                                 ;; current package
                                   )
 
-	;;
-	;; phase 3 of Scheme stub generation
-	;; called before building an executable.  Pull in stubs from
-	;; all visible packages.
-	;;
-	;; example.
-	;; (make-global-scheme-stubs 
-	;; "__SCHEMEEXPORTS__"             ;; special string we recognize
-	;; ".M3IMPTAB"                     ;; where to look
-	;; "SchemeStubs"                   ;; what to call result
-	;; "stubexample__SCHEMEEXPORTS__"  ;; from current package
-	;; )
-	;;
+  ;;
+  ;; phase 3 of Scheme stub generation
+  ;; called before building an executable.  Pull in stubs from
+  ;; all visible packages.
+  ;;
+  ;; example.
+  ;; (make-global-scheme-stubs 
+  ;; "__SCHEMEEXPORTS__"             ;; special string we recognize
+  ;; ".M3IMPTAB"                     ;; where to look
+  ;; "SchemeStubs"                   ;; what to call result
+  ;; "stubexample__SCHEMEEXPORTS__"  ;; from current package
+  ;; )
+  ;;
 
   (let ((in (open-input-file search-path)))
     
@@ -336,14 +336,22 @@
               (else (base-type base))))))
 
 (define (intersperse lst sep)
-	(cond ((null? lst) '())
-				((null? (cdr lst)) lst)
-				(else (cons (car lst) (cons sep (intersperse (cdr lst) sep))))))
+	;; this routine MUST BE tail-recursive, or we will definitely
+	;; run out of stack space!
+	(define (helper lst so-far)
+		(cond ((null? lst) so-far)
+					((null? (cdr lst)) (cons (car lst) so-far))
+
+					(else 
+					 (helper (cdr lst) 
+									 (cons sep  (cons (car lst) so-far))))))
+	(reverse (helper lst '()))
+	)
 
 (define (infixize string-list sep)
   (if (null? string-list) ""
-			(apply string-append 
-						 (intersperse string-list sep))))
+      (apply string-append 
+             (intersperse string-list sep))))
 
 (define (formals-from-sig sig)
   (filter (lambda(f) (and (pair? f) (eq? (car f) 'Formal)))
@@ -1074,9 +1082,9 @@
   ;; if it's a base type, we call the base type conversion library
   ;; else we make the converter ourselves.
 
-	;; we want to warn early if were trying to do something stupid
-	(if (eq? (car type) 'OpenArray)
-			(error "dont try to make open array directly from Scheme object, use REF type instead"))
+  ;; we want to warn early if were trying to do something stupid
+  (if (eq? (car type) 'OpenArray)
+      (error "dont try to make open array directly from Scheme object, use REF type instead"))
 
   (if (and (is-basetype type) 
            (eq? (scheme-modula-conversion-mode (is-basetype type))
@@ -1157,8 +1165,8 @@
                     "      RETURN arr" dnl
                     "    END;" dnl
                     ))
-								 (string-append
-									"    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
+                 (string-append
+                  "    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
            )
           )
          
@@ -1244,7 +1252,7 @@
              "        END;" dnl
              "        p := SchemePair.Pair(p.rest)" dnl
              "      END;" dnl
-						 "      RETURN res" dnl
+             "      RETURN res" dnl
              "    END"))
           )
 
@@ -1694,15 +1702,15 @@
 ;;  (string-flatten-list lst))
 
 (define (get-elements x)
-	(cond ((null? x) '())
-				((pair? x) (append (get-elements (car x)) (get-elements (cdr x))))
-				(else (list x))))
+  (cond ((null? x) '())
+        ((pair? x) (append (get-elements (car x)) (get-elements (cdr x))))
+        (else (list x))))
 
 (define (string-flatten . lst)
-	;; this one is much faster because it uses array indexing in string-append
-	;; and then only a single Wx
-	(apply string-append (get-elements lst)))
-									 
+  ;; this one is much faster because it uses array indexing in string-append
+  ;; and then only a single Wx
+  (apply string-append (get-elements lst)))
+                   
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1734,135 +1742,136 @@
          (is-object-type? (extract-field 'revealedSuperType type))))))
 
 (define (is-ref-record-type? type)
-	(and 
-	 (pair? type)
-	 (eq? (car type) 'Ref)
-	 (eq? (car (extract-field 'target type)) 'Record)))
+  (and 
+   (pair? type)
+   (eq? (car type) 'Ref)
+   (eq? (car (extract-field 'target type)) 'Record)))
 
 (define (is-ref-array-type? type)
-	(and 
-	 (pair? type)
-	 (eq? (car type) 'Ref)
-	 (or
-		(eq? (car (extract-field 'target type)) 'Array)
-		(eq? (car (extract-field 'target type)) 'OpenArray))))
+  (and 
+   (pair? type)
+   (eq? (car type) 'Ref)
+   (or
+    (eq? (car (extract-field 'target type)) 'Array)
+    (eq? (car (extract-field 'target type)) 'OpenArray))))
 
 (define (is-ref-type? type)
-	(and 
-	 (pair? type)
-	 (eq? (car type) 'Ref)))
+  (and 
+   (pair? type)
+   (eq? (car type) 'Ref)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (format-pickle-vector vec)
-	(infixize
-		(let loop ((i (- (vector-length vec) 1))
-							 (res '()))
-			(if (= -1 i) 
-					res
-					(loop (- i 1) 
-								(cons 
-								 (string-append "VAL(" (vector-ref vec i) ",CHAR)")
-								 res))))
-	 ", "))
+	(define res '())
+  (infixize
+	 (let loop ((i (- (vector-length vec) 1))
+							(res '()))
+		 (if (= -1 i) 
+				 res
+				 (loop (- i 1) 
+							 (cons 
+								(string-append "VAL(" (vector-ref vec i) ",CHAR)")
+                 res))))
+   ", "))
 
 (define (register-pickle types env)
 
-	(define (format-typecodes)
-		(infixize 
-		 (map (lambda (t) (format-typecode t env)) types)
-		 ", "
-		))
+  (define (format-typecodes)
+    (infixize 
+     (map (lambda (t) (format-typecode t env)) types)
+     ", "
+    ))
 
-	(define (format-typenames)
-		(infixize 
-		 (map (lambda (t) 
-						(string-append "\"" (type-formatter t env) "\""))
-					types)
-		 ", "
-		))
+  (define (format-typenames)
+    (infixize 
+     (map (lambda (t) 
+            (string-append "\"" (type-formatter t env) "\""))
+          types)
+     ", "
+    ))
 
-	((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
-	((env 'get 'imports) 'insert! 'RT0)
+  ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
+  ((env 'get 'imports) 'insert! 'RT0)
 
-	(let ((type-pickle (encode-pickle-vector types)))
-		(string-flatten
-		 "    VAR" dnl
+  (let ((type-pickle (encode-pickle-vector types)))
+    (string-flatten
+     "    VAR" dnl
      "      Arg_TC := ARRAY [0.." (- (length types) 1) "] OF [-1..LAST(RT0.Typecode)] { " (format-typecodes) "};" dnl
-		 "    CONST" dnl
-		 "      Arg_Names = ARRAY OF TEXT { " (format-typenames) "};" dnl
-		 "      Arg_Pickle = ARRAY OF CHAR { " (format-pickle-vector type-pickle) " };" dnl
-		 "    BEGIN" dnl
-		 "      SchemeProcedureStubs.RegisterTypePickle(Arg_TC, Arg_Names, Arg_Pickle)" dnl
-		 "    END;" dnl
-		 )
-		))
-	
+     "    CONST" dnl
+     "      Arg_Names = ARRAY OF TEXT { " (format-typenames) "};" dnl
+     "      Arg_Pickle = ARRAY OF CHAR { " (format-pickle-vector type-pickle) " };" dnl
+     "    BEGIN" dnl
+     "      SchemeProcedureStubs.RegisterTypePickle(Arg_TC, Arg_Names, Arg_Pickle)" dnl
+     "    END;" dnl
+     )
+    ))
+  
 
 (define (format-typecode type env)
-	(if (and 
-			 (is-reference-type? type)
-			 (not (eq? (car type) 'Procedure)))
-			(string-append "TYPECODE(" (type-formatter type env) ")")
-			"-1"))
+  (if (and 
+       (is-reference-type? type)
+       (not (eq? (car type) 'Procedure)))
+      (string-append "TYPECODE(" (type-formatter type env) ")")
+      "-1"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (spit-out-impl intf-name proc-stubs converter-impls types env)
-	(define (env-map func types)
-		(map (lambda(t)(func t env)) types))
+  (define (env-map func types)
+    (map (lambda(t)(func t env)) types))
 
   (let* ((imports (env 'get 'imports))
 
-				 ;;;;;;;;;;;; REF types ;;;;;;;;;;;;
-				 (ref-types (filter is-ref-type? types))
+         ;;;;;;;;;;;; REF types ;;;;;;;;;;;;
+         (ref-types (filter is-ref-type? types))
 
-				 (ref-ops 
-					(env-map make-ref-ops ref-types))
+         (ref-ops 
+          (env-map make-ref-ops ref-types))
 
-				 (ref-registrations
-					(env-map make-ref-registrations ref-types))
+         (ref-registrations
+          (env-map make-ref-registrations ref-types))
 
-				 ;;;;;;;;;;;; REF ARRAY types ;;;;;;;;;;;;
-				 (ref-array-types (filter is-ref-array-type? types))
-				 
-				 (ref-array-ops
-					(env-map make-ref-array-ops ref-array-types))
+         ;;;;;;;;;;;; REF ARRAY types ;;;;;;;;;;;;
+         (ref-array-types (filter is-ref-array-type? types))
+         
+         (ref-array-ops
+          (env-map make-ref-array-ops ref-array-types))
 
-				 (ref-array-registrations
-					(env-map make-ref-array-registrations ref-array-types))
-
-
-				 ;;;;;;;;;;;; REF RECORD types ;;;;;;;;;;;;
-				 (ref-record-types (filter is-ref-record-type? types))
-
-				 (ref-record-registrations 
-					(env-map make-ref-record-registrations ref-record-types))
-
-				 (ref-record-ops 
-					(env-map make-ref-record-ops ref-record-types))
-
-				 (ref-record-field-stubs
-					(env-map make-field-stubs ref-record-types))
+         (ref-array-registrations
+          (env-map make-ref-array-registrations ref-array-types))
 
 
- 				 ;;;;;;;;;;;; types <: OBJECT END ;;;;;;;;;;;;
+         ;;;;;;;;;;;; REF RECORD types ;;;;;;;;;;;;
+         (ref-record-types (filter is-ref-record-type? types))
+
+         (ref-record-registrations 
+          (env-map make-ref-record-registrations ref-record-types))
+
+         (ref-record-ops 
+          (env-map make-ref-record-ops ref-record-types))
+
+         (ref-record-field-stubs
+          (env-map make-field-stubs ref-record-types))
+
+
+         ;;;;;;;;;;;; types <: OBJECT END ;;;;;;;;;;;;
          (object-types (filter is-object-type? types))
 
          (object-stubs 
-					(env-map make-object-surrogate object-types))
+          (env-map make-object-surrogate object-types))
 
-				 (object-field-stubs 
-					(env-map make-field-stubs object-types))
+         (object-field-stubs 
+          (env-map make-field-stubs object-types))
 
          (object-registrations 
-					(env-map make-object-registrations object-types))
-				 
-				 ;;;;;;;;;;;; the global pickle ;;;;;;;;;;;;
-				 (the-pickle 				(register-pickle types env))
-				 )
+          (env-map make-object-registrations object-types))
+         
+         ;;;;;;;;;;;; the global pickle ;;;;;;;;;;;;
+         (the-pickle        (register-pickle types env))
+         )
       
-		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     (imports 'insert! 'SchemeProcedureStubs)
     (imports 'insert! 'Atom)
@@ -1877,26 +1886,26 @@
      
      (string-flatten
       (make-register-stubs 
-			 (append
-				ref-record-registrations
-				object-registrations 
-				ref-registrations
-				ref-array-registrations
-				the-pickle
-				)
-			 env)
+       (append
+        ref-record-registrations
+        object-registrations 
+        ref-registrations
+        ref-array-registrations
+        the-pickle
+        )
+       env)
       dnl
       object-stubs
-			dnl
-			object-field-stubs
-			dnl
-			ref-record-field-stubs
-			dnl
-			ref-record-ops
-			dnl
-			ref-array-ops
-			dnl
-			ref-ops
+      dnl
+      object-field-stubs
+      dnl
+      ref-record-field-stubs
+      dnl
+      ref-record-ops
+      dnl
+      ref-array-ops
+      dnl
+      ref-ops
       )
 
      dnl
@@ -1917,15 +1926,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (check-non-nil-type varname typename env)
-	((env 'get 'imports) 'insert! 'Scheme)
-	((env 'get 'imports) 'insert! 'SchemeUtils)
+  ((env 'get 'imports) 'insert! 'Scheme)
+  ((env 'get 'imports) 'insert! 'SchemeUtils)
 
-	(string-append
-		 "    IF NOT ISTYPE("varname","typename") OR "varname"=NIL THEN" dnl
-		 "      RAISE Scheme.E(\"Not of type "typename" : \" & SchemeUtils.Stringify("varname"))" dnl
-		 "    END;" dnl
-		 )
-	)
+  (string-append
+     "    IF NOT ISTYPE("varname","typename") OR "varname"=NIL THEN" dnl
+     "      RAISE Scheme.E(\"Not of type "typename" : \" & SchemeUtils.Stringify("varname"))" dnl
+     "    END;" dnl
+     )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1933,64 +1942,64 @@
   (let ((m3tn (type-formatter type env))
         (m3ti (m3type->m3identifier (type-formatter type env)))
         (imports (env 'get 'imports))
-				(fields (visible-fields type))
-				)
+        (fields (visible-fields type))
+        )
 
-		(define (make-field-getter fname)
-			(let* ((field (fields 'retrieve fname))
-						 (ftype (extract-field 'type field)))
-				(string-append
-				 "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
-				 "      RETURN "(to-scheme-proc-name ftype env)"(narrow." fname")" dnl
-				 )))
+    (define (make-field-getter fname)
+      (let* ((field (fields 'retrieve fname))
+             (ftype (extract-field 'type field)))
+        (string-append
+         "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
+         "      RETURN "(to-scheme-proc-name ftype env)"(narrow." fname")" dnl
+         )))
 
-		(define (make-field-setter fname)
-			(let* ((field (fields 'retrieve fname))
-						 (ftype (extract-field 'type field)))
-				(string-append
-				 "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
-				 "      res := "(to-scheme-proc-name ftype env)"(narrow." fname");" dnl
-				 "      narrow." fname" := "(to-modula-proc-name ftype env)"(value)" dnl
-				 )))
+    (define (make-field-setter fname)
+      (let* ((field (fields 'retrieve fname))
+             (ftype (extract-field 'type field)))
+        (string-append
+         "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
+         "      res := "(to-scheme-proc-name ftype env)"(narrow." fname");" dnl
+         "      narrow." fname" := "(to-modula-proc-name ftype env)"(value)" dnl
+         )))
 
-		(imports 'insert! 'SchemeUtils)
-		(imports 'insert! 'Scheme)
-		(imports 'insert! 'SchemeObject)
+    (imports 'insert! 'SchemeUtils)
+    (imports 'insert! 'Scheme)
+    (imports 'insert! 'SchemeObject)
 
-		(string-flatten
-		 "PROCEDURE FieldGet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  VAR" dnl
-		 "    field   := SchemeUtils.First(args);" dnl
-		 "    narrow : " m3tn ";" dnl
-		 "  BEGIN" dnl
-		 (check-non-nil-type "obj" m3tn env)
-		 "    narrow := NARROW(obj,"m3tn");" dnl
-		 "    IF FALSE THEN <*ASSERT FALSE*>" dnl
-		 (map make-field-getter (fields 'keys))
-		 "    ELSE RAISE Scheme.E(\"Unknown field \" & SchemeUtils.Stringify(field))" dnl
-		 "    END" dnl
-		 "  END FieldGet_" m3ti ";" dnl
-		 dnl
+    (string-flatten
+     "PROCEDURE FieldGet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR" dnl
+     "    field   := SchemeUtils.First(args);" dnl
+     "    narrow : " m3tn ";" dnl
+     "  BEGIN" dnl
+     (check-non-nil-type "obj" m3tn env)
+     "    narrow := NARROW(obj,"m3tn");" dnl
+     "    IF FALSE THEN <*ASSERT FALSE*>" dnl
+     (map make-field-getter (fields 'keys))
+     "    ELSE RAISE Scheme.E(\"Unknown field \" & SchemeUtils.Stringify(field))" dnl
+     "    END" dnl
+     "  END FieldGet_" m3ti ";" dnl
+     dnl
 
-		 "PROCEDURE FieldSet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  VAR" dnl
-		 "    field   := SchemeUtils.First(args);" dnl
-		 "    value   := SchemeUtils.First(SchemeUtils.Rest(args));" dnl
-		 "    narrow : " m3tn ";" dnl
-		 "    res : SchemeObject.T;" dnl
-		 "  BEGIN" dnl
-		 (check-non-nil-type "obj" m3tn env)
-		 "    narrow := NARROW(obj,"m3tn");" dnl
-		 "    IF FALSE THEN <*ASSERT FALSE*>" dnl
-		 (map make-field-setter (fields 'keys))
-		 "    ELSE RAISE Scheme.E(\"Unknown field \" & SchemeUtils.Stringify(field))" dnl
-		 "    END;" dnl
-		 "    RETURN res" dnl
-		 "  END FieldSet_" m3ti ";" dnl
-		 dnl
+     "PROCEDURE FieldSet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR" dnl
+     "    field   := SchemeUtils.First(args);" dnl
+     "    value   := SchemeUtils.First(SchemeUtils.Rest(args));" dnl
+     "    narrow : " m3tn ";" dnl
+     "    res : SchemeObject.T;" dnl
+     "  BEGIN" dnl
+     (check-non-nil-type "obj" m3tn env)
+     "    narrow := NARROW(obj,"m3tn");" dnl
+     "    IF FALSE THEN <*ASSERT FALSE*>" dnl
+     (map make-field-setter (fields 'keys))
+     "    ELSE RAISE Scheme.E(\"Unknown field \" & SchemeUtils.Stringify(field))" dnl
+     "    END;" dnl
+     "    RETURN res" dnl
+     "  END FieldSet_" m3ti ";" dnl
+     dnl
 
-		 )
-		)
+     )
+    )
 )
 
 (define (make-object-surrogate type env)
@@ -2131,12 +2140,12 @@
            "            END;" dnl
            )))
 
-			(define (format-field-initializers) 
-				(apply string-append
-							 (map format-field-initializer  
-										((visible-fields type) 'values))))
-										
-									 
+      (define (format-field-initializers) 
+        (apply string-append
+               (map format-field-initializer  
+                    ((visible-fields type) 'values))))
+                    
+                   
           
       (define (format-method-override m)
         (imports 'insert! 'SchemeSymbol)
@@ -2274,333 +2283,333 @@
   (let ((m3tn (type-formatter type env))
         (m3ti (m3type->m3identifier (type-formatter type env)))
         (imports (env 'get 'imports)))
-		
-		(define (format-field-initializer f)
-			(let ((type (extract-field 'type f))
-						(name (extract-field 'name f)))
-				(imports 'insert! 'SchemeSymbol)
-				(string-append
-				 "            IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
-				 "              res." name " := "(to-modula-proc-name type env)"(r.rest); gobbled := TRUE" dnl
-				 "            END;" dnl
-				 )))
-		
-		
-		(define (format-field-initializers) 
-			(apply string-append
-						 (map format-field-initializer  
-									((visible-fields type) 'values))))
-		
-		(map 
-		 (lambda(i)(imports 'insert! i))
-		 '(SchemePair Scheme SchemeObject))
-		
-		(string-flatten
-		 "PROCEDURE New_" m3ti "(<*UNUSED*>interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  VAR" dnl
-		 "    p := SchemePair.Pair(inits);" dnl
-		 "    gobbled : BOOLEAN;" dnl
-		 "  BEGIN" dnl
-		 "    WITH res = NEW("m3tn") DO" dnl
-		 "      WHILE p # NIL DO" dnl
-		 "        WITH r = SchemePair.Pair(p.first) DO" dnl
-		 "          gobbled := FALSE;" dnl
-		 "          IF r # NIL THEN" dnl
-		 (format-field-initializers)
-		 "          END;" dnl
-		 "          IF NOT gobbled THEN" dnl
-		 "            RAISE Scheme.E(\"Unknown field in \" & SchemeUtils.Stringify(inits))" dnl
-		 "          END" dnl
-		 "        END;" dnl
-		 "        p := SchemePair.Pair(p.rest)" dnl
-		 "      END;" dnl
-		 "      RETURN res" dnl
-		 "    END" dnl
-		 "  END New_" m3ti ";" dnl
-		 dnl
-		 
-		 "PROCEDURE GenNew_" m3ti "(interp : Scheme.T; <*UNUSED*>obj : SchemeObject.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  BEGIN RETURN New_" m3ti "(interp,inits) END GenNew_" m3ti ";" dnl
-		 dnl
-		 
-		 ))
-	)
+    
+    (define (format-field-initializer f)
+      (let ((type (extract-field 'type f))
+            (name (extract-field 'name f)))
+        (imports 'insert! 'SchemeSymbol)
+        (string-append
+         "            IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+         "              res." name " := "(to-modula-proc-name type env)"(r.rest); gobbled := TRUE" dnl
+         "            END;" dnl
+         )))
+    
+    
+    (define (format-field-initializers) 
+      (apply string-append
+             (map format-field-initializer  
+                  ((visible-fields type) 'values))))
+    
+    (map 
+     (lambda(i)(imports 'insert! i))
+     '(SchemePair Scheme SchemeObject))
+    
+    (string-flatten
+     "PROCEDURE New_" m3ti "(<*UNUSED*>interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR" dnl
+     "    p := SchemePair.Pair(inits);" dnl
+     "    gobbled : BOOLEAN;" dnl
+     "  BEGIN" dnl
+     "    WITH res = NEW("m3tn") DO" dnl
+     "      WHILE p # NIL DO" dnl
+     "        WITH r = SchemePair.Pair(p.first) DO" dnl
+     "          gobbled := FALSE;" dnl
+     "          IF r # NIL THEN" dnl
+     (format-field-initializers)
+     "          END;" dnl
+     "          IF NOT gobbled THEN" dnl
+     "            RAISE Scheme.E(\"Unknown field in \" & SchemeUtils.Stringify(inits))" dnl
+     "          END" dnl
+     "        END;" dnl
+     "        p := SchemePair.Pair(p.rest)" dnl
+     "      END;" dnl
+     "      RETURN res" dnl
+     "    END" dnl
+     "  END New_" m3ti ";" dnl
+     dnl
+     
+     "PROCEDURE GenNew_" m3ti "(interp : Scheme.T; <*UNUSED*>obj : SchemeObject.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  BEGIN RETURN New_" m3ti "(interp,inits) END GenNew_" m3ti ";" dnl
+     dnl
+     
+     ))
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-ref-type target)
-	(list 'Ref 
-				(cons 'target target)
-				))
+  (list 'Ref 
+        (cons 'target target)
+        ))
 
 (define (convert-value-to-modula type value env)
-	(case (car type)
-		((OpenArray)
-		 (string-append
-			(to-modula-proc-name (make-ref-type type)
-													 env)
-			"(" value ")^")
-		 )
+  (case (car type)
+    ((OpenArray)
+     (string-append
+      (to-modula-proc-name (make-ref-type type)
+                           env)
+      "(" value ")^")
+     )
 
-		(else
-		 (string-append 
-			(to-modula-proc-name type env) "(" value ")"))
-		)
-	)
+    (else
+     (string-append 
+      (to-modula-proc-name type env) "(" value ")"))
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (array-dimensions type)
-	(case (car type)
-		((OpenArray)
-		 (cons (extract-field 'CARDINAL the-basetypes)
-					 (array-dimensions (extract-field 'element type))))
-		((Array)
-		 (cons (extract-field 'index type)
-					 (array-dimensions (extract-field 'element type))))
-		(else '())))
+  (case (car type)
+    ((OpenArray)
+     (cons (extract-field 'CARDINAL the-basetypes)
+           (array-dimensions (extract-field 'element type))))
+    ((Array)
+     (cons (extract-field 'index type)
+           (array-dimensions (extract-field 'element type))))
+    (else '())))
 
 (define (skip n lst)
-	(if (= n 0) 
-			lst
-			(skip (- n 1) (cdr lst))))
+  (if (= n 0) 
+      lst
+      (skip (- n 1) (cdr lst))))
 
 (define (make-assigner specified-indices array-type env)
 
-	(define (first-elem d arr)
-		(if (= d 0) 
-				arr
-				(let ((next (first-elem (- d 1) arr)))
-					(string-append 
-					 next "[FIRST(" next ")]"
-				 ))))
+  (define (first-elem d arr)
+    (if (= d 0) 
+        arr
+        (let ((next (first-elem (- d 1) arr)))
+          (string-append 
+           next "[FIRST(" next ")]"
+         ))))
 
-	(define (check-dims n)
-		;; checks one more than n.  n is the dims to "traverse" before checking
-		(if (< n 0) 
-				""
-				(string-flatten
-				 (check-dims (- n 1))
-				 "      IF NUMBER("(first-elem n "tgt")") # NUMBER("(first-elem n "src")") THEN" dnl
-				 "        RAISE Scheme.E(\"array shape mismatch\")" dnl
-				 "      END;" dnl
-				 ))
-		)
+  (define (check-dims n)
+    ;; checks one more than n.  n is the dims to "traverse" before checking
+    (if (< n 0) 
+        ""
+        (string-flatten
+         (check-dims (- n 1))
+         "      IF NUMBER("(first-elem n "tgt")") # NUMBER("(first-elem n "src")") THEN" dnl
+         "        RAISE Scheme.E(\"array shape mismatch\")" dnl
+         "      END;" dnl
+         ))
+    )
 
-	(define (reduce-dimension atype n)
-		(if (= n 0) 
-				atype 
-				(reduce-dimension (extract-field 'element atype) (- n 1))))
+  (define (reduce-dimension atype n)
+    (if (= n 0) 
+        atype 
+        (reduce-dimension (extract-field 'element atype) (- n 1))))
 
-	(let* ((dims (array-dimensions array-type))
-				 (assigner-type (reduce-dimension array-type specified-indices))
-				 (tn (type-formatter assigner-type env))
-				 (dims-to-traverse (- (length dims) specified-indices 1))
-				)
-		(string-flatten
-		 "  PROCEDURE Assign"specified-indices"(VAR tgt : " tn "; READONLY src : " tn ") " 
+  (let* ((dims (array-dimensions array-type))
+         (assigner-type (reduce-dimension array-type specified-indices))
+         (tn (type-formatter assigner-type env))
+         (dims-to-traverse (- (length dims) specified-indices 1))
+        )
+    (string-flatten
+     "  PROCEDURE Assign"specified-indices"(VAR tgt : " tn "; READONLY src : " tn ") " 
 
-		 (if (= -1 dims-to-traverse) 
-				 "" 
-				 "RAISES { Scheme.E } ") 
+     (if (= -1 dims-to-traverse) 
+         "" 
+         "RAISES { Scheme.E } ") 
 
-		 "= " dnl
-		 "    BEGIN" dnl
-		 "      (* max. dims-to-traverse = " dims-to-traverse " *)" dnl
-		 (check-dims dims-to-traverse)
-		 "      tgt := src" dnl
-		 "    END Assign"specified-indices";" dnl
-		 dnl
-		 )
-		)
-	)
+     "= " dnl
+     "    BEGIN" dnl
+     "      (* max. dims-to-traverse = " dims-to-traverse " *)" dnl
+     (check-dims dims-to-traverse)
+     "      tgt := src" dnl
+     "    END Assign"specified-indices";" dnl
+     dnl
+     )
+    )
+  )
 
 
 (define (make-assigners array-type env)
-	(let loop ((d (length (array-dimensions array-type))))
-		(if (< d 0) 
-				""
-				(string-flatten (make-assigner d array-type env)
-												(loop (- d 1))))
-		))
+  (let loop ((d (length (array-dimensions array-type))))
+    (if (< d 0) 
+        ""
+        (string-flatten (make-assigner d array-type env)
+                        (loop (- d 1))))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-ref-array-ops type env)
   (let* ((m3tn (type-formatter type env))
-				 (m3ti (m3type->m3identifier (type-formatter type env)))
-				 (atype (extract-field 'target type))
-				 (dims (array-dimensions atype))
-				 
-				 (imports (env 'get 'imports)))
+         (m3ti (m3type->m3identifier (type-formatter type env)))
+         (atype (extract-field 'target type))
+         (dims (array-dimensions atype))
+         
+         (imports (env 'get 'imports)))
 
-		(define (index-decls)
-			(let loop ((i 0)
-								 (d dims))
-				(if (null? d) 
-						'()
-						(cons
-						 (string-append 
-							"    i"i" : "(type-formatter (car d) env)";" dnl
-							)
-						 (loop (+ i 1) (cdr d))))))
-				 
-		(define (format-dims n)
-			(if (= 1 n) "i0" (string-append (format-dims (- n 1))  ", i"(- n 1))))
+    (define (index-decls)
+      (let loop ((i 0)
+                 (d dims))
+        (if (null? d) 
+            '()
+            (cons
+             (string-append 
+              "    i"i" : "(type-formatter (car d) env)";" dnl
+              )
+             (loop (+ i 1) (cdr d))))))
+         
+    (define (format-dims n)
+      (if (= 1 n) "i0" (string-append (format-dims (- n 1))  ", i"(- n 1))))
 
-		(define (format-pre i)
-			(if (= 0 i) 
-					"a^"
-					(string-append "a["(format-dims i)"]")
-					))
+    (define (format-pre i)
+      (if (= 0 i) 
+          "a^"
+          (string-append "a["(format-dims i)"]")
+          ))
 
-		(define (check-indices)
-			(let loop ((i 0)
-								 (d dims))
-				(if (null? d) '()
-						(cons
-						 (string-append
-							"    IF indices > "i" THEN " dnl
-							"      i"i" := "(to-modula-proc-name (car d) env)"(SchemeUtils.Nth(args,"i"));" dnl
-							"      WITH pre = "(format-pre i)"," dnl
-							"           lst = i"i" DO" dnl
-							"        IF lst < FIRST(pre) OR lst > LAST(pre) THEN" dnl
-							"          RAISE Scheme.E(\"array index out of range : \" & SchemeUtils.Stringify(args))" dnl
-							"        END" dnl
-							"      END" dnl
-							"    END;" dnl
-							)
-						 (loop (+ i 1) (cdr d))))))
+    (define (check-indices)
+      (let loop ((i 0)
+                 (d dims))
+        (if (null? d) '()
+            (cons
+             (string-append
+              "    IF indices > "i" THEN " dnl
+              "      i"i" := "(to-modula-proc-name (car d) env)"(SchemeUtils.Nth(args,"i"));" dnl
+              "      WITH pre = "(format-pre i)"," dnl
+              "           lst = i"i" DO" dnl
+              "        IF lst < FIRST(pre) OR lst > LAST(pre) THEN" dnl
+              "          RAISE Scheme.E(\"array index out of range : \" & SchemeUtils.Stringify(args))" dnl
+              "        END" dnl
+              "      END" dnl
+              "    END;" dnl
+              )
+             (loop (+ i 1) (cdr d))))))
 
-		(define (make-output)
-			(string-flatten
-			 "    CASE indices OF" dnl
-			 (let loop ((i 1)
-									(d dims)
-									(t atype))
-				 (if (null? d) '()
-						 (cons
-							(string-append
-							 "    | " i " => RETURN "(to-scheme-proc-name (extract-field 'element t) env)"("(format-pre i)")" dnl
-							 )
-							(loop (+ i 1) (cdr d) (extract-field 'element t)))
-							)
-							 
-				 )
-			 "    ELSE" dnl
-			 "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
-			 "    END" dnl
-			 ))
+    (define (make-output)
+      (string-flatten
+       "    CASE indices OF" dnl
+       (let loop ((i 1)
+                  (d dims)
+                  (t atype))
+         (if (null? d) '()
+             (cons
+              (string-append
+               "    | " i " => RETURN "(to-scheme-proc-name (extract-field 'element t) env)"("(format-pre i)")" dnl
+               )
+              (loop (+ i 1) (cdr d) (extract-field 'element t)))
+              )
+               
+         )
+       "    ELSE" dnl
+       "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
+       "    END" dnl
+       ))
 
-		(define (make-input)
-			(string-flatten
-			 "    CASE indices OF" dnl
-			 (let loop ((i 1)
-									(d dims)
-									(t atype))
-				 (if (null? d) '()
-						 (cons
-							(string-append
-							 "    | " i " => Assign"i"("(format-pre i)", "(convert-value-to-modula 
-																									 (extract-field 'element t) 
-																									 "val"
-																										 env) ")" dnl
-							 )
-							(loop (+ i 1) (cdr d) (extract-field 'element t)))
-							)
-							 
-				 )
-			 "    ELSE" dnl
-			 "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
-			 "    END" dnl
-			 ))
+    (define (make-input)
+      (string-flatten
+       "    CASE indices OF" dnl
+       (let loop ((i 1)
+                  (d dims)
+                  (t atype))
+         (if (null? d) '()
+             (cons
+              (string-append
+               "    | " i " => Assign"i"("(format-pre i)", "(convert-value-to-modula 
+                                                   (extract-field 'element t) 
+                                                   "val"
+                                                     env) ")" dnl
+               )
+              (loop (+ i 1) (cdr d) (extract-field 'element t)))
+              )
+               
+         )
+       "    ELSE" dnl
+       "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
+       "    END" dnl
+       ))
 
-		(define (make-limit op)
-			(string-flatten
-			 "    CASE indices OF" dnl
-			 (let loop ((i 0))
-				 (if (= (length dims) i)
-						 (string-append
-							"    ELSE" dnl
-							"      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
-							"    END" dnl
-							)
-						 (cons
-							(string-append
-							 "    | " i " => RETURN SchemeLongReal.FromI("op"("(format-pre i)"))" dnl
-							 )
-							(loop (+ i 1))
-							)
-				 )
-			 )))
+    (define (make-limit op)
+      (string-flatten
+       "    CASE indices OF" dnl
+       (let loop ((i 0))
+         (if (= (length dims) i)
+             (string-append
+              "    ELSE" dnl
+              "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
+              "    END" dnl
+              )
+             (cons
+              (string-append
+               "    | " i " => RETURN SchemeLongReal.FromI("op"("(format-pre i)"))" dnl
+               )
+              (loop (+ i 1))
+              )
+         )
+       )))
 
-		(define (make-limit-op proc-prefix op)
-			(string-flatten
-			 "PROCEDURE "proc-prefix"_"m3ti"(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-			 "  VAR" dnl
-			 "    indices := SchemeUtils.Length(args);" dnl	
-			 "    a : " m3tn ";" dnl
-			 (index-decls)
-			 "  BEGIN"dnl
-			 (check-non-nil-type "obj" m3tn env)
-			 "    a := obj;" dnl
-			 (make-limit op)
-			 "  END "proc-prefix"_"m3ti";" dnl
-			 dnl
-			 ))
+    (define (make-limit-op proc-prefix op)
+      (string-flatten
+       "PROCEDURE "proc-prefix"_"m3ti"(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+       "  VAR" dnl
+       "    indices := SchemeUtils.Length(args);" dnl 
+       "    a : " m3tn ";" dnl
+       (index-decls)
+       "  BEGIN"dnl
+       (check-non-nil-type "obj" m3tn env)
+       "    a := obj;" dnl
+       (make-limit op)
+       "  END "proc-prefix"_"m3ti";" dnl
+       dnl
+       ))
 
-		(imports 'insert! 'Scheme)
-		(imports 'insert! 'SchemeObject)
-		(imports 'insert! 'SchemeUtils)
+    (imports 'insert! 'Scheme)
+    (imports 'insert! 'SchemeObject)
+    (imports 'insert! 'SchemeUtils)
 
-		(string-flatten
-		 "PROCEDURE GetElement_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  VAR" dnl
-		 "    indices := SchemeUtils.Length(args);" dnl
-		 (index-decls)
-		 "    a : " m3tn ";" dnl
-		 "  BEGIN" dnl
-		 (check-non-nil-type "obj" m3tn env)
-		 "    a := obj;" dnl
-		 "    IF indices = 0 THEN" dnl
-		 "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
-		 "    END;" dnl
-		 (check-indices)
-		 (make-output)
-		 "  END GetElement_" m3ti ";" dnl
-		 dnl
+    (string-flatten
+     "PROCEDURE GetElement_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR" dnl
+     "    indices := SchemeUtils.Length(args);" dnl
+     (index-decls)
+     "    a : " m3tn ";" dnl
+     "  BEGIN" dnl
+     (check-non-nil-type "obj" m3tn env)
+     "    a := obj;" dnl
+     "    IF indices = 0 THEN" dnl
+     "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
+     "    END;" dnl
+     (check-indices)
+     (make-output)
+     "  END GetElement_" m3ti ";" dnl
+     dnl
 
-		 (make-limit-op "Last" "LAST")
-		 (make-limit-op "First" "FIRST")
-		 (make-limit-op "Number" "NUMBER")
+     (make-limit-op "Last" "LAST")
+     (make-limit-op "First" "FIRST")
+     (make-limit-op "Number" "NUMBER")
 
-		 "PROCEDURE SetElement_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  PROCEDURE CheckCard(c : INTEGER) : CARDINAL RAISES { Scheme.E } = "dnl
-		 "    BEGIN" dnl
-		 "      IF c < FIRST(CARDINAL) THEN RAISE Scheme.E(\"not a cardinal\") END;" dnl
-		 "      RETURN c" dnl
-		 "    END CheckCard;" dnl
-		 dnl
-		 (make-assigners atype env)
-		 "  VAR" dnl
-		 "    n       := SchemeUtils.Length(args);" dnl
-		 "    indices := CheckCard(n - 1);" dnl
-		 (index-decls)
-		 "    val     := SchemeUtils.Nth(args,indices);" dnl
-		 "    a : " m3tn ";" dnl
-		 "  BEGIN" dnl
-		 (check-non-nil-type "obj" m3tn env)
-		 "    a := obj;" dnl
-		 "    IF indices = 0 THEN" dnl
-		 "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
-		 "    END;" dnl
-		 (check-indices)
-		 (make-input)
-		 "  END SetElement_" m3ti ";" dnl
-		 dnl
+     "PROCEDURE SetElement_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  PROCEDURE CheckCard(c : INTEGER) : CARDINAL RAISES { Scheme.E } = "dnl
+     "    BEGIN" dnl
+     "      IF c < FIRST(CARDINAL) THEN RAISE Scheme.E(\"not a cardinal\") END;" dnl
+     "      RETURN c" dnl
+     "    END CheckCard;" dnl
+     dnl
+     (make-assigners atype env)
+     "  VAR" dnl
+     "    n       := SchemeUtils.Length(args);" dnl
+     "    indices := CheckCard(n - 1);" dnl
+     (index-decls)
+     "    val     := SchemeUtils.Nth(args,indices);" dnl
+     "    a : " m3tn ";" dnl
+     "  BEGIN" dnl
+     (check-non-nil-type "obj" m3tn env)
+     "    a := obj;" dnl
+     "    IF indices = 0 THEN" dnl
+     "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
+     "    END;" dnl
+     (check-indices)
+     (make-input)
+     "  END SetElement_" m3ti ";" dnl
+     dnl
 
-		 )
+     )
 ))
 
 (define (make-ref-array-registrations arr-type env)
@@ -2610,11 +2619,11 @@
          (name  (cleanup-qid (extract-field 'alias arr-type)))
 
          (last-name       (string-append "Last_" m3ti))         
-				 (first-name       (string-append "First_" m3ti))
-				 (number-name       (string-append "Number_" m3ti))
+         (first-name       (string-append "First_" m3ti))
+         (number-name       (string-append "Number_" m3ti))
 
-				 (setter-name     (string-append "SetElement_" m3ti))
-				 (getter-name     (string-append "GetElement_" m3ti))
+         (setter-name     (string-append "SetElement_" m3ti))
+         (getter-name     (string-append "GetElement_" m3ti))
          )
     ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
     ((env 'get 'imports) 'insert! 'Atom)
@@ -2638,46 +2647,46 @@
 (define (make-ref-ops type env)
   (let ((m3tn (type-formatter type env))
         (m3ti (m3type->m3identifier (type-formatter type env)))
-				(target (extract-field 'target type))
+        (target (extract-field 'target type))
         (imports (env 'get 'imports)))
 
-		(define (make-open-array-dims)
-			(if (eq? (car target) 'OpenArray)
-					(let loop ((dims (extract-field 'openDimensions target)))
-						(imports 'insert! 'SchemeLongReal)
-						(if (= dims 0) 
-								""
-								(string-append
-								 (loop (- dims 1))
-								 ", SchemeLongReal.Card(SchemeUtils.Nth(allArgs, "(- dims 1)"))"
-								 )
-								))
-					"")
-			)
+    (define (make-open-array-dims)
+      (if (eq? (car target) 'OpenArray)
+          (let loop ((dims (extract-field 'openDimensions target)))
+            (imports 'insert! 'SchemeLongReal)
+            (if (= dims 0) 
+                ""
+                (string-append
+                 (loop (- dims 1))
+                 ", SchemeLongReal.Card(SchemeUtils.Nth(allArgs, "(- dims 1)"))"
+                 )
+                ))
+          "")
+      )
 
-		(imports 'insert! 'SchemeUtils)
-		(imports 'insert! 'SchemeObject)
-		(imports 'insert! 'Scheme)
+    (imports 'insert! 'SchemeUtils)
+    (imports 'insert! 'SchemeObject)
+    (imports 'insert! 'Scheme)
 
-		(string-flatten
-		 "PROCEDURE DeRef_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  BEGIN" dnl
-		 (check-non-nil-type "obj" m3tn env)
-		 "    WITH x = NARROW(obj, "m3tn") DO" dnl
-		 "      RETURN " (to-scheme-proc-name target env) "(x^)" dnl
+    (string-flatten
+     "PROCEDURE DeRef_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  BEGIN" dnl
+     (check-non-nil-type "obj" m3tn env)
+     "    WITH x = NARROW(obj, "m3tn") DO" dnl
+     "      RETURN " (to-scheme-proc-name target env) "(x^)" dnl
      "    END" dnl
-		 "  END DeRef_" m3ti ";" dnl
-		 dnl
+     "  END DeRef_" m3ti ";" dnl
+     dnl
 
-		 "PROCEDURE MakeRef_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
-		 "  VAR allArgs := SchemeUtils.Cons(obj,args);" dnl
-		 "      res := NEW(" m3tn (make-open-array-dims) ");" dnl
-		 "  BEGIN" dnl
-		 "    RETURN res" dnl
-		 "  END MakeRef_" m3ti ";" dnl
-		 dnl
+     "PROCEDURE MakeRef_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR allArgs := SchemeUtils.Cons(obj,args);" dnl
+     "      res := NEW(" m3tn (make-open-array-dims) ");" dnl
+     "  BEGIN" dnl
+     "    RETURN res" dnl
+     "  END MakeRef_" m3ti ";" dnl
+     dnl
 
-		 )))
+     )))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2686,12 +2695,12 @@
   (let* ((m3tn  (type-formatter obj-type env))
          (m3ti  (m3type->m3identifier m3tn))
 
-				 (dispatcher-name (string-append "MethodDispatcher_" m3ti))
-				 )
+         (dispatcher-name (string-append "MethodDispatcher_" m3ti))
+         )
 
-		(string-flatten
-		 (make-an-op-registration obj-type 'call-method dispatcher-name env)
-		 (make-ref-record-registrations obj-type env))))
+    (string-flatten
+     (make-an-op-registration obj-type 'call-method dispatcher-name env)
+     (make-ref-record-registrations obj-type env))))
 
 (define (make-ref-record-registrations obj-type env)
   (let* ((m3tn  (type-formatter obj-type env))
@@ -2701,8 +2710,8 @@
          
          (new-name        (string-append "New_" m3ti))
          (gen-new-name    (string-append "GenNew_" m3ti))
-				 (setter-name     (string-append "FieldSet_" m3ti))
-				 (getter-name     (string-append "FieldGet_" m3ti))
+         (setter-name     (string-append "FieldSet_" m3ti))
+         (getter-name     (string-append "FieldGet_" m3ti))
          )
     ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
     ((env 'get 'imports) 'insert! 'Atom)
@@ -2720,20 +2729,20 @@
   )
 
 (define (make-ref-registrations ref-type env)
-	(let* ((m3tn  (type-formatter ref-type env))
+  (let* ((m3tn  (type-formatter ref-type env))
          (m3ti  (m3type->m3identifier m3tn))
          (alias (cleanup-qid (extract-field 'alias ref-type)))
          (name  (cleanup-qid (extract-field 'alias ref-type)))
          
          (deref-name        (string-append "DeRef_" m3ti))
          (makeref-name        (string-append "MakeRef_" m3ti)))
-		(string-flatten
-		 (make-an-op-registration ref-type 'deref deref-name env)
-		 (make-an-op-registration ref-type 'makeref makeref-name env)
-		 (make-a-tc-registration ref-type m3tn env)
-		 )
-		)
-	)
+    (string-flatten
+     (make-an-op-registration ref-type 'deref deref-name env)
+     (make-an-op-registration ref-type 'makeref makeref-name env)
+     (make-a-tc-registration ref-type m3tn env)
+     )
+    )
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2744,31 +2753,31 @@
           (lambda(obj-type)
             ;; a type can only have methods if its opaque or object
             (if (null? obj-type) 
-								(make-symbol-hash-table 100)
+                (make-symbol-hash-table 100)
 
-								(case (car obj-type)
-									((Ref)
-									 (let ((target (extract-field 'target obj-type))
-												 (res (make-symbol-hash-table 100)))
-										 (if (not (eq? (car target) 'Record))
-												 (error "Cant get " what " from " obj-type))
-										 (map (lambda(m)
-														(res 'update-entry!
-																 (extract-field 'name m)
-																 m))
-													(extract-field what target))
-										 res))
+                (case (car obj-type)
+                  ((Ref)
+                   (let ((target (extract-field 'target obj-type))
+                         (res (make-symbol-hash-table 100)))
+                     (if (not (eq? (car target) 'Record))
+                         (error "Cant get " what " from " obj-type))
+                     (map (lambda(m)
+                            (res 'update-entry!
+                                 (extract-field 'name m)
+                                 m))
+                          (extract-field what target))
+                     res))
 
                   ((Object)
                    (let ((super-visible 
                           (res (extract-field 'super obj-type))))
                      (map 
-											(lambda(m)
-												(super-visible 'update-entry!
-																			 (extract-field 'name m)
-																			 m))
-											
-											(extract-field what obj-type))
+                      (lambda(m)
+                        (super-visible 'update-entry!
+                                       (extract-field 'name m)
+                                       m))
+                      
+                      (extract-field what obj-type))
                      super-visible))
 
                   ((Opaque)
@@ -2801,17 +2810,17 @@
     ))
         
 (define (stale-output? intf-name)
-	(if config-check-staleness
-			(let ((stale #f)
-						(srcs the-sourcefiles)
-						(tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
-				(unwind-protect
-				 (set! stale (< (apply min (map fs-status-modificationtime tgts))
-												(apply max (map fs-status-modificationtime srcs))))
-				 '()
-				 (set! stale #t))
-				stale)
-			#t))
+  (if config-check-staleness
+      (let ((stale #f)
+            (srcs the-sourcefiles)
+            (tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
+        (unwind-protect
+         (set! stale (< (apply min (map fs-status-modificationtime tgts))
+                        (apply max (map fs-status-modificationtime srcs))))
+         '()
+         (set! stale #t))
+        stale)
+      #t))
           
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
