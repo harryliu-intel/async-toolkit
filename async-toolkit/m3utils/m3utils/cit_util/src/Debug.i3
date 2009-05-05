@@ -23,6 +23,7 @@
 
 INTERFACE Debug;
 IMPORT Fmt, Wr, Pathname;
+IMPORT OSError;
 
 PROCEDURE Out(t : TEXT; 
               minLevel : CARDINAL := 10; (* no print at lower levels*)
@@ -102,5 +103,7 @@ PROCEDURE ClearEnv(var : TEXT);
 PROCEDURE HaveEnv(var : TEXT) : BOOLEAN;
   (* checks overridden value first, and if no override, checks
      actual system environment. *)
+
+PROCEDURE SetDebugTimeZone(tz : TEXT) RAISES { OSError.E };
 
 END Debug.

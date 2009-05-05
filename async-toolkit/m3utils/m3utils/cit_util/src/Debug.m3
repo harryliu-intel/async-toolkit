@@ -140,12 +140,18 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
     IF Options.PrintTime IN options THEN
       WITH now = Time.Now() DO
         LOCK tMu DO
-          IF tz = NIL THEN tz := TZ.New("GMT") END;
+          TRY
+            IF tz = NIL THEN tz := TZ.New(DebugTimeZone) END;
+            
 
-          IF TRUNC(now) # TRUNC(lastTime) THEN
-            timeText := "****** " & 
-                            TZ.FormatSubsecond(tz,now,printMillis := FALSE);
-            lastTime := now
+            IF TRUNC(now) # TRUNC(lastTime) THEN
+              timeText := "****** " & 
+                              TZ.FormatSubsecond(tz,now,printMillis := FALSE) &
+                                                     DebugTimeZone;
+              lastTime := now
+            END
+          EXCEPT
+            OSError.E => timeText := "****** TIMEZONE ERROR " & DebugTimeZone
           END
         END
       END
@@ -165,7 +171,12 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
     IF cr THEN
       t:=t&"\n";
     END;
-    outHook(t);
+
+    IF timeText # NIL THEN
+      outHook(timeText & "\n" & t)
+    ELSE
+      outHook(t)
+    END
   END Out;
 
 PROCEDURE HexOut(t : TEXT; minLevel : CARDINAL; cr : BOOLEAN; 
@@ -317,7 +328,28 @@ VAR
 CONST
   ResetInterval = 1000;
 
+  DefaultDebugTimeZone = "GMT";
+
+VAR
+  DebugTimeZone := DefaultDebugTimeZone;
+
+PROCEDURE SetDebugTimeZone( tzName : TEXT) RAISES { OSError.E } =
+  BEGIN
+    LOCK tMu DO
+      tz := TZ.New(tzName)
+    END
+  END SetDebugTimeZone;
+
 BEGIN 
+  WITH str = Env.Get("DEBUGTIMEZONE") DO
+    IF str # NIL THEN
+      DebugTimeZone := str;
+      LOCK tMu DO
+        tz := NIL
+      END
+    END
+  END;
+
   VAR
     debugStr := Env.Get("DEBUGLEVEL");
   BEGIN
