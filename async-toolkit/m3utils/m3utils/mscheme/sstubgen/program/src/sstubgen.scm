@@ -1520,7 +1520,10 @@
                                     "^" )
                                    (extract-field 'name f))
                                )
-                             formals)
+                             (filter (lambda(f)
+																			 (not (eq? 'Mode.Implied
+																								 (extract-field 'mode f))))
+																		 formals))
                         ", "))
              (result (extract-field 'result sig)))
 
@@ -2227,7 +2230,7 @@
       ;; make dispatch for a single method 
       (let* ((name              (extract-field 'name method))
              (meth-sig          (make-method-call-sig method type))
-             (method-call-name  (string-append m3tn "." name))
+             (method-call-name  (string-append 'this "." name))
              )
         (make-named-procedure-call-stub meth-sig 
                                         method-call-name
@@ -2258,7 +2261,8 @@
   (filter-tree proc-type
                '(sig formals)
                (lambda(formals)
-                 (cons (make-formal 'Mode.Value 'this type) formals))
+                  (cons (make-formal 'Mode.Implied 'this type) formals))
+
                )
 ))
 
