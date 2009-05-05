@@ -490,7 +490,7 @@ PROCEDURE StringifyB(x : Object;
         TYPECASE x OF
           SchemeLongReal.T(lr) =>
           IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
-            Put(Fmt.Int(ROUND(lr^)))
+            Wx.PutInt(buf,(ROUND(lr^)))
           ELSE
             Put(Fmt.LongReal(lr^))
           END
@@ -508,12 +508,16 @@ PROCEDURE StringifyB(x : Object;
           Pair(p) => SchemePair.StringifyPair(p,quoted,buf,seen)
         |
           String(s) =>
-          IF quoted THEN PutC(DQC) END;
-          FOR i := FIRST(s^) TO LAST(s^) DO
-            IF quoted AND s[i] = DQC THEN PutC(BSC) END;
-            PutC(s[i])
-          END;
-          IF quoted THEN PutC(DQC) END
+          IF quoted THEN 
+            PutC(DQC) ;
+            FOR i := FIRST(s^) TO LAST(s^) DO
+              IF s[i] = DQC THEN PutC(BSC) END;
+              PutC(s[i])
+            END;
+            PutC(DQC)
+          ELSE
+            Wx.PutStr(buf, s^)
+          END
         |
           Vector(v) =>
           Put("#(");

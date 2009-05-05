@@ -35,6 +35,7 @@ REVEAL
     globalEnvironment : SchemeEnvironment.Public;
     interrupter : Interrupter := NIL;
     prims : SchemePrimitive.Definer := NIL;
+
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
     reduceCond(clauses : Object; env : SchemeEnvironment.Public) : Object RAISES { E } := ReduceCond;
@@ -367,7 +368,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
     END
   END Eval;
 
-PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
+PROCEDURE EvalInternal(t : T; x : Object; env : SchemeEnvironment.Local) : Object 
   RAISES { E } =
   TYPE  Macro     = SchemeMacro.T;
         Closure   = SchemeClosure.T;
@@ -381,9 +382,13 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
         TruthO = SchemeBoolean.TruthO;
 
   VAR
-    env := NARROW(envP, SchemeEnvironment.Public);
-    envIsLocal := FALSE;
+    (* this will have to change for processing remote environments *)
+
+    envIsLocallyMade := FALSE;
+
     DebugLevel := DebugClass.level;
+
+    savedEnv : SchemeEnvironment.Local := NIL;
   BEGIN
     LOOP
       IF DebugLevel >= 20 THEN Debug.Out("EVAL: " & Stringify(x)) END;
@@ -393,9 +398,11 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
         RAISE E("Command interrupted")
       END;
 
-      IF x # NIL AND ISTYPE(x,Symbol) THEN
+      IF x = NIL THEN
+        RETURN NIL
+      ELSIF ISTYPE(x,Symbol) THEN
         RETURN env.lookup(x)
-      ELSIF x = NIL OR NOT ISTYPE(x,Pair) THEN 
+      ELSIF NOT ISTYPE(x,Pair) THEN 
         RETURN x
       ELSE
         VAR
@@ -453,10 +460,12 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
           ELSIF fn = SYMcond THEN
             x := t.reduceCond(args, env)
           ELSIF fn = SYMlambda THEN
+            env.assigned := TRUE;
             RETURN NEW(SchemeClosure.T).init(First(args), 
                                              Rest(args),
                                              env)
           ELSIF fn = SYMmacro THEN
+            env.assigned := TRUE;
             RETURN NEW(Macro).init(First(args),
                                    Rest(args),
                                    env)
@@ -507,31 +516,36 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
                  mechanism. 
               *)
               VAR
-                canRecyclePairs := TRUE;
+                newEnv : SchemeEnvironment.Local;
               BEGIN
-              IF envIsLocal AND c.env # env THEN
-                INC(envsKilled);
-                WITH lst = t.evalList(args,env) DO
-                  EVAL env.init(c.params,
-                                lst,
-                                c.env,
-                                canRecyclePairs);
-                  IF canRecyclePairs THEN ReturnCons(t,lst) END
-                END
-              ELSE
                 INC(envsMade);
+                
+                IF savedEnv # NIL THEN
+                  newEnv := savedEnv; savedEnv := NIL
+                ELSE
+                  newEnv := NEW(SchemeEnvironment.Unsafe)
+                END;
+
+
+                IF envIsLocallyMade AND NOT env.assigned THEN
+                  (* we might be able to keep it after we've used it *)
+                  savedEnv := env
+                END;
                 
                 (* this is a LOCAL environment.  No need for it to
                    use synchronized methods *)
-                
-                env := NEW(SchemeEnvironment.Unsafe).initEval(c.params,
-                                                              args,env,t,
-                                                              c.env)
 
+                env := newEnv.
+                          initEval(c.params, args, env, t, c.env);
+                envIsLocallyMade := TRUE;
+
+                <* ASSERT c.env.assigned *>
+
+                (* re-check savedEnv, might have been assigned above? *)
+                IF savedEnv # NIL AND savedEnv.assigned THEN
+                  savedEnv := NIL
+                END;
               END
-              END;
-              
-              (*envIsLocal := TRUE*)
 
             |
               Procedure(p) =>
@@ -573,7 +587,6 @@ PROCEDURE EvalInternal(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Obj
   END EvalInternal;
 
 VAR envsMade := 0;
-    envsKilled := 0;
 
 PROCEDURE EvalInGlobalEnv(t : T; x : Object) : Object RAISES { E } =
   BEGIN RETURN t.eval(x, t.globalEnvironment) END EvalInGlobalEnv;

@@ -42,6 +42,7 @@ REVEAL
     parent : T;
 
     dead := FALSE; (* for debugging *)
+
   METHODS
     initDict(vars, vals : Object; 
          VAR canRecyclePairs : BOOLEAN) : BOOLEAN := InitDict;
@@ -164,7 +165,8 @@ PROCEDURE Init(t : T; vars, vals : Object; parent : T;
     RETURN t
   END Init;
 
-PROCEDURE InitEval(t : T; vars, argsToEval : Object;
+PROCEDURE InitEval(t : T; 
+                   vars, argsToEval : Object;
                    evalEnv : T; 
                    interp : Scheme.T;
                    parent : T) : T RAISES { E } =
@@ -172,14 +174,8 @@ PROCEDURE InitEval(t : T; vars, argsToEval : Object;
     EVAL t.initEmpty();
     t.parent := parent;
     IF NOT t.initDictEval(vars, argsToEval, evalEnv, interp) THEN
-      (*TRY*)
         EVAL Warn("wrong number of arguments: expected " &
           StringifyT(vars) & " got " & StringifyT(interp.evalList(argsToEval,evalEnv)))
-(*
-      EXCEPT
-      ELSE
-      END
-*)
     END;
     RETURN t
   END InitEval;

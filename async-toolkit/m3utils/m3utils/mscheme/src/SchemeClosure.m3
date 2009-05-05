@@ -35,6 +35,7 @@ PROCEDURE Init(t : T;
                params, body : Object;
                env : SchemeEnvironment.T) : T =
   BEGIN
+    env.assigned := TRUE;
     t.params := params;
     t.env := env;
     IF body # NIL AND ISTYPE(body, Pair) AND Rest(body) = NIL THEN

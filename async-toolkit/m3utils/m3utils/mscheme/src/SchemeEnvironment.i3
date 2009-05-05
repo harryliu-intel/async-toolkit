@@ -36,9 +36,14 @@ IMPORT Scheme;
    
 
 TYPE
-  T <: Public;
+  T <: Local;
 
-  Public = SchemeEnvironmentSuper.T OBJECT METHODS
+  Local = Public OBJECT
+    assigned := FALSE;
+  END;
+
+  Public = SchemeEnvironmentSuper.T OBJECT 
+  METHODS
     init(vars, vals : SchemeObject.T; 
          parent : T; 
          VAR canRecyclePairs : BOOLEAN) : T;
@@ -46,7 +51,7 @@ TYPE
     (* canRecyclePairs is set to FALSE if the pairs sent in via 
        vals are stored in the environment; if it's unchanged,
        that means that the environment did not keep references to
-       the pairs (and so they can probably be freed) *)
+       the pairs (and so they can be freed) *)
 
     initEval(vars : SchemeObject.T; 
              argsToEval : SchemeObject.T;

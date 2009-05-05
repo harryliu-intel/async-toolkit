@@ -11,7 +11,7 @@ FROM Scheme IMPORT Symbol, Object;
 REVEAL SchemeEnvironment.T <: Private;
 
 TYPE
-  Private = SchemeEnvironment.Public OBJECT METHODS
+  Private = SchemeEnvironment.Local OBJECT METHODS
     put(var : Symbol; READONLY val : Object);
     get(var : Symbol; VAR val : Object) : BOOLEAN;
   END;
