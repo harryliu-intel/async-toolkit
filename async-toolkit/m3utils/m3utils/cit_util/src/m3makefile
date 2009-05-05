@@ -323,6 +323,25 @@ Module("UCTime")
 
 Module("IntSetBits")
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TZ package...
+
+interface ("CTZ")
+
+Module ("TZ")
+implementation("SafeTZ")
+
+Module("FinDate")
+Module("HMTime")
+
+Table("IntFinDate", "Integer", "FinDate")
+Array_sort("FinDate","FinDate")
+
+Module("AscTimeParse")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 Library("cit_util")
 
 

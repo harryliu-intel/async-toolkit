@@ -88,7 +88,7 @@ PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;
 
 PROCEDURE DebugThis(this : TEXT) : BOOLEAN;
 
-TYPE Options = { PrintPID, PrintThreadID };
+TYPE Options = { PrintPID, PrintThreadID, PrintTime };
 
 PROCEDURE SetOptions(options : SET OF Options);
 PROCEDURE GetOptions() : SET OF Options;

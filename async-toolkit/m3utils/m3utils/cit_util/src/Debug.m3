@@ -41,6 +41,7 @@ IMPORT RefList;
 IMPORT Pathname;
 IMPORT LockedTextBooleanTbl;
 IMPORT RdWrReset;
+IMPORT TZ, Time;
 
 VAR options := SET OF Options {};
 
@@ -118,7 +119,12 @@ PROCEDURE PrependText(pre, t : TEXT) : TEXT =
     RETURN res
   END PrependText;
 
+VAR tMu := NEW(MUTEX);
+    tz : TZ.T;
+    lastTime := FIRST(Time.T);
+
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
+  VAR timeText : TEXT := NIL;
   BEGIN
     IF this # NIL AND NOT DebugThis(this) THEN 
       RETURN 
@@ -129,6 +135,20 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
       IF triggers.member(t) THEN
         BreakHere.Please();
       END;
+    END;
+
+    IF Options.PrintTime IN options THEN
+      WITH now = Time.Now() DO
+        LOCK tMu DO
+          IF tz = NIL THEN tz := TZ.New("GMT") END;
+
+          IF TRUNC(now) # TRUNC(lastTime) THEN
+            timeText := "****** " & 
+                            TZ.FormatSubsecond(tz,now,printMillis := FALSE);
+            lastTime := now
+          END
+        END
+      END
     END;
 
     IF Options.PrintThreadID IN options THEN
