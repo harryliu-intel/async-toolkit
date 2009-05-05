@@ -147,7 +147,7 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
             IF TRUNC(now) # TRUNC(lastTime) THEN
               timeText := "****** " & 
                               TZ.FormatSubsecond(tz,now,printMillis := FALSE) &
-                                                     DebugTimeZone;
+                                                     " " & DebugTimeZone;
               lastTime := now
             END
           EXCEPT
