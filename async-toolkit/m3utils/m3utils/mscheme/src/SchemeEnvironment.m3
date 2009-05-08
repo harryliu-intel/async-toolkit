@@ -74,6 +74,8 @@ PROCEDURE GetParent(t : T) : T = BEGIN RETURN t.parent END GetParent;
 
 PROCEDURE UnsafeGet(t : T; var : Symbol; VAR val : Object) : BOOLEAN =
   BEGIN 
+    IF var = NIL THEN RETURN FALSE END;
+
     IF t.dictionary # NIL THEN
       RETURN t.dictionary.get(var,val) 
     ELSE
@@ -239,7 +241,7 @@ PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
       IF t.parent # NIL THEN 
         RETURN t.parent.lookup(symbol)
       ELSE 
-        RETURN Error("Unbound variable: " & SchemeSymbol.ToText(symbol)) 
+        RETURN Error("Unbound variable: " & Stringify(symbol)) 
       END
     END
   END Lookup;

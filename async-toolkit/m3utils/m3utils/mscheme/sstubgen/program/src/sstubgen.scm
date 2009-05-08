@@ -232,9 +232,9 @@
 ;;;;;;;;;;;;;;;;;;;;                            ;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define config-check-staleness #f)
+(define config-check-staleness #t)
 ;; set this to #t to check file staleness before rebuilding,
-;; otherwise rebuilding always happens
+;; otherwise rebuilding "always" happens
 
 (define (reload) (load "../../program/src/sstubgen.scm"))
 ;; utility function for interactive testing
@@ -930,13 +930,13 @@
        (case (car type)
 
          ((Ref)
-          ;; canonical rep. of a Modula-3 ref is just the ref itself
-          ;;        (let* ((target (extract-field 'target type))
-          ;;               (target-pname (push-make target)))
-          ;;          (string-append 
-          ;;           "RETURN " target-pname "(x^)")))
-          "RETURN x")
-         
+          ;; canonical rep. of a Modula-3 ref is just the ref itself,
+					;; unless its UNTRACED.
+					(if (extract-field 'traced type)
+							"RETURN x"
+							(string-flatten
+							 "RETURN NEW(REF RECORD ref : " m3tn " END, ref := x)")
+							))
          
          ((Record)
           (map 
@@ -1145,30 +1145,45 @@
          ((Ref)
           ;; several possibilities.  either we have the correct type
           ;; already, or else we may have to build it, if a Ref OpenArray
-          (string-flatten
-           "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
+					;; special stuff for UNTRACED at the end
+					(if (extract-field 'traced type)
 
-           (let* ((target (extract-field 'target type)))
-             (if (eq? (car target) 'OpenArray)
-                 (let* ((element (extract-field 'element target))
-                        (element-pname (push-make element)))
-                   (string-append
-                    "    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
-                    "        p := SchemePair.Pair(x);" dnl      
-                    "        i := 0;" dnl
-                    "    BEGIN" dnl
-                    "      WHILE p # NIL DO" dnl
-                    "        arr[i] := "element-pname"(p.first);" dnl
-                    "        p := SchemePair.Pair(p.rest);" dnl
-                    "        INC(i)" dnl
-                    "      END;" dnl
-                    "      RETURN arr" dnl
-                    "    END;" dnl
-                    ))
-                 (string-append
-                  "    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
-           )
-          )
+							(string-flatten
+							 "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
+							 
+							 (let* ((target (extract-field 'target type)))
+								 (if (eq? (car target) 'OpenArray)
+										 (let* ((element (extract-field 'element target))
+														(element-pname (push-make element)))
+											 (string-append
+												"    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
+												"        p := SchemePair.Pair(x);" dnl      
+												"        i := 0;" dnl
+												"    BEGIN" dnl
+												"      WHILE p # NIL DO" dnl
+												"        arr[i] := "element-pname"(p.first);" dnl
+												"        p := SchemePair.Pair(p.rest);" dnl
+												"        INC(i)" dnl
+												"      END;" dnl
+												"      RETURN arr" dnl
+												"    END;" dnl
+												))
+										 (string-append
+											"    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
+							 )
+
+							(string-flatten
+							 "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
+							 "    BEGIN" dnl
+							 "      IF NOT ISTYPE(x, Rec) THEN" dnl
+							 "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+							 "      ELSE" dnl
+							 "        RETURN NARROW(x,Rec).ref" dnl
+							 "      END" dnl
+							 )
+							
+							)
+					)
          
          ((Record)
           (let ((fields (extract-field 'fields type)))
@@ -1496,7 +1511,7 @@
     
     (define (formal-type-converter type)
       (case (car type)
-        ((OpenArray) (formal-type-converter `(Ref (target . ,type))))
+        ((OpenArray) (formal-type-converter (make-ref-type type)))
         (else (to-modula-proc-name type env))))
 
     (define (make-formal-temp f)
@@ -2208,14 +2223,15 @@
       (define (make-dispatch-method meth-name)
         (string-append
          "    ELSIF methName = SchemeSymbol.FromText(\""meth-name"\") THEN"dnl
-         "      RETURN MethodStub_" m3ti "_" meth-name "(interp,obj,methArgs)" dnl
+         "      RETURN MethodStub_" m3ti "_" meth-name "(interp,methArgs,methExcHandler)" dnl
          ))
 
       (string-flatten
        "PROCEDURE MethodDispatcher_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
        "  VAR" dnl
        "    methName := Scheme.SymbolCheck(SchemeUtils.First(args));" dnl
-       "    methArgs := SchemeUtils.Rest(args);" dnl
+       "    methArgs := SchemeUtils.Cons(obj,SchemeUtils.Second(args));" dnl
+			 "    methExcHandler := SchemeUtils.Third(args);" dnl
        "  BEGIN" dnl
        "    IF FALSE THEN <*ASSERT FALSE*>" dnl
        (map make-dispatch-method ((visible-methods type) 'keys))
@@ -2344,6 +2360,7 @@
 
 (define (make-ref-type target)
   (list 'Ref 
+				(cons 'traced #t)
         (cons 'target target)
         ))
 

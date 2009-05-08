@@ -17,7 +17,7 @@ PROCEDURE Get(x : REFANY) : TEXT RAISES { NotBranded } =
 PROCEDURE GetByTC(c : RT0.Typecode;
                   nameIfNotBranded := FALSE) : TEXT RAISES { NotBranded } = 
   VAR
-    b := RTType.Get(c).brand;
+    b := RTType.Get(MIN(c,RTType.MaxTypecode())).brand;
     s := LOOPHOLE(b, Ctypes.char_star);
   BEGIN 
     IF LOOPHOLE(s,INTEGER) = 0 THEN
@@ -36,7 +36,7 @@ PROCEDURE GetByTC(c : RT0.Typecode;
 
 PROCEDURE GetName(c : RT0.Typecode) : TEXT RAISES { NotBranded } =
   VAR
-    b := RTType.Get(c).name;
+    b := RTType.Get(MIN(c,RTType.MaxTypecode())).name;
     s := LOOPHOLE(b, Ctypes.char_star);
   BEGIN
     IF LOOPHOLE(s,INTEGER) = 0 THEN

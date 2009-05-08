@@ -35,6 +35,13 @@ SchemeStubs("MarketData")  % why doesnt THIS work
 SchemeStubs("TextSet")
 SchemeStubs("TextSetDef")
 
+SchemeStubs("SchemeClosure")
+SchemeStubs("SchemeClosureClass")
+
+SchemeStubs("RTType")
+
+SchemeStubs("SchemeEnvironment")
+
 %SchemeStubs("TextRefTbl") % doesnt work yet
 
 ExportSchemeStubs("stubexample") % export OUR scheme stubs

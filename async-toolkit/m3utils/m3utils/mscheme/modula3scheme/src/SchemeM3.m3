@@ -24,7 +24,7 @@ IMPORT TZ, SchemeUtils;
 IMPORT NetObj;
 IMPORT FS;
 IMPORT SchemeProcedureStubs;
-IMPORT RTType;
+IMPORT RTType, RTBrand;
 
 <* FATAL Thread.Alerted *>
 
@@ -445,6 +445,17 @@ PROCEDURE GetUnixPIDApply(<*UNUSED*>p : SchemeProcedure.T;
 
 (**********************************************************************)
 
+PROCEDURE RTBrandGetNameApply(<*UNUSED*>p : SchemeProcedure.T; 
+                        <*UNUSED*>interp : Scheme.T; 
+                        args : Object) : Object RAISES { E } =
+  BEGIN
+    TRY
+      RETURN SchemeString.FromText(RTBrand.GetName(SchemeLongReal.Card(First(args))))
+    EXCEPT 
+      RTBrand.NotBranded => RAISE E ("RTBrand.NotBranded")
+    END
+  END RTBrandGetNameApply;
+
 PROCEDURE TypecodeApply(<*UNUSED*>p : SchemeProcedure.T; 
                         <*UNUSED*>interp : Scheme.T; 
                         args : Object) : Object =
@@ -632,6 +643,9 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
 
     prims.addPrim("rttype-ndimensions", NEW(SchemeProcedure.T,
                                             apply := GetNDimensionsApply),
+                  1, 1);
+
+    prims.addPrim("rtbrand-getname", NEW(SchemeProcedure.T, apply := RTBrandGetNameApply),
                   1, 1);
 
     prims.addPrim("fs-status-modificationtime",NEW(SchemeProcedure.T,

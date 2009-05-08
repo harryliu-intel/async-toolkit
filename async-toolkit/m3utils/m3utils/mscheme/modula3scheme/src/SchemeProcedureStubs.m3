@@ -144,7 +144,7 @@ PROCEDURE Extend(prims : SchemePrimitive.ExtDefiner) : SchemePrimitive.ExtDefine
 
     prims.addPrim("modula-type-op",
                   NEW(SchemeProcedure.T, apply := ModulaTypeOpApply),
-                  2, LAST(CARDINAL));
+                  3, LAST(CARDINAL));
 
     prims.addPrim("list-modula-type-ops",
                   NEW(SchemeProcedure.T, apply := ListTypeOpsApply),
