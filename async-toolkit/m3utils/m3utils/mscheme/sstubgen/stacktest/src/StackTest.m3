@@ -130,7 +130,16 @@ PROCEDURE Ph(VAR args : ARRAY OF REFANY;
 (**********************************************************************)
 
 PROCEDURE Make(lr : LONGREAL) : REFANY =
-  VAR res := NEW(REF LONGREAL); BEGIN res^ := lr; RETURN res END Make;
+  VAR 
+    res : REF LONGREAL;
+  BEGIN 
+    IF lr > -1.0d0 AND lr <= FLOAT(LAST(cache),LONGREAL) AND FLOAT(ROUND(lr),LONGREAL) = lr THEN
+      RETURN cache[ROUND(lr)]
+    END;
+    res := NEW(REF LONGREAL); 
+    res^ := lr; 
+    RETURN res 
+  END Make;
 
 PROCEDURE Add(x , y : REF LONGREAL) : REF LONGREAL =
   BEGIN RETURN Make(x^ + y^) END Add;
@@ -138,7 +147,14 @@ PROCEDURE Add(x , y : REF LONGREAL) : REF LONGREAL =
 PROCEDURE Format(x : REF LONGREAL) : TEXT = 
   BEGIN RETURN Fmt.LongReal(x^) END Format;
 
+VAR cache : ARRAY [0..1000] OF REFANY;
+
 BEGIN 
+  FOR i := FIRST(cache) TO LAST(cache) DO
+    cache[i] := NEW(REF LONGREAL);
+    NARROW(cache[i],REF LONGREAL)^ := FLOAT(i, LONGREAL);
+  END;
+
   VAR args := ARRAY [0..1] OF REFANY { NIL, Make(11.0d0) };
   BEGIN
     FOR i := 0 TO 10000000 DO
