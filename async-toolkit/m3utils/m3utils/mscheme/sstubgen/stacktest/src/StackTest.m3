@@ -141,6 +141,10 @@ PROCEDURE Format(x : REF LONGREAL) : TEXT =
 BEGIN 
   VAR args := ARRAY [0..1] OF REFANY { NIL, Make(11.0d0) };
   BEGIN
+    FOR i := 0 TO 10000000 DO
+      EVAL Pf(args, NIL, NIL, NIL, NIL)
+    END;
+
     IO.Put("f(11) = " & Format(Pf(args, 
                                   NIL, 
                                   NIL,
