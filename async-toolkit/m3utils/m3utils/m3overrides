@@ -116,6 +116,7 @@ override("traderulelib", TOP & "/calarm")
 override("smarttraderule", TOP & "/calarm")
 override("marketmakingcommon", TOP & "/calarm/marketmaking")
 override("marketmakingtestrule", TOP & "/calarm/marketmaking")
+override("mmport", TOP & "/calarm/marketmaking")
 
 override("fasthf", TOP & "/calarm")
 override("fastrw", TOP & "/calarm")

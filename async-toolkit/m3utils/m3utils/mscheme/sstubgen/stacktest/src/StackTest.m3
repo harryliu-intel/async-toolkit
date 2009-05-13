@@ -1,4 +1,4 @@
-MODULE StackTest EXPORTS Main;
+UNSAFE MODULE StackTest EXPORTS Main;
 IMPORT IO, Fmt;
 IMPORT SchemeSymbol, SchemeEnvironment;
 
@@ -149,7 +149,13 @@ PROCEDURE Format(x : REF LONGREAL) : TEXT =
 
 VAR cache : ARRAY [0..1000] OF REFANY;
 
+VAR 
+  sf : PROCEDURE(frame : REF Frame; up, pos : CARDINAL; to : REFANY) 
+     := SetFrame;
+    
+  re : REFANY := LOOPHOLE(sf,REFANY); (* will this work???? *)
 BEGIN 
+
   FOR i := FIRST(cache) TO LAST(cache) DO
     cache[i] := NEW(REF LONGREAL);
     NARROW(cache[i],REF LONGREAL)^ := FLOAT(i, LONGREAL);
