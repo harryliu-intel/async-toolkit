@@ -15,8 +15,19 @@ PROCEDURE New(interval : Time.T; offset := 0.0d0) : SXLongReal.T;
 PROCEDURE NewCounter(interval : Time.T; offset := 0.0d0) : SXInt.T;
 (* as above, but counts in integers *)
 
-PROCEDURE Next(interval, offset : Time.T) : Time.T;
+(**********************************************************************)
+
+(*
+   The following two are utility functions that 
+   don't really belong in this interface! 
+ *)
+
+PROCEDURE Next(interval : Time.T; offset : LONGREAL := 0.0d0) : Time.T;
   (* what is the next time (from now) at a given interval and offset
+     (since the epoch) *)
+
+PROCEDURE NextFrom(from, interval : Time.T;  offset : LONGREAL := 0.0d0) : Time.T;
+  (* what is the next time (from a given time) at a given interval and offset
      (since the epoch) *)
 
 END SXTime.

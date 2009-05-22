@@ -43,8 +43,10 @@ PROCEDURE Apply(cl : Closure) : REFANY =
   END Apply;
 
 PROCEDURE Next(interval, offset : Time.T) : Time.T =
+  BEGIN RETURN NextFrom(Time.Now(), interval, offset) END Next;
+
+PROCEDURE NextFrom(now, interval, offset : Time.T) : Time.T =
   VAR
-    now := Time.Now();
     steps := now/interval;
     frac := steps;
   BEGIN
@@ -63,7 +65,7 @@ PROCEDURE Next(interval, offset : Time.T) : Time.T =
          next = whole * interval + interval DO
       RETURN next + offset
     END
-  END Next;
+  END NextFrom;
 
 PROCEDURE New(interval, offset : Time.T) : SXLongReal.T =
   BEGIN

@@ -42,6 +42,9 @@ PROCEDURE First(x : Object) : Object;
 PROCEDURE Rest(x : Object) : Object;
 PROCEDURE Second(x : Object) : Object;
 PROCEDURE Third(x : Object) : Object;
+PROCEDURE Fourth(x : Object) : Object;
+PROCEDURE Fifth(x : Object) : Object;
+
 PROCEDURE PedanticFirst(x : Object) : Object RAISES { E };
 PROCEDURE PedanticRest(x : Object) : Object RAISES { E };
 

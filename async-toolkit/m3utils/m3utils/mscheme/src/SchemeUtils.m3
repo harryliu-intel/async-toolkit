@@ -123,6 +123,12 @@ PROCEDURE Second(x : Object) : Object =
 PROCEDURE Third(x : Object) : Object = 
   BEGIN RETURN First(Rest(Rest(x))) END Third;
 
+PROCEDURE Fourth(x : Object) : Object = 
+  BEGIN RETURN First(Rest(Rest(Rest(x)))) END Fourth;
+
+PROCEDURE Fifth(x : Object) : Object = 
+  BEGIN RETURN First(Rest(Rest(Rest(Rest(x))))) END Fifth;
+
 PROCEDURE PedanticFirst(x : Object) : Object RAISES { E } =
   BEGIN
     IF x # NIL AND ISTYPE(x, Pair) THEN 
