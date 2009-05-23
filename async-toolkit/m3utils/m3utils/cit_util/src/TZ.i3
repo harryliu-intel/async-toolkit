@@ -2,6 +2,7 @@
 
 INTERFACE TZ;
 IMPORT Date, Time, Pathname, OSError;
+IMPORT Word;
 
 (* 
    NOTE 
@@ -78,6 +79,10 @@ CONST DefaultTZRoot : Pathname.T = "/usr/share/zoneinfo";
 
 PROCEDURE DisableChecking();
   (* disable looking for files in /usr/share/zoneinfo.  Needed on Cygwin? *)
+
+PROCEDURE Equal(a, b : T) : BOOLEAN;
+
+PROCEDURE Hash(a : T) : Word.T;
 
 END TZ.
 

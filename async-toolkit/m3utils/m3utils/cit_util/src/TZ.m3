@@ -8,10 +8,12 @@ IMPORT Debug, Fmt;
 IMPORT OSError;
 IMPORT FS, Env;
 FROM Ctypes IMPORT long_star;
+IMPORT Word;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     tz : TEXT;
+    hashV : Word.T;
     cache : Cache;
   OVERRIDES
     init := Init;
@@ -19,6 +21,13 @@ REVEAL
     localtime := Localtime;
     name := Name;
   END;
+
+PROCEDURE Equal(a, b : T) : BOOLEAN =
+  BEGIN
+    RETURN a = b OR a.tz = b.tz OR Text.Equal(a.tz, b.tz) 
+  END Equal;
+
+PROCEDURE Hash(a : T) : Word.T = BEGIN RETURN a.hashV END Hash;
 
 TYPE Cache = RECORD itime : INTEGER (* TRUNC(t : Time.T) *); d : Date.T END;
 
@@ -36,6 +45,7 @@ PROCEDURE Init(t : T; tz : TEXT; disableChecking : BOOLEAN) : T RAISES { OSError
     END;
 
     t.tz := tz; 
+    t.hashV := Text.Hash(tz);
     t.cache.itime := -1; (* impossible key *)
     RETURN t 
   END Init;
