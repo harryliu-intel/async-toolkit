@@ -340,6 +340,14 @@ Array_sort("FinDate","FinDate")
 
 Module("AscTimeParse")
 
+% sloppy TZ stuff
+
+Table("TZRef", "TZ", "Refany")
+Table("LongrealRef", "LongrealType", "Refany")
+Sorted_table("LongrealRef", "LongrealType", "Refany")
+
+Module("SloppyTimeConverter")
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Library("cit_util")
