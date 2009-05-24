@@ -37,11 +37,11 @@ IMPORT FloatMode, Lex;
 IMPORT Fmt;
 IMPORT Process;
 IMPORT ThreadF;
-IMPORT RefList;
 IMPORT Pathname;
 IMPORT LockedTextBooleanTbl;
 IMPORT RdWrReset;
 IMPORT TZ, Time;
+IMPORT DebugStream, DebugStreamList;
 
 VAR options := SET OF Options {};
 
@@ -266,14 +266,14 @@ PROCEDURE DefaultOut(t: TEXT) =
         p := streams;
       BEGIN
         WHILE p # NIL DO
-          IF reset = TRUE THEN RdWrReset.Wr(p.head) END;
+          IF reset = TRUE THEN RdWrReset.Wr(p.head.wr) END;
 
           TRY
-            Wr.PutText(p.head, t); 
+            Wr.PutText(p.head.wr, t); 
 
-            (* this isn't right.  We should have an option to 
-               flush the stream asynchronously. *)
-            Wr.Flush(p.head)
+            IF p.head.flushAlways THEN
+              Wr.Flush(p.head.wr)
+            END
           EXCEPT ELSE END;
           p := p.tail
         END
@@ -282,14 +282,18 @@ PROCEDURE DefaultOut(t: TEXT) =
   END DefaultOut;
 
 PROCEDURE AddStream(wr : Wr.T) = 
-  BEGIN LOCK mu DO streams := RefList.Cons(wr, streams) END END AddStream;
+  BEGIN 
+    LOCK mu DO 
+      streams := DebugStreamList.Cons(DebugStream.T { wr }, streams) 
+    END 
+  END AddStream;
 
 PROCEDURE RemStream(wr : Wr.T) =
-  VAR new, p : RefList.T := NIL; BEGIN
+  VAR new, p : DebugStreamList.T := NIL; BEGIN
     LOCK mu DO
       p := streams;
       WHILE p # NIL DO
-        IF p.head # wr THEN new := RefList.Cons(p.head,new) END;
+        IF p.head.wr # wr THEN new := DebugStreamList.Cons(p.head,new) END;
         p := p.tail
       END;
       streams := new
@@ -321,7 +325,8 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 VAR
   debugFilter := Env.Get("DEBUGFILTER")#NIL;
   triggers: TextSet.T;
-  streams := RefList.List1(stderr); (* protected by mu *)
+  streams := DebugStreamList.List1(DebugStream.T { stderr }); 
+  (* protected by mu *)
   mu := NEW(MUTEX);
   calls := 0;
 
@@ -339,6 +344,46 @@ PROCEDURE SetDebugTimeZone( tzName : TEXT) RAISES { OSError.E } =
       tz := TZ.New(tzName)
     END
   END SetDebugTimeZone;
+
+PROCEDURE SetTimedDebugFlush(wr : Wr.T) =
+  BEGIN
+    StartFlusher();
+    LOCK mu DO
+      VAR p := streams; BEGIN
+        WHILE p # NIL DO
+          IF p.head.wr = wr THEN p.head.flushAlways := FALSE END;
+          p := p.tail
+        END
+      END
+    END
+  END SetTimedDebugFlush;
+
+VAR flusher : Thread.T := NIL;
+
+PROCEDURE StartFlusher() =
+  BEGIN
+    IF flusher # NIL THEN RETURN END;
+
+    flusher := Thread.Fork(NEW(Thread.Closure, apply := FlushApply));
+  END StartFlusher;
+
+PROCEDURE FlushApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
+  <*FATAL Thread.Alerted, Wr.Failure*>
+  BEGIN
+    LOOP
+      Thread.Pause(0.1d0);
+      LOCK mu DO
+        VAR p := streams; BEGIN
+          WHILE p # NIL DO
+            IF NOT p.head.flushAlways THEN
+              Wr.Flush(p.head.wr)
+            END;
+            p := p.tail
+          END
+        END
+      END
+    END
+  END FlushApply;
 
 BEGIN 
   WITH str = Env.Get("DEBUGTIMEZONE") DO

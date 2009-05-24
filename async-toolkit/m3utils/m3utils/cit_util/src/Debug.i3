@@ -106,4 +106,7 @@ PROCEDURE HaveEnv(var : TEXT) : BOOLEAN;
 
 PROCEDURE SetDebugTimeZone(tz : TEXT) RAISES { OSError.E };
 
+PROCEDURE SetTimedDebugFlush(wr : Wr.T);
+  (* flush this stream on a timer rather than automatically on every write *)
+
 END Debug.
