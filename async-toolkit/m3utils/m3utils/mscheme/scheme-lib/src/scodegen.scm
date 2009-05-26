@@ -478,6 +478,22 @@
     (dis "  END " mp)
     #t))
 
+(define (dis-format-m3 tbl mp)
+  (let ((tbl-name (car tbl)) 
+  (fields (get-fields (complete-tbl tbl))))
+    (dis "  VAR fields, values := NEW(TextSeq.T).init();" dnl
+         "  BEGIN" dnl mp)
+
+    (map (lambda(fld) (dis (ins-sql fld) mp))
+   fields) 
+
+    (dis dnl mp)
+    (dis "    RETURN \"(\" & TextUtils.FormatInfix(fields,\",\") & \")\"&"
+   dnl mp)
+    (dis "                 \" values (\"& TextUtils.FormatInfix(values,\",\")&\")\"" dnl mp)
+    (dis "  END " mp)
+    #t))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (ass-m3-old fld)
@@ -632,8 +648,8 @@
 
     (dis "derived_interface(\"" m3name "\",VISIBLE)" dnl m3mp)
     (dis "derived_implementation(\"" m3name "\")" dnl m3mp)
-    ;;(dis "TableMonitor(\"" m3name "\",\"" m3name "\")" dnl dnl m3mp)
-    ;;(dis "Table(\"Int" m3name "\",\"Integer\",\"" m3name "\")" dnl dnl m3mp)
+    (dis "TableMonitor(\"" m3name "\",\"" m3name "\")" dnl dnl m3mp)
+    (dis "Table(\"Int" m3name "\",\"Integer\",\"" m3name "\")" dnl dnl m3mp)
 
     (dis "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl ip)
     (dis "INTERFACE " m3name ";" dnl dnl ip)
@@ -671,12 +687,32 @@
     "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
     dis-update-m3
     ))
+   (parseheader 
+    (list "<*NOWARN*>Parse"
+    "(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
+    dis-parse-m3
+    ))
+
+   (queryheader 
+    (list "QueryHeader" "() : TEXT" dis-query-m3))
+
+	 (format 
+		(list "Format"
+    "(READONLY record : T) : TEXT"
+    dis-format-m3
+    ))
+
    (insert
     (list "Insert"
     "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
     dis-insert-m3
     ))
-
+  (dirtyheader 
+    (list
+     "SetDirty" 
+     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\")"
+     dis-dirty-m3
+     ))
    (upinsert
     (list "UpdateOrInsert" 
           "(db : DesynchronizedDB.T; READONLY record : T; restriction : TEXT; ex : DesynchronizedDB.ExCallback)"
@@ -699,8 +735,12 @@
      (dis-code tbl mp)
      (dis pname ";" dnl dnl dnl mp)))
        (list upheader 
-             insert 
+             insert
+						 format
              upinsert
+						 parseheader
+						 dirtyheader
+						 queryheader
              getid)
        )
       )
@@ -799,6 +839,13 @@
     ))
    (queryheader 
     (list "QueryHeader" "() : TEXT" dis-query-m3))
+
+	 (format 
+		(list "Format"
+    "(READONLY record : T) : TEXT"
+    dis-format-m3
+    ))
+
    (getid
     (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
    (dirtyheader 
@@ -820,9 +867,10 @@
      (dis "PROCEDURE " pname proto "=" dnl mp)
      (dis-code tbl mp)
      (dis pname ";" dnl dnl dnl mp)))
-       (list ;upheader 
+       (list ;;upheader 
              parseheader 
-             ;insert 
+             ;;insert 
+						 format
              queryheader dirtyheader getid)
        )
       )
