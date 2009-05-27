@@ -148,6 +148,7 @@ override("serverframework", TOP & "/calarm/twslib/testtrade2")
 
 override("gcomsdb",  TOP & "/calarm/gcoms")
 override("gcomslib", TOP & "/calarm/gcoms")
+override("gcomsportfolio", TOP & "/calarm/gcoms")
 
 override("dollarparser", TOP & "/calarm/gcmonitor")
 
