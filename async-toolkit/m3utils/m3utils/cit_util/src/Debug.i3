@@ -25,8 +25,12 @@ INTERFACE Debug;
 IMPORT Fmt, Wr, Pathname;
 IMPORT OSError;
 
+CONST DefaultLevel = 10;
+
 PROCEDURE Out(t : TEXT; 
-              minLevel : CARDINAL := 10; (* no print at lower levels*)
+              minLevel : CARDINAL := DefaultLevel; 
+              (* no print at lower levels*)
+
               cr:=TRUE;                  (* carriage return yes/no *)
               this : TEXT := NIL         (* debug if "DebugThis for this" *)
   );
