@@ -407,5 +407,43 @@ PROCEDURE AddV(READONLY a, b : V; VAR c : V) =
     END
   END AddV;
 
+PROCEDURE SubM(READONLY a, b : M; VAR c : M) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      FOR j := FIRST(c[0]) TO LAST(c[0]) DO
+        c[i,j] := a[i,j] - b[i,j] 
+      END
+    END
+  END SubM;
+
+PROCEDURE AddM(READONLY a, b : M; VAR c : M) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      FOR j := FIRST(c[0]) TO LAST(c[0]) DO
+        c[i,j] := a[i,j] + b[i,j] 
+      END
+    END
+  END AddM;
+
+PROCEDURE MulSM(s : Base; READONLY a : M; VAR c : M) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      FOR j := FIRST(c[0]) TO LAST(c[0]) DO
+        c[i,j] := s * a[i,j]
+      END
+    END
+  END MulSM;
+
+PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
+                            bw : Elem.T; READONLY b : M;
+                            VAR c : M) =
+  BEGIN
+    FOR i := FIRST(c) TO LAST(c) DO
+      FOR j := FIRST(c[0]) TO LAST(c[0]) DO
+        c[i,j] := aw*a[i,j] + bw*b[i,j] 
+      END
+    END
+  END LinearCombination;
+
 BEGIN END Matrix2.
 

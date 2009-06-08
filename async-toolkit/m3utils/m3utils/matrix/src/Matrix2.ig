@@ -17,6 +17,7 @@ PROCEDURE Copy(READONLY a : M; VAR b : M);
 PROCEDURE Zero(VAR a : M);
 PROCEDURE MakeUnit(VAR a : M);
 
+PROCEDURE MulSM(s : Base; READONLY a : M; VAR res : M);
 PROCEDURE MulMM(READONLY a, b : M; VAR res : M);
 
 PROCEDURE MulMV(READONLY a : M; READONLY v : V; VAR res : V);
@@ -90,4 +91,13 @@ PROCEDURE SetCol(VAR m : M; c : CARDINAL; READONLY col : V);
 PROCEDURE SubV(READONLY a, b : V; VAR c : V);
 PROCEDURE AddV(READONLY a, b : V; VAR c : V);
 
+PROCEDURE SubM(READONLY a, b : M; VAR c : M);
+PROCEDURE AddM(READONLY a, b : M; VAR c : M);
+
+PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
+                            bw : Elem.T; READONLY b : M;
+                            VAR c : M);
+  (* c <- aw * a + bw * b *)
+
 END Matrix2.
+
