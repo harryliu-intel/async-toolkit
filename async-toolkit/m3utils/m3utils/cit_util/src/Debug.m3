@@ -67,11 +67,11 @@ PROCEDURE HaveEnv(var : TEXT) : BOOLEAN =
     END
   END HaveEnv;
 
-PROCEDURE DebugThis(this : TEXT) : BOOLEAN =
+PROCEDURE DebugThis(this : TEXT; def : BOOLEAN) : BOOLEAN =
 
   VAR
     env := "DEBUG" & this;
-    res := HaveEnv("DEBUGEVERYTHING") AND NOT HaveEnv("NO" & env) OR 
+    res := (def OR HaveEnv("DEBUGEVERYTHING")) AND NOT HaveEnv("NO" & env) OR 
            HaveEnv(env) AND NOT HaveEnv("DEBUGNOTHING");
   BEGIN
     IF level > 100 THEN
@@ -126,7 +126,7 @@ VAR tMu := NEW(MUTEX);
 PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
   VAR timeText : TEXT := NIL;
   BEGIN
-    IF this # NIL AND NOT DebugThis(this) THEN 
+    IF this # NIL AND NOT DebugThis(this,FALSE) THEN 
       RETURN 
     END;
 

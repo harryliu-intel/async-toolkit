@@ -90,8 +90,7 @@ PROCEDURE FmtPointer(p : REFANY; base : Fmt.Base := 16) : TEXT;
    (unless DEBUGEVERYTHING and not NODEBUG & this)...
 
 *)
-
-PROCEDURE DebugThis(this : TEXT) : BOOLEAN;
+PROCEDURE DebugThis(this : TEXT; default := FALSE) : BOOLEAN;
 
 TYPE Options = { PrintPID, PrintThreadID, PrintTime };
 
