@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE StepFunction;
-IMPORT LongRealSeq, LongRealPair, LongRealSetDef, LongrealArraySort;
+IMPORT LongRealSeq, LongRealPair, LongrealSetDef, LongrealArraySort;
 IMPORT Wr, Fmt, Thread;
 
 <* FATAL Thread.Alerted *>
@@ -92,7 +92,7 @@ PROCEDURE BinRecalcSteps(bin : BinOp) =
       END;
 
       (* oh, I'm so lazy *)
-      WITH set = NEW(LongRealSetDef.T).init() DO
+      WITH set = NEW(LongrealSetDef.T).init() DO
         WHILE ap < asteps.size() AND asteps.get(ap) <= end DO
           EVAL set.insert(asteps.get(ap)); INC(ap)
         END;

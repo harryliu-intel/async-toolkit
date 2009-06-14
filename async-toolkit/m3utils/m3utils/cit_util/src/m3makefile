@@ -99,9 +99,9 @@ MkSetDef("Card", "Cardinal")
 MkSetArray("Card", "Cardinal", "CardSet")
 Table("CardRef", "Cardinal", "Refany")
 
-MkSet("LongReal", "LongrealType")
-MkSetDef("LongReal", "LongrealType")
-Table("LongRealRef", "LongrealType", "Refany")
+MkSet("Longreal", "LongrealType")
+MkSetDef("Longreal", "LongrealType")
+%Table("LongRealRef", "LongrealType", "Refany")
 
 gmodule("Ref")
 gmodule("ArrayRef")
