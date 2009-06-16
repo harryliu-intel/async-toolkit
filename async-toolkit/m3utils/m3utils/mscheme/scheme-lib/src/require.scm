@@ -6,6 +6,8 @@
 
 (define require-modules '())
 
+(let ((a-noticeable-symbol 0)) )
+
 (let ((loaded-modules '()))
 
 	(define (mem? elem-eq? x list)
