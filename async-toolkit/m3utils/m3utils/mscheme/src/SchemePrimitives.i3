@@ -9,7 +9,7 @@
 INTERFACE SchemePrimitives;
 
 CONST
-  Code = "(define call/cc    call-with-current-continuation)\n" &
+  Code = "'a (define call/cc    call-with-current-continuation)\n" &
 "(define first 	   car)\n" &
 "(define second     cadr)\n" &
 "(define third      caddr)\n" &
