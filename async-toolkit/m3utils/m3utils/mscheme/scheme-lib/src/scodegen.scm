@@ -395,23 +395,37 @@
      "  <*FATAL FloatMode.Trap, Lex.Error*>" dnl
      "  VAR query := \"select count(*) from " tbl-name " where \"&" dnl
      "                        restriction;" dnl
+		 "      attempts := 5;" dnl
      "  BEGIN" dnl
-     "    TRY" dnl
      "    db.sync();" dnl
-     "    WITH cnt = db.sExec(query).getInt(\"count\") DO" dnl
-     "      IF cnt > 0 THEN" dnl
-     "        WITH id = db.sExec(\"select " tbl-name "_id from " tbl-name " where \"& restriction).getInt(\"" tbl-name "_id\") DO" dnl
-     "          VAR r := record; BEGIN " dnl
-     "            r." tbl-name "_id := id;" dnl
-     "            Update(db,r,ex)" dnl
-     "           END" dnl
-     "        END" dnl
-     "      ELSE" dnl
-     "        Insert(db,record,ex)" dnl
+		 "    LOOP" dnl
+     "      TRY" dnl
+     "        WITH cnt = db.sExec(query, abortConnectionOnFail := attempts <= 1).getInt(\"count\") DO" dnl
+     "          IF cnt > 0 THEN" dnl
+     "            WITH id = db.sExec(\"select " tbl-name "_id from " tbl-name " where \"& restriction, abortConnectionOnFail := attempts <= 1).getInt(\"" tbl-name "_id\") DO" dnl
+     "              VAR r := record; BEGIN " dnl
+     "                r." tbl-name "_id := id;" dnl
+     "                Update(db,r,ex)" dnl
+     "               END" dnl
+     "            END" dnl
+     "          ELSE" dnl
+     "            Insert(db,record,ex)" dnl
+     "          END" dnl
+     "        END(*WITH*);" dnl
+		 "        EXIT" dnl
+     "      EXCEPT" dnl
+     "        DBerr.Error(txt) =>" dnl
+     "          Debug.Out(\"caught DBerr.Error, \" & txt & \" attempts = \""dnl
+		 "             & Fmt.Int(attempts));" dnl
+     "          DEC(attempts);" dnl
+     "          IF attempts = 0 THEN" dnl 
+		 "            ex.exception(query,txt);" dnl 
+		 "            EXIT" dnl
+     "          ELSE" dnl
+     "            Thread.Pause(NEW(Random.Default)." dnl
+     "                  init().longreal(1.0d0,3.0d0))" dnl
+     "          END" dnl
      "      END" dnl
-     "    END(*WITH*)" dnl
-     "    EXCEPT" dnl
-     "      DBerr.Error(txt) => ex.exception(query,txt)" dnl
      "    END" dnl
      "  END" dnl
      mp)
@@ -554,20 +568,30 @@
 (define (dis-dirty-m3 tbl mp)
   ;; print the entire routine for manipulating the dirty bit
   (let ((tbl-name (car tbl)))
+    (dis "  PROCEDURE Exec(q : TEXT) RAISES { DBerr.Error } =" dnl
+         "    BEGIN" dnl
+         "      IF sync THEN" dnl
+         "        EVAL db.sExec(q, abortConnectionOnFail := FALSE)" dnl
+         "      ELSE" dnl
+				 "        db.aExec(q, ex)" dnl
+         "      END" dnl
+         "    END Exec;" dnl
+         dnl mp)
+
     (dis "  BEGIN " dnl mp)
 
     (dis "    IF row # AllRows THEN " dnl mp)
 
-    (dis "      db.aExec(\"update " 
+    (dis "      Exec(\"update " 
    tbl-name 
-        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \";\", ex)" 
+        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \";\")" 
    dnl mp)      
 
     (dis "    ELSE " dnl mp)
 
-    (dis "      db.aExec(\"update " 
+    (dis "      Exec(\"update " 
    tbl-name 
-   " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \";\", ex)" 
+   " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \";\")" 
    dnl mp)
 
     (dis "    END " dnl mp)
@@ -617,7 +641,7 @@
 (define (dis-intf-imports fields ip)
   (let ((imports
    (append (list "DBerr" "Database" "DatabaseTable" "DesynchronizedDB"
-                 "UpdateMonitor"
+                 "UpdateMonitor" "Thread" "Random" "Debug"
            "Scan" "Fmt" "Lex" "FloatMode" "PGSQLScan" "TextSeq"
            "TextUtils" "DBTable")
      (map type->m3-intfname 
@@ -710,7 +734,7 @@
   (dirtyheader 
     (list
      "SetDirty" 
-     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\")"
+     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
      dis-dirty-m3
      ))
    (upinsert
@@ -851,7 +875,7 @@
    (dirtyheader 
     (list
      "SetDirty" 
-     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\")"
+     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
      dis-dirty-m3
      ))
    
