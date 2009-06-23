@@ -1,6 +1,7 @@
 /* $Id$ */
 import ("libm3")
 
+resource ("m3.scm")
 resource ("basic-defs.scm")
 resource ("display.scm")
 resource ("mergesort.scm")
