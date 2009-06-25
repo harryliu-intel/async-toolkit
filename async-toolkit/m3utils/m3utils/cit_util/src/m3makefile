@@ -350,6 +350,8 @@ Sorted_table("LongrealRef", "LongrealType", "Refany")
 
 Module("SloppyTimeConverter")
 
+Module ("XTime")
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Library("cit_util")
