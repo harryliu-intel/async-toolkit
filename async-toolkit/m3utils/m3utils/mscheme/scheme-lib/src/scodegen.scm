@@ -573,7 +573,7 @@
          "      IF sync THEN" dnl
          "        EVAL db.sExec(q, abortConnectionOnFail := FALSE)" dnl
          "      ELSE" dnl
-				 "        db.aExec(q, ex)" dnl
+				 "        NARROW(db,DesynchronizedDB.T).aExec(q, ex)" dnl
          "      END" dnl
          "    END Exec;" dnl
          dnl mp)
@@ -734,7 +734,7 @@
   (dirtyheader 
     (list
      "SetDirty" 
-     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
+     "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
      dis-dirty-m3
      ))
    (upinsert
@@ -875,7 +875,7 @@
    (dirtyheader 
     (list
      "SetDirty" 
-     "(db : DesynchronizedDB.T; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
+     "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
      dis-dirty-m3
      ))
    
