@@ -6,6 +6,7 @@ IMPORT TextReader, Lex, FloatMode, IP, RTParams, Scan;
 IMPORT Fmt;
 IMPORT Wr, Stdio, Env, Thread;
 IMPORT TCP, AL, Process;
+IMPORT Rd, ConnRW;
 (* were not allowed to import Debug, since Debug imports us *)
 
 PROCEDURE Now() : T =
@@ -115,18 +116,38 @@ TYPE
     apply := ClApply;
   END;
 
-PROCEDURE CLApply(cl : Closure) : REFANY =
+PROCEDURE ClApply(cl : Closure) : REFANY =
+  <*FATAL Thread.Alerted, Wr.Failure*>
   BEGIN
     TRY
       LOOP
         WITH line = Rd.GetLine(cl.rd) DO
           (* set the time ! *)
+          WITH now = Time.Now(),
+               tgt = Scan.LongReal(line) DO
+            TRY
+              AdjustOffset(tgt - now)
+            EXCEPT
+              CantAdjust =>
+              Process.Crash("XTime.ClApply: can't adjust time by " & 
+                Fmt.LongReal(tgt - now) & " seconds")
+            END
+          END
         END;
         cl.initialized := TRUE
       END
     EXCEPT
+      Rd.EndOfFile, Rd.Failure => 
+      Wr.PutText(Stdio.stderr, 
+          "Warning: lost connection to XTime source, clock now free-running");
+      Wr.Flush(Stdio.stderr);
+      RETURN NIL 
+    |
+      Lex.Error, FloatMode.Trap =>
+      Process.Crash("Error: XTime source data mis-formatted");
+      <*ASSERT FALSE*>
     END
-  END CLApply;
+  END ClApply;
 
 <*FATAL TextReader.NoMore, Lex.Error, FloatMode.Trap*>
 VAR
@@ -185,7 +206,6 @@ BEGIN
                 host & "\": TCP connection failure : " & AL.Format(e))
             END
           END
-          
         END
       END
     END

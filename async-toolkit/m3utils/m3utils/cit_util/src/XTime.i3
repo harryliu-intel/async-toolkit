@@ -12,6 +12,11 @@ IMPORT Time;
    The difference is that XTime can be set to "fake" time, to do 
    system testing (e.g.).
 
+   System can conveniently be initialized by providing an address for a 
+   TCP XTime server on the command line:
+
+   @M3xtime=<host>:<port>
+
 *)
 
 TYPE T = Time.T;
