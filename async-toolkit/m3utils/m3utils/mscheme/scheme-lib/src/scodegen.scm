@@ -584,14 +584,14 @@
 
     (dis "      Exec(\"update " 
    tbl-name 
-        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \";\")" 
+        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \" and dirty=\"&Fmt.Bool(NOT to)&\";\")" 
    dnl mp)      
 
     (dis "    ELSE " dnl mp)
 
     (dis "      Exec(\"update " 
    tbl-name 
-   " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \";\")" 
+   " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \" and dirty=\"&Fmt.Bool(NOT to)&\";\")" 
    dnl mp)
 
     (dis "    END " dnl mp)
