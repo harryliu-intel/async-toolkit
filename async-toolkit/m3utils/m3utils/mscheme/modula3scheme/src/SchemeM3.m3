@@ -413,6 +413,17 @@ PROCEDURE WrCloseApply(<*UNUSED*>p : SchemeProcedure.T;
 (* this is sort-of thread safe *)
 VAR myHostName : SchemeSymbol.T := NIL;
 
+PROCEDURE FmtAddr(ip : IP.Address) : TEXT =
+  VAR 
+    res := "";
+  BEGIN
+    FOR i := FIRST(ip.a) TO LAST(ip.a) DO
+      res := res & Fmt.Int(ip.a[i]);
+      IF i # LAST(ip.a) THEN res := res & "." END
+    END;
+    RETURN res
+  END FmtAddr;
+
 PROCEDURE HostnameApply(<*UNUSED*>p : SchemeProcedure.T; 
                         <*UNUSED*>interp : Scheme.T; 
                         <*UNUSED*>args : Object) : Object RAISES { E } =
@@ -420,8 +431,13 @@ PROCEDURE HostnameApply(<*UNUSED*>p : SchemeProcedure.T;
     IF myHostName # NIL THEN RETURN myHostName END;
 
     TRY
-      myHostName :=
-        SchemeSymbol.Symbol(IP.GetCanonicalByAddr(IP.GetHostAddr()));
+      WITH hostAddr = IP.GetHostAddr(),
+           hostCanon= IP.GetCanonicalByAddr(hostAddr) DO
+        IF hostCanon = NIL THEN
+          RAISE E ("No host name mapping for address " & FmtAddr(hostAddr))
+        END;
+        myHostName := SchemeSymbol.Symbol(hostCanon)
+      END;
       RETURN myHostName
     EXCEPT
       IP.Error(ec) =>
