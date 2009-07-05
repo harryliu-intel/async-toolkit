@@ -243,7 +243,7 @@ PROCEDURE ReadALineNRL(t : NonReadLine) : TEXT
   RAISES { Rd.EndOfFile, Error.E } =
   BEGIN 
     TRY
-      Wr.PutText(Stdio.stdout, t.prompt);
+      Wr.PutText(Stdio.stdout, t.prompt); Wr.Flush(Stdio.stdout);
       RETURN Rd.GetLine(Stdio.stdin) 
     EXCEPT
       Rd.Failure(x) => RAISE Error.E(x)
@@ -272,7 +272,7 @@ PROCEDURE SendCmdArgNRL(<*UNUSED*>t : NonReadLine; c : CHAR; arg : TEXT)
   BEGIN
     TRY
       CASE c OF 
-        'A', 'D' => Wr.PutText(Stdio.stdout, arg)
+        'A', 'D' => Wr.PutText(Stdio.stdout, arg); Wr.Flush(Stdio.stdout)
       |
         'P' => (* skip, we have it in t.prompt *)
       ELSE
