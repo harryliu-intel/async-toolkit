@@ -26,7 +26,7 @@ BEGIN
       IF pp.keywordPresent("-noreadline") THEN
         readLine := NIL
       ELSE
-        readLine := NEW(ReadLine.T).init()
+        readLine := NEW(ReadLine.Default).init()
       END;
 
       pp.skipParsed();

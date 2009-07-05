@@ -50,7 +50,7 @@ PROCEDURE A(cl : Closure) : REFANY =
 VAR
   cnt := 1;
 BEGIN
-  WITH t = NEW(ReadLine.T).init() DO
+  WITH t = NEW(ReadLine.Default).init() DO
     t.startProc();
     t.display("Hello there.\n");
     LOOP

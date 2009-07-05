@@ -74,7 +74,7 @@ BEGIN
 
         DefineEnvironments(scm);
 
-        MainLoop(NEW(ReadLine.T).init(), scm)
+        MainLoop(NEW(ReadLine.Default).init(), scm)
       END
     EXCEPT
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)

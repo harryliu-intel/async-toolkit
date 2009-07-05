@@ -177,7 +177,7 @@ BEGIN
               Csighandler.install_int_handler();
               scm.readEvalWriteLoop(NEW(Interrupter))
             ELSE
-              MainLoop(NEW(ReadLine.T).init(), scm)
+              MainLoop(NEW(ReadLine.Default).init(), scm)
             END
           END
         END

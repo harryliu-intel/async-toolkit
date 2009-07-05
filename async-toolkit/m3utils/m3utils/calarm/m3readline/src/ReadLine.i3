@@ -19,17 +19,21 @@ IMPORT ReadLineError AS Error, ReadLineLogFormat, ReadLineTable;
  *)
 
 TYPE
-  T <: Public;
+  Default <: U;
 
-  NonReadLine <: Public;
+  NonReadLine <: U;
   (* a T that doesn't actually use readline.  Simplify debugging, 
      etc. *)
 
-  Public = Displayer.T OBJECT METHODS
+  U = Public OBJECT METHODS
     init(startGetter := TRUE) : T RAISES { IP.Error, NetObj.Error, Thread.Alerted  };
     (* setting startGetter to FALSE is for debugging, won't start
        the keyboard reader (you have to do it manually) *)
+  END;
 
+  T = Public;
+
+  Public = Displayer.T OBJECT METHODS
     startProc(doDebug := FALSE) RAISES { Error.E, NetObj.Error, Thread.Alerted  }; 
     (* start Unix process front-end *)
 

@@ -11,11 +11,12 @@ IMPORT NetObj;
 IMPORT ReadLineError AS Error;
 IMPORT ReadLineTable;
 IMPORT Stdio;
+IMPORT RTParams;
 
 <* FATAL Thread.Alerted *>
 
 REVEAL
-  T = Std BRANDED Brand OBJECT 
+  Default = Std BRANDED Brand OBJECT 
     port : IP.Port;
     conn : TCP.Connector;
     completion : ProcUtils.Completion;
@@ -30,6 +31,7 @@ REVEAL
   END;
 
   NonReadLine = Std BRANDED Brand & " (NonReadLine)" OBJECT
+  OVERRIDES
     sendCmd := SendCmdNRL;
     sendCmdArg := SendCmdArgNRL;
     quit := DummyQuit;
@@ -38,7 +40,7 @@ REVEAL
   END;
 
 TYPE
-  Std = Public OBJECT
+  Std = U OBJECT
     (*
        mu and sMu serve different purposes:
        mu   -- keep normal user calls ordered
@@ -79,8 +81,8 @@ TYPE
     sendCmdArg(c : CHAR; t : TEXT) RAISES { Error.E };
     readALine() : TEXT RAISES { Rd.EndOfFile, Error.E };
   OVERRIDES
-    readLine   := ReadLine;
     init := InitStd;
+    readLine   := ReadLine;
     setPrompt := SetPrompt;
     display := Display;
     displayTbl := DisplayTbl;
@@ -115,14 +117,14 @@ PROCEDURE StopLogging(t : Std) RAISES { Error.E } =
     END
   END StopLogging;
 
-PROCEDURE SendCmd(t : T; c : CHAR) RAISES { Error.E } = 
+PROCEDURE SendCmd(t : Default; c : CHAR) RAISES { Error.E } = 
   BEGIN 
     TRY 
       Wr.PutChar(t.wr, c); Wr.PutChar(t.wr, Null); Wr.Flush(t.wr) 
     EXCEPT Wr.Failure(err) => RAISE Error.E(err) END 
   END SendCmd;
 
-PROCEDURE SendCmdArg(t : T; c : CHAR; arg : TEXT) RAISES { Error.E } = 
+PROCEDURE SendCmdArg(t : Default; c : CHAR; arg : TEXT) RAISES { Error.E } = 
   BEGIN 
     FOR i := 0 TO Text.Length(arg)-1 DO
       <* ASSERT Text.GetChar(arg,i) # Null *>
@@ -138,7 +140,7 @@ PROCEDURE SendCmdArg(t : T; c : CHAR; arg : TEXT) RAISES { Error.E } =
     END
   END SendCmdArg;
 
-PROCEDURE ReadALine(t : T) : TEXT RAISES { Rd.EndOfFile, Error.E } =
+PROCEDURE ReadALine(t : Default) : TEXT RAISES { Rd.EndOfFile, Error.E } =
   VAR wx := Wx.New();
   BEGIN
     LOCK t.mu DO
@@ -156,9 +158,13 @@ PROCEDURE ReadALine(t : T) : TEXT RAISES { Rd.EndOfFile, Error.E } =
     END
   END ReadALine;
 
-PROCEDURE Init(t : T; startGetter : BOOLEAN) : T 
+PROCEDURE Init(t : Default; startGetter : BOOLEAN) : T 
   RAISES { IP.Error, NetObj.Error } =
   BEGIN
+    IF RTParams.Value("noreadline") # NIL THEN
+      RETURN NEW(NonReadLine).init(startGetter)
+    END;
+
     EVAL Std.init(t,startGetter);
     WITH ep = IP.Endpoint { IP.NullAddress, IP.NullPort },
          conn = TCP.NewConnector(ep) DO
@@ -169,7 +175,7 @@ PROCEDURE Init(t : T; startGetter : BOOLEAN) : T
     RETURN t
   END Init;
 
-PROCEDURE StartProc(t : T; doDebug : BOOLEAN) RAISES { Error.E } =
+PROCEDURE StartProc(t : Default; doDebug : BOOLEAN) RAISES { Error.E } =
   VAR debug := "";
   BEGIN
     IF doDebug THEN debug := " -d" END;
@@ -194,7 +200,7 @@ PROCEDURE StartProc(t : T; doDebug : BOOLEAN) RAISES { Error.E } =
     END
   END StartProc;
 
-PROCEDURE Quit(t : T) RAISES { Error.E } =
+PROCEDURE Quit(t : Default) RAISES { Error.E } =
   BEGIN 
     TRY
       LOCK t.mu DO 
@@ -329,7 +335,7 @@ PROCEDURE DisplayTbl(t : Std; what : Table; logFormat : LogFormat)
 
 TYPE 
   SourceClosure = Thread.Closure OBJECT
-    t : T;
+    t : Std;
     rd : Rd.T;
   OVERRIDES 
     apply := SourceApply;
