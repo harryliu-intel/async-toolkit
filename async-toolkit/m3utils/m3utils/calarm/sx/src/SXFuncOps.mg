@@ -2,7 +2,7 @@
 
 GENERIC MODULE SXFuncOps(Arg, Result);
 IMPORT SXClass;
-IMPORT Time;
+IMPORT XTime AS Time;
 FROM SX IMPORT Uninitialized;
 IMPORT SX;
 IMPORT SXInt;

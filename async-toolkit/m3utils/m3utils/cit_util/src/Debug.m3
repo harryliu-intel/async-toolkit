@@ -40,7 +40,7 @@ IMPORT ThreadF;
 IMPORT Pathname;
 IMPORT LockedTextBooleanTbl;
 IMPORT RdWrReset;
-IMPORT TZ, Time;
+IMPORT TZ, XTime AS Time;
 IMPORT DebugStream, DebugStreamList;
 
 VAR options := SET OF Options {};

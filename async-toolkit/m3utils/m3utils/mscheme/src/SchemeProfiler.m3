@@ -6,7 +6,7 @@ FROM SchemeUnixDeps IMPORT RUSAGE_SELF, struct_rusage;
 FROM Utime IMPORT struct_timeval;
 IMPORT Fmt, Debug;
 IMPORT LongrealPQ, TextRefTbl;
-IMPORT Time;
+IMPORT XTime AS Time;
 IMPORT TextIntTbl;
 IMPORT SchemeProfilerSysDep;
 

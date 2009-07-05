@@ -7,7 +7,7 @@ FROM Scheme IMPORT E, Object, SymbolCheck;
 
 IMPORT SchemeProcedure, SchemePrimitive;
 IMPORT SchemeJailBreak, SchemeM3TableOps;
-IMPORT Time, Date, RTCollector, Pathname;
+IMPORT XTime AS Time, Date, RTCollector, Pathname;
 IMPORT OSError;
 IMPORT SchemeSymbol;
 FROM SchemeUtils IMPORT First, Second, Third, Stringify, Error;

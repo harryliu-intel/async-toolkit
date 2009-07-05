@@ -155,7 +155,7 @@
    (list 'double-precision "double precision" "LONGREAL"  #f  lr-conversion )
    (list 'boolean          "boolean"          "BOOLEAN"   #f  bool-conversion )
    (list 'timestamp        "timestamp with time zone" 
-                                              "Time"      #t  ts-conversion)
+                                              "XTime"     #t  ts-conversion)
    (list 'id               "integer"          "INTEGER"   #f  int-conversion)  
    )
 )

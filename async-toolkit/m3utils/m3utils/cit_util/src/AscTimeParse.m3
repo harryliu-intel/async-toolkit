@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE AscTimeParse;
-IMPORT TZ, Time, Date, Text, Scan;
+IMPORT TZ, XTime AS Time, Date, Text, Scan;
 IMPORT FloatMode, Lex;
 
 PROCEDURE ParseDay(day : TEXT) : Date.WeekDay RAISES { IllegalFormat } =

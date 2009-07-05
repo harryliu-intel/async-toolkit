@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE SXTime;
-IMPORT Time, SXLongReal, Thread, SXInt;
+IMPORT XTime AS Time, SXLongReal, Thread, SXInt;
 FROM Math IMPORT log, pow;
 
 PROCEDURE log2(x : LONGREAL) : LONGREAL = 

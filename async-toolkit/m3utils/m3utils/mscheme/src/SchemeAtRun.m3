@@ -2,7 +2,7 @@
 
 MODULE SchemeAtRun;
 IMPORT SchemePrimitive, SchemeProcedure;
-IMPORT Time;
+IMPORT XTime AS Time;
 IMPORT Scheme;
 FROM Scheme IMPORT E, Object, Environment;
 IMPORT Thread;

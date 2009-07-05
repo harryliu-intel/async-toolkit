@@ -3,7 +3,7 @@
 MODULE Main;
 IMPORT ReadLine;
 IMPORT VarUI;
-IMPORT Fmt, Time;
+IMPORT Fmt, XTime AS Time;
 
 PROCEDURE ShowTime(p : VarUI.VarProxy; varName : TEXT) : TEXT =
   BEGIN RETURN Fmt.LongReal(Time.Now()) END ShowTime;

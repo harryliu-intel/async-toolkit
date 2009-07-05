@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 UNSAFE MODULE TZ;
-IMPORT Utime, UtimeR, Date, Time;
+IMPORT Utime, UtimeR, Date, XTime AS Time;
 FROM M3toC IMPORT CopyTtoS, FreeCopiedS, CopyStoT;
 IMPORT CTZ, Text;
 IMPORT Debug, Fmt;

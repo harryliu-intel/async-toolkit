@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 UNSAFE MODULE UCTime;
-IMPORT Time;
+IMPORT XTime AS Time;
 IMPORT UtimeR;
 IMPORT M3toC;
 FROM Ctypes IMPORT char_star, long_star;

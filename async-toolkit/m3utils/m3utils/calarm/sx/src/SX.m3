@@ -3,7 +3,7 @@
 MODULE SX EXPORTS SX, SXSelect;
 IMPORT SXClass;
 IMPORT Thread, ThreadF;
-IMPORT Time;
+IMPORT XTime AS Time;
 IMPORT IntSet, IntSetDef;
 IMPORT IntRefTbl;
 IMPORT Debug;

@@ -7,7 +7,7 @@ IMPORT ProcUtils, TextWr, SchemeProcedure;
 IMPORT SchemePrimitive, SchemePair, SchemeUtils, Wr, SchemeLongReal;
 IMPORT Debug;
 IMPORT TextRd;
-IMPORT Time;
+IMPORT XTime AS Time;
 IMPORT Thread;
 IMPORT SchemeString;
 IMPORT Rd;

@@ -41,7 +41,7 @@ IMPORT Thread;
 IMPORT SchemePair;
 IMPORT CardRefTbl, Random;
 IMPORT RefSeq;
-IMPORT Time;
+IMPORT XTime AS Time;
 
 <* FATAL Thread.Alerted *>
 

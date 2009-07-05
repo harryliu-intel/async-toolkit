@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 GENERIC MODULE SXType(Elem);
-IMPORT Time, SXClass, SX;
+IMPORT XTime AS Time, SXClass, SX;
 FROM SX IMPORT Uninitialized;
 
 REVEAL 

@@ -4,7 +4,7 @@ MODULE Main;
 IMPORT ReadLine;
 IMPORT Fmt;
 IMPORT Thread, Rd, Debug, Wx, Text, FileRd, TextReader;
-IMPORT Date, Time;
+IMPORT Date, XTime AS Time;
 
 CONST TE = Text.Equal;
 

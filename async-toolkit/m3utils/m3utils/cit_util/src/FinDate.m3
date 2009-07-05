@@ -3,7 +3,7 @@
 MODULE FinDate;
 IMPORT Scan, TextReader, FloatMode, Lex;
 IMPORT Fmt, Text, Integer;
-IMPORT Date, Time;
+IMPORT Date, XTime AS Time;
 IMPORT Word;
 IMPORT IntFinDateTbl;
 

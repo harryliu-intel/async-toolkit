@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE SloppyTimeConverter;
-IMPORT Time, TZ, HMTime, SortedLongrealRefTbl, TZRefTbl;
+IMPORT XTime AS Time, TZ, HMTime, SortedLongrealRefTbl, TZRefTbl;
 
 REVEAL
   T = Public BRANDED Brand OBJECT

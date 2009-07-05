@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE SafeTZ EXPORTS TZ;
-IMPORT Time, Text, Fmt, FinDate, Date, Debug;
+IMPORT XTime AS Time, Text, Fmt, FinDate, Date, Debug;
 IMPORT TextReader, HMTime;
 IMPORT TextRefTbl;
 IMPORT TextWr, Wr, Thread;

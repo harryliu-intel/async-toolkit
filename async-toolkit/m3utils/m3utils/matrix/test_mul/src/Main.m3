@@ -4,7 +4,7 @@ MODULE Main;
 IMPORT Matrix, MatrixM3;
 IMPORT Random;
 IMPORT RefSeq;
-IMPORT Time;
+IMPORT XTime AS Time;
 IMPORT IO, Fmt;
 
 IMPORT RMatrix2 AS M2, RM2M3 AS M2M3;
