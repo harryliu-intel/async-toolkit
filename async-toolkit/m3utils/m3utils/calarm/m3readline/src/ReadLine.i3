@@ -21,6 +21,10 @@ IMPORT ReadLineError AS Error, ReadLineLogFormat, ReadLineTable;
 TYPE
   T <: Public;
 
+  NonReadLine <: Public;
+  (* a T that doesn't actually use readline.  Simplify debugging, 
+     etc. *)
+
   Public = Displayer.T OBJECT METHODS
     init(startGetter := TRUE) : T RAISES { IP.Error, NetObj.Error, Thread.Alerted  };
     (* setting startGetter to FALSE is for debugging, won't start
@@ -30,8 +34,11 @@ TYPE
     (* start Unix process front-end *)
 
     (* all the following are synchronized w.r.t. each other... *)
-    readLine() : TEXT RAISES { Rd.EndOfFile, Error.E, NetObj.Error, Thread.Alerted   };
+    readLine() : TEXT 
+      RAISES { Rd.EndOfFile, Error.E, NetObj.Error, Thread.Alerted   };
+
     setPrompt(to : TEXT) RAISES { Error.E, NetObj.Error, Thread.Alerted   };
+
     quit() RAISES { Error.E, NetObj.Error, Thread.Alerted   };
 
     startLogging(pn : Pathname.T; 

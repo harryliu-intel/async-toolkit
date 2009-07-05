@@ -10,11 +10,35 @@ IMPORT TextRefTbl;
 IMPORT NetObj;
 IMPORT ReadLineError AS Error;
 IMPORT ReadLineTable;
+IMPORT Stdio;
 
 <* FATAL Thread.Alerted *>
 
 REVEAL
-  T = Public BRANDED Brand OBJECT 
+  T = Std BRANDED Brand OBJECT 
+    port : IP.Port;
+    conn : TCP.Connector;
+    completion : ProcUtils.Completion;
+    wr : Wr.T;
+  OVERRIDES
+    quit       := Quit;
+    init       := Init;
+    startProc  := StartProc;
+    sendCmd    := SendCmd;
+    sendCmdArg := SendCmdArg;
+    readALine  := ReadALine;
+  END;
+
+  NonReadLine = Std BRANDED Brand & " (NonReadLine)" OBJECT
+    sendCmd := SendCmdNRL;
+    sendCmdArg := SendCmdArgNRL;
+    quit := DummyQuit;
+    startProc := DummyStartProc;
+    readALine := ReadALineNRL;
+  END;
+
+TYPE
+  Std = Public OBJECT
     (*
        mu and sMu serve different purposes:
        mu   -- keep normal user calls ordered
@@ -26,10 +50,6 @@ REVEAL
     sMu : MUTEX;
     closed := FALSE;
     rd : Rd.T; 
-    wr : Wr.T;
-    port : IP.Port;
-    completion : ProcUtils.Completion;
-    conn : TCP.Connector;
     manualStart : BOOLEAN;
     prompt : TEXT;
 
@@ -41,7 +61,8 @@ REVEAL
 
     (* the following three implement the "source" command 
        lines is the buffer of lines read so far from the reader.
-       sourcing is set to Sourcing.Reading from right before the first line appears in the 
+       sourcing is set to Sourcing.Reading from right before the first line 
+       appears in the 
        buffer until just after the last line appears in the buffer.
        This permits a test, LOCKed by mu, of the condition
 
@@ -54,14 +75,13 @@ REVEAL
     sourcing := Sourcing.Idle;
     sc : Thread.Condition;
   METHODS
-    sendCmd(c : CHAR) RAISES { Error.E } := SendCmd;
-    sendCmdArg(c : CHAR; t : TEXT) RAISES { Error.E } := SendCmdArg;
+    sendCmd(c : CHAR) RAISES { Error.E };
+    sendCmdArg(c : CHAR; t : TEXT) RAISES { Error.E };
+    readALine() : TEXT RAISES { Rd.EndOfFile, Error.E };
   OVERRIDES
-    init := Init;
-    startProc := StartProc;
-    readLine := ReadLine;
+    readLine   := ReadLine;
+    init := InitStd;
     setPrompt := SetPrompt;
-    quit := Quit;
     display := Display;
     displayTbl := DisplayTbl;
     asyncDisplay := AsyncDisplay;
@@ -76,7 +96,7 @@ REVEAL
     source := Source;
   END;
 
-PROCEDURE StartLogging(t : T; 
+PROCEDURE StartLogging(t : Std; 
                        pn : Pathname.T; 
                        logAsync : BOOLEAN;
                        tblMode : TblMode) RAISES { OSError.E } =
@@ -86,7 +106,7 @@ PROCEDURE StartLogging(t : T;
     t.tblMode := tblMode
   END StartLogging;
 
-PROCEDURE StopLogging(t : T) RAISES { Error.E } =
+PROCEDURE StopLogging(t : Std) RAISES { Error.E } =
   BEGIN 
     TRY
       Wr.Close(t.logWr); t.logWr := NIL 
@@ -94,31 +114,6 @@ PROCEDURE StopLogging(t : T) RAISES { Error.E } =
       Wr.Failure(err) => RAISE Error.E(err)
     END
   END StopLogging;
-
-PROCEDURE StartProc(t : T; doDebug : BOOLEAN) RAISES { Error.E } =
-  VAR debug := "";
-  BEGIN
-    IF doDebug THEN debug := " -d" END;
-
-    IF NOT t.manualStart THEN
-      t.completion := ProcUtils.RunText("readlinefe "&Fmt.Int(t.port) & debug, 
-                                        stdout := ProcUtils.Stdout(), 
-                                        stdin := ProcUtils.Stdin(), 
-                                        stderr := ProcUtils.Stderr())
-    END;
-
-    TRY
-      WITH tcp = TCP.Accept(t.conn),
-           wr = ConnRW.NewWr(tcp),
-           rd = ConnRW.NewRd(tcp) DO
-        t.wr := wr;
-        t.rd := rd;
-        SendCmd(t, 'S')
-      END
-    EXCEPT
-      IP.Error(err) => RAISE Error.E(err)
-    END
-  END StartProc;
 
 PROCEDURE SendCmd(t : T; c : CHAR) RAISES { Error.E } = 
   BEGIN 
@@ -143,27 +138,149 @@ PROCEDURE SendCmdArg(t : T; c : CHAR; arg : TEXT) RAISES { Error.E } =
     END
   END SendCmdArg;
 
-PROCEDURE Init(t : T; startGetter : BOOLEAN) : T RAISES { IP.Error } =
+PROCEDURE ReadALine(t : T) : TEXT RAISES { Rd.EndOfFile, Error.E } =
+  VAR wx := Wx.New();
   BEGIN
-    t.manualStart := NOT startGetter;
-    t.mu := NEW(MUTEX);
-    t.sc := NEW(Thread.Condition);
-    t.sMu := NEW(MUTEX);
+    LOCK t.mu DO
+      LOCK t.sMu DO t.sendCmd('N') END;
+      LOOP
+        TRY
+          WITH c = Rd.GetChar(t.rd) DO
+            IF c = Null THEN EXIT ELSE Wx.PutChar(wx,c) END
+          END
+        EXCEPT
+          Rd.Failure(err) => RAISE Error.E(err)
+        END
+      END;
+      RETURN Wx.ToText(wx)
+    END
+  END ReadALine;
+
+PROCEDURE Init(t : T; startGetter : BOOLEAN) : T 
+  RAISES { IP.Error, NetObj.Error } =
+  BEGIN
+    EVAL Std.init(t,startGetter);
     WITH ep = IP.Endpoint { IP.NullAddress, IP.NullPort },
          conn = TCP.NewConnector(ep) DO
       t.port := TCP.GetEndPoint(conn).port;
       Debug.Out("PORT " & Fmt.Int(t.port));
       t.conn := conn
     END;
+    RETURN t
+  END Init;
+
+PROCEDURE StartProc(t : T; doDebug : BOOLEAN) RAISES { Error.E } =
+  VAR debug := "";
+  BEGIN
+    IF doDebug THEN debug := " -d" END;
+
+    IF NOT t.manualStart THEN
+      t.completion := ProcUtils.RunText("readlinefe "&Fmt.Int(t.port) & debug, 
+                                        stdout := ProcUtils.Stdout(), 
+                                        stdin := ProcUtils.Stdin(), 
+                                        stderr := ProcUtils.Stderr())
+    END;
+
+    TRY
+      WITH tcp = TCP.Accept(t.conn),
+           wr = ConnRW.NewWr(tcp),
+           rd = ConnRW.NewRd(tcp) DO
+        t.wr := wr;
+        t.rd := rd;
+        t.sendCmd('S')
+      END
+    EXCEPT
+      IP.Error(err) => RAISE Error.E(err)
+    END
+  END StartProc;
+
+PROCEDURE Quit(t : T) RAISES { Error.E } =
+  BEGIN 
+    TRY
+      LOCK t.mu DO 
+        LOCK t.sMu DO 
+          t.sendCmd('Q'); Wr.Close(t.wr); Rd.Close(t.rd); t.closed := TRUE
+        END;
+        TRY
+          t.completion.wait()
+        EXCEPT
+          ProcUtils.ErrorExit => RAISE Error.E(AtomList.List1(Atom.FromText("ProcUtils")))
+        END
+      END 
+    EXCEPT
+      Wr.Failure(err) => RAISE Error.E(err)
+    |
+      Rd.Failure(err) => RAISE Error.E(err)
+    END
+  END Quit;
+
+PROCEDURE InitStd(t : Std; startGetter : BOOLEAN) : T =
+  BEGIN
+    t.manualStart := NOT startGetter;
+    t.mu := NEW(MUTEX);
+    t.sc := NEW(Thread.Condition);
+    t.sMu := NEW(MUTEX);
     t.vars := NEW(TextRefTbl.Default).init();
     t.lines := NEW(RefSeq.T).init();
     RETURN t
-  END Init;
+  END InitStd;
+
+(**********************************************************************)
+
+PROCEDURE DummyQuit(<*UNUSED*>t : Std) = BEGIN END DummyQuit;
+
+PROCEDURE DummyStartProc(<*UNUSED*>p : Public; 
+                         <*UNUSED*>doDebug : BOOLEAN) =
+  BEGIN END DummyStartProc;
+
+PROCEDURE ReadALineNRL(t : NonReadLine) : TEXT 
+  RAISES { Rd.EndOfFile, Error.E } =
+  BEGIN 
+    TRY
+      Wr.PutText(Stdio.stdout, t.prompt);
+      RETURN Rd.GetLine(Stdio.stdin) 
+    EXCEPT
+      Rd.Failure(x) => RAISE Error.E(x)
+    |
+      Wr.Failure(x) => RAISE Error.E(x)
+    END
+  END ReadALineNRL;
+
+PROCEDURE SendCmdNRL(<*UNUSED*>t : NonReadLine; c : CHAR) =
+  BEGIN
+    CASE c OF
+      'S', 'I' => (* interrupt stuff not needed here *)
+    |
+      'N' => (* dont need this either *)
+    |
+      'E' => (* no longer used *)
+    |
+      'Q' => <*ASSERT FALSE*> (* would be a type mismatch *)
+    ELSE
+      <*ASSERT FALSE*> (* unknown *)
+    END
+  END SendCmdNRL;
+
+PROCEDURE SendCmdArgNRL(<*UNUSED*>t : NonReadLine; c : CHAR; arg : TEXT) 
+  RAISES { Error.E } =
+  BEGIN
+    TRY
+      CASE c OF 
+        'A', 'D' => Wr.PutText(Stdio.stdout, arg)
+      |
+        'P' => (* skip, we have it in t.prompt *)
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    EXCEPT
+      Wr.Failure(x) => RAISE Error.E(x)
+    END
+  END SendCmdArgNRL;
 
 (**********************************************************************)
 (* user methods follow *)
 
-PROCEDURE DisplayTbl(t : T; what : Table; logFormat : LogFormat) 
+PROCEDURE DisplayTbl(t : Std; what : Table; logFormat : LogFormat) 
   RAISES { Error.E, Rd.EndOfFile, NetObj.Error } = 
   VAR
     wr, logWr := NEW(TextWr.T).init();
@@ -249,7 +366,7 @@ PROCEDURE SourceApply(cl : SourceClosure) : REFANY =
     END
   END SourceApply;
 
-PROCEDURE Source(t : T; rd : Rd.T) =
+PROCEDURE Source(t : Std; rd : Rd.T) =
   BEGIN
     EVAL Thread.Fork(NEW(SourceClosure, t := t, rd := rd));
     
@@ -259,8 +376,7 @@ PROCEDURE Source(t : T; rd : Rd.T) =
     END
   END Source;
 
-PROCEDURE ReadLine(t : T) : TEXT RAISES { Rd.EndOfFile, Error.E } =
-  VAR wx := Wx.New();
+PROCEDURE ReadLine(t : Std) : TEXT RAISES { Rd.EndOfFile, Error.E } =
   BEGIN
     LOCK t.mu DO
       WHILE t.lines.size() > 0 OR t.sourcing = Sourcing.Reading DO
@@ -279,22 +395,10 @@ PROCEDURE ReadLine(t : T) : TEXT RAISES { Rd.EndOfFile, Error.E } =
       END
     END;
 
-    LOCK t.mu DO
-      LOCK t.sMu DO t.sendCmd('N') END;
-      LOOP
-        TRY
-          WITH c = Rd.GetChar(t.rd) DO
-            IF c = Null THEN EXIT ELSE Wx.PutChar(wx,c) END
-          END
-        EXCEPT
-          Rd.Failure(err) => RAISE Error.E(err)
-        END
-      END;
-      RETURN Wx.ToText(wx)
-    END
+    RETURN t.readALine()
   END ReadLine;
 
-PROCEDURE SetPrompt(t : T; newPrompt : TEXT) RAISES { Error.E }  =
+PROCEDURE SetPrompt(t : Std; newPrompt : TEXT) RAISES { Error.E }  =
   BEGIN 
     LOCK t.mu DO 
       t.prompt := newPrompt;
@@ -304,12 +408,12 @@ PROCEDURE SetPrompt(t : T; newPrompt : TEXT) RAISES { Error.E }  =
     END 
   END SetPrompt;
 
-PROCEDURE GetPrompt(t : T) : TEXT = 
+PROCEDURE GetPrompt(t : Std) : TEXT = 
   BEGIN 
     LOCK t.mu DO RETURN t.prompt END
   END GetPrompt;
 
-PROCEDURE Display(t : T; what : TEXT) RAISES { Error.E } = 
+PROCEDURE Display(t : Std; what : TEXT) RAISES { Error.E } = 
   BEGIN 
     LOCK t.mu DO 
       LOCK t.sMu DO
@@ -325,7 +429,7 @@ PROCEDURE Display(t : T; what : TEXT) RAISES { Error.E } =
     END 
   END Display;
 
-PROCEDURE AsyncDisplay(t : T; what : TEXT) RAISES { Error.E } = 
+PROCEDURE AsyncDisplay(t : Std; what : TEXT) RAISES { Error.E } = 
   BEGIN 
     LOCK t.sMu DO
       t.sendCmdArg('A', what);
@@ -338,26 +442,6 @@ PROCEDURE AsyncDisplay(t : T; what : TEXT) RAISES { Error.E } =
       END
     END
   END AsyncDisplay;
-
-PROCEDURE Quit(t : T) RAISES { Error.E } =
-  BEGIN 
-    TRY
-      LOCK t.mu DO 
-        LOCK t.sMu DO 
-          t.sendCmd('Q'); Wr.Close(t.wr); Rd.Close(t.rd); t.closed := TRUE
-        END;
-        TRY
-          t.completion.wait()
-        EXCEPT
-          ProcUtils.ErrorExit => RAISE Error.E(AtomList.List1(Atom.FromText("ProcUtils")))
-        END
-      END 
-    EXCEPT
-      Wr.Failure(err) => RAISE Error.E(err)
-    |
-      Rd.Failure(err) => RAISE Error.E(err)
-    END
-  END Quit;
 
 (**********************************************************************)
 
@@ -526,10 +610,10 @@ PROCEDURE PutTable(tbl : Table; to : Wr.T; format : LogFormat)
     END
   END PutTable;
 
-PROCEDURE SetVar(t : T; name : TEXT; val : REFANY) =
+PROCEDURE SetVar(t : Std; name : TEXT; val : REFANY) =
   BEGIN LOCK t.mu DO EVAL t.vars.put(name,val) END END SetVar;
 
-PROCEDURE GetVar(t : T; name : TEXT) : REFANY =
+PROCEDURE GetVar(t : Std; name : TEXT) : REFANY =
   VAR res : REFANY; BEGIN
     LOCK t.mu DO
       IF t.vars.get(name,res) THEN
