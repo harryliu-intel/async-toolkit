@@ -107,6 +107,27 @@ PROCEDURE AdjustOffset(to : T; absRate := 0.1d0; maxDelta := 30.0d0)
     END
   END AdjustOffset;
 
+PROCEDURE SetXTime(to : T; adjust : BOOLEAN; absRate, maxDelta : LONGREAL) 
+  RAISES { CantAdjust } =
+  VAR
+    newOff : LONGREAL;
+    fakeNow := Now();
+    realNow := Time.Now();
+  BEGIN
+    LOCK mu DO
+      WITH 
+           curOff = CurrentOffset(realNow),
+           delta  = to-fakeNow DO
+        newOff := curOff + delta
+      END
+    END;
+    IF adjust THEN
+      AdjustOffset(newOff, absRate, maxDelta)
+    ELSE
+      SetOffset(newOff)
+    END
+  END SetXTime;
+
 (**********************************************************************)
 
 VAR dLevelT := Env.Get("DEBUGLEVEL");

@@ -25,7 +25,12 @@ PROCEDURE Now() : T;
 
 VAR (* CONST *) Grain : T;
 
-PROCEDURE SetOffset(to : T); 
+PROCEDURE SetXTime(to : T; 
+                   adjust := TRUE; absRate := 0.5d0; maxDelta := 30.0d0)
+  RAISES { CantAdjust };
+  (* can only raise CantAdjust if adjust is TRUE *)
+
+PROCEDURE SetOffset(to : LONGREAL); 
   (* a step change *)
 
 EXCEPTION CantAdjust;
