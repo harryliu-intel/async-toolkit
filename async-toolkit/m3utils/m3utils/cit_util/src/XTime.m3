@@ -74,18 +74,36 @@ PROCEDURE AdjustOffset(to : T; absRate := 0.1d0; maxDelta := 30.0d0)
   RAISES { CantAdjust } =
   BEGIN
     LOCK mu DO
-      WITH now = Time.Now(),
-           curOff = CurrentOffset(now),
+      WITH now         = Time.Now(),
+           curOff      = CurrentOffset(now),
            adjInterval = ABS(to-curOff)/absRate DO
-        
-        IF NOT adjInterval <= maxDelta THEN 
-          (* careful about overflow / NaN here! *)
-          RAISE CantAdjust
-        END;
 
-        breaks[End.Begin] :=  Break { curOff, now };
-        breaks[End.End]   :=  Break { to    , now + adjInterval }
-      END
+        (*
+        DebugOut("XTime.AdjustOffset: now=" & Fmt.LongReal(now) &
+                                    " cur=" & Fmt.LongReal(curOff) &
+                                    "  to=" & Fmt.LongReal(to) &
+                                    " dlt=" & Fmt.LongReal(to-curOff) &
+                                    " ivl=" & Fmt.LongReal(adjInterval));
+        *)
+
+        IF NOT initialized THEN
+          breaks[End.End] := Break { to, now }
+        ELSIF NOT adjInterval <= maxDelta THEN 
+          (* 
+             careful about overflow / NaN here-- reason for NOT <= rather than
+             >.
+
+             also careful that we must allow the very FIRST initialization to
+             be large (initialized) 
+          *)
+
+          RAISE CantAdjust
+        ELSE
+          breaks[End.Begin] :=  Break { curOff, now };
+          breaks[End.End]   :=  Break { to    , now + adjInterval }
+        END
+      END;
+      active := TRUE
     END
   END AdjustOffset;
 
@@ -129,12 +147,19 @@ PROCEDURE ClApply(cl : Closure) : REFANY =
               AdjustOffset(tgt - now)
             EXCEPT
               CantAdjust =>
-              Process.Crash("XTime.ClApply: can't adjust time by " & 
-                Fmt.LongReal(tgt - now) & " seconds")
+              (* this can happen during debugging! *)
+              Wr.PutText(Stdio.stderr, 
+                         "WARNING: XTime.ClApply: can't adjust time by " & 
+                         Fmt.LongReal(tgt - now) & " seconds\n")
             END
           END
         END;
-        cl.initialized := TRUE
+        IF NOT cl.initialized THEN
+          LOCK cl.mu DO
+            cl.initialized := TRUE;
+            Thread.Broadcast(cl.c)
+          END
+        END
       END
     EXCEPT
       Rd.EndOfFile, Rd.Failure => 
@@ -194,7 +219,7 @@ BEGIN
                 EVAL Thread.Fork(cl);
 
                 DebugOut("Awaiting XTime initialization via TCP...");
-                LOCK mu DO
+                LOCK cl.mu DO
                   WHILE NOT cl.initialized DO
                     Thread.Wait(cl.mu, cl.c)
                   END

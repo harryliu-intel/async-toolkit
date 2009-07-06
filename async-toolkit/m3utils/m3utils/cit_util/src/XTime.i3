@@ -30,7 +30,7 @@ PROCEDURE SetOffset(to : T);
 
 EXCEPTION CantAdjust;
 
-PROCEDURE AdjustOffset(to : T; absRate := 0.1d0; maxDelta := 30.0d0) 
+PROCEDURE AdjustOffset(to : T; absRate := 0.5d0; maxDelta := 30.0d0) 
   RAISES { CantAdjust };
   (* change gradually, so that time doesn't run backwards.
 
