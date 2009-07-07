@@ -169,6 +169,7 @@ PROCEDURE Init(t : Default; startGetter : BOOLEAN) : T
     ELSIF RTParams.Value("readline") = NIL AND 
           Env.Get("NOM3READLINE") # NIL THEN
       Debug.Out("ReadLine.Init: NOM3READLINE environment var defined, readline support disabled.");
+      RETURN NEW(NonReadLine).init(startGetter)
     END;
 
     EVAL Std.init(t,startGetter);

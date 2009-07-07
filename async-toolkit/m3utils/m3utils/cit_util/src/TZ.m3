@@ -9,6 +9,7 @@ IMPORT OSError;
 IMPORT FS, Env;
 FROM Ctypes IMPORT long_star;
 IMPORT Word;
+IMPORT Thread;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -66,7 +67,14 @@ PROCEDURE GetOldTZ() : TEXT =
   (* mu must be locked *)
   BEGIN
     WITH res = CopyStoT(CTZ.getenv(TZTZ)) DO
-      IF Debug.GetLevel() > 30 THEN Debug.Out("TZ.GetOldTZ: " & res) END;
+      IF Debug.GetLevel() > 30 THEN 
+        Thread.Release(mu); (* avoid re-entrant locking (Debug uses TZ) *)
+        TRY
+          Debug.Out("TZ.GetOldTZ: " & res) 
+        FINALLY
+          Thread.Acquire(mu)
+        END
+      END;
       RETURN res
     END
   END GetOldTZ;

@@ -140,15 +140,43 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
     IF Options.PrintTime IN options THEN
       WITH now = Time.Now() DO
         LOCK tMu DO
+          (* ok this is a bit messy, remember that for modularity 
+             reasons, we will allow the routines here to call Debug.Out! *)
+
           TRY
-            IF tz = NIL THEN tz := TZ.New(DebugTimeZone) END;
+            IF tz = NIL THEN 
+              VAR 
+                newTz : TZ.T;
+              BEGIN
+                
+                Thread.Release(tMu);
+                TRY
+                  newTz := TZ.New(DebugTimeZone)
+                FINALLY
+                  Thread.Acquire(tMu)
+                END;
+                  
+                tz := newTz
+              END
+            END;
             
 
             IF TRUNC(now) # TRUNC(lastTime) THEN
-              timeText := "****** " & 
-                              TZ.FormatSubsecond(tz,now,printMillis := FALSE) &
-                                                     " " & DebugTimeZone;
-              lastTime := now
+              (* 
+                 lastTime assignment must go FIRST in case debug level
+                 is so high that we are called re-entrantly from 
+                 TZ.FormatSubsecond !
+              *)
+              lastTime := now;
+
+              Thread.Release(tMu);
+              TRY
+                timeText := "****** " & 
+                                TZ.FormatSubsecond(tz,now,printMillis := FALSE) &
+                                                  " " & DebugTimeZone;
+              FINALLY
+                Thread.Acquire(tMu)
+              END
             END
           EXCEPT
             OSError.E => timeText := "****** TIMEZONE ERROR " & DebugTimeZone

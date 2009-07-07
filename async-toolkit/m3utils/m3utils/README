@@ -45,3 +45,5 @@ I have upgraded everything to use PM3-1.1.15's libraries.  The
 reason for this is that we use parseparams all over the place, and
 it's silly to import Karl's version for this.  Also Network Objects
 are in the newer PM3 distributions.
+
+External dependencies are listed in the file DEPENDENCIES

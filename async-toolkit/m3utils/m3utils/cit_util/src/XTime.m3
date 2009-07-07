@@ -157,24 +157,43 @@ TYPE
 
 PROCEDURE ClApply(cl : Closure) : REFANY =
   <*FATAL Thread.Alerted, Wr.Failure*>
+  VAR
+    line : TEXT;
   BEGIN
     TRY
       LOOP
-        WITH line = Rd.GetLine(cl.rd) DO
-          (* set the time ! *)
-          WITH now = Time.Now(),
-               tgt = Scan.LongReal(line) DO
-            TRY
-              AdjustOffset(tgt - now)
-            EXCEPT
-              CantAdjust =>
-              (* this can happen during debugging! *)
-              Wr.PutText(Stdio.stderr, 
-                         "WARNING: XTime.ClApply: can't adjust time by " & 
-                         Fmt.LongReal(tgt - now) & " seconds\n")
-            END
+        (* 
+           it would be better to send along Time.Now() on the remote
+           system (the real time) and compare it to what we expect the
+           real time to be on the local system (initializing this on
+           startup, tracking it after).  Remember that we are dealing
+           with two deltas here: delta in Time.Now() remote vs. local,
+           as well as delta between XTime.Now() remote vs. local.
+
+           For now, the following tricky hack is supposed to reject
+           stale time updates setting on the network link, e.g., if we
+           just returned from suspension...
+
+        *)
+
+        line := Rd.GetLine(cl.rd);
+
+        WHILE Rd.CharsReady(cl.rd) > 0 DO line := Rd.GetLine(cl.rd) END;
+
+        (* set the time ! *)
+        WITH now = Time.Now(),
+             tgt = Scan.LongReal(line) DO
+          TRY
+            AdjustOffset(tgt - now)
+          EXCEPT
+            CantAdjust =>
+            (* this can happen during debugging! *)
+            Wr.PutText(Stdio.stderr, 
+                       "WARNING: XTime.ClApply: can't adjust time by " & 
+                       Fmt.LongReal(tgt - now) & " seconds\n")
           END
         END;
+          
         IF NOT cl.initialized THEN
           LOCK cl.mu DO
             cl.initialized := TRUE;
