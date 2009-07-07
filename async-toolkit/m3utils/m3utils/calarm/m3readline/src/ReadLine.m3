@@ -12,6 +12,7 @@ IMPORT ReadLineError AS Error;
 IMPORT ReadLineTable;
 IMPORT Stdio;
 IMPORT RTParams;
+IMPORT Env;
 
 <* FATAL Thread.Alerted *>
 
@@ -162,7 +163,12 @@ PROCEDURE Init(t : Default; startGetter : BOOLEAN) : T
   RAISES { IP.Error, NetObj.Error } =
   BEGIN
     IF RTParams.Value("noreadline") # NIL THEN
+      Debug.Out("ReadLine.Init: RTParam noreadline defined, readline support disabled.");
       RETURN NEW(NonReadLine).init(startGetter)
+      
+    ELSIF RTParams.Value("readline") = NIL AND 
+          Env.Get("NOM3READLINE") # NIL THEN
+      Debug.Out("ReadLine.Init: NOM3READLINE environment var defined, readline support disabled.");
     END;
 
     EVAL Std.init(t,startGetter);

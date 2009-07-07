@@ -16,6 +16,12 @@ IMPORT ReadLineError AS Error, ReadLineLogFormat, ReadLineTable;
 
    Not many of GNU readline's editing tricks are supported, only
    the basics.
+
+   The system can be disabled in one of two ways:
+
+   RTParam  @M3noreadline
+   Env var  NOM3READLINE (can be over-overriden with @M3readline)
+
  *)
 
 TYPE
@@ -23,7 +29,8 @@ TYPE
 
   NonReadLine <: U;
   (* a T that doesn't actually use readline.  Simplify debugging, 
-     etc. *)
+     etc. Will be returned by Default's init under above-mentioned
+     conditions. *)
 
   U = Public OBJECT METHODS
     init(startGetter := TRUE) : T RAISES { IP.Error, NetObj.Error, Thread.Alerted  };
