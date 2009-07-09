@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <errno.h>
 
 char *
 SchemeUnixDeps__getCurrentUserWrapper(void) 
@@ -21,4 +22,10 @@ SchemeUnixDeps__getHomeDirWrapper(char *user)
 		return NULL;
 	else
 		return pw->pw_dir;
+}
+
+int
+SchemeUnixDeps__getErrno()
+{
+	return errno;
 }

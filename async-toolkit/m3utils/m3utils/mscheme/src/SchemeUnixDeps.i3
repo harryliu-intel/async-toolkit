@@ -48,8 +48,6 @@ TYPE
 
 <*EXTERNAL*> PROCEDURE getrusage (who: int; VAR rus: struct_rusage): int;
 
-<*EXTERNAL errno*>VAR errno : INTEGER;
-
 PROCEDURE GetCurrentUser() : TEXT RAISES { Error };
   (* string name of current user *)
 
@@ -60,6 +58,9 @@ EXCEPTION Error;
   
 <*EXTERNAL SchemeUnixDeps__getCurrentUserWrapper*>
 PROCEDURE getCurrentUserWrapper() : char_star;
+
+<*EXTERNAL SchemeUnixDeps__getErrno*>
+PROCEDURE GetErrno() : INTEGER;
 
 <*EXTERNAL SchemeUnixDeps__getHomeDirWrapper*>
 PROCEDURE getHomeDirWrapper(user : char_star) : char_star;

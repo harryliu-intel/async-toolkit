@@ -2,7 +2,7 @@
 
 MODULE SchemeProfiler;
 IMPORT SchemeProcedure;
-FROM SchemeUnixDeps IMPORT RUSAGE_SELF, struct_rusage;
+FROM SchemeUnixDeps IMPORT RUSAGE_SELF, struct_rusage, GetErrno;
 FROM Utime IMPORT struct_timeval;
 IMPORT Fmt, Debug;
 IMPORT LongrealPQ, TextRefTbl;
@@ -20,7 +20,7 @@ PROCEDURE EnterProcedure(p : SchemeProcedure.T) =
         BEGIN
           IF rusage_retval < 0 THEN
             Debug.Warning("SchemeProfiler.EnterProcedure: getrusage failed, disabling profiling, errno=" & 
-              Fmt.Int(SchemeProfilerSysDep.GetErrno()));
+              Fmt.Int(GetErrno()));
             enabled := FALSE
           ELSE
             (* do calcs *)

@@ -26,7 +26,11 @@ elif [ "x$OS$PROCESSOR2" = "xDarwini386" ]; then
 elif [ "x$OS$PROCESSOR2" = "xDarwinpowerpc" ]; then
   M3ARCH="PPC_DARWIN"
 elif [ "x$OS" = "xLinux" ]; then
-  M3ARCH="LINUXLIBC6"
+  if [ "x$PROCESSOR" = "xx86_64" ]; then
+    M3ARCH="AMD64_LINUX"
+  else
+    M3ARCH="LINUXLIBC6"
+  fi
 else
   exit 1
 fi
