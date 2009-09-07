@@ -434,12 +434,12 @@
 (define (dis-update-m3 tbl mp)
   (let ((tbl-name (car tbl)) 
         (fields (get-fields (complete-tbl tbl))))
-    ;;(dis "dis-update-m3: " tbl-name " : " fields dnl '())
     (dis "  VAR query := NEW(TextSeq.T).init(); BEGIN " dnl mp)
     (map (lambda(fld) (dis (ass-sql fld) mp)) fields) 
     (dis dnl mp)
-    (dis "    db.aExec(\"update " tbl-name " set dirty=true,\" & TextUtils.FormatInfix(query,\",\") & \" where " 
-   tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db))" dnl mp)
+    (dis "    db.aExec(\"update " tbl-name " \" & TextUtils.FormatInfix(query,\",\") & \" where " 
+   tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db));" dnl mp)
+    (dis "    db.aExec(\"delete from clean where table='" tbl-name "' and rowid=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db))" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -565,8 +565,7 @@
     
     #t))
 
-(define (dis-dirty-m3 tbl mp)
-  ;; print the entire routine for manipulating the dirty bit
+(define (dis-clean-m3 tbl mp)
   (let ((tbl-name (car tbl)))
     (dis "  PROCEDURE Exec(q : TEXT) RAISES { DBerr.Error } =" dnl
          "    BEGIN" dnl
@@ -582,17 +581,40 @@
 
     (dis "    IF row # AllRows THEN " dnl mp)
 
-    (dis "      Exec(\"update " 
-   tbl-name 
-        " set dirty = \" & Fmt.Bool(to) & \" where (\" & restriction & \") and " tbl-name "_id = \" & Fmt.Int(row) & \" and dirty=\"&Fmt.Bool(NOT to)&\";\")" 
-   dnl mp)      
+    (dis "      Exec(\"insert into clean (tabl,rowid,client) (select '" tbl-name "',\" & Fmt.Int(row) & \",'\" & clientTag & \"' from " tbl-name " where not exists (select * from clean where tabl='" tbl-name '" and clean.rowid=\" & Fmt.Int(row) &  \"_id and client='\"& clientTag &\"'));;\")" dnl mp)
 
     (dis "    ELSE " dnl mp)
 
-    (dis "      Exec(\"update " 
-   tbl-name 
-   " set dirty = \" & Fmt.Bool(to) & \" where \" & restriction & \" and dirty=\"&Fmt.Bool(NOT to)&\";\")" 
-   dnl mp)
+    (dis "      Exec(\"insert into clean (tabl,rowid,client) (select '" tbl-name "'," tbl-name "_id,'\" & clientTag & \"' from " tbl-name " where not exists (select * from clean where tabl='" tbl-name '" and clean.rowid=" tbl-name "_id and client='\"& clientTag &\"'));;\")" dnl mp)
+
+    (dis "    END " dnl mp)
+
+    (dis "  END " mp)
+
+    #t))
+    
+(define (dis-dirty-m3 tbl mp)
+  (let ((tbl-name (car tbl)))
+    (dis "  PROCEDURE Exec(q : TEXT) RAISES { DBerr.Error } =" dnl
+         "    BEGIN" dnl
+         "      IF sync THEN" dnl
+         "        EVAL db.sExec(q, abortConnectionOnFail := FALSE)" dnl
+         "      ELSE" dnl
+				 "        NARROW(db,DesynchronizedDB.T).aExec(q, ex)" dnl
+         "      END" dnl
+         "    END Exec;" dnl
+         dnl mp)
+
+    (dis "  BEGIN " dnl mp)
+
+    (dis "    IF row # AllRows THEN " dnl mp)
+
+    (dis "      Exec(\"delete from clean where table='" tbl-name "' and rowid=\"&Fmt.Int(row)&\";\")" dnl mp)
+   
+
+    (dis "    ELSE " dnl mp)
+
+    (dis "      Exec(\"delete from clean where table='" tbl-name "';\")" dnl mp)
 
     (dis "    END " dnl mp)
 
@@ -654,6 +676,44 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+;; shared header defn's
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define dirtyheader 
+  (list
+   "SetDirty" 
+   "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; row : [AllRows .. LAST(CARDINAL)] := AllRows; sync := FALSE) RAISES { DBerr.Error }"
+   dis-dirty-m3
+   ))
+
+(define cleanheader
+  (list
+   "SetClean"
+   "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; clientTag : TEXT; row : [AllRows .. LAST(CARDINAL)] := AllRows; sync := FALSE) RAISES { DBerr.Error }"
+   dis-clean-m3
+   ))
+
+(define parseheader 
+    (list "<*NOWARN*>Parse"
+    "(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
+    dis-parse-m3
+    ))
+
+(define queryheader 
+    (list "QueryHeader" "() : TEXT" dis-query-m3))
+
+(define format 
+		(list "Format"
+    "(READONLY record : T) : TEXT"
+    dis-format-m3
+    ))
+
+(define getid
+    (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;;    PUT IT ALL TOGETHER.  GENERATE ALL CODE FOR A SINGLE TABLE!
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -699,7 +759,7 @@
 
     (let 
   ;;
-  ;; define some Modula-3 procedures.
+  ;; define some Modula-3 procedures -- several moved to global space now.
   ;; Update  a row
   ;; Parse   a row
   ;; Insert  a row
@@ -711,42 +771,19 @@
     "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
     dis-update-m3
     ))
-   (parseheader 
-    (list "<*NOWARN*>Parse"
-    "(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
-    dis-parse-m3
-    ))
-
-   (queryheader 
-    (list "QueryHeader" "() : TEXT" dis-query-m3))
-
-	 (format 
-		(list "Format"
-    "(READONLY record : T) : TEXT"
-    dis-format-m3
-    ))
-
    (insert
     (list "Insert"
     "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
     dis-insert-m3
     ))
-  (dirtyheader 
-    (list
-     "SetDirty" 
-     "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
-     dis-dirty-m3
-     ))
    (upinsert
     (list "UpdateOrInsert" 
           "(db : DesynchronizedDB.T; READONLY record : T; restriction : TEXT; ex : DesynchronizedDB.ExCallback)"
           dis-update-or-insert-m3
           ))
-
-   (getid
-    (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
    
    )
+
       (dis dnl "CONST AllRows = -1; " dnl ip)
 
       (map 
@@ -764,6 +801,7 @@
              upinsert
 						 parseheader
 						 dirtyheader
+						 cleanheader
 						 queryheader
              getid)
        )
@@ -848,36 +886,9 @@
 
     (let 
   ;;
-  ;; define some Modula-3 procedures.
-  ;; Update  a row
-  ;; Parse   a row
-  ;; Insert  a row
-  ;; QueryHeader   provide the data spec for the query to Parse
-  ;; SetDirty  clear/set dirty bit
+  ;; define some Modula-3 procedures -- moved out of here to global space
   ;;
   (
-   (parseheader 
-    (list "<*NOWARN*>Parse"
-    "(row : DatabaseTable.T; VAR res : T) RAISES { Lex.Error, FloatMode.Trap, DBerr.Error }"
-    dis-parse-m3
-    ))
-   (queryheader 
-    (list "QueryHeader" "() : TEXT" dis-query-m3))
-
-	 (format 
-		(list "Format"
-    "(READONLY record : T) : TEXT"
-    dis-format-m3
-    ))
-
-   (getid
-    (list "GetRecordId" "(READONLY t : T) : CARDINAL" dis-getid-m3))
-   (dirtyheader 
-    (list
-     "SetDirty" 
-     "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; to : BOOLEAN := TRUE; row : [AllRows .. LAST(CARDINAL)] := AllRows; restriction : TEXT := \"true\"; sync := FALSE) RAISES { DBerr.Error }"
-     dis-dirty-m3
-     ))
    
    )
       (dis dnl "CONST AllRows = -1; " dnl ip)
@@ -895,7 +906,7 @@
              parseheader 
              ;;insert 
 						 format
-             queryheader dirtyheader getid)
+             queryheader dirtyheader cleanheader getid)
        )
       )
 
@@ -919,7 +930,7 @@
   ;; id col.
   ;; created time
   ;; updated time
-  ;; dirty bit (for consistency with in-core cache)
+  ;; NO dirty bit -- replaced by clean table
   ;; active bit 
   ;;
   (let ((name (car tbl))
@@ -933,8 +944,6 @@
       (make-field "created" 'timestamp 'not-null 'not-updatable (list 'default "now()"))
       (make-field "updated" 'timestamp (list 'default "now()"))
       (make-index (list "updated"))
-      (make-field "dirty" 'boolean 'not-null (list 'default "true"))
-      (make-index (list "dirty"))
       )
       (if (eq? owner 'client)
           (list 
