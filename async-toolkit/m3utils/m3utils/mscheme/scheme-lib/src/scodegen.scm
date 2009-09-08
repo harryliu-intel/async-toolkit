@@ -437,9 +437,9 @@
     (dis "  VAR query := NEW(TextSeq.T).init(); BEGIN " dnl mp)
     (map (lambda(fld) (dis (ass-sql fld) mp)) fields) 
     (dis dnl mp)
-    (dis "    db.aExec(\"update " tbl-name " \" & TextUtils.FormatInfix(query,\",\") & \" where " 
+    (dis "    db.aExec(\"update " tbl-name " set \" & TextUtils.FormatInfix(query,\",\") & \" where " 
    tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db));" dnl mp)
-    (dis "    db.aExec(\"delete from clean where table='" tbl-name "' and rowid=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db))" dnl mp)
+    (dis "    db.aExec(\"delete from clean where tabl='" tbl-name "' and rowid=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db))" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -581,11 +581,11 @@
 
     (dis "    IF row # AllRows THEN " dnl mp)
 
-    (dis "      Exec(\"insert into clean (tabl,rowid,client) (select '" tbl-name "',\" & Fmt.Int(row) & \",'\" & clientTag & \"' from " tbl-name " where not exists (select * from clean where tabl='" tbl-name '" and clean.rowid=\" & Fmt.Int(row) &  \"_id and client='\"& clientTag &\"'));;\")" dnl mp)
+    (dis "      Exec(\"insert into clean (tabl,rowid,client) (select '" tbl-name "',\" & Fmt.Int(row) & \",'\" & clientTag & \"' from " tbl-name " where not exists (select * from clean where tabl='" tbl-name "' and clean.rowid=\" & Fmt.Int(row) &  \"_id and client='\"& clientTag &\"'));;\")" dnl mp)
 
     (dis "    ELSE " dnl mp)
 
-    (dis "      Exec(\"insert into clean (tabl,rowid,client) (select '" tbl-name "'," tbl-name "_id,'\" & clientTag & \"' from " tbl-name " where not exists (select * from clean where tabl='" tbl-name '" and clean.rowid=" tbl-name "_id and client='\"& clientTag &\"'));;\")" dnl mp)
+    (dis "      Exec(\"insert into clean (tabl,rowid,client) (select '" tbl-name "'," tbl-name "_id,'\" & clientTag & \"' from " tbl-name " where not exists (select * from clean where tabl='" tbl-name "' and clean.rowid=" tbl-name "_id and client='\"& clientTag &\"'));;\")" dnl mp)
 
     (dis "    END " dnl mp)
 
@@ -609,12 +609,18 @@
 
     (dis "    IF row # AllRows THEN " dnl mp)
 
-    (dis "      Exec(\"delete from clean where table='" tbl-name "' and rowid=\"&Fmt.Int(row)&\";\")" dnl mp)
+		(dis "      <*ASSERT restriction = NIL *>" dnl mp)
+
+    (dis "      Exec(\"delete from clean where tabl='" tbl-name "' and rowid=\"&Fmt.Int(row)&\";\")" dnl mp)
    
+
+    (dis "    ELSIF restriction # NIL THEN " dnl mp)
+
+    (dis "      Exec(\"delete from clean where tabl='" tbl-name "' and exists (select * from " tbl-name " where clean.rowid = " tbl-name "." tbl-name "_id and \" & restriction & \");\")" dnl mp)
 
     (dis "    ELSE " dnl mp)
 
-    (dis "      Exec(\"delete from clean where table='" tbl-name "';\")" dnl mp)
+    (dis "      Exec(\"delete from clean where tabl='" tbl-name "';\")" dnl mp)
 
     (dis "    END " dnl mp)
 
@@ -683,7 +689,7 @@
 (define dirtyheader 
   (list
    "SetDirty" 
-   "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; row : [AllRows .. LAST(CARDINAL)] := AllRows; sync := FALSE) RAISES { DBerr.Error }"
+   "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; row : [AllRows .. LAST(CARDINAL)] := AllRows; sync := FALSE; restriction : TEXT := NIL) RAISES { DBerr.Error }"
    dis-dirty-m3
    ))
 
