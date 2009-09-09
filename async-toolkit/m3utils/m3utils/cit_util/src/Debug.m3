@@ -435,22 +435,24 @@ BEGIN
     END
   END;
 
-  WITH targetstring = RTParams.Value("debugtrace"),
-       reader = NEW(TextReader.T).init(targetstring) DO
-    VAR 
-      p := reader.shatter(",", endDelims := "");
-    BEGIN
-      WHILE p # NIL DO
-        TRY
-          AddStream(FileWr.Open(p.head))
-        EXCEPT
-          OSError.E(x) =>
-          Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)
-        END;
-        p := p.tail
-      END
-    END
-  END;
+  WITH targetstring = RTParams.Value("debugtrace") DO
+    IF targetstring # NIL THEN
+      VAR 
+        reader := NEW(TextReader.T).init(targetstring); 
+        p := reader.shatter(",", endDelims := "");
+      BEGIN
+        WHILE p # NIL DO
+          TRY
+            AddStream(FileWr.Open(p.head))
+          EXCEPT
+            OSError.E(x) =>
+            Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)
+          END;
+          p := p.tail
+        END
+      END(*VAR BEGIN*)
+    END(*IF*)
+  END(*WITH*);
 
   IF debugFilter # NIL THEN
     triggers := NEW(TextSetDef.T).init();
