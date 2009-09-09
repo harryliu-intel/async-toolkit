@@ -42,6 +42,7 @@ IMPORT LockedTextBooleanTbl;
 IMPORT RdWrReset;
 IMPORT TZ, XTime AS Time;
 IMPORT DebugStream, DebugStreamList;
+IMPORT RTParams, TextReader, FileWr, AL;
 
 VAR options := SET OF Options {};
 
@@ -131,7 +132,7 @@ PROCEDURE Out(t: TEXT; minLevel : CARDINAL; cr:=TRUE; this : TEXT := NIL) =
     END;
 
     IF minLevel > level THEN RETURN END;
-    IF debugFilter THEN
+    IF debugFilter # NIL THEN
       IF triggers.member(t) THEN
         BreakHere.Please();
       END;
@@ -351,7 +352,7 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 (* debugFilter *)
 
 VAR
-  debugFilter := Env.Get("DEBUGFILTER")#NIL;
+  debugFilter := Env.Get("DEBUGFILTER");
   triggers: TextSet.T;
   streams := DebugStreamList.List1(DebugStream.T { stderr }); 
   (* protected by mu *)
@@ -433,7 +434,25 @@ BEGIN
         Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE)
     END
   END;
-  IF debugFilter THEN
+
+  WITH targetstring = RTParams.Value("debugtrace"),
+       reader = NEW(TextReader.T).init(targetstring) DO
+    VAR 
+      p := reader.shatter(",", endDelims := "");
+    BEGIN
+      WHILE p # NIL DO
+        TRY
+          AddStream(FileWr.Open(p.head))
+        EXCEPT
+          OSError.E(x) =>
+          Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)
+        END;
+        p := p.tail
+      END
+    END
+  END;
+
+  IF debugFilter # NIL THEN
     triggers := NEW(TextSetDef.T).init();
     VAR
       in: Rd.T;
@@ -441,15 +460,15 @@ BEGIN
       <* FATAL Rd.Failure, Thread.Alerted *>
     BEGIN
       TRY
-        in := FileRd.Open("debugfilter");
+        in := FileRd.Open(debugFilter);
         LOOP
           line := Rd.GetLine(in);
           EVAL triggers.insert(line);
         END;
       EXCEPT
       | Rd.EndOfFile =>
-      | OSError.E => Error("Can't find file `debugfilter'.",TRUE);
-      END;
-    END;
-  END;
+      | OSError.E => Error("Can't find file \"" & debugFilter & "\".",TRUE);
+      END
+    END
+  END
 END Debug.

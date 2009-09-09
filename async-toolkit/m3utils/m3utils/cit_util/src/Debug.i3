@@ -22,6 +22,22 @@
 (* $Id$ *)
 
 INTERFACE Debug;
+
+(* Debugging.
+
+   Main code entry points:  Debug.Out      --  normal debugging, with level
+                            Debug.Warning  --  warnings
+                            Debug.Error    --  program termination is optional
+
+   Controlled by
+ 
+     DEBUGLEVEL env. variable
+     DEBUG<this>, NODEBUG<this> env. variables
+     DEBUGFILTER env. variable
+   
+     @M3debugtrace=<filename>[,<filename>...]  RT arg
+*)
+
 IMPORT Fmt, Wr, Pathname;
 IMPORT OSError;
 
