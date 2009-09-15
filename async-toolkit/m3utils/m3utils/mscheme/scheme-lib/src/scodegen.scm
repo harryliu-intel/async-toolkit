@@ -437,9 +437,14 @@
     (dis "  VAR query := NEW(TextSeq.T).init(); BEGIN " dnl mp)
     (map (lambda(fld) (dis (ass-sql fld) mp)) fields) 
     (dis dnl mp)
-    (dis "    db.aExec(\"update " tbl-name " set \" & TextUtils.FormatInfix(query,\",\") & \" where " 
-   tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db));" dnl mp)
-    (dis "    db.aExec(\"delete from clean where tabl='" tbl-name "' and rowid=\"&Fmt.Int(record." tbl-name "_id)&\";\", ex, MakeResCallback(db))" dnl mp)
+
+    (dis "    WITH q1 = \"update " tbl-name " set \" & TextUtils.FormatInfix(query,\",\") & \" where " 
+   tbl-name "_id=\"&Fmt.Int(record." tbl-name "_id)&\";\", " dnl mp)
+    (dis "         q2 = \"delete from clean where tabl='" tbl-name "' and rowid=\"&Fmt.Int(record." tbl-name "_id)&\";\"" dnl mp)
+    (dis "      DO" dnl mp)
+
+    (dis "      db.aExec(q1 & q2, ex, MakeResCallback(db));" dnl mp)
+    (dis "    END " mp)
     (dis "  END " mp)
     #t))
 
