@@ -575,9 +575,10 @@
     (dis "  PROCEDURE Exec(q : TEXT) RAISES { DBerr.Error } =" dnl
          "    BEGIN" dnl
          "      IF sync THEN" dnl
+	 "        <*ASSERT res = NIL AND ex = NIL *>" dnl
          "        EVAL db.sExec(q, abortConnectionOnFail := FALSE)" dnl
          "      ELSE" dnl
-				 "        NARROW(db,DesynchronizedDB.T).aExec(q, ex)" dnl
+	 "        NARROW(db,DesynchronizedDB.T).aExec(q, ex, res)" dnl
          "      END" dnl
          "    END Exec;" dnl
          dnl mp)
@@ -701,7 +702,7 @@
 (define cleanheader
   (list
    "SetClean"
-   "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; clientTag : TEXT; row : [AllRows .. LAST(CARDINAL)] := AllRows; sync := FALSE) RAISES { DBerr.Error }"
+   "(db : DesynchronizedDB.Execer; ex : DesynchronizedDB.ExCallback; clientTag : TEXT; row : [AllRows .. LAST(CARDINAL)] := AllRows; sync := FALSE; res : DesynchronizedDB.ResCallback := NIL) RAISES { DBerr.Error }"
    dis-clean-m3
    ))
 
