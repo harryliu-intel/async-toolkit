@@ -519,11 +519,11 @@
     (dis "  VAR maxFields, minFields : FieldSet;"           dnl mp)
     (dis "  BEGIN"                                          dnl mp)
     (dis "    IF NUMBER(record) = 0 THEN RETURN END;"       dnl mp)
-    (dis "    maxFields := NullSet(record[0]);"             dnl mp)
-    (dis "    minFields := NullSet(record[0]);"             dnl mp)
+    (dis "    maxFields := AllFields-NullSet(record[0]);"             dnl mp)
+    (dis "    minFields := AllFields-NullSet(record[0]);"             dnl mp)
     (dis "    FOR i := 1 TO LAST(record) DO"                dnl mp)
-    (dis "      WITH nri = NullSet(record[i]) DO"           dnl mp)
-    (dis "        maxFields := maxFields + nri; minFields := minFields - nri" dnl mp)
+    (dis "      WITH nri = AllFields-NullSet(record[i]) DO"           dnl mp)
+    (dis "        maxFields := maxFields + nri; minFields := minFields * nri" dnl mp)
     (dis "      END"                                        dnl mp)
     (dis "    END;"                                         dnl mp)
     (dis "    IF maxFields # minFields THEN (*fallback*)"   dnl mp)
@@ -537,7 +537,7 @@
     (dis "        IF f IN maxFields THEN fields.addhi(FieldNames[f]) END" dnl mp)
     (dis "      END;" dnl mp)
 
-    (dis "      Wx.PutText(wx, \"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \") \"); " dnl mp)
+    (dis "      Wx.PutText(wx, \"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \") SELECT \"); " dnl mp)
 
     (dis "      FOR i := FIRST(record) TO LAST(record) DO" dnl mp)
     (dis "        VAR values := NEW(TextSeq.T).init(); BEGIN" dnl mp)
@@ -833,6 +833,9 @@
     (dis dnl ip)
     
     (dis "TYPE FieldSet = SET OF Field;" dnl ip)
+    (dis dnl ip)
+
+    (dis "CONST AllFields = SET OF Field { FIRST(Field) .. LAST(Field) };" dnl ip)
     (dis dnl ip)
 
     (dis "CONST FieldNames = ARRAY Field OF TEXT { " dnl ip)
