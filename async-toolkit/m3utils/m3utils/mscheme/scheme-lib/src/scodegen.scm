@@ -256,13 +256,12 @@
 
 (define (putm3-field-list fld port)
     (let ((name (car fld))
-    (type (cadr fld)))
+	  (type (cadr fld)))
 
       (dis "  " name " : " (type->m3-typename type) ";" dnl port)
       (dis "  " name "_isNull : BOOLEAN := TRUE;" dnl port)
 
 ))
-
 
 (define (field-cant-be-null? attr-lst)
   (or (memq 'not-null attr-lst)
@@ -472,8 +471,8 @@
 (define (ins-sql fld)
   ;; the string corresponding to a SQL assignment (coded in M3)
   (let* ((name (car fld))
-   (m3name (string-append "record." name))
-   (type-name (cadr fld)))
+	 (m3name (string-append "record." name))
+	 (type-name (cadr fld)))
     (string-append 
      "    IF NOT " m3name "_isNull THEN" dnl
      "      fields.addhi(\" " name "\");" dnl
@@ -481,9 +480,25 @@
      "    END;" dnl
      )))
 
+(define (dis-nullset-m3 tbl mp)
+  (let ((tbl-name (car tbl)) 
+	(fields (get-fields (complete-tbl tbl))))
+    (dis "  VAR" dnl mp)
+    (dis "    res := FieldSet {};" dnl mp)
+    (dis "  BEGIN" dnl mp)
+    (map (lambda (fld) 
+	   (let ((fld-name (car fld)))
+	     (dis "    IF record."fld-name"_isNull THEN" dnl mp)
+	     (dis "      res := res + FieldSet { Field." fld-name "}" dnl mp)
+	     (dis "    END;" dnl mp)))
+	 fields)
+    (dis "    RETURN res" dnl mp)
+    (dis "  END " mp)
+    ))
+
 (define (dis-insert-m3 tbl mp)
   (let ((tbl-name (car tbl)) 
-  (fields (get-fields (complete-tbl tbl))))
+	(fields (get-fields (complete-tbl tbl))))
     (dis "  VAR fields, values := NEW(TextSeq.T).init();" dnl
          "  BEGIN" dnl mp)
 
@@ -494,6 +509,57 @@
     (dis "    db.aExec(\"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \")\"&"
    dnl mp)
     (dis "                 \" values (\"& TextUtils.FormatInfix(values,\",\")&\")\", ex, MakeResCallback(db))" dnl mp)
+    (dis "  END " mp)
+    #t))
+
+
+(define (dis-batch-insert-m3 tbl mp)
+  (let ((tbl-name (car tbl)) 
+	(fields (get-fields (complete-tbl tbl))))
+    (dis "  VAR maxFields, minFields : FieldSet;"           dnl mp)
+    (dis "  BEGIN"                                          dnl mp)
+    (dis "    IF NUMBER(record) = 0 THEN RETURN END;"       dnl mp)
+    (dis "    maxFields := NullSet(record[0]);"             dnl mp)
+    (dis "    minFields := NullSet(record[0]);"             dnl mp)
+    (dis "    FOR i := 1 TO LAST(record) DO"                dnl mp)
+    (dis "      WITH nri = NullSet(record[i]) DO"           dnl mp)
+    (dis "        maxFields := maxFields + nri; minFields := minFields - nri" dnl mp)
+    (dis "      END"                                        dnl mp)
+    (dis "    END;"                                         dnl mp)
+    (dis "    IF maxFields # minFields THEN (*fallback*)"   dnl mp)
+    (dis "      FOR i := FIRST(record) TO LAST(record) DO"  dnl mp)
+    (dis "        Insert(db, record[i], ex)"                dnl mp)
+    (dis "      END;"                                       dnl mp)
+    (dis "      RETURN"                                     dnl mp)
+    (dis "    END;"                                         dnl mp)
+    (dis "    VAR wx := Wx.New(); fields := NEW(TextSeq.T).init(); BEGIN" dnl mp)
+    (dis "      FOR f := FIRST(Field) TO LAST(Field) DO" dnl mp)
+    (dis "        IF f IN maxFields THEN fields.addhi(FieldNames[f]) END" dnl mp)
+    (dis "      END;" dnl mp)
+
+    (dis "      Wx.PutText(wx, \"insert into " tbl-name " (\" & TextUtils.FormatInfix(fields,\",\") & \") \"); " dnl mp)
+
+    (dis "      FOR i := FIRST(record) TO LAST(record) DO" dnl mp)
+    (dis "        VAR values := NEW(TextSeq.T).init(); BEGIN" dnl mp)
+
+    (map (lambda (fld)
+	   (let* ((field-name (car fld))
+		  (m3name (string-append "record[i]." field-name))
+		  (type-name (cadr fld)))
+
+             (dis "          IF Field."field-name" IN maxFields THEN" dnl 
+		  "            values.addhi(" (format-sql-from-m3 m3name type-name) ")" dnl
+                  "           END;" dnl mp)))
+	 fields)
+		       
+    (dis "          Wx.PutText(wx, TextUtils.FormatInfix(values, \",\"));" dnl mp)
+    (dis "          IF i # LAST(record) THEN" dnl mp)
+    (dis "            Wx.PutText(wx, \" UNION SELECT \")" dnl mp)
+    (dis "          END" dnl mp)
+    (dis "        END" dnl mp)
+    (dis "      END(*FOR*);" dnl mp)
+    (dis "      db.aExec(Wx.ToText(wx), ex, MakeResCallback(db))" dnl mp)
+    (dis "    END" dnl mp)
     (dis "  END " mp)
     #t))
 
@@ -676,7 +742,7 @@
   (let ((imports
    (append (list "DBerr" "Database" "DatabaseTable" "DesynchronizedDB"
                  "UpdateMonitor" "Thread" "Random" "Debug"
-           "Scan" "Fmt" "Lex" "FloatMode" "PGSQLScan" "TextSeq"
+           "Scan" "Fmt" "Lex" "FloatMode" "PGSQLScan" "TextSeq" "Wx"
            "TextUtils" "DBTable")
      (map type->m3-intfname 
           (filter m3-import? (map cadr fields))))))
@@ -761,6 +827,20 @@
     (dis "END;" dnl ip)
     (dis dnl ip)
 
+    (dis "TYPE Field = { " dnl ip)
+    (dis (infixize (map (lambda(fld) (car fld)) fields) ",") dnl ip)
+    (dis "};" dnl ip)
+    (dis dnl ip)
+    
+    (dis "TYPE FieldSet = SET OF Field;" dnl ip)
+    (dis dnl ip)
+
+    (dis "CONST FieldNames = ARRAY Field OF TEXT { " dnl ip)
+    (dis (infixize (map (lambda(fld) (string-append "\"" (car fld) "\"")) fields) ",") dnl ip)
+    (dis "};" dnl ip)
+    (dis dnl ip)
+    
+
     ;; the various field-wise procedures
     (map (lambda(proc)
            (map (lambda (fld) (proc fld ip mp)) fields))
@@ -783,11 +863,23 @@
     "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
     dis-update-m3
     ))
+   (nullset
+    (list "NullSet"
+	  "(READONLY record : T) : FieldSet"
+	  dis-nullset-m3))
+
    (insert
     (list "Insert"
     "(db : DesynchronizedDB.T; READONLY record : T; ex : DesynchronizedDB.ExCallback)"
     dis-insert-m3
     ))
+
+   (batch-insert
+    (list "BatchInsert"
+    "(db : DesynchronizedDB.T; READONLY record : ARRAY OF T; ex : DesynchronizedDB.ExCallback)"
+    dis-batch-insert-m3
+    ))
+
    (upinsert
     (list "UpdateOrInsert" 
           "(db : DesynchronizedDB.T; READONLY record : T; restriction : TEXT; ex : DesynchronizedDB.ExCallback)"
@@ -809,13 +901,15 @@
      (dis pname ";" dnl dnl dnl mp)))
        (list upheader 
              insert
-						 format
+	     format
              upinsert
-						 parseheader
-						 dirtyheader
-						 cleanheader
-						 queryheader
-             getid)
+	     parseheader
+	     dirtyheader
+	     cleanheader
+	     queryheader
+             getid
+	     nullset
+	     batch-insert)
        )
       )
 
