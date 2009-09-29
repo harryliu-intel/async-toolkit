@@ -121,6 +121,7 @@ override("mmrv", TOP & "/calarm/marketmaking")
 
 override("fasthf", TOP & "/calarm")
 override("fastrw", TOP & "/calarm")
+override("marketdatadump", TOP & "/calarm")
 override("sx", TOP & "/calarm")
 override("hftrading", TOP & "/calarm")
 override("m3gen", TOP & "/calarm")

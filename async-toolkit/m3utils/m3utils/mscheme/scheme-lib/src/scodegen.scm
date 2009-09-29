@@ -6,7 +6,7 @@
 ;; 
 ;; Code for auto-generating synchronized SQL defn's and Modula-3 code
 ;;
-;; Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+;; Copyright (c) 2008, 2009, Generation Capital Ltd.  All rights reserved.
 ;;
 ;; Author: Mika Nystrom <mika@alum.mit.edu>
 ;;
@@ -47,6 +47,9 @@
 ;; 
 ;; 'server     written only by Modula-3 (central) server
 ;; 'client     written only by clients
+;;
+;; WE ARE MOVING AWAY FROM THESE RESTRICTIONS... most of what the
+;; client and server can do is now identical.
 ;;
 
 (define (map-filter-assoc tag lst)
@@ -636,6 +639,31 @@
     
     #t))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;    CLEAN/DIRTY MANAGEMENT OF TABLE ROWS
+;;
+;;    Summer/Fall 2009 we moved from a single dirty bit per row
+;;    to an auxiliary table, "clean", that for now has to be provided
+;;    by the specifier of the DB.  Eventually we should move this in
+;;    so it is in this code rather than having to be specified by
+;;    the user.
+;;   
+;;    The purpose of the clean table is to remember which rows have
+;;    already been seen by clients and so do not need to be reloaded
+;;    as long as they are cached.  Using a clean table allows multiple
+;;    clients to cache the same table while yet allowing writers to
+;;    dirty rows selectively.
+;;
+;;    To dirty a specific row:
+;;
+;;      DELETE FROM clean WHERE table=<table name> AND rowid=<row>;
+;;
+;;    For performance, then signal clients via an UpdateMonitor.  (Or
+;;    make them poll sufficiently frequently.)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (dis-clean-m3 tbl mp)
   (let ((tbl-name (car tbl)))
     (dis "  PROCEDURE Exec(q : TEXT) RAISES { DBerr.Error } =" dnl
@@ -699,7 +727,8 @@
     (dis "  END " mp)
 
     #t))
-    
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
 
 (define (dis-query-m3 tbl mp)
   ;; print the entire routine that generates the 'standard query string'
@@ -725,6 +754,7 @@
     #t
 ))
   
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (dis-imports imports ip)
   (let ((uniq-imports (uniq eqv? imports)))
