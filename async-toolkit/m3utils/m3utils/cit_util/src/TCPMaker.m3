@@ -59,8 +59,7 @@ REVEAL
     init := MakeMaker;
   END;
 
-PROCEDURE MMT(m : Default) : TCP.T RAISES { IP.Error } = 
-  <* FATAL Thread.Alerted *>
+PROCEDURE MMT(m : Default) : TCP.T RAISES { IP.Error, Thread.Alerted } = 
   BEGIN RETURN TCP.Connect(m.ep) END MMT;
 
 REVEAL
@@ -75,6 +74,6 @@ PROCEDURE InitSimple(s : Simple; tcp : TCP.T) : Simple =
   BEGIN s.tcp := tcp; RETURN s END InitSimple;
 
 PROCEDURE SMT(s : Simple) : TCP.T = 
-  BEGIN RETURN s.tcp END SMT;
+  BEGIN TRY RETURN s.tcp FINALLY s.tcp := NIL END END SMT;
 
 BEGIN END TCPMaker.

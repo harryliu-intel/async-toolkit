@@ -678,6 +678,7 @@
          dnl mp)
 
     (dis "  BEGIN " dnl mp)
+    (dis "    <*ASSERT clientTag # NIL*>" dnl mp)
 
     (dis "    IF row # AllRows THEN " dnl mp)
 
