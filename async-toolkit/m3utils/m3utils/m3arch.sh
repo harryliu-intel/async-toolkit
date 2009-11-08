@@ -14,7 +14,9 @@ MAJORNUM=`echo $VERSION | awk 'BEGIN {FS=""} {print $1}'`
 
 # Very inaccurate OS detection
 if [  "x$OS" = "xFreeBSD" ]; then
-  if [ "x$PROCESSOR" = "xi386" ]; then
+  if [ "x$PROCESSOR" = "xamd64" ]; then
+    M3ARCH="AMD64_FREEBSD"
+  elif [ "x$PROCESSOR" = "xi386" ]; then
     if [ "x$MAJORNUM" = "x3" ]; then
       M3ARCH="FreeBSD3"
     else

@@ -29,7 +29,7 @@ BEGIN
       WITH scm = NEW(SchemeM3.T).init(arr^, 
                                       globalEnv := 
                                 NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
-        MainLoop(NEW(ReadLine.T).init(), scm)
+        MainLoop(NEW(ReadLine.Default).init(), scm)
       END
     EXCEPT
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)

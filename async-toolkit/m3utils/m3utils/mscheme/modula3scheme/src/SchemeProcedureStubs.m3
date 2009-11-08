@@ -239,7 +239,7 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
                             args : Object) : Object RAISES { E } =
   (* modula-type-op <typecode> <name> <object> <args> *)
   VAR
-    tc   := SchemeLongReal.Int(First(args));
+    tci   : INTEGER;
     name := Scheme.SymbolCheck(Second(args));
     obj  := Third(args);
     rest := GetRest(args, 3);
@@ -247,7 +247,18 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
     r : REFANY := NIL;
     ops : OpRec;
   BEGIN
-    EVAL op.get(tc, r);
+    
+    TRY
+      tci := SchemeLongReal.Int(First(args))
+    EXCEPT ELSE
+      (* allow type to be symbol too *)
+      VAR tca : CARDINAL; BEGIN
+        EVAL tc.get(Scheme.SymbolCheck(First(args)), tca);
+        tci := tca
+      END
+    END;
+
+    EVAL op.get(tci, r);
 
     ops := r;
     
@@ -257,7 +268,7 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
       END;
       ops := ops.next
     END;
-    RAISE Scheme.E("Unknown op " & Atom.ToText(name) & " for tc " & Fmt.Int(tc))
+    RAISE Scheme.E("Unknown op " & Atom.ToText(name) & " for tc " & Fmt.Int(tci))
   END ModulaTypeOpApply;
 
 VAR tcMu := NEW(MUTEX);
