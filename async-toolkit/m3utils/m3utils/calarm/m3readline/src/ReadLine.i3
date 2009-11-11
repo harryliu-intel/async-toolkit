@@ -90,7 +90,7 @@ CONST Null = VAL(0, CHAR);
 (* example code, from trading client:
   TRY
     WITH intf = NEW(UI).init(),
-         rl = NEW(T).init() DO
+         rl = NEW(Default).init() DO
       rl.startProc();
       rl.display("Hello.\n");
       intf.run(rl)
