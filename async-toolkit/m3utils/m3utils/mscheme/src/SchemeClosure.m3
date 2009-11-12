@@ -26,9 +26,13 @@ REVEAL
 PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object 
   RAISES { E } =
   VAR dummy : BOOLEAN;
-  BEGIN RETURN interp.eval(t.body, 
-                         NEW(SchemeEnvironment.T).init(t.params, args, t.env,
-                                                       dummy))
+  BEGIN 
+    IF interp = NIL THEN
+      RAISE E ("Internal error: SchemeClosure.Apply: interp NIL")
+    END;
+    RETURN interp.eval(t.body, 
+                       NEW(SchemeEnvironment.T).init(t.params, args, t.env,
+                                                     dummy))
   END Apply;
 
 PROCEDURE Init(t : T; 

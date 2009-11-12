@@ -842,13 +842,15 @@
             ((equal? (cdar p) type) (caar p))
             (else (loop (cdr p))))))
 
-  (if (eq? 'Opaque (car type))
-      (is-opaque-basetype)
-      (let ((unnamed-type (strip-names type)))
-        (let loop ((p the-basetypes))
-          (cond ((null? p) #f)
-                ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
-                (else (loop (cdr p))))))))
+	
+
+  (cond ((eq? 'Opaque (car type)) (is-opaque-basetype))
+				((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
+				(else (let ((unnamed-type (strip-names type)))
+								(let loop ((p the-basetypes))
+									(cond ((null? p) #f)
+												((equal? (strip-names (cdar p)) unnamed-type) (caar p))
+												(else (loop (cdr p)))))))))
   
 (define (string-quote s) (string-append "\"" s "\""))
 
@@ -918,10 +920,12 @@
 
     (imports 'insert! 'SchemeObject) 
     (imports 'insert! 'Scheme)
+    (imports 'insert! 'SchemePair)
 
     (define (make-intf) (string-append proto ";"))
 
     (define (make-impl)
+			(imports 'insert! 'SchemePair)
       (string-append
        proto " = " dnl
        "  BEGIN" dnl
@@ -1117,7 +1121,9 @@
          (imports (env 'get 'imports))
 
          (proto (string-append
-                 "PROCEDURE " pname "(x : SchemeObject.T) : " m3tn 
+								 ;; parens around the return type are needed here
+								 ;; in case the return type is a PROCEDURE
+                 "PROCEDURE " pname "(x : SchemeObject.T) : (" m3tn ")"
                        " RAISES { Scheme.E }"
                        )
                 )
@@ -1292,7 +1298,11 @@
             )
           )
 
-         ((Procedure Object Opaque) 
+				 ((Procedure)
+					"     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
+					)
+
+         ((Object Opaque) 
           (string-append
            "    IF NOT ISTYPE(x,"m3tn") THEN" dnl
            "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
@@ -1442,12 +1452,12 @@
 
     (if (null? arg)
         (string-append 
-         "      | " xname " => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\"), NIL))" dnl
+         "      | " xname " => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2(SchemeSymbol.FromText(\"quote\"),SchemeUtils.List1(SchemeSymbol.FromText(\"" xname "\"))))" dnl
          )
         (let ((xarg->scm (to-scheme-proc-name arg env)))
 
           (string-append
-           "      | " xname "(xarg) => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\"), " xarg->scm "(xarg)))" dnl
+           "      | " xname "(xarg) => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2(SchemeSymbol.FromText(\"quote\"),SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\"), " xarg->scm "(xarg))))" dnl
            )
           )
         )
@@ -1620,7 +1630,7 @@
               (imports 'insert! 'SchemeSymbol)
               (string-append
                "      ELSE" dnl
-               "        SchemeApply.OneArg(interp,excHandler,SchemeUtils.Cons(SchemeSymbol.FromText(\"ANY\"),NIL))" dnl
+               "        SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2(SchemeSymbol.FromText(\"quote\"),SchemeUtils.List1(SchemeSymbol.FromText(\"ANY\"))))" dnl
                )
               )
             (apply string-append
@@ -1839,6 +1849,13 @@
   (define (env-map func types)
     (map (lambda(t)(func t env)) types))
 
+	;; we have one little limitation so far...  we dont discover that
+	;; something is an array type or ref array type while processing the
+	;; current interface unless its already been given its own distinct
+	;; typename.  This mainly hits procedure return values---if we want
+	;; to unpack them, the user needs to specify the types separately
+	;; somehow.
+
   (let* ((imports (env 'get 'imports))
 
          ;;;;;;;;;;;; REF types ;;;;;;;;;;;;
@@ -1893,6 +1910,7 @@
 
     (imports 'insert! 'SchemeProcedureStubs)
     (imports 'insert! 'Atom)
+    (imports 'insert! 'SchemePair)
     
     (string-flatten
      "MODULE " intf-name ";" dnl
@@ -2186,12 +2204,12 @@
        '(SchemePair Scheme SchemeObject))
       
       (string-flatten
-       "PROCEDURE New_" m3ti "(<*UNUSED*>interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+       "PROCEDURE New_" m3ti "(interp : Scheme.T; inits : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
        "  VAR" dnl
        "    p := SchemePair.Pair(inits);" dnl
        "    gobbled : BOOLEAN;" dnl
        "  BEGIN" dnl
-       "    WITH res = NEW("surrogate-type-name") DO" dnl
+       "    WITH res = NEW("surrogate-type-name", interp := interp) DO" dnl
        "      WHILE p # NIL DO" dnl
        "        WITH r = SchemePair.Pair(p.first) DO" dnl
        "          gobbled := FALSE;" dnl
@@ -2626,7 +2644,8 @@
      "      RAISE Scheme.E(\"must specify at least one array index\")" dnl
      "    END;" dnl
      (check-indices)
-     (make-input)
+     (make-input) ";" dnl
+     "    RETURN obj"
      "  END SetElement_" m3ti ";" dnl
      dnl
 
