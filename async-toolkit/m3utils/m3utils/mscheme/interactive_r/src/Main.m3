@@ -10,7 +10,7 @@
 MODULE Main;
 IMPORT Pathname, Scheme, Debug, OSError, ReadLineError, NetObj;
 IMPORT AL, IP, ReadLine;
-FROM SchemeReadLine IMPORT MainLoop;
+FROM SchemeReadLine IMPORT MainLoop, ReturningMainLoop;
 IMPORT Thread;
 IMPORT SchemeM3;
 IMPORT SchemeNavigatorEnvironment;
@@ -20,9 +20,11 @@ IMPORT ParseParams, Stdio;
 
 VAR files : REF ARRAY OF Pathname.T;
     readLine : ReadLine.T;
+    doReturn : BOOLEAN;
 BEGIN 
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
+      doReturn := pp.keywordPresent("-return");
       IF pp.keywordPresent("-noreadline") THEN
         readLine := NIL
       ELSE
@@ -48,7 +50,9 @@ BEGIN
     WITH scm = NEW(SchemeM3.T).init(files^, 
                                     globalEnv := 
                                         NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
-      MainLoop(readLine, scm)
+      IF doReturn THEN EVAL ReturningMainLoop(readLine, scm)
+      ELSE MainLoop(readLine, scm)
+      END
     END
   EXCEPT
     Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)

@@ -7,5 +7,6 @@ import("schemesig")
 import("m3readline")
 
 Module("SchemeReadLine")
+Module("SchemeInteraction")
 
 library("schemereadline")
