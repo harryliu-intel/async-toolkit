@@ -17,6 +17,7 @@ resource ("time.scm")
 resource ("history.scm")
 resource ("struct.scm")
 resource ("pregexp/pregexp.scm")
+resource ("marketdata-hfdate-conversion.scm")
 
 bundle ("SchemeDefsBundle")
 
