@@ -226,6 +226,8 @@ PROCEDURE ReturningMainLoop(rl : ReadLine.T; scm : Scheme.T) : Scheme.Object
           Csighandler.clear_signal();
           WITH res = scm.evalInGlobalEnv(x) DO
             TYPECASE res OF
+              NULL => (* skip *)
+            |
               SchemePair.T(p) =>
                 IF p.first = ReturnHookAtom THEN 
                   RETURN p.rest
