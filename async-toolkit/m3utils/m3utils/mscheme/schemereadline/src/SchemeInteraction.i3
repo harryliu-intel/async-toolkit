@@ -1,10 +1,10 @@
 (* $Id$ *)
 
 INTERFACE SchemeInteraction;
-IMPORT SchemePrimitive;
-
-PROCEDURE Extend(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.ExtDefiner;
+IMPORT Scheme;
 
 CONST Brand = "SchemeInteraction";
+
+PROCEDURE Hook(env : REFANY) : Scheme.Object RAISES { Scheme.E };
 
 END SchemeInteraction.

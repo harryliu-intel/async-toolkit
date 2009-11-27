@@ -73,6 +73,11 @@ PROCEDURE ChangeGlobalEnvironment(t : T; env : SchemeEnvironmentSuper.T) =
 PROCEDURE SetPrimitives(t : T; spd : REFANY) =
   BEGIN t.prims := spd END SetPrimitives;
 
+VAR runInteractionHook : RunInteractionHook := NIL;
+
+PROCEDURE SetInteractionHook(hook : RunInteractionHook) =
+  BEGIN runInteractionHook := hook END SetInteractionHook;
+
 PROCEDURE Bind(t : T; var : REFANY; val : Object) =
   BEGIN 
     TYPECASE var OF
@@ -469,6 +474,8 @@ PROCEDURE EvalInternal(t : T; x : Object; env : SchemeEnvironment.Local) : Objec
             RETURN NEW(Macro).init(First(args),
                                    Rest(args),
                                    env)
+          ELSIF fn = SYMrunInteraction AND runInteractionHook # NIL THEN
+            RETURN runInteractionHook(env)
           ELSE
             (* procedure call *)
             fn := t.eval(fn, env);
@@ -732,6 +739,7 @@ VAR
   SYMquote := SchemeSymbol.Symbol("quote");
   SYMbegin := SchemeSymbol.Symbol("begin");
   SYMdefine := SchemeSymbol.Symbol("define");
+  SYMrunInteraction := SchemeSymbol.Symbol("run-interaction");
   SYMsetB := SchemeSymbol.Symbol("set!");
   SYMif := SchemeSymbol.Symbol("if");
   SYMcond := SchemeSymbol.Symbol("cond");

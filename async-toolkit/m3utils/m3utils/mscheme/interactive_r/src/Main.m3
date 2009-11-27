@@ -15,6 +15,7 @@ IMPORT Thread;
 IMPORT SchemeM3;
 IMPORT SchemeNavigatorEnvironment;
 IMPORT ParseParams, Stdio;
+IMPORT SchemeInteraction;
 
 <*FATAL Thread.Alerted*>
 
@@ -45,6 +46,8 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Couldn't parse cmd-line params")
   END;
+
+  Scheme.SetInteractionHook(SchemeInteraction.Hook);
 
   TRY
     WITH scm = NEW(SchemeM3.T).init(files^, 
