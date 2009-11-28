@@ -7,9 +7,15 @@ IMPORT Scheme;
 IMPORT ReadLine;
 FROM SchemeReadLine IMPORT ReturningMainLoop;
 IMPORT IP, NetObj, Thread, ReadLineError, AL;
+IMPORT SchemeBoolean;
+IMPORT SchemeUtils, Debug;
 
-PROCEDURE Hook(env : REFANY) : Object RAISES { E } =
+PROCEDURE Hook(env : REFANY; do : Object) : Object RAISES { E } =
   BEGIN
+    IF Debug.GetLevel() >= Debug.DefaultLevel THEN
+      Debug.Out("do = " & SchemeUtils.Stringify(do))
+    END;
+    IF NOT SchemeBoolean.TruthO(do) THEN RETURN do END;
     TRY
       WITH interp   = NEW(SchemeM3.T).init(ARRAY OF Pathname.T {},
                                          globalEnv := env),

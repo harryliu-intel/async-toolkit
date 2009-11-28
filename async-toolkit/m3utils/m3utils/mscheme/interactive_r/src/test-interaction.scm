@@ -1,18 +1,20 @@
 ;;
 ;; $Id$
 ;;
-;; test interaction
+;; test "interaction"
 ;;
 
 ;; it would be nice to be able to scan the dynamic scope too, 
-;; rather than just the lexical.
+;; rather than just the lexical!
 
 (require-modules "display")
 
-(define (go) '(**return-hook**))
+(define (go . x) `(**return-hook** @x))
+
+(define break 100)
 
 (define (fact n)
-  (run-interaction)
+  (run-interaction (< n break) )
   (if (= 0 n) 1 (* n (fact (- n 1)))))
 
 (dis (fact 69) dnl)

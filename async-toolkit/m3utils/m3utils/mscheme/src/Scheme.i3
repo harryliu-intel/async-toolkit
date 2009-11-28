@@ -131,7 +131,8 @@ PROCEDURE VectorCheck(x : Object) : SchemeVector.T RAISES { E };
 VAR DoTracebacks := TRUE;
 
 TYPE RunInteractionHook = 
-  PROCEDURE (env : REFANY (*SchemeEnvironment.T*)) : Object RAISES { E };
+  PROCEDURE (env : REFANY (*SchemeEnvironment.T*); 
+             do : Object (* run interaction if not #f *) ) : Object RAISES { E };
 
 PROCEDURE SetInteractionHook(hook : RunInteractionHook);
 

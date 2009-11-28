@@ -16,6 +16,7 @@ PROCEDURE Truth(x : BOOLEAN) : T;
 CONST FromBool = Truth;
 
 PROCEDURE TruthO(x : SchemeObject.T) : BOOLEAN;
+  (* x # False() *)
 
 PROCEDURE True() : T; 
   (* constant TRUE *)

@@ -475,7 +475,7 @@ PROCEDURE EvalInternal(t : T; x : Object; env : SchemeEnvironment.Local) : Objec
                                    Rest(args),
                                    env)
           ELSIF fn = SYMrunInteraction AND runInteractionHook # NIL THEN
-            RETURN runInteractionHook(env)
+            RETURN runInteractionHook(env, t.eval(First(args),env))
           ELSE
             (* procedure call *)
             fn := t.eval(fn, env);
