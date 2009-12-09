@@ -248,9 +248,9 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
     ops : OpRec;
   BEGIN
     
-    TRY
+    IF ISTYPE(First(args),SchemeLongReal.T) THEN
       tci := SchemeLongReal.Int(First(args))
-    EXCEPT ELSE
+    ELSE
       (* allow type to be symbol too *)
       VAR tca : CARDINAL; BEGIN
         EVAL tc.get(Scheme.SymbolCheck(First(args)), tca);

@@ -1315,15 +1315,25 @@ PROCEDURE StringToNumber(x, y : Object) : Object RAISES { E } =
 
     IF base < 2 THEN base := 2 ELSIF base > 16 THEN base := 16 END;
 
-    TRY
-      IF base = 10 THEN
-        RETURN FromLR(Scan.LongReal(StringifyQ(x,FALSE)))
+    VAR
+      str : TEXT;
+    BEGIN
+      IF ISTYPE(x, SchemeString.T) THEN
+        str := SchemeString.ToText(x) 
       ELSE
-        RETURN FromLR(FLOAT(Scan.Int(StringifyQ(x,FALSE), defaultBase := base),
-                            LONGREAL))
+        str := StringifyQ(x,FALSE)
+      END;
+
+      TRY
+        IF base = 10 THEN
+          RETURN FromLR(Scan.LongReal(str))
+        ELSE
+          RETURN FromLR(FLOAT(Scan.Int(str, defaultBase := base),
+                              LONGREAL))
+        END
+      EXCEPT
+        FloatMode.Trap, Lex.Error => RETURN False()
       END
-    EXCEPT
-      FloatMode.Trap, Lex.Error => RETURN False()
     END
   END StringToNumber;
 
