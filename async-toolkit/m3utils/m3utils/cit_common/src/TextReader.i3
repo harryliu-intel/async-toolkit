@@ -115,5 +115,8 @@ TYPE Continuation <: ROOT;
 
 CONST Brand = "TextReader";
 
+PROCEDURE New(txt : TEXT) : T;
+(* equiv. to NEW(T).init(txt) *)
+
 END TextReader.
     

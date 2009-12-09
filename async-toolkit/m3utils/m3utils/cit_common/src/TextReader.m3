@@ -291,6 +291,8 @@ PROCEDURE GetCard(t : T) : CARDINAL
     END
   END GetCard;
 
+PROCEDURE New(txt : TEXT) : T = BEGIN RETURN NEW(T).init(txt) END New;
+
 BEGIN END TextReader.
 
 
