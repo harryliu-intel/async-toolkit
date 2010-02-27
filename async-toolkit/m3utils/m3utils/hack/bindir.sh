@@ -5,5 +5,12 @@ mkdir .hidden
 mv ${OLD} .hidden
 rm -rf *
 mv .hidden/* .
-m3build >/dev/null 2>&1
+
+if [ "x$CM3" -eq "x" ]; then
+	M3BUILD=m3build
+else
+	M3BUILD=cm3
+fi
+
+$M3BUILD >/dev/null 2>&1
 ls | grep -v CVS | grep -v src | grep -v bindir.sh
