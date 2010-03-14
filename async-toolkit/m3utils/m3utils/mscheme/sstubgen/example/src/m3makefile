@@ -17,6 +17,8 @@ Module("Bubble")
 
 Interface("ExampleRef")
 
+Interface("Blah")
+
 SchemeStubs("Bubble")
 SchemeStubs("Example")
 SchemeStubs("Example2")
@@ -41,6 +43,8 @@ SchemeStubs("SchemeClosureClass")
 SchemeStubs("RTType")
 
 SchemeStubs("SchemeEnvironment")
+
+SchemeStubs("Blah")
 
 %SchemeStubs("TextRefTbl") % doesnt work yet
 

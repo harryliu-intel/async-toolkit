@@ -1282,7 +1282,7 @@ PROCEDURE NumCompute(args : Object;
 
 PROCEDURE NumberToLONGREAL(x : Object) : Object RAISES { E } =
   BEGIN
-    RETURN SchemeString.FromText(Fmt.LongReal(FromO(x), literal := TRUE))
+    RETURN SchemeString.FromText(Fmt_LongReal(FromO(x), literal := TRUE))
   END NumberToLONGREAL;
 
 PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
@@ -1300,9 +1300,38 @@ PROCEDURE NumberToString(x, y : Object) : Object RAISES { E } =
     IF base # 10 OR FromO(x) = FLOAT(ROUND(FromO(x)),LONGREAL) THEN
       RETURN SchemeString.FromText(Fmt.Int(ROUND(FromO(x)), base := base))
     ELSE
-      RETURN SchemeString.FromText(Fmt.LongReal(FromO(x)))
+      RETURN SchemeString.FromText(Fmt_LongReal(FromO(x)))
     END
   END NumberToString;
+
+PROCEDURE Fmt_LongReal(lr : LONGREAL; literal := FALSE) : TEXT =
+  BEGIN
+    IF FLOAT(ROUND(lr),LONGREAL) = lr THEN
+      RETURN Fmt.Int(ROUND(lr))
+    ELSIF FLOAT(LAST(CARDINAL),LONGREAL) = lr THEN
+      (* tricky special case for 64-bit machines.  Possible loss
+         of precision! *)
+      RETURN Fmt.Int(LAST(CARDINAL))
+    ELSIF ABS(lr) > 1.0d10 AND FLOAT(FIRST(INTEGER),LONGREAL) = lr THEN
+      (* this is actually wrong... but compiler problems *)
+      RETURN "-" & Fmt.Int(LAST(INTEGER))
+    ELSIF ABS(lr) > 1.0d10 AND 
+      lr >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
+      lr <= FLOAT(LAST(INTEGER), LONGREAL) THEN
+      WITH o  = Fmt.LongReal(ABS(lr)),
+           s  = Scan.LongReal(o),
+           o1 = Fmt.LongReal(ABS(lr)-1.0d0),
+           s1 = Scan.LongReal(o1) DO
+        IF s = s1 THEN
+          RETURN Fmt.Int(ROUND(lr))
+        ELSE
+          RETURN Fmt.LongReal(lr,literal := literal)
+        END
+      END
+    ELSE
+      RETURN Fmt.LongReal(lr,literal := literal)
+    END
+  END Fmt_LongReal;
 
 PROCEDURE StringToNumber(x, y : Object) : Object RAISES { E } = 
   VAR base : INTEGER;

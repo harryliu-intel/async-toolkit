@@ -18,6 +18,7 @@ IMPORT SchemeBoolean;
 IMPORT SchemeProcedure,SchemeProcedureClass;
 IMPORT Debug;
 IMPORT RefSeq, RefPair, RefPairSeq;
+IMPORT Scan;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -497,6 +498,23 @@ PROCEDURE StringifyB(x : Object;
           SchemeLongReal.T(lr) =>
           IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
             Wx.PutInt(buf,(ROUND(lr^)))
+          ELSIF FLOAT(LAST(CARDINAL),LONGREAL) = lr^ THEN
+            (* tricky special case for 64-bit machines.  Possible loss
+               of precision! *)
+            Wx.PutInt(buf,LAST(CARDINAL))
+          ELSIF ABS(lr^) > 1.0d10 AND 
+                lr^ >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
+                lr^ <= FLOAT(LAST(INTEGER), LONGREAL) THEN
+            WITH o  = Fmt.LongReal(ABS(lr^)),
+                 s  = Scan.LongReal(o),
+                 o1 = Fmt.LongReal(ABS(lr^)-1.0d0),
+                 s1 = Scan.LongReal(o1) DO
+              IF s = s1 THEN
+                Wx.PutInt(buf, ROUND(lr^))
+              ELSE
+                Put(Fmt.LongReal(lr^))
+              END
+            END
           ELSE
             Put(Fmt.LongReal(lr^))
           END
