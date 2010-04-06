@@ -18,26 +18,26 @@
 (define (y pt) (cadr pt))
 
 (define (subdivide ll ur n)
-	(let ((lx (x ll))                    ;; 4 coordinates of input rectangle
-				(ly (y ll))
-				(ux (x ur))
-				(uy (y ur))
-				(mx (/ (+ (x ll) (x ur)) 2))   ;; mid x
-				(my (/ (+ (y ll) (y ur)) 2))   ;; mid y
-				)
-		(if (= n 0)
+  (let ((lx (x ll))                    ;; 4 coordinates of input rectangle
+        (ly (y ll))
+        (ux (x ur))
+        (uy (y ur))
+        (mx (/ (+ (x ll) (x ur)) 2))   ;; mid x
+        (my (/ (+ (y ll) (y ur)) 2))   ;; mid y
+        )
+    (if (= n 0)
         ;; IF clause just prints the current rectangle
-				(begin 
-					(dis "(" (x ll) " " (y ll) "),(" (x ur) " " (y ur) ")" dnl) 
+        (begin 
+          (dis "(" (x ll) " " (y ll) "),(" (x ur) " " (y ur) ")" dnl) 
          #t)
 
         ;; else clause calls routine recursively on 4 subrects
-				(begin
-					(subdivide        ll  (pt mx my) (- n 1)) ;; LL subrect
-					(subdivide (pt mx ly) (pt ux my) (- n 1)) ;; LR subrect
+        (begin
+          (subdivide        ll  (pt mx my) (- n 1)) ;; LL subrect
+          (subdivide (pt mx ly) (pt ux my) (- n 1)) ;; LR subrect
           (subdivide (pt lx my) (pt mx uy) (- n 1)) ;; UL subrect
           (subdivide (pt mx my)        ur  (- n 1)) ;; UR subrect
         )
     )
 )) 
-					
+          
