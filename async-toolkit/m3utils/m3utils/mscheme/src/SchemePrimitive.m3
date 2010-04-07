@@ -109,7 +109,7 @@ TYPE
         CloseInputPort, OutputportQ, CurrentOutputPort,
         OpenOutputFile, CloseOutputPort, ReadChar,
         PeekChar, Eval, Quotient, Remainder,
-        Modulo, Third, EofObjectQ, Gcd, Lcm, 
+        IntDiv, Modulo, Third, EofObjectQ, Gcd, Lcm, 
         Cxr, OddQ, EvenQ, ZeroQ, PositiveQ,
         NegativeQ, 
 
@@ -361,6 +361,7 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("memq",           ORD(P.MemQ), dd,     2)
     .defPrim("memv",           ORD(P.MemV), dd,     2)
     .defPrim("min",            ORD(P.Min), dd,      1, n)
+    .defPrim("div",            ORD(P.IntDiv), dd,   2)
     .defPrim("modulo",         ORD(P.Modulo), dd,   2)
     .defPrim("negative?",      ORD(P.NegativeQ), dd,1)
     .defPrim("newline",        ORD(P.Newline), dd,  0, 1)
@@ -962,6 +963,8 @@ PROCEDURE Prims(t : T;
       |
         P.Remainder => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
         (* this must be wrong for negative y *)
+      |
+        P.IntDiv => RETURN FromLR(FLOAT(TRUNC(FromO(x)) DIV TRUNC(FromO(y)), LONGREAL))
       |
         P.Modulo => RETURN FromLR(FLOAT(TRUNC(FromO(x)) MOD TRUNC(FromO(y)), LONGREAL))
       |
