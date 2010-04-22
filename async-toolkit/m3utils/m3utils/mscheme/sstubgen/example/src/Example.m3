@@ -18,6 +18,14 @@ PROCEDURE THello(t : T) =
     IO.Put("hi there!\n")
   END THello;
 
+PROCEDURE Sum(a : ARRAY OF LONGREAL) : LONGREAL =
+  VAR sum := 0.0d0;
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      sum := sum + a[i]
+    END ;
+    RETURN sum
+  END Sum;
 
 BEGIN 
   EVAL NEW(UU, hello := THello)
