@@ -29,6 +29,7 @@ IMPORT SchemeString;
 IMPORT ValueTranslator;
 IMPORT Debug;
 IMPORT CM3Extensions;
+IMPORT Text;
 
 REVEAL 
   Handle = Public BRANDED OBJECT
@@ -68,14 +69,34 @@ PROCEDURE GetNames(c : M3Context.T;
   <*FATAL RTBrand.NotBranded*>
   CONST Msg = StubUtils.Message;
 
+  PROCEDURE DoFileNames(str : TEXT) =
+    (* generic instances look like so: 
+
+       ("/home/mika/t/calarm/twslib/src/TWSBridgeG.ig[/home/mika/t/calarm/twslib/src/TWSDefBridge.i3]")
+
+    *)
+
+    CONST Delims = SET OF CHAR { '[', ']', ',' };
+    VAR p , q := 0;
+    BEGIN 
+      FOR p := 0 TO Text.Length(str)-1 DO
+        IF Text.GetChar(str,p) IN Delims THEN
+          Append(Text.Sub(str,q,p-q)); q := p+1
+        END
+      END;
+      IF p - q > 0 THEN Append(Text.Sub(str,q,p-q)) END
+    END DoFileNames;
+
+  PROCEDURE Append(fn : TEXT) =
+    BEGIN filenames := Cons(SchemeString.FromText(fn),filenames) END Append;
+
   PROCEDURE ProcessUnit() =
     BEGIN
       Debug.Out("AstToType.GetNames : cu is " & RTBrand.GetName(TYPECODE(cu)));
       Debug.Out("AstToType.GetNames : cu.as_root is " & 
         RTBrand.GetName(TYPECODE(cu.as_root)));
 
-      filenames := Cons(SchemeString.FromText(NARROW(cu.fe_uid,M3CUnit.Uid).filename),
-                                 filenames);
+      DoFileNames(NARROW(cu.fe_uid,M3CUnit.Uid).filename);
 
       WITH syms = M3ASTScopeNames.Names(cu.as_root.as_id.vSCOPE) DO
         IF syms = NIL THEN 
