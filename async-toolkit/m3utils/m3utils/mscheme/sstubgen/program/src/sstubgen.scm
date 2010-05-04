@@ -1213,16 +1213,19 @@
                      (field-type (extract-field 'type f))
                      (field-pname (push-make field-type)))
                 (string-append 
-                 "        IF SchemeSymbol.FromText(\"" field-name "\") = SchemeUtils.First(p.first) THEN" dnl
-                 "          res."field-name" := "field-pname"(SchemeUtils.Rest(p.first))" dnl
-                 "        END")))
+                 "        ELSIF SchemeSymbol.FromText(\"" field-name "\") = SchemeUtils.First(p.first) THEN" dnl
+                 "          res."field-name" := "field-pname"(SchemeUtils.Rest(p.first))" dnl)))
             
             (string-append
              "    VAR res : "m3tn";" dnl
              "        p := SchemePair.Pair(x);" dnl 
              "    BEGIN" dnl 
              "      WHILE p # NIL DO" dnl
-             (infixize (map format-field fields) (string-append ";" dnl)) ";" dnl
+             (string-append 
+						 "        IF FALSE THEN" dnl
+							(apply string-append (map format-field fields) )
+             "        END;" dnl
+             )
              "        p := SchemePair.Pair(p.rest)" dnl
              "      END;" dnl
              "      RETURN res" dnl
