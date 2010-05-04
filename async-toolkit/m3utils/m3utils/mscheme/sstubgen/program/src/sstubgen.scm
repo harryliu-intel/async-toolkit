@@ -948,7 +948,7 @@
          ((Record)
           (map 
            (lambda(i)(imports 'insert! i))
-           '(SchemeUtils SchemePair SchemeUtils))
+           '(SchemeUtils SchemePair SchemeUtils SchemeSymbol))
 
           (let ((fields (extract-field 'fields type)))
 
@@ -1204,6 +1204,8 @@
 					)
          
          ((Record)
+					(imports 'insert! 'SchemeSymbol)
+		
           (let ((fields (extract-field 'fields type)))
         
             (define (format-field f)
