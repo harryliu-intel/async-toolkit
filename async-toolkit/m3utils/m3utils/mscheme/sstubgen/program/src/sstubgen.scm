@@ -1904,6 +1904,20 @@
          
          ;;;;;;;;;;;; the global pickle ;;;;;;;;;;;;
          (the-pickle        (register-pickle types env))
+         (register-stubs
+            (make-register-stubs 
+             (append
+              ref-record-registrations
+              object-registrations 
+              ref-registrations
+              ref-array-registrations
+              the-pickle
+               )
+              env))
+
+          (converters (infixize (map cdr (close-conversions env)) dnldnl))
+         
+
          )
       
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1921,15 +1935,7 @@
      dnl
      
      (string-flatten
-      (make-register-stubs 
-       (append
-        ref-record-registrations
-        object-registrations 
-        ref-registrations
-        ref-array-registrations
-        the-pickle
-        )
-       env)
+      register-stubs
       dnl
       object-stubs
       dnl
@@ -1950,7 +1956,7 @@
      dnl
 
      ;; more converters... hrmph shouldnt really be here
-     (infixize (map cdr (close-conversions env)) dnldnl)
+     converters
      dnl
 
      "BEGIN END " intf-name "." dnl
