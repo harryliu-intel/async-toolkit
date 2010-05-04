@@ -558,6 +558,9 @@
              " PROCEDURE"
              (format-parenthesized-signature (extract-field 'sig t) env)))
 
+           ((Packed)
+            (string-append " BITS " (extract-field 'size t) " FOR " (format-type (extract-field 'base t) env)))
+
            ((Opaque)
             (string-append
              " (* <: *) " (format-branding t) dnl
@@ -983,6 +986,15 @@
             )
           )
 
+         ((Packed)
+          (let* ((base (extract-field 'base type))
+                 (base-pname (push-make base)))
+            (string-append
+             "RETURN " base-pname "(x)" 
+             )
+           )
+         )
+
          ((Subrange)
           (let* ((base (extract-field 'base type))
                  (base-pname (push-make base)))
@@ -1235,6 +1247,17 @@
              "        END" dnl
              "      END;" dnl
              "      RAISE Scheme.E(\"Not a value of "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+             "    END"
+             )
+            )
+          )
+
+         ((Packed)
+          (let* ((base (extract-field 'base type))
+                 (base-pname (push-make base)))
+            (string-append
+             "    WITH baseVal = " base-pname "(x) DO"  dnl
+             "      RETURN baseVal" dnl
              "    END"
              )
             )
