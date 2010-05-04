@@ -1211,8 +1211,8 @@
                      (field-type (extract-field 'type f))
                      (field-pname (push-make field-type)))
                 (string-append 
-                 "        IF SchemeSymbol.FromText(\"" field-name "\") = p.first THEN" dnl
-                 "          res."field-name" := "field-pname"(p.rest)" dnl
+                 "        IF SchemeSymbol.FromText(\"" field-name "\") = SchemeUtils.First(p.first) THEN" dnl
+                 "          res."field-name" := "field-pname"(SchemeUtils.Rest(p.first))" dnl
                  "        END")))
             
             (string-append
