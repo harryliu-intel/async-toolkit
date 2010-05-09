@@ -126,9 +126,13 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
           TRY
             SetCurTZ(t.tz);
             
+            (*
+            (* Debug.Out MAY call time functions, which may call us back,
+               leading to locking against ourselves *)
             IF Debug.GetLevel() >= 20 THEN
               Debug.Out("TZ.Localtime: time=" & Fmt.LongReal(time))
             END;
+            *)
             
             clock^ := itime;
             
