@@ -521,9 +521,36 @@
 	(fields (get-fields (complete-tbl tbl))))
     (dis "  VAR maxFields, minFields : FieldSet;"           dnl mp)
     (dis "  BEGIN"                                          dnl mp)
+    
+    ;; anything to insert?
+    
     (dis "    IF NUMBER(record) = 0 THEN RETURN END;"       dnl mp)
-    (dis "    maxFields := AllFields-NullSet(record[0]);"             dnl mp)
-    (dis "    minFields := AllFields-NullSet(record[0]);"             dnl mp)
+
+    ;; deleteFirst is used for fault-tolerant installations that
+    ;; may re-use insert ids.  Because the caches are empty on a restart 
+    ;; we may need to delete entries first
+    ;; note that we don't regularly want to do this due to the overhead
+    ;; of making the query first.
+
+    (dis "    IF deleteFirst THEN"                                  dnl mp)
+    (dis "      VAR wx := Wx.New(); BEGIN"                          dnl mp)
+    (dis "        Wx.PutText(wx, \"delete from " tbl-name " where false \"); " dnl mp)
+    (dis "        FOR i := FIRST(record) TO LAST(record) DO"        dnl mp)
+    (dis "          Wx.PutText(wx, \" or (" tbl-name "_id = \");"   dnl mp)
+    (dis "          Wx.PutInt (wx, record[i]." tbl-name "_id);"     dnl mp)
+    (dis "          Wx.PutText(wx, \")\")"                          dnl mp)
+    (dis "        END;"                                             dnl mp)
+    (dis "        db.aExec(Wx.ToText(wx), ex, MakeResCallback(db))" dnl mp)
+    (dis "      END"                                                dnl mp)
+    (dis "    END;"                                                 dnl mp)
+
+    ;; check to see if all inserts modify the SAME fields.
+    ;; if so we use UNION SELECT to perform the inserts in a single
+    ;; query (below).  Else we fall back to doing the inserts one at a time
+    ;; sequentially.
+
+    (dis "    maxFields := AllFields-NullSet(record[0]);"   dnl mp)
+    (dis "    minFields := AllFields-NullSet(record[0]);"   dnl mp)
     (dis "    FOR i := 1 TO LAST(record) DO"                dnl mp)
     (dis "      WITH nri = AllFields-NullSet(record[i]) DO"           dnl mp)
     (dis "        maxFields := maxFields + nri; minFields := minFields * nri" dnl mp)
@@ -535,6 +562,9 @@
     (dis "      END;"                                       dnl mp)
     (dis "      RETURN"                                     dnl mp)
     (dis "    END;"                                         dnl mp)
+ 
+    ;; fast version follows (UNION SELECT)
+
     (dis "    VAR wx := Wx.New(); fields := NEW(TextSeq.T).init(); BEGIN" dnl mp)
     (dis "      FOR f := FIRST(Field) TO LAST(Field) DO" dnl mp)
     (dis "        IF f IN maxFields THEN fields.addhi(FieldNames[f]) END" dnl mp)
@@ -910,7 +940,7 @@
 
    (batch-insert
     (list "BatchInsert"
-    "(db : DesynchronizedDB.T; READONLY record : ARRAY OF T; ex : DesynchronizedDB.ExCallback)"
+    "(db : DesynchronizedDB.T; READONLY record : ARRAY OF T; ex : DesynchronizedDB.ExCallback; deleteFirst := FALSE)"
     dis-batch-insert-m3
     ))
 
