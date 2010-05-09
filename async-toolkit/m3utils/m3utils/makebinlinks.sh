@@ -40,6 +40,7 @@ ${ROOT}/calarm/trade/${BINDIR}/trade
 ${ROOT}/calarm/twslib/testtrade2/client/${BINDIR}/tradeclient
 ${ROOT}/calarm/twslib/testtrade2/server/${BINDIR}/tradeserver
 ${ROOT}/calarm/trailingave/${BINDIR}/trailingave
+${ROOT}/calarm/dumponeperiod/${BINDIR}/dumponeperiod
 ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
 "
 
