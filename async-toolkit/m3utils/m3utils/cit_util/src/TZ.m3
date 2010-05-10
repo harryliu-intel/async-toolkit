@@ -4,10 +4,10 @@ UNSAFE MODULE TZ;
 IMPORT Utime, UtimeR, Date, XTime AS Time;
 FROM M3toC IMPORT CopyTtoS, FreeCopiedS, CopyStoT;
 IMPORT CTZ, Text;
-IMPORT Debug, Fmt;
+IMPORT Debug;
 IMPORT OSError;
 IMPORT FS, Env;
-FROM Ctypes IMPORT long_star;
+IMPORT Ctypes;
 IMPORT Word;
 IMPORT Thread;
 
@@ -116,8 +116,8 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
     END;
     
     VAR
-      tms := NEW(UNTRACED REF Utime.struct_tm);
-      clock := NEW(long_star);
+      tms   : Utime.struct_tm;
+      clock : Ctypes.long;
       oldTZ : TEXT;
     BEGIN
       TRY
@@ -134,13 +134,13 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
             END;
             *)
             
-            clock^ := itime;
+            clock := itime;
             
             (* the following code should match what is in DateBsd.m3 ... *)
             (* the main difference is the use of localtime_r rather than
                localtime, in order to eliminate static storage depedencies *)
             
-            WITH tm = UtimeR.localtime_r(clock,tms) DO
+            WITH tm = UtimeR.localtime_r(ADR(clock),ADR(tms)) DO
               d.second := MIN(tm.tm_sec,59); (* leap seconds!? *)
               d.minute := tm.tm_min;
               d.hour := tm.tm_hour;
@@ -160,8 +160,6 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
         RETURN d
         
       FINALLY
-        DISPOSE(clock);
-        DISPOSE(tms)
       END
     END
   END Localtime;
@@ -172,27 +170,27 @@ PROCEDURE Mktime(t : T; d : Date.T) : Time.T =
       SetCurTZ(t.tz);
       
       VAR
-        tm := NEW(UNTRACED REF Utime.struct_tm);
-        now := NEW(long_star);
+        tm  : Utime.struct_tm;
+        now : Ctypes.long;
       BEGIN
-        now^ := SomeTimeT;
+        now := SomeTimeT; (* any legal time *)
 
-        tm := UtimeR.localtime_r(now,tm);
-        tm.tm_sec := d.second;
-        tm.tm_min := d.minute;
-        tm.tm_hour := d.hour;
-        tm.tm_mday := d.day;
-        tm.tm_mon := ORD(d.month);
-        tm.tm_year := d.year-1900;
-        tm.tm_isdst := -1;
-        tm.tm_gmtoff := 0;
-        tm.tm_wday := 0; (* ignored *)
-        tm.tm_yday := 0;  (* ignored *)
-        WITH res = Utime.mktime(tm) DO
-          <* ASSERT res >= 0 *>
-          DISPOSE(tm);
-          DISPOSE(now);
-          RETURN FLOAT(res,LONGREAL)
+        tm := UtimeR.localtime_r(ADR(now),ADR(tm))^;
+        BEGIN
+          tm.tm_sec := d.second;
+          tm.tm_min := d.minute;
+          tm.tm_hour := d.hour;
+          tm.tm_mday := d.day;
+          tm.tm_mon := ORD(d.month);
+          tm.tm_year := d.year-1900;
+          tm.tm_isdst := -1;
+          tm.tm_gmtoff := 0;
+          tm.tm_wday := 0; (* ignored *)
+          tm.tm_yday := 0;  (* ignored *)
+          WITH res = Utime.mktime(ADR(tm)) DO
+            <* ASSERT res >= 0 *>
+            RETURN FLOAT(res,LONGREAL)
+          END
         END
       END
     END

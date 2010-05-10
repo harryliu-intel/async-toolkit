@@ -282,6 +282,9 @@ PersistentTable("IntRef", "Refany", "IntRefTbl")
 
 Interface("FileSharing")
 
+%Interface("MyUtime")
+%c_source("myutime")
+
 if equal(TARGET,"NT386GNU") 
   /* the following interfaces are from FreeBSD and seem to 
      do the trick on Cygwin */
