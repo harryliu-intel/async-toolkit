@@ -336,17 +336,17 @@
               (else (base-type base))))))
 
 (define (intersperse lst sep)
-	;; this routine MUST BE tail-recursive, or we will definitely
-	;; run out of stack space!
-	(define (helper lst so-far)
-		(cond ((null? lst) so-far)
-					((null? (cdr lst)) (cons (car lst) so-far))
+        ;; this routine MUST BE tail-recursive, or we will definitely
+        ;; run out of stack space!
+        (define (helper lst so-far)
+                (cond ((null? lst) so-far)
+                                        ((null? (cdr lst)) (cons (car lst) so-far))
 
-					(else 
-					 (helper (cdr lst) 
-									 (cons sep  (cons (car lst) so-far))))))
-	(reverse (helper lst '()))
-	)
+                                        (else 
+                                         (helper (cdr lst) 
+                                                                         (cons sep  (cons (car lst) so-far))))))
+        (reverse (helper lst '()))
+        )
 
 (define (infixize string-list sep)
   (if (null? string-list) ""
@@ -845,15 +845,15 @@
             ((equal? (cdar p) type) (caar p))
             (else (loop (cdr p))))))
 
-	
+        
 
   (cond ((eq? 'Opaque (car type)) (is-opaque-basetype))
-				((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
-				(else (let ((unnamed-type (strip-names type)))
-								(let loop ((p the-basetypes))
-									(cond ((null? p) #f)
-												((equal? (strip-names (cdar p)) unnamed-type) (caar p))
-												(else (loop (cdr p)))))))))
+	((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
+	(else (let ((unnamed-type (strip-names type)))
+		(let loop ((p the-basetypes))
+		  (cond ((null? p) #f)
+                                                                                                ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
+                                                                                                (else (loop (cdr p)))))))))
   
 (define (string-quote s) (string-append "\"" s "\""))
 
@@ -886,9 +886,6 @@
    module-code 
    "END " name "." dnl))
       
-  
-  
-
 (define (make-to-scheme-nonbase type env)
 
   (define (push-make type)(to-scheme-proc-name type env))
@@ -928,7 +925,7 @@
     (define (make-intf) (string-append proto ";"))
 
     (define (make-impl)
-			(imports 'insert! 'SchemePair)
+                        (imports 'insert! 'SchemePair)
       (string-append
        proto " = " dnl
        "  BEGIN" dnl
@@ -938,12 +935,12 @@
 
          ((Ref)
           ;; canonical rep. of a Modula-3 ref is just the ref itself,
-					;; unless its UNTRACED.
-					(if (extract-field 'traced type)
-							"RETURN x"
-							(string-flatten
-							 "RETURN NEW(REF RECORD ref : " m3tn " END, ref := x)")
-							))
+          ;; unless its UNTRACED.
+          (if (extract-field 'traced type)
+              "RETURN x"
+              (string-flatten
+               "RETURN NEW(REF RECORD ref : " m3tn " END, ref := x)")
+              ))
          
          ((Record)
           (map 
@@ -1133,8 +1130,8 @@
          (imports (env 'get 'imports))
 
          (proto (string-append
-								 ;; parens around the return type are needed here
-								 ;; in case the return type is a PROCEDURE
+                                                                 ;; parens around the return type are needed here
+                                                                 ;; in case the return type is a PROCEDURE
                  "PROCEDURE " pname "(x : SchemeObject.T) : (" m3tn ")"
                        " RAISES { Scheme.E }"
                        )
@@ -1163,49 +1160,49 @@
          ((Ref)
           ;; several possibilities.  either we have the correct type
           ;; already, or else we may have to build it, if a Ref OpenArray
-					;; special stuff for UNTRACED at the end
-					(if (extract-field 'traced type)
-
-							(string-flatten
-							 "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
-							 
-							 (let* ((target (extract-field 'target type)))
-								 (if (eq? (car target) 'OpenArray)
-										 (let* ((element (extract-field 'element target))
-														(element-pname (push-make element)))
-											 (string-append
-												"    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
-												"        p := SchemePair.Pair(x);" dnl      
-												"        i := 0;" dnl
-												"    BEGIN" dnl
-												"      WHILE p # NIL DO" dnl
-												"        arr[i] := "element-pname"(p.first);" dnl
-												"        p := SchemePair.Pair(p.rest);" dnl
-												"        INC(i)" dnl
-												"      END;" dnl
-												"      RETURN arr" dnl
-												"    END;" dnl
-												))
-										 (string-append
-											"    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
-							 )
-
-							(string-flatten
-							 "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
-							 "    BEGIN" dnl
-							 "      IF NOT ISTYPE(x, Rec) THEN" dnl
-							 "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
-							 "      ELSE" dnl
-							 "        RETURN NARROW(x,Rec).ref" dnl
-							 "      END" dnl
-							 )
-							
-							)
-					)
+          ;; special stuff for UNTRACED at the end
+	  (if (extract-field 'traced type)
+	      
+	      (string-flatten
+	       "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
+	       
+	       (let* ((target (extract-field 'target type)))
+		 (if (eq? (car target) 'OpenArray)
+		     (let* ((element (extract-field 'element target))
+			    (element-pname (push-make element)))
+                                                                                         (string-append
+           "    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
+	   "        p := SchemePair.Pair(x);" dnl      
+	   "        i := 0;" dnl
+	   "    BEGIN" dnl
+	   "      WHILE p # NIL DO" dnl
+	   "        arr[i] := "element-pname"(p.first);" dnl
+	   "        p := SchemePair.Pair(p.rest);" dnl
+	   "        INC(i)" dnl
+	   "      END;" dnl
+	   "      RETURN arr" dnl
+	   "    END;" dnl
+	   ))
+	  (string-append
+                                                                                        "    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
+                                                         )
+	      
+	      (string-flatten
+	       "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
+	       "    BEGIN" dnl
+	       "      IF NOT ISTYPE(x, Rec) THEN" dnl
+	       "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+	       "      ELSE" dnl
+	       "        RETURN NARROW(x,Rec).ref" dnl
+	       "      END" dnl
+	       )
+	      
+	      )
+	  )
          
          ((Record)
-					(imports 'insert! 'SchemeSymbol)
-		
+	  (imports 'insert! 'SchemeSymbol)
+                
           (let ((fields (extract-field 'fields type)))
         
             (define (format-field f)
@@ -1222,8 +1219,8 @@
              "    BEGIN" dnl 
              "      WHILE p # NIL DO" dnl
              (string-append 
-						 "        IF FALSE THEN" dnl
-							(apply string-append (map format-field fields) )
+	      "        IF FALSE THEN" dnl
+	      (apply string-append (map format-field fields) )
              "        END;" dnl
              )
              "        p := SchemePair.Pair(p.rest)" dnl
@@ -1326,9 +1323,9 @@
             )
           )
 
-				 ((Procedure)
-					"     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
-					)
+                                 ((Procedure)
+                                        "     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
+                                        )
 
          ((Object Opaque) 
           (string-append
@@ -1574,9 +1571,9 @@
                                    (extract-field 'name f))
                                )
                              (filter (lambda(f)
-																			 (not (eq? 'Mode.Implied
-																								 (extract-field 'mode f))))
-																		 formals))
+				       (not (eq? 'Mode.Implied
+						 (extract-field 'mode f))))
+				     formals))
                         ", "))
              (result (extract-field 'result sig)))
 
@@ -1819,15 +1816,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (format-pickle-vector vec)
-	(define res '())
+        (define res '())
   (infixize
-	 (let loop ((i (- (vector-length vec) 1))
-							(res '()))
-		 (if (= -1 i) 
-				 res
-				 (loop (- i 1) 
-							 (cons 
-								(string-append "VAL(" (vector-ref vec i) ",CHAR)")
+         (let loop ((i (- (vector-length vec) 1))
+                                                        (res '()))
+                 (if (= -1 i) 
+                                 res
+                                 (loop (- i 1) 
+                                                         (cons 
+                                                                (string-append "VAL(" (vector-ref vec i) ",CHAR)")
                  res))))
    ", "))
 
@@ -1877,12 +1874,12 @@
   (define (env-map func types)
     (map (lambda(t)(func t env)) types))
 
-	;; we have one little limitation so far...  we dont discover that
-	;; something is an array type or ref array type while processing the
-	;; current interface unless its already been given its own distinct
-	;; typename.  This mainly hits procedure return values---if we want
-	;; to unpack them, the user needs to specify the types separately
-	;; somehow.
+        ;; we have one little limitation so far...  we dont discover that
+        ;; something is an array type or ref array type while processing the
+        ;; current interface unless its already been given its own distinct
+        ;; typename.  This mainly hits procedure return values---if we want
+        ;; to unpack them, the user needs to specify the types separately
+        ;; somehow.
 
   (let* ((imports (env 'get 'imports))
 
@@ -2283,7 +2280,7 @@
        "  VAR" dnl
        "    methName := Scheme.SymbolCheck(SchemeUtils.First(args));" dnl
        "    methArgs := SchemeUtils.Cons(obj,SchemeUtils.Second(args));" dnl
-			 "    methExcHandler := SchemeUtils.Third(args);" dnl
+                         "    methExcHandler := SchemeUtils.Third(args);" dnl
        "  BEGIN" dnl
        "    IF FALSE THEN <*ASSERT FALSE*>" dnl
        (map make-dispatch-method ((visible-methods type) 'keys))
@@ -2412,7 +2409,7 @@
 
 (define (make-ref-type target)
   (list 'Ref 
-				(cons 'traced #t)
+                                (cons 'traced #t)
         (cons 'target target)
         ))
 
