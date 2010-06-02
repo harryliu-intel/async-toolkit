@@ -7,7 +7,6 @@ import ("netobj")
 import ("m3readline")
 import ("schemereadline")
 import ("sstubgen")
-import ("traderulelib")
 
 Module("Example")
 Interface("Example2")
@@ -32,7 +31,6 @@ SchemeStubs("FileWr")
 SchemeStubs("Rd")
 SchemeStubs("FileRd")
 SchemeStubs("Pickle")
-SchemeStubs("MarketData")  % why doesnt THIS work
 
 SchemeStubs("TextSet")
 SchemeStubs("TextSetDef")
