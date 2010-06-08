@@ -5,6 +5,7 @@
 ROOT=`pwd`
 BINDIR=`./m3arch.sh`
 TGTDIR="${HOME}/bin.`uname -m`"
+SGTDIR="${HOME}/bin.script"
 
 PROGS="
 ${ROOT}/calarm/anova/program/${BINDIR}/anova
@@ -44,8 +45,20 @@ ${ROOT}/calarm/dumponeperiod/${BINDIR}/dumponeperiod
 ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
 "
 
+SCRIPTS="
+${ROOT}/calarm/regress/scripts/byticker.awk
+${ROOT}/calarm/regress/scripts/sectorovertime.awk
+${ROOT}/calarm/regress/scripts/tickerovertime.awk
+"
 mkdir ${TGTDIR} || echo Proceeding...
 
 for p in ${PROGS}; do
 	ln -sf $p ${TGTDIR}
 done
+
+mkdir ${SGTDIR} || echo Proceeding...
+
+for p in ${SCRIPTS}; do
+	ln -sf $p ${SGTDIR}
+done
+
