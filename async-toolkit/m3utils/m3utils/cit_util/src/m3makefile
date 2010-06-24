@@ -70,8 +70,11 @@ table("Suffix", "Char", "SIsuffix")
 
 Generic_module("KeyPair")
 template("keypair")
+
 KeyPair("Int", "Integer", "Integer")
 KeyPair("Ref", "Refany", "Refany")
+KeyPair("TextCard", "Text", "Cardinal")
+
 Sequence("RefPair", "RefPair")
 Sequence("IntPair", "IntPair")
 
