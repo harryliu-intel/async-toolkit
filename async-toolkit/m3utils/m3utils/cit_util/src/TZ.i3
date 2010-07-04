@@ -51,7 +51,7 @@ CONST Brand = "TZ";
 CONST DefPrec = 3;
 
 PROCEDURE FormatSubsecond(tz : T; tm : Time.T; 
-                          prec : CARDINAL := DefPrec; 
+                          prec : [0..6] := DefPrec; 
                           simplified := FALSE;
                           printDate, printMillis := TRUE) : TEXT; 
 (* format as YYYY-MM-DD@HH:MM:SS.SSS   (normal)

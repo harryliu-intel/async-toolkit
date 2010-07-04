@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 MODULE SafeTZ EXPORTS TZ;
-IMPORT XTime AS Time, Text, Fmt, FinDate, Date, Debug;
+IMPORT XTime AS Time, Fmt, FinDate, Date, Debug;
 IMPORT TextReader, HMTime;
 IMPORT TextRefTbl;
 IMPORT TextWr, Wr, Thread;
@@ -17,11 +17,23 @@ PROCEDURE Floor(x : LONGREAL) : LONGREAL =
     END
   END Floor;
 
-PROCEDURE FormatSubsecond(tz : T; t : Time.T; 
-                          prec : CARDINAL;
+PROCEDURE FormatSubsecond(tz                                 : T; 
+                          t                                  : Time.T; 
+                          prec                               : [0..6];
                           simplified, printDate, printMillis : BOOLEAN) : TEXT =
   VAR
     sub : TEXT;
+  CONST 
+    Thousand = 1000.0d0;
+
+    Mult = ARRAY OF LONGREAL { 1.0d0, 
+                               10.0d0, 
+                               100.0d0, 
+                               1.0d0 * Thousand, 
+                               10.0d0 * Thousand, 
+                               100.0d0 * Thousand, 
+                               Thousand * Thousand};
+
   BEGIN
     WITH tfloor = Floor(t),
          d = tz.localtime(tfloor) DO
@@ -37,9 +49,12 @@ PROCEDURE FormatSubsecond(tz : T; t : Time.T;
         ELSIF delta = 0.0d0 THEN
           sub := "." & Fmt.Pad("", padChar := '0', length := prec)
         ELSE
-          sub := Text.Sub(Fmt.LongReal(delta,
-                                       style := Fmt.Style.Fix,
-                                       prec := prec),1)
+          (* time isn't rounded but truncated... *)
+          WITH floor = FLOOR(Mult[prec] * delta) DO
+            <*ASSERT floor < ROUND(Mult[prec])*>
+            sub := "." & 
+                       Fmt.Pad(Fmt.Int(floor), padChar := '0', length := prec)
+          END
         END
       END;
 
