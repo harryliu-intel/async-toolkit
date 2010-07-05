@@ -3,10 +3,11 @@
 MODULE SlowTextCompress;
 IMPORT Rd, Wr, UnixFilter, ProcUtils;
 IMPORT TextWr, Debug, Thread;
+IMPORT Stdio;
 
 <* FATAL Thread.Alerted *>
 
-CONST Command = ARRAY Mode OF TEXT { "bzip2 -cz", "bzip2 -cd" };
+CONST Command = ARRAY Mode OF TEXT { "/usr/bin/bzip2 -cz", "/usr/bin/bzip2 -cd" };
 
 PROCEDURE RR(mode : Mode; source : Rd.T) : Rd.T =
   BEGIN
@@ -30,6 +31,7 @@ PROCEDURE Text(mode : Mode; in : TEXT) : TEXT  RAISES { ProcUtils.ErrorExit } =
     writer := ProcUtils.WriteHere(wr);
     c : ProcUtils.Completion;
   BEGIN
+    Debug.Out("SlowTextCompress.Text: running \"" & Command[mode] & "\"");
     c := ProcUtils.RunText(Command[mode], stdout := writer, 
                            stdin := ProcUtils.GimmeWr(wrIn));
 
@@ -49,7 +51,8 @@ PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) RAISES { ProcUtils.ErrorExit 
     Debug.Out("SlowTextCompress.RdWr starting");
     c := ProcUtils.RunText(Command[mode], 
                            stdout := writer, 
-                           stdin := ProcUtils.GimmeWr(wrIn));
+                           stdin := ProcUtils.GimmeWr(wrIn),
+                           stderr := ProcUtils.WriteHere(Stdio.stderr));
 
     TRY
       LOOP

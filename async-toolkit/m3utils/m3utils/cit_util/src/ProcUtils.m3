@@ -23,9 +23,9 @@ IMPORT Wr;
 IMPORT OSError;
 IMPORT Atom;
 IMPORT AL;
+IMPORT Debug;
 
 <* FATAL Thread.Alerted *>
-
 
 TYPE
   PrivateCompletion = Completion OBJECT
@@ -166,6 +166,10 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           wd := Pathname.Join(wd, l.head);
         ELSE
           TRY
+            Debug.Out("Running command: " & l.head);
+            FOR i := FIRST(params^) TO LAST(params^) DO
+              Debug.Out("params[" & Fmt.Int(i) & "] : " & params[i])
+            END;
             VAR
               code := Process.Wait(Process.Create(l.head, params^,
                                                   NIL, wd,
