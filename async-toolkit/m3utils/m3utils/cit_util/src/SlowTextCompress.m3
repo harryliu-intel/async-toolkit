@@ -3,11 +3,13 @@
 MODULE SlowTextCompress;
 IMPORT Rd, Wr, UnixFilter, ProcUtils;
 IMPORT TextWr, Debug, Thread;
-IMPORT Stdio;
+FROM Text IMPORT Length;
+IMPORT Fmt;
 
 <* FATAL Thread.Alerted *>
 
 CONST Command = ARRAY Mode OF TEXT { "/usr/bin/bzip2 -cz", "/usr/bin/bzip2 -cd" };
+(*CONST Command = ARRAY Mode OF TEXT { "./script -cz", "./script -cd" };(* test code *) *)
 
 PROCEDURE RR(mode : Mode; source : Rd.T) : Rd.T =
   BEGIN
@@ -39,7 +41,13 @@ PROCEDURE Text(mode : Mode; in : TEXT) : TEXT  RAISES { ProcUtils.ErrorExit } =
     Wr.Close(wrIn);
 
     c.wait();
-    RETURN TextWr.ToText(wr)
+    WITH out = TextWr.ToText(wr) DO
+      IF Debug.GetLevel() >= Debug.DefaultLevel THEN
+        Debug.Out("SlowTextCompress.Text: in " & Fmt.Int(Length(in)) & 
+                  " bytes, out " & Fmt.Int(Length(out)) & " bytes")
+      END;
+      RETURN out
+    END
   END Text;
 
 PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) RAISES { ProcUtils.ErrorExit } =
@@ -47,12 +55,15 @@ PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) RAISES { ProcUtils.ErrorExit 
     writer := ProcUtils.WriteHere(out);
     wrIn : Wr.T;
     c : ProcUtils.Completion;
+    
+    errWr := NEW(TextWr.T).init();
   BEGIN
     Debug.Out("SlowTextCompress.RdWr starting");
     c := ProcUtils.RunText(Command[mode], 
                            stdout := writer, 
                            stdin := ProcUtils.GimmeWr(wrIn),
-                           stderr := ProcUtils.WriteHere(Stdio.stderr));
+                           stderr := ProcUtils.WriteHere(errWr));
+
 
     TRY
       LOOP
@@ -62,7 +73,14 @@ PROCEDURE RdWr(mode : Mode; in : Rd.T; out : Wr.T) RAISES { ProcUtils.ErrorExit 
       Rd.EndOfFile => Rd.Close(in); Wr.Close(wrIn)
     END;
     
-    c.wait();
+    TRY
+      c.wait();
+    EXCEPT 
+      ProcUtils.ErrorExit(e) =>
+        Debug.Out("SlowTextCompress.errWr: " & TextWr.ToText(errWr));
+        RAISE ProcUtils.ErrorExit(e)
+    END;
+
 
     Debug.Out("SlowTextCompress.RdWr done");
     Wr.Close(out)

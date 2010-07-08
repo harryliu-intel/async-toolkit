@@ -57,6 +57,7 @@ PROCEDURE SSApply(self: SSClosure): REFANY =
       END;
     EXCEPT 
       Rd.EndOfFile => 
+      Debug.Out("SSApply exiting on Rd.EndOfFile");
       TRY Rd.Close(self.ss.rd) EXCEPT ELSE END;
       RETURN NIL
     |
@@ -69,7 +70,7 @@ PROCEDURE SSApply(self: SSClosure): REFANY =
 PROCEDURE ForkWriter(w: Writer): Writer =
   BEGIN
     IF w # NIL AND w.ss # NIL THEN
-      EVAL Thread.Fork(NEW(SSClosure, ss:=w.ss, apply := SSApply));
+      w.th := Thread.Fork(NEW(SSClosure, ss:=w.ss, apply := SSApply));
     END;
     RETURN w;
   END ForkWriter;
@@ -306,7 +307,16 @@ PROCEDURE Wait(c: PrivateCompletion) RAISES { ErrorExit } =
   VAR
     r := Thread.Join(c.th);
   BEGIN
-    IF r # NIL AND ISTYPE(r,Error) THEN RAISE ErrorExit(r) END
+    IF c.po # NIL AND c.po.th # NIL THEN EVAL Thread.Join(c.po.th) END; 
+    IF c.pe # NIL AND c.pe.th # NIL THEN EVAL Thread.Join(c.pe.th) END;
+
+    (* we don't need to Join std input, that's the child's problem *)
+
+    IF r # NIL AND ISTYPE(r,Error) THEN 
+      Debug.Out("ProcUtils.Wait: Raising ErrorExit: " & FormatError(r));
+      RAISE ErrorExit(r) 
+    END
+
   END Wait;
 
 
@@ -345,7 +355,7 @@ REVEAL
   Reader = BRANDED "ProcUtilRd" OBJECT 
     f, aux: File.T := NIL; close: BOOLEAN; ss: SS; END;
   Writer = BRANDED "ProcUtilWr" OBJECT 
-    f, aux: File.T := NIL; close: BOOLEAN; ss: SS; END;
+    f, aux: File.T := NIL; close: BOOLEAN; ss: SS; th : Thread.T END;
 
 TYPE
   SS = OBJECT rd: Rd.T; wr: Wr.T; END;

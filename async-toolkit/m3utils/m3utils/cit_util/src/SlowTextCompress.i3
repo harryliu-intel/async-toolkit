@@ -4,6 +4,7 @@ INTERFACE SlowTextCompress;
 IMPORT Rd, Wr, ProcUtils;
 
 TYPE Mode = { Compress, Decompress };
+CONST ModeNames = ARRAY Mode OF TEXT { "Compress", "Decompress" };
 
 PROCEDURE Text(mode : Mode; in : TEXT) : TEXT RAISES { ProcUtils.ErrorExit };
 
