@@ -109,4 +109,6 @@ else
 	Matrix2("LR", "Matrix2LRType", "LRLU2M3", "LRMatrix2")
 end
 
+module("UseFortran")
+
 Library("matrix")
