@@ -8,7 +8,7 @@ IMPORT Fmt;
 
 <* FATAL Thread.Alerted *>
 
-CONST Command = ARRAY Mode OF TEXT { "/usr/bin/bzip2 -cz", "/usr/bin/bzip2 -cd" };
+CONST Command = ARRAY Mode OF TEXT { "bzip2 -cz", "bzip2 -cd" };
 (*CONST Command = ARRAY Mode OF TEXT { "./script -cz", "./script -cd" };(* test code *) *)
 
 PROCEDURE RR(mode : Mode; source : Rd.T) : Rd.T =
