@@ -1,5 +1,9 @@
 /* $Id$ */
 
+if defined("CM3_VERSION")
+	m3_optimize("")
+end
+
 import ("libm3")
 import ("mscheme")
 %import ("finlib")
