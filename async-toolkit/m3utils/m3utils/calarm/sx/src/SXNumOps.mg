@@ -94,4 +94,12 @@ PROCEDURE UMinusB(a : Elem.Base) : Elem.Base =
 PROCEDURE UMinus(a : Elem.T) : Elem.T =
   BEGIN RETURN Elem_ElemFuncOps.UnaryFunc(a, UMinusB,"UMinus") END UMinus;
 
+(**********************************************************************)
+
+PROCEDURE Sum(READONLY a : ARRAY OF Elem.T) : Elem.T =
+  BEGIN RETURN Elem_ElemFuncOps.NAryFunc(a, SumB, "Sum") END Sum;
+
+PROCEDURE Prod(READONLY a : ARRAY OF Elem.T) : Elem.T =
+  BEGIN RETURN Elem_ElemFuncOps.NAryFunc(a, ProdB, "Prod") END Prod;
+
 BEGIN VAR q : Elem.Base; BEGIN Zero := q-q END END SXNumOps.

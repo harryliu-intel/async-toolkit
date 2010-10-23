@@ -25,4 +25,12 @@ PROCEDURE LE(a, b : Elem.T) : SXBool.T;
 
 VAR (* CONST *) Zero : Elem.Base;
 
+PROCEDURE Sum(READONLY a : ARRAY OF Elem.T) : Elem.T;
+PROCEDURE Prod(READONLY a : ARRAY OF Elem.T) : Elem.T;
+
+(* helper routines *)
+
+PROCEDURE SumB(READONLY a : ARRAY OF Elem.Base) : Elem.Base;
+PROCEDURE ProdB(READONLY a : ARRAY OF Elem.Base) : Elem.Base;
+
 END SXNumOps.
