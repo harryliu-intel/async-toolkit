@@ -238,4 +238,124 @@ PROCEDURE IAryFunc(int : SXInt.T;
     END
   END IAryFunc;
 
+(**********************************************************************)
+
+TYPE 
+  UnaryO = OpResult OBJECT
+    o : O1;
+    a : Arg.T;
+  OVERRIDES
+    recalc := UnaryORecalc;
+  END;
+
+  BinaryO = OpResult OBJECT
+    o : O2;
+    a, b : Arg.T;
+  OVERRIDES
+    recalc := BinaryORecalc;
+  END;
+
+  NAryO = OpResult OBJECT
+    mu : MUTEX;
+    o : ON;
+    a : REF ARRAY OF Arg.T;
+    av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
+  OVERRIDES
+    recalc := NAryORecalc;
+  END;
+
+PROCEDURE UnaryORecalc(u : UnaryO; when : Time.T) : BOOLEAN =
+  BEGIN
+    TRY
+      RETURN u.update(u.o.op(u.a.value()),when)
+    EXCEPT
+      Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
+    END
+  END UnaryORecalc;
+
+PROCEDURE BinaryORecalc(b : BinaryO; when : Time.T) : BOOLEAN = 
+  BEGIN
+    TRY
+      RETURN b.update(b.o.op(b.a.value(),b.b.value()),when)
+    EXCEPT
+      Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
+    END
+  END BinaryORecalc;
+
+PROCEDURE NAryORecalc(n : NAryO; when : Time.T) : BOOLEAN =
+  BEGIN
+    TRY
+      (* prepare av *)
+      LOCK n.mu DO
+        FOR i := FIRST(n.a^) TO LAST(n.a^) DO
+          n.av[i] := n.a[i].value()
+        END;
+        RETURN n.update(n.o.op(n.av^),when)
+      END
+    EXCEPT
+      Uninitialized  => RETURN FALSE (* skip -- don't initialize me yet *)
+    END
+  END NAryORecalc;      
+
+PROCEDURE UnaryOFunc(a : Arg.T; o : O1; opName : TEXT := NIL) : Result.T =
+  BEGIN 
+    WITH res = NEW(UnaryO, opName := opName, o := o, a := a).init() DO
+      SX.Lock(SX.Array { a });
+      TRY
+        EVAL UnaryORecalc(res, a.updated);
+        a.depends(res)
+      FINALLY
+        SX.Unlock(SX.Array { a })
+      END;
+      RETURN res
+    END
+  END UnaryOFunc;
+
+PROCEDURE BinaryOFunc(a, b : Arg.T; o : O2; opName : TEXT := NIL) : Result.T =
+  BEGIN 
+    WITH res = NEW(BinaryO, opName := opName, o := o, a := a, b := b).init() DO
+      SX.Lock( SX.Array { a, b }) ;
+      TRY
+        EVAL BinaryORecalc(res, MAX(a.updated,b.updated));
+        a.depends(res); b.depends(res)
+      FINALLY
+        SX.Unlock(SX.Array { a,b })
+      END;
+      RETURN res
+    END
+  END BinaryOFunc;
+
+PROCEDURE NAryOFunc(READONLY a : ARRAY OF Arg.T; o : ON; opName : TEXT := NIL) : Result.T =
+  VAR 
+    max := FIRST(Time.T);
+  BEGIN 
+    WITH res = NARROW(NEW(NAryO, 
+                          opName := opName,
+                          mu := NEW(MUTEX),
+                          o := o, 
+                          a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a)), 
+                          av := NEW(REF ARRAY OF Arg.Base, NUMBER(a))).init(),
+                      NAryO),
+         sa = NEW(REF SX.Array, NUMBER(a))^ DO
+      
+      FOR i := FIRST(a) TO LAST(a) DO
+        sa[i] := a[i];
+        res.a[i] := a[i]; 
+        max := MAX(max, a[i].updated)
+      END;
+
+      SX.Lock(sa);
+      TRY
+        EVAL NAryORecalc(res, max);
+        FOR i := FIRST(a) TO LAST(a) DO
+          a[i].depends(res);
+        END
+      FINALLY
+        SX.Unlock(sa)
+      END;
+
+      RETURN res
+    END
+  END NAryOFunc;
+
 BEGIN END SXFuncOps.

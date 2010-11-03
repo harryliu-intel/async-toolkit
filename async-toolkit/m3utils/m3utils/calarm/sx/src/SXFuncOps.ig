@@ -20,6 +20,8 @@ PROCEDURE UnaryFunc(a : Arg.T; f : F1; opName : TEXT := NIL) : Result.T;
 
 TYPE F2 = PROCEDURE(a, b : Arg.Base) : Result.Base;
 PROCEDURE BinaryFunc(a, b : Arg.T; f : F2; opName : TEXT := NIL) : Result.T;
+
+
 PROCEDURE BinarySymmetricShortCircuitFunc(a, b : Arg.T; 
                                           f : F2; 
                                           ssOp : Arg.Base; ssRes : Result.Base;
@@ -27,6 +29,27 @@ PROCEDURE BinarySymmetricShortCircuitFunc(a, b : Arg.T;
 
 TYPE FN = PROCEDURE(READONLY a : ARRAY OF Arg.Base) : Result.Base;
 PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : Result.T;
+
+(* ********************************************************************** *)
+
+TYPE 
+  O1 = OBJECT METHODS
+    op(a : Arg.Base) : Result.Base;
+  END;
+
+  O2 = OBJECT METHODS
+    op(a, b : Arg.Base) : Result.Base;
+  END;
+  
+  ON = OBJECT METHODS
+    op(READONLY a : ARRAY OF Arg.Base) : Result.Base;
+  END;
+
+PROCEDURE UnaryOFunc(a : Arg.T; op : O1; opName : TEXT := NIL) : Result.T;
+PROCEDURE BinaryOFunc(a, b : Arg.T; op : O2; opName : TEXT := NIL) : Result.T;
+PROCEDURE NAryOFunc(READONLY a : ARRAY OF Arg.T; op : ON; opName : TEXT := NIL) : Result.T;
+
+(* ********************************************************************** *)
 
 TYPE FI = PROCEDURE(i : INTEGER;
                     READONLY a : ARRAY OF Arg.Base) : Result.Base;
