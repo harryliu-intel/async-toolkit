@@ -69,6 +69,10 @@ TYPE
     wrap(f : F) : T;  
   END;
 
+  Result = To.T;
+
+  Argument = From.T;
+
 CONST Brand = "Map from " & From.Brand & " to " & To.Brand;
 
 PROCEDURE Hash(a : T) : Word.T; (* calls hash method *)

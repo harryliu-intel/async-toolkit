@@ -145,6 +145,7 @@ Table("TextBoolean", "Text", "Boolean")
 
 template("map")
 generic_module("Map")
+generic_module("TblMap")
 
 template("fifo")
 generic_module("Fifo")
