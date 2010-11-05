@@ -1,0 +1,21 @@
+/* $Id$ */
+import ("cit_util")
+import ("mscheme")
+import ("modula3scheme")
+import ("libm3")
+import ("netobj")
+import ("m3readline")
+import ("schemereadline")
+import ("sstubgen")
+
+Interface("Blah")
+
+SchemeStubs("Blah")
+
+ExportSchemeStubs("stubexample") % export OUR scheme stubs
+
+importSchemeStubs()              % import ALL scheme stubs
+
+implementation("Main")
+
+program ("stubexample")
