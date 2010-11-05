@@ -77,3 +77,23 @@ readonly proc importSchemeStubs() is
 	derived_interface("SchemeStubs",VISIBLE)
 	derived_implementation("SchemeStubs")
 end
+
+readonly proc smodule(nam) is
+  module(nam)
+  SchemeStubs(nam)
+end
+
+readonly proc Smodule(nam) is
+  Module(nam)
+  SchemeStubs(nam)
+end
+
+readonly proc sinterface(nam) is
+  interface(nam)
+  SchemeStubs(nam)
+end
+
+readonly proc Sinterface(nam) is
+  Interface(nam)
+  SchemeStubs(nam)
+end
