@@ -122,6 +122,9 @@
       (dis "Scheme stubs up to date: " intf-name dnl))
   )
 
+(define (force-string s)
+	(if (symbol? s) (symbol->string s) s))
+
 (define (write-scheme-package-exports 
          intfs      ;; list of interfaces we want to export
          intf-name  ;; name of interface in which to export them
@@ -218,8 +221,9 @@
                     (loop (read in) (cons (strip-extension next) res))
                     (loop (read in) res)))))))
                   
-    (write-scheme-package-exports  (append (get-matches) local-exports)
-                                   output-path)
+    (write-scheme-package-exports   (uniq equal? (map force-string 
+																				 (append (get-matches) local-exports)))
+																		output-path)
 
     (close-input-port in))
   
@@ -848,10 +852,10 @@
         
 
   (cond ((eq? 'Opaque (car type)) (is-opaque-basetype))
-	((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
-	(else (let ((unnamed-type (strip-names type)))
-		(let loop ((p the-basetypes))
-		  (cond ((null? p) #f)
+  ((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
+  (else (let ((unnamed-type (strip-names type)))
+    (let loop ((p the-basetypes))
+      (cond ((null? p) #f)
                                                                                                 ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
                                                                                                 (else (loop (cdr p)))))))))
   
@@ -1161,47 +1165,47 @@
           ;; several possibilities.  either we have the correct type
           ;; already, or else we may have to build it, if a Ref OpenArray
           ;; special stuff for UNTRACED at the end
-	  (if (extract-field 'traced type)
-	      
-	      (string-flatten
-	       "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
-	       
-	       (let* ((target (extract-field 'target type)))
-		 (if (eq? (car target) 'OpenArray)
-		     (let* ((element (extract-field 'element target))
-			    (element-pname (push-make element)))
+    (if (extract-field 'traced type)
+        
+        (string-flatten
+         "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
+         
+         (let* ((target (extract-field 'target type)))
+     (if (eq? (car target) 'OpenArray)
+         (let* ((element (extract-field 'element target))
+          (element-pname (push-make element)))
                                                                                          (string-append
            "    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
-	   "        p := SchemePair.Pair(x);" dnl      
-	   "        i := 0;" dnl
-	   "    BEGIN" dnl
-	   "      WHILE p # NIL DO" dnl
-	   "        arr[i] := "element-pname"(p.first);" dnl
-	   "        p := SchemePair.Pair(p.rest);" dnl
-	   "        INC(i)" dnl
-	   "      END;" dnl
-	   "      RETURN arr" dnl
-	   "    END;" dnl
-	   ))
-	  (string-append
+     "        p := SchemePair.Pair(x);" dnl      
+     "        i := 0;" dnl
+     "    BEGIN" dnl
+     "      WHILE p # NIL DO" dnl
+     "        arr[i] := "element-pname"(p.first);" dnl
+     "        p := SchemePair.Pair(p.rest);" dnl
+     "        INC(i)" dnl
+     "      END;" dnl
+     "      RETURN arr" dnl
+     "    END;" dnl
+     ))
+    (string-append
                                                                                         "    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
                                                          )
-	      
-	      (string-flatten
-	       "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
-	       "    BEGIN" dnl
-	       "      IF NOT ISTYPE(x, Rec) THEN" dnl
-	       "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
-	       "      ELSE" dnl
-	       "        RETURN NARROW(x,Rec).ref" dnl
-	       "      END" dnl
-	       )
-	      
-	      )
-	  )
+        
+        (string-flatten
+         "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
+         "    BEGIN" dnl
+         "      IF NOT ISTYPE(x, Rec) THEN" dnl
+         "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+         "      ELSE" dnl
+         "        RETURN NARROW(x,Rec).ref" dnl
+         "      END" dnl
+         )
+        
+        )
+    )
          
          ((Record)
-	  (imports 'insert! 'SchemeSymbol)
+    (imports 'insert! 'SchemeSymbol)
                 
           (let ((fields (extract-field 'fields type)))
         
@@ -1219,8 +1223,8 @@
              "    BEGIN" dnl 
              "      WHILE p # NIL DO" dnl
              (string-append 
-	      "        IF FALSE THEN" dnl
-	      (apply string-append (map format-field fields) )
+        "        IF FALSE THEN" dnl
+        (apply string-append (map format-field fields) )
              "        END;" dnl
              )
              "        p := SchemePair.Pair(p.rest)" dnl
@@ -1571,9 +1575,9 @@
                                    (extract-field 'name f))
                                )
                              (filter (lambda(f)
-				       (not (eq? 'Mode.Implied
-						 (extract-field 'mode f))))
-				     formals))
+               (not (eq? 'Mode.Implied
+             (extract-field 'mode f))))
+             formals))
                         ", "))
              (result (extract-field 'result sig)))
 
