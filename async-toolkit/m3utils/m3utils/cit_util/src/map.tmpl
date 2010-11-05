@@ -20,16 +20,29 @@ readonly proc tblMap (nm, tbl, map) is _tblMap (nm, tbl, map, HIDDEN) end
 
 /**********************************************************************/
 
+readonly proc _memo (nm, map, tbl, vis) is
+	build_generic_intf(nm, "Memo", [map, tbl], vis)	
+	build_generic_impl(nm, "Memo", [map, tbl])
+end
+
+readonly proc Memo (nm, map, tbl) is _memo (nm, map, tbl, VISIBLE) end
+readonly proc memo (nm, map, tbl) is _memo (nm, map, tbl, HIDDEN) end
+
+/**********************************************************************/
+
 % note there is no _table in table.tmpl from DECSRC
 
 readonly proc tableAndMap (nm, from, to) is 
-  map (nm & "Map", from, to)
-  table (nm, from, to)
+  map    (nm & "Map"   , from, to)
+  table  (nm           , from, to)
   tblMap (nm & "TblMap", nm & "Tbl", nm & "Map")
+  memo   (nm & "Memo"  , nm & "Map", nm & "Tbl")
 end
 
 readonly proc TableAndMap (nm, from, to) is 
   Map (nm & "Map", from, to)
   Table (nm, from, to)
   TblMap (nm & "TblMap", nm & "Tbl", nm & "Map")
+  Memo   (nm & "Memo"  , nm & "Map", nm & "Tbl")
 end
+

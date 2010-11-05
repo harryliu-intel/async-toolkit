@@ -16,4 +16,6 @@ PROCEDURE WrapWithDefault(tbl : Tbl.T; default : Map.Result) : Map.T;
 
 CONST Brand = "TblMap(" & Tbl.Brand & "," & Map.Brand & ")";
 
+(* for further generics *)
+
 END TblMap.
