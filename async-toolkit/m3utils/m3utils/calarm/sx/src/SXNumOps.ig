@@ -23,10 +23,13 @@ PROCEDURE LT(a, b : Elem.T) : SXBool.T;
 PROCEDURE GE(a, b : Elem.T) : SXBool.T;
 PROCEDURE LE(a, b : Elem.T) : SXBool.T;
 
-VAR (* CONST *) Zero : Elem.Base;
+VAR (* CONST *) Zero, One, NegOne : Elem.Base; 
 
 PROCEDURE Sum(READONLY a : ARRAY OF Elem.T) : Elem.T;
 PROCEDURE Prod(READONLY a : ARRAY OF Elem.T) : Elem.T;
+
+PROCEDURE WeightedSum(READONLY w : ARRAY OF Elem.Base; 
+                      READONLY a : ARRAY OF Elem.T) : Elem.T;
 
 (* helper routines *)
 

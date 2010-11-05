@@ -102,4 +102,55 @@ PROCEDURE Sum(READONLY a : ARRAY OF Elem.T) : Elem.T =
 PROCEDURE Prod(READONLY a : ARRAY OF Elem.T) : Elem.T =
   BEGIN RETURN Elem_ElemFuncOps.NAryFunc(a, ProdB, "Prod") END Prod;
 
-BEGIN VAR q : Elem.Base; BEGIN Zero := q-q END END SXNumOps.
+PROCEDURE SumB(READONLY a : ARRAY OF Elem.Base) : Elem.Base =
+  VAR 
+    s := Zero;
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      s := s + a[i]
+    END;
+    RETURN s
+  END SumB;
+    
+PROCEDURE ProdB(READONLY a : ARRAY OF Elem.Base) : Elem.Base =
+  VAR 
+    s := One;
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      s := s * a[i]
+    END;
+    RETURN s
+  END ProdB;
+
+(**********************************************************************)    
+
+TYPE
+  Weights = Elem_ElemFuncOps.ON OBJECT
+    w : REF ARRAY OF Elem.Base;
+  OVERRIDES
+    op := WeightedSumOp;
+  END;
+
+PROCEDURE WeightedSumOp(weights : Weights; 
+                        READONLY a : ARRAY OF Elem.Base) : Elem.Base =
+  VAR
+    sum := Zero;
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      sum := sum + weights.w[i] * a[i]
+    END;
+    RETURN sum
+  END WeightedSumOp;
+
+PROCEDURE WeightedSum(READONLY w : ARRAY OF Elem.Base; 
+                      READONLY a : ARRAY OF Elem.T) : Elem.T =
+  BEGIN
+    <* ASSERT NUMBER(w) = NUMBER(a) *>
+    WITH weights = NEW(Weights, w := NEW(REF ARRAY OF Elem.Base, NUMBER(w))) DO
+      weights.w^ := w;
+      RETURN Elem_ElemFuncOps.NAryOFunc(a, weights, "WeightedSum")
+    END
+  END WeightedSum;
+
+BEGIN END SXNumOps.
+
