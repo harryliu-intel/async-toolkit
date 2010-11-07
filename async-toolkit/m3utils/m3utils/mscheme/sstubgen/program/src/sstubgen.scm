@@ -1062,7 +1062,8 @@
         ;;  "RETURN SchemeChar.Character(x)" )
 
          ((Procedure) 
-          "RETURN x" ;; wonder if this actually works
+          "RETURN NIL (* conversion not implemented yet, not sure its possible *)" ;; see bug 108
+         
           )
 
          ((Object Opaque)
@@ -1327,8 +1328,8 @@
             )
           )
 
-                                 ((Procedure)
-                                        "     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
+				 ((Procedure)
+					"     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
                                         )
 
          ((Object Opaque) 
