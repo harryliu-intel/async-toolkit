@@ -8,6 +8,14 @@ GENERIC INTERFACE TblMap(Tbl, Map);
    allows the Table to be accessed as a Map 
 *)
 
+TYPE
+  T <: Public;
+
+  Public = Map.T OBJECT METHODS
+    tbl() : Tbl.T; (* allow access to underlying tbl, probably best to use
+                      only during initialization *)
+  END;
+
 PROCEDURE Wrap(tbl : Tbl.T) : Map.T; 
   (* return a Map for which a nonexistent mapping is an error *)
 

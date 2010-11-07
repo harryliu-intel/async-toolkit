@@ -144,9 +144,9 @@ module("FewerDotsTextPref")
 Table("TextBoolean", "Text", "Boolean")
 
 template("map")
-generic_module("Map")
-generic_module("TblMap")
-generic_module("Memo")
+Generic_module("Map")
+Generic_module("TblMap")
+Generic_module("Memo")
 
 template("fifo")
 generic_module("Fifo")
