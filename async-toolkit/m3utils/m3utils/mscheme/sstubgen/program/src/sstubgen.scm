@@ -5,7 +5,7 @@
 ;; Process Modula-3 interfaces in Scheme
 ;;
 ;; 
-;; Copyright (c) 2009, Generation Capital Ltd.  All rights reserved.
+;; Copyright (c) 2009, 2010, Generation Capital Ltd.  All rights reserved.
 ;;
 ;; Author : Mika Nystrom <mika@alum.mit.edu>
 ;;
@@ -123,7 +123,7 @@
   )
 
 (define (force-string s)
-	(if (symbol? s) (symbol->string s) s))
+  (if (symbol? s) (symbol->string s) s))
 
 (define (write-scheme-package-exports 
          intfs      ;; list of interfaces we want to export
@@ -222,8 +222,8 @@
                     (loop (read in) res)))))))
                   
     (write-scheme-package-exports   (uniq equal? (map force-string 
-																				 (append (get-matches) local-exports)))
-																		output-path)
+                                         (append (get-matches) local-exports)))
+                                    output-path)
 
     (close-input-port in))
   
@@ -1328,8 +1328,8 @@
             )
           )
 
-				 ((Procedure)
-					"     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
+         ((Procedure)
+          "     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
                                         )
 
          ((Object Opaque) 
@@ -1821,16 +1821,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (format-pickle-vector vec)
-        (define res '())
+  (define res '())
   (infixize
-         (let loop ((i (- (vector-length vec) 1))
-                                                        (res '()))
-                 (if (= -1 i) 
-                                 res
-                                 (loop (- i 1) 
-                                                         (cons 
-                                                                (string-append "VAL(" (vector-ref vec i) ",CHAR)")
-                 res))))
+   (let loop ((i (- (vector-length vec) 1))
+              (res '()))
+     (if (= -1 i) 
+         res
+         (loop (- i 1) 
+               (cons 
+                (string-append "VAL(" (vector-ref vec i) ",CHAR)")
+                res))))
    ", "))
 
 (define (register-pickle types env)
