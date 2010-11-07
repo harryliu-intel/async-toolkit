@@ -2253,7 +2253,7 @@
        (format-method-overrides)
        "          END;" dnl
        "          IF NOT gobbled THEN" dnl
-       "            RAISE Scheme.E(\"Unknown field/method in \" & SchemeUtils.Stringify(inits))" dnl
+       "            RAISE Scheme.E(\""m3ti": Unknown field/method \" & SchemeUtils.Stringify(r.first) & \" in \" & SchemeUtils.Stringify(inits))" dnl
        "          END" dnl
        "        END;" dnl
        "        p := SchemePair.Pair(p.rest)" dnl

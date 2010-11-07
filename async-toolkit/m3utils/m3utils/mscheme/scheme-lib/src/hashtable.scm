@@ -118,3 +118,4 @@
 
   (make-hash-table size string-hash))
 
+(define (failed-search? x) (= x '*hash-table-search-failed*))
