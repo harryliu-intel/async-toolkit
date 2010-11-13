@@ -49,7 +49,7 @@ end
 /**********************************************************************/
 
 readonly proc _mapMap (from, to, vis) is
-  local nm = from & "2" & to;
+  local nm = from & "2" & to
   build_generic_intf(nm, "MapMap", [from, to, vis])
   build_generic_impl(nm, "MapMap", [from, to])
 end
