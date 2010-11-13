@@ -147,6 +147,7 @@ template("map")
 Generic_module("Map")
 Generic_module("TblMap")
 Generic_module("Memo")
+Generic_module("MapMap")
 
 template("fifo")
 generic_module("Fifo")
