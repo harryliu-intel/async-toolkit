@@ -48,9 +48,11 @@ end
 
 /**********************************************************************/
 
-readonly proc _mapMap (from, to, vis) is
+readonly proc _mapMap (f, t, vis) is
+	local from = f & "Map"
+	local to   = t & "Map"
   local nm = from & "2" & to
-  build_generic_intf(nm, "MapMap", [from, to, vis])
+  build_generic_intf(nm, "MapMap", [from, to], vis)
   build_generic_impl(nm, "MapMap", [from, to])
 end
 
