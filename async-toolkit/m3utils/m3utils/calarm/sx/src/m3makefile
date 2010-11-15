@@ -98,6 +98,7 @@ MkSetDef("SX", "SX")
 Table("SXRef", "SX", "Refany")
 
 Module("SXTime")
+Module("SXTimer")
 
 library ("sx")
 
