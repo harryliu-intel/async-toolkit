@@ -3,6 +3,9 @@
 INTERFACE SXSelect;
 IMPORT SX, SXRef;
 
+(* the routines in this interface release ALL locks held by a thread
+   and re-acquire them before returning; see comments in SX.i3 *)
+
 PROCEDURE Wait(READONLY on : ARRAY OF SX.T;
                touched : REF ARRAY OF BOOLEAN := NIL);
 (* normal Wait: returns as soon as any of the elements of on changes.

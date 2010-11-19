@@ -39,6 +39,25 @@ PROCEDURE Equal(a, b : T) : BOOLEAN;
   
 PROCEDURE Hash(a : T) : Word.T;
 
+PROCEDURE UnlockAll() : REF Array; 
+  (* unlock all locked SX.T held by a single thread, returning an array
+     that can be used to re-lock *)
+
+  (* N.B. changes 2010-NOV-18:
+
+     Add a table for keeping track of per-thread locks.
+
+     This table is updated by Lock and Unlock, and it is consulted by
+     UnlockAll.  The Wait procedures in SXSelect use this table to 
+     figure out what to Unlock.
+
+     This fixes a problem with the earlier implementation, where 
+     apparently we could only Wait for those SX.Ts that we have Locked.
+
+     Sometimes we want to Wait for a simpler condition, but we want to
+     release all locks whenever waiting 
+  *)
+
 END SX.
   
 

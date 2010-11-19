@@ -17,12 +17,12 @@ IMPORT Word;
 
 REVEAL
   T = SXClass.Private BRANDED Brand OBJECT
-    id : CARDINAL;
+    id        : CARDINAL;
     selecters : IntSet.T; (* set of thread IDs *)
-    c : Thread.Condition;
-    when : Time.T;
+    c         : Thread.Condition;
+    when      : Time.T;
     dependers : RefList.T; (* of type T *)
-    dMu : MUTEX;
+    dMu       : MUTEX;
   OVERRIDES
     depends := Depends;
     propagate := Propagate;
@@ -155,9 +155,11 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
       " to " & Fmt.Int(NUMBER(on)) & " selecter lists");
     *)
 
-    FOR i := FIRST(on) TO LAST(on) DO
-      WITH t = on[i] DO
-        EVAL t.selecters.insert(ThreadF.MyId())
+    WITH myId = ThreadF.MyId() DO
+      FOR i := FIRST(on) TO LAST(on) DO
+        WITH t = on[i] DO
+          EVAL t.selecters.insert(myId)
+        END
       END
     END;
 
@@ -175,13 +177,17 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
         END;
 
         (* unlock variables *)
-        Unlock(on);
-        IF except # NIL THEN Thread.Release(except.mu) END;
+        (*Unlock(on);*)
+        WITH locks = UnlockAll() DO
+          IF except # NIL THEN Thread.Release(except.mu) END;
 
-        Thread.Wait(l.tMu,l.c); 
+          Thread.Wait(l.tMu,l.c); 
+          
+          Lock(locks^)
+        END;
 
         (* lock them again *)
-        Lock(on);
+        (*Lock(on);*)
 
         IF touched # NIL THEN
           FOR i := FIRST(touched^) TO LAST(touched^) DO
@@ -240,29 +246,93 @@ PROCEDURE Lock(READONLY arr : Array) =
       IF i = FIRST(a^) OR a[i] # a[i-1] THEN
         Thread.Acquire(NARROW(a[i],T).mu)
       END
+    END;
+
+    LOCK lockMu DO
+      WITH hadLocks = lockTab.put(ThreadF.MyId(),a) DO
+        <* ASSERT NOT hadLocks *>
+      END
     END
   END Lock;
 
-PROCEDURE Lock1(t : T) = BEGIN Thread.Acquire(t.mu) END Lock1;
+VAR lockMu  := NEW(MUTEX);
+    lockTab := NEW(IntRefTbl.Default).init();
 
-PROCEDURE Unlock1(t : T) = BEGIN Thread.Release(t.mu) END Unlock1;
+PROCEDURE Lock1(t : T) = BEGIN Lock(Array { t }) END Lock1;
+
+PROCEDURE Unlock1(t : T) = BEGIN Unlock(Array { t }) END Unlock1;
 
 PROCEDURE Unlock(READONLY arr : Array) =
   VAR
     a := NEW(REF ARRAY OF REFANY, NUMBER(arr));
+    br : REFANY;
+    b : REF ARRAY OF REFANY;
+    bi, nz := 0;
+    myId := ThreadF.MyId();
   BEGIN
     FOR i := FIRST(arr) TO LAST(arr) DO 
       a[i] := arr[i]
     END;
     RefanyArraySort.Sort(a^,IdCompare);
 
+    LOCK lockMu DO
+      WITH hadLocks = lockTab.get(myId, br) DO
+        <* ASSERT hadLocks *>
+        b := br;
+      END
+    END;
+
     FOR i := FIRST(a^) TO LAST(a^) DO
       (* allow specifying same var multiple times *)
       IF i = FIRST(a^) OR a[i] # a[i-1] THEN
-        Thread.Release(NARROW(a[i],T).mu)
+        Thread.Release(NARROW(a[i],T).mu);
+        WHILE b[bi] # a[i] DO 
+          IF b[bi] # NIL THEN INC(nz) END; (* count non-nil locks *)
+          INC(bi); 
+        END; (* skip irrelevants *)
+        WHILE bi <= LAST(b^) AND b[bi] = a[i] DO
+          b[bi] := NIL; (* zero matches *)
+          INC(bi)
+        END
+      END
+    END;
+
+    IF nz = 0 THEN 
+      (* we have completely unlocked our locks *)
+      LOCK lockMu DO
+        EVAL lockTab.delete(myId, br)
       END
     END
   END Unlock;
+
+PROCEDURE UnlockAll() : REF Array =
+  VAR
+    myId := ThreadF.MyId();
+    br : REFANY;
+    j := 0;
+  BEGIN
+    LOCK lockMu DO
+      WITH hadLocks = lockTab.get(myId, br) DO
+        <*ASSERT hadLocks*>
+      END
+    END;
+
+    WITH b = NARROW(br, REF ARRAY OF REFANY)^,
+         c = NEW(REF Array, NUMBER(b)) DO
+      FOR i := FIRST(b) TO LAST(b) DO
+        IF (i = FIRST(b) OR b[i] # b[i-1]) AND b[i] # NIL THEN
+          c[j] := b[i]; INC(j)
+        END
+      END;
+      
+      WITH d = NEW(REF Array, j) DO
+        d^ := SUBARRAY(c^, 0, j);
+        Unlock(d^);
+        RETURN d
+      END
+    END
+  END UnlockAll;
+
 
 BEGIN 
   mu := NEW(MUTEX);
