@@ -15,42 +15,6 @@ IMPORT Word;
 
 (* methods for garbage collecting...?  Would imply using WeakRef. *)
 
-(* 
-   XXX XXX
-
-   I'm worried about race conditions in the locking.  Some of these
-   don't matter, if the signals are delivered "eventually", but some 
-   probably are bad.  The problem is that we can go to sleep with an 
-   idea that the old value has changed, but with an actual new value
-   of the variable.  Might have to use the single global lock for
-   sleeping.  Or grab it recursively, up and down the tree.
-
-   Also the locking orders are bad.  If a user does
-
-   c := BinaryOp(b,a)
-   ...
-   LOCK a.mu LOCK b.mu
-     
-   you can get deadlock just because of the computation of c.
-
-   Likewise, you'll get problems if you LOCK dependent expressions (maybe).
-
-   The solution to these problems lies in abandoning Modula-3's 
-   block-structured LOCK operation (unfortunately) and making a 
-   lock operation that calculates the proper locking order, probably
-   based on an id field defined in this module.  All user code would
-   then have the following appearance...
-
-   Lock(onVars);
-   TRY
-     doCalcs(onVars)
-   FINALLY
-     Unlock(onVars)
-   END
-
-   XXX XXX
-*)
-
 REVEAL
   T = SXClass.Private BRANDED Brand OBJECT
     id : CARDINAL;
