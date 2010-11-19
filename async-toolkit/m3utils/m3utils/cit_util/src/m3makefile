@@ -74,6 +74,8 @@ template("keypair")
 KeyPair("Int", "Integer", "Integer")
 KeyPair("Ref", "Refany", "Refany")
 KeyPair("TextCard", "Text", "Cardinal")
+KeyPair("TextInt", "Text", "Integer")
+Table("TextIntPairRef", "TextIntPair", "Refany")
 
 Sequence("RefPair", "RefPair")
 Sequence("IntPair", "IntPair")
