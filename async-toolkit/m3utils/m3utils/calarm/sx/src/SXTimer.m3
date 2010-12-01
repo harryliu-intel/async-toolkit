@@ -15,6 +15,7 @@ REVEAL
 
 PROCEDURE Init(t : T; granularity : LONGREAL) : T =
   BEGIN
+    EVAL SXLongReal.T.init(t);
     t.granularity := granularity;
     Register(t);
     RETURN t
