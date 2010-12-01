@@ -7,8 +7,10 @@ IMPORT SXLongReal;
 
 TYPE
   T <: Public; 
-  
-  Public = SXLongReal.T OBJECT METHODS
+
+  Private <: SXLongReal.T;  
+
+  Public = Private OBJECT METHODS
     init(granularity := 1.0d0) : T;
   END;
 

@@ -7,6 +7,8 @@ IMPORT SXLongReal;
 IMPORT LongrealPQ;
 
 REVEAL
+  Private = SXLongReal.Var BRANDED OBJECT END; (* this is cool! *)
+
   T = Public BRANDED Brand OBJECT
     granularity : LONGREAL;
   OVERRIDES
@@ -31,9 +33,9 @@ PROCEDURE Register(t : T) =
 
 TYPE
   Elt = LongrealPQ.Elt OBJECT
-    t : T;
+    t    : T;
     when : Time.T;
-    sx : SXLongReal.Var;
+    sx   : SXLongReal.Var;
   END;
 
 VAR pq := NEW(LongrealPQ.Default).init();
@@ -58,7 +60,7 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
           WITH now = Time.Now() DO
             WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).when < now DO
               WITH head = NARROW(pq.deleteMin(),Elt) DO 
-                head.sx.set(now);
+                head.t.set(now);
                 head.when := now + head.t.granularity;
                 pq.insert(head)
               END
