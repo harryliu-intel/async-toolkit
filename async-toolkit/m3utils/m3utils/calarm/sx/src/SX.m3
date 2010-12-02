@@ -179,7 +179,8 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
         (* unlock variables *)
         (*Unlock(on);*)
         WITH locks = UnlockAll() DO
-          IF except # NIL THEN Thread.Release(except.mu) END;
+          (*IF except # NIL THEN Thread.Release(except.mu) END;*)
+          (* the except is one of the locks were holding, dont unlock twice *)
 
           Thread.Wait(l.tMu,l.c); 
           
@@ -196,7 +197,9 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
           END
         END;
 
-        IF except # NIL THEN Thread.Acquire(except.mu) END;
+        (*IF except # NIL THEN Thread.Acquire(except.mu) END;*)
+        (* the except is already locked by Lock(locks^) *)
+                                                             
       END
     END;
 
@@ -227,14 +230,21 @@ VAR threadCondTbl := NEW(IntRefTbl.Default).init();
 
 PROCEDURE IdCompare(a, b : REFANY) : [-1..1] = 
   BEGIN
-    WITH an = NARROW(a, T), bn = NARROW(b, T) DO
-      RETURN Integer.Compare(an.id,bn.id) 
+    (* we can get nil pointers from the Unlock code *)
+    IF    a = NIL THEN RETURN 1 
+    ELSIF b = NIL THEN RETURN -1 
+    ELSE
+      WITH an = NARROW(a, T), bn = NARROW(b, T) DO
+        RETURN Integer.Compare(an.id,bn.id) 
+      END
     END
   END IdCompare;
 
 PROCEDURE Lock(READONLY arr : Array) =
   VAR
     a := NEW(REF ARRAY OF REFANY, NUMBER(arr));
+    bb : REFANY;
+    myId := ThreadF.MyId();
   BEGIN
     FOR i := FIRST(arr) TO LAST(arr) DO 
       a[i] := arr[i]
@@ -249,9 +259,18 @@ PROCEDURE Lock(READONLY arr : Array) =
     END;
 
     LOCK lockMu DO
-      WITH hadLocks = lockTab.put(ThreadF.MyId(),a) DO
-        <* ASSERT NOT hadLocks *>
-      END
+      IF lockTab.get(myId, bb) THEN
+        (* nested locks, scary but OK if programmer knows what hes doing... *)
+        (* extend locked array with new locks *)
+        WITH b = NARROW(bb,REF ARRAY OF REFANY),
+             c = NEW(REF ARRAY OF REFANY, NUMBER(a^) + NUMBER(b^)) DO
+          SUBARRAY(c^,0,NUMBER(a^)) := a^;
+          SUBARRAY(c^,NUMBER(a^),NUMBER(b^)) := b^;
+          a := c;
+          RefanyArraySort.Sort(a^,IdCompare)
+        END
+      END;
+      EVAL lockTab.put(myId, a)
     END
   END Lock;
 
