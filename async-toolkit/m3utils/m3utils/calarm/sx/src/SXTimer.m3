@@ -19,6 +19,7 @@ PROCEDURE Init(t : T; granularity : LONGREAL) : T =
   BEGIN
     EVAL SXLongReal.T.init(t);
     t.granularity := granularity;
+    t.set(Time.Now());
     Register(t);
     RETURN t
   END Init;
