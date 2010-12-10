@@ -86,7 +86,7 @@ SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
 M33STUFF=m3-3
 
-SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse`
+SUBDIRS= `./dirsexist.sh -f bas newsim psim pslnew m3hier Parse calarm/jdata/jdatagw`
 
 CS2TARGETS=cs2/othello/digest cs2/othello/play cs2/othello/random cs2/othello/recursive2 cs2/othello/recursive4 cs2/othello/recursive6 cs2/othello/recursive7 cs2/othello/referee cs2/othello/setup
 
