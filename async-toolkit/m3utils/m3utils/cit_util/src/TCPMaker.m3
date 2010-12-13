@@ -7,8 +7,8 @@ IMPORT AL;
 IMPORT TextReader;
 IMPORT FloatMode, Lex;
 
-PROCEDURE MakeMaker(maker : Default;
-                    nameString : TEXT;
+PROCEDURE MakeMaker(maker       : Default;
+                    nameString  : TEXT;
                     defaultPort : IP.Port) : Default RAISES { ConnErr } =
   VAR
     addr : IP.Address;
@@ -60,7 +60,20 @@ REVEAL
   END;
 
 PROCEDURE MMT(m : Default) : TCP.T RAISES { IP.Error, Thread.Alerted } = 
-  BEGIN RETURN TCP.Connect(m.ep) END MMT;
+  BEGIN 
+    IF Debug.GetLevel() >= 10 THEN
+      VAR
+        str := "TCPMaker.MMT: connecting to addr 16_";
+      BEGIN
+        FOR i := FIRST(m.ep.addr.a) TO LAST(m.ep.addr.a) DO
+          str := str & Fmt.Int(m.ep.addr.a[i],base := 16) 
+        END;
+        str := str & " port " & Fmt.Int(m.ep.port);
+        Debug.Out(str)
+      END
+    END;
+    RETURN TCP.Connect(m.ep) 
+  END MMT;
 
 REVEAL
   Simple = PubSimple BRANDED Brand & " Simple" OBJECT
