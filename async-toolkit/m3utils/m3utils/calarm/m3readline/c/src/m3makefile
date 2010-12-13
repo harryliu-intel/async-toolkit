@@ -1,5 +1,10 @@
 /* $Id$ */
-import_lib ("readline","/usr/local/lib")
+
+if equal(TARGET, "I386_DARWIN")
+        import_lib ("readline","/sw/lib")
+else
+	import_lib ("readline","/usr/local/lib")
+end
 
 if equal(TARGET, "PPC_DARWIN")
 	import_lib ("ncurses","/usr/lib")
