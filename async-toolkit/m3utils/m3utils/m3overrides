@@ -158,5 +158,7 @@ override("gcomsportfolio", TOP & "/calarm/gcoms")
 
 override("dollarparser", TOP & "/calarm/gcmonitor")
 
+override("eurolib", TOP & "/calarm/euromm")
+
 % Ohai
 override("ohailog", TOP & "/ohai")
