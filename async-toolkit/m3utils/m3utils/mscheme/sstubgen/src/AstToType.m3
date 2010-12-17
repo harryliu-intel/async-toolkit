@@ -77,14 +77,15 @@ PROCEDURE GetNames(c : M3Context.T;
     *)
 
     CONST Delims = SET OF CHAR { '[', ']', ',' };
-    VAR p , q := 0;
+    VAR q   := 0;   (* beginning of current string *)
+        len := Text.Length(str);
     BEGIN 
-      FOR p := 0 TO Text.Length(str)-1 DO
+      FOR p := 0 TO len-1 DO
         IF Text.GetChar(str,p) IN Delims THEN
           Append(Text.Sub(str,q,p-q)); q := p+1
         END
       END;
-      IF p - q > 0 THEN Append(Text.Sub(str,q,p-q)) END
+      IF q # len THEN Append(Text.Sub(str,q,len-q)) END
     END DoFileNames;
 
   PROCEDURE Append(fn : TEXT) =
