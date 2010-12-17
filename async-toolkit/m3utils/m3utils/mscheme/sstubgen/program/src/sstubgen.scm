@@ -2890,6 +2890,12 @@
       (let ((stale #f)
             (srcs the-sourcefiles)
             (tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
+
+;;        (dis "srcs: " srcs dnl)
+;;        (dis "src-time: " (apply max (map fs-status-modificationtime srcs)) dnl)
+ ;;       (dis "tgts: " tgts dnl)
+ ;;       (dis "tgt-time: " (apply min (map fs-status-modificationtime tgts)) dnl)
+      
         (unwind-protect
          (set! stale (< (apply min (map fs-status-modificationtime tgts))
                         (apply max (map fs-status-modificationtime srcs))))
