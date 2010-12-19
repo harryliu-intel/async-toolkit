@@ -50,11 +50,13 @@ readonly proc ExportSchemeStubs(package) is
 
 	local intf_data = "(define scm-intfs '(" & intfs & "))"
 	local tgt = package & _EXPORTSSPECIAL
-	local cmd       = "(write-scheme-package-exports scm-intfs \""&tgt&"\")"
+	local cmd      = "(write-scheme-package-exports scm-intfs \""&tgt&"\" \""&tgt&"TMP\")"
+        local cmd2     = "(rename-if-different \""&tgt&"TMP\" \""&tgt&"\")"
 
 	> "build2.scm" in
 	  write (intf_data, CR)
 		write (cmd, CR)
+		write (cmd2, CR)
   end
 
 	_exec([_SSTUBGEN, "-nointeractive", "-unsafe", "-scm", _SSTUBGENSCM, "build2.scm", _SEXIT])
@@ -66,10 +68,12 @@ readonly proc ExportSchemeStubs(package) is
 end	
 
 readonly proc importSchemeStubs() is
-	local cmd = "(make-global-scheme-stubs \""&_EXPORTSSPECIAL&"\" \".M3IMPTAB\" \"SchemeStubs\" "&localExports&")"
+	local cmd = "(make-global-scheme-stubs \""&_EXPORTSSPECIAL&"\" \".M3IMPTAB\" \"SchemeStubs\" \"SchemeStubsTMP\" "&localExports&")"
+        local cmd2     = "(rename-if-different \"SchemeStubsTMP\" \"SchemeStubs\")"
 
 	> "build3.scm" in
  		write (cmd, CR)
+ 		write (cmd2, CR)
 	end
 
 	_exec([_SSTUBGEN, "-nointeractive", "-unsafe", "-scm", _SSTUBGENSCM, "build3.scm", _SEXIT])

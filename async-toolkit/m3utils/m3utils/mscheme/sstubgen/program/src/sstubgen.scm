@@ -128,6 +128,7 @@
 (define (write-scheme-package-exports 
          intfs      ;; list of interfaces we want to export
          intf-name  ;; name of interface in which to export them
+         intf-file-root ;; filename to which to write interface
          )
   ;;
   ;; phase 2 of stub generation.
@@ -142,11 +143,11 @@
   ;;                      MarketDataSchemeStubs TextSetSchemeStubs 
   ;;                      TextSetDefSchemeStubs))
   ;;
-  ;; (write-scheme-package-exports scm-intfs "stubexample__SCHEMEEXPORTS__")
+  ;; (write-scheme-package-exports scm-intfs "stubexample__SCHEMEEXPORTS__" "stubexample__SCHEMEEXPORTS__")
   ;;
 
-  (let* ((iwr (open-output-file (string-append intf-name ".i3")))
-         (mwr (open-output-file (string-append intf-name ".m3"))))
+  (let* ((iwr (open-output-file (string-append intf-file-root ".i3")))
+         (mwr (open-output-file (string-append intf-file-root ".m3"))))
 
     (dis 
      (string-append
@@ -185,7 +186,8 @@
     
 (define (make-global-scheme-stubs magic-string  ;; what to search for
                                   search-path   ;; path of IMPTAB
-                                  output-path   ;; where to put intf/impl
+                                  output-intf   ;; name of intf/impl
+                                  output-root   ;; where to write
                                   .
                                   local-exports ;; if were exporting from
                                                 ;; current package
@@ -223,7 +225,7 @@
                   
     (write-scheme-package-exports   (uniq equal? (map force-string 
                                          (append (get-matches) local-exports)))
-                                    output-path)
+                                    output-intf output-root)
 
     (close-input-port in))
   
@@ -2903,7 +2905,20 @@
          (set! stale #t))
         stale)
       #t))
-          
+
+(define (rename-if-different root1 root2)
+  (define (cmp-files-safely fn1 fn2)
+     (let ((res #f))
+       (unwind-protect
+          (set! res (cmp-files fn1 fn2)) #f #f)
+       res))
+
+  (define (rename-file-if-different fn1 fn2)
+     (if (not (cmp-files-safely fn1 fn2)) (fs-rename fn1 fn2)))
+ 
+   (rename-file-if-different (string-append root1 ".i3") (string-append root2 ".i3"))
+   (rename-file-if-different (string-append root1 ".m3") (string-append root2 ".m3"))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;                           ;;;;;;;;;;;;;;;;;;;;;;

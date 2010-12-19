@@ -25,6 +25,7 @@ IMPORT NetObj;
 IMPORT FS;
 IMPORT SchemeProcedureStubs;
 IMPORT RTType, RTBrand;
+IMPORT FileRd, Rd;
 
 <* FATAL Thread.Alerted *>
 
@@ -348,6 +349,62 @@ PROCEDURE FileRmApply(<*UNUSED*>p : SchemeProcedure.T;
     RETURN SchemeBoolean.True()
   END FileRmApply;
 
+PROCEDURE FileMvApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  BEGIN
+    WITH fn1 = SchemeString.ToText(First(args)), 
+         fn2 = SchemeString.ToText(Second(args)) DO
+      TRY
+        FS.Rename(fn1,fn2)
+      EXCEPT
+        OSError.E(err) => RETURN Error("FileMvApply : " & AL.Format(err))
+      END
+    END;
+    RETURN SchemeBoolean.True()
+  END FileMvApply;
+
+PROCEDURE FileCmpApply(<*UNUSED*>p : SchemeProcedure.T; 
+                       <*UNUSED*>interp : Scheme.T; 
+                                 args : Object) : Object RAISES { E } =
+  PROCEDURE Close() =
+    BEGIN
+      IF rd1 # NIL THEN TRY Rd.Close(rd1) EXCEPT ELSE END END;
+      IF rd2 # NIL THEN TRY Rd.Close(rd2) EXCEPT ELSE END END;
+    END Close;
+
+  VAR
+    rd1, rd2 : Rd.T := NIL;
+  BEGIN
+    WITH fn1 = SchemeString.ToText(First(args)), 
+         fn2 = SchemeString.ToText(Second(args)) DO
+      TRY
+        CONST BufSiz = 1024;
+        VAR
+          buff1, buff2 : ARRAY [0..BufSiz-1] OF CHAR;
+          l1, l2 : CARDINAL;
+        BEGIN
+          rd1 := FileRd.Open(fn1);
+          rd2 := FileRd.Open(fn2);
+          REPEAT 
+            l1 := Rd.GetSub(rd1,buff1);
+            l2 := Rd.GetSub(rd2,buff2);
+            IF l1 # l2 OR SUBARRAY(buff1,0,l1) # SUBARRAY(buff2,0,l2) THEN 
+              Close(); RETURN SchemeBoolean.False() 
+            END
+          UNTIL l1 # BufSiz;
+          Close(); RETURN SchemeBoolean.True()
+        END
+      EXCEPT
+        
+        OSError.E(err) => Close(); RETURN Error("FileMvApply : OSError.E : " & AL.Format(err))
+      |
+        Rd.Failure(err) => Close(); RETURN Error("FileMvApply : Rd.Failure : " & AL.Format(err))
+
+      END
+    END
+  END FileCmpApply;
+
 PROCEDURE DebugSetEnvApply(<*UNUSED*>p : SchemeProcedure.T; 
                        <*UNUSED*>interp : Scheme.T; 
                                  args : Object) : Object RAISES { E } =
@@ -618,6 +675,14 @@ PROCEDURE ExtendWithM3(prims : SchemePrimitive.ExtDefiner)  : SchemePrimitive.Ex
     prims.addPrim("remove-file", NEW(SchemeProcedure.T,
                                      apply := FileRmApply),
                   1, 1);
+
+    prims.addPrim("fs-rename", NEW(SchemeProcedure.T,
+                                     apply := FileMvApply),
+                  2, 2);
+
+    prims.addPrim("cmp-files", NEW(SchemeProcedure.T,
+                                     apply := FileCmpApply),
+                  2, 2);
 
     prims.addPrim("wr-close", NEW(SchemeProcedure.T,
                                       apply := WrCloseApply), 
