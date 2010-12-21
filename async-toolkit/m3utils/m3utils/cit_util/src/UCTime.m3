@@ -2,26 +2,26 @@
 
 UNSAFE MODULE UCTime;
 IMPORT XTime AS Time;
-IMPORT UtimeR;
+IMPORT UtimeOpsC;
 IMPORT M3toC;
 FROM Ctypes IMPORT char_star, long_star;
-FROM Utime IMPORT struct_tm;
 IMPORT Text;
 
 PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
   VAR
     clockI := TRUNC(clock);
     buff : ARRAY [0..25] OF CHAR;
-    tm : struct_tm;
+    tm := UtimeOpsC.make_T();
   BEGIN
+    TRY
     WITH clockP = LOOPHOLE(ADR(clockI), long_star),
          
-         ct = M3toC.CopyStoT(UtimeR.ctime_r(clockP,
+         ct = M3toC.CopyStoT(UtimeOpsC.ctime_r(clockP,
                                             LOOPHOLE(ADR(buff), char_star))),
          noNL = Text.Sub(ct, 0, Text.Length(ct)-1) DO
       IF showTZ THEN
-        WITH locl = UtimeR.localtime_r(clockP, ADR(tm)),
-             tzName = M3toC.CopyStoT(locl.tm_zone) DO
+        WITH locl = UtimeOpsC.localtime_r(clock, tm),
+             tzName = M3toC.CopyStoT(UtimeOpsC.Get_zone(locl)) DO
           IF keepNL THEN
             RETURN noNL & " " & tzName & "\n"
           ELSE
@@ -35,6 +35,9 @@ PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
           RETURN noNL
         END
       END
+    END
+    FINALLY
+      UtimeOpsC.delete_T(tm)
     END
   END ctime;
 

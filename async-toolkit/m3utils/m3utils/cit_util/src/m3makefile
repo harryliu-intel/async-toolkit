@@ -299,9 +299,9 @@ if equal(TARGET,"NT386GNU")
   Interface("Unix")
   Interface("Utypes")
   Interface("Usignal")
-  if not defined("CM3_VERSION") 
-    Interface("Utime")
-  end
+%  if not defined("CM3_VERSION") 
+%    Interface("Utime")
+%  end
   implementation("FileSharingWindows")
   implementation("SysPerfWindows")
 else
@@ -314,7 +314,7 @@ end
 
 Interface("SysPerf")
 
-Interface("UtimeR") /* re-entrant "_r" routines in Utime */
+%Interface("UtimeR") /* re-entrant "_r" routines in Utime */
 
 Module("FileUtils")
 
@@ -362,6 +362,11 @@ Sorted_table("LongrealRef", "LongrealType", "Refany")
 Module("SloppyTimeConverter")
 
 Module ("XTime")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+interface("UtimeOpsC")
+c_source ("UtimeOpsC")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

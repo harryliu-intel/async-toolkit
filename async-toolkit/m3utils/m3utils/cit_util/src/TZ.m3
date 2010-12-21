@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 UNSAFE MODULE TZ;
-IMPORT Utime, UtimeR, Date, XTime AS Time;
+IMPORT UtimeOpsC, Date, XTime AS Time;
 FROM M3toC IMPORT CopyTtoS, FreeCopiedS, CopyStoT;
 IMPORT CTZ, Text;
 IMPORT Debug;
@@ -116,7 +116,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
     END;
     
     VAR
-      tms   : Utime.struct_tm;
+      tms   := UtimeOpsC.make_T();
       clock : Ctypes.long;
       oldTZ : TEXT;
     BEGIN
@@ -140,19 +140,23 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
             (* the main difference is the use of localtime_r rather than
                localtime, in order to eliminate static storage depedencies *)
             
-            WITH tm = UtimeR.localtime_r(ADR(clock),ADR(tms)) DO
-              d.second := MIN(tm.tm_sec,59); (* leap seconds!? *)
-              d.minute := tm.tm_min;
-              d.hour := tm.tm_hour;
-              d.day := tm.tm_mday;
-              d.month := VAL(tm.tm_mon,Date.Month);
-              d.year := tm.tm_year + 1900;
-              d.weekDay := VAL(tm.tm_wday,Date.WeekDay);
+            WITH tm = UtimeOpsC.localtime_r(time,tms) DO
+              UtimeOpsC.Set_second(tms, 
+                                   MIN(UtimeOpsC.Get_second(tm),59)); 
+              (* leap seconds!? *)
+
+              d.minute := UtimeOpsC.Get_minute(tm);
+              d.hour := UtimeOpsC.Get_hour(tm);
+              d.day := UtimeOpsC.Get_day(tm);
+              d.month := VAL(UtimeOpsC.Get_month(tm),Date.Month);
+              d.year := UtimeOpsC.Get_year(tm);
+              d.weekDay := VAL(UtimeOpsC.Get_wday(tm),Date.WeekDay);
               
-              d.offset := -(tm.tm_gmtoff);
-              d.zone := CopyStoT(tm.tm_zone)
+              d.offset := -(UtimeOpsC.Get_gmtoff(tm));
+              d.zone := CopyStoT(UtimeOpsC.Get_zone(tm))
             END
           FINALLY
+            UtimeOpsC.delete_T(tms);
             SetCurTZ(oldTZ)
           END
         END;
@@ -170,28 +174,26 @@ PROCEDURE Mktime(t : T; d : Date.T) : Time.T =
       SetCurTZ(t.tz);
       
       VAR
-        tm  : Utime.struct_tm;
-        now : Ctypes.long;
+        tm  := UtimeOpsC.make_T();
       BEGIN
-        now := SomeTimeT; (* any legal time *)
-
-        tm := UtimeR.localtime_r(ADR(now),ADR(tm))^;
+        TRY
+          tm := UtimeOpsC.localtime_r(SomeTimeT, (* any legal time *)
+                                      tm);
         BEGIN
-          tm.tm_sec := d.second;
-          tm.tm_min := d.minute;
-          tm.tm_hour := d.hour;
-          tm.tm_mday := d.day;
-          tm.tm_mon := ORD(d.month);
-          tm.tm_year := d.year-1900;
-          tm.tm_isdst := -1;
-          tm.tm_gmtoff := 0;
-          tm.tm_wday := 0; (* ignored *)
-          tm.tm_yday := 0;  (* ignored *)
-          WITH res = Utime.mktime(ADR(tm)) DO
-            <* ASSERT res >= 0 *>
-            RETURN FLOAT(res,LONGREAL)
+          UtimeOpsC.Set_second(tm, d.second);
+          UtimeOpsC.Set_minute(tm, d.minute);
+          UtimeOpsC.Set_hour(tm, d.hour);
+          UtimeOpsC.Set_day(tm, d.day);
+          UtimeOpsC.Set_month(tm,ORD(d.month));
+          UtimeOpsC.Set_year(tm,d.year);
+          WITH res = UtimeOpsC.mktime(tm) DO
+            <* ASSERT res >= 0.0d0 *>
+            RETURN res
           END
         END
+      FINALLY
+        UtimeOpsC.delete_T(tm)
+      END
       END
     END
   END Mktime;
@@ -204,7 +206,7 @@ VAR CurTZ := "";
 VAR mu := NEW(MUTEX);
 
 VAR TZTZ := CopyTtoS("TZ");
-VAR SomeTimeT := ROUND(Time.Now());
+VAR SomeTimeT := Time.Now();
 
 VAR
   tzDir := DefaultTZRoot;
