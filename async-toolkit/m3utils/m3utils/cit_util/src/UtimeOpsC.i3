@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 UNSAFE INTERFACE UtimeOpsC;
-FROM Ctypes IMPORT char_star, long_star;
+FROM Ctypes IMPORT char_star, int_star;
 
 TYPE T = ADDRESS; (* struct_tm_star *)
 
@@ -56,7 +56,7 @@ TYPE Second = [0..60];  (* N.B. leap second *)
 <*EXTERNAL UtimeOpsC__Get_gmtoff *>PROCEDURE Get_gmtoff(t : T) : INTEGER;
 <*EXTERNAL UtimeOpsC__Get_zone   *>PROCEDURE Get_zone  (t : T) : char_star;
 
-<*EXTERNAL UtimeOpsC__ctime_r    *>PROCEDURE ctime_r   (clock : long_star; buf : char_star) : char_star;
+<*EXTERNAL UtimeOpsC__ctime_r    *>PROCEDURE ctime_r   (clock : int_star; buf : char_star) : char_star;
 
 CONST Brand = "UtimeC";
 

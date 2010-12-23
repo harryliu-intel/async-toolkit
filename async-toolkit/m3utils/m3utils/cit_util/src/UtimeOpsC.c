@@ -143,3 +143,9 @@ UtimeOpsC__delete_T(struct tm *t)
 {
 	free(t);
 }
+
+char *
+UtimeOpsC__ctime_r(int *clock, char *buf)
+{
+	return ctime_r(clock, buf);
+}
