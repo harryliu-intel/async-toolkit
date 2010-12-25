@@ -160,7 +160,11 @@ PROCEDURE ReadEvalWriteLoop(t : T; int : Interrupter) RAISES { Wr.Failure } =
           END
         END
       EXCEPT
-        E(e) => Wr.PutText(t.output, "EXCEPTION! " & e & "\n")
+        E(e) => Wr.PutText(t.output, "EXCEPTION! " & e & "\n");
+        IF EnvDisablesTracebacks THEN
+          Wr.PutText(t.output,
+                     "(Tracebacks disabled by NOMSCHEMETRACEBACKS.)\n")
+        END
       END;
       Wr.PutText(t.output, "\n"); Wr.Flush(t.output)
     END
@@ -344,7 +348,7 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
         MaxTraceback = 4096; (* in bytes of output *)
         MaxPerLine   =  512; (* also in bytes *)
   BEGIN
-    IF DoTracebacks THEN
+    IF DoTracebacks AND NOT EnvDisablesTracebacks THEN
       TRY
         RETURN EvalInternal(t, x, envP)
       EXCEPT
@@ -751,6 +755,8 @@ VAR
   SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
   SYMunwindProtect := SchemeSymbol.Symbol("unwind-protect");
 BEGIN 
+  EnvDisablesTracebacks := Env.Get("NOMSCHEMETRACEBACKS") # NIL;
+
   WITH sPath = Env.Get("MSCHEMEPATH") DO
     IF sPath # NIL THEN
       path := NIL;

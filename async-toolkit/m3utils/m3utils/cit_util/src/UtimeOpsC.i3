@@ -60,4 +60,5 @@ TYPE Second = [0..60];  (* N.B. leap second *)
 
 CONST Brand = "UtimeC";
 
+<*EXTERNAL UtimeOpsC__check_types*>PROCEDURE check_types();
 END UtimeOpsC.

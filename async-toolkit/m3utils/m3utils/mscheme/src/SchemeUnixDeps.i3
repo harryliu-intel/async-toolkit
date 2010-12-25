@@ -9,8 +9,9 @@
 INTERFACE SchemeUnixDeps;
 
 FROM Ctypes IMPORT int, long, char_star;
-IMPORT Utime;
 IMPORT Pathname;
+
+(* this file should also be replaced *)
 
 (*** <sys/resource.h> ***)
 
@@ -21,9 +22,11 @@ CONST
   RUSAGE_CHILDREN = -1;
 
 TYPE
+  struct_timeval = RECORD tv_sec, tv_usec : INTEGER END;
+
   struct_rusage = RECORD
-    ru_utime: Utime.struct_timeval;  (* user time used *)
-    ru_stime: Utime.struct_timeval;  (* system time used *)
+    ru_utime: struct_timeval;  (* user time used *)
+    ru_stime: struct_timeval;  (* system time used *)
     ru_maxrss: long;
     ru_ixrss: long;            (* integral shared text size *)
     (* Unsupported in Linux 1.0:

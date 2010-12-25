@@ -2,6 +2,7 @@
 
 MODULE SchemeReadLine;
 IMPORT Scheme, Csighandler;
+FROM Scheme IMPORT EnvDisablesTracebacks;
 IMPORT NetObj, Thread;
 IMPORT ReadLine, ReadLineError;
 IMPORT SchemeInputPort, SchemeSymbol, SchemeUtils;
@@ -163,9 +164,12 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
       EXCEPT
         <*NOWARN*>RuntimeError.E(err) => 
         Display("EXCEPTION! RuntimeError! " & 
-          RuntimeError.Tag(err))
+          RuntimeError.Tag(err));
       |
-        Scheme.E(e) => Display("EXCEPTION! " & e & "\n")
+        Scheme.E(e) => Display("EXCEPTION! " & e & "\n");
+        IF EnvDisablesTracebacks THEN
+          Display("(Tracebacks disabled by NOMSCHEMETRACEBACKS.)\n")
+        END
       END;
 
       IF NOT doReadLine THEN
@@ -251,7 +255,11 @@ PROCEDURE ReturningMainLoop(rl : ReadLine.T; scm : Scheme.T) : Scheme.Object
         Display("EXCEPTION! RuntimeError! " & 
           RuntimeError.Tag(err))
       |
-        Scheme.E(e) => Display("EXCEPTION! " & e & "\n")
+        Scheme.E(e) => Display("EXCEPTION! " & e & "\n");
+        IF EnvDisablesTracebacks THEN
+          Display("(Tracebacks disabled by NOMSCHEMETRACEBACKS.)\n")
+        END
+
       END;
 
       IF NOT doReadLine THEN

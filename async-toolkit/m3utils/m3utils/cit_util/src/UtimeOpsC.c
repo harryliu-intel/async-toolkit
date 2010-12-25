@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <assert.h>
 
 void
 UtimeOpsC__Set_second (struct tm *t, int second )
@@ -145,7 +146,15 @@ UtimeOpsC__delete_T(struct tm *t)
 }
 
 char *
-UtimeOpsC__ctime_r(int *clock, char *buf)
+UtimeOpsC__ctime_r(time_t *clock, char *buf)
 {
 	return ctime_r(clock, buf);
+}
+
+void
+UtimeOpsC__check_types(void)
+{
+        /* we really should assert that a Modula-3 INTEGER
+ 	is equally sized to C's time_t */
+	assert(sizeof(time_t) == sizeof(int));
 }

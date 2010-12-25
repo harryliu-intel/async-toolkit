@@ -2,8 +2,7 @@
 
 MODULE SchemeProfiler;
 IMPORT SchemeProcedure;
-FROM SchemeUnixDeps IMPORT RUSAGE_SELF, struct_rusage, GetErrno;
-FROM Utime IMPORT struct_timeval;
+FROM SchemeUnixDeps IMPORT RUSAGE_SELF, struct_rusage, GetErrno, struct_timeval;
 IMPORT Fmt, Debug;
 IMPORT LongrealPQ, TextRefTbl;
 IMPORT XTime AS Time;
