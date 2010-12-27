@@ -18,6 +18,7 @@ import ("libm3")
 import ("m3core")
 import ("cit_util")
 import ("scheme-lib")
+import ("netobj")
 
 Module("Scheme")
 Module("SchemeProfiler")
