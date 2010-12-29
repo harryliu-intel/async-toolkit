@@ -16,4 +16,6 @@ TYPE
     (* take output of a Unix shell command and turn it into a Scheme Object *)
   END;
 
+  TextOutputParser <: OutputParser;
+
 END SchemeCommandRunner.

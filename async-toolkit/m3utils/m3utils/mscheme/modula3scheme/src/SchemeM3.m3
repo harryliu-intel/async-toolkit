@@ -26,6 +26,8 @@ IMPORT FS;
 IMPORT SchemeProcedureStubs;
 IMPORT RTType, RTBrand;
 IMPORT FileRd, Rd;
+IMPORT SchemeAtRun;
+IMPORT SchemeCommandRunner;
 
 <* FATAL Thread.Alerted *>
 
@@ -754,5 +756,7 @@ BEGIN
                                       Green Book *)
   prims := ExtendWithM3(prims);
   SchemeEnvironment.ExtendWithIntrospectionPrimitives(prims)  ;
-  EVAL SchemeProcedureStubs.Extend(prims)
+  prims := SchemeProcedureStubs.Extend(prims);
+  prims := SchemeAtRun.Extend(prims);
+  prims := SchemeCommandRunner.Extend(NEW(SchemeCommandRunner.TextOutputParser),prims)
 END SchemeM3.

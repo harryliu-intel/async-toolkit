@@ -243,7 +243,7 @@ PROCEDURE Extend(op : OutputParser;
 
     definer.addPrim("run-raw-command-with-hooks",
                     NEW(Procedure,
-                        outputParser := NEW(DefaultOutputParser),
+                        outputParser := NEW(TextOutputParser),
                         apply := RunHooksCommandApply),
                     4, LAST(CARDINAL));
 
@@ -252,12 +252,12 @@ PROCEDURE Extend(op : OutputParser;
     RETURN definer
   END Extend;
 
-TYPE 
-  DefaultOutputParser = OutputParser OBJECT OVERRIDES
-    parseRd := DefaultParseRd;
+REVEAL 
+  TextOutputParser = OutputParser BRANDED OBJECT OVERRIDES
+    parseRd := TextParseRd;
   END;
 
-PROCEDURE DefaultParseRd(<*UNUSED*>p : DefaultOutputParser; 
+PROCEDURE TextParseRd(<*UNUSED*>p : TextOutputParser; 
                          rd : Rd.T) : Scheme.Object =
   <*FATAL Rd.Failure, Thread.Alerted, Wr.Failure*>
 
@@ -272,6 +272,6 @@ PROCEDURE DefaultParseRd(<*UNUSED*>p : DefaultOutputParser;
       END;
       RETURN SchemeString.FromText(TextWr.ToText(wr))
     END
-  END DefaultParseRd;
+  END TextParseRd;
 
 BEGIN END SchemeCommandRunner.
