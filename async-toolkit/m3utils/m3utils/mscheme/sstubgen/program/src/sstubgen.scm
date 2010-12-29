@@ -1161,6 +1161,7 @@
       (string-append
        proto " = " dnl
        "  BEGIN" dnl
+       "    IF x # NIL AND ISTYPE(x, REF " m3tn ") THEN RETURN NARROW(x,REF "m3tn")^ END; " dnl
 
        (case (car type)
 
