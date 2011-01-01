@@ -4,7 +4,7 @@
 int 
 main() 
 {
-  printf("sizeof int    = %d\n", sizeof(int));
-  printf("sizeof long   = %d\n", sizeof(long));
-  printf("sizeof time_t = %d\n", sizeof(time_t));
+  printf("sizeof int    = %lu\n", sizeof(int));
+  printf("sizeof long   = %lu\n", sizeof(long));
+  printf("sizeof time_t = %lu\n", sizeof(time_t));
 }
