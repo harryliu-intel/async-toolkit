@@ -341,6 +341,7 @@ Module("IntSetBits")
 % TZ package...
 
 interface ("CTZ")
+c_source ("CTZ")
 
 Module ("TZ")
 implementation("SafeTZ")

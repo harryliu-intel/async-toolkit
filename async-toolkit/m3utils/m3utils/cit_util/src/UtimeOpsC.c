@@ -134,6 +134,7 @@ UtimeOpsC__localtime_r(double clock, struct tm *result)
 	struct tm *res= localtime_r(&clocki, result);
 #if 0
 	printf("tm: %d %d %d\n", res->tm_hour, res->tm_min, res->tm_sec);
+	printf("tm: %s\n", res->tm_zone);
 #endif
         return res;
 }

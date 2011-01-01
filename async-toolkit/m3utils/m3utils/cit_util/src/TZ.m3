@@ -56,7 +56,7 @@ PROCEDURE SetCurTZ(to : TEXT) =
   BEGIN
     IF NOT Text.Equal(to,CurTZ) THEN
       WITH s = CopyTtoS(to) DO
-        WITH res = CTZ.setenv(TZTZ,s,1) DO <*ASSERT res=0*> END;
+        CTZ.setTZ(s);
         FreeCopiedS(s)
       END;
       CurTZ := to
@@ -217,7 +217,7 @@ BEGIN
   END;
 
   WITH s = CopyTtoS(CurTZ) DO
-    EVAL CTZ.setenv(TZTZ,s,1);
+    CTZ.setTZ(s);
     FreeCopiedS(s)
   END
 END TZ.
