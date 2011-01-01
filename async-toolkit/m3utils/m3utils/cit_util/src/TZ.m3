@@ -145,6 +145,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
                                    MIN(UtimeOpsC.Get_second(tm),59)); 
               (* leap seconds!? *)
 
+              d.second := UtimeOpsC.Get_second(tm);
               d.minute := UtimeOpsC.Get_minute(tm);
               d.hour := UtimeOpsC.Get_hour(tm);
               d.day := UtimeOpsC.Get_day(tm);
