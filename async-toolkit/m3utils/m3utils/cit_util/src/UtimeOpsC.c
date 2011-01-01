@@ -1,5 +1,6 @@
 /* $Id$ */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
@@ -130,7 +131,11 @@ UtimeOpsC__localtime_r(double clock, struct tm *result)
 {
 	time_t clocki=clock;
 
-	return localtime_r(&clocki, result);
+	struct tm *res= localtime_r(&clocki, result);
+#if 0
+	printf("tm: %d %d %d\n", res->tm_hour, res->tm_min, res->tm_sec);
+#endif
+        return res;
 }
 
 struct tm *
