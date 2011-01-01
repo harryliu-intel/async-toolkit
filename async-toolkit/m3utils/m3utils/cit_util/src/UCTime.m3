@@ -4,7 +4,7 @@ UNSAFE MODULE UCTime;
 IMPORT XTime AS Time;
 IMPORT UtimeOpsC;
 IMPORT M3toC;
-FROM Ctypes IMPORT char_star, long_star;
+FROM Ctypes IMPORT char_star, int_star;
 IMPORT Text;
 
 PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
@@ -14,7 +14,7 @@ PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
     tm := UtimeOpsC.make_T();
   BEGIN
     TRY
-    WITH clockP = LOOPHOLE(ADR(clockI), long_star),
+    WITH clockP = LOOPHOLE(ADR(clockI), int_star),
          
          ct = M3toC.CopyStoT(UtimeOpsC.ctime_r(clockP,
                                             LOOPHOLE(ADR(buff), char_star))),
