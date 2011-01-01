@@ -1,9 +1,13 @@
 /* $Id$ */
 
-if equal(TARGET, "I386_DARWIN")
+if equal(TARGET, "AMD64_LINUX")
+        import_lib ("readline","/usr/lib")
+else if equal(TARGET, "I386_DARWIN") 
         import_lib ("readline","/sw/lib")
-else
-	import_lib ("readline","/usr/local/lib")
+  
+     else
+   	import_lib ("readline","/usr/local/lib")
+     end
 end
 
 if equal(TARGET, "PPC_DARWIN")
