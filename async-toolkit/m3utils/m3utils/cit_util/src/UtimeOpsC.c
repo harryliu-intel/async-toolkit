@@ -68,7 +68,7 @@ UtimeOpsC__Get_minute (const struct tm *t)
 	return t->tm_min ;
 }
 
-char *
+const char *
 UtimeOpsC__Get_zone (const struct tm *t) 
 {
 	return t->tm_zone ;
@@ -156,5 +156,5 @@ UtimeOpsC__check_types(void)
 {
         /* we really should assert that a Modula-3 INTEGER
  	is equally sized to C's time_t */
-	assert(sizeof(time_t) == sizeof(int));
+	assert(sizeof(time_t) == sizeof(long));
 }
