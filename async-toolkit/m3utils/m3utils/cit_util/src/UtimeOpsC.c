@@ -158,3 +158,9 @@ UtimeOpsC__check_types(void)
  	is equally sized to C's time_t */
 	assert(sizeof(time_t) == sizeof(long));
 }
+
+void
+UtimeOpsC__write_double_clock(double time, time_t *buf)
+{
+	*buf = time;
+}

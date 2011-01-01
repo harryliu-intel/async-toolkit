@@ -4,17 +4,18 @@ UNSAFE MODULE UCTime;
 IMPORT XTime AS Time;
 IMPORT UtimeOpsC;
 IMPORT M3toC;
-FROM Ctypes IMPORT char_star, int_star;
+FROM Ctypes IMPORT char_star, long_star;
 IMPORT Text;
 
 PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
   VAR
-    clockI := TRUNC(clock);
+    clockbuff : ARRAY [0..4] OF INTEGER; (* portable, hopefully... *)
     buff : ARRAY [0..25] OF CHAR;
     tm := UtimeOpsC.make_T();
   BEGIN
     TRY
-    WITH clockP = LOOPHOLE(ADR(clockI), int_star),
+    UtimeOpsC.write_double_clock(clock,ADR(clockbuff));
+    WITH clockP = LOOPHOLE(ADR(clockbuff), long_star),
          
          ct = M3toC.CopyStoT(UtimeOpsC.ctime_r(clockP,
                                             LOOPHOLE(ADR(buff), char_star))),
