@@ -44,7 +44,10 @@ BEGIN
       END;
       sx1.set(0);
       SX.Lock1(sx2);
-      WHILE sx2.value() # 0 DO SXSelect.Wait1(sx2) END;
+      TRY 
+        WHILE sx2.value() # 0 DO SXSelect.Wait1(sx2) END 
+      EXCEPT SX.Uninitialized => (* skip *) 
+      END;
       SX.Unlock1(sx2)
     END
   END
