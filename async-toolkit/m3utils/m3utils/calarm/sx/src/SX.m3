@@ -69,7 +69,8 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
     BEGIN
       IF t.selecters.size() > 0 THEN
         VAR
-          s := t.selecters.iterate();
+          u := t.selecters.copy();
+          s := u.iterate();
           i : INTEGER;
           c : REFANY;
         BEGIN
@@ -77,7 +78,8 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
             IF threadCondTbl.get(i,c) THEN
               WITH tl = NARROW(c,ThreadLock) DO 
                 (* could be Thread.Signal...? *)
-                LOCK tl.tMu DO Thread.Broadcast(tl.c) END
+                LOCK tl.tMu DO Thread.Broadcast(tl.c) END;
+                EVAL t.selecters.delete(i)
               END
             ELSE
               Debug.Warning("No condition variable found for thread #" & 
@@ -212,11 +214,13 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
       " from " & Fmt.Int(NUMBER(on)) & " selecter lists");
     *)
 
+(*
     FOR i := FIRST(on) TO LAST(on) DO
       WITH t = on[i] DO
         EVAL t.selecters.delete(ThreadF.MyId())
       END
     END;
+*)
 
     CheckExcept()
   END WaitE;
