@@ -2,7 +2,7 @@
 
 MODULE Main;
 IMPORT SXInt;
-IMPORT Wr, Stdio, SXSelect, SX, Thread, Random;
+IMPORT Wr, Stdio, SXSelect, SX, Thread, Random, Fmt;
 
 TYPE
   Reader = Thread.Closure OBJECT
@@ -38,7 +38,7 @@ VAR
 BEGIN
   EVAL Thread.Fork(NEW(Reader, sx1 := sx1, sx2 := sx2));
   LOOP
-    WITH num = rand.integer(1,10000) DO
+    WITH num = rand.integer(1,10000) DO Wr.PutText(Stdio.stdout, "[" & Fmt.Int(num) & "]"); Wr.Flush(Stdio.stdout);
       FOR i := 1 TO num DO
         sx1.set(i)
       END;
