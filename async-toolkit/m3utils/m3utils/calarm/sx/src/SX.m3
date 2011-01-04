@@ -75,7 +75,10 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
         BEGIN
           WHILE s.next(i) DO
             IF threadCondTbl.get(i,c) THEN
-              Thread.Broadcast(NARROW(c,ThreadLock).c)
+              WITH tl = NARROW(c,ThreadLock) DO 
+                (* could be Thread.Signal...? *)
+                LOCK tl.tMu DO Thread.Broadcast(tl.c) END
+              END
             ELSE
               Debug.Warning("No condition variable found for thread #" & 
                 Fmt.Int(i))
@@ -155,19 +158,19 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
       " to " & Fmt.Int(NUMBER(on)) & " selecter lists");
     *)
 
-    WITH myId = ThreadF.MyId() DO
-      FOR i := FIRST(on) TO LAST(on) DO
-        WITH t = on[i] DO
-          EVAL t.selecters.insert(myId)
-        END
-      END
-    END;
-
     WITH l = NARROW(r,ThreadLock) DO
 
       (* here we need to atomically unlock all the variables we're
          waiting on -- a kind of multi-wait *)
       LOCK l.tMu DO 
+        WITH myId = ThreadF.MyId() DO
+          FOR i := FIRST(on) TO LAST(on) DO
+            WITH t = on[i] DO
+              EVAL t.selecters.insert(myId)
+            END
+          END
+        END;
+
         (* record # of updates, if applicable *)
         IF touched # NIL THEN
           updates := NEW(REF ARRAY OF CARDINAL, NUMBER(touched^));
