@@ -105,6 +105,7 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
     END;
 
     IF locked THEN
+      AssertLocked(Array { t });
       DoIt()
     ELSE
       LOCK t.mu DO DoIt() END
@@ -183,6 +184,7 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
         (* unlock variables *)
         (*Unlock(on);*)
+        AssertLocked(on);
         WITH locks = UnlockAll() DO
           (*IF except # NIL THEN Thread.Release(except.mu) END;*)
           (* the except is one of the locks were holding, dont unlock twice *)
@@ -330,6 +332,28 @@ PROCEDURE Unlock(READONLY arr : Array) =
       END
     END
   END Unlock;
+
+PROCEDURE AssertLocked(READONLY a : Array) =
+  VAR
+    myId := ThreadF.MyId();
+    br : REFANY;
+    found : BOOLEAN;
+  BEGIN
+    LOCK lockMu DO
+      WITH hadLocks = lockTab.get(myId, br) DO
+        <*ASSERT hadLocks*>
+      END
+    END;
+    WITH b = NARROW(br, REF ARRAY OF REFANY)^ DO
+      FOR ai := FIRST(a) TO LAST(a) DO
+        found := FALSE;
+        FOR bi := FIRST(b) TO LAST(b) DO
+          IF ai = bi THEN found := TRUE; EXIT END
+        END;
+        <* ASSERT found *>
+      END
+    END
+  END AssertLocked;
 
 PROCEDURE UnlockAll() : REF Array =
   VAR
