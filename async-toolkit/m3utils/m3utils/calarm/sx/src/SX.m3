@@ -68,22 +68,45 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
   PROCEDURE DoIt() = 
     BEGIN
       IF t.selecters.size() > 0 THEN
-        VAR
-          u := t.selecters.copy();
-          s := u.iterate();
-          i : INTEGER;
-          c : REFANY;
-        BEGIN
-          WHILE s.next(i) DO
-            IF threadCondTbl.get(i,c) THEN
-              WITH tl = NARROW(c,ThreadLock) DO 
-                (* could be Thread.Signal...? *)
-                LOCK tl.tMu DO Thread.Broadcast(tl.c) END;
-                EVAL t.selecters.delete(i)
+        LOCK giant DO
+          VAR
+            u := t.selecters.copy();
+            s := u.iterate();
+            i : INTEGER;
+            c : REFANY;
+          BEGIN
+            WHILE s.next(i) DO
+              IF threadCondTbl.get(i,c) THEN
+                WITH tl = NARROW(c,ThreadLock) DO 
+                  (* could be Thread.Signal...? *)
+                  (* if we get here, we should be able to assert that
+                     thread tl is eventually going to be in Thread.Wait. *)
+
+                  (* at this point, this thread is committed to waking
+                     up thread i, therefore unmark all ts marked as
+                     selected on by i *)
+                     
+                  FOR tp := FIRST(tl.onc^) TO LAST(tl.onc^) DO
+                    WITH t = tl.onc[tp] DO
+                      EVAL t.selecters.delete(i)
+                    END
+                  END;
+                  tl.onc := NIL;
+                  
+                  (* it better be the case that i is either waiting 
+                     or will soon be waiting *)
+                  <*ASSERT tl.okToLock*>
+                  LOCK tl.tMu DO Thread.Broadcast(tl.c) END;
+                  
+
+                  (* need to delete i from all other things it's 
+                     selecting too... *)
+                  
+                END
+              ELSE
+                Debug.Warning("No condition variable found for thread #" & 
+                  Fmt.Int(i))
               END
-            ELSE
-              Debug.Warning("No condition variable found for thread #" & 
-                Fmt.Int(i))
             END
           END
         END
@@ -112,8 +135,12 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
     END
   END Propagate;
 
+VAR giant := NEW(MUTEX);
+
 PROCEDURE Touch(t : T; when : Time.T; locked : BOOLEAN) =
   BEGIN
+    (* propagate called after recalc, so values will be
+       consistent from dependencies to dependers *)
     IF t.recalc(when) THEN t.propagate(when,locked) END
   END Touch;
 
@@ -138,26 +165,27 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
           Uninitialized => (* skip *)
         END;
         
-        EVAL except.selecters.insert(ThreadF.MyId())
+        EVAL except.selecters.insert(myId);
       END
     END CheckExcept;
 
   VAR
     r : REFANY;
     updates : REF ARRAY OF CARDINAL;
+    myId := ThreadF.MyId();
   BEGIN
     (* set up my waiting condition *)
     LOCK gMu DO
-      IF NOT threadCondTbl.get(ThreadF.MyId(),r) THEN
+      IF NOT threadCondTbl.get(myId,r) THEN
         r := NEW(ThreadLock, tMu := NEW(MUTEX), c := NEW(Thread.Condition));
-        EVAL threadCondTbl.put(ThreadF.MyId(),r)
+        EVAL threadCondTbl.put(myId,r)
       END
     END;
 
     CheckExcept();
 
     (*
-    Debug.Out("Adding thread " & Fmt.Int(ThreadF.MyId()) & 
+    Debug.Out("Adding thread " & Fmt.Int(myId) & 
       " to " & Fmt.Int(NUMBER(on)) & " selecter lists");
     *)
 
@@ -165,12 +193,11 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
       (* here we need to atomically unlock all the variables we're
          waiting on -- a kind of multi-wait *)
+      LOCK giant DO
       LOCK l.tMu DO 
-        WITH myId = ThreadF.MyId() DO
-          FOR i := FIRST(on) TO LAST(on) DO
-            WITH t = on[i] DO
-              EVAL t.selecters.insert(myId)
-            END
+        FOR i := FIRST(on) TO LAST(on) DO
+          WITH t = on[i] DO
+            EVAL t.selecters.insert(myId)
           END
         END;
 
@@ -185,14 +212,35 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
         (* unlock variables *)
         (*Unlock(on);*)
         AssertLocked(on);
+
+        (* 
+           LOCKING ORDER:
+           t.mu < giant < l.tMu 
+
+           global mu not used in this module
+           table locks are > l.tMu
+
+           giant SHOULD NOT BE NECESSARY IN BELOW CODE.. why is it?
+
+         *)
+        l.okToLock := TRUE;
+
+        WITH onc = NEW(REF ARRAY OF T, NUMBER(on)) DO
+          onc^ := on;
+          l.onc := onc
+        END;
+          
+        Thread.Release(giant);
+
         WITH locks = UnlockAll() DO
           (*IF except # NIL THEN Thread.Release(except.mu) END;*)
           (* the except is one of the locks were holding, dont unlock twice *)
-
-          Thread.Wait(l.tMu,l.c); 
+          
+          Thread.Wait(l.tMu,l.c); l.okToLock := FALSE; 
           
           Lock(locks^)
         END;
+        Thread.Acquire(giant);
 
         (* lock them again *)
         (*Lock(on);*)
@@ -207,12 +255,13 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
         (*IF except # NIL THEN Thread.Acquire(except.mu) END;*)
         (* the except is already locked by Lock(locks^) *)
                                                              
-      END
+      END (* LOCK l.tMu *)
+      END (* LOCK giant *)
     END;
 
     (* done waiting, delete me from wait list *)
     (*
-    Debug.Out("Deleting thread " & Fmt.Int(ThreadF.MyId()) & 
+    Debug.Out("Deleting thread " & Fmt.Int(myId) & 
       " from " & Fmt.Int(NUMBER(on)) & " selecter lists");
     *)
 
@@ -229,8 +278,11 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
 TYPE 
   ThreadLock = OBJECT
-    c : Thread.Condition;
-    tMu : MUTEX;
+    c           : Thread.Condition;
+    tMu         : MUTEX;
+    okToLock := FALSE; (* TRUE if OK for foreign thread to lock,
+                          protected by giant *)
+    onc         : REF ARRAY OF T := NIL;
   END;
 
 VAR gMu := NEW(MUTEX);
