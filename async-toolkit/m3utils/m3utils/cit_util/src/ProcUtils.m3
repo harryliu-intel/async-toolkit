@@ -167,15 +167,25 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           wd := Pathname.Join(wd, l.head);
         ELSE
           TRY
-            Debug.Out("Running command: " & l.head);
+            Debug.Out("ProcUtils.Apply.Exec: running command: " & l.head);
             FOR i := FIRST(params^) TO LAST(params^) DO
-              Debug.Out("params[" & Fmt.Int(i) & "] : " & params[i])
+              Debug.Out("ProcUtils.Apply.Exec: params[" & Fmt.Int(i) & "] : " & 
+                        params[i])
             END;
             VAR
-              code := Process.Wait(Process.Create(l.head, params^,
-                                                  NIL, wd,
-                                                  stdin, stdout,stderr));
+              code : Process.ExitCode;
+              sub : Process.T;
             BEGIN
+              Debug.Out("ProcUtils.Apply.Exec: creating subprocess");
+              sub := Process.Create(l.head, params^,
+                                    NIL, wd,
+                                    stdin, stdout,stderr);
+             
+              Debug.Out("ProcUtils.Apply.Exec: waiting for subprocess");
+              code := Process.Wait(sub);
+
+              Debug.Out("ProcUtils.Apply.Exec: subprocess returned " & 
+                        Fmt.Int(code));
 
               (* we need to attempt closing all three of stdin, stdout,
                  and stderr.  Only the LAST exception, if any, will be
