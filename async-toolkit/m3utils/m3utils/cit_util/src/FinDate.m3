@@ -171,17 +171,13 @@ PROCEDURE Julian(READONLY d : T) : CARDINAL =
 
 PROCEDURE ParseMonth(month : TEXT) : [1..12] RAISES { ParseError } =
   BEGIN
-    FOR i := 1 TO 12 DO
+    FOR i := FIRST(Month) TO LAST(Month) DO
       IF Text.Equal(month, MonthNames[i]) THEN RETURN i END
     END;
     RAISE ParseError
   END ParseMonth;
 
 CONST 
-  MonthNames = ARRAY OF TEXT { "NoMonth", 
-                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-
   MaxDays = ARRAY OF [0..31] { 0, 
               31, 29, 31, 30, 31, 30,
               31, 31, 30, 31, 30, 31 };

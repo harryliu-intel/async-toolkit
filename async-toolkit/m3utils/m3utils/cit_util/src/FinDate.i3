@@ -110,4 +110,9 @@ PROCEDURE MYEqual(READONLY a, b : MonthYear) : BOOLEAN;
 
 CONST Brand = "FinDate";
 
+CONST MonthNames = ARRAY Month OF TEXT { 
+                 "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+
 END FinDate.
