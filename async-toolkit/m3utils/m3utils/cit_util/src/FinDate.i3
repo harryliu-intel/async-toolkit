@@ -9,9 +9,9 @@ TYPE
   Day = [1..31];
 
   T = RECORD
-    year : INTEGER;
+    year  : INTEGER;
     month : Month;
-    day : Day;
+    day   : Day;
   END;
 
 CONST LongAgo   = T { 1800, 01, 01 };
@@ -109,6 +109,8 @@ PROCEDURE MYFormatFIX(READONLY my : MonthYear) : TEXT;
 PROCEDURE MYEqual(READONLY a, b : MonthYear) : BOOLEAN;
 
 CONST Brand = "FinDate";
+
+TYPE R = REF T;
 
 CONST MonthNames = ARRAY Month OF TEXT { 
                  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
