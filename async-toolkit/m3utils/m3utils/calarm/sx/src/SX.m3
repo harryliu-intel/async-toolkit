@@ -24,12 +24,13 @@ REVEAL
     dependers : RefList.T; (* of type T *)
     dMu       : MUTEX;
   OVERRIDES
-    depends := Depends;
+    depends   := Depends;
     propagate := Propagate;
-    touch := Touch;
-    init := InitT;
-    wait := WaitT;
+    touch     := Touch;
+    init      := InitT;
+    wait      := WaitT;
   END;
+
 
 PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN a = b END Equal;
 
@@ -81,6 +82,7 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
                   (* could be Thread.Signal...? *)
                   (* if we get here, we should be able to assert that
                      thread tl is eventually going to be in Thread.Wait. *)
+                  <*ASSERT tl.okToLock*>
 
                   (* at this point, this thread is committed to waking
                      up thread i, therefore unmark all ts marked as
@@ -408,6 +410,7 @@ PROCEDURE AssertLocked(READONLY a : Array) =
   END AssertLocked;
 
 PROCEDURE UnlockAll() : REF Array =
+  (* unlock all locks held by current thread and return array of the locks *)
   VAR
     myId := ThreadF.MyId();
     br : REFANY;

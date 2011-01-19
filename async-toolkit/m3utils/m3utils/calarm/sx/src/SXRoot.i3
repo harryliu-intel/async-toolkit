@@ -30,7 +30,23 @@ TYPE
     attachName(name : TEXT);
     (* attach a name for debugging purposes *)
 
+    getName() : TEXT;
+
+    dependsOn() : Iterator;
+    (* return dependencies, for debugging purposes *)
+
+    type() : Type;
+    (* more debugging *)
+
+    debugInfo() : TEXT;
+    (* type-dependent debugging *)
   END;
+
+  Type = { Tree, Const, Var };
+
+  Iterator = OBJECT METHODS next(VAR a : T) : BOOLEAN END;
+
+CONST TypeNames = ARRAY Type OF TEXT { "Tree", "Const", "Var" } ;
 
 (*
    note that this code can be very tricky!

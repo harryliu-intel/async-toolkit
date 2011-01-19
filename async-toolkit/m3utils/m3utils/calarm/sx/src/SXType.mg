@@ -1,24 +1,28 @@
 (* $Id$ *)
 
 GENERIC MODULE SXType(Elem);
-IMPORT XTime AS Time, SXClass, SX;
+IMPORT XTime AS Time, SXClass, SX, SXRoot;
 FROM SX IMPORT Uninitialized;
+IMPORT SXIterator, Fmt;
 
 REVEAL 
   T = Public BRANDED Brand OBJECT
-    v : Elem.T;
-    updates : CARDINAL := 0;
-    name : TEXT;
+    v         : Elem.T;
+    updates   : CARDINAL := 0;
+    name      : TEXT;
     validator : Validator := NIL;
   OVERRIDES 
-    update := Update;
+    update       := Update;
     updateLocked := UpdateLocked;
-    value := GetValue;
-    waitFor := WaitFor;
-    numUpdates := NumUpdates;
+    value        := GetValue;
+    waitFor      := WaitFor;
+    numUpdates   := NumUpdates;
     uninitialize := Uninitialize;
-    attachName := AttachName;
+    attachName   := AttachName;
+    getName      := GetName;
     setValidator := SetValidator;
+    type         := TreeType;
+    debugInfo    := TDebugInfo;
   END;
 
   Var = PublicVar BRANDED Brand & " Var" OBJECT 
@@ -26,12 +30,29 @@ REVEAL
     set := SetVar;
     setLocked := SetVarLocked;
     initVal := InitVal;
+    dependsOn := SXIterator.NullNull;
+    type := VarType;
   END;
 
   Const = PublicConst BRANDED Brand & " Const" OBJECT
   OVERRIDES
     init := InitConst;
+    dependsOn := SXIterator.NullNull;
+    type := ConstType;
   END;
+
+PROCEDURE TreeType(<*UNUSED*>t : T) : SXRoot.Type = 
+  BEGIN RETURN SXRoot.Type.Tree END TreeType;
+
+PROCEDURE VarType(<*UNUSED*>t : T) : SXRoot.Type = 
+  BEGIN RETURN SXRoot.Type.Var END VarType;
+
+PROCEDURE ConstType(<*UNUSED*>t : T) : SXRoot.Type = 
+  BEGIN RETURN SXRoot.Type.Const END ConstType;
+
+PROCEDURE TDebugInfo(t : T) : TEXT =
+  BEGIN RETURN Fmt.F("updates %s", Fmt.Int(t.updates)) END TDebugInfo;
+  (* we could add a lot of debuginfo in SX, threads, etc. *)
 
 PROCEDURE Uninitialize(t : T) = BEGIN t.updates := 0 END Uninitialize;
 
@@ -50,6 +71,9 @@ PROCEDURE SetValidator(t : T; v : Validator) =
 
 PROCEDURE AttachName(t : T; name : TEXT) =
   BEGIN t.name := name END AttachName;
+
+PROCEDURE GetName(t : T) : TEXT =
+  BEGIN RETURN t.name END GetName;
 
 PROCEDURE NumUpdates(t : T) : CARDINAL =
   BEGIN RETURN t.updates END NumUpdates;

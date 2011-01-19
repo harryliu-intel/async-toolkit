@@ -100,6 +100,9 @@ Table("SXRef", "SX", "Refany")
 Module("SXTime")
 Module("SXTimer")
 
+Module("SXIterator")
+Module("SXPrettyPrint")
+
 library ("sx")
 
 

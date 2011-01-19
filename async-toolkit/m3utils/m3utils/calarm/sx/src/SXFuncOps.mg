@@ -6,25 +6,31 @@ IMPORT XTime AS Time;
 FROM SX IMPORT Uninitialized;
 IMPORT SX;
 IMPORT SXInt;
+IMPORT SXIterator;
 
 TYPE 
   Unary = OpResult OBJECT
     f : F1;
     a : Arg.T;
   OVERRIDES
+    dependsOn := UnaryDepends;
     recalc := UnaryRecalc;
   END;
 
-  Binary = OpResult OBJECT
-    f : F2;
+  BinaryRoot = OpResult OBJECT
     a, b : Arg.T;
+  OVERRIDES
+    dependsOn := BinaryDepends;
+  END;
+
+  Binary = BinaryRoot OBJECT
+    f : F2;
   OVERRIDES
     recalc := BinaryRecalc;
   END;
 
-  BinaryShortCircuit = OpResult OBJECT
+  BinaryShortCircuit = BinaryRoot OBJECT
     f : F2;
-    a, b : Arg.T;
     ssOp : Arg.Base;
     ssRes : Result.Base;
   OVERRIDES
@@ -33,22 +39,52 @@ TYPE
 
   NAry = OpResult OBJECT
     mu : MUTEX;
-    f : FN;
-    a : REF ARRAY OF Arg.T;
+    f  : FN;
+    a  : REF ARRAY OF Arg.T;
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := NAryRecalc;
+    dependsOn := NAryDepends;
   END;
 
   IAry = OpResult OBJECT
     mu : MUTEX;
-    f : FI;
-    i : SXInt.T;
-    a : REF ARRAY OF Arg.T;
+    f  : FI;
+    i  : SXInt.T;
+    a  : REF ARRAY OF Arg.T;
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := IAryRecalc;
+    dependsOn := IAryDepends;
   END;
+
+PROCEDURE UnaryDepends(b : Unary) : SXIterator.T =
+  BEGIN RETURN SXIterator.One(b.a) END UnaryDepends;
+
+PROCEDURE BinaryDepends(b : BinaryRoot) : SXIterator.T =
+  BEGIN RETURN SXIterator.Two(b.a, b.b) END BinaryDepends;
+
+PROCEDURE NAryDepends(b : NAry) : SXIterator.T =
+  VAR
+    aa := NEW(REF ARRAY OF SX.T, NUMBER(b.a^));
+  BEGIN 
+    FOR i := FIRST(aa^) TO LAST(aa^) DO
+      aa[i] := b.a[i]
+    END;
+    RETURN SXIterator.Many(aa^) 
+  END NAryDepends;
+
+PROCEDURE IAryDepends(b : IAry) : SXIterator.T =
+  VAR
+    aa := NEW(REF ARRAY OF SX.T, NUMBER(b.a^));
+  BEGIN 
+    FOR i := FIRST(aa^) TO LAST(aa^) DO
+      aa[i] := b.a[i]
+    END;
+    RETURN SXIterator.Many(aa^) 
+  END IAryDepends;
+
+(**********************************************************************)
 
 PROCEDURE UnaryRecalc(u : Unary; when : Time.T) : BOOLEAN =
   BEGIN
