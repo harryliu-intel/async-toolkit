@@ -11,9 +11,16 @@ PROCEDURE Helper(wr : Wr.T; depth : CARDINAL; sx : SX.T)
   VAR
     name  := Debug.UnNil(sx.getName());
     type  := SXRoot.TypeNames[sx.type()];
+    tname : TEXT;
     brand : TEXT;
     debug := sx.debugInfo();
   BEGIN
+
+    TRY
+      tname := RTBrand.GetName(TYPECODE(sx))
+    EXCEPT
+      RTBrand.NotBranded => tname := "[unnamed]"
+    END;
 
     TRY
       brand := "branded \"" & RTBrand.Get(sx) & "\""
@@ -22,10 +29,11 @@ PROCEDURE Helper(wr : Wr.T; depth : CARDINAL; sx : SX.T)
     END;
 
     FOR i := 1 TO depth DO
-      Wr.PutChar(wr, '>');
+      Wr.PutChar(wr, '|');
+      Wr.PutChar(wr, ' ');
     END;
     
-    Wr.PutText(wr, Fmt.F("%s %s %s %s", name, type, brand, debug));
+    Wr.PutText(wr, Fmt.F("%s %s %s %s %s", name, type, tname, brand, debug));
     Wr.PutChar(wr, '\n');
 
     VAR
