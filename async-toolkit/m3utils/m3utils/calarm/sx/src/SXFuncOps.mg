@@ -9,12 +9,16 @@ IMPORT SXInt;
 IMPORT SXIterator;
 
 TYPE 
-  Unary = OpResult OBJECT
+  Unary = UnaryRoot OBJECT
     f : F1;
+  OVERRIDES
+    recalc := UnaryRecalc;
+  END;
+
+  UnaryRoot = OpResult OBJECT
     a : Arg.T;
   OVERRIDES
     dependsOn := UnaryDepends;
-    recalc := UnaryRecalc;
   END;
 
   BinaryRoot = OpResult OBJECT
@@ -37,17 +41,21 @@ TYPE
     recalc := BinarySSRecalc;
   END;
 
-  NAry = OpResult OBJECT
-    mu : MUTEX;
-    f  : FN;
+  NAryRoot = OpResult OBJECT
     a  : REF ARRAY OF Arg.T;
-    av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
-    recalc := NAryRecalc;
     dependsOn := NAryDepends;
   END;
 
-  IAry = OpResult OBJECT
+  NAry = NAryRoot OBJECT
+    mu : MUTEX;
+    f  : FN;
+    av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
+  OVERRIDES
+    recalc := NAryRecalc;
+  END;
+
+  IAry = NAryRoot OBJECT
     mu : MUTEX;
     f  : FI;
     i  : SXInt.T;
@@ -55,16 +63,15 @@ TYPE
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := IAryRecalc;
-    dependsOn := IAryDepends;
   END;
 
-PROCEDURE UnaryDepends(b : Unary) : SXIterator.T =
+PROCEDURE UnaryDepends(b : UnaryRoot) : SXIterator.T =
   BEGIN RETURN SXIterator.One(b.a) END UnaryDepends;
 
 PROCEDURE BinaryDepends(b : BinaryRoot) : SXIterator.T =
   BEGIN RETURN SXIterator.Two(b.a, b.b) END BinaryDepends;
 
-PROCEDURE NAryDepends(b : NAry) : SXIterator.T =
+PROCEDURE NAryDepends(b : NAryRoot) : SXIterator.T =
   VAR
     aa := NEW(REF ARRAY OF SX.T, NUMBER(b.a^));
   BEGIN 
@@ -73,16 +80,6 @@ PROCEDURE NAryDepends(b : NAry) : SXIterator.T =
     END;
     RETURN SXIterator.Many(aa^) 
   END NAryDepends;
-
-PROCEDURE IAryDepends(b : IAry) : SXIterator.T =
-  VAR
-    aa := NEW(REF ARRAY OF SX.T, NUMBER(b.a^));
-  BEGIN 
-    FOR i := FIRST(aa^) TO LAST(aa^) DO
-      aa[i] := b.a[i]
-    END;
-    RETURN SXIterator.Many(aa^) 
-  END IAryDepends;
 
 (**********************************************************************)
 
@@ -277,24 +274,21 @@ PROCEDURE IAryFunc(int : SXInt.T;
 (**********************************************************************)
 
 TYPE 
-  UnaryO = OpResult OBJECT
+  UnaryO = UnaryRoot OBJECT
     o : O1;
-    a : Arg.T;
   OVERRIDES
     recalc := UnaryORecalc;
   END;
 
-  BinaryO = OpResult OBJECT
+  BinaryO = BinaryRoot OBJECT
     o : O2;
-    a, b : Arg.T;
   OVERRIDES
     recalc := BinaryORecalc;
   END;
 
-  NAryO = OpResult OBJECT
+  NAryO = NAryRoot OBJECT
     mu : MUTEX;
     o : ON;
-    a : REF ARRAY OF Arg.T;
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := NAryORecalc;

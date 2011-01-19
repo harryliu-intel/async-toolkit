@@ -8,18 +8,24 @@ IMPORT Fmt;
 
 PROCEDURE Helper(wr : Wr.T; depth : CARDINAL; sx : SX.T) 
   RAISES { Thread.Alerted, Wr.Failure } =
-  <*FATAL RTBrand.NotBranded*>
   VAR
     name  := Debug.UnNil(sx.getName());
     type  := SXRoot.TypeNames[sx.type()];
-    brand := RTBrand.Get(sx);
+    brand : TEXT;
     debug := sx.debugInfo();
   BEGIN
+
+    TRY
+      brand := "branded \"" & RTBrand.Get(sx) & "\""
+    EXCEPT
+      RTBrand.NotBranded => brand := "not branded"
+    END;
+
     FOR i := 1 TO depth DO
       Wr.PutChar(wr, '>');
     END;
     
-    Wr.PutText(wr, Fmt.F("%s %s %s", name, type, brand, debug));
+    Wr.PutText(wr, Fmt.F("%s %s %s %s", name, type, brand, debug));
     Wr.PutChar(wr, '\n');
 
     VAR

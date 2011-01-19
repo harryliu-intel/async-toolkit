@@ -5,6 +5,7 @@ IMPORT XTime AS Time;
 IMPORT Thread;
 IMPORT SXLongReal;
 IMPORT LongrealPQ;
+IMPORT SXIterator;
 
 REVEAL
   Private = SXLongReal.Var BRANDED OBJECT END; (* this is cool! *)
@@ -13,6 +14,7 @@ REVEAL
     granularity : LONGREAL;
   OVERRIDES
     init := Init;
+    dependsOn := SXIterator.NullNull;
   END;
 
 PROCEDURE Init(t : T; granularity : LONGREAL) : T =
