@@ -75,39 +75,37 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
             s := u.iterate();
             i : INTEGER;
             c : REFANY;
+            x : BOOLEAN;
           BEGIN
             WHILE s.next(i) DO
-              IF threadCondTbl.get(i,c) THEN
-                WITH tl = NARROW(c,ThreadLock) DO 
-                  (* could be Thread.Signal...? *)
-                  (* if we get here, we should be able to assert that
-                     thread tl is eventually going to be in Thread.Wait. *)
-                  <*ASSERT tl.okToLock*>
-
-                  (* at this point, this thread is committed to waking
-                     up thread i, therefore unmark all ts marked as
-                     selected on by i *)
-                     
-                  FOR tp := FIRST(tl.onc^) TO LAST(tl.onc^) DO
-                    WITH t = tl.onc[tp] DO
-                      EVAL t.selecters.delete(i)
-                    END
-                  END;
-                  tl.onc := NIL;
-                  
-                  (* it better be the case that i is either waiting 
-                     or will soon be waiting *)
-                  <*ASSERT tl.okToLock*>
-                  LOCK tl.tMu DO Thread.Broadcast(tl.c) END;
-                  
-
-                  (* need to delete i from all other things it's 
-                     selecting too... *)
-                  
-                END
-              ELSE
-                Debug.Warning("No condition variable found for thread #" & 
-                  Fmt.Int(i))
+              x := threadCondTbl.get(i,c);
+              <* ASSERT x *>
+              WITH tl = NARROW(c,ThreadLock) DO 
+                (* could be Thread.Signal...? *)
+                (* if we get here, we should be able to assert that
+                   thread tl is eventually going to be in Thread.Wait. *)
+                <*ASSERT tl.okToLock*>
+                
+                (* at this point, this thread is committed to waking
+                   up thread i, therefore unmark all ts marked as
+                   selected on by i *)
+                
+                FOR tp := FIRST(tl.onc^) TO LAST(tl.onc^) DO
+                  WITH t = tl.onc[tp] DO
+                    EVAL t.selecters.delete(i)
+                  END
+                END;
+                tl.onc := NIL;
+                
+                (* it better be the case that i is either waiting 
+                   or will soon be waiting *)
+                <*ASSERT tl.okToLock*>
+                LOCK tl.tMu DO Thread.Broadcast(tl.c) END;
+                
+                
+                (* need to delete i from all other things it's 
+                   selecting too... *)
+                
               END
             END
           END
@@ -153,8 +151,9 @@ PROCEDURE Wait(READONLY on : ARRAY OF T; touched : REF ARRAY OF BOOLEAN) =
 PROCEDURE Wait1(on : T) = BEGIN Wait(ARRAY OF T { on }, NIL) END Wait1;
 
 PROCEDURE WaitE(READONLY on : ARRAY OF T; 
-                except : SXRef.T;
-                touched : REF ARRAY OF BOOLEAN) RAISES { Exception } =
+                except      : SXRef.T;
+                touched     : REF ARRAY OF BOOLEAN) 
+  RAISES { Exception } =
 
   PROCEDURE CheckExcept() RAISES { Exception } = 
     BEGIN
@@ -165,16 +164,15 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
           END
         EXCEPT
           Uninitialized => (* skip *)
-        END;
-        
-        EVAL except.selecters.insert(myId);
+        END
       END
     END CheckExcept;
 
   VAR
-    r : REFANY;
+    r       : REFANY;
     updates : REF ARRAY OF CARDINAL;
     myId := ThreadF.MyId();
+    nExcept := ARRAY BOOLEAN OF CARDINAL { 0, 1 } [ except # NIL ];
   BEGIN
     (* set up my waiting condition *)
     LOCK gMu DO
@@ -188,7 +186,7 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
     (*
     Debug.Out("Adding thread " & Fmt.Int(myId) & 
-      " to " & Fmt.Int(NUMBER(on)) & " selecter lists");
+      " to " & Fmt.Int(NUMBER(on)+nExcept) & " selecter lists");
     *)
 
     WITH l = NARROW(r,ThreadLock) DO
@@ -202,6 +200,7 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
             EVAL t.selecters.insert(myId)
           END
         END;
+        IF except # NIL THEN EVAL except.selecters.insert(myId) END;
 
         (* record # of updates, if applicable *)
         IF touched # NIL THEN
@@ -213,7 +212,8 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
 
         (* unlock variables *)
         (*Unlock(on);*)
-        AssertLocked(on);
+        AssertLocked(on); 
+        IF except # NIL THEN AssertLocked(ARRAY OF T { except }) END;
 
         (* 
            LOCKING ORDER:
@@ -227,25 +227,27 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
          *)
         l.okToLock := TRUE;
 
-        WITH onc = NEW(REF ARRAY OF T, NUMBER(on)) DO
-          onc^ := on;
+        WITH onc = NEW(REF ARRAY OF T, NUMBER(on)+nExcept) DO
+          SUBARRAY(onc^,0,NUMBER(on)) := on;
+          IF nExcept = 1 THEN onc[LAST(onc^)] := except END;
           l.onc := onc
         END;
           
         Thread.Release(giant);
 
         WITH locks = UnlockAll() DO
-          (*IF except # NIL THEN Thread.Release(except.mu) END;*)
-          (* the except is one of the locks were holding, dont unlock twice *)
-          
           Thread.Wait(l.tMu,l.c); l.okToLock := FALSE; 
-          
+
+          (* here we should be able to assert that we're on any 
+             selector list *)
+          FOR i := FIRST(on) TO LAST(on) DO
+            <*ASSERT NOT on[i].selecters.member(myId)*>
+          END;
+          IF except#NIL THEN <*ASSERT NOT except.selecters.member(myId)*> END;
+
           Lock(locks^)
         END;
         Thread.Acquire(giant);
-
-        (* lock them again *)
-        (*Lock(on);*)
 
         IF touched # NIL THEN
           FOR i := FIRST(touched^) TO LAST(touched^) DO
@@ -253,27 +255,10 @@ PROCEDURE WaitE(READONLY on : ARRAY OF T;
                           on[i].numUpdates() # updates[i]
           END
         END;
-
-        (*IF except # NIL THEN Thread.Acquire(except.mu) END;*)
-        (* the except is already locked by Lock(locks^) *)
                                                              
       END (* LOCK l.tMu *)
       END (* LOCK giant *)
     END;
-
-    (* done waiting, delete me from wait list *)
-    (*
-    Debug.Out("Deleting thread " & Fmt.Int(myId) & 
-      " from " & Fmt.Int(NUMBER(on)) & " selecter lists");
-    *)
-
-(*
-    FOR i := FIRST(on) TO LAST(on) DO
-      WITH t = on[i] DO
-        EVAL t.selecters.delete(ThreadF.MyId())
-      END
-    END;
-*)
 
     CheckExcept()
   END WaitE;
