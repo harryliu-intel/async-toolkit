@@ -28,9 +28,14 @@ PROCEDURE Helper(wr : Wr.T; depth : CARDINAL; sx : SX.T)
       RTBrand.NotBranded => brand := "not branded"
     END;
 
-    FOR i := 1 TO depth DO
-      Wr.PutChar(wr, '|');
-      Wr.PutChar(wr, ' ');
+    CONST
+      Lines = ARRAY OF CHAR { '|', '.', ':' };
+    BEGIN
+
+      FOR i := 1 TO depth DO
+        Wr.PutChar(wr, Lines[i MOD NUMBER(Lines)] );
+        Wr.PutChar(wr, ' ');
+      END
     END;
     
     Wr.PutText(wr, Fmt.F("%s %s %s %s %s", name, type, tname, brand, debug));
