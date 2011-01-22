@@ -43,7 +43,7 @@ SchemeStubs("RTType")
 SchemeStubs("SchemeEnvironment")
 
 SchemeStubs("Blah")
-SchemeStubs("FS")
+%SchemeStubs("FS")
 
 %SchemeStubs("TextRefTbl") % doesnt work yet
 
