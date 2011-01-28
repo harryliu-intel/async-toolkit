@@ -110,6 +110,42 @@ characterdata(void *data, const char *s, int len)
 }
 
 int
+xmlParserString(const char *string,
+	      void *stuff, startCall s, attrCall a, endCall e, charDataCall c)
+{
+  UD *m3callbacks=malloc(sizeof(UD));
+
+  XML_Parser p = XML_ParserCreate(NULL);
+  if (! p) {
+    fprintf(stderr, "Couldn't allocate memory for parser\n");
+    return -1;
+  }
+
+  m3callbacks->stuff = stuff;
+  m3callbacks->s = s;
+  m3callbacks->a = a;
+  m3callbacks->e = e;
+  m3callbacks->c = c;
+
+  XML_SetUserData(p,m3callbacks);
+
+  XML_SetElementHandler(p, start, end);
+  XML_SetCharacterDataHandler(p, characterdata);
+
+	if (XML_Parse(p, string, strlen(string), 1) == XML_STATUS_ERROR) {
+		fprintf(stderr, "Parse error at line %" XML_FMT_INT_MOD "u:\n%s\n",
+						XML_GetCurrentLineNumber(p),
+						XML_ErrorString(XML_GetErrorCode(p)));
+		return -1;
+	}
+
+	XML_ParserFree(p);
+	free(m3callbacks);
+      
+  return 0;
+}
+
+int
 xmlParserMain(const char *path,
 	      void *stuff, startCall s, attrCall a, endCall e, charDataCall c)
 {
@@ -166,6 +202,9 @@ xmlParserMain(const char *path,
   }
 
   if (path) fclose(ifp);
+
+	XML_ParserFree(p);
+	free(m3callbacks);
 
   return 0;
 }

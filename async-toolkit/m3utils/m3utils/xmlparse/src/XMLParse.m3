@@ -10,6 +10,7 @@ IMPORT Text;
 IMPORT Pathname;
 
 IMPORT Thread;
+IMPORT RTCollector; (* Enable/Disable to avoid stepping on malloc *)
 
 CONST TE = Text.Equal;
 
@@ -91,14 +92,35 @@ PROCEDURE DoIt(p : Pathname.T) : T =
 
     WITH s = M3toC.CopyTtoS(p) DO
       TRY
+        RTCollector.Disable(); (* xmlParser uses malloc *)
         EVAL xmlParser.xmlParserMain(s, ru, Start, AttrP, End, CharData)
       FINALLY
+        RTCollector.Enable();
         M3toC.FreeCopiedS(s)
       END
     END;
 
     RETURN ru^
   END DoIt;
+
+PROCEDURE DoText(t : TEXT) : T =
+  VAR
+    ru := NEW(REF U);
+  BEGIN
+    ru^ := NIL;
+
+    WITH s = M3toC.CopyTtoS(t) DO
+      TRY
+        RTCollector.Disable(); (* xmlParser uses malloc *)
+        EVAL xmlParser.xmlParserString(s, ru, Start, AttrP, End, CharData)
+      FINALLY
+        RTCollector.Enable();
+        M3toC.FreeCopiedS(s)
+      END
+    END;
+
+    RETURN ru^
+  END DoText;
 
 REVEAL
   T = Public BRANDED Brand OBJECT

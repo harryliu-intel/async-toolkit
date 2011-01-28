@@ -53,6 +53,8 @@ TYPE
 
 PROCEDURE DoIt(p : Pathname.T) : T;
 
+PROCEDURE DoText(t : TEXT) : T;
+
 CONST Brand = "XML Parse";
 
 END XMLParse.

@@ -16,4 +16,11 @@ PROCEDURE xmlParserMain(path : Ctypes.const_char_star;
                         c : CharDataCall) : INTEGER;
   (* returns 0 if OK, -1 if error *)
 
+<*EXTERNAL*>
+PROCEDURE xmlParserString(string : Ctypes.const_char_star;
+                        stuff : REFANY;
+                        s : StartCall; a : AttrCall; e : EndCall;
+                        c : CharDataCall) : INTEGER;
+  (* returns 0 if OK, -1 if error *)
+
 END xmlParser.
