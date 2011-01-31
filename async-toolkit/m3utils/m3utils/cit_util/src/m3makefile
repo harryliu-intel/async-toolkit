@@ -336,6 +336,13 @@ Module("UCTime")
 
 Module("IntSetBits")
 
+Interface("Hashable")
+Table("HashRef","Hashable","Refany")
+Table("HashText","Hashable","Text")
+Table("HashInt","Hashable","Integer")
+MkSet("Hash","Hashable")
+MkSetDef("Hash","Hashable")
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % TZ package...
