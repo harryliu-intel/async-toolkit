@@ -5,8 +5,10 @@ if equal(TARGET, "AMD64_LINUX")
 else if equal(TARGET, "I386_DARWIN") 
         import_lib ("readline","/sw/lib")
   
-     else
-   	import_lib ("readline","/usr/local/lib")
+     else 
+	if not equal(TARGET, "AMD64_FREEBSD")
+	   	import_lib ("readline","/usr/local/lib")
+	end
      end
 end
 
