@@ -6,8 +6,6 @@ m3_option("-times")
 import ("libm3")
 Module("TextReader") /* needed by m3tmplhack, must be compiled before cit_util. */
 
-Module("CITArgs")
-
 if defined("CM3_VERSION")
 	template("cm3")
 else
