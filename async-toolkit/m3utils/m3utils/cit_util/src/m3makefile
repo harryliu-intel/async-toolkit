@@ -146,6 +146,7 @@ module("FewerDotsTextPref")
 Table("TextBoolean", "Text", "Boolean")
 
 template("map")
+Interface("MapError")
 Generic_module("Map")
 Generic_module("TblMap")
 Generic_module("Memo")

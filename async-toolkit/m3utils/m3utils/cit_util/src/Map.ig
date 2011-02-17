@@ -3,6 +3,7 @@
 GENERIC INTERFACE Map(From,To);
 IMPORT Word;
 IMPORT Thread;
+IMPORT MapError;
 
 (* A Map.T is a wrapper for a 
    PROCEDURE (x : From.T) : To.T;
@@ -24,11 +25,12 @@ TYPE
     maxThreads : CARDINAL := 10; (* max. no of threads in case we do hints
                                     by forking. *)
   METHODS
-    eval(x : From.T) : To.T; (* must override this *)
+    eval(x : From.T) : To.T RAISES { MapError.E }; (* must override this *)
 
-    evalD(x : From.T; VAR y : To.T); (* may override this if desired;
-                                        inefficient default impl. is
-                                        provided *)
+    evalD(x : From.T; VAR y : To.T) RAISES { MapError.E }; 
+    (* may override this if desired;
+       inefficient default impl. is
+       provided *)
 
     (* evalHint provides a rudimentary way to parallelize the evaluation
        of slow functions.
