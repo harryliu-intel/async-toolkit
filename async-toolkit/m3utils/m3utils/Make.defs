@@ -30,24 +30,28 @@ ifdef CYGWIN
 
 else #### !CYGWIN => UNIX ####
 
+# GNU Make 3.80, 3.81, and 3.82 seem to support different ways of saying "else if"
+# maximal compatibility by avoiding the construct entirely
+
+  M3BUILDPROGRAM=m3build
+  M3BUILDOPTS= -O
+  M3BUILDCLEANTARGET= clean
+  M3SHIPPROGRAM=m3ship
+  M3SHIPOPTS=
+
   ifdef CM3  # on MacOS and other newer systems
     M3BUILDPROGRAM=cm3
     M3BUILDOPTS= -override
     M3BUILDCLEANTARGET= -clean
     M3SHIPPROGRAM=cm3
     M3SHIPOPTS=-ship
-  elifdef GC_USECM3  
+  endif
+  ifdef GC_USECM3  
     M3BUILDPROGRAM=cm3
     M3BUILDOPTS= -override
     M3BUILDCLEANTARGET= -clean
     M3SHIPPROGRAM=cm3
     M3SHIPOPTS=-ship
-  else       # older systems -- PM3
-    M3BUILDPROGRAM=m3build
-    M3BUILDOPTS= -O
-    M3BUILDCLEANTARGET= clean
-    M3SHIPPROGRAM=m3ship
-    M3SHIPOPTS=
   endif
 endif
 
