@@ -27,6 +27,8 @@ IMPORT Debug;
 
 <* FATAL Thread.Alerted *>
 
+VAR DoDebug := Debug.DebugThis("PROCUTILS");
+
 TYPE
   PrivateCompletion = Completion OBJECT
     po, pe: Writer;
@@ -167,25 +169,35 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           wd := Pathname.Join(wd, l.head);
         ELSE
           TRY
-            Debug.Out("ProcUtils.Apply.Exec: running command: " & l.head);
-            FOR i := FIRST(params^) TO LAST(params^) DO
-              Debug.Out("ProcUtils.Apply.Exec: params[" & Fmt.Int(i) & "] : " & 
-                        params[i])
+            IF DoDebug THEN
+              Debug.Out("ProcUtils.Apply.Exec: running command: " & l.head);
+              FOR i := FIRST(params^) TO LAST(params^) DO
+                Debug.Out("ProcUtils.Apply.Exec: params[" & Fmt.Int(i) & "] : " & 
+                  params[i])
+              END
             END;
+
             VAR
               code : Process.ExitCode;
               sub : Process.T;
             BEGIN
-              Debug.Out("ProcUtils.Apply.Exec: creating subprocess");
+              IF DoDebug THEN
+                Debug.Out("ProcUtils.Apply.Exec: creating subprocess")
+              END;
               sub := Process.Create(l.head, params^,
                                     NIL, wd,
                                     stdin, stdout,stderr);
              
-              Debug.Out("ProcUtils.Apply.Exec: waiting for subprocess");
+              IF DoDebug THEN
+                Debug.Out("ProcUtils.Apply.Exec: waiting for subprocess")
+              END;
+
               code := Process.Wait(sub);
 
-              Debug.Out("ProcUtils.Apply.Exec: subprocess returned " & 
-                        Fmt.Int(code));
+              IF DoDebug THEN
+                Debug.Out("ProcUtils.Apply.Exec: subprocess returned " & 
+                  Fmt.Int(code))
+              END;
 
               (* we need to attempt closing all three of stdin, stdout,
                  and stderr.  Only the LAST exception, if any, will be
