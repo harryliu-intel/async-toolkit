@@ -36,7 +36,7 @@ else #### !CYGWIN => UNIX ####
     M3BUILDCLEANTARGET= -clean
     M3SHIPPROGRAM=cm3
     M3SHIPOPTS=-ship
-  else ifdef GC_USECM3  
+  elifdef GC_USECM3  
     M3BUILDPROGRAM=cm3
     M3BUILDOPTS= -override
     M3BUILDCLEANTARGET= -clean
