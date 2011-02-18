@@ -19,6 +19,7 @@ IMPORT SchemeProcedure,SchemeProcedureClass;
 IMPORT Debug;
 IMPORT RefSeq, RefPair, RefPairSeq;
 IMPORT Scan;
+IMPORT Lex, FloatMode;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -150,8 +151,8 @@ PROCEDURE PedanticRest(x : Object) : Object RAISES { E } =
 
 PROCEDURE SetFirst(x, y : Object) : Object RAISES { E } =
   BEGIN
-    TYPECASE x OF 
-      Pair(p) => p.first := y; RETURN y
+    IF x # NIL AND ISTYPE(x, Pair) THEN 
+      NARROW(x,Pair).first := y; RETURN y
     ELSE 
       RETURN Error("Attempt to set-car of a non-Pair:" & Stringify(x)) 
     END
@@ -159,8 +160,8 @@ PROCEDURE SetFirst(x, y : Object) : Object RAISES { E } =
 
 PROCEDURE SetRest(x, y : Object) : Object RAISES { E } =
   BEGIN
-    TYPECASE x OF 
-      Pair(p) => p.rest := y; RETURN y
+    IF x # NIL AND ISTYPE(x, Pair) THEN 
+      NARROW(x,Pair).rest := y; RETURN y
     ELSE 
       RETURN Error("Attempt to set-cdr of a non-Pair:" & Stringify(x)) 
     END
@@ -505,7 +506,8 @@ PROCEDURE StringifyB(x : Object;
           ELSIF ABS(lr^) > 1.0d10 AND 
                 lr^ >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
                 lr^ <= FLOAT(LAST(INTEGER), LONGREAL) THEN
-            WITH o  = Fmt.LongReal(ABS(lr^)),
+            <*FATAL FloatMode.Trap, Lex.Error*> (* must be able to parse Fmt *)
+            BEGIN WITH o  = Fmt.LongReal(ABS(lr^)),
                  s  = Scan.LongReal(o),
                  o1 = Fmt.LongReal(ABS(lr^)-1.0d0),
                  s1 = Scan.LongReal(o1) DO
@@ -514,7 +516,7 @@ PROCEDURE StringifyB(x : Object;
               ELSE
                 Put(Fmt.LongReal(lr^))
               END
-            END
+            END END (* BEGIN WITH *)
           ELSE
             Put(Fmt.LongReal(lr^))
           END
