@@ -13,18 +13,21 @@ Interface("Example2")
 %Interface("Type")
 %Interface("Value")
 Module("Bubble")
+Module("Crash")
 
 Interface("ExampleRef")
 
 Interface("Blah")
 
 SchemeStubs("Bubble")
+SchemeStubs("Crash")
 SchemeStubs("Example")
 SchemeStubs("Example2")
 SchemeStubs("ExampleRef")
 
 SchemeStubs("Fmt")
 SchemeStubs("Wr")
+SchemeStubs("Text")
 SchemeStubs("TextWr")
 SchemeStubs("TextRd")
 SchemeStubs("FileWr")
