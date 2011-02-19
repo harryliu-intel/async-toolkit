@@ -163,10 +163,9 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
         END
       EXCEPT
         <*NOWARN*>RuntimeError.E(err) => 
-        Display("EXCEPTION! RuntimeError! " & 
-          RuntimeError.Tag(err));
+        Display("EXCEPTION! RuntimeError! " &  RuntimeError.Tag(err) & "\n")
       |
-        Scheme.E(e) => Display("EXCEPTION! " & e & "\n");
+        Scheme.E(e) => Display("EXCEPTION! " & Debug.UnNil(e) & "\n");
         IF EnvDisablesTracebacks THEN
           Display("(Tracebacks disabled by NOMSCHEMETRACEBACKS.)\n")
         END
