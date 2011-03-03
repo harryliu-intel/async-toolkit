@@ -131,6 +131,8 @@ PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
     END
   END Lookup;
 
+(**********************************************************************)
+
 PROCEDURE GetBinding(t : Instance; sym : Symbol) : Binding RAISES { E } =
   VAR o : Object;
   BEGIN

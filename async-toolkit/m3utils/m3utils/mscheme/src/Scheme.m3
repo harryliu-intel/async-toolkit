@@ -23,6 +23,9 @@ IMPORT Env, TextReader;
 IMPORT SchemeDefsBundle, Bundle;
 IMPORT SchemeProfiler;
 IMPORT SchemeUnixDeps;
+IMPORT SchemeEnvironmentBinding;
+
+TYPE Binding = SchemeEnvironmentBinding.T;
 
 TYPE Pair = SchemePair.T;
 
@@ -412,6 +415,8 @@ PROCEDURE EvalInternal(t   : T;
         RETURN NIL
       ELSIF ISTYPE(x,Symbol) THEN
         RETURN env.lookup(x)
+      ELSIF ISTYPE(x, Binding) THEN
+        RETURN NARROW(x, Binding).get()
       ELSIF NOT ISTYPE(x,Pair) THEN 
         RETURN x
       ELSE
