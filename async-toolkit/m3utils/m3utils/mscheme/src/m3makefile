@@ -45,6 +45,8 @@ Module("SchemePrimitive")
 Module("SchemeEnvironment")
 interface("SchemeEnvironmentClass")
 Interface("SchemeEnvironmentSuper")
+interface("SchemeEnvironmentInstanceRep")
+implementation("SchemeEnvironmentUnsafe")
 
 Module("SchemeNavigatorEnvironment")
 

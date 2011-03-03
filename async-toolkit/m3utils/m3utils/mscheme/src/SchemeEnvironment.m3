@@ -10,9 +10,8 @@ MODULE SchemeEnvironment;
 
 (* One of the few things not taken directly from Norvig... *)
 
-IMPORT SchemeEnvironmentClass;
+IMPORT SchemeEnvironmentInstanceRep;
 
-IMPORT AtomRefTbl;
 IMPORT SchemePrimitive, SchemeSymbol, SchemeProcedure;
 IMPORT SchemeProcedureClass;
 FROM Scheme IMPORT Symbol, Object, E;
@@ -22,36 +21,18 @@ IMPORT Text;
 IMPORT SchemePair;
 IMPORT Scheme;
 IMPORT AtomList, SchemeLongReal;
+FROM SchemeEnvironmentInstanceRep IMPORT QuickMap;
 
 TYPE Pair = SchemePair.T;
 
 CONST TE = Text.Equal;
 
-CONST QuickVars = 5;
-
-TYPE QuickMap = RECORD var : Symbol; val : Object END;
 
 REVEAL
-  Instance = SchemeEnvironmentClass.Private BRANDED Brand OBJECT
-    (* vars, vals not necessary *)
-    dictionary : AtomRefTbl.T;
-
-    quick : ARRAY [0..QuickVars - 1] OF QuickMap;
-
-    parent : T;
-
-    dead := FALSE; (* for debugging *)
-
-  METHODS
-    initDict(vars, vals : Object; 
-         VAR canRecyclePairs : BOOLEAN) : BOOLEAN := InitDict;
-    initDictEval(vars, argsToEval : Object;
-                 evalEnv : T;
-                 interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
-
-    getLocalNames() : AtomList.T;
-    
+  Instance = SchemeEnvironmentInstanceRep.Rep BRANDED Brand OBJECT
   OVERRIDES
+    initDict := InitDict;
+    initDictEval:= InitDictEval2;
     initEval  :=  InitEval;
     lookup    :=  Lookup;
     define    :=  Define;
@@ -59,14 +40,6 @@ REVEAL
     defPrim   :=  DefPrim;
     markAsDead:=  MarkAsDead;
     getParent :=  GetParent;
-  END;
-
-  Unsafe = Instance BRANDED Brand & " Unsafe" OBJECT OVERRIDES
-    init          := Init;
-    initEmpty     := InitEmptyUnsafe;
-    put           := UnsafePut;
-    get           := UnsafeGet;
-    getLocalNames := GetLocalNames;
   END;
 
   Safe = Unsafe BRANDED Brand & " Safe" OBJECT 
@@ -79,70 +52,23 @@ REVEAL
   END;
 
 PROCEDURE SafeGetLocalNames(x : Safe) : AtomList.T =
-  BEGIN LOCK x.mu DO RETURN GetLocalNames(x) END END SafeGetLocalNames;
+  BEGIN LOCK x.mu DO RETURN Unsafe.getLocalNames(x) END END SafeGetLocalNames;
 
 PROCEDURE GetParent(t : Instance) : T = BEGIN RETURN t.parent END GetParent;
 
-PROCEDURE UnsafeGet(t : Instance; var : Symbol; VAR val : Object) : BOOLEAN =
-  BEGIN 
-    IF var = NIL THEN RETURN FALSE END;
-
-    IF t.dictionary # NIL THEN
-      RETURN t.dictionary.get(var,val) 
-    ELSE
-      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-        IF t.quick[i].var = var THEN val := t.quick[i].val; RETURN TRUE END
-      END;
-      RETURN FALSE
-    END
-  END UnsafeGet;
-
-PROCEDURE UnsafePut(t : Instance; var : Symbol; READONLY val : Object) =
-  BEGIN 
-    IF t.dictionary # NIL THEN
-      EVAL t.dictionary.put(var,val) 
-    ELSE
-      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-        IF t.quick[i].var = var OR t.quick[i].var = NIL THEN 
-          t.quick[i].var := var; 
-          t.quick[i].val := val;
-          RETURN
-        END
-      END;
-      (* failed *)
-      t.dictionary := NEW(AtomRefTbl.Default).init();
-      FOR i := LAST(t.quick) TO FIRST(t.quick) BY -1 DO
-        UnsafePut(t,t.quick[i].var, t.quick[i].val)
-      END;
-
-      UnsafePut(t, var, val)
-    END
-  END UnsafePut;
-
 PROCEDURE SafeGet(t : Safe; var : Symbol; VAR val : Object) : BOOLEAN =
   BEGIN 
-    LOCK t.mu DO RETURN UnsafeGet(t,var,val) END
+    LOCK t.mu DO RETURN Unsafe.get(t,var,val) END
   END SafeGet;
 
 PROCEDURE SafePut(t : Safe; var : Symbol; READONLY val : Object) =
   BEGIN
-    LOCK t.mu DO UnsafePut(t,var,val) END
+    LOCK t.mu DO Unsafe.put(t,var,val) END
   END SafePut;
 
 (**********************************************************************)
 
 PROCEDURE MarkAsDead(t : Instance) = BEGIN t.dead := TRUE END MarkAsDead;
-
-PROCEDURE InitEmptyUnsafe(t : Unsafe; parent : T) : Instance =
-  BEGIN 
-    t.dictionary := NIL;
-    t.parent := parent;
-    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-      t.quick[i] := QuickMap { NIL, NIL };
-    END;
-
-    RETURN t 
-  END InitEmptyUnsafe;
 
 PROCEDURE InitEmpty(t : Safe; parent : T) : Instance =
   BEGIN 
@@ -160,23 +86,6 @@ PROCEDURE InitEmpty(t : Safe; parent : T) : Instance =
 
     RETURN t 
   END InitEmpty;
-
-PROCEDURE Init(t                   : Instance;
-               vars, vals          : Object; 
-               parent              : T;
-               VAR canRecyclePairs : BOOLEAN) : Instance =
-  BEGIN
-    EVAL t.initEmpty(parent);
-    IF NOT t.initDict(vars,vals,canRecyclePairs) THEN
-      TRY
-        EVAL Warn("wrong number of arguments: expected " &
-          StringifyT(vars) & " got " & StringifyT(vals))
-      EXCEPT
-      ELSE
-      END
-    END;
-    RETURN t
-  END Init;
 
 PROCEDURE InitEval(t                : Instance; 
                    vars, argsToEval : Object;
@@ -312,29 +221,6 @@ PROCEDURE DefPrim(t                : Instance;
     RETURN t
   END DefPrim;
 
-PROCEDURE GetLocalNames(e : Instance) : AtomList.T =
-  VAR res : AtomList.T := NIL;
-  BEGIN
-    IF e.dictionary # NIL THEN
-      WITH iter = e.dictionary.iterate() DO
-        VAR a : SchemeSymbol.T; o : REFANY; BEGIN
-          WHILE iter.next(a,o) DO
-            res := AtomList.Cons(a,res)
-          END
-        END
-      END
-    ELSE
-      FOR i := FIRST(e.quick) TO LAST(e.quick) DO
-        IF e.quick[i].var # NIL THEN 
-          res := AtomList.Cons(e.quick[i].var,res)
-        ELSE
-          EXIT
-        END
-      END
-    END;
-    RETURN res
-  END GetLocalNames;
-  
 PROCEDURE ListPrimitivesApply(<*UNUSED*>p      : SchemeProcedure.T; 
                               <*UNUSED*>interp : Scheme.T; 
                               args             : Object) : Object 
