@@ -49,6 +49,8 @@ REVEAL
     initDictEval(vars, argsToEval : Object;
                  evalEnv : T;
                  interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
+
+    getLocalNames() : AtomList.T := SafeGetLocalNames;
     
   OVERRIDES
     put       :=  SafePut;
@@ -68,7 +70,11 @@ REVEAL
     initEmpty := InitEmptyUnsafe;
     put := UnsafePut;
     get := UnsafeGet;
+    getLocalNames := GetLocalNames;
   END;
+
+PROCEDURE SafeGetLocalNames(x : T) : AtomList.T =
+  BEGIN LOCK x.mu DO RETURN GetLocalNames(x) END END SafeGetLocalNames;
 
 PROCEDURE GetParent(t : T) : T = BEGIN RETURN t.parent END GetParent;
 
@@ -299,10 +305,6 @@ PROCEDURE DefPrim(t : T;
     RETURN t
   END DefPrim;
 
-PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T; 
-                        <*UNUSED*>interp : Scheme.T; 
-                                  args : Object) : Object RAISES { E } =
-
   PROCEDURE GetLocalNames(e : T) : AtomList.T =
     VAR res : AtomList.T := NIL;
     BEGIN
@@ -326,6 +328,10 @@ PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T;
       RETURN res
     END GetLocalNames;
 
+PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T; 
+                        <*UNUSED*>interp : Scheme.T; 
+                                  args : Object) : Object RAISES { E } =
+
   BEGIN
     WITH x = First(args) DO
       IF x = NIL OR NOT ISTYPE(x, T) THEN
@@ -335,11 +341,7 @@ PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T;
       VAR e := NARROW(x,T);
           names : AtomList.T;
       BEGIN
-        IF ISTYPE(e, Unsafe) THEN
-          names := GetLocalNames(e)
-        ELSE
-          LOCK e.mu DO names := GetLocalNames(e) END
-        END;
+        names := e.getLocalNames();
 
         VAR res : Pair := NIL;
             p := names;
