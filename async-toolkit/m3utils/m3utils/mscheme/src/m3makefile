@@ -48,6 +48,9 @@ Interface("SchemeEnvironmentSuper")
 interface("SchemeEnvironmentInstanceRep")
 implementation("SchemeEnvironmentUnsafe")
 
+generic_implementation ("SchemeEnvironmentSafely")
+module ("SchemeEnvironmentSafe")
+
 Module("SchemeNavigatorEnvironment")
 
 Module("SchemeInputPort")

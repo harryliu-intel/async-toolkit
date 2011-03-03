@@ -32,6 +32,11 @@ TYPE
     getLocalNames() : AtomList.T;
   END;
 
+TYPE Unsafe = SchemeEnvironment.Unsafe;
+TYPE Safe   = SchemeEnvironment.Safe;
+
+CONST Brand = SchemeEnvironment.Brand & " InstanceRep";
+
 END SchemeEnvironmentInstanceRep.
 
  

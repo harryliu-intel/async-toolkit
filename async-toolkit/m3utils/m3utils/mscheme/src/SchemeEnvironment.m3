@@ -21,7 +21,6 @@ IMPORT Text;
 IMPORT SchemePair;
 IMPORT Scheme;
 IMPORT AtomList, SchemeLongReal;
-FROM SchemeEnvironmentInstanceRep IMPORT QuickMap;
 
 TYPE Pair = SchemePair.T;
 
@@ -31,61 +30,22 @@ CONST TE = Text.Equal;
 REVEAL
   Instance = SchemeEnvironmentInstanceRep.Rep BRANDED Brand OBJECT
   OVERRIDES
-    initDict := InitDict;
-    initDictEval:= InitDictEval2;
-    initEval  :=  InitEval;
-    lookup    :=  Lookup;
-    define    :=  Define;
-    set       :=  Set;
-    defPrim   :=  DefPrim;
-    markAsDead:=  MarkAsDead;
-    getParent :=  GetParent;
+    initDict     := InitDict;
+    initDictEval := InitDictEval2;
+    initEval     :=  InitEval;
+    lookup       :=  Lookup;
+    define       :=  Define;
+    set          :=  Set;
+    defPrim      :=  DefPrim;
+    markAsDead   :=  MarkAsDead;
+    getParent    :=  GetParent;
   END;
-
-  Safe = Unsafe BRANDED Brand & " Safe" OBJECT 
-    mu : MUTEX    := NIL;
-  OVERRIDES
-    initEmpty     :=  InitEmpty;
-    getLocalNames :=  SafeGetLocalNames;
-    put           :=  SafePut;
-    get           :=  SafeGet;
-  END;
-
-PROCEDURE SafeGetLocalNames(x : Safe) : AtomList.T =
-  BEGIN LOCK x.mu DO RETURN Unsafe.getLocalNames(x) END END SafeGetLocalNames;
 
 PROCEDURE GetParent(t : Instance) : T = BEGIN RETURN t.parent END GetParent;
-
-PROCEDURE SafeGet(t : Safe; var : Symbol; VAR val : Object) : BOOLEAN =
-  BEGIN 
-    LOCK t.mu DO RETURN Unsafe.get(t,var,val) END
-  END SafeGet;
-
-PROCEDURE SafePut(t : Safe; var : Symbol; READONLY val : Object) =
-  BEGIN
-    LOCK t.mu DO Unsafe.put(t,var,val) END
-  END SafePut;
 
 (**********************************************************************)
 
 PROCEDURE MarkAsDead(t : Instance) = BEGIN t.dead := TRUE END MarkAsDead;
-
-PROCEDURE InitEmpty(t : Safe; parent : T) : Instance =
-  BEGIN 
-    IF t.mu = NIL THEN t.mu := NEW(MUTEX) END;
-
-    (* why lock it? well if it's a safe version, it might still
-       be accessed from other threads *)
-    LOCK t.mu DO
-      t.parent := parent;
-      t.dictionary := NIL;
-      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-        t.quick[i] := QuickMap { NIL, NIL };
-      END
-    END;
-
-    RETURN t 
-  END InitEmpty;
 
 PROCEDURE InitEval(t                : Instance; 
                    vars, argsToEval : Object;
