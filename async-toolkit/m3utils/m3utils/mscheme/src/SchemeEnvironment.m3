@@ -32,8 +32,7 @@ CONST QuickVars = 5;
 TYPE QuickMap = RECORD var : Symbol; val : Object END;
 
 REVEAL
-  T = SchemeEnvironmentClass.Private BRANDED Brand OBJECT
-    mu : MUTEX := NIL; (* always NIL in Unsafe *)
+  Instance = SchemeEnvironmentClass.Private BRANDED Brand OBJECT
     (* vars, vals not necessary *)
     dictionary : AtomRefTbl.T;
 
@@ -50,13 +49,9 @@ REVEAL
                  evalEnv : T;
                  interp : Scheme.T) : BOOLEAN RAISES { E } := InitDictEval2;
 
-    getLocalNames() : AtomList.T := SafeGetLocalNames;
+    getLocalNames() : AtomList.T;
     
   OVERRIDES
-    put       :=  SafePut;
-    get       :=  SafeGet;
-    initEmpty :=  InitEmpty;
-    init      :=  Init;
     initEval  :=  InitEval;
     lookup    :=  Lookup;
     define    :=  Define;
@@ -66,19 +61,29 @@ REVEAL
     getParent :=  GetParent;
   END;
 
-  Unsafe = T BRANDED Brand & " Unsafe" OBJECT OVERRIDES
-    initEmpty := InitEmptyUnsafe;
-    put := UnsafePut;
-    get := UnsafeGet;
+  Unsafe = Instance BRANDED Brand & " Unsafe" OBJECT OVERRIDES
+    init          := Init;
+    initEmpty     := InitEmptyUnsafe;
+    put           := UnsafePut;
+    get           := UnsafeGet;
     getLocalNames := GetLocalNames;
   END;
 
-PROCEDURE SafeGetLocalNames(x : T) : AtomList.T =
+  Safe = Unsafe BRANDED Brand & " Safe" OBJECT 
+    mu : MUTEX    := NIL;
+  OVERRIDES
+    initEmpty     :=  InitEmpty;
+    getLocalNames :=  SafeGetLocalNames;
+    put           :=  SafePut;
+    get           :=  SafeGet;
+  END;
+
+PROCEDURE SafeGetLocalNames(x : Safe) : AtomList.T =
   BEGIN LOCK x.mu DO RETURN GetLocalNames(x) END END SafeGetLocalNames;
 
-PROCEDURE GetParent(t : T) : T = BEGIN RETURN t.parent END GetParent;
+PROCEDURE GetParent(t : Instance) : T = BEGIN RETURN t.parent END GetParent;
 
-PROCEDURE UnsafeGet(t : T; var : Symbol; VAR val : Object) : BOOLEAN =
+PROCEDURE UnsafeGet(t : Instance; var : Symbol; VAR val : Object) : BOOLEAN =
   BEGIN 
     IF var = NIL THEN RETURN FALSE END;
 
@@ -92,7 +97,7 @@ PROCEDURE UnsafeGet(t : T; var : Symbol; VAR val : Object) : BOOLEAN =
     END
   END UnsafeGet;
 
-PROCEDURE UnsafePut(t : T; var : Symbol; READONLY val : Object) =
+PROCEDURE UnsafePut(t : Instance; var : Symbol; READONLY val : Object) =
   BEGIN 
     IF t.dictionary # NIL THEN
       EVAL t.dictionary.put(var,val) 
@@ -114,24 +119,22 @@ PROCEDURE UnsafePut(t : T; var : Symbol; READONLY val : Object) =
     END
   END UnsafePut;
 
-PROCEDURE SafeGet(t : T; var : Symbol; VAR val : Object) : BOOLEAN =
+PROCEDURE SafeGet(t : Safe; var : Symbol; VAR val : Object) : BOOLEAN =
   BEGIN 
     LOCK t.mu DO RETURN UnsafeGet(t,var,val) END
   END SafeGet;
 
-PROCEDURE SafePut(t : T; var : Symbol; READONLY val : Object) =
+PROCEDURE SafePut(t : Safe; var : Symbol; READONLY val : Object) =
   BEGIN
     LOCK t.mu DO UnsafePut(t,var,val) END
   END SafePut;
 
 (**********************************************************************)
 
-PROCEDURE MarkAsDead(t : T) = BEGIN t.dead := TRUE END MarkAsDead;
+PROCEDURE MarkAsDead(t : Instance) = BEGIN t.dead := TRUE END MarkAsDead;
 
-PROCEDURE InitEmptyUnsafe(t, parent : T) : T =
+PROCEDURE InitEmptyUnsafe(t : Unsafe; parent : T) : Instance =
   BEGIN 
-    t.mu := NIL;
-
     t.dictionary := NIL;
     t.parent := parent;
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
@@ -141,7 +144,7 @@ PROCEDURE InitEmptyUnsafe(t, parent : T) : T =
     RETURN t 
   END InitEmptyUnsafe;
 
-PROCEDURE InitEmpty(t, parent : T) : T =
+PROCEDURE InitEmpty(t : Safe; parent : T) : Instance =
   BEGIN 
     IF t.mu = NIL THEN t.mu := NEW(MUTEX) END;
 
@@ -158,8 +161,10 @@ PROCEDURE InitEmpty(t, parent : T) : T =
     RETURN t 
   END InitEmpty;
 
-PROCEDURE Init(t : T; vars, vals : Object; parent : T;
-                   VAR canRecyclePairs : BOOLEAN) : T =
+PROCEDURE Init(t                   : Instance;
+               vars, vals          : Object; 
+               parent              : T;
+               VAR canRecyclePairs : BOOLEAN) : Instance =
   BEGIN
     EVAL t.initEmpty(parent);
     IF NOT t.initDict(vars,vals,canRecyclePairs) THEN
@@ -173,11 +178,12 @@ PROCEDURE Init(t : T; vars, vals : Object; parent : T;
     RETURN t
   END Init;
 
-PROCEDURE InitEval(t : T; 
+PROCEDURE InitEval(t                : Instance; 
                    vars, argsToEval : Object;
-                   evalEnv : T; 
-                   interp : Scheme.T;
-                   parent : T) : T RAISES { E } =
+                   evalEnv          : T; 
+                   interp           : Scheme.T;
+                   parent           : T) : Instance 
+  RAISES { E } =
   BEGIN
     EVAL t.initEmpty();
     t.parent := parent;
@@ -188,7 +194,8 @@ PROCEDURE InitEval(t : T;
     RETURN t
   END InitEval;
 
-PROCEDURE InitDict(t : T; vars, vals : Object;
+PROCEDURE InitDict(t                   : Instance; 
+                   vars, vals          : Object;
                    VAR canRecyclePairs : BOOLEAN) : BOOLEAN =
   BEGIN
     IF vars = NIL AND vals = NIL THEN 
@@ -210,10 +217,10 @@ PROCEDURE InitDict(t : T; vars, vals : Object;
     END
   END InitDict;
 
-PROCEDURE InitDictEval2(t : T; 
+PROCEDURE InitDictEval2(t                : Instance; 
                         vars, argsToEval : Object; 
-                        evalEnv : T;
-                        interp : Scheme.T) : BOOLEAN RAISES { E }=
+                        evalEnv          : T;
+                        interp           : Scheme.T) : BOOLEAN RAISES { E }=
   BEGIN
     LOOP
       IF vars = NIL AND argsToEval = NIL THEN 
@@ -235,7 +242,7 @@ PROCEDURE InitDictEval2(t : T;
     END
   END InitDictEval2;
 
-PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
+PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
     LOOP
@@ -252,7 +259,7 @@ PROCEDURE Lookup(t : T; symbol : Symbol) : Object RAISES { E } =
     END
   END Lookup;
 
-PROCEDURE Define(t : T; var, val : Object) : Object =
+PROCEDURE Define(t : Instance; var, val : Object) : Object =
   BEGIN
     <*ASSERT NOT t.dead*>
     IF var = NIL OR NOT ISTYPE(var, Symbol) THEN RETURN var END;
@@ -272,7 +279,7 @@ PROCEDURE Define(t : T; var, val : Object) : Object =
     RETURN var
   END Define;
 
-PROCEDURE Set(t : T; var, val : Object) : Object RAISES { E } =
+PROCEDURE Set(t : Instance; var, val : Object) : Object RAISES { E } =
   VAR dummy : Object;
   BEGIN
     <*ASSERT NOT t.dead*>
@@ -293,10 +300,10 @@ PROCEDURE Set(t : T; var, val : Object) : Object RAISES { E } =
     END
   END Set;
 
-PROCEDURE DefPrim(t : T; 
-                  name : TEXT; 
-                  id : INTEGER;
-                  definer : REFANY;
+PROCEDURE DefPrim(t                : Instance; 
+                  name             : TEXT; 
+                  id               : INTEGER;
+                  definer          : REFANY;
                   minArgs, maxArgs : CARDINAL) : T =
   BEGIN
     <*ASSERT NOT t.dead*>
@@ -305,40 +312,41 @@ PROCEDURE DefPrim(t : T;
     RETURN t
   END DefPrim;
 
-  PROCEDURE GetLocalNames(e : T) : AtomList.T =
-    VAR res : AtomList.T := NIL;
-    BEGIN
-      IF e.dictionary # NIL THEN
-        WITH iter = e.dictionary.iterate() DO
-          VAR a : SchemeSymbol.T; o : REFANY; BEGIN
-            WHILE iter.next(a,o) DO
-              res := AtomList.Cons(a,res)
-            END
+PROCEDURE GetLocalNames(e : Instance) : AtomList.T =
+  VAR res : AtomList.T := NIL;
+  BEGIN
+    IF e.dictionary # NIL THEN
+      WITH iter = e.dictionary.iterate() DO
+        VAR a : SchemeSymbol.T; o : REFANY; BEGIN
+          WHILE iter.next(a,o) DO
+            res := AtomList.Cons(a,res)
           END
         END
-      ELSE
-        FOR i := FIRST(e.quick) TO LAST(e.quick) DO
-          IF e.quick[i].var # NIL THEN 
-            res := AtomList.Cons(e.quick[i].var,res)
-          ELSE
-            EXIT
-          END
+      END
+    ELSE
+      FOR i := FIRST(e.quick) TO LAST(e.quick) DO
+        IF e.quick[i].var # NIL THEN 
+          res := AtomList.Cons(e.quick[i].var,res)
+        ELSE
+          EXIT
         END
-      END;
-      RETURN res
-    END GetLocalNames;
-
-PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T; 
-                        <*UNUSED*>interp : Scheme.T; 
-                                  args : Object) : Object RAISES { E } =
-
+      END
+    END;
+    RETURN res
+  END GetLocalNames;
+  
+PROCEDURE ListPrimitivesApply(<*UNUSED*>p      : SchemeProcedure.T; 
+                              <*UNUSED*>interp : Scheme.T; 
+                              args             : Object) : Object 
+  RAISES { E } =
+  
   BEGIN
     WITH x = First(args) DO
-      IF x = NIL OR NOT ISTYPE(x, T) THEN
-        RETURN Error("Not a SchemeEnvironment.T : " & Stringify(x))
+      IF x = NIL OR NOT ISTYPE(x, Instance) THEN
+        RETURN Error("Not a SchemeEnvironment.Instance : " & Stringify(x))
       END;
 
-      VAR e := NARROW(x,T);
+      VAR e := NARROW(x,Instance);
           names : AtomList.T;
       BEGIN
         names := e.getLocalNames();
@@ -353,9 +361,9 @@ PROCEDURE ListPrimitivesApply(<*UNUSED*>p : SchemeProcedure.T;
                 SchemePrimitive.T(prim) =>
                 res := NEW(Pair,
                            first := SchemeUtils.List4(p.head,
-                                       SchemeLongReal.FromI(prim.getId()),
-                                       SchemeLongReal.FromI(prim.getMinArgs()),
-                                       SchemeLongReal.FromI(prim.getMaxArgs())
+                                      SchemeLongReal.FromI(prim.getId()),
+                                      SchemeLongReal.FromI(prim.getMinArgs()),
+                                      SchemeLongReal.FromI(prim.getMaxArgs())
                                          ),
                            rest := res)
               ELSE

@@ -1,7 +1,7 @@
 (* $Id$ *)
 
 (*
-  Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
+  Copyright (c) 2008, 2011, Generation Capital Ltd.  All rights reserved.
 
   Author: Mika Nystrom <mika@alum.mit.edu>
 *)
@@ -36,31 +36,7 @@ IMPORT Scheme;
    
 
 TYPE
-  T <: Local;
-
-  Local = Public OBJECT
-    assigned := FALSE;
-  END;
-
-  Public = SchemeEnvironmentSuper.T OBJECT 
-  METHODS
-    init(vars, vals : SchemeObject.T; 
-         parent : T; 
-         VAR canRecyclePairs : BOOLEAN) : T;
-
-    (* canRecyclePairs is set to FALSE if the pairs sent in via 
-       vals are stored in the environment; if it's unchanged,
-       that means that the environment did not keep references to
-       the pairs (and so they can be freed) *)
-
-    initEval(vars : SchemeObject.T; 
-             argsToEval : SchemeObject.T;
-             evalEnv : T;
-             interp : Scheme.T;
-             parent : T) : T RAISES { E };
-
-    initEmpty(parent : T := NIL) : T;
-
+  T = SchemeEnvironmentSuper.T OBJECT METHODS
     lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
 
     define(var, val : SchemeObject.T) : SchemeObject.T;
@@ -75,7 +51,33 @@ TYPE
     getParent() : T;
   END;
 
-  Unsafe <: T; (* unsynchronized version *)
+  (* the following forces compile error if we try to init a T *)
+  Instance <: PubInstance;
+
+  PubInstance = T OBJECT 
+    assigned := FALSE; 
+  METHODS
+    init(vars, vals          : SchemeObject.T; 
+         parent              : T; 
+         VAR canRecyclePairs : BOOLEAN) : Instance;
+
+    (* canRecyclePairs is set to FALSE if the pairs sent in via 
+       vals are stored in the environment; if it's unchanged,
+       that means that the environment did not keep references to
+       the pairs (and so they can be freed) *)
+
+    initEval(vars            : SchemeObject.T; 
+             argsToEval      : SchemeObject.T;
+             evalEnv         : T;
+             interp          : Scheme.T;
+             parent          : T) : Instance RAISES { E };
+
+    initEmpty(parent : T := NIL) : Instance;
+  END;
+
+  Unsafe <: Instance; (* unsynchronized version *)
+
+  Safe   <: Instance; (* synchronized version *)
 
 CONST Brand = "SchemeEnvironment";
 

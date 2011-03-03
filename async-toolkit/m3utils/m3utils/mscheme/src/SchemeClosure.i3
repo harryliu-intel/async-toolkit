@@ -14,7 +14,7 @@ TYPE
   T <: Public;
 
   Public = SchemeProcedure.T OBJECT METHODS
-    init(parms, body : SchemeObject.T; env : SchemeEnvironment.T) : T;
+    init(parms, body : SchemeObject.T; env : SchemeEnvironment.Instance) : T;
   END;
 
 CONST Brand = "SchemeClosure";

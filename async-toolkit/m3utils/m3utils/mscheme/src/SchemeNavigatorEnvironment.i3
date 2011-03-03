@@ -7,7 +7,7 @@ IMPORT SchemeObject, SchemePrimitive;
 TYPE 
   T <: Public;
 
-  Public = SchemeEnvironment.T (* safe *) OBJECT METHODS
+  Public = SchemeEnvironment.Safe (* safe *) OBJECT METHODS
     attachChildEnvironment(env : SchemeEnvironment.T; tag : SchemeObject.T);
   END;
 

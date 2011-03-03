@@ -32,13 +32,13 @@ CONST ProfileProcedures = TRUE;
 
 REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
-    globalEnvironment : SchemeEnvironment.Public;
+    globalEnvironment : SchemeEnvironment.T;
     interrupter : Interrupter := NIL;
     prims : SchemePrimitive.Definer := NIL;
 
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
-    reduceCond(clauses : Object; env : SchemeEnvironment.Public) : Object RAISES { E } := ReduceCond;
+    reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
   OVERRIDES
     init              :=  Init;
     init2             :=  Init2;
@@ -377,7 +377,9 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
     END
   END Eval;
 
-PROCEDURE EvalInternal(t : T; x : Object; env : SchemeEnvironment.Local) : Object 
+PROCEDURE EvalInternal(t   : T; 
+                       x   : Object; 
+                       env : SchemeEnvironment.Instance) : Object 
   RAISES { E } =
   TYPE  Macro     = SchemeMacro.T;
         Closure   = SchemeClosure.T;
@@ -397,7 +399,7 @@ PROCEDURE EvalInternal(t : T; x : Object; env : SchemeEnvironment.Local) : Objec
 
     DebugLevel := DebugClass.level;
 
-    savedEnv : SchemeEnvironment.Local := NIL;
+    savedEnv : SchemeEnvironment.Instance := NIL;
   BEGIN
     LOOP
       IF DebugLevel >= 20 THEN Debug.Out("EVAL: " & Stringify(x)) END;
@@ -527,7 +529,7 @@ PROCEDURE EvalInternal(t : T; x : Object; env : SchemeEnvironment.Local) : Objec
                  mechanism. 
               *)
               VAR
-                newEnv : SchemeEnvironment.Local;
+                newEnv : SchemeEnvironment.Instance;
               BEGIN
                 INC(envsMade);
                 
@@ -638,7 +640,7 @@ PROCEDURE EvalList2(t : T; list : Object; env : SchemeEnvironmentSuper.T) : Obje
   END EvalList2;
 
 PROCEDURE ReduceCond(t : T; 
-                     clauses : Object; env : SchemeEnvironment.Public) : Object 
+                     clauses : Object; env : SchemeEnvironment.T) : Object 
   RAISES { E } =
 
   CONST First  = SchemeUtils.First;

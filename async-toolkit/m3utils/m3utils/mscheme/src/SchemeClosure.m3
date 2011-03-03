@@ -31,13 +31,14 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
       RAISE E ("Internal error: SchemeClosure.Apply: interp NIL")
     END;
     RETURN interp.eval(t.body, 
-                       NEW(SchemeEnvironment.T).init(t.params, args, t.env,
+                       (* dont think this one can be shared, can it? *)
+                       NEW(SchemeEnvironment.Unsafe).init(t.params, args, t.env,
                                                      dummy))
   END Apply;
 
 PROCEDURE Init(t : T; 
                params, body : Object;
-               env : SchemeEnvironment.T) : T =
+               env : SchemeEnvironment.Instance) : T =
   BEGIN
     env.assigned := TRUE;
     t.params := params;

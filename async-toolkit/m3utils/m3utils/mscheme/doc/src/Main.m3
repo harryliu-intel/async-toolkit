@@ -42,7 +42,7 @@ PROCEDURE DefineEnvironments(scm : Scheme.T) =
       DO
 
     FOR i := FIRST(a) TO LAST(a) DO
-      WITH env = NEW(SchemeEnvironment.T).initEmpty() DO
+      WITH env = NEW(SchemeEnvironment.Safe).initEmpty() DO
         EVAL a[i].d.installPrimitives(env);
         scm.bind(a[i].n & "-environment", env)
       END

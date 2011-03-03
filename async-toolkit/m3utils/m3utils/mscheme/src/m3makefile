@@ -71,7 +71,7 @@ template ("sgenerics")
 
 Module("SchemeAtRun")
 
-Netobj("SchemeEnvironment", "Public")
+Netobj("SchemeEnvironment", "T")
 
 Module("SchemeUnixDeps")
 module("SchemeProfilerSysDep")

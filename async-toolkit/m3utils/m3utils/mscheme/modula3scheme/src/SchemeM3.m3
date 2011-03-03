@@ -59,11 +59,11 @@ PROCEDURE HaveGlobalNameApply(<*UNUSED*>p : SchemeProcedure.T;
                               args : Object) : Object 
   RAISES { E } =
   VAR
-    e : SchemeEnvironment.Public;
+    e : SchemeEnvironment.T;
   BEGIN
     WITH sym = SymbolCheck(First(args)),
          ee = interp.getGlobalEnvironment() DO
-      IF ISTYPE(ee, SchemeEnvironment.Public) THEN
+      IF ISTYPE(ee, SchemeEnvironment.T) THEN
         e := ee
       ELSE
         RAISE E("Unknown error: global environment of wrong type?")
@@ -83,11 +83,11 @@ PROCEDURE DefineNewGlobal(<*UNUSED*>p : SchemeProcedure.T;
                           args : Object) : Object 
   RAISES { E } =
   VAR
-    e : SchemeEnvironment.Public;
+    e : SchemeEnvironment.T;
   BEGIN
     WITH sym = SymbolCheck(First(args)),
          ee = interp.getGlobalEnvironment() DO
-      IF ISTYPE(ee, SchemeEnvironment.Public) THEN
+      IF ISTYPE(ee, SchemeEnvironment.T) THEN
         e := ee
       ELSE
         RAISE E("Unknown error: global environment of wrong type?")

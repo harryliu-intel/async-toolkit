@@ -21,7 +21,7 @@ REVEAL
   END;
 
 TYPE
-  Super = SchemeEnvironment.T;
+  Super = SchemeEnvironment.Safe;
   Pair = SchemePair.T;
 
 PROCEDURE AttachChildEnvironment(t : T; 
@@ -35,7 +35,8 @@ PROCEDURE AttachChildEnvironment(t : T;
     END
   END AttachChildEnvironment;
 
-PROCEDURE InitEmpty(t : T; parent : Super) : Super =
+PROCEDURE InitEmpty(t      : T; 
+                    parent : SchemeEnvironment.T) : SchemeEnvironment.Instance =
   BEGIN
     EVAL Super.initEmpty(t,parent);
 

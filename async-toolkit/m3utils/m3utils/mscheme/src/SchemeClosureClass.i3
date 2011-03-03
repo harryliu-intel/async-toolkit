@@ -16,7 +16,7 @@ REVEAL
 TYPE
   Private = SchemeClosure.Public OBJECT
     params, body : SchemeObject.T;
-    env : SchemeEnvironment.T;
+    env          : SchemeEnvironment.Instance;
   END;
 
 END SchemeClosureClass.
