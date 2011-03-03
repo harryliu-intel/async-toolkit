@@ -43,13 +43,13 @@ Module("SchemeMacro")
 Module("SchemePrimitive")
 
 Module("SchemeEnvironment")
-interface("SchemeEnvironmentClass")
+Interface("SchemeEnvironmentClass")
 Interface("SchemeEnvironmentSuper")
-interface("SchemeEnvironmentInstanceRep")
+Interface("SchemeEnvironmentInstanceRep")
 implementation("SchemeEnvironmentUnsafe")
 
-generic_implementation ("SchemeEnvironmentSafely")
-module ("SchemeEnvironmentSafe")
+%generic_implementation ("SchemeEnvironmentSafely")
+implementation ("SchemeEnvironmentSafe")
 
 Module("SchemeNavigatorEnvironment")
 
