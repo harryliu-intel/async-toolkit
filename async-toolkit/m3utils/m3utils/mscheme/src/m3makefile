@@ -58,6 +58,8 @@ Interface("SchemeInputPortClass")
 
 Interface("SchemeObject")
 
+Interface("SchemeEnvironmentBinding")
+
 Module("SchemeBoolean")
 
 Module("SchemeLongReal")

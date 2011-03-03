@@ -21,8 +21,10 @@ IMPORT Text;
 IMPORT SchemePair;
 IMPORT Scheme;
 IMPORT AtomList, SchemeLongReal;
+IMPORT SchemeEnvironmentBinding;
 
 TYPE Pair = SchemePair.T;
+TYPE Binding = SchemeEnvironmentBinding.T;
 
 CONST TE = Text.Equal;
 
@@ -30,8 +32,9 @@ CONST TE = Text.Equal;
 REVEAL
   Instance = SchemeEnvironmentInstanceRep.Rep BRANDED Brand OBJECT
   OVERRIDES
-    initDict     := InitDict;
-    initDictEval := InitDictEval2;
+    bind         :=  GetBinding;
+    initDict     :=  InitDict;
+    initDictEval :=  InitDictEval2;
     initEval     :=  InitEval;
     lookup       :=  Lookup;
     define       :=  Define;
@@ -127,6 +130,54 @@ PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
       END
     END
   END Lookup;
+
+PROCEDURE GetBinding(t : Instance; sym : Symbol) : Binding RAISES { E } =
+  VAR o : Object;
+  BEGIN
+    LOOP
+      <*ASSERT NOT t.dead*>
+      IF t.get(sym,o) THEN
+        RETURN NEW(SimpleBinding, e := t, s := sym)
+      END;
+      
+      IF t.parent # NIL THEN 
+        RETURN t.parent.bind(sym)
+      ELSE 
+        RETURN Error("Unbound variable: " & Stringify(sym)) 
+      END
+    END
+  END GetBinding;
+
+TYPE 
+  SimpleBinding = SchemeEnvironmentBinding.T OBJECT
+    e : Instance;
+    s : Symbol;
+  OVERRIDES
+    name := SBName;
+    env  := SBEnv;
+    get  := SBGet;
+    setB := SBSetB;
+  END;
+
+PROCEDURE SBName(sb : SimpleBinding) : Symbol = BEGIN RETURN sb.s END SBName;
+
+PROCEDURE SBEnv(sb : SimpleBinding) : Object = BEGIN RETURN sb.e END SBEnv;
+
+PROCEDURE SBGet(sb : SimpleBinding) : Object =
+  VAR
+    v : Object;
+  BEGIN 
+    WITH gotit = sb.e.get(sb.s,v) DO
+      <*ASSERT gotit*>
+      RETURN v
+    END
+  END SBGet;
+
+PROCEDURE SBSetB(sb : SimpleBinding; v : Object) =
+  BEGIN sb.e.put(sb.s,v) END SBSetB;
+
+(**********************************************************************)
+
 
 PROCEDURE Define(t : Instance; var, val : Object) : Object =
   BEGIN

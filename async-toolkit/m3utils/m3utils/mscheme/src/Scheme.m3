@@ -38,7 +38,6 @@ REVEAL
 
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
-    reduceCond(clauses : Object; env : SchemeEnvironment.T) : Object RAISES { E } := ReduceCond;
   OVERRIDES
     init              :=  Init;
     init2             :=  Init2;
@@ -469,7 +468,7 @@ PROCEDURE EvalInternal(t   : T;
               x := Third(args)
             END
           ELSIF fn = SYMcond THEN
-            x := t.reduceCond(args, env)
+            x := ReduceCond(t, args, env)
           ELSIF fn = SYMlambda THEN
             env.assigned := TRUE;
             RETURN NEW(SchemeClosure.T).init(First(args), 

@@ -10,6 +10,7 @@ INTERFACE SchemeEnvironment;
 IMPORT SchemeObject, SchemeSymbol, SchemeEnvironmentSuper;
 FROM Scheme IMPORT E;
 IMPORT Scheme;
+IMPORT SchemeEnvironmentBinding;
 
 (* XXX
    
@@ -38,6 +39,8 @@ IMPORT Scheme;
 TYPE
   T = SchemeEnvironmentSuper.T OBJECT METHODS
     lookup(sym : SchemeSymbol.T) : SchemeObject.T RAISES { E };
+
+    bind(sym : SchemeSymbol.T) : SchemeEnvironmentBinding.T RAISES { E };
 
     define(var, val : SchemeObject.T) : SchemeObject.T;
     set(var, val : SchemeObject.T) : SchemeObject.T RAISES { E };
