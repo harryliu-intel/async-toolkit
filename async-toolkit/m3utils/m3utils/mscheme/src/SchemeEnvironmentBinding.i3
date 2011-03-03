@@ -4,9 +4,7 @@ INTERFACE SchemeEnvironmentBinding;
 IMPORT SchemeSymbol, SchemeObject;
 
 TYPE
-  T <: Public;
-
-  Public = OBJECT METHODS
+  T = OBJECT METHODS
     name()  : SchemeSymbol.T; (* debug? *)
     env()   : SchemeObject.T; (* actually an environment *)
     get()   : SchemeObject.T;

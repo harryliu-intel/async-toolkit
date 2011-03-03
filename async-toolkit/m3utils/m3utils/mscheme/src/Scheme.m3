@@ -478,7 +478,8 @@ PROCEDURE EvalInternal(t   : T;
             env.assigned := TRUE;
             RETURN NEW(SchemeClosure.T).init(First(args), 
                                              Rest(args),
-                                             env)
+                                             env,
+                                             IsSpecialForm)
           ELSIF fn = SYMmacro THEN
             env.assigned := TRUE;
             RETURN NEW(Macro).init(First(args),
@@ -760,6 +761,28 @@ VAR
   SYMarrow := SchemeSymbol.Symbol("=>");
   SYMrip := SchemeSymbol.Symbol("####r.i.p.-dead-cons-cell####");
   SYMunwindProtect := SchemeSymbol.Symbol("unwind-protect");
+
+(* the following for testing Bindings in Closure building! *)
+
+PROCEDURE IsSpecialForm(s : Symbol) : BOOLEAN =
+  BEGIN
+    RETURN 
+      s =  SYMquote OR 
+      s =  SYMbegin OR 
+      s =  SYMdefine OR 
+      s =  SYMrunInteraction OR 
+      s =  SYMsetB OR 
+      s =  SYMif OR 
+      s =  SYMcond OR 
+      s =  SYMeval OR 
+      s =  SYMlambda OR 
+      s =  SYMmacro OR 
+      s =  SYMelse OR 
+      s =  SYMarrow OR 
+      s =  SYMrip OR 
+      s =  SYMunwindProtect 
+  END IsSpecialForm;
+
 BEGIN 
   EnvDisablesTracebacks := Env.Get("NOMSCHEMETRACEBACKS") # NIL;
 
