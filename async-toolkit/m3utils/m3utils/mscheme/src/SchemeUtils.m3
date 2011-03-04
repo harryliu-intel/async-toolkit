@@ -20,6 +20,7 @@ IMPORT Debug;
 IMPORT RefSeq, RefPair, RefPairSeq;
 IMPORT Scan;
 IMPORT Lex, FloatMode;
+IMPORT SchemeEnvironmentBinding;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -520,6 +521,9 @@ PROCEDURE StringifyB(x : Object;
           ELSE
             Put(Fmt.LongReal(lr^))
           END
+        |
+          SchemeEnvironmentBinding.T(b) =>
+          PutC('<'); Put(SchemeSymbol.ToText(b.name())); PutC('>')
         |
           SchemeProcedure.T(p) =>
           PutC('{'); Put(p.name); PutC('}')

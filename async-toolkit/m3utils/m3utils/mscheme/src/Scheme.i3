@@ -137,4 +137,6 @@ TYPE RunInteractionHook =
 
 PROCEDURE SetInteractionHook(hook : RunInteractionHook);
 
+PROCEDURE IsSpecialForm(s : Symbol) : BOOLEAN;
+
 END Scheme.

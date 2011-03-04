@@ -16,10 +16,8 @@ TYPE
   Public = SchemeProcedure.T OBJECT METHODS
     init(parms, body : SchemeObject.T; 
          env : SchemeEnvironment.Instance;
-         isSpecialForm : IsSpecialFormProc := NIL) : T;
+         bind := FALSE) : T;
   END;
-
-  IsSpecialFormProc = PROCEDURE(s : SchemeSymbol.T) : BOOLEAN;
 
 CONST Brand = "SchemeClosure";
 

@@ -9,11 +9,13 @@
 MODULE SchemeClosure;
 IMPORT SchemeClosureClass;
 IMPORT SchemeEnvironment;
-FROM Scheme IMPORT Object, E;
-FROM SchemeUtils IMPORT Cons, First, Rest;
+FROM Scheme IMPORT Object, E, IsSpecialForm;
+FROM SchemeUtils IMPORT Cons, First, Rest, Stringify;
 FROM SchemeSymbol IMPORT Symbol;
 IMPORT SchemePair, Scheme;
 IMPORT SchemeSymbol;
+IMPORT Debug;
+IMPORT SchemeMacro;
 
 TYPE Pair = SchemePair.T;
 
@@ -31,64 +33,141 @@ PROCEDURE Apply(t : T; interp : Scheme.T; args : Object) : Object
     IF interp = NIL THEN
       RAISE E ("Internal error: SchemeClosure.Apply: interp NIL")
     END;
+(*
+    Debug.Out("SchemeClosure.Apply: t.params=" & Stringify(t.params) & " args=" & Stringify(args) & " t.body=" & Stringify(t.body));
+*)
     RETURN interp.eval(t.body, 
                        (* dont think this one can be shared, can it? *)
                        NEW(SchemeEnvironment.Unsafe).init(t.params, args, t.env,
                                                      dummy))
   END Apply;
 
-PROCEDURE Init(t : T; 
-               params, body : Object;
-               env : SchemeEnvironment.Instance;
-               isSpecialForm : IsSpecialFormProc) : T =
+VAR SYMdefine := Symbol("define");
+VAR SYMbegin  := Symbol("begin");
+
+PROCEDURE Init(t             : T; 
+               params, body  : Object;
+               env           : SchemeEnvironment.Instance;
+               bind          : BOOLEAN) : T =
+
+PROCEDURE DoBindings(body          : Pair; VAR wasDefine : BOOLEAN) : Object =
+
+  PROCEDURE IsMacroOrUnknown(sym : SchemeSymbol.T) : BOOLEAN =
+    BEGIN
+      IF NOT env.haveBinding(sym) THEN 
+        RETURN TRUE 
+      ELSE
+        RETURN ISTYPE(env.lookup(sym),SchemeMacro.T)
+      END
+    END IsMacroOrUnknown;
+
+  VAR 
+    p := body;
+    sentinel := NEW(Pair, rest := NIL); 
+    r := sentinel;
+  BEGIN
+    IF NOT bind THEN RETURN body END;
+
+    wasDefine := FALSE;
+
+    WHILE p # NIL DO
+      r.rest := NEW(Pair, rest := NIL); r := r.rest;
+
+      TYPECASE p.first OF
+        Pair(pair) =>
+        VAR dummy : BOOLEAN;
+        BEGIN r.first := DoBindings(pair, dummy) END
+      | SchemeSymbol.T(sym) =>
+        IF   p = body AND (IsSpecialForm(sym) OR 
+                           IsMacroOrUnknown(sym)) THEN 
+          IF sym = SYMdefine THEN wasDefine := TRUE END;
+          RETURN body 
+        ELSIF MemberP(sym, params) THEN
+          r.first := sym
+        ELSE
+          TRY
+            r.first := env.bind(sym)
+          EXCEPT
+            E(txt) => 
+(*
+            Debug.Warning("Trouble binding symbol: " & 
+              SchemeSymbol.ToText(sym) & ": " & txt);
+*)
+            (* we hit this in case we are referencing back to a local
+               variable that we havent actually allocated yet, which
+               can happen when binding a sequence *)
+
+            RETURN body
+          END
+        END
+      ELSE
+        r.first := p.first
+      END;
+
+      IF NOT ISTYPE(p.rest,Pair) THEN 
+        r.rest := p.rest; EXIT
+      ELSE
+        p := p.rest
+      END
+
+    END;
+
+    RETURN sentinel.rest
+  END DoBindings;
+
+  PROCEDURE MapBindings(p : Pair) : Pair =
+    VAR
+      sentinel := NEW(Pair, rest := NIL);
+      r := sentinel;
+      wasDefine : BOOLEAN;
+    BEGIN
+      WHILE p # NIL DO
+        r.rest := NEW(Pair, rest := NIL); r := r.rest;
+        IF ISTYPE(p.first,Pair) THEN
+          r.first := DoBindings(p.first,wasDefine)
+        ELSE
+          r.first := p.first
+        END;
+
+        (* if we saw a define, give up on this... not smart enough
+           to track all the changes yet (mutates symbol tables) *)
+        IF NOT wasDefine AND ISTYPE(p.rest, Pair) THEN
+          p := p.rest
+        ELSE
+          r.rest := p.rest; EXIT
+        END
+      END;
+      RETURN sentinel.rest
+    END MapBindings;
+
+  VAR dummy : BOOLEAN;
   BEGIN
     env.assigned := TRUE;
     t.params := params;
     t.env := env;
     IF body # NIL AND ISTYPE(body, Pair) AND Rest(body) = NIL THEN
-      WITH first = First(body) DO
-
-        (* we try some ad-hoc stuff first to see if it works,
-           and do all cases later *)
-        (* one of the tricky things here is that the parameters themselves
-           are not bound at this point of the computation.
-           
-           what we should do is return some structure that can be used
-           to bind the parameters quickly in Scheme.m3 later on.
-           
-           the names are in any case immaterial... 
-        *)
-        IF isSpecialForm # NIL THEN
-          TRY
-            TYPECASE first OF
-              NULL => t.body := NIL; RETURN t
-            |
-              SchemeSymbol.T => t.body := env.bind(first); RETURN t
-            |
-              Pair(p) => 
-              
-              WITH ff = p.first DO
-                (* the "command" *)
-                IF ff # NIL                   AND 
-                  ISTYPE(ff, SchemeSymbol.T) AND 
-                  NOT isSpecialForm(ff)            THEN
-
-                    t.body := NEW(Pair, first := env.bind(ff), rest := p.rest);
-                    RETURN t
-
-                END
-              END
-            ELSE (* skip *)
-            END
-          EXCEPT
-            E => (* skip *)
-          END
-        END;
-        t.body := first; RETURN t
-      END
+      t.body := First(DoBindings(body, dummy))
+    ELSIF ISTYPE(body,Pair) THEN
+(*      Debug.Out("Before MapBindings: " & Stringify(body));*)
+      t.body := Cons(SYMbegin, MapBindings(body));
+(*      Debug.Out("After MapBindings: " & Stringify(t.body));*)
     ELSE
-      t.body := Cons(Symbol("begin"), body); RETURN t
-    END
+      t.body := Cons(SYMbegin, body)
+    END;
+    RETURN t
   END Init;
+
+PROCEDURE MemberP(obj : SchemeSymbol.T; lst : Object) : BOOLEAN =
+  VAR 
+    p := lst;
+  BEGIN
+    WHILE ISTYPE(p,Pair) AND p # NIL DO
+      WITH pp = NARROW(p,Pair) DO
+        IF obj = pp.first THEN RETURN TRUE END;
+        p := pp.rest
+      END
+    END;
+    RETURN obj = p
+  END MemberP;
 
 BEGIN END SchemeClosure.

@@ -479,7 +479,7 @@ PROCEDURE EvalInternal(t   : T;
             RETURN NEW(SchemeClosure.T).init(First(args), 
                                              Rest(args),
                                              env,
-                                             IsSpecialForm)
+                                             TRUE)
           ELSIF fn = SYMmacro THEN
             env.assigned := TRUE;
             RETURN NEW(Macro).init(First(args),

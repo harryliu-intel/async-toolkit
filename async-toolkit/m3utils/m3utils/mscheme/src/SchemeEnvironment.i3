@@ -52,6 +52,7 @@ TYPE
     markAsDead(); (* a debugging thing *)
 
     getParent() : T;
+    haveBinding(sym : SchemeSymbol.T) : BOOLEAN;
   END;
 
   (* the following forces compile error if we try to init a T *)

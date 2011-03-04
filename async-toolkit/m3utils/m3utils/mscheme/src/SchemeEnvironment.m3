@@ -42,6 +42,7 @@ REVEAL
     defPrim      :=  DefPrim;
     markAsDead   :=  MarkAsDead;
     getParent    :=  GetParent;
+    haveBinding  :=  HaveBinding;
   END;
 
 PROCEDURE GetParent(t : Instance) : T = BEGIN RETURN t.parent END GetParent;
@@ -114,6 +115,21 @@ PROCEDURE InitDictEval2(t                : Instance;
     END
   END InitDictEval2;
 
+PROCEDURE HaveBinding(t : Instance; symbol : Symbol) : BOOLEAN =
+  VAR o : Object;
+  BEGIN
+    LOOP
+      <*ASSERT NOT t.dead*>
+      IF t.get(symbol,o) THEN RETURN TRUE END;
+      
+      IF t.parent # NIL THEN 
+        RETURN t.parent.haveBinding(symbol)
+      ELSE 
+        RETURN FALSE
+      END
+    END
+  END HaveBinding;
+
 PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
@@ -126,7 +142,7 @@ PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
       IF t.parent # NIL THEN 
         RETURN t.parent.lookup(symbol)
       ELSE 
-        RETURN Error("Unbound variable: " & Stringify(symbol)) 
+        RETURN Error("Unbound variable in lookup: " & Stringify(symbol)) 
       END
     END
   END Lookup;
@@ -145,7 +161,7 @@ PROCEDURE GetBinding(t : Instance; sym : Symbol) : Binding RAISES { E } =
       IF t.parent # NIL THEN 
         RETURN t.parent.bind(sym)
       ELSE 
-        RETURN Error("Unbound variable: " & Stringify(sym)) 
+        RETURN Error("Unbound variable attempting to bind: " & Stringify(sym)) 
       END
     END
   END GetBinding;
@@ -218,7 +234,7 @@ PROCEDURE Set(t : Instance; var, val : Object) : Object RAISES { E } =
     IF t.parent # NIL THEN
       RETURN t.parent.set(var, val)
     ELSE
-      RETURN Error("Unbound variable: " & SchemeSymbol.ToText(var))
+      RETURN Error("Unbound variable in set!: " & SchemeSymbol.ToText(var))
     END
   END Set;
 
