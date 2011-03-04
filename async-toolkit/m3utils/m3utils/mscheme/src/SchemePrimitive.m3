@@ -765,7 +765,7 @@ PROCEDURE Prims(t : T;
         BEGIN
           (* crimp pointers *)
           start := MAX(start, 0);  (* at least 0 *)
-          start := MIN(start, LAST(str^)); (* no more than last *)
+          start := MIN(start, LAST(str^)+1); (* no more than last *)
 
           end := MIN(end, LAST(str^)+1); (* no more than last+1 *)
           end := MAX(end, start);        (* no less than start *)
