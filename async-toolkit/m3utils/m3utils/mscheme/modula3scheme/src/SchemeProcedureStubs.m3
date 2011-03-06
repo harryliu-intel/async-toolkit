@@ -17,6 +17,7 @@ IMPORT Pickle, SchemeVector, TextRd, TextWr, Text;
 IMPORT Thread, Rd, Wr;
 IMPORT AtomRefTbl, IntRefTbl;
 IMPORT SchemeSymbol;
+IMPORT RuntimeError;
 
 TYPE
   T = OBJECT
@@ -264,7 +265,12 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
     
     WHILE ops # NIL DO
       IF ops.nam = name THEN
-        RETURN ops.proc(interp, obj, rest)
+        TRY
+          RETURN ops.proc(interp, obj, rest)
+        EXCEPT
+          <*NOWARN*>RuntimeError.E(err) =>
+          RAISE E("EXCEPTION! RuntimeError! calling out to Modula-3 code, op=" & SchemeSymbol.ToText(name) & " " &  RuntimeError.Tag(err) & "\n")
+        END
       END;
       ops := ops.next
     END;
