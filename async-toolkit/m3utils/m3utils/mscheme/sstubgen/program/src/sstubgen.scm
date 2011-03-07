@@ -762,9 +762,9 @@
      (imports       ,(lambda()(make-symbol-set 100))) 
      ;; interfaces we need to import
 
-		 (symbols       ,(lambda()(make-symbol-set 100)))
-		 ;; symbols we need to build at load time for runtime comparison,
-		 ;; against method names, exception names, etc.
+     (symbols       ,(lambda()(make-symbol-set 100)))
+     ;; symbols we need to build at load time for runtime comparison,
+     ;; against method names, exception names, etc.
 
      (convert->m3-req          ,(lambda()(make-symbol-hash-table 100))) 
      ;; converters->m3 requested
@@ -796,38 +796,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (format-arbitrary-identifier sym)
-	;; convert . to DOT
-	(string-append
-	 "SYMBOL_"
-	 (list->string
-		(apply append 
-					 (map (lambda(c)(if (eq? c #\.) (string->list "DOT") (list c)))  
-								(string->list (force-string sym)))))))
+  ;; convert . to DOT
+  (string-append
+   "SYMBOL_"
+   (list->string
+    (apply append 
+           (map (lambda(c)(if (eq? c #\.) (string->list "DOT") (list c)))  
+                (string->list (force-string sym)))))))
 
 (define (make-symbol from env) ;; equivalent to SchemeSymbol.FromText(sym)
-	(let ((sym (cond ((string? from) (string->symbol from))
-									 ((symbol? from)                 from )
-									 (else ("error not string or symbol" from)))))
-		((env 'get 'symbols) 'insert! sym)
-		;;(string-append "SchemeSymbol.FromText(\"" sym "\")")
-		;; basic version
+  (let ((sym (cond ((string? from) (string->symbol from))
+                   ((symbol? from)                 from )
+                   (else ("error not string or symbol" from)))))
+    ((env 'get 'symbols) 'insert! sym)
+    ;;(string-append "SchemeSymbol.FromText(\"" sym "\")")
+    ;; basic version
 
-		(string->symbol (format-arbitrary-identifier from)) ;; optimized version
-		
-		)
+    (string->symbol (format-arbitrary-identifier from)) ;; optimized version
+    
+    )
 )
 
 (define (format-symbols symbol-list)
-	(apply 
-	 string-append
-	 (map (lambda(ident)
-					(string-append
-					 "VAR " (format-arbitrary-identifier ident)
-					 " := SchemeSymbol.FromText(\"" ident "\");" dnl))
-				symbol-list)))
+  (apply 
+   string-append
+   (map (lambda(ident)
+          (string-append
+           "VAR " (format-arbitrary-identifier ident)
+           " := SchemeSymbol.FromText(\"" ident "\");" dnl))
+        symbol-list)))
 
 (define (format-load-time-symbols env)
-	(format-symbols ((env 'get 'symbols) 'keys)))
+  (format-symbols ((env 'get 'symbols) 'keys)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1001,7 +1001,7 @@
                      (field-pname (push-make field-type)))
                 (string-append 
                  "      res := SchemeUtils.Cons(SchemeUtils.Cons(" 
-								 (make-symbol field-name env) 
+                 (make-symbol field-name env) 
                  "," field-pname "(x." field-name ")),res)")))
 
             (string-append
@@ -2036,8 +2036,8 @@
      converters
      dnl
 
-		 (format-load-time-symbols env)
-		 dnl
+     (format-load-time-symbols env)
+     dnl
 
      "BEGIN END " intf-name "." dnl
      )
