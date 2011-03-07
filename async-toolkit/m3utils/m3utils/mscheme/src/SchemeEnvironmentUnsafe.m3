@@ -115,7 +115,7 @@ PROCEDURE GetBinding(t : Instance; sym : Symbol) : Binding RAISES { E } =
 
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
       IF t.quick[i].var = sym THEN 
-        RETURN NEW(MyBinding, e := t, q := i)
+        RETURN NEW(MyBinding, e := t, q := i, s := sym)
       END
     END;
 
