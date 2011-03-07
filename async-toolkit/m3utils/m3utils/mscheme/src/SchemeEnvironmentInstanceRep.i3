@@ -7,7 +7,7 @@ IMPORT Scheme;
 
 REVEAL SchemeEnvironment.Instance <: Rep;
 
-CONST QuickVars = 5;
+CONST QuickVars = 10;
 
 TYPE QuickMap = RECORD var : Symbol; val : Object END;
 
