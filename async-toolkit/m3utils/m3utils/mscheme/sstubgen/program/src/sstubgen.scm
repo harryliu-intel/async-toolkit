@@ -182,15 +182,15 @@
 
     (close-output-port iwr) (close-output-port mwr)
     ))
-       
-    
+
+
 (define (make-global-scheme-stubs magic-string  ;; what to search for
                                   search-path   ;; path of IMPTAB
                                   output-intf   ;; name of intf/impl
                                   output-root   ;; where to write
                                   .
                                   local-exports ;; if were exporting from
-                                                ;; current package
+                                  ;; current package
                                   )
 
   ;;
@@ -212,7 +212,7 @@
     (define (get-matches)
       (let loop ((next (read in))
                  (res '()))
-;;                 (res local-exports))
+        ;;                 (res local-exports))
         (if (eof-object? next) 
             res
             (begin
@@ -222,9 +222,9 @@
                 (if match 
                     (loop (read in) (cons (strip-extension next) res))
                     (loop (read in) res)))))))
-                  
+    
     (write-scheme-package-exports   (uniq equal? (map force-string 
-                                         (append (get-matches) local-exports)))
+                                                      (append (get-matches) local-exports)))
                                     output-intf output-root)
 
     (close-input-port in))
@@ -342,17 +342,17 @@
               (else (base-type base))))))
 
 (define (intersperse lst sep)
-        ;; this routine MUST BE tail-recursive, or we will definitely
-        ;; run out of stack space!
-        (define (helper lst so-far)
-                (cond ((null? lst) so-far)
-                                        ((null? (cdr lst)) (cons (car lst) so-far))
+  ;; this routine MUST BE tail-recursive, or we will definitely
+  ;; run out of stack space!
+  (define (helper lst so-far)
+    (cond ((null? lst) so-far)
+          ((null? (cdr lst)) (cons (car lst) so-far))
 
-                                        (else 
-                                         (helper (cdr lst) 
-                                                                         (cons sep  (cons (car lst) so-far))))))
-        (reverse (helper lst '()))
-        )
+          (else 
+           (helper (cdr lst) 
+                   (cons sep  (cons (car lst) so-far))))))
+  (reverse (helper lst '()))
+  )
 
 (define (infixize string-list sep)
   (if (null? string-list) ""
@@ -762,6 +762,10 @@
      (imports       ,(lambda()(make-symbol-set 100))) 
      ;; interfaces we need to import
 
+		 (symbols       ,(lambda()(make-symbol-set 100)))
+		 ;; symbols we need to build at load time for runtime comparison,
+		 ;; against method names, exception names, etc.
+
      (convert->m3-req          ,(lambda()(make-symbol-hash-table 100))) 
      ;; converters->m3 requested
 
@@ -788,6 +792,42 @@
   (let ((res (make-symbol-set 100)))
     (map (lambda(x)(res 'insert! x)) syms)
     res))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (format-arbitrary-identifier sym)
+	;; convert . to DOT
+	(string-append
+	 "SYMBOL_"
+	 (list->string
+		(apply append 
+					 (map (lambda(c)(if (eq? c #\.) (string->list "DOT") (list c)))  
+								(string->list (force-string sym)))))))
+
+(define (make-symbol from env) ;; equivalent to SchemeSymbol.FromText(sym)
+	(let ((sym (cond ((string? from) (string->symbol from))
+									 ((symbol? from)                 from )
+									 (else ("error not string or symbol" from)))))
+		((env 'get 'symbols) 'insert! sym)
+		;;(string-append "SchemeSymbol.FromText(\"" sym "\")")
+		;; basic version
+
+		(string->symbol (format-arbitrary-identifier from)) ;; optimized version
+		
+		)
+)
+
+(define (format-symbols symbol-list)
+	(apply 
+	 string-append
+	 (map (lambda(ident)
+					(string-append
+					 "VAR " (format-arbitrary-identifier ident)
+					 " := SchemeSymbol.FromText(\"" ident "\");" dnl))
+				symbol-list)))
+
+(define (format-load-time-symbols env)
+	(format-symbols ((env 'get 'symbols) 'keys)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -851,16 +891,16 @@
             ((equal? (cdar p) type) (caar p))
             (else (loop (cdr p))))))
 
-        
+  
 
   (cond ((eq? 'Opaque (car type)) (is-opaque-basetype))
-  ((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
-  (else (let ((unnamed-type (strip-names type)))
-    (let loop ((p the-basetypes))
-      (cond ((null? p) #f)
-                                                                                                ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
-                                                                                                (else (loop (cdr p)))))))))
-  
+        ((equal? type (cdr (assoc 'ADDRESS the-basetypes))) 'ADDRESS)
+        (else (let ((unnamed-type (strip-names type)))
+                (let loop ((p the-basetypes))
+                  (cond ((null? p) #f)
+                        ((equal? (strip-names (cdar p)) unnamed-type) (caar p))
+                        (else (loop (cdr p)))))))))
+
 (define (string-quote s) (string-append "\"" s "\""))
 
 (define (format-imports env)
@@ -891,7 +931,7 @@
    "BEGIN" dnl
    module-code 
    "END " name "." dnl))
-      
+
 (define (make-to-scheme-nonbase type env)
 
   (define (push-make type)(to-scheme-proc-name type env))
@@ -913,7 +953,7 @@
                      ""
                      " Scheme.E")
                  " }"
-                       )
+                 )
                 )
          )
 
@@ -931,7 +971,7 @@
     (define (make-intf) (string-append proto ";"))
 
     (define (make-impl)
-                        (imports 'insert! 'SchemePair)
+      (imports 'insert! 'SchemePair)
       (string-append
        proto " = " dnl
        "  BEGIN" dnl
@@ -960,7 +1000,9 @@
                      (field-type (extract-field 'type f))
                      (field-pname (push-make field-type)))
                 (string-append 
-                 "      res := SchemeUtils.Cons(SchemeUtils.Cons(SchemeSymbol.FromText(\"" field-name "\")," field-pname "(x." field-name ")),res)")))
+                 "      res := SchemeUtils.Cons(SchemeUtils.Cons(" 
+								 (make-symbol field-name env) 
+                 "," field-pname "(x." field-name ")),res)")))
 
             (string-append
              "VAR res : SchemePair.T:=NIL; BEGIN" dnl 
@@ -984,6 +1026,7 @@
              "      Name = ARRAY " m3tn " OF TEXT { " (elts-names) " }; " dnl
              "    BEGIN" dnl
              "      RETURN SchemeSymbol.FromText(Name[x])" dnl
+             ;; preallocating these would be overoptimizing, I think
              "    END" 
              )
             )
@@ -995,8 +1038,8 @@
             (string-append
              "RETURN " base-pname "(x)" 
              )
-           )
-         )
+            )
+          )
 
          ((Subrange)
           (let* ((base (extract-field 'base type))
@@ -1059,13 +1102,13 @@
             )
           )
 
-        ;; ((Char) 
-        ;;  (imports 'insert! 'SchemeChar)
-        ;;  "RETURN SchemeChar.Character(x)" )
+         ;; ((Char) 
+         ;;  (imports 'insert! 'SchemeChar)
+         ;;  "RETURN SchemeChar.Character(x)" )
 
          ((Procedure) 
           "RETURN NIL (* conversion not implemented yet, not sure its possible *)" ;; see bug 108
-         
+          
           )
 
          ((Object Opaque)
@@ -1137,11 +1180,11 @@
          (imports (env 'get 'imports))
 
          (proto (string-append
-                                                                 ;; parens around the return type are needed here
-                                                                 ;; in case the return type is a PROCEDURE
+                 ;; parens around the return type are needed here
+                 ;; in case the return type is a PROCEDURE
                  "PROCEDURE " pname "(x : SchemeObject.T) : (" m3tn ")"
-                       " RAISES { Scheme.E }"
-                       )
+                 " RAISES { Scheme.E }"
+                 )
                 )
          )
 
@@ -1169,56 +1212,57 @@
           ;; several possibilities.  either we have the correct type
           ;; already, or else we may have to build it, if a Ref OpenArray
           ;; special stuff for UNTRACED at the end
-    (if (extract-field 'traced type)
-        
-        (string-flatten
-         "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
-         
-         (let* ((target (extract-field 'target type)))
-     (if (eq? (car target) 'OpenArray)
-         (let* ((element (extract-field 'element target))
-          (element-pname (push-make element)))
-                                                                                         (string-append
-           "    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
-     "        p := SchemePair.Pair(x);" dnl      
-     "        i := 0;" dnl
-     "    BEGIN" dnl
-     "      WHILE p # NIL DO" dnl
-     "        arr[i] := "element-pname"(p.first);" dnl
-     "        p := SchemePair.Pair(p.rest);" dnl
-     "        INC(i)" dnl
-     "      END;" dnl
-     "      RETURN arr" dnl
-     "    END;" dnl
-     ))
-    (string-append
-                                                                                        "    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
-                                                         )
-        
-        (string-flatten
-         "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
-         "    BEGIN" dnl
-         "      IF NOT ISTYPE(x, Rec) THEN" dnl
-         "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
-         "      ELSE" dnl
-         "        RETURN NARROW(x,Rec).ref" dnl
-         "      END" dnl
-         )
-        
-        )
-    )
+          (if (extract-field 'traced type)
+              
+              (string-flatten
+               "    IF ISTYPE(x, "m3tn") THEN RETURN x END;" dnl
+               
+               (let* ((target (extract-field 'target type)))
+                 (if (eq? (car target) 'OpenArray)
+                     (let* ((element (extract-field 'element target))
+                            (element-pname (push-make element)))
+                       (string-append
+                        "    VAR arr := NEW("m3tn",SchemeUtils.Length(x));" dnl
+                        "        p := SchemePair.Pair(x);" dnl      
+                        "        i := 0;" dnl
+                        "    BEGIN" dnl
+                        "      WHILE p # NIL DO" dnl
+                        "        arr[i] := "element-pname"(p.first);" dnl
+                        "        p := SchemePair.Pair(p.rest);" dnl
+                        "        INC(i)" dnl
+                        "      END;" dnl
+                        "      RETURN arr" dnl
+                        "    END;" dnl
+                        ))
+                     (string-append
+                      "    RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl)))
+               )
+              
+              (string-flatten
+               "    TYPE Rec = REF RECORD ref : " m3tn "END;" dnl
+               "    BEGIN" dnl
+               "      IF NOT ISTYPE(x, Rec) THEN" dnl
+               "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+               "      ELSE" dnl
+               "        RETURN NARROW(x,Rec).ref" dnl
+               "      END" dnl
+               )
+              
+              )
+          )
          
          ((Record)
-    (imports 'insert! 'SchemeSymbol)
-                
+          (imports 'insert! 'SchemeSymbol)
+          
           (let ((fields (extract-field 'fields type)))
-        
+            
             (define (format-field f)
               (let* ((field-name (extract-field 'name f))
                      (field-type (extract-field 'type f))
                      (field-pname (push-make field-type)))
                 (string-append 
-                 "        ELSIF SchemeSymbol.FromText(\"" field-name "\") = SchemeUtils.First(p.first) THEN" dnl
+                 "        ELSIF " (make-symbol field-name env) 
+                                " = SchemeUtils.First(p.first) THEN" dnl
                  "          res."field-name" := "field-pname"(SchemeUtils.Rest(p.first))" dnl)))
             
             (string-append
@@ -1227,10 +1271,10 @@
              "    BEGIN" dnl 
              "      WHILE p # NIL DO" dnl
              (string-append 
-        "        IF FALSE THEN" dnl
-        (apply string-append (map format-field fields) )
-             "        END;" dnl
-             )
+              "        IF FALSE THEN" dnl
+              (apply string-append (map format-field fields) )
+              "        END;" dnl
+              )
              "        p := SchemePair.Pair(p.rest)" dnl
              "      END;" dnl
              "      RETURN res" dnl
@@ -1333,7 +1377,7 @@
 
          ((Procedure)
           "     RETURN NIL (* conversion not implemented yet, not sure its possible *)"
-                                        )
+          )
 
          ((Object Opaque) 
           (string-append
@@ -1378,14 +1422,14 @@
 
          (proto (string-append
                  "PROCEDURE " pname "(x : SchemeObject.T) : " m3tn 
-                       " RAISES { Scheme.E }"
-                       )
+                 " RAISES { Scheme.E }"
+                 )
                 )
          )
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
 
     (define (make-intf) (string-append proto ";"))
-  
+    
     (define (make-impl)
       (string-append
        proto " = " dnl
@@ -1425,7 +1469,7 @@
                      ""
                      " Scheme.E")
                  " }"
-                       )
+                 )
                 )
          )
     ((env 'get 'convert-blt) 'insert! (string->symbol pname))
@@ -1455,7 +1499,7 @@
 
       (make-to-scheme-nonbase type env)))
 
- 
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1485,12 +1529,12 @@
 
     (if (null? arg)
         (string-append 
-         "      | " xname " => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2(SchemeSymbol.FromText(\"quote\"),SchemeUtils.List1(SchemeSymbol.FromText(\"" xname "\"))))" dnl
+         "      | " xname " => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2("(make-symbol 'quote env)",SchemeUtils.List1("(make-symbol xname env)")))" dnl
          )
         (let ((xarg->scm (to-scheme-proc-name arg env)))
 
           (string-append
-           "      | " xname "(xarg) => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2(SchemeSymbol.FromText(\"quote\"),SchemeUtils.Cons(SchemeSymbol.FromText(\"" xname "\"), " xarg->scm "(xarg))))" dnl
+           "      | " xname "(xarg) => EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2("(make-symbol 'quote env)",SchemeUtils.Cons("(make-symbol xname env)", " xarg->scm "(xarg))))" dnl
            )
           )
         )
@@ -1523,7 +1567,7 @@
                '(sig formals Formal name)
                (lambda(formal-name)
                  (string->symbol (string-append prefix formal-name)))))
-               
+
 
 (define (make-procedure-call-stub proc env)
   (let* ((qid (car proc))
@@ -1579,39 +1623,39 @@
                                    (extract-field 'name f))
                                )
                              (filter (lambda(f)
-               (not (eq? 'Mode.Implied
-             (extract-field 'mode f))))
-             formals))
+                                       (not (eq? 'Mode.Implied
+                                                 (extract-field 'mode f))))
+                                     formals))
                         ", "))
              (result (extract-field 'result sig)))
 
-    (define (format-nil-checks)
-        (apply string-append
-               (map (lambda(f)
-                      (string-append
-                       "        EVAL SchemeUtils.CheckNonNil("
-                       (extract-field 'name f)
-                       ");" dnl))
-                    (filter 
-                     (lambda (f) 
-                       (eq? (car (extract-field 'type f)) 'OpenArray))
-                     formals)
-                    )))
+        (define (format-nil-checks)
+          (apply string-append
+                 (map (lambda(f)
+                        (string-append
+                         "        EVAL SchemeUtils.CheckNonNil("
+                         (extract-field 'name f)
+                         ");" dnl))
+                      (filter 
+                       (lambda (f) 
+                         (eq? (car (extract-field 'type f)) 'OpenArray))
+                       formals)
+                      )))
 
         (define (unpack-var f)
           (let* ((arg-type (extract-field 'type f))
                  (arg-name (extract-field 'name f))
                  (deref-caret (if (eq? (car arg-type) 'OpenArray) "^" "")))
-          (string-append
-           (if (eq? (extract-field 'mode f) 'Mode.Var)
-               (string-append
-                "        EVAL SchemeUtils.SetFirst(p__," (to-scheme-proc-name arg-type env)"(" arg-name deref-caret"));" dnl
-                )
-               ""
-               )
-           "        EVAL Next();" dnl 
-           )
-          ))
+            (string-append
+             (if (eq? (extract-field 'mode f) 'Mode.Var)
+                 (string-append
+                  "        EVAL SchemeUtils.SetFirst(p__," (to-scheme-proc-name arg-type env)"(" arg-name deref-caret"));" dnl
+                  )
+                 ""
+                 )
+             "        EVAL Next();" dnl 
+             )
+            ))
 
         (define (unpack-var-params) 
           ;; fill this in
@@ -1625,32 +1669,32 @@
          "      (* unpack formals *)" dnl
          "      VAR "
          (infixize  (cons "<*NOWARN*>junk__ := 0" (map make-formal-temp formals))
-                   (string-append ";" dnl "           ")) "; BEGIN" dnl
+                    (string-append ";" dnl "           ")) "; BEGIN" dnl
 
-         "        (* carry out NIL checks for open arrays *)" dnl
-         (format-nil-checks) dnl
+                    "        (* carry out NIL checks for open arrays *)" dnl
+                    (format-nil-checks) dnl
 
-         "        (* make procedure call *)" dnl
-         (if (null? result)
-             (string-append
-              "        " m3pn"("arg-list");" dnl
-              "        (* unpack VAR params *)" dnl
-              (unpack-var-params) dnl
-              "        (* proper procedure : return TRUE *)" dnl
-              "        RETURN SchemeBoolean.True()"
-              )
-             (string-append
-              "        WITH res = " (to-scheme-proc-name result env) "("m3pn"("arg-list")) DO" dnl
-              "        (* unpack VAR params *)" dnl
-              (unpack-var-params) dnl
-              "        (* return procedure result *)" dnl
-              "        RETURN res" dnl
-              "        END" 
-              )
-             ) dnl
-         "      END(*WITH*)" dnl
-         )))   
-         
+                    "        (* make procedure call *)" dnl
+                    (if (null? result)
+                        (string-append
+                         "        " m3pn"("arg-list");" dnl
+                         "        (* unpack VAR params *)" dnl
+                         (unpack-var-params) dnl
+                         "        (* proper procedure : return TRUE *)" dnl
+                         "        RETURN SchemeBoolean.True()"
+                         )
+                        (string-append
+                         "        WITH res = " (to-scheme-proc-name result env) "("m3pn"("arg-list")) DO" dnl
+                         "        (* unpack VAR params *)" dnl
+                         (unpack-var-params) dnl
+                         "        (* return procedure result *)" dnl
+                         "        RETURN res" dnl
+                         "        END" 
+                         )
+                        ) dnl
+                          "      END(*WITH*)" dnl
+                          )))   
+    
     (define (format-exception-handling) 
       (let ((exceptions (extract-field 'raises sig)))
         ;; exceptions null? RAISES ANY
@@ -1663,7 +1707,7 @@
               (imports 'insert! 'SchemeSymbol)
               (string-append
                "      ELSE" dnl
-               "        SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2(SchemeSymbol.FromText(\"quote\"),SchemeUtils.List1(SchemeSymbol.FromText(\"ANY\"))))" dnl
+               "        SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2("(make-symbol 'quote env)",SchemeUtils.List1("(make-symbol 'ANY env)")))" dnl
                )
               )
             (apply string-append
@@ -1696,7 +1740,7 @@
      "    END;" dnl
      "    <*NOWARN*>RETURN SchemeBoolean.False()" dnl
      "  END " stub-name ";"  dnl
-    )))
+     )))
 
 
 ;; (make-procedure-call-stub (car the-procs) global-env)
@@ -1731,7 +1775,7 @@
    (spit-out-intf intf-name proc-stubs (map car converters) env)
    (spit-out-impl intf-name proc-stubs (map cdr converters) types env)
    )
-)
+  )
 
 (define (spit-out-intf intf-name proc-stubs converter-intfs env)
   (string-append
@@ -1771,7 +1815,7 @@
   ;; this one is much faster because it uses array indexing in string-append
   ;; and then only a single Wx
   (apply string-append (get-elements lst)))
-                   
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1791,8 +1835,8 @@
      
      (infixize (map formatter qids) dnl)
      ) dnl
-    "  END RegisterStubs;" dnl
-   ))
+       "  END RegisterStubs;" dnl
+       ))
 
 (define (is-object-type? type)
   (and 
@@ -1842,7 +1886,7 @@
     (infixize 
      (map (lambda (t) (format-typecode t env)) types)
      ", "
-    ))
+     ))
 
   (define (format-typenames)
     (infixize 
@@ -1850,7 +1894,7 @@
             (string-append "\"" (type-formatter t env) "\""))
           types)
      ", "
-    ))
+     ))
 
   ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
   ((env 'get 'imports) 'insert! 'RT0)
@@ -1867,7 +1911,7 @@
      "    END;" dnl
      )
     ))
-  
+
 
 (define (format-typecode type env)
   (if (and 
@@ -1882,12 +1926,12 @@
   (define (env-map func types)
     (map (lambda(t)(func t env)) types))
 
-        ;; we have one little limitation so far...  we dont discover that
-        ;; something is an array type or ref array type while processing the
-        ;; current interface unless its already been given its own distinct
-        ;; typename.  This mainly hits procedure return values---if we want
-        ;; to unpack them, the user needs to specify the types separately
-        ;; somehow.
+  ;; we have one little limitation so far...  we dont discover that
+  ;; something is an array type or ref array type while processing the
+  ;; current interface unless its already been given its own distinct
+  ;; typename.  This mainly hits procedure return values---if we want
+  ;; to unpack them, the user needs to specify the types separately
+  ;; somehow.
 
   (let* ((imports (env 'get 'imports))
 
@@ -1938,21 +1982,21 @@
          ;;;;;;;;;;;; the global pickle ;;;;;;;;;;;;
          (the-pickle        (register-pickle types env))
          (register-stubs
-            (make-register-stubs 
-             (append
-              ref-record-registrations
-              object-registrations 
-              ref-registrations
-              ref-array-registrations
-              the-pickle
-               )
-              env))
+          (make-register-stubs 
+           (append
+            ref-record-registrations
+            object-registrations 
+            ref-registrations
+            ref-array-registrations
+            the-pickle
+            )
+           env))
 
-          (converters (infixize (map cdr (close-conversions env)) dnldnl))
+         (converters (infixize (map cdr (close-conversions env)) dnldnl))
          
 
          )
-      
+    
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     (imports 'insert! 'SchemeProcedureStubs)
@@ -1992,10 +2036,13 @@
      converters
      dnl
 
+		 (format-load-time-symbols env)
+		 dnl
+
      "BEGIN END " intf-name "." dnl
      )
     )
-)
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2005,10 +2052,10 @@
   ((env 'get 'imports) 'insert! 'SchemeUtils)
 
   (string-append
-     "    IF NOT ISTYPE("varname","typename") OR "varname"=NIL THEN" dnl
-     "      RAISE Scheme.E(\"Not of type "typename" : \" & SchemeUtils.Stringify("varname"))" dnl
-     "    END;" dnl
-     )
+   "    IF NOT ISTYPE("varname","typename") OR "varname"=NIL THEN" dnl
+   "      RAISE Scheme.E(\"Not of type "typename" : \" & SchemeUtils.Stringify("varname"))" dnl
+   "    END;" dnl
+   )
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2024,7 +2071,7 @@
       (let* ((field (fields 'retrieve fname))
              (ftype (extract-field 'type field)))
         (string-append
-         "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
+         "    ELSIF field = "(make-symbol fname env) " THEN " dnl
          "      RETURN "(to-scheme-proc-name ftype env)"(narrow." fname")" dnl
          )))
 
@@ -2032,7 +2079,7 @@
       (let* ((field (fields 'retrieve fname))
              (ftype (extract-field 'type field)))
         (string-append
-         "    ELSIF field = SchemeSymbol.FromText(\"" fname "\") THEN " dnl
+         "    ELSIF field = "(make-symbol fname env)" THEN " dnl
          "      res := "(to-scheme-proc-name ftype env)"(narrow." fname");" dnl
          "      narrow." fname" := "(to-modula-proc-name ftype env)"(value)" dnl
          )))
@@ -2075,7 +2122,7 @@
 
      )
     )
-)
+  )
 
 (define (make-object-surrogate type env)
   (let ((m3tn (type-formatter type env))
@@ -2143,7 +2190,7 @@
             (string-append
              "      (* punt to Modula-3 object type defn *)" dnl
              "      " (if have-return "RETURN " "") m3tn"."name"("
-                       (infixize (cons 'object__ vars) ", ") ")" dnl
+             (infixize (cons 'object__ vars) ", ") ")" dnl
              
              )
             )
@@ -2156,7 +2203,7 @@
            "        args__ := SchemeUtils.Cons("
            (to-scheme-proc-name (extract-field 'type f) env)
            "(" (extract-field 'name f) ")"
-            ",args__);" dnl
+           ",args__);" dnl
            )
           )
 
@@ -2175,11 +2222,11 @@
            "        args__ := SchemeUtils.Reverse(args__);" dnl
 
            "        " (if have-return 
-                         (string-append "RETURN " (to-modula-proc-name have-return env ) "(")
-                         "EVAL (")
-                   "SchemeProcedureStubs.CallScheme(object__.interp, "
-                   "object__."(scheme-slot-name m)", "
-                   "args__))" dnl
+                          (string-append "RETURN " (to-modula-proc-name have-return env ) "(")
+                          "EVAL (")
+           "SchemeProcedureStubs.CallScheme(object__.interp, "
+           "object__."(scheme-slot-name m)", "
+           "args__))" dnl
            "        (* and this is where we need to unpack VAR params *)" dnl
            "      END" dnl
            )
@@ -2199,9 +2246,9 @@
          (format-override-call)
          "    END" dnl
          "  END " (override-name m) ";" dnl dnl
-       
+         
          )
-      ))
+        ))
 
     (define (make-object-ops)
 
@@ -2210,7 +2257,7 @@
               (name (extract-field 'name f)))
           (imports 'insert! 'SchemeSymbol)
           (string-append
-           "            IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+           "            IF r.first = "(make-symbol name env)" THEN" dnl
            "              res." name " := "(to-modula-proc-name type env)"(r.rest); gobbled := TRUE" dnl
            "            END;" dnl
            )))
@@ -2219,14 +2266,14 @@
         (apply string-append
                (map format-field-initializer  
                     ((visible-fields type) 'values))))
-                    
-                   
-          
+      
+      
+      
       (define (format-method-override m)
         (imports 'insert! 'SchemeSymbol)
         (let ((name (extract-field 'name m)))
           (string-append
-           "            IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+           "            IF r.first = "(make-symbol name env)" THEN" dnl
            "               res." (scheme-slot-name m) " := r.rest; gobbled := TRUE" dnl
            "            END;" dnl
            )))
@@ -2279,7 +2326,7 @@
 
       (define (make-dispatch-method meth-name)
         (string-append
-         "    ELSIF methName = SchemeSymbol.FromText(\""meth-name"\") THEN"dnl
+         "    ELSIF methName = "(make-symbol meth-name env)" THEN"dnl
          "      RETURN MethodStub_" m3ti "_" meth-name "(interp,methArgs,methExcHandler)" dnl
          ))
 
@@ -2288,7 +2335,7 @@
        "  VAR" dnl
        "    methName := Scheme.SymbolCheck(SchemeUtils.First(args));" dnl
        "    methArgs := SchemeUtils.Cons(obj,SchemeUtils.Second(args));" dnl
-                         "    methExcHandler := SchemeUtils.Third(args);" dnl
+       "    methExcHandler := SchemeUtils.Third(args);" dnl
        "  BEGIN" dnl
        "    IF FALSE THEN <*ASSERT FALSE*>" dnl
        (map make-dispatch-method ((visible-methods type) 'keys))
@@ -2312,7 +2359,7 @@
                                         (string-append
                                          "MethodStub_" m3ti "_" name)
                                         env)
-      ))
+        ))
     
     (cons
      (make-object-ops)
@@ -2326,18 +2373,18 @@
       )
      )
     )
-)
+  )
 
 (define (make-method-call-sig method type)
   (let* ((proc-type (prefix-formals 'formal_ method)))
 
-  (filter-tree proc-type
-               '(sig formals)
-               (lambda(formals)
-                  (cons (make-formal 'Mode.Implied 'this type) formals))
+    (filter-tree proc-type
+                 '(sig formals)
+                 (lambda(formals)
+                   (cons (make-formal 'Mode.Implied 'this type) formals))
 
-               )
-))
+                 )
+    ))
 
 (define (make-an-op-registration type name proc-name env)
   ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
@@ -2366,7 +2413,7 @@
             (name (extract-field 'name f)))
         (imports 'insert! 'SchemeSymbol)
         (string-append
-         "            IF r.first = SchemeSymbol.FromText(\"" name "\") THEN" dnl
+         "            IF r.first = " (make-symbol name env)" THEN" dnl
          "              res." name " := "(to-modula-proc-name type env)"(r.rest); gobbled := TRUE" dnl
          "            END;" dnl
          )))
@@ -2417,7 +2464,7 @@
 
 (define (make-ref-type target)
   (list 'Ref 
-                                (cons 'traced #t)
+        (cons 'traced #t)
         (cons 'target target)
         ))
 
@@ -2461,7 +2508,7 @@
         (let ((next (first-elem (- d 1) arr)))
           (string-append 
            next "[FIRST(" next ")]"
-         ))))
+           ))))
 
   (define (check-dims n)
     ;; checks one more than n.  n is the dims to "traverse" before checking
@@ -2484,7 +2531,7 @@
          (assigner-type (reduce-dimension array-type specified-indices))
          (tn (type-formatter assigner-type env))
          (dims-to-traverse (- (length dims) specified-indices 1))
-        )
+         )
     (string-flatten
      "  PROCEDURE Assign"specified-indices"(VAR tgt : " tn "; READONLY src : " tn ") " 
 
@@ -2532,7 +2579,7 @@
               "    i"i" : "(type-formatter (car d) env)";" dnl
               )
              (loop (+ i 1) (cdr d))))))
-         
+    
     (define (format-dims n)
       (if (= 1 n) "i0" (string-append (format-dims (- n 1))  ", i"(- n 1))))
 
@@ -2572,8 +2619,8 @@
                "    | " i " => RETURN "(to-scheme-proc-name (extract-field 'element t) env)"("(format-pre i)")" dnl
                )
               (loop (+ i 1) (cdr d) (extract-field 'element t)))
-              )
-               
+             )
+         
          )
        "    ELSE" dnl
        "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
@@ -2590,13 +2637,13 @@
              (cons
               (string-append
                "    | " i " => Assign"i"("(format-pre i)", "(convert-value-to-modula 
-                                                   (extract-field 'element t) 
-                                                   "val"
-                                                     env) ")" dnl
-               )
+                                                             (extract-field 'element t) 
+                                                             "val"
+                                                             env) ")" dnl
+                                                             )
               (loop (+ i 1) (cdr d) (extract-field 'element t)))
-              )
-               
+             )
+         
          )
        "    ELSE" dnl
        "      RAISE Scheme.E(\"too many array indices : \" & SchemeUtils.Stringify(args))" dnl
@@ -2619,8 +2666,8 @@
                )
               (loop (+ i 1))
               )
-         )
-       )))
+             )
+         )))
 
     (define (make-limit-op proc-prefix op)
       (string-flatten
@@ -2689,7 +2736,7 @@
      dnl
 
      )
-))
+    ))
 
 (define (make-ref-array-registrations arr-type env)
   (let* ((m3tn  (type-formatter arr-type env))
@@ -2887,18 +2934,18 @@
 
     proc-stubs
     ))
-        
+
 (define (stale-output? intf-name)
   (if config-check-staleness
       (let ((stale #f)
             (srcs the-sourcefiles)
             (tgts (map (lambda(sfx)(string-append intf-name sfx)) '(".i3" ".m3"))))
 
-;;        (dis "srcs: " srcs dnl)
-;;        (dis "src-time: " (apply max (map fs-status-modificationtime srcs)) dnl)
- ;;       (dis "tgts: " tgts dnl)
- ;;       (dis "tgt-time: " (apply min (map fs-status-modificationtime tgts)) dnl)
-      
+        ;;        (dis "srcs: " srcs dnl)
+        ;;        (dis "src-time: " (apply max (map fs-status-modificationtime srcs)) dnl)
+        ;;       (dis "tgts: " tgts dnl)
+        ;;       (dis "tgt-time: " (apply min (map fs-status-modificationtime tgts)) dnl)
+        
         (unwind-protect
          (set! stale (< (apply min (map fs-status-modificationtime tgts))
                         (apply max (map fs-status-modificationtime srcs))))
@@ -2909,17 +2956,17 @@
 
 (define (rename-if-different root1 root2)
   (define (cmp-files-safely fn1 fn2)
-     (let ((res #f))
-       (unwind-protect
-          (set! res (cmp-files fn1 fn2)) #f #f)
-       res))
+    (let ((res #f))
+      (unwind-protect
+       (set! res (cmp-files fn1 fn2)) #f #f)
+      res))
 
   (define (rename-file-if-different fn1 fn2)
-     (if (not (cmp-files-safely fn1 fn2)) (fs-rename fn1 fn2)))
- 
-   (rename-file-if-different (string-append root1 ".i3") (string-append root2 ".i3"))
-   (rename-file-if-different (string-append root1 ".m3") (string-append root2 ".m3"))
-)
+    (if (not (cmp-files-safely fn1 fn2)) (fs-rename fn1 fn2)))
+  
+  (rename-file-if-different (string-append root1 ".i3") (string-append root2 ".i3"))
+  (rename-file-if-different (string-append root1 ".m3") (string-append root2 ".m3"))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;                           ;;;;;;;;;;;;;;;;;;;;;;
