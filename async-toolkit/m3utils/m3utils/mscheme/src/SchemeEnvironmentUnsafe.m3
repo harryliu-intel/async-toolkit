@@ -4,10 +4,12 @@ MODULE SchemeEnvironmentUnsafe EXPORTS SchemeEnvironment;
 
 IMPORT SchemeEnvironmentInstanceRep;
 IMPORT AtomRefTbl;
-FROM Scheme IMPORT Object, Symbol;
+FROM Scheme IMPORT Object, Symbol, E;
 IMPORT AtomList;
-FROM SchemeEnvironmentInstanceRep IMPORT QuickMap;
-FROM SchemeUtils IMPORT Warn, StringifyT;
+FROM SchemeUtils IMPORT Warn, StringifyT, Error, Stringify;
+IMPORT SchemeEnvironmentBinding;
+
+TYPE Binding = SchemeEnvironmentBinding.T;
 
 REVEAL
   Unsafe = Instance BRANDED Brand & " Unsafe" OBJECT OVERRIDES
@@ -16,6 +18,7 @@ REVEAL
     put           := UnsafePut;
     get           := UnsafeGet;
     getLocalNames := GetLocalNames;
+    bind          := GetBinding;
   END;
 
 PROCEDURE InitEmptyUnsafe(t : Unsafe; parent : T) : Instance =
@@ -23,7 +26,7 @@ PROCEDURE InitEmptyUnsafe(t : Unsafe; parent : T) : Instance =
     t.dictionary := NIL;
     t.parent := parent;
     FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-      t.quick[i] := QuickMap { NIL, NIL };
+      t.quick[i].var := NIL
     END;
 
     RETURN t 
@@ -49,6 +52,14 @@ PROCEDURE Init(t                   : Instance;
 PROCEDURE GetLocalNames(e : Instance) : AtomList.T =
   VAR res : AtomList.T := NIL;
   BEGIN
+    FOR i := FIRST(e.quick) TO LAST(e.quick) DO
+      IF e.quick[i].var # NIL THEN 
+        res := AtomList.Cons(e.quick[i].var,res)
+      ELSE
+        EXIT
+      END
+    END;
+
     IF e.dictionary # NIL THEN
       WITH iter = e.dictionary.iterate() DO
         VAR a : Symbol; o : REFANY; BEGIN
@@ -57,15 +68,8 @@ PROCEDURE GetLocalNames(e : Instance) : AtomList.T =
           END
         END
       END
-    ELSE
-      FOR i := FIRST(e.quick) TO LAST(e.quick) DO
-        IF e.quick[i].var # NIL THEN 
-          res := AtomList.Cons(e.quick[i].var,res)
-        ELSE
-          EXIT
-        END
-      END
     END;
+
     RETURN res
   END GetLocalNames;
   
@@ -73,36 +77,88 @@ PROCEDURE UnsafeGet(t : Instance; var : Symbol; VAR val : Object) : BOOLEAN =
   BEGIN 
     IF var = NIL THEN RETURN FALSE END;
 
+    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+      IF t.quick[i].var = var THEN val := t.quick[i].val; RETURN TRUE END
+    END;
+    
     IF t.dictionary # NIL THEN
       RETURN t.dictionary.get(var,val) 
     ELSE
-      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-        IF t.quick[i].var = var THEN val := t.quick[i].val; RETURN TRUE END
-      END;
       RETURN FALSE
     END
   END UnsafeGet;
 
 PROCEDURE UnsafePut(t : Instance; var : Symbol; READONLY val : Object) =
   BEGIN 
-    IF t.dictionary # NIL THEN
-      EVAL t.dictionary.put(var,val) 
-    ELSE
-      FOR i := FIRST(t.quick) TO LAST(t.quick) DO
-        IF t.quick[i].var = var OR t.quick[i].var = NIL THEN 
-          t.quick[i].var := var; 
-          t.quick[i].val := val;
-          RETURN
-        END
-      END;
-      (* failed *)
-      t.dictionary := NEW(AtomRefTbl.Default).init();
-      FOR i := LAST(t.quick) TO FIRST(t.quick) BY -1 DO
-        UnsafePut(t,t.quick[i].var, t.quick[i].val)
-      END;
-
-      UnsafePut(t, var, val)
-    END
+    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+      IF t.quick[i].var = var OR t.quick[i].var = NIL THEN 
+        t.quick[i].var := var; 
+        t.quick[i].val := val;
+        RETURN
+      END
+    END;
+    (* failed *)
+    IF t.dictionary = NIL THEN
+      t.dictionary := NEW(AtomRefTbl.Default).init()
+    END;
+    
+    EVAL t.dictionary.put(var,val) 
   END UnsafePut;
+
+(**********************************************************************)
+
+PROCEDURE GetBinding(t : Instance; sym : Symbol) : Binding RAISES { E } =
+  VAR o : Object;
+  BEGIN
+    <*ASSERT NOT t.dead*>
+    IF sym = NIL THEN RETURN NEW(MyBinding, e := t, s := sym)  END;
+
+    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+      IF t.quick[i].var = sym THEN 
+        RETURN NEW(MyBinding, e := t, q := i)
+      END
+    END;
+
+    IF t.get(sym,o) THEN
+      RETURN NEW(MyBinding, e := t, s := sym)
+    END;
+    
+    IF t.parent # NIL THEN 
+      RETURN t.parent.bind(sym)
+    ELSE 
+      RETURN Error("Unbound variable attempting to bind: " & Stringify(sym)) 
+    END
+  END GetBinding;
+
+TYPE 
+  MyBinding = SchemeEnvironmentBinding.T OBJECT
+    e : Unsafe;
+    s : Symbol;
+    q : [ -1..LAST(CARDINAL) ] := -1;
+  OVERRIDES
+    name := SBName;
+    env  := SBEnv;
+    get  := SBGet;
+    setB := SBSetB;
+  END;
+
+PROCEDURE SBName(sb : MyBinding) : Symbol = BEGIN RETURN sb.s END SBName;
+
+PROCEDURE SBEnv(sb : MyBinding) : Object = BEGIN RETURN sb.e END SBEnv;
+
+PROCEDURE SBGet(sb : MyBinding) : Object =
+  VAR
+    v : Object;
+  BEGIN 
+    IF sb.q # -1 THEN RETURN sb.e.quick[sb.q].val END;
+
+    WITH gotit = sb.e.get(sb.s,v) DO
+      <*ASSERT gotit*>
+      RETURN v
+    END
+  END SBGet;
+
+PROCEDURE SBSetB(sb : MyBinding; v : Object) =
+  BEGIN sb.e.put(sb.s,v) END SBSetB;
 
 BEGIN END SchemeEnvironmentUnsafe.

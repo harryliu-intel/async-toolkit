@@ -118,32 +118,28 @@ PROCEDURE InitDictEval2(t                : Instance;
 PROCEDURE HaveBinding(t : Instance; symbol : Symbol) : BOOLEAN =
   VAR o : Object;
   BEGIN
-    LOOP
-      <*ASSERT NOT t.dead*>
-      IF t.get(symbol,o) THEN RETURN TRUE END;
-      
-      IF t.parent # NIL THEN 
-        RETURN t.parent.haveBinding(symbol)
-      ELSE 
-        RETURN FALSE
-      END
+    <*ASSERT NOT t.dead*>
+    IF t.get(symbol,o) THEN RETURN TRUE END;
+    
+    IF t.parent # NIL THEN 
+      RETURN t.parent.haveBinding(symbol)
+    ELSE 
+      RETURN FALSE
     END
   END HaveBinding;
 
 PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
   VAR o : Object;
   BEGIN
-    LOOP
-      <*ASSERT NOT t.dead*>
-      IF t.get(symbol,o) THEN
-        RETURN o
-      END;
-      
-      IF t.parent # NIL THEN 
-        RETURN t.parent.lookup(symbol)
-      ELSE 
-        RETURN Error("Unbound variable in lookup: " & Stringify(symbol)) 
-      END
+    <*ASSERT NOT t.dead*>
+    IF t.get(symbol,o) THEN
+      RETURN o
+    END;
+    
+    IF t.parent # NIL THEN 
+      RETURN t.parent.lookup(symbol)
+    ELSE 
+      RETURN Error("Unbound variable in lookup: " & Stringify(symbol)) 
     END
   END Lookup;
 
@@ -152,17 +148,15 @@ PROCEDURE Lookup(t : Instance; symbol : Symbol) : Object RAISES { E } =
 PROCEDURE GetBinding(t : Instance; sym : Symbol) : Binding RAISES { E } =
   VAR o : Object;
   BEGIN
-    LOOP
-      <*ASSERT NOT t.dead*>
-      IF t.get(sym,o) THEN
-        RETURN NEW(SimpleBinding, e := t, s := sym)
-      END;
-      
-      IF t.parent # NIL THEN 
-        RETURN t.parent.bind(sym)
-      ELSE 
-        RETURN Error("Unbound variable attempting to bind: " & Stringify(sym)) 
-      END
+    <*ASSERT NOT t.dead*>
+    IF t.get(sym,o) THEN
+      RETURN NEW(SimpleBinding, e := t, s := sym)
+    END;
+    
+    IF t.parent # NIL THEN 
+      RETURN t.parent.bind(sym)
+    ELSE 
+      RETURN Error("Unbound variable attempting to bind: " & Stringify(sym)) 
     END
   END GetBinding;
 
