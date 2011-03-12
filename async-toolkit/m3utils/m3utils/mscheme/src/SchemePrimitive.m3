@@ -42,6 +42,7 @@ IMPORT SchemePair;
 IMPORT CardRefTbl, Random;
 IMPORT RefSeq;
 IMPORT XTime AS Time;
+IMPORT RefRecord;
 
 <* FATAL Thread.Alerted *>
 
@@ -132,7 +133,7 @@ TYPE
         Error, ListStar,
         
         Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub,
-        EnableTracebacks, DisableTracebacks,
+        EnableTracebacks, DisableTracebacks, RefRecordFormat,
 
         DisplayNoFlush, WriteNoFlush
   };
@@ -460,7 +461,8 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     .defPrim("disable-tracebacks!",                ORD(P.DisableTracebacks), dd,      0, 0)
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
     .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
-    .defPrim("normal",                ORD(P.Normal), dd,      0, 2);
+    .defPrim("normal",                ORD(P.Normal), dd,      0, 2)
+    .defPrim("refrecord-format", ORD(P.RefRecordFormat), dd, 1, 1);
 
     RETURN env;
 
@@ -1078,6 +1080,9 @@ PROCEDURE Prims(t : T;
         P.Random => RETURN FromLR(NEW(Random.Default).init().longreal(0.0d0,1.0d0))
       |
         P.NumberToLONGREAL => RETURN NumberToLONGREAL(x)
+      |
+        P.RefRecordFormat => RETURN SchemeString.FromText(
+                                        RefRecord.Format(x))
       |
         P.StringHaveSub =>
         RETURN SchemeBoolean.Truth(TextUtils.HaveSub(SchemeString.ToText(x),
