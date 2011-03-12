@@ -2067,6 +2067,10 @@
         (fields (visible-fields type))
         )
 
+    (define (make-field-lister fname)
+      (string-append "    res := SchemeUtils.Cons("(make-symbol fname env)", res);" dnl)
+    )
+
     (define (make-field-getter fname)
       (let* ((field (fields 'retrieve fname))
              (ftype (extract-field 'type field)))
@@ -2089,6 +2093,16 @@
     (imports 'insert! 'SchemeObject)
 
     (string-flatten
+     "PROCEDURE FieldList_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
+     "  VAR" dnl
+     "    res : SchemePair.T := NIL;" dnl
+     "    narrow : " m3tn ";" dnl
+     "  BEGIN" dnl
+     (map make-field-lister (fields 'keys))
+     "    RETURN res" dnl
+     "  END FieldList_" m3ti ";" dnl
+     dnl
+
      "PROCEDURE FieldGet_" m3ti "(interp : Scheme.T; obj : SchemeObject.T; args : SchemeObject.T) : SchemeObject.T RAISES { Scheme.E } =" dnl
      "  VAR" dnl
      "    field   := SchemeUtils.First(args);" dnl
@@ -2838,12 +2852,14 @@
          (gen-new-name    (string-append "GenNew_" m3ti))
          (setter-name     (string-append "FieldSet_" m3ti))
          (getter-name     (string-append "FieldGet_" m3ti))
+         (lister-name     (string-append "FieldList_" m3ti))
          )
     ((env 'get 'imports) 'insert! 'SchemeProcedureStubs)
     ((env 'get 'imports) 'insert! 'Atom)
     (string-flatten
      "    SchemeProcedureStubs.RegisterNew(NEW(SchemeProcedureStubs.Qid, intf := Atom.FromText(\""(car alias)"\"), item := Atom.FromText(\""(cdr alias)"\")), "new-name");" dnl
      (make-an-op-registration obj-type 'new gen-new-name env)
+     (make-an-op-registration obj-type 'list-fields lister-name env)
      (make-an-op-registration obj-type 'get-field getter-name env)
      (make-an-op-registration obj-type 'set-field! setter-name env)
 
