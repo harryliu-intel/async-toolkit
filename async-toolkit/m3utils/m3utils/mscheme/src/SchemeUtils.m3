@@ -495,8 +495,12 @@ PROCEDURE StringifyB(x : Object;
       IF x = NIL THEN 
         Put("()")
       ELSE
-        <* ASSERT NOT ISTYPE(x,TEXT) *>
         TYPECASE x OF
+          TEXT(txt) => (* really should not normally happen *)
+          Wx.PutText(buf, "<Modula-3 TEXT \"");
+          Wx.PutText(buf, txt);
+          Wx.PutText(buf, "\">")
+        |
           SchemeLongReal.T(lr) =>
           IF FLOAT(ROUND(lr^),LONGREAL) = lr^ THEN
             Wx.PutInt(buf,(ROUND(lr^)))
