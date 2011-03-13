@@ -54,7 +54,7 @@ PROCEDURE CallStubApply(<*UNUSED*>proc : SchemeProcedure.T;
                         interpA : Scheme.T; 
                         args : Object) : Object RAISES { E } =
   VAR 
-    n := First(args);
+    n := ConditionallyConvertSymbolToPair(First(args));
 
     intf := First(n);
     item := Rest(n);
@@ -95,7 +95,7 @@ PROCEDURE NewModulaApply(<*UNUSED*>proc : SchemeProcedure.T;
                          interp : Scheme.T; 
                          args : Object) : Object RAISES { E } =
   VAR
-    n := First(args);
+    n := ConditionallyConvertSymbolToPair(First(args));
 
     intf := First(n);
     item := Rest(n);
@@ -433,5 +433,27 @@ PROCEDURE ModulaTypeClassApply(<*UNUSED*>proc : SchemeProcedure.T;
     END;
     RETURN res
   END ModulaTypeClassApply;
+
+PROCEDURE ConditionallyConvertSymbolToPair(obj : Object) : SchemePair.T 
+  RAISES { E } =
+  BEGIN
+    TYPECASE obj OF 
+      SchemePair.T(p) => RETURN p
+    |
+      SchemeSymbol.T(sym) =>
+      WITH str = SchemeSymbol.ToText(sym),
+           idx = Text.FindChar(str, '.') DO
+        IF idx > 0 THEN
+          RETURN NEW(SchemePair.T,
+                     first := SchemeSymbol.FromText(Text.Sub(str,0,idx)),
+                     rest  := SchemeSymbol.FromText(Text.Sub(str,idx+1)))
+        ELSE
+          RAISE E("No dot in symbol : \"" & str & "\"")
+        END
+      END
+    ELSE
+      RAISE E("Can't convert to symbol-pair : " & Stringify(obj))
+    END
+  END ConditionallyConvertSymbolToPair;
 
 BEGIN END SchemeProcedureStubs.
