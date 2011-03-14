@@ -133,7 +133,7 @@ TYPE
         Error, ListStar,
         
         Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub,
-        EnableTracebacks, DisableTracebacks, RefRecordFormat,
+        EnableTracebacks, DisableTracebacks, RefRecordFormat, SetRTErrorMapping,
 
         DisplayNoFlush, WriteNoFlush
   };
@@ -462,8 +462,8 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
     .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2)
-    .defPrim("refrecord-format", ORD(P.RefRecordFormat), dd, 1, 1);
-
+    .defPrim("refrecord-format", ORD(P.RefRecordFormat), dd, 1, 1)
+    .defPrim("set-rt-error-mapping!", ORD(P.SetRTErrorMapping), dd, 1, 1);
     RETURN env;
 
   END InstallDefaultExtendedPrimitives;
@@ -1083,6 +1083,10 @@ PROCEDURE Prims(t : T;
       |
         P.RefRecordFormat => RETURN SchemeString.FromText(
                                         RefRecord.Format(x))
+      |
+        P.SetRTErrorMapping => 
+        interp.setRTErrorMapping(SchemeBoolean.TruthO(x)); 
+        RETURN SchemeBoolean.Truth(interp.attemptToMapRuntimeErrors())
       |
         P.StringHaveSub =>
         RETURN SchemeBoolean.Truth(TextUtils.HaveSub(SchemeString.ToText(x),

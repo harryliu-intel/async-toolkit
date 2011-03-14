@@ -143,28 +143,44 @@ PROCEDURE MainLoop(rl : ReadLine.T; scm : Scheme.T) RAISES { NetObj.Error,
       END;
 
       TRY
-        WITH x = sip.read() DO
-          IF SchemeInputPort.IsEOF(x) THEN RETURN END;
-            
-          IF DebugALL THEN Debug.Out("Eval!") END;
-          Csighandler.clear_signal();
-          WITH res = scm.evalInGlobalEnv(x) DO
-            IF doReadLine THEN
-              WITH wr = NEW(TextWr.T).init() DO
-                EVAL SchemeUtils.Write(res, wr, TRUE);
-                rl.display(TextWr.ToText(wr) & "\n")
-              END
-            ELSE
-              EVAL SchemeUtils.Write(res, scm.output, TRUE)
-            END;
 
-            scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res)
+        PROCEDURE Do() : BOOLEAN 
+          RAISES { Scheme.E, NetObj.Error, ReadLineError.E } =
+          BEGIN
+            WITH x = sip.read() DO
+              IF SchemeInputPort.IsEOF(x) THEN RETURN FALSE END;
+              
+              IF DebugALL THEN Debug.Out("Eval!") END;
+              Csighandler.clear_signal();
+              WITH res = scm.evalInGlobalEnv(x) DO
+                IF doReadLine THEN
+                  WITH wr = NEW(TextWr.T).init() DO
+                    EVAL SchemeUtils.Write(res, wr, TRUE);
+                    rl.display(TextWr.ToText(wr) & "\n")
+                  END
+                ELSE
+                  EVAL SchemeUtils.Write(res, scm.output, TRUE)
+                END;
+                
+                scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res)
+              END
+            END;
+            RETURN TRUE
+          END Do;
+
+        BEGIN
+          IF scm.attemptToMapRuntimeErrors() THEN
+            TRY
+              IF NOT Do() THEN RETURN END;
+            EXCEPT
+              <*NOWARN*>RuntimeError.E(err) => 
+              Display("EXCEPTION! RuntimeError! " &  RuntimeError.Tag(err) & "\n")
+            END
+          ELSE
+            IF NOT Do() THEN RETURN END
           END
         END
       EXCEPT
-        <*NOWARN*>RuntimeError.E(err) => 
-        Display("EXCEPTION! RuntimeError! " &  RuntimeError.Tag(err) & "\n")
-      |
         Scheme.E(e) => Display("EXCEPTION! " & Debug.UnNil(e) & "\n");
         IF EnvDisablesTracebacks THEN
           Display("(Tracebacks disabled by NOMSCHEMETRACEBACKS.)\n")

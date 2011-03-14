@@ -39,6 +39,8 @@ REVEAL
     interrupter : Interrupter := NIL;
     prims : SchemePrimitive.Definer := NIL;
 
+    mapRTErrors := TRUE;
+
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
   OVERRIDES
@@ -64,7 +66,15 @@ REVEAL
     setPrimitives     :=  SetPrimitives;
     changeGlobalEnvironment := ChangeGlobalEnvironment;
     getGlobalEnvironment := GetGlobalEnvironment;
+    attemptToMapRuntimeErrors := AttemptToMapRuntimeErrors;
+    setRTErrorMapping := SetRTErrorMapping;
   END;
+
+PROCEDURE AttemptToMapRuntimeErrors(scm : T) : BOOLEAN = 
+  BEGIN RETURN scm.mapRTErrors END AttemptToMapRuntimeErrors;
+
+PROCEDURE SetRTErrorMapping(scm : T; to : BOOLEAN) =
+  BEGIN scm.mapRTErrors := to END SetRTErrorMapping;
 
 PROCEDURE GetGlobalEnvironment(t : T) : SchemeEnvironmentSuper.T =
   BEGIN RETURN t.globalEnvironment END GetGlobalEnvironment;

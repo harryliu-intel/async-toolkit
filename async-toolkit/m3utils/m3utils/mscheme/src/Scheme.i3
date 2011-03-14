@@ -114,6 +114,12 @@ TYPE
 
     getGlobalEnvironment() : SchemeEnvironmentSuper.T;
 
+    attemptToMapRuntimeErrors() : BOOLEAN;
+    (* should the REPL attempt to map runtime errors to an exception-abort *)
+
+    setRTErrorMapping(to : BOOLEAN);
+    (* set the above (default TRUE) *)
+
   END;
 
 TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;
