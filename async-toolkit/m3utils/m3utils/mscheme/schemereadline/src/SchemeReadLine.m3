@@ -238,38 +238,55 @@ PROCEDURE ReturningMainLoop(rl : ReadLine.T; scm : Scheme.T) : Scheme.Object
       END;
 
       TRY
-        WITH x = sip.read() DO
-          IF SchemeInputPort.IsEOF(x) THEN RETURN NIL END;
-            
-          IF DebugALL THEN Debug.Out("Eval!") END;
-          Csighandler.clear_signal();
-          WITH res = scm.evalInGlobalEnv(x) DO
-            TYPECASE res OF
-              NULL => (* skip *)
-            |
-              SchemePair.T(p) =>
-                IF p.first = ReturnHookAtom THEN 
-                  RETURN p.rest
-                END
-            ELSE (* skip *)
-            END;
-            IF doReadLine THEN
-              WITH wr = NEW(TextWr.T).init() DO
-                EVAL SchemeUtils.Write(res, wr, TRUE);
-                rl.display(TextWr.ToText(wr) & "\n")
-              END
-            ELSE
-              EVAL SchemeUtils.Write(res, scm.output, TRUE)
-            END;
 
-            scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res)
+        PROCEDURE Do(VAR result : Scheme.Object) : BOOLEAN 
+          RAISES { Scheme.E, NetObj.Error, ReadLineError.E } =
+          BEGIN
+            WITH x = sip.read() DO
+              IF SchemeInputPort.IsEOF(x) THEN result := NIL; RETURN FALSE END;
+              
+              IF DebugALL THEN Debug.Out("Eval!") END;
+              Csighandler.clear_signal();
+              WITH res = scm.evalInGlobalEnv(x) DO
+                TYPECASE res OF
+                  NULL => (* skip *)
+                |
+                  SchemePair.T(p) =>
+                  IF p.first = ReturnHookAtom THEN 
+                    result := p.rest; RETURN FALSE
+                  END
+                ELSE (* skip *)
+                END;
+                IF doReadLine THEN
+                  WITH wr = NEW(TextWr.T).init() DO
+                    EVAL SchemeUtils.Write(res, wr, TRUE);
+                    rl.display(TextWr.ToText(wr) & "\n")
+                  END
+                ELSE
+                  EVAL SchemeUtils.Write(res, scm.output, TRUE)
+                END;
+                
+                scm.setInGlobalEnv(SchemeSymbol.Symbol("bang-bang"),res);
+              END
+            END;
+            RETURN TRUE
+          END Do;
+
+        VAR res : Scheme.Object;
+        BEGIN
+          IF scm.attemptToMapRuntimeErrors() THEN
+            TRY
+              IF NOT Do(res) THEN RETURN res END
+            EXCEPT
+              <*NOWARN*>RuntimeError.E(err) => 
+              Display("EXCEPTION! RuntimeError! " & 
+                RuntimeError.Tag(err))
+            END
+          ELSE
+            IF NOT Do(res) THEN RETURN res END
           END
         END
       EXCEPT
-        <*NOWARN*>RuntimeError.E(err) => 
-        Display("EXCEPTION! RuntimeError! " & 
-          RuntimeError.Tag(err))
-      |
         Scheme.E(e) => Display("EXCEPTION! " & e & "\n");
         IF EnvDisablesTracebacks THEN
           Display("(Tracebacks disabled by NOMSCHEMETRACEBACKS.)\n")
