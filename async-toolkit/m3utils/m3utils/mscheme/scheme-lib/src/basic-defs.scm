@@ -38,6 +38,13 @@
 	((not (x? (car lst))) (filter x? (cdr lst)))
 	(else (cons (car lst) (filter x? (cdr lst))))))
 
+(define (filter x? lst)
+  (let loop ((rest lst)
+             (res '()))
+     (cond ((null? rest) (reverse res))
+           ((not (x? (car rest))) (loop (cdr rest) res))
+           (else (loop (cdr rest) (cons (car rest) res))))))
+
 (define (accumulate op initial sequence)
   ;; SICP2 p. 116
   (if (null? sequence) initial
