@@ -43,6 +43,7 @@ IMPORT CardRefTbl, Random;
 IMPORT RefSeq;
 IMPORT XTime AS Time;
 IMPORT RefRecord;
+IMPORT SchemeClosure;
 
 <* FATAL Thread.Alerted *>
 
@@ -135,7 +136,9 @@ TYPE
         Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, StringHaveSub,
         EnableTracebacks, DisableTracebacks, RefRecordFormat, SetRTErrorMapping,
 
-        DisplayNoFlush, WriteNoFlush
+        DisplayNoFlush, WriteNoFlush,
+
+        EqMemo
   };
 
 REVEAL 
@@ -424,7 +427,8 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("write-noflush",          ORD(P.WriteNoFlush), dd,    1, 2)
     .defPrim("write-char",     ORD(P.Display), dd,  1, 2)
     .defPrim("write-char-noflush",     ORD(P.DisplayNoFlush), dd,  1, 2)
-    .defPrim("zero?",          ORD(P.ZeroQ), dd,    1);
+    .defPrim("zero?",          ORD(P.ZeroQ), dd,    1)
+    .defPrim("eq?-memo",       ORD(P.EqMemo), dd, 1, 1);
     
     RETURN env
 
@@ -1142,9 +1146,49 @@ PROCEDURE Prims(t : T;
         P.Error => RETURN Error(Stringify(args))
       |
         P.ListStar => free := FALSE; RETURN ListStar(args)
+      |
+        P.EqMemo => RETURN DoEqMemo(x)
       END
     END
   END Prims;
+
+PROCEDURE DoEqMemo(x : Object) : Object RAISES { E } =
+  BEGIN
+    IF x = NIL OR NOT ISTYPE(x, SchemeClosure.T) THEN
+      RAISE E ("expected closure, got " & Stringify(x))
+    END;
+
+    RETURN NEW(MemObj, c := x, mem := NIL)
+  END DoEqMemo;
+
+TYPE 
+  Mem = OBJECT tag, val : Object; nxt : Mem END;
+
+  MemObj = SchemeProcedure.T OBJECT
+    c   : SchemeClosure.T;
+    mem : Mem; 
+  OVERRIDES
+    apply := MOApply;
+  END;
+
+PROCEDURE MOApply(mo     : MemObj; 
+                  interp : Scheme.T; 
+                  args   : Object) : Object RAISES { E } =
+  VAR 
+    p := mo.mem;
+  BEGIN
+    WITH a1 = First(args) DO
+      WHILE p # NIL DO
+        IF p.tag = a1 THEN RETURN p.val END;
+        p := p.nxt
+      END;
+
+      WITH new = mo.c.apply(interp,args) DO
+        mo.mem := NEW(Mem, tag := a1, val := new, nxt := mo.mem);
+        RETURN new
+      END
+    END
+  END MOApply;
 
 PROCEDURE IsList(x : Object) : BOOLEAN =
   VAR
