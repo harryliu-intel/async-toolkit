@@ -138,7 +138,7 @@ TYPE
 
         DisplayNoFlush, WriteNoFlush,
 
-        EqMemo
+        EqMemo, EqualMemo
   };
 
 REVEAL 
@@ -428,7 +428,9 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("write-char",     ORD(P.Display), dd,  1, 2)
     .defPrim("write-char-noflush",     ORD(P.DisplayNoFlush), dd,  1, 2)
     .defPrim("zero?",          ORD(P.ZeroQ), dd,    1)
-    .defPrim("eq?-memo",       ORD(P.EqMemo), dd, 1, 1);
+    .defPrim("eq?-memo",       ORD(P.EqMemo), dd, 1, 1)
+    .defPrim("equal?-memo",       ORD(P.EqualMemo), dd, 1, 1)
+    ;
     
     RETURN env
 
@@ -1148,6 +1150,8 @@ PROCEDURE Prims(t : T;
         P.ListStar => free := FALSE; RETURN ListStar(args)
       |
         P.EqMemo => RETURN DoEqMemo(x)
+      |
+        P.EqualMemo => RETURN DoEqualMemo(x)
       END
     END
   END Prims;
@@ -1158,8 +1162,17 @@ PROCEDURE DoEqMemo(x : Object) : Object RAISES { E } =
       RAISE E ("expected closure, got " & Stringify(x))
     END;
 
-    RETURN NEW(MemObj, c := x, mem := NIL)
+    RETURN NEW(MemObj, c := x, mem := NIL, apply := MOApply)
   END DoEqMemo;
+
+PROCEDURE DoEqualMemo(x : Object) : Object RAISES { E } =
+  BEGIN
+    IF x = NIL OR NOT ISTYPE(x, SchemeClosure.T) THEN
+      RAISE E ("expected closure, got " & Stringify(x))
+    END;
+
+    RETURN NEW(MemObj, c := x, mem := NIL, apply := MOEApply)
+  END DoEqualMemo;
 
 TYPE 
   Mem = OBJECT tag, val : Object; nxt : Mem END;
@@ -1167,8 +1180,6 @@ TYPE
   MemObj = SchemeProcedure.T OBJECT
     c   : SchemeClosure.T;
     mem : Mem; 
-  OVERRIDES
-    apply := MOApply;
   END;
 
 PROCEDURE MOApply(mo     : MemObj; 
@@ -1189,6 +1200,27 @@ PROCEDURE MOApply(mo     : MemObj;
       END
     END
   END MOApply;
+
+PROCEDURE MOEApply(mo     : MemObj; 
+                  interp : Scheme.T; 
+                  args   : Object) : Object RAISES { E } =
+  VAR 
+    p := mo.mem;
+  BEGIN
+    WITH a1 = First(args) DO
+      WHILE p # NIL DO
+        IF Equal(p.tag,a1) THEN RETURN p.val END;
+        p := p.nxt
+      END;
+
+      WITH new = mo.c.apply(interp,args) DO
+        mo.mem := NEW(Mem, tag := a1, val := new, nxt := mo.mem);
+        RETURN new
+      END
+    END
+  END MOEApply;
+
+(**********************************************************************)
 
 PROCEDURE IsList(x : Object) : BOOLEAN =
   VAR
