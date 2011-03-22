@@ -125,7 +125,6 @@ TYPE
 
         ExactQ, InexactQ, IntegerQ,
         CallWithInputFile, CallWithOutputFile,
-        Tanh,
 
         (* extensions follow *)
 
@@ -138,7 +137,9 @@ TYPE
 
         DisplayNoFlush, WriteNoFlush,
 
-        EqMemo, EqualMemo
+        EqMemo, EqualMemo,
+
+        Cosh, Sinh, Tanh, Acosh, Asinh, Atanh
   };
 
 REVEAL 
@@ -416,7 +417,15 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("symbol->string", ORD(P.SymbolToString), dd,  1)
     .defPrim("symbol?",        ORD(P.SymbolQ), dd,  1)
     .defPrim("tan",            ORD(P.Tan), dd,      1)
+
     .defPrim("tanh",           ORD(P.Tanh), dd,     1)
+    .defPrim("cosh",           ORD(P.Cosh), dd,     1)
+    .defPrim("sinh",           ORD(P.Sinh), dd,     1)
+
+    .defPrim("atanh",           ORD(P.Atanh), dd,     1)
+    .defPrim("acosh",           ORD(P.Acosh), dd,     1)
+    .defPrim("asinh",           ORD(P.Asinh), dd,     1)
+
     .defPrim("vector",         ORD(P.Vector), dd,   0, n)
     .defPrim("vector->list",   ORD(P.VectorToList), dd,1)
     .defPrim("vector-length",  ORD(P.VectorLength), dd,1)
@@ -1080,8 +1089,20 @@ PROCEDURE Prims(t : T;
           END;
           RETURN z
         END
+
       |
         P.Tanh => RETURN FromLR(Math.tanh(FromO(x)))
+      |
+        P.Cosh => RETURN FromLR(Math.cosh(FromO(x)))
+      |
+        P.Sinh => RETURN FromLR(Math.sinh(FromO(x)))
+      |
+        P.Atanh => RETURN FromLR(Math.atanh(FromO(x)))
+      |
+        P.Acosh => RETURN FromLR(Math.acosh(FromO(x)))
+      |
+        P.Asinh => RETURN FromLR(Math.asinh(FromO(x)))
+
       |
         P.Random => RETURN FromLR(NEW(Random.Default).init().longreal(0.0d0,1.0d0))
       |
