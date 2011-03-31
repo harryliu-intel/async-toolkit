@@ -1583,13 +1583,14 @@
       (stubs 'delete-entry! qualified-name)
       (stubs 'add-entry! qualified-name stub-name))
 
-    (make-named-procedure-call-stub proc-type m3pn u3pn stub-name env)))
+    (make-named-procedure-call-stub proc-type m3pn u3pn stub-name "" env)))
 
 (define ( make-named-procedure-call-stub 
           proc-type ;; definition
           m3pn      ;; modula-3 name for procedure to call
           u3pn      ;; name to use for making parts of stub
           stub-name ;; name for actual stub
+					special-prolog ;; nil checks e.g.
           env )
   ;; idea is that this can be used with method definitions too
 
@@ -1673,6 +1674,10 @@
 
                     "        (* carry out NIL checks for open arrays *)" dnl
                     (format-nil-checks) dnl
+
+                    "        (* carry out passed-in checks *)" dnl
+										special-prolog
+										
 
                     "        (* make procedure call *)" dnl
                     (if (null? result)
@@ -2372,6 +2377,11 @@
                                          method-call-name)
                                         (string-append
                                          "MethodStub_" m3ti "_" name)
+																				(string-append
+																				 "        IF this = NIL THEN" dnl
+                                         "          RAISE Scheme.E(\"null object\")" dnl
+																				 "        END;" dnl
+                                        )
                                         env)
         ))
     
