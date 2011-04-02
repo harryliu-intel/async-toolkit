@@ -39,7 +39,10 @@ else #### !CYGWIN => UNIX ####
   M3SHIPPROGRAM=m3ship
   M3SHIPOPTS=
 
+  GC_USECM3 := $(shell ./use_cm3.sh)
+
   ifdef CM3  # on MacOS and other newer systems
+    GC_USECM3=1
     M3BUILDPROGRAM=cm3
     M3BUILDOPTS= -override
     M3BUILDCLEANTARGET= -clean
