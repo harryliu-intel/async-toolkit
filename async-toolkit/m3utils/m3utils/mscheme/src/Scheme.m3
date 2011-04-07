@@ -145,6 +145,9 @@ PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T)
   BEGIN
     EVAL t.loadRd(NEW(TextRd.T).init(SchemePrimitives.Code));
     FOR i := FIRST(files) TO LAST(files) DO
+      IF Debug.GetLevel() >= 20 THEN
+        Debug.Out("Scheme.ReadInitialFiles: " & files[i])
+      END;
       EVAL t.loadFile(SchemeString.FromText(files[i]))
     END
   END ReadInitialFiles;
