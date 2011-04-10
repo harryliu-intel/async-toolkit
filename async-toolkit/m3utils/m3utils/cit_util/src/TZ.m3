@@ -88,7 +88,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
     d : Date.T;
   BEGIN
     IF Debug.GetLevel() >= 20 THEN
-      Debug.Out("Localtime : " & Fmt.LongReal(timeArg))
+      Debug.Out("Localtime : " & Fmt.LongReal(timeArg) & " unixepoch=" & Fmt.LongReal(UnixEpoch))
     END;
     (* first of all, see if the conversion is in the same minute
        as we just converted.  If so, modify return value accordingly
@@ -119,6 +119,9 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
       END
     END;
     
+            IF Debug.GetLevel() >= 20 THEN
+              Debug.Out("TZ.Localtime: time=" & Fmt.LongReal(time))
+            END;
     VAR
       tms   := UtimeOpsC.make_T();
       clock : Ctypes.long;
@@ -133,9 +136,6 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
             (*
             (* Debug.Out MAY call time functions, which may call us back,
                leading to locking against ourselves *)
-            IF Debug.GetLevel() >= 20 THEN
-              Debug.Out("TZ.Localtime: time=" & Fmt.LongReal(time))
-            END;
             *)
             
             clock := itime;

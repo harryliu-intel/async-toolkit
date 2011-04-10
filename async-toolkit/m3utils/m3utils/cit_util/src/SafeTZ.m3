@@ -175,4 +175,7 @@ BEGIN
                                      0, 0, 0,
                                      0, "UTC", 
                                      FIRST(Date.WeekDay) });
+
+  (* this is crazy *)
+  IF ABS(UnixEpoch) < 1.0d5 THEN UnixEpoch := 0.0d0 END;
 END SafeTZ.
