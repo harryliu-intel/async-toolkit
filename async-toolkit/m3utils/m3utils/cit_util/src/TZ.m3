@@ -10,6 +10,7 @@ IMPORT FS, Env;
 IMPORT Ctypes;
 IMPORT Word;
 IMPORT Thread;
+IMPORT Fmt;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -86,6 +87,9 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
 
     d : Date.T;
   BEGIN
+    IF Debug.GetLevel() >= 20 THEN
+      Debug.Out("Localtime : " & Fmt.LongReal(timeArg))
+    END;
     (* first of all, see if the conversion is in the same minute
        as we just converted.  If so, modify return value accordingly
        and return it, saving system calls, etc. *)
