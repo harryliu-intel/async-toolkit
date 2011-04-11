@@ -73,9 +73,13 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
           WITH now = Time.Now() DO
             WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).when < now DO
               WITH head = NARROW(pq.deleteMin(),Elt) DO 
-                Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & Fmt.LongReal(now));
                 head.t.set(now);
                 head.when := now + head.t.granularity;
+
+                Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & 
+                  Fmt.LongReal(now) & " -> " & 
+                  Fmt.LongReal(head.when) & " size=" & 
+                  Fmt.Int(pq.size()));
                 pq.insert(head)
               END
             END;
