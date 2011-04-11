@@ -197,6 +197,19 @@ PROCEDURE FromDate(d : Date.T) : T =
     RETURN T { year := d.year, month := ORD(d.month) + 1, day := d.day }
   END FromDate;
 
+PROCEDURE Morning(t : T) : Date.T =
+  BEGIN
+    RETURN Date.T { year := t.year,
+                    month := VAL(t.month-1,Date.Month),
+                    day := t.day,
+                    hour := 0,
+                    minute := 0,
+                    second := 0, 
+                    offset := 0,
+                    zone := NIL,
+                    weekDay := FIRST(Date.WeekDay) }
+  END Morning;
+
 PROCEDURE Yesterday(zone : Date.TimeZone) : T =
   CONST
     Steps = ARRAY Date.WeekDay OF CARDINAL { 2, 3, 1, 1, 1, 1, 1 };

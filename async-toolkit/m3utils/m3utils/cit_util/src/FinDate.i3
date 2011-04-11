@@ -75,6 +75,11 @@ PROCEDURE FromTime(t : Time.T;
 
 PROCEDURE FromDate(d : Date.T) : T;
 
+PROCEDURE Morning(t : T) : Date.T; 
+  (* midnight this morning, producing a Date.T without the time zone
+     or weekDay fields set to anything sensible.  This is suitable for
+     passing to a TZ's mktime method. *)
+
 PROCEDURE Today(zone : Date.TimeZone := NIL (* Local if NIL *)) : T;
 
 PROCEDURE Yesterday(zone : Date.TimeZone := NIL (* Local if NIL *)) : T;
