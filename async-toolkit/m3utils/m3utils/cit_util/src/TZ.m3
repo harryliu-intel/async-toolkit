@@ -49,7 +49,7 @@ PROCEDURE Init(t : T; tz : TEXT; disableChecking : BOOLEAN) : T RAISES { OSError
 
     t.tz := tz; 
     t.hashV := Text.Hash(tz);
-    t.cache.itime := -1; (* impossible key *)
+    t.cache.itime := FIRST(INTEGER); (* impossible key *)
     RETURN t 
   END Init;
 
