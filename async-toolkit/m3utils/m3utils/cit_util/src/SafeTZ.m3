@@ -6,6 +6,7 @@ IMPORT TextReader, HMTime;
 IMPORT TextRefTbl;
 IMPORT TextWr, Wr, Thread;
 IMPORT OSError;
+IMPORT DebugClass; (* force DebugClass to be initialized before us *)
 
 PROCEDURE Floor(x : LONGREAL) : LONGREAL =
   BEGIN
@@ -34,14 +35,18 @@ PROCEDURE FormatSubsecond(tz                                 : T;
                                100.0d0 * Thousand, 
                                Thousand * Thousand};
 
+  CONST L = Fmt.LongReal; I = Fmt.Int;
   BEGIN
     WITH tfloor = Floor(t),
          d = tz.localtime(tfloor) DO
 
       WITH delta = t-tfloor DO
         IF Debug.GetLevel() >= 20 THEN 
-          Debug.Out(Fmt.F("SafeTZ.FormatSubsecond: t=%s, tfloor=%s, delta=%s",
-                    Fmt.LongReal(t),Fmt.LongReal(tfloor),Fmt.LongReal(delta)))
+          Debug.Out(Fmt.F("SafeTZ.FormatSubsecond: t=%s, tfloor=%s, delta=%s, year=%s, ORD(month)=%s, ",
+                    L(t),L(tfloor),L(delta), I(d.year), I(ORD(d.month))) &
+                    Fmt.F("day=%s, hour=%s, minute=%s, second=%s", I(d.day), I(d.hour), I(d.minute), I(d.second)))
+
+
         END;
 
         IF    prec = 0 THEN
@@ -169,13 +174,16 @@ VAR
   mu := NEW(MUTEX);
 
 BEGIN
+  DebugClass.DoInit();
+  Debug.Out("Setting UnixEpoch");
   UnixEpoch := Date.ToTime( Date.T { 1970,
                                      Date.Month.Jan,
                                      1,
                                      0, 0, 0,
                                      0, "UTC", 
                                      FIRST(Date.WeekDay) });
+  Debug.Out("UnixEpoch=" & Fmt.LongReal(UnixEpoch));
 
   (* this is crazy *)
-  IF ABS(UnixEpoch) < 1.0d5 THEN UnixEpoch := 0.0d0 END;
+(*  IF ABS(UnixEpoch) < 1.0d5 THEN UnixEpoch := 0.0d0 END;*)
 END SafeTZ.

@@ -11,6 +11,7 @@ IMPORT Ctypes;
 IMPORT Word;
 IMPORT Thread;
 IMPORT Fmt;
+IMPORT Scheduler; (* to conform with CM3 DatePosix.m3... *)
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -129,6 +130,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
     BEGIN
       TRY
         LOCK mu DO
+          Scheduler.DisableSwitching();
           oldTZ := GetOldTZ();
           TRY
             SetCurTZ(t.tz);
@@ -161,6 +163,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
               d.zone := CopyStoT(UtimeOpsC.Get_zone(tm))
             END
           FINALLY
+            Scheduler.EnableSwitching();
             UtimeOpsC.delete_T(tms);
             SetCurTZ(oldTZ)
           END

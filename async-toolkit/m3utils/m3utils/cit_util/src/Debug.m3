@@ -22,7 +22,7 @@
 (* $Id$ *)
 
 MODULE Debug;
-FROM DebugClass IMPORT level;
+FROM DebugClass IMPORT level, mu, streams;
 IMPORT TextSet;
 IMPORT TextSetDef;
 IMPORT FileRd;
@@ -354,9 +354,7 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 VAR
   debugFilter := Env.Get("DEBUGFILTER");
   triggers: TextSet.T;
-  streams := DebugStreamList.List1(DebugStream.T { stderr }); 
   (* protected by mu *)
-  mu := NEW(MUTEX);
   calls := 0;
 
 CONST
@@ -421,17 +419,6 @@ BEGIN
       LOCK tMu DO
         tz := NIL
       END
-    END
-  END;
-
-  VAR
-    debugStr := Env.Get("DEBUGLEVEL");
-  BEGIN
-    TRY
-      IF debugStr # NIL THEN level := Scan.Int(debugStr) END
-    EXCEPT
-      Lex.Error, FloatMode.Trap => 
-        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE)
     END
   END;
 
