@@ -30,16 +30,37 @@ build_generic_implementation = build_generic_impl
 Build_generic_implementation = build_generic_impl
 
 if not defined("_exec")
-    readonly proc _exec(cmd) is
+ readonly proc _exec(cmd) is
 	if defined("CM3_VERSION")
 		exec(cmd)
 	else
 		write (cmd, CR)
-	        local ret = exec(cmd)
-	        if not equal(ret, 0) error("command failed with error code: ", ret) end
+    local ret = exec(cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
 	end
-    end
+ end
 end
+
+/* fork_exec is just normal exec on SRC and P M3 */
+if not defined ("_fork_exec") 
+  readonly proc _fork_exec(cmd) is
+    if defined("CM3_VERSION")
+      fork_exec(cmd)
+    else
+      _exec(cmd)
+    end
+  end
+end
+
+if not defined ("_fork_wait")
+  readonly proc _fork_wait(cmd) is
+    if defined("CM3_VERSION")
+      fork_wait()
+    end
+  end
+end
+
+/****************************************/
 
 readonly proc derived_template(nm) is
 	template("../" & BUILD_DIR & "/" & nm)

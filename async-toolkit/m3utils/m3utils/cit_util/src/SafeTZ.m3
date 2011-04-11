@@ -184,6 +184,6 @@ BEGIN
                                      FIRST(Date.WeekDay) });
   Debug.Out("UnixEpoch=" & Fmt.LongReal(UnixEpoch));
 
-  (* this is crazy *)
-(*  IF ABS(UnixEpoch) < 1.0d5 THEN UnixEpoch := 0.0d0 END;*)
+  (* this is crazy -- see my emails to m3devel about London's British Standard Time of 1968-1971 *)
+  IF ABS(UnixEpoch) < 1.0d5 THEN UnixEpoch := 0.0d0 END;
 END SafeTZ.
