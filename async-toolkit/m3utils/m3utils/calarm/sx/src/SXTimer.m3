@@ -6,6 +6,7 @@ IMPORT Thread;
 IMPORT SXLongReal;
 IMPORT LongrealPQ;
 IMPORT SXIterator;
+IMPORT Fmt, Debug;
 
 REVEAL
   Private = SXLongReal.Var BRANDED OBJECT END; (* this is cool! *)
@@ -63,6 +64,7 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
           WITH now = Time.Now() DO
             WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).when < now DO
               WITH head = NARROW(pq.deleteMin(),Elt) DO 
+                Debug.Out("SXTimer.Loop : set " & Fmt.LongReal(now));
                 head.t.set(now);
                 head.when := now + head.t.granularity;
                 pq.insert(head)
