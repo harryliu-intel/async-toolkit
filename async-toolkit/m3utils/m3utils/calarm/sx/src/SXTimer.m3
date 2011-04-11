@@ -13,14 +13,23 @@ REVEAL
 
   T = Public BRANDED Brand OBJECT
     granularity : LONGREAL;
+    c : CARDINAL;
   OVERRIDES
     init := Init;
     dependsOn := SXIterator.NullNull;
   END;
 
+VAR
+  c := 0;
+  cMu := NEW(MUTEX);
+
 PROCEDURE Init(t : T; granularity : LONGREAL) : T =
   BEGIN
     EVAL SXLongReal.T.init(t);
+    LOCK cMu DO
+      t.c := c;
+      INC(c)
+    END;
     t.granularity := granularity;
     t.set(Time.Now());
     Register(t);
@@ -64,7 +73,7 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
           WITH now = Time.Now() DO
             WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).when < now DO
               WITH head = NARROW(pq.deleteMin(),Elt) DO 
-                Debug.Out("SXTimer.Loop : set " & Fmt.LongReal(now));
+                Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & Fmt.LongReal(now));
                 head.t.set(now);
                 head.when := now + head.t.granularity;
                 pq.insert(head)
