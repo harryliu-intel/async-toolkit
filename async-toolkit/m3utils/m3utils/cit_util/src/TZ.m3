@@ -58,7 +58,9 @@ PROCEDURE SetCurTZ(to : TEXT) =
   BEGIN
     IF NOT Text.Equal(to,CurTZ) THEN
       WITH s = CopyTtoS(to) DO
+        Scheduler.DisableSwitching();
         CTZ.setTZ(s);
+        Scheduler.EnableSwitching();
         FreeCopiedS(s)
       END;
       CurTZ := to
@@ -68,7 +70,9 @@ PROCEDURE SetCurTZ(to : TEXT) =
 PROCEDURE GetOldTZ() : TEXT =
   (* mu must be locked *)
   BEGIN
+        Scheduler.DisableSwitching();
     WITH res = CopyStoT(CTZ.getenv(TZTZ)) DO
+        Scheduler.EnableSwitching();
       IF Debug.GetLevel() > 30 THEN 
         Thread.Release(mu); (* avoid re-entrant locking (Debug uses TZ) *)
         TRY
@@ -224,7 +228,9 @@ BEGIN
   END;
 
   WITH s = CopyTtoS(CurTZ) DO
+    Scheduler.DisableSwitching();
     CTZ.setTZ(s);
+    Scheduler.EnableSwitching();
     FreeCopiedS(s)
   END
 END TZ.
