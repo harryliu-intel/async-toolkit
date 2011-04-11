@@ -39,7 +39,7 @@ PROCEDURE Init(t : T; granularity : LONGREAL) : T =
 PROCEDURE Register(t : T) =
   BEGIN
     LOCK mu DO
-      pq.insert(NEW(Elt, when := Time.Now() + t.granularity, t := t));
+      pq.insert(NEW(Elt, priority := Time.Now() + t.granularity, t := t));
       Thread.Alert(main)
     END
   END Register;
@@ -47,7 +47,6 @@ PROCEDURE Register(t : T) =
 TYPE
   Elt = LongrealPQ.Elt OBJECT
     t    : T;
-    when : Time.T;
     sx   : SXLongReal.Var;
   END;
 
@@ -71,14 +70,14 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
       LOOP
         TRY
           WITH now = Time.Now() DO
-            WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).when < now DO
+            WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).priority < now DO
               WITH head = NARROW(pq.deleteMin(),Elt) DO 
                 head.t.set(now);
-                head.when := now + head.t.granularity;
+                head.priority := now + head.t.granularity;
 
                 Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & 
                   Fmt.LongReal(now) & " -> " & 
-                  Fmt.LongReal(head.when) & " size=" & 
+                  Fmt.LongReal(head.priority) & " size=" & 
                   Fmt.Int(pq.size()));
                 pq.insert(head)
               END
@@ -87,7 +86,7 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
             IF pq.size() = 0 THEN
               Sleep(1000.0d0) (* a long time *)
             ELSE
-              Sleep(NARROW(pq.min(),Elt).when-Time.Now())
+              Sleep(NARROW(pq.min(),Elt).priority-Time.Now())
             END
           END
         EXCEPT
