@@ -11,7 +11,7 @@ IMPORT Ctypes;
 IMPORT Word;
 IMPORT Thread;
 IMPORT Fmt;
-IMPORT Scheduler; (* to conform with CM3 DatePosix.m3... *)
+IMPORT SchedulerIndirection; (* to conform with CM3 DatePosix.m3... *)
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -58,9 +58,9 @@ PROCEDURE SetCurTZ(to : TEXT) =
   BEGIN
     IF NOT Text.Equal(to,CurTZ) THEN
       WITH s = CopyTtoS(to) DO
-        Scheduler.DisableSwitching();
+        SchedulerIndirection.DisableSwitching();
         CTZ.setTZ(s);
-        Scheduler.EnableSwitching();
+        SchedulerIndirection.EnableSwitching();
         FreeCopiedS(s)
       END;
       CurTZ := to
@@ -70,9 +70,9 @@ PROCEDURE SetCurTZ(to : TEXT) =
 PROCEDURE GetOldTZ() : TEXT =
   (* mu must be locked *)
   BEGIN
-        Scheduler.DisableSwitching();
+        SchedulerIndirection.DisableSwitching();
     WITH res = CopyStoT(CTZ.getenv(TZTZ)) DO
-        Scheduler.EnableSwitching();
+        SchedulerIndirection.EnableSwitching();
       IF Debug.GetLevel() > 30 THEN 
         Thread.Release(mu); (* avoid re-entrant locking (Debug uses TZ) *)
         TRY
@@ -134,7 +134,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
     BEGIN
       TRY
         LOCK mu DO
-          Scheduler.DisableSwitching();
+          SchedulerIndirection.DisableSwitching();
           oldTZ := GetOldTZ();
           TRY
             SetCurTZ(t.tz);
@@ -167,7 +167,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
               d.zone := CopyStoT(UtimeOpsC.Get_zone(tm))
             END
           FINALLY
-            Scheduler.EnableSwitching();
+            SchedulerIndirection.EnableSwitching();
             UtimeOpsC.delete_T(tms);
             SetCurTZ(oldTZ)
           END
@@ -228,9 +228,9 @@ BEGIN
   END;
 
   WITH s = CopyTtoS(CurTZ) DO
-    Scheduler.DisableSwitching();
+    SchedulerIndirection.DisableSwitching();
     CTZ.setTZ(s);
-    Scheduler.EnableSwitching();
+    SchedulerIndirection.EnableSwitching();
     FreeCopiedS(s)
   END
 END TZ.
