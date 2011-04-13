@@ -8,6 +8,8 @@ IMPORT LongrealPQ;
 IMPORT SXIterator;
 IMPORT Fmt, Debug;
 
+VAR DoDebug := Debug.DebugThis("SXTIMER");
+
 REVEAL
   Private = SXLongReal.Var BRANDED OBJECT END; (* this is cool! *)
 
@@ -75,10 +77,12 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
                 head.t.set(now);
                 head.priority := now + head.t.granularity;
 
-                Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & 
-                  Fmt.LongReal(now) & " -> " & 
-                  Fmt.LongReal(head.priority) & " size=" & 
-                  Fmt.Int(pq.size()));
+                IF DoDebug THEN 
+                  Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & 
+                    Fmt.LongReal(now) & " -> " & 
+                    Fmt.LongReal(head.priority) & " size=" & 
+                    Fmt.Int(pq.size()))
+                END;
                 pq.insert(head)
               END
             END;
