@@ -4,9 +4,10 @@
 (*  Debugging output and aborting the program.                               *)
 (*                                                                           *)
 (*  Copyright (c) 2000 California Institute of Technology                    *)
-(*  All rights reserved.                                                     *)
 (*  Department of Computer Science                                           *)
 (*  Pasadena, CA 91125.                                                      *)
+(*  Copyright (c) 2006-2011 Generation Capital Ltd.                          *)
+(*  All rights reserved.                                                     *)
 (*                                                                           *)
 (*  Author: Mika Nystrom <mika@cs.caltech.edu>                               *)
 (*                                                                           *)
@@ -31,9 +32,7 @@ IMPORT BreakHere;
 IMPORT Thread;
 IMPORT OSError;
 IMPORT Wr, TextWr, Text;
-FROM Stdio IMPORT stderr;
-IMPORT Env, Scan;
-IMPORT FloatMode, Lex;
+IMPORT Env;
 IMPORT Fmt;
 IMPORT Process;
 IMPORT ThreadF;
@@ -431,6 +430,25 @@ BEGIN
         WHILE p # NIL DO
           TRY
             AddStream(FileWr.Open(p.head))
+          EXCEPT
+            OSError.E(x) =>
+            Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)
+          END;
+          p := p.tail
+        END
+      END(*VAR BEGIN*)
+    END(*IF*)
+  END(*WITH*);
+
+  WITH targetstring = RTParams.Value("debugappend") DO
+    IF targetstring # NIL THEN
+      VAR 
+        reader := NEW(TextReader.T).init(targetstring); 
+        p := reader.shatter(",", endDelims := "");
+      BEGIN
+        WHILE p # NIL DO
+          TRY
+            AddStream(FileWr.OpenAppend(p.head))
           EXCEPT
             OSError.E(x) =>
             Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)

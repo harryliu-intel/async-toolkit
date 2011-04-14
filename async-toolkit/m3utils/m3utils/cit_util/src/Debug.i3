@@ -36,6 +36,7 @@ INTERFACE Debug;
      DEBUGFILTER env. variable
    
      @M3debugtrace=<filename>[,<filename>...]  RT arg
+     @M3debugappend=<filename>[,<filename>...]  RT arg
 *)
 
 IMPORT Fmt, Wr, Pathname;
