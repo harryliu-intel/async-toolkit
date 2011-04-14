@@ -1,6 +1,6 @@
 (* $Id$ *)
 
-MODULE SX EXPORTS SX, SXSelect;
+MODULE SX EXPORTS SX, SXSelect, SXDebug;
 IMPORT SXClass;
 IMPORT Thread, ThreadF;
 IMPORT XTime AS Time;
@@ -12,6 +12,7 @@ IMPORT RefList;
 IMPORT SXRef;
 IMPORT Integer, RefanyArraySort;
 IMPORT Word;
+IMPORT SXRefTbl;
 
 (* methods for garbage collecting...?  Would imply using WeakRef. *)
 
@@ -117,6 +118,12 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
     d : RefList.T;
   BEGIN
 
+    VAR cb : REFANY; BEGIN
+      IF tracing AND tab.get(t,cb) THEN
+        NARROW(cb,Callback).changed(t)
+      END
+    END;
+
     Thread.Broadcast(t.c);
 
     LOCK t.dMu DO
@@ -134,6 +141,20 @@ PROCEDURE Propagate(t : T; when : Time.T; locked : BOOLEAN) =
       LOCK t.mu DO DoIt() END
     END
   END Propagate;
+
+VAR tracing := FALSE;
+    
+PROCEDURE Trace(on : BOOLEAN) = BEGIN tracing := on END Trace;
+
+VAR tab := NEW(SXRefTbl.Default).init();
+    tabMu := NEW(MUTEX);
+
+PROCEDURE Register(sx : T; callback : Callback) =
+  BEGIN
+    LOCK tabMu DO
+      EVAL tab.put(sx,callback)
+    END
+  END Register;
 
 VAR giant := NEW(MUTEX);
 

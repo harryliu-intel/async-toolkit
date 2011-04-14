@@ -9,6 +9,7 @@ Interface("SXRoot")
 Interface("SXClass")
 Module("SX")
 Interface("SXSelect")
+Interface("SXDebug")
 
 /* most of the code in SX is generic: */
 template("sxtype")
