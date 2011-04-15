@@ -425,6 +425,8 @@ PROCEDURE ProcessTypeSpec(h: Handle; ts: M3AST_AS.TYPE_SPEC): Type.T =
         IF formalParam.as_default # NIL THEN
           Debug.Out("formal type: " &
             RTBrand.GetName(TYPECODE(formalParam)));
+          Debug.Out("formal name: " &
+            Atom.ToText(formals[i].name));
           formals[i].default := AstToVal.ProcessExp(
                                     h,
                                     NARROW(formalParam, 
