@@ -1784,7 +1784,7 @@
 
 (define (spit-out-intf intf-name proc-stubs converter-intfs env)
   (string-append
-   "INTERFACE " intf-name ";" dnl
+   (if is-unsafe "UNSAFE " "") "INTERFACE " intf-name ";" dnl
    "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
    (format-imports env)
    dnl
@@ -2009,7 +2009,7 @@
     (imports 'insert! 'SchemePair)
     
     (string-flatten
-     "MODULE " intf-name ";" dnl
+     (if is-unsafe "UNSAFE " "") "MODULE " intf-name ";" dnl
      "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
      (format-imports env)
      dnl

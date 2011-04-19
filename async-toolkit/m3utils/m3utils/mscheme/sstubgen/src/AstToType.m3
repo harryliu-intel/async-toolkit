@@ -135,6 +135,7 @@ PROCEDURE GetNames(c : M3Context.T;
     IF M3Context.FindExact(c, 
                            Atom.ToText(qid.intf), 
                            M3CUnit.Type.Interface, cu) THEN
+      isUnsafe := NARROW(cu.as_root,M3AST_AS.Interface).as_unsafe # NIL;
       M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Entry);
       ProcessUnit();
       M3CConcTypeSpec.SetCurrentReveal(cu, ASTWalk.VisitMode.Exit)
@@ -143,6 +144,7 @@ PROCEDURE GetNames(c : M3Context.T;
                            Atom.ToText(qid.intf), 
                            M3CUnit.Type.Interface_gen_ins, cu) THEN
 
+      isUnsafe := FALSE; (* no false generics *)
       cu := NARROW(cu.as_root,M3AST_AS.Interface_gen_ins).sm_ins_comp_unit;
       (* this seems to give us access to all the right names... *)
 
