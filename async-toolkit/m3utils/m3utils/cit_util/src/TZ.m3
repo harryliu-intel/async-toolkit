@@ -128,13 +128,14 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
               Debug.Out("TZ.Localtime: time=" & Fmt.LongReal(time))
             END;
     VAR
-      tms   := UtimeOpsC.make_T();
+      tms : UtimeOpsC.T;
       clock : Ctypes.long;
       oldTZ : TEXT;
     BEGIN
       TRY
         LOCK mu DO
           SchedulerIndirection.DisableSwitching();
+      tms   := UtimeOpsC.make_T();
           oldTZ := GetOldTZ();
           TRY
             SetCurTZ(t.tz);
@@ -167,8 +168,8 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
               d.zone := CopyStoT(UtimeOpsC.Get_zone(tm))
             END
           FINALLY
-            SchedulerIndirection.EnableSwitching();
             UtimeOpsC.delete_T(tms);
+            SchedulerIndirection.EnableSwitching();
             SetCurTZ(oldTZ)
           END
         END;
@@ -186,9 +187,11 @@ PROCEDURE Mktime(t : T; d : Date.T) : Time.T =
       SetCurTZ(t.tz);
       
       VAR
-        tm  := UtimeOpsC.make_T();
+        tm : UtimeOpsC.T;
       BEGIN
+      SchedulerIndirection.DisableSwitching();
         TRY
+        tm  := UtimeOpsC.make_T();
           tm := UtimeOpsC.localtime_r(SomeTimeT, (* any legal time *)
                                       tm);
         BEGIN
@@ -204,7 +207,8 @@ PROCEDURE Mktime(t : T; d : Date.T) : Time.T =
           END
         END
       FINALLY
-        UtimeOpsC.delete_T(tm)
+        UtimeOpsC.delete_T(tm);
+      SchedulerIndirection.EnableSwitching();
       END
       END
     END

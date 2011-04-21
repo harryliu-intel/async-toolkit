@@ -6,8 +6,19 @@ IMPORT UtimeOpsC;
 IMPORT M3toC;
 FROM Ctypes IMPORT char_star, long_star;
 IMPORT Text;
+IMPORT SchedulerIndirection;
 
 PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
+  BEGIN 
+    SchedulerIndirection.DisableSwitching();
+    TRY
+      RETURN ctime_unwrapped(clock,keepNL,showTZ) 
+    FINALLY
+      SchedulerIndirection.EnableSwitching()
+    END
+  END ctime;
+
+PROCEDURE ctime_unwrapped(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
   VAR
     clockbuff : ARRAY [0..4] OF INTEGER; (* portable, hopefully... *)
     buff : ARRAY [0..25] OF CHAR;
@@ -40,6 +51,6 @@ PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
     FINALLY
       UtimeOpsC.delete_T(tm)
     END
-  END ctime;
+  END ctime_unwrapped;
 
 BEGIN END UCTime.
