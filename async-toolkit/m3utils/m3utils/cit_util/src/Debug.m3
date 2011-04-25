@@ -440,6 +440,21 @@ BEGIN
     END(*IF*)
   END(*WITH*);
 
+  WITH targetstring = RTParams.Value("pidfile") DO
+    IF targetstring # NIL THEN
+      TRY
+        WITH wr = FileWr.Open(targetstring) DO
+          Wr.PutText(wr, Fmt.Int(Process.GetMyID()));
+          Wr.PutChar(wr, '\n');
+          Wr.Close(wr)
+        END
+      EXCEPT
+        Wr.Failure, OSError.E => 
+        Error("Couldn't write PID to \"" & targetstring & "\"", exit := TRUE)
+      END
+    END
+  END;
+
   WITH targetstring = RTParams.Value("debugappend") DO
     IF targetstring # NIL THEN
       VAR 
