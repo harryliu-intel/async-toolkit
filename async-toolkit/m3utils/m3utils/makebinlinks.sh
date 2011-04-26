@@ -25,6 +25,7 @@ ${ROOT}/calarm/gridctl/${BINDIR}/gridctl
 ${ROOT}/calarm/regress/hcdriver/${BINDIR}/hcdriver
 ${ROOT}/calarm/histogram/${BINDIR}/histogram
 ${ROOT}/calarm/keypaste/${BINDIR}/keypaste
+${ROOT}/calarm/until/${BINDIR}/until
 ${ROOT}/calarm/mktsim/tradeisolator/${BINDIR}/mktisolator
 ${ROOT}/mscheme/interactive_r/${BINDIR}/mscheme
 ${ROOT}/calarm/picktickers/${BINDIR}/picktickers
