@@ -1,13 +1,14 @@
 (* $Id$ *)
 
 (* 
-   Copyright (c) 2007-2008, Generation Capital Ltd.  All rights reserved.
+   Copyright (c) 2007-2008, 2011 Generation Capital Ltd.  All rights reserved.
    
    Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
 INTERFACE HMTime;
 IMPORT Date, Word, FinDate;
+IMPORT Time, TZ;
 
 EXCEPTION ParseError;
 
@@ -58,6 +59,8 @@ EXCEPTION Overflow(CARDINAL); (* arg is excess. *)
 
 PROCEDURE Advance(READONLY a : T; bySeconds : CARDINAL) : T 
   RAISES { Overflow };
+
+PROCEDURE Today(tz : TZ.T; READONLY hm : T) : Time.T;
 
 CONST Brand = "HMTime";
 

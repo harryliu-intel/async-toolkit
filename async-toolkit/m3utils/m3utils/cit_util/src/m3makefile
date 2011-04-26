@@ -359,6 +359,7 @@ implementation("SafeTZ")
 
 Module("FinDate")
 Module("HMTime")
+implementation("HMTimeToday")
 
 Table("IntFinDate", "Integer", "FinDate")
 Array_sort("FinDate","FinDate")
