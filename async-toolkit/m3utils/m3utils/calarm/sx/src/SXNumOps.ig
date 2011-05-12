@@ -31,9 +31,20 @@ PROCEDURE Prod(READONLY a : ARRAY OF Elem.T) : Elem.T;
 PROCEDURE WeightedSum(READONLY w : ARRAY OF Elem.Base; 
                       READONLY a : ARRAY OF Elem.T) : Elem.T;
 
+PROCEDURE Average(READONLY a : ARRAY OF Elem.T; u : CARDINAL := 0) : Elem.T;
+  (* performs DivB(Sum(a),NUMBER(a))
+
+     -- this is perhaps not that useful for integers 
+     
+     u is the number of entries allowed to be undefined
+  *)
+
 (* helper routines *)
 
 PROCEDURE SumB(READONLY a : ARRAY OF Elem.Base) : Elem.Base;
 PROCEDURE ProdB(READONLY a : ARRAY OF Elem.Base) : Elem.Base;
+
+PROCEDURE DivB(a, b : Elem.Base) : Elem.Base;
+  (* N.B. DivB has different implementations for Real and Int *)
 
 END SXNumOps.

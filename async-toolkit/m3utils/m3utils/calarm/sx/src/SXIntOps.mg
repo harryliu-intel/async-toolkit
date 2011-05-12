@@ -1,12 +1,9 @@
 (* $Id$ *)
 
-GENERIC MODULE SXIntOps(Elem,Elem_ElemFuncOps);
+GENERIC MODULE SXIntOps(Elem);
 
 PROCEDURE DivB(a, b : Elem.Base) : Elem.Base =
   BEGIN RETURN a DIV b END DivB;
-
-PROCEDURE Div(a, b : Elem.T) : Elem.T=
-  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,DivB,"Div") END Div;
 
 BEGIN 
   Zero   :=  0; 

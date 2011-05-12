@@ -47,16 +47,22 @@ TYPE
     dependsOn := NAryDepends;
   END;
 
-  NAry = NAryRoot OBJECT
-    mu : MUTEX;
+  NAryLock = NAryRoot OBJECT mu : MUTEX END;
+
+  NAry = NAryLock OBJECT
     f  : FN;
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := NAryRecalc;
   END;
 
-  IAry = NAryRoot OBJECT
-    mu : MUTEX;
+  NAryU = NAry OBJECT
+    u  : CARDINAL;
+  OVERRIDES
+    recalc := NAryURecalc;
+  END;
+
+  IAry = NAryLock OBJECT
     f  : FI;
     i  : SXInt.T;
     a  : REF ARRAY OF Arg.T;
@@ -137,6 +143,30 @@ PROCEDURE NAryRecalc(n : NAry; when : Time.T) : BOOLEAN =
     END
   END NAryRecalc;      
 
+PROCEDURE NAryURecalc(n : NAryU; when : Time.T) : BOOLEAN =
+  <*FATAL SX.Uninitialized*>
+  VAR u := 0;
+  BEGIN
+    (* prepare av *)
+    LOCK n.mu DO
+      FOR i := FIRST(n.a^) TO LAST(n.a^) DO
+        (* note that we could get SX.Uninitialized here if we use
+           .uninitialize on the input SXs. 
+           
+           should we lock n.a?
+        *)
+        IF n.a[i].initialized() THEN
+          n.av[i-u] := n.a[i].value()
+        ELSIF u = n.u THEN
+          RETURN FALSE
+        ELSE
+          INC(u)
+        END;
+      END;
+      RETURN n.update(n.f(SUBARRAY(n.av^,0,NUMBER(n.a^)-u)),when)
+    END
+  END NAryURecalc;      
+
 PROCEDURE IAryRecalc(n : IAry; when : Time.T) : BOOLEAN =
   BEGIN
     TRY
@@ -202,17 +232,29 @@ PROCEDURE BinarySymmetricShortCircuitFunc(a, b : Arg.T; f : F2;
   END BinarySymmetricShortCircuitFunc;
 
 PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : Result.T =
+  BEGIN
+    RETURN NAryFuncs(NEW(NAry),a,f,opName)
+  END NAryFunc;
+
+<*UNUSED*>
+PROCEDURE NAryUFunc(READONLY a : ARRAY OF Arg.T; f : FN; un : CARDINAL; opName : TEXT := NIL) : Result.T =
+  BEGIN
+    RETURN NAryFuncs(NEW(NAryU, u := un),a,f,opName)
+  END NAryUFunc;
+
+PROCEDURE NAryFuncs(res : NAry; READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : Result.T =
   VAR 
     max := FIRST(Time.T);
   BEGIN 
-    WITH res = NARROW(NEW(NAry, 
-                          opName := opName,
-                          mu := NEW(MUTEX),
-                          f := f, 
-                          a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a)), 
-                          av := NEW(REF ARRAY OF Arg.Base, NUMBER(a))).init(),
-                      NAry),
-         sa = NEW(REF SX.Array, NUMBER(a))^ DO
+    WITH sa = NEW(REF SX.Array, NUMBER(a))^ DO
+
+      res.opName := opName;
+      res.mu := NEW(MUTEX);
+      res.f := f;
+      res.a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a));
+      res.av := NEW(REF ARRAY OF Arg.Base, NUMBER(a));
+      
+      EVAL res.init();
       
       FOR i := FIRST(a) TO LAST(a) DO
         sa[i] := a[i];
@@ -222,7 +264,7 @@ PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : 
 
       SX.Lock(sa);
       TRY
-        EVAL NAryRecalc(res, max);
+        EVAL res.recalc(max);
         FOR i := FIRST(a) TO LAST(a) DO
           a[i].depends(res);
         END
@@ -232,7 +274,7 @@ PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : 
 
       RETURN res
     END
-  END NAryFunc;
+  END NAryFuncs;
 
 PROCEDURE IAryFunc(int : SXInt.T;
                    READONLY a : ARRAY OF Arg.T; f : FI;
@@ -286,12 +328,17 @@ TYPE
     recalc := BinaryORecalc;
   END;
 
-  NAryO = NAryRoot OBJECT
-    mu : MUTEX;
+  NAryO = NAryLock OBJECT
     o : ON;
     av : REF ARRAY OF Arg.Base; (* temporary storage, allocated once only *)
   OVERRIDES
     recalc := NAryORecalc;
+  END;
+
+  NAryOU = NAryO OBJECT
+    u  : CARDINAL;
+  OVERRIDES
+    recalc := NAryOURecalc;
   END;
 
 PROCEDURE UnaryORecalc(u : UnaryO; when : Time.T) : BOOLEAN =
@@ -327,6 +374,30 @@ PROCEDURE NAryORecalc(n : NAryO; when : Time.T) : BOOLEAN =
     END
   END NAryORecalc;      
 
+PROCEDURE NAryOURecalc(n : NAryOU; when : Time.T) : BOOLEAN =
+  <*FATAL SX.Uninitialized*>
+  VAR u := 0;
+  BEGIN
+    (* prepare av *)
+    LOCK n.mu DO
+      FOR i := FIRST(n.a^) TO LAST(n.a^) DO
+        (* note that we could get SX.Uninitialized here if we use
+           .uninitialize on the input SXs. 
+           
+           should we lock n.a?
+        *)
+        IF n.a[i].initialized() THEN
+          n.av[i-u] := n.a[i].value()
+        ELSIF u = n.u THEN
+          RETURN FALSE
+        ELSE
+          INC(u)
+        END;
+      END;
+      RETURN n.update(n.o.op(SUBARRAY(n.av^,0,NUMBER(n.a^)-u)),when)
+    END
+  END NAryOURecalc;      
+
 PROCEDURE UnaryOFunc(a : Arg.T; o : O1; opName : TEXT := NIL) : Result.T =
   BEGIN 
     WITH res = NEW(UnaryO, opName := opName, o := o, a := a).init() DO
@@ -356,18 +427,25 @@ PROCEDURE BinaryOFunc(a, b : Arg.T; o : O2; opName : TEXT := NIL) : Result.T =
   END BinaryOFunc;
 
 PROCEDURE NAryOFunc(READONLY a : ARRAY OF Arg.T; o : ON; opName : TEXT := NIL) : Result.T =
+  BEGIN RETURN NAryOFuncs(NEW(NAryO), a, o, opName) END NAryOFunc;
+
+PROCEDURE NAryOUFunc(READONLY a : ARRAY OF Arg.T; o : ON; un : CARDINAL; opName : TEXT := NIL) : Result.T =
+  BEGIN RETURN NAryOFuncs(NEW(NAryOU, u := un), a, o, opName) END NAryOUFunc;
+
+PROCEDURE NAryOFuncs(res : NAryO; READONLY a : ARRAY OF Arg.T; o : ON; opName : TEXT := NIL) : Result.T =
   VAR 
     max := FIRST(Time.T);
   BEGIN 
-    WITH res = NARROW(NEW(NAryO, 
-                          opName := opName,
-                          mu := NEW(MUTEX),
-                          o := o, 
-                          a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a)), 
-                          av := NEW(REF ARRAY OF Arg.Base, NUMBER(a))).init(),
-                      NAryO),
-         sa = NEW(REF SX.Array, NUMBER(a))^ DO
-      
+    WITH sa = NEW(REF SX.Array, NUMBER(a))^ DO
+
+      res.opName := opName;
+      res.mu := NEW(MUTEX);
+      res.o := o;
+      res.a  := NEW(REF ARRAY OF Arg.T,    NUMBER(a));
+      res.av := NEW(REF ARRAY OF Arg.Base, NUMBER(a));
+
+      EVAL res.init();
+
       FOR i := FIRST(a) TO LAST(a) DO
         sa[i] := a[i];
         res.a[i] := a[i]; 
@@ -386,6 +464,6 @@ PROCEDURE NAryOFunc(READONLY a : ARRAY OF Arg.T; o : ON; opName : TEXT := NIL) :
 
       RETURN res
     END
-  END NAryOFunc;
+  END NAryOFuncs;
 
 BEGIN END SXFuncOps.

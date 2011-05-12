@@ -47,6 +47,9 @@ PROCEDURE Times(a, b : Elem.T; ss : BOOLEAN) : Elem.T =
     END
   END Times;
 
+PROCEDURE Div(a, b : Elem.T) : Elem.T=
+  BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,DivB,"Div") END Div;
+
 PROCEDURE Mod(a, b : Elem.T) : Elem.T =
   BEGIN RETURN Elem_ElemFuncOps.BinaryFunc(a,b,ModB,"Mod") END Mod;
 
@@ -151,6 +154,32 @@ PROCEDURE WeightedSum(READONLY w : ARRAY OF Elem.Base;
       RETURN Elem_ElemFuncOps.NAryOFunc(a, weights, "WeightedSum")
     END
   END WeightedSum;
+
+TYPE
+  Ave = Elem_ElemFuncOps.ON OBJECT
+  OVERRIDES
+    op := AverageOp;
+  END;
+
+PROCEDURE AverageOp(<*UNUSED*>av : Ave;
+                    READONLY a : ARRAY OF Elem.Base) : Elem.Base =
+  VAR
+    sum := Zero;
+    cnt := Zero;
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      sum := sum + a[i];
+      cnt := cnt + One
+    END;
+    RETURN DivB(sum,cnt)
+  END AverageOp;
+
+PROCEDURE Average(READONLY a : ARRAY OF Elem.T; u : CARDINAL) : Elem.T =
+  BEGIN
+    WITH ave = NEW(Ave) DO
+      RETURN Elem_ElemFuncOps.NAryOUFunc(a, ave, u, "Average")
+    END
+  END Average;
 
 BEGIN END SXNumOps.
 
