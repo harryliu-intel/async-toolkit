@@ -104,6 +104,9 @@ Module("SXTimer")
 Module("SXIterator")
 Module("SXPrettyPrint")
 
+template ("sxsloppybuf")
+Generic_module("SXSloppyBuf")
+
 library ("sx")
 
 
