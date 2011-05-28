@@ -39,7 +39,7 @@ TYPE
     wait := Wait;
   END;
 
-  MainClosure = Thread.Closure OBJECT
+  MainClosure = Thread.SizedClosure OBJECT
     c: PrivateCompletion;
     src: Rd.T;
     wd0: Pathname.T;
@@ -100,7 +100,7 @@ PROCEDURE Run(source: Rd.T;
              po := ForkWriter(stdout),
              pe := ForkWriter(stderr),
              pi := ForkReader(stdin),
-             main := NEW(MainClosure, src:=source, wd0:=wd0));
+             main := NEW(MainClosure, src:=source, wd0:=wd0, stackSize := 8192));
   BEGIN
     c.main.c := c;
     c.th := Thread.Fork(c.main);
