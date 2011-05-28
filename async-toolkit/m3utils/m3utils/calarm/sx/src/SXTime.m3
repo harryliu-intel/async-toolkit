@@ -8,7 +8,7 @@ PROCEDURE log2(x : LONGREAL) : LONGREAL =
   BEGIN RETURN log(x) / log(2.0d0) END log2;
 
 TYPE
-  Closure = Thread.Closure OBJECT
+  Closure = Thread.SizedClosure OBJECT
     interval, next : Time.T;
     sx : SXLongReal.Var;
     ix : SXInt.Var;
@@ -85,6 +85,8 @@ PROCEDURE NextFrom(now, interval, offset : Time.T) : Time.T =
     END
   END NextFrom;
 
+CONST StackSize = 4096;
+
 PROCEDURE New(interval, offset : Time.T) : SXLongReal.T =
   BEGIN
     WITH sx = NEW(SXLongReal.Var).initVal(Time.Now()),
@@ -93,7 +95,8 @@ PROCEDURE New(interval, offset : Time.T) : SXLongReal.T =
                            interval := interval, 
                            next := Next(interval,offset),
                            sx := sx,
-                           ix := ix));
+                           ix := ix, 
+                           stackSize := StackSize));
       RETURN sx
     END
   END New;
@@ -106,7 +109,8 @@ PROCEDURE NewCounter(interval, offset : Time.T) : SXInt.T =
                            interval := interval, 
                            next := Next(interval,offset),
                            sx := sx,
-                           ix := ix));
+                           ix := ix, 
+                           stackSize := StackSize));
       RETURN ix
     END
   END NewCounter;
