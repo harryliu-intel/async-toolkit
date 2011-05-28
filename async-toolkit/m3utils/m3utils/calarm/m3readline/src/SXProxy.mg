@@ -54,14 +54,14 @@ PROCEDURE Init(t : T; initVal : Elem.T; mode : VarUI.ProxyMode) : T =
   BEGIN
     EVAL VarUI.VarProxy.init(t, mode);
     t.in := NEW(SXElem, p := t).initVal(initVal);
-    EVAL Thread.Fork(NEW(Closure, t := t));
+    EVAL Thread.Fork(NEW(Closure, t := t, stackSize := 4096));
     RETURN t
   END Init;
 
 PROCEDURE GetSX(t : T) : SXElem = BEGIN RETURN t.in END GetSX;
 
 TYPE 
-  Closure = Thread.Closure OBJECT
+  Closure = Thread.SizedClosure OBJECT
     t : T;
   OVERRIDES
     apply := Apply;
