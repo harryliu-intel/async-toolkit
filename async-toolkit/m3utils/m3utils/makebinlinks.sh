@@ -44,6 +44,7 @@ ${ROOT}/calarm/twslib/testtrade2/server/${BINDIR}/tradeserver
 ${ROOT}/calarm/trailingave/${BINDIR}/trailingave
 ${ROOT}/calarm/dumponeperiod/${BINDIR}/dumponeperiod
 ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
+${ROOT}/calarm/transposecsv/${BINDIR}/transposecsv
 "
 
 SCRIPTS="
