@@ -11,6 +11,7 @@ IMPORT Pathname;
 
 IMPORT Thread;
 IMPORT RTCollector; (* Enable/Disable to avoid stepping on malloc *)
+IMPORT SchedulerIndirection;  (* enable/disable to avoid malloc on malloc *)
 
 CONST TE = Text.Equal;
 
@@ -93,8 +94,10 @@ PROCEDURE DoIt(p : Pathname.T) : T =
     WITH s = M3toC.CopyTtoS(p) DO
       TRY
         RTCollector.Disable(); (* xmlParser uses malloc *)
+        SchedulerIndirection.DisableSwitching();
         EVAL xmlParser.xmlParserMain(s, ru, Start, AttrP, End, CharData)
       FINALLY
+        SchedulerIndirection.EnableSwitching();
         RTCollector.Enable();
         M3toC.FreeCopiedS(s)
       END
@@ -112,8 +115,10 @@ PROCEDURE DoText(t : TEXT) : T =
     WITH s = M3toC.CopyTtoS(t) DO
       TRY
         RTCollector.Disable(); (* xmlParser uses malloc *)
+        SchedulerIndirection.DisableSwitching();
         EVAL xmlParser.xmlParserString(s, ru, Start, AttrP, End, CharData)
       FINALLY
+        SchedulerIndirection.EnableSwitching();
         RTCollector.Enable();
         M3toC.FreeCopiedS(s)
       END
