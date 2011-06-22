@@ -152,14 +152,15 @@
 (define types
   (list
    ;; sym-name, SQL-name, m3-name, m3-must-import, sql-m3-read
-   (list 'serial           "serial"           "INTEGER"   #f  int-conversion )
-   (list 'varchar          "varchar"          "TEXT"      #f  str-conversion )
-   (list 'integer          "integer"          "INTEGER"   #f  int-conversion )
-   (list 'double-precision "double precision" "LONGREAL"  #f  lr-conversion )
+   (list 'serial           "serial"           "INTEGER"   #f  int-conversion  )
+   (list 'varchar          "varchar"          "TEXT"      #f  str-conversion  )
+   (list 'integer          "integer"          "INTEGER"   #f  int-conversion  )
+   (list 'double-precision "double precision" "LONGREAL"  #f  lr-conversion   )
    (list 'boolean          "boolean"          "BOOLEAN"   #f  bool-conversion )
    (list 'timestamp        "timestamp with time zone" 
-                                              "XTime"     #t  ts-conversion)
-   (list 'id               "integer"          "INTEGER"   #f  int-conversion)  
+                                              "XTime"     #t  ts-conversion   )
+   (list 'id               "integer"          "INTEGER"   #f  int-conversion  )  
+   (list 'date             "date"             "TEXT"      #f  str-conversion  ) ;; hack
    )
 )
 
