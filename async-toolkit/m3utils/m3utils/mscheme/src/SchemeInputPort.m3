@@ -21,6 +21,7 @@ IMPORT SchemeString;
 IMPORT SchemePair, SchemeUtils;
 IMPORT SchemeInputPortClass;
 IMPORT Fmt;
+(*IMPORT Debug;*)
 
 REVEAL RdClass.Private <: MUTEX; (* see cryptic SRC comments *)
 
@@ -434,18 +435,24 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
 
         IF c IN NumberChars THEN
           WITH txt = WxToText(wx) DO
-            EVAL WxReset(wx);
-            TRY
-              WITH lr = Scan.LongReal(txt), 
-                   lrp = NEW(SchemeLongReal.T) DO
-                lrp^ := lr;
-                RETURN lrp
+            (* note we are stricter than Modula-3 here.
+               we allow only "e" as the exponent marker.  Not E, d, D, x, or X. *)
+
+            IF HaveAlphasOtherThane(txt) THEN
+            ELSE
+              EVAL WxReset(wx);
+              TRY
+                WITH lr = Scan.LongReal(txt), 
+                     lrp = NEW(SchemeLongReal.T) DO
+                  lrp^ := lr;
+                  RETURN lrp
+                END
+              EXCEPT
+                Lex.Error, FloatMode.Trap => 
+                  WxPutText(wx, txt) (* restore END *);
               END
-            EXCEPT
-              Lex.Error, FloatMode.Trap => 
-                WxPutText(wx, txt) (* restore END *);
             END
-          END
+          END 
         END;
 
         IF CaseInsensitive THEN
@@ -456,6 +463,18 @@ PROCEDURE NextToken(t : T; wx : Wx) : Object RAISES { E } =
       END
     END
   END NextToken;
+
+PROCEDURE HaveAlphasOtherThane(txt : TEXT) : BOOLEAN =
+  BEGIN
+    FOR i := 0 TO Text.Length(txt)-1 DO
+      WITH c = Text.GetChar(txt, i) DO
+        IF c >= 'a' AND c <= 'z' OR c >= 'A' AND c <= 'Z' THEN
+          IF c # 'e' THEN RETURN TRUE END
+        END
+      END
+    END;
+    RETURN FALSE
+  END HaveAlphasOtherThane;
 
 PROCEDURE CharSeqToArray(seq : CharSeq.T) : String =
   BEGIN
