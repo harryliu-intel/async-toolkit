@@ -77,8 +77,19 @@ BEGIN
         FOR i := 0 TO len-1 DO
           WITH c = Text.GetChar(line,i) DO
             (* should be careful with quotation marks etc *)
-            IF c = ',' THEN
-              seq.addhi(Text.Sub(line, p, i-p));
+            IF c = ',' OR c = '\r' OR i = len-1 THEN
+              VAR j : CARDINAL;
+              BEGIN
+                IF i = len-1 THEN
+                  j := i + 1 (* include last char *)
+                ELSE
+                  j := i     (* do not include separator *)
+                END;
+
+                WITH w = Text.Sub(line, p, j-p) DO
+                  seq.addhi(w)
+                END
+              END;
               p := i+1
             END
           END
