@@ -2,6 +2,14 @@
 
 MODULE Main;
 
+(* 
+   align columns of CSV file for terminal display
+
+   Example.
+
+   csvalign -i ../../frac_f/src/GC.csv
+*)
+
 IMPORT ParseParams, Stdio;
 IMPORT Wr, Text, FileRd, TextSeq, RefSeq;
 IMPORT Debug, Rd;
