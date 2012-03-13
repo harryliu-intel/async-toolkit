@@ -15,8 +15,9 @@ IMPORT Wr, Text, FileRd, TextSeq, RefSeq;
 IMPORT Debug, Rd;
 IMPORT Thread;
 IMPORT OSError;
+IMPORT AL;
 
-<*FATAL Thread.Alerted, Wr.Failure, OSError.E, Rd.Failure*>
+<*FATAL Thread.Alerted, OSError.E, Rd.Failure*>
 
 VAR
   rd      := Stdio.stdin;
@@ -34,16 +35,21 @@ PROCEDURE MaxWidth(s : TextSeq.T; VAR w : ARRAY OF CARDINAL) =
 
 PROCEDURE DumpLine(s : TextSeq.T; READONLY w : ARRAY OF CARDINAL) = 
   BEGIN
-    FOR i := 0 TO s.size()-1 DO
-      WITH t = s.get(i) DO
-        Wr.PutText(wr, t);
-        FOR i := 0 TO w[i] - Text.Length(t) DO
-          Wr.PutChar(wr, ' ')
+    TRY
+      FOR i := 0 TO s.size()-1 DO
+        WITH t = s.get(i) DO
+          Wr.PutText(wr, t);
+          FOR i := 0 TO w[i] - Text.Length(t) DO
+            Wr.PutChar(wr, ' ')
+          END;
+          IF i # s.size()-1 THEN
+            Wr.PutText(wr, sep)
+          END
         END;
-        IF i # s.size()-1 THEN
-          Wr.PutText(wr, sep)
-        END
       END;
+      Wr.PutChar(wr, '\n')
+    EXCEPT
+      Wr.Failure(x) => Debug.Error("Wr.Failure: " & AL.Format(x))
     END
   END DumpLine;
 
@@ -68,19 +74,23 @@ BEGIN
 
   TRY
     LOOP
+      CONST 
+        Seps = SET OF CHAR { '\r', ',' };
+
       VAR
         line := Rd.GetLine(rd);
         len := Text.Length(line);
         seq := NEW(TextSeq.T).init();
         p := 0;
+
       BEGIN
         FOR i := 0 TO len-1 DO
           WITH c = Text.GetChar(line,i) DO
             (* should be careful with quotation marks etc *)
-            IF c = ',' OR c = '\r' OR i = len-1 THEN
+            IF c IN Seps OR i = len-1 THEN
               VAR j : CARDINAL;
               BEGIN
-                IF i = len-1 THEN
+                IF NOT c IN Seps AND i = len-1 THEN
                   j := i + 1 (* include last char *)
                 ELSE
                   j := i     (* do not include separator *)
@@ -117,7 +127,6 @@ BEGIN
 
     FOR i := 0 TO lines.size()-1 DO
       DumpLine(lines.get(i), w^);
-      Wr.PutChar(wr, '\n')
     END
   END
 
