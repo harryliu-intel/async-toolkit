@@ -157,4 +157,12 @@ PROCEDURE FromSeconds(s : CARDINAL) : T RAISES { Overflow } =
     RETURN t
   END FromSeconds;
 
+PROCEDURE ParseF1224(t : TEXT) : F1224 RAISES { ParseError } = 
+  BEGIN
+    FOR i := FIRST(F1224) TO LAST(F1224) DO
+      IF TE(t, F1224Names[i]) THEN RETURN i END
+    END;
+    RAISE ParseError
+  END ParseF1224;
+
 BEGIN END HMTime.

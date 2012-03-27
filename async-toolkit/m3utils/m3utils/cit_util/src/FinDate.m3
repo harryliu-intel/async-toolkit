@@ -7,6 +7,8 @@ IMPORT Date, XTime AS Time;
 IMPORT Word;
 IMPORT IntFinDateTbl;
 
+CONST TE = Text.Equal;
+
 PROCEDURE ParseCmdLine(c : TEXT) : T RAISES { ParseError } =
   BEGIN
     TRY
@@ -432,6 +434,14 @@ PROCEDURE MYEqual(READONLY a, b : MonthYear) : BOOLEAN =
   BEGIN RETURN a = b END MYEqual;
 
 (**********************************************************************)
+
+PROCEDURE ParseSpecificFormat(t : TEXT) : SpecificFormat RAISES { ParseError }=
+  BEGIN
+    FOR i := FIRST(SpecificFormat) TO LAST(SpecificFormat) DO
+      IF TE(t, SpecificFormatNames[i]) THEN RETURN i END
+    END;
+    RAISE ParseError
+  END ParseSpecificFormat;
 
 VAR
   LongAgoJulian := Julian(LongAgo);
