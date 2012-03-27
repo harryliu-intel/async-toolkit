@@ -3,6 +3,9 @@
 MODULE HMTime;
 IMPORT TextReader, Scan, Lex, FloatMode, Date, Fmt;
 IMPORT FinDate, Word;
+IMPORT Text, TextUtils;
+
+CONST TE = Text.Equal;
 
 PROCEDURE Format(t : T) : TEXT =
   CONST
@@ -24,21 +27,43 @@ PROCEDURE Check(h,m,s : INTEGER) RAISES { ParseError } =
     END
   END Check;
 
-PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } = 
+PROCEDURE Parse(t : TEXT; f : F1224) : T RAISES { ParseError } = 
   BEGIN
     TRY
+
+      PROCEDURE ParseAmPm(lower : TEXT) : BOOLEAN =
+        BEGIN
+          IF TE(lower, "am") THEN (* skip *)
+          ELSIF TE(lower, "pm") THEN INC(h,12)
+          ELSE RETURN FALSE
+          END;
+          RETURN TRUE
+        END ParseAmPm;
+
       VAR
         reader := NEW(TextReader.T).init(t);
         h, m := Scan.Int(reader.nextE(":"));
+        s := 0;
       BEGIN
-        IF NOT reader.empty() THEN
-          WITH s = Scan.Int(reader.nextE(":")) DO
-            Check(h,m,s);
-            RETURN T { h, m, s }
+        (* hmm *)
+
+        IF f = F1224.F24 THEN
+          IF NOT reader.empty() THEN
+            WITH s = Scan.Int(reader.nextE("")) DO
+              Check(h,m,s);
+            END
           END
         ELSE
-          RETURN T { h, m, 0 }
-        END
+          WITH trail = TextUtils.ToLower(reader.nextE(":")) DO
+            IF NOT ParseAmPm(trail) THEN
+              s := Scan.Int(trail); 
+              IF NOT ParseAmPm(TextUtils.ToLower(reader.nextE(""))) THEN
+                RAISE ParseError
+              END
+            END;
+          END
+        END;
+        RETURN T { h, m, s }
       END
     EXCEPT
       TextReader.NoMore, Lex.Error, FloatMode.Trap => RAISE ParseError

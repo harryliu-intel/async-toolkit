@@ -20,8 +20,10 @@ TYPE T = RECORD hour   : [0..23];
 CONST First = T {  0,  0,  0 };
 CONST Last  = T { 23, 59, 59 }; (* what about the leap second? *)
 
-PROCEDURE Parse(t : TEXT) : T RAISES { ParseError };
-  (* parse from HH:MM:SS or HH:MM format *)
+TYPE F1224 = { F24, F12 };
+
+PROCEDURE Parse(t : TEXT; F1224 := F1224.F24) : T RAISES { ParseError };
+  (* parse from HH:MM:SS or HH:MM format; if F1224 = F1224.F12 expect AM or PM to follow *)
 
 PROCEDURE ParseSubsecond(t : TEXT; VAR (*OUT*) sub : LONGREAL) : T 
   RAISES { ParseError };

@@ -75,6 +75,30 @@ PROCEDURE ParseFed(date :TEXT) : T RAISES { ParseError } =
     END
   END ParseFed;
 
+PROCEDURE ParseBritish(date :TEXT) : T RAISES { ParseError } =
+  VAR
+    reader := NEW(TextReader.T).init(date);
+  BEGIN
+    TRY
+      VAR
+        c1 := reader.nextE("/");
+        c2 := reader.nextE("/");
+        c3 := reader.nextE("/");
+        day :=   Scan.Int(c1);
+        month := Scan.Int(c2);
+        year :=  Scan.Int(c3);
+      BEGIN
+        IF NOT reader.isEmpty() THEN RAISE ParseError END;
+        
+        ValiDate(year, month, day);
+        
+        RETURN T { year, month, day }
+      END
+    EXCEPT
+      FloatMode.Trap, Lex.Error, TextReader.NoMore => RAISE ParseError
+    END
+  END ParseBritish;
+
 PROCEDURE ParseAmerican(date :TEXT) : T RAISES { ParseError } =
   VAR
     reader := NEW(TextReader.T).init(date);
@@ -330,7 +354,7 @@ PROCEDURE FromMicrosoftOLE(m : CARDINAL) : T RAISES { OutOfRange } =
     RETURN FromJulian(ZeroByMicrosoftOLE + m)
   END FromMicrosoftOLE;
 
-PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } =
+PROCEDURE ParseJulian(t : TEXT) : T RAISES { ParseError } =
   BEGIN
     TRY
       RETURN FromJulian(Scan.Int(t))
@@ -342,6 +366,17 @@ PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } =
       RETURN FromJulian(ROUND(Scan.LongReal(t)))
     EXCEPT
       Lex.Error, FloatMode.Trap, OutOfRange => (* skip *)
+    END;
+  
+    RAISE ParseError
+  END ParseJulian;
+
+PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } =
+  BEGIN
+    TRY
+      RETURN ParseJulian(t)
+    EXCEPT
+      ParseError => (* skip *)
     END;
 
     TRY

@@ -37,6 +37,25 @@ PROCEDURE ParseFed(date : TEXT) : T RAISES { ParseError };
 PROCEDURE ParseAmerican(date : TEXT) : T RAISES { ParseError };
   (* parse from format MM/DD/YYYY *)
 
+PROCEDURE ParseBritish(date : TEXT) : T RAISES { ParseError };
+  (* parse from format DD/MM/YYYY *)
+
+PROCEDURE ParseJulian(date : TEXT) : T RAISES { ParseError };
+  (* parse from integer or floating Julian format *)
+
+TYPE 
+  SpecificFormat = { VMS, ISO, US, UK, FIX, Julian, Permissive };
+
+CONST
+  SpecificFormatNames  = ARRAY SpecificFormat OF TEXT { "VMS", "ISO", "US", "UK", "FIX", "Julian", "Permissive" };
+
+PROCEDURE ParseSpecificFormat(fname : TEXT) : SpecificFormat RAISES { ParseError };
+
+TYPE SpecificParser = PROCEDURE (x : TEXT) : T RAISES { ParseError };
+
+CONST
+  SpecificParsers = ARRAY SpecificFormat OF SpecificParser { ParseDaily, ParseFed, ParseAmerican, ParseBritish, ParseCmdLine, ParseJulian, Parse };
+
 CONST ParseFIX = ParseCmdLine;
   (* parse from format YYYYMMDD *)
 
