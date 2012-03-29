@@ -39,6 +39,9 @@ CONST ParseFIX = Parse;
 PROCEDURE Format(t : T) : TEXT;
   (* format in HH:MM:SS (always!) format *)
 
+PROCEDURE FormatHMs(t : T) : TEXT;
+  (* format in HH:MM[:SS] format *)
+
 CONST FormatFIX = Format;
 
 PROCEDURE Truncate(READONLY d : Date.T) : T;

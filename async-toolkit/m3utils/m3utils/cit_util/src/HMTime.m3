@@ -14,6 +14,19 @@ PROCEDURE Format(t : T) : TEXT =
     RETURN Fmt.F("%02s:%02s:%02s", I(t.hour), I(t.minute), I(t.second))
   END Format;
 
+PROCEDURE FormatHMs(t : T) : TEXT =
+  CONST
+    I = Fmt.Int;
+  VAR 
+    res := Fmt.F("%02s:%02s", I(t.hour), I(t.minute));
+  BEGIN
+    IF t.second = 0 THEN
+      RETURN res
+    ELSE
+      RETURN res & Fmt.F(":%02s", I(t.second))
+    END
+  END FormatHMs;
+
 PROCEDURE Check(h,m,s : INTEGER) RAISES { ParseError } =
   BEGIN
     (* since we don't have the date here, we permit a leap second at
