@@ -9,4 +9,6 @@ TYPE T = AtomList.T;
 
 PROCEDURE Format(t : T) : TEXT;
 
+PROCEDURE FromTextArr(READONLY words : ARRAY OF TEXT) : T;
+
 END AL.
