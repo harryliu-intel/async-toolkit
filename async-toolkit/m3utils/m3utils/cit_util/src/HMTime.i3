@@ -22,7 +22,7 @@ CONST Last  = T { 23, 59, 59 }; (* what about the leap second? *)
 
 TYPE F1224 = { F24, F12 };
 
-CONST F1224Names = ARRAY F1224 OF TEXT { "F12", "F24" };
+CONST F1224Names = ARRAY F1224 OF TEXT { "F24", "F12" };
 
 PROCEDURE ParseF1224(t : TEXT) : F1224 RAISES { ParseError };
 
