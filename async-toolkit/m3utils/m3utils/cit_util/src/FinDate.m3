@@ -236,9 +236,19 @@ PROCEDURE Morning(t : T) : Date.T =
                     weekDay := FIRST(Date.WeekDay) }
   END Morning;
 
+PROCEDURE DayOfWeek(t : T) : Date.WeekDay =
+  <*FATAL Date.Error*>
+  BEGIN
+    WITH morning = Morning(t),
+         t       = Date.ToTime(morning),
+         d       = Date.FromTime(t) DO
+      RETURN d.weekDay
+    END
+  END DayOfWeek;
+
 PROCEDURE Yesterday(zone : Date.TimeZone) : T =
   CONST
-    Steps = ARRAY Date.WeekDay OF CARDINAL { 2, 3, 1, 1, 1, 1, 1 };
+    Steps = ARRAY Date.WeekDay OF [1..3] { 2, 3, 1, 1, 1, 1, 1 };
   VAR
     t := Time.Now();
     d := Date.FromTime(t, z := zone);

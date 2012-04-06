@@ -99,6 +99,8 @@ PROCEDURE Morning(t : T) : Date.T;
      or weekDay fields set to anything sensible.  This is suitable for
      passing to a TZ's mktime method. *)
 
+PROCEDURE DayOfWeek(t : T) : Date.WeekDay;
+
 PROCEDURE Today(zone : Date.TimeZone := NIL (* Local if NIL *)) : T;
 
 PROCEDURE Yesterday(zone : Date.TimeZone := NIL (* Local if NIL *)) : T;
