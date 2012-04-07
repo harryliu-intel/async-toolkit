@@ -161,6 +161,7 @@ override("dollarparser", TOP & "/calarm/gcmonitor")
 override("eurolib", TOP & "/calarm/euromm")
 
 override("tradingscreen", TOP & "/calarm")
+override("csv", TOP & "/calarm")
 
 % Ohai
 override("ohailog", TOP & "/ohai")

@@ -16,14 +16,15 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
     g, scale, anorm := 0.0d0;
     c, f, h, s, x, y, z : LONGREAL;
     rv1 := NEW(Matrix.Vector, n);
-    l, nm : CARDINAL;
+    l : CARDINAL;
+    nm : [-1..LAST(CARDINAL)];
     case : [1..2];
   BEGIN
     FOR i := 0 TO n-1 DO
       l := i+1;
       rv1[i] := scale * g;
       g := 0.0d0; s := 0.0d0; scale := 0.0d0;
-      IF i <= m THEN
+      IF i <= m-1 THEN
         FOR k := i TO m - 1 DO
           scale := scale + ABS(a[k,i])
         END;
@@ -57,7 +58,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
       END;
       w[i] := scale*g;
       g := 0.0d0; s := 0.0d0; scale := 0.0d0;
-      IF i <= m AND i # n THEN
+      IF i <= m-1 AND i # n-1 THEN
         FOR k := l TO n - 1 DO
           scale := scale + ABS(a[i,k])
         END;
@@ -72,13 +73,16 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           a[i,l] := f-g;
           FOR k := l TO n - 1 DO
             rv1[k] := a[i,k]/h
-          END;
+          END(*19*);
           FOR j := l TO m - 1 DO
             s := 0.0d0;
             FOR k := l TO n - 1 DO
-              s := s+a[j,k] + s*rv1[k]
+              s := s+a[j,k]*a[i,k]
+            END;
+            FOR k := l TO n - 1 DO
+              a[j,k] := a[j,k] + s*rv1[k]
             END
-          END;
+          END(*23*);
           FOR k := l TO n-1 DO
             a[i,k] := scale * a[i,k]
           END
@@ -86,8 +90,8 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
       END;
       anorm := MAX(anorm,ABS(w[i])+ABS(rv1[i]))
     END;
-    FOR i := n TO 0 BY -1 DO
-      IF i < n THEN
+    FOR i := n-1 TO 0 BY -1 DO
+      IF i < n-1 THEN
         IF g # 0.0d0 THEN
           FOR j := l TO n - 1 DO
             v[j,i] := (a[i,j]/a[i,l])/g
@@ -95,7 +99,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           FOR j := l TO n - 1 DO
             s := 0.0d0;
             FOR k := l TO n - 1 DO
-              s := s + a[j,k]*v[k,j]
+              s := s + a[i,k]*v[k,j]
             END;
             FOR k := l TO n - 1 DO
               v[k,j] := v[k,j]+ s*v[k,i]
@@ -106,11 +110,14 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           v[i,j] := 0.0d0; v[j,i] := 0.0d0
         END
       END;
-      v[i,i] := 1.0d0; (* end of p. 60 *)
+      v[i,i] := 1.0d0; 
+
+      (* end of p. 60 *)
+
       g := rv1[i];
       l := i
     END; (* 32 *)
-    FOR i := MIN(m,n) TO 0 BY -1 DO
+    FOR i := MIN(m-1,n-1) TO 0 BY -1 DO
       l := i+1;
       g := w[i];
       FOR j := l TO n-1 DO
@@ -138,9 +145,10 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
       END;
       a[i,i] := a[i,i]+1.0d0
     END;
-    FOR k := n TO 0 BY -1 DO
+    FOR k := n-1 TO 0 BY -1 DO
       FOR its := 1 TO Iters DO
-        FOR l := k TO 0 BY -1 DO
+        FOR ll := k TO 0 BY -1 DO
+          l := ll;
           nm := l-1;
           IF    ABS(rv1[l])+anorm = anorm THEN 
             case := 2; EXIT
@@ -148,9 +156,10 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             case := 1; EXIT
           END
         END;
+
 (* 1 *) IF case = 1 THEN
           c := 0.0d0; s := 1.0d0;
-          FOR i := l TO k-1 DO
+          FOR i := l TO k DO
             f := s*rv1[i];
             rv1[i] := c * rv1[i];
             IF ABS(f) + anorm = anorm THEN EXIT END;
@@ -160,21 +169,25 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             h := 1.0d0/h;
             c := g*h;
             s := -(f*h);
-            FOR j := i TO m - 1 DO
+            FOR j := 0 TO m - 1 DO
               y := a[j,nm];
               z := a[j,i];
               a[j,nm] := (y*c)+(z*s);
               a[j,i] := -(y*s)+(z*c)
             END
           END
-        END;
+        END(*IF case = 1*);
+
 (* 2 *) z := w[k];
         IF l = k THEN
           IF z < 0.0d0 THEN
             w[k] := -z;
             FOR j := 0 TO n - 1 DO
               v[j,k] := - v[j,k]
-            END (* end of p. 61 *)
+            END 
+
+            (* end of p. 61 *)
+
           END;
           EXIT (* goto 3 *)
         END;
