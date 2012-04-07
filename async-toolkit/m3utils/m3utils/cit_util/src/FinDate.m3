@@ -239,9 +239,9 @@ PROCEDURE Morning(t : T) : Date.T =
 PROCEDURE DayOfWeek(t : T) : Date.WeekDay =
   <*FATAL Date.Error*>
   BEGIN
-    WITH morning = Morning(t),
-         t       = Date.ToTime(morning),
-         d       = Date.FromTime(t) DO
+    WITH morning  = Morning(t),
+         tm       = Date.ToTime(morning),  (* probably uses UTC *)
+         d        = Date.FromTime(tm, z := Date.UTC) DO
       RETURN d.weekDay
     END
   END DayOfWeek;
