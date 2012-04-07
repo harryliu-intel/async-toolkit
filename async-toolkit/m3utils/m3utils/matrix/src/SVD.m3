@@ -5,6 +5,21 @@ IMPORT Matrix;
 FROM Math IMPORT sqrt;
 IMPORT Fortran;
 
+(* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+   THERE ARE ALL SORTS OF PITFALLS IN THE FORTRAN CODE, SEE
+   svdcmp.f
+
+   LOOP INDICES ARE USED OUTSIDE THE LOOPS, RELYING ON FORTRAN
+   SEMANTICS THAT THEY ARE MODIFIED ONE MORE TIME THAN NECESSARY
+   TO REACH THE LOOP LIMIT
+
+   UNLESS YOU GO TO A LABEL OUTSIDE THE LOOP!!!!!!!!!!!! 
+   ARGGHHHHHHHHHHHHHHHHHHHH!!!!!!!!!!!!!!!!
+
+   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+*)
+
 PROCEDURE Decompose((* INOUT *) a : Matrix.T;
                     (* OUT *) w : Matrix.Vector;
                     (* OUT *) v : Matrix.T) RAISES { NoConvergence } =
@@ -16,11 +31,10 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
     g, scale, anorm := 0.0d0;
     c, f, h, s, x, y, z : LONGREAL;
     rv1 := NEW(Matrix.Vector, n);
-    l : CARDINAL;
-    nm : [-1..LAST(CARDINAL)];
+    l, nm :  INTEGER;
     case : [1..2];
   BEGIN
-    FOR i := 0 TO n-1 DO
+    FOR i := 0 TO n-1 DO (*25*)
       l := i+1;
       rv1[i] := scale * g;
       g := 0.0d0; s := 0.0d0; scale := 0.0d0;
@@ -50,12 +64,12 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
 
             (* end of p. 59 *)
 
-          END;
+          END(*15*);
           FOR k := i TO m - 1 DO
             a[k,i] := scale * a[k,i]
           END
-        END
-      END;
+        END(*IF*)
+      END(*IF*);
       w[i] := scale*g;
       g := 0.0d0; s := 0.0d0; scale := 0.0d0;
       IF i <= m-1 AND i # n-1 THEN
@@ -66,7 +80,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           FOR k := l TO n - 1 DO
             a[i,k] := a[i,k]/scale;
             s := s + a[i,k]*a[i,k]
-          END;
+          END(*18*);
           f := a[i,l];
           g := -Fortran.Sign(sqrt(s),f);
           h := f*g-s;
@@ -86,10 +100,11 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           FOR k := l TO n-1 DO
             a[i,k] := scale * a[i,k]
           END
-        END
-      END;
+        END(*IF*)
+      END(*IF*);
       anorm := MAX(anorm,ABS(w[i])+ABS(rv1[i]))
-    END;
+    END(*25*);
+
     FOR i := n-1 TO 0 BY -1 DO
       IF i < n-1 THEN
         IF g # 0.0d0 THEN
@@ -154,7 +169,8 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             case := 2; EXIT
           ELSIF ABS(w[nm])+anorm = anorm THEN
             case := 1; EXIT
-          END
+          END;
+          DEC(l)
         END;
 
 (* 1 *) IF case = 1 THEN
@@ -162,7 +178,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           FOR i := l TO k DO
             f := s*rv1[i];
             rv1[i] := c * rv1[i];
-            IF ABS(f) + anorm = anorm THEN EXIT END;
+            IF ABS(f) + anorm = anorm THEN EXIT (* GO TO 2 *) END;
             g := w[i];
             h := Fortran.pythag(f,g);
             w[i] := h;
@@ -192,27 +208,38 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
           EXIT (* goto 3 *)
         END;
         IF its = Iters THEN RAISE NoConvergence END;
-        x := w[l]; nm := k-1; y := w[nm]; g := rv1[nm]; h := rv1[k];
+        x := w[l]; 
+        nm := k-1; 
+        y := w[nm]; 
+        g := rv1[nm]; 
+        h := rv1[k];
         f := ((y-z)*(y+z)+(g-h)*(g+h))/(2.0d0*h*y);
         g := Fortran.pythag(f,1.0d0);
         f := ((x-z)*(x+z)+h*((y/(f+Fortran.Sign(g,f)))-h))/x;
         c := 1.0d0; s := 1.0d0;
-        FOR j := l TO nm DO
-          VAR
+        
+        VAR 
+          i : CARDINAL;
+        BEGIN
+          FOR j := l TO nm DO (* 47 *)
             i := j+1;
-          BEGIN
-            g := rv1[i]; y := w[i]; h := s*g; g := c*g; z := Fortran.pythag(f,h);
+            g := rv1[i]; 
+            y := w[i]; 
+            h := s*g; 
+            g := c*g; 
+            z := Fortran.pythag(f,h);
             rv1[j] := z; c := f/z; s := h/z;
             f :=  (x*c)+(g*s);
             g := -(x*s)+(g*c);
             h := y*s;
             y := y*c;
             FOR jj := 0 TO n - 1 DO
+              nm := jj;
               x := v[jj,j];
               z := v[jj,i];
               v[jj,j] :=  (x*c)+(z*s);
               v[jj,i] := -(x*s)+(z*c)
-            END;
+            END; INC(nm);
             z := Fortran.pythag(f,h);
             w[j] := z;
             IF z # 0.0d0 THEN
@@ -223,16 +250,17 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
             f :=  (c*g)+(s*y);
             x := -(s*g)+(c*y);
             FOR jj := 0 TO m - 1 DO
+              nm := jj;
               y := a[jj,j];
               z := a[jj,i];
               a[jj,j] :=  (y*c)+(z*s);
               a[jj,i] := -(y*s)+(z*c)
-            END
+            END(*46*); INC(nm)
           END; (* 47 *)
-          rv1[l] := 0.0d0;
-          rv1[k] := f;
-          w[k] := x
-        END (* VAR *)
+        END;
+        rv1[l] := 0.0d0;
+        rv1[k] := f;
+        w[k] := x
       END (* 48 *)
 (* 3 *)
     END (* 49 *)
