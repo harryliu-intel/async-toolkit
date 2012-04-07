@@ -2,7 +2,7 @@
 import ("libm3")
 import ("cit_util")
 
-module    ("CSVParse")
-module    ("CSVWrite")
+Module    ("CSVParse")
+Module    ("CSVWrite")
 
 library   ("csv")
