@@ -63,4 +63,6 @@ PROCEDURE FinDateArrLabeler(READONLY t : ARRAY OF FinDate.T) : Labeler;
 
 PROCEDURE CardinalLabeler(n : CARDINAL) : Labeler;
 
+PROCEDURE EmptyLabeler(n : CARDINAL) : Labeler;
+
 END CSVWrite.

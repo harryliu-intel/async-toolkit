@@ -67,6 +67,12 @@ PROCEDURE Cn(t : CLabeler) : CARDINAL = BEGIN RETURN t.number END Cn;
 PROCEDURE CardinalLabeler(n : CARDINAL) : Labeler =
   BEGIN RETURN NEW(CLabeler, number := n) END CardinalLabeler;
 
+PROCEDURE EmptyLabeler(n : CARDINAL) : Labeler =
+  BEGIN RETURN NEW(CLabeler, number := n, label := ELabel) END EmptyLabeler;
+
+PROCEDURE ELabel(<*UNUSED*>t : CLabeler; <*UNUSED*>i : CARDINAL) : TEXT =
+  BEGIN RETURN "" END ELabel;
+
 (**********************************************************************)
 
 PROCEDURE Write2D(wr : Wr.T; 
