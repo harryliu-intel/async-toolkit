@@ -24,7 +24,7 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
                     (* OUT *) w : Matrix.Vector;
                     (* OUT *) v : Matrix.T) RAISES { NoConvergence } =
   CONST
-    Iters = 30;
+    Iters = 300;
   VAR
     m := NUMBER(a^);
     n := NUMBER(a[0]);
