@@ -165,10 +165,13 @@ PROCEDURE Decompose((* INOUT *) a : Matrix.T;
         FOR ll := k TO 0 BY -1 DO
           l := ll;
           nm := l-1;
-          IF    ABS(rv1[l])+anorm = anorm THEN 
-            case := 2; EXIT
-          ELSIF ABS(w[nm])+anorm = anorm THEN
-            case := 1; EXIT
+          CONST EPS = 1.0d-8;
+          BEGIN
+            IF    ABS(rv1[l]) <= EPS * anorm THEN 
+              case := 2; EXIT
+            ELSIF ABS(w[nm]) <= EPS * anorm THEN
+              case := 1; EXIT
+            END
           END;
           DEC(l)
         END;
