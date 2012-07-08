@@ -16,6 +16,7 @@ IMPORT Debug, Rd;
 IMPORT Thread;
 IMPORT OSError;
 IMPORT AL;
+IMPORT RdWrPipe;
 
 <*FATAL Thread.Alerted, OSError.E, Rd.Failure*>
 
@@ -53,6 +54,61 @@ PROCEDURE DumpLine(s : TextSeq.T; READONLY w : ARRAY OF CARDINAL) =
     END
   END DumpLine;
 
+TYPE
+  RdWrClosure = Thread.Closure OBJECT
+    rd : Rd.T; 
+    wr : Wr.T;
+    mapper : PROCEDURE(c : CHAR) : CHAR;
+  OVERRIDES
+    apply := RWCApply;
+  END;
+
+  Failure = BRANDED OBJECT END;
+
+PROCEDURE RWCApply(rwc : RdWrClosure) : REFANY =
+  CONST 
+    BufSiz = 1024;
+  VAR
+    buf : ARRAY [0..BufSiz-1] OF CHAR;
+    r : CARDINAL;
+  BEGIN
+    TRY
+      LOOP
+        r := Rd.GetSub(rwc.rd, buf);
+        IF r = 0 THEN 
+          Wr.Close(rwc.wr);
+          RETURN NIL 
+        END;
+        FOR i := 0 TO r-1 DO
+          buf[i] := rwc.mapper(buf[i])
+        END;
+        Wr.PutString(rwc.wr, SUBARRAY(buf,0,r))
+      END
+    EXCEPT
+      Rd.Failure, Wr.Failure, Thread.Alerted => RETURN NEW(Failure) 
+    END
+  END RWCApply;
+
+PROCEDURE MapCRLF(c : CHAR) : CHAR = 
+  BEGIN
+    IF c = '\r' THEN RETURN '\n' ELSE RETURN c END
+  END MapCRLF;
+
+PROCEDURE FilterCR(rd : Rd.T) : Rd.T =
+  VAR
+    wr  : Wr.T;
+    res : Rd.T;
+    thr : Thread.T;
+  BEGIN
+    RdWrPipe.New(res, wr);
+    
+    thr := Thread.Fork(NEW(RdWrClosure, 
+                           rd := rd, 
+                           wr := wr, 
+                           mapper := MapCRLF));
+    RETURN res
+  END FilterCR;
+
 BEGIN
   TRY 
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
@@ -71,6 +127,8 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Couldn't parse cmd-line params")
   END;
+
+  rd := FilterCR(rd); (* broken?? *)
 
   TRY
     LOOP
