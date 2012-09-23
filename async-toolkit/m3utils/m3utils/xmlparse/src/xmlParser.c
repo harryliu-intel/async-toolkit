@@ -22,6 +22,7 @@
  */
 
 
+#include <string.h>
 #include <stdio.h>
 
 /* linux sticks just about EVERYTHING in /usr (not /usr/local like BSD) */
