@@ -15,6 +15,10 @@ TYPE
     (* must be called at start, too *)
 
     cell() : TEXT RAISES { EndOfLine };
+    (* get the next cell from the current line, or raise EndOfLine *)
+    
+    cellB(VAR cell : TEXT) : BOOLEAN;
+    (* get the next cell from the current line, or return FALSE *)
     
     int() : INTEGER RAISES { EndOfLine, FloatMode.Trap, Lex.Error };
 
@@ -23,8 +27,10 @@ TYPE
     whatLine() : CARDINAL;
 
     lastCell() : TEXT;
+    (* the last cell seen *)
     
     lastLine() : TEXT;
+    (* the last line seen *)
   END;    
 
 CONST Brand = "CSVParse";

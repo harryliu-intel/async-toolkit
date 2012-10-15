@@ -16,6 +16,7 @@ REVEAL
     init      := Init;
     startLine := StartLine;
     cell      := Cell;
+    cellB     := CellB;
     int       := Int;
     lr        := LR;
     whatLine  := WhatLine;
@@ -41,7 +42,14 @@ PROCEDURE StartLine(t : T)
 
 PROCEDURE WhatLine(t : T) : CARDINAL = BEGIN RETURN t.lNo END WhatLine;
 
-PROCEDURE Cell(t : T) : TEXT RAISES { EndOfLine} =
+PROCEDURE Cell(t : T) : TEXT RAISES { EndOfLine } =
+  VAR
+    res : TEXT;
+  BEGIN
+    IF t.cellB(res) THEN RETURN res ELSE RAISE EndOfLine END
+  END Cell;
+
+PROCEDURE CellB(t : T; VAR cell : TEXT) : BOOLEAN =
   VAR
     b, e : CARDINAL;
     
@@ -50,7 +58,8 @@ PROCEDURE Cell(t : T) : TEXT RAISES { EndOfLine} =
     
   BEGIN
     LOOP
-      IF Text.Length(t.line) <= t.q THEN RAISE EndOfLine END;
+      IF Text.Length(t.line) <= t.q THEN RETURN FALSE END;
+
       IF Text.GetChar(t.line,t.q) IN Seps THEN
         b := t.p; e := t.q;
 
@@ -67,8 +76,9 @@ PROCEDURE Cell(t : T) : TEXT RAISES { EndOfLine} =
       INC(t.q)
     END;
     t.last := Text.Sub(t.line, b, e-b);
-    RETURN t.last
-  END Cell;
+    cell := t.last;
+    RETURN TRUE
+  END CellB;
 
 PROCEDURE LastCell(t : T) : TEXT = BEGIN RETURN t.last END LastCell;
 
