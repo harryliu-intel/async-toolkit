@@ -163,5 +163,7 @@ override("eurolib", TOP & "/calarm/euromm")
 override("tradingscreen", TOP & "/calarm")
 override("csv", TOP & "/calarm")
 
+override("cometlib", TOP & "/calarm/comet")
+
 % Ohai
 override("ohailog", TOP & "/ohai")
