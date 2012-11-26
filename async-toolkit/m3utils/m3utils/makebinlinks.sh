@@ -46,6 +46,7 @@ ${ROOT}/calarm/dumponeperiod/${BINDIR}/dumponeperiod
 ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
 ${ROOT}/calarm/transposecsv/${BINDIR}/transposecsv
 ${ROOT}/calarm/csvalign/${BINDIR}/csvalign
+${ROOT}/calarm/comet/cometcatenate/${BINDIR}/cometcatenate
 "
 
 SCRIPTS="
