@@ -55,6 +55,7 @@ ${ROOT}/calarm/regress/scripts/sectorovertime.awk
 ${ROOT}/calarm/regress/scripts/tickerovertime.awk
 ${ROOT}/calarm/finlib/src/parsegoogle.awk
 ${ROOT}/calarm/finlib/src/googledata_canada.sh
+${ROOT}/invoicing/proc.awk
 "
 mkdir ${TGTDIR} || echo Proceeding...
 
