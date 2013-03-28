@@ -71,7 +71,7 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
     WHILE FindSub(in, old, nextpos, startpos) DO
       in := Text.Sub(in, 0, nextpos) & new & 
                  Text.Sub(in, nextpos + TL(old));
-      startpos := nextpos + TL(old) - TL(new)
+      startpos := nextpos + TL(new) - TL(old)
     END;
     RETURN in
   END Replace;
