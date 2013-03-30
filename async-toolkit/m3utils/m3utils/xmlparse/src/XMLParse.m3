@@ -12,12 +12,27 @@ IMPORT Pathname;
 IMPORT Thread;
 IMPORT RTCollector; (* Enable/Disable to avoid stepping on malloc *)
 IMPORT SchedulerIndirection;  (* enable/disable to avoid malloc on malloc *)
+IMPORT TextList;
 
 CONST TE = Text.Equal;
 
 PROCEDURE Start(stuff : REFANY; el : Ctypes.const_char_star) = 
   BEGIN
+    IF Debug.GetLevel() > 10 THEN
+      Debug.Out("Start: " & M3toC.CopyStoT(el),11)
+    END;
+
     WITH ru = NARROW(stuff, REF U) DO
+      IF ru^ # NIL THEN
+        IF ru.ignore > 0 THEN
+          INC(ru.ignore);
+          RETURN
+        ELSIF TextList.Member(avoidTags, ru.el) THEN
+          INC(ru.ignore);
+          RETURN
+        END
+      END;
+
       ru^ := NEW(U, 
                  el := M3toC.CopyStoT(el),
                  up := ru^, 
@@ -30,12 +45,12 @@ PROCEDURE Start(stuff : REFANY; el : Ctypes.const_char_star) =
       END
     END;
 
-    Debug.Out("Start: " & M3toC.CopyStoT(el),11)
   END Start;
 
 PROCEDURE AttrP(stuff : REFANY; tag, attr : Ctypes.const_char_star) =
   BEGIN
     WITH u = NARROW(stuff, REF U)^ DO
+      IF u.ignore > 0 THEN RETURN END;
       u.a.addhi(NEW(REF Attr, 
                     tag := M3toC.CopyStoT(tag), 
                     attr := M3toC.CopyStoT(attr)))
@@ -46,7 +61,14 @@ PROCEDURE AttrP(stuff : REFANY; tag, attr : Ctypes.const_char_star) =
 PROCEDURE End(stuff : REFANY) =
   BEGIN 
     (* fill in T fields *)
+    IF Debug.GetLevel() > 10 THEN
+      Debug.Out("End.",11)
+    END;
+
     WITH u = NARROW(stuff, REF U)^ DO
+      IF u.ignore > 0 THEN
+        DEC(u.ignore); RETURN 
+      END;
 
       u.attrs := NEW(REF ARRAY OF Attr, u.a.size());
       FOR i := 0 TO u.a.size()-1 DO
@@ -65,7 +87,6 @@ PROCEDURE End(stuff : REFANY) =
       IF ru^.up # NIL THEN ru^ := ru^.up END
     END;
 
-    Debug.Out("End.",11)
   END End;
 
 PROCEDURE CharData(stuff : REFANY; len : CARDINAL; data : Ctypes.const_char_star) =
@@ -74,6 +95,7 @@ PROCEDURE CharData(stuff : REFANY; len : CARDINAL; data : Ctypes.const_char_star
     cp : REF CHAR;
   BEGIN
     WITH u = NARROW(stuff, REF U)^ DO
+      IF u.ignore > 0 THEN RETURN END;
       VAR x := LOOPHOLE(data,ADDRESS); BEGIN
         WHILE x < data + len DO
           cp := LOOPHOLE(x,REF CHAR);
@@ -85,11 +107,15 @@ PROCEDURE CharData(stuff : REFANY; len : CARDINAL; data : Ctypes.const_char_star
     END
   END CharData;
 
-PROCEDURE DoIt(p : Pathname.T) : T =
+VAR
+  avoidTags : TextList.T;
+
+PROCEDURE DoIt(p : Pathname.T; avoidTagsArg : TextList.T) : T =
   VAR
     ru := NEW(REF U);
   BEGIN
     ru^ := NIL;
+    avoidTags := avoidTagsArg;
 
     WITH s = M3toC.CopyTtoS(p) DO
       TRY
@@ -240,6 +266,7 @@ TYPE
     a : RefSeq.T;
     c : RefSeq.T;
     charWr : TextWr.T;
+    ignore : CARDINAL := 0;
   END;
 
 BEGIN END XMLParse.

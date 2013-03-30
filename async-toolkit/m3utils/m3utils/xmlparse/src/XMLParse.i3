@@ -2,6 +2,7 @@
 
 INTERFACE XMLParse;
 IMPORT Pathname;
+IMPORT TextList;
 
 EXCEPTION 
   NotFound; 
@@ -51,7 +52,7 @@ TYPE
     next(VAR child : T) : BOOLEAN;
   END;
 
-PROCEDURE DoIt(p : Pathname.T) : T;
+PROCEDURE DoIt(p : Pathname.T; avoidTags : TextList.T := NIL) : T;
 
 PROCEDURE DoText(t : TEXT) : T;
 
