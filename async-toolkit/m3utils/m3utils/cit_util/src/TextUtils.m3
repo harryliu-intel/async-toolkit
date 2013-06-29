@@ -65,15 +65,18 @@ PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
 
 PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   VAR 
-    startpos := 0;
-    nextpos : CARDINAL;
+    s, p : CARDINAL := 0;
+    wx := Wx.New();
+    ol := TL(old);
   BEGIN
-    WHILE FindSub(in, old, nextpos, startpos) DO
-      in := Text.Sub(in, 0, nextpos) & new & 
-                 Text.Sub(in, nextpos + TL(old));
-      startpos := nextpos + TL(new) - TL(old)
+    <*ASSERT ol>0*>
+    WHILE FindSub(in, old, p, s) DO
+      Wx.PutText(wx, Text.Sub(in, p, p - s));
+      Wx.PutText(wx, new);
+      s := p + ol
     END;
-    RETURN in
+    Wx.PutText(wx, Text.Sub(in, s));
+    RETURN Wx.ToText(wx)
   END Replace;
 
 (* find first occurrence of sub in in *)
@@ -100,6 +103,16 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
     END;
     RETURN FALSE
   END FindSub;
+
+PROCEDURE FindText(in, sub : TEXT; start := 0) : [-1..LAST(CARDINAL)] =
+  VAR r : CARDINAL;
+  BEGIN
+    IF FindSub(in, sub, r, start) THEN
+      RETURN r 
+    ELSE
+      RETURN -1
+    END
+  END FindText;
 
 PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
                       VAR pos: CARDINAL; start := 0): BOOLEAN =

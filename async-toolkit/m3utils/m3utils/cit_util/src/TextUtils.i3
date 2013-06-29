@@ -34,7 +34,10 @@ PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
 PROCEDURE FilterEdges(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
 
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
-(* find first occurrence of sub in in *)
+(* find first occurrence of sub in in.  If not found, pos is not touched. *)
+
+PROCEDURE FindText(in, sub : TEXT; start := 0) : [-1..LAST(CARDINAL)];
+(* as FindSub but returns -1 if not found *)
 
 PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
                       VAR pos: CARDINAL; start := 0): BOOLEAN;
