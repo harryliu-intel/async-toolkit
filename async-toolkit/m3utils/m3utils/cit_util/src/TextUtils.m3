@@ -71,7 +71,7 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   BEGIN
     <*ASSERT ol>0*>
     WHILE FindSub(in, old, p, s) DO
-      Wx.PutText(wx, Text.Sub(in, p, p - s));
+      Wx.PutText(wx, Text.Sub(in, s, p - s));
       Wx.PutText(wx, new);
       s := p + ol
     END;
