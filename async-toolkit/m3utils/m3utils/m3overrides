@@ -165,5 +165,7 @@ override("csv", TOP & "/calarm")
 
 override("cometlib", TOP & "/calarm/comet")
 
+override("turklib", TOP & "/cardturk")
+
 % Ohai
 override("ohailog", TOP & "/ohai")
