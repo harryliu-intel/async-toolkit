@@ -47,6 +47,9 @@ ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
 ${ROOT}/calarm/transposecsv/${BINDIR}/transposecsv
 ${ROOT}/calarm/csvalign/${BINDIR}/csvalign
 ${ROOT}/calarm/comet/cometcatenate/${BINDIR}/cometcatenate
+${ROOT}/cardturk/turkprocess/${BINDIR}/turkprocess
+${ROOT}/cardturk/turkscheme/${BINDIR}/turkscheme
+${ROOT}/cardturk/turksessiond/${BINDIR}/turksessiond
 "
 
 SCRIPTS="
