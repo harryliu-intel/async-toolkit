@@ -7,12 +7,19 @@ m3_option("-times")
 import("cit_util")
 
 Module("BDD")
+List("BDD","BDD")
+Interface("BDDDepends")
 implementation("BDDImpl")
 module("BDDTripleHash")
 module("BDDPair")
 interface("BDDPrivate")
 
 generic_module("ProcTable")
+
+Table ("BDDRef", "BDD", "Refany")
+MkSet ("BDD", "BDD")
+MkSetDef ("BDD", "BDD")
+
 
 import("libm3")
 library("bdd")

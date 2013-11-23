@@ -12,7 +12,7 @@ PROCEDURE True() : T;
 PROCEDURE False() : T;
 
 (* a new variable *)
-PROCEDURE New() : T;
+PROCEDURE New(name : TEXT := NIL) : T;
 
 (* unary ops *)
 PROCEDURE Not(a : T) : T;
@@ -24,6 +24,11 @@ PROCEDURE Equivalent(a, b : T) : T;
 PROCEDURE Or( a, b : T) : T;
 PROCEDURE Implies  (a , b : T) : T;
 
+(* maketrue/makefalse *)
+
+PROCEDURE MakeFalse(b, v : T) : T; (* make v false in b *)
+PROCEDURE MakeTrue(b, v : T) : T; (* make v true in b *)
+
 
 (* print with ids *)
 PROCEDURE Format(a : T) : TEXT;
@@ -31,6 +36,9 @@ PROCEDURE Format(a : T) : TEXT;
 (* the following procedures allow this interface to be used in generics *)
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE Hash(a : T) : Word.T;
+
+PROCEDURE Size(a : T) : CARDINAL;
+  (* number of nodes in structure *)
 
 CONST
   Brand = "BDD 0.1";
