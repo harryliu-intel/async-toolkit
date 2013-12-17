@@ -31,7 +31,9 @@ elif [ "x$OS" = "xLinux" ]; then
   if [ "x$PROCESSOR" = "xx86_64" ]; then
     M3ARCH="AMD64_LINUX"
   elif [ "x$PROCESSOR" = "xarmv6l" ]; then
-    M3ARCH="ARMEL_LINUX"
+    M3ARCH="ARM_LINUX"
+  elif [ "x$PROCESSOR" = "xarmv7l" ]; then
+    M3ARCH="ARM_LINUX"
   else
     M3ARCH="LINUXLIBC6"
   fi
