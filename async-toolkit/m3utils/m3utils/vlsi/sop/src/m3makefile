@@ -1,0 +1,14 @@
+import("libm3")
+import("bool")
+
+Interface("SopFormatStyle")
+Module("Sop")
+Interface("SopRep")
+Module("SopLiteral")
+
+array_sort("SopLiteral","SopLiteral")
+module("SopConjunct")
+array_sort("SopConjunct","SopConjunct")
+module("TestSop")
+
+library("sop")
