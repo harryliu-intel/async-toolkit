@@ -4,7 +4,7 @@
 
 static int ntry, totalsearch;
 
-int ELhashsize;
+/*int ELhashsize;*/
 
 ELinitialize()
 {
