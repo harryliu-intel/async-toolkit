@@ -6,7 +6,7 @@ mv ${OLD} .hidden
 rm -rf *
 mv .hidden/* .
 
-if [ "x$CM3" -eq "x" ]; then
+if [ "x$CM3" = "x" ]; then
 	M3BUILD=m3build
 else
 	M3BUILD=cm3
