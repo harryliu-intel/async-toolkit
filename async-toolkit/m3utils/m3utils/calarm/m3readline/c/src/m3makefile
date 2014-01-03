@@ -1,24 +1,5 @@
 /* $Id$ */
 
-if equal(TARGET, "AMD64_LINUX")
-        import_lib ("readline","/usr/lib")
-else if equal(TARGET, "ARM_LINUX") 
-        import_lib ("readline","/usr/lib/arm-linux-gnueabihf")
-    else if equal(TARGET, "I386_DARWIN") 
-        import_lib ("readline","/sw/lib")
-  
-     else 
-	if not equal(TARGET, "AMD64_FREEBSD")
-	   	import_lib ("readline","/usr/local/lib")
-	end
-     end
-end
-end
-
-if equal(TARGET, "PPC_DARWIN")
-	import_lib ("ncurses","/usr/lib")
-end
-
 import ("libm3")
 
 c_source ("program")
