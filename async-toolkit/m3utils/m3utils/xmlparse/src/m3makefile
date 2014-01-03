@@ -2,12 +2,6 @@
 import ("libm3")
 import ("cit_util")
 
-if equal(TARGET,"AMD64_LINUX")
-	import_lib ("expat", "/usr/lib")
-else
-	import_lib ("expat", "/usr/local/lib")
-end
-
 c_source("xmlParser")
 interface("xmlParser")
 
