@@ -26,7 +26,7 @@ CONST F1224Names = ARRAY F1224 OF TEXT { "F24", "F12" };
 
 PROCEDURE ParseF1224(t : TEXT) : F1224 RAISES { ParseError };
 
-PROCEDURE Parse(t : TEXT; F1224 := F1224.F24) : T RAISES { ParseError };
+PROCEDURE Parse(t : TEXT; f1224 := F1224.F24) : T RAISES { ParseError };
   (* parse from HH:MM:SS or HH:MM format; if F1224 = F1224.F12 expect AM or PM to follow *)
 
 PROCEDURE ParseSubsecond(t : TEXT; VAR (*OUT*) sub : LONGREAL) : T 
