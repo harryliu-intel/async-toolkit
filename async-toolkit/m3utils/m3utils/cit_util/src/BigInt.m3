@@ -153,7 +153,7 @@ PROCEDURE Compare(a, b : T) : CompRet =
 
 PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 
-PROCEDURE New(x : INTEGER) : T =
+PROCEDURE NewInternal(x : [FIRST(INTEGER)+1..LAST(INTEGER)]) : T =
   VAR
     c := ABS(x);
     s := NEW(NSeq).init(1);
@@ -167,6 +167,15 @@ PROCEDURE New(x : INTEGER) : T =
       RETURN NEW(T, sign := 1, rep := s)
     ELSE
       RETURN NEW(T, sign := -1, rep := s)
+    END
+  END NewInternal;
+
+PROCEDURE New(x : INTEGER) : T =
+  BEGIN
+    IF x = FIRST(INTEGER) THEN
+      RETURN Sub(New(FIRST(INTEGER)+1),One)
+    ELSE
+      RETURN NewInternal(x)
     END
   END New;
 
@@ -486,9 +495,10 @@ PROCEDURE ToInt(a : T) : INTEGER RAISES { OutOfRange } =
   END ToInt;
 
 VAR
-  IntLast := New(LAST(INTEGER));
-  IntFirst := New(FIRST(INTEGER));
+  IntLast, IntFirst : T;
 BEGIN 
   Zero := New(0);
   One := New(1);
+  IntLast  := New(LAST(INTEGER));
+  IntFirst := New(FIRST(INTEGER)); (* depends on One *)
 END BigInt.
