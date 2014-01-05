@@ -422,6 +422,8 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
     <* ASSERT base <= 16 *>
     a := Abs(a);
 
+    IF Equal(a,Zero) THEN RETURN "0" END;
+
     WHILE NOT Equal(a,Zero) DO
       VAR
         d : T;
@@ -470,6 +472,22 @@ PROCEDURE ToLongReal(a : T) : LONGREAL =
     END;
   END ToLongReal;
 
+PROCEDURE ToInt(a : T) : INTEGER RAISES { OutOfRange } =
+  BEGIN 
+    IF Compare(a, IntFirst) = -1 THEN 
+      RAISE OutOfRange
+    ELSIF Compare(a, IntLast) = +1 THEN 
+      RAISE OutOfRange
+    ELSE
+      WITH lr = ToLongReal(a) DO
+        RETURN ROUND(lr)
+      END
+    END
+  END ToInt;
+
+VAR
+  IntLast := New(LAST(INTEGER));
+  IntFirst := New(FIRST(INTEGER));
 BEGIN 
   Zero := New(0);
   One := New(1);
