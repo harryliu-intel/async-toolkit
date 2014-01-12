@@ -20,6 +20,7 @@ Table ("BDDRef", "BDD", "Refany")
 MkSet ("BDD", "BDD")
 MkSetDef ("BDD", "BDD")
 
+Sequence ("BDD", "BDD")
 
 import("libm3")
 library("bdd")
