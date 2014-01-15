@@ -2,6 +2,6 @@
 INTERFACE BDDPrivate;
 IMPORT BDD;
 
-PROCEDURE GetId(self : BDD.T) : CARDINAL;
+CONST GetId = BDD.GetId;
 
 END BDDPrivate.

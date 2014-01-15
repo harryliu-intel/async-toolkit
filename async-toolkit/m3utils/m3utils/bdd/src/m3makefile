@@ -22,5 +22,9 @@ MkSetDef ("BDD", "BDD")
 
 Sequence ("BDD", "BDD")
 
+Table ("BDDText", "BDD", "Text")
+
+Interface("BDDImpl")
+
 import("libm3")
 library("bdd")

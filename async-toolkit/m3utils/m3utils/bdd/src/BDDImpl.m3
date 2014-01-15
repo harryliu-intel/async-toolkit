@@ -1,11 +1,11 @@
 (* $Id$ *)
 (* revelation of BDD.T *)
-MODULE BDDImpl EXPORTS BDD, BDDPrivate, BDDDepends;
+MODULE BDDImpl EXPORTS BDD, BDDDepends, BDDImpl;
 IMPORT BDDPair;
 IMPORT BDDTripleHash;
 IMPORT Word;
-IMPORT Debug;
-IMPORT BDDSet, BDDSetDef;
+(*IMPORT Debug;*)
+IMPORT BDDSet, BDDSetDef, BDDTextTbl;
 
 IMPORT Fmt;
 
@@ -22,6 +22,20 @@ REVEAL
   METHODS
     init() : T := Init;
   END;
+
+PROCEDURE Right(a : T) : T = BEGIN RETURN a.r END Right;
+
+PROCEDURE Left(a : T) : T = BEGIN RETURN a.l END Left;
+
+PROCEDURE NodeVar(v : T) : T = 
+  VAR b : T; BEGIN
+    IF BDDTripleHash.Get(v.root.tab, Pair { true, false } , b) THEN
+      RETURN b
+    ELSE
+      (* can this happen?, and is this right?? *)
+      RETURN v.root
+    END
+  END NodeVar;
 
 (* this special object is used as a literal. *)
 (* in order to allow garbage collection, the caches and the lookup table *)
@@ -42,8 +56,6 @@ VAR
   
 PROCEDURE Init(self : T) : T = 
   BEGIN LOCK mu DO self.tag := nextTag; INC(nextTag) END; RETURN self END Init;
-
-PROCEDURE GetId(self : T) : CARDINAL = BEGIN RETURN self.root.id END GetId;
 
 PROCEDURE Order(VAR b1, b2 : T) = 
   BEGIN
@@ -295,8 +307,12 @@ PROCEDURE New(name : TEXT) : T =
     RETURN res
   END New;
 
-PROCEDURE Format(x : T) : TEXT =
+PROCEDURE Format(x : T; symtab : REFANY := NIL) : TEXT =
+  VAR nm : TEXT;
   BEGIN
+    IF symtab # NIL AND NARROW(symtab, BDDTextTbl.T).get(x, nm) THEN
+      RETURN nm
+    END;
     IF x = true THEN RETURN "TRUE"
     ELSIF x = false THEN RETURN "FALSE"
     END;
@@ -355,6 +371,8 @@ PROCEDURE Depends(b1 : T) : BDDSet.T =
     Recurse(b1);
     RETURN res
   END Depends;
+
+PROCEDURE GetId(a : T) : INTEGER = BEGIN RETURN a.root.id END GetId;
 
 BEGIN 
   true := NEW(Root).init();

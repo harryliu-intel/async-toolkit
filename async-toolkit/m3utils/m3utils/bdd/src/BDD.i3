@@ -31,7 +31,7 @@ PROCEDURE MakeTrue(b, v : T) : T; (* make v true in b *)
 
 
 (* print with ids *)
-PROCEDURE Format(a : T) : TEXT;
+PROCEDURE Format(a : T; symtab : REFANY (* BDDTextTbl.T *) := NIL) : TEXT;
 
 (* the following procedures allow this interface to be used in generics *)
 PROCEDURE Equal(a, b : T) : BOOLEAN;
@@ -42,5 +42,7 @@ PROCEDURE Size(a : T) : CARDINAL;
 
 CONST
   Brand = "BDD 0.1";
+
+PROCEDURE GetId(a : T) : INTEGER; (* for debugging *)
 
 END BDD.
