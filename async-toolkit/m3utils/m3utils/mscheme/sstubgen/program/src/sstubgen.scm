@@ -1380,11 +1380,16 @@
           )
 
          ((Object Opaque) 
+          (imports 'insert! 'SchemeConvertHooks)
           (string-append
            "    TYPECASE x OF" dnl
            "      "m3tn"(xx) => RETURN xx" dnl
            "    ELSE" dnl
-           "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+           "      IF SchemeConvertHooks.AttemptConvertToModula(TYPECODE("m3tn"), x) THEN" dnl
+           "        RETURN x" dnl
+           "      ELSE" dnl
+           "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+           "      END" dnl
            "    END" dnl
            )
           )

@@ -82,6 +82,8 @@ Netobj("SchemeEnvironment", "T")
 
 Module("SchemeUnixDeps")
 module("SchemeProfilerSysDep")
+Module("SchemeConvertHooks")
+List("SchemeConvertHooks","SchemeConvertHooks")
 
 c_source("schemeUnixDeps")
 

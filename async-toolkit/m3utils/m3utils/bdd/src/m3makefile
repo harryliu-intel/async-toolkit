@@ -4,7 +4,8 @@ m3_option("-times")
 /*m3_option("-X2@-pg@")*/
 /*m3_option("-Z")*/
 /*remove_m3_option("-O")*/
-import("cit_util")
+import ("libm3")
+import ("set")
 
 Module("BDD")
 List("BDD","BDD")

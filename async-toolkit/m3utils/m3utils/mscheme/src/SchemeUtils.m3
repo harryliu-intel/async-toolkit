@@ -21,6 +21,7 @@ IMPORT RefSeq, RefPair, RefPairSeq;
 IMPORT Scan;
 IMPORT Lex, FloatMode;
 IMPORT SchemeEnvironmentBinding;
+IMPORT SchemeConvertHooks;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -475,15 +476,17 @@ PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT RAISES { E } =
     END
   END StringifyQ;
 
-PROCEDURE StringifyB(x : Object; 
+PROCEDURE StringifyB(x      : Object; 
                      quoted : BOOLEAN; 
-                     buf : Wx.T;
-                     seen : RefSeq.T) RAISES { E } =
+                     buf    : Wx.T;
+                     seen   : RefSeq.T) RAISES { E } =
 
   PROCEDURE Put(txt : TEXT) = BEGIN Wx.PutText(buf,txt) END Put;
   PROCEDURE PutC(c : CHAR) = BEGIN Wx.PutChar(buf,c) END PutC;
 
   BEGIN
+    EVAL SchemeConvertHooks.AttemptConvertToScheme(x);
+
     IF seen = NIL THEN seen := NEW(RefSeq.T).init() END;
 
     FOR i := 0 TO seen.size()-1 DO
