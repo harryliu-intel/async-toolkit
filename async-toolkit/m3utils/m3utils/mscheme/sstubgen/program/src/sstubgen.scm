@@ -1381,10 +1381,11 @@
 
          ((Object Opaque) 
           (string-append
-           "    IF NOT ISTYPE(x,"m3tn") THEN" dnl
+           "    TYPECASE x OF" dnl
+           "      "m3tn"(xx) => RETURN xx" dnl
+           "    ELSE" dnl
            "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
-           "    END;" dnl
-           "    RETURN x" 
+           "    END" dnl
            )
           )
 
