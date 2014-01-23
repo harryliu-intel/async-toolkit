@@ -6,6 +6,7 @@ m3_option("-times")
 /*remove_m3_option("-O")*/
 import ("libm3")
 import ("set")
+import ("cit_util") /* CardSet */
 
 Module("BDD")
 List("BDD","BDD")
@@ -26,6 +27,8 @@ Sequence ("BDD", "BDD")
 Table ("BDDText", "BDD", "Text")
 
 Interface("BDDImpl")
+
+Module ("BDDTruthTable")
 
 import("libm3")
 library("bdd")
