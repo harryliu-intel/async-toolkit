@@ -6,7 +6,7 @@ IMPORT Word;
 IMPORT Debug;
 IMPORT Fmt;
 
-VAR doDebug := Debug.GetLevel() > 5;
+VAR doDebug := FALSE AND Debug.GetLevel() > 5;
 
 PROCEDURE Dbg(z : TEXT) = BEGIN Debug.Out(z, 5) END Dbg;
 
