@@ -104,14 +104,15 @@ PROCEDURE Init(self : T; from : Bool.T) : T =
   END Init;
 
 PROCEDURE Format(self : T; symTab : BoolTextTbl.T;
-                 READONLY style := SopFormatStyle.C) : TEXT =
+                 READONLY style := SopFormatStyle.C;
+                 prefix : TEXT) : TEXT =
 
   PROCEDURE FormatConjunct(c : Conjunct) : TEXT =
     VAR res := ""; BEGIN 
       IF NUMBER(c^) = 0 THEN RETURN "TRUE" END;
       FOR i := 0 TO LAST(c^) DO
         IF NOT c[i].mode THEN res := res & style.notSym END;
-        res := res & Bool.Format(c[i].var,symTab);
+        res := res & Bool.Format(c[i].var,symTab,pfx := prefix);
         IF i < LAST(c^) THEN res := res & style.andSym END
       END;
       RETURN res
@@ -606,6 +607,9 @@ PROCEDURE ConjunctIsOK(c : Conjunct) : BOOLEAN =
     END;
     RETURN TRUE 
   END ConjunctIsOK;
+
+(****************************************)
+
 
 
 BEGIN END SopG.

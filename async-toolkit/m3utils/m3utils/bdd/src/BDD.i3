@@ -31,7 +31,7 @@ PROCEDURE MakeTrue(b, v : T) : T; (* make v true in b *)
 
 
 (* print with ids *)
-PROCEDURE Format(a : T; symtab : REFANY (* BDDTextTbl.T *) := NIL) : TEXT;
+PROCEDURE Format(a : T; symtab : REFANY (* BDDTextTbl.T *) := NIL; pfx := "") : TEXT;
 
 (* the following procedures allow this interface to be used in generics *)
 PROCEDURE Equal(a, b : T) : BOOLEAN;

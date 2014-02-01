@@ -59,7 +59,7 @@ PROCEDURE Hash(a : T) : Word.T;
 PROCEDURE Vars(a : T) : BoolSet.T;
 
 (* format according to symtab *)
-PROCEDURE Format(b : T; symTab : BoolTextTbl.T) : TEXT; 
+PROCEDURE Format(b : T; symTab : BoolTextTbl.T; pfx := "") : TEXT; 
 VAR frees : CARDINAL;
 
 END Bool.

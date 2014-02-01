@@ -192,14 +192,14 @@ PROCEDURE Remap(map : BoolBoolTbl.T; e : T; check : BOOLEAN) : T =
 
   BEGIN RETURN Recurse(e) END Remap;
 
-PROCEDURE Format(b : T; symTab : BoolTextTbl.T) : TEXT =
+PROCEDURE Format(b : T; symTab : BoolTextTbl.T; pfx : TEXT) : TEXT =
   VAR 
     name : TEXT; 
   BEGIN 
     IF symTab # NIL AND symTab.get(b,name) THEN 
-      RETURN name (* & "(??" & Fmt.Int(GetId(b)) & ")" *)
+      RETURN pfx & name (* & "(??" & Fmt.Int(GetId(b)) & ")" *)
     ELSE 
-      RETURN "??(??" & Fmt.Int(GetId(b)) &")"
+      RETURN pfx & "??(??" & Fmt.Int(GetId(b)) &")"
     END
   END Format; 
 

@@ -307,17 +307,17 @@ PROCEDURE New(name : TEXT) : T =
     RETURN res
   END New;
 
-PROCEDURE Format(x : T; symtab : REFANY := NIL) : TEXT =
+PROCEDURE Format(x : T; symtab : REFANY := NIL; pfx : TEXT := "") : TEXT =
   VAR nm : TEXT;
   BEGIN
     IF symtab # NIL AND NARROW(symtab, BDDTextTbl.T).get(x, nm) THEN
-      RETURN nm
+      RETURN pfx & nm
     END;
     IF x = true THEN RETURN "TRUE"
     ELSIF x = false THEN RETURN "FALSE"
     END;
 
-    IF x.name # NIL THEN RETURN x.name END;
+    IF x.name # NIL THEN RETURN pfx & x.name END;
 
     RETURN Fmt.Int(x.root.id) & " && (" & Format(x.l) & ") || (" & Format(x.r) &
            ") && ~" & Fmt.Int(x.root.id)
