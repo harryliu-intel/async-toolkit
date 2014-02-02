@@ -44,13 +44,17 @@ TYPE
   MapProc = PROCEDURE ( context : REFANY; literal : Literal ) : T;
   SimpleMapProc = PROCEDURE ( literal : Literal ) : T;
 
+  (* final stage is mapping aliases, just a text to text mapping *)
+  AliasMapper = OBJECT METHODS canon(txt : TEXT) : TEXT END;
+
   Public = OBJECT
   METHODS
     init( from : Bool.T ) : T; (* initialize from a --literal-- *)
     format(symTab : BoolTextTable.T;
            READONLY style := SopFormatStyle.C;
            pfx := "";
-           inQuotes := FALSE) : TEXT;
+           inQuotes := FALSE;
+           aliasMapper : AliasMapper := NIL) : TEXT;
     toBool() : Bool.T;
 
     (* the context is a REFANY interpreted by the map procedure as it

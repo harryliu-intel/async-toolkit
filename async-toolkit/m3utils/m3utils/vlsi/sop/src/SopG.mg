@@ -103,17 +103,25 @@ PROCEDURE Init(self : T; from : Bool.T) : T =
     RETURN self
   END Init;
 
+VAR IdentityMapper := NEW(AliasMapper, canon := IdentityCanon);
+
+PROCEDURE IdentityCanon(<*UNUSED*>am : AliasMapper; txt : TEXT) : TEXT =
+  BEGIN RETURN txt END IdentityCanon;
+
 PROCEDURE Format(self : T; symTab : BoolTextTbl.T;
                  READONLY style := SopFormatStyle.C;
                  prefix : TEXT;
-                 inQuotes : BOOLEAN) : TEXT =
+                 inQuotes : BOOLEAN;
+                 am : AliasMapper) : TEXT =
 
   PROCEDURE FormatConjunct(c : Conjunct) : TEXT =
     VAR res := ""; BEGIN 
       IF NUMBER(c^) = 0 THEN RETURN "TRUE" END;
       FOR i := 0 TO LAST(c^) DO
         IF NOT c[i].mode THEN res := res & style.notSym END;
-        res := res & q & Bool.Format(c[i].var,symTab,pfx := prefix) & q;
+        res := res & q & 
+                   am.canon(Bool.Format(c[i].var,symTab,pfx := prefix)) & 
+                     q;
         IF i < LAST(c^) THEN res := res & style.andSym END
       END;
       RETURN res
@@ -122,6 +130,8 @@ PROCEDURE Format(self : T; symTab : BoolTextTbl.T;
   VAR res := ""; 
       q   := "";
   BEGIN 
+
+    IF am = NIL THEN am := IdentityMapper END;
 
     IF inQuotes THEN q := "\"" END;
 
