@@ -49,7 +49,8 @@ TYPE
     init( from : Bool.T ) : T; (* initialize from a --literal-- *)
     format(symTab : BoolTextTable.T;
            READONLY style := SopFormatStyle.C;
-           pfx := "") : TEXT;
+           pfx := "";
+           inQuotes := FALSE) : TEXT;
     toBool() : Bool.T;
 
     (* the context is a REFANY interpreted by the map procedure as it
