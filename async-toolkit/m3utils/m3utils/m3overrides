@@ -8,14 +8,14 @@ include(".top")
 /* clean.. */
 
 if defined("pm3_version") 
-      	/* Polytechnique de Montreal Modula-3 */
-	option("shared_lib","")
-	if not equal(TARGET,"NT386GNU")
-		option("optimization","T") 
-	end
+        /* Polytechnique de Montreal Modula-3 */
+  option("shared_lib","")
+  if not equal(TARGET,"NT386GNU")
+    option("optimization","T") 
+  end
 else
  if defined("CM3_VERSION")
-      	/* Critical Mass Modula-3 */
+        /* Critical Mass Modula-3 */
 % see http://www.elegosoft.com/cm3/doc/help/cm3/cm3.html
 
 % not sure about this:
@@ -23,8 +23,8 @@ else
 
       m3_optimize("")
  else 
-	/* SRC Modula-3 */
-	m3_option ("-X2@-static@")
+  /* SRC Modula-3 */
+  m3_option ("-X2@-static@")
  end
 end
 
@@ -171,3 +171,7 @@ override("turklib", TOP & "/cardturk")
 override("ohailog", TOP & "/ohai")
 
 override("json", TOP)
+
+override("hprs", TOP & "/btc")
+override("hbddops", TOP & "/btc")
+override("hparselib", TOP & "/btc")
