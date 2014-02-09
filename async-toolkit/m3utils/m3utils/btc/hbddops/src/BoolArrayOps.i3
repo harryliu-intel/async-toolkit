@@ -1,0 +1,10 @@
+(* $Id$ *)
+
+INTERFACE BoolArrayOps;
+
+PROCEDURE ColsEq(READONLY a : ARRAY OF ARRAY OF BOOLEAN;
+                 p, q : CARDINAL) : BOOLEAN;
+
+PROCEDURE MaxTwoDiffCols(READONLY a : ARRAY OF ARRAY OF BOOLEAN) : BOOLEAN;
+
+END BoolArrayOps.
