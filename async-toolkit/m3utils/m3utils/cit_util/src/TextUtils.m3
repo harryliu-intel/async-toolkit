@@ -71,11 +71,20 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   BEGIN
     <*ASSERT ol>0*>
     WHILE FindSub(in, old, p, s) DO
-      Wx.PutText(wx, Text.Sub(in, s, p - s));
+      (*Wx.PutText(wx, Text.Sub(in, s, p - s));*)
+      FOR i := s TO p-1 DO
+        Wx.PutChar(wx, Text.GetChar(in, i))
+      END;
       Wx.PutText(wx, new);
       s := p + ol
     END;
-    Wx.PutText(wx, Text.Sub(in, s));
+
+    (* copy remainder *)
+    (*Wx.PutText(wx, Text.Sub(in, s));*)
+    FOR i := s TO Text.Length(in)-1 DO
+      Wx.PutChar(wx, Text.GetChar(in,i))
+    END;
+
     RETURN Wx.ToText(wx)
   END Replace;
 
@@ -83,17 +92,15 @@ PROCEDURE Replace(in, old, new : TEXT) : TEXT =
 (* not a good algorithm: if necessary, code up Knuth-Morris-Pratt instead. *)
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
   VAR
-    inA := NEW(REF ARRAY OF CHAR, TL(in));
-    subA := NEW(REF ARRAY OF CHAR, TL(sub));
+    inN  := Text.Length(in);
+    subN := Text.Length(sub);
   BEGIN
-    Text.SetChars(inA^,in);
-    Text.SetChars(subA^,sub);
-    FOR i := start TO LAST(inA^) - LAST(subA^) DO
+    FOR i := start TO inN-subN DO
       VAR
         success := TRUE;
       BEGIN
-        FOR j := 0 TO LAST(subA^) DO
-          IF subA[j] # inA[i + j] THEN 
+        FOR j := 0 TO subN-1 DO
+          IF Text.GetChar(sub,j) # Text.GetChar(in,i+j) THEN 
             success := FALSE; 
             EXIT 
           END
