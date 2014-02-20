@@ -378,6 +378,11 @@ Module ("XTime")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Module   ("LRElem")
+Array_sort("LRElem", "LRElem")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 module   ("UtimeOpsC")
 module   ("UtimeWrap")
 c_source ("UtimeOpsC")
