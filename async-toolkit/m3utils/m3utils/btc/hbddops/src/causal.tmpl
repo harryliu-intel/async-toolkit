@@ -2,3 +2,8 @@ readonly proc Causal (nm, elem, elempair, elemlongrealtbl, elempairlongrealtbl, 
   build_generic_intf(nm, "Causal", [elem, elem & "Set", elem & "List"], VISIBLE)
   build_generic_impl(nm, "Causal", [elem, elem & "Set", elem & "SetDef", elem & "List", elempair, elemlongrealtbl, elempairlongrealtbl, elem_elemset_tbl])
 end
+
+readonly proc Causall (nm, elem, elempair, elemlongrealtbl, elempairlongrealtbl, elem_elemset_tbl, elemset, elemsetdef, elemlst) is
+  build_generic_intf(nm, "Causal", [elem, elemset, elemlst], VISIBLE)
+  build_generic_impl(nm, "Causal", [elem, elemset, elemsetdef, elemlst, elempair, elemlongrealtbl, elempairlongrealtbl, elem_elemset_tbl])
+end
