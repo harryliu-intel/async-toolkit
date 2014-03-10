@@ -2,11 +2,15 @@
 
 GENERIC MODULE Causal(Elem, 
                       ElemSet, ElemSetDef,
-                      ElemList, 
                       ElemPair,
                       ElemLongrealTbl,
                       ElemPairLongrealTbl, 
                       ElemElemSetTbl);
+
+IMPORT Debug;
+FROM Fmt IMPORT LongReal, F, Int;
+
+CONST Verbose = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -18,6 +22,7 @@ REVEAL
     timeTbl      : ElemLongrealTbl.T;
     lastElem     : Elem.T;
     lastTime     := FIRST(LONGREAL);
+    toSync       : ElemSet.T;
   METHODS
     visit        (e : Elem.T)   := Visit;
 
@@ -35,7 +40,28 @@ REVEAL
     addDependency := AddDependency;
     delDependency := DelDependency;
     changeDelay   := ChangeDelay;
+    sync          := Sync;
+    debugFmt      := DefDebugFmt;
   END;
+
+PROCEDURE Error(tag, err : TEXT) =
+  BEGIN
+    Debug.Error(Brand & "." & tag & " : " & err);
+    <*ASSERT FALSE*>
+  END Error;
+
+PROCEDURE Warn(tag, err : TEXT) =
+  BEGIN
+    Debug.Warning(Brand & "." & tag & " : " & err)
+  END Warn;
+
+PROCEDURE Dbg(tag, err : TEXT) =
+  BEGIN
+    Debug.Out(Brand & "." & tag & " : " & err)
+  END Dbg;
+
+PROCEDURE DefDebugFmt(<*UNUSED*>t : T; <*UNUSED*>e : Elem.T) : TEXT =
+  BEGIN RETURN "(" & Elem.Brand & ")" END DefDebugFmt;
 
 PROCEDURE Init(t : T) : T =
   BEGIN
@@ -45,6 +71,7 @@ PROCEDURE Init(t : T) : T =
     t.sinkSet     := NEW(ElemSetDef.T).init();
     t.delayTbl    := NEW(ElemPairLongrealTbl.Default).init();
     t.timeTbl     := NEW(ElemLongrealTbl.Default).init();
+    t.toSync      := NEW(ElemSetDef.T).init();
     RETURN t
   END Init;
 
@@ -53,13 +80,14 @@ PROCEDURE Time(t : T; e : Elem.T) : LONGREAL =
     dummy : ElemSet.T;
     tm : LONGREAL;
   BEGIN
-    IF NOT t.predTbl.get(e, dummy) THEN
-      t.traverse(e)
+    IF NOT t.predTbl.get(e, dummy) OR NOT t.timeTbl.get(e, tm) THEN
+      t.traverse(e);
+      WITH found = t.timeTbl.get(e,tm) DO
+        <*ASSERT found*>
+      END
     END;
-    WITH found = t.timeTbl.get(e, tm) DO
-      <*ASSERT found*>
-      RETURN tm
-    END
+
+    RETURN tm
   END Time;
 
 PROCEDURE Traverse(t : T; e : Elem.T) = 
@@ -67,12 +95,15 @@ PROCEDURE Traverse(t : T; e : Elem.T) =
     at : LONGREAL;
     p  : Elem.T;
     ps : ElemSet.T;
-    ss : ElemSet.T;
   BEGIN
-    (* if its already done we do nothing *)
+    (* if its already done we do nothing -- special handling for creation *)
     IF NOT t.predTbl.get(e, ps) THEN
       IF t.isSource(e, at) THEN
         EVAL t.sourceSet.insert(e);
+        IF at > LAST(LONGREAL) / 2.0d0 THEN
+          Warn("Traverse", "source very late : " & t.debugFmt(e) & " @ " & 
+            LongReal(at))
+        END;
         EVAL t.timeTbl.put(e, at);
         ps := NEW(ElemSetDef.T).init(); (* empty set*)
       ELSE
@@ -83,21 +114,34 @@ PROCEDURE Traverse(t : T; e : Elem.T) =
       WITH iter = ps.iterate() DO
         WHILE iter.next(p) DO
           EVAL t.sinkSet.delete(p);
-          IF NOT t.succTbl.get(p, ss) THEN
-            ss := NEW(ElemSetDef.T).init();
-            EVAL t.succTbl.put(p, ss)
-          END;
-          EVAL ss.insert(e);
+          EVAL SuccSet(t, p).insert(e);
           t.traverse(p)
         END
       END;
-      IF NOT t.succTbl.get(e, ss) THEN
-        ss := NEW(ElemSetDef.T).init();
-        EVAL t.succTbl.put(e, ss)
-      END
+      EVAL SuccSet(t, e);
     END;
     t.visit(e) (* in postorder *)
   END Traverse;
+
+PROCEDURE SuccSet(t : T; p : Elem.T) : ElemSet.T =
+  VAR ss : ElemSet.T;
+  BEGIN
+    IF NOT t.succTbl.get(p, ss) THEN
+      ss := NEW(ElemSetDef.T).init();
+      EVAL t.succTbl.put(p, ss)
+    END;
+    RETURN ss
+  END SuccSet;
+
+PROCEDURE PredSet(t : T; p : Elem.T) : ElemSet.T =
+  VAR ss : ElemSet.T;
+  BEGIN
+    IF NOT t.predTbl.get(p, ss) THEN
+      ss := NEW(ElemSetDef.T).init();
+      EVAL t.predTbl.put(p, ss)
+    END;
+    RETURN ss
+  END PredSet;
 
 PROCEDURE Visit(t : T; e : Elem.T) =
   VAR 
@@ -116,6 +160,10 @@ PROCEDURE Visit(t : T; e : Elem.T) =
         END;
         WITH this = dly + t.time(p) DO
           IF this > max THEN max := this END;
+        END;
+        IF max > LAST(LONGREAL) / 2.0d0 THEN
+          Warn("Visit", "event very late : " & t.debugFmt(e) & " @ " & 
+            LongReal(max))
         END;
         EVAL t.timeTbl.put(e, max);
         IF max > t.lastTime THEN
@@ -149,64 +197,84 @@ PROCEDURE Last(t : T; VAR at : Elem.T) : LONGREAL =
     END
   END Last;
 
-PROCEDURE AddDependency(t : T; a, b : Elem.T) =
-  VAR
-    s : ElemSet.T;
+PROCEDURE AddDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
   BEGIN
-    WITH found = t.succTbl.get(a, s) DO
-      IF NOT found THEN s := NEW(ElemSetDef.T).init() END;
-      EVAL s.insert(b)
+    IF FALSE AND Verbose THEN
+      Dbg("AddDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
     END;
-    WITH found = t.predTbl.get(a, s) DO
-      IF NOT found THEN s := NEW(ElemSetDef.T).init() END;
-      EVAL s.insert(a)
-    END;
-    t.recalculate(b)
+    EVAL SuccSet(t, a).insert(b);
+    EVAL PredSet(t, b).insert(a);
+    IF sync THEN
+      t.recalculate(b)
+    ELSE
+      EVAL t.toSync.insert(b)
+    END
   END AddDependency;
 
-PROCEDURE DelDependency(t : T; a, b : Elem.T) =
-  VAR
-    s : ElemSet.T;
+PROCEDURE DelDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
   BEGIN
-    WITH found = t.succTbl.get(a, s) DO
-      <*ASSERT found*>
-      WITH x = s.insert(b) DO <*ASSERT x*> END
-    END;
-    WITH found = t.predTbl.get(a, s) DO
-      <*ASSERT found*>
-      WITH x = s.delete(a) DO <*ASSERT x*> END
-    END;
-    t.recalculate(b)
+    (* clearly the whole graph need not be built ... *)
+    EVAL SuccSet(t, a).delete(b);
+    EVAL PredSet(t, b).delete(a);
+    IF sync THEN
+      t.recalculate(b)
+    ELSE
+      EVAL t.toSync.insert(b)
+    END
   END DelDependency;
+
+PROCEDURE Sync(t : T) =
+  (* recalculate everything that is stale *)
+  BEGIN
+    IF Verbose THEN
+      Dbg("Sync", "********  " & Int(t.toSync.size()) & " events")
+    END;
+
+    WHILE t.toSync.size() # 0 DO
+      VAR iter := t.toSync.iterate();
+          e : Elem.T;
+      BEGIN
+        EVAL iter.next(e);
+        t.recalculate(e)
+      END
+    END
+  END Sync;
 
 PROCEDURE Recalculate(t : T; b : Elem.T) =
   VAR
     t1 := FIRST(LONGREAL);
     t2 : LONGREAL;
-    s : ElemSet.T;
     c : Elem.T;
   BEGIN
+    EVAL t.toSync.delete(b);
     EVAL t.timeTbl.get(b,t1);
     t.traverse(b);
     WITH found = t.timeTbl.get(b,t2) DO
       <*ASSERT found*>
       IF t1 # t2 THEN
-        WITH x = t.succTbl.get(b,s),
+        WITH s    = SuccSet(t, b),
              iter = s.iterate() DO
-          <*ASSERT x*>
-          WHILE iter.next(c) DO
-            t.recalculate(c)
-          END
+          IF FALSE AND Verbose THEN
+            Dbg("Recalculate", F("updating time(%s) %s -> %s, %s successor(s)",
+                                 t.debugFmt(b),
+                                 LongReal(t1), LongReal(t2),
+                                 Int(s.size())))
+          END;
+          WHILE iter.next(c) DO t.recalculate(c) END
         END
       END
     END
   END Recalculate;
 
-PROCEDURE ChangeDelay(t : T; a, b : Elem.T; dly : LONGREAL) = 
+PROCEDURE ChangeDelay(t : T; a, b : Elem.T; dly : LONGREAL; sync : BOOLEAN) = 
   BEGIN
     WITH hadIt = t.delayTbl.put(ElemPair.T { a, b }, dly) DO
       <*ASSERT hadIt*>
-      t.recalculate(b)
+      IF sync THEN
+        t.recalculate(b)
+      ELSE
+        EVAL t.toSync.insert(b)
+      END
     END
   END ChangeDelay;
 
