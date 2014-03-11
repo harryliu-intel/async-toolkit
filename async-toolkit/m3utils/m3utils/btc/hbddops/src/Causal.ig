@@ -20,6 +20,8 @@ TYPE
     delDependency(pred, succ : Elem.T                ; sync := TRUE);
     changeDelay  (pred, succ : Elem.T; dly : LONGREAL; sync := TRUE);
 
+    successors    (e : Elem.T) : ElemSet.T (* CONST *);
+
     sync();
   END;
 

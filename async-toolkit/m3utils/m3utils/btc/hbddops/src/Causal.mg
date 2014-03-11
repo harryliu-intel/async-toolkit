@@ -42,6 +42,8 @@ REVEAL
     changeDelay   := ChangeDelay;
     sync          := Sync;
     debugFmt      := DefDebugFmt;
+    
+    successors    := SuccSet;
   END;
 
 PROCEDURE Error(tag, err : TEXT) =
