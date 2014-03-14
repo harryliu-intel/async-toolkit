@@ -23,6 +23,8 @@ TYPE
     successors    (e : Elem.T) : ElemSet.T (* CONST *);
 
     sync();
+
+    findCriticalInput(e : Elem.T; VAR crit : Elem.T) : BOOLEAN;
   END;
 
 CONST Brand = "Causal(" & Elem.Brand & ")";

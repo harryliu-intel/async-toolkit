@@ -44,7 +44,28 @@ REVEAL
     debugFmt      := DefDebugFmt;
     
     successors    := SuccSet;
+
+    findCriticalInput := FindCriticalInput;
   END;
+
+PROCEDURE FindCriticalInput(t : T; e : Elem.T; VAR crit : Elem.T) : BOOLEAN =
+  VAR
+    p  : Elem.T;
+    tt := FIRST(LONGREAL);
+  BEGIN
+    WITH predi = PredSet(t, e).iterate() DO
+      WHILE predi.next(p) DO
+        WITH pt = t.time(p),
+             it = pt + t.delay(p, e) DO
+          IF it > tt THEN
+            tt := it;
+            crit := p
+          END
+        END
+      END
+    END;
+    RETURN tt # FIRST(LONGREAL)
+  END FindCriticalInput;
 
 PROCEDURE Error(tag, err : TEXT) =
   BEGIN
@@ -201,7 +222,7 @@ PROCEDURE Last(t : T; VAR at : Elem.T) : LONGREAL =
 
 PROCEDURE AddDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
   BEGIN
-    IF FALSE AND Verbose THEN
+    IF Verbose THEN
       Dbg("AddDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
     END;
     EVAL SuccSet(t, a).insert(b);
@@ -215,6 +236,9 @@ PROCEDURE AddDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
 
 PROCEDURE DelDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
   BEGIN
+    IF Verbose THEN
+      Dbg("DelDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
+    END;
     (* clearly the whole graph need not be built ... *)
     EVAL SuccSet(t, a).delete(b);
     EVAL PredSet(t, b).delete(a);
@@ -256,7 +280,7 @@ PROCEDURE Recalculate(t : T; b : Elem.T) =
       IF t1 # t2 THEN
         WITH s    = SuccSet(t, b),
              iter = s.iterate() DO
-          IF FALSE AND Verbose THEN
+          IF Verbose THEN
             Dbg("Recalculate", F("updating time(%s) %s -> %s, %s successor(s)",
                                  t.debugFmt(b),
                                  LongReal(t1), LongReal(t2),
