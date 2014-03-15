@@ -4,6 +4,7 @@ MODULE BDDOpsH;
 IMPORT BDDSet, BDD;
 IMPORT Word;
 IMPORT SopBDD;
+IMPORT TextSet;
 
 PROCEDURE AccumulateBDD(s  : BDDSet.T; 
                         op : PROCEDURE(a, b : BDD.T) : BDD.T;
@@ -73,5 +74,38 @@ PROCEDURE InfixFormatSet(x           : BDDSet.T;
     END;
     RETURN res
   END InfixFormatSet;
+
+PROCEDURE InfixFormatNSet(x           : TextSet.T; 
+                          pfx         : TEXT; 
+                          inQuotes    : BOOLEAN;
+                          aliasMapper : SopBDD.AliasMapper;
+                          op          : TEXT) : TEXT =
+  VAR res := "";
+      iter := x.iterate();
+      p : TEXT;
+  BEGIN
+    WITH one = iter.next(p) DO
+      <*ASSERT one*>
+      res := PfxNFormat(p, pfx, inQuotes, aliasMapper)
+    END;
+    WHILE iter.next(p) DO
+      res := res & op;
+      res := res & PfxNFormat(p, pfx, inQuotes, aliasMapper)
+    END;
+    RETURN res
+  END InfixFormatNSet;
+
+PROCEDURE PfxNFormat(x : TEXT;
+                     pfx : TEXT; 
+                     inQuotes : BOOLEAN;
+                     am : SopBDD.AliasMapper) : TEXT = 
+  VAR q := "";
+  BEGIN
+    IF am = NIL THEN am := SopBDD.IdentityMapper END;
+    IF inQuotes THEN q := "\"" END;
+
+    RETURN q & am.canon(pfx & x) & q
+
+  END PfxNFormat;
 
 BEGIN END BDDOpsH.

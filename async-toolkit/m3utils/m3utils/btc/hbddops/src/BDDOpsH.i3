@@ -4,6 +4,7 @@ INTERFACE BDDOpsH;
 IMPORT BDDSet, BDD;
 IMPORT Word;
 IMPORT SopBDD;
+IMPORT TextSet;
 
 PROCEDURE AccumulateBDD(s  : BDDSet.T; 
                         op : PROCEDURE(a, b : BDD.T) : BDD.T;
@@ -16,6 +17,8 @@ PROCEDURE XFormat(x : BDD.T; inQuotes := FALSE) : TEXT;
 PROCEDURE PfxFormat(x : BDD.T; prefix : TEXT; inQuotes : BOOLEAN; aliasMapper : SopBDD.AliasMapper) : TEXT;
 
 PROCEDURE InfixFormatSet(x : BDDSet.T; prefix : TEXT; inQuotes : BOOLEAN; aliasMapper : SopBDD.AliasMapper; op : TEXT) : TEXT;
+
+PROCEDURE InfixFormatNSet(x : TextSet.T; prefix : TEXT; inQuotes : BOOLEAN; aliasMapper : SopBDD.AliasMapper; op : TEXT) : TEXT;
 
 PROCEDURE Substitute(in, v, by : BDD.T) : BDD.T;
   (* substitute via Shannon cofactor expansion *)
