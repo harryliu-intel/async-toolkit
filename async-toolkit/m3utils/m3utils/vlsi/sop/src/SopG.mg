@@ -103,8 +103,6 @@ PROCEDURE Init(self : T; from : Bool.T) : T =
     RETURN self
   END Init;
 
-VAR IdentityMapper := NEW(AliasMapper, canon := IdentityCanon);
-
 PROCEDURE IdentityCanon(<*UNUSED*>am : AliasMapper; txt : TEXT) : TEXT =
   BEGIN RETURN txt END IdentityCanon;
 
@@ -627,7 +625,9 @@ PROCEDURE ConjunctIsOK(c : Conjunct) : BOOLEAN =
 
 
 
-BEGIN END SopG.
+BEGIN 
+  IdentityMapper := NEW(AliasMapper, canon := IdentityCanon);
+END SopG.
 
 
 

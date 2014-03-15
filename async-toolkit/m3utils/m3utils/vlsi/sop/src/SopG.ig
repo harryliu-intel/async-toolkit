@@ -72,6 +72,8 @@ TYPE
                        eventualInvariant : Bool.T) : T;
   END;
 
+VAR IdentityMapper (* CONST *) : AliasMapper;
+
 PROCEDURE Simplify(aOld : T) : T;
 PROCEDURE And(READONLY a, b : T) : T;
 PROCEDURE Or(READONLY a, b : T) : T;
