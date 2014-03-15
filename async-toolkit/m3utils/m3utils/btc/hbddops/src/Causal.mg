@@ -10,7 +10,7 @@ GENERIC MODULE Causal(Elem,
 IMPORT Debug;
 FROM Fmt IMPORT LongReal, F, Int;
 
-CONST Verbose = TRUE;
+CONST Verbose = FALSE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
