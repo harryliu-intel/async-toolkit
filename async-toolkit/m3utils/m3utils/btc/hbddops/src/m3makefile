@@ -22,7 +22,7 @@ Table    ("BDDPairLongreal", "BDDPair", "LongrealType")
 Generic_module("Causal")
 template("causal")
 
-Causal   ("BDDCausal", "BDD", "BDDPair", "BDDLongrealTbl", "BDDPairLongrealTbl", "BDDBDDSetTbl")
+Causal   ("BDDCausal", "BDD", "BDDPair", "BDDLongrealTbl", "BDDPairLongrealTbl", "BDDBDDSetTbl", "BDDSeq", "BDDRefTbl")
 
 Module   ("TimeSearcher")
 

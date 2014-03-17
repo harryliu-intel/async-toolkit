@@ -5,7 +5,9 @@ GENERIC MODULE Causal(Elem,
                       ElemPair,
                       ElemLongrealTbl,
                       ElemPairLongrealTbl, 
-                      ElemElemSetTbl);
+                      ElemElemSetTbl,
+                      ElemSeq,
+                      ElemRefTbl);
 
 IMPORT Debug;
 FROM Fmt IMPORT LongReal, F, Int;
@@ -173,6 +175,12 @@ PROCEDURE Visit(t : T; e : Elem.T) =
     p : Elem.T;
     dly : LONGREAL;
   BEGIN
+
+    (* delayTbl is iterated over only like this:
+       for a node, iterate over predecessors.
+
+       therefore, delay to be recorded with predecessors *)
+
     WITH found = t.predTbl.get(e, ps),
          iter  = ps.iterate() DO
       <*ASSERT found*>
