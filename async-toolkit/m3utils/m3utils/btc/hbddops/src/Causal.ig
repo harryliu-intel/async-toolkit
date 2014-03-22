@@ -8,23 +8,30 @@ TYPE
   Public = OBJECT METHODS
     init        () : T;
 
-    isSource    (e : Elem.T; VAR at : LONGREAL) : BOOLEAN;  (* override *)
-    predecessors(e : Elem.T) : ElemSet.T;                   (* override *)
-    delay       (pred, succ : Elem.T) : LONGREAL;           (* override *)
     debugFmt    (e : Elem.T) : TEXT;                        (* may override *)
 
-    (* computes *)
-    last        (VAR at : Elem.T) : LONGREAL;
-    time        (at : Elem.T) : LONGREAL;
+    (* create elements -- not needed? *)
+    (* createElement(e : Elem.T); *)
+
+    (* modify *)
     addDependency(pred, succ : Elem.T                ; sync := TRUE);
     delDependency(pred, succ : Elem.T                ; sync := TRUE);
-    changeDelay  (pred, succ : Elem.T; dly : LONGREAL; sync := TRUE);
+    setDelay  (pred, succ : Elem.T; dly : LONGREAL   ; sync := TRUE);
 
-    successors    (e : Elem.T) : ElemSet.T (* CONST *);
+    setSource (e : Elem.T; at : LONGREAL);
 
-    sync();
+    sync(); (* either sync = TRUE above or call this before computing below *)
 
+    (* computes *)
+    last             (VAR at : Elem.T) : LONGREAL;
+    time             (at : Elem.T)     : LONGREAL;
     findCriticalInput(e : Elem.T; VAR crit : Elem.T) : BOOLEAN;
+
+    (* queries *)
+    getDelay(pred, succ : Elem.T) : LONGREAL;
+    successors       (e : Elem.T)      : ElemSet.T (* CONST *);
+    predecessors  (e : Elem.T)      : ElemSet.T (* CONST *);
+
   END;
 
 CONST Brand = "Causal(" & Elem.Brand & ")";

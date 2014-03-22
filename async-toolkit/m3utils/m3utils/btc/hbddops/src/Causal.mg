@@ -2,9 +2,7 @@
 
 GENERIC MODULE Causal(Elem, 
                       ElemSet, ElemSetDef,
-                      ElemPair,
                       ElemLongrealTbl,
-                      ElemPairLongrealTbl, 
                       ElemElemSetTbl,
                       ElemSeq,
                       ElemRefTbl);
@@ -12,7 +10,7 @@ GENERIC MODULE Causal(Elem,
 IMPORT Debug, Wx;
 FROM Fmt IMPORT LongReal, F, Int, Bool;
 
-CONST Verbose = TRUE;
+CONST Verbose = FALSE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -23,6 +21,7 @@ REVEAL
     lastElem     : Elem.T;
     lastTime     := FIRST(LONGREAL);
     toSync       : ElemSet.T;
+
   OVERRIDES
     init          := Init;
     last          := Last;
@@ -30,14 +29,24 @@ REVEAL
 
     addDependency := AddDependency;
     delDependency := DelDependency;
-    changeDelay   := ChangeDelay;
+    setDelay      := SetDelay;
     sync          := Sync;
     debugFmt      := DefDebugFmt;
     
     successors    := SuccSet;
 
     findCriticalInput := FindCriticalInput;
+    
+    setSource     := SetSource;
+    predecessors  := Predecessors;
+    getDelay      := GetDelay;
   END;
+
+PROCEDURE SetSource(t : T; e : Elem.T; at : LONGREAL) =
+  BEGIN
+    EVAL t.sourceSet.insert(e);
+    EVAL t.timeTbl.put(e, at)
+  END SetSource;
 
 TYPE
   Predecessor = RECORD
@@ -59,7 +68,8 @@ PROCEDURE FindCriticalInput(t : T; e : Elem.T; VAR crit : Elem.T) : BOOLEAN =
       FOR i := FIRST(preds) TO LAST(preds) DO
         WITH p = preds[i].p DO
           IF preds[i].d = Uninitialized THEN
-            preds[i].d := t.delay(p, e)
+            <*ASSERT FALSE*>
+            (*preds[i].d := t.delay(p, e)*)
           END;
           WITH pt = t.time(p),
                it = pt + preds[i].d DO
@@ -154,8 +164,11 @@ PROCEDURE AllNodes(t : T) : ElemSet.T =
       WITH e = todo.remlo() DO
         EVAL res.insert(e);
         
-        iter := t.predecessors(e).iterate();
-        WHILE iter.next(x) DO Check(x) END;
+        WITH pa = PredSet(t,e)^ DO
+          FOR i := FIRST(pa) TO LAST(pa) DO
+            Check(pa[i].p)
+          END
+        END;
 
         iter := t.successors(e).iterate();
         WHILE iter.next(x) DO Check(x) END
@@ -170,7 +183,7 @@ PROCEDURE AllNodes(t : T) : ElemSet.T =
     <*ASSERT FALSE*>
   END Error;
 
-PROCEDURE Warn(tag, err : TEXT) =
+<*NOWARN*>PROCEDURE Warn(tag, err : TEXT) =
   BEGIN
     Debug.Warning(Brand & "." & tag & " : " & err)
   END Warn;
@@ -216,11 +229,25 @@ PROCEDURE PredSet(t : T; p : Elem.T) : REF Preds =
   VAR 
     ss : REFANY;
   BEGIN
+    IF Verbose THEN
+      Dbg("PredSet",t.debugFmt(p))
+    END;
     WITH hadIt = t.predTbl.get(p, ss) DO
       <*ASSERT hadIt*>
     END;
     RETURN ss
   END PredSet;
+
+PROCEDURE Predecessors(t : T; e : Elem.T) : ElemSet.T =
+  VAR res := NEW(ElemSetDef.T).init();
+  BEGIN
+    WITH p = PredSet(t, e)^ DO
+      FOR i := FIRST(p) TO LAST(p) DO
+        EVAL res.insert(p[i].p)
+      END
+    END;
+    RETURN res
+  END Predecessors;
 
 PROCEDURE Last(t : T; VAR at : Elem.T) : LONGREAL =
   BEGIN
@@ -234,6 +261,7 @@ PROCEDURE Last(t : T; VAR at : Elem.T) : LONGREAL =
 
 PROCEDURE AddDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
   BEGIN
+    <*ASSERT NOT t.sourceSet.member(b)*>
     IF Verbose THEN
       Dbg("AddDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
     END;
@@ -267,7 +295,9 @@ PROCEDURE InsertInPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
       SUBARRAY(new^,0,np) := pst^;
       new[np].p := a;
       EVAL t.predTbl.put(b, new)
-    END
+    END;
+
+    CreateIfNotExist(t, a)
   END InsertInPreds;
 
 PROCEDURE DeleteFromPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
@@ -291,33 +321,11 @@ PROCEDURE DeleteFromPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
     END
   END DeleteFromPreds;
 
-PROCEDURE InitPreds(t : T; e : Elem.T) : REF Preds =
-  (* init predecessors table for non-source node *)
-  VAR 
-    p : Elem.T;
-  BEGIN
-    WITH pss = t.predecessors(e),
-         psi = pss.iterate(),
-         pst = NEW(REF Preds, pss.size()) DO
-      <*ASSERT pss.size() # 0*>
-      VAR i := 0; BEGIN
-        WHILE psi.next(p) DO pst[i].p := p; INC(i) END;
-        <*ASSERT i = NUMBER(pst^)*>
-      END;
-      
-      WITH hadIt = t.predTbl.put(e, pst) DO
-        <*ASSERT NOT hadIt*>
-        RETURN pst
-      END
-    END
-  END InitPreds;
-
 PROCEDURE DelDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
   BEGIN
     IF Verbose THEN
       Dbg("DelDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
     END;
-    (* clearly the whole graph need not be built ... *)
     EVAL SuccSet(t, a).delete(b);
 
     DeleteFromPreds(t, a, b);
@@ -333,36 +341,12 @@ PROCEDURE CreateIfNotExist(t : T; e : Elem.T) =
      also fill in delayTbl if created. 
   *)
   VAR
-    at : LONGREAL;
     ps : REFANY;
   BEGIN
-    (* if its already done we do nothing -- special handling for creation *)
     IF NOT t.predTbl.get(e, ps) THEN
-      IF t.isSource(e, at) THEN
-        EVAL t.sourceSet.insert(e);
-        IF at > LAST(LONGREAL) / 2.0d0 THEN
-          Warn("Traverse", "source very late : " & t.debugFmt(e) & " @ " & 
-            LongReal(at))
-        END;
-        EVAL t.timeTbl.put(e, at);
-        ps := NEW(REF Preds, 0);
-        EVAL t.predTbl.put(e, ps)
-      ELSE
-        WITH pst = InitPreds(t, e)^ DO
-          FOR i := FIRST(pst) TO LAST(pst) DO
-            WITH p = pst[i].p DO
-              CreateIfNotExist(t, p);
-              pst[i].d := t.delay(p, e);
-
-              EVAL SuccSet(t, p).insert(e)
-            END;
-            
-            EVAL CalcTime(t, e, pst)
-          END
-        END
-      END;
-      EVAL SuccSet(t, e)
-    END
+      EVAL t.predTbl.put(e, NEW(REF Preds, 0))
+    END;
+    EVAL SuccSet(t, e)
   END CreateIfNotExist;
 
 PROCEDURE CalcTime(t : T; e : Elem.T; VAR pst : Preds) : BOOLEAN =
@@ -374,7 +358,8 @@ PROCEDURE CalcTime(t : T; e : Elem.T; VAR pst : Preds) : BOOLEAN =
     FOR i := FIRST(pst) TO LAST(pst) DO
 
       IF pst[i].d = Uninitialized THEN
-        pst[i].d := t.delay(pst[i].p, e)
+        <*ASSERT FALSE*>
+        (*pst[i].d := t.delay(pst[i].p, e)*)
       END;
 
       WITH int = t.time(pst[i].p),
@@ -457,7 +442,7 @@ PROCEDURE Sync(t : T) =
     END
   END Sync;
 
-PROCEDURE ChangeDelay(t : T; a, b : Elem.T; dly : LONGREAL; sync : BOOLEAN) = 
+PROCEDURE SetDelay(t : T; a, b : Elem.T; dly : LONGREAL; sync : BOOLEAN) = 
   VAR
     ps : REFANY;
     found := FALSE;
@@ -479,6 +464,22 @@ PROCEDURE ChangeDelay(t : T; a, b : Elem.T; dly : LONGREAL; sync : BOOLEAN) =
     EVAL t.toSync.insert(b);
     IF sync THEN t.sync() END
 
-  END ChangeDelay;
+  END SetDelay;
+
+PROCEDURE GetDelay(t : T; a, b : Elem.T) : LONGREAL =
+  BEGIN
+    IF Verbose THEN
+      Dbg("GetDelay", t.debugFmt(a) & " -> " & t.debugFmt(b))
+    END;
+
+    WITH p = PredSet(t, b)^ DO
+      FOR i := FIRST(p) TO LAST(p) DO
+        IF Elem.Equal(p[i].p,a) THEN
+          RETURN p[i].d
+        END
+      END
+    END;
+    <*ASSERT FALSE*>
+  END GetDelay;
 
 BEGIN END Causal.
