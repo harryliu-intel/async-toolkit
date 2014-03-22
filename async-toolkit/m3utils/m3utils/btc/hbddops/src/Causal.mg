@@ -10,9 +10,9 @@ GENERIC MODULE Causal(Elem,
                       ElemRefTbl);
 
 IMPORT Debug, Wx;
-FROM Fmt IMPORT LongReal, F, Int;
+FROM Fmt IMPORT LongReal, F, Int, Bool;
 
-CONST Verbose = FALSE;
+CONST Verbose = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -365,17 +365,31 @@ PROCEDURE CreateIfNotExist(t : T; e : Elem.T) =
     END
   END CreateIfNotExist;
 
-PROCEDURE CalcTime(t : T; e : Elem.T; READONLY pst : Preds) : BOOLEAN =
+PROCEDURE CalcTime(t : T; e : Elem.T; VAR pst : Preds) : BOOLEAN =
   VAR max := FIRST(LONGREAL);
       old := FIRST(LONGREAL);
   BEGIN
     EVAL t.timeTbl.get(e, old);
 
     FOR i := FIRST(pst) TO LAST(pst) DO
-      WITH this = pst[i].d + t.time(pst[i].p) DO
-        IF this > max THEN max := this END;
+
+      IF pst[i].d = Uninitialized THEN
+        pst[i].d := t.delay(pst[i].p, e)
       END;
 
+      WITH int = t.time(pst[i].p),
+           d   = pst[i].d,
+           this = d + int DO
+        IF Verbose THEN
+          Dbg("CalcTime", F("%s @%s + %s -> %s @%s",
+                            t.debugFmt(pst[i].p),
+                            LongReal(int),
+                            LongReal(d),
+                            t.debugFmt(e),
+                            LongReal(this)))
+        END;
+        IF this > max THEN max := this END;
+      END;
 
       IF max > t.lastTime THEN
         t.lastTime := max;
@@ -385,15 +399,22 @@ PROCEDURE CalcTime(t : T; e : Elem.T; READONLY pst : Preds) : BOOLEAN =
         t.lastTime := FIRST(LONGREAL)
       END;
     END;
+
+    IF Verbose THEN
+      Dbg("CalcTime", t.debugFmt(e) & 
+        " max=" & LongReal(max) & 
+        " old=" & LongReal(old) & 
+        " old=max =" & Bool(old=max) )
+    END;
     
     WITH res = old # max DO
       IF res THEN
         EVAL t.timeTbl.put(e, max);
 
         IF Verbose THEN
-            Dbg("CalcTimes", F("updating time(%s) %s -> %s",
-                               t.debugFmt(e),
-                               LongReal(old), LongReal(max)))
+            Dbg("CalcTime", F("updating time(%s) %s -> %s",
+                              t.debugFmt(e),
+                              LongReal(old), LongReal(max)))
         END
       END;
       RETURN res
