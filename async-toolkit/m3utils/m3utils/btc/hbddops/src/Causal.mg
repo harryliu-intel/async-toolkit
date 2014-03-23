@@ -40,6 +40,7 @@ REVEAL
     setSource     := SetSource;
     predecessors  := Predecessors;
     getDelay      := GetDelay;
+    topoSort      := TopoSort;
   END;
 
 PROCEDURE SetSource(t : T; e : Elem.T; at : LONGREAL) =
@@ -97,7 +98,9 @@ PROCEDURE SelectOne(s       : ElemSet.T;
     RETURN FALSE
   END SelectOne;
 
-PROCEDURE TopoSort(t : T) : ElemSeq.T =
+PROCEDURE TopoSort(t : T; syncOnly : BOOLEAN) : ElemSeq.T =
+  (* topological sort of all the nodes, or if syncOnly is true, of
+     all the nodes visible from the syncSet (which might be empty) *)
 
   (* from Wikipedia *)
   PROCEDURE Visit(n : Elem.T) =
@@ -124,7 +127,7 @@ PROCEDURE TopoSort(t : T) : ElemSeq.T =
   VAR
     res       := NEW(ElemSeq.T).init();
     tempMarks := NEW(ElemSetDef.T).init();
-    toVisit   := AllNodes(t);
+    toVisit   := AllNodes(t,syncOnly);
     n : Elem.T;
   BEGIN
     WHILE SelectOne(toVisit, n, notIn := tempMarks) DO
@@ -142,8 +145,11 @@ PROCEDURE TopoSort(t : T) : ElemSeq.T =
     RETURN res
   END TopoSort;
 
-PROCEDURE AllNodes(t : T) : ElemSet.T =
-  (* find all nodes visible from the sync set *)
+PROCEDURE AllNodes(t : T; syncOnly : BOOLEAN) : ElemSet.T =
+  (* find all nodes visible --
+
+     if syncOnly, from the sync set; else, from anywhere
+   *)
 
   PROCEDURE Check(z : Elem.T) =
     BEGIN
@@ -155,10 +161,19 @@ PROCEDURE AllNodes(t : T) : ElemSet.T =
   VAR 
     res, ts := NEW(ElemSetDef.T).init();
     todo := NEW(ElemSeq.T).init();
-    iter := t.toSync.iterate();
     e, x : Elem.T;
+    rdummy : REFANY;
   BEGIN
-    WHILE iter.next(e) DO todo.addhi(e) END;
+
+    IF syncOnly THEN
+      WITH iter = t.toSync.iterate() DO
+        WHILE iter.next(e) DO todo.addhi(e) END
+      END
+    ELSE
+      WITH iter = t.predTbl.iterate() DO
+        WHILE iter.next(e, rdummy) DO todo.addhi(e) END
+      END
+    END;
     
     WHILE todo.size() > 0 DO
       WITH e = todo.remlo() DO
@@ -170,8 +185,9 @@ PROCEDURE AllNodes(t : T) : ElemSet.T =
           END
         END;
 
-        iter := t.successors(e).iterate();
-        WHILE iter.next(x) DO Check(x) END
+        WITH iter = t.successors(e).iterate() DO
+          WHILE iter.next(x) DO Check(x) END
+        END
       END
     END;
     RETURN res
@@ -433,7 +449,7 @@ PROCEDURE Sync(t : T) =
     END;
 
     (* sync the nodes in topological sort order *)
-    WITH topo = TopoSort(t) DO
+    WITH topo = TopoSort(t, syncOnly := TRUE) DO
       FOR i := 0 TO topo.size()-1 DO
         WITH e = topo.get(i) DO
           IF t.toSync.member(e) THEN Recalc(e); EVAL t.toSync.delete(e) END

@@ -1,6 +1,6 @@
 (* $Id$ *)
 
-GENERIC INTERFACE Causal(Elem, ElemSet);
+GENERIC INTERFACE Causal(Elem, ElemSet, ElemSeq);
 
 TYPE
   T <: Public;
@@ -29,8 +29,10 @@ TYPE
 
     (* queries *)
     getDelay(pred, succ : Elem.T) : LONGREAL;
-    successors       (e : Elem.T)      : ElemSet.T (* CONST *);
-    predecessors  (e : Elem.T)      : ElemSet.T (* CONST *);
+    successors       (e : Elem.T) : ElemSet.T (* CONST *);
+    predecessors  (e : Elem.T)    : ElemSet.T (* CONST *);
+
+    topoSort (syncOnly := FALSE)  : ElemSeq.T;
 
   END;
 
