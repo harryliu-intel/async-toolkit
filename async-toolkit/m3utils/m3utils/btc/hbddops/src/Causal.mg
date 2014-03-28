@@ -15,7 +15,7 @@ CONST Verbose = FALSE;
 REVEAL
   T = Public BRANDED Brand OBJECT
     predTbl      : ElemRefTbl.T;
-    succTbl      : ElemElemSetTbl.T;
+    succTbl      : ElemRefTbl.T;
     sourceSet    : ElemSet.T;
     timeTbl      : ElemLongrealTbl.T;
     lastElem     : Elem.T;
@@ -33,7 +33,7 @@ REVEAL
     sync          := Sync;
     debugFmt      := DefDebugFmt;
     
-    successors    := SuccSet;
+    successors    := Successors;
 
     findCriticalInput := FindCriticalInput;
     
@@ -56,6 +56,10 @@ TYPE
   END;
 
   Preds = ARRAY OF Predecessor;
+
+  Successor = Elem.T;
+
+  Succs = ARRAY OF Successor;
 
 CONST Uninitialized = FIRST(LONGREAL);
 
@@ -104,19 +108,19 @@ PROCEDURE TopoSort(t : T; syncOnly : BOOLEAN) : ElemSeq.T =
 
   (* from Wikipedia *)
   PROCEDURE Visit(n : Elem.T) =
-    VAR 
-      m : Elem.T;
     BEGIN
 
       IF tempMarks.member(n) THEN Debug.Error("not a DAG!") END;
       IF toVisit.member(n) THEN
         EVAL tempMarks.insert(n);
-        WITH iter = t.successors(n).iterate() DO
-          WHILE iter.next(m) DO
-            IF Verbose THEN 
-              Dbg("TopoSort.Visit", t.debugFmt(n) & "->" & t.debugFmt(m)) 
-            END;
-            Visit(m)
+        WITH s = SuccSet(t, n)^ DO
+          FOR i := FIRST(s) TO LAST(s) DO
+            WITH m = s[i] DO
+              IF Verbose THEN 
+                Dbg("TopoSort.Visit", t.debugFmt(n) & "->" & t.debugFmt(m)) 
+              END;
+              Visit(m)
+            END
           END
         END;
         EVAL toVisit.delete(n); EVAL tempMarks.delete(n);
@@ -160,8 +164,8 @@ PROCEDURE AllNodes(t : T; syncOnly : BOOLEAN) : ElemSet.T =
 
   VAR 
     res, ts := NEW(ElemSetDef.T).init();
-    todo := NEW(ElemSeq.T).init();
-    e, x : Elem.T;
+    todo := NEW(ElemSeq.T).init(sizeHint := t.predTbl.size());
+    e    : Elem.T;
     rdummy : REFANY;
   BEGIN
 
@@ -185,8 +189,10 @@ PROCEDURE AllNodes(t : T; syncOnly : BOOLEAN) : ElemSet.T =
           END
         END;
 
-        WITH iter = t.successors(e).iterate() DO
-          WHILE iter.next(x) DO Check(x) END
+        WITH sa = SuccSet(t,e)^ DO
+          FOR i := FIRST(sa) TO LAST(sa) DO
+            Check(sa[i])
+          END
         END
       END
     END;
@@ -215,7 +221,7 @@ PROCEDURE DefDebugFmt(<*UNUSED*>t : T; <*UNUSED*>e : Elem.T) : TEXT =
 PROCEDURE Init(t : T) : T =
   BEGIN
     t.predTbl     := NEW(ElemRefTbl.Default).init();
-    t.succTbl     := NEW(ElemElemSetTbl.Default).init();
+    t.succTbl     := NEW(ElemRefTbl.Default).init();
     t.sourceSet   := NEW(ElemSetDef.T).init();
     t.timeTbl     := NEW(ElemLongrealTbl.Default).init();
     t.toSync      := NEW(ElemSetDef.T).init();
@@ -231,11 +237,14 @@ PROCEDURE Time(t : T; e : Elem.T) : LONGREAL =
     RETURN tm
   END Time;
 
-PROCEDURE SuccSet(t : T; p : Elem.T) : ElemSet.T =
-  VAR ss : ElemSet.T;
+PROCEDURE SuccSet(t : T; p : Elem.T) : REF Succs =
+  VAR ss : REFANY;
   BEGIN
+    IF Verbose THEN
+      Dbg("SuccSet",t.debugFmt(p))
+    END;
     IF NOT t.succTbl.get(p, ss) THEN
-      ss := NEW(ElemSetDef.T).init();
+      ss := NEW(REF Succs, 0);
       EVAL t.succTbl.put(p, ss)
     END;
     RETURN ss
@@ -265,6 +274,17 @@ PROCEDURE Predecessors(t : T; e : Elem.T) : ElemSet.T =
     RETURN res
   END Predecessors;
 
+PROCEDURE Successors(t : T; e : Elem.T) : ElemSet.T =
+  VAR res := NEW(ElemSetDef.T).init();
+  BEGIN
+    WITH p = SuccSet(t, e)^ DO
+      FOR i := FIRST(p) TO LAST(p) DO
+        EVAL res.insert(p[i])
+      END
+    END;
+    RETURN res
+  END Successors;
+
 PROCEDURE Last(t : T; VAR at : Elem.T) : LONGREAL =
   BEGIN
     IF t.lastTime # FIRST(LONGREAL) THEN
@@ -281,9 +301,9 @@ PROCEDURE AddDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
     IF Verbose THEN
       Dbg("AddDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
     END;
-    EVAL SuccSet(t, a).insert(b);
 
     InsertInPreds(t, a, b);
+    InsertInSuccs(t, a, b);
       
     EVAL t.toSync.insert(b);
     IF sync THEN t.sync() END;
@@ -316,6 +336,50 @@ PROCEDURE InsertInPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
     CreateIfNotExist(t, a)
   END InsertInPreds;
 
+PROCEDURE InsertInSuccs(t : T; a (* pred *), b (* succ *) : Elem.T) =
+  (* add b to succ list of a *)
+  VAR
+    pst : REF Succs;
+    np : CARDINAL;
+  BEGIN
+    pst := SuccSet(t, a);
+    np := NUMBER(pst^);
+    
+    (* check if we already have it -- necessary ? *)
+    FOR i := FIRST(pst^) TO LAST(pst^) DO
+      IF Elem.Equal(pst[i], b) THEN
+        RETURN
+      END
+    END;
+    
+    WITH new = NEW(REF Succs, np+1) DO
+      SUBARRAY(new^,0,np) := pst^;
+      new[np] := b;
+      EVAL t.succTbl.put(a, new)
+    END;
+  END InsertInSuccs;
+
+PROCEDURE DeleteFromSuccs(t : T; a (* pred *), b (* succ *) : Elem.T) =
+  (* delete b from succ list of a *)
+  VAR
+    pst : REF Succs;
+    np : CARDINAL;
+  BEGIN
+    pst := SuccSet(t, a);
+    np := NUMBER(pst^);
+    FOR i := FIRST(pst^) TO LAST(pst^) DO
+      IF Elem.Equal(pst[i], b) THEN
+        (* swap to end and dealloc *)
+        WITH new = NEW(REF Succs, np-1) DO
+          SUBARRAY(new^, 0, i) := SUBARRAY(pst^, 0, i);
+          SUBARRAY(new^, i, np-i-1) := SUBARRAY(pst^, i+1, np-i-1);
+          EVAL t.succTbl.put(a, new)
+        END;
+        EXIT
+      END
+    END
+  END DeleteFromSuccs;
+
 PROCEDURE DeleteFromPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
   (* delete a from pred list of b *)
   VAR
@@ -342,8 +406,8 @@ PROCEDURE DelDependency(t : T; a, b : Elem.T; sync : BOOLEAN) =
     IF Verbose THEN
       Dbg("DelDependency", t.debugFmt(a) & " -> " & t.debugFmt(b))
     END;
-    EVAL SuccSet(t, a).delete(b);
 
+    DeleteFromSuccs(t, a, b);
     DeleteFromPreds(t, a, b);
 
     EVAL t.toSync.insert(b);
@@ -426,7 +490,6 @@ PROCEDURE Sync(t : T) =
   (* recalculate everything that is stale *)
 
   PROCEDURE Recalc(e : Elem.T) =
-    VAR s : Elem.T;
     BEGIN
       IF Verbose THEN
         Dbg("Sync, recalculating ", t.debugFmt(e))
@@ -434,9 +497,9 @@ PROCEDURE Sync(t : T) =
 
       WITH preds = PredSet(t, e)^ DO 
         IF CalcTime(t, e, preds) THEN
-          WITH succi = SuccSet(t, e).iterate() DO
-            WHILE succi.next(s) DO
-              EVAL t.toSync.insert(s)
+          WITH succs = SuccSet(t, e)^ DO
+            FOR i := FIRST(succs) TO LAST(succs) DO
+              EVAL t.toSync.insert(succs[i])
             END
           END
         END
