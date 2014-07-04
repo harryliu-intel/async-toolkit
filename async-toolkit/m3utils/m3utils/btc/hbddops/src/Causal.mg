@@ -22,6 +22,8 @@ REVEAL
     lastTime     := FIRST(LONGREAL);
     toSync       : ElemSet.T;
 
+    allNodes     : ElemSet.T := NIL;
+
   OVERRIDES
     init          := Init;
     last          := Last;
@@ -163,11 +165,19 @@ PROCEDURE AllNodes(t : T; syncOnly : BOOLEAN) : ElemSet.T =
     END Check;
 
   VAR 
-    res, ts := NEW(ElemSetDef.T).init();
-    todo := NEW(ElemSeq.T).init(sizeHint := t.predTbl.size());
-    e    : Elem.T;
-    rdummy : REFANY;
+    res, ts : ElemSet.T;
+    todo    : ElemSeq.T;
+    e       : Elem.T;
+    rdummy  : REFANY;
   BEGIN
+
+    IF NOT syncOnly AND t.allNodes # NIL THEN
+      RETURN t.allNodes
+    END;
+
+    res  := NEW(ElemSetDef.T).init();
+    ts   := NEW(ElemSetDef.T).init();
+    todo := NEW(ElemSeq.T).init(sizeHint := t.predTbl.size());
 
     IF syncOnly THEN
       WITH iter = t.toSync.iterate() DO
@@ -195,6 +205,9 @@ PROCEDURE AllNodes(t : T; syncOnly : BOOLEAN) : ElemSet.T =
           END
         END
       END
+    END;
+    IF NOT syncOnly THEN
+      t.allNodes := res
     END;
     RETURN res
   END AllNodes;
@@ -330,7 +343,9 @@ PROCEDURE InsertInPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
     WITH new = NEW(REF Preds, np+1) DO
       SUBARRAY(new^,0,np) := pst^;
       new[np].p := a;
-      EVAL t.predTbl.put(b, new)
+      WITH hadIt = t.predTbl.put(b, new) DO
+        <*ASSERT hadIt*> (* allNodes mechanism depends on this *)
+      END
     END;
 
     CreateIfNotExist(t, a)
@@ -394,7 +409,9 @@ PROCEDURE DeleteFromPreds(t : T; a (* pred *), b (* succ *) : Elem.T) =
         WITH new = NEW(REF Preds, np-1) DO
           SUBARRAY(new^, 0, i) := SUBARRAY(pst^, 0, i);
           SUBARRAY(new^, i, np-i-1) := SUBARRAY(pst^, i+1, np-i-1);
-          EVAL t.predTbl.put(b, new)
+          WITH hadIt = t.predTbl.put(b, new) DO
+            <*ASSERT hadIt*> (* allNodes depends on this *)
+          END
         END;
         EXIT
       END
@@ -424,6 +441,10 @@ PROCEDURE CreateIfNotExist(t : T; e : Elem.T) =
     ps : REFANY;
   BEGIN
     IF NOT t.predTbl.get(e, ps) THEN
+      IF t.allNodes # NIL THEN
+        EVAL t.allNodes.insert(e)
+      END;
+
       EVAL t.predTbl.put(e, NEW(REF Preds, 0))
     END;
     EVAL SuccSet(t, e)
