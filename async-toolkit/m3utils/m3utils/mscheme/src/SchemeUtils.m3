@@ -575,7 +575,9 @@ PROCEDURE StringifyB(x      : Object;
         END
       END
     FINALLY
-      <*ASSERT seen.remhi() = x *>
+      WITH s = seen.remhi() DO
+        <*ASSERT s = x *>
+      END
     END
   END StringifyB;
 
