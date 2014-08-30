@@ -4,6 +4,7 @@ import ("netobj")
 import("cit_common")
 import("set")
 import("rdwrreset")
+import("m3core")
 
 if defined("CM3_VERSION")
 	import ("libbuf")
