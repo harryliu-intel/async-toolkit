@@ -39,8 +39,10 @@ PROCEDURE PfxFormat(x : BDD.T;
     WITH tr  = BDD.True(),
          sop = SopBDD.ConvertBool(x) DO
       RETURN sop.invariantSimplify(tr,tr,tr)
-                .format(NIL,pfx:=pfx,inQuotes:=inQuotes,
-                        aliasMapper:=aliasMapper)
+                .format(NIL,
+                        pfx         := pfx,
+                        inQuotes    := inQuotes,
+                        aliasMapper := aliasMapper)
     END
   END PfxFormat;
 

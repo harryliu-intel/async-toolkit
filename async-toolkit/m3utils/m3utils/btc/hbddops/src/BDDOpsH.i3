@@ -13,8 +13,10 @@ PROCEDURE AccumulateBDD(s  : BDDSet.T;
 PROCEDURE MakeCntrBdd(READONLY a : ARRAY OF BDD.T; cntr : Word.T) : BDD.T;
 
 PROCEDURE XFormat(x : BDD.T; inQuotes := FALSE) : TEXT;
+(* format without any prefix *)
 
 PROCEDURE PfxFormat(x : BDD.T; prefix : TEXT; inQuotes : BOOLEAN; aliasMapper : SopBDD.AliasMapper) : TEXT;
+(* format with prefix as given, passing via aliasMapper *)
 
 PROCEDURE InfixFormatSet(x : BDDSet.T; prefix : TEXT; inQuotes : BOOLEAN; aliasMapper : SopBDD.AliasMapper; op : TEXT) : TEXT;
 
