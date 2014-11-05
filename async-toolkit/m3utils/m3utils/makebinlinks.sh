@@ -38,6 +38,7 @@ ${ROOT}/calarm/regress/resample/${BINDIR}/resample
 ${ROOT}/calarm/twslib/switchtickers/${BINDIR}/switchtickers
 ${ROOT}/calarm/anova/tabulate/${BINDIR}/tabulate
 ${ROOT}/throttle/${BINDIR}/throttle
+${ROOT}/trasher/${BINDIR}/trasher
 ${ROOT}/calarm/trade/${BINDIR}/trade
 ${ROOT}/calarm/twslib/testtrade2/client/${BINDIR}/tradeclient
 ${ROOT}/calarm/twslib/testtrade2/server/${BINDIR}/tradeserver
