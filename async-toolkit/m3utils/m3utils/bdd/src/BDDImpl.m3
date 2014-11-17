@@ -1,11 +1,12 @@
 (* $Id$ *)
 (* revelation of BDD.T *)
-MODULE BDDImpl EXPORTS BDD, BDDDepends, BDDImpl;
+MODULE BDDImpl EXPORTS BDD, BDDDepends, BDDImpl, BDDSystemState;
 IMPORT BDDPair;
 IMPORT BDDTripleHash;
 IMPORT Word;
 (*IMPORT Debug;*)
 IMPORT BDDSet, BDDSetDef, BDDTextTbl;
+IMPORT IO;
 
 IMPORT Fmt;
 
@@ -16,9 +17,9 @@ TYPE
 REVEAL
   T = BRANDED Brand OBJECT
     l , r : T;
-    root : Root;
-    tag : CARDINAL; (* for hashing *)
-    name : TEXT;
+    root  : Root;
+    tag   : CARDINAL; (* for hashing *)
+    name  : TEXT;
   METHODS
     init() : T := Init;
   END;
@@ -29,6 +30,12 @@ PROCEDURE Left(a : T) : T = BEGIN RETURN a.l END Left;
 
 PROCEDURE NodeVar(v : T) : T = 
   VAR b : T; BEGIN
+    <*ASSERT v # false*>
+    <*ASSERT v # true*>
+    IF v.root.tab = NIL THEN
+      IO.Put(v.name & "\n")
+    END;
+    <*ASSERT v.root.tab # NIL*>
     IF BDDTripleHash.Get(v.root.tab, Pair { true, false } , b) THEN
       RETURN b
     ELSE
@@ -52,7 +59,6 @@ TYPE
 
 VAR
   mu := NEW(MUTEX);
-  nextTag := 0;
   
 PROCEDURE Init(self : T) : T = 
   BEGIN LOCK mu DO self.tag := nextTag; INC(nextTag) END; RETURN self END Init;
@@ -163,11 +169,12 @@ PROCEDURE Not(b1 : T) : T =
     tripleHash : BDDTripleHash.T;
     b, l, r : T;
   BEGIN
-    IF b1 = true THEN RETURN false
+    IF    b1 = true THEN RETURN false
     ELSIF b1 = false THEN RETURN true
     END;
 
     tripleHash := b1.root.cache[Op.Not];
+    <*ASSERT tripleHash # NIL*>
     IF BDDTripleHash.Get(tripleHash, Pair { b1, true }, b) THEN
       RETURN b
     END;
@@ -327,8 +334,8 @@ PROCEDURE Format(x : T; symtab : REFANY := NIL; pfx : TEXT := "") : TEXT =
   BEGIN RETURN a.tag END Hash;
 
 VAR
-  true,false : Root;
-  nextId : CARDINAL := 2;
+  true, false : Root;
+  nextId : CARDINAL;
 
 PROCEDURE Size(b1 : T) : CARDINAL =
   VAR seen := NEW(BDDSetDef.T).init();
@@ -374,18 +381,52 @@ PROCEDURE Depends(b1 : T) : BDDSet.T =
 
 PROCEDURE GetId(a : T) : INTEGER = BEGIN RETURN a.root.id END GetId;
 
-BEGIN 
-  true := NEW(Root).init();
-  true.root := true;
-  true.id := 1;
-  true.r := true;
-  true.l := true;
+REVEAL
+  SystemState = BRANDED "BDD SystemState" OBJECT
+    true, false : Root;
+    nextTag     : CARDINAL;
+    nextId      : CARDINAL;
+  END;
 
-  false := NEW(Root).init();
-  false.root := false;
-  false.r := false;
-  false.l := false;
-  false.id := 0;
+VAR
+  nextTag : CARDINAL;
+
+PROCEDURE SetSystemState(s : SystemState) =
+  BEGIN
+    true    := s.true;
+    false   := s.false;
+    nextTag := s.nextTag;
+    nextId  := s.nextId;
+  END SetSystemState;
+
+PROCEDURE GetSystemState() : SystemState =
+  BEGIN
+    RETURN NEW(SystemState, true := true, false := false, nextTag := nextTag)
+  END GetSystemState;
+
+BEGIN 
+  VAR 
+    t, f : Root;
+  BEGIN
+    t := NEW(Root).init();
+    t.root := t;
+    t.id := 1;
+    t.r := t;
+    t.l := t;
+    t.name := "TRUE";
+    
+    f := NEW(Root).init();
+    f.root := f;
+    f.r := f;
+    f.l := f;
+    f.id := 0;
+    f.name := "FALSE";
+
+    WITH sys = NEW(SystemState, true := t, false := f, nextTag := 0, nextId := 2) DO
+      SetSystemState(sys)
+    END
+  END;
+
 END BDDImpl.
 
 
