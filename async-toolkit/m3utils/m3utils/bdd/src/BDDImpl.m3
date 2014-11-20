@@ -1,14 +1,14 @@
 (* $Id$ *)
 (* revelation of BDD.T *)
-MODULE BDDImpl EXPORTS BDD, BDDDepends, BDDImpl, BDDSystemState;
+MODULE BDDImpl EXPORTS BDD, BDDDepends, BDDImpl, BDDSystemState, BDDCleaner;
 IMPORT BDDPair;
 IMPORT BDDTripleHash;
 IMPORT Word;
-(*IMPORT Debug;*)
-IMPORT BDDSet, BDDSetDef, BDDTextTbl;
+IMPORT Debug;
+IMPORT BDDSet, BDDSetDef, BDDTextTbl, BDDBDDTbl;
 IMPORT IO;
 
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT Int;
 
 TYPE
   Op = { And, Not, Or, MakeTrue, MakeFalse };
@@ -404,7 +404,7 @@ PROCEDURE GetSystemState() : SystemState =
     RETURN NEW(SystemState, true := true, false := false, nextTag := nextTag)
   END GetSystemState;
 
-BEGIN 
+PROCEDURE NewDefaultSystemState() : SystemState =
   VAR 
     t, f : Root;
   BEGIN
@@ -422,11 +422,85 @@ BEGIN
     f.id := 0;
     f.name := "FALSE";
 
-    WITH sys = NEW(SystemState, true := t, false := f, nextTag := 0, nextId := 2) DO
-      SetSystemState(sys)
+    WITH sys = NEW(SystemState, 
+                   true    := t, 
+                   false   := f, 
+                   nextTag := 0, 
+                   nextId  := 2) 
+     DO
+      RETURN sys
     END
+  END NewDefaultSystemState;
+
+REVEAL
+  (* this is really a major hack
+
+     point is to save memory on small, independent BDDs and to be able
+     to still use those in pickles *)
+  Cleaner = PublicCleaner BRANDED "BDD Cleaner" OBJECT
+    s   : SystemState;
+    map : BDDBDDTbl.T;
+  OVERRIDES
+    init  := InitC;
+    state := StateC;
+    clean := CleanC;
   END;
 
+PROCEDURE InitC(c : Cleaner) : Cleaner =
+  BEGIN
+    c.s := NewDefaultSystemState();
+    c.map := NEW(BDDBDDTbl.Default).init();
+    EVAL c.map.put(false, c.s.false);
+    EVAL c.map.put(true,  c.s.true);
+    RETURN c
+  END InitC;
+
+PROCEDURE StateC(c : Cleaner) : SystemState =
+  BEGIN RETURN c.s END StateC;
+
+PROCEDURE CleanC(c : Cleaner; b : T) : T =
+  VAR
+    z : T;
+    saveState := GetSystemState();
+  BEGIN
+    IF NOT c.map.get(b, z) THEN
+      IF ISTYPE(b, Root) THEN
+        <*ASSERT c.s # saveState *>
+        SetSystemState(c.s);
+        z := New(NARROW(b, Root).name)
+      ELSE
+        WITH oo        = c.clean(b.root),
+             ll        = c.clean(b.l),
+             rr        = c.clean(b.r) DO
+          <*ASSERT c.s # saveState *>
+          SetSystemState(c.s);
+          z := Or(And(oo,ll),
+                  And(rr,Not(oo)))
+        END
+      END;
+
+      c.s := GetSystemState();
+      <*ASSERT c.s # saveState *>
+      SetSystemState(saveState);
+
+      EVAL c.map.put(b, z)
+    END;
+
+    Debug.Out("---");
+    Debug.Out("b pre-clean: " & Format(b)) ;
+    IF b.root.tab # NIL THEN
+      Debug.Out("b.root.tab.size: " & Int(b.root.tab.size()));
+    END;
+    Debug.Out("z post-clean: " & Format(z));
+    IF z.root.tab # NIL THEN
+      Debug.Out("z.root.tab.size: " & Int(z.root.tab.size()));
+    END;
+
+    RETURN z
+  END CleanC;
+
+BEGIN 
+  SetSystemState(NewDefaultSystemState())
 END BDDImpl.
 
 

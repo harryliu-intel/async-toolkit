@@ -8,7 +8,6 @@ import ("modula3scheme")
 
 Module   ("BoolArrayOps")
 
-Table    ("BDDBDD", "BDD", "BDD")
 Table    ("BDDBDDSeq", "BDD", "BDDSeq")
 
 Module   ("BDDDepender")

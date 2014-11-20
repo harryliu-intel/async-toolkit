@@ -8,4 +8,6 @@ PROCEDURE GetSystemState() : SystemState;
 
 PROCEDURE SetSystemState(state : SystemState);
 
+PROCEDURE NewDefaultSystemState() : SystemState;
+
 END BDDSystemState.

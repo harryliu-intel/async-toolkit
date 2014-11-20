@@ -25,12 +25,14 @@ MkSetDef ("BDD", "BDD")
 Sequence ("BDD", "BDD")
 
 Table ("BDDText", "BDD", "Text")
+Table ("BDDBDD", "BDD", "BDD")
 
 Interface("BDDImpl")
 
 Module ("BDDTruthTable")
 
 Interface ("BDDSystemState")
+Interface ("BDDCleaner")
 
 import("libm3")
 library("bdd")
