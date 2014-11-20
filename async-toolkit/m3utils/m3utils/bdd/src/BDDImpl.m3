@@ -304,6 +304,7 @@ PROCEDURE New(name : TEXT) : T =
     res.name := name;
     res.root := res;
     res.l := true; res.r := false; 
+    <*ASSERT nextId >= 2*>
     res.id := nextId;
     res.tab := NEW(BDDTripleHash.Default).init(128);
     FOR i := FIRST(res.cache) TO LAST(res.cache) DO
@@ -320,8 +321,13 @@ PROCEDURE Format(x : T; symtab : REFANY := NIL; pfx : TEXT := "") : TEXT =
     IF symtab # NIL AND NARROW(symtab, BDDTextTbl.T).get(x, nm) THEN
       RETURN pfx & nm
     END;
-    IF x = true THEN RETURN "TRUE"
-    ELSIF x = false THEN RETURN "FALSE"
+    TYPECASE x OF
+      Root(r) =>
+        IF    r.id = 1 THEN RETURN "TRUE"
+        ELSIF r.id = 0 THEN RETURN "FALSE"
+        END
+    ELSE
+      (* skip *)
     END;
 
     IF x.name # NIL THEN RETURN pfx & x.name END;
@@ -393,15 +399,21 @@ VAR
 
 PROCEDURE SetSystemState(s : SystemState) =
   BEGIN
-    true    := s.true;
-    false   := s.false;
+    true    := s.true;   <*ASSERT true.id = 1*>
+    false   := s.false;  <*ASSERT false.id = 0*>
     nextTag := s.nextTag;
+
+    <*ASSERT s.nextId >= 2*>
     nextId  := s.nextId;
   END SetSystemState;
 
 PROCEDURE GetSystemState() : SystemState =
   BEGIN
-    RETURN NEW(SystemState, true := true, false := false, nextTag := nextTag)
+    RETURN NEW(SystemState, 
+               true    := true, 
+               false   := false, 
+               nextTag := nextTag,
+               nextId  := nextId)
   END GetSystemState;
 
 PROCEDURE NewDefaultSystemState() : SystemState =
@@ -466,8 +478,15 @@ PROCEDURE CleanC(c : Cleaner; b : T) : T =
     IF NOT c.map.get(b, z) THEN
       IF ISTYPE(b, Root) THEN
         <*ASSERT c.s # saveState *>
+
+        <*ASSERT NARROW(b,Root).id >= 2*>
+
         SetSystemState(c.s);
-        z := New(NARROW(b, Root).name)
+        z := New(NARROW(b, Root).name);
+        
+        Debug.Out("made new z " & Format(z));
+        Debug.Out("z.id = " & Int(NARROW(z,Root).id));
+        <*ASSERT NARROW(z,Root).id >= 2*>
       ELSE
         WITH oo        = c.clean(b.root),
              ll        = c.clean(b.l),
