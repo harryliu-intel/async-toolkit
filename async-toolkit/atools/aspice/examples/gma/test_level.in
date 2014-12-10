@@ -1,0 +1,5 @@
+watch B.d B.e
+set _RESET:0
+cycle
+set _RESET:1
+cycle

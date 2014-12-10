@@ -1,0 +1,67 @@
+#!/bin/csh
+
+setenv ASPICE $PWD/aspice.tar
+
+pushd aspice
+tar cvf $ASPICE README
+popd
+
+tar rvf $ASPICE Makefile
+tar rvf $ASPICE Makefile.rules
+
+tar rvf $ASPICE lib/Makefile
+tar rvf $ASPICE lib/*.h
+tar rvf $ASPICE lib/*.c
+
+tar rvf $ASPICE aspice/makefile
+tar rvf $ASPICE aspice/*.c
+tar rvf $ASPICE aspice/*.h
+tar rvf $ASPICE aspice/*.1
+
+tar rvf $ASPICE aspice/bsim3/makefile
+tar rvf $ASPICE aspice/bsim3/*.c
+tar rvf $ASPICE aspice/bsim3/*.h
+
+tar rvf $ASPICE aspice/bsim4/makefile
+tar rvf $ASPICE aspice/bsim4/B4TERMS_OF_USE
+tar rvf $ASPICE aspice/bsim4/*.c
+tar rvf $ASPICE aspice/bsim4/*.h
+
+ln -sf ../../lve/script/perl/rc_spice2aspice aspice/rc_spice2aspice
+tar rvfh $ASPICE aspice/rc_spice2aspice
+
+pushd aspice
+tar rvf $ASPICE asp/default.asp
+popd
+
+pushd $HOME/pdk/layout/tsmc13/pdk/Fulcrum
+tar rvf $ASPICE asp/tech.asp
+popd
+
+pushd aspice
+tar rvf $ASPICE examples/README
+tar rvf $ASPICE examples/fulladder/dsim.asp
+tar rvf $ASPICE examples/fulladder/alint.asp
+tar rvf $ASPICE examples/fulladder/aspice.asp
+tar rvf $ASPICE examples/fulladder/prs.asp
+tar rvf $ASPICE examples/fulladder/noprs.asp
+tar rvf $ASPICE examples/fulladder/env.asp
+tar rvf $ASPICE examples/fulladder/cell.aspice
+tar rvf $ASPICE examples/fulladder/dsim.in
+tar rvf $ASPICE examples/fulladder/aspice.in
+tar rvf $ASPICE examples/fulladder/alint.in
+tar rvf $ASPICE examples/fulladder/leaky.in
+tar rvf $ASPICE examples/gma/util.asp
+tar rvf $ASPICE examples/gma/test_add.asp
+tar rvf $ASPICE examples/gma/test_add.in
+tar rvf $ASPICE examples/gma/test_cosim.asp
+tar rvf $ASPICE examples/gma/test_cosim.in
+tar rvf $ASPICE examples/gma/test_group.asp
+tar rvf $ASPICE examples/gma/test_group.in
+tar rvf $ASPICE examples/gma/test_level.asp
+tar rvf $ASPICE examples/gma/test_level.in
+tar rvf $ASPICE examples/gma/test_slack.asp
+tar rvf $ASPICE examples/gma/test_slack.in
+popd
+
+gzip $ASPICE

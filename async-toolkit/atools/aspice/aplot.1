@@ -1,0 +1,28 @@
+.TH APLOT 1 
+.UC 4
+.SH NAME
+aplot \- aspice compatible analog waveform viewer
+.SH SYNOPSIS
+.B aplot
+[
+.I file
+]
+
+.SH DESCRIPTION
+Aplot is a front-end to gnuplot which can plot or measure the results
+of an aspice analog circuit simulation.  Usually, the file is
+specified on the command line and aplot reads file.trace and
+file.names.  Aplot has an interactive command line language.  Run
+aplot and type "help" for a list of commands.  The most essential
+command is "trace nodename".  Commands can be passed through to
+gnuplot by preceding them with a \\.
+
+.SH "SEE ALSO"
+aspice\|(1), gnuplot\|(1)
+
+.SH AUTHOR
+Andrew Lines, Caltech, 1996.
+
+.SH BUGS
+Digital only nodes are not recorded in the trace file and cannot be
+viewed.

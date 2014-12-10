@@ -1,0 +1,98 @@
+magic
+tech scmos
+timestamp 988943070
+<< nselect >>
+rect -52 356 0 421
+<< pselect >>
+rect 0 358 40 418
+<< ndiffusion >>
+rect -40 409 -8 410
+rect -40 405 -8 406
+rect -40 397 -28 405
+rect -40 396 -8 397
+rect -40 392 -8 393
+rect -40 383 -8 384
+rect -40 379 -8 380
+rect -40 371 -28 379
+rect -40 370 -8 371
+rect -40 366 -8 367
+<< pdiffusion >>
+rect 8 404 28 405
+rect 8 396 28 401
+rect 8 392 28 393
+rect 8 383 28 384
+rect 8 375 28 380
+rect 8 371 28 372
+<< ntransistor >>
+rect -40 406 -8 409
+rect -40 393 -8 396
+rect -40 380 -8 383
+rect -40 367 -8 370
+<< ptransistor >>
+rect 8 401 28 404
+rect 8 393 28 396
+rect 8 380 28 383
+rect 8 372 28 375
+<< polysilicon >>
+rect -44 406 -40 409
+rect -8 406 -3 409
+rect -6 404 -3 406
+rect -6 401 8 404
+rect 28 401 32 404
+rect -44 393 -40 396
+rect -8 393 8 396
+rect 28 393 32 396
+rect -44 380 -40 383
+rect -8 380 8 383
+rect 28 380 32 383
+rect -6 372 8 375
+rect 28 372 32 375
+rect -6 370 -3 372
+rect -44 367 -40 370
+rect -8 367 -3 370
+<< ndcontact >>
+rect -40 410 -8 418
+rect -28 397 -8 405
+rect -40 384 -8 392
+rect -28 371 -8 379
+rect -40 358 -8 366
+<< pdcontact >>
+rect 8 405 28 413
+rect 8 384 28 392
+rect 8 363 28 371
+<< polycontact >>
+rect 32 401 40 409
+rect -52 388 -44 396
+rect 32 380 40 388
+rect -52 367 -44 375
+<< metal1 >>
+rect -40 410 -8 418
+rect -52 367 -44 396
+rect -40 392 -32 410
+rect 8 405 28 413
+rect -28 397 4 405
+rect -4 392 4 397
+rect -40 384 -8 392
+rect -4 384 28 392
+rect -40 366 -32 384
+rect -4 379 4 384
+rect 32 380 40 409
+rect -28 371 4 379
+rect -40 358 -8 366
+rect 8 363 28 371
+<< labels >>
+rlabel metal1 -52 367 -44 396 1 a
+rlabel metal1 32 380 40 409 7 b
+rlabel space -53 356 -28 421 7 ^n
+rlabel space 28 358 41 418 3 ^p
+rlabel metal1 -40 384 -8 392 1 GND!|pin|s|0
+rlabel metal1 -40 358 -32 418 1 GND!|pin|s|0
+rlabel metal1 -4 371 4 405 1 x|pin|s|2
+rlabel metal1 -28 397 4 405 1 x|pin|s|2
+rlabel metal1 -28 371 4 379 1 x|pin|s|2
+rlabel metal1 -4 384 28 392 1 x|pin|s|2
+rlabel metal1 -40 410 -8 418 1 GND!|pin|s|0
+rlabel metal1 -40 358 -8 366 1 GND!|pin|s|0
+rlabel metal1 8 405 28 413 1 Vdd!|pin|s|1
+rlabel metal1 8 363 28 371 1 Vdd!|pin|s|0
+<< end >>

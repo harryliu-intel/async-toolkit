@@ -1,0 +1,21 @@
+<wn01> a0 | a1 -> _a_01-
+<wn23> a2 | a3 -> _a_23-
+<wp03> ~_a_01 | ~_a_23 -> av+
+
+<wp01> ~a0 & ~a1 -> _a_01+
+<wp23> ~a2 & ~a3 -> _a_23+
+<wn03> _a_01 & _a_23 -> av-
+
+@stretch(n01,wn01-8)
+@stretch(p01,wp01-8)
+@stretch(n23,wn23-8)
+@stretch(p23,wp23-8)
+@stretch(n03,wn03-8)
+@stretch(p03,wp03-8)
+
+@require(wn01 + 12 <= nwidth)
+@require(wp01 + 12 <= pwidth)
+@require(wn23 + 12 <= nwidth)
+@require(wp23 + 12 <= pwidth)
+@require(wn03 + 12 <= nwidth)
+@require(wp03 + 12 <= pwidth)

@@ -1,0 +1,55 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect 12 552 16 553
+rect 12 546 16 550
+rect 12 543 16 544
+<< pdiffusion >>
+rect 28 554 34 555
+rect 28 551 34 552
+rect 32 547 34 551
+rect 28 546 34 547
+rect 28 543 34 544
+<< ntransistor >>
+rect 12 550 16 552
+rect 12 544 16 546
+<< ptransistor >>
+rect 28 552 34 554
+rect 28 544 34 546
+<< polysilicon >>
+rect 24 552 28 554
+rect 34 552 37 554
+rect 9 550 12 552
+rect 16 550 26 552
+rect 9 544 12 546
+rect 16 544 28 546
+rect 34 544 37 546
+<< ndcontact >>
+rect 12 553 16 557
+rect 12 539 16 543
+<< pdcontact >>
+rect 28 555 34 559
+rect 28 547 32 551
+rect 28 539 34 543
+<< metal1 >>
+rect 12 553 16 557
+rect 28 555 34 559
+rect 13 551 16 553
+rect 13 548 32 551
+rect 28 547 32 548
+rect 12 539 16 543
+rect 28 539 34 543
+<< labels >>
+rlabel polysilicon 11 545 11 545 3 a
+rlabel polysilicon 11 551 11 551 3 b
+rlabel polysilicon 35 545 35 545 7 a
+rlabel polysilicon 35 553 35 553 7 b
+rlabel space 31 538 37 560 3 ^p
+rlabel space 9 539 12 557 7 ^n
+rlabel ndcontact 14 541 14 541 2 GND!
+rlabel pdcontact 30 549 30 549 1 x
+rlabel ndcontact 14 555 14 555 4 x
+rlabel pdcontact 30 557 30 557 6 Vdd!
+rlabel pdcontact 30 541 30 541 8 Vdd!
+<< end >>

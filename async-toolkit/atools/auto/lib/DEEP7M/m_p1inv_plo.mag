@@ -1,0 +1,185 @@
+magic
+tech scmos
+timestamp 962519057
+<< ndiffusion >>
+rect -46 26 -42 27
+rect -100 19 -96 22
+rect -100 18 -92 19
+rect -100 12 -92 16
+rect -46 23 -42 24
+rect -46 18 -42 19
+rect -100 6 -92 10
+rect -46 15 -42 16
+rect -46 10 -42 11
+rect -100 3 -92 4
+rect -46 7 -42 8
+rect -46 2 -42 3
+rect -46 -1 -42 0
+<< pdiffusion >>
+rect -116 26 -112 27
+rect -62 26 -58 27
+rect -116 23 -112 24
+rect -116 18 -112 19
+rect -116 15 -112 16
+rect -116 10 -112 11
+rect -80 15 -72 19
+rect -62 23 -58 24
+rect -62 18 -58 19
+rect -80 12 -72 13
+rect -116 7 -112 8
+rect -116 2 -112 3
+rect -80 9 -76 12
+rect -76 7 -72 8
+rect -62 15 -58 16
+rect -62 10 -58 11
+rect -116 -1 -112 0
+rect -76 -1 -72 5
+rect -62 7 -58 8
+rect -62 2 -58 3
+rect -62 -1 -58 0
+<< ntransistor >>
+rect -46 24 -42 26
+rect -100 16 -92 18
+rect -46 16 -42 18
+rect -100 10 -92 12
+rect -46 8 -42 10
+rect -100 4 -92 6
+rect -46 0 -42 2
+<< ptransistor >>
+rect -116 24 -112 26
+rect -62 24 -58 26
+rect -116 16 -112 18
+rect -62 16 -58 18
+rect -80 13 -72 15
+rect -116 8 -112 10
+rect -62 8 -58 10
+rect -116 0 -112 2
+rect -76 5 -72 7
+rect -62 0 -58 2
+<< polysilicon >>
+rect -119 24 -116 26
+rect -112 24 -108 26
+rect -66 24 -62 26
+rect -58 24 -46 26
+rect -42 24 -38 26
+rect -110 18 -108 24
+rect -119 16 -116 18
+rect -112 16 -100 18
+rect -92 16 -89 18
+rect -110 10 -108 16
+rect -66 18 -64 24
+rect -40 18 -38 24
+rect -66 16 -62 18
+rect -58 16 -46 18
+rect -42 16 -38 18
+rect -84 13 -80 15
+rect -72 13 -69 15
+rect -84 12 -82 13
+rect -103 10 -100 12
+rect -92 10 -82 12
+rect -119 8 -116 10
+rect -112 8 -108 10
+rect -110 2 -108 8
+rect -66 10 -64 16
+rect -40 10 -38 16
+rect -66 8 -62 10
+rect -58 8 -46 10
+rect -42 8 -38 10
+rect -82 6 -76 7
+rect -103 4 -100 6
+rect -92 4 -84 6
+rect -119 0 -116 2
+rect -112 0 -108 2
+rect -80 5 -76 6
+rect -72 5 -69 7
+rect -66 2 -64 8
+rect -40 2 -38 8
+rect -66 0 -62 2
+rect -58 0 -46 2
+rect -42 0 -38 2
+<< ndcontact >>
+rect -46 27 -42 31
+rect -96 19 -92 23
+rect -46 19 -42 23
+rect -46 11 -42 15
+rect -100 -1 -92 3
+rect -46 3 -42 7
+rect -46 -5 -42 -1
+<< pdcontact >>
+rect -116 27 -112 31
+rect -62 27 -58 31
+rect -116 19 -112 23
+rect -77 19 -73 23
+rect -116 11 -112 15
+rect -62 19 -58 23
+rect -116 3 -112 7
+rect -76 8 -72 12
+rect -62 11 -58 15
+rect -62 3 -58 7
+rect -116 -5 -112 -1
+rect -76 -5 -72 -1
+rect -62 -5 -58 -1
+<< polycontact >>
+rect -70 20 -66 24
+rect -84 2 -80 6
+<< metal1 >>
+rect -116 27 -112 31
+rect -77 27 -58 31
+rect -46 27 -42 31
+rect -116 22 -112 23
+rect -116 19 -105 22
+rect -96 19 -92 23
+rect -77 19 -73 27
+rect -70 20 -66 24
+rect -116 11 -112 15
+rect -108 12 -105 19
+rect -95 12 -92 19
+rect -70 12 -67 20
+rect -62 19 -42 23
+rect -108 9 -67 12
+rect -62 11 -58 15
+rect -108 7 -105 9
+rect -76 8 -72 9
+rect -54 7 -50 19
+rect -46 11 -42 15
+rect -116 4 -105 7
+rect -84 5 -80 6
+rect -62 5 -42 7
+rect -116 3 -112 4
+rect -84 3 -42 5
+rect -100 -1 -92 3
+rect -84 2 -58 3
+rect -116 -5 -112 -1
+rect -76 -5 -58 -1
+rect -46 -5 -42 -1
+<< labels >>
+rlabel polysilicon -117 1 -117 1 3 a
+rlabel polysilicon -117 9 -117 9 3 a
+rlabel polysilicon -117 25 -117 25 3 a
+rlabel polysilicon -117 17 -117 17 3 a
+rlabel space -119 -6 -115 32 7 ^p1
+rlabel polysilicon -101 17 -101 17 1 a
+rlabel polysilicon -82 14 -82 14 1 _PReset!
+rlabel space -59 -7 -37 33 3 ^p2
+rlabel space -43 -6 -38 32 3 ^n2
+rlabel pdcontact -75 21 -75 21 5 Vdd!
+rlabel pdcontact -74 10 -74 10 6 _x
+rlabel pdcontact -114 21 -114 21 5 _x
+rlabel pdcontact -114 5 -114 5 1 _x
+rlabel pdcontact -114 13 -114 13 5 Vdd!
+rlabel pdcontact -114 -3 -114 -3 1 Vdd!
+rlabel pdcontact -114 29 -114 29 5 Vdd!
+rlabel ndcontact -96 1 -96 1 1 GND!
+rlabel ndcontact -94 21 -94 21 5 _x
+rlabel pdcontact -74 -3 -74 -3 1 Vdd!
+rlabel pdcontact -60 -3 -60 -3 1 Vdd!
+rlabel pdcontact -60 5 -60 5 1 x
+rlabel pdcontact -60 13 -60 13 5 Vdd!
+rlabel pdcontact -60 21 -60 21 5 x
+rlabel pdcontact -60 29 -60 29 5 Vdd!
+rlabel ndcontact -44 29 -44 29 5 GND!
+rlabel ndcontact -44 21 -44 21 5 x
+rlabel ndcontact -44 5 -44 5 1 x
+rlabel ndcontact -44 13 -44 13 5 GND!
+rlabel ndcontact -44 -3 -44 -3 1 GND!
+<< end >>

@@ -1,0 +1,112 @@
+magic
+tech scmos
+timestamp 962798678
+<< ndiffusion >>
+rect 38 19 50 20
+rect 38 11 50 16
+rect 38 7 50 8
+rect 38 -1 40 7
+rect 38 -2 50 -1
+rect 16 -10 24 -9
+rect 38 -10 50 -5
+rect 16 -14 24 -13
+rect 38 -14 50 -13
+<< pdiffusion >>
+rect 66 19 74 20
+rect -4 14 0 17
+rect 66 11 74 16
+rect -4 7 0 11
+rect -8 -2 0 -1
+rect -8 -6 0 -5
+rect 66 7 74 8
+rect 66 -2 74 -1
+rect 66 -10 74 -5
+rect 66 -14 74 -13
+<< ntransistor >>
+rect 38 16 50 19
+rect 38 8 50 11
+rect 38 -5 50 -2
+rect 16 -13 24 -10
+rect 38 -13 50 -10
+<< ptransistor >>
+rect 66 16 74 19
+rect -4 11 0 14
+rect 66 8 74 11
+rect -8 -5 0 -2
+rect 66 -5 74 -2
+rect 66 -13 74 -10
+<< polysilicon >>
+rect 34 16 38 19
+rect 50 16 66 19
+rect 74 16 78 19
+rect -8 11 -4 14
+rect 0 11 28 14
+rect 25 8 38 11
+rect 50 8 54 11
+rect 62 8 66 11
+rect 74 8 78 11
+rect 28 7 36 8
+rect -12 -5 -8 -2
+rect 0 -5 12 -2
+rect 9 -10 12 -5
+rect 33 -2 36 -1
+rect 33 -5 38 -2
+rect 50 -5 54 -2
+rect 62 -5 66 -2
+rect 74 -5 78 -2
+rect 9 -13 16 -10
+rect 24 -13 28 -10
+rect 34 -13 38 -10
+rect 50 -13 66 -10
+rect 74 -13 78 -10
+<< ndcontact >>
+rect 38 20 50 28
+rect 16 -9 24 -1
+rect 40 -1 50 7
+rect 16 -22 24 -14
+rect 38 -22 50 -14
+<< pdcontact >>
+rect -8 17 0 25
+rect 66 20 74 28
+rect -8 -1 0 7
+rect -8 -14 0 -6
+rect 66 -1 74 7
+rect 66 -22 74 -14
+<< polycontact >>
+rect 4 -2 12 6
+rect 28 -1 36 7
+<< metal1 >>
+rect -8 17 0 25
+rect 38 20 50 28
+rect 66 20 74 28
+rect -4 16 0 17
+rect -4 11 45 16
+rect -8 -1 0 7
+rect 8 6 12 11
+rect 40 7 45 11
+rect 4 -2 12 6
+rect 28 3 36 7
+rect 20 -1 36 3
+rect 40 -1 74 7
+rect 16 -6 24 -1
+rect -8 -9 24 -6
+rect -8 -10 20 -9
+rect -8 -14 0 -10
+rect 16 -22 50 -14
+rect 66 -22 74 -14
+<< labels >>
+rlabel metal1 44 -18 44 -18 1 GND!
+rlabel metal1 44 24 44 24 5 GND!
+rlabel metal1 70 24 70 24 5 Vdd!
+rlabel metal1 70 -18 70 -18 1 Vdd!
+rlabel polysilicon 75 -12 75 -12 1 a
+rlabel polysilicon 75 -4 75 -4 1 b
+rlabel polysilicon 75 9 75 9 1 a
+rlabel polysilicon 75 17 75 17 1 b
+rlabel metal1 20 -18 20 -18 1 GND!
+rlabel metal1 -4 3 -4 3 1 Vdd!
+rlabel space 73 -23 79 29 3 ^p
+rlabel metal1 70 3 70 3 1 x
+rlabel metal1 45 3 45 3 1 x
+rlabel metal1 -4 21 -4 21 1 x
+<< end >>

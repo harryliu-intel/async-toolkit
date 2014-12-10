@@ -1,0 +1,73 @@
+echo Setting design rules for ADD7M technology
+
+/****************************** DEFINE GLOBALS ************************************/
+
+global GND
+global Vdd
+global _SReset
+global _PReset
+
+/********************** SPACING/EXTRACT RULES FOR ADD7M ***************************/
+
+clearpaint
+epsilon 0.01 // add to spacing to avoid roundoff errors
+
+#define poly polysilicon,ntransistor,ptransistor,polycontact
+#define ndif ndiffusion,ndcontact,ntransistor
+#define pdif pdiffusion,pdcontact,ptransistor
+#define nsd  nsubstratendiff,nsubstratencontact
+#define psd  psubstratepdiff,psubstratepcontact
+#define m1   ndcontact,pdcontact,nsubstratencontact,psubstratepcontact,polycontact,metal1,m2contact
+#define m2   m2contact,metal2,m3contact
+#define m3   m3contact,metal3,m4contact
+#define m4   m4contact,metal4,m5contact
+#define m5   m5contact,metal5,m6contact
+#define m6   m6contact,metal6,m7contact
+#define m7   m7contact,metal7
+
+spacing poly poly 5 touching_ok
+spacing ndif ndif 5 touching_ok
+spacing pdif pdif 5 touching_ok
+spacing nsd  nsd  5 touching_ok
+spacing psd  psd  5 touching_ok
+
+spacing poly ndif,pdif,nsd,psd 2 touching_illegal
+spacing ndif psd               9 touching_illegal
+spacing pdif nsd               9 touching_illegal
+spacing ndif pdif,nsd         16 touching_illegal
+spacing pdif ndif,psd         16 touching_illegal
+spacing nsd  psd              10 touching_illegal
+
+spacing m1 m1  4 touching_ok
+spacing m2 m2  5 touching_ok
+spacing m3 m3  5 touching_ok
+spacing m4 m4  5 touching_ok
+spacing m5 m5  5 touching_ok
+spacing m6 m6  8 touching_ok
+spacing m7 m7 10 touching_ok
+
+connect poly poly
+connect ndiffusion,ndcontact ndiffusion,ndcontact
+connect pdiffusion,pdcontact pdiffusion,pdcontact
+connect nsd nsd
+connect psd psd
+connect m1 m1
+connect m2 m2
+connect m3 m3
+connect m4 m4
+connect m5 m5
+connect m6 m6
+connect m7 m7
+
+abut ntransistor ndiffusion,polysilicon
+abut ptransistor pdiffusion,polysilicon
+
+/********************* STACK LAYOUT OPTIONS *******************************/
+
+transistor_length 3
+transistor_spacing 5
+transistor_contact_spacing 1
+contact_width 8
+diffusion_overhang 6
+poly_overhang 4
+

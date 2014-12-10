@@ -1,0 +1,113 @@
+#!/usr/intel/bin/perl -w
+
+# Wrapper script for gds2plot using parallel compute servers.  First
+# pass launches stripes using qsub, second pass concatenates the
+# results.  Delete *.do.* files to force stripes to rerun.  Uses PDK
+# files for gds2plot.conf and exclude.in.
+
+# defaults
+my $name = "";
+my $JOBS = 1;
+my $MEM  = 4096;   # memory argument to QSUB
+my $GRID = 1;      # manufacturing grid, in nm
+my $TILE = 20000;  # tile size, relative to manufacturing grid
+my $MAX  = 13200;  # pixels, 22 inches @ 600 DPI, use 25200 for 42 inches @ 600 DPI
+my $BLACK = 95;    # black point for gamma correction
+my $WHITE = 255;   # white point for gamma correction
+my $GAMMA = 0.75;  # gamma for gamma correction
+my $SWAPXY = 0;    # rotate image
+my $conf_file    = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot/gds2plot.conf";
+my $exclude_file = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot/exclude.in";
+my $format = "ppm"; # output format
+my $quality = 75; # for jpg conversion
+
+# parse arguments
+while (@ARGV) {
+    if    ($ARGV[0] =~ /^--jobs=(.*)/)  { $JOBS  = $1; }
+    elsif ($ARGV[0] =~ /^--mem=(.*)/)   { $MEM   = $1; }
+    elsif ($ARGV[0] =~ /^--max=(.*)/)   { $MAX   = $1; }
+    elsif ($ARGV[0] =~ /^--grid=(.*)/)  { $GRID  = $1; }
+    elsif ($ARGV[0] =~ /^--tile=(.*)/)  { $TILE  = $1; }
+    elsif ($ARGV[0] =~ /^--black=(.*)/) { $BLACK = $1; }
+    elsif ($ARGV[0] =~ /^--white=(.*)/) { $WHITE = $1; }
+    elsif ($ARGV[0] =~ /^--gamma=(.*)/) { $GAMMA = $1; }
+    elsif ($ARGV[0] =~ /^--swapXY=(.*)/) { $SWAPXY = $1; }
+    elsif ($ARGV[0] =~ /^--format=(.*)/) { $format = $1; }
+    elsif ($ARGV[0] =~ /^--quality=(.*)/) { $quality = $1; }
+    elsif ($ARGV[0] =~ /^--conf-file=(.*)/) { $conf_file = $1; }
+    elsif ($ARGV[0] =~ /^--exclude-file=(.*)/) { $exclude_file = $1; }
+    else { $name = $ARGV[0]; }
+    shift @ARGV;
+}
+usage() if (!-e "$name.gds2");
+
+# usage banner
+sub usage {
+    die "USAGE: plot basename\n" .
+        " --max=[$MAX]\n" .
+        " --grid=[$GRID]\n" .
+        " --tile=[$TILE]\n" .
+        " --jobs=[$JOBS]\n" .
+        " --mem=[$MEM]\n" .
+        " --black=[$BLACK]\n" .
+        " --white=[$WHITE]\n" .
+        " --gamma=[$GAMMA]\n" .
+        " --swapXY=[$SWAPXY]\n" .
+        " --format=[$format] # [ppm|png|jpg|tiff]\n" .
+        " --quality=[$quality]\n" .
+        " --conf-file=[$conf_file]\n" .
+        " --exclude-file=[$exclude_file]\n";
+}
+
+# settings
+$BLACK = $BLACK/255.0;
+$WHITE = $WHITE/255.0;
+my $QSUB = "nbq --class-reservation fRM=$MEM";
+my $PLOT = "gds2plot " .
+    "--conf $conf_file " . 
+    "--x $MAX --y $MAX --swapXY $SWAPXY " .
+    "--grid $GRID --tile $TILE " .
+    "--jobs $JOBS " .
+    "--in_min $BLACK --in_max $WHITE --gamma $GAMMA ";
+
+# add exclude regular expressions
+unless ($exclude_file eq "") {
+    open IN, "<$exclude_file" or die "Can't read $exclude_file\n";
+    while (my $line = <IN>) {
+        chomp($line);
+        $PLOT .= "--exclude-regex \"$line\" ";
+    }
+    close IN;
+}
+
+# run stripes
+for (my $i=0; $i<$JOBS; $i++) {
+    if (!(-e "$name.do.$i")) {
+        printf("# Lauching $name, job $i\n");
+        system("touch $name.do.$i");
+        system("rm -f \"$name.out.$i\" \"$name.ppm.$i\"");
+        my $CMD  = "${PLOT} --gds \"$name.gds2\" --ppm \"$name.ppm\" ";
+        if ($JOBS>1) { $CMD = "$QSUB -j \"$name.out.$i\" ${CMD} --job $i &"; }
+        system($CMD);
+    }
+}
+
+# concatenate final image if all stripes exist
+my $ok=1;
+for (my $i=0; $i<$JOBS; $i++) {
+    if (!(-e "$name.ppm.$i")) { $ok = 0; }
+}
+if ($ok) {
+    printf("Concatenating $name.ppm\n");
+    system("rm -f $name.ppm");
+    for (my $i=0; $i<$JOBS; $i++) {
+        system("cat $name.ppm.$i >> $name.ppm");
+    }
+}
+
+# convert output format
+if (-e "$name.ppm" && !($format eq "ppm")) {
+    my $q = "";
+    $q = "-quality $quality" if ($format eq "jpg");
+    system("convert $q $name.ppm $name.$format");
+}

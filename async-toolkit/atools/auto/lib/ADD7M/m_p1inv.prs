@@ -1,0 +1,12 @@
+<wp1> ~a -> _x+
+
+<wn2>  _x -> x-
+<wp2> ~_x -> x+
+
+@staticize(_x)
+
+@stretch(p1,(wp1-40)/4)
+@stretch(n2,(wn2-32)/4)
+@stretch(p2,(wp2-32)/4)
+
+@require(wp1/4 + wn2/4 + wp2/4 + 85 <= nwidth + pwidth) /* revert to separate operators if too big */

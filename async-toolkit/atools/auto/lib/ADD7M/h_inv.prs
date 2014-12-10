@@ -1,0 +1,5 @@
+<wn>  a -> x-
+<wp> ~a -> x+
+
+@stretch(n,(wn-156)/6)
+@stretch(p,(wp-156)/6)

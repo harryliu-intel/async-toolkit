@@ -1,0 +1,101 @@
+magic
+tech scmos
+timestamp 962519057
+<< ndiffusion >>
+rect 132 83 134 87
+rect 132 82 138 83
+rect 116 79 119 81
+rect 132 79 138 80
+rect 132 75 134 79
+rect 132 74 138 75
+rect 116 71 119 73
+rect 132 71 138 72
+<< pdiffusion >>
+rect 88 80 92 81
+rect 101 79 104 81
+rect 150 82 154 83
+rect 88 74 92 78
+rect 88 71 92 72
+rect 101 71 104 76
+rect 150 79 154 80
+rect 150 74 154 75
+rect 150 71 154 72
+<< ntransistor >>
+rect 132 80 138 82
+rect 116 73 119 79
+rect 132 72 138 74
+<< ptransistor >>
+rect 88 78 92 80
+rect 150 80 154 82
+rect 101 76 104 79
+rect 88 72 92 74
+rect 150 72 154 74
+<< polysilicon >>
+rect 85 78 88 80
+rect 92 78 95 80
+rect 128 80 132 82
+rect 138 80 150 82
+rect 154 80 158 82
+rect 98 76 101 79
+rect 104 78 116 79
+rect 104 76 110 78
+rect 85 72 88 74
+rect 92 72 95 74
+rect 114 74 116 78
+rect 113 73 116 74
+rect 119 73 122 79
+rect 128 74 130 80
+rect 156 74 158 80
+rect 128 72 132 74
+rect 138 72 150 74
+rect 154 72 158 74
+<< ndcontact >>
+rect 116 81 120 85
+rect 134 83 138 87
+rect 134 75 138 79
+rect 116 67 120 71
+rect 132 67 138 71
+<< pdcontact >>
+rect 88 81 92 85
+rect 100 81 104 85
+rect 150 83 154 87
+rect 150 75 154 79
+rect 88 67 92 71
+rect 100 67 104 71
+rect 150 67 154 71
+<< polycontact >>
+rect 126 82 130 86
+rect 110 74 114 78
+<< metal1 >>
+rect 126 85 130 86
+rect 88 82 130 85
+rect 134 83 138 87
+rect 150 83 154 87
+rect 88 81 92 82
+rect 100 81 104 82
+rect 116 81 120 82
+rect 134 78 154 79
+rect 110 75 154 78
+rect 110 74 114 75
+rect 88 67 104 71
+rect 116 67 120 71
+rect 132 67 138 71
+rect 150 67 154 71
+<< labels >>
+rlabel space 153 66 158 88 3 ^p2
+rlabel space 137 65 159 89 3 ^n2
+rlabel polysilicon 87 73 87 73 3 a
+rlabel polysilicon 87 79 87 79 3 b
+rlabel space 85 66 89 86 7 ^p1
+rlabel ndcontact 136 69 136 69 1 GND!
+rlabel ndcontact 136 85 136 85 5 GND!
+rlabel pdcontact 152 77 152 77 1 x
+rlabel ndcontact 136 77 136 77 1 x
+rlabel pdcontact 152 85 152 85 5 Vdd!
+rlabel pdcontact 152 69 152 69 1 Vdd!
+rlabel ndcontact 118 69 118 69 1 GND!
+rlabel ndcontact 118 83 118 83 5 _x
+rlabel pdcontact 102 83 102 83 4 _x
+rlabel pdcontact 90 69 90 69 1 Vdd!
+rlabel pdcontact 90 83 90 83 1 _x
+<< end >>

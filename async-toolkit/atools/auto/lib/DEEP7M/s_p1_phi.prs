@@ -1,0 +1,5 @@
+<wp> ~a -> _x+
+~_PReset! -> _x+
+@staticize(_x)
+
+@stretch(p,wp-4)

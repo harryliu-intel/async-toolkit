@@ -1,0 +1,33 @@
+0 1
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+$arch/bin/gds2plot      plot/gds2plot 775
+$arch/bin/plot.pl       plot/plot 755 p
+$arch/bin/aaggds        aaggds/aaggds 775
+$arch/bin/rdgds        aaggds/rdgds 775
+$arch/bin/wrgds        aaggds/wrgds 775
+$arch/bin/xdwg        dwg/xdwg 775
+$arch/bin/dwg        dwg/dwg 775
+$arch/bin/gifdwg        dwg/gifdwg 775
+ifos XXX
+$arch/bin/pngdwg        dwg/pngdwg 775
+endif
+$arch/bin/scalegds.sh   scripts/scalegds.sh 775 p
+$arch/bin/listlayers    scripts/listlayers.pl 775 p
+$arch/bin/vigds         scripts/vigds.pl 755 p
+$arch/bin/gdsxor        scripts/gdsxor 775 p
+$arch/bin/stripgds      scripts/stripgds.pl 775 p
+regression/testLinux.gif   regression/testLinux.gif 444 p
+regression/testLinux.ps   regression/testLinux.ps 444 p
+regression/testSunOS.gif   regression/testSunOS.gif 444 p
+regression/testSunOS.ps   regression/testSunOS.ps 444 p
+regression/testaaggds.gds   regression/testaaggds.gds 444 p
+regression/testdwg.dwg   regression/testdwg.dwg 444 p
+regression/testdwg.gif   regression/testdwg.gif 444 p
+regression/testdwg.ps   regression/testdwg.ps 444 p
+regression/testgdsii.gds   regression/testgdsii.gds 444 p
+regression/rungdsii   regression/testgdsii.pl 555 p
+doc/index.html  doc/index.html 644 p

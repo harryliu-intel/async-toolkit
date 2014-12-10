@@ -1,0 +1,7 @@
+<wn>  _SReset! &  a -> x-
+<wp>             ~a -> x+
+~_PReset! -> x+
+
+@require((wn>=40)|(wp>=60))
+@stretch(n,(wn-12)/2)
+@stretch(p,(wp-24)/2)

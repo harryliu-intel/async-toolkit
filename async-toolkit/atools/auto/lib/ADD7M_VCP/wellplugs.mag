@@ -1,0 +1,23 @@
+magic
+tech scmos
+timestamp 967803279
+<< psubstratepcontact >>
+rect -5 -9 3 -1
+<< nsubstratencontact >>
+rect 29 -9 37 -1
+<< metal1 >>
+rect -5 -8 3 -1
+rect 29 -8 37 -1
+<< m2contact >>
+rect -5 -14 13 -8
+rect 19 -14 37 -8
+<< m3contact >>
+rect -5 -14 13 -8
+rect 19 -14 37 -8
+<< metal3 >>
+rect -5 -17 13 7
+rect 19 -17 37 7
+<< labels >>
+rlabel metal3 28 -11 28 -11 1 Vdd!
+rlabel metal3 4 -11 4 -11 1 GND!
+<< end >>

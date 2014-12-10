@@ -1,0 +1,115 @@
+magic
+tech scmos
+timestamp 962519155
+<< ndiffusion >>
+rect -95 -3 -91 -2
+rect -48 -1 -44 0
+rect -95 -9 -91 -5
+rect -95 -12 -91 -11
+rect -48 -4 -44 -3
+rect -48 -9 -44 -8
+rect -48 -12 -44 -11
+<< pdiffusion >>
+rect -111 -1 -107 0
+rect -66 0 -65 4
+rect -66 -1 -60 0
+rect -111 -4 -107 -3
+rect -111 -9 -107 -8
+rect -79 -5 -76 -2
+rect -111 -12 -107 -11
+rect -79 -12 -76 -8
+rect -66 -4 -60 -3
+rect -66 -9 -60 -8
+rect -66 -12 -60 -11
+<< ntransistor >>
+rect -95 -5 -91 -3
+rect -48 -3 -44 -1
+rect -95 -11 -91 -9
+rect -48 -11 -44 -9
+<< ptransistor >>
+rect -111 -3 -107 -1
+rect -66 -3 -60 -1
+rect -79 -8 -76 -5
+rect -111 -11 -107 -9
+rect -66 -11 -60 -9
+<< polysilicon >>
+rect -114 -3 -111 -1
+rect -107 -3 -103 -1
+rect -105 -5 -95 -3
+rect -91 -5 -88 -3
+rect -70 -3 -66 -1
+rect -60 -3 -48 -1
+rect -44 -3 -40 -1
+rect -105 -9 -103 -5
+rect -84 -8 -79 -5
+rect -76 -8 -73 -5
+rect -84 -9 -82 -8
+rect -114 -11 -111 -9
+rect -107 -11 -103 -9
+rect -98 -11 -95 -9
+rect -91 -11 -86 -9
+rect -70 -9 -68 -3
+rect -42 -9 -40 -3
+rect -70 -11 -66 -9
+rect -60 -11 -48 -9
+rect -44 -11 -40 -9
+<< ndcontact >>
+rect -95 -2 -91 2
+rect -48 0 -44 4
+rect -95 -16 -91 -12
+rect -48 -8 -44 -4
+rect -48 -16 -44 -12
+<< pdcontact >>
+rect -111 0 -107 4
+rect -79 -2 -75 2
+rect -65 0 -60 4
+rect -111 -8 -107 -4
+rect -111 -16 -107 -12
+rect -66 -8 -60 -4
+rect -79 -16 -75 -12
+rect -66 -16 -60 -12
+<< polycontact >>
+rect -72 -1 -68 3
+rect -86 -13 -82 -9
+<< metal1 >>
+rect -111 0 -107 4
+rect -72 2 -68 3
+rect -95 -1 -68 2
+rect -65 0 -60 4
+rect -48 0 -44 4
+rect -95 -2 -91 -1
+rect -79 -2 -75 -1
+rect -95 -4 -92 -2
+rect -111 -7 -92 -4
+rect -66 -5 -44 -4
+rect -111 -8 -107 -7
+rect -85 -8 -44 -5
+rect -85 -9 -82 -8
+rect -111 -16 -107 -12
+rect -95 -16 -91 -12
+rect -86 -13 -82 -9
+rect -79 -16 -60 -12
+rect -48 -16 -44 -12
+<< labels >>
+rlabel space -45 -17 -40 5 3 ^n2
+rlabel space -61 -18 -39 6 3 ^p2
+rlabel polysilicon -112 -2 -112 -2 3 a
+rlabel polysilicon -112 -10 -112 -10 3 a
+rlabel space -114 -17 -110 5 7 ^p1
+rlabel polysilicon -96 -4 -96 -4 5 a
+rlabel pdcontact -77 0 -77 0 6 _x
+rlabel polycontact -70 1 -70 1 5 _x
+rlabel pdcontact -63 -14 -63 -14 1 Vdd!
+rlabel ndcontact -46 -14 -46 -14 1 GND!
+rlabel ndcontact -46 2 -46 2 5 GND!
+rlabel pdcontact -62 -6 -62 -6 1 x
+rlabel ndcontact -46 -6 -46 -6 1 x
+rlabel pdcontact -62 2 -62 2 5 Vdd!
+rlabel pdcontact -109 -6 -109 -6 1 _x
+rlabel ndcontact -93 0 -93 0 5 _x
+rlabel pdcontact -109 2 -109 2 5 Vdd!
+rlabel ndcontact -93 -14 -93 -14 1 GND!
+rlabel pdcontact -109 -14 -109 -14 1 Vdd!
+rlabel polycontact -84 -11 -84 -11 1 x
+rlabel metal1 -77 -14 -77 -14 1 Vdd!
+<< end >>

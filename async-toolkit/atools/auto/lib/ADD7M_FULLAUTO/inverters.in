@@ -1,0 +1,13 @@
+/*** inverters which reset high ***/
+matchcircuit "ADD7M_FULLAUTO/s_inv_rhi"
+matchcircuit "ADD7M_FULLAUTO/m_inv_rhi"
+
+/*** inverters which staticize their input ***/
+matchcircuit "ADD7M_FULLAUTO/m_inv_staticizer"
+matchcircuit "ADD7M_FULLAUTO/l_inv_staticizer"
+
+/*** inverters ***/
+matchcircuit "ADD7M_FULLAUTO/s_inv"
+matchcircuit "ADD7M_FULLAUTO/m_inv"
+matchcircuit "ADD7M_FULLAUTO/l_inv"
+matchcircuit "ADD7M_FULLAUTO/h_inv"

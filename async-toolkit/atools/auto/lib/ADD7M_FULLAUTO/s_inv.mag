@@ -1,0 +1,69 @@
+magic
+tech scmos
+timestamp 969938906
+<< ndiffusion >>
+rect -24 438 -8 439
+rect -24 434 -8 435
+<< pdiffusion >>
+rect 8 438 24 439
+rect 8 434 24 435
+<< ntransistor >>
+rect -24 435 -8 438
+<< ptransistor >>
+rect 8 435 24 438
+<< polysilicon >>
+rect -28 435 -24 438
+rect -8 435 8 438
+rect 24 435 28 438
+<< ndcontact >>
+rect -24 439 -8 447
+rect -24 426 -8 434
+<< pdcontact >>
+rect 8 439 24 447
+rect 8 426 24 434
+<< psubstratepcontact >>
+rect -41 434 -33 442
+<< nsubstratencontact >>
+rect 33 434 41 442
+<< polycontact >>
+rect -4 438 4 446
+<< metal1 >>
+rect -24 444 -8 447
+rect -41 434 -33 442
+rect -24 439 -21 444
+rect -4 438 4 450
+rect 8 444 24 447
+rect 21 439 24 444
+rect 33 434 41 442
+rect -41 432 -8 434
+rect 8 432 41 434
+rect -41 426 -21 432
+rect 21 426 41 432
+<< m2contact >>
+rect -4 450 4 456
+rect -21 438 -8 444
+rect 8 438 21 444
+rect -21 426 -3 432
+rect 3 426 21 432
+<< metal2 >>
+rect -6 450 6 456
+rect -21 438 21 444
+<< m3contact >>
+rect -21 426 -3 432
+rect 3 426 21 432
+<< metal3 >>
+rect -21 423 -3 459
+rect 3 423 21 459
+<< labels >>
+rlabel metal2 6 450 6 456 7 a
+rlabel metal2 -6 450 -6 456 3 a
+rlabel polysilicon 0 436 0 436 1 a
+rlabel pdcontact 12 430 12 430 8 Vdd!
+rlabel ndcontact -12 430 -12 430 2 GND!
+rlabel metal2 12 441 12 441 1 x
+rlabel metal2 -12 441 -12 441 1 x
+rlabel metal1 37 438 37 438 7 Vdd!
+rlabel space 23 425 42 448 3 ^p
+rlabel metal1 -37 438 -37 438 3 GND!
+rlabel space -42 425 -23 448 7 ^n
+<< end >>

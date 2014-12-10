@@ -1,0 +1,20 @@
+// Define a trivial constrained optimization problem
+
+// independent variables
+var x
+var y
+
+// dependent variables
+var z = x 0.25 +
+
+// initial values (optional)
+set x -20
+set y 100
+
+// two constraints
+constraint c0 = 1 x y + -
+constraint c1 = 0.8 z -
+
+// two additive energy terms
+energy ex = x SQR
+energy ey = y SQR

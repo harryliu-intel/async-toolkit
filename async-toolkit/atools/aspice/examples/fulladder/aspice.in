@@ -1,0 +1,23 @@
+watch *
+outerr "aspice.warn"
+output "aspice.prelog"
+cycle 2000
+warnall
+clear_tcounts
+output "aspice.initial"
+get *
+output "aspice.log"
+trace 20
+cycle 20000
+output "aspice.final"
+get_named *
+output "aspice.final_pending"
+pending *
+output "aspice:s.e.critical"
+critical s.e
+output "aspice:s.e.history"
+history s.e
+output "aspice.done"
+echo done
+output
+outerr

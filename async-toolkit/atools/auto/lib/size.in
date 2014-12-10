@@ -1,0 +1,51 @@
+/*** initialize sizing parameters ***/
+echo Reading cmos.in
+read "cmos.in"
+xscale  1.00 // assume 0% horizontal compression
+delay $3
+
+/*** core sizing routines ***/
+echo Reading connect
+read_connect $2
+
+echo Reading instances
+read_instances $2
+
+echo Reading cap
+read_cap $2
+
+echo Relaxing
+BiasType 0 // no bias
+relax 1e-6 // lambda convergence tolerance
+
+// set number of iterations relative to N
+iteration_ratio $4 // now a command line parameter
+cleanup_ratio   0.1 // run longer on last pass
+
+initial_weight  1e3 // start with reasonable constraint cost
+final_weight    1e10
+step_weight     1.4
+
+echo Sizing
+size
+
+/*** debugging ***/
+// print_caps
+// debug_circuits
+// debug_instances
+// debug_aliases
+// debug_labels
+// bifurcation_hints 4.0
+// debug_formulae
+debug_nodetypes external rc 100e-12 /* 100ps wire rc skew */
+debug_nodetypes external r 300      /* about 20000 lambda wire */
+debug_nodetypes c 1e-12             /* long wires or big gates */
+debug_nodetypes external dynamic wire_c_fraction 0.25 /* bad cap-coupling */
+// debug_nodetypes external dynamic wire_r_fraction 0.25 /* bad resistance */
+debug_metric
+
+/*** output ***/
+save_circuits
+
+/*** free memory ***/
+clear_sizing_data

@@ -1,0 +1,7 @@
+circuit $2
+read "globals.in"
+read "cmos.in"
+width_tolerance 1.1
+read "vcp_library.in"
+stacks
+dump_spice

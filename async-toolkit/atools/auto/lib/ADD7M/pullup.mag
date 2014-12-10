@@ -1,0 +1,60 @@
+magic
+tech scmos
+timestamp 965421252
+use m_p1 m_p1_0
+timestamp 962798678
+transform 1 0 107 0 1 234
+box -122 37 -4 71
+use s_p1_phi s_p1_phi_0
+timestamp 965421252
+transform 1 0 -26 0 1 167
+box -163 25 -19 60
+use m_p1_phi m_p1_phi_0
+timestamp 962798572
+transform 1 0 97 0 1 168
+box -111 23 13 71
+use s_p1inv s_p1inv_0
+timestamp 962798927
+transform 1 0 -50 0 1 133
+box -140 -31 -27 5
+use m_p1inv m_p1inv_0
+timestamp 965071348
+transform 1 0 113 0 1 121
+box -128 -19 -14 43
+use s_p1inv_plo s_p1inv_plo_0
+timestamp 962798985
+transform 1 0 -45 0 1 42
+box -142 -28 -25 22
+use m_p1inv_plo m_p1inv_plo_0
+timestamp 965071348
+transform 1 0 114 0 1 41
+box -129 -27 -9 35
+use m_p2 m_p2_0
+timestamp 962798678
+transform 1 0 -4 0 1 -44
+box -12 -23 79 29
+use s_p2_phi s_p2_phi_0
+timestamp 965421252
+transform 1 0 -113 0 1 -204
+box -76 51 62 86
+use m_p2_phi m_p2_phi_0
+timestamp 962798572
+transform 1 0 -8 0 1 -117
+box -8 -36 90 19
+use s_p2inv s_p2inv_0
+timestamp 962799210
+transform 1 0 -250 0 1 -313
+box 60 71 167 107
+use m_p2inv m_p2inv_0
+timestamp 965071348
+transform 1 0 -98 0 1 -288
+box 82 46 205 108
+use s_p2inv_plo s_p2inv_plo_0
+timestamp 962912288
+transform 1 0 -251 0 1 -398
+box 61 63 171 103
+use m_p2inv_plo m_p2inv_plo_0
+timestamp 965071348
+transform 1 0 -97 0 1 -368
+box 81 33 198 99
+<< end >>

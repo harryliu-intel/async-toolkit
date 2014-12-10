@@ -1,0 +1,89 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect -157 415 -147 416
+rect -157 412 -147 413
+rect -157 408 -155 412
+rect -157 407 -147 408
+rect -157 404 -147 405
+rect -153 400 -147 404
+rect -157 399 -147 400
+rect -157 396 -147 397
+rect -157 392 -155 396
+rect -157 391 -147 392
+rect -157 388 -147 389
+<< pdiffusion >>
+rect -135 413 -129 414
+rect -135 407 -129 411
+rect -135 404 -129 405
+rect -131 400 -129 404
+rect -135 399 -129 400
+rect -135 393 -129 397
+rect -135 390 -129 391
+<< ntransistor >>
+rect -157 413 -147 415
+rect -157 405 -147 407
+rect -157 397 -147 399
+rect -157 389 -147 391
+<< ptransistor >>
+rect -135 411 -129 413
+rect -135 405 -129 407
+rect -135 397 -129 399
+rect -135 391 -129 393
+<< polysilicon >>
+rect -160 413 -157 415
+rect -147 413 -143 415
+rect -145 411 -135 413
+rect -129 411 -126 413
+rect -160 405 -157 407
+rect -147 405 -135 407
+rect -129 405 -126 407
+rect -160 397 -157 399
+rect -147 397 -135 399
+rect -129 397 -126 399
+rect -145 391 -135 393
+rect -129 391 -126 393
+rect -160 389 -157 391
+rect -147 389 -143 391
+<< ndcontact >>
+rect -157 416 -147 420
+rect -155 408 -147 412
+rect -157 400 -153 404
+rect -155 392 -147 396
+rect -157 384 -147 388
+<< pdcontact >>
+rect -135 414 -129 418
+rect -135 400 -131 404
+rect -135 386 -129 390
+<< metal1 >>
+rect -157 416 -147 420
+rect -135 414 -129 418
+rect -155 408 -147 412
+rect -150 404 -147 408
+rect -157 400 -153 404
+rect -150 400 -131 404
+rect -150 396 -147 400
+rect -155 392 -147 396
+rect -157 384 -147 388
+rect -135 386 -129 390
+<< labels >>
+rlabel polysilicon -128 406 -128 406 7 a
+rlabel polysilicon -128 412 -128 412 7 b
+rlabel polysilicon -128 392 -128 392 7 a
+rlabel polysilicon -128 398 -128 398 7 b
+rlabel space -132 385 -126 419 3 ^p
+rlabel polysilicon -158 414 -158 414 3 b
+rlabel polysilicon -158 390 -158 390 3 a
+rlabel space -161 383 -154 421 7 ^n
+rlabel polysilicon -158 398 -158 398 3 b
+rlabel polysilicon -158 406 -158 406 3 a
+rlabel ndcontact -149 418 -149 418 5 GND!
+rlabel ndcontact -149 386 -149 386 1 GND!
+rlabel ndcontact -149 394 -149 394 1 x
+rlabel ndcontact -149 410 -149 410 1 x
+rlabel pdcontact -133 402 -133 402 1 x
+rlabel pdcontact -133 416 -133 416 5 Vdd!
+rlabel pdcontact -133 388 -133 388 1 Vdd!
+rlabel ndcontact -155 402 -155 402 1 GND!
+<< end >>

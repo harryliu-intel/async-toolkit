@@ -1,0 +1,86 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect 5 29 9 30
+rect 5 23 9 27
+rect 5 17 9 21
+rect 5 11 9 15
+rect 5 8 9 9
+<< pdiffusion >>
+rect 21 31 31 32
+rect 21 28 31 29
+rect 29 24 31 28
+rect 21 23 31 24
+rect 21 20 31 21
+rect 21 16 27 20
+rect 21 15 31 16
+rect 21 12 31 13
+rect 29 9 31 12
+rect 21 6 29 8
+rect 21 3 29 4
+<< ntransistor >>
+rect 5 27 9 29
+rect 5 21 9 23
+rect 5 15 9 17
+rect 5 9 9 11
+<< ptransistor >>
+rect 21 29 31 31
+rect 21 21 31 23
+rect 21 13 31 15
+rect 21 4 29 6
+<< polysilicon >>
+rect 17 29 21 31
+rect 31 29 34 31
+rect 2 27 5 29
+rect 9 27 19 29
+rect 2 21 5 23
+rect 9 21 21 23
+rect 31 21 34 23
+rect 2 15 5 17
+rect 9 15 19 17
+rect 17 13 21 15
+rect 31 13 34 15
+rect 2 9 5 11
+rect 9 9 12 11
+rect 18 4 21 6
+rect 29 4 32 6
+<< ndcontact >>
+rect 5 30 9 34
+rect 5 4 9 8
+<< pdcontact >>
+rect 21 32 31 36
+rect 21 24 29 28
+rect 27 16 31 20
+rect 21 8 29 12
+rect 21 -1 29 3
+<< metal1 >>
+rect 5 30 9 34
+rect 21 32 31 36
+rect 6 28 9 30
+rect 6 25 29 28
+rect 21 24 29 25
+rect 21 12 24 24
+rect 27 16 31 20
+rect 21 8 29 12
+rect 5 4 9 8
+rect 21 -1 29 3
+<< labels >>
+rlabel space 28 9 34 37 3 ^p
+rlabel polysilicon 32 14 32 14 3 a
+rlabel polysilicon 32 22 32 22 3 b
+rlabel polysilicon 32 30 32 30 3 c
+rlabel polysilicon 4 28 4 28 3 c
+rlabel polysilicon 4 22 4 22 3 b
+rlabel polysilicon 4 16 4 16 3 a
+rlabel polysilicon 4 10 4 10 3 _SReset!
+rlabel space 2 4 5 34 7 ^n
+rlabel polysilicon 30 5 30 5 5 _PReset!
+rlabel pdcontact 29 18 29 18 1 Vdd!
+rlabel ndcontact 7 32 7 32 4 x
+rlabel ndcontact 7 6 7 6 5 GND!
+rlabel pdcontact 23 10 23 10 1 x
+rlabel pdcontact 23 26 23 26 5 x
+rlabel pdcontact 23 34 23 34 1 Vdd!
+rlabel pdcontact 23 1 23 1 1 Vdd!
+<< end >>

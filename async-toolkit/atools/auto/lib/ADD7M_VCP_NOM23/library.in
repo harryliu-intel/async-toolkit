@@ -1,0 +1,26 @@
+/*** ADD7M_VCP_NOM23 cell library ***/
+echo Matching library components for ADD7M_VCP_NOM23 technology
+
+/*** operator matching and stack generation parameters ***/
+default nwidth 100         /* max allowed N side */
+default pwidth 150         /* max allowed P side */
+default width  250         /* max allowed when mixed N/P */
+default nstackwidth 150    /* folding threshold for N stacks */
+default pstackwidth 150    /* folding threshold for P stacks */
+default min_nstackwidth 10 /* mininum width for N stacks */
+default min_pstackwidth 16 /* minimum width for P stacks */
+default min_nfolded 20     /* minimum N width that can be folded */
+default min_pfolded 32     /* minimum P width that can be folded */
+default maxstackedgates 16 /* contact sharing threshold for stacks */
+
+/*** match library cells in proper order ***/
+/** read "ADD7M_VCP_NOM23/completion.in" **/
+read "ADD7M_VCP_NOM23/celements.in"
+read "ADD7M_VCP_NOM23/combinational.in"
+read "ADD7M_VCP_NOM23/pullup.in"
+read "ADD7M_VCP_NOM23/inverters.in"
+matchcircuit "ADD7M_VCP_NOM23/staticizer"
+
+/*** feedback information ***/
+echo Leftover Circuit Components:
+debugcircuit

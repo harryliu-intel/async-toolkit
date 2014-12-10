@@ -1,0 +1,13 @@
+/*** DEEP7M cell library ***/
+
+/*** match library cells in proper order ***/
+read "DEEP7M/completion.in"
+read "DEEP7M/celements.in"
+read "DEEP7M/combinational.in"
+read "DEEP7M/pullup.in"
+read "DEEP7M/inverters.in"
+matchcircuit "DEEP7M/staticizer"
+
+/*** feedback information ***/
+echo Leftover Circuit Components:
+debugcircuit

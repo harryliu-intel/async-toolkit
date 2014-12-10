@@ -1,0 +1,108 @@
+magic
+tech scmos
+timestamp 969939211
+<< ndiffusion >>
+rect -24 4 -8 5
+rect -24 -4 -8 1
+rect -24 -8 -8 -7
+<< pdiffusion >>
+rect 8 9 24 10
+rect 8 5 24 6
+rect 8 -4 24 -3
+rect 8 -8 24 -7
+<< ntransistor >>
+rect -24 1 -8 4
+rect -24 -7 -8 -4
+<< ptransistor >>
+rect 8 6 24 9
+rect 8 -7 24 -4
+<< polysilicon >>
+rect 4 8 8 9
+rect -4 6 8 8
+rect 24 6 28 9
+rect -4 4 -1 6
+rect -28 1 -24 4
+rect -8 1 -1 4
+rect -31 -7 -24 -4
+rect -8 -7 -4 -4
+rect 4 -7 8 -4
+rect 24 -7 31 -4
+rect -31 -8 -28 -7
+rect 28 -8 31 -7
+<< ndcontact >>
+rect -24 5 -8 13
+rect -24 -16 -8 -8
+<< pdcontact >>
+rect 8 10 24 18
+rect 8 -3 24 5
+rect 8 -16 24 -8
+<< psubstratepcontact >>
+rect -41 12 -33 20
+<< nsubstratencontact >>
+rect 33 12 41 20
+<< polycontact >>
+rect -4 8 4 16
+rect -36 -16 -28 -8
+rect 28 -16 36 -8
+<< metal1 >>
+rect -41 20 -21 26
+rect 21 20 41 26
+rect -41 12 -33 20
+rect -4 14 4 16
+rect -24 5 -8 13
+rect 8 10 24 20
+rect 33 12 41 20
+rect -16 4 -8 5
+rect 8 4 24 5
+rect -16 2 24 4
+rect -16 -3 -4 2
+rect 4 -3 24 2
+rect -36 -10 -28 -8
+rect -24 -10 -8 -8
+rect 8 -10 24 -8
+rect -24 -16 -21 -10
+rect 21 -16 24 -10
+rect 28 -10 36 -8
+<< m2contact >>
+rect -21 20 -3 26
+rect 3 20 21 26
+rect -4 8 4 14
+rect -4 -4 4 2
+rect -36 -16 -28 -10
+rect -21 -16 -3 -10
+rect 3 -16 21 -10
+rect 28 -16 36 -10
+<< metal2 >>
+rect -6 8 6 14
+rect -6 -4 6 2
+rect -37 -16 -26 -10
+rect 26 -16 37 -10
+<< m3contact >>
+rect -21 20 -3 26
+rect 3 20 21 26
+rect -21 -16 -3 -10
+rect 3 -16 21 -10
+<< metal3 >>
+rect -21 -19 -3 29
+rect 3 -19 21 29
+<< labels >>
+rlabel metal2 6 8 6 14 7 a
+rlabel metal2 -6 8 -6 14 3 a
+rlabel ndcontact -12 9 -12 9 4 x
+rlabel pdcontact 12 -12 12 -12 5 Vdd!
+rlabel polysilicon 25 -6 25 -6 1 _PReset!
+rlabel pdcontact 12 1 12 1 7 x
+rlabel pdcontact 12 14 12 14 5 Vdd!
+rlabel ndcontact -12 -12 -12 -12 5 GND!
+rlabel polysilicon -25 -6 -25 -6 3 _SReset!
+rlabel metal2 6 -4 6 2 7 x
+rlabel metal2 -6 -4 -6 2 3 x
+rlabel metal2 -31 -13 -31 -13 1 _SReset!
+rlabel metal2 31 -13 31 -13 7 _PReset!
+rlabel metal2 -26 -16 -26 -10 3 ^n
+rlabel metal2 26 -16 26 -10 7 ^p
+rlabel metal1 -37 16 -37 16 3 GND!
+rlabel metal1 37 16 37 16 7 Vdd!
+rlabel space 24 -17 42 27 3 ^p
+rlabel space -42 -17 -24 27 7 ^n
+<< end >>

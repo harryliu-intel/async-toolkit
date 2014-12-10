@@ -1,0 +1,80 @@
+magic
+tech scmos
+timestamp 982635440
+<< nselect >>
+rect -34 -18 0 18
+<< pselect >>
+rect 0 -18 34 21
+<< ndiffusion >>
+rect -28 4 -8 5
+rect -28 -4 -8 1
+rect -28 -8 -8 -7
+<< pdiffusion >>
+rect 8 9 28 10
+rect 8 5 28 6
+rect 8 -4 28 -3
+rect 8 -8 28 -7
+<< ntransistor >>
+rect -28 1 -8 4
+rect -28 -7 -8 -4
+<< ptransistor >>
+rect 8 6 28 9
+rect 8 -7 28 -4
+<< polysilicon >>
+rect -4 6 8 9
+rect 28 6 32 9
+rect -4 4 -1 6
+rect -32 1 -28 4
+rect -8 1 -1 4
+rect -32 -7 -28 -4
+rect -8 -7 -4 -4
+rect 4 -7 8 -4
+rect 28 -7 32 -4
+<< ndcontact >>
+rect -28 5 -8 13
+rect -28 -16 -8 -8
+<< pdcontact >>
+rect 8 10 28 18
+rect 8 -3 28 5
+rect 8 -16 28 -8
+<< metal1 >>
+rect 8 16 28 18
+rect -28 5 -8 13
+rect 8 10 9 16
+rect 27 10 28 16
+rect -28 -3 28 5
+rect -28 -10 -8 -8
+rect -28 -16 -27 -10
+rect -9 -16 -8 -10
+rect 8 -10 28 -8
+rect 8 -16 9 -10
+rect 27 -16 28 -10
+<< m2contact >>
+rect 9 10 27 16
+rect -27 -16 -9 -10
+rect 9 -16 27 -10
+<< m3contact >>
+rect 9 10 27 16
+rect -27 -16 -9 -10
+rect 9 -16 27 -10
+<< metal3 >>
+rect -27 -18 -9 21
+rect 9 -18 27 21
+<< labels >>
+rlabel space -35 -18 -28 21 7 ^n
+rlabel space 28 -18 36 21 3 ^p
+rlabel metal3 -27 -18 -9 21 1 GND!|pin|s|0
+rlabel metal1 -28 -16 -8 -8 1 GND!|pin|s|0
+rlabel metal3 9 -18 27 21 1 Vdd!|pin|s|1
+rlabel metal1 8 10 28 18 1 Vdd!|pin|s|1
+rlabel metal1 8 -16 28 -8 1 Vdd!|pin|s|1
+rlabel metal1 -28 -3 28 5 1 x|pin|s|2
+rlabel metal1 -28 5 -8 13 1 x|pin|s|2
+rlabel polysilicon -32 -7 -28 -4 1 _SReset!|pin|w|3|poly
+rlabel polysilicon -8 -7 -4 -4 1 _SReset!|pin|w|3|poly
+rlabel polysilicon 4 -7 8 -4 1 _PReset!|pin|w|4|poly
+rlabel polysilicon 28 -7 32 -4 1 _PReset!|pin|w|4|poly
+rlabel polysilicon 28 6 32 9 1 a|pin|w|5|poly
+rlabel polysilicon -4 6 0 9 1 a|pin|w|5|poly
+rlabel polysilicon -32 1 -28 4 1 a|pin|w|5|poly
+<< end >>

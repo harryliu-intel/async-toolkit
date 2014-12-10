@@ -1,0 +1,12 @@
+.true=1.08;
+.temperature=125;
+.corner "tt";
+.include "tech.asp";
+.include "cell.aspice";
+.include "env.asp";
+.include "prs.asp";
+.timemax=20e-9;
+.slow_delay=1.05;
+.fast_delay=0.95;
+.poststep=10e-12;
+.prstau=4e-11;

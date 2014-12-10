@@ -1,0 +1,117 @@
+magic
+tech scmos
+timestamp 962798572
+<< ndiffusion >>
+rect -83 52 -75 53
+rect -107 36 -99 37
+rect -83 44 -75 49
+rect -83 36 -75 41
+rect -107 32 -99 33
+rect -83 32 -75 33
+<< pdiffusion >>
+rect 1 63 9 68
+rect -7 62 9 63
+rect -7 58 9 59
+rect 1 53 9 58
+rect -7 49 1 50
+rect -7 45 1 46
+rect -54 41 -50 44
+rect -54 32 -50 37
+rect -37 36 -29 37
+rect -7 36 1 37
+rect -37 32 -29 33
+rect -7 32 1 33
+<< ntransistor >>
+rect -83 49 -75 52
+rect -83 41 -75 44
+rect -107 33 -99 36
+rect -83 33 -75 36
+<< ptransistor >>
+rect -7 59 9 62
+rect -7 46 1 49
+rect -54 37 -50 41
+rect -37 33 -29 36
+rect -7 33 1 36
+<< polysilicon >>
+rect -11 59 -7 62
+rect 9 59 13 62
+rect -73 54 -41 57
+rect -73 52 -70 54
+rect -44 52 -41 54
+rect -87 49 -83 52
+rect -75 49 -70 52
+rect -97 36 -94 49
+rect -44 49 -9 52
+rect -12 46 -7 49
+rect 1 46 6 49
+rect -87 41 -83 44
+rect -75 41 -66 44
+rect -58 37 -54 41
+rect -50 37 -46 41
+rect -111 33 -107 36
+rect -99 33 -94 36
+rect -87 33 -83 36
+rect -75 33 -71 36
+rect 3 36 6 46
+rect -41 33 -37 36
+rect -29 33 -22 36
+rect -11 33 -7 36
+rect 1 33 6 36
+<< ndcontact >>
+rect -83 53 -75 61
+rect -107 37 -99 45
+rect -107 24 -99 32
+rect -83 24 -75 32
+<< pdcontact >>
+rect -7 63 1 71
+rect -54 44 -46 52
+rect -7 50 1 58
+rect -37 37 -29 45
+rect -7 37 1 45
+rect -54 24 -46 32
+rect -37 24 -29 32
+rect -7 24 1 32
+<< polycontact >>
+rect -100 49 -92 57
+rect -66 36 -58 44
+rect -25 36 -17 44
+<< metal1 >>
+rect -7 67 1 71
+rect -21 63 1 67
+rect -100 54 -92 57
+rect -83 54 -75 61
+rect -21 54 -17 63
+rect -100 49 -17 54
+rect -7 50 1 58
+rect -107 44 -99 45
+rect -54 44 -46 49
+rect -107 40 -58 44
+rect -37 40 -29 45
+rect -107 37 -99 40
+rect -66 37 -29 40
+rect -25 44 -17 49
+rect -7 44 1 45
+rect -25 38 1 44
+rect -66 36 -33 37
+rect -25 36 -17 38
+rect -7 37 1 38
+rect -107 24 -75 32
+rect -54 24 1 32
+<< labels >>
+rlabel pdcontact -33 28 -33 28 1 Vdd!
+rlabel metal1 -50 28 -50 28 1 Vdd!
+rlabel ndcontact -103 28 -103 28 1 GND!
+rlabel metal1 -79 28 -79 28 1 GND!
+rlabel polysilicon -74 50 -74 50 1 a
+rlabel polysilicon -74 34 -74 34 1 _SReset!
+rlabel polysilicon 2 47 2 47 1 a
+rlabel polysilicon 2 34 2 34 1 a
+rlabel metal1 -3 54 -3 54 5 Vdd!
+rlabel metal1 -3 28 -3 28 1 Vdd!
+rlabel polysilicon 10 60 10 60 7 _PReset!
+rlabel space 0 23 7 51 3 ^p
+rlabel metal1 -3 41 -3 41 1 x
+rlabel metal1 -3 67 -3 67 5 x
+rlabel metal1 -50 48 -50 48 1 x
+rlabel metal1 -79 57 -79 57 1 x
+<< end >>

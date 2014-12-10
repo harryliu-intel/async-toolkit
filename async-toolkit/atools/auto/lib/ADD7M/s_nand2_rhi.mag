@@ -1,0 +1,70 @@
+magic
+tech scmos
+timestamp 965070451
+<< ndiffusion >>
+rect 66 102 74 103
+rect 66 94 74 99
+rect 66 86 74 91
+rect 66 82 74 83
+<< pdiffusion >>
+rect 90 107 98 108
+rect 90 103 98 104
+rect 90 94 98 95
+rect 90 90 98 91
+rect 98 82 106 87
+rect 90 81 106 82
+rect 90 77 106 78
+rect 98 72 106 77
+<< ntransistor >>
+rect 66 99 74 102
+rect 66 91 74 94
+rect 66 83 74 86
+<< ptransistor >>
+rect 90 104 98 107
+rect 90 91 98 94
+rect 90 78 106 81
+<< polysilicon >>
+rect 85 104 90 107
+rect 98 104 102 107
+rect 85 102 88 104
+rect 62 99 66 102
+rect 74 99 88 102
+rect 62 91 66 94
+rect 74 91 90 94
+rect 98 91 102 94
+rect 62 83 66 86
+rect 74 83 78 86
+rect 86 78 90 81
+rect 106 78 110 81
+<< ndcontact >>
+rect 66 103 74 111
+rect 66 74 74 82
+<< pdcontact >>
+rect 90 108 98 116
+rect 90 95 98 103
+rect 90 82 98 90
+rect 90 69 98 77
+<< metal1 >>
+rect 66 103 74 111
+rect 90 108 98 116
+rect 66 95 98 103
+rect 66 74 74 82
+rect 78 77 86 95
+rect 90 82 98 90
+rect 78 69 98 77
+<< labels >>
+rlabel metal1 70 107 70 107 1 x
+rlabel polysilicon 65 92 65 92 3 a
+rlabel polysilicon 65 100 65 100 3 b
+rlabel metal1 70 78 70 78 1 GND!
+rlabel polysilicon 65 84 65 84 3 _SReset!
+rlabel polysilicon 99 92 99 92 1 a
+rlabel polysilicon 99 105 99 105 1 b
+rlabel metal1 94 86 94 86 1 Vdd!
+rlabel metal1 94 112 94 112 5 Vdd!
+rlabel metal1 94 99 94 99 1 x
+rlabel space 61 74 66 111 7 ^n
+rlabel metal1 94 73 94 73 1 x
+rlabel space 97 89 103 117 3 ^p
+rlabel polysilicon 107 79 107 79 1 _PReset!
+<< end >>

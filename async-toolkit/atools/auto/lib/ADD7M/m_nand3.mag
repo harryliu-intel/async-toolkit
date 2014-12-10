@@ -1,0 +1,116 @@
+magic
+tech scmos
+timestamp 977203183
+<< ndiffusion >>
+rect 265 543 273 544
+rect 265 535 273 540
+rect 265 527 273 532
+rect 265 523 273 524
+rect 265 514 273 515
+rect 265 506 273 511
+rect 265 498 273 503
+rect 265 494 273 495
+<< pdiffusion >>
+rect 289 553 297 554
+rect 289 549 297 550
+rect 289 540 297 541
+rect 289 536 297 537
+rect 289 527 297 528
+rect 289 523 297 524
+rect 289 514 297 515
+rect 289 510 297 511
+rect 289 501 297 502
+rect 289 497 297 498
+rect 289 488 297 489
+rect 289 484 297 485
+<< ntransistor >>
+rect 265 540 273 543
+rect 265 532 273 535
+rect 265 524 273 527
+rect 265 511 273 514
+rect 265 503 273 506
+rect 265 495 273 498
+<< ptransistor >>
+rect 289 550 297 553
+rect 289 537 297 540
+rect 289 524 297 527
+rect 289 511 297 514
+rect 289 498 297 501
+rect 289 485 297 488
+<< polysilicon >>
+rect 275 550 289 553
+rect 297 550 301 553
+rect 275 543 278 550
+rect 261 540 265 543
+rect 273 540 278 543
+rect 284 537 289 540
+rect 297 537 301 540
+rect 284 535 287 537
+rect 261 532 265 535
+rect 273 532 287 535
+rect 261 524 265 527
+rect 273 524 289 527
+rect 297 524 301 527
+rect 261 511 265 514
+rect 273 511 289 514
+rect 297 511 301 514
+rect 261 503 265 506
+rect 273 503 287 506
+rect 284 501 287 503
+rect 284 498 289 501
+rect 297 498 301 501
+rect 261 495 265 498
+rect 273 495 278 498
+rect 275 488 278 495
+rect 275 485 289 488
+rect 297 485 301 488
+<< ndcontact >>
+rect 265 544 273 552
+rect 265 515 273 523
+rect 265 486 273 494
+<< pdcontact >>
+rect 289 554 297 562
+rect 289 541 297 549
+rect 289 528 297 536
+rect 289 515 297 523
+rect 289 502 297 510
+rect 289 489 297 497
+rect 289 476 297 484
+<< metal1 >>
+rect 289 554 297 562
+rect 265 544 273 552
+rect 277 541 297 549
+rect 277 523 285 541
+rect 289 528 297 536
+rect 265 515 297 523
+rect 277 497 285 515
+rect 289 502 297 510
+rect 265 486 273 494
+rect 277 489 297 497
+rect 289 476 297 484
+<< labels >>
+rlabel polysilicon 264 525 264 525 3 a
+rlabel polysilicon 264 533 264 533 3 b
+rlabel polysilicon 264 541 264 541 3 c
+rlabel metal1 269 548 269 548 5 GND!
+rlabel metal1 269 519 269 519 5 x
+rlabel metal1 269 490 269 490 1 GND!
+rlabel polysilicon 264 512 264 512 3 c
+rlabel polysilicon 264 504 264 504 3 b
+rlabel polysilicon 264 496 264 496 3 a
+rlabel polysilicon 298 538 298 538 1 b
+rlabel polysilicon 298 525 298 525 1 a
+rlabel polysilicon 298 551 298 551 1 c
+rlabel polysilicon 298 499 298 499 1 b
+rlabel polysilicon 298 486 298 486 1 a
+rlabel polysilicon 298 512 298 512 1 c
+rlabel space 260 486 265 552 7 ^n
+rlabel space 297 476 302 562 3 ^p
+rlabel metal1 293 480 293 480 1 Vdd!
+rlabel metal1 293 506 293 506 1 Vdd!
+rlabel metal1 293 532 293 532 1 Vdd!
+rlabel metal1 293 558 293 558 5 Vdd!
+rlabel metal1 293 545 293 545 1 x
+rlabel metal1 293 519 293 519 1 x
+rlabel metal1 293 493 293 493 1 x
+<< end >>

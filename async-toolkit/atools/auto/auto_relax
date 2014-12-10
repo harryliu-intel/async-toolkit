@@ -1,0 +1,1 @@
+auto 1 $1 $2 < $CAST_HOME/lib/auto/relax.in

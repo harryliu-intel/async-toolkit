@@ -1,0 +1,37 @@
+/*** nand gates ***/
+matchcircuit "ADD7M/s_nand2"
+matchcircuit "ADD7M/m_nand2"
+matchcircuit "ADD7M/l_nand2"
+
+matchcircuit "ADD7M/s_nand3"
+matchcircuit "ADD7M/m_nand3"
+
+matchcircuit "ADD7M/s_nand4"
+matchcircuit "ADD7M/m_nand4"
+
+matchcircuit "ADD7M/s_nand5"
+matchcircuit "ADD7M/m_nand5"
+
+matchcircuit "ADD7M/s_nand6"
+matchcircuit "ADD7M/m_nand6"
+
+/*** nand gates which reset high ***/
+matchcircuit "ADD7M/s_nand2_rhi"
+matchcircuit "ADD7M/m_nand2_rhi"
+
+matchcircuit "ADD7M/s_nand3_rhi"
+matchcircuit "ADD7M/m_nand3_rhi"
+
+matchcircuit "ADD7M/s_nand4_rhi"
+matchcircuit "ADD7M/m_nand4_rhi"
+
+matchcircuit "ADD7M/s_nand5_rhi"
+matchcircuit "ADD7M/m_nand5_rhi"
+
+/*** nor gates ***/
+matchcircuit "ADD7M/s_nor2"
+matchcircuit "ADD7M/m_nor2"
+matchcircuit "ADD7M/l_nor2"
+
+matchcircuit "ADD7M/s_nor3"
+matchcircuit "ADD7M/m_nor3"

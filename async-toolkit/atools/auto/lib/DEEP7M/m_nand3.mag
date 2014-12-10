@@ -1,0 +1,120 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect 267 541 273 542
+rect 267 535 273 539
+rect 267 529 273 533
+rect 267 526 273 527
+rect 267 522 269 526
+rect 267 521 273 522
+rect 267 515 273 519
+rect 267 509 273 513
+rect 267 506 273 507
+<< pdiffusion >>
+rect 285 545 295 546
+rect 285 542 295 543
+rect 293 538 295 542
+rect 285 537 295 538
+rect 285 534 295 535
+rect 285 530 291 534
+rect 285 529 295 530
+rect 285 526 295 527
+rect 293 522 295 526
+rect 285 521 295 522
+rect 285 518 295 519
+rect 285 514 291 518
+rect 285 513 295 514
+rect 285 510 295 511
+rect 293 506 295 510
+rect 285 505 295 506
+rect 285 502 295 503
+<< ntransistor >>
+rect 267 539 273 541
+rect 267 533 273 535
+rect 267 527 273 529
+rect 267 519 273 521
+rect 267 513 273 515
+rect 267 507 273 509
+<< ptransistor >>
+rect 285 543 295 545
+rect 285 535 295 537
+rect 285 527 295 529
+rect 285 519 295 521
+rect 285 511 295 513
+rect 285 503 295 505
+<< polysilicon >>
+rect 275 543 285 545
+rect 295 543 298 545
+rect 275 541 277 543
+rect 264 539 267 541
+rect 273 539 277 541
+rect 281 535 285 537
+rect 295 535 298 537
+rect 264 533 267 535
+rect 273 533 283 535
+rect 264 527 267 529
+rect 273 527 285 529
+rect 295 527 298 529
+rect 264 519 267 521
+rect 273 519 285 521
+rect 295 519 298 521
+rect 264 513 267 515
+rect 273 513 283 515
+rect 281 511 285 513
+rect 295 511 298 513
+rect 264 507 267 509
+rect 273 507 277 509
+rect 275 505 277 507
+rect 275 503 285 505
+rect 295 503 298 505
+<< ndcontact >>
+rect 267 542 273 546
+rect 269 522 273 526
+rect 267 502 273 506
+<< pdcontact >>
+rect 285 546 295 550
+rect 285 538 293 542
+rect 291 530 295 534
+rect 285 522 293 526
+rect 291 514 295 518
+rect 285 506 293 510
+rect 285 498 295 502
+<< metal1 >>
+rect 285 546 295 550
+rect 267 542 273 546
+rect 285 538 293 542
+rect 285 526 288 538
+rect 291 530 295 534
+rect 269 522 293 526
+rect 285 510 288 522
+rect 291 514 295 518
+rect 285 506 293 510
+rect 267 502 273 506
+rect 285 498 295 502
+<< labels >>
+rlabel polysilicon 266 540 266 540 3 c
+rlabel polysilicon 266 534 266 534 3 b
+rlabel polysilicon 266 528 266 528 3 a
+rlabel polysilicon 266 508 266 508 3 a
+rlabel polysilicon 266 514 266 514 3 b
+rlabel polysilicon 266 520 266 520 3 c
+rlabel space 264 501 270 547 7 ^n
+rlabel space 292 497 299 551 3 ^p
+rlabel polysilicon 296 504 296 504 7 a
+rlabel polysilicon 296 512 296 512 7 b
+rlabel polysilicon 296 520 296 520 7 c
+rlabel polysilicon 296 528 296 528 7 a
+rlabel polysilicon 296 536 296 536 7 b
+rlabel polysilicon 296 544 296 544 7 c
+rlabel ndcontact 271 524 271 524 1 x
+rlabel ndcontact 271 544 271 544 1 GND!
+rlabel ndcontact 271 504 271 504 1 GND!
+rlabel pdcontact 293 516 293 516 5 Vdd!
+rlabel pdcontact 293 532 293 532 5 Vdd!
+rlabel pdcontact 287 508 287 508 1 x
+rlabel pdcontact 287 524 287 524 1 x
+rlabel pdcontact 287 540 287 540 1 x
+rlabel pdcontact 293 500 293 500 1 Vdd!
+rlabel pdcontact 293 548 293 548 1 Vdd!
+<< end >>

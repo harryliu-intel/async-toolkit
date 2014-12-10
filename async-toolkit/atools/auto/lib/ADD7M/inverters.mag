@@ -1,0 +1,36 @@
+magic
+tech scmos
+timestamp 965153727
+use s_inv s_inv_0
+timestamp 965070867
+transform 1 0 -105 0 1 -413
+box 63 428 105 449
+use m_inv m_inv_0
+timestamp 964626297
+transform 1 0 -83 0 1 -530
+box 90 545 134 579
+use l_inv l_inv_0
+timestamp 965153727
+transform 1 0 -338 0 1 -470
+box 396 484 474 546
+use h_inv h_inv_0
+timestamp 965153727
+transform 1 0 96 0 1 15
+box 52 -1 130 87
+use s_inv_rhi s_inv_rhi_0
+timestamp 965071057
+transform 1 0 276 0 1 -21
+box -21 36 28 70
+use m_inv_rhi m_inv_rhi_0
+timestamp 965071057
+transform 1 0 221 0 1 8
+box 99 7 157 57
+use m_inv_staticizer m_inv_staticizer_0
+timestamp 962793444
+transform 1 0 372 0 1 -53
+box 75 67 165 103
+use l_inv_staticizer l_inv_staticizer_0
+timestamp 965153727
+transform 1 0 461 0 1 -47
+box 84 61 210 123
+<< end >>

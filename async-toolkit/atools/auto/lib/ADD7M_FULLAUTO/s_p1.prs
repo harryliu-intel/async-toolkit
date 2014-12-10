@@ -1,0 +1,5 @@
+<wp> ~a -> x+
+@staticize(x)
+
+@stretch(p,wp-8)
+@require(wp + 70 <= pwidth)

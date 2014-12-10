@@ -1,0 +1,22 @@
+/*** c2 ***/
+matchcircuit "DEEP7M/l_c2"
+matchcircuit "DEEP7M/m_c2"
+matchcircuit "DEEP7M/s_c2"
+matchcircuit "DEEP7M/l_c2_rhi"
+matchcircuit "DEEP7M/m_c2_rhi"
+matchcircuit "DEEP7M/s_c2_rhi"
+matchcircuit "DEEP7M/l_c2_phi"
+matchcircuit "DEEP7M/m_c2_phi"
+matchcircuit "DEEP7M/s_c2_phi"
+
+/*** 2*and2 + c2 ***/
+matchcircuit "DEEP7M/m_2and2c2"
+matchcircuit "DEEP7M/s_2and2c2"
+matchcircuit "DEEP7M/m_2and2c2_rhi"
+matchcircuit "DEEP7M/s_2and2c2_rhi"
+
+/*** and2 + c2 ***/
+matchcircuit "DEEP7M/m_and2c2"
+matchcircuit "DEEP7M/s_and2c2"
+matchcircuit "DEEP7M/m_and2c2_rhi"
+matchcircuit "DEEP7M/s_and2c2_rhi"

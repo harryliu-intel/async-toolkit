@@ -1,0 +1,6 @@
+<wn>  a |  b -> x-
+<wp> ~a & ~b -> x+
+
+@require((wn>=80)|(wp>=120))
+@stretch(n,(wn-40)/4)
+@stretch(p,(wp-24)/4)

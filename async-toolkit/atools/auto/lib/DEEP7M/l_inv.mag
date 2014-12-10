@@ -1,0 +1,96 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect 414 470 420 471
+rect 414 467 420 468
+rect 414 463 416 467
+rect 414 462 420 463
+rect 414 459 420 460
+rect 414 454 420 455
+rect 414 451 420 452
+rect 414 447 416 451
+rect 414 446 420 447
+rect 414 443 420 444
+<< pdiffusion >>
+rect 432 470 442 471
+rect 432 467 442 468
+rect 440 463 442 467
+rect 432 462 442 463
+rect 432 459 442 460
+rect 432 455 438 459
+rect 432 454 442 455
+rect 432 451 442 452
+rect 440 447 442 451
+rect 432 446 442 447
+rect 432 443 442 444
+<< ntransistor >>
+rect 414 468 420 470
+rect 414 460 420 462
+rect 414 452 420 454
+rect 414 444 420 446
+<< ptransistor >>
+rect 432 468 442 470
+rect 432 460 442 462
+rect 432 452 442 454
+rect 432 444 442 446
+<< polysilicon >>
+rect 410 468 414 470
+rect 420 468 432 470
+rect 442 468 446 470
+rect 410 462 412 468
+rect 425 462 427 468
+rect 444 462 446 468
+rect 410 460 414 462
+rect 420 460 432 462
+rect 442 460 446 462
+rect 410 454 412 460
+rect 425 454 427 460
+rect 444 454 446 460
+rect 410 452 414 454
+rect 420 452 432 454
+rect 442 452 446 454
+rect 410 446 412 452
+rect 425 446 427 452
+rect 444 446 446 452
+rect 410 444 414 446
+rect 420 444 432 446
+rect 442 444 446 446
+<< ndcontact >>
+rect 414 471 420 475
+rect 416 463 420 467
+rect 414 455 420 459
+rect 416 447 420 451
+rect 414 439 420 443
+<< pdcontact >>
+rect 432 471 442 475
+rect 432 463 440 467
+rect 438 455 442 459
+rect 432 447 440 451
+rect 432 439 442 443
+<< metal1 >>
+rect 414 471 420 475
+rect 432 471 442 475
+rect 416 463 440 467
+rect 414 455 420 459
+rect 432 451 435 463
+rect 438 455 442 459
+rect 416 447 440 451
+rect 414 439 420 443
+rect 432 439 442 443
+<< labels >>
+rlabel space 410 438 417 476 7 ^n
+rlabel space 439 438 446 476 3 ^p
+rlabel polysilicon 411 457 411 457 3 a
+rlabel polysilicon 445 457 445 457 7 a
+rlabel ndcontact 418 449 418 449 1 x
+rlabel ndcontact 418 465 418 465 1 x
+rlabel ndcontact 418 441 418 441 1 GND!
+rlabel ndcontact 418 457 418 457 5 GND!
+rlabel ndcontact 418 473 418 473 5 GND!
+rlabel pdcontact 438 465 438 465 1 x
+rlabel pdcontact 438 449 438 449 1 x
+rlabel pdcontact 440 457 440 457 5 Vdd!
+rlabel pdcontact 440 441 440 441 1 Vdd!
+rlabel pdcontact 440 473 440 473 5 Vdd!
+<< end >>

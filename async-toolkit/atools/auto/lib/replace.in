@@ -1,0 +1,7 @@
+circuit $2
+read "globals.in"
+read "cmos.in"
+load $3
+read "minimize.in"
+align
+layout $3

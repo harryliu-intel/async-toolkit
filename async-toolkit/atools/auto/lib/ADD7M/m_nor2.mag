@@ -1,0 +1,98 @@
+magic
+tech scmos
+timestamp 965070614
+<< ndiffusion >>
+rect -159 427 -151 428
+rect -159 423 -151 424
+rect -159 414 -151 415
+rect -159 410 -151 411
+rect -159 401 -151 402
+rect -159 397 -151 398
+rect -159 388 -151 389
+rect -159 384 -151 385
+<< pdiffusion >>
+rect -135 422 -127 423
+rect -135 414 -127 419
+rect -135 410 -127 411
+rect -135 401 -127 402
+rect -135 393 -127 398
+rect -135 389 -127 390
+<< ntransistor >>
+rect -159 424 -151 427
+rect -159 411 -151 414
+rect -159 398 -151 401
+rect -159 385 -151 388
+<< ptransistor >>
+rect -135 419 -127 422
+rect -135 411 -127 414
+rect -135 398 -127 401
+rect -135 390 -127 393
+<< polysilicon >>
+rect -163 424 -159 427
+rect -151 424 -146 427
+rect -149 422 -146 424
+rect -149 419 -135 422
+rect -127 419 -123 422
+rect -163 411 -159 414
+rect -151 411 -135 414
+rect -127 411 -123 414
+rect -163 398 -159 401
+rect -151 398 -135 401
+rect -127 398 -123 401
+rect -149 390 -135 393
+rect -127 390 -123 393
+rect -149 388 -146 390
+rect -163 385 -159 388
+rect -151 385 -146 388
+<< ndcontact >>
+rect -159 428 -151 436
+rect -159 415 -151 423
+rect -159 402 -151 410
+rect -159 389 -151 397
+rect -159 376 -151 384
+<< pdcontact >>
+rect -135 423 -127 431
+rect -135 402 -127 410
+rect -135 381 -127 389
+<< polycontact >>
+rect -123 419 -115 427
+rect -171 406 -163 414
+rect -123 398 -115 406
+rect -171 385 -163 393
+<< metal1 >>
+rect -159 428 -151 436
+rect -135 423 -127 431
+rect -159 415 -139 423
+rect -123 419 -115 427
+rect -171 406 -163 414
+rect -147 410 -139 415
+rect -170 393 -164 406
+rect -159 402 -151 410
+rect -147 402 -127 410
+rect -122 406 -116 419
+rect -147 397 -139 402
+rect -123 398 -115 406
+rect -171 385 -163 393
+rect -159 389 -139 397
+rect -159 376 -151 384
+rect -135 381 -127 389
+<< labels >>
+rlabel metal1 -155 419 -155 419 1 x
+rlabel polysilicon -126 412 -126 412 7 a
+rlabel polysilicon -126 420 -126 420 7 b
+rlabel polysilicon -160 425 -160 425 1 b
+rlabel polysilicon -160 412 -160 412 1 a
+rlabel metal1 -155 393 -155 393 5 x
+rlabel polysilicon -126 399 -126 399 7 b
+rlabel polysilicon -126 391 -126 391 7 a
+rlabel polysilicon -160 386 -160 386 1 a
+rlabel polysilicon -160 399 -160 399 1 b
+rlabel metal1 -131 406 -131 406 5 x
+rlabel metal1 -131 385 -131 385 1 Vdd!
+rlabel metal1 -131 427 -131 427 1 Vdd!
+rlabel metal1 -155 432 -155 432 5 GND!
+rlabel metal1 -155 406 -155 406 1 GND!
+rlabel metal1 -155 380 -155 380 1 GND!
+rlabel space -172 375 -158 437 7 ^n
+rlabel space -128 380 -114 432 3 ^p
+<< end >>

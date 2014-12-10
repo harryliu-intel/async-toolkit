@@ -1,0 +1,12 @@
+/*** 1of4 input completion ***/
+matchcircuit "ADD7M_FULLAUTO/s_or4"
+
+/*** c2 + inverter ***/
+matchcircuit "ADD7M_FULLAUTO/m_c2inv"
+matchcircuit "ADD7M_FULLAUTO/m_c2inv_rlo"
+matchcircuit "ADD7M_FULLAUTO/m_c2inv_plo"
+
+/*** c4 ***/
+matchcircuit "ADD7M_FULLAUTO/m_c4"
+matchcircuit "ADD7M_FULLAUTO/m_c4_rhi"
+matchcircuit "ADD7M_FULLAUTO/m_c4_phi"

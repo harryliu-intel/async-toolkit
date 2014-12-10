@@ -1,0 +1,4 @@
+#!/bin/csh
+foreach i ( $*)
+  echo 'circuit $2' | auto 1 $i
+end

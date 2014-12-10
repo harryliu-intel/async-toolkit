@@ -1,0 +1,95 @@
+magic
+tech scmos
+timestamp 970026442
+<< ndiffusion >>
+rect -24 293 -8 294
+rect -24 289 -8 290
+rect -24 280 -8 281
+rect -24 276 -8 277
+<< pdiffusion >>
+rect 8 293 24 294
+rect 8 285 24 290
+rect 8 281 24 282
+<< ntransistor >>
+rect -24 290 -8 293
+rect -24 277 -8 280
+<< ptransistor >>
+rect 8 290 24 293
+rect 8 282 24 285
+<< polysilicon >>
+rect -28 290 -24 293
+rect -8 290 -4 293
+rect 4 290 8 293
+rect 24 290 28 293
+rect 1 282 8 285
+rect 24 282 28 285
+rect 1 280 4 282
+rect -28 277 -24 280
+rect -8 277 4 280
+<< ndcontact >>
+rect -24 294 -8 302
+rect -24 281 -8 289
+rect -24 268 -8 276
+<< pdcontact >>
+rect 8 294 24 302
+rect 8 273 24 281
+<< psubstratepcontact >>
+rect -41 276 -33 284
+<< nsubstratencontact >>
+rect 33 294 41 302
+<< polycontact >>
+rect -4 290 4 298
+rect -4 269 4 277
+<< metal1 >>
+rect -21 302 -8 304
+rect -24 294 -8 302
+rect 8 302 21 304
+rect 8 294 41 302
+rect -4 290 4 292
+rect -24 286 -8 289
+rect -41 276 -33 284
+rect -24 281 -21 286
+rect 21 280 24 281
+rect -41 274 -8 276
+rect -41 268 -21 274
+rect -9 268 -8 274
+rect -4 274 4 277
+rect 8 273 24 280
+<< m2contact >>
+rect -21 304 -3 310
+rect 3 304 21 310
+rect -4 292 4 298
+rect -21 280 -8 286
+rect 8 280 21 286
+rect -21 268 -9 274
+rect -4 268 4 274
+<< metal2 >>
+rect -6 292 6 298
+rect -21 280 21 286
+rect -4 268 27 274
+<< m3contact >>
+rect -21 304 -3 310
+rect 3 304 21 310
+rect -21 268 -9 274
+<< metal3 >>
+rect -21 265 -3 313
+rect 3 265 21 313
+<< labels >>
+rlabel metal2 -12 283 -12 283 1 x
+rlabel metal2 6 292 6 298 7 b
+rlabel metal2 -6 292 -6 298 3 b
+rlabel polysilicon -25 291 -25 291 1 b
+rlabel polysilicon -25 278 -25 278 1 a
+rlabel polysilicon 25 291 25 291 7 b
+rlabel polysilicon 25 283 25 283 7 a
+rlabel metal2 15 283 15 283 1 x
+rlabel pdcontact 16 298 16 298 1 Vdd!
+rlabel ndcontact -16 298 -16 298 1 GND!
+rlabel ndcontact -16 272 -16 272 1 GND!
+rlabel metal2 26 271 26 271 7 a
+rlabel metal2 25 268 27 274 7 ^p
+rlabel metal1 -37 280 -37 280 3 GND!
+rlabel space -42 267 -24 303 7 ^n
+rlabel metal1 37 298 37 298 7 Vdd!
+rlabel space 23 267 42 303 3 ^p
+<< end >>

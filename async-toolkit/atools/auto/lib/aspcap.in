@@ -1,0 +1,6 @@
+/*** estimate wiring capacitance for aspice ***/
+read "cmos.in"
+read_connect $2
+read_instances $2
+estimate_cap
+print_aspice_caps

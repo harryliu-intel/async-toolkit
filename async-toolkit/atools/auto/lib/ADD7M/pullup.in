@@ -1,0 +1,27 @@
+/*** 2P pullup with inverter and half-combinational staticizer ***/
+matchcircuit "ADD7M/s_p2inv"
+matchcircuit "ADD7M/m_p2inv"
+
+matchcircuit "ADD7M/s_p2inv_plo"
+matchcircuit "ADD7M/m_p2inv_plo"
+
+/*** 2P pullup with staticizer ***/
+matchcircuit "ADD7M/m_p2"
+
+matchcircuit "ADD7M/s_p2_phi"
+matchcircuit "ADD7M/m_p2_phi"
+
+/*** 1P pullup with inverter and staticizer ***/
+matchcircuit "ADD7M/s_p1inv"
+matchcircuit "ADD7M/m_p1inv"
+
+matchcircuit "ADD7M/s_p1inv_plo"
+matchcircuit "ADD7M/m_p1inv_plo"
+
+/*** 1P pullup with staticizer ***/
+matchcircuit "ADD7M/m_p1"
+
+matchcircuit "ADD7M/s_p1_phi"
+matchcircuit "ADD7M/m_p1_phi"
+
+

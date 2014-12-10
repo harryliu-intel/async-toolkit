@@ -1,0 +1,56 @@
+magic
+tech scmos
+timestamp 982636443
+<< nselect >>
+rect -34 424 0 450
+<< pselect >>
+rect 0 424 34 450
+<< ndiffusion >>
+rect -28 438 -8 439
+rect -28 434 -8 435
+<< pdiffusion >>
+rect 8 438 28 439
+rect 8 434 28 435
+<< ntransistor >>
+rect -28 435 -8 438
+<< ptransistor >>
+rect 8 435 28 438
+<< polysilicon >>
+rect -32 435 -28 438
+rect -8 435 8 438
+rect 28 435 32 438
+<< ndcontact >>
+rect -28 439 -8 447
+rect -28 426 -8 434
+<< pdcontact >>
+rect 8 439 28 447
+rect 8 426 28 434
+<< metal1 >>
+rect -28 439 28 447
+rect -28 432 -8 434
+rect -28 426 -27 432
+rect -9 426 -8 432
+rect 8 432 28 434
+rect 8 426 9 432
+rect 27 426 28 432
+<< m2contact >>
+rect -27 426 -9 432
+rect 9 426 27 432
+<< m3contact >>
+rect -27 426 -9 432
+rect 9 426 27 432
+<< metal3 >>
+rect -27 424 -9 450
+rect 9 424 27 450
+<< labels >>
+rlabel metal1 -28 439 28 447 1 x
+rlabel nselect -34 424 -28 450 7 ^n
+rlabel pselect 28 424 34 450 3 ^p
+rlabel metal3 -27 424 -9 450 1 GND!|pin|s|0
+rlabel metal1 -28 426 -8 434 1 GND!|pin|s|0
+rlabel metal3 9 424 27 450 1 Vdd!|pin|s|1
+rlabel metal1 8 426 28 434 1 Vdd!|pin|s|1
+rlabel polysilicon -32 435 -28 438 1 a|pin|w|2|poly
+rlabel polysilicon -2 435 2 438 1 a|pin|w|2|poly
+rlabel polysilicon 28 435 32 438 1 a|pin|w|2|poly
+<< end >>

@@ -1,0 +1,38 @@
+var x
+var y
+set x 3
+set y 4
+var a = x y +
+var b = x y -
+var c = x y *
+var d = x y /
+
+var e = a b * x y * + 3 +
+var f = x y MAX
+var g = x SQR
+var h = x ABS
+var i = x EXP
+var j = x NEG
+
+deriv a x
+deriv a y
+deriv b x
+deriv b y
+deriv c x
+deriv c y
+deriv d x
+deriv d y
+deriv e x
+deriv e y
+deriv f x
+deriv f y
+deriv g x
+deriv g y
+deriv h x
+deriv h y
+deriv i x
+deriv i y
+deriv j x
+deriv j y
+
+debug

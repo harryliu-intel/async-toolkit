@@ -1,0 +1,72 @@
+magic
+tech scmos
+timestamp 970030343
+use l_c2 l_c2_0
+timestamp 970030046
+transform 1 0 -1196 0 1 481
+box -69 -21 74 87
+use l_c2_rhi l_c2_rhi_0
+timestamp 970030064
+transform 1 0 -974 0 1 580
+box -69 -60 74 72
+use l_c2_phi l_c2_phi_0
+timestamp 970030226
+transform 1 0 -730 0 1 471
+box -77 37 80 145
+use m_c2 m_c2_0
+timestamp 970029977
+transform 1 0 -1196 0 1 77
+box -81 311 89 371
+use m_c2_rhi m_c2_rhi_0
+timestamp 970030046
+transform 1 0 -974 0 1 421
+box -83 15 101 87
+use m_c2_phi m_c2_phi_0
+timestamp 970030097
+transform 1 0 -730 0 1 605
+box -83 -181 101 -109
+use m_2and2c2 m_2and2c2_0
+timestamp 970030226
+transform 1 0 -511 0 1 417
+box -72 7 83 139
+use m_2and2c2_rhi m_2and2c2_rhi_0
+timestamp 970030226
+transform 1 0 -299 0 1 432
+box -80 28 91 184
+use s_c2 s_c2_0
+timestamp 969938097
+transform 1 0 -1196 0 1 58
+box -42 282 42 318
+use s_c2_rhi s_c2_rhi_0
+timestamp 969939778
+transform 1 0 -974 0 1 332
+box -72 8 68 92
+use s_c2_phi s_c2_phi_0
+timestamp 969938295
+transform 1 0 -730 0 1 258
+box -72 82 70 154
+use s_2and2c2 s_2and2c2_0
+timestamp 970030226
+transform 1 0 -511 0 1 252
+box -51 88 52 160
+use s_2and2c2_rhi s_2and2c2_rhi_0
+timestamp 970030226
+transform 1 0 -299 0 1 318
+box -72 22 70 130
+use m_and2c2 m_and2c2_0
+timestamp 970030279
+transform 1 0 -93 0 1 385
+box -60 27 79 147
+use m_and2c2_rhi m_and2c2_rhi_0
+timestamp 970030343
+transform 1 0 108 0 1 404
+box -69 44 85 164
+use s_and2c2 s_and2c2_0
+timestamp 970030271
+transform 1 0 -93 0 1 -206
+box -51 546 52 606
+use s_and2c2_rhi s_and2c2_rhi_0
+timestamp 970030343
+transform 1 0 108 0 1 -164
+box -72 504 70 600
+<< end >>

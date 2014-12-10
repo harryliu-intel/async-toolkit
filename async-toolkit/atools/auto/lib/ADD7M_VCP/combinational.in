@@ -1,0 +1,37 @@
+/*** nand gates ***/
+matchcircuit "ADD7M_VCP/s_nand2"
+matchcircuit "ADD7M_VCP/m_nand2"
+matchcircuit "ADD7M_VCP/l_nand2"
+
+matchcircuit "ADD7M_VCP/s_nand3"
+matchcircuit "ADD7M_VCP/m_nand3"
+
+matchcircuit "ADD7M_VCP/s_nand4"
+matchcircuit "ADD7M_VCP/m_nand4"
+
+matchcircuit "ADD7M_VCP/s_nand5"
+matchcircuit "ADD7M_VCP/m_nand5"
+
+matchcircuit "ADD7M_VCP/s_nand6"
+matchcircuit "ADD7M_VCP/m_nand6"
+
+/*** nand gates which reset high ***/
+matchcircuit "ADD7M_VCP/s_nand2_rhi"
+matchcircuit "ADD7M_VCP/m_nand2_rhi"
+
+matchcircuit "ADD7M_VCP/s_nand3_rhi"
+matchcircuit "ADD7M_VCP/m_nand3_rhi"
+
+matchcircuit "ADD7M_VCP/s_nand4_rhi"
+matchcircuit "ADD7M_VCP/m_nand4_rhi"
+
+matchcircuit "ADD7M_VCP/s_nand5_rhi"
+matchcircuit "ADD7M_VCP/m_nand5_rhi"
+
+/*** nor gates ***/
+matchcircuit "ADD7M_VCP/s_nor2"
+matchcircuit "ADD7M_VCP/m_nor2"
+matchcircuit "ADD7M_VCP/l_nor2"
+
+matchcircuit "ADD7M_VCP/s_nor3"
+matchcircuit "ADD7M_VCP/m_nor3"

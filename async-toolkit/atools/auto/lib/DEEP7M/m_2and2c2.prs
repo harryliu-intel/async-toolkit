@@ -1,0 +1,9 @@
+<wp> (~_a0 | ~_a1) & (~_b0 | ~_b1) -> x+
+<wn>   _a0 &  _a1  &   _b0 &  _b1  -> x-
+@staticize(x)
+
+@require((wn>=40)|(wp>=60))
+@require(wp>=60)
+@require(wn>=24)
+@stretch(p,(wp-60)/2)
+@stretch(n,(wn-24)/2)

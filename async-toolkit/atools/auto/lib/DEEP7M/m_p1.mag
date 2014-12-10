@@ -1,0 +1,98 @@
+magic
+tech scmos
+timestamp 962519057
+<< ndiffusion >>
+rect -90 49 -86 50
+rect -90 43 -86 47
+rect -77 43 -73 44
+rect -90 40 -86 41
+rect -77 40 -73 41
+<< pdiffusion >>
+rect -106 51 -102 52
+rect -106 48 -102 49
+rect -106 43 -102 44
+rect -51 48 -48 50
+rect -61 43 -57 44
+rect -106 40 -102 41
+rect -61 40 -57 41
+rect -51 40 -48 46
+<< ntransistor >>
+rect -90 47 -86 49
+rect -90 41 -86 43
+rect -77 41 -73 43
+<< ptransistor >>
+rect -106 49 -102 51
+rect -106 41 -102 43
+rect -51 46 -48 48
+rect -61 41 -57 43
+<< polysilicon >>
+rect -109 49 -106 51
+rect -102 49 -98 51
+rect -81 51 -53 52
+rect -100 43 -98 49
+rect -93 47 -90 49
+rect -86 47 -83 49
+rect -79 50 -53 51
+rect -55 48 -53 50
+rect -109 41 -106 43
+rect -102 41 -90 43
+rect -86 41 -83 43
+rect -80 41 -77 43
+rect -73 41 -69 43
+rect -55 46 -51 48
+rect -48 47 -44 48
+rect -48 46 -46 47
+rect -65 41 -61 43
+rect -57 41 -54 43
+<< ndcontact >>
+rect -90 50 -86 54
+rect -77 44 -73 48
+rect -90 36 -86 40
+rect -77 36 -73 40
+<< pdcontact >>
+rect -106 52 -102 56
+rect -106 44 -102 48
+rect -51 50 -47 54
+rect -61 44 -57 48
+rect -106 36 -102 40
+rect -61 36 -57 40
+rect -51 36 -47 40
+<< polycontact >>
+rect -83 47 -79 51
+rect -69 41 -65 45
+rect -46 43 -42 47
+<< metal1 >>
+rect -106 52 -102 56
+rect -89 54 -66 57
+rect -90 50 -86 54
+rect -69 51 -47 54
+rect -83 50 -79 51
+rect -90 48 -87 50
+rect -106 45 -87 48
+rect -83 47 -73 50
+rect -106 44 -102 45
+rect -77 44 -73 47
+rect -69 45 -66 51
+rect -51 50 -47 51
+rect -61 47 -57 48
+rect -69 41 -65 45
+rect -61 44 -42 47
+rect -46 43 -42 44
+rect -106 36 -102 40
+rect -90 36 -73 40
+rect -61 36 -47 40
+<< labels >>
+rlabel polysilicon -107 42 -107 42 3 a
+rlabel polysilicon -107 50 -107 50 3 a
+rlabel space -109 35 -105 57 7 ^p
+rlabel pdcontact -104 38 -104 38 1 Vdd!
+rlabel pdcontact -104 54 -104 54 5 Vdd!
+rlabel pdcontact -104 46 -104 46 3 _x
+rlabel ndcontact -88 52 -88 52 5 _x
+rlabel polycontact -67 43 -67 43 1 _x
+rlabel ndcontact -88 38 -88 38 1 GND!
+rlabel ndcontact -75 38 -75 38 1 GND!
+rlabel pdcontact -49 52 -49 52 1 _x
+rlabel pdcontact -49 38 -49 38 1 Vdd!
+rlabel pdcontact -59 38 -59 38 1 Vdd!
+<< end >>

@@ -1,0 +1,27 @@
+/*** c2 ***/
+matchcircuit "ADD7M/s_c2"
+matchcircuit "ADD7M/m_c2"
+matchcircuit "ADD7M/l_c2"
+
+matchcircuit "ADD7M/s_c2_rhi"
+matchcircuit "ADD7M/m_c2_rhi"
+matchcircuit "ADD7M/l_c2_rhi"
+
+matchcircuit "ADD7M/s_c2_phi"
+matchcircuit "ADD7M/m_c2_phi"
+matchcircuit "ADD7M/l_c2_phi"
+
+/*** 2*and2 + c2 ***/
+matchcircuit "ADD7M/s_2and2c2"
+matchcircuit "ADD7M/m_2and2c2"
+
+matchcircuit "ADD7M/s_2and2c2_rhi"
+matchcircuit "ADD7M/m_2and2c2_rhi"
+
+/*** and2 + c2 ***/
+matchcircuit "ADD7M/s_and2c2"
+matchcircuit "ADD7M/m_and2c2"
+
+matchcircuit "ADD7M/s_and2c2_rhi"
+matchcircuit "ADD7M/m_and2c2_rhi"
+matchcircuit "ADD7M/l_and2c2_rhi"

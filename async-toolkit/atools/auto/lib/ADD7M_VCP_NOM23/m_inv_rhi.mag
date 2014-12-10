@@ -1,0 +1,93 @@
+magic
+tech scmos
+timestamp 988943070
+<< nselect >>
+rect -34 5 0 61
+<< pselect >>
+rect 0 5 35 61
+<< ndiffusion >>
+rect -28 48 -8 49
+rect -28 40 -8 45
+rect -28 36 -8 37
+rect -28 27 -8 28
+rect -28 19 -8 24
+rect -28 15 -8 16
+<< pdiffusion >>
+rect 8 47 28 48
+rect 8 41 28 44
+rect 8 33 16 41
+rect 8 32 28 33
+rect 8 28 28 29
+rect 8 19 28 20
+rect 8 15 28 16
+<< ntransistor >>
+rect -28 45 -8 48
+rect -28 37 -8 40
+rect -28 24 -8 27
+rect -28 16 -8 19
+<< ptransistor >>
+rect 8 44 28 47
+rect 8 29 28 32
+rect 8 16 28 19
+<< polysilicon >>
+rect -32 45 -28 48
+rect -8 45 -4 48
+rect 4 44 8 47
+rect 28 44 32 47
+rect -32 37 -28 40
+rect -8 37 -3 40
+rect -6 32 -3 37
+rect -6 27 -4 32
+rect -32 24 -28 27
+rect -8 24 -4 27
+rect 4 29 8 32
+rect 28 29 32 32
+rect 4 24 6 29
+rect 3 19 6 24
+rect -32 16 -28 19
+rect -8 16 -4 19
+rect 3 16 8 19
+rect 28 16 32 19
+<< ndcontact >>
+rect -28 49 -8 57
+rect -28 28 -8 36
+rect -28 7 -8 15
+<< pdcontact >>
+rect 8 48 28 56
+rect 16 33 28 41
+rect 8 20 28 28
+rect 8 7 28 15
+<< polycontact >>
+rect -4 24 4 32
+<< metal1 >>
+rect -28 49 -8 57
+rect 8 48 28 56
+rect 8 42 12 48
+rect -28 36 12 42
+rect -28 28 -8 36
+rect -4 24 4 32
+rect 8 28 12 36
+rect 16 33 28 41
+rect 8 20 28 28
+rect -28 7 -8 15
+rect 8 7 28 15
+<< labels >>
+rlabel metal1 -4 24 4 32 1 a
+rlabel space -35 5 -28 61 7 ^n
+rlabel space 28 6 36 36 3 ^p
+rlabel metal1 -28 36 12 42 1 x|pin|s|2
+rlabel metal1 -28 28 -8 36 1 x|pin|s|2
+rlabel metal1 8 48 28 56 1 x|pin|s|2
+rlabel metal1 8 20 28 28 1 x|pin|s|2
+rlabel metal1 8 20 12 56 1 x|pin|s|2
+rlabel polysilicon -8 45 -4 48 1 _SReset!|pin|w|3|poly
+rlabel polysilicon -32 45 -28 48 1 _SReset!|pin|w|3|poly
+rlabel polysilicon -32 16 -28 19 1 _SReset!|pin|w|4|poly
+rlabel polysilicon -8 16 -4 19 1 _SReset!|pin|w|4|poly
+rlabel polysilicon 4 44 8 47 1 _PReset!|pin|w|5|poly
+rlabel polysilicon 28 44 32 47 1 _PReset!|pin|w|5|poly
+rlabel metal1 16 33 28 41 1 Vdd!|pin|s|1
+rlabel metal1 -28 7 -8 15 1 GND!|pin|s|0
+rlabel metal1 8 7 28 15 1 Vdd!|pin|s|0
+rlabel metal1 -28 49 -8 57 1 GND!|pin|s|1
+<< end >>

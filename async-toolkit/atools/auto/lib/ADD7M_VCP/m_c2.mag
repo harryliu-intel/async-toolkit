@@ -1,0 +1,198 @@
+magic
+tech scmos
+timestamp 982686538
+<< nselect >>
+rect -85 314 0 369
+<< pselect >>
+rect 0 314 93 369
+<< ndiffusion >>
+rect -57 357 -49 358
+rect -28 357 -8 358
+rect -57 349 -49 354
+rect -28 349 -8 354
+rect -57 345 -49 346
+rect -57 336 -49 337
+rect -28 345 -8 346
+rect -79 328 -71 329
+rect -57 328 -49 333
+rect -28 336 -8 337
+rect -28 328 -8 333
+rect -79 324 -71 325
+rect -57 324 -49 325
+rect -28 324 -8 325
+<< pdiffusion >>
+rect 8 357 28 358
+rect 49 357 61 358
+rect 75 357 87 358
+rect 8 349 28 354
+rect 8 345 28 346
+rect 49 349 61 354
+rect 75 353 87 354
+rect 8 336 28 337
+rect 49 345 61 346
+rect 49 336 61 337
+rect 83 348 87 353
+rect 8 328 28 333
+rect 49 328 61 333
+rect 8 324 28 325
+rect 49 324 61 325
+<< ntransistor >>
+rect -57 354 -49 357
+rect -28 354 -8 357
+rect -57 346 -49 349
+rect -28 346 -8 349
+rect -57 333 -49 336
+rect -28 333 -8 336
+rect -79 325 -71 328
+rect -57 325 -49 328
+rect -28 325 -8 328
+<< ptransistor >>
+rect 8 354 28 357
+rect 49 354 61 357
+rect 75 354 87 357
+rect 8 346 28 349
+rect 49 346 61 349
+rect 8 333 28 336
+rect 49 333 61 336
+rect 8 325 28 328
+rect 49 325 61 328
+<< polysilicon >>
+rect -61 354 -57 357
+rect -49 354 -28 357
+rect -8 354 8 357
+rect 28 354 49 357
+rect 61 354 65 357
+rect 71 354 75 357
+rect 87 354 92 357
+rect -84 341 -82 344
+rect -62 346 -57 349
+rect -49 346 -45 349
+rect -62 341 -59 346
+rect -84 328 -81 341
+rect -61 336 -59 341
+rect -32 346 -28 349
+rect -8 346 8 349
+rect 28 346 32 349
+rect -61 333 -57 336
+rect -49 333 -45 336
+rect -40 328 -37 341
+rect 37 341 40 354
+rect 45 346 49 349
+rect 61 346 65 349
+rect -32 333 -28 336
+rect -8 333 8 336
+rect 28 333 32 336
+rect 63 341 65 346
+rect 89 341 92 354
+rect 63 336 66 341
+rect 45 333 49 336
+rect 61 333 66 336
+rect 87 338 92 341
+rect -84 325 -79 328
+rect -71 325 -67 328
+rect -61 325 -57 328
+rect -49 325 -28 328
+rect -8 325 8 328
+rect 28 325 49 328
+rect 61 325 65 328
+<< ndcontact >>
+rect -57 358 -49 366
+rect -28 358 -8 366
+rect -79 329 -71 337
+rect -57 337 -49 345
+rect -28 337 -8 345
+rect -79 316 -71 324
+rect -57 316 -49 324
+rect -28 316 -8 324
+<< pdcontact >>
+rect 8 358 28 366
+rect 49 358 61 366
+rect 75 358 87 366
+rect 8 337 28 345
+rect 49 337 61 345
+rect 75 345 83 353
+rect 8 316 28 324
+rect 49 316 61 324
+<< polycontact >>
+rect -82 341 -74 349
+rect -69 333 -61 341
+rect -40 341 -32 349
+rect 32 333 40 341
+rect 65 341 73 349
+rect 79 333 87 341
+<< metal1 >>
+rect -57 364 -8 366
+rect -57 361 -27 364
+rect -57 358 -49 361
+rect -28 358 -27 361
+rect -9 358 -8 364
+rect 8 364 87 366
+rect 8 358 9 364
+rect 27 358 87 364
+rect -82 346 -53 349
+rect -82 345 -57 346
+rect -82 341 -74 345
+rect -69 337 -61 341
+rect -40 341 -32 351
+rect -2 350 83 354
+rect -57 337 -49 340
+rect -28 340 -16 345
+rect -28 337 -8 340
+rect -79 333 -61 337
+rect -2 333 2 350
+rect 16 340 28 345
+rect 8 337 28 340
+rect -79 329 2 333
+rect 32 334 40 341
+rect 65 345 83 350
+rect 57 340 61 345
+rect 65 341 73 345
+rect 49 337 61 340
+rect 79 337 87 341
+rect 57 333 87 337
+rect -79 322 -8 324
+rect -79 316 -27 322
+rect -9 316 -8 322
+rect 8 322 28 324
+rect 49 322 61 324
+rect 8 316 9 322
+rect 27 316 61 322
+<< m2contact >>
+rect -27 358 -9 364
+rect 9 358 27 364
+rect -40 351 -32 357
+rect -57 340 -49 346
+rect -16 340 -8 346
+rect 8 340 16 346
+rect 49 340 57 346
+rect 32 328 40 334
+rect -27 316 -9 322
+rect 9 316 27 322
+<< metal2 >>
+rect -43 358 -32 364
+rect -40 351 -32 358
+rect -57 340 57 346
+rect 30 328 41 334
+<< m3contact >>
+rect -27 358 -9 364
+rect 9 358 27 364
+rect -27 316 -9 322
+rect 9 316 27 322
+<< metal3 >>
+rect -27 314 -9 369
+rect 9 314 27 369
+<< labels >>
+rlabel metal1 -78 345 -78 345 3 x
+rlabel metal1 83 337 83 337 5 x
+rlabel metal2 -57 340 57 346 1 x
+rlabel metal2 -43 358 -32 364 1 a
+rlabel metal2 30 328 41 334 1 b
+rlabel space -86 314 -28 369 7 ^n
+rlabel space 28 314 94 369 3 ^p
+rlabel metal3 -27 314 -9 369 1 GND!|pin|s|0
+rlabel metal1 -57 361 -8 366 1 GND!|pin|s|0
+rlabel metal1 -79 316 -8 324 1 GND!|pin|s|0
+rlabel metal1 8 316 61 322 1 Vdd!|pin|s|1
+rlabel metal1 8 358 87 366 1 Vdd!|pin|s|1
+rlabel metal3 9 314 27 369 1 Vdd!|pin|s|1
+<< end >>

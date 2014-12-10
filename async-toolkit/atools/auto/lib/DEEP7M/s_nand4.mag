@@ -1,0 +1,86 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect 161 508 165 509
+rect 161 502 165 506
+rect 161 496 165 500
+rect 161 490 165 494
+rect 161 487 165 488
+<< pdiffusion >>
+rect 177 512 187 513
+rect 177 509 187 510
+rect 185 505 187 509
+rect 177 504 187 505
+rect 177 501 187 502
+rect 177 497 183 501
+rect 177 496 187 497
+rect 177 493 187 494
+rect 185 489 187 493
+rect 177 488 187 489
+rect 177 485 187 486
+<< ntransistor >>
+rect 161 506 165 508
+rect 161 500 165 502
+rect 161 494 165 496
+rect 161 488 165 490
+<< ptransistor >>
+rect 177 510 187 512
+rect 177 502 187 504
+rect 177 494 187 496
+rect 177 486 187 488
+<< polysilicon >>
+rect 167 510 177 512
+rect 187 510 190 512
+rect 167 508 169 510
+rect 158 506 161 508
+rect 165 506 169 508
+rect 173 502 177 504
+rect 187 502 190 504
+rect 158 500 161 502
+rect 165 500 175 502
+rect 158 494 161 496
+rect 165 494 177 496
+rect 187 494 190 496
+rect 158 488 161 490
+rect 165 488 175 490
+rect 173 486 177 488
+rect 187 486 190 488
+<< ndcontact >>
+rect 161 509 165 513
+rect 161 483 165 487
+<< pdcontact >>
+rect 177 513 187 517
+rect 177 505 185 509
+rect 183 497 187 501
+rect 177 489 185 493
+rect 177 481 187 485
+<< metal1 >>
+rect 177 513 187 517
+rect 161 509 165 513
+rect 162 506 185 509
+rect 177 505 185 506
+rect 177 493 180 505
+rect 183 497 187 501
+rect 177 489 185 493
+rect 161 483 165 487
+rect 177 481 187 485
+<< labels >>
+rlabel polysilicon 160 489 160 489 3 a
+rlabel polysilicon 160 495 160 495 3 b
+rlabel polysilicon 160 501 160 501 3 c
+rlabel polysilicon 160 507 160 507 3 d
+rlabel space 158 483 161 513 7 ^n
+rlabel space 184 480 190 518 3 ^p
+rlabel polysilicon 188 495 188 495 3 b
+rlabel polysilicon 188 487 188 487 3 a
+rlabel polysilicon 188 511 188 511 3 d
+rlabel polysilicon 188 503 188 503 3 c
+rlabel ndcontact 163 511 163 511 4 x
+rlabel pdcontact 185 499 185 499 5 Vdd!
+rlabel ndcontact 163 485 163 485 5 GND!
+rlabel pdcontact 179 491 179 491 1 x
+rlabel pdcontact 179 507 179 507 1 x
+rlabel pdcontact 185 483 185 483 5 Vdd!
+rlabel pdcontact 185 515 185 515 5 Vdd!
+<< end >>

@@ -1,0 +1,9 @@
+#!/bin/csh
+
+if ( $3 != "" ) then
+   setenv IR $3
+else
+   setenv IR 0.1
+endif
+
+auto 1 $1 $2 $IR < $CAST_HOME/lib/auto/size.in

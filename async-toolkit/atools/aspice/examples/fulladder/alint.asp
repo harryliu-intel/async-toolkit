@@ -1,0 +1,10 @@
+.true=1.08;
+.temperature=125;
+.corner "tt";
+.include "tech.asp";
+.include "cell.aspice";
+.include "noprs.asp";
+.poststep=5e-12;
+.max_bump_fanin_aggressors=2;
+.max_delay_fanin_aggressors=1;
+.prstau=4e-11;

@@ -1,0 +1,100 @@
+magic
+tech scmos
+timestamp 962518978
+use s_nand2 s_nand2_0
+timestamp 962518978
+transform 1 0 -19 0 1 -630
+box 9 538 37 560
+use m_nand2 m_nand2_0
+timestamp 962518978
+transform 1 0 -143 0 1 -560
+box 177 468 212 506
+use l_nand2 l_nand2_0
+timestamp 962518978
+transform 1 0 -104 0 1 -670
+box 189 578 224 648
+use s_nand2_rhi s_nand2_rhi_0
+timestamp 962518978
+transform 1 0 203 0 1 -163
+box 62 70 90 100
+use m_nand2_rhi m_nand2_rhi_0
+timestamp 962518978
+transform 1 0 308 0 1 -116
+box 34 24 70 70
+use s_nand3 s_nand3_0
+timestamp 962518978
+transform 1 0 59 0 1 -658
+box -69 480 -37 510
+use m_nand3 m_nand3_0
+timestamp 962518978
+transform 1 0 -212 0 1 -675
+box 264 497 299 551
+use s_nand3_rhi s_nand3_rhi_0
+timestamp 962518978
+transform 1 0 260 0 1 -178
+box 2 -1 34 37
+use m_nand3_rhi m_nand3_rhi_0
+timestamp 962518978
+transform 1 0 286 0 1 -191
+box 56 13 92 75
+use s_nand4 s_nand4_0
+timestamp 962518978
+transform 1 0 -168 0 1 -760
+box 158 480 190 518
+use m_nand4 m_nand4_0
+timestamp 962518978
+transform 1 0 272 0 1 491
+box -220 -771 -185 -701
+use s_nand4_rhi s_nand4_rhi_0
+timestamp 962518978
+transform 1 0 249 0 1 -311
+box 11 30 43 76
+use m_nand4_rhi m_nand4_rhi_0
+timestamp 962518978
+transform 1 0 563 0 1 511
+box -223 -791 -184 -713
+use s_nand5 s_nand5_0
+timestamp 962518978
+transform 1 0 -17 0 1 -411
+box 7 9 39 55
+use m_nand5 m_nand5_0
+timestamp 962518978
+transform 1 0 273 0 1 389
+box -223 -791 -186 -705
+use s_nand5_rhi s_nand5_rhi_0
+timestamp 962518978
+transform 1 0 284 0 1 -430
+box -27 27 8 81
+use m_nand5_rhi m_nand5_rhi_0
+timestamp 962518978
+transform 1 0 563 0 1 400
+box -223 -802 -184 -708
+use s_nand6 s_nand6_0
+timestamp 962518978
+transform 1 0 -7 0 1 -559
+box -5 23 31 78
+use m_nand6 m_nand6_0
+timestamp 962518978
+transform 1 0 273 0 1 266
+box -223 -802 -186 -700
+use s_nor2 s_nor2_0
+timestamp 962518978
+transform 1 0 51 0 1 -898
+box -61 282 -33 304
+use m_nor2 m_nor2_0
+timestamp 962518978
+transform 1 0 213 0 1 -999
+box -161 383 -126 421
+use l_nor2 l_nor2_0
+timestamp 962518978
+transform 1 0 -84 0 1 -1193
+box 188 579 224 647
+use s_nor3 s_nor3_0
+timestamp 962518978
+transform 1 0 30 0 1 -1120
+box -40 419 -12 449
+use m_nor3 m_nor3_0
+timestamp 962518978
+transform 1 0 31 0 1 -650
+box 21 -51 56 3
+<< end >>

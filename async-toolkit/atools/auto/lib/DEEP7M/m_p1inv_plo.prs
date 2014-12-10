@@ -1,0 +1,17 @@
+<wp1> ~a -> _x+
+~_PReset! -> _x+
+
+<wn2>  _x -> x-
+<wp2> ~_x -> x+
+
+@staticize(_x)
+
+@stretch(p1,(wp1-16)/4)
+@stretch(n2,(wn2-16)/4)
+@stretch(p2,(wp2-16)/4)
+
+/*** half normal sizes since this cell is wide ***/
+@require((wp1>=60)|(wn2>=40)|(wp2>=60))
+@require(wp1<120)
+@require(wn2<80)
+@require(wp2<120)

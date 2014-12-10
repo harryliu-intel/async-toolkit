@@ -1,0 +1,32 @@
+ASPICE RELEASE 0.1
+
+This package includes everything you need to compile and run aspice
+but no documentation whatsoever.
+
+Aspice is copyright 2005 Fulcrum Microsystems and the original code is
+copyright 1999 Caltech.  BSIM4 model is copyright 2005 UC Berkeley but
+has been modified.
+
+Permission is granted for the Caltech, USC, and Cornell VLSI groups to
+modify, copy, compile, install, and run aspice and related tools.
+Students may run installed binaries for classwork.  Do not distribute
+any part of this software outside of these groups without the written
+permission of Fulcrum Microsystems.
+
+The software is distributed as is, completely without warranty or
+service support. Fulcrum Microsystems and its employees are not liable
+for the condition or performance of the software.
+
+Fulcrum Microsystems owns the copyright but shall not be liable for
+any infringement of copyright or other proprietary rights brought by
+third parties against the users of the software.
+
+Fulcrum Microsystems hereby disclaims all implied warranties.
+
+All patches, bug fixes, or enhancements to the code as well as any
+relevant documentation shall be made available to Fulcrum Microsystems
+for inclusion in future releases.
+
+Andrew Lines
+Fulcrum Microsystems
+lines@fulcrummicro.com

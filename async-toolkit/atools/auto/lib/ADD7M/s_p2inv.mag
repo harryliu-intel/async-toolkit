@@ -1,0 +1,104 @@
+magic
+tech scmos
+timestamp 962799210
+<< ndiffusion >>
+rect 127 98 129 106
+rect 127 97 137 98
+rect 107 91 111 94
+rect 127 93 137 94
+rect 127 84 137 85
+rect 107 80 111 83
+rect 127 80 137 81
+<< pdiffusion >>
+rect 65 92 73 93
+rect 153 97 161 98
+rect 65 84 73 89
+rect 87 87 91 90
+rect 153 93 161 94
+rect 153 84 161 85
+rect 65 80 73 81
+rect 87 80 91 83
+rect 153 80 161 81
+<< ntransistor >>
+rect 127 94 137 97
+rect 107 83 111 91
+rect 127 81 137 84
+<< ptransistor >>
+rect 65 89 73 92
+rect 153 94 161 97
+rect 65 81 73 84
+rect 87 83 91 87
+rect 153 81 161 84
+<< polysilicon >>
+rect 61 89 65 92
+rect 73 89 77 92
+rect 122 94 127 97
+rect 137 94 153 97
+rect 161 94 165 97
+rect 61 81 65 84
+rect 73 81 77 84
+rect 83 83 87 87
+rect 91 83 95 87
+rect 103 83 107 91
+rect 111 83 115 91
+rect 122 84 125 94
+rect 122 81 127 84
+rect 137 81 153 84
+rect 161 81 165 84
+<< ndcontact >>
+rect 107 94 115 102
+rect 129 98 137 106
+rect 127 85 137 93
+rect 107 72 115 80
+rect 127 72 137 80
+<< pdcontact >>
+rect 65 93 73 101
+rect 83 90 91 98
+rect 153 98 161 106
+rect 153 85 161 93
+rect 65 72 73 80
+rect 83 72 91 80
+rect 153 72 161 80
+<< polycontact >>
+rect 117 97 125 105
+rect 95 83 103 91
+<< metal1 >>
+rect 117 102 125 105
+rect 107 101 125 102
+rect 65 97 125 101
+rect 129 98 137 106
+rect 153 98 161 106
+rect 65 96 115 97
+rect 65 93 73 96
+rect 83 90 91 96
+rect 107 94 115 96
+rect 95 89 103 91
+rect 127 89 161 93
+rect 95 85 161 89
+rect 95 83 103 85
+rect 65 72 91 80
+rect 107 72 137 80
+rect 153 72 161 80
+<< labels >>
+rlabel polysilicon 64 90 64 90 3 b
+rlabel polysilicon 64 82 64 82 3 a
+rlabel metal1 69 97 69 97 5 _x
+rlabel metal1 87 94 87 94 1 _x
+rlabel polysilicon 106 84 106 84 1 x
+rlabel polysilicon 86 84 86 84 1 x
+rlabel metal1 87 76 87 76 1 Vdd!
+rlabel metal1 69 76 69 76 1 Vdd!
+rlabel metal1 111 76 111 76 1 GND!
+rlabel pdcontact 157 76 157 76 1 Vdd!
+rlabel pdcontact 157 89 157 89 1 x
+rlabel pdcontact 157 102 157 102 5 Vdd!
+rlabel polysilicon 162 95 162 95 1 _x
+rlabel polysilicon 162 82 162 82 1 _x
+rlabel ndcontact 133 102 133 102 5 GND!
+rlabel ndcontact 133 76 133 76 1 GND!
+rlabel ndcontact 132 89 132 89 1 x
+rlabel metal1 111 98 111 98 1 _x
+rlabel space 60 72 65 101 7 ^p1
+rlabel space 161 72 166 106 3 ^p2
+rlabel space 137 71 167 107 3 ^n2
+<< end >>
