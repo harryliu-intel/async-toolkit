@@ -1,0 +1,14 @@
+1 0 
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+include script/perl/ve/ve.package script/perl/ve ^share->share/script/perl/ve
+
+share/skill/layout/geometry/rect.il skill/layout/geometry/rect.il 664 p
+share/skill/layout/assura/assura.il skill/layout/assura/assura.il 664 p
+share/skill/util/list/list.il skill/util/list/list.il 664 p
+share/skill/util/lib.il skill/util/lib.il 664 p
+share/skill/schematic/updatenetlist.il skill/schematic/updatenetlist.il 664 p
+share/skill/util/string/strutil.il skill/util/string/strutil.il 664 p

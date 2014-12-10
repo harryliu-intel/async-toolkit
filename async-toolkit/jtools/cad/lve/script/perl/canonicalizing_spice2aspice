@@ -1,0 +1,106 @@
+#!/usr/intel/bin/perl -w
+
+# Copyright 2005 Fulcrum Microsystems.  All rights reserved.
+
+use strict;
+
+use File::Path;
+use File::Temp qw/tempdir/;
+use Getopt::Long;
+
+# Usage: canonicalizing_spice2aspice <spice-filename> <aspice-filename>
+
+# This is a wrapper around rc_spice2aspice to Work around bug 6594.  For
+# graybox extracted cells, it will canonicalize nodes used to instantiate
+# grayboxed subcircuits.  It strips off arguments that only it understands and
+# passes the rest of the arguments to rc_spice2aspice.
+
+sub usage() {
+    die "Usage: $0 --root-target-dir <dir>\n" .
+        "          --output-dir <dir>\n" .
+        "          --java-args <flags>\n" .
+        "          --cell <fqcn>\n" .
+        "          [rc_spice2aspice options ...]\n" .
+        "rc_spice2aspice options MUST come last in the command line\n";
+}
+
+my $rootTargetDir;
+my $outputDir;
+my $javaArgs = "";
+my $cell;
+my $view;
+my $mode;
+my @saved_args = ();
+
+sub getGrayboxDir {
+    my $cell = shift;
+    $cell =~ s/\./\//g;
+    my $lmode=$mode;
+    $lmode="extracted" if $mode eq "accurate";
+    return "$rootTargetDir/$cell/$view/$lmode";
+}
+
+sub getGrayboxList {
+    my $cell = shift;
+    return getGrayboxDir($cell) . "/graybox_list";
+}
+
+my $definetopcell=0;
+
+my %options = (
+    "root-target-dir=s" => sub {
+        $rootTargetDir=$_[1];},
+    "output-dir=s" => sub {
+        $outputDir = $_[1];
+        my @parts = split(/\//, $outputDir);
+        $mode=$parts[-1];
+        $view=$parts[-2];
+    },
+    "java-args=s" => sub { $javaArgs=$_[1];},
+    "cell=s" => sub {$cell = $_[1];},
+    "minC=s" => sub { push @saved_args, ('--minC', $_[1]);},
+    "minR=s" => sub { push @saved_args, ('--minR', $_[1]);},
+    "minRC=s" => sub { push @saved_args, ('--minRC', $_[1]);},
+    "scaleM=s" => sub { push @saved_args, ('--scaleM', $_[1]);},
+    "scaleR=s" => sub { push @saved_args, ('--scaleR', $_[1]);},
+    "scaleC=s" => sub { push @saved_args, ('--scaleC', $_[1]);},
+    "deltaL=s" => sub { push @saved_args, ('--deltaL', $_[1]);},
+    "noreduce" => sub { push @saved_args, "--noreduce";},
+    "quote" => sub { push @saved_args, "--quote";},
+    "estimated" => sub { push @saved_args, "--estimated";},
+    "include=s" => sub { push @saved_args, ('--include', $_[1]);},
+    "named-resistors" => sub { push @saved_args, "--named-resistors";},
+    "named-resistor-layers=s" => sub { push @saved_args, ('--named-resistor-layers', $_[1]);},
+    "fix-unconnected-ports" => sub { push @saved_args, "--fix-unconnected-ports";},
+    "define-topcell" => \$definetopcell,
+);
+
+GetOptions ( %options );
+
+my %aliasFiles = ();
+
+sub findCDLAliases {
+    my $fqcn = shift;
+    my $graydir = getGrayboxDir($fqcn);
+    my $grayfile = getGrayboxList($fqcn);
+    my $result = $graydir . "/cdl.aliases";
+    if ($mode ne "accurate" or ! -f $result) {
+        my $cmd = "cdlaliases $javaArgs --cell=\"$fqcn\"";
+        $cmd .= " --graybox-list=\"$grayfile\"" if (-r $grayfile);
+        $cmd .= " --gates-regex=\"^(gate|stack)\\\\..*\"";
+        $cmd .= " < \"$graydir/../../cell.cdl\"";
+        $cmd .= " > \"$result\"";
+        system($cmd) == 0 or die "Cannot execute $cmd: $?";
+    }
+    $aliasFiles{$result} = 1;
+}
+
+findCDLAliases($cell);
+foreach my $aliasFile (keys %aliasFiles) {
+    unshift @saved_args, ("--alias-file", $aliasFile);
+}
+
+push @saved_args, ("--cell", "$cell") if ! $definetopcell;
+push @saved_args, @ARGV;
+unshift @saved_args, "rc_spice2aspice";
+system(@saved_args) == 0 or die "rc_spice2aspice failed: $?";

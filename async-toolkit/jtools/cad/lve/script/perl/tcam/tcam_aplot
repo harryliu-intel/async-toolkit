@@ -1,0 +1,210 @@
+#!/usr/intel/bin/perl -w
+
+use FileHandle;
+use IPC::Open2;
+
+#############################################################################
+# Custom timing characterization of TCAM nodes
+#############################################################################
+
+# find relevant packaged tools and libraries
+# find relevant packaged tools and libraries
+BEGIN {
+$lve_root = $0;
+$lve_root =~ s:/[^/]*$::;
+$lve_root =~ s:/[^/]*$::;
+@INC = ("$lve_root/lib/perl", @INC);
+}
+use LveAspice;
+use LveUtil;
+
+# configuration
+$time_slop = 0; # compensate for aspice's sloppy timekeeping
+$cycles = 19;
+$bits = 36;
+$delay_frac = 0.5;
+$slew_frac = 0.333;
+$dir = ".";
+$out = "tcam.measure";
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=*(.*)/ ) {
+    $key = $1;
+    $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    if    ($key eq "cycles")         { $cycles = $value; }
+    elsif ($key eq "bits")           { $bits = $value; }
+    elsif ($key eq "delay-fraction") { $delay_frac = $value; }
+    elsif ($key eq "slew-fraction")  { $slew_frac = $value; }
+    elsif ($key eq "out")            { $out = $value; }
+    elsif ($key eq "help")           { banner(); }
+}
+$dir = $ARGV[0] if (@ARGV>0);
+
+# aplot setup
+$aplot = "aplot";
+$run = "$dir/aspice";
+open_aplot("$aplot");
+
+# measure Vdd
+my ($t, $vdd) = measure_aplot($run,"","","maxv Vdd");
+
+# measurement thresholds
+$loth = $delay_frac * $vdd;
+$hith = (1-$delay_frac) * $vdd;
+$losl = $slew_frac * $vdd;
+$hisl = (1-$slew_frac) * $vdd;
+
+# node lists
+@valid_CLK = ("valid.CLK");
+@valid_k = ();
+@valid_K = ();
+for ($j=0; $j<2; $j++) {
+    for ($k=0; $k<3; $k++) {
+        push @valid_k,"valid.k[$j,$k]";
+        push @valid_K,"valid._K[$j].$k";
+    }
+}
+@data_CLK = ();
+@data_k = ();
+@data_K = ();
+for ($i=0; $i<$bits; $i++) {
+    $a = $i%2; $b = $i/2;
+    push @data_CLK, "data[$a,$b].CLK";
+}
+for ($j=0; $j<2; $j++) {
+    for ($k=0; $k<3; $k++) {
+        for ($i=0; $i<$bits; $i++)  {
+            $a = $i%2; $b = $i/2;
+            push @data_k, "data[$a,$b].k[$j,$k]";
+            push @data_K, "data[$a,$b]._K[$j].$k";
+        }
+    }
+}
+@addr_CLK = ();
+@addr_a = ();
+@addr_V = ();
+for ($i=0; $i<3; $i++) {
+    push @addr_CLK, "addr[$i].CLK";
+    push @addr_a, "addr[$i].RW";
+    push @addr_V, "addr[$i]._V";
+    for ($j=0; $j<8; $j++) {
+        push @addr_a, "addr[$i].a[$j]";
+    }
+}
+@ctrl_l = ("ctrl.L","ctrl._L");
+@ctrl_LK = ("ctrl._LK.0","ctrl._LK.1");
+@HIT = ();
+for ($i=0; $i<8; $i++) { push @HIT, "HIT[$i]"; }
+@READ = ("READ_CASE","READ_VALID");
+for ($i=0; $i<$bits; $i++) {
+    push @READ, "READ_DATA[$i]";
+    push @READ, "READ_MASK[$i]";
+}
+
+# open file
+open OUT, ">$dir/$out" or die "ERROR: can't write $dir/$out\n";
+print "Generating Vdd=$vdd $dir/$out\n";
+
+# measurement window starts with CLK-
+$start = 2.5;
+
+# CLK+ to buffered CLK+ paths
+measure_cycles("valid.CLK","CLK > $loth",1,@valid_CLK);
+measure_cycles("data.CLK","CLK > $loth",1,@data_CLK);
+measure_cycles("addr.CLK","CLK > $loth",1,@addr_CLK);
+
+# CLK- to combinational input logic
+measure_cycles("valid.k","CLK < $hith",1,@valid_k);
+measure_cycles("data.k","CLK < $hith",1,@data_k);
+measure_cycles("addr.a","CLK < $hith",1,@addr_a);
+measure_cycles("ctrl.l","CLK < $hith",1,@ctrl_l);
+
+# CLK+ to end of sample window
+measure_cycles("valid._K","CLK > $loth",1,@valid_K);
+measure_cycles("data._K","CLK > $loth",1,@data_K);
+measure_cycles("addr._V","CLK > $loth",1,@addr_V);
+measure_cycles("ctrl._LK","CLK > $loth",1,@ctrl_LK);
+
+# CLK- to HIT
+measure_cycles("HIT","CLK < $hith",0,@HIT);
+
+# measurement window starts with CLK+
+$start = $start+1.25;
+
+# CLK- to READ outputs
+measure_cycles("READ","CLK > $loth",0,@READ);
+
+# HIT slew
+measure_minmax_slew("HIT",@HIT);
+
+# READ slew
+measure_minmax_slew("READ",@READ);
+
+# finish
+close_aplot();
+close OUT;
+
+# measure min/max delays over all cycles
+sub measure_cycles {
+    my ($comment, $trig, $combine, @nodes) = @_;
+    my $min_rise = 100;
+    my $min_fall = 100;
+    my $max_rise = 0;
+    my $max_fall = 0;
+    foreach my $node (@nodes) {
+        for (my $i=0; $i<$cycles; $i++) {
+            my $from = $start + 2.5*$i - $time_slop;
+            my $to   = $start + 2.5*($i+1) + $time_slop;
+            my ($t,$d);
+            ($t,$d) = measure_aplot($run,$from,$to,"mindelay $trig $node > $loth");
+            $min_rise = $d if (is_numeric($d) && ($d<$min_rise));
+            ($t,$d) = measure_aplot($run,$from,$to,"mindelay $trig $node < $hith");
+            $min_fall = $d if (is_numeric($d) && ($d<$min_fall));
+            ($t,$d) = measure_aplot($run,$from,$to,"maxdelay $trig $node > $loth");
+            $max_rise = $d if (is_numeric($d) && ($d>$max_rise));
+            ($t,$d) = measure_aplot($run,$from,$to,"maxdelay $trig $node < $hith");
+            $max_fall = $d if (is_numeric($d) && ($d>$max_fall));
+        }
+    }
+    if ($combine) {
+        my $min = $min_rise; $min = $min_fall if ($min_fall<$min_rise);
+        my $max = $max_rise; $max = $max_fall if ($max_fall>$max_rise);
+        print OUT "delay $comment $min $max\n" if ($max>=$min);
+    } else {
+        print OUT "rise_delay $comment $min_rise $max_rise\n" if ($max_rise>=$min_rise);
+        print OUT "fall_delay $comment $min_fall $max_fall\n" if ($max_fall>=$min_fall);
+    }
+}
+
+# measure minmax slew
+sub measure_minmax_slew {
+    my ($comment, @nodes) = @_;
+    my $min_rise = 100;
+    my $min_fall = 100;
+    my $max_rise = 0;
+    my $max_fall = 0;
+    foreach my $node (@nodes) {
+        my ($t,$d);
+        ($t,$d) = measure_slew($run,"mindelay",">",$node,$losl,$hisl);
+        $min_rise = $d if (is_numeric($d) && ($d<$min_rise));
+        ($t,$d) = measure_slew($run,"mindelay","<",$node,$hisl,$losl);
+        $min_fall = $d if (is_numeric($d) && ($d<$min_fall));
+        ($t,$d) = measure_slew($run,"maxdelay",">",$node,$losl,$hisl);
+        $max_rise = $d if (is_numeric($d) && ($d>$max_rise));
+        ($t,$d) = measure_slew($run,"maxdelay","<",$node,$hisl,$losl);
+        $max_fall = $d if (is_numeric($d) && ($d>$max_fall));
+    }
+    print OUT "rise_slew $comment $min_rise $max_rise\n" if ($max_rise>=$min_rise);
+    print OUT "fall_slew $comment $min_fall $max_fall\n" if ($max_fall>=$min_fall);
+}
+
+# usage banner
+sub banner {
+    die "USAGE: tcam_aplot\n" .
+        "  [--bits=$bits]\n" .
+        "  [--cycles=$cycles]\n" .
+        "  [--delay-fraction=$delay_frac]\n" .
+        "  [--slew-fraction=$slew_frac]\n" .
+        "  [--out=$out]\n" . 
+        "  dir\n";
+}

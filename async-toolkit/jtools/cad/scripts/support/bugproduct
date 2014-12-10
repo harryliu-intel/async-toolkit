@@ -1,0 +1,47 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+use DBI();
+use CGI;
+use File::Temp qw( tempfile );
+
+sub usage {
+    print STDERR <<EU;
+Usage: bugproduct lookup-string
+    finds matching products and categories in bugzilla
+EU
+    exit 1;
+}
+
+usage unless defined $ARGV[0];
+my $lookup = $ARGV[0];
+# open db
+my $dsn = "DBI:mysql:database=bugs;host=tsyvsqlm01.ts.intel.com";
+my $bugdb = DBI->connect($dsn, "readonly", "readonly") || die "Cannot open db";
+my $sth=$bugdb->prepare("select products.name,components.name,components.description from components,products where ( components.description like '\%$lookup\%' or components.name like '\%$lookup\%' or products.name like '\%$lookup\%' ) and products.id = components.product_id") or die "cannot prepare";
+$sth->execute or die "cannot execute";
+my $n=0;
+my @pr;
+my @co;
+my @de;
+my $wpr=length("Product");
+my $wco=length("Component");
+my $wde=length("Description");
+while (my @ref=$sth->fetchrow_array()) {
+    ($pr[$n],$co[$n],$de[$n])=@ref;
+    $wpr = length($pr[$n]) if length($pr[$n]) > $wpr;
+    $wco = length($co[$n]) if length($co[$n]) > $wco;
+    $wde = length($de[$n]) if length($de[$n]) > $wde;
+    $n++;
+}
+$sth->finish;
+printf "%-*.*s %-*.*s %s\n", $wpr,$wpr,"Product", $wco,$wco,"Component","Description";
+foreach my $n (0..$#pr) {
+    printf "%-*.*s %-*.*s %s\n",
+        $wpr,$wpr,$pr[$n],
+        $wco,$wco,$co[$n],$de[$n];
+}

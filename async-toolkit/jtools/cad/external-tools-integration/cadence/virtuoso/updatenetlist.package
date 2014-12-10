@@ -1,0 +1,63 @@
+2 2
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+### This is used by ubersize to keep floorplan dfII data consistent with 
+### cast hierarcy.  It also estimated floorplan bounding boxes/etc based
+### on schematic statistics (e.g. transistor width, density_factor)
+### It is also used synctonetlist/genfromsource to keep gate/stack instances
+### up to date
+
+# need to create a cadence working directory to run layoutPlus
+include script/sh/setup/cds_wd.package script/sh/setup ^share->share/script/sh/setup
+
+# SH library
+include ../../../../infrastructure/sh-lib/sh-lib.package.inc ../../../../infrastructure/sh-lib
+# SH wrapper scripts
+$arch/bin/updatenetlist.sh                                                 script/sh/cell-automation/multi_cell_commands/updatenetlist.sh           775
+$arch/bin/cast2skill.sh                                                    ../../../java/src/com/avlsi/tools/cast2skill/cast2skill.sh               775
+
+# JAVA
+java com.avlsi.tools.cast2skill.Cast2Skill
+
+# don't use cdsp4 any more
+#include cdsp4.package .
+
+### SKILL
+share/skill/layout/cell/cellinfo.il                                        skill/layout/cell/cellinfo.il                                            664 p
+share/skill/layout/geometry/bbox.il                                        skill/layout/geometry/bbox.il                                            664 p
+share/skill/layout/geometry/fig.il                                         skill/layout/geometry/fig.il                                             664 p
+share/skill/layout/geometry/line.il                                        skill/layout/geometry/line.il                                            664 p
+share/skill/layout/geometry/polygon.il                                     skill/layout/geometry/polygon.il                                         664 p
+share/skill/layout/geometry/rect.il                                        skill/layout/geometry/rect.il                                            664 p
+share/skill/layout/transform/transform.il                                  skill/layout/transform/transform.il                                      664 p
+share/skill/layout/cell/constraints.il                                     skill/layout/cell/constraints.il                                         664 p
+share/skill/layout/pins/autopin.il                                         skill/layout/pins/autopin.il                                             664 p
+share/skill/layout/pins/channels/e1ofn.il                                  skill/layout/pins/channels/e1ofn.il                                      664 p
+share/skill/layout/pins/pinplace.il                                        skill/layout/pins/pinplace.il                                            664 p
+share/skill/layout/pins/pinutil.il                                         skill/layout/pins/pinutil.il                                             664 p
+share/skill/schematic/inlineconnections.il                                 skill/schematic/inlineconnections.il                                     664 p
+share/skill/schematic/netlisttable.il                                      skill/schematic/netlisttable.il                                          664 p
+share/skill/schematic/updatenetlist.il                                     skill/schematic/updatenetlist.il                                         664 p
+share/skill/schematic/syncnetlist.il                                       skill/schematic/syncnetlist.il                                           664 p
+share/skill/util/cache/cache.il                                            skill/util/cache/cache.il                                                664 p
+share/skill/util/file/libcellview.il                                       skill/util/file/libcellview.il                                           664 p
+share/skill/util/file/path.il                                              skill/util/file/path.il                                                  664 p
+share/skill/util/file/readfile.il                                          skill/util/file/readfile.il                                              664 p
+share/skill/util/list/list.il                                              skill/util/list/list.il                                                  664 p
+share/skill/util/list/partition.il                                         skill/util/list/partition.il                                             664 p
+share/skill/util/math/math.il                                              skill/util/math/math.il                                                  664 p
+share/skill/util/name.il                                                   skill/util/name.il                                                       664 p
+share/skill/util/pcell/pcell.il                                            skill/util/pcell/pcell.il                                                664 p
+share/skill/util/prop/prop.il                                              skill/util/prop/prop.il                                                  664 p
+share/skill/util/string/escapestring.il                                    skill/util/string/escapestring.il                                        664 p
+share/skill/util/string/strutil.il                                         skill/util/string/strutil.il                                             664 p
+
+### MISC
+share/script/sh/cell-automation/lib_commands/mkcdslib                      script/sh/cell-automation/lib_commands/mkcdslib                          775 p
+share/script/sh/util/parsecellname                                         script/sh/util/parsecellname                                             664 p
+share/data/change_list_template.txt                                        script/sh/p4/change_list_template.txt                                    664 p
+install/share/bin/gen_autoload                                             skill/gen_autoload                                                       775 p
+

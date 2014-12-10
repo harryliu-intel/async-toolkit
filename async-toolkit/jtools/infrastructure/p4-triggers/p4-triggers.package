@@ -1,0 +1,14 @@
+1 0
+$arch/bin/triggerbuild.sh          build/triggerbuild.sh       775 p
+$arch/bin/handlechange.sh          util/handlechange.sh        775 p
+share/script/sh/file/filecheck.sh  ../sh-lib/file/filecheck.sh 664 p
+share/script/sh/file/conon.sh      ../sh-lib/file/conon.sh     664 p
+share/templates/someonefixedthebuildyoubroke.txt templates/someonefixedthebuildyoubroke.txt 664 p
+share/templates/theydidnotfixthebuild.txt templates/theydidnotfixthebuild.txt 664 p
+share/templates/youbrokethebuild.txt templates/youbrokethebuild.txt 664 p
+share/templates/youdidnotfixthebuild.txt templates/youdidnotfixthebuild.txt 664 p
+share/templates/youdidnotfixthebuildyoubroke.txt templates/youdidnotfixthebuildyoubroke.txt 664 p
+share/templates/youfixedthebuild.txt templates/youfixedthebuild.txt 664 p
+share/templates/youfixedthebuildyoubroke.txt templates/youfixedthebuildyoubroke.txt 664 p
+$arch/bin/cad.trigger.sh           triggers/cad.trigger.sh     774 p
+install/share/bin/install.sh       install.sh                  775 p

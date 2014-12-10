@@ -1,0 +1,764 @@
+#!/usr/intel/bin/perl
+
+#
+# default parameters and Initialization
+#
+
+$minCC = 1e-16;  # minimum coupling capacitance (lump to GND if less)
+$minC = 1e-16; # minimum capacitance (discard if less)
+$minR = 0.1;       # minimum resistance (short if less)
+$time = 20e-9;   # time to run simulation
+$true = 1.2;     # voltage of Vdd
+$temp = 27;      # temperature in Celcius
+$chargeSharing = 0; # perform charge sharing instead of transient analysis
+$diffusionOverhang = 0; # 0 to use given A/P, otherwise estimates based on overhang
+$internalWires = 0; # alias internal node names with wires
+$f_include = "fulcrum_tsmc13lv.asp";
+$aspice_path = ".:/usr/local/cad/lib/aspice:/usr/local/cad/lib/bsim3";
+#$f_config = "$ENV{HOME}/.castrc2";
+$cdsPath = "$ENV{HOME}/cds_wd/X8";
+
+
+## Setting environment variables and Paths
+$ENV{"PATH"} = "$ENV{\"PATH\"}:$aspice_path";
+$path=$ENV{"PATH"};
+
+
+$pwd = "$ENV{PWD}";
+$host = `uname -n`;
+$castPath="";
+$runAllEnv=0;
+$autoEnv=0;
+$batchMode=1;
+chomp($pwd = `pwd`);
+
+
+$job_id="";
+$script_root="/usr/local/cad/bin/layout_spice_stuff";
+$setup_root="/usr/local/cad/lib/spice";
+$intWire="";
+$topCdlFile="";
+$no_extract=0;
+
+# usage banner
+sub usage() {
+    $usage  = "USAGE: spice [args] (cell env ntpc_node1SEP0ntpc_spec_value1SEP1node2SEP0value2SEP1.. list)|todo_file\n";
+    $usage .= "  Args includes:\n";
+    $usage .= "    JOB OPTIONS\n";
+    $usage .= "    --batchMode=[$batchMode]  (either single cell or batch mode (0/1))\n";
+    $usage .= "    --qsub=[$qsb] (0|1) (1 => use qsub, 0=> don't use qsub)\n";
+    $usage .= "    --TopLevelCellSpec=[$TopLevelCellSpec] (0|1) 1=> a top level cell is specified to compile a list of underlying leaf cells to do charge sharing on)\n";
+    $usage .= "    --BigJob=[$Mem] (Memory in M) (Large cells, indicates jflat requires extra memory)\n\n";
+    $usage .= "    EXTRACTION OPTIONS\n";
+    $usage .= "    --delete=[1] <0|1>  (Delete extraction working directory)\n";
+    $usage .= "    --minC=[$minC]  (minimum capacitance)\n";
+    $usage .= "    --minCC=[$minCC]  (minimum coupling capacitance)\n";
+    $usage .= "    --minR=[$minR]  (minimum resistance)\n";
+    $usage .= "    --cdsPath=[$cdsPath]  (Cadence working directory)\n";
+    $usage .= "    --lowK=[0] <0|1> (lowK process as opposed to FSG which is the default)\n";
+    $usage .= "    --64BitEx=[0] <0|1> (64 bit extraction mode for huge cells)\n";
+    $usage .= "    --Parallel=[0] <0|1> (Parallel extraction mode NOT TO BE USED WITH QSUB)\n";
+    $usage .= "    --CdlSim=[0] <0|1> (To simulate CDL or SPICE fiel)\n\n";
+    $usage .= "    TIME DOMAIN SIMULATION OPTIONS\n";
+    $usage .= "    --true=[$true] (Voltage of Vdd)\n";
+    $usage .= "    --time=[$time]  (time to run simulation, in seconds)\n";
+    $usage .= "    --temp=[$temp]  (temperature, in Celcius)\n";
+    $usage .= "    --autoEnv=[$autoEnv] (whether to auto find list of environments 0/1)\n";
+    $usage .= "    --runAllEnv=[$runAllEnv] (whether to run all environments or best environment, assumes significance only if autoEnv is 1 0/1 )\n\n";    
+    $usage .= "   CONFIG OPTIONS\n";
+    $usage .= "    --castPath=[$castPath]  (cast search path for jflat)\n";
+    $usage .= "    --diffusionOverhang=[$diffusionOverhang] \n";
+    $usage .= "    --aspice-path=[$aspice_path]  (search path for aspice)\n";
+    $usage .= "    --include=[$f_include]  (aspice file to include)\n\n";
+    $usage .= "    ASPICE CHARGE SHARING OPTIONS OPTIONS\n";
+    $usage .= "    --chargeSharing=[$chargeSharing]  (do charge sharing instead of transient)\n";
+    $usage .= "    --DynamicNodesOnly=[$DynNd] (0|1) (causes charge sharing to be performed only on dynamic nodes as opposed to all internal nodes\n\n";
+    $usage .= "    ASPICE TIME DOMAIN SIMULATION OPTIONS\n";
+    $usage .= "    --internalWires=[$internalWires]  (short all cast aliases together)\n\n";
+    $usage .= "    HSIM TIME DOMAIN SIMULATION OPTIONS\n";
+    $usage .= "    --HSIMTDS=[0] <0|1> (TDS Using HSIM)\n";
+    $usage .= "    --StopAfterSetup=[0] <0|1> (Sets up simulation but stops before simulation, so that you can inspect the files and make modifications)\n";
+    $usage .= "    --ParamHSIM=[param1SEP0val1SEP1param2SEP0val2SEP1param3SEP0val3SEP1..]\n";
+    $usage .= "    --ParamRunFile=[param1SEP0val1SEP1param2SEP0val2SEP1param3SEP0val3SEP1..]\n";
+    $usage .= "    --PrintNodes=[Node1SEP1Node2SEP1Node3SEP1...]\n";
+    $usage .= "    --SpModels=[13] <13|09> (Spice models to be used 0.13um or 0.09um)\n";
+    $usage .= "    --MeasureNodes=[Node1SEP1Node2SEP1Node3SEP1...]\n";
+    $usage .= "    --64BitSim=[0] <0|1> (64 bit simulation mode using HSIM for large cells)\n";
+    $usage .= "    --RandSeed=[0] (Seed of random number sequence for conversion of random source to source)\n";
+    $usage .= "    --MatchFile=[] <File Name> (File used for substituting special characters not in standard SPICE format)\n";
+    $usage .= "    --RandLength=[4] (length of random number sequence for conversion of random source to source)\n\n";
+    die "$usage";
+}
+
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    ($flag, $value) = split("=",$1);
+        if ($flag eq "minC") {
+            $minC = $value;
+        } elsif ($flag eq "minCC") {
+            $minCC = $value;
+        } elsif ($flag eq "delete") {
+            $delete = $value;
+        } elsif ($flag eq "64BitEx") {
+            $Ex64= $value;
+        } elsif ($flag eq "Parallel") {
+            $Parallel= $value;
+        } elsif ($flag eq "64BitSim") {
+            $Sim64= $value;
+        } elsif ($flag eq "lowK") {
+            $lowK= $value;
+        } elsif ($flag eq "batchMode") {
+            $batchMode = $value;
+        } elsif ($flag eq "minR") {
+            $minR = $value;
+        } elsif ($flag eq "HSIMTDS") {
+            $hsim = $value;
+        } elsif ($flag eq "time") {
+            $time = $value;
+        } elsif ($flag eq "true") {
+            $true = $value;
+        } elsif ($flag eq "temp") {
+            $temp = $value;
+        } elsif ($flag eq "CdlSim") {
+            $CdlSim=1;
+        } elsif ($flag eq "include") {
+            $f_include = $value;
+        } elsif ($flag eq "runAllEnv") {
+            $runAllEnv = $value;
+        } elsif ($flag eq "autoEnv") {
+            $autoEnv = $value;
+        } elsif ($flag eq "qsub") {
+            $qsb = $value;
+        } elsif ($flag eq "BigJob") {
+            $Mem = $value;
+            $BigJob=1;
+        } elsif ($flag eq "TopLevelCellSpec") {
+            $TopLevelCellSpec = $value;
+        } elsif ($flag eq "diffusionOverhang") {
+            $diffusionOverhang = $value;
+        } elsif ($flag eq "DynamicNodesOnly") {
+            $DynNd = $value;
+        } elsif ($flag eq "cdsPath") {
+            $cdsPath = $value;
+        } elsif ($flag eq "castPath") {
+            $castPath = $value;
+        } elsif ($flag eq "chargeSharing") {
+            $chargeSharing = $value;
+        } elsif ($flag eq "internalWires") {
+            $internalWires =$value;
+            if($internalWires==1)  { $intWire="--internalWires";  }
+        } elsif ($flag eq "ParamHSIM") {
+            $HsimParamLine = $value;
+        } elsif ($flag eq "SpModels") {
+            $SpModels = $value;
+        } elsif ($flag eq "MatchFile") {
+            $MatchFile = $value;
+        } elsif ($flag eq "StopAfterSetup") {
+            $Stop = $value;
+        } elsif ($flag eq "ParamRunFile") {
+            $RunFileParamLine = $value;
+        } elsif ($flag eq "RandLength") {
+            $RandLength = $value;
+        } elsif ($flag eq "RandSeed") {
+            $RandSeed = $value;
+        } elsif ($flag eq "PrintNodes") {
+            $PrintNodeLine = $value;
+        } elsif ($flag eq "MeasureNodes") {
+            $MeasureNodeLine = $value;
+        } else {
+            print "ERROR: argument --${flag}=${value} not recognized.\n";
+            &usage();
+        }
+        shift @ARGV;
+}
+defined $delete or $delete=1;
+defined $RandSeed or $RandSeed=0;
+defined $RandLength or $RandLength=4;
+defined $qsb or $qsb=1;
+defined $DynNd or $DynNd=0;
+defined $TopLevelCellSpec or $TopLevelCellSpec=0;
+defined $BigJob or $BigJob=0;
+defined $hsim or $hsim=0;
+defined $CdlSim or $CdlSim=0;
+defined $HsimParamLine or $HsimParamLine="dummySEP1";
+defined $RunFileParamLine or $RunFileParamLine="dummySEP1";
+defined $PrintNodeLine or $PrintNodeLine="dummySEP1";
+defined $MeasureNodeLine or $MeasureNodeLine="dummySEP1";
+defined $Ex64 or $Ex64=0;
+defined $Sim64 or $Sim64=0;
+defined $lowK or $lowK=0;
+defined $Parallel or $Parallel=0;
+defined $MatchFile or $MatchFile="";
+defined $Stop or $Stop=0;
+defined $SpModels or $SpModels="13";
+defined $Mem or $Mem=56;
+## Die if incompatible options specified
+ 
+if(($runAllEnv==1)&&($autoEnv==0))  {
+  die "autoEnv=1 must be specified if runAllEnv=1\n";
+}
+
+if(($Parallel==1)&&($qsub==1))  {
+  die "Parallel extraction mode not to be used with qsub\n";
+}
+
+##
+
+  
+
+
+
+if($BigJob==1)  {
+  $jflat="/home/group/microarch/cad/bin/jflat --max-heap-size=$Mem --cast-version=2 --cast-path=$castPath ";
+  $cast2cdl="/home/group/microarch/cad/bin/cast2cdl --cast-version=2 --cast-path=$castPath --max-heap-size=$Mem ";
+}
+else  {
+  $cast2cdl="/home/group/microarch/cad/bin/cast2cdl --cast-version=2 --cast-path=$castPath ";
+  $jflat="/home/group/microarch/cad/bin/jflat --cast-version=2 --cast-path=$castPath ";
+}
+
+$Strm_Extrct= "/home/group/cadadmin/simplex_extractor/1.0/share/script/perl/stream_and_extract_0.13um_v1 --minR $minR --minC $minC --minCC $minCC --lowK $lowK --64bit $Ex64 --cds_loc $cdsPath --Parallel $Parallel --Path $path --delete $delete ";
+$castQuery="/home/group/microarch/cad/bin/cast_query --cast-path=$castPath --cast-version=2 ";
+
+
+
+$qsub_lin_chrg_shr = "qsub -cwd ";
+$qsub_lin_pp = "qsub -cwd ";
+if($BigJob==0)  {
+  $qsub_sun = "qsub -cwd -l a=solaris64  ";
+  $qsub_lin_tds = "qsub -cwd  ";
+}
+else  {
+  $qsub_sun = "qsub -cwd -l a=solaris64,mem_free=$Mem ";
+  $qsub_lin_tds = "qsub -cwd -l mem_free=$Mem ";
+}
+
+
+
+
+if($batchMode==1)  {
+  @ARGV == 1 or usage();
+  $todo=$ARGV[0];
+  if ( ! (-e $todo) ) {
+      print STDERR "USAGE: extract_and_spice_batch [extract and spice/chrg_share options] dofile\n";
+      print STDERR "  Uses qsub to launch a whole bunch of extract and spice/chrg_share jobs.\n";
+      print STDERR "  Dofile contains cell,env,node to observe and number of transitions/cycle for TDS or just  or just cell name .\n";
+      print STDERR "  If the node to observe contains special characters like [,],(,) etc they must be escaped.\n";   
+      die "Can't open todo for reading.\n";
+  }
+}
+else  {
+  $todo="$pwd/Temp_file";
+  if($chargeSharing==1)  { 
+    @ARGV == 1 or usage();
+    if($TopLevelCellSpec==1)  {
+      my $TopCellName=$ARGV[0];
+      print "Obtaining List of leaf cells for the given cell to do charge sharing on\n";
+      `$castQuery --cell=$TopCellName --task=subcells --filter=leaf > $todo`;
+    } 
+  } 
+  else { 
+    @ARGV >= 1 or usage();
+  }
+  if(($chargeSharing==0)||($TopLevelCellSpec==0))  {
+    open HANDLE1 ,">$todo" or die "Can't open $todo\n";
+    my $i=0;
+    while($ARGV[$i])  { print HANDLE1 "$ARGV[$i] "; $i++; }
+    print HANDLE1 "\n";
+    close(HANDLE1);
+  }
+}
+
+open TODO, "<$todo" or die "Can't open $todo\n";
+while (my $TempLine= <TODO>) 
+  {
+    my $noEnv=0;
+    @Temp_fields=split/\s+/,$TempLine;
+    ## I do not want cellName and dir and env to be globals. I want them to have limited scope becoz in batch
+    ## mode these are going to change.
+    my $cellName=shift(@Temp_fields); 
+    my $cellNameMod=$cellName;
+    if($cellName=~/[\(\{\,]/)  {
+      $_=$cellName;
+      s/\(/\-L/g;
+      s/\{/\-L/g;
+      s/\)/\-R/g;
+      s/\}/\-R/g;
+      s/\,/_/g;
+      s/\"//g;
+      $cellNameMod=$_;
+      print "Cell contains funky char\n";
+      print "Modifying cell names according to accepted conventions\n";
+      print "Modified Cell Name is $cellNameMod\n";
+      if($cellName!~/\"/)  {
+	print "Detecting that the cell name does not contain quotes. Quoting original cell name.\n";
+        $cellName="\"$cellName\"";
+      }     
+    }  
+    my $dir = "$pwd/$cellNameMod"; 
+    my $envName=""; 
+    my ($f_spice,$job_id);
+    if( !(-e $dir)) {
+      print "Directory does not exist, making new one\n";
+      `mkdir -p $dir`;
+    }
+    print "changing to directory $dir\n";
+    chdir $dir;
+    ##
+    my $ret_val=&Extract($cellName,$cellNameMod,$dir);
+    my @fields1=split/\s+/,$ret_val;
+    $f_spice=$fields1[0];
+    if($fields1[1] ne "")  {
+      $job_id="$fields1[1] $fields1[2] ";
+    }
+    print "Extraction job_id is  $job_id\n";
+
+### summarize arguments
+$date = `date`;
+print STDERR "cell = $cellName\n";
+print STDERR "spice file = $f_spice\n";
+print STDERR "aspice path = $aspice_path\n";
+print STDERR "aspice include = $f_include\n";
+print STDERR "true = $true, temp = $temp, time = $time\n";
+print STDERR "minC = $minC, minCC= $minCC, minR = $minR\n";
+print STDERR "host = $host";
+print STDERR "date = $date";
+###
+
+###Simulation
+
+    if ($chargeSharing == 1) {
+      $envName="CS";
+      &PrepSim($envName,"CHRG_SHR",$cellName,$cellNameMod,$dir);
+      &CHRG_SHR_DO($job_id,$cellName,$cellNameMod,$dir,$f_spice);
+    } 
+    else {
+        ## Running TDS
+        ## if autoEnv is set run Jflat to find environment else take specified environment
+        ## Cast path needs to be specified for running Jflat to find list of environments 
+        ## with details about ntpc nodes and ntpc_spec values to be found
+        if($autoEnv==1)  {
+          my $EnvLine="";
+          if($castPath eq "")  { die "Cast Path Needs to be specified for TDS\n"; }
+          `$jflat --cell=$cellName --tool=env-ntpc > $dir/ENV.fil`;
+          open ENVHANDLE , "<$dir/ENV.fil" or die "ENV file not created\n";          
+          if(!(-s ENVHANDLE > 0))  { die "Empty ENV file \n"; }
+          while(my $linerd=<ENVHANDLE>)  {
+            chomp($linerd);
+            ## $runAllEnv is 0 by default
+            ## when it is 0 the best environment suited for TDS is found
+            ## Analog is the best, if not found search for Performance else digital else take the only environment
+            ## Once the environment is found store the ntpc spec nodes and values in a hash
+            ## $runAllEnv means simulatneously launching multiple TDS jobs.
+	    my @EnvFields = split /\s+/, $linerd;
+            ##Creating a hash called $env_analog or $env_digital or $env_envName with key as ntpc node and value as ntpc value
+            my ($Key , $Val);
+            ($Key,$Val)=($EnvFields[1],$EnvFields[2]);
+            $HoHoHEnv{$cellNameMod}{$EnvFields[0]}{$Key}=$Val;
+            #First key is cellNameMod, next key is envName, next key is ntpc spec node
+            $EnvLine=$EnvLine."$EnvFields[0]  ";
+            ## $EnvLine is a line containing a list of environments for a particular cell
+          }  
+          if($runAllEnv==0)  {
+            if($EnvLine=~/(analog\S*)/i)  {
+	      $envName=$1;              
+            }
+            elsif($EnvLine=~/(performance\S*)/i)  {
+	      $envName=$1;
+            } 
+            elsif($EnvLine=~/(digital\S*)/i)  {
+	      $envName=$1;
+            }
+            else  {
+              ## None of the expected environments are found
+              ## Run the first one you find
+              my @EnvList=split /\s+/, $EnvLine;
+              $envName=$EnvList[0];                  
+            }
+            if($hsim==1)  {
+	      &HSIM_LAUNCH($cellName,$envName,$f_spice,$dir);
+            }
+            else  {
+              &PrepSim($envName,"TDS",$cellName,$cellNameMod,$dir);
+              &TDS_DO_GEN($envName,$job_id,$cellName,$cellNameMod,$dir,$f_spice);      
+            }       
+	  }
+          else  {  
+            my $EnvK;
+            for $EnvK (keys %{$HoHoHEnv{$cellNameMod}})  {
+              print "Environment is $EnvK\n";
+              $envName=$EnvK;
+              if($hsim==1)  {
+	        &HSIM_LAUNCH($cellName,$envName,$f_spice,$dir);
+              }
+              else  {
+                &PrepSim($envName,"TDS",$cellName,$cellNameMod,$dir);  
+                &TDS_DO_GEN($envName,$job_id,$cellName,$cellNameMod,$dir,$f_spice);
+	      }
+	    }
+          }
+        }
+        else  {
+        ##autoEnv=0
+        ## So user specifies environment and ntpc nodes and values
+        ## format is cellNameMod envName ntpcnode1 ntpcval1 ntpcnode2 ntpcval2....
+        ##Creating a hash of hashes with first key being envName and then key val pairs of ntpc_node ntpc_val
+          $envName=shift(@Temp_fields);
+          if($envName ne "")  {
+            my $i=0;
+            my $Ntpc_Line=shift(@Temp_fields);
+            my @Ntpc_fields=split/SEP1/,$Ntpc_Line;
+            while($Ntpc_fields[$i])  { 
+	      my @fields=split/SEP0/,$Ntpc_fields[$i];
+              $i++;
+              $HoHoHEnv{$cellNameMod}{$envName}{$fields[0]}=$fields[1];
+            } 
+          } 
+          else  {  
+            $noEnv=1;
+            $envName="noEnv";
+          }
+          if($hsim==1)  {
+	    &HSIM_LAUNCH($cellName,$envName,$f_spice,$dir);
+          }
+          else  {
+            &PrepSim($envName,"TDS",$cellName,$cellNameMod,$dir);
+            &TDS_DO_GEN($envName,$job_id,$cellName,$cellNameMod,$dir,$f_spice);             
+	  }
+        }           
+    }
+  }    
+
+if($batchMode==0)  { `rm  $todo`; } 
+
+sub HSIM_LAUNCH  {
+  our ($time,$true,$temp,$HsimParamLine,$RunFileParamLine,$PrintNodeLine,$MeasureNodeLine,$jflat,$Sim64,$script_root,%HoHoHEnv,@Temp_fields,$Stop,$MatchFile);
+  my $cellName=$_[0];
+  my $envName=$_[1];
+  my $f_spice=$_[2];
+  my $dir=$_[3];
+  my $rnDir="$dir/HSIMTDS\_$envName";
+  my $f_env="$dir/$cellName.auto_env.spice";
+  my $f_modspice="$rnDir/$cellName.sp";
+  my %Match;
+  my $i=0;
+  while($Temp_fields[$i])  {
+    my @fields=split/=/,$Temp_fields[$i];
+    if($fields[0] eq "PrintNodes")  {  $PrintNodeLine="$fields[1]SEP1".$PrintNodeLine; }
+    elsif($fields[0] eq "MeasureNodes")  {  $MeasureNodeLine="$fields[1]SEP1".$MeasureNodeLine;  }
+    else  { print "$fields[0]\n"; die "wrong format for todo file\n"; }
+    $i++;
+  }
+  for my $key (keys %{$HoHoHEnv{$cellName}{$envName}})  {  
+      print "key is $key\n";
+    $PrintNodeLine="Xenv.Xtest.".$key."SEP1".$PrintNodeLine;
+    $MeasureNodeLine="Xenv.Xtest.".$key."SEP1".$MeasureNodeLine;
+  } 
+
+  print "making  directory $rnDir and changing to it\n";
+  `mkdir -p $rnDir`;
+  chdir $rnDir;
+
+  ## Modifying SPICE File to remove non spice characters
+  if(!(-e $f_modspice))  {
+    print "Cleaning SPICE file to remove non spice syntax\n";
+    my $exec=`$script_root/change_char2spice.scr 0 $MatchFile $f_spice $f_modspice`;
+    print "$exec";
+    if($exec=~/ExitCode 0/)  { die "Unsuitable Match File\n";  }
+  }
+  $PrintNodeLine=&LINE_CLEAN($PrintNodeLine);
+  $MeasureNodeLine=&LINE_CLEAN($MeasureNodeLine);
+
+  # Creating environment
+  if((!(-e $f_env))&&($envName ne "noEnv"))   {
+    print "Creating environment\n";
+    `$jflat --tool=hsim --rand-length=$RandLength --rand-seed=$RandSeed --cell="$cellName:$envName" > $f_env`;
+  }
+
+  # Copying parameter and Run Files
+  print "Creating parameter files and run file and linking to models\n";
+  `rm -rf $rnDir/param_file $rnDir/run.sp`;
+  `cp -f $setup_root/param_file $rnDir/param_file`;
+  if($SpModels==13)  {
+    `ln -sf $setup_root/models/cl013lv.l_2.5  $rnDir/cl013lv.l`;
+    `cp -f $setup_root/run_0.13.sp  $rnDir/run.sp`;
+  }
+  else  {
+    `ln -sf $setup_root/models/sun_0.09nm/magb4n.nch_1p1v_lvt  $rnDir/magb4n.nch_1p1v_lvt`;
+    `ln -sf $setup_root/models/sun_0.09nm/magb4n.pch_1p1v_lvt  $rnDir/magb4n.pch_1p1v_lvt`;
+    `cp -f $setup_root/run_0.09.sp  $rnDir/run.sp`;
+  }
+  # Updating Parameter File
+  my @fields1=split/SEP1/,$HsimParamLine;
+  open PARAM_FILE,">>$rnDir/param_file";
+  my $i1=0;
+  print PARAM_FILE ".param HSIMVDD=$true\n";
+  while(($fields1[$i1])&&($fields1[$i1] ne "dummy"))  {
+    my @fields=split/SEP0/,$fields1[$i1];
+    print PARAM_FILE ".param $fields[0]=$fields[1]\n";
+    $i1++;
+  }
+  close(PARAM_FILE);  
+
+  # Updating Run File
+  open RUN_FILE , ">>$rnDir/run.sp";
+  my $Vlo=0.3*$true;
+  my $Vhi=0.7*$true;
+  print RUN_FILE ".param Vlo=$Vlo\n";
+  print RUN_FILE ".param Vhi=$Vhi\n";
+  print RUN_FILE ".param Vdd=$true\n";
+  print RUN_FILE ".include \"$f_modspice\"\n";
+  if($envName ne "noEnv")  {
+    print RUN_FILE ".include \"$f_env\"\n";
+    print RUN_FILE "Xenv GND Vdd _RESET $cellName\_env\n";
+  }
+  else  {
+    print RUN_FILE "Xenv GND Vdd _RESET $cellName\n";
+  }
+  print RUN_FILE "V1m Vdd 0 $true\n";
+  print RUN_FILE "VReset _RESET 0 pulse (0 $true 4ns  50ps 100ps 200ns 1000ns )\n";
+  print RUN_FILE ".tran 1ps $time\n";
+  @fields1=();
+  @fields1=split/SEP1/,$RunFileParamLine;
+  $i1=0;
+  while(($fields1[$i1])&&($fields1[$i1] ne "dummy"))  {
+    my @fields=split/SEP0/,$fields1[$i1];
+    print RUN_FILE ".param $fields[0]=$fields[1]\n";
+    $i1++;
+  }
+  @fields1=();
+  @fields1=split/SEP1/,$PrintNodeLine;
+  $i1=0;
+  while(($fields1[$i1])&&($fields1[$i1] ne "dummy"))  {
+    print RUN_FILE ".print v\($fields1[$i1]\)\n";
+    $i1++;
+  }
+  @fields1=();
+  @fields1=split/SEP1/,$MeasureNodeLine;
+  $i1=0;
+  my $v=$true/2;
+  my $Val_10=$true*0.1;
+  my $Val_90=$true*0.9;
+  while(($fields1[$i1])&&($fields1[$i1] ne "dummy"))  {
+    print RUN_FILE ".measure tran CycleTime$i1 trig v\($fields1[$i1]\) val=$v rise=4 targ v\($fields1[$i1]\) val=$v rise=8\n";
+    print RUN_FILE ".measure tran Freq$i1 PARAM=\'(4/(CycleTime$i1*1e+6))\'\n";
+    print RUN_FILE ".measure tran_cont RiseTime$i1 trig v\($fields1[$i1]\) val=$Val_10 rise=1 targ v\($fields1[$i1]\) val=$Val_90 rise=1\n";
+    print RUN_FILE ".measure tran_cont FallTime$i1 trig v\($fields1[$i1]\) val=$Val_90 fall=1 targ v\($fields1[$i1]\) val=$Val_10 fall=1\n";
+    $i1++;
+  }
+  close(RUN_FILE);
+  print "Finished HSIM set up. Ready for Launch\n";  
+  if($Stop==0)  {  
+    print "Launching HSIM 3,2,1...\n";
+    `ssh rupee $script_root/hsim_tds.scr $rnDir`;
+  }
+  $PrintNodeLine="dummySEP1";
+  $MeasureNodeLine="dummySEP1";    
+}
+
+
+
+
+sub  LINE_CLEAN  {
+  my $line=$_[0];
+  my $exec=`$script_root/change_char2spice.scr 1 $MatchFile $line`;   
+  print "$exec";
+  my @temp=split/\n/,$exec;
+  if($temp[0] eq "ExitCode 1")  {
+    $line=$temp[1];
+    return $line;
+  }
+  else  {
+    die "Unsuitable Match File\n";  
+  }
+}
+
+
+sub PrepSim {
+    our ($true,$temp,$f_include,$time);
+    my $evName=$_[0];
+    my $runType=$_[1];
+    my $cellName=$_[2];
+    my $cellNameMod=$_[3];
+    my $dir=$_[4];
+    my $rnName;
+    if($runType eq "CHRG_SHR")  {
+      $rnName="$cellNameMod";  }
+    else  {
+      $rnName="$cellNameMod:$evName";
+    }
+    my $rnDir="$dir/$runType\_$evName";
+    my $f_asp="$rnDir/$rnName.asp";
+    my $f_aspice="$rnDir/$cellNameMod.aspice";
+    my $f_env="$rnDir/$rnName.aspice";
+    print "making  directory $rnDir\n";
+    `mkdir -p $rnDir`;
+    ## Creating cellNameMod.asp
+    open ASP, ">$f_asp" or die "Can't open '$f_asp' for writing.\n";
+    print ASP ".true=$true;\n";
+    print ASP ".temperature=$temp;\n";
+    print ASP ".include \"$f_include\";\n";      
+    print ASP ".include \"$f_aspice\";\n";
+    if (($runType eq "TDS")&&($evName ne "noEnv")) {
+        print ASP ".include \"$f_env\";\n";
+    }
+    print ASP ".timemax=$time;\n";
+    close(ASP); 
+}
+
+sub Extract  {
+  our ($CdlSim,$qsb,$cast2cdl,$Strm_Extrct,$path);
+  my $f_spice;
+  my $cellName=$_[0];
+  my $cellNameMod=$_[1];
+  my $dir=$_[2];
+  my $date = `date`;
+  chdir $dir;
+  if(!(-e "$dir/$cellNameMod.cdl"))  {
+    print "Generating CDL file for cell $cellName\n"; 
+    `$cast2cdl --cell=$cellName`; 
+    if($cellName ne $cellNameMod)  {
+      `mv $dir/$cellName.cdl $dir/$cellNameMod.cdl`;
+    }
+  }
+  if ($CdlSim==1)  {
+    if ( (-e "$dir/$cellNameMod.cdl") && (-s "$dir/$cellNameMod.cdl" > 10))  {
+      $f_spice = "$dir/$cellNameMod.cdl";
+    }
+    else  {
+      die "cast2cdl did not work\n";
+    }
+  }
+  elsif    ( (-e "$dir/$cellNameMod.spice")&&(-s "$dir/$cellNameMod.spice" > 100) ) {$f_spice = "$dir/$cellNameMod.spice";}
+  else {
+    # automatically extract to cellName.spice
+    my $libName = $cellNameMod;
+    $libName =~ s/\.[^\.]+\.[^\.]+$//;
+    print STDERR "extracting started $date";
+    ## Creating Do File for extraction
+    my $do_ext = "$dir/do_ext";
+    open OUT_EXT, ">$do_ext" or die "Can't open $do_ext for writing.\n";
+    print OUT_EXT "#! /bin/sh  \n";
+    print OUT_EXT "\#\$ -N Extract\n";
+    print OUT_EXT "$Strm_Extrct  --spice $dir/$cellNameMod.spice --top_level_name $cellNameMod --cdl_loc $dir/$cellNameMod.cdl $cellNameMod $libName\n";
+    close(OUT_EXT);
+    `chmod +x $do_ext`;    
+    ##End of creating do file
+    $f_spice = "$dir/$cellNameMod.spice";
+    if($qsb==1)  {
+      my $job_id= `$qsub_sun -e $dir/err_ext -o $dir/out_ext $do_ext`; 
+      $job_id=&EXTRACT_JOB_ID($job_id);
+      print- "$job_id\n";
+      $f_spice =$f_spice." $job_id";
+    }
+    else  {
+      `ssh rupee $do_ext > $dir/err_ext 2 > $dir/out_ext `;
+    } 
+  }
+  return $f_spice;
+}
+
+sub EXTRACT_JOB_ID  {
+  my $job_id=$_[0];
+  chomp($job_id);
+  $job_id=~/your job (\d+) .*/;
+  $job_id="-hold_jid $1";
+}  
+
+
+sub CHRG_SHR_DO {
+  our ($minR,$minC,$diffusionOverhang,$jflat,$path,$pwd,$qsb,$DynNd,$castPath,$aspice_path);
+  my $job_id=$_[0];
+  my $cellName=$_[1];
+  my $cellNameMod=$_[2];
+  my $dir=$_[3];
+  my $f_spice=$_[4];  
+  my $runName=$cellNameMod;
+  my $run_dir="$dir/CHRG_SHR_CS";
+  my $f_aspice="$run_dir/$cellNameMod.aspice";
+  my $job_id1="";
+  chdir $run_dir;
+  my $do_chrg_shr ="$run_dir/do_chrg_shr";
+  open OUT_CHRG_SHR, ">$do_chrg_shr" or die "Can't open $do_chrg_shr for writing.\n";
+  # convert cellNameMod.spice to cellNameMod.aspice
+  print OUT_CHRG_SHR "#!/bin/sh \n";
+  print OUT_CHRG_SHR  "\#\$ -N charge_share\n";  
+  print OUT_CHRG_SHR "$script_root/call_spice.scr $cellName $cellNameMod $aspice_path $dir $f_spice $minR $minC $diffusionOverhang  $path CS $castPath $DynNd\n";
+  close(OUT_CHRG_SHR);
+  `chmod +x $do_chrg_shr`;
+  if($qsb==1)  {
+    $job_id1=`$qsub_lin_chrg_shr -e $run_dir/err_chrg_shr -o $run_dir/out_chrg_shr $job_id $do_chrg_shr`; 
+    $job_id1=&EXTRACT_JOB_ID($job_id1);
+    print "$job_id1\n";
+  }
+  else  {
+    print `$do_chrg_shr > $run_dir/out_chrg_shr 2> $run_dir/err_chrg_shr`;
+  }
+  my $do_cs_pp="$run_dir/do_cs_pp";
+  open OUT_CS_PP , ">$do_cs_pp" or die "Can't open $do_cs_pp for writing.\n";
+  print OUT_CS_PP "#!/bin/sh  \n";
+  print OUT_CS_PP  "\#\$ -N   cs_post_proc\n";      
+  print OUT_CS_PP "cd $run_dir\n";  
+  print OUT_CS_PP "$script_root/chrg_shr_post_processing.scr $pwd $cellNameMod $DynNd $path\n";
+  close(OUT_CS_PP);
+  `chmod +x $do_cs_pp`;
+  if($qsb==1)  {
+    print `$qsub_lin_pp -e $run_dir/err_cs_pp -o $run_dir/out_cs_pp $job_id1 $do_cs_pp`;       
+  }
+  else  {
+    `$do_cs_pp >$run_dir/out_cs_pp 2>$run_dir/err_cs_pp  `;
+  }
+}
+
+sub TDS_DO_GEN {
+  our %HoHoHEnv;
+  our ($minR,$minC,$diffusionOverhang,$pwd,$intWire,$qsb,$path,$BigJob,$Mem,$castPath,$aspice_path);
+  my $enV=$_[0];
+  my $job_id=$_[1];
+  my $cellName=$_[2];
+  my $cellNameMod=$_[3];
+  my $dir=$_[4];
+  my $f_spice=$_[5];
+  my $runName="$cellNameMod:$enV";
+  my $run_dir="$dir/TDS_$enV";
+  my $job_id1="";
+  my $f_aspice="$run_dir/$cellNameMod.aspice";
+  my $f_env="$run_dir/$runName.aspice";
+  $do_tds ="$run_dir/do_tds";
+  open OUT_TDS, ">$do_tds" or die "Can't open $do_tds for writing.\n";
+  ## Interesting Point we are using normal shell not my default TCSH or the CSH
+  ## this is becoz any shell derived from CSH does not allow for 2 way redirection of output
+  ## notice this happens with our aspice statement
+  print OUT_TDS "#!/bin/sh  \n";
+  print OUT_TDS "\#\$ -N tds\n";
+  print OUT_TDS "$script_root/call_spice.scr $cellName $cellNameMod $aspice_path $dir $f_spice $minR $minC $diffusionOverhang $path TDS $castPath $enV $BigJob $Mem $intWire\n";
+  close(OUT_TDS);  
+  `chmod +x $do_tds`;
+  if($qsb==1)  {
+    $job_id1= `$qsub_lin_tds -e $run_dir/err_tds -o $run_dir/out_tds $job_id $do_tds`;
+    $job_id1=&EXTRACT_JOB_ID($job_id1);
+    print "$job_id1\n";
+
+  }
+  else  {
+    `$do_tds > $run_dir/out_tds 2> $run_dir/err_tds`;
+  }
+
+  $do_mes="$run_dir/do_mes";
+  open OUT_MES, ">$do_mes" or die "Can't open $do_mes for writing.\n";
+  print OUT_MES "#!/bin/sh \n";
+  print OUT_MES  "\#\$ -N   tdsmes\n";      
+  print OUT_MES "cd $run_dir\n";
+  my $ntpcNode;
+  for $ntpcNode (keys %{$HoHoHEnv{$cellNameMod}{$enV}})  {
+    print OUT_MES qq{$script_root/post_process_tds.scr $runName $ntpcNode $HoHoHEnv{$cellNameMod}{$enV}{$ntpcNode} "$pwd/TDS_RESULTS" $path\n};    
+  }
+  close(OUT_MES);
+  `chmod +x $do_mes`;
+  if($qsb==1)  {  
+    print `$qsub_lin_pp -e $run_dir/err_mes -o $run_dir/out_mes $job_id1 $do_mes`;  
+  }
+  else  {
+    `$do_mes > $run_dir/out_mes 2> $run_dir/err_mes`;
+  }
+}
+

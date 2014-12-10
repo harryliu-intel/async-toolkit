@@ -1,0 +1,4 @@
+hw.models.partial_exclude=(^verilog\.|\.v[ms]?$|(??{ quotemeta 'registerInfo.xml' })$|registerInfo\.dtd$|(??{ quotemeta 'constant.xml' }))
+topdir=.
+xml.filename=registerInfo.xml
+xml_constant.filename=constant.xml

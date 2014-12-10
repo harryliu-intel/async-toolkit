@@ -1,0 +1,106 @@
+#!/usr/intel/bin/perl -w
+
+# make an aspice.in file from an env.ntpcnodes file
+
+# get arguments, open files
+@ARGV==7 or die "USAGE: make_aspice_in timemax env.ntpcnodes aspice.in digital_time_unit digital_time min_delay max_delay\n";
+$digital_time_unit = $ARGV[3];
+$digital_time = $ARGV[4];
+$min_delay = $ARGV[5];
+$max_delay = $ARGV[6];
+$reset   = int(2e-9 / $digital_time_unit + 0.5);
+$forever = int(1e-3 / $digital_time_unit + 0.5); # 1ms in case no breakpt hit
+if ($digital_time!=0) {
+    $digital_time = int($digital_time * 1e-9 / $digital_time_unit + 0.5);
+}
+
+open IN,  "<$ARGV[1]" or die "ERROR: can't read $ARGV[1]\n";
+open OUT, ">$ARGV[2]" or die "ERROR: can't write $ARGV[2]\n";
+
+# read ntpcnodes file
+$digital_sim = 0;
+@ntpclines = ();
+$timemax = -1;
+while ($line = <IN>) {
+    chomp($line);
+    my ($node, $digital_cycles, $analog_cycles, $tmax) = split(" ",$line);
+    if ($digital_cycles>0) { $digital_sim=1; }
+    if ($tmax > 0 && $tmax > $timemax) { $timemax = $tmax; }
+    push @ntpclines, $line;
+}
+$timemax = $ARGV[0] unless $timemax > 0;
+$timemax = int($timemax / $digital_time_unit + 0.5);
+
+# common stuff
+print OUT "watch *\n";
+print OUT "outerr \"aspice.warn\"\n";
+print OUT "output \"/dev/null\"\n";
+
+# handle digital or analog reset phase
+if ($digital_sim == 0 && $digital_time == 0) {
+    print OUT "timed_delay $min_delay $max_delay\n";
+    print OUT "cycle $reset\n";
+    print OUT "warnall\n";
+}
+else {
+    print OUT "analog off\n";
+    print OUT "set \$GND:0\n";
+    print OUT "set \$Vdd:1\n";
+    print OUT "set \$_RESET:0\n";
+    print OUT "cycle $reset\n";
+    print OUT "set \$_RESET:1\n";
+    print OUT "warnall\n";
+    if ($digital_time == 0) {
+        foreach $line (@ntpclines) {
+            my ($node, $digital_cycles, $analog_cycles, $tmax) = split(" ",$line);
+            if ($digital_cycles>0) {
+                $digital_cycles *= 2; # convert to half cycles
+                print OUT "breakpt $node : $digital_cycles\n";
+            }
+        }
+        print OUT "cycle $forever\n";
+        print OUT "breakpt * : 0\n";
+    } else {
+        print OUT "cycle $digital_time\n";
+    }
+    print OUT "analog on\n";
+    print OUT "timed_delay $min_delay $max_delay\n";
+}
+
+# now do important analog part of simulation
+print OUT "clear_tcounts\n";
+print OUT "output \"aspice.initial\"\n";
+print OUT "get *\n";
+print OUT "output \"aspice.log\"\n";
+print OUT "trace 20\n";
+foreach $line (@ntpclines) {
+    my ($node, $digital_cycles, $analog_cycles, $tmax) = split(" ",$line);
+    if ($analog_cycles>0) {
+        $analog_cycles *= 2; # convert to half cycles
+        print OUT "breakpt $node : $analog_cycles\n";
+    }
+}
+print OUT "cycle $timemax\n";
+print OUT "output \"aspice.final\"\n";
+print OUT "get_named *\n";
+print OUT "output \"aspice.final_pending\"\n";
+print OUT "pending *\n";
+
+# get history and critical for all ntpcnodes
+foreach $line (@ntpclines) {
+    my ($ntpc, $digital_cycles, $analog_cycles, $tmax) = split(" ",$line);
+    print OUT "output \"aspice:$ntpc.critical\"\n";
+    print OUT "critical $ntpc\n";
+    print OUT "output \"aspice:$ntpc.history\"\n";
+    print OUT "history $ntpc\n";
+}
+
+# touch aspice.done file and finish up
+print OUT "output \"aspice.done\"\n";
+print OUT "echo done\n";
+print OUT "output\n";
+print OUT "outerr\n";
+
+# close files
+close OUT;
+close IN;

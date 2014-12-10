@@ -1,0 +1,380 @@
+#!/usr/intel/bin/perl -w
+
+use FileHandle;
+use POSIX qw(ceil);
+use File::Basename;
+
+# make an alint.in file from an cell.localprops file
+
+# defaults
+$DYNAMIC_ONLY = 0;
+$STATIC_ONLY = 0;
+$LEAKAGE      = 1;
+$INVERTER_LEAKAGE = 1;
+$BUMP_CC      = "";
+$DELAY_CC     = "";
+$DELAY_FAST   = "";
+$BUMP_TAU     = "";
+$DELAY_TAU    = "";
+$THRESH_PERCENT = "";
+$LIBCHAR      = 0;
+$ALINT_PO_CHAR      = 0;
+my $MAX_NODE_PER_ALINT_BIN = 1000;
+my $MAX_ALINT_BIN_NUM = 16;
+my $ALINT_BIN = 0;
+my $DEFAULT_MAX_BUMP_FANIN = 2;
+my $ALINT_SCENARIOS;
+my $REDO_NODES="";
+my %REDO_NODES;
+my $i;
+my $effective_alint_bin = 0;
+
+# get arguments
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=(.*)/ ) {
+    $key = $1;
+    $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    if    ($key eq "dynamic-only") { $DYNAMIC_ONLY = $value; }
+    elsif ($key eq "static-only")  { $STATIC_ONLY = $value; }
+    elsif ($key eq "bumpCC")       { $BUMP_CC = $value; }
+    elsif ($key eq "delayCC")      { $DELAY_CC = $value; }
+    elsif ($key eq "delayFast")    { $DELAY_FAST = $value; }
+    elsif ($key eq "bumpTau")      { $BUMP_TAU = $value; }
+    elsif ($key eq "delayTau")     { $DELAY_TAU = $value; }
+    elsif ($key eq "delayCap")     { $DELAY_CAP = $value; }
+    elsif ($key eq "threshPercent"){ $THRESH_PERCENT = $value; }
+    elsif ($key eq "leakage")      { $LEAKAGE = $value; }
+    elsif ($key eq "inverter-leakage") { $INVERTER_LEAKAGE = $value; }
+    elsif ($key eq "maxNodePerAlintBin") {$MAX_NODE_PER_ALINT_BIN = $value;}
+    elsif ($key eq "maxAlintBinNum") {$MAX_ALINT_BIN_NUM = $value;}
+    elsif ($key eq "alintBin") {$ALINT_BIN = $value;}
+    elsif ($key eq "defaultMaxBumpFanin") { $DEFAULT_MAX_BUMP_FANIN = $value; }
+    elsif ($key eq "libChar") { $LIBCHAR = $value; }
+    elsif ($key eq "alintPOChar") { $ALINT_PO_CHAR = $value; }
+    elsif ($key eq "alint-scenarios") { $ALINT_SCENARIOS = $value; }
+    elsif ($key eq "redo-nodes") { $REDO_NODES = $value; }
+}
+
+# deal with valid bin args
+$REDO_NODES=""
+    if (defined ($REDO_NODES) and ($REDO_NODES =~ /^\d+$/) and $REDO_NODES >= 0 and $REDO_NODES <= 16);
+if (defined ($REDO_NODES) and $REDO_NODES ne "") {
+    foreach my $n (split(/:/, $REDO_NODES)) {
+        $REDO_NODES{$n}=1;
+    }
+}
+else {
+    $REDO_NODES="";
+}
+# check usage
+@ARGV==2 or die "USAGE: make_alint_in\n" .
+    "  [--dynamic-only=0|1] [--leakage=0|1] [--inverter-leakage=0|1]\n" .
+    "  [--bumpCC=BUMP_CC] [--delayCC=DELAY_CC]\n" .
+    "  [--bumpTau=BUMP_TAU] [--delayTau=DELAY_TAU]\n" .
+    "  [--threshPercent=THRESH_PERCENT]\n" .
+    "  [--delayFast=DELAY_FAST]\n" .
+    "  [--delayCap=DELAY_CAP]\n" .
+    "  [--defaultMaxBumpFanin=DEFAULT_MAX_BUMP_FANIN]\n" .
+    "  [--maxNodePerAlintBin=MAX_NODE_PER_ALINT_BIN]\n" .
+    "  [--maxAlintBinNum=MAX_ALINT_BIN_NUM]\n" .
+    "  [--alintBin=ALINT_BIN]\n" .
+    "  [--libChar=0|1]\n" .
+    "  [--alintPOChar=0|1]\n" .
+    "  [--static-only=0|1]\n" .
+    "  [--alint-scenarios=SCENARIOS_FILE]\n" .
+    "  [--redo-nodes= : separated list\n" .
+    "  cell.nodeprops alint.in\n";
+
+# open files
+my $file_in = new FileHandle;
+$file_in->open("<$ARGV[0]") or die "ERROR: can't read $ARGV[0]\n";
+my @all_nodes;
+
+while (my $line = <$file_in>) {
+    # parse cell.nodeprops line
+    if ($line =~ s/^SIGNOFF //g) { next; }
+    chomp $line;
+    my @values = split(" ",$line);
+    my $node = $values[0];
+    my $dynamic = $values[1];
+    my $max_fanin = $values[15];
+    my $type = $values[16];
+
+    if ($LIBCHAR) {
+        next if($type eq "INTERNAL");
+        my $dir=$type;
+        if ((($STATIC_ONLY==1) && ($dynamic==0)) or ($STATIC_ONLY==0)) {
+          push @all_nodes, [$node, $dir] if $node ne "GND" and $node ne "Vdd";
+        }
+    }
+    elsif ($ALINT_PO_CHAR) {
+        next if($type ne "OUT");
+        my $dir=$type;
+        if ((($STATIC_ONLY==1) && ($dynamic==0)) or ($STATIC_ONLY==0)) {
+          push @all_nodes, [$node, $dir] if $node ne "GND" and $node ne "Vdd";
+        }
+    }
+    else {
+        next if($type ne "INTERNAL");
+        # complain if cell.localprops is broken
+        if (!(defined($node) && defined($dynamic))) {
+            die "ERROR: $ARGV[0] appears incorrect.\n";
+        }
+
+        # use default if the alint_max_bump_fanin column doesn't exist or is -1
+        if (!defined($max_fanin) || $max_fanin == -1) {
+            $max_fanin = $DEFAULT_MAX_BUMP_FANIN;
+        }
+        
+        # emit commands to alint this node
+        if ((($DYNAMIC_ONLY==0) || ($dynamic!=0)) and ( $REDO_NODES eq "" or defined ($REDO_NODES{$node}))) {
+            push @all_nodes, [ $node, $max_fanin ];
+        }
+    }
+}
+$file_in->close();
+
+my %scenarios = ();
+# read scenarios
+if (defined $ALINT_SCENARIOS) {
+    my $sin = new FileHandle;
+    $sin->open($ALINT_SCENARIOS) or die "ERROR: can't read $ALINT_SCENARIOS\n";
+    my $victim;
+    while (my $line = <$sin>) {
+        chomp $line;
+        if ($line =~ /^victim (\S+)/) {
+            $victim = $1;
+        } elsif ($line =~ /^(scenario.*)/) {
+            die "ERROR: invalid scenarios file (scenario before victim at ".
+                "$ALINT_SCENARIOS:$.)" unless defined $victim;
+            push @{$scenarios{$victim}}, $1;
+        }
+    }
+    $sin->close();
+}
+
+# calculate the number of bins to occupy
+if (@all_nodes >= $MAX_NODE_PER_ALINT_BIN * $MAX_ALINT_BIN_NUM) {
+    $effective_alint_bin = $MAX_ALINT_BIN_NUM;
+} else {
+    $effective_alint_bin = ceil(@all_nodes / $MAX_NODE_PER_ALINT_BIN);
+}
+
+sub ncmp {
+    return 1 if $a > $b;
+    return -1 if $a < $b;
+    0;
+}
+
+if ($LIBCHAR) {
+    $file_out_top = new FileHandle;
+    $file_out_top->open(">$ARGV[1]") or die "ERROR: can't write $ARGV[1]\n";
+    if($ALINT_BIN >= $effective_alint_bin) { exit 0; }
+    my @dlytau=(sort ncmp split(/ /, $DELAY_TAU));
+    my $delayTau="20e-12";
+    $delayTau = $dlytau[int($#dlytau/2)] if @dlytau;
+    print {$file_out_top} <<EH;
+max_bump_fanin_aggressors 1
+leakage 0
+inverterLeakage 0
+bumpCC
+delayCC 0
+delayFast 0
+delayTau $DELAY_TAU
+delayCap $DELAY_CAP
+EH
+    if ($ALINT_BIN < 0) {
+        for (my $i = 0; $i < @all_nodes; $i++) {
+            my $node = $all_nodes[$i]->[0];
+            my $dir = $all_nodes[$i]->[1];
+            next if $dir eq "IN" and ($node eq "GND" or $node eq "Vdd");
+            print {$file_out_top} "max_bump_fanin_aggressors 1\n";
+            print {$file_out_top} "output \"$node/out\"\n";
+            print {$file_out_top} "outerr \"$node/err\"\n";
+            print {$file_out_top} "alint $node\n";
+        }
+        print {$file_out_top} <<ET;
+output "lib.done"
+outerr
+ET
+        exit 0;
+    }
+    else {
+        for (my $i = 0; $i < @all_nodes; $i++) {
+            my $bin_num = $i % $effective_alint_bin;
+            if ($bin_num == $ALINT_BIN){
+                my $node = $all_nodes[$i]->[0];
+                next if ($node eq "GND" or $node eq "Vdd");
+                print {$file_out_top} "max_bump_fanin_aggressors 1\n";
+                print {$file_out_top} "output \"$node/out\"\n";
+                print {$file_out_top} "outerr \"$node/err\"\n";
+                print {$file_out_top} "alint $node\n";
+            }
+        }
+        print {$file_out_top} <<ET;
+output "lib_parallel/lib.done.$ALINT_BIN"
+outerr
+ET
+        exit 0;
+    }
+}
+
+if ($ALINT_PO_CHAR) {
+    $file_out_top = new FileHandle;
+    $file_out_top->open(">$ARGV[1]") or die "ERROR: can't write $ARGV[1]\n";
+    if($ALINT_BIN >= $effective_alint_bin) { exit 0; }
+    my @dlytau=(sort ncmp split(/ /, $DELAY_TAU));
+    my @dlycap=(sort ncmp split(/ /, $DELAY_CAP));
+    my $delayTau="20e-12";
+    my $delayCap="0";
+    $delayTau = $dlytau[0] if @dlytau;
+    $delayCap = $dlycap[0] if @dlycap;
+    print {$file_out_top} <<EH;
+max_bump_fanin_aggressors 1
+leakage 0
+inverterLeakage 0
+bumpCC
+delayCC 0
+delayFast 0
+delayTau $delayTau
+delayCap $delayCap
+threshPercent $THRESH_PERCENT
+EH
+    if ($ALINT_BIN < 0) {
+        for (my $i = 0; $i < @all_nodes; $i++) {
+            my $node = $all_nodes[$i]->[0];
+            my $dir = $all_nodes[$i]->[1];
+            next if $dir eq "IN" and ($node eq "GND" or $node eq "Vdd");
+            print {$file_out_top} "max_bump_fanin_aggressors 1\n";
+            print {$file_out_top} "output \"$node/out\"\n";
+            print {$file_out_top} "outerr \"$node/err\"\n";
+            print {$file_out_top} "alint $node\n";
+        }
+        print {$file_out_top} <<ET;
+output "alint_PO.done"
+outerr
+ET
+        exit 0;
+    }
+    else {
+        for (my $i = 0; $i < @all_nodes; $i++) {
+            my $bin_num = $i % $effective_alint_bin;
+            if ($bin_num == $ALINT_BIN){
+                my $node = $all_nodes[$i]->[0];
+                next if ($node eq "GND" or $node eq "Vdd");
+                print {$file_out_top} "max_bump_fanin_aggressors 1\n";
+                print {$file_out_top} "output \"$node/out\"\n";
+                print {$file_out_top} "outerr \"$node/err\"\n";
+                print {$file_out_top} "alint $node\n";
+            }
+        }
+        print {$file_out_top} <<ET;
+output "alint_PO_parallel/alint_PO.done.$ALINT_BIN"
+outerr
+ET
+        exit 0;
+    }
+}
+
+
+my @file_out;
+my $file_out_top;
+if ($ALINT_BIN eq "-1") {
+    $file_out_top = new FileHandle;
+    $file_out_top->open(">$ARGV[1]") or die "ERROR: can't write $ARGV[1]\n";
+    # start alint.in
+    print {$file_out_top} "leaky_file \"leaky.nodes\"\n";
+    print {$file_out_top} "leakage $LEAKAGE\n";
+    print {$file_out_top} "inverterLeakage $INVERTER_LEAKAGE\n";
+    print {$file_out_top} "bumpCC $BUMP_CC\n";
+    print {$file_out_top} "delayCC $DELAY_CC\n";
+    print {$file_out_top} "delayFast $DELAY_FAST\n";
+    print {$file_out_top} "bumpTau $BUMP_TAU\n";
+    print {$file_out_top} "delayTau $DELAY_TAU\n";
+    print {$file_out_top} "delayCap\n";
+    print {$file_out_top} "threshPercent $THRESH_PERCENT\n";
+} elsif ( $ALINT_BIN =~ /^\d+$/) {
+    for (my $i = $ALINT_BIN; $i < $ALINT_BIN + 1; $i++) {
+        $file_out[$i] = new FileHandle;
+        $file_out[$i]->open(">$ARGV[1]") or die "ERROR: can't write $ARGV[1]\n";
+        # start alint.in
+        if($ALINT_BIN < $effective_alint_bin) {
+            print {$file_out[$i]} "leaky_file \"leaky.nodes\"\n";
+            print {$file_out[$i]} "leakage $LEAKAGE\n";
+            print {$file_out[$i]} "inverterLeakage $INVERTER_LEAKAGE\n";
+            print {$file_out[$i]} "bumpCC $BUMP_CC\n";
+            print {$file_out[$i]} "delayCC $DELAY_CC\n";
+            print {$file_out[$i]} "delayFast $DELAY_FAST\n";
+            print {$file_out[$i]} "bumpTau $BUMP_TAU\n";
+            print {$file_out[$i]} "delayTau $DELAY_TAU\n";
+            print {$file_out[$i]} "delayCap\n";
+            print {$file_out[$i]} "threshPercent $THRESH_PERCENT\n";
+        }
+    }
+}
+else {
+    my $i=0;
+    $file_out[$i] = new FileHandle;
+    $file_out[$i]->open(">$ARGV[1]") or die "ERROR: can't write $ARGV[1]\n";
+    # start alint.in
+    print {$file_out[$i]} "leaky_file \"leaky.nodes\"\n";
+    print {$file_out[$i]} "leakage $LEAKAGE\n";
+    print {$file_out[$i]} "inverterLeakage $INVERTER_LEAKAGE\n";
+    print {$file_out[$i]} "bumpCC $BUMP_CC\n";
+    print {$file_out[$i]} "delayCC $DELAY_CC\n";
+    print {$file_out[$i]} "delayFast $DELAY_FAST\n";
+    print {$file_out[$i]} "bumpTau $BUMP_TAU\n";
+    print {$file_out[$i]} "delayTau $DELAY_TAU\n";
+    print {$file_out[$i]} "delayCap\n";
+    print {$file_out[$i]} "threshPercent $THRESH_PERCENT\n";
+}
+
+my $alint_bin_dir=$ALINT_BIN;
+$alint_bin_dir=0 if ($alint_bin_dir !~ /^\d+$/) or $alint_bin_dir < 0;
+for (my $i = 0; $i < @all_nodes; $i++) {
+    my $bin_num = $i % $effective_alint_bin;
+    if (($ALINT_BIN !~ /^\d+$/) or $bin_num == $ALINT_BIN){
+        my $node = $all_nodes[$i]->[0];
+        my $fanin = $all_nodes[$i]->[1];
+        print {$file_out[$bin_num]} "max_bump_fanin_aggressors $fanin\n";
+        print {$file_out[$bin_num]} "output \"$node/out\"\n";
+        print {$file_out[$bin_num]} "outerr \"$node/err\"\n";
+        if (exists($scenarios{$node})) {
+            foreach my $s (@{$scenarios{$node}}) {
+                print {$file_out[$bin_num]} "$s\n";
+            }
+        }
+        print {$file_out[$bin_num]} "alint $node\n";
+    }
+}
+
+
+# finish alint.in
+if ($ALINT_BIN eq "-1") {
+    for (my $i = 0; $i < $effective_alint_bin; $i++) {
+        print {$file_out_top} "source \"alint_parallel/alint.in.$i\"\n";
+    }
+    print {$file_out_top} "output \"alint.done\"\n";
+    print {$file_out_top} "echo done\n";
+    print {$file_out_top} "output\n";
+    print {$file_out_top} "outerr\n";
+    $file_out_top->close();
+} elsif ($ALINT_BIN =~ /^\d+$/) {
+    for (my $i = $ALINT_BIN; $i < $ALINT_BIN+1; $i++) {
+        if($ALINT_BIN < $effective_alint_bin) {
+            print {$file_out[$i]} "output \"alint_parallel/alint.done.$i\"\n";
+            print {$file_out[$i]} "echo done\n";
+            print {$file_out[$i]} "output\n";
+            print {$file_out[$i]} "outerr\n";
+        }
+        $file_out[$i]->close();
+    }
+}
+else {
+    my $i=0;
+    print {$file_out[$i]} "output \"alint_parallel/alint.done.$ALINT_BIN\"\n";
+    print {$file_out[$i]} "echo done\n";
+    print {$file_out[$i]} "output\n";
+    print {$file_out[$i]} "outerr\n";
+}

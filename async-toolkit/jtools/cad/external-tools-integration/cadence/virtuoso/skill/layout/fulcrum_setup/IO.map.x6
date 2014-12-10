@@ -1,0 +1,88 @@
+; PLL IPs 0 to 5
+; ==================
+c		SPI4_$i			i	0	5
+LOCK		PLL_IO[$i].LOCK	
+BYPASS_VCO	PLL_IO[$i].BYPASS_VCO
+BYPASS_EN	PLL_IO[$i].BYPASS_EN
+REFCLK 		PLL_IO[$i].REFCLK
+CLKOUT2		PLL_IO[$i].CLKOUT2
+vaa		PLL_IO[$i].VAA
+ag		PLL_IO[$i].AG
+
+; RX IPs 0 to 5
+; ==================
+c		SPI4_$i		i	0	5
+xi_rctl         RXSPI4_IO[$i].xi_rctl
+xi_rdclk        RXSPI4_IO[$i].xi_rdclk
+xi_rdat[$j]	RXSPI4_IO[$i].xi_rdat[$j]	j	0	15
+xo_rsclk        RXSPI4_IO[$i].xo_rsclk
+xo_rstat[$j]    RXSPI4_IO[$i].xo_rstat[$j]	j	0	1
+
+; TX IPs 0 to 5
+; ==================
+c		SPI4_$i		i	0	5
+n_xo_tctl		TXSPI4_IO[$i].xo_tctl
+n_xo_tdclk		TXSPI4_IO[$i].xo_tdclk
+n_xo_tdat_L_$j_R_	TXSPI4_IO[$i].xo_tdat[$j]	j	0	15
+n_xi_tsclk		TXSPI4_IO[$i].xi_tsclk
+n_xi_tstat_L_$j_R_	TXSPI4_IO[$i].xi_tstat[$j]	j	0	1
+
+; EBI EXTERNAL BUS INTERFACE
+; ==========================
+c	busif_sync
+n_ADDR_L_$j_R_		BUSIF_IO.ADDR[$j]		j	1	17
+n_DATA_IN_L_$j_R_	BUSIF_IO.DATA_IN[$j]		j	0	15
+n_DATA_OUT_L_$j_R_	BUSIF_IO.DATA_OUT[$j]		j	0	15
+n_DATA_OE_L_$j_R_	BUSIF_IO.DATA_OE[$j]		j	0	15
+n_CLK_X8BUSIF		BUSIF_IO.CLK_X8BUSIF
+n_RW_N			BUSIF_IO.RW_N
+n_AS_N			BUSIF_IO.AS_N
+n_DS_N			BUSIF_IO.DS_N
+n_CS_N			BUSIF_IO.CS_N
+n_DTACK_INV		BUSIF_IO.DTACK_INV
+n_RW_N_INV		BUSIF_IO.RW_N_INV
+n_IGNORE_DS_N		BUSIF_IO.IGNORE_DS_N
+n_SYNC_MODE		BUSIF_IO.SYNC_MODE
+n_DTACK_N		BUSIF_IO.DTACK_N
+n_DTACK_OE		BUSIF_IO.DTACK_OE
+n_INTR_OE		BUSIF_IO.INTR_OE
+
+; PADFRAME
+; ========
+c       PADFRAME	i	0	5
+PLL_IO[$i].BYPASS_EN	PLL_IO[$i].BYPASS_EN
+PLL_IO[$i].BYPASS_VCO	PLL_IO[$i].BYPASS_VCO
+PLL_IO[$i].LOCK		PLL_IO[$i].LOCK
+PLL_IO[$i].REFCLK	PLL_IO[$i].REFCLK
+PLL_IO[$i].VAA		PLL_IO[$i].VAA
+PLL_IO[$i].AG		PLL_IO[$i].AG
+PLL_IO[$i].CLKOUT2	PLL_IO[$i].CLKOUT2
+
+RXSPI4_IO[$i].xi_rctl		RXSPI4_IO[$i].xi_rctl
+RXSPI4_IO[$i].xi_rdat[$j]	RXSPI4_IO[$i].xi_rdat[$j]	j	0	15
+RXSPI4_IO[$i].xi_rdclk		RXSPI4_IO[$i].xi_rdclk
+RXSPI4_IO[$i].xo_rsclk		RXSPI4_IO[$i].xo_rsclk
+RXSPI4_IO[$i].xo_rstat[$j]	RXSPI4_IO[$i].xo_rstat[$j]	j	0	1
+
+TXSPI4_IO[$i].xo_tctl		TXSPI4_IO[$i].xo_tctl
+TXSPI4_IO[$i].xo_tdclk		TXSPI4_IO[$i].xo_tdclk
+TXSPI4_IO[$i].xo_tdat[$j]	TXSPI4_IO[$i].xo_tdat[$j]	j	0	15
+TXSPI4_IO[$i].xi_tsclk		TXSPI4_IO[$i].xi_tsclk
+TXSPI4_IO[$i].xi_tstat[$j]	TXSPI4_IO[$i].xi_tstat[$j]	j	0	1
+
+BUSIF_IO.ADDR[$j]		BUSIF_IO.ADDR[$j]		j	1	17
+BUSIF_IO.DATA_IN[$j]		BUSIF_IO.DATA_IN[$j]		j	0	15
+BUSIF_IO.DATA_OUT[$j]		BUSIF_IO.DATA_OUT[$j]		j	0	15
+BUSIF_IO.DATA_OE[$j]		BUSIF_IO.DATA_OE[$j]		j	0	15
+BUSIF_IO.CLK_X8BUSIF		BUSIF_IO.CLK_X8BUSIF
+BUSIF_IO.RW_N			BUSIF_IO.RW_N
+BUSIF_IO.AS_N			BUSIF_IO.AS_N
+BUSIF_IO.DS_N			BUSIF_IO.DS_N
+BUSIF_IO.CS_N			BUSIF_IO.CS_N
+BUSIF_IO.DTACK_INV		BUSIF_IO.DTACK_INV
+BUSIF_IO.RW_N_INV		BUSIF_IO.RW_N_INV
+BUSIF_IO.IGNORE_DS_N		BUSIF_IO.IGNORE_DS_N
+BUSIF_IO.SYNC_MODE		BUSIF_IO.SYNC_MODE
+BUSIF_IO.DTACK_N		BUSIF_IO.DTACK_N
+BUSIF_IO.DTACK_OE		BUSIF_IO.DTACK_OE
+BUSIF_IO.INTR_OE		BUSIF_IO.INTR_OE

@@ -1,0 +1,53 @@
+(defun SyncCell ( CellName ViewName )
+    let( ( lcv cv ncv mcv newCellName pieces LibName )
+        pieces=parseString( CellName "." )
+        LibName=nth( 0 pieces )
+        for( n 1 length(pieces)-3
+            LibName = strcat( LibName "." nth( n pieces )))
+        cv=nrOpenCellViewReadable( LibName CellName ViewName )
+	when( ((cv == nil)&&(ViewName == "distort"))
+	ViewName="layout"
+	lcv=nrOpenCellViewReadable( LibName CellName ViewName ))
+	when( ((cv == nil)&&(ViewName == "distort_pg"))
+	ViewName="layout_pg"
+	lcv=nrOpenCellViewReadable( LibName CellName ViewName ))
+        newCellName = strcat(CellName "_hvt") 
+	mcv=nrOpenCellViewReadable( LibName newCellName ViewName)
+        when( cv == nil
+            printf( "Doesnot have distort/distort_pg view for %s\n" CellName)
+            )
+	when( lcv == nil
+            printf( "Cannot open %s\n" CellName)
+            )
+	when( mcv != nil
+	    printf("HVT subtype already exists %s\n" newCellName))
+         when( ((cv != nil)&&(mcv == nil))
+            printf("yes\n")
+            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
+            SyncToNetlist( ?CV ncv )
+        dbSave( ncv )
+  	dbClose( ncv )
+    )
+         when(((lcv != nil)&&(mcv == nil))
+            printf("yes\n")
+            dbCopyCellView(lcv LibName newCellName ViewName nil nil t)
+            ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
+            SyncToNetlist( ?CV ncv )
+        dbSave( ncv )
+  	dbClose( ncv )
+    )
+	)
+ )
+
+(defun sync ()
+	(let (text CellName num)
+	fl = infile("list_5.txt")
+	while( gets(k fl) != nil
+  	text = parseString( k " \n") 
+  	CellName = nth(0 text)
+	num = nth(1 text)
+	when( num != "0"
+  	SyncCell(CellName "distort")
+  	SyncCell(CellName "distort_pg")
+))))

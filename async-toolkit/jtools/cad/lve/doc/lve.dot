@@ -1,0 +1,148 @@
+digraph {
+size="50,18"
+rankdir=LR
+ranksep=1.5
+nodesep=0.3
+nslimit=2.0
+
+bgcolor="#eae4e1"
+node [style=filled, fillcolor=green, fontname="cour", fontsize=12];
+edge [fontname="cour"]
+
+"CAST Spec Path/<cell>/<subtype>.cast" -> "cast.d"
+"DFII Directory/<cell>/layout.cdb" -> "<view>/df2.d"
+"cast.d" -> signatures
+
+signatures [label="signatures (* is touched iff *.latest changes)"]
+signatures -> { "jflat/aspice/default/noprs.asp" "jflat/aspice/default/prs.asp" "jflat/aspice/<env-name>/env.asp" }
+signatures -> "jflat/hsim/<env-name>"
+signatures -> "jflat/query/default"
+signatures -> "jflat/cdl/default"
+signatures -> "jflat/local-nodes/default"
+signatures -> "jflat/leaky-nodes/default"
+signatures -> "jflat/env-ntpc/<env-name>"
+
+"jflat/cdl/default" -> "cell.cdl"
+"cell.cdl" -> "cast.changed"
+
+"jflat/local-nodes/default" -> "cell.localnodes"
+"jflat/local-nodes/default" -> "cell.localprops"
+"jflat/leaky-nodes/default" -> "cell.leakynodes"
+
+//alint
+"cell.localprops" -> "<view>/<type>/alint/.../alint.in"
+"cell.leakynodes" -> "<view>/<type>/alint/.../leaky.in"
+
+{ "<view>/<type>/alint/.../alint.in" \
+"<view>/<type>/alint/.../leaky.in" \
+"<view>/<type>/alint/.../alint.asp" \
+"<view>/<type>/cell.aspice" \
+"<view>/<type>/extract.result" \
+"jflat/aspice/default/noprs.asp" } -> 
+"<view>/<type>/alint/.../alint.done" [label="aspice",href="http://internal/eng/depot/sw/main/cad/c/aspice"]
+
+{ "cell.localprops" \
+  "cell.leakynodes" \
+  "<view>/<type>/alint/.../alint.done" } -> "<view>/<type>/alint/.../alint.raw" \
+[label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+
+//hsim
+"<view>/<type>/cell.spice_gds2" -> "<view>/<type>/hsim/.../hsim.out"
+"jflat/hsim/<env-name>" -> "<view>/<type>/hsim/.../hsim.out"
+"jflat/env-ntpc/<env>" -> "<view>/<type>/hsim/.../hsim.out"
+"<view>/<type>/hsim/.../hsim.out" -> "<view>/<type>/hsim/.../hsim.raw" \
+[label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+
+//aspice
+{ "<view>/<type>/aspice/.../aspice.in" \
+"<view>/<type>/aspice/.../aspice.asp" \
+"<view>/<type>/cell.aspice" \
+"<view>/<type>/extract.result" \
+"jflat/aspice/<env-name>/env.asp" \
+"jflat/aspice/default/prs.asp"  } -> "<view>/<type>/aspice/.../aspice.done"
+
+
+"jflat/env-ntpc/<env>" -> "<view>/<type>/aspice/.../aspice.raw" \
+[label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+"<view>/<type>/aspice/.../aspice.done" -> "<view>/<type>/aspice/.../aspice.raw"
+
+//jlvs
+"cell.cdl" -> "jlvs.err" [label="jlvs",href="http://internal/eng/depot/sw/main/cad/java/src/com/avlsi/tools/lvs/LVS.java"]
+"cell.cdl" -> "jlvs.out" [label="jlvs",href="http://internal/eng/depot/sw/main/cad/java/src/com/avlsi/tools/lvs/LVS.java"]
+"jlvs.out" -> "jlvs.raw" [label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+
+//gds2
+"cell.cdl" -> "<view>/cell.cdl" [ label="ln -s"]
+{ "<view>/df2.d"  \
+  "<view>/cell.cdl" } -> \
+{ "<view>/cell.gds2" } \
+ [label="gdsIIWrite",weight=1,href="http://internal/eng/depot/sw/main/cad/external-tools-integration/cadence/virtuoso/script/sh/cell-automation/one_cell_commands/gdsIIWrite.pl"]
+
+
+//spice
+{ "<view>/estimated/cell.spice" "<view>/extracted/cell.spice" "<view>/nogeometry/cell.spice" } -> "<view>/<type>/cell.aspice" [label="rc_spice2aspice",href="http://internal/eng/depot/sw/main/cad/lve/script/perl/rc_spice2aspice"]
+
+//type=accurate
+"<view>/cell.cdl" -> "<view>/cell.cdl_gds2" [label="cdl_renamer"]
+{ "<view>/cell.cdl_gds2" "<view>/cell.gds2" } -> \
+{ "<view>/accurate/cell.spice_gds2" \
+  "<view>/accurate/extract.result" \
+  "<view>/accurate/nvn.log" } \
+ [label="extract_starRC.pl",href="http://internal/eng/depot/sw/main/cad/lve/script/perl/spice/extract_starRC.pl"]
+
+"<view>/accurate/extract.result" -> "<view>/accurate/extract.raw" \
+[label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+"<view>/accurate/cell.spice_gds2" -> "<view>/accurate/cell.spice" \
+[label="cdl_renamer gds2->cast",href="http://internal/eng/depot/sw/main/cad/java/src/com/avlsi/file/cdl/util/rename/cdlrenamer.package" ]
+
+//type=extracted
+"<view>/cell.cdl" -> "<view>/cell.cdl_gds2" [label="cdl_renamer"]
+{ "<view>/cell.cdl_gds2" "<view>/cell.gds2" } -> \
+{ "<view>/extracted/cell.spice_gds2" \
+  "<view>/extracted/extract.result" \
+  "<view>/extracted/nvn.log" } \
+ [label="extract_starRC.pl",href="http://internal/eng/depot/sw/main/cad/lve/script/perl/spice/extract_starRC.pl"]
+
+"<view>/extracted/extract.result" -> "<view>/extracted/extract.raw" \
+[label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+"<view>/extracted/cell.spice_gds2" -> "<view>/extracted/cell.spice" \
+[label="cdl_renamer gds2->cast",href="http://internal/eng/depot/sw/main/cad/java/src/com/avlsi/file/cdl/util/rename/cdlrenamer.package" ]
+
+//type=estimated
+{ "<view>/df2.d" "cast.changed" } -> "<view>/estimated/instances/.instances" [label="mk_instance",href="http://internal/eng/depot/sw/main/cad/external-tools-integration/cadence/virtuoso/script/sh/util/mk_instance"]
+"<view>/estimated/instances/.instances" -> "<view>/estimated/cell.spice" [label="jauto"]
+
+//type=nogeometry
+"cast.changed" -> "<view>/nogeometry/cell.spice" [label="jauto"]
+
+//lvs
+{ "<view>/cell.gds2" "<view>/cell.cdl" } -> "<view>/lvs.cls" [label="vfe",href="http://internal/eng/depot/sw/main/cad/external-tools-integration/cadence/virtuoso/script/perl/ve/"]
+"<view>/lvs.cls" -> "<view>/lvs.raw" [label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+//drc
+{ "<view>/cell.gds2" } -> "<view>/drc.err" [label="vfe",href="http://internal/eng/depot/sw/main/cad/external-tools-integration/cadence/virtuoso/script/perl/ve/"]
+"<view>/drc.err" -> "<view>/drc.raw" [label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+//frc
+{ "<view>/cell.gds2" } -> "<view>/frc.err" [label="vfe",href="http://internal/eng/depot/sw/main/cad/external-tools-integration/cadence/virtuoso/script/perl/ve/"]
+"<view>/frc.err" -> "<view>/frc.raw" [label=lve_raw,href="http://internal/eng/depot/sw/main/cad/lve/script/perl/lve_raw"]
+
+
+//raw colored special like
+"<view>/drc.raw" [fillcolor=red]
+"<view>/frc.raw" [fillcolor=red]
+"<view>/lvs.raw" [fillcolor=red]
+"jlvs.raw" [fillcolor=red]
+"<view>/extracted/extract.raw" [fillcolor=red]
+"<view>/accurate/extract.raw" [fillcolor=red]
+"<view>/<type>/alint/.../alint.raw" [fillcolor=red]
+"<view>/<type>/aspice/.../aspice.raw" [fillcolor=red]
+"<view>/<type>/hsim/.../hsim.raw" [fillcolor=red]
+
+
+}

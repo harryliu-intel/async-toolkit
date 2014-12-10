@@ -1,0 +1,28 @@
+import "lib/buffers.cast";
+import "lib/fullbuffers.cast";
+
+define BUFFERED_CHANNEL()(e1of2 L,R)
+  {
+  e1of2 chan[0..45];
+  chan[0] = L;
+  chan[45] = R;
+  
+  <i:45: FBUF_1of2 buf[i](chan[i],chan[i+1]); >
+  }
+
+e1of2 left,right;
+BUFFERED_CHANNEL() channel(left,right);
+
+//define BUFFERED_CHANNEL(int slack)(e1of2 L,R)
+//  {
+//  e1of2 chan[0..2*slack];
+//  chan[0] = L;
+//  chan[2*slack] = R;
+//
+//  <i:2*slack: BUF_1of2 buf[i](chan[i],chan[i+1]); >
+//  }
+//
+//define TEST_CHANNEL()(e1of2 L,R)
+//  {
+//  BUFFERED_CHANNEL(10)(L,R);
+//  }

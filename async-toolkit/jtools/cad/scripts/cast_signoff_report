@@ -1,0 +1,627 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+my $package_root;
+
+BEGIN {
+    $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+    push @INC, "$package_root/lib/perl";
+}
+
+use Cast::SourceControl;
+use Cast::JavaServer;
+use Util::Numeric;
+
+#
+# ASSUMPTIONS:
+#
+# - Layout subtype cell names begin with a digit (0-9), inherited from
+#   Cast::SourceControl routines.
+# - See update_block for assumptions about '{' and '}' formatting in
+#   cell definitions.
+#
+
+#
+# Variables / Configuration
+#
+my $V_r                     = {
+    PACKAGE_ROOT            => $package_root
+};
+my $BRANCH                  = "";
+my $CAST_DIR                = "$ENV{HOME}/hw/cast";
+my $SPEC_DIR                = "$ENV{HOME}/hw/layout/tsmc13/spec";
+my $CLIENT_SPEC             = "$ENV{USER}-hw";
+my $DEBUG                   = 0;
+my @signoff_directives;
+
+my %directive_queries = (
+    "rte_ignore"                => "rte_ignore:true",
+    "csp_cosim_will_fail"       => "csp_cosim_will_fail:true",
+    "prs_netlist_mismatch_ok"   => "prs_netlist_mismatch_ok:true",
+    "alint_ignore"              => "alint_ignore:true",
+    "ntpc_scaling_signoff"      => "ntpc_scaling_signoff",
+    "slew_signoff"              => "slew_signoff",
+    "skew_signoff"              => "skew_signoff",
+    "alint_signoff"             => "alint_signoff:true",
+    "staticizer_ratio_signoff"  => "staticizer_ratio_signoff"
+);
+
+my %report_fields = (
+    "rte_ignore" => 
+        [ "Cell", "Block", "Comment", "Designer", "Date" ],
+    "csp_cosim_will_fail" => 
+        [ "Cell", "Environment", "Comment", "Designer", "Date" ],
+    "prs_netlist_mismatch_ok" => 
+        [ "Cell", "Comment", "Designer", "Date" ],
+    "alint_ignore" => 
+        [ "Cell", "Comment", "Designer", "Date" ],
+    "ntpc_scaling_signoff" =>
+        [ "Cell", "Value", "NTPC", "Comment", "Designer", "Date" ],
+    "slew_signoff" =>
+        [ "Cell", "Half Operator", "Slew Limit", "Comment", "Designer", "Date"],
+    "skew_signoff" =>
+        [ "Cell", "Half Operator", "Skew Limit", "Comment", "Designer", "Date"],
+    "alint_signoff" =>
+        [ "Cell", "Half Operator", "Comment", "Designer", "Date"],
+    "staticizer_ratio_signoff" =>
+        [ "Cell", "Half Operator", "Strength Range", "Comment", "Designer",
+          "Date" ]
+);
+
+my %field_to_index_map = (
+    "Half Operator" => 0,
+    "Block" => 1, "Environment" => 1,
+    "Comment" => 2,
+    "Designer" => 3,
+    "Value" => 4, "Slew Limit" => 4, "Skew Limit" => 4, "Strength Range" => 4,
+    "Line" => 5,
+    "Change Number" => 6,
+    "Date" => 7,
+    "NTPC" => 8
+);
+
+my %report_extra_actions = (
+    "ntpc_scaling_signoff" => \&lookup_ntpc_specs
+);
+
+my %report_field_descriptions = (
+    "Cell" => 
+        "Cell in which the sign-off directive is defined.  This may " .
+        "be a refinement parent of the cell or layout subtype tested " .
+        "by the RTE and LVE.",
+    "Half Operator" =>
+        "Directive's half-operator parameter.",
+    "Block" => 
+        "Block in which the sign-off directive is specified.  If " .
+        "A ':' indicates this is an environment block.",
+    "Environment" =>
+        "Environment block in which the sign-off directive is defined.",
+    "Comment" =>
+        "Text given in the SIGNOFF cast comment.",
+    "Designer" =>
+        "Two users are given: user1/user2, where \"user1\" is ".
+        "the user who wrote the SIGNOFF comment, \"user2\" is the user ".
+        "who last modified the actual sign-off directive in the cast.  ".
+        "If the directive was added in a different branch and integrated ".
+        "into the user-space branch, \"user2\" will be the source branch, ".
+        "not the user who made the edit.",
+    "Value" =>
+        "Value of the sign-off directive specified in the cast.",
+    "Line" =>
+        "Line number on which the sign-off directive is specified in the ".
+        "cast.",
+    "Change Number" =>
+        "Perforce change number of the change in which the sign-off " .
+        "directive was last modified.",
+    "Date" =>
+        "Date the sign-off directive (NOT the comment) was last modified.",
+    "NTPC" =>
+        "NTPC specs of each environment, both pre- and post-ntpc_scaling ".
+        "directive.",
+    "Slew Limit" =>
+        "Relaxed slew limit for the specified half-operator (default ".
+        "LVE slew rate limit is 250ps).",
+    "Skew Limit" =>
+        "Relaxed skew limit for the specified half-operator (default ".
+        "LVE skew limit is 300ps).",
+    "Strength Range" =>
+        "Relaxed logic-to-staticizer drive strength range.  Default LVE ".
+        "range is [2,20]."
+);
+
+
+#
+# Usage & Command Line Parsing
+#
+
+sub usage_exit {
+    print <<EOF;
+cast_signoff_report
+   [--max-heap-size=<heap>]     Standard JVM heap size limit.
+   [--branch=<branch> |         
+    --cast-dir=<cast>
+    --spec-dir=<spec> ]
+   [--client-spec=<p4spec>]     Defaults to <user>-hw-releases or <user>-hw
+    --do=<signoff-type-list>    A comma-separated list of sign-off directives
+    cell
+
+User-space cast directory defaults to ~/hw/cast if no branch is specified.
+If a branch is specified, defaults to ~/p4/hw/<branch>/cast.  Same for spec
+directory.  Valid sign-off directives:
+
+EOF
+    foreach my $dir (keys %directive_queries) { print "   $dir\n"; }
+    print <<EOF;
+
+Produces one HTML file in the current directory per signoff directive.  The
+files are named <cell>:<directive>.html.
+
+EOF
+    exit;
+}
+
+usage_exit() if (!@ARGV);
+while ($ARGV[0] =~ /^--([^=]+)=(.*)$/) {
+    my ($opt,$arg) = ($1,$2);
+    if ($opt eq "max-heap-size") {
+        $V_r->{HEAP_SIZE} = $arg;
+    }
+    elsif ($opt eq "cast-dir") {
+        $CAST_DIR = $arg;
+    }
+    elsif ($opt eq "spec-dir") {
+        $SPEC_DIR = $arg;
+    }
+    elsif ($opt eq "do") {
+        @signoff_directives = split /,/, $arg;
+    }
+    elsif ($opt eq "branch") {
+        $BRANCH = $arg;
+    }
+    elsif ($opt eq "debug") {
+        $DEBUG = $arg;
+    }
+    elsif ($opt eq "client-spec") {
+        $CLIENT_SPEC = $arg;
+    }
+    elsif ($opt eq "package-root") {
+        $V_r->{PACKAGE_ROOT} = $arg;
+    }
+    elsif ($opt eq "package-name") {
+        $V_r->{PACKAGE_NAME} = $arg;
+    }
+    else {
+        print "Unrecognized option $opt.\n";
+        usage_exit();
+    }
+    shift;
+}
+usage_exit if (@ARGV > 1 || @ARGV == 0);
+my $top_cell = $ARGV[0];
+if ($BRANCH ne "") {
+    $CAST_DIR = "$ENV{HOME}/p4/hw/$BRANCH/cast";
+    $SPEC_DIR = "$ENV{HOME}/p4/hw/$BRANCH/layout/tsmc13/spec";
+    $CLIENT_SPEC = "$ENV{USER}-hw-releases" if ($CLIENT_SPEC eq "$ENV{USER}-hw");
+}
+$V_r->{CAST_PATH} = "$CAST_DIR:$SPEC_DIR";
+
+if (!exists $V_r->{PACKAGE_NAME} && 
+    $V_r->{PACKAGE_ROOT} =~ /\/tools\/(\w+)\/\d+/) {
+    $V_r->{PACKAGE_NAME} = $1;
+}
+
+foreach my $directive (@signoff_directives) {
+    print "Generating report for directive $directive.\n";
+    if (! grep {$_ eq $directive} keys %directive_queries) {
+        print "Skipping unrecognized signoff directive '$directive'.\n";
+        next;
+    }
+    #
+    # Look up cells with this directive set
+    #
+    my $query .= "--task=subcells ";
+       $query .= "--filter=directive=$directive_queries{$directive} ";
+       $query .= "--cell=$top_cell";
+    my @cell_list;
+    query_cast_server($V_r, $query, \@cell_list, 1);
+
+    if (@cell_list == 0) {
+        print "No directives of type '$directive' set within $top_cell.\n";
+        next;
+    }
+
+    #
+    # Query signoff comments and such for each signed off cell
+    #
+    my %cell_data;
+    foreach my $cell (@cell_list) {
+        print "Cell = $cell\n" if ($DEBUG);
+        push @{$cell_data{$cell}}, lookup_signoff_info($cell,$directive);
+    }
+
+    #
+    # Output data in HTML form
+    #
+    my $filename = "$top_cell:$directive.html";
+    open FILE, ">$filename" || die "Can't write to $filename.\n";
+    my $fh = \*FILE;
+    output_header($fh,$top_cell,$directive);
+    foreach my $cell (sort keys %cell_data) {
+        foreach my $soref (@{$cell_data{$cell}}) {
+            output_cell_entry($fh,$cell,$soref,$directive);
+        }
+    }
+    output_footer($fh,$directive);
+}
+
+#
+# DATA GATHERING ROUTINES
+#
+
+sub lookup_signoff_info {
+    my ($cell,$directive) = @_;
+    my @data;
+    my @cell_lineage = lookup_refinement_lineage($cell);
+    my $cell_name = "";
+    foreach my $parent (@cell_lineage) {
+        my $shortened_parent = shorten_cellname($parent,60);
+        if ($cell_name eq "") { $cell_name = $shortened_parent; }
+        else { $cell_name = "$shortened_parent :&gt;<br>&nbsp;&nbsp;$cell_name"; }
+        my @signoffs = read_cast_file($parent,$directive);
+        next if (!@signoffs);
+        augment_with_p4_info($parent,\@signoffs);
+        &{$report_extra_actions{$directive}}($cell,\@signoffs) if
+            defined $report_extra_actions{$directive};
+        foreach my $slist (@signoffs) {
+            my %s;
+            $s{Cell} = $cell_name;
+            foreach my $field (keys %field_to_index_map) {
+                $s{$field} = $slist->[$field_to_index_map{$field}];
+            }
+            push @data, \%s;
+        }
+    }
+    if (!@data) {
+        warn "Directive $directive not found for $cell!\n";
+        my %s;
+        $s{Cell} = $cell;
+        foreach my $field (keys %field_to_index_map) {
+            $s{$field} = "?";
+        }
+        push @data, \%s;
+    }
+    return \@data;
+}
+
+#
+# Adds to the signoff directive list [ ... , Change Number, Date ]
+# And adds "/<user>" to the Designer field, where <user> is the 
+# designer who actually added the signoff directive.  (Oftentimes
+# not the same as the guy who wrote the signoff comment.)
+#
+sub augment_with_p4_info {
+    my ($cell,$soref) = @_;
+    return if ($cell =~ /[\(\)\{\}]/);  # p4pr can't handle these characters
+    my ($file) = cell_to_unqualified_depot_file($cell);
+    $file = unqualified_depot_to_user_file($file,$CAST_DIR,$SPEC_DIR);
+    # Get line numbers of interest
+    my %line_data;
+    foreach my $slist (@{$soref}) {
+        $line_data{$slist->[$field_to_index_map{Line}]} = $slist;
+    }
+    my @lines = keys %line_data;
+    $ENV{P4CLIENT} = $CLIENT_SPEC;
+    open P4PR, "p4pr '$file'|" ||
+        warn "Couldn't run p4pr -c $CLIENT_SPEC '$file'.\n";
+    while (<P4PR>) {
+        s/^\s*//;
+        my @parts = split /\s+/, $_;
+        if (grep {$parts[0] eq $_} @lines) {
+            # Add to designer field
+            $line_data{$parts[0]}->[$field_to_index_map{Designer}] .= 
+                "/$parts[1]";
+            push @{$line_data{$parts[0]}}, $parts[2];
+            push @{$line_data{$parts[0]}}, changenumber_to_date($parts[2]);
+        }
+    }
+    close P4PR;
+}
+
+sub changenumber_to_date {
+    my ($cn) = @_;
+    open P4, "p4 describe -s '$cn'|" || 
+        warn "Couldn't run p4 describe -s '$cn'.\n";
+    my $line = <P4>;
+    close P4;
+    if ($line =~ /^Change \d+ by [^\s]+ on ([\d\/]+) /) {
+        return $1;
+    }
+    else {
+        return $cn;
+    }
+}
+
+sub lookup_ntpc_specs {
+    my ($cell,$soref) = @_;
+    my $ntpc = "";
+    my $cmd = "jflat " .
+              "--cast-path=$CAST_DIR:$SPEC_DIR " .
+              "--tool=env-ntpc " .
+              "'--cell=$cell'|";
+    open JFLAT, $cmd || warn "Couldn't run $cmd\n";
+    while (<JFLAT>) {
+        my @parts = split /\s+/, $_;
+        if ($parts[2] != -1) {
+            $ntpc .= "$parts[0]:<br>&nbsp;&nbsp;$parts[2] to " .
+                     round_float($parts[3],-1) . "<br>";
+        }
+    }
+    close JFLAT;
+    $ntpc = "No ntpc_specs!" if ($ntpc eq "");
+    foreach my $slist (@{$soref}) {
+        $slist->[$field_to_index_map{NTPC}] = $ntpc;
+    }
+}
+
+
+#
+# Returns list of signoff directive data lists.  Each signoff directive
+# data list has [ Block, Comment, Designer, Value, Line ].
+#
+sub read_cast_file {
+    my ($fqcn,$directive) = @_;
+    my $local_cell = fqcn_to_local_regex($fqcn);
+    if (!defined $local_cell) { warn "Bad cell name $fqcn\n"; return (); }
+    my ($file) = cell_to_unqualified_depot_file($fqcn);
+    $file = unqualified_depot_to_user_file($file,$CAST_DIR,$SPEC_DIR);
+    print STDERR "Processing $file for definition of $local_cell\n" if ($DEBUG);
+    open (CAST_FILE, $file) || warn "Couldn't read $file.\n";
+    my @signoffs;
+    my ($block,$comment,$user) = ("unknown","","unkown");
+    my $dstate   = 0;
+    my $bstate   = 0;
+    my $cstate   = 0;
+    my $line_num = 0;
+    my $defline  = "";
+    while (<CAST_FILE>) {
+        $line_num++;
+        $_ = strip_line($_);
+        print "($dstate,$bstate,$cstate) $_\n" if ($DEBUG);
+        if ($dstate == 0 && /^define\s+\"?$local_cell\"?(\s|\()/) {
+            $dstate = 1;
+        }
+        if ($dstate == 1) {
+            $defline .= $_;
+            if (is_complete_define($defline)) {
+                $defline = "";
+                $dstate = 2;
+                $bstate = 0;
+                $block = "cell";
+            }
+        }
+        elsif ($dstate == 2) {
+            if (($cstate == 0 || $cstate == 3) && 
+                s/^\/\*\*\s*SIGNOFF\s*\(?([\w]+)\)?\s*:\s*// ||
+                $cstate == 1 && s/^\*\s*SIGNOFF\s*\(?([\w]+)\)?\s*:\s*//) {
+                $cstate = 2;
+                ($comment,$user) = ("",$1);
+            }
+            elsif (($cstate == 0 || $cstate == 3) && /^\/\*\*$/) {
+                $cstate = 1;
+            }
+            if ($cstate == 0 && 
+                   $_ =~ s/\s*$directive\(([^\)]+)\)\s*=\s*([^\s\;]+)\s*\;//) {
+                push @signoffs, [ $1, $block, "NO SIGNOFF", "", $2, $line_num ];
+            }
+            elsif ($cstate == 0 && /\s*$directive\s*=\s*([^\s\;]+)\s*\;/) {
+                push @signoffs, [ "", $block, "NO SIGNOFF", "", $1, $line_num ];
+            }
+            elsif ($cstate == 1 && /\*\//) {
+                $cstate = 0;
+            }
+            if ($cstate == 2 && s/\*?\*\/$//) {
+                $comment .= $_;
+                $cstate = 3;
+            }
+            elsif ($cstate == 2) {
+                s/\*\s*//;
+                $comment .= $_ . " ";
+            }
+            elsif ($cstate == 3 && 
+                $_ =~ s/\s*$directive\(([^\)]+)\)\s*=\s*([^\s\;]+)\s*\;//) {
+                push @signoffs, [ $1, $block, $comment, $user, $2, $line_num ];
+            }
+            elsif ($cstate == 3 && 
+                   $_ =~ s/\s*$directive\s*=\s*([^\s\;]+)\s*\;//) {
+                push @signoffs, [ "", $block, $comment, $user, $1, $line_num ];
+            }
+            elsif ($cstate == 3 && $_ !~ /^\s*$/) {
+                ($comment,$user) = ("","unknown");
+                $cstate = 0;
+            }
+        }
+        elsif ($dstate == 2 && (/\{/ || /\}/)) {
+            # Update block state
+            ($bstate,my $new_block) = update_block($_,$bstate,$block);
+            if ($new_block != $block) {
+                $cstate = 0; ($comment,$user) = ("","unknown");
+                $block = $new_block;
+            }
+            $dstate = 0 if ($bstate == -1);
+        }
+    }
+    close CAST_FILE;
+    return @signoffs;
+}
+
+sub strip_line {
+    my ($line) = @_;
+    $line =~ s/^\s*//; $line =~ s/\s*$//;
+    $line =~ s/\s*\/\/.*$//;
+    if ($line =~ /\/\*.*\*\//) {
+        $line =~ s/\s*\/\*.*\*\/\s*// if ($line !~ /\/\*\*\s*SIGNOFF/);
+    }
+    return $line;
+}
+
+sub fqcn_to_local_regex {
+    my ($fqcn) = @_;
+    my $cellmatch;
+    if ($fqcn =~ /\.([^\.\(\)]+)(\(.*\))?$/) { $cellmatch = $1; }
+    else { warn "Bad fqcn: $fqcn\n"; }
+    return $cellmatch;
+}
+
+sub is_complete_define {
+    my ($line) = @_;
+    if ($line =~ s/^define\s+\"?\w+\"?\s*\([^\)]*\)\s*\([^\)]*\)\s*(\([^\)]+\))?.*\{//) {
+        warn "Repeated '{' encountered on define line.\n" if ($line =~ /\{/);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+        
+# ASSUMPTION: all lines with mixtures of { and } are of the form
+# block { block { ... } garbage } garbage } ... 
+sub update_block {
+    my ($line,$bstate,$block) = @_;
+    my ($l,$r);
+    do {
+        print " line=$line\n" if ($DEBUG);
+        $l = index $line, "{";
+        $r = index $line, "}";
+        if ($l == -1 && $r == -1) {
+            $line = "";
+        }
+        elsif ($l < $r && $l != -1 || $r == -1) {
+            # Left bracket is next
+            my $b = substr $line, 0, $l;
+            if ($line !~ /^\s*\{\s*$/) { $line = substr $line, $l+1; }
+            else { $line = ""; }
+            $b =~ s/^\s*//; $b =~ s/\s*$//;
+            if ($bstate == 0 && ($b eq "prs" || $b eq "subcells" ||
+                                 $b eq "subtypes")) {
+                $block = $b;
+            }
+            elsif ($bstate == 0 && $b eq "env") {
+                $block = ":";
+            }
+            elsif ($bstate == 0 && $b =~ /^env\s+(\w+)(\s+\w+)?$/) {
+                $block = ":$1";
+            }
+            elsif ($bstate > 0 && $block eq ":") {
+                $block .= $b if ($b ne "directives");
+            }
+            $bstate++;
+        }
+        else {
+            # Right bracket is next
+            if ($line !~ /^\s*\}\s*$/) { $line = substr $line, $r+1; } 
+            else { $line = ""; }
+            $bstate--;
+            if ($bstate == 0) {
+                $block = "cell";
+            }
+            elsif ($bstate == 1 && $block =~ /^:/) {
+                $block = ":";
+            }
+        }
+    } while ($line ne "" && ($l != -1 || $r != -1));
+    return ($bstate,$block);
+}
+
+sub lookup_refinement_lineage {
+    my ($cell) = @_;
+    my $query .= "--task=refinement_lineage ";
+       $query .= "--cell=$cell";
+    my @cell_list;
+    query_cast_server($V_r, $query, \@cell_list, 1);
+    @cell_list = reverse @cell_list;
+    pop @cell_list;         # Get rid of "Lineage of <cell>:" line
+    return @cell_list;
+}
+
+sub shorten_cellname {
+    my ($fullname,$limit) = @_;
+    if (length($fullname) > $limit && $fullname =~ /\([^\)]+\)/) {
+        if ($fullname =~ /\{[^\}]+\}/) {
+            $fullname =~ s/\{[^\}]+\}/\{...\}/g;
+        }
+        else {
+            $fullname =~ s/\([^\)]+\)/\(...\)/;
+        }
+    }
+    return $fullname;
+}
+
+
+#
+# REPORT OUTPUT ROUTINES
+#
+
+sub output_header {
+    my ($fh,$top_cell,$dir) = @_;
+    my $date = `date`; chomp $date;
+    print $fh <<HTML;
+<body bgcolor=\"white\">
+ <font size="+2"><b>$top_cell Sign-off Directives: $dir</b></font><br>
+ Report Generation Date: $date <br>
+ <hr>
+ <table width=\"100\%\" border=0 bgcolor="black" cellpadding=3>
+HTML
+    print $fh "  <tr bgcolor=\"#ffffee\">";
+    foreach my $f (@{$report_fields{$dir}}) {
+        print $fh "<td><b>$f</b></td>";
+    }
+    print $fh "\n";
+}
+
+sub output_cell_entry {
+    my ($fh,$cell,$data_ref,$dir) = @_;
+    foreach my $soref (@{$data_ref}) {
+        print $fh "  <tr bgcolor=\"white\">\n   ";
+        foreach my $f (@{$report_fields{$dir}}) {
+            if (exists $soref->{$f} && defined $soref->{$f}) {
+                print $fh "<td>$soref->{$f}</td>";
+            }
+            else {
+                print $fh "<td>??</td>";
+            }
+        }
+        print $fh "</tr>\n";
+    }
+}
+
+
+sub output_footer {
+    my ($fh,$dir) = @_;
+    print $fh "</table>\n";
+    print $fh "<hr>\n";
+    print $fh "<table bgcolor=\"#aaaaaa\" width=60\% cellpadding=4 ".
+              "cellspacing=1 border=0>\n";
+    foreach my $f (@{$report_fields{$dir}}) {
+        print $fh "  <tr bgcolor=\"white\"><td><b>$f:</b></td>" .
+                  "<td>$report_field_descriptions{$f}</td></tr>\n";
+    }
+    print $fh " </table></body>\n";
+}

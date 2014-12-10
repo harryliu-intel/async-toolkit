@@ -1,0 +1,28 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+if ($#ARGV == -1) {
+   while (<>) {
+      chomp;
+      if (length($_) == 0) {
+	 last;
+      }
+      my $date=localtime($_);
+      print $date;
+   }
+}
+elsif ( ! ($ARGV[0] =~ /^\d+$/) ) {
+    print STDERR "Usage: time2date ...";
+    print STDERR "   convert a list of unix times to readable date/time";
+    exit 1;
+}
+else {
+   foreach my $time (@ARGV) {
+      my $date=localtime($time);
+      print $date;
+   }
+}

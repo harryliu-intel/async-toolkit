@@ -1,0 +1,3455 @@
+#!/usr/intel/bin/perl -w
+
+use POSIX;
+use File::Basename;
+use File::stat;
+use File::Spec;
+use File::Temp qw/ tempfile tempdir /;
+use Digest::MD5 qw/ md5_hex /;
+use IPC::Open3;
+use Symbol;
+use DBI;
+use Fcntl qw(:flock);
+use strict;
+
+umask 02;
+
+my %optionvalues=();
+my %defaultvalues=();
+my %previousvalues=();
+my %dontsave=(
+    "task" => 1,
+    "justPrint" => 1,
+);
+my %noextracttask = (
+    "antenna" => 1,
+    "hdrc" => 1,
+    "hlvs" => 1,
+    "jlvs" => 1,
+    "lef" => 1,
+    "lvs" => 1,
+    "drc" => 1,
+    "plt" => 1,
+    "rte" => 1,
+    "stats" => 1,
+);
+
+my $lve_root;
+my @errors=();
+my @warnings=();
+my %errors=();
+my %warnings=();
+my $child=0;
+my $forkinvoked=0;
+my @force=();
+my %force=();
+my @theTargets = ();
+my @theTargets_raw = ();
+my @delayCap=();
+my $libtranslate="cadence";
+my $fakesize=8;
+my $notify=0;
+my $budgetcapindex=0;
+my $budgetcapvalue="1f";
+my $dobudget=1;
+my $extractskip6t=0;
+my $hdrc_density=0;
+my $noextractdeps=0;
+my $deletemakefiles=1;
+my $astaTauBound=-1;
+my $hercules_threads=2;
+my $hsim_threads=1;
+my $hspice_threads=1;
+my $globalJreFlags="";
+my $jreFlags="";
+my $eplfix=0;
+my $extra_extract_equiv="";
+my $starRC1_extra_options="";
+my $clean_trace=1;
+my $mysqlhost="chipdev";
+my $mysqldb="lve";
+my $mysqluser="lve";
+my $mysqlpassword="lve";
+my $usemysql=0;
+my $usedb=1;
+my $use_tag="--use-tag"; # changed by the --no-tag arg
+my $no_tag=0; # not really used, just a place holder for the usage message
+my $make="/usr/intel/pkgs/gmake/3.81/bin/gmake";
+my $tag_orientation="MXR90";
+my %valid_orientations = (
+    "R0" => 1,
+    "R90" => 1,
+    "R180" => 1,
+    "R270" => 1,
+    "MX" => 1,
+    "MXR90" => 1,
+    "MY" => 1,
+    "MYR90" => 1,
+);
+my $cell_type="";
+my $sigma_factor=1;
+my $dbprefix="";
+my $redonodes="";
+my $env_cap_load="";
+my $maxAlintBinNum=16;
+my $maxNodePerAlintBin=1000;
+my $minRC=0;
+my $traceInternal=0;
+my $traceAll=0;
+my $minAccurateR=1;
+my $minAccurateC=1e-18;
+my $minAccurateRC=0;
+my $accurateMode=0;
+
+sub dounlink {
+    my ($file,$dir)=@_;
+    if ($dir) {
+        if ( -d $file ) {
+            print STDERR "rm -rf '$file'\n";
+            system "rm -rf '$file' 2>/dev/null";
+        }
+    }
+    else {
+        print STDERR "Unlink $file\n" if ( -e $file );
+        unlink $file;
+    }
+}
+
+sub forcetarget {
+    my ($task,$target)=@_;
+    return if ! $force{$task};
+    dounlink($target);
+    if ($task eq "alint") {
+        if($target =~ /alint.raw/){
+          $target =~ s/alint.raw//;
+        }else{
+          $target =~ s/threshresp.result//;
+        }
+        dounlink $target,1;
+    }
+    elsif ($task eq "antenna") {
+        $target =~ s/antenna.err//;
+        dounlink($target."antenna.err");
+        dounlink($target."antenna.tar.bz2");
+    }
+    elsif ($task eq "aspice") {
+        $target =~ s/aspice.raw//;
+        dounlink($target,1);
+    }
+    elsif ($task eq "coverage") {
+        $target =~ s/coverage.err//;
+        dounlink($target."coverage.tar.bz2");
+    }
+    elsif ($task eq "drc") {
+        $target =~ s/drc.raw//;
+        dounlink($target."drc.err");
+        dounlink($target."drc.tar.bz2");
+    }
+    elsif ($task eq "hdrc") {
+        $target =~ s/hdrc.raw//;
+        dounlink($target."hdrc.err");
+        dounlink($target."hdrc.tar.bz2");
+    }
+    elsif ($task eq "frc") {
+        $target =~ s/frc.raw//;
+        dounlink($target."frc.err");
+        dounlink($target."frc.tar.bz2");
+    }
+    elsif ($task eq "lvs") {
+        $target =~ s/lvs.raw//;
+        dounlink($target."lvs.cls");
+        dounlink($target."lvs.tar.bz2");
+    }
+    elsif ($task eq "hlvs") {
+    }
+    elsif ($task eq "gds2") {
+    }
+    elsif ($task eq "hsim") {
+        $target =~ s/hsim.raw//;
+        dounlink($target,1);
+    }
+    elsif ($task eq "xa") {
+        $target =~ s/xa.raw//;
+        dounlink($target,1);
+    }
+    elsif ($task eq "hspice") {
+        $target =~ s/hspice.raw//;
+        dounlink($target,1);
+    }
+    elsif ($task eq "jlvs") {
+        $target =~ s/jlvs.raw//;
+        dounlink($target."jlvs.err");
+    }
+    elsif ($task eq "lef") {
+    }
+    elsif ($task eq "spef") {
+        $target =~ s/cell.spef//;
+        dounlink($target."cell.spef_gds2");
+    }
+    elsif ($task eq "stats") {
+    }
+    elsif ($task eq "extract") {
+        $target =~ s/extract.raw//;
+        dounlink($target."cell.spice_gds2");
+        dounlink($target."cell.spice");
+        dounlink($target."cell.aspice");
+    }
+    elsif ($task eq "captally") {
+        $target =~ s/captally.raw//;
+        dounlink($target."cell.captally");
+    }
+    elsif ($task eq "plt") {
+    }
+    elsif ($task eq "rte") {
+        $target =~ s/rte.raw//;
+        dounlink($target."rte.out");
+        dounlink($target."rte.raw");
+        $target =~ s/rte.raw.summary//;
+        dounlink($target."rte.raw.summary");
+    }
+    elsif ($task eq "lib") {
+        if($target =~ /lib.raw/){
+          $target =~ s/lib.raw/lib_parallel/;
+          dounlink $target,1;
+        }
+    }
+    elsif ($task eq "fakelib") {
+    }
+    elsif ($task eq "totem") {
+        $target =~ s/totem.raw//;
+        dounlink($target."totem.out");
+        dounlink($target."totem.err");
+        dounlink($target."totem.raw");
+    }
+    elsif ($task eq "cmm") {
+        $target =~ s/cmm.out//;
+        dounlink($target."cmm.out");
+    }
+    elsif ($task eq "apl") {
+        $target =~ s/cell.spiprof//;
+        dounlink($target."cell.spiprof");
+        dounlink($target."cell.cdev");
+    }
+}
+
+my %legalmodes=(
+    "nogeometry" => 1,
+    "estimated" => 1,
+    "extracted" => 1,
+    "accurate" => 1,
+    "custom" => 1,
+);
+my @noerrstrings = (
+   "Always output CDL netlist",
+);
+
+my $verbose   = 0;
+
+# used so that the fork in runMake does not interfere
+# with direct output in END function
+my $dupsuccess=1;
+open OLDERR, ">&", \*STDERR or $dupsuccess=0;
+warn "Duplicate failed\n" if ! $dupsuccess;
+
+END {
+    if (! $child ) {
+        if (@errors or (@warnings and $verbose)) {
+            select OLDERR;
+            $|=1;
+            print OLDERR "\nSummary of ";
+            print "Warnings and " if $verbose;
+            print "Errors:\n";
+            if ($verbose) {
+                foreach my $line (@warnings) {
+                    chomp $line;
+                    print OLDERR "$line\n" if ! defined $warnings{$line};
+                    $warnings{$line}=1;
+                }
+            }
+            foreach my $line (@errors) {
+                chomp $line;
+                print OLDERR "$line\n" if ! defined $errors{$line};
+                $errors{$line}=1;
+            }
+        }
+    }
+}
+
+# DISPLAY causes problems with qrsh
+if (defined ($ENV{DISPLAY} ) ) {
+    delete $ENV{DISPLAY};
+}
+
+our @svars;
+our @avars;
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    if (! ($lve_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $lve_root = $pwd;
+        $lve_root .= "/$0";
+        $lve_root =~ s:lve$::;
+        $lve_root =~ s://:/:g;
+        chdir $lve_root;
+        $lve_root = `pwd`;
+        chomp $lve_root;
+        chdir $pwd;
+        $lve_root .= "/lve";
+    }
+    $lve_root =~ s:/bin/lve::;
+    unshift @INC, "$lve_root/lib/perl" if -d "$lve_root/lib/perl";
+    local $"=",";
+    
+    @svars = qw/ accurateMode astaInputSlew astaOutputCap astaThreads astaWalltime extractTemp hsimAccurate hsimPrsCap hsimPrsDelay hsimPrsMaxRes hsimPrsMinRes hsimVdd internalRules internalWires layoutScaleX layoutScaleY maxAlintBinNum maxBumpFanin maxDelayFanin maxF maxNodePerAlintBin minAccurateC minAccurateR minAccurateRC minC minCC minExtractedC minExtractedR minR minRC pdk_root prsTau reduce_mode reduced_dspf slintAbsMargin slintInputSlew slintOcvMargin traceAll traceInternal traceR probePorts probeTopPorts probeGates/;
+
+    @avars = qw/ bumpCC delayCC bumpTau delayTau astaTau time true corner temp mode view_estimated view_extracted timed_delay /;
+
+    my @vars =();
+    push @vars,map { "\@$_"; } @avars;
+    push @vars,map { "\$$_"; } @svars;
+    eval "our (@vars);";
+}
+
+
+use LveStatus;
+use LveUtil;
+use LveDB;
+
+my $develop=0;
+
+my $doc = <<DOC;
+Copyright 2003 Fulcrum Microsystems.  All rights reserved.
+Authors: Andrew Lines, Clayton Otey, Chris Brichford
+
+<h2>Other documentation</h2>
+The <package lve> package has a listing of lve related docs that aren't specific to this script.
+
+<h2>Description</h2>
+<p> This script is a front end for the back-end lve build-system, which is implemented with <a href=http://internal/eng/depot/sw/infrastructure/build-system/main/filetypes/castfiles>makefiles</a>.  The makefiles are located with the rest of the <a href=http://internal/eng/depot/sw/infrastructure/build-system/main>build-system</a>.  There are other make-files <a href=http://internal/eng/depot/sw/cad/lve/main/build-system>here</a>. </p>
+
+<h2>Implementation</h2>
+Here's a list of implementation miscellany.  I only discuss implementation specific to this script.
+
+<dl>
+<dt> Running make
+<dd> We create a makefile temp directory in /tmp.  Here we put a top level Makefile which just includes: 
+<dl>
+<dt> globals.mk 
+<dd> Defines make variables for build-system which don\'t affect the results.
+<dt> <a href=http://internal/eng/depot/sw/cad/lve/main/build-system/lveMakefile>static lve Makefile</a>
+<dd> Sets up make, and defines make variables for use in lve commands (e.g. for GNUFIND) by loading <a href=http://internal/eng/depot/sw/infrastructure/build-system/main/systemtypes>system dependent makefiles</a> and includes <a href=http://internal/eng/depot/sw/infrastructure/build-system/main/filetypes/castfiles/once.mk>once.mk/</a>
+<dt> targets.mk
+<dd> Describes which targets to make and turns options which affect the results into make variables.  We bootstrap the <a href=http://internal/eng/depot/sw/infrastructure/build-system/main/filetypes/castfiles/dir.mk>lve make rules/</a> by forcing make to load cell.mk in every cell directory in the output tree.
+</dl>
+</dd>
+
+<dt> slurping
+<dd> --slurp-dir and --slurp=1 can be used in conjuction with a normal lve run.
+It will currently just work for cell.gds2, cell.spice_gds2, extract.err: the
+nasty ones.
+The implementation works as follows:
+For each cell:
+<ol>
+<li> When enumerating targets, check to see if the corresponding cell directory under the slurp_dir has a cell.cdl and df2.d file for each view we have targets under.
+<li> If so, include \$cellpath/\$view/slurp.mk in the lve run.
+<li> slurp.mk will be created by the <a href=http://internal/eng/depot/sw/infrastructure/build-system/main/filetypes/castfiles/dir.mk>build-system</a>.  It depends on the cdl files
+and df2.d files in the output_dir and slurp_dir.  It checks to see if the cell.cdl files and the dfII referenced by the df2.d files are the same in the output_dir and the slurp_dir.  If they match, slurp.mk will include castfiles/slurp_cell_view.mk.  If not, slurp.mk will be empty; there will be no slurping going on here, because we cant guarantee the results will be properly up to date between the output_dir and slurp_dir in this case.
+<li> slurp_cell_view.mk will check to see if the slurp_dir files exist: if so, it tells make the rule to copy over the files from the slurp_dir to the output_dir. 
+</ol>
+
+<dt> renaming
+<dd> Different tasks in lve use different character spaces.
+ e.g. the lvs task uses special cadence names, i.e. replaces '(' with '-L', and so on, because the dfII source has cadence names, because it doesn\'t accept '(' in cellnames
+ The make rules for different tasks get the names they need from the \$cellpath/.cellname file which we create in this script.
+ First we have to do the renaming with the java 'rename' tool
+
+<dt> partial extraction
+<dd> All we need to do for partial extraction here is include special cellnames corresponding to cellplusminus and/or implied subtypes(.0) in the .cellname file.  See build-system for a description
+<dt> long cell names
+    <dd> For long cellnames,esp. for cellplusminuses, we md5-sum components of the cellname so that they don\'t exceed any filesystem limits.
+
+<dt> log files/output
+<dd> The log files are lve.log.XXXX files that contain a build descriptor, the usage string, and stdout/stderr of the make rocess.
+
+<dt> pdk
+<dd> The --fulcrum-pdk-root option is treated specially.  When parsing options, we look for this option before doing anything else.  We get defaults from the pdk in <a href=http://internal/eng/depot/hw/layout/nv90/pdk/main/Fulcrum/lve/lve.config>lve.config</a> inside the pdk.
+See LveUtil::parseArgs()
+
+Also, we pass the FULCRUM_PDK_PACKAGE_ROOT environment variable for qb to use for dumping out .diag files.
+
+</dl>
+DOC
+
+# start doing things
+
+# set output list separator
+$" = ",";	
+
+# get paths to tools we might need to use
+my $os_type=`uname -s`; chomp $os_type;
+my $arch_type=`uname -m`; chomp $arch_type;
+my $os_arch="$os_type-$arch_type";
+my $lve_resummarize = "$lve_root/bin/lve_resummarize";
+$lve_resummarize = "lve_resummarize";
+my $cast_query = `which cast_query`;
+chomp $cast_query;
+
+# files and paths
+my $cast_dir        = "$ENV{HOME}/hw/cast";
+my $spec_dir        = "$ENV{HOME}/hw/layout/tsmc13/spec";
+my $dfII_dir        = "$ENV{HOME}/hw/layout/tsmc13/dfII";
+our $pdk_root       = "$ENV{FULCRUM_PDK_ROOT}";
+our $pdk_extract_root = $pdk_root;
+my $build_root      = "${lve_root}/share/build";
+my $output_dir      = "$ENV{PWD}";
+my $arg_output_dir  = $output_dir;
+my $slurp_dir       = "";
+my $deleteExtractDir= 1;    # clean up after extraction
+my $keepHlvsDir= 0;         # clean up after hlvs
+my $keepHdrcDir= 0;         # clean up after hdrc
+my $keepDrcDir= 0;          # clean up after drc
+my $keepFrcDir= 0;          # clean up after frc
+my $keepTotemDir= 0;        # clean up after frc
+my $keepLvsDir= 0;          # clean up after lvs
+my $hsimDeleteFiles= 1;
+my $monte_carlo=0;
+my $start_time=2;
+my $merge_paths=0;
+my $extract_corner="typical";
+my $extractdir="";
+my $custom_config = "$ENV{PWD}/custom.config"; # extra jauto options
+my $tech_asp="tech.asp";
+my $tech_alint_asp="tech_alint.asp";
+my $alint_asp = "";
+my $alint_in = "";
+my $aspice_asp = "";
+my $aspice_in = "";
+my $aspice_extra_asp = "";
+my $alint_extra_asp = "";
+my $aspice_digital_time = 0;
+my $cell_localprops="";
+my $cell_nodeprops="";
+
+# aspice/alint/jlvs settings
+my $digital_time_unit = 1e-13;
+my $alint_dynamic_only = 0;
+my $lib_static_only = 1;
+my $max_stat_ratio = 40;
+my $min_stat_ratio = 4;
+my $routed;
+my $cdl_name_map = "";
+
+# rte options
+
+my $digitalDelay ="off";
+my $estimatedDelay = "off";
+my $measuredDelay ="off";
+my $depth = -1;
+my $cycleCount = 0;
+my $no_cell_lock = 0;
+my $useMeasuredDelay ="on";
+my @rtedeps;
+
+# general tool options
+my $namedResistorLayers="";
+my $tableTransistor = 0;
+my $countScenarios = 0;
+my $qsub_arch_arg = "lx24-amd64";
+my $qsub_extras = "";
+my %qsub_extras = ();
+my $mem        = "500M";
+my $lowmem     = "1024M";
+my $hard       = 1;
+my $hardLimit  = 0;
+my $maxHeapSize = "512M";
+my $maxHeapSizeSet = 0;
+my $memSet = 0;
+my %memSet = ();
+my $extractMem = "500M";
+my $javaFlags = "-server";
+my $disk_space = "4G";
+my $jobs      = 1;
+my $qsub      = 1;
+my $ignoreNVN = 0;
+my $ignoreDanglingPinCheck = 1;
+my $blackboxHercules = 0;
+my $hlvsmode = "flat";
+my $hlvs_graybox_list = "";
+my $qx        = 0;
+my $graybox_list = "";
+my $customSpice = "";
+my $customSpiceInc = "/dev/null"; # avoids errors in once.mk
+my $justPrint = 0;
+my $doLeakage  = 1;
+my $doInverterLeakage = 1;
+my @delayFast = (0,1);
+my $makeFlags = "";
+my $lef_file = "";
+my $def_file = "";
+my $priority  = "-200";
+my $slurp     = 0;
+my $sixtyfivemode = 0;
+my $lambda    = 0;
+my $do_summarize = 0;
+my $do_sort      = 1;
+my $taskLock  = 0;
+my $bit64 = 0;
+my $remote = "";
+my $skip_sub_lve = 1;
+my $big_lef = 1;
+my $star_rc=1;
+my $simplex=0;
+my $extractPower='DEVICE_LAYERS';
+my $isopotentialLayers="";
+my $graybox_mode = "";
+my $abstract_view = "abstract";
+my $sub_lve_root_dir = "";
+my $globalQSUBMemFlags = "";
+my %globalQSUBMemFlags=();
+my $globalQSUBLowFlags = "";
+my $numMegs = getNumMegabytesFromMemorySizeStr( $mem );
+my $lowMegs = getNumMegabytesFromMemorySizeStr( $lowmem );
+my %numMegs = ();
+my $extractNumMegs = getNumMegabytesFromMemorySizeStr( $extractMem );
+my $maxHeapSizeNumMegs = getNumMegabytesFromMemorySizeStr( $maxHeapSize );
+our @mode=();
+our @view_mode_order=();
+our @view_extracted=();
+our @view_estimated=();
+our @timed_delay=();
+our @pvt=();
+our @temp=();
+our @corner=();
+our @true=();
+our @delayTau=();
+our @astaTau=(50);
+our @delayCC=();
+our @bumpTau=();
+our @bumpCC=();
+our @bump_source_pvt=();
+our @time=();
+our @threshPercent=();
+our $traceR;
+our $probeTopPorts;
+our $probePorts;
+our $probeGates;
+our $maxF=10e9;
+our $extractTemp=90;
+our $reduced_dspf=0;
+our $reduce_mode="NO";
+our $tail_comments=0;
+my %valid_reduce_modes = (
+    "HIGH"           => 0,
+    "NO_EXTRA_LOOPS" => 0,
+    "YES"            => 0,
+    "NO"             => 1,
+    "LAYER"          => 1,
+);
+our $hsimAccurate;
+our $hsimVdd;
+our $hsimPrsCap='';
+our $hsimPrsDelay='';
+our $hsimPrsMaxRes='';
+our $hsimPrsMinRes='';
+our $minR;
+our $minC;
+our $minExtractedR;
+our $minExtractedC;
+our $minCC;
+our $internalWires;
+our $internalRules;
+our $maxBumpFanin;
+our $maxDelayFanin;
+our $layoutScaleX;
+our $layoutScaleY;
+our $nowellplugs=0;
+our $mmonitor=0;
+our $astaInputSlew=14;
+our $astaOutputCap=1;
+our $astaWalltime=0;
+our $astaThreads=2;
+our $slintInputSlew=150;
+our $slintAbsMargin=25;
+our $slintOcvMargin=0.9;
+our $alint_raw=1;
+our $bump_debug=0;
+our $power_sag=0;
+our $static_switchV = 33;
+our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
+
+# sweep options
+my @skip = ();
+my @validtasks = (
+    "alint",
+    "antenna",
+    "aspice",
+    "asta",
+    "captally",
+    "coverage",
+    "drc",
+    "extract",
+    "fakelib",
+    "frc",
+    "gds2",
+    "hdrc",
+    "hlvs",
+    "hsim",
+    "xa",
+    "hspice",
+    "jlvs",
+    "lef",
+    "lib",
+    "lvs",
+    "plt",
+    "rte",
+    "slint",
+    "spef",
+    "stats",
+    "cmm",
+    "totem"
+);
+my @task = ("hdrc","drc","lvs","jlvs","extract","aspice","alint","stats","captally","lib", "plt","rte", "apl"); # which types of sims to run
+my %taskSet = (); # hashed by task, 1 if that task used at all
+
+# target hash (cell->target list)
+my %targetSet = (); # make targets
+my %targetSet_raw = (); # make targets
+my %includeSet = (); # make includes
+my $ERROR = 0; # accumulate any errors
+my %longPathMap = (); # map from a cell dir to partial extract dirs for that cell
+
+# parse command line
+my @options = ();
+my @defaultOptions = ();
+my @defaultArgs = ();
+
+# get pdk root from args, and parse the arguments into options
+# which are either cellnames (scalars) or key-value pairs (array references)
+$pdk_root=&parseArgs(\@ARGV,\@options);
+# also pre-parse the cell-type arg and no lock
+foreach my $pair (@options) {
+    if (ref ($pair) eq "ARRAY") {
+        my ($key,$value)=@{$pair};
+        $value=1 if ! defined $value;
+        $cell_type=$value if ($key eq 'cell-type');
+        $no_cell_lock=$value if ($key eq 'no-cell-lock');
+        $output_dir=canonicalizePath($value) if ($key eq 'output-dir');
+    }
+}
+my $haslvedb=1;
+my $hasargoutputdirtxt=1;
+die usage() . "You must specify --fulcrum-pdk-root=" if(!$pdk_root);
+$haslvedb=0;
+$hasargoutputdirtxt=0;
+# include default arguments
+&includeConfig("$pdk_root/share/Fulcrum/lve/lve.config",\@defaultArgs);
+# modify defaults from cell_type
+if ($cell_type ne "") {
+    my %opt=();
+    my $defdbh=lve_db_connect("$pdk_root/share/Fulcrum/lve");
+    my $hasdata=0;
+    if ($defdbh) {
+        my $fst = lve_db_select($defdbh, "*", "default_options","pdk = 'tsmc28:$cell_type'");
+        foreach my $row (@$fst) {
+            my ($pdk,$arg,$val)=@$row;
+            $val =~ s:\$packageroot\$:$pdk_root:;
+            $opt{$arg}=$val;
+            $hasdata=1;
+        }
+    }
+    lve_db_disconnect($defdbh);
+    if ($hasdata) {
+        my @opt=();
+        my %found=();
+        foreach my $pair (@defaultArgs) {
+            $pair =~ /--(\S+)=(\S+)/;
+            my $key=$1;
+            my $value=$2;
+            $found{$key}=1;
+            if (defined ($opt{$key})) {
+                push @opt, "--$key=$opt{$key}";
+            }
+            else {
+                push @opt, $pair;
+            }
+        }
+        foreach my $key (keys %opt) {
+            if (! defined ($found{$key})) {
+                push @opt, "--$key=$opt{$key}";
+            }
+        }
+        @defaultArgs=@opt;
+    }
+}
+# parse them into options
+&parseArgs(\@defaultArgs,\@defaultOptions);
+# process defaults
+&processOptions(\@defaultOptions);
+
+if ( $extra_extract_equiv ne "" and ! -s $extra_extract_equiv) {
+    print STDERR "Warning: extra-extract-equiv file does not exist or is empty.\n";
+    $extra_extract_equiv="";
+}
+# pre-parse output-dir
+my @output_dir=();
+my %output_dir=();
+my $selected_output_dir="";
+foreach my $opt (@options) {
+    if (ref ($opt) eq "ARRAY") {
+        my ($k,$v)=@{$opt};
+        if ($k eq "output-dir") {
+            @output_dir=();
+            %output_dir=();
+            $selected_output_dir="";
+            my @arg=();
+            foreach my $dir (split(/:/, $v)) {
+                `mkdir -p "$dir"`;
+                if ( -d "$dir") {
+                    push @output_dir, canonicalizePath($dir);
+                    my $x=`/bin/df -P $dir | tail -1`;
+                    $x =~ s/\s+/ /g;
+                    my ($x1,$x2,$x3,$avail)=split(/\s/, $x);
+                    # rand to allow distribution between equal or nearly equal partitions
+                    $output_dir{$output_dir[$#output_dir]}=$avail-rand(1000);
+                    push @arg, $output_dir[$#output_dir];
+                }
+            }
+            $selected_output_dir=$output_dir=$output_dir[0];
+            $arg_output_dir=join(":", @arg);
+        }
+    }
+}
+if ($selected_output_dir eq "") {
+    # default of '.'
+    $selected_output_dir=$arg_output_dir=$output_dir=$output_dir[0]=canonicalizePath(".");
+    $output_dir{$output_dir}=1000;
+}
+if ( -f "$output_dir/invalid-lvedir") {
+    my $parent=`cat $output_dir/arg_output_dir.txt`;
+    chomp $parent;
+    $parent =~ s/:.*//;
+    print STDERR "Error: you chose a rotating lve subdir as an output dir\n";
+    print STDERR "the parent is: $parent\n";
+    print STDERR "and MUST be first on the lve output_dir list\n";
+    exit 1;
+}
+# selected dir with largest available space
+foreach my $dir (@output_dir) {
+    if ($output_dir{$dir} > $output_dir{$selected_output_dir}) {
+        $selected_output_dir=$dir;
+    }
+    if ($dir ne $output_dir) {
+        `touch "$dir/invalid-lvedir"`;
+    }
+}
+my $stat = stat ("$output_dir");
+die "Cannot stat $output_dir" if (! defined $stat->mode);
+my $changedoutput=0;
+if ( -f "$output_dir/arg_output_dir.txt" ) {
+    my $content=`cat "$output_dir/arg_output_dir.txt"`;
+    chomp $content;
+    my @content=split(/:/, $content);
+    # in case the netapp partition changes...
+    foreach my $c (@content) {
+        $c=canonicalizePath($c);
+    }
+    $content=join(":", @content);
+    if ($content ne $arg_output_dir) {
+        print STDERR "Severe Warning: You have changed the output-dir list\n";
+        print STDERR "   old list: $content\n";
+        print STDERR "   new list: $arg_output_dir\n";
+        print STDERR "Continue (y/N)? ";
+        my $ans=<STDIN>;
+        if ( ! ($ans =~ /y/i)) {
+            exit 1;
+        }
+        $changedoutput=1;
+    }
+}
+else {  
+    $changedoutput=1;
+}
+$hasargoutputdirtxt=1 if ( -s "$output_dir/arg_output_dir.txt");
+foreach my $dir (@output_dir) {
+    if ($changedoutput or ! -f "$dir/arg_output_dir.txt") {
+        open (PX, ">$dir/arg_output_dir.txt");
+        print PX "$arg_output_dir\n";
+        close PX;
+    }
+}
+my $dirmode = ($stat->mode & 02777);
+my $filemode = ($stat->mode & 0666);
+$filemode |= 0444; # make all readable
+$dirmode |= 0110; # make all group descendable, not necessarily readable
+my $odirmode=sprintf("%o", $dirmode);
+my $gid = $stat->gid;
+my @g=getgrgid($gid);
+my $groupname=$g[0];
+undef @g;
+my $sgid = ($dirmode & 02000) ? 1 : 0;
+my $umask = ( ( ~ $filemode ) & 0666);
+umask $umask;
+if ($sgid) {
+    foreach my $dir (@output_dir) {
+        if ($dir ne $output_dir) {
+            `chgrp $groupname "$dir" 2>/dev/null`;
+            `chmod $odirmode "$dir" 2>/dev/null`;
+        }
+    }
+}
+# in case another tool wants this info
+$ENV{LVE_UMASK}=$umask;
+$ENV{LVE_GID}=$gid;
+$ENV{LVE_GRPNAME}=$groupname;
+$ENV{LVE_SGID}=$sgid;
+$ENV{LVE_DIRMODE}=$dirmode;
+$ENV{LVE_FILEMODE}=$filemode;
+# rename
+my $rename = "$lve_root/bin/rename";
+$rename = "rename";
+my %gds2Name = ();
+my %cadenceName = ();
+my @cells = ();
+my %celllock=();
+my @flock;
+my $flocknr=0;
+foreach my $option (@options) {
+    # only scalars are cellnames
+    if (ref ($option) ne "ARRAY") {
+        my ($cell,$envs,$nodes) = split(":",$option);
+        my ($basecell,$plusminus) = partition_fqcnminus($cell);
+        my $celldir=$basecell;
+        $celldir =~ s/\./\//g;
+        my $scelldir="$selected_output_dir/$celldir";
+        $celldir="$output_dir/$celldir";
+        my $unlocked=1;
+        if ( ! -e "$celldir") {
+            `mkdir -p "$scelldir"`;
+            if ($scelldir ne $celldir) {
+                my $basecelldir=$celldir;
+                $basecelldir =~ s:/[^/]+$::;
+                `mkdir -p "$basecelldir"`;
+                my $rv=symlink $scelldir, $celldir;
+            }
+        }
+        if ( -d "$celldir") {
+            if ( ! $no_cell_lock) {
+                my $lockfile="$celldir/cell.lock";
+                if (open ($flock[$flocknr], ">>$lockfile")) {
+                    $unlocked=flock($flock[$flocknr], LOCK_EX | LOCK_NB);
+                    if ( ! $unlocked ) {
+                        print STDERR "Cell $basecell cannot be run now due to a cell lock\n";
+                        close $flock[$flocknr];
+                    }
+                }
+                else {
+                    print STDERR "Cell lockfile cannot be created for $cell\n";
+                    $unlocked=0;
+                }
+                $flocknr++;
+            }
+            else {
+                $unlocked=1;
+            }
+        }
+        else {
+            print STDERR "Cannot create or detect $celldir\n";
+            $unlocked=0;
+        }
+        push @cells,$basecell if $unlocked;
+        $celllock{$basecell}=1 if ! $unlocked;
+    }
+}
+&reName($rename,"cast","cadence","cell",\%cadenceName,\@cells);
+&reName($rename,"cast","gds2","cell",\%gds2Name,\@cells);
+
+# and finally process all the command line options
+&processOptions(\@options);
+# convert taus from ps to seconds
+if ($sigma_factor < 0 or $sigma_factor > 1) {
+   print STDERR "Sigma-factor of $sigma_factor is out of range 0..1\n";
+   exit 1;
+}
+
+# usage banner
+if ( ! @cells) {
+    die usage()."No cells can be run\n" if ! @cells;
+    exit 1;
+}
+
+# derived variables
+$start_time *= 1e-9; # convert to ns
+our $prsTau = int($prsTau+0.5) * 1e-12;
+for (my $i=0; $i<@delayTau; $i++) { $delayTau[$i] = int($delayTau[$i] + 0.5) * 1e-12; }
+for (my $i=0; $i<@bumpTau; $i++)  { $bumpTau[$i]  = int($bumpTau[$i] + 0.5) * 1e-12; }
+
+$haslvedb=1 if ( -s "$output_dir/lvedb.db");
+my $lvedbfile=lve_db_filename($output_dir);
+$usedb=1 if ( -s "$lvedbfile" and -w "$lvedbfile" );
+
+if ($usedb) {
+    $dbprefix=lve_create_db($output_dir, $pdk_root, $dbprefix);
+    if ( -w "$lvedbfile" or $dbprefix ne "") {
+        if ( -w "$lvedbfile") {
+            my $stat=stat("$lvedbfile");
+            my $mode=$stat->mode;
+            $mode |= 020;
+            chmod $mode, "$lvedbfile";
+        }
+        my $defdbh=lve_db_connect("$pdk_root/share/Fulcrum/lve", "");
+        my $dbh=lve_db_connect($output_dir, $dbprefix);
+        lve_db_fix($dbh); # add raw column to database
+        if ($dbh and $defdbh) {
+            &defaultOptions($defdbh);
+            foreach my $opt (sort keys %defaultvalues) {
+                if ( ! defined $defaultvalues{$opt}) {
+                    $defaultvalues{$opt}="undef";
+                }
+            }
+            &setOptions();
+            foreach my $opt (sort keys %optionvalues) {
+                if ( ! defined $optionvalues{$opt}) {
+                    $optionvalues{$opt}="undef";
+                }
+            }
+            foreach my $fqcn (@cells) {
+                my $rows=&previousOptions($dbh, $fqcn);
+                my $changed=0;
+                foreach my $opt (sort keys %previousvalues) {
+                    if ( ! defined $previousvalues{$opt}) {
+                        $previousvalues{$opt}="undef";
+                    }
+                }
+                foreach my $opt ((sort keys %optionvalues), "output-dir") {
+                    if (defined($previousvalues{$opt}) and $previousvalues{$opt} ne $optionvalues{$opt}) {
+                        print "--$opt changed from $previousvalues{$opt} to $optionvalues{$opt}\n";
+                        $changed++;
+                    }
+                }
+                my @update=();
+                foreach my $opt ((keys %defaultvalues),(keys %optionvalues)) {
+                    $defaultvalues{$opt}="undef" if ! defined $defaultvalues{$opt};
+                    $optionvalues{$opt}="undef" if ! defined $optionvalues{$opt};
+                    if ($defaultvalues{$opt} ne $optionvalues{$opt}) {
+                        push @update, "$opt=$optionvalues{$opt}" if ! defined ($dontsave{$opt});
+                    }
+                }
+                push @update, "output-dir=$arg_output_dir";
+                if (@update) {
+                    foreach my $v (@update) {
+                        $v =~ s/\s/\\b/g;
+                    }
+                    my $update=join(" ", @update);
+                    my $cells="cells";
+                    $cells=$dbh->{prefix}."_cells" if $dbh->{prefix} ne "";
+                    if ($rows) {
+                        lve_db_do($dbh, "update $cells set args='$update' where fqcn='$fqcn'");
+                    }
+                    else {
+                        lve_db_do($dbh, "insert into $cells ( fqcn, args ) values( '$fqcn', '$update' )");
+                    }
+                    my $taskargs="taskargs";
+                    $taskargs=$dbh->{prefix}."_taskargs" if $dbh->{prefix} ne "";
+                    my @dt=localtime();
+                    my $now=sprintf("%04d-%02d-%02d %02d:%02d:%02d", $dt[5]+1900,$dt[4]+1,$dt[3],$dt[2],$dt[1],$dt[0]);
+                    foreach my $u (@update) {
+                        $u="" if ($u =~ /^(task|jobs|make|summarize|keep-all|output-dir)=/);
+                    }
+                    $update=join(" ", @update);
+                    $update =~ s/\s+$/ /;
+                    $update =~ s/^\s+//;
+                    $update =~ s/\s+/ /g;
+                    foreach my $task (@task) {
+                        my $fst = lve_db_select($dbh, "args,datetime","taskargs", "fqcn='$fqcn' and task='$task'");
+                        my $rows=0;
+                        my $prevarg="";
+                        my $prevdatetime="0000-00-00 00:00:00";
+                        my $matchtime=undef;
+                        foreach my $row (@$fst) {
+                            $rows++;
+                            my ($arg,$datetime)=@$row;
+                            if (($prevdatetime cmp $datetime) < 0) {
+                                $prevdatetime=$datetime;
+                                $prevarg=$arg;
+                            }
+                            $matchtime=$datetime if ($arg eq $update);
+                        }
+                        my $cmd;
+                        if (defined $matchtime) {
+                            # do not duplicate prev run, just set the time stamp
+                            $cmd="update $taskargs set datetime='$now' where fqcn='$fqcn' and task='$task' and datetime='$matchtime'";
+                        }
+                        elsif ($prevarg ne $update) {
+                            # add a new entry for changed args or new run
+                            $cmd="insert into $taskargs (fqcn, datetime, task, args) values ('$fqcn', '$now', '$task', '$update')";
+                        }
+                        else {
+                            # this should actuall never happen... should have matched above
+                            $cmd="update $taskargs set datetime='$now' where fqcn='$fqcn' and task='$task' and datetime='$prevdatetime'";
+                        }
+                        lve_db_do($dbh, $cmd);
+                    }
+                }
+            }
+            lve_db_disconnect($dbh);
+            lve_db_disconnect($defdbh);
+        }
+        else {
+            print STDERR "Error: cannot connect to lve database\n"
+                if (! $dbh );
+            print STDERR "Error: cannot connect to pdk database\n"
+                if (! $defdbh );
+        }
+    }
+}
+# check pvt properly entered
+foreach my $pvtval (@pvt) {
+    my @f=split(/:/, $pvtval);
+    my $err=0;
+    $err=1 if ( $#f != 2);
+    $err=2 if ( ! $err and ! ($f[0] =~ /^[a-zA-Z_\d]+$/));
+    $err=3 if ( ! $err and ! ($f[1] =~ /^[\d\.]+$/));
+    $err=4 if ( ! $err and ! ($f[2] =~ /^-?\d+$/));
+    if ($err) {
+        print STDERR "--pvt malformed ".join(",", @pvt)."\n";
+        exit 1;
+    }
+}
+# see bug 11704, removed output_dir
+my $aspice_path="$lve_root/share/asp:$pdk_root/share/Fulcrum/asp:" .
+    "$pdk_root/share/Fulcrum/bsim:$pdk_root/share/Fulcrum/bsim/\$\$ASPICE_CORNER";
+my $extract_starrc="extract_starRC";
+
+# check budgetcapindex
+if ($budgetcapindex < 0 or $budgetcapindex > $#delayCap) {
+    $budgetcapindex=0;
+    print STDERR "Warning: selected budgetcapindex out of range, set to 0\n";
+}
+$budgetcapvalue=sprintf("%.0ff", $delayCap[$budgetcapindex]*1e15);
+$sub_lve_root_dir = $output_dir
+    if ( $sub_lve_root_dir eq "" or ! -d $sub_lve_root_dir);
+
+# check lef file and def file
+if($qx){
+    if( !($lef_file eq "") and !(-e $lef_file) ){ 
+        die usage() . "No valid $lef_file for QX extraction";
+    }
+    if( !($def_file eq "") and !(-e $def_file) ){ 
+        die usage() . "No valid $def_file for QX extraction";
+    }
+
+}
+
+if( !($graybox_list eq "") and !(-e $graybox_list) ){ 
+    die usage() . "No valid $graybox_list for graybox extraction";
+}
+
+if( !($graybox_list eq "") and ($graybox_mode eq "") ){
+    $graybox_mode="custom";
+}
+
+# Check that we've defined everything we need.
+$accurateMode = ($mode[0] eq "accurate") ? 1 : 0;
+$reduced_dspf = 0 if $accurateMode;
+$reduce_mode = "NO" if $accurateMode;
+$maxAlintBinNum = 1 if $alint_in ne "" or $alint_asp ne "";
+$maxNodePerAlintBin = 1000000 if $alint_in ne "" or $alint_asp ne "";
+
+if (($customSpice ne '') != grep(/custom/, @mode)) {
+    die usage() . "A custom SPICE file can be specified if and only if --mode=custom";
+}
+
+foreach my $svar (@svars) {
+    my $rv=eval "defined \$$svar or die";
+    if (! defined $rv) {
+        die usage();
+    }
+}
+foreach my $svar (@avars) {
+    my $rv=eval "\@$svar >= 0 or die";
+    if (! defined $rv) {
+        die usage();
+    }
+}
+
+$reduce_mode =~ tr/a-z/A-Z/;
+
+die "Invalid reduce-mode $reduce_mode" if (! defined ($valid_reduce_modes{$reduce_mode}));
+
+my %valid_arch = (
+    "Linux-i686" => "glinux",
+    "glinux" => "glinux",
+    "lx24-x86" => "glinux",
+    "lx26-x86" => "glinux",
+    "x86" => "glinux",
+    "Linux-x86_64" => "lx24-amd64",
+    "amd64" => "lx24-amd64",
+    "lx24" => "lx24-amd64",
+    "lx24-amd64" => "lx24-amd64",
+    "lx26-amd64" => "lx24-amd64",
+);
+
+foreach my $v (keys %valid_arch) {
+    if ($valid_arch{$v} eq "glinux") {
+        $valid_arch{$v} = "lx24-x86";
+    }
+}
+$valid_arch{linux}="lx*";
+$valid_arch{lx}="lx*";
+$valid_arch{"lx*"}="lx*";
+$valid_arch{any}="*";
+if (defined ($valid_arch{$qsub_arch_arg})) {
+    $qsub_arch_arg=$valid_arch{$qsub_arch_arg};
+}
+else {
+    $qsub_arch_arg="lx24-amd64";
+}
+# see bug 11962
+my %forceqsub = (
+    "drc" => 1,
+    "lvs" => 1,
+    "hlvs" => 1,
+    "extract" => 1,
+    "hsim" => 1,
+    "hspice" => 1,
+    "xa" => 1,
+    "hdrc" => 1,
+    "rte" => 1,
+);
+
+# exit if no targets or an ERROR
+if ($ERROR) { exit($ERROR); }
+if (!%targetSet) { 
+    print "ERROR: Target set empty, there is something to be done\n";
+    push @errors, "ERROR: Target set empty, there is something to be done\n";
+    print "Eg. SPICEable ENV? ...\n";
+    push @errors, "Eg. SPICEable ENV? ...\n";
+    die usage(); 
+}
+
+my $default_minmax = join("_", split(":","@timed_delay"));
+my @default_aspice_params = ("aspice","digital","@corner","@{true}V","@{temp}C","@{time}ns",$default_minmax);
+my @default_alint_params = ("alint","@corner","@{true}V","@{temp}C");
+my @default_spice_params = ("spice","digital","@corner","@{true}V","@{temp}C","@{time}ns");
+
+# set make globals (depended on)
+my $custom_config_string = -e $custom_config ? "--config=${custom_config}" : "";
+my $aspiceOptions = ($traceR ? "-traceR " : "") . 
+    ($traceInternal ? "-traceInternal " : "") .
+    ($traceAll ? "-traceAll " : "") .
+    ($tableTransistor ? "-table " : "") .
+    ($countScenarios ? "-count_scenarios " : "");
+my $globals = "";
+
+my $jflat_tools = "cdl,query";
+my $use_routed = 0;
+
+if($cycleCount > 0) {
+  $cycleCount =" --cycle-count=$cycleCount";
+}
+else{
+  $cycleCount ="";
+}
+if($measuredDelay ne "off") {$useMeasuredDelay = "on";}
+else {$useMeasuredDelay = "off";}
+
+if (defined ($routed)) {
+    $use_routed = $routed;
+}
+else {
+    if (($mode[0] eq "nogeometry") or
+        (($mode[0] eq "estimated") and ($view_estimated[0] eq "floorplan"))) {
+        $use_routed = 0;
+    }
+    else {
+        $use_routed = 1;
+    }
+}
+if(!(grep {/env/} @skip)) {
+    $jflat_tools = "$jflat_tools,new-aspice,env-ntpc,node-props,leaky-nodes,".
+                   "alint-scenarios,fanout,fanin";
+}
+if (defined($taskSet{hsim}) or defined($taskSet{hspice}) or defined($taskSet{xa}) or
+    defined($taskSet{totem}) or defined($taskSet{cmm})) {
+    $jflat_tools = "$jflat_tools,hsim";
+}
+
+my $alintBinEnum = "";
+for (my $i=0; $i<$maxAlintBinNum; $i++) {
+    $alintBinEnum .= $i . ' ';
+}
+
+our $sub_lve_cast_dir;
+our $sub_lve_spec_dir;
+our $sub_lve_dfII_dir;
+
+$sub_lve_cast_dir=$cast_dir;
+$sub_lve_spec_dir=$spec_dir;
+$sub_lve_dfII_dir=$dfII_dir;
+
+# choose old or new style of named-resistors for EM
+my $namedResistorArg="--named-resistors";
+if (!($namedResistorLayers eq "")) {
+    $namedResistorArg = "--named-resistor-layers $namedResistorLayers";
+}
+
+my @mode_order=("custom", "accurate",  "extracted",  "estimated",  "nogeometry");
+#my @mode_s = sort {$mode_order{$a}<=>$mode_order{$b}} @mode;
+#foreach my $mode (@mode_s) {
+#  foreach my $view (get_views($mode)) {
+#    push @view_modes, "$view/$mode";
+#  }
+#}
+if(scalar(@view_mode_order)==0){
+  foreach my $mode (@mode_order){
+    foreach my $view (get_views($mode)) {
+      push @view_mode_order, "$view/$mode";
+    }  
+  }
+}
+
+# pass parameters to makefile system
+{
+local ($") = " ";
+$globals = <<EOF;
+NOEXTRACTDEPS                    := $noextractdeps
+QSUB_ARCH_ARG                    := $qsub_arch_arg
+QSUB_EXTRAS                      := $qsub_extras
+MEMORY_ARG                       := $mem
+MAX_HEAP_SIZE                    := $maxHeapSize
+USE_ROUTED                       := $use_routed
+JFLAT_TOOLS                      := $jflat_tools
+CDL_NAME_MAP                     := $cdl_name_map
+CAST_PATH                        := ${cast_dir}:${spec_dir}
+CAST_DIR                         := ${cast_dir}
+SPEC_DIR                         := ${spec_dir}
+DFII_DIR                         := $dfII_dir
+SUB_LVE_CAST_DIR                 := ${sub_lve_cast_dir}
+SUB_LVE_SPEC_DIR                 := ${sub_lve_spec_dir}
+SUB_LVE_DFII_DIR                 := $sub_lve_dfII_dir
+LVE_PACKAGE_ROOT                 := $lve_root
+ASPICE_PATH                      := $aspice_path
+ASPICE_INCLUDE                   := $tech_asp
+ALINT_INCLUDE                    := $tech_alint_asp
+ALINT_IN                         := $alint_in
+ALINT_ASP                        := $alint_asp
+ALINT_DYNAMIC_ONLY               := $alint_dynamic_only
+LIB_STATIC_ONLY                  := $lib_static_only
+ASPICE_IN                        := $aspice_in
+ASPICE_ASP                       := $aspice_asp
+ASPICE_EXTRA_ASP                 := $aspice_extra_asp
+ALINT_EXTRA_ASP                  := $alint_extra_asp
+ASPICE_DIGITAL_TIME              := $aspice_digital_time
+MAX_STAT_RATIO                   := $max_stat_ratio
+MIN_STAT_RATIO                   := $min_stat_ratio
+CELL_LOCALPROPS                  := $cell_localprops
+CELL_NODEPROPS                   := $cell_nodeprops
+MAXF                             := $maxF
+DELETE_EXTRACT_DIR               := $deleteExtractDir
+DELETE_BUMPCHECK_DIR             := $delete_bumpcheck_dir
+KEEP_HLVS_DIR                    := $keepHlvsDir
+KEEP_HDRC_DIR                    := $keepHdrcDir
+KEEP_LVS_DIR                     := $keepLvsDir
+KEEP_DRC_DIR                     := $keepDrcDir
+KEEP_FRC_DIR                     := $keepFrcDir
+KEEP_TOTEM_DIR                   := $keepTotemDir
+TEMPERATURE                      := $extractTemp
+REDUCED_DSPF                     := $reduced_dspf
+REDUCE_MODE                      := $reduce_mode
+LAMBDA                           := $lambda
+HSIM_ACCURATE                    := $hsimAccurate
+HSIM_VDD                         := $hsimVdd
+HSIM_PRS_CAP                     := $hsimPrsCap
+HSIM_PRS_DELAY                   := $hsimPrsDelay
+HSIM_PRS_MIN_RES                 := $hsimPrsMinRes
+HSIM_PRS_MAX_RES                 := $hsimPrsMaxRes
+HSIM_DELETE                      := $hsimDeleteFiles
+PROBE_TOP_PORTS                  := $probeTopPorts
+PROBE_PORTS                      := $probePorts
+PROBE_GATES                      := $probeGates
+START_TIME                       := $start_time
+MINR                             := $minR
+MINC                             := $minC
+MINRC                            := $minRC
+MINEXTRACTEDR                    := $minExtractedR
+MINEXTRACTEDC                    := $minExtractedC
+MINACCURATER                     := $minAccurateR
+MINACCURATEC                     := $minAccurateC
+MINACCURATERC                    := $minAccurateRC
+MINCC                            := $minCC
+NAMED_RESISTOR_ARG               := $namedResistorArg
+LEFFILE                          := $lef_file
+DEFFILE                          := $def_file
+QX                               := $qx
+HLVS_GRAYBOX_LIST                := $hlvs_graybox_list
+GRAYBOX_LIST                     := $graybox_list
+GRAYBOX_MODE                     := $graybox_mode
+PRS_TAU                          := $prsTau
+POWER_SAG                        := $power_sag
+BUMP_SOURCE_PVT                  := @bump_source_pvt
+BUMP_CC                          := @bumpCC
+DELAY_CC                         := @delayCC
+DELAY_FAST                       := @delayFast
+BUMP_TAU                         := @bumpTau
+DELAY_TAU                        := @delayTau
+DELAY_CAP                        := @delayCap
+THRESH_PERCENT                   := @threshPercent
+STATIC_SWITCH_V                  := $static_switchV
+BUMP_DEBUG                       := $bump_debug
+MAX_NODE_PER_ALINT_BIN           := $maxNodePerAlintBin
+ALINT_BIN_ENUM                   := $alintBinEnum
+MAX_ALINT_BIN_NUM                := $maxAlintBinNum
+DO_LEAKAGE                       := $doLeakage
+DO_INVERTER_LEAKAGE              := $doInverterLeakage
+PRIORITY                         := $priority
+INTERNAL_WIRES                   := $internalWires
+INTERNAL_RULES                   := $internalRules
+ASPICE_OPTIONS                   := $aspiceOptions
+MAX_BUMP_FANIN                   := $maxBumpFanin
+MAX_DELAY_FANIN                  := $maxDelayFanin
+LAYOUT_SCALE_X                   := $layoutScaleX
+LAYOUT_SCALE_Y                   := $layoutScaleY
+DIGITAL_TIME_UNIT                := $digital_time_unit
+CUSTOM_JAUTO_CONFIG              := $custom_config_string
+DEFAULT_ASPICE_PARAMS            := @default_aspice_params
+DEFAULT_SPICE_PARAMS             := @default_spice_params
+DEFAULT_ALINT_PARAMS             := @default_alint_params
+VIEW_MODE_ORDER                  := @view_mode_order
+EXTRACTED_VIEW                   := @view_extracted
+ROOT_PROJECT_DIR                 := $spec_dir
+ROOT_TARGET_DIR                  := $output_dir
+ROOT_SLURP_DIR                   := $slurp_dir
+SIXTYFIVEMODE                    := $sixtyfivemode
+IGNORE_NVN                       := $ignoreNVN
+IGNORE_DANGLING_PIN_CHECK        := $ignoreDanglingPinCheck
+BLACKBOX_HERCULES                := $blackboxHercules
+HLVS_MODE                        := $hlvsmode
+SUB_LVE_ROOT_DIR                 := $sub_lve_root_dir
+ABSTRACT_VIEW                    := $abstract_view
+SKIP_SUB_LVE                     := $skip_sub_lve
+BIG_LEF                          := $big_lef
+STAR_RC                          := $star_rc
+EXTRACTPOWER                     := $extractPower
+ISOPOTENTIALLAYERS               := $isopotentialLayers
+ACCURATE_MODE                    := $accurateMode
+IGNORE_BULK                      := $nowellplugs
+MMONITOR                         := $mmonitor
+FULCRUM_PDK_PACKAGE_EXTRACT_ROOT := $pdk_extract_root
+EXTRACT_STARRC                   := $extract_starrc
+CUSTOM_SPICE                     := $customSpice
+CUSTOM_SPICE_INCLUDE             := $customSpiceInc
+MERGE_PATHS                      := $merge_paths
+EXTRACT_CORNER                   := $extract_corner
+EXTRACT_DIR                      := $extractdir
+LIBTRANSLATE                     := $libtranslate
+FAKESIZE                         := $fakesize
+BUDGETCAPINDEX                   := $budgetcapindex
+BUDGETCAPVALUE                   := $budgetcapvalue
+DOBUDGET                         := $dobudget
+EXTRACTSKIP6T                    := $extractskip6t
+HDRC_DENSITY                     := $hdrc_density
+ASTA_TAU                         := @astaTau
+ASTA_INPUT_SLEW                  := $astaInputSlew
+ASTA_OUTPUT_CAP                  := $astaOutputCap
+ASTA_WALLTIME                    := $astaWalltime
+ASTA_TAU_BOUND                   := $astaTauBound
+ASTA_THREADS                     := $astaThreads
+HERCULES_THREADS                 := $hercules_threads
+HSIM_THREADS                     := $hsim_threads
+HSPICE_THREADS                   := $hspice_threads
+EPLFIX                           := $eplfix
+EXTRA_EQUIV                      := $extra_extract_equiv
+STARRC1_EXTRA_OPTIONS            := $starRC1_extra_options
+MYSQLHOST                        := $mysqlhost
+MYSQLDB                          := $mysqldb
+MYSQLUSER                        := $mysqluser
+MYSQLPASSWORD                    := $mysqlpassword
+USEMYSQL                         := $usemysql
+USEDB                            := $usedb
+GDS_USE_TAG                      := $use_tag
+GDS_TAG_ORIENTATION              := $tag_orientation
+CLEAN_TRACE                      := $clean_trace
+DIGITALDELAY                     := $digitalDelay
+ESTIMATEDDELAY                   := $estimatedDelay
+MEASUREDDELAY                    := $measuredDelay
+CYCLECOUNT                       := $cycleCount
+DEPTH                            := $depth
+USEMEASUREDDELAY                 := $useMeasuredDelay
+RTEDEPS                          := @rtedeps
+SLINT_INPUT_SLEW                 := $slintInputSlew
+SLINT_ABS_MARGIN                 := $slintAbsMargin
+SLINT_OCV_MARGIN                 := $slintOcvMargin
+SIGMA_FACTOR                     := $sigma_factor
+DBPREFIX                         := $dbprefix
+REDONODES                        := $redonodes
+ENV_CAP_LOAD                     := $env_cap_load
+EOF
+}
+
+$maxHeapSizeNumMegs = $numMegs if $numMegs > $maxHeapSizeNumMegs;
+# if max-heap-size >= 2g, then on 32 bit systems, cannot create JVM, give 200m headroom
+$maxHeapSizeNumMegs -= 200 if $maxHeapSizeNumMegs > 2047-200 and $numMegs <= 2048;
+$numMegs = $maxHeapSizeNumMegs if $numMegs < $maxHeapSizeNumMegs;
+$maxHeapSize=$maxHeapSizeNumMegs."M";
+$mem=$numMegs."M";
+
+$bit64 = 1
+    if (!$qsub and ($os_arch eq "SunOS-sun4u" or $os_arch eq "Linux-x86_64") or
+        $qsub and
+            ($qsub_arch_arg eq "lx24-amd64" or
+                $maxHeapSizeNumMegs > 2048 or $numMegs > 2048) );
+# check if 64-bit mode is valid
+$qsub_arch_arg = "lx24-amd64" if $bit64 and $qsub_arch_arg =~ /^lx/;
+if ($bit64 and !($os_arch eq "SunOS-sun4u") and ! ($os_arch eq "Linux-x86_64") and
+        ! ($qsub and $qsub_arch_arg eq "lx24-amd64") ) {
+    error("--64=1 or large memory request requires a 64-bit machine");
+}
+
+# use small memory qsub servers if possible
+# $maxHeapSize = $mem if($numMegs > $maxHeapSizeNumMegs) and ! $maxHeapSizeSet;
+# extraction can't use bigger machines than other jobs
+$extractNumMegs = $numMegs if($numMegs < $extractNumMegs);
+# take advantage of the whole heap in java
+# but make sure java can handle it
+print "maxHeapSize $maxHeapSize\n" if $develop;
+
+# set qsub and java flags
+my %hardlimit=();
+my $hardlimit=$numMegs;
+$hardlimit = $maxHeapSizeNumMegs if $numMegs < $maxHeapSizeNumMegs;
+$hardlimit=int(($hardlimit+250)*1.2);
+$hardlimit=int(($hardlimit*1.2)+2000) if $bit64;
+$hardlimit = getNumMegabytesFromMemorySizeStr( $hardLimit ) if $hardLimit ne 0;
+$numMegs = $maxHeapSizeNumMegs if $numMegs < $maxHeapSizeNumMegs;
+foreach my $key (keys %numMegs) {
+$hardlimit{$key}=$numMegs{$key};
+$hardlimit{$key} = $maxHeapSizeNumMegs if $numMegs < $maxHeapSizeNumMegs;
+$hardlimit{$key}=int(($hardlimit{$key}+250)*1.2);
+$hardlimit{$key}=int(($hardlimit{$key}*1.2)+2000) if $bit64;
+$hardlimit{$key} = getNumMegabytesFromMemorySizeStr( $hardLimit ) if $hardLimit ne 0;
+}
+$lowMegs = $numMegs if $lowMegs > $numMegs;
+print "hardlimit=$hardlimit\n" if $develop;
+print "mem=$numMegs\n" if $develop;
+$notify = 1 if $hard;
+$globalQSUBMemFlags="-l mem=$numMegs";
+$globalQSUBMemFlags .= "M";
+$globalQSUBMemFlags.=",h_vmem=${hardlimit}M -m a" if $hard;
+$globalQSUBMemFlags.=" -m a" if $notify;
+foreach my $key (keys %numMegs) {
+$globalQSUBMemFlags{$key}="-l mem=$numMegs{$key}";
+$globalQSUBMemFlags{$key} .= "M";
+$globalQSUBMemFlags{$key}.=",h_vmem=${hardlimit{$key}}M -m a" if $hard;
+$globalQSUBMemFlags{$key}.=" -m a" if $notify;
+}
+$globalQSUBLowFlags="-l mem=$lowMegs";
+$globalQSUBLowFlags .= "M";
+$globalQSUBLowFlags .= " -m a" if $notify;
+$globalJreFlags = "--jre=$jreFlags" if $jreFlags ne "" and -d $jreFlags;
+my $globalJavaFlags="--max-heap-size=$maxHeapSize ";
+$globalJavaFlags.= " --jre-args='${javaFlags}'" unless $javaFlags eq "";
+$globalJavaFlags="--64 " . $globalJavaFlags if ($bit64);
+
+my $globalJavaLowFlags="--max-heap-size=1G ";
+$globalJavaLowFlags.= " --jre-args='${javaFlags}'" unless $javaFlags eq "";
+$globalJavaLowFlags="--64 " . $globalJavaLowFlags if ($bit64);
+
+# set environment variables here
+# for 64-bit cadence tools
+$ENV{CDS_AUTO_64BIT}="ALL" if ($bit64 and ($os_arch eq "SunOS-sun4u" or 
+                                          ($ENV{PATH} =~ /SEV41/)));
+# TEMP directory for certain tools (e.g. gdsIIWrite)
+$ENV{TEMP}="/scratch" if(!defined $ENV{TEMP} or $ENV{TEMP} eq "/tmp");
+# qb and build-system/filetypes/castfiles/once.mk
+$ENV{FULCRUM_PDK_PACKAGE_ROOT} = $pdk_root;
+
+# make command line
+$makeFlags = "$makeFlags -n " if($justPrint);
+
+# gather targets
+if($do_sort) {
+    print "lve: sorting targets...\n"  if($verbose);
+    @theTargets = sort { &target_value($b) <=> &target_value($a) } (keys %targetSet);
+    @theTargets_raw = sort { &target_value($b) <=> &target_value($a) } (keys %targetSet_raw);
+} else {
+    @theTargets = (keys %targetSet);
+    @theTargets_raw = (keys %targetSet_raw);
+}
+# gather includes
+my @includes = keys %includeSet;
+
+# create log file - make sure it's readable
+my $lognr=0;
+opendir (D, "$output_dir");
+my @logs=sort(grep(/lve\.log\./, readdir(D)));
+closedir D;
+$lognr = $#logs+1;
+foreach my $log (@logs) {
+    $log =~ s/lve\.log.//;
+    $log =~ s/\..*//;
+    if ($log =~ /^\d+$/) {
+        $log += 0;
+        $lognr = $log + 1 if $log >= $lognr;
+    }
+}
+undef @logs;
+our ($lveLog, $lveLogFileName) = tempfile(sprintf("lve.log.%04d.XXXX", $lognr), DIR => $output_dir );
+chmod $filemode, $lveLogFileName;
+chown -1, $gid, $lveLogFileName if $sgid;
+print "Log file is $lveLogFileName\n";
+
+# header for log file
+my $version = getVersion();
+print $lveLog `date`;
+print $lveLog "$version\n";
+print $lveLog "$ENV{USER}\n";
+print $lveLog "\n";
+print $lveLog usage(0);
+close($lveLog);
+
+# temp directory
+my_system("mkdir -p '$output_dir/temp'");
+`chgrp $gid "$output_dir/temp" &>/dev/null` if $sgid;
+chmod $dirmode, "$output_dir/temp";
+
+# wait files for cleanup
+my $lveWaitFiles = "$output_dir/temp/waitfiles.$$";
+
+# set global options that are not dependencies
+# or do not affect output
+my $options = <<EOF;
+LVE_WAIT_FILES                    := "$lveWaitFiles"
+LVELOG                            := $lveLogFileName
+BIT64                             := $bit64
+REMOTE                            := $remote
+TASKLOCK                          := $taskLock
+LVE_SKIP_TASKS                    := @skip
+CASTFILES                         := 1
+JUST_PRINT_MODE                   := $justPrint
+SLURP_MODE                        := $slurp
+QSUB                              := $qsub
+MEMORY_QSUB_FLAGS                 := $globalQSUBMemFlags
+MEMORY_LOW_FLAGS                  := $globalQSUBLowFlags
+WORKING_DIR                       := $output_dir/temp
+GLOBAL_JAVA_FLAGS                 := $globalJavaFlags
+GLOBAL_JRE_FLAGS                  := $globalJreFlags
+GLOBAL_JAVA_LOW_FLAGS             := $globalJavaLowFlags
+EXTRACT_MEM                       := $extractNumMegs
+DISK_SPACE                        := $disk_space
+BUILD_SYSTEM_ROOT                 := $build_root
+EOF
+
+# run make finally!
+print "lve: updating targets...\n" if($verbose);
+my $status = runMake(\@theTargets,\@includes);
+$status = runMake(\@theTargets_raw,\@includes) if (defined($taskSet{"alint"}) or defined($taskSet{"plt"}));
+
+my $tdir="";
+if ($output_dir =~ m:/nfs/site/disks/wdisk\.\d+/(.*):) {
+    $tdir=$1;
+}
+elsif ($output_dir =~ m:/p/work/[^/]+/(.*):) {
+    $tdir=$1;
+}
+elsif ($output_dir eq "/nfs/site/disks/lve/lve") {
+    $tdir="lve/lve";
+}
+open (INDEX, ">$output_dir/index.html");
+print INDEX <<EINDEX;
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Redirect</TITLE>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<meta http-equiv="Refresh" content="0;url=https://tsyvweb03.ts.intel.com/lve/index.php?lveroot=$tdir">
+</HEAD>
+<BODY>
+<script type="text/javascript" language="JavaScript1.2">
+<!--
+// Begin and hide
+window.location.replace('https://tsyvweb03.ts.intel.com/lve/index.php?lveroot=$tdir');
+// End hide -->
+</script>
+Go <a href="https://tsyvweb03.ts.intel.com/lve/index.php?lveroot=$tdir">Here</a>
+</body>
+</HTML>
+EINDEX
+
+# summarize results with lve_resummarize
+if($do_summarize){
+    print "lve: summarizing...\n" if($verbose);
+    my $cmd = "${lve_resummarize} --work-dir='$output_dir'";
+    system("$cmd >> '$lveLogFileName'");
+}
+open(LOG, "<$lveLogFileName");
+my $extractRC=0;
+while (<LOG>) {
+    $extractRC = 1 if /extract_starRC/ or /Star-RCXT/ or /extract_spef/;
+    $extractRC = 0 if /spice2aspice/ or /^Done *Elp=/;
+    my $ok = 0;
+    foreach my $str (@noerrstrings) {
+        $ok = 1 if (/$str/);
+    }
+    next if $ok;
+    # error filtering for spewage which comes from hercules and StarRCXT
+    s/^ *//;
+    push @errors, $_ if (/error/i and ! (/^warning/i) and ! (/Errors: *0/) and ! (/Error File/) and
+        ! (/"Error"/) and ! (/LAYOUT_ERRORS/) and
+            ((! (/grep /) and ! (/Summary/)) or $verbose or !$extractRC));
+    push @warnings, $_ if (/warning/i and ! (/Warnings: *0/) and $verbose);
+}
+close LOG;
+
+exit $status;
+
+
+### subs ###
+{
+    # static variables
+    my %tables = ();
+    my %valueCache = ();
+
+    # add a make target, and sort them based on their 
+    # current status
+    sub addTarget {
+        my ($cell,$task,$target,$line) = @_;
+        my $value = 0;
+        forcetarget($task,$target);
+        if($task eq "alint"){
+          if($target =~ /(alint\.raw|directives\.0)$/){
+            $targetSet_raw{$target} = 1;            
+          }else{
+            $targetSet{$target} = 1;        
+          }
+        }elsif($task eq "plt"){
+          #do alint first then plt
+          if($target =~ /plt\.raw$/){
+            $targetSet_raw{$target} = 1;            
+          }else{
+            $targetSet{$target} = 1;        
+          }
+        }else{
+          $targetSet{$target} = 1;        
+        }
+        $taskSet{$task} = 1;
+        if($do_sort and
+           !defined $valueCache{$target}) {
+            if( $target =~ /.raw/ ) {
+                my $indexTable = getIndexTable("$output_dir/index.table");
+                if(!defined $indexTable) {
+                    $do_sort = 0;
+                    return;
+                }
+                my $status = "NOT_TESTED";
+                if($cell and $indexTable->{$cell}) {
+                    $status = $indexTable->{$cell}->{uc($task)};
+                }
+                $value = &get_status_priority($status);
+            } elsif( ! ( -e "$output_dir/$target" ) ) {
+                $value = 1000;
+            }
+            $valueCache{$target} = $value;
+        }
+    }
+
+    # the priority of the target
+    sub target_value {
+        my ($target) = @_;
+        return $valueCache{$target};
+    }
+
+    # sort based on current status
+    # which we get from index.table
+    sub getIndexTable {
+        my ($file) = @_;
+        my $ret = $tables{$file};
+        return $ret if(defined $ret);
+        
+        my %table;
+        open(INDEX,"<$file") or return;   
+        while( <INDEX> ) {
+            chomp;
+            my @pairs = /([^ ]*)\:=([^ ]*) /g;
+            my %map = (@pairs);
+            my $cell = $map{"CELL"};
+            $table{$cell} = \%map;
+        }
+        close(INDEX);
+ 
+        $ret = \%table;
+        $tables{$file} = $ret;
+        return $ret;
+    }
+
+
+    # add a makefile that the build-system should include
+    sub addInclude {
+        my ($include) = @_;
+        $includeSet{$include} = 1;
+    }
+}
+
+sub runMake {
+    my ($targets,$includes) = @_;
+    my @targets = @{$targets};
+    my @includes = @{$includes};
+    
+    local $" = " \\\n  ";  
+    # FIX!!
+    my $working_dir  = tempdir( CLEANUP => $deletemakefiles );
+    chmod 02775, $working_dir;
+    print STDERR "Makefiles in $working_dir\n" if ! $deletemakefiles;
+
+    print "Makefiles in $working_dir\n" if ($verbose);
+
+    my $globals_mk   = "$working_dir/globals.mk";
+    my $targets_mk   = "$working_dir/targets.mk";
+    my $makefile     = "$working_dir/Makefile";
+    my @rules        = ();
+    
+
+    # ## write targets.mk ###
+    open TARGETS_MK,">$targets_mk" or die "Can't open targets.mk: $targets_mk for write";
+    # We want to make the PHONY target .toptarget
+    # which will depend on all the real targets
+    # So we don't have to list all the targets on the command line
+    print TARGETS_MK ".PHONY: .toptarget\n";
+    print TARGETS_MK ".toptarget: \\\n  @targets\n";
+
+    # map cell to dfII-dir so the make rules no how to 
+    # make df2.d depend on the dfII for the cell
+    foreach my $cell (@cells) {
+        my $cell_cadence = $cadenceName{$cell};
+        my $dfIIDir = &dfIIDir($dfII_dir,$cell_cadence);
+        $dfIIDir =~ s/\#/\\\#/g;
+        print TARGETS_MK "DFII-DIR-$cell := $dfIIDir\n";
+    }
+    # Makefiles that the build-system needs to make and include
+    print TARGETS_MK "-include @includes\n" if(@includes);
+    print TARGETS_MK "ifneq (\"\$(CURR_TARGET_DEPS)\",\"\")\n";
+    print TARGETS_MK "-include \$(CURR_TARGET_DEPS)\n";
+    print TARGETS_MK "endif\n";
+    close TARGETS_MK;
+
+    
+    # ## write globals.mk ###
+    open GLOBALS_MK,">$globals_mk" or die "Can't open globals.mk: $globals_mk for write";
+    print GLOBALS_MK $globals;
+    foreach my $key (sort keys %qsub_extras) {
+        print GLOBALS_MK "QSUB_EXTRAS_$key := $qsub_extras{$key}\n";
+    }
+    close GLOBALS_MK;
+
+    # last chance to exit
+    if ($ERROR) { exit($ERROR); }
+
+    # write the -actual- Makefile, which just includes all the other makefiles
+    # we wrote
+    open MAKEFILE,">$makefile" or die "Can't open Makefile \"$makefile\" for write";
+    print MAKEFILE $options;
+    foreach my $key (sort keys %globalQSUBMemFlags) {
+        print MAKEFILE "MEMORY_QSUB_FLAGS_$key := $globalQSUBMemFlags{$key}\n";
+    }
+    print MAKEFILE "include $globals_mk\n";
+    print MAKEFILE "include $build_root/Makefile\n";
+    print MAKEFILE "include $build_root/filetypes/castfiles/once.mk\n";
+    print MAKEFILE "include $targets_mk\n";
+    close MAKEFILE;
+
+    # call make
+    my $cmd = "$make -f \"$makefile\" -C '$output_dir' -r -k -j $jobs $makeFlags .toptarget";
+    $cmd = "sg $groupname '$cmd'" if ($sgid);
+
+    open(LOG,">>",$lveLogFileName);
+
+    $forkinvoked=1;
+    # pipes to record the results of the make file
+    if (open(STDOUT, "|-") == 0) {
+        $child=1;
+        select LOG; $| = 1;
+        while (<STDIN>) {
+            print LOG $_;
+            if( /^\#/ ) {
+                print STDOUT;
+            }
+            elsif( $justPrint and (/#TASK=(lib|alint)/)) {
+                # hack see bug 19348
+                my $line=$_;
+                $line =~ s/.*#TASK/#TASK/;
+                $line =~ s/'.*//;
+                print STDOUT "$line";
+            }
+            elsif ($verbose > 1) {
+                print STDOUT;
+            }
+        }
+        exit;
+    }
+    
+    if (open(STDERR, "|-") == 0) {
+        $child=1;
+        select LOG; $| = 1;
+        my %dups=();
+        my $validskip=1;
+        while (<STDIN>) {
+            if (! /Unknown directive/) {
+                print LOG $_;
+                my $skip=0;
+                if (/gmake: Warning: .* modification time (\S+) /i) {
+                    $skip=1 if $1 < 0.1;
+                    $validskip=0 if $1 >= 0.1;
+                }
+                if (/gmake: warning:  Clock skew/i and $validskip) {
+                    $skip=1;
+                }
+                $skip=1 if (/DBD::SQLite/);
+                print STDERR if ((! $dups{$_} and ! (/VSZ=.*RSS=/)) or $verbose) and ! $skip;
+                $dups{$_}=1;
+            }
+        }
+        exit;
+    }
+    
+    my $pid = system($cmd);
+    my $status = $? >> 8;
+    close(LOG);
+    return $status;
+}
+
+# unroll all the tasks/options into targets for make to build
+# Make sure to check for existence of cast/dfII
+sub enumerate_targets {
+    my ($cell,$shortPath,$dfIIPath,@env) = @_;
+    my $cellpath = "$output_dir/$shortPath";
+    my $hasextracted = 0;
+    my $hastotem=0;
+
+    foreach my $task (@task) {
+        $hastotem = 1 if $task eq "totem" or $task eq "cmm";
+    }
+    # include makefiles for cell
+    addInclude("$cellpath/cell.mk");
+    my $validexview = "";
+    my $corner_extension="";
+    foreach my $mode (@mode) {
+        $hasextracted=1 if ($mode eq "extracted" or $mode eq "accurate");
+    }
+    $corner_extension = "-".substr($extract_corner, 0, 3)
+        if ! ($extract_corner =~ /^t/i) and $hasextracted;
+    $corner_extension = "-$extract_corner" if $hasextracted and $extract_corner =~ /^m10/;
+    my @checkedFiles;
+    foreach my $view (get_views("extracted")) {
+        my $path="$dfIIPath/$view/layout.oa";
+        push @checkedFiles, $path;
+        if ( -s $path and (($view !~ /_tag$/) or ! $no_tag)) {
+            $validexview=$view;
+            last;
+        }
+    }
+    if ($validexview eq "" and $hasextracted) {
+        print STDERR "Error: No valid view in ".join(' ',get_views("extracted"))." for $cell";
+        if (@checkedFiles > 0) {
+            print STDERR " (because none of the following files exists and has non-zero size: ".join(' ',@checkedFiles).")";
+        }
+        print STDERR "\n";
+        return;
+    }
+    foreach my $mode (@mode) {
+        foreach my $view (get_views($mode)) {
+            $view = $validexview if (($mode eq "extracted") or ($mode eq "accurate"));
+            if ($mode ne "nogeometry" and $mode ne "custom") {
+                my $path="$dfIIPath/$view/layout.oa";
+                if (! -s "$path") {
+                    error("Missing DFII(layout) file: $path");
+                }
+            }
+            addInclude("$cellpath/$view/$mode$corner_extension/analog.mk");
+            addInclude("$cellpath/$view/totem$corner_extension/analog.mk")
+                if $hastotem;
+            addInclude("$cellpath/$view/df2.d") if ($mode ne "nogeometry" and
+                                                    $mode ne "custom");
+            # if all the dependencies are there, include slurp.mk
+            if ($slurp and $slurp_dir and
+               ( -e "$slurp_dir/$shortPath/cell.cdl" ) and
+               ( -e "$slurp_dir/$shortPath/$view/df2.d" )) {
+                my_system("rm -f '$cellpath/$view/slurp.mk'");
+                my_system("rm -f '$cellpath/cell.mk'");
+                addInclude("$cellpath/$view/slurp.mk");
+            }
+        }
+    }
+
+    # extract.raw target implied by extract/alint/aspice/hsim tasks
+    my $needExtract = 0;
+    foreach my $task (@task) {
+        if (($task eq "extract") or ($task eq "hsim") or ($task eq "hspice") or ($task eq "xa") or
+            ($task eq "aspice")  or ($task eq "alint") or ($task eq "lib") or ($task eq "totem") or
+            ($task eq "apl") or ($task eq "cmm")) {
+            $needExtract = 1 if ! $noextractdeps;
+        }
+        if ($task eq "spef") {
+            foreach my $mode (@mode) {
+                if ($mode eq "extracted" or $mode eq "accurate") {
+                    addTarget($cell,"spef","$cellpath/$validexview/$mode$corner_extension/cell.spef");
+                }
+                else {
+                    foreach my $view (get_views($mode)) {
+                        addTarget($cell,"spef","$cellpath/$view/$mode$corner_extension/cell.spef");
+                    }
+                }
+            }
+        }
+    }
+    if ($needExtract) {
+        foreach my $mode (@mode) {
+            if ($mode eq "extracted" or $mode eq "accurate") {
+                my $targ;
+                foreach my $task (@task) {
+                    next if defined($noextracttask{$task});
+                    my $md=$mode;
+                    $md = "totem" if $task eq "totem" or $task eq "cmm";
+                    $targ = "$cellpath/$validexview/$md$corner_extension/extract.raw";
+                    addTarget($cell,"extract",$targ, __LINE__);
+                }
+            }
+            else {
+                foreach my $view (get_views($mode)) {
+                    my $targ;
+                    $targ = "$cellpath/$view/$mode$corner_extension/extract.raw";
+                    addTarget($cell,"extract",$targ, __LINE__);
+                }
+            }
+        }
+    }
+    
+    # targets
+    foreach my $task (@task) {
+        if ($task eq "alint") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targ;
+                            if($alint_raw){ 
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint.raw";
+                                addTarget($cell,$task,$targ);
+                                if($force{"alint_raw"}){
+                                    dounlink($targ);
+                                    system "rm -f '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
+                                }
+                                if($force{"alint_PO"}){
+                                    dounlink($targ);
+                                    system "rm -f '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
+                                    $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                    addTarget($cell,$task,$targ);
+                                    dounlink($targ);
+                                    system "rm -rf '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_PO'*";
+                                }
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/directives.0";
+                                addTarget($cell,$task,$targ);
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp.result";
+                                addTarget($cell,$task,$targ);
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                addTarget($cell,$task,$targ);
+                            }else{
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp.result";
+                                addTarget($cell,$task,$targ);
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                addTarget($cell,$task,$targ);
+                                if($force{"alint_PO"}){
+                                    dounlink($targ);
+                                    system "rm -rf '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_PO'*";
+                                }
+                            }
+                            if ($redonodes ne "") {
+                                # !FORCE running this
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.in.$redonodes";
+                                unlink $targ;
+                                addTarget($cell,$task,$targ);
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint_aspice.done.$redonodes";
+                                unlink $targ;
+                                addTarget($cell,$task,$targ);
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/threshresp.result.$redonodes";
+                                unlink $targ;
+                                addTarget($cell,$task,$targ);
+                                if($alint_raw){ 
+                                    $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw.$redonodes";
+                                    unlink $targ;
+                                    addTarget($cell,$task,$targ);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        elsif ($task eq "asta") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/asta.raw";
+                            addTarget($cell,$task,$targ);
+                            foreach my $tau (@astaTau) {
+                                $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/asta/$tau/in";
+                                addTarget($cell,$task,$targ);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        elsif ($task eq "slint") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/slint.raw";
+                            addTarget($cell,$task,$targ);
+                        }
+                    }
+                }
+            }
+        }
+        elsif ($task eq "lib") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targprefix = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C";
+                            my $targ = "$targprefix/lib.raw";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$targprefix/cell.timing";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$targprefix/cell.lib";
+                            addTarget($cell,$task,$targ);
+                            # added to force regen of libs with only one tau
+                            $targ = "$targprefix/cell.paths_top.50";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$targprefix/cell.paths_top.52";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$targprefix/directives.done";
+                            addTarget($cell,$task,$targ);
+                        }
+                    }
+                }
+            }
+        }
+        elsif ($task eq "fakelib") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targprefix = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C";
+                            my $targ = "$targprefix/cell.fakelib";
+                            addTarget($cell,$task,$targ);
+                        }
+                    }
+                }
+            }
+        } elsif ($task eq "aspice") {
+            if (@env == 0) { @env = enumerateEnvs($cell); }
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $env (@env) {
+                        foreach my $pvt (list_pvt()) {
+                            my ($corner,$true,$temp) = split(":",$pvt);
+                            foreach my $time (@time) {
+                                foreach my $minmax (@timed_delay) {
+                                    my $min_max = join("_", split(":",$minmax));
+                                    if ($mode   eq "" or
+                                        $corner eq "" or
+                                        $true   eq "" or
+                                        $temp   eq "" or
+                                        $time   eq "" or
+                                        $minmax eq "" or
+                                        $env    eq "") {
+                                        error("empty list element");
+                                    } else {
+                                        my $targ = "$cellpath/$view/$mode$corner_extension/$task/$env/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
+                                        addTarget($cell,$task,$targ);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } elsif (($task eq "hsim") or ($task eq "hspice") or ($task eq "xa")) {
+            if (@env == 0) { @env = enumerateEnvs($cell); }
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $env (@env) {
+                        foreach my $pvt (list_pvt()) {
+                            my ($corner,$true,$temp) = split(":",$pvt);
+                            foreach my $time (@time) {
+                                if ($mode   eq "" or
+                                    $corner eq "" or
+                                    $true   eq "" or
+                                    $temp   eq "" or
+                                    $time   eq "" or
+                                    $env    eq "") {
+                                    error("empty list element");
+                                } else {
+                                    my $targ = "$cellpath/$view/$mode$corner_extension/$task/$env/$corner/${true}V/${temp}C/${time}ns/$task.raw";
+                                    addTarget($cell,$task,$targ);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } elsif ($task eq "rte") {
+            if (@env == 0) { @env = enumerateEnvs($cell); }
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate" or $mode eq "totem"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        foreach my $env (@env) {
+                            foreach my $time (@time) {
+                                if ($mode   eq "" or
+                                    $corner eq "" or
+                                    $true   eq "" or
+                                    $temp   eq "" or
+                                    $time   eq "" or
+                                    $env    eq "") {
+                                    error("empty list element");
+                                } else {
+                                    my $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/$env/$task.raw";
+                                    addTarget($cell,$task,$targ);
+                                    push(@rtedeps,$targ);
+                                }
+                            }
+                        }
+                        my $summtarg = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/$task.raw.summary";
+#                        print "The total target is :",$summtarg;
+                        addTarget($cell,$task,$summtarg);
+                    }
+                }
+            }
+        } elsif ($task eq "totem" or $task eq "cmm") {
+            if (@env == 0) { @env = enumerateEnvs($cell); }
+            foreach my $view (get_views("extracted")) {
+                next if ($view ne $validexview);
+                foreach my $env (@env) {
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        foreach my $time (@time) {
+                            if ($corner eq "" or
+                                $true   eq "" or
+                                $temp   eq "" or
+                                $time   eq "" or
+                                $env    eq "") {
+                                error("empty list element");
+                            } else {
+                                my $targ = "$cellpath/$view/totem$corner_extension/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.out";
+                                addTarget($cell,$task,$targ);
+                                if ($task eq "totem") {
+                                    $targ = "$cellpath/$view/totem$corner_extension/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.raw";
+                                    addTarget($cell,$task,$targ);
+                                }
+                                elsif ($task eq "cmm") {
+                                    $targ = "$cellpath/$view/totem$corner_extension/hsim/$env/$corner/${true}V/${temp}C/${time}ns/$task.out";
+                                    addTarget($cell,$task,$targ);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } elsif ($task eq "hdrc") { # actually IVS
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/cell.gds2";
+                addTarget($cell,$task,$targ);
+                $targ = "$cellpath/$validexview/hdrc.raw";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "drc") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/cell.gds2";
+                addTarget($cell,$task,$targ);
+                $targ = "$cellpath/$validexview/drc.raw";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "frc") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/frc.raw";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "antenna") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/antenna.raw";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "coverage") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/coverage.err";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "lvs") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/cell.gds2";
+                addTarget($cell,$task,$targ);
+                $targ = "$cellpath/$validexview/lvs.raw";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "hlvs") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/cell.gds2";
+                addTarget($cell,$task,$targ);
+                $targ = "$cellpath/$validexview/hlvs.raw";
+                addTarget($cell,$task,$targ);
+                # force making of intermediate files
+                $targ = "$cellpath/$validexview/hlvs.err";
+                addTarget($cell,$task,$targ);
+                if ( $hlvsmode ne "flat") {
+                    if ( -f "$hlvs_graybox_list") {
+                        $targ = "$cellpath/$validexview/hlvs_custom_list";
+                    }
+                    else {
+                        $targ = "$cellpath/$validexview/hlvs_graybox_list";
+                    }
+                    addTarget($cell,$task,$targ);
+                }
+            }
+        } elsif ($task eq "gds2") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/cell.gds2";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "lef") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/$validexview/lib.lef";
+                addTarget($cell,$task,$targ);
+            }
+            elsif (@view_estimated and $mode[0] eq "estimated") {
+                my $targ = "$cellpath/$view_estimated[0]/lib.lef";
+                addTarget($cell,$task,$targ);
+            }
+        } elsif ($task eq "jlvs") {
+            my $targ = "$cellpath/jlvs.raw";
+            addTarget($cell,$task,$targ);
+        } elsif ($task eq "stats") {
+            if (@view_extracted and $validexview ne "") {
+                my $targ = "$cellpath/cell.stats";
+                addTarget($cell,$task,$targ);
+
+            }
+        } elsif ($task eq "captally") {
+            if (@view_extracted and $validexview ne "") {
+                foreach my $mode (@mode) {
+                    if ($mode eq "extracted" or $mode eq "accurate") {
+                        my $targ;
+                        $targ = "$cellpath/$validexview/$mode$corner_extension/cell.captally";
+                        addTarget($cell,"captally",$targ);
+                    }
+                    else {
+                        foreach my $view (get_views($mode)) {
+                            my $targ;
+                            $targ = "$cellpath/$view/$mode$corner_extension/cell.captally";
+                            addTarget($cell,"captally",$targ);
+                        }
+                    }
+                }
+            }
+        } elsif ($task eq "plt") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt (list_pvt()) {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/plt.raw";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/threshresp.result";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$cellpath/$view/$mode$corner_extension/alint/$corner/${true}V/${temp}C/threshresp_PO.result";
+                            addTarget($cell,$task,$targ);
+                        }
+                    }
+                }
+            }
+        } elsif ($task eq "apl") {
+            foreach my $mode (@mode) {
+                foreach my $view (get_views($mode)) {
+                    next if ($view ne $validexview and
+                        ($mode eq "extracted" or $mode eq "accurate"));
+                    foreach my $pvt ("pwr:0.945:115") {
+                        my ($corner,$true,$temp) = split(":",$pvt);
+                        if ($mode   eq "" or
+                            $corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $time="10";
+                            my $min_max="0.95_1.05";
+                            my $targ = "$cellpath/$view/$mode$corner_extension/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$cellpath/$view/$mode$corner_extension/aspice/leakage/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
+                            addTarget($cell,$task,$targ);
+                            $targ = "$cellpath/$view/$mode$corner_extension/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/cell.spiprof";
+                            addTarget($cell,$task,$targ);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+# find appropriate view list for a given mode
+sub get_views {
+    my ($mode) = @_;
+    if (($mode eq "extracted") or ($mode eq "accurate")) {
+        return @view_extracted;
+    }
+    return @view_estimated;
+}
+
+# return number of megabytes given a memory size string
+sub getNumMegabytesFromMemorySizeStr {
+    my ( $memStr ) = @_;
+    my $k_per_meg = 1024;
+
+    my $numberPart = $memStr;
+    $numberPart =~ s/([A-Za-z])$//;
+    my $unit = $1;
+
+    if ( ( $unit eq "M" ) or ( $unit eq "m" ) ) {
+        $numberPart = $numberPart * $k_per_meg * $k_per_meg;
+    }
+    elsif ( ( $unit eq "K" ) or ( $unit eq "k" ) ) {
+        $numberPart = $numberPart * $k_per_meg;
+    }
+    elsif ( ( $unit eq "G" ) or ( $unit eq "g" ) ) {
+        $numberPart = $numberPart * $k_per_meg * $k_per_meg * $k_per_meg;
+    }
+    
+    $numberPart = POSIX::ceil( $numberPart / ( $k_per_meg * $k_per_meg ) ) ;
+    if ( $numberPart < 1 ) {
+        $numberPart = 1;
+    }
+    return $numberPart;
+}
+
+# convert all memory sizes to megabytes
+sub canonicalizeMemory {
+    my ( $memStr ) = @_;
+    my $megs = getNumMegabytesFromMemorySizeStr( $memStr );
+    return "${megs}M";
+}
+
+# return lve package version
+sub getVersion {
+    open BUILD_IDENT,"<$lve_root/.fulcrum-package-root";
+    my $buildIdent = <BUILD_IDENT>;
+    close BUILD_IDENT;
+    return $buildIdent;
+}
+
+# use cast_query to enumerate suitable aspice/hsim environments
+sub enumerateEnvs {
+    my ($cell) = @_;
+    my @cmd=("$cast_query",
+        "--max-heap-size=$maxHeapSize",
+        "--cast-path=${cast_dir}:${spec_dir}",
+        "--task=env=prs:aspice_ignore",
+        "--no-recurse",
+        "--cell=$cell");
+    my $cmd="'".join("' '", @cmd)."'";
+    if ($qsub) {
+        my $arch="";
+        $arch="a=$qsub_arch_arg," if $qsub_arch_arg ne "";
+        $cmd = "QRSH_FLAGS='-l ${arch}mem=$maxHeapSize' qb $cmd"
+    }
+    print "#TASK=env cell=$cell\n";
+    my $out = `$cmd 2>/dev/null`;
+    chomp $out;
+    my @rtn=();
+    if ($out ne "" and ! ($out =~ /^Error/)) {
+        my ($lcell, $lout) = split(" ",$out);
+        @rtn = split(",",$lout) if $lcell eq $cell;
+    }
+    if (! @rtn) {
+        warn "Warning: No env found in $cell\n";
+    }
+    @rtn;
+}
+
+# parse a list of parameterized envs
+sub parse_envs {
+    my ($envs) = @_;
+    my @env = ();
+    while (1) {
+        if ($envs =~ /([^,]+\([^\)]*\)),(\S+)$/ ) {
+            push @env, $1;
+            $envs = $2;
+        }
+        elsif ($envs =~ /([^,]+\([^\)]*\))$/ ) {
+            push @env, $1;
+            return @env;
+        }
+        elsif ($envs =~ /([^,]+),(\S+)$/ ) {
+            push @env, $1;
+            $envs = $2;
+        }
+        else {
+            push @env, $envs if length ($envs);
+            return @env;
+        }
+    }
+    @env;
+}
+
+# display usage banner
+sub usage {
+    my $arg=$_[0];
+    foreach my $svar (@svars) {
+        my $rv=eval "defined \$$svar or die";
+        if (! defined $rv) {
+            print STDERR "\$$svar is undefined\n";
+            eval "\$$svar=''";
+        }
+    }
+    foreach my $svar (@avars) {
+        my $rv=eval "\@$svar >= 0 or die";
+        if (! defined $rv) {
+            print STDERR "\@$svar is undefined\n";
+            eval "\@$svar=()";
+        }
+    }
+
+    $routed="default" if !defined $routed;
+    my $keep=($keepDrcDir and $keepHdrcDir and $keepLvsDir and $keepHlvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and ! $delete_bumpcheck_dir) ? 1 : 0;
+    my $force=join(",", @force);
+
+    my $usage = <<EOF;
+Layout Verification Engine, Fulcrum Microsystems, Copyright April 23, 2003
+
+USAGE: $0 [options] cell[:env][:node,node,...]
+  cell  (a fully qualified cell name)
+  env   (a comma separated list of environments for aspice)
+
+  Directory Options:
+    --output-dir=[$arg_output_dir] (output directory)
+    --cast-dir=[$cast_dir]  (cast directory)
+    --spec-dir=[$spec_dir]  (spec directory)
+    --dfII-dir=[$dfII_dir]  (dfII directory)
+    --fulcrum-pdk-root=[$pdk_root]  (location of Fulcrum pdk)
+    --slurp-dir=[$slurp_dir]  (existing output-dir to steal up-to-date files)
+
+  Extract Options:
+    --minC=[$minC]  (minimum capacitance for aspice/alint/hsim/xa, discarded if less)
+    --minR=[$minR]  (minimum resistance for aspice/alint/hsim/xa, shorted if less)
+    --minRC=[$minRC]  (minimum RC time constant for aspice/alint RC reduction)
+    --minExtractedC=[$minExtractedC]  (minimum capacitance for extracted mode)
+    --minExtractedR=[$minExtractedR]  (minimum resistance for extracted mode)
+    --minAccurateC=[$minAccurateC]  (minimum capacitance for aspic/alint in accurate mode)
+    --minAccurateR=[$minAccurateR]  (minimum resistance for aspice/alint in accurate mode)
+    --minAccurateRC=[$minAccurateRC]  (minimum RC time constant for aspice/alint RC reduction in accurate mode)
+    --extractTemp=[$extractTemp]  (temperature for wiring extraction)
+    --deleteExtractDir=[$deleteExtractDir] (clean up after extraction)
+    --delete-bumpcheck-dir=[$delete_bumpcheck_dir] (clean up after bump check)
+    --keep-drc=[$keepDrcDir] (do not clean up after drc)
+    --keep-frc=[$keepFrcDir] (do not clean up after frc)
+    --keep-hdrc=[$keepHdrcDir] (do not clean up after hdrc)
+    --keep-hlvs=[$keepHlvsDir] (do not clean up after hlvs)
+    --keep-lvs=[$keepLvsDir] (do not clean up after lvs)
+    --keep-totem=[$keepTotemDir] (do not clean up after totem)
+    --keep[-all]=[$keep] (do not clean up any of the above)
+    --ignore-nvn=[$ignoreNVN] (continue with extraction even nvn fails)
+    --ignore-dangling-pin-check=[$ignoreDanglingPinCheck] (continue with extraction even dangling pin check fails)
+    --reduced-dspf=[$reduced_dspf]  (simplify extracted RC)
+    --reduce-mode=[$reduce_mode]  (starRC reduction mode : HIGH,NO_EXTRA_LOOPS,YES,NO or LAYER)
+    --maxF=[$maxF]  (maximum frequency for reduced-dspf=1)
+    --layoutScaleX=[$layoutScaleX]  (X coordinate scaling for estimated RC)
+    --layoutScaleY=[$layoutScaleY]  (Y coordinate scaling for estimated RC)
+    --custom-config=[$custom_config]  (extra jauto options for estimated RC)
+    --nowellplugs=[$nowellplugs] (fake the well plug connections)
+    --blackbox-hercules=[$blackboxHercules] (run Hercules in blackbox mode)
+    --extract-corner=[$extract_corner] (one of t[yp], cb[est], rcb[est], cw[orst], rcw[orst], m10typ)
+        CAUTION: do not use corner unless in a separate lve tree for now.
+    --named-resistor-layers=[$namedResistorLayers] (preserve resistors on these layers in accurate mode for EM analysis)
+    --star-rc=[$star_rc] ( no need to use both, these are complementary)
+    --simplex=[$simplex]
+    --extract-skip-6t=[$extractskip6t] (DANGEROUS: estimated mode, skip 6T core during estimated libs!)
+    --sigma-factor [$sigma_factor] (value 0..1, use with extreme caution)
+    --db-prefix [$dbprefix] (not for general use, for setting up mysql)
+
+  Extract Graybox Options:
+    --graybox-list=[$graybox_list] ( should be <filename> containing list of cell names)
+    --graybox-mode=[$graybox_mode] ( should be [""|routed|leaf], default="" )
+    --skip-sub-lve=[$skip_sub_lve] ( skip=1 or not skip=0)
+    --sub-lve-root-dir=[$sub_lve_root_dir] ( should be <path>)
+    --abstract-view=[$abstract_view] (view used to generate LEF )
+    --big-lef=[$big_lef] (for --task=lef only, default=1 )
+    --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to blackbox equiv file)
+    --starRC1-extra-options=[$starRC1_extra_options] (add options to hercules lvs_deck)
+
+  Extract Custom Options:
+    --custom-spice=[$customSpice] (use specified file as extracted netlist)
+    --custom-spice-include=[$customSpiceInc] (use specified include file)
+
+  Extract QX Options (obsolete)
+    --qx=[$qx] ( gate level=1 or transistor level=0 )
+    --lef-file=[$lef_file] (LEF file name for gate level extraction)
+    --def-file=[$def_file] (DEF file name for gate level extraction)
+
+  SPICE Options for hspice,hsim,xa tasks:
+    --hspice-threads=[$hspice_threads] (number of hspice threads)
+    --hsimAccurate=[$hsimAccurate]  (optimize for accuracy)
+    --hsimVdd=[$hsimVdd]  (maximum vdd+1 for internal tables)
+    --hsimPrsCap=[$hsimPrsCap]
+    --hsimPrsDelay=[$hsimPrsDelay]
+    --hsimPrsMinRes=[$hsimPrsMinRes]
+    --hsimPrsMaxRes=[$hsimPrsMaxRes]
+    --hsimDeleteFiles=[$hsimDeleteFiles] (whether to delete temp run directories)
+    --hsim-threads=[$hsim_threads] (use multi-threading in hsim, only choice is four threads)
+    --probeTopPorts=[$probeTopPorts]            (save waveforms for ports of top cell)
+    --probePorts=[$probePorts]               (save waveforms for ports of all cells)
+    --probeGates=[$probeGates]               (save waveforms for any node that gates a transistor)
+
+  SPICE and Aspice shared options:
+    --env-cap-load=[$env_cap_load] (put additional load in Farads on ports)
+    --monte-carlo=[$monte_carlo] (how many monte carlo seeds to run)
+    --start-time=[$start_time] (how long to assert reset)
+
+  Aspice/Alint Options:
+    --minCC=[$minCC]  (minimum coupling capacitance for aspice)
+    --[no]routed=[$routed] (use jflat --routed to generate localprops file)
+         default is routed except for floorplan/estimated runs
+    --tech-asp=[$tech_asp]  (name of aspice asp setup file)
+    --tech-alint-asp=[$tech_alint_asp]  (name of alint asp setup file)
+    --alint-asp=[$alint_asp] (overwrite standard alint.asp for custom simulation)
+    --alint-in=[$alint_in] (overwrite standard alint.in for custom simulation)
+    --alint-dynamic-only=[$alint_dynamic_only] (only alint dynamic nodes)
+    --lib-static-only=[$lib_static_only] (only run lib task at static nodes)
+    --aspice-in=[$aspice_in] (overwrite standard aspice.in for custom simulation)
+    --aspice-asp=[$aspice_asp] (overwrite standard aspice.asp for custom simulation)
+    --aspice-extra-asp=[$aspice_extra_asp] (prepend this file to aspice.asp for custom simulation)
+    --alint-extra-asp=[$alint_extra_asp] (prepend this file to alint.asp for custom simulation)
+    --cell-localprops=[$cell_localprops] (Use this as the cell.localprops file)
+    --cell-nodeprops=[$cell_nodeprops] (Use this as the cell.nodeprops file)
+    --internalWires=[$internalWires]  (connect all cast aliases)
+    --internalRules=[$internalRules]  (cosim analog circuit against prs)
+    --traceR=[$traceR]  (include resistive subnets in trace file)
+    --traceInternal=[$traceInternal]  (include internal subnets in trace file)
+    --traceAll=[$traceAll]  (include all nodes in trace file)
+    --tableTransistor=[$tableTransistor] (enable aspice table transistors)
+    --countScenarios=[$countScenarios] (only count alint scenarios)
+    --maxBumpFanin=[$maxBumpFanin]  (number of switching inputs for alint bumps)
+    --maxDelayFanin=[$maxDelayFanin]  (number of switching inputs for alint delays)
+    --prsTau=[$prsTau]  (aspice prs switching tau, in ps)
+    --bumpCC=[@bumpCC]  (list of [0|1] to enable cap-coupling for alint bumps)
+    --bumpTau=[@bumpTau]  (list of agressor switching taus for alint bumps, in ps)
+    --delayCC=[@delayCC]  (list of [0|1] to enable cap-coupling for alint delays)
+    --delayFast[@delayFast]  (list of [0|1] to enable slow/fast delay simulations)
+    --delayTau=[@delayTau]  (list of fanin switching taus for alint delays, in ps)
+    --delayCap=[@delayCap]  (list of load caps in F)
+    --leakage=[$doLeakage]  (enable alint leakage simulations)
+    --inverter-leakage=[$doInverterLeakage]  (enable alint leakage simulations of inverters)
+    --maxNodePerAlintBin=[$maxNodePerAlintBin] (maximum number of nodes per Alint bin)
+    --aspice-digital-time=[$aspice_digital_time]  (simulate digitally for this long after reset, in ns)
+    --clean-trace=[$clean_trace] (trace files NOT copied from temp run directory  alint and lib tasks)
+    --alint-raw=[$alint_raw]  (alint-raw=1 to generate alint.raw in alint task)
+    --bump-source-pvt=[@bump_source_pvt] (signoff bump from which pvt.  If "", default current PVT)
+    --power-sag=[$power_sag] (in percentage. Shift bump waveform according to this value. Bump signoff will check the bump waveform without shift and also check the shift bump waveform. )
+    --threshPercent=[@threshPercent] (Voltage steps in percentage of Vdd for ziggurat bump signoff)
+
+  ASTA Options:
+    --asta-input-slew=[$astaInputSlew]  (default slew rates for primary inputs, in ps)
+    --asta-output-cap=[$astaOutputCap]  (default capacitance for primary outputs, in fF; currently fixed at 1fF)
+    --asta-walltime=[$astaWalltime]  (solver wall time limit, in s; non-positive integer means no limit)
+    --astaTau=[@astaTau]  (list of taus to evaluate in ASTA, in ps)
+    --asta-tau-bound=[$astaTauBound] ( pass/fail, <0 means use default in lve_raw.config)
+    --asta-threads=[$astaThreads] (number of threads to use; more than 8 threads not recommended)
+
+  SLINT Options:
+    --slint-input-slew=[$slintInputSlew] (input slew rate used to computed victims slews in ps)
+    --slint-abs-margin=[$slintAbsMargin] (absolute margin to use in ps)
+    --slint-ocv-margin=[$slintOcvMargin] (multiplicative margin, 1.0 = no margin)
+
+  JLVS:
+    --min-staticizer-ratio=[$min_stat_ratio] (Min staticizer ratio for jlvs)
+    --max-staticizer-ratio=[$max_stat_ratio] (Max staticizer ratio for jlvs)
+    --digital-time-unit=[$digital_time_unit] (used by Alint/Aspice)
+    --65mode=[$sixtyfivemode] (fake 65nm gds2/cdl translate from 130 mode)
+
+  Sweep Options (supports comma separated lists):
+    --task=[@task]  (alint,aspice,asta,captally,drc,extract,fakelib,gds2,hdrc,hlvs,hsim,hspice,xa,jlvs,lef,lib,lvs,plt,slint,spef,totem)
+    --mode=[@mode]  (create extracted/estimated/nogeometry/accurate/custom spice files)
+    --view-mode-order=[@view_mode_order]  (search priority order of view/mode)
+    --extracted-view=[@view_extracted]  (view to use for extracted/accurate RC)
+    --estimated-view=[@view_estimated]  (view to use for estimated/nogeometry RC)
+    --pvt=[@pvt] (corner:true:temp)
+    --corner=[@corner]  (process corner)
+    --true=[@true]  (voltage for Vdd)
+    --temp=[@temp]  (temperature, in Celcius)
+    --time=[@time]  (time to run simulation, in nanoseconds)
+    --timed-delay=[@timed_delay]  (min:max random jitter pair)
+    --cell-type=[$cell_type] (used to specify certain special conditions)
+ 
+  HDRC Options
+    --hdrc-density [$hdrc_density] (run density checks, normally off)
+    --hercules-threads [$hercules_threads]
+
+  HLVS Options
+    --hlvs-mode=[$hlvsmode] (one of flat, graybox, blackbox: default flat)
+    --hlvs-graybox-list=[$hlvs_graybox_list] (override the auto generated graybox list)
+    --hlvs-eplfix=[$eplfix] (needed in some rare cases)
+
+  RTE Options
+    --digital-delay=[$digitalDelay] [(an integer value) digitalDelay for jdsim-auto ]
+    --estimated-delay=[$estimatedDelay] [(an integer value) estimated Delay for jdsim-auto]
+    --measured-delay=[$measuredDelay] [(an integer value) measured Delay for jdsim-auto]
+    --history-per-node=[$depth] [(an integer value)]
+    --cycle-count = [$cycleCount] (count paramater for jdsim-auto)
+
+
+  General Options:
+    --force=[$force]  ( force the list of tasks specified )
+    --[no]hard=[$hard]  (set hard limit on memory size of qsub jobs)
+    --hard-limit=[$hardLimit] (set the hard limit (Mbytes)]
+    --notify                  (send e-mail on aborted jobs,
+        default is 1 for hard limits.
+    --justPrint=[$justPrint]  (print make commands without running them)
+    --verbose=[$verbose]  (enable verbose output)
+    --version        (print build identifier)
+    --lambda=[$lambda]  (post process gds2 with biasing step)
+    --skip=[@skip]  (deps,envs,gds2,extract,alint,aspice)
+    --include=[]  (source additional arguments from a file)
+    --max-heap-size=[$maxHeapSize]  (memory to use for java tools)
+    --javaFlags=[$javaFlags] (Additional Flags for java)
+    --jre-args=[$javaFlags] (duplicate of javaFlags arg, use interchangeably)
+    --jre=[$jreFlags] (specify JRE)
+    --mem=[$mem]  (memory to use for qrshing)
+    --lowmem=[$lowmem]  (memory to use for qrshing low mem jobs, e.g. aspice_raw)
+    --disk-space=[$disk_space]  (estimated disk space for aspice files)
+    --extractMem=[$extractMem]  (memory to use for qrshing extract jobs)
+    --qsub=[$qsub]  (use qrsh to run commands)
+    --jobs=[$jobs]  (number of jobs to launch in parallel)
+    --priority=[$priority]  (qrsh priority)
+    --slurp=[$slurp]      (enable slurp mode[see slurp-dir])
+    --summarize=[$do_summarize] (enable resummarize)
+    --sort=[$do_sort] (enable target sorting)
+    --taskLock=[$taskLock] (enable task locking)
+    --makeFlags=[$makeFlags]  (flags to pass on to make)
+    --64=[$bit64]  (64 bit tools)
+    --remote[$remote] (Remote jobs; set username/passwd.)(pmc)
+    --extractPower=[$extractPower] ([NO|YES|DEVICE_LAYERS] for flat extraction only)
+    --isopotentialLayers=[$isopotentialLayers] (comma separated list of layers to wire up subnets)
+    --qsubarch=[$qsub_arch_arg] (target arch for qb, overrides current arch)
+        one of lx24-amd64,Linux-x86_64,glinux,etc...
+    --qsub-extras=[$qsub_extras] (misc extra qsub args, e.g. -P regression)
+    --cdl-name-map=[$cdl_name_map] (name mapping file to use when generating CDL)
+    --mmonitor=[$mmonitor] (monitor memory)
+    --include=[<file>] (specify options and/or cells in a file)
+    --lib-translate=[$libtranslate] (one of cast, cadence, or gds2, cadence default)
+    --fake-size=[$fakesize] (0..8 for fake lib generation)
+    --budgetcapindex=[$budgetcapindex] (for lib characterization)
+    --dobudget=[$dobudget] (will we use budgets?, default=1)
+    --use-db [$usedb]  ( use database to store data )
+    --no-tag  [$no_tag] (do not create a tag cell, use specified view as is)
+    --tag-orientation  [$tag_orientation] (one of legal virtuoso orientations)
+    --make=[$make] (alternate make file, use with extreme caution)
+EOF
+
+    if (! defined ($arg)) {
+        unlink ("$output_dir/lvedb.db") if ! $haslvedb;
+        unlink ("$output_dir/arg_output_dir.txt") if ! $hasargoutputdirtxt;
+        rmdir ("$output_dir") if ( -d $output_dir);
+    }
+    return $usage;
+}
+
+sub setOptions {
+   $optionvalues{"fulcrum-pdk-root"} = $pdk_root;
+   $optionvalues{"output-dir"} =  $arg_output_dir;
+   $optionvalues{"cast-dir"} =  $cast_dir;
+   $optionvalues{"spec-dir"} =  $spec_dir;
+   $optionvalues{"dfII-dir"} =  $dfII_dir;
+   $optionvalues{"slurp-dir"} =  $slurp_dir;
+   $optionvalues{"minC"} =  $minC;
+   $optionvalues{"minR"} =  $minR;
+   $optionvalues{"minRC"} =  $minRC;
+   $optionvalues{"minExtractedC"} =  $minExtractedC;
+   $optionvalues{"minExtractedR"} =  $minExtractedR;
+   $optionvalues{"minAccurateC"} =  $minAccurateC;
+   $optionvalues{"minAccurateR"} =  $minAccurateR;
+   $optionvalues{"minAccurateRC"} =  $minAccurateRC;
+   $optionvalues{"minCC"} =  $minCC;
+   $optionvalues{"named-resistor-layers"} = $namedResistorLayers;
+   $optionvalues{"maxF"} =  $maxF;
+   $optionvalues{"extractTemp"} =  $extractTemp;
+   $optionvalues{"deleteExtractDir"} =  $deleteExtractDir;
+   $optionvalues{"keep-hlvs"} =  $keepHlvsDir;
+   $optionvalues{"keep-lvs"} =  $keepLvsDir;
+   $optionvalues{"keep-hdrc"} =  $keepHdrcDir;
+   $optionvalues{"keep-drc"} =  $keepDrcDir;
+   $optionvalues{"keep-frc"} =  $keepFrcDir;
+   $optionvalues{"keep-totem"} =  $keepTotemDir;
+   $optionvalues{"keep-all"} =  ( $keepHlvsDir and $keepLvsDir and $keepHdrcDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir);
+   $optionvalues{"ignore-nvn"} =  $ignoreNVN;
+   $optionvalues{"ignore-dangling"} =  $ignoreDanglingPinCheck;
+   $optionvalues{"blackbox"} = $blackboxHercules;
+   $optionvalues{"hlvs-mode"} =  $hlvsmode;
+   $optionvalues{"hlvs-graybox-list"} =  $hlvs_graybox_list;
+   $optionvalues{"reduced-dspf"} =  $reduced_dspf;
+   $optionvalues{"reduce-mode"} =  $reduce_mode;
+   $optionvalues{"layoutScaleX"} =  $layoutScaleX;
+   $optionvalues{"nowellplugs"} =  $nowellplugs;
+   $optionvalues{"mmonitor"} =  $mmonitor;
+   $optionvalues{"layoutScaleY"} =  $layoutScaleY;
+   $optionvalues{"custom-config"} =  $custom_config;
+   $optionvalues{"merge-paths"} =  $merge_paths;
+   $optionvalues{"extract-corner"} =  $extract_corner;
+   $optionvalues{"qx"} =  $qx;
+   $optionvalues{"lef-file"} =  $lef_file;
+   $optionvalues{"def-file"} =  $def_file;
+   $optionvalues{"star-rc"} =  $star_rc;
+   $optionvalues{"graybox-list"} =  $graybox_list;
+   $optionvalues{"graybox-mode"} =  $graybox_mode;
+   $optionvalues{"abstract-view"} =  $abstract_view;
+   $optionvalues{"big-lef"} =  $big_lef;
+   $optionvalues{"sub-lve"} = $sub_lve_root_dir;
+   $optionvalues{"skip-sub-lve"} =  $skip_sub_lve;
+   $optionvalues{"custom-spice"} =  $customSpice;
+   $optionvalues{"custom-spice-include"} =  $customSpiceInc;
+   $optionvalues{"hsimAccurate"} =  $hsimAccurate;
+   $optionvalues{"hsimVdd"} =  $hsimVdd;
+   $optionvalues{"hsimPrsCap"} =  $hsimPrsCap;
+   $optionvalues{"hsimPrsDelay"} =  $hsimPrsDelay;
+   $optionvalues{"hsimPrsMinRes"} =  $hsimPrsMinRes;
+   $optionvalues{"hsimPrsMaxRes"} =  $hsimPrsMaxRes;
+   $optionvalues{"hsimDeleteFiles"} =  $hsimDeleteFiles;
+   $optionvalues{"probeTopPorts"} = $probeTopPorts;
+   $optionvalues{"probePorts"} = $probePorts;
+   $optionvalues{"probeGates"} = $probeGates;
+   $optionvalues{"tech-asp"} =  $tech_asp;
+   $optionvalues{"tech-alint-asp"} =  $tech_alint_asp;
+   $optionvalues{"alint-asp"} =  $alint_asp;
+   $optionvalues{"aspice-asp"} =  $aspice_asp;
+   $optionvalues{"aspice-extra-asp"} =  $aspice_extra_asp;
+   $optionvalues{"alint-extra-asp"} =  $alint_extra_asp;
+   $optionvalues{"aspice-digital-time"} =  $aspice_digital_time;
+   $optionvalues{"alint-in"} =  $alint_in;
+   $optionvalues{"alint-dynamic-only"} =  $alint_dynamic_only;
+   $optionvalues{"lib-static-only"} =  $lib_static_only;
+   $optionvalues{"aspice-in"} =  $aspice_in;
+   $optionvalues{"cell-localprops"} =  $cell_localprops;
+   $optionvalues{"cell-nodeprops"} =  $cell_nodeprops;
+   $optionvalues{"internalWires"} =  $internalWires;
+   $optionvalues{"internalRules"} =  $internalRules;
+   $optionvalues{"traceR"} =  $traceR;
+   $optionvalues{"traceInternal"} =  $traceInternal;
+   $optionvalues{"traceAll"} =  $traceAll;
+   $optionvalues{"tableTransistor"} =  $tableTransistor;
+   $optionvalues{"countScenarios"} =  $countScenarios;
+   $optionvalues{"maxBumpFanin"} =  $maxBumpFanin;
+   $optionvalues{"maxDelayFanin"} =  $maxDelayFanin;
+   $optionvalues{"prsTau"} =  $prsTau;
+   $optionvalues{"delayCap"} =  join(",", @delayCap);
+   $optionvalues{"bumpCC"} =  join(",", @bumpCC);
+   $optionvalues{"bumpTau"} =  join(",", @bumpTau);
+   $optionvalues{"delayCC"} =  join(",", @delayCC);
+   $optionvalues{"delayFast"} =  join(",", @delayFast);
+   $optionvalues{"delayTau"} =  join(",", @delayTau);
+   $optionvalues{"leakage"} =  $doLeakage;
+   $optionvalues{"inverter-leakage"} =  $doInverterLeakage;
+   $optionvalues{"maxNodePerAlintBin"} =  $maxNodePerAlintBin;
+   $optionvalues{"digital-time-unit"} =  $digital_time_unit;
+   $optionvalues{"min-staticizer-ratio"} =  $min_stat_ratio;
+   $optionvalues{"max-staticizer-ratio"} =  $max_stat_ratio;
+   $optionvalues{"power-sag"} =  $power_sag;
+   $optionvalues{"alint-raw"} =  $alint_raw;
+   $optionvalues{"bump-debug"}      = $bump_debug;
+   $optionvalues{"static-switchV"}  = $static_switchV;
+   $optionvalues{"threshPercent"}   = join(",", @threshPercent);
+   $optionvalues{"bump-source-pvt"} = join(",", @bump_source_pvt);
+   $optionvalues{"delete-bumpcheck-dir"} =  $delete_bumpcheck_dir;
+   $optionvalues{"force"} =   join(",", @force);
+   $optionvalues{"verbose"} =  $verbose;
+   $optionvalues{"version"} =  $version;
+   $optionvalues{"mem"} =  $mem;
+   $optionvalues{"lowmem"} =  $lowmem;
+   $optionvalues{"mem-starRC2b"} =  $numMegs{"starRC2b"};
+   foreach my $t (@task) {
+       $optionvalues{"mem-$t"} =  $numMegs{$t} if defined $numMegs{$t};
+   }
+   $optionvalues{"nohard"} =  ! $hard;
+   $optionvalues{"hard"} =  $hard;
+   $optionvalues{"notify"} =  $notify;
+   $optionvalues{"hard-limit"} =  $hardLimit;
+   $optionvalues{"max-heap-size"} =  $maxHeapSize;
+   $optionvalues{"javaFlags"} =  $javaFlags;
+   $optionvalues{"jre-args"} =  $javaFlags;
+   $optionvalues{"jre"} =  $jreFlags;
+   $optionvalues{"extractMem"} =  $extractMem;
+   $optionvalues{"disk-space"} =  $disk_space;
+   $optionvalues{"jobs"} =  $jobs;
+   $optionvalues{"slurp"} =  $slurp;
+   $optionvalues{"summarize"} =  $do_summarize;
+   $optionvalues{"sort"} =  $do_sort;
+   $optionvalues{"makeFlags"} =  $makeFlags;
+   $optionvalues{"priority"} =  $priority;
+   $optionvalues{"qsub"} =  $qsub;
+   $optionvalues{"64"} =  $bit64;
+   $optionvalues{"lambda"} =  $lambda;
+   $optionvalues{"taskLock"} =  $taskLock;
+   $optionvalues{"remote"} =  $remote;
+   $optionvalues{"extractPower"} =  $extractPower;
+   $optionvalues{"isopotentialLayers"} =  $isopotentialLayers;
+   $optionvalues{"qsubarch"} =  $qsub_arch_arg;
+   $optionvalues{"qsub-extras"} =  $qsub_extras;
+   $optionvalues{"qsub-extras-starRC2b"} =  $qsub_extras{starRC2b};
+   $optionvalues{"65mode"} =  $sixtyfivemode;
+    # ASTA options
+   $optionvalues{"asta-input-slew"} =  $astaInputSlew;
+    # TODO: currently fixed to 1fF; remove after adding interpolation code
+   $optionvalues{"asta-output-cap"} =  $astaOutputCap;
+   $optionvalues{"asta-walltime"} =  $astaWalltime;
+   $optionvalues{"asta-tau-bound"} =  $astaTauBound;
+   $optionvalues{"hercules-threads"} =  $hercules_threads;
+   $optionvalues{"hsim-threads"} =  $hsim_threads;
+   $optionvalues{"hspice-threads"} =  $hspice_threads;
+   $optionvalues{"asta-threads"} =  $astaThreads;
+   $optionvalues{"astaTau"} =  join(",",@astaTau);
+   $optionvalues{"slint-input-slew"} =  $slintInputSlew;
+   $optionvalues{"slint-abs-margin"} =  $slintAbsMargin;
+   $optionvalues{"slint-ocv-margin"} =  $slintOcvMargin;
+
+    # sweep options
+   $optionvalues{"skip"} =  join(",", @skip);
+   $optionvalues{"time"} =  join(",", @time);
+   $optionvalues{"pvt"} =  join(",", @pvt);
+   $optionvalues{"true"} =  join(",", @true);
+   $optionvalues{"corner"} =  join(",", @corner);
+   $optionvalues{"temp"} =  join(",", @temp);
+   $optionvalues{"timed-delay"} =  join(",", @timed_delay);
+   $optionvalues{"mode"} =  join(",", @mode);
+   $optionvalues{"view-mode-order"} =  join(",", @view_mode_order);
+   $optionvalues{"extracted-view"} =  join(",",@view_extracted);
+   $optionvalues{"estimated-view"} =  join(",", @view_estimated);
+   $optionvalues{"routed"} =  $routed;
+   $optionvalues{"norouted"} = !$routed;
+   $optionvalues{"cdl-name-map"} =  $cdl_name_map;
+   $optionvalues{"lib-translate"} =  $libtranslate;
+   $optionvalues{"fake-size"} =  $fakesize;
+   $optionvalues{"libtranslate"} =  $libtranslate;
+   $optionvalues{"budgetcapindex"} =  $budgetcapindex;
+   $optionvalues{"dobudget"} =  $dobudget;
+   $optionvalues{"extract-skip-6t"} =  $extractskip6t;
+   $optionvalues{"sigma-factor"} =  $sigma_factor;
+   $optionvalues{"env-cap-load"} =  $env_cap_load;
+   $optionvalues{"db-prefix"} =  $dbprefix;
+   $optionvalues{"redo-nodes"} = $redonodes;
+   $optionvalues{"hdrc-density"} =  $hdrc_density;
+   $optionvalues{"noextractdeps"} =  $noextractdeps;
+   $optionvalues{"keepMakefiles"} =  $deletemakefiles;
+   $optionvalues{"hlvs-eplfix"} =  $eplfix;
+   $optionvalues{"extra-extract-equiv"} =  $extra_extract_equiv;
+   $optionvalues{"starRC1-extra-options"} =  $starRC1_extra_options;
+   $optionvalues{"use-db"} =  $usedb;
+   $optionvalues{"make"} =  $make;
+   $optionvalues{"no-tag"} =  $no_tag;
+   $optionvalues{"tag-orientation"} =  $tag_orientation;
+   $optionvalues{"clean-trace"} =  $clean_trace;
+   #rte Options
+   $optionvalues{"digital-delay"} =  $digitalDelay;
+   $optionvalues{"estimated-delay"} =  $estimatedDelay;
+   $optionvalues{"measured-delay"} =  $measuredDelay;
+   $optionvalues{"history-per-node"} =  $depth;
+   $optionvalues{"cycle-count"} =  $cycleCount;
+}
+
+sub processOptions {
+    my ($options) = @_;
+    my $errors=0;
+    foreach my $option (@{$options}) {
+        $errors += &processOption($option);
+    }
+    $errors;
+}
+
+sub processOption {
+    my ($option) = @_;
+    my $errors=0;
+
+    if (ref($option) eq "ARRAY") {
+        my ($key,$value) = @{$option};
+        # path/directory/file options
+        if ($key eq "output-dir")             { }
+        elsif ($key eq "cast-dir")            { $cast_dir = canonicalizePath($value); }
+        elsif ($key eq "spec-dir")            { $spec_dir = canonicalizePath($value); }
+        elsif ($key eq "dfII-dir")            { $dfII_dir = canonicalizePath($value); }
+        elsif ($key eq "slurp-dir")           { $slurp_dir = canonicalizePath($value); }
+
+        # extract options
+        elsif ($key eq "minC")                { $minC = $value; }
+        elsif ($key eq "minR")                { $minR = $value; }
+        elsif ($key eq "minRC")               { $minRC = $value; }
+        elsif ($key eq "minExtractedC")       { $minExtractedC = $value; }
+        elsif ($key eq "minExtractedR")       { $minExtractedR = $value; }
+        elsif ($key eq "minAccurateC")        { $minAccurateC = $value; }
+        elsif ($key eq "minAccurateR")        { $minAccurateR = $value; }
+        elsif ($key eq "minAccurateRC")       { $minAccurateRC = $value; }
+        elsif ($key eq "minCC")               { $minCC = $value; }
+        elsif ($key eq "named-resistor-layers") {$namedResistorLayers = $value; }
+        elsif ($key eq "maxF")                { $maxF = $value; }
+        elsif ($key eq "extractTemp")         { $extractTemp = $value; }
+        elsif ($key eq "deleteExtractDir")    { $deleteExtractDir = $value ? 1 : 0; }
+        elsif ($key eq "delete-bumpcheck-dir"){ $delete_bumpcheck_dir = $value ? 1 : 0; }
+        elsif ($key eq "keep-hlvs")           { $keepHlvsDir = $value ? 1 : 0; }
+        elsif ($key eq "keep-lvs")            { $keepLvsDir = $value ? 1 : 0; }
+        elsif ($key eq "keep-hdrc")           { $keepHdrcDir = $value ? 1 : 0; }
+        elsif ($key eq "keep-drc")            { $keepDrcDir = $value ? 1 : 0; }
+        elsif ($key eq "keep-totem")          { $keepTotemDir = $value ? 1 : 0; }
+        elsif ($key eq "keep" or $key eq "keep-all") {
+                                                $keepHlvsDir = $value ? 1 : 0;
+                                                $keepLvsDir = $value ? 1 : 0;
+                                                $keepHdrcDir = $value ? 1 : 0;
+                                                $keepDrcDir = $value ? 1 : 0;
+                                                $keepFrcDir = $value ? 1 : 0;
+                                                $keepTotemDir = $value ? 1 : 0;
+                                                $hsimDeleteFiles = $value ? 0 : 1;
+                                                $deleteExtractDir = $value ? 0 : 1;
+                                                $delete_bumpcheck_dir = $value ? 0 : 1; }
+        elsif ($key eq "ignore-nvn")          { $ignoreNVN = $value; }
+        elsif ($key =~ /^ignore-dangling/)    { $ignoreDanglingPinCheck = $value; }
+        elsif ($key =~ /^blackbox/)           { $blackboxHercules = $value; }
+        elsif ($key eq "hlvs-mode")           { $hlvsmode = $value; }
+        elsif ($key eq "hlvs-graybox-list")   { if (! -f "$value") {
+                                                    die "hlvs graybox list '$value' does not exist";
+                                                }
+                                                $hlvs_graybox_list = canonicalizePath($value);
+                                              }
+        elsif ($key eq "reduced-dspf")        { $reduced_dspf = $value; }
+        elsif ($key eq "reduce-mode")         { $reduce_mode = $value; }
+        elsif ($key eq "layoutScaleX")        { $layoutScaleX = $value; }
+        elsif ($key eq "nowellplugs")         { $nowellplugs = $value; }
+        elsif ($key eq "mmonitor")            { $mmonitor = $value; $ENV{LVE_MMONITOR}=$value; }
+        elsif ($key eq "layoutScaleY")        { $layoutScaleY = $value; }
+        elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); }
+        elsif ($key eq "merge-paths")         { $merge_paths=1; }
+        elsif ($key eq "extract-corner")      {
+            if ($value =~ /^t/i) {
+                $extract_corner = "typical";
+            }
+            elsif ($value =~ /^cw/i) {
+                $extract_corner = "cworst";
+                $extractdir = "-cwo";
+            }
+            elsif ($value =~ /^rcw/i) {
+                $extract_corner = "rcworst";
+                $extractdir = "-rcw";
+            }
+            elsif ($value =~ /^cb/i) {
+                $extract_corner = "cbest";
+                $extractdir = "-cbe";
+            }
+            elsif ($value =~ /^rcb/i) {
+                $extract_corner = "rcbest";
+                $extractdir = "-rcb";
+            }
+            elsif ($value =~ /^m10typ/) {
+                $extract_corner="m10typ";
+                $extractdir = "-m10typ";
+            }
+            else {
+                $errors++;
+                print STDERR "Unknown extract_corner $value, using $extract_corner\n";
+            }
+        }
+
+        # extract_qx options
+        elsif ($key eq "qx") { $qx = $value; }
+        elsif ($key eq "lef-file") { $lef_file = $value; }
+        elsif ($key eq "def-file") { $def_file = $value; }
+
+        # extract_star_rc options
+        elsif ($key eq "star-rc") {
+            $star_rc = $value;
+            $simplex = $value eq "0" ? 1 : 0;
+        }
+
+        elsif ($key eq "simplex") {
+            $simplex = $value;
+            $star_rc = ($value eq "0") ? 1 : 0;
+        }
+
+        # extract_graybox options
+        elsif ($key eq "graybox-list")  { $graybox_list = canonicalizePath($value); }
+        elsif ($key eq "graybox-mode")  { $graybox_mode = $value; }
+        elsif ($key eq "abstract-view") { $abstract_view = $value; }
+        elsif ($key eq "big-lef") { $big_lef = $value; }
+        elsif ($key =~ /^sub-lve/)      {
+            my @f=split(/:/, $value);
+            my @result=();
+            foreach my $f (@f) {
+                $f = canonicalizePath($f);
+                push @result, $f if -d $f;
+            }
+            if ($#result >= 0) {
+                $sub_lve_root_dir=join(":", @result);
+            }
+        }
+        elsif ($key eq "skip-sub-lve")  { $skip_sub_lve = $value; }
+
+        # extract custom options
+        elsif ($key eq "custom-spice")          { $customSpice = canonicalizePath($value); }
+        elsif ($key eq "custom-spice-include")  { $customSpiceInc = canonicalizePath($value); }
+
+        # spice options
+        elsif ($key eq "hsimAccurate")      { $hsimAccurate = $value; }
+        elsif ($key eq "hsimVdd")           { $hsimVdd = $value; }
+        elsif ($key eq "hsimPrsCap")        { $hsimPrsCap = $value; }
+        elsif ($key eq "hsimPrsDelay")      { $hsimPrsDelay = $value; }
+        elsif ($key eq "hsimPrsMinRes")     { $hsimPrsMinRes = $value; }
+        elsif ($key eq "hsimPrsMaxRes")     { $hsimPrsMaxRes = $value; }
+        elsif ($key eq "hsimDeleteFiles")   { $hsimDeleteFiles = $value; }
+        elsif ($key eq "monte-carlo")       { $monte_carlo = $value; }
+        elsif ($key eq "start-time")        { $start_time = $value; }
+        elsif ($key eq "probeTopPorts")     { $probeTopPorts = $value; }
+        elsif ($key eq "probePorts")        { $probePorts = $value; }
+        elsif ($key eq "probeGates")        { $probeGates = $value; }
+
+        # aspice options
+        elsif ($key eq "tech-asp")          { $tech_asp = canonicalizePath($value); }
+        elsif ($key eq "tech-alint-asp")    { $tech_alint_asp = canonicalizePath($value); }
+        elsif ($key eq "alint-asp")          { $alint_asp = canonicalizePath($value); }
+        elsif ($key eq "aspice-asp")         { $aspice_asp = canonicalizePath($value); }
+        elsif ($key eq "aspice-extra-asp")   { $aspice_extra_asp = canonicalizePath($value); }
+        elsif ($key eq "alint-extra-asp")    { $alint_extra_asp = canonicalizePath($value); }
+        elsif ($key eq "aspice-digital-time") { $aspice_digital_time = $value; }
+        elsif ($key eq "alint-in")           { $alint_in = canonicalizePath($value); }
+        elsif ($key eq "alint-dynamic-only") { $alint_dynamic_only = $value; }
+        elsif ($key eq "lib-static-only")    { $lib_static_only = $value; }
+        elsif ($key eq "aspice-in")          { $aspice_in = canonicalizePath($value); }     
+        elsif ($key eq "cell-localprops")    { $cell_localprops = canonicalizePath($value); } 
+        elsif ($key eq "cell-nodeprops")    { $cell_nodeprops = canonicalizePath($value); } 
+        elsif ($key eq "internalWires")     { $internalWires = $value ? 1 : 0; }
+        elsif ($key eq "internalRules")     { $internalRules = $value ? 1 : 0; }
+        elsif ($key eq "traceR")            { $traceR = $value; }
+        elsif ($key eq "traceInternal")     { $traceInternal = $value; }
+        elsif ($key eq "traceAll")          { $traceAll = $value; }
+        elsif ($key eq "tableTransistor")   { $tableTransistor = $value; }
+        elsif ($key eq "countScenarios")    { $countScenarios = $value; }
+        elsif ($key eq "maxBumpFanin")      { $maxBumpFanin = $value; }
+        elsif ($key eq "maxDelayFanin")     { $maxDelayFanin = $value; }
+        elsif ($key eq "prsTau")            { $prsTau = $value; }
+        elsif ($key eq "alint-raw")       { $alint_raw = $value; }
+        elsif ($key eq "bump-source-pvt")   { @bump_source_pvt = split(",",$value); }
+        elsif ($key eq "bump-debug")        { $bump_debug = $value; }
+        elsif ($key eq "power-sag")         { $power_sag = $value; }
+        elsif ($key eq "threshPercent")     { @threshPercent = split(",",$value); }
+        elsif ($key eq "static-switchV")    { $static_switchV = $value; }
+        elsif ($key eq "delayCap")          { @delayCap=split(/,/,$value); }
+        elsif ($key eq "bumpCC")            { my @f=split(",",$value);
+                                              @bumpCC=();
+                                              foreach my $f (@f) {
+                                                push @bumpCC, $f if ($f eq "1" or $f eq "0");
+                                              }
+                                            }
+        elsif ($key eq "bumpTau")           { my @f=split(",",$value);
+                                              @bumpTau=();
+                                              foreach my $f (@f) {
+                                                push @bumpTau, $f if ($f =~ /^\d+$/);
+                                              }
+                                            }
+        elsif ($key eq "delayCC")            { my @f=split(",",$value);
+                                              @delayCC=();
+                                              foreach my $f (@f) {
+                                                push @delayCC, $f if ($f eq "1" or $f eq "0");
+                                              }
+                                            }
+        elsif ($key eq "delayFast")         { my @f=split(",",$value);
+                                              @delayFast=();
+                                              foreach my $f (@f) {
+                                                push @delayFast, $f if ($f eq "1" or $f eq "0");
+                                              }
+                                            }
+        elsif ($key eq "delayTau")          { my @f=split(",",$value);
+                                              @delayTau=();
+                                              foreach my $f (@f) {
+                                                push @delayTau, $f if ($f =~ /^\d+$/);
+                                              }
+                                            }
+        elsif ($key eq "leakage")           { $doLeakage = $value; }
+        elsif ($key eq "inverter-leakage")  { $doInverterLeakage = $value; }
+        elsif ($key eq "maxNodePerAlintBin") { $maxNodePerAlintBin = $value; }
+        elsif ($key eq "digital-time-unit") { $digital_time_unit = $value; }
+        
+        # JLVS max/min ratio options
+        elsif ($key eq "min-staticizer-ratio")   { $min_stat_ratio = $value; }
+        elsif ($key eq "max-staticizer-ratio")   { $max_stat_ratio = $value; }
+
+        # general options
+        elsif ($key eq "force")             { push @force,split(/,/,$value); }
+        elsif ($key eq "justPrint")         { $justPrint = $value; }
+        elsif ($key eq "verbose")           { $verbose = $value; }
+        elsif ($key eq "version")           { $version = getVersion(); print "$version\n"; }
+        elsif ($key eq "mem")               { $mem = canonicalizeMemory($value);
+                                              $memSet = 1;
+                                              $numMegs = getNumMegabytesFromMemorySizeStr( $mem );
+                                              $numMegs{"starRC2b"}=$numMegs if ! $memSet{"starRC2b"};
+                                            }
+        elsif ($key eq "lowmem")            { $lowmem = canonicalizeMemory($value);
+                                              $lowMegs = getNumMegabytesFromMemorySizeStr( $lowmem );
+                                            }
+        elsif ($key =~ /^mem-starRC2b/)     {
+                                              $numMegs{"starRC2b"}=getNumMegabytesFromMemorySizeStr(canonicalizeMemory($value));
+                                              $memSet{"starRC2b"}=1;
+                                            }
+        elsif ($key =~ /^mem-(\S+)/)        {
+                                              my $memtask=$1;
+                                              $numMegs{$memtask}=getNumMegabytesFromMemorySizeStr(canonicalizeMemory($value));
+                                              $memSet{$memtask}=1;
+                                            }
+        elsif ($key eq "nohard")            { $hard = $value ? 0 : 1; }
+        elsif ($key eq "hard")              { $hard = $value; }
+        elsif ($key eq "notify")            { $notify = $value; }
+        elsif ($key eq "hard-limit")        { $hardLimit = canonicalizeMemory($value); $hard = 1; }
+        elsif ($key eq "max-heap-size")     { $maxHeapSize = canonicalizeMemory($value);
+                                              $maxHeapSizeSet = 1;
+                                              $maxHeapSizeNumMegs = getNumMegabytesFromMemorySizeStr( $maxHeapSize );
+                                            }
+        elsif ($key eq "javaFlags")         { $javaFlags = $value; }
+        elsif ($key eq "jre-args")          { $javaFlags = $value; }
+        elsif ($key eq "jre")               { $jreFlags = $value; }
+        elsif ($key eq "extractMem")        { $extractMem = canonicalizeMemory($value);
+                                              $extractNumMegs = getNumMegabytesFromMemorySizeStr( $extractMem );
+                                            }
+        elsif ($key eq "disk-space")        { $disk_space = canonicalizeMemory($value); }
+        elsif ($key eq "jobs")              { $jobs = $value; }
+        elsif ($key eq "slurp")             { $slurp = $value; }
+        elsif ($key eq "summarize")         { $do_summarize = $value; }
+        elsif ($key eq "sort")              { $do_sort = $value; }
+        elsif ($key eq "makeFlags")         { $makeFlags = $value; }
+        elsif ($key eq "priority")          { $priority = $value;
+            $priority = -1000 if ($priority < -1000); }
+        elsif ($key eq "qsub")              { $qsub = $value; }
+        elsif ($key eq "64")                { $bit64 = $value; }
+        elsif ($key eq "lambda")            { $lambda  = $value; }
+        elsif ($key eq "taskLock")          { $taskLock  = $value; }
+        elsif ($key eq "remote")            { $remote = $value; }
+        elsif ($key eq "extractPower")      { $extractPower = $value; }
+        elsif ($key eq "isopotentialLayers") { $isopotentialLayers = $value; }
+        elsif ($key eq "qsubarch")          { $qsub_arch_arg = $value; }
+        elsif ($key eq "qsub-extras")       { $qsub_extras = $value;
+                                              $qsub_extras{starRC2b}=$value if ! defined $qsub_extras{starRC2b};
+                                            }
+        elsif ($key eq "qsub-extras-starRC2b")  { $qsub_extras{starRC2b} = $value; }
+        elsif ($key eq "65mode")            { $sixtyfivemode = $value; }
+
+        # ASTA options
+        elsif ($key eq "asta-input-slew")   { $astaInputSlew = $value; }
+        # TODO: currently fixed to 1fF; remove after adding interpolation code
+        #elsif ($key eq "asta-output-cap")   { $astaOutputCap = $value; }
+        elsif ($key eq "asta-walltime")     { $astaWalltime = $value; }
+        elsif ($key eq "asta-tau-bound")    { $astaTauBound = $value; }
+        elsif ($key eq "hercules-threads")  { $hercules_threads = $value; }
+        elsif ($key eq "hsim-threads")      { $hsim_threads = $value > 1 ? 4: 1; }
+        elsif ($key eq "hspice-threads")    { $hspice_threads = $value > 0 ? $value : 1; }
+        elsif ($key eq "asta-threads")      { $astaThreads = $value; }
+        elsif ($key eq "astaTau")           { my @f=split(",",$value);
+                                              @astaTau=();
+                                              foreach my $f (@f) {
+                                                push @astaTau, $f if ($f =~ /^\d+(\.\d+)?$/);
+                                              }
+                                            }
+        elsif ($key eq "slint-input-slew") { $slintInputSlew = $value; }
+        elsif ($key eq "slint-abs-margin") { $slintAbsMargin = $value; }
+        elsif ($key eq "slint-ocv-margin") { $slintOcvMargin = $value; }
+
+        # sweep options
+        elsif ($key eq "task")               { @task    = split(",",$value); }
+        elsif ($key eq "skip")               { @skip    = split(",",$value); }
+        elsif ($key eq "time")               { @time    = split(",",$value); }
+        elsif ($key eq "pvt")                { @pvt     = split(",",$value); }
+        elsif ($key eq "true")               { @true    = split(",",$value); }
+        elsif ($key eq "corner")             { @corner  = split(",",$value); }
+        elsif ($key eq "temp")               { @temp    = split(",",$value); }
+        elsif ($key eq "timed-delay")        { @timed_delay = split(",",$value); }
+        elsif ($key eq "mode")               { @mode = split(",",$value); 
+            if ($#mode > 0) {
+                push @warnings, "WARNING: multiple modes may not work correctly";
+                warn "WARNING: multiple modes may not work correctly\n";
+            }
+            foreach my $m (@mode) {
+                my $e=0;
+                if ( ! $legalmodes{$m}) {
+                    push @errors, "ERROR: Illegal mode $m";
+                    $e++;
+                }
+                die usage() if $e;
+            }
+        }
+        elsif ($key eq "view-mode-order")               { @view_mode_order = split(",",$value);}
+        elsif ($key eq "extracted-view")     {
+                my @x = split(",",$value);
+                my $e=0;
+                foreach my $x (@x) {
+                    # it is ok for layout to be in the lve.config but NOT on the command line
+                    # config is read first
+                    if ($x eq "layout_tag" or
+                            (@view_extracted and $x eq "layout")) {
+                        push @errors, "ERROR: view $x is illegal here, reverting to ".join(",", @view_extracted);
+                        $errors++;
+                        $e++;
+                    }
+                }
+                @view_extracted=@x if ! $e;
+            }
+        elsif ($key eq "estimated-view")     { @view_estimated = split(",",$value); }
+        elsif ($key eq "routed")             { $routed = $value; }
+        elsif ($key eq "norouted")           { if ($value == 1)
+                                                {$routed=0;} else
+                                                {$routed=1;} }
+        elsif ($key eq "cdl-name-map")       { $cdl_name_map = $value; }
+        elsif ($key eq "lib-translate")      { $libtranslate = $value; }
+        elsif ($key eq "fake-size")          { $fakesize = $value; }
+        elsif ($key eq "libtranslate")       { $libtranslate = $value; }
+        elsif ($key eq "budgetcapindex")     { $budgetcapindex = $value; }
+        elsif ($key eq "dobudget")           { $dobudget = $value; }
+        elsif ($key eq "extract-skip-6t")    { $extractskip6t = $value; }
+        elsif ($key eq "sigma-factor")       { $sigma_factor = $value; }
+        elsif ($key eq "env-cap-load")       { $env_cap_load = $value; }
+        elsif ($key eq "db-prefix")          { $dbprefix = $value; }
+        elsif ($key eq "redo-nodes")         { $redonodes = $value; }
+        elsif ($key eq "hdrc-density")       { $hdrc_density = $value; }
+        elsif ($key eq "noextractdeps")      { $noextractdeps = $value; }
+        elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
+        elsif ($key eq "hlvs-eplfix")        { $eplfix = $value; }
+        elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value); }
+        elsif ($key eq "starRC1-extra-options") { $starRC1_extra_options = canonicalizePath($value);}
+        elsif ($key eq "use-db") { $usedb=$value; }
+        elsif ($key eq "make") { $make=$value if ( -x "$value"); }
+        elsif ($key eq "no-tag") { $no_tag=$value; $use_tag = $value ? "" : "--use-tag"; }
+        elsif ($key eq "tag-orientation") {
+            if (defined ($valid_orientations{$value})) {
+                $tag_orientation=$value;
+            }
+            else {
+                push @errors, "ERROR: $value orientation is not valid, using $tag_orientation";
+                $errors++;
+            }
+        }
+        elsif ($key eq "clean-trace")        { $clean_trace = $value;}
+        elsif ($key eq "cell-type")          { $cell_type = $value;}
+        #rte Options
+        elsif ($key eq "digital-delay")      {$digitalDelay = $value;}
+        elsif ($key eq "estimated-delay")      {$estimatedDelay = $value;}
+        elsif ($key eq "measured-delay")      {$measuredDelay = $value;}
+        elsif ($key eq "history-per-node")      {$depth = $value;}
+        elsif ($key eq "cycle-count")      {$cycleCount = $value;}
+        elsif ($key eq "no-cell-lock")      {$no_cell_lock = $value;}
+
+        # unknown option
+        else {
+            push @warnings, "WARNING: option --${key}=${value} not recognized.\n";
+            warn ("WARNING: option --${key}=${value} not recognized.");
+        }
+    } else {
+        # separate cell and env list
+        my ($cell,$envs,$nodes) = split(":",$option);        
+        if ( ! $celllock{$cell}) {
+            my ($basecell, $plusminus) = partition_fqcnminus($cell);
+
+            my $basecellpath = $basecell;
+            $basecellpath =~ s:\.:/:g;
+            my $cellpath = "${basecellpath}${plusminus}";
+            $envs = "" if !defined($envs);
+            my @env = parse_envs($envs);
+     
+            print "Processing cell: $basecell ...\n";
+           
+            # make sure no directories are > 255 chars
+            my $long = 0;
+            my @parts = File::Spec->splitdir($cellpath);
+            my @shortParts;
+            foreach my $px (@parts) {
+                my $part = $px;
+                if(length($part) >= 255 or $part =~ /\[.*\]/ )  {
+                    $long = 1;
+                    my ($prefix) = split("-",$part);
+                    $part = "$prefix" . "-" . md5_hex($part);
+                }
+                push @shortParts,$part;
+            }
+            my $shortPath = File::Spec->catdir( @shortParts );
+
+            my $subtype = $plusminus?".0":"";
+            my $subtype_gds2 = $plusminus?"_D_0":"";
+            my $cell_cadence = $cadenceName{$basecell};
+            my $cell_gds2 = $gds2Name{$basecell};
+
+            my $dfIIPath = dfIIDir($dfII_dir,$cell_cadence);
+
+            $cellpath = "$output_dir/$shortPath";
+            # quick test for existence of spec cell
+            my $found_spec = 0;
+            my @spec_dirs = split(/:/, "${cast_dir}:${spec_dir}");
+            foreach my $one_dir (@spec_dirs) {
+                if (-e "$one_dir/${basecellpath}.cast") {
+                    $found_spec = 1;
+                    last;
+                }
+            }
+            if (!$found_spec) {
+                error("Missing CAST spec file: ${basecellpath}.cast in ${cast_dir}:${spec_dir}");
+            } else {
+                my_system("mkdir -p '$cellpath'");
+                `chgrp $gid "$cellpath" &>/dev/null` if $sgid;
+                chmod $dirmode, "$cellpath";
+                
+                if(! ( -e "$cellpath/.cellname" ) ) {
+                    open CELLNAME, ">$cellpath/.cellname.tmp"
+                        or die "Can't open $cellpath/.cellname for write";
+                print CELLNAME<<EOF;
+$basecell$subtype
+$basecell$plusminus
+$basecell
+$cell_gds2$subtype_gds2
+$cell_cadence
+EOF
+                     close(CELLNAME);
+                    `mv '$cellpath/.cellname.tmp' '$cellpath/.cellname'`;
+                }
+
+                # unroll all targets
+                if($nodes and !($nodes eq "")) {
+                    open NODES,">$output_dir/$shortPath/.nodes.latest";
+                    print NODES "$nodes\n";
+                    close NODES;
+                }
+                enumerate_targets($cell,$shortPath,$dfIIPath,@env);
+            }
+        }
+    }
+    foreach my $f (@force) {
+        $force{$f}=1;
+    }
+    $errors;
+}
+
+# unroll pvt list, or all corner, true, temp combinations
+# also expand monte-carlo seeds
+sub list_pvt {
+    my @t1;
+    @t1 = @pvt;
+    if (@pvt==0) {
+        foreach my $corner (@corner) {
+            foreach my $true (@true) {
+                foreach my $temp (@temp) {
+                    push @t1, "$corner:$true:$temp";
+                }
+            }
+        }
+    }
+    my @t2;
+    foreach my $pvt (@t1) {
+        if ($monte_carlo>0 && $pvt =~ /^(\S+)g:(\S+):(\S+)$/ ) {
+            for (my $seed=1; $seed<=$monte_carlo; $seed++) {
+                push @t2, "${1}g_${seed}:$2:$3";
+            }
+        } else { push @t2, $pvt; }
+    }
+    return @t2;
+}
+
+sub defaultOptions {
+    my ($dbh)=@_;
+    # note use of '*' because the column name of option is not allowed in mysql
+    my $fst = lve_db_select($dbh, "*", "default_options","pdk = 'tsmc28'");
+    foreach my $row (@$fst) {
+        my ($pdk,$arg,$val)=@$row;
+        $val =~ s:\$packageroot\$:$pdk_root:;
+        $defaultvalues{$arg}=$val;
+    }
+    # include cell-type args into the config defaults
+    if ($cell_type ne "") {
+        my $fst = lve_db_select($dbh, "*", "default_options","pdk = 'tsmc28:$cell_type'");
+        foreach my $row (@$fst) {
+            my ($pdk,$arg,$val)=@$row;
+            $val =~ s:\$packageroot\$:$pdk_root:;
+            $defaultvalues{$arg}=$val;
+        }
+    }
+}
+
+sub previousOptions {
+    my ($dbh,$fqcn)=@_;
+    my $fst = lve_db_select($dbh, "args","cells", "fqcn = '$fqcn'");
+    my $rows=0;
+    foreach my $row (@$fst) {
+        $rows++;
+        my ($arg)=@$row;
+        if (defined ($arg)) {
+            foreach my $av (split(/ /, $arg) ) {
+                my ($a,$v)=split(/=/, $av, 2);
+                $v =~ s/\\b/ /g;
+                $previousvalues{$a}=$v;
+            }
+        }
+    }
+    print STDERR "Error: database corrupted, $rows entries for $fqcn\n"
+        if $rows > 1;
+    $rows;
+}

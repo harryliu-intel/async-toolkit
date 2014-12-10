@@ -1,0 +1,932 @@
+#!/usr/intel/bin/perl -w
+
+use POSIX;
+use File::Basename;
+use File::Temp qw/ tempfile tempdir /;
+
+use File::stat;
+use File::Spec;
+use File::Temp qw/ tempfile tempdir /;
+use Digest::MD5 qw/ md5_hex /;
+use IPC::Open3;
+use Symbol;
+use strict;
+
+my @errors=();
+my @warnings=();
+my %errors=();
+my %warnings=();
+my $limit = 10e-3;
+my $fakepower=0;
+
+my $doc = <<DOC;
+Copyright 2008 Fulcrum Microsystems.  All rights reserved.
+Authors: Kai He
+
+<h2>Voltage Storm Package</h2>
+.
+DOC
+
+# get paths to tools we might need to use
+my $os_type=`uname -s`; chomp $os_type;
+my $arch_type=`uname -m`; chomp $arch_type;
+my $os_arch="$os_type-$arch_type";
+
+# files and paths
+my $pdk_root;
+my $output_dir      = "";
+my $deleteTempDir= 1;    # clean up after running
+my $force=0;
+my $skip=0;
+my $verbose=0;
+my $extra_lef="";
+my $extra_lib="";
+
+my$SPAR_DIR      ="/home/user/khe/alta/spar";
+
+# locate tools
+my $package_root = $0;
+$package_root =~ s:/bin/vstorm::;
+my $SCRIPTS     = "$package_root/share/proteus/scripts";
+my $LIBGEN      = "/usr/local/cadence/bin/anls libgen";
+my $POWERMETER  = "/usr/local/cadence/bin/anls powermeter";
+my $VSTORM      = "/usr/local/cadence/bin/anls vstorm2";
+
+# command line arguments
+my $cell="";
+my $def_file="";
+my $vdd_loc_file="";
+my $vss_loc_file="";
+#my $vdd_loc_file="vstorm_vdd_loc.txt";
+#my $vss_loc_file="vstorm_vss_loc.txt";
+my @task=("libgen","powermeter","vdd","vss");
+
+# parse command line
+my @options = ();
+my @defaultOptions = ();
+my @defaultArgs = ();
+
+# get pdk root from args, and parse the arguments into options
+# which are either cellnames (scalars) or key-value pairs (array references)
+$pdk_root=&parseArgs(\@ARGV,\@options);
+die usage() . "ERROR: You must specify --fulcrum-pdk-root\n" if(!$pdk_root);
+# parse them into options
+&parseArgs(\@defaultArgs,\@defaultOptions);
+# process defaults
+&processOptions(\@defaultOptions);
+
+die usage() . "ERROR: file $vdd_loc_file not exist\n" if(($vdd_loc_file ne "") && !(-e $vdd_loc_file));
+die usage() . "ERROR: file $vss_loc_file not exist\n" if(($vss_loc_file ne "") && !(-e $vss_loc_file));
+
+# derived settings
+#my $TB = "$cell/testbench_template";
+
+# review tasks
+my %stage;
+foreach my $current_task (@task){
+    if    ($current_task eq "libgen") {$stage{"libgen"}=1;}
+    elsif ($current_task eq "powermeter") {$stage{"powermeter"}=1;}
+    elsif ($current_task eq "Vdd" || $current_task eq "vdd")   {$stage{"vdd"}=1;}
+    elsif ($current_task eq "GND" || $current_task eq "gnd" || $current_task eq "vss" || $current_task eq "Vss")        {$stage{"vss"}=1;}
+    else {
+        die usage() . "ERROR: Unknown task $current_task\n";
+    }
+}
+
+# check for def file
+die usage() . "ERROR: Can't open def file \"$def_file\" for read.\n" if (($def_file eq "") || !(-r $def_file));
+
+
+# create and change to output-dir
+if ($output_dir eq "") {
+    $output_dir = canonicalizePath("vs");
+}
+system("mkdir -p $output_dir");
+chdir("$output_dir");
+
+# create cell.def
+if (&checkDependency("cell.def", "$def_file", $force, $skip)) {
+  my $cmd;
+  if( $def_file=~/gz$/ ){ 
+    $cmd="cat $def_file | gunzip | sed -e 's^\\\\^^g' -e 's^\\<GND\\>^Vss^g' > cell.def";
+  }else{
+    $cmd="cat $def_file | sed -e 's^\\\\^^g' -e 's^\\<GND\\>^Vss^g' > cell.def";
+  }
+  print "Processing $def_file... \n";
+  system($cmd);
+}
+$def_file="cell.def";
+my %components;
+#open (P, "<cell.def");
+#while (<P>) {
+#    chomp;
+#    if (/^COMPONENT/) {
+#        while (<P>) {
+#            last if /^END COMP/;
+#            chomp;
+#            my @f=split;
+#            $components{$f[2]}=1 if $f[0] eq "-" and $f[2] !~ /^synthesis/;
+#        }
+#        last;
+#    }
+#}
+
+# create libgen.cmd
+open(LIBGEN, ">libgen.cmd");
+print LIBGEN "input_type pr_lef\n";
+print LIBGEN "setvar library_name all_port_views\n";
+
+open(LEFLIST, "<$SPAR_DIR/chip/alta/FM/scripts/lef_file.list");
+while(my $line=<LEFLIST>){
+    chomp $line;
+    if( $line=~/^\#/ ){ next; }
+    if( -e "$SPAR_DIR/${line}_VS" ){
+       print LIBGEN "lef_file_list { $SPAR_DIR/${line}_VS }\n";
+    } elsif( -e "$SPAR_DIR/${line}_starRC" ) {
+       print LIBGEN "lef_file_list { $SPAR_DIR/${line}_starRC }\n";
+    } elsif( -e "$SPAR_DIR/$line" ) {
+       print LIBGEN "lef_file_list { $SPAR_DIR/$line }\n";
+   } else {
+       print "Error: file $SPAR_DIR/$line not exist\n";
+   }
+}
+close(LEFLIST);
+my %leflist=();
+my $leferr=0;
+foreach my $component (sort keys %components) {
+    my $cdir=$component;
+    next if $component =~ /av_/;
+    next if $component =~ /vendor/;
+    $cdir =~ s/\./\//g;
+    if ( -s "/mnt/fulcrum/alta/lve/lve/$cdir/layout/lib_vc.lef") {
+        $leflist{"/mnt/fulcrum/alta/lve/lve/$cdir/layout/lib_vc.lef"}=1;
+    }
+    elsif ( -s "/mnt/fulcrum/alta/lve/lve/$cdir/layout_pg/lib_vc.lef") {
+        $leflist{"/mnt/fulcrum/alta/lve/lve/$cdir/layout_pg/lib_vc.lef"}=1;
+    }
+    elsif (($component !~ /TIEOFF$/) and ($component !~ /GNDShieldTieOff/)) {
+        print STDERR "Cannot find lef for $component\n";
+        $leferr++;
+    }
+}
+if ($extra_lef ne "") {
+    my @lef=split(/,/, $extra_lef);
+    foreach my $lef (@lef) {
+        $leflist{$lef}=1;
+    }
+}
+my @lef=keys %leflist;
+foreach my $lef (@lef) {
+    if ( -s "$lef") {
+        print LIBGEN "lef_file_list { $lef }\n";
+    }
+    else {
+        print STDERR "Error: $lef not found\n";
+        $leferr++;
+    }
+}
+print LIBGEN <<END_OF_LIBGEN;
+cell_list { * }
+setvar assume_foreigns true
+setvar generate_port_powerview true
+setvar tech_file $pdk_root/share/Fulcrum/vstorm/icecaps.tch
+setvar extract_r_only true
+generic_power_names 1.08 { VDD Vdd } 
+generic_ground_names 0 { VSS Vss } 
+include $pdk_root/share/Fulcrum/vstorm/vs.layer.map
+
+END_OF_LIBGEN
+close(LIBGEN);
+
+# create powermeter.cmd
+open(POWERMETER, ">powermeter.cmd");
+print POWERMETER "sxclDesign design .\n";
+print POWERMETER "design calDef $def_file\n";
+print POWERMETER "design rDesignHierarchySeparator \"\/\"\n";
+print POWERMETER "design rIgnoreMissingCells 1\n";
+
+sub default_operating_condition {
+    my ($file)=@_;
+    my $f;
+    open ($f, "<$file");
+    while (<$f>) {
+        chomp;
+        if (/default_operating_conditions\s*:\s*(\S+)\s*;/) {
+            my $condition=$1;
+            $condition =~ s/"//g;
+            close $f;
+            return $condition;
+        }
+    }
+    close $f;
+    return "";
+}
+
+open(LIBLIST, "<$SPAR_DIR/chip/alta/FM/scripts/lib_file_min.list");
+while(my $line=<LIBLIST>){
+    chomp $line;
+    if( $line=~/^\#/ ){ next; }
+    if( $line=~/port_only.lib/){ next ; }
+    # this is extra and creates problems
+    next if $line =~ /sd65Cpcie2_dfea5_pcs02_ff_1_1v-GP-OD/;
+    if( -e "$SPAR_DIR/${line}_VS" ){
+       my $cond=default_operating_condition("$SPAR_DIR/${line}_VS");
+       print POWERMETER "design calSynopsysTimingLib $SPAR_DIR/${line}_VS $cond\n";
+    } elsif( -e "$SPAR_DIR/$line" ) {
+       my $cond=default_operating_condition("$SPAR_DIR/${line}");
+       print POWERMETER "design calSynopsysTimingLib $SPAR_DIR/$line $cond\n";
+   } else {
+       print "Error: file $SPAR_DIR/$line not exist\n";
+   }
+}
+if ($extra_lib ne "") {
+    my @lib=split(/,/, $extra_lib);
+    foreach my $lib (@lib) {
+        if ( -s "$lib") {
+           my $cond=default_operating_condition("$lib");
+           print POWERMETER "design calSynopsysTimingLib $lib $cond\n";
+        }
+        else {
+            print STDERR "Error: $lib not found\n";
+        }
+    }
+}
+close(LIBLIST);
+
+print POWERMETER <<END_OF_POWERMETER;
+design calCadenceCellLib ./all_port_views.cl
+sxclPowerMeter ChipPwr design
+ChipPwr rDefaultSupplyVoltage 1.08V
+ChipPwr calRailVoltage VDD 1.1V
+ChipPwr calRailVoltage VDD8 1.8V
+ChipPwr calRailVoltage VDD18 1.8V
+ChipPwr calRailVoltage VDD33 3.3V
+ChipPwr rDefaultFrequency 550MHz
+ChipPwr rDefaultTransitionTime 0.625ns
+ChipPwr rDefaultInputDutyCycle 0.5
+ChipPwr rDefaultPinCap 0.0
+ChipPwr rDefaultInputActivity 0.12
+ChipPwr rUseTwfExtensionClock 1
+ChipPwr fnExecute accura
+sxclPowerMeterOutput ChipPwrOut  ChipPwr
+ChipPwrOut fnReport stat tranDensity.rpt
+ChipPwrOut fnReport cpw clock.pwr
+
+END_OF_POWERMETER
+close(POWERMETER);
+
+&create_loc_file( $def_file );
+
+# create powermeter.cmd
+open(VSTORM, ">vstorm.cmd");
+print VSTORM <<END_OF_VSTORM;
+layout_file $def_file
+cell_library	./all_port_views
+use_cell_view pattern * port
+power_pin_supply_tolerance 0.9 1.2
+instance_power_file avg 1.08 pm scale 1.0 powermeter.pwr
+setvar powerpin_location_file 		$vdd_loc_file
+setvar fe_eco_output	   true
+setvar fe_output	   true
+setvar operation_mode signoff_verification
+setvar precision_digits 7
+setvar max_warning_messages 1000
+analyze Vdd 1.08 avg 1.026 ir
+filter ir auto
+plot ir
+filter er auto
+plot er
+
+END_OF_VSTORM
+close(VSTORM);
+
+# create powermeter.cmd
+open(VSTORM_VSS, ">vstorm_vss.cmd");
+print VSTORM_VSS <<END_OF_VSS;
+layout_file $def_file
+cell_library	./all_port_views
+use_cell_view pattern * port
+instance_power_file avg 1.08 pm scale 1.0 powermeter.pwr
+setvar powerpin_location_file 		$vss_loc_file
+setvar fe_eco_output	   true
+setvar fe_output	   true
+setvar max_warning_messages 1000
+setvar operation_mode signoff_verification
+analyze Vss 0.00 avg 0.054 ir
+filter ir auto
+plot ir
+filter er auto
+plot er
+
+END_OF_VSS
+close(VSTORM_VSS);
+
+# task=libgen
+if (defined($stage{"libgen"}) && &checkDependency("all_port_views.cl/cells_1.pwr", "$def_file", $force, $skip)) {
+  print "\nVSTORM: run libgen ...\n";
+  system("echo 'Running libgen...\n' > vstorm.err");
+  &my_system("rm -rf all_port_views.cl; $LIBGEN -cmd libgen.cmd > libgen.log");
+  system("grep -i error libgen.log >> vstorm.err");
+}
+
+# task=powermeter
+if (defined($stage{"powermeter"}) && &checkDependency("powermeter.pwr", "all_port_views.cl/cells_1.pwr $def_file", $force, $skip)) {
+  print "\nVSTORM: run powermeter ...\n";
+  if ($fakepower) {
+    fakePowermeter($def_file, "powermeter.pwr");
+  }
+  else {
+    system("echo '\nRunning powermeter...\n' >> vstorm.err");
+    &my_system("rm -f powermeter.pwr; $POWERMETER powermeter.cmd > powermeter.log");
+    system("grep -i error powermeter.log >> vstorm.err");
+  }
+}
+
+# task=vdd
+if (defined($stage{"vdd"}) && &checkDependency("vstorm_vdd.log", "powermeter.pwr all_port_views.cl/cells_1.pwr $def_file", $force, $skip)) {
+  print "\nVSTORM: run vstorm vdd ...\n";
+  system("echo '\nRunning vdd vstorm...\n' >> vstorm.err");
+  &my_system("$VSTORM -cmd vstorm.cmd > vstorm_vdd.log");
+  system("grep -i error vstorm_vdd.log >> vstorm.err");
+  system("grep 'filtered data range' vstorm_vdd.log >> vstorm.err");
+  system("grep -i warning vstorm_vdd.log >> vstorm.err");
+}
+
+# task=vss
+if (defined($stage{"vss"}) && &checkDependency("vstorm_vss.log", "powermeter.pwr all_port_views.cl/cells_1.pwr $def_file", $force, $skip)) {
+  print "\nVSTORM: run vstorm vss ...\n";
+  system("echo '\nRunning vss vstorm...\n' >> vstorm.err");
+  &my_system("$VSTORM -cmd vstorm_vss.cmd > vstorm_vss.log");
+  system("grep -i error vstorm_vss.log >> vstorm.err");
+  system("grep 'filtered data range' vstorm_vss.log >> vstorm.err");
+  system("grep -i warning vstorm_vss.log >> vstorm.err");
+}
+
+analyze_results();
+
+#*********SUB ROUTINES***********
+
+# display usage banner
+sub usage {
+    local $"=",";
+    my $usage = <<EOF;
+
+Proteus Master Script, Fulcrum Microsystems, Copyright June, 2008
+
+USAGE: $0 [options]
+
+  Options:
+    --output-dir=[$output_dir] (output directory)
+    --fulcrum-pdk-root=[$pdk_root]  (location of Fulcrum pdk)
+    --spar-dir=[$SPAR_DIR]  (location of spar directory)
+    --def=[$def_file]  (DEF file)
+    --vdd-loc-file=[$vdd_loc_file]  (vdd source location file)
+    --vss-loc-file=[$vdd_loc_file]  (vss source location file)
+    --task=[@task] (libgen,powermeter,vdd,vss)
+    --force=[$force]  ([0|1] force to regenerate all files, default=0)
+    --skip=[$skip]  ([0|1] skip dependency check, default=0)
+    --verbose=[$verbose]  ([0|1] default=0)
+    --extra-lef=[$extra_lef] for epl LANE, for example
+    --extra-lib=[$extra_lib] for epl LANE, for example
+    --include=[]  (include config file)
+
+EOF
+
+    return $usage;
+}
+
+
+# parses $args >> $options
+# args are just the args from the command line
+# an option is either a
+# 1) key value pair (list reference)
+# 2) scalar
+
+sub parseArgs() {
+    my ($args,$options) = @_;
+    my $pdk_root = undef;
+    foreach my $arg (@{$args}) {
+        next if($arg =~ /^\#/ );
+        if ($arg =~ /^--(.*)/) {
+            # key-value pair
+            my ($key, $value) = split("=",$1);
+            if ( ! defined ($value)) {
+                $value = 1;
+            }
+            if(!defined $key || !defined $value) {
+                # bad syntax
+                error("bad --key=value syntax in ($arg).");
+            } elsif($key eq "include" || $key eq "config" ) {
+                my @config_args = ();
+                &includeConfig($value,\@config_args);
+                my $pdk_temp = &parseArgs(\@config_args,$options);
+                $pdk_root = $pdk_temp if defined($pdk_temp);
+            } elsif($key eq "fulcrum-pdk-root") {
+                my $pdk_temp = canonicalizePath($value);
+                $pdk_root = $pdk_temp if defined($pdk_temp);
+            } elsif($key eq "output-dir") {
+                $output_dir = canonicalizePath($value);
+            } elsif($key eq "spar-dir") {
+                $SPAR_DIR = canonicalizePath($value);
+            } elsif ($key eq "def") {
+                $def_file = canonicalizePath($value);
+            } elsif ($key eq "vdd-loc-file") {
+                $vdd_loc_file = canonicalizePath($value);
+                print "VDD $vdd_loc_file\n";
+            } elsif ($key eq "vss-loc-file") {
+                $vss_loc_file = canonicalizePath($value);
+            } elsif($key eq "force") {
+                $force = $value;
+            } elsif($key eq "skip") {
+                $skip = $value;
+            } elsif($key eq "verbose") {
+                $verbose = $value;
+            } elsif($key eq "extra-lef") {
+                my @lef=split(/,/, $value);
+                foreach my $lef (@lef) {
+                    $lef=canonicalizePath($lef);
+                }
+                $extra_lef = join(",", @lef);
+            } elsif($key eq "extra-lib") {
+                my @lib=split(/,/, $value);
+                foreach my $lib (@lib) {
+                    $lib=canonicalizePath($lib);
+                }
+                $extra_lib = join(",", @lib);
+            } elsif($key eq "task") {
+                @task = split(/,/, $value);
+            } elsif($key eq "fake-power") {
+                $fakepower=$value;
+            } else {
+                my @pair = ($key,$value);
+                push @{$options}, \@pair;
+                print "\nUnknown arguement $arg\n";
+                die &usage();
+            }
+        } else {
+            # cell as a convenience translate / to . in a cell name
+            $arg =~ s:/:.:g;
+            push @{$options}, $arg;
+        }
+    }
+    return $pdk_root;
+}
+
+# adds args from $config file to $args
+sub includeConfig  {
+    my ($config,$args) = @_;
+    my @packageroot=split(/\//, $config);
+    pop @packageroot;
+    while ( @packageroot and -d join("/", @packageroot) and ! -f join("/",@packageroot)."/.fulcrum-package-root") {
+        pop @packageroot;
+    }
+    my $packageroot = join("/",@packageroot);
+    undef @packageroot;
+    if (open INCLUDE, "<$config") {
+        while (<INCLUDE>) {
+            my ($line) = split("#",$_);
+            foreach my $arg (split(" ",$line)) {
+                if ($packageroot ne "" and -d $packageroot and $arg =~ /\$packageroot\$/) {
+                    $arg =~ s:\$packageroot\$:$packageroot:g;
+                }
+                push @{$args}, $arg;
+            }        }
+        close INCLUDE;
+    } else { error("can't include file \"$config\"."); }
+}
+
+sub processOptions {
+    my ($options) = @_;
+    foreach my $option (@{$options}) {
+        &processOption($option);
+    }
+}
+
+sub processOption {
+    my ($option) = @_;
+
+    if (ref($option) eq "ARRAY") {
+        my ($key,$value) = @{$option};
+        # path/directory/file options
+        if ($key eq "output-dir")             { $output_dir = canonicalizePath($value); }
+        else {
+            push @warnings, "WARNING: option --${key}=${value} not recognized.\n";
+            warn ("WARNING: option --${key}=${value} not recognized.");
+        }
+    } else {
+        # separate cell and env list
+        my ($cell,$envs,$nodes) = split(":",$option);
+        my ($basecell, $plusminus) = partition_fqcnminus($cell);
+    }
+}
+
+# canonicalizePath
+sub canonicalizePath {
+    my ( $thePath ) = @_;
+
+    my @dirParts = File::Spec->splitdir( $thePath );
+
+    my $numDirectories = scalar( @dirParts );
+
+    my $i;
+
+    my @canonDirParts;
+
+    if( !File::Spec->file_name_is_absolute( $thePath ) ) {
+        @canonDirParts = File::Spec->splitdir( getcwd() );
+    }
+    my $numCanonDirParts = scalar( @canonDirParts );
+
+    for ( $i=0; $i<$numDirectories; $i++ ) {
+	if ( ! ( $dirParts[ $i ] eq "" ) ) {
+	    if ( $dirParts[ $i ] eq File::Spec->updir ) {
+	
+		if ( $numCanonDirParts != 0 ) {
+		
+		    $numCanonDirParts--;
+		
+		    @canonDirParts = @canonDirParts[0..($numCanonDirParts-1)];
+		
+		}
+		else {
+		    @canonDirParts = ( @canonDirParts, $dirParts[ $i ] );
+		}
+	
+	    }
+	    else{
+		if ( ! ( $dirParts[ $i ] eq File::Spec->curdir ) ) {
+		    @canonDirParts = ( @canonDirParts, $dirParts[ $i ] );
+		    $numCanonDirParts++;
+		}
+	    }
+	}
+	
+    }
+
+    my $canonPath = File::Spec->catdir( @canonDirParts );
+
+    if ( File::Spec->file_name_is_absolute( $thePath ) ) {
+	$canonPath = "/" . $canonPath;
+    }
+
+    return $canonPath;
+
+}
+
+sub checkDependency {
+    my ( $output,$input,$force,$skip ) = @_;
+    my @output_files=split(/ /, $output);
+    my @input_files=split(/ /, $input);
+    my $input_timestamp = 0;
+    my $write_secs;
+    foreach my $file (@input_files) {
+        chomp $file;
+        if(! -e $file){ return 0;}
+        $write_secs = stat($file)->mtime;
+        if($write_secs > $input_timestamp){$input_timestamp=$write_secs;}
+    }
+    if($force){return 1;}
+    foreach my $file (@output_files) {
+        chomp $file;
+        if(! -e $file){ return 1;}
+        $write_secs = stat($file)->mtime;
+        if($skip == 0 && $write_secs < $input_timestamp){return 1;}
+    }
+    return 0;
+}
+
+sub my_system {
+    my ($cmd)=@_;
+    if( $verbose ){print "$cmd\n";}
+    system($cmd);
+}
+
+sub create_loc_file {
+  my ( $def_file ) = @_;
+  print STDERR "Create Loc File $def_file\n";
+  my $vdd_found=0;
+  my $vss_found=0;
+  my $x; 
+  my $y;
+  my $via;
+  my $vdd_top_metal=0;
+  my $vss_top_metal=0;
+  my $vdd_source_count=0;
+  my $vss_source_count=0;
+  my $create_vdd_loc=0;
+  my $create_vss_loc=0;
+  if($vdd_loc_file eq ""){ $vdd_loc_file="vdd_loc_file.txt"; $create_vdd_loc=1; }
+  if($vss_loc_file eq ""){ $vss_loc_file="vss_loc_file.txt"; $create_vss_loc=1; }
+  if($create_vdd_loc==0 && $create_vss_loc==0){ return 0; }
+      
+  open(DEF, "<$def_file") or die "Cannot open $def_file\n";
+  if( $create_vdd_loc==1){ open(VDD_LOC, ">$vdd_loc_file"); }
+  if( $create_vss_loc==1){ open(VSS_LOC, ">$vss_loc_file"); }
+  my $specialnets=0;
+  while(my $line=<DEF>){
+    $specialnets=1 if ($line =~ /^SPECIALNETS/);
+    $specialnets=0 if ($line =~ /^END/);
+    next if ! $specialnets;
+    if($line=~/- Vdd/){$vss_found=0; $vdd_found=1;}
+    if($line=~/- Vss/){$vss_found=1; $vdd_found=0;}
+    if($line=~/;/){$vss_found=0; $vdd_found=0;}
+    if($create_vdd_loc==1 && $vdd_found==1 && $line=~/\( ([-0-9]+) ([-0-9]+) \) (M[3-9]_M[2-8]_)/){
+        $x=$1; $y=$2; $via=$3;
+        $via=~/M([3-9])_M([2-8])_/;
+        if($1>$vdd_top_metal){
+            $vdd_top_metal=$1;
+            close(VDD_LOC);
+            open(VDD_LOC, ">$vdd_loc_file");
+            $vdd_source_count=0;
+        }
+        $x/=1000;
+        $y/=1000;
+        if($vdd_top_metal==$1){
+           print VDD_LOC "vsrc{$vdd_source_count} $x $y M$vdd_top_metal\n";
+           $vdd_source_count+=1;
+        }
+    }    
+    if($create_vdd_loc==1 && $vdd_found==1 && $line=~/\( ([-0-9]+) ([-0-9]+) \) (via[1-9]Array)/){
+        $x=$1; $y=$2; $via=$3;
+        $via=~/via([1-9])Array/;
+        if($1+1>$vdd_top_metal){
+            $vdd_top_metal=$1+1;
+            close(VDD_LOC);
+            open(VDD_LOC, ">$vdd_loc_file");
+            $vdd_source_count=0;
+        }
+        $x/=1000;
+        $y/=1000;
+        if($vdd_top_metal==$1+1){
+           print VDD_LOC "vsrc{$vdd_source_count} $x $y M$vdd_top_metal\n";
+           $vdd_source_count+=1;
+        }
+    }    
+    if($create_vss_loc==1 && $vss_found==1 && $line=~/\( ([-0-9]+) ([-0-9]+) \) (M[3-9]_M[2-8]_)/){
+        $x=$1; $y=$2; $via=$3;
+        $via=~/M([3-9])_M([2-8])_/;
+        if($1>$vss_top_metal){
+            $vss_top_metal=$1;
+            close(VSS_LOC);
+            open(VSS_LOC, ">$vss_loc_file");
+            $vss_source_count=0;
+        }
+        $x/=1000;
+        $y/=1000;
+        if($vss_top_metal==$1){
+           print VSS_LOC "vsrc{$vss_source_count} $x $y M$vss_top_metal\n";
+           $vss_source_count+=1;
+        }
+    }    
+    if($create_vss_loc==1 && $vss_found==1 && $line=~/\( ([-0-9]+) ([-0-9]+) \) (via[1-9]Array)/){
+        $x=$1; $y=$2; $via=$3;
+        $via=~/via([1-9])Array/;
+        if($1+1>$vss_top_metal){
+            $vss_top_metal=$1+1;
+            close(VSS_LOC);
+            open(VSS_LOC, ">$vss_loc_file");
+            $vss_source_count=0;
+        }
+        $x/=1000;
+        $y/=1000;
+        if($vss_top_metal==$1+1){
+           print VSS_LOC "vsrc{$vss_source_count} $x $y M$vss_top_metal\n";
+           $vss_source_count+=1;
+        }
+    }    
+  }
+  close(DEF);
+  if( $create_vdd_loc==1){ close(VDD_LOC); }
+  if( $create_vss_loc==1){ close(VSS_LOC); }
+  return 0;
+}
+
+sub canonicalize_value {
+    my ($string)=@_;
+    $string =~ s/V$//;
+    if ($string =~ s/m$//) {
+        $string /= 1000;
+    }
+    elsif ($string =~ s/u$//) {
+        $string /= 1000000;
+    }
+    $string;
+}
+
+sub analyze_results {
+    my $workdir=$output_dir;
+    my @logfiles=( 
+        "libgen.log",
+        "powermeter.log",
+    );
+    my @files=("vstorm_vdd.log", "vstorm_vss.log");
+
+    my $errors=0;
+    my $warnings=0;
+    my $fatal=0;
+    foreach my $file (@logfiles) {
+        my $wcnt=0;
+        my $ecnt=0;
+        my $fcnt=0;
+        open (P, "<$workdir/$file");
+        while (<P>) {
+            chomp;
+            if (/\s*(\S.*) messages:\s+(\d+)/) {
+                my $type=$1;
+                my $cnt=$2;
+                if ($type =~ /Fatal/i) {
+                    $fcnt += $cnt;
+                }
+                elsif ($type =~ /error/i) {
+                    $ecnt += $cnt;
+                }
+                elsif ($type =~ /warn/i) {
+                    $wcnt += $cnt;
+                }
+            }
+            if (/^Warning:\s*$/) {
+                my $ln=$_;
+                while (<P>) {
+                    chomp;
+                    $ln .= " $_";
+                    last if /^\s*$/;
+                }
+                $_=$ln;
+                s/\s+/ /g;
+            }
+            if (/Warning/i) {
+                if (/LEFPARS-2019/) {
+                    $wcnt--;
+                }
+                elsif (/metal10/) {
+                    $wcnt--;
+                }
+                elsif (/Pin 'CK' of cell 'vendor.avago.svt.gates.av_/) {
+                    $wcnt--;
+                }
+                elsif (/Operating condition 'WCIND' does not exist in lib/) {
+                    $wcnt--;
+                }
+                elsif (/leakage_power_unit\) not found/) {
+                    $wcnt--;
+                }
+                elsif (/in the design have Synopsys Timing Library models but/) {
+                    $wcnt--;
+                }
+                elsif (/Warning:.*BUMP_RDL/) {
+                    $wcnt--;
+                }
+                elsif (/^Warning:/) {
+                    print STDERR "$_\n";
+                }
+            }
+        }
+        close P;
+        print STDERR "$file\n";
+        print STDERR "Warnings : $wcnt\n";
+        print STDERR "Errors   : $ecnt\n";
+        print STDERR "Fatal    : $fcnt\n";
+        $fatal += $fcnt;
+        $errors += $ecnt;
+        $warnings += $wcnt;
+    }
+    foreach my $file (@files) {
+        my @warning=();
+        my $data=0;
+        my $wcnt=0;
+        my $ecnt=0;
+        my $fcnt=0;
+        my $max=undef;
+        my $min=undef;
+        my @cnt;
+        my @range;
+        my %connect_size=();
+        my $connect_count=0;
+        open (P, "<$workdir/$file");
+        while (<P>) {
+            chomp;
+            if ((/WARNING/i) and ( ! /messages:/) and (! /section\(s\)/) and
+                    ! (/during loading/)) {
+                if ((! / metal[12],/) and (! /EXTZCORE-102/)) {
+                    if (! (/VST-822/) or $connect_count > 0) {
+                        push @warning,$_;
+                    }
+                }
+                if (/WARNING.*Unconnected section found beginning at node (\d+), layer (\S+), \((\S+),\s*(\S+)\)/) {
+                    if (defined ($connect_size{$1})) {
+                        $connect_size{$1}=$2;
+                        $connect_count-- if $2 eq "metal1" or $2 eq "metal2";
+                    }
+                }
+            }
+            if (/^Connect_size\[(\d+)\]/) {
+                my $node=$1;
+                if ($node != 0 and $node != 1) {
+                    $connect_size{$node}=1 if $node != 0 and $node != 1;
+                    $connect_count++;
+                }
+            }
+            if (/Data filtering results for IR drop:/) {
+                $data++;
+            }
+            if ((/(\d+) values were in range (\d+):\s+(\S+)\s+-\s+(\S+)/) and $data == 2) {
+                my $cnt=$1;
+                my $ndx=$2-1;
+                my $ll=canonicalize_value($3);
+                my $ul=canonicalize_value($4);
+                if ( defined $max ) {
+                    $max = $max < $ll ? $ll : $max;
+                    $max = $max < $ul ? $ul : $max;
+                    $min = $min > $ll ? $ll : $min;
+                    $min = $min > $ul ? $ul : $min;
+                }
+                else {
+                    $min = $max = $ll;
+                    $max = $max < $ul ? $ul : $max;
+                    $min = $min > $ul ? $ul : $min;
+                }
+                $range[$ndx]="$ll $ul";
+                $cnt[$ndx]=$cnt;
+            }
+        }
+        print STDERR "$file\n";
+        $wcnt=$#warning+1;
+        $warnings += $wcnt;
+        if ($max-$min > $limit) {
+            $ecnt++;
+            print STDERR "Error: voltage drop exceeds $limit\n";
+        }
+        $errors += $ecnt;
+        print join "\n", @warning if $wcnt;
+        print STDERR "Min $min Max $max\n";
+        print STDERR "Warnings : $wcnt\n";
+        print STDERR "Errors   : $ecnt\n";
+        print STDERR "Fatal    : $fcnt\n";
+    }
+    opendir (D, $workdir);
+    my @dirs=sort (grep (/^V(ss|dd)/, readdir(D)));
+    closedir (D);
+    my @d=();
+    foreach my $dir (@dirs) {
+        $d[0] = $dir if $dir =~ /^Vss/;
+        $d[1] = $dir if $dir =~ /^Vdd/;
+    }
+    print STDERR join("\n", @dirs);
+    print STDERR join("\n", @d);
+    print STDERR "\n";
+    print STDERR "Total Warnings : $warnings\n";
+    print STDERR "Total Errors   : $errors\n";
+    print STDERR "Total Fatal    : $fatal\n";
+}
+
+sub fakePowermeter {
+  my ( $def_file, $powerfile ) = @_;
+
+  open( DEF, "<$def_file") or die "Can't open '$def_file' for reading.\n";
+  open( POWERFILE, ">$powerfile") or die "Can't open '$powerfile' for writing.\n";
+  print POWERFILE "Cell                            Internal   Switching       Total     Leakage   Cell\n";
+  print POWERFILE "                                   Power       Power       Power       Power   Name\n";
+  print POWERFILE "--------------------------------------------------------------------------------------\n";
+
+
+  my %area=();
+  my $macro="";
+  foreach my $lef_file (sort keys %leflist) {
+    open ( LEF, "<$lef_file");
+    while (<LEF>) {
+      chomp;
+      if (/MACRO (\S+)/) {
+          $macro=$1;
+      }
+      if (/SIZE (\S+) BY (\S+)/) {
+          $area{$macro}=($1*$2)/1e6;
+      }
+    }
+    close LEF;
+  }
+  my $components=0;
+
+  $. = 0;
+  LOOP: while(my $line=<DEF>){
+    if ($line=~/\\/){$line=~s/\\//g;}
+    if ( $line=~/^COMPONENTS /){
+        $components=1;
+    } elsif ( $components && $line=~/^- (\S*) (\S*) /){
+        my $instname=$1;
+        my $cellname=$2;
+        next if $cellname =~ /FILL/;
+        if (defined ($area{$cellname})) {
+          print POWERFILE "$instname 0 $area{$cellname} $area{$cellname} 0 $cellname\n";
+        } else {
+          print POWERFILE "$instname 0 0.01 0.01 0 $cellname\n";
+        }
+    } elsif ( $line=~/^END COMPONENTS$/){
+        $components=0;
+        last LOOP;
+    }
+  }
+
+  close(DEF); 
+  close(POWERFILE);
+}
+

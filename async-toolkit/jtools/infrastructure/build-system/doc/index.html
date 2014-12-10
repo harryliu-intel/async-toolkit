@@ -1,0 +1,1050 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html
+ xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link rel="stylesheet" href="http://www.internal.avlsi.com/fm-basic.css"
+   type="text/css" media="all" />
+<link rel="stylesheet" href="http://www.internal.avlsi.com/basic-print.css"
+   type="text/css" media="print" />
+<meta
+ name="generator"
+ content="HTML Tidy for Linux/x86 (vers 1st July 2002), see www.w3.org" />
+<title>Fulcrum Build System</title>
+<style
+ type="text/css">
+<!--
+body{ margin-left: 10px; margin-right: 10px; }
+code { font-family: terminal; margin: 0 0 0 0; color: #000;}
+pre { margin: 0 0 0 0;}
+-->
+</style>
+</head>
+
+<body>
+<h1>Fulcrum Build System</h1>
+
+<h2>Overview</h2>
+
+<p>Our build system can build some set of targets from a
+hierarchical source base. The build system only uses standard
+GNU make files, standard unix commands( such as sed, awk, and
+grep), and a few custom shell scripts included with the make
+system. The build system should build hierarchical source bases
+with some small amount of configuration if the source base only
+contains file types that are already supported by the build
+system. The build system currently supports, Java, C, C++, and
+latex files. The basic feature of the build system is it's
+ability to automatically generate targets and their
+dependencies based on the structure of the source base
+directory structure. The build system extracts extra dependency
+information from source files if the tools for a file type have
+a facility to extract dependencies from source files of that
+type. For instance, C and C++ files are analyzed using gcc -E
+to generate extra dependency information.</p>
+
+<p>The build system can also make packages. To be able to
+make packages, there must be a package specification file
+named <code>&lt;package-name&gt;.package</code>. The build
+system extracts the dependencies of the package from that file
+and allows one to type <code>make &lt;package-name&gt;.tar.gz</code>
+to generate the package. Format of the package definition file
+is described <a href="/eng/package-build/package.html">here</a></p>
+
+<p>There is a <a href="/eng/depot/sw/infrastructure/release-system/main/doc/">release system</a> built on top of the build/package system.  Tools can be accessed from any package using the fulcrum script.</p>
+
+<p>The build system will build a specified source code
+directory hierarchy into a specified root target directory. The
+build system will not create any file in the source code
+directory hierarchy other than utility make files, which save
+you typing. The creation of utility make files in the source
+code can be enabled by setting the "FULCRUM_NO_UTIL_MAKEFILES"
+variable to "" on the command line the first time you run make
+to generate a target directory hierarchy.</p>
+
+<p>The latest version of the build system can be found in
+perforce at
+<code>//depot/sw/infrastructure/build-system/main/...</code>.
+The build system does not care where it is located in your
+workspace, as long as you tell the make command where it is. (See below.)</p>
+
+<p>See also the <a href="#gotcha">Gotcha</a> section at the bottom of
+this page.</p>
+
+<h2>General Usage</h2>
+
+<p>Assuming the target tree has been correctly configured, then the build system
+needs to know these things:</p>
+
+<dl>
+  <dt>The location of the build system</dt>
+
+  <dd>
+    <p>The build system needs to know where to find submake
+    files and various shell scripts it needs. The variable
+    <code>BUILD_SYSTEM_ROOT</code> specifies the location of
+    the build system. This variable can be set on the command
+    line to make by putting
+    <code>BUILD_SYSTEM_ROOT=location_build_system</code> on the
+    command line to make. The location of the build system can
+    be specified with a relative path provided that the path
+    does not contain "<code>.</code>" or "<code>..</code>" and
+    you can always use an absolute path.</p>
+  </dd>
+
+  <dt>The location of the source code to build</dt>
+
+  <dd>
+    <p>The build system needs to know what to build. The
+    variable <code>ROOT_PROJECT_DIR</code> must be a common
+    ancestor directory of all the code you wish to build. This
+    variable can be set on the command line to make by putting
+    <code>ROOT_PROJECT_DIR=root_source_code</code> on the
+    command line to make. The location of the source code can
+    be specified with a relative path provided that the path
+    does not contain "<code>.</code>" or "<code>..</code>" and
+    you can always use an absolute path.</p>
+  </dd>
+
+  <dt>The location of a directory to build into</dt>
+
+  <dd>
+    <p>The build system needs to know where to put the results
+    of the build. The specified directory should not be an
+    ancestor directory of any of the directories in the source
+    base. Specifying a directory as the target directory that
+    is an ancestor directory of a directory in the source base
+    may work, but is in general considered bad form. Specify
+    the target as <code>ROOT_TARGET_DIR=target-dir</code> on the
+    command line to make. This may <b>NOT</b> be a relative
+    path but must be a full path.</p>
+  </dd>
+  <dt>The location of the master Makefile</dt>
+  <dd>
+     <p>The make command must know the location of the master Makefile
+     for the build system when first generating the target directory.
+     Specify this with the standard -f command line option to make.
+     </p>
+  </dd>
+  <dt>Example command line to build the target tree for the first time</dt>
+  <dd>
+  <code>
+  make -f /scratch/example-build/source/sw/infrastructure/build-system/Makefile
+  ROOT_PROJECT_DIR=/scratch/example-build/source/sw/cad/java
+  ROOT_TARGET_DIR=/scratch/example-build/results
+  BUILD_SYSTEM_ROOT=/scratch/example-build/source/sw/infrastructure/build-system
+  </code><br />
+  This assumes your p4 client has placed the build-system and the build tree as above
+  in the BUILD_SYSTEM_ROOT and ROOT_PROJECT_DIR locations. The ROOT_TARGET_DIR must
+  exist but can be empty.
+  </dd>
+  <dt>After building for the first time</dt>
+  <dd>
+  <p>After the target tree is built, then any specific target can be built at any
+  time by changing directory to anywhere in the target tree and <code>make</code>ing
+  the target file.</p>
+  </dd>
+</dl>
+
+<h3>Generated Targets</h3>
+
+<p>The main purpose of this build system is automatically
+generated targets and the dependencies of those targets from
+the structure of the source coded directory hierarchy. All
+generated files are placed in the target directory hierarchy
+specified by the <code>ROOT_TARGET_DIR</code> variable. The
+target directory hierarchy that is created will mirror the
+source code directory hierarchy. Each file the build system can
+generate is generated with a make file rule. Thus when it is
+said that the build system generates a target what that really
+means is that the build system provides a rule or set of rules
+to build that target from what the build system finds in the
+source code directory hierarchy. Make generally assumes that
+building a target results in a file of the same name. In this
+build system, if build the target results in a file, the name
+of that file will be the same as the target. The name of the
+target will include the directory in which the file resulting
+from building the target will end up in. In this build system,
+any target that results in a file when built will place the
+resulting file in the directory in the target directory
+hierarchy that corresponds to the directory of the source code
+hierarchy that contains the source that was build into that
+target.</p>
+
+<h3>Special Targets</h3>
+
+<p>
+<dl>
+  <dt><code>make [package-name]-package</code></dt>
+  <dd>
+  Generates the [package-name].tar.gz file.<br>
+  Requires [package-name].package in the <code>project</code> directory.
+  </dd>
+  <dt><code>make [package-name].tar.gz</code></dt>
+  <dd>
+  Generates the [package-name].tar.gz file, identical to above.<br>
+  Requires [package-name].package in the <code>project</code> directory.
+  </dd>
+  <dt><code>make [package-name]-install</code></dt>
+  <dd>
+  Generates the [package-name].tar.gz file then runs <code>package-inst.pl</code>
+  to place an installed package in the <code>target</code> root in a directory named
+  <code>install</code>.<br>
+  Requires [package-name].package in the <code>project</code> directory.
+  </dd>
+</dl>
+<h3>General Example</h3>
+
+<p>This example will describe the top level process to getting
+the build system to build a source directory hierarchy.</p>
+
+<p>First assume that you have put the build system in a
+directory called
+<code>/scratch/example-build/source/sw/infrastructure/build-system</code>
+and that you have put the source code hierarchy you want to
+build in a directory called
+<code>/scratch/example-build/source/sw/cad/java/</code>. Second
+assume that you want to build the source code hierarchy into
+<code>/scratch/example-build/results</code>. Third assume that
+the current directory is
+<code>/scratch/example-build</code></p>
+
+<p>To use the build system you have to tell make where to find
+the makefile which contains all the rules which tell it how to
+build whatever it is you are building. By default make looks in
+the current directory for a file named <code>Makefile</code> or
+<code>makefile</code>. However you can tell make to look at a
+particular make file by using the <code>-f</code> command line
+option. Thus the command we will use to invoke make will start
+with</p><pre>
+make -f source/sw/infrastructure/build-system/Makefile</pre>
+
+<p>If you run the command shown above you will see something
+like</p>
+<pre>
+build-system/Makefile:13: *** You set the variable BUILD_SYSTEM_ROOT to be the path of the root of the build system directory hierarchy.. Stop.</pre>
+<p>
+This is telling you that you did not tell the make file where
+build system was located. So we will add</p><pre>
+BUILD_SYSTEM_ROOT=source/sw/infrastructure/build-system</pre>
+<p>to our command. The command</p><pre>
+make -f source/sw/infrastructure/build-system/Makefile "BUILD_SYSTEM_ROOT=source/sw/infrastructure/build-system"</pre>
+<p>results in something like</p><pre>
+build-system/Makefile:67: *** You set the variable ROOT_PROJECT_DIR to be the path of the root of the source tree you want to build..  Stop.</pre>
+<p>This is telling you that the build system does not know where
+source code you want to build is located. Thus we add</p><pre>
+ROOT_PROJECT_DIR=source/sw/cad/java</pre>
+<p>to our command. The command</p><pre>
+make -f source/sw/infrastructure/build-system/Makefile "BUILD_SYSTEM_ROOT=source/sw/infrastructure/build-system" "ROOT_PROJECT_DIR=source/sw/cad/java</pre>
+<p>results in something like</p><pre>
+infrastructure/build-system/Makefile:71: *** You set the variable ROOT_TARGET_DIR to be the path of the root of the result tree you want to build into..  Stop.</pre>
+<p>This is telling you that the build system does not know which
+directory to build the results into. Thus we add</p><pre>
+ROOT_TARGET_DIR=$PWD/results</pre>
+<p>Thus our final command is</p><pre>
+make -f source/sw/infrastructure/build-system/Makefile \
+   "BUILD_SYSTEM_ROOT=source/sw/infrastructure/build-system" \
+   "ROOT_PROJECT_DIR=source/sw/cad/java" "ROOT_TARGET_DIR=$PWD/results"</pre>
+<p>This will generate a bunch of stuff in<code>/scratch/example-build/results</code>
+and a bunch of utility make files in the source directory hierarchy.</p>
+
+<p>When make is used to invoke the build system you can specify
+a target you want the build system to build. A space separated
+list of targets may follow the list of variable definitions. If
+no targets are specified then the build system will attempt to
+build the "default" target. If a list of targets is specified
+then the build system will attempt to build the target
+specified in that list. If you specify a list of targets you
+must put "default" in that list if you want the build system to
+build the default target.</p>
+
+<p>Unfortunately due to the fact that Java dependencies take
+just as long to extract from the source as does to compile the
+source, all targets that depend on java files are phony
+targets. Phony targets are always considered out of date and
+must be rebuilt any time anything depends on them. The
+"default" target in this build system does not depend on any
+phony targets. Thus no java code is compiled by default by this
+build system.</p>
+
+<p>To compile Java code you have to specify the top level Java
+class you want to compile to the build system. To facilitate
+this, the build system automatically generates four targets for
+each Java file it encounters in the target build directory
+hierarchy(the second two are only generated if FULCRUM_NO_UTIL_MAKEFILES= ).
+These four targets for the class
+com.avlsi.tools.jflat.JFlat are:</p>
+
+<dl>
+  <dt>
+  <code>results/src/com/avlsi/tools/jflat/JFlat</code></dt>
+
+  <dd>
+    <p>This target will compile
+    <code>source/sw/cad/java/src/com/avlsi/tools/jflat/JFlat.java</code>
+    and all of its dependencies if needed.</p>
+  </dd>
+
+  <dt>
+  <code>results/src/com/avlsi/tools/jflat/JFlat.class.jar</code></dt>
+
+  <dd>
+    <p>This target will always compile
+    <code>source/sw/cad/java/src/com/avlsi/tools/jflat/JFlat.java</code>
+    and all of its dependencies and put the resulting class
+    file in a jar file called
+    <code>results/src/com/avlsi/tools/jflat/JFlat.class.jar</code>.
+    This target does not read any previously generated class
+    files, nor does it generate any class files.</p>
+  </dd>
+
+  <dt>
+  <code>source/sw/cad/java/src/com/avlsi/tools/jflat/JFlat</code></dt>
+
+  <dd>
+    <p>This target will compile
+    <code>source/sw/cad/java/src/com/avlsi/tools/jflat/JFlat.java</code>
+    and all of its dependencies if needed. This target is
+    implemented by depending on the
+    <code>results/src/com/avlsi/tools/jflat/JFlat</code>
+    target.</p>
+  </dd>
+
+  <dt>
+  <code>source/sw/cad/java/src/com/avlsi/tools/jflat/JFlat.class.jar</code></dt>
+
+  <dd>
+    <p>This target will always compile
+    <code>source/sw/cad/java/src/com/avlsi/tools/jflat/JFlat.java</code>
+    and all of its dependencies and put the resulting class
+    file in a jar file called
+    <code>results/src/com/avlsi/tools/jflat/JFlat.class.jar</code>.
+    This target does not read any previously generated class
+    files, nor does it generate any class files. This rule is
+    implemented by depending on the
+    <code>results/src/com/avlsi/tools/jflat/JFlat.class.jar</code>
+    target.</p>
+  </dd>
+</dl>
+
+<p>The above targets exists for all Java files in the source
+code directory hierarchy. Any class files that are generated by
+building the above targets can be found in
+results/src/classcache. The reason the class file get put
+in that particular location can be found in the file
+source/sw/cad/java/src/javafiles-custom.mk in which the
+variable JAVAFILES_CLASS_CACHE_ROOT is set.</p>
+
+<h2>General Configuration of a Build</h2>
+
+<p>The core of the build system will read a file named
+<code>custom.mk</code> from every directory in the source code
+directory hierarchy. The build system will <em>not</em>
+complain if a directory does not contain a file named
+<code>custom.mk</code>. The following variables are defined by
+the build system while the custom.mk is being read:</p>
+
+<dl>
+  <dt><code>BUILD_SYSTEM_ROOT</code></dt>
+
+  <dd>
+    <p>Contains the path the directory that contains the build
+    system. This variable is read only, changing its value will
+    have undefined results.</p>
+  </dd>
+
+  <dt><code>CURR_PROJECT_DIR</code></dt>
+
+  <dd>
+    <p>Contains the path to the directory in the source
+    directory hierarchy that contains the custom.mk being read.
+    This variable is read only, changing its value will have
+    undefined results.</p>
+  </dd>
+
+  <dt><code>CURR_TARGET_DIR</code></dt>
+
+  <dd>
+    <p>Contains the path to the directory that the directory
+    that contains the custom.mk is being build into. This
+    variable is read only, changing its value will have
+    undefined results.</p>
+  </dd>
+
+  <dt><code>CURR_NON_BUILD_DIRS</code></dt>
+
+  <dd>
+    <p>Contains a list of directory names of directories in the
+    directory containing the custom.mk being read that are
+    <em>not</em> be part of the source code directory hierarchy
+    by the build system. This variable is a list of directory
+    names not a list of paths to the directories. Thus if a
+    directory <code>source/cad/java/src</code> contained
+    subdirectories named <code>build</code>,
+    <code>scripts</code>, <code>src</code>, and
+    <code>tests</code> and you didn't want the build system
+    going into <code>build</code>, <code>scripts</code>, or
+    <code>tests</code> you would put
+    <code>CURR_NON_BUILD_DIRS&nbsp;:=&nbsp;$(CURR_NON_BUILD_DIRS)&nbsp;build&nbsp;scripts&nbsp;tests</code>
+    into the custom.mk file in
+    <code>source/cad/java/src</code>. The value of this
+    variable should only be added to.</p>
+  </dd>
+
+  <dt><code>CURR_INTERMEDIATE_FILES</code></dt>
+
+  <dd>
+    <p>Contains a list of files that are intermediate files
+    generated during the building of any thing in the directory
+    specified by <code>CURR_PROJECT_DIR</code>. The files in
+    this list will be deleted by the <code>clean</code> or
+    <code>cleanall</code> targets are built by the build
+    system. This value of this variable may be appended to by
+    the custom.mk.</p>
+  </dd>
+
+  <dt><code>CURR_RESULTS_FILES</code></dt>
+
+  <dd>
+    <p>Contains a list of files that are considered the results
+    of building the source code in the directory specified by
+    <code>CURR_PROJECT_DIR</code>. The files in this list will
+    be deleted by the <code>clean</code> or
+    <code>cleanall</code> targets are built by the build
+    system. This value of this variable may be appended to by
+    the custom.mk.</p>
+  </dd>
+</dl>
+
+<p>In addition to tweaking the values of some the variables
+above, a custom.mk file can add rules to build system. The
+build system never changes the current directory so all rules
+in a custom.mk file must use <code>CURR_PROJECT_DIR</code> to
+reference directories in the source code directory hierarchy
+and <code>CURR_TARGET_DIR</code> to reference the directory in
+which to put the resulting target. If a rule depends on a
+target generated in another directory and the relative path to
+that target would contain <code>..</code> then you must call
+the function <code>CONONICALIZE_PATH</code> ( note the
+misspelling ). Imagine that you wanted the classes
+com.avlsi.tools.dsim.DSim and com.avlsi.tools.dsim.DSimMain to
+depend on all the classes in the package
+com.avlsi.util.cmdline. To do this you would put the following
+in a <code>custom.mk</code> file in
+<code>source/cad/java/src/com/avlsi/tools/dsim</code>.</p>
+
+<div>
+  <table
+   summary="extra rules example">
+    <tbody>
+      <tr>
+        <td>
+          <p>
+          <code>$(CURR_TARGET_DIR)/DSimMain&nbsp;$(CURR_TARGET_DIR)/DSim:&nbsp;$(call&nbsp;CONONICALIZE_PATH,$(CURR_TARGET_DIR)/../../util/cmdline/javaclasses)</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>The CONONICALIZE_PATH function will put the specified path
+into a form such that make will recognize that it has a rule to
+build the target you are trying to depend on. Paths to files in
+the source directory hierarchy do not need to be cononicalize as
+they are not built by the build system.</p>
+
+<h3>OS specific configuration</h3>
+
+<p>When using the build system on different operating system to
+compile our source tree we realized that some tools are in
+different locations on different operating systems. To make it
+possible to build the same source tree on different
+architectures, we added the systemtypes directory to the
+build-system. In this directory you will find a file for each
+support operating system / CPU architecture pair. The names of
+the files are constructed using "uname -s" and "uname -m". The
+makefile corresponding to the architecture that the make file
+is being run under is sourced by the root makefile. There is a
+makefile for the "default" architecture which is always sourced
+first to make sure that all the variables defining the needed
+set of commands are defined. Below is a definition list
+defining all the variables that are used by the build
+system.</p>
+
+<dl>
+  <dt>GNUSED</dt>
+
+  <dd>
+    <p>The path to the GNU version of sed.</p>
+  </dd>
+
+  <dt>GNUGAWK</dt>
+
+  <dd>
+    <p>The path to the GNU version of awk.</p>
+  </dd>
+
+  <dt>GNUFIND</dt>
+
+  <dd>
+    <p>The path to the GNU version of find.</p>
+  </dd>
+
+  <dt>GNUGREP</dt>
+
+  <dd>
+    <p>The path to the GNU version of grep.</p>
+  </dd>
+
+  <dt>GCC</dt>
+
+  <dd>
+    <p>The path to the default version of gcc</p>
+  </dd>
+
+  <dt>GCXX</dt>
+
+  <dd>
+    <p>The path to the default version of g++</p>
+  </dd>
+
+  <dt>GCPP</dt>
+
+  <dd>
+    <p>The command to run the preprocessor in the default
+    version of gcc</p>
+  </dd>
+
+  <dt>JIKES</dt>
+
+  <dd>
+    <p>The command to run jikes.</p>
+  </dd>
+
+  <dt>JDK_ROOT</dt>
+
+  <dd>
+    <p>The location of the root of the default JDK
+    installation.</p>
+  </dd>
+
+  <dt>JRE_ROOT</dt>
+
+  <dd>
+    <p>The location of the root of the default JRE
+    installation.</p>
+  </dd>
+
+  <dt>JAR</dt>
+
+  <dd>
+    <p>The command to run the default version of jar.</p>
+  </dd>
+
+  <dt>JAVAH</dt>
+
+  <dd>
+    <p>The command to run the default version of javah.</p>
+  </dd>
+
+  <dt>JAVADOC</dt>
+
+  <dd>
+    <p>The command to run the default version of javadoc.</p>
+  </dd>
+
+  <dt>SYSTEM_LINKER</dt>
+
+  <dd>
+    <p>The command to run ld</p>
+  </dd>
+
+  <dt>ANTLR</dt>
+
+  <dd>
+    <p>The command to run the default version of antlr.</p>
+  </dd>
+
+  <dt>JAVA_JNI_INCLUDE_DIR</dt>
+
+  <dd>
+    <p>The location of the platform specific JNI header
+    files.</p>
+  </dd>
+</dl>
+
+<p>The variables in the above list should be used in *custom.mk
+in the source tree to specify what commands to run. You may be
+asking why this information has to be specified once in the
+architecture specific configuration and also in the source
+tree. The idea is that the source tree may want to specify a
+particular version of gcc for a certain part of the source
+tree. The source tree gets the final say on what tools get run,
+the above variables give the source tree the option of
+specifying those commands in a more portable way.</p>
+
+<p>The systems directory in the build system contains a similar
+mechanism for specifying configuration information that is host
+specific. The host specific configuration files can change the
+values of any of the variables listed above.</p>
+
+<h2>Supported File Types</h2>
+
+<h3>C Files</h3>
+
+<p>The build system is capable of building C source files into
+object files.</p>
+
+<h4>Generated Targets</h4>
+
+<p>For each C file in the source code directory hierarchy a
+target to build an object file with the same file name stem in
+the corresponding directory in the target directory hierarchy
+is generated.</p>
+
+<h4>Generated Dependencies</h4>
+
+<p>Each C file in the source code directory is analyzed with
+"gcc -MM -MG" to determine which header files will be read by
+the compiler with the object file is created. The build system
+then automatically makes the target to build the object file
+depend on those header files.</p>
+
+<h4>Configuration</h4>
+
+<p>The C files module of the build system will read a file
+named <code>cfiles-custom.mk</code> from every directory in the
+source code directory hierarchy if such a file exists. The
+variables <code>CURR_PROJECT_DIR</code> and
+<code>CURR_TARGET_DIR</code> are defined while a
+<code>cfiles-custom.mk</code> file is read. A
+<code>cfiles-custom.mk</code> may define the variables listed
+below. The values of the variables below will be inherited to
+subdirectories of the directory in which they were defined
+unless those subdirectories redefine their values.</p>
+
+<dl>
+  <dt><code>CFILES_PRE_PROCESSOR_DEFINES</code></dt>
+
+  <dd>
+    <p>A list of symbols that are to be defined by the C
+    preprocessor before an code is preprocessed. The entries in
+    the list are separated by whitespace. You can assign a
+    value to a symbol with the <code>=</code> character.</p>
+  </dd>
+
+  <dt><code>CFILES_PROJECT_INCLUDE_DIRS</code></dt>
+
+  <dd>
+    <p>A list of directories that should be searched by the C
+    preprocessor for included files. The entries in the list
+    are separated by whitespace.</p>
+  </dd>
+
+  <dt><code>CFILES_GENERATED_INCLUDE_DIRS</code></dt>
+
+  <dd>
+    <p>A list of directories that should be searched by the C
+    preprocess for included files. The entries in the list are
+    separated by whitespace. Each target generated by the C
+    files module of the build system will depend on a file
+    called <code>.sometimesmakesucks</code> in each of the
+    directories listed in the value of this variable. You can
+    then provide a rule somewhere that generates the file
+    <code>.sometimesmakesucks</code>. In the action of that
+    rule you can copy header files into a directory. This will
+    enable you to generate directory of header files.</p>
+  </dd>
+
+  <dt><code>CFILES_C_COMPILE_FLAGS</code></dt>
+
+  <dd>
+    <p>A list of flags to pass to the compiler. You will need
+    to put on the <code>-</code> characters. The entries of the
+    list are separated by whitespace.</p>
+  </dd>
+</dl>
+
+<h3>C++ Files</h3>
+
+<p>The build system is capable of building C++ source files
+into object files.</p>
+
+<h4>Generated Targets</h4>
+
+<p>For each C++ file in the source code directory hierarchy a
+target to build an object file with the same file name stem in
+the corresponding directory in the target directory hierarchy
+is generated. The C++ modules of the build system assumes that
+all file ending in <code>.cpp</code> are C++ files.</p>
+
+<h4>Generated Dependencies</h4>
+
+<p>Each C++ file in the source code directory is analyzed with
+"g++ -MM -MG" to determine which header files will be read by
+the compiler with the object file is created. The build system
+then automatically makes the target to build the object file
+depend on those header files.</p>
+
+<h4>Configuration</h4>
+
+<p>The C++ files module of the build system will read a file
+named <code>cfiles-custom.mk</code> from every directory in the
+source code directory hierarchy if such a file exists. The
+variables <code>CURR_PROJECT_DIR</code> and
+<code>CURR_TARGET_DIR</code> are defined while a
+<code>cppfiles-custom.mk</code> file is read. A
+<code>cppfiles-custom.mk</code> may define the variables listed
+below. The values of the variables below will be inherited to
+subdirectories of the directory in which they were defined
+unless those subdirectories redefine their values.</p>
+
+<dl>
+  <dt><code>CPPFILES_PRE_PROCESSOR_DEFINES</code></dt>
+
+  <dd>
+    <p>A list of symbols that are to be defined by the C++
+    preprocessor before an code is preprocessed. The entries in
+    the list are separated by whitespace. You can assign a
+    value to a symbol with the <code>=</code> character.</p>
+  </dd>
+
+  <dt><code>CPPFILES_PROJECT_INCLUDE_DIRS</code></dt>
+
+  <dd>
+    <p>A list of directories that should be searched by the C++
+    preprocessor for included files. The entries in the list
+    are separated by whitespace.</p>
+  </dd>
+
+  <dt><code>CPPFILES_GENERATED_INCLUDE_DIRS</code></dt>
+
+  <dd>
+    <p>A list of directories that should be searched by the C++
+    preprocess for included files. The entries in the list are
+    separated by whitespace. Each target generated by the C++
+    files module of the build system will depend on a file
+    called <code>.sometimesmakesucks</code> in each of the
+    directories listed in the value of this variable. You can
+    then provide a rule somewhere that generates the file
+    <code>.sometimesmakesucks</code>. In the action of that
+    rule you can copy header files into a directory. This will
+    enable you to generate directory of header files.</p>
+  </dd>
+
+  <dt><code>CPPFILES_CPP_COMPILE_FLAGS</code></dt>
+
+  <dd>
+    <p>A list of flags to pass to the compiler. You will need
+    to put on the <code>-</code> characters. The entries of the
+    list are separated by whitespace.</p>
+  </dd>
+</dl>
+
+<h3>Library Files</h3>
+
+<p>The library files module of the build system links object
+files together into library object files. Fundamentally this
+module's goal is to link all the object files for a directory
+into a single object file that can then be depended on by other
+rules in the build system. The library objects of
+subdirectories are also linked into a directory's library
+object file.</p>
+
+<h4>Generated Targets</h4>
+
+<p>The <code>LIBFILES_TARGET_LD_OBJS</code> variable contains a
+list of all the object files being generated for a given
+directory. The value of this variable is set by the C files
+module of the build system and by the C++ file modules of the
+build system. A target named <code>libdir.o</code> where dir is
+replaced with the basename of the directory for which the
+target is generated will be generated. When this target is
+built all the object files list in the value of
+<code>LIBFILES_TARGET_LD_OBJS</code> will be built and linked
+together into a resulting object file with the library objects
+of subdirectories.</p>
+
+<h4>Configuration</h4>
+
+<p>The library files module of the build system will read a
+file named <code>libfiles-custom.mk</code> from every directory
+in the source code directory hierarchy if such a file exists.
+The variables <code>CURR_PROJECT_DIR</code> and
+<code>CURR_TARGET_DIR</code> are defined while a
+<code>libfiles-custom.mk</code> file is read. A
+<code>libfiles-custom.mk</code> may define the variables listed
+below. The values of the variables below will be inherited to
+subdirectories of the directory in which they were defined
+unless those subdirectories redefine their values.</p>
+
+<dl>
+  <dt><code>LIBFILES_PROJECT_LINK_FLAGS</code></dt>
+
+  <dd>
+    <p>A list of flags to the linker used to link the object
+    library file from the objects in the directory.</p>
+  </dd>
+</dl>
+
+<h3>Program Files</h3>
+
+<p>The program files module of the build system links object
+files together into programs. By default the module just
+manages the values of some variables. However it does provide a
+sub make file called <code>mklinkrule.mk</code> that can be
+included by a <code>custom.mk</code> file.</p>
+
+<h2><code>mklinkrule.mk</code></h2>
+
+<p>The <code>mklinkrule.mk</code> sub make file is located in
+<code>$(BUILD_SYSTEM_ROOT)/filetypes/progfiles/mklinkrule.mk</code>.
+The <code>mklinkrule.mk</code> sub make file generates a target
+to build a program from a list of directory object files. You
+want to use this sub make file to generate the target to link
+your program together because it will use the linker flags
+local to the directory in which the program is being built
+from. Before including the <code>mklinkrule.mk</code> sub make
+file you must set the values of the following variables.</p>
+
+<dl>
+  <dt><code>MAKE_LINK_RULE_TARGET_NAME</code></dt>
+
+  <dd>
+    <p>The name of the program to build. The actual target will
+    have the value of <code>CURR_TARGET_DIR</code> and a
+    <code>/</code> character prepended to it.</p>
+  </dd>
+
+  <dt><code>MAKE_LINK_RULE_TARGET_DEPENDENCIES</code></dt>
+
+  <dd>
+    <p>A list of object files that the program being linked
+    depends on. The entries of this list can include library
+    object files. The entries of the list are separated by
+    whitespace.</p>
+  </dd>
+</dl>
+
+<h4>Configuration</h4>
+
+<p>The program files module of the build system manages the
+values of the following variables. The program files module
+will inherit the values of the following variables to
+subdirectories. All of these variables may be set in a
+<code>progfiles-custom.mk</code> in any directory in the source
+code directory hierarchy.</p>
+
+<dl>
+  <dt><code>PROGFILES_PROJECT_LIB_DIRS</code></dt>
+
+  <dd>
+    <p>A list of directories in which the linker should look
+    for libraries. The entries of the list are separated by
+    whitespace.</p>
+  </dd>
+
+  <dt><code>PROGFILES_PROJECT_LIBS</code></dt>
+
+  <dd>
+    <p>A list of library names that the linker should always
+    link against when building programs in the current
+    directory or its subdirectories. The entries of the list
+    are separated by whitespace.</p>
+  </dd>
+
+  <dt><code>PROGFILES_PROJECT_LINK_FLAGS</code></dt>
+
+  <dd>
+    <p>A list of flags that should be passed to the linker when
+    it is linking programs in the current directory or its
+    subdirectories. The entries of the list are separated by
+    whitespace.</p>
+  </dd>
+</dl>
+
+<h3>Java files</h3>
+
+<p>The Java files module of the build system is used to
+generate targets and dependencies for building Java files.</p>
+
+<p>The Java files module has the concept of a class cache. A
+class cache is directory that contains the class files
+resulting from the compilation of a Java file. If the class
+cache is in the class path of the compiler then some classes
+might be used from the class cache rather than being build from
+scratch from their Java files.</p>
+
+<h4>Generated Targets</h4>
+
+<p>For each Java file in the source code directory hierarchy
+the following targets are generated. The directory of the
+generated target will be the directory that corresponds to the
+directory containing the Java file in the target directory
+hierarchy. The following assumes that the Java file is named
+MyClass.java.</p>
+
+<dl>
+  <dt>MyClass</dt>
+
+  <dd>
+    <p>A target that when built uses the Java compiler to
+    compile MyClass.java. The class cache cache will be in the
+    compiler class path and the resulting class file will be in
+    the class cache. The location of the class cache is
+    specified with the <a
+     href="#classcache"><code>JAVAFILES_CLASSES_CACHE_ROOT</code></a>
+    variable.</p>
+  </dd>
+
+  <dt>MyClass.class.jar</dt>
+
+  <dd>
+    <p>A target that when built uses the Java compiler to
+    compile MyClass.java and puts the resulting class files
+    into MyClass.class.jar. The class cache is <em>not</em>
+    used and no class files will be added to the class
+    cache.</p>
+  </dd>
+</dl>
+
+<p>For each .package file in the source code directory
+hierarchy the following targets are generated. The directory of
+the generated target will be the directory that corresponds to
+the directory containing the .package file in the target
+directory hierarchy. The following assumes that the .package
+file is named dsim.package.</p>
+
+<dl>
+  <dt>dsim.java</dt>
+
+  <dd>
+    <p>A target that when built generates a java file that will
+    depend on all the classes listed in the dsim.package file
+    with the java statement. When this java file is compiled
+    all the classes listed in the dsim.package with the java
+    statement will also be compiled.</p>
+  </dd>
+
+  <dt>dsim.jar</dt>
+
+  <dd>
+    <p>A target that when built generates a jar file by
+    compiling the java file generated by the previous target in
+    to a temporary directory and then adding all the class
+    files in the temporary directory to the resulting jar file.
+    The class cache is <em>not</em> used and no class files
+    will be added to the class cache.</p>
+  </dd>
+</dl>
+
+<h4>Configuration</h4>
+
+<p>The variables listed below may be set in a
+<code>javafiles-custom.mk</code> file. The values of these
+variables will be inherited to sub-directories.</p>
+
+<dl>
+  <dt><code>JAVAFILES_JRE_ROOT</code></dt>
+
+  <dd>
+    <p>The root directory of the Java run-time environment that
+    Java files should be compiled against. This variable is
+    used to get a list of jar files that should always be in
+    the class path of the compiler because those jar files come
+    with the Java run-time environment.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_PARSES_USED</code></dt>
+
+  <dd>
+    <p>A list of class names that are used by the code in the
+    current directory or in its subdirectories. All generated
+    targets will depend on Java files for these classes.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_PARSERS_ROOT</code></dt>
+
+  <dd>
+    <p>A directory to add to the class path of the Java
+    compiler such that it will find the classes for any parsers
+    used by the Java code.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_CLASSPATH</code></dt>
+
+  <dd>
+    <p>The class path that the Java compiler should use. The
+    build system will append directories and jar files to this
+    classpath when running the Java compiler.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_JAVAC_FLAGS</code></dt>
+
+  <dd>
+    <p>A list of flags to pass to the Java compiler.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_JAVAC</code></dt>
+
+  <dd>
+    <p>The command which runs the Java compiler</p>
+  </dd>
+
+  <dt><code>JAVAFILES_JAR</code></dt>
+
+  <dd>
+    <p>The command used to create jar files.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_JDK_ROOT</code></dt>
+
+  <dd>
+    <p>The root directory of the Java developers kit that is
+    being used to compile the Java code. This is used to find
+    the location of the JNI header files.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_JAVAH</code></dt>
+
+  <dd>
+    <p>The command which generates a C or C++ header file from
+    a Java class.</p>
+  </dd>
+
+  <dt><code>JAVAFILES_CLASSES_CACHE_ROOT</code></dt>
+
+  <dd>
+    <p><a
+     name="classcache"
+     id="classcache"></a>Specifies the location of the class
+    cache. The value of this variable should be relative to
+    <code>$(CURR_TARGET_DIR)</code>.</p>
+  </dd>
+</dl>
+
+<a name="gotcha"></a>
+<h2>Gotcha's</h2>
+
+<ul>
+<li>For any and all things remotely related to Cadence layout, you must
+use <code>q4</code> and not <code>p4</code> to sync your client. Otherwise,
+builds will not work.
+</li>
+<li>Many of the packages and other targets depend on the directory
+<code>[path]/sw/infrastructure/build-system/sh-libs</code> This directory
+is referenced by a relative path and so the hw and sw checkouts must be
+at the same level and the sw checkout <b>must</b> be named <code>sw</code>.
+<br>
+This can be accomplished either by using a common p4 client with both
+hw and sw in the checkout OR by making sure that the depth of the hierarchy
+in the hw checkout matches the depth of the sw checkout. If this is not
+clear, sorry, some and see me (Aubrey) or Harry.
+</li>
+</ul>
+
+</body>
+</html>

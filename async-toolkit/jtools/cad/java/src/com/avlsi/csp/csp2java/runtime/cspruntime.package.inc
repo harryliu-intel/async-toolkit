@@ -1,0 +1,27 @@
+2 0
+java com.avlsi.csp.csp2java.runtime.CspArray
+java com.avlsi.csp.csp2java.runtime.CspArrayBoundsException
+java com.avlsi.csp.csp2java.runtime.CspBoolean
+java com.avlsi.csp.csp2java.runtime.CspChannelInArray1
+java com.avlsi.csp.csp2java.runtime.CspChannelInArray2
+java com.avlsi.csp.csp2java.runtime.CspChannelOutArray1
+java com.avlsi.csp.csp2java.runtime.CspChannelOutArray2
+java com.avlsi.csp.csp2java.runtime.CspCloneableValue
+java com.avlsi.csp.csp2java.runtime.CspInteger
+java com.avlsi.csp.csp2java.runtime.CspMetaParamArray1
+java com.avlsi.csp.csp2java.runtime.CspNode
+java com.avlsi.csp.csp2java.runtime.CspNodeArray1
+java com.avlsi.csp.csp2java.runtime.CspRuntimeAbstractDevice
+java com.avlsi.csp.csp2java.runtime.CspSnoopingInterface
+java com.avlsi.csp.csp2java.runtime.CspString
+java com.avlsi.csp.csp2java.runtime.CspStructure
+java com.avlsi.csp.csp2java.runtime.CspValue
+java com.avlsi.csp.csp2java.runtime.FiniteCspInteger
+java com.avlsi.csp.csp2java.runtime.Fold
+java com.avlsi.csp.csp2java.runtime.LoggedCspArray
+java com.avlsi.csp.csp2java.runtime.NonDeterminismException
+java com.avlsi.csp.csp2java.runtime.Packable
+java com.avlsi.csp.csp2java.runtime.LinkageHelper
+java com.avlsi.csp.csp2java.runtime.StackFrame
+java com.avlsi.csp.csp2java.runtime.ShadowCspInteger
+include ../../../tools/sigscan/sigscan.package.inc ../../../tools/sigscan

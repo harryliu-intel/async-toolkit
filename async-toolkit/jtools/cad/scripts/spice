@@ -1,0 +1,305 @@
+#!/usr/intel/bin/perl
+
+# default parameters
+$minCC = 1e-15;  # minimum coupling capacitance (lump to GND if less)
+$minC = 0;       # minimum capacitance (discard if less)
+$minR = 1;       # minimum resistance (short if less)
+$time = 20e-9;   # time to run simulation
+$true = 1.2;     # voltage of Vdd
+$corner = "tt";  # corner case to use for bsim3 model
+$temp = 27;      # temperature in Celcius
+$chargeSharing = 0; # perform charge sharing instead of transient analysis
+$internalWires = 0; # alias internal node names with wires
+$internalRules = 0; # output prs that overlap with circuit for A/D cosim
+$interactive   = 0; # interactive mode of aspice
+$f_include = "fulcrum_tsmc13lv.asp";
+$aspice_path = "/usr/local/cad/lib/aspice:/usr/local/cad/lib/bsim3";
+$cast_path = "";
+$f_spice = "";
+$f_config = "$ENV{HOME}/.castrc2";
+$f_config = "" if ( ! -r $f_config );
+$cds_dir = "$ENV{HOME}/cds_wd/F16";
+chomp($host = `uname -n`);
+$sun = "rupee";
+$useJava = 0;
+$f_env = undef;
+@chargeSharingNodes = (); # nodes to do charge sharing; if empty, all dynamic nodes.
+
+# usage banner
+sub usage() {
+    my $usage = <<EOF;
+USAGE: spice [args] cell:env [ntpc_nodes]
+  Args includes:
+    --spice-file=[$f_spice] (specify spice file explicitly)
+    --minC=[$minC]  (minimum capacitance)
+    --minCC=[$minCC]  (minimum coupling capacitance)
+    --minR=[$minR]  (minimum resistance)
+    --true=[$true]  (voltage for Vdd)
+    --corner=[$corner]  (Process Corner for BSIM3 Deck)
+    --time=[$time]  (time to run simulation, in seconds)
+    --temp=[$temp]  (temperature, in Celcius)
+    --chargeSharing=[$chargeSharing]  (do charge sharing instead of transient)
+    --chargeSharingNodes=[] (do charge sharing only on , separated nodes listed)
+    --env=[$f_env] (output from running jflat --cell)
+    --internalWires=[$internalWires]  (short all cast aliases together)
+    --internalRules=[$internalRules]  (cosim all analog nodes against prs)
+    --interactive=[$interactive]  (enable interactive aspice)
+    --sun=[$sun]  (sun host)
+    --config=[$f_config]  (config file for jflat)
+    --cast-path=[$cast_path]  (cast search path for jflat)
+    --cds-dir=[$cds_dir]  (Cadence working directory)
+    --aspice-path=[$aspice_path]  (search path for aspice)
+    --include=[$f_include]  (aspice file to include)
+    --useJava=[$useJava]  (use java directly instead of scripts)
+EOF
+    die "$usage";
+}
+
+# parse optional command line arguments
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    ($flag, $value) = split("=",$1);
+    if    ($flag eq "spice-file")        { $f_spice = $value; }
+    elsif ($flag eq "minC")              { $minC = $value; }
+    elsif ($flag eq "minCC")             { $minCC = $value; }
+    elsif ($flag eq "minR")              { $minR = $value; }
+    elsif ($flag eq "time")              { $time = $value;}
+    elsif ($flag eq "true")              { $true = $value; }
+    elsif ($flag eq "corner")            { $corner = $value; }
+    elsif ($flag eq "temp")              { $temp = $value; }
+    elsif ($flag eq "include")           { $f_include = $value; }
+    elsif ($flag eq "config")            { $f_config = $value; }
+    elsif ($flag eq "sun")               { $sun = $value; }
+    elsif ($flag eq "cds-dir")           { $cds_dir = $value; }
+    elsif ($flag eq "cast-path")         { $cast_path = $value; }
+    elsif ($flag eq "aspice-path")       { $aspice_path = $value; }
+    elsif ($flag eq "chargeSharing")     { $chargeSharing = $value; }
+    elsif ($flag eq "internalWires")     { $internalWires = $value; }
+    elsif ($flag eq "internalRules")     { $internalRules = $value; }
+    elsif ($flag eq "interactive")       { $interactive = $value; }
+    elsif ($flag eq "useJava")           { $useJava = $value; }
+    elsif ($flag eq "env")               { $f_env = $value; }
+    elsif ($flag eq "chargeSharingNodes") {
+        @chargeSharingNodes = split(",",$value);
+    }
+    else { die "ERROR: argument --${flag}=${value} not recognized.\n"; }
+    shift @ARGV;
+}
+
+# get cell and env
+@ARGV >= 1 or usage();
+$runName = "$ARGV[0]";
+($cellName, $envName) = split(":",$runName);
+shift @ARGV;
+@ntpc_nodes = @ARGV;
+
+# default tools and arguments
+$java = "java -server -Xmx256M";
+if ( $useJava == 1) {
+    $jflat = "$java com.avlsi.tools.jflat.JFlat ";
+    $find_dynamic_nodes = "$java com.avlsi.tools.jauto.CastQuery ";
+}
+else {
+    $jflat = "jflat --max-heap-size=256M "; 
+    $find_dynamic_nodes = "cast_query --max-heap-size=256M ";
+}
+$find_dynamic_nodes .= "--task=dynamic_nodes --no-header ";
+
+$jflat .= "--config=$f_config " if (! $f_config eq "");
+$jflat .= "--cast-path=\"$cast_path\" " if (! $cast_path eq "");
+$jflat .= "--cast-version=2 ";
+$jflat .= "--tool=aspice ";
+$jflat .= "--internalWires " if ( $internalWires == 1 || $chargeSharing == 1);
+$jflat .= "--internalRules " if ( $internalRules == 1);
+
+# Changed By Mahesh
+$cast2cdl="/home/group/microarch/cad/bin/cast2cdl --cast-version=2 --cast-path=$cast_path ";
+#
+$find_dynamic_nodes .= "--config=$f_config " if (! $f_config eq "");
+$find_dynamic_nodes .= "--cast-path=\"$cast_path\" " if (! $cast_path eq "");
+$find_dynamic_nodes .= "--cast-version=2 ";
+
+$extract  = "/home/group/cadadmin/simplex_extractor/1.0/share/script/perl/stream_and_extract_0.13um ";
+$extract .= "--view layout --delete 1 --reduced_dspf --lowK 1 ";
+$extract .= "--minC $minC --minR $minR --minCC $minCC ";
+
+$spice2aspice  = "rc_spice2aspice ";
+$spice2aspice .= "--quote ";
+$spice2aspice .= "--minR $minR --minC $minC ";
+
+$aspice  = "aspice ";
+$aspice .= "-path $aspice_path ";
+$aspice .= "-minCC $minCC ";
+$aspice .= "-interactive " if ( $interactive == 1);
+
+# automatically select file.spice, file.cdl or extract new file.spice
+if    ( ! $f_spice eq "") {}
+elsif ( -r "$cellName.spice" ) { $f_spice = "$cellName.spice"; }
+else {
+    # automatically extract to cellName.spice
+    my $libName = $cellName;
+    $libName =~ s/\.[^\.]+\.[^\.]+$//;
+    chomp($date = `date`);
+    print STDERR "extracting started $date\n";
+    ### Changed by Mahesh
+    ## Creating CDL file
+    `$cast2cdl --cell=$cellName`;
+    system "ssh $sun $extract --spice \"$ENV{PWD}/$cellName.spice\" --cds_loc $cds_dir --cdl_loc \"$ENV{PWD}/$cellName.cdl\" --top_level_name \"$cellName\" \"$cellName\" \"$libName\"";
+    ###
+    $f_spice = "$cellName.spice";
+}
+
+# summarize arguments
+chomp($date = `date`);
+print STDERR "cell = $cellName\n";
+print STDERR "env = $envName\n";
+print STDERR "ntpc_nodes = @ntpc_nodes\n";
+print STDERR "spice file = $f_spice\n";
+print STDERR "true = $true, temp = $temp, time = $time, corner = $corner\n";
+print STDERR "minC = $minC, minCC= $minCC, minR = $minR\n";
+print STDERR "host = $host\n";
+print STDERR "date = $date\n";
+
+# output file names
+$f_aspice = "$cellName.aspice";
+$f_asp    = "$runName.asp";
+$f_in     = "$runName.in";
+
+# convert cellName.spice to cellName.aspice
+system "$spice2aspice --cell \"$cellName\" \"$f_spice\" \"$f_aspice\"";
+
+# generate cellName:envName.aspice from CAST
+if (!defined($f_env)) {
+    $f_env    = "$runName.env.asp";
+    system "$jflat --cell=\"$runName\" > \"$f_env\"";
+}
+
+# create cellName.asp
+open  ASP, ">$f_asp" or die "Can't write $f_asp.\n";
+print ASP ".true=$true;\n";
+print ASP ".corner \"$corner\";\n";
+print ASP ".temperature=$temp;\n";
+print ASP ".include \"$f_include\";\n";
+print ASP ".include \"$f_aspice\";\n";
+print ASP ".include \"$f_env\";\n";
+print ASP ".timemax=$time;\n";
+close ASP;
+
+# create cellName.in for new interactive aspice features
+open IN, ">$f_in" or die "Can't write $f_in.\n";
+print IN "watchall\n";
+print IN "output \"$runName.log\"\n";
+print IN "outerr \"$runName.warn\"\n";
+print IN "trace 20\n";
+print IN "cycle\n";
+print IN "output \"$runName.tcounts\"\n";
+print IN "get_non_env *\n";
+for my $ntpc_node (@ntpc_nodes) {
+    print IN "output \"$runName:$ntpc_node.critical\"\n";
+    print IN "critical $ntpc_node\n";
+    print IN "output \"$runName:$ntpc_node.history\"\n";
+    print IN "history $ntpc_node\n";
+}
+close IN;
+
+if ( $chargeSharing == 0 ) {
+
+    # run aspice
+    if ($interactive == 1) {
+        # fully interactive simulation
+        system "$aspice \"$runName\"";
+    } elsif ($internalRules == 1) {
+        # use aspice interactive features with .in file
+        system "$aspice -interactive \"$runName\" < \"$f_in\" > \"$runName.out\" 2> \"$runName.err\"";
+    } else {
+        # old fashioned batch run
+        system "$aspice \"$runName\" > \"$runName.out\" 2> \"$runName.err\"";
+    }
+    
+    # measure results
+    open MEASURE, "> $runName.measure";
+    chomp($power = `trace \"$runName\" QVdd | power 10 100 $true`);
+    chomp($error = `trace \"$runName\" ERROR | trig rise 0.25 2 1`);
+    print MEASURE "VDD: $true\n";
+    print MEAUSRE "TEMP: $temp\n";
+    print MEASURE "POWER: $power\n";
+    print MEASURE "ERROR: $error\n";
+    for $ntpc_node (@ntpc_nodes) {
+        chomp($tpc = `trace \"$runName\" \"$ntpc_node\" | trig fall 0.6 2 4 8`);
+        print MEASURE "TPC($ntpc_node): $tpc\n";
+    }
+    close MEASURE;
+
+} else {
+
+    # if no specific nodes specified, identify all output nodes
+    if (scalar(@chargeSharingNodes) == 0) {
+        # XXX: there is no need to write this to a file, but keep it in case
+        # people or other scripts depended on this behavior.
+        system "${find_dynamic_nodes} --cell=\"$cellName\" > \"$cellName.nodes\"";
+        open NODES, "<$cellName.nodes" or die "Can't read $cellName.nodes.\n";
+        while(<NODES>) {
+            chomp;
+            my $node;
+            ($node) = split;
+            # XXX: Might consider skipping over output nodes
+            push @chargeSharingNodes, $node;
+        }
+        close NODES;
+    }
+    open UP, ">$cellName:up.measure" or die "Can't write $cellName:up.measure.\n";
+    open DN, ">$cellName:dn.measure" or die "Can't write $cellName:dn.measure.\n";
+    foreach my $nodeName (@chargeSharingNodes) {
+        print STDERR "Simulating charge sharing for $cellName/$nodeName\n";
+        
+        # aspice upward bumps
+        system "ln -sf \"$runName.asp\" \"$cellName:$nodeName:up.asp\"";
+        system "$aspice -up \"$nodeName\" \"$cellName:$nodeName:up\" 1> \"$cellName:$nodeName:up.out\" 2> \"$cellName:$nodeName:up.err\"";
+        $v = maxv("$cellName:$nodeName:up","$nodeName");
+        print UP "ERROR: " if ( $v > $true/3 );
+        print UP "up: $nodeName $v\n";
+
+        # aspice downward bumps
+        system "ln -sf \"$runName.asp\" \"$cellName:$nodeName:dn.asp\"";
+        system "$aspice -dn \"$nodeName\" \"$cellName:$nodeName:dn\" 1> \"$cellName:$nodeName:dn.out\" 2> \"$cellName:$nodeName:dn.err\"";
+        $v = minv("$cellName:$nodeName:dn","$nodeName");
+        $v = $true - $v;
+        print DN "ERROR: " if ( $v > $true/3 );
+        print DN "dn: $nodeName $v\n";
+
+    }
+    close UP;
+    close DN;
+
+}
+
+# final timestamp
+chomp($date = `date`);
+print STDERR "simulation finished $date\n";
+
+# subroutine to measure minimum voltage in a trace file
+sub minv {
+    my $traceFile,$traceNode,$t,$v;
+    ($traceFile,$traceNode) = @_;
+    my $min = $true;
+    open FILE, "trace \"$traceFile\" \"$traceNode\" |"
+        or die "Could not read trace";
+    while(<FILE>) {
+        ($t,$v) = split(" ",$_);
+        $min = $v if ( $v < $min );
+    }
+    return $min;
+}
+
+# subroutine to measure maximum voltage in a trace file
+sub maxv {
+    my $traceFile,$traceNode,$t,$v;
+    ($traceFile,$traceNode) = @_;
+    my $max = 0;
+    open FILE, "trace \"$traceFile\" \"$traceNode\" |"
+        or die "Could not read trace";
+    while(<FILE>) {
+        ($t,$v) = split(" ",$_);
+        $max = $v if ( $v > $max );
+    }
+    return $max;
+}

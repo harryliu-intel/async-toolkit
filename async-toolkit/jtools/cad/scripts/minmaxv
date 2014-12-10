@@ -1,0 +1,29 @@
+#!/usr/intel/bin/perl
+
+die "Usage: mixmaxv <file> <node>" if @ARGV != 2;
+
+my $tracefile = $ARGV[0];
+my $node = $ARGV[1];
+
+my $min = 1000;
+my $max = 0;
+my ($mintime,$maxtime);
+
+open FILE, "trace \"$tracefile\" \"$node\" |" or die "Could not run trace";
+while(<FILE>)
+{
+	chomp;
+	my ($foo,$bar) = split;
+	if( $bar > $max )
+	{
+		$max = $bar;
+		$maxtime = $foo;
+	}
+	if ( $bar < $min )
+	{
+		$min = $bar;
+		$mintime = $foo;
+	}
+}
+	print "Minimum V: $min @ $mintime ns\n";
+	print "Maximum V: $max @ $maxtime ns\n";

@@ -1,0 +1,21 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+<<DOC
+ve is a wrapper for verification scripts  e.g. assura.
+Without this, you have to set up an rsf file which is flexible but awkward.
+DOC
+
+share/back-end/LvbeAlwaysError.pm                           back-end/LvbeAlwaysError.pm                               775 p
+share/back-end/LvbeAssuraDrc.pm                             back-end/LvbeAssuraDrc.pm                                 775 p
+share/back-end/LvbeAssuraLvs.pm                             back-end/LvbeAssuraLvs.pm                                 775 p
+share/back-end/LvbeAssuraNvn.pm                             back-end/LvbeAssuraNvn.pm                                 775 p
+share/back-end/LvbeAssura.pm                                back-end/LvbeAssura.pm                                    775 p
+share/back-end/LvbeSignOff.pm                               back-end/LvbeSignOff.pm                                   775 p
+share/back-end/LvbeSignOffInclude.pm                        back-end/LvbeSignOffInclude.pm                            775 p
+share/back-end/Lvbe.pm                                      back-end/Lvbe.pm                                          775 p
+share/front-end/Lvfe.pm                                     front-end/Lvfe.pm                                         775 p
+share/front-end/vfe                                         front-end/vfe                                             775 p

@@ -1,0 +1,7 @@
+package com.fulcrummicro.util;
+
+import java.lang.String;
+
+public class BuildIdentifier {
+    public final static String id = ".BuildIdentifier." ;
+}

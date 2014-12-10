@@ -1,0 +1,115 @@
+#!/usr/intel/bin/perl -w
+
+# describe power grid by layers (from worst case structure A resistance data)
+$grid = 9.6;  # grid pitch in microns
+$RH3 = 0.100 * $grid;     # 1 0.72um M3 wire
+$RV4 = 0.307 * $grid / 2; # 2 0.24um M4 wires
+$RH5 = 0.100 * $grid;     # 1 0.72um M5 wire
+$RV6 = 0.100 * $grid;     # 1 0.72um M6 wire
+$RH7 = 0.060 * $grid;     # 1 1.20um M7 wire
+$RV8 = 0.007 * $grid;     # 1 3.83um M8 wire
+
+# run defaults
+$true = 1;                          # Vdd
+$RH = 1/(1/$RH3 + 1/$RH5 + 1/$RH7); # R per horizontal link of power grid
+$RV = 1/(2/$RV4 + 1/$RV6 + 1/$RV8); # R per vertical link of power grid
+$RLOAD = 41;                        # ohms of load at each grid point
+$X = 20;                            # dimensions of power grid
+$Y = 20;                            # dimensions of power grid
+
+# create the asp file
+open ASP, ">sag.asp" or die "Can't open sag.asp for writing.\n";
+my $asp = <<EOF;
+.true=$true;
+.T_Reset=1;
+.include "fulcrum_tsmc13lv.asp";
+.timemax=10e-9;
+.maxerr=1e-8;
+.RH=$RH;
+.RV=$RV;
+.RLOAD=$RLOAD;
+EOF
+
+print ASP "$asp";
+
+for ($i=0; $i<$X; $i++) {
+    for ($j=1; $j<$Y; $j++) {
+        $i1 = $i+1;
+        print ASP "res(v[$i,$j],v[$i1,$j])(RH)\n";
+        print ASP "res(u[$i,$j],u[$i1,$j])(RH)\n";
+    }
+}
+for ($i=1; $i<$X; $i++) {
+    for ($j=0; $j<$Y; $j++) {
+        $j1 = $j+1;
+        print ASP "res(v[$i,$j],v[$i,$j1])(RV)\n";
+        print ASP "res(u[$i,$j],u[$i,$j1])(RV)\n";
+    }
+}
+for ($i=0; $i<=$X; $i++) {
+    for ($j=0; $j<=$Y; $j++) {
+        print ASP "res(v[$i,$j],u[$i,$j])(RLOAD)\n";
+    }
+}
+
+for ($i=0; $i<=$X; $i++) { print ASP "wire(v[$i,0],v[$i,$Y],Vdd)\n"; }
+for ($i=0; $i<=$X; $i++) { print ASP "wire(u[$i,0],u[$i,$Y],GND)\n"; }
+for ($j=0; $j<=$Y; $j++) { print ASP "wire(v[0,$j],v[$X,$j],Vdd)\n"; }
+for ($j=0; $j<=$Y; $j++) { print ASP "wire(u[0,$j],u[$X,$j],GND)\n"; }
+close ASP;
+
+# run aspice
+system "aspice sag";
+print "\n---------- SAG MEASUREMENTS ----------\n";
+print "VDD = $true\n";
+print "RLOAD = $RLOAD\n";
+print "RV = $RV\n";
+print "RH = $RH\n";
+print "X = $X\n";
+print "Y = $Y\n";
+
+# measure the grid points
+open DAT, ">sag.dat" or die "Can't open sag.dat for writing.\n";
+for ($i=0; $i<=$X; $i++) {
+    for ($j=0; $j<=$Y; $j++) {
+    $v = `trace sag "v[$i,$j]" | tail -1 | cut -d " " -f 2`;
+    $u = `trace sag "u[$i,$j]" | tail -1 | cut -d " " -f 2`;
+    $diff = $v - $u;
+    print DAT "$j $i $diff\n";
+    if ($i == $X/2 && $j == $Y/2) {
+        $sag = $true - $diff;
+        $pct = 100*$sag/$true;
+        print "midpoint sag = ${sag}V ($pct%)\n";
+    }
+  }
+  print DAT "\n";
+}
+close DAT;
+
+# measure power
+$pow = `trace sag QVdd | power 8 10 $true`;
+chomp($pow);
+print "power consumption = $pow\n";
+
+# plot the results
+$in = <<EOF;
+set contour
+set cntrparam levels 10
+set cntrparam bspline
+set cntrparam points 20
+set nosurface
+set view 0, 90, 1
+set term postscript
+set out "sag.ps"
+set title "Power supply sag at ${true}V, ${pow}"
+set data style lines
+set noxtics
+set noytics
+set size 0.69, 1
+splot "sag.dat"
+EOF
+
+open IN, ">sag.in" or die "Can't write sag.in\n";
+print IN "$in";
+close IN;
+system "gnuplot < sag.in";

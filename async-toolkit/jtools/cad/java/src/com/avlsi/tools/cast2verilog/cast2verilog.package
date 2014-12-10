@@ -1,0 +1,13 @@
+0 6
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.cast2verilog.Cast2Verilog
+java com.avlsi.tools.cast2verilog.Cast2RTL
+include ../../csp/resources/resources.package.inc ../../csp/resources
+include ../../util/logging/logging.package.inc ../../util/logging
+$arch/bin/cast2verilog.sh	cast2verilog.sh 775
+$arch/bin/cast2rtl.sh	cast2rtl.sh 775
+$arch/bin/verilog_filelist	verilog_filelist.pl 775 p

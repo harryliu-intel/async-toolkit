@@ -1,0 +1,38 @@
+<pre>
+
+I'll just put my comments here rather than in the document.
+
+If we support three platforms, we should do the nightly build on all
+three platforms to make sure one doesn't get broken.  That would also
+mean having Bevan buy and maintain a Mac.  As you mention, we will also
+want build support to build and install on all 3 platforms, either through
+qsub or cross compilers.
+
+The use of beta, or even alpha for a nightly build seems whacked.  
+Why not call it nightly?  Alpha or beta imply some level of stabilization
+and feature freeze in the code base.
+
+The structure of /usr/local/fulcrum/ and indeed the entire document seems
+to assume that we stick with our current paradigm of having one line of
+development.  The hope seems to be that improving the regression testing
+will remove any instabilities the user currently sees.  I doubt this,
+as new features will always add new bugs.  Instead, what I suggest is a
+branch for each project (as long as we have a small number of projects,
+if we have many, then multiple projects will use tools from the same
+branch).  For example, now, we would have a branch, say 1.1, for the
+tools that will be used for Nevada.  This will have the features that they
+need and any bug fixes to those features, but not other random features
+that are being developed.  When we have a tool set in the main line
+that it looks like we can use for Tahoe, we can create the 1.5 branch.
+Then development can continue in the main line without breaking the
+users on a weekly basis.
+
+An alternative to the above, which we sometimes do now is to do any
+significant development in a side branch, in order to keep the main
+branch stable, but this creates a proliferation of side branches,
+and requires more reverse integration, which is annoying.
+
+I will expand on this more later.
+
+Comments on the above?
+</pre>

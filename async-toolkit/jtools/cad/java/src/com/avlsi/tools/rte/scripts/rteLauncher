@@ -1,0 +1,698 @@
+#!/usr/intel/bin/perl
+
+# TODO:
+# Add additional run time commands:
+#   Kill job - How to kill rte client as well?
+#   Change number of total jobs
+# Changed the qsub commands to netbatch commands 
+use strict;
+use warnings;
+
+BEGIN {
+    # Path + script name
+    my $scriptPath = $0;
+    # Extract script name
+    my @tmp = split('/', $0);
+    my $exe = $tmp[(@tmp)-1];
+    # Remove script name from end of path
+    $scriptPath =~ s/$exe$//;
+    if(! ($scriptPath =~ /^\//)) {
+        # Relative path, so convert to full path
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $scriptPath = $pwd . "/$scriptPath/../lib/perl";
+        chdir $scriptPath;
+        $scriptPath = `pwd`;
+        chomp $scriptPath;
+        chdir $pwd; 
+        push @INC, "$scriptPath";
+    }else
+    {
+        # Already full path
+        push @INC, "$scriptPath/../lib/perl";
+    }
+}
+
+use List::Util qw(min);
+use Getopt::Long qw(:config no_ignore_case);
+use Pod::Usage;
+use IO::Select;
+use File::Temp;
+use IO::File;
+use Data::Dumper;
+use rteLib;
+use Cwd;
+use job_netbatch qw (
+ job_cleanup
+job_hostname
+job_start
+job_starttime
+job_status
+job_isRunning
+job_isComplete);
+
+my $ENABLE_NB_SUBMIT = 1;             #For debug purposes
+
+use constant JOB_RUNNING    => 0;
+use constant JOB_COMPLETE   => 1;
+use constant JOB_TIMEOUT    => 2;
+use constant JOB_OUTOFMEM   => 3;
+
+my $running = 0;
+my $startTime = time;
+# A queue of [netbatch job id, cellname]
+my $jobQueue = [];
+my $stopLauncher = 0;
+my $pltMode = 0;
+
+# Catch CTRL-C 
+$SIG{INT} = \&sigHandler;
+
+my $cmdLine = cmdLineOpts(@ARGV);
+
+my $db = rteLib::openCellDatabase($cmdLine);
+
+my $cells = rteLib::readSuiteFile($cmdLine);
+
+#print Dumper($cells);
+
+runRte($cells, $cmdLine, $db);
+
+rteLib::updateDb($db, $cmdLine->{cellDb});
+
+my $elapsedTime = time - $startTime;
+    
+printf("Total run time: %02d:%02d:%02d\n", int($elapsedTime/3600), 
+            int(($elapsedTime%3600)/60), int($elapsedTime%60));
+
+exit(0);
+
+#---------------------------------------------------------
+# Parse the command line and return a hash reference
+sub cmdLineOpts
+{
+    my %cmdLine = ( suiteFile => "",
+                    numJobs => 10,
+                    cellDb => "rteResults.xml",
+                    masterCellDb => "",
+                    outputDir => "./output",
+                    castPath => ".",
+                    timeout => 10,
+                    defaultNbMem => "2G",
+                    maxNbMem => "-1",
+                    cycleCount => 0,
+                    measuredDelay => -1,
+                    estimatedDelay => -1,
+                    digitalDelay => -1,
+                    historyPerNode => -1,
+                    dsimArg => "",
+                    pltDelayException => []
+                   );
+
+    GetOptions('h|help' => sub {pod2usage( { -verbose => 2, -noperldoc => 1}) },
+               's|suite=s' => \$cmdLine{suiteFile},
+               'db|cellDb=s' => \$cmdLine{cellDb},
+               'masterCellDb=s' => \$cmdLine{masterCellDb},
+               'numJobs=i' => \$cmdLine{numJobs},
+               'cast-path=s' => \$cmdLine{castPath},
+               'o|output-dir=s' => \$cmdLine{outputDir},
+               't|timeoutr=f' => \$cmdLine{timeout},
+               'nbMem=s' => \$cmdLine{defaultNbMem},
+               'maxNbMem=s' => \$cmdLine{maxNbMem},
+               'cycle-count=i' => \$cmdLine{cycleCount},
+               'measured-delay=i' => \$cmdLine{measuredDelay},
+               'estimated-delay=f' => \$cmdLine{estimatedDelay},
+               'digital-delay=i' => \$cmdLine{digitalDelay},
+               'history-per-node=i' => \$cmdLine{historyPerNode},
+               'dsimArg=s' => \$cmdLine{dsimArg},
+               'pltDelayException=s' => \@{$cmdLine{pltDelayException}}
+            );
+
+    if($cmdLine{suiteFile} eq "")
+    {
+        printf("Need to specify suite file via -s or --suite option.\n");
+        pod2usage({ -verbose => 2,
+                    -exitval => 2,
+                    -noperldoc => 1});
+    }
+
+    if(!-e $cmdLine{outputDir})
+    {
+        mkdir $cmdLine{outputDir};
+    }
+
+    if($cmdLine{maxNbMem} eq "-1")
+    {
+        $cmdLine{maxNbMem} = $cmdLine{defaultNbMem};
+    }
+
+    return \%cmdLine;
+}
+
+sub runRte
+{
+    my ($cellList, $cmdLine, $db) = @_;
+
+    $running = 1;
+
+    my $cellHash = {};
+    foreach my $c (@{$cellList})
+    {
+        printf("runRte: $c %s\n", $c->{name});
+        $cellHash->{$c->{name}} = $c;
+    }
+
+    my $totalJobs = scalar(@{$cellList});
+    my $cnt = 0;
+
+    my $io = IO::Select->new();
+    $io->add(\*STDIN);
+
+    my $stop = 0;
+    while( ((scalar(@{$cellList}) > 0) || (scalar(@{$jobQueue}) > 0)) && !$stop)
+    {
+        if($cnt == 15)
+        {
+            for(my $i = 0 ; $i < scalar(@{$jobQueue}); $i++)
+            {
+                my $status = updateJobQueue($jobQueue->[$i], $cmdLine, $db, $stopLauncher);
+
+                if($status == JOB_OUTOFMEM && 
+                  (rteLib::memCompare($jobQueue->[$i]->{defaultNbMem}, $cmdLine->{maxNbMem}) == -1))
+                {
+                    if($stopLauncher == 0)
+                    {
+                        # Rerun the cell with more memory
+                        $cellHash->{$jobQueue->[$i]->{cell}}->{defaultNbMem} = rteLib::memDouble(
+                                    $jobQueue->[$i]->{defaultNbMem}, 
+                                    $cmdLine->{maxNbMem});
+
+                        printf("Rerunning cell %s with %s mem\n", 
+                                $jobQueue->[$i]->{cell},
+                                $cellHash->{$jobQueue->[$i]->{cell}}->{defaultNbMem});
+
+                        push(@{$cellList}, $cellHash->{$jobQueue->[$i]->{cell}}); 
+
+                    }
+                    #system(sprintf("rm %s", $jobQueue->[$i]->{script}));
+                    #job_cleanup($jobQueue->[$i]->{id},$jobQueue->[$i]->{wd});
+                    splice(@{$jobQueue}, $i, 1);
+                    
+                }elsif($status != JOB_RUNNING)
+                {
+                    # If stopLauncher is set, we've received a Ctrl-C and we're killing jobs so
+                    # don't postprocess the results
+                    if($stopLauncher == 0) 
+                    {
+                        rteLib::postProcessResults($jobQueue->[$i]->{cell}, $cmdLine, $db,
+                                                       $jobQueue->[$i]->{cellFileTimestamp}, 0);
+                        if($pltMode)
+                        {
+                            rteLib::postProcessPltResults($jobQueue->[$i]->{cell}, 
+                                                          $cellHash->{$jobQueue->[$i]->{cell}}->{delayExceptions},
+                                                          $cmdLine, $db);
+                        }
+                        # Cleanup the Netbatch run script
+                        # system(sprintf("rm %s", $jobQueue->[$i]->{script}));
+                        #job_cleanup($jobQueue->[$i]->{id},$jobQueue->[$i]->{wd});
+                        splice(@{$jobQueue}, $i, 1);
+                    }else
+                    {
+                        #system(sprintf("rm %s", $jobQueue->[$i]->{script}));
+                        splice(@{$jobQueue}, $i, 1);
+                    }
+                }
+            }
+            if($stopLauncher) { $stop = 1;}
+            $cnt = 0;
+        }
+
+        if((scalar(@{$jobQueue}) < $cmdLine->{numJobs}) && (scalar(@{$cellList}) > 0)
+            && !$stopLauncher)
+        {
+            my $job;
+            my $cell = shift(@{$cellList});
+            $job->{cell} = $cell->{name};
+            $job->{timeout} = $cmdLine->{timeout};
+            my $nbMem = -1;
+
+            if(defined $cellHash->{$cell->{name}}->{timeout})
+            {
+                # There was a timeout specified in the suite file
+                $job->{timeout} = $cellHash->{$cell->{name}}->{timeout};
+            }
+
+            if(defined $cellHash->{$cell->{name}}->{defaultNbMem})
+            {
+                # There was a nbMem specified in the suite file
+                $job->{defaultNbMem} = $cellHash->{$cell->{name}}->{defaultNbMem};
+            }else
+            {
+                $job->{defaultNbMem} = -1;
+            }
+
+            $job->{envList} = $cellHash->{$cell->{name}}->{envList};
+            #printf "Run RTE is being called";
+            $job = runRteJob($cmdLine, $db, $job);
+
+            # Record the file timestamp at the time of launching the job
+            # in case the user p4 sync while the job is running
+            $job->{cellFileTimestamp} = rteLib::getCellTimestamp($cell->{name}, $cmdLine);
+            $job->{startTime} = -1;
+
+            if($job->{id} != -1)
+            {
+                push(@{$jobQueue}, $job);
+            }
+        }else
+        {
+            sleep 1;
+            $cnt++;
+        }
+
+        # If the user hits a key, print the job queue
+        if($io->can_read(0.1))
+        {
+            $_ = <STDIN>;
+            printf("Current Queue of Active Jobs:\n");
+            printf("------------------------------------------------------------\n");
+            printf(" Num     NetBatch ID\tRun Time\t\tCell\n");
+            printf("------------------------------------------------------------\n");
+            for(my $i = 0 ; $i < scalar(@{$jobQueue}); $i++)
+            {
+                my $t;
+                if($jobQueue->[$i]->{startTime} == -1)
+                {
+                    $t = "Queued";
+                }else
+                {
+                    $t = sprintf("%0.2f hr",(time - $jobQueue->[$i]->{startTime})/60.0/60.0);
+                }
+                printf("  $i\t%d\t\t$t\t\t%s\n", $jobQueue->[$i]->{id}, $jobQueue->[$i]->{cell});
+            }
+            printf("There are %d jobs waiting to run\n", scalar(@{$cellList}));
+
+            rteLib::updateDb($db, $cmdLine->{cellDb});
+        }
+    }
+
+    if($stop == 0)
+    {
+        printf("Done running cell list\n");
+    }else
+    {
+        printf("Stopping early\n");
+    }
+}
+
+# Given a cell, run that cell through rte using netbatch
+# Return the netbatch job ID (or -1 on failure)
+sub runRteJob
+{
+    my ($cmdLine, $db, $job) = @_;
+
+    my $jobId = -1;
+    $job->{defaultNbMem} = getNbMem($cmdLine, $db, $job->{cell}, $job->{defaultNbMem});
+
+    printf("\nLaunching job for cell %s with %s mem\n", $job->{cell}, $job->{defaultNbMem});
+
+    my $cycleCnt = "";
+    if($cmdLine->{cycleCount} > 0)
+    {
+        $cycleCnt = sprintf("--cycle-count=%d", $cmdLine->{cycleCount});
+    }
+
+    if(-e rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}))
+    {
+        my $cmd = sprintf("rm -r %s", rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}));
+        system($cmd);
+    }
+
+    my $cmd = sprintf("#!/bin/bash -noprofile\n" .
+                      "fulcrum --latest jdsim-auto " .
+                      "--max-heap-size=%s --cell=\"%s\" --basedir=%s --cast-path=%s %s",
+                      $job->{defaultNbMem},
+                      $job->{cell},
+                      rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}),
+                      $cmdLine->{castPath}, $cycleCnt);
+
+    my $setMeasuredDelay = 0;
+    if($cmdLine->{measuredDelay} != -1)
+    {
+        $cmd = sprintf("$cmd --measured-delay=%s",$cmdLine->{measuredDelay});
+        $setMeasuredDelay = 1;
+        $pltMode = 1;
+    }else
+    {
+        $cmd = sprintf("$cmd --measured-delay=off");
+    }
+
+    if($cmdLine->{digitalDelay} != -1)
+    {
+        $cmd = sprintf("$cmd --digital-delay=%s",$cmdLine->{digitalDelay});
+        $setMeasuredDelay = 1;
+        $pltMode = 1;
+    }else
+    {
+        $cmd = sprintf("$cmd --digital-delay=off");
+    }
+
+    if($cmdLine->{estimatedDelay} != -1)
+    {
+        $cmd = sprintf("$cmd --estimated-delay=%s",$cmdLine->{estimatedDelay});
+        $setMeasuredDelay = 1;
+        $pltMode = 1;
+    }else
+    {
+        $cmd = sprintf("$cmd --estimated-delay=off");
+    }
+
+    if($setMeasuredDelay)
+    {
+        $cmd = sprintf("$cmd --use-measured-delay=on");
+        $pltMode = 1;
+    }else
+    {
+        $cmd = sprintf("$cmd --use-measured-delay=off");
+    }
+
+    if($cmdLine->{historyPerNode} != -1)
+    {
+        $cmd = sprintf("$cmd --history-per-node=%s", $cmdLine->{historyPerNode});
+    }
+
+    if(!$cmdLine->{dsimArg} eq "")
+    {
+        $cmd = sprintf("$cmd %s", $cmdLine->{dsimArg});
+    }
+
+    #printf("envlist: %s\n", $job->{envList});
+    if(!$job->{envList} eq "")
+    {
+        $cmd = sprintf("$cmd --envs=%s", $job->{envList});
+    }
+
+    #printf("Running:\n $cmd\n");
+
+    mkdir rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell});
+
+    # Give time for the script to show up over NFS
+    sleep 2;
+
+    $job->{defaultNbMem} =~ /([0-9]+)([kmg])/i;
+    #Net batch takes memory input in MBs ( Converting the GB to MB)
+    $job->{defaultNbMem} = $1*1000;
+    printf "\nRunning the command :$cmd";
+    $job->{wd} = getcwd();
+    $job->{params} = "--class \"fVM>$job->{defaultNbMem}\" --class-reservation \"fVM=$job->{defaultNbMem}\"";
+    $job->{opfile} = rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}."/" . $job->{cell}. ".output");
+    $job->{endfile} =rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}."/" . $job->{cell}. ".complete");
+    my $testname = rteLib::dbEscapeCellName($job->{cell});
+    $job->{id} = job_start($cmd,$job->{wd},$cmdLine->{outputDir},"",$job->{opfile},
+    ,$job->{endfile},$job->{params},$testname);
+    if($ENABLE_NB_SUBMIT)
+    {
+         if($job->{id} == 0)
+         {
+             printf("Failed to launch job for cell %s\n", $job->{cell});
+             $job->{id} = -1;
+         }
+    }else
+    {
+       $job->{id} = 5000;
+    }
+    ABORT:
+    return $job;
+}
+
+sub getNbMem
+{
+    my ($cmdLine, $db, $cell, $nbMemIn) = @_;
+
+    my $mem = $cmdLine->{defaultNbMem};
+
+    if(!($nbMemIn eq "-1"))
+    {
+        $mem = $nbMemIn;
+    }elsif(defined $db->{rteLib::dbEscapeCellName($cell)})
+    {
+        if(!( defined $db->{rteLib::dbEscapeCellName($cell)}->{outOfMemory} &&
+                 $db->{rteLib::dbEscapeCellName($cell)}->{outOfMemory} eq "1" )
+            )
+        { 
+            if(defined $db->{rteLib::dbEscapeCellName($cell)}->{memUsed})
+            {
+                $mem = $db->{rteLib::dbEscapeCellName($cell)}->{memUsed};
+            }
+        }
+    }
+
+    if($mem eq "0")
+    {   
+        $mem = $cmdLine->{defaultNbMem};
+    }
+
+    $mem = rteLib::memRoundUpToGig($mem); 
+    return $mem;
+}
+
+# Go through the list of running jobs and see if any have finished
+# If they have, post process the results, and remove the job from
+# the queue
+sub updateJobQueue
+{
+    
+    my ($jobInfo, $cmdLine, $db, $stopLauncher) = @_;
+
+    my $jobId = $jobInfo->{id};
+    my $filter;
+    if (job_status($jobInfo->{endfile}))
+    {
+        # Give some time for the script to finish
+        sleep 15;
+        if(checkForOutOfMem($jobInfo->{cell}, $cmdLine->{outputDir}) == JOB_OUTOFMEM)
+        {
+            printf("Job id %d for cell %s has run out of memory and died\n",
+                $jobInfo->{id}, $jobInfo->{cell});
+            return JOB_OUTOFMEM;
+        }else
+        {
+            if(job_isComplete($jobInfo->{id})){
+                printf("Job %d for cell %s has stopped\n", $jobInfo->{id},
+                $jobInfo->{cell});
+                #job_cleanup($jobId,$jobInfo->{wd});
+                return JOB_COMPLETE;
+            }
+        }
+
+    }
+    else{
+        if($jobInfo->{startTime} == -1){
+             #Only start timeout timer if the job is running
+             #Queued jobs are not be penalized
+            if(job_isRunning($jobId))
+            {
+                $jobInfo->{startTime} = time;
+            }
+       
+        }
+        if( ($jobInfo->{startTime} != -1) &&
+            ( $jobInfo->{timeout} != -1) &&
+            ( $jobInfo->{timeout} < ((time - $jobInfo->{startTime})/60.0/60.0)) ){
+            # Check for timeout
+            printf("Job id %d for cell %s has reached timeout limit %0.2f, terminating job...\n",
+                $jobInfo->{id}, $jobInfo->{cell}, $jobInfo->{timeout});
+            $filter="Jobid=='$jobInfo->{id}'";
+            system(sprintf("nbjob remove --reason \"Timed Out\" $filter >/dev/null"));
+            sleep 15;
+            return JOB_TIMEOUT;
+        }
+        else{
+            if(checkForOutOfMem($jobInfo->{cell}, $cmdLine->{outputDir}) == JOB_OUTOFMEM)
+            {
+                printf("Job id %d for cell %s has run out of memory, killing job...\n",
+                    $jobInfo->{id}, $jobInfo->{cell});
+                system(sprintf("nbjob remove --reason \"Out of Memory\" $filter >/dev/null"));
+                sleep 15;
+                return JOB_OUTOFMEM;
+                
+            }
+        }
+    }
+   
+    return JOB_RUNNING;
+    
+}
+
+
+
+
+sub checkForOutOfMem
+{
+    my ($cell, $outputDir) = @_;
+
+    #RTE catches out of memory conditions and keeps running
+    #Grep through the log file and if a out of memory condition occures,
+    #Kill the job.
+    my $file = rteLib::replaceParenthesisWith_($outputDir . "/" . 
+               $cell . "/" . 
+               $cell . ".output");
+
+    if(-e $file)
+    {
+        $file = rteLib::escapeParenthesis($file);
+        my $HANDLE;
+        open($HANDLE, "grep java.lang.OutOfMemoryError $file |");
+        my $killed = 0;
+        while(<$HANDLE>)
+        {
+            if(!$killed && $_ =~ /java.lang.OutOfMemoryError/)
+            {
+                return JOB_OUTOFMEM;
+            }
+        }
+    }
+    return -1;
+}
+
+sub sigHandler
+{
+    $SIG{INT} = \&sigHandler;
+    
+    if($running == 0)
+    {
+        exit(0);
+    }
+
+    printf("Received Ctrl-C, cleaning up...\n");
+    foreach my $job (@{$jobQueue})
+    {
+        printf("Stopping job %d cell %s...\n", $job->{id}, $job->{cell});
+        #system("qdel $job->{id}");
+        if(!job_isComplete($job->{id})){
+            system("nbjob remove \"Jobid==$job->{id}\" ");
+        }
+    }
+
+    # Don't exit, but indicate we're stopping
+    $stopLauncher = 1;
+
+}
+
+__END__
+
+
+=head1 NAME
+
+rteLauncher - Given a list of cells, run RTE on each cell and save results into a database
+
+=head1 SYNOPSYS
+
+rteLauncher [OPTIONS] B<-s>=file
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-numJobs>=integer
+
+Tells the tool how many Netbatch jobs to use. Default is 10
+
+=item B<-s>=string B<--suiteFile>=string
+
+A text file containing a list of cells to run. Empty lines are ignored. 
+Also per cell options may be specified. For example:
+CELL1 --timeout=10 --nbMem=32G
+CELL1 --timeout=1 --nbMem=4G
+The only options supported are timeout, nbMem, and pltDelayException.
+
+=item B<-db>=string <--cellDb>=string
+
+Points to the xml file used to keep track of RTE run results. If not specified,
+the default file: ./rteResults.xml will be used
+
+=item B<--cast-path>=string
+
+Path to cast files, : separated
+
+=item B<-o>=string B<--output-dir>=string
+
+The path to where RTE output files will be stored. Default is ./output
+
+=item B<-t>=integer B<--timeout>=integer
+
+The RTE timeout option. Default is 10 hours. -1 will disable the timeout mechanism
+
+=item B<-nbMem>=integer
+
+Normally, the qsub memory options come from the cell database. However, 
+if a cell is being run for the first time, the qsub memory usage will come
+from this option. The option should be formated as: 2G, 2000M, etc. 
+
+=item B<-maxNbMem>=integer
+
+If a rte run runs out of memory, the script will automatically, rerun the cell with
+an increased qsub memory. This option specifies the maximum memory the script is 
+allowed to use. If not specified this value is set to the same value as nbMem,
+disabling the auto rerun feature.
+
+=item B<-masterCellDb>=file
+
+This allows a master cell database to be specified. This database can provide 
+a base set of run results. This database is read before the local cell database
+(specified by cellDb). Any results read from the local cell database will 
+override results found in the master database. This option would be used if, 
+for example, you wanted to rerun several cells out of a run someone else ran. 
+You would specify their cell database as the master database, and a local 
+file for your own database.
+
+=item B<-cycle-count>=integer
+
+This number is passed to rte as --cycle-count=N. If not specified, the option 
+is not passed on.
+
+=item B<--measured-delay>=integer
+
+Used for running PLT
+
+=item B<--digital-delay>=integer
+
+Used for running PLT
+
+=item B<--estimated-delay>=integer
+
+Used for running PLT
+
+=item B<--history-per-node>=integer
+
+Used for running PLT
+
+=item B<--dsimArg>=string
+
+Can be used to pass arguments into dsim, like defines etc. It is important 
+to quote the string to prevent parsing confusion.
+
+=item B<--pltDelayException>=string
+
+When processing plt results, and looking for estimated or digial delay warnings,
+this regular expression can be used to filter those warnings out of the report.
+
+=back
+
+=head1 DESCRIPTION
+
+This script will launch several RTE runs. As runs finish the output files are
+analyzed and key parameters are extracted and stored in the cell database (run time, 
+memory usage, pass/fail, etc).
+
+During operation, the user can hit enter to see the list of jobs in the active 
+queue, and to see the number of cells left to run. Hitting enter will also flush
+the current results to the cell databse, which is normally done at the end once
+all jobs have finished.
+
+=head1 AUTHOR
+
+Copyright (C) 2011 Fulcrum Microsystem, Inc. All rights reserved
+
+=cut
+

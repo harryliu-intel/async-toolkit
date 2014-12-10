@@ -1,0 +1,4 @@
+#!/bin/bash
+xsetroot -solid grey
+xterm -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" &
+fvwm2 -f "$HOME/.fvwm2/Main-8-bit" &

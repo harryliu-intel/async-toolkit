@@ -1,0 +1,43 @@
+#!/usr/intel/bin/perl -w
+#
+# Author: Abe Ankumah, Andrew Lines
+# Purpose: Summarize LVE raw results into web pages
+#
+
+# find relevant packaged tools and libraries
+BEGIN {
+$package_root = $0;
+my $exe = $package_root;
+$exe =~ s:.*/::;
+if (! ($package_root =~ m:^/:)) {
+    my $pwd = `pwd`;
+    chomp $pwd;
+    $package_root = $pwd;
+    $package_root .= "/$0";
+    $package_root =~ s:$exe$::;
+    $package_root =~ s://:/:g;
+    chdir $package_root;
+    $package_root = `pwd`;
+    chomp $package_root;
+    chdir $pwd;
+}
+else {
+    $package_root =~ s:/bin/$exe::;
+}
+push @INC,"$package_root/lib/perl";
+}
+
+use LveSummarize;
+
+# report usage
+sub usage() {
+    my $usage = <<EOF;
+USAGE: lve_summarize task work_dir
+    task = aspice, alint, hsim, lvs, drc, cell, extract
+    work_dir = where to find relevant raw results and produce HTML summary
+EOF
+    die "$usage";
+}
+
+@ARGV == 2 or usage();
+&lve_summarize(@ARGV);

@@ -1,0 +1,115 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use LveStatus;
+use LveUtil;
+
+# get raw files
+my @files = @ARGV;
+if (@files==0) {
+    @files = `find . -name aspice.raw -or -name hsim.raw -or -name hspice.raw -or -name xa.raw`;
+}
+
+# globals
+my @sims = ("aspice","hsim","hspice","xa");
+my @field = ("","","","","","","","");
+my @diff = (0,0,0,0,0,0,0,0);
+my %freq = ();
+my %power = ();
+
+# parse the files
+foreach my $file (@files) {
+    my @raw = get_lines($file);
+    foreach my $line (sort @raw) {
+	my ($status, $task, $cell, $path, %results) = parse_raw_line($line);
+        $temp = $path;
+        $key = "";
+        foreach my $sim (@sims) {
+            if ($temp =~ /\/([^\/]+)\/([^\/]+)\/($sim)\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^\/]+)\// ) {
+                $key = "$cell $1 $2 $3 $4 $5 $6 $7";
+                my @f = split(" ",$key);
+                for ($i=0; $i<8; $i++) {
+                    if ($field[$i] eq "") { $field[$i]=$f[$i]; }
+                    elsif ($field[$i] ne $f[$i]) { $diff[$i]=1; }
+                }
+            }
+        }
+
+        # snarf results
+	if (defined($results{power}) && is_numeric($results{power})) {
+	    $power{$key} = (int ($results{power} * 1e9 + 0.5))/1e9;
+	}
+	elsif (defined($results{frequency}) && is_numeric($results{frequency})) {
+            my $f = int (1000 * $results{frequency} + 0.5);
+            if (defined($frequency{$key})) { $frequency{$key} .= ",$f"; }
+            else { $frequency{$key} = "$f"; }
+	}
+    }
+}
+
+# print master key
+print "# ";
+for (my $i=0; $i<8; $i++) {
+    if ($diff[$i]==0) { print "$field[$i] "; }
+    else { print "* "; }
+}
+print "p e f\n";
+
+# compute field length
+my @field_length;
+foreach $key (sort keys %power) {
+    my @f = split(" ",$key);
+    for (my $i=0; $i<8; $i++) {
+        if ($diff[$i]==1) { $field_length[$i] = my_max($field_length[$i],length("$f[$i]")); }
+    }
+    if (defined $frequency{$key}) {
+        my @f = split(",",$frequency{$key});
+        my $e = int(0.5 + 1e15*$power{$key}/($f[0]*1e6))/1000;
+        $field_length[8] = my_max($field_length[8],length("$power{$key}W"));
+        $field_length[9] = my_max($field_length[9],length("${e}pJ"));
+        $field_length[10] = my_max($field_length[10],length("$frequency{$key}MHz"));
+    } else {
+        $field_length[8] = my_max($field_length[8],length("$power{$key}W"));
+    }
+}
+
+# output results
+foreach $key (sort keys %power) {
+    my @f = split(" ",$key);
+    for (my $i=0; $i<8; $i++) {
+        if ($diff[$i]==1) { print_field("$f[$i]",$field_length[$i]); }
+    }
+    if (defined $frequency{$key}) {
+        my @f = split(",",$frequency{$key});
+        my $e = int(0.5 + 1e15*$power{$key}/($f[0]*1e6))/1000;
+        print_field("$power{$key}W",$field_length[8]);
+        print_field("${e}pJ",$field_length[9]);
+        print_field("$frequency{$key}MHz",$field_length[10]);
+    } else {
+        print_field("$power{$key}W",$field_length[8]);
+    }
+    print "\n";
+}
+
+# print a field with padding
+sub print_field {
+    my ($str,$length) = @_;
+    print "$str";
+    for (my $i=length($str); $i<$length; $i++) {
+        print " ";
+    }
+    print " ";
+}
+
+# max two numbers allowing the first to be undefined
+sub my_max {
+    my ($a, $b) = @_;
+    if (!defined($a) || $b>$a) { return $b; }
+    return $a;
+}

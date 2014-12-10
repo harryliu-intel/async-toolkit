@@ -1,0 +1,509 @@
+#!/usr/intel/bin/perl -w
+
+# Reclassify data for Analog Verification Tracking Purposes. This will be 
+# integrated into lve_summarize/lve_resummarize at some point. I'd rather 
+# not invoke cast query though!
+
+use strict;
+use POSIX;
+
+my $package_root;
+
+BEGIN {
+$package_root = $0;
+my $exe = $package_root;
+$exe =~ s:.*/::;
+if (! ($package_root =~ m:^/:)) {
+    my $pwd = `pwd`;
+    chomp $pwd;
+    $package_root = $pwd;
+    $package_root .= "/$0";
+    $package_root =~ s:$exe$::;
+    $package_root =~ s://:/:g;
+    chdir $package_root;
+    $package_root = `pwd`;
+    chomp $package_root;
+    chdir $pwd;
+}
+else {
+    $package_root =~ s:/bin/$exe::;
+}
+push @INC,"$package_root/lib/perl";
+}
+
+use LveStatus;
+use LveSummarize;
+
+#creat a link for a cellname to where the LVE results are
+sub linkcell {
+    my $cell = shift;
+    my $filename = $cell;
+    
+    # For the tracking page, truncating the names means we can't cut-n-paste
+    # them into todo files (a common task), so let's not do it.
+    #
+    #if(length($cell) > 64){
+    #    $cell = substr($cell,0,64);
+    #    $cell = $cell."...";
+    #}
+    
+    $filename =~ s/\./\//g;
+    $filename .= "/cell.html";
+    return "<a href=\"$filename\">$cell</a>";
+}
+
+#some constants
+my $bump_bound = 28;
+my $slew_bound = 150;
+my $dynamic_bound = 12;
+my $leak_bound = 10;
+
+my %aspice_class = ();
+%{$aspice_class{WARN}} = ();
+%{$aspice_class{WARN_0}} = ();
+%{$aspice_class{WARN_I}} = ();
+%{$aspice_class{DEADLOCK}} = ();
+%{$aspice_class{PERFORMANCE}} = ();
+%{$aspice_class{ALL}} = ();
+
+# If set, don't call cast_query to correlate aspice failures with 
+# childrens' alint problems.
+my $skip_cast_query = 0;
+my $fast = 1;
+
+# Parse command line
+die "lve_tracking [--skip-cast-query=0|1] fast=[0|1] workdir\n" if (@ARGV < 1);
+while ($ARGV[0] =~ /^--([^=]+)=(.*)$/) {
+    my ($opt,$arg) = ($1,$2);
+    if ($opt eq "skip-cast-query") {
+        $skip_cast_query = $arg;
+    }
+    elsif ($opt eq "fast") {
+        $fast = $arg;
+    }
+    else {
+        die "Unrecognized option $opt.\n";
+    }
+    shift;
+}
+@ARGV == 1 or die "$0 workdir\n";
+my $working_dir = shift;
+
+my @alintfiles;
+my @aspicefiles;
+
+my $bump_up = "";
+my $bump_dn = "";
+my $inv_bump_up = "";
+my $inv_bump_dn = "";
+my $inv_node = "";
+my $delay_dn = "";
+my $delay_up = "";
+my $fast_delay_dn = "";
+my $fast_delay_up = "";
+my $slow_delay_dn = "";
+my $slow_delay_up = "";
+my $cc = "";
+my $tau = "";
+my $leak_up = "";
+my $leak_dn = "";
+my $skew_up = "";
+my $skew_dn = "";
+my $slew_up = "";
+my $slew_dn = "";
+my %charge_sharing_class=();
+my %charge_sharing=();
+my %dynamic_bump=();
+my %leaks=();
+my %slew=();
+my @files=();
+
+if(defined($working_dir)){
+    if ( ! $fast ) {
+        my $alint = `find \"$working_dir\" -noleaf -name "alint.raw"`;
+        @files = split('\n',$alint);
+        my $aspice = `find \"$working_dir\" -noleaf -name "aspice.raw"`;
+        push @files, split('\n',$aspice);
+    }
+    else {
+        open (P, "<$working_dir/index.table");
+        my @f;
+        my $path;
+        my $cell;
+        my @ls;
+        while (<P>) {
+            chomp;
+            @f=split;
+            $path=$f[0];
+            $path =~ s/CELL:=//;
+            $cell=$path;
+            $path =~ s:\.:/:g;
+            push @files, "$working_dir/$path/cell.raw" if -s "$working_dir/$path/cell.raw";
+        }
+        close P;
+    }
+    foreach my $raw_file (@files){
+        
+        my @raw = get_lines($raw_file);
+        foreach my $line (sort @raw) {
+            
+            my ($status, $task, $cell, $path, %results) = 
+                parse_raw_line($line);
+            
+            my $node = $results{node};
+            
+            if ($task eq "alint") {
+                $charge_sharing_class{ALL}{$cell}=0;
+                
+                $bump_up = "";
+                $bump_dn = "";
+                $inv_bump_up = "";
+                $inv_bump_dn = "";
+                $inv_node = "";
+                $delay_dn = "";
+                $delay_up = "";
+                $fast_delay_dn = "";
+                $fast_delay_up = "";
+                $slow_delay_dn = "";
+                $slow_delay_up = "";
+                $cc = "";
+                $tau = "";
+                $leak_up = "";
+                $leak_dn = "";
+                $skew_up = "";
+                $skew_dn = "";
+                $slew_up = "";
+                $slew_dn = "";
+                
+                if (defined $node){
+                    
+                    if(defined $results{bump_dn} &&
+                       defined $results{bump_up}){
+                        
+                        ($bump_dn) = split("@",$results{bump_dn});
+                        ($bump_up) = split("@",$results{bump_up});
+                        ($inv_bump_dn) = split("@",$results{inv_bump_dn});
+                        ($inv_bump_up) = split("@",$results{inv_bump_up});
+                        ($inv_node) = $results{inv_node};
+                        $cc = $results{cc};
+                        $tau = $results{tau};
+                    }
+                    if(defined $results{leak_dn} &&
+                       defined $results{leak_up}){
+                        
+                        ($leak_dn) = split("@",$results{leak_dn});
+                        ($leak_up) = split("@",$results{leak_up});
+                    }
+                    if(defined $results{delay_dn} &&
+                       defined $results{delay_up} &&
+                       defined $results{fast_delay_dn} &&
+                       defined $results{fast_delay_up} &&
+                       defined $results{slow_delay_dn} &&
+                       defined $results{slow_delay_up} ){
+                        
+                        
+                        $cc = $results{cc};
+                        $tau = $results{tau};
+                        $delay_dn = $results{delay_dn};
+                        $delay_up = $results{delay_up};
+                        ($fast_delay_dn) 
+                            = split("@",$results{fast_delay_dn});
+                        ($fast_delay_up) 
+                            = split("@",$results{fast_delay_up});
+                        ($slow_delay_dn) 
+                            = split("@",$results{slow_delay_dn});
+                        ($slow_delay_up) 
+                            = split("@",$results{slow_delay_up});
+                    }
+                    if(defined $results{skew_dn} &&
+                       defined $results{skew_up} &&
+                       defined $results{slow_slew_dn} &&
+                       defined $results{slow_slew_up} ){
+
+                        ($skew_dn) =  split("@",$results{skew_dn});
+                        ($skew_up) =  split("@",$results{skew_up});
+                        ($slew_dn) =  split("@",$results{slow_slew_dn});
+                        ($slew_up) =  split("@",$results{slow_slew_up});
+                        
+                    }
+                    
+                    #Now we have all the alint information for a cell
+                    #build table database for final output 
+                    
+                    $charge_sharing{$cell} = [] unless exists $charge_sharing{$cell};
+                    if($cc eq "0"){
+                        process_data($node,$bump_up,$bump_dn,$charge_sharing{$cell},$bump_bound);
+                    }
+                    
+                    if(!($inv_node =~ /NA/ || $inv_node eq "")){
+                        $dynamic_bump{$cell} = [] unless exists $dynamic_bump{$cell};
+                        if($cc eq "0"){
+                            process_data($inv_node,$inv_bump_up,$inv_bump_dn,
+                                         $dynamic_bump{$cell},$dynamic_bound);
+                        }
+                    }
+                    
+                    $leaks{$cell} = [] unless exists $leaks{$cell};
+                    process_data($node,$leak_up,$leak_dn,$leaks{$cell},$leak_bound);
+                    
+                    
+                    $slew{$cell} = [] unless exists $slew{$cell};
+                    process_data($node,$slew_up,$slew_dn,$slew{$cell},$slew_bound);
+                    
+                                    
+                }
+            }
+            if ($task eq "aspice" && defined $results{deadlock} && 
+                $status eq "FAIL") {
+                $aspice_class{DEADLOCK}{$cell}=0;
+                $aspice_class{ALL}{$cell}=0;
+            }
+            if ($task eq "aspice" && defined $results{warn_file} && 
+                $status eq "FAIL" ||
+                $task eq "aspice" && defined $results{warn} && 
+                $status eq "FAIL") {
+                $aspice_class{WARN}{$cell}=0;
+                $aspice_class{ALL}{$cell}=0;
+            }
+            if ($task eq "aspice" && defined $results{frequency} && 
+                $status eq "FAIL") {
+                $aspice_class{PERFORMANCE}{$cell}=0;
+                $aspice_class{ALL}{$cell}=0;
+            }
+        }
+    }
+}
+
+sub process_data {
+    my $node = shift;
+    my $up = shift;
+    my $dn = shift;
+    my $myarray = shift;
+    my $bound = shift;
+
+    #Now we have all the alint information for a cell
+    #build table database for final output 
+    
+    if ($up =~ /FAIL/ || $up =~ /SIGNOFF/ ||
+        $up =~ /NOT_TESTED/ || $up =~ /NA/){ 
+        push @{$myarray},{ node=>"$node",
+                           val=>$up
+                           };
+    }
+    elsif ($dn =~ /FAIL/ || $dn =~ /SIGNOFF/ ||
+           $dn =~ /NOT_TESTED/ || $dn =~ /NA/){ 
+        push @{$myarray},{ node=>"$node",
+                           val=>$dn
+                           };
+    }
+    # this could happen if the raw line if for say leakage or delay
+    elsif($up ne "" && $dn ne "") {
+        my $current_val = $dn < $up ? $up : $dn;
+        if($current_val >= $bound){ 
+            my $current_rec = $myarray->[0];
+            
+            if(defined $current_rec && 
+               !($current_rec->{'val'} =~ /FAIL/  ||
+                 $current_rec->{'val'} =~ /SIGNOFF/ ||
+                 $current_rec->{'val'} =~ /NOT_TESTED/
+                 )){
+                if($current_rec->{'val'} ne "NA" and $current_rec->{'val'} < $current_val){
+                    $current_rec->{'val'} = $current_val;
+                    $current_rec->{'node'} = $node;
+                }
+            } else {
+                unshift @{$myarray},{ node=>"$node",
+                                      val=>$current_val
+                                      }
+            }
+        }
+    }
+}
+
+# sort the cells 
+sub bump_sort {
+    
+    my $a = shift;
+    my $b = shift;
+    
+    my $FAIL = 4;
+    my $BUMP = 3;
+    my $NOT_TESTED = 2;
+    my $SIGNOFF = 1;
+
+    my $a_level=0;
+    my $b_level=0;
+    
+    my $level = 0;
+    foreach my $elem(@{$a}){
+        if($elem->{'val'} =~ /FAIL/){$level = $FAIL; }
+        elsif($elem->{'val'} =~ /NOT_TESTED/){$level = $NOT_TESTED ; }
+        elsif($elem->{'val'} =~ /SIGNOFF/){$level = $SIGNOFF ; }
+        $a_level = $a_level > $level ? $a_level : $level;
+    }
+    $level = 0;
+    foreach my $elem(@{$b}){
+        if($elem->{'val'} =~ /FAIL/){$level = $FAIL; }
+        elsif($elem->{'val'} =~ /NOT_TESTED/){$level = $NOT_TESTED ; }
+        elsif($elem->{'val'} =~ /SIGNOFF/){$level = $SIGNOFF ; }
+        $b_level = $b_level > $level ? $b_level : $level;
+    }
+    if($a_level != $b_level){return $a_level - $b_level; }
+    else {
+        if(scalar(@{$a}) == 0) { return 1; }
+        elsif(scalar(@{$b}) == 0) { return -1; }
+        elsif( $a->[0]->{'val'} eq $b->[0]->{'val'} ) {return 0; }
+        elsif( $a->[0]->{'val'} eq "NA") {return -1; }
+        elsif( $b->[0]->{'val'} eq "NA") {return 1; }
+        else { return $a->[0]->{'val'} - $b->[0]->{'val'}; }
+    }
+}
+
+sub start_ttable {
+    my $fh = shift;
+    my $header = shift;
+    my $str = shift;
+    print $fh "<center><h3>$header</h3></center>\n";
+    print $fh "<TABLE BORDER=\"0\" WIDTH=\"100%\" CELLPADDING=\"2\" CELLSPACING=\"3\" class=\"yellow\" >\n";
+    print $fh "<TBODY>\n";
+    print $fh "<tr BGCOLOR=\"#CCCCFF\" >";
+    print $fh "<td  class=\"yellow\" > <b>CELL</b> </td>";
+    print $fh "<td  class=\"yellow\" > <b>Node</b> </td>"; 
+    print $fh "<td  class=\"yellow\" > <b>$str</b> </td>"; 
+    print $fh "</tr>\n";
+}
+
+
+############# PRINT PROCESS RESULTS HERE ##############################
+my $fh = start_page("$working_dir/status_tmp.html", 
+                    "Result Ranking");
+
+start_ttable($fh,"Charge Sharing Ranking (>=$bump_bound%)", "\% Vdd ");
+foreach my $cellname (sort {bump_sort($charge_sharing{$b},$charge_sharing{$a})}
+                   keys %charge_sharing){
+    foreach my $detail(@{$charge_sharing{$cellname}}){
+        my $celllink = linkcell($cellname);
+        print $fh "<tr>";
+        print $fh "<td class=\"yellow\" > $celllink </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'node'}  </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'val'} </td>";
+        print $fh "</tr>\n";
+    }
+} 
+print $fh "</TABLE><P>";
+
+start_ttable($fh,"Dynamic Inverter Ranking (>=$dynamic_bound%)", "\% Vdd");
+foreach my $cellname (sort {bump_sort($dynamic_bump{$b},$dynamic_bump{$a})}
+                   keys %dynamic_bump){
+    foreach my $detail(@{$dynamic_bump{$cellname}}){
+        my $celllink = linkcell($cellname);
+        print $fh "<tr>";
+        print $fh "<td class=\"yellow\" > $celllink </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'node'}  </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'val'} </td>";
+        print $fh "</tr>\n";
+    }
+} 
+print $fh "</TABLE><P>";
+
+start_ttable($fh,"Leakage Ranking (>=$leak_bound%)", "\% Vdd");
+foreach my $cellname (sort {bump_sort($leaks{$b},$leaks{$a})}
+                   keys %leaks){
+    foreach my $detail(@{$leaks{$cellname}}){
+        my $celllink = linkcell($cellname);
+        print $fh "<tr>";
+        print $fh "<td class=\"yellow\" > $celllink </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'node'}  </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'val'} </td>";
+        print $fh "</tr>\n";
+    }
+} 
+print $fh "</TABLE><P>";
+
+start_ttable($fh,"Slew Rate Ranking (>=$slew_bound)", "slew rate(ps)");
+foreach my $cellname (sort {bump_sort($slew{$b},$slew{$a})}
+                   keys %slew){
+    foreach my $detail(@{$slew{$cellname}}){
+        my $celllink = linkcell($cellname);
+        print $fh "<tr>";
+        print $fh "<td class=\"yellow\" > $celllink </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'node'}  </td>";
+        print $fh "<td class=\"yellow\" > $detail->{'val'} </td>";
+        print $fh "</tr>\n";
+    }
+} 
+print $fh "</TABLE><P>";
+
+
+# PRINT Transient simulation (ASPICE) results here
+print $fh "<center><h3>ASPICE (Transient) Simulation</h3></center>\n";
+print $fh "<TABLE BORDER=\"0\" WIDTH=\"100%\" CELLPADDING=\"2\" CELLSPACING=\"3\" class=\"yellow\" >\n";
+print $fh "<TBODY>\n";
+print $fh "<tr BGCOLOR=\"#CCCCFF\" >";
+print $fh "<td  class=\"yellow\" > <b>CELL</b> </td>";
+print $fh "<td  class=\"yellow\" > <b>DI</b> </td>"; 
+print $fh "<td  class=\"yellow\" > <b>LIVE</b> </td>"; 
+print $fh "<td  class=\"yellow\" > <b>PERF</b> </td>"; 
+print $fh "</tr>\n";
+foreach my $cellname (sort keys %{$aspice_class{ALL}}){
+    my $celllink = linkcell($cellname);
+    print $fh "<tr>";
+    print $fh "<td class=\"yellow\" > $celllink </td>";
+    my $str=""; if(exists($aspice_class{WARN}{$cellname})){$str="X";}
+    print $fh "<td class=\"yellow\" > $str </td>";
+    $str=""; if(exists($aspice_class{DEADLOCK}{$cellname})){$str="X";}
+    print $fh "<td class=\"yellow\" > $str </td>";
+    $str=""; if(exists($aspice_class{PERFORMANCE}{$cellname})){$str="X";}
+    print $fh "<td class=\"yellow\" > $str </td>";
+    print $fh "</tr>\n";
+}
+print $fh "</TABLE><P>";
+
+finish_page($fh);
+
+#move to final destination
+`mv \"$working_dir/status_tmp.html\" \"$working_dir/status.html\"`;
+
+# CURRETLY THIS HAS BEEN DISABLED; TODO: Figure out a way to properly improve this for Tahoe
+# --Abe
+#
+#determine childred of the passed cell which have alint problems
+#this section of code invokes cast_query and all that jazz, elk!
+sub children_walint_problems {
+    my $cellname = shift;
+    my @cellnames = ();
+
+    #removed explicit paths to be sure this fails until they are right AAG
+    my $cast_path="";
+    my $spec_path="";
+    my $output_file= tmpnam();
+    my $cast_query="cast_query";
+
+    my $cast_query_cmd = $cast_query ." --cast-path=$cast_path:$spec_path ";
+    $cast_query_cmd .= " --output=$output_file --cell=\"$cellname\" ";
+    $cast_query_cmd .= " --max-heap-size=1200M --task=subcells";
+    
+    `$cast_query_cmd`;
+
+    if(-z $output_file){
+        print "cast_query failed for $cellname\n";
+    }
+    else {
+        open CAST_QUERY, "<$output_file" or die "cannot open $output_file\n";
+        while(<CAST_QUERY>){
+            my $cell = $_;
+            chop $cell;
+            chop $cell;
+            
+            if(exists($charge_sharing_class{CLASS_I}{$cell})||
+               exists($charge_sharing_class{CLASS_II}{$cell})||
+               exists($charge_sharing_class{CLASS_III}{$cell})
+               ){
+               push @cellnames, $cell;
+            }
+        }
+        close CAST_QUERY;
+    }    
+    `rm -fr $output_file`;
+    return @cellnames;
+}

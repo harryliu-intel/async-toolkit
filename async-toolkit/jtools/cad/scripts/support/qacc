@@ -1,0 +1,289 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+my $arguser;
+my $arghost;
+my $tail = 10000;
+my $human=0;
+my $sort="";
+my $seeqrsh=2;
+my $argname;
+my $argtime;
+my $argdate;
+my $argopts;
+my $argsince;
+my $summary=0;
+
+sub usage {
+    print STDERR <<EU;
+Usage: qacc [options]
+    --host=name             display only one grid host
+    --human                 show run times in easier format
+    --sort=[e|m|j|w]        sort by runtime,mem used, job#, wait time
+    --tail=#                show last # entries, 10000 default
+    --user=name             display only one user
+    --name=jobname          display those with this job name
+    --date=[[+-]yyyy-mm-dd] only these dates
+    --opts=string           match options
+    --since=[yyyy-mm-dd]    since this date only
+    --summary               just display summary stats
+    --qrsh=0|1|2            0 = no qrsh, 1 = only qrsh, 2 = both
+EU
+    exit 1;
+}
+
+my %options = (
+    "user=s" => \$arguser,
+    "host=s" => \$arghost,
+    "tail=s" => \$tail,
+    "human" => \$human,
+    "sort=s" => \$sort,
+    "name=s" => \$argname,
+    "date=s" => \$argdate,
+    "time=s" => \$argtime,
+    "opts=s" => \$argopts,
+    "since=s" => \$argsince,
+    "summary" => \$summary,
+    "qrsh=i" => \$seeqrsh,
+);
+
+GetOptions ( %options ) or usage;
+
+$argsince =~ s/-//g if defined $argsince;
+
+$argdate = formatdate(0) if defined ($argdate) and $argdate eq "0";
+$argdate =~ s/ .*//;
+my $cmpdate = $argdate;
+$cmpdate =~ s/^[-+]//;
+my @rt=();
+my @mem=();
+my @mr=();
+my @wt=();
+my $cnt=0;
+
+sub formattime {
+    my ($sec) = @_;
+    if (!$human) {
+        return $sec;
+    }
+    if ($sec < 60) {
+        return sprintf "%.4gS", $sec;
+    }
+    if ($sec < 3600) {
+        return sprintf "%.2fM", $sec/60;
+    }
+    if ($sec > 2600*24) {
+        return sprintf "%.2fD", $sec/3600/24;
+    }
+    sprintf "%.2fH", $sec/3600;
+}
+
+sub formatdate {
+    my ($time) = @_;
+    my @t = localtime($time);
+    $time = localtime($time);
+    $time =~ s/  */ /g;
+    my @time = split(/ /,$time);
+    $time[3] =~ s/:[^:]+$//;
+    "$time[1] $time[2], $time[4] $time[3]";
+    sprintf "%04d-%02d-%02d %02d:%02d", $t[5]+1900, $t[4]+1, $t[3], $t[2], $t[1];
+}
+
+sub mycmp {
+    my @a=split(/ /, $a);
+    my @b=split(/ /, $b);
+    return 0 if $sort eq "";
+    my $fr=1;
+    $fr=0 if ($sort =~ /^w/i);
+    $fr=2 if ($sort =~ /^m/i);
+    $fr=6 if ($sort =~ /^j/i);
+    if ($a[$#a-$fr] =~ /H/) {
+        $a[$#a-$fr] =~ s/H//;
+        $a[$#a-$fr] *= 3600;
+    }
+    if ($a[$#a-$fr] =~ /M/) {
+        $a[$#a-$fr] =~ s/M//;
+        $a[$#a-$fr] *= 60;
+    }
+    if ($a[$#a-$fr] =~ /S/) {
+        $a[$#a-$fr] =~ s/S//;
+    }
+    if ($b[$#b-$fr] =~ /H/) {
+        $b[$#b-$fr] =~ s/H//;
+        $b[$#b-$fr] *= 3600;
+    }
+    if ($b[$#b-$fr] =~ /M/) {
+        $b[$#b-$fr] =~ s/M//;
+        $b[$#b-$fr] *= 60;
+    }
+    if ($b[$#b-$fr] =~ /S/) {
+        $b[$#b-$fr] =~ s/S//;
+    }
+    $a[$#a-$fr]-$b[$#b-$fr];
+}
+
+my $stell=0;
+if (defined($argsince) and $argsince =~ /^\d\d\d\d\d\d\d\d$/) {
+    open (P, "</mnt/fulcrum/local/common/logs/qstat/accountndx.dat");
+    while (<P>) {
+        next if ! /^$argsince /;
+        my ($d,$st,$ft)=split;
+        $stell=$st;
+        last;
+    }
+    close P;
+}
+if ($stell > 0 and $stell ne "-") {
+    open (P, "</usr/local/grid-6.0/default/common/accounting");
+    seek P, $stell, 0;
+}
+else {
+    open (P, "tail -$tail /usr/local/grid-6.0/default/common/accounting |");
+}
+my @list;
+while (<P>) {
+    chomp;
+    my ($queue,$host,$group,$user,$name,$job,$account,$priority,$submit,$start,$end,$failed,$exit_status,$elapsed,@l) =
+        split(/:/,$_);
+    my $opts = $l[$#l-3];
+    $opts =~ s/-U [^ ]+ //;
+    my $isqrsh=0;
+    $isqrsh = (($opts =~ /-I y/) or ($name =~ /QRLOGIN/));
+    my $maxmem = $l[$#l];
+    my $io = $l[$#l-4];
+    $host =~ s/\..*//;
+    next if (defined($arguser) and $arguser ne $user);
+    next if (defined($arghost) and $arghost ne $host);
+    next if (defined($argname) and $argname ne $name);
+    next if (defined($argopts) and ! ($opts =~ /$argopts/));
+    my $starttime = formatdate($start);
+#    my $endtime = formatdate($end);
+    my ($date,$time)=split(/ /,$starttime);
+    if (defined ($argdate)) {
+        if ($argdate =~ /^-/) {
+            next if ($date cmp $cmpdate) > 0;
+        }
+        elsif ($argdate =~ /^\+/) {
+            next if ($date cmp $cmpdate) < 0;
+        }
+        else {
+            next if $argdate ne $date;
+        }
+    }
+    $opts =~ s/\s+/:/g;
+    $name =~ s/\s/-/g;
+    if ($seeqrsh == 0 and ! $isqrsh or $seeqrsh == 1 and $isqrsh or $seeqrsh == 2) {
+        my $ln= sprintf "$user $host $name $job $starttime '$opts' %s %s %s", sprintf ("%.2f",$maxmem/1024/1024/1024),formattime($end-$start),formattime($start-$submit);
+        if ($summary ) {
+            next if $starttime =~ /1969-12-31/;
+            next if $submit > $start;
+            $opts =~ /memory=([^,]+)/;
+            my $mr = $1;
+            $mr =~ s/(.*)([a-z])$/$1/i;
+            my $mul=$2;
+            if ($mul eq "g" or $mul eq "G") {
+                $mr *= 1024*1024*1024;
+                $mul="";
+            }
+            elsif ($mul eq "m" or $mul eq "M") {
+                $mr *= 1024*1024;
+                $mul="";
+            }
+            elsif ($mul eq "k" or $mul eq "K") {
+                $mr *= 1024;
+                $mul="";
+            }
+            my $wt = $start-$submit;
+            if (! @rt) {
+                $rt[0] = $rt[1] = $rt[2] = $end-$start;
+                $mem[0] = $mem[1] = $mem[2] = $maxmem;
+                $mr[0] = $mr[1] = $mr[2] = $mr;
+                $wt[0] = $wt[1] = $wt[2] = $wt;
+                $cnt++;
+            }
+            else {
+                $rt[0] = $end-$start if $end-$start < $rt[0];
+                $rt[1] = $end-$start if $end-$start > $rt[1];
+                $rt[2] += $end-$start;
+                $mem[0] = $maxmem if $maxmem < $mem[0];
+                $mem[1] = $maxmem if $maxmem > $mem[1];
+                $mem[2] += $maxmem;
+                $mr[0] = $mr if $mr < $mr[0];
+                $mr[1] = $mr if $mr > $mr[1];
+                $mr[2] += $mr;
+                $wt[0] = $wt if $wt < $wt[0];
+                $wt[1] = $wt if $wt > $wt[1];
+                $wt[2] += $wt;
+                $cnt++;
+            }
+        }
+        else {
+            if ($sort eq "") {
+                print $ln;
+            }
+            else {
+                push @list, $ln
+            }
+        }
+    }
+}
+if ($summary) {
+    my @lines=();
+    push @lines, "Arg name min max avg";
+    if ($human) {
+        push @lines, sprintf "Run time    %s %s %s", formattime($rt[0]), formattime($rt[1]),formattime($rt[2]/$cnt);
+        push @lines, sprintf "Wait time   %s %s %s", formattime($wt[0]), formattime($wt[1]),formattime($wt[2]/$cnt);
+        push @lines, sprintf "Mem used    %.2f %.2f %.2f", $mem[0]/1024/1024/1024, $mem[1]/1024/1024/1024,$mem[2]/$cnt/1024/1024/1024;
+        push @lines, sprintf "Mem Req     %.2f %.2f %.2f", $mr[0]/1024/1024/1024, $mr[1]/1024/1024/1024,$mr[2]/$cnt/1024/1024/1024;
+    }
+    else {
+        push @lines, sprintf "Run time    %d %d %d", $rt[0], $rt[1],$rt[2]/$cnt;
+        push @lines, sprintf "Wait time   %d %d %d", $wt[0], $wt[1],$wt[2]/$cnt;
+        push @lines, sprintf "Mem used    %.2f %.2f %.2f", $mem[0]/1024/1024/1024, $mem[1]/1024/1024/1024,$mem[2]/$cnt/1024/1024/1024;
+        push @lines, sprintf "Mem Req     %.2f %.2f %.2f", $mr[0]/1024/1024/1024, $mr[1]/1024/1024/1024,$mr[2]/$cnt/1024/1024/1024;
+    }
+    push @lines, sprintf "Count $cnt";
+    &format(@lines);
+}
+elsif ($sort ne "") {
+    print join("\n", sort mycmp @list) if @list;
+}
+
+sub format {
+    my @l=@_;
+    my @w=(0,0, 0, 0, 0, 0, 0);
+    my $cc=0;
+    foreach my $l (@l) {
+        $l =~ s/\s+/ /g;
+        $l =~ s/^\s//;
+        $l =~ s/^\s$//;
+        my @f=split / /, $l;
+        my $lcc=$#f;
+        for ( my $n = 0; $n <= $lcc; $n++) {
+            $w[$n] = length($f[$n]) if length($f[$n]) > $w[$n];
+        }
+    }
+    foreach my $l (@l) {
+        $l =~ s/\s+/ /g;
+        $l =~ s/^\s//;
+        $l =~ s/^\s$//;
+        my @f=split / /, $l;
+        my $lcc=$#f;
+        my $ln = sprintf "%-*.*s", $w[0],$w[0],$f[0];
+        for ( my $n = 1; $n <= $lcc; $n++) {
+            if ($n < 2) {
+                $ln .= sprintf " %-*.*s", $w[$n], $w[$n], $f[$n];
+            }
+            else {
+                $ln .= sprintf " %*.*s", $w[$n], $w[$n], $f[$n];
+            }
+        }
+        print $ln;
+    }
+}
+

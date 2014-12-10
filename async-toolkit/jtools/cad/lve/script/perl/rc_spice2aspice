@@ -1,0 +1,883 @@
+#!/usr/intel/bin/perl -w
+
+# Copyright 2003 Fulcrum Microsystems.  All rights reserved.
+# Authors: Andrew Lines, Clayton Otey, Chris Britchford
+
+use FileHandle;
+use IPC::Open2;
+use POSIX;
+
+# Usage: rc_spice2aspice <spice-filename> <aspice-filename>
+
+# rc_spice2aspice converts files from spice format to aspice format.
+# <spice-filename> is the spice source file.  <aspice-filename> is the
+# target file.  Aspice defines appear in the same order as the
+# corresponding SUBCKTs in the source.  Also ensures that the base
+# name for a resistive subnet exists by creating an alias if
+# necessary.  Also does reduction of parallel R's and C's with
+# thresholds.  Nodes with only 1 R/C spoke get pruned out.
+
+# Output record separator
+$" = ",";
+
+#
+# options and defaults
+#
+
+$estimated=0;     # use estimated-mos-parameters
+$minC=0;          # minimum capacitance to emit
+$minR=0;          # minimum resistance to emit
+$minRC=0;         # minimum tau for RC reduction
+$scaleM=1;        # scales transistor/diode dimensions
+$scaleC=1;        # scales capacitor values
+$scaleR=1;        # scales resistor values
+$deltaL=0;        # offsets transistor length
+$deltaW=0;        # offsets transistor width
+$cellName="";     # flatten this cell's SUBCKT
+$cellFlattened=0; # has the desired cell been flattened?
+$zero_is_gnd=0;   # automatically rename 0 to GND
+$named_resistors=0; # output named resistors, used for electromigration
+%named_resistor_layers = (); # which named resistor layers to keep, for EM
+$x_prefix = 0;    # is InstanceName preceeded by X?
+$appendColon=":"; # append : to the end of node names to fix bug 6594
+@aliasFiles=();   # files containing aliases to work around bug 6594
+$keepDiode=0;     # keep or discard diodes
+$fixUnconnectedPorts=0; # create wires from port nodes to unconnected subnets
+$verbose="";      # for rc_simplify
+%estimated_mos_parameters = (); # hash of transistor_type to list of parameter names
+%extracted_mos_parameters = (); # hash of transistor_type to list of parameter names
+$estimated_mos_parameters{""} = \("w","l","as","ps","nrs","ad","pd","nrd");
+$extracted_mos_parameters{""} = \("w","l","as","ps","nrs","ad","pd","nrd");
+@res_parameters = ("l=1e-6","w=1e-6"); # explicit resistors
+$default_sc=0.16e-6;
+@resistor_cells=(); # names of explicit resistor subcells
+%missing_parameters = ();
+%unknown_parameters = ();
+
+# All resistors on these layers create connections to the same
+# isopotential subnet, which should also get aliased to the canonical
+# node.
+@isopotentialLayers=();
+
+sub usage() {
+    die <<EOF;
+Usage: rc_spice2aspice
+  [--cell cellName]
+  [--include config]
+  [--estimated]
+  [--minC Farads] [--minR Ohms] [--minRC seconds]
+  [--scaleM ratio] [--scaleC ratio] [--scaleR ratio] [--deltaL dL] [--deltaW dW]
+  [--named-resistors] [--named-resistor-layers LAYER1:LAYER2:...]
+  [--resistor-cells=cell1:cell2:...]
+  [--no-append-colon] [--zero-is-gnd] [--Xprefix] [--fix-unconnected-ports] [--keep-diode]
+  [--alias-file <file>]
+  [--isopotential-layers layer1,layer2,...]
+  [--mos-parameters[:trans_type1:trans_type2:... parm1,parm2,...]
+  <in> <out>
+EOF
+}
+
+sub parseArgs {
+    my @arg = (@_);
+    while (defined $arg[0] && $arg[0] =~ /^--(.*)/) {
+        $flag = $1;
+        if ($flag eq "include") {
+            my $file = $arg[1];
+            shift @arg;
+            @args = split(' ',`cat \"$file\"`);
+            parseArgs(@args);
+        } elsif ($flag eq "estimated") {
+            $estimated = 1;
+        } elsif ($flag eq "minC") {
+            $minC = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "minR") {
+            $minR = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "minRC") {
+            $minRC = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "scaleM") {
+            $scaleM = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "scaleR") {
+            $scaleR = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "scaleC") {
+            $scaleC = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "deltaL") {
+            $deltaL = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "deltaW") {
+            $deltaW = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "cell") {
+            $cellName = $arg[1];
+            shift @arg;
+        } elsif ($flag eq "zero-is-gnd") {
+            $zero_is_gnd = 1;
+        } elsif ($flag eq "named-resistors") {
+            $named_resistors = 1;
+        } elsif ($flag eq "named-resistor-layers") {
+            foreach my $layer (split(":",$arg[1])) {
+                $named_resistor_layers{$layer} = 1;
+            }
+            shift @arg;
+        } elsif ($flag eq "Xprefix") {
+            $x_prefix = 1;
+        } elsif ($flag eq "no-append-colon") {
+            $appendColon = '';
+        } elsif ($flag eq "alias-file") { 
+            push @aliasFiles, $arg[1];
+            shift @arg;
+        } elsif ($flag eq "keep-diode") {
+            $keepDiode = 1;
+        } elsif ($flag eq "fix-unconnected-ports") {
+            $fixUnconnectedPorts = 1;
+        } elsif ($flag eq "isopotential-layers") {
+            @isopotentialLayers = split(",",$arg[1]);
+            shift @arg;
+        } elsif ($flag eq "resistor-cells") {
+            @resistor_cells = split(",",$arg[1]);
+            shift @arg;
+        } elsif ($flag =~ /^estimated-mos-parameters:(\S+)/) {
+            my @parms = split(",",$arg[1]);
+            foreach my $type (split(",",$1)) {
+                $estimated_mos_parameters{$type}= \@parms;
+            }
+            shift @arg;
+        } elsif ($flag eq "estimated-mos-parameters") {
+            my @parms = split(",",$arg[1]);
+            $estimated_mos_parameters{""}= \@parms;
+            shift @arg;
+        } elsif ($flag =~ /^extracted-mos-parameters:(\S+)/) {
+            my @parms = split(",",$arg[1]);
+            foreach my $type (split(",",$1)) {
+                $extracted_mos_parameters{$type}= \@parms;
+            }
+            shift @arg;
+        } elsif ($flag eq "extracted-mos-parameters") {
+            my @parms = split(",",$arg[1]);
+            $extracted_mos_parameters{""}= \@parms;
+            shift @arg;
+        } elsif ($flag eq "verbose") {
+            $verbose="-v";
+        } else {
+            print STDERR "unrecognized argument: $flag\n";
+            usage();
+        }
+        shift @arg;
+    }
+    return @arg;
+}
+
+@ARGV = parseArgs(@ARGV);
+@ARGV == 2 or usage();
+$f_in  = "$ARGV[0]";
+$f_out = "$ARGV[1]";
+
+# return a list of mos_parameters
+sub get_mos_parameters {
+    my ($type) = @_;
+    if ($estimated) {
+        if (defined $estimated_mos_parameters{$type}) {
+            return @{$estimated_mos_parameters{$type}};
+        }
+        return @{$estimated_mos_parameters{""}};
+    } else {
+        if (defined $extracted_mos_parameters{$type}) {
+            return @{$extracted_mos_parameters{$type}}
+        }
+        return @{$extracted_mos_parameters{""}}
+    }
+}
+
+# fill in parameters of resistor cells
+my %subc_args = ();
+foreach my $name (@resistor_cells) {
+    @{$subc_args{$name}}=@res_parameters;
+}
+
+# open files
+open SPICE, "<$f_in" or die "Can't open '$f_in' for reading.\n";
+open ASPICE, ">$f_out" or die "Can't open '$f_out' for writing.\n";
+print ASPICE "/* spice=$f_in, cell=$cellName, minC=$minC, minR=$minR, minRC=$minRC */\n";
+
+#
+# subroutines
+#
+
+# report a fatal error
+sub error_msg {
+    unlink($f_out);
+    die "$0: $f_in, line $.: $_[0]\n";
+}
+
+# check if a string is a legal real number
+sub is_numeric {
+    my ($parm) = @_;
+    if ($parm =~ /^[-+]?[\d]+(\.[\d]+)?([eE]?[-+]?[\d]+)?$/ ) { return 1; }
+    else { return 0; }
+}
+
+# choose which subnet would be the best candidate for an alias to basename
+sub rank_subnet {
+    my ($net) = @_;
+    if (!defined $net)   { return 0; } # undefined has lowest priority
+    if ($net =~ "isopotential") { return 4;} # isopotential subnet rules
+    if ($net =~ s/G$//g) { return 3; } # gate has highest priority
+    if ($net =~ s/^F//g) { return 2; } # S/G/D is 2nd highest
+    if ($net =~ s/^M//g) { return 2; } # S/D is 2nd highest
+    return 1;                          # resistive subnet is 2nd lowest
+}
+
+# translate type name
+sub convert_type {
+    my ($type) = @_;
+    $type =~ s:##28:(:g;
+    $type =~ s:##29:):g;
+    $type =~ s:##2c:,:g;
+    return $type;
+}
+
+# convert node names back into CAST compatible syntax
+sub node_names {
+    my $suitable_for_basename = $_[0];
+    shift @_;
+    for my $old_node (@_) {
+        # we have reserved names of the form node:, die if there is conflict
+        if ($appendColon ne '' && $old_node =~ /$appendColon$/) {
+            die "$old_node ends with $appendColon";
+        }
+
+        # separate out base node name and subnet
+        my $node = $old_node;
+        my $subnet;
+        if ($node =~ /^([^:]+):(.*)/ ) { $node=$1; $subnet=$2; }
+
+        # process base node name
+        $node =~ s:\(:\[:g;            # replace ( with [
+        $node =~ s:\):\]:g;            # replace ) with ]
+        $node =~ s:\]\[:,:g;           # replace ][ with ,
+        $node =~ s|^(\d+)$|$1#|gi;     # replace num with num#
+        $node =~ s|(/\d+)$|$1#|gi;     # replace */num with */num#
+        $node =~ s:-H:#:g;             # replace -H with #
+        if($x_prefix==0){
+            $node =~ s:X([^/]*)/:$1.:gi;   # replace Xblah/ with blah.
+        }
+        elsif($x_prefix==1){
+            $node =~ s:([^/]*)/:$1.:gi;   # replace blah/ with blah.
+        }
+
+        # rename 0 to GND, for PMC stuff
+        if($zero_is_gnd==1){
+            if($node eq "0#"){$node = "GND"; }
+        }
+
+        # save node names and subnets
+        if (defined $subnet) {
+            $x = rank_subnet($subnets{$node});
+            $y = rank_subnet($subnet);
+            if ($y > $x) { $subnets{$node} = $subnet; }
+        } elsif (!defined $basename_defined{$node} || ($basename_defined{$node}==0)) {
+            # Simplex doesn't always use the port names
+            $basename_defined{$node} = $suitable_for_basename;
+            mark_used("\"$node$appendColon\"");
+        }
+
+        # quote
+        if ($subnet) { $old_node = "\"$node:$subnet\""; }
+        else { $old_node  = "\"$node$appendColon\""; }
+    }
+}
+
+# strip single quotes or convert unit suffixes to exponential notation
+sub fix_parms {
+    for $parm (@_) {
+	if (!($parm =~ s:\'([^\']*)\':$1:g)) { # replace 'blah' with blah
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)m$/$1e-3/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)u$/$1e-6/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)n$/$1e-9/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)p$/$1e-12/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)f$/$1e-15/;
+            $parm =~ s/\.$//g; # fix simplex's stupid trailing decimal point
+        }
+    }
+}
+
+# mark that a node is used by a non R/C device
+sub mark_used {
+    for $node (@_){
+        print SIMPLIFY_OUT "used $node\n";
+    }
+}
+
+# add a capacitor
+sub add_capacitor {
+    my ($a, $b, $c) = @_;
+    print SIMPLIFY_OUT "C $a $b $c\n";
+}
+
+# add a resistor or wire
+sub add_resistor {
+    my ($a, $b, $r, $name, $layer, $width) = @_;
+    if (defined($name) && defined($layer) && defined($width)) {
+        print SIMPLIFY_OUT "R $a $b $r $name $layer $width\n";
+    } else { print SIMPLIFY_OUT "R $a $b $r\n"; }
+}
+
+#
+# Store parameters of subcircuits
+#
+
+$line = <SPICE>;
+$. = 0;
+while ($line) {
+    $next_line = <SPICE>;
+    if (!($line =~ s/^\.SUBCKT\s+//i)) {
+        $line = $next_line;
+        next;
+    }
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <SPICE>;
+    }
+    $line =~ s/(\S+)\s+// or error_msg "SUBCKT lacks type";
+    my $type = convert_type($1);
+    !defined($subc_args{$type}) or error_msg "SUBCKT '$type' defined twice";
+    while ($line =~ s/(\S+)=(\S+)\s*//) {
+        push @{$subc_args{$type}}, "$1=$2";
+    }
+    $line = $next_line;
+}
+seek SPICE, 0, 0;
+
+%canonical = ();
+%unknown = ();
+%canonical_found = ();
+sub canonicalize {
+    my $fqcn = shift;
+    for my $node (@_) {
+        my $net;
+        my $subnet;
+        if ($node =~ /^([^:]+):(.*)/ ) { $net=$1; $subnet=$node; }
+        else { $net=$node; $subnet=$node; }
+        if (exists($canonical{$fqcn}->{$net})) {
+            my $canonical_name = $canonical{$fqcn}->{$net};
+            $canonical_found{$fqcn}->{$canonical_name} = 1;
+            if ($canonical_name ne $net) {
+                my $before = $node;
+                my $after = $canonical_name . ':' . $subnet;
+                $node = $after;
+                node_names(1, $before, $after);
+                add_resistor($before, $after, 0);
+            }
+        } else {
+            $unknown{$fqcn}->{$net} = 1 unless ($net =~ /#/);
+        }
+    }
+}
+
+# print discrepancies between SPICE and CAST namespaces
+# and missing or unknown transistor parameters
+sub print_unknown_or_missing {
+    my $error = 0;
+
+    # unrecognized layout names are merely warnings, because
+    # commercial extractors do all sorts of dumb things
+    for my $cell (sort keys %unknown) {
+        print STDERR "WARNING: Unrecognized analog nodes in $cell:\n";
+        for my $net (sort keys %{$unknown{$cell}}) {
+            print STDERR "\t$net\n";
+        }
+    }
+    # all canonical CAST nodes should exist in the output aspice file,
+    # or we can't do analog/digital cosim or alint.
+    for my $cell (sort keys %canonical) {
+        my @missing = ();
+        for my $net (sort keys %{$canonical{$cell}}) {
+            if (($canonical{$cell}->{$net} eq $net) &&
+                !exists($canonical_found{$cell}->{$net})) {
+                push @missing, $net;
+            }
+        }
+        if (@missing) {
+            print STDERR "WARNING: CAST nodes with no analog node in $cell:\n";
+            for my $net (@missing) {
+                print STDERR "\t$net\n";
+            }
+        }
+    }
+    # report missing transistor parameters
+    foreach my $parm (sort keys %missing_parameters) {
+        print STDERR "WARNING: Missing transistor parameter $parm\n";
+    }
+    # report unknown transistor parameters
+    foreach my $parm (sort keys %unknown_parameters) {
+        print STDERR "WARNING: Unknown transistor parameter $parm\n";
+    }
+    # report errors
+    if ($error) {
+        die "ERROR\n";
+    }
+}
+
+#
+# Read the files of aliases; setup a map from aliases to canonical nodes
+#
+foreach my $aliasFile (@aliasFiles) {
+    open(my $fh, "$aliasFile") or die "Cannot open $aliasFile: $!";
+    chomp(my $fqcn = <$fh>);
+    while (<$fh>) {
+        chomp;
+        my @names = split /=/;
+        foreach my $name (@names) {
+            $canonical{$fqcn}->{$name} = $names[0];
+        }
+    }
+    close($fh);
+}
+
+#
+# Do linewise translation of cdl to aspice
+#
+
+$line = <SPICE>;
+$. = 0;
+my $pid=0;
+
+while ($line) {
+    $next_line = <SPICE>;
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <SPICE>;
+    }
+    my $full = $line;
+    if ($line =~ s/^\.SUBCKT\s+//i) {
+
+        #
+        # Begin Subcircuit Definition
+        #
+
+        # spawn rc_simplify to hand RC reduction
+        $pid = open2(*SIMPLIFY_IN,*SIMPLIFY_OUT,
+                     "rc_simplify $verbose $minR $minC $minRC");
+
+        my @parameters = ();
+        my @nodes = ();
+        %basename_defined = ();
+        %subnets = ();
+
+        $line =~ s/(\S+)\s+//;
+        $type = convert_type($1);
+
+        while ($line =~ s/(\S+)\s*//) {
+            $arg = $1;
+            if ($arg =~ /(\S+)=(\S+)/) {
+                # Parameter and default.
+                # Default value saved in subc_arg will be used 
+                # if an instance fails to provide all parameters
+                push @parameters, $1;
+            } else {
+                # Node argument
+                push @nodes, $arg;
+            }
+        }
+        node_names(0,@nodes); # port nodes set $basename_defined{$node}=0
+        if (!($type eq $cellName )) {
+            print ASPICE "define \"$type\" (@nodes) (@parameters) {\n";
+        } else {
+            $cellFlattened=1;
+        }
+        mark_used(@nodes);
+        $cellType = $type;
+
+    } elsif ($line =~ s/^\.ENDS//i) {
+
+        #
+        # End Subcircuit Definition
+        #
+
+        # add additional aliases to ensure that basenames exist
+        foreach $name (sort keys %subnets) {
+            $subnet = $subnets{$name};
+            if (!defined $basename_defined{$name}) {
+                # Most extractors do not call internal nodes by their
+                # proper name.  They will all end with a subnet
+                # suffix.  Here we create an alias from the proper
+                # name to one of these subnets.
+                print ASPICE "wire (\"$name$appendColon\", \"$name:$subnet\") /* basename */\n";
+                mark_used("\"$name$appendColon\"", "\"$name:$subnet\""); # must keep
+            } elsif ($fixUnconnectedPorts && ($basename_defined{$name}==0)) {
+                # Unfortunately, Simplex sometimes doesn't even call a
+                # port node by its real name.  Here we try to fix the
+                # open circuit by creating an alias to one of the
+                # subnets.  This is NOT exactly the correct circuit,
+                # but it avoids an all-too-common bug.
+                print ASPICE "wire (\"$name$appendColon\", \"$name:$subnet\") /* WARNING: fixing open circuit in spice file */\n";
+                mark_used("\"$name$appendColon\"", "\"$name:$subnet\""); # must keep
+                print STDERR "WARNING: fixing open circuit in spice file between $name$appendColon and $name:$subnet.\n";
+            }
+        }
+
+        # pass on results of rc_simplify
+        close SIMPLIFY_OUT;
+        while (my $line = <SIMPLIFY_IN>) {
+            print ASPICE "$line";
+        }
+        close SIMPLIFY_IN;
+        # eliminate zombies
+        waitpid $pid, 0;
+        if (WIFEXITED($?)) {
+            my $status = WEXITSTATUS($?);
+            if ($status != 0) {
+                print STDERR "ERROR: rc_simplify exited with non-zero status: $status\n";
+                exit 1;
+            }
+        } else {
+            print STDERR "ERROR: rc_simplify exited due to signal: " .
+                         ($? & 127) . "\n";
+            exit 1;
+        }
+
+        # end circuit definition
+        if (!($cellType eq $cellName)) {
+            print ASPICE "}\n";
+        }
+
+    } elsif ($line =~ /^\.include\s+"(.*)"/i ) {
+
+        #
+        # include file -- assumes there will be an aspice file with same base name
+        #
+        
+        my $file = $1;
+        if    ($file =~ /(.*)\.spice_gds2/) { $file = $1; }
+        elsif ($file =~ /(.*)\.spice/)      { $file = $1; }
+        print ASPICE ".include \"${file}.aspice\";\n";
+        
+    } elsif ($line =~ s/^M//i) {
+
+        #
+        # MOSFET
+        #
+
+        my @parameters = ();
+        my %parameters = ();
+        my @nodes = ();
+
+        $line =~s/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)//
+            or error_msg "Missing arguments in mosfet: $full";
+        $name = $1;
+        $type = $6;
+        $drain = "$2";
+        $gate = "$3";
+        $source = "$4";
+        $bulk = "$5";
+
+        # create port list in aspice order: s,g,d,b
+        @nodes = ($source, $gate, $drain, $bulk);
+
+        # get mos parameters for this transistor type and extract mode
+        my @mos_parameters = get_mos_parameters($type);
+        my %known_parameters;
+        foreach my $p (@mos_parameters) { $known_parameters{$p} = 1 ; }
+
+        # create parameter list in aspice order
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            my $p = lc($1);
+            if (defined($known_parameters{$p})) {
+                $parameters{$p} = $2;
+            } else {
+                $unknown_parameters{$p} = 1;
+            }
+        }
+        for (my $i=0; $i<@mos_parameters; $i++) {
+            $pp = $parameters{$mos_parameters[$i]};
+            if (defined $pp) {
+                push @parameters, $pp;
+            } else {
+                $missing_parameters{$mos_parameters[$i]} = 1;
+                if ($mos_parameters[$i] eq "sc" and ! defined $parameters{"sca"}) {
+                    push @parameters, $default_sc;
+                }
+                else {
+                    push @parameters, -1;
+                }
+            }
+        }
+        canonicalize($cellType, @nodes);
+        node_names(1, @nodes);
+        mark_used(@nodes);
+        fix_parms(@parameters);
+        if ($scaleM != 1) {
+            $parameters[0] = "($parameters[0]) * $scaleM + $deltaW";
+            $parameters[1] = "($parameters[1]) * $scaleM + $deltaL";
+            $parameters[2] = "($parameters[2]) * $scaleM * $scaleM";
+            $parameters[3] = "($parameters[3]) * $scaleM";
+            $parameters[5] = "($parameters[5]) * $scaleM * $scaleM";
+            $parameters[6] = "($parameters[6]) * $scaleM";
+        }
+        print ASPICE "$type (@nodes)\n\t(@parameters)\n";
+
+    } elsif ($line =~ s/^X//i) {
+
+        #
+        # Call to Subcircuit
+        #
+
+        my %parms = ();
+        my @nodes = ();
+        $line =~ s/^(\S+)\s*// or error_msg "Call lacks instance name: $full";
+        $name = $1;
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            $parms{$1}=$2;
+        }
+        $line =~ s/(\S+)\s*$// or error_msg "Call lacks SUBCKT name: $full";
+        $type = convert_type($1);
+        @nodes = split /\s+/, $line;
+        my $slash = pop @nodes; # FIXME: find better way to remove last "/"
+        if ($slash ne "/") { # slash is optional before subcircuit name
+            push @nodes, $slash;
+        }
+        canonicalize($cellType, @nodes);
+        node_names(1, @nodes);
+        mark_used(@nodes);
+
+        # put parameters in correct order and fill in default values
+        my @parameters = ();
+        foreach my $parm (@{$subc_args{$type}}) {
+            $p = $parm;
+            $p =~ /(\S+)=(\S+)/;
+            $p = $1;
+            my $v = $2; # default value saved from SUBCKT definition
+            $v = $parms{$p} if (defined $parms{$p}); # new instance value
+            push @parameters, $v;
+        }
+        fix_parms(@parameters);
+
+        print ASPICE "\"$type\" \"$name\" (@nodes) (@parameters)\n";
+
+    } elsif ($line =~ s/^C//i) {
+	
+        #
+        # Capacitor
+        #
+
+        $line =~ s/^(\S*)\s*//;		# Capacitor name
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no positive terminal: $full";
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no negative terminal: $full";
+        $neg = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no capacitance specifier: $full";
+        $cap = $1;
+        my @parameters = ();
+        push @parameters, $cap;
+        fix_parms(@parameters);
+        $parameters[0] *= $scaleC;
+        canonicalize($cellType, $pos, $neg);
+        node_names(1, $pos, $neg);
+        add_capacitor($pos, $neg, $parameters[0]);
+
+    } elsif ($line =~ /^R/i) {
+
+        #
+        # Resistor
+        #
+
+        $line =~ s/\s+/ /g;
+        ($name, $term1, $term2, $para1, $para2, $para3, $para4)=split(' ', $line);
+        $term1 =~ /^\S+/
+            or error_msg "Resistor has no terminals: $full";
+        $term2 =~ /^\S+/
+            or error_msg "Resistor has only one terminal: $full";
+        if (is_numeric($para1)) {
+            $res=$para1; $layer=""; $length=""; $width="";
+        }
+        else {
+            $layer=$para1;
+            if (is_numeric($para2)) {
+                $res=$para2; $length=$para3; $width=$para4;
+            } else {
+                $length=$para2; $width=$para3; $res=$para4; $res =~ s/^.*MODEL=//i;
+            }
+            $width  =~ s/^W=//; $width  = int($width  * 1000 + 0.5); # convert to nm
+            $length =~ s/^A=//; # fix for supporting via area
+            $length =~ s/^L=//; $length = int($length * 1000 + 0.5); # convert to nm
+        }
+        is_numeric($res)
+            or error_msg "Resistor has no resistance specifier: $full";
+        my @parameters = ();
+        push @parameters, $res;
+        fix_parms(@parameters);
+        $parameters[0] *= $scaleR;
+        canonicalize($cellType, $term1, $term2);
+        node_names(1, $term1, $term2);
+
+        # check if this resistor is on an isopotential layer
+        my $iso = 0;
+        foreach my $isolayer (@isopotentialLayers) {
+            if ($layer eq $isolayer) { $iso=1; }
+        }
+        if ($iso!=0) {
+            # create isopotential subnets for both terminals
+            my $node;
+            $node = $term1;
+            $node =~ /^[\"]*([^:]+):(.*)[\"]*$/;
+            my $isonode1 = "${1}:isopotential";
+            $node = $term2; 
+            $node =~ /^[\"]*([^:]+):(.*)[\"]*$/;
+            my $isonode2 = "${1}:isopotential";
+            node_names(1,$isonode1,$isonode2);
+
+            # add wires to isopotential subnets instead of a resistor
+            add_resistor($term1,$isonode1,0);
+            add_resistor($term2,$isonode2,0);
+            print "wire($term1,$isonode1);\n";
+            print "wire($term2,$isonode2);\n";
+        }
+        elsif ($named_resistors || defined($named_resistor_layers{$layer})) {
+            if ($parameters[0]==0) { # a wire
+                add_resistor($term1,$term2,0);
+            } else { # a named resistor
+                add_resistor($term1,$term2,$parameters[0],$name,$layer,$width);
+            }
+        } else {
+            add_resistor($term1,$term2,$parameters[0]);
+        }
+
+    } elsif ($line =~ s/^V//i) {
+
+        #
+        # Voltage source (turning into wires)
+        #
+
+        $line =~ s/^(\S*)\s*//;		# source name
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has no terminals: $full";
+        $term1 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has only one terminal: $full";
+        $term2 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has no voltage specified: $full";
+        $volt = $1;
+        canonicalize($cellType, $term1, $term2);
+        node_names(1, $term1, $term2);
+        if ($volt == 0) {
+            add_resistor($term1, $term2, 0); # a wire
+        } else {
+            error_msg "Can't handle non-zero voltage sources: $full";
+        }
+    } elsif ($line =~ s/^D//i) {
+
+        if ($keepDiode) {
+            #
+            # Diode
+            #
+
+            $line =~ s/^(\S*)\s*//;		# Diode name
+            $line =~ s/M=(\S*)\s*//;	# Multiplier
+            $line =~ s/^(\S+)\s*//
+                or error_msg "Diode has no positive terminal: $full";
+            $pos = "$1";
+            $line =~ s/^(\S+)\s*//
+                or error_msg "Diode has no negative terminal: $full";
+            $neg = "$1";
+            $line =~ s/(\S+)\s*//
+                or error_msg "Diode has no model name: $full";
+            $mname = $1;
+            $mname =~ s/M//;
+            $mname =~ /[PN]/ or error_msg "Unknown diode model name: $full";
+            $line =~ s/(\S+)\s*//
+                or error_msg "Diode has no area specified: $full";
+            $area = $1;
+            $line =~ s/(\S+)\s*//
+                or error_msg "Diode has no perimeter specified: $full";
+            $perim = $1;
+            $width = ($perim + sqrt ($perim * $perim - 4 * $area)) / 2;
+            $length = $area / $width;
+            canonicalize($cellType, $pos, $neg);
+            node_names(1, $pos, $neg);
+            mark_used($pos, $neg);
+            my @parameters = ();
+            push @parameters, $width;
+            push @parameters, $length;
+            push @parameters, $area;
+            push @parameters, $perim;
+            fix_parms(@parameters);
+            $parameters[0] = "($parameters[0]) * $scaleM + $deltaW";
+            $parameters[1] = "($parameters[1]) * $scaleM + $deltaL";
+            $parameters[2] = "($parameters[2]) * $scaleM * $scaleM";
+            $parameters[3] = "($parameters[3]) * $scaleM";
+            print ASPICE (($mname eq "P")?"p_diode":"n_diode")
+                . " ($pos, $neg)"
+                . " (@parameters)\n";
+        }
+
+    } elsif ($line =~ s/^Q//i) {
+
+        if ($keepDiode) {
+            #
+            # Diode
+            #
+
+            $line =~ s/^(\S*)\s*//;	# Diode name
+            $line =~ s/M=(\S*)\s*//;	# Multiplier
+            $line =~ s/^(\S+)\s*//
+                or error_msg "BJT has no emitter terminal: $full";
+            my $e = "$1";
+            $line =~ s/^(\S+)\s*//
+                or error_msg "BJT has no base terminal: $full";
+            my $b = "$1";
+            $line =~ s/^(\S+)\s*//
+                or error_msg "BJT has no collector terminal: $full";
+            my $c = "$1";
+            $line =~ s/(\S+)\s*//
+                or error_msg "BJT has no model name: $full";
+            $mname = $1;
+            $mname =~ /^[PN]/i or error_msg "Unknown BJT model name: $full";
+            $line =~ s/(\S+)\s*//
+                or error_msg "BJT has no area specified: $full";
+            $area = $1;
+            canonicalize($cellType, $e, $b, $c);
+            node_names(1, $e, $b, $c);
+            mark_used($e, $b, $c);
+            my @parameters = ();
+            push @parameters, $area;
+            fix_parms(@parameters);
+            $parameters[0] = "($parameters[0]) * $scaleM * $scaleM";
+            print ASPICE (($mname =~ /^P/i)?"pnp":"npn")
+                . " ($e, $b, $c)"
+                . " (@parameters)\n";
+        }
+
+    } elsif ($line =~ m/^\*/) {
+        # comment line, do nothing
+    } elsif ($line eq "\n") {
+        # empty line, do nothing
+    } elsif ($line =~ s/^\s+\n//i ) {
+        # empty line with space, do nothing
+    } elsif ($line eq ".PARAM\n") {
+        # param line, do nothing
+    } elsif ($line =~ s/^\.GLOBAL\s+//i) {
+        # global line, do nothing
+    } else {
+        # unknown line, error
+        error_msg "Unknown line type: $line";
+    }
+    $line = $next_line;
+}
+
+# abort if selected cellName doesn't exit in spice file
+if ((!($cellName eq "")) && ($cellFlattened != 1)) {
+    error_msg("cell $cellName not defined");
+}
+
+print_unknown_or_missing();

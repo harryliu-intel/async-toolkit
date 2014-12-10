@@ -1,0 +1,239 @@
+CGraph	Proteus core program
+Tapeout	Development tapeout utility
+aaggds	interactive gds manipulation and display
+add_clocks	Proteus tool
+analyze_coupling	creates aggressors.report, a list of aggressors in cell
+aplot	aspice graphical plotting tool
+aspice	spice like simulator exclusive to Fulcrum
+bali2Qualcore	Obsolete: used for Tahoe
+cadalyze	analyzes cast cells?
+canonicalizing_spice2aspice	Internal lve tool for converting spice to aspice format, see also spice2aspice
+captally	calculate total node capacitance from extracted spice files
+cast2cdl	convert cast/spec cell descriptions to lvs cdl format
+cast2def	generate def for running nano route on async cells
+cast2skill	generate skill from cast for numerous Cadence layout purposes
+cast2verilog	generate verilog for NCSIM simulation from cast
+cast_file_server	was to access cast without restarting java numerous times
+cast_query	robust tool to extract miscellaneous cast information per cell, some redundancy with jflat
+cast_signoff_report	
+caststat	
+cdl2cast	
+cdl2dot	
+cdl4Qualcore	Obsolete: used for Tahoe
+cdl_renamer	
+cdlaliases	
+cdlsize265	Obsolete: used to do 65nm trials
+cdlstat	
+cdsp4	replacement for p4 for Cadence layout operations
+cdsp4add	replacement for p4 for Cadence layout operations
+cdsp4addlibs	replacement for p4 for Cadence layout operations
+cdsp4celllog	replacement for p4 for Cadence layout operations
+cdsp4delete	replacement for p4 for Cadence layout operations
+cdsp4edit	replacement for p4 for Cadence layout operations
+cdsp4opened	replacement for p4 for Cadence layout operations
+cdsp4revert	replacement for p4 for Cadence layout operations
+cdsp4smartedit	replacement for p4 for Cadence layout operations
+cdsp4submit	replacement for p4 for Cadence layout operations
+cdsp4sync	replacement for p4 for Cadence layout operations
+cell_lef	
+cells2html	used in ubersize, probably obsolete
+characterize	
+check_dummy_pin	
+checklic	way to check a license and wait for it
+chkdupdef	Finds duplicate names in a def file
+chkdupname	Finds potential name conflicts in a verilog file
+chkpins4Qualcore	Obsolete: used for Tahoe
+client	
+cmpdef	basic compare of def files
+code-check	part of the tb series of tools
+code-clean	part of the tb series of tools
+compactcell	
+compactcells	
+compile_cdc	compile cdc spec into new cdc
+compile_lib	Convert .lib to .db
+compilemem	front end for the ARM memory compilers to generate cast/spec/dfII
+createAbstract	
+createAbstractCellLog	
+createFlattenView	
+csp2tt	CSP to Truth Table
+dangling	checks for dangling nodes for generating gds compatible with extraction
+debug_trace	aspice debugging tool?
+def4Qualcore	Obsolete: used for Tahoe
+defNets	
+def_rename	
+density	
+df2d	
+dfII_split_subtypes	
+dfIIflat2tree	
+dfIIhier	Find layoout hierarchy
+dwg	simple drawing tool
+exportDesignDef	
+exportDesignLef	
+extract	Obsolete: see extract_starRC
+extract_graybox	Obsolete: see extract_starRC
+extract_qx	Obsolete: see extract_starRC
+extract_rcx	Obsolete: see extract_starRC
+extract_starRC	extract component of lve
+extract_starRC65	Obsolete: see extract_starRC
+fakelib	
+find_bumps	
+find_envs	
+find_layout	
+findclosestwithlayout	
+fix_pinswap	
+fixhdrc	rename gds2 structures to be compatible with hercules
+fixnames	part of importSync to get the names right within the verilog
+flatcdl	simple and not terribly robust cdl/spice flattening tool
+floorplan_init	
+fsdb2aplot	convert hsim fsdb format to aplot trace format
+gds24Qualcore	Obsolete: used for Tahoe
+gds2cdl	using Assura, extract a cdl from a gds2 file
+gds2plot	Andrew's pretty gds2 plotting program
+gdsIIWrite	generic dfII to gds2 writer compatible with Fulcrum flow
+gdsxor	uses Assura to xor two gds2 files
+genIP	
+genTracks	
+gen_abstract_views	
+gen_autoload	
+gen_branch_spec	
+gen_bus_scripts	
+gen_instantiator_views	
+gen_leaf_cells	
+gen_mid_cells	
+gen_sram_scan_wrap	makes a wrapper for SRAM/REGFILEs
+generate_charge_sharing_tests	
+generate_gdsII_data	
+generate_ip_data	
+generate_plt_subtypes	
+generate_port_mapping	maps verilog ports and cast ports
+generate_wrapper	
+genlib	to characterize cdc leaf cells
+genliberty	Obsolete: see genlib
+genprocesslibs	
+gifdwg	see also dwg, simple graphic language to gif
+graph_netlist	
+hlvs	Do hercules lvs
+hsim	this is a wrapper for the synopsys hsim simulator within lve
+html2pdf	convert html to pdf for spec writing
+image2cast	Proteus tool
+importGDS	part of importSync
+importPR	works for importing standard cell libraries
+importQ	Obsolete: used for Tahoe
+importSR	convert ARM SRAM/REGFILE compiler output to cast, spec and dfII
+importSync	import synchronous blocks postlayout
+importV	part of importSync to import verilog
+import_cast	Proteus tool
+import_dfII	Proteus tool
+importccar	
+initFloorplan	
+initNanoroute	
+inliner	
+isgds	test for a binary file being a gds2 file
+jauto	tool to size async circuits
+jdsim	tool to simulate cast either prs or csp level
+jflat	misc cast extraction and checking, some redundancy with cast_query
+jlvs	compares prs to transistor netlist in cast
+jtimer	asynchrounous timing analyzer based on jauto code
+leafspec	allows testing of a leaf cell in a ficticious environment
+lef4Qualcore	Obsolete: used for Tahoe
+lefWrite	
+lef_rename	
+lefdefWrite	
+listMissingAbstracts	
+listlayers	lists all layers (and datatypes) used in a gds2 file
+lmusage	robust listing of all licenses at fulcrum
+lmwait	a way to wait for a license to be free
+local_aspice	lve internal wrapper for aspice
+lve	top level call for the whole lve process
+lve_em	old way to to electro-migration. Still needed as a pre-processor
+lve_pmc	Obsolete from Nevada project
+lve_query	
+lve_raw	generates raw files within lve
+lve_resummarize	generates summaries within lve or on lve hierarchy
+lve_sram	
+lve_summarize	generates summaries within lve or on lve hierarchy
+lve_tracking	
+make_alint_in	generate the alint.in file(s) within lve
+make_aspice_in	generate the aspice.in file(s) within lve
+make_gates	Proteus tool
+merge_alint_out	combine the split alint.out files
+merge_hint	
+mk_instance	
+mk_instance_multi	
+mkbind	
+mkcdslib	
+mkcdswd	creates local files and directories for running virtuoso
+mksigs	extracts signal list from cdl or extracted spice
+mmonitor	memory monitor for qsub jobs
+mosaicify	
+netlistDistance	
+nograph	runs arbitrary command with a new vnc server
+pathalyze	analyze cast paths for delay and slew rate
+plotdensity	plot density of any gds2 file
+plt_scenarios	
+pmc_jobcancel	Obsolete from Nevada project
+pmc_jobsubmit	Obsolete from Nevada project
+presto	convert csp to prs
+proteus	Proteus tool
+proteus_characterize	
+prs2verilog	translate prs cast to verilog for NCSIM
+q4	Obsolete: use p4
+qb	wrapper for qsub used in various tools, mostly lve
+rc_simplify	lve internal tool to reduce size of a generated aspice file
+rc_spice2aspice	lve internal tool to convert spice to aspice, see also canonicalizing_spice2aspice
+rdgds	convert gds2 to a text form
+registers	part of the tb series of tools
+rehierverilog	internal tool to importSync to reduce the number of independent verilog modules
+release2Qualcore	Obsolete: used for Tahoe
+rename	allows conversion among Cadence, Cast, and Gds2 names
+reorder_trace	optimize the aplot trace files
+resourcesCli	part of the tb series of tools
+rte	regression test environment for asynchronous cells
+rtlwait	allows waiting for an RTL compiler license
+runccar	
+runincdswd	
+scalegds	Obsolete from Nevada project
+sdk-release	part of the tb series of tools
+server	part of the cast server
+signoff	
+signoff_check	
+size265	Obsolete: used to do 65nm trials
+slacker	analyzes and fixes slack issues in asynchronous design
+solve	the cgsolve executable used in jauto
+spefrename	names the spef names from gds2 to cadence
+spice_reduce	internal lve tool during extract modifies spice file for compatibility
+splitcast	part of importSync, converts a combined cast file into separate cast(spec) files
+splitfill	part of importSync, splits large top cells of a gds2 file into two structures to reduce the size of the individual structures
+stripgds	removes all but specified layers from the gds2 file
+stub-gen	part of the tb series of tools
+subtype_merge	
+subtype_query	
+subtype_split	
+summarize	Proteus tool
+supersize	new sizing design tool, replaces ubersize
+synthesis	generate logic library
+tapeout	new tool under development for automating the tape out process
+tb-bali	part of the tb series of tools
+tb-dev	part of the tb series of tools
+tb-fiji	part of the tb series of tools
+tb-tahoe	part of the tb series of tools
+tcam_aplot	
+tcam_cap	
+tcam_lib	
+tcam_todo	
+test_model	
+tracescan	Trace synchronous scan chain in Avago 65nm
+ubersize	Obsolete: see supersize
+update_delay_and_cap	
+updatenetlabels	
+updatenetlist	synchronize the dfII data to the cast
+updatepins	
+v2cast	Proteus tool
+verilog2cdl	internal tool to importPR
+vigds	allows edit of a gds2 file
+vs2calibre	Obsolete conversion of verilog to calibre format netlist
+vs2cast	convert verilog postlayout to a cdl file for import
+vstorm	Run voltage storm on Synchronous block
+wirelen	Find scenic routing
+wrgds	write a gds2 file using the format generated by rdgds
+xdwg	see also dwg. Simple X11 drawing program

@@ -1,0 +1,31 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use rename;
+
+@ARGV==1 or die "usage rename_aplot file.names\n";
+my $file = $ARGV[0];
+open IN, "<$file" or die "can't read $file\n";
+my @lines = ();
+while (my $line = <IN>) {
+    if ($line =~ /^v\((.*)\)/) {
+        my $x = from_spice($1);
+        push @lines, $x;
+    } else {
+        chomp($line);
+        push @lines, $line;
+    }
+}
+close IN;
+
+open OUT, ">$file" or die "can't write $file\n";
+foreach my $line (@lines) {
+    print OUT "$line\n";
+}
+close OUT;

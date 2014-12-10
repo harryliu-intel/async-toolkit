@@ -1,0 +1,118 @@
+****************
+Fill Overview
+****************
+
+See <module filler> and <assura fillercells>/<assura fillershapes>/<assura fillergrid>.
+
+There are 3 types of fill. 
+All of them place fill only in areas marked with ( "y9" "drawing" ), which we call the 
+fill boundary.
+
+In the order they are typically run.
+* Fill grid
+  This is placed everywhere where there is non-power-grid metal.
+  Powergrid is on M3-M7.  M3-M5 have a 4.8x9.6 pitch.  M6-M8 have a 9.6x9.6 pitch.
+  Powergrid is signaled by the existence of yN layers 
+  (e.g ("y3" "drawing" ) means that there is M3 powergrid here.  
+  Care must be taken not to draw these layers anywhere but the STANDARD powergrid!
+  There was a case where a M7_wide powergrid cell had y7 drawing where it shouldn't
+  and this caused shorts.
+  
+  The cells are placed per metal layer.
+  (e.g. globals.fill.M3 is the fill for metal 3)
+  We also place via cells between layers, that avoids non-power grid metal on 
+  the 2 layers it connects.  
+  (e.g. globals.fill.VIA34 has vias that connects the M3 to M4 powergrid.
+  The via cells also have redundant metal in them so we dont have any floating vias.
+
+  Each fill cell is the same size as its metal's powergrid pitch.
+  (e.g. globals.fill.M3 is 4.8x9.6)
+
+  
+  The cells are placed with assura using generateRectangle() which just tiles them all in
+  the fill boundary, and then gets rid of rectangles that are within 1.2u of non-powergrid
+  shapes.  Assura returns with a bunch of rectangles which are postprocessed into fillergrid cells.
+  
+  There is another post-processing stage called mosaicification, which converts these instances
+  into mosaics.  To run this, Do the following:
+  * From layout: ( dbWriteSkill cellview "file1" "w" "5.0" )
+  * Run fulcrum mosaicify file1 file2
+  * From layout, open an empty cellview where you want the mosaics, nad ( load "file2" )
+    If you have multiple cellviews and you want to merge all their mosaics, just cat
+    together the results of dbWriteSkill. 
+
+* Fill cells
+  This is placed 0.6u away from existing metal.  It just uses the standard assura
+  generateFill().  The fill is non-optimal but is space-efficient because it consists
+  of mosaics. 
+
+
+* Fill shapes 
+  This is placed 0.6u away from existing metal.  It is more optimal than filler cells
+  but it consists of flat shapes.  Care is taken to avoid spacing <=0.4, area<=1.44, 
+  width<=0.6, and vertices>4.  Particularly useful for place and route cells.
+  
+
+
+****************
+How to run fill
+****************
+
+Currently, the interface is through the CIW in cadence.  For chip level stuff you'll 
+probably want to start cadence with
+CDS_AUTO_64BIT=ALL /usr/local/cadence/scripts/cadence.latest.run layout
+
+
+Just run ( Fill cellview ?Type type ?Layers layers )
+
+cellview is a cellview dbId
+type is one of ("grid" "cells" "shapes")
+layers is t or nil and it means the following for the different types
+
+grid/nil   : od through m2
+grid/t     : via23 through m7, dont export gates/stacks
+
+cells/nil  : od through m1
+cells/t    : m2 through m7, don't export gates/stacks
+
+shapes/t   : m2 though m3, don't export gates/stacks
+shapes/nil : m4 through m7, don't export gates/stacks
+
+First the CIW will tell you the name of the library to look for the result...
+something like FILL_grid0
+The library will be in your cds.config TEMP directory, and the assura logs
+will be in some AssuraRuXXXXX directory inside your TEMP directory.
+
+
+Then it will probably complain about some libraries or something(don't worry),
+and then it will say:
+
+"running assura"
+
+Then it will run for a while (3-4 hours or so for the chip, depending on the type of run)
+and come back with:
+
+"done with assura"
+
+And you're good to go.
+
+
+
+************************
+Current risk assessment
+************************
+
+* I have LVS'd the chip with fillergrid and it passed.
+
+* The filler cells are low risk, and we checked that they didn't short any metal shapes. 
+  I checked to see if GND/Vdd were shorted with these cells added using GNDVddShortCheck.rul
+  (in the pdk/drc directory), and they did not.  I only went down to M2, though.
+
+* The filler shapes are relatively high risk still.  They were shorting nets in a truly
+  mysterious way.  I made some changes and ran the fill again and indeed removed problems of 
+  that type, but I've learned to make no guarantees.
+  I checked to see if GND/Vdd were shorted with m2m3 shapes
+  (these were the layers that the short was on) using GNDVddShortCheck.rul, and they did not.
+  I only went down to M2, though.
+
+

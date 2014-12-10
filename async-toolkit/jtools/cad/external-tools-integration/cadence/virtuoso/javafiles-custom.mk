@@ -1,0 +1,23 @@
+# Copyright 2003 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+VIRTUOSO_CURR_TARGET_DIR_TEMP := $(CURR_TARGET_DIR)
+VIRTUOSO_CURR_PROJECT_DIR_TEMP := $(CURR_PROJECT_DIR)
+
+CURR_TARGET_DIR := $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../../../java/src)
+CURR_PROJECT_DIR := $(call CONONICALIZE_PATH, $(CURR_PROJECT_DIR)/../../../java/src)
+
+include $(VIRTUOSO_CURR_PROJECT_DIR_TEMP)/../../../java/src/javafiles-custom.mk
+
+CURR_TARGET_DIR := $(VIRTUOSO_CURR_TARGET_DIR_TEMP)
+CURR_PROJECT_DIR := $(VIRTUOSO_CURR_PROJECT_DIR_TEMP)
+
+JAVAFILES_CLASSES_SRC_ROOT := $(call CONONICALIZE_PATH, $(CURR_PROJECT_DIR)/../../../java/src)
+JAVAFILES_CLASSES_JAR_ROOT := $(call CONONICALIZE_PATH, $(CURR_PROJECT_DIR)/../../../java/jars)
+JAVAFILES_CLASSES_CACHE_ROOT := $(CURR_TARGET_DIR)/classcache
+JAVAFILES_JAVADOC_SOURCE_PATH := $(call CONONICALIZE_PATH,$(CURR_PROJECT_DIR)/../../../java/src)
+
+JAVAFILES_PARSERS_USED := $(JAVAFILES_PARSERS_USED) \
+                          $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../../../java/src/com/avlsi/tools/jauto/CastQueryParser)

@@ -1,0 +1,10 @@
+Hello, $brokenuserfirstname$
+  You submitted change list #$brokenchangenum$.  Change list #$brokenchangenum$
+broke the $buildname$ build.  Log files detailing the errors encountered
+during the build can be extracted from "$brokenlogarchive$".  Please fix
+these errors as soon as possible.  You will be notified everytime someone
+submits code that is compiled by the $buildname$ build until the $buildname$ build
+is built successfully.
+
+Sincerely,
+  The Build User

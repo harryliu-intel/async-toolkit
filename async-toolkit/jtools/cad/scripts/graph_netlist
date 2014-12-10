@@ -1,0 +1,226 @@
+#!/usr/intel/bin/perl -w
+# AAG
+# $Id$
+# $DateTime$
+# $Author$
+
+
+use strict;
+
+# strip all cadence related libs!
+my @libs=();
+@libs=split(/:/,$ENV{LD_LIBRARY_PATH}) if defined $ENV{LD_LIBRARY_PATH};
+$ENV{LD_LIBRARY_PATH}="";
+my @newlib;
+foreach my $lib (@libs) {
+    push (@newlib,$lib) if (! ($lib =~ /cadence/));
+}
+{
+    local $" = ":";
+    $ENV{LD_LIBRARY_PATH}="@newlib";
+}
+undef @libs;
+undef @newlib;
+my $cast2cdl = "cast2cdl";
+my $inliner  = "inliner";
+my $cdl2dot  = "cdl2dot";
+my $dot      = "/usr/intel/bin/dot";
+
+my $inline_gates = 0;
+my $inline_staticizers = 0;
+my $no_cleanup = 0;
+my $format = "ps";
+
+my $usage_string = "Usage: graph_netlist \n" .
+"    [--config=<file>]              Standard config file option\n" .
+"    [--cast-path=<path>]           Standard cast path, including sized subtypes\n" .
+"    [--include-gates]              Include gates in the circuit graph\n" .
+"    [--include-all]                Include everything in the circuit graph\n" .
+"    [--no-cleanup]                 Leave temporary files in /scratch\n" .
+"    [--format=<format>]            Output format (ps, gif, etc.)\n" .
+"    fully.qualified.cell.NUM       Cell to graph\n\n" .
+"Outputs a graph of the cell's transistor netlist to \n" .
+"fully.qualified.cell.NUM.ps (extension subject to change if the --format\n" .
+"option is specified.)  The specified cell must be a leaf cell with a\n" .
+"netlist block.  By default, gates and staticizers are not included in\n" .
+"the graph.\n";
+
+my $cast_path;
+my $cell;
+my $config;
+my $gsize = "8,10.5";
+my $grotate = "90";
+
+while ($ARGV[0]) {
+    if ($ARGV[0] =~ /^--(.*)/) {
+        my ($option,$val) = split(/=/,$1);
+        if ($option eq "config") {
+            $config = $val;
+        }
+        elsif ($option eq "cast-path") {
+            $cast_path = $val;
+        }
+        elsif ($option eq "include-gates") {
+            $inline_gates = 1;
+        }
+        elsif ($option eq "include-all") {
+            $inline_gates = 1;
+            $inline_staticizers = 1;
+        }
+        elsif ($option eq "no-cleanup") {
+            $no_cleanup = 1;
+        }
+        elsif ($option eq "format") {
+            $format = $val;
+        }
+        elsif ($option eq "size") {
+            $gsize = $val;
+        }
+        elsif ($option eq "rotate") {
+            $grotate = $val;
+        }
+        else {
+            print STDERR $usage_string;
+            exit;
+        }
+    }
+    else {
+        $cell = $ARGV[0];
+    }
+    shift;
+}
+die $usage_string if (!defined($cell));
+
+my $tempDir=`mktemp -d /tmp/graph_netlist.XXXXXX` ; chomp $tempDir;
+
+#
+# Generate temporary cdl file
+#
+my $cmd = "$cast2cdl ";
+$cmd .= "--config=$config " if ( ! $config eq "" );
+$cmd .= "--cast-path=\"$cast_path\" " if (! $cast_path eq "" );
+$cmd .= "--output=\"$tempDir/all.cdl\" ";
+$cmd .= "--cell=\"$cell\" ";
+system($cmd) && die "ERROR: Couldn't run cast2cdl.\n";
+
+#
+# Separate the CDL file into stacks and
+# the cell definition
+#
+open (ALLCDL, "<$tempDir/all.cdl");
+open (STACKS, ">$tempDir/stacks.cdl");
+open (CDL,   ">$tempDir/withgates.cdl");
+my $in_cell_definition = 0;
+my $in_stack_definition = 0;
+my $in_staticizer_definition = 0;
+print "CDL cell name: " . cast2cdl_rename_cellname($cell) . "\n";
+while (<ALLCDL>) {
+    if (/^.SUBCKT\s*$/) {
+        my $cont = <ALLCDL>;
+        if ($cont =~ /^\+(.*)/) {
+            chomp;
+            $_ .= ' ' . $1 . "\n";
+        } else {
+            die "Malformed CDL (unnamed SUBCKT) near line $.";
+        }
+    }
+    if (/^.SUBCKT ([^\s]+)/ && $1 eq cast2cdl_rename_cellname($cell)) {
+        $in_cell_definition = 1;
+    }
+    elsif (/^.SUBCKT ([^\s]+)/ && $1 =~ /^stack\./) {
+        $in_stack_definition = 1;
+    }
+    elsif (/^.SUBCKT ([^\s]+)/ && $1 =~ /^gate\.STATICIZER/) {
+        $in_staticizer_definition = 1;
+    }
+    if ($in_cell_definition) {
+        s/-H/\#/g;
+        print CDL;
+    }
+    elsif ($in_stack_definition) {
+        print STACKS;
+    }
+    elsif ($in_staticizer_definition) {
+        print STACKS if ($inline_staticizers);
+    }
+    elsif ($inline_gates) {
+        print STACKS;
+    }
+    if (/^.ENDS/) {
+        $in_cell_definition = 0;
+        $in_stack_definition = 0;
+        $in_staticizer_definition = 0;
+    }
+}
+close ALLCDL;
+close STACKS;
+close CDL;
+
+
+
+
+
+
+#
+# Flatten the cell definition
+#
+$cmd = "$inliner --cdl='$tempDir/withgates.cdl' --library=$tempDir/stacks.cdl ".
+       "> '$tempDir/cell.cdl'";
+system($cmd) && die "ERROR: CDL Inliner failed.\n";
+
+#
+# Run cdl2dot
+#
+if ( $format eq "ps" ) { 
+    $cmd = $cdl2dot . " -o $tempDir/%i.dot '$tempDir/cell.cdl'";
+}
+else {
+    $cmd = $cdl2dot . " '$tempDir/cell.cdl' >$tempDir/0.dot";
+}
+
+system($cmd) && warn "(WARNING): cdl2dot failed.\n";
+
+opendir( TEMPDIR, "$tempDir" );
+my @dotFiles = grep { /\.dot$/ } readdir TEMPDIR;
+closedir TEMPDIR;
+
+foreach my $dotFile ( @dotFiles ) {
+  #
+  # Convert to postscript
+  #
+  $cmd = "$dot -T$format -Grotate=$grotate -Gsize=$gsize -o \"$tempDir/$dotFile.$format\" " .
+         "\"$tempDir/$dotFile\"";
+  system($cmd) && die "ERROR: dot failed.\n";
+}
+
+if ( $format eq "ps" ) {
+    opendir( TEMPDIR, "$tempDir" );
+    my @psFiles = grep { /\.ps$/ } readdir TEMPDIR;
+    closedir TEMPDIR;
+
+    $cmd = "gs -dNOPAUSE -sDEVICE=pswrite \"-sOutputFile=$cell.ps\" -dBATCH";
+
+    foreach my $psFile ( @psFiles ) {
+        $cmd = $cmd . " $tempDir/$psFile";
+    }
+    system($cmd) && die "ERROR: \"$cmd\" failed.\n";
+}
+else {
+    `cp "$tempDir/0.dot.$format" "$cell.$format"`;
+}
+
+#
+# Clean up
+#
+if (! $no_cleanup) {
+    `rm -rf $tempDir`;
+}
+
+sub cast2cdl_rename_cellname {
+    my ($cast_name) = @_;
+    $cast_name =~ s/[\(\{]/-L/g;
+    $cast_name =~ s/[\)\}]/-R/g;
+    $cast_name =~ s/,/_/g;
+    return $cast_name;
+}
+

@@ -1,0 +1,10 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+include ../../csp/csp2java/runtime/cspruntime.package.inc ../../csp/csp2java/runtime
+java com.avlsi.tools.presto.PReSto
+$arch/bin/presto.sh              presto.sh 775
+$arch/bin/csp2tt.sh              csp2tt.sh 775

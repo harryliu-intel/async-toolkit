@@ -1,0 +1,3 @@
+#!/bin/zsh
+p4 files 'src/...#have' 'Makefile#have' 'scripts/...#have' \
+	'build/...#have' 'custom.mk#have' | awk '{ print $1 }'

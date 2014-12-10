@@ -1,0 +1,191 @@
+#!/usr/intel/bin/perl
+# AAG
+# $Id$
+# $DateTime$
+#s2aplt v1.2 Steven Lipa, North Carolina State Univ. 2/1/96
+#     Usage:   s2aplt filename
+#     where filename is an IBIS v2.1 or lower model file
+#You need perl to run this program.  perl is available *free*
+#from several archive sites, such as
+#               http://www1.cis.ufl.edu/perl/
+#You need gnuplot to use this program.  gnuplot is available
+# *free* from Dartmouth.  Information is available at
+#       http://www.cs.dartmouth.edu/gnuplot_info.html
+#
+
+eval "exec /usr/intel/bin/perl -S $0 $*"
+    if $running_under_some_shell;
+
+eval '$'.$1.'$2;' while $ARGV[0] =~ /^([A-Za-z_]+=)(.*)/ && shift;
+
+if (length($ARGV[0])==0) {print "Usage: s2aplt filename\n"; exit;}
+$, = ' ';		
+$\ = "\n";
+open(vx,"@ARGV");
+$_=<vx>;
+%mult = ("m",1.0E-3,"k",1.0E+3,"n",1.0E-9,
+         "u",1.0E-6,"p",1.0E-12,"f",1.0E-15,
+         "T",1.0E+12,"G",1.0E+09,"M",1.0E+6,
+         "V",1.0,"A",1.0);
+$us2 = "using 1:2";
+
+until (/^\[Model\]/i) 
+   {
+    $_ = <vx>;
+    if (!$_) {die "No [Model]s found";}
+   }
+until (!$_)
+   {
+    ($dummy, $modname) = split(' ', $_, 3);
+    until ((/^\[pulldown\]/i) || 
+           (/^\[pullup\]/i) ||
+           (/^\[gnd.clamp\]/i) ||
+           (/^\[falling.waveform\]/i) ||
+           (/^\[rising.waveform\]/i) || 
+           (/^\[power.clamp\]/i))
+       {
+        $_ = <vx>;
+        if (/^\[Model\]/i) { ($dummy, $modname) = split(' ', $_, 3); }
+        if (! $_) {unlink("s2idata1","s2idata2","s2idata3","s2istart"); exit;}
+       }
+    until (/^\[Model\]/i)
+       {
+        if (! $_) {unlink("s2idata1","s2idata2","s2idata3","s2istart"); exit;}
+        ($tabname, $dummy) = split(']',$_,2);
+        $tabname .= "]";
+        $temp1 = "N/A";
+        $temp2 = "N/A";
+        until (($temp1 =~ /\d/) && ($temp2 =~ /\d/))
+           {
+            $_ = <vx>;
+            if (! $_) {die "Empty table $tabname found";}
+            ($temp1, $temp2, $temp3, $temp4) = split(' ',$_, 4);
+           }
+        unlink("s2istart");
+        unlink("s2idata1","s2idata2","s2idata3");
+        open(s2s,">s2istart");
+        open(s2d1,">s2idata1");
+        open(s2d2,">s2idata2");
+        open(s2d3,">s2idata3");
+        $ab2good = 1;
+        $ab3  = 0;
+        $ab3good = 1;
+        $ab4  = 0;
+        $ab4good = 1;
+        while ($_ !~ /^\[/)
+           {
+            ($temp1, $temp2, $temp3, $temp4) = split(' ',$_, 4);
+            if ($temp1 =~ /\d/) 
+               {
+                #then this is data so add it to the current plot file
+                ($temp1, $temp2, $temp3, $temp4) =  &scale($temp1, $temp2, $temp3, $temp4);
+                if ($temp2 =~ /\d/) {
+                                     if (!$ab2good) {printf s2d1 "\n";}
+                                     printf s2d1 "%g %g\n", $temp1, $temp2;
+                                     $ab2good = 1;
+                                    }
+                else {
+                      $ab2good = 0;
+                     }
+                if ($temp3 =~ /\d/) { 
+                                     if (!$ab3good) {printf s2d2 "\n";}
+                                     printf s2d2 "%g %g\n", $temp1, $temp3;
+                                     $ab3 = 1;
+                                     $ab3good = 1;
+                                    }
+                else {
+                      $ab3good = 0;
+                     }
+                if ($temp4 =~ /\d/) { 
+                                    if (!$ab4good) {printf s2d3 "\n";}
+                                     printf s2d3 "%g %g\n", $temp1, $temp4;
+                                     $ab4 = 1;
+                                     $ab4good = 1;
+                                    }
+                else {
+                      $ab4good = 0;
+                     }
+               }
+            $_ = <vx>;
+            if (($_ =~ /^\[/i) || (!$_))
+                 { 
+                  if ($tabname =~ /form/) { printf s2s "set xlabel \"$modname $tabname (nanoseconds)\"\n"; }
+                  else
+                     { printf s2s "set xlabel \"$modname $tabname\"\n"; }
+                  printf s2s "set terminal postscript\n";
+                  printf s2s "set title \"s2iplt v1.2 North Carolina State University\"\n";
+                  printf s2s "set grid nopolar\n";
+                  printf s2s "set grid xtics ytics noztics nox2tics noy2tics nomxtics nomytics nomztics nomx2tics nomy2tics lt 0 lw 1.000, lt 0 lw 1.000\n";
+                  if ($ab3 && $ab4)
+                     {
+                      printf s2s "plot \"s2idata1\" $us2 title 'typ'  w l 1, \"s2idata2\" $us2 title 'min' w l 2, \"s2idata3\" $us2 title 'max' w l 3\n";
+                     }
+                  elsif ($ab3 && !$ab4)
+                         {
+                          printf s2s "plot 's2idata1' $us2 title 'typ'  w l 1, 's2idata2' $us2 title 'min' w l 2\n";
+                         }
+                      elsif ($ab4 && !$ab3)
+                            {
+                             printf s2s "plot 's2idata1' $us2 title 'typ'  w l 1, 's2idata2' $us2 title 'max' w l 2\n";
+                            }
+                          else
+                            {
+                             printf s2s "plot 's2idata1' $us2 title 'typ'  w l 1\n";
+                            }
+#                  printf s2s "pause -1 \"After plot pops up, just press return to continue.\" \n";
+                  close(s2s);
+                  close(s2d1);
+                  close(s2d2);
+                  close(s2d3);
+#		  system ("aplot s2istart | dwg -Pprinter13");
+		  $name=$tabname;
+		  $name =~ s/_.*//;
+		  $name =~ s/ .*//;
+		  $name =~ s/[\[\]]//g;
+		  $name = "$modname.$name";
+                  system ("gnuplot s2istart > $name.ps");
+#		  system ("aplot s2istart | dwg -o $name.ps");
+                 }
+            if (!$_) {unlink("s2idata1","s2idata2","s2idata3","s2istart"); exit; }
+           }
+        until ((/^\[Model\]/i) ||
+               (/^\[pulldown\]/i) ||
+               (/^\[pullup\]/i) ||
+               (/^\[gnd.clamp\]/i) ||
+               (/^\[falling.waveform\]/i) ||
+               (/^\[rising.waveform\]/i) ||
+               (/^\[power.clamp\]/i) ||
+               (!$_) ) { $_ = <vx>; }
+       }
+   }
+unlink("s2idata1","s2idata2","s2idata3","s2istart");
+exit;
+
+sub scale
+   {
+    for ($a=0; $a<4; $a++)
+       {
+        if (($_[$a] =~ /[mkunpfsSAVTGM]/) && ($_[$a] =~ /[0123456789]/))
+           {
+            $C = chop($_[$a]);
+            while(($C !~ /[0123456789]/) && length($_[$a]))
+               {
+                $D = $C;
+                $C = chop($_[$a]);
+               }
+            if (length($_[$a]))
+               {
+                $_[$a] .= $C;
+                $_[$a] *= $mult{$D};
+                if ((!$a) && ($tabname =~ /form/)){ $_[$a] *= 1.0E9;}
+               }
+            else
+               {
+                $_[$a] = $C;
+                $_[$a] *= $mult{$D};
+                if ((!$a) && ($tabname =~ /form/)){ $_[$a] *= 1.0E9;}
+               }
+           }
+       }
+    ($_[0], $_[1], $_[2], $_[3]);
+   }

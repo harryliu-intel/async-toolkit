@@ -1,0 +1,10 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.lvs.LVS
+java com.avlsi.tools.lvs.PrsToNet
+$arch/bin/jlvs.sh	jlvs.sh 775
+$arch/bin/prs2net.sh	prs2net.sh 775

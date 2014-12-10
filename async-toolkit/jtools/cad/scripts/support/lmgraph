@@ -1,0 +1,401 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id: lmgraph,v 1.9 2010/05/20 19:45:22 aubrey Exp $
+
+use strict;
+use Getopt::Long;
+use CGI;
+use File::stat;
+
+my $debug=0;
+my $since=0.5;
+my $mode = "X11";
+my $loop = 0;
+my $license = "verilog-xl";
+my $notransparent=0;
+my $multi=0;
+my $cumulate=0;
+my $gnuplot="/usr/bin/gnuplot";
+my $mogrify="/usr/bin/mogrify";
+my $geometry="";
+
+sub usage {
+    print <<EU;
+Usage: lmgraph [options]
+    --since=[$since]     : time span of graph
+    --mode=[$mode]       : one of png, xll
+    --license=[$license] : case insensitive license name(s)
+    --loop               : loop every second to update graph
+    --notransparent      : for png mode, do not use transparency
+    --multi              : multiple licenses, multiple windows
+    --cumulate           : show each summed license cumulatvely
+    --geometry           : x11 geometry
+EU
+exit 1;
+}
+
+GetOptions (
+    "debug" => \$debug,
+    "license=s" => \$license,
+    "since=s" => \$since,
+    "mode=s" => \$mode,
+    "loop" => \$loop,
+    "notransparent" => \$notransparent,
+    "multi" => \$multi,
+    "cumulate" => \$cumulate,
+    "geometry=s" => \$geometry,
+) or usage;
+
+# alternative license list
+if (defined $ARGV[0]) {
+    $license = $ARGV[0];
+    shift;
+    while (defined ($ARGV[0])) {
+        $license .= ",$ARGV[0]";
+        shift;
+    }
+}
+my $added = $license =~ /\+/ ? 1 : 0;
+my @lic = sort(split(/[+,]/,$license));
+my @slic = sort(split(/,/,$license));
+my $liccnt=$#lic+1;
+if ($multi and ($license =~ /,/)) {
+    my $lp = "";
+    $lp = "--loop" if $loop;
+    my $nt = "";
+    $nt = "--notransparent" if $notransparent;
+    foreach my $lic (@slic) {
+        if (! fork()) {
+            exec "lmgraph --since=$since --mode=$mode $lp $nt --lic=$lic";
+            exit 0;
+        }
+    }
+    exit 0;
+}
+my $dir = "/mnt/fulcrum/local/common/logs/lmstat";
+my $cgi=new CGI;
+if ($cgi->request_method eq "GET" or $cgi->request_method eq "POST") {
+    $mode = "png";
+    $since = $cgi->param("days") if defined ($cgi->param("days"));
+    $license = $cgi->param("license") if defined ($cgi->param("license"));
+    print <<EH;
+Content-type: image/png
+EH
+}
+my @filelist=();
+my $time=time;
+foreach my $license (@lic) {
+    substr($license,0,1) =~ tr/a-z/A-Z/;
+    opendir (D, "$dir");
+    my $pat=$license;
+    $pat =~ s/\.\*/*/g;
+    $pat =~ s/\*/.*/g;
+    my @files = grep (/^$pat\.log/i, readdir (D));
+    closedir D;
+    if ($#files == -1 ) {
+        print STDERR "No log found for $license";
+        next;
+    }
+    foreach my $file (@files) {
+        my $stat=stat("$dir/$file");
+        # only files recently updated
+        if ($time - $stat->mtime < 600) {
+            push @filelist, $file;
+        }
+    }
+    #push @filelist, @files;
+}
+if (! @filelist) {
+    print STDERR "No logs found for $license";
+    exit 1;
+}
+@lic=();
+foreach my $f (@filelist) {
+    my $lic=$f;
+    $lic =~ s/\.log//;
+    $lic =~ s:.*/::;
+    push @lic, $lic;
+}
+my %lic=();
+my $title = $slic[0];
+$title = "Licenses" if $#filelist > 0;
+if ($mode =~ /^pn/i) {
+    $mode = "png";
+    $loop=0;
+}
+else {
+    $mode = "X11";
+}
+my $days=$since;
+if ($since =~ /^y/) {
+    $days = 1;
+}
+elsif ($since =~ /^d/) {
+    my @f=split(/=/,$since);
+    if (defined ($f[1]) and $f[1] =~ /^\d+/) {
+        $days = $f[1];
+    }
+}
+elsif ($since =~ /^\d+/ or $since =~ /\.\d+$/) {
+    $days = $since;
+}
+sub ncmp {
+    $a - $b;
+}
+
+sub median {
+    my ($aa,$ba,$ca) = sort ncmp @_;
+    $ba;
+}
+
+my $file="$dir/$filelist[0]";
+my $lpcnt=0;
+my $datfile="/tmp/tmpdat$$.dat";
+$datfile = "abc.dat" if $debug;
+my $xlabel="Date-Hr";
+$xlabel = "Time" if $days < 2;
+my $xfmt = "%d-%H";
+$xfmt = "%k" if $days < 2;
+$xfmt = "%k:%M" if $days < 0.3;
+my $time=time;
+if ($geometry ne "") {
+    $geometry="-geometry $geometry";
+}
+if ($debug) {
+    open (GNU, ">abc.plt");
+}
+elsif ($mode eq "X11") {
+    open (GNU, "| $gnuplot -title '$title' -persist -noraise $geometry");
+}
+elsif ($notransparent) {
+    open (GNU, "| $gnuplot -title '$title'");
+}
+else {
+    open (GNU, "| $gnuplot -title '$title' | $mogrify -transparent white png:-");
+}
+select GNU;
+$|=1;
+select STDOUT;
+my $yrange = 0;
+while (1) {
+    $yrange = 0;
+    $time = time;
+    my $date=localtime($time);
+    chomp $date;
+    my $first = $time-$days*3600*24;
+    $date =~ s/ 20\d\d$//;
+    my $sec = $date;
+    $sec =~ s/.*://;
+    $sec = 65-$sec;
+    if ($sec > 60) {
+        $sec -= 60;
+    }
+    my $lines = int(($days+0.1)*24*60+2);
+    my @list=();
+    my @tlist=();
+    my @ulist=();
+    my $fc=0;
+    my $start = undef;
+    my $end = undef;
+    my $maxtm=0;
+    # look for real start and end
+    foreach my $fn (@filelist) {
+        $file="$dir/$fn";
+        open (P, "tail -$lines $file |");
+        $"=':';
+        my $tm=0;
+        while (<P>) {
+            chomp;
+            my ($tm,$tot,$use)=split(/  */);
+            $tm=int($tm/60)*60;
+            $lic{$fn}=1 if $use+$tot > 0;
+            my $lic=$fn;
+            $lic =~ s:.*/::;
+            $lic =~ s/\.log//;
+            $lic{$lic}=1;
+            $start = $tm if ! defined $start or $tm < $start;
+            $end = $tm if $tm > $end;
+            $maxtm = $tm if $tm > $maxtm;
+        }
+        close P;
+    }
+    # read in the data
+    my %yrange=();
+    my $ndxmin;
+    my $ndxmax;
+    foreach my $fn (@filelist) {
+        if (@lic and ! defined ($lic{$fn})) {
+            next;
+        }
+        $file="$dir/$fn";
+        $yrange{$fn}=0;
+        open (P, "tail -$lines $file |");
+        $"=':';
+        my $tm=0;
+        my $ndx;
+        my $lndx;
+        while (<P>) {
+            chomp;
+            my ($tm,$tot,$use)=split(/  */);
+            $tm=int($tm/60)*60;
+            $ndx=int(($tm-$start+30)/60);
+            $ndxmin = $ndx if ! defined($ndxmin) or $ndxmin > $ndx;
+            $ndxmax = $ndx if ! defined($ndxmax) or $ndxmax < $ndx;
+            $lndx = $ndx - 1 if ! defined $lndx;
+            # fill gaps
+            while ($ndx > $lndx) {
+                if ($lndx >= 0) {
+                    ${@{$tlist[$lndx]}}[$fc]=$tot;
+                    ${@{$ulist[$lndx]}}[$fc]=$use;
+                }
+                $lndx++;
+            }
+            $yrange{$fn} = $tot if $yrange{$fn} < $tot;
+            $yrange = $tot if $yrange < $tot;
+            my $x=$maxtm-$start;
+        }
+        close P;
+        $fc++;
+    }
+    for( my $n = 0; $n < $fc; $n++) {
+        for( my $ndx = $ndxmin; $ndx <= $ndxmax; $ndx++) {
+            if (! defined (${@{$tlist[$ndx]}}[$n])) {
+                ${@{$tlist[$ndx]}}[$n]=0;
+                ${@{$ulist[$ndx]}}[$n]=0;
+            }
+        }
+    }
+    if ($#slic < $#lic) {
+        $yrange = 0;
+        foreach my $fn (keys %yrange) {
+            $yrange += $yrange{$fn};
+        }
+    }
+    my $ndxstart=$start;
+    $start = $first if $start < $first;
+    my $delta = $end - $start;
+    my $firstfmt;
+    my @lt=localtime($start);
+    $firstfmt = sprintf "%d/%d/%02d/%02d/%02d/%02d", $lt[4]+1,$lt[3],$lt[5]%100,$lt[2],$lt[1],$lt[0];
+    $"=' ';
+    my $lcnt=int(($maxtm-$ndxstart+30)/60);
+    open (P, ">$datfile");
+    my @c;
+    my $first;
+    my $last = $start;
+    my $lastfmt;
+    foreach my $n (0..$lcnt-1) {
+        my $string;
+        $c[0] = $n*60+$ndxstart;
+        my @sum=(0,0);
+        if ($days <= 0 or $c[0] >= -(24*$days + 1) ) {
+            if ( !defined ($first)) { $first=$c[0]; }
+            my @lt=localtime($c[0]);
+            my $fmt = sprintf "%d/%d/%02d/%02d/%02d/%02d", $lt[4]+1,$lt[3],$lt[5]%100,$lt[2],$lt[1],$lt[0];
+            if ( !defined ($firstfmt)) { $firstfmt=$fmt;}
+            $last=$c[0];
+            $lastfmt = $fmt;
+            $string="$fmt";
+        }
+        foreach my $fl (0..$fc-1) {
+            next if ! defined ${@{$ulist[$n]}}[$fl];
+            $c[1] = ${@{$tlist[$n]}}[$fl]*1;
+            $c[2] = ${@{$ulist[$n]}}[$fl]*1;
+            my @f=@c;
+            if ($days <= 0 or $f[0] >= -(24*$days + 1) ) {
+                if ( !defined ($first)) { $first=$f[0]; }
+                my @lt=localtime($f[0]);
+                my $fmt = sprintf "%d/%d/%02d/%02d/%02d/%02d", $lt[4]+1,$lt[3],$lt[5]%100,$lt[2],$lt[1],$lt[0];
+                if ( !defined ($firstfmt)) { $firstfmt=$fmt;}
+                $last=$f[0];
+                $lastfmt = $fmt;
+                shift @f;
+                $sum[0] += $f[0];
+                $sum[1] += $f[1];
+#                $yrange = $sum[0] if $yrange < $sum[0];
+                $string .= " @f";
+            }
+        }
+        print P "$string @sum";
+    }
+    close P;
+    my $totalindex=2;
+    my $useindex=3;
+    $yrange = int($yrange*1.2)+1;
+    if ($lpcnt == 0) {
+    print GNU <<EF;
+set term $mode
+set grid
+set title "$title utilization $date"
+set xlabel "$xlabel"
+set xdata time
+set timefmt "%m/%d/%Y/%H/%M/%S"
+set format x '$xfmt'
+set xrange ["$firstfmt":"$lastfmt"]
+set yrange [-0.1:$yrange]
+set ylabel "Licenses"
+EF
+        if ($fc <= 1) {
+            print GNU <<EG;
+plot '$datfile' using 1:$totalindex smooth unique title 'Avail' w lines 3, '$datfile' using 1:$useindex smooth unique title '$lic[0]' w lines 1
+EG
+        }
+        elsif ($added) {
+            my $ti=$fc*2+2;
+            my $ui=$ti+1;
+            my @plot=();
+            if ($cumulate) {
+                push @plot, "'$datfile' using 1:$ti smooth unique title 'Avail' w lines 3";
+                my $lines=1;
+                my $index="\$$useindex";
+                for (my $ndx = $useindex, my $n=0; $n < $fc; $n++) {
+                    push @plot, "'$datfile' using 1:($index) smooth unique title '$lic[$n]' w lines $lines";
+                    $lines++;
+                    $lines=6 if ($lines == 2);
+                    $ndx += 2;
+                    $index .= "+\$$ndx";
+                }
+            }
+            else {
+                my $title=join("+",@lic);
+                push @plot, "'$datfile' using 1:$ti smooth unique title 'Avail' w lines 3";
+                push @plot, "'$datfile' using 1:$ui smooth unique title '$title' w lines 1";
+            }
+            print GNU "plot ".join(", \\\n", @plot);
+        }
+        else {
+            my $ndx;
+            my $n;
+            my @plot=();
+            my @sname=();
+            for ($ndx = $useindex, $n = 0; $n < $fc ; $ndx += 2, $n++) {
+                next if (!defined($lic{$lic[$n]}));
+                if ($#slic == $#lic) {
+                    push @plot, "'$datfile' using 1:$ndx smooth unique title '$lic[$n]'";
+                }
+                else {
+                    push @sname, $lic[$n];
+                }
+            }
+            push @plot, "'$datfile' using 1:$ndx smooth unique title '".join("+",@sname)."'"
+                if ($#slic < $#lic);
+            print GNU "plot ".join(", \\\n", @plot);
+        }
+    }
+    else {
+        print GNU "set yrange [-0.1:$yrange]";
+        print GNU "set xrange [\"$firstfmt\":\"$lastfmt\"]";
+        print GNU "set title \"$title utilization $date\"";
+        print GNU "replot";
+    }
+    if ( ! $loop ) {
+        print GNU "quit";
+        close GNU;
+        last;
+    }
+    else {
+        sleep $sec;
+    }
+    $lpcnt++;
+}
+unlink "$datfile" if ! $debug;

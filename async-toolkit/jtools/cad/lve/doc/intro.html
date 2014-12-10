@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>LVE Introduction</title>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <link REL ="stylesheet" TYPE="text/css" HREF="lve.css">
+</head>
+<body>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td><br>
+      </td>
+      <td align="left" height="90"><img src="logo.png" alt="Fulcrum" style="border: 0px solid ; width: 250px; height: 90px;" align="left"> </td>
+    </tr>
+  </tbody>
+</table>
+<!-- ========== START OF NAVBAR ========== --> <a name="navbar_top"><!-- --></a>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td colspan="2" class="NavBarCell1"> <a name="navbar_top_firstrow"><!-- --></a>
+      <table border="0" cellpadding="0" cellspacing="3">
+        <tbody>
+          <tr align="center" valign="top">
+            <td class="NavBarCell1"> <a href="index.html"><b>Static Index</b></a></td>
+            <td class="NavBarCell1"> <a href="tracking.html"><b>Tracking</b></a>
+            </td>
+            <td class="NavBarCell1"> <a href="$help_page"><b>Help Doc</b></a></td>
+            <td class="NavBarCell1"> <a href="../statistics.html"><b>Statistics</b></a></td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td rowspan="3" align="right" valign="top">
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- =========== END OF NAVBAR =========== -->
+<p> </p>
+<div style="text-align: center;">
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: left;">
+<h2>Contents</h2>
+<ol>
+  <li><a href="#users_guide">LVE Users Guide</a></li>
+  <ol>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#setup">Set up and Basic options</a></li>
+    <li><a href="#lve_run">What happens when the LVE is run</a></li>
+    <li><a href="#options">More options</a></li>
+    <li><a href="#results">Result Organization</a></li>
+    <li><a href="#tasks">Aspice and Alint Tasks</a></li>
+    <li><a href="#partial_extraction">Advanced Features</a></li>
+    <ol>
+      <li><a href="#partial_extraction">Partial Extraction</a></li>
+      <li><a href="#slurping">Slurping</a></li>
+      <li><a href="#aspice_toggle">Aspice Toggle Feature</a>
+      </li>
+    </ol>
+  </ol>
+  <li><a href="data_mining.html">Data Mining in LVE</a></li>
+  <ol>
+    <li><a href="data_mining.html#intro">Introduction</a></li>
+    <li><a href="data_mining.html#aspice">Data Mining ASPICE Results</a></li>
+    <li><a href="data_mining.html#alint">Data Mining ALINT Results</a></li>
+    <li><a href="data_mining.html#signoffs">Sign Offs</a></li>
+    <li><a href="data_mining.html#issues">Known Issues</a></li>
+  </ol>
+  <li><a href="directives.html">Directive support in LVE</a>
+  </li>
+  <li><a href="faq.html">Frequently Asked Questions</a>
+  </li>
+</ol>
+<a name="users_guide"></a>
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: center;">
+<h2>LVE Users Guide</h2>
+</div>
+</div>
+<div style="text-align: left;">
+<h3><a name="intro"></a>Introduction</h3>
+The Layout Verification Engine (LVE) constitutes a package of
+interrelated programs which enable the automation of nearly all aspects
+of layout verification. The LVE uses <i>make</i>
+as its command generator to naturally sort out dependency relations
+between the various steps in layout related verification tasks. Having
+<i>make</i> as the backbone of this
+application allows a user to incrementally perform the various tasks
+while keeping track of cells which need to be reverified due to
+dependency modifications. The LVE produces a host of machine readable
+files; <i>index.table &amp; *.raw</i> files and browser viewable html files.<br>
+<br>
+<h3><a name="setup"></a>Set up/Basic options<br>
+</h3>
+The LVE front-end is a perl script called the <i>lve.</i> With the options
+appropriately set the lve only requires a fully qualified cell name
+(FQCN) and an optional environment.<br>
+<br>
+The minimal options required to run this tool are the following:<br>
+<ul>
+  <li>--cast-path (default: /home/user/&lt;username&gt;/hw/cast)</li>
+  <li>--spec-dir (default: /home/user/&lt;username&gt;/hw/layout/tsmc13/spec)</li>
+  <li>--dfII-dir (default: /home/user/&lt;username&gt;/hw/layout/tsmc13/dfII</li>
+</ul>
+Run lve with the fulcrum script as in
+<blockquote>
+<pre>
+alias lve='fulcrum --pdk tsmc65 lve --cast-dir=$CAST_DIR --spec-dir=$SPEC_DIR --dfII-dir=$DFII_DIR --qsub=1 --jobs=4'
+lve lib.buffer.half.BUF_1of2.300:digital
+</pre>
+</blockquote>
+<br>
+the command will run drc, lvs, jlvs, alint on the
+lib.buffer.half.BUF_1of2.300 cell and run a transient simulation with
+the 'digital' environment. If the aspice task is specified an no
+environment is specified the LVE ignores the aspice task.<br>
+<h3><a name="lve_run"></a>What happens when the LVE is run</h3>
+The LVE runs a set of tasks on the list of cells and their environments
+given. The default task are<br>
+<ul>
+  <li><b>alint </b>--Runs exhaustive analog simulation using aspice</li>
+  <li><b>aspice</b> --Runs a transient simulation for the specified environment</li>
+  <li><b>drc</b> --Assura DRC</li>
+  <li><b>jlvs</b> --JLVS to check CDL vs CAST</li>
+  <li><b>lvs</b> --Assura LVS to check CDL vs DFII</li>
+</ul>
+The lve also runs other tasks <br>
+<ul>
+  <li><b>gds2</b> --Writes out a gds2 file for the specified cell (or chip)</li>
+  <li><b>extract</b> --Extract the cell to get a SPICE file</li>
+  <li><b>hsim</b> --Runs a transient simulation using HSIM</li>
+  <li><b>stats</b> --generates statistics only.
+</ul>
+<h3><a name="options"></a>More Options</h3>
+The lve supports quite a few options. Running the lve command without
+any cells will print the usage banner with their options and default
+values (if any). LVE options fall within the following categories:<br>
+<ul>
+  <li><b>Directory options</b>; these
+indicate directories or paths from which circuit/dfII descriptions,
+configuration information (pdk) and other information are read.</li>
+  <li><b>Extract options</b>;
+these control the thresholds on the values of the parasitics detects
+or how <i>jauto </i>estimates parasitics. These options also control some
+details of the extract process including temperature, fake well plugs graybox mode and others.</li>
+  <li><b>HSIM options</b>; control options to the hsim circuit simulator.</li>
+  <li><b>Aspice/Alint options</b>; control options to the aspice circuit simulator.</li>
+  <li><b>Sweep options</b>; sweep
+options are comma separated lists are essentially unrolled into various
+commands and the LVE performs tests with all combinations. These include
+the simulations conditions and the different tasks the LVE is capable of
+performing. There are exceptions to this rule and the exceptions are not
+well understood due to the vagaries of <i>make</i>, so use lists with caution. This
+is particularly true with the view and mode options at this time.</li>
+  <li><b>General options</b>; all other options fall within this category. Tool memory sizes, limits on
+compute resources etc are specified under this class of options.</li>
+</ul>
+The first four classes of options are global options which affect all
+cells and tests run. Only the last specified value has any effect. On
+the other hand sweep options produce runs in different run <a href="#directories">subdirectories</a>.
+Sweep options are applied in order so they can be changed for different cells in the same run.<br>
+<br>
+The following sweep options will yield 100 simulations!<br>
+<blockquote>
+--task=aspice,alint --corner=tt,ff,ss,fs,sf --time=100 \<br>
+--timed-delay=1:10 --true=1.4,1.2,1,0.8,0.6 --temp=90,0
+</blockquote>
+All options to the LVE can also be passed by specifying a file to the
+<i>--include</i> option. This also allows one to pass multiple cells to
+the LVE. The <i>--include</i> option pretends as if the contents in the
+include file were specified on the command line.<br>
+<h3><a name="results"></a>Result Organization</h3>
+A run of the LVE generates an immense amount of data. There is a set
+directory structure into which these results are written. These results
+are also <a href="data_mining.html">data mined</a> and interpreted to
+provide more manageable data a human and easily visualize. The data
+mined results are summarize in html format in the static page <i>index.html</i>. Statistical information
+about the different tasks and cells are collected in <i>statistics.html. </i>A search-able page
+<i>index.php</i> allows the user to search and classify the results based on status and test category. The
+result query can also be restricted by substring matching the <i>FQCN</i> field.<br>
+<br>
+The test results are all descriptive. The NA status indicates that the
+specified test in Not Applicable. This is common when a given cell has
+no simulatable environments for the <i>aspice</i>task
+or has no local nodes for <i>alint.</i> NOT_TESTED
+indicates that the lve has not completed performing the specified task.
+<br>
+<br>
+In the queryable page, the hierarchical descent feature allows a user
+view the status for a cell and its children. All the other search
+options are applied to the results in this mode. Note that a complete <i>fqcn</i> needs to be specified in this
+mode.<br>
+<br>
+The results are written to the specified output directory with the
+following structure. Every portion of the non-period portion of the FQCN
+is translated into a directory; for example lib.buffer.half.BUF_1of2.300 will
+generate the following directory:<br>
+<blockquote>
+<b> &lt;output-dir&gt;/lib/buffer/half/BUF_1of2/300</b>
+</blockquote>
+all the results for a cells run as saved in this directory. Under this
+directory the &lt;view&gt;/&lt;mode&gt; directory is created and all
+runs which require spice files are saved here. JLVS results are saved
+under the cell directory. DRC and LVS results are saved under the view
+directory. In fact these two results are always under the 'layout'
+directory since we do not run these tests for 'floorplan' views.<br>
+<br>
+Alint results are save under the following directory:<br>
+<blockquote>
+<b>&lt;output-dir&gt;/lib/buffer/half/BUF_1of2/300/&lt;view&gt;/&lt;mode&gt;/alint/&lt;corner&gt;/&lt;voltage&gt;/&lt;temp&gt;/</b><br>
+<br>
+and Aspice results are written to<br>
+<br>
+<b>&lt;output-dir&gt;/lib/buffer/half/BUF_1of2/300/&lt;view&gt;/&lt;mode&gt;/aspice/&lt;env&gt;/&lt;corner&gt;/&lt;voltage&gt;/&lt;temp&gt;/&lt;timemax&gt;/&lt;timed_delay&gt;/</b>
+</blockquote>
+An lve run does not need to complete before results can be view.
+Invoking <i>lve_resummarize</i> updates
+the results page with the state of the current results. The end of an
+lve run also invokes this program to report the final results.<br>
+<br>
+<h3><a name="tasks"></a>Aspice and Alint Tasks</h3>
+The behavior of the aspice task is summarized as follows<br>
+<ul>
+  <li>The LVE runs a transient simulation using aspice</li>
+  <li>The environment is modeled as digital PRS</li>
+  <li>For all parts of the analog circuit, there are also 'shadow' PRS
+which track the behavior of the circuit</li>
+  <li>If the analog circuit does ANYTHING not expected by the shadow
+PRS, a warning is printed to the <i>aspice.warn</i> file.
+The test is considered to have failed.</li>
+  <li>Noise bumps, interference, unstable nodes and incorrect logic
+will cause warnings.</li>
+  <li>A transition log and the analog critical path of your circuit is
+provided too.</li>
+</ul>
+the alint task is advertised to catch EVERY noise problem you can
+possibly see in a transient simulation. It replaces the old aspice
+'charge sharing' simulations has the following behavior<br>
+<ul>
+  <li>Models charge sharing and well as capacitive-coupling crosstalk.</li>
+  <li>Exhaustively characterizes switching delay, slew rates and resistive skew.</li>
+  <li>Thorough scenario searches</li>
+  <li>Results are simulated only for nets which are local to a cell.</li>
+</ul>
+<a name="advanced"></a>
+<h3>Advanced Features</h3>
+<h4><a name="partial_extraction"></a>Partial Extraction</h4>
+With the LVE a user can perform <i>partial extraction.</i> This feature
+allows you to extract and simulate only parts of a cell, instead of
+its entirety. The non-extracted sections are
+represented in PRS. Partial Extraction provides us with the ability to
+extract and simulate extremely large units within the context of a given
+design. To use partial extraction the cell is specified as a FQCNMINUS,
+instead of an FQCN. The format of FQCNMINUS is:<br>
+<blockquote>
+FQCN-inst1-inst2+inst3
+</blockquote>
+the named instances are replaced by a digital only model and those
+instances are removed from the layout during extraction.<br>
+<h4><a name="slurping"></a>Slurping</h4>
+This feature allows a user to 'steal' or better put reuse lve results
+from another run directory which are up to date. If slurping is enabled
+(--slurp=1) pertinent results for the specified task will be copied from
+the --slurp-dir if they are up to date. This feature is extremely useful
+in preventing extractions by designers if that work has already been done
+is say the central run repository.<br>
+<br>
+<h4><a name="aspice_toggle"></a>Aspice Toggle Feature</h4>
+This feature allows aspice to enable/disable analog simulation during a
+run. When analog simulation is disabled, the simulation can be advanced
+using the digital shadow prs. After a fixed period of time, or a
+breakpoint, the analog devices can be re-enabled, forced to the digital
+values, and A/D cosim can continue from there. The benefit will be the
+ability to skip past the reset and initialization phase of circuits to
+focus on the steady state critical path. LVE measurements of frequency
+and power take account of this feature.<br>
+<br>
+Note that accurate timing information of the shadow prs is lost
+during the analog off transition, which might cause problems in non-DI
+cells. Also, the delays of the shadow prs were intentionally omitted by
+jflat to avoid rerunning the lve when delays change. Also, the digital
+rules fire about 3 times faster than the analog ones.<br>
+<br>
+<hr style="width: 100%; height: 2px;"><i>Fulcrum Microsystems.</i>&copy;
+Copyright 2003-2007. All Rights Reserved.<br>
+<br>
+</div>
+</div>
+</body>
+</html>

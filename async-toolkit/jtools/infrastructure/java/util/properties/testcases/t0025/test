@@ -1,0 +1,37 @@
+<test>
+<!-- test of multi-level variants - empty with uses -->
+<config>
+<opt name="N" type="Integer" default="3"></opt>
+<opt name="variant" type="String" default=""></opt>
+<opt name="port.[1-$(N)].opt" type="String" default=""></opt>
+port.1.opt=a
+</config>
+
+<config name="fff2">
+port.3.opt=f
+</config>
+<config name="ggg">
+port.1.opt=g
+</config>
+<config name="ggg2">
+port.2.opt=g2FAIL
+</config>
+
+<variant name="ccc">
+  port.[1-2].opt=c
+  <variant name="ddd">
+    port.1.opt=d
+    port.3.opt=d
+    <variant name="fff" uses="fff2">
+      
+      <variant name="ggg" uses="ggg2">
+        port.1.opt=gFAIL
+        port.3.opt=gFAIL
+      </variant>
+    </variant>
+  </variant>
+  <variant name="eee">
+    port.2.opt=e
+  </variant>
+</variant>
+</test>

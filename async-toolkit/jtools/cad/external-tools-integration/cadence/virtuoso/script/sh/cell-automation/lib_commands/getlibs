@@ -1,0 +1,30 @@
+#!/bin/sh
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+
+cell_list_file=
+
+
+command_args=
+for arg in $@ ; do
+  case "$arg" in
+  --cell-list=* )
+    cell_list_file=`echo $arg | sed -e "s/--cell-list=//"`
+    ;;
+  esac
+done
+
+
+if [ -n "$cell_list_file" ] ; then
+
+  if [ -f "$cell_list_file" ] ; then
+    cat $cell_list_file | sed -e "s/\.[^\.]\+\$//" -e "s/\.[^\.]\+\$//" | sort | uniq
+  else
+    echo "\"$cell_list_file\" is not a file."
+  fi
+else
+  echo "Usage: $0 --cell-list=file" 
+fi

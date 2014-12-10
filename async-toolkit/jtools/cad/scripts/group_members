@@ -1,0 +1,2 @@
+#!/bin/csh
+ldapsearch -x cn=$1 memberuid | grep memberUid | sed "s/memberUid: //g" | sort

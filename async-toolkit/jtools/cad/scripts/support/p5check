@@ -1,0 +1,163 @@
+#!/usr/intel/bin/perl
+# vim:et:sw:ts=4:tw=79:
+
+##############################################################################
+# File:             p5check
+# Author:           Mark Hesselink
+# Creation Date:    November 4, 2009
+# Description:      Verifies whether all Perl package used within Fulcrum have
+#                   been installed.
+#
+# modified by Aubrey to incorporate other used perl modules
+# modified not to die when an error is detected in order to report all
+# missing modules
+#              
+# Copyright (C) 2009,2010 Fulcrum Microsystems, Inc.  All rights reserved.
+# Unauthorized disclosure is prohibited.
+##############################################################################
+
+use strict;
+use warnings;
+
+# Common packages
+eval "use DBD::mysql";
+print "perl module DBD::mysql missing\n" if $@;
+eval "use DBI";
+print "perl module DBI missing\n" if $@;
+eval "use DBD::SQLite";
+print "perl module DBI::SQLite missing\n" if $@;
+
+# Verification specific packages
+eval "use Class::DBI";
+print "perl module Class::DBI missing\n" if $@;
+eval "use Class::DBI::AbstractSearch";
+print "perl module Class::DBI::AbstractSearch missing\n" if $@;
+eval "use DBD::DBM";
+print "perl module DBD::DBM missing\n" if $@;
+eval "use File::NFSLock";
+print "perl module File::NFSLock missing\n" if $@;
+eval "use DBIx::ContextualFetch";
+print "perl module DBIx::ContextualFetch missing\n" if $@;
+eval "use Term::ReadLine";
+print "perl module Term::ReadLine missing\n" if $@;
+eval "use Term::ReadLine::Gnu";
+print "perl module Term::ReadLine::Gnu missing\n" if $@;
+eval "use XML::LibXML";
+if ($@) {
+    print "perl module XML::LibXML missing\n";
+}
+else {
+    eval("use XML::LibXML; XML::LibXML->load_xml('abc')");
+    print "XML::LibXML is not version > 1.7\n" if ($@ =~ /Can't/)
+}
+eval "use XML::Twig";
+print "perl module XML::Twig missing\n" if $@;
+eval "use XML::Simple";
+print "perl module XML::Simple missing\n" if $@;
+
+# others
+eval "use Benchmark";
+print "perl module Benchmark missing\n" if $@;
+eval "use CGI";
+print "perl module CGI missing\n" if $@;
+eval "use Class::Struct";
+print "perl module Class::Struct missing\n" if $@;
+eval "use Config";
+print "perl module Config missing\n" if $@;
+eval "use Curses";
+print "perl module Curses missing\n" if $@;
+eval "use Cwd";
+print "perl module Cwd missing\n" if $@;
+eval "use Data::Dumper";
+print "perl module Data::Dumper missing\n" if $@;
+eval "use Date::Parse";
+print "perl module Date::Parse missing\n" if $@;
+eval "use Digest::MD5";
+print "perl module Digest::MD5 missing\n" if $@;
+eval "use Exporter";
+print "perl module Exporter missing\n" if $@;
+eval "use ExtUtils::MakeMaker";
+print "perl module ExtUtils::MakeMaker missing\n" if $@;
+eval "use File::Basename";
+print "perl module File::Basename missing\n" if $@;
+eval "use File::Find";
+print "perl module File::Find missing\n" if $@;
+eval "use File::Path";
+print "perl module File::Path missing\n" if $@;
+eval "use File::Spec::Functions";
+print "perl module File::Spec::Functions missing\n" if $@;
+eval "use File::Spec";
+print "perl module File::Spec missing\n" if $@;
+eval "use File::Temp";
+print "perl module File::Temp missing\n" if $@;
+eval "use File::stat";
+print "perl module File::stat missing\n" if $@;
+eval "use FileHandle";
+print "perl module FileHandle missing\n" if $@;
+eval "use FindBin";
+print "perl module FindBin missing\n" if $@;
+eval "use Getopt::Long";
+print "perl module Getopt::Long missing\n" if $@;
+eval "use Getopt::Std";
+print "perl module Getopt::Std missing\n" if $@;
+eval "use IO::File";
+print "perl module IO::File missing\n" if $@;
+eval "use IO::Handle";
+print "perl module IO::Handle missing\n" if $@;
+eval "use IO::Select";
+print "perl module IO::Select missing\n" if $@;
+eval "use IO::Socket::INET";
+print "perl module IO::Socket::INET missing\n" if $@;
+eval "use IO::Socket";
+print "perl module IO::Socket missing\n" if $@;
+eval "use IPC::Open2";
+print "perl module IPC::Open2 missing\n" if $@;
+eval "use IPC::Open3";
+print "perl module IPC::Open3 missing\n" if $@;
+eval "use Math::BigInt";
+print "perl module Math::BigInt missing\n" if $@;
+eval "use Math::Complex";
+print "perl module Math::Complex missing\n" if $@;
+eval "use Net::LDAP";
+print "perl module Net::LDAP missing\n" if $@;
+eval "use POSIX 'WNOHANG'";
+print "perl module POSIX 'WNOHANG' missing\n" if $@;
+eval "use POSIX";
+print "perl module POSIX missing\n" if $@;
+eval "use SelfLoader";
+print "perl module SelfLoader missing\n" if $@;
+eval "use Socket";
+print "perl module Socket missing\n" if $@;
+eval "use Storable";
+print "perl module Storable missing\n" if $@;
+eval "use Symbol";
+print "perl module Symbol missing\n" if $@;
+eval "use Sys::Syslog";
+print "perl module Sys::Syslog missing\n" if $@;
+eval "use Term::ANSIColor";
+print "perl module Term::ANSIColor missing\n" if $@;
+eval "use Term::ReadKey";
+print "perl module Term::ReadKey missing\n" if $@;
+eval "use Test::Harness";
+print "perl module Test::Harness missing\n" if $@;
+eval "use Text::Balanced";
+print "perl module Text::Balanced missing\n" if $@;
+eval "use Text::ParseWords";
+print "perl module Text::ParseWords missing\n" if $@;
+eval "use Text::Tabs";
+print "perl module Text::Tabs missing\n" if $@;
+eval "use Text::Wrap";
+print "perl module Text::Wrap missing\n" if $@;
+eval "use Tie::Hash";
+print "perl module Tie::Hash missing\n" if $@;
+eval "use Time::HiRes";
+print "perl module Time::HiRes missing\n" if $@;
+eval "use Time::Local";
+print "perl module Time::Local missing\n" if $@;
+eval "use Time::tm";
+print "perl module Time::tm missing\n" if $@;
+eval "use strict";
+print "perl module strict missing\n" if $@;
+eval "use warnings::register";
+print "perl module warnings::register missing\n" if $@;
+

@@ -1,0 +1,25 @@
+body.yellow {
+    color: black;
+}
+
+h1.yellow {
+    text-align: center;
+}
+
+table.yellow {
+    border: 2px double black;
+    border-collapse: collapse;
+}
+
+thead.yellow {
+    background-color: #ffffee;
+    font-weight: bold;
+}
+
+tbody.yellow {
+    background-color: white;
+}
+
+td.yellow {
+    border: 1px solid black;
+}

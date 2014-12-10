@@ -1,0 +1,229 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+BEGIN {
+    my $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+    if ( -d $package_root ) {
+        push @INC, "$package_root/lib/perl";
+    }
+}
+
+require 'date2time.pm';
+
+my $tail=20000;
+my $first=1;
+my $host;
+my $now = time;
+my @now=localtime($now);
+my @start = localtime ($now-3600*24*5);
+my $startdisp = sprintf "%04d%02d%02d", $start[5]+1900, $start[4]+1,$start[3];
+my $enddisp = $now+100;
+my $jid;
+
+sub usage {
+    print STDERR <<EU;
+Usage: qtrace [options] hostname
+    --start=<days>    beginning date YYYYMMDD
+    --jid=<job num>   if want to see concurrent jobs
+EU
+    exit 1;
+}
+GetOptions (
+    "start=i" => \$startdisp,
+    "jid=i" => \$jid,
+) or usage;
+
+$host = $ARGV[0] if defined $ARGV[0];
+usage unless defined $host;
+my @list=();
+my @max=(0,0,0);
+my %list=();
+my $job;
+my %strings;
+my %start;
+my $stell=0;
+my %running;
+my %concurrent;
+my $jidmode=0;
+$jidmode = 1 if defined $jid;
+if (defined($startdisp) and $startdisp =~ /^\d\d\d\d\d\d\d\d$/) {
+    open (P, "</mnt/fulcrum/local/common/logs/qstat/accountndx.dat");
+    while (<P>) {
+        next if ! /^$startdisp /;
+        my ($d,$st,$ft)=split;
+        $stell=$st;
+        last;
+    }
+    close P;
+}
+if ($stell > 0 and $stell ne "-") {
+    open (P, "</usr/local/grid-6.0/default/common/accounting");
+    seek P, $stell, 0;
+}
+else {
+    open (P, "tail -$tail /usr/local/grid-6.0/default/common/accounting |");
+}
+while (<P>) {
+    chomp;
+    if ( /^all.q:$host\./) {
+        my @f=split(/:/,$_);
+        $f[0] =~ s/\.q//;
+        my $user=$f[2];
+        $job=$f[4];
+        my $start=$f[9];
+        my $end = $f[10];
+        push @{$list{$start}}, "START $f[5] $user $job";
+        $strings{$f[5]}="START $f[5] $user $job";
+        $start{$f[5]}=$start;
+        push @{$list{$end}}, "END   $f[5] $user $job";
+    }
+}
+close P;
+# pick up running jobs
+open (P, "qstat |");
+while (<P>) {
+    chomp;
+    s/^  *//;
+    my @f=split(/  */,$_);
+    my $hs=$f[7];
+    my $date=$f[5];
+    my $time=$f[6];
+    next if $hs =~ /^watch/;
+    $hs =~ s/.*@//;
+    $hs =~ s/\..*//;
+    $hs = sprintf "%10.10s", $hs;
+    $hs =~ s/ //g;
+    if ($hs eq substr($host,0,10)) {
+        my ($mo,$md,$yr)=split(/\//,$date);
+        my ($hr,$mn,$se)=split(/:/,$time);
+        my $time = date2time($mo,$md,$yr,$hr,$mn,$se);
+        push @{$list{$time}}, "START $f[0] $f[3] $f[2]";
+        $strings{$f[0]}="START $f[0] $f[3] $f[2]";
+        $start{$f[0]} = $time;
+    }
+}
+my %open;
+my $open=0;
+my @column=();
+my $ncol=8;
+for (my $c = 0; $c < $ncol; $c++) {
+    $column[$c] = 0;
+}
+
+sub printline {
+    my ($ctime, $string) = @_;
+    my $ln1 = "$ctime ";
+    for (my $c = 0; $c < $ncol; $c++) {
+        $ln1 .= $column[$c] ? "| " : "  ";
+    }
+    $ln1 .= $string;
+    if ($jidmode) {
+        if ($ln1 =~ /START\s+(\d+)/) {
+            my $ln="$ln1 ";
+            foreach my $j (sort keys %running) {
+                $ln .= "$j " if ($running{$j})
+            }
+            $running{$1}=1;
+            $ln =~ s/\s$//;
+            if ($ln =~ /$jid/) {
+                print $ln;
+                foreach my $j (sort keys %running) {
+                    $concurrent{$j}=1 if $running{$j} and $jid ne $j;
+                }
+            }
+        }
+        if ($ln1 =~ /END\s+(\d+)/) {
+            my $ln="$ln1 ";
+            $running{$1}=0;
+            foreach my $j (sort keys %running) {
+                $ln .= "$j " if ($running{$j})
+            }
+            $ln =~ s/\s$//;
+            print $ln if $ln =~ /$jid/;
+        }
+    }
+    else {
+        print $ln1;
+    }
+}
+
+foreach my $t (sort keys %list) {
+    my $ctime = localtime($t);
+    foreach my $string (@{$list{$t}}) {
+        my @f=split(/  */,$string);
+        $open++ if ($f[0] eq "START");
+        $open-- if ($f[0] eq "END" and $open > 0);
+        my $job = $f[1];
+        $open{$f[1]}=0 if ($f[0] eq "END" and $f[1] =~ /^\d+$/);
+        $open{$f[1]}=1 if ($f[0] eq "START" and $f[1] =~ /^\d+$/);
+        my $cnt=0;
+        for (my $c = 0; $c < $ncol; $c++) {
+            $column[$c] = 0 if ($open{$column[$c]}==0 and $column[$c]);
+        }
+        foreach my $x (keys %open) {
+            $cnt += $open{$x};
+            if ($open{$x} and
+                    $column[0] != $x and $column[1] != $x and
+                    $column[2] != $x and $column[3] != $x and
+                    $column[4] != $x and $column[5] != $x and
+                    $column[6] != $x and $column[7] != $x) {
+                for (my $c = 0; $c < $ncol; $c++) {
+                    if ($column[$c] == 0) {
+                        $column[$c] = $x;
+                        last;
+                    }
+                }
+            }
+        }
+        my $thisok = defined($open{$f[1]});
+        if ($first and $t >= $startdisp) {  
+            $first = 0;
+            for (my $c = 0; $c < $ncol; $c++) {
+                if ($column[$c] and ($column[$c] ne $job) and $open{$job}) {
+                    my $ctime = localtime($start{$column[$c]});
+                    printline($ctime, $strings{$column[$c]})
+                        if ($t >= $startdisp and $t <= $enddisp);
+                }
+            }
+        }
+        printline($ctime, "$string $cnt")
+            if ($t >= $startdisp and $t <= $enddisp);
+    }
+}
+if ($first) {
+    for (my $c = 0; $c < $ncol; $c++) {
+        if ($column[$c]) {
+            my $ctime = localtime($start{$column[$c]});
+            printline($ctime, $strings{$column[$c]});
+        }
+    }
+}
+if ($jidmode) {
+    printf "Concurrent:";
+    foreach my $jid (sort keys %concurrent) {
+        printf " $jid";
+    }
+    print "";
+}

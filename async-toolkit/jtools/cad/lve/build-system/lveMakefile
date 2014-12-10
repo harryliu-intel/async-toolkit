@@ -1,0 +1,20 @@
+# optimize for lve
+
+include $(BUILD_SYSTEM_ROOT)/functions.mk
+include $(BUILD_SYSTEM_ROOT)/systemtypes/default.mk
+
+MAKEFILE_KERNEL_NAME=$(shell uname -s)
+MAKEFILE_MACHINE_TYPE=$(shell uname -m)
+MAKEFILE_ARCH_NAME=$(MAKEFILE_KERNEL_NAME)-$(MAKEFILE_MACHINE_TYPE)
+-include $(BUILD_SYSTEM_ROOT)/systemtypes/$(MAKEFILE_ARCH_NAME).mk
+MAKEFILE_HOST_NAME=$(shell hostname)
+-include $(BUILD_SYSTEM_ROOT)/systems/$(MAKEFILE_HOST_NAME).mk
+BUILD:=$(BUILD_SYSTEM_ROOT)
+include $(BUILD_SYSTEM_ROOT)/commands.mk
+
+default:
+
+.SUFFIXES:
+
+SHELL := /bin/bash
+

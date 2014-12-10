@@ -1,0 +1,188 @@
+#!/usr/intel/bin/perl -w
+
+
+use POSIX;
+use FileHandle;
+use IPC::Open2;
+use Symbol;
+use DBI;
+use Getopt::Long;
+use strict;
+
+#############################################################################
+# Generate raw lve results. Each line has the format:
+#
+# STATUS TASK CELL PATH key1=value1 key2=value2 ...
+#
+# STATUS is PASS|NA|SIGNOFF|NOT_TESTED|FAIL|WARNING
+# TASK is the lve task.
+# CELL is the FQCN.
+# PATH is the relative path from ROOT_TARGET_DIR to the run directory.
+# the key=value pairs are specific to each task.
+# keys and values cannot include whitespace or the = character.
+#
+# The cell.raw and index.raw merely collect all raw results underneath them.
+#############################################################################
+
+# find relevant packaged tools and libraries
+our $lve_root;
+our @svars;
+
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    local $"=",";
+    our @svars = qw/ cell dir root task mode /;
+
+}
+
+# default list separator
+$"=",";
+
+use LveUtil;
+use LveAspice;
+use LveDelay;
+use LveDB;
+
+my $aplot = "$lve_root/bin/aplot";
+my $alint_in="";
+my $dir="";
+my $nodeprops = "";
+my $is_PO = 0;
+my $alint_dynamic_only;
+
+my $result = GetOptions("alint-in=s"      => \$alint_in,
+                        "dir=s"           => \$dir,
+                        "is-PO=s"         => \$is_PO,
+                        "alint-dynamic-only=s"    => \$alint_dynamic_only,
+                        "node-props=s"           => \$nodeprops);
+
+
+
+if ($alint_in eq "" or  ! -r $alint_in) {       
+    exit 0;
+}
+
+#prepare bin and directory
+my $alint_bin=0;
+my $alint_dir=$dir;
+if($is_PO == 1){
+    if ($alint_in =~ /\.(\d+)$/) {
+        $alint_bin = $1;
+    }
+}else{
+    if ($alint_in =~ /.*\/alint\.in\.(\S+)$/) {
+        $alint_bin = $1;
+    }
+}
+$alint_dir =~ s:/$::;
+$alint_dir =~ s:/alint_parallel$::;
+$alint_dir =~ s:/alint_PO_parallel$:: if $is_PO;
+my $outbindir="$alint_dir/alint.bin.$alint_bin";
+$outbindir="$alint_dir/alint_PO.bin.$alint_bin" if $is_PO;
+my $bindir="$outbindir.tmp";
+$bindir="$outbindir" if ! -d $bindir;
+$bindir=$alint_dir if ! -d $bindir; # legacy
+        
+my $status_file="$dir/threshresp.result.$alint_bin";
+open SF, ">$status_file" or die "Cannot write $status_file\n";
+
+# get run parameters
+my $view=get_nth_run_param($dir,0);
+my $process = get_nth_run_param($dir,2);
+my $true    = get_nth_run_param($dir,3);
+my $temp    = get_nth_run_param($dir,4);
+$true =~ s/V$//g;
+$temp =~ s/C$//g;
+
+# get threshPercent from alint.in file
+my @threshPercent = ();
+my @threshPercent_arg=`grep '^threshPercent' \"$alint_in\"`;
+if(scalar(@threshPercent_arg)<1){
+  #fail get the threshold percentage parameter
+  print SF "bin $alint_bin: FAIL";
+  exit 0;
+}
+foreach my $line (@threshPercent_arg){
+    chomp($line);
+    my @args = split(" ",$line);
+    if (@args<2) { next; }
+    shift @args;
+    @threshPercent=sort {$a <=> $b} @args;            
+}
+
+#get skip nodes
+my %skipnodes=(); #if is_PO==1, no skip nodes
+if($is_PO ==0){
+        # specifically to skip non dynamic nodes when doing dyn nodes
+        if ($alint_dynamic_only) {
+            open NODEPROPS, "<$nodeprops" or die "Cannot read $nodeprops\n";
+            while (my $line = <NODEPROPS>) {
+                chomp($line);
+                next if($line =~ /^SIGNOFF/);
+                my @f=split(" ", $line);
+                my $type = $f[$#f];
+                if ($type eq "INTERNAL"){
+                  $skipnodes{$f[0]}=1 if $f[1] ne "1";
+                }
+            }
+        }
+        close NODEPROPS;
+}
+
+#prepare nodes
+my @alint_node=();
+open (IN, "<$alint_in");
+while (<IN>) {
+    chomp;
+    if (/^alint /) {
+        my ($x, $node) = split;
+        push @alint_node, $node;
+        print "$_\n";
+    }
+}
+close IN;
+
+
+
+if($is_PO == 0 ){
+        # spawn aplot
+        open_aplot($aplot);
+        foreach my $thisnode (sort @alint_node) {
+            if ($skipnodes{$thisnode}) {
+                next;
+            }
+            #calculate threshold response
+            characterize_thresh($true,$bindir,$thisnode,\@threshPercent,%skipnodes);
+        }
+        close_aplot();
+        print SF "bin $alint_bin: SUCCESS";
+}else{
+        open NODEPROPS, "<$nodeprops" or die "Cannot read $nodeprops\n";
+        my %direction=();
+        while (my $line = <NODEPROPS>) {
+            chomp($line);
+            next if($line =~ /^SIGNOFF/);
+            my @f=split(" ", $line);
+            my $node = $f[0];
+            my $type = $f[$#f];
+            if ($type ne "INTERNAL"){
+                $direction{$node}=$type;
+            }
+        }
+        close NODEPROPS;
+
+        open_aplot($aplot);
+        foreach my $node (@alint_node) {
+            next if(not defined $direction{$node});
+            if($direction{$node} ne "IN" and $node ne "GND" and $node ne "Vdd") {
+              characterize_thresh($true,$bindir,$node,\@threshPercent,%skipnodes);
+            }
+        }
+        free_aplot();
+        close_aplot();
+        print SF "bin $alint_bin: SUCCESS";
+}
+close SF;

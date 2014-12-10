@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+input=
+log=$(mktemp "$PWD/mkinstances_log.XXXXXX")
+function exit_func() {
+    [ -f "$input" ] && rm -f "$input"
+}
+
+trap exit_func EXIT
+
+
+arch_bin_dir=${0%\/*}
+package_root=${arch_bin_dir%\/*}
+sh_lib_dir="$package_root/share/script/sh/sh-lib"
+source "$sh_lib_dir/file/filecheck.sh"
+
+if [ -z "$CADENCE_WRAPPER_SCRIPT" ] ; then
+    CADENCE_WRAPPER_SCRIPT="/usr/local/cadence/bin/ic"
+fi
+# override from FULCRUM script if appropriate
+if [ -n "$IC_SCRIPT" ] ; then
+    CADENCE_WRAPPER_SCRIPT=$IC_SCRIPT
+fi
+
+function usage() {
+    cat << USAGE
+Usage: $0
+    [--lib=<library name> (defaults to lib in cell name)]
+    --cell=<cell name>
+    [ --view=<view name> (defaults to $view) ]
+    [ --outdir=<output directory> (defaults to $outdir) ]
+    --fulcrum-pdk-root=<PDK directory>
+USAGE
+}
+
+sedcmd=`which sed`
+mkdircmd=`which mkdir`
+check_executable_file "$sedcmd" "Unable to find sed in \"$PATH\"" 2
+check_executable_file "$mkdircmd" "Unable to find mkdir in \"$PATH\"" 2
+
+view="layout"
+outdir="."
+lib=
+logremove=1
+
+for arg in "$@"; do
+    case "$arg" in
+    --cadence-log=*)
+        rm "$log"
+        log=`echo "$arg" | "$sedcmd" -e "s/--cadence-log=//"`
+        logremove=0
+        ;;
+    --lib=*)
+        library=`echo "$arg" | "$sedcmd" -e "s/--lib=//"`
+        ;;
+    --cell=*)
+        cell=`echo "$arg" | "$sedcmd" -e "s/--cell=//"`
+        ;;
+    --view=*)
+        view=`echo "$arg" | "$sedcmd" -e "s/--view=//"`
+        ;;
+    --outdir=*)
+        outdir=`echo "$arg" | "$sedcmd" -e "s/--outdir=//"`
+        ;;
+    --fulcrum-pdk-root=*)
+        pdkroot=`echo "$arg" | "$sedcmd" -e "s/--fulcrum-pdk-root=//"`
+        ;;
+    *)
+        ;;
+    esac
+done
+
+if [ -z "$library" ] ; then
+    source "$package_root/share/script/sh/util/parsecellname"
+    get_lib_name "$cell"
+    library="$ret"
+fi
+
+check_for_empty_arg "$package_root" "The packageroot variable must contain the location of the package installation." 2
+check_for_empty_arg "$library" "You must specify the Cadence library of the cell." 2
+check_for_empty_arg "$cell" "You must specify the name of the cell." 2
+check_for_empty_arg "$pdkroot" "You must specify the location of the Fulcrum PDK you want to use." 2
+check_readable_dir "$pdkroot" "PDK: \"$pdkroot\" is not a readable directory." 2
+
+
+[ -d $outdir ] || $mkdircmd -p $outdir
+
+check_writeable_dir "$outdir" "Output directory: \"$outdir\" is not writeable." 1
+
+if cadence_cell=`echo "$cell" | "$arch_bin_dir/rename" --type=cell --from=cast --to=cadence`; then
+	cell="$cadence_cell"
+else
+	echo "Cannot get convert CAST cell name $cell to Cadence name"
+	exit 2
+fi
+
+input=$(mktemp "$PWD/mkinstances.XXXXXX")
+cat<< EOF > "$input"
+(load "$package_root/share/skill/autoload.il")
+(load "$pdkroot/share/Fulcrum/pdkinfo.il")
+(WriteInstancesFile "$outdir" (dbOpenCellViewByType "$library" "$cell" "$view") ?LibCellPairRegExsToExclude \`(,@WiringCellLibCellPairRegExs ,@GateLibCellPairRegExs ,@ChainLibCellPairRegExs ,@SuperStackLibCellPairRegExs (,( strcat "^" TechLibName "$" ) ".*" ) ) )
+(exit)
+EOF
+
+DISPLAY= $CADENCE_WRAPPER_SCRIPT layout -nograph -replay "$input" -log "$log" </dev/null &>/dev/null
+ret=$?
+[ $ret == 0 ] || cat "$log" 1>&2
+if [ -f "$log" -a $logremove == 1 ]; then
+   rm "$log"
+fi
+exit $ret

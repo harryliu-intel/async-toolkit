@@ -1,0 +1,70 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+my $os="fedora-x86_64";
+my $branch="";
+my %aname=(
+    "fedora" => "Linux-i686",
+    "glinux" => "Linux-i686",
+    "Linux-i686" => "Linux-i686",
+    "fedora-x86_64" => "Linux-x86_64",
+    "lx24-amd64" => "Linux-x86_64",
+    "Linux-x86_64" => "Linux-x86_64",
+    "solaris8" => "SunOS-sun4u",
+    "solaris64" => "SunOS-sun4u",
+    "SunOS-sun4u" => "SunOS-sun4u",
+);
+
+my $toolhome = "/p/rrc/tools/fulcrum";
+
+sub chkrel {
+    my ($file,$osf)=@_;
+    my @osf = ($os) if ! defined $osf;
+    @osf = ($osf) if defined $osf;
+    @osf = ("fedora-x86_64") if $branch ne "";
+    local(*P);
+    local($_);
+    open (P, "<$file") || warn "Cannot open $file";
+    while (<P>) {
+        chomp;
+        my ($pkg,$chg)=split;
+        if ($pkg eq  "#os") {
+            @osf = ($chg);
+            next;
+        }
+        next if (/^#/);
+        if ($pkg eq "include") {
+            chkrel($chg);
+            next;
+        }
+        foreach my $arch (@osf) {
+            if ( $pkg =~ /^tb-/) {
+                 if (! -d "$toolhome/tools/$pkg/${branch}$chg/bin") {
+                    print "Release $arch $pkg/${branch}$chg not found";
+                 }
+            }
+            elsif ( ! ( -d "$toolhome/tools/$pkg/${branch}$chg/$aname{$arch}/bin" and
+                ( -f "$toolhome/tools/$pkg/${branch}$chg/.installed-$aname{$arch}" ) ) and
+                    ! ( -f "$toolhome/pdk/$pkg/${branch}$chg/.installed" ) ) {
+                print "Release $arch $aname{$arch} $pkg/${branch}$chg not found";
+            }
+        }
+    }
+}
+my @files=();
+if ($ARGV[0] eq "bali") {
+    @files="balirelease.txt";
+    $branch="bali_";
+}
+else {
+    @files=("releasef64.txt","proteusbeta.txt");
+    @files = @ARGV if @ARGV;
+}
+foreach my $file (@files) {
+    print $file;
+    chkrel ($file);
+}

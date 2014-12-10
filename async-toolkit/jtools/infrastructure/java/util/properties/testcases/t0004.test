@@ -1,0 +1,37 @@
+<test>
+<config>
+
+</config>
+
+    <config name="log_base" uses="log2G">
+    log.scope=TESTBENCH.inst1._env:-1,TESTBENCH.inst1:2
+    </config>
+
+    <config name="log_fc" uses="log_base,log4G">
+    log.scope=TESTBENCH.inst1.x.fc:-1
+    </config>
+
+    <config name="log_dp" uses="log_base">
+    log.scope=TESTBENCH.inst1.x.dp:-1
+    </config>
+
+    <config name="log_fsched" uses="log_base">
+    log.scope=TESTBENCH.inst1.x.fsched:-1
+    </config>
+
+    <config name="log_xbar" uses="log_base">
+    log.scope=TESTBENCH.inst1.x.xbar:-1
+    </config>
+
+    <config name="log2G">
+    regress.qsub_mem=2G
+    </config>
+
+    <config name="log4G">
+    regress.qsub_mem=4G
+    </config>
+
+    <config name="log8G">
+    regress.qsub_mem=8G
+    </config>
+</test>

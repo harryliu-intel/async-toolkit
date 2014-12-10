@@ -1,0 +1,227 @@
+#!/bin/bash
+# $Id$
+
+function output() {
+	if [ "$VERBOSE" = "1" ]; then
+		echo "$1"
+	fi
+}
+
+function usage() {
+    echo "Usage: cadencize cell"
+	echo 
+	echo "  -v: verbose"
+	echo "  -o: do not overwrite existing .auto file"
+	echo "  -f: take floorplanning info from mag file"
+	echo "  -m: specify memory usage for java (ex 128M)"
+	echo "  -d: debug mode( honor CLASSPATH )"
+	echo "  -i: import hand layout from magic"
+	echo "  -c: Generate cdl file"
+    exit 1
+}
+
+VERBOSE=0
+OVERWRITE=0
+FLOORPLAN=AUTO
+DEBUG=0
+IMPORT=0
+CDLOUT=0
+
+while getopts ":vofdhcm:i" opt; do
+    case $opt in
+        v   ) VERBOSE=1 ;;
+        o   ) OVERWRITE=0 ;;
+        f   ) FLOORPLAN=MAG ;;
+		m	) JAVAMEM=$OPTARG ;;
+		d   ) DEBUGMODE=1;;
+		i   ) IMPORT=1;;
+        h   ) usage ;;
+		c	) CDLOUT=1 ;;
+        \?  ) usage
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ -z "$1" ]; then
+	usage
+fi
+
+CELLNAME=`basename $1`
+
+output "Cell name is $CELLNAME"
+
+if [ `dirname $1` = "." ]; then
+    NEEDPOPD=0
+    UNITNAME=`pwd`
+    UNITNAME=`basename $UNITNAME`
+    CELLDIRNAME="."
+else
+    NEEDPOPD=1
+    
+    output "Looking up cell dir."
+
+    CELLDIRNAME=`new_fc -dC $1`
+
+    output "Cell dir is: $CELLDIRNAME"
+
+    UNITNAME=`dirname $1`
+
+    output "Cell unit is: $UNITNAME"
+
+    CELLDIRNAME="$CELLDIRNAME/$1"
+
+
+
+    CELLDIRNAME=`dirname $CELLDIRNAME`
+    pushd $CELLDIRNAME > /dev/null
+fi
+
+if [ "$IMPORT" = "1" ]; then
+	output "Importing cell from magic"
+	mkdir $CELLNAME-blocks 2> /dev/null
+	dirname=`pwd | rev | cut -d'/' -f1 | rev`
+	cd $CELLNAME-blocks
+	auto ../$CELLNAME.mag $CELLNAME.il < $CAST_HOME/lib/auto/magicimport.in
+	echo "$HARDWARE_HOME/ADD7M/$dirname/$CELLNAME-blocks $dirname-$CELLNAME Leaf" > $HARDWARE_HOME/.cadencized
+	exit
+fi	
+
+output "Verbose mode"
+
+if [ "$OVERWRITE" = "1" ]; then
+	output "CVS updating auto file"
+	rm -f $CELLNAME.auto.bak
+	cp $CELLNAME.auto $CELLNAME.auto.bak 2> /dev/null
+	rm -f $CELLNAME.auto
+	cvs update $CELLNAME.auto > /dev/null 2> /dev/null
+	output "CVS updating cast file"
+	cvs update `stlookup -cp "$CELLNAME"`
+else
+	echo 'Do not forget to cvs commit your auto file if'
+	echo 'you make any changes to it!'
+fi
+
+if [ "$FLOORPLAN" = "MAG" ]; then
+	if [ "$OVERWRITE" = "1" ]; then
+		output "CVS updating mag file"
+		rm -f $CELLNAME.mag
+		cvs update $CELLNAME.mag > /dev/null 2> /dev/null
+	fi
+	chmod u+w $CELLNAME.auto
+	output "Running fp_mag2auto on $UNITNAME/$CELLNAME"
+	fp_mag2auto $UNITNAME/$CELLNAME
+	if [ -z "`grep inplace $CELLNAME.auto`" ]; then
+		echo 'WARNING: no inplace directive!!! Are you sure you do not need one?'
+	fi
+fi
+magtype=`mag_is $HARDWARE_HOME/ADD7M/$UNITNAME/$CELLNAME.mag`
+output "mag file is type: $magtype"
+
+if [ ! -e $HARDWARE_HOME/cast/sram32/link_sram32.cast ]; then
+	output "Creating link to real_sram32.cast"
+	ln -s $HARDWARE_HOME/cast/sram32/real_sram32.cast $HARDWARE_HOME/cast/sram32/link_sram32.cast
+fi
+
+if [ -a "$CELLNAME.auto" ] ; then
+    output "running auto"
+    auto_skill "$CELLNAME"
+	rm -f $CELLNAME-blocks/$CELLNAME.auto
+	cp $CELLNAME.auto $CELLNAME-blocks
+else
+    mkdir "$CELLNAME-blocks"
+    pushd "$CELLNAME-blocks" > /dev/null
+    if [ -a "../$CELLNAME.mag" ] ; then
+    output "running auto"
+	auto "../$CELLNAME.mag" $CELLNAME.il <$CAST_HOME/lib/auto/floor.in
+    else
+	echo "Unable to find auto file or mag file for $CELLNAME."
+    fi
+    popd > /dev/null
+fi
+
+output "finding cast file"
+
+CELLCASTFILE="`stlookup -c -p $CELLNAME`"
+CELLCASTNAME="`stlookup -c $CELLNAME`"
+
+# ensure that there is only one cast file
+if [ `echo "$CELLCASTFILE" | wc -l` != 1 ]; then
+    echo "Multiple cast files found for $CELLNAME:"
+    echo "$CELLCASTFILE"
+    exit 2
+fi
+
+if [ -z $CELLCASTFILE ] ; then
+	echo "Unable to get cast file for $CELLNAME."
+	exit 1
+fi
+
+if [ -z $CELLCASTNAME ] ; then
+	echo "Unable to get cast cell name for $CELLNAME."
+	exit 1
+fi
+
+output "found cell $CELLCASTNAME in file $CELLCASTFILE"
+
+
+MYCLASSPATH=$HOME/jars/jcast.jar:$HOME/jars/antlr.jar
+
+if [ "$DEBUGMODE" = "1" ] ; then
+    MYCLASSPATH=$CLASSPATH
+else
+    echo "$DEBUGMODE"
+fi
+
+#TMPFILENAME=`date -u +"/tmp/%d-%m-%Y-%H-%M-%S-cadencize-$USER"`
+CASTTMPFILENAME="tmp.$$.0"
+
+output "creating cast temp file $TMPFILENAME"
+
+cat $CELLCASTFILE > $CASTTMPFILENAME
+echo "$CELLCASTNAME cadencize_inst ;" >> $CASTTMPFILENAME
+
+output "creating subcells file"
+SUBCELLSTEMPFILENAME="tmp.$$.1"
+
+magic_subcells "$UNITNAME/$CELLNAME" >$SUBCELLSTEMPFILENAME 
+
+output "creating extract files"
+output "running java cadencize"
+
+if [ -z "$JAVAMEM" ]; then
+	JAVAMEM=128M
+fi
+if [ "$CDLOUT" = "1" ]; then
+	magicextract "$UNITNAME/$CELLNAME" &>/dev/null
+	EXTRACTFILENAME="$CELLDIRNAME/$CELLNAME.ext"
+	output "Extract file name is $EXTRACTFILENAME"
+	CLASSPATH=$MYCLASSPATH /usr/intel/bin/java -Xmx$JAVAMEM -DHOME="$HOME" com.avlsi.tools.cadencize.Cadencize "$UNITNAME" "$CELLCASTNAME" "$CELLNAME" "$CASTTMPFILENAME" "$SUBCELLSTEMPFILENAME" $CELLNAME-blocks/castinfo.il $CELLNAME-blocks/$CELLNAME.cdl $EXTRACTFILENAME
+else
+	CLASSPATH=$MYCLASSPATH /usr/intel/bin/java -Xmx$JAVAMEM -DHOME="$HOME" com.avlsi.tools.cadencize.Cadencize "$UNITNAME" "$CELLCASTNAME" "$CELLNAME" "$CASTTMPFILENAME" "$SUBCELLSTEMPFILENAME" $CELLNAME-blocks/castinfo.il 
+fi
+
+output "removing temp files"
+
+rm $CASTTMPFILENAME
+rm $SUBCELLSTEMPFILENAME
+
+dirname=`pwd | rev | cut -d'/' -f1 | rev`
+rm -f $HARDWARE_HOME/.cadencized
+
+SAFECELLNAME=`echo $CELLNAME | sed -e "s/(/%40/g ; s/)/%41/g ; s/,/%44/g"`
+
+echo "$HARDWARE_HOME/ADD7M/$dirname/$CELLNAME-blocks $dirname-$SAFECELLNAME $magtype" > $HARDWARE_HOME/.cadencized
+
+if [ "$NEEDPOPD" = "1" ] ; then
+    popd > /dev/null
+fi
+
+foo="$HARDWARE_HOME/ADD7M/$dirname/$CELLNAME-blocks/castinfo.il"
+footmp="$HARDWARE_HOME/ADD7M/$dirname/$CELLNAME-blocks/castinfo.tmp"
+cat $foo | sed -e "s/,/][/g" > $footmp
+mv $footmp $foo
+foo="$HARDWARE_HOME/ADD7M/$dirname/$CELLNAME-blocks/$CELLNAME.il"
+footmp="$HARDWARE_HOME/ADD7M/$dirname/$CELLNAME-blocks/$CELLNAME.tmp"
+cat $foo | sed -e "s/%40/##28/g" | sed -e "s/%41/##29/g" > $footmp
+mv $footmp $foo
+

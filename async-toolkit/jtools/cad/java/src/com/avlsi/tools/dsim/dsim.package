@@ -1,0 +1,14 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.dsim.DSimMain com.avlsi.tools.dsim.DSim
+include ../../csp/csp2java/runtime/cspruntime.package.inc ../../csp/csp2java/runtime
+include ../../csp/resources/resources.package.inc ../../csp/resources
+include ../../util/cmdline/cmdline.package.inc ../../util/cmdline
+include ../../util/readline/readline.package.inc ../../util/readline
+include ../tsim/channellib.package ../tsim
+java com.avlsi.tools.cell.CellConstants
+$arch/bin/jdsim.sh              jdsim.sh 664

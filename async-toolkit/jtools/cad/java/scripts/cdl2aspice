@@ -1,0 +1,20 @@
+#! /bin/sh -p
+
+#
+# Copyright 2001 Asynchronous Digital Design.  All rights reserved.
+#
+# $Id$
+#
+# author: Jesse Rosenstock
+#
+
+#
+# wrapper for convenient use of cdl2aspice
+#   handles setting of CLASSPATH and CAST_PATH
+#
+
+CLASSPATH=$HOME/jars/antlr.jar:$HOME/jars/jcast.jar
+export CLASSPATH
+
+exec /usr/intel/bin/java -Xmx256M -DHOME="$HOME" \
+    com.avlsi.tools.cdl2aspice.CDL2Aspice "$@"

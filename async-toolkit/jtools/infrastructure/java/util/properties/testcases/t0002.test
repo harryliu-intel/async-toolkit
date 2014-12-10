@@ -1,0 +1,8 @@
+<config>
+
+test.a=1
+test.b=$(test.a)2
+test.c=$(test.b)3
+test.d=$(test.c)4
+
+</config>

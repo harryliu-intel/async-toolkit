@@ -1,0 +1,873 @@
+#!/usr/intel/bin/perl -w
+use strict;
+use Getopt::Long;
+use File::Find;
+use File::Path;
+use File::Temp qw/tempfile tempdir/;
+use File::Spec::Functions qw/:ALL/;
+use Cwd;
+
+my $spice = 'spice';
+my $castpath = undef;
+my $uberdir = '.';
+my $pdk_root = '';
+my $hsizes = undef;
+my $cell = undef;
+my $spicedir = undef;
+my $workdir = undef;
+my $qsub = '';
+my $cleanup = 0;
+my $verbose = 0;
+my $priority = -500;
+my $bump_bound = 28;
+my $relaxed_bound = 30;
+my $mode = "nogeometry";
+my $feasibility = 0;
+my $mem = "1000M";
+
+sub usage {
+    print <<EOF;
+USAGE: fix_charge_sharing [options ...]
+
+Options are:
+    --spice=[$spice] (SPICE command)
+    --cast-path=<path> (CAST path)
+    --uberdir=[$uberdir] (An ubersize working directory, after charge sharing)
+    --fulcrum-pdk-root=[$pdk_root] (PDK root)
+    --hsizes=[$hsizes] (File containing half-operator sizes, e.g., hsizes.debug from a Jauto run)
+    --spicedir=[$spicedir] (Where to find the result of an initial SPICE run.  There should a subdirectory for each cell.)
+    --cell=<cell:cell:...> (Only attempt to fix the listed cells)
+    --qsub (Enable qsub; each cell will be submitted as a separate job)
+    --priority=[$priority] (qsub priority)
+    --bump-bound=[$bump_bound] (charge sharing bump threshold)
+    --workdir=[$workdir] (directory to store results and intermediate files)
+    --test-feasibility (Apply the maximal diectives to see if fix is possible)
+EOF
+    exit 1;
+}
+
+GetOptions('spice=s' => \$spice,
+           'cast-path=s' => \$castpath,
+           'uberdir=s' => \$uberdir,
+           'fulcrum-pdk-root=s' => \$pdk_root,
+           'hsizes=s' => \$hsizes,
+           'bump-bound=i' => \$bump_bound,
+           'cell=s' => \$cell,
+           'spicedir=s' => \$spicedir,
+           'workdir=s' => \$workdir,
+           'cleanup!' => \$cleanup,
+           'verbose' => \$verbose,
+           'priority' => \$priority,
+           'qsub' => \$qsub,
+           'mode=s' => \$mode,
+           'test-feasibility' => \$feasibility,
+           'mem=s' => \$mem);
+
+$hsizes = catdir($uberdir, "hsizes.debug") unless defined($hsizes);
+$spicedir = catdir($uberdir, "charge_sharing") unless defined($spicedir);
+$workdir = catdir($uberdir, "fix_charge_sharing") unless defined($workdir);
+
+usage() if (!defined($castpath) || !-d $spicedir || $pdk_root eq '');
+
+my $qsubcmd = 'qsub -S /bin/sh -V -p ' . $priority;
+my $jauto_config = "$pdk_root/share/Fulcrum/jauto/jauto.config";
+my $process_config = "$pdk_root/share/Fulcrum/jauto/process.config";
+
+my %initial_list;
+my %cells = ();
+
+# Read the specified alint.raw file.  Parse all lines that report a charge
+# sharing failure.  Return references to arrays containing all nodes failing in
+# the up and down directions, respectively.
+sub read_alint_raw {
+    my $raw = shift;
+    my ($uperr, $dnerr) = ([], []);
+    my %bumps = ();
+    my $line;
+    my $cell;
+    open(my $fh, $raw) || die "Cannot open $raw: $!";
+    while($line = <$fh>) {
+        if ($line =~ /^((?:FAIL)|(?:PASS)) alint (\S+) (\S+) node=(\S+) cc=(\S+) tau=(\S+) bump_dn=([^@]+)@(\S+) bump_up=([^@]+)@(\S+) inv_node=(\S+) inv_bump_dn=([^@]+)@(\S+) inv_bump_up=([^@]+)@(\S+)/) {
+            $cell = $2 unless defined($cell);
+            my ($status, $dir, $node, $cc, $tau, $bump_dn, $bump_up, $inv_node,
+                $inv_bump_dn, $inv_bump_up) =
+                ($1, $3, $4, $5, $6, $7, $9, $11, $12, $14);
+            push @{$uperr}, $node if ($bump_up > $bump_bound);
+            push @{$dnerr}, $node if ($bump_dn > $bump_bound);
+            $bumps{$node} = [ $bump_dn, $bump_up ];
+        }
+    }
+    close($fh);
+    return ($cell, $uperr, $dnerr, \%bumps);
+}
+
+sub alint_raw_finder {
+    if ($_ eq 'alint.raw') {
+        my ($cell, $uperr, $dnerr) = read_alint_raw($_);
+        $cells{$cell} = [ $uperr, $dnerr ]
+            if (defined($cell) && (@{$uperr} || @{$dnerr}) &&
+                (!%initial_list || exists($initial_list{$cell})));
+    }
+}
+
+
+%initial_list = map { $_ => 1 } (split /:/, $cell) if (defined($cell));
+find(\&alint_raw_finder, $spicedir) if (-d $spicedir);
+
+mkpath($workdir) unless -e $workdir;
+print "Can't write to $workdir\n" unless -e $workdir;
+
+if (!scalar(%cells)) {
+    print "No cells to work on.\n";
+    exit 2;
+}
+
+my $group_dir_outfile;
+my $outfile_group_dir;
+my $tests;
+my $directives;
+my $groups;
+my $dideq;
+my $parent;
+
+sub verbose {
+    my $msg = shift;
+    print "$msg\n" if $verbose;
+}
+
+# Give a charge_sharing directory made by ubersize, extract nodes that have
+# charge sharing problems.  Returns a reference to a hash keyed on the names of
+# the leaf cells.
+sub get_error_nodes {
+    my $dir = shift;
+    my $cell = shift;
+    my $uperr = [];
+    open(my $up, catfile($dir, "$cell:up.measure"));
+    while(<$up>) {
+        if (/^ERROR: up: (\S+) (\S+)/) {
+            push @{$uperr}, $1;
+        }
+    }
+    close($up);
+
+    my $dnerr = [];
+    open(my $dn, catfile($dir, "$cell:dn.measure"));
+    while(<$dn>) {
+        if (/^ERROR: dn: (\S+) (\S+)/) {
+            push @{$dnerr}, $1;
+        }
+    }
+    close($dn);
+    return ($uperr, $dnerr);
+}
+
+sub read_configs {
+    my $dir = shift;
+    my $file = catfile($dir, 'configs');
+    my $group_dir_outfile = {};
+    my $outfile_group_dir = {};
+    open(my $fh, $file) || die "Can't open: $file: $!";
+    while(<$fh>) {
+        chomp;
+        my @fields = split(/:/);
+        my $current = [];
+        my $outfile = rel2abs(catfile($dir, shift @fields));
+        for my $group (@fields) {
+            (my $gid, my $did) = split(/ /, $group);
+            $$group_dir_outfile{$gid}->{$did} = $outfile;
+            push @{$current}, [ $gid, $did ];
+        }
+        $$outfile_group_dir{$outfile} = $current;
+    }
+    close($fh);
+    return ($group_dir_outfile, $outfile_group_dir);
+}
+
+sub read_groups {
+    my $file = shift;
+    my $group = [];
+    my $dideq = {};
+    open(my $fh, $file) || die "Can't open: $file: $!";
+    while(<$fh>) {
+        chomp;
+        my @fields = split(/:/);
+        my @idnodes = split(/ /, shift @fields);
+        my $id = shift @idnodes;
+        my $tries = {};
+        for my $field (@fields) {
+            (my $equiv, my $trans, my $width) = split(/ /, $field);
+            my @dids = split(/=/, $equiv);
+            $dideq->{$id}->{$dids[0]} = [];
+            foreach my $did (@dids) {
+                push @{$dideq->{$id}->{$dids[0]}},$did;
+            }
+            $$tries{$dids[0]} = [$trans, $width];
+        }
+        $$group[$id] = { nodes => \@idnodes, tries => $tries };
+    }
+    close($fh);
+    return ($group, $dideq);
+}
+
+sub read_all_configs {
+    my $file = shift;
+    my @tests = ();
+    open(my $fh, $file) || die "Can't open: $file: $!";
+    while(<$fh>) {
+        chomp;
+        my @subtests = ();
+        my @fields = split(/:/);
+        for my $field (@fields) {
+            my @groups = split(/ /, $field);
+            push @subtests, \@groups;
+        }
+        push @tests, \@subtests;
+    }
+    close($fh);
+    return \@tests;
+}
+
+# Read in a file of directive IDs and the associated directives, and return the
+# mapping in an array
+sub read_directives {
+    my $file = shift;
+    my $directives = ();
+    open(my $fh, $file) || die "Can't open: $file: $!";
+    while(<$fh>) {
+        chomp;
+        my @fields = split(/:/);
+        my $did = shift @fields;
+        $$directives[$did] = \@fields;
+    }
+    close($fh);
+    return $directives;
+}
+
+sub read_structures {
+    my $dir = shift;
+    (my $group_dir_outfile, my $outfile_group_dir) =
+        read_configs($dir);
+    my $tests = read_all_configs(catfile($dir, "all-configs"));
+    my $directives = read_directives(catfile($dir, "directives"));
+    (my $groups, my $dideq) = read_groups(catfile($dir, "groups"));
+    open(my $fh, catfile($dir, "parent"));
+    chomp(my $parent = <$fh>);
+    close($fh);
+    return ($group_dir_outfile, $outfile_group_dir, $tests, $directives, $groups, $dideq, $parent);
+}
+
+sub quote_arg {
+    my $arg = shift;
+    $arg =~ s/'/'"'"'/g;
+    return "'" . $arg . "'";
+}
+
+my @spices = ("ginger", "sporty", "posh", "scary", "baby");
+sub construct_command {
+    my $options = shift;
+    my $cell = shift;
+    my $cmd = $spice;
+    foreach my $key (keys %{$options}) {
+        $cmd .= " " . quote_arg("--" . $key . "=" . $$options{$key});
+    }
+    $cmd .= " " . quote_arg($cell);
+
+    return $cmd;
+}
+
+sub local_spice {
+    my $options = shift;
+    my $cell = shift;
+    my $parent = shift;
+    my $tmpdir = shift;
+    my $status;
+
+    my $path = catdir(split(/\./, $cell));
+    my $tar = "tar -C " . quote_arg($spicedir) . " -c -f - " .
+              quote_arg($path) . " | tar -x -f -";
+    verbose("tar command: $tar");
+    $status = system $tar;
+    die "Cannot copy alint directory $tar: $!" if (($status >> 8) != 0);
+
+    my $view = "floorplan";
+    my $corner = "tt";
+    my $voltage = "0.9V";
+    my $temp = "125C";
+
+    my $spiceIn = $options->{'spice-file'};
+    open(my $sin, $spiceIn) || die "Cannot open $spiceIn: $!";
+    my $spiceOut = catfile($path, $view, $mode, 'cell.spice');
+    open(my $sout, ">$spiceOut") || die "Cannot open $spiceOut: $!";
+    while (my $line = <$sin>) {
+        $line =~ s/\Q$parent\E/$cell/;
+        print $sout $line;
+    }
+    close($sin);
+    close($sout);
+
+    my $localprops = catfile($path, 'jflat', 'local-nodes', 'default.latest');
+    open(my $fh, '>' . $localprops) || die "Cannot write to $localprops: $!";
+    foreach my $node (split(/,/, $options->{'chargeSharingNodes'})) {
+        print $fh "$node 1 6.0E-11 4.0E-11 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1\n";
+    }
+    close($fh);
+
+    open(my $mkfh, '>' . catfile($path, 'cell.mk')) ||
+        die "Cannot write to cell.mk: $!";
+    print $mkfh "CURR_CELL_DIR := " . catdir($tmpdir, $path) . "\n";
+    print $mkfh "include \$(BUILD)/filetypes/castfiles/dir.mk\n";
+    close($mkfh);
+
+    #my $cmd = construct_command($options, $cell);
+    my $cmd = 'fulcrum --latest lve --skip=deps ' .
+              quote_arg("--fulcrum-pdk-root=$pdk_root") . ' ' .
+              quote_arg("--cast-dir=$castpath") . ' ' .
+              quote_arg("--spec-dir=$uberdir/cast") . ' ' .
+              quote_arg("--mode=$mode") . ' --bumpCC=0 ' .
+              '--delayTau= --alint-dynamic-only=1 --task=alint --minC=1 ' .
+              quote_arg($cell);
+    verbose("lve command: $cmd");
+    $status = system "$cmd";
+    die "Cannot execute $cmd: $!" if (($status >> 8) != 0);
+
+    return catfile($path, $view, $mode, 'alint', $corner, $voltage, $temp,
+                   'alint.raw')
+}
+
+sub qsub_spice {
+    my $options = shift;
+    my $cell = shift;
+    my $cmd = construct_command($options, $cell);
+    verbose("qsub spice command: $cmd");
+
+    #my $name = "sandtrout";
+    my $name = $spices[int(rand(scalar(@spices)))];
+
+    my $fd;
+    open($fd, ">$name") || die "Can't open $name: $!";
+    my $dir = cwd;
+    print $fd "cd " . quote_arg($dir) . "\n";
+    print $fd "$cmd\n";
+    close($fd);
+
+    chmod 0755, $name;
+    open($fd, "$qsubcmd -o " . quote_arg(catfile($dir, "$name.out")) . " -e " .
+              quote_arg(catfile($dir, "$name.err")) . " " . quote_arg($name) .
+              " 2>&1 |") || die "Cannot run qsub: $!";
+    my $line = <$fd>;
+    close($fd);
+
+    if ($line =~ /your job (\d+) \S+ has been submitted/) {
+        verbose("qsub job id is " . $1);
+        return $1;
+    } else {
+        die "Unable to submit job: $line: $?";
+    }
+}
+
+my $cache = {};
+
+sub get_cached {
+    my $gid = shift;
+    my $did = shift;
+    return $$cache{$gid}->{$did};
+}
+
+# Has the specified group and directives been tested?
+sub is_cached {
+    my $gid = shift;
+    my $did = shift;
+    return defined(get_cached($gid, $did));
+}
+
+sub write_cache {
+    my $cell = shift;
+    my $raw = shift;
+    my $gid = shift;
+    my $did = shift;
+
+    my ($dummy, $uperr, $dnerr, $allbumps) = read_alint_raw($raw);
+
+    my %uphash = ();
+    foreach my $err (@{$uperr}) { $uphash{$err} = 1; }
+    my %dnhash = ();
+    foreach my $err (@{$dnerr}) { $dnhash{$err} = 1; }
+
+    my @badup = ();
+    my @baddn = ();
+    my %bumps = ();
+    foreach my $node (@{$$groups[$gid]->{'nodes'}}) {
+        push @badup, $node if (defined($uphash{$node}));
+        push @baddn, $node if (defined($dnhash{$node}));
+        $bumps{$node} = $allbumps->{$node};
+    }
+
+    $$cache{$gid}->{$did} = [ \@badup, \@baddn, \%bumps ];
+}
+
+sub local_charge_sharing {
+    my $options = shift;
+    my $cell = shift;
+    my $parent = shift;
+    my $gid = shift;
+    my $did = shift;
+    verbose("testing $parent $gid $did");
+    my $outfile = $$group_dir_outfile{$gid}->{$did};
+    $$options{'spice-file'} = $outfile;
+    $$options{'chargeSharingNodes'} = join(",", @{$$groups[$gid]->{'nodes'}});
+
+    my $tmpdir = tempdir("$parent-$gid-$did-XXXXXX", DIR => $workdir,
+                         CLEANUP => $cleanup);
+    chdir $tmpdir;
+    my $raw = local_spice($options, $cell, $parent, $tmpdir);
+    chdir updir();
+
+    write_cache($parent, catfile($tmpdir, $raw), $gid, $did);
+
+    return get_cached($gid, $did);
+}
+
+sub qsub_charge_sharing {
+    my $options = shift;
+    my $cell = shift;
+    my $untested = shift;
+    my %jobs = ();
+
+    # submit all jobs via qsub
+    foreach my $group (@{$untested}) {
+        (my $gid, my $did) = @{$group};
+        my $outfile = $$group_dir_outfile{$gid}->{$did};
+        $$options{'spice-file'} = $outfile;
+        $$options{'chargeSharingNodes'} = join(",", @{$$groups[$gid]->{'nodes'}});
+        my $tmpdir = tempdir(DIR => $workdir, CLEANUP => $cleanup);
+        chdir $tmpdir or die "Cannot chdir to $tmpdir: $!";
+        $jobs{qsub_spice($options, $cell)} = [ $tmpdir, $gid, $did ];
+        chdir updir();
+    }
+
+    my @remain = keys %jobs;
+    # poll for jobs that terminated.  If a job returned was found to have an
+    # error, kill the rest of the jobs.
+    while (1) {
+        sleep 5;
+        my $fd;
+        open($fd, "qstat |") || die "Cannot run qstat: $!";
+        my %pending = ();
+        while(<$fd>) {
+            if (/^\s*([0-9]+)\s+.*/) {
+                $pending{$1} = 1;
+            }
+        }
+        close($fd);
+
+        my @left = ();
+        my @finished = ();
+        foreach my $job (@remain) {
+            if (exists($pending{$job})) {
+                push @left, $job;
+            } else {
+                push @finished, $job;
+            }
+        }
+
+        my $failed = 0;
+        foreach my $id (@finished) {
+            verbose("Job ID $id completed");
+            (my $tmpdir, my $gid, my $did) = @{$jobs{$id}};
+            write_cache($cell, $tmpdir, $gid, $did);
+            $failed += num_failed_nodes(get_cached($gid, $did));
+        }
+
+        if ($failed) {
+            verbose("Killing " . join(" ", @left)) if (scalar(@left));
+            system "qdel " . join(" ", @left) if (scalar(@left));
+            return 0;
+        }
+
+        if (scalar(@left) == 0) {
+            return 1;
+        }
+        @remain = @left;
+    }
+}
+
+sub num_failed_nodes {
+    my $result = shift;
+    (my $uperr, my $dnerr) = @{$result};
+    return scalar(@{$uperr}) + scalar(@{$dnerr});
+}
+
+sub print_failed_nodes {
+    my $result = shift;
+    (my $uperr, my $dnerr) = @{$result};
+    print "Up: " . join(" ", @{$uperr}) . "\n";
+    print "Down: " . join(" ", @{$dnerr}) . "\n";
+}
+
+sub compare_metric {
+    my $a = shift;
+    my $b = shift;
+    (my $atrans, my $awidth) = @{$a};
+    (my $btrans, my $bwidth) = @{$b};
+    return $awidth <=> $bwidth || $atrans <=> $btrans;
+}
+
+sub calculate_score {
+    my $scene = shift;
+    my $trans = 0;
+    my $width = 0;
+    foreach my $group (@{$scene}) {
+        (my $gid, my $did) = @{$group};
+        (my $t, my $w) = @{$$groups[$gid]->{'tries'}->{$did}};
+        $trans += $t;
+        $width += $w;
+    }
+    return [ $trans, $width ];
+}
+
+# Try to determine if a sharing scenario is feasible, and do it in such a way
+# as to minimize the number of spice runs.
+sub test_sharing_group {
+    my $cell = shift;
+    my $options = shift;
+    my $scene = shift;
+    my @untested = ();
+
+    # Find all groups that have not been tested.  If any group that has been
+    # tested has failed, then there is no need to test anything new.
+    foreach my $group (@{$scene}) {
+        (my $gid, my $did) = @{$group};
+        if (is_cached($gid, $did)) {
+            my $cached = get_cached($gid, $did);
+            return 0 if num_failed_nodes($cached);
+        } else {
+            push @untested, $group;
+        }
+    }
+
+    if ($qsub) {
+        return qsub_charge_sharing($options, $parent, \@untested);
+    } else {
+        foreach my $group (@untested) {
+            (my $gid, my $did) = @{$group};
+            my $cs = local_charge_sharing($options, $cell, $parent, $gid, $did);
+            return 0 if num_failed_nodes($cs);
+        }
+    }
+
+    return 1;
+}
+
+sub test_sharing {
+    my $groups = shift;
+    my $cell = shift;
+    my $options = shift;
+    my $scenes = shift;
+    my @sorted = sort { compare_metric(calculate_score($a),
+                                       calculate_score($b)) } @{$scenes};
+    my $passed = undef;
+
+    my $last_resort_full = undef;
+    my $last_resort_fullx = undef;
+    my $max_groups = 0;
+BADNESS:
+    foreach my $scene (reverse @sorted) {
+        if (scalar(@{$scene}) >= $max_groups) {
+            $max_groups = scalar(@{$scene});
+            my ($full, $fullx) = (1, 1);
+            foreach my $group (@{$scene}) {
+                (my $gid, my $did) = @{$group};
+                my $nodes = $$groups[$gid]->{'nodes'};
+                my @alldirs = ();
+                foreach my $deq (@{$dideq->{$gid}->{$did}}) {
+                    push @alldirs, @{$$directives[$deq]};
+                }
+
+                my @matched;
+                @matched = grep { /SYM_FULL\b/ } @alldirs;
+                foreach my $node (@{$nodes}) {
+                    if (! grep { /symmetrize\(\Q$node\E[-]?\)/ } @matched) {
+                        $full = 0;
+                        last;
+                    }
+                }
+
+                @matched = grep { /SYM_FULL_X\b/ } @alldirs;
+                foreach my $node (@{$nodes}) {
+                    if (! grep { /symmetrize\(\Q$node\E\)/ } @matched) {
+                        $fullx = 0;
+                        last;
+                    }
+                }
+
+                next BADNESS unless ($full || $fullx);
+            }
+            $last_resort_full = $scene if $full;
+            $last_resort_fullx = $scene if $fullx;
+        }
+    }
+
+    my @last_resorts = ();
+    if ($last_resort_full) {
+        push @last_resorts, $last_resort_full;
+    } else {
+        if ($last_resort_fullx) {
+            for (my $i = $#sorted; $i >= 0; $i--) {
+                if ($sorted[$i] != $last_resort_fullx) {
+                    push @last_resorts, $sorted[$i];
+                    last;
+                }
+            }
+        }
+        verbose("Last resort SYM_FULL scenario not found");
+    }
+    if ($last_resort_fullx) {
+        push @last_resorts, $last_resort_fullx;
+    } else {
+        verbose("Last resort SYM_FULL_X scenario not found");
+    }
+
+    ($bump_bound, $relaxed_bound) = ($relaxed_bound, $bump_bound);
+    foreach my $last_resort (@last_resorts) {
+        if (test_sharing_group($cell, $options, $last_resort)) {
+            $passed = $last_resort;
+            last;
+        }
+    }
+
+    ($bump_bound, $relaxed_bound) = ($relaxed_bound, $bump_bound);
+    if ($passed && !$feasibility) {
+        foreach my $scene (@sorted) {
+            # no need to skip over the last resort scenes, since if they were
+            # tested, the result would be cached, and no actual SPICE run is
+            # necessary
+
+            # avoid too many share groups
+            next if ($max_groups > 5 && scalar(@{$scene}) < $max_groups);
+            if (test_sharing_group($cell, $options, $scene)) {
+                $passed = $scene;
+                last;
+            }
+        }
+    }
+
+    return ($passed, $last_resort_fullx);
+}
+
+sub gen_choices {
+    my $groups = shift;
+    my $array = shift;
+    my $index = shift;
+    my $result = [];
+    my $gid = $$array[$index];
+    if ($index + 1 < scalar(@{$array})) {
+        my $prevs = gen_choices($groups, $array, $index + 1);
+        foreach my $did (keys %{$$groups[$gid]->{'tries'}}) {
+            foreach my $prev (@{$prevs}) {
+                push @{$result}, [ [$gid, $did], @{$prev} ];
+            }
+        }
+    } else {
+        foreach my $did (keys %{$$groups[$gid]->{'tries'}}) {
+            push @{$result}, [ [$gid, $did] ];
+        }
+    }
+    return $result;
+}
+
+sub print_result {
+    my $result = shift;
+    (my $gid, my $did) = @{$result};
+    my $string = "";
+    my $nodes = $$groups[$gid]->{'nodes'};
+    foreach my $dir (@{$$directives[$did]}) {
+        foreach my $node (@{$nodes}) {
+            if ($dir =~ /\(\Q$node\E[-+]?\)/) {
+                $string .= "    " . $dir . ";\n";
+            }
+        }
+    }
+    return $string;
+}
+
+sub print_scene {
+    my $scene = shift;
+    print "scene:";
+    foreach my $group (@{$scene}) {
+        my ($gid, $did) = @{$group};
+        print " ($gid, $did)";
+    }
+    print "\n";
+}
+
+sub print_scene_result {
+    my $scene = shift;
+    my $result = "";
+    foreach my $group (@{$scene}) {
+        my ($gid, $did) = @{$group};
+        $result .= "($gid $did)";
+        my $cached = get_cached($gid, $did);
+        my $allbumps = $cached->[2];
+        $result .= '<';
+        foreach my $node (keys %{$allbumps}) {
+            my ($up, $dn) = @{$allbumps->{$node}};
+            $result .= "$node $up $dn/";
+        }
+        $result .= '>';
+        my $dir = print_result($group);
+        $dir =~ s/\n//g;
+        $result .= $dir;
+        $result .= "|";
+    }
+    return $result;
+}
+
+sub print_scenes {
+    my $scenes = shift;
+    foreach my $scene (@{$scenes}) {
+        print_scene($scene);
+    }
+}
+
+sub process_cell {
+    my $cell = shift;
+    local $_;
+    my $badnodes = shift;
+    (my $badup, my $baddn) = @{$badnodes};
+    my $tmpdir = tempdir("$cell-XXXXXX", DIR => $workdir, CLEANUP => $cleanup);
+    my $cmd = "fulcrum generate_charge_sharing_tests --max-heap-size=$mem --cast-path=" . $castpath . " --config=" . $jauto_config . " --config=" . $process_config . " --hsizes=" . $hsizes . " --outdir=" . quote_arg($tmpdir);
+    verbose("Running " . $cmd);
+
+    open(my $fh, "| " . $cmd);
+    my $bad = $cell;
+    $bad .= " +" . join(" +", @{$badup}) if scalar(@{$badup});
+    $bad .= " -" . join(" -", @{$baddn}) if scalar(@{$baddn});
+    verbose($bad);
+    print $fh $bad . "\n";
+    close($fh);
+
+    if ($?) {
+        verbose("generate_charge_sharing_tests returned with status: " . ($? >> 8));
+        return;
+    }
+
+    ($group_dir_outfile,
+     $outfile_group_dir,
+     $tests,
+     $directives,
+     $groups,
+     $dideq,
+     $parent) = read_structures($tmpdir);
+
+    my $id = 0;
+    foreach my $test (@{$tests}) {
+#        my $pid = fork();
+#        if ($pid == 0) {
+            srand(time + $$);
+            my $out = catfile($workdir, "$cell.result.$id");
+            open(my $rfh, ">$out");
+            my $options = { env => catfile($spicedir, $cell, $cell . ".env.asp"),
+                            chargeSharing => '1' };
+            my $scenes = [];
+            foreach my $grouping (@{$test}) {
+                push @{$scenes}, @{gen_choices($groups, $grouping, 0)};
+            }
+            my ($result, $last_resort_fullx) =
+                test_sharing($groups, $cell, $options, $scenes);
+            print "==" . join("\n==", map print_scene_result($_), @{$scenes})
+                       . "\n";
+
+            my $nodes = join(" ", @{$$groups[$$test[0][0]]->{'nodes'}});
+            if (defined($result)) {
+                print "Charge sharing fixed for $nodes:";
+                print $rfh "Charge sharing fixed for $nodes:\n";
+                my $dirs = "  directives {\n";
+                foreach my $group (@{$result}) {
+                    print " (" . $group->[0] . " " . $group->[1] . ")";
+                    $dirs .= print_result($group);
+                }
+                print "\n";
+                $dirs .= "  }\n";
+                print $dirs;
+                print $rfh $dirs;
+            } else {
+                print "Cannot fix charge sharing for $nodes\n";
+                print $rfh "Cannot fix charge sharing for $nodes\n";
+                if (defined($last_resort_fullx)) {
+                    my $dirs = "  directives {\n";
+                    foreach my $group (@{$last_resort_fullx}) {
+                        print " (" . $group->[0] . " " . $group->[1] . ")";
+                        $dirs .= print_result($group);
+                    }
+                    print "\n";
+                    $dirs .= "  }\n";
+                    print $dirs;
+                    print $rfh $dirs;
+                }
+            }
+            close($rfh);
+#            exit;
+#        } else {
+#            verbose("PID = $pid");
+#        }
+
+        $id++;
+    }
+    #print $rfh "===\n";
+}
+
+sub uniq_problem_nodes {
+    my $result = shift;
+    (my $uperr, my $dnerr) = @{$result};
+    my %hash = ();
+    foreach my $n (@{$uperr}) {
+        $hash{$n} = 1;
+    }
+    foreach my $n (@{$dnerr}) {
+        $hash{$n} = 1;
+    }
+    my @nodes = keys %hash;
+    return \@nodes;
+}
+
+#if ($qsub) {  # Submit jobs to qsub
+=cut
+if (0) {
+    my $currdir = cwd;
+    if ($currdir !~ m:/home:) {
+        print STDERR "Warning: $currdir may not be NFS accessible.\n";
+    }
+    foreach my $c (keys %cells) {
+        my $cmd = "#!/bin/sh\n";
+        $cmd .= "export " . quote_arg("PATH=" . $ENV{'PATH'}) . "\n";
+        $cmd .= "cd " . quote_arg($currdir) . "\n";
+        $cmd .= "fix_charge_sharing " . quote_arg("--spice=" . $spice) . " ";
+        $cmd .= quote_arg("--cast-path=" . $castpath) . " ";
+        $cmd .= quote_arg("--uberdir=" . $uberdir) . " ";
+        $cmd .= quote_arg("--config=" . $jauto_config) . " ";
+        $cmd .= quote_arg("--hsizes=" . $hsizes) . " ";
+        $cmd .= quote_arg("--cell=" . $c) . " ";
+        $cmd .= quote_arg("--spicedir=" . $spicedir) . " ";
+        $cmd .= ">" . quote_arg(catfile($workdir, "$c.out")) . " 2>&1\n";
+        (my $bfh, my $batch) = tempfile("qXXXXXXXX", DIR => $workdir, SUFFIX => '.sh');
+        print $bfh $cmd;
+        close($bfh);
+        chmod 0755, $batch;
+        system("$qsubcmd $batch");
+    }
+    exit
+}
+=cut
+
+foreach my $c (keys %cells) {
+    my $val = $cells{$c};
+    print "Cell $c\n";
+    print_failed_nodes($val);
+    process_cell($c, $val);
+}
+
+my $pid;
+while (($pid = wait) != -1) {
+    verbose("Reaped PID $pid");
+}
+# vim:expandtab:sw=4

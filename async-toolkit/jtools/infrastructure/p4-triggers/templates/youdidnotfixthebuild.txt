@@ -1,0 +1,11 @@
+Hello, $userfirstname$
+  You submitted change list #$changenum$.  Change list #$changenum$
+did not fixed the $buildname$ build. The $buildname$ build was broken by 
+change list #$brokenchangenum$, which was submitted by $brokenuserfullname$ ( $brokenuser$ ).
+  Log files detailing the errors caused by change list #$brokenchangenum$
+can be extracted from "$brokenlogarchive$".  Log files detailing the errors
+caused by change list #$changenum$ can be extracted from
+"$logarchive$".
+
+Sincerely,
+  The Build User

@@ -1,0 +1,22 @@
+
+
+ifeq ($(PROGFILES_VARS_CHANGED),1)
+
+POP_SCOPED_VAR_VAR_NAME := PROGFILES_LINKER
+include $(BUILD_SYSTEM_ROOT)/include-functions/popscopedvar.mk
+
+POP_SCOPED_VAR_VAR_NAME := PROGFILES_PROJECT_LIB_DIRS
+include $(BUILD_SYSTEM_ROOT)/include-functions/popscopedvar.mk
+
+POP_SCOPED_VAR_VAR_NAME := PROGFILES_PROJECT_LIBS
+include $(BUILD_SYSTEM_ROOT)/include-functions/popscopedvar.mk
+
+POP_SCOPED_VAR_VAR_NAME := PROGFILES_PROJECT_LINK_FLAGS
+include $(BUILD_SYSTEM_ROOT)/include-functions/popscopedvar.mk
+
+endif
+
+
+PROGFILES_VARS_CHANGED :=$(strip $(firstword $(PROGFILES_VARS_CHANGED_STACK)))
+PROGFILES_VARS_CHANGED_STACK := $(call POP_STACK,$(PROGFILES_VARS_CHANGED_STACK))
+

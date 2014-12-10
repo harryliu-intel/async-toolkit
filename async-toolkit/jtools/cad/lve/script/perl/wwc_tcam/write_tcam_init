@@ -1,0 +1,52 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use rename;
+
+my $depth = 512;
+my $width = 40;
+
+# open file
+open OUT, ">tcam.init.spice" or die "Can't write tcam.init.spice";
+print OUT "* initialize metastable nodes in TCAM\n";
+my $node;
+
+# initialize metastable latches
+for (my $x=0; $x<$depth; $x++) {
+    my $i = int($x/64);
+    my $k = int(($x-$i*64)/32);
+    my $l = $x%32;
+    my $a = int($l/4);
+    my $b = $l%4;
+    my $cell = "slice[$i]/mid[$k]/out[$a,$b]/latch";
+    nodeset("$cell/X.1",0);
+    nodeset("$cell/X.0",1);
+    for (my $b=0; $b<$width; $b++) {
+        my $j = int($b/20);
+        my $m = $b%20;
+        my $bit = "slice[$i]/chunk[$j]/z[$k]/z[$l,$m]";
+        nodeset("${bit}/x[0,0]",0);
+        nodeset("${bit}/x[0,1]",1);
+        nodeset("${bit}/x[1,0]",1);
+        nodeset("${bit}/x[1,1]",0);
+    }
+}
+for (my $i=0; $i<$width; $i++) {
+    my $cell = "read[$i]";
+    nodeset("${cell}/X.1",0);
+    nodeset("${cell}/X.0",1);
+}
+close OUT;
+
+sub nodeset {
+    my ($node,$dir) = @_;
+    my $n = to_spice($node);
+    my $v = 0; $v = "vtrue" if ($dir==1);
+    print OUT ".IC V($n)=$v\n";
+}

@@ -1,0 +1,64 @@
+; Copyright 2003 Fulcrum Microsy\stems.  All rights reserved.
+; $Id$
+; $DateTime$
+; $Author$
+
+drcExtractRules(
+layerDefs( "df2"
+
+  ;leaf cell boundaries
+  prBound_leaf  = layer( "prBoundary" type("drawing"))
+
+  ;top level boundary
+  prBound_bound = layer( "prBoundary" type("boundary"))
+
+  ;sub cell boundaries
+  prBound_sub   = layer( "prBoundary" type("label"))
+
+  prBound_text   = textToPin( "prBound" )
+
+) ; layerDefs complete
+
+geomConnect(
+     via( prBound_leaf prBound_bound prBound_sub )
+     label( prBound_text prBound_bound )
+)
+
+
+size = 19.2
+leaf       = geomOr( prBound_leaf )
+merge      = geomSize( geomSize( prBound_leaf size ) -size )
+mid_bound  = geomOr( prBound_bound )
+subcell    = geomOr( prBound_sub )
+
+
+geomStamp( leaf prBound_leaf )
+geomStamp( merge prBound_leaf )
+geomStamp( subcell prBound_sub )
+geomStamp( mid_bound prBound_bound )
+
+; leaf
+extractDevice( "leaf" leaf leaf("X") flagMalformed )
+leaf_area = measureParameter( area ( leaf ) 1.0 )
+nameParameter( leaf_area "area" )
+
+; bloat/shrunk leaf cells
+extractDevice( "merge" merge merge("X") flagMalformed )
+merge_area = measureParameter( area ( merge ) 1.0 )
+nameParameter( merge_area "area" )
+
+;top level boundary
+extractDevice( "mid_bound" mid_bound mid_bound("X") flagMalformed )
+mid_bound_area = measureParameter( area ( mid_bound ) 1.0 )
+nameParameter( mid_bound_area "area" )
+
+;merged mid level boundaries
+extractDevice( "subcell" subcell subcell("X") flagMalformed )
+subcell_area = measureParameter( area ( subcell ) 1.0 )
+nameParameter( subcell_area "area" )
+
+
+
+
+
+) ; drcExtractRules Complete

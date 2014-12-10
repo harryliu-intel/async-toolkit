@@ -1,0 +1,19 @@
+<!--
+  vim:et:sw=2:syntax=xml:ts=2:tw=79:
+  -->
+<test>
+  <opt name="cosim.base" type="String" default="" />
+  <opt name="cosim.exceptions" type="String" default="" />
+  <opt name="cosim.spec" type="String" default='$%cosim("$(cosim.base)","$(cosim.exceptions)")%'/>
+  <config name="epl_ultb_model">
+    <set name="cosim.base">
+      testbench.alta.unit.epl.port_ultb(1,3,1,9){
+        verilog.rtl,csp,subcells,prs,java
+      }:digital{verilog.rtl,csp,subcells,prs,java}
+    </set>
+  </config>
+  <config uses="epl_ultb_model">
+    <set name="cosim.exceptions">port[1].epl{java,subcells,csp,prs}</set>
+    <!-- This is currently making two copies in the exrected result. If later changes cause this testcase to fail by only making one, it is fine. Just update the testcase. -->
+  </config>
+</test>

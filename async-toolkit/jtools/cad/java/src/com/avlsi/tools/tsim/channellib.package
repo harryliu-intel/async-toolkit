@@ -1,0 +1,19 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.dsim.DigitalScheduler
+java com.avlsi.util.debug.Debug
+java com.avlsi.util.exception.AssertionFailure
+java com.avlsi.util.math.Math
+java com.avlsi.util.mathexpression.impl.MathExpressionFactoryImpl
+java com.avlsi.util.mathexpression.variable.impl.WriteableVariableDictionaryImpl
+include ../sigscan/sigscan.package.inc ../sigscan
+include tsim.package.inc .
+include ../../util/container/container.package.inc ../../util/container
+include ../../util/text/text.package.inc ../../util/text
+include ../../util/cmdlineargs/defimpl/defimpl.package.inc ../../util/cmdlineargs/defimpl
+include ../../util/mathexpression/impl/parser/parser.package.inc ../../util/mathexpression/impl/parser
+include verilog/verilog.package.inc verilog

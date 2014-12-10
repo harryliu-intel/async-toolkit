@@ -1,0 +1,17 @@
+#!/bin/bash
+
+projectname=`basename "$3"`
+
+sedcmd="$1"
+
+
+directory="$3"
+
+if [[ ! -d "$directory" ]] ; then
+  mkdir -p "$directory"
+fi
+
+escaped_projectname=`echo "$projectname" | $sedcmd -e "s/\#/\\\\\\\\\\\\\\\\\#/g"`
+
+$sedcmd -e "s/placeholderproject/$escaped_projectname/" $2>$3/defaults.mk
+

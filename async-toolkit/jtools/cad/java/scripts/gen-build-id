@@ -1,0 +1,2 @@
+#!/bin/sh
+echo `id -un`-`date +'%Y%m%d-%H%M%S' -u`

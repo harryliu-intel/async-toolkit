@@ -1,0 +1,345 @@
+#!/usr/intel/bin/perl -w
+
+###############################################################################
+# Invokes LVE tasks required to be run remotely for Nevada Project
+# 
+# This scripts runs the following tasks:
+# 1) Lambda drc results of which can be view with calibre RVE in virtuoso  
+# 2) Extraction rc/cc/conly 
+# 3) LVS lambda lvs or silicon lvs
+#
+# The output of these runs are properly manipulated to fit into the LVE results
+# This script stalls until the remote run being executed is complete
+#
+# Author: Abe Ankumah, 06/01/04. Fulcrum Microsystems. All Rights Reserved.
+###############################################################################
+
+
+# find relevant packaged tools and libraries
+BEGIN {
+$package_root = $0;
+my $exe = $package_root;
+$exe =~ s:.*/::;
+if (! ($package_root =~ m:^/:)) {
+    my $pwd = `pwd`;
+    chomp $pwd;
+    $package_root = $pwd;
+    $package_root .= "/$0";
+    $package_root =~ s:$exe$::;
+    $package_root =~ s://:/:g;
+    chdir $package_root;
+    $package_root = `pwd`;
+    chomp $package_root;
+    chdir $pwd;
+}
+else {
+    $package_root =~ s:/bin/$exe::;
+}
+@INC = ("$package_root/lib/perl", @INC);
+}
+
+$PMC_WRAPPER="pmc_jobsubmit";
+$PMC_JOBCANCEL="pmc_jobcanel";
+$SCALE_GDSII="fulcrum scalegds -f ";
+
+use LveSummarize;
+use LveUtil;
+
+BEGIN {
+    local $"=",";
+    our @svars = qw/ cell dir task /;
+    
+    my @vars =();
+    push @vars,map { "\$$_"; } @svars;
+    eval "our (@vars);";
+}
+
+# 
+$task=""; 
+$dir="";
+$cell="";
+$workdir="";
+
+# Report usage
+sub usage {
+    my $usage = <<EOF;
+LVE Remote: Runs Remote LVE jobs on PMC host machines. Intended use for
+the the Nevada Project. 
+
+USAGE: $0 [options] 
+
+  Required Options:
+            --task=[$task] (what task to raw)
+            --dir=[$dir]   (directory for results)
+            --workdir=[$workdir] (working directory for remote run)
+            --cell=[$cell] (cell being rawed)        
+            --help
+EOF
+  print $usage;
+}
+
+while (defined $ARGV[0] && $ARGV[0] =~ /^--([^=]+)=?(.*)$/) {
+    my ($opt,$arg) = ($1,$2);
+    shift;
+    if($opt eq "task"){$task = $arg; }
+    elsif($opt eq "dir"){$dir = $arg; }
+    elsif($opt eq "cell"){$cell = $arg; }
+    elsif($opt eq "workdir"){$workdir = $arg; }
+    elsif($opt eq "help"){usage; exit;}
+    else {
+        print STDERR "Unrecognized option '$opt'.\n";
+        usage();
+        exit;
+    }
+}
+
+foreach $svar (@svars) { $$svar ne "" or 
+                             die "Required opt '$svar' not defined\n"; }
+
+# print out args read by program
+
+print "Collecting data to run PMC Remote $task on $cell\n";
+my ($basename, $plusminus) = partition_fqcnminus($cell);
+my $cellpath = $basename;
+$cellpath =~ s/\./\//g;
+$cellpath .= "$plusminus";
+$root = "";
+
+#make sure the nothing is no tmp; restriction in vfe
+if($dir =~ /^\/tmp\//){
+    die "WorkingDir cannot be on /tmp; restriction imposed by VFE\n";
+}
+
+# compute cellpath based on the task and $dir
+if($task eq "drc" || $task eq "lvs"){ 
+    if($dir =~ /(\S+)\/*\Q$cellpath\E\/layout/){ $root = $1; }
+}
+# for extraction
+else { if($dir =~ /(\S+)\/*\Q$cellpath\E\/layout\/extracted/){ $root = $1; }}
+
+$cellpath = "$root/$cellpath";
+
+# Get the gdsII names and cdl name of the cell here 
+open CELLNAME, "<$cellpath/.cellname" or die "Cannot open $cellpath/.cellname";
+$junk=<CELLNAME>;
+# read the fqcn and fqcnminus
+$junk=<CELLNAME>; $junk=<CELLNAME>; 
+# get the gdsIIName of the cell
+$gdsIIname=<CELLNAME>; chop $gdsIIname;
+$junk=<CELLNAME>; 
+$cdlname="$gdsIIname"."_PMC_";
+close CELLNAME;
+
+print "cellName: $cdlname\ngdsIIName: $gdsIIname\n";
+
+$cdlfile = "$cellpath/layout/cell.cdl_pmc";
+if($task eq "drc"){
+    #extraction needs gdsII file in silicon dimensions
+    $gdsIIfile = "$cellpath/layout/cell.gds2_lambda2";
+}
+else {
+    #use lambda dimensions for lvs and drc
+    $gdsIIfile = "$cellpath/layout/cell.gds2_bias";
+}
+
+# check the status of these inferred files
+if($task ne "drc"){
+    if(!(-e $cdlfile)){die "CDL file $cdlfile does not exist\n"; }
+    elsif(-z $cdlfile){die "CDL file $cdlfile is empty\n"; }
+}
+if(!(-e $gdsIIfile)){die "GDSII file $gdsIIfile does not exist\n"; }
+elsif(-z $gdsIIfile){die "GDSII file is empty\n"; }
+
+#check for bindrul and create portmap file
+$bindrul="$cellpath/layout/cell.bindrul";
+if($task eq "lvs" || $task eq "extract"){
+    $portmap=`mktemp $workdir/cell.portmap.XXXXXX`;
+    chop $portmap;
+    open PORTMAP, ">$portmap" or die "Cannot open $portmap for write\n";
+    if(-e $bindrul){
+        open BINDRUL, "<$bindrul" or die "Cannot open $bindrul for read\n";
+        while(<BINDRUL>){
+            if($_ =~ /N (\S+) (\S+)/){
+                print PORTMAP "$2 $1\n";
+            }
+        }
+        close BINDRUL;
+    }
+    else {
+        die "Cannot write portmap file; cell.bindrul does not exsist\n";
+    }
+    close PORTMAP;
+}
+
+$remotegdsII="";
+# scale the gdsII file to lambda dimensions
+if($task eq "drc"){
+    $remotegdsII=`mktemp $workdir/cell.gds2.XXXXXX`;
+    chop $remotegdsII;
+    system("$SCALE_GDSII \"$gdsIIfile\" \"$remotegdsII\"");
+    if(!(-e $remotegdsII)|| -z $remotegdsII){
+        die "GDSII Scaling failed\n";
+    }
+}
+else {
+    $remotegdsII = $gdsIIfile;
+}   
+   
+#launch job with pmc_jobsubmit script here
+$remote_cmd="$PMC_WRAPPER -workdir $workdir ";
+if($task eq "drc"){
+    $remote_cmd .= " -mode drc -gds \"$remotegdsII\" -top \"$gdsIIname\"";
+}
+elsif($task eq "lvs"){
+    $remote_cmd .= " -mode siliconlvs -gds \"$remotegdsII\" -top \"$gdsIIname\"";
+    $remote_cmd .= " -netlist \"$cdlfile\" -nettop \"$cdlname\" ";
+}
+elsif($task eq "extract"){
+    $remote_cmd .= " -mode rce -gds \"$remotegdsII\" -top \"$gdsIIname\" ";
+    $remote_cmd .= " -netlist \"$cdlfile\" -nettop \"$cdlname\" -rcemode rcc ";
+}
+
+print "Running remote command:\n$remote_cmd\n";
+$runlog=`$remote_cmd`;
+if($runlog =~ /Job-Id:(\d+)/){
+    $jobid = $1;
+    print "Submission successful. JobId is $1 ... waiting for results\n";
+}
+else {
+    die "Job submission failed\n\n$remote_cmd\n\n$runlog\n";
+}
+
+$logfile="$workdir/${task}.err";
+open LOGFILE, ">$logfile" or die "Cannot open $logfile\n";
+print "Results will be written to $logfile\n";
+# busy wait until we're able to populate the results 
+# directory with something
+$done=0;
+$populate_cmd = "$PMC_WRAPPER -workdir $workdir -populate $jobid";
+while($done == 0){
+    sleep(100);
+    `$populate_cmd`;
+    
+    #make sure that the submit directory was created else cancel
+    if(!(-e "$workdir/$jobid/submit/")){
+        print STDERR "Remote Submission Error: $cell $task job cancelled\n";
+        print "Remote Submission Error: $cell $task job cancelled\n";
+        `$PMC_JOBCANCEL -id $jobid`;
+        print LOGFILE "NOT_TESTED\n";
+        last;
+    }
+    
+    #run lvs and process results
+    if($task eq "lvs"){
+        if((-e "$workdir/$jobid/submit/lvsrun.sp")           
+           &&(-e "$workdir/$jobid/submit/$gdsIIname.lvsrep")
+           &&(-s "$workdir/$jobid/submit/$gdsIIname.lvsrep")           
+           &&(-e "$workdir/$jobid/submit/$gdsIIname.lvsrep.ext")
+           &&(-e "$workdir/$jobid/submit/svdb")
+           &&(-e "$workdir/$jobid/submit/svdb/$gdsIIname.dv")
+           &&(-e "$workdir/$jobid/submit/svdb/$gdsIIname.extf")
+           &&(-e "$workdir/$jobid/submit/svdb/$gdsIIname.lvsf")
+           &&(-e "$workdir/$jobid/submit/svdb/$gdsIIname.phdb")
+           &&(-e "$workdir/$jobid/submit/svdb/$gdsIIname.xdb")
+           ){
+            $results_str = `cat \"$workdir/$jobid/submit/$gdsIIname.lvsrep\"`;
+            if($results_str =~ /INCORRECT/){
+                $result = "FAIL";
+            }
+            elsif($results_str =~ /CORRECT/){
+                $result = "PASS";
+            }
+            else { $result = "FAIL"; }
+            
+            #make sure that the gdsII file is not borked
+            if(-e "$workdir/$jobid/submit/$gdsIIname.lvsrep"
+               && -s "$workdir/$jobid/submit/$gdsIIname.lvsrep"){
+                $results_str = `cat \"$workdir/$jobid/submit/$gdsIIname.lvsrep\"`;
+                    if($results_str =~ /\#\s+NOT\s+COMPARED\s+\#/){
+                        $result = "FAIL";
+                        $done = 1;
+                    }
+            }
+            $lvs_report = `cat \"$workdir/$jobid/submit/$gdsIIname.lvsrep\"`;
+            print LOGFILE "$lvs_report\n";
+            print LOGFILE "$result\n";
+            if($result eq "PASS"){
+                print LOGFILE "Schematic and Layout Match\n";
+            }
+            else {
+                print LOGFILE "Schematic and Layout Mismatch\n";
+                print LOGFILE "Run tar -xjf lvs.tar.bz2 for errors\n";
+            }
+                $done = 1;
+        }
+    }
+    #run drc and process results
+    elsif($task eq "drc"){
+        if((-e "$workdir/$jobid/submit/drc.log")
+           &&(-e "$workdir/$jobid/submit/$gdsIIname.drc.db")
+           &&(-e "$workdir/$jobid/submit/$gdsIIname.drc.sum")
+           &&(-e "$workdir/$jobid/submit/sdrc/$gdsIIname.drc.db")
+           &&(-e "$workdir/$jobid/submit/sdrc/$gdsIIname.drc.sum")
+           ){
+            $result = "PASS";
+            open SUM, "<$workdir/$jobid/submit/$gdsIIname.drc.sum" 
+                or die "Cannont read $gdsIIname.drc.sum\n";
+            while(<SUM>){
+                if($_ =~ /RULECHECK\s+\S+\s+\S+\s+TOTAL Result Count = (\S+)/){
+                    if($1 ne "0"){$result = "FAIL"; }
+                }
+            }
+            close SUM;
+            open SUM, "<$workdir/$jobid/submit/sdrc/$gdsIIname.drc.sum" 
+                or die "Cannont read sdrc/$gdsIIname.drc.sum\n";
+            while(<SUM>){
+                if($_ =~ /RULECHECK\s+\S+\s+\S+\s+TOTAL Result Count = (\S+)/){
+                    if($1 ne "0"){$result = "FAIL"; }
+                }
+            }
+            close SUM;
+            $done = 1;
+            print LOGFILE $result;
+           
+        }
+    }
+    #run extraction and process results
+    elsif($task eq "extract"){
+        if(-e "$workdir/$jobid/submit/$gdsIIname.lvsrep"
+           && -s "$workdir/$jobid/submit/$gdsIIname.lvsrep"){      
+            $result_str = `cat \"$workdir/$jobid/submit/$gdsIIname.lvsrep\"`;
+            if($result_str =~ /INCORRECT/){
+                $result = "FAIL";
+            }
+            elsif($result_str =~ /CORRECT/){
+                $result = "PASS"; 
+            }
+            else { $result = "FAIL"; }
+            print LOGFILE "$result\n";
+            if(-e "$workdir/$jobid/submit/${gdsIIname}_rc_cc.spf"){
+                #make sure entire spicefile is upload on Fulcrum side, for lack of a semaphore
+                $spffile = "";
+                $spffile = `cat \"$workdir/$jobid/submit/${gdsIIname}_rc_cc.spf\"`;
+                if($spffile =~ /\.ENDS/){ $done = 1; }
+            }
+            if($result eq "FAIL"){$done = 1; }
+            if($done==1 && $result ne "FAIL"){
+                #fix port here to run HSIM
+                #for now copy cell to spice file
+                open CDLIN, "<$workdir/$jobid/submit/${gdsIIname}_rc_cc.spf"
+                    or die "Cannot open spf file: $workdir/$jobid/submit/${gdsIIname}_rc_cc.spf\n";
+                open CDLOUT, ">$dir/cell.spf" 
+                    or die "Cannot write output spf file: $dir/cell.spf \n";
+                while(<CDLIN>){
+                    if($_ =~ /^.SUBCKT/){ s/$cdlname/$gdsIIname/g; print CDLOUT $_;}
+                    else { print CDLOUT $_; }
+                }
+                close CDLIN;
+                close CDLOUT;
+            }
+        }
+    }
+}    
+close LOGFILE;
+
+    

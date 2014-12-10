@@ -1,0 +1,539 @@
+#!/usr/intel/bin/perl -w
+
+use FileHandle;
+use IPC::Open2;
+
+# Estimate electromigration and current violations from extracted
+# layout.  Uses alint delay characterizations and capacitance
+# reports. Assumes only one via and minimum width wire.  Assumes 100%
+# duty cycle at nominal frequency.  Reports violations relative to
+# limit.  Filters out nodes which pass all limits.  Reports by parent
+# cell and local node, just like alint.
+
+# Author: Andrew Lines, Mike Davies
+
+use strict;
+
+my $package_root;
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+    push @INC,"$package_root/lib/perl";
+}
+
+use LveStatus;
+use LveUtil;
+my $usage =<<EOF;
+Usage: lve_em
+  [--lve-dir=]
+  [--cast-path=]
+  [--max-heap-size=]
+  [--debug=0|1]
+  [--cell=]
+  [--fulcrum-pdk-root=]  (location of Fulcrum pdk)
+  [--minimumWireWidth=]
+  [--cycleTime=}]
+  [--voltage=]
+  [--viaAvgCurrentLimit=]
+  [--wireAvgCurrentLimit=]
+  [--wireRMSCurrentLimit=]
+  [--wirePeakCurrentLimit=]
+  [--avgCurrentLimitTempCorrectionFactor=]
+  [--limit=]
+  --corner= 
+  --temp=
+  --true=
+  --temp=
+  --cc=[0|1]
+  --tau=
+  --verbose
+
+    Recursively searches for extracted alint results for the given
+    conditions.  Will report any potential electromigration or current
+    violations on local nodes of all cells found.  Assumes only 1 via,
+    xxxm wide wire, a xxxs cycle time, and xxxV supply
+    voltage.  Used technology data for specified pdk xxx
+    Run from an lve working directory (or specify the lve directory
+    with --lve-dir.)  Limit defaults to 1, and is used as the threshold 
+    to filter relative violations.  Also reports violations organized 
+    by leaf cell drivers.
+EOF
+
+
+my %my_options = ();
+# default options
+$my_options{"minimumWireWidth"} = 0.06e-6;      # minimum wire width;
+$my_options{"cycleTime"} = 1/1.35e9;        # cycle time;
+$my_options{"lve_dir"} = $ENV{PWD};
+$my_options{"cast_path"} = $ENV{CAST_PATH};
+$my_options{"pdk_root"} = $ENV{FULCRUM_PDK_PACKAGE_ROOT};
+$my_options{"debug"} = 0;
+$my_options{"voltage"} = 0.81;         # supply voltage;
+$my_options{"corner"} = "tt";
+$my_options{"true"} = "0.81";
+$my_options{"temp"} = "50";
+$my_options{"cc"} = "0";
+$my_options{"tau"} = 8;
+$my_options{"limit"} = 0;
+$my_options{"activityFactor"}=1;
+# FIXME << ENDFIXME
+$my_options{"avgCurrentLimitTempCorrectionFactor"} = 0.704;     # correction for 115C instead of 110C;
+$my_options{"viaAvgCurrentLimit"} = 0.179e-4 * $my_options{"avgCurrentLimitTempCorrectionFactor"};    # average current limit per contact;
+$my_options{"wireAvgCurrentLimit"} = 1.43e-4*1e6 * $my_options{"avgCurrentLimitTempCorrectionFactor"}; # average current limit per width of M1;
+$my_options{"wireRMSCurrentLimit"} = 7.0e-4*1e6;  # rms current limit per width of M2;
+$my_options{"wirePeakCurrentLimit"} = 18.0e-4*1e6; # peak current limit per width of M1;
+$my_options{"max_heap_size"} = "8G"; # default max-hea-size for jflat calls
+# capacitance technology data
+$my_options{"ng_cap"} = 11.0E-3; # nmos gate capacitance per m^2
+$my_options{"na_cap"} = 0;       # ndiffusion area capacitance per m^2
+$my_options{"np_cap"} = 0;       # ndiffusion perimeter capacitance per m
+$my_options{"pg_cap"} = 11.0E-3; # pmos gate capacitance per m^2
+$my_options{"pa_cap"} = 0;       # pdiffusion area capacitance per m^2
+$my_options{"pp_cap"} = 0;       # pdiffusion perimeter capacitance per m
+# ENDFIXME
+$my_options{"default_metal"} = "M1";
+$my_options{"default_via"} = "VIA1";
+$my_options{"verbose"} = 0;
+
+
+#parse options
+my @cmd_options = ();
+$my_options{"pdk_root"} = &parseArgs(\@ARGV,\@cmd_options);
+my @jauto_config_a = ();
+my @jauto_config = ();
+open (P, "$my_options{pdk_root}/share/Fulcrum/jauto/transistors.config");
+while (<P>) {
+    chomp;
+    next if /^#/ or /^\s*$/;
+    s/ //g;
+    my ($key,$value)=split(/=/);
+    $my_options{$key}=$value;
+}
+close P;
+my @lve_raw_config_a = ();
+my @lve_raw_config = ();
+&includeConfig("$my_options{pdk_root}/share/Fulcrum/lve/lve_raw.config",\@lve_raw_config_a);
+&parseArgs(\@lve_raw_config_a,\@lve_raw_config);
+foreach my $opt (@lve_raw_config, @cmd_options) {
+    if(ref($opt) eq "ARRAY") { 
+	my ($key, $value) = @{$opt};
+        print STDERR "K $key $value\n" if $key =~ /mos/;
+	$key =~ s/-/_/g;
+        if ($key =~ /^em/) {
+            my $kn=$key;
+            $kn =~ s/:.*//;
+            if ($key =~ /^$kn:(\S+):(\S+)/ )   {
+                if ( ! defined ($my_options{$kn}{$1}) or $value < $my_options{$kn}{$1}) {
+                    $my_options{$kn}{$1} = $value;
+                }
+            }
+            elsif ($key =~ /^$kn:(\S+)/ )  { $my_options{$kn}{$1} = $value; }
+        }
+	$my_options{$key} = $value;
+    }
+}
+
+$my_options{"ng_cap"} = $my_options{"unitNmosGateCapacitance[1]"}
+    if defined $my_options{"unitNmosGateCapacitance[1]"};
+$my_options{"na_cap"} = $my_options{"unitNmosDiffusionAreaCapacitance[1]"}
+    if defined $my_options{"unitNmosDiffusionAreaCapacitance[1]"};
+$my_options{"np_cap"} = $my_options{"unitNmosDiffusionPerimeterCapacitance[1]"}
+    if defined $my_options{"unitNmosDiffusionPerimeterCapacitance[1]"};
+$my_options{"pg_cap"} = $my_options{"unitPmosGateCapacitance[1]"}
+    if defined $my_options{"unitPmosGateCapacitance[1]"};
+$my_options{"pa_cap"} = $my_options{"unitPmosDiffusionAreaCapacitance[1]"}
+    if defined $my_options{"unitPmosDiffusionAreaCapacitance[1]"};
+$my_options{"pp_cap"} = $my_options{"unitPmosDiffusionPerimeterCapacitance[1]"}
+    if defined $my_options{"unitPmosDiffusionPerimeterCapacitance[1]"};
+$my_options{cycleTime} = 1.0/$my_options{em_frequency}
+    if defined($my_options{em_frequency});
+my $width=$my_options{minimumWireWidth};
+my $layer=$my_options{default_metal};
+$my_options{em_avg_wire_limit}{$layer} /= 2 if $width < $my_options{em_width_div_limit}{$layer};
+my $em_avg_wire_limit=$my_options{em_avg_wire_limit}{$layer}*$my_options{em_avg_scaling}*($width+$my_options{em_avg_width_offset}{$layer});
+my $em_rms_wire_limit=sqrt($my_options{em_rms_heating} * $my_options{em_rms_wire_limit}{$layer} *
+     ($width+$my_options{em_rms_width_offset}{$layer})*($width+$my_options{em_rms_width_offset}{$layer}) *
+        ($width + $my_options{em_rms_width_offset}{$layer} + $my_options{em_rms_width_offset1}{$layer}) /
+            ($width + $my_options{em_rms_width_offset}{$layer} + $my_options{em_rms_width_offset2}{$layer}));
+my $em_avg_via_limit=$my_options{em_avg_via_limit}{$my_options{default_via}} * $my_options{em_avg_scaling};
+# error checking
+die "$usage\n" if(!defined ($my_options{tau}) or $my_options{"tau"} eq "" or defined($my_options{"help"}) or ! defined($my_options{"cast_path"}));
+# print options we're running with 
+$my_options{verbose}=1 if $my_options{debug};
+
+if ($my_options{verbose}) {
+print "Running lve_em with the following options ..\n";
+print "--lve-dir=$my_options{lve_dir}\n";
+print "--fulcrum-pdk-root=$my_options{pdk_root}\n";
+print "--cast-path=$my_options{cast_path}\n";
+print "--corner=$my_options{corner}\n";
+print "--true=$my_options{true}\n";
+print "--temp=$my_options{temp}\n";
+print "--cc=$my_options{cc}\n";
+print "--tau=$my_options{tau}\n";
+print "--limit=$my_options{limit}\n";
+}
+
+# set up driver query command
+my $driver_query = "jflat" .
+    " --cast-path=$my_options{cast_path}" . 
+    " --max-heap-size=$my_options{max_heap_size}" .
+    " --tool=query --query-tasks=local_nodes=drivers";
+
+# set up em directives query command
+my $em_query = "jflat" .
+    " --cast-path=$my_options{cast_path}" .
+    " --max-heap-size=$my_options{max_heap_size}" .
+    " --tool=query --query-tasks=em_spec ";
+
+# initialize drivers hashtables
+my %drivers_worst = (); # worst relative violation
+my %drivers_err   = (); # error message for the worst violation
+
+# find all relevant alint results for specified conditions
+my $find_cmd;
+if (defined $my_options{cell}) {
+    my $do_cell = $my_options{cell};
+    $do_cell =~ s/\./\//g;
+    $find_cmd = "find $my_options{lve_dir}/$do_cell/ -noleaf -path '*/extracted' -prune";
+}
+else {
+    $find_cmd = "find $my_options{lve_dir} -noleaf -path '*/extracted' -prune";
+}
+
+print STDERR "Running $find_cmd\n" if $my_options{debug};
+open ALINTDIRS, "$find_cmd |"
+    or die "ERROR: can't find alint.raw files\n";
+while (my $raw = <ALINTDIRS>) {
+    chomp($raw);
+    $raw .= "/alint/$my_options{corner}/$my_options{true}V/$my_options{temp}C/alint.raw";
+    next if ! -s "$raw";
+    print STDERR "RAW $raw\n" if $my_options{debug};
+    my $cell = "";
+    my $dir = $raw;
+    $dir =~ s|/alint\.raw$||g;
+
+    # read raw file
+    my @errors = ();
+    my @raw = get_lines("$raw");
+    my $drivers_loaded = 0;
+    my $em_directives_loaded = 0;
+    my %drivers = ();
+    my %em_directives = ();
+    foreach my $line (@raw) {
+        my ($status, $task, $c, $path, %results) = parse_raw_line($line);
+        $cell = (partition_fqcnminus($c))[0];
+        my $node = $results{node};
+        if (($task eq "alint") && (defined $node) &&
+            (defined $results{delay_dn}) && 
+            (defined $results{delay_up}) &&
+            (defined $results{slow_delay_dn}) && 
+            (defined $results{slow_delay_up}) &&
+            (defined $results{fast_delay_dn}) &&
+            (defined $results{fast_delay_up}) &&
+            (defined $results{skew_dn}) &&
+            (defined $results{skew_up}) &&
+            (defined $results{slow_slew_dn}) &&
+            (defined $results{slow_slew_up}) &&
+            (defined $results{fast_slew_dn}) &&
+            (defined $results{fast_slew_up})) {
+
+            # skip wrong cc/tau
+            if ((defined $results{cc}  && ($my_options{cc}  != $results{cc})) || 
+                (defined $results{tau} && ($my_options{tau} != $results{tau}))) { next; }
+            
+            print STDERR "Parse $line\n" if $my_options{debug};
+            # get up/dn slews
+            my ($Up) = split("@",$results{fast_slew_up});
+            my ($Dn) = split("@",$results{fast_slew_dn});
+            if (($Up eq "SIGNOFF") || ($Dn eq "SIGNOFF") || 
+                ($Up eq "FAIL")    || ($Dn eq "FAIL")) { next; }
+
+            # snoop through node.out file for capacitance info
+            my $open=1;
+            if (! open OUT, "<$dir/$node/out" ) {
+                $open=0;
+                for(my $n = 0; $n < 16; $n++) {
+                    if (open OUT, "<$dir/alint.bin.$n/$node/out" ) {
+                        $open=1;
+                        last;
+                    }
+                }
+            }
+            $open or warn "ERROR: can't read $dir/$node/out";
+            my ($c, $ng, $na, $np, $pg, $pa, $pp);
+            while (my $l = <OUT> ) {
+                chomp($l);
+                if ($l =~ /^\s*Constant capacitance (.*)fF$/) {
+                    $c = $1 * 1e-15;
+                } elsif ($l =~ /^\s*Capacitance (.*)fF$/) {
+                    $c = $1 * 1e-15;
+                } elsif ($l =~ /^\s*Nmos gate area (.*)um\^2$/) {
+                    $ng = $1 * 1e-12;
+                } elsif ($l =~ /^\s*Ndiffusion area (.*)um\^2$/) {
+                    $na = $1 * 1e-12;
+                } elsif ($l =~ /^\s*Ndiffusion non-gate perimeter (.*)um$/) {
+                    $np = $1 * 1e-6;
+                } elsif ($l =~ /^\s*Ndiffusion gate perimeter (.*)um$/) {
+                    $np += $1 * 1e-6;
+                } elsif ($l =~ /^\s*Pmos gate area (.*)um\^2$/) {
+                    $pg = $1 * 1e-12;
+                } elsif ($l =~ /^\s*Pdiffusion area (.*)um\^2$/) {
+                    $pa = $1 * 1e-12;
+                } elsif ($l =~ /^\s*Pdiffusion non-gate perimeter (.*)um$/) {
+                    $pp = $1 * 1e-6;
+                } elsif ($l =~ /^\s*Pdiffusion gate perimeter (.*)um$/) {
+                    $pp += $1 * 1e-6;
+                }
+            }
+            close OUT;
+
+            # check for problems with capacitance info
+            if ((!defined $ng) || (!defined $na) || (!defined $np) ||
+                (!defined $pg) || (!defined $pa) || (!defined $pp)) {
+                push @errors, "ERROR: $node has no capacitance data";
+                next;
+            }
+
+            # compute total capacitance
+            my $Cap = $c + 
+		$ng * $my_options{ng_cap} + 
+		$na * $my_options{na_cap} + 
+		$np * $my_options{np_cap} +
+                $pg * $my_options{pg_cap} + 
+		$pa * $my_options{pa_cap} + 
+		$pp * $my_options{pp_cap};
+            
+            # convert 1/3 to 2/3 slews in ps to full swing times in seconds
+            $Up = 22 if (!defined ($Up) or $Up == 0);
+            $Dn = 22 if (!defined ($Dn) or $Dn == 0);
+
+            $Up *= 3e-12;
+            $Dn *= 3e-12;
+
+            # compute currents
+            my $Activity = $my_options{activityFactor};
+            my $DC_width = $my_options{"minimumWireWidth"};
+            my $DC_vias  = 1;
+            my $AC_width = $my_options{"minimumWireWidth"};
+            my $Reset_node=0;
+	    my $current_layer = $my_options{default_metal};
+	    my $current_via = $my_options{default_via};
+            my ($Jav_wire_err,$Jav_via_err,$Jrms_wire_err,$Jpeak_wire_err,
+                $worst) = compute_currents($Activity,$DC_width,$DC_vias,
+                                           $AC_width,$Up,$Dn,$Cap,$current_layer,$current_via);
+
+
+            # if the node fails, look up wiring directives from the cast
+            if ($worst>$my_options{limit}) {
+                if ($em_directives_loaded==0) {
+                    %em_directives = query_em_directives($cell);
+                    $em_directives_loaded = 1;
+                }
+                if (defined $em_directives{$node}) {
+                    ($Activity,$DC_width,$DC_vias,$AC_width,$Reset_node) = 
+                        @{$em_directives{$node}};
+                    $Reset_node = 1 if defined($Reset_node) and $Reset_node eq "1";
+                }
+                elsif ($my_options{verbose}) {
+                    warn "Didn't find wiring directives for node $node in ".
+                         "cell\n  $cell.\n";
+                }
+                $Activity = 1e-6 if $Activity == 1 and $Reset_node == 1;
+                ($Jav_wire_err,$Jav_via_err,$Jrms_wire_err,$Jpeak_wire_err,
+                $worst) = compute_currents($Activity,$DC_width,$DC_vias,
+                                           $AC_width,$Up,$Dn,$Cap,$current_layer,$current_via);
+            }
+
+            # report if worst violation still exceeds the limit
+            if ($worst>$my_options{limit}) {
+                $Cap            = round_float($Cap*1e15,-2);
+                $Jav_via_err    = round_float($Jav_via_err,-4);
+                $Jav_wire_err   = round_float($Jav_wire_err,-4);
+                $Jrms_wire_err  = round_float($Jrms_wire_err,-4);
+                $Jpeak_wire_err = round_float($Jpeak_wire_err,-4);
+                my $err = "Cap=${Cap}fF Jav_via_err=$Jav_via_err" .
+                    " Jav_wire_err=$Jav_wire_err Jrms_wire_err=$Jrms_wire_err" .
+                    " Jpeak_wire_err=$Jpeak_wire_err";
+                $err .= " Up=$Up Dn=$Dn Activity=$Activity DC_vias=$DC_vias ".
+                        " DC_width=$DC_width AC_width=$AC_width" if ($my_options{debug});
+                push @errors, "$node $err";
+                
+                # load driver database unless already cached
+                if ($drivers_loaded==0) {
+                    %drivers = query_drivers($cell);
+                    $drivers_loaded = 1;
+                }
+
+                # find driver and keep track of worst error
+                my $driver = $drivers{$node};
+                if (!defined $driver) { $driver = "NOT_FOUND($cell/$node)"; }
+                if (!defined $drivers_worst{$driver} ||
+                        ($worst>$drivers_worst{$driver})) {
+                    $drivers_worst{$driver} = $worst;
+                    $drivers_err{$driver}   = $err;
+                }
+            }
+        }
+    }
+
+    # print error report for this cell
+    my $celldir = $cell;
+    $celldir =~ s/\./\//g;
+    $celldir=$my_options{"lve_dir"}."/$celldir";
+    my $accurateprops="$celldir/cell.localprops.routed.accurate";
+    if (@errors>0) {
+        print ("CELL $cell {\n");
+        my %nodes=();
+        foreach my $err (@errors) {
+            my $node=$err;
+            $node =~ s/^\s+//;
+            $node =~ s/\s.*//;
+            $nodes{$node}=1;
+            print ("  $err\n");
+        }
+        print ("}\n\n");
+        open (O, ">$accurateprops.tmp");
+        open (I, "<$celldir/cell.localprops.routed");
+        while (<I>) {
+            chomp;
+            s/^SIGNOFF //;
+            s/^"SIGNOFF" //;
+            my ($node, $rest)=split(/ /, $_, 2);
+            print O "$_\n" if defined ($nodes{$node});
+        }
+        close I;
+        close O;
+        if ( ! -s "$accurateprops") {
+            rename "$accurateprops.tmp", $accurateprops;
+            print STDERR "$celldir/cell.localprops.routed.accurate added.\n";
+        }
+        else {
+            my $dif=`diff "$accurateprops.tmp" "$accurateprops" | wc -l`;
+            chomp $dif;
+            if ($dif > 0) {
+                print STDERR "$accurateprops changed.\n";
+                rename "$accurateprops.tmp", $accurateprops;
+            }
+            else {
+                print STDERR "$accurateprops unchanged.\n";
+                unlink "$accurateprops.tmp";
+            }
+        }
+    }
+    else {
+        if ( -s "$accurateprops") {
+            print STDERR "$accurateprops removed.\n";
+            unlink $accurateprops;
+            `touch "$accurateprops"`;
+        }
+    }
+}
+close ALINTDIRS;
+
+# print sorted drivers output
+print "DRIVERS {\n";
+foreach my $driver (sort keys %drivers_err) {
+    print "  $driver $drivers_err{$driver}\n";
+}
+print "}\n\n";
+
+# use cast_query to find all drivers of a localnode
+sub query_drivers {
+    my ($cell) = @_;
+    my %drivers = ();
+    my @lines = split("\n",`$driver_query --cell=\"$cell\"`);
+    foreach my $line (@lines) {
+        chomp($line);
+        my @args = split(" ",$line);
+        if (($args[0] eq "SIGNOFF") || (@args<13)) { next; }
+        $drivers{$args[0]} = $args[12];
+    }
+    return %drivers;
+}
+
+# use cast_query to find all em directives for the cell's localnodes
+sub query_em_directives {
+    my ($cell) = @_;
+    my %directives = ();
+    open QUERY, "$em_query --cell=\"$cell\"|";
+    my $ignore_fist = <QUERY>;
+    while (<QUERY>) {
+        my ($node,$activity,$dc_width,$dc_vias,$ac_width,$ac_vias,$wirewidth,$reset) 
+            = split /\s+/, $_;
+        $activity = 1.0    if ($activity == -1);
+        $dc_width = $my_options{"minimumWireWidth"} if ($dc_width == -1);
+        $dc_vias  = 1      if ($dc_vias == -1);
+        $ac_width = $my_options{"minimumWireWidth"} if ($ac_width == -1);
+        $ac_width = $wirewidth if ($wirewidth > $ac_width);
+        $reset = "u" if ! defined $reset;
+        $directives{$node} = [ $activity, $dc_width, $dc_vias, $ac_width, $reset ];
+    }
+    close QUERY;
+    return %directives;
+}
+
+# common code for calculating ave/rms/peak current failure ratios
+sub compute_currents {
+    my ($Activity,$DC_width,$DC_vias,$AC_width,$Up,$Dn,$Cap,$current_layer,$current_via) = @_;
+
+    # compute average unidirectional current
+    #my $Jav_wire = $Cap*$my_options{voltage}/$DC_width/$my_options{cycleTime}*$Activity;
+    my $Jav_wire = $Cap*$my_options{voltage}/$my_options{cycleTime}*$Activity;
+    my $Jav_via  = $Cap*$my_options{voltage}/$DC_vias/$my_options{cycleTime}*$Activity;
+        
+    # curse divide by zero errors!
+
+    $Up = 66e-12 if (!defined ($Up) or $Up == 0);
+    $Dn = 66e-12 if (!defined ($Dn) or $Dn == 0);
+
+    # compute root-mean-squared bidirectional current
+    my $Jrms = $Cap*$my_options{voltage}*sqrt($Activity*(1/($Up*$my_options{cycleTime}) + 1/($Dn*$my_options{cycleTime})));
+    
+    # compute peak bidirectional current adjusted by duty cycle
+    my $Jpeak_up = $Cap*$my_options{voltage}*sqrt(2*$Activity/($Up*$my_options{cycleTime}))/$AC_width;
+    my $Jpeak_dn = $Cap*$my_options{voltage}*sqrt(2*$Activity/($Dn*$my_options{cycleTime}))/$AC_width;
+    my $Jpeak = ($Jpeak_dn>$Jpeak_up) ? $Jpeak_dn : $Jpeak_up;
+
+    my $Jav_wire_limit = $em_avg_wire_limit;
+    my $Jav_via_limit = $em_avg_via_limit;
+    my $Jrms_wire_limit = $em_rms_wire_limit;
+    #my $Jrms_via_limit = $my_options{em_rms_via_limit}{$current_via} *
+    #sqrt($my_options{em_rms_heating}) * $DC_vias;
+
+    # compute relative electromigration violations
+    #my $Jav_wire_err   = $Jav_wire/$my_options{"wireAvgCurrentLimit"};
+    my $Jav_wire_err   = $Jav_wire/$Jav_wire_limit;
+    #my $Jav_via_err    = $Jav_via/$my_options{"viaAvgCurrentLimit"};
+    my $Jav_via_err    = $Jav_via/$Jav_via_limit;
+    #my $Jrms_wire_err  = $Jrms/$my_options{"wireRMSCurrentLimit"};
+    my $Jrms_wire_err  = $Jrms/$Jrms_wire_limit;
+    my $Jpeak_wire_err = $Jpeak/$my_options{"wirePeakCurrentLimit"};
+    
+    # max up worst violation
+    my $worst = $Jav_via_err;
+    if ($Jav_wire_err>$worst)   {$worst = $Jav_wire_err;}
+    if ($Jrms_wire_err>$worst)  {$worst = $Jrms_wire_err;}
+    if ($Jpeak_wire_err>$worst) {$worst = $Jpeak_wire_err;}
+    
+    return ($Jav_wire_err,$Jav_via_err,$Jrms_wire_err,$Jpeak_wire_err,$worst);
+}
+

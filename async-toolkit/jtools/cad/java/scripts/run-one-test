@@ -1,0 +1,30 @@
+#!/bin/sh
+
+#
+# Copyright 2000 Asynchronous Digital Design.  All rights reserved.
+#
+# $Id$
+#
+# author: Aaron Denney
+#
+# runs one test.  See
+# http://internal/~denney/software-regression-test-harness/
+
+testname="$1"
+location="$2"
+if [ -z "$location" ]; then
+	location=`pwd`/classes
+fi
+testroot=`pwd`/classes
+if [ ! -x "${testname}/run-this-test" ]; then
+	echo "No such test $testname"
+	exit 2
+fi
+(cd ${testname}; env - ./run-this-test ${location} ${testroot}) 3>&1
+if [ $? != 0 ]; then
+	echo test failed
+	exit 1
+else
+	echo test succeeded
+	exit 0
+fi

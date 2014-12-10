@@ -1,0 +1,91 @@
+#!/usr/intel/bin/perl -w
+
+use strict;
+use Getopt::Long;
+
+
+my $cellname = "";
+my $alint_path = "";
+my $fanoutfile = "";
+my $portfile = "";
+my $result = GetOptions("cellName=s"           => \$cellname,
+                        "fanoutfile=s"           => \$fanoutfile,
+                        "portfile=s"           => \$portfile,
+                        "alint-path=s"           => \$alint_path);
+
+#parse cell port file
+my %POlist=();
+open FP, "<$portfile" or die "Cannot open $portfile\n";
+while(<FP>){
+    chomp;
+    if($_ =~ /^\+(\S+)/){
+      $POlist{$1}=1;
+    }
+}
+close FP;
+
+my %isFanoutPO=();
+#parse fanout file
+open FNS, "<$fanoutfile" or die "Cannot open $fanoutfile\n";
+while(<FNS>){
+    chomp;
+    my $line=$_;
+    my($inputnode, @fanouts) = split(/ /,$_);
+    if(not defined $isFanoutPO{$inputnode}){
+      $isFanoutPO{$inputnode}=0;
+    }
+    foreach my $fanout (@fanouts){
+       my($fanout_cell,$in,$out)=split("/",$fanout);
+       if($fanout_cell eq $cellname ){
+          if(defined $POlist{$out}){
+             #this node drive output port
+             $isFanoutPO{$inputnode}=1;      
+          }
+       }
+    }
+}
+close FNS;
+
+#find node bin directory
+my $alint_in_path="$alint_path/alint_parallel";
+
+if(! -d $alint_in_path){
+  warn "Warning: cannot find directory $alint_in_path\n";
+  exit;
+}
+
+my @alint_in_list=`ls \"$alint_in_path/alint.in.\"*`;
+chomp @alint_in_list;
+
+foreach my $alint_in (@alint_in_list){
+  #get bin
+  my $bin = 0;
+  if ($alint_in =~ /\.(\d+)$/) {
+     $bin = $1;
+  }
+  my @nodelist = `grep '^alint' \"$alint_in\"`;
+  chomp @nodelist;
+  foreach my $item (@nodelist){
+    my($pre,$node)=split(" ",$item);
+    if((not defined $isFanoutPO{$node}) or ( $isFanoutPO{$node}==0)){
+      print "$node has no PO fanout, delete all trace file, in bin=$bin\n";
+      system("rm -f \"$alint_path/alint.bin.$bin/$node/\"*.names");
+      system("rm -f \"$alint_path/alint.bin.$bin/$node/\"*.trace");
+      
+    }else{
+      opendir DIR, "$alint_path/alint.bin.$bin/$node" ||
+          die "Couldn't read alint directory $alint_path/alint.bin.$bin/$node\n";
+      my @node_files = readdir DIR;
+      closedir DIR;
+      print "$node has PO fanout, save bump trace file, in bin=$bin\n";
+      foreach my $file (@node_files){
+          if($file =~ /\.(trace|names)$/){
+            my $type=$1;
+            if($file !~ /bump_(up|dn)\S+\.$type$/){
+              system("rm -f \"$alint_path/alint.bin.$bin/$node/$file\"");
+            }
+          }
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+N=2
+port.1.opt2=c
+port.1.opt=c
+port.2.opt2=c
+port.2.opt=c
+port.3.opt2=a
+topdir=.
+variant=ccc

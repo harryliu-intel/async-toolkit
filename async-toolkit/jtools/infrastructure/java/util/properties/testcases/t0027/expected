@@ -1,0 +1,11 @@
+port.1.opt=false
+port.10.opt=false
+port.2.opt=true
+port.3.opt=true
+port.4.opt=true
+port.5.opt=false
+port.6.opt=false
+port.7.opt=false
+port.8.opt=false
+port.9.opt=false
+topdir=.

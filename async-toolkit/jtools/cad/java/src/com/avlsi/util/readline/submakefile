@@ -1,0 +1,31 @@
+ifdef DIR 
+$(error DIR is defined!)
+endif
+
+DIR=com/avlsi/util/readline
+
+ifeq ($(UNAME),SunOS)
+$(DIR)/libReadline.so: $(patsubst %, $(DIR)/%, Bind.o Completion.o Keymap.o Modify.o Readline.o Redisplay.o)
+	/usr/ccs/bin/ld -G -o $@ $^ -lcurses -L /usr/local/lib -lreadline
+else
+$(DIR)/libReadline.so: $(patsubst %, $(DIR)/%, Bind.o Completion.o Keymap.o Modify.o Readline.o Redisplay.o)
+	$(CC) -shared -Wl,-soname,libReadline.so -o $@ $^ # -L /usr/local/lib -lreadline -lcurses (linking with readline and curses explicitly triggers an ld bug on odin.)
+endif
+
+readline: $(DIR)/libReadline.so
+
+readline_clean:
+	-rm com/avlsi/util/readline/*.o \
+	    com/avlsi/util/readline/libReadline.so \
+	    com/avlsi/util/readline/Readline.h
+
+install_readline: readline
+	cp com/avlsi/util/readline/libReadline.so /usr/local/jars/native
+
+$(DIR)/%.o : $(DIR)/%.c $(DIR)/Readline.h $(DIR)/*.h
+	$(CC) -Wall $(CPPFLAGS) -c $< -o $@
+
+$(DIR)/Readline.h: ../classes/$(DIR)/Readline.class
+	$(JAVAH) -jni -o $@ $(subst /,.,"$(@D)/Readline")
+
+DIR=

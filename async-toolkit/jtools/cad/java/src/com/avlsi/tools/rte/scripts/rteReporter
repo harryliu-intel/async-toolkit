@@ -1,0 +1,604 @@
+#!/usr/intel/bin/perl
+
+use strict;
+use warnings;
+use feature ":5.10";
+
+BEGIN {
+    # Path + script name
+    my $scriptPath = $0;
+    # Extract script name
+    my @tmp = split('/', $0);
+    my $exe = $tmp[(@tmp)-1];
+    # Remove script name from end of path
+    $scriptPath =~ s/$exe$//;
+    if(! ($scriptPath =~ /^\//)) {
+        # Relative path, so convert to full path
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $scriptPath = $pwd . "/$scriptPath/../lib/perl";
+        chdir $scriptPath;
+        $scriptPath = `pwd`;
+        chomp $scriptPath;
+        chdir $pwd; 
+        push @INC, "$scriptPath";
+    }else
+    {
+        # Already full path
+        push @INC, "$scriptPath/../lib/perl";
+    }
+}
+
+use rteLib;
+use Getopt::Long qw(:config no_ignore_case);
+use Data::Dumper;
+use Pod::Usage;
+use XML::Simple;
+
+my $cmdLine = cmdLineOpts(@ARGV);
+
+my $db = rteLib::openCellDatabase($cmdLine);
+
+my $cellList = getAllCells($cmdLine, $db);
+
+reportResults($cmdLine, $db, $cellList);
+
+exit(0);
+
+#---------------------------------------------------------
+sub cmdLineOpts
+{
+    my %cmdLine = ( cellDb => "rteResults.xml",
+                    masterCellDb => "",
+                    castQueryMem => 3000,
+                    castPath => ".",
+                    suiteFile => "",
+                    cellList => [],
+                    depth => -1,
+                    output => "result.html"
+                    );
+
+    my @values;
+    GetOptions('h|help' => sub { pod2usage( { -verbose => 2, -noperldoc=>1}) },
+               'c|cell=s' => \@{$cmdLine{cellList}},
+               'd|depth=i' => \$cmdLine{depth},
+               'db|cellDb=s' => \$cmdLine{cellDb},
+               'masterCellDb=s' => \$cmdLine{masterCellDb},
+               'o|output=s' => \$cmdLine{output},
+               'cast-path=s' => \$cmdLine{castPath},
+               'cast-query-mem=i' => \$cmdLine{castQueryMem},
+               's|suiteFile=s' => \$cmdLine{suiteFile}
+              );
+
+    $cmdLine{cellList} = rteLib::expandOption($cmdLine{cellList});
+
+    if( (scalar(@{$cmdLine{cellList}}) == 0) &&
+        $cmdLine{suiteFile} eq "")
+    {
+        printf("ERROR a cell must be specified via the --cell or --suiteFile options \n");
+        pod2usage( { -exitval => 2,
+                     -verbose => 2,
+                     -noperldoc => 1});
+    }else
+    {
+        #printf("Processing cells: %s\n", join(",", @{$cmdLine{cellList}}));
+    }
+
+    return \%cmdLine;
+}
+
+# For each cell specified on the command line:
+#   run cast-query --task=subcell_tree
+#   convert hierarchy into cell list
+# Return array reference of cells
+sub getAllCells
+{
+    my ($cmdLine, $db) = @_;
+
+    printf("Retrieving cell hierarchy...\n");
+    my $cellList = [];
+    for(my $i = 0 ; $i < scalar(@{$cmdLine->{cellList}}); $i++)
+    {
+        my $cell = $cmdLine->{cellList}->[$i];
+
+        if($cmdLine->{depth} == 0)
+        {
+            # If we don't have to descend, save time
+            # don't run cast_query
+            push(@{$cellList},$cell);
+        }else
+        {
+            # Run cast queury and get full cell hierarchy
+            my $tmpList = getCellList($cmdLine, $cell);
+            $cellList = [(@{$cellList}, @{$tmpList})];
+        }
+    }
+
+    #print Dumper($cellHierarchyList);
+    if(!$cmdLine->{suiteFile} eq "")
+    {
+        # If a suite file is specified add those cells in
+        my $cells = rteLib::readSuiteFile($cmdLine);
+
+        foreach my $c (@{$cells})
+        {
+            push(@{$cellList}, $c->{name});
+            #$tmp{$c->{name}} = 1;
+        }
+        #$cellList = [(@{$cellList}, @{$cells})];
+    }
+
+    return $cellList;
+}
+
+# Run cast-query -task=subcell_tree
+# Parse tree and based on --depth option
+# return cell hierarchy
+sub getCellList
+{
+    my ($cmdLine, $cell) = @_;
+
+    my $cellList = [];
+
+    # Put qrsh mem in M 
+    # and cast_query in M (1000 base)
+
+    my $nbcommand = "nbjob run";
+    my $nbparams = "--mode interactive --class \"fVM>$cmdLine->{castQueryMem}\" ".
+                   " --class-reservation \"fVM=$cmdLine->{castQueryMem}\""; 
+    my $fulcrumCmd= "fulcrum cast_query --task=subcell_tree "
+                     ."--max-heap-size=$cmdLine->{castQueryMem}M ".
+                     "--cast-path=$cmdLine->{castPath} --cell=\"$cell\"";
+    my $cmd = sprintf("%s %s %s",$nbcommand,$nbparams,$fulcrumCmd); 
+     
+
+
+    #printf("Running $cmd\n");
+    my $HANDLE;
+    open ($HANDLE, $cmd . "|");
+
+    my $lastDepth = -1;
+    while(<$HANDLE>)
+    {
+        chomp($_);
+        #printf("#$_\n");
+        # the lines will look like:
+        #  Subcell tree of ....
+        #  chip.alta.fc.snf.SNF_76
+        #   |
+        #   +--chip.alta.fc.snf.core.SNF_CORE_80
+        #   |    |
+        #   |    +--chip.alta.fc.snf.core.OUTPUT_CORE
+
+        if($_ =~ /Subcell tree of/)
+        {
+            #skip
+        }elsif($_ =~ /Your job has been queued/){
+            #skip
+        }elsif($_ =~ /Job ([0-9]+) has started/){
+            #skip
+        }elsif($_ =~ /[a-zA-Z0-9]+/)
+        {
+            # First only look at lines that have cell names
+
+            #printf("$_\n");
+            # Remove spaces at the beginning
+            $_ =~ s/^  //;
+            #printf("$_\n");
+            # convert groups of 4 spaces to , => 
+            $_ =~ s/[ ]{4}/;/g;
+            #printf("$_\n");
+            # the string will now look like one of the following:
+            # [CELLNAME]
+            # +--[CELLNAME]
+            # |,|,|,+--[CELLNAME]
+            # now convert to an array
+            my @line = split(/;/, $_);
+            ##printf("split:%s\n", join(",", @line));
+
+            my $fqn;
+
+            if($line[scalar(@line)-1] =~ /^[ ]*\+--([a-zA-Z0-9()\.-_,{}]+)/)
+            {
+                $fqn = $1;
+            }elsif($line[scalar(@line)-1] =~ /^[ ]*([a-zA-Z0-9()\.-_,{}]+)/)
+            {
+                $fqn = $1;
+            }
+
+            #printf("Cell: $fqn depth: $depth\n");
+            push(@{$cellList}, $fqn);
+        }
+    }
+
+    return $cellList;
+}
+
+sub reportResults
+{
+    my ($cmdLine, $db, $cellList) = @_;
+
+    printf("Building result html page...\n");
+    # First sort the cell list (and remove duplicates):
+#print Dumper($cellList);
+    my %tmp = map {$_, 1} @{$cellList};
+    $cellList = [sort(keys %tmp)];
+
+    my $fh;
+    open($fh, ">", $cmdLine->{output});
+
+    printFileHeader($fh);
+    printf $fh ("<BR><BR><H1>RTE Results for cell: %s</H1><BR>\n", join(",", @{$cmdLine->{cellList}}));
+    printf $fh ("<H3><a href=\"#RTEIGNORECELLS\">Rte_Ignore table</a></H3>\n");
+    printf $fh ("<H3><a href=\"#FRAGMENTCELLS\">Fragment table</a></H3><BR>\n");
+    printTableHeader($fh);
+    printTableColumnTitles($fh);
+    my $i = 0;
+    foreach my $cell (@{$cellList})
+    {
+        if(defined $db->{rteLib::dbEscapeCellName($cell)})
+        {
+            # Don't report rteIgnore or fragment cells (FIXME: make this optional)
+            if( !(
+                    (isRteIgnore($db->{rteLib::dbEscapeCellName($cell)}) == 1) ||
+                    ($db->{rteLib::dbEscapeCellName($cell)}->{fragment} == 1) 
+                 ))
+            {
+                printTableEntry($fh, $cell, $db);
+                $i++;
+            }
+        }else
+        {
+            printf("WARNING: unable to find cell $cell in database\n");
+            printTableEntry($fh, $cell, $db);
+        }
+
+        if($i == 31)
+        {
+            printTableColumnTitles($fh);
+            $i = 0;
+        }
+    }
+    printTableTail($fh);
+
+    print $fh "<BR><BR><H2><CENTER><a name=\"RTEIGNORECELLS\">RTE_IGNORE Cells</a></H2></CENTER>";
+
+    printTableHeader($fh);
+    printIgnoreTableColumnTitles($fh);
+    $i = 0;
+    foreach my $cell (@{$cellList})
+    {
+        if(defined $db->{rteLib::dbEscapeCellName($cell)})
+        {
+            # Rport rteIgnore or fragment cells (FIXME: make this optional)
+            if( ( isRteIgnore($db->{rteLib::dbEscapeCellName($cell)}) == 1) )
+            {
+                my $rteIgnore = $db->{rteLib::dbEscapeCellName($cell)}->{rteIgnore};
+                my $file = $db->{rteLib::dbEscapeCellName($cell)}->{outputDir} . "/" .
+                        rteLib::replaceParenthesisWith_($db->{rteLib::dbEscapeCellName($cell)}->{cellName} . "/" .
+                                    $db->{rteLib::dbEscapeCellName($cell)}->{cellName} . ".output");
+                print $fh "<TR><TD>$cell</TD>
+<TD><CENTER>$rteIgnore</CENTER></TD
+<TD><A HREF=\"$file\">output</A></TD>
+</TR>";
+                $i++;
+            }
+        }else
+        {
+            printTableEntry($fh, $cell, $db);
+        }
+
+        if($i == 31)
+        {
+            printIgnoreTableColumnTitles($fh);
+            $i = 0;
+        }
+    }
+
+    printTableTail($fh);
+
+    print $fh "<BR><BR><H2><CENTER><a name=\"FRAGMENTCELLS\">FRAGMENT Cells</a></H2></CENTER>";
+    printTableHeader($fh);
+    printFragmentTableColumnTitles($fh);
+    $i = 0;
+    foreach my $cell (@{$cellList})
+    {
+        if(defined $db->{rteLib::dbEscapeCellName($cell)})
+        {
+            # Rport rteIgnore or fragment cells (FIXME: make this optional)
+            if( ($db->{rteLib::dbEscapeCellName($cell)}->{fragment} == 1) )
+            {
+                my $fragment = $db->{rteLib::dbEscapeCellName($cell)}->{fragment};
+                my $file = $db->{rteLib::dbEscapeCellName($cell)}->{outputDir} . "/" .
+                        rteLib::replaceParenthesisWith_($db->{rteLib::dbEscapeCellName($cell)}->{cellName} . "/" .
+                                    $db->{rteLib::dbEscapeCellName($cell)}->{cellName} . ".output");
+                print $fh "<TR><TD>$cell</TD>
+<TD><CENTER>$fragment</CENTER></TD>
+<TD><A HREF=\"$file\">output</A></TD>
+</TR>";
+                $i++;
+            }
+        }else
+        {
+            printTableEntry($fh, $cell, $db);
+        }
+
+        if($i == 31)
+        {
+            printFragmentTableColumnTitles($fh);
+            $i = 0;
+        }
+    }
+
+    printTableTail($fh);
+
+    printFileTail($fh);
+
+    close($fh);
+}
+
+sub printFileHeader
+{
+    my ($fh) = @_;
+
+    my $date = localtime;
+    print $fh 
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\"\"http://www.w3.org/TR/REC-html40/loose.dtd>
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>
+Simulations Statistics $date
+</TITLE>
+<LINK REL =\"stylesheet\" TYPE=\"text/css\" HREF=\"stylesheet.css\" TITLE=\"Style\">
+</HEAD>
+<BODY BGCOLOR=\"#ffffff\">
+";
+}
+
+sub printTableHeader
+{
+    my ($fh) = @_;
+
+    print $fh 
+"<TABLE BORDER=\"1\" WIDTH=\"100%\" CELLPADDING=\"0\" CELLSPACING=\"1\">
+";
+}
+
+sub printTableColumnTitles
+{
+    my ($fh) = @_;
+    print $fh
+"<TR>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Cell</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Pass/Fail</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Unimplemented Cells</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Reset Stress Run</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Cosim Pass/Fail</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Rule Coverage</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Csp Coverage</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Node Coverage</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Output</CENTER></B></TD>
+</TR>
+";
+}
+
+sub printIgnoreTableColumnTitles
+{
+    my ($fh) = @_;
+    print $fh
+"<TR>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Cell</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Rte Ignore</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Output</CENTER></B></TD>
+</TR>
+";
+}
+
+sub printFragmentTableColumnTitles
+{
+    my ($fh) = @_;
+    print $fh
+"<TR>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Cell</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Fragment</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Output</CENTER></B></TD>
+</TR>
+";
+}
+
+sub getCoverageColor {
+    my ($result) = @_;
+    return do { given ($result) {
+        "white"     when /^Unknown/;
+        "white"     when /^NA/;
+        "red"       when /^error/;
+        "limegreen" when $_ > 85;
+        "yellow"    when $_ > 50;
+        "red";
+    }};
+}
+
+sub getColorPassUnknown {
+    my ($result) = @_;
+    return do { given ($result) {
+        "limegreen" when /^Pass/;
+        "white"     when /^Unknown/;
+        "red";
+     }};
+}
+
+sub getResults
+{
+    my ($cell, $db) = @_;
+    
+    my $data = $db->{rteLib::dbEscapeCellName($cell)};
+    my %result = %{rteLib::getResults($data)};
+
+    $result{indexFile} = $data->{outputDir} . "/" .
+                rteLib::replaceParenthesisWith_($data->{cellName}) .
+                "/modules/" .
+                join('/', split(/\./, $cell)) . ".html";
+
+    $result{coverageColor} = getCoverageColor($result{coverage});
+    $result{cspCoverageColor} = getCoverageColor($result{cspCoverage});
+    $result{ruleCoverageColor} = getCoverageColor($result{ruleCoverage});
+
+    $result{cosimFailColor} = do { given ($result{cosimFail}) {
+        "yellow" when /^NA/;
+        getColorPassUnknown($_);
+    }};
+
+    $result{passFailColor} = 
+        getColorPassUnknown($result{passFail});
+    $result{unimplementedCellsColor} =
+        getColorPassUnknown($result{unimplementedCells});
+    $result{resetStressRunColor} =
+        getColorPassUnknown($result{resetStressRun});
+
+    return \%result;
+}
+
+sub printTableEntryLine
+{
+    my ($value, $color) = @_;
+
+    return "<TD NOWRAP BGCOLOR=$color><CENTER>$value</CENTER></TD>\n";
+}
+sub printTableEntry
+{
+    my ($fh, $cell, $db) = @_;
+
+    if(defined($db->{rteLib::dbEscapeCellName($cell)}))
+    {
+        my $result = getResults($cell, $db);
+
+        print $fh
+"<TR>
+<TD NOWRAP>" . $db->{rteLib::dbEscapeCellName($cell)}->{cellName} . "</TD>\n" .
+printTableEntryLine($result->{passFail}, $result->{passFailColor}) .
+printTableEntryLine($result->{unimplementedCells}, $result->{unimplementedCellsColor}) .
+printTableEntryLine($result->{resetStressRun}, $result->{resetStressRunColor}) . 
+printTableEntryLine($result->{cosimFail}, $result->{cosimFailColor}) . 
+printTableEntryLine($result->{ruleCoverage}, $result->{ruleCoverageColor}) . 
+printTableEntryLine($result->{cspCoverage}, $result->{cspCoverageColor}) . 
+printTableEntryLine($result->{coverage}, $result->{coverageColor}) . 
+"<TD NOWRAP><A HREF=\"" . $result->{indexFile} . "\">output</A></TD>
+</TR>";
+    }else
+    {
+        print $fh
+"<TR>
+<TD NOWRAP>" . $cell . "</TD>
+<TD NOWRAP BGCOLOR=red><CENTER>CELL MISSING FROM DB</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+<TD NOWRAP BGCOLOR=red><CENTER>-1</CENTER></TD>
+</TR>";
+    }
+}
+
+sub printTableTail
+{
+    my ($fh) = @_;
+    print $fh "</TABLE>";
+}
+
+sub printFileTail
+{
+    my ($fh) = @_;
+    print $fh
+"</BODY>
+</HTML>";
+}
+
+sub isRteIgnore
+{
+    my ($cell) = @_;
+
+    if( ($cell->{version} <= 4) &&
+        ($cell->{rteIgnore})    && 
+        ($cell->{coverage} == 0)
+      )
+    {
+            return 1;
+    }elsif( ($cell->{version} >= 5) &&
+            ($cell->{rteIgnore}) &&
+            ($cell->{passed} eq "NOTTESTED"))
+    {
+        return 1;
+    }else
+    {
+        return 0;
+    }
+}
+
+__END__
+
+=head1 NAME
+
+rteReporter - Give a cell, create an RTE run report
+
+=head1 SYNOPSYS
+
+rteReporter [OPTIONS] [B<-c>=string] [B<-s>=string]
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-c>=string B<--cell>=string
+
+The fully qualified cell name. This option may be specified more than
+once, and/or may include a comma separated list of cells: --cell=fqcn1,fqcn2
+--cell=fqcn3
+
+=item B<-s>=string B<--suiteFile>=string
+
+A text file containing a list of cells to report. Empty lines are ignored. 
+
+=item B<-d>=integer B<--depth>=integer
+
+Tells tool to run cells N hierarchy levels down.  For example, a value of 3
+will report the given cell, plus cells up to 3 levels down. A value of 0 means
+don't descend, and -1 means descend as far as possible. Default value is -1
+
+=item B<-db>=string B<--cellDb>=string
+
+Points to the xml file that contains the RTE run results. If not specified,
+the default file: ./rteResults.xml will be used
+
+=item B<-o>=string B<--output>=string
+
+The html file name the report will be stored in
+
+=item B<--cast-path>=string
+
+Path to cast files, : separated
+
+=item B<--cast-query-mem>=integer
+
+Amount of memory to use when running cast_query. Default is 3000
+
+=item B<-masterCellDb>=file
+
+This allows a master cell database to be specified. This database can provide 
+a base set of run results. This database is read before the local cell database
+(specified by cellDb). Any results read from the local cell database will 
+override results found in the master database. This option would be used if, 
+for example, you wanted to rerun several cells out of a run someone else ran. 
+You would specify their cell database as the master database, and a local 
+file for your own database.
+
+=back
+
+=head1 AUTHOR
+
+Copyright (C) 2011 Fulcrum Microsystem, Inc. All rights reserved
+
+=cut
+

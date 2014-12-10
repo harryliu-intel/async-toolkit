@@ -1,0 +1,8 @@
+<options>
+
+<opt name="N" type="Integer" default="${1+1}"></opt>
+<opt name="variant" type="String" default=""></opt>
+<opt name="port.[1-$(N)].opt" type="String" default=""></opt>
+<opt name="port.[1-3].opt2" type="String" default=""></opt>
+
+</options>

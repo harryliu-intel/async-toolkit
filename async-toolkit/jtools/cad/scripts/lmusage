@@ -1,0 +1,163 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+use strict;
+use Getopt::Std;
+
+open (P, "</p/rrc/tools/bin/license");
+while (<P>) {
+    chomp;
+    if (/^export\s+(\S+)=(\S+)/) {
+        $ENV{$1}=$2;
+    }
+}
+close P;
+my @files=split(/:/, $ENV{LM_LICENSE_FILE});
+foreach my $file (@files) {
+    if ($file =~ /^\$(\S+)/) {
+        my $env=$1;
+        if (defined ($ENV{$env})) {
+            $file = $ENV{$env};
+        }
+        else {
+            print STDERR "Undefined $env";
+        }
+    }
+}
+
+my $lmdir=join(":", @files);
+my $lmstat="/p/rrc/tools/bin/lmutil lmstat";
+my $all=0;
+my $brief=0;
+my @select=();
+our $opt_a;
+our $opt_b;
+our $opt_f;
+our $opt_c;
+getopts ('abf:c:');
+$opt_a and ($all=1);
+$opt_b and ($brief=1);
+$opt_f and (push (@select,$opt_f));
+$opt_c and ($lmdir=$opt_c);
+push @select,@ARGV;
+my $doselect=($#select >= 0);
+my %selected=();
+foreach my $s (@select) {
+    $s =~ tr/A-Z/a-z/;
+    $selected{$s}=1;
+}
+
+# get rid of all of the default garbage
+if ( -s "$ENV{HOME}/.flexlmrc"  or ! -f "$ENV{HOME}/.flexlmrc" ) {
+    unlink "$ENV{HOME}/.flexlmrc";
+    open (X, ">$ENV{HOME}/.flexlmrc");
+    close X;
+    chmod 0400,"$ENV{HOME}/.flexlmrc";
+}
+$ENV{HOME}="/"; # may help .flexlmrc from overriding
+foreach my $server (split (/:/, $lmdir)) {
+    if (defined ($ENV{$server})) {
+        $server=$ENV{$server};
+    }
+    if (defined ($ENV{$server."_LICENSE_FILE"})) {
+        $server=$ENV{$server."_LICENSE_FILE"};
+    }
+    while ( 1 ) {
+        if ($#select >= 0) {
+            open (P, "LM_LICENSE_FILE= $lmstat -c $server -f $select[0] 2>&1 |");
+        }
+        else {
+            open (P, "LM_LICENSE_FILE= $lmstat -c $server -a 2>&1 |");
+        }
+        my $use = 0;
+        my $llic;
+        my $lic="";
+        my %usage=();
+        my $total=0;
+        my $usage=0;
+        my $tsuse=0;
+        while (<P>) {
+            chomp;
+            s/^\s*//;
+            $lic =~ s/\s//g;
+            if (/^Users/) {
+                if ($total > 0 and $lic ne "") {
+                    my $double=0;
+                    my $lusage=0;
+                    foreach my $key (keys %usage) {
+                        $key =~ /^\s+(\d+)/;
+                        $lusage += $1;
+                    }
+                    if ($double) {
+                        $total /= 2;
+                        $usage = $lusage;
+                    }
+                    printf " %5d %5d%s(%2d) $lic\n", $total, $usage, $usage >= $total ? "*" : " ", $tsuse
+                        if (($tsuse > 0 or $all) and (!$doselect or $selected{$llic}));
+                    if (%usage and ! $brief) {
+                        foreach my $key (sort keys %usage) {
+                            printf ("     %3d %s\n", $usage{$key}, $key );
+                        }
+                    }
+                    $total=$usage=0;
+                }
+                %usage=();
+                my @f = split;
+                $lic = $f[2];
+                $lic =~ s/://;
+                $llic=$lic;
+                $llic =~ tr/A-Z/a-z/;
+                my $tot = $f[5];
+                $total=$tot;
+                $use = $usage = $f[10];
+                $tsuse=0;
+            }
+            if ($use > 0 and m/ start /) {
+                my @f=split;
+                next if $f[1] !~ /^ts/;
+                my $num = 1;
+                my $st;
+                for ($st=0; $st <= $#f and $f[$st] ne "start"; $st++) {};
+                $st = 6 if $st == $#f+1;
+                if ( $f[$#f] eq "licenses" ) {
+                    $num = $f[$#f-1];
+                }
+                elsif ($#f == $st+4) {
+                    $f[$st+3] =~ s/,$//;
+                    $num = $f[$st+4];
+                }
+                $usage{"$f[0] $f[1] $f[2] $f[$st+1] $f[$st+2] $f[$st+3] $lic"} += $num
+                    if (! $doselect or $selected{$llic});
+                $use -= $num;
+                $tsuse += $num;
+            }
+        }
+        close P;
+        if ($total > 0 and $lic ne "") {
+            my $double=0;
+            my $lusage=0;
+            foreach my $key (keys %usage) {
+                $key =~ /^\s+(\d+)/;
+                $lusage += $1 * $usage{$key};
+    #            $double=1 if $usage{$key} > 1;
+            }
+            if ($double) {
+                $total /= 2;
+                $usage = $lusage;
+            }
+            printf " %5d %5d%s(%2d) $lic\n", $total, $usage, $usage >= $total ? "*" : " ", $tsuse
+                if (($tsuse > 0 or $all) and (!$doselect or $selected{$llic}));
+            if (%usage and ! $brief) {
+                foreach my $key (sort keys %usage) {
+                    printf ("     %3d %s\n", $usage{$key}, $key );
+                }
+            }
+            $total=$usage=0;
+        }
+        if ($#select >= 0) {
+            shift @select;
+        }
+        last if $#select < 0;
+    }
+}

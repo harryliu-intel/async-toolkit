@@ -1,0 +1,47 @@
+#!/usr/intel/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use File::Spec::Functions;
+
+my ($cell, $outdir, $input_slew, $ocv_margin, $abs_margin);
+
+GetOptions('cell=s'       => \$cell,
+           'output-dir=s' => \$outdir,
+           'input-slew=s' => \$input_slew,
+           'ocv-margin=s' => \$ocv_margin,
+           'abs-margin=s' => \$abs_margin);
+
+if (!defined($cell) || !defined($outdir) || !defined($input_slew) ||
+    !defined($ocv_margin) || !defined($abs_margin)) {
+    die "All arguments must be specified!";
+}
+
+my $in = catfile($outdir, 'in');
+open(my $fh, ">$in") || die "Cannot open $in: $!";
+
+my $input_slew_dsim = $input_slew * 100;
+my $abs_margin_dsim = $abs_margin * 100;
+$\ = "\n";
+print $fh "param sta.shape=0";
+print $fh "slint on";
+print $fh "measured_delay 0";
+print $fh "cosimulate $cell" . '{subcells,prs-@asta_blackbox{}}';
+print $fh "slint computeSlowSlews --slew=$input_slew_dsim";
+print $fh "slint saveSlowSlews --output=" . catfile($outdir, "slews.tmp");
+print $fh "slint off";
+print $fh "slint on";
+print $fh "measured_delay 1";
+print $fh "cosimulate $cell" . '{subcells,prs-@asta_blackbox{}}';
+print $fh "slint readSlowSlews --input=" . catfile($outdir, "slews.tmp");
+print $fh "slint computeFastSlews --slew=0";
+print $fh "slint evaluate --mult-margin=$ocv_margin ".
+    "--abs-margin=$abs_margin_dsim";
+print $fh "slint report --output=" . catfile($outdir, "violations.all");
+print $fh "slint report --report-victims-once --output=" . 
+    catfile($outdir, "violations.summary");
+print $fh "slint reportSlowSlews --output=". catfile($outdir, "slews.slow");
+print $fh "slint reportFastSlews --output=". catfile($outdir, "slews.fast");
+print $fh "quit";
+
+close($in);

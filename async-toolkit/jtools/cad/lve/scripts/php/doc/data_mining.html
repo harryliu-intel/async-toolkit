@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Data Mining Description in LVE</title>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <link REL ="stylesheet" TYPE="text/css" HREF="lve.css">
+</head>
+<body>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td><br>
+      </td>
+      <td align="left" height="90"><img src="logo.png" alt="Intel" style="border: 0px solid ; width: 250px; height: 90px;" align="left"> </td>
+    </tr>
+  </tbody>
+</table>
+<!-- ========== START OF NAVBAR ========== --> <a name="navbar_top"><!-- --></a>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td colspan="2" class="NavBarCell1"> <a name="navbar_top_firstrow"><!-- --></a>
+      <table border="0" cellpadding="0" cellspacing="3">
+        <tbody>
+          <tr align="center" valign="top">
+            <td class="NavBarCell1"> <a href="../index.php"><b>Static Index</b></a></td>
+            <td class="NavBarCell1"> <a href="index.html"><b>Help Doc</b></a></td>
+            <td class="NavBarCell1"> <a href="../statistics.php"><b>Statistics</b></a></td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td rowspan="3" align="right" valign="top">
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- =========== END OF NAVBAR =========== -->
+<p> <br>
+</p>
+<h2 style="text-align: center;">Data Mining in the LVE</h2>
+<div style="text-align: center;"> (Analog Verification of PivotPoint)<br>
+</div>
+<br>
+<div style="text-align: left;">
+<h3><a name="intro"></a>Introduction<br>
+</h3>
+This document outlines what data we intend to measure and interpret
+from the various tasks performed by the Layout Verification Engine
+(LVE). The intention here is to capture and present any <span
+ style="font-style: italic;">interesting </span>data found through
+simulation; any problem exposed through simulation should be exposed by
+the our data mining process. We assume that we are performing all the
+relevant tasks needed to detect all analog issues which are possible.
+The LVE performs the following tasks.<br>
+<ul>
+  <li>Extraction; physical extract of layout with resistive and
+capacitive information</li>
+  <li>LVS; Layout versus Schematic matching compared implemented
+transistor sizes/topology to specification</li>
+  <li>JLVS; CAST implementation vrs. CDL schematic checking. This is
+more of a sanity check<br>
+  </li>
+  <li>DRC; Design rule checking of layout to foundry (TSMC) requirements</li>
+  <li>Transient simulation; white box simulation of analog behavior
+with digital specification implemented in aspice.<br>
+  </li>
+  <li>ALINT; a more thorough check on analog circuit behavior than will
+be captured with transient simulations. ALINT implemented as part of
+the
+ASPICE code-base mimics an exhaustive transient simulation environment,
+without the simulation time penalty.</li>
+</ul>
+Data mining within the LVE is simple for the first four tasks.
+Extraction is verified by running the results through Assura LVS, the
+remaining three tasks provide a binary result for weather they passed
+or
+failed. In the following 2 sections we go into detail of how we will
+interparate transient simulation runs by ASPICE and ALINT results.<br>
+<h3><a name="aspice"></a>Data Mining ASPICE Results</h3>
+ASPICE now does more than analog circuit simulation with support for
+digital environments. The current version of <span
+ style="font-style: italic;">aspice</span> supports partially extracted
+netlists and also performs digital/analog cosimulation (white box
+testing).&nbsp; Decisions made by arbiters are done at the analog level
+and propagated to the prs implementation.<br>
+<ul>
+  <li><span style="font-weight: bold;">Cosimulation: </span>ASPICE
+runs will detect functional correctness problems by reporting
+discrepancies between nodes in the analog and digital simulation.
+Errors
+are written to the <span style="font-style: italic;">run-name.warn</span>file.
+A transient run is considered a failure whenever this file is populated.<br>
+    <span style="font-weight: bold;"></span></li>
+  <li><span style="font-weight: bold;">DI property (Stability &amp;
+non-Interference):</span> Interference events will cause the ubiquitous
+ERROR node to be driven both ways (unstable); this together with other
+classes of unstable events (say due to premature firing) are all
+reported as failures by <span style="font-style: italic;">aspice.</span>
+The occurrence of such an event is logged in the&nbsp; <span
+ style="font-style: italic;">run-name.warn</span>;&nbsp; a transient
+run is considered a failure whenever this file is populated.<span
+ style="font-weight: bold;"></span></li>
+  <li><span style="font-weight: bold;">Performance: </span>the desired
+performance of a cell in our design can be determined observing the
+frequency on a descriptive node in the design; the value measure can
+then be correlated to the digital performance described by the number
+of
+transitions per cycle (NTPC). Based on process parameters we can
+conclude on what frequency we expect from a specified NTPC.&nbsp;&nbsp;
+Measured frequency should be within 10%&nbsp; of the following formula
+[3]:</li>
+</ul>
+<div style="text-align: center;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; <span
+ style="font-style: italic;">freq = </span>1/(ntpc_spec * max_tau(ps))
+Hz<br>
+<div style="text-align: left;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; max_tau determined for pivotpoint cells
+sized at a tau of 40ps is 80ps. Performance measurements also check for
+the fact a node marked with the cycle_node <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; directive experiences at
+least 4 cycles. This help indicated the whether an simulation has been
+run for an adequate length of time.<br>
+</div>
+</div>
+<ul>
+  <li><span style="font-weight: bold;"><span style="font-weight: bold;">Liveness/Deadlock:</span></span>at
+the end of a simulation we check that the ntpc_spec node transitioned a
+'short' time before the end of that simulation. If an ntpc_spec node is
+missing from the environment we use the transition log to determine
+when
+the last node in the system transitioned. Although clocked circuits
+might slip through this heuristic, circuit malfunction of these
+circuits
+will be captured under cosimulation, since their analog performance
+will
+desert their digital specification.<br>
+  </li>
+  <li><span style="font-weight: bold;">Power: </span>we estimate the
+power dissipated from a transient simulation within a given time
+interval. Power is computed by measuring the current accumulated in the
+current mirror of Vdd (QVdd; connected to a 1F capacitor) for the
+duration of the simulation after reset. <span
+ style="font-weight: bold;">This
+measurement is only for informational purposes.</span><span
+ style="font-weight: bold;"></span><span style="font-weight: bold;"></span></li>
+  <li><span style="font-weight: bold;">Coverage: </span>For every
+transient run we wish to determine how many of the nodes in the circuit
+under test (CUT) have toggled, with more stringent requirements of the
+local connections within highest hierarchy in that circuit. The toggled
+nodes are aggregated over multiple environments to given a cumulative
+measure of simulation coverage enjoyed by a given cell. <br>
+  </li>
+</ul>
+<br>
+With the implementation of ALINT the value of coverage by a given
+environment is now diminished, since the latest tool as mentioned
+before
+essentially provides an exhaustive environment. <br>
+<span style="font-weight: bold;"></span>
+<h3><a name="alint"></a>Data Mining ALINT Results</h3>
+&nbsp;<span style="font-weight: bold;">lint </span>(l<img alt=""
+ src="http://cache.lexico.com/dictionary/graphics/AHD4/GIF/ibreve.gif"
+ align="bottom" height="15" width="7">nt) <span
+ style="font-style: italic;">n</span>. A Unix {C} language processor
+which carries out more thorough checks on the code than is usual with C
+compilers.<br>
+<br>
+ALINT provides a replacement to the charge sharing support in ASPICE,
+together with some pretty powerful extensions and improvements. ALINT
+performs the following noise and delay simulations:<br>
+<ul>
+  <li>downward/upward bumps for charge-sharing and capacitive-coupling
+noise<br>
+  </li>
+  <li>switching simulations for both upward and downward transitions
+and with fastest/slowest assumptions about coupling nodes, initial
+internal voltages, and so forth<br>
+  </li>
+</ul>
+Instead of an exhaustive scenario simulation which is bound to yield a
+remarkable number of false negatives, ALINT performs scenario filtering
+based on certain heuristics[2]. Alint analysis is run only on local
+nodes of the cell, so complete coverage requires alint runs on every
+cell in the hierarchy. Alint aborts if there are more than 14 fanin
+gates for the victim (which would most likely take far to long to
+simulate).&nbsp;The results of these simulations are post-processed to
+provide the following measurements:
+<ul>
+  <li><span style="font-weight: bold;"><span style="font-weight: bold;">Charge
+Sharing/Capacitive Coupling Noise</span></span>: ALINT runs charge
+sharing/capacitive coupling noise analysis by performing a 0.25ns
+transient simulation with the nodes initialized for each of the
+identified scenarios.&nbsp; Nodes which couple to the victim are
+assumed
+to switch simultaneously in the direction of the bump.&nbsp; Only the
+worst rail of a 1ofN code can be a coupling aggressor; the others stay
+constant.&nbsp; Any node with a bump equal to or greater than 33% of
+Vdd
+is considered a failure.&nbsp; Scenarios now include multiple inputs
+switching simultaneously, as well as scenarios where the final state is
+driven back to the rail instead of floating (these can often be the
+worst case).&nbsp; Also, combinational logic is checked for capacitive
+coupling noise even when no charge sharing can occur.&nbsp; Staticizer
+feedback is simulated accurately, as are any inverters gated by the
+victim node.<br>
+  </li>
+  <li><span style="font-weight: bold;">Delay Measurements</span>: The
+results from ALINT are mined for delay by measuring the time between
+when any input of a gate crosses Vdd/2 to when the output crosses
+Vdd/2.&nbsp; The "fast" simulations are used to measure fast delays,
+and
+the "slow" simulations are used to measure slow delays.&nbsp; Delay
+simulations are run for 0.5ns.&nbsp; Inputs switch as exponentials with
+a time-constant of "prsTau", currently set to 20ps but configurable via
+an lve option.&nbsp; The measured delays are then checked against the
+delay budget in the spec (generated by Jauto).&nbsp; A node is
+considered a failure if the worst delay is worse than 4x the estimated
+jauto delay.<span style="font-weight: bold;"></span> <span
+ style="font-weight: bold;"></span></li>
+  <li><span style="font-weight: bold;">Slew Rates: </span>The results
+of ALINT are also data mined for slew rates on all local nodes.&nbsp;
+We
+measure the time interval between a signal crossing 1/3 Vdd to 2/3
+Vdd.&nbsp; This is measured for both the fast and slow assumptions like
+our delay measurements.&nbsp; The region between 1/3 and 2/3 of Vdd is
+considered "dangerous" because both N and P transistors are turned
+on.&nbsp; If a signal stays in this range for more than 1/2 of a cycle,
+it could cause a failure.&nbsp; Thus, we will implement PASS/FAIL
+criteria using an absolute maximum slew time.&nbsp; From the above 1/2
+cycle time reasoning we consider a node failing if it's slew rate is
+worse that 250ps (margin included)[2]. <br>
+  </li>
+  <li><span style="font-weight: bold;">Skew:</span> For echo victim net
+we measure the resistive skew.&nbsp;&nbsp; This is the time span
+between
+when the first resistive subnet of the victim crosses Vdd/2 to when the
+last subnet does.&nbsp; Skew is a nearly pure measurement of resistive
+RC delay.&nbsp; The PASS/FAIL criteria should be calibrated to the
+worst
+skew expected on a SBUF-RBUF link with proper wiring constraints.&nbsp;
+Any wires longer or narrower than that will be caught as skew
+failures.&nbsp; Note that the skew is component of the delay
+measurements, and will also be checked there. A skew value of more than
+300ps is considered a failure[2]. <br>
+  </li>
+</ul>
+<h3><a name="signoffs"></a>Sign Offs<br>
+</h3>
+Analog verification in&nbsp; PivotPoint is more pedantic than&nbsp;
+anything we have performed in the&nbsp; past.&nbsp; We anticipate&nbsp;
+detecting 'problems ' which have&nbsp; prove benign in silicon verified
+designs; a signoff procedure will reduce the 'signal-to-noise' ratio in
+the verification summary output. The sign off procedure we refer to is
+the ability to sign off different classes of tests for individual
+cells;
+instead of a way of tweaking global PASS/FAIL parameters, such as
+increasing failure thresholds. <br>
+<br>
+Our DRC signoff proceedure in use allows the designer to signoff
+specific error paint. The process involves creating a drc_signoff file
+in the dfII directory, under the view directory of the cell in
+question.
+LVS sign off are done by merely touching an lvs_sign file in this
+directory. We employ this scheme to create signoff for aspice and alint
+tasks. We describe them below.<br>
+<h4> Alint and Aspice Signoffs<br>
+</h4>
+Alint and Aspice signoff are done by appling one or more of the
+following directives --<span style="font-style: italic;">estimated_delay_signoff,
+ntpc_scaling_signoff, slew_signoff, skew_signoff </span>-- to the spec
+tree. Refer to the <a href="directives.html">directive listing</a> for
+a
+detailed documentation on how to use directives. These directives allow
+a designer, in the case of alint, to sign of specific 'failures' on a
+node by node basis as well as measurement specific.<br>
+<br>
+<span style="font-weight: bold;">JLVS</span> signoffs are accomplished
+using directives; the directive <span style="font-style: italic;">prs_netlist_mismatch_ok</span>is
+how we signoff prs vs. netlist inconsistencies.<br>
+<h3><a name="issues"></a>Known Issues&nbsp;</h3>
+<ul>
+  <li> If alint delay simulations do not run long enough to capture a
+very slow transition, it is not reported.&nbsp; This case should be
+checked more robustly.</li>
+</ul>
+<h3>References</h3>
+[1] Within a given cell ALINT is run only on nodes local to that cell. <br>
+[2] Private Communication, Andrew Lines<br>
+[3] Performance calibration on a representative set of cells, Mike
+Davives<br>
+<hr style="width: 100%; height: 2px;"><i>Intel Corporation</i>&copy;
+copyright 2012. All Rights Reserved. <br>
+<br>
+</div>
+</body>
+</html>

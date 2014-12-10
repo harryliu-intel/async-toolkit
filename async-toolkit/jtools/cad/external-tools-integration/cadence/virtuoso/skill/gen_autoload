@@ -1,0 +1,143 @@
+#!/usr/intel/bin/perl
+use strict;
+
+use File::Spec;
+
+use Cwd;
+
+use FileHandle;
+  
+sub dofile {
+    local $_;
+    my $file = shift;
+    my $fh;
+    open($fh, "cpp -P -traditional $file |");
+    my @out = ();
+    while (<$fh>) {
+        s/^([^;]*).*$/$1/; #remove ';' comments
+        s/^\s*$//; #remove whitespace lines       
+        s/(\w+)\(/\(\1/g; # replace "foo(" with "(foo" 
+
+        while (/.*(defun|defstruct|procedure|defmacro)[\([:space:]]+([^[:space:]\)\(]+)/g) {
+            if ($1 eq "defun" or $1 eq "procedure" or $1 eq "defmacro") {
+                push @out, $2;
+            } elsif ($1 eq "defstruct") {
+                push @out, "make_$2";
+                push @out, "copy_$2";
+            }
+        }
+    }
+    close($fh);
+    return @out;
+}
+
+sub real_canon {
+    my ( $path ) = @_;
+
+    my $absPath;
+
+    if ( File::Spec->file_name_is_absolute( $path ) ) {
+        $absPath = File::Spec->canonpath($path);
+    }
+    else {
+        $absPath = File::Spec->canonpath(File::Spec->rel2abs( $path ) );
+    }
+
+    my ( $volume, $dir, $file ) = File::Spec->splitpath( $absPath );
+
+    
+
+    my $dirPath;
+    
+    $dirPath = File::Spec->catpath( $volume, $dir );
+    
+    if ( -d $dirPath ) {
+        
+        chomp( my $realDirName = `cd $dirPath ; pwd`);
+
+        my $canonPath = File::Spec->catpath(  $volume, $realDirName, $file );
+        
+        return $canonPath;
+    }
+    else {
+        return $absPath;
+    }
+
+}
+
+sub dodir {
+    my ( $outputFile, $dir, $dup ) = @_;
+    my $dh;
+    $dir = real_canon( $dir );
+    
+    opendir($dh, $dir);
+    my @entries=sort(readdir($dh));
+    closedir($dh);
+        
+    foreach my $entry (@entries) {
+        my $full = File::Spec->canonpath($dir . "/" . $entry);
+        if (( -f $full or -l $full ) and $entry =~ /\.ils?$/) {
+            my @out;
+            @out = dofile($full);
+            if ($#out != -1) {
+                
+                my $func;
+                foreach $func (@out) {
+                    push @{${$dup}{$func}}, $full;
+                    print $outputFile "( putpropq `$func \"$full\" autoload )\n";
+                }
+                
+            }
+        } elsif (-d $full and $entry !~ /^\./ and $entry !~ /^CVS$/) {
+            dodir($outputFile, $full, $dup);
+        }
+    }
+}
+
+if ( $#ARGV != 7 ) {
+    print STDERR "#ARGV=\"$#ARGV\"\n";
+    print STDERR "$0 packageRoot installShareBin installShareData" .
+        " installArchBin installArchData packageInst archBin archData\n";
+    exit 1;
+}
+else {
+    my $packageRoot=$ARGV[0];
+    my $installShareBin=$ARGV[1];
+    my $installShareData=$ARGV[2];
+    my $installArchBin=$ARGV[3];
+    my $installArchData=$ARGV[4];
+    my $packageInst=$ARGV[5];
+    my $archBin=$ARGV[6];
+    my $archData=$ARGV[7];
+
+    my $skillRoot="$packageRoot/share/skill";
+
+    if ( ( -d $skillRoot ) &&
+         ( -w $skillRoot ) &&
+         ( -r $skillRoot ) ) {
+        my $warning = 0; # Whether to print out warnings for multiple definitions
+
+        my $autoloadFileName = "$skillRoot/autoload.il";
+
+        my $autoloadFile = new FileHandle;
+        $autoloadFile->open( ">$autoloadFileName" ) or die "Can't open $autoloadFileName for writing.";
+
+        my %dup = ();
+        &dodir($autoloadFile, $skillRoot, \%dup);
+        $autoloadFile->close();
+        if ($warning) {
+            my $key;
+            foreach $key (keys %dup) {
+                if ($#{ $dup{$key} } > 0) {
+                    print STDERR "$key defined in @{ $dup{$key}} \n";
+                }
+            }
+        }
+    }
+    else {
+        print STDERR "Unable to find skill code at \"" . $skillRoot . "\" after package extraction.\n";
+        exit 1;
+    }
+}
+0;
+

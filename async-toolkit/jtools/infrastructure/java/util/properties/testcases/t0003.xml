@@ -1,0 +1,6 @@
+<options>
+
+<opt name="log.scope" type="String" default=""></opt>
+<opt name="variant" type="String" default=""></opt>
+
+</options>

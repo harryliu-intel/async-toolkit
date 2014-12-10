@@ -1,0 +1,24 @@
+#!/usr/intel/bin/perl -w
+
+$rename = "rename";
+
+# recursively find dfII cells with layout view
+%layout = ();
+$out = `find . -name layout`;
+@cells = split("\n",$out);
+
+# rename them to CAST names
+foreach $cell (@cells) {
+    my @fields = split("/",$cell);
+    my $name = $fields[@fields-2];
+    $name =~ s|#2e|\.|g;
+    $name =~ s|#2d|-|g;
+    $name = `echo \"$name\" | $rename --type=cell --from=cadence --to=cast`;
+    chomp($name);
+    $layout{$name}=1;
+}
+
+# print out all names
+foreach $cell (sort keys %layout) {
+    print "$cell\n";
+}

@@ -1,0 +1,702 @@
+#!/usr/intel/bin/perl -w
+
+use FileHandle;
+use IPC::Open2;
+use strict;
+
+#############################################################################
+# Read alint.raw and change pass fail signoff from new criteria from
+# bug 10668
+#
+#############################################################################
+
+# find relevant packaged tools and libraries
+local (*ADX);
+my $lve_raw_debug=0;
+my $alint_in="";
+my $alint_raw="";
+# highly problematic: buf_1of1 is about 48
+# lve.chip.alta.fc.dmg.l2f.L2F_BANK256_76.1000 was 24
+my $density_factor=25;
+
+our $lve_root;
+our $cell;
+our $task;
+our $root;
+our $dir;
+our $mode;
+our $delayTauIndex=0; # index used for PASS/FAIL
+our @svars;
+
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    local $"=",";
+    our @svars = qw/ cell dir root task mode /;
+
+}
+
+# default list separator
+$"=",";
+
+use LveUtil;
+use LveAspice;
+use LveDelay;
+
+sub ncmp {
+    return 1 if $a > $b;
+    return -1 if $a < $b;
+    0;
+}
+
+open (ADX, ">raw.dbg") if $lve_raw_debug;
+
+# PASS/FAIL criteria for alint
+my $skew_bound  = 300; # absolute skew bound, in ps
+my %skew_bound=();
+$skew_bound{""}=$skew_bound;
+my $slew_bound  = 250; # absolute slew bound, in ps
+my %slew_bound=();
+$slew_bound{""}=$slew_bound;
+my $delay_bound = 10.0; # relative delay bound
+my %delay_bound=(); # relative delay bound
+$delay_bound{""}=$delay_bound;
+my $bump_bound_estimated=30; # distinguish between bumps pre and post extract
+my %bump_bound_estimated=();
+$bump_bound_estimated{""}=$bump_bound_estimated;
+my @bump_bound=();
+$bump_bound[0] = 35; # absolute bump bound without cap-coupling, in percent
+$bump_bound[1] = 45; # absolute bump bound with cap-coupling, in percent
+my %bump_bound=();
+@{$bump_bound{""}}=(@bump_bound);
+my @inv_bump_bound=();
+$inv_bump_bound[0] = 5; # absolute inverse node bump bound without cap-coupling, in percent
+$inv_bump_bound[1] = 5; # absolute inverse node bump bound with cap-coupling, in percent
+my %inv_bump_bound=();
+@{$inv_bump_bound{""}}=(@inv_bump_bound);
+my $small_leak_bound = 5; # absolute leak bound for non-leaky nodes, in percent
+my %small_leak_bound=();
+$small_leak_bound{""}=$small_leak_bound;
+my $large_leak_bound = 10; # absolute leak bound for leaky nodes, in percent
+my %large_leak_bound=();
+$large_leak_bound{""}=$large_leak_bound;
+
+# alint electromigration parameters
+my $em_frequency         = 1e9; # 1GHz default electromigration frequency
+my $em_avg_scaling       = 1;   # multiplies em_avg limits to correct for temperature
+my $em_rms_heating       = 10;  # 10C joule heating limit for rms currents
+my %em_avg_wire_limit    = ();
+my %em_rms_wire_limit    = ();
+my %em_rms_width_offset  = ();
+my %em_rms_width_offset2 = ();
+my %em_avg_width_offset  = ();
+my %em_avg_via_limit     = ();
+my %em_rms_via_limit     = ();
+
+# PASS/FAIL criteria for aspice
+my $ntpc_to_tau       = 80e-12; # conversion from ntpc to cycle time
+my %ntpc_to_tau = ();
+$ntpc_to_tau{""}=$ntpc_to_tau;
+my $digital_time_unit = 1e-13;  # digital time unit, in seconds
+my $deadlock_time     = 0.5e-9; # deadlock margin for last transition, in seconds
+my $measure_time      = 4e-9;   # how long after initialization to enable measurements
+my $min_cycles        = 4;      # how many measured cycles needed to PASS
+
+# ASTA
+my $asta_tau_bound = 53;
+my @asta_taus = ();
+
+# extra files 
+my $envntpc = "";
+my $localprops = "";
+my $leakynodes = "";
+my $pdk_root = "";
+
+# delay correction parameters for process, voltage, temperature
+my %process_correction = ();
+$process_correction{""} = 1.0;
+$process_correction{tt} = 1.0;                # nominal tt process gives no correction
+$process_correction{ss} = 1.0;
+$process_correction{sf} = 1.0;
+$process_correction{fs} = 1.0;
+$process_correction{ff} = 1.0;
+my $temperature_correction_nominal = 90;         # nominal 90C gives no correction
+my %temperature_correction_nominal=();
+$temperature_correction_nominal{""}=$temperature_correction_nominal;
+my $temperature_correction_slope   = 0 / 50;     # 0% delay increase for +50 celcius
+my %temperature_correction_slope=();
+$temperature_correction_slope{""}=$temperature_correction_slope;
+my $voltage_correction_nominal     = 0.9;        # nominal 0.9V gives no correction
+my %voltage_correction_nominal=();
+$voltage_correction_nominal{""}=$voltage_correction_nominal;
+my $voltage_correction_slope       = 0 / 0.3;    # 0% speed increase for +0.3 volts
+my %voltage_correction_slope=();
+$voltage_correction_slope{""}=$voltage_correction_slope;
+
+# delay correction function, returns relative adjustment for spec delays
+sub delay_correction_factor {
+    my ($process, $true, $temp) = @_;
+    my $correction = 1;
+    if (defined $process_correction{$process}) {
+        $correction *= $process_correction{$process};
+    }
+    $correction *= 1 + ($temp - $temperature_correction_nominal) * 
+        $temperature_correction_slope;
+    $correction /= 1 + ($true - $voltage_correction_nominal) *
+        $voltage_correction_slope;
+    return $correction;
+}
+
+my @options = ();
+my @defaultOptions = ();
+$pdk_root = &parseArgs(\@ARGV,\@options);
+# include lve.config from specified pdk
+my @defaultArgs = ();
+&includeConfig("$pdk_root/share/Fulcrum/lve/lve_raw.config",\@defaultArgs);
+&parseArgs(\@defaultArgs,\@defaultOptions);
+&parseOptions(\@defaultOptions);
+my $process_config="$pdk_root/share/Fulcrum/jauto/process.config";
+if ( ! -s $process_config) {
+    $process_config = `fulcrum --path pdk`;
+    chomp $process_config;
+    $process_config .= "/share/Fulcrum/jauto/process.config";
+}
+my $transistor_config="$pdk_root/share/Fulcrum/jauto/transistors.config";
+if ( ! -s $transistor_config) {
+    $transistor_config = `fulcrum --path pdk`;
+    chomp $transistor_config;
+    $transistor_config .= "/share/Fulcrum/jauto/transistors.config";
+}
+$transistor_config="" if ! -s $transistor_config;
+# find the capacitance factors from PDK
+my @unitnmosgatecapacitance;
+my @unitpmosgatecapacitance;
+my @unitnmosdiffusioncapacitance;
+my @unitpmosdiffusioncapacitance;
+my $unitnmosgatecapacitance;
+my $unitpmosgatecapacitance;
+my $unitnmosdiffusioncapacitance;
+my $unitpmosdiffusioncapacitance;
+
+sub read_config {
+    my ($file) = @_;
+    local(*P);
+    open (P, "<$file") or warn "Cannot open $file\n";
+    while (<P>) {
+        chomp;
+        s/ //g;
+        my ($param,$val)=split(/=/,$_);
+        if (defined ($param) and defined ($val) and ($param =~ /unit([NP])mos(Gate|Diffusion)Capacitance/i)) {
+            $param =~ tr/A-Z/a-z/;
+            eval "\$$param = $val";
+        }
+        if (defined ($param) and $param eq "config") {
+            read_config($val);
+        }
+    }
+    close P;
+}
+
+sub rmax {
+    my (@array) = @_;
+    my $out=0;
+    foreach my $v (@array) {
+        $out= $v if defined ($v) and $out < $v;
+    }
+    $out;
+}
+
+read_config($process_config);
+
+$unitnmosgatecapacitance = rmax(@unitnmosgatecapacitance) if ! defined $unitnmosgatecapacitance;
+$unitpmosgatecapacitance = rmax(@unitpmosgatecapacitance) if ! defined $unitpmosgatecapacitance;
+$unitnmosdiffusioncapacitance = rmax(@unitnmosdiffusioncapacitance) if ! defined $unitnmosdiffusioncapacitance;
+$unitpmosdiffusioncapacitance = rmax(@unitpmosdiffusioncapacitance) if ! defined $unitpmosdiffusioncapacitance;
+# Report usage
+sub usage {
+    my $msg=$_[0];
+    $task="" if ! defined $task;
+    $cell="" if ! defined $cell;
+    $root="" if ! defined $root;
+    $dir="" if ! defined $dir;
+    $mode="" if ! defined $mode;
+    my $basename=`basename $0`;
+    chomp $basename;
+    print STDERR <<EOF;
+LVE Raw; Utility for Datamining LVE Results. Emits machine readable format for 
+possible further processing.
+
+USAGE: $basename [options] 
+
+  Required Options:
+    --fulcrum-pdk-root=[$pdk_root]  (location of Fulcrum pdk)
+    --task=[$task] (what task to raw)
+    --root=[$root] (base directory for run)
+    --dir=[$dir]   (directory for results)
+    --cell=[$cell] (cell being rawed)
+    --mode=[$mode] (accurate, extracted or empty)
+    
+  Alint PASS/FAIL Criteria:
+    --skew-bound=[$skew_bound] (absolute skew bound, in ps)
+    --slew-bound=[$slew_bound] (absolute slew bound, in ps)
+    --delay-bound=[$delay_bound] (relative delay bound)
+    --bump-bound-nocc=[$bump_bound[0]] (absolute bump bound without cap-coupling, in percent)
+    --bump-bound-cc=[$bump_bound[1]] (absolute bump bound with cap-coupling, in percent)
+    --bump-bound-estimated=[$bump_bound_estimated] (estimated bump bound)
+    --inv-bump-bound-nocc=[$inv_bump_bound[0]] (absolute bump bound on inverses without cap-coupling, in percent)
+    --inv-bump-bound-cc=[$inv_bump_bound[1]] (absolute bump bound on inverses with cap-coupling, in percent)
+    --small-leak-bound=[$small_leak_bound] (absolute leak bound for non-leaky nodes, in percent)
+    --large-leak-bound=[$large_leak_bound] (absolute leak bound for leaky nodes, in percent)
+
+  Alint Electromigration Criteria:
+    --em-frequency=[$em_frequency] (default frequency in Hz for em checks)
+    --em-avg-scaling=[$em_avg_scaling] (multiples em-avg limits)
+    --em-avg-wire-limit:WIRE=I/W (sets average current limit for a wiring layer in A/m)
+    --em-avg-via-limit:VIA=I (sets average current limit for a via layer in A)
+    --em-rms-heating=[$em_rms_heating] (joule heating limit for rms current)
+    --em-rms-wire-limit:WIRE=I/W (sets rms current limit for a wiring layer in A/m)
+    --em-rms-via-limit:VIA=I (sets rms current limit for a via layer in A)
+    --em-rms-width-offset:WIRE=W (sets width offset for rms calculation in m)
+    --em-avg-width-offset:WIRE=W (sets width offset for rms calculation in m)
+
+  Delay Correction Parameters for PVT
+    --todo (move parameters here)
+    
+  Aspice PASS/FAIL Criteria:
+    --ntpc-to-tau=[$ntpc_to_tau] (conversion from ntpc to cycle time)
+    --digital-time-unit=[$digital_time_unit] (digital time unit, in seconds)
+    --deadlock-time=[$deadlock_time] (deadlock margin for last transition, in seconds)
+    --measure-time=[$measure_time] (how long after initialization to enable measurements)
+    --min-cycles=[$min_cycles] (how many measured cycles needed to "PASS")
+
+  Extra Options:
+    --env-ntpc=[$envntpc] (env.ntpc file)
+    --local-props=[$localprops] (cell.localprops file)
+    --leaky-nodes=[$leakynodes] (cell.leakynodes file)
+    --asta-tau=[@asta_taus] (tau used to evaluate ASTA)
+    --asta-tau-bound=[$asta_tau_bound] (passing Tau for ASTA)
+EOF
+    print STDERR "\nERROR: $msg\n" if defined $msg;
+    exit 1;
+}
+
+# parse options interpreted from command line args
+sub parseOptions {
+    my ($options) = @_;
+    foreach my $option (@{$options}) {
+        &parseOption($option);
+    }
+}
+
+my $alint_dynamic_only;
+my $process_correction;
+
+sub  parseOption {
+    my ($option) = @_;
+
+    if(scalar @{$option}) {
+        my ($key,$value) = @{$option};
+        if ($key =~ /^skew-bound:*(.*)/)         { $skew_bound{"$1"}=$value;}
+        elsif ($key =~ /^slew-bound:*(.*)/)      { $slew_bound{"$1"}=$value;}
+        elsif ($key =~ /^delay-bound:*(.*)/)     { $delay_bound{"$1"}=$value;}
+        elsif ($key =~ /^bump-bound-nocc:*(.*)/) { $bump_bound{$1}[0]=$value;}
+        elsif ($key =~ /^bump-bound-cc:*(.*)/)   { $bump_bound{$1}[1]=$value;}
+        elsif ($key =~ /^bump-bound-estimated:*(.*)/) { $bump_bound_estimated{$1} = $value; }
+        elsif ($key =~ /^inv-bump-bound-nocc:*(.*)/)   { $inv_bump_bound{$1}[0] = $value; }
+        elsif ($key =~ /^inv-bump-bound-cc:*(.*)/)     { $inv_bump_bound{$1}[1] = $value; }
+        elsif ($key =~ /^small-leak-bound:*(.*)/)      { $small_leak_bound{$1} = $value; }
+        elsif ($key =~ /^large-leak-bound:*(.*)/)      { $large_leak_bound{$1} = $value; }
+        elsif ($key =~ /^ntpc-to-tau:*(.*)/)           { $ntpc_to_tau{$1} = $value; }
+        elsif ($key =~ /^process-correction:*(.*)/)    { $process_correction{$1} = $value; }
+        elsif ($key =~ /^temperature-correction-nominal:*(.*)/)    { $temperature_correction_nominal{$1} = $value; }
+        elsif ($key =~ /^temperature-correction-slope:*(.*)/)  { $temperature_correction_slope{$1} = $value; }
+        elsif ($key =~ /^voltage-correction-nominal:*(.*)/)    { $voltage_correction_nominal{$1} = $value; }
+        elsif ($key =~ /^voltage-correction-slope:*(.*)/)      { $voltage_correction_slope{$1} = $value; }
+        elsif ($key eq "digital-time-unit")      { $digital_time_unit = $value; }
+        elsif ($key eq "deadlock-time")          { $deadlock_time = $value; }
+        elsif ($key eq "measure-time")           { $measure_time = $value; }
+        elsif ($key eq "min-cycles")             { $min_cycles = $value; }
+        elsif ($key eq "task")                   { $task = $value; }
+        elsif ($key eq "cell")                   { $cell = $value; }
+        elsif ($key eq "root")                   { $root = $value; }        
+        elsif ($key eq "dir")                    { $dir = $value; }
+        elsif ($key eq "mode")                   { $mode = $value; }
+        elsif ($key eq "env-ntpc")               { $envntpc = $value; }
+        elsif ($key eq "local-props")            { $localprops = $value; }
+        elsif ($key eq "leaky-nodes")            { $leakynodes = $value; }
+        elsif ($key eq "alint-in")               { $alint_in = $value; }
+        elsif ($key eq "alint-raw")              { $alint_raw = $value; }
+        elsif ($key eq "help")                   { usage(); }
+
+        # electromigration parameters
+        elsif ($key eq "em-frequency")               { $em_frequency = $value; }
+        elsif ($key eq "em-avg-scaling")             { $em_avg_scaling = $value; }
+        elsif ($key eq "em-rms-heating")             { $em_rms_heating = $value; }
+
+        elsif ($key =~ /^em-avg-wire-limit:(\S+)/ )  { $em_avg_wire_limit{$1} = $value; }
+        elsif ($key =~ /^em-rms-wire-limit:(\S+)/ )  { $em_rms_wire_limit{$1} = $value; }
+        elsif ($key =~ /^em-rms-width-offset:(\S+)/ ){ $em_rms_width_offset{$1} = $value; }
+        elsif ($key =~ /^em-rms-width-offset2:(\S+)/ ){ $em_rms_width_offset2{$1} = $value; }
+        elsif ($key =~ /^em-avg-width-offset:(\S+)/ ){ $em_avg_width_offset{$1} = $value; }
+        elsif ($key =~ /^em-avg-via-limit:(\S+)/ )   { $em_avg_via_limit{$1} = $value; }
+        elsif ($key =~ /^em-rms-via-limit:(\S+)/ )   { $em_rms_via_limit{$1} = $value; }
+        elsif ($key eq "alint-dynamic-only" )   { $alint_dynamic_only = $value; }
+        elsif ($key eq "asta-tau-bound") { $asta_tau_bound = $value; }
+        elsif ($key eq "asta-tau") { @asta_taus = split(/ /, $value); }
+        
+        # unknown option
+        else { warn ("Warning: option --${key}=${value} not recognized."); }
+    }
+}
+&parseOptions(\@options);
+
+# must define the process to parse config file
+my $process="";
+
+usage if ! defined $dir;
+
+$process=get_nth_run_param($dir,2)
+    if ($task eq "alint" or $task eq "aspice" or $task eq "hsim" or $task eq "lib" or $task eq "asta");
+
+$skew_bound = defined ($skew_bound{$process}) ? $skew_bound{$process} : $skew_bound{""};
+$slew_bound = defined ($slew_bound{$process}) ? $slew_bound{$process} : $slew_bound{""};
+$delay_bound = defined ($delay_bound{$process}) ? $delay_bound{$process} : $delay_bound{""};
+$bump_bound[0] = defined ($bump_bound{$process}[0]) ? $bump_bound{$process}[0] : $bump_bound{""}[0];
+$bump_bound[1] = defined ($bump_bound{$process}[1]) ? $bump_bound{$process}[1] : $bump_bound{""}[1];
+$bump_bound_estimated = defined ($bump_bound_estimated{$process}) ? $bump_bound_estimated{$process} : $bump_bound_estimated{""};
+$inv_bump_bound[0] = defined ($inv_bump_bound{$process}[0]) ? $inv_bump_bound{$process}[0] : $inv_bump_bound{""}[0];
+$inv_bump_bound[1] = defined ($inv_bump_bound{$process}[1]) ? $inv_bump_bound{$process}[1] : $inv_bump_bound{""}[1];
+$small_leak_bound = defined ($small_leak_bound{$process}) ? $small_leak_bound{$process} : $small_leak_bound{""};
+$large_leak_bound = defined ($large_leak_bound{$process}) ? $large_leak_bound{$process} : $large_leak_bound{""};
+$ntpc_to_tau = defined ($ntpc_to_tau{$process}) ? $ntpc_to_tau{$process} : $ntpc_to_tau{""};
+$process_correction = defined ($process_correction{$process}) ? $process_correction{$process} : $process_correction{""};
+$temperature_correction_nominal = defined ($temperature_correction_nominal{$process}) ? $temperature_correction_nominal{$process} : $temperature_correction_nominal{""};
+$temperature_correction_slope = defined ($temperature_correction_slope{$process}) ? $temperature_correction_slope{$process} : $temperature_correction_slope{""};
+$voltage_correction_nominal = defined ($voltage_correction_nominal{$process}) ? $voltage_correction_nominal{$process} : $voltage_correction_nominal{""};
+$voltage_correction_slope = defined ($voltage_correction_slope{$process}) ? $voltage_correction_slope{$process} : $voltage_correction_slope{""};
+
+foreach my $svar (@svars) { defined $$svar or usage "$svar not defined"; }
+
+my $path = $dir;
+$path =~ s,^$root\/,,g;
+$path =~ s,/alint_parallel$,,;
+$path =~ s,/lib_parallel$,,;
+
+# read the status from a result file
+sub getStatusFromResultFile {
+    my ($resultFile) = @_;
+    my $status = `tail -1 \"$resultFile\"`;
+    if    ($status =~ /"PASS"/)    { return "PASS"; }
+    elsif ($status =~ /SIGN/) { return "SIGNOFF"; }
+    else { return "FAIL"; }
+}
+
+# Process ALINT results
+if ($task eq "alint") {
+    if ($alint_raw ne "" and -r $alint_raw) {
+        # get run parameters
+        my $process = get_nth_run_param($dir,2);
+        my $true    = get_nth_run_param($dir,3);
+        my $temp    = get_nth_run_param($dir,4);
+        $true =~ s/V$//g;
+        $temp =~ s/C$//g;
+        my $del_corr = delay_correction_factor($process,$true,$temp);
+        my $midV = $true/2;
+
+        # get bumpCC, delayCC, bumpTau, delayTau from alint.in file
+        my @bumpCC   = (0);
+        my @delayCC  = (0);
+        my @bumpTau  = (0);
+        my @delayTau = (0);
+        my @delayCap = (0);
+        $dir =~ s:/$::;
+        open IN, "<$alint_in" or die "Cannot read $alint_in";
+        while (my $line = <IN>) {
+            chomp($line);
+            my @args = split(" ",$line);
+            if (@args<1) { next; }
+            my $cmd = $args[0];
+            shift @args;
+            if    ($cmd eq "bumpCC")   { @bumpCC   = @args; }
+            elsif ($cmd eq "delayCC")  { @delayCC  = @args; }
+            elsif ($cmd eq "bumpTau")  { @bumpTau  = @args; }
+            elsif ($cmd eq "delayTau") { @delayTau = @args; }
+            elsif ($cmd eq "delayCap") { @delayCap = @args; }
+        }
+        close IN;
+        foreach my $tau (@delayTau) {
+            $tau=int($tau/1e-12+0.5);
+        }
+        open IN, "<$alint_raw" or die "Cannot read $alint_raw";
+        my @lines=();
+        my @alint_node=();
+        my %alint_node=();
+        while (my $ln = <IN>) {
+            chomp($ln);
+            my @args = split(" ",$ln);
+            if (@args<1) { next; }
+            my $nd=$args[4];
+            if ($nd =~ s/node=//) {
+                $alint_node{$nd}=1;
+            }
+            push @lines, $ln;
+        }
+        @alint_node=(sort keys %alint_node);
+        close IN;
+        
+        $dir=$dir if ! -d $dir;
+        my %delay_dn=();
+        my %delay_up=();
+        my %dynamic=();
+        my %sbump_dn=();
+        my %sbump_up=();
+        my %sdelay_dn=();
+        my %sdelay_up=();
+        my %signoff=();
+        my %space=();
+        my %sskew_dn=();
+        my %sskew_up=();
+        my %sslew_dn=();
+        my %sslew_up=();
+        my %width=();
+        my %activity_factor=();
+        open LOCALPROPS, "<$localprops" or die "Cannot read $localprops\n";
+        while (my $line = <LOCALPROPS>) {
+            # strip off whitespace from the end, so split doesn't return a null
+            # field at the end
+            $line =~ s/\s+$//;
+
+            # parse cell.localprops file
+            my $signoff = 0;
+            if ($line =~ s/^"SIGNOFF" //g) { $signoff = 1; }
+            my ($node,$dynamic,$delay_up,$delay_dn,$sdelay_up,$sdelay_dn,
+                $sslew_up,$sslew_dn,$sskew_up,$sskew_dn,$sbump_up,$sbump_dn,
+                $width,$space,$activity_factor) 
+                = split(" ",$line);
+            next if $alint_dynamic_only and $dynamic != 1;
+            # complain if cell.localprops in broken
+            if(!(defined($node) && defined($dynamic) && defined($delay_up) &&
+                 defined($delay_dn) && defined($sdelay_up) && defined($sdelay_dn)&&
+                 defined($sslew_up) && defined($sslew_dn) && defined($sskew_up) &&
+                 defined($sskew_dn) && defined($sbump_up) && defined($sbump_dn) &&
+                 defined($width) && defined($space))){
+                warn "$localprops appears incorrect. Please check file\n";
+            }
+
+            # assume default value to try to interoperate with previously generated
+            # localprops file
+            $activity_factor = -1 unless defined($activity_factor);
+            
+            # check for correct entries in file and convert units
+            if ($delay_up<0) { $delay_up = "FAIL"; }
+            else { $delay_up *= 1e9; } # convert to ns
+            if ($delay_dn<0) { $delay_dn = "FAIL"; }
+            else { $delay_dn *= 1e9; } # convert to ns
+            if ($sdelay_up>0) { $sdelay_up *= $delay_up; } # relative scaling
+            if ($sdelay_dn>0) { $sdelay_dn *= $delay_dn; } # relative scaling
+            $sslew_up = $slew_bound if ($sslew_up == -1);
+            $sslew_dn = $slew_bound if ($sslew_dn == -1);
+            $sskew_up = $skew_bound if ($sskew_up == -1);
+            $sskew_dn = $skew_bound if ($sskew_dn == -1);
+            $activity_factor = 1 if ($activity_factor == -1);
+            
+            # convert spec times from ns to integer ps
+            # Note: sslew, sskew values are already in ps units
+            ns_to_ps($delay_dn,$delay_up,
+                     $sdelay_up,$sdelay_dn);
+
+            $delay_dn{$node}=$delay_dn;
+            $delay_up{$node}=$delay_up;
+            $dynamic{$node}=$dynamic;
+            $sbump_dn{$node}=$sbump_dn;
+            $sbump_up{$node}=$sbump_up;
+            $sdelay_dn{$node}=$sdelay_dn;
+            $sdelay_up{$node}=$sdelay_up;
+            $signoff{$node}=$signoff;
+            $space{$node}=$space;
+            $sskew_dn{$node}=$sskew_dn;
+            $sskew_up{$node}=$sskew_up;
+            $sslew_dn{$node}=$sslew_dn;
+            $sslew_up{$node}=$sslew_up;
+            $width{$node}=$width;
+            $activity_factor{$node}=$activity_factor;
+        }
+        close LOCALPROPS;
+        open RAW, ">$dir/alint.raw.tmp" or die "Cannot write $dir/alint.raw.tmp\n";
+        print STDERR "Writing $dir/alint.raw.tmp\n";
+        foreach my $line (@lines) {
+            $line =~ /node=(\S+)/;
+            my $node=$1;
+            if ( ! defined ($dynamic{$node}) ) {
+                print STDERR "aborting: $node not in $localprops\n";
+                # this means localprops not consistent
+                exit 1;
+            }
+            my $delay_dn=$delay_dn{$node};
+            my $delay_up=$delay_up{$node};
+            my $dynamic=$dynamic{$node};
+            my $sbump_dn=$sbump_dn{$node};
+            my $sbump_up=$sbump_up{$node};
+            my $sdelay_dn=$sdelay_dn{$node};
+            my $sdelay_up=$sdelay_up{$node};
+            my $signoff=$signoff{$node};
+            my $space=$space{$node};
+            my $sskew_dn=$sskew_dn{$node};
+            my $sskew_up=$sskew_up{$node};
+            my $sslew_dn=$sslew_dn{$node};
+            my $sslew_up=$sslew_up{$node};
+            my $width=$width{$node};
+            my $activity_factor=$activity_factor{$node};
+            next if $alint_dynamic_only and $dynamic != 1;
+            # complain if cell.localprops in broken
+            if(!(defined($node) && defined($dynamic) && defined($delay_up) &&
+                 defined($delay_dn) && defined($sdelay_up) && defined($sdelay_dn)&&
+                 defined($sslew_up) && defined($sslew_dn) && defined($sskew_up) &&
+                 defined($sskew_dn) && defined($sbump_up) && defined($sbump_dn) &&
+                 defined($width) && defined($space)) and defined ($dynamic)){
+                    if (! defined($node) ) { print "node undefined\n";}
+                    if (! defined($dynamic) )  { print "dynamic undefined\n";}
+                    if (! defined($delay_up) )  { print "delay_up undefined\n";}
+                    if (! defined($delay_dn) )  { print "delay_dn undefined\n";}
+                    if (! defined($sdelay_up) )  { print "sdelay_up undefined\n";}
+                    if (! defined($sdelay_dn))  { print "sdelay_dn undefined\n";}
+                    if (! defined($sslew_up) )  { print "sslew_up undefined\n";}
+                    if (! defined($sslew_dn) )  { print "sslew_dn undefined\n";}
+                    if (! defined($sskew_up) )  { print "sskew_up undefined\n";}
+                    if (! defined($sskew_dn) )  { print "sskew_dn undefined\n";}
+                    if (! defined($sbump_up) )  { print "sbump_up undefined\n";}
+                    if (! defined($sbump_dn) )  { print "sbump_dn undefined\n";}
+                    if (! defined($width) )  { print "width undefined\n";}
+                    if (! defined($space))  { print "space undefined\n";}
+                    warn "$localprops appears incorrect. Please check file\n";
+            }
+
+            my $status = "PASS";
+            $status = "SIGNOFF" if $signoff;
+            my $error = "";
+            if ($line =~ / bump_(up|dn)=/) {
+                my $tau=-1;
+                if ($line =~ / tau=(\d+)/) {
+                    $tau=$1;
+                }
+                my $cc=-1;
+                if ($line =~ / cc=([01])\s/) {
+                    $cc=$1;
+                }
+                next if $tau < 0 or $cc < 0;
+                print RAW "$line\n";
+            }
+            elsif ($line =~ / leak_(up|dn)=/) {
+                print RAW "$line\n";
+            }
+            elsif ($line =~ /error=/) {
+                print RAW "$line\n";
+            }
+            elsif ($line =~ / delay_(up|dn)=(\S+)/) {
+                my ($delay_up,$delay_dn);
+                my ($slow_delay_up,$slow_delay_dn);
+                my ($slow_delay_up_t,$slow_delay_dn_t);
+                my ($fast_delay_up,$fast_delay_dn);
+                my ($fast_delay_up_t,$fast_delay_dn_t);
+                my ($slow_slew_up_t,$slow_slew_dn_t);
+                my ($slow_slew_up,$slow_slew_dn);
+                my ($fast_slew_up_t,$fast_slew_dn_t);
+                my ($fast_slew_up,$fast_slew_dn);
+                my ($slew_up_t,$slew_dn_t);
+                my ($slew_up,$slew_dn);
+                my ($slow_skew_up_t,$slow_skew_dn_t);
+                my ($slow_skew_up,$slow_skew_dn);
+                my ($fast_skew_up_t,$fast_skew_dn_t);
+                my ($fast_skew_up,$fast_skew_dn);
+                my ($skew_up_t,$skew_dn_t);
+                my ($skew_up,$skew_dn);
+                my $tau_ps;
+                my $cc;
+                my @element=split(/ /, $line);
+                $status=$element[0];
+                foreach my $element (@element) {
+                    if ($element =~ /^cc=(\S+)/) {
+                        $cc=$1;
+                    }
+                    elsif ($element =~ /^tau=(\S+)/) {
+                        $tau_ps=$1;
+                    }
+                    elsif ($element =~ /^delay_(up|dn)=(\S+)/) {
+                        eval "\$delay_$1=\"$2\";";
+                    }
+                    elsif ($element =~ /^(slow|fast)_(delay|slew|skew)_(up|dn)=(\S+)@(\S+)/) {
+                        eval "\$${1}_${2}_${3}=\"$4\";";
+                        eval "\$${1}_${2}_${3}_t=\"$5\";";
+                    }
+                    elsif ($element =~ /^(slew|skew)_(up|dn)=(\S+)@(\S+)/) {
+                        eval "\$${1}_${2}=\"$3\";";
+                        eval "\$${1}_${2}_t=\"$4\";";
+                    }
+                }
+                print STDERR "NON NUMERIC $tau_ps or $delayTau[0] in $line\n" if !is_numeric($tau_ps) or !is_numeric($delayTau[0]);
+                if ($status ne "FAIL" and ($tau_ps == $delayTau[0] or $tau_ps eq 42)) {
+                    if (is_numeric($slow_delay_dn) &&
+                        (($slow_delay_dn > $delay_bound*$delay_dn*$del_corr)) ||
+                        is_numeric($slow_delay_up) &&
+                        (($slow_delay_up > $delay_bound*$delay_up*$del_corr))) {
+                        $status = "FAIL";
+                        # sign off delay failures with estimated_delay_signoff
+                        if (($slow_delay_dn <= $delay_bound*$sdelay_dn*$del_corr) &&
+                            ($slow_delay_up <= $delay_bound*$sdelay_up*$del_corr)){
+                            $status = "SIGNOFF";
+                        }
+                        print STDERR "DELAY $status $node $tau_ps $slow_delay_dn $slow_delay_up $delay_bound\n";
+                    }
+                    # absolute bound on slew
+#                    print STDERR "slow_slew_dn $line\n" if ! defined $slow_slew_dn;
+#                    print STDERR "slow_slew_up $line\n" if ! defined $slow_slew_up;
+                    if ($status ne "FAIL" && is_numeric($slow_slew_dn) &&
+                        (($slow_slew_dn > $slew_bound*$del_corr)) ||
+                        is_numeric($slow_slew_up) &&
+                        (($slow_slew_up > $slew_bound*$del_corr))) {
+                        $status = "FAIL";
+                        # sign of slew rate violations with slew_signoff
+                        if (($slow_slew_dn <= $sslew_dn*$del_corr) && 
+                            ($slow_slew_up <= $sslew_up*$del_corr)){
+                            $status = "SIGNOFF";
+                        }
+                        print STDERR "SLEW $status $node $tau_ps $slow_slew_dn $slow_slew_up $slew_bound $sslew_dn $sslew_up\n";
+                    }
+                    
+                    # absolute bound on skew
+#                    print STDERR "skew_dn $line\n" if ! defined $skew_dn;
+#                    print STDERR "skew_up $line\n" if ! defined $skew_up;
+                    if ($status ne "FAIL" && is_numeric($skew_dn) && 
+                        (($skew_dn > $skew_bound*$del_corr)) ||
+                        is_numeric($skew_up) &&
+                        (($skew_up > $skew_bound*$del_corr))) {
+                        $status = "FAIL";
+                        # sign off skew violations with skew_signoff
+                        if (($skew_dn <= $sskew_dn*$del_corr) && 
+                            ($skew_up <= $sskew_up*$del_corr)){
+                            $status = "SIGNOFF";
+                        }
+                        print STDERR "SKEW $status $node $tau_ps $skew_dn $skew_up $skew_bound $sskew_dn $sskew_up\n";
+                    }
+                    if ($tau_ps == $delayTau[0]) {
+                        print STDERR "$node changed from $element[0] to $status in $cell\n" if $element[0] ne $status;
+                        $element[0] = $status;
+                    }
+                    else {
+                        print STDERR "$node changed from $element[0] to $status at tau=$tau_ps $alint_raw\n" if $element[0] ne $status and $status ne "SIGNOFF";
+                    }
+                }
+                print RAW join(" ", @element)."\n";
+            }
+            else {
+                print STDERR "Unknown line $line\n";
+                print RAW "$line\n";
+            }
+        }
+        close RAW;
+    }
+}
+# error message
+else { die "ERROR: unknown task\n"; }

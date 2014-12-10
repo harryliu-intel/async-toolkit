@@ -1,0 +1,58 @@
+<pre>
+
+<div class="moz-text-flowed" style="font-family: -moz-fixed">Bevan C. Bennett wrote:
+
+>> Their ability to stick with a specific "release" seems to be to stick
+>> with a changelist number in the single line of development.  There
+>> doesn't seem to be any place different branches to go.
+>
+>
+> Indeed! I missed that...
+> I emphatically believe/agree that tools should be installed as
+>
+> tool-version
+>
+> -not-
+>
+> tool-date-changenumber
+>
+>>> The whole 'how to branch' discussion seems (to me) to be an issue 
+>>> internal to a particular tools' development team. Whichever method 
+>>> gets chosen for a particular tool shouldn't effect me, 
+>>> /usr/local/fulcrum, or this plan.
+>>
+>>
+>>
+>> Well, we need a place to put 1.1, 1.1.1, 1.2, etc.
+>
+>
+> Right.
+> Counterproposal:
+> /usr/local/fulcrum/[bin|pdk|config] : as discussed
+> /usr/local/fulcrum/tools/
+> /usr/local/fulcrum/tools/<tool>-nightly/
+> /usr/local/fulcrum/tools/<tool>-version.release/
+>                    ...
+>
+> This is more in line with how we install other 'normal' software.
+>
+> Re: PowerPC, I was asking where it came from that Mike listed it as a 
+> required architecture? I suspect it was Patrick and Andrew wanting to 
+> run things natively on their laptops, but I don't believe there's been 
+> any formal discussion of what would be required to properly support it.
+>
+Keep up the discussion.
+
+One additional point on /usr/local/fulcrum is this: Are we considering
+the fact that the tools and the pdk, for example, are highly cross 
+dependent... in other words, updates
+to the pdk can affect tools and tool improvements may require changes to 
+the pdk. Therefore,
+they really cannot be released separately without some serious cross 
+checking by the tool
+for compatibility.
+
+
+
+</div>
+</pre>

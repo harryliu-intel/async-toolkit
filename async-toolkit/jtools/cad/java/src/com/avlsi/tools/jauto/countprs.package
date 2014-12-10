@@ -1,0 +1,8 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.jauto.CountPrs
+$arch/bin/count_prs.sh  count_prs.sh 775

@@ -1,0 +1,10 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+include ../../csp/csp2java/runtime/cspruntime.package.inc ../../csp/csp2java/runtime
+include ../../csp/resources/resources.package.inc ../../csp/resources
+java com.avlsi.tools.jflat.JFlat
+$arch/bin/jflat.sh              jflat.sh 775

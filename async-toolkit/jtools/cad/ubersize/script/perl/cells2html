@@ -1,0 +1,95 @@
+#!/usr/intel/bin/perl
+# $Id$
+# $DateTime$
+# $Author$
+
+
+open IN, "<@ARGV[0]" or die "ERROR: can't open @ARGV[0].";
+
+my @cells = ();
+
+$line = <IN>;
+while ($line) {
+    
+    # read cell
+    $cell = $line;
+    $cell =~ s/CELL //g;
+    $cell =~ s/\ {//g;
+    chomp($cell);
+
+    $instances{$cell} = <IN>;
+    chomp($instances{$cell});
+    if (!($instances{$cell} eq "}")) {
+
+        # read cell name
+        push(@cells,$cell);
+
+        # read instances
+        $instances{$cell} =~ s/  instances = //g;
+        chomp ($instances{$cell});
+
+        # read all_width
+        $all_width{$cell} = <IN>;
+        $all_width{$cell} =~ s/  all_width = //g;
+        chomp ($all_width{$cell});
+        
+        # read avg_width
+        $avg_width{$cell} = <IN>;
+        $avg_width{$cell} =~ s/  avg_width = //g;
+        chomp ($avg_width{$cell});
+        
+        # read max_width
+        $max_width{$cell} = <IN>;
+        $max_width{$cell} =~ s/  max_width = //g;
+        chomp ($max_width{$cell});
+        
+        # read min_width
+        $min_width{$cell} = <IN>;
+        $min_width{$cell} =~ s/  min_width = //g;
+        chomp ($min_width{$cell});
+        
+        # read }
+        $line = <IN>;
+    }
+
+    # read \n
+    $line = <IN>;
+
+    # read next line
+    $line = <IN>;
+}
+
+#output
+@cells = sort(@cells);
+print "<h1>$ARGV[0]</h1>\n";
+print "<table cellpadding=\"2\" cellspacing=\"2\" border=\"1\" width=\"100%\">
+  <tbody>
+    <tr>
+      <th valign=\"top\">Cell<br>
+      </th>
+      <th valign=\"top\">Instances<br>
+      </th>
+      <th valign=\"top\">all_width<br>
+      </th>
+      <th valign=\"top\">avg_width<br>
+      </th>
+      <th valign=\"top\">max_width<br>
+      </th>
+      <th valign=\"top\">min_width<br>
+      </th>
+    </tr>
+";
+
+for $cell (@cells) {
+    print "    <tr>\n";
+    print "      <td>$cell</td>\n";
+    print "      <td>$instances{$cell}</td>\n";
+    print "      <td>$all_width{$cell}</td>\n";
+    print "      <td>$avg_width{$cell}</td>\n";
+    print "      <td>$max_width{$cell}</td>\n";
+    print "      <td>$min_width{$cell}</td>\n";
+    print "    </tr>\n";
+}
+
+print "  </tbody>\n";
+print "</table>\n";

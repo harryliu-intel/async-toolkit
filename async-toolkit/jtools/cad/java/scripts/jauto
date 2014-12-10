@@ -1,0 +1,9 @@
+#!/bin/sh
+mkdir -p cdlout
+cell="$2"
+cast="$1"
+shift 2
+java -DHOME=$HOME com.avlsi.tools.jauto.Jauto --noFloorplan \
+        --castInRoot=.:/home/user/denney/hardware/cast:/home/user/denney/hardware/cast/standard:/usr/local/cad/cast \
+        --cellName="$cell" --cdlRoot=cdlout --unitSize \
+        --outRoot=cdlout --project=none "$cast" "$@"

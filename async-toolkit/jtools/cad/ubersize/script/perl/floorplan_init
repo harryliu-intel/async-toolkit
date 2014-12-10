@@ -1,0 +1,85 @@
+#!/usr/intel/bin/perl -w
+
+#
+# Author: Abe Ankumah
+# Purpose: Leverage existing floorplanning into new subtype
+#
+
+#report usage
+sub usage() {
+    my $usage = <<EOF;
+USAGE: floorplan_init [args]
+  Arguments:
+     --dfII-dir=[${dfII_dir}]  (dfII directory)
+    --dest-dfII-dir=[${dest_dfII_dir}]  (dfII directory for output)
+EOF
+    die "${usage}";
+}
+
+# default paths and variables
+$cast_dir       = "$ENV{HOME}/hw/cast";
+$dfII_dir       = "$ENV{HOME}/hw/layout/tsmc13/dfII";
+$dest_dfII_dir  = "";
+@subtype_from   = ();
+$subtype_to     = "";
+$cell           = "";
+$in_file = "/scratch/in_file.txt";
+$out_file = "/scratch/out_file.txt";
+$client = "";
+$max_heap_size = "500M";
+ 
+# get optional command line arguments
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    ($flag, $value) = split("=",$1);
+if    ($flag eq "subtype-from")        { @subtype_from = split(',',$value); }
+elsif ($flag eq "subtype-to")       { $subtype_to = $value; }
+elsif ($flag eq "client")       { $client = $value; }
+elsif ($flag eq "dfII-dir")       { $dfII_dir = $value; }
+elsif ($flag eq "cast-dir")       { $cast_dir = $value; }
+elsif ($flag eq "cell")       { $cell = $value; }
+elsif ($flag eq "dest-dfII-dir")  { $dest_dfII_dir = $value; }
+elsif ($flag eq "max-heap-size")  { $max_heap_size = $value; }
+elsif ($flag eq "subcells_file")  { $in_file = $value; }
+elsif ($flag eq "split_spec")  { $out_file = $value; }
+elsif ($flag eq "help")           { usage(); }
+else { die "ERROR: argument --${flag}=${value} not recognized.\n"; }    
+shift @ARGV;
+} 
+
+if ($dest_dfII_dir eq "") {
+    $dest_dfII_dir = $dfII_dir;
+}
+
+#Error Checking 
+if(scalar(@subtype_from) == 0){die "ERROR: Please specify a base subtype list\n"; }
+if($subtype_to eq ""){die "ERROR: Please specify a target subtype\n"; }
+if($cell eq ""){die "ERROR: Please specify a cell\n"; }
+
+# now perform the operation
+`cast_query --cast-path=\"$cast_dir\" --cast-version=2 --cell=\"$cell.$subtype_to\" --task=subcells --translate=cadence --max-heap-size=$max_heap_size &> \"$in_file\" `;
+
+open(SUBCELLS, "<$in_file") or 
+    die "FATAL: cannot open cast_query results file $in_file\n";
+open(SPLIT_LOG, ">$out_file") or 
+    die "FATAL: cannot open split log file $out_file\n";
+
+$errors = `grep Exception \"$out_file\"`;
+if($errors ne ""){ die "ERROR: Refer to $out_file\n"; }
+
+while(<SUBCELLS>){
+    chop $_;  
+    chop $_;  
+    if(!($_ =~ /SYNTAX:/)){
+    @parts = split /\./, $_;
+
+    foreach $subtypefrom (@subtype_from) {
+        $newcell = "";
+        for($i=0; $i < scalar(@parts)-1; $i++){
+            if($i!=0){ $newcell .= "."; }   #don't put a . first
+            $newcell .=  "$parts[$i]";
+        }
+        print SPLIT_LOG "SPLIT: $newcell $subtypefrom $subtype_to\n";        
+    }
+  }
+}
+

@@ -1,0 +1,45 @@
+#!/bin/zsh
+#
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+#
+# $Id$
+#
+# Author: Aaron Denney
+#
+# See http://internal/~denney/software-regression-test-harness/
+#
+# Zsh necessary for the coprocess, which is necessary to get the status
+# of the test rather than the awk filter.
+#
+location=$1
+if [ -z "$location" ]; then
+	location=`pwd`/classes
+fi
+subset=$2
+if [ -z "$subset" ]; then
+	subset=tests 
+fi
+testroot=`pwd`/tests
+logfile=report
+finalstatus=0
+failures=0
+successes=0
+testscripts=(`find $subset -name 'run-this-test' -perm -a+x`)
+for i in ${testscripts}; do 
+	testname=`dirname $i`
+	coproc awk "{ print ${testname} \$0 }" >> ${logfile}
+	(cd $testname; exec env - ./run-this-test ${location} ${testroot}) >& /dev/null 3>&p
+	testresult=$?
+	coproc exit
+
+	if [ $testresult != 0 ]; then
+		echo "$testname failed"
+		failures=`expr $failures + 1`
+	else
+		echo "$testname passed"
+		successes=`expr $successes + 1`
+	fi;
+	finalstatus=`expr $finalstatus '|' $testresult`
+done
+echo "$failures failures, $successes successes"
+exit $finalstatus

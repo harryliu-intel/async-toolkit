@@ -1,0 +1,812 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta name="P4HD" content="$Id$">
+</head>
+<body>
+  <style>
+<!--
+.new {
+    color : red;
+}
+.aub {
+    color : green;
+p {
+    margin 3px 0 3px 0;
+}
+-->
+  </style>
+  <title class="new">Fulcrum Tool Install and Release System</title>
+<h1>Fulcrum Tool Release System<br>
+</h1>
+(Proposal)<br>
+<br>
+Revisions:<br>
+<table cellpadding="2" cellspacing="2" border="0"
+ style="text-align: left; width: 100%;">
+    <tr>
+      <td valign="top">3/24/2004
+      </td>
+      <td valign="top">Initial version (Davies).
+      </td>
+    </tr>
+    <tr>
+      <td valign="top" class="aub">3/26/2004</td>
+      <td valign="top" class="aub">comments by Aubrey</td>
+    </tr>
+    <tr>
+      <td valign="top" class="new">3/27/2004</td>
+      <td valign="top" class="new">s/beta/nightly/g.&nbsp; Added
+support for multiple branches (Davies).
+      </td>
+    </tr>
+    <tr>
+      <td valign="top" class="new">4/2/2004</td>
+      <td valign="top">Added <a href="thread/index.html">link</a> to mail thread on Release System.
+      </td>
+    </tr>
+    <tr>
+      <td valign="top" class="new">4/7/2004</td>
+      <td valign="top">This document rewritten to be a spec for the release system is
+      now a separate <a href="releasedoc.html">document</a>
+      </td>
+    </tr>
+</table>
+<span class="aub"><br>
+</span>
+<h2>Directory Structure<br>
+</h2>
+Currently, internal Fulcrum CAD tool installations are scattered across
+the filesystem in a disorganized and uncontrolled manner. This
+has to stop. In the future, all official Fulcrum tool
+installations will be located under /usr/local/fulcrum, and all users
+will set their $PATH to include only /usr/local/fulcrum/bin to obtain
+access to all tool releases. The following table outlines the new
+central package release directory structure:<br>
+<br>
+<table cellpadding="2" cellspacing="2" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td valign="top">
+      <pre>/usr/local/fulcrum/    <span
+ style="color: rgb(153, 153, 153);">[-&gt; /home/local/common/fulcrum]</span></pre>
+      </td>
+      <td valign="top">Central directory for all
+Fulcrum tool and pdk installations. This directory replaces the
+numerous redundant "release" directories that exist now, such as
+/home/group/software, /home/group/cadadmin, /home/group/microarch, etc.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum</span>/bin/<br></pre>
+      </td>
+      <td valign="top">Platform-independent bin
+directory that all users will include in their $PATH. All Fulcrum
+tools can be run with this single directory in a user's $PATH.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/bin</span>/fulcrum</pre>
+      </td>
+      <td valign="top">New fulcrum wrapper
+script. Provides a simple interface for running all of Fulcrum's
+internal tools.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum</span>/tools/<br></pre>
+      </td>
+      <td valign="top">Package installation directory
+for internal Fulcrum tools.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools<span
+ style="color: rgb(0, 0, 0);">/</span></span><span class="new">nightly</span>/<br></pre>
+      </td>
+      <td valign="top"><span class="new">Nightly</span> installations of Fulcrum
+tool packages. No guarantees are made on the functionality of
+these tools.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools/<span="new">nightly</span><span
+ style="color: rgb(0, 0, 0);">/</span></span>&lt;tool&gt;<span class="new">-branch</span>/<br></pre>
+      </td>
+      <td valign="top"> Directory containing most
+recent and all prior builds of the specified tool package <span class="new">in the
+specified branch (e.g. "1.1").</span> A new
+build is added each night whenever a source file belonging to the
+package changes, or whenever a developer wishes.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools/<span="new">nightly/&lt;tool&gt;-branch</span><span
+ style="color: rgb(0, 0, 0);">/</span></span><br>                                 &lt;tool&gt;<span class="new">-branch</span>.YYYY-MM-DD.changenum.tar.gz<br></pre>
+      </td>
+      <td valign="top">Filename format of each tool
+package.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools/<span="new">nightly/&lt;tool&gt;-branch</span><span
+ style="color: rgb(0, 0, 0);">/</span></span>log.txt</pre>
+      </td>
+      <td valign="top">Log file documenting the <span class="new">nightly</span>
+package build
+history.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools</span>/released/<br></pre>
+      </td>
+      <td valign="top">Directory containing official
+releases of tool packages. These releases have, in theory, been
+carefully QA'd.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools/released</span>/&lt;tool&gt;<span class="new">-branch/</span><br></pre>
+      </td>
+      <td valign="top">Directory containing most recent
+and all prior releases of the specified tool <span class="new">package in the specified
+branch.</span></td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">usr/local/fulcrum/tools/released/&lt;tool&gt;<span class="new">-branch</span><span
+ style="color: rgb(0, 0, 0);">/<br>                                  </span></span>&lt;tool&gt;<span class="new">-branch</span>.YYYY-MM-DD.changenum.tar.gz</pre>
+      </td>
+      <td valign="top">Filename format of each released
+tool package. The "YYYY-MM-DD" date string corresponds to the
+date of release (<span style="font-style: italic;">not</span> build),
+whereas the change number is preserved from the <span="new">nightly</span> directory's
+source
+package file, identifying the precise date/time of build.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/tools/released/&lt;tool&gt;<span class="new">-branch</span><span
+ style="color: rgb(0, 0, 0);">/</span></span>log.txt</pre>
+      </td>
+      <td valign="top">Log file which includes release
+comments provided by the installer.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum</span>/pdk/</pre>
+      </td>
+      <td valign="top">Nightly and released PDK
+packages. Structure exactly matches the "tools" directory. <span class="new">All
+branch names are identical.</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum</span>/config/</pre>
+      </td>
+      <td valign="top">Centrally organized
+configuration files for Fulcrum tools. The model for organizing
+these configuration files will be on a per-project basis.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/config</span>/fulcrum.config</pre>
+      </td>
+      <td valign="top">Configuration file for the
+fulcrum wrapper script. This file spans all projects, so it
+belongs at the topmost level in the directory hierarchy. (See the
+section on the Fulcrum wrapper script below for more details about what
+this file specifies.)<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/config</span>/&lt;project&gt;/</pre>
+      </td>
+      <td valign="top">Project-specific configuration
+files.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/config/&lt;project&gt;</span>/project.config</pre>
+      </td>
+      <td valign="top">Top-level project configuration
+file; mostly specifies project-to-package-release mappings.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/config/&lt;project&gt;</span>/&lt;tool&gt;/</pre>
+      </td>
+      <td valign="top">Per-tool configuration files
+(e.g. jauto.config).<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/config/&lt;project&gt;</span>/&lt;tool&gt;/&lt;prog&gt;.YYYY-MM-DD.&lt;change#&gt;.config</pre>
+      </td>
+      <td valign="top">History of all configuration
+files for each sub-program of each tool of each project.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">/usr/local/fulcrum/config/&lt;project&gt;</span>/&lt;tool&gt;/log.txt</pre>
+      </td>
+      <td valign="top">Log of configuration file
+updates.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+One characteristic to note is that no package file is ever "installed"
+under /usr/local/fulcrum, in the sense that we use "package-inst.pl" to
+install package files now under /home/group/cadadmin etc. Because
+all tools will be run via the "fulcrum" wrapper script, all packages
+can be treated as "safe" versions that are expanded into a temporary
+user directory upon each invocation of the tool.<br>
+<p class="aub">
+I would think that one would want both beta and releases to be
+installed.
+If one wants the 'latest', what I would call 'alpha' build, then one
+would
+install it locally.
+</p>
+<br>
+<h2>Packages</h2>
+The new package format will be the following:<br>
+<br>
+<table cellpadding="2" cellspacing="2" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td valign="top">
+      <pre>&lt;tool&gt;/<span style="color: rgb(153, 153, 153);"></span></pre>
+      </td>
+      <td valign="top">Tool (or pdk) name.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;</span>/&lt;arch&gt;/<br><span
+ style="color: rgb(153, 153, 153);">&lt;tool&gt;</span>/Linux-i686/<br><span
+ style="color: rgb(153, 153, 153);">&lt;tool&gt;</span>/SunOS-sun4u/<br><span
+ style="color: rgb(153, 153, 153);">&lt;tool&gt;</span>/Darwin-powerpc/<br></pre>
+      </td>
+      <td valign="top">Platform-dependent files. Three
+platforms will be supported and, in official builds, all will be
+built and included by default.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;/&lt;arch&gt;</span>/bin/</pre>
+      </td>
+      <td valign="top">Platform-dependent binaries.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;/&lt;arch&gt;</span>/lib/</pre>
+      </td>
+      <td valign="top">Platform-dependent library files.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;</span>/share/</pre>
+      </td>
+      <td valign="top">Platform-independent files.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;/share</span>/lib/&lt;lang&gt;/    </pre>
+      </td>
+      <td valign="top">Platform-independent,
+language-specific library files (e.g. java, perl, etc.)<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;/share</span>/java/</pre>
+      </td>
+      <td valign="top">Java jar files (NOTE: why not
+move to lib/java ?)<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre><span style="color: rgb(153, 153, 153);">&lt;tool&gt;/share</span>/Fulcrum/...</pre>
+      </td>
+      <td valign="top">Fulcrum-specific pdk and other
+configuration files.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+That is, the package format is exactly the same as it is now, except
+for the following changes:<br>
+<ol>
+  <li>Elimination of the version number as a level of directory
+hierarchy. We've never had a use for the version number, and with
+this new system's structured release organization (where old releases
+of all tools are stored indefinitely), a version identifier is simply
+not necessary.<br>
+    <span class="aub">
+I do think it is a good idea to retain the notion of release numbers. I
+agree
+that we should not keep all releases around forever. There are previous
+releases which maybe need to be a long time because of use at tapeout.
+    </span> <br>
+  </li>
+  <li>Reorganization of &lt;tool&gt;/lib to &lt;tool&gt;/share/lib, to
+improve internal consistency.<br>
+    <br>
+  </li>
+  <li>Inclusion of multiple platform-specific builds in a single
+package. This presumably was the original intention of the build
+system, but the support was never fully implemented. In the
+future system, whenever a package is built, the default behavior will
+be for all supported platforms' files to be built and included in the
+package. The build system will optionally support compiling for a
+single platform, as it does now, in order to speed up developer debug
+time.<br>
+    <span class="aub">
+This would be nice. It would mean using the qsub system, I think, as
+part of the build. In addition, it would mean running regression on
+both platforms at once.
+    </span> </li>
+</ol>
+<br>
+<h2>Build and Install</h2>
+The current build/install procedure is informal, poorly organized, and
+leads to excessive tool instability from the perspective of users:<br>
+<ol>
+  <li>[Development] The developer builds a package with "make
+&lt;tool&gt;.tar.gz", and then installs the package with the
+"package-inst.sh" bash script into a local user directory for testing.<br>
+    <br>
+  </li>
+  <li>[<span class="aub">Alpha</span> Release] A nightly cron job
+builds a package by
+invoking "make &lt;tool&gt;.tar.gz" for all tools (using an "official"
+build user software Perforce check-out), and deposits the packages
+into /home/group/software/build-often. A different cron job
+installs these packages into /home/group/microarch/cad-latest/, with
+their (Linux-i686) executables (such as "jdsim") linked to
+/home/group/microarch/bin (as, for example, "jdsim-latest"). A
+30-day history of these packages is saved in
+/home/group/software/build-often, but no history is maintained of the
+installed alpha packages.<br>
+    <br>
+  </li>
+  <li><span class="aub">[Beta Release] Periodically, before a final
+official release, a beta release is generated, probably from one of
+the nightly builds. History is maintained of the
+installed beta packages. Release numbers are assigned to these.</span><br>
+    <br>
+  </li>
+  <li>[Official Release] Occasionally, when someone (generally
+Abe, Andrew, or Clayton) feels that a particular package is stable and
+required for general use, that person will use package-inst.sh to
+install the package into the appropriate "central" install
+location. The central location varies by package. For
+example, for jdsim, the location is /home/group/microarch/cad; for the
+lve, it is /home/group/cadadmin/lve-safe; for the PDKs, it is
+/home/group/cadadmin/technology. Users must set their paths
+appropriately to access the latest released versions of these
+packages. They have no control over which released version of a
+particular package they run (no history is saved).<span class="aub">
+Release
+numbers are assigned to these releases, probably by removing the
+'beta' from an existing beta release.</span><br>
+  </li>
+</ol>
+<br>
+The new procedure will address these problems by adding more controls,
+clearer file organization, and a more useful release history:<br>
+<ol>
+  <li>[Development] Same as (1) above. Developers still
+need a simple, unburdened mechanism to build and install development
+versions of packages for testing purposes.<br>
+    <br>
+  </li>
+  <li>[<span class="new">Nightly Release</span>] As before, a nightly cron job will build and
+install the latest Perforce snapshots of all tool and PDK packages into
+a central location. The new central location will be
+/usr/local/fulcrum/beta/{tools,pdk}.<br>
+    <br>
+  </li>
+  <li>[Accelerated <span class="new">Nightly</span> Release] In order to allow immediate user
+testing of a particular new feature or bug fix, there needs to be a
+method to build and install new <span class="new">nightly</span> releases of packages
+immediately,
+without having to wait until the next automatic nightly build. <span class="new">(The
+"nightly" designation doesn't apply very well for such builds, but oh
+well.)</span> Such builds must be performed in a controlled (build user)
+environment
+-- not in a particular developer's perforce user check-out. Two
+mechanisms will be supported (which don't necessarily have to be
+implemented immediately):<br>
+    <br>
+    <ol style="list-style-type: lower-alpha;">
+      <li>Perforce-triggered build. A Perforce trigger will be
+installed that will look for lines in the "Description" field of
+software check-ins that match the following:<br>
+        <pre>  !! install=package1[,package2,...] !!<br></pre>
+The trigger script will then build each listed package as
+&lt;package&gt;.YYYY-MM-DD.&lt;change#&gt;.tar.gz and deposit them
+under /usr/local/fulcrum/{tools,pdk}/<span class="new">nightly</span>.<br>
+        <br>
+      </li>
+      <li>Email-triggered build. Not every <span class-new>nightly</span> release can be
+conveniently tied to a particular Perforce check-in. For
+post-checkin installs, an email to the build user with the above "!!
+install=package_list !!" line in either the subject or body will
+instruct the build account to sync its perforce check-out and
+build/install the specified package(s).<br>
+        <br>
+Future enhancement: Support "package@changenum" in the install line to
+allow installing packages from a Perforce snapshot older than the
+current head.<br>
+        <br>
+      </li>
+    </ol>
+  </li>
+  <li>[Official Release] We need to institute a slightly more
+controlled procedure for installing "official" package releases. A new
+"package-release" script can provide this. This script will
+have the following properties:<br>
+    <br>
+    <ol style="list-style-type: lower-alpha;">
+      <li>It will install the released packages under
+/usr/local/fulcrum/released/{tools,pdk}, providing a single central
+location for all tool and pdk releases.<br>
+      </li>
+      <li>It will require the user to write a comment describing the
+purpose of the release. This comment will be recorded in the
+installed package's log.txt file, and will be emailed to all relevant
+engineers.<br>
+      </li>
+      <li>It will grant authority to release package to only a specific
+list of users.</li>
+      <li>It will only release <span class-new>nightly</span> packages that have already been
+installed under /usr/local/fulcrum/<span class-new>nightly</span>/{tools,pdk}.</li>
+      <li>There will be no other way to install packages under
+/usr/local/fulcrum/released/{tools,pdk}.</li>
+    </ol>
+    <br>
+  </li>
+</ol>
+<h2>Fulcrum Wrapper Script<br>
+</h2>
+Half of the user-visible improvements of this new system comes from the
+increased control over the build &amp; release process; the other half
+comes from the new Fulcrum wrapper script, "fulcrum". This script
+has the following general properties:<br>
+<ol>
+  <li>It provides a single executable interface to all internal Fulcrum
+tools. That is, as long as a user has "fulcrum" visible in his
+$PATH, all versions of all Fulcrum tools are accessible.<br>
+    <br>
+  </li>
+  <li>It provides a simple and powerful mechanism to run particular
+versions of tools. For example, simple command-line options will
+allow a user to select between the latest <span class-new>nightly</span> version, the latest
+released version, and the official PV2 development version of a
+particular tool. The same command-line options will allow the
+user to run the official released version of a tool as of six months
+ago.<br>
+    <br>
+  </li>
+  <li>It will run the particular executable (and set up the child
+processes' $PATH) appropriately for the user's platform
+architecture. That is, if the user is logged into a Sun, the
+SunOS-sun4u builds of all platform-specific files will be invoked
+automatically.<br>
+    <br>
+  </li>
+  <li><span class="aub">To simplify user interface, the use of
+config files in the same paradigm of perforce .p4.config
+(.fulcrum.config?) should
+be used. This may be the same thing that is indicated above, but am not
+sure. That way, the user does not have remember 256 characters
+of command line interface to invoke a tool.</span><br>
+    <br>
+  </li>
+</ol>
+Usage specification:<br>
+<br>
+<pre>fulcrum [fulcrum-script-options] &lt;toolspec&gt; [tool options]</pre>
+<br>
+The <span style="font-family: monospace;">&lt;toolspec&gt;</span>
+argument identifies the tool executable to run. Two formats are
+supported:<br>
+<ul>
+  <li><span style="font-family: monospace;">&lt;package&gt;</span>: The
+default tool executable associated with the specified tool package
+will be run. For example, "fulcrum ubersize" will invoke the
+"ubersize" perl wrapper script of the ubersize package. The
+default tool executable will be assumed to be the same name as the
+package.<br>
+    <br>
+  </li>
+  <li><span style="font-family: monospace;">&lt;package&gt;.&lt;prog&gt;</span>:
+In cases when multiple programs are included in a single package, the
+user will use this &lt;toolspec&gt; format to specify the particular
+program to run. For example, "fulcrum lve.cast2cdl".<br>
+  </li>
+</ul>
+The following [preliminary] fulcrum script options will be supported:<br>
+<br>
+<table cellpadding="2" cellspacing="2" border="1"
+ style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; white-space: nowrap;"><span
+ style="font-family: monospace;">--<span class-new>nightly</span>[=changenum | <br>
+=datestring]</span><br>
+      </td>
+      <td valign="top">With no "=" version argument,
+this option specifies that the latest <span class-new>nightly</span> version of the specified
+tool should be run. With "=changenum" or "=datestring", the most
+recent <span class-new>nightly</span> version of the tool prior to the specified time will be
+run. "datestring" can be formatted as "YYYY-MM-DD" (other formats may
+also
+be supported.)<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; white-space: nowrap;"><span
+ style="font-family: monospace;">--release[=changenum | <br>
+=datestring]</span><br>
+      </td>
+      <td valign="top">With no "=" version argument,
+this option specifies that the latest released version of the specified
+tool should be run (this is the default behavior when neither --<span class-new>nightly</span>
+nor --release is given.) With "=changenum" or "=datestring", the
+most recent released version of the tool prior to the specified time
+will be run. (Note: the date of the package's release, not build,
+is used.)<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top"><span
+ style="font-family: monospace;">--project=&lt;projectname&gt;</span><br>
+      </td>
+      <td valign="top">The latest project-specific
+release of the tool will be invoked, as specified in
+/usr/local/fulcrum/config/&lt;projectname&gt;/project.config.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>--package=&lt;packagefile&gt;<br></pre>
+      </td>
+      <td valign="top">Bypasses the <span class-new>nightly</span>/release
+package file resolution system and instructs fulcrum to run the
+executable from the specified package file.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>--<span class-new>nightly</span>-pdk[=changenum | <br>           =datestring]<br></pre>
+      </td>
+      <td valign="top">Similar to the --<span class-new>nightly</span> option,
+except this option identifies the PDK package to use.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>--release-pdk[=changenum |<br>              =datestring]<br></pre>
+      </td>
+      <td valign="top">Similar to the --release option,
+except this option identifies the PDK package to use.</td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>--project-pdk=&lt;projectname&gt;  <br></pre>
+      </td>
+      <td valign="top">Similar to the --project option,
+except this option identifies the PDK package to use. Defaults to
+the value specified by --project, if --project is given.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>--config=&lt;userconfig&gt;<br></pre>
+      </td>
+      <td valign="top">Specifies our standard
+extra-arguments configuration file. Any number of --config
+options can be provided, and the fulcrum script will evaluate each
+specified file in order.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+In order for this new fulcrum wrapper script scheme to work, some minor
+changes will need to be made to various tools and scripts. Below
+is a preliminary listing of these changes:<br>
+<ul>
+  <li>All tools will need to standardize on a certain set of common
+options, specifically:<br>
+    <br>
+    <ul>
+      <li>--fulcrum-pdk-root : Identifies the installed pdk root
+directory. All tools and scripts must accept this option (even if
+it has absolutely no use for a pdk) since the fulcrum wrapper script
+will provide it to every executable it runs.<br>
+        <br>
+      </li>
+      <li>--package-root : Scripts should use this option to set the
+fully-qualified paths of sub-programs that they need to run. Use
+of this option is preferable to relying on the environment $PATH to be
+set appropriately, and also can hopefully eliminate the reliance on
+package-inst.sh's $packageroot$ substitution (which is annoying).<br>
+      </li>
+    </ul>
+  </li>
+</ul>
+The fulcrum wrapper script will always behave as if its first argument
+is "--config=/usr/local/fulcrum/config/fulcrum.config". The
+fulcrum.config file specifies the following global configuration
+options to the fulcrum script:<br>
+<br>
+<table style="text-align: left; width: 100%;" border="1" cellspacing="2"
+ cellpadding="2">
+  <tbody>
+    <tr>
+      <td valign="top">
+      <pre>fulcrum-root=/usr/local/fulcrum<br></pre>
+      </td>
+      <td valign="top">Identifies the root of the tool
+release tree.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>install-dir=/scratch/$USER<br></pre>
+      </td>
+      <td valign="top">Directory in which each package
+should be installed.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+When a --project or --project-pdk option is specified, the
+corresponding project-specific configuration file(s) will be
+read. These files specify the official tool and pdk releases for
+that project:<br>
+<br>
+<table style="text-align: left; width: 100%;" border="1" cellspacing="2"
+ cellpadding="2">
+  <tbody>
+    <tr>
+      <td valign="top">
+      <pre>tool-release(&lt;tool&gt;)=YYYY-MM-DD.changenum<br></pre>
+      </td>
+      <td valign="top">Tool-parameterized release
+specification.<br>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+      <pre>pdk-release=&lt;pdk&gt;.YYYY-MM-DD.changenum<br></pre>
+      </td>
+      <td valign="top">PDK release specification.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+Whenever <span style="font-family: monospace;">--project=&lt;proj&gt;</span>
+is specified and a <span style="font-family: monospace;">config/&lt;proj&gt;/&lt;tool&gt;/&lt;prog&gt;.YYYY-MM-DD.&lt;change#&gt;.config</span>
+file exists for the <span style="font-family: monospace;">&lt;tool&gt;.&lt;prog&gt;</span>
+program to be run, the fulcrum wrapper script will pass the
+configuration file to the program via a <span
+ style="font-family: monospace;">--config=&lt;configfile&gt;</span>
+option. Although recently the trend has been to move such
+configuration files into the pdk (e.g. jauto.config), this feature will
+allow future project-wide conventions to be established. For
+example, the following is an {lve,ubersize}.config file that could be
+instituted to enforce one particular user directory organization:<br>
+<pre>  cast-dir=$HOME/hw/cast<br>  spec-dir=$HOME/hw/layout/tsmc13/spec<br>  dfII-dir=$HOME/hw/layout/tsmc13/dfII<br>  <br></pre>
+<h2>Implementation Steps</h2>
+The following is a summary of technical developments that will need to
+happen before the system described in this document is functional:<br>
+<ol>
+  <li>Set up /usr/local/fulcrum directory structure.</li>
+  <li>New package format needs to be implemented (full cross-platform
+support in the build system is the main feature here).</li>
+  <li>Cross-platform compilation strategy needs to be worked out.<br>
+  </li>
+  <li>Fulcrum wrapper script needs to be written.</li>
+  <li>Build user Perforce/email/crontab scripts need to be written to
+implement <span class-new>nightly</span> release support.</li>
+  <li>package-release script needs to be written to implement official
+release support.<br>
+  </li>
+</ol>
+<br>
+<h2>Open Issues</h2>
+<ul>
+  <li>Can the Cadence tools' "ic" wrapper script be unified with the
+"fulcrum" wrapper script? It would be nice if there were only a
+single wrapper script to run all CAD tools, be they internal or
+vendor-supplied.<br>
+    <br>
+  </li>
+  <li>Eventually a regression system should be incorporated into this
+build &amp; release procedure. Presumably a simple, light-weight
+regression would be run before installing <span class-new>nightly</span> packages, while a
+much
+more rigorous (and compute-intensive) regression suite would be run on
+<span class-new>nightly</span> installations which would gate their migration to a release
+directory.<br>
+    <br>
+  </li>
+  <li>How should the configuration files under
+/usr/local/fulcrum/config be controlled? There will be a need for
+multiple people to edit these files, but they should not be free to do
+so on a whim. Possibilities:<br>
+    <ol style="list-style-type: lower-alpha;">
+      <li>The directory tree could be revision-controlled in Perforce,
+and the central /usr/local/fulcrum/config directory could be a build
+user perforce checkout (synced every night and/or by the perforce/email
+trigger.)</li>
+      <li>Writing to the files could be controlled by the email trigger
+or by the "package-release" script.<br>
+        <br>
+      </li>
+    </ol>
+  </li>
+  <li>Since this system guarantees the stability of any installed
+package file (whether <span class-new>nightly</span> or released), it is strictly unnecessary
+to
+store packages as uninstalled tar files under /usr/local/fulcrum, and
+to have them installed locally upon each invocation of "fulcrum".
+Although such a system is clean and simple, the run-time
+start-up cost could be annoying to users. We might want to
+consider fully installing each package file under
+/usr/local/fulcrum. The directory structure (or package
+installation script) may need to be modified to keep the packages'
+installations from overwriting each other.<br>
+    <br>
+  </li>
+  <li><span class="aub">None of this will be particularly useful unless
+we have simultaneously a first class regression and test methodology
+in place. This is actually the harder problem.</span><br>
+  </li>
+</ul>
+<br>
+<h2>See Also</h2>
+<ul>
+  <li><a href="../../../build-system/main/doc/index.html">Build System
+Documentation</a></li>
+</ul>
+<br>
+</body>
+</html>

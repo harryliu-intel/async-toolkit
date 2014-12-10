@@ -1,0 +1,58 @@
+#!/usr/intel/bin/perl
+
+# diffs two html files and produces a color coded diff.html file.
+
+# usage
+if ( @ARGV != 2 || ! -e $ARGV[0] || ! -e $ARGV[1] ) {
+    print STDERR "USAGE: html_diff file1 file2\n";
+    print STDERR "  Compares file1 to file2 to diff.html.\n";
+    print STDERR "  Additions are green, deletions are red.\n";
+    exit;
+}
+
+# do the diff
+$f_patch = "diff.html";
+$f_out = "tmp.html";
+$diff = "diff --minimal --ignore-all-space --ignore-blank-lines --unified=10000";
+system "cat $ARGV[0] | tail +2 | tidy -wrap 0 2> /dev/null | tidier 1> $ARGV[0].tmp";
+system "cat $ARGV[1] | tail +2 | tidy -wrap 0 2> /dev/null | tidier 1> $ARGV[1].tmp";
+system "$diff $ARGV[0].tmp $ARGV[1].tmp > $f_patch";
+system "rm $ARGV[0].tmp";
+system "rm $ARGV[1].tmp";
+
+# open files 
+open IN, "<$f_patch" or die "Can't open '$f_patch' for reading.\n";
+open OUT, ">$f_out"  or die "Can't open '$f_out' for writing.\n";
+
+# postprocess the diff to make a colored html file
+$last = "n";
+$line = <IN>;
+while ($line) {
+    if ( $line =~ s/^====// ) {
+        # skip it
+    } elsif ( $line =~ s/^---// ) {
+        # skip it
+    } elsif ( $line =~ s/^\+\+\+// ) {
+        # skip it
+    } elsif ( $line =~ s/^@@// ) {
+        # skip it
+    } elsif ( $line =~ s/^\+// ) {
+        # additions
+        print OUT "<font color=\"#009900\">\n";
+        print OUT "$line";
+        print OUT "</font>";
+        $last = "+";
+    } elsif ( $line =~ s/^-// ) {
+        # deletions
+        print OUT "<font color=\"#ff0000\">\n";
+        print OUT "$line";
+        print OUT "</font>";
+        $last = "-";
+    } else {
+        # unchanged lines
+        print OUT "$line";
+        $last = "n";
+    }
+    $line = <IN>;
+}
+system "mv $f_out $f_patch";

@@ -1,0 +1,1 @@
+JAVAFILES_PARSERS_USED := $(JAVAFILES_PARSERS_USED) $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../tools/jauto/CellHierarchyDumpParser )

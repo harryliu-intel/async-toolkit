@@ -1,0 +1,421 @@
+#!/usr/intel/bin/perl -w
+
+# Usage: spice2spice in.spice out.spice
+# rc_spice2spice converts files from spice format to archaic
+# compatible spice format (i.e HSPICE or BSPICE).
+
+# usage banner
+sub usage() {
+    die "Usage: $0\n" .
+        "  [--nmos nmos_model] [--pmos pmos_model]\n" .
+        "  [--minC Farads] [--minR Ohms]\n" . 
+        "  [--scaleM ratio] [--scaleC ratio] [--scaleR ratio] [--deltaL dL]\n" .
+        "  [--diffusionOverhang m] <in> <out>\n";
+}
+
+# set defaults
+$minC = 0;              # minimum capacitance to keep
+$minR = 0;              # minimum resistance to keep
+$scaleM = 1;            # scales transistor/diode dimensions
+$scaleC = 1;            # scales capacitor values
+$scaleR = 1;            # scales resistor values
+$deltaL = 0;            # offsets transistor length
+$diffusionOverhang = 0; # re-estimates diffusion A/P based on overhang
+$nmos = "N";
+$pmos = "P";
+
+# parse arguments
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    $flag = $1;
+    if ($flag eq "minC") {
+        $minC = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "minR") {
+        $minR = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "scaleM") {
+        $scaleM = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "scaleR") {
+        $scaleR = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "scaleC") {
+        $scaleC = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "deltaL") {
+        $deltaL = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "pmos") {
+        $pmos = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "nmos") {
+        $nmos = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "diffusionOverhang") {
+        $diffusionOverhang = $ARGV[1];
+        shift @ARGV;
+    } else {
+        usage();
+    }
+    shift @ARGV;
+}
+@ARGV == 2 or usage();
+
+# open files
+$f_in = "$ARGV[0]";
+$f_out = "$ARGV[1]";
+open SPICE, "<$f_in" or die "Can't open '$f_in' for reading.\n";
+open ASPICE, ">$f_out" or die "Can't open '$f_out' for writing.\n";
+print ASPICE "* spice=$f_in, minC=$minC, minR=$minR\n";
+print ASPICE "* scaleM=$scaleM, scaleR=$scaleR, scaleC=$scaleC, deltaL=$deltaL\n";
+print ASPICE "* diffusionOverhang=$diffusionOverhang\n\n";
+
+# halt with an error message
+sub error_msg {
+    die "$0: $f_in, line $.: $_[0]\n";
+}
+
+# convert list of names back into archaic compatible syntax
+sub fix_names {
+    for $node (@_) {
+        $oldnode = $node;
+        if  ( $mapping{$oldnode} ) {
+            $node = $mapping{$oldnode};
+        } else {
+            # munge name
+            $node =~ s:\(:_:g;   # replace (  with _
+            $node =~ s:\):_:g;   # replace )  with _
+            $node =~ s:\]\[:_:g; # replace ][ with _
+            $node =~ s:\[:_:g;   # replace [  with _
+            $node =~ s:\]:_:g;   # replace ]  with _
+            $node =~ s:\.:_:g;   # replace .  with _
+            $node =~ s:,:_:g;    # replace ,  with _
+            $node = lc($node);   # lowercase
+
+            # choose another mapping if reverse mapping already exists
+            if ( $reverse_mapping{$node} ) {
+                $i = 0;
+                while ( $reverse_mapping{"$node" . "_$i"} ) {
+                    $i++;
+                }
+                $node = "$node" . "_$i";
+            }
+
+            # save node mapping and reverse mapping
+            $mapping{$oldnode} = $node;
+            $reverse_mapping{$node} = $oldnode;
+        }
+    }
+}
+
+# strip single quotes or convert unit suffixes to exponential notation
+sub fix_parms {
+    for $parm (@_) {
+	if (!($parm =~ s:\'([^\']*)\':$1:g)) { # replace 'blah' with blah
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)m$/$1e-3/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)u$/$1e-6/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)n$/$1e-9/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)p$/$1e-12/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)f$/$1e-15/;
+        }
+    }
+}
+
+# Store parameters of subcircuits
+$line = <SPICE>;
+$. = 0;
+while ($line) {
+    $next_line = <SPICE>;
+    if (!($line =~ s/^\.SUBCKT\s+//i)) {
+        $line = $next_line;
+        next;
+    }
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <SPICE>;
+    }
+
+    my @parameters = ();
+    my @nodes = ();
+    my @dummies = ();
+
+    $line =~ s/(\S+)\s+//;
+    $type = $1;
+    $type =~ s:##28:(:g;
+    $type =~ s:##29:):g;
+    $type =~ s:##2c:,:g;
+    
+    while ($line =~ s/(\S+)\s*//) {
+        $arg = $1;
+        if ($arg =~ /(\S+)=(\S+)/) {
+            # Parameter and default
+            # 	N.B. default is ignored by this
+            #	translator.
+            push @dummies, $1;
+            push @parameters, $2;
+        } else {
+            # Node argument
+            push @nodes, $arg;
+        }
+    }
+
+    !$subc_args{$type} or error_msg "SUBCKT '$name' defined twice";
+    @{$subc_args{$type}} = @nodes;
+    @{$subc_dummies{$type}} = @dummies;
+    @{$subc_parms{$type}} = @parameters;
+    $line = $next_line;
+}
+
+# Reset input file
+seek SPICE, 0, 0;
+
+# Do linewise translation of cdl to spice
+$line = <SPICE>;
+$. = 0;
+$indent = "";
+while ($line) {
+    $next_line = <SPICE>;
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <SPICE>;
+    }
+    if ($line =~ s/^\.SUBCKT\s+//i) { # Begin Subcircuit Definition
+
+        my @parameters = ();
+        my @nodes = ();
+
+        $line =~ s/(\S+)\s+//;
+        $type = $1;
+        $type =~ s:##28:(:g;
+        $type =~ s:##29:):g;
+        $type =~ s:##2c:,:g;
+
+        while ($line =~ s/(\S+)\s*//) {
+            $arg = $1;
+            if ($arg =~ /(\S+)=(\S+)/) {
+                # Parameter and default
+                # 	N.B. default is ignored by this
+                #	translator.
+                push @parameters, $1;
+            } else {
+                # Node argument
+                push @nodes, $arg;
+            }
+        }
+        fix_names(@nodes);
+        fix_parms(@parameters);
+        my @newtypes = ();
+        push @newtypes, $type;
+        fix_names(@newtypes);
+        my $newtype = $newtypes[0];
+        print ASPICE ".SUBCKT $newtype ";
+        foreach $i (@nodes) {
+            print ASPICE "$i ";
+        }
+        my $n = 0;
+        foreach $i (@parameters) {
+            print ASPICE "$subc_dummies{$type}[$n]=$subc_parms{$type}[$n] ";
+            $n++;
+        }
+        print ASPICE "\n";
+        $nextR = 0;
+        $nextC = 0;
+        $nextM = 0;
+        $nextV = 0;
+
+    } elsif ($line =~ s/^\.ENDS//i) { # End Subcircuit Definition
+        
+        # print mapping
+        foreach $name (keys %mapping) {
+            print ASPICE "* $name => $mapping{$name}\n";
+        }
+        undef %mapping;
+        undef %reverse_mapping;
+        print ASPICE ".ENDS\n\n";
+
+    } elsif ($line =~ s/^M//i) { # MOSFET
+
+        my @parameters = ();
+        my %parameters = ();
+        my @nodes = ();
+
+        $line =~s/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)//
+            or die "Missing arguments in mosfet";
+        $name = "$1";
+        $type = "$6";
+        $drain = "$2";
+        $gate = "$3";
+        $source = "$4";
+        $bulk = "$5";
+
+        # set type of transistor
+        if ( $type =~ s/^[nN]//i) {
+            $type = $nmos;
+        }
+        else {
+            $type = $pmos;
+        }
+
+        @nodes = ($drain, $gate, $source, $bulk);
+
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            $parameters{lc $1}=$2;
+        }
+        foreach $p (("w", "l", "as", "ps", "nrs", "ad", "pd", "nrd")) {
+            $pp = $parameters{$p};
+            if (defined $pp) {
+                push @parameters, $pp;
+            } else {
+                push @parameters, 0;
+            }
+        }
+        fix_names(@nodes);
+        fix_parms(@parameters);
+        if (($scaleM != 1) || ($deltaL !=0)) {
+            $parameters[0] = "($parameters[0]) * $scaleM";
+            $parameters[1] = "($parameters[1]) * $scaleM + $deltaL";
+            $parameters[2] = "($parameters[2]) * $scaleM * $scaleM";
+            $parameters[3] = "($parameters[3]) * $scaleM";
+            $parameters[5] = "($parameters[5]) * $scaleM * $scaleM";
+            $parameters[6] = "($parameters[6]) * $scaleM";
+        }
+        if ($diffusionOverhang != 0) {
+            $parameters[2] = "($parameters[0]) * $diffusionOverhang";
+            $parameters[3] = "($parameters[0]) + 2*$diffusionOverhang";
+            $parameters[5] = "($parameters[0]) * $diffusionOverhang";
+            $parameters[6] = "($parameters[0]) + 2*$diffusionOverhang";
+        }
+        print ASPICE "M$nextM ";
+        $nextM++;
+        foreach $i (@nodes) {
+            print ASPICE "$i ";
+        }
+        print ASPICE "$type ";
+        print ASPICE "W=\'$parameters[0]\' L=\'$parameters[1]\' AS=\'$parameters[2]\' PS=\'$parameters[3]\' AD=\'$parameters[5]\' PD=\'$parameters[6]\'\n";
+
+    } elsif ($line =~ s/^X//i) { # Call to Subcircuit
+
+        my @parameters = ();
+        my @nodes = ();
+        my @names = ();
+
+        $line =~ s/^(\S+)\s*// or error_msg "Call lacks instance name";
+        $name = $1;
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            push @parameters, $2;
+        }
+        $line =~ s/(\S+)\s*$// or error_msg "Call lacks SUBCKT name";
+        $type = $1;
+        push @names, $type;
+        push @names, $name;
+        fix_names(@names);
+        $newtype = $names[0];
+        $newname = $names[1];
+        @nodes = split /\s+/, $line;
+        pop @nodes; # FIXME: find a better way to take last / out of nodes list
+        fix_names(@nodes);
+        fix_parms(@parameters);
+        print ASPICE $indent . "X$newname ";
+        foreach $i (@nodes) {
+            print ASPICE "$i ";
+        }
+        print ASPICE "/ $newtype ";
+        my $n = 0;
+        foreach $i (@parameters) {
+            print ASPICE "$subc_dummies{$type}[$n]=$i ";
+            $n = $n + 1;
+        }
+        print ASPICE "\n";
+
+    } elsif ($line =~ s/^C//i) { # Capacitor
+
+        $line =~ s/^(\S*)\s*//;		# Capacitor name
+        $line =~ s/^(\S+)\s*// 
+            or error_msg "Capacitor has no positive terminal";
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no negative terminal";
+        $neg = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no capacitance specifier";
+        $cap = $1;
+        my @parameters = ();
+        push @parameters, $cap;
+        fix_parms(@parameters);
+        if ($scaleC != 1) {
+            $parameters[0] = "\'($parameters[0]) * $scaleC\'";
+        }
+        if ( $cap ne "Inf" ) {
+            if ( $cap > $minC ) {
+                fix_names ($pos, $neg);
+                print ASPICE $indent . "C$nextC $pos $neg $parameters[0]\n";
+                $nextC++;
+            }
+        }
+
+    } elsif ($line =~ s/^R//i) { # Resistor
+
+        $line =~ s/^(\S*)\s*//;		# Resistor name
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no terminals";
+        $term1 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has only one terminal";
+        $term2 = "$1";
+        
+        $line =~ s/^.*r=//i;
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no resistance specifier";
+        $res = $1;
+        if ($res !~ /^[\d.eE-]+$/) {
+            # Must be a metal layer...
+            $line =~ s/^(\S+)\s*//
+                or error_msg "Resistor has no resistance specifier";
+            $res = $1;
+        }
+        my @parameters = ();
+        push @parameters, $res;
+        fix_parms(@parameters);
+        if ( $scaleR != 1) {
+            $parameters[0] = "\'($parameters[0]) * $scaleR\'";
+        }
+        fix_names($term1, $term2);
+        if ($res > $minR) {
+            print ASPICE $indent . "R$nextR $term1 $term2 $parameters[0]\n";
+            $nextR++;
+        } else {
+            print ASPICE $indent . "V$nextV $term1 $term2 0\n";
+            $nextV++;
+        }
+
+    } elsif ($line =~ s/^V//i) { # Voltage source (turned into wires)
+
+        $line =~ s/^(\S*)\s*//;		# source name
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has no terminals";
+        $term1 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has only one terminal";
+        $term2 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has no voltage specified";
+        $volt = $1;
+        fix_names ($term1, $term2);
+        if ($volt == 0) {
+            print ASPICE "V$nextV $term1 $term2 0\n";
+            $nextV++;
+        } else {
+            error_msg "Can't handle non-zero voltage sources"
+            }
+
+    } elsif ($line =~ m/^\*/) {            # comment line, do nothing
+    } elsif ($line eq "\n") {              # empty line, do nothing
+    } elsif ($line eq ".PARAM\n") {        # param line, do nothing
+    } elsif ($line =~ s/^\.GLOBAL\s+//i) { # global line, do nothing
+    } else {                               # unknown line, error
+        error_msg "Unknown line type: $line";
+    }
+    $line = $next_line;
+}

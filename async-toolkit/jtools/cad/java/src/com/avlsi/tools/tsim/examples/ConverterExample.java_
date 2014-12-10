@@ -1,0 +1,142 @@
+/*
+ * Copyright 2000 Asynchronous Digital Design.  All rights reserved.
+ *
+ * $Id$
+ */
+
+package com.avlsi.tools.tsim.examples;
+
+import com.avlsi.tools.sigscan.Sigscan;
+import com.avlsi.tools.sigscan.SigscanException;
+import com.avlsi.tools.sigscan.DebugOpts;
+import com.avlsi.tools.tsim.*;
+
+/**
+ * Class for testing a S2A and A2S reading and writing off of channels.
+ *
+ * Command Line args:
+ *
+ * <ul>
+ * <li>arg 0 : <b>clockCycle</b> The clock cycle in dsim units
+ * <li>arg 1 : <b>OutputCycleTime</b> The cycle time of the source in dsim units
+ * <li>arg 2 : <b>InputCycleTime</b> The cycle time of the sink in dsim units
+ * <li>arg 3 : <b>flowctrl?</b> set to true to use flow control
+ * <li>arg 4 : <b>disableSink?</b> set to true to disable the sink device
+ * </ul>
+ *
+ * @author Dan Daly
+ * @version $Date$
+ **/
+
+public class ConverterExample extends AbstractDevice {
+
+    private int count = 0;
+    
+    private final BufferedChannel buf;
+
+    private final boolean input;
+    
+    public ConverterExample(String scopename, String name, 
+                  Sigscan sigscan, DebugOpts opts,
+                  BufferedChannel buf, boolean input, int cycleTime) {
+        super(scopename, name, sigscan, opts);
+        this.buf = buf;
+        this.input = input;
+        this.cycleTime = cycleTime;
+    }
+
+    public void go() throws InterruptedException {
+        while (true) {
+            if (input) {
+                Message m = receive(buf);
+                //System.out.println("abtest input received: "+m);
+            } else {
+                send(buf, count++);
+            }
+        }
+    }
+    
+    public static void main(String[] args) {
+
+        int clockCycle = 2000;
+        int c1 = 1800;
+        int c2 = 1800;
+        boolean flowctrl = false;
+        boolean disableSink = false;
+        if ((args != null) && (args.length > 0)) {
+            try {
+                clockCycle = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.out.println("Can't parse clockCycle to int: "+args[0]);
+            }
+        }
+        if ((args != null) && (args.length > 1)) {
+            try {
+                c1 = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                System.out.println("Can't parse c1 to int: "+args[1]);
+            }
+        }
+        if ((args != null) && (args.length > 2)) {
+            try {
+                c2 = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                System.out.println("Can't parse c2 to int: "+args[2]);
+            }
+        }
+        if ((args != null) && (args.length > 3)) {
+            try {
+                flowctrl = Boolean.valueOf(args[3]).booleanValue();
+            } catch (NumberFormatException e) {
+                System.out.println("Can't parse flowcontrol to boolean : "+
+                                   args[3]);
+            }
+        }
+        if ((args != null) && (args.length > 4)) {
+            try {
+                disableSink = Boolean.valueOf(args[4]).booleanValue();
+            } catch (NumberFormatException e) {
+                System.out.println("Can't parse disableSink to boolean : "+
+                                   args[4]);
+            }
+        }
+        System.out.println("Clock cycle = "+clockCycle+
+                           " flow control= "+flowctrl);
+        Sigscan sigscan = null;
+        DebugOpts opts = new DebugOpts().logAllSST();
+        try {
+            sigscan = new Sigscan("convert");
+        } catch (SigscanException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
+        BufferedChannel obuf = new BufferedChannel("obuf");
+        BufferedChannel ibuf = new BufferedChannel("ibuf");
+        SharedBus bus1 = new SharedBus("top", "busa", sigscan, opts, 16);
+        SharedBus bus2 = new SharedBus("top", "busb", sigscan, opts, 16);
+        SharedBus valid=null, fc= null;
+        if (flowctrl) {
+            valid = new SharedBus("top", "valid", sigscan, opts, 1);
+            fc =    new SharedBus("top", "fc",    sigscan, opts, 1);
+        }
+        Clock clock = new Clock("top", "clock", clockCycle, sigscan);
+        S2A s2a = new S2A("top", "inp", sigscan, opts, 
+                                clock, bus2, valid, fc, ibuf);
+        A2S a2s = new A2S("top", "out", sigscan, opts,
+                                clock, bus1, valid, fc, obuf);
+        DelayElement delay = new DelayElement(bus1, bus2, 25);
+        ConverterExample input = 
+            new ConverterExample("top", "abtest_in", sigscan, opts, 
+                                 ibuf, true, c1);
+        if (!disableSink) input.start();
+        ConverterExample output =
+            new ConverterExample("top", "abtest_out", sigscan, opts, 
+                                 obuf, false,c2);
+        output.start();
+        clock.start();
+        com.avlsi.tools.dsim.SchedulerRunner.get().start();
+        return;
+    }
+
+}
+

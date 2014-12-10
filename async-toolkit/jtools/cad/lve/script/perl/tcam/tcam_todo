@@ -1,0 +1,167 @@
+#!/usr/intel/bin/perl -w
+
+# configuration
+$" =",";
+$lines = 512;
+$bits   = 36;
+@prsTau  = (40,160);
+@lumpCap = (10,40);
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=*(.*)/ ) {
+    $key = $1;
+    $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    if    ($key eq "prsTau")    { @prsTau = split(",",$value); }
+    elsif ($key eq "lumpCap")   { @lumpCap = split(",",$value); }
+    elsif ($key eq "lines")     { $lines = $value; }
+    elsif ($key eq "bits")     { $bits = $value; }
+    elsif ($key eq "help")      { banner(); }
+}
+
+foreach my $tau (@prsTau) {
+    foreach my $cap (@lumpCap) {
+        $run = "tcam_${tau}_${cap}";
+
+        # create todo file
+        open OUT, ">${run}.todo" or die "ERROR: can't write ${run}.todo\n";
+        my $todo=<<EOF;
+--slurp=1
+--slurp-dir=/home/user/lines/lve3/TCAM
+--task=aspice
+--mode=extracted
+--time=1
+--qsub=1
+--jobs=8
+--mem=4G
+--qsubarch=lx24-amd64
+--disk-space=1000G
+
+--output-dir=$run
+--aspice-in=tcam_${tau}_${cap}.in
+--corner=ss --true=1.08 --temp=125 lib.cam.sync_tcam.TCAM${lines}_${bits}.600:empty
+--corner=tt --true=1.08 --temp=125 lib.cam.sync_tcam.TCAM${lines}_${bits}.600:empty
+--corner=ff --true=1.32 --temp=0   lib.cam.sync_tcam.TCAM${lines}_${bits}.600:empty
+EOF
+        print OUT "$todo";
+        close OUT;
+
+        # create in file
+        open OUT, ">${run}.in" or die "ERROR: can't write ${run}.in\n";
+        header($tau,$cap);
+        
+        # 8 writes
+        cycle(2,0,1,0,0xF,0x0);
+        cycle(2,1,1,1,0xF,0xF);
+        cycle(2,3,0,1,0x0,0xF);
+        cycle(2,2,0,0,0x0,0x0);
+        cycle(2,6,1,0,0xF,0x0);
+        cycle(2,7,1,1,0xF,0xF);
+        cycle(2,5,0,1,0x0,0xF);
+        cycle(2,4,0,0,0x0,0x0);
+        
+        # 8 reads
+        cycle(3,0,1,0,0xF,0x0);
+        cycle(3,1,1,1,0xF,0xF);
+        cycle(3,3,0,1,0x0,0xF);
+        cycle(3,2,0,0,0x0,0x0);
+        cycle(3,6,1,0,0xF,0x0);
+        cycle(3,7,1,1,0xF,0xF);
+        cycle(3,5,0,1,0x0,0xF);
+        cycle(3,4,0,0,0x0,0x0);
+
+        # 2 lookups
+        cycle(1,0,1,1,0xF,0xF); # hit on 1, 7
+        cycle(1,0,0,1,0x0,0xF); # hit on 3, 5
+
+        # finish last cycle
+        print OUT "cycle 1250\n";
+        print OUT "output \"aspice.done\"\n";
+        print OUT "echo done\n";
+        close OUT;
+    }
+}
+
+# get a bit from an array
+sub getbit {
+    my ($val, $pos) = @_;
+    my $v = ($val>>$pos)%2;
+    return $v ? "t" : "f";
+}
+
+# force a node t or f
+sub force_node {
+    my ($name, $val) = @_;
+    my $v = getbit($val,0);
+    print OUT "force $name : $v\n";
+}
+
+# force an array of nodes to t or f
+sub force_array {
+    my ($name, $val, $bits) = @_;
+    for (my $i=0; $i<$bits; $i++) {
+        my $v = getbit($val,$i);
+        print OUT "force $name\[$i\] : $v\n";
+    }
+}
+
+# simulate one cycle
+sub cycle {
+    my ($cmd, $addr, $case, $valid, $data, $mask) = @_;
+    print OUT "/* CMD=$cmd, ADDR=$addr, CASE=$case, VALID=$valid, DATA=$data, MASK=$mask */\n";
+    force_array("CMD",$cmd,2);
+    force_array("ADDR",$addr,9);
+    force_node("CASE",$case);
+    force_node("VALID",$valid);
+    force_array("DATA",$data,$bits);
+    force_array("MASK",$mask,$bits);
+    print OUT "cycle 1250\n";
+    force_node("CLK",1);
+    print OUT "cycle 1250\n";
+    force_node("CLK",0);
+    print OUT "\n";
+}
+
+
+# setup and reset
+sub header {
+    my ($tau,$cap) = @_;
+    $tau = $tau * 1e-12;
+    $cap = $cap * 1e-15;
+    my $header = <<EOF;
+/* setup */
+prsTau $tau
+lumpCap HIT[*] : $cap
+lumpCap READ_DATA[*] : $cap
+lumpCap READ_MASK[*] : $cap
+lumpCap READ_VALID : $cap
+lumpCap READ_CASE : $cap
+
+/* reset */
+analog off
+nowarnall
+force CLK CMD[*] ADDR[*] CASE VALID DATA[*] MASK[*] : f
+force \$GND : f
+force \$Vdd : t
+force \$_RESET : f
+cycle 1000
+force \$_RESET : t
+warnall
+cycle 1000
+force CLK : t
+cycle 500
+force CLK : f
+watch CLK HIT[*] READ_DATA[*] READ_MASK[*]
+analog on
+
+EOF
+    print OUT "$header";
+}
+
+# usage banner
+sub banner {
+    die "USAGE: tcam_todo\n" .
+        "  --bits=$bits\n" .
+        "  --lines=$lines\n" .
+        "  --prsTau=@prsTau\n" .
+        "  --lumpCap=@lumpCap\n";
+}

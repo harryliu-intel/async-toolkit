@@ -1,0 +1,410 @@
+2 2
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+# This package is for all the Physical Design Tools
+# It implements the <flow layout> flow.
+
+# <h2> Documentation </h2>
+doc/updatenetlist/index.html doc/updatenetlist/index.html 664 p
+doc/updatenetlist/calls.dot doc/updatenetlist/calls.dot 664 p
+
+# The Fulcrum ui menu package.
+# extra dir added to match existing structure (AAG)
+# the 'build' directory replaces the version number which package-inst.pl would put in
+include skill/ui/ui.package skill/ui ^share->share/skill/ui/ui/build/share
+
+# ve - used by everything that calls assura - Fulcrum menu / gen_leaf_cells
+include script/perl/ve/ve.package script/perl/ve ^share->share/script/perl/ve
+
+# cds_wd - For creating working directories.  For users and for most top level scripts
+include script/sh/setup/cds_wd.package script/sh/setup ^share->share/script/sh/setup
+
+# <tool gdsIIWrite>
+include gdsIIWrite.package .
+
+# <tool lefdef>
+include lefdef.package .
+
+# <tool nano>
+include nano.package .
+
+# <tool fulcrum_cds_setup>
+include fulcrum_cds_setup.inc .
+
+# cdsp4 - cadence perforce integration used by fulcrum menu/from command line
+include cdsp4.package .
+
+# updatenetlist - used by synctonetlist/genfromsource step of gen_leaf_cells
+include updatenetlist.package .
+
+# subtype splitting
+include dfII_split_subtypes.package .
+
+# jflat
+include ../../../java/src/com/avlsi/tools/jflat/jflat.package ../../../java/src/com/avlsi/tools/jflat
+
+# jauto
+include ../../../java/src/com/avlsi/tools/jauto/jauto.package ../../../java/src/com/avlsi/tools/jauto
+
+# <tool prs2verilog>
+include ../../../java/src/com/avlsi/tools/prs2verilog/prs2verilog.package ../../../java/src/com/avlsi/tools/prs2verilog
+
+# proteus_setup
+# include ../../../proteus/setup/proteus_setup.inc ../../../proteus/setup
+
+# Tools (sh java wrappers)
+$arch/bin/generate_ip_data.sh                                              ../../../java/src/com/avlsi/tools/ipgen/generate_ip_data.sh              775
+$arch/bin/cdl2cast.sh                                                      ../../../java/src/com/avlsi/tools/cdl2cast/cdl2cast.sh                   775
+$arch/bin/netlistDistance.sh                                               ../../../java/src/com/avlsi/tools/jauto/netlistDistance.sh               775
+
+# rename - rename cast cells/instances/models/etc from 
+#          cast<->cadence<->gds2 names
+# used in <tool signoff>
+include ../../../java/src/com/avlsi/file/cdl/util/rename/cdlrenamer.package ../../../java/src/com/avlsi/file/cdl/util/rename
+
+# Tool (lib tools)
+$arch/bin/fakelib.sh                                                    script/sh/setup/fakelib.sh                 775 p
+# <tool importIP> for <a href=flow.html#import>importing gds2/cdl for IP cells</a>
+$arch/bin/importIP                                                      script/perl/util/importIP.pl               775 p
+$arch/bin/fixportdirection                                              script/perl/util/fixportdirection          775 p
+# <tool importPR> for <a href=flow.html#import>importing gds2/cdl for std cell libraries</a>
+$arch/bin/importPR.sh                                                   script/sh/util/importPR.sh                 775 p
+$arch/bin/cdl2cast2                                                     script/perl/util/cdl2cast2                 775 p
+$arch/bin/fixcdl                                                        script/perl/util/fixcdl.pl                 775 p
+$arch/bin/fixgds                                                        script/perl/util/fixgds.pl                 775 p
+$arch/bin/importSR.pl                                                   script/perl/util/importSR.pl               775 p
+$arch/bin/gen_sram_scan_wrap.pl                                         script/perl/util/gen_sram_scan_wrap.pl     775 p
+$arch/bin/compilemem.pl                                                 script/perl/util/compilemem.pl             775 p
+$arch/bin/compile_lib                                                   ../../../scripts/compile_lib.sh            775 p
+$arch/bin/lmwait                                                        script/sh/setup/lmwait.pl                  775 p
+$arch/lib/rescuedb.so                                                   ../../../scripts/rescuedb.so               664
+
+# <tool genIP> for <a href=flow.html#export>exporting gds2/cdl</a>
+$arch/bin/genIP.sh                                                      script/sh/cell-automation/one_cell_commands/genIP.sh    775 p
+
+# <tool gen_leaf_cells>
+$arch/bin/gen_leaf_cells.sh                                                script/sh/cell-automation/multi_cell_commands/gen_leaf_cells.sh          775 p
+share/script/sh/cell-automation/templates/leaf_cell.il.template            script/sh/cell-automation/templates/leaf_cell.il.template                664 p
+$arch/bin/dfIIflat2tree.sh                                                 script/sh/cell-automation/multi_cell_commands/dfIIflat2tree.sh           775 p
+
+# other scripts that use layoutPlus and SKILL
+$arch/bin/gen_mid_cells.sh                                                 script/sh/cell-automation/multi_cell_commands/gen_mid_cells.sh           775 p
+$arch/bin/gen_instantiator_views.sh                                        script/sh/cell-automation/multi_cell_commands/gen_instantiator_views.sh  775 p
+$arch/bin/gen_abstract_views.sh                                            script/sh/cell-automation/multi_cell_commands/gen_abstract_views.sh      775 p
+$arch/bin/density.sh                                                       script/sh/cell-automation/multi_cell_commands/density.sh                 775 p
+
+# <tool qb> - qrsh batch wrapper - used by <tool gen_leaf_cells>
+$arch/bin/qb.pl                                                            ../../../lve/script/perl/qsub/qb 775 p
+$arch/bin/qbwrapper                                                        ../../../lve/script/perl/qsub/qbwrapper 775 p
+
+# Used in <package ui>/Fulcrum/Verify/Signoff
+$arch/bin/signoff.pl                                                       script/perl/signoff.pl                                                   775 p
+
+# misc tools - not referenced by any other tools
+$arch/bin/gen_branch_spec.sh                                               script/sh/p4/gen_branch_spec.sh                                          775 p
+$arch/bin/findclosestwithlayout.sh                                         script/sh/util/findclosestwithlayout.sh                                  775 p
+$arch/bin/mosaicify.pl                                                     script/perl/mosaicify.pl                                                 775 p
+$arch/bin/plotdensity.pl                                                   script/perl/plotdensity.pl                                               775 p
+$arch/bin/checkpgvia.pl                                                    script/perl/checkpgvia.pl                                                775 p
+$arch/bin/dangling.pl                                                      script/perl/dangling.pl                                                  775 p
+
+# routing - needed for UI/gen_leaf_cells
+$arch/bin/runccar.sh                                                       skill/layout/leaf/router/runccar.sh                                      775 p
+$arch/bin/importccar.sh                                                    skill/layout/leaf/router/importccar.sh                                   775 p
+
+# nograph vnc wrapper
+$arch/bin/nograph.sh                                                       script/sh/vnc/nograph.sh                                                 775 p
+share/script/sh/vnc/getvncserver.sh                                        script/sh/vnc/getvncserver.sh                                            775 p
+share/script/sh/vnc/.fvwm2/Main-8-bit                                      script/sh/vnc/.fvwm2/Main-8-bit                                          664 p
+# sh scripts to build dfII libraries
+share/script/sh/cell-automation/lib_commands/getlibs                       script/sh/cell-automation/lib_commands/getlibs                           775 p
+share/script/sh/cell-automation/lib_commands/mkcdslibs                     script/sh/cell-automation/lib_commands/mkcdslibs                         775 p
+share/script/sh/cell-automation/lib_commands/mkcdslib                      script/sh/cell-automation/lib_commands/mkcdslib                          775 p
+
+# sh library
+share/script/sh/util/parsecellname                                         script/sh/util/parsecellname                                             664 p
+share/script/sh/sh-lib/file/filecheck.sh                                   ../../../../infrastructure/sh-lib/file/filecheck.sh                      775 p
+share/script/sh/sh-lib/file/conon.sh                                       ../../../../infrastructure/sh-lib/file/conon.sh                          775 p
+share/script/sh/sh-lib/file/config.sh                                      ../../../../infrastructure/sh-lib/file/config.sh                         775 p
+share/script/sh/sh-lib/script/generate_script_with_libs.sh                 ../../../../infrastructure/sh-lib/script/generate_script_with_libs.sh    775 p
+
+# JAVA classes
+java com.avlsi.tools.ipgen.GenerateIPData com.avlsi.tools.cdl2cast.CDL2Cast 
+java com.avlsi.tools.jauto.NetlistDistance
+
+# <h2> SKILL </h2>
+# This is all the skill we use.
+
+# utility
+share/skill/ui/util/license.il                                             skill/ui/util/license.il                                                 664 p
+share/skill/util/db.il                                                     skill/util/db.il                                                         664 p
+share/skill/util/defaults.il                                               skill/util/defaults.il                                                   664 p
+share/skill/util/counter.il                                                skill/util/counter.il                                                    664 p
+share/skill/util/math/math.il                                              skill/util/math/math.il                                                  664 p
+share/skill/util/expression/expression.il                                  skill/util/expression/expression.il                                      664 p
+share/skill/util/lib.il                                                    skill/util/lib.il                                                        664 p
+share/skill/util/makemidlayouttag.il                                       skill/util/makemidlayouttag.il                                           664 p
+share/skill/util/makelayouttag.il                                          skill/util/makelayouttag.il                                              664 p
+share/skill/util/name.il                                                   skill/util/name.il                                                       664 p
+share/skill/util/version.il                                                skill/util/version.il                                                    664 p
+share/skill/util/cache/cache.il                                            skill/util/cache/cache.il                                                664 p
+share/skill/util/package/package.il                                        skill/util/package/package.il                                            664 p
+share/skill/util/pcell/pcell.il                                            skill/util/pcell/pcell.il                                                664 p
+share/skill/util/prop/prop.il                                              skill/util/prop/prop.il                                                  664 p
+share/skill/util/file/readfile.il                                          skill/util/file/readfile.il                                              664 p
+share/skill/util/file/tempfile.il                                          skill/util/file/tempfile.il                                              664 p
+share/skill/util/file/path.il                                              skill/util/file/path.il                                                  664 p
+share/skill/util/file/fileutil.il                                          skill/util/file/fileutil.il                                              664 p
+share/skill/util/file/libcellview.il                                       skill/util/file/libcellview.il                                           664 p
+share/skill/util/file/configfile.il                                        skill/util/file/configfile.il                                            664 p
+share/skill/util/list/list.il                                              skill/util/list/list.il                                                  664 p
+share/skill/util/table/table.il                                            skill/util/table/table.il                                                664 p
+share/skill/util/string/strutil.il                                         skill/util/string/strutil.il                                             664 p
+share/skill/util/string/escapestring.il                                    skill/util/string/escapestring.il                                        664 p
+share/skill/util/binarysearch/binarysearch.il                              skill/util/binarysearch/binarysearch.il                                  664 p
+share/skill/util/binarysearch/search.il                                    skill/util/binarysearch/search.il                                        664 p
+share/skill/util/cellview.il                                               skill/util/cellview.il                                                   664 p
+share/skill/util/profile.il                                                skill/util/profile.il                                                    664 p
+share/skill/util/recurse.il                                                skill/util/recurse.il                                                    664 p
+
+# geometry
+share/skill/layout/geometry/segmenttree.il                                 skill/layout/geometry/segmenttree.il                                     664 p
+share/skill/layout/geometry/line.il                                        skill/layout/geometry/line.il                                            664 p
+share/skill/layout/geometry/range.il                                       skill/layout/geometry/range.il                                           664 p
+share/skill/layout/geometry/polygon.il                                     skill/layout/geometry/polygon.il                                         664 p
+share/skill/layout/geometry/corner.il                                      skill/layout/geometry/corner.il                                          664 p
+share/skill/layout/geometry/point.il                                       skill/layout/geometry/point.il                                           664 p
+share/skill/layout/geometry/rect.il                                        skill/layout/geometry/rect.il                                            664 p
+share/skill/layout/geometry/fig.il                                         skill/layout/geometry/fig.il                                             664 p
+share/skill/layout/geometry/path.il                                        skill/layout/geometry/path.il                                            664 p
+share/skill/layout/geometry/bbox.il                                        skill/layout/geometry/bbox.il                                            664 p
+share/skill/layout/geometry/area.il                                        skill/layout/geometry/area.il                                            664 p
+
+
+# updatenetlist
+share/skill/schematic/swapmasters.il                                       skill/schematic/swapmasters.il                                           664 p
+share/skill/schematic/distinst.il                                          skill/schematic/distinst.il                                              664 p
+share/skill/schematic/inlineconnections.il                                 skill/schematic/inlineconnections.il                                     664 p
+share/skill/schematic/netlisttable.il                                      skill/schematic/netlisttable.il                                          664 p
+share/skill/schematic/updatenetlist.il                                     skill/schematic/updatenetlist.il                                         664 p
+share/skill/schematic/update_floorplan.il skill/schematic/update_floorplan.il 664 p
+
+
+# hand layout
+share/skill/layout/hand/rectonpitch.il                                     skill/layout/hand/rectonpitch.il                                         664 p
+share/skill/layout/hand/wiring.il                                          skill/layout/hand/wiring.il                                              664 p
+share/skill/layout/hand/length.il                                          skill/layout/hand/length.il                                              664 p
+share/skill/layout/hand/checklength.il                                     skill/layout/hand/checklength.il                                         664 p
+
+# ui
+share/skill/ui/ui.il                                                       skill/ui/ui.il                                                           664 p
+
+# vlvs
+share/skill/layout/vlvs/vlvs.il                                            skill/layout/vlvs/vlvs.il                                                664 p
+share/skill/layout/vlvs/vlvs.state.template                                skill/layout/vlvs/vlvs.state.template                                    664 p
+
+# assura
+share/skill/layout/assura/assura.il                                        skill/layout/assura/assura.il                                            664 p
+share/skill/layout/assura/drc.il                                           skill/layout/assura/drc.il                                               664 p
+share/skill/layout/assura/lvs.il                                           skill/layout/assura/lvs.il                                               664 p
+share/skill/layout/assura/area.rul                                         skill/layout/assura/area.rul                                             664 p
+
+# misc 
+share/skill/layout/keepout/keepout.il                                      skill/layout/keepout/keepout.il                                          664 p
+share/skill/layout/keepout/abstract.il                                     skill/layout/keepout/abstract.il                                         664 p
+share/skill/layout/keepout/conductor.il                                    skill/layout/keepout/conductor.il                                        664 p
+share/skill/layout/notches/notches.il                                      skill/layout/notches/notches.il                                          664 p
+share/skill/layout/floorplanning/import/getcellmappings.il                 skill/layout/floorplanning/import/getcellmappings.il                     664 p
+share/skill/layout/floorplanning/import/importfloorplan.il                 skill/layout/floorplanning/import/importfloorplan.il                     664 p
+share/skill/layout/floorplanning/resolveOverlap.il                         skill/layout/floorplanning/resolveOverlap.il                             664 p
+share/skill/layout/floorplanning/initFloorplan.il                          skill/layout/floorplanning/initFloorplan.il                              664 p
+share/skill/layout/floorplanning/floorplanTemplating.il                    skill/layout/floorplanning/floorplanTemplating.il                        664 p
+share/skill/layout/floorplanning/optimizeXY.il                             skill/layout/floorplanning/optimizeXY.il                                 664 p
+share/skill/layout/floorplanning/align.il                                  skill/layout/floorplanning/align.il                                      664 p
+share/skill/layout/floorplanning/anchor.il                                 skill/layout/floorplanning/anchor.il                                     664 p
+share/skill/layout/floorplanning/util.il                                   skill/layout/floorplanning/util.il                                       664 p
+share/skill/layout/floorplanning/updatefromlayout.il                       skill/layout/floorplanning/updatefromlayout.il                                      664 p
+share/skill/layout/gdsII/gdsIIhier.il                                      skill/layout/gdsII/gdsIIhier.il                                          664 p
+share/skill/layout/import/import.il                                        skill/layout/import/import.il                                            664 p
+share/skill/layout/import/fp.il                                            skill/layout/import/fp.il                                                664 p
+share/skill/layout/leaf/well/regionwell.il                                 skill/layout/leaf/well/regionwell.il                                     664 p
+share/skill/layout/leaf/AddBlkCell.il                                 skill/layout/leaf/AddBlkCell.il                                     664 p
+share/skill/layout/leaf/placer/guessplacementregions.il                    skill/layout/leaf/placer/guessplacementregions.il                        664 p
+share/skill/layout/leaf/placer/placementregions.il                         skill/layout/leaf/placer/placementregions.il                             664 p
+share/skill/layout/leaf/placer/placer.il                                   skill/layout/leaf/placer/placer.il                                       664 p
+share/skill/layout/leaf/placer/runplacer.sh                                skill/layout/leaf/placer/runplacer.sh                                    775 p
+share/skill/layout/leaf/placer/placer.pl                                   skill/layout/leaf/placer/placer.pl                                       775 p
+share/skill/layout/hierarchy/inline.il                                     skill/layout/hierarchy/inline.il                                         664 p
+share/skill/p4/p4.il                                                       skill/p4/p4.il                                                           664 p
+share/skill/layout/density/density.il                                      skill/layout/density/density.il                                          664 p
+share/skill/layout/leaf/placer/squish.il                                   skill/layout/leaf/placer/squish.il                                       664 p
+share/skill/layout/leaf/placer/npsearch.il                                 skill/layout/leaf/placer/npsearch.il                                     664 p
+share/skill/layout/leaf/router/router.il                                   skill/layout/leaf/router/router.il                                       664 p
+share/skill/layout/fig/fig.il                                              skill/layout/fig/fig.il                                                  664 p
+share/skill/layout/leaf/decompact/decompact.il                             skill/layout/leaf/decompact/decompact.il                                 664 p
+share/skill/layout/leaf/plugs/plugs.il                                     skill/layout/leaf/plugs/plugs.il                                         664 p
+share/skill/layout/chain/chain.il                               	   skill/layout/chain/chain.il                                   	    664 p
+share/skill/layout/chain/refold.il                               	   skill/layout/chain/refold.il                                   	    664 p
+share/skill/layout/chain/superstack.il                               	   skill/layout/chain/superstack.il                                   	    664 p
+share/skill/layout/chain/superstack_tools.il                           	   skill/layout/chain/superstack_tools.il                              	    664 p
+share/skill/layout/chain/domino.il                               	   skill/layout/chain/domino.il                                             664 p
+share/skill/layout/chain/domain.il                               	   skill/layout/chain/domain.il                                             664 p
+share/skill/layout/chain/componentinfo.il                         	   skill/layout/chain/componentinfo.il                                      664 p
+share/skill/layout/chain/unstack.il                                        skill/layout/chain/unstack.il                                            664 p
+share/skill/layout/chain/group.il                                        skill/layout/chain/group.il                                            664 p
+share/skill/layout/filler/filler.il                                        skill/layout/filler/filler.il                                            664 p
+share/skill/layout/filler/SpareCellFill.il                                 skill/layout/filler/SpareCellFill.il                                     664 p
+share/skill/layout/leaf/implant/findplugingateinstance.il                  skill/layout/leaf/implant/findplugingateinstance.il                      664 p
+share/skill/layout/leaf/implant/drawimplant.il                             skill/layout/leaf/implant/drawimplant.il                                 664 p
+share/skill/layout/leaf/Implant.il                             	           skill/layout/leaf/Implant.il                                             664 p
+share/skill/layout/tech/spacing.il                                         skill/layout/tech/spacing.il                                             664 p
+share/skill/layout/genfromsource/genfromsource.il                          skill/layout/genfromsource/genfromsource.il                              664 p
+share/skill/layout/hierarchy/hierarchy.il                                  skill/layout/hierarchy/hierarchy.il                                      664 p
+share/skill/layout/hierarchy/instantiator.il                               skill/layout/hierarchy/instantiator.il                                   664 p
+share/skill/layout/hierarchy/instance.il                                   skill/layout/hierarchy/instance.il                                       664 p
+share/skill/layout/transform/transform.il                                  skill/layout/transform/transform.il                                      664 p
+share/skill/layout/cell/cellinfo.il                                        skill/layout/cell/cellinfo.il                                            664 p
+share/skill/layout/cell/constraints.il                                     skill/layout/cell/constraints.il                                         664 p
+share/skill/layout/powergrid/powergrid.il                                  skill/layout/powergrid/powergrid.il                                      664 p
+share/skill/layout/hierarchy/inline.il                                     skill/layout/hierarchy/inline.il                                         664 p
+share/skill/layout/leaf/lvsnodes.il                                        skill/layout/leaf/lvsnodes.il                                            664 p
+share/skill/layout/leaf/LayoutGridPoly.il                                  skill/layout/leaf/LayoutGridPoly.il 					    664 p
+share/skill/layout/leaf/property.il                                        skill/layout/leaf/property.il 					    664 p
+share/skill/layout/mid/mid.il                                              skill/layout/mid/mid.il                                                  664 p
+share/skill/layout/mid/compact.il                                          skill/layout/mid/compact.il                                              664 p
+
+# cable
+share/skill/layout/cable/optimus.il                             	         skill/layout/cable/optimus.il                                            664 p
+share/skill/layout/cable/placer.il                             	           skill/layout/cable/placer.il                                             664 p
+share/skill/layout/cable/router.il                             	           skill/layout/cable/router.il                                             664 p
+share/skill/layout/cable/templates.il                          	           skill/layout/cable/templates.il                                          664 p
+share/skill/layout/cable/util.il                              	           skill/layout/cable/util.il                                               664 p
+
+# used by mk_instances to dump floorplan info to text file for jauto.
+share/skill/layout/instancesfile/instance.il                               skill/layout/instancesfile/instance.il                                   664 p
+
+# power grids and tieoffs
+share/skill/layout/powergrid/AutoGeneratePowerGrid.il skill/layout/powergrid/AutoGeneratePowerGrid.il 664 p
+
+
+# pins
+share/skill/layout/pins/autopin.il                                         skill/layout/pins/autopin.il                                             664 p
+share/skill/layout/pins/pinutil.il                                         skill/layout/pins/pinutil.il                                             664 p
+share/skill/layout/pins/channels/e1ofn.il                                  skill/layout/pins/channels/e1ofn.il                                      664 p
+share/skill/layout/pins/pinplace.il                                        skill/layout/pins/pinplace.il                                            664 p
+share/skill/layout/pins/canonicalize.il                                    skill/layout/pins/canonicalize.il                                        664 p
+share/skill/layout/pins/vstruts.il                                         skill/layout/pins/vstruts.il                                             664 p
+share/skill/layout/pins/abstractpin.il                                     skill/layout/pins/abstractpin.il                                         664 p
+share/skill/layout/pins/detailed_abstract.il                               skill/layout/pins/detailed_abstract.il                                   664 p
+share/skill/layout/pins/pintemplates.il                                    skill/layout/pins/pintemplates.il                                        664 p
+share/skill/layout/pins/ScanPinToAutoPinFile.il                                    skill/layout/pins/ScanPinToAutoPinFile.il                                        664 p
+share/skill/layout/pins/midlevelpins.il                                    skill/layout/pins/midlevelpins.il                                        664 p
+share/skill/layout/pins/leafpins.il                                        skill/layout/pins/leafpins.il                                            664 p
+share/skill/layout/pins/expand_pins.il                                     skill/layout/pins/expand_pins.il                                         664 p
+share/skill/layout/pins/sync_pins.il                                       skill/layout/pins/sync_pins.il                                           664 p
+share/skill/layout/pins/pinlayer.il                                        skill/layout/pins/pinlayer.il                                            664 p
+
+
+# proteus
+share/skill/layout/proteus/proteus.il                                      skill/layout/proteus/proteus.il                                          664 p
+
+# For <tool gen_leaf_cells> only.
+share/skill/layout/chain/compactsuperstacks.il skill/layout/chain/compactsuperstacks.il 664 p
+share/skill/layout/chain/createsuperstacks.il skill/layout/chain/createsuperstacks.il 664 p
+share/skill/layout/chain/foldandchain.il skill/layout/chain/foldandchain.il 664 p
+share/skill/layout/chain/inlinesuperstacks.il skill/layout/chain/inlinesuperstacks.il 664 p
+share/skill/layout/leaf/decompact/spacestacks.il skill/layout/leaf/decompact/spacestacks.il 664 p
+share/skill/layout/leaf/placer/foldgates.il skill/layout/leaf/placer/foldgates.il 664 p
+share/skill/layout/leaf/placer/initnp.il skill/layout/leaf/placer/initnp.il 664 p
+share/skill/layout/leaf/placer/placementregions.il skill/layout/leaf/placer/placementregions.il 664 p
+share/skill/layout/leaf/placer/placercheck.il skill/layout/leaf/placer/placercheck.il 664 p
+share/skill/layout/leaf/placer/placersearch.il skill/layout/leaf/placer/placersearch.il 664 p
+share/skill/layout/leaf/placer/placersearchdone.il skill/layout/leaf/placer/placersearchdone.il 664 p
+share/skill/layout/leaf/placer/runplacer.il skill/layout/leaf/placer/runplacer.il 664 p
+share/skill/layout/leaf/plugs/addplugs.il skill/layout/leaf/plugs/addplugs.il 664 p
+share/skill/layout/leaf/plugs/connectwellplugs.il skill/layout/leaf/plugs/connectwellplugs.il 664 p
+share/skill/layout/leaf/plugs/wellplugsoff.il skill/layout/leaf/plugs/wellplugsoff.il 664 p
+share/skill/layout/leaf/removeinvalidlayers.il skill/layout/leaf/removeinvalidlayers.il 664 p
+share/skill/layout/leaf/router/checkpolygons.il skill/layout/leaf/router/checkpolygons.il 664 p
+share/skill/layout/leaf/router/delextrapolycontact.il skill/layout/leaf/router/delextrapolycontact.il 664 p
+share/skill/layout/leaf/router/lvsnodes.il skill/layout/leaf/router/lvsnodes.il 664 p
+share/skill/layout/leaf/router/routercheck.il skill/layout/leaf/router/routercheck.il 664 p
+share/skill/layout/leaf/router/routersearch.il skill/layout/leaf/router/routersearch.il 664 p
+share/skill/layout/leaf/router/routersearchdone.il skill/layout/leaf/router/routersearchdone.il 664 p
+share/skill/layout/leaf/router/routersearchinit.il skill/layout/leaf/router/routersearchinit.il 664 p
+share/skill/layout/leaf/router/routerwidth.il        skill/layout/leaf/router/routerwidth.il 664 p
+share/skill/layout/leaf/router/runrouter.il          skill/layout/leaf/router/runrouter.il 664 p
+share/skill/layout/leaf/router/swapvias.il           skill/layout/leaf/router/swapvias.il 664 p
+share/skill/layout/leaf/router/setglcparams.il           skill/layout/leaf/router/setglcparams.il 664 p
+share/skill/layout/leaf/router/snapFatPins.il           skill/layout/leaf/router/snapFatPins.il 664 p
+share/skill/layout/leaf/router/PreroutePowerVia.il           skill/layout/leaf/router/PreroutePowerVia.il 664 p
+share/skill/layout/leaf/well/drawregionwell.il       skill/layout/leaf/well/drawregionwell.il 664 p
+share/skill/layout/notches/fillnotches.il            skill/layout/notches/fillnotches.il 664 p
+share/skill/ui/automation/copyview.il                skill/ui/automation/copyview.il 664 p
+
+# install scripts
+$arch/bin/gen_autoload                               skill/gen_autoload                               775 p
+install/share/bin/gen_autoload                       skill/gen_autoload                               775 p
+install/share/bin/package.il.inst                    skill/util/package/package.il.inst               775 p
+install/share/bin/runplacer.inst                     skill/layout/leaf/placer/runplacer.inst          775 p
+
+# vendor release scripts
+$arch/bin/cdl4Qualcore.pl                             ../../../vendor-release/cdl4Qualcore.pl         775 p
+$arch/bin/def4Qualcore.pl                             ../../../vendor-release/def4Qualcore.pl         775 p
+$arch/bin/gds24Qualcore.pl                            ../../../vendor-release/gds24Qualcore.pl        775 p
+$arch/bin/lef4Qualcore.pl                             ../../../vendor-release/lef4Qualcore.pl         775 p
+$arch/bin/chkpins4Qualcore.pl                         ../../../vendor-release/chkpins4Qualcore.pl     775 p
+$arch/bin/release2Qualcore.pl                         ../../../vendor-release/release2Qualcore.pl     775 p
+$arch/bin/bali2Qualcore.pl                            ../../../vendor-release/bali2Qualcore.pl        775 p
+
+#add bus.il, fat.il, power_grid.il
+share/skill/layout/bus/bus.il                         skill/layout/bus/bus.il                         664 p
+share/skill/layout/bus/shield.il                      skill/layout/bus/shield.il                         664 p
+share/skill/layout/bus/obs.il                         skill/layout/bus/obs.il                         664 p
+share/skill/layout/bus/util.il                        skill/layout/bus/util.il                        664 p
+share/skill/layout/bus/patterns.il                    skill/layout/bus/patterns.il                    664 p
+#share/skill/layout/bus/fat.il                         skill/layout/bus/fat.il                         664 p
+share/skill/layout/power_grid/power_grid.il           skill/layout/power_grid/power_grid.il           664 p
+
+# Router
+#share/skill/layout/route/route.il                     skill/layout/route/route.il                     664 p 
+share/skill/layout/route/nanoroute.il                 skill/layout/route/nanoroute.il                 664 p 
+share/skill/layout/route/prelayout.il                 skill/layout/route/prelayout.il                 664 p 
+share/skill/layout/route/flatten.il                   skill/layout/route/flatten.il                   664 p 
+share/skill/layout/route/layout.il                    skill/layout/route/layout.il                    664 p 
+share/skill/layout/route/routepath.il                 skill/layout/route/routepath.il                 664 p
+share/skill/layout/route/canonicalize.il              skill/layout/route/canonicalize.il              664 p
+share/skill/layout/route/trim.il                      skill/layout/route/trim.il                      664 p
+share/skill/layout/route/ground.il                    skill/layout/route/ground.il                    664 p
+#share/skill/layout/route/abstract.il                  skill/layout/route/abstract.il                  664 p
+share/skill/layout/route/reset.il                     skill/layout/route/reset.il                     664 p
+share/skill/layout/route/sync.il                      skill/layout/route/sync.il                      664 p
+
+# Laygen
+share/skill/layout/laygen/import.il             skill/layout/laygen/import.il           664 p
+share/skill/layout/laygen/pr.il                 skill/layout/laygen/pr.il               664 p
+
+# distort to fix VIA7 overhang
+share/skill/layout/distort/distort.il                 skill/layout/distort/distort.il                 664 p
+ 
+#new gds2cdl script
+$arch/bin/gds2cdl.pl                                  script/perl/gds2cdl.pl                          775 p
+$arch/bin/importQ.pl                                  script/perl/importQ.pl                          775 p
+$arch/bin/importGDS.pl                                script/perl/importGDS.pl                        775 p
+$arch/bin/vs2calibre.pl                               script/perl/vs2calibre.pl                       775 p
+$arch/bin/vs2cast.pl                                  script/perl/vs2cast.pl                          775 p
+$arch/bin/cdl2snp.pl                                  script/perl/cdl2snp.pl                          775 p
+
+#misc
+$arch/bin/dfIIhier                                    script/perl/dfIIhier.pl                         775 p
+
+#new supersize procedure script
+$arch/bin/initFloorplan.sh                            script/sh/floorplan/initFloorplan.sh            775 p
+
+#misc
+$arch/bin/hlvs                                        ../../../lve/script/perl/spice/hlvs.pl          775 p
+$arch/bin/lef2rp                                      script/perl/lef2rp.pl                           775 p
+$arch/bin/vs2et                                       script/perl/vs2et.pl                            775 p

@@ -1,0 +1,440 @@
+#!/usr/intel/bin/perl
+# vim:et:sw=4:ts=4:tw=79:
+
+# This is a wrapper scrip to run RTE.
+# It runs rteCellListGen, rteLauncher and rteReporter by default
+
+use strict;
+use warnings;
+
+
+BEGIN {
+    # Path + script name
+    my $scriptPath = $0;
+    # Extract script name
+    my @tmp = split('/', $0);
+    my $exe = $tmp[(@tmp)-1];
+    # Remove script name from end of path
+    $scriptPath =~ s/$exe$//;
+    if(! ($scriptPath =~ /^\//)) {
+        # Relative path, so convert to full path
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $scriptPath = $pwd . "/$scriptPath/../lib/perl";
+        chdir $scriptPath;
+        $scriptPath = `pwd`;
+        chomp $scriptPath;
+        chdir $pwd; 
+        push @INC, "$scriptPath";
+    }else
+    {
+        # Already full path
+        push @INC, "$scriptPath/../lib/perl";
+    }
+}
+
+use rteLib;
+use Getopt::Long qw(:config no_ignore_case);
+use Data::Dumper;
+use Pod::Usage;
+use File::stat;
+use XML::Simple;
+use HTTP::Date;
+
+my ($rteCellListGen, $rteLauncher,$rteReporter) = (0,0,0);
+
+my $cmdLine = cmdLineOpts(@ARGV);
+
+# Retrieving the tasks the user has to run 
+$cmdLine->{tasks} =~ s/" "//g;
+
+my @t = split(/,/,$cmdLine->{tasks});
+#print "The task array is :@t";
+foreach my $tsk (@t){
+    if(lc($tsk) eq "rtecelllistgen"){
+        $rteCellListGen = 1;
+    }
+    elsif (lc($tsk) eq "rtelauncher"){
+        $rteLauncher = 1;
+    }
+    elsif (lc($tsk) eq "rtereporter"){
+        $rteReporter = 1;
+    }
+    else{
+        print "Invalid $tsk option in the tasks!";
+        goto END_SCRIPT;
+    }
+}
+my $cmd;
+my $returnStatus;
+
+if($rteCellListGen){
+    print "\nRunning rteCellListGen \n";
+    $cmd = sprintf("#! /bin/bash -noprofile\n" .
+         "fulcrum --latest rteCellListGen --masterCellDb \"%s\"".
+         " --cellDb \"%s\"".
+         " --cast-path=\"%s\"".
+         " --cell=\"%s\"".
+         " --output \"%s\"".
+         " --depth=$cmdLine->{depth}".
+         " --cast-query-mem=$cmdLine->{castQueryMem}"
+     ,$cmdLine->{masterCellDb},$cmdLine->{cellDb},$cmdLine->{castPath},$cmdLine->{cell},$cmdLine->{rteCellListOut});
+     if ($cmdLine->{forceRerun}) { $cmd.= " --forceRerun";}
+     if ($cmdLine->{newCellsOnly}) { $cmd.= " --newCellsOnly";}
+     if ($cmdLine->{failingOnly}) { $cmd.= " --fainlingOnly";}
+
+     $returnStatus = runCmd($cmd);
+
+     if($returnStatus == 1){
+         print("\n Successful Run");
+     }
+     else{
+         print ("\n Command \"$cmd\" falied to execute\n");
+     }
+}
+if($rteLauncher){
+
+    print "\nRunning rteLauncher \n";
+    if(!-e $cmdLine->{rteCellListOut}){
+        print "\nSuite file for the cells  missing.\n";
+        goto END_SCRIPT;
+    }
+    $cmd= sprintf("#! /bin/bash -noprofile\n" .
+         "fulcrum --latest rteLauncher --masterCellDb \"%s\"".
+         " --cellDb \"%s\"".
+         " --cast-path=\"%s\"".
+         " --nbMem=$cmdLine->{jobMem}".
+         " --numJobs=$cmdLine->{numJobs}".
+         " --suite=\"%s\"".
+         " --output-dir=\"%s\"",
+    $cmdLine->{masterCellDb},$cmdLine->{cellDb},$cmdLine->{castPath},$cmdLine->{rteCellListOut},$cmdLine->{outputDir});
+
+    if($cmdLine->{timeout}) {$cmd .= " --timeout $cmdLine->{timeout}";}
+    if($cmdLine->{maxNbMem}) {$cmd .= " --maxNbMem $cmdLine->{maxNbMem}";}
+    if($cmdLine->{cycleCount}) {$cmd .= " --cycle-count $cmdLine->{cycleCount}";}
+    if($cmdLine->{measuredDelay}) {$cmd .= " --measured-delay $cmdLine->{measuredDelay}";}
+    if($cmdLine->{estimatedDelay}) {$cmd .= " --estimated-delay $cmdLine->{estimatedDelay}";}
+    if($cmdLine->{digitalDelay}) {$cmd .= " --digital-delay $cmdLine->{digitalDelay}";}
+    if($cmdLine->{historyPerNode}) {$cmd .= " --history-per-node $cmdLine->{historyPerNode}";}
+    if($cmdLine->{dsimArg}) {$cmd .= " --dsimArg $cmdLine->{dsimArg}";}
+    if($cmdLine->{pltDelayException}) {$cmd .= " --pltDelayException $cmdLine->{pltDelayException}";}
+    $returnStatus = runCmd($cmd);
+
+     if($returnStatus == 1){
+         print("\n Successful Run\n");
+     }
+     else{
+         print ("\n Command \"$cmd\" failed to execute\n");
+     }
+
+}
+if($rteReporter){
+
+    print "\nRunning rteReporter \n";
+    if(!-e $cmdLine->{cellDb}){
+        print "Cell Db (.xml file)missing\n";
+        goto END_SCRIPT;
+    }
+    $cmd=sprintf( "#! /bin/bash -noprofile\n" .
+         "fulcrum --latest rteReporter --masterCellDb \"%s\"".
+         " --cellDb \"%s\"".
+         " --cast-path=\"%s\"".
+         " --cast-query-mem=$cmdLine->{castQueryMem}".
+         " --depth=$cmdLine->{depth}".
+         " --cell=\"%s\"".
+         " --output=\"%s\""
+    ,$cmdLine->{masterCellDb},$cmdLine->{cellDb},$cmdLine->{castPath},$cmdLine->{cell},$cmdLine->{rteReporterOut});
+    $returnStatus = runCmd($cmd);
+    if($returnStatus == 1){
+        print("\n Successful Run\n");
+    }
+    else{
+        print ("\n Command \"$cmd\" failed to execute\n");
+    }
+}
+
+
+
+END_SCRIPT:
+exit(0);
+
+#-------------------------------------------------------------------------------
+# Parse command line options, returns hash pointer
+sub cmdLineOpts
+{
+    my (@args) = @_;
+
+    my %cmdLine = ( cell => "",
+                    cellList => "",
+                    depth => -1,
+                    forceRerun => 0,
+                    masterCellDb => "",
+                    cellDb  => "",
+                    castPath => ".",
+                    castQueryMem => 3000,
+                    jobMem => "2G",
+                    failingOnly => 0,
+                    newCellsOnly => 0,
+                    outputDir => "./output",
+                    tasks =>"rteCellListGen,rteLauncher,rteReporter",
+                    numJobs => 10,
+                    rteCellListOut => "",
+                    rteReporterOut => "",
+                    timeout => 10,
+                    maxNbMem => "-1",
+                    cycleCount => 0,
+                    measuredDelay => -1,
+                    estimatedDelay => -1,
+                    digitalDelay => -1,
+                    historyPerNode => -1,
+                    dsimArg => "",
+                    pltDelayException => ""
+
+                  );
+
+    my @values;
+    GetOptions('h|help' => sub { pod2usage( { -verbose => 2, -noperldoc=>1}) },
+               'c|cell=s' => \$cmdLine{cell},
+               'cellList=s' => \$cmdLine{cellList},
+               'd|depth=i' => \$cmdLine{depth},
+               'f|forceRerun' => \$cmdLine{forceRerun},
+               'failingOnly' => \$cmdLine{failingOnly},
+               'newCellsOnly' => \$cmdLine{newCellsOnly},
+               'masterCellDb=s' => \$cmdLine{masterCellDb},
+               'db|cellDb=s' => \$cmdLine{cellDb },
+               'cast-path=s' => \$cmdLine{castPath},
+                'cast-query-mem=i' => \$cmdLine{castQueryMem},
+               'jobMem=s' => \$cmdLine{jobMem},
+               'numJobs=i' => \$cmdLine{numJobs},
+               'output-dir=s' => \$cmdLine{outputDir},
+               'task|tasks=s' => \$cmdLine{tasks},
+               'rteCellListOut' => \$cmdLine{rteCellListOut},
+               'rteReporterOut' => \$cmdLine{rteReporterOut},
+               't|timeoutr=f' => \$cmdLine{timeout},
+               'maxNbMem=s' => \$cmdLine{maxNbMem},
+               'cycle-count=i' => \$cmdLine{cycleCount},
+               'measured-delay=i' => \$cmdLine{measuredDelay},
+               'estimated-delay=f' => \$cmdLine{estimatedDelay},
+               'digital-delay=i' => \$cmdLine{digitalDelay},
+               'history-per-node=i' => \$cmdLine{historyPerNode},
+               'dsimArg=s' => \$cmdLine{dsimArg},
+               'pltDelayException=s' => \$cmdLine{pltDelayException}
+
+         
+              );
+
+
+    if(($cmdLine{cell} eq "") &&
+       ($cmdLine{cellList} eq "")){
+        print "ERROR a cell must be specified via the -c or --cell or --cellList option\n\n";
+        pod2usage( { -exitval => 2,
+                     -verbose => 2,
+                     -noperldoc => 1});
+    }
+    if(!($cmdLine{cellList} eq "")){
+        open (CELL_LIST, $cmdLine{cellList}) or die "Cannot open cellList $cmdLine{cellList}\n";
+        my @cellListLines = <CELL_LIST>;
+        chomp @cellListLines;
+        $cmdLine{cell} .= join(",",@cellListLines);
+        close CELL_LIST;
+    }
+    if(!-e $cmdLine{outputDir}){
+         mkdir $cmdLine{outputDir};
+    }
+    if($cmdLine{rteCellListOut} eq "") {
+        $cmdLine{rteCellListOut} = $cmdLine{outputDir}."/"."rteSuite";
+    }
+    if($cmdLine{rteReporterOut} eq ""){
+        $cmdLine{rteReporterOut} = $cmdLine{outputDir}."/"."rte.html";
+    }
+    if($cmdLine{cellDb} eq ""){
+        $cmdLine{cellDb} = $cmdLine{outputDir}."/"."rteResults.xml";
+    }
+    #print "\nExiting from cmdLineOpts";
+    return \%cmdLine;
+}
+#---------------------------------------------------------------------
+# Runs a command on the prompt using HANDLE 
+
+sub runCmd{
+    my($cmd) =@_;
+    #print "\nInside runCmd";
+    my $returnStatus =1;
+    print "\nRunning $cmd\n";
+    #open ($HANDLE, $cmd . "|") || die "Failed to execute $cmd\n ";
+    system($cmd);
+    #my @result = `$cmd 2>&1`;
+    if($? == -1){
+        $returnStatus = -1;
+    }
+    return $returnStatus;
+
+}
+
+
+__END__
+
+=head1 NAME
+
+rte - Runs rteCellListGen, rteLauncher and rteReporter
+
+=head1 SYNOPSIS
+
+rte [OPTIONS] B<-c>=cell[,cell]
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-d>=integer B<--depth>=integer
+
+Tells tool to run cells N hierarchy levels down.  For example, a value of 3
+will run the given cell, plus cells up to 3 levels down. A value of 0 means
+don't descend, and -1 means descend as far as possible. Default value is -1
+
+=item B<-f> B<--forceRerun>
+
+Normally the script will skip cells that have already been run, and/or
+have not been changed since (based on local p4 change number). This option will
+force all cells to be rerun.
+
+=item B<-db>=string B<--cellDb>=string
+
+Points to the xml file used to keep track of RTE run results. If not specified,
+the default file: ./rteResults.xml  will be used
+
+
+=item B<--cast-path>=string[:string]
+
+Path to cast files, : separated. If no path is given, the script assumes the
+cast-path is the current directory.
+
+=item B<--cast-query-mem>=integer
+
+Amount of memory to use when running cast_query. Default is 3000
+
+=item B<-c>=string[,string] B<--cell>=string[,string]
+
+The fully qualified cell name. This option may be specified more than
+once, and/or may include a comma separated list of cells: --cell=fqcn1,fqcn2
+--cell=fqcn3
+
+=item B<--cellList>=string[,string]
+
+File with one fully qualified cell name per line.
+
+=item B<--masterCellDb>=file
+
+This allows a master cell database to be specified. This database can provide 
+a base set of run results. This database is read before the local cell database
+(specified by cellDb). Any results read from the local cell database will
+override results found in the master database. This option would be used if, for 
+example, you wanted to rerun several cells out of a run someone else ran. You 
+would specify their cell database as the master database, and a local file for 
+your own database.
+
+=item B<--tasks>=string[,string]
+
+This specifies the tasks the user has to run. The default is
+rteCellListGen,rteLauncher and the rteReporter. If the user just has to run
+rteLauncher he can do so. But the rteSuite file should be existing in this
+case. In short if the previous suite file or reports file is existing then the
+user can run only rteLauncher or only rteReporter
+rteCellListGen - no previous file required
+
+rteLauncher - rteSuite file needed
+
+rteReporter - cellDb.xml or rteResults.xml needed
+
+=item B<--failingOnly>
+
+When this option is set, the cell list generated will contain only cells that
+have previously failed or have never been run before. It will not include 
+cells that have changed, and it will not require parent cells to be rerun.
+
+=item B<--newCellsOnly>
+
+When this option is set, only cells not found in the cell database will be
+reported.
+
+=item B<--numJobs>=integer
+
+Tells the tool how many Netbatch jobs to use. Default is 10
+
+=item B<-o>=string B<--output-dir>=string
+
+The path to where RTE output files will be stored. Default is ./output. If the
+user does not specify the filenames for Suitefile, html file or cellDb file,
+then  the default files are rteSuite, rte.html and rteResults.xml respectively
+created in the ./output directory.
+
+=item B<--rteCellListOut>=stringB
+
+Tells the tool what is the testSuite file name. This Suite file is normally generated by the 
+rteCellListGen task. It is a list of cells on which rteLauncher is to be run. 
+If this option is specified an absolute path of the file should be given.
+
+=item B<--rteReporterOut>=stringB
+
+Tells the tool where the output of rteReporter has to be sent. The
+default is rte.html. This file will have the results of the rteReporter script in an
+html format.
+If this option is specified an absolute path of the file should be given.
+
+
+=item B<--cycle-count>=integer
+
+This number is passed to rte as --cycle-count=N. If not specified, the option 
+is not passed on.
+
+=item B<--measured-delay>=integer
+
+Used for running PLT
+
+=item B<--digital-delay>=integer
+
+Used for running PLT
+
+=item B<--estimated-delay>=integer
+
+Used for running PLT
+
+=item B<--history-per-node>=integer
+
+Used for running PLT
+
+=item B<--dsimArg>=string
+
+Can be used to pass arguments into dsim, like defines etc. It is important 
+to quote the string to prevent parsing confusion.
+
+=item B<--pltDelayException>=string
+
+When processing plt results, and looking for estimated or digial delay warnings,
+this regular expression can be used to filter those warnings out of the report.
+
+=item B<--jobMem>=string
+This is the memory required for rteLauncher for running a job in netbatch. This
+parameter is given to netbatch when it reserves memory for the job.
+This is the memory specified in GBs. For eg "3G" or "6G". Default is 2G.
+
+
+=item B<--maxNbMem>=string
+
+If a rte run runs out of memory, the script will automatically, rerun the cell with
+an increased netbatch memory. This option specifies the maximum memory the script is 
+allowed to use. If not specified this value is set to the same value as jobMem,
+disabling the auto rerun feature.
+
+
+=item B<-t>=integer B<--timeout>=integer
+
+The RTE timeout option. Default is 10 hours. -1 will disable the timeout mechanism
+
+=back
+
+=head1 AUTHOR
+
+Copyright (C) 2011 Fulcrum Microsystem, Inc. All rights reserved
+
+=cut

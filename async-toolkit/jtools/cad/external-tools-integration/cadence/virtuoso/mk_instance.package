@@ -1,0 +1,15 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+# This package is used for dumping dfII floorplan data to a format readable by jauto.
+
+include ../../../java/src/com/avlsi/file/cdl/util/rename/cdlrenamer.package ../../../java/src/com/avlsi/file/cdl/util/rename
+$arch/bin/mk_instance.sh                                                   script/sh/util/mk_instance                                               775 p
+$arch/bin/mkcdslib.sh                                                   script/sh/util/mkcdslib                                               775 p
+$arch/bin/mk_instance_multi.pl                                             script/perl/mk_instance_multi.pl                                         775 p
+install/share/bin/gen_autoload                                            skill/gen_autoload                                                       775 p
+share/skill/layout/instancesfile/instance.il                               skill/layout/instancesfile/instance.il                                   664 p
+share/skill/util/name.il                                                   skill/util/name.il                                                       664 p

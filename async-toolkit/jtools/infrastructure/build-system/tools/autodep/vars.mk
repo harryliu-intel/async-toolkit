@@ -1,0 +1,7 @@
+AUTODEP_BIN_DIR := $(TOOLS_BINARIES_ROOT)/autodep/bin
+
+AUTODEP_BIN := $(AUTODEP_BIN_DIR)/autodep
+
+AUTODEP_LIB_DIR := $(TOOLS_BINARIES_ROOT)/autodep/lib/autodep
+
+AUTODEP_LIB := $(AUTODEP_LIB_DIR)/autodep.so

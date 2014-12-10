@@ -1,0 +1,45 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+<<DOC
+ Used for nano route.  Used as a shim for
+ <ul>
+<li> Create Abstract</li>
+<li> Create Flatten Cellview</li>
+<li> Export Design DEF file </li>
+<li> Export Design LEF file </li>
+<li> Export Routing Directive DEF file </li>
+<li> Create Verilog file </li>
+<li> Nanoroute Init </li>
+</ul>
+DOC
+
+# PERL scripts
+$arch/bin/createAbstract.pl		script/perl/nano/createAbstract.pl		755 p
+$arch/bin/createAbstractCellLog.pl	script/perl/nano/createAbstractCellLog.pl	755 p
+$arch/bin/defNets.pl			script/perl/nano/defNets.pl			755 p
+$arch/bin/exportDesignLef.pl		script/perl/nano/exportDesignLef.pl		755 p
+$arch/bin/genTracks.pl			script/perl/nano/genTracks.pl			755 p
+$arch/bin/initNanoroute.pl		script/perl/nano/initNanoroute.pl		755 p
+$arch/bin/listMissingAbstracts.pl	script/perl/nano/listMissingAbstracts.pl	755 p
+#$arch/bin/lef_rename.pl       script/perl/lef_rename.pl 755 p
+#$arch/bin/def_rename.pl       script/perl/def_rename.pl 755 p
+
+# SH wrapper scripts
+$arch/bin/createFlattenView.sh      script/sh/nano/createFlattenView.sh          755 p
+$arch/bin/exportDesignDef.sh        script/sh/nano/exportDesignDef.sh          755 p
+
+# SKILL
+install/share/bin/gen_autoload          skill/gen_autoload         775 p
+share/skill/nano/flatten.il             skill/nano/flatten.il      664 p
+share/skill/nano/util.il                skill/nano/util.il         664 p
+share/skill/nano/cellview.il            skill/nano/cellview.il     664 p
+share/skill/nano/routed.il              skill/nano/routed.il       664 p
+share/skill/nano/sync.il                skill/nano/sync.il         664 p
+share/skill/nano/floorplan.il           skill/nano/floorplan.il    664 p
+share/skill/layout/lefdef/lefdef.il     skill/layout/lefdef/lefdef.il         664 p
+
+include ../../../java/src/com/avlsi/tools/cast2def/cast2def.package.inc ../../../java/src/com/avlsi/tools/cast2def

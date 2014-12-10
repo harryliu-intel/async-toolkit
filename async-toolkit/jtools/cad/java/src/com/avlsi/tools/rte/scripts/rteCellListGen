@@ -1,0 +1,584 @@
+#!/usr/intel/bin/perl
+# vim:et:sw=4:ts=4:tw=79:
+
+use strict;
+use warnings;
+
+BEGIN {
+    # Path + script name
+    my $scriptPath = $0;
+    # Extract script name
+    my @tmp = split('/', $0);
+    my $exe = $tmp[(@tmp)-1];
+    # Remove script name from end of path
+    $scriptPath =~ s/$exe$//;
+    if(! ($scriptPath =~ /^\//)) {
+        # Relative path, so convert to full path
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $scriptPath = $pwd . "/$scriptPath/../lib/perl";
+        chdir $scriptPath;
+        $scriptPath = `pwd`;
+        chomp $scriptPath;
+        chdir $pwd; 
+        push @INC, "$scriptPath";
+    }else
+    {
+        # Already full path
+        push @INC, "$scriptPath/../lib/perl";
+    }
+}
+
+use rteLib;
+use job_netbatch;
+use Getopt::Long qw(:config no_ignore_case);
+use Data::Dumper;
+use Pod::Usage;
+use File::stat;
+use XML::Simple;
+use HTTP::Date;
+
+my $cmdLine = cmdLineOpts(@ARGV);
+
+my $db = rteLib::openCellDatabase($cmdLine);
+
+# cellHierarchy is an array of hash trees
+my $cellHierarchyList = getAllCells($cmdLine, $db);
+
+# cellList is an array of cells
+my $cellList = identifyCellsToRun($cmdLine, $db, $cellHierarchyList);
+
+writeCellList($cmdLine, $cellList);
+exit(0);
+
+#-------------------------------------------------------------------------------
+# Parse command line options, returns hash pointer
+sub cmdLineOpts
+{
+    my (@args) = @_;
+
+    my %cmdLine = ( cellList => [],
+                    depth => -1,
+                    forceRerun => 0,
+                    masterCellDb => "",
+                    cellDb  => "rteResults.xml",
+                    output => "",
+                    castPath => ".",
+                    castQueryMem => 3000,
+                    failingOnly => 0,
+                    newCellsOnly => 0
+                  );
+
+    my @values;
+    GetOptions('h|help' => sub { pod2usage( { -verbose => 2, -noperldoc=>1}) },
+               'c|cell=s' => \@{$cmdLine{cellList}},
+               'd|depth=i' => \$cmdLine{depth},
+               'f|forceRerun' => \$cmdLine{forceRerun},
+               'failingOnly' => \$cmdLine{failingOnly},
+               'newCellsOnly' => \$cmdLine{newCellsOnly},
+               'masterCellDb=s' => \$cmdLine{masterCellDb},
+               'db|cellDb=s' => \$cmdLine{cellDb },
+               'o|output=s' => \$cmdLine{output},
+               'cast-path=s' => \$cmdLine{castPath},
+               'cast-query-mem=i' => \$cmdLine{castQueryMem}
+              );
+
+    $cmdLine{cellList} = rteLib::expandOption($cmdLine{cellList});    
+
+    if(scalar(@{$cmdLine{cellList}}) == 0)
+    {
+        printf("ERROR a cell must be specified via the -c or --cell option\n\n");
+        pod2usage( { -exitval => 2,
+                     -verbose => 2,
+                     -noperldoc => 1});
+    }elsif($cmdLine{output} eq "")
+    {
+        printf("ERROR an output must be specified via the -o or --output option\n\n");
+        pod2usage( { -exitval => 2,
+                     -verbose => 2,
+                     -noperldoc => 1});
+        #printf("Processing cells: %s\n", join(",", @{$cmdLine{cellList}}));
+    }
+
+    return \%cmdLine;
+}
+
+# For each cell specified on the command line:
+#   run cast-query --task=subcell_tree
+#   convert hierarchy into hash tree, save tree into array
+# Return array reference of hash trees
+sub getAllCells
+{
+    my ($cmdLine, $db) = @_;
+
+    my $cellHierarchyList = [];
+    for(my $i = 0 ; $i < scalar(@{$cmdLine->{cellList}}); $i++)
+    {
+        my $cell = $cmdLine->{cellList}->[$i];
+
+        if($cmdLine->{depth} == 0)
+        {
+            # If we don't have to descend, save time
+            # don't run cast_query
+            $cellHierarchyList->[$i] = {$cell};
+        }else
+        {
+            # Run cast queury and get full cell hierarchy
+            $cellHierarchyList->[$i] = getCellHierarchy($cmdLine, $cell);
+        }
+    }
+
+    #print Dumper($cellHierarchyList);
+ 
+    return $cellHierarchyList;
+}
+
+# Identify the cells to run:
+#   Build a list of cells to run based on changes
+#   remove duplicate cells
+#   remove cells that haven't changed since last run
+sub identifyCellsToRun
+{
+    my ($cmdLine, $db, $cellHierarchyList) = @_;
+
+    my $cells = [];
+    foreach my $cellHierarchy (@{$cellHierarchyList})
+    {
+        (my $ignore, $cells, my $latestFileTimestamp) = identifyCells($cellHierarchy,
+                                $cmdLine->{forceRerun},
+                                $cmdLine->{newCellsOnly},
+                                $cmdLine->{failingOnly}, 0, 
+                                $cmdLine->{depth}, $db, $cells);
+
+        #print Dumper($cells);
+    }
+
+    # remove duplicate cells from the list
+    my %tmp = map {$_,1} @{$cells};
+    $cells= [keys %tmp];
+
+    return $cells;
+}
+
+# Recursivly Walk through the hierarchy and database identify which cells have changed
+# rerun cells that have newer file timestamps
+# Criterial for running a cell:
+#   forceRerun is set
+#   File containing cell changed
+#   child cell changed
+#   Cell failed previous rte run
+#   Child cell has newer rte run than parent cell
+#       Consider hierarchy:
+#           A 
+#           +- B
+#             +- C
+#           
+#           E
+#           +- C
+#       If a cell list for A is generated, A, B and C will be rerun due to C
+#       changing. If after that, a cell list for E is requested. E should be
+#       rerun due to C changing, however, in the database C is up to date. To
+#       work around this: compare C's file time against E's last run time
+#       (similar to how Make works). Or, more simply, rerun E if it's run 
+#       time is older than the earliest child's file time.
+sub identifyCells
+{
+    my ($cellHierarchy, $forceRerun, $newCellsOnly, $failOnly, $curDepth, $depth, $db, $cells) = @_;
+
+    #printf("current Depth: $curDepth, keys: %s\n", join(",", keys(%{$cellHierarchy})));
+    if(scalar(keys %{$cellHierarchy}) == 0)
+    {
+        # Bottom is an empty hash
+        return (0, $cells, -1);
+    }
+
+    my $change = 0;
+    my $returnFileTimestamp = -1;
+    foreach my $key (keys %{$cellHierarchy})
+    {
+        # Recurse down to leaf cells
+        my ($changed, $cells, $latestFileTimestamp) = identifyCells($cellHierarchy->{$key}, 
+                                    $forceRerun, $newCellsOnly, $failOnly, $curDepth+1, $depth, 
+                                    $db, $cells);
+
+        # If one of the lower cells changed, run the upper cells
+        if(($curDepth <= $depth) || ($depth == -1))
+        {
+            if(!($newCellsOnly || $failOnly) && ($changed || $forceRerun))
+            {
+                # A lower cell has changed, or we're forcing all cells to rerun
+                push(@{$cells}, $key);
+                $change = 1;
+                printf("Adding cell due to lower level cell change or force rerun option: $key\n");
+            }elsif(!($newCellsOnly || $failOnly) && cellHasChanged($key, $cmdLine, $db))
+            {
+                # Or if this cell itself has changed
+                push(@{$cells}, $key);
+                $change = 1;
+                printf("Adding cell due to change: $key\n");
+            }elsif(!$newCellsOnly && cellFailed($key, $cmdLine, $db))
+            {
+                push(@{$cells}, $key);
+                $change = 1;
+                printf("Adding cell due to failure on previous run: $key\n");
+            }elsif(!($newCellsOnly || $failOnly) && childRunTimeIsNewer($key, $db, $latestFileTimestamp))
+            {
+                # Indicate parent cell needs to be rerun
+                $change = 1;
+                printf("Adding parent cell due to earlier child run time: $key\n");
+            }elsif(!$failOnly && isNewCell($key, $db))
+            {
+                push(@{$cells}, $key);
+                printf("Adding new cell $key\n"); 
+            }
+        }else
+        {
+            #printf("Outside depth $key\n");
+        }
+
+        # Return the most recent (largest) file timestamp
+        my $cellTimestamp = rteLib::getCellTimestamp($key, $cmdLine);
+        if($cellTimestamp > $latestFileTimestamp) 
+        { 
+            $returnFileTimestamp = $cellTimestamp; 
+        }
+        #printf("cell: $key  timestamp: $cellTimestamp latest: $latestFileTimestamp => $returnFileTimestamp\n");
+    }
+
+    return ($change, $cells, $returnFileTimestamp);
+}
+
+sub isNewCell
+{
+    my ($key, $db) = @_;
+
+    if(defined $db->{rteLib::dbEscapeCellName($key)})
+    {
+        return 0;
+    }else
+    {
+        return 1;
+    }
+}
+
+sub childRunTimeIsNewer
+{
+    my ($key, $db, $latestFileTimestamp) = @_;
+
+    if(defined($db->{$key}) &&
+        !($db->{$key}->{runStartTime} eq "-1"))
+    {
+        my $runTimestamp = str2time($db->{$key}->{runStartTime});
+
+        if( ($latestFileTimestamp != -1) && 
+            ($latestFileTimestamp > $runTimestamp) )
+        {
+            #printf("chilRunTimeIsNewer $key latest: $latestFileTimestamp runTimestamp: $runTimestamp return 1\n");
+            return 1;
+        }
+        #printf("chilRunTimeIsNewer $key latest: $latestFileTimestamp runTimestamp: $runTimestamp return 0\n");
+    }
+
+    return 0;
+}
+
+# If a cell failed RTE last time (or hasn't been ever run), rerun it
+sub cellFailed
+{
+    my ($cell, $cmdLine, $db) = @_;
+
+    if(defined $db->{rteLib::dbEscapeCellName($cell)})
+    {
+        # Cell exists in db
+        if(defined ($db->{rteLib::dbEscapeCellName($cell)}->{failedToComplete}) &&
+           $db->{rteLib::dbEscapeCellName($cell)}->{failedToComplete} == 1)
+        {
+            # Cell failed to run to completion
+            return 1;
+        }elsif( $db->{rteLib::dbEscapeCellName($cell)}->{failedNTPCTarget} == 1)
+        {
+            return 1;
+        }elsif( !($db->{rteLib::dbEscapeCellName($cell)}->{passed} eq "PASSED") && 
+            ($db->{rteLib::dbEscapeCellName($cell)}->{fragment} == 0) &&
+            ($db->{rteLib::dbEscapeCellName($cell)}->{rteIgnore} == 0)
+          )
+        {
+            # The cell didn't pass, and it's not a fragment or marked
+            # rteIgnore
+            return 1;
+        }else
+        {
+            return 0;
+        }
+    }else
+    {
+        # Cell doesn't exist in db
+        return 1;
+    }
+}
+
+# Look at the p4 change number and compare to the p4 change 
+# number in the db, return 1 if different
+sub cellHasChanged
+{
+    my ($cell, $cmdLine, $db) = @_;
+
+    if(defined $db->{rteLib::dbEscapeCellName($cell)})
+    {
+        # Cell exists in db
+
+        my $cellTimestamp = rteLib::getCellTimestamp($cell, $cmdLine);
+        my $cellDbTimestamp = $db->{rteLib::dbEscapeCellName($cell)}->{cellFileTimestamp};
+
+        if($cellTimestamp > $cellDbTimestamp)
+        {
+            printf("Cell $cell has changed file timestamp: $cellTimestamp " .
+                    "cellDb timestamp: $cellDbTimestamp\n");
+            return 1;
+        }else
+        {
+            return 0;
+        }
+    }else
+    {
+        # Cell not in db, so force rerun
+        printf("Cell $cell is not in cellDb\n");
+        return 1;
+    }
+}
+
+# Run cast-query -task=subcell_tree
+# Parse tree and based on --depth option
+# return cell hierarchy (hash tree)
+sub getCellHierarchy
+{
+    my ($cmdLine, $cell) = @_;
+
+    my @cellPath;
+    my $cellHierarchy;
+
+    # Put netbatch mem in M (1000 base)
+    # and cast_query in M (1000 base)
+
+    my $tmpCellName = $cell;
+    #In order to get cells with meta parameters to work, escape the ()
+    $tmpCellName =~ s/(\()/\\\(/g;
+    $tmpCellName =~ s/(\))/\\\)/g;
+
+    my $nbcommand = "nbjob run";
+    my $nbparams = "--mode interactive-ls --class \"fVM>$cmdLine->{castQueryMem}\" ".
+                   "--class-reservation \"fVM=$cmdLine->{castQueryMem}\""; 
+    my $fulcrumCmd= "fulcrum cast_query --task=subcell_tree "
+                     ." --max-heap-size=$cmdLine->{castQueryMem}M ".
+                     " --cast-path=$cmdLine->{castPath} --cell=$tmpCellName";
+    my $cmd = sprintf("%s %s %s",$nbcommand,$nbparams,$fulcrumCmd); 
+     
+    printf("Running $cmd\n");
+    my $HANDLE;
+    open ($HANDLE, $cmd . "|");
+    my $lastDepth = -1;
+    while(<$HANDLE>)
+    {
+        chomp($_);
+        #printf("#$_\n");
+        # the lines will look like:
+        #  Subcell tree of ....
+        #  chip.alta.fc.snf.SNF_76
+        #   |
+        #   +--chip.alta.fc.snf.core.SNF_CORE_80
+        #   |    |
+        #   |    +--chip.alta.fc.snf.core.OUTPUT_CORE
+
+        if($_ =~ /Subcell tree of/)
+        {
+            #skip
+        }
+        elsif($_ =~ /Your job has been queued/){
+            #skip
+        }
+        elsif($_ =~ /Job ([0-9]+) has started/){
+            #skip
+        }elsif($_ =~ /[a-zA-Z0-9]+/){
+            # First only look at lines that have cell names
+
+            printf("$_\n");
+            # Remove spaces at the beginning
+            $_ =~ s/^  //;
+            #printf("$_\n");
+            # convert groups of 4 spaces to , => 
+            $_ =~ s/[ ]{4}/;/g;
+            #printf("$_\n");
+            # the string will now look like one of the following:
+            # [CELLNAME]
+            # +--[CELLNAME]
+            # |,|,|,+--[CELLNAME]
+            # now convert to an array
+            my @line = split(/;/, $_);
+            ##printf("split:%s\n", join(",", @line));
+            
+            my $depth = 0;          # First case
+            my $fqn;
+
+            if($line[scalar(@line)-1] =~ /^[ ]*\+--([a-zA-Z0-9()\.-_,{}]+)/)
+            {   
+                $depth = scalar(@line);
+                $fqn = $1;
+            }elsif($line[scalar(@line)-1] =~ /^[ ]*([a-zA-Z0-9()\.-_,{}]+)/)
+            {
+                $depth = scalar(@line)-1;
+                $fqn = $1;
+            }
+        
+            #printf("Cell: $fqn depth: $depth\n");
+            if(scalar(@cellPath) == 0)
+            {
+                @cellPath = ($fqn);
+            }else
+            {
+                if(scalar(@cellPath)-1 < $depth)
+                {
+                    push(@cellPath, $fqn);
+                }elsif(scalar(@cellPath)-1 == $depth)
+                {
+                    pop(@cellPath);
+                    push(@cellPath, $fqn);
+                }else
+                {
+                    while(scalar(@cellPath)-1 >= $depth)
+                    {
+                        pop(@cellPath);
+                    }
+                    push(@cellPath, $fqn);
+                }
+            }
+            #printf("Adding cell: $fqn at %s\n", join(",", @cellPath));
+            $cellHierarchy = addNode($cellHierarchy, \@cellPath);
+            #print Dumper($cellHierarchy);
+        }    
+    }
+
+    return $cellHierarchy;
+}
+
+# Given a hash reference and a instance path
+# build a hash tree
+sub addNode
+{
+    my ($cellHierarchy, $cellPath) = @_;
+
+    #printf("\t\tAdding cell: %s\n", join(",", @{$cellPath}));
+    if(scalar(@{$cellPath}) == 0)
+    {
+        #printf("\t leaf\n");
+        return {};
+    }else
+    {
+        #printf("\t subcell\n");
+        my @tmp = @{$cellPath}[1..(scalar(@{$cellPath})-1)];
+        $cellHierarchy->{$cellPath->[0]} = addNode($cellHierarchy->{$cellPath->[0]}, \@tmp);
+        return $cellHierarchy;
+    }
+}
+
+# Given an array pointer of cells
+# sort the list and write out to either
+# stdout or the command line specified file
+sub writeCellList
+{
+    my ($cmdLine, $cellListIn) = @_;
+
+    my @cellList = sort @{$cellListIn};
+
+    if($cmdLine->{output} eq "")
+    {
+        printf ("\n No output file specified!");
+        printf("%s\n", join("\n", @cellList));
+    }else
+    {
+        my $FH;
+        open($FH, ">", $cmdLine->{output}) or die $!;
+
+        print $FH join("\n", @cellList);
+        print $FH "\n";
+        close $FH;
+    }
+}
+
+__END__
+
+=head1 NAME
+
+rteCellListGen - Given a cell, recursivly walks the hierarchy and generates a
+                 list of subcells for RTE
+
+=head1 SYNOPSIS
+
+rteCellListGen [OPTIONS] B<-c>=cell[,cell]
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-d>=integer B<--depth>=integer
+
+Tells tool to run cells N hierarchy levels down.  For example, a value of 3
+will run the given cell, plus cells up to 3 levels down. A value of 0 means
+don't descend, and -1 means descend as far as possible. Default value is -1
+
+=item B<-f> B<--forceRerun>
+
+Normally the script will skip cells that have already been run, and/or
+have not been changed since (based on local p4 change number). This option will
+force all cells to be rerun.
+
+=item B<-db>=string B<--cellDb>=string
+
+Points to the xml file used to keep track of RTE run results. If not specified,
+the default file: ./rteResults.xml  will be used
+
+=item B<-o>=string B<--output>=string
+
+Output file the cell list will be written to. Default is standard out
+
+=item B<--cast-path>=string[:string]
+
+Path to cast files, : separated
+
+=item B<--cast-query-mem>=integer
+
+Amount of memory to use when running cast_query. Default is 3000
+
+=item B<-c>=string[,string] B<--cell>=string[,string]
+
+The fully qualified cell name. This option may be specified more than
+once, and/or may include a comma separated list of cells: --cell=fqcn1,fqcn2
+--cell=fqcn3
+
+=item B<-masterCellDb>=file
+
+This allows a master cell database to be specified. This database can provide 
+a base set of run results. This database is read before the local cell database
+(specified by cellDb). Any results read from the local cell database will
+override results found in the master database. This option would be used if, for 
+example, you wanted to rerun several cells out of a run someone else ran. You 
+would specify their cell database as the master database, and a local file for 
+your own database.
+
+=item B<--failingOnly>
+
+When this option is set, the cell list generated will contain only cells that
+have previously failed or have never been run before. It will not include 
+cells that have changed, and it will not require parent cells to be rerun.
+
+=item B<--newCellsOnly>
+
+When this option is set, only cells not found in the cell database will be
+reported.
+
+=back
+
+=head1 AUTHOR
+
+Copyright (C) 2011 Fulcrum Microsystem, Inc. All rights reserved
+
+=cut

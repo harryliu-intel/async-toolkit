@@ -1,0 +1,27 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+<<DOC
+ Used for streaming out dfII into LEF & DEF.  Used as a shim for
+ <ul>
+<li> LEF file generation</li>
+<li> DEF file generation</li>
+<li> LEF file renaming </li>
+<li> DEF file renaming </li>
+</ul>
+DOC
+
+# PERL wrapper scripts
+$arch/bin/lef_rename.pl                   script/perl/lef_rename.pl            755 p
+$arch/bin/def_rename.pl                   script/perl/def_rename.pl            755 p
+                                          
+# SH wrapper scripts                      
+$arch/bin/lefdefWrite.sh                  script/sh/lefdef/lefdefWrite.sh      755 p
+
+# SKILL
+install/share/bin/gen_autoload            skill/gen_autoload                   775 p
+share/skill/layout/lefdef/lefdef.il       skill/layout/lefdef/lefdef.il        664 p
+share/skill/layout/lefdef/apr_lefdef.il   skill/layout/lefdef/apr_lefdef.il    664 p

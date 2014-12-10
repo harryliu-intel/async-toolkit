@@ -1,0 +1,49 @@
+#!/usr/intel/bin/perl -w
+
+# Find relevant packaged tools
+
+$cast_query = "cast_query";
+
+# snarf env variables
+$CAST_PATH=$ENV{CAST_PATH};
+$SPEC_DIR=$ENV{SPEC_DIR};
+
+# parse args
+foreach $i (@ARGV) {
+    if ($ARGV[0] =~ /^--(.*)/) {
+        ($flag, $value) = split("=",$1);
+        shift @ARGV;
+
+        # bad syntax
+        if (! defined $flag || ! defined $value) { error("bad --flag=value syntax."); }
+        
+        # path/directory/file options
+        elsif ($flag eq "cast-path")           { $CAST_PATH = $value; }
+        elsif ($flag eq "spec-dir")            { $SPEC_DIR = $value; }
+    }
+}
+
+# get envs for cells which exist in spec tree
+%envs = ();
+while (my $line = <STDIN>) {
+    my ($cell) = split("[ :]",$line);
+    chomp($cell);
+    my $path = $cell;
+    $path =~ s|\.|/|g;
+    if (-e "$SPEC_DIR/$path.cast") {
+        my $out = `$cast_query --cast-path=${CAST_PATH} --max-heap-size=400M --task=env=prs:aspice_ignore --cell=\"$cell\"`;
+        if ($? == 0) {
+            my @results = split("\n",$out);
+            foreach my $i (@results) {
+                my ($c,$e) = split(" ",$i);
+                $envs{$c}=$e;
+            }
+        }
+    }
+}
+
+# print out all cells with envs reached
+foreach $i (sort keys %envs) {
+    if ($envs{$i} eq "") { print "$i\n"; }
+    else { print "$i:$envs{$i}\n"; }
+}

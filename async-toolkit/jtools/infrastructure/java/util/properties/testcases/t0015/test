@@ -1,0 +1,7 @@
+<test>
+<!-- check errors that are suppressed by suppress_named_block_warning in verif_util -->
+<config>
+<opt name="variant" type="String" default=""></opt>
+</config>
+
+</test>

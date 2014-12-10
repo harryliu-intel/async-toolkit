@@ -1,0 +1,8 @@
+N=3
+WARNING: no properties or uses for use block named XXX in ggg were found
+WARNING: no properties or uses for use block named XXX in ggg were found
+port.1.opt=g
+port.2.opt=c
+port.3.opt=f
+topdir=.
+variant=ccc:ddd:fff,ggg

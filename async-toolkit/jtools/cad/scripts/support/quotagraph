@@ -1,0 +1,396 @@
+#!/usr/intel/bin/perl -lw
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+use Getopt::Long;
+
+my %groupname=();
+my @files=();
+
+sub isvalid {
+    my ($date) = @_;
+    my ($m,$d,$y) = split(/\//,$date);
+    return 0 if ($m < 1 or $m > 12);
+    return 0 if ($d < 1 or $d > 31);
+    return 0 if ($y < 2000 or $y > 2010);
+    1;
+}
+
+sub usage {
+    print STDERR <<EU;
+Usage: quotagraph [options] [users]
+    --start m/d/y   : start date of graph
+    --end   m/d/y   : end date of graph
+    --yscale [m:x]  : m = min, x = max (GB)
+    --group         : graph group usage not user usage
+    --fs [bali|tahoe|alta|fiji|scratch1|home]
+EU
+    exit 1;
+}
+
+my $plt = <<EP;
+# set terminal x11 
+# set output
+unset clip points
+set clip one
+unset clip two
+set bar 1.000000
+set border 31 lt -1 lw 1.000
+set xdata
+set ydata
+set zdata
+set x2data time
+set y2data
+set xdata time
+set timefmt "%m/%d/%Y/%H:%M"
+set boxwidth
+set style fill empty border
+set dummy x,y
+set format x "XFMT"
+set format y "% g"
+set format x2 "X2FMT"
+set format y2 "% g"
+set format z "% g"
+set format cb "% g"
+set angles radians
+set grid nopolar
+set grid xtics nomxtics ytics nomytics noztics nomztics nox2tics nomx2tics noy2tics nomy2tics nocbtics nomcbtics
+set grid layerdefault
+set key title ""
+set key right top Right noreverse enhanced box linetype -2 linewidth 1.000 samplen 4 spacing 1 width 0 height 0 autotitles
+unset label
+unset arrow
+unset style line
+unset style arrow
+unset logscale
+set offsets 0, 0, 0, 0
+set pointsize 1
+set encoding default
+unset polar
+unset parametric
+unset decimalsign
+set view 60, 30, 1, 1
+set samples 100, 100
+set isosamples 10, 10
+set surface
+unset contour
+set clabel '%8.3g'
+set mapping cartesian
+set datafile separator whitespace
+unset hidden3d
+set cntrparam order 4
+set cntrparam linear
+set cntrparam levels auto 5
+set cntrparam points 5
+set size ratio 0 1,1
+set origin 0,0
+set style data points
+set style function lines
+set xzeroaxis lt -2 lw 1.000
+set yzeroaxis lt -2 lw 1.000
+set x2zeroaxis lt -2 lw 1.000
+set y2zeroaxis lt -2 lw 1.000
+set tics in
+set ticslevel 0.5
+set ticscale 1 0.5
+set cbtics border mirror norotate autofreq 
+set title "" 0.000000,0.000000  font "TITLE"
+set timestamp "" bottom norotate 0.000000,0.000000  ""
+set xlabel "Date" 0.000000,0.000000  font ""
+set x2label "X2LABEL" 0.000000,0.000000  font ""
+set xrange [ XSTART : XEND ] noreverse nowriteback
+set x2range [ * : * ] noreverse nowriteback  # (currently [-10.0000:10.0000] )
+set ylabel "GB" 0.000000,0.000000  font "GB"
+set y2label "" 0.000000,0.000000  font ""
+set yrange [ YSCALE ] noreverse nowriteback  # (currently [:4.00000e+06] )
+set y2range [ * : * ] noreverse nowriteback  # (currently [-10.0000:10.0000] )
+set zlabel "" 0.000000,0.000000  font ""
+set zrange [ * : * ] noreverse nowriteback  # (currently [-10.0000:10.0000] )
+set cblabel "" 0.000000,0.000000  font ""
+set cbrange [ * : * ] noreverse nowriteback  # (currently [-10.0000:10.0000] )
+set zero 1e-08
+set lmargin -1
+set bmargin -1
+set rmargin -1
+set tmargin -1
+set locale "C"
+set pm3d scansautomatic flush begin noftriangles nohidden3d implicit corners2color mean
+unset pm3d
+set palette positive nops_allcF maxcolors 0 gamma 1.5 color model RGB 
+set palette rgbformulae 7, 5, 15
+set colorbox default
+set colorbox vertical origin 0.9,0.2 size 0.1,0.63 bdefault
+set loadpath 
+set fontpath 
+set fit noerrorvariables
+EP
+my $cmpval=-10e6;
+my $minval=1e6;
+
+my %list;
+my $dogrp=0;
+my $yscale='0 : *';
+my $xstart = "*";
+my $xend = "*";
+my $fs="";
+
+my $fn = -1;
+my %options = (
+    "yscale=s" => \$yscale,
+    "end=s" => sub {
+            if ( isvalid ($_[1])) {
+                $xend = "\"$_[1]/22:59\"";
+            } else {
+                $xend = "*";
+            }
+        },
+    "start=s" => sub {
+            if ( isvalid ($_[1])) {
+                $xstart = "\"$_[1]/00:00\"";
+            } else {
+                $xstart = "*";
+            }
+        },
+    "group" => \$dogrp,
+    "fs=s" => \$fs,
+);
+
+GetOptions ( %options ) or usage;
+
+while (0 and defined ($ARGV[0]) and $ARGV[0] =~ /^-/) {
+    if ($ARGV[0] =~ /^-y/) {
+        $yscale = $ARGV[0];
+        $yscale =~ s/-y//;
+        if ($yscale eq "") {
+            shift;
+            $yscale = $ARGV[0];
+        }
+        if ($yscale =~ /:/) {
+            $yscale =~ s/:/ : /;
+        }
+        elsif ($yscale <= 0) {
+            $yscale = "0 : *";
+        }
+        elsif ($yscale > 0) {
+            $yscale = "0 : $yscale";
+        }
+    }
+    elsif ($ARGV[0] =~ /-e/) {
+        $xend = $ARGV[0];
+        if ($xend eq "-e") {
+            shift;
+            $xend = $ARGV[0];
+        }
+        $xend =~ s/-e//;
+        print STDERR "Not valid $xend" if ! isvalid($xend);
+        if (!isvalid($xend)) {
+            $xend = "*";
+        }
+        else {
+            $xend = "\"$xend/22:59\"";
+        }
+    }
+    elsif ($ARGV[0] =~ /-s/) {
+        $xstart = $ARGV[0];
+        if ($xstart eq "-s") {
+            shift;
+            $xstart = $ARGV[0];
+        }
+        $xstart =~ s/-s//;
+        print STDERR "Not valid $xstart" if ! isvalid($xstart);
+        if (!isvalid($xstart)) {
+            $xstart = "*";
+        }
+        else {
+            $xstart = "\"$xstart/00:00\"";
+        }
+    }
+    elsif ($ARGV[0] =~ /g/i) {
+        $dogrp=1;
+    }
+    elsif ($ARGV[0] =~ /\d/) {
+        $fn = $ARGV[0];
+        $fn =~ s/[^\d]//g;
+        $fn = -$fn;
+    }
+    shift @ARGV;
+}
+my $user = `whoami`;
+chomp $user;
+$"=",";
+$user = "@ARGV" if defined $ARGV[0];
+
+if ($dogrp) {
+    open (P, "ldapsearch -x -LLL '(&(objectClass=posixGroup)(gidNumber=*))' gidNumber |");
+    my $cn;
+    my $gid;
+    while (<P>) {
+        chomp;
+        if (/^dn:/) {
+            s/.*cn=//;
+            s/,.*//;
+            $cn = $_;
+            $_=<P>;
+            chomp;
+            s/gidNumber: //;
+            s/  *//g;
+            $groupname{$_}=$cn;
+        }
+    }
+    if (! defined ($groupname{0})) {
+        $groupname{0}="root";
+    }
+    close P;
+}
+my $dir = "/mnt/fulcrum/scratch1/aubrey/quotas/";
+opendir (P, "$dir");
+if ($fs eq "tahoe") {
+    @files=sort(grep(/^quotat20/,readdir(P)));
+    push @files, "getquot -f - |";
+}
+elsif ($fs eq "bali") {
+    @files=sort(grep(/^quotab20/,readdir(P)));
+    push @files, "getquob -f - |";
+}
+elsif ($fs eq "alta") {
+    @files=sort(grep(/^quotaa20/, readdir(P)));
+    push @files, "getquoa -f - |";
+}
+elsif ($fs eq "fiji") {
+    @files=sort(grep(/^quotaf20/, readdir(P)));
+    push @files, "getquof -f - |";
+}
+elsif ($fs eq "scratch1") {
+    @files=sort(grep(/^quotas20/, readdir(P)));
+    push @files, "getquos -f - |";
+}
+else {
+    @files=sort(grep(/^quota20/,readdir(P)));
+    push @files, "getquo -f - -s na3020-a -v home |";
+}
+closedir P;
+foreach my $n (0..$#files) {
+    if ($files[$n] =~ /^quota/) {
+        open (P, "<$dir"."$files[$n]") or warn "$files[$n]";
+    }
+    else {
+        open (P, "$files[$n]") or warn "$files[$n]";
+    }
+    while (<P>) {
+        chomp;
+        my @f=split;
+        next if ! defined $f[1];
+        if ($f[1] eq "0") {
+            $f[1] = "root";
+        }
+        if (/^user/ and ! $dogrp) {
+            $list{$f[1]}[$n]=$f[4];
+        }
+        elsif (/^group/ and $dogrp) {
+            $groupname{$f[1]}=$f[1] if ! defined ($groupname{$f[1]});
+            $list{$groupname{$f[1]}}[$n]=$f[4];
+        }
+    }
+}
+
+my $dat = "/tmp/qu$$.dat";
+open (X, ">$dat");
+select X;
+my @user=split(/,/,$user);
+my $xn = 0;
+while ($xn <= $#user and ! defined ($list{$user[$xn]})) {
+    $xn++;
+}
+if ($xn > $#user) {
+    print STDERR "No valid user/group names";
+    usage;
+}
+foreach my $vals ($list{$user[$xn]}) {
+    my @x = @{$vals};
+    foreach my $n (0..$#x) {
+        my $t = $files[$n];
+        my $m;
+        my $d;
+        my $y;
+        my $H;
+        my $M;
+        if ($t =~ /^quota/) {
+            $t =~ s/[a-z\.]//g;
+            $m = substr($t,4,2);
+            $d = substr($t,6,2);
+            $y = substr($t,0,4);
+            $H = substr($t,8,2);
+            $M = substr($t,10,2);
+        }
+        else {
+            my @lt = localtime(time);
+            $m = sprintf "%02d", $lt[4]+1;
+            $d = sprintf "%02d", $lt[3];
+            $y = sprintf "%04d", $lt[5]+1900;
+            $H = sprintf "%02d", $lt[2];
+            $M = sprintf "%02d", $lt[1];
+        }
+        printf "$m/$d/$y/$H:$M";
+        foreach my $user (@user) {
+            if (defined ($list{$user})) {
+                my @x = @{$list{$user}};
+                $x[$n] = 0 if ! defined ($x[$n]);
+                printf " %.3f", $x[$n]/1024/1024;
+            }
+        }
+        printf "\n";
+    }
+}
+select STDOUT;
+close X;
+my $plt1=$plt;
+my $x2label = sprintf "Usage by %s", $dogrp ? "Group" : "User";
+my $xfmt = "%m/%d";
+my $x2fmt = "%m/%d";
+my ($x1,$m1,$d1,$y1) = split (/["\/ :]/,$xstart);
+my ($x2,$m2,$d2,$y2) = split (/["\/ :]/,$xend);
+if ($xstart eq "*" or $xend eq "*" ) {
+    $x2fmt = "";
+}
+else {
+    if ($y1 == $y2 and $m1 == $m2 and $d2 - $d1 < 2) {
+        $xfmt = "%H:%M";
+    }
+}
+$plt1 =~ s/TITLE/$user/g;
+$plt1 =~ s/X2LABEL/$x2label/g;
+$plt1 =~ s/YSCALE/$yscale/g;
+$plt1 =~ s/XSTART/$xstart/g;
+$plt1 =~ s/XEND/$xend/g;
+$plt1 =~ s/XFMT/$xfmt/g;
+$plt1 =~ s/X2FMT/$x2fmt/g;
+open (X, "| gnuplot -persist");
+select X;
+print $plt1;
+my $n = 2;
+my $x = 2;
+my $started=0;
+foreach my $n (2..$#user+2) {
+    if (defined ($list{$user[$n-2]})) {
+        if ( $started ) {
+           printf ", ";
+        }
+        else {
+            printf "plot ";
+        }
+        printf "'$dat' using 1:$x smooth unique t '$user[$n-2]'";
+        $started++;
+        $x++;
+    }
+    else {
+        print STDERR "Skipping invalid user/group $user[$n-2]";
+    }
+}
+printf "\n";
+select STDOUT;
+close X;
+sleep 1;
+unlink $dat;

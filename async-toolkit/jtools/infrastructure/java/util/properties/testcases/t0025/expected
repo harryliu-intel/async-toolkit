@@ -1,0 +1,6 @@
+N=3
+port.1.opt=g
+port.2.opt=c
+port.3.opt=f
+topdir=.
+variant=ccc:ddd:fff,ggg

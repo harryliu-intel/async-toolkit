@@ -1,0 +1,765 @@
+#!/usr/intel/bin/perl -lw
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Std;
+use Term::ReadKey;
+use POSIX qw(:termios_h);
+eval "use Curses";
+my $has_curses = $@ ? 0 : 1;
+my $key = 0;
+my $reverse=0;
+my $numeric=1;
+my %occupied=();
+my %load=();
+my $jobnamelen=14;
+my %cores;
+
+our $opt_a = 0;
+our $opt_e = 0;
+our $opt_f = "";
+our $opt_h = 0;
+our $opt_j = "";
+our $opt_l = $jobnamelen;
+our $opt_m = "";
+our $opt_n = "";
+our $opt_s = "";
+our $opt_t = 0;
+our $opt_w = 0;
+our $opt_E = 0;
+our $opt_q = 0;
+our $opt_r = 0;
+our $opt_b = 0;
+my $statusselect="status='Run'||status='Wait'||status='Send'||status='DEL'||status='Del'||status='Disc-D'||status='Disc-R'||status='Move'||status='Inactive'";
+
+sub memstring {
+    my ($mem)=@_;
+    int(($mem+1023)/1024);
+}
+
+sub ishex {
+    my ($s)=@_;
+    return ! ($s =~ /^[a-f0-9]$/);
+}
+
+sub usage {
+    print <<EU;
+Usage: myqs [options] [user]
+    -a        : show all jobs
+    -b        : brief, do not list jobs
+    -e        : show loading of all systems
+    -f        : filter on egrep like expression (assumes -a)
+    -h        : continuous update (hold)
+    -j        : job number
+    -l        : length of job string to show
+    -m        : memory
+    -n        : job name
+    -r        : running
+    -s        : system (host) name
+    -t        : interval for -h
+    -w        : waiting jobs
+    -E        : error
+    -q        : quick jobs
+EU
+exit 1;
+}
+
+getopts('brqEwehat:s:m:f:l:n:j:n') or usage;
+
+my %abbr=(
+    "altalve" => "al",
+    "arch" => "a",
+    "assuradrc" => "drc",
+    "assuralvs" => "lvs",
+    "autoflow" => "af",
+    "calendar" => "c",
+    "centos" => "ct",
+    "cores" => "cc",
+    "coverity" => "cov",
+    "cpu" => "cpu",
+    "fastverilog" => "fv",
+    "h_core" => "h_core",
+    "h_cpu" => "h_cpu",
+    "h_data" => "h_data",
+    "h_fsize" => "h_fsize",
+    "h_rss" => "h_rss",
+    "h_rt" => "h_rt",
+    "h_stack" => "h_stack",
+    "h_vmem" => "mx",
+    "hercules" => "herc",
+    "herculesdrc" => "hdrc",
+    "highmem" => "hm",
+    "hostname" => "h",
+    "hsim" => "hsim",
+    "load_avg" => "la",
+    "load_long" => "ll",
+    "load_medium" => "lm",
+    "load_short" => "ls",
+    "mem_free" => "mf",
+    "mem_total" => "mt",
+    "mem_used" => "mu",
+    "memory" => "m",
+    "memsize" => "mz",
+    "min_cpu_interval" => "mci",
+    "nano" => "nano",
+    "nanoproteus" => "np",
+    "nehalem" => "nehalem",
+    "np_load_avg" => "nla",
+    "np_load_long" => "nll",
+    "np_load_medium" => "nlm",
+    "np_load_short" => "nls",
+    "npregression" => "npr",
+    "num_proc" => "p",
+    "p4t" => "p4t",
+    "primetime" => "pt",
+    "processor" => "proc",
+    "qname" => "q",
+    "quick" => "qk",
+    "rc" => "rc",
+    "regtest" => "reg",
+    "rerun" => "re",
+    "s_core" => "s_core",
+    "s_cpu" => "s_cpu",
+    "s_data" => "s_data",
+    "s_fsize" => "s_fsize",
+    "s_rss" => "s_rss",
+    "s_rt" => "s_rt",
+    "s_stack" => "s_stack",
+    "s_vmem" => "s_vmem",
+    "scratch" => "scr",
+    "seq_no" => "seq",
+    "slots" => "s",
+    "solaris" => "sol",
+    "starrc" => "star",
+    "swap_free" => "sf",
+    "swap_rate" => "sr",
+    "swap_rsvd" => "srsv",
+    "swap_total" => "st",
+    "swap_used" => "su",
+    "syncalta" => "sa",
+    "tmpdir" => "tmp",
+    "trigger" => "tg",
+    "unshared" => "us",
+    "verilog" => "vl",
+    "virtual_free" => "vf",
+    "virtual_total" => "vt",
+    "virtual_used" => "vu",
+    "vlm" => "vlm",
+    "vlog-debug" => "vld",
+    "watch" => "wt",
+);
+
+my %filters=();
+foreach my $filter (split(/[,]/,$opt_f)) {
+    $filters{$filter}=1;
+    $opt_a = 1 if (length($filter));
+}
+if ($opt_w) {
+    $opt_a=1;
+}
+if ($opt_E) {
+    $filters{" E"}=1;
+    $opt_a=1;
+}
+if ($opt_q) {
+    $filters{qk}=1;
+    $opt_a=1;
+}
+$opt_a = 1 if $opt_s ne "";
+$jobnamelen=$opt_l;
+my %memory=();
+my %num_proc=();
+my %arch=();
+my $shostlen=7;
+$shostlen=7 if $opt_e;
+my %frm=();
+
+if ($opt_m ne "" or $opt_e or 1) {
+    open (P, "nbstatus workstations --fields All --format csv |");
+    my $in=0;
+    my $host=0;
+    my $ge = 0;
+    my $lt = 0;
+    my $mem = $opt_m;
+    $ge = 1 if $opt_m =~ /^[+>]/;
+    $lt = 1 if $opt_m =~ /^[-<]/;
+    $mem =~ s/[^\d]//g;
+    $mem = 0 if $opt_m eq "";
+    my $shost;
+    $_=<P>;
+    my %hostkeys=();
+    my (@f)=split(/,/);
+    foreach my $n (0..$#f) {
+        $hostkeys{$n}=$f[$n];
+        $hostkeys{$f[$n]}=$n;
+    }
+    while (<P>) {
+        chomp;
+        my @f=split(/,/);
+        $host=$f[$hostkeys{Server}];
+        $shost = sprintf("%-$shostlen.${shostlen}s", $host);
+        my $arch=$f[$hostkeys{Arch}];
+        $arch{$shost}=sprintf("%6.6s", $arch);
+        $num_proc{$shost}=$f[$hostkeys{CPUCount}];
+        $memory{$shost}=$f[$hostkeys{tRM}];
+        $f[$hostkeys{fRM}] = 0 if $f[$hostkeys{fRM}] eq "";
+        $frm{$shost}=sprintf("%.0f", $f[$hostkeys{fRM}]/1024);
+        $occupied{$shost}=0;
+        $load{$shost}=$f[$hostkeys{Load}];
+        $load{$shost}=~ s/\/.*//;
+        $load{$shost} = 0 if $load{$shost} eq "";
+        $load{$shost} = sprintf("%4.1f", $load{$shost});
+        $cores{$shost}=0;
+    }
+    close P;
+}
+
+sub memdecode {
+    my ($y)=@_;
+    if ($y =~ /[mgkMGK]/) {
+        if ($y =~ /m$/) {
+            $y =~ s/m$//;
+            $y *= 1000/1024;
+        }
+        elsif ($y =~ /M$/) {
+            $y =~ s/M$//;
+        }
+        elsif ($y =~ /g$/) {
+            $y =~ s/g$//;
+            $y *= 1000;
+        }
+        elsif ($y =~ /G$/) {
+            $y =~ s/G$//;
+            $y *= 1024;
+        }
+        elsif ($y =~ /k$/) {
+            $y =~ s/k$//;
+            $y /= 1000;
+        }
+        elsif ($y =~ /K$/) {
+            $y =~ s/K$//;
+            $y /= 1024;
+        }
+    }
+    else {
+        $y /= 1024*1024;
+    }
+    if ($y == 0) {
+    }
+    elsif ($y < 1) {
+        $y *= 1024;
+        if ($y > 1) {
+            $y = sprintf "%.0f", $y;
+        }
+        else {
+            $y = sprintf "%.3f", $y;
+        }
+        $y .= 'k';
+    }
+    elsif ($y >= 1000) {
+        if ($y % 1000 == 0) {
+            $y /= 1000;
+            $y = sprintf "%.0fg", $y;
+        }
+        elsif ($y % 1024 == 0) {
+            $y /= 1024;
+            $y = sprintf "%.0fG", $y;
+        }
+        else {
+            $y /= 1024;
+            $y = sprintf "%.1fG", $y;
+        }
+        $y =~ s/0*$//;
+        $y =~ s/\.$//;
+    }
+    else {
+        $y = sprintf "%.0f", $y;
+        $y .= "m";
+    }
+    $y;
+}
+
+my $keep=$opt_h;
+END {
+    if ($keep) {
+        nodelay(0); nocbreak(); echo();
+        Curses::initscr(); Curses::endwin();
+        my $host=`uname -n`;
+        chomp $host;
+        my $pts=`/usr/bin/who am i`;
+        chomp $pts;
+        $pts =~ s/\s+/ /g;
+        $pts =~ s/.*\///;
+        $pts =~ s/ .*//;
+        my $hdr="$host$pts";
+        if ( -s "$ENV{HOME}/.titles/$host-pts_S_$pts") {
+            $hdr = `cat "$ENV{HOME}/.titles/$host-pts_S_$pts"`;
+            chomp $hdr;
+        }
+        printf "]0;$hdr";
+    }
+}
+my $all = $opt_a;
+my $userlist = `whoami`;
+chomp $userlist;
+my $time = 0;
+my %systems;
+my $sysregex="";
+foreach my $sys (split(/[, ]/,$opt_s)) {
+    $sysregex .= "|^$sys";
+}
+$sysregex =~ s/^\|//;
+$time = $opt_t/10 if $opt_t > 0;
+$time = 0.10 if $time <= 0;
+chomp $userlist;
+if ($userlist eq "aagrey") {
+    $userlist .= ",build";
+}
+$userlist = join(",",@ARGV) if defined ($ARGV[0]);
+my $userregex=$userlist;
+$userregex =~ s/,/|^/g;
+$userregex = "^$userregex" if $userregex ne "";
+my $cnt=0;
+my %cpu;
+my %mem=();
+my %tail=();
+my $rl;
+my $oldstring;
+my $string;
+my $line;
+my @lines;
+my %load_short;
+my @termsize;
+my $sortby = "j";
+$keep = 0 if $has_curses == 0;
+if ($opt_e) {
+    my $job;
+    my (%queue,%memreq);
+    my ($queue,$arch,$usage);
+    @lines = ();
+    $line = "";
+    my $err=1;
+    $err=0;
+    open (P1, "nbstatus jobs --fields All --format csv \"$statusselect\" |");
+    $_=<P1>;
+    my %jobkeys=();
+    my (@f)=split(/,/);
+    foreach my $n (0..$#f) {
+        $jobkeys{$n}=$f[$n];
+        $jobkeys{$f[$n]}=$n;
+    }
+    while (<P1>) {
+        chomp;
+        my @f=split(/,/);
+        $queue = sprintf "%-$shostlen.${shostlen}s", $f[$jobkeys{Workstation}];
+        $job=$f[$jobkeys{Jobid}];
+        my $name=$f[$jobkeys{Name}];
+        my $pri=0;
+        $name=$f[$jobkeys{Cmdname}] if $name eq "";
+        my $user=$f[$jobkeys{User}];
+        my ($date,$time)=split(/ /, $f[$jobkeys{StartTime}]);
+        $queue{$job}=sprintf "%-$shostlen.${shostlen}s", $queue;
+        $memreq{$job}=$f[$jobkeys{ActualClassReservation}];
+        if ( $memreq{$job} =~ /memory=(\d+)/) {
+            $memreq{$job}=$1;
+        }
+        else {
+            $memreq{$job}='0';
+        }
+        $cores{$queue{$job}}++;
+        $memreq{$queue{$job}} += $memreq{$job};
+#        elsif (/=/) {
+#            s/.*://;
+#            s/^  *//;
+#            s/ *$//;
+#            my $f = $_;
+#            $f =~ s/ *\(.*//;
+#            $f =~ s/=false$/=0/i;
+#            $f =~ s/=true$/=1/i;
+#            if (($f =~ /mem.*=/) and ! ( $f =~ /highmem/)) {
+#                my ($x,$y)=split(/=/,$f);
+#                $y=memdecode($y);
+#                my $mem=$y;
+#                $mem =~ s/G//;
+#                if ($mem =~ /m$/) {
+#                    $mem =~ s/m$//;
+#                    $mem /= 1024;
+#                }
+#                elsif ($mem =~ /k$/) {
+#                    $mem =~ s/k$//;
+#                    $mem /= 1024*1024;
+#                }
+#                $memreq{$queue{$job}} += $mem;
+#            }
+#            if ($f =~ /cores=/) {
+#                my ($x,$y)=split(/=/,$f);
+#                my $cores=$y;
+#                $cores{$queue{$job}} += $cores;
+#            }
+#        }
+    }
+    close P1;
+    foreach my $host (sort keys %num_proc) {
+        $cores{$host}=$num_proc{$host} if ! defined ($cores{$host});
+        $memreq{$host}=0 if ! defined ($memreq{$host});
+        $memreq{$host}=memstring($memreq{$host});
+        $memory{$host}=memstring($memory{$host});
+        printf "$host %s %3d %3d %3d %3d%s\n", $arch{$host},
+            $cores{$host},$num_proc{$host},
+            $memreq{$host},$memory{$host},
+            (($memreq{$host}>=$memory{$host}) or ($cores{$host}>=$num_proc{$host})) ? " *" : "";
+    }
+    exit 0;
+}
+if ($has_curses) {
+if ($keep) { Curses::initscr(); Curses::nodelay(1); Curses::noecho(); Curses::cbreak(); $termsize[0]=$Curses::COLS; $termsize[1]=$Curses::LINES;}
+else { Curses::initscr(); $termsize[0]=$Curses::COLS; $termsize[1]=$Curses::LINES; Curses::endwin();}
+}
+else {
+    @termsize=(1000,1000);
+}
+open (STDERR, ">/dev/null") if $keep;
+$|=1;
+
+while (1) {
+    if ($keep) { $termsize[0] = $Curses::COLS; $termsize[1] = $Curses::LINES;}
+    my (%queue,%start,%state,%name,%pri,%user);
+    my ($queue,$arch,$usage);
+    foreach my $shost (keys %occupied) {
+        $occupied{$shost}=0;
+    }
+    my $job;
+    @lines = ();
+    $line = "";
+    my $err=1;
+    $err=0;
+    open (P1, "nbstatus jobs --fields All --format csv \"$statusselect\" 2>/dev/null |");
+    select STDERR;
+    $|=1;
+    select STDOUT;
+    $|=1;
+    $_=<P1>;
+    chomp;
+    my @fields=split(/,/);
+    my %fields=();
+    foreach my $f (0..$#fields) {
+        $fields{$fields[$f]}=$f;
+    }
+    while (<P1>) {
+        chomp;
+        my @f=split(/,/);
+        foreach my $n (0..$#f) {
+#            print "$fields[$n] $f[$n]";
+        }
+        $f[$fields{Workstation}]="-" if ! defined $f[$fields{Workstation}];
+        $queue=sprintf("%-$shostlen.${shostlen}s", $f[$fields{Workstation}]);
+        $job=$f[$fields{Jobid}];
+        @{$tail{$job}}=();
+        my $classreservation=$f[$fields{ActualClassReservation}];
+        my $mem=0;
+        if ($classreservation =~ /memory=(\d+)/) {
+            $mem=$1;
+        }
+        push @{$tail{$job}}, "m=${mem}G" if $mem != 4;
+        my $cores=0;
+        if ($classreservation =~ /cores=(\d+)/) {
+            $cores=$1;
+        }
+        push @{$tail{$job}}, "cc=$cores" if $cores != 1;
+        if ($classreservation =~ /frm=(\d+)/) {
+            my $frm=$1;
+            if ($frm %1000 == 0) {
+                $frm = int(($frm+500)/1000)."g";
+            }
+            elsif ($frm %1024 == 0) {
+                $frm = int(($frm+500)/1024)."G";
+            }
+            else {
+                $frm = sprintf("%.2f", ($frm/1024))."G";
+            }
+            push @{$tail{$job}}, "frm=$frm";
+        }
+        my @usage=split(/ /, $f[$fields{RUsage}]);
+        $usage = $usage[6];
+        $usage=0 if ! defined $usage;
+        $mem{$job}=$mem;
+        $cores{$job}=$cores;
+        my $status=$f[$fields{Status}];
+        if ($status ne "Run") {
+            $queue = sprintf "%-$shostlen.${shostlen}s", "-";
+            $usage=0;
+        }
+        $cpu{$queue}=$usage;
+        $load_short{$queue}=$usage;
+        my $pri=$f[$fields{Priority}];
+        $pri = sprintf "%7.3f", $pri;
+        my $name=$f[$fields{Task}];
+        $name="none" if ishex($name) and length($name) == 32;
+        $name =~ s/.* //;
+        $name = "none" if ! defined $name or $name eq "";
+        $name=$f[$fields{Cmd}] if $name eq "none";
+        $name =~ s/.*\///;
+        $name =~ s/  *$//;
+        $name =~ s/.* //;
+        $name = "none" if ! defined $name or $name eq "";
+        $name{$job}=sprintf("%-12.12s", $name);
+        my $user=$f[$fields{User}];
+        my $st=$f[$fields{StartTime}];
+        $st =~ s/^\s+//;
+        my @st=split(/ /, $st);
+        my $date=$st[0];
+        my $time=$st[1];
+        $date="12/31/1969" if ! defined $date;
+        $time="00:00:00" if ! defined $time;
+        $pri{$job}=$pri;
+        my $state=substr($f[$fields{Status}],0,3);
+        if ($state eq "Run") {
+            $state = "  r";
+        }
+        elsif ($state eq "Sen") {
+            $state = " qs";
+        }
+        elsif ($state eq "Wai") {
+            $state = " qw";
+        }
+        elsif ($state eq "DEL" or $state eq "Del") {
+            $state = "  d";
+        }
+        $state{$job}=$state;
+        $start{$job}="$date $time";
+        $queue{$job}=sprintf "%-$shostlen.${shostlen}s", $queue;
+        $cpu{$job}=sprintf "%5.5s", $usage;
+        $user{$job}=sprintf "%-8.8s", $user;
+        my $sjob = sprintf "%7.7s", $job;
+        $frm{$queue{$job}}=0 if ! defined $frm{$queue{$job}};
+        $user{$queue{$job}}="unknown" if ! defined $user{$queue{$job}};
+        $pri{$queue{$job}}="0" if ! defined $pri{$queue{$job}};
+        $name{$queue{$job}}="unknown" if ! defined $name{$queue{$job}};
+        $state{$queue{$job}}="u" if ! defined $state{$queue{$job}};
+        push @{$tail{$job}}, "arm=$frm{$queue{$job}}" if $frm{$queue{$job}} < 33;
+        $load{$queue{$job}}=" 0.0" if ! defined $load{$queue{$job}};
+        $line = "$sjob $user{$job} $pri{$job} $name{$job} $state{$job} $start{$job} $load{$queue{$job}} $queue{$job} ".join(",",sort @{$tail{$job}});
+        if ($line ne "") {
+            if (length($line) and
+                ($opt_s eq "" or $queue{$job} =~ /$sysregex/) and
+                ($opt_m eq "" or $memory{$queue{$job}} eq $opt_m)
+                ) {
+                push(@lines,$line);
+            }
+        }
+    }
+    close P1;
+    my $dummyjid="9999999";
+    foreach my $shost (sort keys %occupied) {
+        if ($occupied{$shost}==0) {
+#            push @lines, sprintf "%7.7d %9.9s %6.3f %-*.*s %3.3s %10.10s %8.8s %10.10s %5.5s %s", $dummyjid, "-", 0, $jobnamelen, $jobnamelen, "empty", "-", "-", "-", $shost, "-", "m=$memory{$shost}G";
+        }
+    }
+    $line="";
+    my @s = sortlines (@lines);
+#    print join("\n", @s);
+    my @string;
+    $cnt = 0;
+    foreach my $s (@s) {
+        next if length($s) <= 20;
+        my $ok = 0;
+        if ($opt_r) {
+            if ($s =~ / r /) {
+                if (%filters) {
+                    foreach my $filter (keys %filters) {
+                        $ok = 1 if $s =~ /$filter/;
+                    }
+                }
+                else {
+                    $ok=1;
+                }
+            }
+        }
+        elsif ($opt_w) {
+            if ($s =~ /qw/) {
+                if (%filters) {
+                    foreach my $filter (keys %filters) {
+                        $ok = 1 if $s =~ /$filter/;
+                    }
+                }
+                else {
+                    $ok=1;
+                }
+            }
+        }
+        elsif ($opt_f ne "" or $opt_E or $opt_q) {
+            $s =~ s/$dummyjid/-------/;
+            foreach my $filter (keys %filters) {
+                $ok = 1 if $s =~ /$filter/;
+            }
+        }
+        elsif ($opt_j ne "") {
+            my ($x,$u,$r)=split(/ /, $s, 3);
+            $ok = 1 if $x == $opt_j;
+        }
+        elsif ($opt_n ne "") {
+            my ($x,$u,$p,$n,$r)=split(/  */, $s, 5);
+            $ok = 1 if $n =~ /$opt_n/;
+        }
+        elsif ( ! $opt_a and $userregex ne "") {
+            my $ss=$s;
+            $ss =~ s/\s+/ /g;
+            $ss =~ s/^ //;
+            my ($x,$u,$r)=split(/ /, $ss, 3);
+            $ok=1 if ($u =~ /$userregex/);
+        }
+        else {
+            $ok=1;
+        }
+        if ($ok) {
+            push @string, $s if ! $opt_b;
+            $cnt++;
+        }
+    }
+    foreach my $line (@string) {
+        $line = substr($line,0,$termsize[0]);
+        $line =~ s/\s+$//;
+    }
+    $"="\n";
+    my $date=`date`;
+    chomp $date;
+    $date .= " $cnt";
+    if ($keep) {
+        Curses::clear();
+        addstr(0,0,$date);
+        printf "]0;myqs $cnt";
+        $string="";
+        my $n = 1;
+        foreach my $s (@string) {
+            if (length($s) > 20) {
+                addstr($n,0,"$s");
+                $n++;
+                if ($n >= $termsize[1]-1) {
+                    last;
+                }
+            }
+        }
+        Curses::refresh();
+    }
+    else {
+        if ($cnt > 0 or !$keep) {
+            printf "$date\n";
+            print "@string";
+        }
+        last;
+    }
+    if ($keep) {
+        my $key;
+        for (my $n = 0; $n <= 10; $n++) {
+            $key = Curses::getch();
+            if (defined ($key) and $key ne "-1") {
+                if ($key eq "q") {
+                    exit 0;
+                }
+                $sortby = $key;
+                last;
+            }
+            # fancy sleep
+            select (undef, undef, undef, $time);
+        }
+        $key = Curses::getch();
+        if (defined ($key) and $key ne "-1") {
+            if ($key eq "q") {
+                last;
+            }
+            $sortby = $key;
+        }
+    }
+}
+
+my %key = (
+    "j" => 0,
+    "n" => 1,
+    "p" => 2,
+    "d" => 3,
+    "h" => 5,
+);
+
+
+sub sn {
+    my $aa = $a;
+    $aa =~ s/^  *//;
+    $aa =~ s/[ \t\r\n]+/ /g;
+    my $bb = $b;
+    $bb =~ s/^  *//;
+    $bb =~ s/[ \t\r\n]+/ /g;
+    my @a;
+    my @b;
+    if ($key == 8 and (! $reverse) or $key != 8 and $reverse) {
+        @b = split(/ /,$aa);
+        @a = split(/ /,$bb);
+    }
+    else {
+        @a = split(/ /,$aa);
+        @b = split(/ /,$bb);
+    }
+    if ($key == 5) {
+        $a[5] = "$a[5] $a[6]";
+        $b[5] = "$b[5] $b[6]";
+    }
+    $a[$key] = "0" if !defined $a[$key];
+    $b[$key] = "0" if !defined $b[$key];
+    if ($numeric) {
+        return 1 if $a[$key] > $b[$key];
+        return -1 if $a[$key] < $b[$key];
+        return 0;
+    }
+    $a[$key] cmp $b[$key];
+}
+
+sub sortlines {
+    my (@in)=@_;
+    my @out = @in;
+    if ($sortby =~ /r/i) {
+        $reverse = ! $reverse;
+        $sortby =~ s/r//g;
+    }
+    elsif ($sortby =~ /[j0]/i ) {
+        $key = 0;
+        $reverse=0;
+        $numeric=1;
+    }
+    elsif ($sortby =~ /[un1]/i) {
+        $key = 1;
+        $reverse=0;
+        $numeric=0;
+    }
+    elsif ($sortby =~ /[p2]/i) {
+        $key = 2;
+        $reverse=0;
+        $numeric=1;
+    }
+    elsif ($sortby =~ /[d5]/i) {
+        $key = 5;
+        $reverse=0;
+        $numeric=0;
+    }
+    elsif ($sortby =~ /[h7]/i) {
+        $key = 7;
+        $reverse=0;
+        $numeric=0;
+    }
+    elsif ($sortby =~ /[t8]/i) {
+        $key = 8;
+        $reverse=0;
+        $numeric=1;
+    }
+    elsif ($sortby =~ /[9]/i) {
+        $key = 9;
+        $reverse=0;
+        $numeric=0;
+    }
+    elsif ($sortby =~ /^\d$/ and $sortby < 9) {
+        $key = $sortby;
+        $reverse=0;
+        $numeric=0;
+    }
+    @out = sort sn @in;
+}

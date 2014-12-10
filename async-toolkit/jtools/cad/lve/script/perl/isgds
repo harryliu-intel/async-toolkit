@@ -1,0 +1,45 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use Getopt::Std;
+use strict;
+
+our ($opt_v);
+$opt_v=0;
+if (! getopts ('v')) {
+    exit 1;
+}
+my $verbose=$opt_v;
+
+sub error {
+    print STDERR "$_[0]" if $verbose;
+    exit 1;
+}
+
+my @begin = (0, 6, 0, 2);
+my @end = (4, 4, 0, 0, 7, 4, 0);
+open (P, "<$ARGV[0]") or error ("$ARGV[0] cannot be opened");
+my $var;
+read(P, $var, $#begin+2);
+for (my $n = 0; $n <= $#begin; $n++) {
+    if (ord(substr($var,$n,1)) != $begin[$n]) {
+        error("Not a gds file $ARGV[0]: $n ".ord(substr($var,$n,1))." ".$begin[$n]);
+    }
+}
+seek (P, -2070, 2);
+$b = tell P;
+read (P, $var,2070);
+my $n = length($var)-1;
+while ($n > 0 and ord(substr($var,$n,1)) == 0) {
+    $n--;
+}
+for (my $j = 0; $j <= $#end; $j++) {
+    if (ord(substr($var,$n-$j,1)) != $end[$j]) {
+        my $nn=$n+$b-$j;
+        error("Truncated gds file $ARGV[0]: ".$nn." ".ord(substr($var,$n-$j,1))." ".$end[$j]);
+    }
+}
+print STDERR "Good gds file $ARGV[0]" if $verbose;
+0;

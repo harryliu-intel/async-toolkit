@@ -1,0 +1,258 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+my %license=(
+#    "RTL_Compiler_Verification" => [0,0],
+#    "RTL_Compiler_L" => [0,0],
+#    "RTL_Compiler_Ultra" => [0,0],
+#    "RTL_Compiler_Ultra_II" => [0,0],
+);
+
+my @priority = (
+    "RTL_Compiler_Physical",
+    "RTL_Compiler_L",
+    "RTL_Compiler_Ultra",
+);
+
+sub usage {
+    print <<U;
+Usage: rtlwait <command line>
+U
+exit 1;
+}
+
+my $istty = (defined ($ENV{TERM}));
+$istty = 0 if $ENV{TERM} eq "linux";
+$istty = 0 if defined $ENV{SGE_O_WORKDIR};
+$istty = 0 if defined $ENV{SGE_O_SHELL};
+
+my $licensefile="";
+my %total=();
+my $debug=0;
+#$istty=0 if $debug;
+
+for (my $n = 0; $n <= $#ARGV and $ARGV[$n] =~ /^-/; $n++) {
+    my $arg=shift @ARGV;
+    $istty=0 if ($arg =~ /^--batch/);
+    print STDERR "BATCH" if $debug and ! $istty;
+}
+
+# really messes things up if not done
+unlink "$ENV{HOME}/.flexlmrc";
+my $home=$ENV{HOME};
+$ENV{HOME}="/";
+
+my $licensefile="";
+open (P, "</p/rrc/tools/bin/license");
+while (<P>) {
+    chomp;
+    if (/export CDSLMD_LICENSE_FILE=([^\s]+)/) {
+        $licensefile=$1;
+        last;
+    }
+}
+close P;
+
+sub checklicense {
+    my ($use)=@_;
+    local (*P);
+    local ($_);
+    my $do=0;
+    my $total=0;
+    @priority=($use) if $use ne "";
+    foreach my $lic (@priority) {
+        next if $lic eq "";
+        open (P, "/p/rrc/tools/bin/lmutil lmstat -c $licensefile -f $lic |");
+        my $thislicense="";
+        while (<P>) {
+            chomp;
+            my @f=split;
+            if ($f[0] eq "Users") {
+                s/[:;\(\)]/ /g;
+                s/\s+/ /g;
+                s/^\s//;
+                my @f=split;
+                foreach my $n (0..$#f) {
+                    if ($f[$n] eq "Users") {
+                        $thislicense=$f[$n+2];
+                        $license{$thislicense} = [0,0];
+                    }
+                    if (defined ($license{$thislicense})) {
+                        if ($f[$n] eq "issued") {
+                            $license{$thislicense}[0]=$f[$n-2];
+                            $total += $f[$n-2];
+                        }
+                        elsif ($f[$n] eq "use") {
+                            $license{$thislicense}[1]=$f[$n-3];
+                            last;
+                        }
+                    }
+                }
+                next;
+            }
+        }
+        close P;
+        if ($total) {
+            last;
+        }
+    }
+    print STDERR "rtlwait did not find a license, continuing anyway"
+        if $total == 0;
+    my $rv = 0;
+    $rv=1 if ($use ne "" and $license{$use}[1] < $license{$use}[0]);
+    print "checklicense returns $rv : use='$use' $license{$use}[1] $license{$use}[0]" if $debug;
+    $rv;
+}
+
+$|=1;
+@ARGV;
+my @exec=();
+my $uselicense="";
+for (my $arg = 0; $arg <= $#ARGV and $arg < 2; $arg++) {
+    print STDERR "ARG[$arg]=$ARGV[$arg]" if $debug;
+    $exec[$arg]=$ARGV[$arg];
+}
+$exec[2]="-use_license";
+$exec[3]="";
+for (my $arg = 2; $arg <= $#ARGV; $arg++) {
+    print STDERR "ARG[$arg]=$ARGV[$arg]" if $debug;
+    if ($ARGV[$arg] eq '-use_license') {
+        $arg++;
+        $uselicense=$ARGV[$arg];
+    }
+    else {
+        push @exec, $ARGV[$arg];
+    }
+}
+checklicense($uselicense);
+my $liccnt=0;
+my $availcnt=0;
+my $onlylic="";
+my $onlyavail="";
+foreach my $lic (keys %license) {
+    if ($license{$lic}[0] != 0) {
+        $liccnt++;
+        $onlylic=$lic;
+    }
+    if ($license{$lic}[0] > $license{$lic}[1]) {
+        $availcnt++;
+        $onlyavail=$lic;
+    }
+}
+# if there is only one license, override the selector
+$uselicense = $onlylic if ($liccnt == 1);
+# if more than one license and only one available, use it
+$uselicense = $onlyavail if ($availcnt == 1 and $liccnt > 1 and $uselicense eq "");
+# if more than one available, select based on priority
+if ($uselicense eq "" and $availcnt > 1) {
+    foreach my $lic (@priority) {
+        if ($license{$lic}[1] < $license{$lic}[0]) {
+            $uselicense = $lic;
+            last;
+        }
+    }
+}
+$|=1;
+$exec[3]=$uselicense if $license{$uselicense}[0];
+my %available=();
+
+if ($istty) {
+    if ($uselicense ne "" and
+            $license{$uselicense}[1] >= $license{$uselicense}[0]) {
+        printf "License $uselicense in use, do you want to wait? ";
+        my $ans=<STDIN>;
+        if ($ans =~ /^n/i) {
+            exit 1;
+        }
+    }
+    elsif ($uselicense eq "") {
+        my $mask=0;
+        my $all=0;
+        my $bit=1;
+        my $ndx=0;
+        my $default="";
+        my %avaliable=();
+        my @list = ();
+        foreach my $key (sort keys %license) {
+            next if $key eq "";
+            if ($license{$key}[0] > $license{$key}[1]) {
+                $mask |= $bit;
+                $available{$key}=1 if $key ne "";
+                $default = $key if $key ne "" and $default eq "";
+            }
+            else {
+                $available{$key}=0 if $key ne "";
+            }
+            push @list, $key;
+            $license{$key}[2]=$ndx;
+            $ndx++;
+            $all |= $bit;
+            $bit <<=1;
+        }
+        print "You did not specify the license to use!";
+        foreach my $key (sort keys %available) {
+            if ($available{$key}) {
+                print "$license{$key}[2]> $key ",$license{$key}[0]-$license{$key}[1], " available.";
+            }
+            else {
+                print "$license{$key}[2]> $key is not available.";
+            }
+        }
+        if ($mask) {
+            printf "which? <0> ";
+        }
+        else {
+            printf "wait for which? <0> ";
+        }
+        my $ans=<STDIN>;
+        chomp $ans;
+        if ($ans =~ /^\d+$/ and $ans <= $#list) {
+            $uselicense=$exec[3]=$list[$ans];
+        }
+        else {
+            $uselicense=$exec[3]=$list[$license{$default}[2]];
+        }
+    }
+}
+while (1) {
+    last if checklicense($uselicense);
+    # if there is only one license, override the selector
+    if ($uselicense eq "") {
+        my $liccnt=0;
+        my $availcnt=0;
+        my $onlylic="";
+        my $onlyavail="";
+        foreach my $lic (keys %license) {
+            if ($license{$lic}[0] != 0) {
+                $liccnt++;
+                $onlylic=$lic;
+            }
+            if ($license{$lic}[0] > $license{$lic}[1]) {
+                $availcnt++;
+                $onlyavail=$lic;
+            }
+        }
+        $uselicense = $exec[3] = $onlylic if ($liccnt == 1);
+        # if more than one license and only one available, use it
+        $uselicense = $exec[3] = $onlyavail if ($availcnt == 1 and $liccnt > 1 and $uselicense eq "");
+        # if more than one available, select based on priority
+        if ($uselicense eq "" and $availcnt > 1) {
+            foreach my $lic (@priority) {
+                if ($license{$lic}[1] < $license{$lic}[0]) {
+                    $uselicense = $exec[3] = $lic;
+                    last;
+                }
+            }
+        }
+        last if $uselicense ne "";
+    }
+    sleep 1;
+}
+$"=" ";
+$ENV{HOME}=$home;
+print "running: @exec";
+exec @exec;

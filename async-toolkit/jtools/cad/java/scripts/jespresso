@@ -1,0 +1,5 @@
+#!/bin/csh
+jflat --tool=auto --cell=$1 > $1.auto
+auto_espresso $1.auto $1.auto
+sed "s/<30> /    /g" $1.auto | grep "\->" 
+rm $1.auto

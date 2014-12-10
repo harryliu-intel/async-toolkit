@@ -1,0 +1,37 @@
+1 1
+include ../ubersize/ubersize.package ../ubersize
+include ../proteus/proteus.package ../proteus
+include ../lad_quake/lad_quake.inc ../lad_quake
+include ../lve/lve.package ../lve
+include ../java/src/com/avlsi/tools/synthesis/synthesis.package ../java/src/com/avlsi/tools/synthesis
+include ../java/src/com/avlsi/tools/slacker/slacker.package ../java/src/com/avlsi/tools/slacker
+include ../java/src/com/avlsi/tools/rte/rte.package ../java/src/com/avlsi/tools/rte
+include ../java/src/com/avlsi/tools/prs2verilog/prs2verilog.package ../java/src/com/avlsi/tools/prs2verilog
+include ../java/src/com/avlsi/tools/presto/presto.package ../java/src/com/avlsi/tools/presto
+include ../java/src/com/avlsi/tools/dsim/dsim.package ../java/src/com/avlsi/tools/dsim
+include ../java/src/com/avlsi/tools/cast2verilog/cast2verilog.package ../java/src/com/avlsi/tools/cast2verilog
+include ../external-tools-integration/cadence/virtuoso/virtuoso-integration.package ../external-tools-integration/cadence/virtuoso
+include ../c/gdsii/gdsii.package ../c/gdsii
+include ../scripts/support/support.package ../scripts/support
+share/java/Jama-1.0.2.jar ../java/jars/Jama-1.0.2.jar 640 p
+share/java/antlr-2.7.2.jar ../java/jars/antlr-2.7.2.jar 640 p
+share/java/antlrall-2.7.1.jar ../java/jars/antlrall-2.7.1.jar 640 p
+share/java/bcel-5.0.jar ../java/jars/bcel-5.0.jar 640 p
+share/java/ccl-20.40.jar ../java/jars/ccl-20.40.jar 640 p
+share/java/concurrent-1.3.1.jar ../java/jars/concurrent-1.3.1.jar 640 p
+share/java/javancss-20.40.jar ../java/jars/javancss-20.40.jar 640 p
+share/java/jcsp-net.jar ../java/jars/jcsp-net.jar 640 p
+share/java/jcsp-std.jar ../java/jars/jcsp-std.jar 640 p
+share/java/jml-release-3.2.jar ../java/jars/jml-release-3.2.jar 640 p
+share/java/jmljunitruntime-3.2.jar ../java/jars/jmljunitruntime-3.2.jar 640 p
+share/java/jmlruntime-3.2.jar ../java/jars/jmlruntime-3.2.jar 640 p
+share/java/junit-3.7.jar ../java/jars/junit-3.7.jar 640 p
+share/java/log4j-1.2.5.jar ../java/jars/log4j-1.2.5.jar 640 p
+share/java/mjc-for-jml-3.2.jar ../java/jars/mjc-for-jml-3.2.jar 640 p
+share/java/concurrent.jar ../java/jars/concurrent.jar 640 p
+share/java/jdom.jar ../java/jars/jdom.jar 640 p
+share/java/resolver.jar ../java/jars/resolver.jar 640 p
+share/java/stringtemplate.jar ../java/jars/stringtemplate.jar 640 p
+share/java/tools.jar ../java/jars/tools.jar 640 p
+share/java/xercesImpl.jar ../java/jars/xercesImpl.jar 640 p
+share/java/xml-apis.jar ../java/jars/xml-apis.jar 640 p

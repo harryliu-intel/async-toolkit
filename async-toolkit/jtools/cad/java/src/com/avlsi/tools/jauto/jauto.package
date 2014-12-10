@@ -1,0 +1,37 @@
+0 6
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.jauto.Jauto
+java com.avlsi.tools.jauto.CastQuery
+java com.avlsi.tools.jauto.Cast2Cdl
+java com.avlsi.tools.jauto.SubtypeSplit
+java com.avlsi.tools.jauto.SubtypeMerge
+java com.avlsi.tools.jauto.MergeHint
+java com.avlsi.file.cdl.parser.CDLstat
+java com.avlsi.tools.jauto.CastStat
+java com.avlsi.tools.jauto.CastQuery
+java com.avlsi.tools.jauto.GenerateChargeSharingTests
+java com.avlsi.tools.jauto.GeneratePLTSubtypes
+java com.avlsi.tools.jauto.LeafSpec
+java com.avlsi.tools.jauto.Jtimer
+$arch/bin/jauto.sh	jauto.sh 775
+$arch/bin/cast2cdl.sh   cast2cdl.sh 775
+$arch/bin/cdlstat.sh    ../../file/cdl/parser/cdlstat.sh 775
+$arch/bin/subtype_merge.sh subtype_merge.sh 775
+$arch/bin/subtype_split.sh subtype_split.sh 775
+$arch/bin/merge_hint.sh merge_hint.sh 775
+$arch/bin/caststat.sh caststat.sh 775
+$arch/bin/cast_query.sh cast_query.sh 775
+$arch/bin/generate_charge_sharing_tests.sh generate_charge_sharing_tests.sh 775
+$arch/bin/generate_plt_subtypes.sh generate_plt_subtypes.sh 775
+$arch/bin/jtimer.sh jtimer.sh 775
+share/java/JaCoP-3.2.jar  ../../../../../jars/JaCoP-3.2.jar 640 p
+
+include ../../../../../../scripts/graph_netlist.inc ../../../../../../scripts
+include ../../util/debug/gettime.package.inc ../../util/debug
+include ../../cast2/util/fileserver.package.inc ../../cast2/util
+include ../../util/logging/logging.package.inc ../../util/logging
+include ../../util/flute/flute.package.inc ../../util/flute

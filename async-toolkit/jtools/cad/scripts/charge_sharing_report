@@ -1,0 +1,268 @@
+#!/usr/intel/bin/perl -w
+
+$html        = 0;
+$class       = "";
+$limit       = 0.35;
+$error       = 0.40;
+$fail_file   = "0";
+$check_ports = 0;
+$verbose     = 0;
+
+$cast_query  = "/home/group/microarch/cad/bin/cast_query";
+
+$usage_str = "Usage: charge_sharing_report [options] run_directory\n" .
+   "  --limit=voltage   - Sets limit above which to report [$limit]\n" .
+   "  --error=voltage   - Sets limit above which to report as an error [$error]\n" .
+   "  --html=0|1        - Specifies html output when 1 [$html]\n" .
+   "  --class=css       - Specifies html style sheet URL\n" .
+   "  --fail-list=file  - Save list of failing cells to file [$fail_file]\n" .
+   "  --check-ports=0|1 - Use cast_query to check for port nodes [$check_ports]\n" .
+   "  --cast-path=path  - Needed if --check-ports=1 is specified.\n" .
+   "  --verbose=0|1     - Sets verbosity level [$verbose]\n";
+
+while (defined $ARGV[0] && $ARGV[0] =~ /^--([^=]+)=?(.*)/) {
+    $option = $1;
+    $value  = $2;
+    if ($option eq "help" || $option eq "h") {
+        print $usage_str;
+        exit;
+    }
+    if ($option eq "limit") {
+        $limit = $value;
+    }
+    elsif ($option eq "error") {
+        $error = $value;
+    }
+    elsif ($option eq "html") {
+        $html = $value;
+    }
+    elsif ($option eq "class") {
+        $class = $value;
+    }
+    elsif ($option eq "fail-list") {
+        $fail_file = $value;
+    }
+    elsif ($option eq "check-ports") {
+        $check_ports = $value;
+    }
+    elsif ($option eq "cast-path") {
+        $cast_path = $value;
+    }
+    elsif ($option eq "verbose") {
+        $verbose = $value;
+    }
+    else {
+        die "Unrecognized option $option.\n$usage_str";
+    }
+    shift;
+}
+
+die $usage_str if (@ARGV != 1);
+
+$run_dir = $ARGV[0];
+
+die "No charge sharing directory\n" if (! -d $run_dir);
+
+opendir CELLS, $run_dir;
+@cells = grep {/^[^\.]/ } readdir CELLS;
+closedir CELLS;
+
+foreach $leaf (@cells) {
+    next if ($leaf eq "todo");                      # Skip ubersize temp file
+    @{$cs_halfop{$leaf}} = ();
+    @{$cs_bump{$leaf}} = ();
+    %bump = ();
+    $nonzero{$leaf} = 0;
+    if (-e "$run_dir/$leaf/${leaf}:up.measure") {
+        open UP, "$run_dir/$leaf/${leaf}:up.measure" || 
+            warn "Couldn't read $run_dir/$leaf/${leaf}:dn.measure\n";
+        $warning = 0;
+        while (<UP>) {
+            ($line = $_) =~ s/^ERROR:\s+//;
+            $nonzero{$leaf} = 1;
+            @fields = split /\s+/, $line;
+            next if ($fields[1] eq "Note:");
+            if ($fields[2] !~ /^-?\d+\.?\d*$/) {
+                $warning = 1;
+                next;
+            }
+            if ($fields[2] > $limit) {
+                $bump{"$fields[1]+"} = $fields[2];
+            }
+        }
+        warn "Warnings found in $leaf up.\n" if ($warning);
+        close UP;
+    }
+    else {
+        warn "Warning: No up measure file for $leaf.\n";
+    }
+    if (-e "$run_dir/$leaf/${leaf}:dn.measure") {
+        open DN, "$run_dir/$leaf/${leaf}:dn.measure" || 
+            warn "Couldn't read $run_dir/$leaf/${leaf}:dn.measure\n";
+        $warning = 0;
+        while (<DN>) {
+            ($line = $_) =~ s/^ERROR:\s+//;
+            $nonzero{$leaf} = 1;
+            @fields = split /\s+/, $line;
+            next if ($fields[1] eq "Note:");
+            if ($fields[2] !~ /^-?\d+\.?\d*$/) {
+                $warning = 1;
+                next;
+            }
+            if ($fields[2] > $limit) {
+                $bump{"$fields[1]-"} = $fields[2];
+            }
+        }
+        warn "Warnings found in $leaf dn.\n" if ($warning);
+        close DN;
+    }
+    else {
+        warn "Warning: No dn measure file for $leaf.\n";
+    }
+    @{$cs_halfop{$leaf}} = sort {$bump{$b} <=> $bump{$a}} keys %bump;
+    @{$cs_bump{$leaf}}   = sort {$b <=> $a} values %bump;
+}
+
+@nonzero_cells = grep {@{$cs_bump{$_}} > 0} keys %cs_halfop;
+@sorted_cells = sort {${$cs_bump{$b}}[0] <=> ${$cs_bump{$a}}[0]} @nonzero_cells;
+
+if ($html) {
+    if ($class ne "") {
+        $class_str = "class=$class";
+    } 
+    else {
+        $class_str = "";
+    }
+    print <<TABLE;
+Cells with charge sharing bumps greater than $limit:
+<p>
+<table $class_str cellpadding=3>
+ <thead $class_str>
+ <tr $class_str>
+  <td $class_str align=center>Cell</td>
+  <td $class_str align=center>Max Bump Magnitude (V)</td>
+  <td $class_str align=center>All failing nodes are ports?</td></tr>
+ </thead>
+ <tbody $class_str>
+TABLE
+}
+
+%fail_cells = ();
+foreach $cell (@sorted_cells) {
+    $fail_cells{$cell} = 0;
+    next if (!@{$cs_halfop{$cell}});
+    $fail_cells{$cell} = 1 if (${$cs_bump{$cell}}[0] > $error);
+    if ($check_ports == 1) {
+        %port_nodes = lookup_port_nodes($cell);
+    }
+    else {
+        %port_nodes = ();
+    }
+    if ($html) {
+        if (${$cs_bump{$cell}}[0] > $error) {
+            $tr = "<tr $class_str bgcolor=\"#eeeeff\">";
+        }
+        else {
+            $tr = "<tr>";
+        }
+        print " $tr<td $class_str>$cell</td>\n";
+        print "  <td $class_str align=center>${$cs_bump{$cell}}[0]</td>\n";
+        print "  <td $class_str align=center>?</td></tr>\n";
+    }
+    else {
+        print "Bumps in $cell greater than $limit:\n";
+        for $i (0..$#{$cs_halfop{$cell}}) {
+            if (${$cs_bump{$cell}}[$i] > $error) {
+                if (!is_port_node(${$cs_halfop{$cell}}[$i],\%port_nodes)) {
+                    $comment = "[FAIL]";
+                }
+                else {
+                    $comment = "[PORT]";
+                }
+            }
+            else {
+                $comment = "";
+            }
+            $node = "${$cs_halfop{$cell}}[$i]";
+            $value = ${$cs_bump{$cell}}[$i];
+            write;
+        }
+        print "\n";
+    }
+}
+
+if ($html) {
+    print " </tbody>\n";
+    print "</table>\n";
+}
+
+#
+# Write list of failing cells in a simple format.  This will
+# presumably be used as the list of cells to run the analysis
+# on after directives have been changed.
+#
+if ($fail_file ne "0") {
+    if ($fail_file =~ /^\//) {
+        $file = $fail_file 
+    }
+    else {
+        $file = $run_dir . "/" . $fail_file;
+    }
+    open (FAILURES, ">$file") || die "Couldn't write to $fail_file.\n";
+    foreach $cell (@sorted_cells) {
+        if ($fail_cells{$cell} == 1) {
+            print FAILURES "$cell\n";
+        }
+    }
+    close FAILURES;
+}
+
+format STDOUT =
+ @<<<<<<<<<<<<<<<< @<<<<<<<<<<      @<<<<<<<<<<<
+$node,$value,$comment
+.
+
+
+sub lookup_port_nodes {
+    my ($cell) = @_;
+    my %port_nodes = ();
+    $cell = escape($cell);
+    my $cmd = $cast_query . " " .
+               "--cast-path=$cast_path " .
+               "--task=dynamic_nodes --cell=$cell";
+    print "Running $cmd\n" if ($verbose);
+    open (CAST_QUERY, "$cmd|") || die "Couldn't run $cmd\n";
+    my $begin = 0;
+    while (<CAST_QUERY>) {
+        if ($begin==0 && /^Dynamic/) {
+            $begin = 1;
+            next;
+        }
+        elsif ($begin==0) {
+            next;
+        }
+        warn "Unrecognized cast_query syntax.\n" if ($_ !~ /^([^\s]+)\s+(\*?)$/);
+        if ($2 eq "*") {
+            $port_nodes{$1} = 1;
+        }
+        else {
+            $port_nodes{$1} = 0;
+        }
+    }
+    close CAST_QUERY;
+    return %port_nodes;
+}
+
+sub is_port_node {
+    my ($halfop,$map_ref) = @_;
+    my $node = $halfop;
+    $node =~ s/[-+]$//;
+    return defined $$map_ref{$node} && $$map_ref{$node} == 1;
+}
+
+sub escape {
+    my ($str) = @_;
+    $str =~ s/\(/\\\(/g;
+    $str =~ s/\)/\\\)/g;
+    return $str;
+}

@@ -1,0 +1,850 @@
+#!/usr/bin/perl -w
+
+use strict;
+use FileHandle;
+
+#
+# Configuration
+#
+my $LVE_DIR         = "/mnt/fulcrum/scratch3a/tahoe/lve/final/lve";
+my $ALINT_DIR       = "layout/extracted/alint/tt/1.08V/125C";
+my $OUT_DIR         = ".";
+my $HTML_DIR;
+my $DEBUG           = 0;
+my $QUIET           = 0;
+my $STATUS_GREEN    = 0;
+my $STATUS_YELLOW   = 1;
+my $STATUS_RED      = 2;
+
+my $STATIC_CAP      = -1;
+my $STRAY_CAP       = -2;
+my $FOLLOWER_CAP    = -3;
+
+my $IGNORE_ALINT_EXCLUSIONS = 0;
+
+sub usage_exit {
+    my $msg = shift;
+
+    print "$msg\n" if (defined $msg);
+    print <<EOF;
+analyze_coupling 
+        --lve-dir=<lve_dir>         Root directory of LVE results.
+        --cell=<fqcn>               Cell in LVE directory to analyze
+        [--ignore-alint-exclusions] Ignore alint's exclcc knowledge.
+        [--exclusion-info=<excl>]   Exclusion sign-off file.  Ask Mike.
+        [--output-dir=<out_dir>]    Output directory for all result files.
+                                    (Defaults to .)
+        [--html-dir=<html_dir>]     Output directory for html report (will
+                                    default to <out_dir>.)
+        [--debug]                   Turn on debugging output.
+        [<node_list>]               List of nodes to analyze.
+
+Under <out_dir>, creates aggressors.report, a list of all significant
+aggressors to failing victims in <cell>.  If the <excl> exclusion info file
+is specified, the resulting exclcc/nocc directives will be written to
+<out_dir>/directives.  A report of post-analysis bump failures/sign-offs
+will be written to <html_dir>/<cell>.html.
+
+If no <node_list> is given, the cell's alint.raw will be read and all nodes
+failing due to cap coupling will be analyzed.
+
+EOF
+    exit;
+}
+
+#
+# Command-line parsing
+#
+my $cell;
+my $excl_file;
+my @nodes;
+
+while (@ARGV) {
+    if ($ARGV[0] =~ /^--lve-dir=(.*)$/) {
+        $LVE_DIR = $1;
+    }
+    elsif ($ARGV[0] =~ /^--cell=(.*)$/) {
+        $cell = $1;
+    }
+    elsif ($ARGV[0] =~ /^--exclusion-info=(.*)$/) {
+        $excl_file = $1;
+    }
+    elsif ($ARGV[0] =~ /^--output-dir=(.*)$/) {
+        $OUT_DIR = $1;
+    }
+    elsif ($ARGV[0] =~ /^--html-dir=(.*)$/) {
+        $HTML_DIR = $1;
+    }
+    elsif ($ARGV[0] eq "--debug") {
+        $DEBUG = 1;
+    }
+    elsif ($ARGV[0] eq "--quiet") {
+        $QUIET = 1;
+    }
+    elsif ($ARGV[0] eq "--ignore-alint-exclusions") {
+        $IGNORE_ALINT_EXCLUSIONS = 1;
+    }
+    elsif ($ARGV[0] eq "--help") {
+        usage_exit();
+    }
+    elsif ($ARGV[0] =~ /^--/) {
+        usage_exit("Unknown argument $ARGV[0].\n");
+    }
+    else {
+        push @nodes, [$ARGV[0]];
+    }
+    shift;
+}
+usage_exit("Must specify --cell=<fqcn>.\n") if (!defined $cell);
+
+$HTML_DIR = $OUT_DIR if (!defined $HTML_DIR);
+mkdir $OUT_DIR if (!-e $OUT_DIR);
+mkdir $HTML_DIR if (!-e $HTML_DIR);
+
+# 
+# Read exclusion info file
+#
+my $excl_r = read_exclusive_sets($excl_file) if (defined $excl_file);
+
+# 
+# Get failing nodes from raw file if none are specified
+#
+print "--- Reading alint.raw ---\n" unless ($QUIET);
+read_raw_file($cell, \@nodes);
+print " Identified " . scalar(@nodes) . " failing nodes.\n" unless ($QUIET);
+
+# Initialize results hash
+my $result_r = {
+    $STATUS_GREEN  => {},
+    $STATUS_YELLOW => {},
+    $STATUS_RED    => {}
+};
+
+# 
+# Process each failing node's out file
+#
+my $xg2n_r   = {};
+my $s2xg_r   = {};
+my $report_r = {};
+foreach my $n (@nodes) {
+    analyze_out_file($cell, @{$n}, $excl_r, $xg2n_r, $s2xg_r,
+                     $result_r, $report_r);
+}
+
+#
+# Write HTML report
+#
+print "--- Writing html report ---\n";
+write_html_report($cell, $result_r);
+
+# 
+# Generate list of exclcc/nocc directives
+#
+if (defined $excl_file) {
+    emit_exclcc_directives($cell, $xg2n_r, $s2xg_r, $excl_file);
+}
+
+#
+# Write aggressor report file
+#
+print "--- Writing aggressor.report ---\n";
+my @sorted_aggressors = sort { $report_r->{$b} <=> $report_r->{$a} }
+                             keys %{$report_r};
+open (REPORT, ">$OUT_DIR/aggressor.report") ||
+    die "Couldn't write to aggressor.report.\n";
+REPORT->format_top_name("REPORT_top");
+REPORT->format_name("REPORT");
+REPORT->format_lines_per_page(10000);
+my $a_node;
+foreach $a_node (@sorted_aggressors) {
+    write REPORT;
+}
+close REPORT; 
+    
+format REPORT_top = 
+Aggressor Node                                  Badness Factor 
+----------------------------------------------------------------
+.
+format REPORT =
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<
+$a_node,sprintf("%g",$report_r->{$a_node})
+.
+
+
+# Reads a node's out file, determining real bump magnitudes.
+sub analyze_out_file {
+    my $cell      = shift;
+    my $node      = shift;
+    my $bump_dn   = shift;
+    my $bump_up   = shift;
+    my $excl_r    = shift;
+    my $gl_xg2n_r = shift;  # cell-wide exclusion group node membership
+    my $gl_s2xg_r = shift;  # cell-wide set to exclusion group membership
+    my $result_r  = shift;
+    my $report_r  = shift;
+    my $a_report_cap_cutoff  = 0.5;     # 0.5fF aggressor capacitance limit
+    my $a_report_keep_cutoff = 0.85;    # save all aggressors accounting for
+                                        # 75% of all aggressor cap
+
+    my %set_to_xgroups;                 # Set number to excl group list
+    my %xgroups_to_nodes;               # excl group list to member nodes
+    my %xgroups_to_cap;                 # Total cap of each exclusive group
+
+    # initialize static, stray, and follower cap
+    $xgroups_to_cap{$STATIC_CAP}   = 0.0;
+    $xgroups_to_cap{$STRAY_CAP}    = 0.0;
+    $xgroups_to_cap{$FOLLOWER_CAP} = 0.0;
+
+    print "--- $node ---\n";
+
+    (my $cell_dir = $cell) =~ s/\./\//g;
+    my $out_file = $LVE_DIR . "/$cell_dir/" . $ALINT_DIR . "/$node/out";
+    if (-z $out_file) {
+        print "WARNING: out file is empty.  Skipping.\n";
+        return;
+    }
+    open (OUTFILE, $out_file) || die "Couldn't read $out_file.\n";
+
+    my $a_cap_r = {};
+    while (<OUTFILE>) {
+        chomp; s/^\s+//;
+        if (/^coupling\s/) {
+            # Construct aggressor -> cap map
+            my ($a_node, $a_cap) = (split /\s+/, $_)[1,2];
+            # strangely, sometimes there is no coupling capacitance given
+            # for the nodes at the very end of alint's listing (too small?)
+            next if (!defined $a_node || !defined $a_cap);
+            $a_cap =~ s/fF$//;
+
+            $a_cap_r->{$a_node} = $a_cap;
+        }
+        elsif (/^excl(cc|hi|lo)\s+\((.*)\)\s*$/ && 
+               !$IGNORE_ALINT_EXCLUSIONS) {
+            # Determine alint's list of exclcc exclusions, delete all 
+            # excluded aggressors except the largest ones.
+            my @excl_nodes;
+            foreach my $e_node (split /\,\s+/, $2) {
+                $e_node =~ s/\"//g;
+                if (exists $a_cap_r->{$e_node}) {
+                    push @excl_nodes, $e_node;
+                }
+            }
+            my @sorted_excl_nodes = sort { $a_cap_r->{$b} <=> $a_cap_r->{$a} }
+                                        @excl_nodes;
+            foreach my $i (1..$#sorted_excl_nodes) {
+                if ($DEBUG && exists $a_cap_r->{$sorted_excl_nodes[$i]}) {
+                    print " | Deleting excluded aggresor " .
+                            $sorted_excl_nodes[$i] . "\n";
+                    
+                }
+                delete $a_cap_r->{$sorted_excl_nodes[$i]};
+            }
+        }
+    }
+    close OUTFILE;
+
+    # Now tally capacitance of remaining aggressors, applying additional
+    # exclusion rules.
+    my $coupling_cap = 0.0;
+    my %aggressor_data_rails;
+    my @aggressor_cap;
+    my $extra_propagated_total_cap = 0.0;
+    foreach my $a_node (sort { $a_cap_r->{$b} <=> $a_cap_r->{$a} } 
+                            keys %{$a_cap_r}) {
+
+        my $a_cap = $a_cap_r->{$a_node};
+
+        if ($a_node =~ /\.\d+$/ || $a_node =~ /\.d\[\d+\]$/ ||
+            $a_node =~ /\.e$/) {
+            (my $a_base = $a_node) =~ s/\.e$//;
+            $a_base =~ s/\.(d\[)?\d+\]?$//;
+            if (!exists $aggressor_data_rails{$a_base}) {
+                $aggressor_data_rails{$a_base} = 1;
+            }
+            else {
+                # When IGNORE_ALINT_EXCLUSIONS is 0, we should never find
+                # any of these.  If we do, then the exclcc/exclhi/excllo
+                # directives haven't been set correctly in the cast.
+                if ($a_cap > 0.5 && $DEBUG || !$IGNORE_ALINT_EXCLUSIONS) {
+                    print " | Identified e1ofN excluded aggressor: $a_node.\n";
+                }
+                next;
+            }
+        }
+        $coupling_cap += $a_cap;
+
+        # Exclude data rails aggressing enables -- this is not a
+        # problem due to the 4-phase handshake protocol!
+        if ($a_node =~ /\.\d+$/ || $a_node =~ /\.d\[\d+\]$/) {
+            (my $a_base = $a_node) =~ s/\.(d\[)?\d+\]?$//;
+            if ($node eq "$a_base.e") {
+                if ($DEBUG) {
+                    print " | Excluding data rail aggression on enable!\n";
+                }
+                # HOWEVER, alint doesn't model this, so we need to include
+                # this capacitance in the 'propagated_total_cap' tally.
+                $extra_propagated_total_cap += $a_cap;
+                next;
+            }
+        }
+        tally_coupling_cap($node, $a_node, $a_cap, $excl_r, 
+                           \%set_to_xgroups, \%xgroups_to_nodes,
+                           \%xgroups_to_cap);
+        if (defined $report_r && $a_cap > $a_report_cap_cutoff) {
+            push @aggressor_cap, [$a_node, $a_cap];
+        }
+    }
+
+    my ($max_cap, $prop_from_worst, $prop_from_worst_two,
+        $propagated_total_cap) =
+        determine_max_aggressor_cap(\%set_to_xgroups, \%xgroups_to_nodes,
+                                    \%xgroups_to_cap, $a_cap_r,
+                                    $gl_xg2n_r, $gl_s2xg_r);
+    
+    # Add back data rail to enable coupling cap
+    $propagated_total_cap += $extra_propagated_total_cap;
+
+    my $new_bump_dn       = $bump_dn * $max_cap / $coupling_cap;
+    my $new_bump_up       = $bump_up * $max_cap / $coupling_cap;
+    my $new_worst_bump    = $new_bump_dn > $new_bump_up ? 
+                            $new_bump_dn : $new_bump_up;
+    my $predicted_bump_dn = $bump_dn * $propagated_total_cap / $coupling_cap;
+    my $predicted_bump_up = $bump_up * $propagated_total_cap / $coupling_cap;
+    my $predicted_worst_bump = $predicted_bump_dn > $predicted_bump_up ?
+                               $predicted_bump_dn : $predicted_bump_up;
+
+    if (!$QUIET) {
+        print " Total aggressor capacitance:                         " . 
+                sprintf("%g", $coupling_cap) ." fF\n";               
+        print " Total stray aggressor capacitance:                   " .
+                sprintf("%g", $xgroups_to_cap{$STRAY_CAP}) . " fF\n";        
+        print " Total static aggressor capacitance:                  " .
+                sprintf("%g", $xgroups_to_cap{$STATIC_CAP}) . " fF\n";        
+        print " Total follower aggressor capacitance:                " .
+                sprintf("%g", $xgroups_to_cap{$FOLLOWER_CAP}) . " fF\n";        
+        print " Maximum attainable aggressor capacitance:            " .
+                sprintf("%g", $max_cap) . " fF\n";                   
+        print " Max attainable bump (proportion of reported bump):   " .
+                sprintf("%g", $max_cap / $coupling_cap) . "\n";
+        if (defined $bump_dn && defined $bump_up) {
+            print " Max attainable down bump:                            " .
+                    sprintf("%.3g", $new_bump_dn) . " (".
+                    sprintf("%.3g", $predicted_bump_dn) . ")\n"; 
+            print " Max attainable up bump:                              " .
+                    sprintf("%g", $new_bump_up) . " (".
+                    sprintf("%.3g", $predicted_bump_up) . ")\n"; 
+        }
+        print " Proportion of cap due to worst aggressor:            " .
+                sprintf("%g", $prop_from_worst) . "\n";
+        print " Proportion of cap due to worst two aggressors:       " .
+                sprintf("%g", $prop_from_worst_two) . "\n";
+    }
+
+    if (defined $bump_dn && defined $bump_up) {
+
+        my $status = determine_status($new_worst_bump,
+                                      $prop_from_worst,
+                                      $prop_from_worst_two);
+
+        if ($status == $STATUS_GREEN) {
+            print "  PASS\n";
+        }
+        elsif ($status == $STATUS_YELLOW) {
+            print "  ** FAIL -- YELLOW **\n";
+        }
+        elsif ($status == $STATUS_RED) {
+            print "  ** FAIL -- RED **\n";
+        }
+        $result_r->{$status}{$node} = [
+            $new_worst_bump,
+            ($bump_up > $bump_dn ? $bump_up : $bump_dn),
+            $predicted_worst_bump
+        ];
+    }
+
+    # Determine which aggressor nodes to save for the final report, update
+    # "badness" weighting
+    if (defined $report_r) {
+        my $partial_total = 0.0;
+        foreach my $a_info (@aggressor_cap) {
+            if (!exists $report_r->{$a_info->[0]}) {
+                $report_r->{$a_info->[0]} = 0.0;
+            }
+            $report_r->{$a_info->[0]} += 
+                ((defined $bump_up && defined $bump_dn ?
+                    ($bump_up > $bump_dn ? $bump_up : $bump_dn) : 36.0)
+                 - 30)
+                * ($a_info->[1] / $coupling_cap);
+
+            $partial_total += $a_info->[1];
+            last if ($partial_total > $a_report_keep_cutoff * $coupling_cap);
+        }
+    }
+}
+
+
+sub tally_coupling_cap {
+    my $v_node   = shift;   # victim
+    my $a_node   = shift;   # aggressor
+    my $a_cap    = shift;   # aggressor capacitance
+    my $excl_r   = shift;   # exclusive info
+    my $set2xg_r = shift;   # Each set's excl group membership list
+    my $xg2n_r   = shift;   # excl group list to member nodes
+    my $xg2cap_r = shift;   # Total cap of each exclusive group
+
+    my @groups;
+    my @sets;
+    foreach my $rule (@{$excl_r}) {
+        if ($a_node =~ /^$rule->[0]$/) {
+            if ($rule->[1] == 0) {
+                # Standard exclusion rule
+                push @groups, $rule->[2] if (!grep {$_ == $rule->[2]} @groups);
+                push @sets,   $rule->[3] if (!grep {$_ == $rule->[3]} @sets);
+            }
+            elsif ($rule->[1] == 1) {
+                # follower rule; count if it appropriately matches the victim
+                if ($v_node =~ /^$rule->[2]$/) {
+                    if (!grep {$_ == $FOLLOWER_CAP} @groups) {
+                        push @groups, $FOLLOWER_CAP;
+                        push @sets,   $FOLLOWER_CAP;
+                    }
+                }
+            }
+        }
+    }
+
+    # If didn't match any exclusion group match, then designate as "stray"
+    @groups = ($STRAY_CAP) if (!@groups);
+    @sets   = ($STRAY_CAP) if (!@sets);
+
+    # Determine exclusive group name (unique name based on all match groups)
+    my $xg = "";
+    foreach my $g (@groups) {
+        $xg .= "$g,";
+        last;               # FIXME: TEMPORARY! (requires solver support)
+        if ($g == $STATIC_CAP) {
+            # static trumps everything!
+            $xg = "$STATIC_CAP,";
+            last;
+        }
+    }
+    chop $xg;
+    print " | Group membership: $xg.\n" if ($xg =~ /,/ && $DEBUG);
+
+    # Associate exclusion node group with sets
+    foreach my $set (@sets) {
+        $set2xg_r->{$set} = {} if (!defined $set2xg_r->{$set});
+        $set2xg_r->{$set}{$xg} = 1;
+        #push @{$set2xg_r->{$set}}, $xg;
+
+        last;               # TEMPORARY! (requires solver support)
+    }
+
+    # Add aggressor node to this exclusion group membership list
+    $xg2n_r->{$xg} = {} if (!defined $xg2n_r->{$xg});
+    if (!exists $xg2n_r->{$xg}{$a_node}) {
+        $xg2n_r->{$xg}{$a_node} = 1;
+    }
+
+    # Tally total aggressor cap of this exclusion group
+    $xg2cap_r->{$xg} = 0.0 if (!defined $xg2cap_r->{$xg});
+    $xg2cap_r->{$xg} += $a_cap;
+}
+
+
+sub determine_max_aggressor_cap {
+    my $set2xg_r = shift;   # Each set's excl group membership list
+    my $xg2n_r   = shift;   # excl group list to member nodes
+    my $xg2cap_r = shift;   # Total cap of each exclusion group
+    my $a_cap_r  = shift;   # Cap of each aggressor node
+    my $gl_xg2n_r= shift;   # cell-wide exclusion group node membership
+    my $gl_s2xg_r= shift;   # cell-wide exclusion set group membership
+
+    my $MIN_EXCLUDED_COUPLING = 1.0;   # See below (was 1.0)
+    my $MIN_NODE_COUPLING     = 0.005; # See below, proportion of max cap
+                                       # (was 0.005)
+
+    # Determine if LP solve is required.  If no exlusion group belongs to
+    # more than one set, then the solution is obvious: pick the group with
+    # the largest cap per set.  Multiple set membership is indicated by
+    # the presence of a ',' in the group name.
+    my $run_solver = 0;
+    foreach my $xg (keys %{$xg2n_r}) {
+        $run_solver = 1 if ($xg =~ /,/);
+    }
+
+    my $total_cap = 0.0;
+    my $propagated_total_cap = 0.0;
+    my @a_feasible;
+    my @save_xg;
+    if (!$run_solver) {
+        foreach my $set (keys %{$set2xg_r}) {
+            my $max_cap = 0.0;
+            my $max_group = 0;
+            my $set_cap = 0.0;
+            my $propagate_to_alint = 0;
+            foreach my $xg (keys %{$set2xg_r->{$set}}) {
+                if ($xg2cap_r->{$xg} > $max_cap) {
+                    $max_cap = $xg2cap_r->{$xg};
+                    $max_group = $xg;
+                }
+                if ($DEBUG) {
+                    print " | Set $set: Adding $xg2cap_r->{$xg} from $xg.\n";
+                }
+                $set_cap += $xg2cap_r->{$xg};
+            }
+            if (scalar(keys %{$set2xg_r->{$set}}) > 1 && 
+                $set != $STRAY_CAP && $set != $FOLLOWER_CAP || $set == -1) {
+                # keep track of groups from exclusion sets that matter, in
+                # the sense that more than one group aggresses it.  However,
+                # if the exclusion property only excludes a minimal
+                # amount of coupling cap (defined as $MIN_EXCLUDED_COUPLING),
+                # then don't bother saving & annotating as exclcc
+                # directives.  Too many nodes will cause jflat's
+                # directive expansion code to create many GB's of exclusion 
+                # properties in the noprs.asp file.
+                if ($DEBUG) {
+                    print " |   set $set cap: $set_cap\n";
+                    print " |   max cap:      $max_cap\n";
+                }
+                if ($set_cap - $max_cap > $MIN_EXCLUDED_COUPLING ||
+                    $set == -1) {
+                    $gl_s2xg_r->{$set} = [] if (!defined $gl_s2xg_r->{$set});
+                    foreach my $xg (keys %{$set2xg_r->{$set}}) {
+                        push @save_xg, [$xg, ($xg==$max_group)];
+                        if (!grep {$_ eq $xg} @{$gl_s2xg_r->{$set}}) {
+                            push @{$gl_s2xg_r->{$set}}, $xg;
+                        }
+                    }
+                    $propagate_to_alint = 1;
+                }
+            }
+            # Add the appropriate amount of aggressor cap according to what
+            # exclcc directives we plan to propagate to alint
+            if ($propagate_to_alint && $set != -1) {
+                $propagated_total_cap += $max_cap;
+            }
+            else {
+                $propagated_total_cap += $set_cap;
+            }
+
+            # Don't add static cap or follower cap to aggressor coupling
+            next if ($set == $STATIC_CAP || $set == $FOLLOWER_CAP);
+
+            if ($DEBUG) {
+                print " | Adding $max_cap from group $max_group, set $set.\n"
+            }
+            $total_cap += $max_cap;
+            # Keep track of all feasible worst-case aggressors
+            push @a_feasible, keys %{$xg2n_r->{$max_group}};
+        }
+    }
+    else {
+        die "ERROR: Needs solver, but not yet implemented!\n";
+    }
+
+    # Add nodes to the cell-wide exclusion node group, so the right 
+    # exclcc/nocc directives can be generated
+    foreach my $xg_r (@save_xg) {
+        my ($xg, $is_max) = @{$xg_r};
+        $gl_xg2n_r->{$xg} = {} if (!defined $gl_xg2n_r->{$xg});
+        foreach my $n (keys %{$xg2n_r->{$xg}}) {
+            if ($a_cap_r->{$n}/$total_cap > $MIN_NODE_COUPLING) {
+                $gl_xg2n_r->{$xg}{$n} = 1;
+            }
+            elsif (!exists $gl_xg2n_r->{$xg}{$n} && !$is_max) {
+                # oops, this aggressor won't be excluded after all
+                $propagated_total_cap += $a_cap_r->{$n};
+            }
+        }
+    }
+
+    # Determine proportion of worst-case aggressor cap due to the worst
+    # single aggressor and worst two single aggressors.
+    my @sorted_aggressors = 
+        sort { $a_cap_r->{$b} <=> $a_cap_r->{$a} } @a_feasible;
+    my $proportion_from_worst = 
+        $a_cap_r->{$sorted_aggressors[0]} / $total_cap;
+    my $proportion_from_worst_two = $proportion_from_worst +
+        $a_cap_r->{$sorted_aggressors[1]} / $total_cap;
+
+    return ($total_cap, $proportion_from_worst, $proportion_from_worst_two,
+            $propagated_total_cap);
+}
+
+#
+# Returns excl_r list:
+#   Exclusion rule: [aggressor_match, 0, group_num, set_num]
+#   Follower rule:  [aggressor_match, 1, victim_match]
+#
+# Static nodes are mapped to group_num==-1, set_num==-1.
+#
+sub read_exclusive_sets {
+    my $file = shift;
+
+    print "Processing exclusive info file.\n" if ($DEBUG);
+
+    open (EXCL, $file) || die "Couldn't read $file.\n";
+    my $excl_r = [];
+    my $group_num = 0;
+    my $set_num   = 0;
+    my $new_group = 0;
+    my $new_set   = 0;
+    my $in_static = 0;
+    my $in_follows= 0;
+    my $followed_victim_match;
+    while (<EXCL>) {
+        chomp;
+        next if (/^#/);
+        if (!/^\s*$/ && !/^-/) {
+            if ($new_group) {
+                $group_num++;
+                $new_group = 0;
+            }
+            if ($new_set) {
+                $set_num++;
+                $new_set = 0;
+            }
+            (my $match = $_) =~ s/([\[\]\(\).])/\\$1/g;
+            $match =~ s/\\\[\*\\\]/\\\[[^\]]+\\\]/g;
+            $match =~ s/\*/.*/;
+            #$match =~ s/\*\\\./.*\\\./g;
+            if (!$in_static) {
+                if ($DEBUG) {
+                    print " Mapping $match to group $group_num, set $set_num\n";
+                }
+                if (!$in_follows) {
+                    push @{$excl_r}, [$match, 0, $group_num, $set_num];
+                }
+                else {
+                    push @{$excl_r}, [$match, 1, $followed_victim_match];
+                }
+            }
+            else {
+                if ($DEBUG) {
+                    print " Mapping $match to static group.\n";
+                }
+                push @{$excl_r}, [$match, 0, $STATIC_CAP, $STATIC_CAP];
+            }
+            # TODO: If match already exists (or an existing match matches
+            # this one, etc.) then combine groups and sets.
+        }
+        elsif (/^--\s+static/i) {
+            $in_static  = 1;
+            $in_follows = 0;
+        }
+        elsif (/^--\s+follows\s+(.*)\s*$/) {
+            $in_static  = 0;
+            $in_follows = 1;
+            $followed_victim_match = $1;
+        }
+        elsif (/^-+\s*$/) {
+            $new_group  = 1;
+            $new_set    = 1;
+            $in_static  = 0;
+            $in_follows = 0;
+        }
+        elsif (/^\s*$/) {
+            $new_group = 1 unless ($in_follows || $in_static);
+        }
+        else {
+            die "Unrecognized line in exclusive info file:\n  $_";
+        }
+    }
+    close EXCL;
+    return $excl_r;
+}
+
+sub read_raw_file {
+    my $cell     = shift;
+    my $nodes_lr = shift;
+    my $add_nodes = !@{$nodes_lr};
+
+    (my $cell_dir = $cell) =~ s/\./\//g;
+    my $raw_file = $LVE_DIR . "/$cell_dir/" . $ALINT_DIR . "/alint.raw";
+    open (RAW, $raw_file) || die "Couldn't read $raw_file.\n";
+    while (<RAW>) {
+        chomp;
+        my @parts = split /\s+/, $_;
+        next if ($parts[0] ne "FAIL");
+        next if ($parts[7] !~ /^bump/);
+        (my $node = $parts[4]) =~ s/^node=//;
+        next if (!$add_nodes && !grep {$_->[0] eq $node} @{$nodes_lr});
+        (my $cc = $parts[5]) =~ s/^cc=//;
+        (my $bump_dn = $parts[7]) =~ s/^bump_dn=//;
+        (my $bump_up = $parts[8]) =~ s/^bump_up=//;
+        $bump_dn =~ s/\@\d+$//;
+        $bump_up =~ s/\@\d+$//;
+        if (!$cc) {
+            print "WARNING: Charge sharing failure found for node $node.\n";
+            next;
+        }
+        if ($add_nodes) {
+            push @{$nodes_lr}, [$node, $bump_dn, $bump_up];
+        }
+        else {
+            my ($nref) = grep {$_->[0] eq $node} @{$nodes_lr};
+            push @{$nref}, ($bump_dn, $bump_up);
+        }
+    }
+    close RAW;
+}
+
+sub determine_status {
+    my $worst_bump                = shift;  # new worst bump
+    my $proportion_from_worst     = shift;  # proprtion cap from worst aggress.
+    my $proportion_from_worst_two = shift;
+
+    my $status = $STATUS_GREEN;
+
+    if ($worst_bump > 35) {
+        # Fail
+        if ($worst_bump >= 40 || $worst_bump >= 37 &&
+            ($proportion_from_worst * $worst_bump > 0.75 * 35 ||
+             $proportion_from_worst_two * $worst_bump > 0.85 * 35)) {
+            $status = $STATUS_RED;
+        }
+        else {
+            $status = $STATUS_YELLOW;
+        }
+    }
+    return $status;
+}
+
+
+sub emit_exclcc_directives {
+    my $cell      = shift;
+    my $xg2n_r    = shift;
+    my $s2xg_r    = shift;
+    my $excl_file = shift;
+
+    open (DIRECTIVES, ">$OUT_DIR/directives") || 
+        die "Couldn't write to $OUT_DIR/directives.\n";
+    print DIRECTIVES "      /**\n";
+    print DIRECTIVES "       * SIGNOFF($ENV{USER}):\n";
+    print DIRECTIVES "       * Cap-coupling exclcc directives generated " .
+                     "using analyze_coupling with\n";
+    print DIRECTIVES "       * --exclusive-info=";
+    print DIRECTIVES "$ENV{PWD}/" if ($excl_file !~ /^\//);
+    print DIRECTIVES "$excl_file\n";
+    print DIRECTIVES "       * on " . localtime() . "\n";
+    print DIRECTIVES "       **/\n";
+
+    foreach my $s (keys %{$s2xg_r}) {
+        if ($s != $STATIC_CAP && $s != $FOLLOWER_CAP) {
+            my @exclcc_directives;
+            my $total_nodes = 0;
+            my $total_pairs = 0;
+            foreach my $xg (@{$s2xg_r->{$s}}) {
+                next if (scalar(keys %{$xg2n_r->{$xg}}) == 0);
+                my $d = "exclcc({";
+                foreach my $n (keys %{$xg2n_r->{$xg}}) {
+                    $d .= "$n,";
+                }
+                chop $d;
+                $d .= "}) = $s;";
+                push @exclcc_directives, $d;
+                $total_pairs += scalar(keys %{$xg2n_r->{$xg}}) * $total_nodes;
+                $total_nodes += scalar(keys %{$xg2n_r->{$xg}});
+            }
+            if (@exclcc_directives) {
+                foreach my $d (@exclcc_directives) {
+                    print DIRECTIVES "      $d\n";
+                }
+                print "Set $s will produce $total_pairs exclcc pairs.\n";
+            }
+        }
+        elsif (scalar(keys %{$xg2n_r->{$STATIC_CAP}}) > 0) {
+            # List all static nodes
+            my $d = "nocc_nodes = {";
+            foreach my $n (keys %{$xg2n_r->{$STATIC_CAP}}) {
+                $d .= "$n,";
+            }
+            chop $d;
+            $d .= "};";
+            print DIRECTIVES "      $d\n";
+        }
+    }
+    close DIRECTIVES;
+
+    print "Directives saved to $OUT_DIR/directives.\n";
+}
+
+
+sub write_html_report {
+    my $cell     = shift;
+    my $result_r = shift;
+
+    open (HTML, ">$HTML_DIR/$cell.html") || 
+        die "Couldn't write to $HTML_DIR/$cell.html";
+    my $date_str = localtime();
+    print HTML <<HEAD;
+<body>
+<h2>$cell</h2>
+<b><font size="+1">Post-Signoff Cap Coupling Report</font></b><br>
+Generation Date: $date_str
+<p>
+<table border=1 cellspacing=1 cellpadding=3 rules=all frame=box>
+<tr>
+ <th>Node</th>
+ <th>Measured Bump [1]</th>
+ <th>Predicted Bump [2]</th>
+ <th>Modelled Bump [3]</th>
+ <th>Category</th>
+</tr>
+HEAD
+    my %color = ( 
+        $STATUS_RED    => "red",
+        $STATUS_YELLOW => "yellow",
+        $STATUS_GREEN  => "#44ff44"
+    );
+    foreach my $class ($STATUS_RED,$STATUS_YELLOW,$STATUS_GREEN) {
+        my @sorted_nodes = sort { $result_r->{$class}{$b}[0] <=> 
+                                  $result_r->{$class}{$a}[0] } 
+                                keys %{$result_r->{$class}};
+        foreach my $n (@sorted_nodes) {
+            my $c = "bgcolor=\"$color{$class}\"";
+            print HTML "<tr><td>$n</td>\n";
+            print HTML "    <td align=center>$result_r->{$class}{$n}[1]</td>\n";
+            print HTML "    <td align=center>" .
+                sprintf("%.3g",$result_r->{$class}{$n}[2]) . "</td>\n";
+            print HTML "    <td align=center>" .
+                sprintf("%.3g",$result_r->{$class}{$n}[0]) . "</td>\n";
+            print HTML "    <td $c align=center>";
+            if ($class == $STATUS_RED) {
+                print HTML "RED";
+            }
+            elsif ($class == $STATUS_YELLOW) {
+                print HTML "YELLOW";
+            }
+            else {
+                print HTML "GREEN";
+            }
+            print HTML "</td></tr>\n";
+        }
+    }
+    print HTML "</table>\n";
+    my $total_red    = scalar(keys %{$result_r->{$STATUS_RED}});
+    my $total_yellow = scalar(keys %{$result_r->{$STATUS_YELLOW}});
+    my $total_green  = scalar(keys %{$result_r->{$STATUS_GREEN}});
+    print HTML <<TAIL;
+<p>
+<table border=1 cellspacing=1 cellpadding=3 rules=all frame=box>
+<tr><td>Total RED:</td><td>$total_red</td></tr>
+<tr><td>Total YELLOW:</td><td>$total_yellow</td></tr>
+<tr><td>Total GREEN:</td><td>$total_green</td></tr>
+</table>
+<p>
+Notes:
+<table border=0 cellspacing=3>
+<tr><td>[1]</td><td>Worst bump magnitude reported by alint.</td></tr>
+<tr><td>[2]</td><td>Predicted measured bump once exclcc directives
+                    are annotated and propagated to alint.</td></tr>
+<tr><td>[3]</td><td>Predicted bump magnitude with fully accurate 
+                    exclusion set modelling (not all properties can or
+                    will be propagated to alint).</td></tr>
+</table>
+</body>
+TAIL
+    close HTML;
+}

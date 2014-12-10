@@ -1,0 +1,523 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use rename;
+
+sub usage {
+    die "USAGE: run_tcam [--plot-only=[0|1]] test/process/voltage/temp/tau/slew/load/cfg ...\n";
+}
+
+# tools
+my $fulcrum = "$ENV{FULCRUM}";
+my $convert_trace = "$fulcrum convert_trace";
+my $aplot = "$fulcrum aplot";
+my $rename_aplot = "$fulcrum rename_aplot";
+
+# XA
+my $xa = "/p/com/env/psetup/prod/bin/setupTool xa I-2013.12-SP2 -m local -i -com xa";
+
+# defaults
+my $top = "wwc_tcam_512_40_4000";
+my $html_suffix="";
+my $plot_only = 0;
+my $scale_time = 1e-6;
+my $width = 40;
+my $slew_frac = 0.2;
+my %cycles;
+$cycles{"rw"} = 6;
+$cycles{"lookup"} = 6;
+$cycles{"leakage"} = 6;
+$cycles{"lib"} = 15;
+
+# parse command line arguments
+while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
+    if ($1 eq "plot-only") { $plot_only = $2; }
+    elsif ($1 eq "html-suffix") { $html_suffix = $2; }
+    shift;
+}
+@ARGV>0 or usage();
+
+# make list of signals to probe
+my @probes;
+probe_signals();
+
+# launch all simulations
+my %html;
+my $root = $ENV{PWD};
+foreach $dir (@ARGV) {
+    my @options = split("/",$dir);
+    usage() unless (@options==9);
+    my ($test, $process, $voltage, $temp, $rcCorner, $tau, $slew, $load, $cfg) = @options;
+    my $title = "$test at $process, ${voltage}V, ${temp}C, ${rcCorner}, ${tau}ns, ${slew}ps, ${load}fF, cfg=$cfg";
+    my $time = 2+$cycles{$test}*$tau;
+    print("*** $title\n");
+
+    # create directory
+    system("mkdir -p $dir");
+    
+    # write input files
+    write_tcam_sp($dir,$process,$voltage,$temp,$rcCorner,$time);
+    write_tcam_env($dir,$test,$tau,$time,$slew,$load,$cfg);
+    write_aplot_in($dir,$test,$title,$tau,$time);
+
+    # simulate, plot, and measure
+    my $cmd = "cd $dir; ";
+    unless ($plot_only || -e "$dir/xa.meas") {
+        $cmd .= "$xa -hspice tcam.sp; ";
+        $cmd .= "$convert_trace --scale-time $scale_time --fsdb xa.fsdb xa; ";
+        $cmd .= "$rename_aplot xa.names; ";
+    }
+    unless (-e "$dir/aplot.out") {
+        $cmd .= "$aplot xa < aplot.in > aplot.out; ";
+    }
+    system($cmd);
+
+    # add to HTML report
+    $html{$test}="" unless ($html{$test});
+    $html{$test} .= "<h3>$title</h3>\n";
+    $html{$test} .= "<a href=\"$dir/xa.log\" type=\"text/plain\">xa.log</a><br>\n";
+    $html{$test} .= "<a href=\"$dir/xa.meas\" type=\"text/plain\">xa.meas</a><br>\n";
+    $html{$test} .= "<a href=\"$dir/aplot.out\" type=\"text/plain\">aplot.out</a><br>\n";
+    my @pngs = (split"\n",`ls $dir/*.png`);
+    foreach my $png (@pngs) {
+        $html{$test} .= "<img src = \"$png\" align = bottom><br>\n";
+    }
+}
+
+# write HTML pages per test
+foreach my $test (keys %html) {
+    open HTML, ">${test}${html_suffix}.html" or die "ERROR: Can't write ${test}${html_suffix}.html\n";
+    print HTML "<html>\n<title>Wild Wood Canyon TCAM ($test)</title>\n<body>\n";
+    print HTML "$html{$test}";
+    print HTML "</body>\n</html>\n";
+    close HTML;
+}
+exit(0);
+
+# write tcam.sp
+sub write_tcam_sp {
+    my ($dir, $process, $voltage, $temp, $rcCorner, $time) = @_;
+    # write main tcam.sp
+    open SP, ">$dir/tcam.sp" or die "ERROR Can't write $dir/tcam.sp\n";
+    print SP <<EOF;
+* $dir
+.TEMP $temp
+.PARAM vtrue=$voltage
+.OPTIONS POST=fsdb
+.include "$root/1273.sp"
+.option search="$ENV{hspice_model_root}"
+.LIB "$ENV{hspice_model}" $process
+.include "$root/${top}_${temp}C_${rcCorner}.spice"
+.include "$root/tcam.init.spice"
+.include "tcam.env.spice"
+.TRAN 1ps ${time}ns
+.END
+EOF
+    close SP;
+}
+
+# create a SPICE environment
+sub write_tcam_env {
+    my ($dir, $test, $tau, $time, $slew, $load, $cfg) = @_;
+
+    # derived parameters
+    if ($cfg =~ /^0x(.*)/) { $cfg = hex($1); }
+    my $slew_dt = $slew/(1-2*$slew_frac)/1000.0; # rail to rail slew time
+
+    # open file
+    open OUT, ">$dir/tcam.env.spice" or die "ERROR: Can't write $dir/tcam.env.spice";
+    print OUT "* test=$test tau=$tau cfg=$cfg\n";
+    my $node;
+
+    # probes
+    foreach my $n (@probes) {
+        my $x = to_spice($n);
+        print OUT ".PROBE v(${x})\n";
+    }
+    
+    # output loads
+    $vss = to_spice("VSS");
+    for (my $i=0; $i<512; $i++) {
+        $node = to_spice("RHIT[$i]");
+        print OUT "C$node $node $vss ${load}fF\n";
+    }
+    for (my $i=0; $i<40; $i++) {
+        $node = to_spice("READ_DATA[$i]");
+        print OUT "C$node $node $vss ${load}fF\n";
+    }
+
+    # power, reset, clock
+    $node = to_spice("VDD");
+    print OUT "vvdd $node 0 DC=vtrue\n";
+    $node = to_spice("VSS");
+    print OUT "vgnd $node 0 DC=0\n";
+    $node = to_spice("RESET_N");
+    print OUT "vres $node 0 DC=0 PWL 0 0 0.9ns 0 1ns vtrue\n";
+    $node = to_spice("CLK");
+    if ($test eq "leakage") {
+        print OUT "vclk $node 0 DC=0\n";
+    } else {
+        my $w = $tau/2 - $slew_dt;
+        print OUT "vclk $node 0 PULSE ( 0 vtrue 2ns ${slew_dt}ns ${slew_dt}ns ${w}ns ${tau}ns )\n";
+    }
+
+    # static input vectors
+    input_vector($tau,$slew,"cfg","CFG",12,    $cfg);
+    input_vector($tau,$slew,"en","SLICE_EN",8, 0xFF);
+
+    # synchronous input vectors
+    if ($test eq "lib") {
+        # exercise all timing arcs for library characterization
+        my @REN;
+        my @WEN;
+        my @KEN;
+        my @ADDR;
+        my @DATA;
+        my @MASK;
+        my @LHIT;
+
+        # lookup: hit
+        push @REN,0; push @WEN,0; push @KEN,1; push @ADDR,0;
+        push @DATA,0; push @MASK,-1; push @LHIT,-1;
+        # lookup: slow miss
+        push @REN,0; push @WEN,0; push @KEN,1; push @ADDR,0;
+        push @DATA,1; push @MASK,-1; push @LHIT,-1;
+        # lookup: hit
+        push @REN,0; push @WEN,0; push @KEN,1; push @ADDR,0;
+        push @DATA,0; push @MASK,-1; push @LHIT,-1;
+        # lookup: slow miss
+        push @REN,0; push @WEN,0; push @KEN,1; push @ADDR,0;
+        push @DATA,0x8000000000; push @MASK,-1; push @LHIT,-1;
+        # lookup: hit
+        push @REN,0; push @WEN,0; push @KEN,1; push @ADDR,0;
+        push @DATA,0; push @MASK,-1; push @LHIT,-1;
+        # lookup: fast miss
+        push @REN,0; push @WEN,0; push @KEN,1; push @ADDR,0;
+        push @DATA,-1; push @MASK,-1; push @LHIT,-1;
+
+        # read: addr 0 (slow READ_DATA+)
+        push @REN,1; push @WEN,0; push @KEN,0; push @ADDR,0;
+        push @DATA,-1; push @MASK,-1; push @LHIT,-1;
+        # nop
+        push @REN,0; push @WEN,0; push @KEN,0; push @ADDR,511;
+        push @DATA,-1; push @MASK,0; push @LHIT,-1;
+        # read: addr 1 (slow READ_DATA-)
+        push @REN,1; push @WEN,0; push @KEN,0; push @ADDR,1;
+        push @DATA,-1; push @MASK,-1; push @LHIT,-1;
+        # nop
+        push @REN,0; push @WEN,0; push @KEN,0; push @ADDR,510;
+        push @DATA,-1; push @MASK,0; push @LHIT,-1;
+
+        # write: addr 510 (fast READ_DATA+)
+        push @REN,0; push @WEN,1; push @KEN,0; push @ADDR,510;
+        push @DATA,-1; push @MASK,-1; push @LHIT,-1;
+        # nop
+        push @REN,0; push @WEN,0; push @KEN,0; push @ADDR,0;
+        push @DATA,-1; push @MASK,0; push @LHIT,-1;
+        # write: addr 511 (fast READ_DATA-)
+        push @REN,0; push @WEN,1; push @KEN,0; push @ADDR,511;
+        push @DATA,0; push @MASK,-1; push @LHIT,-1;
+        # nop
+        push @REN,0; push @WEN,0; push @KEN,0; push @ADDR,1;
+        push @DATA,0; push @MASK,0; push @LHIT,-1;
+
+        # nop
+        push @REN,0; push @WEN,0; push @KEN,0; push @ADDR,1;
+        push @DATA,0; push @MASK,0; push @LHIT,-1;
+
+        # input vectors
+        input_vector($tau,$slew,"ren","REN",1,     @REN);
+        input_vector($tau,$slew,"wen","WEN",1,     @WEN);
+        input_vector($tau,$slew,"ken","KEN",1,     @KEN);
+        input_vector($tau,$slew,"addr","ADDR",10,  @ADDR);
+        input_vector($tau,$slew,"data","DATA",40,  @DATA);
+        input_vector($tau,$slew,"mask","MASK",40,  @MASK);
+        input_vector($tau,$slew,"lhit","LHIT",512, @LHIT);
+    } elsif ($test eq "lookup") {
+        # lookups and nops
+        input_vector($tau,$slew,"ren","REN",1,     0);
+        input_vector($tau,$slew,"wen","WEN",1,     0);
+        input_vector($tau,$slew,"ken","KEN",1,     1,1,1,1,0);
+        input_vector($tau,$slew,"addr","ADDR",10,  0);
+        input_vector($tau,$slew,"data","DATA",40,  0,1,0,0x8000000001,0);
+        input_vector($tau,$slew,"mask","MASK",40,  -1);
+        input_vector($tau,$slew,"lhit","LHIT",512, -1);
+    } elsif ($test eq "rw") {
+        # reads and writes
+        input_vector($tau,$slew,"ren","REN",1,     0,0,1,0,1,0);
+        input_vector($tau,$slew,"wen","WEN",1,     1,0,0,0,0,0);
+        input_vector($tau,$slew,"ken","KEN",1,     0);
+        input_vector($tau,$slew,"addr","ADDR",10,  0,0,2,2,0,0);
+        input_vector($tau,$slew,"data","DATA",40,  0);
+        input_vector($tau,$slew,"mask","MASK",40,  -1);
+        input_vector($tau,$slew,"lhit","LHIT",512, -1);
+    } else {
+        # nop or leakage test
+        input_vector($tau,$slew,"ren","REN",1,     0);
+        input_vector($tau,$slew,"wen","WEN",1,     0);
+        input_vector($tau,$slew,"ken","KEN",1,     0);
+        input_vector($tau,$slew,"addr","ADDR",10,  0);
+        input_vector($tau,$slew,"data","DATA",40,  0);
+        input_vector($tau,$slew,"mask","MASK",40,  -1);
+        input_vector($tau,$slew,"lhit","LHIT",512, -1);
+    }
+    # measure current
+    print OUT ".measure tran avg_ivdd avg i(vvdd) from 2ns to ${time}ns\n";
+    close OUT;
+}
+
+# write spice PWL vector sequence to OUT (a -1 turns into all 1's)
+sub input_vector {
+    my ($tau,$slew,$name,$node,$width,@values) = @_;
+    my $slew_dt = $slew/(1-2*$slew_frac)/1000.0;
+    for (my $b=0; $b<$width; $b++) {
+        my $n = to_spice("${node}[$b]");
+        if ($width==1) { $n = to_spice("${node}"); }
+        my $t = 2 - $tau/2;
+        print OUT "V${name}$b $n 0 PWL 0ns 0 ";
+        my $v = "0";
+        foreach $val (@values) {
+            print OUT "${t}ns $v ";
+            $v = "0";
+            $v = "vtrue" if ($val<0 || ($val>>$b)%2==1);
+            my $t2 = $t+$slew_dt;
+            print OUT "${t2}ns $v ";
+            $t += $tau;
+        }
+        print OUT "\n";
+    }
+}
+
+# write aplot.in
+sub write_aplot_in {
+    my ($dir, $test, $title, $tau, $time) = @_;
+    open APLOT, ">$dir/aplot.in" or die "ERROR: Can't write $dir/aplot.in\n";
+    my $t0 = 0;
+    my $t = $time;
+    my $x = 1000;
+    my $y = 400;
+    print APLOT "range $t0 $t -0.1 1.2\n";
+
+    # plot interesting things
+    if ($test eq "lib") {
+        print APLOT "trace WEN REN KEN\n";
+        print APLOT "png \"ctrl.png\" \"$title\" $x $y\n";
+        print APLOT "trace ADDR[*]\n";
+        print APLOT "png \"addr.png\" \"$title\" $x $y\n";
+        print APLOT "trace DATA[*]\n";
+        print APLOT "png \"data.png\" \"$title\" $x $y\n";
+        print APLOT "trace MASK[*]\n";
+        print APLOT "png \"mask.png\" \"$title\" $x $y\n";
+        print APLOT "trace LHIT[0] LHIT[511]\n";
+        print APLOT "png \"lhit.png\" \"$title\" $x $y\n";
+        print APLOT "trace RHIT[0] RHIT[511]\n";
+        print APLOT "png \"rhit.png\" \"$title\" $x $y\n";
+        print APLOT "trace READ_DATA[*]\n";
+        print APLOT "png \"read_data.png\" \"$title\" $x $y\n";
+    } elsif ($test eq "lookup") {
+        print APLOT "with slice[0]. ; trace hit[?,0] mid[0].out[0,0].h.* _dlk\n";
+        print APLOT "png \"hitlines.png\" \"$title\" $x $y\n";
+        print APLOT "with ; trace CLK RHIT[0]\n";
+        print APLOT "png \"hit.png\" \"$title\" $x $y\n";
+    } elsif ($test eq "rw") {
+        print APLOT "with slice[0]. ; trace a[0,0,0] a[0,0,2] chunk[0].b[0,0,?] " .
+            "chunk[0].z[0].z[0,0].x[0,?]\n";
+        print APLOT "png \"rw.png\" \"$title\" $x $y\n";
+        print APLOT "trace ctrl.ar ctrl.aw ctrl.Root_Vcc WL_Vcc[0] a[0,0,0] a[0,0,2]\n";
+        print APLOT "png \"wl.png\" \"$title\" $x $y\n";
+        print APLOT "with ; trace CLK READ_DATA[0]\n";
+        print APLOT "png \"readdata.png\" \"$title\" $x $y\n";
+    } else {
+        print APLOT "range $t0 $t\n";
+        print APLOT "trace i(vvdd)\n";
+        print APLOT "png \"ivdd.png\" \"$title\" $x $y\n";
+    }
+
+    # measure currents over clock cycles
+    print APLOT "range 1.5 2 ; avg i(vvdd)\n"; # idle
+    my $lo = 2;
+    for (my $i=0; $i<$cycles{$test}; $i++) {
+        my $hi = $lo+$tau;
+        print APLOT "range $lo $hi ; avg i(vvdd)\n";
+        $lo = $hi;
+    }
+    close APLOT;
+}
+
+# probe a node  to sig file
+sub probe_sig {
+    my ($n) = @_;
+    push @probes, $n;
+}
+
+# probe 1D array to sig file
+sub probe_1D_sig {
+    my ($n,$m) = @_;
+    for (my $i=0; $i<$m; $i++) {
+        push @probes, "$n" . "[$i]";
+    }
+}
+
+# probe 2D array to sig file
+sub probe_2D_sig {
+    my ($n,$a,$b) = @_;
+    for (my $i=0; $i<$a; $i++) {
+        for (my $j=0; $j<$b; $j++) {
+            push @probes, "$n" . "[$i,$j]";
+        }
+    }
+}
+
+# probe 3D array to sig file
+sub probe_3D_sig {
+    my ($n,$a,$b,$c) = @_;
+    for (my $i=0; $i<$a; $i++) {
+        for (my $j=0; $j<$b; $j++) {
+            for (my $k=0; $k<$c; $k++) {
+                push @probes, "$n" . "[$i,$j,$k]";
+            }
+        }
+    }
+}
+
+# choose what signals to probe
+sub probe_signals {
+    # pins
+    probe_sig("VDD");
+    probe_sig("VSS");
+    probe_sig("RESET_N");
+    probe_sig("CLK");
+    probe_sig("KEN");
+    probe_sig("WEN");
+    probe_sig("REN");
+    probe_1D_sig("LHIT",512);
+    probe_1D_sig("RHIT",512);
+    probe_1D_sig("READ_DATA",40);
+    probe_1D_sig("DATA",40);
+    probe_1D_sig("MASK",40);
+    probe_1D_sig("CFG",12);
+    probe_1D_sig("SLICE_EN",8);
+    probe_1D_sig("ADDR",10);
+
+    # TCAM
+    probe_1D_sig("inputs/lw",2);
+    probe_1D_sig("lk",2);
+    probe_sig("ar");
+    probe_sig("aw");
+    probe_sig("_RESET");
+    probe_1D_sig("lk",2);
+    for (my $j=0; $j<5; $j++) {
+        for (my $k=0; $k<4; $k++) {
+            probe_sig("addr2[0,$j].$k");
+        }
+    }
+    for (my $i=0; $i<2; $i++) {
+        for (my $j=0; $j<$width; $j++) {
+            for (my $k=0; $k<2; $k++) {
+                probe_sig("w[$i,$j].$k");
+            }
+        }
+    }
+    for (my $i=1; $i<=8; $i++) {
+        for (my $j=0; $j<$width; $j++) {
+            for (my $k=0; $k<2; $k++) {
+                probe_sig("r[$i,$j].$k");
+            }
+        }
+    }
+
+    # TCAM_CTRL
+    probe_sig("inputs/ctrl/ar");
+    probe_sig("inputs/ctrl/aw");
+    probe_sig("inputs/ctrl/lw0");
+    probe_sig("inputs/ctrl/rw");
+    probe_sig("inputs/ctrl/lw.0");
+    probe_sig("inputs/ctrl/lw.1");
+    foreach my $ctrl ("ken", "wen", "ren", "lw") {
+        probe_sig("inputs/ctrl/${ctrl}.0");
+        probe_sig("inputs/ctrl/${ctrl}.1");
+        probe_sig("inputs/ctrl/dff_${ctrl}/_L");
+        probe_sig("inputs/ctrl/dff_${ctrl}/_R.0");
+        probe_sig("inputs/ctrl/dff_${ctrl}/_R.1");
+    }
+    for (my $i=0; $i<10; $i++) {
+        my $a=int($i/2);
+        my $b=$i%2;
+        my $inst = "inputs/ctrl/dff_a[$a]/bit[$b]";
+        probe_sig("${inst}/_L");
+        probe_sig("${inst}/_R.0");
+        probe_sig("${inst}/_R.1");
+    }
+
+    # DFF_DATA
+    for (my $i=0; $i<40; $i++) {
+        probe_sig("inputs/data[$i]/rampW[0,0].a");
+        probe_sig("inputs/data[$i]/rampW[0,1].a");
+        probe_sig("inputs/data[$i]/core/_D");
+        probe_sig("inputs/data[$i]/core/_M");
+        probe_sig("inputs/data[$i]/core/_W.0");
+        probe_sig("inputs/data[$i]/core/_W.1");
+        probe_sig("inputs/data[$i]/core/_W.2");
+    }
+
+    # SLICE64
+    probe_sig("slice[0]/_dlk");
+    probe_sig("slice[0]/lk[1]");
+    probe_sig("slice[0]/lk[2]");
+    probe_1D_sig("slice[0]/s",2);
+    probe_2D_sig("slice[0]/hit",2,64);
+    probe_3D_sig("slice[0]/a",2,2,64);
+    probe_1D_sig("slice[0]/WL_Vcc",2);
+    for (my $i=0; $i<2; $i++) {
+        for (my $j=0; $j<3; $j++) {
+            for (my $k=0; $k<4; $k++) {
+                probe_sig("slice[0]/b[$i,$j].$k");
+            }
+        }
+    }
+
+    # SLICE_CTRL
+    probe_sig("slice[0]/ctrl/ar");
+    probe_sig("slice[0]/ctrl/aw");
+    probe_sig("slice[0]/ctrl/Root_Vcc");
+    for (my $i=1; $i<=4; $i++) { probe_sig("slice[0]/ctrl/dlk[$i]"); }
+    probe_sig("slice[0]/ctrl/lk[0]");
+
+    # OUT_READ_LATCH
+    probe_sig("read[0]/X.0");
+    probe_sig("read[0]/X.1");
+
+    # OUT_HIT
+    for (my $s=0; $s<8; $s++) {
+        for (my $m=0; $m<2; $m++) {
+            for (my $i=0; $i<8; $i++) {
+                for (my $j=0; $j<4; $j++) {
+                    probe_sig("slice[$s]/mid[$m]/out[$i,$j]/h.0");
+                    probe_sig("slice[$s]/mid[$m]/out[$i,$j]/h.1");
+                    probe_sig("slice[$s]/mid[$m]/out[$i,$j]/hit");
+                }
+            }
+        }
+    }
+
+    # CHUNK64
+    probe_3D_sig("slice[0]/chunk[0]/b",2,20,2);
+    for (my $i=0; $i<20; $i++) {
+        for (my $j=0; $j<2; $j++) {
+            probe_sig("slice[0]/chunk[0]/k[$i].$j");
+        }
+    }
+
+    # TBIT
+    for (my $i=0; $i<32; $i++) {
+        for (my $j=0; $j<20; $j++) {
+            probe_2D_sig("slice[0]/chunk[0]/z[0]/z[$i,$j]/x",2,2);
+        }
+    }
+}

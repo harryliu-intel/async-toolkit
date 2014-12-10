@@ -1,0 +1,739 @@
+#!/usr/intel/bin/perl -w
+
+# Usage: rc_spice2aspice <spice-filename> <aspice-filename>
+
+# rc_spice2aspice converts files from spice format to aspice format.
+# <spice-filename> is the spice source file.  <aspice-filename> is the
+# target file.  Aspice defines appear in the same order as the
+# corresponding SUBCKTs in the source.  Also ensures that the base
+# name for a resistive subnet exists by creating an alias if
+# necessary.  Also does reduction of parallel R's and C's with
+# thresholds.  Nodes with only 1 R/C spoke get pruned out.
+
+# Output record separator is comma for cell definition and
+# instantiation argument and parameter lists.
+
+$" = ", ";	
+
+#
+# parse arguments
+#
+
+sub usage() {
+    die "Usage: $0 [--minC Farads] [--minR Ohms]\n  [--scaleM ratio] [--scaleC ratio] [--scaleR ratio] [--deltaL dL] [--cell cellName] [--noreduce] <in> <out>\n";
+}
+
+$reduce=1;
+$minC=0;
+$minR=0;
+$scaleM=1; # scales transistor/diode dimensions
+$scaleC=1; # scales capacitor values
+$scaleR=1; # scales resistor values
+$deltaL=0; # offsets transistor length
+$cellName=""; # flatten this cell's SUBCKT
+$cellFlattened=0; # has the desired cell been flattened
+
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    $flag = $1;
+    if ($flag eq "minC") {
+        $minC = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "minR") {
+        $minR = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "noreduce") {
+        $reduce = 0;
+    } elsif ($flag eq "quote") {
+    } elsif ($flag eq "scaleM") {
+        $scaleM = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "scaleR") {
+        $scaleR = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "scaleC") {
+        $scaleC = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "deltaL") {
+        $deltaL = $ARGV[1];
+        shift @ARGV;
+    } elsif ($flag eq "cell") {
+        $cellName = $ARGV[1];
+        shift @ARGV;
+    } else {
+        usage();
+    }
+    shift @ARGV;
+}
+@ARGV == 2 or usage();
+
+#
+# Define globals and subroutines
+# 
+
+$f_in  = "$ARGV[0]";
+$f_out = "$ARGV[1]";
+
+open SPICE, "<$f_in" or die "Can't open '$f_in' for reading.\n";
+open ASPICE, ">$f_out" or die "Can't open '$f_out' for writing.\n";
+print ASPICE "/* spice=$f_in, cell=$cellName, minC=$minC, minR=$minR */\n";
+
+sub error_msg {
+    unlink($f_out);
+    die "$0: $f_in, line $.: $_[0]\n";
+}
+
+# choose which subnet would be the best candidate for an alias to basename
+sub rank_subnet {
+    my ($net) = @_;
+    if (! $net)          { return 0; } # undefined has lowest priority
+    if ($net =~ s/G$//g) { return 3; } # gate has highest priority
+    if ($net =~ s/^M//g) { return 2; } # S/D is 2nd highest
+    return 1;                           # resistive subnet is 2nd lowest
+}
+
+# convert node names back into CAST compatible syntax
+sub node_names {
+    for my $old_node (@_) {
+        # separate out base node name and subnet
+        my ($node,$subnet) = split(":",$old_node);
+
+        # process base node name
+        $node =~ s:\(:\[:g;            # replace ( with [
+        $node =~ s:\):\]:g;            # replace ) with ]
+        $node =~ s:\]\[:,:g;           # replace ][ with ,
+        $node =~ s|^(\d+)$|$1#|gi;     # replace num with num#
+        $node =~ s|(/\d+)$|$1#|gi;     # replace */num with */num#
+        $node =~ s:-H:#:g;             # replace -H with #
+        $node =~ s:X([^/]*)/:$1.:gi;   # replace Xblah/ with blah.
+        
+        # save node names and subnets
+        if ($subnet) {
+            $x = rank_subnet($subnets{$node});
+            $y = rank_subnet($subnet);
+            if ($y > $x) { $subnets{$node} = $subnet; }
+        } else {
+            $basename_defined{$node} = 1;
+        }
+
+        # quote if desired
+        if ($subnet) { $old_node = "\"$node:$subnet\""; }
+        else { $old_node = "\"$node\""; }
+    }
+}
+
+# strip single quotes or convert unit suffixes to exponential notation
+sub fix_parms {
+    for $parm (@_) {
+	if (!($parm =~ s:\'([^\']*)\':$1:g)) { # replace 'blah' with blah
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)m$/$1e-3/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)u$/$1e-6/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)n$/$1e-9/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)p$/$1e-12/;
+            $parm =~ s/^([-]?[\d]+(\.[\d]+)?)f$/$1e-15/;
+            $parm =~ s/\.$//g; # fix simplex's stupid trailing decimal point
+        }
+    }
+}
+
+
+# mark that a node is used by a non R/C device
+sub mark_used {
+    for $node (@_){
+        my $n = defined $used{$node} ? $used{$node} : 0;
+        $used{$node} = $n + 1;
+    }
+}
+
+# add a capacitor
+sub add_capacitor {
+    my ($a, $b, $c) = @_;
+    my $ab = join(" ",sort($a,$b));
+    $C{$ab} += $c;
+}
+
+# add a resistor or wire
+sub add_resistor {
+    my ($a, $b, $r) = @_;
+    my $ab = join(" ",sort($a,$b));
+    if (($r>0) && ((!defined $G{$ab}) || ($G{$ab}>0))) {
+        $G{$ab} += 1/$r;
+    } else {
+        $G{$ab} = -1;
+    }
+}
+
+# check if a node is needed for R/C output
+sub dangling_node {
+    my ($n) = @_;
+    my $cs = defined $c_spokes{$n} ? $c_spokes{$n} : 0;
+    my $gs = defined $g_spokes{$n} ? $g_spokes{$n} : 0;
+    return (!defined $used{$n}) && ($cs+$gs==1);
+}
+
+# check if a node is used only once
+sub unconnected_node {
+    my ($n) = @_;
+    my $cs = defined $c_spokes{$n} ? $c_spokes{$n} : 0;
+    my $gs = defined $g_spokes{$n} ? $g_spokes{$n} : 0;
+    return (defined $used{$n} && $used{$n} == 1) && ($cs + $gs==0);
+}
+
+# check if a node is the middle of a series R structure
+sub series_R_node {
+    my ($n) = @_;
+    my $cs = defined $c_spokes{$n} ? $c_spokes{$n} : 0;
+    my $gs = defined $g_spokes{$n} ? $g_spokes{$n} : 0;
+    return (($gs==2) && ($cs==0) && (!defined $used{$n}));
+}
+
+# check if a node is the middle of a series C structure
+sub series_C_node {
+    my ($n) = @_;
+    my $cs = defined $c_spokes{$n} ? $c_spokes{$n} : 0;
+    my $gs = defined $g_spokes{$n} ? $g_spokes{$n} : 0;
+    return (($cs==2) && ($gs==0) && (!defined $used{$n}));
+}
+
+#
+# Store parameters of subcircuits
+#
+
+$line = <SPICE>;
+$. = 0;
+
+while ($line) {
+    $next_line = <SPICE>;
+    if (!($line =~ s/^\.SUBCKT\s+//i)) {
+        $line = $next_line;
+        next;
+    }
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <SPICE>;
+    }
+    $line =~ s/(\S+)\s+// or error_msg "SUBCKT lacks name";
+    $name = $1;
+    $name =~ s/-/\//g;
+    !$subc_args{$name} or error_msg "SUBCKT '$name' defined twice";
+    @{$subc_args{$name}} = split /\s+/, $line;
+    $line = $next_line;
+}
+
+#
+# Reset input file
+#
+
+seek SPICE, 0, 0;
+
+#
+# Do linewise translation of cdl to aspice
+#
+
+$line = <SPICE>;
+$. = 0;
+
+while ($line) {
+    $next_line = <SPICE>;
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <SPICE>;
+    }
+    if ($line =~ s/^\.SUBCKT\s+//i) {
+
+        #
+        # Begin Subcircuit Definition
+        # 
+
+        %subnets = ();
+        %basename_defined = ();
+        %G = ();
+        %C = ();
+        %used = ();
+
+        my @parameters = ();
+        my @nodes = ();
+
+        $line =~ s/(\S+)\s+//;
+        $type = $1;
+        $type =~ s:##28:(:g;
+        $type =~ s:##29:):g;
+        $type =~ s:##2c:,:g;
+
+        while ($line =~ s/(\S+)\s*//) {
+            $arg = $1;
+            if ($arg =~ /(\S+)=(\S+)/) {
+                # Parameter and default
+                # 	N.B. default is ignored by this
+                #	translator.
+                push @parameters, $1;
+            } else {
+                # Node argument
+                push @nodes, $arg;
+            }
+        }
+        node_names(@nodes);
+        mark_used(@nodes);
+        fix_parms(@parameters);
+        if (!($type eq $cellName )) {
+            print ASPICE "define \"$type\"(@nodes)(@parameters) {\n";
+        } else {
+            $cellFlattened=1;
+        }
+        $cellType = $type;
+
+    } elsif ($line =~ s/^\.ENDS//i) {
+
+        #
+        # End Subcircuit Definition
+        #
+
+        # add additional aliases to ensure that basenames exist
+        foreach $name (sort keys %subnets) {
+            $subnet = $subnets{$name};
+            if (!defined $basename_defined{$name}) {
+                print ASPICE "wire (\"$name\", \"$name:$subnet\") /* basename */\n";
+                mark_used("\"$name:$subnet\""); # can't throw this out now
+            }
+        }
+
+        # count resistor/wire spokes
+        %g_spokes = ();
+        foreach my $ab (keys %G) {
+            my ($a,$b) = split(" ",$ab);
+            $g_spokes{$a}++;
+            $g_spokes{$b}++;
+        }
+
+        # count capacitor spokes
+        %c_spokes = ();
+        foreach my $ab (keys %C) {
+            my ($a,$b) = split(" ",$ab);
+            $c_spokes{$a}++;
+            $c_spokes{$b}++;
+        }
+
+        # do R/C netlist reduction given G/C/used hash-tables
+        my $progress = $reduce;
+        while ($progress>0) {
+            $progress = 0;
+            
+            # delete small capacitors
+            foreach my $ab (keys %C) {
+                my ($a,$b) = split(" ",$ab);
+                if ($C{$ab} <= $minC) {
+                    print "eliminating small C $a $b $C{$ab}\n";
+                    $progress++;
+                    delete $C{$ab};
+                    $c_spokes{$a}--;
+                    $c_spokes{$b}--;
+                }
+            }
+
+            # delete dangling resistors/wires
+            foreach my $ab (keys %G) {
+                my ($a,$b) = split(" ",$ab);
+                if (dangling_node($a)) {
+                    print "eliminating dangling R $a $b\n";
+                    $progress++;
+                    delete $G{$ab};
+                    $g_spokes{$a}--;
+                    $g_spokes{$b}--;
+                } elsif (dangling_node($b)) {
+                    print "eliminating dangling R $b $a\n";
+                    $progress++;
+                    delete $G{$ab};
+                    $g_spokes{$a}--;
+                    $g_spokes{$b}--;
+                }
+            }
+
+            # delete dangling capacitors
+            foreach my $ab (keys %C) {
+                my ($a,$b) = split(" ",$ab);
+                if (dangling_node($a)) {
+                    print "eliminating dangling C $a $b\n";
+                    $progress++;
+                    delete $C{$ab};
+                    $c_spokes{$a}--;
+                    $c_spokes{$b}--;
+                } elsif (dangling_node($b)) {
+                    print "eliminating dangling C $b $a\n";
+                    $progress++;
+                    delete $C{$ab};
+                    $c_spokes{$a}--;
+                    $c_spokes{$b}--;
+                }
+            }
+
+            # identify neighbors of nodes which can be series R reduced
+            %neighbors = ();
+            foreach my $ab (keys %G) {
+                my ($a,$b) = split(" ",$ab);
+                if (series_R_node($a)) {
+                    if (defined $neighbors{$a}) {
+                        $neighbors{$a} = "$neighbors{$a} $b";
+                    } else {
+                        $neighbors{$a} = $b;
+                    }
+                }
+                if (series_R_node($b)) {
+                    if (defined $neighbors{$b}) {
+                        $neighbors{$b} = "$neighbors{$b} $a";
+                    } else {
+                        $neighbors{$b} = $a;
+                    }
+                }
+            }
+
+            # reduce series resistors or wires
+            foreach my $n (keys %neighbors) {
+                if (series_R_node($n)) {
+                    # identify nodes involved
+                    my ($a,$b) = split(" ",$neighbors{$n});
+                    $na = join(" ",sort($n,$a));
+                    $nb = join(" ",sort($n,$b));
+                    $ab = join(" ",sort($a,$b));
+
+                    # check if resistors already deleted
+                    if (!defined $G{$na} || !defined $G{$nb}) { next; }
+
+                    # report progress
+                    print "eliminating series R $a $n $b\n";
+                    $progress++;
+
+                    # compute combined resistance (-1 for wires)
+                    my $gab;
+                    if    ($G{$na}<0) { $gab = $G{$nb}; }
+                    elsif ($G{$nb}<0) { $gab = $G{$na}; }
+                    else  { $gab = 1/(1/$G{$na} + 1/$G{$nb}); }
+
+                    # delete old resistors
+                    delete $G{$na};
+                    delete $G{$nb};
+                    $g_spokes{$n}=0;
+                    $g_spokes{$a}--;
+                    $g_spokes{$b}--;
+
+                    # create or combine new resistor
+                    if (defined $G{$ab}) {
+                        if (($G{$ab}<0) || ($gab<0)) { $G{$ab} = -1; }
+                        else { $G{$ab} += $gab; }
+                    } else {
+                        $G{$ab} = $gab;
+                        $g_spokes{$a}++;
+                        $g_spokes{$b}++;
+                    }
+                }
+            }
+
+            # identify neighbors of nodes which can be series C reduced
+            %neighbors = ();
+            foreach my $ab (keys %C) {
+                my ($a,$b) = split(" ",$ab);
+                if (series_C_node($a)) {
+                    if (defined $neighbors{$a}) {
+                        $neighbors{$a} = "$neighbors{$a} $b";
+                    } else {
+                        $neighbors{$a} = $b;
+                    }
+                }
+                if (series_C_node($b)) {
+                    if (defined $neighbors{$b}) {
+                        $neighbors{$b} = "$neighbors{$b} $a";
+                    } else {
+                        $neighbors{$b} = $a;
+                    }
+                }
+            }
+
+            # reduce series capacitors
+            foreach my $n (keys %neighbors) {
+                if (series_C_node($n)) {
+                    # identify nodes involved
+                    my ($a,$b) = split(" ",$neighbors{$n});
+                    $na = join(" ",sort($n,$a));
+                    $nb = join(" ",sort($n,$b));
+                    $ab = join(" ",sort($a,$b));
+
+                    # check if capacitors already deleted
+                    if (!defined $C{$na} || !defined $C{$nb}) { next; }
+
+                    # report progress
+                    print "eliminating series C $a $n $b\n";
+                    $progress++;
+
+                    # compute combined capacitance
+                    my $cab = 1/(1/$C{$na} + 1/$C{$nb});
+
+                    # delete old capacitors
+                    delete $C{$na};
+                    delete $C{$nb};
+                    $c_spokes{$n}=0;
+                    $c_spokes{$a}--;
+                    $c_spokes{$b}--;
+
+                    # create or combine new capacitor
+                    if (defined $C{$ab}) {
+                        $C{$ab} += $cab;
+                    } else {
+                        $C{$ab} = $cab;
+                        $c_spokes{$a}++;
+                        $c_spokes{$b}++;
+                    }
+                }
+            }
+
+            #foreach my $n (keys %used) {
+            #    die "node $n is used only once!" if unconnected_node($n);
+            #}
+
+            # report progress
+            print STDERR "rc_spice2aspice: eliminated $progress R/C devices\n";
+        }
+
+        # free memory
+        %neighbors = ();
+        %c_spokes = ();
+        %g_spokes = ();
+
+        # output resistors if above threshold or wires otherwise
+        foreach my $ab (sort keys %G) {
+            my $R = 1/$G{$ab}; # wires are -1
+            my ($a,$b) = split(" ",$ab);
+            if ($R > $minR) {
+                print ASPICE "res ($a, $b) ($R)\n";
+            } elsif ($R > 0) {
+                print ASPICE "wire ($a, $b) /* R=$R */\n";
+            } else {
+                print ASPICE "wire ($a, $b)\n";
+            }
+        }
+
+        # output capacitors
+        foreach my $ab (sort keys %C) {
+            my ($a,$b) = split(" ",$ab);
+            if ($C{$ab} > $minC) {
+                print ASPICE "cap ($a, $b) ($C{$ab})\n";
+            }
+        }
+
+        # end circuit definition
+        if (!($cellType eq $cellName)) {
+            print ASPICE "}\n";
+        }
+
+    } elsif ($line =~ s/^M//i) {
+
+        #
+        # MOSFET
+        #
+
+        my @parameters = ();
+        my %parameters = ();
+        my @nodes = ();
+
+        $line =~s/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)//
+            or error_msg "Missing arguments in mosfet";
+        $name = $1;
+        $type = lc $6;
+        $drain = "$2";
+        $gate = "$3";
+        $source = "$4";
+        $bulk = "$5";
+
+        $type =~ s/mos_2v$/mos/;
+        $type =~ s/mos_3v$/mos_to/;
+        $type =~ s/^n$/nmos/;
+        $type =~ s/^p$/pmos/;
+        $type =~ s/nch/nmos/;
+        $type =~ s/pch/pmos/;
+
+        @nodes = ($drain, $gate, $source, $bulk);
+
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            $parameters{lc $1}=$2;
+        }
+        foreach $p (("w", "l", "as", "ps", "nrs", "ad", "pd", "nrd")) {
+            $pp = $parameters{$p};
+            if (defined $pp) {
+                push @parameters, $pp;
+            } else {
+                push @parameters, 0;
+            }
+        }
+        node_names(@nodes);
+        mark_used(@nodes);
+        fix_parms(@parameters);
+        if ($scaleM != 1) {
+            $parameters[0] = "($parameters[0]) * $scaleM";
+            $parameters[1] = "($parameters[1]) * $scaleM + $deltaL";
+            $parameters[2] = "($parameters[2]) * $scaleM * $scaleM";
+            $parameters[3] = "($parameters[3]) * $scaleM";
+            $parameters[5] = "($parameters[5]) * $scaleM * $scaleM";
+            $parameters[6] = "($parameters[6]) * $scaleM";
+        }
+        print ASPICE "$type (@nodes)\n\t(@parameters)\n";
+
+    } elsif ($line =~ s/^X//i) {
+        
+        #
+        # Call to Subcircuit
+        #
+
+        my @parameters = ();
+        my @nodes = ();
+
+        $line =~ s/^(\S+)\s*// or error_msg "Call lacks instance name";
+        $name = $1;
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            push @parameters, $2;
+        }
+        $line =~ s/(\S+)\s*$// or error_msg "Call lacks SUBCKT name";
+        $type = $1;
+        @nodes = split /\s+/, $line;
+        pop @nodes; # FIXME: find a better way to take last / out of nodes list
+        node_names(@nodes);
+        mark_used(@nodes);
+        fix_parms(@parameters);
+        print ASPICE "\"$type\" \"$name\" (@nodes) (@parameters)\n";
+
+    } elsif ($line =~ s/^C//i) {
+	
+        #
+        # Capacitor
+        #
+
+        $line =~ s/^(\S*)\s*//;		# Capacitor name
+        $line =~ s/^(\S+)\s*// 
+            or error_msg "Capacitor has no positive terminal";
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no negative terminal";
+        $neg = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no capacitance specifier";
+        $cap = $1;
+        my @parameters = ();
+        push @parameters, $cap;
+        fix_parms(@parameters);
+        $parameters[0] *= $scaleC;
+        node_names($pos, $neg);
+        add_capacitor($pos, $neg, $parameters[0]);
+
+    } elsif ($line =~ s/^R//i) {
+
+        #
+        # Resistor
+        # 
+
+        $line =~ s/^(\S*)\s*//;		# Resistor name
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no terminals";
+        $term1 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has only one terminal";
+        $term2 = "$1";
+        
+        $line =~ s/^.*r=//i;
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no resistance specifier";
+        $res = $1;
+        if ($res !~ /^[\d.eE-]+$/) {
+            # Must be a metal layer...
+            $line =~ s/^(\S+)\s*//
+                or error_msg "Resistor has no resistance specifier";
+            $res = $1;
+        }
+        my @parameters = ();
+        push @parameters, $res;
+        fix_parms(@parameters);
+        $parameters[0] *= $scaleR;
+        node_names($term1, $term2);
+        add_resistor($term1, $term2, $parameters[0]);
+
+    } elsif ($line =~ s/^V//i) {
+
+        #
+        # Voltage source (turning into wires)
+        # 
+
+        $line =~ s/^(\S*)\s*//;		# source name
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has no terminals";
+        $term1 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has only one terminal";
+        $term2 = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Voltage source has no voltage specified";
+        $volt = $1;
+        node_names($term1, $term2);
+        if ($volt == 0) {
+            add_resistor($term1, $term2, 0); # a wire
+        } else {
+            error_msg "Can't handle non-zero voltage sources";
+        }
+    } elsif ($line =~ s/^D//i) {
+
+        #
+        # Diode
+        #
+
+        $line =~ s/^(\S*)\s*//;		# Diode name
+        $line =~ s/M=(\S*)\s*//;	# Multiplier
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Diode has no positive terminal";
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Diode has no negative terminal";
+        $neg = "$1";
+        $line =~ s/(\S+)\s*//
+            or error_msg "Diode has no model name";
+        $mname = $1;
+        $mname =~ s/M//;
+        $mname =~ /[PN]/ or error_msg "Unknown diode model name";
+        $line =~ s/(\S+)\s*//
+            or error_msg "Diode has no area specified";
+        $area = $1;
+        $line =~ s/(\S+)\s*//
+            or error_msg "Diode has no perimeter specified";
+        $perim = $1;
+        $width = ($perim + sqrt ($perim * $perim - 4 * $area)) / 2;
+        $length = $area / $width;
+        node_names($pos, $neg);
+        mark_used($pos, $neg);
+        my @parameters = ();
+        push @parameters, $width;
+        push @parameters, $length;
+        push @parameters, $area;
+        push @parameters, $perim;
+        fix_parms(@parameters);
+        $parameters[0] = "($parameters[0]) * $scaleM";
+        $parameters[1] = "($parameters[1]) * $scaleM + $deltaL";
+        $parameters[2] = "($parameters[2]) * $scaleM * $scaleM";
+        $parameters[3] = "($parameters[3]) * $scaleM";
+        print ASPICE (($mname eq "P")?"p_diode":"n_diode")
+            . " ($pos, $neg)"
+            . " (@parameters)\n";
+
+    } elsif ($line =~ m/^\*/) {
+        # comment line, do nothing
+    } elsif ($line eq "\n") {
+        # empty line, do nothing
+    } elsif ($line eq ".PARAM\n") {
+        # param line, do nothing
+    } elsif ($line =~ s/^\.GLOBAL\s+//i) {
+        # global line, do nothing
+    } else {
+        # unknown line, error
+        error_msg "Unknown line type: $line";
+    }
+    $line = $next_line;
+}
+
+# abort if selected cellName doesn't exit in spice file
+if ((!($cellName eq "")) && ($cellFlattened != 1)) {
+    error_msg("cell $cellName not defined");
+}

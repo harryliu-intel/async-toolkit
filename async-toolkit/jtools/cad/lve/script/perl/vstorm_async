@@ -1,0 +1,1151 @@
+#!/usr/intel/bin/perl -w
+
+use POSIX;
+use File::Basename;
+use File::Temp qw/ tempfile tempdir /;
+
+use File::stat;
+use File::Spec;
+use File::Temp qw/ tempfile tempdir /;
+use Digest::MD5 qw/ md5_hex /;
+use IPC::Open3;
+use Symbol;
+use strict;
+
+my @errors=();
+my @warnings=();
+my %errors=();
+my %warnings=();
+my $showflow=0;
+
+my $doc = <<DOC;
+Copyright 2008-2011 Fulcrum Microsystems.  All rights reserved.
+Authors: Kai He
+
+<h2>Voltage Storm Package</h2>
+.
+DOC
+
+# get paths to tools we might need to use
+my $os_type=`uname -s`; chomp $os_type;
+my $arch_type=`uname -m`; chomp $arch_type;
+my $os_arch="$os_type-$arch_type";
+
+# files and paths
+my $pdk_root;
+my $deleteTempDir= 1;    # clean up after running
+my $SPAR_DIR      ="/home/user/khe/alta/spar";
+
+# locate tools
+my $package_root = $0;
+$package_root =~ s:/bin/vstorm_async::;
+my $SCRIPTS     = "$package_root/share/proteus/scripts";
+my $LIBGEN      = "/usr/local/cadence/bin/anls libgen";
+my $POWERMETER  = "/usr/local/cadence/bin/anls powermeter";
+my $VSTORM      = "/usr/local/cadence/bin/anls vstorm2";
+my $GDS2DEF     = "$package_root/bin/gds2def";
+
+# command line arguments
+my $output_dir      = "";
+my $force=0;
+my $skip=0;
+my $verbose=0;
+my $dfII_dir;
+my $cell="";
+my $lib="";
+my $view="layout";
+my $def_file="";
+my $lef_file="";
+my $vdd_loc_file="";
+my $vss_loc_file="";
+#my $vdd_loc_file="vstorm_vdd_loc.txt";
+#my $vss_loc_file="vstorm_vss_loc.txt";
+my @task=("defgen","lefgen","locgen","libgen","powermeter","vdd","vss");
+
+# parse command line
+my @options = ();
+my @defaultOptions = ();
+my @defaultArgs = ();
+my $line;
+
+# get pdk root from args, and parse the arguments into options
+# which are either cellnames (scalars) or key-value pairs (array references)
+$pdk_root=&parseArgs(\@ARGV,\@options);
+die usage() . "ERROR: You must specify --fulcrum-pdk-root\n" if(! -d $pdk_root);
+# parse them into options
+&parseArgs(\@defaultArgs,\@defaultOptions);
+# process defaults
+&processOptions(\@defaultOptions);
+
+if ($showflow) {
+    print <<ESF;
+vstorm_async flow:
+    1) create flat view (not flatten)
+        a) open layout_pg (or layout if layout_pg does not exist)
+        b) load ~aubrey/altawd/flathier.il
+        c) copy layout_pg to flat view
+        d) delete ALL shapes and all instances from flat view
+        e) open cellview for flat view (call it flat)
+        f) open cellview for layout_pg (call it cv)
+        g) CIW getFlatInstances(flat cv nil nil nil)
+        h) save flat view
+    2) prep
+        a) create run directory: spar_dir/FQCN
+        b) add a .fulcrum.config:
+            --pdk tsmc65
+            vstorm_async {
+            --output-dir=vs
+            --force=0
+            --verbose=1
+            --spar-dir=/home/user/aubrey/alta/spar # use your spar dir
+            --dfII-dir=/home/user/aubrey/alta/dfII # use your dfII dir
+            --cell=CADENCE CELL NAME (not cast name!) e.g. chip.alta.fc.l2_lookup.L2_LOOKUP-L76-R.1000
+            --view=flat
+            }
+     3) fulcrum --latest vstorm_async
+     4) fix problems
+        a) missing abstracts mean missing lefs
+ESF
+    exit 0;
+}
+$pdk_root=~/fulcrum-([^-]+)-pdk/;
+my $tech=$1;
+
+die usage() . "ERROR: file $vdd_loc_file not exist\n" if(($vdd_loc_file ne "") && !(-e $vdd_loc_file));
+die usage() . "ERROR: file $vss_loc_file not exist\n" if(($vss_loc_file ne "") && !(-e $vss_loc_file));
+
+# review tasks
+my %stage;
+foreach my $current_task (@task){
+    if    ($current_task eq "defgen") {$stage{"defgen"}=1;}
+    elsif ($current_task eq "lefgen") {$stage{"lefgen"}=1;}
+    elsif ($current_task eq "locgen") {$stage{"locgen"}=1;}
+    elsif ($current_task eq "libgen") {$stage{"libgen"}=1;}
+    elsif ($current_task eq "powermeter") {$stage{"powermeter"}=1;}
+    elsif ($current_task eq "Vdd" || $current_task eq "vdd")   {$stage{"vdd"}=1;}
+    elsif ($current_task eq "GND" || $current_task eq "gnd" || $current_task eq "vss" || $current_task eq "Vss")        {$stage{"vss"}=1;}
+    else {
+        die usage() . "ERROR: Unknown task $current_task\n";
+    }
+}
+
+# check for cell name
+die usage() . "ERROR: cell not defined.\n" if ($cell eq "");
+if ($lib eq "") {
+  $lib =$cell;
+  $lib =~ s/\.([^\.]+)\.([^\.]+)$//;
+}
+
+$def_file="${cell}_vs.def";
+$lef_file="${cell}_vs.lef";
+
+# create and change to output-dir
+if ($output_dir eq "") {
+    $output_dir = "vs";
+}
+system("mkdir -p '$output_dir'");
+chdir("$output_dir");
+my $cmd="mkcdswd --fulcrum-pdk-root=$pdk_root --dfII-dir=$dfII_dir --target-dir='$output_dir'";
+print STDERR "$cmd\n" if $verbose;  
+system($cmd);
+
+# create cell.def if async
+my $cell_dir=$cell;
+$cell_dir =~ s/\./\#2e/g;
+$cell_dir =~ s/-/\#2d/g;
+my $lib_dir=$lib;
+$lib_dir=~s/\./\//g;
+$cell =~ /\.([^\.]+)\.([^\.]+)$/;
+my $powerdef="$lib.wires.${1}_${2}_POWER_GRID_TIEOFF.def";
+my $dfiisrc="$dfII_dir/$lib_dir/$cell_dir/$view/layout.cdb";
+
+if (defined($stage{"defgen"}) && &checkDependency("$def_file", "$dfiisrc", $force, $skip)) {
+  print "VSTORM: Creating $def_file... \n" if $verbose;
+  $powerdef="$cell.def";
+  if (&checkDependency("$powerdef", "$dfiisrc", $force, $skip)) {
+      $powerdef=&genpdef();
+  }
+  if (&checkDependency("$output_dir/${cell}_design.def", "$dfiisrc", $force, $skip)) {
+      &exportDesignDef("$output_dir/${cell}_design.def");
+      &createCellList("$output_dir/${cell}_design.def", "$output_dir/${cell}.cell_list");
+  }
+  &combineDefs("$output_dir/${cell}_design.def", $powerdef, "$output_dir/$def_file");
+}
+
+if (defined($stage{"lefgen"}) && &checkDependency("$lef_file", "$def_file", $force, $skip)) {
+  print "VSTORM: Creating $lef_file... \n" if $verbose;
+  &exportDesignLef("$output_dir/$lef_file", "$output_dir/${cell}.cell_list");
+}
+
+# create libgen.cmd
+open(LIBGEN, ">libgen.cmd");
+print LIBGEN "input_type pr_lef\n";
+print LIBGEN "setvar library_name all_port_views\n";
+
+print LIBGEN "lef_file_list { $pdk_root/share/Fulcrum/nano/tech.lef }\n";
+print LIBGEN "lef_file_list { $lef_file }\n";
+print LIBGEN <<END_OF_LIBGEN;
+cell_list { * }
+setvar assume_foreigns true
+setvar generate_port_powerview true
+setvar tech_file $pdk_root/share/Fulcrum/vstorm/icecaps.tch
+setvar extract_r_only true
+generic_power_names 1.08 { VDD Vdd } 
+generic_ground_names 0 { VSS Vss GND } 
+include $pdk_root/share/Fulcrum/vstorm/vs.layer.map
+
+END_OF_LIBGEN
+close(LIBGEN);
+
+if (defined($stage{"locgen"}) && &checkDependency("vdd_loc_file.txt vss_loc_file.txt", "$def_file $lef_file", $force, $skip)) {
+  print "VSTORM: Creating vdd/vss loc files...\n" if $verbose;
+  &create_loc_file( $def_file );
+}
+
+$vdd_loc_file="vdd_loc_file.txt" if ($vdd_loc_file eq "");
+$vss_loc_file="vss_loc_file.txt" if ($vss_loc_file eq "");
+
+# create vstorm.cmd
+open(VSTORM, ">vstorm.cmd");
+print VSTORM <<END_OF_VSTORM;
+layout_file $def_file
+cell_library	./all_port_views
+use_cell_view pattern * port
+power_pin_supply_tolerance 0.9 1.2
+instance_power_file avg 1.08 pm scale 1.0 powermeter.pwr
+setvar powerpin_location_file 		$vdd_loc_file
+setvar fe_eco_output	   true
+setvar fe_output	   true
+setvar operation_mode signoff_verification
+analyze Vdd 1.08 avg 1.026 ir
+
+END_OF_VSTORM
+close(VSTORM);
+
+# create vstorm_vss.cmd
+open(VSTORM_VSS, ">vstorm_vss.cmd");
+print VSTORM_VSS <<END_OF_VSS;
+layout_file $def_file
+cell_library	./all_port_views
+use_cell_view pattern * port
+instance_power_file avg 1.08 pm scale 1.0 powermeter.pwr
+setvar powerpin_location_file 		$vss_loc_file
+setvar fe_eco_output	   true
+setvar fe_output	   true
+setvar operation_mode signoff_verification
+analyze Vss 0.00 avg 0.054 ir
+
+END_OF_VSS
+close(VSTORM_VSS);
+
+# task=libgen
+if (defined($stage{"libgen"}) && &checkDependency("all_port_views.cl/cells_1.pwr", "$def_file", $force, $skip)) {
+  print "\nVSTROM: run libgen ...\n";
+  system("echo 'Running libgen...\n' > vstorm.err");
+  &my_system("rm -rf all_port_views.cl; $LIBGEN -cmd libgen.cmd > libgen.log;");
+  system("grep -i error libgen.log >> vstorm.err");
+}
+
+# task=powermeter if async
+if (defined($stage{"powermeter"}) && &checkDependency("powermeter.pwr", "$def_file", $force, $skip)) {
+  print "\nVSTROM: run powermeter ...\n";
+  system("echo '\nRunning powermeter...\n' >> vstorm.err");
+  &fakePowermeter($def_file,"powermeter.pwr");
+}
+
+# task=vdd
+if (defined($stage{"vdd"}) && &checkDependency("vstorm_vdd.log", "powermeter.pwr all_port_views.cl/cells_1.pwr $def_file", $force, $skip)) {
+  print "\nVSTORM: run vstorm vdd ...\n";
+  system("/bin/rm -rf Vdd*");
+  system("echo '\nRunning vdd vstorm...\n' >> vstorm.err");
+  &my_system("$VSTORM -64 -cmd vstorm.cmd > vstorm_vdd.log");
+  system("grep -i error vstorm_vdd.log >> vstorm.err");
+  system("grep 'filtered data range' vstorm_vdd.log >> vstorm.err");
+  system("grep -i warning vstorm_vdd.log >> vstorm.err");
+}
+
+# task=vss
+if (defined($stage{"vss"}) && &checkDependency("vstorm_vss.log", "powermeter.pwr all_port_views.cl/cells_1.pwr $def_file", $force, $skip)) {
+  print "\nVSTORM: run vstorm vss ...\n";
+  system("/bin/rm -rf Vss*");
+  system("echo '\nRunning vss vstorm...\n' >> vstorm.err");
+  &my_system("$VSTORM -64 -cmd vstorm_vss.cmd > vstorm_vss.log");
+  system("grep -i error vstorm_vss.log >> vstorm.err");
+  system("grep 'filtered data range' vstorm_vss.log >> vstorm.err");
+  system("grep -i warning vstorm_vss.log >> vstorm.err");
+}
+
+#*********SUB ROUTINES***********
+
+# display usage banner
+sub usage {
+    local $"=",";
+    my $usage = <<EOF;
+
+Proteus Master Script, Fulcrum Microsystems, Copyright June, 2008
+
+USAGE: $0 [options]
+
+     --flow : documents recommended flow!
+
+  General Options:
+    --output-dir=[$output_dir] (output directory)
+    --fulcrum-pdk-root=[$pdk_root]  (location of Fulcrum pdk)
+    --vdd-loc-file=[$vdd_loc_file]  (vdd source location file)
+    --vss-loc-file=[$vdd_loc_file]  (vss source location file)
+    --force=[$force]  ([0|1] force to regenerate all files, default=0)
+    --skip=[$skip]  ([0|1] skip dependency check, default=0)
+    --verbose=[$verbose]  ([0|1] default=0)
+    --include=[]  (include config file)
+    --lef=[$lef_file]  (DEF file)
+    --dfII-dir=[$dfII_dir]  (location of dfII directory)
+    --lib=[$lib] (lib name is optional)
+    --cell=[$cell] (cell name)
+    --view=[$view] (view name, default is layout)
+    --task=[@task] (lefout,libgen,vdd,vss)
+
+EOF
+
+    return $usage;
+}
+
+
+# parses $args >> $options
+# args are just the args from the command line
+# an option is either a
+# 1) key value pair (list reference)
+# 2) scalar
+
+sub parseArgs() {
+    my ($args,$options) = @_;
+    my $pdk_root = undef;
+    foreach my $arg (@{$args}) {
+        next if($arg =~ /^\#/ );
+        if ($arg =~ /^--(.*)/) {
+            # key-value pair
+            my ($key, $value) = split("=",$1);
+            if ( ! defined ($value)) {
+                $value = 1;
+            }
+            if(!defined $key || !defined $value) {
+                # bad syntax
+                error("bad --key=value syntax in ($arg).");
+            } elsif($key eq "include" || $key eq "config" ) {
+                my @config_args = ();
+                &includeConfig($value,\@config_args);
+                my $pdk_temp = &parseArgs(\@config_args,$options);
+                $pdk_root = $pdk_temp if defined($pdk_temp);
+            } elsif($key eq "fulcrum-pdk-root") {
+                my $pdk_temp = canonicalizePath($value);
+                $pdk_root = $pdk_temp if defined($pdk_temp);
+            } elsif($key eq "output-dir") {
+                $output_dir = canonicalizePath($value);
+            } elsif($key eq "spar-dir") {
+                $SPAR_DIR = canonicalizePath($value);
+            } elsif($key eq "dfII-dir") {
+                $dfII_dir = canonicalizePath($value);
+            } elsif ($key eq "def") {
+                $def_file = canonicalizePath($value);
+            } elsif ($key eq "vdd-loc-file") {
+                $vdd_loc_file = canonicalizePath($value);
+            } elsif ($key eq "vss-loc-file") {
+                $vss_loc_file = canonicalizePath($value);
+            } elsif($key eq "cell") {
+                $cell = $value;
+            } elsif($key eq "lib") {
+                $lib = $value;
+            } elsif($key eq "view") {
+                $view = $value;
+            } elsif($key eq "force") {
+                $force = $value;
+            } elsif($key eq "skip") {
+                $skip = $value;
+            } elsif($key eq "verbose") {
+                $verbose = $value;
+            } elsif($key eq "flow") { # document the flow
+                $showflow = $value;
+            } elsif($key eq "task") {
+                @task = split(/,/, $value);
+            } else {
+                my @pair = ($key,$value);
+                push @{$options}, \@pair;
+                print "\nUnknown arguement $arg\n";
+                die &usage();
+            }
+        } else {
+            # cell as a convenience translate / to . in a cell name
+            $arg =~ s:/:.:g;
+            push @{$options}, $arg;
+        }
+    }
+    return $pdk_root;
+}
+
+# adds args from $config file to $args
+sub includeConfig  {
+    my ($config,$args) = @_;
+    my @packageroot=split(/\//, $config);
+    pop @packageroot;
+    while ( @packageroot and -d join("/", @packageroot) and ! -f join("/",@packageroot)."/.fulcrum-package-root") {
+        pop @packageroot;
+    }
+    my $packageroot = join("/",@packageroot);
+    undef @packageroot;
+    if (open INCLUDE, "<$config") {
+        while (<INCLUDE>) {
+            my ($line) = split("#",$_);
+            foreach my $arg (split(" ",$line)) {
+                if ($packageroot ne "" and -d $packageroot and $arg =~ /\$packageroot\$/) {
+                    $arg =~ s:\$packageroot\$:$packageroot:g;
+                }
+                push @{$args}, $arg;
+            }        }
+        close INCLUDE;
+    } else { error("can't include file \"$config\"."); }
+}
+
+sub processOptions {
+    my ($options) = @_;
+    foreach my $option (@{$options}) {
+        &processOption($option);
+    }
+}
+
+sub processOption {
+    my ($option) = @_;
+
+    if (ref($option) eq "ARRAY") {
+        my ($key,$value) = @{$option};
+        # path/directory/file options
+        if ($key eq "output-dir")             { $output_dir = canonicalizePath($value); }
+        else {
+            push @warnings, "WARNING: option --${key}=${value} not recognized.\n";
+            warn ("WARNING: option --${key}=${value} not recognized.");
+        }
+    } else {
+        # separate cell and env list
+        my ($cell,$envs,$nodes) = split(":",$option);
+        my ($basecell, $plusminus) = partition_fqcnminus($cell);
+    }
+}
+
+# canonicalizePath
+sub canonicalizePath {
+    my ( $thePath ) = @_;
+
+    my @dirParts = File::Spec->splitdir( $thePath );
+
+    my $numDirectories = scalar( @dirParts );
+
+    my $i;
+
+    my @canonDirParts;
+
+    if( !File::Spec->file_name_is_absolute( $thePath ) ) {
+        @canonDirParts = File::Spec->splitdir( getcwd() );
+    }
+    my $numCanonDirParts = scalar( @canonDirParts );
+
+    for ( $i=0; $i<$numDirectories; $i++ ) {
+	if ( ! ( $dirParts[ $i ] eq "" ) ) {
+	    if ( $dirParts[ $i ] eq File::Spec->updir ) {
+	
+		if ( $numCanonDirParts != 0 ) {
+		
+		    $numCanonDirParts--;
+		
+		    @canonDirParts = @canonDirParts[0..($numCanonDirParts-1)];
+		
+		}
+		else {
+		    @canonDirParts = ( @canonDirParts, $dirParts[ $i ] );
+		}
+	
+	    }
+	    else{
+		if ( ! ( $dirParts[ $i ] eq File::Spec->curdir ) ) {
+		    @canonDirParts = ( @canonDirParts, $dirParts[ $i ] );
+		    $numCanonDirParts++;
+		}
+	    }
+	}
+	
+    }
+
+    my $canonPath = File::Spec->catdir( @canonDirParts );
+
+    if ( File::Spec->file_name_is_absolute( $thePath ) ) {
+	$canonPath = "/" . $canonPath;
+    }
+
+    return $canonPath;
+
+}
+
+sub checkDependency {
+    my ( $output,$input,$force,$skip ) = @_;
+    my @output_files=split(/ /, $output);
+    my @input_files=split(/ /, $input);
+    my $input_timestamp = 0;
+    my $write_secs;
+    foreach my $file (@input_files) {
+        chomp $file;
+        if(! -e $file){ return 0;}
+        $write_secs = stat($file)->mtime;
+        if($write_secs > $input_timestamp){$input_timestamp=$write_secs;}
+    }
+    if($force){return 1;}
+    foreach my $file (@output_files) {
+        chomp $file;
+        if(! -e $file){ return 1;}
+        $write_secs = stat($file)->mtime;
+        if($skip == 0 && $write_secs < $input_timestamp){return 1;}
+    }
+    return 0;
+}
+
+sub my_system {
+    my ($cmd)=@_;
+    if( $verbose ){print "$cmd\n";}
+    system($cmd);
+}
+
+sub gcmp {
+    return 1 if $a > $b;
+    return -1 if $a < $b;
+    0;
+}
+
+sub create_loc_file {
+  my ( $def_file ) = @_;
+  my $vdd_found=0;
+  my $vss_found=0;
+  my $x; 
+  my $y;
+  my $via;
+  my $vdd_top_metal=0;
+  my $vss_top_metal=0;
+  my $vdd_source_count=0;
+  my $vss_source_count=0;
+  my $create_vdd_loc=0;
+  my $create_vss_loc=0;
+  my %vdd_loc=();
+  my %vss_loc=();
+  if($vdd_loc_file eq ""){ $vdd_loc_file="vdd_loc_file.txt"; $create_vdd_loc=1; }
+  if($vss_loc_file eq ""){ $vss_loc_file="vss_loc_file.txt"; $create_vss_loc=1; }
+  if($create_vdd_loc==0 && $create_vss_loc==0){ return 0; }
+      
+  open(DEF, "<$def_file") or die "Cannot open $def_file\n";
+  while(my $line=<DEF>){
+    if($line=~/- Vdd/){$vss_found=0; $vdd_found=1;}
+    if($line=~/- Vss/ || $line=~/- GND/){$vss_found=1; $vdd_found=0;}
+    if($line=~/;/){$vss_found=0; $vdd_found=0;}
+    if($create_vdd_loc==1 && $vdd_found==1 && $line=~/\( ([-0-9]+) ([-0-9]+) \) (M[3-9]_M[2-8]_)/){
+        $x=$1; $y=$2; $via=$3;
+        $via=~/M([3-9])_M([2-8])_/;
+        if($1>$vdd_top_metal){
+            $vdd_top_metal=$1;
+            %vdd_loc=();
+            $vdd_source_count=0;
+        }
+        $x/=1000;
+        $y/=1000;
+        if($vdd_top_metal==$1){
+           $vdd_loc{"$x $y"}=1;
+           $vdd_source_count++;
+        }
+    }    
+    if($create_vss_loc==1 && $vss_found==1 && $line=~/\( ([-0-9]+) ([-0-9]+) \) (M[3-9]_M[2-8]_)/){
+        $x=$1; $y=$2; $via=$3;
+        $via=~/M([3-9])_M([2-8])_/;
+        if($1>$vss_top_metal){
+            $vss_top_metal=$1;
+#            close(VSS_LOC);
+#            open(VSS_LOC, ">$vss_loc_file");
+            %vss_loc=();
+            $vss_source_count=0;
+        }
+        $x/=1000;
+        $y/=1000;
+        if($vss_top_metal==$1){
+#           print VSS_LOC "vsrc{$vss_source_count} $x $y M$vss_top_metal\n";
+           $vss_loc{"$x $y"}=1;
+           $vss_source_count++;
+        }
+    }    
+  }
+  close(DEF);
+  if( $create_vdd_loc==1){
+    open(VDD_LOC, ">$vdd_loc_file");
+    my %x=();
+    my %y=();
+    if ($vdd_source_count > 1000) {
+        my $ratio=int(sqrt($vdd_source_count/1000));
+        my $n=0;
+        foreach my $xy (keys %vdd_loc) {
+            my ($x,$y)=split(/ /, $xy);
+            $x{$x}=1;
+            $y{$y}=1;
+        }
+        my @x=keys %x;
+        my @y=keys %y;
+        my $nx=0;
+        my $ny=0;
+        $n=0;
+        foreach my $x (sort gcmp keys %x) {
+            $ny=0;
+            foreach my $y (sort gcmp keys %y) {
+                if ($nx % $ratio == 0 and $ny % $ratio == 0 and defined $vdd_loc{"$x $y"}) {
+                    $n++;
+                    print VDD_LOC "vsrc{$n} $x $y M$vdd_top_metal\n";
+                }
+                $ny++;
+            }
+            $nx++;
+        }
+    }
+    else {
+        my $n=0;
+        foreach my $xy (keys %vdd_loc) {
+            print VDD_LOC "vsrc{$n} $xy M$vdd_top_metal\n";
+            $n++;
+        }
+    }
+    close(VDD_LOC);
+    %vdd_loc=();
+  }
+  if( $create_vss_loc==1){
+    open(VSS_LOC, ">$vss_loc_file");
+    my %x=();
+    my %y=();
+    # roughly 1000 sources is fine!
+    if ($vss_source_count > 1000) {
+        my $ratio=int(sqrt($vss_source_count/1000));
+        foreach my $xy (keys %vss_loc) {
+            my ($x,$y)=split(/ /, $xy);
+            $x{$x}=1;
+            $y{$y}=1;
+        }
+        my $nx=0;
+        my $ny=0;
+        my $n=0;
+        my @x=keys %x;
+        my @y=keys %y;
+        my $xratio=int(($#x+1)/($#y+1)*$ratio+1);
+        my $yratio=int(($#y+1)/($#x+1)*$ratio+1);
+        foreach my $x (sort gcmp keys %x) {
+            $ny=0;
+            foreach my $y (sort gcmp keys %y) {
+                if ($nx % $xratio == 0 and $ny % $yratio == 0 and defined $vss_loc{"$x $y"}) {
+                    $n++;
+                    print VSS_LOC "vsrc{$n} $x $y M$vss_top_metal\n";
+                }
+                $ny++;
+            }
+            $nx++;
+        }
+    }
+    else {
+        my $n=0;
+        foreach my $xy (keys %vss_loc) {
+            print VSS_LOC "vsrc{$n} $xy M$vss_top_metal\n";
+            $n++;
+        }
+    }
+    close(VSS_LOC);
+    %vss_loc=();
+  }
+  return 0;
+}
+
+sub fakePowermeter {
+  my ( $def_file, $powerfile ) = @_;
+
+  open( DEF, "<$def_file") or die "Can't open '$def_file' for reading.\n";
+  open( POWERFILE, ">$powerfile") or die "Can't open '$powerfile' for writing.\n";
+  print POWERFILE "Cell                            Internal   Switching       Total     Leakage   Cell\n";
+  print POWERFILE "                                   Power       Power       Power       Power   Name\n";
+  print POWERFILE "--------------------------------------------------------------------------------------\n";
+
+
+  my %area=();
+  my $macro="";
+  open ( LEF, "<$lef_file");
+  while (<LEF>) {
+    chomp;
+    if (/MACRO (\S+)/) {
+        $macro=$1;
+    }
+    if (/SIZE (\S+) BY (\S+)/) {
+        $area{$macro}=($1*$2)/1e6;
+    }
+  }
+  close LEF;
+  my $components=0;
+
+  $. = 0;
+  LOOP: while(my $line=<DEF>){
+    if ($line=~/\\/){$line=~s/\\//g;}
+    if ( $line=~/^COMPONENTS /){
+        $components=1;
+    } elsif ( $components && $line=~/^- (\S*) (\S*) /){
+        my $instname=$1;
+        my $cellname=$2;
+        if (defined ($area{$cellname})) {
+          print POWERFILE "$instname 0 $area{$cellname} $area{$cellname} 0 $cellname\n";
+        } else {
+          print POWERFILE "$instname 0 0.01 0.01 0 $cellname\n";
+        }
+    } elsif ( $line=~/^END COMPONENTS$/){
+        $components=0;
+        last LOOP;
+    }
+  }
+
+  close(DEF); 
+  close(POWERFILE);
+}
+
+sub genpdef {
+  my $assura = "/usr/local/cadence/bin/assura";
+  $assura = $ENV{ASSURA_SCRIPT} if defined $ENV{ASSURA_SCRIPT};
+  my $assuraLib=`$assura --libs`;
+  $assuraLib =~ s/lib$/assuraLib\/etc\/avtech\/avTech/;
+  my $strmouttemplate = <<ES;
+streamOutKeys = list(nil
+	'runDir			"."
+	'libName		"LIBNAME"
+	'primaryCell		"CELLNAME"
+	'viewName		"VIEWNAME"
+	'outFile		"CELLNAME.gds"
+	'scale			0.001000
+	'units			"micron"
+	'compression		"none"
+	'hierDepth		32
+	'convertToGeo		t
+	'maxVertices		200
+	'refLib			nil
+	'libVersion		"5.0"
+	'checkPolygon		nil
+	'snapToGrid		nil
+	'simMosaicToArray	t
+	'caseSensitivity	"preserve"
+	'textCaseSensitivity	"preserve"
+	'lineToZeroPath		"path"
+	'convertDot	"ignore"
+	'rectToBox		nil
+	'convertPathToPoly	t
+	'keepPcell	nil
+	'replaceBusBitChar	nil
+	'useParentXYforText	nil
+	'reportPrecision	nil
+	'runQuiet		nil
+	'comprehensiveLog		nil
+	'ignorePcellEvalFail		nil
+	'translateTopDown		nil
+	'errFile		"CELLNAME.strmout.log"
+	'NOUnmappingLayerWarning		nil
+	'techFileChoice		nil
+	'pcellSuffix		"DbId"
+	'respectGDSIILimits		nil
+	'dumpPcellInfo		nil
+	'genListHier		nil
+	'cellMapTable		""
+	'layerTable		"power.map"
+	'textFontTable		""
+	'convertPin		"geometry"
+	'pinInfo		0
+	'pinTextMapTable	""
+	'propMapTable		""
+	'propSeparator		","
+	'userSkillFile		""
+	'rodDir			""
+	'refLibList		""
+)
+ES
+
+  my $vddgndtemplate = <<ET;
+avParameters(?outputErrorLib t ?flagMalformed nil)
+
+outFile( "gds2" "vddgnd" "OUTFILE"
+   outLayer( m2vdd 32 type(0))
+   outLayer( m3vdd 33 type(0))
+   outLayer( m4vdd 34 type(0))
+   outLayer( m5vdd 35 type(0))
+   outLayer( m6vdd 36 type(0))
+   outLayer( m7vdd 37 type(0))
+   outLayer( m8vdd 38 type(0))
+   outLayer( m9vdd 39 type(0))
+   outLayer( m10vdd 40 type(0))
+   outLayer( v23vdd 52 type(0))
+   outLayer( v34vdd 53 type(0))
+   outLayer( v45vdd 54 type(0))
+   outLayer( v56vdd 55 type(0))
+   outLayer( v67vdd 56 type(0))
+   outLayer( v78vdd 57 type(0))
+   outLayer( v89vdd 58 type(0))
+   outLayer( v910vdd 59 type(0))
+
+   outLayer( m2gnd 32 type(1))
+   outLayer( m3gnd 33 type(1))
+   outLayer( m4gnd 34 type(1))
+   outLayer( m5gnd 35 type(1))
+   outLayer( m6gnd 36 type(1))
+   outLayer( m7gnd 37 type(1))
+   outLayer( m8gnd 38 type(1))
+   outLayer( m9gnd 39 type(0))
+   outLayer( m10gnd 40 type(0))
+   outLayer( v23gnd 52 type(1))
+   outLayer( v34gnd 53 type(1))
+   outLayer( v45gnd 54 type(1))
+   outLayer( v56gnd 55 type(1))
+   outLayer( v67gnd 56 type(1))
+   outLayer( v78gnd 57 type(1))
+   outLayer( v89gnd 58 type(0))
+   outLayer( v910gnd 59 type(0))
+
+   outLayer( m2vddm 32 type(2))
+   outLayer( m3vddm 33 type(2))
+   outLayer( m4vddm 34 type(2))
+   outLayer( m5vddm 35 type(2))
+   outLayer( m6vddm 36 type(2))
+   outLayer( m7vddm 37 type(2))
+   outLayer( m8vddm 38 type(2))
+   outLayer( m9vddm 39 type(2))
+   outLayer( m10vddm 40 type(2))
+   outLayer( v23vddm 52 type(2))
+   outLayer( v34vddm 53 type(2))
+   outLayer( v45vddm 54 type(2))
+   outLayer( v56vddm 55 type(2))
+   outLayer( v67vddm 56 type(2))
+   outLayer( v78vddm 57 type(2))
+   outLayer( v89vddm 58 type(2))
+   outLayer( v910vddm 59 type(2))
+)
+
+avParameters(
+  ?inputLayout ( "gds2" "INFILE" )
+  ?cellName "CELLNAME"
+  ?rulesFile "$pdk_root/share/Fulcrum/vstorm/pvddgnd.rul"
+  ?viewName "layout"
+  ?overwrite t
+  ?avrpt t
+  ?diskList ( ( "pg/0" 2G ) ( "pg/1" 2G ) ( "pg/2" 2G ) ( "pg/3" 2G ) ( "pg/5" 2G ) ( "pg/6" 2G ) ( "pg/7" 2G ) ( "pg/8" 2G ) ( "pg/9" 2G ) ( "pg/10" 2G ) ( "pg/11" 2G ) ( "pg/12" 2G ) ( "pg/13" 2G ) ( "pg/14" 2G ) ( "pg/15" 2G ) ( "pg/16" 2G ) ( "pg/17" 2G ) ( "pg/18" 2G ) )
+  ?avrpt maxErrorShapesPerCell(700000000)
+  ?workingDirectory "."
+  ?ignoreMissingOutLayer t
+  ?runName "pvddgnd2"
+)
+ET
+
+  $cell =~ /\.([^\.]+)\.([^\.]+)$/;
+  my $cn = $1;
+  my $st = $2;
+# not power grid cell, whole cell
+#  my $pcell="$lib.wires.${cn}_${st}_POWER_GRID_TIEOFF";
+  my $pcell=$cell;
+  my $pipocell=$pcell;
+  $pipocell =~ s/\./_/g;
+  $pipocell =~ s/-/_/g;
+  open (Q, ">strmout.rsf");
+  $strmouttemplate =~ s/LIBNAME/$lib/;
+  $strmouttemplate =~ s/CELLNAME/$pcell/g;
+  $strmouttemplate =~ s/VIEWNAME/$view/;
+  print Q $strmouttemplate;
+  close Q;
+  open Q, ">cds.lib";
+  print Q <<EL;
+SOFTINCLUDE $dfII_dir/cds.lib.generated
+SOFTINCLUDE \${FULCRUM_PDK_ROOT}/share/Fulcrum/dfII/cds.lib
+SOFTINCLUDE cds.lib.user
+# Use following line instead to use fake gates/stacks
+# SOFTINCLUDE \${FULCRUM_PDK_ROOT}/share/Fulcrum/dfII/cds.lib.fake
+DEFINE avTech $assuraLib
+EL
+  close Q;
+  open Q, ">assura_tech.lib";
+print Q <<EA;
+DEFINE Assura_$tech \${FULCRUM_PDK_ROOT}/share/Fulcrum/assura
+EA
+  close Q;
+  open Q, ">power.map";
+  foreach my $m (2..8) {
+    print Q "M$m gnd 3$m 1\n";
+    print Q "M$m vdd 3$m 0\n";
+  }
+  foreach my $v (3..7) {
+    print Q "VIA$v gnd 5$v 1\n";
+    print Q "VIA$v vdd 5$v 0\n";
+  }
+  close Q;
+  print STDERR "GENPDEF: Streamout of $cell ...\n" if $verbose;
+  `ic pipo strmout strmout.rsf 2>/dev/null`;
+  unlink "pipo_xout_info";
+  print STDERR "GENPDEF: Flattening $pcell.gds ...\n" if $verbose;
+  open Q, "| aaggds '$pcell.gds' 1>/dev/null 2>/dev/null";
+  print Q "wf";
+  print Q "q";
+  close Q;
+  open Q, ">pvddgnd.rsf";
+  $vddgndtemplate =~ s/INFILE/$pipocell.gds/;
+  $vddgndtemplate =~ s/OUTFILE/$pipocell.vddgnd.gds/;
+  $vddgndtemplate =~ s/CELLNAME/$pipocell/;
+  print Q $vddgndtemplate;
+  close Q;
+  print STDERR "GENPDEF: Merging Layers ...\n" if $verbose;
+  `/p/rrc/tools/bin/assura assura pvddgnd.rsf `;
+  `/bin/rm -fr pvddgnd2.*`;
+  print STDERR "GENPDEF: Generating $pcell.def ...\n" if $verbose;
+  open P, "$GDS2DEF '$pipocell.vddgnd.gds' 2>/dev/null |";
+  open Q, ">$pcell.def";
+  print Q<<ED;
+DIVIDERCHAR "/" ;
+BUSBITCHARS "[]" ;
+DESIGN $pcell ;
+TECHNOLOGY $tech ;
+UNITS DISTANCE MICRONS 1000 ;
+ED
+  while (<P>) {
+    next if /^\s*CLASS BLOCK/;
+    next if /^\s*FOREIGN /;
+    next if /^\s*SIZE /;
+    next if /^\s*ORIGIN /;
+    next if /^\s*DESIGN /;
+    next if /^\s*MACRO /;
+    s/END MACRO/END DESIGN/;
+    s/$pipocell/$pcell/;
+    print Q;
+  }
+  close P;
+  close Q;
+  return "${pcell}.def";
+}
+
+sub exportDesignDef {
+  my ( $def_out ) = @_;
+  print STDERR "EXPORT: Export Design Def ...\n\n" if $verbose;
+  system("mkdir -p '$output_dir/def_temp'");
+  my $cmd="exportDesignDef ".
+          "--fulcrum-pdk-root=$pdk_root ".
+          "--dfII-dir=$dfII_dir ".
+          "--cast-path=NULL ".
+          "--cell=$cell --lib=$lib --view=$view ".
+          "--working-dir='$output_dir/def_temp' ".
+          "--def-output='$def_out' ";
+  print STDERR "$cmd\n" if $verbose;  
+  system($cmd);
+}
+
+sub exportDesignLef {
+  my ( $lef_out, $cell_list ) = @_;
+  print STDERR "EXPORT: Export Design Lef ...\n\n" if $verbose;
+   
+  open P,">exportDesignLefOut.cmd";
+  print P <<CMD;
+gec3SkipLefTECH = t
+gec3CurrentLEFVersion="5.5"
+return = ldtrLefWrite( "$lef_out" 
+                       "$tech"
+                       t
+                       "$cell_list"
+                       "SE" )
+if( return "SUCCESS" "FAILURE" )
+exit
+CMD
+  close(P);
+  
+  $cmd="$ENV{IC_SCRIPT} icca -replay exportDesignLefOut.cmd -nograph -log exportDesignLefOut.log";
+  print STDERR "$cmd\n" if $verbose;  
+  system($cmd);
+}
+
+sub locateAbstract {
+    my ($lib,$cell)=@_;
+    my $libdir=$lib;
+    $libdir =~ s/\./\//g;
+    my $celldir=$cell;
+    $celldir =~ s/\./#2e/g;
+    $celldir =~ s/-/#2d/g;
+    if ( -s "$dfII_dir/$libdir/$celldir/abstract_vs/layout.cdb") {
+        return "abstract_vs";
+    }
+    "abstract";
+}
+
+sub createCellList {
+  my ( $def_file, $cell_list ) = @_;
+
+  open( DEF, "<$def_file") or die "Can't open '$def_file' for reading.\n";
+  open( CELL_LIST, ">$cell_list") or die "Can't open '$cell_list' for reading.\n";
+
+  $. = 0;
+  my $components=0;
+  my %cell_exist;
+
+  LOOP: while(my $line=<DEF>){
+    if ($line=~/\\/){$line=~s/\\//g;}
+    if ( $line=~/^COMPONENTS /){
+        $components=1;
+    } elsif ( $components && $line=~/^- (\S*) (\S*) /){
+        my $instname=$1;
+        my $cellname=$2;
+        if( ! defined $cell_exist{$cellname} ){
+          $cell_exist{$cellname}=$cellname; 
+          my $libname=$cellname;
+          $libname =~ s/\.([^\.]+)\.([^\.]+)$//;
+          if( $cellname!~/\.wires\./ ){
+            my $view=locateAbstract($libname, $cellname);
+            print CELL_LIST "$libname $cellname $view\n";
+          }
+        }
+    } elsif ( $line=~/^END COMPONENTS$/){
+        $components=0;
+        last LOOP;
+    }
+  }
+
+  close(DEF); 
+  close(CELL_LIST);
+}
+
+sub combineDefs {
+
+  my( $routed_def, $power_def, $all_def )=@_;
+
+  open( ROUTED_DEF, "<$routed_def") or die "Can't open '$routed_def' for reading.\n";
+  open( POWER_DEF, "<$power_def") or die "Can't open '$power_def' for reading.\n";
+  open( ALL_DEF, ">$all_def") or die "Can't open '$all_def' for reading.\n";
+
+  $. = 0;
+  my $components=0;
+  my $nets=0;
+  my $specialNets=0;
+  my $pins=0;
+  my $thisNet=0;
+  my $VddNet=0;
+  my $GNDNet=0;
+  my $VddNetExist=0;
+  my $GNDNetExist=0;
+  my $specialNetExist=0;
+  my $netExist=0;
+  my %inst;
+  my $instname;
+  my $cellname;
+  my $pinname;
+  my $netname;
+
+  while(my $line=<ROUTED_DEF>){
+    if ($line=~/\\/){$line=~s/\\//g;}
+    if ($line=~/^DESIGN (\S*)/){
+        $cellname=$1;
+    } elsif ( $line=~/^COMPONENTS /){
+        $components=1;
+    } elsif ( $components && $line=~/^- (\S*) (\S*) /){
+        $instname=$1;
+        $cellname=$2;
+        # tieoff is already being merged in
+        next if $cellname =~ /POWER_GRID_TIEOFF/;
+        $inst{$instname}=$cellname;
+    } elsif ( $line=~/^END COMPONENTS$/){
+        $components=0;
+    } elsif ( $line=~/^PINS /){
+        $pins=1;
+    } elsif ( $pins && $line=~/- (\S*) \+ NET (\S*) /){
+        $pinname=$1;
+        $netname=$2;
+    } elsif ( $line=~/^END PINS$/){
+        $pins=0;
+
+    } elsif ( $line=~/^NETS /){
+        $nets=1;
+        $netExist=1;
+    } elsif ( $line=~/^SPECIALNETS /){
+        $specialNets=1;
+        $specialNetExist=1;
+    } elsif ( $nets && $line=~/^\s*- Vdd/){
+        $VddNet=1;
+        $VddNetExist=1;
+        print ALL_DEF $line;
+        &AddVddNet(%inst);
+        $line=<ROUTED_DEF>;
+    } elsif ( $nets && ( $line=~/^\s*- GND/ | $line=~/^\s*- Vss/)){
+        $line=~s/GND/Vss/;
+        $GNDNet=1;
+        $GNDNetExist=1;
+        print ALL_DEF $line;
+        &AddGNDNet(%inst);
+        $line=<ROUTED_DEF>;
+    } elsif ( $nets && $thisNet && $line=~/^\s*\+/){
+        $thisNet=0;
+    } elsif ( $line=~/^END NETS/){
+        $nets=0;
+        if(! $VddNetExist){
+          print ALL_DEF "- Vdd\n";
+          &AddVddNet(%inst);
+          print ALL_DEF " ;\n";
+        }
+        if(! $GNDNetExist){
+          print ALL_DEF "- Vss\n";
+          &AddGNDNet(%inst);
+          print ALL_DEF " ;\n";
+        }           
+   } elsif ( $specialNets && $line=~/^- (\S*)/){
+        $netname=$1;
+        $thisNet=1;
+        &AddPowerGrid;
+    } elsif ( $line=~/^END SPECIALNETS/){
+        $specialNets=0;
+    } elsif ( $line=~/^END DESIGN/){
+        if( !$netExist ){
+          print ALL_DEF "NETS 2 ;\n";
+          print ALL_DEF "- Vdd\n";
+          &AddVddNet(%inst);
+          print ALL_DEF " ;\n";
+          print ALL_DEF "- Vss\n";
+          &AddGNDNet(%inst);
+          print ALL_DEF " ;\n";
+          print ALL_DEF "END NETS\n";
+        }
+        if( !$specialNetExist ){
+          print ALL_DEF "SPECIALNETS 2 ;\n";
+          &AddPowerGrid;
+          print ALL_DEF "END SPECIALNETS\n";
+        }
+    }
+    print ALL_DEF $line;
+  }
+
+  close(ALL_DEF);
+  close(ROUTED_DEF);
+  close(POWER_DEF);
+
+}
+
+sub AddPowerGrid () {
+  my $powerNets=0;
+  my $powerThisNet=0;
+  while(my $pline=<POWER_DEF>){
+    if ($pline=~/\\/){$pline=~s/\\//g;}
+    if ( $pline=~/^SPECIALNETS /){
+        $powerNets=1;
+    } elsif ( $powerNets && $pline=~/^- (\S*)/){
+        $powerThisNet=1;
+    } elsif ( $pline=~/^END SPECIALNETS/){
+        $powerNets=0;
+    } 
+    if( $powerNets && $powerThisNet ){ print ALL_DEF $pline; }
+  }
+}
+
+sub AddVddNet () {
+  my %inst=@_;
+  while (my ($key, $value) = each(%inst)){
+    print ALL_DEF "  ( $key Vdd )\n";
+  }
+}
+sub AddGNDNet () {
+  my %inst=@_;
+  foreach my $key (keys %inst) {
+    print ALL_DEF "  ( $key GND )\n";
+  }
+}

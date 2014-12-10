@@ -1,0 +1,1 @@
+java com.avlsi.tools.tsim.mips32.Instruction --disassemble --binary-image --big-endian $1 $2

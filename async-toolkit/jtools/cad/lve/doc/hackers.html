@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>Hacker's Guide to LVE</title>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <link REL ="stylesheet" TYPE="text/css" HREF="lve.css">
+</head>
+<body>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td><br>
+      </td>
+      <td align="left" height="90"><img src="logo.png" alt="Fulcrum" style="border: 0px solid ; width: 250px; height: 90px;" align="left"> </td>
+    </tr>
+  </tbody>
+</table>
+<!-- ========== START OF NAVBAR ========== --> <a name="navbar_top"><!-- --></a>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td colspan="2" class="NavBarCell1"> <a name="navbar_top_firstrow"><!-- --></a>
+      <table border="0" cellpadding="0" cellspacing="3">
+        <tbody>
+          <tr align="center" valign="top">
+            <td class="NavBarCell1"> <a href="index.html"><b>Static Index</b></a></td>
+            <td class="NavBarCell1"> <a href="tracking.html"><b>Tracking</b></a>
+            </td>
+            <td class="NavBarCell1"> <a href="$help_page"><b>Help Doc</b></a></td>
+            <td class="NavBarCell1"> <a href="../statistics.html"><b>Statistics</b></a></td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td rowspan="3" align="right" valign="top">
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- =========== END OF NAVBAR =========== -->
+<p> </p>
+<div style="text-align: center;">
+<div style="text-align: left;">
+<div style="text-align: center;">
+<h2><span style="font-weight: bold;">LVE Hackers Guide</span></h2>
+</div>
+</div>
+<div style="text-align: left;">
+<h3><a name="intro"></a>Introduction</h3>
+This page attempts to provide an in depth documentation about the
+generated files, depandancies and quirks about the LVE. It also serves
+as a detailed documentation of the system itself. We start of by looking
+into each of the directories created by the LVE and explain/document
+what is contained in the files found therein.<br>
+<h4>Cell Directory</h4>
+<pre><span style="font-style: italic;">.cellname</span><br></pre>
+The first line indicates the CAST CDL name potentially resubtyped (for
+partial extraction). The second line indicates the fully qualified
+cellname minus (FQCNMINUS) for partial extraction, third indicates the
+fully qualified cellname (FQCN); this does not include the minus part
+during partial extraction. The last line is the gds2 encoded cellname.
+This file is created before any attempt is made to run any tasks
+related to the specified cell.<br>
+<pre>CAST_CDL_NAME<br>FQCNMINUS<br>FQCN<br>GDSII_NAME<br></pre>
+<pre><span style="font-style: italic;">cell.localprops</span><br></pre>
+This file contains local properties of a cell. A line in this file has
+the following format.<br>
+<pre>node 'dynamicNode?"1":"0"' delayUp delayDn signoffDelayUp signoffDelayDn signoffSlewDn signoffSlewUp signoffSkewDn signoffSkewUp width space<br></pre>
+<pre><span style="font-style: italic;">cell.localnodes</span><br><br><span
+ style="font-style: italic;">cell.stats</span><br><br><span
+ style="font-style: italic;">cast.d</span><br><br><span
+ style="font-style: italic;">cell.raw</span><br><br></pre>
+<h4>Jflat Directory: &lt;output/dir&gt;/&lt;some/cell/name&gt;/jflat</h4>
+<pre>.default</pre>
+<br>
+<h4>Layout Directory: &lt;output/dir&gt;/&lt;some/cell/name&gt;/layout/</h4>
+<pre><span style="font-style: italic;">cell.cdl_gds2 </span><br
+ style="font-style: italic;"><br><span style="font-style: italic;">cell.cdl</span><br><br><span
+ style="font-style: italic;">cell.gds2</span>   <br><br><span
+ style="font-style: italic;">lvs.cls</span><br><br><span
+ style="font-style: italic;">df2.d</span> <span
+ style="font-style: italic;"></span><br></pre>
+<pre><span style="font-style: italic;">checkpoly.err</span><br></pre>
+<h4>Extract Directory:
+&lt;output/dir&gt;/&lt;some/cell/name&gt;/layout/extracted</h4>
+<pre><span style="font-style: italic;">cell.spice</span><br><br><span
+ style="font-style: italic;">cell.aspice</span><br><br><span
+ style="font-style: italic;">cell.spice_gds2</span><br><br><span
+ style="font-style: italic;">nvn.log</span><br><br></pre>
+<h4>Aspice Run Directory:
+&lt;output/dir&gt;/&lt;some/cell/name&gt;/layout/extracted/aspice/&lt;envname&gt;/&lt;process-corner&gt;/&lt;voltage&gt;/&lt;temp&gt;/&lt;timed_delay&gt;/</h4>
+<pre><span style="font-style: italic;">aspice.in</span><br><br><span
+ style="font-style: italic;">env.asp</span><br
+ style="font-style: italic;"><br><span style="font-style: italic;">aspice.asp</span><br><br><span
+ style="font-style: italic;">env.ntpc</span><br></pre>
+The contains environment specific directives information. The following
+the format for the this file:<br>
+<pre>node ntpc_spec ntpc_spec_signoff digitalCycles analogCyclces timeMax<br><span
+ style="font-style: italic;"><br>env.ntpcnodes</span><br><br><br><span
+ style="font-style: italic;">aspice.done</span><br><br></pre>
+<h4>Alint Run Directory:
+&lt;output/dir&gt;/&lt;some/cell/name&gt;/layout/extracted/alint/&lt;process-corner&gt;/&lt;voltage&gt;/&lt;temp&gt;/</h4>
+<pre>alint.in<br><br>env.asp<br><br>alint.done<br><br>alint.asp<br></pre>
+<br>
+<hr style="width: 100%; height: 2px;"><i>Fulcrum Microsystems.</i>&copy;
+copyright 2003. All Rights Reserved. <br>
+<br>
+</div>
+</div>
+</body>
+</html>

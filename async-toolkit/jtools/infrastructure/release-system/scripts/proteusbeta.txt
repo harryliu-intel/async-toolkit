@@ -1,0 +1,3 @@
+#os fedora-x86_64
+all 248912
+fulcrum-tsmc28-pdk 248912

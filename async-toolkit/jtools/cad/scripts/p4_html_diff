@@ -1,0 +1,75 @@
+#!/usr/intel/bin/perl
+
+# diffs revisions of html documents in p4 using html_diff.
+
+# usage
+if ( !$ARGV[0] ) {
+    print STDERR "USAGE: p4_html_diff file[#revision] [file[#revision]]\n";
+    print STDERR "  Compares changes to html file in p4.\n";
+    print STDERR "  Produces file#revision.diff in html format.\n";
+    print STDERR "  Additions are green, deletions are red.\n";
+    exit;
+}
+
+# create files to diff
+$ENV{P4DIFF} = "diff --minimal --ignore-all-space --ignore-blank-lines --unified=10000";
+if ( !$ARGV[1] ) {
+    # single file given
+    ($file, $rev) = split("#",$ARGV[0]);
+    if ( $rev == "" ) { die "single argument must be file#revision\n"; }
+    $a = "$file#$rev";
+    $b = "$file";
+} else {
+    # two files given
+    $a = "$ARGV[0]";
+    $b = "$ARGV[1]";
+}
+
+# do the diff
+system "p4 print $a > $a.tmp";
+system "p4 print $b > $b.tmp";
+system "html_diff $a.tmp $b.tmp";
+system "rm -f $a.tmp";
+system "rm -f $b.tmp";
+
+# create html header
+open OUT, ">header.tmp"  or die "Can't open header.tmp for writing.\n";
+system "p4 filelog -l $b | tail +2 > log.tmp";
+open IN, "<log.tmp" or die "Can't open log.tmp for reading.\n";
+print OUT "<h2>Revision history of $b:</h2>\n"; 
+print OUT "<table cellpadding=\"2\" cellspacing=\"2\" border=\"1\" width=\"100%\" align=\"justify\">
+ \n";
+$line = <IN>;
+$last = 0;
+while ($line) {
+    chomp $line;
+    if ( $line =~ s/\.\.\. \.\.\.//g ) {
+        if ( $last != 0) { print OUT "</td></tr>"; }
+        print OUT "<tr><td><font color=\"#0x3366ff\">$line</font>\n";
+    } elsif ( $line =~ s/\.\.\. //g ) {
+        if ( $last != 0) { print OUT "</td></tr>"; }
+        print OUT "<tr><td>$line</td><td>\n";
+        $last = 1;
+    } else {
+        print OUT "$line\n";
+    }
+    $line = <IN>;
+}
+if ( $last != 0) { print OUT "</td></tr>"; }
+print OUT "</table>\n";
+
+# summarize comparison
+print OUT "<h2><p>Comparing $a to $b.\n";
+print OUT "<font color=\"#009900\">&nbsp;Additions in green.</font>\n";
+print OUT "<font color=\"#ff0000\">&nbsp;Deletions in red.</font>\n";
+print OUT "</p></h2>\n";
+print OUT "<hr width=\"100%\">\n"; 
+
+# combine files
+system "cat header.tmp diff.html > 2.tmp";
+system "mv 2.tmp diff.html";
+system "rm header.tmp";
+system "rm log.tmp";
+
+# echo command to view it
+print STDERR "mozilla \$PWD/diff.html &\n";

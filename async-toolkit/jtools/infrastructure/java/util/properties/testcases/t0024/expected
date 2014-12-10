@@ -1,0 +1,9 @@
+N=6
+port.1.opt=d
+port.2.opt=c
+port.3.opt=f
+port.4.opt=d
+port.5.opt=f
+port.6.opt=d
+topdir=.
+variant=ccc:ddd:fff

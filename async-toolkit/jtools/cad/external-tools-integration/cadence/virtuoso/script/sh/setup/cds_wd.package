@@ -1,0 +1,11 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+### the cds_wd package used to cadence working directories that point
+### to the correct layout and setup environemnt for users/tools
+$arch/bin/mkcdswd.sh                                       mkcdswd.sh                                               775 p
+share/cds_wd_default_template/usermenu/.menu               cds_wd_default_template/usermenu/.menu                   664 p
+share/cds_wd_default_template/autoload/bindkeys            cds_wd_default_template/autoload/bindkeys                664 p

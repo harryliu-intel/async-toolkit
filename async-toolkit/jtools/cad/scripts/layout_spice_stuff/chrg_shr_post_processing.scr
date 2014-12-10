@@ -1,0 +1,209 @@
+#!/usr/intel/bin/perl
+
+my $date=`date`;
+my $base_dir=shift(@ARGV);
+my $CellName=shift(@ARGV);
+my $DynNd=shift(@ARGV);
+my $path=shift(@ARGV);
+## Setting environment variables and Paths
+
+$ENV{"PATH"} = "$ENV{\"PATH\"}:$path";
+
+my %OutputDynNd;
+my %PassGateDynNd;
+if($DynNd==1)  {
+  open HANDLE1,"<$base_dir/$CellName/CHRG_SHR_CS/out_chrg_shr";
+  L1:while(my $line=<HANDLE1>)  {
+    if($line=~/List_of_Output_Dynamic_Nodes/)  {
+      my @fields=split/\s+/,$line;
+      shift(@fields);
+      while(my $key=shift(@fields))  {
+	if($key ne "")  {
+	  $OutputDynNd{$key}="V";
+        }
+      }
+    }
+    elsif($line=~/List_Of_Pass_Gate_Dynamic_Nodes/)  {
+      my @fields=split/\s+/,$line;
+      shift(@fields);
+      while(my $key=shift(@fields))  {
+	if($key ne "")  {
+	  $PassGateDynNd{$key}="V";
+        }
+      }
+    }
+  }
+  close(HANDLE1);
+}
+if(!(-e "$base_dir/RESULTS"))  {
+  mkdir  "$base_dir/RESULTS";
+}
+
+open HANDLE1, ">>$base_dir/RESULTS/ERR_WARN.log";
+open HANDLE2,">>$base_dir/RESULTS/NODE_REPORT";
+open HANDLE3,">>$base_dir/RESULTS/EXTRACTOR_GONE_WRONG";
+open HANDLE4,">>$base_dir/RESULTS/PASSES_COMPLETELY";
+open STDERR,">>$base_dir/RESULTS/SIMULATION_ERROR_LOG";
+
+chdir "$base_dir/$CellName/CHRG_SHR_CS";
+
+my $status=0;
+my $dangerous_messages=0;
+my $one_shot=0;
+my $one_shot_b=0;
+my $one_shot_a=0;
+
+### to check whether the extraction worked
+### check that a spice file exists and is of size greater than zero
+  open HANDLE5, "<$base_dir/$CellName/$CellName.spice";
+  if((!(-e HANDLE5))||(-s HANDLE5 < 100))
+    {
+	print HANDLE3 "$CellName extraction went wrong on $date\n";
+        die "$CellName extraction went wrong on $date\n";
+    }
+   close(HANDLE5);
+#### Looking at the Up.out file
+## Finds bumps
+## if all values are zero it makes a note of that cell
+
+   open HANDLE5, "<$base_dir/$CellName/CHRG_SHR_CS/$CellName:up.out" or die  "SIMULATION Does not have  up.out $CellName on $date\n";
+   while(<HANDLE5>)
+     {
+      @fields_line=split;
+      if ($fields_line[2]>0.4)
+        {
+          $status=1;
+          if($one_shot==0)
+	    {
+		print HANDLE2 "$CellName $date\n";
+                print HANDLE2 "UP NODE REPORT\n";
+                $one_shot=1;
+            }
+          s/$CellName://o;
+          print HANDLE2 $_;
+          my $temp=$_;
+          $temp=~/(.*)\:up\.out/;
+          my $node=$1;
+          if(exists $OutputDynNd{$node})  {
+	    print HANDLE2 "Node $node is an Output Dynamic Node\n";
+          }
+          if(exists $PassGateDynNd{$node})  {
+	    print HANDLE2 "Node $node is a Pass Gate Dynamic Node\n";
+          }
+        }
+     }
+   close(HANDLE5);
+
+#### Looking at the Dn.out file
+## Finds bumps
+## if all values are >=1.2 it makes a note of that cell
+   open HANDLE5, "<$base_dir/$CellName/CHRG_SHR_CS/$CellName:dn.out" or die  "SIMULATION Does not have  dn.out $CellName\n";
+   while(<HANDLE5>)
+     {
+      $line=$_;
+      @fields_line=split;
+      if ($fields_line[2]<0.8)
+        {
+          $status=1;
+          if($one_shot==0)
+	    {
+		print HANDLE2 "$CellName $date\n";
+                $one_shot=1;
+            }
+           if($one_shot_b==0)
+	    {
+                print HANDLE2 "DOWN NODE REPORT\n";
+                $one_shot_b=1;
+            }   
+          s/$CellName://o;     
+          print HANDLE2 $_;
+          my $temp=$_;
+          $temp=~/(.*)\:dn\.out/;
+          my $node=$1;
+          if(exists $OutputDynNd{$node})  {
+	    print HANDLE2 "Node $node is an Output Dynamic Node\n";
+          }
+          if(exists $PassGateDynNd{$node})  {
+	    print HANDLE2 "Node $node is a Pass Gate Dynamic Node\n";
+          }
+        }      
+     }
+   close(HANDLE5);
+
+#### Looks at the err.sim log
+#### Filters out benign errors and warnings
+
+
+   open HANDLE5, "<$base_dir/$CellName/CHRG_SHR_CS/err_chrg_shr" or die  "SIMULATION Does not have  err_sim $CellName $date\n";
+   $one_shot_a=0;
+   $prev_line="";
+   $store="";
+   $store_has_a_value=0;
+   while(<HANDLE5>)
+     {
+       chomp($_);
+       if($store_has_a_value==1)
+         {
+           if($_=~/ERROR: can't find node [a-zA-Z0-9\.\_\-\,\\\#\|]*/)
+             {
+               print HANDLE1 "$_\n";
+             }
+           else
+             {
+               print HANDLE1 "$store\n";
+             }
+           $store_has_a_value=0;
+           $store="";
+           $dangerous_messages=1;            
+         }
+       else
+         {
+           if(($_=~/ERROR\:/)||($_=~/WARNING\:/))
+             {
+               if(($_=~/unknown BSIM3 parameters/)||($_=~/unable to reorder trace file/)||($_=~/no conductive device connected to node/)||($_=~/cell \=/)||($_=~/node [a-zA-Z\_0-9\.\-\\\|\,\#]* not used/))
+                 {
+                 }
+               else
+                 {
+                   if($one_shot_a==0)
+                     {
+                       print HANDLE1 "Cell= $CellName $date\n";
+                       $one_shot_a=1;
+                     } 
+                   if($_=~/ERROR: Can't find specified victim node/)
+                     {
+                       $prev_line=~/victim\=([a-zA-Z0-9\.\_\-\,\\\#\|]*) /;
+                       $store="$_ $1";
+                       $store_has_a_value=1;                       
+                     }
+                   else
+                     {
+                       print HANDLE1 "$_ \n";
+                       $dangerous_messages=1;
+                     }
+                 }
+             }
+         } 
+       $prev_line=$_;  
+     }
+   close(HANDLE5);
+######
+###### 
+
+   if ($status==1)
+     {
+	 print HANDLE2 "\n";
+         print HANDLE2 "\n";
+         $status=0;
+     }
+   elsif(($status==0)&&($dangerous_messages==0))
+     {
+	 print HANDLE4 "$CellName $date\n";
+     }
+
+ 
+close(HANDLE1);
+close(HANDLE2);
+close(HANDLE3);
+close(HANDLE4);
+close(STDERR);

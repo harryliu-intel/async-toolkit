@@ -1,0 +1,558 @@
+#!/usr/intel/bin/perl -w
+#
+# Author: Mike Davies
+# Purpose: tie together all scripts related to post-layout verification
+#
+
+#
+# report usage
+#
+sub usage() {
+  my $usage = <<EOF;
+USAGE: postlayout [args] actions fqcn
+  Actions is a comma separated list of ordered actions including:
+    extract          (Generates .spice extract file[s])
+    spice            (spice the extract file[s])
+    charge_sharing   (spice charge sharing for all leaf cells)
+    density_factor   (calculate pre- and post-layout density factors)
+
+  Arguments:
+    --allCells=[$allCells] [ --filter=[$filterCells] ]
+      (Perform operation on all cells instantiated by fqcn, possibly
+      filtered according to cast_query --filter.)
+    --verbose=[$verbose] 
+      (Show commands as they are executed; if >=2, show command output as well)
+    --justPrint=[$justPrint]
+      (Only print what would be done, don't execute)
+    --html=[$htmlReport] [ --class=[$cssClass] ]
+      (Generate an HTML report, applicable to 'density_factor' action)
+
+   Path/file:
+    --cast-path=[${cast_path}]  
+      (cast path)
+    --cds-dir=[${cds_dir}]  
+      (cds_wd directory for Cadence)
+    --dfII-dir=[${dfII_dir}]  
+      (dfII directory)
+    --hw-root=[${hw_root}]
+      (Determines cast-path and dfII-dir if specified)
+
+   Perforce:
+    --specClient=[${specClient}]  
+      (p4 client for spec netlists)
+    --layoutClient=[${layoutClient}]  
+      (p4 client for layout)
+
+   Spice:
+    --spiceTime=[${spiceTime}]  
+      (Duration of spice run, in seconds)
+    --spiceTemp=[${spiceTemp}]  
+      (Temperature for spice run, in Celcius)
+    --spiceTrue=[${spiceTrue}]  
+      (Vdd voltage for spice run)
+    --spiceCorner=[${spiceCorner}]  
+      (Process corner for BSIM3 deck)
+    --spiceEnv=[${spiceEnv}]  
+      (List of environments for spice runs)
+    --spiceCells=[${spiceCells}]  
+      (List of cells for charge_sharing, run all if empty)
+
+   Java:
+    --useJava=[${useJava}]  
+      (Use java directly instead of scripts)
+    --javaFlags=[${javaFlags}]  
+      (Additional flags for java)
+    --mem=[${mem}]  
+      (Memory to use for java tools or wrapper scripts)
+
+   Compute servers:
+    --sun=[${sun}]  
+      (Chooses sun host machine)
+    --qsub=[${qsub}]  
+      (Use qsub for spice jobs)
+
+   Environment variables:
+    USER=[$ENV{USER}]
+    HOME=[$ENV{HOME}]
+    PWD=[$ENV{PWD}]
+
+EOF
+    die "${usage}";
+}
+
+#
+# default paths and variables
+#
+$useJava        = 0;
+$spiceTime      = 20e-9;
+$spiceCorner    = "tt";
+$spiceTemp      = 27;
+$spiceTrue      = 1.2;
+$layoutClient   = "$ENV{USER}-layout";
+$specClient     = "$ENV{USER}";
+$spiceEnv       = "digital";
+$spiceCells     = "";
+$sun            = "rupee";
+$cds_dir        = "$ENV{HOME}/cds_wd/F16";
+$hw_root        = "$ENV{HOME}/hw";
+$cast_path      = "${hw_root}/cast:${hw_root}/layout/tsmc13/spec";
+$dfII_dir       = "${hw_root}/layout/tsmc13/dfII";
+$qsub           = 0;
+$mem            = "512M";
+$javaFlags      = "-server";
+$verbose        = 0;
+$justPrint      = 0;
+$allCells       = 0;
+$filterCells    = "";
+$htmlReport     = 0;
+$cssClass       = "";
+
+#
+# Non-Java tools
+#
+$mk_instance           = "/home/group/microarch/cad/bin/mk_instance";
+$spice_batch           = "/usr/local/cad/bin/spice_batch";
+$charge_sharing_report = "/home/group/microarch/cad/bin/charge_sharing_report";
+$stream_and_extract    = "/home/group/cadadmin/simplex_extractor/1.0/share/script/perl/stream_and_extract_0.13um";
+$spice                 = "/usr/local/cad/bin/spice";
+$qsub                  = "/usr/local/PBS/bin/qsub -l walltime=24:00:00";
+
+#
+# Assumptions (constants)
+#
+$STATICIZER_GATES = "gate.STATICIZER.0:gate.STATICIZER.1";
+
+#
+# Get optional command line arguments
+#
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+
+    ($flag, $value) = split("=",$1);
+    if    ($flag eq "useJava")        { $useJava = $value; }
+    elsif ($flag eq "sun")            { $sun = $value; }
+    elsif ($flag eq "spiceTime")      { $spiceTime = $value; }
+    elsif ($flag eq "spiceTemp")      { $spiceTemp = $value; }
+    elsif ($flag eq "spiceTrue")      { $spiceTrue = $value; }
+    elsif ($flag eq "spiceCorner")    { $spiceCorner = $value; }
+    elsif ($flag eq "spiceEnv")       { $spiceEnv = $value; }
+    elsif ($flag eq "spiceCells")     { $spiceCells = $value; }
+    elsif ($flag eq "layoutClient")   { $layoutClient = $value; }
+    elsif ($flag eq "specClient")     { $specClient = $value; }
+    elsif ($flag eq "cds-dir")        { $cds_dir = $value; }
+    elsif ($flag eq "hw-root")        { 
+        $hw_root = $value; 
+        $cast_path = "${hw_root}/cast:${hw_root}/layout/tsmc13/spec";
+        $dfII_dir  = "${hw_root}/layout/tsmc13/dfII";
+    }
+    elsif ($flag eq "dfII-dir")       { $dfII_dir = $value; }
+    elsif ($flag eq "cast-path")      { $cast_path = $value; }
+    elsif ($flag eq "qsub")           { $qsub = $value; }
+    elsif ($flag eq "mem")            { $mem = $value; }
+    elsif ($flag eq "javaFlags")      { $javaFlags = $value; }
+    elsif ($flag eq "verbose")        { $verbose = defined($value) ? 
+                                            $value : ($verbose+1); }
+    elsif ($flag eq "justPrint")      { $justPrint = 1; }
+    elsif ($flag eq "allCells")       { $allCells = $value; }
+    elsif ($flag eq "filter")         { $filterCells = $value; }
+    elsif ($flag eq "html")           { $htmlReport = $value; }
+    elsif ($flag eq "class")          { $cssClass = $value; }
+    elsif ($flag eq "help")           { usage(); }
+
+    else { 
+        die "ERROR: argument --${flag} not recognized.\n"; 
+    }
+    shift @ARGV;
+}
+
+#
+# Get required command line arguments
+#
+@ARGV == 2 or usage();
+@actions  = split(",",$ARGV[0]);
+$fqcn     = $ARGV[1];
+$cadenceName = (decode_fqcn($fqcn))[2];
+
+#
+# Derived variables
+#
+$work_dir = "$ENV{PWD}/${cadenceName}";
+$javaFlags ||= "-Xmx${mem}";
+
+#
+# Java tools
+#
+if ( $useJava == 1) {
+
+    # run java classes directly, rely on correct CLASSPATH
+    $java      = "/usr/intel/bin/java ${javaFlags}";
+    $CastQuery = "${java} com.avlsi.tools.jauto.CastQuery";
+    $Cast2Cdl  = "${java} com.avlsi.tools.jauto.Cast2Cdl";
+
+} else {
+
+    # run wrapper scripts or whatever is in your path
+    $CastQuery = "cast_query --max-heap-size=${mem}";
+    $Cast2Cdl  = "cast2cdl --max-heap-size=${mem}";
+}
+
+#
+# List of cells to work on
+#
+if ($allCells == 1) {
+    @cellList = query("--filter=$filterCells");
+}
+else {
+    @cellList = ( $fqcn );
+}
+
+our $action;
+our $verbose;
+
+#
+# Workspace setup
+#
+mkdir ${work_dir} if (! -e ${work_dir});
+umask 0022;
+sub my_system;                              # Predeclare my_system
+
+
+#
+# Process the ordered list of actions
+#
+foreach $action (@actions) {
+    print "Doing ${action}...\n";
+
+    # handle various modes
+    if ($action eq "extract") {
+
+        foreach $cell (@cellList) {
+            print "  $cell\n" if (@cellList > 1);
+            extract_cell($cell);
+        }
+
+    } elsif ($action eq "spice") {
+      
+        # construct todo file for spice
+        if (! -e "${work_dir}/${fqcn}.spice") {
+            die "Missing ${fqcn}.spice.\n";
+        }
+        my_system "mkdir -p \"${work_dir}/spice\"";
+        my @envs = split(",",$spiceEnv);
+        my $out="${work_dir}/spice/todo";
+        if($justPrint) {
+            print STDERR "[writing to ${out}]\n";
+        } else {
+            open OUT, ">${out}" or die "couldn't open ${out} for writing";
+            for $env (@envs) {
+                print OUT "${fqcn}:${env}\n";
+            }
+            close OUT;
+        }
+
+        # use spice_batch to run it
+        $cmd  = "cd \"${work_dir}/spice\"; ${spice_batch} \\\n";
+        $cmd .= "-f \\\n";
+        $cmd .= "-local \\\n" if ( $qsub == 0);
+        $cmd .= "--spice-file=\"${work_dir}/${fqcn}.spice\" \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--time=${spiceTime} \\\n";
+        $cmd .= "--temp=${spiceTemp} \\\n";
+        $cmd .= "--true=${spiceTrue} \\\n";
+        $cmd .= "--corner=${spiceCorner} \\\n";
+        $cmd .= "todo";
+        my_system "${cmd}";
+
+    } elsif ($action eq "charge_sharing") {
+      
+        if (! -e "${work_dir}/charge_sharing") {
+            mkdir "${work_dir}/charge_sharing";
+        }
+
+        foreach $cell (@cellList) {
+            print "  $cell\n" if (@cellList > 1);
+            extract_cell($cell);
+
+            my $name = (decode_fqcn($cell))[2];
+
+            $cmd = "${spice} \\\n" .
+                   "--spice-file=\"${work_dir}/extract/${name}.spice\" \\\n" .
+                   "--cast-path=\"${cast_path}\" \\\n" .
+                   "--chargeSharing=1 \\\n" .
+                   "--true=${spiceTrue} \\\n" .
+                   "--corner=${spiceCorner} \\\n" .
+                   "--temp=${spiceTemp} \\\n" .
+                   "\"$cell\"\n";
+
+            my_system "rm -rf \"${work_dir}/charge_sharing/${name}\"";
+            mkdir "${work_dir}/charge_sharing/${name}";
+
+            qsub("${work_dir}/charge_sharing/${name}",$cmd,"cs");
+        }
+
+        # Generate report
+        my_system "${charge_sharing_report} ${work_dir}/charge_sharing" .
+                  " > ${work_dir}/charge_sharing.out";
+
+    } elsif ($action eq "density_factor") {
+
+        extract_geometry($fqcn,"floorplan");
+        extract_geometry($fqcn,"layout");
+
+        my %gate_area = query_gate_areas();
+        my %density_factor = ();
+
+        open REPORT, ">${work_dir}/density_factor.out";
+
+        foreach $cell (@cellList) {
+            
+            my ($name) = (decode_fqcn($cell))[2];
+            my $finst = "${work_dir}/geometry/floorplan/${name}.instances";
+            my $linst = "${work_dir}/geometry/layout/${name}.instances";
+            my $floorplan_area = (parse_instances($finst))[0];
+            my $layout_area    = (parse_instances($linst))[0];
+
+            @{$density_factor{$cell}} = (
+                sprintf("%.3g", $floorplan_area / $gate_area{$cell}),
+                sprintf("%.3g", $layout_area / $gate_area{$cell})
+            );
+
+            printf REPORT "$cell %.4g %.4g\n", 
+                          $floorplan_area / $gate_area{$cell}, 
+                          $layout_area / $gate_area{$cell};
+        }
+
+        close REPORT;
+
+        # Generate HTML report if specified
+        if ($htmlReport == 1) {
+            generate_html_report_from_map("Cell", "Pre-Layout Density Factor",
+                                          "Post-Layout Density Factor",
+                                          \%density_factor, 2,
+                                          "density_factor");
+        }
+        
+    } else {
+        
+        print STDERR "Unknown action '$action'.\n";
+        usage();
+        
+    }
+}
+
+
+#
+# Execute a command, taking care of exit status and $verbose and
+# $justPrint
+#
+sub my_system {
+    my ($cmd,$outfile)=@_;
+    my $real_cmd = 
+        !defined($outfile) 
+        ? $cmd
+        : (($verbose > 1)
+           ? "bash -c \Q$cmd | tee \"$outfile\"; exit \$PIPESTATUS\E" 
+           : "$cmd > '$outfile'");
+    print STDERR "$cmd\n" if $verbose || $justPrint;
+    unless($justPrint) {
+        system($real_cmd) == 0 
+            or die "ubersize(action=$action): Failed to execute:\n".
+            " $cmd\nError ",$?>>8,($outfile?"; see $outfile\n":"\n");
+    }
+}
+
+
+#
+# Return an array of cells for easy use in various actions.
+# Argument list is passed to cast_query --task=subcells
+#
+sub query {
+    my $cmd = "${CastQuery} --cast-path=\"${cast_path}\" --cell=\"${fqcn}\"".
+              " --task=subcells @_";
+    my @cells = ();
+    open QUERY, "${cmd}|" or die "ERROR: query failed";
+    while (<QUERY>) {
+        chomp $_;
+        s/\s*$//;
+        push @cells, $_;
+    }
+    return @cells;
+}
+
+
+#
+# Query gate areas
+#
+sub query_gate_areas {
+    my $cmd = "${CastQuery} --cast-path=\"${cast_path}\" --cell=\"${fqcn}\"" .
+              " --task=transistors=${STATICIZER_GATES}";
+    my ($cell,$tcount,$width,$area);
+    my %areas = ();
+    
+    $cmd .= " --filter=${filterCells}" if ($filterCells ne "");
+    open QUERY, "${cmd}|" or die "ERROR: query failed";
+    while (<QUERY>) {
+        chomp $_;
+        ($cell,$tcount,$width,$area) = split /\s+/, $_;
+        $areas{$cell} = $area;
+    }
+    return %areas;
+}
+
+
+#
+# Determine base cell type, subtype number, cadence name, and cadence
+# library from a FQCN.
+#
+sub decode_fqcn {
+    my ($cell) = @_;
+    my ($lib,$type,$subtype);
+    $cell =~ /^(.*)\.([^.]+)\.([^.]+)$/;
+    $lib = $1;
+    $type = $1 . "." . $2;
+    $subtype = $2;
+    $cell =~ s/\(/-L/g;
+    $cell =~ s/\)/-R/g;
+    $cell =~ s/\{/-L/g;
+    $cell =~ s/\}/-R/g;
+    $cell =~ s/,/_/g;
+    return ($type,$subtype,$cell,$lib);
+}
+
+
+#
+# Extracts the specified cell if its .spice file doesn't exist.
+#
+sub extract_cell {
+    my ($cell) = @_;
+
+    # create directories
+    mkdir ${work_dir} if (! -e $work_dir);
+    mkdir "${work_dir}/extract" if (! -e "$work_dir/extract");
+
+    # Create cdl file
+    if (! -e "${work_dir}/extract/${cadenceName}.cdl") {
+        $cmd = "${Cast2Cdl} \\\n" .
+               "--cast-path=${cast_path} \\\n" .
+               "\"--cell=${fqcn}\" \\\n" .
+               "\"--output=${work_dir}/extract/${cadenceName}.cdl\"";
+        my_system $cmd;
+    }
+
+    my ($name,$lib) = (decode_fqcn($cell))[2,3];
+    if (! -e "${work_dir}/extract/${name}.spice") {
+        $cmd = "ssh ${sun} \"\\\n" .
+               "${stream_and_extract} \\\n" .
+               "--lowK \\\n" .
+               "--spice '${work_dir}/extract/${name}.spice' \\\n" .
+               "--cds_loc ${cds_dir} \\\n" .
+               "--cdl_loc '${work_dir}/extract/${cadenceName}.cdl' \\\n" .
+               "--top_level_name ${name} \\\n" .
+               "${name} $lib \"";
+        my_system $cmd, "${work_dir}/extract/${name}.out";
+    }
+}
+
+
+#
+# Dispatches the job to qsub.  Takes three arguments: working directory,
+# command to run in the working directory, and a short descriptive job
+# name to identify it in qstat.
+#
+sub qsub {
+    my ($dir,$cmd,$do) = @_;
+
+    open DO, ">${dir}/${do}" || die "Couldn't create ${dir}/${do}.\n";
+    print DO "cd \"$dir\"; \\\n";
+    print DO $cmd;
+    close DO;
+    my_system "chmod +x ${dir}/${do}";
+    my_system "${qsub} -o \"${dir}/out\" -e \"${dir}/err\" \"${dir}/${do}\"";
+}
+
+
+#
+# Generates .instance geometry information for all subcells of the specified 
+# cell (for a particular Cadence view name).
+#
+sub extract_geometry {
+    my ($cell,$view) = @_;
+    my ($name,$lib) = (decode_fqcn($cell))[2,3];
+    my $cmd = "";
+
+    if (! -e "${work_dir}/geometry/${view}/${name}.instances") {
+        $cmd = "ssh ${sun} \"" .
+               "cd ${cds_dir}; " .
+               "${mk_instance} ${lib} ${name} '${work_dir}/geometry/${view}' " .
+               "${view} \"";
+
+        my_system($cmd, "${work_dir}/mk_instance.${view}.out");
+    }
+}
+
+
+#
+# Calculates the area and half-perimeter of a cell from its .instances file.
+#
+sub parse_instances {
+    my ($instfile) = @_;
+    my ($line,$llx,$lly,$urx,$ury,$area,$half_perim);
+    
+    open (INSTANCE, $instfile) || die "Couldn't read $instfile.\n";
+    $line = <INSTANCE>;
+    die "Unexpected line in $instfile\n" if ($line ne "beginlist\n");
+    $line = <INSTANCE>;
+    die "Unexpected line in $instfile\n" if ($line ne "beginlist\n");
+    $llx = <INSTANCE>; chomp $llx;
+    $lly = <INSTANCE>; chomp $lly;
+    $line = <INSTANCE>;
+    die "Unexpected line in $instfile\n" if ($line ne "endlist\n");
+    $line = <INSTANCE>;
+    die "Unexpected line in $instfile\n" if ($line ne "beginlist\n");
+    $urx = <INSTANCE>; chomp $urx;
+    $ury = <INSTANCE>; chomp $ury;
+    close INSTANCE;
+    
+    $area = ($urx - $llx) * ($ury - $lly);
+    $half_perim = 0.5 * ($urx - $llx + $ury - $lly);
+
+    return ($area,$half_perim);
+}
+
+
+#
+# Generates an HTML report (table) from a map of keys to arrays
+#
+sub generate_html_report_from_map {
+    my $name = pop;
+    my $numfields = pop;
+    my $mapref = pop;
+    my @headers = @_;
+    my $class_str = "";
+    $class_str = "class=$cssClass" if ($cssClass ne "");
+
+    open REPORT, ">${work_dir}/${name}.html" 
+        || die "Couldn't write ${work_dir}/${name}.html.\n";
+    print REPORT <<TABLE;
+<table $class_str cellpadding=3>
+ <thead $class_str>
+ <tr $class_str>
+TABLE
+    foreach $head (@headers) {
+        print REPORT "  <td $class_str align=center>${head}</td>\n";
+    }
+    print REPORT " </thead>\n";
+    print REPORT " <tbody $class_str>\n";
+
+    foreach $key (keys %{$mapref}) {
+        print REPORT "  <tr $class_str>\n";
+        print REPORT "   <td $class_str>$key</td>\n";
+        foreach $val (@{$mapref->{$key}}) {
+            print REPORT "   <td $class_str>$val</td>\n";
+        }
+        print REPORT "  </tr>\n";
+    }
+    print REPORT " </tbody>\n";
+    print REPORT "</table>\n";
+    close REPORT;
+}
+

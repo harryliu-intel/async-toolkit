@@ -1,0 +1,393 @@
+#!/usr/intel/bin/perl -w
+
+my $verbose=0;
+my $jobid=0;
+
+my $doc = <<DOC;
+!!! Not updated for Intel netbatch
+Wrapper for qsub used by <tool lve> and <tool gen_leaf_cells>.
+
+Just use 'qb command' to execute command on a compute server.
+It acts just like you typed the command, except it is utterly non-interactive.
+
+Module details this is what is happening:
+<pre>
+qsub -cwd bash --norc --noprofile -c \'cmd\'
+</pre>
+Uses these environement variables:
+    <dl>
+    <dt> QB_LOCAL
+    <dd> If set, will run the command locally instead of using qsub.  Use this if you still want the .diag capability.
+    <dt> QB_RUN_NAME
+    <dd> The run name for the qsub job that will show up in qstat.
+    <dt> QRSH_FLAGS
+    <dd> A list of flags to pass on to qsub.
+    <dt> QB_DIAG_FILE
+    <dd> <p> qb will write to this file if specified.  It writes diagnostics about the compute job and the version of the packages involved.  Heres an example of what it writes when <tool lve> uses qb: </p>
+<pre>
+Host Linux aetius 2.4.22-1.2197.nptl #1 Thu Jul 1 15:14:28 EDT 2004 i686 i686 i386 GNU/Linux
+lve Build: khe-aetius-2004-08-03-17-21-50-PDT-unofficial
+fulcrum-nv90-pdk Build: khe-aetius-2004-08-05-20-11-36-PDT-unofficial
+submission: Fri Aug 6 18:46:13 PDT 2004
+Compute Host: hydrogen
+started: Fri Aug 6 18:46:20 PDT 2004
+finished: Fri Aug 6 18:46:29 PDT 2004
+</pre>
+    <dt> FULCRUM_PDK_PACKAGE_ROOT
+    <dd> If QB_DIAG_FILE is also specified, the diagnostics file will include a package descriptor line for the pdk package:
+    <pre>fulcrum-nv90-pdk Build: khe-aetius-2004-08-05-20-11-36-PDT-unofficial</pre>
+
+</dl>    
+DOC
+
+BEGIN {
+    $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+}
+
+my $scriptfile="";
+my $pid=0;
+my $ret=0;
+my $err=0;
+
+# stop it from leaving garbage if ^C during nbrun
+
+sub exittrap {
+    system("nbjob remove $jobid 1>/dev/null 2>/dev/null") if $jobid > 0;
+    unlink $scriptfile if $scriptfile ne "";
+    exit $err;
+}
+
+END {
+    exittrap("NORMAL");
+}
+
+$SIG{TERM}=\&exittrap;
+$SIG{INT}=\&exittrap;
+$SIG{QUIT}=\&exittrap;
+$ENV{QB} = $0;
+
+use IPC::Open3 qw/ open3 /;
+use IO::Select;
+use Symbol;
+
+# export environment variables, skipping trouble-makers
+my %env=();
+foreach $e (keys %ENV) {
+    if (!(( $e =~ /^SSH_/ ) or
+        ( $e =~ /^LD_/ ) or
+        ( $e eq "DISPLAY" ) or
+        ( $e =~ /^TERM/ ))) {
+        $env{$e}=$ENV{$e};
+    }
+}
+
+%ENV=%env;
+
+my @args  = (@ARGV);
+my $oldflags = $ENV{QRSH_FLAGS} || "";
+my $monitor=0;
+if (defined ($ENV{LVE_MMONITOR}) and $ENV{LVE_MMONITOR}) {
+    # use dumpRusage
+    $monitor = 1;
+}
+# illegal qsub oldflags
+$oldflags =~ s/-nostdin//;
+$oldflags =~ s/-noshell//;
+
+$oldflags =~ s/\s+/ /g;
+my $nocwd=1;
+$nocwd = 0 if ($oldflags =~ /-cwd/);
+my @hold=();
+my $hold="";
+if ($oldflags =~ /-hold_jid=(\S+)/) {
+    @hold = split(/,/, $1);
+    foreach my $h (@hold) {
+        $h = "$h [exit]";
+    }
+    $hold = "--trigger '".join(" \&\& ", @hold)."'";
+}
+my $qrsh = 1;
+if ($ENV{QB_LOCAL}) { $qrsh = 0; }
+my $hostname=`hostname`;
+chomp $hostname;
+my $name=$hostname;
+$name = $ENV{QB_RUN_NAME} if (defined $ENV{QB_RUN_NAME});
+my $logfile="/dev/null";
+$nflags .= "--log-file $logfile";
+my $diagFile = $ENV{QB_DIAG_FILE} || "/dev/null";
+$diagFile = "\Q$diagFile\E";
+my $esc   = join(" ",map {"\Q$_\E"} @args);
+$esc =~ s:\\/:/:g;
+# allow multiple commands on one line
+$esc =~ s/\\;/;/g;
+my $cmd = "echo Compute Host: `hostname` >>$diagFile; echo started: `date`>>$diagFile; $esc";
+my $umask = "";
+# assuradrc drc --license "Assura_DRC=1"
+# assuralvs lvs --license "Assura_LVS=1"
+# big b TBD
+# cores cc 
+# h_rt h_rt wtime <
+# h_vmem h_vmem
+# hercules herc
+# herculesdrc hdrc
+# hostname h class host="$$"
+# hsim hsim
+# hspice hsp
+# memory mem --class-reservation "fRM:#" (#in M)
+# memsize mz tRM ??
+# nano nano,nanoproteus np --license "Encounter_Digital_Impl_Sys_XL=#"
+# npregression npr ??
+# p4t p4t ??
+# primetime,pt --license "PrimeTime-SI=1"
+# rc,rcv --license "RTL_Compiler_Verification=1"
+# scratch scr
+# starrc star --license "Star-RC2_MANAGER=1"
+# syncalta sa
+# trigger tg
+# unshared us --class-reservation "dedicated=true"
+# verilog vl fastverilog fv --license "VERILOG_XL=#"
+#translate grid to netbatch options
+sub mem2megs {
+    my ($mem)=@_;
+    $mem =~ /([\d\.]+)([a-zA-Z])/;
+    my $size=$1;
+    my $modifier=$2;
+    $size *= 1024 if ($modifier eq "G");
+    $size *= 1000 if ($modifier eq "g");
+    $size /= 1024 if ($modifier eq "K");
+    $size /= 1000 if ($modifier eq "k");
+    $size = int($size+0.5);
+    $size = 1 if $size < 1;
+    $size;
+}
+
+sub mem2gigs {
+    my ($mem)=@_;
+    $mem =~ /([\d\.]+)([a-zA-Z])/;
+    my $size=$1;
+    my $modifier=$2;
+    $size *= 1024 if ($modifier eq "G");
+    $size *= 1000 if ($modifier eq "g");
+    $size /= 1024 if ($modifier eq "K");
+    $size /= 1000 if ($modifier eq "k");
+    $size /= 1024;
+    $size = int($size+0.5);
+    $size = 1 if $size < 1;
+    $size;
+}
+
+my @smartresource=();
+my @class_reservations=();
+my @licenses=();
+if ($oldflags =~ /[\s,](nano|np|nanoproteus)=(\d+)/) {
+    push @licenses, "Encounter_Digital_Impl_Sys_XL=$2";
+}
+if ($oldflags =~ /[\s,](drc|assuradrc)=(\d+)/) {
+    push @licenses, "Assura_DRC=$2";
+}
+if ($oldflags =~ /[\s,](lvs|assuralvs)=(\d+)/) {
+    push @licenses, "Assura_LVS=$2";
+}
+if ( $oldflags =~ /[\s,](mem|memory)=([^,\s]+)/) {
+    my $mem=$2;
+    my $size = mem2megs($mem);
+#    $nflags .= " --class-reservation 'fRM=$size'";
+    $size=mem2gigs($mem);
+    push @class_reservations,"memory=$size";
+}
+if ( $oldflags =~ /[\s,](cc|cores)=([^,\s]+)/) {
+    my $cores=$2;
+    push @class_reservations,"cores=$cores";
+}
+if ( $oldflags =~ /[\s,](mz|memsize)=([^,\s]+)/) {
+    my $size = mem2megs($2);
+    push @smartresource, "tRM<=$size";
+}
+if ( $oldflags =~ /[\s,](h|hostname)=([^,\s]+)/) {
+    push @smartresource, "host=\"$2\"";
+}
+if ( $oldflags =~ /[\s,]suse=(\d+)/) {
+    push @smartresource, "SLES$1";
+}
+else {
+    push @smartresource, "SLES10";
+}
+my $sr=join("\&\&", @smartresource);
+$nflags .= " --class '$sr'" if @smartresource;
+my $cr=join(",", @class_reservations);
+$nflags .= " --class-reservation '$cr'";
+
+if($qrsh) {
+    $umask = sprintf "umask 0%o", $ENV{LVE_UMASK} if defined $ENV{LVE_UMASK};
+    # added sync due to nfs lag issues, may or may not solve them
+    $qcmd = "nbjob run $hold --task '$name' --mode interactive $nflags";
+}
+$ENV{NBUMASK}=$umask if $umask ne "";
+
+if( $ENV{QB_DIAG_FILE} ) {
+    system("echo Host `uname -a` > $diagFile");
+    system("echo `cat '$package_root/.fulcrum-package-root'` >> $diagFile");
+    my $pdk_package_root = $ENV{FULCRUM_PDK_PACKAGE_ROOT};
+    if(defined $pdk_package_root) {
+        system("echo `cat '$pdk_package_root/.fulcrum-package-root'` >> $diagFile");
+    }
+    system("echo submission: `date` >> $diagFile");
+    my $esc1   = join(" ",map {"\Q$_\E"} @args);
+    $esc1 =~ s:\\/:/:g;
+    $esc1 =~ s:\\::g;
+    system("echo command : '$esc1' >> $diagFile");
+}
+
+$ENV{NBWD}=`pwd`;
+chomp $ENV{NBWD};
+
+sub line {
+    my $text = shift;
+    print IN "$text\n";
+    print "CMD: $text\n" if $verbose;
+}
+
+my $job=0;
+if ($qrsh) {
+    $scriptfile=`mktemp \Q$ENV{NBWD}\E/qb.XXXXXX`;
+    chomp $scriptfile;
+    if (open (IN, ">$scriptfile")) {
+        line('#!/bin/bash --noprofile');
+        # set up 64 bit mode appropriately
+        line("source $ENV{'FULCRUM_WRAPPER_DIR'}/cad.start");
+        line('(mmonitor &)') if $monitor;
+        line("$umask") if $umask ne "";
+        line("echo Compute Host: `hostname` >>$diagFile; echo started: `date`>>$diagFile");
+        line("$esc");
+        line('ret=$?');
+        line("echo -n $name 1\&2") if $monitor;
+        line("pkill -HUP -s 0 mmonitor 1\&2") if $monitor;
+        line("pkill -s 0 mmonitor 1\&2") if $monitor;
+        line('sync');
+        line('exit $ret');
+        close IN;
+        chmod 0700, $scriptfile;
+        system("sync");
+        print STDERR "$qcmd $scriptfile\n" if $verbose;
+        $pid = open3(\*IN,*OUT,*ERR,"$qcmd \Q$scriptfile\E");
+        print STDERR "$pid\n" if $verbose;
+        my $SEL=new IO::Select;
+        $SEL->add(*OUT);
+        $SEL->add(*ERR);
+        if ($pid > 0) {
+            close IN;
+            my $done=0;
+            my @ready=();
+            my $out_data;
+            my $err_data;
+            my @lines=();
+            my $no=0;
+            my $ne=0;
+            my $osave="";
+            my $esave="";
+            my $out_line = $err_line="";
+            while (!$done and (@ready = $SEL->can_read())) {
+                foreach my $fh (@ready) {
+                    if ($fh eq *OUT) {
+                        if (!sysread OUT, $out_data, 4096) {
+                            $done=1;
+                            next;
+                        }
+                        my @lines = split /\n/, $out_data;
+                        my $leftover = pop @lines if ($out_data !~ /\n$/);
+                        my $starts_with_newline = ($out_data =~ /^\n/);
+                        while (@lines or $out_line ne "" and $out_data eq "\n") {
+                            $out_line .= shift @lines unless ($starts_with_newline);
+                            if ( $out_line =~ /Your job has been queued .*JobID (\d+)/) {
+                               $jobid=$1;
+                               $out_line = ""; $out_data = "";
+                               $starts_with_newline=0;
+                               next;
+                            }
+                            $out_line =~ s/\s*$//; $out_line =~ s/^\s*//;
+                            printf "%s\n", $out_line;
+                            $out_line = ""; $out_data = "";
+                            $starts_with_newline = 0;
+                        }
+                        $out_line .= $leftover if ($leftover);
+                    }
+                    elsif ($fh eq *ERR) {
+                        if (!sysread ERR, $err_data, 4096) {
+                            $done=1;
+                            next;
+                        }
+                        my @lines = split /\n/, $err_data;
+                        my $leftover = pop @lines if ($err_data !~ /\n$/);
+                        my $starts_with_newline = ($err_data =~ /^\n/);
+                        while (@lines or $err_line ne "" and $err_data eq "\n") {
+                            $err_line .= shift @lines unless ($starts_with_newline);
+                            if ( $err_line =~ /Your job has been queued .*JobID (\d+)/) {
+                               $jobid=$1;
+                               $err_line = ""; $err_data = "";
+                               $starts_with_newline=0;
+                               next;
+                            }
+                            if ($err_line =~ /Job (\d+) has finished with exit status (\S+)/) {
+                                $err=$2;
+                                $err_line = ""; $err_data = "";
+                                $starts_with_newline=0;
+                                next;
+                            }
+                            if (($err_line =~ /Your job has been queued/) or
+                                ($err_line =~ /has started on.*intel.com/) or
+                                ($err_line =~ /no version information available/)) {
+                               $err_line = ""; $err_data = "";
+                               $starts_with_newline=0;
+                            }
+                            $err_line =~ s/\s*$//; $err_line =~ s/^\s*//;
+                            printf STDERR "%s\n", $err_line if $err_line ne "";
+                            $err_line = ""; $err_data = "";
+                            $starts_with_newline = 0;
+                        }
+                        $err_line .= $leftover if ($leftover);
+                    }
+                }
+            }
+            close ERR;
+            close OUT;
+            waitpid($pid, 0);
+        }
+        unlink $scriptfile;
+    }
+}
+else {  # no qsub
+    my $ssh_err=0;
+    do {
+        open(IN,"<&STDIN");
+        my $pid = open3("<&IN",">&STDOUT",\*PH,$cmd);
+        while( <PH> ) {
+            next if /no version information available/;
+            print STDERR $_;
+        }
+        waitpid($pid, 0);
+        close IN;
+    } while($ssh_err==1 and $?!=0);
+}
+
+if( $diagFile ) {
+    system("echo finished: `date` >> $diagFile");
+}
+
+exit($ret);

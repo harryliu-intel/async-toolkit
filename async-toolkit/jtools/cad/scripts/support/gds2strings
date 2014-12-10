@@ -1,0 +1,51 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+sub usage {
+    print STDERR <<EU;
+Usage: gds2strings gdsfile
+    finds all strings, layers, cell, and coordinates in gds file
+EU
+    exit 1;
+}
+
+usage if ! -s $ARGV[0];
+open (P, "fulcrum rdgds $ARGV[0] |");
+my $s;
+my $l;
+my $t;
+my $st;
+my $x;
+my $y;
+while (<P>) {
+    if (/^STRNAME / ) {
+        chomp;
+        s/.* //;
+        $s = $_;
+    }
+    if (/^XY/) {
+        $_=<P>;
+        chomp;
+        ($x,$y)=split(/,/,$_);
+    }
+    if (/^LAYER / ) {
+        chomp;
+        s/.* //;
+        $l = $_;
+        $t=0;
+    }
+    if (/^TEXTTYPE / ) {
+        chomp;
+        s/ *$//;
+        s/.* //;
+        $t = $_;
+    }
+    if (/^STRING / ) {
+        chomp;
+        s/^STRING //;
+        $l="$l;$t" if ($t ne "0");
+        print "$s $l $x $y $_";
+    }
+}

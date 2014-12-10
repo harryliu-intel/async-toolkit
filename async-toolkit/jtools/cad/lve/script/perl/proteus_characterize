@@ -1,0 +1,1307 @@
+#!/usr/intel/bin/perl -w
+
+#############################################################################
+# Custom timing characterization of Proteus gates
+#############################################################################
+
+# find relevant packaged tools and libraries
+my $fulcrum = "";
+my $pdk_root = "";
+if ($0 eq "proteus_characterize" || $0 eq "./proteus_characterize") { # local executable
+    BEGIN { @INC = ("$ENV{HOME}/sw/cad/lve/lib/perl", @INC); }
+    $fulcrum = $ENV{MY_FULCRUM};
+} else { # packaged executable
+    BEGIN {
+        $lve_root = $0;
+        $lve_root =~ s:/[^/]*$::;
+        $lve_root =~ s:/[^/]*$::;
+        @INC = ("$lve_root/lib/perl", @INC);
+    }
+    $pdk_root = "--fulcrum-pdk-root=$ENV{FULCRUM_PDK_ROOT}";
+}
+use LveAspice;
+use LveUtil;
+use FileHandle;
+use IPC::Open2;
+
+# capacitance scaling for strengths 0..8
+my @scale = (1.0,1.0,2.0,2.0,4.0,4.0,8.0,8.0,16.0);
+
+# configuration
+$" =",";
+my $now        = 0; # used to track current time for crit files
+my $step       = 2500; # step to simulate between input changes
+my @prsTau     = (16,64,256); # in ps
+my @lumpCap    = (1,2,4,8,16,32,64); # in fF
+my $gates      = "qdi.gates";
+my $corner     = "ss";
+my $vdd        = 0.81;
+my $temp       = 0;
+my $delay_frac = 0.5;
+my $slew_frac  = 0.333;
+my $mode       = "estimated";
+my $estimated_view = "layout";
+my $view       = "layout";
+my $CAST_DIR   = $ENV{CAST_DIR};
+my $SPEC_DIR   = $ENV{SPEC_DIR};
+my $DFII_DIR   = $ENV{DFII_DIR};
+my $MEM        = $ENV{MEM};
+my @tasks      = ("todo","extract","lve","cap","area","timing");
+
+# parse command line arguments
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=*(.*)/ ) {
+    $key = $1;
+    $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    if    ($key eq "gates")     { $gates = $value; }
+    elsif ($key eq "step")      { $step = $value; }
+    elsif ($key eq "corner")    { $corner = $value; }
+    elsif ($key eq "vdd")       { $vdd = $value; }
+    elsif ($key eq "temp")      { $temp = $value; }
+    elsif ($key eq "prsTau")    { @prsTau = split(",",$value); }
+    elsif ($key eq "lumpCap")   { @lumpCap = split(",",$value); }
+    elsif ($key eq "cast-dir")  { $CAST_DIR = $value; }
+    elsif ($key eq "spec-dir")  { $SPEC_DIR = $value; }
+    elsif ($key eq "dfII-dir")  { $DFII_DIR = $value; }
+    elsif ($key eq "mem")       { $MEM = $value; }
+    elsif ($key eq "mode")      { $mode = $value; }
+    elsif ($key eq "view")      { $view = $value; }
+    elsif ($key eq "estimated-view") { $estimated_view = $value; }
+    elsif ($key eq "delay-fraction") { $delay_frac = $value; }
+    elsif ($key eq "slew-fraction")  { $slew_frac = $value; }
+    elsif ($key eq "tasks")     { @tasks = split(",",$value); }
+    elsif ($key eq "help")      { banner(); }
+}
+
+# fulcrum tools and settings
+my $lve      = "$fulcrum lve $pdk_root --mem=$MEM --time=0 " .
+    "--cast-dir=$CAST_DIR --spec-dir=$SPEC_DIR --dfII-dir=$DFII_DIR";
+my $captally = "$fulcrum captally $pdk_root";
+my $aplot    = "$fulcrum aplot";
+
+# create custom.config
+open OUT, ">custom.config" or die "ERROR: can't write custom.config";
+print OUT "defaultLoadCapacitance=0\n";
+close OUT;
+
+# set measurement thresholds
+my $loth = $delay_frac * $vdd;
+my $hith = (1-$delay_frac) * $vdd;
+my $losl = $slew_frac * $vdd;
+my $hisl = (1-$slew_frac) * $vdd;
+
+# parse list of gates
+my @gates = parse_gates($gates);
+
+# handle tasks
+foreach my $gate (@gates) {
+    foreach my $task (@tasks) {
+        print STDERR "Processing $gate $task\n";
+        if    ($task eq "todo")   { create_todo($gate);    }
+        elsif ($task eq "extract") { launch_extract($gate); }
+        elsif ($task eq "lve")    { launch_lve($gate);     }
+        elsif ($task eq "cap")    { measure_cap($gate);    }
+        elsif ($task eq "area")   { measure_area($gate);   }
+        elsif ($task eq "timing") { measure_timing($gate); }
+    }
+}
+
+# usage banner
+sub banner {
+    die "USAGE: proteus_characterize\n" .
+        "  [--gates=$gates]\n" .
+        "  [--corner=$corner]\n" .
+        "  [--vdd=$vdd]\n" .
+        "  [--temp=$temp]\n" .
+        "  [--prsTau=@prsTau]\n" .
+        "  [--lumpCap=@lumpCap]\n" .
+        "  [--step=$step]\n" .
+        "  [--delay-fraction=$delay_frac]\n" .
+        "  [--slew-fraction=$slew_frac]\n" .
+        "  [--cast-dir=$CAST_DIR]\n" .
+        "  [--spec-dir=$SPEC_DIR]\n" .
+        "  [--dfII-dir=$DFII_DIR]\n" .
+        "  [--mem=$MEM]\n" .
+        "  [--mode=$mode]\n" .
+        "  [--view=$view]\n" .
+        "  [--estimated-view=$view]\n" .
+        "  [--help]\n" .
+        "  [--tasks=@tasks]\n";
+}
+
+
+################################################################################
+# Create todo, in, and crit files
+################################################################################
+
+# create *.in and *.todo files
+sub create_todo {
+    my ($gate) = @_;
+
+    # create todo file for extraction (add estimated to get area)
+    mkdir($gate);
+    open OUT, ">${gate}/extract.todo" or
+        die "ERROR: can't write ${gate}/extract.todo\n";
+    my $todo=<<EOF;
+--task=extract
+--estimated-view=$estimated_view
+--extracted-view=$view
+--qsub=1 --jobs=1
+--output-dir=$gate/extract
+EOF
+    print OUT "$todo";
+    close OUT;
+
+    # sweep tau and cap
+    foreach my $tau (@prsTau) {
+        foreach my $cap (@lumpCap) {
+
+            # setup files
+            my $run = "${gate}/${tau}_${cap}";
+
+            # create todo file for aspice
+            open OUT, ">${run}.todo" or die "ERROR: can't write ${run}.todo\n";
+            $todo=<<EOF;
+--slurp=0
+--slurp-dir=${gate}/extract
+--task=aspice
+--mode=$mode
+--estimated-view=$estimated_view
+--extracted-view=$view
+--qsub=1 --jobs=1
+--output-dir=$run
+--aspice-in=${run}.in
+--corner=${corner}
+--true=${vdd}
+--temp=${temp}
+--time=0
+${gate}:empty
+EOF
+            print OUT "$todo";
+            close OUT;
+
+            # create files
+            open OUT, ">${run}.in" or die "ERROR: can't write ${run}.in\n";
+            open CRIT, ">${run}.crit" or die "ERROR: can't write ${run}.crit\n";
+
+            # classify the gate
+            my $inputs   = num_inputs($gate);
+            my $class    = classify_gate($gate);
+            my $strength = gate_strength($gate);
+            my $rails    = gate_rails($gate);
+
+            # identify inputs and outputs
+            my $input_nodes = "";
+            my $output_nodes = "";
+            if ($class eq "QDI_LOGIC") {
+                $input_nodes = "A[*].0 A[*].1 en";
+                $output_nodes = "X.0 X.1";
+            } elsif ($class eq "INV") {
+                $input_nodes = "a";
+                $output_nodes = "x";
+            } elsif ($class eq "RESET_INVINV") {
+                $input_nodes = "a _RESET";
+                $output_nodes = "x";
+            } elsif ($class eq "CTREE") {
+                $input_nodes = "a[*]";
+                $output_nodes ="x";
+            } elsif ($class eq "RESET_CTREE") {
+                $input_nodes = "a[*] _RESET";
+                $output_nodes ="x";
+            } elsif ($class eq "AND_NOR") {
+                $input_nodes = "a[*]";
+                $output_nodes ="x";
+            } elsif ($class eq "QDI_BUF") {
+                if ($rails==2) {
+                    $input_nodes = "L.0 L.1 R.e _RESET";
+                    $output_nodes = "L.e R.0 R.1";
+                } elsif ($rails==4) {
+                    $input_nodes = "L.0 L.1 L.2 L.3 R.e _RESET";
+                    $output_nodes = "L.e R.0 R.1 R.2 R.3";
+                } elsif ($rails==8) {
+                    $input_nodes = "L.0 L.1 L.2 L.3 L.4 L.5 L.6 L.7 R.e _RESET";
+                    $output_nodes = "L.e R.0 R.1 R.2 R.3 R.4 R.5 R.6 R.7";
+                }
+            } elsif ($class eq "QDI_EDFF") {
+                $input_nodes = "L.0 L.1 E.0 E.1 R.e _RESET";
+                $output_nodes = "E.e R.0 R.1";
+            } elsif ($class eq "QDI_SEND") {
+                if ($rails==2) {
+                    $input_nodes = "E.0 E.1 L[0].0 L[0].1 R.e _RESET";
+                    $output_nodes = "E.e R.0 R.1";
+                } elsif ($rails==4) {
+                    $input_nodes = "E.0 E.1 L[0].0 L[0].1 L[1].0 L[1].1" .
+                        " R.e _RESET";
+                    $output_nodes = "E.e R.0 R.1 R.2 R.3";
+                } elsif ($rails==8) {
+                    $input_nodes = "E.0 E.1 L[0].0 L[0].1 L[1].0 L[1].1".
+                        " L[2].0 L[2].1 R.e _RESET";
+                    $output_nodes = "E.e R.0 R.1 R.2 R.3 R.4 R.5 R.6 R.7";
+                }
+            } elsif ($class eq "QDI_TO") {
+                if ($rails==4) {
+                    $input_nodes = "L[0].0 L[0].1 L[1].0 L[1].1" .
+                        " R.e _RESET";
+                    $output_nodes = "L[0].e R.0 R.1 R.2 R.3";
+                } elsif ($rails==8) {
+                    $input_nodes = "L[0].0 L[0].1 L[1].0 L[1].1".
+                        " L[2].0 L[2].1 R.e _RESET";
+                    $output_nodes = "L[0].e R.0 R.1 R.2 R.3 R.4 R.5 R.6 R.7";
+                }
+            } elsif ($class eq "QDI_RECV") {
+                if ($rails==2) {
+                    $input_nodes = "E.0 E.1 L.0 L.1 R[0].e _RESET";
+                    $output_nodes = "E.e L.e R[0].0 R[0].1";
+                } elsif ($rails==4) {
+                    $input_nodes = "E.0 E.1 L.0 L.1 L.2 L.3 R[0].e R[1].e _RESET";
+                    $output_nodes = "E.e L.e R[0].0 R[0].1 R[1].0 R[1].1";
+                } elsif ($rails==8) {
+                    $input_nodes = "E.0 E.1 L.0 L.1 L.2 L.3 L.4 L.5 L.6 L.7" .
+                        " R[0].e R[1].e R[2].e _RESET";
+                    $output_nodes = "E.e L.e R[0].0 R[0].1 R[1].0 R[1].1" .
+                        " R[2].0 R[2].1";
+                }
+            } elsif ($class eq "QDI_FROM") {
+                if ($rails==4) {
+                    $input_nodes = "L.0 L.1 L.2 L.3 R[0].e R[1].e _RESET";
+                    $output_nodes = "L.e R[0].0 R[0].1 R[1].0 R[1].1";
+                } elsif ($rails==8) {
+                    $input_nodes = "L.0 L.1 L.2 L.3 L.4 L.5 L.6 L.7" .
+                        " R[0].e R[1].e R[2].e _RESET";
+                    $output_nodes = "L.e R[0].0 R[0].1 R[1].0 R[1].1" .
+                        " R[2].0 R[2].1";
+                }
+            } elsif ($class eq "QDI_SCAN_CONFIG") {
+                $input_nodes  = "LC LS.0 LS.1 RS.e _RESET";
+                $output_nodes = "RC LS.e RS.0 RS.1";
+            }
+            
+            # extra scan pins
+            if ($gate =~ /SCAN/ && !($class eq "QDI_SCAN_CONFIG")) {
+                $input_nodes .= " C[0] C[1] C[2] C[3] LS.0 LS.1 RS.e";
+                $output_nodes .= " RS.0 RS.1 LS.e";
+            }
+
+            # write
+            print CRIT "inputs $input_nodes\n";
+            print CRIT "outputs $output_nodes\n";
+            print CRIT "step $step\n";
+
+            # header of in file
+            in_header($class,$strength,$tau,$cap,$input_nodes,$output_nodes);
+
+            # simulate all scenarios
+            if ($class =~ "LOGIC") {
+                simulate_LOGIC($inputs,$class);
+            } elsif ($class eq "CTREE" || $class eq "RESET_CTREE" ||
+                     $class eq "INV"   || $class eq "RESET_INVINV") {
+                simulate_CTREE_INV($gate);
+            } elsif ($class eq "AND_NOR") {
+                simulate_AND_NOR($gate);
+            } elsif ($class eq "QDI_BUF" ||
+                     $class eq "QDI_SCAN_CONFIG" || $class eq "QDI_EDFF") {
+                simulate_QDI_BUF($gate,$class,$rails);
+            } elsif ($class eq "QDI_SEND" || $class eq "QDI_TO") {
+                simulate_QDI_SEND_TO($gate,$class,$rails);
+            } elsif ($class eq "QDI_RECV" || $class eq "QDI_FROM") {
+                simulate_QDI_RECV_FROM($gate,$class,$rails);
+            } else {
+                print STDERR "WARNING: $gate not recognized\n";
+            }
+
+            # finish
+            in_footer();
+            close OUT;
+            close CRIT;
+        }
+    }
+}
+
+# scale a cap for a gate
+sub scale_cap {
+    my ($class,$strength,$cap) = @_;
+    $cap = $scale[$strength] * $cap;
+    $cap *= 0.5 if ($class eq "QDI_CTRL");
+    return $cap;
+}
+
+# setup and reset
+sub in_header {
+    my ($class,$strength,$tau,$cap,$input_nodes,$output_nodes) = @_;
+    $tau = $tau * 1e-12;
+    $cap = scale_cap($class,$strength,$cap) * 1e-15;
+    $now = 2*$step;
+    my $header = <<EOF;
+/* setup */
+prsTau $tau
+lumpCap $output_nodes : $cap
+
+/* reset */
+analog off
+nowarnall
+set \$GND : 0
+force $input_nodes : f
+force \$_RESET _RESET : f
+force \$Vdd : t
+cycle $step
+watch $output_nodes
+warnall
+status U
+force \$_RESET _RESET : t
+cycle $step
+analog on
+
+EOF
+print OUT "$header";
+}
+
+# finish aspice.in file
+sub in_footer {
+    print OUT "/* finish */\n";
+    print OUT "output \"aspice.done\"\n";
+    print OUT "echo done\n";
+}
+
+# simulate LOGIC scenarios
+sub simulate_LOGIC {
+    my ($inputs,$class) = @_;
+    for (my $scenario = 0; $scenario < (1<<$inputs); $scenario++) {
+        for (my $crit = -1; $crit < $inputs; $crit++) {
+
+            # header
+            print OUT "/* scenario=$scenario critical_input=$crit */\n";
+
+            # valid non-critical inputs
+            if ($crit!=-1) { force_node("en",1); }
+            force_node("X.e",1);
+            for (my $i = 0; $i < $inputs; $i++) {
+                if ($i!=$crit) { valid_1ofN("A[$i]",getbit($scenario,$i)); }
+            }
+            simulate_step();
+
+            # valid critical inputs
+            my $c = "";
+            if ($crit==-1) { force_node("en",1); $c = "en+"; }
+            for (my $i = 0; $i < $inputs; $i++) {
+                if ($i==$crit) {
+                    my $b = getbit($scenario,$i);
+                    $c = "A[$i].$b+";
+                    valid_1ofN("A[$i]",$b);
+                }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # reset non-critical inputs
+            if ($crit!=-1) { force_node("en",0); }
+            for (my $i = 0; $i < $inputs; $i++) {
+                if ($i!=$crit) { neutral_1ofN("A[$i]"); }
+            }
+            simulate_step();
+
+            # reset critical inputs
+            if ($crit==-1) { force_node("en",0); $c = "en-"; }
+            for (my $i = 0; $i < $inputs; $i++) {
+                if ($i==$crit) {
+                    my $b = getbit($scenario,$i);
+                    $c = "A[$i].$b-";
+                    neutral_1ofN("A[$i]");
+                }
+            }
+            if ($crit<0) { print CRIT "$c $now\n"; }
+            simulate_step();
+
+            # finish
+            print OUT "\n";
+        }
+    }
+}
+
+# simulate CTREE/RESET_CTREE/INV/INVINV/RESET_INVINV scenarios
+sub simulate_CTREE_INV {
+    my ($gate) = @_;
+    my $inputs = 1;
+    my $a = "a";
+    if ($gate =~ /CTREE(.)/ ) { $inputs = $1; }
+    for (my $crit = 0; $crit < $inputs; $crit++) {
+
+        # header
+        print OUT "/* critical_input=$crit */\n";
+
+        # valid non-critical inputs
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            if ($i!=$crit) { force_node($a,1); }
+        }
+        simulate_step();
+
+        # valid critical inputs
+        my $c = "";
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            if ($i==$crit) {
+                $c = "$a+";
+                force_node($a,1);
+            }
+        }
+        print CRIT "$c $now\n";
+        simulate_step();
+
+        # reset non-critical inputs
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            if ($i!=$crit) { force_node($a,0); }
+        }
+        simulate_step();
+
+        # reset critical inputs
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            if ($i==$crit) {
+                $c = "$a-";
+                force_node($a,0);
+            }
+        }
+        print CRIT "$c $now\n";
+        simulate_step();
+
+        # finish
+        print OUT "\n";
+    }
+}
+
+# simulate AND/NOR scenarios
+sub simulate_AND_NOR {
+    my ($gate) = @_;
+    my $inputs = 1;
+    my $a = "a";
+    my $and;
+    if    ($gate =~ /AND(.)/ ) { $and=1; $inputs=$1; }
+    elsif ($gate =~ /NOR(.)/ ) { $and=0; $inputs=$1; }
+    else { die "not AND or NOR gate\n"; }
+    for (my $crit = 0; $crit < $inputs; $crit++) {
+
+        # header
+        print OUT "/* critical_input=$crit */\n";
+        
+        # neutral inputs
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            force_node($a,$and ? 1 : 0);
+        }
+        simulate_step();
+        
+        # valid critical input
+        my $c = "";
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            if ($i==$crit) {
+                $c = $and ? "$a-" : "$a+";
+                force_node($a,$and ? 0 : 1);
+            }
+        }
+        print CRIT "$c $now\n";
+        simulate_step();
+        
+        # neutral critical input
+        for (my $i=0; $i<$inputs; $i++) {
+            if ($inputs>1) { $a = "a[$i]"; }
+            if ($i==$crit) {
+                $c = $and ? "$a+" : "$a-";
+                force_node($a,$and ? 1 : 0);
+            }
+        }
+        print CRIT "$c $now\n";
+        simulate_step();
+        
+        # finish
+        print OUT "\n";
+    }
+}
+
+# simulate QDI SCAN/TOK/BUF/EDFF
+sub simulate_QDI_BUF {
+    my ($gate,$class,$rails) = @_;
+    if ($gate =~ /SCAN_/) {
+        print OUT "/* put SCAN in passthru */\n";
+        force_node("C[0]",1) if (!($gate =~ /SCAN_CONFIG/));
+        force_node("C[1]",0) if (!($gate =~ /SCAN_CONFIG/));
+        force_node("C[2]",0) if (!($gate =~ /SCAN_CONFIG/));
+        force_node("C[3]",0) if (!($gate =~ /SCAN_CONFIG/));
+        neutral_1ofN("LS");
+        force_node("RS.e",0);
+        print OUT "\n";
+    }
+    if ($gate =~ /TOK_/) {
+        # eat the first token
+        print OUT "/* eat first token */\n";
+        force_node("R.e",1);
+        simulate_step();
+        force_node("R.e",0);
+        simulate_step();
+        print OUT "\n";
+    }
+    my ($scenarios, $inputs);
+    if ($class eq "QDI_EDFF")   { $inputs=3; $scenarios=8; }
+    elsif ($class eq "QDI_BUF") { $inputs=2; $scenarios=$rails; }
+    else                        { $inputs=0; $scenarios=0; }
+    for (my $scenario=0; $scenario<$scenarios; $scenario++) {
+        for (my $crit = 0; $crit<$inputs; $crit++) {
+            my $d = $scenario % $rails;
+            my $e = getbit($scenario,1); # for EDFF
+            my $s = getbit($scenario,2); # for EDFF
+
+            # header
+            print OUT "/* scenario=$scenario critical_input=$crit */\n";
+
+            # initialize state bit
+            if ($class eq "QDI_EDFF") {
+                valid_1ofN("S",$s);
+                print OUT "nowarnall\n";
+                simulate_step();
+                print OUT "warnall\n";
+                print OUT "force S.d[*]\n";
+            }
+
+            # valid non-critical inputs
+            if (($crit!=2) && (2<$inputs)) { valid_1ofN("E",$e); }
+            if (($crit!=1) && (1<$inputs)) { force_node("R.e",1); }
+            if ($crit!=0)                  { valid_1ofN("L",$d); }
+            simulate_step();
+
+            # valid critical inputs
+            my $c = "";
+            if ($crit==2) {
+                valid_1ofN("E",$e);
+                $c = "E.${e}+";
+            }
+            elsif ($crit==1) {
+                force_node("R.e",1);
+                $c = "R.e+";
+            }
+            elsif ($crit==0) {
+                valid_1ofN("L",$d);
+                $c = "L.${d}+";
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # reset non-critical inputs
+            if (($crit!=2) && (2<$inputs)) { neutral_1ofN("E"); }
+            if (($crit!=1) && (1<$inputs)) { force_node("R.e",0); }
+            if ($crit!=0)                  { neutral_1ofN("L"); }
+            simulate_step();
+
+            # reset critical inputs
+            $c = "";
+            if ($crit==2) {
+                neutral_1ofN("E");
+                $c = "E.${e}-";
+            }
+            elsif ($crit==1) {
+                force_node("R.e",0);
+                $c = "R.e-";
+            }
+            elsif ($crit==0) {
+                neutral_1ofN("L");
+                $c = "L.${d}-";
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # finish
+            print OUT "\n";
+        }
+    }
+
+    # special case for SCAN_CONFIG
+    if ($gate =~ /SCAN_CONFIG/) {
+        # header
+        print OUT "/* SCAN_CONFIG special scenario */\n";
+        
+        # initialize state bit
+        valid_1ofN("reg.RD",1);
+        print OUT "nowarnall\n";
+        simulate_step();
+        print OUT "warnall\n";
+        print OUT "force reg.RD.d[*]\n";
+
+        # valid critical inputs
+        my $c = "LC+";
+        force_node("LC",1);
+        print CRIT "$c $now\n";
+        simulate_step();
+        
+        # reset critical inputs
+        $c = "LC-";
+        force_node("LC",0);
+        print CRIT "$c $now\n";
+        simulate_step();
+
+        # finish
+        print OUT "\n";
+    }
+
+    # simulate scan chain shifting
+    if ($gate =~ /SCAN_/) {
+        $scenarios = $rails * $rails;
+        for (my $scenario=0; $scenario<$scenarios; $scenario++) {
+            for (my $crit = 0; $crit<2; $crit++) {
+                my $d = $scenario % $rails;
+                my $s = ($scenario / $rails) % $rails;
+
+                # header
+                print OUT "/* scan scenario=$scenario critical_input=$crit */\n";
+
+                # initialize state bit(s)
+                if ($rails==4) {
+                    valid_1ofN("reg[0].RD",getbit($s,0));
+                    valid_1ofN("reg[1].RD",getbit($s,1));
+                } else {
+                    valid_1ofN("reg.RD",$s);
+                }
+                print OUT "nowarnall\n";
+                simulate_step();
+                print OUT "warnall\n";
+                if ($rails==4) {
+                    print OUT "force reg[0].RD.d[*]\n";
+                    print OUT "force reg[1].RD.d[*]\n";
+                } else {
+                    print OUT "force reg.RD.d[*]\n";
+                }
+
+                # valid non-critical inputs
+                if ($crit!=1) { force_node("RS.e",1); }
+                if ($crit!=0) { valid_1ofN("LS",$d); }
+                simulate_step();
+
+                # valid critical inputs
+                my $c = "";
+                if ($crit==1) {
+                    force_node("RS.e",1);
+                    $c = "RS.e+";
+                }
+                elsif ($crit==0) {
+                    valid_1ofN("LS",$d);
+                    $c = "LS.${d}+";
+                }
+                print CRIT "$c $now\n";
+                simulate_step();
+
+                # reset non-critical inputs
+                if ($crit!=1) { force_node("RS.e",0); }
+                if ($crit!=0) { neutral_1ofN("LS"); }
+                simulate_step();
+
+                # reset critical inputs
+                $c = "";
+                if ($crit==1) {
+                    force_node("RS.e",0);
+                    $c = "RS.e-";
+                }
+                elsif ($crit==0) {
+                    neutral_1ofN("LS");
+                    $c = "LS.${d}-";
+                }
+                print CRIT "$c $now\n";
+                simulate_step();
+
+                # finish
+                print OUT "\n";
+            }
+        }
+    }
+}
+
+# simulate QDI_SEND/QDI_TO scenarios
+sub simulate_QDI_SEND_TO {
+    my ($gate,$class,$rails) = @_;
+    my ($scenarios, $inputs);
+    if    ($rails==2) { $inputs=1; }
+    elsif ($rails==4) { $inputs=2; }
+    elsif ($rails==8) { $inputs=3; }
+    if    ($class eq "QDI_SEND")  { $scenarios=2*$rails; }
+    elsif ($class eq "QDI_TO")    { $scenarios=$rails; }
+    my $send = $class eq "QDI_SEND";
+    for (my $scenario=0; $scenario<$scenarios; $scenario++) {
+        for (my $crit = $send ? -2 : -1; $crit<$inputs; $crit++) {
+            my $e = getbit($scenario,$inputs);
+
+            # header
+            print OUT "/* scenario=$scenario critical_input=$crit */\n";
+
+            # valid non-critical inputs
+            if (($crit!=-2) && $send) { valid_1ofN("E",$e); }
+            if ($crit!=-1)            { force_node("R.e",1); }
+            for (my $i=0; $i<$inputs; $i++) {
+                if ($crit!=$i) { valid_1ofN("L[$i]",getbit($scenario,$i)); }
+            }
+            simulate_step();
+
+            # valid critical inputs
+            my $c = "";
+            if ($crit==-2) {
+                valid_1ofN("E",$e);
+                $c = "E.${e}+";
+            }
+            elsif ($crit==-1) {
+                force_node("R.e",1);
+                $c = "R.e+";
+            }
+            else {
+                for (my $i=0; $i<$inputs; $i++) {
+                    if ($crit==$i) {
+                        my $d = getbit($scenario,$i);
+                        valid_1ofN("L[$i]",$d);
+                        $c = "L[$i].${d}+";
+                    }
+                }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # reset non-critical inputs
+            if (($crit!=-2) && $send) { neutral_1ofN("E"); }
+            if ($crit!=-1)            { force_node("R.e",0); }
+            for (my $i=0; $i<$inputs; $i++) {
+                if ($crit!=$i) { neutral_1ofN("L[$i]"); }
+            }
+            simulate_step();
+
+            # reset critical inputs
+            $c = "";
+            if ($crit==-2) {
+                neutral_1ofN("E");
+                $c = "E.${e}-";
+            }
+            elsif ($crit==-1) {
+                force_node("R.e",0);
+                $c = "R.e-";
+            }
+            else {
+                for (my $i=0; $i<$inputs; $i++) {
+                    if ($crit==$i) {
+                        my $d = getbit($scenario,$i);
+                        neutral_1ofN("L[$i]");
+                        $c = "L[$i].${d}+";
+                    }
+                }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # finish
+            print OUT "\n";
+        }
+    }
+}
+
+# simulate QDI_RECV/QDI_FROM scenarios
+sub simulate_QDI_RECV_FROM {
+    my ($gate,$class,$rails) = @_;
+    my ($scenarios, $outputs);
+    if    ($rails==2) { $outputs=1; }
+    elsif ($rails==4) { $outputs=2; }
+    elsif ($rails==8) { $outputs=3; }
+    if    ($class eq "QDI_RECV")  { $scenarios=2*$rails; }
+    elsif ($class eq "QDI_FROM")  { $scenarios=$rails; }
+    my $recv = ($class eq "QDI_RECV");
+    for (my $scenario=0; $scenario<$scenarios; $scenario++) {
+        for (my $crit = $recv ? -1 : 0; $crit<$outputs+1; $crit++) {
+            my $d = $scenario%$rails;
+            my $e = int($scenario/$rails);
+
+            # header
+            print OUT "/* scenario=$scenario critical_input=$crit */\n";
+
+            # valid non-critical inputs
+            if (($crit!=-1) && $recv) { valid_1ofN("E",$e); }
+            if ($crit!=$outputs)      { valid_1ofN("L",$d); }
+            for (my $i=0; $i<$outputs; $i++) {
+                if ($crit!=$i)        { force_node("R[$i].e",1); }
+            }
+            simulate_step();
+
+            # valid critical inputs
+            my $c = "";
+            if ($crit==-1) {
+                valid_1ofN("E",$e);
+                $c = "E.${e}+";
+            }
+            elsif ($crit==$outputs) {
+                valid_1ofN("L",$d);
+                $c = "L.${d}+";
+            }
+            else {
+                for (my $i=0; $i<$outputs; $i++) {
+                    if ($crit==$i) {
+                        force_node("R[$i].e",1);
+                        $c = "R[$i].e+";
+                    }
+                }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # reset non-critical inputs
+            if (($crit!=-1) && $recv) { neutral_1ofN("E"); }
+            if ($crit!=$outputs)      { neutral_1ofN("L"); }
+            for (my $i=0; $i<$outputs; $i++) {
+                if ($crit!=$i) { force_node("R[$i].e",0); }
+            }
+            simulate_step();
+
+            # reset critical inputs
+            $c = "";
+            if ($crit==-1) {
+                neutral_1ofN("E");
+                $c = "E.${e}-";
+            }
+            elsif ($crit==$outputs) {
+                neutral_1ofN("L");
+                $c = "L.${d}-";
+            }
+            else {
+                for (my $i=0; $i<$outputs; $i++) {
+                    if ($crit==$i) {
+                        force_node("R[$i].e",0);
+                        $c = "R[$i].e-";
+                    }
+                }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # finish
+            print OUT "\n";
+        }
+    }
+}
+
+# simulate QDI_CTRL scenarios
+sub simulate_QDI_CTRL {
+    my ($gate) = @_;
+    $gate =~ /CTRL(.)(.)/;
+    my $inputs  = $1;
+    my $outputs = $2;
+    for (my $scenario=0; $scenario<2; $scenario++) {
+        for (my $crit = 0; $crit<$inputs+$outputs; $crit++) {
+
+            # header
+            print OUT "/* scenario=$scenario critical_input=$crit */\n";
+
+            # valid non-critical inputs
+            for (my $i=0; $i<$inputs; $i++) {
+                if ($crit!=$i) { valid_1ofN("A[$i]",$scenario); }
+            }
+            for (my $i=0; $i<$outputs; $i++) {
+                if ($crit!=$i+$inputs) { force_node("V[$i]",1); }
+            }
+            simulate_step();
+
+            # valid critical inputs
+            my $c = "";
+            for (my $i=0; $i<$inputs; $i++) {
+                if ($crit==$i) {
+                    valid_1ofN("A[$i]",$scenario);
+                    $c = "A[$i].${scenario}+";
+                }
+            }
+            for (my $i=0; $i<$outputs; $i++) {
+                if ($crit==$i+$inputs) { force_node("V[$i]",1); $c = "V[$i]+"; }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # reset non-critical inputs
+            for (my $i=0; $i<$inputs; $i++) {
+                if ($crit!=$i) { neutral_1ofN("A[$i]"); }
+            }
+            for (my $i=0; $i<$outputs; $i++) {
+                if ($crit!=$i+$inputs) { force_node("V[$i]",0); }
+            }
+            simulate_step();
+
+            # reset critical inputs
+            $c = "";
+            for (my $i=0; $i<$inputs; $i++) {
+                if ($crit==$i) {
+                    neutral_1ofN("A[$i]",$scenario);
+                    $c = "A[$i].${scenario}-";
+                }
+            }
+            for (my $i=0; $i<$outputs; $i++) {
+                if ($crit==$i+$inputs) { force_node("V[$i]",0); $c = "V[$i]-"; }
+            }
+            print CRIT "$c $now\n";
+            simulate_step();
+
+            # finish
+            print OUT "\n";
+        }
+    }
+}
+
+# get a bit from an array
+sub getbit {
+    my ($val, $pos) = @_;
+    my $v = ($val>>$pos)%2;
+    return $v;
+}
+
+# force a 1ofN to a defined value
+sub valid_1ofN {
+    my ($name, $val) = @_;
+    print OUT "force ${name}.d[*] : f\n";
+    print OUT "force ${name}.${val} : t\n";
+}
+
+# force a 1ofN to neutral
+sub neutral_1ofN {
+    my ($name) = @_;
+    print OUT "force ${name}.d[*] : f\n";
+}
+
+# force a node t or f
+sub force_node {
+    my ($name, $val) = @_;
+    my $v = getbit($val,0) ? "t" : "f";
+    print OUT "force $name : $v\n";
+}
+
+# simulate one step
+sub simulate_step {
+    $now += $step;
+    print OUT "cycle $step\n";
+}
+
+
+################################################################################
+# Measure capacitance
+################################################################################
+
+# use captally to measure input cap of pins
+sub measure_cap {
+    my ($gate) = @_;
+    my $gatedir = $gate;
+    $gatedir =~ s:\.:/:g;
+    my $spice = "${gate}/extract/$gatedir/$view/$mode/cell.spice";
+    die "ERROR: can't read $spice\n" unless (-e $spice);
+    system("$captally --cdl $spice --cell $gate > $gate.cap");
+}
+
+
+################################################################################
+# Measure area
+################################################################################
+
+# process instances to measure area
+sub measure_area {
+    my ($gate) = @_;
+    my $gatedir = $gate;
+    $gatedir =~ s:\.:/:g;
+    my $instances = "${gate}/extract/$gatedir/$estimated_view/estimated/instances/${gate}.instances";
+    die "ERROR: can't read $instances\n" unless (-e $instances);
+    my @lines = split("\n",`cat $instances`);
+    open OUT, ">$gate.area" or die "ERROR: can't write $gate.area\n";
+    my $x0 = $lines[2];
+    my $y0 = $lines[3];
+    my $x1 = $lines[6];
+    my $y1 = $lines[7];
+    my $area = ($x1-$x0) * ($y1-$y0);
+    print OUT "$area\n";
+    close OUT;
+}
+
+
+################################################################################
+# Launch lve jobs
+################################################################################
+
+# launch lve jobs (one at a time to avoid crashing host machine)
+sub launch_extract {
+    my ($gate) = @_;
+    system("$lve --include=${gate}/extract.todo --mode=estimated " .
+           "$gate >& ${gate}/estimated.err");
+    if (!($mode eq "estimated")) {
+        system("$lve --include=${gate}/extract.todo --mode=$mode " .
+               "$gate >& ${gate}/${mode}.err");
+    }
+}
+
+# launch lve jobs (one at a time to avoid crashing host machine)
+sub launch_lve {
+    my ($gate) = @_;
+    foreach my $tau (@prsTau) {
+        foreach my $cap (@lumpCap) {
+            system("$lve --include=${gate}/${tau}_${cap}.todo " .
+                   " >& ${gate}/${tau}_${cap}.err");
+        }
+    }
+}
+
+
+################################################################################
+# Measure timing
+################################################################################
+
+# measure timing paths
+sub measure_timing {
+    my ($gate) = @_;
+    my $class = classify_gate($gate);
+    my $strength = gate_strength($gate);
+
+    # aplot setup
+    open_aplot("$aplot");
+
+    # start gate measurement
+    open OUT, ">${gate}.timing" or die "ERROR: can't write ${gate}.timing\n";
+    my %delay = ();
+    my %slew = ();
+    my %energy = ();
+    my %paths = ();
+    my %outputs = ();
+    my $gatedir = $gate;
+    my $tau_cap_step = $step;
+    $gatedir =~ s:\.:/:g;
+
+    # area
+    open IN, "<$gate.area" or die "Can't read $gate.area\n";
+    my $line = <IN>;
+    chomp($line);
+    my $area = $line;
+    $area = $area*1e12;
+    print OUT "area $area\n";
+    close IN;
+
+    # save prsTau and lumpCap as inputSlews and outputCaps
+    print OUT "inputSlews \"";
+    for (my $i=0; $i<@prsTau; $i++) {
+        my $slew = int (0.5 + $prsTau[$i] * (log(1-$slew_frac) - log($slew_frac)))/1000;
+        if ($i>0) { print OUT ","; }
+        print OUT "$slew";
+    }
+    print OUT "\"\n";
+    print OUT "outputCaps \"";
+    for (my $i=0; $i<@lumpCap; $i++) {
+        my $c = scale_cap($class,$strength,$lumpCap[$i]) / 1000;
+        if ($i>0) { print OUT ","; }
+        print OUT "$c";
+    }
+    print OUT "\"\n";
+
+    # process all taus and caps
+    @outputs = ();
+    @inputs = ();
+
+    foreach my $tau (@prsTau) {
+        foreach my $cap (@lumpCap) {
+
+            # set aspice run
+            my $run = "${gate}/${tau}_${cap}/$gatedir/" .
+                "$view/$mode/aspice/empty/" .
+                "${corner}/${vdd}V/${temp}C/0ns/0.95_1.05/aspice";
+
+            # read crit file and take measurements
+            open CRIT, "<${gate}/${tau}_${cap}.crit"
+                or die "ERROR: can't read ${gate}/${tau}_${cap}.crit\n";
+            while (my $line = <CRIT>) {
+                if ($line =~ s/^outputs //g) {
+                    @outputs = split(" ",$line);
+                }
+                elsif ($line =~ s/^inputs //g) {
+                    @inputs = split(" ",$line);
+                }
+                elsif ($line =~ s/^step //g) {
+                    chomp($tau_cap_step = $line);
+                }
+                else {
+                    my ($input,$time) = split(" ",$line);
+                    $input =~ /(.*)([+-])/;
+                    $input = $1;
+                    $indir = $2;
+                    my $from = $time/1000;
+                    my $to = ($time+$tau_cap_step)/1000;
+                    my @dirs = ("+", "-");
+                    foreach my $output (@outputs) {
+                        foreach my $outdir (@dirs) {
+                            my ($d,$s,$I) =
+                                measure_path($run,$from,$to,$input,$indir,
+                                             $output,$outdir);
+                            my $key = "${input}${indir}:${output}${outdir}";
+                            my $fullkey = "${key}:${tau}:${cap}";
+                            if (is_numeric($d)) {
+                                $paths{$key} = 1;
+                                $delay{$fullkey} = my_max($delay{$fullkey},$d);
+                            }
+                            if (is_numeric($s)) {
+                                $slew{$fullkey}  = my_max($slew{$fullkey},$s);
+                            }
+                            if (is_numeric($I)) {
+                                # compute energy in pJ
+                                my $e = $I * ($to - $from) * $vdd * 0.5 * 1e3;
+                                $energy{$fullkey} = my_max($energy{$fullkey},$e);
+                            }
+                        }
+                    }
+                }
+            }
+            close CRIT;
+        }
+    }
+
+    # input pin capacitances
+    my %cap = ();
+    open IN, "<$gate.cap" or die "Can't read $gate.cap\n";
+    while (my $line = <IN>) {
+        my @args = split(" ",$line);
+        if (@args==2) {
+            my $c = int($args[1]*1e17+0.5)/100000; # convert to pF
+            my $o = 0;
+            for (my $j=0; $j<@outputs; $j++) { if ($outputs[$j] eq $args[0]) { $o=1; }}
+            if (!($args[0] eq "Vdd" || $args[0] eq "GND") && !$o) { $cap{$args[0]} = $c; }
+        }
+    }
+    close IN;
+    for my $key (sort keys %cap) {
+        print OUT "input $key $cap{$key}\n";
+    }
+
+    # declare outputs
+    foreach my $output (@outputs) {
+        print OUT "output $output\n";
+    }
+
+    # report timing paths
+    foreach my $key (sort keys %paths) {
+        my $dstr = "";
+        my $sstr = "";
+        my $estr = "";
+        for (my $i = 0; $i<@prsTau; $i++) {
+            my $tau = $prsTau[$i];
+            if ($i>0) { $dstr .= ","; $sstr .= ","; $estr .= ","; }
+            $dstr .= "\"";
+            $sstr .= "\"";
+            $estr .= "\"";
+            for (my $j = 0; $j<@lumpCap; $j++) {
+                my $cap = $lumpCap[$j];
+                if ($j>0) { $dstr .= ","; $sstr .= ","; $estr .= ","; }
+                my $fullkey = "${key}:${tau}:${cap}";
+                my $d = $delay{$fullkey};
+                my $s = $slew{$fullkey};
+                my $e = $energy{$fullkey};
+                if (!defined($d)) { $d = "UNDEFINED"; }
+                else { $d = int($d*1000+0.5)/1000; }
+                if (!defined($s)) { $s = "UNDEFINED"; }
+                else { $s = int($s*1000+0.5)/1000; }
+                if (!defined($e)) { $e = "UNDEFINED"; }
+                else { $e = int($e*1000000+0.5)/1000000; }
+                $dstr .= $d;
+                $sstr .= $s;
+                $estr .= $e;
+            }
+            $dstr .= "\"";
+            $sstr .= "\"";
+            $estr .= "\"";
+        }
+        my $kstr = $key;
+        $kstr =~ s/:/ /g;
+        print OUT "path $kstr $dstr $sstr\n";
+        print OUT "power $kstr $estr\n";
+    }
+
+    # finish
+    close OUT;
+    close_aplot();
+}
+
+# measure delay/slew/power for input/indir/output/outdir path
+sub measure_path {
+    my ($run,$from,$to,$input,$indir,$output,$outdir) = @_;
+    my ($t,$d,$s,$I,$dtrig,$dtarg,$strig,$starg);
+    if ($indir eq "+") { $dtrig = "$input > $loth"; }
+    else               { $dtrig = "$input < $hith"; }
+    if ($outdir eq "+") {
+        $dtarg = "$output > $loth";
+        $strig = "$output > $losl";
+        $starg = "$output > $hisl";
+    }
+    else {
+        $dtarg = "$output < $hith";
+        $strig = "$output < $hisl";
+        $starg = "$output < $losl";
+    }
+    ($t,$d) = measure_aplot($run,$from,$to,"mindelay $dtrig $dtarg");
+    ($t,$s) = measure_aplot($run,$from,$to,"mindelay $strig $starg");
+    ($t,$I) = measure_aplot($run,$from,$to,"avg IVdd|");
+    return ($d,$s,$I);
+}
+
+
+################################################################################
+# Shared utilities
+################################################################################
+
+# max which supports undefined variables
+sub my_max {
+    my ($a, $b) = @_;
+    if (!defined($a) || $b>$a) { return $b; }
+    return $a;
+}
+
+# parse gates
+sub parse_gates {
+    my ($gates) = @_;
+    my @gates = ();
+    open GATES, "<$gates" or die "ERROR: can't read $gates.\n";
+    while (my $line = <GATES>) {
+        chomp($line);
+        push @gates, $line;
+    }
+    close GATES;
+    return @gates;
+}
+
+# auto-detect number of inputs
+sub num_inputs {
+    my ($gate) = @_;
+    my $inputs = 0;
+    if ($gate =~ /\.logic(.)\./) { $inputs = $1; }
+    return $inputs;
+}
+
+# get gate strength
+sub gate_strength {
+    my ($gate) = @_;
+    $gate =~ /\.(\d+)$/;
+    return $1;
+}
+
+# get number of rails
+sub gate_rails {
+    my ($gate) = @_;
+    if ($gate =~ /_1of(\d+)/ ) { return $1; }
+    return 2;
+}
+
+# classify gate
+sub classify_gate {
+    my ($gate) = @_;
+    my $class = "";
+    if    ($gate =~ /RESET_CTREE/)  { $class = "RESET_CTREE"; }
+    elsif ($gate =~ /CTREE/)        { $class = "CTREE"; }
+    elsif ($gate =~ /RESET_INVINV/) { $class = "RESET_INVINV"; }
+    elsif ($gate =~ /INV/)          { $class = "INV"; }
+    elsif ($gate =~ /NOR/)          { $class = "AND_NOR"; }
+    elsif ($gate =~ /AND/)          { $class = "AND_NOR"; }
+    elsif ($gate =~ /LOGIC/)        { $class = "QDI_LOGIC"; }
+    elsif ($gate =~ /BUF/)          { $class = "QDI_BUF"; }
+    elsif ($gate =~ /EDFF/)         { $class = "QDI_EDFF"; }
+    elsif ($gate =~ /SEND/)         { $class = "QDI_SEND"; }
+    elsif ($gate =~ /RECV/)         { $class = "QDI_RECV"; }
+    elsif ($gate =~ /FROM/)         { $class = "QDI_FROM"; }
+    elsif ($gate =~ /TO/)           { $class = "QDI_TO"; }
+    elsif ($gate =~ /SCAN_CONFIG/)  { $class = "QDI_SCAN_CONFIG"; }
+    return $class;
+}

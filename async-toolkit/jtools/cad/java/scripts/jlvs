@@ -1,0 +1,67 @@
+#! /bin/zsh
+
+#
+# Copyright 2001 Asynchronous Digital Design.  All rights reserved.
+#
+# $Id$
+#
+# author: Jesse Rosenstock
+#
+
+#
+# wrapper for convenient use of lvs
+#   handles setting of CLASSPATH, and instantiating cell to be lvs'd
+#
+
+layout_dir=$HOME/hardware/ADD7M
+cast_dir=$HOME/hardware/cast
+
+# -d option to use original classpath
+if [ x"$1" = x-d ]; then
+    shift
+else
+    CLASSPATH=$HOME/jars/antlr.jar:$HOME/jars/jcast.jar
+    export CLASSPATH
+fi
+
+
+# usage: lvs [ -d ] cast_file cast_cell 
+#          ( --ext ext_file ext_cell
+#          | --cdl cdl_file cdl_cell )
+
+if [ $# -le 4 ]; then
+    echo "Usage: $0 [ -d ] cast_file cast_cell "
+    echo "  ( --ext ext_file ext_cell | --cdl cdl_file cdl_cell ) "
+    echo "  [--noSubcells] [--noWires] [--noUnwired] [--noPrs]"
+    echo "  [--minStaticizerRatio rmin] [--maxStaticizerRatio rmax]"
+    exit 1
+fi
+
+CASTFILE=`cast_which $1`
+if [ x"$CASTFILE" = x ]; then
+    echo "Couldn't find $1"
+    exit 2
+fi
+
+# make cast file that instantiates cell, until we can do this in java
+tmp_cast=`mktemp /tmp/jlvs.XXXXXX`
+cat $CASTFILE > $tmp_cast
+echo "$2 __lvs_instance__;" >> $tmp_cast
+
+# make file with all the subtype information in it
+tmp_subtypes=`mktemp /tmp/jlvs.XXXXXX`
+tmp_equivtypes=`mktemp /tmp/jlvs.XXXXXX`
+find $layout_dir/. -name directives  -or -name subtypes | xargs cat | \
+    awk '/^[A-Za-z0-9_,(){}]+:/ { print $1 }' | sort -u > $tmp_subtypes
+find $cast_dir/. -name equivtypes | xargs cat | sort -u > $tmp_equivtypes
+
+/usr/intel/bin/java -Xmx2G -DHOME="$HOME" \
+    com.avlsi.tools.lvs.LVS "$tmp_cast" "$2" "$3" "$4" "$5" \
+    "$tmp_subtypes" "$tmp_equivtypes" "$6" "$7" "$8" "$9" "$10" "$11"
+lvs_status=$?
+
+rm -f $tmp_cast
+rm -f $tmp_subtypes
+rm -f $tmp_equivtypes
+
+exit $lvs_status

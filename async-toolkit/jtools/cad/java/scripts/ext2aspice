@@ -1,0 +1,24 @@
+#! /bin/sh -p
+
+#
+# Copyright 2000 Asynchronous Digital Design.  All rights reserved.
+#
+# $Id$
+#
+# author: Jesse Rosenstock
+#
+
+#
+# wrapper for convenient use of ext2aspice
+#   handles setting of CLASSPATH and CAST_PATH
+#
+
+if [ $# != 1 ]; then
+    echo "Usage: $0 cellname"
+    exit 1
+fi
+
+CLASSPATH=$HOME/jars/jcast.jar ; export CLASSPATH
+
+exec /usr/intel/bin/java -Xmx256M -DHOME="$HOME" \
+    com.avlsi.tools.ext2aspice.Ext2Aspice "$1"

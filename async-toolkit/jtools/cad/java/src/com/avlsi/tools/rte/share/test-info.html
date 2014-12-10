@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Test Info Page</title>
+  <link rel="stylesheet" type="text/css" href="stylesheet.css"
+ title="Style">
+</head>
+<body bgcolor="white">
+<table border="0" width="100%" cellpadding="1" cellspacing="0">
+  <tbody>
+    <tr>
+      <td><br>
+      </td>
+      <td align="left" height="90"><img src="logo.png" width="250"
+ height="90" alt="Fulcrum" border="0" align="left"> </td>
+    </tr>
+  </tbody>
+</table>
+<!-- ========== START OF NAVBAR ========== --> <a name="navbar_top"><!-- --></a>
+<table border="0" width="100%" cellpadding="1" cellspacing="0">
+  <tbody>
+    <tr>
+      <td colspan="2" bgcolor="#eeeeff" class="NavBarCell1"> <a
+ name="navbar_top_firstrow"><!-- --></a>
+      <table border="0" cellpadding="0" cellspacing="3">
+        <tbody>
+          <tr align="center" valign="top">
+            <td bgcolor="#eeeeff" class="NavBarCell1"> <a
+ href="statistics.html"><font clas="" s="NavBarFont1"><b>Statistics</b></font></a>&nbsp;</td>
+            <td bgcolor="#ffffff" class="NavBarCell1Rev"> &nbsp;<font
+ class="NavBarFont1Rev"><b>Test Info</b></font>&nbsp;</td>
+            <td bgcolor="#eeeeff" class="NavBarCell1"> <a
+ href="help-doc.html"><font class="NavBarFont1"><b>Help Doc</b></font></a>&nbsp;</td>
+            <td bgcolor="#eeeeff" class="NavBarCell1"> <a
+ href="examples.html"><font clas="" s="NavBarFont1"><b>Examples</b></font></a>&nbsp;</td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td align="right" valign="top" rowspan="3"><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- =========== END OF NAVBAR =========== -->
+<center>
+<h1>Test Info</h1>
+</center>
+<h2>Introduction</h2>
+This page documents the Automated cell testing performed by the
+Fulcrum's Regression Test Engine (RTE). The RTE performs circuit
+simulation within the <span style="font-style: italic;">dsim/tsim </span>simulation
+framework. Cells can be cosimulated for functional correctness,
+delay-insensitivity, coverage and performance. Leaf cells are also
+Reset Stress Tested. Directives within the CAST language define which
+properties of a given circuit are tested. Below we describe what these
+tests cover and how the behaviour of the RTE is controlled with
+directives to dictate what tests are performed.
+<h2>Test Categories</h2>
+<ul>
+  <li>
+    <h3>Functional Correctness</h3>
+  </li>
+</ul>
+<div style="margin-left: 40px;">Thess tests ultimately check that the
+behavioral specification and the transistor implementation are
+functionally identical. This is achieved by sending the same
+&nbsp;&nbsp;&nbsp; sequence of inputs to both the behavioral and
+digital versions of the system under test and asserting that the same
+sequence values are observed on all&nbsp; outputs. Under this framework
+non-deterministic circuits/modules ---Arbiters and synchronizers---
+will have to make the same <i>decision</i>. The solution to this
+problem this problem by making only one of these units ---preferrably
+the digital implementation---make the decision. Correctness tests
+should attempt to explore all the function space of the cell, whenever
+possible.<br>
+</div>
+<ul>
+  <li>
+    <h3>QDI Property: Stability and
+Non-interference&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h3>
+  </li>
+</ul>
+<div style="margin-left: 40px;">&nbsp;We require that all our
+asynchronous circuits satisfy the requirements of stability and
+non-interference. We simulate our digital cells with random timing
+enabled in Dsim and run it long enough to expose any premature
+switching, with cause instabilities. We can only check for
+non-interference of productions rules if and when that path is
+exercised. The test engineering is strongly encoured to choose test
+vectors carefully and intelligently. Sychronous circuits should not
+be simulated with random timing. <br>
+</div>
+<ul>
+  <li>
+    <h3>Performance Tests</h3>
+  </li>
+</ul>
+<div style="margin-left: 40px;">&nbsp;Digital tests can provide some
+measure of circuit performance by the number of transitions per cycle
+(ntpc) displayed by some interesting nodes, such as the&nbsp; <i>enable</i>
+line for an input or output channel on say the critical path of a cell.
+This information can be extracted in a simulation by using the
+ntpc_spec directive. The RTE will simulate a specified cell in
+TIMED_RANDOM mode and compares the measured ntpc_spec value to the
+specified values, raising a warning if the observed value of off by a
+certain margin.<br>
+</div>
+<ul>
+  <li>
+    <h3>Coverage Analysis</h3>
+  </li>
+</ul>
+<div style="margin-left: 40px;">Thorough coverage analysis should be to
+detect if a particular node has been caused to transition both up and
+down from all its potential sources. At the &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; moment there is no way of detecting such a
+property in our simulator. We therefore define coverage to mean that in
+a particular simulation a node transitions at least twice after reset.
+For leaf cells we will attempt at achieve 100% coverage. For mid-level
+cells 100$% coverage will be harder to achieve. It is the responsibitly
+of the designer entering the test vector to ensure that all the
+interesting cases involving the different cell interfaces are exercised.
+ The Regression Test Engine also has the ability to perform converage
+space merging; we compute the covergage results by taking the union of
+the coverage for different tests for the same cell to give an over cell
+testing coverage. </div>
+<ul>
+  <li>
+    <h3>Deadlock </h3>
+  </li>
+</ul>
+<div style="margin-left: 40px;">The test harness also provides a
+mechanism to check for whether a cell simulated as long as it was
+specified to. If the <i>cycle</i> command it Dsim returns we
+still&nbsp; need to check for whether the circuit run as long as it was
+supported to since the circuit simulator is event based. Here we
+compare the simulator time with the <i>cycle_time</i> directive and
+assert equality. In the case where we're cycling based on the number of
+transitions on a node we essentially perform the &nbsp;&nbsp;&nbsp;
+&nbsp; equivalent comparsion.<br>
+</div>
+<ul>
+  <li>
+    <h3>Reset Stress Testing</h3>
+  </li>
+</ul>
+<div style="margin-left: 40px;">All leaf cells with a cycle_node
+directive or an ntpc_spec have reset stress testing applied to them.
+DSim repeatedly resets the system with full-random &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; timing, cycling for some length of time between
+resets in whatever timing mode is currently selected.<br>
+</div>
+<br>
+<h2>Directives</h2>
+The following CAST directives have special meaning to the RTE. <br>
+<br>
+<ul>
+  <li><span style="font-style: italic;">Type </span>represents what
+appears on the RHS of the direcitve</li>
+  <li><span style="font-style: italic;">Default</span> is what the value
+assumes if it is not specified</li>
+  <li><span style="font-style: italic;">Parameter</span> is a directive
+qualifier. It can be a node, half operator etc</li>
+  <li><span style="font-style: italic;">Scope</span> indicates where in
+the cell definition the directive can be specified<br>
+  </li>
+</ul>
+<br>
+<center>
+<table border="1" width="80%" cellpadding="1" cellspacing="1">
+  <tbody>
+    <tr>
+      <td><b>Type</b></td>
+      <td><b>Directive</b></td>
+      <td><b>Default Value</b></td>
+      <td><b>Parameter</b></td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Scope</span><br>
+      </td>
+      <td><b>Description</b></td>
+    </tr>
+    <tr>
+      <td>int</td>
+      <td>cycle_count</td>
+      <td>null</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">ENV<br>
+      </td>
+      <td>Simulation ends after this node transitions the specified
+number</td>
+    </tr>
+    <tr>
+      <td>Node</td>
+      <td>cycle_node</td>
+      <td>null</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">ENV<br>
+      </td>
+      <td>The node to which <i>cycle_count</i> is applied</td>
+    </tr>
+    <tr>
+      <td>int</td>
+      <td>cycle_time</td>
+      <td>LONG_TIME</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">ENV<br>
+      </td>
+      <td>How long simulation is run in DSim time</td>
+    </tr>
+    <tr>
+      <td>boolean</td>
+      <td>unimplementable</td>
+      <td>false</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td>Indicates the cell is unimplementable and should not be
+digitally tested either</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+      <td style="vertical-align: top;">rte_ignore<br>
+      </td>
+      <td style="vertical-align: top;">false<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL/ENV<br>
+      </td>
+      <td style="vertical-align: top;">Indicates to the RTE not to test
+this cell<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+      <td style="vertical-align: top;">fragment<br>
+      </td>
+      <td style="vertical-align: top;">false<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td style="vertical-align: top;">Indicates that cell should not
+be simulated in isolation, cells of this nature have exposed nodes and
+there is usually no convenient way to specify and environment for these
+cells.<br>
+      </td>
+    </tr>
+    <tr>
+      <td>boolean</td>
+      <td>synchronous</td>
+      <td>false</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td>Denotes a synchronous cell; we have different test
+requirements on these cells</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">String <br>
+      </td>
+      <td style="vertical-align: top;">owner<br>
+      </td>
+      <td style="vertical-align: top;">mid<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td style="vertical-align: top;">Indicates to who all problems
+associated with this cell should be sent to. This directive is
+currently ignored.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+      <td style="vertical-align: top;">csp_cosim_will_fail<br>
+      </td>
+      <td style="vertical-align: top;">false<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL/ENV<br>
+      </td>
+      <td style="vertical-align: top;">Indicates that the cell should
+not be cosimulated. Cells displaying this directive only have thier
+implementations simulated<br>
+      </td>
+    </tr>
+    <tr>
+      <td>float</td>
+      <td>ntpc_spec</td>
+      <td>NaN<br>
+      </td>
+      <td>Node</td>
+      <td style="vertical-align: top;">ENV<br>
+      </td>
+      <td>Specfies the number of transistions per cycle this node
+should exhibit</td>
+    </tr>
+	 <tr>
+      <td>boolean</td>
+      <td>random</td>
+      <td>true</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td>Enable/disable UNTIMED_TIMING for simulation</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+      <td style="vertical-align: top;">timed<br>
+      </td>
+      <td style="vertical-align: top;">false<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL/ENV<br>
+      </td>
+      <td style="vertical-align: top;">Instructs RTE to simulate cell
+in TIMED_RANDOM mode<br>
+      </td>
+    </tr>
+    <tr>
+      <td>float</td>
+      <td>timed_jitter</td>
+      <td>0.33</td>
+      <td>nil</td>
+      <td style="vertical-align: top;">CELL/ENV<br>
+      </td>
+      <td> set random delay range for TIMED_RANDOM simulation<br>
+      </td>
+    </tr>
+	
+  </tbody>
+</table>
+</center>
+<h3>Examples</h3>
+This section provides examples of CAST cells which can be properly
+tested by the <i>rte</i>.
+<hr><i>Confidential</i>. Fulcrum Microsystems, Copyright &copy; 2002.
+All Rights Reserved.
+</body>
+</html>

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Produces data on how the number of tokens in a simple loop of
+# buffers affects the throughput.  Data is in the form of points, one
+# to a line.  The first number is the number of tokens, the second the
+# throughput in tokens per thousand transitions.  LENGTH is the length
+# of the loop, in full buffers.
+
+LENGTH=100
+I=$LENGTH
+
+for (( ; I=$(($I-1)) ; )); do
+    ./testloop -l $LENGTH -r $LENGTH -n $I ;
+done;

@@ -1,0 +1,103 @@
+#!/usr/intel/bin/perl
+
+# parse args, check usage
+$nop = 0;
+$force = 0;
+$local = 0;
+$noblock = 0;
+$delay = 30;
+if ( $ARGV[0] eq "-n" ) {
+    $nop = 1;
+    shift @ARGV;
+}
+if ( $ARGV[0] eq "-f") {
+    $force = 1;
+    shift @ARGV;
+} 
+if ($ARGV[0] eq "-local") {
+    $local = 1;
+    shift @ARGV;
+}
+if ($ARGV[0] eq "-noblock") {
+    $noblock = 1;
+    shift @ARGV;
+}
+
+$todo = $ARGV[$ARGC-1];
+pop @ARGV;
+if ( ! (-e $todo) ) {
+    print STDERR "USAGE: spice_batch [-n | -f | -local | -noblock ] [spice options] dofile\n";
+    print STDERR "  Uses qsub to launch a whole bunch of spice jobs.\n";
+    print STDERR "  Dofile contains cell:env or cell lines.\n";
+    print STDERR "  Use -f or delete subdirectories to force a rerun.\n";
+    print STDERR "  Use -n to see what cells need to be run.\n";
+    print STDERR "  Use -local to run only on local machine.\n";
+    print STDERR "  Use -noblock to quit without waiting for remote jobs to complete.\n";
+    exit 1;
+}
+
+# spice any recently added cells from list of cell:env pairs
+chomp($pwd = `pwd`);
+
+$ENV{'ARCH'} = "x86_64";
+$qsub = "qb";
+
+open TODO, "<$todo" or die "Can't open todo for reading.\n";
+$line = <TODO>;
+my %jobs;
+while ($line) {
+    $line =~ s/(\S+)\s+//;
+    $dir = "$pwd/$1";
+    if ( ! ( -e $dir)  || ($force == 1)) {
+        if ( $nop == 1 ) {
+            print STDOUT "Need to spice $1\n";
+        } else {
+            print STDOUT "Spicing $1\n";
+            mkdir "$dir";
+            $do = "$dir/do";
+            open  OUT, ">$do" or die "Can't open $do for writing.\n";
+            print OUT "#!/bin/sh\n";
+            # Workaround to prevent qsub from interpreting : in arguments to -e
+            # and -o as hostnames
+            print OUT "exec >\"$dir/out\" 2>\"$dir/err\"\n";
+            print OUT "cd \"$dir\"\n";
+            print OUT "spice ";
+            for $arg (@ARGV) {
+                print OUT "\"$arg\" "; # requote args
+            }
+            print OUT "\"$1\"\n";
+            close OUT;
+            `chmod +x \"$do\"`;
+            if ($local == 1) {
+                `\"$do\"`;
+            } else {
+                my $qsubfd;
+                open ($qsubfd,"$qsub \"$do\" 2>&1 |");
+                my @status = <$qsubfd>;
+                close($qsubfd);
+                if ($status[0] =~ /your job (\d+) \S+ has been submitted/) {
+                    $jobs{$1} = 1;
+                } else {
+                    print OUT "qsub seems to have failed, continuing anyway:\n";
+                    print OUT @status;
+                }
+            }
+        }
+    }
+    $line = <TODO>;
+}
+
+if (!$local && !$noblock) {
+    while (scalar(keys %jobs)) {
+        open(my $fd, "$qstat |") || die "Cannot execute $qstat: $!";
+        my %pending;
+        while(<$fd>) {
+            if (/^\s*([0-9]+)\s+.*/) {
+                $pending{$1} = 1 if ($jobs{$1});
+            }
+        }
+        close($fd);
+        %jobs = %pending;
+        sleep $delay;
+    }
+}

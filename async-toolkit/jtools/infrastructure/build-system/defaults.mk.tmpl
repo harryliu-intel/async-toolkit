@@ -1,0 +1,6 @@
+#Push project name
+SUB_PROJ_STACK := $(CURR_PROJECT_NAME) $(SUB_PROJ_STACK)
+#Set CURR_PROJECT_NAME to current project name.
+CURR_PROJECT_NAME:= placeholderproject
+
+include $(BUILD)/defaults.dir.mk

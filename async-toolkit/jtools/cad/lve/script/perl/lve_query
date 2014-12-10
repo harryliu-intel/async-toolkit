@@ -1,0 +1,327 @@
+#!/usr/intel/bin/perl -w
+
+BEGIN {
+    $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+    push @INC,"$package_root/lib/perl";
+}
+
+use LveUtil;
+use LveStatus;
+use strict;
+
+my $def_verbose = 0;                          # Default verbosity
+my $def_lve_dir = $ENV{PWD};                  # Default lve-dir
+my $def_include = "$ENV{HOME}/.lve_query";    # Default include file
+my $def_view    = "layout";
+my $def_mode    = "extracted";
+my $def_corner  = "tt";
+my $def_true    = "0.9";
+my $def_temp    = "90";
+my $def_time    = "20";
+my $def_random  = "0.95_1.05";
+
+my @VALID_TASKS = (
+    "jlvs", "drc", "frc", "lvs", "gds2", "extract", "alint", "aspice" 
+);
+
+my @VALID_QUERIES = (
+    "status", "timestamp"
+);
+
+#
+# Usage
+#
+sub usage_exit {
+    print STDERR <<USAGE;
+Usage: lve_query
+    --query=<query-list> 
+   [--filter=<filter-expn>]
+   [--tasks=<task-list>]
+   [--lve-dir=$def_lve_dir]
+   [--verbose=$def_verbose]
+   [--view=$def_view]
+   [--mode=$def_mode]
+   [--corner=$def_corner]
+   [--true=$def_true]
+   [--temp=$def_temp]
+   [--aspice-time=$def_time]
+   [--aspice-random=$def_random]
+   [--include=<file>]
+   [ cell[:env] ... ]           Cells to query.  If none are specified, will
+                                search all cells, subject ot filtering.
+
+Valid tasks: @VALID_TASKS
+Valid queries: @VALID_QUERIES
+
+Note: lve_query is unusual in that it behaves as if --include=~/.lve_query is
+always sepecified (as long as ~/.lve_query exists).
+USAGE
+    exit;
+}
+
+#
+# Configuration / Command variables
+#
+my $verbose       = $def_verbose;
+my $lve_dir       = $def_lve_dir;
+my $view          = $def_view;
+my $mode          = $def_mode;
+my $corner        = $def_corner;
+my $true          = $def_true;
+my $temp          = $def_temp;
+my $aspice_time   = $def_time;
+my $aspice_random = $def_random;
+my $filter  = "";
+my @queries = ( "status" );
+my @cells;
+my @tasks = @VALID_TASKS;
+
+my %query_functions = (
+    "status" => \&cell_status_query,
+    "timestamp" => \&cell_timestamp_query
+);
+
+
+
+#
+# Parse command line (and default include file)
+#
+read_include_file($def_include,\@ARGV) if (-e $def_include);
+
+while (defined $ARGV[0] && $ARGV[0] =~ /^--([^=]+)=?(.*)$/) {
+    my ($opt,$arg) = ($1,$2);
+    shift;
+    if ($opt eq "query") {
+        @queries = split /,/, $arg;
+        foreach my $query (@queries) {
+            if (! grep { $_ eq $query } keys %query_functions) {
+                print STDERR "Unrecognized query: $query\n";
+                usage_exit();
+            }
+        }
+    }
+    elsif ($opt eq "filter") {
+        # Need to implement filtering
+        $filter = $arg;
+    }
+    elsif ($opt eq "tasks") {
+        @tasks = split /,/, $arg;
+    }
+    elsif ($opt eq "lve-dir") {
+        $lve_dir = $arg;
+    }
+    elsif ($opt eq "verbose") {
+        $verbose = $arg;
+    }
+    elsif ($opt eq "corner") {
+        $corner = $arg;
+    }
+    elsif ($opt eq "true") {
+        $true = $arg;
+    }
+    elsif ($opt eq "temp") {
+        $temp = $arg;
+    }
+    elsif ($opt eq "aspice-time") {
+        $aspice_time = $arg;
+    }
+    elsif ($opt eq "aspice-random") {
+        $aspice_random = $arg;
+    }
+    elsif ($opt eq "include") {
+        read_include_file($arg,\@ARGV);
+    }
+    elsif ($opt eq "help") {
+        usage_exit();
+    }
+    else {
+        print STDERR "Unrecognized option '$opt'.\n";
+        usage_exit();
+    }
+}
+
+@cells = @ARGV;
+
+#
+# Main loop
+#
+if (!@cells) {
+    print "Finding cells...\n" if ($verbose);
+    find_fqcns($lve_dir,\@cells);
+}
+
+my $oneline = 0;
+foreach my $cell (@cells) {
+    my ($fqcn,@envs);
+    if ($cell =~ /^([^:]+):?(.*)$/) {
+        $fqcn = $1;
+        @envs = split /,/, $2;
+    }
+    next if (filter_out($filter,$fqcn));
+    print "$fqcn";
+    foreach my $task (@tasks) {
+        if (!$oneline) { print "\n    " . expand_task_str($task) . " "; }
+        else { print " $task "; }
+        foreach my $query (@queries) {
+            &{$query_functions{$query}}($task,$fqcn,$view,$mode,@envs);
+            print " ";
+        }
+    }
+    print "\n";
+}
+
+#
+# Subroutines
+#
+
+# Return 1 if cells is to be filtered out
+sub filter_out {
+    my ($filter,$cell) = @_;
+    return 0;
+}
+
+sub cell_status_query {
+    my ($task,$cell,$view,$mode,@envs) = @_;
+    my $celldir = $lve_dir . "/" . fqcn_to_path($cell);
+    my ($status,$time) = get_task_status($task,$celldir,$view,$mode,@envs);
+    print "[" . $status . "]";
+}
+
+sub cell_timestamp_query {
+    my ($task,$cell,$view,$mode,@envs) = @_;
+    my $celldir = $lve_dir . "/" . fqcn_to_path($cell);
+    my ($status,$time) = get_task_status($task,$celldir,$view,$mode,@envs);
+    print $time;
+}
+
+
+sub get_task_status {
+    my ($task,$celldir,$view,$mode,@envs) = @_;
+    my ($status,$time) = ("NT", "--");
+    if ($task eq "jlvs") {
+        if (-e "$celldir/jlvs.out") {
+            my $jlvs_status = `tail -1 \"$celldir/jlvs.out\"`;
+            if ($jlvs_status =~ /^LVS passed/) { $status = "P"; }
+            elsif ($jlvs_status =~ /^LVS signoff/) { $status = "SO"; }
+            elsif ($jlvs_status =~ /^LVS NA/) { $status = "NA"; }
+            else { $status = "F"; }
+            $time = get_time("$celldir/jlvs.err.time");
+        }
+    }
+    elsif ($task eq "gds2") {
+        if (-s "$celldir/$view/cell.gds2") {
+            $status = "P";
+            $time = get_time("$celldir/$view/cell.gds2.time");
+        }
+    }
+    elsif ($task eq "drc" || $task eq "frc" || $task eq "lvs") {
+        $status = result_to_status("$celldir/$view/$task.result");
+        $time = get_time("$celldir/$view/$task.tar.bz2.time");
+    }
+    elsif ($task eq "extract") {
+        $status = result_to_status("$celldir/$view/$mode/extract.result");
+        $time = get_time("$celldir/$view/$mode/cell.spice.time");
+    }
+    elsif ($task eq "aspice" || $task eq "alint") {
+        $celldir .= "/$view/$mode";
+        my @dirs;
+        if ($task eq "aspice") {
+            if (!@envs) {
+                opendir ENVS, "$celldir/aspice" || 
+                    die "Couldn't read $celldir/aspice";
+                @dirs = grep { !/^\./ } readdir(ENVS);
+                closedir ENVS;
+            }
+            else {
+                @dirs = @envs;
+            }
+            foreach (@dirs) {
+                $_ = "$celldir/aspice/$_/$corner/${true}V/${temp}C/" .
+                     "${aspice_time}ns/$aspice_random";
+            }
+        }
+        else {
+            @dirs = ( "$celldir/alint/$corner/${true}V/${temp}C" );
+        }
+        foreach my $dir (@dirs) {
+            my ($s,$t) = done_to_tstat($task,$dir);
+            if ($s eq "T") {
+                $status = "T" if ($status eq "NT");
+                $time   = $t;                       # Note arbitrary choice
+                if ($status =~ /^T/ && -e "$dir/$task.raw") {
+                    my @raw = get_lines("$dir/$task.raw");
+                    my $raw_status = get_status(@raw);
+                    if ($raw_status eq "PASS" || $raw_status eq "NA" ||
+                        $raw_status eq "SIGNOFF") {
+                        $status .= "P";
+                    }
+                    else {
+                        $status .= "F";
+                    }
+                }
+            }
+        }
+    }
+    else {
+        die "Unrecognized task $task.\n";
+    }
+    return ($status,$time);
+}
+
+sub result_to_status {
+    my ($file) = @_;
+    if (-e $file) {
+        my $status = `tail -1 \"$file\"`;
+        if    ($status =~ /PASS/) { return "P"; }
+        elsif ($status =~ /SIGN/) { return "SO"; }
+        else { return "F"; }
+    }
+    else {
+        return "NT";
+    }
+}
+
+sub get_time {
+    my ($file) = @_; 
+    my $time = "--";
+    if (-e $file) {
+        $time = `tail -1 \"$file\"`;
+        chomp $time;
+    }
+    return $time;
+}
+
+# Gets testing status of an aspice or alint run, based on .done file
+sub done_to_tstat {
+    my ($task,$dir) = @_;
+    my ($tstat,$time) = ("NT", "--");
+    if (-s "$dir/$task.done") {
+        my $result = `tail -1 \"$dir/$task.done\"`;
+        $tstat = "T" if ($result !~ /FAIL/);
+        $time = get_time("$dir/$task.done.time");
+    }
+    return ($tstat,$time);
+}
+
+sub expand_task_str {
+    my ($task) = @_;
+    for (length($task)..6) { $task .= " "; }
+    return $task;
+}

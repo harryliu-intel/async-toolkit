@@ -1,0 +1,275 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+my $sparroot;
+my $alintpath = "extracted/alint/tt/0.9V/125C";
+my $cell;
+my $lveroot = `pwd`;
+chomp $lveroot;
+my $p4client;
+my $dryrun = 0;
+my $verbose = 0;
+my $view;
+my $corner = "tt";
+my $voltage = "0.9";
+my $temperature = "125";
+my $mode="extracted";
+my $check=0;
+
+sub mysystem {
+    my (@args) = @_;
+    print join(" ", @args) if $verbose or $dryrun;
+    if ( ! $dryrun) {
+        system @args;
+    }
+}
+
+sub usage {
+    my ($msg) = @_;
+    print STDERR "$msg" if defined $msg;
+    print <<EU;
+Usage : p4lib [options] <leflist file>
+    options
+        --cell=<fqcn>        cell name to check in
+        --client             p4 client spec name
+        --dryrun             do not execute commands
+        --help               this usage message
+        --lve-root=<path>    path to lve root
+        --view=<name>        view name
+        --verbose            show what you are doing
+        --voltage=<volts>    default 0.9
+        --temp=<temperature> default 125
+        --corner=<corner>    default tt
+        --mode=<mode>        default extracted
+        --check              check only
+EU
+    exit 1;
+}
+
+GetOptions (
+    "dryrun" => \$dryrun,
+    "verbose" => \$verbose,
+    "client=s" => \$p4client,
+    "cell=s" => \$cell,
+    "lve-root=s" => \$lveroot,
+    "help" => sub {usage;},
+    "view=s" => \$view,
+    "voltage=f" => \$voltage,
+    "temp=i" => \$temperature,
+    "corner=s" => \$corner,
+    "mode=s" => \$mode,
+    "check" => \$check,
+) or usage;
+
+
+$alintpath = "$mode/alint/$corner/${voltage}V/${temperature}C";
+$dryrun = 1 if $check;
+
+usage "specify p4 client, please" if ! defined $p4client and ! $check;
+
+usage "lve-root $lveroot is not a directory" if ! -d $lveroot;
+
+if (! $check ) {
+    my $ok=`p4 clients -e $p4client | wc -l`;
+    chomp $ok;
+    usage "Cannot find p4 client '$p4client'" if ! $ok;
+    open (P, "p4 -u system client -o $p4client |");
+    my $root;
+    my $found=0;
+    my $tail;
+    while (<P>) {
+        chomp;
+        if (/^Root:\s*(\S+)/) {
+            $root=$1;
+        }
+        if (m:\s+//$p4client/\S+/spar/(\S+):) {
+            $tail=$1;
+        }
+        elsif (m:\s+//$p4client/spar/(\S+):) {
+            $tail=$1;
+        }
+        if (defined ($tail)) {
+            s/^\s+//;
+            my @f=split;
+            $f[1] =~ s://$p4client:$root:;
+            $f[1] =~ s:/$tail$::;
+            $sparroot = $f[1];
+            if ( -d $sparroot ) {
+                $found=1;
+                last;
+            }
+        }
+        undef $tail;
+    }
+
+    usage "Cannot find spar root for $p4client" if ! $found;
+}
+
+usage if ! defined($ARGV[0]) and ! defined($cell);
+
+if (defined ($ARGV[0])) {
+    open (P, "<$ARGV[0]");
+    while (<P>) {
+        chomp;
+        dothedeed($_);
+    }
+}
+else {
+    my @views=("layout_pg", "layout_tag", "lvsclean", "layout", "floorplan");
+    my $leffile = $cell;
+    $leffile =~ s/\./\//g;
+    if (defined ($view) and -d "$lveroot/$leffile/$view") {
+        $leffile .= "/$view";
+    }
+    else {
+        foreach my $v (@views) {
+            $leffile .= "/$v" if -d "$lveroot/$leffile/$v";
+            last;
+        }
+    }
+    $leffile .= "/lib_vc.lef";
+    usage "$lveroot/$leffile not found" if ! -s "$lveroot/$leffile";
+    if (checkfiles($leffile) and ! $check) {
+        dothedeed($leffile);
+    }
+}
+
+sub checkfiles {
+    my ($leffile) = @_;
+    local($_) = $leffile;
+    my @f = split(/\//);
+    pop @f;
+    pop @f;
+    my $sparprefix = "$sparroot/".join("/", @f);
+    pop @f;
+    my $spardir = "$sparroot/".join("/", @f);
+    if (! -s "$lveroot/$leffile") {
+        print STDERR "Error: no lef $lveroot/$leffile";
+        return 0;
+    }
+    my $libfile = $leffile;
+    $libfile =~ s:lib_vc.lef:$alintpath/cell.lib:;
+    if ( ! -s "$lveroot/$libfile") {
+        print STDERR "Error: no lib $lveroot/$libfile";
+        return 0;
+    }
+    return 0 if ! checkpins("$lveroot/$leffile", "$lveroot/$libfile");
+    checklibsyntax("$lveroot/$libfile");
+}
+
+sub checkpins {
+    my ($lef, $lib) = @_;
+    print STDERR "checkpins $lef $lib" if $verbose;
+    my %pins=();
+    my $clean=1;
+    %pins=();
+    open (P, "<$lef");
+    while (<P>) {
+        chomp;
+        if (/^\s*PIN\s+(\S+)\s*/) {
+            $pins{$1}=1 if $1 ne "GND" and $1 ne "Vdd";
+        }
+    }
+    close P;
+    open (P, "<$lib");
+    while (<P>) {
+        chomp;
+        if (/^\s*pin\s*\(\s*(\S+)\s*\)/) {
+            $pins{$1} |= 2;
+        }
+    }
+    close P;
+    foreach my $pin (sort keys %pins) {
+        print "Error: $pin missing from lef in $lef" if $pins{$pin} == 2;
+        print "Error: $pin missing from lib in $lib" if $pins{$pin} == 1;
+        $clean = 0 if $pins{$pin} != 3;
+    }
+    print STDERR "Pin check ". ($clean ? "Ok" : "Not OK" ) if $verbose;
+    $clean;
+}
+
+sub checklibsyntax {
+    my  ($lib) = @_;
+    my $errs=0;
+    my @errs=();
+    if ( ! -s "$lib") {
+        $errs++;
+        push @errs, "Error: $lib does not exist";
+    }
+    else {
+        if (defined ($ENV{TMP}) and -d $ENV{TMP}) {
+            $ENV{TMPDIR}=$ENV{TMP};
+        }
+        else {
+            $ENV{TMPDIR}="/scratch";
+        }
+        my $workdir=`mktemp -t -d lveliblef2p4.XXXXXX`;
+        chomp $workdir;
+        print STDERR "Using tmpdir $workdir" if $verbose;
+        open (P, ">$workdir/pt.tcl");
+        print P "read_lib \{$lib\}";
+        print P "exit";
+        close P;
+        system ("cd $workdir; /usr/local/synopsys/bin/pts pt_shell -file '$workdir/pt.tcl' 1>pt.log 2>pt.err" );
+        open (P, "cat '$workdir/pt.log' '$workdir/pt.err' |");
+        while (<P>) {
+            chomp;
+            if (/^Error:/) {
+                push @errs, $_;
+                $errs++;
+            }
+        }
+        close P;
+        if ( $workdir =~ /lveliblef2p4\./) {
+            system ("/bin/rm -rf $workdir");
+        }
+    }
+    print STDERR join("\n", @errs) if $errs;
+    print STDERR "Lib Syntax check ". ($errs ? "Not Ok" : "OK") if $verbose;
+    $errs ? 0 : 1;
+}
+
+sub dothedeed {
+    my ($leffile) = @_;
+    local($_) = $leffile;
+    my @f = split(/\//);
+    pop @f;
+    pop @f;
+    my $sparprefix = "$sparroot/".join("/", @f);
+    pop @f;
+    my $spardir = "$sparroot/".join("/", @f);
+    if (-s "$lveroot/$leffile" and (! -e "$sparprefix.lef" or -w "$sparprefix.lef")) {
+        mysystem ("mkdir", "-p", $spardir) if ! -d $spardir;
+        unlink ("$sparprefix.lef");
+        mysystem ("cp", "-pv", "$lveroot/$leffile", "$sparprefix.lef");
+        mysystem ("p4", "-c", $p4client, "add", "$sparprefix.lef");
+    }
+    elsif ( -e "$sparprefix.lef") {
+        my $rv = system("diff", "$lveroot/$leffile", "$sparprefix.lef");
+        if ($rv != 0) {
+            mysystem ("p4", "-c", $p4client, "edit", "$sparprefix.lef");
+            mysystem ("cp", "-pv", "$lveroot/$leffile", "$sparprefix.lef");
+        }
+    }
+    my $libfile = $leffile;
+    $libfile =~ s:lib_vc.lef:$alintpath/cell.lib:;
+    if (-s "$lveroot/$libfile" and (! -e "$sparprefix.lib" or -w "$sparprefix.lib")) {
+        mysystem ("mkdir", "-p", $spardir) if ! -d $spardir;
+        unlink ("$sparprefix.lib");
+        mysystem ("p4", "-c", $p4client, "edit", "$sparprefix.lib");
+        mysystem ("cp", "-pv", "$lveroot/$libfile", "$sparprefix.lib");
+        mysystem ("p4", "-c", $p4client, "add", "$sparprefix.lib");
+    }
+    elsif ( -e "$sparprefix.lib") {
+        my $rv = system("diff", "$lveroot/$libfile", "$sparprefix.lib");
+        if ($rv != 0) {
+            mysystem ("p4", "-c", $p4client, "edit", "$sparprefix.lib");
+            mysystem ("cp", "-pv", "$lveroot/$libfile", "$sparprefix.lib");
+        }
+    }
+}

@@ -1,0 +1,1245 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use LveAspice;
+use LveUtil;
+use FileHandle;
+use IPC::Open2;
+
+#############################################################################
+# Generate LIB file for TCAM nodes
+#############################################################################
+
+# configuration
+$" = ",";
+my %energy;
+my $area          = "8558.64576"; # um^2
+my $leakage       = 0; #uW
+$energy{"read"}   = 0; #fJ
+$energy{"write"}  = 0; #fJ
+$energy{"lookup"} = 0; #fJ
+$energy{"nop"}    = 0; #fJ
+my $revision = "1.0.0";
+my $cycles = 15;
+my $process  = "tttt";
+my $rcCorner = "tttt";
+my $vdd = 0.815;
+my $temp = -40;
+my $cfg = "0x9C4";
+my $depth = 512;
+my $width = 40;
+my $delay_frac = 0.5; # measure delays at 50%
+my $slew_frac  = 0.2; # measure slews from 20% to 80%, also for min/max delay paths
+my $mindelay = 0;
+my $debug = 1;
+my $start_posedge = 2; # measurement window starts with CLK+
+my $cycle_time = 2; # cycle time
+# slews and loads for run_tcam characterization in XA
+my @slews = (4,8,16,32,64,128,256); # input slew in ps
+my @loads = (5); # output load in fF
+# slews and loads for NanoTime characterization
+my @nt_slews = (4,8,16,32,64,128,256); # input slew in ps
+my @nt_loads = (5,8,14,22,37,61,100); # output load in fF for nanotime gate characterization
+
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=*(.*)/ ) {
+    my $key = $1;
+    my $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    if    ($key eq "slews")      { @slews = split(",",$value); }
+    elsif ($key eq "loads")      { @loads = split(",",$value); }
+    elsif ($key eq "nt_slews")   { @nt_slews = split(",",$value); }
+    elsif ($key eq "nt_loads")   { @nt_loads = split(",",$value); }
+    elsif ($key eq "depth")      { $depth = $value; }
+    elsif ($key eq "width")      { $width = $value; }
+    elsif ($key eq "process")    { $process = $value; }
+    elsif ($key eq "rcCorner")   { $rcCorner = $value; }
+    elsif ($key eq "vdd")        { $vdd = $value; }
+    elsif ($key eq "temp")       { $temp = $value; }
+    elsif ($key eq "cfg")        { $cfg = $value; }
+    elsif ($key eq "min-delay")  { $mindelay = $value; }
+    elsif ($key eq "delay-frac") { $delay_frac = $value; }
+    elsif ($key eq "slew-frac")  { $slew_frac = $value; }
+    elsif ($key eq "debug")      { $debug = $value; }
+    elsif ($key eq "em")         { $em = $value; }
+    else                         { banner(); }
+}
+
+# usage banner
+sub banner {
+    die "USAGE: tcam_lib\n" .
+        "  [--process=$process]\n" .
+        "  [--rcCorner=$rcCorner]\n" .
+        "  [--vdd=$vdd]\n" .
+        "  [--temp=$temp]\n" .
+        "  [--min-delay=$mindelay]\n" .
+        "  [--width=$width]\n" .
+        "  [--depth=$depth]\n" .
+        "  [--slews=@slews]\n" .
+        "  [--loads=@loads]\n" .
+        "  [--nt_slews=@nt_slews]\n" .
+        "  [--nt_loads=@nt_loads]\n" .
+        "  [--slew-frac=$slew_frac]\n" . 
+        "  [--debug=$debug]\n" .
+        "  [--em=$em]\n";
+}
+
+# derived values
+my $last_line = $depth-1;
+my $last_bit = $width-1;
+my $start_negedge = $start_posedge - $cycle_time/2;
+my $emflag = "";
+$emflag = "_em" if ($em);
+my $cell = "ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl";
+my $libname = "${cell}${emflag}_${process}_${vdd}v_${temp}c_${rcCorner}";
+my $n_slews = @slews;
+my $n_loads = @loads;
+my $nt_n_loads = @nt_loads;
+my $max_transition = $slews[@slews-1];
+my $max_capacitance = $nt_loads[@nt_loads-1];
+
+# measurement thresholds
+my $slew_low  = $slew_frac * 100;
+my $slew_high = (1-$slew_frac) * 100;
+my $delay_thresh = $delay_frac*100;
+my $loth = $delay_frac * $vdd;
+my $hith = (1-$delay_frac) * $vdd;
+my $losl = $slew_frac * $vdd;
+my $hisl = (1-$slew_frac) * $vdd;
+
+# tools
+my $aplot = "$ENV{FULCRUM} aplot";
+
+# parse nanotime timing arcs and capacitances
+my %nt_min_cap;
+my %nt_max_cap;
+my %nt_values;
+parse_lib("statim/wwc_out_hit_and_4000_${process}_${vdd}v_${temp}c","hit",0);
+parse_lib("statim/wwc_out_read_latch_4000_${process}_${vdd}v_${temp}c","read",0);
+parse_lib("statim/wwc_tcam_512_40_4000_tttt_0.815v_-40c","cap",1); # just for input cap
+
+# debug lib data
+if ($debug) {
+    print STDERR "### Input Capacitances\n";
+    for my $key (sort keys %nt_max_cap) {
+        print STDERR "cap{$key} = $nt_min_cap{$key} $nt_max_cap{$key}\n";
+    }
+    print STDERR "\n";
+    print STDERR "### Output Timing Arcs\n";
+    foreach my $key (sort keys %nt_values) {
+        print STDERR "$key $nt_values{$key}\n\n";
+    }
+}
+
+# measure timing with aplot
+foreach my $slew (@slews) {
+    foreach my $load (@loads) {
+        my $run = "lib/${process}/${vdd}/${temp}/${rcCorner}/${cycle_time}/${slew}/${load}/${cfg}/xa";
+        unless (-e "${run}.measure") {
+            unless (-e "${run}.trace") { die("ERROR: no simulation results found for $run\n"); }
+            measure_tcam($run);
+        }
+    }
+}
+
+# load raw measurements into hash tables
+my %delay_min = ();
+my %delay_max = ();
+my %fall_delay_min = ();
+my %fall_delay_max = ();
+my %rise_delay_min = ();
+my %rise_delay_max = ();
+my %fall_slew_min = ();
+my %fall_slew_max = ();
+my %rise_slew_min = ();
+my %rise_slew_max = ();
+foreach my $slew (@slews) {
+    foreach my $load (@loads) {
+        my $run = "lib/${process}/${vdd}/${temp}/${rcCorner}/${cycle_time}/${slew}/${load}/${cfg}/xa";
+        my $file = "${run}.measure";
+        unless (open IN, "<$file") { print STDERR "ERROR: can't read $file\n"; next; }
+        while (my $line = <IN>) {
+            chomp($line);
+            my @args = split(" ",$line);
+            my $key = "${args[1]}:${slew}:${load}";
+            if ($args[0] eq "delay") {
+                $delay_min{$key} = my_min($delay_min{$key},$args[2]);
+                $delay_max{$key} = my_max($delay_max{$key},$args[3]);
+            } elsif ($args[0] eq "rise_delay") {
+                $rise_delay_min{$key} = my_min($rise_delay_min{$key},$args[2]);
+                $rise_delay_max{$key} = my_max($rise_delay_max{$key},$args[3]);
+            } elsif ($args[0] eq "fall_delay") {
+                $fall_delay_min{$key} = my_min($fall_delay_min{$key},$args[2]);
+                $fall_delay_max{$key} = my_max($fall_delay_max{$key},$args[3]);
+            } elsif ($args[0] eq "rise_slew") {
+                $rise_slew_min{$key} = my_min($rise_slew_min{$key},$args[2]);
+                $rise_slew_max{$key} = my_max($rise_slew_max{$key},$args[3]);
+            } elsif ($args[0] eq "fall_slew") {
+                $fall_slew_min{$key} = my_min($fall_slew_min{$key},$args[2]);
+                $fall_slew_max{$key} = my_max($fall_slew_max{$key},$args[3]);
+            } elsif ($args[0] eq "energy") {
+                $energy{$args[1]} = my_max($energy{$args[1]},$args[2]);
+            } elsif ($args[0] eq "leakage") {
+                $leakage = my_max($leakage,$args[1]);
+            }
+        }
+        close IN;
+    }
+}
+
+# debugging
+if ($debug) {
+    print STDERR "### Simulation Measurements\n";
+    foreach my $key (sort keys %delay_min) {
+        print STDERR "delay_min{$key} = $delay_min{$key}\n";
+    }
+    foreach my $key (sort keys %delay_max) {
+        print STDERR "delay_max{$key} = $delay_max{$key}\n";
+    }
+    foreach my $key (sort keys %rise_delay_min) {
+        print STDERR "rise_delay_min{$key} = $rise_delay_min{$key}\n";
+    }
+    foreach my $key (sort keys %rise_delay_max) {
+        print STDERR "rise_delay_max{$key} = $rise_delay_max{$key}\n";
+    }
+    foreach my $key (sort keys %fall_delay_min) {
+        print STDERR "fall_delay_min{$key} = $fall_delay_min{$key}\n";
+    }
+    foreach my $key (sort keys %fall_delay_max) {
+        print STDERR "fall_delay_max{$key} = $fall_delay_max{$key}\n";
+    }
+    foreach my $key (sort keys %rise_slew_min) {
+        print STDERR "rise_slew_min{$key} = $rise_slew_min{$key}\n";
+    }
+    foreach my $key (sort keys %rise_slew_max) {
+        print STDERR "rise_slew_max{$key} = $rise_slew_max{$key}\n";
+    }
+    foreach my $key (sort keys %fall_slew_min) {
+        print STDERR "fall_slew_min{$key} = $fall_slew_min{$key}\n";
+    }
+    foreach my $key (sort keys %fall_slew_max) {
+        print STDERR "fall_slew_max{$key} = $fall_slew_max{$key}\n";
+    }
+}
+
+# library values
+my %setup_rise = ();
+my %setup_fall = ();
+my %hold_rise = ();
+my %hold_fall = ();
+my %delay_rise = ();
+my %delay_fall = ();
+my %slew_rise = ();
+my %slew_fall = ();
+my %min_delay_rise = ();
+my %min_delay_fall = ();
+my %min_slew_rise = ();
+my %min_slew_fall = ();
+
+# setup/hold times don't depend on cap, so use first load only
+$load = $loads[0];
+
+# DATA/MASK setup/hold
+@setup = ();
+@hold = ();
+foreach my $slew1 (@slews) { # data
+    foreach my $slew2 (@slews) { # clock
+        push @setup, $delay_max{"data_in:${slew1}:${load}"} -
+            $rise_delay_min{"data_clock:${slew2}:${load}"};
+        push @hold, $fall_delay_max{"data_latch:${slew2}:${load}"} -
+            $delay_min{"data_in:${slew1}:${load}"};
+    }
+}
+foreach $name ("DATA", "MASK") {
+    $setup_rise{$name} = $setup_fall{$name} = format_2D($n_slews,$n_slews,@setup);
+    $hold_rise{$name}  = $hold_fall{$name}  = format_2D($n_slews,$n_slews,@hold);
+}
+
+# ADDR setup/hold
+@setup = ();
+@hold = ();
+foreach my $slew1 (@slews) { # data
+    foreach my $slew2 (@slews) { # clock
+        push @setup, $delay_max{"addr_in:${slew1}:${load}"} -
+            $rise_delay_min{"addr_clock:${slew2}:${load}"};
+        push @hold, $fall_delay_max{"addr_latch:${slew2}:${load}"} -
+            $delay_min{"addr_in:${slew1}:${load}"};
+    }
+}
+$setup_rise{"ADDR"} = $setup_fall{"ADDR"} = format_2D($n_slews,$n_slews,@setup);
+$hold_rise{"ADDR"}  = $hold_fall{"ADDR"}  = format_2D($n_slews,$n_slews,@hold);
+
+# CTRL setup/hold`
+@setup = ();
+@hold = ();
+foreach my $slew1 (@slews) { # data
+    foreach my $slew2 (@slews) { # clock
+        push @setup, $delay_max{"ctrl_in:${slew1}:${load}"} -
+            $rise_delay_min{"ctrl_clock:${slew2}:${load}"};
+        push @hold,  $fall_delay_max{"ctrl_latch:${slew2}:${load}"} -
+            $delay_min{"ctrl_in:${slew1}:${load}"};
+    }
+}
+$setup_rise{"CTRL"} = $setup_fall{"CTRL"} = format_2D($n_slews,$n_slews,@setup);
+$hold_rise{"CTRL"}  = $hold_fall{"CTRL"}  = format_2D($n_slews,$n_slews,@hold);
+foreach my $ctrl ("WEN", "REN", "KEN") {
+    $setup_rise{$ctrl} = $setup_rise{"CTRL"};
+    $setup_fall{$ctrl} = $setup_fall{"CTRL"};
+    $hold_rise{$ctrl} = $hold_rise{"CTRL"};
+    $hold_fall{$ctrl} = $hold_fall{"CTRL"};
+}
+
+# RHIT maximum delay/slew
+my @d_rise = ();
+my @s_rise = ();
+my @d_fall = ();
+my @s_fall = ();
+foreach my $slew (@slews) {
+    push @d_rise, interpolate_row($rise_slew_max{"hit:${slew}:${load}"},
+                                  $rise_delay_max{"hit:${slew}:${load}"},
+                                  $nt_values{"hit:x:a[1]:cell_rise:max"});
+    push @d_fall, interpolate_row($fall_slew_max{"hit:${slew}:${load}"},
+                                  $fall_delay_max{"hit:${slew}:${load}"},
+                                  $nt_values{"hit:x:a[1]:cell_fall:max"});
+    push @s_rise, interpolate_row($rise_slew_max{"hit:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"hit:x:a[1]:rise_transition:max"});
+    push @s_fall, interpolate_row($fall_slew_max{"hit:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"hit:x:a[1]:fall_transition:max"});
+}
+$delay_rise{"RHIT"} = format_2D($n_slews,$nt_n_loads,@d_rise);
+$delay_fall{"RHIT"} = format_2D($n_slews,$nt_n_loads,@d_fall);
+$slew_rise{"RHIT"}  = format_2D($n_slews,$nt_n_loads,@s_rise);
+$slew_fall{"RHIT"}  = format_2D($n_slews,$nt_n_loads,@s_fall);
+
+# RHIT minimum delay/slew
+@d_rise = ();
+@s_rise = ();
+@d_fall = ();
+@s_fall = ();
+foreach my $slew (@slews) {
+    push @d_rise, interpolate_row($rise_slew_min{"hit:${slew}:${load}"},
+                                  $rise_delay_min{"hit:${slew}:${load}"},
+                                  $nt_values{"hit:x:a[1]:cell_rise:min"});
+    push @d_fall, interpolate_row($fall_slew_min{"hit:${slew}:${load}"},
+                                  $fall_delay_min{"hit:${slew}:${load}"},
+                                  $nt_values{"hit:x:a[1]:cell_fall:min"});
+    push @s_rise, interpolate_row($rise_slew_min{"hit:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"hit:x:a[1]:rise_transition:min"});
+    push @s_fall, interpolate_row($fall_slew_min{"hit:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"hit:x:a[1]:fall_transition:min"});
+}
+$min_delay_rise{"RHIT"} = format_2D($n_slews,$nt_n_loads,@d_rise);
+$min_delay_fall{"RHIT"} = format_2D($n_slews,$nt_n_loads,@d_fall);
+$min_slew_rise{"RHIT"}  = format_2D($n_slews,$nt_n_loads,@s_rise);
+$min_slew_fall{"RHIT"}  = format_2D($n_slews,$nt_n_loads,@s_fall);
+
+# LHIT_RHIT maximum delay/slew
+$delay_rise{"LHIT_RHIT"} = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:cell_rise:max"});
+$delay_fall{"LHIT_RHIT"} = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:cell_fall:max"});
+$slew_rise{"LHIT_RHIT"}  = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:rise_transition:max"});
+$slew_fall{"LHIT_RHIT"}  = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:fall_transition:max"});
+
+# LHIT_RHIT minimum delay/slew
+$min_delay_rise{"LHIT_RHIT"} = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:cell_rise:min"});
+$min_delay_fall{"LHIT_RHIT"} = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:cell_fall:min"});
+$min_slew_rise{"LHIT_RHIT"}  = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:rise_transition:min"});
+$min_slew_fall{"LHIT_RHIT"}  = reformat_2D($n_slews,$nt_n_loads,$nt_values{"hit:x:a[0]:fall_transition:min"});
+
+# READ_DATA maximum delay/slew
+@d_rise = ();
+@s_rise = ();
+@d_fall = ();
+@s_fall = ();
+foreach my $slew (@slews) {
+    push @d_rise, interpolate_row($rise_slew_max{"read1:${slew}:${load}"},
+                                  $rise_delay_max{"read1:${slew}:${load}"},
+                                  $nt_values{"read:R:L.1:cell_rise:max"});
+    push @d_fall, interpolate_row($rise_slew_max{"read0:${slew}:${load}"},
+                                  $rise_delay_max{"read0:${slew}:${load}"},
+                                  $nt_values{"read:R:L.0:cell_fall:max"});
+    push @s_rise, interpolate_row($rise_slew_max{"read1:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"read:R:L.1:rise_transition:max"});
+    push @s_fall, interpolate_row($rise_slew_max{"read0:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"read:R:L.0:fall_transition:max"});
+}
+$delay_rise{"READ_DATA"} = format_2D($n_slews,$nt_n_loads,@d_rise);
+$delay_fall{"READ_DATA"} = format_2D($n_slews,$nt_n_loads,@d_fall);
+$slew_rise{"READ_DATA"}  = format_2D($n_slews,$nt_n_loads,@s_rise);
+$slew_fall{"READ_DATA"}  = format_2D($n_slews,$nt_n_loads,@s_fall);
+
+# READ_DATA minimum delay/slew
+@d_rise = ();
+@s_rise = ();
+@d_fall = ();
+@s_fall = ();
+foreach my $slew (@slews) {
+    push @d_rise, interpolate_row($rise_slew_min{"read1:${slew}:${load}"},
+                                  $rise_delay_min{"read1:${slew}:${load}"},
+                                  $nt_values{"read:R:L.1:cell_rise:min"});
+    push @d_fall, interpolate_row($rise_slew_min{"read0:${slew}:${load}"},
+                                  $rise_delay_min{"read0:${slew}:${load}"},
+                                  $nt_values{"read:R:L.0:cell_fall:min"});
+    push @s_rise, interpolate_row($rise_slew_min{"read1:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"read:R:L.1:rise_transition:min"});
+    push @s_fall, interpolate_row($rise_slew_min{"read0:${slew}:${load}"},
+                                  0,
+                                  $nt_values{"read:R:L.0:fall_transition:min"});
+}
+$min_delay_rise{"READ_DATA"} = format_2D($n_slews,$nt_n_loads,@d_rise);
+$min_delay_fall{"READ_DATA"} = format_2D($n_slews,$nt_n_loads,@d_fall);
+$min_slew_rise{"READ_DATA"}  = format_2D($n_slews,$nt_n_loads,@s_rise);
+$min_slew_fall{"READ_DATA"}  = format_2D($n_slews,$nt_n_loads,@s_fall);
+
+# library header
+my $date = `date`; chomp($date);
+my $header = <<EOF;
+/* Copyright (c) 2014 Intel */
+library($libname) {
+
+  /* documentation attributes */
+
+  revision : "$revision";
+  date : "$date";
+  comment : "Copyright (c) 2014 Intel. All Rights Reserved."
+
+  /* general attributes */
+
+  delay_model : table_lookup;
+  in_place_swap_mode : match_footprint;
+  library_features(report_delay_calculation);
+  bus_naming_style : "%s[%d]";
+  define(min_delay_flag, timing, boolean);
+
+  /* unit attributes */
+
+  time_unit : "1ps";
+  voltage_unit : "1V";
+  current_unit : "1mA";
+  capacitive_load_unit (1,fF);
+  pulling_resistance_unit : "1kohm";
+  leakage_power_unit : "1uW";
+
+  /* operation conditions */
+
+  nom_process     : 1;
+  nom_temperature : $temp;
+  nom_voltage     : $vdd;
+  operating_conditions(default) {
+    process     : 1;
+    temperature : $temp;
+    voltage     : $vdd;
+    tree_type   : balanced_tree
+  }
+  default_operating_conditions : default;
+  voltage_map(VDD,$vdd);
+  voltage_map(VSS,0);
+
+  /* threshold definitions */
+
+  slew_lower_threshold_pct_fall : $slew_low;
+  slew_upper_threshold_pct_fall : $slew_high;
+  slew_lower_threshold_pct_rise : $slew_low;
+  slew_upper_threshold_pct_rise : $slew_high;
+  input_threshold_pct_fall      : $delay_thresh;
+  input_threshold_pct_rise      : $delay_thresh;
+  output_threshold_pct_fall     : $delay_thresh;
+  output_threshold_pct_rise     : $delay_thresh;
+
+  /* default attributes */
+
+  default_leakage_power_density : 0.0;
+  slew_derate_from_library      : 1.0;
+  default_cell_leakage_power    : 0.0;
+  default_fanout_load           : 1.0;
+  default_output_pin_cap        : 0.0;
+  default_inout_pin_cap         : 0.0;
+  default_input_pin_cap         : 0.0;
+  default_max_transition        : $max_transition;
+  default_max_capacitance       : $max_capacitance;
+  default_max_fanout            : 64;
+
+  /* default setup/hold/delay lookup tables */
+
+  lu_table_template(delay_template) {
+    variable_1 : input_net_transition;
+    variable_2 : total_output_net_capacitance;
+    index_1 ("1000, 1001");
+    index_2 ("1000, 1001");
+  }
+
+  lu_table_template(setup_template) {
+    variable_1 : constrained_pin_transition;
+    variable_2 : related_pin_transition;
+    index_1 ("1000, 1001");
+    index_2 ("1000, 1001");
+  }
+
+  lu_table_template(hold_template) {
+    variable_1 : constrained_pin_transition;
+    variable_2 : related_pin_transition;
+    index_1 ("1000, 1001");
+    index_2 ("1000, 1001");
+  }
+
+  /* bus definitions */
+  
+  type(TCAM_DATA) {
+    base_type : array;
+    data_type : bit;
+    bit_width : $width;
+    bit_from : $last_bit;
+    bit_to : 0;
+    downto : true;
+  }
+
+  type(TCAM_ADDR) {
+    base_type : array;
+    data_type : bit;
+    bit_width : 10;
+    bit_from : 9;
+    bit_to : 0;
+    downto : true;
+  }
+
+  type(TCAM_HIT) {
+    base_type : array;
+    data_type : bit;
+    bit_width : $depth;
+    bit_from : $last_line;
+    bit_to : 0;
+    downto : true;
+  }
+
+  type(TCAM_CFG) {
+    base_type : array;
+    data_type : bit;
+    bit_width : 12;
+    bit_from : 11;
+    bit_to : 0;
+    downto : true;
+  }
+
+  type(TCAM_EN) {
+    base_type : array;
+    data_type : bit;
+    bit_width : 8;
+    bit_from : 7;
+    bit_to : 0;
+    downto : true;
+  }
+
+  /* cell */
+
+  cell($cell) {
+    is_macro_cell : true;
+    interface_timing : true;
+    dont_use : true;
+    map_only : true;
+    dont_touch : true;
+    area : ${area};
+    cell_leakage_power : ${leakage};
+
+    pg_pin (VDD) {
+      pg_type      : primary_power;
+      direction    : inout;
+      voltage_name : VDD;
+    }
+
+    pg_pin (VSS) {
+      pg_type      : primary_ground;
+      direction    : inout;
+      voltage_name : VSS;
+    }
+
+    pin(CLK) {
+      direction : input;
+      capacitance : $nt_max_cap{CLK};
+      clock : true;
+      min_pulse_width_low  : 350;
+      min_pulse_width_high : 350;
+      min_period           : 800;
+      max_transition	   : 100;
+      internal_power() {
+        when : "!WEN & !REN & !KEN"; /* No Operation */
+        rise_power(scalar) {
+          values ("$energy{nop}");
+        }
+        fall_power(scalar) {
+          values ("0");
+        }
+      }
+      internal_power() {
+        when : "WEN & !REN & !KEN"; /* Write */
+        rise_power(scalar) {
+          values ("$energy{write}");
+        }
+        fall_power(scalar) {
+          values ("0");
+        }
+      }
+      internal_power() {
+        when : "!WEN & REN & !KEN"; /* Read */
+        rise_power(scalar) {
+          values ("$energy{read}");
+        }
+        fall_power(scalar) {
+          values ("0");
+        }
+      }
+      internal_power() {
+        when : "!WEN & !REN & KEN"; /* Lookup */
+        rise_power(scalar) {
+          values ("$energy{lookup}");
+        }
+        fall_power(scalar) {
+          values ("0");
+        }
+      }
+    }
+
+EOF
+
+my $footer = <<EOF;
+  }
+}
+EOF
+
+# print the library
+open LIB, ">${libname}.lib" or die "ERROR: can't write ${libname}.lib\n";
+print LIB "$header";
+async_input("RESET_N");
+input_pin("WEN");
+input_pin("REN");
+input_pin("KEN");
+input_pin("DATA","TCAM_DATA");
+input_pin("MASK","TCAM_DATA");
+input_pin("ADDR","TCAM_ADDR");
+async_input("CFG","TCAM_CFG");
+async_input("SLICE_EN","TCAM_EN");
+async_input("LHIT","TCAM_HIT");
+output_pin("READ_DATA","rising_edge","TCAM_DATA");
+output_pin("RHIT","rising_edge","TCAM_HIT");
+print LIB "$footer";
+close LIB;
+exit;
+
+# asynchronous input bus
+sub async_input {
+    my ($name,$bus) = @_;
+    if (defined($bus)) {
+        print LIB "    bus($name) {\n" .
+            "      bus_type : ${bus};\n";
+    } else {
+        print LIB "    pin($name) {\n";
+    }
+    print LIB <<EOF;
+      direction : input;
+      capacitance : $nt_max_cap{$name};
+    }
+
+EOF
+}
+
+# describe an input pin
+sub input_pin {
+    my ($name,$bus) = @_;
+    if (defined($bus)) {
+        print LIB "    bus($name) {\n" .
+              "      bus_type : ${bus};\n";
+    } else {
+        print LIB "    pin($name) {\n";
+    }
+    print LIB <<EOF;
+      direction : input;
+      capacitance : $nt_max_cap{$name};
+      timing() {
+        related_pin : "CLK";
+        timing_type : setup_rising;
+        rise_constraint(setup_template) {
+          index_1 ("@slews");
+          index_2 ("@slews");
+          values  ($setup_rise{$name});
+        }
+        fall_constraint(setup_template) {
+          index_1 ("@slews");
+          index_2 ("@slews");
+          values  ($setup_fall{$name});
+        }
+      }
+      timing() {
+        related_pin : "CLK";
+        timing_type : hold_rising;
+        rise_constraint(hold_template) {
+          index_1 ("@slews");
+          index_2 ("@slews");
+          values  ($hold_rise{$name});
+        }
+        fall_constraint(hold_template) {
+          index_1 ("@slews");
+          index_2 ("@slews");
+          values  ($hold_fall{$name});
+        }
+      }
+    }
+
+EOF
+}
+
+# describe an output pin
+sub output_pin {
+    my ($name,$edge,$bus) = @_;
+    if (defined($bus)) {
+        print LIB "    bus($name) {\n" .
+              "      bus_type : ${bus};\n";
+    } else {
+        print LIB "    pin($name) {\n";
+    }
+    print LIB <<EOF;
+      direction : output;
+      capacitance : 0.0;
+      timing() {
+        related_pin : "CLK";
+        timing_type : $edge;
+        timing_sense : non_unate;
+        cell_rise(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($delay_rise{$name});
+        }
+        cell_fall(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($delay_fall{$name});
+        }
+        rise_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($slew_rise{$name});
+        }
+        fall_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($slew_fall{$name});
+        }
+      }
+      timing() {
+        min_delay_flag : true ;
+        related_pin : "CLK";
+        timing_type : $edge;
+        timing_sense : non_unate;
+        cell_rise(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_delay_rise{$name});
+        }
+        cell_fall(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_delay_fall{$name});
+        }
+        rise_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_slew_rise{$name});
+        }
+        fall_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_slew_fall{$name});
+        }
+      }
+EOF
+    if ($name eq "RHIT") {
+        $name = "LHIT_RHIT";
+        print LIB <<EOF;
+      timing() {
+        related_pin : "LHIT" ;
+        timing_type : combinational ;
+        timing_sense : positive_unate ;
+        cell_rise(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($delay_rise{$name});
+        }
+        cell_fall(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($delay_fall{$name});
+        }
+        rise_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($slew_rise{$name});
+        }
+        fall_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($slew_fall{$name});
+        }
+      }
+      timing() {
+        min_delay_flag : true ;
+        related_pin : "LHIT" ;
+        timing_type : combinational ;
+        timing_sense : positive_unate ;
+        cell_rise(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_delay_rise{$name});
+        }
+        cell_fall(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_delay_fall{$name});
+        }
+        rise_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_slew_rise{$name});
+        }
+        fall_transition(delay_template) {
+          index_1 ("@slews");
+          index_2 ("@nt_loads");
+          values  ($min_slew_fall{$name});
+        }
+      }
+EOF
+    }
+    print LIB "    }\n\n";
+}
+
+# format 2D table in LIB format
+sub format_2D {
+    my $imax = shift;
+    my $jmax = shift;
+    my @values = @_;
+    my $n=0;
+    my $str="";
+    for (my $i=0; $i<$imax; $i++) {
+        $str .= "\"";
+        for (my $j=0; $j<$jmax; $j++) {
+            my $v;
+            if (defined($values[$n])) {
+                $v = round($values[$n]);
+            } else {
+                $v = "UNDEFINED";
+            }
+            $str .= $v;
+            if ($j+1<$jmax) { $str .= ", "; }
+            $n++;
+        }
+        $str .= "\"";
+        if ($i+1<$imax) { $str .= ", \\\n                   "; }
+    }
+    return $str;
+}
+
+# reformat text to text
+sub reformat_2D {
+    my $imax = shift;
+    my $jmax = shift;
+    my $values = shift;
+    my @rows;
+    my @values;
+    while ($values =~ s/^"([^"]+)"[,]*//g ) {
+        push @rows, $1;
+    }
+    foreach $row (@rows) {
+        my @cols = split(",",$row);
+        foreach my $x (@cols) {
+            $x = round($x);
+            push @values, $x;
+        }
+    }
+    return format_2D($imax,$jmax,@values);
+}
+
+# Get an interpolated row out of a 2D table given a slew.  The input
+# slew is a number, knots is comma separated string of numbers, and
+# values is the liberty format for 2D with quotes and commas.  Also
+# apply an offset.
+sub interpolate_row {
+    my ($slew, $offset, $values) = @_;
+    my @knots = @nt_slews;
+    my @rows;
+    while ($values =~ s/^"([^"]+)"[,]*//g ) {
+        push @rows, $1;
+    }
+    my @result;
+    die if (@knots!=@rows);
+    for (my $i=0; $i<@knots-1; $i++) {
+        my $alpha = ($slew-$knots[$i])/($knots[$i+1]-$knots[$i]); # linear interpolation
+        if ($alpha>=0 && $alpha<1) {
+            my @row0 = split(",",$rows[$i]);
+            my @row1 = split(",",$rows[$i+1]);
+            for (my $j=0; $j<@row0; $j++) {
+                my $x0 = $row0[$j];
+                my $x1 = $row1[$j];
+                $v = $alpha*$x1 + (1-$alpha)*$x0 + $offset;
+                push @result, $v;
+            }
+        }
+    }
+    return @result;
+}
+
+sub round {
+    my ($x) = @_;
+    if ($x<0) { return -int(-$x+0.5); }
+    return int($x+0.5);
+}
+
+sub my_min {
+    my ($a, $b) = @_;
+    if (!defined($a) || $b<$a) { return $b; }
+    return $a;
+}
+
+sub my_max {
+    my ($a, $b) = @_;
+    if (!defined($a) || $b>$a) { return $b; }
+    return $a;
+}
+
+#############################################################################
+# Custom timing characterization of TCAM nodes
+#############################################################################
+
+sub measure_tcam {
+    my ($run) = @_;
+    my $out = "${run}.measure";
+    open_aplot("$aplot");
+
+    # input node lists
+    @data_clock = ("inputs.lw[0]","inputs.lw[1]");
+    @data_in = ();
+    @data_latch = ();
+    for ($i=0; $i<$width; $i++) {
+        my $inst = "inputs.data[$i].core";
+        push @data_in, "DATA[$i]";
+        push @data_in, "MASK[$i]";
+        push @data_in, "${inst}._D";
+        push @data_in, "${inst}._M";
+        push @data_latch, "${inst}._W.0";
+        push @data_latch, "${inst}._W.1";
+        push @data_latch, "${inst}._W.2";
+    }
+    @addr_clock = ("inputs.ctrl.rw");
+    @addr_in = ();
+    @addr_latch = ();
+    for ($i=0; $i<10; $i++) {
+        my $a=$i/2;
+        my $b=$i%2;
+        my $inst = "inputs.ctrl.dff_a[$a].bit[$b]";
+        push @addr_in, "ADDR[$i]";
+        push @addr_in, "${inst}._L";
+        push @addr_latch, "${inst}._R.0";
+        push @addr_latch, "${inst}._R.1";
+    }
+    @ctrl_clock = ("CLK");
+    @ctrl_in = ("WEN","inputs.ctrl.dff_wen._L",
+                "REN","inputs.ctrl.dff_ren._L",
+                "KEN","inputs.ctrl.dff_ken._L",
+                "inputs.ctrl.lw0","inputs.ctrl.dff_lw._L");
+    @ctrl_latch = ("inputs.ctrl.dff_wen._R.0","inputs.ctrl.dff_wen._R.1",
+                   "inputs.ctrl.dff_ren._R.0","inputs.ctrl.dff_ren._R.1",
+                   "inputs.ctrl.dff_ken._R.0","inputs.ctrl.dff_ken._R.1",
+                   "inputs.ctrl.dff_lw._R.0","inputs.ctrl.dff_lw._R.1");
+
+    # internal nodes which are inputs to the output gates
+    @hit = ();
+    for (my $s=0; $s<int($depth/64); $s++) {
+        for (my $m=0; $m<2; $m++) {
+            for (my $i=0; $i<8; $i++) {
+                for (my $j=0; $j<4; $j++) {
+                    push @hit, "slice[$s].mid[$m].out[$i,$j].hit";
+                }
+            }
+        }
+    }
+    @read0 = ();
+    @read1 = ();
+    my $s = $depth/64;
+    for (my $j=0; $j<$width; $j++) {
+        push @read0, "r[$s,$j].0";
+        push @read1, "r[$s,$j].1";
+    }
+
+    # output node lists
+    @RHIT = ();
+    for ($i=0; $i<$width; $i++) { push @RHIT, "RHIT[$i]"; }
+    @READ_DATA = ();
+    for ($i=0; $i<$width; $i++) {
+        push @READ_DATA, "READ_DATA[$i]";
+    }
+    
+    # open measure file
+    unless (open OUT, ">$out") { print STDERR "ERROR: can't write $out\n"; return; }
+    print STDERR "Generating $out\n";
+    
+    # CLK+ to buffered CLK+ paths
+    my $ok = 1;
+    $ok &= measure_cycles($run,"data_clock",$start_posedge,1,0,$losl,$hisl,@data_clock);
+    $ok &= measure_cycles($run,"addr_clock",$start_posedge,1,0,$losl,$hisl,@addr_clock);
+    $ok &= measure_cycles($run,"ctrl_clock",$start_posedge,1,0,$losl,$hisl,@ctrl_clock);
+ 
+    # CLK- to combinational input logic
+    $ok &= measure_cycles($run,"data_in",$start_negedge,1,1,$losl,$hisl,@data_in);
+    $ok &= measure_cycles($run,"addr_in",$start_negedge,1,1,$losl,$hisl,@addr_in);
+    $ok &= measure_cycles($run,"ctrl_in",$start_negedge,1,1,$losl,$hisl,@ctrl_in);
+
+    # CLK+ to end of sample window
+    $ok &= measure_cycles($run,"data_latch",$start_posedge,1,0,$losl,$hisl,@data_latch);
+    $ok &= measure_cycles($run,"addr_latch",$start_posedge,1,0,$losl,$hisl,@addr_latch);
+    $ok &= measure_cycles($run,"ctrl_latch",$start_posedge,1,0,$losl,$hisl,@ctrl_latch);
+
+    # CLK+ to RHIT
+    $ok &= measure_cycles($run,"RHIT",$start_posedge,0,0,$loth,$hith,@RHIT);
+    $ok &= measure_cycles($run,"hit", $start_posedge,0,0,$loth,$hith,@hit);
+
+    # CLK+ to READ_DATA outputs
+    $ok &= measure_cycles($run,"READ_DATA",$start_posedge,0,0,$loth,$hith,@READ_DATA);
+    $ok &= measure_cycles($run,"read0",    $start_posedge,0,0,$loth,$hith,@read0);
+    $ok &= measure_cycles($run,"read1",    $start_posedge,0,0,$loth,$hith,@read1);
+
+    # RHIT slew
+    $ok &= measure_minmax_slew($run,"RHIT",@RHIT);
+    $ok &= measure_minmax_slew($run,"hit",@hit);
+
+    # READ slew
+    $ok &= measure_minmax_slew($run,"READ_DATA",@READ_DATA);
+    $ok &= measure_minmax_slew($run,"read0",@read0);
+    $ok &= measure_minmax_slew($run,"read1",@read1);
+
+    # leakage
+    my $leakage;
+    my $leakage_time = $start_posedge - 0.1 * ($start_posedge - $start_negedge);
+    my ($t,$c) = measure_aplot($run,$leakage_time,$start_posedge,"avg i(vvdd)");
+    if (defined($c)) {
+        $leakage = -$c * $vdd;
+        $leakage = my_max($leakage,0); # ignore negative leakage power
+        my $l = $leakage / 1e-6; # to uW
+        print OUT "leakage $l\n";
+    } else { $ok = 0; }
+
+    # energy
+    $ok &= measure_energy($run,$leakage);
+
+    # finish
+    close_aplot();
+    close OUT;
+
+    # error check
+    if (!$ok) {
+        print STDERR "ERROR: measurement errors in $out\n";
+        system("mv $out ${out}.fail");
+    }
+}
+
+# measure min/max delays over all cycles
+sub measure_cycles {
+    my ($run, $comment, $start, $half_cycle, $combine, $lo, $hi, @nodes) = @_;
+    my $min_rise;
+    my $min_fall;
+    my $max_rise;
+    my $max_fall;
+    foreach my $node (@nodes) {
+        for (my $i=1; $i<$cycles; $i++) { # skip first cycle because no CLK transition
+            my $from = $start + $cycle_time*$i;
+            my $to   = $from  + $cycle_time;
+            $to = $from + $cycle_time*0.5 if ($half_cycle);
+            my ($t0,$t);
+            $t0 = $from;
+            ($t) = measure_aplot($run,$from,$to,"trigger $node > $lo 1");
+            if (is_numeric($t)) {
+                $min_rise = my_min($min_rise,$t-$t0);
+            }
+            ($t) = measure_aplot($run,$from,$to,"trigger $node < $hi 1");
+            if (is_numeric($t)) {
+                $min_fall = my_min($min_fall,$t-$t0);
+            }
+            ($t) = measure_aplot($run,$from,$to,"trigger $node > $hi 1");
+            if (is_numeric($t)) {
+                $max_rise = my_max($max_rise,$t-$t0);
+            }
+            ($t) = measure_aplot($run,$from,$to,"trigger $node < $lo 1");
+            if (is_numeric($t)) {
+                $max_fall = my_max($max_fall,$t-$t0);
+            }
+        }
+    }
+    $min_rise*=1000 if (defined($min_rise)); # to ps
+    $min_fall*=1000 if (defined($min_fall)); # to ps
+    $max_rise*=1000 if (defined($min_rise)); # to ps
+    $max_fall*=1000 if (defined($max_fall)); # to ps
+    if ($combine && defined($min_rise) && defined($max_rise) && defined($min_fall) && defined($max_fall)) {
+        my $min = my_min($min_rise,$min_fall);
+        my $max = my_max($max_rise,$max_fall);
+        print OUT "delay $comment $min $max\n";
+    } else {
+        if (defined($min_rise) && defined($max_rise)) {
+            print OUT "rise_delay $comment $min_rise $max_rise\n";
+        }
+        if (defined($min_fall) && defined($max_fall)) {
+            print OUT "fall_delay $comment $min_fall $max_fall\n";
+        }
+    }
+    return 1;
+}
+
+# measure energy over all half cycles
+sub measure_energy {
+    my ($run,$leakage) = @_;
+    my ($energy_w, $energy_r, $energy_k, $energy_n);
+    my $last_energy=0;
+    my $last_wen=0;
+    my $last_ren=0;
+    for (my $i=1; $i<$cycles; $i++) { # skip first cycle because no CLK transition
+        my $from = $start_posedge + $cycle_time*$i;
+        my $half = $from + $cycle_time*0.5;
+        my $to   = $from + $cycle_time;
+        my ($t,$current,$maxv_wen,$maxv_ren,$maxv_ken);
+        ($t,$current)  = measure_aplot($run,$from,$to,"avg i(vvdd)");
+        ($t,$maxv_wen) = measure_aplot($run,$from,$half,"maxv WEN");
+        ($t,$maxv_ren) = measure_aplot($run,$from,$half,"maxv REN");
+        ($t,$maxv_ken) = measure_aplot($run,$from,$half,"maxv KEN");
+        if (!is_numeric($current)  || !is_numeric($maxv_wen) ||
+            !is_numeric($maxv_ren) || !is_numeric($maxv_ken)) {
+            return 0;
+        }
+        my $power = -$current * $vdd - $leakage;
+        my $energy = $power * $cycle_time * 1e-9;
+        my ($wen,$ken,$ren);
+        $wen = $maxv_wen>$vdd/2;
+        $ren = $maxv_ren>$vdd/2;
+        $ken = $maxv_ken>$vdd/2;
+        if    ($ken)           { $energy_k = my_max($energy_k,$energy); }
+        elsif ($last_wen)      { $energy_w = my_max($energy_w,$energy+$last_energy); }
+        elsif ($last_ren)      { $energy_r = my_max($energy_r,$energy+$last_energy); }
+        elsif (!$wen && !$ren) { $energy_n = my_max($energy_n,$energy); }
+        $last_wen = $wen;
+        $last_ren = $ren;
+        $last_energy = $energy;
+    }
+    if (!defined($energy_n) || !defined($energy_w) ||
+        !defined($energy_r) || !defined($energy_k)) {
+        return 0;
+    }
+    $energy_n /= 1e-15; # to fJ
+    $energy_w /= 1e-15; # to fJ
+    $energy_r /= 1e-15; # to fJ
+    $energy_k /= 1e-15; # to fJ
+    print OUT "energy nop $energy_n\n";
+    print OUT "energy write $energy_w\n";
+    print OUT "energy read $energy_r\n";
+    print OUT "energy lookup $energy_k\n";
+    return 1;
+}
+
+# measure minmax slew
+sub measure_minmax_slew {
+    my ($run, $comment, @nodes) = @_;
+    my $min_rise;
+    my $min_fall;
+    my $max_rise;
+    my $max_fall;
+    foreach my $node (@nodes) {
+        my ($t,$d);
+        ($t,$d) = measure_slew($run,"mindelay",">",$node,$losl,$hisl);
+        return 0 if (!is_numeric($d));
+        $min_rise = my_min($min_rise,$d);
+        ($t,$d) = measure_slew($run,"mindelay","<",$node,$hisl,$losl);
+        return 0 if (!is_numeric($d));
+        $min_fall = my_min($min_fall,$d);
+        ($t,$d) = measure_slew($run,"maxdelay",">",$node,$losl,$hisl);
+        return 0 if (!is_numeric($d));
+        $max_rise = my_max($max_rise,$d);
+        ($t,$d) = measure_slew($run,"maxdelay","<",$node,$hisl,$losl);
+        return 0 if (!is_numeric($d));
+        $max_fall = my_max($max_fall,$d);
+    }
+    $min_rise*=1000; # to ps
+    $min_fall*=1000; # to ps
+    $max_rise*=1000; # to ps
+    $max_fall*=1000; # to ps
+    print OUT "rise_slew $comment $min_rise $max_rise\n" if ($max_rise>=$min_rise);
+    print OUT "fall_slew $comment $min_fall $max_fall\n" if ($max_fall>=$min_fall);
+    return 1;
+}
+
+#############################################################################
+# Parse NanoTime libs for output cells
+#############################################################################
+
+sub parse_lib {
+    my ($cell, $name, $docap) = @_;
+    open IN, "<${cell}.lib" or die "ERROR: can't read ${cell}.lib\n";
+    my $minmax = "max";
+    my $type = "";
+    my $direction = "";
+    while (my $l = <IN>) {
+        chomp($l);
+        my $line = $l;
+        while ($line =~ /(.*)\\$/) {
+            $line = $1;
+            $l = <IN>;
+            chomp($l);
+            $line .= $l;
+        }
+        if    ($line =~ /^\s*pin\("(\S+)"\)/) {
+            $pin = $1;
+        }
+        elsif ($line =~ /^\s*timing\s+/) {
+            $minmax = "max";
+        }
+        elsif ($line =~ /^\s*direction\s*:\s*(\S+)\s*;/) {
+            $direction = $1;
+        }
+        elsif ($line =~ /^\s*min_delay_flag\s*:\s*(\S+)\s*;/) {
+            $minmax = "min";
+        }
+        elsif ($line =~ /^\s*related_pin\s*:\s*"(\S+)"\s*;/) {
+            $related_pin = $1;
+        }
+        elsif ($line =~ /^\s*cell_rise/) {
+            $type = "cell_rise";
+        }
+        elsif ($line =~ /^\s*rise_transition/) {
+            $type = "rise_transition";
+        }
+        elsif ($line =~ /^\s*cell_fall/) {
+            $type = "cell_fall";
+        }
+        elsif ($line =~ /^\s*fall_transition/) {
+            $type = "fall_transition";
+        }
+        elsif ($docap==1 && $direction eq "input" &&
+               $line =~ /^\s*capacitance\s*:\s*(\S+)\s*;/) { 
+            my $c = $1;
+            my $p = $pin;
+            if ($p =~ /^(\S+)\[\S+\]$/) { $p = $1; } # collapse busses
+            $nt_min_cap{$p} = my_min($nt_min_cap{$p},$c);
+            $nt_max_cap{$p} = my_max($nt_max_cap{$p},$c);
+        }
+        elsif ($docap==0 && $direction eq "output" &&
+               $line =~ /^\s*values\s*\((.*)\)\s*;/) {
+            my $values = $1;
+            $values =~ s/\s+//g;
+            $nt_values{"$name:$pin:$related_pin:$type:$minmax"} = $values;
+        }
+    }
+    close IN;
+}

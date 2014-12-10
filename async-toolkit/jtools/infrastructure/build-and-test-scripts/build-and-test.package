@@ -1,0 +1,9 @@
+1 0
+$arch/bin/runmake.sh                            runmake.sh                      755 p
+$arch/bin/buildfromsource.sh                    buildfromsource.sh              755 p
+$arch/bin/runtestsfromsource.sh                 runtestsfromsource.sh           755 p
+$arch/bin/buildandtestfromp4.sh                 buildandtestfromp4.sh           755 p
+share/script/sh/file/filecheck.sh               ../sh-lib/file/filecheck.sh     644 p
+share/script/sh/file/conon.sh                   ../sh-lib/file/conon.sh         644 p
+share/script/sh/p4/map_depot_to_disk.sh         util/p4/map_depot_to_disk.sh    644 p
+share/script/sh/p4/clientroot.sh                util/p4/clientroot.sh           644 p

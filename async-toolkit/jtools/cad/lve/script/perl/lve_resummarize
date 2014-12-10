@@ -1,0 +1,453 @@
+#!/usr/intel/bin/perl -w
+
+use strict;
+use POSIX;
+use File::stat;
+use Getopt::Long;
+
+my $lve_root;
+
+BEGIN {
+    $lve_root = $0;
+    my $exe = $lve_root;
+    $exe =~ s:.*/::;
+    if (! ($lve_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $lve_root = $pwd;
+        $lve_root .= "/$0";
+        $lve_root =~ s:$exe$::;
+        $lve_root =~ s://:/:g;
+        chdir $lve_root;
+        $lve_root = `pwd`;
+        chomp $lve_root;
+        chdir $pwd;
+    }
+    else {
+        $lve_root =~ s:/bin/$exe::;
+    }
+    push @INC,"$lve_root/lib/perl";
+}
+
+use LveSummarize;
+use LveUtil;
+
+my $lve_tracking = "lve_tracking";
+my $force = 0;
+my $statushtml=0;
+
+
+
+# report usage
+sub usage() {
+    my $usage = <<EOF;
+USAGE: lve_resummarize 
+            [--work-dir=<work_dir>|--index-table=<index_table>]
+            [--master-cell-list=<cell_list_file>]
+
+    work_dir          - Output dir of lve run to be resummarized
+    index_table       - Pre-created file to use for resummarize instead
+    master_cell_list  - Calculate verification statistics only over
+                        this set of cells.
+    force             - do not do dependency checking
+    tracking          - generate status.html
+EOF
+die "$usage";
+}
+
+my $working_dir;
+my $index_table;
+my $index_file;
+my @master_cell_list=();
+my %master_cell_list=();
+my $incremental=0;
+# abbreviate really long cell names to make displaying them easier
+sub abbreviate_cellname {
+    my $cellname = shift;
+    if(length($cellname) > 64){
+        my $shortname = substr($cellname,0,64);
+        $shortname .= "...";
+        return $shortname;
+    }
+    else {
+        return $cellname;
+    }
+}
+
+GetOptions (
+    "work-dir=s" => \$working_dir,
+    "index-table=s" => \$index_table,
+    "tracking" => \$statushtml,
+    "status" => \$statushtml,
+    "force" => \$force,
+    "master-cell-list=s" => sub {
+            if ( -s "$_[1]") {
+                read_cell_list($_[1],\@master_cell_list);
+            }
+            else {
+                push @master_cell_list, split(/[,\s]/,$_[1]);
+            }
+        },
+    "incremental" => \$incremental,
+) or usage();
+
+@ARGV == 0 or usage();
+$index_table = "$working_dir/index.table" if ! defined $index_table;
+my $stat=stat("$working_dir/summarize.start");
+my $indexmtime=0;
+if ($stat) {
+    $indexmtime = $stat->mtime if defined $stat->mtime;
+    my @lt=localtime($indexmtime);
+    my $suffix=sprintf("%04d%02d%02d%02d%02d%02d",
+        $lt[5]+1900,$lt[4]+1,$lt[3],$lt[2],$lt[1],$lt[0]);
+    my $tmp="$working_dir/summarize.start.$suffix";
+    `touch -r $working_dir/summarize.start $tmp`;
+    `chmod 644 $tmp`;
+}
+unlink "$working_dir/summarize.start";
+`touch "$working_dir/summarize.start"`;
+if ($incremental) {
+    @master_cell_list=();
+    my $count=0;
+    %master_cell_list=();
+    opendir (D, "$working_dir");
+    my @logs=sort (grep (/^lve\.log\./, readdir(D)));
+    closedir D;
+    foreach my $log (@logs) {
+        $stat=stat("$working_dir/$log");
+        if ($stat->mtime >= $indexmtime) {
+            open (X, "<$working_dir/$log");
+            while (<X>) {
+                chomp;
+                if (/^#TASK.*CELL=(\S+)/) {
+                    # these do not create new data
+                    next if /^#TASK=(create_routed_list|cast_deps|layout_deps) /;
+                    $count++;
+                    $master_cell_list{$1}=1;
+                }
+            }
+            close X;
+        }
+    }
+    if ( ! $count) {
+        print STDERR "Nothing to be done\n";
+        exit 0;
+    }
+    foreach my $cell (sort keys %master_cell_list) {
+        push @master_cell_list, $cell;
+    }
+}
+else {
+    foreach my $c (@master_cell_list) {
+        $master_cell_list{$c}=1;
+    }
+}
+my %table=();
+if(defined($working_dir)){
+    
+    if (! defined ($ENV{LVE_GID})) {
+        my $stat = stat ("$working_dir");
+        die "Cannot stat $working_dir" if (! defined $stat->mode);
+        my $dirmode = ($stat->mode & 02777);
+        my $filemode = ($stat->mode & 0666);
+        $filemode |= 0444; # make all readable
+        $dirmode |= 0111; # make all descendable, not necessarily readable
+        my $gid = $stat->gid;
+        my $sgid = ($dirmode & 02000) ? 1 : 0;
+        my $umask = ( ( ~ $filemode ) & 0666);
+        umask $umask;
+        # in case another tool wants this info
+        $ENV{LVE_UMASK}=sprintf("0%o", $umask);
+        $ENV{LVE_GID}=$gid;
+        $ENV{LVE_SGID}=$sgid;
+        $ENV{LVE_DIRMODE}=$dirmode;
+        $ENV{LVE_FILEMODE}=$filemode;
+    }
+
+    my $tmp_index_table =`mktemp \"$working_dir/index_tmp.table.XXXXXX\"`;
+    chomp $tmp_index_table;
+    chmod $ENV{LVE_FILEMODE}, "$tmp_index_table"
+        if (defined ($ENV{LVE_FILEMODE}));
+    system("chgrp",$ENV{LVE_GID},"$tmp_index_table")
+        if (defined ($ENV{LVE_GID}));
+#    $index_table = "$working_dir/index.table";
+    if ( -s "$index_table" and @master_cell_list) {
+        open (P, "<$index_table");
+        while (<P>) {
+            chomp;
+            /CELL:=(\S+)/;
+            my $cell=$1;
+            $table{$cell}=$_;
+        }
+        close P;
+    }
+    #copy files in doc to working dir
+    if ( ! -d "$working_dir/.doc") {
+        `mkdir -p \"$working_dir/.doc\"`;
+        `cp -R \"$lve_root/doc/\"/* \"$working_dir/.doc/\"`;
+    }
+    
+    #delete the tmp_index.table if it exists
+    `rm -rf \"$tmp_index_table\"`;
+    
+    # find all raw files and resummarize
+    print "Determining cell list ...";
+    my @xcells=();
+    if (@master_cell_list) {
+        foreach my $cell (@master_cell_list) {
+            my $dir = $cell;
+            $dir =~ s/\./\//g;
+            find_cells("$working_dir/$dir", \@xcells)
+                if ( -d "$working_dir/$dir");
+        }
+    }
+    else {
+        find_cells($working_dir,\@xcells);
+    }
+    print ".. done\n";
+    my @cells=();
+    foreach my $cell (@xcells){
+        $cell =~ /(\S+)\/\.cellname/;
+        my $dir_name = $1;
+        push @cells, $cell;
+        #optimized raw file search
+        my @rawfiles = find_rawfiles($dir_name);
+        # check for list of raw files used last time
+        my $fd;
+        my %dfiles=();
+        my $fdcnt=0;
+        if (open ($fd, "<$dir_name/cellraw.d")) {
+            while (<$fd>) {
+                chomp;
+                $dfiles{$_}=1;
+                $fdcnt++;
+            }
+        }
+        close $fd;
+        my $doit = 1;
+        # check date stamps of existing raw files
+        if ( -s "$dir_name/cell.raw" and $fdcnt > 0) {
+            $doit=0;
+            my $crstat=stat("$dir_name/cell.raw");
+            my $crmtime=$crstat->mtime;
+            foreach my $rf (@rawfiles) {
+                $crstat=stat("$rf");
+                if ($crstat->mtime > $crmtime) {
+                    $doit=1;
+                    last;
+                }
+                my $hf=$rf;
+                $hf =~ s/\.raw/.html/;
+                $crstat=stat("$hf");
+                if (!$crstat or $crstat->mtime > $crmtime) {
+                    $doit=1;
+                    last;
+                }
+            }
+        }
+        # check if any were deleted from last time
+        foreach my $file (keys %dfiles) {
+            $doit=1 if ( ! -e "$file");
+        }
+        if ($doit) {
+            unlink("$dir_name/cell.raw");
+            open ( CELLRAW, ">$dir_name/cell.raw" ) or 
+                warn "cannot open $dir_name/cell.raw\n";
+            
+            foreach my $raw_file(@rawfiles){
+                if($raw_file =~ /(\S+)\/(\S+)\.raw/){
+                    my $dir = $1;
+                    my $task = $2;
+                    if($task ne "cell"){
+                        $|=1;
+#                        print "summarizing $task $dir\n";
+                        &lve_summarize($task,$dir,$tmp_index_table,$force);
+                        open RAWFILE, "<$raw_file" or 
+                            warn "cannot open $raw_file\n";
+                        while(<RAWFILE>){
+                            # Ignore old checkpoly results
+                            next if (/ checkpoly /);
+                            print CELLRAW "$_";
+                        } # done reading and writing raw cell
+                    } # do all but cell.raw files
+                }
+            }  #for each raw file found under a cell tree 
+            close CELLRAW;
+            chmod $ENV{LVE_FILEMODE}, "$dir_name/cell.raw"
+                if defined $ENV{LVE_FILEMODE};
+            system("chgrp",$ENV{LVE_GID},"$dir_name/cell.raw")
+                if (defined ($ENV{LVE_GID}));
+            # create the list of used raw files
+            unlink "$dir_name/cellraw.d";
+            open ($fd, ">$dir_name/cellraw.d") or warn "Cannot open $dir_name/cellraw.d";
+            print $fd join("\n", @rawfiles);
+            close $fd;
+            chmod $ENV{LVE_FILEMODE}, "$dir_name/cellraw.d"
+                if defined $ENV{LVE_FILEMODE};
+            system("chgrp",$ENV{LVE_GID},"$dir_name/cellraw.d")
+                if (defined ($ENV{LVE_GID}));
+        }
+        print "summarizing cell $dir_name\n";
+        &lve_summarize("cell",$dir_name,$tmp_index_table,$force);
+    } # find all cell trees and write results
+    #replace the old index.table with the file created be lve_summarize
+    system("sync");
+    if ( -s "$tmp_index_table") {
+        open (P, "<$tmp_index_table");
+        while (<P>) {
+            chomp;
+            /CELL:=(\S+)/;
+            my $cell=$1;
+            $table{$cell}=$_;
+        }
+        close P;
+    }
+    unlink $index_table;
+    open (P, ">$index_table");
+    foreach my $cell (sort keys %table) {
+        print P "$table{$cell}\n";
+    }
+    close P;
+    chmod $ENV{LVE_FILEMODE}, "$index_table"
+        if (defined ($ENV{LVE_FILEMODE}));
+    system("chgrp",$ENV{LVE_GID},"$index_table")
+        if (defined ($ENV{LVE_GID}));
+    system("sync");
+    sleep 1;
+    unlink $tmp_index_table;
+}
+if(!defined($index_table)){usage(); }
+if(!defined($index_file)){
+    $index_file = $index_table;
+    $index_file =~ s/\.table/\.html/g;
+}
+
+#start rendering index.html
+print "Generating static index.html page\n";
+my $fh = start_page($index_file,"Analog Verification Summary");
+
+#generate index page from index.table
+open INDEX_TABLE, "< $index_table" or 
+    die "cannot open $index_table for index generation\n";
+my $lines = `wc -l \"$index_table\"`;
+if($lines =~ /(\S+) (\S+)/){
+    print $fh "<h3>$1 cell(s) found</h3>\n";
+}
+
+# start table header
+print $fh "<TABLE BORDER=\"0\" WIDTH=\"100%\" CELLPADDING=\"2\" CELLSPACING=\"3\" class=\"yellow\"
+ >\n";
+print $fh "<TBODY>\n";
+
+#generate column headings
+sub write_header {
+    my $fh = shift;
+    print $fh "<tr BGCOLOR=\"#CCCCFF\" >\n";
+    print $fh "<td  class=\"yellow\"  ><b>CELL</b> </td>";
+    print $fh "<td  class=\"yellow\"  ><b>JLVS</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>LVS</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>HLVS</b> </td>";
+    print $fh "<td  class=\"yellow\"  ><b>EXTRACT</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>DRC</b> </td>";
+    print $fh "<td  class=\"yellow\"  ><b>HDRC</b> </td>";
+    print $fh "<td  class=\"yellow\"  ><b>FRC</b> </td>";
+    print $fh "<td  class=\"yellow\"  ><b>ALINT</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>ASPICE</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>LIB</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>ASTA</b> </td>"; 
+    print $fh "<td  class=\"yellow\"  ><b>SLINT</b> </td>"; 
+    print $fh "</tr>";
+}
+
+
+write_header($fh);
+
+my %statistics;
+my @tests = ("JLVS", "LVS", "HLVS", "EXTRACT", "DRC", "HDRC", "FRC", "ALINT", "ASPICE", "LIB", "ASTA", "SLINT");
+foreach my $test (@tests) {
+    $statistics{$test} = ();
+}
+my $cell_count = 0;
+while(<INDEX_TABLE>){
+    if($_ =~ s/CELL:=(\S+)//) {
+        my $cell = $1;
+        $cell_count++;
+
+        my ($basename, $plusminus) = partition_fqcnminus($cell);
+        my $cellpath = $basename;
+        $cellpath =~ s/\./\//g;
+        $cellpath .= "$plusminus";
+        $cellpath .= "/cell.html";
+        my $cell_abbr = abbreviate_cellname($cell);
+
+        print $fh "<tr>\n";
+        my $indent = "";
+        $indent = "&nbsp;&nbsp;&nbsp;&nbsp;" if ($plusminus ne "");
+        
+        my %result;
+        foreach my $test (@tests) {
+            if (/\s+$test:=(\S+)/) {
+                $result{$test} = $1;
+            }
+            else {
+                $result{$test} = "NOT_TESTED";
+            }
+        }
+        foreach my $test (keys %result) {
+            $statistics{$test}{$result{$test}}++;
+        }
+        print $fh "<td class=\"yellow\">";
+
+        print $fh "$indent<a href=\"$cellpath\">$cell_abbr</a></td>";
+        foreach my $test (@tests) {
+            print $fh "<td class=\"yellow\" BGCOLOR=\"" .
+                status2color($result{$test}) . "\" >$result{$test}</td>";
+        }
+        print $fh "</tr>\n";
+        if(($cell_count%40==0) && ($cell_count/40 >= 1)){write_header($fh); }
+    }
+}
+print $fh "</TABLE><P>";
+
+finish_page($fh);
+close INDEX_TABLE;
+
+# write statistics page here 
+print "Generating statictics page\n";
+my $statistics_file = $index_file;
+$statistics_file =~ s/index\.html/statistics\.html/g;
+$fh = start_page($statistics_file,"Analog Verification Statistics");
+
+foreach my $test(keys %statistics){
+    my $total = 0;
+    print $fh "<center><h3>Results Statistics for $test</h3></center>\n";
+    print $fh "<TABLE BORDER=\"0\" WIDTH=\"100%\" CELLPADDING=\"2\" CELLSPACING=\"3\" class=\"yellow\" >\n";
+    print $fh "<TBODY>\n";
+    print $fh "<tr BGCOLOR=\"#CCCCFF\" >";
+    print $fh "<td  class=\"yellow\" > <b>Result Category</b> </td>";
+    print $fh "<td  class=\"yellow\" > <b>\#cells</b> </td>"; 
+    print $fh "<td  class=\"yellow\" > <b>\%cells</b> </td>"; 
+    print $fh "</tr>\n";
+    foreach my $result (keys %{$statistics{$test}}){
+        $total += $statistics{$test}{$result};
+    }
+    foreach my $result (keys %{$statistics{$test}}){
+        my $p = ($statistics{$test}{$result}/$total)*100;
+        my $percent = sprintf "%.2f", $p;
+        print $fh "<tr>";
+        print $fh "<td class=\"yellow\" > $result </td>";
+        print $fh "<td class=\"yellow\" > $statistics{$test}{$result} </td>";
+        print $fh "<td class=\"yellow\" > $percent </td>";
+        print $fh "</tr>\n";
+    }
+    print $fh "</TABLE><P>";
+}
+
+finish_page($fh);
+
+# invoke lve_tracking since cast_path not supplied, skip cast_query
+if($statushtml && defined($working_dir)){
+    print "Generating status page\n";
+    my $tracking = `$lve_tracking --skip-cast-query=1 \"$working_dir\"`;
+    print "$tracking";
+}

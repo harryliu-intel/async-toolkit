@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<LINK REV=MADE HREF="mailto:denney@avlsi.com">
+<title>Handshaking</title>
+</head>
+<body>
+
+TSIM: Timing-accurate simulator API via message passing primitives.
+
+<h2>General Use</h2>
+<p>
+AbstractDevice.send(channel, message) and
+AbstractDevice.receive(channel) are the proper methods to use.  If you
+are modelling something weird, the channel send() and receive() are
+also available.  For most purposes, though, the methods in
+AbstractDevice should be fine.
+
+<p>
+Buffered Channels and AbstractDevices both have default time settings.
+BufferedChannels default to a forward latency of 2 transitions for
+every unit of slack and a total cycle time of 10 transitions.
+AbstractDevices don't have forward latencies and default to a cycle
+time of 18 transitions.  These numbers can be changed during
+construction or after it.  The relevant variables are
+<em>AbstractDevice.cycleTime</em>,
+<em>BufferedChannel.ffLatency</em>,
+<em>BufferedChannel.bbLatency</em>,
+<em>BufferedChannel.fbLatency</em>, and
+<em>BufferedChannel.bfLatency</em>.  Currently bbLatency,
+fbLatency, and bfLatency are treated as a single span of time
+(cycleTime - ffLatency) by BufferedChannels but not by NodeChannels
+(which use BufferedChannels).  ffLatency is the time between the data
+line on the left changing and the data line on the right changing.
+bbLatency is the time between the enable(s) on the right changing
+and the enable(s) on the left changing.  fbLatency is the time
+between the data on the left changing and the enable(s) on the left
+changing, and bfLatency is the time between the enable(s) on the
+right changing and the data on the right changing.
+
+<p>
+Devices generally have slower cycle times than the surrounding
+channels.  This reflects the hardware, where the cells buffering
+connecting wires (long wires) are simpler than the logic of the
+high-level cells, and thus cycle faster.  This means that backlogs
+clear out faster.  If there is a slackless delay inside a cell, as
+there is in the long-division loop in DIV, delayBy(deltaTime) should
+model it.
+
+<h2>The hardware's four step handshake:</h2>
+<table border=1>
+<tr><th>Step Number</th><th>Sender</th><th>Receiver</th></tr>
+<tr><td>1</td><td>Wait for E active; set D to valid state</td><td></td></tr>
+<tr><td>2</td><td></td><td>Wait for valid D<br>
+						   Use (or latch) D<br>
+						   Set E inactive</td></tr>
+<tr><td>3</td><td>Wait for E inactive; clear D</td><td></td></tr>
+<tr><td>4</td><td></td><td>Wait for neutral D; activate E</td></tr>
+</table>
+<h3> The nodes:</h3>
+<dl>
+<dt>E</dt>
+<dd>Enable.  Set by Receiver, monitored by sender.</dd>
+<dt>D</dt>
+<dd> n bits of the data, on 2n wires, organized as pairs or quadruplets.
+	Valid means exactly one wire per set active.  No data is no
+	wire active.  Set by sender, monitored by receiver.</dd>
+</dl>
+
+<h2>tsim's 1 stage "handshake":</h2>
+
+<p>
+Currently we are assuming we can get adequate accuracy by mapping this
+4 stage handshake into simple calls to the channels connecting modules
+and by letting the channels handle the brunt of the timing.  Each
+message transaction consists of one Message being sent or received.  A
+Message is just a BigInteger with an associated int timestamp and data
+on where it is in the source.  There is no acknowledgement, although
+send() and receive() can block if probeSend()/probeReceive() would
+have returned false.
+
+<h2>Correspondence to tsim API</h2>
+
+<p>
+Physically, the 4 stage handshake has 4 time lengths in it. Call them
+t1 through t4. t1 is the time after E is raised before the data becomes
+valid. t2 is the time after the data becomes valid that enable is
+lowered. t3 is the time after enable is lowered that data becomes
+invalid. t4 is the time after data becomes invalid that E is raised.
+
+<p>
+t3 should be constant for a given channel/unit combination. t1 can vary
+depending on when the sending process gets needed data from. mint2 can
+be started later than the end of t1 depending on the data received
+(rare, pretty much just div), or if necessary data hasn't been received
+yet from other channels (more common). t4 can be delayed until a buffer
+used in t2 is finished emptying, which can be delayed by sending delays.
+t1, t2 and t4 will have constant *minimum* times, however, which lets us
+play around a little bit.  In particular, we can combine the steps t1
+and t2 together on the sending side by having the send method specify
+not the beginning or end of t1, but just the minimum t1 time, and when
+we can start sending.
+
+<table border=1>
+<tr> <th>Time period</th> <th> receiving side </th> <th> sending side
+			</th> <th> time of E/D </th> <th> length of phase </th>
+<tr> <th>previous t4</th> <td> raising E      </td> <td> <td> <td> t4
+<tr> <td colspan=3 align="center"> E active <td> End of t4 <td>
+<tr> <th rowspan=2>t1</th> <td> <td> possible delay. <td>
+			<td> Max(0, D possible - end of t4)
+<tr>                      <td> <td> Raising D <td> <td> mint1
+<tr> <td colspan=3 align="center"> D valid <td>
+			Max(D possible, end of t4) + mint1 <td>
+<tr> <th rowspan=2>t2         </th> <td> possible delay <td> <td>
+			<td> Max(0, D saved or used - end of t1)
+<tr> <td> Lowering E <td> <td> <td> mint2
+<tr> <td colspan=3 align="center"> E inactive <td>
+			Max(D used, end of t1) + minT2 <td>
+<tr> <th>t3         </th> <td> <td> lowering D <td> <td> t3
+<tr> <td colspan=3 align="center"> D invalid <td> end of t3 <td>
+<tr> <th>t4         </th> <td> raising E <td> <td> <td> mint4 + possible time
+to clear buffer.
+</table>
+
+<p>
+Devices can't send or receive on a given channel until after both they
+and the channel have cycled (ie, after the maximum of the cycle
+times).  In the current model, each channel keeps track of this for
+both of its ends, which means that the device doesn't need to worry
+about cycling.  BufferedChannel uses the internal variables sendTime
+and receiveTime as device times, which means they can be earlier than
+the corresponding time specified in BC's internal array.  However,
+when getSendTime() and getReceiveTime() are called, they return the
+earliest time that a device can next send/receive on that channel by
+examining the array of times as well as the two end times.
+
+<p>
+Giving the following API:
+<p>
+<code>
+int ChannelOutput.send(message, myTime, myCycleTime);<br>
+Message ChannelInput.receive(myTime, myCycleTime);
+</code>
+<p>
+And a slightly higher level API:
+<code>
+void send(channel, message);<br>
+Message receive(channel);
+</code>
+<p>
+Sending and receiving only update the device time if the channel is
+"later" than it is.  This means that in:
+<code>
+send(A, a);<br>
+send(B, b);<br>
+</code>
+the two sends are effectively parallel (if A is late, it delays the
+device and B, but normally it doesn't affect anything).  This makes
+arrayed send and receive much less necessary.  One caution: two sends
+on the same channel will cause a delay of at least one cycle.  If it
+is easier to serialize complicated modules like this:
+<code>
+<br>send(A, a);<br>
+send(A, a);<br>
+send(A, a);<br>
+send(B, b);<br>
+send(B, b);<br>
+send(B, b);<br>
+</code>
+then startParallel(), parallelSend(), and endParallel() might be helpful.  
+
+<h2>Channel classes and Buffering</h2>
+
+<p>
+There are two classes of channels: tsim-only, and tsim-dsim
+connectors.  Each tsim-only channel, or BufferedChannel, has a given
+slack and applies latencies to determine how messages move internally
+from "full-buffer" to "full-buffer".  There aren't slackless channels
+anymore.  A BufferedChannel can use the default forward latency and
+cycle time (2 transitions and 10 transitions) or can define its own.
+
+<p> The tsim-dsim connectors, NodeReadChannel and NodeWriteChannel,
+have a given slack N and a converter to talk to dsim.  They can
+connect to groups of e1ofn channels as well as individuals.  Because
+of the converter, they actually have slightly more than N slack.  The
+extra slack ensures that the tsim device connected to the NodeChannel
+can rely on the results of probeSend() and probeReceive(); it never
+gets stuck halfway through a hardware cycle.
+
+<h2>TimingBuffer internals</h2>
+
+<p>
+TimingBuffer is the internal class of BufferedChannel which does the
+real work.  It keeps two internal arrays which together correspond to
+the states of the imaginary full-buffers.  <code>messages</code>
+contains the tokens passing through the buffered channel.  This has
+the invariant that all "holes" (empty slots) are before all tokens.
+It contains Messages with their original timestamps, because Messages
+are immutable.  New Messages are created from the old with updated
+times at the end of the channel.
+
+<p>
+<code>times</code> keeps track of the next time each "full-buffer" is
+ready to do anything.  If the corresponding Message slot is empty,
+this is the earliest time that "buffer" can accept another token.  If
+it's full, this is the earliest time that "buffer" can pass on its
+token.  <code>times</code> and <code>messages</code> are always
+modified at the same time in the same place.  TimingBuffer has two
+internal offsets which control <code>times</code>:
+<code>ffLatency</code> and the rest of the cycle time (once known as
+"backwards latency").  
+
+<p>
+TimingBuffer stores a time for the device at each of the channel to
+make parallelism easier.  Something needs to keep track of the
+AbstractDevice's cycle time.  The AbstractDevice could, but then
+"send(A); send(B);" on two clear channels would take twice as long in
+simulated time as it ought to, because it would take two
+<em>consecutive</em> cycles.  <code>sendTime</code> and
+<code>receiveTime</code> exist to remember when the AbstractDevice can
+next use that particular channel.  However, they don't prevent other
+constraints on the AbstractDevice from slowing it down further.
+
+<h2> Arbiters, etc </h2>
+<p>
+Use one of the Wait classes (AccurateWait, InaccurateWait) to select
+between multiple channels.  The usage of Waits is prone to race
+conditions and other weird bugs.  Be careful with them.
+
+<p>
+Be warned that you may get messages out of order if they come from
+different channels and you're using InaccurateWait.  AccurateWait
+prevents this from happening, but is slower, both because it performs
+more calculations and because it ties into dsim's scheduler.  Dsim's
+scheduler has to wait for all AbstractDevices to finish before it can
+perform any action.  In almost all cases the slowdown is worth it.
+
+<p>
+Tsim time, like dsim time, is measured in hundredths of a transition.
+
+</body>

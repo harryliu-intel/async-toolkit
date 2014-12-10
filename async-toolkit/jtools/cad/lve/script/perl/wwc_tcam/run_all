@@ -1,0 +1,174 @@
+#!/usr/intel/bin/perl -w
+
+# options
+$"=",";
+my $plot_only = 0;
+my @slews = (4,8,16,32,64,128,256); # input slew in ps
+my @loads = (5); # (5,8,14,22,37,61,100) # output load in fF
+my @sims = ("leakage","rw","lookup");
+my @all_libs = ("tttt/0.815/-40/tttt",
+                "tttt/0.915/105/tttt",
+                "tttt/0.915/125/tttt",
+                "tttt/0.98/105/tttt",
+                "psss/0.88/-40/pifs",
+                "psss/0.88/-40/pisf",
+                "psss/0.88/125/pifs",
+                "psss/0.88/125/pisf",
+                "pfff/0.85/125/pifs",
+                "pfff/0.85/125/pisf",
+                # bonus libs for HLP
+                "tttt/0.75/-40/tttt",
+                "tttt/0.75/125/tttt");
+my $n0=0;
+my $n1=@all_libs-1;
+
+# parse command line arguments
+while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
+    if ($1 eq "plot-only") { $plot_only = $2; }
+    elsif ($1 eq "slews")  { @slews = split(",",$2); }
+    elsif ($1 eq "loads")  { @loads = split(",",$2); }
+    elsif ($1 eq "sims")   { @sims = split(",",$2); }
+    elsif ($1 eq "lib-range") { ($n0,$n1) = split(":",$2); }
+    shift;
+}
+
+# choose subset of libs to run
+my @libs;
+for (my $i=$n0; $i<=$n1 && $i<@all_libs; $i++) {
+    push @libs, $all_libs[$i];
+}
+
+my $NBRUN = "nbjob run --class \"SLES10&&24G\" --work-dir $ENV{PWD}";
+my $run_tcam = "$ENV{FULCRUM} run_tcam";
+
+# Performance corners
+# RFFF, 0.75V,  125C and -40C
+# TTTT, 0.815V, 125C and -40C
+# RSSS, 0.88V,  125C and -40C
+
+# Skew corners
+# RFFS, 0.815V, 125C and -40C
+# RFSF, 0.815V, 125C and -40C
+# RSSF, 0.88V,  125C and -40C
+# RSFS, 0.88V,  125C and -40C
+
+# Power corner
+# TTTT, 0.915V, 105C
+# RFFF, 0.915V, 105C
+
+# Uses 12 static configuration bits.  CFG[0..3] controls the lookup
+# delay line, with larger numbers faster.  CFG[4..5] configures write
+# boosting cutoff delay, with larger numbers faster.  CFG[6..8]
+# configure the write boosting voltage, with larger numbers
+# configuring higher word-line voltage.  CFG[9..11] configures read
+# underdrive voltage, with larger numbers configuring lower word-line
+# voltage.
+
+# lib config:      lookup_delay=4,  write_delay=0, write_boost=7, read_under=4
+my $cfg0 = "0x9C4";
+# default config:  lookup_delay=8,  write_delay=0, write_boost=7, read_under=7
+my $cfg1 = "0xFC8";
+# no rw assist:    lookup_delay=8,  write_delay=0, write_boost=0, read_under=0
+my $cfg2 = "0x008";
+# slow corners:    lookup_delay=12, write_delay=0, write_boost=7, read_under=4
+my $cfg3 = "0x9CC";
+# slowest corners: lookup_delay=12, write_delay=0, write_boost=7, read_under=2
+my $cfg4 = "0x5CC";
+
+# set up sweeps
+my @corner = ("rfff","tttt","rffs","rfsf","rsss","rssf","rsfs");
+my @temps = (-40,125);
+my @deltaV = (-0.2, -0.1, 0, 0.1, 0.2);
+my @cycleT = (1.6, 1.25, 0.8, 0.8, 0.8);
+my $rcCorner = "tttt";
+my %nomV;
+$nomV{"tttt"} = 0.815;
+$nomV{"rffs"} = 0.815;
+$nomV{"rfsf"} = 0.815;
+$nomV{"rfff"} = 0.75;
+$nomV{"rsss"} = 0.88;
+$nomV{"rssf"} = 0.88;
+$nomV{"rsfs"} = 0.88;
+my %isSlow;
+$isSlow{"rsss"} = 1;
+$isSlow{"rssf"} = 1;
+$isSlow{"rsfs"} = 1;
+my $slew = $slews[0];
+my $load = $loads[0];
+
+foreach my $sim (@sims) {
+
+    if ($sim eq "lib") {
+        my $cfg = $cfg0;
+        foreach my $slew (@slews) {
+            foreach my $load (@loads) {
+                my @cmd = ();
+                push @cmd, "$NBRUN";
+                push @cmd, "--log-file lib.${slew}.${load}.log $run_tcam --plot-only=$plot_only " .
+                    "--html-suffix=\".${slew}.${load}\"";
+                foreach my $load (@loads) {
+                    foreach my $lib (@libs) {
+                        push @cmd, "lib/${lib}/2/$slew/$load/$cfg";
+                    }
+                }
+                my $cmd = join(" ",@cmd);
+                print "$cmd\n";
+                system($cmd);
+            }
+        }
+    }
+    elsif ($sim eq "lookup") {
+        my @cmd = ();
+        push @cmd, "$NBRUN";
+        push @cmd, "--log-file lookup.log $run_tcam --plot-only=$plot_only";
+        foreach my $corner (@corner) {
+            for (my $dv=0; $dv<@deltaV; $dv++) {
+                foreach my $temp (@temps) {
+                    my $v = $nomV{$corner} + $deltaV[$dv];
+                    my $c = $cycleT[$dv];
+                    my $cfg = $cfg1;
+                    $cfg = $cfg3 if (defined($isSlow{$corner}) && $dv>0);
+                    $cfg = $cfg4 if (defined($isSlow{$corner}) && $dv==0);
+                    push @cmd, "lookup/$corner/$v/$temp/$rcCorner/$c/$slew/$load/$cfg";
+                }
+            }
+        }
+        push @cmd, "lookup/tttt/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
+        push @cmd, "lookup/rfff/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
+        my $cmd = join(" ",@cmd);
+        print "$cmd\n";
+        system($cmd);
+    }
+    elsif ($sim eq "rw") {
+        @cmd = ();
+        push @cmd, "$NBRUN";
+        push @cmd, "--log-file rw.log $run_tcam --plot-only=$plot_only";
+        foreach my $corner (@corner) {
+            for (my $dv=0; $dv<@deltaV; $dv++) {
+                foreach my $temp (@temps) {
+                    my $v = $nomV{$corner} + $deltaV[$dv];
+                    my $c = $cycleT[$dv];
+                    my $cfg = $cfg1;
+                    $cfg = $cfg3 if (defined($isSlow{$corner}) && $dv>0);
+                    $cfg = $cfg4 if (defined($isSlow{$corner}) && $dv==0);
+                    push @cmd, "rw/$corner/$v/$temp/$rcCorner/$c/$slew/$load/$cfg";
+                }
+            }
+        }
+        push @cmd, "rw/tttt/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
+        push @cmd, "rw/rfff/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
+        $cmd = join(" ",@cmd);
+        print "$cmd\n";
+        system($cmd);
+    }
+    elsif ($sim eq "leakage") {
+        @cmd = ();
+        push @cmd, "$NBRUN";
+        push @cmd, "--log-file leakage.log $run_tcam --plot-only=$plot_only";
+        push @cmd, "leakage/tttt/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
+        push @cmd, "leakage/rfff/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
+        $cmd = join(" ",@cmd);
+        print "$cmd\n";
+        system($cmd);
+    }
+}

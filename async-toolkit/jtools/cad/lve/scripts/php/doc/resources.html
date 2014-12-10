@@ -1,0 +1,338 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Compute Resource Estimation</title>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <link REL ="stylesheet" TYPE="text/css" HREF="lve.css">
+</head>
+<body>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td>
+      </td>
+      <td align="left" height="90"><img src="logo.png" alt="Intel" style="border: 0px solid ; width: 250px; height: 90px;" align="left"> </td>
+    </tr>
+  </tbody>
+</table>
+<!-- ========== START OF NAVBAR ========== --> <a name="navbar_top"><!-- --></a>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td colspan="2" class="NavBarCell1"> <a name="navbar_top_firstrow"><!-- --></a>
+      <table border="0" cellpadding="0" cellspacing="3">
+        <tbody>
+          <tr align="center" valign="top">
+            <td class="NavBarCell1"> <a href="../index.php"><b>Static Index</b></a></td>
+            <td class="NavBarCell1"> <a href="index.html"><b>Help Doc</b></a></td>
+            <td class="NavBarCell1"> <a href="../statistics.php"><b>Statistics</b></a></td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td rowspan="3" align="right" valign="top"></td>
+    </tr>
+  </tbody>
+</table>
+<!-- =========== END OF NAVBAR =========== -->
+<div style="text-align: center;">
+<h2 style="text-align: center;">Compute Resource Estimation</h2>
+(Analog Verification of PivotPoint)<br>
+<br>
+<div style="text-align: left;">The purpose of this document is to
+develop an intuition for the compute resources needed to achieve the
+desired level of analog/layout verification outlined in [1]. This
+process uses empirical information drawn from running a representative
+subset of cells through our analog verification framework; the LVE.
+From these results we deduce simulation duration times based on total
+cell count and estimated cell type distribution.<br>
+<br>
+<h3>Cell Type Distribution</h3>
+We define 5 cell categories based on the number of production rules;
+which should scale proportionally to the number of transistors and nodes
+-- the factors which affect the time taken to extract, lvs, drc
+and spice/lint our circuits.<br>
+<br>
+<table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">Category</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">#prs</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">%distribution</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">Description/Examples</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; text-align: center;">1</td>
+      <td style="vertical-align: top;">prs&lt;=40</td>
+      <td style="vertical-align: top;">49%</td>
+      <td style="vertical-align: top;">This includes simple cells like
+buffers, circuit fragments including DYBs, operators
+(CTREE2,INV2,INVINV) and single stage control processes.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; text-align: center;">2</td>
+      <td style="vertical-align: top;">40&gt;prs&lt;=220</td>
+      <td style="vertical-align: top;">31%</td>
+      <td style="vertical-align: top;">More complex leaf cells --4 or
+more channels --(KPG4_S2_H5,SERIAL_SPLIT_CORE), byte cells (FILTER_6,
+RIPPLE_INC_8) and other single hierarchy cells,</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; text-align: center;">3</td>
+      <td style="vertical-align: top;">220&gt;prs&lt;=1500</td>
+      <td style="vertical-align: top;">11%</td>
+      <td style="vertical-align: top;">Word cells/full data path cells
+single/multi-dimensional (FILTER_16,REGBUF_4x16,REORDER16_4). More
+sophisticated control cells with multiple hierarchies
+(GEN_NEW_HPT,FIFO_EVAL_GUTS).</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; text-align: center;">4</td>
+      <td style="vertical-align: top;">1500&gt;prs&lt;=10000</td>
+      <td style="vertical-align: top;">6%</td>
+      <td style="vertical-align: top;">Complicated word blocks which
+might include state and about half a dozen word cells. Also includes
+multi-dimensional <span style="font-style: italic;">nxm </span>units
+here n &amp; m &gt;= 8. (CONFIG_CSR_16x32,REORDER16_16,
+rx.control.rq_mgr.GEN_REQR)</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; text-align: center;">5</td>
+      <td style="vertical-align: top;">prs&gt;10000</td>
+      <td style="vertical-align: top;">3%</td>
+      <td style="vertical-align: top;">Major functional blocks in the
+system. (FIFO_STATE,LQ_MGR,BYTE_BLOCK_READER,TX_OUT)</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<h3>Empirical Result Sampling</h3>
+From the above classification of cells we have selected 3 cells from
+each category and determined the compute time required to perform
+critical components of our verification process. We extrapolate from
+these results and deduce some final walltime numbers.<br>
+<br>
+Note that all transient runs assume one environment and a timemax of
+20ns.<br>
+<br>
+<table cellpadding="2" cellspacing="2" border="1" style="text-align: left; width: 100%;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">Cell</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">Category</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">extract (s)</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">lvs (s)</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">drc (s)</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">aspice (s)</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">alint (s)</td>
+      <td style="vertical-align: top; text-align: center; font-weight: bold;">Total (s) Sun/Linux</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.complete.detect.DETECT_1of5.300</td>
+      <td style="vertical-align: top; text-align: center;">1</td>
+      <td style="vertical-align: top; text-align: right;">48</td>
+      <td style="vertical-align: top; text-align: right;">4</td>
+      <td style="vertical-align: top; text-align: right;">13</td>
+      <td style="vertical-align: top; text-align: right;">96</td>
+      <td style="vertical-align: top; text-align: right;">179</td>
+      <td style="vertical-align: top; text-align: right;">48/292</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.sram.sram16.WRITE_CTRL.300</td>
+      <td style="vertical-align: top; text-align: center;">1</td>
+      <td style="vertical-align: top; text-align: right;">40</td>
+      <td style="vertical-align: top; text-align: right;">4</td>
+      <td style="vertical-align: top; text-align: right;">12</td>
+      <td style="vertical-align: top; text-align: right;">-</td>
+      <td style="vertical-align: top; text-align: right;">33</td>
+      <td style="vertical-align: top; text-align: right;">40/49</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.register.regbuf.REGBUF_CTRL.300</td>
+      <td style="vertical-align: top; text-align: center;">1</td>
+      <td style="vertical-align: top; text-align: right;">44</td>
+      <td style="vertical-align: top; text-align: right;">3</td>
+      <td style="vertical-align: top; text-align: right;">12</td>
+      <td style="vertical-align: top; text-align: right;">-</td>
+      <td style="vertical-align: top; text-align: right;">31</td>
+      <td style="vertical-align: top; text-align: right;">44/46</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.conditional.filter.FILTER_8.300</td>
+      <td style="vertical-align: top; text-align: center;">2</td>
+      <td style="vertical-align: top; text-align: right;">137</td>
+      <td style="vertical-align: top; text-align: right;">5</td>
+      <td style="vertical-align: top; text-align: right;">15</td>
+      <td style="vertical-align: top; text-align: right;">477</td>
+      <td style="vertical-align: top; text-align: right;">157</td>
+      <td style="vertical-align: top; text-align: right;">137/654</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.serial.csr.config_bitgen.CONFIG_BITGEN_CTRL.300</td>
+      <td style="vertical-align: top; text-align: center;">2</td>
+      <td style="vertical-align: top; text-align: right;">225</td>
+      <td style="vertical-align: top; text-align: right;">6</td>
+      <td style="vertical-align: top; text-align: right;">17</td>
+      <td style="vertical-align: top; text-align: right;">684</td>
+      <td style="vertical-align: top; text-align: right;">1237</td>
+      <td style="vertical-align: top; text-align: right;">225/1944</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.serial.csr.config_bitgen.CONFIG_BITGEN_TOP.300</td>
+      <td style="vertical-align: top; text-align: center;">2</td>
+      <td style="vertical-align: top; text-align: right;">66</td>
+      <td style="vertical-align: top; text-align: right;">4</td>
+      <td style="vertical-align: top; text-align: right;">13</td>
+      <td style="vertical-align: top; text-align: right;">187</td>
+      <td style="vertical-align: top; text-align: right;">978</td>
+      <td style="vertical-align: top; text-align: right;">66/1182</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.serial.csr.config_bitgen.CONFIG_BITGEN_CSR_8(68).300</td>
+      <td style="vertical-align: top; text-align: center;">3</td>
+      <td style="vertical-align: top; text-align: right;">1113</td>
+      <td style="vertical-align: top; text-align: right;">11</td>
+      <td style="vertical-align: top; text-align: right;">37</td>
+      <td style="vertical-align: top; text-align: right;">5400</td>
+      <td style="vertical-align: top; text-align: right;">12780</td>
+      <td style="vertical-align: top; text-align: right;">1113/18228</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">lib.serial.sram.BYPASS_SHIM_16.300</td>
+      <td style="vertical-align: top; text-align: center;">3</td>
+      <td style="vertical-align: top; text-align: right;">1065</td>
+      <td style="vertical-align: top; text-align: right;">9</td>
+      <td style="vertical-align: top; text-align: right;">22</td>
+      <td style="vertical-align: top; text-align: right;">4620</td>
+      <td style="vertical-align: top; text-align: right;">420</td>
+      <td style="vertical-align: top; text-align: right;">1065/5071</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">core.spi4.shared.fifo_eval.FIFO_EVAL_ARB.300:digital</td>
+      <td style="vertical-align: top; text-align: center;">3</td>
+      <td style="vertical-align: top; text-align: right;">283</td>
+      <td style="vertical-align: top; text-align: right;">7</td>
+      <td style="vertical-align: top; text-align: right;">18</td>
+      <td style="vertical-align: top; text-align: right;">1060</td>
+      <td style="vertical-align: top; text-align: right;">120</td>
+      <td style="vertical-align: top; text-align: right;">283/1205</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">core.spi4.rx.control.rq_mgr.GEN_REQR.300</td>
+      <td style="vertical-align: top; text-align: center;">4</td>
+      <td style="vertical-align: top; text-align: right;">3477</td>
+      <td style="vertical-align: top; text-align: right;">16</td>
+      <td style="vertical-align: top; text-align: right;">34</td>
+      <td style="vertical-align: top; text-align: right;">23400</td>
+      <td style="vertical-align: top; text-align: right;">1380</td>
+      <td style="vertical-align: top; text-align: right;">3477/24830</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"> </td>
+      <td style="vertical-align: top; text-align: center;">4</td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"> </td>
+      <td style="vertical-align: top; text-align: center;">4</td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: center;">5</td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"> </td>
+      <td style="vertical-align: top; text-align: center;">5</td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"> </td>
+      <td style="vertical-align: top; text-align: center;">5</td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+      <td style="vertical-align: top; text-align: right;"> </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+From the above numbers we estimate that it it will takes on average
+times for SunOS (extraction) and Linux (lvs,drc,aspice,alint) resource
+tasks, we extrapolate this to 3600 cells in the different categories;<br>
+<ul>
+  <li>45s/129s per cell in category 1; (79380s/216000s)</li>
+  <li>150s/1260s per cell in category 2; (167400s/1360800s)</li>
+  <li>830s/8168s per cell in category 3; (328680s/3234528s)</li>
+  <li>3477s/24830s per cell in category 4; (751032s/5363280s)</li>
+</ul>
+we estimate a total number of 16 days worth of compute time to extract
+all the cells in category 1-4 and 118 days of compute time to perform
+analog simulations for cells in this category, assuming one simulation
+environment and a single permutation of process corner sweeps. We
+estimate a compute time overhead of 25% one these simulation numbers. At
+the time of writing no reliable data has been generated for the cells
+in category 5. The above data appears to corroborate results from
+simulating all the components of sizing drop 2a.<br>
+<h3>Task compute time/ walltime extrapolation</h3>
+<ul>
+  <li>The overall extraction time can be 6 days with with 3 dedicated
+non-parallel licenses or a little under 1 day with parallel useage of
+our simplex licenses.</li>
+  <li>The non Sun OS dependent processes estimate to a little over a
+week (8 days) to run the time intensive aspice and alint runs for one
+process corner, and one transient environment with a timemax of 20ns.
+  </li>
+</ul>
+<h3>Where we are; What remains
+</h3>
+As of 06/27/03 a majority of the cells in sizing drop 2, 5 and
+part of 3a have been extracted (this is run has been restricted to cells
+with less than 10000 prs count). The following substantial units remain;
+<ul>
+  <li>core.spi4.rx.out.RX_OUT.300 (drop 3b)</li>
+  <li>core.spi4.tx.out.TX_OUT.300 (drop 3b)</li>
+  <li>core.spi4.tx.control.control.TX_NOT_DATA_MGR.300 (drop 3b)</li>
+  <li>core.spi4.rx.in.RX_IN.300 (drop 4b)</li>
+  <li>core.spi4.shared.asoc_wrap.IN.300/core.spi4.shared.asoc_wrap.OUT.300 (drop 3a)</li>
+  <li>JTAG.300/External BUS (drop 4a)</li>
+  <li>All cells in the so-called misc sizing drop</li>
+  <li>ASOC.0 (low priority, silicon verified)</li>
+</ul>
+<h3>Known Issues</h3>
+<ul>
+  <li>Extractor speed up/parallelism; (being addressed)</li>
+  <li>Extractor generating 0 length spice files</li>
+  <li>Not enough parallelism in make system; breadth/depth first?</li>
+  <li>/scratch/net slow down on multiple accesses (aspice problem?)</li>
+</ul>
+<hr style="width: 100%; height: 2px;">
+[1] X8 Analog Verification Document, Mike Davies.
+</div>
+<br>
+</div>
+</body>
+</html>

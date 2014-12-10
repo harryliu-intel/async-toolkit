@@ -1,0 +1,186 @@
+#!/usr/intel/bin/perl
+
+# vim:et:sw=4:ts=4:tw=79:
+
+use strict;
+use warnings;
+
+BEGIN {
+    # Path + script name
+    my $scriptPath = $0;
+    # Extract script name
+    my @tmp = split('/', $0);
+    my $exe = $tmp[(@tmp)-1];
+    # Remove script name from end of path
+    $scriptPath =~ s/$exe$//;
+    if(! ($scriptPath =~ /^\//)) {
+        # Relative path, so convert to full path
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $scriptPath = $pwd . "/$scriptPath/../lib/perl";
+        chdir $scriptPath;
+        $scriptPath = `pwd`;
+        chomp $scriptPath;
+        chdir $pwd; 
+        push @INC, "$scriptPath";
+    }else
+    {
+        # Already full path
+        push @INC, "$scriptPath/../lib/perl";
+    }
+}
+
+use Getopt::Long qw(:config no_ignore_case);
+use Data::Dumper;
+use Pod::Usage;
+use XML::Simple;
+use HTTP::Date;
+use rteLib;
+
+my $cmdLine = cmdLineOpts(@ARGV);
+
+my $db;
+
+foreach my $dbFile (@{$cmdLine->{cellDbs}})
+{
+    printf("Adding file $dbFile...\n");
+    $db = mergeDbFile($dbFile, $db);
+}
+
+rteLib::updateDb($db, $cmdLine->{outputDb});
+
+exit(0);
+
+#---------------------------------------------------------------------------
+sub cmdLineOpts
+{
+    my (@args) = @_;
+
+    my %cmdLine = ( cellDbs => [],
+                    outputDb => "",
+                  );
+
+    my @values;
+    GetOptions('h|help' => sub { pod2usage( { -verbose => 2, -noperldoc=>1}) },
+               'i|inputDb=s' => sub {
+                   my ($arg, $val) = @_;
+                   push @{$cmdLine{cellDbs}}, split(/,/, $val);
+               },
+               'o|outputDb=s' => \$cmdLine{outputDb},
+               'x|inputDbList=s' => sub {
+                   my ($arg, $val) = @_;
+                   open(my $fh, $val) || die "Can't open $val: $!";
+                   push @{$cmdLine{cellDbs}},
+                        map { chomp; $_ } grep { !/^\s+$/ } <$fh>;
+                   close($fh);
+               }
+              );
+
+    if(scalar($cmdLine{cellDbs}) == 0 || $cmdLine{outputDb} eq "")
+    {
+        printf("ERROR: must specifiy at least one inputDb and one outputDb\n");
+        pod2usage( { -exitval => 2,
+                     -verbose => 2,
+                     -noperldoc => 1});
+    }
+    return \%cmdLine;
+}
+
+sub mergeDbFile
+{
+    my ($file, $db) = @_;
+
+    my $newDb = openCellDatabase($file);
+
+    foreach my $cell (keys %{$newDb})
+    {
+        if(defined $db->{$cell})
+        {
+            # cell exists in both DB, so pick latest version
+            if($db->{$cell}->{version} < $newDb->{$cell}->{version})
+            {
+                $db->{$cell} = $newDb->{$cell};
+            }elsif($db->{$cell}->{version} == $newDb->{$cell}->{version})
+            {
+                # cell exists in both DB, both have same version, so pick latest
+                my $newRunEndTime = $newDb->{$cell}->{runEndTime};
+                my $runEndTime = $db->{$cell}->{runEndTime};
+
+                if( !($newRunEndTime eq "-1") && !($runEndTime eq "-1"))
+                {
+                    # Both DB have runs that have completed, pick the latest
+                    my $newDbTime = str2time($newDb->{$cell}->{runEndTime});
+                    my $dbTime  = str2time($db->{$cell}->{runEndTime});
+                    if($newDbTime > $dbTime)
+                    {
+                        $db->{$cell} = $newDb->{$cell};
+                    }
+                }else
+                {
+                    # One or both DB have runs that didn't complete
+                    # prefer latter DB on the command line
+                    $db->{$cell} = $newDb->{$cell};
+                }
+            }
+        }else
+        {
+            # Add new cell
+            $db->{$cell} = $newDb->{$cell};
+        }
+    }
+
+    return $db;
+}
+    
+sub openCellDatabase
+{
+    my ($file) = @_;
+
+    my $dbHandle = {};
+
+    if(-e $file)
+    {
+        $dbHandle= XML::Simple::XMLin($file);
+    }
+
+    #print Dumper($dbHandle);
+    return $dbHandle;
+}
+
+__END__
+
+=head1 NAME
+
+rteDbMerge - Given a set of Rte cell databases, merge the results into one file
+
+=head1 SYNOPSYS
+
+rteDbMerge B<-i>=file[,file] B<-o>=file
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-i>=file[,file]
+
+Input cell databases
+
+=item B<-o>=file
+
+Output cell database
+
+=back
+
+=head1 DESCRIPTION
+
+This script will take one or more cell databases and merge them into a single
+file. The script will replace newer runs with older runs. Runs that ran to
+completion will override runs that didn't complete. If it finds two runs
+that didn't complete, it will give precedence to the run from the last cell DB
+on the command line.
+
+=head1 AUTHOR
+
+Copyright (C) 2011 Fulcrum Microsystem, Inc. All rights reserved
+
+=cut

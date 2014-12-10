@@ -1,0 +1,198 @@
+#!/usr/intel/bin/perl
+# AAG
+# $Id$
+# $DateTime$
+
+use Term::ANSIColor qw(:constants);
+use DBI();
+use Term::ReadKey;
+use Getopt::Long;
+
+sub usage {
+    my ($msg) = @_;
+    print STDERR "$msg\n" if defined $msg;
+    print STDERR <<EU;
+Usage : bugmonitor <options> userlist
+    --interval=<minutes> update interval
+
+when running 'r' to reset count
+             'q' to quit
+EU
+    exit 1;
+}
+
+my $interval = 1;
+my $users;
+my %userlist=();
+
+GetOptions (
+    "users=s" => \$users,
+    "interval=i" => \$interval,
+    "help" => sub {usage;},
+) or usage;
+
+usage ("Interval > 0 please!") if $interval <= 0;
+
+my %aliases=();
+open (P, "</mnt/fulcrum/home/htmldirs/itgroup/zimbra/zimbraaliases.dat");
+while (<P>) {
+    chomp;
+    my ($alias,$list)=split;
+    $aliases{$alias}=$list;
+}
+close P;
+
+my %names;
+my $dbh = DBI->connect("DBI:mysql:database=bugs;host=tsyvsqlm01.ts.intel.com", "readonly",
+                       "readonly", {"RaiseError" => 1});
+my $sth = $dbh->prepare("SELECT DATE_SUB(NOW(), INTERVAL 48 HOUR)");
+$sth->execute();
+my $last = $sth->fetchrow_arrayref->[0];
+$sth->finish;
+my $sth=$dbh->prepare("SELECT userid,login_name,extern_id from profiles");
+$sth->execute();
+my %bugzillanames=();
+my %login=();
+while (my $ref=$sth->fetchrow_hashref) {
+    my $login=$ref->{login_name};
+    my $userid=$ref->{userid};
+    $login =~ s/\@fulcrummicro.com//;
+    $login =~ s/\@intel.com//;
+    $bugzillanames{$login}=$userid;
+    $bugzillanames{$ref->{extern_id}}=$userid if $ref->{extern_id} ne "NULL";
+    $login{$userid}=$login;
+    $login{$ref->{extern_id}}=$login if $ref->{extern_id} ne "NULL";
+}
+
+sub adduser {
+    my ($user) = @_;
+    # prevent infinite recursion
+    return if defined $userlist{$user};
+    if (defined ($aliases{$user})) {
+        foreach my $u (split(/,/,$aliases{$user})) {
+            adduser($u);
+        }
+    }
+    elsif (defined ($bugzillanames{$user})) {
+        $userlist{$user}=1;
+        $userlist{$bugzillanames{$user}}=1;
+    }
+    else {
+        usage ("User/Group $user does not exist");
+    }
+}
+
+if (defined ($users) or defined ($ARGV[0])) {
+    %userlist=();
+    if (defined ($users)) {
+        foreach my $user (split(/,/, $users)) {
+            adduser($user);
+        }
+    }
+    while (defined ($ARGV[0])) {
+        foreach my $user (split(/,/, $ARGV[0])) {
+            adduser($user);
+        }
+        shift;
+    }
+}
+else {
+    $users = `whoami`;
+    chomp $users;
+    adduser($users);
+}
+
+my $headertail='R';
+$|=1;
+
+my $lastbug;
+my $headertail = '';
+my $addedcnt=0;
+
+ReadMode cbreak;
+
+sub wrap {
+    my $string=$_[0];
+    my @lines = split(/\n/, $string);
+    foreach my $line (@lines) {
+        while (length($line) > 79) {
+            my $ln = substr($line,0,79);
+            my $ri = rindex($ln,' ');
+            $ln = substr($ln,0,$ri);
+            print "$ln\n";
+            $line = substr($line, $ri);
+            $line =~ s/^ //;
+        }
+        print "$line\n" if length ($line)>0;
+    }
+}
+
+while(1) {
+    my $sth = $dbh->prepare("SELECT bugs.bug_id,bugs.assigned_to,profiles.userid,bugs.reporter,profiles.realname,bugs.short_desc,longdescs.bug_when,longdescs.thetext,bugs.bug_status,bugs.resolution FROM bugs,profiles,longdescs WHERE longdescs.bug_when > \"$last\" AND longdescs.who = profiles.userid AND longdescs.bug_id = bugs.bug_id");
+    $sth->execute();
+    my $names = $sth->{'NAME'};
+    my $fields = $sth->{"NUM_OF_FIELDS"};
+    while (my $ref = $sth->fetchrow_arrayref) {
+        my %result;
+        for (my $i = 0; $i < $fields; $i++) {
+            $result{$$names[$i]} = $$ref[$i];
+        }
+        $result{'realname'} =~ s/(\s)\s*/\1/;
+        next if (!
+            ($userlist{$result{reporter}} or $userlist{$result{assigned_to}} or $userlist{$result{userid}}));
+        format HEADER =
+@<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<...
+$result{'bug_id'}, $result{'short_desc'}
+.
+        format FOOTER =
+@<<<<<<<<<< @<<<<<<<<<  @>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @>>>>>>>>>>>>>>>>>>>
+$result{'bug_status'}, $result{'resolution'}, $result{'realname'}, $result{'bug_when'}
+.
+        $~ = 'HEADER';
+        print BOLD, RED;
+        write;
+        print RESET;
+        wrap $result{'thetext'}, "\n";
+        $~ = 'FOOTER';
+        print BOLD, GREEN;
+        print BOLD;
+        write;
+        print RESET;
+        $headertail = '';
+        printf "%c]0;bug $result{bug_id}%s $addedcnt%c", 0x1b, $headertail, 7;
+        $lastbug=$result{bug_id};
+        $last = $result{'bug_when'};
+        $addedcnt++;
+    }
+    my $ch = ReadKey -1;
+    my $n = 0;
+    while ($n < $interval*60 and ! defined ($ch)) {
+        $n++;
+        $ch = ReadKey -1;
+        sleep 1;
+    }
+    last if $ch eq "q";
+    if ($ch eq 'r') {
+        $headertail='R';
+        $addedcnt="";
+        printf "%c]0;bug ${lastbug}%s $addedcnt%c", 0x1b, $headertail, 7;
+    }
+    if ($ch eq 'u') {
+        $headertail='';
+        printf "%c]0;bug ${lastbug}%s $addedcnt%c", 0x1b, $headertail, 7;
+    }
+}
+print "\n";
+my $host=`uname -n`;
+chomp $host;
+my $pts=`/usr/bin/who am i`;
+chomp $pts;
+$pts =~ s/\s+/ /g;
+$pts =~ s/.*\///;
+$pts =~ s/ .*//;
+my $hdr="$host$pts";
+if ( -s "$ENV{HOME}/.titles/${host}-pts_S_$pts") {
+    $hdr = `cat "$ENV{HOME}/.titles/${host}-pts_S_$pts"`;
+    chomp $hdr;
+}
+printf "]0;$hdr";

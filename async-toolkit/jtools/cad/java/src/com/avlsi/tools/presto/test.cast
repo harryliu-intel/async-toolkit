@@ -1,0 +1,217 @@
+/*
+ * Copyright 2003 Fulcrum Microsystems.  All rights reserved.
+ * $Id$
+ */
+
+module test;
+
+/********** bug 1890 **********/
+
+// Computes the control for the filter and sram rw
+// Truth table:
+// INDEX  OVERFLOW  RWA_FILTER_CTRL  W_FILTER_CTRL
+//   0       0          1              1
+//   0       1          0              0
+//   1       0          1              -
+//   1       1          1              -
+// RWA_FILTER_CTRL is the control for filter on RW and A ports of SRAM
+// W_FILTER_CTRL is the control for filter on W port of SRAM
+define PRODUCER_SRAM_CTRL ()(e1of2 -INDEX;
+                             e1of2 -OVERFLOW;
+                             e1of2 +RWA_FILTER_CTRL;
+                             e1of2 +W_FILTER_CTRL)
+                             <: LEAF {
+  csp {
+    *[INDEX?index, OVERFLOW?overflow;
+      RWA_FILTER_CTRL!((index == 1) | (overflow == 0));
+      [ index == 0 -> W_FILTER_CTRL!(overflow == 0)
+      []index == 1 -> skip
+     ]]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of2 _(INDEX);
+        rsource_e1of2 _(OVERFLOW);
+        bitbucket_e1of2 _(RWA_FILTER_CTRL);
+        bitbucket_e1of2 _(W_FILTER_CTRL);
+      }
+      directives {
+        ntpc_spec(RWA_FILTER_CTRL.e)=14;
+      }
+    }
+  }
+}
+
+/********** bug 1909 **********/
+
+define BUG_1909 ()(e1of2 -L; e1of1 +R) <: LEAF {
+  csp {
+    boolean x;
+
+    *[L?x; [x -> R! [] else -> skip]]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of2 _(L);
+        bitbucket_e1of1 _(R);
+      }
+      directives {
+        ntpc_spec(L.e)=12;
+      }
+    }
+  }
+}
+
+/********** bug 1930 **********/
+
+define BUG_1930 ()(e1of2 -L; e1of3 +R) <: LEAF {
+  csp {
+    boolean x;
+
+    *[L?x; [x -> R!0 [] else -> R!2]]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of2 _(L);
+        bitbucket_e1of3 _(R);
+      }
+      directives {
+        ntpc_spec(R.e)=12;
+      }
+    }
+  }
+}
+
+/********** bug 1976 **********/
+
+define FOO()(e1of2 -L, +R) <: LEAF {
+  csp {
+    *[L?, R!0]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of2 _(L);
+        bitbucket_e1of2 _(R);
+      }
+      directives {
+        ntpc_spec(R.e)=10;
+      }
+    }
+  }
+}
+
+/********** bug 2037 **********/
+
+define JTAG_SHIFT_CELL_PRESTO ()(e1of2     -LS;
+                                 e1of3     -LC;
+                                 e1of2     -PL;
+                                 e1of2     -STATEIN;
+                                 e1of2     +RS;
+                                 e1of3     +RC;
+                                 e1of2     +PO;
+                                 e1of2     +STATEOUT) <: LEAF {
+  csp {
+    // Temporary variables
+    int val;
+    int cmd;
+    
+    // Constants
+    int SHIFT=0, PLOAD=1, POUT=2;
+ 
+    *[ STATEIN?val, LC?cmd, LS?val_ls, PL?val_pl; RC!cmd;
+       [ cmd==SHIFT -> RS!val; val=val_ls
+       []cmd==PLOAD -> val=val_pl
+       []cmd==POUT  -> PO!val
+       ];
+       STATEOUT!val
+     ]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of2 _(LS);
+        rsource_e1of3 _(LC);
+        rsource_e1of2 _(PL);
+        rsource_e1of2 _(STATEIN);
+        bitbucket_e1of2 _(RS);
+        bitbucket_e1of3 _(RC);
+        bitbucket_e1of2 _(PO);
+        bitbucket_e1of2 _(STATEOUT);
+      }
+      directives {
+        ntpc_spec(STATEOUT.e)=18;
+      }
+    }
+  }
+}
+
+/********** a couple of nice big cells **********/
+
+define MODIFY_VALID ()(e1of6 -LA; e1of2 -LV; e1of6 +RA; e1of2 +RV) <:LEAF {
+  csp {
+    int a;
+    boolean v;
+
+    *[LA?a, LV?v;
+      [  a == 2 -> RA!2, RV!v
+       []a == 4 & v -> RA!2, RV!v
+       []a == 0 & v -> RA!4, RV!v
+       [](a == 4 | a == 0) & ~v -> RA!0, RV!true
+       []a == 3 -> RA!3, RV!v
+       []a == 5 & ~v -> RA!2, RV!v
+       []a == 1 & ~v -> RA!5, RV!v
+       [](a == 5 | a == 1) & v -> RA!1, RV!false
+      ]
+     ]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of6 _(LA);
+        rsource_e1of2 _(LV);
+        bitbucket_e1of6 _(RA);
+        bitbucket_e1of2 _(RV);
+      }
+      directives {
+        ntpc_spec(RA.e)=18;
+      }
+    }
+  }
+}
+
+define ADP_IN_CTRL1 ()(e1of4 -L; e1of2 +R; e1of3 +G; e1of2 +B) <: LEAF {
+  csp {
+    int byteAddr;
+
+    *[L?byteAddr;
+      [  byteAddr == 0 -> R!0, G!0
+       []byteAddr == 1 -> R!0, G!2, B!0
+       []byteAddr == 2 -> R!1, G!1, B!1
+       []byteAddr == 3 -> R!1, G!1, B!1 ]
+     ]
+  }
+
+  env {
+    digital {
+      subcells {
+        rsource_e1of4 _(L);
+        bitbucket_e1of2 _(R);
+        bitbucket_e1of3 _(G);
+        bitbucket_e1of2 _(B);
+      }
+      directives {
+        ntpc_spec(R.e)=18;
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+#!/usr/intel/bin/perl -l
+# vim:et:sw=4:ts=4:
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use warnings;
+
+use IO::File;
+
+my $totvsz=0;
+my $totrss=0;
+
+my $start=time;
+my $maxtime=0;
+
+sub reset {
+    $totvsz = $totrss = 0;
+}
+
+sub trap {
+    print STDERR "VSZ=${totvsz}G RSS=${totrss}G at $maxtime";
+    $SIG{HUP}="trap";
+}
+
+$SIG{HUP}="trap";
+$SIG{USR1}="reset";
+
+# See proc(5) for a description of the information contained in
+# /proc/self/stat.
+my $fh = IO::File->new("/proc/self/stat");
+my @stat = split(/\s+/, <$fh>);
+$fh->close();
+while (1) {
+    open (P, "/bin/ps -s $stat[5] -o 'vsz rss' |");
+    <P>;
+    my $tvsz=0;
+    my $trss=0;
+    while (<P>) {
+        chomp;
+        my ($vsz,$rss)=split;
+        $tvsz += $vsz;
+        $trss += $rss;
+    }
+    close P;
+    my $time=time;
+    $tvsz = sprintf "%.3f", $tvsz/1024/1024;
+    $trss = sprintf "%.3f", $trss/1024/1024;
+    $maxtime=$time-$start
+        if $totvsz < $tvsz or $totrss < $trss;
+    $totvsz = $tvsz if $totvsz < $tvsz;
+    $totrss = $trss if $totrss < $trss;
+    sleep 1;
+}

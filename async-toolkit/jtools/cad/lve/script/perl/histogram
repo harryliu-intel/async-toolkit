@@ -1,0 +1,49 @@
+#!/usr/intel/bin/perl -w
+# Compute mean and standard deviation, produe data for plotting histogram.
+
+# options
+my $n=5;
+while (@ARGV) {
+    if ($ARGV[0] =~ /^--bins=(\S+)$/) { $n = $1; }
+    else { usage(); }
+    shift;
+}
+
+# parse data in snarf format, compute mean
+my @freq;
+my $fmin;
+my $fmax;
+my $num=0;
+my $mean=0;
+my $sigma=0;
+while (my $line = <STDIN>) {
+    if ($line =~ /(\d+)MHz$/ ) {
+        push @freq, $1;
+        if (!defined($fmin) || $1<$fmin) { $fmin=$1; }
+        if (!defined($fmax) || $1>$fmax) { $fmax=$1; }
+        $mean += $1;
+        $num++;
+    }
+}
+$mean /= $num;
+
+# bin the data in a histogram, plus compute standard deviation
+foreach my $f (@freq) {
+    my $bin = int($n * ($f-$fmin) / ($fmax-$fmin) * 0.999999); # round down into a bin
+    $bins[$bin]++;
+    $sigma += ($f-$mean)*($f-$mean);
+}
+$sigma = sqrt($sigma/($num-1.5)); # unbiased sample standard deviation (from Wikipedia)
+
+# print results
+printf STDERR "min=$fmin max=$fmax mean=%g sigma=%g\n", $mean, $sigma;
+for (my $i=0; $i<$n; $i++) {
+    my $f = ($i+0.5) / $n * ($fmax-$fmin) + $fmin; # middle of bin
+    if (!defined($bins[$i])) { $bins[$i]=0; }
+    print "$f $bins[$i]\n";
+}
+
+# usage banner
+sub usage {
+    die "USAGE: histogram [--bins=#] < in.snarf > output.dat\n";
+}

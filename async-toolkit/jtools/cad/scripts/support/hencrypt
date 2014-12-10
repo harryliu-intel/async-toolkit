@@ -1,0 +1,58 @@
+#!/bin/bash -f
+# AAG
+# $Id$
+# $DateTime$
+
+function usage() {
+    echo "Usage: hencrypt [-f] inputfile [outputfile]"
+    exit 1
+}
+
+source "/usr/local/flexlm/licenses/license.bash"
+encrypt="/home/local/common/synopsys/hspice-2004.09/hspice/linux/metaencrypt"
+lib=freelib
+force=
+for arg in "$@" ; do
+case $arg in
+    -f )
+    force=t
+    ;;
+    -* )
+    echo "Unknown $arg"
+    usage
+    ;;
+    * )
+    if [ -z $in ]; then
+        in=$arg
+    elif [ -z $out ]; then
+        out=$arg
+    else
+        echo "too many args"
+        usage
+    fi
+    ;;
+esac
+done
+
+if [ -z "$out" ]; then
+    out=${in/\.*/.inc}
+fi
+if [ "$out" = "$in" ]; then
+    echo "Cannot overwrite input"
+    usage
+fi
+if [ -f "$out" ]; then
+    if [ -z "$force" ]; then
+        echo "Use -f to overwrite $out"
+        usage
+    else
+        /bin/rm -f "$out"
+    fi
+fi
+if [ -f "$in" ]; then
+    $encrypt -t $lib -i "$in" -o "$out"
+else
+    echo "Input file $in does not exist"
+    usage
+fi
+exit 0

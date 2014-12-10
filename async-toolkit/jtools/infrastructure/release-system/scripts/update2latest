@@ -1,0 +1,105 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+my %lat=();
+my %chg=();
+
+my @files=();
+
+sub usage {
+    my ($msg)=@_;
+    print STDERR "$msg" if defined $msg;
+    print STDERR <<EU;
+Usage: update2latest [--files <list>] [packages]
+EU
+    exit 1;
+}
+
+GetOptions (
+    "files=s" => sub { @files=split(/,/,$_[1]);},
+    "help" => sub {usage },
+) or usage;
+
+my $isproteus=0;
+foreach my $file (@files) {
+    $file = $file.".txt"
+        if ( ! ( -e $file ) and ( -e "$file.txt") );
+    $isproteus = 1 if $file eq "proteus.txt";
+}
+
+my @pkg=("all", "fulcrum-tsmc28-pdk");
+
+@pkg=@ARGV if @ARGV;
+
+open (P, "listfmdb.pl latest |");
+while (<P>) {
+    chomp;
+    my ($pkg, $chg) = split;
+    if ($pkg =~ /:/) {
+        ($pkg)=split(/:/,$pkg);
+    }
+    if (! defined ($lat{$pkg})) {
+        $lat{$pkg}=$chg;
+    }
+    elsif ($lat{$pkg} < $chg) {
+        $lat{$pkg} = $chg;
+    }
+}
+my $cnt=0;
+my $pdk=0;
+foreach my $pkg (@pkg) {
+    if (defined ($lat{$pkg})) {
+        $chg{$pkg}=$lat{$pkg};
+        $cnt++;
+        $pdk++ if $pkg =~ /pdk$/;
+    }
+}
+die "No data found" if ! $cnt and ! $pdk;
+if (! @files) {
+    @files=("releasef64.txt");
+    push @files, "releasepdk.txt" if ($pdk);
+}
+elsif ($isproteus) {
+    push @files, ("releasef64.txt");
+    push @files, "releasepdk.txt" if ($pdk);
+}
+
+$|=1;
+system "p4 edit @files >/dev/null";
+my $totalchanges=0;
+foreach my $file (@files) {
+    open (P, "<$file");
+    my @lines=();
+    my $change=0;
+    while (<P>) {
+        chomp;
+        my ($pkg,$chg)=split;
+        if (defined ($chg{$pkg})) {
+            $change++ if ($_ ne "$pkg $chg{$pkg}");
+            push @lines, "$pkg $chg{$pkg}";
+        }
+        else {
+            push @lines, $_;
+        }
+    }
+    close P;
+    if ($change) {
+        $totalchanges++;
+        open (P, ">$file");
+        foreach my $line (@lines) {
+            print P "$line";
+        }
+        close P;
+        print STDERR "$file updated";
+    }
+    else {
+        system "p4 revert $file";
+    }
+}
+#print "p4 submit ..." if $totalchanges;
+#exec "P4EDITOR=vi p4 submit ..." if $totalchanges;

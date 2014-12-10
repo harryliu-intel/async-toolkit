@@ -1,0 +1,74 @@
+#!/bin/bash
+# $Id$
+qbname=qbwrapper
+qbdiag=/dev/null
+qrsh_flags=-cwd
+n=1
+pos=`expr $#`
+done=0
+while [ $n -le $pos -a $done = "0" ]; do
+    case "$1" in
+        -l )
+        qrsh_flags="$qrsh_flags $1"
+        shift
+        n=`expr $n + 1`
+        qrsh_flags="$qrsh_flags $1"
+        ;;
+        -hold_jid )
+        qrsh_flags="$qrsh_flags $1"
+        shift
+        n=`expr $n + 1`
+        qrsh_flags="$qrsh_flags $1"
+        ;;
+        -P )
+        qrsh_flags="$qrsh_flags $1"
+        shift
+        n=`expr $n + 1`
+        qrsh_flags="$qrsh_flags $1"
+        ;;
+        -p )
+        qrsh_flags="$qrsh_flags $1"
+        shift
+        n=`expr $n + 1`
+        qrsh_flags="$qrsh_flags $1"
+        ;;
+        -N )
+        shift
+        n=`expr $n + 1`
+        qbname=$1
+        ;;
+        -verify )
+        qrsh_flags="$qrsh_flags $1"
+        n=`expr $n + 1`
+        ;;
+        -cwd )
+        n=`expr $n + 1`
+        ;;
+        -- )
+        shift
+        done=1
+        ;;
+        -* )
+        echo "Invalid qsub flag '$1'" 1>&2
+        echo "Usage: qbwrapper [qsub flags] command..." 1>&2
+        exit 1
+        ;;
+        * )
+        done=1
+        break
+        ;;
+    esac
+    if [ $done = "0" ]; then
+    shift
+    n=`expr $n + 1`
+    fi
+done
+export QB_LOCAL=0
+export QB_RUN_NAME="$qbname"
+export QB_DIAG_FILE="$qbdiag"
+export QRSH_FLAGS="$qrsh_flags"
+if [ "$#" = 0 ]; then
+echo "Usage: qbwrapper [qsub flags] command..." 1>&2
+exit 1
+fi
+exec qb "$@"

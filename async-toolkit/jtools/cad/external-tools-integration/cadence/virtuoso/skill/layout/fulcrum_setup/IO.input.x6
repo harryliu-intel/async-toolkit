@@ -1,0 +1,1303 @@
+; ====================================================
+; DIE SIZE 12.2 x 11.85 (W x H) 
+; ====================================================
+
+
+
+; ====================================================
+; SOUTH SIDE 
+; ====================================================
+
+; SPI4(5) TX LVDS
+; ----------------------------------------------------
+
+
+LVDS	D	D1	nil
+LVDS	D	D1	nil
+LVDS	D	D5_0u	nil
+
+
+; clkout2
+; =======
+LVDS	S	OUT_GO	list( "PLL5_CLKOUT2" "GND" "PLL5_CLKOUT2.OE" "pad_gd25_5tx"  "padn_PLL5_CLKOUT2"    "padp_PLL5_CLKOUT2"    "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+
+LVDS	S	OUT_VC	list( "TX5_TDCLK"    "GND" "TX5_TDCLK.OE"    "pad_Vdd"     "padn_TX5_TDCLK"    "padp_TX5_TDCLK"    "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GC	list( "TX5_TCTL"     "GND" "TX5_TCTL.OE"     "pad_GND"     "padn_TX5_TCTL"     "padp_TX5_TCTL"     "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VOP	list( "TX5_TDAT[0]"  "GND" "TX5_TDAT[0].OE"  "pad_vd25op_5tx" "padn_TX5_TDAT[0]"  "padp_TX5_TDAT[0]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GO	list( "TX5_TDAT[1]"  "GND" "TX5_TDAT[1].OE"  "pad_gd25_5tx"  "padn_TX5_TDAT[1]"  "padp_TX5_TDAT[1]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VC	list( "TX5_TDAT[2]"  "GND" "TX5_TDAT[2].OE"  "pad_Vdd"     "padn_TX5_TDAT[2]"  "padp_TX5_TDAT[2]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GC	list( "TX5_TDAT[3]"  "GND" "TX5_TDAT[3].OE"  "pad_GND"     "padn_TX5_TDAT[3]"  "padp_TX5_TDAT[3]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VREF	list( "TX5_TDAT[4]" "GND" "TX5_TDAT[4].OE" "pad_vref_5tx" "padn_TX5_TDAT[4]" "padp_TX5_TDAT[4]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VOP	list( "TX5_TDAT[5]"  "GND" "TX5_TDAT[5].OE"  "pad_vd25op_5tx" "padn_TX5_TDAT[5]"  "padp_TX5_TDAT[5]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GO	list( "TX5_TDAT[6]"  "GND" "TX5_TDAT[6].OE"  "pad_gd25_5tx"  "padn_TX5_TDAT[6]"  "padp_TX5_TDAT[6]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VC	list( "TX5_TDAT[7]"  "GND" "TX5_TDAT[7].OE"  "pad_Vdd"     "padn_TX5_TDAT[7]"  "padp_TX5_TDAT[7]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GC	list( "TX5_TDAT[8]"  "GND" "TX5_TDAT[8].OE"  "pad_GND"     "padn_TX5_TDAT[8]"  "padp_TX5_TDAT[8]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VOP	list( "TX5_TDAT[9]"  "GND" "TX5_TDAT[9].OE"  "pad_vd25op_5tx" "padn_TX5_TDAT[9]"  "padp_TX5_TDAT[9]"  "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GO	list( "TX5_TDAT[10]" "GND" "TX5_TDAT[10].OE" "pad_gd25_5tx"  "padn_TX5_TDAT[10]" "padp_TX5_TDAT[10]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VC	list( "TX5_TDAT[11]" "GND" "TX5_TDAT[11].OE" "pad_Vdd"     "padn_TX5_TDAT[11]" "padp_TX5_TDAT[11]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GC	list( "TX5_TDAT[12]" "GND" "TX5_TDAT[12].OE" "pad_GND"     "padn_TX5_TDAT[12]" "padp_TX5_TDAT[12]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VOP	list( "TX5_TDAT[13]" "GND" "TX5_TDAT[13].OE" "pad_vd25op_5tx" "padn_TX5_TDAT[13]" "padp_TX5_TDAT[13]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_GO	list( "TX5_TDAT[14]" "GND" "TX5_TDAT[14].OE" "pad_gd25_5tx"  "padn_TX5_TDAT[14]" "padp_TX5_TDAT[14]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+LVDS	S	OUT_VC	list( "TX5_TDAT[15]" "GND" "TX5_TDAT[15].OE" "pad_Vdd"     "padn_TX5_TDAT[15]" "padp_TX5_TDAT[15]" "SGND" "DISABLE_STRAP5_n" "Vdd" "vd25o_5tx" "vd25p_5tx" "VGG" "vref_5tx" "gd25_5tx" )
+
+LVDS	D	D20_0u	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+; Power Grid Observation Pair (SPI-4 IP Edge)
+; ===========================================
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	AIO	list( "GND" "pad_OBS_SPI4_IP_VDD" "Vdd" "PAD_OBS_SPI4_IP_VDD_RIN" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	AIO	list( "GND" "pad_OBS_SPI4_IP_GND" "GND" "PAD_OBS_SPI4_IP_GND_RIN" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+
+
+; Power Grid Observation Pair (SPI-4 Async Edge)
+; ===========================================
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	AIO	list( "GND" "pad_OBS_SPI4_ASYNC_VDD" "Vdd" "PAD_OBS_SPI4_ASYNC_VDD_RIN" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	AIO	list( "GND" "pad_OBS_SPI4_ASYNC_GND" "GND" "PAD_OBS_SPI4_ASYNC_GND_RIN" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+; MISC DOMAIN -- TAP + TEST/SCAN + SERIAL TREE
+; ----------------------------------------------------
+; 9x LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 9x LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+
+; TAP
+; ===
+; 5x  Signals
+; 1x LVTTL	PRH	VOO	list( "GND" "pad_vd33o_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 1x LVTTL	PRH	VP	list( "GND" "pad_vd33p_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 1x LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; ---------------------------------------------------------------------------------------------------------------------
+; 8x TOTAL
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INnn8	list( "TCK" "GND" "pad_TCK" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "TDI" "GND" "pad_TDI" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "TMS" "GND" "pad_TMS" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "TRST_N" "GND" "pad_TRST_N" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "TDO.DI"  "TDO" "GND"  "oe_TDO"  "pad_TDO"  "SGND" "tn_TDO"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+
+; TEST/SCAN
+; =========
+; 12x Signals
+; 1x LVTTL	PRH	VOO	list( "GND" "pad_vd33o_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 3x LVTTL	PRH	VP	list( "GND" "pad_vd33p_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 4x LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; ---------------------------------------------------------------------------------------------------------------------
+; 20x TOTAL
+
+LVTTL	S	INpd8	list( "CHIP_RESET_N" "GND" "pad_CHIP_RESET_N" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "SCAN_IN0"     "GND" "pad_SCAN_IN0"     "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "SCAN_IN1"     "GND" "pad_SCAN_IN1"     "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "SCAN_IN2"     "GND" "pad_SCAN_IN2"     "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpu2	list( "SCAN_IN3"     "GND" "pad_SCAN_IN3"     "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "SCAN_OUT0.DI"  "SCAN_OUT0" "GND"  "oe_SCAN_OUT0"  "pad_SCAN_OUT0"  "SGND" "tn_SCAN_OUT0"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "SCAN_OUT1.DI"  "SCAN_OUT1" "GND"  "oe_SCAN_OUT1"  "pad_SCAN_OUT1"  "SGND" "tn_SCAN_OUT1"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "SCAN_OUT2.DI"  "SCAN_OUT2" "GND"  "oe_SCAN_OUT2"  "pad_SCAN_OUT2"  "SGND" "tn_SCAN_OUT2"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "SCAN_OUT3.DI"  "SCAN_OUT3" "GND"  "oe_SCAN_OUT3"  "pad_SCAN_OUT3"  "SGND" "tn_SCAN_OUT3"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpd2	list( "SCAN_ENABLE" "GND" "pad_SCAN_ENABLE" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpd2	list( "TEST_MODE"   "GND" "pad_TEST_MODE"   "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	D	D1	nil
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+; SELF OSC TEST
+; 5x  Signals (Outputs)
+;
+; SOSC_TEST_IO[0..4]
+; SOSC_TEST_PAD[0..4]
+; ---------------------------------------------------------------------------------------------------------------------
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT2nn2	list( "SOSC_TEST_IO[0].DI"  "SOSC_TEST_IO[0]" "GND"  "oe_SOSC_TEST_IO[0]"  "pad_SOSC_TEST_PAD[0]"  "SGND" "tn_SOSC_TEST_IO[0]"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT2nn2	list( "SOSC_TEST_IO[1].DI"  "SOSC_TEST_IO[1]" "GND"  "oe_SOSC_TEST_IO[1]"  "pad_SOSC_TEST_PAD[1]"  "SGND" "tn_SOSC_TEST_IO[1]"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT2nn2	list( "SOSC_TEST_IO[2].DI"  "SOSC_TEST_IO[2]" "GND"  "oe_SOSC_TEST_IO[2]"  "pad_SOSC_TEST_PAD[2]"  "SGND" "tn_SOSC_TEST_IO[2]"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT2nn2	list( "SOSC_TEST_IO[3].DI"  "SOSC_TEST_IO[3]" "GND"  "oe_SOSC_TEST_IO[3]"  "pad_SOSC_TEST_PAD[3]"  "SGND" "tn_SOSC_TEST_IO[3]"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT2nn2	list( "SOSC_TEST_IO[4].DI"  "SOSC_TEST_IO[4]" "GND"  "oe_SOSC_TEST_IO[4]"  "pad_SOSC_TEST_PAD[4]"  "SGND" "tn_SOSC_TEST_IO[4]"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+
+; Power Grid Observation Pair (ASOC Edge)
+; ===========================================
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	AIO	list( "GND" "pad_OBS_ASOC_VDD" "Vdd" "PAD_OBS_ASOC_VDD_RIN" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	AIO	list( "GND" "pad_OBS_ASOC_GND" "GND" "PAD_OBS_ASOC_GND_RIN" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+; SERIAL TREE
+; 9x  Signals
+; 1x LVTTL	PRH	VOO	list( "GND" "pad_vd33o_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 3x LVTTL	PRH	VP	list( "GND" "pad_vd33p_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; 3x LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; ---------------------------------------------------------------------------------------------------------------------
+; 16x TOTAL
+
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+; LVTTL	S	INpd2	list( "ASIIO_MODE" "GND" "pad_ASIIO_MODE" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpd2	list( "ASII0"      "GND" "pad_ASII0"      "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpd2	list( "ASII1"      "GND" "pad_ASII1"      "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INpd2	list( "ASII2"      "GND" "pad_ASII2"      "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "ASII_E.DI"  "ASII_E" "GND"  "oe_ASII_E"  "pad_ASII_E"  "SGND" "tn_ASII_E" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Misc"  "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	S	INOUT4nn2	list( "ASIO0.DI"   "ASIO0"  "GND"  "oe_ASIO0"   "pad_ASIO0"   "SGND" "tn_ASIO0"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "ASIO1.DI"   "ASIO1"  "GND"  "oe_ASIO1"   "pad_ASIO1"   "SGND" "tn_ASIO1"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	S	INOUT4nn2	list( "ASIO2.DI"   "ASIO2"  "GND"  "oe_ASIO2"   "pad_ASIO2"   "SGND" "tn_ASIO2"  "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	D	D1	nil
+
+LVTTL	S	INpd2	list( "ASIO_E"      "GND" "pad_ASIO_E"      "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Misc" "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+
+LVTTL	D	D17_0u	nil
+
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd"        "SGND" "Vdd" "vd33o_Misc" "vd33p_Misc" "VGG" "gd33_Misc" )
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+LVDS	D	D20_0u	nil
+
+; SPI4(0) TX LVDS
+; ----------------------------------------------------
+
+LVDS	S	OUT_VC	list( "TX0_TDAT[15]" "GND" "TX0_TDAT[15].OE" "pad_Vdd"     "padn_TX0_TDAT[15]" "padp_TX0_TDAT[15]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GO	list( "TX0_TDAT[14]" "GND" "TX0_TDAT[14].OE" "pad_gd25_0tx"  "padn_TX0_TDAT[14]" "padp_TX0_TDAT[14]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VOP	list( "TX0_TDAT[13]" "GND" "TX0_TDAT[13].OE" "pad_vd25op_0tx" "padn_TX0_TDAT[13]" "padp_TX0_TDAT[13]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GC	list( "TX0_TDAT[12]" "GND" "TX0_TDAT[12].OE" "pad_GND"     "padn_TX0_TDAT[12]" "padp_TX0_TDAT[12]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VC	list( "TX0_TDAT[11]" "GND" "TX0_TDAT[11].OE" "pad_Vdd"     "padn_TX0_TDAT[11]" "padp_TX0_TDAT[11]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GO	list( "TX0_TDAT[10]" "GND" "TX0_TDAT[10].OE" "pad_gd25_0tx"  "padn_TX0_TDAT[10]" "padp_TX0_TDAT[10]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VOP	list( "TX0_TDAT[9]"  "GND" "TX0_TDAT[9].OE"  "pad_vd25op_0tx" "padn_TX0_TDAT[9]"  "padp_TX0_TDAT[9]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GC	list( "TX0_TDAT[8]"  "GND" "TX0_TDAT[8].OE"  "pad_GND"     "padn_TX0_TDAT[8]"  "padp_TX0_TDAT[8]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VC	list( "TX0_TDAT[7]"  "GND" "TX0_TDAT[7].OE"  "pad_Vdd"     "padn_TX0_TDAT[7]"  "padp_TX0_TDAT[7]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GO	list( "TX0_TDAT[6]"  "GND" "TX0_TDAT[6].OE"  "pad_gd25_0tx"  "padn_TX0_TDAT[6]"  "padp_TX0_TDAT[6]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VOP	list( "TX0_TDAT[5]"  "GND" "TX0_TDAT[5].OE"  "pad_vd25op_0tx" "padn_TX0_TDAT[5]"  "padp_TX0_TDAT[5]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VREF	list( "TX0_TDAT[4]" "GND" "TX0_TDAT[4].OE" "pad_vref_0tx" "padn_TX0_TDAT[4]" "padp_TX0_TDAT[4]" "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GC	list( "TX0_TDAT[3]"  "GND" "TX0_TDAT[3].OE"  "pad_GND"     "padn_TX0_TDAT[3]"  "padp_TX0_TDAT[3]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VC	list( "TX0_TDAT[2]"  "GND" "TX0_TDAT[2].OE"  "pad_Vdd"     "padn_TX0_TDAT[2]"  "padp_TX0_TDAT[2]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GO	list( "TX0_TDAT[1]"  "GND" "TX0_TDAT[1].OE"  "pad_gd25_0tx"  "padn_TX0_TDAT[1]"  "padp_TX0_TDAT[1]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VOP	list( "TX0_TDAT[0]"  "GND" "TX0_TDAT[0].OE"  "pad_vd25op_0tx" "padn_TX0_TDAT[0]"  "padp_TX0_TDAT[0]"  "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_GC	list( "TX0_TDCLK"    "GND" "TX0_TDCLK.OE"    "pad_GND"     "padn_TX0_TDCLK"    "padp_TX0_TDCLK"    "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+LVDS	S	OUT_VC	list( "TX0_TCTL"     "GND" "TX0_TCTL.OE"     "pad_Vdd"     "padn_TX0_TCTL"     "padp_TX0_TCTL"     "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+
+
+; clkout2
+; =======
+LVDS	S	OUT_GO	list( "PLL0_CLKOUT2" "GND" "PLL0_CLKOUT2.OE" "pad_gd25_0tx"  "padn_PLL0_CLKOUT2"    "padp_PLL0_CLKOUT2"    "SGND" "DISABLE_STRAP0_n" "Vdd" "vd25o_0tx" "vd25p_0tx" "VGG" "vref_0tx" "gd25_0tx" )
+
+
+LVDS	D	D1	nil
+LVDS	D	D1	nil
+
+
+
+
+
+
+
+
+
+; ====================================================
+; EAST SIDE 
+; ====================================================
+
+LVTTL	D	D10_0u	nil
+
+
+; SPI4(0) TX LVTTL
+; ----------------------------------------------------
+
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+
+LVTTL	S	INpd2_2	list( "DISABLE_STRAP0" "GND" "pad_DISABLE_STRAP0" "Vdd" "DISABLE_STRAP0_n" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+LVTTL	S	INnn2	list( "TX0_TSTAT[1]" "GND" "pad_TX0_TSTAT[1]" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_0tx" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+LVTTL	S	INnn2	list( "TX0_TSTAT[0]" "GND" "pad_TX0_TSTAT[0]" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+LVTTL	S	INnn2	list( "TX0_TSCLK" "GND" "pad_TX0_TSCLK" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_0tx" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_0tx" "vd33p_0tx" "VGG" "gd33_0tx" )
+
+LVDS	D	D1	nil
+
+
+
+
+
+; SPI4(0) PLL
+; ----------------------------------------------------
+
+
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	S	INOUT4nn2	list( "PLL0_LOCK.DIN"  "PLL0_LOCK" "GND"  "oe_PLL0_LOCK"  "pad_PLL0_LOCK"  "SGND" "tn_PLL0_LOCK"  "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	S	INnn2	list( "PLL0_BYPASS_VCO" "GND" "pad_PLL0_BYPASS_VCO" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	PRH	VOP_2	list( "GND" "pad_vaa_0" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	PRH	VOP	list( "GND" "pad_vaa_0" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	S	INnn2	list( "PLL0_REFCLK" "GND" "pad_PLL0_REFCLK" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	S	INpd2	list( "PLL0_BYPASS_EN" "GND" "pad_PLL0_BYPASS_EN" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+LVTTL	PRL	GO_2	list( "GND" "pad_ag_0" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+;LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_0" "vaa_0" "VGG" "ag_0" )
+
+LVDS	D	D1	nil
+
+
+; SPI4(0) RX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_0rx" "SGND" "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	S	INOUT8nn2	list( "RX0_RSTAT[1].DIN"  "RX0_RSTAT[1]" "GND"  "oe_RX0_RSTAT[1]"  "pad_RX0_RSTAT[1]"  "SGND" "tn_RX0_RSTAT[1]"  "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	S	INOUT8nn2	list( "RX0_RSTAT[0].DIN"  "RX0_RSTAT[0]"  "GND" "oe_RX0_RSTAT[0]"  "pad_RX0_RSTAT[0]"  "SGND" "tn_RX0_RSTAT[0]"  "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_0rx" "SGND" "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	S	INOUT8nn2	list( "RX0_RSCLK.DIN"  "RX0_RSCLK"  "GND" "oe_RX0_RSCLK"  "pad_RX0_RSCLK"  "SGND" "tn_RX0_RSCLK"  "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_0rx" "vd33p_0rx" "VGG" "gd33_0rx" )
+
+
+
+; SPI4(0) RX LVDS
+; ----------------------------------------------------
+
+LVDS	S	IN	list( "RX0_RDAT[15]" "GND" "padn_RX0_RDAT[15]" "padp_RX0_RDAT[15]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[14]" "GND" "padn_RX0_RDAT[14]" "padp_RX0_RDAT[14]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_0rx" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[13]" "GND" "padn_RX0_RDAT[13]" "padp_RX0_RDAT[13]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[12]" "GND" "padn_RX0_RDAT[12]" "padp_RX0_RDAT[12]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[11]" "GND" "padn_RX0_RDAT[11]" "padp_RX0_RDAT[11]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[10]" "GND" "padn_RX0_RDAT[10]" "padp_RX0_RDAT[10]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_0rx" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[9]" "GND" "padn_RX0_RDAT[9]" "padp_RX0_RDAT[9]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[8]" "GND" "padn_RX0_RDAT[8]" "padp_RX0_RDAT[8]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDCLK" "GND" "padn_RX0_RDCLK" "padp_RX0_RDCLK" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RCTL" "GND" "padn_RX0_RCTL" "padp_RX0_RCTL" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_0rx" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[7]" "GND" "padn_RX0_RDAT[7]" "padp_RX0_RDAT[7]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[6]" "GND" "padn_RX0_RDAT[6]" "padp_RX0_RDAT[6]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[5]" "GND" "padn_RX0_RDAT[5]" "padp_RX0_RDAT[5]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[4]" "GND" "padn_RX0_RDAT[4]" "padp_RX0_RDAT[4]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_0rx" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[3]" "GND" "padn_RX0_RDAT[3]" "padp_RX0_RDAT[3]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[2]" "GND" "padn_RX0_RDAT[2]" "padp_RX0_RDAT[2]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[1]" "GND" "padn_RX0_RDAT[1]" "padp_RX0_RDAT[1]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	S	IN	list( "RX0_RDAT[0]" "GND" "padn_RX0_RDAT[0]" "padp_RX0_RDAT[0]" "DISABLE_STRAP0" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_0rx" "vd25p_0rx" "VGG" "vref_0rx" "gd25_0rx" )
+
+LVTTL	D	D9_6u	nil
+
+
+; SPI4(1) RX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+LVTTL	S	INOUT8nn2	list( "RX1_RSCLK.DIN"  "RX1_RSCLK"  "GND" "oe_RX1_RSCLK"  "pad_RX1_RSCLK"  "SGND" "tn_RX1_RSCLK"  "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_1rx" "SGND" "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+LVTTL	S	INOUT8nn2	list( "RX1_RSTAT[0].DIN"  "RX1_RSTAT[0]"  "GND" "oe_RX1_RSTAT[0]"  "pad_RX1_RSTAT[0]"  "SGND" "tn_RX1_RSTAT[0]"  "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+LVTTL	S	INOUT8nn2	list( "RX1_RSTAT[1].DIN"  "RX1_RSTAT[1]" "GND"  "oe_RX1_RSTAT[1]"  "pad_RX1_RSTAT[1]"  "SGND" "tn_RX1_RSTAT[1]"  "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_1rx" "SGND" "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_1rx" "vd33p_1rx" "VGG" "gd33_1rx" )
+
+; SPI4(1) RX LVDS
+; ----------------------------------------------------
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[0]" "GND" "padn_RX1_RDAT[0]" "padp_RX1_RDAT[0]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[1]" "GND" "padn_RX1_RDAT[1]" "padp_RX1_RDAT[1]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[2]" "GND" "padn_RX1_RDAT[2]" "padp_RX1_RDAT[2]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[3]" "GND" "padn_RX1_RDAT[3]" "padp_RX1_RDAT[3]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_1rx" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[4]" "GND" "padn_RX1_RDAT[4]" "padp_RX1_RDAT[4]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[5]" "GND" "padn_RX1_RDAT[5]" "padp_RX1_RDAT[5]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[6]" "GND" "padn_RX1_RDAT[6]" "padp_RX1_RDAT[6]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[7]" "GND" "padn_RX1_RDAT[7]" "padp_RX1_RDAT[7]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_1rx" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RCTL" "GND" "padn_RX1_RCTL" "padp_RX1_RCTL" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDCLK" "GND" "padn_RX1_RDCLK" "padp_RX1_RDCLK" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[8]" "GND" "padn_RX1_RDAT[8]" "padp_RX1_RDAT[8]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[9]" "GND" "padn_RX1_RDAT[9]" "padp_RX1_RDAT[9]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_1rx" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[10]" "GND" "padn_RX1_RDAT[10]" "padp_RX1_RDAT[10]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[11]" "GND" "padn_RX1_RDAT[11]" "padp_RX1_RDAT[11]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[12]" "GND" "padn_RX1_RDAT[12]" "padp_RX1_RDAT[12]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[13]" "GND" "padn_RX1_RDAT[13]" "padp_RX1_RDAT[13]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_1rx" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[14]" "GND" "padn_RX1_RDAT[14]" "padp_RX1_RDAT[14]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+LVDS	S	IN	list( "RX1_RDAT[15]" "GND" "padn_RX1_RDAT[15]" "padp_RX1_RDAT[15]" "DISABLE_STRAP1" "SGND" "Vdd" "vd25o_1rx" "vd25p_1rx" "VGG" "vref_1rx" "gd25_1rx" )
+
+
+; SPI4(1) PLL
+; ----------------------------------------------------
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+
+LVTTL	PRL	GO_2	list( "GND" "pad_ag_1" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	S	INpd2	list( "PLL1_BYPASS_EN" "GND" "pad_PLL1_BYPASS_EN" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	S	INnn2	list( "PLL1_REFCLK" "GND" "pad_PLL1_REFCLK" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	PRH	VOP	list( "GND" "pad_vaa_1" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	PRH	VOP_2	list( "GND" "pad_vaa_1" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	S	INnn2	list( "PLL1_BYPASS_VCO" "GND" "pad_PLL1_BYPASS_VCO" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	S	INOUT4nn2	list( "PLL1_LOCK.DIN"  "PLL1_LOCK" "GND"  "oe_PLL1_LOCK"  "pad_PLL1_LOCK"  "SGND" "tn_PLL1_LOCK"  "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+; Changed by Samson
+; =================
+; Swap out 35um x 4 = 140um
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_1" "vaa_1" "VGG" "ag_1" )
+
+; Swap in 20um + 120um = 140um
+; ============================
+LVDS	D	D20_0u	nil
+
+
+
+; clkout2
+; =======
+LVDS	S	OUT_GO	list( "PLL1_CLKOUT2" "GND" "PLL1_CLKOUT2.OE" "pad_gd25_1tx"  "padn_PLL1_CLKOUT2"    "padp_PLL1_CLKOUT2"    "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+
+
+
+; SPI4(1) TX LVDS
+; ----------------------------------------------------
+LVDS	S	OUT_VC	list( "TX1_TCTL"     "GND" "TX1_TCTL.OE"     "pad_Vdd"     "padn_TX1_TCTL"     "padp_TX1_TCTL"     "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GC	list( "TX1_TDCLK"    "GND" "TX1_TDCLK.OE"    "pad_GND"     "padn_TX1_TDCLK"    "padp_TX1_TDCLK"    "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VOP	list( "TX1_TDAT[0]"  "GND" "TX1_TDAT[0].OE"  "pad_vd25op_1tx" "padn_TX1_TDAT[0]"  "padp_TX1_TDAT[0]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GO	list( "TX1_TDAT[1]"  "GND" "TX1_TDAT[1].OE"  "pad_gd25_1tx"  "padn_TX1_TDAT[1]"  "padp_TX1_TDAT[1]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VC	list( "TX1_TDAT[2]"  "GND" "TX1_TDAT[2].OE"  "pad_Vdd"     "padn_TX1_TDAT[2]"  "padp_TX1_TDAT[2]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GC	list( "TX1_TDAT[3]"  "GND" "TX1_TDAT[3].OE"  "pad_GND"     "padn_TX1_TDAT[3]"  "padp_TX1_TDAT[3]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VREF	list( "TX1_TDAT[4]" "GND" "TX1_TDAT[4].OE" "pad_vref_1tx" "padn_TX1_TDAT[4]" "padp_TX1_TDAT[4]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VOP	list( "TX1_TDAT[5]"  "GND" "TX1_TDAT[5].OE"  "pad_vd25op_1tx" "padn_TX1_TDAT[5]"  "padp_TX1_TDAT[5]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GO	list( "TX1_TDAT[6]"  "GND" "TX1_TDAT[6].OE"  "pad_gd25_1tx"  "padn_TX1_TDAT[6]"  "padp_TX1_TDAT[6]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VC	list( "TX1_TDAT[7]"  "GND" "TX1_TDAT[7].OE"  "pad_Vdd"     "padn_TX1_TDAT[7]"  "padp_TX1_TDAT[7]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GC	list( "TX1_TDAT[8]"  "GND" "TX1_TDAT[8].OE"  "pad_GND"     "padn_TX1_TDAT[8]"  "padp_TX1_TDAT[8]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VOP	list( "TX1_TDAT[9]"  "GND" "TX1_TDAT[9].OE"  "pad_vd25op_1tx" "padn_TX1_TDAT[9]"  "padp_TX1_TDAT[9]"  "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GO	list( "TX1_TDAT[10]" "GND" "TX1_TDAT[10].OE" "pad_gd25_1tx"  "padn_TX1_TDAT[10]" "padp_TX1_TDAT[10]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VC	list( "TX1_TDAT[11]" "GND" "TX1_TDAT[11].OE" "pad_Vdd"     "padn_TX1_TDAT[11]" "padp_TX1_TDAT[11]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GC	list( "TX1_TDAT[12]" "GND" "TX1_TDAT[12].OE" "pad_GND"     "padn_TX1_TDAT[12]" "padp_TX1_TDAT[12]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VOP	list( "TX1_TDAT[13]" "GND" "TX1_TDAT[13].OE" "pad_vd25op_1tx" "padn_TX1_TDAT[13]" "padp_TX1_TDAT[13]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_GO	list( "TX1_TDAT[14]" "GND" "TX1_TDAT[14].OE" "pad_gd25_1tx"  "padn_TX1_TDAT[14]" "padp_TX1_TDAT[14]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+LVDS	S	OUT_VC	list( "TX1_TDAT[15]" "GND" "TX1_TDAT[15].OE" "pad_Vdd"     "padn_TX1_TDAT[15]" "padp_TX1_TDAT[15]" "SGND" "DISABLE_STRAP1_n" "Vdd" "vd25o_1tx" "vd25p_1tx" "VGG" "vref_1tx" "gd25_1tx" )
+
+
+; SPI4(1) TX LVTTL
+; ----------------------------------------------------
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	S	INnn2	list( "TX1_TSCLK" "GND" "pad_TX1_TSCLK" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	S	INnn2	list( "TX1_TSTAT[0]" "GND" "pad_TX1_TSTAT[0]" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_1tx" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	S	INnn2	list( "TX1_TSTAT[1]" "GND" "pad_TX1_TSTAT[1]" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	S	INpd2_2	list( "DISABLE_STRAP1" "GND" "pad_DISABLE_STRAP1" "Vdd" "DISABLE_STRAP1_n" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_1tx" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_1tx" "vd33p_1tx" "VGG" "gd33_1tx" )
+
+
+
+
+LVTTL	D	D9_6u	nil
+LVTTL	D	D9_6u	nil
+
+
+
+
+
+; SPI4(2) RX LVDS
+; ----------------------------------------------------
+
+LVDS	S	IN	list( "RX2_RDAT[0]" "GND" "padn_RX2_RDAT[0]" "padp_RX2_RDAT[0]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[1]" "GND" "padn_RX2_RDAT[1]" "padp_RX2_RDAT[1]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[2]" "GND" "padn_RX2_RDAT[2]" "padp_RX2_RDAT[2]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[3]" "GND" "padn_RX2_RDAT[3]" "padp_RX2_RDAT[3]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_2rx" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[4]" "GND" "padn_RX2_RDAT[4]" "padp_RX2_RDAT[4]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[5]" "GND" "padn_RX2_RDAT[5]" "padp_RX2_RDAT[5]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[6]" "GND" "padn_RX2_RDAT[6]" "padp_RX2_RDAT[6]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[7]" "GND" "padn_RX2_RDAT[7]" "padp_RX2_RDAT[7]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_2rx" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RCTL" "GND" "padn_RX2_RCTL" "padp_RX2_RCTL" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDCLK" "GND" "padn_RX2_RDCLK" "padp_RX2_RDCLK" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[8]" "GND" "padn_RX2_RDAT[8]" "padp_RX2_RDAT[8]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[9]" "GND" "padn_RX2_RDAT[9]" "padp_RX2_RDAT[9]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_2rx" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[10]" "GND" "padn_RX2_RDAT[10]" "padp_RX2_RDAT[10]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[11]" "GND" "padn_RX2_RDAT[11]" "padp_RX2_RDAT[11]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[12]" "GND" "padn_RX2_RDAT[12]" "padp_RX2_RDAT[12]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[13]" "GND" "padn_RX2_RDAT[13]" "padp_RX2_RDAT[13]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_2rx" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[14]" "GND" "padn_RX2_RDAT[14]" "padp_RX2_RDAT[14]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+LVDS	S	IN	list( "RX2_RDAT[15]" "GND" "padn_RX2_RDAT[15]" "padp_RX2_RDAT[15]" "DISABLE_STRAP2" "SGND" "Vdd" "vd25o_2rx" "vd25p_2rx" "VGG" "vref_2rx" "gd25_2rx" )
+
+
+
+; SPI4(2) RX LVTTL
+; ----------------------------------------------------
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+
+LVTTL	S	INOUT8nn2	list( "RX2_RSTAT[1].DIN"  "RX2_RSTAT[1]" "GND"  "oe_RX2_RSTAT[1]"  "pad_RX2_RSTAT[1]"  "SGND" "tn_RX2_RSTAT[1]"  "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+LVTTL	S	INOUT8nn2	list( "RX2_RSTAT[0].DIN"  "RX2_RSTAT[0]"  "GND" "oe_RX2_RSTAT[0]"  "pad_RX2_RSTAT[0]"  "SGND" "tn_RX2_RSTAT[0]"  "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_2rx" "SGND" "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+LVTTL	S	INOUT8nn2	list( "RX2_RSCLK.DIN"  "RX2_RSCLK"  "GND" "oe_RX2_RSCLK"  "pad_RX2_RSCLK"  "SGND" "tn_RX2_RSCLK"  "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_2rx" "SGND" "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_2rx" "vd33p_2rx" "VGG" "gd33_2rx" )
+
+LVDS	D	D1	nil
+
+
+
+; SPI4(2) PLL
+; ----------------------------------------------------
+
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+
+LVTTL	S	INOUT4nn2	list( "PLL2_LOCK.DIN"  "PLL2_LOCK" "GND"  "oe_PLL2_LOCK"  "pad_PLL2_LOCK"  "SGND" "tn_PLL2_LOCK"  "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+LVTTL	S	INnn2	list( "PLL2_BYPASS_VCO" "GND" "pad_PLL2_BYPASS_VCO" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+LVTTL	PRH	VOP_2	list( "GND" "pad_vaa_2" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+LVTTL	PRH	VOP	list( "GND" "pad_vaa_2" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+LVTTL	S	INnn2	list( "PLL2_REFCLK" "GND" "pad_PLL2_REFCLK" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+LVTTL	S	INpd2	list( "PLL2_BYPASS_EN" "GND" "pad_PLL2_BYPASS_EN" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+LVTTL	PRL	GO_2	list( "GND" "pad_ag_2" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+;LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_2" "vaa_2" "VGG" "ag_2" )
+
+LVDS	D	D1	nil
+
+
+
+; SPI4(2) TX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_2tx" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	S	INpd2_2	list( "DISABLE_STRAP2" "GND" "pad_DISABLE_STRAP2" "Vdd" "DISABLE_STRAP2_n" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	S	INnn2	list( "TX2_TSTAT[1]" "GND" "pad_TX2_TSTAT[1]" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_2tx" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	S	INnn2	list( "TX2_TSTAT[0]" "GND" "pad_TX2_TSTAT[0]" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	S	INnn2	list( "TX2_TSCLK" "GND" "pad_TX2_TSCLK" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_2tx" "vd33p_2tx" "VGG" "gd33_2tx" )
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+; ====================================================
+; NORTH SIDE 
+; ====================================================
+
+; SPI4(2) TX LVDS
+; ----------------------------------------------------
+
+LVDS	D	D1	nil
+LVDS	D	D1	nil
+LVDS	D	D13_0u	nil
+
+
+; clkout2
+; =======
+LVDS	S	OUT_GO	list( "PLL2_CLKOUT2" "GND" "PLL2_CLKOUT2.OE" "pad_gd25_2tx"  "padn_PLL2_CLKOUT2"    "padp_PLL2_CLKOUT2"    "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+
+
+LVDS	S	OUT_VC	list( "TX2_TDCLK"    "GND" "TX2_TDCLK.OE"    "pad_Vdd"     "padn_TX2_TDCLK"    "padp_TX2_TDCLK"    "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GC	list( "TX2_TCTL"     "GND" "TX2_TCTL.OE"     "pad_GND"     "padn_TX2_TCTL"     "padp_TX2_TCTL"     "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VOP	list( "TX2_TDAT[0]"  "GND" "TX2_TDAT[0].OE"  "pad_vd25op_2tx" "padn_TX2_TDAT[0]"  "padp_TX2_TDAT[0]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GO	list( "TX2_TDAT[1]"  "GND" "TX2_TDAT[1].OE"  "pad_gd25_2tx"  "padn_TX2_TDAT[1]"  "padp_TX2_TDAT[1]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VC	list( "TX2_TDAT[2]"  "GND" "TX2_TDAT[2].OE"  "pad_Vdd"     "padn_TX2_TDAT[2]"  "padp_TX2_TDAT[2]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GC	list( "TX2_TDAT[3]"  "GND" "TX2_TDAT[3].OE"  "pad_GND"     "padn_TX2_TDAT[3]"  "padp_TX2_TDAT[3]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VREF	list( "TX2_TDAT[4]" "GND" "TX2_TDAT[4].OE" "pad_vref_2tx" "padn_TX2_TDAT[4]" "padp_TX2_TDAT[4]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VOP	list( "TX2_TDAT[5]"  "GND" "TX2_TDAT[5].OE"  "pad_vd25op_2tx" "padn_TX2_TDAT[5]"  "padp_TX2_TDAT[5]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GO	list( "TX2_TDAT[6]"  "GND" "TX2_TDAT[6].OE"  "pad_gd25_2tx"  "padn_TX2_TDAT[6]"  "padp_TX2_TDAT[6]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VC	list( "TX2_TDAT[7]"  "GND" "TX2_TDAT[7].OE"  "pad_Vdd"     "padn_TX2_TDAT[7]"  "padp_TX2_TDAT[7]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GC	list( "TX2_TDAT[8]"  "GND" "TX2_TDAT[8].OE"  "pad_GND"     "padn_TX2_TDAT[8]"  "padp_TX2_TDAT[8]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VOP	list( "TX2_TDAT[9]"  "GND" "TX2_TDAT[9].OE"  "pad_vd25op_2tx" "padn_TX2_TDAT[9]"  "padp_TX2_TDAT[9]"  "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GO	list( "TX2_TDAT[10]" "GND" "TX2_TDAT[10].OE" "pad_gd25_2tx"  "padn_TX2_TDAT[10]" "padp_TX2_TDAT[10]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VC	list( "TX2_TDAT[11]" "GND" "TX2_TDAT[11].OE" "pad_Vdd"     "padn_TX2_TDAT[11]" "padp_TX2_TDAT[11]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GC	list( "TX2_TDAT[12]" "GND" "TX2_TDAT[12].OE" "pad_GND"     "padn_TX2_TDAT[12]" "padp_TX2_TDAT[12]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VOP	list( "TX2_TDAT[13]" "GND" "TX2_TDAT[13].OE" "pad_vd25op_2tx" "padn_TX2_TDAT[13]" "padp_TX2_TDAT[13]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_GO	list( "TX2_TDAT[14]" "GND" "TX2_TDAT[14].OE" "pad_gd25_2tx"  "padn_TX2_TDAT[14]" "padp_TX2_TDAT[14]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+LVDS	S	OUT_VC	list( "TX2_TDAT[15]" "GND" "TX2_TDAT[15].OE" "pad_Vdd"     "padn_TX2_TDAT[15]" "padp_TX2_TDAT[15]" "SGND" "DISABLE_STRAP2_n" "Vdd" "vd25o_2tx" "vd25p_2tx" "VGG" "vref_2tx" "gd25_2tx" )
+
+LVDS	D	D20_0u	nil
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D0_6u	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+; X8BUS Interface
+; ----------------------------------------------------
+;11x LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+;5x  LVTTL	PRH	VOO	list( "GND" "pad_vd33o_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+;7x  LVTTL	PRH	VP	list( "GND" "pad_vd33p_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "CLK_X8BUSIF"     "GND" "pad_CLK_X8BUSIF"     "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INpu2	list( "BUSIF_RESET_N"   "GND" "pad_BUSIF_RESET_N"   "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[1]"         "GND" "pad_ADDR[1]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[2]"         "GND" "pad_ADDR[2]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[3]"         "GND" "pad_ADDR[3]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[4]"         "GND" "pad_ADDR[4]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[5]"         "GND" "pad_ADDR[5]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[6]"         "GND" "pad_ADDR[6]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[7]"         "GND" "pad_ADDR[7]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[8]"         "GND" "pad_ADDR[8]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[9]"         "GND" "pad_ADDR[9]"         "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[10]"        "GND" "pad_ADDR[10]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[11]"        "GND" "pad_ADDR[11]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[12]"        "GND" "pad_ADDR[12]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[13]"        "GND" "pad_ADDR[13]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[14]"        "GND" "pad_ADDR[14]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[15]"        "GND" "pad_ADDR[15]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[16]"        "GND" "pad_ADDR[16]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "ADDR[17]"        "GND" "pad_ADDR[17]"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+
+LVTTL	S	INOUT4nn2	list( "DATA_IN[0]"   "DATA_OUT[0]"  "GND"  "DATA_OE[0]"   "pad_DATA[0]"   "SGND" "tn_DATA[0]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[1]"   "DATA_OUT[1]"  "GND"  "DATA_OE[1]"   "pad_DATA[1]"   "SGND" "tn_DATA[1]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[2]"   "DATA_OUT[2]"  "GND"  "DATA_OE[2]"   "pad_DATA[2]"   "SGND" "tn_DATA[2]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[3]"   "DATA_OUT[3]"  "GND"  "DATA_OE[3]"   "pad_DATA[3]"   "SGND" "tn_DATA[3]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[4]"   "DATA_OUT[4]"  "GND"  "DATA_OE[4]"   "pad_DATA[4]"   "SGND" "tn_DATA[4]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[5]"   "DATA_OUT[5]"  "GND"  "DATA_OE[5]"   "pad_DATA[5]"   "SGND" "tn_DATA[5]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[6]"   "DATA_OUT[6]"  "GND"  "DATA_OE[6]"   "pad_DATA[6]"   "SGND" "tn_DATA[6]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[7]"   "DATA_OUT[7]"  "GND"  "DATA_OE[7]"   "pad_DATA[7]"   "SGND" "tn_DATA[7]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[8]"   "DATA_OUT[8]"  "GND"  "DATA_OE[8]"   "pad_DATA[8]"   "SGND" "tn_DATA[8]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[9]"   "DATA_OUT[9]"  "GND"  "DATA_OE[9]"   "pad_DATA[9]"   "SGND" "tn_DATA[9]"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[10]"  "DATA_OUT[10]" "GND"  "DATA_OE[10]"  "pad_DATA[10]"  "SGND" "tn_DATA[10]"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[11]"  "DATA_OUT[11]" "GND"  "DATA_OE[11]"  "pad_DATA[11]"  "SGND" "tn_DATA[11]"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[12]"  "DATA_OUT[12]" "GND"  "DATA_OE[12]"  "pad_DATA[12]"  "SGND" "tn_DATA[12]"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[13]"  "DATA_OUT[13]" "GND"  "DATA_OE[13]"  "pad_DATA[13]"  "SGND" "tn_DATA[13]"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[14]"  "DATA_OUT[14]" "GND"  "DATA_OE[14]"  "pad_DATA[14]"  "SGND" "tn_DATA[14]"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DATA_IN[15]"  "DATA_OUT[15]" "GND"  "DATA_OE[15]"  "pad_DATA[15]"  "SGND" "tn_DATA[15]"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+
+LVTTL	S	INnn2	list( "RW_N_INV"        "GND" "pad_RW_N_INV"        "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "RW_N"            "GND" "pad_RW_N"            "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "AS_N"            "GND" "pad_AS_N"            "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "DS_N"            "GND" "pad_DS_N"            "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "CS_N"            "GND" "pad_CS_N"            "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "DTACK_N.DIN"  "DTACK_N" "GND"  "DTACK_OE"    "pad_DTACK_N"  "SGND" "tn_DTACK_N"  "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "DTACK_INV"       "GND" "pad_DTACK_INV"       "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_Bus" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "IGNORE_DS_N"     "GND" "pad_IGNORE_DS_N"     "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INnn2	list( "SYNC_MODE"       "GND" "pad_SYNC_MODE"       "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	S	INOUT4nn2	list( "INTR_N.DIN"   "GND"  "GND"  "oe_INTR_N"   "pad_INTR_N"   "SGND" "tn_INTR_N"   "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+
+
+LVTTL	D	D1	nil
+LVTTL	D	D16_4u	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_Bus" "vd33p_Bus" "VGG" "gd33_Bus" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+
+
+
+LVDS	D	D20_0u	nil
+
+; SPI4(3) TX LVDS
+; ----------------------------------------------------
+
+LVDS	S	OUT_VC	list( "TX3_TDAT[15]" "GND" "TX3_TDAT[15].OE" "pad_Vdd"     "padn_TX3_TDAT[15]" "padp_TX3_TDAT[15]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GO	list( "TX3_TDAT[14]" "GND" "TX3_TDAT[14].OE" "pad_gd25_3tx"  "padn_TX3_TDAT[14]" "padp_TX3_TDAT[14]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VOP	list( "TX3_TDAT[13]" "GND" "TX3_TDAT[13].OE" "pad_vd25op_3tx" "padn_TX3_TDAT[13]" "padp_TX3_TDAT[13]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GC	list( "TX3_TDAT[12]" "GND" "TX3_TDAT[12].OE" "pad_GND"     "padn_TX3_TDAT[12]" "padp_TX3_TDAT[12]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VC	list( "TX3_TDAT[11]" "GND" "TX3_TDAT[11].OE" "pad_Vdd"     "padn_TX3_TDAT[11]" "padp_TX3_TDAT[11]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GO	list( "TX3_TDAT[10]" "GND" "TX3_TDAT[10].OE" "pad_gd25_3tx"  "padn_TX3_TDAT[10]" "padp_TX3_TDAT[10]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VOP	list( "TX3_TDAT[9]"  "GND" "TX3_TDAT[9].OE"  "pad_vd25op_3tx" "padn_TX3_TDAT[9]"  "padp_TX3_TDAT[9]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GC	list( "TX3_TDAT[8]"  "GND" "TX3_TDAT[8].OE"  "pad_GND"     "padn_TX3_TDAT[8]"  "padp_TX3_TDAT[8]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VC	list( "TX3_TDAT[7]"  "GND" "TX3_TDAT[7].OE"  "pad_Vdd"     "padn_TX3_TDAT[7]"  "padp_TX3_TDAT[7]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GO	list( "TX3_TDAT[6]"  "GND" "TX3_TDAT[6].OE"  "pad_gd25_3tx"  "padn_TX3_TDAT[6]"  "padp_TX3_TDAT[6]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VOP	list( "TX3_TDAT[5]"  "GND" "TX3_TDAT[5].OE"  "pad_vd25op_3tx" "padn_TX3_TDAT[5]"  "padp_TX3_TDAT[5]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VREF	list( "TX3_TDAT[4]" "GND" "TX3_TDAT[4].OE" "pad_vref_3tx" "padn_TX3_TDAT[4]" "padp_TX3_TDAT[4]" "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GC	list( "TX3_TDAT[3]"  "GND" "TX3_TDAT[3].OE"  "pad_GND"     "padn_TX3_TDAT[3]"  "padp_TX3_TDAT[3]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VC	list( "TX3_TDAT[2]"  "GND" "TX3_TDAT[2].OE"  "pad_Vdd"     "padn_TX3_TDAT[2]"  "padp_TX3_TDAT[2]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GO	list( "TX3_TDAT[1]"  "GND" "TX3_TDAT[1].OE"  "pad_gd25_3tx"  "padn_TX3_TDAT[1]"  "padp_TX3_TDAT[1]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VOP	list( "TX3_TDAT[0]"  "GND" "TX3_TDAT[0].OE"  "pad_vd25op_3tx" "padn_TX3_TDAT[0]"  "padp_TX3_TDAT[0]"  "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_GC	list( "TX3_TDCLK"    "GND" "TX3_TDCLK.OE"    "pad_GND"     "padn_TX3_TDCLK"    "padp_TX3_TDCLK"    "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+LVDS	S	OUT_VC	list( "TX3_TCTL"     "GND" "TX3_TCTL.OE"     "pad_Vdd"     "padn_TX3_TCTL"     "padp_TX3_TCTL"     "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+
+
+; clkout2
+; =======
+LVDS	S	OUT_GO	list( "PLL3_CLKOUT2" "GND" "PLL3_CLKOUT2.OE" "pad_gd25_3tx"  "padn_PLL3_CLKOUT2"    "padp_PLL3_CLKOUT2"    "SGND" "DISABLE_STRAP3_n" "Vdd" "vd25o_3tx" "vd25p_3tx" "VGG" "vref_3tx" "gd25_3tx" )
+
+
+LVDS	D	D1	nil
+LVDS	D	D1	nil
+
+
+
+
+; ====================================================
+; WEST SIDE 
+; ====================================================
+
+LVTTL	D	D12_0u	nil
+LVTTL	D	D9_6u	nil
+LVTTL	D	D9_6u	nil
+
+
+; SPI4(3) TX LVTTL
+; ----------------------------------------------------
+
+LVTTL	D	D1	nil
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+
+LVTTL	S	INpd2_2	list( "DISABLE_STRAP3" "GND" "pad_DISABLE_STRAP3" "Vdd" "DISABLE_STRAP3_n" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+LVTTL	S	INnn2	list( "TX3_TSTAT[1]" "GND" "pad_TX3_TSTAT[1]" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_3tx" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+LVTTL	S	INnn2	list( "TX3_TSTAT[0]" "GND" "pad_TX3_TSTAT[0]" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+LVTTL	S	INnn2	list( "TX3_TSCLK" "GND" "pad_TX3_TSCLK" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_3tx" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_3tx" "vd33p_3tx" "VGG" "gd33_3tx" )
+
+LVDS	D	D1	nil
+
+
+
+
+
+; SPI4(3) PLL
+; ----------------------------------------------------
+
+
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	S	INOUT4nn2	list( "PLL3_LOCK.DIN"  "PLL3_LOCK" "GND"  "oe_PLL3_LOCK"  "pad_PLL3_LOCK"  "SGND" "tn_PLL3_LOCK"  "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	S	INnn2	list( "PLL3_BYPASS_VCO" "GND" "pad_PLL3_BYPASS_VCO" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	PRH	VOP_2	list( "GND" "pad_vaa_3" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	PRH	VOP	list( "GND" "pad_vaa_3" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	S	INnn2	list( "PLL3_REFCLK" "GND" "pad_PLL3_REFCLK" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	S	INpd2	list( "PLL3_BYPASS_EN" "GND" "pad_PLL3_BYPASS_EN" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+LVTTL	PRL	GO_2	list( "GND" "pad_ag_3" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+;LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_3" "vaa_3" "VGG" "ag_3" )
+
+LVDS	D	D1	nil
+
+
+; SPI4(3) RX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_3rx" "SGND" "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	S	INOUT8nn2	list( "RX3_RSTAT[1].DIN"  "RX3_RSTAT[1]" "GND"  "oe_RX3_RSTAT[1]"  "pad_RX3_RSTAT[1]"  "SGND" "tn_RX3_RSTAT[1]"  "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	S	INOUT8nn2	list( "RX3_RSTAT[0].DIN"  "RX3_RSTAT[0]"  "GND" "oe_RX3_RSTAT[0]"  "pad_RX3_RSTAT[0]"  "SGND" "tn_RX3_RSTAT[0]"  "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_3rx" "SGND" "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	S	INOUT8nn2	list( "RX3_RSCLK.DIN"  "RX3_RSCLK"  "GND" "oe_RX3_RSCLK"  "pad_RX3_RSCLK"  "SGND" "tn_RX3_RSCLK"  "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_3rx" "vd33p_3rx" "VGG" "gd33_3rx" )
+
+
+
+; SPI4(3) RX LVDS
+; ----------------------------------------------------
+
+LVDS	S	IN	list( "RX3_RDAT[15]" "GND" "padn_RX3_RDAT[15]" "padp_RX3_RDAT[15]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[14]" "GND" "padn_RX3_RDAT[14]" "padp_RX3_RDAT[14]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_3rx" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[13]" "GND" "padn_RX3_RDAT[13]" "padp_RX3_RDAT[13]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[12]" "GND" "padn_RX3_RDAT[12]" "padp_RX3_RDAT[12]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[11]" "GND" "padn_RX3_RDAT[11]" "padp_RX3_RDAT[11]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[10]" "GND" "padn_RX3_RDAT[10]" "padp_RX3_RDAT[10]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_3rx" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[9]" "GND" "padn_RX3_RDAT[9]" "padp_RX3_RDAT[9]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[8]" "GND" "padn_RX3_RDAT[8]" "padp_RX3_RDAT[8]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDCLK" "GND" "padn_RX3_RDCLK" "padp_RX3_RDCLK" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RCTL" "GND" "padn_RX3_RCTL" "padp_RX3_RCTL" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_3rx" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[7]" "GND" "padn_RX3_RDAT[7]" "padp_RX3_RDAT[7]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[6]" "GND" "padn_RX3_RDAT[6]" "padp_RX3_RDAT[6]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[5]" "GND" "padn_RX3_RDAT[5]" "padp_RX3_RDAT[5]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[4]" "GND" "padn_RX3_RDAT[4]" "padp_RX3_RDAT[4]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_3rx" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[3]" "GND" "padn_RX3_RDAT[3]" "padp_RX3_RDAT[3]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[2]" "GND" "padn_RX3_RDAT[2]" "padp_RX3_RDAT[2]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[1]" "GND" "padn_RX3_RDAT[1]" "padp_RX3_RDAT[1]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	S	IN	list( "RX3_RDAT[0]" "GND" "padn_RX3_RDAT[0]" "padp_RX3_RDAT[0]" "DISABLE_STRAP3" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_3rx" "vd25p_3rx" "VGG" "vref_3rx" "gd25_3rx" )
+
+LVTTL	D	D9_6u	nil
+LVTTL	D	D9_6u	nil
+
+
+
+; SPI4(4) TX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_4tx" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	S	INpd2_2	list( "DISABLE_STRAP4" "GND" "pad_DISABLE_STRAP4" "Vdd" "DISABLE_STRAP4_n" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	S	INnn2	list( "TX4_TSTAT[1]" "GND" "pad_TX4_TSTAT[1]" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_4tx" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	S	INnn2	list( "TX4_TSTAT[0]" "GND" "pad_TX4_TSTAT[0]" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	S	INnn2	list( "TX4_TSCLK" "GND" "pad_TX4_TSCLK" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_4tx" "vd33p_4tx" "VGG" "gd33_4tx" )
+
+
+; SPI4(4) TX LVDS
+; ----------------------------------------------------
+
+LVDS	S	OUT_VC	list( "TX4_TDAT[15]" "GND" "TX4_TDAT[15].OE" "pad_Vdd"     "padn_TX4_TDAT[15]" "padp_TX4_TDAT[15]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GO	list( "TX4_TDAT[14]" "GND" "TX4_TDAT[14].OE" "pad_gd25_4tx"  "padn_TX4_TDAT[14]" "padp_TX4_TDAT[14]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VOP	list( "TX4_TDAT[13]" "GND" "TX4_TDAT[13].OE" "pad_vd25op_4tx" "padn_TX4_TDAT[13]" "padp_TX4_TDAT[13]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GC	list( "TX4_TDAT[12]" "GND" "TX4_TDAT[12].OE" "pad_GND"     "padn_TX4_TDAT[12]" "padp_TX4_TDAT[12]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VC	list( "TX4_TDAT[11]" "GND" "TX4_TDAT[11].OE" "pad_Vdd"     "padn_TX4_TDAT[11]" "padp_TX4_TDAT[11]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GO	list( "TX4_TDAT[10]" "GND" "TX4_TDAT[10].OE" "pad_gd25_4tx"  "padn_TX4_TDAT[10]" "padp_TX4_TDAT[10]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VOP	list( "TX4_TDAT[9]"  "GND" "TX4_TDAT[9].OE"  "pad_vd25op_4tx" "padn_TX4_TDAT[9]"  "padp_TX4_TDAT[9]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GC	list( "TX4_TDAT[8]"  "GND" "TX4_TDAT[8].OE"  "pad_GND"     "padn_TX4_TDAT[8]"  "padp_TX4_TDAT[8]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VC	list( "TX4_TDAT[7]"  "GND" "TX4_TDAT[7].OE"  "pad_Vdd"     "padn_TX4_TDAT[7]"  "padp_TX4_TDAT[7]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GO	list( "TX4_TDAT[6]"  "GND" "TX4_TDAT[6].OE"  "pad_gd25_4tx"  "padn_TX4_TDAT[6]"  "padp_TX4_TDAT[6]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VOP	list( "TX4_TDAT[5]"  "GND" "TX4_TDAT[5].OE"  "pad_vd25op_4tx" "padn_TX4_TDAT[5]"  "padp_TX4_TDAT[5]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VREF	list( "TX4_TDAT[4]" "GND" "TX4_TDAT[4].OE" "pad_vref_4tx" "padn_TX4_TDAT[4]" "padp_TX4_TDAT[4]" "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GC	list( "TX4_TDAT[3]"  "GND" "TX4_TDAT[3].OE"  "pad_GND"     "padn_TX4_TDAT[3]"  "padp_TX4_TDAT[3]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VC	list( "TX4_TDAT[2]"  "GND" "TX4_TDAT[2].OE"  "pad_Vdd"     "padn_TX4_TDAT[2]"  "padp_TX4_TDAT[2]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GO	list( "TX4_TDAT[1]"  "GND" "TX4_TDAT[1].OE"  "pad_gd25_4tx"  "padn_TX4_TDAT[1]"  "padp_TX4_TDAT[1]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VOP	list( "TX4_TDAT[0]"  "GND" "TX4_TDAT[0].OE"  "pad_vd25op_4tx" "padn_TX4_TDAT[0]"  "padp_TX4_TDAT[0]"  "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_GC	list( "TX4_TDCLK"    "GND" "TX4_TDCLK.OE"    "pad_GND"     "padn_TX4_TDCLK"    "padp_TX4_TDCLK"    "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	S	OUT_VC	list( "TX4_TCTL"     "GND" "TX4_TCTL.OE"     "pad_Vdd"     "padn_TX4_TCTL"     "padp_TX4_TCTL"     "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+
+
+; clkout2
+; =======
+LVDS	S	OUT_GO	list( "PLL4_CLKOUT2" "GND" "PLL4_CLKOUT2.OE" "pad_gd25_4tx"  "padn_PLL4_CLKOUT2"    "padp_PLL4_CLKOUT2"    "SGND" "DISABLE_STRAP4_n" "Vdd" "vd25o_4tx" "vd25p_4tx" "VGG" "vref_4tx" "gd25_4tx" )
+LVDS	D	D20_0u	nil
+
+
+; SPI4(4) PLL
+; ----------------------------------------------------
+
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	D	D1	nil
+LVTTL	D	D1	nil
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+
+LVTTL	S	INOUT4nn2	list( "PLL4_LOCK.DIN"  "PLL4_LOCK" "GND"  "oe_PLL4_LOCK"  "pad_PLL4_LOCK"  "SGND" "tn_PLL4_LOCK"  "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	S	INnn2	list( "PLL4_BYPASS_VCO" "GND" "pad_PLL4_BYPASS_VCO" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	PRH	VOP_2	list( "GND" "pad_vaa_4" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	PRH	VOP	list( "GND" "pad_vaa_4" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	S	INnn2	list( "PLL4_REFCLK" "GND" "pad_PLL4_REFCLK" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	S	INpd2	list( "PLL4_BYPASS_EN" "GND" "pad_PLL4_BYPASS_EN" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	PRL	GO_2	list( "GND" "pad_ag_4" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_4" "vaa_4" "VGG" "ag_4" )
+
+
+; SPI4(4) RX LVDS
+; ----------------------------------------------------
+
+LVDS	S	IN	list( "RX4_RDAT[15]" "GND" "padn_RX4_RDAT[15]" "padp_RX4_RDAT[15]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[14]" "GND" "padn_RX4_RDAT[14]" "padp_RX4_RDAT[14]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_4rx" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[13]" "GND" "padn_RX4_RDAT[13]" "padp_RX4_RDAT[13]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[12]" "GND" "padn_RX4_RDAT[12]" "padp_RX4_RDAT[12]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[11]" "GND" "padn_RX4_RDAT[11]" "padp_RX4_RDAT[11]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[10]" "GND" "padn_RX4_RDAT[10]" "padp_RX4_RDAT[10]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_4rx" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[9]" "GND" "padn_RX4_RDAT[9]" "padp_RX4_RDAT[9]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[8]" "GND" "padn_RX4_RDAT[8]" "padp_RX4_RDAT[8]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDCLK" "GND" "padn_RX4_RDCLK" "padp_RX4_RDCLK" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RCTL" "GND" "padn_RX4_RCTL" "padp_RX4_RCTL" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_4rx" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[7]" "GND" "padn_RX4_RDAT[7]" "padp_RX4_RDAT[7]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[6]" "GND" "padn_RX4_RDAT[6]" "padp_RX4_RDAT[6]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[5]" "GND" "padn_RX4_RDAT[5]" "padp_RX4_RDAT[5]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[4]" "GND" "padn_RX4_RDAT[4]" "padp_RX4_RDAT[4]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_4rx" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[3]" "GND" "padn_RX4_RDAT[3]" "padp_RX4_RDAT[3]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[2]" "GND" "padn_RX4_RDAT[2]" "padp_RX4_RDAT[2]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[1]" "GND" "padn_RX4_RDAT[1]" "padp_RX4_RDAT[1]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	S	IN	list( "RX4_RDAT[0]" "GND" "padn_RX4_RDAT[0]" "padp_RX4_RDAT[0]" "DISABLE_STRAP4" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_4rx" "vd25p_4rx" "VGG" "vref_4rx" "gd25_4rx" )
+
+
+; SPI4(4) RX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_4rx" "SGND" "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+LVTTL	S	INOUT8nn2	list( "RX4_RSTAT[1].DIN"  "RX4_RSTAT[1]" "GND"  "oe_RX4_RSTAT[1]"  "pad_RX4_RSTAT[1]"  "SGND" "tn_RX4_RSTAT[1]"  "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+LVTTL	S	INOUT8nn2	list( "RX4_RSTAT[0].DIN"  "RX4_RSTAT[0]"  "GND" "oe_RX4_RSTAT[0]"  "pad_RX4_RSTAT[0]"  "SGND" "tn_RX4_RSTAT[0]"  "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_4rx" "SGND" "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+LVTTL	S	INOUT8nn2	list( "RX4_RSCLK.DIN"  "RX4_RSCLK"  "GND" "oe_RX4_RSCLK"  "pad_RX4_RSCLK"  "SGND" "tn_RX4_RSCLK"  "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_4rx" "vd33p_4rx" "VGG" "gd33_4rx" )
+
+
+
+
+
+;LVTTL	D	D9_6u	nil
+LVTTL	D	D9_6u	nil
+
+
+
+; SPI4(5) RX LVDS
+; ----------------------------------------------------
+
+LVDS	S	IN	list( "RX5_RDAT[0]" "GND" "padn_RX5_RDAT[0]" "padp_RX5_RDAT[0]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[1]" "GND" "padn_RX5_RDAT[1]" "padp_RX5_RDAT[1]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[2]" "GND" "padn_RX5_RDAT[2]" "padp_RX5_RDAT[2]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[3]" "GND" "padn_RX5_RDAT[3]" "padp_RX5_RDAT[3]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_5rx" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[4]" "GND" "padn_RX5_RDAT[4]" "padp_RX5_RDAT[4]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[5]" "GND" "padn_RX5_RDAT[5]" "padp_RX5_RDAT[5]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[6]" "GND" "padn_RX5_RDAT[6]" "padp_RX5_RDAT[6]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[7]" "GND" "padn_RX5_RDAT[7]" "padp_RX5_RDAT[7]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_5rx" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RCTL" "GND" "padn_RX5_RCTL" "padp_RX5_RCTL" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDCLK" "GND" "padn_RX5_RDCLK" "padp_RX5_RDCLK" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[8]" "GND" "padn_RX5_RDAT[8]" "padp_RX5_RDAT[8]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[9]" "GND" "padn_RX5_RDAT[9]" "padp_RX5_RDAT[9]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_5rx" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[10]" "GND" "padn_RX5_RDAT[10]" "padp_RX5_RDAT[10]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[11]" "GND" "padn_RX5_RDAT[11]" "padp_RX5_RDAT[11]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[12]" "GND" "padn_RX5_RDAT[12]" "padp_RX5_RDAT[12]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[13]" "GND" "padn_RX5_RDAT[13]" "padp_RX5_RDAT[13]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	PRH	VOP	list( "GND" "pad_vd25op_5rx" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[14]" "GND" "padn_RX5_RDAT[14]" "padp_RX5_RDAT[14]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+LVDS	S	IN	list( "RX5_RDAT[15]" "GND" "padn_RX5_RDAT[15]" "padp_RX5_RDAT[15]" "DISABLE_STRAP5" "SGND" "Vdd" "vd25o_5rx" "vd25p_5rx" "VGG" "vref_5rx" "gd25_5rx" )
+
+
+
+; SPI4(5) RX LVTTL
+; ----------------------------------------------------
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+
+LVTTL	S	INOUT8nn2	list( "RX5_RSTAT[1].DIN"  "RX5_RSTAT[1]" "GND"  "oe_RX5_RSTAT[1]"  "pad_RX5_RSTAT[1]"  "SGND" "tn_RX5_RSTAT[1]"  "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+LVTTL	S	INOUT8nn2	list( "RX5_RSTAT[0].DIN"  "RX5_RSTAT[0]"  "GND" "oe_RX5_RSTAT[0]"  "pad_RX5_RSTAT[0]"  "SGND" "tn_RX5_RSTAT[0]"  "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_5rx" "SGND" "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+LVTTL	S	INOUT8nn2	list( "RX5_RSCLK.DIN"  "RX5_RSCLK"  "GND" "oe_RX5_RSCLK"  "pad_RX5_RSCLK"  "SGND" "tn_RX5_RSCLK"  "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_5rx" "SGND" "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_5rx" "vd33p_5rx" "VGG" "gd33_5rx" )
+
+LVDS	D	D1	nil
+
+
+
+; SPI4(5) PLL
+; ----------------------------------------------------
+
+;LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+
+LVTTL	S	INOUT4nn2	list( "PLL5_LOCK.DIN"  "PLL5_LOCK" "GND"  "oe_PLL5_LOCK"  "pad_PLL5_LOCK"  "SGND" "tn_PLL5_LOCK"  "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+LVTTL	S	INnn2	list( "PLL5_BYPASS_VCO" "GND" "pad_PLL5_BYPASS_VCO" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+LVTTL	PRH	VOP_2	list( "GND" "pad_vaa_5" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+LVTTL	PRH	VOP	list( "GND" "pad_vaa_5" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+LVTTL	S	INnn2	list( "PLL5_REFCLK" "GND" "pad_PLL5_REFCLK" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+LVTTL	S	INpd2	list( "PLL5_BYPASS_EN" "GND" "pad_PLL5_BYPASS_EN" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+LVTTL	PRL	GO_2	list( "GND" "pad_ag_5" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+;LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vaao_5" "vaa_5" "VGG" "ag_5" )
+
+LVDS	D	D1	nil
+
+
+
+; SPI4(5) TX LVTTL
+; ----------------------------------------------------
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+
+LVTTL	PCL	GCS	list( "GND" "pad_GND" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	PRL	GO	list( "GND" "pad_gd33_5tx" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	S	INpd2_2	list( "DISABLE_STRAP5" "GND" "pad_DISABLE_STRAP5" "Vdd" "DISABLE_STRAP5_n" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	S	INnn2	list( "TX5_TSTAT[1]" "GND" "pad_TX5_TSTAT[1]" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	PRH	VOP	list( "GND" "pad_vd33op_5tx" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	S	INnn2	list( "TX5_TSTAT[0]" "GND" "pad_TX5_TSTAT[0]" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	S	INnn2	list( "TX5_TSCLK" "GND" "pad_TX5_TSCLK" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+
+LVTTL	PCH	VC	list( "GND" "pad_Vdd" "SGND" "Vdd" "vd33o_5tx" "vd33p_5tx" "VGG" "gd33_5tx" )
+LVDS	D	D1	nil
+
+;LVTTL	D	D9_6u	nil

@@ -1,0 +1,478 @@
+#!/usr/intel/bin/python --
+
+import re
+import sys
+import types
+import getopt
+import string
+
+debug = 0
+
+class Graph:
+    def __init__(self):
+        self.edges = []
+        self.nodes = {}
+
+    # has slight "bug": I don't know why the marked line is necessary
+    # FIXME: either stops should take names, or startnames should instead
+    # be startnodes.
+    def udjikstra(self, distancekey, startnames, stops):
+        """Undirected Djikstra's algorithm for computing shortest distances.
+           Modified to stop at selected nodes."""
+        if debug: print distancekey
+        dist = 0
+        grayname = startnames
+        while len(grayname) > 0:
+            newgray = []
+            for nodename in grayname:
+                node = self.nodes[nodename]
+                if debug: print node.label,
+                if node.distance.has_key(distancekey): continue # should not be necessary.
+                node.distance[distancekey] = dist
+                if node in stops: continue
+                for p in node.parents:
+                    pn = p.parent
+                    if (not pn.distance.has_key(distancekey)) and (not pn.label in newgray):
+                        newgray.append(pn.label)
+                for c in node.children:
+                    cn = c.child
+                    if (not cn.distance.has_key(distancekey)) and (not cn.label in newgray):
+                        newgray.append(cn.label)
+            grayname = newgray
+            dist = dist + 1
+            if debug: print
+
+    def has_node_named(self, label):
+        return self.nodes.has_key(label)
+
+class Node:
+    def __init__(self, graph, label, info):
+        self.label = label
+        self.visited = 0
+        self.parents = []
+        self.children = []
+        self.info = info
+        self.distance = {}
+        self.graph = graph
+        graph.nodes[label] = self
+
+class Edge:
+    def __init__(self, parent, child, info):
+        assert(parent.graph == child.graph)
+        self.parent = parent
+        self.child = child
+        self.info = info
+        graph = child.graph
+        graph.edges.append(self)
+        child.parents.append(self)
+        parent.children.append(self)
+
+    def flip(self):
+        self.child.parents.remove(self)
+        self.parent.children.remove(self)
+        x = self.parent
+        self.parent = self.child
+        self.child = x
+        self.parent.children.append(self)
+        self.child.parents.append(self)
+
+class NodeInfo:
+    def __init__(self):
+        self.num_ns = 0
+        self.num_ps = 0
+
+class TranInfo:
+    def __init__(self, gatelabel, type, width):
+        self.gatelabel = gatelabel
+        self.type = type
+        self.ambiguous = 0
+        self.width = float(width) / 1E-6
+
+class CellBindings:
+    def __init__(self, layoutName, schematicName):
+        self.layoutName = layoutName
+        self.shematicName = schematicName
+        self.layoutNetToSchematicNet = {}
+        self.layoutInstanceToSchematicInstance = {}
+        
+    def addNetBinding(self, layoutName, schematicName):
+        self.layoutNetToSchematicNet[layoutName] = schematicName
+
+    def addInstanceBinding( self, layoutName, schematicName):
+        self.layoutInstanceToSchematicInstance[layoutName] = schematicName
+
+    def getSchematicNetForLayoutNet(self, layoutName):
+        return self.layoutNetToSchematicNet.get(layoutName, None )
+
+    def getSchematicInstanceForLayoutInstance(self, layoutName):
+        return self.layoutInstanceToSchematicInstance.get(layoutName, None )
+
+
+class BindFile:
+    def __init__(self, bindFileName):
+        self.mappingsForCells={}
+        bindFile = open( bindFileName, "r")
+        currCell = None
+        for i in bindFile.readlines():
+            splitline = string.split( i.rstrip(), ' ')
+            if ( len( splitline ) > 0 ):
+                if ( splitline[0] == "C" ):
+                    currCell=CellBindings( splitline[2], splitline[1] )
+                    self.mappingsForCells[splitline[2]] = currCell
+                elif ( splitline[0] == "N" ):
+                    currCell.addNetBinding( splitline[2], splitline[1] )
+                elif ( splitline[0] == "I" ):
+                    currCell.addInstanceBinding( splitline[2], splitline[1] )
+    def getCellBindings(self, layoutName):
+        return self.mappingsForCells.get(layoutName, None);
+
+name = ""
+Vdd = "Vdd"
+GND = "GND"
+substrates = { 'N' : GND, 'P' : Vdd }
+rank = { Vdd : "min", GND : "max" }
+targets = []
+infinity = 100
+thegraph = None
+targetsdistkey = ()
+
+def canonize_node_name(bindings,name):
+    if bindings:
+        boundName = bindings.getSchematicNetForLayoutNet( name )
+        if boundName:
+            name = boundName
+    if string.lower(name) == string.lower(Vdd): name = Vdd
+    if string.upper(name) == GND: name = GND
+    return name
+
+def new_graph():
+    graph = Graph()
+    graph.nodes[Vdd] = Node(graph, Vdd, NodeInfo())
+    graph.nodes[GND] = Node(graph, GND, NodeInfo())
+    return graph
+
+def handle_trans(bindings, source, gate, drain, substrate, type, width):
+    type = string.upper(type[0])
+    substrate = canonize_node_name(bindings, substrate)
+    source = canonize_node_name(bindings, source)
+    drain = canonize_node_name(bindings, drain)
+    gate = canonize_node_name(bindings, gate)
+    if not substrates[type] == substrate:
+        sys.stderr.write( "found substrate %s for %s-type transistor!\n" % \
+                (substrate, type));
+        return 1
+    if not thegraph.has_node_named(source):
+        Node(thegraph, source, NodeInfo())
+    if not thegraph.has_node_named(drain):
+        Node(thegraph, drain, NodeInfo())
+    t = Edge(thegraph.nodes[source], thegraph.nodes[drain], TranInfo(gate, type, width))
+
+def handle_line(bindFile,line):
+    global name
+    global thegraph
+    global bindings
+    splitline = string.split(line, ' ')
+    if ( len( line ) > 0 ):
+        if (".SUBCKT" == splitline[0]):
+            if name != "":
+                sys.stderr.write( "Multiple .SUBCKT in one file.  You " + \
+                                  "probably need to inline all but the first.\n")
+                return 1
+            name = splitline[1]
+            thegraph = new_graph()
+            if ( bindFile ):
+                bindings = bindFile.getCellBindings( name )
+            else:
+                bindings = None
+        elif (".ENDS" == splitline[0]):
+            0 # nothing yet
+        elif ("M" == line[0]):
+            splitwidth = string.split(splitline[6], '=')
+            return handle_trans(bindings, splitline[1], splitline[2], splitline[3], splitline[4], splitline[5], splitwidth[1])
+
+    return 0
+
+gensymcounter = 0
+def gensym(string):
+    global gensymcounter
+    gensymcounter = gensymcounter + 1
+    return "%s%d" % (string, gensymcounter)
+
+def calc_nsps():
+    for edge in thegraph.edges:
+        if edge.info.type == 'N':
+            edge.parent.info.num_ns = edge.parent.info.num_ns + 1
+            edge.child.info.num_ns = edge.child.info.num_ns + 1
+        if edge.info.type == 'P':
+            edge.parent.info.num_ps = edge.parent.info.num_ps + 1
+            edge.child.info.num_ps = edge.child.info.num_ps + 1
+
+def get_label(node):
+    return node.label
+
+def calc_order():
+    vnode = thegraph.nodes[Vdd]
+    gnode = thegraph.nodes[GND]
+    thegraph.udjikstra(vnode, [Vdd], targets)
+    thegraph.udjikstra(gnode, [GND], targets)
+    thegraph.udjikstra(targetsdistkey, (map (get_label, targets)), [vnode, gnode])
+
+# Nicest presentation not fully recoverable:
+#
+#    Target
+#     /   \
+#   a|  c  |b
+#  int --- int
+#   d|     |e
+#     \   /
+#      GND
+#
+#
+#  Can have either int higher than the other.
+#
+#  What we can do is impose a partial ordering
+#  based on both distance to target and distance to power supply.
+#  if they both agree node a should be higher than node b, it will be that way.
+#  if one ties, and the other has an opinion, they'll follow the opinion.
+#  if they disagree, we won't care -- actually we should adjust based
+#  on whether target or power supply is closer.
+
+def aggregate_prefs(udp, udc, ldp, ldc):
+    """Arguments are distances from the two nodes to targets and power supply.
+    Returns -1 if parent should be below child, 1 if parent should be above
+    child, 0 if nothing can be determined."""
+    u = udc - udp; # parent above child if closer to "u"
+    l = ldp - ldc; # parent above child if further from "l"
+    if (u*l < 0): # different signs, disagree
+        # which further away?
+        ud = udc + udp
+        ld = ldc + ldp
+        if (ud < ld):
+            return u
+        elif (ld < ud):
+            return l
+        else:
+            return 0
+    # either agree, or one doesn't care.
+    if (u == 0):
+        return l;
+    # if u does care, l either agrees, so we can use u, or is zero,
+    # so we should use u.
+    return u;
+
+
+def correct_edge_direction(t):
+    dir = find_edge_direction(t)
+    if dir < 0:
+        t.flip()
+    elif dir == 0:
+        make_ambiguous(t)
+    else:
+        0 # already correct.
+
+def find_edge_direction(t):
+    vnode = thegraph.nodes[Vdd]
+    gnode = thegraph.nodes[GND]
+    tdistp = t.parent.distance[targetsdistkey]
+    tdistc = t.child.distance[targetsdistkey]
+    if t.info.type == "N":
+        pdistp = t.parent.distance.get(gnode,infinity)
+        pdistc = t.child.distance.get(gnode,infinity)
+        return aggregate_prefs(tdistp, tdistc, pdistp, pdistc)
+    else:
+        pdistp = t.parent.distance.get(vnode,infinity)
+        pdistc = t.child.distance.get(vnode,infinity)
+        return aggregate_prefs(pdistp, pdistc, tdistp, tdistc)
+
+
+def make_ambiguous(t):
+    t.info.ambiguous = 1
+
+allnumbers = re.compile("^[0-9]*$");
+hashash = re.compile("#");
+number_dash_H = re.compile("^[0-9]*-H$");
+
+def is_auto_generated_name(label):
+    return allnumbers.search(label) or \
+        hashash.search(label) or \
+        number_dash_H.search(label);
+
+def is_target(node):
+    return ((node.info.num_ns and node.info.num_ps) or (not is_auto_generated_name(node.label) and not (node.label == "Vdd" or node.label == "GND")))
+
+def extract_targets():
+    for node in thegraph.nodes.values():
+        if is_target(node):
+            targets.append(node)
+
+def rectify_edges():
+    for e in thegraph.edges:
+        correct_edge_direction(e)
+
+def print_edge(file, edge):
+    p = edge.parent.label
+    c = edge.child.label
+    if (edge.info.type == 'N'):
+        color = "blue"
+        gate = edge.info.gatelabel
+    else:  # elif (edge.info.type == 'P'):
+        color = "red"
+        gate = "~" + edge.info.gatelabel
+
+    if (p == Vdd or p == GND):
+        op = p
+        p = gensym(p)
+        file.write( '{ rank="%s" %s [label="%s",shape=box] }\n' % \
+                (rank[op], p, op));
+    if (c == Vdd or c == GND):
+        oc = c
+        c = gensym(c)
+        file.write( '{ rank="%s" %s [label="%s",shape=box] }\n' % \
+                (rank[oc], c, oc));
+    if edge.info.ambiguous:
+        file.write(('"%s" -> "%s"' + \
+                '[label="%s\\n%s", color="%s", weight=0, dir=both]\n') % \
+                (p, c, gate, edge.info.width, color));
+    else:
+        file.write( '"%s" -> "%s" [label="%s\\n%s", color="%s"]\n' %
+            (p, c, gate, edge.info.width, color));
+
+def dump_graph(thegraph, file):
+    file.write('digraph "%s" {\n' % name);
+    file.write('node [shape=diamond]\n');
+    file.write( '{ rank = same\n');
+    for node in thegraph.nodes.values():
+        if is_target(node):
+            file.write( '"%s" [label="%s",shape=ellipse]\n' % \
+                (node.label, node.label) );
+    file.write( '}\n');
+    for edge in thegraph.edges:
+        print_edge(file, edge)
+    file.write( 'name_of_cell [label="%s",rank="min",shape="plaintext"]\n' % name);
+    file.write( '}\n');
+
+def parse_options():
+    has_one_percent_i = re.compile("%i");
+    file = sys.stdin
+    nametemplate = None
+    bindFileName = None
+    (opts, args) = getopt.getopt(sys.argv[1:], "o:t:h", ['help', 'usage'])
+    if debug:
+        print opts
+        print args
+
+    if len(args) > 1: usage(1)
+    for (o, a) in opts:
+        if o == "--help" or o == "--usage" or o == "-h":
+            usage(0)
+        elif o == "-o":
+            nametemplate = a
+            matches = has_one_percent_i.findall(nametemplate)
+            if len(matches) != 1:
+                usage(1)
+        elif o == "-t":
+            bindFileName = a
+        else:
+            usage(1);
+    if len(args) == 1:
+        file = open(args[0], "r")
+
+    return (file, nametemplate, bindFileName)
+
+def usage(error):
+    oldout = sys.stdout
+    if error:
+        sys.stdout = sys.stderr
+    print "cdl2dot [-o nametemplate] [filename]"
+    print "cdl2dot -h | --help | --usage"
+    print
+    print "Helps visualize transistor netgraphs by converting (a subset of)"
+    print "cdl (spice) files to a form usable by dot and writing to standard"
+    print "output, or the files specified by nametemplate."
+    print
+    print " -o nametemplate :"
+    print "    Instead of dumping everything in one file, print each   "
+    print "    connected region of the transistor network to a seperate"
+    print "    dot file, with %i in the nametemplate replaced with 0,  "
+    print "    1, 2, etc.  The nametemplate must have exactly one '%i'."
+    print
+    print " filename :"
+    print "    Read from this instead of stdin."
+    print
+    print " -h | --help | --usage :"
+    print "    Print this message."
+
+    sys.stdout=oldout
+    sys.exit(1)
+
+def is_string(object):
+    return type(object) == types.StringType
+
+def split_graph():
+    for i in targets:
+        thegraph.udjikstra(i.label, [i.label], [thegraph.nodes[Vdd], thegraph.nodes[GND]]);
+
+    added = []
+    targetlistlist = []
+    for i in targets:
+        if get_label(i) not in added:
+            reachable = filter(is_string, i.distance.keys())
+            assert get_label(i) in reachable
+            added.extend(reachable)
+            targetlistlist.append(reachable)
+
+    nodelistlist = []
+    for i in targetlistlist:
+        rep = i[0]
+        nodelist = []
+        for j in thegraph.nodes.values():
+            if j.distance.has_key(rep):
+                nodelist.append(j)
+        nodelistlist.append(nodelist)
+
+    graphs = []
+    for i in nodelistlist:
+        newgraph = new_graph()
+        for edge in thegraph.edges:
+            if edge.parent in i and edge.child in i:
+                parent = newgraph.nodes.get(edge.parent.label, None)
+                child = newgraph.nodes.get(edge.child.label, None)
+                if not parent:
+                    parent = Node(newgraph, edge.parent.label, edge.parent.info)
+                if not child:
+                    child = Node(newgraph, edge.child.label, edge.child.info)
+                Edge(parent, child, edge.info)
+        graphs.append(newgraph)
+
+    return graphs
+
+def dump_graph_list(nametemplate, list):
+    count = 0;
+    for graph in list:
+        if len(graph.edges) > 0:
+            file = open(nametemplate % count, "w");
+            dump_graph(graph, file)
+            file.close()
+            count = count + 1
+
+def main():
+    input, nametemplate, bindFileName = parse_options()
+    bindFile = None
+    if ( bindFileName ):
+        bindFile = BindFile( bindFileName )
+    for i in input.readlines():
+        if handle_line(bindFile,i.rstrip()):
+            return 1
+    calc_nsps()
+    extract_targets()
+    calc_order()
+    rectify_edges()
+    if (nametemplate):
+        list = split_graph()
+        dump_graph_list(nametemplate, list)
+    elif len(thegraph.edges) > 0:
+        dump_graph(thegraph, sys.stdout)
+    return 0
+
+if (__name__ == "__main__"):
+    sys.exit(main())

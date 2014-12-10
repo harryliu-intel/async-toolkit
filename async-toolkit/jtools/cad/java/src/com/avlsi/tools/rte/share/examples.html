@@ -1,0 +1,441 @@
+<HTML>
+<HEAD>
+<TITLE>
+Test Info Page
+</TITLE>
+<LINK REL ="stylesheet" TYPE="text/css" HREF="stylesheet.css" TITLE="Style">
+</HEAD>
+<BODY BGCOLOR="white">
+
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0">
+<TR>
+<TD><TD ALIGN="LEFT" HEIGHT="90"><IMG SRC="logo.png" 
+	WIDTH="250" HEIGHT="90" ALT="Fulcrum" BORDER="0" align="left"></A>
+</TD>
+</TR>
+</TABLE>
+
+<!-- ========== START OF NAVBAR ========== -->
+<A NAME="navbar_top"><!-- --></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3">
+  <TR ALIGN="center" VALIGN="top">
+ <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="statistics.html"><FONT CLASS=
+"NavBarFont1"><B>Statistics</B></FONT></A>&nbsp;</TD> 
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="test-info.html"><FONT CLAS
+S="NavBarFont1"><B>Test Info</B></FONT></A>&nbsp;</TD>
+
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="help-doc.html"><FONT CLASS
+="NavBarFont1"><B>Help Doc</B></FONT></A>&nbsp;</TD>
+<TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT
+ CLASS="NavBarFont1Rev"><B>Examples</B></FONT>&nbsp;</TD>  
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3></TD>
+</TR>
+</TR>
+</TABLE>
+<!-- =========== END OF NAVBAR =========== -->
+
+<table width="80%">
+<tr><td>
+<center> <font size="+2"><b>CAST Cell Examples</b></font><br></center>
+ <p>
+ <font size="+1">From lib.buffer.half:</font>
+ <pre>
+
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: half.cast,v 1.0 2002/01/24 12:00:00 auto-migrate Exp $
+ */
+
+module lib.buffer.half;
+
+
+/****** WCHB Buffers ******/
+
+/*** standard single rail (synchronizing) halfbuffer ***/
+define BUF_1of1 ()(e1of1 -L,+R)
+{
+  csp {
+    var x:int;
+    in ( *[L?x ; R!x] )
+  }
+  prs {
+    node _r, rv;
+
+    R.e &amp; L.d -&gt; _r-         ~_Reset | ~R.e &amp; ~L.d -&gt; _r+
+    ~_r =&gt; R.d+
+    ~_Reset | ~_r =&gt; rv+
+    rv =&gt; L.e-
+  }
+  env {
+    digital subcells {
+      rsource_e1of1 _(L);
+      bitbucket_e1of1 _(R);
+    }
+  }
+}
+
+
+/*** standard dual rail halfbuffer ***/
+define BUF_1of2 ()(e1of2 -L,+R)
+{
+  csp {
+    var x:int;
+    in ( *[L?x ; R!x] )
+  }
+  prs {
+    node rv;
+    _1of2 _r;
+
+    &lt;i:2: L.d[i] &amp; R.e -&gt; _r.d[i]-      ~_Reset | ~L.d[i] &amp; ~R.e -&gt; _r.d[i]+ &gt;
+    &lt;i:2: ~_r.d[i] =&gt; R.d[i]+ &gt;
+    ~_Reset | ~_r.0 | ~_r.1 =&gt; rv+
+    rv =&gt; L.e-
+  }
+  env {
+    digital subcells {
+      rsource_e1of2 _(L);
+      bitbucket_e1of2 _(R);
+    }
+  }
+}
+
+
+
+
+/****** EXPLICIT SIZING SUBTYPES ******/
+
+/*** e1of2 Send buffer ***/
+define SBUF_1of2 ()(e1of2 -L,+R) &lt;: BUF_1of2 {}
+
+/*** e1of3 Send buffer ***/
+define SBUF_1of3 (e1of3 -L,+R) &lt;: BUF_1of3 {}
+
+/*** e1of4 Send buffer ***/
+define SBUF_1of4 (e1of4 -L,+R) &lt;: BUF_1of4 {}
+
+/*** e1of2 Receive buffer **/
+define RBUF_1of2 (e1of2 -L,+R) &lt;: BUF_1of2 {}
+
+/*** e1of3 Receive buffer **/
+define RBUF_1of3 (e1of3 -L,+R) &lt;: BUF_1of3 {}
+
+/*** e1of4 Receive buffer **/
+define RBUF_1of4 (e1of4 -L,+R) &lt;: BUF_1of4 {}
+
+/*** e1of2 Redistribution ("Middle") buffer **/
+define MBUF_1of2 (e1of2 -L,+R) &lt;: BUF_1of2 {}
+
+/*** e1of3 Redistribution ("Middle") buffer **/
+define MBUF_1of3 (e1of3 -L,+R) &lt;: BUF_1of3 {}
+
+/*** e1of4 Redistribution ("Middle") buffer **/
+define MBUF_1of4 (e1of4 -L,+R) &lt;: BUF_1of4 {}
+
+
+
+/****** DATAPATH BUFFER ARRAYS ******/
+
+/*** array of N mbufs ***/
+define BUF_1of4x (int N)(e1of4[N] -L,+R)
+{
+  csp { var x:int; in ( *[L?x; R!x] ) }
+  subcells {
+    &lt;i:N: BUF_1of4 buf[i](L[i],R[i]); &gt;
+  }
+  env digital subcells {
+      &lt;i:N: rsource_e1of4 _(L[i]); &gt;
+      &lt;i:N: bitbucket_e1of4 _(R[i]); &gt;
+  }
+}
+
+
+/*** Rebuffering N-1of4 array, for long wire distribution ***/
+define MBUF_1of4x (int N)(e1of4[N] -L,+R) &lt;: BUF_1of4x(N)
+{
+  subtypes {
+    BUF_1of4 :&gt; MBUF_1of4 buf;
+  }
+}
+
+</pre>
+ <p>
+ <hr>
+ <font size="+1">From lib.multiplier.booth:</font>
+ <pre>
+
+define BOOTH_COLUMN_DYB()(e1of5 B; e1of2 X1[0..1], X2[0..1], RX[0..1], BT[0..1];
+                          node _Rv, en)
+{
+  prs {
+    _1of2 _RX[0..1],_BT[0..1];
+    node RXv,BTv;
+
+    &lt;i:2: &lt;j:2: RX[i].e &amp; X1[i].d[j] #&gt; _RX[i].d[j]- &gt;&gt;
+    
+    &lt;i:2: en &amp; BT[i].e &amp; B.0 &amp; X2[i].0 -&gt; _BT[i].1- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.0 &amp; X2[i].1 -&gt; _BT[i].0- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.1 &amp; X1[i].0 -&gt; _BT[i].1- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.1 &amp; X1[i].1 -&gt; _BT[i].0- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.2           -&gt; _BT[i].0- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.3 &amp; X1[i].0 -&gt; _BT[i].0- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.3 &amp; X1[i].1 -&gt; _BT[i].1- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.4 &amp; X2[i].0 -&gt; _BT[i].0- &gt;
+    &lt;i:2: en &amp; BT[i].e &amp; B.4 &amp; X2[i].1 -&gt; _BT[i].1- &gt;
+        &lt;i:2: &lt;j:2: ~en &amp; ~BT[i].e -&gt; _BT[i].d[j]+ &gt;&gt;
+    
+    /*** output ***/
+    &lt;i:2: &lt;j:2: ~_RX[i].d[j] =&gt; RX[i].d[j]+ &gt;&gt;
+    &lt;i:2: &lt;j:2: ~_BT[i].d[j] =&gt; BT[i].d[j]+ &gt;&gt;
+    
+    (~_RX[0].0 | ~_RX[0].1) &amp; (~_RX[1].0 | ~_RX[1].1) #&gt; RXv+
+    (~_BT[0].0 | ~_BT[0].1) &amp; (~_BT[1].0 | ~_BT[1].1) #&gt; BTv+
+    
+    RXv &amp; BTv #&gt; _Rv-
+  }
+  directives {
+    fragment = true;
+  }
+}
+
+define BOOTH_COLUMN_8_CTRL ()(e1of5 -B; e1of2 -XUP; node -LX6e, -_Rv[0..3], +en)
+{
+  prs {
+    /*** Internal nodes ***/
+    node _XUPv,_B_012,_B_34,Bv,_Bv;
+    node _Rv[0..3],Rv_01,Rv_23,_Rv_03;
+    node _XUPe,_X67e,_Be,_en;
+
+    /*** input ***/
+    XUP.0 | XUP.1 =&gt; _XUPv-
+
+    B.0 | B.1 | B.2 =&gt; _B_012-
+    B.3 | B.4 =&gt; _B_34-
+    ~_B_012 | ~_B_34 =&gt; Bv+
+    Bv =&gt; _Bv-
+
+    /*** ack ***/
+    ~_Reset | ~_Rv[0] &amp; ~_XUPv #&gt; _XUPe+
+    _XUPe =&gt; XUP.e-
+
+    ~_Reset | ~_Rv[3] =&gt; _X67e+
+     _X67e =&gt; LX[6].e-
+
+    ~_Rv[0] &amp; ~_Rv[1] #&gt; Rv_01+
+    ~_Rv[2] &amp; ~_Rv[3] #&gt; Rv_23+
+    Rv_01 &amp; Rv_23 #&gt; _Rv_03-
+
+    ~_Reset | ~_Rv_03 &amp; ~_Bv #&gt; _Be+
+    _Be =&gt; B.e-
+
+    /*** enable ***/
+    ~XUP.e &amp; ~LX6e #&gt; _en+
+    _en &amp; _Be #&gt; en-
+  }
+  directives {
+    fragment = true;
+  }
+}
+
+define BOOTH_COLUMN_8()(e1of5 -B; e1of2 -XUP; e1of2[8] -LX, +RX, +BT)
+{
+  csp {
+    var b:int, xup:int, x:int;
+    in (
+      *[B?b, XUP?xup, LX?x; RX!x,
+        [ b=0 -&gt; BT!~(x&lt;&lt;1 + xup)
+        []b=1 -&gt; BT!~x
+        []b=2 -&gt; BT!0
+        []b=3 -&gt; BT!x
+        []b=4 -&gt; BT!(x&lt;&lt;1 + xup)
+        ]
+       ]
+    )
+  }
+  prs { 
+    /*** Internal nodes ***/
+    e1of2 X2[0..7];
+    node _Rv[0..3],en;
+
+    /*** 8 bit datapath ***/
+    X2[0]=XUP; X2[1..7]=LX[0..6];
+    &lt;i:4: flatten BOOTH_COLUMN_DYB d[i]
+                              (B,LX[2*i..2*i+1],X2[2*i..2*i+1],
+                               RX[2*i..2*i+1],BT[2*i..2*i+1],_Rv[i],en); &gt;
+    LX[6].e=LX[7].e;
+    &lt;i:6: LX[i].e=B.e; &gt;
+
+    /*** Buffer control ***/
+    flatten BOOTH_COLUMN_8_CTRL c(B,XUP,LX[6].e,_Rv,en);
+  }
+  env {
+    digital subcells {
+      rsource_e1of5 _(B);
+      rsource_e1of2 _(XUP);
+      &lt;i:8: rsource_e1of2 _(LX[i]); &gt;
+      &lt;i:8: bitbucket_e1of2 _(RX[i]); &gt;
+      &lt;i:8: bitbucket_e1of2 _(BT[i]); &gt;
+    }
+  }
+}
+
+
+
+define BOOTH_COLUMN_CTRL ()(e1of4 -Y; e1of2 -LY, +RY, +BC; e1of5 +B)
+{
+  csp {
+    var ly:int, y:int, sel:int;
+    in (
+      *[/*** copy through Y inputs ***/
+        LY?ly, Y?y; RY!y[3];
+        /*** handle booth codes for these 4 bits of Y ***/
+        sel:=y&amp;3;
+        [ ~ly &amp; sel=0 -&gt; B!2, BC!0
+        []~ly &amp; sel=1 -&gt; B!3, BC!0
+        []~ly &amp; sel=2 -&gt; B!0, BC!1
+        []~ly &amp; sel=3 -&gt; B!1, BC!1
+        [] ly &amp; sel=0 -&gt; B!3, BC!0
+        [] ly &amp; sel=1 -&gt; B!4, BC!0
+        [] ly &amp; sel=2 -&gt; B!1, BC!1
+        [] ly &amp; sel=3 -&gt; B!2, BC!0
+        ]
+       ]
+    )
+  }
+  prs {
+    /*** Internal nodes ***/
+    _1of5 _B;
+    _1of2 _BC;
+    _1of2 _RY;
+    node _LYv,LYv,_Y_01,_Y_23,Yv,_Lv;
+    node Bv,RBv,_Rv;
+    node _Le,Le,en;
+    en=Le=LY.e=Y.e;
+
+    /*** input ***/
+    LY.0 | LY.1 =&gt; _LYv-
+    ~_LYv =&gt; LYv+
+    
+    Y.0 | Y.1 =&gt; _Y_01-
+    Y.2 | Y.3 =&gt; _Y_23-
+    ~_Y_01 | ~_Y_23 =&gt; Yv+
+    
+    LYv &amp; Yv #&gt; _Lv-
+    
+    /*** output ***/
+    en &amp; RY.e &amp; (Y.0 | Y.1) -&gt; _RY.0-
+    en &amp; RY.e &amp; (Y.2 | Y.3) -&gt; _RY.1-
+         &lt;i:2: ~en &amp; ~RY.e -&gt; _RY.d[i]+ &gt;
+    
+    en &amp; B.e &amp; LY.0 &amp; Y.0 -&gt; _B.2-
+    en &amp; B.e &amp; LY.0 &amp; Y.1 -&gt; _B.3-
+    en &amp; B.e &amp; LY.0 &amp; Y.2 -&gt; _B.0-
+    en &amp; B.e &amp; LY.0 &amp; Y.3 -&gt; _B.1-
+    en &amp; B.e &amp; LY.1 &amp; Y.0 -&gt; _B.3-
+    en &amp; B.e &amp; LY.1 &amp; Y.1 -&gt; _B.4-
+    en &amp; B.e &amp; LY.1 &amp; Y.2 -&gt; _B.1-
+    en &amp; B.e &amp; LY.1 &amp; Y.3 -&gt; _B.2-
+    
+    en &amp; BC.e &amp; LY.0 &amp; Y.0 -&gt; _BC.0-
+    en &amp; BC.e &amp; LY.0 &amp; Y.1 -&gt; _BC.0-
+    en &amp; BC.e &amp; LY.0 &amp; Y.2 -&gt; _BC.1-
+    en &amp; BC.e &amp; LY.0 &amp; Y.3 -&gt; _BC.1-
+    en &amp; BC.e &amp; LY.1 &amp; Y.0 -&gt; _BC.0-
+    en &amp; BC.e &amp; LY.1 &amp; Y.1 -&gt; _BC.0-
+    en &amp; BC.e &amp; LY.1 &amp; Y.2 -&gt; _BC.1-
+    en &amp; BC.e &amp; LY.1 &amp; Y.3 -&gt; _BC.0-
+    
+        &lt;j:5: ~en &amp; ~B.e -&gt; _B.d[j]+ &gt;
+        &lt;j:2: ~en &amp; ~BC.e -&gt; _BC.d[j]+ &gt;
+    
+    /*** output ***/
+    &lt;i:2: ~_RY.d[i] =&gt; RY.d[i]+ &gt;
+    &lt;i:5: ~_B.d[i] =&gt; B.d[i]+ &gt;
+    &lt;i:2: ~_BC.d[i] =&gt; BC.d[i]+ &gt;
+    
+    ~_B.0 | ~_B.1 | ~_B.2 | ~_B.3 | ~_B.4 =&gt; Bv+
+    (~_RY.0 | ~_RY.1) &amp; (~_BC.0 | ~_BC.1) #&gt; RBv+
+    
+    Bv &amp; RBv #&gt; _Rv-
+    
+    /*** ack ***/
+    ~_Reset | ~_Lv &amp; ~_Rv #&gt; _Le+
+    _Le =&gt; Le-
+  }
+  env {
+    digital subcells {
+      rsource_e1of2 _(Y);
+      rsource_e1of2 _(LY);
+      bitbucket_e1of2 _(RY);
+      bitbucket_e1of2 _(BC);
+      bitbucket_e1of5 _(B);
+    }
+  }
+}
+
+
+
+define BOOTH_COLUMN ()(e1of4 -Y; e1of2 -LXS, +RXS; e1of2[32] -LX, +RX; 
+                       e1of2 -LY, +RY; e1of2[34] +BT; e1of2 +BC)
+{
+  csp {
+    var xs:int, x:int, ly:int, y:int, sel:int;
+    in (
+      *[/*** copy through LXS,LX ***/
+        LXS?xs, LX?x; RXS!xs, RX!x;
+        /*** copy through Y inputs ***/
+        LY?ly, Y?y; RY!y[1];
+        /*** sign extend x ***/
+        [~xs -&gt; skip
+        []xs &amp; (x&gt;&gt;31)=1 -&gt; x:=x|(3&lt;&lt;32)
+        ];
+        /*** handle booth codes for these 4 bits of Y ***/
+        sel:=y&amp;3;
+        [ ~ly &amp; sel=0 -&gt; BT!0,       BC!0;
+        []~ly &amp; sel=1 -&gt; BT!x,       BC!0;
+        []~ly &amp; sel=2 -&gt; BT!~(x&lt;&lt;1), BC!1;
+        []~ly &amp; sel=3 -&gt; BT!~x,      BC!1;
+        [] ly &amp; sel=0 -&gt; BT!x,       BC!0;
+        [] ly &amp; sel=1 -&gt; BT!x&lt;&lt;1,    BC!0;
+        [] ly &amp; sel=2 -&gt; BT!~x,      BC!1;
+        [] ly &amp; sel=3 -&gt; BT!0,       BC!0;
+        ]
+       ]
+    )
+  }
+  subcells {
+    e1of5 B,B2[0..4],B3[0..4];
+    e1of2 XX[0..31],XUP[0..4];
+    XUP[0].0=XUP[0].e; XUP[0].1=GND;
+    &lt;i:4: XX[8*i..8*i+6]=LX[8*i..8*i+6]; COPY2_1of2 cpyXUP[i](LX[8*i+7],); &gt;
+    BOOTH_COLUMN_CTRL ctrl(Y,LY,RY,BC,B);
+    inline COPY5_1of5 cpyB(B,B2);
+    &lt;i:5: BUF_1of5 bufB[i](B2[i],B3[i]); &gt;
+    &lt;i:4: BOOTH_COLUMN_8 byte[i](B3[i],XUP[i],XX[8*i..8*i+7],
+                                 RX[8*i..8*i+7],BT[8*i..8*i+7]); &gt;
+    BOOTH_COLUMN_TOP top(B3[4],LXS,RXS,XUP[4],BT[32..33]);
+  }
+  env {
+    digital subcells {
+      source_e1of4(4,{0,1,2,3}) _(Y);
+      source_e1of2(8,{0,0,0,0,1,1,1,1}) _(LY);
+      source_e1of2(16,{0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1}) _(LXS);
+      source_e1of2(32,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                       1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}) _(LX[31]);
+      &lt;i:31: rsource_e1of2 _(LX[i]); &gt;
+    }
+  }
+}
+
+  </pre>
+</td></tr></table>
+<hr><i>Confidential</i>. Fulcrum Microsystems, Copyright &copy 2002. All
+Rights Reserved.
+</body>
+</html>

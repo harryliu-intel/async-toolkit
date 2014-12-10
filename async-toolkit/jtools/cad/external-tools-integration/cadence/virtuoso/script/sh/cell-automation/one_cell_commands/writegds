@@ -1,0 +1,236 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+my $user=`whoami`;
+chomp $user;
+my $cast_path;
+my $spec_dir;
+my $spar_dir;
+my $cast_dir;
+my $dfII_dir;
+my $spar_dir = "/p/work/aagrey/rrc/spar";
+my $pdk_root;
+my $max_heap_size="8192M";
+my $cell;
+my $verbose=0;
+my $debug=0;
+my $dotop=1;
+my $top_dir=undef;
+my $synchronous=0;
+
+GetOptions (
+    "cast-path=s" => \$cast_path,
+    "spec-dir=s" => \$spec_dir,
+    "cast-dir=s" => \$cast_dir,
+    "dfii-dir=s" => \$dfII_dir,
+    "fulcrum-pdk-root=s" => \$pdk_root,
+    "max-heap-size=s" => \$max_heap_size,
+    "synchronous" => \$synchronous,
+    "verbose" => \$verbose,
+    "debug" => \$debug,
+    "notop" => sub {$dotop=0;},
+);
+
+$verbose=1 if $debug;
+$top_dir=$spar_dir if ! defined $top_dir and -d $spar_dir;
+
+sub mysystem {
+    my @cmd=@_;
+    chomp @cmd;
+    print STDERR join " ", @cmd;
+    system(@cmd);
+}
+
+$cell=shift if defined $ARGV[0];
+$cell =~ s/_L_/\(/g;
+$cell =~ s/_R_/\)/g;
+$cell =~ s/__/./g if $cell =~ /__/;
+
+usage() if ! defined $cell;
+
+open (STDERR, ">/dev/null") if ! $debug;
+
+writegds ($cell, $dotop);
+
+sub usage {
+    print STDERR <<EU;
+Usage: writegds [options] cellname
+    options
+      --cast-path
+      --dfII-dir
+      --fulcrum-pdk-root
+      --top
+      --verbose
+      --max-heap-size
+EU
+    exit 1;
+}
+
+sub writegds {
+    my ($cell, $topcell)=@_;
+    return if $cell =~ /^vendor/;
+    my $gdsIIcell=`echo '$cell' | rename --type=cell --from=cast --to=gds2`;
+    chomp $gdsIIcell;
+    $gdsIIcell=~ s/\s//g;
+    if ($synchronous) {
+        $gdsIIcell=$cell;
+        $gdsIIcell =~ s/\./__/g;
+        $gdsIIcell =~ s/\(/_L_/g;
+        $gdsIIcell =~ s/\)/_R_/g;
+        $gdsIIcell =~ s/[^_A-Za-z0-9]/_/g;
+    }
+    my $xlatcell=`echo '$cell' | rename --type=cell --from=cast --to=cadence`;
+    chomp $xlatcell;
+    $xlatcell =~ s/\s//g;
+    $xlatcell =~ s/[^A-Za-z0-9_]/_/g;
+    $xlatcell .= "_0";
+    my @topcells=`cast_query --cast-path='$cast_path' --task=subcells --routed --filter=one-level --cell='$cell'`;
+    chomp @topcells;
+    my %topcells=();
+    foreach my $c (@topcells) {
+        $c =~ s/\s//g;
+        $topcells{$c}=1;
+        writegds($c, 0);
+#        mysystem "writegds","--fulcrum-pdk-root", "$pdk_root", "--cast-path", "$cast_path", "--dfII-dir", "$dfII_dir", "$c";
+    }
+
+    my $celldir=$cell;
+    $celldir =~ s/\./\//g;
+
+    my $working_dir="$top_dir/$celldir";
+    my $outgds="$working_dir/cell.gds2";
+    $outgds="$working_dir/top.gds2" if $topcell;
+    if ( -s "$outgds") {
+        my @depend=`df2d --dfII-dir='$dfII_dir' --cell='$cell' --view=layout --output-file=/dev/stdout`;
+        chomp @depend;
+        my $outofdate=0;
+        my @stat=stat($outgds);
+        my $gdstime=$stat[9];
+        foreach my $file (@depend) {
+            next if $file =~ /CDBDEP_TAR/;
+            $file =~ s/\s*\\//;
+            $file =~ s/\\//g;
+            $file =~ s/\s//g;
+            my $cn=$file;
+            $cn =~ s:$dfII_dir/::;
+            $cn =~ s:\/layout/.*::;
+            $cn =~ s:.*/::;
+            $cn =~ s/#2e/./g;
+            $cn =~ s/#2d/./g;
+            @stat=stat($file);
+            my $ltime=$stat[9];
+            $outofdate=1 if (! defined ($ltime) or $ltime > $gdstime); 
+            print "$cn is out of date for $cell" if $outofdate;
+            last if $outofdate;
+        }
+        if (! $outofdate) {
+            print "Skipping $cell" if $verbose;
+            return 0;
+        }
+    }
+    my $start=time;
+    print "Generating $cell" if $verbose;
+    mysystem "mkdir", "-p", "$working_dir";
+
+    mkdir "/scratch/$user";
+    my $gdswd=`mktemp -d "/scratch/$user/writegds.XXXXXX"`;
+    chomp $gdswd;
+    my @cmd=(
+#    "qbwrapper",
+#    "-l", "mem=8G",
+    "gdsIIWrite",
+    "--64",
+    "--max-heap-size=$max_heap_size",
+    "--jre-args=-server",
+    "--working-dir=$gdswd",
+    "--fulcrum-pdk-root=$pdk_root",
+    "--cast-path=$cast_path",
+    "--view=layout",
+    "--dfII-dir=$dfII_dir",
+    "--cadence-log=$working_dir/gdsIIWrite.log",
+    "--assura-log=$working_dir/partial.log",
+    "--output=$gdswd/cell.gds2.tmp",
+    "--bind-rul=/nfs/site/disks/wdisk.50/aagrey/rrcwd/lve/lib/sram/8T/fifo/SRAMFIFO32(24)/3000/layout/cell.bindrul.tmp",
+    "--cell=$cell",
+    "--noproperties",
+    "--output-root-cell-name=$gdsIIcell",
+    "--65mode=0",
+    "--flatten-vias",
+    "--flatten-pcells");
+    push @cmd, "--use-tag" if $topcell;
+    push @cmd, "--tapeout" if $cell =~ /\.wires\./ or $cell =~ /^global/;
+    push @cmd, "--verilog" if $synchronous;
+
+    my $cmd="'".join("' '", @cmd)."'";
+    mysystem($cmd);
+
+    print "TOPCELLS of $gdsIIcell ".join(" ", @topcells);
+    my $outnames=$outgds;
+    $outnames =~ s/\.gd[^\.]*$/.names/;
+    if (@topcells || $topcell) {
+        my @gdstopcells=@topcells;
+        print STDERR ("aaggds '$gdswd/cell.gds2.tmp'");
+        if ($debug) {
+            open (P, "| aaggds '$gdswd/cell.gds2.tmp' 2>\&1");
+        }
+        else {
+            open (P, "| aaggds '$gdswd/cell.gds2.tmp' 2>/dev/null 1>/dev/null");
+        }
+        print STDERR "t";
+        print P "t";
+        foreach my $g (@gdstopcells) {
+            $g=`echo '$g' | rename --type=cell --from=cast --to=gds2`;
+            chomp $g;
+            print STDERR "rm $g";
+            print P "rm $g";
+        }
+        if ($topcell) {
+            print P "t $xlatcell";
+            print P "wh $working_dir/t.gds";
+            print P "t $gdsIIcell";
+            print P "rm $xlatcell";
+        }
+        print P "wh $working_dir/x.gds";
+        print P "q";
+        close P;
+        if ($topcell) {
+            unlink "$working_dir/cell.names";
+            mysystem("rdgds '$working_dir/t.gds' | sed -e 's/$xlatcell/$gdsIIcell/' | awk '{print \$0} /STRNAME/ {st[\$2]=1} /SNAME/ {sn[\$2]=1} END {for (s in sn) { print \"SNAME\",s >> \"$working_dir/cell.names\" } for (s in st ) { print \"STRNAME\",s >> \"$working_dir/cell.names\"}}' | wrgds > '$working_dir/cell.gds2'");
+            unlink "$working_dir/t.gds";
+            unlink "$outnames";
+            mysystem("rdgds '$working_dir/x.gds' | sed -e 's/$gdsIIcell/${gdsIIcell}_top/' -e 's/$xlatcell/$gdsIIcell/' | awk '{print \$0} /STRNAME/ {st[\$2]=1} /SNAME/ {sn[\$2]=1} END {for (s in sn) { print \"SNAME\",s >> \"$outnames\" } for (s in st ) { print \"STRNAME\",s >> \"$outnames\"}}' | wrgds > '$outgds'");
+            unlink "$working_dir/x.gds";
+        }
+        else {
+            rename "$working_dir/x.gds", "$outgds";
+            mysystem ("rdgds '$outgds' | egrep 'SNAME|STRNAME' | sort -u > '$outnames'");
+        }
+    }
+    else {
+        if ($topcell) {
+            mysystem ("cp", "-p", "$gdswd/cell.gds2.tmp", "$outgds");
+            mysystem ("rdgds '$outgds' | egrep 'SNAME|STRNAME' | sort -u > '$outnames'");
+        }
+        else {
+            print STDERR ("aaggds '$gdswd/cell.gds2.tmp'");
+            if ($debug) {
+                open (P, "| aaggds '$gdswd/cell.gds2.tmp' 2>\&1");
+            }
+            else {
+                open (P, "| aaggds '$gdswd/cell.gds2.tmp' 2>/dev/null 1>/dev/null");
+            }
+            print P "wf $working_dir/g.gds";
+            print P "q";
+            close P;
+            rename "$working_dir/g.gds", "$outgds";
+            mysystem ("rdgds '$outgds' | egrep 'SNAME|STRNAME' | sort -u > '$outnames'");
+        }
+    }
+    system ("/bin/rm -rf $gdswd");
+    my $elapse=sprintf("%.1f", ((time-$start)/60));
+    print "Elapsed for $cell ${elapse}M" if $verbose;
+}

@@ -1,0 +1,504 @@
+#!/bin/bash
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+if [[ -x "$sedcmd" && -r "$sedcmd" ]] ; then
+
+function get_lib_name() {
+  local cellName="$1"
+  local libName=`echo "$cellName" | $sedcmd -e 's/\.[^\.]*$//' -e 's/\.[^\.]*$//'`
+  ret="$libName"
+}
+
+function get_cell_name_from_cell_name_with_subtype() {
+  local cellNameWithSubType="$1"
+  local cellName=`echo "$cellNameWithSubType" | $sedcmd -e 's/\.[^\.]*$//'`
+  ret="$cellName"
+}
+
+function get_subtype_from_cell_name_with_subtype() {
+  local cellNameWithSubType="$1"
+  local subType=`echo "$cellNameWithSubType" | $sedcmd -e "s/.*\.//"`
+  ret="$subType"
+}
+
+function strip_lib_name() {
+  local cellName="$1"
+  
+  get_cell_name_from_cell_name_with_subtype "$cellName"
+  local subtype_stripped="$ret"
+ 
+  
+  local shortName=`echo "$subtype_stripped" | $sedcmd -e "s/.*\.//"`
+
+  get_subtype_from_cell_name_with_subtype "$cellName"
+  local subtype="$ret"
+
+  ret="$shortName.$subtype"
+
+}
+  
+
+function get_short_name() {
+  local cellName="$1"
+  local shortName=`echo "$cellName" | $sedcmd -e "s/.*\.//"`
+  ret="$shortName"
+}
+
+function get_library_dir_for_libraray() {
+  local libName="$1"
+  local rootDir="$2"
+
+  local libDir=`echo $libName | $sedcmd -e "s/\./\\//g"`
+  ret="$rootDir/$libDir"
+
+}
+
+function get_library_dir() {
+  local cellName="$1"
+  local rootDir="$2"
+
+  if [[ -n "$cellName" && -n "$rootDir" ]] ; then
+    local libName
+    local libDir
+    get_lib_name "$cellName"
+    libName="$ret"
+    
+    get_library_dir_for_libraray "$libName" "$rootDir"
+    libDir="$ret"
+
+    ret="$libDir"
+
+  else
+    ret=""
+  fi
+
+}
+
+function get_cell_dir() {
+  local cellName="$1"
+  local rootDir="$2"
+  if [[ -n "$cellName" && -n "$rootDir" ]] ; then
+    local libDir
+    get_library_dir "$cellName" "$rootDir"
+    libDir="$ret"
+    ret="$libDir/$cellName"
+  else
+    ret=""
+  fi
+}
+
+function cadence_escape_string() {
+  local theStr="$1"
+
+  ret=`echo "$theStr" | $sedcmd -e "s/\./#2e/g" -e "s/-/#2d/g" -e 's/\\$/#24/g'`
+}
+
+function cadence_reverse_escape_string() {
+  local theStr="$1"
+
+  ret=`echo "$theStr" | $sedcmd -e "s/#2e/./g" -e "s/#2d/-/g"`
+}
+
+function get_escaped_cell_dir() {
+  local cellName="$1"
+  local rootDir="$2"
+  if [[ -n "$cellName" && -n "$rootDir" ]] ; then
+    local libDir
+    get_library_dir "$cellName" "$rootDir"
+    libDir="$ret"
+
+    local escapedCellName
+    cadence_escape_string "$cellName"
+    escapedCellName="$ret"
+
+    ret="$libDir/$escapedCellName"
+  else
+    ret=""
+  fi
+}
+
+function get_cadence_cell_view_dir() {
+  local cellName="$1"
+  local viewName="$2"
+  local rootDir="$3"
+
+  if [[ -n "$cellName" && -n "$viewName" && -n "$rootDir" ]] ; then
+    local cellDir
+    get_escaped_cell_dir "$cellName" "$rootDir"
+    cellDir="$ret"
+   
+    if [ -n "$cellDir" ] ; then
+      local escapedViewName
+      cadence_escape_string "$viewName"
+      escapedViewName="$ret"
+      
+      ret="$cellDir/$escapedViewName"
+    else
+      ret=""
+    fi
+  else
+    ret=""
+  fi
+
+}
+
+
+#Tells you if we know a cell view is invalid.
+#Inverting the result of this function tells you
+#if a cell COULD be valid, NOT that it is valid.
+function is_invalid_cadence_cell_view() {
+  local cellName="$1"
+  local viewName="$2"
+  local rootDir="$3"
+
+  if [[ -n "$cellName" && -n "$viewName" && -n "$rootDir" ]] ; then
+    local cellViewDir
+    get_cadence_cell_view_dir "$cellName" "$viewName" "$rootDir"
+    local cellViewDir="$ret"
+
+    if [ -n "$cellViewDir" ] ; then
+      is_invalid_cadence_cell_view_dir "$cellViewDir"
+    else
+      ret="1"
+    fi
+  else
+    ret="1"
+  fi 
+}
+
+function is_invalid_cadence_cell_view_dir() {
+  local cellViewDir="$1"
+  local master_tag="$cellViewDir/master.tag"
+  local cdb_file=
+  if [[ -f "$master_tag" &&
+        -r "$master_tag" ]] ; then
+    cdb_file=`tail -1 "$master_tag"`
+    cdb_file="$cellViewDir/$cdb_file"
+  fi
+
+  if [ -n "$cdb_file" ] ; then
+    if [[ -f "$cdb_file"          &&
+          -r "$cdb_file"          &&
+          -f "$master_tag"        &&
+          -r "$master_tag"        ]] ; then
+      ret="0"
+    else
+      ret="1"
+    fi
+  else
+    ret="1"
+  fi
+}
+
+function get_cadence_cell_view_binary_files() {
+
+  local cellName="$1"
+  local viewName="$2"
+  local rootDir="$3"
+
+  if [[ -n "$cellName" && -n "$viewName" && -n "$rootDir" ]] ; then
+    local cellViewDir
+    get_cadence_cell_view_dir "$cellName" "$viewName" "$rootDir"
+    cellViewDir="$ret"
+
+    echo "$cellViewDir";
+    if [ -n "$cellViewDir" ] ; then
+      
+      local master_tag="$cellViewDir/master.tag"
+      local prop_xx="$cellViewDir/prop.xx"
+      local thumbnail="$cellViewDir/thumbnail_128x128.png"
+      local cdb_file=
+      if [[ -f "$master_tag" &&
+            -r "$master_tag" ]] ; then
+        cdb_file=`tail -1 "$master_tag"`
+        cdb_file="$cellViewDir/$cdb_file"
+      fi
+
+      # do not really need prop.xx if it is not there
+      if [ ! -f "$prop_xx" ]; then prop_xx=""; fi
+      if [ ! -f "$thumbnail" ]; then thumbnail=""; fi
+      if [ -n "$cdb_file" ] ; then
+        ret="$cdb_file $prop_xx $thumbnail"
+      else
+        ret="$prop_xx"
+      fi
+    else
+      ret=""
+    fi
+  else
+    ret=""
+  fi
+
+}
+
+function get_cadence_cell_view_text_files() {
+
+  local cellName="$1"
+  local viewName="$2"
+  local rootDir="$3"
+
+  if [[ -n "$cellName" && -n "$viewName" && -n "$rootDir" ]] ; then
+    local cellViewDir
+    get_cadence_cell_view_dir "$cellName" "$viewName" "$rootDir"
+    cellViewDir="$ret"
+
+    if [ -n "$cellViewDir" ] ; then
+      local master_tag="$cellViewDir/master.tag"
+      local cdb_file=
+      ret="$master_tag"
+      
+    else
+      ret=""
+    fi
+  else
+    ret=""
+  fi
+
+}
+
+function is_cell_view_writeable() {
+
+  local cellName="$1"
+  local viewName="$2"
+  local rootDir="$3"
+
+  if [[ -n "$cellName" && -n "$viewName" && -n "$rootDir" ]] ; then
+    local cellViewDir
+    get_cadence_cell_view_dir "$cellName" "$viewName" "$rootDir"
+    cellViewDir="$ret"
+
+    if [ -n "$cellViewDir" ] ; then
+      
+      local master_tag="$cellViewDir/master.tag"
+      local cdb_file=
+      if [[ -f "$master_tag" &&
+            -r "$master_tag" ]] ; then
+        cdb_file=`tail -1 "$master_tag"`
+        cdb_file="$cellViewDir/$cdb_file"
+      fi
+
+      if [ -n "$cdb_file" ] ; then
+        if [[ -f "$master_tag" &&
+              -w "$master_tag" &&
+              -r "$master_tag" &&
+              -f "$cdb_file"   &&
+              -w "$cdb_file"   &&
+              -r "$cdb_file"   ]] ; then
+          ret="1"
+        else
+          ret="0"
+        fi
+      else
+        ret="0"
+      fi
+    else
+      ret="0"
+    fi
+  else
+    ret="0"
+  fi
+
+}
+
+function get_lib_name_for_dir() {
+  local dirName="$1"
+  local rootDir="$2"
+
+  local escapedRootDir=`echo "$rootDir" | $sedcmd -e "s/\//\\\\\\\\\\//g"`
+
+  local relativeLibDir=`echo "$dirName" | $sedcmd -e "s/$escapedRootDir//g"`
+
+  local libName=`echo "$relativeLibDir" | $sedcmd -e "s/\//./g" -e "s/^\.//" -e "s/\.\$//"`
+
+  ret="$libName"
+
+}
+
+function get_escaped_library_name_for_library() {
+  local libName="$1"
+  
+  local escapedLibName
+  cadence_escape_string "$libName"
+  escapedLibName="$ret"
+
+  ret="$escapedLibName"
+
+}
+
+function get_first_component_of_name() {
+
+  local name="$1"
+
+  ret=`echo $name | $sedcmd -e "s/^\([^\.]\+\)\..\+/\1/"`
+  
+}
+
+function strip_first_component_of_name() {
+  local name="$1"
+  ret=`echo $name | $sedcmd -e "s/^\([^\.]\+\)\.\(.\+\)/\2/"`
+}
+
+function get_second_component_of_name() {
+  local name="$1"
+
+  strip_first_component_of_name "$name"
+
+  local second_and_beyond="$ret"
+
+  get_first_component_of_name "$second_and_beyond"
+
+  local second_component="$ret"
+
+  ret="$second_component"
+        
+}
+
+function strip_first_two_components_of_name() {
+
+  local name="$1"
+  strip_first_component_of_name "$name"
+  local firstStripped="$ret"
+  strip_first_component_of_name "$firstStripped"   
+  local firstTwoStripped="$ret"
+  ret="$firstTwoStripped"
+}
+
+function get_third_component_of_name() {
+  local name="$1"
+  
+  strip_first_two_components_of_name "$name"
+
+  local third_and_beyond="$ret"
+
+  get_first_component_of_name "$third_and_beyond"
+
+  local third_component="$ret"
+
+  ret="$third_component"
+
+}
+
+function strip_first_three_components_of_name() {
+  local name="$1"
+  strip_first_two_components_of_name "$name"
+  local firstTwoStripped="$ret"
+  strip_first_component_of_name  "$firstTwoStripped"
+  local firstThreeStripped="$ret"
+  ret="$firstThreeStripped"
+}
+
+function get_depot_path_for_lib_name() {
+  
+  local dfIIRoot="$1"
+  local branchName="$2"
+  local libName="$3"
+  
+  
+  get_first_component_of_name "$libName"
+  firstComponent="$ret"
+
+  local preBranch="$dfIIRoot"
+  local postBranch=""
+
+  if [[ "$firstComponent" == "chip" || "$firstComponent" == "core" ]] ; then
+    get_second_component_of_name "$libName"
+    local secondComponent="$ret"
+    preBranch="$preBranch/$firstComponent/$secondComponent"
+
+    strip_first_two_components_of_name "$libName"
+    local postBranchComponents="$ret"
+    postBranch=`echo $postBranchComponents | $sedcmd -e "s/\./\\//g"`
+  else
+    if [[ "$firstComponent" == "vendor" ]] ; then
+      get_second_component_of_name "$libName"
+      local secondComponent="$ret"
+
+      get_third_component_of_name "$libName"
+      local thirdComponent="$ret"
+      preBranch="$preBranch/$firstComponent/$secondComponent/$thirdComponent"
+
+      strip_first_three_components_of_name "$libName"
+      local postBranchComponents="$ret"
+      postBranch=`echo $postBranchComponents | $sedcmd -e "s/\./\\//g"`
+    else
+      
+      preBranch="$preBranch/$firstComponent"
+
+      strip_first_component_of_name "$libName"
+      local postBranchComponents="$ret" 
+      postBranch=`echo $postBranchComponents | $sedcmd -e "s/\./\\//g"`
+    fi
+  fi
+  
+  ret="$preBranch/$branchName/$postBranch"
+
+}
+
+function get_dfII_depot_path_for_cell_name() {
+  local dfIIRoot="$1"
+  local branchName="$2"
+  local cellName="$3"
+
+  get_lib_name "$cellName"
+  local libName="$ret"
+
+  get_depot_path_for_lib_name "$dfIIRoot" "$branchName" "$libName"
+  local libDepotPath="$ret"
+
+  cadence_escape_string "$cellName"
+  escapedCellName="$ret"
+
+  ret="$libDepotPath/${cellName}Q$"
+  
+}
+
+function get_spec_depot_path_for_cell_name() {
+
+  
+  local dfIIRoot="$1"
+  local branchName="$2"
+  local cellName="$3"
+
+  get_lib_name "$cellName"
+  local libName="$ret"
+
+  get_depot_path_for_lib_name "$dfIIRoot" "$branchName" "$libName"
+  local libDepotPath="$ret"
+
+  cadence_escape_string "$cellName"
+  escapedCellName="$ret"
+
+  strip_lib_name "$cellName"
+  libStripped="$ret"
+
+  get_first_component_of_name "$libStripped"
+  rootCellName="$ret"
+
+  get_second_component_of_name "$libStripped"
+  subType="$ret"
+
+  ret="$libDepotPath/$rootCellName/$subType.cast"
+
+}
+
+function get_cadence_cell_name_for_dfII_file() {
+    local file="$1"    
+    local viewDir=`dirname $file`
+    local cellDir=`dirname $viewDir`
+    local cell=`basename $cellDir`
+    
+    cadence_reverse_escape_string $cell
+}
+
+function get_cadence_view_name_for_dfII_file() {
+    local file="$1"    
+    local viewDir=`dirname $file`
+    ret=`basename $viewDir`    
+}
+
+else
+  echo "You must define the sedcmd variable before sourcing the parsecellname file."
+fi

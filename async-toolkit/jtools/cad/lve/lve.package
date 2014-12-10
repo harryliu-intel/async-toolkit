@@ -1,0 +1,299 @@
+1 1
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+# <h1> LVE package </h2>
+# <h2> Documentation </h2>
+# <ul>
+# <li> User level documentation.
+doc/index.html                doc/intro.html                   644 p
+doc/intro.html                doc/intro.html                   644 p
+
+# <li> How we gather/and display information about cells in lve.
+doc/data_mining.html          doc/data_mining.html             644 p
+
+# <li> A discussion of the directives that lve understands.
+doc/directives.html           doc/directives.html              644 p
+
+# <li> FAQ
+doc/faq.html                  doc/faq.html                     644 p
+
+# <li> For more advanced features of LVE.
+doc/hackers.html              doc/hackers.html                 644 p
+
+# <li> A discussion of compute resources and the LVE.
+doc/resources.html            doc/resources.html               644 p
+
+# <li> A directed graph of dependencies.
+doc/dag.html                  doc/dag.html                     644 p
+#</ul>
+
+doc/lve.png                   doc/lve.png                      644 p
+doc/logo.png                  doc/logo.png                     644 p
+doc/table.css                 doc/table.css                    644 p
+doc/lve.css                   doc/lve.css                      644 p
+
+# <h2> Files </h2>
+# a script to test for valid gds
+$arch/bin/isgds               script/perl/isgds                755 p
+
+# The primary lve script.
+$arch/bin/lve.pl               script/perl/lve                  755 p
+$arch/bin/recursive_graybox.pl script/perl/recursive_graybox    755 p
+$arch/bin/getslack             script/perl/getslack.pl          755 p
+
+# The to automatically do graybox extract hierarchically
+$arch/bin/lveextractgray.pl   script/perl/lveextractgray.pl    755 p
+
+# Used for submitting drc/lvs jobs to PMC.
+$arch/bin/lve_pmc.pl          script/perl/remote/lve_pmc       755 p
+
+# Used for converting .raw files to .html files inside the lve script.
+$arch/bin/lve_resummarize.pl  script/perl/lve_resummarize      755 p
+$arch/bin/lve_summarize.pl    script/perl/lve_summarize        755 p
+
+# Used to verify 6T/10T/TCAM
+$arch/bin/lve_sram.pl          script/perl/lve_sram            755 p
+$arch/bin/pathalyze_HitChan.pl script/perl/pathalyze_HitChan   755 p
+
+# Used for timing characterization of TCAMs
+$arch/bin/tcam_lib.pl          script/perl/wwc_tcam/tcam_lib        755 p
+$arch/bin/run_tcam.pl          script/perl/wwc_tcam/run_tcam        755 p
+$arch/bin/rename_aplot.pl      script/perl/wwc_tcam/rename_aplot    755 p
+$arch/bin/write_tcam_init.pl   script/perl/wwc_tcam/write_tcam_init 755 p
+
+# Used for Proteus timing characterization
+$arch/bin/proteus_characterize.pl script/perl/proteus_characterize 755 p
+
+# Used for electromigration analysis.
+$arch/bin/lve_em.pl           script/perl/lve_em               755 p
+# Used in the makefiles to turn results into .raw files
+$arch/bin/lve_raw.pl          script/perl/lve_raw              755 p
+$arch/bin/lve_apl             script/perl/lve_apl              755 p
+$arch/bin/raw2db              script/perl/raw2db.pl            755 p
+$arch/bin/checkdb             script/perl/checkdb.pl           755 p
+$arch/bin/db2table            script/perl/db2table.pl          755 p
+# Used in the makefiles to delete trace file
+$arch/bin/deletetracefile          script/perl/deletetracefile              755 p
+# Used in the makefiles to delete trace file
+$arch/bin/lve_threshresp          script/perl/lve_threshresp   755 p
+# PGP encryption of gds2 Removed because it points to non-existant place; hence useless
+#$arch/bin/tapeout.pl          script/perl/tapeout              755 p
+
+# qsub wrapper script used for launching jobs in parallel
+$arch/bin/qb.pl               script/perl/qsub/qb              755 p
+$arch/bin/qbwrapper           script/perl/qsub/qbwrapper       755 p
+
+# The extraction script
+$arch/bin/extract_starRC.pl   script/perl/spice/extract_starRC.pl   755 p
+$arch/bin/spice_reduce.pl     script/perl/spice/spice_reduce.pl     755 p
+$arch/bin/fix_pinswap.pl      script/perl/fix_pinswap.pl            755 p
+$arch/bin/spefrename.pl       script/perl/spefrename.pl             755 p
+$arch/bin/hlvs                script/perl/spice/hlvs.pl             755 p
+$arch/bin/hdrc                script/perl/hdrc.pl                   755 p
+$arch/bin/frc                 script/perl/frc.pl                    755 p
+$arch/bin/hlvsrename          script/perl/spice/hlvsrename.pl       755 p
+$arch/bin/parse_hlvs          script/perl/spice/parse_hlvs.pl       755 p
+$arch/bin/extractCDC.pl       script/perl/spice/extractCDC.pl       755 p
+
+# Used to run hsim
+$arch/bin/hsim.pl             script/perl/spice/hsim.pl             755 p
+$arch/bin/spice2spice.pl      script/perl/spice/spice2spice.pl      755 p
+
+# Used to simplify an RC spice file and convert to .aspice format
+$arch/bin/rc_spice2aspice.pl  script/perl/rc_spice2aspice      755 p
+$arch/bin/canonicalizing_spice2aspice.pl  script/perl/canonicalizing_spice2aspice 755 p
+
+# Pathalyze and related utilies
+$arch/bin/pathalyze.pl       script/perl/pathalyze.pl        755 p
+$arch/bin/captally.pl        script/perl/captally.pl         755 p
+$arch/bin/genliberty.pl      script/perl/genliberty.pl       755 p
+$arch/bin/genlib.pl          script/perl/genlib.pl           755 p
+
+# In-depth cap coupling failure analysis & sign-off tool.
+$arch/bin/analyze_coupling.pl script/perl/analyze_coupling   755 p
+
+# Generate LEF file from gray-cell-list
+$arch/bin/lefWrite.pl        script/perl/lefWrite.pl         755 p
+
+# check dummy pins
+$arch/bin/check_dummy_pin.pl script/perl/check_dummy_pin.pl  755 p
+
+# utilities
+$arch/bin/lve_jobs.pl        script/perl/lve_jobs            755 p
+
+# new df2.d generator
+$arch/bin/df2d              script/perl/df2d.pl              755 p
+
+### ve is a wrapper for verification scripts.  e.g. assura
+include ../external-tools-integration/cadence/virtuoso/script/perl/ve/ve.package ../external-tools-integration/cadence/virtuoso/script/perl/ve ^share->share/script/perl/ve
+
+include ../external-tools-integration/cadence/virtuoso/skill/ui/ui.package ../external-tools-integration/cadence/virtuoso/skill/ui ^share->share/skill/ui
+
+### mkcdswd used here for gdsIIWrite, updatenetlist, etc
+include ../external-tools-integration/cadence/virtuoso/script/sh/setup/cds_wd.package ../external-tools-integration/cadence/virtuoso/script/sh/setup ^share->share/script/sh/setup
+
+### mk_instance used by jauto
+include ../external-tools-integration/cadence/virtuoso/mk_instance.package ../external-tools-integration/cadence/virtuoso
+
+### gdsIIWrite used to make gds2 in gds2 task
+include ../external-tools-integration/cadence/virtuoso/gdsIIWrite.package ../external-tools-integration/cadence/virtuoso
+
+### lefdefWrite
+include ../external-tools-integration/cadence/virtuoso/lefdef.package ../external-tools-integration/cadence/virtuoso
+
+### nano
+include ../external-tools-integration/cadence/virtuoso/nano.package ../external-tools-integration/cadence/virtuoso
+
+## jauto is used for creating spice files for estimated, nogeometry
+include ../java/src/com/avlsi/tools/jauto/jauto.package ../java/src/com/avlsi/tools/jauto
+
+include ../java/src/com/avlsi/tools/lvs/jlvs.package ../java/src/com/avlsi/tools/lvs
+
+include ../java/src/com/avlsi/tools/jflat/jflat.package ../java/src/com/avlsi/tools/jflat
+
+include ../java/src/com/avlsi/file/cdl/util/rename/cdlrenamer.package ../java/src/com/avlsi/file/cdl/util/rename
+java com.avlsi.tools.cast2skill.Cast2Skill
+# following needed for library generation
+java com.avlsi.file.cdl.parser.Inliner
+$arch/bin/generate_ip_data.sh ../java/src/com/avlsi/tools/ipgen/generate_ip_data.sh 755
+$arch/bin/cast2skill.sh       ../java/src/com/avlsi/tools/cast2skill/cast2skill.sh  755
+
+### override some build-system stuff for optimizations, clarity.
+include ../../infrastructure/build-system/build-system.package ../../infrastructure/build-system ^share->share/build
+share/build/Makefile          build-system/lveMakefile          644 p
+
+# skill for ui
+# used in cdbdep
+share/skill/util/file/configfile.il ../../cad/external-tools-integration/cadence/virtuoso/skill/util/file/configfile.il 644 p
+share/skill/util/file/tempfile.il ../../cad/external-tools-integration/cadence/virtuoso/skill/util/file/tempfile.il 644 p
+share/skill/util/file/readfile.il ../../cad/external-tools-integration/cadence/virtuoso/skill/util/file/readfile.il 644 p
+share/skill/util/file/path.il ../../cad/external-tools-integration/cadence/virtuoso/skill/util/file/path.il 644 p
+share/skill/ui/ui.il ../../cad/external-tools-integration/cadence/virtuoso/skill/ui/ui.il 644 p
+
+
+share/script/sh/util/parsecellname ../../cad/external-tools-integration/cadence/virtuoso/script/sh/util/parsecellname                                             644 p
+share/script/sh/sh-lib/file/filecheck.sh ../../infrastructure/sh-lib/file/filecheck.sh 755 p
+share/script/sh/sh-lib/file/conon.sh ../../infrastructure/sh-lib/file/conon.sh         755 p
+share/script/sh/sh-lib/file/config.sh ../../infrastructure/sh-lib/file/config.sh       755 p
+share/script/sh/sh-lib/script/generate_script_with_libs.sh ../../infrastructure/sh-lib/script/generate_script_with_libs.sh 755 p
+lib/perl/LveDB.pm              lib/perl/LveDB.pm                      755 p
+lib/perl/LveUtil.pm            lib/perl/LveUtil.pm                    755 p
+lib/perl/LveAspice.pm          lib/perl/LveAspice.pm                  755 p
+lib/perl/LveDelay.pm           lib/perl/LveDelay.pm                   755 p
+lib/perl/LveStatus.pm          lib/perl/LveStatus.pm                  755 p
+lib/perl/LveSummarize.pm       lib/perl/LveSummarize.pm               755 p
+lib/perl/LveSummarize.pm       lib/perl/LveSummarize.pm               755 p
+lib/perl/Pathalyze.pm          lib/perl/Pathalyze.pm                  755 p
+lib/perl/Pathalyze/Parser.pm   lib/perl/Pathalyze/Parser.pm           755 p
+lib/perl/Pathalyze/Measurement.pm lib/perl/Pathalyze/Measurement.pm   755 p
+lib/perl/Pathalyze/Parameter.pm lib/perl/Pathalyze/Parameter.pm       755 p
+lib/perl/Cast/JavaServer.pm    ../perl/perlmod/Cast/JavaServer.pm     755 p
+lib/perl/Cast/NodeAliasing.pm  ../perl/perlmod/Cast/NodeAliasing.pm   755 p
+lib/perl/Cast/SourceControl.pm ../perl/perlmod/Cast/SourceControl.pm  755 p
+lib/perl/Util/Numeric.pm       ../perl/perlmod/Util/Numeric.pm        755 p
+lib/perl/rvp.pm                lib/perl/rvp/rvp.pm                    755 p
+lib/perl/Perforce.pm           ../ubersize/lib/perl/Perforce.pm       755 p
+lib/perl/rename.pm             lib/perl/rename.pm                     755 p
+
+$arch/bin/local_aspice.pl         script/perl/local_aspice            755 p
+$arch/bin/make_aspice_in.pl       script/perl/make_aspice_in          755 p
+$arch/bin/make_asta_in.pl         script/perl/make_asta_in            755 p
+$arch/bin/make_alint_in.pl        script/perl/make_alint_in           755 p
+$arch/bin/make_slint_in.pl        script/perl/make_slint_in           755 p
+$arch/bin/merge_alint_out.pl      script/perl/merge_alint_out         755 p
+$arch/bin/update_delay_and_cap.pl script/perl/update_delay_and_cap    755 p
+$arch/bin/find_envs.pl            script/perl/find_envs               755 p
+$arch/bin/find_layout.pl          script/perl/find_layout             755 p
+$arch/bin/find_bumps.pl           script/perl/find_bumps              755 p
+$arch/bin/snarf.pl                script/perl/snarf                   755 p
+$arch/bin/shmoo.pl                script/perl/shmoo                   755 p
+$arch/bin/histogram.pl            script/perl/histogram               755 p
+$arch/bin/signoff_check.pl        script/perl/signoff_check           755 p
+$arch/bin/aspice                  ../c/aspice/aspice                  755
+$arch/bin/calculator              ../c/lib/calculator                 755
+$arch/bin/bigint_calculator       ../c/lib/bigint_calculator          755
+$arch/bin/mksigs                  script/perl/mksigs.pl               755 p
+$arch/bin/aplot                   ../c/aspice/aplot                   755
+$arch/bin/reorder_trace           ../c/aspice/reorder_trace           755
+$arch/bin/convert_trace           ../c/aspice/convert_trace           755
+$arch/bin/debug_trace             ../c/aspice/debug_trace             755
+$arch/bin/rc_simplify             ../c/aspice/rc_simplify             755
+$arch/bin/test_model              ../c/aspice/test_model              755
+$arch/bin/lve_tracking.pl         script/perl/lve_tracking            755 p
+$arch/bin/pmc_jobcancel           script/perl/remote/pmc_jobcancel.sh 755 p
+$arch/bin/pmc_jobsubmit           script/perl/remote/pmc_jobsubmit.pl 755 p
+$arch/bin/lve_query.pl            script/perl/lve_query               755 p
+$arch/bin/cell_lef.pl             script/perl/cell_lef.pl             755 p
+
+share/asp/default.asp             ../c/aspice/asp/default.asp         644 p
+
+# skill for package
+share/skill/util/package/package.il ../../cad/external-tools-integration/cadence/virtuoso/skill/util/package/package.il 644 p
+
+# install scripts
+install/share/bin/package.il.inst ../../cad/external-tools-integration/cadence/virtuoso/skill/util/package/package.il.inst 775 p
+install/share/bin/gen_autoload    ../../cad/external-tools-integration/cadence/virtuoso/skill/gen_autoload                 775 p
+
+# script for checking license availabilty
+$arch/bin/checklic.pl   ../scripts/license/checklic.pl  775 p
+
+# cast tapeout signoff report generation script
+$arch/bin/cast_signoff_report.pl  ../scripts/cast_signoff_report      755 p
+
+# a utility for flattening or partially flattening a cdl
+$arch/bin/flatcdl script/perl/flatcdl.pl    755 p
+
+# generatel CDL aliases to help with canonicalizing names
+java com.avlsi.file.cdl.parser.CDLAliases
+$arch/bin/cdlaliases.sh ../java/src/com/avlsi/file/cdl/parser/cdlaliases.sh 755
+
+# memory monitor
+$arch/bin/mmonitor script/perl/mmonitor     755 p
+
+# a script to run alint on partially extracted synchronous circuits, which also
+# needs vs2cast
+$arch/bin/plt_scenarios script/perl/plt_scenarios.pl    755 p
+$arch/bin/vs2cast ../external-tools-integration/cadence/virtuoso/script/perl/vs2cast.pl 755 p
+$arch/bin/splitcast     script/perl/splitcast.pl     755 p
+$arch/bin/importSync    script/perl/importSync.pl    755 p
+$arch/bin/def2vddgnd    script/perl/def2vddgnd.pl    755 p
+$arch/bin/importV       script/perl/importV.pl       755 p
+$arch/bin/fixnames      script/perl/fixnames.pl      755 p
+$arch/bin/rehierverilog script/perl/rehierverilog.pl 755 p
+$arch/bin/splitfill     script/perl/splitfill.pl     755 p
+$arch/bin/mkbind        script/perl/mkbind.pl        755 p
+$arch/bin/cmpdef ../external-tools-integration/cadence/virtuoso/script/perl/cmpdef.pl 755 p
+
+# script to shorten long names in gds2
+$arch/bin/fixhdrc       script/perl/fixhdrc.pl       755 p
+
+# Voltage Storm
+$arch/bin/vstorm       script/perl/vstorm            755 p
+$arch/bin/vstorm_async script/perl/vstorm_async      755 p
+$arch/bin/gds2def       script/perl/gds2def.pl       755 p
+
+# Wire Length
+$arch/bin/wirelen       script/perl/wirelen.pl       755 p
+
+# check duplicate escaped names in def and verilog
+$arch/bin/chkdupdef     script/perl/chkdupdef.pl     755 p
+$arch/bin/chkdupname    script/perl/chkdupname.pl    755 p
+
+# misc
+$arch/bin/tracescan     script/perl/tracescan.pl     755 p
+$arch/bin/mkpinassign   script/perl/mkpinassign.pl   755 p
+$arch/bin/lveliblef2p4  script/perl/lveliblef2p4     755 p
+$arch/bin/wrapspec      script/perl/wrapspec.pl      755 p
+$arch/bin/fix_alint_raw script/perl/fix_alint_raw    755 p
+
+# totem
+$arch/bin/run_totem     script/perl/run_totem.pl     755 p
+$arch/bin/run_cmm       script/perl/run_cmm.pl       755 p
+
+#rte
+$arch/bin/rte_summarize     script/perl/rte_summarize.pl     755 p
+
+include ../java/src/com/avlsi/tools/synthesis/synthesis.inc ../java/src/com/avlsi/tools/synthesis

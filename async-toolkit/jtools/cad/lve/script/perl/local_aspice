@@ -1,0 +1,311 @@
+#!/usr/intel/bin/perl -w
+
+use POSIX;
+use strict;
+
+my $debugx=0;
+my $accurate="";
+open (DEBUG, ">debug") if $debugx;
+# Find relevant packaged tools
+my $host = `uname -n`; chomp $host;
+my $lve_root = $0;
+my $exe = $lve_root;
+$exe =~ s:.*/::;
+if (! ($lve_root =~ m:^/:)) {
+    my $pwd = `pwd`;
+    chomp $pwd;
+    $lve_root = $pwd;
+    $lve_root .= "/$0";
+    $lve_root =~ s:$exe$::;
+    $lve_root =~ s://:/:g;
+    chdir $lve_root;
+    $lve_root = `pwd`;
+    chomp $lve_root;
+    chdir $pwd;
+}
+else {
+    $lve_root =~ s:/bin/$exe::;
+}
+
+my $aspice = "$lve_root/bin/aspice";
+
+# cleanup leftovers
+my @cleanMe = ();
+sub cleanUp {
+    foreach my $cleanMe (@cleanMe) {
+        print DEBUG "CLEAN $cleanMe" if $debugx;
+        if ( -e "$cleanMe" ) {
+            system("rm -rf \"$cleanMe\"");
+        }
+    }
+    exit();
+}
+
+# set interrupt handlers to cleanup on exit
+$SIG{'INT'} = \&cleanUp;
+$SIG{__DIE__} = \&cleanUp;
+
+# parse optional disk space argument
+my @aspiceargs=();
+my $disk_space = "4G";
+my $cellname="";
+my $root_target_dir="";
+my $alint_dynamic_only=0;
+my $local_props="";
+my $node_props="";
+my $leaky_nodes="";
+my $clean_trace=0;
+my $has_raw_args=0;
+my $task="";
+for (my $i=0; $i<@ARGV; $i++) {
+    if ($ARGV[$i] eq "-top") {
+        $cellname = $ARGV[$i+1];
+        $cellname =~ s/'//g;
+        $cellname =~ s/"//g;
+    }
+    elsif ($ARGV[$i] eq "-path") {
+        my @path=split(/:/, $ARGV[$i+1]);
+        $root_target_dir=$path[$#path-1];
+    }
+    elsif ($ARGV[$i] =~ s/^--alint-dynamic-only=//g) {
+        $alint_dynamic_only=$ARGV[$i];
+        $has_raw_args++;
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--local-props=//g) {
+        $local_props=$ARGV[$i];
+        $has_raw_args++;
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--node-props=//g) {
+        $node_props=$ARGV[$i];
+        $has_raw_args++;
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--leaky-nodes=//g) {
+        $leaky_nodes=$ARGV[$i];
+        $has_raw_args++;
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--task=//g) {
+        $task=$ARGV[$i];
+        $has_raw_args++;
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--clean-trace=//g) {
+        $clean_trace=$ARGV[$i];
+        next;
+    }
+    elsif ($ARGV[$i] eq "--clean-trace") {
+        $clean_trace=1;
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--disk-space=//g) {
+        $disk_space=$ARGV[$i];
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--accurate=//g) {
+        if ($ARGV[$i] ne "0") {
+            $accurate="-verbose";
+        }
+        else {
+            $accurate="";
+        }
+        next;
+    }
+    elsif ($ARGV[$i] =~ /^--/) {
+        next; # ignore all other -- args
+    }
+    push @aspiceargs, "\"$ARGV[$i]\"" unless ($ARGV[$i] eq "");
+}
+
+foreach my $arg (@aspiceargs) {
+    if ($arg =~ m:/accurate:) {
+        $accurate="-verbose";
+        last;
+    }
+}
+$accurate="" if ($task ne "alint");
+$disk_space = getNumMegabytesFromMemorySizeStr($disk_space);
+
+
+# choose temp directory
+my $tmp;
+if (defined $ENV{TMP}) { $tmp = $ENV{TMP}; }
+else { $tmp = "/scratch"; }
+chomp($tmp);
+if (! -e $tmp) {
+    system("mkdir -p $tmp");
+    print DEBUG "push tmp $tmp" if $debugx;
+    push @cleanMe, $tmp;
+}
+
+# check for available disk space in $tmp
+my $available=0;
+if (-w $tmp) {
+    # use -P because otherwise the line may wrap; neither -P or -m exists on
+    # Sun's implementation df; perhaps we should consider using a perl module
+    # to get this information instead of parsing the output of df for
+    # robustness and portability
+    my $space = `df -P -m $tmp | tail -1` or die "Can't df -P -m $tmp\n";
+    chomp($space);
+    my @args = split(" ",$space);
+    $available = $args[3];
+    print STDERR "local_aspice: ${available}MB available on ${host}:${tmp}\n";
+}
+
+# run aspice
+my $parallel_dir=$task;
+my $pwd=`pwd`;
+chomp $pwd;
+my $dir=$pwd;
+$dir =~ s/\/[^\/]+$/\/${parallel_dir}_parallel/ if $task eq "lib" or $task eq "alint" or $task eq "alint_PO";
+write_run("$aspice $accurate @aspiceargs");
+if ($available > $disk_space) {
+    # run aspice in $workdir
+    `mkdir -p "$tmp"`;
+    my $workdir = `mktemp -d ${tmp}/aspice.XXXXXX` 
+        or die "Can't mktemp -d ${tmp}/aspice.XXXXXX\n";
+    chomp $workdir;
+    if (defined ($ENV{LVE_DIRMODE})) {
+        if (defined($ENV{LVE_SGID}) and $ENV{LVE_SGID} == 1) {
+            `chgrp $ENV{LVE_GID} "$workdir" &>/dev/null`;
+        }
+        chmod $ENV{LVE_DIRMODE}, "$workdir";
+    }
+    print DEBUG "push workdir $workdir" if $debugx;
+    push @cleanMe, $workdir;
+    print STDERR "local_aspice: using ${host}:${workdir}\n";
+    system("$aspice $accurate -dir $workdir @aspiceargs");
+    sleep 1;
+    opendir (DW, "$workdir");
+    my @dirs=readdir (DW);
+    closedir (DW);
+    foreach my $dir (@dirs) {
+        if ( $dir ne "." and $dir ne ".." and -d "$workdir/$dir" ) {
+            opendir (DT, "$workdir/$dir"); # target
+            my @names=grep (/\.names$/, readdir (DT));
+            closedir DT;
+            my $firstname=shift @names;
+            my $firstmd5=`md5sum "$workdir/$dir/$firstname"`;
+            chomp $firstmd5;
+            $firstmd5 =~ s/\s.*//;
+            foreach my $namefile (@names) {
+                my $thismd5=`md5sum "$workdir/$dir/$namefile"`;
+                chomp $thismd5;
+                $thismd5 =~ s/\s.*//;
+                if ($firstmd5 eq $thismd5 and $firstmd5 ne "") {
+                    unlink "$workdir/$dir/$namefile";
+                    link "$workdir/$dir/$firstname", "$workdir/$dir/$namefile";
+                }
+            }
+        }
+    }
+    if (($task eq "alint" or $task eq "alint_PO" or $task eq "lib") and $has_raw_args) {
+        my @dir=split(/\//, $pwd);
+        my $mode=$dir[$#dir-5];
+        my $bin=$pwd;
+        my $task_dir=$task;
+        $bin =~ s/.*\/$task_dir\.bin\.//;
+        my $symlink="$pwd.tmp";
+        unlink $symlink;
+        symlink $workdir, "$symlink";
+        sleep 1; # allow nfs to settle
+        if ($task eq "alint") {
+             system "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-dynamic-only=$alint_dynamic_only --alint-in='$dir/$task.in.$bin'";
+
+        }
+        elsif ($task eq "alint_PO") {
+            my $in_file="$task.in.$bin";
+            print "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-in='$dir/$in_file' --is-PO=1\n";
+            system "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-in='$dir/$in_file' --is-PO=1";
+        }
+        elsif ($task eq "lib") {
+            my $in_file="$task.in.$bin";
+            system "lve_raw --fulcrum-pdk-root=$ENV{FULCRUM_PDK_PACKAGE_ROOT} --task=$task --root='$root_target_dir' --dir='$dir' --cell='$cellname' --mode=$mode --local-props='$local_props' --alint-in='$dir/$in_file'";
+        }
+        if ($clean_trace) { 
+            #alint's next step is to do bump chek. We need trace file to measure bumps. Bump check will clean trace file after finished.
+            if($task eq "lib"){
+                if ( -f "$dir/${task}.raw.$bin") {
+                    my $fail=`grep -c "^FAIL" "$dir/${task}.raw.$bin"`;
+                    chomp $fail;
+                    $clean_trace = 0 if $fail > 0;
+                    $fail=`grep -c "FAIL" "$dir/threshresp.result.$bin"`;
+                    chomp $fail;
+                    $clean_trace = 0 if $fail > 0;
+                }
+                else {
+                    $clean_trace = 0;
+                }
+            }elsif($task eq "alint_PO"){
+                    my $fail=`grep -c "FAIL" "$dir/threshresp.result.$bin"`;
+                    chomp $fail;
+                    $clean_trace = 0 if $fail > 0;
+            }else{
+                $clean_trace = 0;
+            }
+        }
+        if ($clean_trace) {
+            system "rsync -aH --exclude='*.trace' --exclude='*.names' '$workdir/' '$pwd'";
+        }
+        else {
+            system "rsync -aH '$workdir/' '$pwd'";
+        }
+        unlink $symlink;
+    }
+    else {
+        system("cp --preserve --preserve=links --recursive $workdir/. .");
+    }
+} else {
+    # run aspice in current directory
+    print STDERR "local_aspice: using $ENV{PWD}\n";
+    system("$aspice $accurate @aspiceargs");
+}
+if (defined ($ENV{LVE_SGID}) and $ENV{LVE_SGID} != 0) {
+    system ("find '$pwd' '$dir' \\! -group $ENV{LVE_GRPNAME} -print0 | xargs -r -0 chgrp $ENV{LVE_GRPNAME}");
+    my $gmod=sprintf("%o", $ENV{LVE_DIRMODE});
+    system ("find '$pwd'  '$dir' -type d \\! -perm $gmod -print0 | xargs -r -0 chmod $gmod");
+    $gmod=sprintf("%o", $ENV{LVE_FILEMODE});
+    system ("find '$pwd' '$dir' -type f \\! -perm $gmod -print0 | xargs -r -0 chmod $gmod");
+}
+
+# clean $workdir (and $tmp if created)
+cleanUp();
+
+# return number of megabytes given a memory size string
+sub getNumMegabytesFromMemorySizeStr {
+    my ( $memStr ) = @_;
+
+    my $numberPart = $memStr;
+    $numberPart =~ s/[A-Za-z]$//;
+    my $unit = $memStr;
+    $unit =~ s/^[0-9]+//;
+
+    if ( ( $unit eq "M" ) || ( $unit eq "m" ) ) {
+        $numberPart = $numberPart * 1024 * 1024;
+    }
+    elsif ( ( $unit eq "K" ) || ( $unit eq "k" ) ) {
+        $numberPart = $numberPart * 1024;
+    }
+    elsif ( ( $unit eq "G" ) || ( $unit eq "g" ) ) {
+        $numberPart = $numberPart * 1024 * 1024 * 1024;
+    }
+    
+    $numberPart = POSIX::ceil( $numberPart / ( 1024 * 1024 ) ) ;
+    if ( $numberPart < 1 ) {
+        $numberPart = 1;
+    }
+    return $numberPart;
+}
+
+# save a run file for later debugging
+sub write_run {
+    my ($str) = @_;
+    open RUN, ">run" or die "ERROR: can't write run file\n";
+    $str =~ s/\$ASPICE_CORNER/$ENV{ASPICE_CORNER}/g; # hack to expand $ASPICE_CORNER
+    print RUN "#!/bin/csh\n";
+    print RUN "$str\n";
+    close RUN;
+    system("chmod +x run");
+}

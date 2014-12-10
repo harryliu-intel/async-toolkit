@@ -1,0 +1,34 @@
+#!/usr/local/bin/perl -w
+
+use FindBin;
+use POSIX;
+
+# Work properly on both Linux and Mac OS X; see bug 1776
+$OSX = ([uname()]->[0] eq "Darwin");
+
+if (exists $ENV{'CHANNELLIB'}) {
+    $ChannelLib = $ENV{'CHANNELLIB'};
+    print STDERR '=' x 70, "\n";
+    print STDERR "Warning: using non-standard ChannelLib $ChannelLib\n";
+    print STDERR '=' x 70, "\n";
+} else {
+    $ChannelLib = osxify("/home/group/microarch/cad/dsim/2.0/share/java/dsim.jar");
+}
+
+@ClassPath = ();
+
+push @ClassPath, "$FindBin::Bin/../../../shared/jars/dsim.jar";
+push @ClassPath, "$FindBin::Bin/../../../shared/jars/concurrent.jar";
+push @ClassPath, osxify("/home/group/software/jars/antlrall-2.7.2.jar");
+push @ClassPath, "$FindBin::Bin/../src";
+push @ClassPath, "$FindBin::Bin/../classes";
+push @ClassPath, osxify("/usr/local/JCSP-1.1.3/jcsp-std-J2.jar");
+push @ClassPath, "$FindBin::Bin/../../../pv2/shared/java/classes";
+
+print join(":", @ClassPath), "\n";
+
+sub osxify {
+    my $path = $_[0];
+    $path =~ s%^.*/%$FindBin::Bin/osx/jars/% if ($OSX);
+    return $path;
+}

@@ -1,0 +1,123 @@
+*
+* Max wire resistance test circuits.
+* Builds on vdn.spice tests.
+*
+* TO RUN THIS TEST:
+*   SpiceMine --test subnet maxpath.spice
+*
+.SUBCKT MAXPATH_TEST / D
+*
+* Driver nodes are D:1..D:6
+* VDN node should be A:3.
+* VDN resistance should be 3, MaxR=4
+* Gate cap nodes are A:8, A:10, A:11.
+* Max path should be to A:8.  R=3, Cw=3, Cg=?
+*
+*                        D:4   D:5 
+*                          \   /
+*        D:1 D:2            A:6
+*          \ /              /
+*          A:1       D:3  A:5
+*            \         \  /
+*            A:2--A:3--A:4--D:6
+*           /       \
+*         A:7       A:10
+*        /   \      /   \
+*      A:8   A:9  A:11  A:12
+*
+* If D:6 is removed, VDN node should still be A:3.
+* VDN resistance should become 3.2.
+*
+M0  D:1     G0      GND! GND! nmos_2v L=0.18U W=1.2U
+M1  D:2     G1      GND! GND! nmos_2v L=0.18U W=1.2U
+M2  D:3     G2      GND! GND! nmos_2v L=0.18U W=1.2U
+M4  D:4     G4      GND! GND! nmos_2v L=0.18U W=1.2U
+M5  D:5     G5      GND! GND! nmos_2v L=0.18U W=1.2U
+M6  D:6     G3      GND! GND! nmos_2v L=0.18U W=1.2U
+M7  DA      A:8     GND! GND! nmos_2v L=0.18U W=1.2U
+M8  DB      A:10    GND! GND! nmos_2v L=0.18U W=1.2U
+M9  DC      A:11    GND! GND! nmos_2v L=0.18U W=1.2U
+*
+R0  D:1     A:1     1.0 $x
+R1  D:2     A:1     1.0 $x
+R2  A:1     A:2     1.0 $x
+R3  A:2     A:7     1.0 $x
+R4  A:7     A:8     1.0 $x
+R5  A:7     A:9     1.0 $x
+R6  A:2     A:3     1.0 $x
+R7  A:3     A:4     1.0 $x
+R8  A:4     D:3     1.0 $x
+R9  A:4     A:5     1.0 $x
+RA  A:5     A:6     1.0 $x
+RB  A:6     D:4     1.0 $x
+RC  A:6     D:5     1.0 $x
+RX  D:6     A:4     1.0 $x
+RD  A:10    A:3     1.0 $x
+RE  A:11    A:10    1.0 $x
+RF  A:10    A:12    1.0 $x
+*
+C0  A:2     GND     1.0e-15
+C1  A:7     GND     1.0e-15
+C2  A:8     GND     1.0e-15
+C3  A:9     GND     1.0e-15
+C4  A:3     GND     1.0e-15
+C5  A:10    GND     1.0e-15
+C6  A:11    GND     1.0e-15
+C7  A:12    GND     1.0e-15
+C8  A:4     GND     1.0e-15
+*
+* Case w/ a cycle:
+*
+* Driver nodes are D:7 D:8 D:9
+* Driven nodes are B:2 B:4 B:9 B:10
+* VDN node should be B:1 or B:2
+* MaxR should be 5/6 (to B:9), but due to the cycle and the nature
+* of the depth-first search, the max will either be 105/106 or 106/107
+* (to B:9 or B:10, respectively).
+*
+*      D:7  D:8
+*       \   /
+*        B:1  D:9
+*          \ / 
+*          B:2
+*           |
+*          B:3
+*           |
+*          B:4   B:10
+*         /   \  /
+*       B:5   B:6
+*        |    |
+*       B:7--B:8
+*       /       
+*     B:9           
+*
+MA  D:7     G6      GND! GND! nmos_2v L=0.18U W=1.2U
+MB  D:8     G6      GND! GND! nmos_2v L=0.18U W=1.2U
+MC  D:9     G6      GND! GND! nmos_2v L=0.18U W=1.2U
+MD  DD      B:2     GND! GND! nmos_2v L=0.18U W=1.2U
+ME  DE      B:4     GND! GND! nmos_2v L=0.18U W=1.2U
+MF  DF      B:9     GND! GND! nmos_2v L=0.18U W=1.2U
+MG  DG      B:10    GND! GND! nmos_2v L=0.18U W=1.2U
+*
+RD  D:7     B:1     1.0 $x
+RE  D:8     B:1     1.0 $x
+RF  B:1     B:2     1.0 $x
+RG  B:2     B:3     1.0 $x
+RH  D:9     B:2     1.0 $x
+RI  B:3     B:4     1.0 $x
+RJ  B:4     B:5     1.0 $x
+RK  B:4     B:6     1.0 $x
+RL  B:5     B:7     1.0 $x
+RM  B:7     B:9     1.0 $x
+RN  B:6     B:10    1.0 $x
+RO  B:6     B:8     1.0 $x
+RP  B:7     B:8   100.0 $x
+*
+C9  D:7     GND!    1.0e-14
+CA  D:8     GND!    3.0e-14
+CB  B:1     Vdd!    2.0e-14
+CC  D:7     D:8     1.0e-12
+CD  B:3     A:7     1.0e-15
+CE  B:2     GND!    1.0e-15
+*
+.ENDS

@@ -1,0 +1,122 @@
+#!/usr/intel/bin/perl -w
+
+# Generate a set of lve todo files, named base.N.todo, which can be
+# extracted in order to create the proper graybox_hierarchy.  Leaf
+# cells and flat-extracted cells go in the base.0.todo.  Cells which
+# inherit <+ graybox_extract go into the N>0 todo lists.
+
+use strict;
+use Getopt::Long;
+
+# defaults
+my $pdk_root = "";
+my $cast_path = "";
+my $base_todo = "extract";
+my $max_heap_size = "1G";
+my $hierarchy = "graybox";
+my $cell_file = "";
+
+# usage banner
+sub usage {
+    print STDERR <<EU;
+USAGE: recursive_graybox [options] [top_cells]
+    --base=[$base_todo] : prefix for generated todo files
+    --fulcrum-pdk-root=[$pdk_root]
+    --max-heap-size=[$max_heap_size]
+    --cast-path=[$cast_path]
+    --hierarchy=[floorplan|layout|graybox]
+    --cells=[cell_file]
+EU
+    exit 1;
+}
+
+# parse command-line arguments
+GetOptions (
+    "base=s" => \$base_todo,
+    "fulcrum-pdk-root=s" => \$pdk_root,
+    "max-heap-size=s" => \$max_heap_size,
+    "cast-path=s" => \$cast_path,
+    "hierarchy=s" => \$hierarchy,
+    "cells=s"     => \$cell_file
+) or usage;
+
+# check usage
+usage if !@ARGV && $cell_file eq "";
+usage if ($pdk_root eq "");
+usage if ($cast_path eq "");
+
+# common tool arguments
+my $cast_query = "cast_query" .
+    " --max-heap-size=$max_heap_size" .
+    " --fulcrum-pdk-root=$pdk_root" .
+    " --cast-path=\"$cast_path\"";
+my $opt = "--routed";
+$opt = "" if ($hierarchy eq "floorplan");
+
+# get top cells
+my %cells = ();
+if ($cell_file eq "") {
+    while (my $cell=shift) {
+        if ($cell =~ /^\s*([^\s#]+)/) {
+            $cell = $1;
+            $cells{$cell} = 1;
+        }
+    }
+} else {
+    open IN, "$cell_file" or die "ERROR: can't read $cell_file\n";
+    while (my $line = <IN>) {
+        chomp($line);
+        $cells{$line} = 1;
+    }
+}
+
+# For each top-level cell, query levels of subcells and
+# graybox_extract ancestry of subcells.
+my %level = ();
+my %graybox = ();
+my $max_level = 0;
+foreach my $cell (keys %cells) {
+    my $cmd = "$cast_query --task=level $opt --cell=\"$cell\"";
+    open (P, "$cmd |");
+    while (<P>) {
+        if (/^\s*(\S+)\s+(\d+)\s*$/) {
+            $level{$1}=$2;
+            if ($2>$max_level) { $max_level = $2; }
+        }
+    }
+    if ($hierarchy eq "graybox") {
+        $cmd = "$cast_query --task=subcells --routed --cell=\"$cell\"" .
+            " --filter=\"ancestor=standard.base.graybox_extract\"";
+        open (P, "$cmd |");
+        while (<P>) {
+            if (/^\s*(\S+)\s*$/) {
+                $graybox{$1} = 1;
+            }
+        }
+    }
+}
+
+# set non-graybox cells to level=0
+if ($hierarchy eq "graybox") {
+    foreach my $cell (keys %level) {
+        if (!defined($graybox{$cell})) { $level{$cell} = 0; }
+    }
+}
+
+# print todo lists for each level
+for (my $l=0; $l<=$max_level; $l++) {
+    my @lines = ();
+    foreach my $cell (sort keys %level) {
+        if ($level{$cell}==$l) {
+            push @lines, $cell;
+        }
+    }
+    if (@lines) {
+        open OUT, ">${base_todo}.$l.todo" or die;
+        print OUT "--graybox-mode=routed\n" if $l>0;
+        foreach my $line (sort @lines) {
+            print OUT "$line\n";
+        }
+        close OUT;
+    }
+}

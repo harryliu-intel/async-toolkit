@@ -1,0 +1,9 @@
+Hello, $userfirstname$
+  You submitted change list #$changenum$.  Change list #$changenum$
+fixed the $buildname$ build. The $buildname$ build had been broken by 
+change list #$brokenchangenum$, which was submitted by you.
+You don't deserve a cookie, because you should not have broken the build
+in the first place.
+
+Sincerely,
+  The Build User

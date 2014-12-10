@@ -1,0 +1,493 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use Getopt::Long;
+
+$verbose=0;                             # generates a lot of output to STDERR
+$fulcrum_pdk_root="";                   # default pdk root is nowhere
+$ui_directory="";                       # default ui_directory is nowhere
+$autoload_directory="";                 # default autoload_directory is nowhere
+$config="";                             # default config is nowhere
+$temp="";                               # default temp is nowhere
+$home=$ENV{HOME};                       # home is where your home directory is
+$home =~ s:^/mnt/fulcrum/home:/home:; # get rid of /mnt/fulcrum from path
+$target = "";                  # default place to put results
+$changedconfig=1;                       # checks to see if config file values were changed
+$pwd=$ENV{PWD};
+$pwd =~ s:^/mnt/fulcrum/home:/home:;
+
+GetOptions(
+    "v|verbose" => \$verbose,
+    "fulcrum_pdk_root=s" => \$fulcrum_pdk_root,
+    "ui_directory=s" => \$ui_directory,
+    "autoload_directory=s" => \$autoload_directory,
+    "config=s" => \$config,
+    "temp=s" => \$temp,
+    "target=s" => \$target,
+    "h|help" => \$help,
+);
+
+if ($help) {
+    print STDERR <<EF;
+Usage: mktestcase [options]
+    --verbose    : lots of info
+    --fulcrum_pdk_root=<dir> : the pdk root to use (will get from cds.config too)
+    --ui_directory=<dir> : the ui directory (gets package root from this)
+                           and gets this from cds.config as well.
+    --autoload_directory=<dir> : normally gets from cds.config
+    --config=<file> : this is the cds config file from cds.config
+    --temp=<dir> : the temp file also from cds.config
+    --target=<dir> : the target directory of the test case
+    --help : this  help
+
+Files:
+    cds.confg : reads PDK and PKG from this
+    strace.out : reads the list of files needed from this
+    testcase.config : reads mktestcase configuration from this
+EF
+    exit 1;
+}
+
+# createpath
+# this creates a set of directories along the specified path
+# it is needed to make sure that a place exists to place a file
+# later
+
+sub createpath {
+    my ($path)=@_;
+    my @dirs=split(/\//,$path);
+    if ( ! -d $path && $verbose) {
+        print STDERR "Creating $path";
+    }
+    $path="";
+    for (my $n = 0; $n <= $#dirs; $n++) {
+        if ($dirs[$n] eq "") { next;}
+        $path .= "/$dirs[$n]";
+        if (index ($path,$target) == 0 && ! -d $path ) {
+            mkdir $path || die "Cannot create $path";
+        }
+    }
+}
+
+# simple query returns true for a yes or y response
+# and false for a no or n. Typing q quits and it
+# allows for defaults.
+sub query {
+    my ($string, $default)=@_;
+    my $ans = 'x';
+    $default =~ tr/A-Z/a-z/;
+    while (! ($ans =~ /^[yn]/)) {
+        printf STDERR "$string [y|n|q] ";
+        $ans=<>;
+        chomp $ans;
+        $ans =~ tr/A-Z/a-z/;
+        if ($ans =~ /^q/) {
+            exit (1);
+        }
+        if ($ans eq "" && defined ($default)) {
+            $ans = $default;
+        }
+    }
+    ($ans =~ /^y/);
+}
+
+# sometimes a directory contains /../ in it's path.
+# this replaces /../ with the next level up directory.
+sub fixdotdot {
+    my ($file)=@_;
+    while ($file =~ /\/\.\.\//) {
+        my @dirs=split(/\//,$file);
+        $file="/";
+        for (my $n = 0; $n < $#dirs; $n++) {
+            if ($n == 0 && $dirs[0] eq "") { next;}
+            if ($dirs[$n] eq "..") {
+                $file =~ s/$dirs[$n-1]\/$//;
+                next;
+            }
+            $file .= "$dirs[$n]/";
+        }
+        $file .= $dirs[$#dirs];
+    }
+    $file;
+}
+
+# read the testcase config file. Helps in rerunning the script
+# there are only two keywords at present:
+# TARGETHOME which is $target above, and
+# TARGET which has two args, the source and the target
+# user can override while running
+if (open (P, "<testcase.config")) {
+    while (<P>) {
+        chomp;
+        s/  */ /;
+        s/[ \t]+$//;
+        @f=split;
+        for ($i=$pndx=$ndx=0; $ndx >= 0; ) {
+            $pndx++;
+            $ndx = index (substr($_,$pndx),"'");
+            if ($ndx >= 0) {
+                $i++;
+            }
+            $pndx += $ndx;
+        }
+        if ($i % 2) {
+            die "Syntax error in testcase.config, unbalanced \"'\"";
+        }
+        if (substr($f[1],0,1) eq "'") {
+            @g = split (/'/, $_);
+            $f[1] = $g[1];
+            if ($g[2] =~ /[ \t]+/ && defined ($g[3])) {
+                # we have a second set of "'"
+                $f[2] = $g[3];
+            }
+        }
+        elsif (substr($f[2],0,1) eq "'") {
+            @g=split(/'/,$_);
+            $f[2] = $g[1];
+        }
+        if (/^TARGETHOME /) {
+            $target=$f[1];
+        }
+        elsif (/^TARGET /) {
+            $target{$f[1]}=$f[2];
+        }
+        elsif (/^EXCLUDE /) {
+            push (@exclude, $f[1]);
+        }
+    }
+    $changedconfig=0;
+    foreach $src (keys %target) {
+        if ( ! ($target{$src} =~ /^\//) ) {
+            $target{$src} = "$target/$target{$src}";
+            $target{$src} =~ s/\/\//\//g;
+        }
+    }
+}
+# check the above and correct interactively if not found
+if ($target eq "") {
+    $ok = 0;
+    while (!$ok) {
+        printf STDERR "Target: ";
+        $target = <>;
+        chomp $target;
+        if ( ! ( $target =~ /^\//)) {
+            $target = "$home/$target";
+        }
+        if (index ($target,$pwd) == 0) {
+            printf STDERR "Do not put target under current directory!";
+        }
+        else {
+            $ok = 1;
+        }
+    }
+}
+# if there is a cds.config file, we get the pdk,
+# temp, autoload and ui directories here. We ignore
+# the P4 entries
+# also, do not override the command line options!
+open (P, "<cds.config");
+while (<P>) {
+    chomp;
+    @f=split(/=/, $_);
+    @g=split(/:/, $f[1]);
+    if (/^P4/) { next;}
+    if ($f[0] eq "FULCRUM_PDK_ROOT" && $fulcrum_pdk_root eq "") {
+        $fulcrum_pdk_root=$g[0];
+        $configdirs{$g[0]}=1;
+    }
+    elsif ($f[0] eq "config" && $config eq "") {
+        $config=$g[0];
+    }
+    elsif ($f[0] eq "TEMP" && $temp eq "") {
+        $temp=$g[0];
+        $configdirs{$g[0]}=1;
+    }
+    for ($n = 0; $n <= $#g; $n++) {
+        if ( -d $g[$n] || -f $g[$n]) {
+            $config{$f[0]}[$n]=$g[$n];
+            if ($f[0] eq "UI_DIRECTORY" && ! ($g[$n] =~ /\/user\//) && $ui_directory eq "" ) {
+                $ui_directory=$g[$n];
+                $configdirs{$g[0]}=1;
+            }
+            if ($f[0] eq "AUTOLOAD_DIRECTORY" && ! ($g[$n] =~ /\/user\//)  && $autoload_directory eq "") {
+                $autoload_directory=$g[$n];
+                $configdirs{$g[0]}=1;
+            }
+        }
+        else {
+            print STDERR "cds.config: File/Direcctory not found f[0]=$g[$n]";
+        }
+    }
+}
+if (! -d $fulcrum_pdk_root ) {
+    die "fulcrum_pdk_root is not a directory: $fulcrum_pdk_root";
+}
+$configdirs{$fulcrum_pdk_root}=1;
+if (! -d $ui_directory ) {
+    die "ui_directory is not a directory: $ui_directory";
+}
+$configdirs{$ui_directory}=1;
+if (! -d $autoload_directory ) {
+    die "autoload_directory is not a directory: $autoload_directory";
+}
+$configdirs{$autoload_directory}=1;
+if (! -d $temp ) {
+    die "temp is not a directory: $temp";
+}
+$configdirs{$temp}=1;
+if (! -f $config ) {
+    die "config is not a file: $config";
+}
+# Now we open the strace.out file which contains the
+# files opened during the run.
+open (P, "<strace.out");
+# IMPORTANT: the strace.out file contains information from multiple
+# threads and/or processes. As a result, some file names could be
+# corruped by ome process writing concurrently with another.
+while (<P>) {
+    chomp;
+    if (/open\("/) {      # only the lines with open(" in them are appropriate
+        @f=split(/"/,$_); # look at the string between the quotes
+        $_=$f[1];         # use the default string to simplify the lookup
+        $file=$_;
+        # First, the file/directory must exist!
+        # second, it should not be a system file like .so files, files in /etc/
+        # files in /var files in /usr files in /proc files in /tmp and /dev
+        if ((-f $_ || -d $_ ) && ! ( /\.so\./ || /\.so"/ || /^\/etc\// || /^\/var\// || /^\/dev\// || /^\/usr\// || /^\/proc\// || /^\/tmp\//)) {
+            $file =~ s:^/mnt/fulcrum/home:/home:;
+            $file = fixdotdot($file);
+            $_ = $file;
+            if ($file =~ /^\./) {
+                $file =~ s/^\.//;
+                $file = "$pwd/$file";
+            }
+            $dir=$file;
+            if ( -f $file) {
+                $dir =~ s/\/[^\/]*$/\//;
+                $dir =~ s/\/+/\//g;
+            }
+            #ignore cadence install
+            if (! ($file =~ /^\/home\/local\/common\//)) {
+                if (-d $dir) {
+                    if ($dir =~ /^\./) {
+                        print STDERR "$dir : $file";
+                    }
+                    $dirs{$dir}=1;
+                }
+                $files{$file}=1;
+            }
+        }
+    }
+}
+# now start the writing
+if ( -d $target ) {
+    if (query ("Remove $target?") ) {
+        system ("chmod -R +w $target");
+        system ("rm -rf $target");
+        ( -r $target ) && die "did not remove $target";
+        mkdir ($target) || die "Cannot create $target";
+    }
+}
+else {
+    mkdir ($target) || die "Cannot create $target";
+}
+$found = 0;
+foreach $tgt (keys %target) {
+    if (index ($tgt, $fulcrum_pdk_root) == 0 && $tgt ne $fulcrum_pdk_root) {
+        print STDERR "Warning: Userdefined target matches PDK root";
+        print STDERR "   $tgt";
+        print STDERR "   $fulcrum_pdk_root";
+        $found = 1;
+    }
+    if ($tgt eq $fulcrum_pdk_root) {
+        $found = 1;
+    }
+}
+if (! $found ) {
+    printf STDERR "$fulcrum_pdk_root where? ";
+    $ans = <>;
+    chomp $ans;
+    if (index ($ans, $target)) {
+        $ans = "$target/$ans";
+        $ans =~ s/\/\//\//g;
+    }
+    $target{$fulcrum_pdk_root}="$ans";
+    $changedconfig=1;
+}
+$package_home=$ui_directory;
+$package_home =~ s/\/share\/skill.*//;
+foreach $tgt (keys %target) {
+    if (index ($tgt, $package_home) == 0 && $tgt ne $package_home) {
+        print STDERR "Warning: Userdefined target matches PDK root";
+        print STDERR "   $tgt";
+        print STDERR "   $package_home";
+        $found = 1;
+    }
+    if ($tgt eq $package_home) {
+        $found = 1;
+    }
+}
+if (! $found ) {
+    printf STDERR "$package_home where? ";
+    $ans = <>;
+    chomp $ans;
+    if (index ($ans, $target)) {
+        $ans = "$target/$ans";
+        $ans =~ s/\/\//\//g;
+    }
+    $target{$package_home}="$ans";
+    $changedconfig=1;
+}
+# create all of the directoies found in the files
+# to be transferred
+$lastdir = "xx";
+foreach $dir (sort keys %dirs) {
+    $dx=$dir.'/';
+    $dx =~ s/\/\//\//g;
+    @dir=split(/\//,$dx);
+    $found=0;
+    foreach $tgt (keys %target) {
+        if (index ($dx,$tgt) == 0) {
+            $found = 1;
+            last;
+        }
+    }
+    if (! $found && index ($dx,$lastdir) != 0) {
+        $redo=1;
+        if (defined ($target{$dx})) {
+            my $xx = substr($target{$dx},length($target)+1);
+            $redo=query("Replace $xx for $dx?");
+        }
+        if ($redo) {
+            printf STDERR "$dx $dirlist{$dx} where? ";
+            $ans=<>;
+            chomp $ans;
+            $ans = "$target/$ans";
+            if (!(-d $ans && -w $ans && $ans ne $dx) ) {
+                if (query ("Create $ans?")) {
+                    createpath($ans);
+                }
+            }
+            $changedconfig=1;
+            $target{$dx}=$ans;
+        }
+        else {
+            $ans = $target{$dx};
+            createpath($ans);
+        }
+        $lastdir = $dx;
+    }
+}
+# create a sed command to fixup any text files with
+# hard coded paths
+$sedcmd = "-e 's:^/mnt/fulcrum/home:/home:g'";
+foreach $dx (reverse sort keys %target) {
+    $t=$target{$dx};
+    $t =~ s/\/$//;
+    $sedcmp .= " -e 's:$dx:$t:g'";
+}
+# all paths are created, start file transfer
+foreach $file (sort keys %files) {
+    $copied=0;
+    if (-f $file || -d $file) {
+        foreach $dx (keys %target) {
+            # the source of target key matches first part of file string
+            if (index ($file,$dx) == 0) {
+                $excluded = 0;
+                # make sure this path is not in the EXCLUDED list
+                foreach $f (@exclude) {
+                    if (index($file, $f) >= 0) {
+                        $excluded = 1;
+                        last;
+                    }
+                }
+                if ($excluded) {    
+                    next;
+                }
+                # create the target path name
+                $tgt = $target{$dx}.'/'.substr($file,length($dx));
+                $tgt =~ s/\/\//\//g;
+                # create the target directory path
+                $tgtdir=$tgt;
+                if ( ! -d $tgtdir ) {
+                    $tgtdir =~ s/\/[^\/]*$//;
+                }
+                # make sure the path to the directory exists by creating it
+                createpath($tgtdir);
+                # assume the filetype is dir
+                $filetype = "dir";
+                if ( ! -d $tgt ) {
+                    # non directories (aka files)
+                    open (P, "/usr/bin/file -b $file |");
+                    $filetype=<P>;
+                    chomp $filetype;
+                    close P;
+                    # best way to overwrite is to remove it
+                    system ("rm -f '$tgt'");
+                }
+                if ($filetype =~ / text/ ) {
+                    # text files get their internal paths changed
+                    if ($verbose) {
+                        print STDERR "sed -e 's:/mnt/fulcrum/home:/home:g' '$file' | sed $sedcmp > '$tgt'";
+                    }
+                    $rv=system ("sed -e 's:/mnt/fulcrum/home:/home:g' '$file' | sed $sedcmp > '$tgt'");
+                    if ( -x $file ) {
+                        system ("chmod +x '$tgt'");
+                    }
+                    $copied = 1;
+                }
+                elsif (-f $file )  {
+                    # non text files get copied
+                    if ($verbose) {
+                        print STDERR "cp -p '$file' '$tgt'";
+                    }
+                    $rv=system ("cp -p '$file' '$tgt'");
+                    $copied = 1;
+                }
+                elsif ($file ne $home) {
+                    # directories get copied in full, I know this seems silly,
+                    # but I had problems when not doing this.
+                    $file =~ s/$/\//;
+                    $tgt =~ s/$/\//;
+                    $file =~ s/\/\//\//g;
+                    $tgt =~ s/\/\//\//g;
+                    if ($verbose) {
+                        print STDERR "cp -rf $file $tgt";
+                    }
+                    system ("rm -rf '$tgt'");
+                    $rv=system ("cp -rf '$file' '$tgt'");
+                    $copied = 1;
+                }
+                if ($rv) {
+                    print STDERR "Error:$rv on $tgt";
+                    $copied = 0;
+                }
+                last;
+            }
+        }
+        if (! copied) {
+            print STDERR "Error: Not copied $file";
+        }
+    }
+}
+# update the config file, if necessary
+if ($changedconfig && query ("Write Config File?")) {
+    $target =~ s/\/$//;
+    open (P, ">testcase.config");
+    select P;
+    print "TARGETHOME '$target'";
+    foreach $dx (sort keys %target) {
+        if (index ($target{$dx},$target) == 0) {
+            $t = substr($target{$dx},length($target)+1);
+        }
+        else {
+            $t = $target{$dx};
+        }
+        print "TARGET '$dx' '$t'";
+    }
+    foreach $dx (@exclude) {
+        print "EXCLUDE '$dx'";
+    }
+}

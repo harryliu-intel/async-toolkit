@@ -1,0 +1,4 @@
+<options>
+<opt name="port.[1-10].opt" type="Boolean" default="true"></opt>
+
+</options>

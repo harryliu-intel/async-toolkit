@@ -1,0 +1,1853 @@
+#!/usr/intel/bin/perl -w
+#
+# ,-. . . ,-. ,-. ,-. ,-. . ,_, ,-.      
+# `-. | | | | |-' |   `-. |  /  |-'      Physical Synthesis User Shell
+# `-' `-^ |-' `-' '   `-' ' '"' `-'      (c) 2005 Fulcrum Microsystems
+#         |
+#         '
+# $Id$
+# $DateTime$
+#
+# TODO:
+#
+#   - Support 'clear command.input_var' & maps & map elements.
+#   - Perforce integration (only edit non-fixed cells by default etc.)
+#   - Support for subtype- and instance-qualified subtype translations in
+#     'resubtype'.
+#   - ^C trapping to interrupt supersize_system calls.
+#   - Review/fix treatment of deprecated cells.
+#   - Need better ^C protection in second phase of update_subtypes.
+#   - update_subtypes should handle the case of non-existing source 
+#     hierarchy better (i.e. behave like create_subtypes).
+#   - Fix split_subtypes -- needs to respect splittable directive (same
+#     for update_subtypes).
+#   - Implement 'log'.
+#   - Implement 'exit'.
+#   - Conditional command execution.
+#   - parallelize trial_size.
+#   - reuse_subtypes command.
+#   - snarf_floorplan command.
+#   - Support for user-defined modules.
+#   - instance-based merge exclusions.
+#
+
+#################################### Setup ####################################
+
+# These must be handled specially
+my $INSTALL_PACKAGE_ROOT;
+my $COMMAND_LINE_PDK_ROOT;
+
+#
+# Determine supersize (ubersize) package root.  If not installed via the
+# build system, look in more developer-friendly places.
+#
+BEGIN {
+    my $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+# Remember that the literal $ packageroot $ will be replaced by packge-inst.sh,
+# so we must write the string in a convoluted way to avoid it
+    if ( -d $package_root ) {
+        $INSTALL_PACKAGE_ROOT = $package_root;
+        push @INC, "$package_root/lib/perl";
+    }
+    elsif (defined $ENV{SUPERSIZE_ROOT}) {
+        push @INC, "$ENV{SUPERSIZE_ROOT}/lib/perl";
+    }
+    else {
+        push @INC, "$ENV{HOME}/sw/cad/ubersize/lib/perl";
+    }
+}
+
+use strict;
+use Supersize::FulcrumIntegration;
+use Supersize::DensityFactor;
+use Supersize::FileIO;
+use Supersize::JavaUtil;
+use Supersize::LayoutIntegration;
+use Supersize::LayoutModeling;
+use Supersize::Merging;
+use Supersize::MergeLibrary;
+use Supersize::Misc;
+use Supersize::ModifySubtypes;
+use Supersize::Netlist;
+use Supersize::PerforceIntegration;
+use Supersize::PostLayout;
+use Supersize::Sizing;
+use Supersize::SizingDebug;
+#use Supersize::SizingDrop;
+use Supersize::SubtypeSpace;
+use Supersize::TypeOps;
+use Supersize::TypeUtil;
+use Supersize::Unmerging;
+use Supersize::Util;
+use Term::ANSIColor;
+use Term::ReadLine;
+use Text::Wrap;
+
+#
+# Global variables
+#
+my %GS = (                  # User-visible/settable scalar variables
+    WORK_DIR     => undef,
+    CAST_DIR     => "$ENV{HOME}/hw/cast",
+    SPEC_DIR     => "$ENV{HOME}/hw/layout/tsmc13/spec",
+    DFII_DIR     => undef,
+    IC           => defined($ENV{'IC_SCRIPT'}) ? $ENV{'IC_SCRIPT'}
+                                               : "/p/rrc/tools/bin/ic",
+    HOME         => "$ENV{HOME}",
+    SAVE_BACKUPS => 0,
+    AUTO_REFRESH => 0,
+    VERBOSE      => 1,
+    DEBUG        => 0,
+    PROMPT       => 0,
+    SGE_LEVEL    => 0,
+    HISTSIZE     => -1
+);
+my %IGV = (                 # Internal global variables (not user-visible)
+    TERM         => 0,      # ReadLine reference
+    INTERACTIVE  => 0,      # In ReadLine interactive mode?
+    MODULES      => {}
+);
+
+#
+# SuperSize variable space, passed to all commands.
+#
+my %SS = ( 
+    GS => \%GS,             # Global Scalar variables
+    GL => {},               # Global List variables
+    GM => {},               # Global Map variables
+    IV => {},               # Command input variables
+    RV => {},               # Command return values
+    IGV => \%IGV            # Global variables not visible to the user
+);
+
+#
+# Construct command table
+#
+load_modules({ NAME => "",
+              DESC => "Main supersize commands\n",
+              COMMANDS => { 
+    "help" => {
+        SUBREF => \&help,
+        USAGE  => "help [--extra|all] " . underline("topic"),
+        DESC   => "Tells you about " . underline("topic") . ".  Supported ".
+                  "topics: \"globals\" and all commands.  Supply the --extra ".
+                  "option to get more advanced information, or --all to get ".
+                  "everything." },
+    "source" => {
+        SUBREF => \&source,
+        USAGE  => "source " . underline("file"),
+        DESC   => 
+          "Reads " . underline("file") . ", interpreting each line as a " .
+          "command to execute.  Ignores empty lines and any text following " .
+          "'#'.  Lines may be extended by terminating them with '\\'." },
+    "interactive" => {
+        SUBREF => \&interactive,
+        USAGE  => "interactive",
+        DESC   => "Enters interactive (readline) mode." },
+    "get" => {
+        SUBREF => \&get,
+        USAGE  => "get [--scalar | --list] [" . underline("varname") . "]",
+        DESC   => 
+          "Gets the values of all matching variables. If a " .
+          "variable name (" . underline("varname") . ") is omitted, will " .
+          "get all variable values of the specified type." },
+    "set" => {
+        SUBREF => \&set,
+        USAGE  => "set " . underline("varname") . " = " . underline("value"),
+        DESC   =>
+          "Sets the value of the specified variable (" . underline("varname") .
+          ").  If " . underline("value") . " is a list, i.e. of the form " .
+          "< a b c ... >, then " . underline("varname") . " is " .
+          "assumed to be a list type.  Otherwise it is taken to be a scalar " .
+          "type." },
+    "clear" => {
+        SUBREF => \&clear,
+        USAGE  => "clear [--scalar | --list] [" . underline("varname") . "]",
+        DESC   => 
+          "Clears any variables matching the supplied variable type and ".
+          underline("varname") . " qualifiers.  Either " . underline("vartype").
+          " or " . underline("varname") . " (or both) ".
+          "must be specified. Warning: 'clear --scalar' is a bad idea." },
+    "quit" => {
+        SUBREF => \&quit,
+        USAGE  => "quit",
+        DESC   => 
+          "quit from supersize" },
+    "sh" => {
+        SUBREF => \&shell,
+        USAGE  => "shell " . underline("command"),
+        DESC   => 
+          "Runs a shell command." },
+    "echo" => {
+        SUBREF => \&echo,
+        USAGE  => "echo " . underline("args"),
+        DESC   => 
+          "Echoes arguments back to the user (with variables & inlined " .
+          "commands evaluated).  This is mostly just for debugging." },
+    "history" => {
+        SUBREF => \&history,
+        USAGE  => "history",
+        DESC   => "Returns the history of interactive commands issued." },
+    "cast_server" => {
+        SUBREF => \&cast_server,
+        USAGE  => "cast_server --refresh | --kill",
+        DESC   => 
+          "Java cast server management command.  Currently, two actions " .
+          "are supported: refresh and kill.  Refresh the server whenever ".
+          "the cast source or subtype hierarchy changes outside the " .
+          "purview of Supersize.  The only reason to kill the server is ".
+          "if you are concerned about system memory crowding.  (See ".
+          "comments for the SERVER_MEM variable in 'help globals'.)" },
+    "query" => {
+        SUBREF => \&query,
+        USAGE  => "query [" . underline("subtype") . "] [--filter=" .
+                  underline("cast_query_filter") . "] " . underline("task"),
+        DESC   =>
+          "Performs a CastQuery task on the top-level design (or " .
+          underline("subtype") . " if it's specified).\n\n" .
+          "Filter expressions must be quoted (e.g. --filter=\"leaf & fixed\") ".
+          "if they contain whitespace.",
+        GLOBALS => { CAST_DIR => {REQUIRED => 1},
+                     SPEC_DIR => {REQUIRED => 1}},
+        RV     => {
+          result => { 
+            TYPE => $TYPE_LIST,
+            DESC => "Result of the query (each element in the list " .
+                    "corresponds to each line of the query output." }} },
+    "grep" => {
+        SUBREF => \&grep_command,
+        USAGE  => "grep [--count] " . underline("regexp") . " " . 
+                        underline("list"),
+        DESC   =>
+          "Filters " . underline("list") . " with the specified regular ".
+          "expression.  Example:\n\n" .
+          "  grep \"/\\.4\\d+\$/\" < fqcn1.400 fqcn2.500 fqcn3.4010 >\n" .
+          "  < fqcn1.400 fqcn3.4010 >\n\n" .
+          "It's also legal to specify !/.../ in order to select all " .
+          "list elements that do not match the expression.\n\n" .
+          "The --count option causes the number of matching list elements ".
+          "to be printed.  The filtered list will not be printed in this ".
+          "case." },
+    "log" => {
+        SUBREF => \&log_command,
+        USAGE  => "log [--file=" . underline("logfile") . "] " .
+                       "on | off",
+        DESC   =>
+          "Logs all supersize output to the named file, or " .
+          "WORK_DIR/supersize.log if none is specified.\n\n".
+          "NOTE: This command is not implemented yet." }
+    },
+    GLOBALS => {
+      AUTO_REFRESH => { DESC => "When set, the Java Cast server will be " .
+                            "refreshed following any command that modifies ".
+                            "the Cast subtypes.  This is best left 0 until ".
+                            "incremental re-parsing support is implemented ".
+                            "in CastFileParser.  (Bug Harry)" },
+      CAST_DEFINES => { TYPE => $TYPE_LIST,
+                    DESC => "List of Cast --define var:val pairs which will ".
+                            "be passed to any Java Cast tool." },
+      CAST_DIR => { DESC => "Base cast directory." },
+      DEBUG    => { DESC => "Set to 1 if you want to see debugging output." },
+      LAYOUT_ATTRIBUTE => { DESC =>
+                            "If set, overrides the default layout attribute ".
+                            "cell, which is inherited by all spec subtypes, ".
+                            "defined in the PDK." },
+      HISTSIZE => { DESC => "Maximum command history length.  Use negative ".
+                            "numbers to indicate no limit." },
+      HOME     => { DESC => "Initialized to your home directory; set only for ".
+                            "user convenience." },
+      FLOORPLAN_VIEW => { DESC =>
+                            "DFII view name of floorplan hierarchy.  If not ".
+                            "set, defaults to 'floorplan'." },
+      MEM      => { DESC => "Heap size for Java processes (other than " .
+                            "the Java Cast Server; see SERVER_MEM)." },
+      PACKAGE_ROOT => { DESC => "Supersize package root directory.  Needed ".
+                            "for accessing other tools within the same ".
+                            "package.  It's initialized automatically by ".
+                            "the fulcrum wrapper script." },
+      PDK_ROOT => { DESC => "PDK root directory.  This is initialized " .
+                            "automatically by the fulcrum wrapper script." },
+      PROMPT   => { DESC => "Selects the style of command-line prompt to " .
+                            "use.  (Default is 0.)\n" .
+                            "  0 - supersize> \n" .
+                            "  1 - \$TOP> \n" .
+                            "  2 - \$TOP_SHORT>" },
+      ROUTED   => { DESC => "If set to 1, the --routed option will be passed ".
+                            "to all java commands.  This eliminates all ".
+                            "mid-level design hierarchy except for levels ".
+                            "that have the routed directive set to true. ".
+                            "NOTE: Support for this global variable is ".
+                            "somewhat experimental.  Use at your own risk." },
+      SAVE_BACKUPS => { DESC => "When set, causes some commands to preserve ".
+                            "original source files." },
+      SERVER_MEM => { DESC => "Heap size for the Java Cast Server process.  ".
+                            "For now, the cast server only runs CastQuery and ".
+                            "MergeHint, and neither of which need much more " .
+                            "memory than is required to parse the cast files. ".
+                            "Thus you should be able to get by setting this ".
+                            "to a value smaller than MEM.  Also, keep in ".
+                            "mind that so long as Jauto and other ".
+                            "memory-intensive tools can't be invoked through ".
+                            "the cast server, both the cast server and " .
+                            "another tool may be active concurrently.  " .
+                            "Thus you'll need to avoid setting SERVER_MEM + ".
+                            "MEM to be (significantly) larger than the " .
+                            "system's total available memory.  (If you run ".
+                            "into trouble, bug Harry to propagate " .
+                            "CastFileServer support to all Cast tools!) " .
+                            "Eventually this variable will go away -- that " .
+                            "is, once we've bugged Harry enough." },
+      SPEC_DIR => { DESC => "hw/layout/<process>/spec root directory." },
+      TAU      => { DESC => "The sizing Tau value, in picoseconds.  (Don't ".
+                            "include a \"ps\" suffix.)" },
+      TOP      => { DESC => "Top-level cell on which many commands operate.  ".
+                            "Should be a fully-qualified, layout-subtyped " .
+                            "cell name.  Subtype number will be inferred " .
+                            "from the trailing suffix." },
+      VERBOSE  => { DESC => "More information is printed to standard output ".
+                            "when this is set." },
+      WORK_DIR => { DESC => "Working directory in which the cast/... " .
+                            "subtype hierarchy and all output files are " .
+                            "stored.  Just like an ubersize working ".
+                            "directory, except no particular naming " .
+                            "convention is required.  IMPORTANT: Must be " .
+                            "an absolute path.  Supersize will normally " .
+                            "make it absolute for you at start-up, but ".
+                            "beware if you ever manually set WORK_DIR." },
+    }
+});
+
+# Load all other modules
+load_modules(Supersize::FulcrumIntegration::get_module_data,
+             Supersize::DensityFactor::get_module_data,
+             Supersize::FileIO::get_module_data,
+             Supersize::JavaUtil::get_module_data,
+             Supersize::LayoutIntegration::get_module_data,
+             Supersize::LayoutModeling::get_module_data,
+             Supersize::Merging::get_module_data,
+             Supersize::MergeLibrary::get_module_data,
+             Supersize::ModifySubtypes::get_module_data,
+             Supersize::Misc::get_module_data,
+             Supersize::Netlist::get_module_data,
+             Supersize::PerforceIntegration::get_module_data,
+             Supersize::PostLayout::get_module_data,
+             Supersize::Sizing::get_module_data,
+             Supersize::SizingDebug::get_module_data,
+             #Supersize::SizingDrop::get_module_data,
+             Supersize::SubtypeSpace::get_module_data,
+             Supersize::TypeOps::get_module_data,
+             Supersize::Unmerging::get_module_data,
+             Supersize::Util::get_module_data);
+
+#################################### Main ####################################
+
+#
+# Parse general options and command
+#
+my $command = "";
+my @source_files;
+while (@ARGV && $command eq "") {
+    if ($ARGV[0] =~ /^--work-dir=(.*)$/) {
+        $GS{WORK_DIR} = $1;
+    }
+    elsif ($ARGV[0] =~ /^--fulcrum-pdk-root=(.*)$/) {
+        $COMMAND_LINE_PDK_ROOT = $1;
+    }
+    elsif ($ARGV[0] =~ /^--verbose=(.*)$/) {
+        $GS{VERBOSE} = $1;
+    }
+    elsif ($ARGV[0] =~ /^--debug=(.*)$/) {
+        $GS{DEBUG} = $1;
+    }
+    elsif ($ARGV[0] =~ /^--backup=(.*)$/) {
+        $GS{SAVE_BACKUPS} = $1;
+    }
+    elsif ($ARGV[0] =~ /^--source=(.*)$/) {
+        push @source_files, $1;
+    }
+    elsif ($ARGV[0] =~ /^--/) {
+        command_die(\%SS, "Unknown option: $ARGV[0]");
+    }
+    else {
+        $command = $ARGV[0];
+    }
+    shift;
+}
+$command = "interactive" if ($command eq "");
+
+# Initialization procedure:
+#
+#  (1) Set PACKAGE_ROOT and PDK_ROOT
+#  (2) Source the initialization scripts specified with --source
+#      arguments.
+#  (3) Verify that WORK_DIR is set, try to find one if it isn't.
+#  (4) Souce WORK_DIR/supersize.vars if no custom initialization
+#      scripts were specified.  Set PACKAGE_ROOT and PDK_ROOT
+#      again to override the last session's values.
+#  (5) Enter interactive mode 
+#
+set_package_variables();
+foreach my $f (@source_files) {
+    execute_command("source $f");
+}
+setup_work_dir() if ($command ne "help");
+if (!@source_files) {
+    execute_command("source $GS{WORK_DIR}/supersize.vars")
+        if (-e "$GS{WORK_DIR}/supersize.vars");
+    set_package_variables();
+}
+
+#
+# Execute command
+#
+execute_command("$command @ARGV");
+
+# Executes a given command line "command command_args".
+# On success, returns 1.  On failure, returns 0.
+sub execute_command {
+    my $cmd_line = shift;
+
+    # Separate command and command argument string
+    $cmd_line =~ /^([^\s]+)\s*(.*)$/;
+    my $cmd_name    = $1;
+    my $cmd_arg_str = $2;
+
+    # Verify that the command exists
+    my ($cmd_r, $fqcmd) = lookup_command(\%SS, $cmd_name);
+    if (!defined $cmd_r) {
+        if ($IGV{INTERACTIVE}) {
+            print "Unknown command '$cmd_name'.";
+            print "  Type 'help' for a list of supported commands.\n";
+        }
+        else {
+            usage(\%SS, "Uknown command '$cmd_name'.");
+        }
+        return 0;
+    }
+
+    # Verify that all required global and scoped input variables are set
+    my @undefined;
+    foreach my $gvar (keys %{$cmd_r->{GLOBALS}}) {
+        if ($cmd_r->{GLOBALS}{$gvar}{REQUIRED} &&
+            !defined $GS{$gvar}) {
+            push @undefined, $gvar;
+        }
+    }
+    foreach my $ivar (keys %{$cmd_r->{IV}}) {
+        if ($cmd_r->{IV}{$ivar}{REQUIRED} &&
+            !defined $SS{IV}{$fqcmd}{$ivar}) {
+            push @undefined, "$fqcmd.$ivar";
+        }
+    }
+    if (@undefined) {
+        print "Must set the following required variables: @undefined\n";
+        return 0;
+    }
+
+    # Process arguments
+    my @args;
+    eval {
+        @args = parse_command_args(\%SS, preprocess_args($cmd_arg_str));
+    };
+    if ($@) {
+        chomp $@;
+        print "$@\n";
+        return 0;
+    }
+    for my $i (0..@args/2-1) {
+        if ($args[2*$i] == $TYPE_ERROR) {
+            print "$args[2*$i+1]\n";
+            return 0;
+        }
+    }
+
+    # Run the command
+    push @{$IGV{cmd_stack}}, $fqcmd;
+    eval {
+        &{$cmd_r->{SUBREF}}(\%SS, @args);
+    };
+    pop @{$IGV{cmd_stack}};
+
+    # restore cast server path
+    unset_server_cast_path();
+
+    # check error state
+    if ($@) {
+        chomp $@;
+        print "$@\n" if ($SS{GS}{DEBUG});
+        print "Error: $cmd_name failed.\n";
+        return 0;
+    }
+
+    # Refresh java cast server
+    refresh_cast_server(\%SS, 0) if ($SS{GS}{AUTO_REFRESH});
+
+    return 1;
+}
+
+############################### Basic Commands ################################
+
+#
+# help
+#
+sub help {
+    my $SS_r  = shift;
+    my $intro = 1;
+    my $extra = 0;
+
+    # Argument processing
+    while (num_args(\@_) && next_scalar(\@_) =~ /^--/) {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg eq "--extra") {
+            $intro = 0;
+            $extra = 1;
+        }
+        elsif ($arg eq "--all") {
+            $extra = 1;
+        }
+        else {
+            command_die($SS_r, "Unknown help option '$arg'.");
+        }
+    }
+    my $topic   = shift_next_scalar(\@_) if (num_args(\@_));
+    if (!defined $topic) {
+        usage($SS_r);
+        return;
+    }
+
+    # Trap special-cased help topics
+    if ($topic eq "globals") {
+        command_die($SS_r, "No extra help for topic globals.") 
+            if ($extra && !$intro);
+
+        print "\n  Global Variables\n\n";
+        my $text = "The default Supersize variable space is global in the ".
+            "sense that all commands have access to it.  Some commands " .
+            "require that certain variables be set in order to execute. ".
+            "Type 'help --extra " . color('underline') . "command" . 
+            color('reset') . "' to obtain a list of all global ".
+            "variables that are relevant to a particular command.\n\n" .
+            "The following is a list of all registered global variables. " .
+            "The module that defines each variable is listed (unless " .
+            "it's a predefined supersize variable), along with a description ".
+            "and the variable's type if non-scalar.\n";
+        print wrap("  ", "  ", $text);
+        print "\n";
+        my $mod_r = $SS_r->{IGV}{MODULES};
+        my %gv_list;
+        foreach my $mod (sort keys %{$mod_r}) {
+            foreach my $gv (sort keys %{$mod_r->{$mod}{GLOBALS}}) {
+                $gv_list{$gv} = 1;
+            }
+        }
+        foreach my $gv (sort keys %gv_list) {
+            pretty_print_global($SS_r, $gv, undef, 0);
+        }
+        print "\n";
+    }
+    else {
+        my ($cmd_r, $fqcmd) = lookup_command($SS_r, $topic);
+        command_die($SS_r, "Unrecognized help topic '$topic'.  Try 'help'.")
+            if (!defined $cmd_r);
+
+        (my $indent = $cmd_r->{USAGE}) =~ s/\s.*$//;
+        $indent =~ s/./ /g;
+        print wrap("  ", "   $indent", $cmd_r->{USAGE}) . "\n\n";
+        if ($intro) {
+            $indent = "    ";
+            print wrap($indent, $indent, $cmd_r->{DESC})
+                . "\n\n";
+        }
+        if ($extra) {
+            if ($cmd_r->{EXTRA_DESC}) {
+                $indent = "    ";
+                print wrap($indent, $indent, $cmd_r->{EXTRA_DESC})
+                    . "\n\n";
+            }
+            print "  Requires the following global variables to be set:\n";
+            foreach my $gv (sort keys %{$cmd_r->{GLOBALS}}) {
+                my $bold = 0;
+                $bold = 1 if ($cmd_r->{GLOBALS}{$gv}{REQUIRED});
+                pretty_print_global($SS_r, $gv, $fqcmd, $bold);
+            }
+            print "\n";
+            if (keys %{$cmd_r->{IV}}) {
+                print "  Defines the following input variables:\n";
+                foreach my $iv (keys %{$cmd_r->{IV}}) {
+                    pretty_print_variable_def($iv, $cmd_r->{IV}{$iv}{TYPE},
+                        $cmd_r->{IV}{$iv}{DESC}, $cmd_r->{IV}{$iv}{REQUIRED});
+                }
+                print "\n";
+            }
+            if (keys %{$cmd_r->{RV}}) {
+                print "  Defines the following return variables:\n";
+                foreach my $rv (keys %{$cmd_r->{RV}}) {
+                    pretty_print_variable_def($rv, $cmd_r->{RV}{$rv}{TYPE},
+                        $cmd_r->{RV}{$rv}{DESC}, 0);
+                }
+                print "\n";
+            }
+            print "  (Required input variables are " . color('red') .
+                  "colored" . color('reset') . ".)\n\n";
+        }
+    }
+}
+
+sub pretty_print_global {
+    my $SS_r  = shift;
+    my $gv    = shift;
+    my $fqcmd = shift;
+    my $bold  = shift;
+    my ($type, $desc, $mod);
+    ($type, $desc) = lookup_global($SS_r, $gv, $fqcmd);
+    $desc = "Undefined global variable." if (!$desc);
+    pretty_print_variable_def($gv, $type, $desc, $bold);
+
+}
+
+sub pretty_print_variable_def {
+    my ($name, $type, $desc, $bold) = @_;
+    my $text;
+    #$text = color 'blue' if ($bold);
+    $text .= sprintf("%-16s", $name);
+    $text .= color 'reset' if ($bold);
+    $text .= " - ";
+     if ($desc) {
+        $text .= $desc;
+    }
+    else {
+        $text .= "Undefined variable";
+    }
+    if (defined $type && $type == $TYPE_LIST) {
+        $text .= " [List]";
+    }
+    elsif (defined $type && $type == $TYPE_MAP) {
+        $text .= " [Map]";
+    }
+    $text .= "\n";
+    print color 'red' if ($bold);
+    print wrap("    ", sprintf("%23s", " "), $text);
+}
+
+# Lookups up info about the specified global variable, preferring a
+# particular module if one is provided.
+sub lookup_global {
+    my $SS_r  = shift;
+    my $gv    = shift;
+    my $fqcmd = shift;
+    my $type  = $TYPE_SCALAR;
+    my $desc  = "";
+    # Give preference to command's description, if a command is given
+    my ($mod,  $cmd) = split /\//, $fqcmd if (defined $fqcmd);
+    if ($mod && $cmd) {
+        my $global_r = $SS_r->{IGV}{MODULES}{$mod}{COMMANDS}{$cmd}{GLOBALS};
+        if (defined $global_r && exists $global_r->{$gv} && 
+            exists $global_r->{$gv}{DESC}) {
+            if (defined $global_r->{$gv}{TYPE}) {
+                $type = $global_r->{$gv}{TYPE};
+            }
+            else {
+                $type = $TYPE_SCALAR;
+            }
+            return ($type, $mod, $global_r->{$gv}{DESC});
+        }
+    }
+    # Now look through all modules, concatenating descriptions
+    foreach my $mod_iter (sort keys %{$SS_r->{IGV}{MODULES}}) {
+        my $globals_r = $SS_r->{IGV}{MODULES}{$mod_iter}{GLOBALS};
+        foreach my $gv_iter (keys %{$globals_r}) {
+            if ($gv_iter eq $gv) {
+                if (defined $globals_r->{$gv}{TYPE}) {
+                    $type = $globals_r->{$gv}{TYPE};
+                }
+                if ($globals_r->{$gv}{DESC}) {
+                    $desc .= "[$mod_iter] " if ($mod_iter ne "");
+                    $desc .= $globals_r->{$gv}{DESC} . "\n";
+                }
+            }
+        }
+    }
+    chomp $desc;
+    return ($type, $desc);
+}
+
+#
+# source
+#
+sub source {
+    my $SS_r = shift;
+    if (num_args(\@_)!=1) {
+        command_die($SS_r, "Wrong number of arguments to source.")
+    }
+    local *FH;
+    my $file = shift_next_scalar(\@_);
+    command_die($SS_r, "Bad file argument to source.") if (!$file);
+    if (open (FH, $file)) {
+        my $line_num = 0;
+        my $line = "";
+        while (<FH>) {
+            $line_num++;
+            s/#.*$//; next if (/^\s*$/); chomp;
+            if (s/\\\s*$//) {
+                $line .= $_;
+            }
+            else {
+                $line .= $_;
+                if (!execute_command($line)) {
+                    command_die($SS_r, "Sourcing of $file failed at line " .
+                                       $line_num);
+                }
+                $line = "";
+            }
+        }
+        close FH;
+    }
+    else {
+        command_die($SS_r, "Couldn't read $file.");
+    }
+}
+
+#
+# interactive
+#
+sub interactive {
+    my $SS_r = shift;
+    my $GS_r = $SS_r->{GS};
+    if (num_args(\@_)>0) {
+        command_die($SS_r, "Too many arguments to interactive.");
+    }
+    if ($SS_r->{IGV}{INTERACTIVE}) {
+        command_die($SS_r, "Already in interactive mode.");
+    }
+    # Start ReadLine
+    $SS_r->{IGV}{TERM} = 
+        new Term::ReadLine 'Interactive Sizing', *STDIN, *STDOUT;
+    $SS_r->{IGV}{INTERACTIVE} = 1;
+
+    # Output welcome banner if this is a fresh working directory
+    if (!-e "$GS_r->{WORK_DIR}/supersize.history" &&
+        !-e "$GS_r->{WORK_DIR}/supersize.vars") {
+        print <<BANNER;
+                                     
+    ,-. . . ,-. ,-. ,-. ,-. . ,_, ,-.      Interactive Sizing Shell
+    `-. | | | | |-' |   `-. |  /  |-'      (c) 2005 Fulcrum Microsystems
+    `-' `-^ |-' `-' '   `-' ' '"' `-'      
+            |                              Type 'help' to get started.
+            '                              
+BANNER
+    }
+
+    # if this is a real ReadLine implementation, add tab completion for all the
+    # commands registered
+    if (grep {$_ eq "attribs"} keys %{$SS_r->{IGV}{TERM}->Features}) {
+        my $attribs = $SS_r->{IGV}{TERM}->Attribs;
+        $attribs->{completion_entry_function} =
+            $attribs->{list_completion_function};
+        my @allCommands = ();
+        foreach my $mod (keys %{$SS_r->{IGV}{MODULES}}) {
+            push @allCommands, keys %{$SS_r->{IGV}{MODULES}->{$mod}{COMMANDS}};
+        }
+        $attribs->{completion_word} = \@allCommands;
+    }
+
+    # set history size
+    my $canStifle = 0;
+    if (grep {$_ eq "stiflehistory"} keys %{$SS_r->{IGV}{TERM}->Features}) {
+        $canStifle = 1;
+        stifle_history($SS_r);
+    }
+    
+    # Read saved history, variable, and job state from working directory
+    if (grep {$_ eq "readHistory"} keys %{$SS_r->{IGV}{TERM}->Features}) {
+        $SS_r->{IGV}{TERM}->ReadHistory("$GS_r->{WORK_DIR}/supersize.history") 
+            if (-e "$GS_r->{WORK_DIR}/supersize.history");
+    }
+    elsif (-e "$GS_r->{WORK_DIR}/supersize.history") {
+        print "Warning: Can't read command history.\n";
+    }
+    restore_job_state($SS_r);
+    check_jobs($SS_r);
+    
+    # Command loop
+    my $line = "";
+    my $prompt = format_prompt($SS_r);
+    while ( defined ($_ = $SS_r->{IGV}{TERM}->readline($prompt)) ) {
+        s/#.*$//; chomp;
+        if (s/\\\s*$//) {
+            $line .= $_;
+            $prompt = "";
+        }
+        else {
+            $line .= $_;
+            $line =~ s/^\s*//;
+            execute_command($line) unless ($line =~ /^$/);
+            $line = "";
+            check_jobs($SS_r);
+            $prompt = format_prompt($SS_r);
+        }
+
+        # update history size in case the variable changed
+        stifle_history($SS_r) if ($canStifle);
+    }
+
+    # Save history and variable space to supersize.{history,vars}
+    if (grep {$_ eq "writeHistory"} keys %{$SS_r->{IGV}{TERM}->Features}) {
+        $SS_r->{IGV}{TERM}->WriteHistory("$GS_r->{WORK_DIR}/supersize.history");
+    }
+    else {
+        print "Warning: Can't write command history.\n";
+    }
+    write_variable_space("$GS_r->{WORK_DIR}/supersize.vars");
+    save_job_state($SS_r);
+    $SS_r->{IGV}{INTERACTIVE} = 0;
+}
+
+sub stifle_history {
+    my $SS_r = shift;
+    $SS_r->{IGV}{TERM}->StifleHistory(
+        $SS_r->{GS}{HISTSIZE} >= 0 ? $SS_r->{GS}{HISTSIZE} : undef);
+}
+
+sub format_prompt {
+    my $SS_r = shift;
+    my $prompt = "supersize";
+    if ($SS_r->{GS}{PROMPT}==1) {
+        $prompt = "%TOP";
+    }
+    elsif ($SS_r->{GS}{PROMPT}==2) {
+        $prompt = "%T.%S";
+    }
+    if (defined $SS_r->{GS}{TOP}) {
+        my $idx2 = rindex $SS_r->{GS}{TOP}, ".";
+        my $idx1 = rindex $SS_r->{GS}{TOP}, ".", $idx2-1;
+        my $TYPE = substr $SS_r->{GS}{TOP}, 0, $idx2;
+        my $T = substr $SS_r->{GS}{TOP}, $idx1+1, $idx2-$idx1-1;
+        my $S = substr $SS_r->{GS}{TOP}, $idx2+1;
+        $prompt =~ s/\%TOP/$SS_r->{GS}{TOP}/g;
+        $prompt =~ s/\%TYPE/$TYPE/g;
+        $prompt =~ s/\%T/$T/g;
+        $prompt =~ s/\%S/$S/g;
+    }
+    if (exists $SS_r->{IGV}{job_string}) {
+        $prompt = $SS_r->{IGV}{job_string} . $prompt;
+    }
+    if (exists $SS_r->{GS}{MERGE_DIR} && $SS_r->{GS}{MERGE_DIR} ne "") {
+        $prompt .= "/$SS_r->{GS}{MERGE_DIR}";
+    }
+    return "$prompt> ";
+}
+
+#
+# history
+#
+sub history {
+    my $SS_r = shift;
+    my $GS_r = $SS_r->{GS};
+    if (num_args(\@_)) {
+        command_die($SS_r, "Too many arguments to history.");
+    }
+    if (!$IGV{INTERACTIVE}) {
+        command_die($SS_r, "Command history only defined in interactive mode.");
+    }
+    my @hist = $IGV{TERM}->GetHistory();
+    print "Command history:\n\n";
+    foreach my $line (@hist) {
+        print "$line\n";
+    }
+}
+
+#
+# get
+#
+sub get {
+    my $SS_r = shift;
+    my $type = "";
+    my $varname = "";
+    while (num_args(\@_)) {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg =~ /^--(.*)$/ && $1 eq "scalar") {
+            $type = "scalar";
+        }
+        elsif ($arg =~ /^--(.*)$/ && $1 eq "list") {
+            $type = "list";
+        }
+        elsif ($arg =~ /^--(.*)$/ && $1 eq "map") {
+            $type = "map";
+        }
+        elsif ($arg =~ /^--(.*)$/) {
+            usage($SS_r, "Unrecognized option $arg.");
+            return;
+        }
+        elsif ($varname ne "") {
+            usage($SS_r, "Too many arguments to get.");
+            return;
+        }
+        else {
+            $varname = $arg;
+        }
+    }
+    if ($varname ne "") {
+        my @arg = dereference_variable($SS_r, $varname);
+        command_die($SS_r, $arg[1]) if ($arg[0] == $TYPE_ERROR);
+        my $str = type_to_string(@arg);
+        if ($arg[0] != $TYPE_MAP) {
+            print "$varname = $str\n";
+        }
+        else {
+            $str =~ s/::/$varname\::/g;
+            print $str;
+        }
+    }
+    else {
+        # Print all variables
+        print "Scalar Variables:\n" if ($type eq "" && %{$SS_r->{GS}});
+        if ($type ne "list" && $type ne "map") {
+            foreach my $v (sort keys %{$SS_r->{GS}}) {
+                print "  $v = " . 
+                    type_to_string(dereference_variable($SS_r, $v)) . 
+                    "\n";
+            }
+        }
+        print "\nList Variables:\n" if ($type eq "" && %{$SS_r->{GL}});
+        if ($type ne "scalar" && $type ne "map") {
+            foreach my $v (sort keys %{$SS_r->{GL}}) {
+                print "  $v = " . 
+                    type_to_string(dereference_variable($SS_r,$v)) . "\n";
+            }
+        }
+        print "\nMap Variables:\n" if ($type eq "" && %{$SS_r->{GM}});
+        if ($type ne "scalar" && $type ne "list") {
+            foreach my $v (sort keys %{$SS_r->{GM}}) {
+                foreach my $k (sort keys %{$SS_r->{GM}{$v}}) {
+                    print "  $v\::$k = " . 
+                        type_to_string(dereference_variable($SS_r, "$v\::$k")) 
+                        . "\n";
+                }
+            }
+        }
+    }
+}
+
+#
+# set
+#
+sub set {
+    my $SS_r = shift;
+    my ($map_ref, $key);
+    my $is_map = 0;
+    my $check_vartype = -1;
+    if (num_args(\@_) != 3) {
+        command_die($SS_r, "Wrong number of arguments to set.");
+    }
+    # Interpret lvalue
+    my $varname  = shift_next_scalar(\@_);
+    if (shift_next_scalar(\@_) ne "=") {
+        command_die($SS_r, "Invalid set syntax: '=' expected.");
+    }
+    if ($varname =~ /^(\w+)(::[\-\w\.\[\]\(\)\{\},]+)?$/) {
+        # Standard global variable
+        $varname = $1;
+        if (defined $2) {
+            $map_ref = $SS_r->{GM};
+            ($key = $2) =~ s/^:://;
+            $is_map = 1;
+        }
+
+        # Check map existence & consistency
+        if ($is_map) {
+            if (!exists $map_ref->{$varname}) {
+                $map_ref->{$varname} = {};
+            }
+            else {
+                my $k = (keys %{$map_ref->{$varname}})[0];
+                $check_vartype = $map_ref->{$varname}{$k}[0];
+            }
+            $map_ref = $map_ref->{$varname};
+        }
+
+        # Assign value
+        my ($vartype, $value) = shift_next_arg(\@_);
+        if ($vartype == $TYPE_ERROR) {
+            command_die($SS_r, $value);
+        }
+        elsif (!$is_map && $vartype == $TYPE_SCALAR && ($check_vartype == -1 || 
+            $check_vartype == $TYPE_SCALAR)) {
+            $SS_r->{GS}{$varname} = $value;
+        }
+        elsif (!$is_map && $vartype == $TYPE_LIST && ($check_vartype == -1 || 
+               $check_vartype == $TYPE_LIST)) {
+            $SS_r->{GL}{$varname} = $value;
+        }
+        elsif (!$is_map && $check_vartype != $vartype && 
+               $vartype == $TYPE_SCALAR) {
+            # promote scalar to list
+            $SS_r->{GL}{$varname} = [$value];
+        }
+        elsif (!$is_map && $check_vartype != $vartype && 
+               $vartype == $TYPE_LIST) {
+            command_die($SS_r, "Can't assign list type to scalar $varname.");
+        }
+        elsif ($is_map && 
+               ($check_vartype == $vartype || $check_vartype == -1)) {
+            if ($vartype == $TYPE_MAP) {
+                command_die($SS_r, "Can't assign map elements to maps.");
+            }
+            $map_ref->{$key} = [ $vartype, $value ];
+        }
+        elsif ($is_map && $check_vartype != $vartype && 
+               $vartype != $TYPE_SCALAR) {
+            command_die($SS_r, "Incompatible map type assignment.");
+        }
+        elsif ($is_map && $check_vartype != $vartype && 
+               $vartype == $TYPE_SCALAR) {
+            # promote scalar to list
+            $map_ref->{$key} = [ $TYPE_LIST, [$value] ];
+        }
+        elsif ($vartype == $TYPE_MAP) {
+            # FIXME: Need to copy the map itself, not just the reference
+            $SS_r->{GM}{$varname} = $value;
+        }
+    }
+    elsif ($varname =~ /^([\w\/]+)\.(\w+)(::)?([\-\w\.\[\]\(\)\{\},]+)?$/) {
+        # Command-scoped input variable
+        my ($type, $value) = shift_next_arg(\@_);
+        my $cmd = $1; $varname = $2; $key = $4;
+        my $ref;
+        my $vartype = cmd_input_variable_type($SS_r, $varname, $cmd);
+        if (!defined $vartype) {
+            command_die($SS_r, "Invalid $1 input variable.");
+        }
+        if (defined $3) {
+            # Map type, map need to first initialize map
+            if ($vartype != $TYPE_MAP) {
+                command_die($SS_r, "Variable $cmd.$varname isn't a " .
+                                   "map type.");
+            }
+            my $map_r = (get_cmd_input_variable($SS_r, $2, $1))[1];
+            if (!defined $map_r) {
+                $map_r = {};
+                set_cmd_input_variable($SS_r, $varname, $1, 
+                    [ $TYPE_MAP, $map_r ]);
+            }
+            else {
+                my $k = (keys %{$map_r->{$varname}[1]})[0];
+                my $val_type = $map_r->{$varname}[1]{$k}[0];
+                if ($map_ref->{$varname}{$k}[0] != $type) {
+                    command_die($SS_r, "Values of map $cmd.$varname must " .
+                        "be " . type_name_to_string($val_type) . "s.");
+                }
+            }
+            $map_r->{$key} = [ $type, $value ];
+        }
+        elsif ($type == $vartype) {
+            set_cmd_input_variable($SS_r, $varname, $cmd, [$type, $value]);
+        }
+        else {
+            command_die($SS_r, "Type mismatch in $1 input variable ".
+                               "assignment.");
+        }
+        return;
+    }
+    else {
+        # Invalid identifier
+        command_die($SS_r, "Invalid variable name: $varname.  " .
+                    "Names must match /\\w+/.");
+    }
+}
+
+#
+# clear
+#
+sub clear {
+    my $SS_r = shift;
+    if (num_args(\@_)<1) {
+        command_die($SS_r, "Insufficient arguments to clear.");
+    }
+    my $type = "";
+    my $varname = "";
+    while (num_args(\@_)) {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg =~ /^--(.*)$/ && $1 eq "scalar") {
+            $type = "scalar";
+        }
+        elsif ($arg =~ /^--(.*)$/ && $1 eq "list") {
+            $type = "list";
+        }
+        elsif ($arg =~ /^--(.*)$/ && $1 eq "map") {
+            $type = "map";
+        }
+        elsif ($arg =~ /^--(.*)$/) {
+            command_die($SS_r, "Unrecognized option $arg.");
+        }
+        elsif ($varname ne "") {
+            command_die($SS_r, "Too many arguments to clear.");
+        }
+        else {
+            $varname = $arg;
+        }
+    }
+    my $found_s = 0;
+    my $found_l = 0;
+    my $found_m = 0;
+    if ($type eq "" || $type eq "scalar") {
+        foreach my $v (keys %{$SS_r->{GS}}) {
+            if ($varname eq "" || $v eq $varname) {
+                delete $SS_r->{GS}->{$v};
+                $found_s = 1;
+            }
+        }
+        if ($found_s && $varname ne "" && $SS_r->{GS}->{VERBOSE}) {
+            print "Cleared scalar variable $varname\n";
+        }
+    }
+    if ($type eq "" || $type eq "list") {
+        foreach my $v (keys %{$SS_r->{GL}}) {
+            if ($varname eq "" || $v eq $varname) {
+                delete $SS_r->{GL}->{$v};
+                $found_l = 1;
+            }
+        }
+        if ($found_l && $varname ne "" && $SS_r->{GS}->{VERBOSE}) {
+            print "Cleared list variable $varname\n";
+        }
+    }
+    if ($type eq "" || $type eq "map") {
+        foreach my $v (keys %{$SS_r->{GM}}) {
+            if ($varname eq "" || $v eq $varname) {
+                delete $SS_r->{GM}->{$v};
+                $found_m = 1;
+            }
+        }
+        if ($found_m && $varname ne "" && $SS_r->{GS}->{VERBOSE}) {
+            print "Cleared map variable $varname\n";
+        }
+    }
+    if (!$found_s && !$found_l && !$found_m && $SS_r->{GS}->{VERBOSE}) {
+        print "No matching variables to clear.\n";
+    }
+}
+
+#
+# quit
+#
+sub quit {
+    if ($IGV{INTERACTIVE}) {
+        print STDERR "Are you sure you want to quit? (y/N) :";
+        my $ans=<STDIN>;
+        chomp $ans;
+        exit 0 if $ans =~ /^\s*y/i;
+        return 0;
+    }
+    exit 0;
+}
+
+#
+# shell
+#
+sub shell {
+    my $SS_r = shift;
+    my @args=();
+    while (num_args(\@_)) {
+        my ($type, $arg)=shift_next_arg(\@_);
+        # need to rejoin supersize args with '='
+        if ($arg eq "=") {
+            $args[$#args].="=";
+            my ($type1, $arg1)=shift_next_arg(\@_);
+            $args[$#args].=$arg1;
+        }
+        else {
+            push @args, $arg;
+        }
+    }
+    my $cmd=join(" ", @args);
+    print "$cmd\n";
+    system ($cmd);
+    print "\n";
+}
+
+#
+# echo
+#
+sub echo {
+    my $SS_r = shift;
+    my $str = "";
+    my $fancy = 0;
+    while (num_args(\@_)) {
+        my ($type, $arg) = shift_next_arg(\@_);
+        if ($type==$TYPE_SCALAR) {
+            if ($arg =~ /^--(.*)$/ && ($1 eq "bold" || $1 eq "underline")) {
+                print color($1);
+                $fancy = 1;
+            }
+            elsif ($arg =~ /^--(.*)$/ && $1 eq "color") {
+                my $eq = shift_next_scalar(\@_);
+                my $color = shift_next_scalar(\@_);
+                if ($eq ne "=" || !defined $color) {
+                    command_die($SS_r, "Bad arguments to --color.");
+                }
+                print color($color);
+                $fancy = 1;
+            }
+            else {
+                $str .= " " if ($str ne "");
+                $str .= $arg;
+            }
+        }
+        elsif ($type==$TYPE_LIST) {
+            $str .= " " if ($str ne "");
+            $str .= list_to_string($arg);
+        }
+        else {
+            print "Got type $type\n";
+            print $arg . "\n";
+            return;
+        }
+    }
+    print $str;
+    print color('reset') if ($fancy);
+    print "\n";
+}
+
+#
+# cast_server
+#
+sub cast_server {
+    my $SS_r = shift;
+
+    # parse args
+    my $action = -1;
+    while (num_args(\@_)) {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg eq "--refresh") {
+            $action = 1;
+        }
+        elsif ($arg eq "--kill") {
+            $action = 0;
+        }
+        else {
+            command_die($SS_r, "Unrecognized argument $arg.");
+        }
+    }
+    if ($action == -1) {
+        command_die($SS_r, "Must specify either --refresh or --kill.")
+    }
+    elsif ($action == 0) {
+        kill_cast_server($SS_r);
+    }
+    elsif ($action == 1) {
+        refresh_cast_server($SS_r, 1);
+    }
+}
+
+#
+# query
+#
+sub query {
+    my $SS_r   = shift;
+    my $GS_r   = $SS_r->{GS};
+    my $task   = "";
+    my $cell   = $GS_r->{TOP};
+    my $filter = "";
+    while (num_args(\@_)) {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg =~ /^--/) {
+            my $eq = shift_next_scalar(\@_);
+            my $val = shift_next_scalar(\@_);
+            if (!defined $eq || !defined $val || $eq ne "=") {
+                command_die($SS_r, 
+                    "Bad arguments to query.  See 'help query'.");
+            }
+            if ($arg eq "--filter") {
+                $filter = "--filter=$val";
+            }
+            else {
+                command_die($SS_r, "Unknown argument to query: $arg");
+            }
+        }
+        elsif ($arg =~ /\.\d[^\.]*$/) {
+            if ($cell ne "") {
+                command_die($SS_r, 
+                    "Bad arguments to query.  See 'help query'.");
+            }
+            $cell = $arg;
+        }
+        else {
+            if ($task ne "") {
+                command_die($SS_r, 
+                    "Bad arguments to query.  See 'help query'.");
+            }
+            $task = $arg;
+        }
+    }
+    if (!$cell) {
+        command_die($SS_r, "Error: Must set the TOP global variable or " .
+              "specify a subtype\n       to query.");
+        return;
+    }
+    if (!$task) {
+        command_die($SS_r, "Error: No task specified to query.");
+    }
+
+    # Run cast_query
+    my $query_cmd = "$filter --cell=$cell --task=$task";
+    my $result_r = [];
+    query_cast_server($SS_r, $query_cmd, $result_r, 0);
+
+    # Set return variable list
+    set_cmd_return_variable($SS_r, "result", [ $TYPE_LIST, $result_r ]);
+}
+
+#
+# grep
+#
+sub grep_command {
+    my $SS_r = shift;
+
+    # Parse arguments
+    my $regexp = "";
+    my $do_count = 0;
+    while (num_args(\@_)>0 && $regexp eq "") {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg =~ /^--count/) {
+            $do_count = 1;
+        }
+        elsif ($arg =~ /^--/) {
+            command_die($SS_r, "Unknown grep argument $arg.");
+        }
+        elsif (!defined $arg) {
+            command_die($SS_r, "Invalid grep argument.");
+        }
+        else {
+            $regexp = $arg;
+        }
+    }
+    command_die($SS_r, "Invalid arguments.  See 'help grep'.") 
+        if (!defined $regexp || !num_args(\@_));
+    my $not = 0;
+    if ($regexp =~ /^(!?)\/(.*)\/$/) {
+        $not = $1;
+        $regexp = $2;
+    }
+
+    # Get list
+    my $list_r = shift_next_list(\@_);
+    command_die($SS_r, "Bad list argument.") if (!defined $list_r);
+
+    # Do the filtering
+    print "< " if (!$do_count);
+    my $count = 0;
+    foreach my $item (@{$list_r}) {
+        my $matched = 0;
+        eval { 
+            $matched = 1 if ($item =~ /$regexp/ && !$not);
+            $matched = 1 if ($item !~ /$regexp/ && $not);
+        };
+        if ($@) {
+            chomp $@;
+            print "Bad grep evaluation:\n";
+            print "  $@\n";
+        }
+        elsif ($matched) {
+            $count++;
+            print "$item " if (!$do_count);
+        }
+    }
+    print " >\n" if (!$do_count);
+    print "Matching list elements: $count\n" if ($do_count);
+}
+
+#
+# log
+#
+sub log_command {
+    my $SS_r = shift;
+    my $logfile = "$SS_r->{GS}{WORK_DIR}/supersize.log";
+    my $action;
+
+    # parse args
+    while (num_args(\@_)) {
+        my $arg = shift_next_scalar(\@_);
+        if ($arg eq "--file") {
+            my $eq = shift_next_scalar(\@_);
+            my $logfile = shift_next_scalar(\@_);
+            if (!defined $eq || $eq ne "=" || !defined $logfile) {
+                command_die($SS_r, "Invalid --file argument.");
+            }
+        }
+        elsif ($arg eq "on") {
+            $action = 1;
+        }
+        elsif ($arg eq "off") {
+            $action = 0;
+        }
+        else {
+            command_die($SS_r, "Invalid argument: $arg.");
+        }
+    }
+    command_die($SS_r, "Must specify on/off.") if (!defined $action);
+
+    print "Sorry, logging isn't implemented yet.\n";
+}
+
+
+############################## Utility functions ##############################
+
+# Loads a Supersize module.  Specifically,
+#   - Registers module name
+#   - Adds the module's command table to the master command table.  
+#   - Verifies that all required entries of the new command table are defined.
+#   - Adds any additional help topics defined by the module.
+# Format of the module hash is as follows:
+#   module_table_r 
+#     -> {NAME}                         Scalar module name
+#     -> {DESC}                         Description of module
+#     -> {COMMANDS}                     Command table
+#          -> {cmd_name}                command name
+#               -> {SUBREF}             Subroutine reference
+#               -> {USAGE}              Usage string
+#               -> {DESC}               Command description
+#               -> {EXTRA_DESC}         Extra documentation (optional)
+#               -> {GLOBALS} ->         List of global scalars used by command
+#                    -> {varname}       Global scalar variable name
+#                         -> {REQUIRED} '1' if variable must be set
+#               -> {IV}                 Command-scoped input variables
+#                    -> {varname}       Command-scoped variable name
+#                         -> {TYPE}     Command-scoped variable type
+#                         -> {DESC}     Command-scoped variable description
+#                         -> {REQUIRED} '1' if variable must be set
+#               -> {RV}                 Command return variables
+#                    -> {varname}       Return variable name
+#                         -> {TYPE}     Return variable type
+#                         -> {DESC}     Return variable description
+#     -> {GLOBALS} ->
+#          -> {varname}
+#               -> {TYPE}
+#               -> {DESC}
+#          
+sub load_modules {
+    while (defined (my $mod_r = shift)) {
+        if (defined $mod_r->{NAME}) {
+            my $mod = $mod_r->{NAME};
+            if (exists $IGV{MODULES}->{$mod}) {
+                if ($mod ne "") {
+                    print "Skipping re-import of module $mod.\n";
+                    next;
+                }
+                else {
+                    print "Adding to Supersize main module.\n" if ($GS{DEBUG});
+                }
+            }
+            else {
+                $IGV{MODULES}->{$mod} = {};
+                $IGV{MODULES}->{$mod}{COMMANDS} = {};
+                $IGV{MODULES}->{$mod}{DESC} = $mod_r->{DESC};
+                $IGV{MODULES}->{$mod}{GLOBALS} = {};
+            }
+            if ($mod ne "") {
+                print "Loading command module $mod\n" if ($GS{DEBUG});
+            }
+            foreach my $cmd (keys %{$mod_r->{COMMANDS}}) {
+                if (defined $mod_r->{COMMANDS}{$cmd}{SUBREF} &&
+                    defined $mod_r->{COMMANDS}{$cmd}{USAGE} &&
+                    defined $mod_r->{COMMANDS}{$cmd}{DESC}) {
+                    $IGV{MODULES}->{$mod}{COMMANDS}{$cmd} =
+                        $mod_r->{COMMANDS}{$cmd};
+                }
+                else {
+                    print "  Incomplete command definition: $mod.$cmd\n";
+                }
+            }
+            foreach my $gv (keys %{$mod_r->{GLOBALS}}) {
+                $IGV{MODULES}->{$mod}{GLOBALS}{$gv} = 
+                    $mod_r->{GLOBALS}{$gv};
+            }
+        }
+        else {
+            print "Incomplete module definition: $mod_r->{NAME}\n";
+        }
+    }
+}
+
+# Does some preprocessing of the command argument list.  Basically,
+# regenerates the list so that each list item is indeed a genuine argument
+# token.  Handles special characters such as quotes, '=', and angle brackets.
+# Examples:
+#
+#   foo=bar       ->  foo = bar
+#   <a b c>       ->  < a b c >
+#   "x  y z"      ->  "x  y z"  (leaves as-is as a single argument)
+#   foo[[x y z]]  ->  foo?????, where ????? is the evaluation of [[x y z]]
+#   map :: key    ->  map::key
+#
+# Note: Nested inlined commands are not supported.
+#
+sub preprocess_args {
+    my $arg_str = shift;
+
+    my @args;
+    my $iclose_idx = 0;
+    my $iopen_idx;
+    do {
+        $iopen_idx = index $arg_str, "[[", $iclose_idx;
+        $iopen_idx = length $arg_str if ($iopen_idx == -1);
+        my $sub_str = substr $arg_str, $iclose_idx, $iopen_idx-$iclose_idx;
+
+        # Deal with the damn quoted arguments, preserving whitespace
+        my @quoted_args = ();
+        my $idx = 0;
+        while (substr($sub_str, $idx) =~ s/(\"[^\"]+)(\")?/\"/) {
+            push @quoted_args, $1;
+            die "Unmatched quoted argument.\n" if (!defined $2);
+            $idx = index($sub_str, "\"") + 1;
+        }
+
+        # Add/delete whitespace around special characters
+        $sub_str =~ s/([=<>"])/ $1 /g;
+        $sub_str =~ s/\s+::\s+/::/g;
+        $sub_str =~ s/^\s+//;
+        $sub_str =~ s/\s+$//;
+
+        # tokenize on whitespace, restore quoted arguments
+        my @sub_args = split /\s+/, $sub_str;
+        foreach my $i (0..$#sub_args) {
+            $sub_args[$i] = (shift @quoted_args) . "\"" 
+                if ($sub_args[$i] eq "\"");
+        }
+        push @args, @sub_args;
+
+        if ($iopen_idx < length $arg_str) {
+            $iopen_idx += 2;
+            $iclose_idx = index $arg_str, "]]", $iopen_idx;
+            die "Badly formed inlined command.\n" if ($iclose_idx == -1);
+            $iclose_idx += 2;
+            my $cmd_str = substr $arg_str, $iopen_idx, $iclose_idx-$iopen_idx-2;
+
+            # Execute inline command
+            my $rv;
+            if (substr($arg_str, $iclose_idx) =~ /^\.(\w+)/) {
+                $rv = $1;
+                $iclose_idx += 1+length($rv);
+            }
+            $sub_str = execute_inlined_command($rv, $cmd_str);
+            push @args, preprocess_args($sub_str);
+        }
+    } while ($iopen_idx != length $arg_str);
+    return @args;
+}
+
+# Runs a command, redirecting its standard output to the returned scalar.
+# Multiple lines of output are interpreted as lists, and returned with the
+# appropriate "( line1 line2 ... )" formatting.
+sub execute_inlined_command {
+    my $rv       = shift;
+    my $cmd_line = shift;
+
+    # Temporarily redirect standard output
+    open(my $oldout, ">&STDOUT") || die "Couldn't dup STDOUT.\n";
+    pipe(my $read, my $write)    || die "Couldn't create pipe.\n";
+    open(STDOUT, ">&", $write)   || die "Couldn't redirect STDOUT.\n";
+
+    # Run the command
+    print STDERR "Executing inlined command:\n  $cmd_line\n" if ($GS{DEBUG});
+    execute_command($cmd_line);
+
+    # Restore standard output
+    close $write;
+    #close STDOUT;
+    open(STDOUT, ">&", $oldout)  || die "Couldn't restore STDOUT.\n";
+
+    # Get requested output
+    my $cmd_output;
+    if (!defined $rv || $rv eq "") {
+        # Return standard output
+        my @lines = <$read>;
+        close $read;
+        if (@lines < 2) {
+            $cmd_output = (@lines ? $lines[0] : "");
+            chomp $cmd_output;
+        }
+        else {
+            # Interpret as list
+            ($cmd_output = "@lines") =~ s/\n/ /g;
+            $cmd_output = "< $cmd_output >";
+        }
+    }
+    else {
+        my $cmd = (lookup_command(\%SS, (split /\s+/, $cmd_line)[0]))[1];
+        $cmd_output = type_to_string(get_cmd_return_variable(\%SS, $rv, $cmd));
+    }
+    close $read;
+    return $cmd_output;
+}
+
+        
+# Given a list of command arguments, as entered by the user, will return a
+# list of actual, type-classified arguments.  Specifically:
+#
+#   - Combines lists specified as "( e1 e2 ... )" or "(e1 .. eN)"
+#   - Dereferences variables specified as "$var"
+#     
+# Returns arguments as a reference to a list of (arg_type, arg_val) pairs.  
+# Defined types: TYPE_SCALAR, TYPE_LIST, TYPE_MAP, and TYPE_ERROR (invalid
+# variable reference).
+#
+# For scalar arguments, 'arg_val' is the actual value; for list arguments,
+# 'arg_val' is a reference to the list.  For an invalid variable reference,
+# 'arg_val' contains the error string.
+#
+sub parse_command_args {
+    my $SS_r = shift;
+    my @real_args;
+    my $list_str   = "";
+    my $list_depth = 0;
+    while (@_) {
+        if ($list_depth == 0 && $_[0] !~ /^"/ && $_[0] ne "<") {
+            # Standard literal argument (may contain variable reference)
+            push @real_args, parse_arg($_[0]);
+        }
+        elsif ($list_depth == 0 && $_[0] eq "<") {
+            # Literal list argument
+            $list_str   = "";
+            $list_depth = 1;
+        }
+        elsif ($list_depth == 0 && $_[0] =~ /^\"(.*)\"$/) {
+            # Quoted argument at top-level context
+            push @real_args, ( $TYPE_SCALAR, $1 );
+        }
+        elsif ($list_depth > 0) {
+            # Within list context
+            if ($_[0] eq ">") {
+                $list_depth--;
+            }
+            elsif ($_[0] eq "<") {
+                $list_depth++;
+            }
+            if ($list_depth==0) {
+                # List closure
+                push @real_args, parse_list_arg($SS_r, $list_str);
+            }
+            else {
+                $list_str .= " $_[0]";
+            }
+        }
+        else {
+            die "Invalid state in parse_command_args: $_[0]\n";
+        }
+        shift;
+    }
+    for my $i (0..@real_args/2-1) {
+        if ($real_args[2*$i] == $TYPE_ERROR) {
+            return ( $TYPE_ERROR, $real_args[2*$i+1] );
+        }
+    }
+    if ($list_depth != 0) {
+        die "Incomplete argument list.\n";
+    }
+    return @real_args;
+}
+
+# Parses an argument containing an arbitrary number of variable
+# dereferences (possibly nested).  The following are all supported:
+#
+#  foo                                 -- Simple literal scalar
+#  $foo                                -- Simple variable reference.
+#                                         Can be scalar, list, or map
+#  foobar$var foo$var/bar foo${var}bar -- Embedded scalar references
+#                                         (*must* be scalar variables)
+#  $$varptr                            -- Variable pointer dereference
+#  $map::key $map::$keyvar             -- Map element dereferences
+#
+sub parse_arg {
+    my ($arg) = @_;
+    my @args = ();
+    my $dollar_idx = length $arg;
+    while (($dollar_idx = rindex($arg, '$', $dollar_idx)) != -1) {
+        my $subarg = substr $arg, $dollar_idx;
+        if ($subarg =~ /^\$\{([\w\/\.]+::[\w\.\[\]\(\)\{\},]+)\}(.*)$/ || 
+            $subarg =~ /^\$([\w\/\.]+::[\w\.\[\]\(\)\{\},]+)(.*)$/ || 
+            $subarg =~ /^\$\{([\w\/\.]+)\}(.*)$/ || 
+            $subarg =~ /^\$([\w\/\.]+)(.*)$/) {
+            my @v = dereference_variable(\%SS, $1);
+            if ($v[0] != $TYPE_SCALAR) {
+                if ($2) {
+                    unshift @args, ($TYPE_SCALAR, $2);
+                }
+                unshift @args, @v;
+            }
+            else {
+                if (!@args || $args[0] != $TYPE_SCALAR) {
+                    unshift @args, ($TYPE_SCALAR, $v[1] . $2);
+                }
+                else {
+                    $args[1] = $v[1] . $2 . $args[1];
+                }
+            }
+            substr($arg, $dollar_idx) = "";
+        }
+        else {
+            die "Invalid variable reference: $subarg.\n";
+        }
+    }
+    if ($arg ne "") {
+        if (!@args || $args[0] != $TYPE_SCALAR) {
+            unshift @args, ($TYPE_SCALAR, $arg);
+        }
+        else {
+            $args[1] = $arg . $args[1];
+        }
+    }
+    return @args;
+}
+
+# Generates a list type from a literal list argument.  May contain
+# scalar variable references, nested lists (they will be flattened), and
+# quoted literal scalars.  May not contain map references.
+sub parse_list_arg {
+    my $SS_r = shift;
+    my $str  = shift;
+    $str =~ s/^\s*//;
+    $str =~ s/\s*$//;
+    my @list_elements = parse_command_args($SS_r, preprocess_args($str));
+    my $list_ref = [];
+    while (@list_elements) {
+        my $type = shift @list_elements;
+        if ($type == $TYPE_SCALAR) {
+            push @{$list_ref}, shift @list_elements;
+        }
+        elsif ($type == $TYPE_LIST) {
+            # Flatten sub-list
+            push @{$list_ref}, @{shift @list_elements};
+        }
+        elsif ($type == $TYPE_MAP) {
+            # Illegal
+            die "Illegal argument: Lists of maps not supported.\n";
+        }
+        else {
+            # Error
+            die "Bad list element: " . shift @list_elements;
+        }
+    }
+    return ( $TYPE_LIST, $list_ref );
+}
+
+# Writes all user variables to a file in a format that can be read back
+# in using 'source'.
+sub write_variable_space {
+    my $file = shift;
+    if (open (VARS, ">$file")) {
+        print VARS "# SCALAR VARIABLES:\n";
+        foreach my $sv (sort keys %{$SS{GS}}) {
+            print VARS "set $sv = \"$SS{GS}->{$sv}\"\n";
+        }
+        print VARS "# LIST VARIABLES:\n";
+        foreach my $lv (sort keys %{$SS{GL}}) {
+            print VARS "set $lv = " . list_to_string($SS{GL}->{$lv}) . "\n";
+        }
+        print VARS "# MAP VARIABLES:\n";
+        foreach my $mv (sort keys %{$SS{GM}}) {
+            # skip DIRTY_CELL_MAP since obviously all cells are dirtied between
+            # supersize runs
+            next if ($mv eq "DIRTY_CELL_MAP");
+            my $mstr = type_to_string(dereference_variable(\%SS, $mv));
+            $mstr =~ s/\::/set $mv\::/g;
+            print VARS $mstr;
+        }
+        foreach my $cmd (sort keys %{$SS{IV}}) {
+            print VARS "# COMMAND $cmd INPUT VARIABLES:\n"
+                if (keys %{$SS{IV}->{$cmd}});
+            foreach my $iv (sort keys %{$SS{IV}->{$cmd}}) {
+                my $type = cmd_input_variable_type(\%SS, $iv, $cmd);
+                if (!defined $type) {
+                    print STDERR "Oops, something set undefined input " .
+                                 "variable $cmd.$iv.\n";
+                    next;
+                }
+                my $sstr = 
+                    type_to_string(get_cmd_input_variable(\%SS,$iv,$cmd));
+                if ($sstr) {
+                    if ($type==$TYPE_SCALAR || $type==$TYPE_LIST) {
+                        print VARS "set $cmd.$iv = $sstr\n";
+                    }
+                    elsif ($type==$TYPE_MAP) {
+                        $sstr =~ s/\::/set $cmd.$iv\::/g;
+                        print VARS $sstr;
+                    }
+                }
+            }
+            # Output variables aren't written since they are intended only
+            # for temporary use.
+        }
+        close VARS;
+    }
+    else {
+        print "Warning: Couldn't write variable space to $file\n";
+    }
+}
+
+# Attempts to find ubersize working directory in current dir
+# (Only works if there is a single directory; could check timestamps and
+# choose most recently used directory -- later)
+sub setup_work_dir {
+    if (defined $GS{WORK_DIR} && ! -e $GS{WORK_DIR}) {
+        print "Creating working directory $GS{WORK_DIR}.\n";
+        mkdir $GS{WORK_DIR} || 
+            print "Warning: Couldn't create $GS{WORK_DIR}.\n";
+    }
+    elsif (!defined $GS{WORK_DIR}) {
+        opendir CURDIR, ".";
+        my @dirs = ();
+        foreach my $dir (grep { !/^\./ && -d $_ } readdir(CURDIR)) {
+            push @dirs, $dir if ($dir =~ /_\d+ps$/);
+        }
+        closedir CURDIR;
+        if (@dirs==0) {
+            print "Error: Couldn't locate an ubersize working directory.\n";
+            print "       Use --work-dir option.\n";
+            exit -1;
+        }
+        elsif (@dirs>1) {
+            print "Error: Multiple ubersize working directories.\n";
+            print "       Use --work-dir option.\n";
+            exit -1;
+        }
+        else {
+            $GS{WORK_DIR} = $dirs[0];
+        }
+    }
+    # Make the work_dir path absolute
+    $GS{WORK_DIR} = "$ENV{PWD}/$GS{WORK_DIR}" if ($GS{WORK_DIR} !~ /^\//);
+
+    # Default DFII_DIR is under WORK_DIR
+    $GS{DFII_DIR} = "$GS{WORK_DIR}/dfII" if (!defined $GS{DFII_DIR});
+
+    # Create cast subtype root directory
+    mkdir "$GS{WORK_DIR}/cast" if (!-e "$GS{WORK_DIR}/cast");
+}
+
+# Sets PACKAGE_ROOT appropriately if this is running in the context of
+# a build package; sets PDK_ROOT if it was specified on the command line.
+sub set_package_variables {
+    if (defined $COMMAND_LINE_PDK_ROOT) {
+        $GS{PDK_ROOT} = $COMMAND_LINE_PDK_ROOT;
+    }
+    if (defined $INSTALL_PACKAGE_ROOT) {
+        $GS{PACKAGE_ROOT} = $INSTALL_PACKAGE_ROOT;
+    }
+}

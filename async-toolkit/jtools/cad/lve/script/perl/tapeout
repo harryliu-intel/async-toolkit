@@ -1,0 +1,104 @@
+#!/usr/intel/bin/perl -w
+
+#
+# Tapeout a gds2 file.  Encrypt with multiple PGP keys, then fill out
+# appropriate forms automatically.
+#
+
+# PGP keys and forms directory
+$tapeout_dir = "/home/group/tapeout/PIVOTPOINT_V1_0";
+$forms_dir   = "$tapeout_dir/TSMC_FORMS";
+$keys_dir    = "$tapeout_dir/PGPKeys";
+$working_dir = "$ENV{PWD}";
+
+# tools to use
+$gpg = "/usr/bin/gpg";
+
+# use comma separator for lists
+$" = ",";
+
+# display usage banner
+sub usage {
+    my $usage = <<EOF;
+Tapeout a chip with PGP encryption and forms,
+Fulcrum Microsystems, Copyright Nov 13, 2003
+
+USAGE: $0
+  [--keys-dir=$keys_dir]
+  [--forms-dir=$forms_dir]
+  [--working-dir=$working_dir]
+  gds2_input
+  pgp_output
+
+EOF
+    return $usage;
+}
+
+# delete the temporary keyring and files
+sub obliterate_keyring {
+    `rm -f $working_dir/random_seed`;
+    `rm -f $working_dir/*.gpg`;
+    `rm -f $working_dir/*.gpg~`;
+}
+
+# parse arguments
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    ($flag, $value) = split("=",$1);
+    shift @ARGV;
+    
+    # bad syntax
+    if (! defined $flag || ! defined $value) { error("bad --flag=value syntax."); }
+    
+    # options
+    elsif ($flag eq "keys-dir")      { @keys_dir = $value; }
+    elsif ($flag eq "forms-dir")     { $forms_dir = $value; }
+    elsif ($flag eq "working-dir")   { $working_dir = $value; }
+}
+
+# required arguments
+@ARGV == 2 or die usage();
+$gds2_in = $ARGV[0];
+$pgp_out = $ARGV[1];
+
+# delete any old keyrings
+obliterate_keyring();
+
+# base gpg command
+$gpg_cmd = "$gpg --yes --homedir $working_dir";
+
+# add all keys to keyring
+$tmp = `ls $keys_dir`;
+@keys = split("\n",$tmp);
+foreach $key (@keys) {
+    $cmd = "$gpg_cmd --import $keys_dir/$key";
+    system "$cmd";
+}
+
+# list keys, parse back fingerprints
+$cmd = "$gpg_cmd --fingerprint";
+print "$cmd\n\n";
+@fingerprints = ();
+open IN, "$cmd|" or die "ERROR: can't get fingerprints";
+while ($line = <IN>) {
+    if ($line =~ /^     Key fingerprint = ([^\$]*)$/ )  {
+        $fingerprint = $1;
+        chomp($fingerprint);
+        $fingerprint =~ s/ //g;
+        push(@fingerprints, "0x$fingerprint");
+    }
+}
+close IN;
+
+# encrypt
+$cmd = "$gpg_cmd --encrypt";
+foreach $fp (@fingerprints) {
+    $cmd .= " --recipient $fp";
+}
+$cmd .= " --output $pgp_out $gds2_in";
+system "$cmd";
+
+# delete temporary keyrings
+obliterate_keyring();
+
+# fill in Word/Excel forms
+# TODO

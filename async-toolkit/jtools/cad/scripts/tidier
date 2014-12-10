@@ -1,0 +1,30 @@
+#!/usr/intel/bin/perl
+
+# first pass adds newlines before < and after >
+open MID, ">mid.tmp"  or die "Can't open mid.tmp for writing.\n";
+$line = <STDIN>;
+while ($line) {
+    chomp $line;
+    $line =~ s/</\n</g;
+    $line =~ s/>/>\n/g;
+    print MID "$line\n";
+    $line = <STDIN>;
+}
+
+# second pass turns spaces to newlines except in <tags>
+open MID, "<mid.tmp" or die "Can't open mid.tmp for reading.\n";
+$line = <MID>;
+while ($line) {
+    chomp $line;
+    if ( $line =~ s/^<// ) {
+        print "<$line\n";
+    } else {
+        $line =~ s/ /\n/g;
+        print "$line\n";
+    }
+    $line = <MID>;
+}
+
+# delete temp file
+system "rm mid.tmp";
+

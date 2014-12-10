@@ -1,0 +1,240 @@
+#!/usr/bin/perl -w
+use strict;
+use File::Spec::Functions qw/:ALL/;
+use IPC::Open2;
+use Getopt::Long;
+
+my @layoutFiles = ('layout.cdb', 'master.tag', 'pc.db', 'prop.xx');
+my @dfIIdirs;
+my @p4clients;
+my $branchSpecFile;
+my $q4 = 'p4';
+my $view = 'layout';
+
+sub usage {
+    my $reason = shift;
+    print $reason . "\n\n";
+    print <<EOF;
+USAGE: integrate_views
+    --dfII-dir=<a dfII directory> (may be supplied multiple times)
+    --perforce-client=<client> (may be supplied multiple times)
+    [--branch-spec=<file> (where to write the branch spec, defaults to stdout)]
+    [--q4-command=<command> (defaults to fulcrum --latest q4)]
+
+Integrates the layout view of leaf cells from any number of branches to the
+main branch.  The first uses of --dfII-dir and --perforce-client specify the
+main branch DFII directory and Perforce client, respectively.  Additional
+--dfII-dir and --perforce-client arguments specify DFII directories and
+Perforce clients of additional branches.  Each --dfII-dir must have a
+corresponding --perforce-client; Perforce clients need not be distinct.
+
+Cadence IC tools must be in your path, possibly by running:
+    ic integrate_views [...]
+EOF
+    exit 1;
+}
+
+GetOptions('dfII-dir=s' => \@dfIIdirs,
+           'perforce-client=s' => \@p4clients,
+           'branch-spec=s' => \$branchSpecFile,
+           'q4-command=s' => \$q4);
+
+usage("Each DFII directory must have a corresponding Perforce client")
+    if (scalar(@dfIIdirs) != scalar(@p4clients));
+
+usage("At least 2 branches must be specified") if (scalar(@dfIIdirs) <= 1);
+
+my $mainDF2 = shift @dfIIdirs;
+my $mainP4 = shift @p4clients;
+
+# translates a cell name in the DFII scheme to an appropriate file system name
+sub cadence2path {
+    my $cell = shift;
+    my $lib;
+    if ($cell =~ /(.*)\.([^.]+)\.([^.]+)/) {
+        $lib = $1;
+    }
+    my $cmd = "nmp mapName CDBA LibraryUnix \"$cell\"";
+    open(my $fh, $cmd . ' |') || die "Cannot execute $cmd: $!";
+    chomp(my $renamed = <$fh>);
+    close($fh);
+
+    my @libparts = split ('\.', $lib);
+    return catdir(@libparts, $renamed);
+}
+
+# contains handles returned by open2 if renamer was already invoked
+my @renamerHandle = ();
+
+# translates a cell name in the CAST scheme to the DFII scheme
+sub cast2cadence {
+    my $cell = shift;
+    my ($in, $out);
+    if (scalar(@renamerHandle) == 0) {
+        my $pid = open2($in, $out, 'rename', '--type=cell', '--from=cast', '--to=cadence');
+        @renamerHandle = ($in, $out);
+    } else {
+        ($in, $out) = @renamerHandle;
+    }
+    print $out "$cell\n";
+    chomp(my $renamed = <$in>);
+    return $renamed;
+}
+
+# status constants
+sub NOTHING() { 0 }
+sub REVERSE_INTEGRATE () { 10 }
+sub NOT_FOUND () { 20 }
+
+# parse the response of q4, which are of the form (for commands we are
+# interested in):
+# ... <key> <value>
+# return a reference to a hash from key to value
+sub q4response {
+    local $_;
+    my $cmd = shift;
+    my %result;
+    open(my $fh, $q4 . ' ' . $cmd . ' |') || die "Cannot execute $q4 $cmd: $!";
+    while (<$fh>) {
+        chomp;
+        if (/^\.\.\. (\w+) (.*)/) {
+            $result{$1} = $2;
+        }
+    }
+    close($fh);
+    return \%result;
+}
+
+# cache of fstat results
+my %fstatCache = ();
+
+sub p4fstat {
+    my ($client, $path) = @_;
+    if (!exists($fstatCache{$client}->{$path})) {
+        my $cmd = "-c '$client' fstat '$path'";
+        my $result = q4response($cmd);
+        $fstatCache{$client}->{$path} = $result;
+    }
+    return $fstatCache{$client}->{$path};
+}
+
+sub p4where {
+    my ($client, $path) = @_;
+    my $cmd = "-c '$client' where '$path'";
+    my $result = q4response($cmd);
+    return $result;
+}
+
+sub lastChange {
+    my ($client, $path) = @_;
+    my $change = -1;
+    my $fstat = p4fstat($client, $path);
+    if (exists($fstat->{'headChange'})) {
+        $change = $fstat->{'headChange'};
+    }
+    return $change;
+}
+
+# are the contents of the two files the same?
+sub equalFile {
+    my ($file1, $file2) = @_;
+    system("cmp", "-s", "$file1", "$file2");
+    return $? == 0;
+}
+
+# determine the action to be taken for a particular file
+sub compareFile {
+    my ($mainClient, $branchClient, $main, $branch) = @_;
+    if (-r $branch) {
+        if (-r $main) {
+            return NOTHING if (equalFile($main, $branch));
+            my $mainChange = lastChange($mainClient, $main);
+            my $branchChange = lastChange($branchClient, $branch);
+            if ($mainChange == -1 || $branchChange == -1) {
+                print STDERR "Cannot find change numbers: $main($mainChange) " .
+                             "$branch($branchChange)\n";
+                return NOT_FOUND;
+            } elsif ($branchChange > $mainChange) {
+                return REVERSE_INTEGRATE;
+            } else {
+                return NOTHING;
+            }
+        } else {
+            return REVERSE_INTEGRATE;
+        }
+    } else {
+        return NOT_FOUND;
+    }
+}
+
+# determine the action to be taken for a view
+sub compareView {
+    my ($mainClient, $branchClient, $view, $main, $branch) = @_;
+    my $maindir = catdir($main, $view);
+    my $fulldir = catdir($branch, $view);
+    my $result = NOTHING;
+    foreach my $file (@layoutFiles) {
+        my $mainpath = catfile($maindir, $file);
+        my $fullpath = catfile($fulldir, $file);
+        my $state =
+            compareFile($mainClient, $branchClient, $mainpath, $fullpath);
+        $result = $state if ($state > $result);
+    }
+    return $result;
+}
+
+# generate the branch spec for a particular view
+sub computeBranchSpec {
+    my @result = ();
+    my ($dstClient, $srcClient, $view, $dstPath, $srcPath) = @_;
+    foreach my $file (@layoutFiles) {
+        my $srcFullpath = catfile($srcPath, $view, $file);
+        my $srcFstat = p4fstat($srcClient, $srcFullpath);
+
+        # the destination may not exists, so fstat cannot be used
+        my $dstFullpath = catfile($dstPath, $view, $file);
+        my $dstWhere = p4where($dstClient, $dstFullpath);
+
+        push @result, "\t" . $srcFstat->{'encodedDepotFile'} .
+                       " " . $dstWhere->{'encodedDepotFile'};
+    }
+    return @result;
+}
+
+chomp (my @cells = <STDIN>);
+
+my @branchSpec = ();
+foreach my $cell (@cells) {
+    my $relpath = cadence2path(cast2cadence($cell));
+
+    my $i;
+    for ($i = 0; $i < @dfIIdirs; $i++) {
+        my $maindir = catdir($mainDF2, $relpath);
+        my $fulldir = catdir($dfIIdirs[$i], $relpath);
+        my $status =
+            compareView($mainP4, $p4clients[$i], $view, $maindir, $fulldir);
+        if ($status == NOTHING) {
+            print STDERR "$cell: NOTHING\n";
+            last;
+        } elsif ($status == REVERSE_INTEGRATE) {
+            print STDERR "$cell: REVERSE_INTEGRATE\n";
+            push @branchSpec, computeBranchSpec($mainP4, $p4clients[$i], $view,
+                                                $maindir, $fulldir);
+            last;
+        } elsif ($status == NOT_FOUND) {
+            # do nothing
+        }
+    }
+}
+
+my $branchFd;
+if ($branchSpecFile) {
+    open($branchFd, ">$branchSpecFile") ||
+        die "Cannot write to $branchSpecFile: $!";
+} else {
+    $branchFd = \*STDOUT;
+}
+
+foreach my $spec (@branchSpec) {
+    print $branchFd $spec . "\n";
+}

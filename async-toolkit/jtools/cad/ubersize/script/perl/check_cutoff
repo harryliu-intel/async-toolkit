@@ -1,0 +1,104 @@
+#!/usr/intel/bin/perl
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Temp qw/tempfile/;
+use File::Spec::Functions;
+
+my $castPath = '.';
+my @cells = ();
+my $heap = '1G';
+
+GetOptions("cast-path=s"     => \$castPath,
+           "cell=s"          => \@cells,
+           "cell-list=s"     => sub {
+               my ($arg, $val) = @_;
+               open (my $fh, $val) || die "Can't open file $val: $!";
+               while(<$fh>) {
+                   chomp;
+                   s/\s//;
+                   push @cells, $_ if $_ ne '';
+               }
+               close($fh);
+           },
+           "max-heap-size=s" => \$heap) || die "Can't parse arguments: $!";
+
+if (!@cells) {
+    print STDERR <<EOF;
+Usage: check_cutoff --cast-path=<path> (CAST path, defaults to .)
+                    --max-heap-size=<mem> (defaults to 1G)
+                    [ --cell=<fqcn> ... ](fully PRS implemented cell)
+                    [ --cell-list=<file> ... ] (cell list, one per line)
+
+Exit status: 0 means pass, 1 means fail, 2 means error
+EOF
+    exit(2);
+}
+
+my $tempdir = File::Temp->newdir();
+my $logfile = catfile($tempdir, "log");
+my $outfile = catfile($tempdir, "out");
+
+sub check {
+    my ($cell) = @_;
+
+    unlink $logfile if -e $logfile;
+    unlink $outfile if -e $outfile;
+
+    my $cmd = "jdsim --max-heap-size=$heap " .
+              "--cast-path=\Q$castPath\E >\Q$logfile\E 2>&1";
+
+    my ($error, $fail) = (1, 1);
+    if (open(my $fh, '|-', $cmd)) {
+        print $fh <<EOF;
+param cutoff.enableToData=2
+param cutoff.dataToEnable=3
+sta on
+instantiate $cell
+cutoff --max-length=4 >$outfile
+EOF
+        close($fh);
+    }
+
+    if (open(my $outfh, $outfile)) {
+        my $status = <$outfh>;
+        if (defined($status)) {
+            print "$cell $status";
+            chomp($status);
+            if ($status eq 'PASS') {
+                $error = 0;
+                $fail = 0;
+            } elsif ($status eq 'FAIL') {
+                $error = 0;
+            }
+            while(<$outfh>) {
+                print;
+            }
+        }
+        close($outfh);
+    }
+
+    if ($error) {
+        print "$cell ERROR\n";
+        print STDERR "$cell Errors executing $cmd\n";
+        if (open(my $logfh, $logfile)) {
+            while(<$logfh>) {
+                print STDERR $_;
+            }
+            close($logfh);
+        }
+        print STDERR "\n";
+    }
+
+    return $error ? 2 : ($fail ? 1 : 0);
+}
+
+my ($error, $fail) = (0, 0);
+foreach my $cell (@cells) {
+    my $status = check($cell);
+    $error++ if ($status == 2);
+    $fail++ if ($status == 1);
+}
+
+exit($error ? 2 : ($fail ? 1 : 0));

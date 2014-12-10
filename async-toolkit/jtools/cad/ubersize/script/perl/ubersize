@@ -1,0 +1,1535 @@
+#!/usr/intel/bin/perl -w
+# $Id$
+# $DateTime$
+# $Author$
+# 
+# Author: Andrew Lines
+# Purpose: tie together all scripts related to floorplanning, sizing, spicing
+#
+#
+
+use strict;
+use POSIX;
+use Getopt::Long qw(:config require_order no_ignore_case);
+use IPC::Open2;
+
+my $packageRoot = $0;
+my $exe = $packageRoot;
+$exe =~ s:.*/::;
+if (! ($packageRoot =~ m:^/:)) {
+    my $pwd = `pwd`;
+    chomp $pwd;
+    $packageRoot = $pwd;
+    $packageRoot .= "/$0";
+    $packageRoot =~ s:$exe$::;
+    $packageRoot =~ s://:/:g;
+    chdir $packageRoot;
+    $packageRoot = `pwd`;
+    chomp $packageRoot;
+    chdir $pwd;
+}
+else {
+    $packageRoot =~ s:/bin/$exe::;
+}
+
+my @SAVED_ARGV=@ARGV;
+
+#place all the supported actions here
+my %allactions = ("leafspec", 0x0, "spec", 0x0, "respec", 0x0, "updateprs", 0x0, 
+                  "copy", 0x0, "copySMR", 0x0, "presize", 0x0, "size", 0x0,
+                  "final_size", 0x0, "split",0x0, "split_spec", 0x0,
+                  "trial_merge", 0x0, "trial_merge_wfp", 0x0,
+                  "trial_merge_unsplittable", 0x0,
+                  "accept_merge", 0x0, "compact", 0x0, "updatenetlist", 0x0,
+                  "query", 0x0, "reuse_floorplan", 0x0, "edit_floorplan", 0x0,
+                  "add_floorplan", 0x0, "add_spec", 0x0, "branch", 0x0, 
+                  "delete_netlist", 0x0,
+                  "spice", 0x0, "charge_sharing", 0x0,
+                  "fix_charge_sharing", 0x0, "graph", 0x0, "jlvs", 0x0,
+                  "reuse", 0x0, "reuse_spec", 0x0, "set_fixed", 0x0, "set_unfixed", 0x0,
+                  "update_directive", 0x0);
+
+# default paths and variables
+my $layoutScaleX   = 1;
+my $layoutScaleY   = 1;
+my $compactRange   = "";
+my $defaultLayoutAttributes = "standard.process.standard_layout_cell";
+my $mergeHintsFile = "";
+my $mergeThreshold = 0.001;
+my $mergeMaxWidthRatio = 4;
+my $mergeMaxFixedWidthRatio = 1.1;
+my $mergeTargetCells = "";
+my $mergeDirective = 1;
+my $mergeCells = "";
+my $excludeCells = "";
+my $ignoreStaticizer = 0;
+my $layoutClient   = "$ENV{USER}-layout";
+my $specClient     = "$ENV{USER}";
+my $spiceCells     = "";
+my $cast_dir       = "$ENV{HOME}/hw/cast";
+my $spec_dir       = "$ENV{HOME}/hw/layout/tsmc13/spec";
+my $dfII_dir       = "$ENV{HOME}/hw/layout/tsmc13/dfII";
+my $dfII_instances = "";
+my $mkinstances    = 1;
+my $dest_dfII_dir  = "";
+my $src_dfII_dir   = "";
+my $pdk_root       = "";
+my $newSubtype     = 0;
+my $qsub           = 0;
+my $qsub_priority  = 0;
+my $lock_bound     = 0;
+my $lock_layout    = 0;
+my $use_layout_height = 0;
+my $serverLimit    = 0;
+my $viewName       = "floorplan";
+my $mem            = "512M";
+my $jreToUse       = "";
+my $javaFlags      = $ENV{JAVAFLAGS} || "-server";
+my $verbose        = 0;
+my $justPrint      = 0;
+my $bound_scale_factor = "";
+my $subtypes_from  = "0";
+my $reuse_spec     = '';
+my $pedantic_reuse_spec = '';
+my $new_spice      = '';
+my $suppress_netlist = 1;
+my $suppress_pins = 1;
+my $min_stat_ratio = 4;
+my $max_stat_ratio = 40;
+my $wireDrive;
+my $wireLoad;
+my $widthDrivePlus;
+my $widthDriveMinus;
+my $widthDrive;
+my $widthLoad;
+my $x8 = 0;
+my $solver = "useJCGSolver";
+my $fast = 0;
+my $oneGroup = 0;
+my $custom_config  = "$ENV{PWD}/custom.config";
+my $standard_layout_cell = "process.standard_layout_cell";
+my $solve_file = "";
+my $solve_hours = 0;
+my $fixedSizeDelayBias = 1;
+my $action;
+my $branch_name = "";
+my $src_branch = "main";
+my $dst_branch = "pv2";
+my $debugDelayBias;
+
+my %optionlist = (
+   "layoutScaleX=f" => \$layoutScaleX,
+   "layoutScaleY=f" => \$layoutScaleY,
+   "compactRange=s" => \$compactRange,
+   "defaultLayoutAttributes=s" => \$defaultLayoutAttributes,
+   "mergeHints=s" => \$mergeHintsFile,
+   "mergeThreshold=f" => \$mergeThreshold,
+   "mergeMaxWidthRatio=f" => \$mergeMaxWidthRatio,
+   "mergeMaxFixedWidthRatio=f" => \$mergeMaxFixedWidthRatio,
+   "mergeTargetCells=s" => \$mergeTargetCells,
+   "nomergeDirective" => sub { $mergeDirective = 0;},
+   "mergeDirective:1" => \$mergeDirective,
+   "mergeCells=s" => \$mergeCells,
+   "excludeCells=s" => \$excludeCells,
+   "ignoreStaticizer" => \$ignoreStaticizer,
+   "newSubtype=i" => \$newSubtype,
+   "spiceCells=s" => \$spiceCells,
+   "layoutClient=s" => \$layoutClient,
+   "specClient=s" => \$specClient,
+   "dfII-dir=s" => \$dfII_dir,
+   "dest-dfII-dir=s" => \$dest_dfII_dir,
+   "src-dfII-dir=s" => \$src_dfII_dir,
+   "fulcrum-pdk-root=s" => \$pdk_root,
+   "cast-dir=s" => \$cast_dir,
+   "spec-dir=s" => \$spec_dir,
+   "dfII-instances=s" => sub {$mkinstances = 0;
+            $dfII_instances = $_[1]; },
+   "useCG:1"       => sub { $solver = "useCGSolver"; },
+   "useJCG:1"      => sub { $solver = "useJCGSolver"; },
+   "useLP:1"       => sub { $solver = "useLPSolver"; },
+   "fast:1" => \$fast,
+   "solve-file=s" => \$solve_file,
+   "solve-hours=f" => \$solve_hours,
+   "oneGroup" => \$oneGroup,
+   "custom-config=s" => \$custom_config,
+   "qsub:1" => \$qsub,
+   "qsub-priority=i" => \$qsub_priority,
+   "subtypesFrom=s" => \$subtypes_from,
+   "lock-bound:1" => \$lock_bound,
+   "lock-layout:1" => \$lock_layout,
+   "use-layout-height" => \$use_layout_height,
+   "bound-scale-factor=f" => \$bound_scale_factor,
+   "viewName=s" => \$viewName,
+   "serverLimit=i" => \$serverLimit,
+   "mem=s" => sub { $mem = canonicalizeMemory( $_[1] ); },
+   "jre=s" => \$jreToUse,
+   "javaFlags=s" => \$javaFlags,
+   "verbose" => sub { $verbose = defined($_[1]) ?  $_[1] : ($verbose+1); },
+   "justPrint" => \$justPrint,
+   "help" => sub { usage(); },
+   "reuse-spec=s" => \$reuse_spec,
+   "pedantic-reuse-spec=s" => \$pedantic_reuse_spec,
+   "new-spice" => \$new_spice,
+   "suppress-netlist:1" => \$suppress_netlist,
+   "suppress-pins:1" => \$suppress_pins,
+   "min-staticizer-ratio=f" => \$min_stat_ratio,
+   "max-staticizer-ratio=f" => \$max_stat_ratio,
+   "wireDrive=f" => \$wireDrive,
+   "wireLoad=f" => \$wireLoad,
+   "widthDrivePlus=f" => \$widthDrivePlus,
+   "widthDriveMinus=f" => \$widthDriveMinus,
+   "widthDrive=f" => \$widthDrive,
+   "widthLoad=f" => \$widthLoad,
+   "x8" => \$x8,
+   "fixedSizeDelayBias=f" => \$fixedSizeDelayBias,
+   "branch-name=s" => \$branch_name,
+   "src-branch=s" => \$src_branch,
+   "dst-branch=s" => \$dst_branch,
+   "debugDelayBias" => \$debugDelayBias,
+);
+
+# report usage
+sub usage() {
+    my $usage = <<EOF;
+USAGE: ubersize [args] actions cellName subType Tau(ps)
+   Actions is a comma separated list of ordered actions including:
+    leafspec         (generate wrapper for leaf cell, must run spec next)
+    spec             (generate new spec tree from scratch)
+    respec           (regenerate spec tree, preserve old sizes)
+    updateprs        (like respec, but also preserve existing hierarchy)
+    copy             (copy spec/netlist/floorplan from subtype 0)
+    copySMR          (copy fixed size SBUF/RBUF/MBUFs from main spec)
+    presize          (size without floorplan information)
+    size             (size with floorplan information, output spec with fixed_size=false)
+    final_size       (size with floorplan information, output spec with fixed_size=true)
+    split            (split all subtypes except arrays in spec and layout)
+    split_spec       (split all subtypes except arrays in spec only)
+    trial_merge      (merge subtypes and count them)
+    trial_merge_wfp  (perform a trial_merge taking floorplanning into account)
+    trial_merge_unsplittable (trial merges any splittable=false types together)
+    accept_merge     (replace subtypes with merged subtypes)
+    compact          (compact subtypes to new range)
+    updatenetlist    (update netlist and floorplan views)
+    query            (list all subtypes)
+    reuse_floorplan  (Reused floorplanning from previous drops if they exist)
+    edit_floorplan   (edit floorplan views with layoutClient)
+    add_floorplan    (add floorplan views with layoutClient)
+    add_spec         (add or edit spec netlists with specClient)
+    branch           (create a branch spec for dfII and spec)
+    delete_netlist   (deletes netlist views)
+    spice            (spice the estimated RC circuit)
+    charge_sharing   (spice charge sharing for all leaf cells)
+    fix_charge_sharing (attempt to automatically fix charge sharing problems)
+    graph            (graph all leaf cell netlists)
+    jlvs             (generate CDL netlist and verify vs CAST)
+    reuse            (reuse subtypes in spec and copy floorplans)
+    reuse_spec       (reuse subtypes in spec only)
+    set_fixed        (set fixed_size = true)
+    set_unfixed      (set fixed_size = false)
+    update_directive (reemit estimated_delay and cap directives)
+ Arguments:
+    --help    (this help)
+    --verbose (show commands as they are executed; 
+              if >=2, show command output as well)
+    --justPrint (only print what would be done, dont execute)
+   Path/file:
+    --dfII-instances=[${dfII_instances}]
+    --cast-dir=[${cast_dir}]  (cast directory)
+    --spec-dir=[${spec_dir}]  (spec directory)
+    --dfII-dir=[${dfII_dir}]  (dfII directory)
+    --dest-dfII-dir=[${dest_dfII_dir}]  (dfII directory for copy/compact/split output)
+    --src-dfII-dir=[${src_dfII_dir}]  (dfII directory for reuse_floorplan input)
+    --fulcrum-pdk-root=[${pdk_root}]  (fulcrum pdk root)
+    --reuse-spec=[${reuse_spec}] (file of cells to reuse)
+    --pedantic-reuse-spec=[${pedantic_reuse_spec}] (file of exact cells to reuse)
+    --new-spice=[${new_spice}] (generate new style SPICE file)
+    --suppress-netlist[=${suppress_netlist}] (suppress netlist generation in updatenetlist)
+    --suppress-pins[=${suppress_pins}] (suppress pins in updatenetlist)
+    --custom-config=[${custom_config}] (config for Jauto/MergeHint/SubtypeSplit/SubtypeMerge)
+    --x8 (tells jauto to use special gates/stacks config file for old x8 cells)
+   Perforce:
+    --specClient=[${specClient}]  (p4 client for spec netlists)
+    --layoutClient=[${layoutClient}]  (p4 client for layout)
+    --branch-name=[${branch_name}]  (name of branch spec for branch task)
+    --src-branch=[${src_branch}]  (source branch point for branch task)
+    --dst-branch=[${dst_branch}]  (destination branch point for branch task)
+   Spice:
+    --spiceCells=[${spiceCells}]  (list of cells for charge_sharing)
+   Java:
+    --jre=[${jreToUse}]  (which Java Runtime Environment to use)
+    --javaFlags=[${javaFlags}]  (additional flags for java)
+    --mem=[${mem}]  (memory to use for java tools or wrapper scripts)
+   Leafspec:
+    --wireDrive=<length> (length of wire on inputs to cell
+    --wireLoad=<length> (length of wire on outputs of cell
+    --widthLoad=<width> (total width of transistor load of all outputs)
+    --widthDrive=<width> (width of both N and P transistor driver of all inputs)
+    --widthDrivePlus=<width> (width of P transistor driver for all inputs)
+    --widthDriveMinus=<width> (width of N transistor driver for all inputs)
+   Solver:
+    --useJCG      (use internal java conjugate gradient solver)
+    --solve-hours=[${solve_hours}]  (minimum time to spend optimizing with JCG)
+    --useCG       (deprecated: use external conjugate gradient solver)
+    --useLP       (deprecated: use external linear programming solver)
+    --fast        (deprecated: use faster, less accurate settings for CG solver)
+    --solve-file=[${solve_file}]  (deprecated: solve.in for CG solver)
+    --oneGroup=[${oneGroup}]  (deprecated: size over all independent variables at once)
+   Sizing:
+    --newSubtype=[${newSubtype}]  (new minimum subtype for compact)
+    --mergeHints=[${mergeHintsFile}]  (Merge hints override file)
+    --mergeDirective=[${mergeDirective}] (Take directives into account)
+    --nomergeDirective (Do not take directives into account)
+    --mergeThreshold=[${mergeThreshold}]  (tunes subtype merging)
+    --mergeMaxWidthRatio=[${mergeMaxWidthRatio}]  (maximum allowed ratio for merging)
+    --mergeMaxFixedWidthRatio=[${mergeMaxFixedWidthRatio}]  (maximum allowed ratio for merging into fixed-size cells)
+    --mergeTargetCells=[${mergeTargetCells}]  (top-level of fixed-size cells for merge trial)
+    --mergeCells=[${mergeCells}] (only merge listed cells)
+    --excludeCells=[${excludeCells}] (exclude listed cells from merging)
+    --ignoreStaticizer (ignore staticizers when merging)
+    --layoutScaleX=[${layoutScaleX}]  (scales floorplan X coordinate)
+    --layoutScaleY=[${layoutScaleY}]  (scales floorplan Y coordinate)
+    --defaultLayoutAttributes=[${defaultLayoutAttributes}] (specifies default layout_attributes directive)
+    --compactRange=[${compactRange}]  (compact only within the range)
+    --fixedSizeDelayBias=[${fixedSizeDelayBias}] (delaybias applied to fixed size cells)
+    --debugDelayBias  (generate delaybias.debug for instance-based delaybias)
+   Compute servers:
+    --qsub[=${qsub}]  (use qsub for sizing jobs)
+    --qsub-priority=[${qsub_priority}] (set qsub priority)
+    --serverLimit=[${serverLimit}]  (number of servers to be used in sizing qsub jobs)
+   Floorplanning:
+    --subtypesFrom=[${subtypes_from}] (subtype ranges to snarf from, list with increasing priority)
+    --lock-bound[=${lock_bound}] (don't change bbox)
+    --lock-layout[=${lock_layout}] (don't change layout)
+    --use-layout-height=[${use_layout_height}] (use height of layout for floorplan bbox)
+    --viewName=[${viewName}] (name of view to use for instance geometry)
+    --bound-scale-factor=[${bound_scale_factor}] (set the bounding box scale)
+  JLVS:
+    --min-staticizer-ratio=[$min_stat_ratio] (Min staticizer ratio for jlvs)
+    --max-staticizer-ratio=[$max_stat_ratio] (Max staticizer ratio for jlvs)
+   Environment variables:
+    USER=[$ENV{USER}]
+    HOME=[$ENV{HOME}]
+    PWD=[$ENV{PWD}]
+    JAVAFLAGS=[$javaFlags]
+EOF
+    foreach my $f (sort keys %optionlist) {
+        my $v=( $f =~ /[=:!]/);
+        $f =~ s/[=:].*//;
+        if ( ! ( "$usage" =~ /\n  *--$f=/ ) ) {
+            if (! $v && ! ( "$usage" =~ /--$f/ ) ) {
+                print STDERR "No help for --$f\n";
+            }
+        }
+    }
+    die "$usage";
+}
+
+GetOptions ( %optionlist ) or usage;
+
+# derived arguments
+if ($dest_dfII_dir eq "") {
+    $dest_dfII_dir = $dfII_dir;
+}
+if ($src_dfII_dir eq "") {
+    $src_dfII_dir = $dfII_dir;
+}
+
+if ($pdk_root eq "") {
+    die "No PDK Specified";
+}
+
+# pick solve.in file for CG solver
+if (!($solve_file eq "")) {
+} elsif ($fast) {
+    $solve_file = "$packageRoot/share/solve/fast_solve.in";
+} else {
+    $solve_file = "$packageRoot/share/solve/solve.in";
+}
+                          
+# find pdk files for jauto
+my $gates_stacks_config = "$pdk_root/share/Fulcrum/jlvs/gates_stacks.config";
+my $jauto_config = "$pdk_root/share/Fulcrum/jauto/jauto.config";
+my $process_config = "$pdk_root/share/Fulcrum/jauto/process.config";
+my $x8_config = "$pdk_root/share/Fulcrum/jauto/x8_gates_stacks.config";
+
+foreach my $configfile ($jauto_config, $process_config, $gates_stacks_config) {
+	die "PDK config file $configfile is unreadable.\nDid you specify --fulcrum-pdk-root correctly?\n" unless -r $configfile;
+}
+
+# get required command line arguments
+@ARGV == 4 or usage();
+my @actions = split(",",$ARGV[0]);
+my $cellName = $ARGV[1];
+my $subtype  = $ARGV[2];
+my $tau      = $ARGV[3];
+my $fqcn     = "${cellName}.${subtype}";
+
+my $work_dir;
+
+# make sure the the specified action is supported
+foreach my $acts (@actions) { 
+    if(!defined $allactions{$acts}) {
+        print STDERR "Specified action \"$acts\" not supported\n";
+        usage();
+    }
+}
+
+
+# derived variables
+if (($layoutScaleX == 1) && ($layoutScaleY == 1)) {
+    $work_dir = "$ENV{PWD}/${cellName}_${tau}ps";
+} else {
+    $work_dir = "$ENV{PWD}/${cellName}_${tau}ps_${layoutScaleX}x_${layoutScaleY}y";
+}
+my $cast_path  = "${cast_dir}:${work_dir}/cast:${spec_dir}";
+
+if($dfII_instances eq ""){
+    $mkinstances = 1;
+    $dfII_instances = "${work_dir}/instances";
+}
+elsif (!-e $dfII_instances){
+    print STDERR "\nDirectory ${dfII_instances} does not exist\n";
+    usage();
+}
+
+my $commonArgs   = " --max-heap-size=${mem}";
+$commonArgs      = $commonArgs . " --jre='${jreToUse}'" unless $jreToUse eq "";
+$commonArgs      = $commonArgs . " --jre-args='${javaFlags}'" unless $javaFlags eq "";
+my $Leafspec        = "leafspec" . $commonArgs;
+my $Jauto           = "jauto" . $commonArgs;
+my $SubtypeSplit    = "subtype_split" . $commonArgs;
+my $MergeHint       = "merge_hint" . $commonArgs;
+my $SubtypeMerge    = "subtype_merge" . $commonArgs;
+my $CastQuery       = "cast_query" . $commonArgs;
+my $cast2cdl        = "cast2cdl" . $commonArgs;
+my $jlvs            = "jlvs" . $commonArgs;
+my $rename          = "rename" . $commonArgs;
+
+my $p4              = "/usr/intel/bin/p4";
+my $cdsp4add        = "cdsp4add";
+my $cdsp4delete     = "cdsp4delete";
+my $cdsp4edit       = "cdsp4edit";
+
+# ic wrapper script: BUG 3849, shouldn't ic be called inside these scripts?
+my $ic                    = "/p/rrc/tools/bin/ic";
+$ic = $ENV{IC_SCRIPT} if defined $ENV{IC_SCRIPT};
+my $runincdswd            = "$ic runincdswd";
+my $updatenetlist         = "$ic updatenetlist";
+
+my $dfII_split_subtypes   = "dfII_split_subtypes";
+my $mk_instance           = "mk_instance";
+my $graph_netlist         = "graph_netlist";
+my $charge_sharing_report = "charge_sharing_report";
+my $cells2html            = "cells2html";
+my $floorplan_init        = "floorplan_init";
+
+# execute a command, taking care of exit status and $verbose and
+# $justPrint
+sub my_system {
+    my ($cmd,$outfile)=@_;
+    my $real_cmd = 
+        !defined($outfile) 
+        ? $cmd
+        : (($verbose > 1)
+           ? "bash -c \Q$cmd | tee \"$outfile\"; exit \$PIPESTATUS\E" 
+           : "$cmd > \"$outfile\"");
+    print STDERR "$cmd\n" if $verbose || $justPrint;
+    unless($justPrint) {
+        system($real_cmd) == 0 
+            or die "ubersize(action=$action): Failed to execute:\n".
+            " $cmd\nError ",$?>>8,($outfile?"; see $outfile\n":"\n");
+    }
+}
+
+# return an array of cells for easy use in various actions
+sub query {
+    my $cmd = "${CastQuery} --task=subcells --cast-path=\"${cast_path}\" --cell=\"${fqcn}\" '@_'";
+    my @cells = ();
+    open QUERY, "${cmd}|" or die "ERROR: query failed";
+    while (<QUERY>) {
+        chomp $_;
+	if (/(\S+)\s+/) { $_ = $1; }
+	else { die "Unexpected CastQuery output: $_"; }
+        push @cells, $_;
+    }
+    return @cells;
+}
+
+sub query_cadence {
+    return query("--translate=cadence");
+}
+
+# escape funny characters to get the layout name of a cast cell name
+sub cast_cells_to_layout_cells {
+    my $cmd = "$rename --type=cell --from=cast --to=cadence";
+    my $pid = open2(my $rfh, my $wfh, "$cmd") or die "ERROR: can't exec $cmd\n";
+    for my $cell (@_) {
+        print $wfh "$cell\n";
+        defined(my $renamed = <$rfh>) or die "Cannot rename: $cell\n";
+        chomp($renamed);
+        $cell = $renamed;
+    }
+    close($wfh);
+    close($rfh);
+    waitpid $pid, 0;
+}
+
+# find depot location of a perforce file (using p4)
+sub p4_where {
+    my ($client,$file) = @_;
+    my $cmd = "$p4 -c $client where '$file'";
+    open P4_IN, "$cmd|" or die "ERROR: can't exec $cmd\n";
+	my $line = <P4_IN>;
+    close P4_IN;
+    my $where = "";
+	if ($line =~ /^(\/\/.*) \/\/.*/) {
+		$where = $1;
+	}
+    return $where;
+}
+
+# use dfII_split_subtypes to copy netlist and floorplan views
+sub copy_views {
+
+    my $spec = $_[0];
+    my $out  = $_[1];
+    my $cmd  = "${dfII_split_subtypes} ";
+    $cmd .= "--split-spec=${spec} ";
+    $cmd .= "--src-dfII-dir=${src_dfII_dir} ";
+    $cmd .= "--dest-dfII-dir=${dest_dfII_dir} ";
+    $cmd .= "--verbose --force ";
+    $cmd .= "--fulcrum-pdk-root=${pdk_root} ";
+    $cmd .= "> ${out}";
+    my_system "${cmd}";
+
+}
+
+# get floorplan info from floorplan or layout views
+sub make_instances {
+    my $cellName = $_[0];
+    my $viewName = $_[1];
+    my $cadence_library = $cellName;
+    $cadence_library =~ s/\.[^\.]+$//;
+    my $cmd  = "${runincdswd} ";
+    $cmd .= "\"--dfII-dir=${dfII_dir}\" ";
+    $cmd .= "\"--fulcrum-pdk-root=${pdk_root}\" ";
+    $cmd .= "${mk_instance} ";
+    $cmd .= "\"--lib=${cadence_library}\" ";
+    $cmd .= "\"--cell=${fqcn}\" ";
+    $cmd .= "\"--outdir=${dfII_instances}\" ";
+    $cmd .= "\"--view=${viewName}\" ";
+    $cmd .= "\"--fulcrum-pdk-root=${pdk_root}\" ";
+    my_system($cmd, "${work_dir}/mk_instance.out");
+
+}
+
+# get floorplan info from floorplan or layout views
+sub make_target_instances {
+    my $cellName = $_[0];
+    my $viewName = $_[1];
+    my $cadence_library = $cellName;
+    $cadence_library =~ s/\.[^\.]+$//;
+    $cadence_library =~ s/\.[^\.]+$//;
+    my $cmd  = "${runincdswd} ";
+    $cmd .= "\"--dfII-dir=${dfII_dir}\" ";
+    $cmd .= "\"--fulcrum-pdk-root=${pdk_root}\" ";
+    $cmd .= "${mk_instance} ";
+    $cmd .= "\"--lib=${cadence_library}\" ";
+    $cmd .= "\"--cell=${cellName}\" ";
+    $cmd .= "\"--outdir=${dfII_instances}\" ";
+    $cmd .= "\"--view=${viewName}\" ";
+    $cmd .= "\"--fulcrum-pdk-root=${pdk_root}\" ";
+    my_system($cmd, "${work_dir}/mk_instance.out");
+
+}
+
+sub my_rmdir {
+    my($dir)=@_;
+    if ( -e "$dir" ) {
+        my_system "chmod -R +w \"$dir\"";
+        my_system "rm -rf \"$dir\"";
+    }
+}
+
+# execute merge given merge.hint file and optional dfII_instances
+sub trial_merge {
+    my ($mergeHintsFile,$dfII_instances) = @_;
+    
+    # remove cast_merge directory if it exists
+    my_rmdir("${work_dir}/cast_merge");
+    
+    # perform merge hints
+    my $cmd  = "${SubtypeMerge}  \\\n";
+    $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+    $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+    $cmd .= "--cell=\"${fqcn}\" \\\n";
+    $cmd .= "--merge_target=\"${mergeTargetCells}\" \\\n"
+        if $mergeTargetCells ne "";
+    $cmd .= "--subtype-path=\"${work_dir}/cast_merge\" \\\n";
+    $cmd .= "--all \\\n";
+    $cmd .= "--instance-dir=\"${dfII_instances}\" \\\n" if defined $dfII_instances;
+    $cmd .= "--output-leaves \\\n";
+    $cmd .= "< \"${mergeHintsFile}\" \\\n";
+    $cmd .= "> \"${work_dir}/merge.out\"\n";
+    my_system "${cmd}";
+    
+    # debugging feedback
+    print STDERR "  mergeThreshold=${mergeThreshold}\n";
+    print STDERR "  initial subtypes: ";
+    my_system "find \"${work_dir}/cast\" -name ${subtype}.cast | wc -l";
+    print STDERR "  split   subtypes: ";
+    my_system "find \"${work_dir}/cast\" -name \*.cast | wc -l";
+    print STDERR "  merged  subtypes: ";
+    my_system "find \"${work_dir}/cast_merge\" -name \*.cast | wc -l";
+}
+
+sub reuse {
+    my $cmd  = "${SubtypeSplit} \\\n";
+    $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+    $cmd .= "--cell=\"${fqcn}\" \\\n";
+    $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+    $cmd .= "--subtype-path=\"${work_dir}/cast\" \\\n";
+    $cmd .= "--force-reuse \\\n";
+    $cmd .= "--reuse-spec=\"${reuse_spec}\" \\\n" if $reuse_spec;
+    $cmd .= "--pedantic-reuse-spec=\"${pedantic_reuse_spec}\" \\\n" if $pedantic_reuse_spec;
+    $cmd .= "--output=\"${work_dir}/reuse.spec\"";
+    my_system($cmd, "${work_dir}/reuse.out");
+    if ($action eq "reuse") {
+        copy_views("\"${work_dir}/reuse.spec\"","\"${work_dir}/reuse_views.out\"");
+    }
+}
+
+sub copy_pdk {
+    my_rmdir "${work_dir}/pdk";
+    my_system "mkdir \"${work_dir}/pdk\"";
+    my_system "tar cf - -C \"$pdk_root\" . | tar xf - -C \"${work_dir}/pdk\"";
+}
+
+sub generate_lve_todo {
+    my $mode = shift;
+    my $fh;
+
+#   copy_pdk();
+
+    open($fh, "> ${work_dir}/lve.todo") || die "Cannot create lve.todo: $!";
+    print $fh <<EOF;
+--cast-dir=$cast_path
+--spec-dir=$work_dir/cast
+--dfII-dir=$dfII_dir
+\#--fulcrum-pdk-root=$pdk_root
+--layoutScaleX=$layoutScaleX
+--layoutScaleY=$layoutScaleY
+--output-dir=$work_dir/lve
+--mode=$mode
+EOF
+    close($fh);
+
+    open($fh, "> ${work_dir}/spice.todo") || die "Cannot create spice.todo: $!";
+    print $fh <<EOF;
+--include=$work_dir/lve.todo
+--task=aspice
+$fqcn
+EOF
+    close($fh);
+
+    open($fh, "> ${work_dir}/jlvs.todo") || die "Cannot create jlvs.todo: $!";
+    print $fh <<EOF;
+--include=$work_dir/lve.todo
+--task=jlvs
+$fqcn
+EOF
+    close($fh);
+
+    open($fh, "> ${work_dir}/charge_sharing.todo") ||
+        die "Cannot create charge_sharing.todo: $!";
+    print $fh <<EOF;
+--include=$work_dir/lve.todo
+--output-dir=$work_dir/charge_sharing
+--task=alint
+--minC=1
+--bumpCC=0
+--delayTau=
+--alint-dynamic-only=1
+--include=$work_dir/charge_sharing/todo
+EOF
+    close($fh);
+}
+
+# Construct an argument list which includes implied context such as
+# environment variables, and can be used to reproduce results on
+# different machines
+my $canonical_cmdline;
+{
+    my @canonical_argv=($0,@SAVED_ARGV);
+
+    # remove justPrint since they probably don't want to reproduce
+    # that part of the cmdline
+    @canonical_argv = map { ($_ eq "--justPrint") ? () : $_ } @canonical_argv;
+
+    # quote all the arguments (TODO: use a prettier quoting fn)
+    @canonical_argv = map { quotemeta($_); } @canonical_argv;
+
+    # list of possibly relevant environment variables
+    my @env_vars=("USER","HOME","JAVAFLAGS");
+    for(@env_vars) {
+        unshift @canonical_argv, "\Q$_\E=\Q$ENV{$_}\E" if $ENV{$_};
+    }
+    
+    $canonical_cmdline = "(cd \Q".$ENV{PWD}."\E; ".
+        join(" ",@canonical_argv).")";
+}
+
+if ($verbose || $justPrint) {
+    print STDERR $canonical_cmdline."\n";
+}
+
+# process the ordered list of actions
+my $leafspecpath = "";
+my $leafspecdone = 0;
+for(@actions) {
+    $action = $_;
+    my $start = `date`;
+    chomp($start);
+    print "Starting $action at $start\n";
+
+    # common jauto command line arguments
+    if ($leafspecdone && length($leafspecpath) > 0) {
+        $cast_path = "${leafspecpath}:$cast_path";
+        $leafspecpath="";
+        my $lcn = $cellName;
+        $lcn =~ s/.*\.//;
+        $cellName = "wrap.ttt.TEST_$lcn";
+        $fqcn = "${cellName}.${subtype}";
+    }
+    my $jcmd;
+    if ($action eq "leafspec") {
+        $jcmd = "LS_COLORS= ${Leafspec} \\\n";
+        $jcmd .= "--cellName=\"${cellName}\" \\\n";
+        $jcmd .= "--subtype=${subtype} \\\n";
+        $jcmd .= "--tau=${tau}e-12 \\\n";
+        $jcmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $jcmd .= "--wireDrive=$wireDrive \\\n" if defined ($wireDrive);
+        $jcmd .= "--wireLoad=$wireLoad \\\n" if defined ($wireLoad);
+        $jcmd .= "--widthDrivePlus=$widthDrivePlus \\\n" if defined ($widthDrivePlus);
+        $jcmd .= "--widthDriveMinus=$widthDriveMinus \\\n" if defined ($widthDriveMinus);
+        $jcmd .= "--widthDrive=$widthDrive \\\n" if defined ($widthDrive);
+        $jcmd .= "--widthLoad=$widthLoad \\\n" if defined ($widthLoad);
+    }
+    else {
+        $jcmd = "LS_COLORS= ${Jauto} \\\n";
+        $jcmd .= "--config=${jauto_config} \\\n";
+        $jcmd .= "--config=${process_config} \\\n";
+        $jcmd .= "--config=${custom_config} \\\n" if ( -e $custom_config);
+        $jcmd .= "--config=${x8_config} \\\n" if ( -e $x8_config and $x8 );
+        $jcmd .= "--keepLancelotRuns \\\n";
+        $jcmd .= "--${solver} \\\n";
+        $jcmd .= "--solve-file=${solve_file} \\\n";
+        $jcmd .= "--solve-hours=${solve_hours} \\\n" if ($solve_hours>0);
+        $jcmd .= "--maxGroupSize=100000 \\\n" if ($oneGroup > 0);
+        $jcmd .= "--cellName=\"${cellName}\" \\\n";
+        $jcmd .= "--subtype=${subtype} \\\n";
+        $jcmd .= "--tau=${tau}e-12 \\\n";
+        $jcmd .= "--castInRoot=\"${cast_path}\" \\\n";
+        $jcmd .= "--cdlRoot=\"${work_dir}\" \\\n";
+        $jcmd .= "--outRoot=\"${work_dir}\" \\\n";
+        $jcmd .= "--lancelotTemp=\"${work_dir}/lancelot\" \\\n";
+        $jcmd .= "--subtypePath=\"${work_dir}/cast\" \\\n";
+        $jcmd .= "--layoutScaleX=${layoutScaleX} \\\n";
+        $jcmd .= "--layoutScaleY=${layoutScaleY} \\\n";
+        $jcmd .= "--useQsub \\\n" if ($qsub >= 1);
+        $jcmd .= "--priorityQsub=${qsub_priority} \\\n" if ($qsub_priority < 0);
+        $jcmd .= "--usePBS \\\n" if ($qsub == 2);
+        $jcmd .= "--serverLimit=${serverLimit} \\\n" if ($serverLimit > 0);
+        $jcmd .= "--new-spice \\\n" if ($new_spice);
+        $jcmd .= "--spice-output=\"${fqcn}.spice\" \\\n";
+        $jcmd .= "--fixedSizeDelayBias=${fixedSizeDelayBias} \\\n";
+        $jcmd .= "--debugDelayBias \\\n" if ($debugDelayBias);
+    }
+
+    # handle various modes
+    if ($action eq "leafspec") {
+
+        # make fresh working directory
+        my_rmdir "${work_dir}";
+        my_system "mkdir \"${work_dir}\"";
+
+        $jcmd .= "--output-cast=\"${work_dir}/leafspec/wrap/ttt.cast\" \\\n";
+        $jcmd .= "--module-name=\"wrap.ttt\" \\\n";
+        # generate initial spec
+        my_system($jcmd, "${work_dir}/leafspec.out");
+
+        $leafspecdone=1;
+        $leafspecpath="${work_dir}/leafspec";
+
+    } elsif ($action eq "spec") {
+
+        # make fresh working directory
+        if (!$leafspecdone) {
+            my_rmdir "${work_dir}";
+            my_system "mkdir \"${work_dir}\"";
+        }
+
+        # generate initial spec
+        $jcmd .= "--mode=spec \\\n";
+        $jcmd .= "--defaultLayoutAttributes=${defaultLayoutAttributes} \\\n" unless $defaultLayoutAttributes eq "";
+        $jcmd .= "--noFloorplan";
+        my_system($jcmd, "${work_dir}/spec.out");
+
+        if ($leafspecdone) {
+            my ($wlp, $wln);
+            if (defined ($widthLoad)) {
+                $wlp = $widthLoad * 2/3;
+                $wln = $widthLoad * 1/3;
+            }
+            if (defined ($widthDrive) and ! defined ($widthDrivePlus)) {
+                $widthDrivePlus = $widthDrive;
+            }
+            if (defined ($widthDrive) and ! defined ($widthDriveMinus)) {
+                $widthDriveMinus = $widthDrive;
+            }
+            local(*P);
+            open (P, "find ${work_dir}/cast -name \\*.cast |");
+            while (<P>) {
+                if (m:/INVLOAD/:) {
+                    local (*M);
+                    chomp;
+                    open (M, "| /bin/ex $_");
+                    print M "1,\$s/fixed_size *= *false/fixed_size = true/\n";
+                    print M "1,\$s/NW1=[^ ][^ ]*/NW1=${wln}/\n1,\$s/PW1=[^ ][^ ]*/PW1=${wlp}/\n"
+                        if (defined ($widthLoad));
+                    print M "wq\n";
+                    close M;
+                }
+                if (m:/INVDRIVE/:) {
+                    local (*M);
+                    chomp;
+                    open (M, "| /bin/ex $_");
+                    print M "1,\$s/fixed_size *= *false/fixed_size = true/\n";
+                    print M "1,\$s/PW1=[^ ][^ ]*/PW1=${widthDrivePlus}/\n"
+                        if (defined ($widthDrivePlus));
+                    print M "1,\$s/NW1=[^ ][^ ]*/NW1=${widthDriveMinus}/\n"
+                        if (defined ($widthDriveMinus));
+                    print M "wq\n";
+                    close M;
+                }
+            }
+            close P;
+        }
+
+        if ($reuse_spec || $pedantic_reuse_spec) {
+            reuse();
+        }
+        generate_lve_todo("nogeometry");
+
+    } elsif ($action eq "respec") {
+
+        if (-r "${work_dir}/hsizes.debug" ) {
+
+            # delete old spec directory
+            my_rmdir "${work_dir}/cast";
+
+            # update the spec
+            my $cmd  = $jcmd;
+            $cmd .= "--mode=spec \\\n";
+            $cmd .= "--defaultLayoutAttributes=${defaultLayoutAttributes} \\\n" unless $defaultLayoutAttributes eq "";
+            $cmd .= "--noFloorplan \\\n";
+            $cmd .= "> \"${work_dir}/respec.out\"";
+            my_system "${cmd}";
+
+            if ($reuse_spec || $pedantic_reuse_spec) {
+                reuse();
+            }
+
+            # resize the spec
+            $cmd  = $jcmd;
+            $cmd .= "--mode=resize \\\n";
+            $cmd .= "--noFloorplan \\\n";
+            $cmd .= "--trial \\\n";
+            $cmd .= "--hsizes=\"${work_dir}/hsizes.debug\" \\\n";
+            $cmd .= ">> \"${work_dir}/respec.out\"";
+            my_system "${cmd}";
+
+        } else {
+            print STDERR "WARNING: respec failed, can't read hsizes.debug\n";
+        }
+
+    } elsif ($action eq "copySMR") {
+        
+        # copy fixed size SBUF/RBUF/MBUF from main spec tree
+        my @SMRbufs = ( "SBUF_1of1", "RBUF_1of1", "MBUF_1of1",
+                        "SBUF_1of2", "RBUF_1of2", "MBUF_1of2",
+                        "SBUF_1of3", "RBUF_1of3", "MBUF_1of3",
+                        "SBUF_1of4", "RBUF_1of4", "MBUF_1of4",
+                        "SBUF_1of5", "RBUF_1of5", "MBUF_1of5" );
+        foreach my $i ( @SMRbufs ) {
+          # copy 0.cast to local subtype.cast 
+          my_system "mkdir -p \"${work_dir}/cast/lib/buffer/half/${i}\"";
+          my_system "cp -f ${spec_dir}/lib/buffer/half/${i}/0.cast " .
+              "\"${work_dir}/cast/lib/buffer/half/${i}/0.cast\"";
+
+          if(${subtype} != "0") {
+            # substituting define "0" with define "subtype"
+            my $out="${work_dir}/cast/lib/buffer/half/${i}/${subtype}.cast";
+            my $in="${work_dir}/cast/lib/buffer/half/${i}/0.cast";
+            if ($justPrint) {
+              print STDERR "[reading from ${in}, writing to ${out}]\n"; 
+            } else {
+              open (ZEROFILE, "<", $in) or
+                die "WARNING: cannot read ${i}/0.cast\n";
+              open (SMRFILE, ">", $out) or 
+                die "WARNING: cannot write file ${i}/${subtype}.cast\n";
+                    
+              my $line;
+              while ($line  = <ZEROFILE>) {
+                $line =~ s/define "0"/define "${subtype}"/g;
+                print SMRFILE $line;
+              }
+              close ZEROFILE;
+              close SMRFILE;
+            }
+            my_system "rm -f \"${work_dir}/cast/lib/buffer/half/${i}/0.cast\"";
+          }
+        }
+
+    } elsif ($action eq "size") {
+        
+        # get floorplan info
+	if($mkinstances){make_instances($cellName,$viewName); }    
+        
+        # size with floorplan
+        $jcmd .= "--mode=size \\\n";
+        $jcmd .= "--layoutRoot=\"${dfII_instances}\" \\\n";
+        $jcmd .= "--trial ";
+        my_system($jcmd, "${work_dir}/size.out");
+        my_system("$cells2html \"${work_dir}/cells.debug\"", "${work_dir}/cells.html");
+		generate_lve_todo("estimated");
+        
+    } elsif ($action eq "final_size") {
+        
+        # get floorplan info
+        if($mkinstances){make_instances($cellName,$viewName); }    
+        
+        # size with floorplan
+        $jcmd .= "--mode=size \\\n";
+        $jcmd .= "--layoutRoot=\"${dfII_instances}\" \\\n";
+        my_system($jcmd, "${work_dir}/size.out");
+        my_system("$cells2html \"${work_dir}/cells.debug\"", "${work_dir}/cells.html");
+		generate_lve_todo("estimated");
+        
+    } elsif ($action eq "presize") {
+        
+        # size without floorplan
+        $jcmd .= "--mode=size \\\n";
+        $jcmd .= "--noFloorplan \\\n";
+        $jcmd .= "--trial ";
+        my_system($jcmd, "${work_dir}/presize.out");
+        my_system("$cells2html \"${work_dir}/cells.debug\"", "${work_dir}/cells.html");
+		generate_lve_todo("nogeometry");
+
+    } elsif ($action eq "update_directive") {
+        # create a working directory if one does not exist
+        my_system "mkdir \"${work_dir}\"" unless -d $work_dir;
+
+        # get floorplan info
+        if ($mkinstances) { make_instances($cellName, $viewName); }    
+        
+        # size with floorplan
+        $jcmd .= "--mode=size \\\n";
+        $jcmd .= "--layoutRoot=\"${dfII_instances}\" \\\n";
+        $jcmd .= "--trial --skipSizing --updateDirective ";
+        my_system($jcmd, "${work_dir}/update_directive.out");
+        my_system("$cells2html \"${work_dir}/cells.debug\"", "${work_dir}/cells.html");
+        
+    } elsif ($action eq "copy") {
+
+        # make fresh working directory (just like for spec)
+        my_rmdir "${work_dir}";
+        my_system "mkdir \"${work_dir}\"";
+
+        # copy 0 subtypes to new range
+        my $cmd  = "${SubtypeSplit} \\\n";
+        $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+        $cmd .= "--cell=\"${cellName}.0\" \\\n";
+        $cmd .= "--min-subtype=${subtype} \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--subtype-path=\"${work_dir}/cast_copy\" \\\n";
+        $cmd .= "--compact \\\n";
+        $cmd .= "--output=\"${work_dir}/copy.spec\" \\\n";
+        $cmd .= "> \"${work_dir}/copy.out\"";
+        my_system "${cmd}";
+        copy_views("\"${work_dir}/copy.spec\"","\"${work_dir}/copy_views.out\"");
+        my_rmdir "${work_dir}/cast";
+        my_system "mv \"${work_dir}/cast_copy\" \"${work_dir}/cast\"";
+
+    } elsif ($action eq "compact") {
+
+        # compact subtypes to new range
+        my $cmd  = "${SubtypeSplit} \\\n";
+        $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+        $cmd .= "--cell=\"${cellName}.${subtype}\" \\\n";
+        $cmd .= "--min-subtype=${newSubtype} \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--subtype-path=\"${work_dir}/cast_compact\" \\\n";
+        $cmd .= "--compact \\\n";
+        $cmd .= "--compact-range=\"${compactRange}\" \\\n" if $compactRange;
+        $cmd .= "--compact-path=\"${spec_dir}:${work_dir}/cast\" \\\n";
+        $cmd .= "--output=\"${work_dir}/compact.spec\" \\\n";
+        $cmd .= "> \"${work_dir}/compact.out\"";
+        my_system "${cmd}";
+        copy_views("\"${work_dir}/compact.spec\"","\"${work_dir}/compact_views.out\"");
+        my_rmdir "${work_dir}/cast";
+        my_system "mv \"${work_dir}/cast_compact\" \"${work_dir}/cast\"";
+
+    } elsif ($action eq "split" || $action eq "split_spec") {
+        
+        # split all splittable subtypes (except arrays)
+        my $cmd  = "${SubtypeSplit} \\\n";
+        $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+        $cmd .= "--cell=\"${fqcn}\" \\\n";
+        $cmd .= "--min-subtype=${subtype} \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--subtype-path=\"${work_dir}/cast_split\" \\\n";
+        $cmd .= "--all \\\n";
+        $cmd .= "--output=\"${work_dir}/split.spec\"";
+        my_system($cmd, "${work_dir}/split.out");
+        if ($action eq "split") {
+            copy_views("\"${work_dir}/split.spec\"","\"${work_dir}/split_views.out\"");
+        }
+        my_rmdir "${work_dir}/cast";
+        my_system "mv \"${work_dir}/cast_split\" \"${work_dir}/cast\"";
+        
+    } elsif ($action eq "trial_merge") {
+        
+        # generate merge hints, if none was specified
+        if ($mergeHintsFile eq "") {
+            my $cmd  = "${MergeHint} \\\n";
+            $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+            $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+            $cmd .= "--cell=\"${fqcn}\" \\\n";
+            $cmd .= "--merge_target=\"${mergeTargetCells}\" \\\n" 
+                if $mergeTargetCells ne "";
+            $cmd .= "--threshold=${mergeThreshold} \\\n";
+            $cmd .= "--max-width-ratio=${mergeMaxWidthRatio} \\\n";
+            $cmd .= "--max-fixed-width-ratio=${mergeMaxFixedWidthRatio} \\\n";
+            $cmd .= "--merge-cells=\"${mergeCells}\" \\\n" if $mergeCells;
+            $cmd .= "--exclude-cells=\"${excludeCells}\" \\\n" if $excludeCells;
+            $cmd .= "--directive \\\n" if $mergeDirective;
+            $cmd .= "--ignore-staticizer \\\n" if $ignoreStaticizer;
+            $cmd .= "> \"${work_dir}/merge.hint\"\n";
+            my_system "${cmd}";
+            $mergeHintsFile = "${work_dir}/merge.hint";
+        }
+
+        # perform merge to a temporary directory    
+        trial_merge($mergeHintsFile);
+
+    } elsif ($action eq "trial_merge_wfp") {
+        
+        # generate merge hints, if none was specified
+        if ($mergeHintsFile eq "") {
+
+            # make instances for comparison purposes
+            if ($mkinstances) {
+                make_instances($cellName,$viewName);
+                if ($mergeTargetCells ne "") {
+                    my @mergetargets = split(':', $mergeTargetCells);
+                    foreach my $mergetarget ( @mergetargets) {
+                        make_target_instances($mergetarget,$viewName);
+                    }
+                }
+                if (-e $custom_config) {
+                    open CONFIG, "<$custom_config" or 
+                        die "ERROR: can't read $custom_config\n";
+                    while ( my $line = <CONFIG> ) {
+                        if ($line =~ /merge_target=(\S+)/ ) {
+                            my @mergetargets = split(':', $1);
+                            foreach my $mergetarget ( @mergetargets) {
+                                make_target_instances($mergetarget,$viewName);
+                            }
+                        }
+                    }
+                    close CONFIG;
+                }
+            }
+                
+            
+            my $cmd  = "${MergeHint} \\\n";
+            $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+            $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+            $cmd .= "--cell=\"${fqcn}\" \\\n";
+            $cmd .= "--merge_target=\"${mergeTargetCells}\" \\\n"
+                if $mergeTargetCells ne "";
+            $cmd .= "--threshold=${mergeThreshold} \\\n";
+            $cmd .= "--max-width-ratio=${mergeMaxWidthRatio} \\\n";
+            $cmd .= "--max-fixed-width-ratio=${mergeMaxFixedWidthRatio} \\\n";
+            $cmd .= "--mergeCells=\"${mergeCells}\" \\\n" if $mergeCells;
+            $cmd .= "--excludeCells=\"${excludeCells}\" \\\n" if $excludeCells;
+            $cmd .= "--directive \\\n" if $mergeDirective;
+            $cmd .= "--ignore-staticizer \\\n" if $ignoreStaticizer;
+            $cmd .= "> \"${work_dir}/merge.hint\"\n";
+            my_system "${cmd}";
+            $mergeHintsFile = "${work_dir}/merge.hint";
+        }
+
+        # perform merge to a temporary directory    
+        trial_merge($mergeHintsFile,$dfII_instances);
+
+    } elsif ($action eq "trial_merge_unsplittable") {
+
+        # query the set of splittable=false cells
+        my $cmd = "${CastQuery} \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--cell=\"${fqcn}\" \\\n";
+        $cmd .= "--task=subcells \\\n";
+        $cmd .= "--filter=directive=splittable:false \\\n";
+        $cmd .= "> \"${work_dir}/unsplittable.cells\"\n";
+        my_system "${cmd}";
+        
+        # read unsplittable.cells into a list
+        open IN, "< ${work_dir}/unsplittable.cells"
+            or die "ERROR: can't read \"${work_dir}/unsplittable.cells\"";
+        my @cells = ();
+        while (my $line = <IN>) {
+            chomp $line;
+            my ($cell) = split(" ",$line);
+            push @cells, $cell;
+        }
+        close IN;
+
+        # write unsplittable.config
+        open OUT, "> ${work_dir}/unsplittable.config"
+            or die "ERROR: can't write \"${work_dir}/unsplittable.config\"";
+        my $line = join (":", @cells);
+        print OUT "merge-cells=$line\n";
+        close OUT;
+
+        # create merge.hint
+        $cmd  = "${MergeHint} \\\n";
+        $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--cell=\"${fqcn}\" \\\n";
+        $cmd .= "--threshold=1000000 \\\n";
+        $cmd .= "--max-width-ratio=1000000 \\\n";
+        $cmd .= "--max-fixed-width-ratio=1000000 \\\n";
+        $cmd .= "--config=\"${work_dir}/unsplittable.config\" \\\n";
+        $cmd .= "--ignore-staticizer \\\n";
+        $cmd .= "> \"${work_dir}/merge.hint\"\n";
+        my_system "${cmd}";
+        $mergeHintsFile = "${work_dir}/merge.hint";
+
+        # perform merge to a temporary directory    
+        trial_merge($mergeHintsFile);
+
+    } elsif ($action eq "accept_merge") {
+
+        if ( -e "${work_dir}/cast_merge" ) {
+
+            # overwrite source spec with merged spec
+            my_rmdir "${work_dir}/cast";
+            my_system "mv \"${work_dir}/cast_merge\" \"${work_dir}/cast\"";
+
+        } else {
+
+            # warning
+            print STDERR "WARNING: do a trial_merge first.\n";
+
+        }
+
+    } elsif ($action eq "updatenetlist") {
+        
+        # run updatenetlist
+        my $cmd  = "${updatenetlist} \\\n";
+        $cmd .= "--cell=\"${cellName}\" \\\n";
+        $cmd .= "--subtype=${subtype} \\\n";
+        $cmd .= "--fulcrum-pdk-root=${pdk_root} \\\n";
+        $cmd .= "--dfII-dir=${dfII_dir} \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--cadence-log=\"${work_dir}/updatenetlist.log\" \\\n";
+        $cmd .= "--check-log=\"${work_dir}/updatenetlist.check\" \\\n";
+	if($suppress_netlist == 1){
+	    $cmd .= "--suppress-netlist-view \\\n";
+	}
+        $cmd .= "--update-views \\\n";
+        if($lock_bound != 0){
+            $cmd .= "--lock-bound \\\n";
+        }
+	if($lock_layout != 0){
+            $cmd .= "--lock-layout \\\n";
+        }
+        if($use_layout_height!=0) {
+            $cmd .= "--use-layout-height \\\n";
+        }
+        $cmd .= "--bound-scale-factor=\"${bound_scale_factor}\" \\\n" if $bound_scale_factor;
+        $cmd .= "--verbose \\\n";
+        if($suppress_pins == 1){
+            $cmd .= "--suppress-pins \\\n";
+        }
+        else {
+            $cmd .= "--force-pins \\\n";
+        }
+        $cmd .= "--java-max-heap-size=${mem} \\\n";
+        # updatenetlist does not support this option anymore
+        #$cmd .= "--temp-dir\"${work_dir}\" \\\n";
+        $cmd .= "> \"${work_dir}/updatenetlist.out\"";
+        my_system "${cmd}";
+
+    } elsif ($action eq "query") {
+
+        # query subtypes
+        my $out="${work_dir}/query.out";
+        my @cells = query;
+        if($justPrint) {
+            print STDERR "[writing to ${out}]\n";
+        } else {
+            open OUT, ">${out}" or die "couldn't open ${out} for writing";
+            for my $cell (@cells) {
+                print OUT "$cell\n";
+            }
+            close OUT;
+        }
+	
+    }
+    elsif ($action eq "reuse_floorplan") {
+
+	if(! -e $work_dir){ my_system "mkdir \"${work_dir}\""; }
+
+        # reuse any of the existing floorplanning available
+        my $cmd  = "${floorplan_init} --cast-dir=\"${cast_path}\" ";
+	$cmd     .= " --cell=\"${cellName}\" ";
+	$cmd     .= " --dfII-dir=\"${src_dfII_dir}\" ";
+	$cmd     .= " --dest-dfII-dir=\"${dfII_dir}\" ";
+	$cmd     .= " --subtype-from=\"${subtypes_from}\" ";
+	$cmd     .= " --subtype-to=\"${subtype}\" ";
+	$cmd     .= " --max-heap-size=\"${mem}\" ";
+	$cmd     .= " --subcells_file=\"${work_dir}/reuse_floorplan_subcells.txt\" ";
+	$cmd     .= " --split_spec=\"${work_dir}/reuse_floorplan.spec\" ";
+	my_system "${cmd}";
+        copy_views("\"${work_dir}/reuse_floorplan.spec\"","\"${work_dir}/reuse_floorplan.out\"");
+        
+    } elsif ($action eq "edit_floorplan") {
+
+        # edit all floorplan views used by this cell
+        my @cells = query_cadence;
+        my $cmd  = "$cdsp4edit \\\n";
+        $cmd .= "--client-spec=${layoutClient} \\\n";
+        $cmd .= "--dfII-dir=${dfII_dir} \\\n";
+        for my $cell (@cells) {
+            my_system "${cmd} --view-name=floorplan \"${cell}\"";
+	    make_layout_writeable($dfII_dir,$cell);
+        }
+
+    } elsif ($action eq "add_floorplan") {
+
+        # add all floorplan views used by this cell
+        my @cells = query_cadence;
+        my $cmd  = "$cdsp4add \\\n";
+        $cmd .= "--client-spec=${layoutClient} \\\n";
+        $cmd .= "--dfII-dir=${dfII_dir} \\\n";
+	if($justPrint) {
+            print STDERR "$cmd \n";
+	    for my $cell (@cells) {
+		print STDERR "${cmd} --view-name=floorplan \"${cell}\"";
+	    }
+	} else {
+	    for my $cell (@cells) {
+		my_system "${cmd} --view-name=floorplan \"${cell}\"";
+	    }
+	}
+    } elsif ($action eq "delete_netlist") {
+
+        # delete all netlist views used by this cell
+        my @cells = query_cadence;
+        my $cmd  = "$cdsp4delete \\\n";
+        $cmd .= "--client-spec=${layoutClient} \\\n";
+        $cmd .= "--dfII-dir=${dfII_dir} \\\n";
+        for my $cell (@cells) {
+            my_system "${cmd} --view-name=netlist \"${cell}\"";
+        }
+
+    } elsif ($action eq "add_spec") {
+        
+        # copy current spec to main spec tree, editing/adding as needed
+        my @cells = query;
+        for my $cell (@cells) {
+            my $file = $cell;
+            $file =~ s:\.:/:g; # replace . with /
+            $file .= ".cast";
+            my $from = "${work_dir}/cast/${file}";
+            my $to = "${spec_dir}/${file}";
+            my $dir = $to;
+            $dir =~ s|/[^/]+$||;
+            my_system "mkdir -p \"${dir}\"";
+            my_system "$p4 -c ${specClient} edit \"${to}\"";
+            my_system "cp -f \"${from}\" \"${to}\"";
+            my_system "$p4 -c ${specClient} add \"${to}\"";
+        }
+
+    } elsif ($action eq "branch") {
+        
+        # create branch.spec file
+        open BS, ">$work_dir/branch.spec" 
+            or die "ERROR: can't write $work_dir/branch.spec\n";
+        print BS "Branch: $branch_name\n";
+        print BS "Owner: $ENV{USER}\n";
+        print BS "Description: branch $fqcn from $src_branch to $dst_branch\n";
+        print BS "View:\n";
+
+        # find and translate perforce depot locations of all modules
+        my @cells = query;
+        my %src_spec_depot = ();
+        my %dst_spec_depot = ();
+        my %src_dfII_depot = ();
+        my %dst_dfII_depot = ();
+        for my $fqcn (@cells) {
+            if ( $fqcn =~ /(.*)\.([^\.]+\.[^\.]+)/ ) {
+                my $module = $1;
+                $module =~ s:\.:/:g; # replace . with /
+                if (!(defined $src_spec_depot{$module})) {
+                    my $where = p4_where($specClient,"${spec_dir}/${module}");
+                    $src_spec_depot{$module} = $where;
+                    $where =~ s:/${src_branch}/:/${dst_branch}/:;
+                    $dst_spec_depot{$module} = $where;
+                    $where = p4_where($layoutClient,"${dfII_dir}/${module}");
+                    $src_dfII_depot{$module} = $where;
+                    $where =~ s:/${src_branch}/:/${dst_branch}/:;
+                    $dst_dfII_depot{$module} = $where;
+                }
+            }
+        }
+
+        # branch spec
+        for my $fqcn (@cells) {
+            if ( $fqcn =~ /(.*)\.([^\.]+\.[^\.]+)/ ) {
+                my $module = $1;
+                my $cell = $2;
+                $module =~ s:\.:/:g; # replace . with /
+                $cell   =~ s:\.:/:g; # replace . with /
+                print BS "\t$src_spec_depot{$module}/${cell}.cast "
+                    . "$dst_spec_depot{$module}/${cell}.cast\n";
+            }
+        }
+        
+        # branch prop.xx and cdsinfo.tag of dfII modules
+        for my $module (sort keys %src_dfII_depot) {
+            # prop.xx
+            print BS "\t$src_dfII_depot{$module}/prop.xx " .
+                "$dst_dfII_depot{$module}/prop.xx\n";
+            print BS "\t$src_dfII_depot{$module}/cdsinfo.tag " .
+                "$dst_dfII_depot{$module}/cdsinfo.tag\n";
+        }
+
+        # branch dfII of cells
+        cast_cells_to_layout_cells(@cells);
+        for my $fqcn (@cells) {
+            if ( $fqcn =~ /(.*)\.([^\.]+\.[^\.]+)/ ) {
+                my $module = $1;
+                my $cell = $2;
+                $cell = "${module}.${cell}";
+                # Escape call name for p4
+                $cell =~ s/\./%232e/g;
+                $cell =~ s/-/%232d/g;
+                $module =~ s:\.:/:g;      # replace . with /
+                print BS "\t$src_dfII_depot{$module}/${cell}/... "
+                     . "$dst_dfII_depot{$module}/${cell}/...\n";
+            }
+        }
+
+        # create branch spec with perforce
+        close BS;
+        if ($branch_name ne "") { system("cat \"$work_dir/branch.spec\" | $p4 branch -i"); }
+        else { print "WARNING: --branch-name unspecified, only wrote branch.spec\n"; }
+    
+    } elsif ($action eq "graph") {
+
+        # graph netlists of all leaf cells
+        my_rmdir "${work_dir}/graph";
+        my_system "mkdir \"${work_dir}/graph\"";
+        my @cells = query("--filter=leaf");
+        for my $cell (@cells) {
+            my $cmd  = "cd \"${work_dir}/graph\"; ${graph_netlist} \\\n";
+            $cmd .= "\"--cast-path=${cast_path}\" \\\n";
+            $cmd .= "--format=ps \\\n";
+            $cmd .= "\"$cell\"";
+            my_system "${cmd}";
+        }
+
+    } elsif ($action eq "spice") {
+      
+        print "To start aspice, please run:\n";
+        print "    fulcrum lve --include=${work_dir}/spice.todo\n";
+
+    } elsif ($action eq "charge_sharing") {
+      
+        # construct todo file for charge_sharing
+        my_rmdir "${work_dir}/charge_sharing";
+        my_system "mkdir \"${work_dir}/charge_sharing\"";
+        my $out ="${work_dir}/charge_sharing/todo";
+        my @cells;
+        if ($spiceCells eq "") {
+            @cells = query("--filter=!fixed");
+        } else {
+            @cells = split(",",$spiceCells);
+        }
+        if($justPrint) {
+            print STDERR "[writing to ${out}]\n";
+        } else {
+            open OUT, ">${out}" or die "Cannot write $out: $!";
+            for my $cell (@cells) {
+                print OUT "${cell}\n";
+            }
+            close OUT;
+        }
+        print "To start charge sharing, please run:\n";
+        print "    fulcrum lve --include=${work_dir}/charge_sharing.todo\n";
+
+    } elsif ($action eq "fix_charge_sharing") {
+        my $spiceopt .= "--minC=0.5 ";   # Always use no wire cap
+
+        my $cmd  = "cd \"${work_dir}\"; fix_charge_sharing \\\n";
+        $cmd .= "--spice=\"spice ${spiceopt}\" \\\n";
+        $cmd .= "--uberdir=\"${work_dir}\" \\\n";
+        $cmd .= "--qsub \\\n" if $qsub;
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--config=\"${jauto_config}\" \\\n";
+        $cmd .= "--process-config=\"${process_config}\" \\\n";
+        $cmd .= "--config=${x8_config} \\\n" if ( -e $x8_config and $x8 );
+        $cmd .= "--verbose \\\n" if ($verbose);
+        $cmd .= " > ${work_dir}/fix_charge_sharing.out";
+        my_system "${cmd}";
+
+    } elsif ($action eq "jlvs") {
+	
+        print "To start JLVS, please run:\n";
+		print "    fulcrum lve --include=${work_dir}/jlvs.todo\n";
+
+    } elsif ($action eq "reuse" || $action eq "reuse_spec") {
+        if ($reuse_spec || $pedantic_reuse_spec) {
+            reuse();
+        } else {
+            print STDERR "Neither reuse-spec nor pedantic_reuse_spec specified!\n";
+        }
+    } elsif ($action eq "set_fixed" || $action eq "set_unfixed") {
+        # set fixed_size = true on all subtypes in $work_dir/cast
+        my $cmd  = "${SubtypeSplit} \\\n";
+        $cmd .= "--config=\"${custom_config}\" \\\n" if -e $custom_config;
+        $cmd .= "--cell=\"${cellName}.${subtype}\" \\\n";
+        $cmd .= "--cast-path=\"${cast_path}\" \\\n";
+        $cmd .= "--subtype-path=\"${work_dir}/cast_set_fixed\" \\\n";
+        $cmd .= "--recursive \\\n";
+        $cmd .= "--directive cell:fixed_size=true \\\n" if ($action eq "set_fixed");
+        $cmd .= "--directive cell:fixed_size=false \\\n" if ($action eq "set_unfixed");
+        $cmd .= "> \"${work_dir}/set_fixed.out\"";
+        my_system "${cmd}";
+        my_rmdir "${work_dir}/cast";
+        my_system "mv \"${work_dir}/cast_set_fixed\" \"${work_dir}/cast\"";
+
+    } elsif ($action eq "updateprs") {
+
+        if (-r "${work_dir}/hsizes.debug" ) {
+
+            # update the spec
+            my $cmd  = $jcmd;
+            $cmd .= "--mode=update \\\n";
+            $cmd .= "--defaultLayoutAttributes=${defaultLayoutAttributes} \\\n" unless $defaultLayoutAttributes eq "";
+            $cmd .= "--noFloorplan \\\n";
+            $cmd .= "> \"${work_dir}/update.out\"";
+            my_system "${cmd}";
+
+            # resize the spec
+            $cmd  = $jcmd;
+            $cmd .= "--mode=resize \\\n";
+            $cmd .= "--noFloorplan \\\n";
+            $cmd .= "--trial \\\n";
+            $cmd .= "--hsizes=\"${work_dir}/hsizes.debug\" \\\n";
+            $cmd .= ">> \"${work_dir}/update.out\"";
+            my_system "${cmd}";
+
+        } else {
+            print STDERR "WARNING: update failed, can't read hsizes.debug\n";
+        }
+
+    } else {
+        
+        # bad task
+        print STDERR "Bad task\n";
+        usage();
+        
+    }
+    my $finish = `date`;
+    chomp($finish);
+    print "Finished $action at $finish\n";
+}
+
+
+#
+# This second pass over the spec tree following edit_floorplan
+# handles the unfortunate case when a prior attempt to check in
+# the floorplan views failed.  This is the simplest way to 
+# recover from such a condition that I can think of --mid.
+#
+sub make_layout_writeable {
+    my ($dfII_dir, $fqcn) = @_;
+    my $cell = $fqcn;
+    my $lib = layout_library($cell);
+    $lib  =~ s/\./\//g;
+    $cell =~ s/\./\#2e/g;
+    $cell =~ s/-/\#2d/g;
+    my $celldir = "${dfII_dir}/${lib}/${cell}";
+    my @viewdirs = ( "${celldir}/floorplan",
+                     "${celldir}/layout" );
+    my $mod = 0;
+    foreach my $viewdir (@viewdirs) {
+        if (-d $viewdir) {
+            opendir VIEW, $viewdir || next;
+            my @files = grep { /^[^\.]/ && !-w "${viewdir}/$_" } readdir VIEW;
+            foreach my $file (@files) {
+                chmod 0644, "${viewdir}/${file}";
+                $mod = 1;
+            }
+        }
+    }
+    print STDERR "Warning: Overriding layout permissions of cell $fqcn.\n"
+        if ($mod==1);
+}
+
+sub layout_library {
+    my ($fqcn) = @_;
+    my $i = rindex $fqcn, ".";
+    $i = rindex $fqcn, ".", $i-1;
+    return substr $fqcn,0,$i;
+}
+
+# return number of megabytes given a memory size string
+sub getNumMegabytesFromMemorySizeStr {
+    my ( $memStr ) = @_;
+
+    my $numberPart = $memStr;
+    $numberPart =~ s/[A-Za-z]$//;
+    my $unit = $memStr;
+    $unit =~ s/^[0-9]+//;
+
+    if ( ( $unit eq "M" ) || ( $unit eq "m" ) ) {
+        $numberPart = $numberPart * 1024 * 1024;
+    }
+    elsif ( ( $unit eq "K" ) || ( $unit eq "k" ) ) {
+        $numberPart = $numberPart * 1024;
+    }
+    elsif ( ( $unit eq "G" ) || ( $unit eq "g" ) ) {
+        $numberPart = $numberPart * 1024 * 1024 * 1024;
+    }
+    
+    $numberPart = POSIX::ceil( $numberPart / ( 1024 * 1024 ) ) ;
+    if ( $numberPart < 1 ) {
+        $numberPart = 1;
+    }
+    return $numberPart;
+}
+
+# convert all memory sizes to megabytes
+sub canonicalizeMemory {
+    my ( $memStr ) = @_;
+
+    my $megs = getNumMegabytesFromMemorySizeStr( $memStr );
+
+    return "${megs}M";
+}

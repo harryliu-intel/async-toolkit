@@ -1,0 +1,4 @@
+#os fedora
+all 245426
+include tbdev
+include releasepdk

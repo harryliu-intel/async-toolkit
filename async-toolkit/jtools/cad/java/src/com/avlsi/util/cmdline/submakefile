@@ -1,0 +1,31 @@
+ifdef DIR 
+$(error DIR is defined!)
+endif
+
+DIR=com/avlsi/util/cmdline
+
+ifeq ($(UNAME),SunOS)
+$(DIR)/libSignal.so: $(DIR)/Signal.o
+	/usr/ccs/bin/ld -G -o $@ $^
+else
+$(DIR)/libSignal.so: $(DIR)/Signal.o
+	$(CC) -shared -Wl,-soname,libSignal.so -o $@ $^
+endif
+
+signal: $(DIR)/libSignal.so
+
+signal_clean:
+	-rm com/avlsi/util/cmdline/*.o \
+	    com/avlsi/util/cmdline/Signal.h \
+	    com/avlsi/util/cmdline/libSignal.so
+
+install_signal: signal
+	cp com/avlsi/util/cmdline/libSignal.so /usr/local/jars/native
+
+$(DIR)/%.o : $(DIR)/%.c $(DIR)/Signal.h 
+	$(CC) -Wall $(CPPFLAGS) -c $< -o $@
+
+$(DIR)/Signal.h: ../classes/$(DIR)/Signal.class
+	$(JAVAH) -jni -o $@ $(subst /,.,"$(@D)/Signal")
+
+DIR=

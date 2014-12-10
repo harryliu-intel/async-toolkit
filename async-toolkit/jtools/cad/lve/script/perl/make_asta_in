@@ -1,0 +1,53 @@
+#!/usr/intel/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use File::Spec::Functions;
+
+my ($cell, $taus, $outdir, $input_slew, $output_cap, $walltime);
+
+GetOptions('cell=s'       => \$cell,
+           'tau=s'        => \$taus,
+           'output-dir=s' => \$outdir,
+           'input-slew=s' => \$input_slew,
+           'walltime=s'   => \$walltime,
+           'output-cap=s' => \$output_cap);
+
+if (!defined($cell) || !defined($taus) || !defined($outdir) ||
+    !defined($input_slew) || !defined($output_cap)) {
+    die "All arguments must be specified!";
+}
+
+my $in = catfile($outdir, 'in');
+open(my $fh, ">$in") || die "Cannot open $in: $!";
+
+$\ = "\n";
+print $fh "# input_slew=$input_slew output_cap=$output_cap";
+print $fh "sta on";
+print $fh "measured_delay 0";
+print $fh "cosimulate $cell" . '{subcells,prs-@asta_blackbox{}}';
+
+foreach my $tau (split(/,/, $taus)) {
+    my $worstTau = $tau + 0.0005;
+    print $fh "sta evaluate --tau=$tau --input-slew=$input_slew" .
+              (defined($walltime) ? " --max-walltime=$walltime" : "");
+    print $fh "sta report --type=flat --worst-tau=0 --max-violations=10000 " .
+              "--output=" . catfile($outdir, "flat.timing");
+    print $fh "sta report --type=flat --worst-tau=0 --max-violations=10000 " .
+              "--verbose --output=" . catfile($outdir, "flat.timing.verbose");
+    print $fh "sta report --type=flat --worst-tau=$worstTau " .
+              "--max-violations=10000 --output=" .
+              catfile($outdir, "flat.violations");
+    print $fh "sta report --type=hier --worst-tau=0 " .
+              "--output=" . catfile($outdir, "hier.timing");
+    print $fh "sta report --type=hier --worst-tau=$worstTau " .
+              "--output=" . catfile($outdir, "hier.violations");
+    print $fh "sta evaluate --sweep=0.001 --tau=$tau --input-slew=$input_slew" .
+              (defined($walltime) ? " --max-walltime=$walltime" : "");
+    print $fh "sta report --type=flat --worst-tau=0 --max-violations=100 " .
+              "--output=" . catfile($outdir, "flat.timing.sweep");
+}
+
+print $fh "quit";
+
+close($in);

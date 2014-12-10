@@ -1,0 +1,69 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Release System Plan</title>
+<link rel="stylesheet" href="http://www.internal.avlsi.com/fm-basic.css" type="text/css" media="all">
+<link rel="stylesheet" href="http://www.internal.avlsi.com/basic-print.css" type="text/css" media="print">
+<META NAME="P4HD" CONTENT="$Id$ AAG">
+<META NAME="DATE" CONTENT="$DateTime$">
+<META NAME="EXPIRES" CONTENT=0>
+<META Http-equiv="Expires" CONTENT=0>
+<style type="text/css">
+<!--
+blockquote {
+    margin: 0 0 0 10px;
+}
+-->
+</style>
+</head>
+<body>
+<h2>Release System Plan</h2>
+<ol>
+<li>Change or make new package build script to build packages according to change number.
+<blockquote>
+5/12: experimental version works but not complete.<br>
+5/18: completed changes to allow build concurrently in non-conflicting locations as well
+as other misc. improvements.
+5/20: Discovered major issues in building PDKs, still unresolved.
+</blockquote>
+</li>
+<li>Change or make new package install script to install packages into /usr/local/fulcrum according to change number.
+<blockquote>
+5/12: experimental version works but not complete.<br>
+5/19: Fixed issues with build system such that this is no longer required.<br>
+</blockquote>
+</li>
+<li>Write Preliminary fulcrum script which reads from the installed packages in /usr/local/fulcrum and allows selection by change number, date, production or beta packages, if defined.
+<blockquote>
+5/12: experimental version works but not complete.<br>
+5/19: completed version to use production by default. Imported the microarch and
+cadadmin 'released' packages as production change numbers.<br>
+</blockquote>
+</li>
+<li>Write script and database to identify production and beta change numbers.
+<blockquote>
+5/12: experimental versionstarted.<br>
+5/19: database is just a line file with packages and change numbers. Written by hand for now.<br>
+</blockquote>
+</li>
+<li>Write crontab script to do the daily package builds per the above paradigm.
+<blockquote>
+5/12: Not started<br>
+5/19: ditto<br>
+</blockquote>
+</li>
+<li>Write documentation and release to Fulcrum.
+<blockquote>
+5/12: Not started<br>
+5/19: ditto<br>
+</blockquote>
+<li>Define first level regressions and mechanism for running them.
+<blockquote>
+5/19: not started.<br>
+</blockquote>
+</ol>
+<hr>
+Last Updated $DateTime$
+<br>Contact <a href="mailto:aubrey@fulcrummicro.com">Aubrey</a> for comments on this page.
+</body>
+</html>
