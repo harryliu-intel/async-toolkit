@@ -58,10 +58,7 @@ my $env_spice_file = "";
 my $accurate = 0;
 
 # TODO: spice model information should be in PDK
-my $hspice_model_root = $ENV{hspice_model_root};
-my $hspice_model      = $ENV{hspice_model};
-my $hspice_lib_models = $ENV{hspice_lib_models};
-my $pdmi_lib          = $ENV{PDMI_LIB};
+# NOTE: uses env $hspice_model_root $hspice_model $PDMI_LIB $hspice_lib_models
 
 # usage banner
 sub usage() {
@@ -214,7 +211,7 @@ print RUN_FILE "* $sim\n" .
 if ($sim eq "hsim") {
     print RUN_FILE<<EOF;
 * HSIM options
-.option PDMI_LIB='$pdmi_lib'
+.option PDMI_LIB='\$PDMI_LIB'
 .option POST=fsdb PROBE=1
 .option spice
 .option warnlimit=20
@@ -305,8 +302,8 @@ print RUN_FILE<<EOF;
 .temp $temp
 
 * Model
-${option_seed}.option search='$hspice_model_root'
-.lib '$hspice_model' $process_corner
+${option_seed}.option search='\$hspice_model_root'
+.lib '\$hspice_model' $process_corner
 .param sigma_factor=$sigma_factor
 EOF
 
@@ -433,8 +430,8 @@ close(RUN_FILE);
 
 open SCRIPT,">run" or die "Can't write to run script";
 print SCRIPT "#!/bin/bash\n";
-print SCRIPT "export hspice_lib_models=$hspice_lib_models\n";
-print SCRIPT "export PDMI_LIB=$pdmi_lib\n";
+print SCRIPT "export hspice_lib_models=\$hspice_lib_models\n";
+print SCRIPT "export PDMI_LIB=\$PDMI_LIB\n";
 if ($sim eq "hspice") {
     my $hsim_mc = "";
     $hsim_mc = "-monte 1" if ($seed>0);
