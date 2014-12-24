@@ -38,7 +38,7 @@ for (my $i=$n0; $i<=$n1 && $i<@all_libs; $i++) {
     push @libs, $all_libs[$i];
 }
 
-my $NBRUN = "nbjob run --class \"SLES10&&24G\" --work-dir $ENV{PWD}";
+my $NBRUN = "nbjob run --class \"SLES11&&24G\" --work-dir $ENV{PWD}";
 my $run_tcam = "$ENV{FULCRUM} run_tcam";
 
 # Performance corners
