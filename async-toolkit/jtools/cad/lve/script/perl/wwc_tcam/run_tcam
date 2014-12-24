@@ -110,7 +110,7 @@ sub write_tcam_sp {
 .TEMP $temp
 .PARAM vtrue=$voltage
 .OPTIONS POST=fsdb
-.include "$root/1273.sp"
+.include "$root/$ENV{PROCESS}.sp"
 .option search="$ENV{hspice_model_root}"
 .LIB "$ENV{hspice_model}" $process
 .include "$root/${top}_${temp}C_${rcCorner}.spice"
@@ -329,7 +329,7 @@ sub write_aplot_in {
         print APLOT "with slice[0]. ; trace a[0,0,0] a[0,0,2] chunk[0].b[0,0,?] " .
             "chunk[0].z[0].z[0,0].x[0,?]\n";
         print APLOT "png \"rw.png\" \"$title\" $x $y\n";
-        print APLOT "trace ctrl.ar ctrl.aw ctrl.Root_Vcc WL_Vcc[0] a[0,0,0] a[0,0,2]\n";
+        print APLOT "trace ctrl.xar ctrl.xaw ctrl.Root_Vcc WL_Vcc[0] a[0,0,0] a[0,0,2]\n";
         print APLOT "png \"wl.png\" \"$title\" $x $y\n";
         print APLOT "with ; trace CLK READ_DATA[0]\n";
         print APLOT "png \"readdata.png\" \"$title\" $x $y\n";
@@ -433,8 +433,8 @@ sub probe_signals {
     }
 
     # TCAM_CTRL
-    probe_sig("inputs/ctrl/ar");
-    probe_sig("inputs/ctrl/aw");
+    probe_sig("inputs/ctrl/xar");
+    probe_sig("inputs/ctrl/xaw");
     probe_sig("inputs/ctrl/lw0");
     probe_sig("inputs/ctrl/rw");
     probe_sig("inputs/ctrl/lw.0");
@@ -483,8 +483,8 @@ sub probe_signals {
     }
 
     # SLICE_CTRL
-    probe_sig("slice[0]/ctrl/ar");
-    probe_sig("slice[0]/ctrl/aw");
+    probe_sig("slice[0]/ctrl/xar");
+    probe_sig("slice[0]/ctrl/xaw");
     probe_sig("slice[0]/ctrl/Root_Vcc");
     for (my $i=1; $i<=4; $i++) { probe_sig("slice[0]/ctrl/dlk[$i]"); }
     probe_sig("slice[0]/ctrl/lk[0]");
