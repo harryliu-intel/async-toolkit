@@ -14,7 +14,7 @@ my $reverse=0;
 my $numeric=1;
 my %occupied=();
 my %load=();
-my $jobnamelen=14;
+my $jobnamelen=12;
 my %cores;
 
 our $opt_a = 0;
@@ -32,6 +32,8 @@ our $opt_E = 0;
 our $opt_q = 0;
 our $opt_r = 0;
 our $opt_b = 0;
+our $opt_p = "tslinux";
+my $jobnumberlen=7;
 my $statusselect="status='Run'||status='Wait'||status='Send'||status='DEL'||status='Del'||status='Disc-D'||status='Disc-R'||status='Move'||status='Inactive'";
 
 sub memstring {
@@ -62,11 +64,23 @@ Usage: myqs [options] [user]
     -w        : waiting jobs
     -E        : error
     -q        : quick jobs
+    -p        : nb pool name (tslinux or ts_ion)
 EU
 exit 1;
 }
 
-getopts('brqEwehat:s:m:f:l:n:j:n') or usage;
+getopts('brqEwehat:s:m:f:l:n:j:np:s') or usage;
+
+$ENV{NBCONF}="/nfs/site/gen/adm/netbatch/conf"
+    if ! defined $ENV{NBCONF};
+
+if ( -e "$ENV{NBCONF}/versions/$opt_p") {
+    $ENV{NBPOOL}=$opt_p;
+}
+elsif (!(defined($ENV{NBPOOL}) and -e "$ENV{NBCONF}/versions/$ENV{NBPOOL}" )) {
+    print "Fail, invalid pool $opt_p";
+    exit 1;
+}
 
 my %abbr=(
     "altalve" => "al",
@@ -202,16 +216,21 @@ if ($opt_m ne "" or $opt_e or 1) {
         $shost = sprintf("%-$shostlen.${shostlen}s", $host);
         my $arch=$f[$hostkeys{Arch}];
         $arch{$shost}=sprintf("%6.6s", $arch);
-        $num_proc{$shost}=$f[$hostkeys{CPUCount}];
-        $memory{$shost}=$f[$hostkeys{tRM}];
-        $f[$hostkeys{fRM}] = 0 if $f[$hostkeys{fRM}] eq "";
-        $frm{$shost}=sprintf("%.0f", $f[$hostkeys{fRM}]/1024);
-        $occupied{$shost}=0;
-        $load{$shost}=$f[$hostkeys{Load}];
-        $load{$shost}=~ s/\/.*//;
-        $load{$shost} = 0 if $load{$shost} eq "";
-        $load{$shost} = sprintf("%4.1f", $load{$shost});
-        $cores{$shost}=0;
+        if ($f[$hostkeys{CPUCount}] ne "") {
+            $num_proc{$shost}=$f[$hostkeys{CPUCount}];
+            my $m=$f[$hostkeys{WSCapabilities}];
+            $m =~ /memory=(\d+)/;
+            $memory{$shost} = $1;
+            $m =~ /cores=(\d+)/;
+            $num_proc{$shost}=$1;
+            $f[$hostkeys{fRM}] = 0 if $f[$hostkeys{fRM}] eq "";
+            $frm{$shost}=sprintf("%.0f", $f[$hostkeys{fRM}]/1024);
+            $occupied{$shost}=0;
+            $load{$shost}=$f[$hostkeys{Load}];
+            $load{$shost}=~ s/\/.*//;
+            $load{$shost} = 0 if $load{$shost} eq "";
+            $load{$shost} = sprintf("%4.1f", $load{$shost});
+        }
     }
     close P;
 }
@@ -304,6 +323,7 @@ END {
 my $all = $opt_a;
 my $userlist = `whoami`;
 chomp $userlist;
+my $thisuser=$userlist;
 my $time = 0;
 my %systems;
 my $sysregex="";
@@ -342,7 +362,12 @@ if ($opt_e) {
     $line = "";
     my $err=1;
     $err=0;
-    open (P1, "nbstatus jobs --fields All --format csv \"$statusselect\" |");
+    if ($userlist eq $thisuser and ! $opt_a) {
+        open (P1, "nbstatus jobs --fields All --format csv \"($statusselect)\&\&user='$userlist'\" |");
+    }
+    else {
+        open (P1, "nbstatus jobs --fields All --format csv \"$statusselect\" |");
+    }
     $_=<P1>;
     my %jobkeys=();
     my (@f)=split(/,/);
@@ -355,62 +380,52 @@ if ($opt_e) {
         my @f=split(/,/);
         $queue = sprintf "%-$shostlen.${shostlen}s", $f[$jobkeys{Workstation}];
         $job=$f[$jobkeys{Jobid}];
+        $jobnumberlen=length($job) > $jobnumberlen ? length($job) : $jobnumberlen;
         my $name=$f[$jobkeys{Name}];
         my $pri=0;
         $name=$f[$jobkeys{Cmdname}] if $name eq "";
         my $user=$f[$jobkeys{User}];
         my ($date,$time)=split(/ /, $f[$jobkeys{StartTime}]);
         $queue{$job}=sprintf "%-$shostlen.${shostlen}s", $queue;
-        $memreq{$job}=$f[$jobkeys{ActualClassReservation}];
-        if ( $memreq{$job} =~ /memory=(\d+)/) {
+        my $m=$f[$jobkeys{ActualClassReservation}];
+        if ( $m =~ /memory=(\d+)/) {
             $memreq{$job}=$1;
         }
         else {
-            $memreq{$job}='0';
+            $memreq{$job}=0;
         }
-        $cores{$queue{$job}}++;
+        if ( $m =~ /cores=(\d+)/) {
+            $cores{$job}=$1;
+        }
+        else {
+            $cores{$job}=1;
+        }
+        $cores{$queue{$job}} += $cores{$job};
         $memreq{$queue{$job}} += $memreq{$job};
-#        elsif (/=/) {
-#            s/.*://;
-#            s/^  *//;
-#            s/ *$//;
-#            my $f = $_;
-#            $f =~ s/ *\(.*//;
-#            $f =~ s/=false$/=0/i;
-#            $f =~ s/=true$/=1/i;
-#            if (($f =~ /mem.*=/) and ! ( $f =~ /highmem/)) {
-#                my ($x,$y)=split(/=/,$f);
-#                $y=memdecode($y);
-#                my $mem=$y;
-#                $mem =~ s/G//;
-#                if ($mem =~ /m$/) {
-#                    $mem =~ s/m$//;
-#                    $mem /= 1024;
-#                }
-#                elsif ($mem =~ /k$/) {
-#                    $mem =~ s/k$//;
-#                    $mem /= 1024*1024;
-#                }
-#                $memreq{$queue{$job}} += $mem;
-#            }
-#            if ($f =~ /cores=/) {
-#                my ($x,$y)=split(/=/,$f);
-#                my $cores=$y;
-#                $cores{$queue{$job}} += $cores;
-#            }
-#        }
     }
     close P1;
+    printf "host    arch   %3s %5s %3s %4s %4s\n", "cu", "load", "ct", "mu"," mt";
+    my $sc=0;
+    my $st=0;
+    my $sl=0;
+    my $sm=0;
+    my $tm=0;
     foreach my $host (sort keys %num_proc) {
-        $cores{$host}=$num_proc{$host} if ! defined ($cores{$host});
+        $cores{$host}=0 if ! defined ($cores{$host});
         $memreq{$host}=0 if ! defined ($memreq{$host});
-        $memreq{$host}=memstring($memreq{$host});
-        $memory{$host}=memstring($memory{$host});
-        printf "$host %s %3d %3d %3d %3d%s\n", $arch{$host},
-            $cores{$host},$num_proc{$host},
+        $sc += $cores{$host};
+        $st += $num_proc{$host};
+        $sl += $load{$host};
+        $sm += $memreq{$host};
+        $tm += $memory{$host};
+        printf "$host %s %3d %5.1f %3d %4d %4d%s\n", $arch{$host},
+            $cores{$host},$load{$host},$num_proc{$host},
             $memreq{$host},$memory{$host},
-            (($memreq{$host}>=$memory{$host}) or ($cores{$host}>=$num_proc{$host})) ? " *" : "";
+            (($memreq{$host}>=$memory{$host}) or ($cores{$host}>=$num_proc{$host}) or ($load{$host} >= $num_proc{$host})) ? " *" : "";
     }
+    printf "totals \& pct   %3d %5.1f %3d %4d %4d %2.0f%% %2.0f%% %2.0f%%\n",
+        $sc, $sl, $st,
+        $sm,$tm,$sc/$st*100,$sl/$st*100,$sm/$tm*100;
     exit 0;
 }
 if ($has_curses) {
@@ -435,7 +450,12 @@ while (1) {
     $line = "";
     my $err=1;
     $err=0;
-    open (P1, "nbstatus jobs --fields All --format csv \"$statusselect\" 2>/dev/null |");
+    if ($userlist eq $thisuser and ! $opt_a) {
+        open (P1, "nbstatus jobs --fields All --format csv \"($statusselect)\&\&user='$userlist'\" 2>/dev/null |");
+    }
+    else {
+        open (P1, "nbstatus jobs --fields All --format csv \"$statusselect\" 2>/dev/null |");
+    }
     select STDERR;
     $|=1;
     select STDOUT;
@@ -456,6 +476,7 @@ while (1) {
         $f[$fields{Workstation}]="-" if ! defined $f[$fields{Workstation}];
         $queue=sprintf("%-$shostlen.${shostlen}s", $f[$fields{Workstation}]);
         $job=$f[$fields{Jobid}];
+        $jobnumberlen=length($job) > $jobnumberlen ? length($job) : $jobnumberlen;
         @{$tail{$job}}=();
         my $classreservation=$f[$fields{ActualClassReservation}];
         my $mem=0;
@@ -504,7 +525,7 @@ while (1) {
         $name =~ s/  *$//;
         $name =~ s/.* //;
         $name = "none" if ! defined $name or $name eq "";
-        $name{$job}=sprintf("%-12.12s", $name);
+        $name{$job}=sprintf("%-$jobnamelen.${jobnamelen}s", $name);
         my $user=$f[$fields{User}];
         my $st=$f[$fields{StartTime}];
         $st =~ s/^\s+//;
@@ -532,7 +553,7 @@ while (1) {
         $queue{$job}=sprintf "%-$shostlen.${shostlen}s", $queue;
         $cpu{$job}=sprintf "%5.5s", $usage;
         $user{$job}=sprintf "%-8.8s", $user;
-        my $sjob = sprintf "%7.7s", $job;
+        my $sjob = sprintf "%$jobnumberlen.${jobnumberlen}s", $job;
         $frm{$queue{$job}}=0 if ! defined $frm{$queue{$job}};
         $user{$queue{$job}}="unknown" if ! defined $user{$queue{$job}};
         $pri{$queue{$job}}="0" if ! defined $pri{$queue{$job}};
@@ -706,6 +727,8 @@ sub sn {
     }
     $a[$key] = "0" if !defined $a[$key];
     $b[$key] = "0" if !defined $b[$key];
+    $a[$key] =~ s/:.*//;
+    $b[$key] =~ s/:.*//;
     if ($numeric) {
         return 1 if $a[$key] > $b[$key];
         return -1 if $a[$key] < $b[$key];
