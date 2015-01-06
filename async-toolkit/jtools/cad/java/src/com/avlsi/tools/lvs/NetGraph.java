@@ -1408,6 +1408,8 @@ public final class NetGraph {
         nostaticizers = new HashSet();
         Vdd = createNetNode(HierName.makeHierName("Vdd"));
         GND = createNetNode(HierName.makeHierName("GND"));
+        defaultWidth  = 0;
+        defaultLength = 0;
         nextNodeNum = 1;
         try {
             this.addCellInterface(cell, new NetGraph[0], cfp, cadencize);
