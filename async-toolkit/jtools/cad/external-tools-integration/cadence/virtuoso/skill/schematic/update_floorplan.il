@@ -99,9 +99,9 @@
                      )
              )
 
-    ; update prBoundary, from layout view if it exists
-    (when CV->prBoundary (dbDeleteObject CV->prBoundary))
+    ; update prBoundary of leaf cells, from layout view if it exists
     (unless realInstances
+      (when CV->prBoundary (dbDeleteObject CV->prBoundary))
       (when CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
             layoutCV = (dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r")
             points = layoutCV->prBoundary->points
