@@ -88,6 +88,7 @@ prsAction
 
 prsModifiers
     : ( ISOCHRONIC )? ( UNSTAB | METASTABLE )?
+      ( TIMED ( LBRACK! expression ( COMMA! expression )? RBRACK! )? )?
       ( ( AFTER | AFTER_PS ) expression )? 
     ;
 

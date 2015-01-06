@@ -1246,6 +1246,7 @@ tokens {
     ASSERT          = "assert"          ;
     // prs
     PRS             = "prs"             ;
+    TIMED           = "timed"           ;
     AFTER           = "after"           ;
     AFTER_PS        = "after_ps"        ;
     UNSTAB          = "unstab"          ;

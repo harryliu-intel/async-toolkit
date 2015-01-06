@@ -121,6 +121,16 @@ public final class Rule {
     boolean measureDelayOn;
     
     /**
+     * Lower bound of timed jitter range.
+     **/
+    final float fastDelay;
+
+    /**
+     * Upper bound of timed jitter range.
+     **/
+    final float slowDelay;
+
+    /**
      * Instance name of the cell that contains this production rule.
      **/
     final HierName prefix;
@@ -196,7 +206,8 @@ public final class Rule {
      * </jml></pre>
      **/
     public Rule(Node[] guards, int[] sense, Node target, int dir, int delay,
-                byte delay_type, boolean timed, boolean isochronic,
+                byte delay_type, boolean timed, float fastDelay,
+                float slowDelay, boolean isochronic,
 				boolean absoluteDelay, boolean asserted, Pair[] measuredDelay,
 				byte coverageRequirement, HierName prefix) {
         Debug.assertTrue(guards.length == sense.length);
@@ -206,6 +217,8 @@ public final class Rule {
         this.delay_type = delay_type;
         this.target = target;
         this.timed = timed;
+        this.fastDelay = fastDelay;
+        this.slowDelay = slowDelay;
         this.isochronic = isochronic;
         this.absoluteDelay = absoluteDelay;
         this.asserted = asserted;
@@ -533,6 +546,14 @@ public final class Rule {
 
     public int getDelay() {
         return delay;
+    }
+
+    public float getFastDelay() {
+        return fastDelay;
+    }
+
+    public float getSlowDelay() {
+        return slowDelay;
     }
 
     public String toString() {

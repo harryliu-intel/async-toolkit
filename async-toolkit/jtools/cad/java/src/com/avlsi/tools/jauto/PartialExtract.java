@@ -513,6 +513,12 @@ public final class PartialExtract {
                         new LeafCallback() {
                             public Object leaf(CellInterface cell,
                                                HierName inst, HierName canon) {
+                                final AliasedSet locals =
+                                    cad.convert(cell).getLocalNodes();
+                                for (HierName rail : getPowerRails()) {
+                                    if (locals.getCanonicalKey(rail) == canon)
+                                        return null;
+                                }
                                 return inst;
                             }
                             public Object midlevel(Object o, CellInterface cell,

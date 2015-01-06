@@ -555,6 +555,8 @@ public class Prs2Verilog {
                                        alwaysEscape, chooser, cad, minimizeTriRegs);
         } else if (type.equals("netlist")) {
             cv = new NetlistConverter(cell, factory, ports, Vdd, GND, alwaysEscape, chooser);
+        } else if (type.equals("lvs")) {
+            cv = new LVSConverter(cell, factory, ports, alwaysEscape, chooser);
         } else {
             cv = null;
         }
@@ -889,7 +891,7 @@ public class Prs2Verilog {
 "     --cell=<cellName[:env]> (cell to translate)\n" +
 "   [--library=<CDL library> (a gate library to match against), required if --minimize-tri-regs not set]\n" +
 "   [--special=<path> (path to find cells that required manual translation)]\n" +
-"   --converter=[ gate | wire | netgraph | netlist ] (defaults to netgraph)\n" +
+"   --converter=[ gate | wire | netgraph | netlist | lvs ] (defaults to netgraph)\n" +
 "   [--number-gate=<n>] (name AND, OR gates with <= n inputs as AND<k>, OR<k>)\n" +
 //"   [--tau=<number>] (digital delay is multiplied by specified number)\n" +
 "   [--estimated-delay] (use estimated_delay directives for delay)\n" +

@@ -621,7 +621,7 @@ public final class MergeHint {
                 new HashSet<String>(),
                 DirectiveConstants.HEIGHT,
                 DirectiveConstants.WIDTH,
-                DirectiveConstants.TRANSISTOR_TYPE,
+                // DirectiveConstants.TRANSISTOR_TYPE, // see BUG 24274
                 DirectiveConstants.EXTRA_DELAY,
                 DirectiveConstants.DEFAULT_UP_DELAY,
                 DirectiveConstants.DEFAULT_DN_DELAY,

@@ -16,21 +16,21 @@ import com.avlsi.util.container.SortingIterator;
 /** for generating Liberty ".lib" files **/
 public class CellTiming {
 	
-	final Double slewLowerThreshold = new Double(33.3);
+    final Double slewLowerThreshold = new Double(33.3);
 	
-	final Double slewUpperThreshold = new Double(66.7);
+    final Double slewUpperThreshold = new Double(66.7);
 	
-	/** number of indices for clock slew (setup constraints) **/
-	final int N_CLOCK_SLEW = 3;
+    /** number of indices for clock slew (setup constraints) (TODO: read from timing file) **/
+    final int N_CLOCK_SLEW = 5;
 
-    /** 3x7 formated 0's to fill in for dummy delay arcs **/
-    final String zeroValues = "\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\"";
+    /** 5x7 formated 0's to fill in for dummy delay arcs (TODO: read from timing file) **/
+    final String zeroValues = "\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0,0.0,0.0\"";
 
-    /** 3x3 formated 0's to fill in for setup times **/
-    final String zeroSetupValues = "\"0.0,0.0,0.0\",\"0.0,0.0,0.0\",\"0.0,0.0,0.0\"";
+    /** 5x5 formated 0's to fill in for setup times (TODO: read from timing file) **/
+    final String zeroSetupValues = "\"0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0\",\"0.0,0.0,0.0,0.0,0.0\"";
 
-    /* just the slew values to use with the above zeroSetupValues */
-    final String zeroSlewValues = "\"0.011,0.044,0.178\"";
+    /** just the slew values to use with the above zeroSetupValues (TODO: read from timing file) **/
+    final String zeroSlewValues = "\"0.003,0.007,0.013,0.027,0.053\"";
     
     /** timing paths in data structure **/
     List<PathTiming> timingPaths = new ArrayList<PathTiming>();
@@ -108,9 +108,9 @@ public class CellTiming {
     //TODO support this in the input arguments
     /**
      * computing CK->out delay/slew times using this values as the 
-     * center input slew value, setup times will add offset to the output values
+     * fastest input slew value, setup times will add offset to the output values
      */
-    final double realLibNominalInputSlew = 0.017;
+    final double realLibNominalInputSlew = 0.003;
     
     //TODO support in input args
     /**

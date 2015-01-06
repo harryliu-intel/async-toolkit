@@ -32,11 +32,16 @@ qw(
     job_status
     job_isRunning
     job_isComplete
+    nb_queue_cmd
 );
 our @EXPORT_FAIL =
 qw(
     report_error
 );
+
+my $nb_class_default="";
+my $nb_class_mem_core=0;
+my %qslot_map=();
 
 ###############################################################################
 # Local Functions
@@ -547,5 +552,80 @@ sub job_starttime {
     return $time
 }
 
+
+sub parse_nbconfig{
+  return if (not defined $ENV{FULCRUM_NB_CONFIG});
+  return if %qslot_map;
+
+  if (open (P, "<$ENV{FULCRUM_NB_CONFIG}")) {
+    while(<P>){
+      chomp;
+      next if (/^#/);
+      if(/TOOLNAME/i){
+        my $ptool=0; my $pslot=0;
+        my @tools; my $qslot="";
+        my @tokens=split(/\s|=|,/, $_);
+        foreach my $t(@tokens){
+          if($t =~ /TOOLNAME/i){
+              $ptool=1; $pslot=0; next;
+          }elsif($t =~ /QSLOT/i){
+              $ptool=0; $pslot=1; next;
+          }elsif($ptool==1){
+              push @tools, $t;
+          }elsif($pslot==1){
+              $qslot=$t;
+          }
+        }
+        foreach my $t (@tools){
+            $qslot_map{$t}=$qslot;
+          if($t eq 'default'){
+            $qslot_map{''}=$qslot;
+          }
+        }
+      }if(/NBPOOL\s*=\s*(\S+)/){
+        $ENV{NBPOOL}=$1;
+      }if(/CLASS_DEFAULT\s*=\s*(\S+)/){
+        $nb_class_default=$1;
+      }if(/CLASS_MEM_CORE\s*=\s*(\d+)/){
+        $nb_class_mem_core=$1;
+      }
+    }
+  }
+}
+
+
+sub nb_queue_cmd {
+    my ($exe, $cores, $mem, $parallel) = @_;
+
+    parse_nbconfig();
+    
+    my @smartresource=();
+    if($nb_class_mem_core){
+      if($nb_class_default ne ""){
+        my $nb_class_prefix=$nb_class_default;
+        $nb_class_prefix=~s/_(\d+)G(&&\d+C)?$//;
+        push @smartresource, "${nb_class_prefix}_${mem}G";
+        push @smartresource, "${cores}C" if ($cores > 1);
+      }
+    }else{
+      push @smartresource, $nb_class_default if($nb_class_default ne "");
+    }
+    
+    my @res = ();
+    push @res, "cores=$cores" if $cores and $cores =~ /^\d+$/;
+    push @res, "memory=$mem" if $mem and $mem =~ /^\d+$/;
+    my $qslot=$qslot_map{''};
+    if ( defined $qslot_map{"rteReport"}){
+      $qslot=$qslot_map{"rteReport"};
+    }elsif($qslot_map{"rte"}){
+      $qslot=$qslot_map{"rte"};
+    }
+    
+    my @cmd = ('nbjob', 'run', '--mode', 'interactive', '--qslot', $qslot);
+    push @cmd, '--class-reservation', join(',', @res) if @res;
+    push @cmd, '--parallel', $parallel if $parallel;
+    push @cmd, "--class","\'".join("\&\&", @smartresource)."\'" if @smartresource;
+    return join(' ', @cmd, $exe);
+}
 
 1;

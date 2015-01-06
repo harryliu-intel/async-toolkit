@@ -735,12 +735,11 @@ public class VerilogEmitter extends CommonEmitter {
             return;
         } else if ("wait".equals(funcName)) {
             final Iterator i = e.getActuals(); 
-            out.print("#((");
+            out.print("`CAST2VERILOG_WAIT(");
             final ExpressionInterface arg = (ExpressionInterface) i.next();
             lvalues.add(arg);
-            arg.accept(this); 
-            // divide by 100 to change from DSim units to transitions
-            out.println(") * `PRS2VERILOG_TAU / 100);");
+            arg.accept(this); // in DSim units
+            out.println(");");
             return;
         } else if ("string".equals(funcName)) {
             out.print("util.csp_string(");

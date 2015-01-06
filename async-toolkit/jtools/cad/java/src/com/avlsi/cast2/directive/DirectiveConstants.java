@@ -128,6 +128,8 @@ public interface DirectiveConstants {
     String ALINT_SIGNOFF = "alint_signoff";
     String STATICIZER_RATIO_SIGNOFF = "staticizer_ratio_signoff";
     String BUMP_SIGNOFF = "bump_signoff";
+    String THRESH_BUMP_SIGNOFF = "thresh_resp_signoff";
+    String LEAKAGE_SIGNOFF = "leakage_signoff";
     String ALINT_IGNORE = "alint_ignore";
     String ACTIVITY_FACTOR = "activity_factor";
     String DC_WIRING_SPEC = "dc_wiring_spec";

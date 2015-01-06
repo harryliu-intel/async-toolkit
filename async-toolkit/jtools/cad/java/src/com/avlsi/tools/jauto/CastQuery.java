@@ -95,6 +95,7 @@ import com.avlsi.prs.ProductionRuleSet;
 import com.avlsi.tools.cadencize.Cadencize;
 import com.avlsi.tools.cadencize.CadenceInfo;
 import com.avlsi.tools.dsim.ExceptionPrettyPrinter;
+import com.avlsi.tools.lvs.NetGraph;
 import com.avlsi.tools.prs2verilog.verilog.VerilogUtil;
 import com.avlsi.util.bool.BooleanExpressionInterface;
 import com.avlsi.util.bool.OrBooleanExpressionInterface;
@@ -621,23 +622,27 @@ public final class CastQuery {
         /** Output all nodes, include ports? */
         private final boolean includePorts;
 
+        /** output include staticizer nodes? **/
+        private final boolean staticizer;        
+
         /** Set of possible nodes **/
         private final Set nodeSet;
         
         public LocalNodes(final CastFileParser cfp, final Cadencize cad,
                           final boolean alias, final boolean used, 
-                          final boolean includePorts, Set nodes) {
+                          final boolean includePorts, final boolean staticizer,
+                          Set nodes) {
             this(cfp, cad, alias, used, false, true, false, includePorts,
-                 nodes);
+                 staticizer, nodes);
         }
 
         public LocalNodes(final CastFileParser cfp, final Cadencize cad,
                           final boolean alias, final boolean used,
                           final boolean drivers, final boolean EMReport,
                           final boolean all_alias, final boolean includePorts,
-                          final Set nodeSet) {
+                          final boolean staticizer, final Set nodeSet) {
             this(cfp, cad, alias, used, drivers, EMReport, all_alias,
-                 includePorts, new HashMap(), 100e-12F, nodeSet);
+                 includePorts, staticizer, new HashMap(), 100e-12F, nodeSet);
         }
 
         public LocalNodes(final CastFileParser cfp, final Cadencize cad,
@@ -646,16 +651,26 @@ public final class CastQuery {
                           final boolean all_alias, final boolean includePorts,
                           final Map cache, final float defaultTau) {
             this(cfp, cad, alias, used, drivers, EMReport, all_alias,
-                 includePorts, cache, defaultTau, null);
+                 includePorts, false, cache, defaultTau, null);
         }
 
+        public LocalNodes(final CastFileParser cfp, final Cadencize cad,
+                final boolean alias, final boolean used,
+                final boolean drivers, final boolean EMReport,
+                final boolean all_alias, final boolean includePorts,
+                final boolean staticizer, final Map cache,
+                final float defaultTau) {
+           this(cfp, cad, alias, used, drivers, EMReport, all_alias,
+                includePorts, staticizer, cache, defaultTau, null);
+        }
+        
 
         public LocalNodes(final CastFileParser cfp, final Cadencize cad,
                           final boolean alias, final boolean used,
                           final boolean drivers, final boolean EMReport,
                           final boolean all_alias, final boolean includePorts,
-                          final Map cache, final float defaultTau,
-                          final Set nodeSet) {
+                          final boolean staticizer, final Map cache,
+                          final float defaultTau, final Set nodeSet) {
             this.cfp = cfp;
             this.cad = cad;
             this.alias = alias;
@@ -664,6 +679,7 @@ public final class CastQuery {
             this.EMReport = EMReport;
             this.all_alias = all_alias;
             this.includePorts = includePorts;
+            this.staticizer = staticizer;
             this.cache = (Map<String, Map<HierName, PropagateInfo>>) cache;
             this.defaultTau = defaultTau;
             this.nodeSet = nodeSet;
@@ -747,19 +763,25 @@ public final class CastQuery {
             public final float upSlew, dnSlew;
             public final float upSkew, dnSkew;
             public final float upBump, dnBump;
+            public final float upThreshBump, dnThreshBump;
             public final float upDelay, dnDelay;
+            public final float leakage;
             private Signoff() {
                 this(Float.NaN, Float.NaN,
                      Float.NaN, Float.NaN,
                      Float.NaN, Float.NaN,
                      Float.NaN, Float.NaN,
-                     Float.NaN, Float.NaN);
+                     Float.NaN, Float.NaN,
+                     Float.NaN, Float.NaN,
+                     Float.NaN);
             }
             private Signoff(float alintSignoff, float maxBumpFanin,
                             float upSlew, float dnSlew,
                             float upSkew, float dnSkew,
                             float upBump, float dnBump,
-                            float upDelay, float dnDelay) {
+                            float upThreshBump, float dnThreshBump,
+                            float upDelay, float dnDelay,
+                            float leakage) {
                 this.alintSignoff = alintSignoff;
                 this.maxBumpFanin = maxBumpFanin;
                 this.upSlew = upSlew;
@@ -768,27 +790,37 @@ public final class CastQuery {
                 this.dnSkew = dnSkew;
                 this.upBump = upBump;
                 this.dnBump = dnBump;
+                this.upThreshBump = upThreshBump;
+                this.dnThreshBump = dnThreshBump;
                 this.upDelay = upDelay;
                 this.dnDelay = dnDelay;
+                this.leakage = leakage;
             }
             public static Signoff getInstance(float alintSignoff,
                                               float maxBumpFanin,
                                               float upSlew, float dnSlew,
                                               float upSkew, float dnSkew,
                                               float upBump, float dnBump,
-                                              float upDelay, float dnDelay) {
+                                              float upThreshBump,
+                                              float dnThreshBump,
+                                              float upDelay, float dnDelay,
+                                              float leakage) {
                 if (Float.isNaN(alintSignoff) && Float.isNaN(maxBumpFanin) &&
                     Float.isNaN(upSlew) && Float.isNaN(dnSlew) &&
                     Float.isNaN(upSkew) && Float.isNaN(dnSkew) &&
                     Float.isNaN(upBump) && Float.isNaN(dnBump) &&
-                    Float.isNaN(upDelay) && Float.isNaN(dnDelay)) {
+                    Float.isNaN(upThreshBump) && Float.isNaN(dnThreshBump) &&
+                    Float.isNaN(upDelay) && Float.isNaN(dnDelay) &&
+                    Float.isNaN(leakage)) {
                     return UNSPECIFIED;
                 } else {
                     return new Signoff(alintSignoff, maxBumpFanin,
                                        upSlew, dnSlew,
                                        upSkew, dnSkew,
                                        upBump, dnBump,
-                                       upDelay, dnDelay);
+                                       upThreshBump, dnThreshBump,
+                                       upDelay, dnDelay,
+                                       leakage);
                 }
             }
 
@@ -802,8 +834,12 @@ public final class CastQuery {
                     LocalNodes.update(top, dnSkew, other.dnSkew),
                     LocalNodes.update(top, upBump, other.upBump),
                     LocalNodes.update(top, dnBump, other.dnBump),
+                    LocalNodes.update(top, upThreshBump, other.upThreshBump),
+                    LocalNodes.update(top, dnThreshBump, other.dnThreshBump),
                     LocalNodes.update(top, upDelay, other.upDelay),
-                    LocalNodes.update(top, dnDelay, other.dnDelay));
+                    LocalNodes.update(top, dnDelay, other.dnDelay),
+                    LocalNodes.update(top, leakage, other.leakage)
+                    );
             }
         }
 
@@ -952,6 +988,18 @@ public final class CastQuery {
                   DirectiveConstants.BUMP_SIGNOFF,
                   DirectiveConstants.HALFOP_TYPE );
 
+            final Map threshBumpSignoffMap =
+                DirectiveUtils.getMultipleBlockDirective
+                ( db,
+                  DirectiveConstants.THRESH_BUMP_SIGNOFF,
+                  DirectiveConstants.HALFOP_TYPE );
+
+            final Map leakageSignoffMap = DirectiveUtils.canonizeKey(locals,
+                DirectiveUtils.getMultipleBlockDirective
+                ( db,
+                  DirectiveConstants.LEAKAGE_SIGNOFF,
+                  DirectiveConstants.NODE_TYPE ));
+
             final Map delaySignoffUpMap =
                 DirectiveUtils.canonizeKey(locals,
                     DirectiveUtils.getUps(delaySignoffMap));
@@ -980,6 +1028,13 @@ public final class CastQuery {
                 DirectiveUtils.canonizeKey(locals,
                     DirectiveUtils.getDowns(bumpSignoffMap));
                 
+            final Map threshBumpSignoffUpMap =
+                DirectiveUtils.canonizeKey(locals,
+                    DirectiveUtils.getUps(threshBumpSignoffMap));
+            final Map threshBumpSignoffDnMap =
+                DirectiveUtils.canonizeKey(locals,
+                    DirectiveUtils.getDowns(threshBumpSignoffMap));
+                
             // Find all targets of production rules
             final Set<HierName> prsTarget = new HashSet<HierName>();
             for (Iterator i = cell.getProductionRuleSet().getProductionRules();
@@ -1007,8 +1062,11 @@ public final class CastQuery {
                     undef2NaN(skewSignoffDnMap, port),
                     undef2NaN(bumpSignoffUpMap, port),
                     undef2NaN(bumpSignoffDnMap, port),
+                    undef2NaN(threshBumpSignoffUpMap, port),
+                    undef2NaN(threshBumpSignoffDnMap, port),
                     undef2NaN(delaySignoffUpMap, port),
-                    undef2NaN(delaySignoffDnMap, port));
+                    undef2NaN(delaySignoffDnMap, port),
+                    undef2NaN(leakageSignoffMap, port));
                 final PropagateInfo other = new PropagateInfo(
                     prsTarget.contains(port) ?
                         cellDelay.getDelay(port, true, tau) : Float.NaN,
@@ -1260,16 +1318,28 @@ public final class CastQuery {
 
             header("Local nodes of " + cell.getFullyQualifiedType() + ":\n", w);
             final PropagateInfo defSignoff = new PropagateInfo();
-            for (Iterator i = new SortingIterator(nodes.getCanonicalKeys());
-                 i.hasNext(); ) {
-                final HierName canon = (HierName) i.next();
-                if (nodeSet!=null && 
-                    !nodeSet.contains(canon.toString())) continue;
-                if (!includePorts && ports.getCanonicalKey(canon) != null)
-                    continue;
-                if (prsSet != null && !prsSet.contains(canon) &&
-                    !subcellUsed(cell, nodes.getAliases(canon))) continue;
-
+            Iterator i = new SortingIterator(nodes.getCanonicalKeys());
+            Iterator sinv_i = null;
+            if (staticizer) {
+                final Collection staticizerNodes = new NetGraph(cell, cad, cfp).getStaticizerNodes();
+                sinv_i = staticizerNodes.iterator();
+            }
+            while (i.hasNext() || sinv_i.hasNext()) {
+                HierName canon;
+                boolean isStaticizer = false;
+                if (i.hasNext()){
+                    canon = (HierName) i.next();
+                    if (nodeSet!=null && 
+                        !nodeSet.contains(canon.toString())) continue;
+                    if (!includePorts && ports.getCanonicalKey(canon) != null)
+                        continue;
+                    if (prsSet != null && !prsSet.contains(canon) &&
+                        !subcellUsed(cell, nodes.getAliases(canon))) continue;
+                } else {
+                    //now process staticizer inverter nodes
+                    canon = ((NetGraph.NetNode) sinv_i.next()).getName();
+                    isStaticizer = true;
+                }
                 final PropagateInfo pinfo = propagateInfo.get(canon);
                 final Signoff signoff = pinfo == null ? Signoff.UNSPECIFIED
                                                       : pinfo.signoff;
@@ -1285,14 +1355,20 @@ public final class CastQuery {
                 final double skewSignoffDn  = useDef(signoff.dnSkew);
                 final double bumpSignoffUp  = useDef(signoff.upBump);
                 final double bumpSignoffDn  = useDef(signoff.dnBump);
+                final double threshBumpSignoffUp  = useDef(signoff.upThreshBump);
+                final double threshBumpSignoffDn  = useDef(signoff.dnThreshBump);
                 final int maxBumpFanin   = (int) useDef(signoff.maxBumpFanin);
+                final double leakageSignoff = useDef(signoff.leakage);
                 if (getAlintSignoff(cell, canon, useDef(signoff.alintSignoff)))
                 {
                     w.write("SIGNOFF ");
                 }
-
-                w.write(canon.getCadenceString());
-                for (Iterator j = nodes.getAliases(canon); j.hasNext(); ) {
+                if (!isStaticizer) {
+                    w.write(canon.getCadenceString());
+                } else {
+                    w.write(CellUtils.getCastNodeName(canon).getCadenceString()); 
+                }
+                for (Iterator j = nodes.getAliases(canon); j!=null && j.hasNext(); ) {
                     final HierName aliasName = (HierName) j.next();
                     if (alias && !all_alias && !aliasName.equals(canon)) {
                         w.write("=" + aliasName.getCadenceString());
@@ -1302,7 +1378,7 @@ public final class CastQuery {
                 }
                 if (all_alias) {
                     for (Iterator j = getAliases.getAliases(cell, canon);
-                         j.hasNext(); ) {
+                         j!=null && j.hasNext(); ) {
                         final HierName aliasName = (HierName) j.next();
                         if (!aliasName.equals(canon)) {
                             w.write("=" + aliasName.getCadenceString());
@@ -1332,7 +1408,8 @@ public final class CastQuery {
                     }
                 }
                 if (activityFactor != null) {
-                    final Number n = (Number) ((NetProperty.Property) activityFactor.get(canon)).getValue();
+                    final NetProperty.Property activity = (NetProperty.Property) activityFactor.get(canon);
+                    final Number n = activity == null ? null : (Number) activity.getValue();
                     w.write(" " + (n == null ? "-1"
                                              : printDouble(n.doubleValue())));
                 }
@@ -1354,6 +1431,14 @@ public final class CastQuery {
                     w.write(" " + dirStr);
                 }
 
+                w.write(" " + printDouble(threshBumpSignoffUp));
+                w.write(" " + printDouble(threshBumpSignoffDn));
+                w.write(" " + printDouble(leakageSignoff));
+                String staStr = "0";
+                if (isStaticizer) {
+                    staStr = "1";
+                }
+                w.write(" " + staStr);
                 w.write("\n");
             }
         }
@@ -3437,7 +3522,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                 }
             }
             return new LocalNodes(cfp, new Cadencize(true), alias, used,
-                                  drivers, EMReport, all_alias, false, null);
+                                  drivers, EMReport, all_alias, false, false, null);
         } else if (name.startsWith("routing")) {
             return new RoutingComplexity(new Cadencize(false));
         } else if (name.startsWith("env")) {

@@ -35,6 +35,8 @@ use Getopt::Long qw(:config no_ignore_case);
 use Data::Dumper;
 use Pod::Usage;
 use File::stat;
+use File::Spec;
+use File::Temp;
 use XML::Simple;
 use HTTP::Date;
 
@@ -77,7 +79,7 @@ sub cmdLineOpts
                'failingOnly' => \$cmdLine{failingOnly},
                'newCellsOnly' => \$cmdLine{newCellsOnly},
                'masterCellDb=s' => \$cmdLine{masterCellDb},
-               'db|cellDb=s' => \$cmdLine{cellDb },
+               'db|cellDb=s' => \$cmdLine{cellDb},
                'o|output=s' => \$cmdLine{output},
                'cast-path=s' => \$cmdLine{castPath},
                'cast-query-mem=i' => \$cmdLine{castQueryMem}
@@ -360,22 +362,22 @@ sub getCellHierarchy
     # Put netbatch mem in M (1000 base)
     # and cast_query in M (1000 base)
 
-    my $tmpCellName = $cell;
-    #In order to get cells with meta parameters to work, escape the ()
-    $tmpCellName =~ s/(\()/\\\(/g;
-    $tmpCellName =~ s/(\))/\\\)/g;
+    my $tmpdir = File::Temp->newdir('rteXXXXXX', DIR => File::Spec->curdir);
+    my $tree = File::Spec->catfile($tmpdir, 'subcell_tree');
+    my $nbmem = rteLib::getNumGigabytesFromMegbytes($cmdLine->{castQueryMem});
+    my $fulcrumCmd = "cast_query --task=subcell_tree ".
+                      "--max-heap-size=$cmdLine->{castQueryMem}M ".
+                      "--cast-path=$cmdLine->{castPath} ".
+                      "--cell=$cell ".
+                      "--output=$tree";
 
-    my $nbcommand = "nbjob run";
-    my $nbparams = "--mode interactive-ls --class \"fVM>$cmdLine->{castQueryMem}\" ".
-                   "--class-reservation \"fVM=$cmdLine->{castQueryMem}\""; 
-    my $fulcrumCmd= "fulcrum cast_query --task=subcell_tree "
-                     ." --max-heap-size=$cmdLine->{castQueryMem}M ".
-                     " --cast-path=$cmdLine->{castPath} --cell=$tmpCellName";
-    my $cmd = sprintf("%s %s %s",$nbcommand,$nbparams,$fulcrumCmd); 
-     
+    my $cmd = nb_queue_cmd($fulcrumCmd, 1, $nbmem);
+ 
     printf("Running $cmd\n");
+
+    system($cmd) == 0 or die "Can't execute $cmd: $!";
     my $HANDLE;
-    open ($HANDLE, $cmd . "|");
+    open ($HANDLE, $tree) or die "Can't read cast_query result $tree: $!";
     my $lastDepth = -1;
     while(<$HANDLE>)
     {
@@ -513,7 +515,7 @@ rteCellListGen - Given a cell, recursivly walks the hierarchy and generates a
 
 =head1 SYNOPSIS
 
-rteCellListGen [OPTIONS] B<-c>=cell[,cell]
+rteCellListGen [OPTIONS] B<-c>=cell[:cell]
 
 =head1 OPTIONS
 
@@ -548,10 +550,10 @@ Path to cast files, : separated
 
 Amount of memory to use when running cast_query. Default is 3000
 
-=item B<-c>=string[,string] B<--cell>=string[,string]
+=item B<-c>=string[:string] B<--cell>=string[:string]
 
 The fully qualified cell name. This option may be specified more than
-once, and/or may include a comma separated list of cells: --cell=fqcn1,fqcn2
+once, and/or may include a colon separated list of cells: --cell=fqcn1:fqcn2
 --cell=fqcn3
 
 =item B<-masterCellDb>=file

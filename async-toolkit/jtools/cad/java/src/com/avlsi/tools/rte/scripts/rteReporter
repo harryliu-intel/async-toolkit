@@ -30,6 +30,7 @@ BEGIN {
 }
 
 use rteLib;
+use job_netbatch;
 use Getopt::Long qw(:config no_ignore_case);
 use Data::Dumper;
 use Pod::Usage;
@@ -142,15 +143,16 @@ sub getCellList
 
     # Put qrsh mem in M 
     # and cast_query in M (1000 base)
+    
+    #convert M to G
+    my $nbmem = rteLib::getNumGigabytesFromMegbytes($cmdLine->{castQueryMem});
+    
 
-    my $nbcommand = "nbjob run";
-    my $nbparams = "--mode interactive --class \"fVM>$cmdLine->{castQueryMem}\" ".
-                   " --class-reservation \"fVM=$cmdLine->{castQueryMem}\""; 
-    my $fulcrumCmd= "fulcrum cast_query --task=subcell_tree "
+    my $fulcrumCmd = "cast_query --task=subcell_tree "
                      ."--max-heap-size=$cmdLine->{castQueryMem}M ".
                      "--cast-path=$cmdLine->{castPath} --cell=\"$cell\"";
-    my $cmd = sprintf("%s %s %s",$nbcommand,$nbparams,$fulcrumCmd); 
-     
+    my $cmd = nb_queue_cmd($fulcrumCmd, 1, $nbmem);
+ 
 
 
     #printf("Running $cmd\n");
@@ -554,7 +556,7 @@ rteReporter [OPTIONS] [B<-c>=string] [B<-s>=string]
 =item B<-c>=string B<--cell>=string
 
 The fully qualified cell name. This option may be specified more than
-once, and/or may include a comma separated list of cells: --cell=fqcn1,fqcn2
+once, and/or may include a colon separated list of cells: --cell=fqcn1:fqcn2
 --cell=fqcn3
 
 =item B<-s>=string B<--suiteFile>=string

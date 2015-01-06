@@ -9,6 +9,7 @@ package com.avlsi.tools.prs2verilog;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public abstract class AbstractConverter implements ConverterInterface {
      * (<code>String[]</code>) that is depended on by the verilog block choosen
      * for that cell.
      **/
-    protected final Map/*<CellInterface, String[]>*/ depends;
+    protected final Map<CellInterface, String[]> depends;
 
     protected final static String PRS2VERILOG_TAU = "PRS2VERILOG_TAU";
     protected final static String PRS2VERILOG_DELAY_SCALE = "PRS2VERILOG_DELAY_SCALE";
@@ -83,7 +84,7 @@ public abstract class AbstractConverter implements ConverterInterface {
         this.inout = new ArrayList();
         this.wireId = 0;
         mAlwaysEscape = alwaysEscape;
-        this.depends = new HashMap();
+        this.depends = new HashMap<CellInterface, String[]>();
     }
     public VerilogObject newNet(final String type) {
         final String name = "PRS2VERILOG_internal_" + wireId++;
@@ -191,6 +192,9 @@ public abstract class AbstractConverter implements ConverterInterface {
     }
     private Integer accumPortDir(final Integer oldDir, final Integer newDir) {
         if (oldDir == null || oldDir == newDir) return newDir;
+        else if (oldDir == PortDefinition.IN && newDir == PortDefinition.OUT ||
+                 oldDir == PortDefinition.OUT && newDir == PortDefinition.IN)
+            return PortDefinition.IN;
         else if (oldDir == PortDefinition.NONE) return newDir;
         else if (newDir == PortDefinition.NONE) return oldDir;
         else return PortDefinition.INOUT;
@@ -343,10 +347,10 @@ public abstract class AbstractConverter implements ConverterInterface {
         }
     }
 
-    protected VerilogObject verilogValue(final HierName instance,
-                                         final AliasedSet ns,
-                                         final Value v,
-                                         final BlockValue value) {
+    protected List<VerilogObject> verilogValue(final HierName instance,
+                                               final AliasedSet ns,
+                                               final Value v,
+                                               final BlockValue value) {
         if (v == null) {
             // no connection
             return null;
@@ -359,18 +363,18 @@ public abstract class AbstractConverter implements ConverterInterface {
             } else {
                 ai = HierName.append(instance, avi.getParent());
             }
-            final List objs = new ArrayList();
+            final List<VerilogObject> objs = new ArrayList<VerilogObject>();
             for (Iterator i = av.getIterator(); i.hasNext(); ) {
-                objs.add(0, verilogValue(ai, ns, (Value) i.next(), value));
+                objs.addAll(0, verilogValue(ai, ns, (Value) i.next(), value));
             }
-            return value.array(toArray(objs));
+            return objs;
         } else if (v instanceof NodeValue) {
             final HierName name = ((NodeValue) v).getInstanceName();
-            return value.node(instance, name);
+            return Collections.singletonList(value.node(instance, name));
         } else if (v instanceof InstanceValue) {
             final InstanceValue iv = (InstanceValue) v;
             final CellInterface cell = iv.getCell();
-            final List objs = new ArrayList();
+            final List<VerilogObject> objs = new ArrayList<VerilogObject>();
             if (cell.isChannel()) {
                 (new CellUtils.MarkPort() {
                     protected void mark(final NodeType nodeType,
@@ -408,12 +412,30 @@ public abstract class AbstractConverter implements ConverterInterface {
                         }
                     }
                 }).mark(cell);
-                return value.array(toArray(objs));
+                return objs;
             } else {
                 throw new NonDefchanException(cell);
             }
         } else {
             throw new NonNodeException(v);
+        }
+    }
+
+    // Return an identifier object that's not subject to renaming.
+    private VerilogObject dontRename(final String name, final boolean escape) {
+        // XXX: use of hierIdent is a temporary workaround
+        return factory.hierIdent(
+                new VerilogObject[] { factory.ident(name, escape) });
+    }
+
+    private VerilogObject concat(final List<VerilogObject> objs,
+                                 final BlockValue bv) {
+        if (objs == null) {
+            return null;
+        } else if (objs.size() == 1) {
+            return objs.get(0);
+        } else {
+            return bv.array(toArray(objs));
         }
     }
 
@@ -445,10 +467,10 @@ public abstract class AbstractConverter implements ConverterInterface {
                 final Map.Entry entry = (Map.Entry) name.next();
                 final String key = (String) entry.getKey();
                 final Value val = (Value) entry.getValue();
-                final VerilogObject portName = factory.ident(key, false);
+                final VerilogObject portName = dontRename(key, false);
                 final VerilogObject port;
                 try {
-                    port = verilogValue(instance, ns, val, bv);
+                    port = concat(verilogValue(instance, ns, val, bv), bv);
                 } catch (NonNodeException e) {
                     throw new RuntimeException(
                         "Encountered unknown value while process connection " +
@@ -469,7 +491,7 @@ public abstract class AbstractConverter implements ConverterInterface {
                 final Value v = (Value) order.next();
                 final VerilogObject port;
                 try {
-                    port = verilogValue(instance, ns, v, bv);
+                    port = concat(verilogValue(instance, ns, v, bv), bv);
                 } catch (NonNodeException e) {
                     throw new RuntimeException(
                         "Encountered unknown value while process connection " +
@@ -522,7 +544,7 @@ public abstract class AbstractConverter implements ConverterInterface {
                                                 : (instance.toString() + "$"))
                               + id, mAlwaysEscape);
             final VerilogObject moduleName =
-                factory.ident(inst.getModule(), mAlwaysEscape);
+                dontRename(inst.getModule(), mAlwaysEscape);
             insts.add(factory.moduleInst(instName, moduleName, toArray(params),
                                          toArray(ports)));
             if (addFiles)
@@ -564,7 +586,7 @@ public abstract class AbstractConverter implements ConverterInterface {
                              : factory.delay(d[0], d[1], d[2]);
     }
 
-    public Map/*<CellInterface, String[]>*/ getDependencies() {
+    public Map<CellInterface, String[]> getDependencies() {
         return depends;
     }
 
@@ -585,6 +607,11 @@ public abstract class AbstractConverter implements ConverterInterface {
         return ((Boolean) DirectiveUtils.getTopLevelDirective(
                     cell.cast_cell,
                     DirectiveConstants.SUPPRESS_FAULTS)).booleanValue();
+    }
+
+    protected VerilogObject getTimeScaleMacro() {
+        return factory.expr(
+                "`" + ConverterConstants.getTimeScaleMacroString() + "\n");
     }
 
     public abstract VerilogObject convert(final CommandLineArgs theArgs,

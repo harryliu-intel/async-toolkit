@@ -513,6 +513,18 @@ public final class Node implements Event, Waitable {
     /** Returns our current value (vs pending value). **/
     public /*@ pure @*/ byte getValue() { return value; }
 
+    private float randomDelay(final Rule drule) {
+        float fastDelay, slowDelay;
+        if (drule.timed) {
+            fastDelay = drule.getFastDelay();
+            slowDelay = drule.getSlowDelay();
+        } else {
+            fastDelay = sim.getFastDelay();
+            slowDelay = sim.getSlowDelay();
+        }
+        return sim.randomDelay(fastDelay, slowDelay);
+    }
+
     /** Notification that a Rule affecting this Node changed its state **/
     public void ruleFired(int delay, float slew, byte type, byte oldState,
             byte newState, Node lastEvent, Rule drule) {
@@ -545,7 +557,7 @@ public final class Node implements Event, Waitable {
             }
             else if (sim.randomOrder != DSim.NO_RANDOM && !drule.absoluteDelay) {
                 if (drule.timed || sim.randomOrder == DSim.TIMED_RANDOM) {
-                    delay *= sim.randomDelay();
+                    delay *= randomDelay(drule);
                 } else {
                     random = true;
                     delay = 0;

@@ -40,6 +40,8 @@ import com.avlsi.cast.CastFileParser;
 
 import com.avlsi.cast.impl.Environment;
 
+import com.avlsi.cast2.util.StandardParsingOption;
+
 import com.avlsi.cell.CellInterface;
 
 import com.avlsi.file.cdl.parser.CDLFactoryInterface;
@@ -303,9 +305,19 @@ public class GenerateGDSIIData {
              ( outputDir.isDirectory() ) ) {
 
             final CastFileParser castParser =
-                new CastFileParser( new FileSearchPath(castRoot), castVersion );
+                new CastFileParser( new FileSearchPath(castRoot), castVersion,
+                                    new StandardParsingOption(theArgs) );
 
-            final Cadencize cadencizer = new Cadencize(false);
+            final Cadencize cadencizer = new Cadencize(false,
+                new Cadencize.DefaultCallback(Cadencize.VERILOG_PARTIAL) {
+                    public boolean mark(CellInterface cell, String block) {
+                        if (block == com.avlsi.fast.BlockInterface.NETLIST) {
+                            return cell.containsNetlist();
+                        } else {
+                            return !cell.containsNetlist() && super.mark(cell, block);
+                        }
+                    }
+                });
 
             final PartialExtract.CellPlusMinus cellNameSpec =
                 new PartialExtract.CellPlusMinusKeyword( cellName,
@@ -435,7 +447,8 @@ public class GenerateGDSIIData {
                                 lvsNodesEmitter,
                                 cadencizer,
                                 false,
-                                false );
+                                false,
+                                true );
 
             if ( ! cellNameSpec.isEmpty() ) {
                 final PartialExtract pe =

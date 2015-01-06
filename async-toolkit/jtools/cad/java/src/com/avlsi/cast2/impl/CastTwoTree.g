@@ -113,6 +113,7 @@ header {
     import com.avlsi.cell.RefinementException;
     import com.avlsi.cell.SubcellCreationException;
     import com.avlsi.fast.BlockInterface;
+    import com.avlsi.fast.BlockIterator;
     import com.avlsi.fast.DirectiveBlock;
     import com.avlsi.fast.EnvBlock;
     import com.avlsi.fast.NetlistBlock;
@@ -419,6 +420,19 @@ options {
         throws SemanticWrapperException {
         try {
             return IntValue.valueOf(v).getValue().intValue();
+        } catch (InvalidOperationException e) {
+            throw semanticWrapperException(e, ast);
+        }
+        
+    }
+
+    /**
+     * Produces a double from the given Value or throws an exception trying.
+     **/
+    private double getFloat(final Value v, final ASTWithInfo ast)
+        throws SemanticWrapperException {
+        try {
+            return FloatValue.valueOf(v).getValue();
         } catch (InvalidOperationException e) {
             throw semanticWrapperException(e, ast);
         }
@@ -3545,7 +3559,7 @@ prsAction[Environment env, CellImpl cell, ProductionRuleSet prs, boolean deepP]
 prsActionBody[Environment env, CellImpl cell, boolean deepP]
 returns [ProductionRule pr]
     {
-        Value av, rhsv;
+        Value av, rhsv, d1, d2;
         BooleanExpressionInterface be;
         boolean isochronicP = false, unstabP = false, timedP = false;
         boolean metastableP = false;
@@ -3553,9 +3567,19 @@ returns [ProductionRule pr]
         int dir;
         ASTWithInfo exp;
         boolean afterPs = false;
+        float fastDelay = -1;
+        float slowDelay = -1;
     }
     : ( ISOCHRONIC {isochronicP = true;} )?
       ( UNSTAB {unstabP = true;} | METASTABLE { metastableP = true; } )?
+      ( TIMED { timedP = true; fastDelay = 1; slowDelay = 1; }
+        ( d1=de1:expression[env, false]
+          { slowDelay = fastDelay = (float) getFloat(d1, de1); }
+          ( d2=de2:expression[env, false]
+            { slowDelay = (float) getFloat(d2, de2); }
+          )?
+        )?
+      )?
       ( ( AFTER | AFTER_PS { afterPs = true; } ) av=e:expression[env, false]
         { afterTimeSteps = getInt(av, e); } )?
        be=prsExpression[env, deepP] rhsv=e2:expr[env, false, deepP]
@@ -3588,7 +3612,7 @@ returns [ProductionRule pr]
 
         pr = new ProductionRule(be, rhsNode, railName, dir, isochronicP,
                                 unstabP, metastableP, timedP, afterTimeSteps,
-                                afterPs);
+                                afterPs, fastDelay, slowDelay);
     }
     ;
 
@@ -4319,11 +4343,17 @@ internalChannelStatement[Environment env, CellImpl cell]
 
 verilogBlock[Environment env, CellImpl cell]
     {
-        final VerilogBlock vb = new VerilogBlock();
+        final BlockIterator bi = cell.getBlockInterface()
+                                     .iterator(BlockInterface.VERILOG);
+        final VerilogBlock vb;
+        if (bi.hasNext()) {
+            vb = (VerilogBlock) bi.next();
+        } else {
+            vb = new VerilogBlock();
+            bi.add(vb);
+        }
     }
-    : #( VERILOG ( verilogNamed[env, vb] )* ) {
-           cell.getBlockInterface().iterator(BlockInterface.VERILOG).add(vb);
-       }
+    : #( VERILOG ( verilogNamed[env, vb] )* )
     ;
 
 

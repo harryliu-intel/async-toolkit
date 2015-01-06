@@ -89,6 +89,7 @@ import com.avlsi.util.cmdlineargs.CommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
+import com.avlsi.util.cmdlineargs.defimpl.UnionCommandLineArgs;
 import com.avlsi.util.container.AliasedMap;
 import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.CollectionUtils;
@@ -797,7 +798,11 @@ public class Cast2Verilog {
                         wrapper, getCadencize(true),
                         beh == Mode.PRS ? null
                                         : ((Mode.VerilogMode) beh).getLevel(),
-                        new NoRepeatVisitor(out), theArgs, validVerilogFiles);
+                        new NoRepeatVisitor(out),
+                        new UnionCommandLineArgs(theArgs,
+                            new CommandLineArgsDefImpl(
+                                new String[] { "--timescale" })),
+                        validVerilogFiles);
                 } catch (IOException e) {
                     throw new SemanticException(e);
                 }
@@ -2015,7 +2020,7 @@ public class Cast2Verilog {
 
         final String outputFileName =
             theArgs.getArgValue("output-file", cellEnv.getFullyQualifiedType() + ".v");
-        System.err.println("output file is " + outputFileName);
+        logger.warning("output file is " + outputFileName); // TODO: set to INFO
         final PrintWriter out =
             new PrintWriter(
                 new BufferedWriter(
@@ -2865,6 +2870,7 @@ public class Cast2Verilog {
         emitPortList(cell, dataNodes, enableNodes,
                  arrayInputNodes, arrayOutputNodes, inputPorts, out, true);
         out.println(");");
+        emitTimeScale(out);
 
         // declare the array regs for array inputs and outputs
         declareArrayRegs(cell.getCSPInfo(), out);
@@ -3321,5 +3327,9 @@ public class Cast2Verilog {
         if (!first[0]) out.println(";");
         out.println("endmodule");
         out.println("`endif");
+    }
+
+    private void emitTimeScale(final PrintWriter out) {
+        out.println("`" + ConverterConstants.getTimeScaleMacroString());
     }
 }

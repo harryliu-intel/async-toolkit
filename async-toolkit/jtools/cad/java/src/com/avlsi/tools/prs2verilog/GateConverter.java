@@ -152,6 +152,7 @@ class GateConverter extends NetgraphGateConverter {
         items.addAll(0, wireDecl);
         items.addAll(0, inout);
         addParameters();
+        if (timescale) items.add(0, getTimeScaleMacro());
 
         final List topModel = new ArrayList();
         topModel.add(

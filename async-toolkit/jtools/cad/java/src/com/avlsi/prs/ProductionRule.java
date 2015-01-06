@@ -111,6 +111,16 @@ public final class ProductionRule {
     private final boolean absolute;
 
     /**
+     * see {@link #getFastDelay}
+     **/
+    private final float fastDelay;
+
+    /**
+     * see {@link #getSlowDelay}
+     **/
+    private final float slowDelay;
+
+    /**
      * Direction constant indicating that the right-hand side goes down when
      * the left-hand side condition is true.
      **/
@@ -135,6 +145,26 @@ public final class ProductionRule {
                           final boolean isTimedP,
                           final int after,
                           final boolean absolute) {
+        this(guard, target, powerSupply, direction, isIsochronic,
+             isUnstableP, isMetastableP, isTimedP, after, absolute,
+             1, 1);
+    }
+
+    /**
+     * Class constructor.
+     **/
+    public ProductionRule(final BooleanExpressionInterface guard,
+                          final HierName target,
+                          final HierName powerSupply,
+                          final int direction,
+                          final boolean isIsochronic,
+                          final boolean isUnstableP,
+                          final boolean isMetastableP,
+                          final boolean isTimedP,
+                          final int after,
+                          final boolean absolute,
+                          final float fastDelay,
+                          final float slowDelay) {
         assert !(isUnstableP && isMetastableP) : "A rule cannot be unstable and metastable: " + guard + " -> " + target;
         assert direction == UP || direction == DOWN : "Unknown direction: " + direction;
         if (direction != DOWN && direction != UP)
@@ -150,6 +180,8 @@ public final class ProductionRule {
         this.isTimedP = isTimedP;
         this.after = after;
         this.absolute = absolute;
+        this.fastDelay = fastDelay;
+        this.slowDelay = slowDelay;
     }
 
     /**
@@ -241,6 +273,20 @@ public final class ProductionRule {
      **/
     public int getAfter() {
         return after;
+    }
+
+    /**
+     * Returns the lower bound of the time jitter range.
+     **/
+    public float getFastDelay() {
+        return fastDelay;
+    }
+
+    /**
+     * Returns the upper bound of the time jitter range.
+     **/
+    public float getSlowDelay() {
+        return slowDelay;
     }
 
     /**

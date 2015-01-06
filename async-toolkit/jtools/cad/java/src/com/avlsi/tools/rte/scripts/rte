@@ -65,31 +65,30 @@ foreach my $tsk (@t){
         goto END_SCRIPT;
     }
 }
-my $cmd;
+my @cmd;
 my $returnStatus;
 
 if($rteCellListGen){
     print "\nRunning rteCellListGen \n";
-    $cmd = sprintf("#! /bin/bash -noprofile\n" .
-         "fulcrum --latest rteCellListGen --masterCellDb \"%s\"".
-         " --cellDb \"%s\"".
-         " --cast-path=\"%s\"".
-         " --cell=\"%s\"".
-         " --output \"%s\"".
-         " --depth=$cmdLine->{depth}".
-         " --cast-query-mem=$cmdLine->{castQueryMem}"
-     ,$cmdLine->{masterCellDb},$cmdLine->{cellDb},$cmdLine->{castPath},$cmdLine->{cell},$cmdLine->{rteCellListOut});
-     if ($cmdLine->{forceRerun}) { $cmd.= " --forceRerun";}
-     if ($cmdLine->{newCellsOnly}) { $cmd.= " --newCellsOnly";}
-     if ($cmdLine->{failingOnly}) { $cmd.= " --fainlingOnly";}
+    @cmd = ('rteCellListGen',
+            '--masterCellDb', $cmdLine->{masterCellDb},
+            '--cellDb', $cmdLine->{cellDb},
+            '--cast-path', $cmdLine->{castPath},
+            '--cell', $cmdLine->{cell},
+            '--output', $cmdLine->{rteCellListOut},
+            '--depth', $cmdLine->{depth},
+            '--cast-query-mem', $cmdLine->{castQueryMem});
+     if ($cmdLine->{forceRerun})   { push @cmd, '--forceRerun';   }
+     if ($cmdLine->{newCellsOnly}) { push @cmd, '--newCellsOnly'; }
+     if ($cmdLine->{failingOnly})  { push @cmd, '--failingOnly'; }
 
-     $returnStatus = runCmd($cmd);
+     $returnStatus = runCmd(@cmd);
 
      if($returnStatus == 1){
-         print("\n Successful Run");
+         print("\n Successful Run\n");
      }
      else{
-         print ("\n Command \"$cmd\" falied to execute\n");
+         print ("\n Command \"@cmd\" falied to execute\n");
      }
 }
 if($rteLauncher){
@@ -99,32 +98,31 @@ if($rteLauncher){
         print "\nSuite file for the cells  missing.\n";
         goto END_SCRIPT;
     }
-    $cmd= sprintf("#! /bin/bash -noprofile\n" .
-         "fulcrum --latest rteLauncher --masterCellDb \"%s\"".
-         " --cellDb \"%s\"".
-         " --cast-path=\"%s\"".
-         " --nbMem=$cmdLine->{jobMem}".
-         " --numJobs=$cmdLine->{numJobs}".
-         " --suite=\"%s\"".
-         " --output-dir=\"%s\"",
-    $cmdLine->{masterCellDb},$cmdLine->{cellDb},$cmdLine->{castPath},$cmdLine->{rteCellListOut},$cmdLine->{outputDir});
+    @cmd = ('rteLauncher',
+            '--masterCellDb', $cmdLine->{masterCellDb},
+            '--cellDb', $cmdLine->{cellDb},
+            '--cast-path', $cmdLine->{castPath},
+            '--nbMem', $cmdLine->{jobMem},
+            '--numJobs', $cmdLine->{numJobs},
+            '--suite', $cmdLine->{rteCellListOut},
+            '--output-dir', $cmdLine->{outputDir});
 
-    if($cmdLine->{timeout}) {$cmd .= " --timeout $cmdLine->{timeout}";}
-    if($cmdLine->{maxNbMem}) {$cmd .= " --maxNbMem $cmdLine->{maxNbMem}";}
-    if($cmdLine->{cycleCount}) {$cmd .= " --cycle-count $cmdLine->{cycleCount}";}
-    if($cmdLine->{measuredDelay}) {$cmd .= " --measured-delay $cmdLine->{measuredDelay}";}
-    if($cmdLine->{estimatedDelay}) {$cmd .= " --estimated-delay $cmdLine->{estimatedDelay}";}
-    if($cmdLine->{digitalDelay}) {$cmd .= " --digital-delay $cmdLine->{digitalDelay}";}
-    if($cmdLine->{historyPerNode}) {$cmd .= " --history-per-node $cmdLine->{historyPerNode}";}
-    if($cmdLine->{dsimArg}) {$cmd .= " --dsimArg $cmdLine->{dsimArg}";}
-    if($cmdLine->{pltDelayException}) {$cmd .= " --pltDelayException $cmdLine->{pltDelayException}";}
-    $returnStatus = runCmd($cmd);
+    if($cmdLine->{timeout}) {push @cmd, '--timeout', $cmdLine->{timeout};}
+    if($cmdLine->{maxNbMem}) {push @cmd, '--maxNbMem', $cmdLine->{maxNbMem};}
+    if($cmdLine->{cycleCount}) {push @cmd, '--cycle-count', $cmdLine->{cycleCount};}
+    if($cmdLine->{measuredDelay}) {push @cmd, '--measured-delay', $cmdLine->{measuredDelay};}
+    if($cmdLine->{estimatedDelay}) {push @cmd, '--estimated-delay', $cmdLine->{estimatedDelay};}
+    if($cmdLine->{digitalDelay}) {push @cmd, '--digital-delay', $cmdLine->{digitalDelay};}
+    if($cmdLine->{historyPerNode}) {push @cmd, '--history-per-node', $cmdLine->{historyPerNode};}
+    if($cmdLine->{dsimArg}) {push @cmd, '--dsimArg', $cmdLine->{dsimArg};}
+    if($cmdLine->{pltDelayException}) {push @cmd, '--pltDelayException', $cmdLine->{pltDelayException};}
+    $returnStatus = runCmd(@cmd);
 
      if($returnStatus == 1){
          print("\n Successful Run\n");
      }
      else{
-         print ("\n Command \"$cmd\" failed to execute\n");
+         print ("\n Command \"@cmd\" failed to execute\n");
      }
 
 }
@@ -135,21 +133,20 @@ if($rteReporter){
         print "Cell Db (.xml file)missing\n";
         goto END_SCRIPT;
     }
-    $cmd=sprintf( "#! /bin/bash -noprofile\n" .
-         "fulcrum --latest rteReporter --masterCellDb \"%s\"".
-         " --cellDb \"%s\"".
-         " --cast-path=\"%s\"".
-         " --cast-query-mem=$cmdLine->{castQueryMem}".
-         " --depth=$cmdLine->{depth}".
-         " --cell=\"%s\"".
-         " --output=\"%s\""
-    ,$cmdLine->{masterCellDb},$cmdLine->{cellDb},$cmdLine->{castPath},$cmdLine->{cell},$cmdLine->{rteReporterOut});
-    $returnStatus = runCmd($cmd);
+    @cmd = ('rteReporter',
+            '--masterCellDb', $cmdLine->{masterCellDb},
+            '--cellDb', $cmdLine->{cellDb},
+            '--cast-path', $cmdLine->{castPath},
+            '--cast-query-mem', $cmdLine->{castQueryMem},
+            '--depth', $cmdLine->{depth},
+            '--cell', $cmdLine->{cell},
+            '--output', $cmdLine->{rteReporterOut});
+    $returnStatus = runCmd(@cmd);
     if($returnStatus == 1){
         print("\n Successful Run\n");
     }
     else{
-        print ("\n Command \"$cmd\" failed to execute\n");
+        print ("\n Command \"@cmd\" failed to execute\n");
     }
 }
 
@@ -235,7 +232,7 @@ sub cmdLineOpts
         open (CELL_LIST, $cmdLine{cellList}) or die "Cannot open cellList $cmdLine{cellList}\n";
         my @cellListLines = <CELL_LIST>;
         chomp @cellListLines;
-        $cmdLine{cell} .= join(",",@cellListLines);
+        $cmdLine{cell} .= join(':',@cellListLines);
         close CELL_LIST;
     }
     if(!-e $cmdLine{outputDir}){
@@ -257,13 +254,10 @@ sub cmdLineOpts
 # Runs a command on the prompt using HANDLE 
 
 sub runCmd{
-    my($cmd) =@_;
-    #print "\nInside runCmd";
-    my $returnStatus =1;
-    print "\nRunning $cmd\n";
-    #open ($HANDLE, $cmd . "|") || die "Failed to execute $cmd\n ";
-    system($cmd);
-    #my @result = `$cmd 2>&1`;
+    my (@cmd) = @_;
+    my $returnStatus = 1;
+    print "\nRunning @cmd\n";
+    system(@cmd);
     if($? == -1){
         $returnStatus = -1;
     }

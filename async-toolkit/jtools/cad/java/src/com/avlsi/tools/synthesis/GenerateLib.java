@@ -88,9 +88,11 @@ public class GenerateLib {
 
     int CellCount = 0;
 
-    String voltage = "0.9";
-    String temperature = "125";
-    String process_name = "tt";
+    /** default PVT applies to hard-macro, Proteus sets these from timing file **/
+    String voltage = "0.81";
+    String temperature = "0";
+    String process_name = "ss";
+
     String translate = "cast";
 
     boolean noheader;
@@ -492,7 +494,7 @@ public class GenerateLib {
 
     /** describe an image input pin **/
     void emitImageInput(CellTiming timing, double fanout_load, boolean setupCheck,
-                        String IA, String A0, String A1,boolean isINV) {
+                        String IA, String A0, String A1) {
 
         // start pin description
         System.out.println("  pin(" + IA + ") {");
@@ -503,10 +505,7 @@ public class GenerateLib {
         double cap0 = timing.getInputCap(A0);
         double cap1 = timing.getInputCap(A1);
         double cap = cap0 > cap1 ? cap0 : cap1;
-        if(isINV)
-            System.out.println("    capacitance : 0.0;");
-        else
-            System.out.println("    capacitance : " + cap + ";");
+        System.out.println("    capacitance : " + cap + ";");
 
         // set fanout_load
         if (Task.equals("qdi"))
@@ -520,18 +519,15 @@ public class GenerateLib {
     }
 
     /** shortcut **/
-    void emitImageInput(CellTiming timing, String A,boolean isINV) {
-        emitImageInput(timing,1.0,false,A,A + ".0",A + ".1",isINV);
+    void emitImageInput(CellTiming timing, String A) {
+        emitImageInput(timing,1.0,false,A,A + ".0",A + ".1");
     }
 
     /** describe a real input pin **/
-    void emitRealInput(CellTiming timing, String A,boolean isINV) {
+    void emitRealInput(CellTiming timing, String A) {
         System.out.println("  pin(" + A + ") {");
         System.out.println("    direction : input;");
-        if(isINV)
-            System.out.println("    capacitance : 0.0;");
-        else
-            System.out.println("    capacitance : " + timing.getInputCap(A) + ";");
+        System.out.println("    capacitance : " + timing.getInputCap(A) + ";");
         System.out.println("    fanout_load : 1.0;");
         System.out.println("  }");
     }
@@ -569,13 +565,11 @@ public class GenerateLib {
     }
 
     /** describe a timing arc from an real input pin to an real output pin **/
-    void emitRealToRealTiming(CellTiming timing, String A, String X,
-                              boolean isINV, String tau) {
+    void emitRealToRealTiming(CellTiming timing, String A, String X, String tau) {
         String from  = A;
         String to = X;
         for (int to_dir=0; to_dir<2; to_dir++) {
-            String sense = (!isINV) ?
-                "positive_unate" : "negative_unate";
+            String sense = "positive_unate";
             String type = (to_dir==1) ?
                 "combinational_rise" : "combinational_fall";
             String cell_dir = (to_dir==1) ?
@@ -693,13 +687,12 @@ public class GenerateLib {
         // handle special image cells
         boolean isBUF=false, isTOK=false, isEDFF=false, isRECV=false,
             isSEND=false, isSCAN=false, isFROM=false, isTO=false,
-            isCONFIG=false, isCONFIG2=false, isINV =false, isScanOneOf =false;
+            isCONFIG=false, isCONFIG2=false, isScanOneOf=false;
         int N = Inputs, M = 0;
         if (footName.equals("BUF")) {
             isBUF=true;
             trueFunc="L";
         } else if (footName.equals("INV")) {
-            isINV = true;
             isBUF=true;
             inversionMask=1;
             canonicalName = StringUtil.replaceSubstring(canonicalName,"INV","BUF");
@@ -796,10 +789,7 @@ public class GenerateLib {
         System.out.println("cell (" + cellName + ") {");
         if (!footName.equals(cellName))
             System.out.println("  cell_footprint : " + footName + ";");
-        if(isINV)
-            System.out.println("  area : 0.0;");
-        else
-            System.out.println("  area : " + NumberFormatter.format(area,4) + ";");
+        System.out.println("  area : " + NumberFormatter.format(area,4) + ";");
 
         // special handling of SCAN
         if (isSCAN) {
@@ -883,7 +873,7 @@ public class GenerateLib {
             if (isScanOneOf) {
                 //Take care of input side
                 for (int i=0; i<N; i++) {
-                    emitRealInput(timing,"L."+i,isINV);
+                    emitRealInput(timing,"L."+i);
                 }
                 System.out.print(timing.dummyOutput("L.e"));
                 //Take care of outputs
@@ -893,10 +883,10 @@ public class GenerateLib {
                     System.out.println("  pin(" + X +") {");
                     System.out.println("    direction : output;");
                     if (Task.equals("qdi")) System.out.println("    max_fanout : 3.0;");
-                    emitRealToRealTiming(timing,A,X,false,tau);
+                    emitRealToRealTiming(timing,A,X,tau);
                     System.out.println("  }");
                 }
-                emitRealInput(timing,"R.e",isINV);
+                emitRealInput(timing,"R.e");
                 System.out.println("}\n");
                 return;
             }
@@ -905,11 +895,11 @@ public class GenerateLib {
         // special handling of SEND/RECV/TO/FROM
         if (isRECV || isFROM) {
             // external pins
-            for (int i=0; i<M; i++) emitRealInput(timing,"L." + i,isINV);
+            for (int i=0; i<M; i++) emitRealInput(timing,"L." + i);
             System.out.print(timing.dummyOutput("L.e"));
 
             // internal pins
-            if (isRECV) emitImageInput(timing,"E",isINV);
+            if (isRECV) emitImageInput(timing,"E");
 
             // timing arcs to image data outputs
             for (int i=0; i<N; i++) {
@@ -943,14 +933,14 @@ public class GenerateLib {
                 if (isSEND) emitImageToRealTiming(timing,"E",X,tau);
                 System.out.println("  }");
             } 
-            emitRealInput(timing,"R.e",isINV);
+            emitRealInput(timing,"R.e");
 
             // internal pins
-            if (isSEND) emitImageInput(timing,"E",isINV);
+            if (isSEND) emitImageInput(timing,"E");
             for (int i=0; i<N; i++) {
                 String L = "L[" + i + "]";
                 if (isTO && N==1) L = "L";
-                emitImageInput(timing,L,isINV);
+                emitImageInput(timing,L);
             }
 
             // close cell block
@@ -979,7 +969,7 @@ public class GenerateLib {
             String A0 = A + "." + invA;
             String A1 = A + "." + (1-invA);
             double fanout_load = isBUF||isTOK ? 0.33 : 1.0;
-            emitImageInput(timing,fanout_load,isTOK||isEDFF,IA,A0,A1,isINV);
+            emitImageInput(timing,fanout_load,isTOK||isEDFF,IA,A0,A1);
         }
 
         // print virtual CK/RN/SN input pins for TOK_BUF/EDFF/TOK_EDFF

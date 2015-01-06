@@ -68,6 +68,11 @@ my $pltMode = 0;
 # Catch CTRL-C 
 $SIG{INT} = \&sigHandler;
 
+my $nb_class_default="";
+my $nb_class_mem_core=0;
+my %qslot_map;
+parse_nbconfig();
+
 my $cmdLine = cmdLineOpts(@ARGV);
 
 my $db = rteLib::openCellDatabase($cmdLine);
@@ -305,6 +310,45 @@ sub runRte
     }
 }
 
+sub parse_nbconfig{
+  return if (not defined $ENV{FULCRUM_NB_CONFIG});
+  if (open (P, "<$ENV{FULCRUM_NB_CONFIG}")) {
+    while(<P>){
+      chomp;
+      next if (/^#/);
+      if(/TOOLNAME/i){
+        my $ptool=0; my $pslot=0;
+        my @tools; my $qslot="";
+        my @tokens=split(/\s|=|,/, $_);
+        foreach my $t(@tokens){
+          if($t =~ /TOOLNAME/i){
+              $ptool=1; $pslot=0; next;
+          }elsif($t =~ /QSLOT/i){
+              $ptool=0; $pslot=1; next;
+          }elsif($ptool==1){
+              push @tools, $t;
+          }elsif($pslot==1){
+              $qslot=$t;
+          }
+        }
+        foreach my $t (@tools){
+            $qslot_map{$t}=$qslot;
+          if($t eq 'default'){
+            $qslot_map{''}=$qslot;
+          }
+        }
+      }if(/NBPOOL\s*=\s*(\S+)/){
+        $ENV{NBPOOL}=$1;
+      }if(/CLASS_DEFAULT\s*=\s*(\S+)/){
+        $nb_class_default=$1;
+      }if(/CLASS_MEM_CORE\s*=\s*(\d+)/){
+        $nb_class_mem_core=$1;
+      }
+    }
+  }
+}
+
+
 # Given a cell, run that cell through rte using netbatch
 # Return the netbatch job ID (or -1 on failure)
 sub runRteJob
@@ -381,6 +425,11 @@ sub runRteJob
         $cmd = sprintf("$cmd --history-per-node=%s", $cmdLine->{historyPerNode});
     }
 
+    if($pltMode)
+    {
+        $cmd = sprintf("$cmd --rule-coverage=off");
+    }
+
     if(!$cmdLine->{dsimArg} eq "")
     {
         $cmd = sprintf("$cmd %s", $cmdLine->{dsimArg});
@@ -400,11 +449,31 @@ sub runRteJob
     sleep 2;
 
     $job->{defaultNbMem} =~ /([0-9]+)([kmg])/i;
-    #Net batch takes memory input in MBs ( Converting the GB to MB)
-    $job->{defaultNbMem} = $1*1000;
+    ##Net batch takes memory input in MBs ( Converting the GB to MB)
+    $job->{defaultNbMem} = $1;
     printf "\nRunning the command :$cmd";
     $job->{wd} = getcwd();
-    $job->{params} = "--class \"fVM>$job->{defaultNbMem}\" --class-reservation \"fVM=$job->{defaultNbMem}\"";
+    
+    my @smartresource=();
+    if($nb_class_mem_core > 0){
+      if($nb_class_default ne ""){
+        my $nb_class_prefix=$nb_class_default;
+        $nb_class_prefix=~s/_(\d+)G(&&\d+C)?$//;
+        push @smartresource, "${nb_class_prefix}_$job->{defaultNbMem}G";
+      }
+    }else{
+        push @smartresource, $nb_class_default;
+    }
+
+    if (defined $qslot_map{rte}){
+      $job->{params} = " --qslot $qslot_map{rte}"
+    }elsif(defined  $qslot_map{''}){
+      $job->{params} = " --qslot $qslot_map{''}";
+    }
+    $job->{params} .= " --class '".join("\&\&", @smartresource)."'" if @smartresource;
+    $job->{params} .= " --class-reservation 'memory=$job->{defaultNbMem},cores=1'";
+
+    #$job->{params} = "--class \"fVM>$job->{defaultNbMem}\" --class-reservation \"fVM=$job->{defaultNbMem}\"";
     $job->{opfile} = rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}."/" . $job->{cell}. ".output");
     $job->{endfile} =rteLib::replaceParenthesisWith_($cmdLine->{outputDir} . "/" . $job->{cell}."/" . $job->{cell}. ".complete");
     my $testname = rteLib::dbEscapeCellName($job->{cell});

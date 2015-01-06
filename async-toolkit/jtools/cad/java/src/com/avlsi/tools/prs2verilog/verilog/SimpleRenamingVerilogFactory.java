@@ -150,7 +150,7 @@ public class SimpleRenamingVerilogFactory extends VerilogFactoryImpl {
         public void namedPort(final VerilogObject portName,
                               final VerilogObject port) {
             new NodeNameVisitor(portName);
-            new NodeNameVisitor(port);
+            if (port != null) new NodeNameVisitor(port);
         }
 
         public void macroUse(final VerilogObject ident,

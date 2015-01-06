@@ -52,6 +52,7 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
     protected boolean oneify = false;
     protected boolean skip = false;
     protected boolean outputDelay = false;
+    protected boolean timescale = false;
     protected final static PrintfFormat fmt = new PrintfFormat("%.6g");
 
     public NetgraphGateConverter(final CellType cell,
@@ -237,6 +238,7 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
         outputDelay = theArgs.argExists("output-delay");
         zeroify = theArgs.argExists("make-gnd-0");
         oneify = theArgs.argExists("make-vdd-1");
+        timescale = theArgs.argExists("timescale");
     }
 
     /**
@@ -270,7 +272,7 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
                           return wireType((CellNet) o);
                       }
                    });
-            final VerilogObject ident =                                                         factory.ident(ci.nameInParent.getCadenceString(), mAlwaysEscape);
+            final VerilogObject ident = factory.ident(ci.nameInParent.getCadenceString(), mAlwaysEscape);
             final VerilogObject[] parameters = getModuleParameter(ci);
             items.add(factory.moduleInst(ident,
                                          factory.ident(getModuleName(ci.child.cast_cell), mAlwaysEscape),

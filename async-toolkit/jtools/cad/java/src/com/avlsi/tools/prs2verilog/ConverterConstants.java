@@ -23,4 +23,8 @@ public class ConverterConstants {
         return "PRS2VERILOG_EXTRADELAY_" + (up ? "UP" : "DOWN") + "_" +
                node.getAsString('.').replace(',','_');
     }
+
+    public static String getTimeScaleMacroString() {
+        return "PRS2VERILOG_TIMESCALE";
+    }
 }

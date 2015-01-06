@@ -973,20 +973,24 @@ public class DSim implements NodeWatcher {
         // GND => ERROR+
         createHierRule(new HierNameAtomicBooleanExpression(false, gndName),
                        target, ProductionRule.DOWN, 100, DIGITAL_TAU, false,
+                       -1, -1,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
         createHierRule(new HierNameAtomicBooleanExpression(true, gndName),
                        target, ProductionRule.UP, 100, DIGITAL_TAU, false,
+                       -1, -1,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
 
         // Vdd => ERROR-
         createHierRule(new HierNameAtomicBooleanExpression(true, vddName),
                        target, ProductionRule.DOWN, 100, DIGITAL_TAU, false,
+                       -1, -1,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
         createHierRule(new HierNameAtomicBooleanExpression(false, vddName),
                        target, ProductionRule.UP, 100, DIGITAL_TAU, false,
+                       -1, -1,
                        false, false, true, null, null, Float.NaN, null, true,
                        null);
 
@@ -1001,12 +1005,12 @@ public class DSim implements NodeWatcher {
             lookupNode(resetNodeName.appendString(RESET_BODY_SUFFIX));
         createHierRule(
                 new HierNameAtomicBooleanExpression(false, resetNodeName),
-                body, ProductionRule.DOWN, 100, DIGITAL_TAU, false,
+                body, ProductionRule.DOWN, 100, DIGITAL_TAU, false, -1, -1,
                 false, false, true, null, null, RESET_SLEW, null, true,
                 null);
         createHierRule(
                 new HierNameAtomicBooleanExpression(true, resetNodeName),
-                body, ProductionRule.UP, 100, DIGITAL_TAU, false,
+                body, ProductionRule.UP, 100, DIGITAL_TAU, false, -1, -1,
                 false, false, true, null, null, RESET_SLEW, null, true,
                 null);
 
@@ -1017,12 +1021,12 @@ public class DSim implements NodeWatcher {
             lookupNode(resetNodeName.appendString(RESET_ENV_SUFFIX));
         createHierRule(
                 new HierNameAtomicBooleanExpression(false, resetNodeName),
-                env, ProductionRule.DOWN, 100, DIGITAL_TAU, false,
+                env, ProductionRule.DOWN, 100, DIGITAL_TAU, false, -1, -1,
                 false, false, true, null, null, RESET_SLEW, null, true,
                 null);
         createHierRule(
                 new HierNameAtomicBooleanExpression(true, resetNodeName),
-                env, ProductionRule.UP, 100, DIGITAL_TAU, false,
+                env, ProductionRule.UP, 100, DIGITAL_TAU, false, -1, -1,
                 false, false, true, null, null, RESET_SLEW, null, true,
                 null);
     }
@@ -1046,7 +1050,8 @@ public class DSim implements NodeWatcher {
                     createHierRule(
                         new HierNameAtomicBooleanExpression(
                             negated, trigger.getName()),
-                        target, dir, count * 100, DIGITAL_TAU, false, false,
+                        target, dir, count * 100, DIGITAL_TAU, false, -1, -1,
+                        false,
                         false, false, null, null, RESET_SLEW, null, true, null);
                 }
             }
@@ -1502,7 +1507,8 @@ public class DSim implements NodeWatcher {
 
     private void createHierRule(AndBooleanExpressionInterface term, Node n,
                                 int direction, int delay, byte delay_type,
-                                boolean timed, boolean isochronic,
+                                boolean timed, float fastDelay,
+                                float slowDelay, boolean isochronic,
                                 boolean absoluteDelay, boolean assertedP,
                                 Pair[] delays,
                                 HierName prefix, float defaultSlew,
@@ -1569,7 +1575,7 @@ public class DSim implements NodeWatcher {
 
         final Rule newrule =
             new Rule(guards, sense, n, direction, delay, delay_type, timed,
-                     isochronic,
+                     fastDelay, slowDelay, isochronic,
                      absoluteDelay, assertedP,
                      measuredDelay == null ? null :
                         (Pair[]) measuredDelay.toArray(new Pair[0]),
@@ -2625,7 +2631,7 @@ public class DSim implements NodeWatcher {
     private float slowDelay=(float)(4.0/3.0), fastDelay=(float)(2.0/3.0);
         
     /** returns a float in [fastDelay, slowDelay). */
-    protected float randomDelay() {
+    protected float randomDelay(float fastDelay, float slowDelay) {
         return fastDelay + rand.nextFloat() * (slowDelay - fastDelay);
     }
         
@@ -4727,7 +4733,8 @@ public class DSim implements NodeWatcher {
                     createHierRule(filtered, target, d, delay,
                                    Float.isNaN(estimated) ? DIGITAL_TAU
                                                           : ESTIMATED_TAU,
-                                   timed, isochronic,
+                                   timed, pr.getFastDelay(), pr.getSlowDelay(),
+                                   isochronic,
                                    pr.isAbsolute(), assertedP, measured, prefix,
                                    defaultSlew, localNodes,
                                    coverage_ignore || assertedP || isEnv,
@@ -4739,7 +4746,8 @@ public class DSim implements NodeWatcher {
         protected void createHierRule(
                 AndBooleanExpressionInterface term, Node n,
                 int direction, int delay, byte delay_type,
-                boolean timed, boolean isochronic,
+                boolean timed, float fastDelay, float slowDelay,
+                boolean isochronic,
                 boolean absoluteDelay, boolean assertedP,
                 Pair[] delays,
                 HierName prefix, float defaultSlew,
@@ -4747,7 +4755,8 @@ public class DSim implements NodeWatcher {
                 final boolean coverage_ignore,
                 final Map<Pair<List<Node>,BitSet>,Rule> astaGrayboxRules) {
             DSim.this.createHierRule(term, n, direction, delay, delay_type,
-                                     timed, isochronic, absoluteDelay,
+                                     timed, fastDelay, slowDelay, isochronic,
+                                     absoluteDelay,
                                      assertedP, delays, prefix, defaultSlew,
                                      localNodes, coverage_ignore,
                                      astaGrayboxRules);

@@ -1803,6 +1803,21 @@ public final class CellUtils {
             }
         }
     }
+    
+    /**
+     * Given an instance, return a CAST name
+     **/
+    public static HierName
+    getCastNodeName(final HierName inst) {
+        return transformHierName(
+            inst,
+            new UnaryFunction<String,String>() {
+                public String execute(String x) {
+                    return StringUtil.replaceSubstring(moveBrackets(x),
+                                                       "][", ",");
+                }
+            });
+    }
 
     /**
      * Given a STATICIZER instance, return a pair consisting of the CAST name
@@ -1930,7 +1945,12 @@ public final class CellUtils {
 
         final Triplet<HierName,CadenceInfo,HierName> result;
         if (canon == null) {
+            if (inSubcell) {
+                result =
+                    new Triplet<HierName,CadenceInfo,HierName>(path, type, name.tail());
+            } else {
             result = null;
+            }
         } else {
             if (top && !inSubcell) {
                 // this is an implied port node; treat as if it belongs to the

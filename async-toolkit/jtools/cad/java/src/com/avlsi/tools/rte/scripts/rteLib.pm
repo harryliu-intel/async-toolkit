@@ -21,7 +21,7 @@ sub expandOption
 
     foreach my $x (@{$in})
     {
-        my @t = split(/,/, $x);
+        my @t = split(/:/, $x);
         foreach my $a (@t)
         {
             push(@{$out}, $a);
@@ -1241,4 +1241,12 @@ sub getResults
 
     return \%result;
 }
+
+sub getNumGigabytesFromMegbytes {
+    my ($memStr ) = @_;
+    my $gigs=sprintf("%.0f", $memStr/1024+0.5);
+    $gigs = 2 if $gigs < 2;
+    $gigs;
+}
+
 1;

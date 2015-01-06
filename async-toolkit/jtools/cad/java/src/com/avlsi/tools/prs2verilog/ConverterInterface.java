@@ -9,6 +9,7 @@ package com.avlsi.tools.prs2verilog;
 
 import java.util.Map;
 
+import com.avlsi.cell.CellInterface;
 import com.avlsi.tools.prs2verilog.verilog.VerilogObject;
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
 
@@ -39,5 +40,5 @@ public interface ConverterInterface {
      * Returns file dependencies.  Should only be called after
      * <code>convert</code> to get sensical result.
      **/
-    Map /*<CellInterface,String[]>*/ getDependencies();
+    Map<CellInterface,String[]> getDependencies();
 }

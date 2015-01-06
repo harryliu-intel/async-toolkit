@@ -78,6 +78,8 @@ import com.avlsi.fast.ports.ChannelType;
 import com.avlsi.fast.ports.NodeType;
 import com.avlsi.fast.ports.PortDefinition;
 import com.avlsi.fast.ports.PortTypeInterface;
+import com.avlsi.file.cdl.parser.CDLFactoryAdaptor;
+import com.avlsi.file.cdl.parser.CDLSubcktFilter;
 import com.avlsi.file.cdl.parser.LVSNodesCDLFactory;
 import com.avlsi.file.cdl.parser.LVSNodesNullHandler;
 import com.avlsi.file.cdl.util.CDLWriter;
@@ -201,6 +203,8 @@ public final class JFlat {
                            + " | --tool=cdl [ --cdl-translate=[ cadence | gds2 | none ]\n"
                            + "              [ --cdl-name-map=<name map file> ]\n"
                            + "              [ --cdl-mos-parameters=<param,param,...> ]\n"
+                           + "              [ --cdl-call-delimiter=<string> ]\n"
+                           + "              [ --cdl-cells=<string> ]\n"
                            + " | --tool=cosim --cosim-merge=<cell> [ --cosim-analog=<cell> ]\n"
                            + " | --tool=env-ntpc \n"
                            + " | --tool=local-nodes [ --nodes=<node,node,...> ] \n" 
@@ -363,6 +367,7 @@ public final class JFlat {
                                                        fqcnSpec,
                                                        null,
                                                        castParser,
+                                                       cdlCadencizer,
                                                        cadencizer,
                                                        false,
                                                        appendColon);
@@ -396,6 +401,7 @@ public final class JFlat {
                                                        fqcnSpec,
                                                        partialSimSpec,
                                                        castParser,
+                                                       cdlCadencizer,
                                                        cadencizer,
                                                        false,
                                                        appendColon);
@@ -403,7 +409,7 @@ public final class JFlat {
                         } else {
                             final PrintWriter pw = (PrintWriter)
                                 pwf.getPrintWriter("aspice", cellName, envName + File.separator + "env.asp").getFirst();
-                            return new NewAspiceFormatter(pw, true, true, fqcnSpec, null, castParser, cadencizer, false, appendColon);
+                            return new NewAspiceFormatter(pw, true, true, fqcnSpec, null, castParser, cdlCadencizer, cadencizer, false, appendColon);
                         }
                     }
                 };
@@ -422,6 +428,7 @@ public final class JFlat {
                     public CellFormatterInterface getFormatter(PrintWriter pw) {
                         return new NewAspiceFormatter( pw, true, true, fqcnSpec,
                                                        null, castParser,
+                                                       cdlCadencizer,
                                                        cadencizer, true,
                                                        appendColon);
                     }
@@ -510,6 +517,12 @@ public final class JFlat {
             final String[] mosParams =
                 mosParamStr == null ? null
                                     : StringUtil.split(mosParamStr, ',');
+            final String callDelimiter =
+                args.getArgValue("cdl-call-delimiter", "/");
+            final String cdlCellStr = args.getArgValue("cdl-cells", null);
+            final String[] cdlCells =
+                cdlCellStr == null ? new String[0]
+                                   : StringUtil.split(cdlCellStr, ':');
 
             return new CellFormatterFactory () {
                     public CellFormatterInterface 
@@ -524,7 +537,7 @@ public final class JFlat {
                             // CDLFormatter never takes into account routed
                             return new CDLFormatter(
                                 pw, fqcnSpec, castParser, nameInterfaceFactory,
-                                mosParams,
+                                mosParams, callDelimiter, cdlCells,
                                 cdlCadencizer);
                         } else {
                             return null;
@@ -663,10 +676,10 @@ public final class JFlat {
                         new HashSet<String>(Arrays.asList(nodesStr.split(":")));
                     return tool.equals("fanin") ?
                         new FaninFormatter (pw, castParser, cdlCadencizer,
-                            nodes, args.argExists("ignore-feedback"),
+                            cadencizer, nodes, args.argExists("ignore-feedback"),
                             args.argExists("routed")) :
                         new FanoutFormatter(pw, castParser, cdlCadencizer,
-                            nodes, args.argExists("ignore-feedback"),
+                            cadencizer, nodes, args.argExists("ignore-feedback"),
                             args.argExists("routed"));
                     
                 }
@@ -1408,6 +1421,8 @@ public final class JFlat {
         private final PartialExtract.CellPlusMinus fqcnSpec;
         private final PartialExtract.CellPlusMinusKeyword partialSimSpec;
         private final Cadencize cadencizer;
+        private final Cadencize routedCadencizer;
+        private CellInterface routedCell;
         private final CastFileParser cfp;
         private final TreeMap impliedPorts;
         private final boolean dsimMode;
@@ -1428,10 +1443,12 @@ public final class JFlat {
                            final PartialExtract.CellPlusMinusKeyword pSS,
                            final CastFileParser cfp,
                            final Cadencize cadencizer,
+                           final Cadencize routedCadencizer,
                            final boolean dsimMode,
                            final String appendColon) {
             this(pw, new Pair(pw, null), internalWires, internalRules,
-                 fqcnSpec, pSS, cfp, cadencizer, dsimMode, appendColon);
+                 fqcnSpec, pSS, cfp, cadencizer, routedCadencizer, dsimMode,
+                 appendColon);
         }
         NewAspiceFormatter(final PrintWriter pw,
                            final Pair modifyPair,
@@ -1441,6 +1458,7 @@ public final class JFlat {
                            final PartialExtract.CellPlusMinusKeyword pSS,
                            final CastFileParser cfp,
                            final Cadencize cadencizer,
+                           final Cadencize routedCadencizer,
                            final boolean dsimMode,
                            final String appendColon) {
             this.oldpw = pw;
@@ -1453,6 +1471,7 @@ public final class JFlat {
             this.fqcnSpec = fqcnSpec;
             this.partialSimSpec = pSS;
             this.cadencizer = cadencizer;
+            this.routedCadencizer = routedCadencizer;
             this.cfp = cfp;
             this.impliedPorts = new TreeMap();
             this.dsimMode = dsimMode;
@@ -1477,6 +1496,13 @@ public final class JFlat {
                     ci.isChannel()) port.add(h);
             }
             return port;
+        }
+
+        public CellInterface prepCell(CellInterface cell,
+                                      CellInterface routed) {
+            this.routedCell = routed;
+            routedCadencizer.convert(routed);
+            return prepCell(cell);
         }
 
         public CellInterface prepCell(CellInterface cell) {
@@ -1561,7 +1587,7 @@ public final class JFlat {
                     processPortConnections(cell);
 
                 if (partialSimSpec != null) {
-                    partialSimSpec.initialize(cell, cadencizer);
+                    partialSimSpec.initialize(routedCell, routedCadencizer);
                     if (!partialSimSpec.isEmpty()) {
                         pruneUsedTypes(typesMap, cell, name, null);
                         for (Iterator j = unusedSet.iterator(); j.hasNext(); ) {
@@ -1717,17 +1743,45 @@ public final class JFlat {
 
             // Emit the definition for this cell; but do not define a top-level
             // cell
+            final Set<HierName> ports = new HashSet<HierName>();
             if (prefix != null) {
                 pw.print("define ");
                 quote(result);
                 pw.print("(");
                 for (Iterator i = getParameterList(cell, cadencizer).iterator(); i.hasNext(); ) {
                     final HierName p = (HierName) i.next();
+                    ports.add(p);
                     quote(p);
                     if (i.hasNext()) pw.print(", ");
                 }
                 pw.println(") {");
                 iw.nextLevel();
+            }
+
+            final CadenceInfo routedInfo =
+                routedCadencizer.getExistingCadenceInfo(cell.getFullyQualifiedType());
+            Collection staticizerNodes = (Collection) Collections.EMPTY_LIST;
+            if (routedInfo != null) {
+                final AliasedSet locals = routedInfo.getLocalNodes();
+                for (Iterator i = locals.getCanonicalKeys(); i.hasNext(); ) {
+                    final HierName node = (HierName) i.next();
+                    if (prefix == null || !ports.contains(node)) {
+                        final String snode = node.getAspiceString();
+                        pw.print("wire(");
+                        OldLVSFormatter.printName(null, snode, pw);
+                        pw.println(");");
+                    }
+                }
+                //Get staticizer inverter node from netgraph
+                staticizerNodes = new NetGraph(cell, routedCadencizer, cfp).getStaticizerNodes();
+                for (Iterator i = staticizerNodes.iterator(); i.hasNext(); ) {
+                    final NetGraph.NetNode node = (NetGraph.NetNode) i.next();
+                    final String snode = CellUtils.getCastNodeName(node.getName()).getAspiceString();
+                    pw.print("wire(");
+                    OldLVSFormatter.printName(null, snode, pw);
+                    pw.println(");");
+                    
+                }
             }
 
             final CellDelay delay = new CellDelay(cell, cadencizer);
@@ -1783,7 +1837,7 @@ public final class JFlat {
 
             if (!isEnv && !appendColon.equals("")) {
                 emitAnalogDigitalBindings(localNodes, portNodes,
-                                          prefix == null);
+                                          staticizerNodes, prefix == null);
             }
 
             if (prefix != null) {
@@ -1795,6 +1849,7 @@ public final class JFlat {
 
         private void emitAnalogDigitalBindings(final AliasedSet localNodes,
                                                final AliasedMap portNodes,
+                                               final Collection staticizerNodes,
                                                final boolean all) {
             for (Iterator i = localNodes.getCanonicalKeys(); i.hasNext(); ) {
                 final HierName node = (HierName) i.next();
@@ -1806,6 +1861,16 @@ public final class JFlat {
                     OldLVSFormatter.printName(null, snode + appendColon, pw);
                     pw.println(");");
                 }
+            }
+            for (Iterator i = staticizerNodes.iterator(); i.hasNext(); ) {
+                final NetGraph.NetNode node = (NetGraph.NetNode) i.next();
+                final String snode = node.getName().getAspiceString();                
+                final String snode_digital = CellUtils.getCastNodeName(node.getName()).getAspiceString();               
+                pw.print("wire(");
+                OldLVSFormatter.printName(null, snode_digital, pw);
+                pw.print(",");
+                OldLVSFormatter.printName(null, snode + appendColon, pw);
+                pw.println(");");
             }
         }
 
@@ -2529,6 +2594,7 @@ public final class JFlat {
                                false,
                                true,
                                includePorts,
+                               true,
                                nodes);
             localNodes.printHeader = false;
             localNodes.doTask(cell,pw);
@@ -2553,14 +2619,18 @@ public final class JFlat {
         private void alintScenario(final Map<Object,Object> dirs,
                                    final String type,
                                    final String dir,
-                                   final Set<HierName> seen,
+                                   final Set<HierName> noDefaultUp,
+                                   final Set<HierName> noDefaultDn,
                                    final HierName canon) throws IOException {
             final Collection<TupleValue> tuples =
                 (Collection<TupleValue>) dirs.get(canon);
             if (tuples != null) {
                 pw.write("victim " + canon + "\n");
-                if (seen.add(canon)) {
-                    pw.write("scenario" + dir + "\n");
+                if (noDefaultUp.add(canon)) {
+                    pw.write("scenario:up\n");
+                }
+                if (noDefaultDn.add(canon)) {
+                    pw.write("scenario:dn\n");
                 }
                 for (TupleValue tuple : tuples) {
                     pw.write("scenario" + type + dir);
@@ -2647,12 +2717,12 @@ public final class JFlat {
                 for (Map.Entry<String,Map<Object,Object>> entry :
                         upScenarioMaps.entrySet()) {
                     alintScenario(entry.getValue(), entry.getKey(), ":up",
-                                  noDefaultUp, canon);
+                                  noDefaultUp, noDefaultDn, canon);
                 }
                 for (Map.Entry<String,Map<Object,Object>> entry :
                         dnScenarioMaps.entrySet()) {
                     alintScenario(entry.getValue(), entry.getKey(), ":dn",
-                                  noDefaultDn, canon);
+                                  noDefaultUp, noDefaultDn, canon);
                 }
             }
 
@@ -2757,6 +2827,8 @@ public final class JFlat {
         private final CastFileParser cfp;
         private final PartialExtract.CellPlusMinus fqcnSpec;
         private final String[] mosParams;
+        private final String callDelimiter;
+        private final String[] cdlCells;
         private final Cadencize mCadencizer;
 
         public CDLFormatter( final PrintWriter pw,
@@ -2764,12 +2836,16 @@ public final class JFlat {
                              final CastFileParser cfp,
                              final CDLNameInterfaceFactory nameInterfaceFactory,
                              final String[] mosParams,
+                             final String callDelimiter,
+                             final String[] cdlCells,
                              final Cadencize cadencizer ) { 
             this.fqcnSpec = fqcnSpec;
             this.pw = pw;
             this.cfp = cfp;
             this.nameInterfaceFactory = nameInterfaceFactory;
             this.mosParams = mosParams;
+            this.callDelimiter = callDelimiter;
+            this.cdlCells = cdlCells;
             mCadencizer = cadencizer;
         }
 
@@ -2787,7 +2863,7 @@ public final class JFlat {
             }
             
             final CDLFactoryInterface cdlEmitterFactory =
-                new CDLFactoryEmitter(pw, true, 79);
+                new CDLFactoryEmitter(pw, true, 79, true, false, callDelimiter);
 
             final CDLFactoryInterface renamerFactory =
                 new CDLRenameFactory( cdlEmitterFactory,
@@ -2825,12 +2901,33 @@ public final class JFlat {
                                           realNamesEmitter,
                                           mosParams);
 
+            final Set<String> emitted = new HashSet<String>();
+            final CDLFactoryInterface noop = new CDLFactoryAdaptor();
+            final CDLFactoryInterface uniqFilter =
+                new CDLSubcktFilter(
+                    new UnaryFunction<String,CDLFactoryInterface>() {
+                        public CDLFactoryInterface execute(String subName) {
+                            return emitted.add(subName) ? mosParameterFilter
+                                                        : noop;
+                        }
+                    }, noop);
+
             Cast2Cdl.outputCDL( cell,
                                 cfp, 
-                                mosParameterFilter,
+                                uniqFilter,
                                 mCadencizer,
                                 false,
                                 true );
+
+            for (String c : cdlCells) {
+                Cast2Cdl.outputCDL( cfp.getFullyQualifiedCellPretty(c),
+                                    cfp, 
+                                    uniqFilter,
+                                    mCadencizer,
+                                    false,
+                                    true );
+            }
+
 
             final String cellName = fqcnSpec.getTop();
 
@@ -3032,6 +3129,7 @@ public final class JFlat {
         private final CDLNameInterface renamer;
         private final static String GND = "GND";
         private final static String Vdd = "Vdd";
+        private final static String _RESET = "_RESET";
         private final static Pattern RSOURCE = Pattern.compile("standard\\.random\\.rsource_([ae])1of\\(?(\\d+)\\)?");
         private final Random random;
 
@@ -3326,6 +3424,8 @@ public final class JFlat {
             // if !hasCompletePrs && !hasSubcells
             final List ports = new ArrayList();
             final List impliedPorts = new ArrayList();
+            final Map<HierName,String> isolatedPorts =
+                new HashMap<HierName,String>();
             for (Iterator i = NetlistAdapter.getParameterList(cell, cadencizer).iterator(); i.hasNext(); ) {
                 final HierName p = (HierName) i.next();
                 final String pn = printNode(p);
@@ -3333,28 +3433,54 @@ public final class JFlat {
             }
 
             if (parentCell != null) {
+                final HierName hreset = HierName.makeHierName(_RESET);
                 // names of the GND, Vdd and _RESET in this cell
                 final String localGND =
                     CellUtils.getLocalImpliedName(parentCell, GND);
                 final String localVdd =
                     CellUtils.getLocalImpliedName(parentCell, Vdd);
-                final String localReset = CellUtils.getResetName(parentCell);
-                if (localGND == null || localVdd == null ||
-                    localReset == null) {
+
+                // XXX: this should be refactored with other tools
+                boolean envReset = false;
+                String localReset = CellUtils.getResetName(parentCell);
+                if (localReset == null) {
+                    if (cell.getCanonicalName(hreset) != null) {
+                        localReset = _RESET;
+                        envReset = true;
+                    }
+                }
+
+                if (localGND == null || localVdd == null) {
                     throw new RuntimeException(
-                        "HSIM requires GND, Vdd and _RESET or _Reset as " +
-                        "implied ports in " +
+                        "HSIM requires GND and Vdd as implied ports in " +
                         parentCell.getFullyQualifiedType());
                 }
 
                 // order of the ports must match what the hsim script expects
-                for (String p : Arrays.asList(localGND, localVdd, localReset)) {
+                for (String p : Arrays.asList(localGND, localVdd)) {
                     final HierName canon =
                         (HierName) localNodes.getCanonicalKey(makeHierName(p));
                     final String pn = printNode(canon);
                     impliedPorts.add(pn);
                     if (isolateCell) {
-                        impliedPorts.add(pn + "_cell");
+                        final String isolated = pn + "_cell";
+                        impliedPorts.add(isolated);
+                        isolatedPorts.put(canon, isolated);
+                    }
+                }
+
+                // if there are no reset found, add dummy reset ports
+                final HierName canon =
+                    localReset == null ? hreset :
+                        (HierName) localNodes.getCanonicalKey(
+                                makeHierName(localReset));
+                final String pn = printNode(canon);
+                impliedPorts.add(pn);
+                if (isolateCell) {
+                    final String isolated = pn + "_cell";
+                    impliedPorts.add(isolated);
+                    if (localReset != null && !envReset) {
+                        isolatedPorts.put(canon, isolated);
                     }
                 }
             }
@@ -3504,11 +3630,9 @@ public final class JFlat {
                         (HierName)localNodes.getCanonicalKey(canon);
                     if (actual == null) actual = canon;
                     String pn = printNode(actual);
-                    if(isolateCell) {
-                        final HierName base = canon.head().getArrayBase();
-                        if(parentCell.isImpliedPort(base.getAsString('.'))) {
-                            pn += "_cell";
-                        }
+                    final String isolated = isolatedPorts.get(actual);
+                    if (isolateCell && isolated != null) {
+                        pn = isolated;
                     }
                     subports.add(pn);
                 }
@@ -4511,6 +4635,7 @@ public final class JFlat {
         private final PrintWriter pw;
         private final CastFileParser cfp;
         private final Cadencize cad;
+        private final Cadencize routedCad;
 
         /**
          * If non-null, specify the set of nodes to determine fanout for.
@@ -4538,12 +4663,14 @@ public final class JFlat {
         public FanFormatter(final PrintWriter pw, 
                             final CastFileParser cfp,
                             final Cadencize cad,
+                            final Cadencize routedCad,
                             final Set<String> nodes,
                             final boolean ignoreFeedback,
                             final boolean routed) {
             this.pw = pw;
             this.cfp = cfp;
             this.cad = cad;
+            this.routedCad = routedCad;
             this.nodes = nodes;
             this.ignoreFeedback = ignoreFeedback;
             this.routed = routed;
@@ -4551,6 +4678,7 @@ public final class JFlat {
         
         public CellInterface prepCell(CellInterface cell,
                                       CellInterface routed) {
+            routedCad.convert(routed);
             // handle routed hierarchy independently, because the flattening of
             // unrouted cells with netlist blocks does not work properly, and
             // even if it did, NetGraph does not handle netlists with multiple
@@ -4635,6 +4763,19 @@ public final class JFlat {
                                    : HierName.append(instSinceRouted, remain));
         }
         
+        protected HierName getCanonical(final CellInterface routed,
+                                        final HierName local) {
+            final CadenceInfo cinfo =
+                routedCad.getExistingCadenceInfo(routed.getFullyQualifiedType());
+            final Triplet<HierName,CadenceInfo,HierName> t =
+                CellUtils.localize(local, cinfo, false);
+            //Handle special case. t will be null when the local name is a staticizer node.
+            if (t ==  null){
+                return local;
+            }
+            return HierName.append(t.getFirst(), t.getThird());
+        }
+
         /**
          * Descends the hierarchy to find all fanouts of a given fanin node.
          **/
@@ -4646,8 +4787,10 @@ public final class JFlat {
                 final HierName name,
                 final HierName path,
                 final Set<Result> result) {
-            final HierName canon =
+            HierName canon =
                 (HierName) ci.getLocalNodes().getCanonicalKey(name);
+            //when node name is staticizer inverter, it does not exist in CandenceInfo localnode
+            if (canon == null) canon = name;
             if (cell.containsNetlist()) {
                 final Set<HierName> fanouts = getFan(cell).get(canon);
                 if (fanouts != null) {
@@ -4715,6 +4858,7 @@ public final class JFlat {
             final AliasedSet locals = info.getLocalNodes();
             final AliasedMap ports = info.getPortNodes();
             final Iterator i;
+            final Iterator inv_i;
             if (nodes == null) {
                 i = new FilteringIterator(locals.getCanonicalKeys(),
                         new UnaryPredicate() {
@@ -4722,20 +4866,41 @@ public final class JFlat {
                                 return ports.getCanonicalKey(o) == null;
                             }
                         });
+                //Add staticizer inverter nodes
+                final Collection staticizerNodes = new NetGraph(cell, cad, cfp).getStaticizerNodes();
+                inv_i=staticizerNodes.iterator();
             } else {
                 final Set<HierName> hnodes = new HashSet<HierName>();
                 for (String node : nodes) {
                     hnodes.add(makeHierName(node));
                 }
                 i = hnodes.iterator();
+                inv_i = null;
             }
+            //TODO: make inverter node as fanin node
+            //while (i.hasNext() || inv_i.hasNext()) {
             while (i.hasNext()) {
-                final HierName canon = (HierName) i.next();
-
+                final HierName canon;
+                boolean isStaticizerInv = false;
+                if (i.hasNext()){
+                    canon = (HierName) i.next();
+                } else {
+                    isStaticizerInv = true;
+                    //After parse all local nodes, start to check staticizer inverter node
+                    final NetGraph.NetNode node = (NetGraph.NetNode) inv_i.next();
+                    canon = node.getName();
+                }
                 final Set<Result> result = new TreeSet<Result>();
                 descend(cell, info, top, topInfo, canon, prefix, result);
                 if (!result.isEmpty()) {
-                    pw.print(HierName.append(prefix, canon));
+                    HierName canon_ = getCanonical(top, HierName.append(prefix, canon));
+                    if (isStaticizerInv) {
+                        //fix inverter digital name such as Lv[0]_inverse -> Lv_inverse[0]
+                        pw.print(CellUtils.getCastNodeName(canon_));
+                    } else {
+                        pw.print(canon_);
+                    }
+                    
                     for (Result r : result) {
                         pw.print(" " + r);
                     }
@@ -4788,10 +4953,11 @@ public final class JFlat {
         public FaninFormatter(final PrintWriter pw, 
                               final CastFileParser cfp,
                               final Cadencize cad,
+                              final Cadencize routedCad,
                               final Set<String> nodes,
                               final boolean ignoreFeedback,
                               final boolean routed) {
-            super(pw, cfp, cad, nodes, ignoreFeedback, routed);
+            super(pw, cfp, cad, routedCad, nodes, ignoreFeedback, routed);
         }
 
         protected Result resolveNames(final HierName path,
@@ -4804,24 +4970,28 @@ public final class JFlat {
                 CellUtils.localize(HierName.append(path, related),
                                    topInfo, false);
             final CellInterface routedCell;
+            final HierName relInst;
             final HierName relFanIn;
             if (rel.getFirst() == null) {
                 routedCell = topCell;
+                relInst = null;
                 relFanIn = rel.getThird();
             } else {
                 final Triplet<HierName,CellInterface,HierName> t =
                     findRouted(topCell, rel.getFirst());
                 routedCell = t.getSecond();
+                relInst = t.getFirst();
                 relFanIn = t.getThird() == null
                     ? rel.getThird()
                     : HierName.append(t.getThird(), rel.getThird());
             }
 
-            final HierName absFanIn =
-                HierName.append(rel.getFirst(), rel.getThird());
+            final HierName canonFanin = getCanonical(routedCell, relFanIn);
+
+            final HierName absFanIn = HierName.append(relInst, canonFanin);
 
             return new FaninResult(routedCell.getFullyQualifiedType(),
-                                   relFanIn, absFanIn);
+                                   canonFanin, absFanIn);
         }
 
         protected void getFan(final NetGraph ng,
@@ -4862,22 +5032,25 @@ public final class JFlat {
         private static class FanoutResult implements Result,
                                                      Comparable<FanoutResult> {
             private final String fqcn;
+            private final String path;
             private final HierName fanin;
             private final HierName fanout;
 
-            FanoutResult(final String fqcn,final HierName fanin,
-                         final HierName fanout) {
+            FanoutResult(final String path, final String fqcn,
+                         final HierName fanin, final HierName fanout) {
+                this.path = path;
                 this.fqcn = fqcn;
                 this.fanin = fanin;
                 this.fanout = fanout;
             }
 
             public String toString() {
-                return fqcn + "/" + fanin + "/" + fanout;
+                return path + "/" + fqcn + "/" + fanin + "/" + fanout;
             }
 
             public int compareTo(FanoutResult o) {
                 return ObjectUtils.compare(fqcn, o.fqcn,
+                                           path, o.path,
                                            fanin, o.fanin,
                                            fanout, o.fanout);
             }
@@ -4886,10 +5059,11 @@ public final class JFlat {
         public FanoutFormatter(final PrintWriter pw, 
                               final CastFileParser cfp,
                               final Cadencize cad,
+                              final Cadencize routedCad,
                               final Set<String> nodes,
                               final boolean ignoreFeedback,
                               final boolean routed) {
-            super(pw, cfp, cad, nodes, ignoreFeedback, routed);
+            super(pw, cfp, cad, routedCad, nodes, ignoreFeedback, routed);
         }
 
         /**
@@ -4908,8 +5082,6 @@ public final class JFlat {
                 for (Iterator i = node.getPaths().iterator();
                         i.hasNext(); ) {
                     final NetGraph.NetPath p = (NetGraph.NetPath) i.next();
-                    if (ignoreFeedback && p.isFeedBack()) continue;
-
                     for (Iterator j = p.getGateNodes().iterator();
                          j.hasNext(); ) {
                         final NetGraph.NetNode g =
@@ -4917,9 +5089,11 @@ public final class JFlat {
                         for (NetGraph.NetNode out :
                                 Arrays.asList(p.getStartNode(),
                                               p.getEndNode())) {
-                            // only include names that are valid CAST names
-                            if (!out.isRail() &&
-                                localNodes.contains(out.name)) {
+                            if (ignoreFeedback && p.isFeedBack()) {
+                                //Only include Staticizer in feedback path
+                                if (!g.isStaticizerInverter() && !g.gatesSmallInverter()) continue;
+                            }
+                            if (!out.isRail()){
                                 Set<HierName> fanouts = result.get(g.name);
                                 if (fanouts == null) {
                                     fanouts = new HashSet<HierName>();
@@ -4939,15 +5113,22 @@ public final class JFlat {
                                       final Cadencize cad,
                                       final CellInterface topCell,
                                       final CadenceInfo topInfo) {
-            final Triplet<HierName,CadenceInfo,HierName> sink =
+            Triplet<HierName,CadenceInfo,HierName> sink =
                 CellUtils.localize(HierName.append(path, related),
                                    topInfo, false);
             final CellInterface routedCell;
             HierName relFanIn = HierName.append(path, canon);
             final HierName relFanOut;
-            if (sink.getFirst() == null) {
-                routedCell = topCell;
-                relFanOut = sink.getThird();
+            String instPath = "";
+            boolean fanoutNotPrsLocalNode=false;
+            if (sink == null){
+               //This should be the stacizer inverter node case.
+               routedCell = topCell;
+               relFanOut = related;               
+            }            
+            else if (sink.getFirst() == null) {
+                routedCell = topCell;                
+                relFanOut = sink.getThird();                
             } else {
                 final Triplet<HierName,CellInterface,HierName> t =
                     findRouted(topCell, sink.getFirst());
@@ -4957,13 +5138,13 @@ public final class JFlat {
                     : HierName.append(t.getThird(), sink.getThird());
                 if (t.getFirst() != null) {
                     relFanIn = relFanIn.tail(t.getFirst().getNumComponents());
+                    instPath = t.getFirst().toString();
                 }
             }
-            final Triplet<HierName,CadenceInfo,HierName> src =
-                CellUtils.localize(relFanIn, cad.convert(routedCell), false);
-            relFanIn = HierName.append(src.getFirst(), src.getThird());
-            return new FanoutResult(routedCell.getFullyQualifiedType(),
-                                    relFanIn, relFanOut);
+            return new FanoutResult(instPath,
+                                    routedCell.getFullyQualifiedType(),
+                                    CellUtils.getCastNodeName(getCanonical(routedCell, relFanIn)),
+                                    CellUtils.getCastNodeName(getCanonical(routedCell, relFanOut)));
         }
     }
 

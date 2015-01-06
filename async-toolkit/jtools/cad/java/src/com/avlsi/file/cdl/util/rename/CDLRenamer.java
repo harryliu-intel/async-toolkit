@@ -43,6 +43,7 @@ import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
 import com.avlsi.util.cmdlineargs.defimpl.PedanticCommandLineArgs;
+import com.avlsi.util.functions.UnaryPredicate;
 
 /**
  * An CDLFactoryInterface that can be used to rename nodes and names of circuit
@@ -79,6 +80,59 @@ public class CDLRenamer  {
         }
     }
 
+    private static class NoTranslateInterface implements CDLNameInterface {
+        private final CDLNameInterface ni;
+        private final UnaryPredicate<String> cellFunc;
+        private final UnaryPredicate<String> nodeFunc;
+        private final UnaryPredicate<String> deviceFunc;
+        private final UnaryPredicate<String> instFunc;
+        private final UnaryPredicate<String> mosFunc;
+
+        public NoTranslateInterface( final CDLNameInterface ni,
+                                     final UnaryPredicate<String> cellFunc,
+                                     final UnaryPredicate<String> nodeFunc,
+                                     final UnaryPredicate<String> deviceFunc,
+                                     final UnaryPredicate<String> instFunc,
+                                     final UnaryPredicate<String> mosFunc ) {
+            this.ni = ni;
+            this.cellFunc = cellFunc;
+            this.nodeFunc = nodeFunc;
+            this.deviceFunc = deviceFunc;
+            this.instFunc = instFunc;
+            this.mosFunc = mosFunc;
+        }
+
+        public String renameCell( final String name ) 
+            throws CDLRenameException {
+            return cellFunc.evaluate( name ) ? name
+                                             : ni.renameCell( name );
+        }
+
+        public String renameNode( final String name )
+            throws CDLRenameException {
+            return nodeFunc.evaluate( name ) ? name
+                                             : ni.renameNode( name );
+        }
+
+        public String renameDevice( final String name )
+            throws CDLRenameException {
+            return deviceFunc.evaluate( name ) ? name
+                                               : ni.renameDevice( name );
+        }
+
+        public String renameSubCellInstance( final String name )
+            throws CDLRenameException {
+            return instFunc.evaluate( name ) ? name
+                                             : ni.renameSubCellInstance( name );
+        }
+
+        public String renameTransistorModel( final String name )
+            throws CDLRenameException {
+            return mosFunc.evaluate( name ) ? name
+                                            : ni.renameTransistorModel( name );
+        }
+    }
+
     private static void usage( String m ) {
 
         System.err.println( "Usage: cdl_renamer\n" + 
@@ -89,6 +143,8 @@ public class CDLRenamer  {
             "   [--rcx-cell-map=file]\n" +
             "   [--rcx-pipo-map=file]\n" +
             "   [--translated-nmap=file]\n" +
+            "   [--layout-net-prefix=string]\n" +
+            "   [--layout-inst-prefix=string]\n" +
             "   (only understands conditionals and loops if nmap specified)\n" );
         if (m != null && m.length() > 0)
             System.err.print( m );
@@ -119,6 +175,8 @@ public class CDLRenamer  {
                             "   [--rcx-cell-map=file]\n" +
                             "   [--rcx-pipo-map=file]\n" +
                             "   [--translated-nmap=file]\n" +
+                            "   [--layout-net-prefix=string]\n" +
+                            "   [--layout-inst-prefix=string]\n" +
                             "   (only understands conditionals and loops if nmap specified)\n" );
     }
 
@@ -163,12 +221,37 @@ public class CDLRenamer  {
         final String sourceCDLFileName = 
             theArgs.getArgValue( "source-cdl-file", null );
 
+        final String layoutNetPrefix =
+            theArgs.getArgValue( "layout-net-prefix", null );
+
+        final String layoutInstPrefix =
+            theArgs.getArgValue( "layout-inst-prefix", null );
+
         pedanticArgs.argTag("rcx-cell-map");
         pedanticArgs.argTag("rcx-pipo-map");
 
         if ( ! pedanticArgs.pedanticOK( false, true ) ) {
             usage( pedanticArgs.pedanticString() );
         }
+
+        final UnaryPredicate<String> falsePred = 
+            new UnaryPredicate.Constant<String>( false );
+
+        final UnaryPredicate<String> nodeFunc =
+            layoutNetPrefix == null ? falsePred :
+                new UnaryPredicate<String>() {
+                    public boolean evaluate( final String s ) {
+                        return s.startsWith( layoutNetPrefix );
+                    }
+                };
+
+        final UnaryPredicate<String> instFunc =
+            layoutInstPrefix == null ? falsePred :
+                new UnaryPredicate<String>() {
+                    public boolean evaluate( final String s ) {
+                        return s.startsWith( layoutInstPrefix );
+                    }
+                };
 
         final List outputFileNames = new ArrayList( 2 );
         
@@ -268,13 +351,20 @@ public class CDLRenamer  {
                     ni = new CompositeInterface(f,g);
                 }
                 final CDLNameInterface nameInterface = ni;             
+                final CDLNameInterface filteredInterface =
+                    new NoTranslateInterface( nameInterface,
+                                              falsePred,
+                                              nodeFunc,
+                                              falsePred,
+                                              instFunc,
+                                              falsePred);
                 try {                
                     if (nameInterface instanceof StartObserver) {
                         ((StartObserver) nameInterface).renameStart();
                     }
                     if( nameMapFileName != null ) {
                         final ReloadableNameInterface reloadableNameInterface =
-                            new ReloadableNameInterface( nameInterface );
+                            new ReloadableNameInterface( filteredInterface );
                             
                         cdlFactory.addNameInterface( cdlWriter,
                                                      reloadableNameInterface,
@@ -294,7 +384,7 @@ public class CDLRenamer  {
                     }
                     else {                            
                         cdlFactory.addNameInterface( cdlWriter,
-                                                     nameInterface,
+                                                     filteredInterface,
                                                      76 );                            
                         ReadCDLIntoFactory.readCDLSimple( sourceCDLReader,
                                                           cdlFactory );

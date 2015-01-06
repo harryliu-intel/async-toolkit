@@ -822,6 +822,26 @@ public class DirectiveTable {
                           DirectiveConstants.FLOAT_TYPE,
                           new Float(0));
         registerDirective(BlockInterface.PRS,
+                          DirectiveConstants.THRESH_BUMP_SIGNOFF,
+                          DirectiveConstants.HALFOP_TYPE,
+                          DirectiveConstants.FLOAT_TYPE,
+                          new Float(0));
+        registerDirective(BlockInterface.SUBCELL,
+                          DirectiveConstants.THRESH_BUMP_SIGNOFF,
+                          DirectiveConstants.HALFOP_TYPE,
+                          DirectiveConstants.FLOAT_TYPE,
+                          new Float(0));
+        registerDirective(BlockInterface.PRS,
+                          DirectiveConstants.LEAKAGE_SIGNOFF,
+                          DirectiveConstants.NODE_TYPE,
+                          DirectiveConstants.FLOAT_TYPE,
+                          new Float(0));
+        registerDirective(BlockInterface.SUBCELL,
+                          DirectiveConstants.LEAKAGE_SIGNOFF,
+                          DirectiveConstants.NODE_TYPE,
+                          DirectiveConstants.FLOAT_TYPE,
+                          new Float(0));
+        registerDirective(BlockInterface.PRS,
                           DirectiveConstants.ALINT_MAX_BUMP_FANIN,
                           DirectiveConstants.NODE_TYPE,
                           DirectiveConstants.INT_TYPE,

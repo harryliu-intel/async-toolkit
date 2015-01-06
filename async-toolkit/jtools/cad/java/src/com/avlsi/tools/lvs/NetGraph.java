@@ -1391,7 +1391,34 @@ public final class NetGraph {
             return s;
         }
     }
+    
 
+    /** Construct NetGraph.  Used by jflat */
+    public NetGraph(final CellInterface cell, 
+                    final Cadencize cadencize,
+                    final CastFileParser cfp) {
+        final CadenceInfo ci = cadencize.convert(cell);
+        final ExclusiveNodeSets exclusiveSets = new ExclusiveNodeSets();
+        exclusiveSets.merge(ci.getPortExclusiveNodeSets());
+        exclusiveSets.merge(ci.getLocalExclusiveNodeSets());
+        namespace = ci.getLocalNodes();
+        exclusives = exclusiveSets.canonicalizeNames(namespace);
+        problems = new ArrayList();       
+        nodes = new MultiSet();
+        nostaticizers = new HashSet();
+        Vdd = createNetNode(HierName.makeHierName("Vdd"));
+        GND = createNetNode(HierName.makeHierName("GND"));
+        nextNodeNum = 1;
+        try {
+            this.addCellInterface(cell, new NetGraph[0], cfp, cadencize);
+        } catch (com.avlsi.prs.UnimplementableProductionRuleException e)
+        {
+            throw new RuntimeException("Can't happen");
+        }
+        this.prepareForLvs();
+        assert problems.isEmpty();
+    }
+    
     /** Construct an empty NetGraph.  Used by jauto and jlvs. */
     public NetGraph(final AliasedSet commonNamespace, 
                     final ExclusiveNodeSets exclusiveSets,
@@ -2345,7 +2372,20 @@ public final class NetGraph {
     public Collection getOutputNodes() {
         List l = new ArrayList();
         for (Iterator i = nodes.iterator(); i.hasNext(); ) {
-            l.add((NetNode) i.next());
+//            l.add((NetNode) i.next());
+            NetNode n = (NetNode) i.next();
+            if (n.isOutput()) l.add(n);
+
+        }
+        return (Collection) l;
+    }
+
+    /** Get staticizer nodes of this NetGraph. */
+    public Collection getStaticizerNodes() {
+        List l = new ArrayList();
+        for (Iterator i = nodes.iterator(); i.hasNext(); ) {
+            NetNode n = (NetNode) i.next();
+            if (n.isStaticizerInverter()) l.add(n);
         }
         return (Collection) l;
     }
