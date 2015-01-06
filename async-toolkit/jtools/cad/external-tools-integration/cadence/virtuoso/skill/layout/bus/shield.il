@@ -3,7 +3,7 @@
 ; $DateTime: 2012/07/27 17:24:08 $
 ; $Author: pankala $
 
-(defun DrawBusShield ( points layers prefix @key (CellVue (UIGetCellView)) (shieldM2 t)) 
+(defun DrawBusShield ( points layers prefix @key (CV (UIGetCellView)) (shieldM2 t)) 
   let( ( Idx NPoints HLayer VLayer 
          CurrPoint NextPoint CurrLayer Segments
          ShieldDir ShieldPoint ShieldPointX ShieldPointY ShieldLength ShieldInst ShieldInstName
@@ -103,8 +103,8 @@
          )
        )
    ShieldPoint = list(ShieldPointX ShieldPointY)
-   when( !OverlapShield(CellVue ShieldPoint CurrLayer ShieldDir Segments)
-       DrawShieldShapes(CellVue Segments ShieldPoint ShieldDir CurrLayer ?shieldM2 shieldM2)
+   when( !OverlapShield(CV ShieldPoint CurrLayer ShieldDir Segments)
+       DrawShieldShapes(CV Segments ShieldPoint ShieldDir CurrLayer ?shieldM2 shieldM2)
      )
    )
 
@@ -180,8 +180,8 @@
          )
        )
    ShieldPoint = list(ShieldPointX ShieldPointY)
-   when( !OverlapShield(CellVue ShieldPoint CurrLayer ShieldDir Segments)
-   DrawShieldShapes(CellVue Segments ShieldPoint ShieldDir CurrLayer ?shieldM2 shieldM2)
+   when( !OverlapShield(CV ShieldPoint CurrLayer ShieldDir Segments)
+   DrawShieldShapes(CV Segments ShieldPoint ShieldDir CurrLayer ?shieldM2 shieldM2)
     )
    )
 
@@ -267,8 +267,8 @@
          )
        )
    ShieldPoint = list(ShieldPointX ShieldPointY)
-   when( !OverlapShield(CellVue ShieldPoint CurrLayer ShieldDir Segments)
-   DrawShieldShapes(CellVue Segments ShieldPoint ShieldDir CurrLayer ?shieldM2 shieldM2)
+   when( !OverlapShield(CV ShieldPoint CurrLayer ShieldDir Segments)
+   DrawShieldShapes(CV Segments ShieldPoint ShieldDir CurrLayer ?shieldM2 shieldM2)
     )
    )
 

@@ -274,7 +274,8 @@
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
                                 (cutaroundpins nil)
                                 (cutout KeepoutM2to7WireSpacing)
-                                (topMetal nil))
+                                (topMetal nil)
+                                (powerGrid nil))
  (let (abstractCV name net fig term
        havem2pins havem3pins havem4pins havem5pins havem6pins havem7pins)
 
@@ -359,7 +360,8 @@
                                             ?otherpinlpp Metal7pinLPP ?cutout cutout))
   )
 
-  ;create power grid blockages 
+  ;create power grid blockages (TODO: some other way; see BUG 24326) 
+  (when powerGrid
   x2box = (rightEdge   prb->bBox)
   x1box = (leftEdge   prb->bBox)
   y2box = (topEdge   prb->bBox)
@@ -380,6 +382,7 @@
   (for k numy1 numy2
      (dbCreateRect abstractCV (list "M3" "boundary") (list numx1*1.56-0.105:k*1.56-0.1 numx2*1.56+0.105:k*1.56+0.1))
      (dbCreateRect abstractCV (list "M8" "boundary") (list numx1*1.56-0.31:k*1.56-0.4 numx2*1.56+0.31:k*1.56+0.4))
+  )
   )
 
   (CopyKeepoutToBlockage abstractCV )
@@ -592,7 +595,10 @@
       (foreach layer (list Metal1byLPP Metal2byLPP Metal3byLPP Metal4byLPP
                            Metal5byLPP Metal6byLPP Metal7byLPP Metal8byLPP)
         (when shape->lpp==layer
-          points = (if shape->objType=="rect" (RectGetPolygonPoints shape->bBox) shape->points)
+          points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
+                         (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
+                         (t shape->points)
+                         )
           (when points (dbCreateLayerBlockage cv (car layer) "routing" points))
           )
         )
@@ -606,7 +612,8 @@
                               (cutout KeepoutM2to7WireSpacing)
                               (topMetal nil))
   (MakeSimpleAbstract ?CV CV ?cutaroundpins cutaroundpins ?cutout cutout
-                      ?topMetal topMetal)
+                      ?topMetal topMetal
+                      ?powerGrid t) ; TODO: BUG 24326
   )
 
 (defun MakeAbstract ( @key (CV (geGetEditCellView))

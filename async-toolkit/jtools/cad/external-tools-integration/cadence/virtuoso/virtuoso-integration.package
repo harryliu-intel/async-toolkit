@@ -147,6 +147,7 @@ share/skill/util/math/math.il                                              skill
 share/skill/util/expression/expression.il                                  skill/util/expression/expression.il                                      664 p
 share/skill/util/lib.il                                                    skill/util/lib.il                                                        664 p
 share/skill/util/makemidlayouttag.il                                       skill/util/makemidlayouttag.il                                           664 p
+share/skill/util/TagStruts.il                                              skill/util/TagStruts.il                                           664 p
 share/skill/util/makelayouttag.il                                          skill/util/makelayouttag.il                                              664 p
 share/skill/util/name.il                                                   skill/util/name.il                                                       664 p
 share/skill/util/version.il                                                skill/util/version.il                                                    664 p
@@ -277,11 +278,34 @@ share/skill/layout/mid/mid.il                                              skill
 share/skill/layout/mid/compact.il                                          skill/layout/mid/compact.il                                              664 p
 
 # cable
-share/skill/layout/cable/optimus.il                             	         skill/layout/cable/optimus.il                                            664 p
-share/skill/layout/cable/placer.il                             	           skill/layout/cable/placer.il                                             664 p
-share/skill/layout/cable/router.il                             	           skill/layout/cable/router.il                                             664 p
-share/skill/layout/cable/templates.il                          	           skill/layout/cable/templates.il                                          664 p
-share/skill/layout/cable/util.il                              	           skill/layout/cable/util.il                                               664 p
+share/skill/layout/cable/GndShield.il                                      skill/layout/cable/GndShield.il                 664 p 
+share/skill/layout/cable/Obstruction.il                                    skill/layout/cable/Obstruction.il               664 p 
+share/skill/layout/cable/cable_layout.il                                   skill/layout/cable/cable_layout.il              664 p 
+share/skill/layout/cable/cable_defchan.il                                  skill/layout/cable/cable_defchan.il              664 p 
+share/skill/layout/cable/cable_spec.il                                     skill/layout/cable/cable_spec.il                664 p 
+share/skill/layout/cable/cdc_insts.txt                                     skill/layout/cable/cdc_insts.txt                664 p 
+share/skill/layout/cable/optimus.il                                        skill/layout/cable/optimus.il                   664 p 
+share/skill/layout/cable/placer.il                                         skill/layout/cable/placer.il                    664 p 
+share/skill/layout/cable/power_grid.il                                     skill/layout/cable/power_grid.il                664 p 
+share/skill/layout/cable/routedbuffers.il                                  skill/layout/cable/routedbuffers.il             664 p 
+share/skill/layout/cable/router.il                                         skill/layout/cable/router.il                    664 p 
+share/skill/layout/cable/sync_placer.il                                    skill/layout/cable/sync_placer.il               664 p 
+share/skill/layout/cable/templates.il                                      skill/layout/cable/templates.il                 664 p 
+share/skill/layout/cable/util.il                                           skill/layout/cable/util.il                      664 p 
+
+share/skill/layout/cable/spec_templates/dense_mbuf_spec.cast               skill/layout/cable/spec_templates/dense_mbuf_spec.cast   664 p
+share/skill/layout/cable/spec_templates/dense_rbuf_spec.cast               skill/layout/cable/spec_templates/dense_rbuf_spec.cast   664 p
+share/skill/layout/cable/spec_templates/dense_sbuf_spec.cast               skill/layout/cable/spec_templates/dense_sbuf_spec.cast   664 p
+share/skill/layout/cable/spec_templates/dense_spec.cast                    skill/layout/cable/spec_templates/dense_spec.cast        664 p
+share/skill/layout/cable/spec_templates/nyb_mbuf_spec.cast                 skill/layout/cable/spec_templates/nyb_mbuf_spec.cast     664 p
+share/skill/layout/cable/spec_templates/nyb_rbuf_spec.cast                 skill/layout/cable/spec_templates/nyb_rbuf_spec.cast     664 p
+share/skill/layout/cable/spec_templates/nyb_sbuf_spec.cast                 skill/layout/cable/spec_templates/nyb_sbuf_spec.cast     664 p
+share/skill/layout/cable/spec_templates/nyb_spec.cast                      skill/layout/cable/spec_templates/nyb_spec.cast          664 p
+share/skill/layout/cable/spec_templates/sync_node_spec.cast                skill/layout/cable/spec_templates/sync_node_spec.cast    664 p
+share/skill/layout/cable/spec_templates/ts_mbuf_spec.cast                  skill/layout/cable/spec_templates/ts_mbuf_spec.cast      664 p
+share/skill/layout/cable/spec_templates/ts_rbuf_spec.cast                  skill/layout/cable/spec_templates/ts_rbuf_spec.cast      664 p
+share/skill/layout/cable/spec_templates/ts_sbuf_spec.cast                  skill/layout/cable/spec_templates/ts_sbuf_spec.cast      664 p
+share/skill/layout/cable/spec_templates/ts_spec.cast                       skill/layout/cable/spec_templates/ts_spec.cast           664 p
 
 # used by mk_instances to dump floorplan info to text file for jauto.
 share/skill/layout/instancesfile/instance.il                               skill/layout/instancesfile/instance.il                                   664 p

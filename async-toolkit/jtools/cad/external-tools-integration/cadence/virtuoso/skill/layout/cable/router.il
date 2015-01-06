@@ -5,7 +5,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( DrawCablePins (CableShape CellVue Template)
   let( ( 
-        IpProbeXP IpProbeXN IpProbeYP IpProbeYN CableWidth
+        IpProbeXP IpProbeXN IpProbeYP IpProbeYN ChannelWidth
         OpProbeXP OpProbeXN OpProbeYP OpProbeYN
         IpRouteList OpRouteList
         Idx TempArray
@@ -16,16 +16,16 @@ defun( DrawCablePins (CableShape CellVue Template)
    EndPt   = nth(CableShape~>nPoints-1 CableShape~>points)
 
 
-      CableWidth = CableShape~>CableWidth
-      when( stringp(CableWidth)
-       CableWidth = evalstring(CableShape~>CableWidth)
+      ChannelWidth = CableShape~>ChannelWidth
+      when( stringp(ChannelWidth)
+       ChannelWidth = evalstring(CableShape~>ChannelWidth)
        )
 
    IpRouteList = list(StartPt car(CBLLocateAtDist(CableShape StartPt 0.39)))
 
    OpRouteList = list(EndPt car(CBLLocateAtDist(CableShape EndPt -0.39)))
 
-   for( Idx 0 CableWidth - 1
+   for( Idx 0 ChannelWidth - 1
      DrawChannel(nil DefChan(list(TempArray[Idx])) "L" IpRouteList ?isPin t)
      DrawChannel(nil DefChan(list(TempArray[Idx])) "R" OpRouteList ?isPin t)
     )
@@ -37,7 +37,7 @@ defun( DrawCablePins (CableShape CellVue Template)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( RouteCableBuffers (@optional (CableShape car(geGetSelectedSet())) (CellVue (UIGetCellView))) 
   let( ( BufIdx HopIdx
-         Hops Bufs BufArray CableWidth
+         Hops Bufs BufArray ChannelWidth
          temp 
         )
 
@@ -45,25 +45,25 @@ defun( RouteCableBuffers (@optional (CableShape car(geGetSelectedSet())) (CellVu
       DrawCablePins(CableShape CellVue "Template_A")
       BufArray = CBLCreateBufArray()
 
-      CableWidth = CableShape~>CableWidth
-      when( stringp(CableWidth)
-       CableWidth = evalstring(CableShape~>CableWidth)
+      ChannelWidth = CableShape~>ChannelWidth
+      when( stringp(ChannelWidth)
+       ChannelWidth = evalstring(CableShape~>ChannelWidth)
        )
       Hops = CableShape~>BufferHops      
       when( stringp(Hops)
          Hops = evalstring(CableShape~>BufferHops)
        )
 
-      if( evenp(CableWidth)
+      if( evenp(ChannelWidth)
        then
-         Bufs = truncate(CableWidth)/2 - 1
+         Bufs = truncate(ChannelWidth)/2 - 1
        else
-         Bufs = truncate(CableWidth)/2 - 1
+         Bufs = truncate(ChannelWidth)/2 - 1
       )
 
       for( BufIdx 0 Bufs
           TrBufIdx = BufArray[2*BufIdx]
-          when( BufIdx <= CableWidth
+          when( BufIdx <= ChannelWidth
           CBLPlaceWiringInst(CableShape 0 2*BufIdx "Template_A")
           temp = CBLRouteBufferInput(CableShape 0 2*BufIdx "Template_A" "Input")
           )
@@ -72,7 +72,7 @@ defun( RouteCableBuffers (@optional (CableShape car(geGetSelectedSet())) (CellVu
       for( HopIdx 1 Hops-1
         for( BufIdx 0 Bufs
           TrBufIdx = BufArray[2*BufIdx]
-          when( BufIdx <= CableWidth
+          when( BufIdx <= ChannelWidth
           CBLPlaceWiringInst(CableShape HopIdx 2*BufIdx "Template_A")
           temp = CBLRouteBufferInput(CableShape HopIdx 2*BufIdx "Template_A" "Buffer")
            )
@@ -81,7 +81,7 @@ defun( RouteCableBuffers (@optional (CableShape car(geGetSelectedSet())) (CellVu
 
         for( BufIdx 0 Bufs
           TrBufIdx = BufArray[2*BufIdx]
-          when( BufIdx <= CableWidth
+          when( BufIdx <= ChannelWidth
           temp = CBLRouteBufferInput(CableShape Hops 2*BufIdx "Template_A" "Output")
          )
         )

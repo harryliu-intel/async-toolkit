@@ -473,7 +473,11 @@
   (if (IsLeafCell CellView->cellName) then
     (MakeLeafTag CellView ?orientation orientation ?TargetViewName TargetViewName)
   else
-    (MakeMidLayoutTag CellView ?orientation orientation ?TargetViewName TargetViewName)
+    (if (IsCableCell CellView->cellName ?viewname CellView->viewName) then
+      (CableTag CellView ?orientation "R0" ?TargetViewName TargetViewName)
+    else
+      (MakeMidLayoutTag CellView ?orientation orientation ?TargetViewName TargetViewName)
+    )
   )
 )
 
@@ -494,11 +498,12 @@
                                          (TargetViewName "layout_tag")
                                          (CastPath ConfigFileGetValue(TheCDSConfigTable "CAST_PATH"))
                                          (TempDir ConfigFileGetValue(TheCDSConfigTable "TEMP")) )
-   let( (isleaf isavago isoproteus )
+   let( (isleaf isavago isoproteus iscable)
 
       isleaf = (IsLeafCell CellName ?viewname ViewName ?tempdir TempDir ?castpath CastPath)
       isproteus = (IsProteusCell CellName ?viewname ViewName ?tempdir TempDir ?castpath CastPath)
       isavago = (IsAvagoCell CellName ?viewname ViewName ?tempdir TempDir ?castpath CastPath)
+      iscable = (IsCableCell CellName ?viewname ViewName ?tempdir TempDir ?castpath CastPath)
 
    (cond ((when isleaf 
              (MakeLeafTagCell CellName ?ViewName ViewName  ?orientation orientation ?TargetViewName TargetViewName)))
@@ -506,8 +511,11 @@
              (MakeProteusTagCell CellName ?ViewName ViewName  ?orientation orientation ?TargetViewName TargetViewName)))
          ((when isavago
 	     (MakeAvagoTagCell CellName ?ViewName ViewName  ?orientation "R0" ?TargetViewName TargetViewName)))
+         ((when iscable
+	     (MakeCableTagCell CellName ?ViewName ViewName  ?orientation "R0" ?TargetViewName TargetViewName)))
          (t  (MakeMidLayoutTagCell CellName ?ViewName ViewName  ?orientation orientation ?TargetViewName TargetViewName))
    )
+ exportTotemLef( CellName TargetViewName )
  )
 )
 

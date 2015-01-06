@@ -1,4 +1,4 @@
-; Copyright 2003 Fulcrum Microsy\stems.  All rights reserved.
+;  Copyright 2003 Fulcrum Microsy\stems.  All rights reserved.
 ; $Id: //depot/sw/intel/cad/external-tools-integration/cadence/virtuoso/skill/layout/cable/util.il#1 $
 ; $DateTime: 2012/07/27 17:24:08 $
 ; $Author: pankala $
@@ -22,7 +22,7 @@ defun( CBLOveralapExists (Overlaps Toggle)
         OverlapFound = t
       )
       when( lay~>isAnyInst && !OverlapFound
-        if( lay~>libName == "lib.buffer.smr" || lay~>libName == "lib.buffer.nyb" ||   lay~>libName == "lib.buffer.ts"
+        if( lay~>libName == "lib.buffer.smr" || lay~>libName == "lib.buffer.nyb" || lay~>libName == "lib.buffer.ts" || lay~>libName == "chip.rrc.util.sync"
          then
            Overlap = t
            OverlapFound = t
@@ -155,20 +155,17 @@ defun( CBLFindPtIdxs ( CableShape Point @key (CV (UIGetCellView)) )
 
 defun( CBLLocateAtDist ( CableShape StartLoc Distance @key (CV (UIGetCellView)) )
  let( (
-       XYCoOrd
-       FinalIdx
-       LwIdx UpIdx 
+       XYCoOrd penaltyList CablePoints
+       FinalIdx            LocFound
+       LwIdx UpIdx         shp
        CurrIdx CurrDist CurrLoc
-       CablePoints
-       LocFound
-       shp
        )
 
-     CablePoints = CableShape~>points
-     UpIdx = cadr(CBLFindPtIdxs(CableShape StartLoc))
-     CurrIdx = UpIdx
-     CurrDist = Distance
-     CurrLoc = StartLoc
+     CablePoints  =  CableShape~>points
+     UpIdx        =  cadr(CBLFindPtIdxs(CableShape StartLoc))
+     CurrIdx      =  UpIdx
+     CurrDist     =  Distance
+     CurrLoc      =  StartLoc
 
      while( !LocFound  && (CurrIdx != length(CablePoints))
       if( car(CurrLoc) == car(nth(CurrIdx CablePoints))
@@ -208,10 +205,7 @@ defun( CBLLocateAtDist ( CableShape StartLoc Distance @key (CV (UIGetCellView)) 
            CurrLoc = nth(CurrIdx CablePoints)
            CurrIdx = CurrIdx + 1
          )
-
        )
-
-
      )
 
   ; shp = dbCreateRect(CV "M5" list(XYCoOrd list(car(XYCoOrd)+1.56 cadr(XYCoOrd)+1.56)))
@@ -221,7 +215,103 @@ defun( CBLLocateAtDist ( CableShape StartLoc Distance @key (CV (UIGetCellView)) 
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+defun( buildTurnPenaltyList ( CableShape )
+ (let ( W
+        currSegDir currSeg currDir 
+        nextSegDir nextSeg nextDir 
+      )
 
+   pList = list()
+   W     = CBLGetPathWidth( ?CableShape CableShape )*3.12
+
+   for( I 0 CableShape~>nPoints-1
+
+     when( I == 0 || I == CableShape~>nPoints-1
+        penalty = 0
+      )
+
+     when( I > 0 && I < CableShape~>nPoints-1
+
+       currSeg  = CBLCurrSegment( CableShape I   )
+       nextSeg  = CBLCurrSegment( CableShape I+1 )
+       currDir  =     CBLCurrDir( CableShape I   )
+       nextDir  =     CBLCurrDir( CableShape I+1 )
+
+       currSegDir = strcat( currSeg currDir )
+       nextSegDir = strcat( nextSeg nextDir )
+     
+       case( currSegDir 
+         ( "VP"  case( nextSegDir ( "HP" penalty =   W ) ( "HN" penalty = 0 ) ) )
+         ( "VN"  case( nextSegDir ( "HP" penalty = 2*W ) ( "HN" penalty = W ) ) )
+         ( "HP"  case( nextSegDir ( "VP" penalty =   W ) ( "VN" penalty = 0 ) ) )
+         ( "HN"  case( nextSegDir ( "VP" penalty = 2*W ) ( "VN" penalty = W ) ) )
+        )
+      )  
+    pList = append( pList list(penalty) )
+
+    )
+
+  pList
+ )
+)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+defun( measureDistance ( CableShape StartPt EndPt )
+  (let ( EndIdx    StartIdx distance
+         EndX      StartX   
+         EndY      StartY   
+
+)
+
+    StartIdx = cadr( CBLFindPtIdxs( CableShape StartPt ) )
+    StartX   = round(car(StartPt)*1000)
+    StartY   = round(cadr(StartPt)*1000)
+
+    EndIdx   = cadr( CBLFindPtIdxs( CableShape   EndPt ) )
+    EndX     = round(car(EndPt)*1000)
+    EndY     = round(cadr(EndPt)*1000)
+
+    distance = 0
+
+    if( StartIdx == EndIdx 
+     then
+       distance = lineDistance( StartPt EndPt )
+     else
+       distance = lineDistance( StartPt nth( StartIdx CableShape~>points ) )
+       for( I StartIdx EndIdx-2
+       distance = distance + lineDistance( nth( I CableShape~>points ) nth( I+1 CableShape~>points ) )
+        )
+       distance = distance + lineDistance( nth( EndIdx-1 CableShape~>points ) EndPt )
+      )
+
+distance
+ )
+)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+defun( lineDistance ( StartPt EndPt )
+  (let ( StartX  distance  
+         StartY 
+         EndX   
+         EndY   
+)
+
+    StartX = round(car(StartPt)*1000)
+    StartY = round(cadr(StartPt)*1000)
+    EndX   = round(car(EndPt)*1000)
+    EndY   = round(cadr(EndPt)*1000)
+
+    if( StartX == EndX
+     then
+       distance = abs( StartY - EndY )/1000
+     else
+       distance = abs( StartX - EndX )/1000
+      )
+
+distance
+ )
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( CBLCreateBufBlockage ( @key (CableShape car(geGetSelectedSet())) (CV (UIGetCellView)) (BlockLPP list("y5" "drawing")))
 
   let( (
@@ -266,7 +356,8 @@ defun( CBLGetPathWidth ( @key (CableShape car(geGetSelectedSet())) )
       when( stringp(CableShape~>ChannelWidth) DataWidth = evalstring(CableShape~>ChannelWidth)) 
       when( numberp(CableShape~>ChannelWidth) DataWidth = CableShape~>ChannelWidth) 
       DataWidth = DataWidth - 1
-      channelBuf
+;     println(DataWidth)
+      channelBuf = CableShape~>ChannelBuf
 
    
 ;   WidthFound = nil
@@ -287,40 +378,33 @@ defun( CBLGetPathWidth ( @key (CableShape car(geGetSelectedSet())) )
 ;  else
 ;   PathWidth = 2
 ;   )
-
-       when( DataWidth >  0  && DataWidth < 12
-          PathWidth = 2 
-       )
-       when( DataWidth >= 12 && DataWidth < 24
-          PathWidth = 3     
-       )
-       when( DataWidth >= 24 && DataWidth < 36
-          PathWidth = 4     
-       )
-       when( DataWidth >= 36 && DataWidth < 48
-          PathWidth = 5     
-       )
-       when( DataWidth >= 48 && DataWidth < 60
-          PathWidth = 6     
-       )
-
-    when( channelBuf == "TS"
-       when( DataWidth >  0  && DataWidth < 12
-          PathWidth = 2 
-       )
-       when( DataWidth >= 12 && DataWidth < 24
-          PathWidth = 3     
-       )
-       when( DataWidth >= 24 && DataWidth < 36
-          PathWidth = 4     
-       )
-       when( DataWidth >= 36 && DataWidth < 48
-          PathWidth = 5     
-       )
-       when( DataWidth >= 48 && DataWidth < 60
-          PathWidth = 6     
-       )
+    case( channelBuf 
+     ( "DENSE" || "NYB"
+       when( DataWidth >= 0  && DataWidth < 12   PathWidth = 2 )
+       when( DataWidth >= 12 && DataWidth < 24   PathWidth = 3 )
+       when( DataWidth >= 24 && DataWidth < 36   PathWidth = 4 )
+       when( DataWidth >= 36 && DataWidth < 48   PathWidth = 5 )
+       when( DataWidth >= 48 && DataWidth < 60   PathWidth = 6 )
      )
+    ( "TS" || "TS_18"
+       when( DataWidth >= 0  && DataWidth < 12   PathWidth = 3 )
+       when( DataWidth >= 12 && DataWidth < 24   PathWidth = 3 )
+       when( DataWidth >= 24 && DataWidth < 36   PathWidth = 4 )
+       when( DataWidth >= 36 && DataWidth < 48   PathWidth = 5 )
+       when( DataWidth >= 48 && DataWidth < 60   PathWidth = 6 )
+     )
+    ( "XBUS"
+       PathWidth = 3
+     )
+    ( "SYNC_NODE"
+       when( DataWidth >= 0   && DataWidth < 20    PathWidth = 1 )
+       when( DataWidth >= 20  && DataWidth < 80    PathWidth = 2 )
+       when( DataWidth >= 80  && DataWidth < 140   PathWidth = 3 )
+       when( DataWidth >= 140 && DataWidth < 200   PathWidth = 4 )
+       when( DataWidth >= 200 && DataWidth < 260   PathWidth = 5 )
+    )                                                          
+   )
+
   PathWidth
 
   )
@@ -357,9 +441,9 @@ defun( CAComputeCableLength ( CableShape @key (CV (UIGetCellView)) )
     paths = (if paths==nil (geGetSelSet) paths)
     (foreach obj paths
       (cond (obj->objType=="path"
-                  pat = (if template template (GetProp obj "ChannelTemplate" "Template_A"))
+       ;           pat = (if template template (GetProp obj "ChannelTemplate" "Template_A"))
                   (CreateCableProps ?paths (list obj))
-                  (dbReplaceProp obj "ChannelTemplate" "string" pat)
+       ;           (dbReplaceProp obj "ChannelTemplate" "string" pat)
                   )
             )
       )
@@ -367,35 +451,42 @@ defun( CAComputeCableLength ( CableShape @key (CV (UIGetCellView)) )
   )
 )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun CreateCableProps (@key (paths nil))
+(defun CreateCableProps (@key (paths nil) (CV (UIGetCellView)))
   (let (
-        template   width  prop_mbuf  prop_template 
-        mbuf       hops   prop_hops  prop_hopdist  
-        sbuf       start  prop_width 
-        rbuf       end    hopdist  
+        template   width xhopsL   prop_mbuf  prop_template 
+        mbuf       hops  xhopsR   prop_hops  prop_hopdist  
+        sbuf       start xadpL    prop_width props
+        rbuf       end   xadpR    hopdist    name
        )
     paths = (if paths==nil (geGetSelSet) paths)
-    props = (FindCableProps)
-    when( nth(0 props) prop_mbuf     = nth(0 props) )
-    when( nth(1 props) prop_hops     = nth(1 props) )
-    when( nth(2 props) prop_width    = nth(2 props) )
-    when( nth(3 props) prop_template = nth(3 props) )
-    when( nth(4 props) prop_hopdist  = nth(4 props) )
+  ; props = FindCableProps(?CV CV)
+    props = nil
+    if( nth(0 props) then prop_mbuf     = nth(0 props) else prop_mbuf     = ""    )
+    if( nth(1 props) then prop_hops     = nth(1 props) else prop_hops     = 1     )
+    if( nth(2 props) then prop_width    = nth(2 props) else prop_width    = 1     )
+    if( nth(3 props) then prop_template = nth(3 props) else prop_template = ""    )
+    if( nth(4 props) then prop_hopdist  = nth(4 props) else prop_hopdist  = 290.0 )
     (foreach obj paths
              (cond (obj->objType=="path"
                        ; copy properties
                        template = (GetProp   obj   "ChannelTemplate"     prop_template )
+                       name     = (GetProp   obj   "ChannelName"         ""            )
                        mbuf     = (GetProp   obj   "ChannelBuf"          prop_mbuf     )
-                       sbuf     = (GetProp   obj   "ChannelSbufOrient"  "H"            )
-                       rbuf     = (GetProp   obj   "ChannelRbufOrient"  "H"            )
+                       sbuf     = (GetProp   obj   "ChannelSbufOrient"  "1000_H"       )
+                       rbuf     = (GetProp   obj   "ChannelRbufOrient"  "1000_H"       )
                        hops     = (GetProp   obj   "ChannelHops"         prop_hops     )
                        width    = (GetProp   obj   "ChannelWidth"        prop_width    )
-                       start    = (GetProp   obj   "InputDistance_um"    0.0           )
+                       start    = (GetProp   obj   "InputDistance_um"    40.0          )
                        end      = (GetProp   obj   "OutputDistance_um"   0.0           )
                        hopdist  = (GetProp   obj   "HopDistance_um"      prop_hopdist  )
+                       xhopsL   = (GetProp   obj   "XBUS_L_ChannelHops"  1             )
+                       xhopsR   = (GetProp   obj   "XBUS_R_ChannelHops"  1             )
+                       xadpL    = (GetProp   obj   "XBUS_Adapter_L"      "1000_H"      )
+                       xadpR    = (GetProp   obj   "XBUS_Adapter_R"      "1000_H"      )
 
                        ; delete properties
                        (dbDeletePropByName   obj   "ChannelTemplate"    )
+                       (dbDeletePropByName   obj   "ChannelName"        )
                        (dbDeletePropByName   obj   "ChannelBuf"         )
                        (dbDeletePropByName   obj   "ChannelSbufOrient"  )
                        (dbDeletePropByName   obj   "ChannelRbufOrient"  )
@@ -404,9 +495,14 @@ defun( CAComputeCableLength ( CableShape @key (CV (UIGetCellView)) )
                        (dbDeletePropByName   obj   "InputDistance_um"   )
                        (dbDeletePropByName   obj   "OutputDistance_um"  )
                        (dbDeletePropByName   obj   "HopDistance_um"     )
+                       (dbDeletePropByName   obj   "XBUS_L_ChannelHops" )
+                       (dbDeletePropByName   obj   "XBUS_R_ChannelHops" )
+                       (dbDeletePropByName   obj   "XBUS_Adapter_L"     )
+                       (dbDeletePropByName   obj   "XBUS_Adapter_R"     )
 
                        ; set new properties
                        (dbReplaceProp        obj   "ChannelTemplate"    "string"  template )
+                       (dbReplaceProp        obj   "ChannelName"        "string"  name     )
                        (dbReplaceProp        obj   "ChannelBuf"         "string"  mbuf     )
                        (dbReplaceProp        obj   "ChannelSbufOrient"  "string"  sbuf     )
                        (dbReplaceProp        obj   "ChannelRbufOrient"  "string"  rbuf     )
@@ -415,6 +511,10 @@ defun( CAComputeCableLength ( CableShape @key (CV (UIGetCellView)) )
                        (dbReplaceProp        obj   "InputDistance_um"   "flonum"  start    )
                        (dbReplaceProp        obj   "OutputDistance_um"  "flonum"  end      )
                        (dbReplaceProp        obj   "HopDistance_um"     "flonum"  hopdist  )
+                       (dbReplaceProp        obj   "XBUS_L_ChannelHops" "fixnum"  xhopsL   )
+                       (dbReplaceProp        obj   "XBUS_R_ChannelHops" "fixnum"  xhopsR   )
+                       (dbReplaceProp        obj   "XBUS_Adapter_L"     "string"  xadpL    )
+                       (dbReplaceProp        obj   "XBUS_Adapter_R"     "string"  xadpR    )
 
                        ))
              )
@@ -433,8 +533,8 @@ defun( CAComputeCableLength ( CableShape @key (CV (UIGetCellView)) )
       parts1   =  parseString(CV~>cellName   "."  )
       parts2   =  parseString(nth(4 parts1)  "-"  )
       parts3   =  parseString(nth(1 parts2)  "_L" )
-      bufHops  =   readstring(nth(0 parts3) )
-      bufWidth =   readstring(nth(1 parts3) )
+      bufHops  =   readstring(nth(0 parts3)       )
+      bufWidth =   readstring(nth(1 parts3)       )
       case( nth(0 parts2) 
         ( "CABLE_MBUFS"     || "CABLE"     bufType = "DENSE" buftemplate = "Template_BUF_R90"    hopDist = 290.0 )
         ( "NYB_CABLE_MBUFS" || "NYB_CABLE" bufType = "NYB"   buftemplate = "Template_NYBBUF_R90" hopDist = 290.0 )
@@ -442,7 +542,8 @@ defun( CAComputeCableLength ( CableShape @key (CV (UIGetCellView)) )
        )
      props = list(bufType bufHops bufWidth buftemplate hopDist )
      else
-      props = nil
+     props = nil
+     
       )
 props
  )
@@ -451,7 +552,7 @@ props
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun CreateCableBoundary (@key (CableShape car(geGetSelectedSet())) (CV (UIGetCellView)) (CreatePRObject nil))
   (let ( I CurrDir CurrSeg PathWidth NotStart NotEnd 
-         PRList PRShape MergePRShape
+         PRList PRShape MergePRShape prB
         )
 
     PRList = CBLCreateBufBlockage(?CableShape CableShape ?BlockLPP list("prBoundary" "drawing"))
@@ -474,10 +575,14 @@ props
     if( MergePRShape~>points
      then
        dbCreatePRBoundary(CV MergePRShape~>points)
+       dbDeleteObject(MergePRShape)
      else
        dbCreatePRBoundary(CV BBoxToPoints(MergePRShape~>bBox))
+       dbDeleteObject(MergePRShape)
     )
    )
+
+  if( CreatePRObject then MergePRShape = prB )
 
 MergePRShape
      
@@ -599,6 +704,8 @@ MergePRShape
     instname = strcat(instprefix, "[0][0]") 
 
     inst = dbFindAnyInstByName(CV instname)
+
+    when( !inst inst = car(CV~>instances) )
 
     pinop = CablePowerPinFigs(CV inst)
 
@@ -995,7 +1102,7 @@ list(cableShapes cableOrigins cableInsts)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun GenerateCableOverlaps ( @key (CableShapes (geGetSelectedSet)) )
+(defun GenerateCableOverlaps ( @key (CableShapes (geGetSelectedSet)) (CV (UIGetCellView)))
   (let ( cbl currPr allPr pr tempPr obs allObs )
 
    foreach( cbl CableShapes
@@ -1005,7 +1112,7 @@ list(cableShapes cableOrigins cableInsts)
 
    foreach( pr allPr
         tempPr = remove(pr allPr)
-        obs = dbLayerAnd(wcv() list("OBS" "bus") list(pr) tempPr)
+        obs = dbLayerAnd(CV list("OBS" "bus") list(pr) tempPr)
         allObs = append(allObs obs)
       )
 
@@ -1152,5 +1259,290 @@ list(cableShapes cableOrigins cableInsts)
 
 close(ipFile)
 t 
+ )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun UpdateCableObstructions ( @key (CV (UIGetCellView)) (Selected (geGetSelectedSet)) (view "cable"))
+  (let ( 
+        spec_root spec_temp curr_obs obs buf savSel              xadpL          
+        channelName  channelSBuf sbuf temp I                     xadpR          
+        channelWidth channelRBuf mbuf cableGuide cableguides     xchannelHopsL  
+        channelHops  channelBuf  channelSpec channelWidth2       xchannelHopsR  
+         sbuf_cell   sbuf_CV                                     channelName    
+         rbuf_cell   rbuf_CV                                     spec_temp      
+         mbuf_cell   mbuf_CV                                     spec_temp2     
+        cable_cell  cable_CV
+        temp_layer cab_layer curr_layer new shp
+         )
+
+    cableguides = setof(shp CV~>shapes shp~>objType=="path"&&shp~>ChannelBuf)
+    savSel = Selected
+
+    temp_layer = list("y9" "drawing")
+
+    foreach( cableGuide cableguides; CV~>shapes ; cableguides
+       obs = list()
+       temp = dbCreatePath(CV temp_layer cableGuide~>points cableGuide~>width)
+       when(cableGuide~>prop  dbCopyProp(cableGuide temp))
+       cab_layer = cableGuide~>lpp
+       dbDeleteObject(cableGuide)
+       
+       for( I 0 9
+        sprintf( curr_layer "M%d" I)
+        curr_obs = leLayerAnd(CV temp_layer list(curr_layer "boundary") list("OBS" "bus"))
+        obs = append( obs curr_obs )
+        )
+
+       foreach( obs_shp obs obs_shp~>autoBlockage="TRUE" )
+
+       channelName     =  temp~>ChannelName
+       channelWidth    =  temp~>ChannelWidth
+       channelHops     =  temp~>ChannelHops
+       channelBuf      =  temp~>ChannelBuf
+       channelSBuf     =  temp~>sbuf_orient
+       channelRBuf     =  temp~>rbuf_orient
+       channelWidth2   =  round((channelWidth+1)/2)
+
+       when( member(cableGuide Selected)
+
+       if(channelBuf then buf = channelBuf else buf = "NYB")
+       if(channelBuf=="DENSE" then buf = "" else buf = strcat(buf "_"))
+       if(channelBuf=="TS_18" then buf = "TS_" )
+       spec_temp = parseString(lowerCase(channelName) "[]")
+       if(length(spec_temp)>1
+         then        
+           channelSpec = strcat(car(spec_temp) "_" cadr(spec_temp))
+         else
+           channelSpec = lowerCase(channelName)
+         )
+
+       case( channelBuf
+        ( "DENSE" || "TS" || "NYB" || "TS_18"
+          sprintf( mbuf_cell  "chip.rrc.util.cable.%sCABLE_MBUFS-L%d_%d-R.%s"  buf channelHops channelWidth2 channelSpec) 
+         )
+        ( "XBUS"
+          xadpL           =  temp~>XBUS_Adapter_L   
+          xadpR           =  temp~>XBUS_Adapter_R   
+          xchannelHopsL   =  temp~>XBUS_L_ChannelHops
+          xchannelHopsR   =  temp~>XBUS_R_ChannelHops
+          channelName     = lowerCase(channelName)
+          spec_temp       = parseString( channelName "[]" )
+          spec_temp2      = parseString( channelName "_[]" )       
+          when( nth(0 spec_temp2) == "rx" || nth(0 spec_temp2) == "tx"
+             rxchannelSpec = strcat("rx_xbus_port_" cadr(spec_temp))
+             txchannelSpec = strcat("tx_xbus_port_" cadr(spec_temp))
+             channelSpec   = strcat("xbus_port_"    cadr(spec_temp))
+           )
+          when( nth(0 parseString( channelName "_[]" )) == "rx"  rxchannelSpec = strcat(car(spec_temp) "_" cadr(spec_temp)))  
+
+          if(  nth(0 spec_temp2) == "rx" 
+           then
+             sprintf( mbuf_cell "chip.rrc.util.cable.CABLE_MBUFS_XbusPortHalf-L%d-R.%s" xchannelHopsL rxchannelSpec )
+           else 
+             sprintf( mbuf_cell "chip.rrc.util.cable.CABLE_MBUFS_XbusPortHalf-L%d-R.%s" xchannelHopsR txchannelSpec )
+           )
+
+         )
+        ( "SYNC_NODE"
+          sprintf( mbuf_cell  "chip.rrc.util.cable.%sCABLE-L%d_%d-R.%s"  buf channelHops channelWidth channelSpec) 
+         )
+       )
+
+       println( mbuf_cell )
+       
+       mbuf_CV  =   nrOpenCellViewWritableByName( mbuf_cell view )
+      println(mbuf_CV~>libName)
+       when( mbuf_CV
+         printf("Deleting existing %s view !\n" view)
+         ddDeleteObj(ddGetObj("chip.rrc.util.cable" mbuf_cell view))
+         mbuf_CV  =   nrOpenCellViewWritableByName( mbuf_cell view)
+        )
+
+
+       foreach( shp mbuf_CV~>shapes when( car(shp~>lpp)=="OBS" dbDeleteObject(shp) ))
+
+       foreach( obs_shp obs	dbCopyShape(obs_shp mbuf_CV) dbDeleteObject(obs_shp) )
+
+       dbSave( mbuf_CV)
+       dbClose( mbuf_CV)
+ ;     dbPurge( mbuf_CV)
+        )
+       new = dbCreatePath(CV cab_layer temp~>points temp~>width)
+       when(temp~>prop  dbCopyProp(temp new))
+       dbDeleteObject(temp)
+
+;      dbCreateInstByMasterName( CV "chip.rrc.util.cable" mbuf_cell "cable" channelSpec 0:0 "R0")
+
+    )
+
+       foreach( obs_shp setof(sh CV~>shapes sh~>autoBlockage=="TRUE") dbDeleteObject(obs_shp))
+
+;     when(savSel geSelectFigs(savSel))
+
+t 
+ )
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun GetPlaceableLength ( Points @key (CV (UIGetCellView)) (Del t))
+  (let (  segWidth segHeight vSeg currPt I sh bufBlks
+          blkWidth blkHeight hSeg nextPt s bBlk 
+          placeLength 
+     )
+
+   blks = setof( sh CV~>shapes car(sh~>lpp)=="y5"||car(sh~>lpp)=="OBS" )
+   placeLength = 0
+   for( I 0 length(Points)-2
+     currPt = nth( I Points )
+     nextPt = nth( I+1 Points )
+
+     if( almostEqual( car(currPt) car(nextPt) )
+      then
+       vSeg = dbCreateRect( CV list( "y9" "drawing" ) list( car(currPt)-0.015:cadr(currPt) car(nextPt)+0.015:cadr(nextPt) ))
+       vSeg~>autoLengthShape = "TRUE"
+       bufBlks = dbLayerAnd( CV list("M3" "boundary") list(vSeg) blks)
+       segHeight = BBoxGetHeight(vSeg~>bBox)
+       blkHeight = 0
+       foreach( bBlk bufBlks when( BBoxGetHeight(bBlk~>bBox) > TrackPitch blkHeight = blkHeight + BBoxGetHeight(bBlk~>bBox) ) )
+       foreach( bBlk bufBlks dbDeleteObject(bBlk) )
+       dbDeleteObject(vSeg)
+       placeLength = placeLength + (segHeight - blkHeight)
+      else
+       hSeg = dbCreateRect( CV list( "y9" "drawing" ) list( car(currPt):cadr(currPt)-0.015 car(nextPt):cadr(nextPt)+0.015 ))
+       hSeg~>autoLengthShape = "TRUE"
+       bufBlks = dbLayerAnd( CV list("M3" "boundary") list(hSeg) blks)
+       segWidth = BBoxGetWidth(hSeg~>bBox)
+       blkWidth = 0
+       foreach( bBlk bufBlks when( BBoxGetWidth(bBlk~>bBox) > TrackPitch  println(bBlk~>bBox) blkWidth = blkWidth + BBoxGetWidth(bBlk~>bBox) ) )
+       foreach( bBlk bufBlks dbDeleteObject(bBlk) )
+       dbDeleteObject(hSeg)
+       placeLength = placeLength + (segWidth - blkWidth)
+     )
+
+   )
+
+  when( Del foreach( s setof(sh CV~>shapes sh~>autoLengthShape) dbDeleteObject(s) ) )
+
+  println(placeLength)
+placeLength
+ )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun BufferBaySize ( CableShape )
+  (let ( channelWidth   
+         channelWidth2  
+         BufferBay      
+        )
+
+   case( CableShape~>ChannelBuf
+    ( "DENSE" || "NYB"
+      channelWidth   =  CableShape~>ChannelWidth
+      channelWidth2  =  round((channelWidth+1)/2)
+      BufferBay      =  6.24 * channelWidth2 + 6.24
+    )
+    ( "TS" || "TS_18"
+      channelWidth   =  CableShape~>ChannelWidth
+      channelWidth2  =  round((channelWidth+1)/2)
+      BufferBay = 7.8 * channelWidth2 + 6.24
+    )
+    ( "SYNC_NODE"
+      channelWidth   =  CableShape~>ChannelWidth
+      channelWidth2  =  round((channelWidth+1)/2)
+      BufferBay = 3.12 * channelWidth2 + 6.24
+    )
+    ( "XBUS"
+      channelWidth   =  CableShape~>ChannelWidth
+      channelWidth2  =  12 
+      BufferBay = 3.12 * channelWidth2 + 6.24
+    )
+   )
+
+  BufferBay
+
+ )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun CablePtAtDist ( CableShape Dist @key (CV (UIGetCellView)) )
+ (let ( points   dist
+        nP       locFound 
+        I        FinalLoc 
+       )
+
+   points   = CableShape~>points
+   nP       = CableShape~>nPoints
+   I        = 0
+   locFound = nil
+   FinalLoc = nil
+   dist     = Dist
+   RestOfCable = CAComputeCableLength( CableShape )
+
+   while( I <= nP-2 && !locFound
+     currPt = nth(I   points)
+     nextPt = nth(I+1 points)
+     if( dist <= RestOfCable && dist <= LineGetSegmentLength( list(currPt nextPt) )
+      then
+       if( LineIsSegmentHorizontal( list(currPt nextPt) )
+        then
+         locFound = t
+         if( CBLCurrDir( CableShape I+1 ) == "P"
+          then
+           FinalLoc = list( car(currPt)+dist cadr(currPt) )
+          else
+           FinalLoc = list( car(currPt)-dist cadr(currPt) )
+           )
+        else
+         locFound = t
+         if( CBLCurrDir( CableShape I+1 ) == "P"
+          then
+           FinalLoc = list( car(currPt) cadr(currPt)+dist )
+          else
+           FinalLoc = list( car(currPt) cadr(currPt)-dist )
+           )
+       )
+      else
+       dist = dist - LineGetSegmentLength( list(currPt nextPt) )
+       RestOfCable = RestOfCable - LineGetSegmentLength( list(currPt nextPt) )
+     )
+     I = I + 1
+    )
+
+ when( !FinalLoc println("Point at the Distance Not Found !!!") )
+ list( FinalLoc I )
+ )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun CablePtLength ( CableShape Loc @key (CV (UIGetCellView)) )
+  (let (  points   
+          nP       
+          I        
+          sLen     
+          locFound 
+       )
+
+   points   = CableShape~>points
+   nP       = CableShape~>nPoints
+   I        = 0
+   sLen     = 0
+   locFound = nil
+   
+   while( I <= nP-2 && !locFound
+     currPt = nth(I   points)
+     nextPt = nth(I+1 points)
+     if( LinePointIsOnSegment( Loc list(currPt nextPt) )
+      then
+         locFound = t
+         sLen = sLen + LineGetSegmentLength( list(currPt Loc) )
+      else
+       sLen = sLen + LineGetSegmentLength( list(currPt nextPt) )
+     )
+     I = I + 1
+    )
+
+sLen
  )
 )

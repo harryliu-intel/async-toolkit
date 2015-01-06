@@ -66,3 +66,18 @@
         )
         (
          ( BBoxGetCenter ( getq Fig bBox ) ) ) ) ) )
+
+
+(defun GetShapesFromOverlaps (overlaps)
+ (let (shapes)
+   shapes = (list nil)
+   (foreach element overlaps
+     (when element->objType=="rect" || element->objType=="polygon"
+       shapes = (cons element shapes)
+     )
+     (when element->objType==nil
+       shapes = (GetShapesFromOverlaps element)
+     )
+   )
+   shapes
+))

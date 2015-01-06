@@ -3,8 +3,8 @@
 ; Copyright 2010 Fulcrum Microsystems.  All rights reserved.
 
 ; Sync-to-netlist with appropriate options
-(defun SyncToNetlist (@key (CV (geGetEditCellView)) (old nil))
-  (let (routed TEMP NetFile DirectivesFile ExecCmd Command status)
+(defun SyncToNetlist (@key (CV (geGetEditCellView)) (old nil) (heapSize nil))
+  (let (routed TEMP NetFile DirectivesFile ExecCmd Command status heap)
 
     ; check usage
     (unless CV->viewName=="layout_pg" || CV->viewName=="layout" || 
@@ -24,7 +24,7 @@
     DirectivesFile = (sprintf nil "%s/ildirectives/%s.directives.il"
                               TEMP CV->cellName)
     ExecCmd = (if (and (boundp `ExecCmd) (stringp ExecCmd)) ExecCmd "")
-
+    if(heapSize then heap = heapSize else heap = (nrGetMaxHeapSize))
     ; run cast2skill
     Command = (sprintf nil
                        "%s %s/cast2skill --cast-path=%s --cell=%s %s --output-dir=%s --cadence-name --root-only --suppress-pins --max-heap-size=%dM %s --64"
@@ -34,7 +34,7 @@
                        CV->cellName
                        (if routed "--routed" "")
                        TEMP
-                       (nrGetMaxHeapSize)
+                       heap ; (nrGetMaxHeapSize)
                        (nrGetJavaArguments)
                        )
     (printf "%s\n" Command)
@@ -64,6 +64,6 @@
   )
 
 ; obsolete form for backward compatibility
-(defun nrSyncToNetlist (CV @key (routed nil))
-  (SyncToNetlist ?CV CV ?old t)
+(defun nrSyncToNetlist (CV @key (routed nil) (heapSize nil))
+  (SyncToNetlist ?CV CV ?old t ?heapSize heapSize)
   )

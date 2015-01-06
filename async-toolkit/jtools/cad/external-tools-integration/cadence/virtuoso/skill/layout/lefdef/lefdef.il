@@ -10,8 +10,8 @@
 defNxWarn=0
 defNxErr=0
 
-(defvar powerNet  list( "VDD" "VDDS" "VDDF" "Vdd" "AVDD" ))
-(defvar groundNet list( "GND" "VSS"  "AGND" ))
+(defvar  powerNetGlobal list( "VDD" "VDDS" "VDDF" "Vdd" "AVDD" "VDDH" "VDDH[0]" "VDDH[1]" ))
+(defvar groundNetGlobal list( "GND" "VSS"  "AGND" ))
 
 ;**********************************************************************
 ;  sub functions
@@ -306,7 +306,7 @@ defun( defShapeToText ( pout shapes transform )
                caadr(rect)*UNITS, cadadr(rect)*UNITS)
           )
         )
-       fprintf(defPort, ";\n")
+       fprintf(defPort, "+ TYPE GUIDE ;\n")
      )
 
     fprintf(defPort, "END REGIONS\n\n")
@@ -404,6 +404,40 @@ t
     dbDeleteObject(sct)
     foreach(rect rects dbDeleteObject(rect))
  newlist
+ )
+)
+
+(defun exportDomainAssociation ( defPort powerNets gndNets CV )
+ (let ( pNet inst pPin  )
+
+    fprintf( defPort "SPECIALNETS %d ;\n" length(powerNets)+length(gndNets) )
+    foreach( pNet powerNets 
+      fprintf( defPort "- %s ( * %s )\n" pNet, pNet )
+       foreach( inst CV~>instances
+        foreach( pPin powerNetGlobal 
+         when( dbGetPropByName(inst strcat("powerPin_" pPin))~>value == pNet
+          fprintf( defPort " ( %s %s )\n" inst~>name, pPin )
+         )
+        )
+      )
+      fprintf( defPort " + USE POWER ;\n" pNet, pNet )
+    )
+
+    foreach( pNet gndNets 
+      fprintf( defPort "- %s ( * %s )\n" pNet, pNet )
+       foreach( inst CV~>instances
+        foreach( pPin groundNetGlobal 
+         when( dbGetPropByName(inst strcat("groundPin_" pPin))~>value == pNet
+          fprintf( defPort " ( %s %s )\n" inst~>name, pPin )
+         )
+        )
+      )
+      fprintf( defPort " + USE GROUND ;\n" pNet, pNet )
+    )
+
+    fprintf( defPort "END SPECIALNETS \n\n" )
+
+t
  )
 )
 
@@ -558,6 +592,9 @@ defun( defDefOut (  libName cellName viewName
                     ( BlockageCellView nil ) ;BlockageCellView is PowerGridCellView since our placement and routing blockages are in PowerGrid Cell
                     ( Warnonly nil )
                     ( DialogBox t ) ; pop up dialog box on warnings or errors
+                    ( VoltageDomain nil )
+                    ( powerNets list("Vdd") )
+                    ( gndNets   list("GND") )
                    )
  let( (pin_nocast pin_nodef pout pinserr 
          cellView cellView1 foundTieOffCell instances prelayouts
@@ -698,7 +735,10 @@ if(!Synchronous
     prBound=setof( lpp instMaster~>lpps lpp~>layerName=="prBoundary" )
     if(instMaster->prBoundary || (prBound !=nil) then
       prBoundBox=nil
-	  if( prBound then
+	  if( instMaster->prBoundary then
+        if( instMaster->prBoundary then
+          prBoundBox=instMaster->prBoundary->bBox)
+      else
         foreach( thisLayer prBound
           foreach( shape thisLayer~>shapes
             if((shape~>objType!="label" && prBoundBox==nil) then
@@ -706,9 +746,6 @@ if(!Synchronous
             )
           )
         )
-      else
-        if( instMaster->prBoundary then
-          prBoundBox=instMaster->prBoundary->bBox)
       )
       if((prBoundBox!=nil && inst~>xy!=nil) then 
         let((point1 point2 x y w1 h1 w2 h2)
@@ -902,8 +939,8 @@ if(!Synchronous
       fprintf( pout "- %s\n" netName)
       powerStr = ""
       when(Synchronous 
-        when( member(netName powerNet)   powerStr = "+ USE POWER " fprintf( pout "+ USE POWER\n"  ) )
-        when( member(netName groundNet)  powerStr = "+ USE GROUND" fprintf( pout "+ USE GROUND\n" ) )
+        when( member(netName powerNetGlobal)   powerStr = "+ USE POWER " fprintf( pout "+ USE POWER\n"  ) )
+        when( member(netName groundNetGlobal)  powerStr = "+ USE GROUND" fprintf( pout "+ USE GROUND\n" ) )
        )
  
       specialNetString=sprintf( nil "- %s %s\n" netName powerStr)
@@ -1048,6 +1085,8 @@ if(!Synchronous
 
   )
 
+  when(VoltageDomain exportDomainAssociation(pout powerNets gndNets cellView))
+
   when(Synchronous exportPlacementBlockages(pout cellView))
   when(Synchronous   exportRoutingBlockages(pout cellView))
 
@@ -1061,7 +1100,7 @@ if(!Synchronous
     foreach( metalLpp MetalLPPs
       metalShapes=setof( shape BlockageCellView~>shapes shape~>layerName==car(metalLpp) && shape~>purpose=="boundary")
       if( metalShapes then
-        blockageNum=blockageNum+1
+        blockageNum=blockageNum+2
       )
     )
    when(!Synchronous
@@ -1080,7 +1119,15 @@ if(!Synchronous
             then
               fprintf( pout "  - LAYER %s + PUSHDOWN\n" car(metalLpp))
             else
-              fprintf( pout "  - LAYER %s\n" car(metalLpp))
+              fprintf( pout "  - LAYER %s + PUSHDOWN\n" car(metalLpp))
+              )
+           defShapeToText( pout metalShapes transform)
+           fprintf( pout "  ;\n")
+           if( Synchronous 
+            then
+              fprintf( pout "  - LAYER %s \n" car(metalLpp))
+            else
+              fprintf( pout "  - LAYER %s \n" car(metalLpp))
               )
           defShapeToText( pout metalShapes transform)
           fprintf( pout "  ;\n")
@@ -1092,7 +1139,7 @@ if(!Synchronous
   )
   fprintf( pout "END DESIGN\n")
   close(pout)
-  close(pinserr)
+  when(OutputPins close(pinserr))
 
   when(prelayouts
     defnWarn(1)
@@ -1136,5 +1183,43 @@ if(!Synchronous
   ) ) )
   ; return t if no errors
   defnErr(0)==0
+ )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;
+(defun exportTotemLef ( cellName viewName  )
+ (let ( CV temp_dir lefPort box tpid gdsName dfIILoc fp_dir time libName )
+
+  libName = car(NameParseCellName(cellName))
+  printf("generating totem Lef for %s %s (%s).\n\n" libName cellName viewName)
+
+  CV = dbOpenCellViewByType( libName cellName viewName )  
+  time = parseString(dbGetFileTimeStamp(CV) " ")
+  temp_dir  = ( ConfigFileGetValue TheCDSConfigTable "TEMP" ) ; strcat(root_dir "temp/")
+  tpid = (NameStartRename "cell" "cadence" "gds2")
+  gdsName = (NameDoRename tpid cellName)
+  dfIILoc   = ( ConfigFileGetValue TheCDSConfigTable "DFII_DIR" )
+  fp_dir    = NameGetViewDirFromDFIIDirAndCellNameAndView( dfIILoc cellName viewName )
+  lefPort = outfile(strcat( fp_dir "/" "cell_totem.lef" ))
+
+  fprintf( lefPort "## Auto generated LEF as reference for Totem CMM Flow\n" )
+  fprintf( lefPort "## Created On: %s\n\n",dbGetFileTimeStamp(CV))
+  fprintf( lefPort "VERSION 5.6 ;     \n" )
+  fprintf( lefPort "BUSBITCHARS \"<>\" ;\n" )
+  fprintf( lefPort "DIVIDERCHAR \"|\" ; \n\n" )
+  fprintf( lefPort "MACRO %s\n" gdsName )
+  fprintf( lefPort "  CLASS BLOCK ;\n" )
+  box = GetPrbound(CV)~>bBox
+  if( box == nil then
+    box=CV->bBox
+  )
+  fprintf( lefPort "  ORIGIN %.3f %.3f ;\n", caar(box), cadar(box) ) 
+  fprintf( lefPort "  SIZE %.3f BY %.3f ;\n", BBoxGetHeight(box), BBoxGetWidth(box) ) 
+  fprintf( lefPort "END %s\n\n" GDSIIHierMakeNameGDSIISafe(cellName) )
+  fprintf( lefPort "END LIBRARY" )
+
+  close(lefPort)
+
+t
  )
 )

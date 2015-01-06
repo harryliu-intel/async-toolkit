@@ -5,6 +5,12 @@
   ) 
 )
 
+(defun SetCableCellProp (cv val)
+  (when cv
+    (dbReplaceProp cv "CableCell" "boolean" val)
+  ) 
+)
+
 (defun SetAvagoProp (cv val)
   (when cv
     (dbReplaceProp cv "AvagoCell" "boolean" val)
@@ -79,6 +85,24 @@
     isavago=nil
   )
   isavago
+ )
+)
+
+(defun IsCableCell (cellname @key (viewname "layout")
+                            (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
+                            (castpath ConfigFileGetValue(TheCDSConfigTable "CAST_PATH")) )
+ (let (iscable cv)
+  iscable=nil
+  cv=(nrOpenCellViewReadable (car (NameParseCellName cellname)) cellname viewname)
+
+  (if cv && (dbGetPropByName cv "CableCell") then
+    (when (dbGetPropByName cv "CableCell")->value=="TRUE"
+      iscable=t
+    )
+  else
+    iscable=nil
+  )
+  iscable
  )
 )
 

@@ -32,7 +32,7 @@
           (t           rotation = "R90" height = x1-x0)
           )
     height = MfgGrid * (round height/MfgGrid/3) ; adjust height
-    label = (dbCreateLabel view fig->layerName x:y fig->net->name
+    label = (dbCreateLabel view list(car(fig->lpp) "pin") x:y fig->net->name
                            "centerCenter" rotation "stick" height) ; draw the label
     label->parent = fig ; label moves with figure
     )
@@ -95,8 +95,10 @@
     (unless net net = (dbFindNetByName CV name))
     (when pins
       (foreach pin net->pins
-               (geSelectObject pin->fig)
-               found = found+1
+               (when pin->fig
+                 (geSelectObject pin->fig)
+                 found = found+1
+                 )
                )
       )
     (when wires

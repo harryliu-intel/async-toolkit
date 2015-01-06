@@ -105,7 +105,7 @@ defun( MidPinsInheritPin (CellVue Inst TermName PinName)
 
    when( InPlacePinFig
      InPlacePinTrf = dbTransformBBox(InPlacePinFig~>bBox Inst~>transform)
-     TopPinFig = dbCreateRect(CellVue InPlacePinFig~>lpp InPlacePinTrf)
+     TopPinFig = dbCreateRect(CellVue list(car(InPlacePinFig~>lpp) "pin") InPlacePinTrf)
      TopPinNet = dbMakeNet(CellVue PinName)
      TopPin = dbCreatePin(TopPinNet TopPinFig)
      dbSetq( TopPin ( list "top" "bottom" "left" "right" ) accessDir )
@@ -200,7 +200,7 @@ defun( MidPinsCreateLabel (CellVue PinShape)
            LabelRot = "R90"
            LabelHt  = PinWd/2
        )
-    PinLabel = dbCreateLabel(CellVue PinShape~>lpp LwLtX+PinWd/2:LwLtY+PinHt/2 LabelName "centerCenter" LabelRot "stick" LabelHt)
+    PinLabel = dbCreateLabel(CellVue list( car(PinShape~>lpp) "pin") LwLtX+PinWd/2:LwLtY+PinHt/2 LabelName "centerCenter" LabelRot "stick" LabelHt)
 
     PinLabel
   )
@@ -219,4 +219,53 @@ defun( MidPinsCreateLabel (CellVue PinShape)
      )
   t
  )
+)
+
+(defun DrawSyncInPlacePins ( @key (CV (UIGetCellView)) )
+ (let ( mapfile maplist  rtlname_parts pinmap
+        apr      rtlname fixname_0     pin
+        cmd     castname fixname_1     rtlparts
+                         inplace_0     name
+                         inplace_1     pin2
+
+ )
+
+  cmd = sprintf( nil "fulcrum --before 283418 generate_port_mapping --cast-path=%s --verilog-block=rtl --cell=%s > %s.portmap" 
+                 ConfigFileGetValue( TheCDSConfigTable "CAST_PATH" ) CV~>cellName CV~>cellName )
+  (sh cmd)
+
+  mapfile = infile( sprintf( nil "%s.portmap" CV~>cellName ) )
+  apr     = dbFindAnyInstByName(CV "apr" )
+
+  foreach( s CV~>shapes when( s~>SyncInPlacePin == "TRUE" dbDeleteObject(s) ) )
+
+  while( gets( pinmap mapfile ) 
+   maplist  = parseString( pinmap " \n" )
+    rtlname = nth(0 maplist)
+   castname = nth(1 maplist)
+   (rexCompile ",")
+   castname = (rexReplace castname "][" 0 )
+
+   pin = MidPinsInheritPin(CV apr rtlname castname) 
+   pin~>SyncInPlacePin = "TRUE"
+
+   rtlparts = parseString( rtlname "[<>]" )
+
+   when( length( rtlparts ) > 1 
+     when( !pin 
+       sprintf( name "%s<%s>" nth(0 rtlparts) nth(1 rtlparts) )
+       pin2 = MidPinsInheritPin(CV apr name castname) 
+       pin2~>SyncInPlacePin = "TRUE"
+     )
+    )
+   when( !pin2 && !pin  printf( "ERROR: Cannot inherit %s pin, due to missing %s pin inside %s\n" castname rtlname apr~>cellName ) )
+   pin = nil
+   pin2 = nil
+
+   )
+
+close(mapfile)
+
+ )
+t
 )

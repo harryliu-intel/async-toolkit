@@ -269,10 +269,10 @@ wires_modtime = makeTable("wires" 0)
     (if net!=nil fig->net = net)
     (cond (isPin
           (cond (y0==y1
-                rect = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
+                rect = (dbCreateRect CV list( car(layer) "drawing" ) list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
                 )
                 (x0==x1
-                rect = (dbCreateRect CV layer list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
+                rect = (dbCreateRect CV list( car(layer) "drawing" ) list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
                 )
                 (t (error "invalid coordinates for pins %f:%f %f:%f" x0 y0 x1 y1) 
                 )
@@ -357,7 +357,7 @@ wires_modtime = makeTable("wires" 0)
                         @key (isPin nil) (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
                         (guideInst nil) (flipX nil) (flipY nil) (pattern evalstring("e1of4"))
                         (CV (geGetEditCellView)))
-  (let (horz_layer vert_layer via viadir last first lastIndex index cuts layer hv dir templast (types (ClassifyPoints points)) (dirs (ClassifyDirs points)) corrected correctOP)
+  (let (horz_layer vert_layer via viadir last first lastIndex index cuts layer hv dir prevdir templast (types (ClassifyPoints points)) (dirs (ClassifyDirs points)) corrected correctOP)
     corrected = nil
     horz_layer = (car layers)
     vert_layer = (cadr layers)
@@ -373,10 +373,18 @@ wires_modtime = makeTable("wires" 0)
 	when(verticalVias
     cuts = (if verticalVias "_R_V" "_R_H"))
 
-    (if startVias (DrawVia name via last width cuts ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias                            ?guideInst guideInst ?stacked t ?CV CV))
+    (if startVias (DrawVia name via last width cuts ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias 
+                   ?guideInst guideInst ?stacked t ?CV CV))
     (foreach point (cdr points)
              hv = nth(index types)
-             dir = nth(index dirs)
+             if( index > 0
+              then 
+               prevdir = nth(index-1 dirs)
+               dir     = nth(index dirs)
+             else
+               prevdir = nil
+               dir     = nth(index dirs)
+             )
              layer = (if (almostEqual (car point) (car last)) vert_layer horz_layer)
              (DrawSegment name layer width last point
                           (index!=0) (index!=lastIndex) isPin ?guideInst guideInst ?CV CV)
@@ -391,7 +399,7 @@ wires_modtime = makeTable("wires" 0)
                 corrected = nth(1 correctOP)
               )
              when( doubleVias &&  verticalVias
-                correctOP = VerticalViaCorrection(templast hv dir pattern flipX flipY positiveVias)
+                correctOP = VerticalViaCorrection(templast hv prevdir dir pattern flipX flipY positiveVias)
                 last = nth(0 correctOP)
                 corrected = nth(1 correctOP)
               )
@@ -583,7 +591,7 @@ wires_modtime = makeTable("wires" 0)
                     ?isPin isPin ?startVias stVias ?endVias eVias ?verticalVias verticalVias ?positiveVias positiveVias 
                     ?doubleVias doubleVias ?guideInst guideInst ?flipX flipX ?flipY flipY ?pattern pattern ?CV CV)
 
-      when( drawShield DrawBusShield(newpoints (if layer_override layer_override curLayer) prefix ?shieldM2 shieldM2) )
+      when( drawShield DrawBusShield(newpoints (if layer_override layer_override curLayer) prefix ?shieldM2 shieldM2 ?CV CV) )
           
     )
 
@@ -1239,9 +1247,8 @@ wires_modtime = makeTable("wires" 0)
         ;always load the primary cell's file
         FinalPath=(sprintf nil "%s/wires.il"
                  (NameGetCellPathFromCellName CV->cellName))
-        (when (isFile FinalPath)
-          (load FinalPath)
-        )
+        (when (isFile FinalPath) (load FinalPath) )
+        (load (strcat ( ConfigFileGetValue TheCDSConfigTable "VIRTUOSO_HOME" ) "/share/skill/layout/cable/cable_defchan.il"))
 	)
   )
 
@@ -1852,56 +1859,212 @@ wires_modtime = makeTable("wires" 0)
  )
 )
 
+;; lot of cases ... logic not optimized !!!
 (defun DoubleViaCorrection (point hv dir pattern flipX flipY)
  let( (newpoint corrected up Flip)
   corrected = nil
   Flip = (flipX || flipY) && !(flipX && flipY)
-;  if( nth(2 car(pattern)) != 0
-;   then
      corrected = t
      if( hv == "HV"
       then
-       if( (dir == "P" && Flip) || (dir == "N" && !Flip)
-        then
-         newpoint = car(point)-(TrackPitch/24):cadr(point)
-        else
-         newpoint = car(point)+(TrackPitch/24):cadr(point)
-        )
+        when( dir == "P" 
+         if( prevdir == "P"
+          then
+            if( Flip 
+            then
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+             )
+           )
+         )
+        when( dir == "N" 
+         if( prevdir == "N"
+          then
+            if( Flip 
+            then
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+             )
+          else
+            if( Flip 
+            then  
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+             )
+           )
+         )
       else
-       if( (dir == "P" && Flip) || (dir == "N" && !Flip)
-        then
-         newpoint = car(point)+(TrackPitch/24):cadr(point)
-        else
-         newpoint = car(point)-(TrackPitch/24):cadr(point)
-        )
+        when( dir == "P" 
+         if( prevdir == "P"
+          then
+            if( Flip 
+            then
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+             )
+           )
+         )
+        when( dir == "N" 
+         if( prevdir == "N"
+          then
+            if( Flip 
+            then
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+            else                                              
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point)+(TrackPitch/24):cadr(point)
+            else                                             
+             newpoint = car(point)-(TrackPitch/24):cadr(point)
+             )
+           )
+         )
       )
-;   else
-;    newpoint = point
-;   )
 
   list(newpoint corrected)
  )
 )
 
-(defun VerticalViaCorrection (point hv dir pattern flipX flipY positiveVias)
+;; lot of cases ... logic not optimized !!!
+(defun VerticalViaCorrection (point hv prevdir dir pattern flipX flipY positiveVias)
  let( (newpoint corrected up Flip)
   corrected = nil
   Flip = (flipX || flipY) && !(flipX && flipY)
-     corrected = nil
-	when(positiveVias==nil
-         newpoint = car(point):cadr(point)-(TrackPitch/24))
-	when(positiveVias==t
-         newpoint = car(point):cadr(point)+(TrackPitch/24))
+	if( !positiveVias
+   then
+     if( hv == "HV"
+      then
+        when( dir == "P" 
+         if( prevdir == "P"
+          then
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+             )
+           )
+         )
+        when( dir == "N" 
+         if( prevdir == "N"
+          then
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+             )
+           )
+         )
+      else
+        when( dir == "P" 
+         if( prevdir == "P"
+          then
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+             )
+           )
+         )
+        when( dir == "N" 
+         if( prevdir == "N"
+          then
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+             )
+          else
+            if( Flip 
+            then
+             newpoint = car(point):cadr(point)+(TrackPitch/24)
+            else                                              
+             newpoint = car(point):cadr(point)-(TrackPitch/24)
+             )
+           )
+         )
+      )
+   else
+      newpoint = car(point):cadr(point)+(TrackPitch/24)
+   )
   list(newpoint corrected)
- ))
+ )
+)
 
 (defun ClassifyDirs (points)
   let( ((types (ClassifyPoints points)) Idx dirs currPt comparePt)
 
    for( Idx 0 length(points)-1
 
-     when( nth(Idx types) == "VE" || nth(Idx types) == "HE" || nth(Idx types) == "EV" || nth(Idx types) == "EH"
+     when( nth(Idx types) == "VE" || nth(Idx types) == "HE" 
         dirs = cons(nil dirs)
+       )
+
+     when( nth(Idx types) == "EH"
+       currPt = nth(Idx points)
+       comparePt = nth(Idx+1 points)
+       if( car(currPt) < car(comparePt)
+        then
+         dirs = cons("P" dirs)
+        else
+         dirs = cons("N" dirs)
+         )
+       )
+
+     when( nth(Idx types) == "EV" 
+       currPt = nth(Idx points)
+       comparePt = nth(Idx+1 points)
+       if( cadr(currPt) < cadr(comparePt)
+        then
+         dirs = cons("P" dirs)
+        else
+         dirs = cons("N" dirs)
+         )
        )
 
      when( nth(Idx types) == "HV"
@@ -1917,8 +2080,8 @@ wires_modtime = makeTable("wires" 0)
 
      when( nth(Idx types) == "VH"
        currPt = nth(Idx points)
-       comparePt = nth(Idx-1 points)
-       if( cadr(currPt) > cadr(comparePt)
+       comparePt = nth(Idx+1 points)
+       if( car(currPt) < car(comparePt)
         then
          dirs = cons("P" dirs)
         else

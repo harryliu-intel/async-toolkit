@@ -9,6 +9,15 @@
              ( setq Key ( getq Fig lpp ) )
              ( setq Incr ( PathGetDistance Fig ) )
            ) )
+
+	  (
+           ( equal Type "pathSeg" )
+           (let (
+                  ( BBox ( getq Fig bBox ) ) )
+             ( setq Key ( getq Fig lpp ) )
+             ( setq Incr ( max ( BBoxGetHeight BBox )
+                               ( BBoxGetWidth BBox ) ) ) ) )
+
           (
            ( equal Type "rect" )
            (let (

@@ -8,13 +8,13 @@
         (Verbose nil)            ; verbose
         (ConnectDanglingPins t)  ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins t)  ; paint metal between nearby pins on the same net
-        (doFillPoly t)           ; fill poly
         (doMakePowerGrid t)      ; make power grid
         (doPowerGridAbstract t)  ; generate abstract view of power grid
+        (decap nil)              ; add DECAP cells
         )
   (let (MaxHeapSize FlattenCellsList Components RComponents CellBaseName
         type_sub PowerGridCellName OBSCellName flattenCV xalign yalign
-        pgCV win temp)
+        pgCV win TEMP)
 
     ; check viewName
     (when (and CV->viewName!="floorplan" CV->viewName!="prelayout")
@@ -31,7 +31,8 @@
     MaxHeapSize = (nrGetMaxHeapSize)
 
     ; generated cell or file names
-    FlattenCellsList = (strcat CV->cellName ".flatten_cells_list")
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    FlattenCellsList = (strcat TEMP "/" CV->cellName ".flatten_cells_list")
     Components = (parseString CV->cellName ".")
     RComponents = (reverse Components)
     CellBaseName = (cadr RComponents)
@@ -55,15 +56,9 @@
     (SetYAlignmentProp flattenCV (max (if yalign yalign 0) GridPitch))
     (dbSave flattenCV)
 
-    ; Create Poly Fill 
-    (when doFillPoly && !Proteus
-      polyfillCV = (FillPoly ?CV flattenCV)
-      (unless polyfillCV (error "Unable to create poly fill\n"))
-    )
-
     ; Create power grid
     (when doMakePowerGrid
-      pgCV = (MakePowerGrid ?CV flattenCV ?Proteus Proteus)
+      pgCV = (MakePowerGrid ?CV flattenCV ?Proteus Proteus ?decap decap)
       (unless pgCV (error "Unable to create power grid\n"))
       )
 
@@ -86,9 +81,9 @@
 
     ; create FlattenCellsList file
     celllist_filename = FlattenCellsList
-    instances= setof( inst CV~>instances inst->libName!=TechLibName && inst->viewName!="polyfill")
-    instances= append( car( NameFilterInstances( instances LibCellsToIgnore ))
-                       cadr( NameFilterInstances( instances PowerGridCellPairRegExs )))
+    instances= (setof inst CV->instances inst->libName!=TechLibName)
+    instances= (append (car (NameFilterInstances instances LibCellsToIgnore))
+                       (cadr (NameFilterInstances instances PowerGridCellPairRegExs)))
     uniqueInstances=nil
     foreach( inst instances
       if( !member( inst~>cellName uniqueInstances~>cellName ) then
@@ -160,16 +155,21 @@
 (defun MakePowerGrid
   (@key (CV (geGetEditCellView)) ; flatten CV
         (Proteus nil) ; include M2 stripes
+        (sync_cable nil)
+        (polyfill t)
+        (decap nil)
         )
-  (let (Components RComponents type_sub powerCellName
-        inst prb PowerGridSize PGS prbObjPoints prb1
+  (let (TEMP Components RComponents type_sub powerCellName
+        inst prb PowerGridSize PGS prbObjPoints prb1 copyprb vertprb vertprbrec
         x1box x2box y1box y2box x1 y1 x2 x2 xy
         AssuraLayerMappings AssuraRuleFile AssuraRunLog ErrorStr
         powerCV ReplaceCellNameTable blks
         count gridName gridCV rows cols transform points
-        tiehilo GND Vdd instGND instVdd)
+        tiehilo GND Vdd instGND instVdd
+        PolyGridSize PolyColSize XdirGridSize pr prblks fillLib fillName)
 
     ; generated cell or file names
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     Components = (parseString CV->cellName ".")
     RComponents = (reverse Components)
     (when (length RComponents)<3 (error "Cell name violates CAST conventions\n"))
@@ -181,21 +181,28 @@
     (when inst (dbDeleteObject inst))
 
     ; get prBoundary boundary shapes 
-    prbObjPoints = CV->prBoundary->points
-    prb1 = (dbCreatePolygon CV list("prBoundary" "drawing") prbObjPoints)
-    copyprb1 = (setof x CV->shapes (car x->lpp) == "prBoundary" && (cadr x->lpp) == "drawing")
+    (unless CV->prBoundary->points (error "Bad prBoundary"))
+    (cond (!sync_cable
+           prbObjPoints = CV->prBoundary->points
+           )
+          (sync_cable
+           prbObjPoints = (RotatePolygonPoints CV->prBoundary->points "MXR90")
+           )
+          )
+    prb1 = (dbCreatePolygon CV (list "prBoundary" "drawing") prbObjPoints)
+    copyprb1 = (setof x CV->shapes x->lpp==(list "prBoundary" "drawing"))
 
     ; checks for prBoundary drawing, if only one exists, if vertices are on 3.12u grid
-    (cond ((length copyprb1)==1 (letseq
-                ((copyprb (car copyprb1)))
-                vertprb = (setof vertprb copyprb->points (CheckOffGrid vertprb))
-                vertprbrec = (setof vertprbrec copyprb->bBox (CheckOffGrid vertprbrec))
-                (when vertprb (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprb))
-                (when vertprbrec (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprbrec))
-                prb =  (dbCopyShape copyprb CV )
-                prb->lpp=(list "prBoundary" "boundary")))
-           (t (error "ERROR: Check prBoundary layer. Either no prBoundary or more than one exists."))) 
-           
+    (when (length copyprb1)!=1
+          (error "ERROR: Check prBoundary layer. Either no prBoundary or more than one exists."))
+    copyprb = (car copyprb1)
+    vertprb = (setof vertprb copyprb->points (CheckOffGrid vertprb))
+    vertprbrec = (setof vertprbrec copyprb->bBox (CheckOffGrid vertprbrec))
+    (when vertprb    (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprb))
+    (when vertprbrec (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprbrec))
+    prb = (dbCopyShape copyprb CV)
+    prb->lpp = (list "prBoundary" "boundary")
+
     ; get bounding box as an integer multiple of MfgGrid
     x1box = 1.0*(round (leftEdge   prb->bBox)/MfgGrid)
     x2box = 1.0*(round (rightEdge  prb->bBox)/MfgGrid)
@@ -210,24 +217,27 @@
     x2 = (ceiling x2box/PGS)
     y2 = (ceiling y2box/PGS)
 
+    ; create prBoundary leaf boxes to block poly fill
+    prblks = (PaintOverSubcellPrBoundary (list "prBoundary" "leaf") ?CV CV)
+    when(sync_cable foreach(pr prblks  pr~>points = (RotatePolygonPoints pr->points "MXR90")) )
+ 
     ; avoid M2 overlapping prBoundary of subcells (looks only one level down)
     (when Proteus blks = (PaintOverSubcellPrBoundary (list "M2" "block") ?CV CV))
 
     ; avoid M2 power grid everywhere
-    (unless Proteus blks = (list (dbCreatePolygon CV (list "M2" "block") (GetPrboundPoints CV))))
+    (unless Proteus blks = (list (dbCreatePolygon CV (list "M2" "block")
+                                                  (GetPrboundPoints CV))))
 
-    ; find bottom vertices of prbound to place Vdd/GND pins
-    (if prb->objType == "polygon"
-        (letseq ()
-                botprbverts = (setof botprbverts prb->points
-                                     (CheckBotVert botprbverts ((ceiling y1box/PGS)*PowerGridSize)))
-        xy = (car botprbverts))
-        xy = (list (ceiling x1box/PGS)*PowerGridSize
-                   (ceiling y1box/PGS)*PowerGridSize)
-        )
+    ; find bottom left vertices of prbound to place Vdd/GND pins
+    (cond (prb->objType == "polygon" xy = (car (SortVertices prb->points)))
+          (t xy = x1box:y1box)
+          )
 
     ; run layer processing
     AssuraLayerMappings = (list
+                           (list "fillpoly" (list "prBoundary" "leaf"))
+                           (list "power2top" (list "PO" "block"))
+                           (list "power2bot" (list "M1" "block"))
                            (list "power2" (list "M2" "block"))
                            (list "power3" (list "M3" "block"))
                            (list "power4" (list "M4" "block"))
@@ -240,12 +250,11 @@
                               (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
                               "makePowerGrid.rul")
     AssuraRunLog = (sprintf nil "%s/%s.power_grid.log"
-                            (ConfigFileGetValue TheCDSConfigTable "TEMP")
-                            CV->cellName)
+                            TEMP CV->cellName)
     ErrorStr = (AssuraRunAssuraLayerProcessor
                 CV CV->libName powerCellName "layout"
                 AssuraRuleFile
-                (ConfigFileGetValue TheCDSConfigTable "TEMP")
+                TEMP
                 AssuraLayerMappings
                 nil
                 ?AssuraRunLog AssuraRunLog
@@ -255,6 +264,8 @@
 
     ; define power grid cell names
     ReplaceCellNameTable=makeTable("a" "")
+    ReplaceCellNameTable["PO"]="globals.wires.POWER_GRID_M2345678top"
+    ReplaceCellNameTable["M1"]="globals.wires.POWER_GRID_M2345678bot"
     ReplaceCellNameTable["M2"]="globals.wires.POWER_GRID_M2345678"
     ReplaceCellNameTable["M3"]="globals.wires.POWER_GRID_M345678"
     ReplaceCellNameTable["M4"]="globals.wires.POWER_GRID_M45678"
@@ -276,7 +287,7 @@
           cols = (round (x2-x1)/PowerGridSize)
           rows = (round (y2-y1)/PowerGridSize)
           (dbCreateSimpleMosaic powerCV gridCV
-                                (sprintf nil "I%d" count) x1:y1 "R0"
+                                (sprintf nil "pg%d" count) x1:y1 "R0"
                                 rows cols PowerGridSize PowerGridSize)
           count = count+1
           (dbDeleteObject shape)
@@ -284,179 +295,94 @@
         )
       )
 
-    ; copy prBoundary object to powergrid view
-    (dbCreatePRBoundary powerCV CV->prBoundary->points)
+    ; create prBoundary, power pins, and instantiate power grid
+    (cond (!sync_cable
+           (dbCreatePRBoundary powerCV CV->prBoundary->points)
+           (CreatePowerPins powerCV "M8" xy t)
+           (CreatePowerPins CV      "M8" xy t)
+           tiehilo = (dbCreateInst CV powerCV "tiehilo" 0:0 "R0")
+           )
+          (sync_cable
+           (CreateSyncCablePowerPins CV "M3")
+           tiehilo = (dbCreateInst CV powerCV "tiehilo" 0:0 "MXR90")
+           (dbCreatePRBoundary powerCV
+                               (RotatePolygonPoints CV->prBoundary->points "MXR90"))
+           )
+          )
 
-    ; delete temporary prBoundary shape
-    (dbDeleteObject prb)
-    (dbDeleteObject prb1)
-
-    ; delete temporary leaf M2 block shapes from flatten CV
-    (foreach x blks (dbDeleteObject x))
-
-    ; create power pins
-    (CreatePowerPins powerCV "M8" xy t)
-    (CreatePowerPins CV      "M8" xy t)
-
-    ; instantiate power grid and connect power pins
-    tiehilo = (dbCreateInst CV powerCV "tiehilo" 0:0 "R0")
+    ; finish up power grid and pins
     (AnchorInstance tiehilo)
     GND = (dbFindNetByName CV GNDNetName)
     Vdd = (dbFindNetByName CV VddNetName)
     instGND = (dbFindTermByName powerCV GNDNetName)
     instVdd = (dbFindTermByName powerCV VddNetName)
-    (dbCreateInstTerm GND tiehilo instGND)
-    (dbCreateInstTerm Vdd tiehilo instVdd)
+    (unless sync_cable
+       instGND = (dbFindTermByName powerCV "GND")
+       instVdd = (dbFindTermByName powerCV "Vdd")
+       (dbCreateInstTerm GND tiehilo instGND)
+       (dbCreateInstTerm Vdd tiehilo instVdd)
+       )
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; FillPoly ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    ; minimum sized poly x-axis grid
+    PolyGridSize = 2*GridPolyPitch
+    PolyColSize = (round PowerGridSize/PolyGridSize)
+
+    ; use prbleaf shapes to create poly fill mosaics
+    count=0
+    when( polyfill
+      decapCount = 0 ; returned as a global variable
+      (foreach shape (setof s powerCV->shapes s->lpp==(list "prBoundary" "leaf"))
+        x1 = (leftEdge   shape->bBox)
+        y1 = (bottomEdge shape->bBox)
+        x2 = (rightEdge  shape->bBox)
+        y2 = (topEdge    shape->bBox)
+        cols = (round (x2-x1)/PolyGridSize)
+        rows = (round (y2-y1)/PowerGridSize)
+        XdirGridSize = PolyGridSize
+        fillLib = "globals"
+        (cond (cols >= PolyColSize
+               fillLib = (if decap "lib.decap" "globals")
+               fillName = (if decap "lib.decap.DECAP.0"
+                            "globals.wires.POLY_FILL_DCAP")
+               cols = (round cols/PolyColSize)
+               decapCount = decapCount + (if decap cols*rows 0)
+               XdirGridSize = PowerGridSize)
+              (cols == 4
+               fillName = "globals.wires.POLY_FILL_S104"
+               cols = (round cols/4)
+               XdirGridSize = 4*PolyGridSize)
+              (cols == 2
+               fillName = "globals.wires.POLY_FILL_S52"
+               cols = (round cols/2)
+               XdirGridSize = 2*PolyGridSize)
+              (cols == 1
+               fillName = "globals.wires.POLY_FILL_S26"
+               cols = (round cols/1)
+               XdirGridSize = PolyGridSize)
+              (t (error "unexpected poly fill shape width %d" cols))
+              )
+        gridCV = (nrOpenCellViewReadable fillLib fillName "layout")
+        (dbCreateSimpleMosaic powerCV gridCV
+                              (sprintf nil "polyfill%d" count) x1:y1 "R0"
+                              rows cols PowerGridSize XdirGridSize)
+        count = count+1
+        )
+     )
+
+    ; delete temporary shapes
+    (dbDeleteObject prb)
+    (dbDeleteObject prb1)
+    (foreach x blks (dbDeleteObject x))
+    (foreach x prblks (dbDeleteObject x))
 
     ; save and return
     (dbSave CV)
     (dbSave powerCV)
     (dbClose powerCV)
+    (printf "decapCount=%d\n" decapCount)
     powerCV
-    )
-  )
-
-; Fill grided poly between custom leaf cells
-(defun FillPoly
-  (@key (CV (geGetEditCellView)) ; select CV
-        )
-  (let (Components RComponents type_sub polyCellName
-        inst prb PowerGridSize PGS prbObjPoints prb1
-        x1box x2box y1box y2box x1 y1 x2 x2 xy
-        AssuraLayerMappings AssuraRuleFile AssuraRunLog ErrorStr
-        polyCV blks
-        count gridName gridCV rows cols leafcell leafbbox 
-        polyfill XdirGridSize PolyGridSize PolyColSize)
-
-    ; generated cell or file names
-    Components = (parseString CV->cellName ".")
-    RComponents = (reverse Components)
-    (when (length RComponents)<3 (error "Cell name violates CAST conventions\n"))
-    type_sub = (sprintf nil "%s_%s" (cadr RComponents) (car RComponents))
-    polyCellName = (CV->cellName)
-
-    ; delete old poly grid instance if it exists
-    inst = (dbFindAnyInstByName CV "polyfill")
-    (when inst (dbDeleteObject inst))
-
-    ; get prBoundary boundary shapes 
-    prbObjPoints = CV->prBoundary->points
-    prb1 = (dbCreatePolygon CV list("prBoundary" "drawing") prbObjPoints)
-    copyprb1 = (setof x CV->shapes (car x->lpp)=="prBoundary"&&(cadr x->lpp)=="drawing")
-
-    ; checks for prBoundary drawing, if only one exists, if vertices are on 3.12u grid
-    (cond ((length copyprb1)==1 (letseq
-                ((copyprb (car copyprb1)))
-                vertprb = (setof vertprb copyprb->points (CheckOffGrid vertprb))
-                vertprbrec = (setof vertprbrec copyprb->bBox (CheckOffGrid vertprbrec))
-                (when vertprb (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprb))
-                (when vertprbrec (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprbrec))
-                prb =  (dbCopyShape copyprb CV )
-                prb->lpp=(list "prBoundary" "boundary")))
-           (t (error "ERROR: Check prBoundary layer. Either no prBoundary or more than one exists.")))
-
-    ;create prBoundary leaf boxes for fill block
-    blks = (PaintOverSubcellPrBoundary (list "prBoundary" "leaf") ?CV CV)
- 
-    ; minimum sized power grid y-axis
-    PowerGridSize = 2*PowerGridPitch
-
-    ; minimum sized poly x-axis grid
-    PolyGridSize = 2*0.13
-
-    ; number of polyfill columns per powergrid
-    OneCol = 1
-    TwoCol = 2
-    ThreeCol = 3
-    PolyColSize = PowerGridSize/PolyGridSize
-
-    ; run layer processing
-    AssuraLayerMappings = (list
-                           (list "fillpoly" (list "M7" "block"))
-                           )
-    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s"
-                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-                              "fillPoly.rul")
-    AssuraRunLog = (sprintf nil "%s/%s.fillpoly.log"
-                            (ConfigFileGetValue TheCDSConfigTable "TEMP")
-                            CV->cellName)
-    ErrorStr = (AssuraRunAssuraLayerProcessor
-                CV CV->libName polyCellName "polyfill"
-                AssuraRuleFile
-                (ConfigFileGetValue TheCDSConfigTable "TEMP")
-                AssuraLayerMappings
-                nil
-                ?AssuraRunLog AssuraRunLog
-                ?LeaveMess nil 
-                )
-    polyCV = (nrOpenCellViewWritable CV->libName polyCellName "polyfill")
-
-    ; replace block shapes with poly mosaics
-    count=0
-    (foreach lpp polyCV->lpps
-      (when lpp->layerName=="M7" && lpp->purpose=="block"
-        (foreach shape lpp->shapes
-          x1 = (leftEdge   shape->bBox)
-          y1 = (bottomEdge shape->bBox)
-          x2 = (rightEdge  shape->bBox)
-          y2 = (topEdge    shape->bBox)
-          cols = (round (x2-x1)/PolyGridSize)
-          rows = (round (y2-y1)/PowerGridSize)
-          XdirGridSize = PolyGridSize
-          (cond (cols >= PolyColSize (let ()
-           	   gridCV = (nrOpenCellViewReadable
-                             "globals" "globals.wires.POLY_FILL_DCAP" "layout")
-                   cols = (round cols/PolyColSize)
-                   XdirGridSize = PowerGridSize))
-
-                (cols >= ThreeCol (let ()
-                   gridCV = (nrOpenCellViewReadable
-                             "globals" "globals.wires.POLY_FILL_S78" "layout")
-                   cols = (round cols/ThreeCol)
-                   XdirGridSize = 3*PolyGridSize))
-
-                (cols >= TwoCol (let ()
-                   gridCV = (nrOpenCellViewReadable
-                             "globals" "globals.wires.POLY_FILL_S52" "layout")
-                   cols = (round cols/TwoCol)
-                   XdirGridSize = 2*PolyGridSize))
-
-                (cols >= OneCol (let ()
-                   gridCV = (nrOpenCellViewReadable
-                             "globals" "globals.wires.POLY_FILL_S26" "layout")
-                   cols = (round cols/OneCol)
-                   XdirGridSize = PolyGridSize))
-                (t (error))
-                )
-          (dbCreateSimpleMosaic polyCV gridCV
-                                (sprintf nil "I%d" count) x1:y1 "R0"
-                                rows cols PowerGridSize XdirGridSize)
-
-          count = count+1
-          (dbDeleteObject shape)
-          )
-        )
-      )
-
-    ; copy prBoundary object to poly fill view
-    (dbCreatePRBoundary polyCV CV->prBoundary->points)
-
-    ; delete temporary prBoundary shape
-    (dbDeleteObject prb)
-    (dbDeleteObject prb1)
-
-    ; delete temporary leaf prBoundary shapes 
-    (foreach x blks (dbDeleteObject x))
-
-    ; instantiate poly grid 
-    polyfill = (dbCreateInst CV polyCV "polyfill" 0:0 "R0")
-    (AnchorInstance polyfill)
-
-    ; save and return
-    (dbSave CV)
-    (dbSave polyCV)
-    (dbClose polyCV)
-    polyCV
     )
   )
 
@@ -465,8 +391,8 @@
         (topLayer 7)
         (bottomLayer 3)
         )
-  (let (polyfillinst tclImportFile tclRunFile top bottom instances uniqueInstances pout pout2 Command
-        )
+  (let (tclImportFile tclRunFile top bottom
+        instances uniqueInstances pout pout2 Command)
 
     tclImportFile = (strcat CV->cellName ".import.tcl")
     tclRunFile = (strcat CV->cellName ".run.tcl")
@@ -479,11 +405,7 @@
                               (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
                               "nondefault.lef")
 
-    ; delete poly grid instance if it exists
-    polyfillinst = (dbFindAnyInstByName CV "polyfill")
-    (when polyfillinst (dbDeleteObject polyfillinst))
-
-    instances= setof( inst CV~>instances inst->libName!=TechLibName && inst->viewName!="polyfill")
+    instances= (setof inst CV->instances inst->libName!=TechLibName)
     uniqueInstances=nil
     foreach( inst instances
       if( !member( inst~>libName uniqueInstances~>libName ) then
@@ -571,7 +493,8 @@
 (defun MakePowerGridAbstract
   (@key (CV (geGetEditCellView)) ; flatten CellView
         (powerLayers (list "M2" "M3" "M8"))) ; which layers to keep as pins
-  (let (inst pgCV dd pgaCV AssuraLayerMappings AssuraRuleFile AssuraRunLog figsVdd figsGND)
+  (let (inst pgCV dd pgaCV points
+        AssuraLayerMappings AssuraRuleFile AssuraRunLog figsVdd figsGND)
 
     ; fing powergrid CV
     inst = (dbFindAnyInstByName CV "tiehilo")
@@ -580,6 +503,7 @@
 
     ; run Assura makePowerGridAbstract.rul
     AssuraLayerMappings = (list
+                           (list "prbleaf" (list "M1" "boundary")) ; poly fill
                            (list "m2v" (list "M2" "vdd"))
                            (list "m2g" (list "M2" "gnd"))
                            (list "m3v" (list "M3" "vdd"))
@@ -618,7 +542,7 @@
 
     ; merge shapes (too damn slow)
     ; (leMergeShapes pgaCV->shapes)
-
+    
     ; create prBoundary object
     (dbCreatePRBoundary pgaCV (GetPrboundPoints pgCV))
     (dbCreatePolygon pgaCV BoundaryLPP (GetPrboundPoints pgCV))
@@ -640,6 +564,15 @@
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV VddNetName) nil) figsVdd)
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV GNDNetName) nil) figsGND)
 
+    ; create placement blockage object over prBoundary leaf of fill cells
+    (foreach shape (setof s pgaCV->shapes s->lpp==(list "M1" "boundary"))
+      points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
+                     (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
+                     (t shape->points)
+                     )
+      (dbCreateAreaBlockage CV points) ; in flatten view directly
+      )
+
     ; convert remaining shapes to boundary
     (foreach shape (setof shape pgaCV->shapes !(member shape->layerName powerLayers))
              shape->purpose="boundary"
@@ -650,6 +583,7 @@
     (SetLefProperties pgaCV ?powergrid t)
 
     ; save and return
+    (dbSave CV)
     (dbSave pgaCV)
     (dbClose pgaCV)
     pgaCV
@@ -668,6 +602,20 @@
    (GetNonZeroMod x XGrid) || (GetNonZeroMod y YGrid)
   )
 )
+
+; sort a list of vertices by smallest Y then smallest X
+(defun SortVertices (vertices)
+  (sort (copy vertices)
+        (lambda (a b)
+          (cond ((cadr a)<(cadr b) t)
+                ((cadr a)>(cadr b) nil)
+                ((car  a)<(car  b) t)
+                ((car  a)>(car  b) nil)
+                (t                 nil)
+                )
+          )
+        )
+  )
 
 ; Check vertices are on lowest Y-coord 
 (defun CheckBotVert ( pt bottom )
@@ -690,15 +638,6 @@
                )
              )
     shapes
-    )
-  )
-
-
-; apply a transform to a list of points
-(defun TransformPoints (points transform)
-  (when points
-    (cons (geTransformUserPoint (car points) transform)
-          (TransformPoints (cdr points) transform))
     )
   )
 
@@ -748,3 +687,13 @@ defun( CreateMissingAbstractList ( CellView CellsListFileName )
   )
 )
 
+(defun RotatePolygonPoints (pointlist orient)
+  let( ( I trfPoints )
+     for( I 0 length(pointlist)-1
+      when( orient == "MXR90"
+        trfPoints = append(trfPoints list(reverse(nth(I pointlist))))
+        )
+      )
+trfPoints
+ )
+)

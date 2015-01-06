@@ -12,7 +12,6 @@ my $spec_dir;
 my $spar_dir;
 my $cast_dir;
 my $dfII_dir;
-my $spar_dir = "/p/work/aagrey/rrc/spar";
 my $pdk_root;
 my $max_heap_size="8192M";
 my $cell;
@@ -21,18 +20,21 @@ my $debug=0;
 my $dotop=1;
 my $top_dir=undef;
 my $synchronous=0;
+my $force=0;
 
 GetOptions (
     "cast-path=s" => \$cast_path,
     "spec-dir=s" => \$spec_dir,
     "cast-dir=s" => \$cast_dir,
     "dfii-dir=s" => \$dfII_dir,
+    "spar-dir=s" => \$spar_dir,
     "fulcrum-pdk-root=s" => \$pdk_root,
     "max-heap-size=s" => \$max_heap_size,
     "synchronous" => \$synchronous,
     "verbose" => \$verbose,
     "debug" => \$debug,
     "notop" => sub {$dotop=0;},
+    "force" => \$force,
 );
 
 $verbose=1 if $debug;
@@ -107,10 +109,12 @@ sub writegds {
     if ( -s "$outgds") {
         my @depend=`df2d --dfII-dir='$dfII_dir' --cell='$cell' --view=layout --output-file=/dev/stdout`;
         chomp @depend;
-        my $outofdate=0;
+        my $outofdate=$force;
         my @stat=stat($outgds);
         my $gdstime=$stat[9];
+        $outofdate=1 if ! -s $outgds;
         foreach my $file (@depend) {
+            last if $outofdate;
             next if $file =~ /CDBDEP_TAR/;
             $file =~ s/\s*\\//;
             $file =~ s/\\//g;
@@ -125,10 +129,13 @@ sub writegds {
             my $ltime=$stat[9];
             $outofdate=1 if (! defined ($ltime) or $ltime > $gdstime); 
             print "$cn is out of date for $cell" if $outofdate;
-            last if $outofdate;
         }
         if (! $outofdate) {
             print "Skipping $cell" if $verbose;
+            return 0;
+        }
+        if ( ! -w $outgds and -s $outgds) {
+            print "Cannot overwrite $outgds";
             return 0;
         }
     }
@@ -154,7 +161,7 @@ sub writegds {
     "--cadence-log=$working_dir/gdsIIWrite.log",
     "--assura-log=$working_dir/partial.log",
     "--output=$gdswd/cell.gds2.tmp",
-    "--bind-rul=/nfs/site/disks/wdisk.50/aagrey/rrcwd/lve/lib/sram/8T/fifo/SRAMFIFO32(24)/3000/layout/cell.bindrul.tmp",
+    "--bind-rul=$working_dir/cell.bindrul.tmp",
     "--cell=$cell",
     "--noproperties",
     "--output-root-cell-name=$gdsIIcell",

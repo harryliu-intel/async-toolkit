@@ -7,9 +7,9 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (bottomMetal nil)        ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
-        (SaveQuit nil)           ; automatically save and quit NanoRoute
-        (Background t)           ; select foreground or background
-        (importView "layout_pg") ; view name to import wiring back to
+        (SaveQuit t)             ; automatically save and quit NanoRoute
+        (Background nil)         ; select foreground or background
+        (importView "layout")    ; view name to import wiring back to
         (Ticket "np")            ; QSUB ticket: np, nano
         (Mem 4000)               ; QSUB mem to request
         (Soc (getShellEnvVar "SOC_SCRIPT")) ; which version of Encounter to use
@@ -240,11 +240,11 @@
 
     ; summarize errors
     errorStr = ""
-    (unless statusVerilog (strcat errorStr " Verilog"))
-    (unless statusLef (strcat errorStr " LEF"))
-    (unless statusDef (strcat errorStr " DEF"))
-    (unless statusNonDefault (strcat errorStr "NonDefaultDEF"))
-    (unless statusTracks (strcat errorStr "TracksDEF"))
+    (unless statusVerilog errorStr = (strcat errorStr " Verilog"))
+    (unless statusLef errorStr = (strcat errorStr " LEF"))
+    (unless statusDef errorStr = (strcat errorStr " DEF"))
+    (unless statusNonDefault errorStr = (strcat errorStr "NonDefaultDEF"))
+    (unless statusTracks errorStr = (strcat errorStr "TracksDEF"))
     (when errorStr!="" (error errorStr))
 
     ; return CV
@@ -290,11 +290,11 @@
         (topMetal    7)          ; top metal layer
         (Verify t)               ; run VerifyGeom and VerifyConn at the end
         (SkipCompleteNets t)     ; auto-skip complete nets
-        (SaveQuit nil)           ; automatically save and quit NanoRoute
+        (SaveQuit t)             ; automatically save and quit NanoRoute
         (strictNondefault t)     ; strict nondefault width/spacing rules
         (AutoStop t)             ; stop routing if too many errors
-        (routeGND nil)             ; route GND net
-        (routeVdd nil)             ; route Vdd net
+        (routeGND nil)           ; route GND net
+        (routeVdd nil)           ; route Vdd net
         )
   (let (CmdFile file)
     ; write TCL
@@ -327,7 +327,7 @@
 ; launch NanoRoute
 (defun NanoRouteRun
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (Background t)           ; run in foreground or background
+        (Background nil)         ; run in foreground or background
         (Ticket "np")            ; QSUB ticket: np, nano
         (Mem 4000)               ; QSUB mem to request
         (Soc (getShellEnvVar "SOC_SCRIPT")) ; which version of Encounter to use
@@ -335,15 +335,15 @@
   (let (CmdFile LicenseStr QsubOptions Command defFile status)
     ; files and options
     CmdFile = (strcat CV->cellName ".tcl")
-    LicenseStr = "-socel"
-    QsubOptions = (sprintf nil "-cwd -now n -l %s=1,mem=%dM,a=lx24-amd64 -N NanoRoute"
+    LicenseStr = ""
+    QsubOptions = (sprintf nil "qrsh -cwd -now n -l %s=1,mem=%dM,a=lx24-amd64 -N NanoRoute"
                            Ticket Mem)
     defFile = (strcat CV->cellName "_routed.def")
 
     ; run
     (shell (strcat "rm -rf " defFile))
-    Command = (sprintf nil "qrsh %s %s encounter -64 %s -init %s %s"
-                       QsubOptions Soc
+    Command = (sprintf nil "%s %s encounter -64 %s -init %s %s"
+                       (if Background QsubOptions "") Soc
                        LicenseStr CmdFile (if Background "-nowin &" "-win"))
     (printf "%s\n" Command)
     status = (shell Command)
@@ -392,7 +392,7 @@
 ; timing driven routing with Proteus script
 (defun ProteusRun
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
-        (Background t)           ; run in background
+        (Background nil)         ; run in background
         (Mem 4000)               ; qsub memory
         (bottomMetal 3)          ; bottom metal layer
         (topMetal 7)             ; top metal layer
@@ -477,7 +477,7 @@
               (getShellEnvVar "DFII_DIR") ; [t_libPath libPath]
               cellName    ; [t_cellName cellName]
               viewName    ; [t_viewName viewName]
-              TechLibName ; [t_techName techName]
+              nil ; [t_techName techName] (see BUG 22162)
               "abstract_proteus abstract"  ; [t_viewNameList viewNameList]
               (buildString SubcellLibNames) ; [t_masterLibs masterLibs]
               nil ; [ shared nil]
@@ -530,6 +530,9 @@
     ; save layout
     (dbSave ImportCV)
 
+    ; fix VTL VTH spacing problems
+    (when proteus (FixVtlVth ?CV ImportCV))
+
     ; create floorplan view for Proteus
     (when proteus (MakeProteusFloorplanView ?CV ImportCV))
 
@@ -573,6 +576,7 @@
 (defun MakeProteusFloorplanView (@key (CV (geGetEditCellView)))
   (let (fCV)
     fCV = (dbOpenCellViewByType CV->libName CV->cellName "floorplan" "maskLayout" "w")
+    (unless fCV (error "Can't write floorplan view"))
     (foreach inst (setof s CV->instances s->libName!=TechLibName && s->name!="tiehilo")
              inst = (dbCopyFig inst fCV (list 0:0 "R0"))
              inst->master = (dbOpenCellViewByType inst->libName inst->cellName "floorplan")
@@ -582,4 +586,38 @@
       )
     fCV
     )
+  )
+
+; grunt work to run Assura to draw some generated shapes in the current cell
+(defun SimpleAssuraLayerProcessor (AssuraLayerMappings rulName @key (CV (geGetEditCellView)))
+  (let (TEMP AssuraRuleFile AssuraRunLog assuraCV)
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s.rul"
+                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") rulName)
+    AssuraRunLog = (sprintf nil "%s/%s.%s.log" TEMP CV->cellName rulName)
+    (AssuraRunAssuraLayerProcessor
+     CV CV->libName CV->cellName rulName
+     AssuraRuleFile TEMP AssuraLayerMappings nil
+     ?AssuraRunLog AssuraRunLog
+     ?LeaveMess nil
+     )
+    assuraCV = (dbOpenCellViewByType CV->libName CV->cellName rulName nil "r")
+    (unless assuraCV (error "Unable to open %s %s %s\n" CV->libName CV->cellName rulName))
+    (foreach fig assuraCV->shapes (dbCopyFig fig CV))
+    (ddDeleteObj (ddGetObj CV->libName CV->cellName rulName nil nil "r"))
+    )
+  CV
+  )
+
+; fix VTL and VTH spacing
+(defun FixVtlVth (@key (CV (geGetEditCellView)))
+  (SimpleAssuraLayerProcessor
+   (list
+    (list "new_vtln" (list "VTL_N" "drawing"))
+    (list "new_vtlp" (list "VTL_P" "drawing"))
+    (list "new_vthn" (list "VTH_N" "drawing"))
+    (list "new_vthp" (list "VTH_P" "drawing"))
+    )
+   "fixVtlVth"
+   )
   )

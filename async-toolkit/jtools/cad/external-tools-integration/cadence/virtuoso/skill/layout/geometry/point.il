@@ -28,3 +28,26 @@
   ( list
     ( times ( car Point ) S )
     ( times ( cadr Point ) S ) ) )
+
+
+(defun PointOnLayer ( cv point lpp )
+ (let (on bbox overlaps shapes)
+   on = nil;
+   bbox = (list (car point)-MfgGrid:(cadr point)-MfgGrid (car point)+MfgGrid:(cadr point)+MfgGrid)
+   overlaps = (dbGetTrueOverlaps cv bbox lpp 32)
+   shapes = (GetShapesFromOverlaps overlaps)
+   (foreach obj shapes
+     (when obj->lpp==lpp
+        on = t
+     )
+   )
+   on
+))
+
+; apply a transform to a list of points
+(defun TransformPoints (points transform)
+  (when points
+    (cons (geTransformUserPoint (car points) transform)
+          (TransformPoints (cdr points) transform))
+    )
+  )

@@ -694,6 +694,7 @@
                   )
                  )
            )
+  (foreach obj CV->blockages (dbDeleteObject obj))
   t
   )
 

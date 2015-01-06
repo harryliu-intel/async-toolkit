@@ -270,6 +270,7 @@ my $noproperties=0;
 my $use_tag=0;
 my $tag_orientation="MXR90";
 my $verilog=0;
+my @defines=();
 
 my %options = (
     "view-name=s" => \$srcViewName,
@@ -304,6 +305,7 @@ my %options = (
     "tag-orientation=s" => \$tag_orientation,
     "verilog" => \$verilog,
     "skip-libs=s" => sub { push @skip_libs,split(/,/,$_[1]);},
+    "define=s" => \@defines,
 );
 
 my %help = (
@@ -339,6 +341,7 @@ my %help = (
     "tapeout" => "fast mode for tapeout",
     "noproperties" => "for smaller files, do not write properties",
     "skip-libs" => "comma separated list of libs to skip or 'all' to just to the top lib",
+    "define" => "CAST defines, may be specified multiple times",
 );
 
 sub usage {
@@ -631,7 +634,7 @@ if ($verbose) {
         $xx =~ s/=.*//;
         my $value="undef";
         my $value = ${$options{$opt}}
-            if defined $options{$opt};
+            if defined $options{$opt} && ref($options{$opt}) eq 'SCALAR';
         print "  --$xx=[$value]" if $value ne "";
     }
 }
@@ -736,6 +739,7 @@ $generateGDSIIData .= " \"--bind-rul=$assurarule\""
     if ( -s "$assurarule" );
 $generateGDSIIData .= " \"--output-dir=$gdsIIDataDir\"";
 $generateGDSIIData .= " \"--output-root-cell-name=$rootcellname\"";
+$generateGDSIIData .= join('', map { " \"--define=$_\"" } @defines);
 $generateGDSIIData .= " $generateGDSIIDataOptions \&> \"$gdsIIDataOutput\"";
 
 if (! $tapeout ) {
@@ -754,8 +758,6 @@ foreach my $il (grep(/\.il$/, readdir(DD))) {
 closedir DD;
 
 `/bin/cp '$gdsIIDataDir/bind.rul' '$bindfile'` if $bindfile ne "/dev/null";
-`/bin/cp '$gdsIIDataDir/bind.rul' 'bind.rul'`;
-print STDERR "$gdsIIDataDir/bind.rul";
 open (D, "<$gdsIIDataDir/bind.rul");
 my $cl="";
 while (<D>) {
@@ -763,7 +765,7 @@ while (<D>) {
     my ($type,$dfii,$gds)=split;
     if (/^C/) {
         my $pipo=$dfii;
-        print STDERR;
+#        print STDERR;
         $pipo =~ s/[^a-zA-Z0-9_]/_/g;
         my $st=$gds;
         my $fst="undef";
@@ -778,7 +780,7 @@ while (<D>) {
         }
         $cbinding{$pipo}=$gds;
         $gbinding{$dfii}=$pipo;
-        print STDERR "BINDC $st => $fst => $gds";
+#        print STDERR "BINDC $st => $fst => $gds";
 #        print STDERR "BINDG $dfii => $pipo" if /SRAMFIFO32/;
         $cl=$gds;
     }
@@ -844,6 +846,13 @@ if ($use_tag) {
     $path = "$dfIIdir/$lib/$path/custom_tag/layout.oa";
     if ( -s "$path" and -f "$path") {
         $viewName="custom_tag";
+        open ($ft, ">$cdsWD/mktag.il");
+        print $ft <<EFT;
+exportTotemLef("$pc" "$viewName")
+exit
+EFT
+        close $ft;
+        system("cd '$cdsWD'; $ENV{IC_SCRIPT} layout -nograph -replay '$cdsWD/mktag.il' -log '$cdsWD/mktag.log'");
     }
     else {
         open ($ft, ">$cdsWD/mktag.il");

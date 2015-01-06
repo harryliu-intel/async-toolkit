@@ -155,15 +155,15 @@ defun( PlaceCableBuffers ( @key (CableShape car(geGetSelectedSet())) (CV (UIGetC
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( CBLLocateBuffer (CableShape Loc Dist @key (CV (UIGetCellView)) (SearchMultiple 1) (BufType "DENSE"))
+defun( CBLCreateBufShape (CurrLoc CurrSeg CurrDir @key (CV (UIGetCellView)) (BufType "DENSE"))
  let( (
-       Overlaps
-       LocatorOP BufOP
-       BufLocFound BufShape
-       CurrLoc CurrSeg CurrDir TrCurrLoc
-       FinalLoc FinalSeg FinalDir FinalIdx
+       BufShape
+       CurrLocX CurrLocY
+       TrCurrLoc
        )
+case( BufType
 
-    BufLocFound = nil
+  ( "DENSE" || "NYB" || "XBUS"
 
    while( BufLocFound == nil
 
@@ -236,7 +236,7 @@ case( BufType
      )
     )
 
-  ( "TS" 
+  ( "TS" || "TS_18"
    case( CurrSeg
      
       ( "H"
@@ -266,6 +266,33 @@ case( BufType
      )
     )
 
+  ( "SYNC_NODE" 
+   case( CurrSeg
+     
+      ( "H"
+        if( CurrDir == "P"
+         then
+          CurrLocX = truncate(car(CurrLoc)/3.12)*3.12
+          CurrLocY = truncate(cadr(CurrLoc)/1.56)*1.56
+          BufShape = dbCreateRect(CV "y4" list(CurrLocX+0.39:CurrLocY+0.39 CurrLocX+2.76:CurrLocY+2.76))
+         else 
+          CurrLocX = (truncate(car(CurrLoc)/3.12)+1)*3.12
+          CurrLocY = truncate(cadr(CurrLoc)/1.56)*1.56
+          BufShape = dbCreateRect(CV "y4" list(CurrLocX-0.39:CurrLocY+0.39 CurrLocX-2.76:CurrLocY+2.76))
+           )
+      ( "V"
+        if( CurrDir == "P"
+         then
+          CurrLocX = truncate(car(CurrLoc)/3.12)*3.12
+          CurrLocY = truncate(cadr(CurrLoc)/1.56)*1.56
+          BufShape = dbCreateRect(CV "y4" list(CurrLocX+0.39:CurrLocY+0.39 CurrLocX+2.76:CurrLocY+2.76))
+         else 
+          CurrLocX = truncate(car(CurrLoc)/3.12)*3.12
+          CurrLocY = (truncate(cadr(CurrLoc)/1.56)+1)*1.56
+          BufShape = dbCreateRect(CV "y4" list(CurrLocX+0.39:CurrLocY-0.39 CurrLocX+2.76:CurrLocY-2.76))
+           )
+     )
+    )
   ( "RESET"
    case( CurrSeg
      
