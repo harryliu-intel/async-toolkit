@@ -47,6 +47,7 @@ use LveDelay;
 use LveDB;
 
 my $aplot = "$lve_root/bin/aplot";
+$aplot = "$aplot -archiver $lve_root/bin/archiver.cmd";
 my $alint_in="";
 my $dir="";
 my $nodeprops = "";
@@ -98,19 +99,11 @@ $true =~ s/V$//g;
 $temp =~ s/C$//g;
 
 # get threshPercent from alint.in file
-my @threshPercent = ();
 my @threshPercent_arg=`grep '^threshPercent' \"$alint_in\"`;
 if(scalar(@threshPercent_arg)<1){
   #fail get the threshold percentage parameter
   print SF "bin $alint_bin: FAIL";
   exit 0;
-}
-foreach my $line (@threshPercent_arg){
-    chomp($line);
-    my @args = split(" ",$line);
-    if (@args<2) { next; }
-    shift @args;
-    @threshPercent=sort {$a <=> $b} @args;            
 }
 
 #get skip nodes
@@ -144,9 +137,6 @@ while (<IN>) {
     }
 }
 close IN;
-
-
-
 if($is_PO == 0 ){
         # spawn aplot
         open_aplot($aplot);
@@ -155,7 +145,9 @@ if($is_PO == 0 ){
                 next;
             }
             #calculate threshold response
-            characterize_thresh($true,$bindir,$thisnode,\@threshPercent,%skipnodes);
+           my $do_threshresp=is_do_threshrsp("$bindir/$thisnode/thresh_resp.zip","$bindir/$thisnode/aspice_trace.zip");
+           print STDERR "RUN thresh response.....\n" if ($do_threshresp);
+            characterize_thresh($true,$bindir,$thisnode,%skipnodes) if($do_threshresp);
         }
         close_aplot();
         print SF "bin $alint_bin: SUCCESS";
@@ -178,7 +170,9 @@ if($is_PO == 0 ){
         foreach my $node (@alint_node) {
             next if(not defined $direction{$node});
             if($direction{$node} ne "IN" and $node ne "GND" and $node ne "Vdd") {
-              characterize_thresh($true,$bindir,$node,\@threshPercent,%skipnodes);
+              my $do_threshresp=is_do_threshrsp("$bindir/$node/thresh_resp.zip","$bindir/$node/aspice_trace.zip");
+              print STDERR "RUN thresh response.....\n" if ($do_threshresp);
+              characterize_thresh($true,$bindir,$node,%skipnodes) if($do_threshresp);
             }
         }
         free_aplot();
@@ -186,3 +180,40 @@ if($is_PO == 0 ){
         print SF "bin $alint_bin: SUCCESS";
 }
 close SF;
+
+
+sub is_do_threshrsp{
+  my ($archive_thresh,$archive_aspice)=@_;
+  my $do_threshresp=1;
+
+  if(-e $archive_thresh and -e $archive_aspice){
+      $do_threshresp=0;
+      my $timestamp_thresh=archive_getfiletimestamp($archive_thresh);
+      
+      my $timestamp_aspice=archive_getfiletimestamp($archive_aspice);
+      my %parsed_trace;
+      foreach my $file (keys %$timestamp_thresh){
+         my $file_trace=$file; $file_trace=~s/\.resp$/\.trace/;
+         $file_trace=~s/^(\S+):thresh/thresh/;
+         my $time_resp=0;
+         $time_resp=$timestamp_thresh->{$file};
+         my $time_aspice=0;
+         $time_aspice=$timestamp_aspice->{$file_trace} if (defined $timestamp_aspice->{$file_trace});
+         $parsed_trace{$file_trace}=1 if (defined $timestamp_aspice->{$file_trace});
+         if($time_aspice > $time_resp){
+           $do_threshresp=1; last;
+         }
+      }
+      if($do_threshresp==0){
+          foreach my $file (keys %$timestamp_aspice){
+            next if($file !~ /^thresh_/ or $file !~ /\.trace$/);
+            if(not defined $parsed_trace{$file}){
+              $do_threshresp=1; last;
+            }
+          }
+          
+      }
+  }
+  return $do_threshresp; 
+
+}

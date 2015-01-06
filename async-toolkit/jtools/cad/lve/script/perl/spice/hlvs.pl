@@ -4,9 +4,14 @@
 # $Author$
 use strict;
 
+BEGIN {
+    unshift @INC, "$ENV{'FULCRUM_PACKAGE_ROOT'}/lib/perl";
+}
+
 use Cwd;
 use IPC::Open2;
 use Getopt::Long;
+use Hercules;
 
 
 $ENV{SNPSLMD_QUEUE}="true";
@@ -318,7 +323,10 @@ print X "*.SCALE meter";
 print X ".include '$working_dir/cell.cdl_gds2'";
 close X;
 
-my_system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$working_dir/nettran.cdl' -sp-slashSpace -logFile nettran.log -outName '$herc_out'");
+my $macro_models = Hercules::get_device_names($pdk_root);
+Hercules::write_nettran_devmap("$working_dir/devMap", $macro_models);
+
+my_system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$working_dir/nettran.cdl' -sp-slashSpace -sp-devMap '$working_dir/devMap' -logFile nettran.log -outName '$herc_out'");
 if ($longcellnametop or $longcellnamegray) {
     open (GIN, "<$herc_out");
     open (GOUT, ">$sch_out");

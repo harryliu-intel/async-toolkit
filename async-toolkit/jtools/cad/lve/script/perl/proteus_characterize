@@ -275,6 +275,9 @@ EOF
             } elsif ($class eq "QDI_SCAN_CONFIG") {
                 $input_nodes  = "LC LS.0 LS.1 RS.e _RESET";
                 $output_nodes = "RC LS.e RS.0 RS.1";
+            } elsif ($class eq "TIE") {
+                $input_nodes = "VDD";
+                $output_nodes = "Q";
             }
             
             # extra scan pins
@@ -306,8 +309,10 @@ EOF
                 simulate_QDI_SEND_TO($gate,$class,$rails);
             } elsif ($class eq "QDI_RECV" || $class eq "QDI_FROM") {
                 simulate_QDI_RECV_FROM($gate,$class,$rails);
+            } elsif ($class eq "TIE") {
+                simulate_TIE($gate);
             } else {
-                print STDERR "WARNING: $gate not recognized\n";
+                print STDERR "WARNING: $gate with class $class not recognized\n";
             }
 
             # finish
@@ -943,6 +948,24 @@ sub simulate_QDI_CTRL {
     }
 }
 
+sub simulate_TIE {
+    my ($gate) = @_;
+    my $inputs = 1;
+    my $a = "a";
+    if ($gate =~ /CTREE(.)/ ) { $inputs = $1; }
+    # header
+    print OUT "/* critical_input=none */\n";
+
+    force_node("Q",1);
+    simulate_step();
+    print OUT "force Q\n";
+    print CRIT "VDD+ $now\n";
+    simulate_step();
+    print OUT "\n";
+
+}
+    
+
 # get a bit from an array
 sub getbit {
     my ($val, $pos) = @_;
@@ -961,6 +984,11 @@ sub valid_1ofN {
 sub neutral_1ofN {
     my ($name) = @_;
     print OUT "force ${name}.d[*] : f\n";
+}
+
+sub neutral_sr {
+  my ($name) = @_;
+  print OUT "force ${name} : f\n";
 }
 
 # force a node t or f
@@ -1022,7 +1050,7 @@ sub measure_area {
 # launch lve jobs (one at a time to avoid crashing host machine)
 sub launch_extract {
     my ($gate) = @_;
-    system("$lve --include=${gate}/extract.todo --mode=estimated " .
+    system("$lve --include=${gate}/extract.todo --mode=estimated --ignore-nvn=1 " .
            "$gate >& ${gate}/estimated.err");
     if (!($mode eq "estimated")) {
         system("$lve --include=${gate}/extract.todo --mode=$mode " .
@@ -1035,7 +1063,7 @@ sub launch_lve {
     my ($gate) = @_;
     foreach my $tau (@prsTau) {
         foreach my $cap (@lumpCap) {
-            system("$lve --include=${gate}/${tau}_${cap}.todo " .
+            system("$lve --include=${gate}/${tau}_${cap}.todo --ignore-nvn=1 " .
                    " >& ${gate}/${tau}_${cap}.err");
         }
     }
@@ -1066,6 +1094,12 @@ sub measure_timing {
     my $tau_cap_step = $step;
     $gatedir =~ s:\.:/:g;
 
+    # header information
+    print OUT "process $corner\n";
+    print OUT "voltage $vdd\n";
+    print OUT "temperature $temp\n";
+    print OUT "mode $mode\n";
+
     # area
     open IN, "<$gate.area" or die "Can't read $gate.area\n";
     my $line = <IN>;
@@ -1078,7 +1112,12 @@ sub measure_timing {
     # save prsTau and lumpCap as inputSlews and outputCaps
     print OUT "inputSlews \"";
     for (my $i=0; $i<@prsTau; $i++) {
-        my $slew = int (0.5 + $prsTau[$i] * (log(1-$slew_frac) - log($slew_frac)))/1000;
+        my $slew = $prsTau[$i];
+        # for d2a_shape=0, uses decaying exponentials
+        #$slew *= log(1-$slew_frac) - log($slew_frac);
+        # for d2a_shape=1, uses linear ramp
+        $slew *= 1-$slew_frac-$slew_frac;
+        $slew = int(0.5 + $slew)/1000;
         if ($i>0) { print OUT ","; }
         print OUT "$slew";
     }
@@ -1126,9 +1165,15 @@ sub measure_timing {
                     my @dirs = ("+", "-");
                     foreach my $output (@outputs) {
                         foreach my $outdir (@dirs) {
-                            my ($d,$s,$I) =
-                                measure_path($run,$from,$to,$input,$indir,
-                                             $output,$outdir);
+                            my ($d,$s,$I);
+                            if ($class eq "TIE") {
+                                ($d,$s,$I) = measure_tie_path($run,$from,$to,
+                                                                 $output,$outdir);
+                            }
+                            else {
+                                ($d,$s,$I) = measure_path($run,$from,$to,$input,$indir,
+                                                          $output,$outdir);
+                            }
                             my $key = "${input}${indir}:${output}${outdir}";
                             my $fullkey = "${key}:${tau}:${cap}";
                             if (is_numeric($d)) {
@@ -1238,6 +1283,31 @@ sub measure_path {
     return ($d,$s,$I);
 }
 
+sub measure_tie_path {
+    my ($run,$from,$to,$output,$outdir) = @_;
+    my ($t,$d,$t1,$t2,$s,$I,$strig,$starg);
+    if ($outdir eq "+") {
+        $strig = "$output > $losl";
+        $starg = "$output > $hisl";
+    }
+    else {
+        $strig = "$output < $hisl";
+        $starg = "$output < $losl";
+    }
+    ($t1) = measure_aplot($run,$from,$to,"trigger $strig 1");
+    ($t2) = measure_aplot($run,$from,$to,"trigger $starg 1");
+    ($t,$I) = measure_aplot($run,$from,$to,"avg IVdd|");
+    if (is_numeric($t1) && is_numeric($t2)) { 
+        $s = $t2 - $t1;
+        $d = 0;
+    }
+    else {
+        $s = "no path";
+        $d = "no path";
+    }
+    return ($d,$s,$I);
+}
+
 
 ################################################################################
 # Shared utilities
@@ -1303,5 +1373,6 @@ sub classify_gate {
     elsif ($gate =~ /FROM/)         { $class = "QDI_FROM"; }
     elsif ($gate =~ /TO/)           { $class = "QDI_TO"; }
     elsif ($gate =~ /SCAN_CONFIG/)  { $class = "QDI_SCAN_CONFIG"; }
+    elsif ($gate =~ /TIE/)          { $class = "TIE"; }
     return $class;
 }

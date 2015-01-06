@@ -13,6 +13,7 @@ my $env="digital";
 my $true="0.9";
 my $view="layout";
 my $corner="tt";
+my $extract_corner="totem";
 my $temp="125";
 my $lve_dir="";
 my $work_dir="";
@@ -48,14 +49,15 @@ GetOptions (
     "work-dir=s" => \$work_dir,
     "lve-dir=s" => \$lve_dir,
     "corner=s" => \$corner,
+    "extract-corner=s" => \$extract_corner,
     "temp=s" => \$temp,
     "print-nodes=s" => \$print_nodes,
-    "measure-nodes=s" => \$measure_nodes,
+    "measure-nodes:s" => \$measure_nodes,
     "fulcrum-pdk-root=s" => \$fulcrum_pdk_root,
     "prs-delay=s" => \$prsDelay,
     "cap-load=s" => \$capLoad,
     "port-props=s" => \$portprops,
-    "dynamic-simulation-time=s" => \$dynsimulationtime,
+    "dynamic-simulation-time=s" => sub {$dynsimulationtime = $_[1] * 1e-9} 
 ) or usage();
 $true =~ s/V//;
 $temp =~ s/C//;
@@ -76,11 +78,23 @@ mkdir "$work_dir/design_data/ploc";
 my $gdsfqcn = $gdsfqcn;
 my $fqcn_path = $fqcn;
 $fqcn_path =~ s/\./\//g;
+my $start_time = "4.0e-9";
+my $total_sim_time = $start_time + $dynsimulationtime;
 
 # fix totem gds to
 # 1) remove the top tag hierarchy
 # 2) Rename the new top cell to the correct name
 # 3) add labels for Vdd/GND on M8 at the top level
+open (RD, "rdgds '$lve_dir/$fqcn_path/$view/cell.gds2' |");
+my $rotated = 0;
+while (<RD>) {
+    chomp;
+    if (/^SNAME $cadencefqcn/../^ENDEL/) { 
+        $rotated=1 if (/^ANGLE/); 
+        last if /ENDEL/; 
+    }
+}
+close (RD);
 open (RD, "rdgds '$lve_dir/$fqcn_path/$view/cell.gds2' |");
 open (WR, "| wrgds > '$lve_dir/$fqcn_path/$view/cellnt.gds2'");
 my $incell=0;
@@ -106,8 +120,31 @@ while (<RD>) {
                     my $datatype=0;
                     $datatype=80 if $lay > 38;
                     if (defined $type) {
-                        $x = int($x*1000+0.5);
-                        $y = int($y*1000+0.5);
+                        if ($rotated == 0 ) {
+                            if($x>=0){
+                              $x = int($x*1000+0.5);
+                            }else{
+                              $x = int($x*1000-0.5);
+                            }
+                            if($y>=0){
+                              $y = int($y*1000+0.5);
+                            }else{
+                              $y = int($y*1000-0.5);
+                            }
+                        } else {
+                            my $x_temp;
+                            if($y>=0){
+                              $x_temp = int($y*1000+0.5);
+                            }else{
+                              $x_temp = int($y*1000-0.5);
+                            }
+                            if($x>=0){
+                              $y = int($x*1000+0.5);
+                            }else{
+                              $y = int($x*1000-0.5);
+                            }
+                            $x = $x_temp;
+                        } 
                         $node =~ s/\..*//;
                         print WR "BOUNDARY";
                         print WR "LAYER $lay";
@@ -118,6 +155,27 @@ while (<RD>) {
                         printf WR "%d,%d\n", $x+50, $y+50;
                         printf WR "%d,%d\n", $x-50, $y+50;
                         printf WR "%d,%d\n", $x-50, $y-50;
+                        print WR "ENDEL";
+                        print WR "BOUNDARY";
+                        my $vialay = $lay + 19; 
+                        print WR "LAYER $vialay";
+                        print WR "DATATYPE $datatype";
+                        print WR "XY 5";
+                        printf WR "%d,%d\n", $x-65, $y-90;
+                        printf WR "%d,%d\n", $x-65, $y-40;
+                        printf WR "%d,%d\n", $x+65, $y-40;
+                        printf WR "%d,%d\n", $x+65, $y-90;
+                        printf WR "%d,%d\n", $x-65, $y-90;
+                        print WR "ENDEL";
+                        print WR "BOUNDARY";
+                        print WR "LAYER $vialay";
+                        print WR "DATATYPE $datatype";
+                        print WR "XY 5";
+                        printf WR "%d,%d\n", $x-65, $y+40;
+                        printf WR "%d,%d\n", $x-65, $y+90;
+                        printf WR "%d,%d\n", $x+65, $y+90;
+                        printf WR "%d,%d\n", $x+65, $y+40;
+                        printf WR "%d,%d\n", $x-65, $y+40;
                         print WR "ENDEL";
                         print WR "TEXT";
                         print WR "LAYER $lay";
@@ -143,20 +201,29 @@ while (<RD>) {
 }
 close RD;
 close WR;
-open (RD, "<$lve_dir/$fqcn_path/$view/totem/cell.placement_info");
-open (WR, ">$lve_dir/$fqcn_path/$view/totem/cell.placement_info.nt");
+open (RD, "<$lve_dir/$fqcn_path/$view/$extract_corner/cell.placement_info");
+open (WR, ">$lve_dir/$fqcn_path/$view/$extract_corner/cell.placement_info.nt");
 while (<RD>) {
     chomp;
     my ($inst,$type,$x,$y,$angle,$refl)=split;
     if (defined($refl) and $inst =~ /^X/) {
-        $_="$inst $type $y $x $angle $refl";
+        if ($rotated == 1) {
+            $_="$inst $type $y $x $angle $refl";
+        } else {
+            $_="$inst $type $x $y $angle $refl";
+        }
     }
     print WR;
 }
 close RD;
 close WR;
 
+#Ehsan: changed back to use GDS_FILE $lve_dir/$fqcn_path/$view/cell.gds2 instead of cellnt.gds2
 ### aplmmx.config ###
+my $cmdSpf = "cat '$lve_dir/$fqcn_path/$view/$extract_corner/cell.spf' | sed 's/^XXx/Xx/' > '$work_dir/design_data/aplmmx_dynamic/cell.spf'";
+my $cmdPlace = "cat '$lve_dir/$fqcn_path/$view/$extract_corner/cell.placement_info' | sed 's/^Xx/X/' > '$work_dir/design_data/aplmmx_dynamic/cell.placement_info'";
+system($cmdSpf);
+system($cmdPlace);
 my $file = "$work_dir/design_data/aplmmx_dynamic/aplmmx.config";
 open (FH, "> $file") or die "Cannot open $file";
 print FH<<EOF;
@@ -181,28 +248,37 @@ VOLTAGE_SOURCES {
 MACRO_TYPE    analog
 
 #netlist with XY location
-SPICE_NETLIST    $lve_dir/$fqcn_path/$view/totem/cell.spf
+SPICE_NETLIST    $work_dir/design_data/aplmmx_dynamic/cell.spf
 
 # Spice Model library
-DEVICE_MODEL_LIBRARY    $fulcrum_pdk_root/share/Fulcrum/apache/spice.lib $corner
+DEVICE_MODEL_LIBRARY    $work_dir/design_data/aplmmx_dynamic/models.sp $corner
 
 #Type of spice simulator
 SPICE_SIMULATOR         hsim
 
+ACE_OPTION {
+  option search='$fulcrum_pdk_root/share/Fulcrum/bsim'
+}
+
+ACE_OPTION {
+  include $fulcrum_pdk_root/share/Fulcrum/spice/default.sp
+}
+
 #Spice simulation output waveform
-SIM_OUTPUT_FILE      $lve_dir/$fqcn_path/$view/totem/hsim/$env/$corner/${true}V/${temp}C/10ns/hsim.fsdb
+SIM_OUTPUT_FILE      $lve_dir/$fqcn_path/$view/$extract_corner/hsim/$env/$corner/${true}V/${temp}C/10ns/hsim.fsdb
 
 # Define state name and capture window to use from simulation
 # Windows of interest from above spice waveform
 CUSTOM_STATE_SIM_TIME {
 # <state> <start time> <end time>
-WRITE "" "" 4e-9 10e-9
+WRITE "" "" $start_time $total_sim_time
 }
-
 GDS_FILE $lve_dir/$fqcn_path/$view/cellnt.gds2
+#GDS_FILE $lve_dir/$fqcn_path/$view/cell.gds2
 GDS_MAP_FILE $fulcrum_pdk_root/share/Fulcrum/apache/gds_layer.map
 
-DSPF_NETLIST $lve_dir/$fqcn_path/$view/totem/cell.spf $lve_dir/$fqcn_path/$view/totem/cell.placement_info.nt
+DSPF_NETLIST $work_dir/design_data/aplmmx_dynamic/cell.spf $work_dir/design_data/aplmmx_dynamic/cell.placement_info
+#DSPF_NETLIST $lve_dir/$fqcn_path/$view/$extract_corner/cell.spf $lve_dir/$fqcn_path/$view/$extract_corner/cell.placement_info
 
 EOF
 close FH;
@@ -241,7 +317,7 @@ EOF
 close FH;
 chmod (0775, "$file");
 
-
+#Ehsan: changed back to use GDS_FILE $lve_dir/$fqcn_path/$view/cell.gds2 instead of cellnt.gds2
 ### irdrop.gds.config ###
 my $file = "$work_dir/dynamic_run/irdrop.gds.config";
 open (FH, "> $file") or die "Cannot open $file";
@@ -254,6 +330,7 @@ MACRO_TYPE     analog
 
 # GDS
 GDS_FILE $lve_dir/$fqcn_path/$view/cellnt.gds2
+#GDS_FILE $lve_dir/$fqcn_path/$view/cell.gds2
 # Layer map
 GDS_MAP_FILE $fulcrum_pdk_root/share/Fulcrum/apache/gds_layer.map
 
@@ -319,10 +396,10 @@ GSC_FILE  $fulcrum_pdk_root/share/Fulcrum/apache/cell_mmx.gsc
 TEMPERATURE    $temp
 
 # Pads and labels
-#ADD_PLOC_FROM_TOP_DEF    1
-PAD_FILES {
-   $work_dir/cell.ploc
-}
+ADD_PLOC_FROM_TOP_DEF    1
+#PAD_FILES {
+#   $work_dir/cell.ploc
+#}
 LIB_FILE {
 }
 
@@ -345,8 +422,15 @@ VIA_IR_REPORT   1
 EOF
 close FH;
 chmod (0775, "$file");
+my $aplmmx_dir = "$work_dir/design_data/aplmmx_dynamic";
+my $bsim_dir = "$fulcrum_pdk_root/share/Fulcrum/bsim";
+my $spice_dir = "$fulcrum_pdk_root/share/Fulcrum/spice";
+chdir $aplmmx_dir;
+opendir(DH, $bsim_dir) || die "cannot open $bsim_dir";
+map { symlink "$bsim_dir/$_", "$aplmmx_dir/$_" } grep { ($_ ne ".") && ($_ ne "..") } readdir(DH); 
+closedir DH;
+symlink "$spice_dir/models.sp", "$aplmmx_dir/models.sp";
 
-chdir "$work_dir/design_data/aplmmx_dynamic";
 my $rv=my_system "$ENV{TOT_SCRIPT} aplmmx -s aplmmx.config";
 
 $file="$gdsfqcn.aplmmx";
@@ -364,7 +448,7 @@ close FH;
 close FH_MOD;
 
 # hsim
-my $out_dir="$lve_dir/$fqcn_path/$view/totem/hsim/$env/$corner/${true}V/${temp}C/10ns";
+my $out_dir="$lve_dir/$fqcn_path/$view/$extract_corner/hsim/$env/$corner/${true}V/${temp}C/10ns";
 my @nodes=();
 open P, "<$portprops";
 while (<P>) {

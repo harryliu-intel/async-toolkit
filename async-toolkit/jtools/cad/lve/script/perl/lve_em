@@ -41,41 +41,6 @@ BEGIN {
 
 use LveStatus;
 use LveUtil;
-my $usage =<<EOF;
-Usage: lve_em
-  [--lve-dir=]
-  [--cast-path=]
-  [--max-heap-size=]
-  [--debug=0|1]
-  [--cell=]
-  [--fulcrum-pdk-root=]  (location of Fulcrum pdk)
-  [--minimumWireWidth=]
-  [--cycleTime=}]
-  [--voltage=]
-  [--viaAvgCurrentLimit=]
-  [--wireAvgCurrentLimit=]
-  [--wireRMSCurrentLimit=]
-  [--wirePeakCurrentLimit=]
-  [--avgCurrentLimitTempCorrectionFactor=]
-  [--limit=]
-  --corner= 
-  --temp=
-  --true=
-  --temp=
-  --cc=[0|1]
-  --tau=
-  --verbose
-
-    Recursively searches for extracted alint results for the given
-    conditions.  Will report any potential electromigration or current
-    violations on local nodes of all cells found.  Assumes only 1 via,
-    xxxm wide wire, a xxxs cycle time, and xxxV supply
-    voltage.  Used technology data for specified pdk xxx
-    Run from an lve working directory (or specify the lve directory
-    with --lve-dir.)  Limit defaults to 1, and is used as the threshold 
-    to filter relative violations.  Also reports violations organized 
-    by leaf cell drivers.
-EOF
 
 
 my %my_options = ();
@@ -84,22 +49,18 @@ $my_options{"minimumWireWidth"} = 0.06e-6;      # minimum wire width;
 $my_options{"cycleTime"} = 1/1.35e9;        # cycle time;
 $my_options{"lve_dir"} = $ENV{PWD};
 $my_options{"cast_path"} = $ENV{CAST_PATH};
-$my_options{"pdk_root"} = $ENV{FULCRUM_PDK_PACKAGE_ROOT};
+$my_options{"pdk_root"} = $ENV{FULCRUM_PDK_ROOT};
 $my_options{"debug"} = 0;
-$my_options{"voltage"} = 0.81;         # supply voltage;
-$my_options{"corner"} = "tt";
-$my_options{"true"} = "0.81";
-$my_options{"temp"} = "50";
+$my_options{"voltage"} = 0.99;         # supply voltage;
+$my_options{"corner"} = "pwr";
+$my_options{"true"} = "1.045";
+$my_options{"temp"} = "90";
 $my_options{"cc"} = "0";
 $my_options{"tau"} = 8;
-$my_options{"limit"} = 0;
+$my_options{"limit"} = 1;
 $my_options{"activityFactor"}=1;
-# FIXME << ENDFIXME
-$my_options{"avgCurrentLimitTempCorrectionFactor"} = 0.704;     # correction for 115C instead of 110C;
-$my_options{"viaAvgCurrentLimit"} = 0.179e-4 * $my_options{"avgCurrentLimitTempCorrectionFactor"};    # average current limit per contact;
-$my_options{"wireAvgCurrentLimit"} = 1.43e-4*1e6 * $my_options{"avgCurrentLimitTempCorrectionFactor"}; # average current limit per width of M1;
-$my_options{"wireRMSCurrentLimit"} = 7.0e-4*1e6;  # rms current limit per width of M2;
-$my_options{"wirePeakCurrentLimit"} = 18.0e-4*1e6; # peak current limit per width of M1;
+$my_options{"recoveryFactor"}=0.9;
+$my_options{"em_width_scaling"}=0.9;
 $my_options{"max_heap_size"} = "8G"; # default max-hea-size for jflat calls
 # capacitance technology data
 $my_options{"ng_cap"} = 11.0E-3; # nmos gate capacitance per m^2
@@ -108,15 +69,16 @@ $my_options{"np_cap"} = 0;       # ndiffusion perimeter capacitance per m
 $my_options{"pg_cap"} = 11.0E-3; # pmos gate capacitance per m^2
 $my_options{"pa_cap"} = 0;       # pdiffusion area capacitance per m^2
 $my_options{"pp_cap"} = 0;       # pdiffusion perimeter capacitance per m
-# ENDFIXME
-$my_options{"default_metal"} = "M1";
-$my_options{"default_via"} = "VIA1";
+$my_options{"default_metal"} = ""; #no default metal, will pick min limit
+$my_options{"default_via"} = ""; #no default via, will pick min limit
+
 $my_options{"verbose"} = 0;
+$my_options{"report"} = "lve_em.rpt";
 
 
 #parse options
 my @cmd_options = ();
-$my_options{"pdk_root"} = &parseArgs(\@ARGV,\@cmd_options);
+&parseArgs(\@ARGV,\@cmd_options);
 my @jauto_config_a = ();
 my @jauto_config = ();
 open (P, "$my_options{pdk_root}/share/Fulcrum/jauto/transistors.config");
@@ -163,33 +125,22 @@ $my_options{"pa_cap"} = $my_options{"unitPmosDiffusionAreaCapacitance[1]"}
     if defined $my_options{"unitPmosDiffusionAreaCapacitance[1]"};
 $my_options{"pp_cap"} = $my_options{"unitPmosDiffusionPerimeterCapacitance[1]"}
     if defined $my_options{"unitPmosDiffusionPerimeterCapacitance[1]"};
-$my_options{cycleTime} = 1.0/$my_options{em_frequency}
-    if defined($my_options{em_frequency});
-my $width=$my_options{minimumWireWidth};
-my $layer=$my_options{default_metal};
-$my_options{em_avg_wire_limit}{$layer} /= 2 if $width < $my_options{em_width_div_limit}{$layer};
-my $em_avg_wire_limit=$my_options{em_avg_wire_limit}{$layer}*$my_options{em_avg_scaling}*($width+$my_options{em_avg_width_offset}{$layer});
-my $em_rms_wire_limit=sqrt($my_options{em_rms_heating} * $my_options{em_rms_wire_limit}{$layer} *
-     ($width+$my_options{em_rms_width_offset}{$layer})*($width+$my_options{em_rms_width_offset}{$layer}) *
-        ($width + $my_options{em_rms_width_offset}{$layer} + $my_options{em_rms_width_offset1}{$layer}) /
-            ($width + $my_options{em_rms_width_offset}{$layer} + $my_options{em_rms_width_offset2}{$layer}));
-my $em_avg_via_limit=$my_options{em_avg_via_limit}{$my_options{default_via}} * $my_options{em_avg_scaling};
+set_em_cycletime();
+
+
 # error checking
-die "$usage\n" if(!defined ($my_options{tau}) or $my_options{"tau"} eq "" or defined($my_options{"help"}) or ! defined($my_options{"cast_path"}));
+die usage() if(!defined ($my_options{tau}) or $my_options{"tau"} eq "" or defined($my_options{"help"}) or ! defined($my_options{"cast_path"}));
+open (RF, ">$my_options{report}") or die "Cannot write to $my_options{report}";
+
+
 # print options we're running with 
 $my_options{verbose}=1 if $my_options{debug};
 
 if ($my_options{verbose}) {
 print "Running lve_em with the following options ..\n";
-print "--lve-dir=$my_options{lve_dir}\n";
-print "--fulcrum-pdk-root=$my_options{pdk_root}\n";
-print "--cast-path=$my_options{cast_path}\n";
-print "--corner=$my_options{corner}\n";
-print "--true=$my_options{true}\n";
-print "--temp=$my_options{temp}\n";
-print "--cc=$my_options{cc}\n";
-print "--tau=$my_options{tau}\n";
-print "--limit=$my_options{limit}\n";
+print usage(1);
+print RF "Running lve_em with the following options ..\n";
+print RF usage(1);
 }
 
 # set up driver query command
@@ -210,18 +161,36 @@ my %drivers_err   = (); # error message for the worst violation
 
 # find all relevant alint results for specified conditions
 my $find_cmd;
+my $extractCorner = "";
+my $extractTemp = "";
+
+if (defined $my_options{extract_corner}) {
+  if ($my_options{extract_corner} eq "cworst") {
+    $extractCorner = "-cwo";
+  } elsif ($my_options{extract_corner} eq "cbest") {
+    $extractCorner = "-cbe";
+  }
+}
+
+if (defined $my_options{extractTemp}) {
+  $extractTemp = "-$my_options{extractTemp}";
+}
+
+
 if (defined $my_options{cell}) {
     my $do_cell = $my_options{cell};
     $do_cell =~ s/\./\//g;
-    $find_cmd = "find $my_options{lve_dir}/$do_cell/ -noleaf -path '*/extracted' -prune";
+    print "$do_cell\n";
+    $find_cmd = "find $my_options{lve_dir}/$do_cell/ -noleaf -path '*/extracted${extractCorner}${extractTemp}' -prune";
 }
 else {
-    $find_cmd = "find $my_options{lve_dir} -noleaf -path '*/extracted' -prune";
+    $find_cmd = "find $my_options{lve_dir} -noleaf -path '*/extracted${extractCorner}${extractTemp}' -prune";
 }
 
 print STDERR "Running $find_cmd\n" if $my_options{debug};
 open ALINTDIRS, "$find_cmd |"
-    or die "ERROR: can't find alint.raw files\n";
+    or die "ERROR: can't find alint.raw files\n Please run with extracted mode\n";
+my $alint_raw_cnt=0;
 while (my $raw = <ALINTDIRS>) {
     chomp($raw);
     $raw .= "/alint/$my_options{corner}/$my_options{true}V/$my_options{temp}C/alint.raw";
@@ -230,6 +199,8 @@ while (my $raw = <ALINTDIRS>) {
     my $cell = "";
     my $dir = $raw;
     $dir =~ s|/alint\.raw$||g;
+    
+    my %nodebin=get_node_bin("$dir/alint_parallel","alint.in");
 
     # read raw file
     my @errors = ();
@@ -260,6 +231,7 @@ while (my $raw = <ALINTDIRS>) {
             if ((defined $results{cc}  && ($my_options{cc}  != $results{cc})) || 
                 (defined $results{tau} && ($my_options{tau} != $results{tau}))) { next; }
             
+            print STDERR "######## $node ###########\n" if $my_options{debug};
             print STDERR "Parse $line\n" if $my_options{debug};
             # get up/dn slews
             my ($Up) = split("@",$results{fast_slew_up});
@@ -269,16 +241,15 @@ while (my $raw = <ALINTDIRS>) {
 
             # snoop through node.out file for capacitance info
             my $open=1;
-            if (! open OUT, "<$dir/$node/out" ) {
-                $open=0;
-                for(my $n = 0; $n < 16; $n++) {
-                    if (open OUT, "<$dir/alint.bin.$n/$node/out" ) {
-                        $open=1;
-                        last;
-                    }
-                }
+            my $alint_bin="alint.bin.$nodebin{$node}";
+            my $out_file="$dir/$alint_bin/$node/out";
+            $out_file="$dir/$alint_bin/$node/out.gz" if (-e "$dir/$alint_bin/$node/out.gz");
+            if($out_file=~/\.gz$/){
+                 open (OUT, "gzip -cd \'$out_file\'|") or warn "Cannot read $out_file.\n";
+            }else{
+                 open (OUT, "<$out_file") or warn "Cannot read $out_file.\n";
             }
-            $open or warn "ERROR: can't read $dir/$node/out";
+                
             my ($c, $ng, $na, $np, $pg, $pa, $pp);
             while (my $l = <OUT> ) {
                 chomp($l);
@@ -335,11 +306,9 @@ while (my $raw = <ALINTDIRS>) {
             my $DC_vias  = 1;
             my $AC_width = $my_options{"minimumWireWidth"};
             my $Reset_node=0;
-	    my $current_layer = $my_options{default_metal};
-	    my $current_via = $my_options{default_via};
-            my ($Jav_wire_err,$Jav_via_err,$Jrms_wire_err,$Jpeak_wire_err,
+            my ($Iav_wire_err,$Iav_via_err,$Irms_wire_err,$Ipeak_wire_err,
                 $worst) = compute_currents($Activity,$DC_width,$DC_vias,
-                                           $AC_width,$Up,$Dn,$Cap,$current_layer,$current_via);
+                                           $AC_width,$Up,$Dn,$Cap,undef,undef);
 
 
             # if the node fails, look up wiring directives from the cast
@@ -355,24 +324,24 @@ while (my $raw = <ALINTDIRS>) {
                 }
                 elsif ($my_options{verbose}) {
                     warn "Didn't find wiring directives for node $node in ".
-                         "cell\n  $cell.\n";
+                         "cell:\n  $cell.\n";
                 }
                 $Activity = 1e-6 if $Activity == 1 and $Reset_node == 1;
-                ($Jav_wire_err,$Jav_via_err,$Jrms_wire_err,$Jpeak_wire_err,
+                ($Iav_wire_err,$Iav_via_err,$Irms_wire_err,$Ipeak_wire_err,
                 $worst) = compute_currents($Activity,$DC_width,$DC_vias,
-                                           $AC_width,$Up,$Dn,$Cap,$current_layer,$current_via);
+                                           $AC_width,$Up,$Dn,$Cap,undef,undef);
             }
 
             # report if worst violation still exceeds the limit
             if ($worst>$my_options{limit}) {
                 $Cap            = round_float($Cap*1e15,-2);
-                $Jav_via_err    = round_float($Jav_via_err,-4);
-                $Jav_wire_err   = round_float($Jav_wire_err,-4);
-                $Jrms_wire_err  = round_float($Jrms_wire_err,-4);
-                $Jpeak_wire_err = round_float($Jpeak_wire_err,-4);
-                my $err = "Cap=${Cap}fF Jav_via_err=$Jav_via_err" .
-                    " Jav_wire_err=$Jav_wire_err Jrms_wire_err=$Jrms_wire_err" .
-                    " Jpeak_wire_err=$Jpeak_wire_err";
+                $Iav_via_err    = round_float($Iav_via_err,-4);
+                $Iav_wire_err   = round_float($Iav_wire_err,-4);
+                $Irms_wire_err  = round_float($Irms_wire_err,-4);
+                $Ipeak_wire_err = round_float($Ipeak_wire_err,-4);
+                my $err = "Cap=${Cap}fF Iav_via_err=$Iav_via_err" .
+                    " Iav_wire_err=$Iav_wire_err Irms_wire_err=$Irms_wire_err" .
+                    " Ipeak_wire_err=$Ipeak_wire_err";
                 $err .= " Up=$Up Dn=$Dn Activity=$Activity DC_vias=$DC_vias ".
                         " DC_width=$DC_width AC_width=$AC_width" if ($my_options{debug});
                 push @errors, "$node $err";
@@ -386,6 +355,7 @@ while (my $raw = <ALINTDIRS>) {
                 # find driver and keep track of worst error
                 my $driver = $drivers{$node};
                 if (!defined $driver) { $driver = "NOT_FOUND($cell/$node)"; }
+                next if ($driver eq "-1");
                 if (!defined $drivers_worst{$driver} ||
                         ($worst>$drivers_worst{$driver})) {
                     $drivers_worst{$driver} = $worst;
@@ -394,23 +364,22 @@ while (my $raw = <ALINTDIRS>) {
             }
         }
     }
-
     # print error report for this cell
     my $celldir = $cell;
     $celldir =~ s/\./\//g;
     $celldir=$my_options{"lve_dir"}."/$celldir";
     my $accurateprops="$celldir/cell.localprops.routed.accurate";
     if (@errors>0) {
-        print ("CELL $cell {\n");
+        print RF ("CELL $cell {\n");
         my %nodes=();
         foreach my $err (@errors) {
             my $node=$err;
             $node =~ s/^\s+//;
             $node =~ s/\s.*//;
             $nodes{$node}=1;
-            print ("  $err\n");
+            print RF ("  $err\n");
         }
-        print ("}\n\n");
+        print RF ("}\n\n");
         open (O, ">$accurateprops.tmp");
         open (I, "<$celldir/cell.localprops.routed");
         while (<I>) {
@@ -438,23 +407,109 @@ while (my $raw = <ALINTDIRS>) {
                 unlink "$accurateprops.tmp";
             }
         }
+        print STDERR "FAIL $cell\n";
     }
     else {
+        print STDERR "PASS $cell\n";
+        print RF "CELL $cell PASS\n";
         if ( -s "$accurateprops") {
             print STDERR "$accurateprops removed.\n";
             unlink $accurateprops;
             `touch "$accurateprops"`;
         }
     }
+    # print sorted drivers output
+    if (keys %drivers_err){
+      print RF "DRIVERS {\n";
+      foreach my $driver (sort keys %drivers_err) {
+        print RF "  $driver $drivers_err{$driver}\n";
+      }
+      print RF "}\n\n";
+    }
+    $alint_raw_cnt++;
 }
 close ALINTDIRS;
 
-# print sorted drivers output
-print "DRIVERS {\n";
-foreach my $driver (sort keys %drivers_err) {
-    print "  $driver $drivers_err{$driver}\n";
+close RF;
+print "View detail information in lve_em reports: $my_options{report}\n";
+print "ERROR: can't find alint.raw files\n Please run lve with extracted mode\n" if($alint_raw_cnt==0);
+#########################################
+# functions
+#########################################
+sub get_node_bin{
+    my($alint_parallel,$file_prefix)=@_;
+    my @loc=`grep '^alint' \"$alint_parallel/$file_prefix.\"*`;
+    my %node_bin_map=();
+    foreach my $loc (@loc){
+        chomp $loc;
+        my($bin_path,$node_info)=split(":",$loc);
+        my $node_bin=0;
+        my $node="";
+        if($bin_path =~ /\.(\d+)$/){
+          $node_bin=$1;
+          (my $a,$node) = split(/\s+/,$node_info);
+          $node_bin_map{$node}=$node_bin;
+        }
+    }
+    return %node_bin_map;
 }
-print "}\n\n";
+
+#set em cycle time
+sub set_em_cycletime {
+  if(defined $my_options{em_frequency}){
+    my $emfreq=$my_options{em_frequency};
+    if(defined  $my_options{em_unit}{frequency}){
+      if($my_options{em_unit}{frequency}=~/(\d+)(\S)/){
+        my($div,$u)=($1,$2);
+       $emfreq *= 1e+9 if ($u eq "G" or $u eq "g");
+       $emfreq *= 1e+6 if ($u eq "M" or $u eq "m");
+       $emfreq *= 1e+3 if ($u eq "K" or $u eq "k");
+       $emfreq /= $div;
+       $my_options{cycleTime} = 1.0/$emfreq;
+      }
+    }
+  }
+}
+
+sub unit_length_2m {
+  if(defined  $my_options{em_unit}{length}){
+    if($my_options{em_unit}{length}=~/(\d+)(\S)/){
+      my($div,$u)=($1,$2);
+      for (my $i=0; $i<@_; $i++) {
+        $_[$i] *= 1e-9 if ($u eq "n");
+        $_[$i] *= 1e-6 if ($u eq "u");
+        $_[$i] *= 1e-3 if ($u eq "m");
+        $_[$i] *= $div;
+      }
+      my $x;
+      $x = 1e-9 if ($u eq "n");
+      $x = 1e-6 if ($u eq "u");
+      $x = 1e-3 if ($u eq "m");
+      $x *= $div;
+      return $x;
+    }
+  }
+}
+
+sub unit_current_2A {
+  if(defined  $my_options{em_unit}{current}){
+    if($my_options{em_unit}{current}=~/(\d+)(\S)/){
+      my($div,$u)=($1,$2);
+      for (my $i=0; $i<@_; $i++) {
+        $_[$i] *= 1e-9 if ($u eq "n");
+        $_[$i] *= 1e-6 if ($u eq "u");
+        $_[$i] *= 1e-3 if ($u eq "m");
+        $_[$i] *= $div;
+      }
+      my $x;
+      $x = 1e-9 if ($u eq "n");
+      $x = 1e-6 if ($u eq "u");
+      $x = 1e-3 if ($u eq "m");
+      $x *= $div;
+      return $x;
+    }
+  }
+}
 
 # use cast_query to find all drivers of a localnode
 sub query_drivers {
@@ -491,14 +546,88 @@ sub query_em_directives {
     return %directives;
 }
 
+sub get_min_Iavg_limit {
+  my $Iavg_min_limit=1e10;
+  my $width=$my_options{minimumWireWidth};
+  foreach my $layer (sort keys %{$my_options{em_avg_wire_parm}}){
+    if ($layer =~/^M(\d+)/){
+      my $Iavg_limit;
+      if(defined $my_options{em_avg_wire_width}{$layer}){
+        my $width_thresh=$my_options{em_avg_wire_width}{$layer};
+        my $unit_2m=unit_length_2m($width_thresh);
+        $Iavg_limit=$my_options{em_avg_temp_rating}{$layer}*$my_options{em_avg_wire_parm}{$layer}*($width*(1/$unit_2m)*$my_options{em_width_scaling}+$my_options{em_avg_wire_offset}{$layer});
+        
+        if($width >= $width_thresh){
+          $Iavg_limit*=$my_options{em_avg_wire_width_coef}{$layer};
+        }
+        $Iavg_min_limit=$Iavg_limit if($Iavg_min_limit > $Iavg_limit );
+      }
+    }
+  }
+  unit_current_2A($Iavg_min_limit);
+  return $Iavg_min_limit;
+}
+
+sub get_min_Iavg_via_limit {
+  my $Iavg_min_limit=1e10;
+  foreach my $layer (sort keys %{$my_options{em_avg_via_limit}}){
+    if ($layer =~/^VIA(\d+)$/){
+        my $Iavg_limit;
+        $Iavg_limit=$my_options{em_avg_temp_rating}{$layer}*$my_options{em_avg_via_limit}{$layer};
+        $Iavg_min_limit=$Iavg_limit if($Iavg_min_limit > $Iavg_limit );
+    }
+  }
+  unit_current_2A($Iavg_min_limit);
+  return $Iavg_min_limit;
+}
+
+sub get_min_Irms_limit {
+  my $Irms_min_limit=1e10;
+  my $width=$my_options{minimumWireWidth};
+  my $unit_2m=unit_length_2m();
+  my $width_shrink=$width*(1/$unit_2m)*$my_options{em_width_scaling}; #translate m to tech file config unit and *widthscaling
+
+  foreach my $layer (sort keys %{$my_options{em_rms_parm}}){
+    if ($layer =~/^M(\d+)/){
+      my $Irms_limit=$my_options{em_rms_parm}{$layer}*$my_options{em_rms_heating}
+                    *($width_shrink+$my_options{em_rms_offset1}{$layer})*($width_shrink+$my_options{em_rms_offset1}{$layer})*
+                      ($width_shrink+$my_options{em_rms_offset1}{$layer}+$my_options{em_rms_offset2}{$layer})/
+                        ($width_shrink+$my_options{em_rms_offset1}{$layer}+$my_options{em_rms_offset3}{$layer});
+        $Irms_limit=sqrt($Irms_limit);
+
+        $Irms_min_limit=$Irms_limit if($Irms_min_limit > $Irms_limit );
+    }
+  }
+  unit_current_2A($Irms_min_limit);
+  return $Irms_min_limit;
+}
+
+sub get_min_Ipeak_limit {
+  my $Ipeak_min_limit=1e10;
+  my $width=$my_options{minimumWireWidth};
+  my $unit_2m=unit_length_2m();
+  my $width_shrink=$width*(1/$unit_2m)*$my_options{em_width_scaling}; #translate m to tech file config unit and *widthscaling
+
+  foreach my $layer (sort keys %{$my_options{em_peak_parm}}){
+    if ($layer =~/^M(\d+)/){
+#     print "$layer parm:$my_options{em_peak_parm}{$layer}\n";
+      my $offset=0;
+      $offset= $my_options{em_peak_offset}{$layer} if (defined $my_options{em_peak_offset}{$layer});
+      my $Ipeak_limit=$my_options{em_peak_parm}{$layer}*($width_shrink+$offset);
+        $Ipeak_min_limit=$Ipeak_limit if($Ipeak_min_limit > $Ipeak_limit );
+    }
+  }
+  unit_current_2A($Ipeak_min_limit);
+  return $Ipeak_min_limit;
+}
+
 # common code for calculating ave/rms/peak current failure ratios
 sub compute_currents {
     my ($Activity,$DC_width,$DC_vias,$AC_width,$Up,$Dn,$Cap,$current_layer,$current_via) = @_;
 
     # compute average unidirectional current
-    #my $Jav_wire = $Cap*$my_options{voltage}/$DC_width/$my_options{cycleTime}*$Activity;
-    my $Jav_wire = $Cap*$my_options{voltage}/$my_options{cycleTime}*$Activity;
-    my $Jav_via  = $Cap*$my_options{voltage}/$DC_vias/$my_options{cycleTime}*$Activity;
+    my $Iav_wire = $Cap*$my_options{voltage}/$my_options{cycleTime}*$Activity*(1-$my_options{recoveryFactor});
+    my $Iav_via  = $Cap*$my_options{voltage}/$DC_vias/$my_options{cycleTime}*$Activity*(1-$my_options{recoveryFactor});
         
     # curse divide by zero errors!
 
@@ -506,34 +635,79 @@ sub compute_currents {
     $Dn = 66e-12 if (!defined ($Dn) or $Dn == 0);
 
     # compute root-mean-squared bidirectional current
-    my $Jrms = $Cap*$my_options{voltage}*sqrt($Activity*(1/($Up*$my_options{cycleTime}) + 1/($Dn*$my_options{cycleTime})));
+    my $Irms = $Cap*$my_options{voltage}*sqrt($Activity*(1/($Up*$my_options{cycleTime}) + 1/($Dn*$my_options{cycleTime})));
     
     # compute peak bidirectional current adjusted by duty cycle
-    my $Jpeak_up = $Cap*$my_options{voltage}*sqrt(2*$Activity/($Up*$my_options{cycleTime}))/$AC_width;
-    my $Jpeak_dn = $Cap*$my_options{voltage}*sqrt(2*$Activity/($Dn*$my_options{cycleTime}))/$AC_width;
-    my $Jpeak = ($Jpeak_dn>$Jpeak_up) ? $Jpeak_dn : $Jpeak_up;
+    my $Ipeak_up = $Cap*$my_options{voltage}*sqrt(2*$Activity/($Up*$my_options{cycleTime}));
+    my $Ipeak_dn = $Cap*$my_options{voltage}*sqrt(2*$Activity/($Dn*$my_options{cycleTime}));
+    my $Ipeak = ($Ipeak_dn>$Ipeak_up) ? $Ipeak_dn : $Ipeak_up;
 
-    my $Jav_wire_limit = $em_avg_wire_limit;
-    my $Jav_via_limit = $em_avg_via_limit;
-    my $Jrms_wire_limit = $em_rms_wire_limit;
-    #my $Jrms_via_limit = $my_options{em_rms_via_limit}{$current_via} *
-    #sqrt($my_options{em_rms_heating}) * $DC_vias;
+    my $Iav_wire_limit = get_min_Iavg_limit();
+    my $Iav_via_limit  = get_min_Iavg_via_limit();
+    my $Irms_wire_limit= get_min_Irms_limit();
+    my $Ipeak_wire_limit=get_min_Ipeak_limit();
 
     # compute relative electromigration violations
-    #my $Jav_wire_err   = $Jav_wire/$my_options{"wireAvgCurrentLimit"};
-    my $Jav_wire_err   = $Jav_wire/$Jav_wire_limit;
-    #my $Jav_via_err    = $Jav_via/$my_options{"viaAvgCurrentLimit"};
-    my $Jav_via_err    = $Jav_via/$Jav_via_limit;
-    #my $Jrms_wire_err  = $Jrms/$my_options{"wireRMSCurrentLimit"};
-    my $Jrms_wire_err  = $Jrms/$Jrms_wire_limit;
-    my $Jpeak_wire_err = $Jpeak/$my_options{"wirePeakCurrentLimit"};
+    my $Iav_wire_err   = $Iav_wire/$Iav_wire_limit;
+    my $Iav_via_err    = $Iav_via/$Iav_via_limit;
+    my $Irms_wire_err  = $Irms/$Irms_wire_limit;
+    my $Ipeak_wire_err = $Ipeak/$Ipeak_wire_limit;
     
     # max up worst violation
-    my $worst = $Jav_via_err;
-    if ($Jav_wire_err>$worst)   {$worst = $Jav_wire_err;}
-    if ($Jrms_wire_err>$worst)  {$worst = $Jrms_wire_err;}
-    if ($Jpeak_wire_err>$worst) {$worst = $Jpeak_wire_err;}
-    
-    return ($Jav_wire_err,$Jav_via_err,$Jrms_wire_err,$Jpeak_wire_err,$worst);
+    my $worst = $Iav_via_err;
+    if ($Iav_wire_err>$worst)   {$worst = $Iav_wire_err;}
+    if ($Irms_wire_err>$worst)  {$worst = $Irms_wire_err;}
+    if ($Ipeak_wire_err>$worst) {$worst = $Ipeak_wire_err;}
+    print STDERR "avg wire $Iav_wire / $Iav_wire_limit \n" if ($my_options{debug});
+    print STDERR "avg via $Iav_via / $Iav_via_limit\n" if ($my_options{debug});
+    print STDERR "rms $Irms / $Irms_wire_limit\n" if ($my_options{debug});
+    print STDERR "peak $Ipeak / $Ipeak_wire_limit\n" if ($my_options{debug});
+    return ($Iav_wire_err,$Iav_via_err,$Irms_wire_err,$Ipeak_wire_err,$worst);
 }
 
+sub usage {
+ my($report)=@_;
+my $cell_str="";
+$cell_str=$my_options{cell} if (defined $my_options{cell});
+my $usage_pre="Usage: lve_em\n";
+
+my $usage =<<EOF;
+  [--pdk-root=$my_options{pdk_root}]  (location of Fulcrum pdk)
+  [--lve-dir=$my_options{lve_dir}]
+  [--cast-path=$my_options{cast_path}]
+  [--debug=$my_options{debug}]
+  [--max-heap-size=$my_options{max_heap_size}]
+  [--cell=$cell_str]
+  [--minimumWireWidth=$my_options{minimumWireWidth}]
+  [--cycleTime=$my_options{cycleTime}]
+  [--voltage=$my_options{voltage}]
+  [--recoveryFactor=$my_options{recoveryFactor}] #used for Iavg calculation
+  [--activityFactor=$my_options{activityFactor}]
+  [--limit=$my_options{limit}] #list em results if the ratio > limit; (ratio is defined as Ipeak/Ipeak_limit. Same as rms and avg)
+  [--default-metal=$my_options{default_metal}]  #no default metal, will pick min limit
+  [--default-via=$my_options{default_via}]  #no default via, will pick min limit
+  [--report=$my_options{report}] #lve_em report file
+  --corner=$my_options{corner}
+  --true=$my_options{true}
+  --temp=$my_options{temp}
+  --cc=$my_options{cc}
+  --tau=$my_options{tau}
+EOF
+
+my $usage_post =<<EOF;
+  --verbose
+
+    Recursively searches for extracted alint results for the given
+    conditions.  Will report any potential electromigration or current
+    violations on local nodes of all cells found.  Assumes only 1 via,
+    xxxm wide wire, a xxxs cycle time, and xxxV supply
+    voltage.  Used technology data for specified pdk xxx
+    Run from an lve working directory (or specify the lve directory
+    with --lve-dir.)  Limit defaults to 1, and is used as the threshold 
+    to filter relative violations.  Also reports violations organized 
+    by leaf cell drivers.
+EOF
+
+  return $usage_pre.$usage.$usage_post if (not defined $report);
+  return $usage if(defined $report);
+}

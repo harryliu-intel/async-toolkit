@@ -182,6 +182,7 @@ sub write_delay_directives {
     print DIRECTIVES "$leading". join("$leading", @charge_directives)
         if $docharge;
     close DIRECTIVES;
+    system('gzip','-f',"$directory/directives.$suffix");
     if (@{$directives[1]}) {
         open (DIRECTIVES, ">$directory/directives.1") ||
             die "Couldn't write to $directory/directives.1.\n";

@@ -58,6 +58,7 @@ my $noextractdeps=0;
 my $deletemakefiles=1;
 my $astaTauBound=-1;
 my $hercules_threads=2;
+my $starrc_threads=1;
 my $hsim_threads=1;
 my $hspice_threads=1;
 my $globalJreFlags="";
@@ -191,6 +192,7 @@ sub forcetarget {
     elsif ($task eq "extract") {
         $target =~ s/extract.raw//;
         dounlink($target."cell.spice_gds2");
+        dounlink($target."cell.spice_topcell");
         dounlink($target."cell.spice");
         dounlink($target."cell.aspice");
     }
@@ -419,7 +421,10 @@ my $monte_carlo=0;
 my $start_time=2;
 my $merge_paths=0;
 my $extract_corner="typical";
+my $extract_lvs="herc";
 my $extractdir="";
+my $extractdir_temp="";
+my $extractdir_corner="";
 my $custom_config = "$ENV{PWD}/custom.config"; # extra jauto options
 my $tech_asp="tech.asp";
 my $tech_alint_asp="tech_alint.asp";
@@ -503,6 +508,8 @@ my $big_lef = 1;
 my $star_rc=1;
 my $simplex=0;
 my $extractPower='DEVICE_LAYERS';
+my @validInstancePort=('CONDUCTIVE','NOT_CONDUCTIVE', 'SUPERCONDUCTIVE');
+my $instancePort=$validInstancePort[0];
 my $isopotentialLayers="";
 my $graybox_mode = "";
 my $abstract_view = "abstract";
@@ -531,13 +538,16 @@ our @bumpTau=();
 our @bumpCC=();
 our @bump_source_pvt=();
 our @time=();
+our @threshCC=();
+our @threshTau=();
 our @threshPercent=();
 our $traceR;
 our $probeTopPorts;
 our $probePorts;
 our $probeGates;
 our $maxF=10e9;
-our $extractTemp=90;
+my  $extractTemp_default=90;
+our $extractTemp=$extractTemp_default;
 our $reduced_dspf=0;
 our $reduce_mode="NO";
 our $tail_comments=0;
@@ -575,10 +585,18 @@ our $slintInputSlew=150;
 our $slintAbsMargin=25;
 our $slintOcvMargin=0.9;
 our $alint_raw=1;
+our $lve_raw_config="";
+our $lve_raw_config_include="";
+our $alint_incr=0;
+our $aspice_incr=0;
+our $alint_PO=1;
 our $bump_debug=0;
+our $bump_nearest_end=0;
 our $power_sag=0;
-our $static_switchV = 33;
+our $additive_resp = 0;
 our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
+our $maxNodePerAlintBin = 1000;
+our $maxAlintBinNum = 16;
 
 # sweep options
 my @skip = ();
@@ -882,13 +900,16 @@ if ( ! @cells) {
 
 # derived variables
 $start_time *= 1e-9; # convert to ns
+# round and convert taus from ps to s
 our $prsTau = int($prsTau+0.5) * 1e-12;
 for (my $i=0; $i<@delayTau; $i++) { $delayTau[$i] = int($delayTau[$i] + 0.5) * 1e-12; }
 for (my $i=0; $i<@bumpTau; $i++)  { $bumpTau[$i]  = int($bumpTau[$i] + 0.5) * 1e-12; }
+for (my $i=0; $i<@threshTau; $i++)  { $threshTau[$i]  = int($threshTau[$i] + 0.5) * 1e-12; }
 
 $haslvedb=1 if ( -s "$output_dir/lvedb.db");
 my $lvedbfile=lve_db_filename($output_dir);
-$usedb=1 if ( -s "$lvedbfile" and -w "$lvedbfile" );
+#if user explicitly disables db, don't use it.
+#$usedb=1 if ( -s "$lvedbfile" and -w "$lvedbfile" );
 
 if ($usedb) {
     $dbprefix=lve_create_db($output_dir, $pdk_root, $dbprefix);
@@ -1029,8 +1050,15 @@ if ($budgetcapindex < 0 or $budgetcapindex > $#delayCap) {
     print STDERR "Warning: selected budgetcapindex out of range, set to 0\n";
 }
 $budgetcapvalue=sprintf("%.0ff", $delayCap[$budgetcapindex]*1e15);
+my @sub_lve_root_dir_t = split(":",$sub_lve_root_dir);
+my @sub_lve_root_dir=();
+foreach my $dir (@sub_lve_root_dir_t){
+  push @sub_lve_root_dir, $dir if (-e $dir);
+}
+$sub_lve_root_dir = join(":",@sub_lve_root_dir) ;
+
 $sub_lve_root_dir = $output_dir
-    if ( $sub_lve_root_dir eq "" or ! -d $sub_lve_root_dir);
+    if ( scalar(@sub_lve_root_dir)==0);
 
 # check lef file and def file
 if($qx){
@@ -1052,11 +1080,17 @@ if( !($graybox_list eq "") and ($graybox_mode eq "") ){
 }
 
 # Check that we've defined everything we need.
+our $minRC=0 unless defined $minRC;
+our $traceInternal=0 unless defined $traceInternal;
+our $traceAll=0 unless defined $traceAll;
+our $minAccurateR=1 unless defined $minAccurateR;
+our $minAccurateC=1e-18 unless defined $minAccurateC;
+our $minAccurateRC=0 unless defined $minAccurateRC;
+our $maxNodePerAlintBin = 1000 unless defined $maxNodePerAlintBin;
+our $maxAlintBinNum = 16 unless defined $maxAlintBinNum;
 $accurateMode = ($mode[0] eq "accurate") ? 1 : 0;
 $reduced_dspf = 0 if $accurateMode;
 $reduce_mode = "NO" if $accurateMode;
-$maxAlintBinNum = 1 if $alint_in ne "" or $alint_asp ne "";
-$maxNodePerAlintBin = 1000000 if $alint_in ne "" or $alint_asp ne "";
 
 if (($customSpice ne '') != grep(/custom/, @mode)) {
     die usage() . "A custom SPICE file can be specified if and only if --mode=custom";
@@ -1206,7 +1240,9 @@ my @mode_order=("custom", "accurate",  "extracted",  "estimated",  "nogeometry")
 if(scalar(@view_mode_order)==0){
   foreach my $mode (@mode_order){
     foreach my $view (get_views($mode)) {
-      push @view_mode_order, "$view/$mode";
+      my $dir = ($mode eq 'extracted' || $mode eq 'accurate') ? "$mode$extractdir"
+                                                              : $mode;
+      push @view_mode_order, "$view/$dir";
     }  
   }
 }
@@ -1296,9 +1332,12 @@ DELAY_FAST                       := @delayFast
 BUMP_TAU                         := @bumpTau
 DELAY_TAU                        := @delayTau
 DELAY_CAP                        := @delayCap
+THRESH_CC                        := @threshCC
+THRESH_TAU                       := @threshTau
 THRESH_PERCENT                   := @threshPercent
-STATIC_SWITCH_V                  := $static_switchV
+ADDITIVE_RESP                    := $additive_resp
 BUMP_DEBUG                       := $bump_debug
+BUMP_NEAREST_END                 := $bump_nearest_end
 MAX_NODE_PER_ALINT_BIN           := $maxNodePerAlintBin
 ALINT_BIN_ENUM                   := $alintBinEnum
 MAX_ALINT_BIN_NUM                := $maxAlintBinNum
@@ -1343,6 +1382,7 @@ CUSTOM_SPICE                     := $customSpice
 CUSTOM_SPICE_INCLUDE             := $customSpiceInc
 MERGE_PATHS                      := $merge_paths
 EXTRACT_CORNER                   := $extract_corner
+EXTRACT_LVS                      := $extract_lvs
 EXTRACT_DIR                      := $extractdir
 LIBTRANSLATE                     := $libtranslate
 FAKESIZE                         := $fakesize
@@ -1358,11 +1398,13 @@ ASTA_WALLTIME                    := $astaWalltime
 ASTA_TAU_BOUND                   := $astaTauBound
 ASTA_THREADS                     := $astaThreads
 HERCULES_THREADS                 := $hercules_threads
+STARRC_THREADS                   := $starrc_threads
 HSIM_THREADS                     := $hsim_threads
 HSPICE_THREADS                   := $hspice_threads
 EPLFIX                           := $eplfix
 EXTRA_EQUIV                      := $extra_extract_equiv
 STARRC1_EXTRA_OPTIONS            := $starRC1_extra_options
+INSTANCE_PORT                    := $instancePort
 MYSQLHOST                        := $mysqlhost
 MYSQLDB                          := $mysqldb
 MYSQLUSER                        := $mysqluser
@@ -1372,6 +1414,9 @@ USEDB                            := $usedb
 GDS_USE_TAG                      := $use_tag
 GDS_TAG_ORIENTATION              := $tag_orientation
 CLEAN_TRACE                      := $clean_trace
+ALINT_PO                         := $alint_PO
+LVE_RAW_CONFIG                   := $lve_raw_config_include
+ALINT_INCR                       := $alint_incr
 DIGITALDELAY                     := $digitalDelay
 ESTIMATEDDELAY                   := $estimatedDelay
 MEASUREDDELAY                    := $measuredDelay
@@ -1584,22 +1629,19 @@ if($do_summarize){
     my $cmd = "${lve_resummarize} --work-dir='$output_dir'";
     system("$cmd >> '$lveLogFileName'");
 }
+
+# report Errors or Warnings in the log file to STDERR
 open(LOG, "<$lveLogFileName");
-my $extractRC=0;
 while (<LOG>) {
-    $extractRC = 1 if /extract_starRC/ or /Star-RCXT/ or /extract_spef/;
-    $extractRC = 0 if /spice2aspice/ or /^Done *Elp=/;
     my $ok = 0;
     foreach my $str (@noerrstrings) {
         $ok = 1 if (/$str/);
     }
     next if $ok;
-    # error filtering for spewage which comes from hercules and StarRCXT
+    # filter spewage from hercules and StarRCXT
     s/^ *//;
-    push @errors, $_ if (/error/i and ! (/^warning/i) and ! (/Errors: *0/) and ! (/Error File/) and
-        ! (/"Error"/) and ! (/LAYOUT_ERRORS/) and
-            ((! (/grep /) and ! (/Summary/)) or $verbose or !$extractRC));
-    push @warnings, $_ if (/warning/i and ! (/Warnings: *0/) and $verbose);
+    push @errors,   $_ if (/^error/i and ! (/^Errors:\s*0/) and ! (/^Error File/));
+    push @warnings, $_ if (/^warning/i and ! (/^Warnings:\s*0/) and $verbose);
 }
 close LOG;
 
@@ -1837,9 +1879,7 @@ sub enumerate_targets {
     foreach my $mode (@mode) {
         $hasextracted=1 if ($mode eq "extracted" or $mode eq "accurate");
     }
-    $corner_extension = "-".substr($extract_corner, 0, 3)
-        if ! ($extract_corner =~ /^t/i) and $hasextracted;
-    $corner_extension = "-$extract_corner" if $hasextracted and $extract_corner =~ /^m10/;
+    $corner_extension=$extractdir if ($hasextracted);
     my @checkedFiles;
     foreach my $view (get_views("extracted")) {
         my $path="$dfIIPath/$view/layout.oa";
@@ -1941,12 +1981,86 @@ sub enumerate_targets {
                             error("empty list element");
                         } else {
                             my $targ;
+                            if($alint_incr){
+                              #alint incremental. Generate new alint.in file and rerun aspice incrementally
+                              my $alint_path="$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C";
+                              if(-d $alint_path ){
+                                opendir(D,  "$alint_path");
+                                my @bin_dirs= grep {$_ =~ /(alint|alint_PO)\.bin\.\d+$/} readdir(D);
+                                closedir(D);
+                                my %eff_alint_bins; my %total_nodes;
+                                foreach my $bin_dir (@bin_dirs){
+                                  next if($bin_dir =~/alint_PO/ and $alint_PO==0);
+                                  if($bin_dir=~/(alint|alint_PO)\.bin\.(\d+)/){
+                                    my $bin_type=$1;
+                                    my $bin_t=$2+1;
+                                    $eff_alint_bins{$bin_type}=1 if(not defined $eff_alint_bins{$bin_type});
+                                    $eff_alint_bins{$bin_type}=$bin_t if($bin_t >= $eff_alint_bins{$bin_type});
+                                    opendir(D,  "$alint_path/$bin_dir");
+                                    my @node_dirs= map { (-d "$alint_path/$bin_dir/$_" and $_ ne "." and $_ ne "..") ? $_:()} readdir(D);
+                                    closedir(D);
+                                    $total_nodes{$bin_type}=0 if(not defined $total_nodes{$bin_type});
+                                    $total_nodes{$bin_type}= $total_nodes{$bin_type}+scalar(@node_dirs);
+                                  }
+                                  
+                                }
+                                #calculate current setting
+                                foreach my $type (keys %total_nodes){
+                                    #my $node_max_new=$total_nodes{$type}/$maxAlintBinNum
+                                        my $eff_alint_bins_new;
+                                    if ($total_nodes{$type} >= $maxAlintBinNum * $maxNodePerAlintBin) {
+                                        $eff_alint_bins_new = $maxAlintBinNum;
+                                    } else {
+                                        $eff_alint_bins_new = ceil($total_nodes{$type} / $maxNodePerAlintBin);
+                                    }
+                                    if($eff_alint_bins_new != $eff_alint_bins{$type}){
+#                                      print "\n*** Error: maxAlintBinNum or maxNodePerAlintBin is inconsistent.\n";
+#                                      print "\tWhen alint-incr=1, user should use same setting of maxAlintBinNum and maxNodePerAlintBin\n";
+#                                      print "\tIf you need to change  maxAlintBinNum or maxNodePerAlintBin, please run lve with --force=alint option\n";
+                                      #exit;
+                                    }
+                                }
+                              }
+                              my @alint_type=("alint_parallel");
+                              push @alint_type, "alint_PO_parallel" if ($alint_PO);
+                              foreach my $p (@alint_type){
+                                if(-d "$alint_path/$p"){
+                                  opendir(D,  "$alint_path/$p");
+                                  my @infiles= grep {$_ =~ /(alint|alint_PO)\.in\.\d+$/} readdir(D);
+                                  closedir(D);
+                                  if($p eq "alint_parallel" and scalar(@infiles) > 0){
+                                    $maxAlintBinNum= scalar(@infiles);
+                                    print "Information: Reuse original maxAlintBinNum setting:$maxAlintBinNum\n"; 
+                                  }
+                                  foreach my $f (@infiles){
+                                      system('mv', '-f', "$alint_path/$p/$f", "$alint_path/$p/save.$f") if (-e "$alint_path/$p/$f");
+                                  }
+                                  system "rm -f '$alint_path/$p/alint'*.*";
+                                  system "rm -f '$alint_path/$p/threshresp'.*";
+                                  foreach my $f (@infiles){
+                                      system('mv', '-f', "$alint_path/$p/save.$f", "$alint_path/$p/$f.org") if (-e "$alint_path/$p/save.$f");
+                                  }
+                                }
+                              }
+                              dounlink("$alint_path/threshresp_PO.result");
+                              dounlink("$alint_path/threshresp.result");
+                            }
                             if($alint_raw){ 
                                 $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint.raw";
                                 addTarget($cell,$task,$targ);
+                                dounlink($targ) if ($alint_incr);
                                 if($force{"alint_raw"}){
                                     dounlink($targ);
                                     system "rm -f '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel/alint.raw'.*";
+                                    if(-d "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel"){
+                                      opendir(D,  "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_parallel");
+                                      my @infiles= grep {$_ =~ /alint\.in\.\d+$/} readdir(D);
+                                      closedir(D);
+                                      if(scalar(@infiles) > 0){
+                                        $maxAlintBinNum= scalar(@infiles);
+                                        print "Information: Reuse original maxAlintBinNum setting:$maxAlintBinNum\n"; 
+                                      }
+                                    }
                                 }
                                 if($force{"alint_PO"}){
                                     dounlink($targ);
@@ -1956,11 +2070,12 @@ sub enumerate_targets {
                                     dounlink($targ);
                                     system "rm -rf '$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/alint_PO'*";
                                 }
+                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
+                                addTarget($cell,$task,$targ);
                                 $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/directives.0";
                                 addTarget($cell,$task,$targ);
+                                dounlink($targ) if ($alint_incr);
                                 $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp.result";
-                                addTarget($cell,$task,$targ);
-                                $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp_PO.result";
                                 addTarget($cell,$task,$targ);
                             }else{
                                 $targ = "$cellpath/$view/$mode$corner_extension/$task/$corner/${true}V/${temp}C/threshresp.result";
@@ -2058,11 +2173,6 @@ sub enumerate_targets {
                             addTarget($cell,$task,$targ);
                             $targ = "$targprefix/cell.lib";
                             addTarget($cell,$task,$targ);
-                            # added to force regen of libs with only one tau
-                            $targ = "$targprefix/cell.paths_top.50";
-                            addTarget($cell,$task,$targ);
-                            $targ = "$targprefix/cell.paths_top.52";
-                            addTarget($cell,$task,$targ);
                             $targ = "$targprefix/directives.done";
                             addTarget($cell,$task,$targ);
                         }
@@ -2113,6 +2223,7 @@ sub enumerate_targets {
                                     } else {
                                         my $targ = "$cellpath/$view/$mode$corner_extension/$task/$env/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
                                         addTarget($cell,$task,$targ);
+                                        dounlink($targ) if($force{"aspice_raw"});
                                     }
                                 }
                             }
@@ -2341,8 +2452,10 @@ sub enumerate_targets {
                             my $min_max="0.95_1.05";
                             my $targ = "$cellpath/$view/$mode$corner_extension/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
                             addTarget($cell,$task,$targ);
+                            dounlink($targ) if($force{"aspice_raw"});
                             $targ = "$cellpath/$view/$mode$corner_extension/aspice/leakage/$corner/${true}V/${temp}C/${time}ns/${min_max}/aspice.raw";
                             addTarget($cell,$task,$targ);
+                            dounlink($targ) if($force{"aspice_raw"});
                             $targ = "$cellpath/$view/$mode$corner_extension/aspice/redhawk/$corner/${true}V/${temp}C/${time}ns/${min_max}/cell.spiprof";
                             addTarget($cell,$task,$targ);
                         }
@@ -2526,12 +2639,14 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --blackbox-hercules=[$blackboxHercules] (run Hercules in blackbox mode)
     --extract-corner=[$extract_corner] (one of t[yp], cb[est], rcb[est], cw[orst], rcw[orst], m10typ)
         CAUTION: do not use corner unless in a separate lve tree for now.
+    --extract-lvs=[$extract_lvs] (LVS tool, herc or icv)
     --named-resistor-layers=[$namedResistorLayers] (preserve resistors on these layers in accurate mode for EM analysis)
     --star-rc=[$star_rc] ( no need to use both, these are complementary)
     --simplex=[$simplex]
     --extract-skip-6t=[$extractskip6t] (DANGEROUS: estimated mode, skip 6T core during estimated libs!)
     --sigma-factor [$sigma_factor] (value 0..1, use with extreme caution)
     --db-prefix [$dbprefix] (not for general use, for setting up mysql)
+    --starrc-threads=[$starrc_threads] (number of StarRC processes)
 
   Extract Graybox Options:
     --graybox-list=[$graybox_list] ( should be <filename> containing list of cell names)
@@ -2542,6 +2657,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --big-lef=[$big_lef] (for --task=lef only, default=1 )
     --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to blackbox equiv file)
     --starRC1-extra-options=[$starRC1_extra_options] (add options to hercules lvs_deck)
+    --instance-port=[$instancePort] (@validInstancePort)
 
   Extract Custom Options:
     --custom-spice=[$customSpice] (use specified file as extracted netlist)
@@ -2606,12 +2722,19 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --leakage=[$doLeakage]  (enable alint leakage simulations)
     --inverter-leakage=[$doInverterLeakage]  (enable alint leakage simulations of inverters)
     --maxNodePerAlintBin=[$maxNodePerAlintBin] (maximum number of nodes per Alint bin)
+    --maxAlintBinNum=[$maxAlintBinNum] (maximum number of Alint bins)
     --aspice-digital-time=[$aspice_digital_time]  (simulate digitally for this long after reset, in ns)
     --clean-trace=[$clean_trace] (trace files NOT copied from temp run directory  alint and lib tasks)
+    --alint-incr=[$alint_incr]  (alint-incr=1 to generate aspice trace files incrementally. If alint-incr=1, alint will not delete existing trace file.)
     --alint-raw=[$alint_raw]  (alint-raw=1 to generate alint.raw in alint task)
+    --alint-PO=[$alint_PO]  (alint-PO=1 to run new bump on PO for early check)
     --bump-source-pvt=[@bump_source_pvt] (signoff bump from which pvt.  If "", default current PVT)
     --power-sag=[$power_sag] (in percentage. Shift bump waveform according to this value. Bump signoff will check the bump waveform without shift and also check the shift bump waveform. )
+    --threshCC=[@threshCC] (list of [0|1] to enable cap-coupling for alint thresh)
+    --threshTau=[@threshTau] (list of fanin switching taus for alint thresh, in ps)
     --threshPercent=[@threshPercent] (Voltage steps in percentage of Vdd for ziggurat bump signoff)
+    --lve-raw-config=[$lve_raw_config]  (lve raw config file. This provide user to overwrite lve raw setting. 
+                                         User can set any config in this file. LVE_RAW will source this file after sourcing lve_raw.config in pdk)
 
   ASTA Options:
     --asta-input-slew=[$astaInputSlew]  (default slew rates for primary inputs, in ps)
@@ -2712,7 +2835,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
 EOF
 
     if (! defined ($arg)) {
-        unlink ("$output_dir/lvedb.db") if ! $haslvedb;
+#        unlink ("$output_dir/lvedb.db") if ! $haslvedb;
         unlink ("$output_dir/arg_output_dir.txt") if ! $hasargoutputdirtxt;
         rmdir ("$output_dir") if ( -d $output_dir);
     }
@@ -2760,6 +2883,7 @@ sub setOptions {
    $optionvalues{"custom-config"} =  $custom_config;
    $optionvalues{"merge-paths"} =  $merge_paths;
    $optionvalues{"extract-corner"} =  $extract_corner;
+   $optionvalues{"extract-lvs"} =  $extract_lvs;
    $optionvalues{"qx"} =  $qx;
    $optionvalues{"lef-file"} =  $lef_file;
    $optionvalues{"def-file"} =  $def_file;
@@ -2814,13 +2938,20 @@ sub setOptions {
    $optionvalues{"leakage"} =  $doLeakage;
    $optionvalues{"inverter-leakage"} =  $doInverterLeakage;
    $optionvalues{"maxNodePerAlintBin"} =  $maxNodePerAlintBin;
+   $optionvalues{"maxAlintBinNum"} =  $maxAlintBinNum;
    $optionvalues{"digital-time-unit"} =  $digital_time_unit;
    $optionvalues{"min-staticizer-ratio"} =  $min_stat_ratio;
    $optionvalues{"max-staticizer-ratio"} =  $max_stat_ratio;
    $optionvalues{"power-sag"} =  $power_sag;
    $optionvalues{"alint-raw"} =  $alint_raw;
+   $optionvalues{"lve-raw-config"} =  $lve_raw_config;
+   $optionvalues{"alint-incr"} =  $alint_incr;
+   $optionvalues{"alint-PO"} =  $alint_PO;
    $optionvalues{"bump-debug"}      = $bump_debug;
-   $optionvalues{"static-switchV"}  = $static_switchV;
+   $optionvalues{"bump-nearest-end"}      = $bump_nearest_end;
+   $optionvalues{"additive-resp"}  = $additive_resp;
+   $optionvalues{"threshCC"}   = join(",", @threshCC);
+   $optionvalues{"threshTau"}   = join(",", @threshTau);
    $optionvalues{"threshPercent"}   = join(",", @threshPercent);
    $optionvalues{"bump-source-pvt"} = join(",", @bump_source_pvt);
    $optionvalues{"delete-bumpcheck-dir"} =  $delete_bumpcheck_dir;
@@ -2867,6 +2998,7 @@ sub setOptions {
    $optionvalues{"asta-walltime"} =  $astaWalltime;
    $optionvalues{"asta-tau-bound"} =  $astaTauBound;
    $optionvalues{"hercules-threads"} =  $hercules_threads;
+   $optionvalues{"starrc-threads"} =  $starrc_threads;
    $optionvalues{"hsim-threads"} =  $hsim_threads;
    $optionvalues{"hspice-threads"} =  $hspice_threads;
    $optionvalues{"asta-threads"} =  $astaThreads;
@@ -2906,6 +3038,7 @@ sub setOptions {
    $optionvalues{"hlvs-eplfix"} =  $eplfix;
    $optionvalues{"extra-extract-equiv"} =  $extra_extract_equiv;
    $optionvalues{"starRC1-extra-options"} =  $starRC1_extra_options;
+   $optionvalues{"instance-port"} = $instancePort;
    $optionvalues{"use-db"} =  $usedb;
    $optionvalues{"make"} =  $make;
    $optionvalues{"no-tag"} =  $no_tag;
@@ -2936,10 +3069,10 @@ sub processOption {
         my ($key,$value) = @{$option};
         # path/directory/file options
         if ($key eq "output-dir")             { }
-        elsif ($key eq "cast-dir")            { $cast_dir = canonicalizePath($value); }
-        elsif ($key eq "spec-dir")            { $spec_dir = canonicalizePath($value); }
-        elsif ($key eq "dfII-dir")            { $dfII_dir = canonicalizePath($value); }
-        elsif ($key eq "slurp-dir")           { $slurp_dir = canonicalizePath($value); }
+        elsif ($key eq "cast-dir")            { $cast_dir = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "spec-dir")            { $spec_dir = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "dfII-dir")            { $dfII_dir = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "slurp-dir")           { $slurp_dir = canonicalizePath($value); check_path($value); }
 
         # extract options
         elsif ($key eq "minC")                { $minC = $value; }
@@ -2953,7 +3086,14 @@ sub processOption {
         elsif ($key eq "minCC")               { $minCC = $value; }
         elsif ($key eq "named-resistor-layers") {$namedResistorLayers = $value; }
         elsif ($key eq "maxF")                { $maxF = $value; }
-        elsif ($key eq "extractTemp")         { $extractTemp = $value; }
+        elsif ($key eq "extractTemp")         {
+            $extractTemp = $value;
+            if ($value != $extractTemp_default) { #for backward compatible
+                $extractdir_temp = "-$value";
+            }
+            #setup extract directory
+            $extractdir="$extractdir_corner$extractdir_temp";
+        }
         elsif ($key eq "deleteExtractDir")    { $deleteExtractDir = $value ? 1 : 0; }
         elsif ($key eq "delete-bumpcheck-dir"){ $delete_bumpcheck_dir = $value ? 1 : 0; }
         elsif ($key eq "keep-hlvs")           { $keepHlvsDir = $value ? 1 : 0; }
@@ -2979,6 +3119,7 @@ sub processOption {
                                                     die "hlvs graybox list '$value' does not exist";
                                                 }
                                                 $hlvs_graybox_list = canonicalizePath($value);
+                                                check_path($value);
                                               }
         elsif ($key eq "reduced-dspf")        { $reduced_dspf = $value; }
         elsif ($key eq "reduce-mode")         { $reduce_mode = $value; }
@@ -2986,7 +3127,7 @@ sub processOption {
         elsif ($key eq "nowellplugs")         { $nowellplugs = $value; }
         elsif ($key eq "mmonitor")            { $mmonitor = $value; $ENV{LVE_MMONITOR}=$value; }
         elsif ($key eq "layoutScaleY")        { $layoutScaleY = $value; }
-        elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); }
+        elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); check_path($value); }
         elsif ($key eq "merge-paths")         { $merge_paths=1; }
         elsif ($key eq "extract-corner")      {
             if ($value =~ /^t/i) {
@@ -2994,29 +3135,32 @@ sub processOption {
             }
             elsif ($value =~ /^cw/i) {
                 $extract_corner = "cworst";
-                $extractdir = "-cwo";
+                $extractdir_corner = "-cwo";
             }
             elsif ($value =~ /^rcw/i) {
                 $extract_corner = "rcworst";
-                $extractdir = "-rcw";
+                $extractdir_corner = "-rcw";
             }
             elsif ($value =~ /^cb/i) {
                 $extract_corner = "cbest";
-                $extractdir = "-cbe";
+                $extractdir_corner = "-cbe";
             }
             elsif ($value =~ /^rcb/i) {
                 $extract_corner = "rcbest";
-                $extractdir = "-rcb";
+                $extractdir_corner = "-rcb";
             }
             elsif ($value =~ /^m10typ/) {
                 $extract_corner="m10typ";
-                $extractdir = "-m10typ";
+                $extractdir_corner = "-m10typ";
             }
             else {
                 $errors++;
                 print STDERR "Unknown extract_corner $value, using $extract_corner\n";
             }
+            #setup extract directory
+            $extractdir="$extractdir_corner$extractdir_temp";
         }
+        elsif ($key eq "extract-lvs") { $extract_lvs = $value; }
 
         # extract_qx options
         elsif ($key eq "qx") { $qx = $value; }
@@ -3035,7 +3179,7 @@ sub processOption {
         }
 
         # extract_graybox options
-        elsif ($key eq "graybox-list")  { $graybox_list = canonicalizePath($value); }
+        elsif ($key eq "graybox-list")  { $graybox_list = canonicalizePath($value); check_path($value); }
         elsif ($key eq "graybox-mode")  { $graybox_mode = $value; }
         elsif ($key eq "abstract-view") { $abstract_view = $value; }
         elsif ($key eq "big-lef") { $big_lef = $value; }
@@ -3043,7 +3187,7 @@ sub processOption {
             my @f=split(/:/, $value);
             my @result=();
             foreach my $f (@f) {
-                $f = canonicalizePath($f);
+                $f = canonicalizePath($f); check_path($f);
                 push @result, $f if -d $f;
             }
             if ($#result >= 0) {
@@ -3053,8 +3197,8 @@ sub processOption {
         elsif ($key eq "skip-sub-lve")  { $skip_sub_lve = $value; }
 
         # extract custom options
-        elsif ($key eq "custom-spice")          { $customSpice = canonicalizePath($value); }
-        elsif ($key eq "custom-spice-include")  { $customSpiceInc = canonicalizePath($value); }
+        elsif ($key eq "custom-spice")          { $customSpice = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "custom-spice-include")  { $customSpiceInc = canonicalizePath($value); check_path($value); }
 
         # spice options
         elsif ($key eq "hsimAccurate")      { $hsimAccurate = $value; }
@@ -3071,19 +3215,19 @@ sub processOption {
         elsif ($key eq "probeGates")        { $probeGates = $value; }
 
         # aspice options
-        elsif ($key eq "tech-asp")          { $tech_asp = canonicalizePath($value); }
-        elsif ($key eq "tech-alint-asp")    { $tech_alint_asp = canonicalizePath($value); }
-        elsif ($key eq "alint-asp")          { $alint_asp = canonicalizePath($value); }
-        elsif ($key eq "aspice-asp")         { $aspice_asp = canonicalizePath($value); }
-        elsif ($key eq "aspice-extra-asp")   { $aspice_extra_asp = canonicalizePath($value); }
-        elsif ($key eq "alint-extra-asp")    { $alint_extra_asp = canonicalizePath($value); }
+        elsif ($key eq "tech-asp")          { $tech_asp = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "tech-alint-asp")    { $tech_alint_asp = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "alint-asp")          { $alint_asp = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "aspice-asp")         { $aspice_asp = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "aspice-extra-asp")   { $aspice_extra_asp = canonicalizePath($value); check_path($value); }
+        elsif ($key eq "alint-extra-asp")    { $alint_extra_asp = canonicalizePath($value); check_path($value); }
         elsif ($key eq "aspice-digital-time") { $aspice_digital_time = $value; }
-        elsif ($key eq "alint-in")           { $alint_in = canonicalizePath($value); }
+        elsif ($key eq "alint-in")           { $alint_in = canonicalizePath($value); check_path($value); }
         elsif ($key eq "alint-dynamic-only") { $alint_dynamic_only = $value; }
         elsif ($key eq "lib-static-only")    { $lib_static_only = $value; }
-        elsif ($key eq "aspice-in")          { $aspice_in = canonicalizePath($value); }     
-        elsif ($key eq "cell-localprops")    { $cell_localprops = canonicalizePath($value); } 
-        elsif ($key eq "cell-nodeprops")    { $cell_nodeprops = canonicalizePath($value); } 
+        elsif ($key eq "aspice-in")          { $aspice_in = canonicalizePath($value); check_path($value); }     
+        elsif ($key eq "cell-localprops")    { $cell_localprops = canonicalizePath($value); check_path($value); } 
+        elsif ($key eq "cell-nodeprops")    { $cell_nodeprops = canonicalizePath($value); check_path($value); } 
         elsif ($key eq "internalWires")     { $internalWires = $value ? 1 : 0; }
         elsif ($key eq "internalRules")     { $internalRules = $value ? 1 : 0; }
         elsif ($key eq "traceR")            { $traceR = $value; }
@@ -3095,11 +3239,17 @@ sub processOption {
         elsif ($key eq "maxDelayFanin")     { $maxDelayFanin = $value; }
         elsif ($key eq "prsTau")            { $prsTau = $value; }
         elsif ($key eq "alint-raw")       { $alint_raw = $value; }
+        elsif ($key eq "lve-raw-config")       { $lve_raw_config = canonicalizePath($value); check_path($value); $lve_raw_config_include="--include=$lve_raw_config";}
+        elsif ($key eq "alint-incr")       { $alint_incr = $value; }
+        elsif ($key eq "alint-PO")       { $alint_PO = $value; }
         elsif ($key eq "bump-source-pvt")   { @bump_source_pvt = split(",",$value); }
-        elsif ($key eq "bump-debug")        { $bump_debug = $value; }
+        elsif ($key eq "bump-debug")        { $bump_debug = $value; $delete_bumpcheck_dir= $value? 0: $delete_bumpcheck_dir; }
         elsif ($key eq "power-sag")         { $power_sag = $value; }
+        elsif ($key eq "bump-nearest-end")  { $bump_nearest_end = $value; }
+        elsif ($key eq "threshCC")          { @threshCC = split(",",$value); }
+        elsif ($key eq "threshTau")         { @threshTau = split(",",$value); }
         elsif ($key eq "threshPercent")     { @threshPercent = split(",",$value); }
-        elsif ($key eq "static-switchV")    { $static_switchV = $value; }
+        elsif ($key eq "additive-resp")     { $additive_resp = $value; }
         elsif ($key eq "delayCap")          { @delayCap=split(/,/,$value); }
         elsif ($key eq "bumpCC")            { my @f=split(",",$value);
                                               @bumpCC=();
@@ -3134,6 +3284,7 @@ sub processOption {
         elsif ($key eq "leakage")           { $doLeakage = $value; }
         elsif ($key eq "inverter-leakage")  { $doInverterLeakage = $value; }
         elsif ($key eq "maxNodePerAlintBin") { $maxNodePerAlintBin = $value; }
+        elsif ($key eq "maxAlintBinNum") { $maxAlintBinNum = $value; }
         elsif ($key eq "digital-time-unit") { $digital_time_unit = $value; }
         
         # JLVS max/min ratio options
@@ -3205,6 +3356,7 @@ sub processOption {
         elsif ($key eq "asta-walltime")     { $astaWalltime = $value; }
         elsif ($key eq "asta-tau-bound")    { $astaTauBound = $value; }
         elsif ($key eq "hercules-threads")  { $hercules_threads = $value; }
+        elsif ($key eq "starrc-threads")    { $starrc_threads = $value; }
         elsif ($key eq "hsim-threads")      { $hsim_threads = $value > 1 ? 4: 1; }
         elsif ($key eq "hspice-threads")    { $hspice_threads = $value > 0 ? $value : 1; }
         elsif ($key eq "asta-threads")      { $astaThreads = $value; }
@@ -3272,13 +3424,21 @@ sub processOption {
         elsif ($key eq "sigma-factor")       { $sigma_factor = $value; }
         elsif ($key eq "env-cap-load")       { $env_cap_load = $value; }
         elsif ($key eq "db-prefix")          { $dbprefix = $value; }
-        elsif ($key eq "redo-nodes")         { $redonodes = $value; }
+        elsif ($key eq "redo-nodes")         { $redonodes = $value; $alint_incr=0 if ($redonodes ne "");}
         elsif ($key eq "hdrc-density")       { $hdrc_density = $value; }
         elsif ($key eq "noextractdeps")      { $noextractdeps = $value; }
         elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
         elsif ($key eq "hlvs-eplfix")        { $eplfix = $value; }
-        elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value); }
+        elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value);}
         elsif ($key eq "starRC1-extra-options") { $starRC1_extra_options = canonicalizePath($value);}
+        elsif ($key eq "instance-port") {
+            if (grep { $value eq $_ } @validInstancePort) {
+                $instancePort = $value;
+            } else {
+                push @errors, "ERROR: $value is not a valid INSTANCE_PORT setting, using $instancePort";
+                $errors++;
+            }
+        }
         elsif ($key eq "use-db") { $usedb=$value; }
         elsif ($key eq "make") { $make=$value if ( -x "$value"); }
         elsif ($key eq "no-tag") { $no_tag=$value; $use_tag = $value ? "" : "--use-tag"; }
@@ -3307,6 +3467,8 @@ sub processOption {
             warn ("WARNING: option --${key}=${value} not recognized.");
         }
     } else {
+        $maxAlintBinNum = 1 if $alint_in ne "" or $alint_asp ne "";
+        $maxNodePerAlintBin = 1000000 if $alint_in ne "" or $alint_asp ne "";
         # separate cell and env list
         my ($cell,$envs,$nodes) = split(":",$option);        
         if ( ! $celllock{$cell}) {

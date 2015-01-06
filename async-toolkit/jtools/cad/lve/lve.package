@@ -75,10 +75,13 @@ $arch/bin/lve_apl             script/perl/lve_apl              755 p
 $arch/bin/raw2db              script/perl/raw2db.pl            755 p
 $arch/bin/checkdb             script/perl/checkdb.pl           755 p
 $arch/bin/db2table            script/perl/db2table.pl          755 p
+$arch/bin/archiver.cmd        script/perl/archiver.cmd              755 p
 # Used in the makefiles to delete trace file
 $arch/bin/deletetracefile          script/perl/deletetracefile              755 p
 # Used in the makefiles to delete trace file
 $arch/bin/lve_threshresp          script/perl/lve_threshresp   755 p
+$arch/bin/lve_datacheck          script/perl/lve_datacheck   755 p
+$arch/bin/lve_bumpsim          script/perl/lve_bumpsim   755 p
 # PGP encryption of gds2 Removed because it points to non-existant place; hence useless
 #$arch/bin/tapeout.pl          script/perl/tapeout              755 p
 
@@ -179,6 +182,7 @@ share/script/sh/sh-lib/file/filecheck.sh ../../infrastructure/sh-lib/file/filech
 share/script/sh/sh-lib/file/conon.sh ../../infrastructure/sh-lib/file/conon.sh         755 p
 share/script/sh/sh-lib/file/config.sh ../../infrastructure/sh-lib/file/config.sh       755 p
 share/script/sh/sh-lib/script/generate_script_with_libs.sh ../../infrastructure/sh-lib/script/generate_script_with_libs.sh 755 p
+lib/perl/Hercules.pm           lib/perl/Hercules.pm                   755 p
 lib/perl/LveDB.pm              lib/perl/LveDB.pm                      755 p
 lib/perl/LveUtil.pm            lib/perl/LveUtil.pm                    755 p
 lib/perl/LveAspice.pm          lib/perl/LveAspice.pm                  755 p
@@ -186,6 +190,7 @@ lib/perl/LveDelay.pm           lib/perl/LveDelay.pm                   755 p
 lib/perl/LveStatus.pm          lib/perl/LveStatus.pm                  755 p
 lib/perl/LveSummarize.pm       lib/perl/LveSummarize.pm               755 p
 lib/perl/LveSummarize.pm       lib/perl/LveSummarize.pm               755 p
+lib/perl/LveMultinoise.pm      lib/perl/LveMultinoise.pm              755 p
 lib/perl/Pathalyze.pm          lib/perl/Pathalyze.pm                  755 p
 lib/perl/Pathalyze/Parser.pm   lib/perl/Pathalyze/Parser.pm           755 p
 lib/perl/Pathalyze/Measurement.pm lib/perl/Pathalyze/Measurement.pm   755 p

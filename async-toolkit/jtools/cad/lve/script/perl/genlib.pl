@@ -1635,7 +1635,6 @@ EONE
         $n++;
     }
     foreach my $pin (keys %cap) {
-        $cap{$pin}=10e-12 if ! defined $specpins{$pin};
         print "PIN $pin $cap{$pin}\n" if $VARS{DEBUG};
     }
     # sort thru all of the input pins with no output

@@ -1,0 +1,209 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    $cad_dir = $lve_root;
+    $cad_dir =~s:/[^/]*$::;
+    @INC = ("$cad_dir/lib/perl", @INC);
+}
+use LveStatus;
+use LveUtil;
+use Getopt::Long;
+use strict;
+
+my $lve_dir;
+my $pvt;
+my $cell_list;
+
+GetOptions (
+    "lve-dir=s"  => \$lve_dir,
+    "pvt=s"      => \$pvt,
+    "cells=s"    => \$cell_list,
+    ) or die;
+
+sub write_lines {
+    my ($file, $lines) = @_;
+    open RAW, ">$file" or die "Can't write $file\n";
+    foreach my $l (@$lines)   { print RAW "$l\n"; }
+    close RAW;
+}
+
+sub write_histogram {
+    my ($file, $histogram) = @_;
+    
+    open RAW, ">$file" or die "Can't write $file\n";
+    foreach my $k (sort {$a <=> $b} keys(%$histogram)) { 
+        print RAW "$k $histogram->{$k}\n"; }
+    close RAW;
+}
+
+sub get_dynamic_nodes {
+    my ($cell) = @_;
+    my @dynamic_nodes = ();
+
+    my @localprops = get_lines("$cell/cell.localprops.routed");
+    foreach my $line (@localprops) {
+        my @keys = split(" ", $line);
+        if(is_numeric($keys[1])) {
+            if($keys[1] == 1) {
+                push(@dynamic_nodes, $keys[0]);
+            }
+        }
+        elsif($keys[0] eq "SIGNOFF") {}
+        else {
+            die "Error reading local props:$cell/cell.localprops.routed \n";
+        }
+    }
+    return @dynamic_nodes;
+}
+
+sub plot_histogram {
+    my ($measurements) = @_;
+    my %histogram = ();
+    foreach my $m (@$measurements) {
+        my @pair = split(" ", $m);
+        my $key = $pair[0]-$pair[1];
+        if (!defined($histogram{$key})) {
+            $histogram{$key} = 0;
+        }
+        $histogram{$key} += 1;
+    }
+    return %histogram;
+}
+
+
+
+sub update_worst_bumps {
+    my ($keys, $bumps, $key) = @_;
+    if (defined($keys->{"node"})) {
+        my $node = $keys->{"node"};
+        my $bump;
+
+        my @args = split("@",$keys->{$key});
+        if (is_numeric($args[0])) { 
+            $bump = $args[0];
+
+        }
+        if (defined($bump)) {
+            if (!defined($bumps->{$node})) {
+                $bumps->{$node} = 0;
+            } 
+            if ($bump > $bumps->{$node}) {
+                $bumps->{$node} = $bump;
+            }
+        }
+    }
+}
+
+sub check_inv_bumps_cell {
+    my ($cell, $raw, $cc) = @_;
+    my @dynamic_nodes = get_dynamic_nodes($cell);
+    my @raw_lines = get_lines($raw);
+    my %inv_bump_ups = ();
+    my %inv_bump_dns = ();
+    my %resp_bump_ups = ();
+    my %resp_bump_dns = ();
+    my @measurements = ();
+    foreach my $line (@raw_lines) {
+        my ($status, $task, $cell, $path, %keys) = parse_raw_line($line);
+        if (defined($keys{"cc"}) && 
+            is_numeric($keys{"cc"}) &&
+            $keys{cc} == $cc) {
+            if (defined($keys{"inv_bump_up"})) {
+                update_worst_bumps(\%keys, 
+                                   \%inv_bump_ups, 
+                                   "inv_bump_up");
+                update_worst_bumps(\%keys, 
+                                   \%inv_bump_dns, 
+                                   "inv_bump_dn");
+            }
+            if (defined($keys{"threshCC"}) &&
+                defined($keys{"bump_up"}) &&
+                $keys{"threshCC"} == 0) {
+                update_worst_bumps(\%keys,
+                                   \%resp_bump_dns,
+                                   "resp");
+            }
+            if (defined($keys{"threshCC"}) &&
+                defined($keys{"bump_dn"}) &&
+                $keys{"threshCC"} == 0) {
+                update_worst_bumps(\%keys,
+                                   \%resp_bump_ups,
+                                   "resp");
+            }
+        }
+    }
+    foreach my $dn (@dynamic_nodes) {
+        if(defined($inv_bump_ups{$dn}) &&
+           defined($resp_bump_ups{$dn})) {
+            push(@measurements, "$inv_bump_ups{$dn} $resp_bump_ups{$dn} $raw $dn");
+        }
+        if(defined($inv_bump_dns{$dn}) &&
+           defined($resp_bump_dns{$dn})) {
+            push(@measurements, "$inv_bump_dns{$dn} $resp_bump_dns{$dn} $raw $dn");
+        }
+    }
+    return @measurements;
+}
+
+sub check_pvt {
+    my ($cell_list, $lve_dir, $pvt, $cc, $all_pvts) = @_;
+    my @cells = get_lines($cell_list);
+    my @lve_dirs = split(":", $lve_dir);    
+    my ($corner, $voltage, $temp);
+    my @split_pvt = split(":", $pvt);
+    $corner = $split_pvt[0];
+    $voltage = $split_pvt[1];
+    $temp = $split_pvt[2];
+    my @paths = ();
+    foreach my $d (@lve_dirs) {
+        foreach my $c (@cells) {
+            my $p = "$d/";
+            $p .= fqcn_to_path((split(" ", $c))[0]);
+            if (-d $p) {
+                push @paths, $p;
+            }
+        }
+    }
+    my @views =("custom_tag", "layout");
+    my @alint_not_found = ();
+    my @measurements = ();
+    
+    foreach my $c (@paths) {
+        my $alinted_views = 0;
+        foreach my $v (@views) {
+            my $alint_raw = "$c/$v/extracted/alint/${corner}/${voltage}V/${temp}C/alint.raw";
+            if (-e "$alint_raw") {
+                $alinted_views++;
+                push(@measurements, 
+                     check_inv_bumps_cell($c, $alint_raw, $cc));
+            }
+        }
+        if ($alinted_views == 0) {
+            push(@alint_not_found, $c);
+        }
+    }
+    
+    my %histogram = plot_histogram(\@measurements);
+    push(@$all_pvts, @measurements);
+    my $output_prefix = "${corner}:${voltage}:${temp}:$cc";
+    write_lines("${output_prefix}.skipped.cells", \@alint_not_found);
+    write_lines("${output_prefix}.inv_bumps_v_resp", \@measurements);
+    write_histogram("${output_prefix}.histogram", \%histogram);
+}
+
+my @pvts = split(",", $pvt);
+my @all_pvt_bumps = ();
+for(my $i = 0; $i < 2; $i++) {
+    foreach my $p (@pvts) {
+        check_pvt($cell_list, $lve_dir, $p, $i, \@all_pvt_bumps);
+    }
+}
+
+write_lines("all.inv_bumps_v_resp", \@all_pvt_bumps);
+my %all_pvt_hist = plot_histogram(\@all_pvt_bumps);
+write_histogram("all.histogram", \%all_pvt_hist);

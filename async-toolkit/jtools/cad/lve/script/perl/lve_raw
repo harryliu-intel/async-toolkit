@@ -5,6 +5,8 @@ use FileHandle;
 use IPC::Open2;
 use Symbol;
 use DBI;
+use Archive::Tar;
+use File::Temp qw/ tempfile /;
 use strict;
 
 #############################################################################
@@ -59,6 +61,7 @@ use LveUtil;
 use LveAspice;
 use LveDelay;
 use LveDB;
+use LveMultinoise;
 
 sub ncmp {
     return 1 if $a > $b;
@@ -72,6 +75,12 @@ my $rename = "$lve_root/bin/rename";
 my $dbh;
 my $user=`whoami`;
 chomp $user;
+
+my @sub_lve_root_dir=();
+# archive file name
+my $trace_archive="aspice_trace.zip";
+my $resp_archive="thresh_resp.zip";
+
 
 # scale Tau to slew time
 my $slew_scaling = log(2);
@@ -99,26 +108,25 @@ $inv_bump_bound[0] = 5; # absolute inverse node bump bound without cap-coupling,
 $inv_bump_bound[1] = 5; # absolute inverse node bump bound with cap-coupling, in percent
 my %inv_bump_bound=();
 @{$inv_bump_bound{""}}=(@inv_bump_bound);
+my @thresh_resp_bound=();
+$thresh_resp_bound[0] = 10; # absolute thresh response bound without cap-coupling, in percent
+$thresh_resp_bound[1] = 30; # absolute thresh response bound with cap-coupling, in percent
+my %thresh_resp_bound=();
+@{$thresh_resp_bound{""}}=(@thresh_resp_bound);
+my %multi_noise_resp_bound=();
+@{$multi_noise_resp_bound{""}}=(@LveMultinoise::resp_bound);
 my $small_leak_bound = 5; # absolute leak bound for non-leaky nodes, in percent
 my %small_leak_bound=();
 $small_leak_bound{""}=$small_leak_bound;
 my $large_leak_bound = 10; # absolute leak bound for leaky nodes, in percent
 my %large_leak_bound=();
 $large_leak_bound{""}=$large_leak_bound;
+my @threshCC=();
+my @threshTau=();
+my @threshPercent=();
 
 # alint electromigration parameters
-my $em_frequency         = 1e9; # 1GHz default electromigration frequency
-my $em_avg_scaling       = 1;   # multiplies em_avg limits to correct for temperature
-my $em_rms_heating       = 10;  # 10C joule heating limit for rms currents
-my %em_avg_wire_limit    = ();
-my %em_rms_wire_limit    = ();
-my %em_rms_width_offset  = ();
-my %em_rms_width_offset1 = ();
-my %em_rms_width_offset2 = ();
-my %em_avg_width_offset  = ();
-my %em_avg_via_limit     = ();
-my %em_width_div_limit   = ();
-my %em_rms_via_limit     = ();
+my %em_options=();
 
 # PASS/FAIL criteria for aspice
 my $digital_time_unit = 1e-13;  # digital time unit, in seconds
@@ -141,6 +149,7 @@ my $localprops = "";
 my $leakynodes = "";
 my $pdk_root = "";
 my $nodeprops = "";
+my $fio_signoff_props = "";
 
 # delay correction parameters for process, voltage, temperature
 my %process_correction = ();
@@ -166,14 +175,16 @@ $voltage_correction_slope{""}=$voltage_correction_slope;
 #bump check
 my @bump_source=();
 my $bump_debug=0;
+my $bump_nearest_end=0;
 my $bump_work_dir="";
 my $power_sag=0;
-my $static_switch_V=33;
-my %static_switch_V = ();
-$static_switch_V{""}=$static_switch_V;
+my $cast_path="";
+my $additive_resp=0;
+my $alint_PO=1;
+my $usedb=1;
 my @fail_type=("pass",
                "max_thresh_percent",
-               "static_switching_th",
+               "thresh_resp_bound",
                "no_such_fanout",
                "no_thresh_scenario",
                "no_such_node",
@@ -187,7 +198,13 @@ my @fail_type=("pass",
                "illegal_fanout_node_in_jflat_fanout_file",
                "no_such_fanin",
                "illegal_fanin_node_in_jflat_fanin_file",
-               "illegal_node_in_jflat_fanout_file");
+               "illegal_node_in_jflat_fanout_file",
+               "no_additive_resp");
+
+# set interrupt handlers to cleanup on exit
+$SIG{'INT'} = \&LveUtil::cleanUp_workdir;
+$SIG{__DIE__} = \&LveUtil::cleanUp_workdir;
+
 
 # delay correction function, returns relative adjustment for spec delays
 sub delay_correction_factor {
@@ -222,6 +239,8 @@ if ( ! -s $process_config) {
     chomp $process_config;
     $process_config .= "/share/Fulcrum/jauto/process.config";
 }
+
+
 
 sub read_config {
     my ($file, $result) = @_;
@@ -292,17 +311,14 @@ USAGE: $basename [options]
     --inv-bump-bound-cc=[$inv_bump_bound[1]] (absolute bump bound on inverses with cap-coupling, in percent)
     --small-leak-bound=[$small_leak_bound] (absolute leak bound for non-leaky nodes, in percent)
     --large-leak-bound=[$large_leak_bound] (absolute leak bound for leaky nodes, in percent)
+    --thresh-resp-bound-nocc=[$thresh_resp_bound[0]] (absolute thresh resp bound on inverses without cap-coupling, in percent)
+    --thresh-resp-bound-cc=[$thresh_resp_bound[1]] (absolute thresh resp bound on inverses with cap-coupling, in percent)
+    --multi-noise-resp-bound-nocc=[$LveMultinoise::resp_bound[0]] (absolute multi-noise bump resp bound without cap-coupling, in percent)
+    --multi-noise-resp-bound-cc=[$LveMultinoise::resp_bound[1]] (absolute multi-noise bump resp bound with cap-coupling, in percent)
 
   Alint Electromigration Criteria:
-    --em-frequency=[$em_frequency] (default frequency in Hz for em checks)
-    --em-avg-scaling=[$em_avg_scaling] (multiples em-avg limits)
-    --em-avg-wire-limit:WIRE=I/W (sets average current limit for a wiring layer in A/m)
-    --em-avg-via-limit:VIA=I (sets average current limit for a via layer in A)
-    --em-rms-heating=[$em_rms_heating] (joule heating limit for rms current)
-    --em-rms-wire-limit:WIRE=I/W (sets rms current limit for a wiring layer in A/m)
-    --em-rms-via-limit:VIA=I (sets rms current limit for a via layer in A)
-    --em-rms-width-offset:WIRE=W (sets width offset for rms calculation in m)
-    --em-avg-width-offset:WIRE=W (sets width offset for rms calculation in m)
+    (Do not change other em setting.)
+    --em-width-scaling=[$em_options{em_width_scaling}] ( metal width scaling factor)
 
   Aspice/Asta PASS/FAIL Criteria:
     --tau-bound=[$tau_bound] (passing Tau for Aspice/Asta in ps)
@@ -326,12 +342,20 @@ USAGE: $basename [options]
     --env-ntpc=[$envntpc] (env.ntpc file)
     --local-props=[$localprops] (cell.localprops file)
     --node-props=[$nodeprops] (cell.nodeprops file)
+    --fanin-fanout-sigoff-props=[$fio_signoff_props] (fanin fanout signoff props file)
     --leaky-nodes=[$leakynodes] (cell.leakynodes file)
     --slew-scaling=[$slew_scaling] (scale Tau to slew time)
     --bump-source=[@bump_source] (signoff bumps from which PVT. If "", default current PVT)
     --power-sag=[$power_sag] (in percentage of Vdd. voltage power variation)
-    --static-switchV=[$static_switch_V] (in percentage. static switching voltage)
+    --cast-path=[$cast_path] (cast-path is required if power-sag is on)
+    --additive-resp=[$additive_resp] (1: add up all threshold response of all aggressor)
+    --multi-noise=[$LveMultinoise::isMultiNoise] (1: enable multiple noise analysis to apply bumps on parallel inputs)
+    --alint-PO=[$alint_PO] (1: do early new bump check on PO)
+    --use-db=[$usedb] (1: use database to store raw data. Not valid for alint and lib task)
     --bump-debug=[$bump_debug] (1: will print out the bump response waveform)
+    --threshCC=[]
+    --threshTau=[]
+    --threshPercent=[]
 EOF
     print STDERR "\nERROR: $msg\n" if defined $msg;
     exit 1;
@@ -348,6 +372,7 @@ sub parseOptions {
 my $alint_dynamic_only;
 my $lib_static_only;
 my $process_correction;
+my $maxHeapSize = "512M";
 
 sub  parseOption {
     my ($option) = @_;
@@ -369,8 +394,11 @@ sub  parseOption {
         elsif ($key =~ /^temperature-correction-slope:*(.*)/)  { $temperature_correction_slope{format_pvt($1)} = $value; }
         elsif ($key =~ /^voltage-correction-nominal:*(.*)/)    { $voltage_correction_nominal{format_pvt($1)} = $value; }
         elsif ($key =~ /^voltage-correction-slope:*(.*)/)      { $voltage_correction_slope{format_pvt($1)} = $value; }
-        elsif ($key =~ /^static-switchV:*(.*)/)  { $static_switch_V{format_pvt($1)} = $value;}
         elsif ($key =~ /^deadlock-time:*(.*)/)  { $deadlock_time{format_pvt($1)} = $value; }
+        elsif ($key eq "additive-resp")          { $additive_resp = $value; }
+        elsif ($key eq "multi-noise")            { $LveMultinoise::isMultiNoise = $value; }
+        elsif ($key eq "alint-PO")               { $alint_PO = $value; }
+        elsif ($key eq "use-db")                 { $usedb = $value; }
         elsif ($key eq "digital-time-unit")      { $digital_time_unit = $value; }
         elsif ($key eq "deadlock-time")          { $deadlock_time = $value; }
         elsif ($key eq "measure-time")           { $measure_time = $value; }
@@ -384,38 +412,49 @@ sub  parseOption {
         elsif ($key eq "env-ntpc")               { $envntpc = $value; }
         elsif ($key eq "local-props")            { $localprops = $value; }
         elsif ($key eq "node-props")             { $nodeprops = $value; }
+        elsif ($key eq "fanin-fanout-signoff-props")    { $fio_signoff_props = $value; }
         elsif ($key eq "leaky-nodes")            { $leakynodes = $value; }
         elsif ($key eq "alint-in")               { $alint_in = $value; }
+        elsif ($key eq "sub-lve-root-dir")       { @sub_lve_root_dir = split(":",$value);}
         elsif ($key eq "bump-source")            { @bump_source = split(",",$value); }
         elsif ($key eq "bump-debug")             { $bump_debug = $value; }
+        elsif ($key eq "bump-nearest-end")       { $bump_nearest_end = $value; }
         elsif ($key eq "power-sag")              { $power_sag = $value; }
+        elsif ($key eq "cast-path")              { $cast_path = $value; }
         elsif ($key eq "bump-work-dir")          { $bump_work_dir = $value; }
         elsif ($key eq "fanout-nodes")           { $fanoutnodes = $value; }
         elsif ($key eq "fanin-nodes")            { $faninnodes = $value; }
         elsif ($key eq "jflat-query")            { $jflat_query = $value; }
         elsif ($key eq "help")                   { usage(); }
 
-        # electromigration parameters
-        elsif ($key eq "em-frequency")               { $em_frequency = $value; }
-        elsif ($key eq "em-avg-scaling")             { $em_avg_scaling = $value; }
-        elsif ($key eq "em-rms-heating")             { $em_rms_heating = $value; }
-
-        elsif ($key =~ /^em-avg-wire-limit:(\S+)/ )  { $em_avg_wire_limit{$1} = $value; }
-        elsif ($key =~ /^em-avg-width-offset:(\S+)/ ){ $em_avg_width_offset{$1} = $value; }
-        elsif ($key =~ /^em-width-div-limit:(\S+)/ ){ $em_width_div_limit{$1} = $value; }
-        elsif ($key =~ /^em-rms-wire-limit:(\S+)/ )  { $em_rms_wire_limit{$1} = $value; }
-        elsif ($key =~ /^em-rms-width-offset:(\S+)/ ){ $em_rms_width_offset{$1} = $value; }
-        elsif ($key =~ /^em-rms-width-offset1:(\S+)/ ){ $em_rms_width_offset1{$1} = $value; }
-        elsif ($key =~ /^em-rms-width-offset2:(\S+)/ ){ $em_rms_width_offset2{$1} = $value; }
-        elsif ($key =~ /^em-avg-via-limit:(\S+)/ )   { $em_avg_via_limit{$1} = $value; }
-        elsif ($key =~ /^em-rms-via-limit:(\S+)/ )   { $em_rms_via_limit{$1} = $value; }
         elsif ($key eq "alint-dynamic-only" )   { $alint_dynamic_only = $value; }
         elsif ($key eq "lib-static-only" )   { $lib_static_only = $value; }
+        elsif ($key eq "max-heap-size" )   { $maxHeapSize = $value; }
         elsif ($key =~ /^tau-bound:*(.*)/) { $tau_bound{format_pvt($1)} = $value; }
 
         elsif ($key eq "asta-tau") { @asta_taus = split(/ /, $value); }
         elsif ($key eq "slew-scaling") { $slew_scaling = $value; }
         elsif ($key eq "totem-ir-spec") { $totem_ir_spec = $value; }
+        elsif ($key eq "threshCC")               { @threshCC = split(/\s/,$value);  }
+        elsif ($key eq "threshTau")              { @threshTau =  map { $_ * 1e12 } split(/\s/, $value); }
+        elsif ($key eq "threshPercent")          { @threshPercent = split(/\s/, $value); }
+        # electromigration parameters
+        elsif ($key =~ /^em\-/) {
+	          $key =~ s/-/_/g;
+            my $kn=$key;
+            $kn =~ s/:.*//;
+            if ($key =~ /^$kn:(\S+):(\S+)/ )   {
+                if ( ! defined ($em_options{$kn}{"$1:$2"}) or $value < $em_options{$kn}{"$1:$2"}) {
+                    $em_options{$kn}{"$1:$2"} = $value;
+                }
+            }
+            elsif ($key =~ /^$kn:(\S+)/ ) {$em_options{$kn}{$1} = $value; }
+            else  {$em_options{$key} = $value;}
+        }
+        elsif ($key =~ /^thresh-resp-bound-nocc:*(.*)/)   { $thresh_resp_bound{format_pvt($1)}[0] = $value; }
+        elsif ($key =~ /^thresh-resp-bound-cc:*(.*)/)     { $thresh_resp_bound{format_pvt($1)}[1] = $value; }
+        elsif ($key =~ /^multi-noise-resp-bound-nocc:*(.*)/)   { $multi_noise_resp_bound{format_pvt($1)}[0] = $value; }
+        elsif ($key =~ /^multi-noise-resp-bound-cc:*(.*)/)     { $multi_noise_resp_bound{format_pvt($1)}[1] = $value; }
 
         # unknown option
         else { warn ("Warning: option --${key}=${value} not recognized."); }
@@ -424,10 +463,15 @@ sub  parseOption {
 &parseOptions(\@options);
 usage if ! defined $dir;
 
+if($usedb){
 # note neither alint nor lib update db here.
 if ($task ne "alint" and $task ne "lib" and lve_db_exists($root)) {
     $dbh=lve_db_connect($root);
 }
+}
+$aplot = "$aplot -archiver $lve_root/bin/archiver.cmd";
+
+
 
 # get process, voltage, temperature
 my $process="";
@@ -498,6 +542,10 @@ $bump_bound[1] = retrieve_bound_value(1, %bump_bound);
 $bump_bound_estimated = retrieve_bound(%bump_bound_estimated);
 $inv_bump_bound[0] = retrieve_bound_value(0, %inv_bump_bound);
 $inv_bump_bound[1] = retrieve_bound_value(1, %inv_bump_bound);
+$thresh_resp_bound[0] = retrieve_bound_value(0, %thresh_resp_bound);
+$thresh_resp_bound[1] = retrieve_bound_value(1, %thresh_resp_bound);
+$LveMultinoise::resp_bound[0] = retrieve_bound_value(0, %multi_noise_resp_bound);
+$LveMultinoise::resp_bound[1] = retrieve_bound_value(1, %multi_noise_resp_bound);
 $small_leak_bound = retrieve_bound(%small_leak_bound);
 $large_leak_bound = retrieve_bound(%large_leak_bound);
 $tau_bound = retrieve_bound(%tau_bound);
@@ -506,7 +554,6 @@ $temperature_correction_nominal = retrieve_bound(%temperature_correction_nominal
 $temperature_correction_slope = retrieve_bound(%temperature_correction_slope);
 $voltage_correction_nominal = retrieve_bound(%voltage_correction_nominal);
 $voltage_correction_slope = retrieve_bound(%voltage_correction_slope);
-$static_switch_V= retrieve_bound(%static_switch_V);
 $deadlock_time = retrieve_bound(%deadlock_time);
 my $ntpc_to_tau = $tau_bound*1e-12;
 
@@ -598,7 +645,12 @@ sub get_capacitances {
 
     my %out = ();
     my $old_alint = 0;
-    open my $fh, "<$file" or die "Cannot open $file.\n";
+    my $fh;
+    if($file=~/\.gz$/){
+      open ($fh, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open ($fh, "<$file") or die "Cannot read $file.\n";
+    }
     while (my $line = <$fh>) {
         if ($line =~ /^\s*(?:Coupling|Constant) capacitance (\S+)fF/) {
             $wirecap += $1;
@@ -649,10 +701,10 @@ sub get_alint_bin {
   my ($node, $alint_parallel_path)=@_;
   my $node_fix = $node;
   my $bin=-1;
-  $node_fix =~ s/\[/\\\[/;
-  $node_fix =~ s/\]/\\\]/;
-  $node_fix =~ s/\./\\\./;
-  my @loc=`grep '^alint ${node_fix}' \"$alint_parallel_path/alint.in.\"*`;
+  $node_fix =~ s/\[/\\\[/g;
+  $node_fix =~ s/\]/\\\]/g;
+  $node_fix =~ s/\./\\\./g;
+  my @loc=`grep '^alint ${node_fix}\\s*\$' \"$alint_parallel_path/alint.in.\"*`;
   if(scalar(@loc)==0){
       return $bin;
   }
@@ -669,16 +721,27 @@ sub get_alint_path{
     my @search_view_mode=split(/\s+/,$search_order);
     my $cellpath =$cellname;
     $cellpath=~s/\./\//g;
-    $cellpath="$root/$cellpath";
-    foreach my $view_mode (@search_view_mode) {
-        my $path = "$cellpath/$view_mode/alint/$process/${true}V/${temp}C/";
+    foreach my $dir ("$root", @sub_lve_root_dir){
+      my $cell_dir="$dir/$cellpath";
+      foreach my $view_mode (@search_view_mode) {
+        my $path = "$cell_dir/$view_mode/alint/$process/${true}V/${temp}C/";
         if ( -d $path) {
             return $path;
         }
+      }
     }
     return "";
 }
 
+sub get_cell_path{
+    my($cellname)=@_;
+    my $cellname_path=$cellname; $cellname_path=~s/\./\//g;
+    foreach my $dir ("$root", @sub_lve_root_dir){
+      my $cell_dir="$dir/$cellname_path";
+      return $cell_dir if( -d $cell_dir);
+    }
+    return "";
+}
 
 sub get_node_bin{
     my($alint_parallel,$file_prefix)=@_;
@@ -691,53 +754,60 @@ sub get_node_bin{
         my $node="";
         if($bin_path =~ /\.(\d+)$/){
           $node_bin=$1;
+          (my $a,$node) = split(/\s+/,$node_info);
+          $node_bin_map{$node}=$node_bin;
         }
-        (my $a,$node) = split(/\s+/,$node_info);
-        $node_bin_map{$node}=$node_bin;
     }
     return %node_bin_map;
 }
+
 sub get_legal_nodes{
     my($cellname,$cell_legal_data)=@_;
     my %fanout_legal_nodes;
 
-    my $fanout_cell_path=$cellname;
-    $fanout_cell_path=~s/\./\//g;
-    $fanout_cell_path="$root/$fanout_cell_path";
+    my $cellname_path=$cellname; $cellname_path=~s/\./\//g;
+    my $fanout_cell_path="";
+    $fanout_cell_path = get_cell_path($cellname);
+    return if( $fanout_cell_path eq "" or ! -d $fanout_cell_path);
 
-    return if( ! -d $fanout_cell_path);
-
-#    my @fanout_nodeprops_files=`ls \"$fanout_cell_path/cell.nodeprops\"*`;
-    opendir DIR, "$fanout_cell_path" ||
-            die "Couldn't read $fanout_cell_path directory.\n";
-    my @fanout_files = readdir DIR;
-    closedir DIR;
-    foreach my $file (@fanout_files){
-        next if($file !~ /^cell.nodeprops/);
-        open FP, "<$fanout_cell_path/$file" or die "Cannot read $fanout_cell_path/$file\n";
+    my $props_path=$nodeprops; $props_path=~s/\S+\///;
+    $props_path="$fanout_cell_path/$props_path"; 
+#    foreach my $file (@fanout_files){
+#        next if($file !~ /^cell.nodeprops/);
+#        open FP, "<$fanout_cell_path/$file" or die "Cannot read $fanout_cell_path/$file\n";
+      if((open FP, "<$props_path")){
         while (my $line = <FP>) {
             chomp($line);
-            my @f=split(" ", $line);
+            $line =~ s/\s+$//;
+            # parse cell.nodeprops file
             my $signoff=0;
-            if($f[0] =~ /SIGNOFF/){
-              $signoff=1;
-              shift(@f);
-            }
-            my $type=$f[$#f];
-            my $dynamic=$f[1];
+            $signoff=1 if($line =~ s/^SIGNOFF //g);
+            my ($node,$dynamic,$delay_up,$delay_dn,$sdelay_up,$sdelay_dn,
+                $sslew_up,$sslew_dn,$sskew_up,$sskew_dn,$sbump_up,$sbump_dn,
+                $width,$space,$activity_factor,$alint_max_bump_fanin,$type,
+                $thresh_up,$thresh_dn,$leak,$staticizer)
+                = split(" ",$line);
+            $thresh_up=-1 if (not defined $thresh_up);
+            $thresh_dn=-1 if (not defined $thresh_dn);
+            $cell_legal_data->{$cellname}->{thresh_up}->{$node}=$thresh_up;
+            $cell_legal_data->{$cellname}->{thresh_dn}->{$node}=$thresh_dn;
+
             if($signoff){
-              $cell_legal_data->{$cellname}->{$f[0]}="SIGNOFF";
+                $cell_legal_data->{$cellname}->{legal}->{$node}="SKIP" 
             }elsif($type eq "INTERNAL"){
               if($alint_dynamic_only and $dynamic==0){
-                $cell_legal_data->{$cellname}->{$f[0]}="SKIP";
+                $cell_legal_data->{$cellname}->{legal}->{$node}="SKIP";
               }else{
-                $cell_legal_data->{$cellname}->{$f[0]}=$type;
+                $cell_legal_data->{$cellname}->{legal}->{$node}=$type;
               }
             }else{
-              if ($lib_static_only and $dynamic == 1){
-                $cell_legal_data->{$cellname}->{$f[0]}="SKIP";
+              if($alint_PO==0){
+                $cell_legal_data->{$cellname}->{legal}->{$node}="SKIP";
+              }
+              elsif ($lib_static_only and $dynamic == 1){
+                $cell_legal_data->{$cellname}->{legal}->{$node}="SKIP";
               }else{
-                $cell_legal_data->{$cellname}->{$f[0]}=$type;
+                $cell_legal_data->{$cellname}->{legal}->{$node}=$type;
               }
             }
         }
@@ -747,21 +817,25 @@ sub get_legal_nodes{
 
 
 sub get_threshPercent_response_infos{
-    my ($alint_bin,$extract_view,$extract_corner,$process,$true,$temp,$fanout_data,$threshPercentRef) = @_;
+    my ($alint_bin,$extract_view,$extract_corner,$process,$true,$temp,$fanout_data) = @_;
     my @thresh_dir=("thresh_dn","thresh_up");
     my %bump_dir=("-",0,
                   "+",1);
     my $log="";
     my $threshResponse_infos={};
     my $fail_status=0;
+
+    my $workdir  = mktemp_workdir("threshresp");
     foreach my $fanout_cell (keys %$fanout_data){
         my $fanout_alint_path=$fanout_data->{$fanout_cell}->{"path"};
         next if($fanout_alint_path eq ""); #cannot find fanout path, skip this. Fail message is already reported.
 
         #get fanout nodes bin directory
         my %nodebin=get_node_bin("$fanout_alint_path/alint_parallel","alint.in");
-        my %POnodebin=get_node_bin("$fanout_alint_path/alint_PO_parallel","alint_PO.in");
-
+        my %POnodebin;
+        if($alint_PO){
+           %POnodebin=get_node_bin("$fanout_alint_path/alint_PO_parallel","alint_PO.in");
+        }
         foreach my $out (keys %{$fanout_data->{$fanout_cell}->{"node"}}){
             my $node_path="";
             my $node_bin=0;
@@ -770,123 +844,200 @@ sub get_threshPercent_response_infos{
                 $node_bin=$nodebin{$out} if(defined $nodebin{$out});
                 $node_path="$fanout_alint_path/alint.bin.$node_bin/$out";
             }else{
+                if($alint_PO){
                 $node_bin=$POnodebin{$out} if(defined $POnodebin{$out});
                 $node_path="$fanout_alint_path/alint_PO.bin.$node_bin/$out";
+                }else{
+                  #ignore PO if alint_PO is disabled.
+                  next;
+                }
             }
             if(! -d $node_path){
                 warn "Cannot find fanout node $out in fanout cell $node_path\n";
                 $fail_status++;
+                my $finfo="$fanout_cell/$out";
+                $finfo=$out if($fanout_cell eq $cell);
                 $log .=  "FAIL alint $cell $path".
-                         " fanout_cell=$fanout_cell" .
-                         " fanout_info=*\@$out" .
+                         " fanout=$finfo" .
                          " fail_type=$fail_type[3]\n";
                 next;
             }
             my %scenarios=();
             my %timearray=();
-            if ( -e "$node_path/out") {
+            my %fanin_nodes;
+            my $out_file="";
+            $out_file="$node_path/out" if ( -e "$node_path/out");
+            $out_file="$node_path/out.gz" if ( -e "$node_path/out.gz");
+
+
+            if ( $out_file ne "") {
                #get the thresh response we had in fanout directory
-               %scenarios = read_delay_scenarios("$node_path/out",0,"thresh",\%timearray);
+               %scenarios = read_delay_scenarios($out_file,0,"thresh",\%timearray);
+               #read out file to get all possible fanin
+               if($out_file=~/\.gz$/){
+                 open (IF, "gzip -cd \'$out_file\'|") or die "Cannot read $out_file.\n";
+               }else{
+                 open (IF, "<$out_file") or die "Cannot read $out_file.\n";
+               }
+                  while(<IF>){
+                    if(/Fanin:/){
+                       while(<IF>){
+                          chomp;
+                          last if(/:\s*$/);
+                          my $f=$_; $f=~s/\s*//g; 
+                          $fanin_nodes{$f}=1;
+                       }
+                       last;
+                    }
+                  }
+                  close(IF);
             }else{
                 warn "Cannot find fanout node $out out file in fanout cell $node_path\n";
                 $fail_status++;
+                my $finfo="$fanout_cell/$out";
+                $finfo=$out if($fanout_cell eq $cell);
                 $log .=  "FAIL alint $cell $path".
-                         " fanout_cell=$fanout_cell" .
-                         " fanout_info=*\@$out" .
+                         " fanout=$finfo" .
                          " fail_type=$fail_type[6]\n";
                 next;
             }
             my $fanout_scenario={};
-            foreach my $scenario (keys %scenarios){
-                my($thresh_updn,$perc)=split(":",$scenario);
+            foreach my $scenario (keys %scenarios){                
+                my ($updn,$cc,$tau, $perc)=("",1,8,10);
+                if($scenario=~/(\w+):(\d):(\d+):(\d+)/){
+                    $updn=$1; $cc=$2; $tau=$3;$perc=$4;
+                }else{
+                    ($updn,$perc)=split(":",$scenario);
+                }
+                my @aggressors = keys %{$scenarios{$scenario}};
+                push @aggressors, "*" if ($additive_resp);
                 foreach my $aggressor (keys %{$scenarios{$scenario}}){
-                  $fanout_scenario->{$thresh_updn}->{$perc}->{$aggressor}=1;
+                  $fanout_scenario->{$aggressor}->{$updn}->{$perc}->{"$cc:$tau"}=1;
                 }
             }
-
-            foreach my $in (keys %{$fanout_data->{$fanout_cell}->{"node"}->{$out}->{"fanin"}}){
+            my ($is_resp_archive, @resp_files)=is_node_archive($node_path, $resp_archive);
+            my $node_path_fix=$node_path;
+            if($is_resp_archive){
+              $node_path_fix=archive_extrace_files("$node_path/$resp_archive","$workdir/$out");
+            } 
+            foreach my $in (keys %fanin_nodes){
+              foreach my $thresh_updn ("thresh_dn", "thresh_up"){
+                   if(not defined $fanout_scenario->{$in}->{$thresh_updn}){
+                      $threshResponse_infos->{$fanout_cell}->{$in}->{$out}->{$thresh_updn}=-1;
+                   }
+              }
+            }
+            foreach my $in (keys %{$fanout_scenario}) {
                 #see if it matched the desired percentage.
                 #find thresh_up/dn file for corresponding input,dir and threshold percentage step.
                 my $report_missing=1;
-                for my $thresh_dir (0..1){
-                   foreach my $perc (@$threshPercentRef){
+                foreach my $thresh_updn (keys %{$fanout_scenario->{$in}}) {
+                   foreach my $perc (keys %{$fanout_scenario->{$in}->{$thresh_updn}}) {
                       #get thresh response from node directory
-                      if(not defined $fanout_scenario->{$thresh_dir[$thresh_dir]}->{$perc}->{$in}){
-                          #no such scenario, skip this one
-                          push @{$threshResponse_infos->{$fanout_cell}->{$in}->{$out}->{$thresh_dir[$thresh_dir]}->{$perc}}, 1e9;
-                          next;
-                      }
-                      my $thresh_resp_file="$node_path/$in:$thresh_dir[$thresh_dir]:$perc.resp";
-                      if(! -e $thresh_resp_file){
-                          #try alias
-                          my $in_fix = $in;
-                          $in_fix =~ s/\[/\\\[/;
-                          $in_fix =~ s/\]/\\\]/;
-                          $in_fix =~ s/\./\\\./;
-
-                          #print "grep '${in_fix}' \"$node_path/\"*:$thresh_dir[$thresh_dir]:$perc.resp\n";
-                          my @alias=`grep '${in_fix}' \"$node_path/\"*:$thresh_dir[$thresh_dir]:$perc.resp`;
-                          my $alias_name="";
-                          if(scalar(@alias)>0){
-                             foreach my $alias_line(@alias){
-                                last if($alias_name ne "");
-                                my($file,$alias_names)=split(/#/,$alias_line);
-                                $alias_line=~ s/^#//;
-                                my @alias_names=split(/\s+/,$alias_names);
-                                foreach my $name(@alias_names){
-                                    if($name eq $in){
-                                      $alias_name=$alias_names[0];
-                                      last;
-                                    }
-                                }
+                      foreach my $cctau (keys %{$fanout_scenario->{$in}->{$thresh_updn}->{$perc}}) {
+                          my $respfile="$thresh_updn:$cctau:$perc.resp";
+                          if ( not defined $scenarios{"$thresh_updn:$cctau:$perc"} ) {
+                            $respfile="$thresh_updn:$perc.resp";
+                          }
+                          my($status, $thresh_resp_ref)=parse_threshresp($node_path_fix, $in, "$respfile");
+                          if($status eq "FAIL"){
+                             if($report_missing==1 && $alint_bin==0){
+                                 warn "Cannot find node ${in}'s thresh response at $node_path\n";
+                                 $fail_status++;
+                                 $respfile=~s/\.resp$//;
+                                 my $finfo="$fanout_cell/$out";
+                                 $finfo=$out if($fanout_cell eq $cell);
+                                 $log .=  "FAIL alint $cell $path".
+                                          " fanout=$finfo" .
+                                          " fail_type=$fail_type[4]:$in:$respfile\n";
+                                 $report_missing=0;
                              }
-                          }
-                          $thresh_resp_file="$node_path/$alias_name:$thresh_dir[$thresh_dir]:$perc.resp";
-                          if(! -e $thresh_resp_file){
-                              if($report_missing==1 && $alint_bin==0){
-                                  warn "Cannot find $thresh_resp_file\n";
-                                  $fail_status++;
-                                  $log .=  "FAIL alint $cell $path".
-                                           " fanout_cell=$fanout_cell" .
-                                           " fanout_info=$in\@$out" .
-                                           " fail_type=$fail_type[4]\n";
-                                  $report_missing=0;
-                              }
-                              next;
+                          }else{
+                             push @{$threshResponse_infos->{$fanout_cell}->{$in}->{$out}->{$thresh_updn}->{$cctau}->{$perc}},@$thresh_resp_ref;
                           }
                       }
-                      open TR,"<$thresh_resp_file" or die "Cannot read file $thresh_resp_file";
-                      my @lines=<TR>;
-                      close TR;
-                      chomp(@lines);
-                      unshift (@lines,0);
-                      if($lines[$#lines] =~ /^#/){
-                        pop(@lines);
-                      }
-                      push @{$threshResponse_infos->{$fanout_cell}->{$in}->{$out}->{$thresh_dir[$thresh_dir]}->{$perc}},@lines;
                    }
                 }
             }
         }
     }#foreach my $fanout_cell (keys %{$fanout_data})
+    cleanUp_workdir($workdir);
     return ($log,$threshResponse_infos,$fail_status);
 }
 
+sub parse_threshresp{
+  my ($node_path, $in, $thresh_file)=@_;
+  #fine which is the response file for the input node
+  my $thresh_resp_file="$node_path/$in:$thresh_file";
+  if ($in eq '*'){
+     $thresh_resp_file="$node_path/$thresh_file";
+  }
+  if(! -e $thresh_resp_file){
+    print "cannot find $thresh_resp_file\n";
+      if($in eq '*'){
+          #additive response
+          return ("FAIL");
+      }
+      #try alias
+      my $in_fix = $in;
+      $in_fix =~ s/\[/\\\[/;
+      $in_fix =~ s/\]/\\\]/;
+      $in_fix =~ s/\./\\\./;
+
+      my @alias=`grep '${in_fix}' \"$node_path/\"*:$thresh_file`;
+      my $alias_name="";
+      if(scalar(@alias)>0){
+         foreach my $alias_line(@alias){
+            last if($alias_name ne "");
+            my($file,$alias_names)=split(/#/,$alias_line);
+            $alias_line=~ s/^#//;
+            my @alias_names=split(/\s+/,$alias_names);
+            foreach my $name(@alias_names){
+                if($name eq $in){
+                  $alias_name=$alias_names[0];
+                  last;
+                }
+            }
+         }
+      }
+      $thresh_resp_file="$node_path/$alias_name:$thresh_file";
+      if(! -e $thresh_resp_file){
+          return ("FAIL");
+      }
+  }
+  open TR,"<$thresh_resp_file" or die "Cannot read file $thresh_resp_file";
+  my @lines=<TR>;
+  close TR;
+  chomp(@lines);
+  unshift (@lines,0);
+  while($lines[$#lines] =~ /^#/){
+    pop(@lines);
+  }
+  return ("SUCESS", \@lines);
+}
+
 sub get_sTau{
+  my ($cell)=@_;
+  
   if(-e $jflat_query){
       open FH, "<$jflat_query" or die "Cannot open $jflat_query\n";
       my @lines=<FH>;
       close FH;
       while(scalar(@lines)>0){
         my $line=pop(@lines); chomp($line);
-        if($line ne ""){
+        if($line =~ /^\Q$cell,\E/){
+          my @cell_col=split(/,/,$cell);
           my @cols=split(/,/,$line);
-          return $cols[5]*1e12; #return and translate to ps
+          my $index=scalar(@cell_col)+4;
+          if ( $cols[$index] ne "null" ){
+            return $cols[$index]*1e12; #return and translate to ps
+          }else{return 100;}
+          #jflat use 100e-12 as default tau
         }
       }
-  }else{
-      return 0;
   }
+  #jflat use 100e-12 as default tau
+  return 100;
 }
 
 sub check_hier_depend_cell{
@@ -894,8 +1045,8 @@ sub check_hier_depend_cell{
   my $alint_path=get_alint_path($target_cell,$view,$mode,$p,$v,$t);
   my $fail_status=0;
   my $log="";
-  my $cell_str=" fanin_cell=$target_cell";
-  $cell_str=" fanout_cell=$target_cell" if ($is_fanout);
+  my $cell_str=" fanin=$target_cell";
+  $cell_str=" fanout=$target_cell" if ($is_fanout);
   if($alint_path eq ""){
     if($report){
       warn "Cannot find fanout/fanin cell $target_cell\n";
@@ -915,7 +1066,7 @@ sub pvt_path {
 }
 
 sub bump_check{
-  my($fh,$alint_dir,$alint_bin,$alint_node_ref,$threshPercent_ref)=@_;
+  my($fh,$alint_dir,$alint_bin,$alint_node_ref,$threshPercent_ref, $threshCC_ref, $threshTau_ref)=@_;
        print "LVE bump check.....\n";
        my %bump_dir=("-",0,
                     "+",1);
@@ -937,10 +1088,35 @@ sub bump_check{
        ######################################################
        my $request_data={};
        my $legal_data={};
+       my $fanout_nodes={};
        $request_data->{$cell}->{"path"}="$root/$path";
-
+      
        get_legal_nodes($cell,$legal_data);
-
+       my $no_power_sag;
+       if($power_sag > 0){
+         #do cast_query if power_sag is on
+           open (P, "cast_query --cast-path='$cast_path' --max-heap-size=$maxHeapSize --task=subcells --filter='leaf|ancestor=standard.base.no_power_sag' --routed --cell='$cell'|");
+           while(<P>){
+             chomp; s/\s*//g;
+             $no_power_sag->{cells}->{$_}=1;
+             if($_ eq $cell){
+                   $power_sag=0;
+                   last;
+             }
+           } 
+           close(P);
+       }
+       if(open(F, "<$fio_signoff_props")){
+          while(<F>){
+            chomp;
+            my($node, @fanoutinfo)=split(/\s+/,$_);
+            foreach my $fanoutinfo (@fanoutinfo){
+                my($fanout_cell,$in,$out)=split("/",$fanoutinfo);
+                $no_power_sag->{pairs}->{"$cell/$node"}->{"$fanout_cell/$in/$out"}=1;
+            }
+          }
+          close(F);   
+       }
        open FNS, "<$fanoutnodes" or die "Cannot open $fanoutnodes\n";
        while(<FNS>){
            chomp;
@@ -948,7 +1124,12 @@ sub bump_check{
            $line=~ s/\n//;
            my($inputnode, @fanouts) = split(/ /,$_);
            foreach my $fanout (@fanouts){
-              my($fanout_cell,$in,$out)=split("/",$fanout);
+              #my($fanout_cell,$in,$out)=split("/",$fanout);
+              my @toks = split("/",$fanout);
+              my $out = pop(@toks);
+              my $in = pop(@toks);
+              my $fanout_cell = pop(@toks);
+              my $inst_path = undef; $inst_path = pop(@toks) if (@toks);
               if(not defined $request_data->{$fanout_cell}){
                   my $report=1; $report=0 if ($alint_bin>0);
                   my ($fail_status,$msg,$fanout_cell_path)=check_hier_depend_cell($fanout_cell,$extract_view,$extract_corner,
@@ -960,46 +1141,36 @@ sub bump_check{
                   if($fail_status == 0 ){
                      get_legal_nodes($fanout_cell,$legal_data);
                   }
+                  
               }
               if(defined $alint_node->{$inputnode}){
                   next if($request_data->{$fanout_cell}->{"path"} eq "");
-                  if(not defined $legal_data->{$fanout_cell}->{$out}){
+                  if(not defined $legal_data->{$fanout_cell}->{legal}->{$out}){
                       warn "**** Illegal fanout node in jflat fanout file: $fanout_cell,output node:$out.\n";
                       warn "     Please contact CAD team for this problem\n";
                       $bump_check_status{"FAIL"}++;
+                      my $finfo="$fanout_cell/$out";
+                      $finfo=$out if($fanout_cell eq $cell);
                       print $fh "FAIL alint $cell $path".
-                                " fanout_cell=$fanout_cell" .
-                                " fanout_info=*\@$out" .
+                                " fanout=$finfo" .
                                 " fail_type=$fail_type[13]\n";
-                  }elsif($legal_data->{$fanout_cell}->{$out} eq "SIGNOFF"){
-                       #TODO: fix SIGNOFF node scenarios, so the internal node will have threshresp of fanout node.
-#                      $bump_check_status{"SIGNOFF"}++;
-#                      print $fh "SIGNOFF alint $cell $path".
-#                                " fanout_cell=$fanout_cell" .
-#                                " fanout_info=*\@$out\n";
-                  }elsif($legal_data->{$fanout_cell}->{$out} ne "SKIP"){
-                      $request_data->{$fanout_cell}->{"node"}->{$out}->{"prop"}=$legal_data->{$fanout_cell}->{$out};
+                  }elsif($legal_data->{$fanout_cell}->{legal}->{$out} ne "SKIP"){
+                      $request_data->{$fanout_cell}->{"node"}->{$out}->{"prop"}=$legal_data->{$fanout_cell}->{legal}->{$out};
                       $request_data->{$fanout_cell}->{"node"}->{$out}->{"fanin"}->{$in}=1;
-                      push @{$alint_node->{$inputnode}}, [$fanout_cell,$in,$out,$legal_data->{$fanout_cell}->{$out}];
+                      push @{$alint_node->{$inputnode}}, 
+                     [$inst_path,$fanout_cell,$in,$out,$legal_data->{$fanout_cell}->{legal}->{$out}, $legal_data->{$fanout_cell}->{thresh_up}->{$out}, $legal_data->{$fanout_cell}->{thresh_dn}->{$out}];
+                      #save fanout information for multiple noise analysis
+                      LveMultinoise::save_fanout_info($fanout_cell,$out,$request_data->{$fanout_cell}->{"path"});
                   }
               }else{
-                  #check if this node is SIGNOFF node
-                  if (not defined $legal_data->{$cell}->{$inputnode}){
+                  if (not defined $legal_data->{$cell}->{legal}->{$inputnode}){
                       warn "**** Illegal fanout node in jflat fanout file: $cell, node:$inputnode.\n";
                       warn "     Please contact CAD team for this problem\n";
                       $bump_check_status{"FAIL"}++;
                       print $fh "FAIL alint $cell $path".
-                                " node=$inputnode".
+                                " fanin=$inputnode".
                                 " fail_type=$fail_type[16]\n";
                       next;
-                  }
-                  if($legal_data->{$cell}->{$inputnode} eq "SIGNOFF"){
-                      #TODO: fix SIGNOFF node scenarios, so the internal node will have threshresp of fanout node.
-                      $bump_check_status{"SIGNOFF"}++;
-                      print $fh "SIGNOFF alint $cell $path".
-                                " node=$inputnode".
-                                " fanout_cell=$fanout_cell" .
-                                " fanout_info=$in\@$out\n";
                   }
               }
           }
@@ -1013,8 +1184,10 @@ sub bump_check{
            my $line=$_;
            $line=~ s/\n//;
            my($node, @fanins) = split(/ /,$_);
-           if(defined $alint_node->{$node} and $legal_data->{$cell}->{$node} ne "SKIP"){
-              $request_data->{$cell}->{"node"}->{$node}->{"prop"}=$legal_data->{$cell}->{$node};
+           if(defined $alint_node->{$node} and $legal_data->{$cell}->{legal}->{$node} ne "SKIP"){
+              $request_data->{$cell}->{"node"}->{$node}->{"prop"}=$legal_data->{$cell}->{legal}->{$node};
+              #save fanout node information for multiple noise analysis
+              LveMultinoise::save_fanout_info($cell,$node,$request_data->{$cell}->{"path"});
               foreach my $fanin (@fanins){
                  my($fanin_cell,$in,$in_hier)=split("/",$fanin);
                  my $fanin_alint_path=undef;
@@ -1022,7 +1195,6 @@ sub bump_check{
                  foreach my $source_pvt (@bump_source) {
                     my ($p,$v,$t) = split(":",$source_pvt);
                     next if (defined  $fanin_data->{$fanin_cell}->{"path"}->{$source_pvt});
-                    if(not defined $fanin_alint_path){
                        my $report=1; $report=0 if ($alint_bin>0);
                        (my $fail_status,my $msg,$fanin_alint_path)=check_hier_depend_cell($fanin_cell,$extract_view,$extract_corner,
                                                  $p,$v,$t,$report,$fail_type[14],0);
@@ -1031,34 +1203,25 @@ sub bump_check{
                        if($fail_status == 0 and (not defined $legal_data->{$fanin_cell})){
                           get_legal_nodes($fanin_cell,$legal_data);
                        }
-                    }
                     $fanin_data->{$fanin_cell}->{"path"}->{$source_pvt}=$fanin_alint_path;
                  }
-                 if(not defined $legal_data->{$fanin_cell}->{$in}){
-                     my $fanin_path =$fanin_cell; $fanin_path=~s/\./\//g;
-                     $fanin_path="$root/$fanin_path";
-                     next if(! -d $fanin_path);
+                 next if(!-d get_cell_path($fanin_cell));
+                 if(not defined $legal_data->{$fanin_cell}->{legal}->{$in}){
                      warn "**** Illegal fanout node in cell.fanin file: $fanin_cell,output node:$in.\n";
                      warn "     Please contact CAD team for this problem\n";
                      $bump_check_status{"FAIL"}++;
+                     my $finfo="$fanin_cell/$in";
+                     $finfo=$in if($fanin_cell eq $cell);
                      print $fh "FAIL alint $cell $path".
-                               " fanin_cell=$fanin_cell" .
-                               " fanin_node=$in" .
+                               " fanin=$finfo" .
                                " fail_type=$fail_type[15]\n";
                      next;
-                 }elsif($legal_data->{$fanin_cell}->{$in} eq "SIGNOFF"){
-                      #TODO: fix SIGNOFF node scenarios, so the internal node will have threshresp of fanout node.
-#                      $bump_check_status{"SIGNOFF"}++;
-#                      print $fh "SIGNOFF alint $cell $path".
-#                                " node=$node".
-#                                " fanin_cell=$fanin_cell" .
-#                                " fanin_node=$in\n";
-                      next;
-                 }elsif($legal_data->{$fanin_cell}->{$in} ne "INTERNAL"){
+                 }elsif($legal_data->{$fanin_cell}->{legal}->{$in} ne "INTERNAL"){
                       next;
                  }
                  $request_data->{$cell}->{"node"}->{$node}->{"fanin"}->{$in_hier}=1;
-                 push @{$fanin_data->{$fanin_cell}->{"node"}->{$in}}, [$cell, $in_hier,$node,$legal_data->{$cell}->{$node}];
+                 push @{$fanin_data->{$fanin_cell}->{"node"}->{$in}}, 
+                     [undef,$cell, $in_hier,$node,$legal_data->{$cell}->{legal}->{$node}, $legal_data->{$cell}->{thresh_up}->{$node},$legal_data->{$cell}->{thresh_dn}->{$node}];
               }
            }
        }
@@ -1068,7 +1231,7 @@ sub bump_check{
        # prepare fanin & fanout data
        ######################################################
        my $ThreshPercent_infos={};
-       (my $msg,$ThreshPercent_infos,my $fail_status)=get_threshPercent_response_infos($alint_bin,$extract_view,$extract_corner,$process,$true,$temp,$request_data,\@threshPercent);
+       (my $msg,$ThreshPercent_infos,my $fail_status)=get_threshPercent_response_infos($alint_bin,$extract_view,$extract_corner,$process,$true,$temp,$request_data);
        print $fh $msg;
        $bump_check_status{"FAIL"} +=$fail_status;
        my $pvt_path = pvt_path($pvt);
@@ -1085,6 +1248,9 @@ sub bump_check{
            ###########################
            # 1. for fanout check
            ###########################
+           #build table to mark if fanin check pass and fanout check pass.
+           my %node_check_status = map{$_ => undef} (keys %{$alint_node});
+
            foreach my $inputnode (keys %{$alint_node}){
               print "processing $inputnode ...\n";
               my $source_alint_parallel="$bump_source_dir/alint_parallel";
@@ -1095,17 +1261,16 @@ sub bump_check{
                     warn "Cannot find bump node $inputnode in $source_pvt\n";
                     $bump_check_status{"FAIL"}++;
                     print $fh "FAIL alint $cell $path".
-                           " node=$inputnode" .
+                           " fanin=$inputnode" .
                            " source_pvt=$source_pvt".
                            " fail_type=$fail_type[5]\n";
                     next;
                   }
               }
               my $fanoutref = $alint_node->{$inputnode};
-              system("mkdir \"$bump_work_dir/${cell}:$source_pvt\"") if(! -d "$bump_work_dir/${cell}:$source_pvt");
-              my $working_dir="$bump_work_dir/${cell}:$source_pvt/$inputnode";
-              system("mkdir \"$working_dir\"") if (! -d "$working_dir");
-              my %status=evaluate_bumps_threshPercent( $working_dir, $fh,$bump_debug, $power_sag,$static_switch_V,$source_pvt,$current_pvt,$cell,$inputnode,$ThreshPercent_infos, $fanoutref, $bump_source_dir,$path,$cell,0,$source_bin,\@threshPercent);
+              my $working_dir="$bump_work_dir/$source_pvt/fanout_check/$inputnode";
+              system("mkdir -p \"$working_dir\"") if(! -d "$working_dir");
+              my %status=evaluate_bumps_threshPercent( $working_dir, $fh,$bump_debug, $bump_nearest_end, $power_sag,\@thresh_resp_bound,$source_pvt,$current_pvt,$cell,$inputnode,$ThreshPercent_infos, $fanoutref, $bump_source_dir,$path,$cell,0,$source_bin,\@threshPercent, $additive_resp,$threshCC_ref, $threshTau_ref, \%node_check_status,$no_power_sag);
               foreach my $status (keys %status){
                   $bump_check_status{$status} += $status{$status};
               }
@@ -1126,22 +1291,74 @@ sub bump_check{
                   if($fanin_alint_bin < 0 ){
                     warn "Cannot find bump node $fanin_cell $fanin_node in $source_pvt\n";
                     $bump_check_status{"FAIL"}++;
+                    my $finfo="$fanin_cell/$fanin_node";
+                    $finfo=$fanin_node if($fanin_cell eq $cell);
                     print $fh "FAIL alint $cell $path".
-                           " fanin_cell=$fanin_cell" .
-                           " fanin_node=$fanin_node" .
+                           " fanin=$finfo" .
                            " source_pvt=$source_pvt".
                            " fail_type=$fail_type[14]\n";
                     next;
                   }
-                  system("mkdir \"$bump_work_dir/${fanin_cell}:$source_pvt\"") if(! -d "$bump_work_dir/${fanin_cell}:$source_pvt");
-                  my $working_dir="$bump_work_dir/${fanin_cell}:$source_pvt/$fanin_node";
-                  system("mkdir \"$working_dir\"") if (! -d "$working_dir");
-                  my %status=evaluate_bumps_threshPercent( $working_dir, $fh,$bump_debug, $power_sag,$static_switch_V,$source_pvt,$current_pvt,$fanin_cell,$fanin_node,$ThreshPercent_infos, $fanoutref, $fanin_alint_path,$path,$cell,1,$fanin_alint_bin,\@threshPercent);
+                  my $working_dir="$bump_work_dir/$source_pvt/fanin_check/$fanin_cell/$fanin_node";
+                  system("mkdir -p \"$working_dir\"") if (! -d "$working_dir");
+                  my %status=evaluate_bumps_threshPercent( $working_dir, $fh,$bump_debug, $bump_nearest_end, $power_sag,\@thresh_resp_bound,$source_pvt,$current_pvt,$fanin_cell,$fanin_node,$ThreshPercent_infos, $fanoutref, $fanin_alint_path,$path,$cell,1,$fanin_alint_bin,\@threshPercent, $additive_resp,$threshCC_ref, $threshTau_ref, \%node_check_status,$no_power_sag);
                   foreach my $status (keys %status){
                       $bump_check_status{$status} += $status{$status};
                   }
               }
            }
+           ###########################
+           # 3. multiple noise analysis
+           ###########################
+           LveMultinoise::multi_noise_analysis($fh, "alint $cell $path");
+
+           ###########################
+           # 4. report fanin/fanout check status
+           #    if node pass fanin/fanout check.
+           ###########################
+           foreach my $node (keys %node_check_status){
+              foreach my $faninout (keys %{$node_check_status{$node}}){
+                  if(not defined $node_check_status{$node}{$faninout}{fail}){
+                    foreach my $type (keys %{$node_check_status{$node}{$faninout}}){
+                      my ($resp, $bump)=@{$node_check_status{$node}{$faninout}{$type}};
+                      my $status="PASS";
+                      my $respkey;
+                      my $bump_curve="";
+                      if ($type=~ s/^SIGNOFF;//g) { $status = "SIGNOFF"; }
+                      if ($type=~ s/(resp_up|resp_dn);//g) { $respkey =$1; }
+                      if ($type=~ s/(bump_curve=nearest_end);//g) { $bump_curve =" $1"; }
+                      my $resp_bound="NA";
+                      if ($type =~ s/resp_bound=([\d|\.]+)//){
+                         $resp_bound=$1;
+                      }
+                      my @toks=split(";",$type);
+                      #my $respkey=$toks[0]; $toks[0]="";
+                      @toks=grep { $_ ne ''} @toks;
+                      my $other_info=join(" ", @toks);
+                      my $threshCC=1;
+                      if ($type =~ /threshCC=(\d)/){
+                         $threshCC=$1;
+                      }
+                      $resp = int($resp+0.5);
+                      $bump_check_status{$status} ++;
+                      #if doing fanout check, the node direction is fanin
+                      #if doing fanin check, the node direction is fanout
+                      my $faninout_str="fanout";
+                      $faninout_str="fanin" if ($faninout eq "fanout");
+
+                      print $fh "$status alint $cell $path".
+                              " $faninout_str=$node" .
+                              " $other_info" .
+                              " $respkey=$resp" .
+                              " $bump".
+                              "$bump_curve".
+                              " resp_bound=$resp_bound".
+                              " bump_bound=$threshPercent[$#threshPercent]\n";
+           
+                    }
+                  }
+              }
+           } 
            free_aplot();
            close_aplot();
        }
@@ -1833,7 +2050,9 @@ elsif ($task eq "alint") {
         my @bumpTau  = (0);
         my @delayTau = (0);
         my @delayCap = (0);
-        my @threshPercent = ();
+        #my @threshCC = ();
+        #my @threshTau = ();
+        #my @threshPercent = ();
         $dir =~ s:/$::;
         $dir =~ s:/alint_parallel$::;
         open IN, "<$alint_in" or die "Cannot read $alint_in";
@@ -1848,7 +2067,9 @@ elsif ($task eq "alint") {
             elsif ($cmd eq "bumpTau")  { @bumpTau  = @args; }
             elsif ($cmd eq "delayTau") { @delayTau = @args; }
             elsif ($cmd eq "delayCap") { @delayCap = @args; }
-            elsif ($cmd eq "threshPercent") { @threshPercent=sort {$a <=> $b} @args;}
+            elsif ($cmd eq "threshPercent") { @threshPercent=sort {$a <=> $b} @args if(scalar(@threshPercent)==0);}
+            elsif ($cmd eq "threshCC") { @threshCC = @args if(scalar(@threshCC)==0);}
+            elsif ($cmd eq "threshTau") { @threshTau = map { $_ * 1e12 } @args if(scalar(@threshTau)==0);}
         }
         close IN;
         # specifically to skip non dynamic nodes when doing dyn nodes
@@ -1861,6 +2082,7 @@ elsif ($task eq "alint") {
             }
         }
         close LOCALPROPS;
+
         # read table of leaky leaky nodes for alint leakage thresholds
         my %leaky = ();
         if (!(-z $leakynodes)) {
@@ -1887,15 +2109,45 @@ elsif ($task eq "alint") {
         my $bindir="$outbindir.tmp";
         $bindir="$outbindir" if ! -d $bindir;
         $bindir=$dir if ! -d $bindir; # legacy
+        if($alint_bin==0){
+            foreach my $node (keys %skipnodes) {
+                next;
+                  $allstatus{PASS}++;
+                  print RAW "PASS alint $cell $path node=$node alint_dynamic_only=$alint_dynamic_only message=skip_static_node\n";
+            }
+        }
         foreach my $thisnode (sort @alint_node) {
             if (! -d "$bindir/$thisnode") {
                 warn "No alint data found for local node $thisnode. Skipping alint check & delay characterization\n";
+                $allstatus{FAIL}++;
+                print RAW "FAIL alint $cell $path node=$thisnode error=no_alint_data\n";
                 next;
             }
 
             if ($skipnodes{$thisnode}) {
                 next;
             }
+            my $out_file="$bindir/$thisnode/out";
+            $out_file="$bindir/$thisnode/out.gz" if (-e "$bindir/$thisnode/out.gz");
+            if (! -s "$out_file") {
+                warn "alint out file is empty or does not exist of $thisnode. Skipping alint check & delay characterization\n";
+                $allstatus{FAIL}++;
+                print RAW "FAIL alint $cell $path node=$thisnode fail_type=alint_terminated\n";
+                next;
+            }else{
+                #check node out file
+                my $grep_cmd="grep -c \"^Alint simulation of\" \'$out_file\'";
+                if($out_file=~/\.gz$/){
+                  $grep_cmd="gzip -cd \'$out_file\' | grep -c \"^Alint simulation of\"";
+                }
+                if (`$grep_cmd`==0) {
+                  warn "alint aspice is teminated of $thisnode. Skipping alint check & delay characterization\n";
+                  $allstatus{FAIL}++;
+                  print RAW "FAIL alint $cell $path node=$thisnode fail_type=alint_terminated\n";
+                  next;
+                }
+            }
+
             # spawn aplot
             open_aplot($aplot);
             # Characterize the cell's delay results if alint was run with delayCC==0
@@ -1922,9 +2174,9 @@ elsif ($task eq "alint") {
                 if ($line =~ s/^"SIGNOFF" //g) { $signoff = 1; }
                 my ($node,$dynamic,$delay_up,$delay_dn,$sdelay_up,$sdelay_dn,
                     $sslew_up,$sslew_dn,$sskew_up,$sskew_dn,$sbump_up,$sbump_dn,
-                    $width,$space,$activity_factor)
+                    $width,$space,$activity_factor,$alint_max_fanin,$thresh_up,$thresh_dn,$sleak,$staticizer)
                     = split(" ",$line);
-                next if $alint_dynamic_only and $dynamic != 1;
+                next if ($alint_dynamic_only and $dynamic != 1);
                 next if $node ne $thisnode;
                 # complain if cell.localprops in broken
                 if(!(defined($node) && defined($dynamic) && defined($delay_up) &&
@@ -1938,14 +2190,11 @@ elsif ($task eq "alint") {
                 # assume default value to try to interoperate with previously generated
                 # localprops file
                 $activity_factor = -1 unless defined($activity_factor);
-
                 # check for correct entries in file and convert units
                 if ($delay_up<0) { $delay_up = "FAIL"; }
                 else { $delay_up *= 1e9; } # convert to ns
                 if ($delay_dn<0) { $delay_dn = "FAIL"; }
                 else { $delay_dn *= 1e9; } # convert to ns
-                if ($sdelay_up>0) { $sdelay_up *= $delay_up; } # relative scaling
-                if ($sdelay_dn>0) { $sdelay_dn *= $delay_dn; } # relative scaling
                 $sslew_up = $slew_bound if ($sslew_up == -1);
                 $sslew_dn = $slew_bound if ($sslew_dn == -1);
                 $sskew_up = $skew_bound if ($sskew_up == -1);
@@ -1954,29 +2203,41 @@ elsif ($task eq "alint") {
 
                 # convert spec times from ns to integer ps
                 # Note: sslew, sskew values are already in ps units
-                ns_to_ps($delay_dn,$delay_up,
-                         $sdelay_up,$sdelay_dn);
+                ns_to_ps($delay_dn,$delay_up);
+                if ($staticizer){
+                    #jflat generate -1 value of staticizer delay. We will ignore the delay of staticizer.
+                    $delay_up = "NA" if ($delay_up eq "FAIL");
+                    $delay_dn = "NA" if ($delay_dn eq "FAIL");
+                }
 
                 my $status = "PASS";
                 my $error = "";
-
+                my $out_file="$outbindir/$node/out";
+                $out_file="$outbindir/$node/out.gz" if (-e "$outbindir/$node/out.gz");
+                my $err_file="$outbindir/$node/err";
+                $err_file="$outbindir/$node/err.gz" if (-e "$outbindir/$node/err.gz");
+                my $out_uncompress="cat";
+                $out_uncompress="gzip -cd" if($out_file=~/\.gz$/);
+                my $err_uncompress="cat";
+                $err_uncompress="gzip -cd" if($err_file=~/\.gz$/);
+                
                 # check for an alint_signoff directive
                 if ( $signoff == 1 ) {
                     $status = "SIGNOFF";
                     $error = "SIGNOFF";
                 }
                 # check for missing files
-                elsif (! -r "$outbindir/$node/out" || ! -r "$outbindir/$node/err") {
+                elsif (! -r $out_file || ! -r "$err_file") {
                     $status = "NOT_TESTED";
                     $error = "missing_files";
                 }
                 # check for ERROR's in err file
-                elsif (`grep -c ^ERROR \"$outbindir/$node/err\"`!=0) {
+                elsif (`$err_uncompress \'$err_file\' | grep -c ^ERROR`!=0) {
                     $status = "FAIL";
                     $error = "circuit_error";
                 }
                 # check for WARNING's in out file
-                elsif (`grep -c ^WARNING \"$outbindir/$node/out\"`!=0) {
+                elsif (`$out_uncompress \'$out_file\' | grep -c ^WARNING`!=0) {
                     $status = "FAIL";
                     $error = "circuit_warning";
                 }
@@ -1994,21 +2255,24 @@ elsif ($task eq "alint") {
                 }
 
                 # find all inverses of this node
-                my @inverses = read_inverses("$outbindir/$node/out");
+                my @inverses = read_inverses($out_file);
                 my @plotnodes = ($node, @inverses);
 
                 # read named resistors
-                my @resistors = read_named_resistors("$outbindir/$node/out");
+                my @resistors = read_named_resistors($out_file);
 
                 # read scenario start times
-                my %times = read_start_times("$outbindir/$node/out");
+                my %times = read_start_times($out_file);
 
                 # get capacitances
                 my ($wirecap, $gatecap, $diffcap) =
-                    get_capacitances("$outbindir/$node/out", $process_params);
+                    get_capacitances($out_file, $process_params);
 
+                my $bump_scenarios={};
+                $bump_scenarios= read_bump_scenarios($out_file);
                 # alint bumps
                 free_aplot();
+
                 foreach my $cc (@bumpCC) {
                     foreach my $tau (@bumpTau) {
 
@@ -2026,8 +2290,55 @@ elsif ($task eq "alint") {
                         my $tau_ps = int($tau/1e-12 + 0.5);
                         my $suffix = "";
                         if (($cc>0) || ($tau>0)) { $suffix = ":$cc:$tau_ps"; }
-
+                        my $cctau_key=$suffix; $cctau_key=~s/^://;
                         # measure bumps as rounded percentage
+                        if((not defined $bump_scenarios->{$cctau_key}->{bump_up} or scalar(@{$bump_scenarios->{$cctau_key}->{bump_up}})==0) 
+                            and (not defined $bump_scenarios->{$cctau_key}->{bump_dn} or scalar(@{$bump_scenarios->{$cctau_key}->{bump_dn}})==0) ){
+                            $status="PASS";
+                            $allstatus{$status}++;
+                            my $invnodes="";
+                            $invnodes=join("",@inverses) if (@inverses > 0);
+                            print RAW "$status alint $cell $path" .
+                                " node=$node" .
+                                " cc=$cc" .
+                                " tau=$tau_ps" .
+                                " bump_dn=NA\@NA" .
+                                " bump_up=NA\@NA" .
+                                " inv_node=$invnodes" .
+                                " inv_bump_dn=NA\@NA" .
+                                " inv_bump_up=NA\@NA" .
+                                " bump_dn_bound=$bump_bound" .
+                                " bump_up_bound=$bump_bound" .
+                                " inv_bump_dn_bound=$inv_bump_bound" .
+                                " inv_bump_up_bound=$inv_bump_bound" .
+                                "\n" if $mode ne "accurate";
+                            next;
+                            
+                        }
+                        if((not defined $bump_scenarios->{$cctau_key}->{bump_up} and defined $bump_scenarios->{$cctau_key}->{bump_dn}) 
+                            or (not defined $bump_scenarios->{$cctau_key}->{bump_dn} and defined $bump_scenarios->{$cctau_key}->{bump_up}) ){
+                            $status="FAIL";
+                            $allstatus{$status}++;
+                            my $invnodes="";
+                            $invnodes=join("",@inverses) if (@inverses > 0);
+                            print RAW "$status alint $cell $path" .
+                                " node=$node" .
+                                " cc=$cc" .
+                                " tau=$tau_ps" .
+                                " bump_dn=FAIL\@FAIL" .
+                                " bump_up=FAIL\@FAIL" .
+                                " inv_node=$invnodes" .
+                                " inv_bump_dn=FAIL\@FAIL" .
+                                " inv_bump_up=FAIL\@FAIL" .
+                                " bump_dn_bound=$bump_bound" .
+                                " bump_up_bound=$bump_bound" .
+                                " inv_bump_dn_bound=$inv_bump_bound" .
+                                " inv_bump_up_bound=$inv_bump_bound" .
+                                " fail_type=alint_terminated" .
+                                "\n" if $mode ne "accurate";
+                            next;
+                            
+                        }
                         $status = "PASS";
                         my ($bump_dn_t,$bump_dn) =
                             measure_minv("$bindir/$node/bump_dn${suffix}",$node);
@@ -2186,7 +2497,6 @@ elsif ($task eq "alint") {
                         }
                     }
                 }
-
                 # alint delays
                 foreach my $cc (@delayCC) {
                     foreach my $tau (sort ncmp @delayTau) {
@@ -2207,25 +2517,24 @@ elsif ($task eq "alint") {
                         @times_slow_up = split(" ",$times{"slow_up${suffix}"}) if defined $times{"slow_up${suffix}"};
 
                         # get fanins
-                        my @fanin = read_fanin("$outbindir/$node/out");
-
+                        my @fanin = read_fanin($out_file);
                         # measure delays (from 1/3 true)
                         my ($slow_delay_dn_t,$slow_delay_dn) =
                             measure_delay("$bindir/$node/slow_dn${suffix}",
                                           "maxdelay",">","<",
-                                          $node,$true/3,2*$true/3,@fanin);
+                                          $node,$true/3,2*$true/3,\@times_slow_dn, @fanin);
                         my ($slow_delay_up_t,$slow_delay_up) =
                             measure_delay("$bindir/$node/slow_up${suffix}",
                                           "maxdelay","<",">",
-                                          $node,2*$true/3,$true/3,@fanin);
+                                          $node,2*$true/3,$true/3,\@times_slow_up, @fanin);
                         my ($fast_delay_dn_t,$fast_delay_dn) =
                             measure_delay("$bindir/$node/fast_dn${suffix}",
                                           "mindelay",">","<",
-                                          $node,$true/3,2*$true/3,@fanin);
+                                          $node,$true/3,2*$true/3,\@times_fast_dn, @fanin);
                         my ($fast_delay_up_t,$fast_delay_up) =
                             measure_delay("$bindir/$node/fast_up${suffix}",
                                           "mindelay","<",">",
-                                          $node,2*$true/3,$true/3,@fanin);
+                                          $node,2*$true/3,$true/3,\@times_fast_up, @fanin);
 
                         # measure slews (from 1/3 to 2/3 of true)
                         my ($slow_slew_dn_t,$slow_slew_dn) =
@@ -2291,9 +2600,8 @@ elsif ($task eq "alint") {
                         }
 
                         # check delays bounds for first delayTau
-                        my $sTau=get_sTau();
-                        my $delay_up_aTau=$delay_up*$tau_bound/$sTau;
-                        my $delay_dn_aTau=$delay_dn*$tau_bound/$sTau;
+                        my $delay_up_aTau=$tau_bound;
+                        my $delay_dn_aTau=$tau_bound;
                         my $delay_bound_up=$delay_up_aTau > 0 ? $delay_bound*$delay_up_aTau*$del_corr : "NA";
                         my $delay_bound_dn=$delay_dn_aTau > 0 ? $delay_bound*$delay_dn_aTau*$del_corr : "NA";
                         my $skew_bound_dn=$skew_bound*$del_corr;
@@ -2301,14 +2609,14 @@ elsif ($task eq "alint") {
                         if (($status eq "PASS") && ($tau == $delayTau[$delayTauIndex])) {
 
                             # check for relative delay failure
-                            if (is_numeric($slow_delay_dn) && ($delay_dn_aTau>0) &&
-                                ($slow_delay_dn > $delay_bound*$delay_dn_aTau*$del_corr) ||
-                                is_numeric($slow_delay_up) && ($delay_up_aTau>0) &&
-                                ($slow_delay_up > $delay_bound*$delay_up_aTau*$del_corr)) {
+                            if (is_numeric($slow_delay_dn) && is_numeric($delay_bound_dn) &&
+                                ($slow_delay_dn > $delay_bound_dn) ||
+                                is_numeric($slow_delay_up) && is_numeric($delay_bound_up) &&
+                                ($slow_delay_up > $delay_bound_up)) {
                                 $status = "FAIL";
                                 # sign off delay failures with estimated_delay_signoff
-                                if (($slow_delay_dn <= $delay_bound*$sdelay_dn*$del_corr) &&
-                                    ($slow_delay_up <= $delay_bound*$sdelay_up*$del_corr)){
+                                if (($slow_delay_dn <= $sdelay_dn*$delay_bound_dn) &&
+                                    ($slow_delay_up <= $sdelay_up*$delay_bound_up)){
                                     $status = "SIGNOFF";
                                 }
                             }
@@ -2382,9 +2690,16 @@ elsif ($task eq "alint") {
                     }
                 }
 
+                my($is_archive,@files)=is_node_archive("$bindir/$node", $trace_archive); 
+                my $check_leak=0;
+                if($is_archive){
+                    my %files=map {$_=>1} @files;
+                    $check_leak=1 if(defined $files{"leak_dn.trace"} and defined $files{"leak_up.trace"} );
+                }else{
+                    $check_leak=1 if ((-e "$bindir/$node/leak_dn.trace")&&(-e "$bindir/$node/leak_up.trace"));
+                }
                 # alint leakage
-                if ((-e "$bindir/$node/leak_dn.trace") &&
-                    (-e "$bindir/$node/leak_up.trace")) {
+                if($check_leak) {
 
                     # measure leakage as rounded percentage
                     $status = "PASS";
@@ -2417,6 +2732,13 @@ elsif ($task eq "alint") {
                             ($leak_up > $leak_bound)) {
                             # no signoff for leakage; we should fix 'em all
                             $status = "FAIL";
+                            # use bound for any unspecified signoff value
+                            my $new_leak_bound = (not defined $sleak or $sleak == -1) ? $leak_bound
+                                                        : $sleak;
+                            # signoff charge sharing
+                            if (($leak_dn <= $new_leak_bound) && ($leak_up <= $new_leak_bound)) {
+                                $status = "SIGNOFF";
+                            }
                         }
                     }
 
@@ -2437,19 +2759,19 @@ elsif ($task eq "alint") {
                         " leak_bound=${leak_bound}" .
                         "\n" if $mode ne "accurate";
                 }
-
                 # alint electromigration
                 if (@resistors > 0) {
                     # the actual frequency is scaled by the activity factor
-                    my $em_freq = $em_frequency * $activity_factor;
+                    my $em_freq = em_unit_freq($em_options{em_unit}{frequency}, $em_options{em_frequency})*$activity_factor;
+                    #my $em_freq = $em_frequency * $activity_factor;
                     my $em_cycle = 1 / $em_freq;
 
                     # loop through cc and tau
                     foreach my $cc (@delayCC) {
                         foreach my $tau (sort ncmp @delayTau) {
-
                             # file suffix for cc and tau
                             my $tau_ps = int($tau/1e-12 + 0.5);
+                            next if (defined $em_options{em_tau_limit}  and $tau_ps > $em_options{em_tau_limit});
                             my $suffix = "";
                             if (($cc>0) || ($tau>0)) { $suffix = ":$cc:$tau_ps"; }
                             my $fast_dn = "$bindir/$node/fast_dn${suffix}";
@@ -2470,7 +2792,6 @@ elsif ($task eq "alint") {
 
                             # check EM current limits of all named resistors
                             foreach my $res (@resistors) {
-
                                 # get layer and width info from resistor name
                                 $res =~ /(.*)\.([^\.]+)\.([^\.]+) (\S+)/;
                                 my $rn=$1;
@@ -2481,52 +2802,55 @@ elsif ($task eq "alint") {
                                 my $resname="$rn.$layer.$numvias";
 
                                 if ($layer =~ /VIA/) {
-                                    if (! defined ($em_avg_via_limit{"$layer:$value"})) {
+                                    #if (! defined ($em_avg_via_limit{"$layer:$value"})) {
+                                    if (! defined ($em_options{em_avg_via_limit}{"$layer:$value"})) {
                                         print STDERR "Error: Cannot find $res: $layer:$value\n";
                                     }
                                 }
                                 if ($layer =~ /CONT$/) {
                                     # scale the value for split via
-                                    foreach my $key (keys %em_avg_via_limit) {
+                                    foreach my $key (keys %{$em_options{em_avg_via_limit}}) {
                                         my ($l,$v)=split(/:/, $key);
                                         if ($l eq $layer) {
-                                            $em_avg_via_limit{"$layer:$value"}=$em_avg_via_limit{$key}*$v/$value;
+                                            $em_options{em_avg_via_limit}{"$layer:$value"}=$em_options{em_avg_via_limit}{$key}*$v/$value;
                                             last;
                                         }
                                     }
                                 }
 
                                 # skip this resistor if its layer has no defined limits
-                                next if (!defined($em_avg_wire_limit{$layer}) &&
-                                         !defined($em_avg_via_limit{"$layer:$value"}) &&
-                                         !defined($em_rms_wire_limit{$layer}) &&
-                                         !defined($em_rms_via_limit{$layer}));
+                                next if (!defined($em_options{em_avg_wire_parm}{$layer}) &&
+                                         !defined($em_options{em_avg_via_limit}{"$layer:$value"}) &&
+                                         !defined($em_options{em_rms_wire_limit}{$layer}) &&
+                                         !defined($em_options{em_rms_via_limit}{$layer}));
 
                                 # measure min/max avg/rms across all fast/slow up/dn scenarios
-                                my ($min_avg_dn, $max_avg_dn, $max_rms_dn) =
+                                my ($min_avg_dn, $max_avg_dn, $max_rms_dn, $max_peak_dn) =
                                     measure_worst_avg_rms($fast_dn,"$resname|",@times_fast_dn);
-                                print ADX "$resname min_avg_dn=$min_avg_dn, max_avg_dn=$max_avg_dn, max_rms_dn=$max_rms_dn\n" if $lve_raw_debug;
+                                print ADX "$resname min_avg_dn=$min_avg_dn, max_avg_dn=$max_avg_dn, max_rms_dn=$max_rms_dn max_peak_dn=$max_peak_dn\n" if $lve_raw_debug;
 
-                                my ($min_avg_slow_dn, $max_avg_slow_dn, $max_rms_slow_dn) =
+                                my ($min_avg_slow_dn, $max_avg_slow_dn, $max_rms_slow_dn, $max_peak_slow_dn) =
                                     measure_worst_avg_rms($slow_dn,"$resname|",@times_slow_dn);
-                                print ADX "$resname min_avg_slow_dn=$min_avg_slow_dn, max_avg_slow_dn=$max_avg_slow_dn, max_rms_dn=$max_rms_dn\n" if $lve_raw_debug;
+                                print ADX "$resname min_avg_slow_dn=$min_avg_slow_dn, max_avg_slow_dn=$max_avg_slow_dn, max_slow_rms_dn=$max_rms_slow_dn max_peak_slow_dn=$max_peak_slow_dn\n" if $lve_raw_debug;
 
-                                my ($min_avg_up, $max_avg_up, $max_rms_up) =
+                                my ($min_avg_up, $max_avg_up, $max_rms_up, $max_peak_up) =
                                     measure_worst_avg_rms($fast_up,"$resname|",@times_fast_up);
-                                print ADX "$resname min_avg_up=$min_avg_up, max_avg_up=$max_avg_up, max_rms_up=$max_rms_up\n" if $lve_raw_debug;
+                                print ADX "$resname min_avg_up=$min_avg_up, max_avg_up=$max_avg_up, max_rms_up=$max_rms_up max_peak_up=$max_peak_up\n" if $lve_raw_debug;
 
-                                my ($min_avg_slow_up, $max_avg_slow_up, $max_rms_slow_up) =
+                                my ($min_avg_slow_up, $max_avg_slow_up, $max_rms_slow_up, $max_peak_slow_up) =
                                     measure_worst_avg_rms($slow_up,"$resname|",@times_slow_up);
-                                print ADX "$resname min_avg_slow_up=$min_avg_slow_up, max_avg_slow_up=$max_avg_slow_up, max_rms_up=$max_rms_up\n" if $lve_raw_debug;
+                                print ADX "$resname min_avg_slow_up=$min_avg_slow_up, max_avg_slow_up=$max_avg_slow_up, max_rms_slow_up=$max_rms_slow_up max_peak_slow_up=$max_peak_slow_up\n" if $lve_raw_debug;
 
                                 # combine slow and fast measurments
                                 $min_avg_dn = $min_avg_slow_dn if (defined ($min_avg_slow_dn) and (! defined ($min_avg_dn) or $min_avg_slow_dn<$min_avg_dn));
                                 $max_avg_dn = $max_avg_slow_dn if (defined ($max_avg_slow_dn) and (! defined ($max_avg_dn) or $max_avg_slow_dn>$max_avg_dn));
                                 $max_rms_dn = $max_rms_slow_dn if (defined ($max_rms_slow_dn) and (! defined ($max_rms_dn) or $max_rms_slow_dn>$max_rms_dn));
+                                $max_peak_dn = $max_peak_slow_dn if (defined ($max_peak_slow_dn) and (! defined ($max_peak_dn) or $max_peak_slow_dn>$max_peak_dn));
 
                                 $min_avg_up = $min_avg_slow_up if (defined ($min_avg_slow_up) and (! defined ($min_avg_up) or $min_avg_slow_up<$min_avg_up));
                                 $max_avg_up = $max_avg_slow_up if (defined ($max_avg_slow_up) and (! defined ($max_avg_up) or $max_avg_slow_up>$max_avg_up));
                                 $max_rms_up = $max_rms_slow_up if (defined ($max_rms_slow_up) and (! defined ($max_rms_up) or $max_rms_slow_up>$max_rms_up));
+                                $max_peak_up = $max_peak_slow_up if (defined ($max_peak_slow_up) and (! defined ($max_peak_up) or $max_peak_slow_up>$max_peak_up));
 
                                 # em_avg is worst combination of avg_up and avg_dn
                                 my $min_avg = abs($min_avg_dn + $min_avg_up)/$em_cycle;
@@ -2542,53 +2866,98 @@ elsif ($task eq "alint") {
                                 # it might be sqrt(2) too large
                                 my $em_rms = sqrt(($max_rms_dn + $max_rms_up)/$em_cycle);
 
+                                # peak current is Ipeak/sqrt(r) r=Td/cycletime, in measure peak, the peak current already times sqrt(Td)
+                                my $peak_dn = $max_peak_dn/sqrt($em_cycle);
+                                print ADX "$resname peak_dn=$peak_dn = $max_peak_dn/sqrt($em_cycle)\n" if $lve_raw_debug;
+                                my $peak_up = $max_peak_up/sqrt($em_cycle);
+                                print ADX "$resname peak_up=$peak_up = $max_peak_up/sqrt($em_cycle)\n" if $lve_raw_debug;
+                                my $em_peak = $peak_up;
+                                $em_peak = $peak_dn if ($peak_dn > $em_peak);
+
                                 # normalize em_avg current by layer limits
-                                if (defined($em_avg_wire_limit{$layer})) {
+                                if (defined($em_options{em_avg_wire_parm}{$layer})) {
                                     my $offset = 0;
-                                    if (defined($em_avg_width_offset{$layer})) {
-                                        $offset = $em_avg_width_offset{$layer};
+                                    if (defined($em_options{em_avg_width_offset}{$layer})) {
+                                        $offset = $em_options{em_avg_width_offset}{$layer};
                                     }
-                                    my $limit = $em_avg_wire_limit{$layer} * $em_avg_scaling *
-                                        ($width+$offset);
-                                    $limit /= 2 if defined($em_width_div_limit{$layer}) and $em_width_div_limit{$layer} > $width;
+                                    my ( $unit, $width_thresh)=em_unit($em_options{em_unit}{length}, $em_options{em_avg_wire_width}{$layer});
+                                    my $limit=$em_options{em_avg_temp_rating}{$layer} * $em_options{em_avg_wire_parm}{$layer} * 
+                                              ($width*(1/$unit)*$em_options{em_width_scaling}+$offset);
+                                    if($width >= $width_thresh){
+                                      $limit*=$em_options{em_avg_wire_width_coef}{$layer};
+                                    }
+                                    $limit=em_unit($em_options{em_unit}{current},$limit);
+                                    print ADX "$node $res $layer Iavg limit = $limit, Iavg=$em_avg\n " if $lve_raw_debug;
+
+                                     $em_avg = $em_avg / $limit;
+
+                                } elsif (defined($em_options{em_avg_via_limit}{"$layer:$value"})) {
+                                     my $limit=$em_options{em_avg_temp_rating}{$layer}*$em_options{em_avg_via_limit}{"$layer:$value"};
+                                     $limit*=$numvias;
+                                     $limit=em_unit($em_options{em_unit}{current},$limit);
+                                    print ADX "$node $res $layer Iavg limit = $limit, Iavg=$em_avg\n "  if $lve_raw_debug;
                                     $em_avg = $em_avg / $limit;
-                                } elsif (defined($em_avg_via_limit{"$layer:$value"})) {
-                                    my $limit = $em_avg_via_limit{"$layer:$value"} * $em_avg_scaling *
-                                        $numvias;
-                                    $em_avg = $em_avg / $limit;
-                                } else { $em_avg = 0; }
+                                } else { $em_avg = 0; 
+                                    print ADX "$node $layer Iavg limit = NA, Iavg=NA\n " if $lve_raw_debug;
+                                }
 
                                 # normalize em_rms current by layer limits
-                                if (defined($em_rms_wire_limit{$layer})) {
-                                    my $offset = 0;
-                                    if (defined($em_rms_width_offset{$layer})) {
-                                        $offset = $em_rms_width_offset{$layer};
-                                    }
+                                if (defined($em_options{em_rms_parm}{$layer})) {
+                                    my $width_unit=em_unit($em_options{em_unit}{length});
+                                    my $width_shrink=$width*(1/$width_unit)*$em_options{em_width_scaling};
                                     my $offset1=0;
-                                    if (defined($em_rms_width_offset1{$layer})) {
-                                        $offset1 = $em_rms_width_offset1{$layer};
+                                    if (defined($em_options{em_rms_offset1}{$layer})) {
+                                        $offset1 = $em_options{em_rms_offset1}{$layer};
                                     }
                                     my $offset2=0;
-                                    if (defined($em_rms_width_offset2{$layer})) {
-                                        $offset2 = $em_rms_width_offset2{$layer};
+                                    if (defined($em_options{em_rms_offset2}{$layer})) {
+                                        $offset2 = $em_options{em_rms_offset2}{$layer};
                                     }
-                                    my $limit =
-                                        sqrt($em_rms_heating * $em_rms_wire_limit{$layer} *
-                                             ($width+$offset)*($width+$offset) * ($width + $offset + $offset1)/($width + $offset + $offset2));
+                                    my $offset3=0;
+                                    if (defined($em_options{em_rms_offset3}{$layer})) {
+                                        $offset3 = $em_options{em_rms_offset3}{$layer};
+                                    }
+                                    my $limit;
+                                    if($layer =~ /AP/){
+                                      $limit=$em_options{em_rms_parm}{$layer}*$em_options{em_rms_heating}
+                                            *$width_shrink*($width_shrink+$offset1);
+                                    }else{
+                                      $limit=$em_options{em_rms_parm}{$layer}*$em_options{em_rms_heating}
+                                           *($width_shrink+$offset1)*($width_shrink+$offset1)*
+                                              ($width_shrink+$offset1+$offset2)/
+                                                ($width_shrink+$offset1+$offset3);
+                                    }
+                                    $limit=sqrt($limit);
+                                    $limit=em_unit($em_options{em_unit}{current},$limit);
+                                    print ADX "$node $res $layer Irms limit = $limit, Irms=$em_rms\n "  if $lve_raw_debug;
                                     $em_rms = $em_rms / $limit;
-                                } elsif (defined($em_rms_via_limit{$layer})) {
-                                    my $limit = $em_rms_via_limit{$layer} *
-                                        sqrt($em_rms_heating) * $numvias;
-                                    $em_rms = $em_rms / $limit;
-                                } else { $em_rms = 0; }
+                                } else { $em_rms = 0; 
+                                    print ADX "$node $res $layer Irms limit = NA, Irms=NA\n "  if $lve_raw_debug;
+                                }
 
+                                # normalize em_peak current by layer limits
+                                if (defined($em_options{em_peak_parm}{$layer})) {
+                                    my $width_unit=em_unit($em_options{em_unit}{length});
+                                    my $width_shrink=$width*(1/$width_unit)*$em_options{em_width_scaling};
+                                    my $offset=0;
+                                    if (defined($em_options{em_peak_offset}{$layer})) {
+                                        $offset = $em_options{em_peak_offset}{$layer};
+                                    }
+                                    my $limit=$em_options{em_peak_parm}{$layer}*($width_shrink+$offset);
+                                    $limit=em_unit($em_options{em_unit}{current},$limit);
+                                    print ADX "$node $res $layer Ipeak limit = $limit, Ipeak=$em_peak\n " if $lve_raw_debug ;
+                                    $em_peak = $em_peak / $limit;
+                                } else { $em_peak = 0; 
+                                    print ADX "$node $res $layer Ipeak limit = NA, Ipeak=NA\n "  if $lve_raw_debug;
+                                }
                                 # round to 2 decimal places
-                                $em_avg  = round_float($em_avg,-2);
-                                $em_rms  = round_float($em_rms,-2);
+                                $em_avg  = round_float($em_avg,-4);
+                                $em_rms  = round_float($em_rms,-4);
+                                $em_peak  = round_float($em_peak,-4);
 
                                 # print results
                                 $status = "PASS";
-                                if (($em_avg>1) || ($em_rms>1)) { $status = "FAIL"; }
+                                if (($em_avg>1) || ($em_rms>1) || ($em_peak>1)) { $status = "FAIL"; }
                                 my $freq = int($em_freq / 1e6 + 0.5) / 1e3; # GHz
                                 $allstatus{$status}++;
                                 print RAW "$status alint $cell $path" .
@@ -2599,6 +2968,7 @@ elsif ($task eq "alint") {
                                     " em_freq=$freq" .
                                     " em_avg=$em_avg" .
                                     " em_rms=$em_rms" .
+                                    " em_peak=$em_peak" .
                                     "\n";
                             }
                         }
@@ -2629,10 +2999,13 @@ elsif ($task eq "alint") {
             close LOCALPROPS;
             close_aplot();
         }
-        my %bump_check_status=bump_check(\*RAW,$dir,$alint_bin,\@alint_node,\@threshPercent);
+        #check new bumps when bump scenario and thresh scenario is on
+        if(scalar(@threshCC) > 0 and scalar(@threshTau) > 0 and scalar(@bumpCC) > 0 and  scalar(@bumpTau) > 0){
+          my %bump_check_status=bump_check(\*RAW,$dir,$alint_bin,\@alint_node,\@threshPercent, \@threshCC, \@threshTau);
 
-        foreach my $status (keys %bump_check_status){
-           $allstatus{$status}+=$bump_check_status{$status};
+          foreach my $status (keys %bump_check_status){
+             $allstatus{$status}+=$bump_check_status{$status};
+          }
         }
         close RAW;
         if ($mode ne "accurate") {
@@ -2666,6 +3039,7 @@ elsif ($task eq "lib") {
         my $bindir="$outbindir.tmp";
         $bindir="$outbindir" if ! -d $bindir;
         $bindir=$dir if ! -d $bindir; # legacy
+print "bindir is $bindir\n";
         # first look for the .instances file
         my $lef = $dir;
         $lef =~ s:/alint/$process/.*::;
@@ -2924,24 +3298,32 @@ elsif ($task eq "lib") {
 
             # check for missing files
             my $output = $direction eq "+" || $direction eq "";
-            if (! -r "$outbindir/$node/out" || ! -r "$outbindir/$node/err") {
+            my $out_file="$outbindir/$node/out";
+            $out_file="$outbindir/$node/out.gz" if (-e "$outbindir/$node/out.gz");
+            my $err_file="$outbindir/$node/err";
+            $err_file="$outbindir/$node/err.gz" if (-e "$outbindir/$node/err.gz");
+            my $out_uncompress="cat";
+            $out_uncompress="gzip -cd" if($out_file=~/\.gz$/);
+            my $err_uncompress="cat";
+            $err_uncompress="gzip -cd" if($err_file=~/\.gz$/);
+            if (! -r "$out_file" || ! -r "$err_file") {
                 $status = "NOT_TESTED";
                 $error = "missing_files";
             }
             # check for ERROR's in err file
-            elsif ($output && `grep -c ^ERROR \"$outbindir/$node/err\"`!=0) {
+            elsif ($output && `$err_uncompress \'$err_file\' | grep -c ^ERROR`!=0) {
                 $status = "FAIL";
                 $error = "circuit_error";
             }
             # check for WARNING's in out file
-            elsif ($output && `grep -c ^WARNING \"$outbindir/$node/out\"`!=0) {
+            elsif ($output && `$out_uncompress \'$out_file\' | grep -c ^WARNING`!=0) {
                 $status = "FAIL";
                 $error = "circuit_warning";
             }
             # compute capacitance
             else {
                 ($wirecap, $gatecap, $diffcap) =
-                    get_capacitances("$outbindir/$node/out", $process_params);
+                    get_capacitances($out_file, $process_params);
                 if (defined $wirecap) {
                     $pincap = $wirecap + $gatecap + $diffcap;
                 } else {
@@ -2961,14 +3343,14 @@ elsif ($task eq "lib") {
             }
 
             # find all inverses of this node
-            my @inverses = read_inverses("$outbindir/$node/out");
+            my @inverses = read_inverses($out_file);
             my @plotnodes = ($node, @inverses);
 
             # read named resistors
-            my @resistors = read_named_resistors("$outbindir/$node/out");
+            my @resistors = read_named_resistors($out_file);
 
             # read scenario start times
-            my %times = read_start_times("$outbindir/$node/out");
+            my %times = read_start_times($out_file);
 
 
             # alint delays
@@ -2981,7 +3363,7 @@ elsif ($task eq "lib") {
             my $slwup;
             my $slwdn;
             my $valid=1;
-            $valid=0 if ! -s "$outbindir/$node/out";
+            $valid=0 if ! -s "$out_file";
             my %ntd=();
             my $dlycapndx=-1;
             foreach my $delayCap (@delayCap) {
@@ -3356,3 +3738,6 @@ elsif ($task eq "totem") {
 ###
 # error message
 else { die "ERROR: unknown task\n"; }
+
+
+

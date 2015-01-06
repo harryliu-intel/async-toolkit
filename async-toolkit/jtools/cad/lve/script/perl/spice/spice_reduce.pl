@@ -15,7 +15,7 @@ sub is_numeric {
 }
 
 sub usage() {
-    die "Usage: $0 --infile=[infilename] --outfile=[outfilename] [--mode=nvn] \n";
+    die "Usage: $0 --infile=[infilename] --outfile=[outfilename] [--mode=nvn|totem] \n";
 }
 
 my $macro_model = 0; # for macro-model transistors instead of primitives
@@ -223,7 +223,7 @@ sub reduce {
             }
             $line = join (" ", @f);
         }
-        if ($line =~ /^R/i) {
+        if ($line =~ /^R/i and $mode ne "totem") {
 
             # process resistor to remove width/length/layer info if any
             $line =~ s/\s+/ /g;
@@ -307,7 +307,7 @@ sub reduce {
             }
             # macro-model transistors
             # change M to X and force parameters to lower-case
-            if ($macro_model && $line =~ s/^M/X/gi) {
+            if ($mode ne "nvn" && $macro_model && $line =~ s/^M/X/gi) {
                 my @fields = split(/\s+/,$line);
                 for (my $f=0; $f<@fields; $f++) {
                     if ($fields[$f] =~ /(\S+)=(\S+)/ ) {

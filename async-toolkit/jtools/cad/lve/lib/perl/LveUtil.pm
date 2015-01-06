@@ -5,6 +5,10 @@ use POSIX;
 use LveStatus;
 use IPC::Open2;
 use IPC::Open3;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
+use Archive::Extract;
+
+
 
 BEGIN {
     use Exporter;
@@ -14,11 +18,16 @@ BEGIN {
         &find_cells &find_rawfiles &find_fqcns &fqcn_to_path &partition_fqcnminus 
         &read_include_file &read_cell_list &parseArgs &includeConfig 
         &error &canonicalizePath &my_system &reName &reNameNode &dfIIDir
-        &ns_to_ps &summarizeStatus
+        &ns_to_ps &summarizeStatus &archive_extrace_files
+        &mktemp_workdir &cleanUp_workdir &is_node_archive &archive_memberNamed
+        &em_unit_freq &em_unit &archive_getcontent &archive_addfile &check_path
+        &archive_getfiletimestamp
     );
 }
 
 use strict;
+
+our @cleanMe=();
 
 #
 # Rounds num to the nearest 10^digit.
@@ -206,7 +215,7 @@ sub includeConfig  {
                 push @{$args}, $arg;
             }        }
         close INCLUDE;
-    } else { error("can't include file \"$config\"."); }
+    } else { error("can't include file \"$config\"."); exit;}
 }
 
 # print an error message and set ERROR flag
@@ -214,6 +223,7 @@ sub error {
     my ($msg) = @_;
     print STDERR "ERROR: $msg\n";
     my $ERROR = 1;
+    exit;
 }
 
 # check if a string is a legal real number
@@ -223,6 +233,13 @@ sub is_numeric {
     else { return 0; }
 }
 
+# check if path exist or not.
+sub check_path {
+    my ($path) = @_;
+    foreach my $dir (split(":",$path)) {
+        unless (-e $dir) { error("$path does not exist."); exit; }
+    }
+}
 
 # get a sweep option from the path
 sub get_nth_run_param {
@@ -551,16 +568,177 @@ sub my_system {
 }
 
 sub summarizeStatus {
-    my ($all)=@_;
+    my ($all, $type)=@_;
     my %all=%{$all};
+    my %type;
+    %type = %{$type} if(defined $type);
     my @all=(keys %all);
     return "PASS" if $all{PASS} and $#all==0;
-    return "FAIL" if $all{FAIL};
+    return "FAIL" if ($all{FAIL} and defined $type{OTHER} and $type{OTHER});
+    return "FAIL_NEWBUMP" if ($all{FAIL} and defined $type{FAIL_NEWBUMP} and $type{FAIL_NEWBUMP});
+    return "FAIL_MNOISE"  if ($all{FAIL} and defined $type{FAIL_MNOISE} and $type{FAIL_MNOISE});
+    return "FAIL" if ($all{FAIL});
+    return "FAIL_NEWBUMP" if ($all{FAIL_NEWBUMP});
+    return "FAIL_MNOISE" if ($all{FAIL_MNOISE});
     return "WARNING" if $all{WARNING};
     return "SIGNOFF" if $all{SIGNOFF};
     return "PASS" if $all{NA} and $all{PASS};
     return "NA" if $all{NA};
     return "NOT_TESTED";
 }
+
+sub is_node_archive{
+  my ($dir,$file)=@_;
+  if(-e "$dir/$file"){
+    my $zip = Archive::Zip->new();
+    unless ( $zip->read( "$dir/$file" ) == AZ_OK ) {
+       die "Cannot read $dir/$file";
+    }
+    my @mbrs = $zip->memberNames();
+    return (1, @mbrs);
+  }
+  return 0;
+}
+
+sub archive_extrace_files{
+  my ($archive,$extract_path,@files)=@_;
+  if (@files){
+     my $zip = Archive::Zip->new();
+     unless ( $zip->read( $archive ) == AZ_OK ) {
+         die "Read error on $archive";
+     }
+     foreach my $element (@files) {
+         $zip->extractMember($element, "$extract_path/$element");
+     }
+  }else{
+     my $ae = Archive::Extract->new( archive => "$archive" );
+     my $status = $ae->extract( to => $extract_path ) or die $ae->error;
+  }
+  `chmod 02775 $extract_path`;
+  `chmod -R g+w   $extract_path`;
+  return $extract_path;
+}
+
+sub archive_memberNamed{
+  my ($archive,$name)=@_;
+  my $zip = Archive::Zip->new();
+  unless ( $zip->read( $archive ) == AZ_OK ) {
+      die "Read error on $archive";
+  }
+  return $zip->memberNamed($name);
+}
+
+sub archive_getcontent{
+  my ($archive,$name)=@_;
+  my $zip = Archive::Zip->new();
+  unless ( $zip->read( $archive ) == AZ_OK ) {
+      die "Read error on $archive";
+  }
+  return $zip->contents($name);
+}
+sub archive_addfile{
+  my ($archive,$name)=@_;
+  my $zip = Archive::Zip->new();
+  my @paths=split("/",$name); #remove directory structure.
+  my $rename=$paths[$#paths];
+
+  if(!-e $archive){
+     $zip->addFile($name, $rename);
+     unless ( $zip->writeToFileNamed("$archive") == AZ_OK ) {
+      die "Error: zip write error $archive";
+    }
+  }else{
+    unless ( $zip->read( $archive ) == AZ_OK ) {
+        die "Read error on $archive";
+    }
+    my $member=$zip->memberNamed($rename);
+    if(defined $member){
+      $zip->removeMember($rename);
+    }
+    $zip->addFile($name,$rename);
+    unless ( $zip->overwrite() == AZ_OK ) {
+        die "Add file error on $archive";
+    }
+  }
+}
+
+sub archive_getfiletimestamp{
+  my ($archive)=@_;
+  my $timestamp={};
+  my $zip = Archive::Zip->new();
+  unless ( $zip->read( $archive ) == AZ_OK ) {
+        die "Read error on $archive";
+  }
+  my @mbrs = $zip->members();
+
+  foreach my $member (@mbrs){
+    my $file=$member->fileName();
+    $timestamp->{$file}=$member->lastModTime();
+  }
+  return $timestamp;
+
+}
+
+
+sub mktemp_workdir{
+  my ($name)=@_;
+  my $user =`whoami`; chomp($user);
+  $name="lve" if(not defined $name);
+  my $tmp;
+  if (defined $ENV{TMP}) { $tmp = $ENV{TMP}; }
+  else { $tmp = "/scratch"; }
+  chomp($tmp);
+  if (! -e $tmp) {
+    system("mkdir -p $tmp");
+  } 
+
+  my $workdir = `mktemp -d ${tmp}/$user.$name.XXXXXX  ` 
+    or die "Can't mktemp -d ${tmp}/$user.$name.XXXXXX\n";
+  chomp $workdir;
+  chmod 02775, "$workdir";
+  push @cleanMe, $workdir;
+  return $workdir; 
+}
+
+sub cleanUp_workdir{
+  my ($cleandir)=@_;
+  if(defined $cleandir){
+    system("rm -rf \"$cleandir\"");
+  }else{
+    foreach my $dir (@cleanMe) {
+        if ( -e "$dir" ) {
+            system("rm -rf \"$dir\"");
+        }
+    }
+    @cleanMe=();
+  }
+}
+
+sub em_unit_freq {
+   my ($unit,$freq)=@_; 
+   if($unit=~/(\d+)(\S)/){
+     my($div,$u)=($1,$2);
+     $freq *= 1e+9 if ($u eq "G" or $u eq "g");
+     $freq *= 1e+6 if ($u eq "M" or $u eq "m");
+     $freq *= 1e+3 if ($u eq "K" or $u eq "k");
+     $freq *= $div;
+   }
+   return $freq;
+}
+
+sub em_unit {
+  my ($unit,$l)=@_; 
+  my $scal=1;
+  if($unit=~/(\d+)(\S)/){
+    my($div,$u)=($1,$2);
+    $scal = 1e-9 if ($u eq "n");
+    $scal = 1e-6 if ($u eq "u");
+    $scal = 1e-3 if ($u eq "m");
+    $scal *= $div;
+  }
+  return ($scal,$l*$scal) if (defined $l);
+  return ($scal);
+}
+
 
 1;

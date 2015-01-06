@@ -13,20 +13,24 @@ BEGIN {
         &measure_delay &make_png &coverage_merging  &measure_worst_avg_rms
         &characterize_delay &characterize_cap_delay &measure_charge &read_delay_scenarios
         &measure_charge_wcap &generate_pwl &evaluate_bumps_threshPercent &characterize_thresh
+        &aplot_file_cmd &read_bump_scenarios
     );
 }
 
 use strict;
 use FileHandle;
 use IPC::Open2;
+use File::Spec;
+use File::Spec::Functions;
 use LveUtil;
+use LveMultinoise;
 my  $aplotpid;
 my $DEBUG=0;
 my $dbgnr=0;
 local (*AD);
 my @fail_type=("pass",
                "max_thresh_percent",
-               "static_switching_th",
+               "thresh_resp_bound",
                "no_such_fanout",
                "no_thresh_scenario",
                "no_such_node",
@@ -38,7 +42,13 @@ my @fail_type=("pass",
                "no_switchingVoltages",
                "no_any_fanout_found",
                "no_such_fanin",
-               "bump_width");
+               "bump_width",
+               "thresh_resp_bound:additive_resp",
+               "no_thresh_scenario_to_estimate");
+
+my $trace_archive="aspice_trace.zip";
+my $resp_archive="thresh_resp.zip";
+
 
 # spawn aplot with in/out pipes for measurements
 sub open_aplot {
@@ -96,6 +106,7 @@ sub close_aplot {
 # measure the min bump for alint
 sub measure_minv {
     my ($run,$node) = @_;
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range";
     write_aplot "minv $node";
@@ -107,6 +118,7 @@ sub measure_minv {
 # measure the max bump for alint
 sub measure_maxv {
     my ($run,$node) = @_;
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range";
     write_aplot "maxv $node";
@@ -119,6 +131,9 @@ sub measure_bump_height{
     my($node,$start,$end,$dir)=@_;
     my @aplot_cmd    = ( "minv", "maxv" );
     
+    if($node =~ /:F(\d+)$/){
+      write_aplot "resistive off";
+    }
     write_aplot "range $start:$end";
     print "range $start:$end\n" if($DEBUG);
     my $aplot_cmd = "$aplot_cmd[$dir] $node";
@@ -126,6 +141,7 @@ sub measure_bump_height{
     write_aplot($aplot_cmd);
     my $out = read_aplot();
     print "$out\n" if ($DEBUG);
+    write_aplot "resistive on";
     flush_aplot();
     my($bump_time,$bump_v)=split(" ",$out);
     if (!is_numeric($bump_v)) {return ("FAIL",0); }
@@ -157,13 +173,25 @@ sub measure_end_time{
     return $end_time;    
 }
 sub transfer_bump2ziggurat{
-    my($power_sag_v,$startV,$node,$dir,$start,$end,$peak_time,$vddPercentRef,$threshPercRef,$last_time)=@_;
+    my($bump_nearest_end,$power_sag_v,$startV,$node,$dir,$start,$end,$peak_v,$peak_time,$vddPercentRef,$threshPercRef,$last_time)=@_;
     my $zig_waveform="";
     #my $timePercentDn={};
     my @timePercentDn;
     my @timePercentUp;
     if($last_time == 1){
       $end = measure_end_time($start,$end,$node,$dir);
+    }
+    my $trigger_cmd="trigger_minv";
+    $trigger_cmd="trigger_maxv" if ($dir);
+    if($bump_nearest_end){
+      if($trigger_cmd eq "trigger_maxv"){
+        $trigger_cmd="trigger_minv";
+      }else{
+        $trigger_cmd="trigger_maxv";
+      }
+    }
+    if($node =~ /:F(\d+)$/){
+      write_aplot "resistive off";
     }
     write_aplot "range $start:$end";
     print "range $start:$end\n" if($DEBUG);
@@ -180,7 +208,7 @@ sub transfer_bump2ziggurat{
           $v=$v-$power_sag_v;
           next if($v < 0);
        }
-       my $aplot_cmd = "trigger $node=$v";
+       my $aplot_cmd = "$trigger_cmd $node=$v";
        print "$aplot_cmd\n" if($DEBUG);
        write_aplot($aplot_cmd);
        my $triggers = read_aplot();
@@ -201,7 +229,7 @@ sub transfer_bump2ziggurat{
            #bump is heigher or equal to this voltage          
            my $event=1;
            while ($event != 0){
-               $aplot_cmd = "trigger $node=$v $event";
+               $aplot_cmd = "$trigger_cmd $node=$v $event";
                print "$aplot_cmd\n" if($DEBUG);
                write_aplot($aplot_cmd);
                my $out = read_aplot();
@@ -209,7 +237,7 @@ sub transfer_bump2ziggurat{
                flush_aplot();
                if ($out =~ /^WARNING/) {
                   flush_aplot();
-                   $aplot_cmd = "trigger $node=$v";
+                   $aplot_cmd = "$trigger_cmd $node=$v";
                    print "RETRY $aplot_cmd\n" if $DEBUG;
                    write_aplot ($aplot_cmd);
                    $out = read_aplot();
@@ -242,6 +270,7 @@ sub transfer_bump2ziggurat{
            $peak_perc=$i;
        }
     }
+    write_aplot "resistive on";
     my $start_time=$start;
     my $end_time=$end;
     my $index_VP=-1;
@@ -308,8 +337,12 @@ sub measure_thresh_resp{
     my %outresp;
     #print "find fastest response for $input->$node ($dir)\n";
     my @timearray = @$timearrayref;
-    if (! -e "$file.trace") {
-        next;
+
+    my $filecmd=aplot_file_cmd($file);
+    if($file eq $filecmd){
+      next if (! -e "$file.trace");
+    }else{
+      $file=$filecmd;
     }
     print "File = $file\n" if ($DEBUG);
     write_aplot("file \"$file\"");
@@ -359,7 +392,7 @@ sub measure_thresh_resp{
 
 #Signoff bumps by the result of output trace files in different percentage of Vdd
 sub evaluate_bumps_threshPercent{
-    my ($working_dir,$fh,$bump_debug,$power_sag,$static_switchV,$source_pvt,$current_pvt,$cell,$node,$TP_data,$fanoutref, $alint_path, $raw_path,$raw_cell,$is_fanin_check,$alint_bin,$threshPercentRef) = @_;
+    my ($working_dir,$fh,$bump_debug,$bump_nearest_end,$power_sag,$thresh_resp_bound_ref,$source_pvt,$current_pvt,$cell,$node,$TP_data,$fanoutref, $alint_path, $raw_path,$raw_cell,$is_fanin_check,$alint_bin,$threshPercentRef, $additive_resp,$threshCC_ref, $threshTau_ref, $node_check_status,$no_power_sag) = @_;
     my ($process_s,$Vdd_s,$temp_s) = split(":",$source_pvt);
     my ($process_c,$Vdd_c,$temp_c) = split(":",$current_pvt);
     $Vdd_s =~s/V$//g;
@@ -370,23 +403,24 @@ sub evaluate_bumps_threshPercent{
     #find bump source node
     my $log="";
 
-     my $fanincell_str="";
-     my $faninnode_str="";
-     my $node_str=" node=$node";
-     $fanincell_str = " fanin_cell=$cell" if($is_fanin_check);
-     $faninnode_str = " fanin_node=$node" if($is_fanin_check);
-     $node_str      = "" if($is_fanin_check);
+     #my $fanincell_str="";
+     #my $faninnode_str="";
+     #my $node_str=" node=$node";
+     #$fanincell_str = " fanin_cell=$cell" if($is_fanin_check);
+     #$faninnode_str = " fanin_node=$node" if($is_fanin_check);
+     #$node_str      = "" if($is_fanin_check);
+     my $finfo="$cell/$node";
+     $finfo=$node if($cell eq $raw_cell);
 
      my $node_path="$alint_path/alint.bin.$alint_bin/$node"; 
      if(! -d $node_path ){
          warn "Error: Cannot find node directory $node_path\n";
          $bump_check_status{"FAIL"}++;
+
          my $fail_str=$fail_type[5];
          $fail_str=$fail_type[13] if($is_fanin_check);
          print $fh "FAIL alint $raw_cell $raw_path".
-                  "$node_str" .
-                  "$fanincell_str" .
-                  "$faninnode_str" .
+                  " fanin=$finfo" .
                   " source_pvt=$source_pvt".
                   " fail_type=$fail_str\n";
          return;
@@ -394,63 +428,92 @@ sub evaluate_bumps_threshPercent{
 
      #read bump file
      my $scenarios={};
-     if ( -e "$node_path/out") {
-         $scenarios = read_bump_scenarios("$node_path/out");
+     my $out_file="$node_path/out";
+     $out_file="$node_path/out.gz" if(-e "$node_path/out.gz");
+     if ( -e $out_file) {
+         $scenarios = read_bump_scenarios($out_file);
      }
      else {
          warn "Error: Cannot find corresponding out file in $node_path\n";
          $bump_check_status{"FAIL"}++;
          print $fh "FAIL alint $raw_cell $raw_path".
-                  "$node_str" .
-                  "$fanincell_str" .
-                  "$faninnode_str" .
+                  " fanin=$finfo" .
                   " source_pvt=$source_pvt".
                   " fail_type=$fail_type[6]\n";
          return;    
      }
 
-     ziggurat_bumps($working_dir,$power_sag,$Vdd_s,"$alint_path/alint.bin.$alint_bin",$node,$threshPercentRef,$scenarios);
-
-     #check all bumps
-     foreach my $cctaucap (keys %$scenarios){         
-         my ($bump_dn,$bump_dn_t,$bump_up,$bump_up_t)=(1e6,0,0,0);
-         foreach my $bump_updn (keys %{$scenarios->{$cctaucap}}){
-             my $fileprefix="$bump_updn:$cctaucap";
-             my($fails, $passes)=bumpzig_check($working_dir,$raw_path,$bump_debug,$fh,$static_switchV,$source_pvt,$current_pvt,$cell,$raw_cell,$node,$bump_updn, $fileprefix,$threshPercentRef, $fanoutref, $TP_data,$is_fanin_check);
-             $bump_check_status{"FAIL"}+=$fails;
-             $bump_check_status{"PASS"}+=$passes;
-             if($power_sag>0){
-                $fileprefix="$bump_updn:$cctaucap:s$power_sag";
-                my($fails, $passes)=bumpzig_check($working_dir,$raw_path,$bump_debug,$fh,$static_switchV,$source_pvt,$current_pvt,$cell,$raw_cell,$node,$bump_updn, $fileprefix,$threshPercentRef, $fanoutref, $TP_data,$is_fanin_check);
-                $bump_check_status{"FAIL"}+=$fails;
-                $bump_check_status{"PASS"}+=$passes;
-             }
-         }#foreach my $bump_updn (keys %{$scenarios->{$cctaucap}})
+     #ziggurat_bumps($working_dir,$zig_near_end,$power_sag,$Vdd_s,"$alint_path/alint.bin.$alint_bin",$node,$threshPercentRef,$scenarios);
+     foreach my $fanoutinforef (@$fanoutref){
+       my ($inst_path,$fanoutcell,$in_node,$out,$fanout_type,$thresh_up, $thresh_dn) = @$fanoutinforef;
+       my $node_instname=$node;
+       if(defined $inst_path){
+          $node_instname=$in_node;
+          $node_instname="$inst_path.$in_node" if ($inst_path ne "");
+          
+       }
+       my $zig_near_end=0;
+       $zig_near_end=1 if ((defined $no_power_sag->{pairs}->{"$cell/$node"} and scalar(keys %{$no_power_sag->{pairs}->{"$cell/$node"}})> 0 ) 
+                             or $bump_nearest_end==1 );
+       ziggurat_bumps_by_instpath($working_dir,$zig_near_end,$power_sag,$Vdd_s,"$alint_path/alint.bin.$alint_bin",$node,$node_instname,$threshPercentRef,$scenarios);
+       #check all bumps
+       foreach my $cctaucap (keys %$scenarios){         
+           my ($bump_dn,$bump_dn_t,$bump_up,$bump_up_t)=(1e6,0,0,0);
+           foreach my $bump_updn (keys %{$scenarios->{$cctaucap}}){
+               my $fileprefix="$node_instname:$bump_updn:$cctaucap";
+               next if(not defined $scenarios->{$cctaucap}->{$bump_updn} or scalar(@{$scenarios->{$cctaucap}->{$bump_updn}}) <= 0);
+               my($fails, $passes)=bumpzig_check(0,undef,$working_dir,$raw_path,$bump_debug,$fh,$thresh_resp_bound_ref,$source_pvt,$current_pvt,$cell,$raw_cell,$node,$bump_updn, $fileprefix,$threshPercentRef, $fanoutinforef, $TP_data,$is_fanin_check,$additive_resp,$threshCC_ref, $threshTau_ref, $node_check_status,$no_power_sag);
+               $bump_check_status{"FAIL"}+=$fails;
+               $bump_check_status{"PASS"}+=$passes;
+               if($zig_near_end){
+                 my($fails, $passes)=bumpzig_check(1,!$bump_nearest_end,$working_dir,$raw_path,$bump_debug,$fh,$thresh_resp_bound_ref,$source_pvt,$current_pvt,$cell,$raw_cell,$node,$bump_updn, $fileprefix,$threshPercentRef, $fanoutinforef, $TP_data,$is_fanin_check,$additive_resp,$threshCC_ref, $threshTau_ref, $node_check_status,$no_power_sag);
+                 $bump_check_status{"FAIL"}+=$fails;
+                 $bump_check_status{"PASS"}+=$passes;
+               }
+               if($power_sag>0){
+                  $fileprefix.=":s$power_sag";
+                  my($fails, $passes)=bumpzig_check(0,undef,$working_dir,$raw_path,$bump_debug,$fh,$thresh_resp_bound_ref,$source_pvt,$current_pvt,$cell,$raw_cell,$node,$bump_updn, $fileprefix,$threshPercentRef, $fanoutinforef, $TP_data,$is_fanin_check,$additive_resp,$threshCC_ref, $threshTau_ref, $node_check_status,$no_power_sag);
+                  $bump_check_status{"FAIL"}+=$fails;
+                  $bump_check_status{"PASS"}+=$passes;
+                  if($bump_nearest_end){
+                    my($fails, $passes)=bumpzig_check(1,!$bump_nearest_end,$working_dir,$raw_path,$bump_debug,$fh,$thresh_resp_bound_ref,$source_pvt,$current_pvt,$cell,$raw_cell,$node,$bump_updn, $fileprefix,$threshPercentRef, $fanoutinforef, $TP_data,$is_fanin_check,$additive_resp,$threshCC_ref, $threshTau_ref, $node_check_status,$no_power_sag);
+                    $bump_check_status{"FAIL"}+=$fails;
+                    $bump_check_status{"PASS"}+=$passes;
+                  }
+               }
+           }#foreach my $bump_updn (keys %{$scenarios->{$cctaucap}})
+       }
+       
      }
+
     return %bump_check_status;
 
 
 }
 
+
 #from bump ziggurat, generating the output response waveform from threshPercent response file
 #and check the bump
 sub bumpzig_check{
-  my ($working_dir,$path,$bump_debug,$fh,$static_switchV,$source_pvt,$current_pvt,$fanin_cell,$cell,$node,$bump_dir,$fileprefix,$threshPercentRef, $fanoutRef, $TP_data,$is_fanin_check)=@_;
+  my ($bump_nearest_end,$signoff_nearest_end,$working_dir,$path,$bump_debug,$fh,$thresh_resp_bound_ref,$source_pvt,$current_pvt,$fanin_cell,$cell,$node,$bump_dir,$fileprefix,$threshPercentRef, $fanoutInfoRef, $TP_data,$is_fanin_check, $additive_resp,$threshCC_ref, $threshTau_ref, $node_check_status,$no_power_sag)=@_;
   my ($process_s,$Vdd_s,$temp_s) = split(":",$source_pvt);
   my ($process_c,$Vdd_c,$temp_c) = split(":",$current_pvt);
   $Vdd_s =~s/V$//g;
   $Vdd_c =~s/V$//g;
 
+  my @threshCC=@$threshCC_ref;
+  my @threshTau=@$threshTau_ref;
   my $fail_status=0;
   my $pass_status=0;
-  my @fanouts=@$fanoutRef;
   my @threshPercent=@$threshPercentRef;
   my $log="";
   my $thresh_dir="thresh_dn";
   $thresh_dir="thresh_up" if ($bump_dir eq "bump_dn");
-
-  my($status, %bumpdata)=parse_bumpzig("$working_dir/$fileprefix.bumpzig");
-  my($bump_updn,$cc,$tau_ps,$powersag)=split(":",$fileprefix);  
+  
+  my $bumpfilename="$working_dir/$fileprefix.bumpzig";
+  $bumpfilename.=".nd" if ($bump_nearest_end);
+  my($status, %bumpdata)=parse_bumpzig($bumpfilename);
+  my($node_instname,$bump_updn,$bump_cc,$bump_tau,$powersag)=split(":",$fileprefix);  
   my $power_sag_str="";
   if(defined $powersag){
      if($powersag =~ /s(\d+)/){
@@ -461,31 +524,31 @@ sub bumpzig_check{
   if($source_pvt ne $current_pvt){
      $source_pvt_str=" source_pvt=$source_pvt";
   }
+  my $nearest_end_str="";
+  $nearest_end_str=" bump_curve=nearest_end" if($bump_nearest_end);
+  my $fin="$fanin_cell/$node";
+  $fin=$node if($fanin_cell eq $cell);
 
-  my $fanincell_str="";
-  my $faninnode_str="";
-  my $node_str=" node=$node";
-  $fanincell_str = " fanin_cell=$fanin_cell" if($is_fanin_check);
-  $faninnode_str = " fanin_node=$node" if($is_fanin_check);
-  $node_str      = "" if($is_fanin_check);
-
+  if(defined $powersag){
+    #disable powersag when fanin is localnode
+    return ($fail_status,$pass_status) if(defined $no_power_sag->{cells}->{$fanin_cell});
+  }
   if($status eq "FAIL"){
-    warn "CANNOTN find $working_dir/$fileprefix.bumpzig\n" if ($DEBUG);
+    warn "CANNOTN find $bumpfilename\n" if ($DEBUG);
     $fail_status++;
     print $fh "FAIL alint $cell $path".
-      "$node_str" .
-      "$fanincell_str" .
-      "$faninnode_str" .
+      " fanin=$fin" .
       "$power_sag_str" .
       "$source_pvt_str" .
-      " fail_type=$fail_type[7]\n";       
-    return;
+      "$nearest_end_str" .
+      " fail_type=$fail_type[7]:$fileprefix\n";       
+    return ($fail_status,$pass_status);
   }
   
-  my $all_status="PASS";
-  my $max_Vperc=-1;
-  my $max_bump_v=-1;
-  my $max_bump_time=-1;
+  my %max_Vperc;
+  my %max_bump_v;
+  my %max_bump_time;
+  my @thresh_error_msg=();
   foreach my $bumpinfo (keys %bumpdata){
      my($bump_peak,$bump_peak_time)=split("@",$bumpinfo);
      my $bump_v_perc=$bump_peak;
@@ -493,187 +556,285 @@ sub bumpzig_check{
      $bump_v_perc = int(100*$bump_v_perc/$Vdd_s + 0.5);
      my $bump_time_ps = $bump_peak_time;
      my $s = ns_to_ps($bump_time_ps);             
-     #print "bump for $node $bump_updn:$cc:$tau $bumpinfo\n" if ($DEBUG);
      print "\n==========================================================\n" if ($DEBUG);
-     print "$bump_dir for $node $bump_updn:$cc:$tau_ps $power_sag_str $bumpinfo\n" if ($DEBUG);
+     print "$bump_dir for $node $bump_updn:$bump_cc:$bump_tau $power_sag_str $bumpinfo\n" if ($DEBUG);
      print "==========================================================\n" if ($DEBUG);
      if($bump_v_perc > $threshPercent[$#threshPercent]){
-         $all_status="FAIL";
          $fail_status++;
          print $fh "FAIL alint $cell $path".
-                 "$node_str" .
-                 " cc=$cc" .
-                 " tau=$tau_ps" .
-                 "$fanincell_str" .
-                 "$faninnode_str" .
+                 " fanin=$fin" .
+                 " cc=$bump_cc" .
+                 " tau=$bump_tau" .
                  "$power_sag_str" .
                  "$source_pvt_str".
                  " $bump_updn=${bump_v_perc}\@${bump_time_ps}".
-                 " resp_bound=$static_switchV".
+                 " resp_bound=$thresh_resp_bound_ref->[1]".
                  " bump_bound=$threshPercent[$#threshPercent]".
                  " fail_type=$fail_type[1]\n";
          next;                              
      }
-     if(scalar(@fanouts)==0){
-        #if cannot find any fanouts to check, use old bump method.
-        $all_status="OLD_BUMP";
-        if($bump_v_perc > $max_bump_v){
-            $max_bump_v= $bump_v_perc;
-            $max_bump_time= $bump_time_ps;
-        }
-        next;
-     }
 
-     foreach my $fanoutinforef (@fanouts){
-        my ($fanoutcell,$in,$out,$fanout_type) = @$fanoutinforef;
-        $node_str      = " node=$out" if($is_fanin_check);
-        print "* ${node}'s fanout: $fanoutcell/$in/$out\n" if ($DEBUG);
-        if(not defined $TP_data->{$fanoutcell}->{$in}->{$out}){
-            $all_status="FAIL";
-            $fail_status++;
-            next;
-        }
-        my $resp_time=0;
-        my $resp_Vperc=0;
-        my $br_fh=new FileHandle;
-        if($bump_debug){
-          if(! -d "$working_dir/$fanoutcell"){
-            system("mkdir  \"$working_dir/$fanoutcell\"");
+     my $get_bump_resp=sub{
+       my ($fanoutcell,$in, $out)=@_;
+       print "* ${node}'s fanout: $fanoutcell/$in/$out\n" if ($DEBUG);
+       if(not defined $TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}){
+           return ("FAIL:$fail_type[4]:$in:$thresh_dir");
+       }
+       if(defined $TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir} and $TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}==-1){
+           return ("IGNORE");
+       }
+       my %br_fh;
+       if($bump_debug){
+          if(! -d "$working_dir/$fanoutcell/$out"){
+             system("mkdir -p  \"$working_dir/$fanoutcell/$out\"");
           }
-          $br_fh->open(">$working_dir/$fanoutcell/$in:$out:$fileprefix:$bump_v_perc:$bump_time_ps.bumpresp") or die "cannot write $working_dir/$fanoutcell/$in:$out:$bump_dir:$bump_v_perc:$bump_time_ps.bumpresp\n";
-        }
-        my $max_Vperc_=0;
-        for my $zigdurref (@{$bumpdata{$bumpinfo}}){
-            my ($dt,$perc)=@$zigdurref;
-            if(not defined $TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}){
-                #has such fanout, but no thresh response found.
-                $all_status="FAIL";
-                next;
-            }
-            $resp_Vperc=linearInterp_response($perc,$resp_Vperc,$dt,$TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir});
-            $resp_time=$resp_time+$dt;
-            print " zigdur=$dt, $perc% ---> respV=$resp_Vperc% time=$resp_time\n" if ($DEBUG);
-            print $br_fh "$resp_time $resp_Vperc\n" if ($bump_debug);
-            if($resp_time > 1.0) { #bump width is larger than 1ns.
-              $max_Vperc_=$resp_Vperc;
-              last;
-            }
-            if($resp_Vperc >= $max_Vperc_){
-              $max_Vperc_=$resp_Vperc;
-            }else{
-              last;
-            }
-        }#for my $zigdurref (@{$bumpdata{$bumpinfo}})
-        if($bump_debug) {$br_fh->close();}
-        my $max_Vperc_int = int($max_Vperc_+0.5);
-        if($resp_time > 1.0 and $max_Vperc_int > 10){
-            print "FAIL bump width\n" if ($DEBUG);
-            $all_status="FAIL";
-            $fail_status++;
-            print $fh "FAIL alint $cell $path".
-                    "$node_str" .
-                    " cc=$cc" .
-                    " tau=$tau_ps" .
-                    "$fanincell_str" .
-                    "$faninnode_str" .
-                    "$power_sag_str" .
-                    "$source_pvt_str".
-                    " resp=$max_Vperc_int" .
-                    " $bump_dir=${bump_v_perc}\@${bump_time_ps}".
-                    " resp_bound=$static_switchV".
-                    " bump_bound=$threshPercent[$#threshPercent]".
-                    " fail_type=$fail_type[14]\n";
-            last;
-        }
-        if($max_Vperc_>=$static_switchV){
-            $all_status="FAIL";
-            $fail_status++;
-            print $fh "FAIL alint $cell $path".
-                    "$node_str" .
-                    " cc=$cc" .
-                    " tau=$tau_ps" .
-                    "$fanincell_str" .
-                    "$faninnode_str" .
-                    "$power_sag_str" .
-                    "$source_pvt_str".
-                    " resp=$max_Vperc_int" .
-                    " $bump_dir=${bump_v_perc}\@${bump_time_ps}".
-                    " resp_bound=$static_switchV".
-                    " bump_bound=$threshPercent[$#threshPercent]".
-                    " fanout_type=$fanout_type" .
-                    " fanout_cell=$fanoutcell" .
-                    " fanout_info=$in\@$out" .
-                    " fail_type=$fail_type[2]\n";
-        }
-        $max_Vperc = $max_Vperc_ if($max_Vperc_ > $max_Vperc);
-        if(($max_Vperc_ > $max_Vperc) or (($max_Vperc_ == $max_Vperc) and $bump_v_perc > $max_bump_v)){
-            $max_Vperc = $max_Vperc_;
-            $max_bump_v= $bump_v_perc;
-            $max_bump_time= $bump_time_ps;
-        }
-     }#foreach my $fanoutinforef (@fanouts)
-  }  
-  $node_str=" node=$node";
-  $node_str="" if($is_fanin_check);
-  if($all_status eq "PASS"){ #this bump passed step1 and step2&3 for all fanouts
-         my $max_Vperc_int = int($max_Vperc+0.5);
-         $pass_status++;
-         print $fh "PASS alint $cell $path".
-                 "$node_str" .
-                 " cc=$cc" .
-                 " tau=$tau_ps" .
-                 "$fanincell_str" .
-                 "$faninnode_str" .
-                 "$power_sag_str" .
-                 "$source_pvt_str".
-                 " resp=$max_Vperc_int" .
-                 " $bump_dir=${max_bump_v}\@${max_bump_time}".
-                 " resp_bound=$static_switchV".
-                 " bump_bound=$threshPercent[$#threshPercent]\n";
-  }elsif($all_status eq "OLD_BUMP"){
-     if($max_bump_v >=$static_switchV){
-         $fail_status++;
-         print $fh "FAIL alint $cell $path".
-                 "$node_str" .
-                 " cc=$cc" .
-                 " tau=$tau_ps" .
-                 "$fanincell_str" .
-                 "$faninnode_str" .
-                 "$power_sag_str" .
-                 "$source_pvt_str".
-                 " $bump_dir=${max_bump_v}\@${max_bump_time}".
-                 " bump_bound=$static_switchV\n";
-     }else{
-         $pass_status++;
-         print $fh "PASS alint $cell $path".
-                 "$node_str" .
-                 " cc=$cc" .
-                 " tau=$tau_ps" .
-                 "$fanincell_str" .
-                 "$faninnode_str" .
-                 "$power_sag_str" .
-                 "$source_pvt_str".
-                 " $bump_dir=${max_bump_v}\@${max_bump_time}".
-                 " bump_bound=$static_switchV\n";
+       }
+       my %max_Vperc_;
+       my %resp_Vperc;
+       my %resp_time;
+       my %resp;
+       for my $zigdurref (@{$bumpdata{$bumpinfo}}){
+           my ($dt,$perc)=@$zigdurref;
+           foreach my $threshcc (@threshCC){
+              foreach my $threshtau (@threshTau){
+                my $cctau="$threshcc:$threshtau";
+                if(not defined $TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}->{$cctau}){
+                   #no thresh response found for this cc and tau.
+                   
+                   return ("FAIL:$fail_type[4]:$in:$thresh_dir:$cctau");
+                }
+                if(not defined $TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}->{$cctau}->{$perc}){
+                  #find the close one to interprete
+                  my $perc_est=undef;
+                  my @perc_avaliable = sort {$a <=> $b}  keys %{$TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}->{$cctau}};
+                  foreach my $perc_t (@perc_avaliable){
+                      if ($perc_t >= $perc){
+                        $perc_est = $perc_t;
+                        last;
+                      }
+                  }
+                  if(not defined $perc_est){
+                    return ("FAIL:$fail_type[16]:$in:$thresh_dir:$cctau:$perc");
+                  }
+                  $perc=$perc_est;
+                }
+                if($bump_debug){
+                     if(not defined $br_fh{$cctau}) {
+                         my $dir="$working_dir/$fanoutcell/$out/$thresh_dir:$cctau";
+                         system("mkdir -p  \"$dir\"");
+                         my $respfile="$dir/${bump_v_perc}\@${bump_time_ps}.bumpresp";
+                         $br_fh{$cctau}=new FileHandle;
+                         $br_fh{$cctau}->open(">$respfile") or die "cannot write $respfile\n";
+                     }
+                }
+                $resp_Vperc{$cctau}=0 if (not defined $resp_Vperc{$cctau});
+                $resp_Vperc{$cctau}=linearInterp_response($resp_Vperc{$cctau},$dt,$TP_data->{$fanoutcell}->{$in}->{$out}->{$thresh_dir}->{$cctau}->{$perc});
+                $resp_time{$cctau}=0 if (not defined $resp_time{$cctau});
+                $resp_time{$cctau}=$resp_time{$cctau}+$dt;
+                print " zigdur=$dt,cc,tau=$cctau $perc% ---> respV=$resp_Vperc{$cctau}% time=$resp_time{$cctau}\n" if ($DEBUG);
+                print {$br_fh{$cctau}} "$resp_time{$cctau} $resp_Vperc{$cctau}\n" if ($bump_debug);
+                push @{$resp{$cctau}}, [$resp_time{$cctau},$resp_Vperc{$cctau}];
+                if($resp_time{$cctau} > 1.0) { #bump width is larger than 1ns.
+                  $max_Vperc_{$cctau}=$resp_Vperc{$cctau};
+                  last;
+                }
+                if(not defined $max_Vperc_{$cctau} or $resp_Vperc{$cctau} >= $max_Vperc_{$cctau}){
+                  $max_Vperc_{$cctau}=$resp_Vperc{$cctau};
+                }else{
+                  last;
+                }
+                 
+              }
+           }
+       }#for my $zigdurref (@{$bumpdata{$bumpinfo}})
+       if($bump_debug) {foreach my $fh (keys %br_fh) {$br_fh{$fh}->close();}}
+       return ("SUCCESS", \%resp_time,\%max_Vperc_, \%resp);
+     };
+     
+     #start to check fanout response
+     my ($inst_path,$fanoutcell,$in_node,$out,$fanout_type,$thresh_up, $thresh_dn) = @$fanoutInfoRef;
+     if(defined $powersag or $bump_nearest_end==0){
+           if(defined $no_power_sag->{pairs}->{"$fanin_cell/$node"}->{"$fanoutcell/$in_node/$out"}){
+              #1. if power sag is on, directive signoff for non-power-sag pairs
+              #2. if running farest end, directive signoff for non-power-sag (near-end) pairs
+              next ;
+           }
      }
+     if($bump_nearest_end and $signoff_nearest_end){
+         if(not defined $no_power_sag->{pairs}->{"$fanin_cell/$node"}->{"$fanoutcell/$in_node/$out"}){
+           #If nearest end is on and signoff mode is on, only run nearest end for directive signoff pairs
+           next;
+         }
+     }
+     my $fanout_type_str="";
+     $fanout_type_str=" fanout_type=PO" if ($fanout_type eq "OUT");
+     my $fout="$fanoutcell/$out";
+     $fout=$out if($fanoutcell eq $cell);
+     my @in_nodes=($in_node);
+     push @in_nodes, '*' if ($additive_resp);
+     foreach my $in (@in_nodes){
+       my ($status, $resp_time_ref, $max_Vperc_ref, $resp_ref)=$get_bump_resp->($fanoutcell,$in,$out);
+       next if ($status =~/IGNORE/);
+       if($status =~ /FAIL/){
+         my $fail_msg=$status;
+         $fail_msg=~s/^FAIL://;
+         $node_check_status->{$out}->{fanin}->{fail}=1 if ($fanoutcell eq $cell);
+         $node_check_status->{$node}->{fanout}->{fail}=1 if ($fanin_cell eq $cell);
 
+         my $msg= "FAIL alint $cell $path".
+                 " fanin=$fin" .
+                 " fanout=$fout" .
+                 " cc=$bump_cc" .
+                 " tau=$bump_tau" .
+                 "$power_sag_str" .
+                 "$source_pvt_str".
+                 "$fanout_type_str" .
+                 "$nearest_end_str" .
+                 " fail_type=$fail_msg\n";
+         push @thresh_error_msg,$msg;
+       
+         next;
+       }
+       foreach my $cctau (keys %$resp_time_ref){
+           my ($threshCC,$threshTau)=split(":",$cctau);
+           my $resp_time=$resp_time_ref->{$cctau};
+           my $max_Vperc_=$max_Vperc_ref->{$cctau};
+           my $thresh_resp_bound=$thresh_resp_bound_ref->[$threshCC];
+           my $signoff=0;
+           
+           my $resp_str="resp_up";
+           $resp_str="resp_dn" if ($bump_dir eq "bump_up");
+           if($in eq '*'){
+               $resp_str="additive_".$resp_str;
+           }
+           my $max_Vperc_int = int($max_Vperc_+0.5);
+           if($resp_time > 1.0 and $max_Vperc_int > 10){
+               print "FAIL bump width\n" if ($DEBUG);
+               $fail_status++;
+               $node_check_status->{$out}->{fanin}->{fail}=1 if ($fanoutcell eq $cell);
+               $node_check_status->{$node}->{fanout}->{fail}=1 if ($fanin_cell eq $cell);
+               print $fh "FAIL alint $cell $path".
+                       " fanin=$fin" .
+                       " fanout=$fout" .
+                       " cc=$bump_cc" .
+                       " tau=$bump_tau" .
+                       " threshCC=$threshCC" .
+                       " threshTau=$threshTau" .
+                       "$power_sag_str" .
+                       "$source_pvt_str".
+                       "$fanout_type_str" .
+                       " $resp_str=$max_Vperc_int" .
+                       " $bump_dir=${bump_v_perc}\@${bump_time_ps}".
+                       "$nearest_end_str" .
+                       " resp_bound=$thresh_resp_bound".
+                       " bump_bound=$threshPercent[$#threshPercent]".
+                       " fail_type=$fail_type[14]\n";
+               last;
+           }
+           if($max_Vperc_int > $thresh_resp_bound){
+               if (defined $thresh_dn and $thresh_dn !=-1 and $bump_dir eq "bump_up"){
+                   $thresh_resp_bound=$thresh_dn;
+               }
+               if (defined $thresh_up and $thresh_up !=-1 and $bump_dir eq "bump_dn"){
+                   $thresh_resp_bound=$thresh_up;
+               }
+               if($max_Vperc_int <= $thresh_resp_bound){
+                 $signoff=1;
+               }else{
+                 $fail_status++;
+                 my $fail_type=$fail_type[2];
+                 if($in eq '*'){
+                    $fail_type=$fail_type[15];
+                 }
+                 $node_check_status->{$out}->{fanin}->{fail}=1 if ($fanoutcell eq $cell);
+                 $node_check_status->{$node}->{fanout}->{fail}=1 if ($fanin_cell eq $cell);
+                 print $fh "FAIL alint $cell $path".
+                         " fanin=$fin" .
+                         " fanout=$fout" .
+                         " cc=$bump_cc" .
+                         " tau=$bump_tau" .
+                         " threshCC=$threshCC" .
+                         " threshTau=$threshTau" .
+                         "$power_sag_str" .
+                         "$source_pvt_str".
+                         "$fanout_type_str" .
+                         " $resp_str=$max_Vperc_int" .
+                         " $bump_dir=${bump_v_perc}\@${bump_time_ps}".
+                         "$nearest_end_str" .
+                         " resp_bound=$thresh_resp_bound".
+                         " bump_bound=$threshPercent[$#threshPercent]".
+                         " fail_type=$fail_type\n";
+               }
+
+
+           }
+           my $signoff_str="";
+           $signoff_str="SIGNOFF;fanout=$fout;" if($signoff);
+           my $type="$signoff_str$resp_str;threshCC=$threshCC;threshTau=$threshTau";
+           $max_Vperc{$type} = $max_Vperc_ if(not defined $max_Vperc{$type} or $max_Vperc_ > $max_Vperc{$type});
+           $max_bump_v{$type}=-1 if(not defined $max_bump_v{$type} );
+           if(($max_Vperc_ > $max_Vperc{$type}) or (($max_Vperc_ == $max_Vperc{$type}) and $bump_v_perc > $max_bump_v{$type})){
+               $max_Vperc{$type} = $max_Vperc_;
+               $max_bump_v{$type}= $bump_v_perc;
+               $max_bump_time{$type}= $bump_time_ps;
+               my $bump_scen="$bump_dir:$bump_cc:$bump_tau";
+               LveMultinoise::save_bump_resp($fanoutcell, $in, $out, "${bump_v_perc}\@${bump_time_ps}", $resp_ref->{$cctau},
+                                             $bump_scen, "$threshCC:$threshTau", $power_sag_str, $source_pvt_str, $fanout_type_str);
+           }
+           my $type_t = $type.";cc=$bump_cc;tau=$bump_tau;$power_sag_str;$source_pvt_str;$nearest_end_str;resp_bound=$thresh_resp_bound"; $type_t=~s/\s//g;
+           if ($fanoutcell eq $cell){
+             my $type_t_fin = $type_t.";$fanout_type_str"; $type_t_fin=~s/\s//g;
+             if(defined $node_check_status->{$out}->{fanin}->{$type_t_fin}){
+               my ($Vperc, $bump)=@{$node_check_status->{$out}->{fanin}->{$type_t_fin}};
+               if($Vperc < $max_Vperc_){
+                   $node_check_status->{$out}->{fanin}->{$type_t_fin}=[$max_Vperc_, "$bump_dir=$bump_v_perc\@$bump_time_ps"];
+               }elsif($Vperc == $max_Vperc_ ){
+                   my ($bd,$bump_h, $bump_t)=split(/[\=|@]/, $bump);
+                   if($bump_h < $bump_v_perc){
+                     $node_check_status->{$out}->{fanin}->{$type_t_fin}=[$max_Vperc_, "$bump_dir=$bump_v_perc\@$bump_time_ps"];
+                   }		
+               }
+             }else{
+               $node_check_status->{$out}->{fanin}->{$type_t_fin}=[$max_Vperc_, "$bump_dir=$bump_v_perc\@$bump_time_ps"];
+             }
+           }
+           if ($fanin_cell eq $cell){
+             if(defined $node_check_status->{$node}->{fanout}->{$type_t}){
+               my ($Vperc, $bump)=@{$node_check_status->{$node}->{fanout}->{$type_t}};
+               if($Vperc < $max_Vperc_){
+                   $node_check_status->{$node}->{fanout}->{$type_t}=[$max_Vperc_, "$bump_dir=$bump_v_perc\@$bump_time_ps"];
+               }elsif($Vperc == $max_Vperc_ ){
+                   my ($bd,$bump_h, $bump_t)=split(/[\=|@]/, $bump);
+                   if($bump_h < $bump_v_perc){
+                     $node_check_status->{$node}->{fanout}->{$type_t}=[$max_Vperc_, "$bump_dir=$bump_v_perc\@$bump_time_ps"];
+                   }		
+               }
+             }else{
+               $node_check_status->{$node}->{fanout}->{$type_t}=[$max_Vperc_, "$bump_dir=$bump_v_perc\@$bump_time_ps"];
+             }
+           }
+         
+       }
+     }
+  }  
+  my %thresh_err_msg = map { $_ => 1 } @thresh_error_msg;
+  foreach my $msg (keys %thresh_err_msg){
+      $fail_status++;
+      print $fh $msg;
   }
+  #Report PASS at upper level.
   return ($fail_status,$pass_status);
 }
 
-sub linearInterp_response{
-    my($Vthresh,$last_v,$dt,$threshRespref)=@_;    
-    my $respVp=0;
 
-    if(not defined $threshRespref->{$Vthresh}){
-      warn "ERROR no threshpercent response table:$Vthresh\n";
-      return $last_v;
-    }
-    my $max_v= $#{$threshRespref->{$Vthresh}};
-    if($threshRespref->{$Vthresh}->[$max_v] == 1e9){
+sub linearInterp_response{
+    my($last_v,$dt,$threshRespref)=@_;    
+    my $respVp=0;
+    my $max_v= scalar(@$threshRespref)-1;
+    if($threshRespref->[$max_v] == 1e9){
       $max_v--;
     }
-    my $max_t= $threshRespref->{$Vthresh}->[$max_v];
+    my $max_t= $threshRespref->[$max_v];
 
     my $last_v_f=int($last_v);
     my $last_v_c=int($last_v)+1;
@@ -684,8 +845,8 @@ sub linearInterp_response{
     }
 
     #do linear interpolation
-    my $last_t_f = $threshRespref->{$Vthresh}->[$last_v_f];
-    my $last_t_c = $threshRespref->{$Vthresh}->[$last_v_c];
+    my $last_t_f = $threshRespref->[$last_v_f];
+    my $last_t_c = $threshRespref->[$last_v_c];
       
     my $delta_t = ($last_t_c-$last_t_f)*($last_v-$last_v_f);
     #print "delta t= ($last_t_c - $last_t_f)*($last_v-$last_v_f)=$delta_t\n";
@@ -697,7 +858,7 @@ sub linearInterp_response{
       return $max_v;
     }
 
-    $respVp=binary_search_thresh_resp($resp_t,$last_v_f,$max_v,$threshRespref->{$Vthresh});
+    $respVp=binary_search_thresh_resp($resp_t,$last_v_f,$max_v,$threshRespref);
     return $respVp;
 }
 
@@ -706,6 +867,7 @@ sub binary_search_thresh_resp{
     if($V1==($V2-1)){
         my $t1=$table->[$V1];
         my $t2=$table->[$V2];
+        return $V2 if($t>$t2);
         my $V=$V1+($t-$t1)/($t2-$t1);
         return ($V);
     }
@@ -742,9 +904,9 @@ sub parse_bumpzig{
     while(<BZ>){
       chomp;
       if(/^#/){
-        if(/^#FORMAT/){next;}
+        if(! s/^#BUMP INFO:\s*//){next;}
         #start a new bump
-        (my $c, $node, $bump_dir, $cctauslew,$peak_v,$peak_t) = split(/\s+/,$_);
+        ($node, $bump_dir, $cctauslew,$peak_v,$peak_t) = split(/\s+/,$_);
         $prev_v=undef;
         $prev_t=undef;
       }else{    
@@ -772,8 +934,9 @@ sub parse_bumpzig{
     close BZ;
 }
 
+#characterize_thresh is called by lve_threshresp before archive all resp files.
 sub characterize_thresh{
-    my ($Vdd,$alint_dir,$localprops,$threshPercentRef,%skipnodes) = @_;
+    my ($Vdd,$alint_dir,$localprops,%skipnodes) = @_;
     my @thresh_dir=("thresh_dn", "thresh_up");
     my %hash_dir=("thresh_dn",0,
                   "thresh_up",1);
@@ -793,7 +956,13 @@ sub characterize_thresh{
     for my $node (@localnodes) {
         next if $skipnodes{$node};
         free_aplot();
-        if (! -e "$alint_dir/$node/out" and ! -e "$alt_alint_dir/$node/out") {
+        my $out_file="$alint_dir/$node/out";
+        $out_file="$alint_dir/$node/out.gz" if(-e "$alint_dir/$node/out.gz");
+        if(! -e $out_file){
+           $out_file="$alt_alint_dir/$node/out" if(-e "$alt_alint_dir/$node/out");
+           $out_file="$alt_alint_dir/$node/out.gz" if(-e "$alt_alint_dir/$node/out.gz");
+        }
+        if (! -e $out_file) {
             warn "No alint data found for local node $node. Skipping " .
                  "delay characterization.\n";
             next;
@@ -801,61 +970,151 @@ sub characterize_thresh{
         my $node_path="";
         my %scenarios=();
         my %timearray=();
-        if ( -e "$alint_dir/$node/out") {
-           %scenarios = read_delay_scenarios("$alint_dir/$node/out",0,"thresh",\%timearray);
-        }
-        else {
-           %scenarios = read_delay_scenarios("$alt_alint_dir/$node/out",0,"thresh",\%timearray);
-        }
+           %scenarios = read_delay_scenarios("$out_file",0,"thresh",\%timearray);
 
         foreach my $scenario (keys %scenarios){
-            my($thresh_updn,$perc)=split(":",$scenario);
+            my($thresh_updn,$cc,$tau,$perc)=split(":",$scenario);
             my $hashref = $scenarios{$scenario};
             my $timearrayref = \@{$timearray{$scenario}};
             my %thresh_resp=measure_thresh_resp($Vdd,$node,$hash_dir{$thresh_updn},"$alint_dir/$node/$scenario",$timearrayref);
             my %name_map=thresh_name_maps( "$alint_dir/$node/$scenario.names");
 
+            my %add_resp;
+            my @alias_names;
+            open AF, ">$alint_dir/$node/$scenario.resp" or die "cannot write file $alint_dir/$node/$scenario.resp\n";
             for my $input (keys %$hashref) {
                 my $alias_names;
                 if(defined $name_map{$input}){
                   $alias_names="#$input ";
                   $alias_names .= join(" ",@{$name_map{$input}});
+                } else {
+                    print STDERR "WARNING: missing name_map\n";
+                    print STDERR "  alint_dir=$alint_dir\n";
+                    print STDERR "  node=$node\n";
+                    print STDERR "  scenario=$scenario\n";
+                    print STDERR "  input=$input\n";
                 }
                 my@fastresp=find_fastest_resp(\%thresh_resp,$hashref->{$input});                
                 shift @fastresp;
                 my $outresp_result = join ("\n",@fastresp);
                 open RF, ">$alint_dir/$node/$input:$scenario.resp" or die "cannot write file $alint_dir/$node/$input:$scenario.resp\n";
                 print RF "$outresp_result\n";
-                print RF "$alias_names\n";
+                print RF "$alias_names\n" if (defined $alias_names);
+                push @alias_names, "$alias_names" if (defined $alias_names) ;
                 close RF;
+                archive_addfile("$alint_dir/$node/$resp_archive", "$alint_dir/$node/$input:$scenario.resp");
+                system("rm -f \'$alint_dir/$node/$input:$scenario.resp\'");
+
+                #prepare addition response
+                unshift (@fastresp,0);
+                if ((scalar keys %add_resp) == 0) {
+                  %add_resp = map { $fastresp[$_] => $_ } 0..$#fastresp;
+                }else{
+                  my $v_pre=0;
+                  my $v_base=0;
+                  my $v_add=0;
+                  my $max_v=$#fastresp;
+                  if ( $fastresp[$#fastresp] == 1e9 ){
+                        $max_v=$max_v-1;
+                  }
+                  foreach my $t_base (sort keys %add_resp){
+                      
+                      last if ($t_base == 1e9);
+                      if($v_add==100) {
+                        $add_resp{$t_base}=100;
+                        last;
+                      }
+                      #find voltage % at threshresp
+                      my $v=binary_search_thresh_resp($t_base,$v_pre,$max_v,\@fastresp);
+                      $v_base=$add_resp{$t_base};
+                      $v_add=$add_resp{$t_base}+$v;
+                      $v_add=100 if ($v_add > 100);
+                      $add_resp{$t_base}=$v_add;
+                      $v_pre=POSIX::floor($v);
+                      #print AF "addition $t_base find: $v @ $input:$scenario $v_base -> $v_add\n";
+                  }
+                  #continue add response
+                  for(my $i=$v_pre+1; $i<=$max_v;$i++){
+                    $v_add=$i+$v_base;
+                    $add_resp{$fastresp[$i]}=$v_add;
+                    if ($v_add > 100){
+                      $add_resp{$fastresp[$i]}=100;
+                      last;
+                    }
+                    #print AF "Continue addition t:$fastresp[$i] find:$i -> $add_resp{$fastresp[$i]}\n";
+                  }
+                }
             }
+            my $v_pre=0;
+            my $v_bin=1;
+            my $t_pre=0;
+            foreach my $t_base (sort keys %add_resp){
+                next if($t_base == 0);
+                if($t_base == 1e9){
+                  #print AF "$t_base $v_pre\n";
+                  print AF "$t_base\n";
+                  last;
+                }elsif($add_resp{$t_base}>=100){
+                  #print AF "1000000000 100\n";
+                  print AF "1000000000\n";
+                  last;
+                }else{
+                  #print AF "$t_base $add_resp{$t_base}\n";
+                  while($v_bin <= $add_resp{$t_base} and $v_bin <=100){
+                     my $t=$t_pre+($t_base-$t_pre)*(($v_bin-$add_resp{$t_pre})/($add_resp{$t_base}-$add_resp{$t_pre}));
+                     #print AF "$t $v_bin\n";
+                     print AF "$t\n";
+                     $v_bin++;
+                  }
+                }
+                $v_pre=$add_resp{$t_base};
+                $t_pre=$t_base;
+            }
+            print AF join("\n", @alias_names);
+            close AF;
+            archive_addfile("$alint_dir/$node/$resp_archive", "$alint_dir/$node/$scenario.resp");
+            system("rm -f \'$alint_dir/$node/$scenario.resp\'");
         }
    }
 }
+
 sub thresh_name_maps{
   my($file)=@_;
-  open NF,"<$file" or die "cannot open file $file\n";
+  my @lines=();
+  if(-e $file){
+    open NF,"<$file" or die "cannot open file $file\n";
+    @lines=<NF>;
+    close(NF);
+  }else{
+    my @paths=split("/",$file);
+    my $zipfile=$file;
+    $zipfile=~s/\/$paths[$#paths]$/\/$trace_archive/;
+    my $lines=archive_getcontent($zipfile, $paths[$#paths]);
+    @lines=split("\n", $lines);
+  }
   my $name="";
   my %name_map;
-  while(<NF>){
-    chomp;
-    if(/^=(\S+)/){
+  foreach my $l (@lines){
+    chomp($l);
+    if($l=~/^=(\S+)/){
       push @{$name_map{$name}}, $1;
-    }elsif(/(\S+)/){
+    }elsif($l=~/(\S+)/){
       $name=$1;
+      @{$name_map{$name}}=();
     }
   }
   return %name_map;
 }
-
 #ziggurat bumps by the argument of threshPercent
 #output corresponding .bumpzig file for each scenario
-sub ziggurat_bumps{
-    my ($working_dir,$power_sag,$Vdd,$alint_dir,$node,$threshPercentRef,$scenarios) = @_;
+sub ziggurat_bumps_by_instpath{
+    my ($working_dir,$zig_near_end,$power_sag,$Vdd,$alint_dir,$node,$node_instname,$threshPercentRef,$scenarios) = @_;
+    # $node is digital alias; $node_instname is the name with instance path to the transistor node.
     my $zig_raw="";
+    my @curve_names=();
     my %bumpdir=("bump_dn",0,
                  "bump_up",1);
-    
+    my %analog_name_map=();
     my @threshPercent=sort {$a <=> $b} @$threshPercentRef;
     
     my %VddPercent=();
@@ -863,25 +1122,92 @@ sub ziggurat_bumps{
       push @{$VddPercent{"bump_up"}}, ($Vdd*$perc/100);
       push @{$VddPercent{"bump_dn"}}, $Vdd-($Vdd*$perc/100);
     }
-     
+    
 
     free_aplot();
     foreach my $cctaucap (keys %$scenarios){
         foreach my $bump_updn (keys %{$scenarios->{$cctaucap}}){
+            my $fileprefix="$node_instname:$bump_updn:$cctaucap";
+            next if (-e "$working_dir/$fileprefix.bumpzig");
             my $zig_wf="";
             my $zig_wf_s="";
+            my $zig_wf_nd="";
+            my $zig_wf_s_nd="";
             my $run="$bump_updn:$cctaucap";
             my $file="$alint_dir/$node/$run";
-            print "file \"$file\"\n" if($DEBUG);
-            if (! -e "$file.trace" ) {
-               print "no trace file: $file.trace\n" if ($DEBUG);
-               next;
+            my $filecmd=aplot_file_cmd($file);
+            if($file eq $filecmd){
+              if (! -e "$file.trace" ) {
+                 print "no trace file: $file.trace\n" if ($DEBUG);
+                 next;
+              }
+            }else{
+              $file=$filecmd;
             }
+            #read names file to get analog name
+            %analog_name_map=thresh_name_maps( "$alint_dir/$node/$run.names") if (! %analog_name_map);
+            #get all analog names with postfix :F<d+>
+            if(! @curve_names){
+              my @analog_names=();
+              my $digital_name="";
+              foreach my $n (keys %analog_name_map){
+                 my $node_fix = $node_instname;
+                 $node_fix =~ s/\[/\\\[/g;
+                 $node_fix =~ s/\]/\\\]/g;
+                 $node_fix =~ s/\./\\\./g;
+                push @analog_names, $n if($n=~/^$node_fix:F(\d+)/);
+                foreach my $alias (@{$analog_name_map{$n}}){
+                  push @analog_names, $n if($n=~/^$node_fix:F(\d+)/);
+                }
+                if($n !~ /:F(\d+)$/){
+                  if($node_instname eq $n){ #digital alias
+                     $digital_name=$node_instname;
+                  }
+                }
+              }
+              if(! @analog_names){
+                print STDERR "Warning: This $node_instname does not have analog name. Use digital alias $node!!\n";
+                $digital_name=$node;
+              }
+              if($digital_name ne ""){
+                @curve_names=($digital_name);
+              }else{
+                @curve_names=@analog_names;
+              }
+            }
+
+            print "file \"$file\"\n" if($DEBUG);
             write_aplot "file \"$file\"";
             my $start=0;
             my $end=0;
             my @timearray=@{$scenarios->{$cctaucap}->{$bump_updn}};
             my $last_time=0;
+            my $bumpdir=$bumpdir{$bump_updn};
+
+            # find farest or nearest curve
+            my $find_curve=sub{
+              my ($start,$end,$near_far)=@_; #near_far: 0:near, 1:far
+              my $bump_time=undef; my $bump_v=undef;
+              my $curve;
+              # assume the curve with highest voltage is the worst bump curve
+              foreach my $cn (@curve_names){
+                 my ($bump_t_,$bump_v_)=measure_bump_height($cn,$start,$end,$bumpdir);
+                 if(($bumpdir and $near_far) or (!$bumpdir and $near_far)){
+                    if(not defined $bump_v or $bump_v_ > $bump_v){
+                      $bump_v=$bump_v_;
+                      $bump_time=$bump_t_;
+                      $curve=$cn;
+                    }
+                 }else{
+                    if(not defined $bump_v or $bump_v_ < $bump_v){
+                      $bump_v=$bump_v_;
+                      $bump_time=$bump_t_;
+                      $curve=$cn;
+                    }
+                 }
+              }
+              return ($curve,$bump_time,$bump_v);
+            };
             for(my $i=0; $i<scalar(@timearray);$i++) {
                $start=$timearray[$i];
                if($i==$#timearray){
@@ -890,40 +1216,65 @@ sub ziggurat_bumps{
                }else{
                    $end=$timearray[$i+1];
                }
-               my $bumpdir=$bumpdir{$bump_updn};
                print "Ziggurat bump in range:$start ~ $end of $run\n" if($DEBUG);
                
-               my ($bump_time,$bump_v)=measure_bump_height($node,$start,$end,$bumpdir);
-               $zig_wf .= "# $node $bump_updn $cctaucap $bump_v $bump_time\n";
+               my ($worst_curve,$bump_time,$bump_v)=$find_curve->($start,$end,1);
+               $zig_wf .= "#BUMP INFO: $node $bump_updn $cctaucap $bump_v $bump_time\n";
+               $zig_wf .= "#NODE: bump curve analog name: $worst_curve\n";
                $zig_wf .= "#FORMAT: time voltage VddPercentage\n";
-               $zig_wf_s .= "# $node $bump_updn $cctaucap $bump_v $bump_time $power_sag%\n";
+               $zig_wf_s .= "#BUMP INFO: $node $bump_updn $cctaucap $bump_v $bump_time $power_sag%\n";
+               $zig_wf_s .= "#NODE: bump curve analog name: $worst_curve\n";
                $zig_wf_s .= "#FORMAT: time voltage VddPercentage\n";
-               my $startV=$Vdd;
-               $startV=0 if($bumpdir==1);
-               $zig_wf .= transfer_bump2ziggurat(0,$startV,$node,$bumpdir,$start,$end,$bump_time,\@{$VddPercent{$bump_updn}},\@threshPercent,$last_time);
+               my $startV=$Vdd; $startV=0 if($bumpdir==1);
+               $zig_wf .= transfer_bump2ziggurat(0,0,$startV,$worst_curve,$bumpdir,$start,$end,$bump_v,$bump_time,\@{$VddPercent{$bump_updn}},\@threshPercent,$last_time);
+               my ($near_curve,$bump_time_n,$bump_v_n)=$find_curve->($start,$end,0) if ($zig_near_end);
+               if($zig_near_end){
+                  $zig_wf_nd .= "#BUMP INFO: $node $bump_updn $cctaucap $bump_v_n $bump_time_n nearest_end\n";
+                  $zig_wf_nd .= "#NODE: bump curve analog name: $near_curve\n";
+                  $zig_wf_nd .= "#FORMAT: time voltage VddPercentage\n";
+                  $zig_wf_nd .= transfer_bump2ziggurat(1,0,$startV,$near_curve,$bumpdir,$start,$end,$bump_v_n,$bump_time_n,\@{$VddPercent{$bump_updn}},\@threshPercent,$last_time);
+               }
                if($power_sag>0){
                   my $power_sag_v=$Vdd*($power_sag/100);
-                  $zig_wf_s .= transfer_bump2ziggurat($power_sag_v,$startV,$node,$bumpdir,$start,$end,$bump_time,\@{$VddPercent{$bump_updn}},\@threshPercent,$last_time);
+                  $zig_wf_s .= transfer_bump2ziggurat(0,$power_sag_v,$startV,$worst_curve,$bumpdir,$start,$end,$bump_v,$bump_time,\@{$VddPercent{$bump_updn}},\@threshPercent,$last_time);
+                  if($zig_near_end){
+                    $zig_wf_s_nd .= "#BUMP INFO: $node $bump_updn $cctaucap $bump_v $bump_time $power_sag% nearest_end\n";
+                    $zig_wf_s_nd .= "#NODE: bump curve analog name: $near_curve\n";
+                    $zig_wf_s_nd .= "#FORMAT: time voltage VddPercentage\n";
+                    $zig_wf_s_nd .= transfer_bump2ziggurat(1,$power_sag_v,$startV,$near_curve,$bumpdir,$start,$end,$bump_v_n,$bump_time_n,\@{$VddPercent{$bump_updn}},\@threshPercent,$last_time);
+                  }
                }
                print "Ziggurat bump height:$bump_v @ $bump_time\n" if($DEBUG);
             }#for(my $i=0; $i<scalar(@timearray);$i++)
-            #open BZG, ">$alint_dir/$node/$bump_updn:$cctaucap.bumpzig" or die "cannot write file $alint_dir/$node/$bump_updn:$cctaucap.bumpzig\n";
-            open BZG, ">$working_dir/$bump_updn:$cctaucap.bumpzig" or die "cannot write file $working_dir/$bump_updn:$cctaucap.bumpzig\n";
+            open BZG, ">$working_dir/$fileprefix.bumpzig" or die "cannot write file $working_dir/$fileprefix.bumpzig\n";
             print BZG $zig_wf;
             close BZG;
+            if($zig_near_end){
+              open BZG, ">$working_dir/$fileprefix.bumpzig.nd" or die "cannot write file $working_dir/$fileprefix.bumpzig.nd\n";
+              print BZG $zig_wf_nd;
+              close BZG;
+            }
             if($power_sag>0){
-            #open BZG, ">$alint_dir/$node/$bump_updn:$cctaucap:s$power_sag.bumpzig" or die "cannot write file $alint_dir/$node/$bump_updn:$cctaucap:s$power_sag.bumpzig\n";
-            open BZG, ">$working_dir/$bump_updn:$cctaucap:s$power_sag.bumpzig" or die "cannot write file $working_dir/$bump_updn:$cctaucap:s$power_sag.bumpzig\n";
-            print BZG $zig_wf_s;
-            close BZG;
+              $fileprefix.=":s$power_sag";
+              open BZG, ">$working_dir/$fileprefix.bumpzig" or die "cannot write file $working_dir/$fileprefix.bumpzig\n";
+              print BZG $zig_wf_s;
+              close BZG;
+              if($zig_near_end){
+              open BZG, ">$working_dir/$fileprefix.bumpzig.nd" or die "cannot write file $working_dir/$fileprefix.bumpzig.nd\n";
+              print BZG $zig_wf_s_nd;
+              close BZG;
+              }
             }
         }#foreach my $bump_updn (keys %{$scenarios->{$cctaucap}})
     }
+   # cleanUp_workdir($extract_workdir) if (-d $extract_workdir);
+
 }
 
 # measure the avg value in range
 sub measure_avg {
     my ($run,$node,$from,$to) = @_;
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range $from $to";
     write_aplot "avg $node";
@@ -935,6 +1286,7 @@ sub measure_avg {
 # measure the rms value in range
 sub measure_rms {
     my ($run,$node,$from,$to) = @_;
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range $from $to";
     write_aplot "rms $node";
@@ -943,10 +1295,43 @@ sub measure_rms {
     return split(" ",$out);
 }
 
+# measure the peak value in range
+sub measure_peak {
+    my ($run,$node,$from,$to) = @_;
+    $run=aplot_file_cmd($run);
+    write_aplot "file \"$run\"";
+    write_aplot "range $from $to";
+    write_aplot "minv $node";
+    my ($p1_t, $p1) = split(" ", read_aplot());
+    my $ph=$p1/2;
+    if($p1 > 0){
+      write_aplot "mindelay $node > $ph  $node < $ph ";
+    }else{
+      write_aplot "mindelay $node < $ph  $node > $ph ";
+    }
+    (my $p1_et, $p1_t) = split(" ", read_aplot());
+    
+    write_aplot "maxv $node";
+    my ($p2_t, $p2) = split(" ", read_aplot());
+    $ph=$p2/2;
+    if($p2 > 0){
+      write_aplot "mindelay $node > $ph  $node < $ph ";
+    }else{
+      write_aplot "mindelay $node < $ph  $node > $ph ";
+    }
+    (my $p2_et, $p2_t) = split(" ", read_aplot());
+
+    flush_aplot();
+    $p1=abs($p1); $p2=abs($p2);
+    return ($p1_t, $p1) if($p1>= $p2);
+    return ($p2_t, $p2);
+}
+
 # measure average and peak power consumption
 sub measure_power {
     my ($run, $true, $reset) = @_;
     $reset *= 1e9; # convert from s to ns
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range $reset";
     write_aplot "avg IVdd|";
@@ -970,6 +1355,7 @@ sub measure_frequency {
     $start *= 1e9; # convert from s to ns
     
     # set file and range
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range $start";
     
@@ -995,6 +1381,7 @@ sub measure_aplot {
     my ($run, $from, $to, $command) = @_;
 
     # set file and range
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range $from $to";
     
@@ -1043,6 +1430,7 @@ sub measure_frequency_from_history {
 # measure skew between resistive subnets at given voltage threshold
 sub measure_skew {
     my ($run,$node,$midV) = @_;
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range";
     write_aplot "skew $node $midV";
@@ -1054,6 +1442,7 @@ sub measure_skew {
 # measure min/max slew for direction (>/<) between two voltage thresholds
 sub measure_slew {
     my ($run, $minmax, $dir, $node, $fromV, $toV) = @_;
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
     write_aplot "range";
     write_aplot "$minmax $node $dir $fromV $node $dir $toV";
@@ -1066,7 +1455,11 @@ sub measure_slew {
 sub read_fanin {
     my ($file) = @_;
     my @fanin = ();
-    open IN, "<$file" or die "Cannot open $file.\n";
+    if($file=~/\.gz$/){
+      open (IN, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open (IN, "<$file") or die "Cannot read $file.\n";
+    }
     while (my $line = <IN>) {
         if ($line =~ /^  gate (\S+)/) {
             push @fanin, $1;
@@ -1080,7 +1473,11 @@ sub read_fanin {
 sub read_inverses {
     my ($file) = @_;
     my @inverses = ();
-    open IN, "<$file" or die "Cannot read $file.\n";
+    if($file=~/\.gz$/){
+      open (IN, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open (IN, "<$file") or die "Cannot read $file.\n";
+    }
     while (my $line = <IN>) {
         if ($line =~ /^  inverse (\S+)/) {
             push @inverses, $1;
@@ -1094,7 +1491,11 @@ sub read_inverses {
 sub read_named_resistors {
     my ($file) = @_;
     my @resistors = ();
-    open IN, "<$file" or die "Cannot open $file.\n";
+    if($file=~/\.gz$/){
+      open (IN, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open (IN, "<$file") or die "Cannot read $file.\n";
+    }
     while (my $line = <IN>) {
         if ($line =~ /^  res ([^\(]+)\(.*\((\S+)\)/ ) {
             push @resistors, "$1 $2";
@@ -1110,7 +1511,11 @@ sub read_start_times {
     my %times;
     my $test = "";
     my $start = 0;
-    open IN, "<$file" or die "Cannot read $file.\n";
+    if($file=~/\.gz$/){
+      open (IN, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open (IN, "<$file") or die "Cannot read $file.\n";
+    }
     while (<IN>) {
         if ($test eq "" && /^Alint (\S+) simulation \(CC=(\d) Tau=([\d\.e-]+) Cap=([\d\.e-]+)\):$/) {
             $test = "$1:$2:" . int($3/1e-12 + 0.5);
@@ -1141,6 +1546,7 @@ sub measure_worst_avg_rms {
     my $min_avg;
     my $max_avg;
     my $max_rms;
+    my $max_peak;
     for (my $i = 0; $i<@times; $i++) {
         my $from = $times[$i];
         my $to = ""; # end of simulation
@@ -1151,46 +1557,88 @@ sub measure_worst_avg_rms {
         my ($wrms,$rms) = measure_rms($file,$node,$from,$to);
         $wrms *= 1e-9; # ns to s
         $rms = $rms * $rms * $wrms;
+        my ($wpeak,$peak) = measure_peak($file,$node,$from,$to);
+        $wpeak *= 1e-9; # ns to s
+        $peak = $peak * sqrt($wpeak);
         if (!defined($min_avg) || ($avg < $min_avg)) { $min_avg = $avg; }
         if (!defined($max_avg) || ($avg > $max_avg)) { $max_avg = $avg; }
         if (!defined($max_rms) || ($rms > $max_rms)) { $max_rms = $rms; }
+        if (!defined($max_peak) || ($peak > $max_peak)) { $max_peak = $peak; }
     }
-    print AD "measure_worst_avg_rms $file $node $min_avg, $max_avg, $max_rms\n"
+    print AD "measure_worst_avg_rms $file $node $min_avg, $max_avg, $max_rms, $max_peak\n"
         if $DEBUG;
     # avg here is actually the integral of the value
     # rms here is actually the integral of the square
-    return ($min_avg, $max_avg, $max_rms);
+    return ($min_avg, $max_avg, $max_rms, $max_peak);
 }
 
 
 # measure min/max delay from any fanin nodes to victim node
 sub measure_delay {
-    my ($run, $minmax, $trigdir, $targdir, $node, $trigV, $targV, @fanin) = @_;
+    my ($run, $minmax, $trigdir, $targdir, $node, $trigV, $targV, $timeref, @fanin) = @_;
     local $"=" ";
+    $run=aplot_file_cmd($run);
     write_aplot "file \"$run\"";
-    write_aplot "range";
-    write_aplot "$minmax @fanin $trigdir $trigV $node $targdir $targV";
+    my ($delay, $delay_t)=(undef,undef);
+    
+    my @starttime = @$timeref;
 
-    my $out = read_aplot();
-    if (($out =~ /WARNING/i)) {
-        flush_aplot();
-        if ($minmax eq "maxdelay") {
-            $minmax = "mindelay";
-        }
-        elsif ($minmax eq "mindelay") {
-            $minmax = "maxdelay";
-        }
-        write_aplot "$minmax $node $targdir $targV @fanin $trigdir $trigV";
-        $out = read_aplot();
-        my ($a,$b)=split(" ", $out);
-        if (is_numeric ($a) and is_numeric($b)) {
-            $b = -$b;
+    for(my $i=0;$i<scalar(@starttime);$i++){
+        my $start=$starttime[$i];
+        my $end="";
+        $end=":$starttime[$i+1]" if (defined $starttime[$i+1]);
+        write_aplot "range $start$end";
+        print "range $start$end\n" if($DEBUG);
+        my $minmax_cmd=$minmax;
+        write_aplot "$minmax_cmd @fanin $trigdir $trigV $node $targdir $targV";
+
+        my $out = read_aplot();
+
+        if (($out =~ /WARNING/i)) {
             flush_aplot();
-            return ($a,$b);
+            if ($minmax_cmd eq "maxdelay") {
+                $minmax_cmd = "mindelay";
+            }
+            elsif ($minmax_cmd eq "mindelay") {
+                $minmax_cmd = "maxdelay";
+            }
+            write_aplot "$minmax_cmd $node $targdir $targV @fanin $trigdir $trigV";
+            $out = read_aplot();
+            if (($out =~ /WARNING/i)) {
+              flush_aplot();
+              if ($minmax_cmd eq "maxdelay") {
+                  $minmax_cmd = "mindelay";
+              }
+              elsif ($minmax_cmd eq "mindelay") {
+                  $minmax_cmd = "maxdelay";
+              }
+              write_aplot "$minmax_cmd $node $targdir $targV @fanin $trigdir $trigV";
+              $out = read_aplot();
+            }
+            my ($a,$b)=split(" ", $out);
+            if (is_numeric ($a) and is_numeric($b)) {
+                $b = -$b;
+                flush_aplot();
+                if (not defined $delay or ($b > $delay and $minmax eq "maxdelay") or ($b < $delay and $minmax eq "mindelay")){
+                  $delay=$b; 
+                  $delay_t=$a;
+                }
+            }
+        }else{
+            my ($a,$b)=split(" ", $out);
+            if (is_numeric ($a) and is_numeric($b)) {
+                flush_aplot();
+                if (not defined $delay or ($b > $delay and $minmax eq "maxdelay") or ($b < $delay and $minmax eq "mindelay")){
+                  $delay=$b;
+                  $delay_t=$a;
+                }
+            }
         }
+        flush_aplot();
+
     }
-    flush_aplot();
-    return split(" ",$out);
+    return ("NA","NA") if(not defined $delay);
+    return ($delay_t, $delay);
 }
 
 sub ncmp {
@@ -1204,7 +1652,14 @@ sub make_png {
     my $title = shift;
     my $run = shift;
     my @nodes = @_;
-    if (-e "$run.names" && -e "$run.trace") {
+
+    my $run_trace=aplot_file_cmd($run);
+    my $run_names=aplot_file_cmd($run,"names");
+    if($run eq $run_trace and $run eq $run_names){
+      return if (! -e "$file.trace" && -e "$run.trace" );
+    }else{
+      $run=$run_trace;
+    }
         write_aplot "file \"$run\"";
         write_aplot "range";
         write_aplot "\\set term png";
@@ -1212,7 +1667,6 @@ sub make_png {
         write_aplot "\\set out \"$file\"";
         write_aplot "trace @nodes";
         flush_aplot();
-    }
 }
 
 # consolidate coverage across multiple environments
@@ -1284,27 +1738,31 @@ sub characterize_delay {
         free_aplot();
         my @slow_str  = ( "slow_dn", "slow_up" );
         my @fast_str  = ( "fast_dn", "fast_up" );
-        if (! -e "$alint_dir/$node/out" and ! -e "$alt_alint_dir/$node/out") {
+        my $out_file="$alint_dir/$node/out";
+        $out_file="$alint_dir/$node/out.gz" if(-e "$alint_dir/$node/out.gz");
+        if(! -e $out_file){
+           $out_file="$alt_alint_dir/$node/out" if(-e "$alt_alint_dir/$node/out");
+           $out_file="$alt_alint_dir/$node/out.gz" if(-e "$alt_alint_dir/$node/out.gz");
+        }
+        if (! -e $out_file) {
             warn "No alint data found for local node $node. Skipping " .
                  "delay characterization.\n";
             next;
         }
         my %scenarios=();
-        if ( -e "$alint_dir/$node/out") {
-            %scenarios = read_delay_scenarios("$alint_dir/$node/out",0);
-        }
-        else {
-            %scenarios = read_delay_scenarios("$alt_alint_dir/$node/out",0);
-        }
+        %scenarios = read_delay_scenarios("$out_file",0);
 
         (my $re_node = $node) =~ s/\[/\\\[/g; $re_node =~ s/\]/\\\]/g;
 
-        # find all files for this node
-        opendir DIR, "$alint_dir/$node" ||
-            die "Couldn't read alint directory $alint_dir/$node.\n";
-        my @node_files = readdir DIR;
-        closedir DIR;
+        my ($is_archive,@node_files)=is_node_archive("$alint_dir/$node",$trace_archive);  
 
+        if($is_archive==0){
+          # find all files for this node
+          opendir DIR, "$alint_dir/$node" ||
+              die "Couldn't read alint directory $alint_dir/$node.\n";
+           @node_files = readdir DIR;
+          closedir DIR;
+        }
         for my $dir (0..1) {
             print "Processing half-op $node$LveAspice::DIR_STR[$dir]\n" 
                 if ($DEBUG);
@@ -1363,7 +1821,16 @@ sub characterize_delay {
                 else {
                     %slow_slewdata = %{$slow_data{$halfop_in}};
                 }
-                my %fast_charge_data=%{$charge_data{$halfop_in}};
+                my %fast_charge_data;
+                if(defined $charge_data{$halfop_in}){
+                    %fast_charge_data=%{$charge_data{$halfop_in}};
+                }else{
+                    #Use slow one if there is mismatch between slow/fast
+                    %charge_data = measure_charge($node, $dir,
+                                "$alint_dir/$node/$slow_str[$dir]:0", 
+                                  \@slow_ranges, $slew_scaling, @slews);
+                    %fast_charge_data=%{$charge_data{$halfop_in}};
+                }
                 foreach my $slew (keys %slow_slewdata) {
                     my $slow_delay = ${$slow_slewdata{$slew}}[0];
                     my $fast_delay = ${$fast_slewdata{$slew}}[0];
@@ -1383,6 +1850,7 @@ sub characterize_delay {
     return %data;
 }
 
+#characterize_cap_delay is called before archive
 sub characterize_cap_delay {
     my ($alint_dir,$node,$cap,$slew_scaling) = @_;
     my $alt_alint_dir=$alint_dir;
@@ -1393,12 +1861,14 @@ sub characterize_cap_delay {
 
     free_aplot();
     my @slow_str  = ( "slow_dn", "slow_up" );
-    if (! -e "$alt_alint_dir/$node/out") {
+    my $out_file="$alt_alint_dir/$node/out";
+    $out_file="$alt_alint_dir/$node/out.gz" if(-e "$alt_alint_dir/$node/out.gz");
+    if (! -e "$out_file") {
         warn "No alint data found for local node $node. Skipping " .
              "delay characterization.\n";
         return %data;
     }
-    my %scenarios = read_delay_scenarios("$alt_alint_dir/$node/out",0);
+    my %scenarios = read_delay_scenarios("$out_file",0);
 
     (my $re_node = $node) =~ s/\[/\\\[/g; $re_node =~ s/\]/\\\]/g;
 
@@ -1407,6 +1877,8 @@ sub characterize_cap_delay {
         die "Couldn't read alint directory $alint_dir/$node.\n";
     my @node_files = readdir DIR;
     closedir DIR;
+
+
     my $hastrace = 0;
     my $hasdirectives=0;
     foreach my $file (@node_files) {
@@ -1490,7 +1962,7 @@ sub characterize_cap_delay {
 # 
 sub measure_transitions {
     my ($node, $dir, $file_base, $ranges_ref, $min_or_max, $slew_scaling, @slews) = @_;
-    my $vdd          = get_nth_run_param($file_base,3); $vdd =~ s/V$//;
+    my $vdd = get_nth_run_param($file_base,3); $vdd =~ s/V$//;
     my @aplot_cmd    = ( "mindelay", "maxdelay" );
     my @aplot_dir    = ( "<", ">" );
     my @vth          = ( 2*$vdd/3, $vdd/3 );
@@ -1501,10 +1973,15 @@ sub measure_transitions {
 
     for my $i (0..$#slews) {
         my $file = "$file_base:$slews[$i]";
-        if (! -e "$file.trace") {
+        my $filecmd=aplot_file_cmd($file);
+        if($file eq $filecmd){
+          if (! -e "$file.trace") {
 # BUG 6548: assumes it is ok to miss this file.
 #           warn "Warning: No data for $file_base, slew rate $slews[$i].\n";
             next;
+          }
+        }else{
+          $file=$filecmd;
         }
         print "File = $file\n" if ($DEBUG);
         write_aplot("file \"$file\"");
@@ -1629,10 +2106,15 @@ sub measure_charge_wcap {
     for my $i (0..$#slews) {
         my $file = "$file_base:$slews[$i]";
         $file .= ":$cap" if defined ($cap) and $cap ne "0";
-        if (! -s "$file.trace") {
+        my $filecmd=aplot_file_cmd($file);
+        if($file eq $filecmd){
+          if (! -e "$file.trace") {
 # BUG 6548: assumes it is ok to miss this file.
 #           warn "Warning: No data for $file_base, slew rate $slews[$i].\n";
             next;
+          }
+        }else{
+          $file=$filecmd;
         }
         print "File = $file\n" if ($DEBUG);
         write_aplot("file \"$file\"");
@@ -1732,13 +2214,20 @@ sub measure_charge {
     my ($node, $dir, $file_base, $ranges_ref, $slew_scaling, @slews) = @_;
     my %data;
 
+ 
     for my $i (0..$#slews) {
         my $file = "$file_base:$slews[$i]";
-        next if ! ($file =~ /fast_/);
-        if (! -e "$file.trace") {
+        #explicit use fas_ data if slow is not avaliable
+        #next if ! ($file =~ /fast_/);
+        my $filecmd=aplot_file_cmd($file);
+        if($file eq $filecmd){
+          if (! -e "$file.trace") {
 # BUG 6548: assumes it is ok to miss this file.
 #           warn "Warning: No data for $file_base, slew rate $slews[$i].\n";
             next;
+          }
+        }else{
+          $file=$filecmd;
         }
         print "File = $file\n" if ($DEBUG);
         write_aplot("file \"$file\"");
@@ -1849,10 +2338,15 @@ sub measure_transitions_wcap {
         my $file = "$file_base:$slews[$i]";
         $file .= ":$cap" if defined($cap) and $cap ne "0";
 #        print "Error: measure_transition $slews[$i] $cap $file $node $dir\n";
-        if (! -s "$file.trace") {
+        my $filecmd=aplot_file_cmd($file);
+        if($file eq $filecmd){
+          if (! -e "$file.trace") {
 # BUG 6548: assumes it is ok to miss this file.
 #           warn "Warning: No data for $file_base, slew rate $slews[$i].\n";
             next;
+          }
+        }else{
+          $file=$filecmd;
         }
         print "File = $file\n" if ($DEBUG);
         write_aplot("file \"$file\"");
@@ -1987,7 +2481,11 @@ sub read_delay_scenarios {
     my $start = 0;
     my @aggressor = ();
     my $d2a_shape = "(not found)";
-    open IN, $file or die "Cannot read $file.\n";
+    if($file=~/\.gz$/){
+      open (IN, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open (IN, "<$file") or die "Cannot read $file.\n";
+    }
     $type="" if(not defined $type);
     while (<IN>) {
         chomp;
@@ -2009,7 +2507,15 @@ sub read_delay_scenarios {
             $scenarios{$test} = {};
             @aggressor = ();
         }
+        elsif($test eq "" and $type eq "thresh" and /^Alint thresh_(\S+) simulation \(CC=(\d) Tau=([\d\.e-]+) Percent=([\d\.]+)\):$/) {
+            $test="thresh_$1:$2:".int($3/1e-12 + 0.5).":$4";
+            $scenarios{$test} = {};
+            $$timearray{$test} = ();
+            @aggressor = ();        
+            next;
+        }
         elsif($test eq "" and $type eq "thresh" and /^Alint thresh_(\S+) simulation \(Percent=([\d\.]+)\):$/) {
+            #old thresh style cc=1, tau=8
             $test="thresh_$1:$2";
             $scenarios{$test} = {};
             $$timearray{$test} = ();
@@ -2058,9 +2564,6 @@ sub read_delay_scenarios {
     }
     close IN;
 
-    # hardcoded check for hybrid shape
-    die "Unexpected d2a_shape: $d2a_shape.  Re-alint with a newer PDK.\n"
-        unless $d2a_shape eq '1';
     return %scenarios;
 }
 
@@ -2069,7 +2572,11 @@ sub read_bump_scenarios {
     my $scenarios={};
     my $test = "";
     my $bump = "";
-    open IN, $file or die "Cannot read $file.\n";
+    if($file=~/\.gz$/){
+      open (IN, "gzip -cd \'$file\'|") or die "Cannot read $file.\n";
+    }else{
+      open (IN, "<$file") or die "Cannot read $file.\n";
+    }
     print "filename: $file\n" if $DEBUG;
     while (<IN>) {
         s/^\s+//;
@@ -2078,14 +2585,14 @@ sub read_bump_scenarios {
                 $bump=$1;
                 $test = "$2:" . int($3/1e-12 + 0.5);
                 $test .= ":".sprintf("%g", $4*1e15) if $4 > 0;
-                $scenarios->{$test}->{$1} = ();
+                @{$scenarios->{$test}->{$1}} = ();
             }
         }elsif ($test eq "" and /^Alint (\S+) simulation \(CC=(\d) Tau=([\d\.e-]+)\):$/) {
             # needed for re-raw
             if ($1 eq "bump_up" or $1 eq "bump_dn"){
                 $bump=$1;
                 $test = "$2:" . int($3/1e-12 + 0.5);
-                $scenarios->{$test}->{$1} = ();
+                @{$scenarios->{$test}->{$1}} = ();
             }
         }elsif ($test ne "" and /^\w+\s+([\d\.]+)/) {
             push @{$scenarios->{$test}->{$bump}}, $1;
@@ -2117,18 +2624,24 @@ sub generate_pwl {
     my ($bindir, $aplot, $type)=@_;
     my $pwd=`pwd`;
     chomp $pwd;
+
+
     my $fd;
     opendir ($fd, $bindir);
     my @nodes=readdir($fd);
     closedir ($fd);
+    my $workdir  = mktemp_workdir("pwl");    
     foreach my $node (@nodes) {
         next if ( ! -d "$bindir/$node" or ($node =~ /^\./));
-        opendir ($fd, "$bindir/$node");
-        my @files=readdir($fd);
-        closedir ($fd);
-        opendir ($fd, "$bindir/$node");
-        @files=grep(/${type}_.*\.trace/, readdir($fd));
-        closedir ($fd);
+        my ($is_archive,@files)=is_node_archive("$bindir/$node",$trace_archive);  
+        if(! $is_archive){
+          opendir ($fd, "$bindir/$node");
+          @files=grep(/${type}_.*\.trace/, readdir($fd));
+          closedir ($fd);
+        }else{
+          archive_extrace_files("$bindir/$node/$trace_archive",$workdir,@files);
+          @files=map {"$workdir/$_"} grep(/${type}_.*\.trace/, @files);
+        }
         chdir("$bindir/$node");
         open_aplot($aplot);
         my @pwl;
@@ -2136,10 +2649,12 @@ sub generate_pwl {
             $file =~ s/\.trace//;
             write_aplot("file \"$file\"\n");
             my $pwl="$file:IGND.pwl";
+            (my $vol, my $dir_t, $pwl) = File::Spec->splitpath($pwl);
             push @pwl, $pwl;
             unlink $pwl;
             write_aplot("write IGND|\n");
             $pwl="$file:IVdd.pwl";
+            ($vol, $dir_t, $pwl) = File::Spec->splitpath($pwl);
             push @pwl, $pwl;
             unlink $pwl;
             write_aplot("write IVdd|\n");
@@ -2169,6 +2684,21 @@ sub generate_pwl {
         }
     }
     chdir ($pwd);
+    cleanUp_workdir($workdir);
+
+}
+
+sub aplot_file_cmd{
+    my ($filebase,$postfix)=@_;
+    $postfix="trace" if(not defined $postfix);
+    my ($vol, $dir, $file_name_t) = File::Spec->splitpath($filebase);
+    my $archive_file=catfile($dir,$trace_archive); 
+    if (-e $archive_file){
+        my $ismember=archive_memberNamed($archive_file,"$file_name_t.$postfix");
+        return $filebase if(not defined $ismember);
+        return "$archive_file/$file_name_t";
+    }
+    return $filebase;
 }
 
 1;

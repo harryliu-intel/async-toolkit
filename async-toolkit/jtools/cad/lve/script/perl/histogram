@@ -2,48 +2,72 @@
 # Compute mean and standard deviation, produe data for plotting histogram.
 
 # options
-my $n=5;
+my $num_bins=5;
+my $snarf=0;
+my @freq;
 while (@ARGV) {
-    if ($ARGV[0] =~ /^--bins=(\S+)$/) { $n = $1; }
-    else { usage(); }
+    if ($ARGV[0] =~ /^--bins=(\S+)$/) { $num_bins = $1; }
+    elsif ($ARGV[0] eq "--snarf") { $snarf = 1; }
+    elsif ($ARGV[0]) { push @freq, split(",",$ARGV[0]); }
     shift;
 }
 
-# parse data in snarf format, compute mean
-my @freq;
-my $fmin;
-my $fmax;
-my $num=0;
-my $mean=0;
-my $sigma=0;
-while (my $line = <STDIN>) {
-    if ($line =~ /(\d+)MHz$/ ) {
-        push @freq, $1;
-        if (!defined($fmin) || $1<$fmin) { $fmin=$1; }
-        if (!defined($fmax) || $1>$fmax) { $fmax=$1; }
-        $mean += $1;
-        $num++;
+# parse data in snarf format from STDIN instead
+if ($snarf==1) {
+    while (my $line = <STDIN>) {
+        if ($line =~ /\s+(\S+)MHz$/ ) {
+            push @freq, split(",",$1);
+        }
     }
 }
-$mean /= $num;
 
-# bin the data in a histogram, plus compute standard deviation
-foreach my $f (@freq) {
-    my $bin = int($n * ($f-$fmin) / ($fmax-$fmin) * 0.999999); # round down into a bin
-    $bins[$bin]++;
-    $sigma += ($f-$mean)*($f-$mean);
-}
-$sigma = sqrt($sigma/($num-1.5)); # unbiased sample standard deviation (from Wikipedia)
+if (@freq==0) { usage(); }
 
-# print results
+# compute histogram
+my ($fmin,$fmax,$mean,$sigma) = histogram(@freq);
 printf STDERR "min=$fmin max=$fmax mean=%g sigma=%g\n", $mean, $sigma;
-for (my $i=0; $i<$n; $i++) {
-    my $f = ($i+0.5) / $n * ($fmax-$fmin) + $fmin; # middle of bin
-    if (!defined($bins[$i])) { $bins[$i]=0; }
-    print "$f $bins[$i]\n";
+
+# find mean and standard deviation
+sub histogram {
+    my @freq = @_;
+    my @bins = ();
+
+    # find fmin, fmax, mean, num
+    my $fmin;
+    my $fmax;
+    my $num=0;
+    my $mean=0;
+    foreach my $f (@freq) {
+        if (!defined($fmin) || $f<$fmin) { $fmin=$f; }
+        if (!defined($fmax) || $f>$fmax) { $fmax=$f; }
+        $mean += $f;
+        $num++;
+    }
+    $num>0 or die "ERROR: no data points\n";
+    $mean /= $num;
+    
+    # bin the data in a histogram, plus compute standard deviation
+    my $sigma=0;
+    foreach my $f (@freq) {
+        my $bin = int($num_bins/2);
+        if (@freq>1) {
+            $bin = int($num_bins * ($f-$fmin) / ($fmax-$fmin) * 0.999999); # round down into a bin
+        }
+        $bins[$bin]++;
+        $sigma += ($f-$mean)*($f-$mean);
+    }
+    $sigma = sqrt($sigma/($num-1.5)); # unbiased sample standard deviation (from Wikipedia)
+    
+    # print results
+    for (my $i=0; $i<$num_bins; $i++) {
+        my $f = ($i+0.5) / $num_bins * ($fmax-$fmin) + $fmin; # middle of bin
+        if (!defined($bins[$i])) { $bins[$i]=0; }
+        print "$f $bins[$i]\n";
+    }
+    return ($fmin, $fmax, $mean, $sigma);
 }
 
 # usage banner
 sub usage {
-    die "USAGE: histogram [--bins=#] < in.snarf > output.dat\n";
+    die "USAGE: histogram [--bins=#] [val1 val2 ... | val1,val2,... | --snarf < in.snarf] > output.dat\n";
 }

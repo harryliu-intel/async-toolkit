@@ -1,0 +1,349 @@
+#!/usr/intel/bin/perl -w
+
+
+use POSIX;
+use FileHandle;
+use IPC::Open2;
+use Symbol;
+use DBI;
+use Getopt::Long;
+use strict;
+use File::stat;
+use File::Spec;
+use File::Spec::Functions;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
+use Cwd 'abs_path';
+
+my %checked;
+my $root="";
+my $cell="";
+my $only=0;
+my $view_mode_order="floorplan/custom,custom_tag/accurate,layout/accurate,floorplan/accurate,custom_tag/extracted,layout/extracted,floorplan/extracted,floorplan/estimated,floorplan/nogeometry";
+my $sub_lve_root_dir="";
+my @sub_lve_root_dir=();
+
+my $result = GetOptions("root=s"      => \$root,
+                        "cell=s"           => \$cell,
+                        "only"           => \$only,
+                        "sub-lve-root-dir=s" => $sub_lve_root_dir
+ );
+
+die usage("Root $root does not exist\n") if (! -d $root);
+die usage("Please specify cell\n") if ($cell eq "");
+$root=~s/\/$//;
+@sub_lve_root_dir = split(":",$sub_lve_root_dir);
+
+my $isHier=1; 
+$isHier=0 if($only);
+if(-e $cell){
+  #it is a cell list
+  if(open(CF,"$cell")){
+    while(<CF>){
+      s/\s+//g;
+      chomp;
+      next if(/^#/);
+      check_cell($_,$isHier,0);
+    }
+    close(CF);
+  }else{
+    print STDERR "ERROR: Cannot open cell list file $cell\n";
+  }
+}else{
+  check_cell($cell,$isHier,0);
+}
+
+
+sub check_cell{
+  my ($cellname,$isHier,$isDep,$view,$mode,$pvt)=@_;
+  my $cellpath =$cellname; $cellpath=~s/\./\//g;
+  # cell path check
+  if($isDep){
+    #get cell alint path
+    my($p,$v,$t)=split(":",$pvt);
+    my $alint_path=get_alint_path($cellname,$view,$mode,$p,$v,$t);
+    if($alint_path ne ""){
+        print "Information: Check sub-hier cell $cellname ...\n";
+        $alint_path = abs_path( $alint_path ) ;
+        alint_check($cellname, $alint_path, $isHier);
+    }else{
+       print "ERROR: no lve $pvt path for $cellname\n";
+       return;
+    }
+  }else{
+    print "Information: Check $cellname ...\n";
+    if(! -d "$root/$cellpath"){
+      print "ERROR: no lve path for $cellname\n";
+      return;
+    }
+    # get alint.raw file
+    my @raw_files=`find \'$root/$cellpath\'  -follow -type f -name alint.raw`;
+    if(scalar(@raw_files)==0){
+       print "Information: No alint.raw files found $cellname\n";
+       return;
+    }
+    foreach my $raw (@raw_files){
+      chomp($raw);
+      if(!-s $raw){
+          print "ERROR: $raw is empty\n";    
+      }else{
+        #check things
+         $raw = abs_path( $raw ) ;
+         my ($vol,$alint_path,$file)= File::Spec->splitpath($raw);
+         alint_check($cellname, $alint_path, $isHier);
+      }
+    }
+  }
+}
+
+
+sub alint_check{
+  my($cellname, $alint_path,$isHier)=@_;
+#  my ($vol,$dir,$file)= File::Spec->splitpath($raw);
+  #$alint_path=~s/^$root\///;
+  $alint_path=~s/\/$//;
+  my @dir= File::Spec->splitdir($alint_path);
+  my $view = $dir[$#dir-5];
+  my $mode = $dir[$#dir-4];
+  my $p = $dir[$#dir-2];
+  my $v = $dir[$#dir-1];
+  my $t = $dir[$#dir];
+  alint_aspice_check($alint_path) if(not defined $checked{$alint_path});
+  #check fanout
+  alint_check_fanout_fanin($cellname,$alint_path,$view,$mode,"$p:$v:$t") if($isHier);
+}
+
+
+sub alint_check_fanout_fanin{
+  my ($cellname,$alint_path, $view,$mode,$pvt)=@_;
+  my %faninoutcells;
+  my $cellpath=get_cell_path($alint_path);
+  my @jflat=`find \"$cellpath\" -follow -type d -name jflat\\*`;
+  my $jflat_path;
+  foreach my $j (@jflat){
+      chomp($j);
+      $jflat_path=$j;
+      #$jflat_path=~s/^$root\///;
+  }
+  if(!-e "$jflat_path"){
+        print "ERROR: no jflat path $jflat_path\n";    
+        return;
+  }
+  foreach my $f ("fanin/default.latest","fanout/default.latest"){
+    my $jflat_file_path="$jflat_path/$f";
+    if(!-e "$jflat_file_path"){
+        print "ERROR: missing jflat file $jflat_file_path\n";    
+        return;
+    }
+    open(F,"<$jflat_file_path");
+    while(<F>){
+      chomp;
+      my $line=$_;
+      $line=~ s/\n//;
+      my($inputnode, @fanios) = split(/ /,$_);
+      foreach my $fanio (@fanios){
+         my @toks = split("/",$fanio);
+         my $out = pop(@toks);
+         my $in = pop(@toks);
+         my $leafcell = pop(@toks);
+         $faninoutcells{$leafcell}=1 if($leafcell ne $cellname);
+      }
+    }
+    close(F);
+  }
+  foreach my $leafcell (keys %faninoutcells){
+      check_cell($leafcell,0,1,$view,$mode,$pvt);
+  }
+}
+
+###############################
+# alint aspice check
+###############################
+sub alint_aspice_check{
+  my ($alint_dir)=@_;
+  return if($checked{$alint_dir});
+  print "Information: Checking $alint_dir ...\n";
+  $checked{$alint_dir}=1;
+  my $alint_parallel="$alint_dir/alint_parallel";
+  if(!-d "$alint_parallel"){
+    print "ERROR: alint_parallel does not exist $alint_parallel\n";    
+    return;
+  }
+  opendir (D, "$alint_parallel") or die "Couldn't read $alint_parallel\n";
+  my @in_files=map {-s "$alint_parallel/$_" ? "$alint_parallel/$_" : () } grep(/alint\.in\.\d+$/, readdir(D));    
+  closedir(D);
+  foreach my $in (@in_files){
+    my @nodes=`grep '^alint' \"$in"`;
+    my $bin=-1;
+    if($in=~/\.(\d+)$/){
+      $bin=$1;
+    }
+    foreach my $node (@nodes){
+        chomp $node;
+        (my $a,$node) = split(/\s+/,$node);
+        my $node_path="$alint_dir/alint.bin.$bin/$node";
+        # check node bin
+        if(!-d "$node_path"){
+          print "ERROR: no alint data of $node_path\n";
+          next;
+        }
+        # check node out file
+        my $out_file="$node_path/out";
+        $out_file="$node_path/out.gz" if(-e "$node_path/out.gz");
+
+        if(!-s "$out_file"){
+          print "ERROR: alint terminated (empty out file) of $node_path\n";
+          next;
+        }
+        my $out_uncompress="cat";
+        $out_uncompress="gzip -cd" if($out_file=~/\.gz$/);
+
+        if (`$out_uncompress \'$out_file\' | grep -c "^Alint simulation of"`==0) {
+          print "ERROR: alint terminated of $node_path\n";
+          next;
+        }
+        #check trace files
+        if($out_file=~/\.gz$/){
+          open(F,"gzip -cd \'$out_file\'|") or die "CANNOT open $out_file file\n";
+        }else{
+          open(F,"<$out_file") or die "CANNOT open $out_file file\n";
+        }
+
+        my %scenarios; my @aggressors=();
+        my $type ="";
+        while(<F>){
+          chomp;
+          s/^\s+//;
+          if($type eq "" and /^Alint (\S+) simulation \(CC=(\d) Tau=([\d\.e-]+) Cap=([\d\.e-]+)\):$/) {
+            $type = "$1:$2:" . int($3/1e-12 + 0.5);
+            $type .= ":".sprintf("%g", $4*1e15) if $4 > 0;
+            @aggressors=();
+          }elsif($type eq "" and /^Alint (\S+) simulation \(CC=(\d) Tau=([\d\.e-]+) Percent=([\d\.]+)\):$/){
+            $type="$1:$2:".int($3/1e-12 + 0.5).":$4";
+            @aggressors=();
+          }elsif($type eq "" and /^Alint (\S+) simulation:$/){
+            $type="$1";
+            @aggressors=();
+          }elsif ($type ne "" and /^\w+\s+([\d\.]+)\s*/) {
+            @{$scenarios{$type}}=() if(not defined $scenarios{$type});
+            my $this = $1;
+            my $nodes=$';
+            my @nodes= split(/\s+/,$nodes); 
+            foreach my $item (@nodes){
+                if($item =~ /([\w\[,\]\.\#\:]+):(\+|\-)/){
+                    push @aggressors,$1;
+                }
+            }
+            
+          }elsif ($type ne ""){
+            if(scalar(@aggressors) > 0){
+              my %agg_h=map{$_=>1} @aggressors;
+              @{$scenarios{$type}}=(keys %agg_h);
+            }
+            $type="";
+            @aggressors=();
+          }
+          
+        }
+        close(F);
+        #check if trace file exists or not.
+        my $isZip=0;
+        if(-e "$node_path/aspice_trace.zip"){
+          $isZip=1;
+        }
+        my %aspice_files;
+        if($isZip){
+          %aspice_files=map{$_=>1} zip_members("$node_path/aspice_trace.zip");
+
+        }else{
+          opendir(D,"$node_path");
+          %aspice_files=map {$_=>1} grep(/\.(names|trace)$/, readdir(D));    
+          closedir(D);
+        }
+        my %resp_files;
+        my @thresh_sce = map { ($_=~/thresh/)?$_:()} keys %scenarios;
+        if(scalar(@thresh_sce)){
+        if(!-e "$node_path/thresh_resp.zip"){
+          print "ERROR: missing thresh resp zip file $node_path/thresh_resp.zip\n";
+        }else{
+          %resp_files=map{$_=>1} zip_members("$node_path/thresh_resp.zip");
+        }
+        }
+        foreach my $sce (keys %scenarios){
+          if(not defined $aspice_files{"$sce.trace"}){
+              print "ERROR: missing trace file $node_path/$sce.trace\n";
+              next;
+          }
+          if($sce=~/^thresh/ and -e "$node_path/thresh_resp.zip"){
+            #check thresh_resp file
+            foreach my $a (@{$scenarios{$sce}}){
+              if(not defined $resp_files{"$a:$sce.resp"}){
+                print "ERROR: missing thresh resp file $node_path/$a:$sce.trace\n";
+                next;
+              }
+            }
+            if(scalar @{$scenarios{$sce}} > 0){
+              if(not defined $resp_files{"$sce.resp"}){
+                print "ERROR: missing thresh resp file $node_path/$sce.trace\n";
+                next;
+              }
+            }
+          }
+        }
+    }
+  }
+}
+
+sub get_alint_path{
+    my($cellname,$extract_view,$extract_mode,$p,$v,$t)=@_;
+    my $search_order="$extract_view/$extract_mode,".$view_mode_order;
+    my @search_view_mode=split(/,/,$search_order);
+    my $cellpath =$cellname;
+    $cellpath=~s/\./\//g;
+    foreach my $dir ("$root", @sub_lve_root_dir){
+      my $cell_dir="$dir/$cellpath";
+      foreach my $view_mode (@search_view_mode) {
+        my $path = "$cell_dir/$view_mode/alint/$p/$v/$t";
+        if ( -d $path) {
+            $path=File::Spec->canonpath( $path ) ;
+            return $path;
+        }
+      }
+    }
+    return "";
+}
+
+sub get_cell_path{
+  my ($path)=@_;
+  my @view_mode=split(/,/,$view_mode_order);
+  foreach my $view_mode (@view_mode){
+    if($path =~/(\S+)\/$view_mode\/(\S+)/){
+      return $1;
+    }
+  }
+  return "";
+}
+sub zip_members{
+  my ($file)=@_;
+  my $zip = Archive::Zip->new();
+    unless ( $zip->read( "$file" ) == AZ_OK ) {
+       die "Cannot read $file";
+    }
+    my @mbrs = $zip->memberNames();
+    return (@mbrs);
+}
+sub usage {
+    my ($msg)=@_;
+    local $"=",";
+print STDERR $msg if(defined $msg);
+    my $usages = <<ET;
+
+Check lve alint
+
+USAGE: $0 -root=<lve root> --cell=<cellname or cell list file>
+  other options:
+  --sub-lve-root-dir=<>
+  --only  (check only this cell level. By default, lve datacheck will also check fanout/fanin cells )
+ET
+   return $usages;
+}
+

@@ -2,8 +2,11 @@
 
 use strict;
 use Getopt::Long;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 
 
+# archive file name
+my $trace_archive="aspice_trace.zip";
 my $cellname = "";
 my $alint_path = "";
 my $fanoutfile = "";
@@ -69,6 +72,9 @@ foreach my $alint_in (@alint_in_list){
     my($pre,$node)=split(" ",$item);
     if((not defined $isFanoutPO{$node}) or ( $isFanoutPO{$node}==0)){
       print "$node has no PO fanout, delete all trace file, in bin=$bin\n";
+      if(-e "$alint_path/alint.bin.$bin/$node/$trace_archive"){
+          system("rm -f \"$alint_path/alint.bin.$bin/$node/$trace_archive\"");
+      }
       system("rm -f \"$alint_path/alint.bin.$bin/$node/\"*.names");
       system("rm -f \"$alint_path/alint.bin.$bin/$node/\"*.trace");
       
@@ -85,6 +91,23 @@ foreach my $alint_in (@alint_in_list){
               system("rm -f \"$alint_path/alint.bin.$bin/$node/$file\"");
             }
           }
+      }
+      if(-e "$alint_path/alint.bin.$bin/$node/$trace_archive"){
+          #remove non bubmp trace files from archive
+          my $zip = Archive::Zip->new();
+          unless ( $zip->read( "$alint_path/alint.bin.$bin/$node/$trace_archive" ) == AZ_OK ) {
+            warn "Read error on $alint_path/alint.bin.$bin/$node/$trace_archive; Skip delete trace files\n";
+          }
+          my @mbrs = $zip->memberNames();
+          foreach my $m (@mbrs){
+            if($m =~ /\.(trace|names)$/){
+              my $type=$1;
+              if ($m !~ /bump_(up|dn)\S+\.$type$/){
+                my $member = $zip->removeMember( $m);
+              }
+            }
+          }
+          my $status = $zip->overwrite();
       }
     }
   }

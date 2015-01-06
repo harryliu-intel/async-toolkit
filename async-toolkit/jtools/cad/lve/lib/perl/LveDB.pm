@@ -4,6 +4,7 @@ package LveDB;
 use POSIX;
 use LveStatus;
 use DBI;
+use File::stat;
 use Fcntl qw(:flock);
 
 BEGIN {
@@ -13,12 +14,55 @@ BEGIN {
         &lve_create_db &lve_db_connect &lve_db_disconnect &lve_db_do
         &lve_db_filename &lve_db_exists &lve_db_select &lve_db_raw
         &lve_db_hashref &lve_db_fix &lve_db_getprefix_from_root
+        &lve_db_raw2db
     );
 }
 
 use strict;
+my %viewdepth = (
+    "alint" => 5,
+    "asta" => 5,
+    "lib" => 5,
+    "antenna" => 0,
+    "drc" => 0,
+    "lvs" => 0,
+    "frc" => 0,
+    "hdrc" => 0,
+    "hlvs" => 0,
+    "jlvs" => -1,
+    "aspice" => 8,
+    "hspice" => 7,
+    "hsim" => 7,
+    "totem" => 7,
+    "extract" => 1,
+    "rte" => 6,
+    "xa" => 7,
+);
 
 my $dbfilename="lvedb.db";
+my @cell_table_entry=(
+    "fqcn primary key",
+    "datetime default NULL", 
+    "alint default 'NOT_TESTED'", 
+    "antenna default 'NOT_TESTED'", 
+    "aspice default 'NOT_TESTED'", 
+    "asta default 'NOT_TESTED'", 
+    "drc default 'NOT_TESTED'", 
+    "extract default 'NOT_TESTED'", 
+    "frc default 'NOT_TESTED'", 
+    "hdrc default 'NOT_TESTED'", 
+    "hlvs default 'NOT_TESTED'", 
+    "hsim default 'NOT_TESTED'", 
+    "xa default 'NOT_TESTED'", 
+    "hspice default 'NOT_TESTED'", 
+    "jlvs default 'NOT_TESTED'", 
+    "lib default 'NOT_TESTED'", 
+    "lvs default 'NOT_TESTED'", 
+    "slint default 'NOT_TESTED'", 
+    "totem default 'NOT_TESTED'", 
+    "'rte' default 'NOT_TESTED'", 
+    "args default ''"
+);
 
 sub lve_db_filename {
     my ($root)=@_;
@@ -115,8 +159,9 @@ sub lve_create_db {
 }
 
 sub lve_db_connect {
-    my ($root,$prefix)=@_;
+    my ($root,$prefix,$dbfile)=@_;
     local($\)="\n";
+    $dbfilename=$dbfile if(defined $dbfile);
     my $dbh;
     $prefix="" if ! defined $prefix;
     $prefix=lve_db_getprefix_from_root($root,$prefix);
@@ -240,7 +285,7 @@ sub lve_db_fix {
     my $needfix=1;
     my %cells=();
     foreach my $row (@$sth) {
-        $needfix=0 if ($#$row == 19);
+        $needfix=0 if ($#$row == $#cell_table_entry);
         if ($needfix) {
             my @x=@$row;
             $cells{$x[0]}=[@x];
@@ -252,11 +297,12 @@ sub lve_db_fix {
     if ($needfix and $dbh->{prefix} eq "") {
         # only sql files (for now) need to be fixed.
         lve_db_do($dbh, "drop table cells");
-        lve_db_do($dbh, "CREATE TABLE cells ( fqcn primary key, datetime default NULL, alint default 'NOT_TESTED', antenna default 'NOT_TESTED', aspice default 'NOT_TESTED', asta default 'NOT_TESTED', drc default 'NOT_TESTED', extract default 'NOT_TESTED', frc default 'NOT_TESTED', hdrc default 'NOT_TESTED', hlvs default 'NOT_TESTED', hsim default 'NOT_TESTED', hspice default 'NOT_TESTED', jlvs default 'NOT_TESTED', lib default 'NOT_TESTED', lvs default 'NOT_TESTED', slint default 'NOT_TESTED', totem default 'NOT_TESTED', 'rte' default 'NOT_TESTED', args default '');");
+        my $cmd="CREATE TABLE cells ( ".join(", ", @cell_table_entry).");";
+        lve_db_do($dbh, $cmd);
         foreach my $fqcn (sort keys %cells) {
             my @x=@{$cells{$fqcn}};
             my $cmd="insert into cells VALUES(";
-            for (my $n = 0; $n < 18; $n++) {
+            for (my $n = 0; $n < scalar(@cell_table_entry) - 2; $n++) {
                 if (! defined ($x[$n])) {
                     $cmd .= "NULL,";
                 }
@@ -265,11 +311,95 @@ sub lve_db_fix {
                 }
             }
             $cmd .= "'NOT_TESTED',";
-            $cmd .= "'$x[18]')";
+            $cmd .= "'$x[$#cell_table_entry]')";
             lve_db_do($dbh, $cmd);
         }
     }
     $needfix;
 }
 
+sub lve_db_raw2db{
+    my ($dbh,$root,$rawfile,$verbose,$skipdb)=@_;
+    my $opened=0;
+    my $status_sum="NOT_TESTED";
+    chomp($rawfile);
+    if (($rawfile =~ /\.gz$/) and open (P, "gunzip -c '$rawfile' |")) {
+        $opened=1;
+    }
+    elsif (open (P, "<$rawfile")) {
+        $opened=1;
+    }
+    if ($opened) {
+        print STDERR "Processing $rawfile" if $verbose;
+        my $rawname = $rawfile;
+        $rawname =~ s/\.gz$//;
+        my @path=split(/\//, $rawname);
+        my $task = $path[$#path];
+        $task =~ s/\.raw$//;
+        print STDERR "Skipping $rawfile" if ! defined $viewdepth{$task};
+        return undef if ! defined $viewdepth{$task};
+        my $viewdepth=$viewdepth{$task};
+        my %allstatus=();
+        my $cnt=0;
+        my ($status,$tsk,$cell,$path);
+        my $onlyNewBumpFail=undef;
+        my %fail_type;
+        $fail_type{OTHER}=0;
+        $fail_type{FAIL_MNOISE}=0;
+        $fail_type{FAIL_NEWBUMP}=0;
+        while (<P>) {
+            chomp;
+            ($status, $tsk, $cell, $path)=split(/ /, $_);
+            next if ! defined $path;
+            next if $tsk ne $task;
+            if($tsk eq "alint" and $status =~ "FAIL"){
+              if($_ =~ /fail_type=/){
+                $fail_type{FAIL_NEWBUMP}=1;
+              }elsif($_ =~ /multi_noise_resp/){
+                $fail_type{FAIL_MNOISE}=1;
+              }else{
+                $fail_type{OTHER}=1;
+              }
+            }
+            $allstatus{$status}++;
+            $cnt++;
+        }
+        if ($cnt > 0) {
+            $status_sum=LveUtil::summarizeStatus(\%allstatus,\%fail_type);
+            my @path=split(/\//, $path);
+            my $view;
+            my $mode;
+            if ($viewdepth >= 0) {
+                $view=$path[$#path-$viewdepth];
+            }
+            else {
+                $view="NA";
+            }
+            if ($viewdepth >= 1) {
+                $mode=$path[$#path-$viewdepth+1];
+            }
+            else {
+                $mode="NA";
+            }
+            $rawfile =~ s:^$root/::;
+            $rawname =~ s:^$root/::;
+            if ( $rawname eq "$path/$task.raw" ) {
+                my $stat=stat("$root/$rawfile");
+                my @dt=localtime($stat->mtime);
+                my $datetime=sprintf("%04d-%02d-%02d %02d:%02d:%02d",
+                    $dt[5]+1900, $dt[4]+1, $dt[3], $dt[2], $dt[1], $dt[0]);
+                lve_db_raw($dbh, $cell,$task,$view,$mode,$status_sum,$path,$datetime) if(not defined $skipdb or $skipdb==0);
+            }
+            else {
+                $status_sum=undef;
+                print STDERR "$rawfile does not have correct path\n  $rawfile\n  $path/$task.raw.";
+            }
+        }
+    }
+    else {
+        $status_sum=undef;
+        print STDERR "Cannot open $rawfile: $!";
+    }
+    return $status_sum;
+}
 1;

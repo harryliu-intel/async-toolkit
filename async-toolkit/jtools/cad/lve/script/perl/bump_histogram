@@ -1,0 +1,125 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    $cad_dir = $lve_root;
+    $cad_dir =~s:/[^/]*$::;
+    @INC = ("$cad_dir/lib/perl", @INC);
+}
+use LveStatus;
+use LveUtil;
+use Getopt::Long;
+use strict;
+
+my $lve_dir;
+my $corner;
+my $voltage;
+my $temp;
+my $cc;
+my $threshCC;
+my $bumps=0;
+my $inv_bumps=0;
+my $thresh_resp=0;
+
+GetOptions (
+    "lve-dir=s"     => \$lve_dir,
+    "corner=s"      => \$corner,
+    "voltage=s"     => \$voltage,
+    "temp=i"        => \$temp,
+    "cc=i"          => \$cc,
+    "threshCC=i"    => \$threshCC,
+    "bumps=i"       => \$bumps,
+    "inv-bumps=i"   => \$inv_bumps,
+    "thresh-resp=i" => \$thresh_resp,
+    ) or die;
+
+sub write_histogram {
+    my ($file, $histogram) = @_;
+    
+    open RAW, ">$file" or die "Can't write $file\n";
+    foreach my $l (sort(keys %$histogram))   { print RAW "$l $histogram->{$l}\n"; }
+    close RAW;
+}
+
+sub find_bumps {
+    my ($raw, $histogram, $key1, $key2, $key3, $key4) = @_;
+    my @raw_lines = get_lines($raw);
+    my %nodes = ();
+    foreach my $line (@raw_lines) {
+        my ($status, $task, $cell, $path, %keys) = parse_raw_line($line);
+        if(defined($keys{$key1}) &&
+           defined($keys{$key2})) {
+            if ($keys{"cc"} != $cc) { next;}
+            if (defined($keys{"threshCC"}) &&
+                $keys{"threshCC"} != $threshCC) { next; }
+            my ($v1) = split("@", $keys{$key3});
+            my ($v2) = split("@", $keys{$key4});
+            if ($v1 eq "NA" || $v2 eq "NA") { next; };
+            if ($v1 eq "FAIL" || 
+                $v2 eq "FAIL") {
+                $nodes{$keys{"node"}} = "FAIL";
+                next;
+            }
+            my $max = $v1 > $v2 ? $v1 : $v2;
+	    if (!defined($keys{"node"})) {
+	      printf "Can't parse: $line\n";
+            }
+            elsif (!defined($nodes{$keys{"node"}}) ||
+                (!($nodes{$keys{"node"}} eq "FAIL") &&
+                 $max > $nodes{$keys{"node"}})) {
+                $nodes{$keys{"node"}} = $max;
+            }
+        }
+    }
+    foreach my $n (keys %nodes) {
+        if(!defined($histogram->{$nodes{$n}})) {
+            $histogram->{$nodes{$n}}=0;
+        }
+        $histogram->{$nodes{$n}} = $histogram->{$nodes{$n}} + 1;
+    }
+}
+
+
+my @cells;
+my @lve_dirs = split(":", $lve_dir);
+foreach my $d (@lve_dirs) {
+    find_cells($d, \@cells);
+}
+
+my %bump_histogram=();
+my @views =("custom_tag", "layout");
+foreach my $c (@cells) {
+    $c =~ s/\/\.cellname$//;
+    foreach my $v (@views) {
+        my $alint_raw = "$c/$v/extracted/alint/${corner}/${voltage}V/${temp}C/alint.raw";
+        if (-e "$alint_raw") {
+            if ($bumps == 1) {
+                find_bumps($alint_raw, \%bump_histogram, 
+                           "bump_up", "bump_dn",
+                           "bump_up", "bump_dn");
+            }
+            if ($inv_bumps == 1) {
+                find_bumps($alint_raw, \%bump_histogram, 
+                           "inv_bump_up", "inv_bump_dn",
+                           "inv_bump_up", "inv_bump_dn");
+            }
+            if ($thresh_resp == 1) {
+                find_bumps($alint_raw, \%bump_histogram,
+                           "threshCC", "threshTau",
+                           "resp", "resp");
+            }
+        }
+    }
+}
+
+my $output_prefix="${corner}:${voltage}:${temp}:$cc";
+my $name="";
+if ($bumps == 1) { $name = "bumps"; }
+if ($inv_bumps == 1) { $name = "inv_bumps"; }
+if ($thresh_resp == 1) { $name = "resp"; $output_prefix .= ":${threshCC}"}
+
+write_histogram("$output_prefix.$name",\%bump_histogram);

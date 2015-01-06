@@ -1,9 +1,11 @@
 #!/usr/intel/bin/perl -w
 
 # Generate a set of lve todo files, named base.N.todo, which can be
-# extracted in order to create the proper graybox_hierarchy.  Leaf
+# extracted in order to create the proper graybox hierarchy.  Leaf
 # cells and flat-extracted cells go in the base.0.todo.  Cells which
-# inherit <+ graybox_extract go into the N>0 todo lists.
+# inherit <+ graybox_extract go into the N>0 todo lists.  Cells which
+# inherit <+ flat_extract go into the N==0 list.  Otherwise the
+# hierchy option controls this.
 
 use strict;
 use Getopt::Long;
@@ -13,7 +15,7 @@ my $pdk_root = "";
 my $cast_path = "";
 my $base_todo = "extract";
 my $max_heap_size = "1G";
-my $hierarchy = "graybox";
+my $hierarchy = "routed";
 my $cell_file = "";
 
 # usage banner
@@ -24,7 +26,7 @@ USAGE: recursive_graybox [options] [top_cells]
     --fulcrum-pdk-root=[$pdk_root]
     --max-heap-size=[$max_heap_size]
     --cast-path=[$cast_path]
-    --hierarchy=[floorplan|layout|graybox]
+    --hierarchy=[$hierarchy] ([floorplan|layout|graybox])
     --cells=[cell_file]
 EU
     exit 1;
@@ -74,6 +76,7 @@ if ($cell_file eq "") {
 # graybox_extract ancestry of subcells.
 my %level = ();
 my %graybox = ();
+my %flat = ();
 my $max_level = 0;
 foreach my $cell (keys %cells) {
     my $cmd = "$cast_query --task=level $opt --cell=\"$cell\"";
@@ -82,6 +85,14 @@ foreach my $cell (keys %cells) {
         if (/^\s*(\S+)\s+(\d+)\s*$/) {
             $level{$1}=$2;
             if ($2>$max_level) { $max_level = $2; }
+        }
+    }
+    $cmd = "$cast_query --task=subcells --routed --cell=\"$cell\"" .
+        " --filter=\"ancestor=standard.base.flat_extract\"";
+    open (P, "$cmd |");
+    while (<P>) {
+        if (/^\s*(\S+)\s*$/) {
+            $flat{$1} = 1;
         }
     }
     if ($hierarchy eq "graybox") {
@@ -96,11 +107,10 @@ foreach my $cell (keys %cells) {
     }
 }
 
-# set non-graybox cells to level=0
-if ($hierarchy eq "graybox") {
-    foreach my $cell (keys %level) {
-        if (!defined($graybox{$cell})) { $level{$cell} = 0; }
-    }
+# set non-graybox cells or flat-extract cells to level=0
+foreach my $cell (keys %level) {
+    if ((($hierarchy eq "graybox") && !defined($graybox{$cell})) ||
+        (defined($flat{$cell}))) { $level{$cell} = 0; }
 }
 
 # print todo lists for each level
@@ -113,7 +123,7 @@ for (my $l=0; $l<=$max_level; $l++) {
     }
     if (@lines) {
         open OUT, ">${base_todo}.$l.todo" or die;
-        print OUT "--graybox-mode=routed\n" if $l>0;
+        print OUT "--graybox-mode=routed --extractPower=NO\n" if ($l>0);
         foreach my $line (sort @lines) {
             print OUT "$line\n";
         }

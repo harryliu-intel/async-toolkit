@@ -2,13 +2,31 @@
 
 use POSIX;
 use strict;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
+use File::Compare;
+
+# find relevant packaged tools and libraries
+our $lve_root;
+our @svars;
+
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    local $"=",";
+    our @svars = qw/ cell dir root task mode /;
+
+}
+
+use LveUtil;
 
 my $debugx=0;
 my $accurate="";
 open (DEBUG, ">debug") if $debugx;
 # Find relevant packaged tools
 my $host = `uname -n`; chomp $host;
-my $lve_root = $0;
+$lve_root = $0;
 my $exe = $lve_root;
 $exe =~ s:.*/::;
 if (! ($lve_root =~ m:^/:)) {
@@ -56,6 +74,7 @@ my $node_props="";
 my $leaky_nodes="";
 my $clean_trace=0;
 my $has_raw_args=0;
+my $alint_incr=0;
 my $task="";
 for (my $i=0; $i<@ARGV; $i++) {
     if ($ARGV[$i] eq "-top") {
@@ -102,6 +121,10 @@ for (my $i=0; $i<@ARGV; $i++) {
     }
     elsif ($ARGV[$i] =~ s/^--disk-space=//g) {
         $disk_space=$ARGV[$i];
+        next;
+    }
+    elsif ($ARGV[$i] =~ s/^--alint-incr=//g) {
+        $alint_incr=$ARGV[$i];
         next;
     }
     elsif ($ARGV[$i] =~ s/^--accurate=//g) {
@@ -161,10 +184,12 @@ chomp $pwd;
 my $dir=$pwd;
 $dir =~ s/\/[^\/]+$/\/${parallel_dir}_parallel/ if $task eq "lib" or $task eq "alint" or $task eq "alint_PO";
 write_run("$aspice $accurate @aspiceargs");
+my $skipaspice=is_skip_aspice($pwd);
+my $workdir=$pwd;
 if ($available > $disk_space) {
     # run aspice in $workdir
     `mkdir -p "$tmp"`;
-    my $workdir = `mktemp -d ${tmp}/aspice.XXXXXX` 
+    $workdir = `mktemp -d ${tmp}/aspice.XXXXXX` 
         or die "Can't mktemp -d ${tmp}/aspice.XXXXXX\n";
     chomp $workdir;
     if (defined ($ENV{LVE_DIRMODE})) {
@@ -175,14 +200,29 @@ if ($available > $disk_space) {
     }
     print DEBUG "push workdir $workdir" if $debugx;
     push @cleanMe, $workdir;
-    print STDERR "local_aspice: using ${host}:${workdir}\n";
-    system("$aspice $accurate -dir $workdir @aspiceargs");
+}
+
+    #save out file to tmp file before running aspice if out file exists.
+    if (! $skipaspice){
+       save_out_file($pwd);
+       if($workdir eq $pwd ){
+         # run aspice in current directory
+         print STDERR "local_aspice: using $ENV{PWD}\n";
+         system("$aspice $accurate @aspiceargs");
+       }else{
+         print STDERR "local_aspice: using ${host}:${workdir}\n";
+         system("$aspice $accurate -dir $workdir @aspiceargs");
+       }
+       update_out_file($pwd);
+    }else{
+       print STDERR "Information: SKIP ASPICE with alint-incr=1 and alint.in.* files have less run scenario\n";
+    }
     sleep 1;
     opendir (DW, "$workdir");
     my @dirs=readdir (DW);
     closedir (DW);
     foreach my $dir (@dirs) {
-        if ( $dir ne "." and $dir ne ".." and -d "$workdir/$dir" ) {
+        if ( $dir ne "." and $dir ne ".." and $dir ne "alint_parallel" and -d "$workdir/$dir" ) {
             opendir (DT, "$workdir/$dir"); # target
             my @names=grep (/\.names$/, readdir (DT));
             closedir DT;
@@ -207,61 +247,73 @@ if ($available > $disk_space) {
         my $bin=$pwd;
         my $task_dir=$task;
         $bin =~ s/.*\/$task_dir\.bin\.//;
-        my $symlink="$pwd.tmp";
-        unlink $symlink;
-        symlink $workdir, "$symlink";
-        sleep 1; # allow nfs to settle
-        if ($task eq "alint") {
-             system "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-dynamic-only=$alint_dynamic_only --alint-in='$dir/$task.in.$bin'";
+        if ($task eq "lib") {
+#            my $symlink="$pwd.tmp";
+#            unlink $symlink;
+#            symlink $workdir, "$symlink";
+#            sleep 1; # allow nfs to settle
 
-        }
-        elsif ($task eq "alint_PO") {
             my $in_file="$task.in.$bin";
-            print "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-in='$dir/$in_file' --is-PO=1\n";
-            system "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-in='$dir/$in_file' --is-PO=1";
-        }
-        elsif ($task eq "lib") {
-            my $in_file="$task.in.$bin";
-            system "lve_raw --fulcrum-pdk-root=$ENV{FULCRUM_PDK_PACKAGE_ROOT} --task=$task --root='$root_target_dir' --dir='$dir' --cell='$cellname' --mode=$mode --local-props='$local_props' --alint-in='$dir/$in_file'";
-        }
-        if ($clean_trace) { 
-            #alint's next step is to do bump chek. We need trace file to measure bumps. Bump check will clean trace file after finished.
-            if($task eq "lib"){
+            system "lve_raw  --fulcrum-pdk-root=$ENV{FULCRUM_PDK_ROOT} --task=$task --root='$root_target_dir' --dir='$dir' --cell='$cellname' --mode=$mode --local-props='$local_props' --alint-in='$dir/$in_file'";
+            if ($clean_trace) { 
                 if ( -f "$dir/${task}.raw.$bin") {
                     my $fail=`grep -c "^FAIL" "$dir/${task}.raw.$bin"`;
-                    chomp $fail;
-                    $clean_trace = 0 if $fail > 0;
-                    $fail=`grep -c "FAIL" "$dir/threshresp.result.$bin"`;
                     chomp $fail;
                     $clean_trace = 0 if $fail > 0;
                 }
                 else {
                     $clean_trace = 0;
                 }
-            }elsif($task eq "alint_PO"){
+            }
+            if($clean_trace==0){
+              zip_rsync_trace_files($workdir, $pwd);
+            }
+            system("rm -rf $workdir") if($workdir ne $pwd);
+#            unlink $symlink;
+        }
+
+        if (($task eq "alint") or ($task eq "alint_PO")) {
+           #zip trace and rsync first to save inode and disk space
+           zip_rsync_trace_files($workdir, $pwd);
+           system("rm -rf $workdir") if($workdir ne $pwd);
+           if ($task eq "alint") {
+             print "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-dynamic-only=$alint_dynamic_only --alint-in='$dir/$task.in.$bin'\n";
+             system "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-dynamic-only=$alint_dynamic_only --alint-in='$dir/$task.in.$bin'";
+          }
+          elsif ($task eq "alint_PO") {
+            my $in_file="$task.in.$bin";
+            print "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-in='$dir/$in_file' --is-PO=1\n";
+            system "lve_threshresp --dir='$dir' --node-props='$node_props' --alint-in='$dir/$in_file' --is-PO=1";
+          }
+          if ($clean_trace) { 
+            #alint's next step is to do bump chek. We need trace file to measure bumps. Bump check will clean trace file after finished.
+            if($task eq "alint_PO"){
                     my $fail=`grep -c "FAIL" "$dir/threshresp.result.$bin"`;
                     chomp $fail;
                     $clean_trace = 0 if $fail > 0;
             }else{
                 $clean_trace = 0;
             }
+          }
+          if($clean_trace){
+              opendir(D, "$pwd");
+              my @dirs=readdir(D);
+              closedir (D);
+              foreach my $dir (@dirs){
+                if(-d $dir and $dir !~/^\./){
+                  my $trace_file="$workdir/$dir/aspice_trace.zip";
+                  system("rm -f $trace_file") if(-e $trace_file);
+                }
+              }
+          }
         }
-        if ($clean_trace) {
-            system "rsync -aH --exclude='*.trace' --exclude='*.names' '$workdir/' '$pwd'";
-        }
-        else {
-            system "rsync -aH '$workdir/' '$pwd'";
-        }
-        unlink $symlink;
     }
     else {
-        system("cp --preserve --preserve=links --recursive $workdir/. .");
+        system("cp --preserve --preserve=links --recursive $workdir/. .") if ($workdir ne $pwd);
     }
-} else {
-    # run aspice in current directory
-    print STDERR "local_aspice: using $ENV{PWD}\n";
-    system("$aspice $accurate @aspiceargs");
-}
+
+
+
 if (defined ($ENV{LVE_SGID}) and $ENV{LVE_SGID} != 0) {
     system ("find '$pwd' '$dir' \\! -group $ENV{LVE_GRPNAME} -print0 | xargs -r -0 chgrp $ENV{LVE_GRPNAME}");
     my $gmod=sprintf("%o", $ENV{LVE_DIRMODE});
@@ -272,6 +324,7 @@ if (defined ($ENV{LVE_SGID}) and $ENV{LVE_SGID} != 0) {
 
 # clean $workdir (and $tmp if created)
 cleanUp();
+
 
 # return number of megabytes given a memory size string
 sub getNumMegabytesFromMemorySizeStr {
@@ -309,3 +362,160 @@ sub write_run {
     close RUN;
     system("chmod +x run");
 }
+
+sub archive_files{
+  my($dir,$archivefile, @filelist)=@_;
+  my $zip = Archive::Zip->new;
+  foreach my $f (@filelist){
+    next if(!-e "$dir/$f");
+    $zip->addFile("$dir/$f", $f);
+  }
+  unless ( $zip->writeToFileNamed("$dir/$archivefile") == AZ_OK ) {
+    die "Error: zip write error $archivefile";
+  }
+  return   "$dir/$archivefile";
+}
+
+
+sub zip_rsync_trace_files{
+  my ($workdir, $to_dir)=@_;
+  opendir(D, $workdir);
+  my @dirs=readdir(D);
+  closedir (D);
+  foreach my $dir (@dirs){
+    if(-d $dir and $dir !~/^\./){
+      #archive *.trace, *.names and *.resp files
+      opendir(D, "$workdir/$dir");
+      my @files=readdir(D);
+      closedir (D);
+      my @archive_spice=();
+      foreach my $f (@files) {
+        if($f =~ /\.(trace|names)$/){
+            archive_addfile("$to_dir/$dir/aspice_trace.zip", "$workdir/$dir/$f");
+        }
+      }
+      if($workdir eq $to_dir){
+        system("rm -f '$workdir/$dir/'*.names");
+        system("rm -f '$workdir/$dir/'*.trace");
+      }
+    }
+  }
+  if($workdir ne $to_dir){
+    system "rsync -aH  --exclude='*.trace' --exclude='*.names' '$workdir/' '$to_dir'";
+  }
+}
+
+sub save_out_file{
+  my ($bindir)=@_;
+  return if(! $alint_incr);
+  opendir(D, $bindir);
+  my @dirs=readdir(D);
+  closedir (D);
+  foreach my $dir (@dirs){
+    if(-d $dir and $dir !~/^\./){
+      if (-e "$bindir/$dir/out"){
+        system('gzip','-f', "$bindir/$dir/out");
+        system('mv', '-f', "$bindir/$dir/out.gz", "$bindir/$dir/out.tmp.gz");
+      }elsif (-e "$bindir/$dir/out.gz"){
+        system('mv', '-f', "$bindir/$dir/out.gz", "$bindir/$dir/out.tmp.gz");
+      }
+    }
+  }
+}
+sub update_out_file{
+    my ($bindir)=@_;
+    opendir(D, $bindir);
+    my @dirs=readdir(D);
+    closedir (D);
+    foreach my $dir (@dirs){
+      if(-d $dir and $dir !~/^\./){
+        if (-e "$bindir/$dir/out.tmp.gz"){
+           my %scenarios;
+           #append out file if exists.
+           open(ORGF, "gzip -cd \'$bindir/$dir/out.tmp.gz\'|");
+           while(my $l=<ORGF>){
+              if($l=~/Alint \S+ simulation/){
+                my $sce=$l;
+                $scenarios{$sce}=$l;
+                while($l=<ORGF>){
+                  $scenarios{$sce}.=$l;
+                  last if ($l=~/Total \S+ scenarios/);
+                }
+              }
+           }
+           close(ORGF);
+           if(! -e "$bindir/$dir/out"){
+              system('mv', '-f', "$bindir/$dir/out.tmp.gz", "$bindir/$dir/out.gz");
+              next;
+           }
+           system('mv', '-f', "$bindir/$dir/out", "$bindir/$dir/out.tmp1");
+           open(OF, ">$bindir/$dir/out");
+           my $finish_time="";
+           open(NEWF, "<$bindir/$dir/out.tmp1");
+           while(my $l=<NEWF>){
+              if($l=~/Alint \S+ simulation/){
+                my $sce=$l;
+                $scenarios{$sce}=$l;
+                while($l=<NEWF>){
+                  $scenarios{$sce}.=$l;
+                  last if ($l=~/Total \S+ scenarios/);
+                }
+              }elsif($l=~/Alint simulation of \S+ finished/){
+                $finish_time=$l;
+              }else{
+                print OF $l;
+              }
+           }
+           close(NEWF);
+           foreach my $sce (sort(keys %scenarios)){
+              print OF  $scenarios{$sce};                 
+           }
+           print OF $finish_time;
+           close(OF);
+           unlink "$bindir/$dir/out.tmp.gz";
+           unlink "$bindir/$dir/out.tmp1";
+        }
+        system('gzip','-f', "$bindir/$dir/out") if (-e "$bindir/$dir/out");
+        system('gzip','-f', "$bindir/$dir/err") if (-e "$bindir/$dir/out");
+      }
+    }
+    if(($task eq "alint" or $task eq "alint_PO") and $alint_incr){
+      my $bin=0;
+      if($bindir=~/\.bin\.(\S+)$/){
+        $bin=$1;
+      }
+      my $in_file="$task.in.$bin";
+      #update alint.in to full set
+      if(-e "$dir/$in_file.new"){
+        system('mv', '-f', "$dir/$in_file", "$dir/$in_file.diff");
+        system('mv', '-f', "$dir/$in_file.new", "$dir/$in_file");
+      }
+      
+    }
+
+}
+
+sub is_skip_aspice{
+  my ($bindir)=@_;
+  if(($task eq "alint" or $task eq "alint_PO") and $alint_incr){
+      my $bin=0;
+      if($bindir=~/\.bin\.(\S+)$/){
+        $bin=$1;
+      }
+      my $in_file="$task.in.$bin";
+      #update alint.in to full set
+      if(open(INF, "<$dir/$in_file")){
+        #check if we need to run aspice or not
+        while(<INF>){
+          return 0 if(/leakage\s+1/);
+          return 0 if(/(bumpTau|delayTau|threshTau|threshPercent)\s+(\S+)/);          
+        }
+        #now we want to skip aspice
+        system('mv', '-f', "$dir/$in_file", "$dir/$in_file.diff");
+        system('mv', '-f', "$dir/$in_file.new", "$dir/$in_file");
+        return 1;
+      }
+    }
+    return 0;
+}
+

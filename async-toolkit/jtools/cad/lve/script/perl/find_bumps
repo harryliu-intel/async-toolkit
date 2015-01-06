@@ -11,29 +11,48 @@ use LveStatus;
 
 # pick bound to look for
 my $report_nodes = 0;
-if (@ARGV && $ARGV[0] eq "--nodes") { $report_nodes = 1; shift; }
-@ARGV == 2 or die "USAGE: find_bumps [--nodes] max_ok_bump cc\n";
+my $key="bump";
+my $node="node";
+my $fail=0;
+while (@ARGV && $ARGV[0] =~ /^--/) {
+    if ($ARGV[0] eq "--nodes") { $report_nodes = 1; }
+    elsif ($ARGV[0] =~ /--key=(\S+)/ ) { $key = $1; }
+    elsif ($ARGV[0] =~ /--fail/) { $fail = 1; }
+    shift;
+}
+@ARGV==2 or die "USAGE: find_bumps [--nodes] [--fail] [--key=[bump|inv_bump|resp|leak|slow_delay|fast_delay|slow_slew|fast_slew|skew]] max_ok_bump cc\n";
 my $bump_bound = $ARGV[0];
 my $cc = $ARGV[1];
+if ($key eq "resp") { $node = "fanout"; }
 
 # find all bumps of greater than bump_bound
-open IN, "find . -noleaf -name alint.raw|" or die "ERROR: can't find alint.raw\n";
+open IN, "find -L . -noleaf -name alint.raw|" or die "ERROR: can't find alint.raw\n";
 my %cells = ();
 my %nodes = ();
 while (my $file = <IN>) {
     my @raw = get_lines("$file");
     foreach my $line (sort @raw) {
         my ($status, $task, $cell, $path, %results) = parse_raw_line($line);
-        if (defined $results{bump_up} && defined $results{bump_dn}) {
-            my ($bump_dn) = split("@",$results{bump_dn});
-            my ($bump_up) = split("@",$results{bump_up});
-            if ($results{cc} != $cc) { next; }
-            if ($bump_up>$bump_bound || $bump_dn>$bump_bound) {
+        if ($fail && !($status eq "FAIL")) { next; }
+        if (!($key eq "leak") && (!defined($results{cc}) || $results{cc} != $cc)) { next; }
+        if (!defined($results{$node})) { next; }
+        if (defined($results{$key . "_up"})) {
+            my ($bump) = split("@",$results{$key . "_up"});
+            if (!($bump eq "NA") && $bump>$bump_bound) {
                 $cells{$cell}=1;
-                my $bump = $bump_up>$bump_dn ? $bump_up : $bump_dn;
-                if (!defined($nodes{"$cell/$results{node}"}) ||
-                    $bump > $nodes{"$cell/$results{node}"}) {
-                    $nodes{"$cell/$results{node}"} = $bump;
+                if (!defined($nodes{"$cell/$results{$node}"}) ||
+                    $bump > $nodes{"$cell/$results{$node}"}) {
+                    $nodes{"$cell/$results{$node}"} = $bump;
+                }
+            }
+        }
+        if (defined($results{$key . "_dn"})) {
+            my ($bump) = split("@",$results{$key . "_dn"});
+            if (!($bump eq "NA") && $bump>$bump_bound) {
+                $cells{$cell}=1;
+                if (!defined($nodes{"$cell/$results{$node}"}) ||
+                    $bump > $nodes{"$cell/$results{$node}"}) {
+                    $nodes{"$cell/$results{$node}"} = $bump;
                 }
             }
         }
