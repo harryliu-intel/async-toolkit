@@ -82,6 +82,7 @@ sub conon_path {
     chomp $ret;
     chdir $pwd;
     $ret =~ s:^/mnt/fulcrum/home/:/home/:;
+    $ret =~ s:^/nfs/site/disks/local_tools/:/p/rrc/tools/:;
     $ret;
 }
 

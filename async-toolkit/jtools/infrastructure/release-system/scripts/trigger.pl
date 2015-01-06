@@ -27,6 +27,7 @@ sub usage {
     print STDERR "      list of pdk packages\n";
     print STDERR "      a testbench package file\n";
     print STDERR "      the literal 'reindex'\n";
+    print STDERR " IMPORTANT: use of branch disabled. Only rrc branch may be built and it is treated as main.\n";
     exit 1;
 }
 
@@ -85,7 +86,7 @@ GetOptions (
 	"host=s" => \$rhost,
 	"timeout|t=n" => \$to,
         "os=s" => \$os,
-        "branch=s" => \$branch,
+#        "branch=s" => \$branch,
         "change=i" => \$change,
         "cc=s" => \$cc,
 ) or usage;

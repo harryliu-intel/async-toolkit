@@ -242,6 +242,7 @@ all:qresource
 all:qtrace
 all:quake_dc
 all:quake_icc
+all:report_quake_stats
 all:quotacmp
 all:quotagraph
 all:raw2db

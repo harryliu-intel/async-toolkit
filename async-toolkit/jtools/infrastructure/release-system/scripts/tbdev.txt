@@ -1,4 +1,4 @@
-tb-html2pdf 249331
+tb-html2pdf 300305
 tb-pug 245804
-tb-registers 253098
-tb-lintra 2096
+tb-registers 289060
+tb-lintra 271516

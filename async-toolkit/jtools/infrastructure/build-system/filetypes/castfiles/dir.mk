@@ -130,7 +130,7 @@ $(CURR_CELL_DIR)/.nodes.latest$(ROUTED_SUFFIX):
 $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX): $(CURR_CELL_DIR)/.nodes.latest$(ROUTED_SUFFIX)
 	$(CASTFILES_UPDATE_SIGNATURE)
 # cast dependencies and environments
-$(CURR_CELL_DIR)/cast.d $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX)
+$(CURR_CELL_DIR)/cast.d : $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX)
 	#TASK=cast_deps CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	dir='$(@D)'; \
 	task=cast_deps && $(CASTFILES_ENQUEUE_TASK) && \
@@ -151,6 +151,7 @@ $(CURR_CELL_DIR)/cast.d $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_
 	  '--cdl-mos-parameters=' \
 	  '$(JFLAT_NAME_MAP)' \
 	  "--cdl-translate=cadence" "--hsim-translate=gds2" "--hsim-isolate-cell" "--query-translate=none" \
+	  --hsim-rand-seed=0 --hsim-rand-length=4 \
 	  "--query-tasks=prs,transistors=gate.STATICIZER.0:gate.STATICIZER.1,routing,density,tau,external_nodes=im:di:re" \
 	  "--query-separator=," \
 	  --query-no-header \
@@ -172,6 +173,53 @@ $(CURR_CELL_DIR)/cast.d $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_
 	 cdlsize265 $$dir/jflat$(ROUTED_SUFFIX)/cdl/default.latest; \
 	fi; \
 	$(CASTFILES_DEQUEUE_TASK)
+
+
+$(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/.nodes$(ROUTED_SUFFIX)
+	#TASK=cast_deps CELL=$(call GET_CAST_FULL_NAME,$(@D))
+	dir='$(@D)'; \
+	task=cast_deps && $(CASTFILES_ENQUEUE_TASK) && \
+	if [[ ( -n "$(call LVE_SKIP,deps)" ) && ( -e '$@' ) ]] ; then exit; fi; \
+	until [[ ( -e "$$dir/.cellname" ) || ( "$$dir" == "/" ) ]]; do \
+		dir="$$(dirname "$$dir")"; done; \
+	target="$$dir/cast.d"; \
+	if [[ ( -n "$(call LVE_SKIP,deps)" ) && ( -e "$$target" ) ]] ; then exit; fi; \
+	QB_DIAG_FILE="$$target.diag" QB_RUN_NAME='lve_jflat' \
+	  $(EXEC_PACKAGE) $(JFLAT) \
+	  $(JFLAT_ROUTED) \
+	  "--cell=$(call GET_CAST_FULL_NAME,$(@D)):*" \
+	  "--cast-path=$(CAST_PATH)" \
+	  "--tool=$(JFLAT_TOOLS)" \
+	  "--nodes=$$(cat '$<')" \
+	  "--internalWires=$(INTERNAL_WIRES)" \
+	  "--internalRules=$(INTERNAL_RULES)" \
+	  '--cdl-mos-parameters=' \
+	  '$(JFLAT_NAME_MAP)' \
+	  "--cdl-translate=cadence" "--hsim-translate=gds2" "--hsim-isolate-cell" "--query-translate=none" \
+	  --hsim-rand-seed=0 --hsim-rand-length=4 \
+	  "--query-tasks=prs,transistors=gate.STATICIZER.0:gate.STATICIZER.1,routing,density,tau,external_nodes=im:di:re" \
+	  "--query-separator=," \
+	  --query-no-header \
+	  --ignore-feedback \
+	  "--output-suffix=.latest" \
+	  "--output-dir=$$dir/jflat$(ROUTED_SUFFIX)" \
+	  "--cast-deps=$$target.tmp" \
+	  "--cast-deps-target=$$target" && \
+	if [ -f "$$target.tmp" ]; then mv "$$target.tmp" "$$target"; fi && \
+	if [ -f "$$dir/jflat$(ROUTED_SUFFIX)/node-props/default.latest" ]; then \
+		mkdir -p "$$dir/jflat$(ROUTED_SUFFIX)/local-nodes" && \
+		$(GNUGAWK) '{ if ($$1 == "SIGNOFF") c = 18; else c = 17; \
+		              if ($$c == "INTERNAL") { $$c = ""; print $$0 } }' < \
+			"$$dir/jflat$(ROUTED_SUFFIX)/node-props/default.latest" | \
+		$(GNUSED) -e 's/ \+/ /g' -e 's/ $$//' > \
+			"$$dir/jflat$(ROUTED_SUFFIX)/local-nodes/default.latest"; \
+	fi && \
+	if [ "$(SIXTYFIVEMODE)" = "1" ]; then \
+	 cdlsize265 $$dir/jflat$(ROUTED_SUFFIX)/cdl/default.latest; \
+	fi; \
+	$(CASTFILES_DEQUEUE_TASK)
+
+
 
 $(CURR_CELL_DIR)/%/slurp.mk : $(CURR_SLURP_DIR)/%/df2.d \
                               $(CURR_CELL_DIR)/%/df2.d \

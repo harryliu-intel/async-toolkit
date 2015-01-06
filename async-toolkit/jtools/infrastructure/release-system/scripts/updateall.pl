@@ -72,7 +72,7 @@ if ($toolhome =~ m:/p/rrc/tools/: or $toolhome eq "") {
     die "You must be tsbuild user to update global db's"
         if ( ! -w "/p/rrc/tools/fulcrum/config" );
     foreach my $arch ( "intel-x86_64") {
-       system "P4PORT=10.232.36.77:1666 P4USER=system P4CONFIG= P4CLIENT=system-$arch-fulcrum p4 sync 2>/dev/null";
+       system "P4PORT=ssl:p4proxy19.devtools.intel.com:2510 P4USER=sys_system P4CONFIG= P4CLIENT=system-$arch-fulcrum p4 sync 2>/dev/null";
     }
 }
 

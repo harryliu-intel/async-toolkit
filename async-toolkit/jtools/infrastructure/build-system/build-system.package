@@ -60,7 +60,7 @@ share/Makefile Makefile 664 p
 share/dir_exit.mk dir_exit.mk 664 p
 share/tools/autodep/rules.mk tools/autodep/rules.mk 664 p
 share/tools/autodep/vars.mk tools/autodep/vars.mk 664 p
-share/tools/autodep/autodep-0.2.1-fulcrum.tar.gz tools/autodep/autodep-0.2.1-fulcrum.tar.gz 664 p
+#share/tools/autodep/autodep-0.2.1-fulcrum.tar.gz tools/autodep/autodep-0.2.1-fulcrum.tar.gz 664 p
 share/commands.mk commands.mk 664 p
 share/runindir.bash runindir.bash 775 p
 share/cononicalizepath.zsh cononicalizepath.zsh 775 p

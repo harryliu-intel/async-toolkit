@@ -66,15 +66,16 @@ CASTFILES_UPDATE_SIGNATURE = \
 	   fi; \
 	$(CASTFILES_DEQUEUE_TASK)
 
-
-SPICE_TYPES := nogeometry estimated extracted extracted-rcw extracted-rcb extracted-cwo extracted-cbe \
-    accurate accurate-rcx accurate-rcb accurate-cwo accurate-cbe extracted-m10typ accurate-m10typ custom totem
+SPICE_TYPES := nogeometry estimated extracted  \
+    accurate custom totem \
+    extracted$(EXTRACT_DIR) accurate$(EXTRACT_DIR) totem$(EXTRACT_DIR)
 #1) run directory
 #2) default params
 #3) N
-GET_RUN_PATH = $(filter-out /%,$(foreach type,$(SPICE_TYPES),$(call GET_LAST_WORD,$(subst $(type)/, ,$(1)))))
-GET_SPICE_PATH = $(patsubst %/$(call GET_RUN_PATH,$(1)),%,$(1))
-GET_SPICE_TYPE = $(call GET_LAST_WORD,$(subst /, ,$(call GET_SPICE_PATH,$(1))))
+GET_SPICE_PATH = $(call GET_LAST_WORD,$(sort $(filter-out $(1),$(foreach type,$(SPICE_TYPES),$(patsubst %/$(call GET_LAST_WORD,$(subst /$(type)/, ,$(1))),%,$(1))))))
+GET_RUN_PATH = $(patsubst $(call GET_SPICE_PATH,$(1))/%,%,$(1))
+GET_EXTRACT_DIR = $(call GET_LAST_WORD,$(subst /, ,$(call GET_SPICE_PATH,$(1))))
+GET_SPICE_TYPE = $(firstword $(subst -, ,$(call GET_EXTRACT_DIR,$(1))))
 GET_NTH_RUN_PARAM_IMPL = $(word $(2),$(subst /, ,$(call GET_RUN_PATH,$(1))))
 GET_NTH_RUN_PARAM = $(if $(strip $(call GET_NTH_RUN_PARAM_IMPL,$(1),$(3))),$(call GET_NTH_RUN_PARAM_IMPL,$(1),$(3)),$(word $(3),$(2)))
 LVE_SKIP = $(findstring $(1),$(LVE_SKIP_TASKS))
@@ -146,7 +147,6 @@ RENAME        := rename
 LEF_RENAME    := lef_rename
 DEF_RENAME    := def_rename
 SPICE_REDUCE  := spice_reduce
-SPICE2SPICE   := spice2spice --probe-ports=$(PROBE_PORTS) --probe-top-ports=$(PROBE_TOP_PORTS) --probe-gates=$(PROBE_GATES)
 PARSECELLNAME := $(LVE_PACKAGE_ROOT)/share/script/sh/util/parsecellname
 MKCDSWD       := mkcdswd
 RUNINCDSWD    := runincdswd
@@ -180,7 +180,7 @@ JTIMER        := jtimer $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 JLVS          := jlvs $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CAST_QUERY    := cast_query $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 CAST2CDL      := cast2cdl $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
-CDL_RENAMER   := cdl_renamer $(GLOBAL_JAVA_LOW_FLAGS) $(GLOBAL_JRE_FLAGS)
+CDL_RENAMER   := cdl_renamer $(GLOBAL_JAVA_LOW_FLAGS) $(GLOBAL_JRE_FLAGS) --layout-net-prefix='ln\#' --layout-inst-prefix='ld\#'
 CAST2SKILL    := cast2skill $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 GENERATEPLTSUBTYPES := generate_plt_subtypes $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 GDSIIWRITE    := gdsIIWrite $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
@@ -1035,7 +1035,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
+	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
@@ -1067,6 +1069,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1088,15 +1091,17 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' \
-	&& QRSH_FLAGS="$(PACKAGE_FLAGS) -l starrc=1 $(EXTRACT_FLAGS)" \
+	&& QRSH_FLAGS="$(PACKAGE_FLAGS) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2b.diag" QB_RUN_NAME='lve_spef2b' \
 	  qb $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=1 \
+	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1128,6 +1133,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1171,8 +1177,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
-	#TASK=$(EXTRACT_STARRC)  MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
+	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
+	echo "#TASK=$(EXTRACT_STARRC)  MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	mkdir -p '$(@D)'; \
 	status=0; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
 	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
@@ -1191,7 +1198,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
+	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1225,6 +1234,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1247,16 +1257,18 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
-	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1 $(EXTRACT_FLAGS)" \
+	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
 	  qb $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1290,6 +1302,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1322,6 +1335,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1354,6 +1368,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1386,6 +1401,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1411,7 +1427,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	if [[ -f "$(@D)/cell.spice_gds2.tmp" ]]; then mv -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2"; fi; \
 	if [ $$? == 0 ] ; then \
 		touch '$(@D)/cell.spice_gds2'; \
-	elif [[ -n $$(grep 'NVN FAILED' "$(@D)/extract.err") ]] && !$(IGNORE_NVN) ; then \
+	elif [[ $(IGNORE_NVN) == 0 ]] && grep -q 'NVN FAILED' "$(@D)/extract.err" ; then \
 		rm -f "$(@D)/cell.spice_gds2" ; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
 	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
@@ -1441,8 +1457,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list
-	#TASK=$(EXTRACT_STARRC) MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
+	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
+	echo "#TASK=$(EXTRACT_STARRC) MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	mkdir -p '$(@D)'; \
 	status=0; \
 	echo "$(BLACKBOX_HERCULES)" > '$(@D)/blackbox-hercules'; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
@@ -1462,7 +1479,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
+	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1498,6 +1517,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1521,17 +1541,19 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
-	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1 $(EXTRACT_FLAGS)" \
+	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
 	  qb $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1567,6 +1589,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1621,6 +1644,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1655,6 +1679,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1689,6 +1714,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1723,6 +1749,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --delete=$(DELETE_EXTRACT_DIR) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1749,7 +1776,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	if [[ -f "$(@D)/cell.spice_gds2.tmp" ]]; then mv -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2"; fi; \
 	if [ $$? == 0 ] ; then \
 		touch '$(@D)/cell.spice_gds2'; \
-	elif [[ -n $$(grep 'NVN FAILED' "$(@D)/extract.err") ]] && !$(IGNORE_NVN) ; then \
+	elif [[ $(IGNORE_NVN) == 0 ]] && grep -q 'NVN FAILED' "$(@D)/extract.err" ; then \
 		rm -f "$(@D)/cell.spice_gds2" ; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
 	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
@@ -1771,8 +1798,9 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spf: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
-	#TASK=$(EXTRACT_STARRC) MODE=totem$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
+	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
+	echo "#TASK=$(EXTRACT_STARRC) MODE=totem$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	mkdir -p '$(@D)'; \
 	status=0; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
 	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
@@ -1791,7 +1819,9 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --delete=0 \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
+	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1825,6 +1855,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --delete=0 \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1847,16 +1878,18 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
-	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1 $(EXTRACT_FLAGS)" \
+	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
 	  qb $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=0 \
+	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1890,6 +1923,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --delete=0 \
 	  --dfII-dir='$(DFII_DIR)' \
 	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
@@ -1913,7 +1947,9 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --task='stage2c' \
 	   '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	  rm -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2" "$(@D)/cell.spice_topcell"; \
-	cp "$$extract_dir/starRC/cell.spf" '$(@D)/cell.spf' ; \
+	$(SPICE_REDUCE) --mode=totem \
+	  --infile="$$extract_dir/starRC/cell.spf" \
+	  --outfile='$(@D)/cell.spf'; \
 	cp "$$extract_dir/starRC/cell.placement_info" '$(@D)/cell.placement_info' ; \
 	if [ "$(DELETE_EXTRACT_DIR)" != "0" ]; then /bin/rm -rf "$$extract_dir"; fi; \
 	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
@@ -1949,23 +1985,29 @@ $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry
 	  --translated-cdl='$@'
 	$(CASTFILES_DEQUEUE_TASK)
 
-# post-process spice file
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.spice_rename
-$(ROOT_TARGET_DIR)/%/cell.spice_rename: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
-	#TASK=spice2spice CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	if [ -s '$(@D)/cell.spice_topcell' ]; then \
-	   $(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$(@D)/cell.spice_topcell" "$@"; \
-	else \
-	   $(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@" ;\
-	fi
-
 # delete resistor size info for hsim
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.spice_hsim
-$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_rename
+ifeq ("$(GRAYBOX_MODE)", "")
+$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
 	#TASK=spice_reduce CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
-	$(SPICE_REDUCE) --infile="$?" --outfile="$@"
+	if [ -s '$(@D)/cell.spice_topcell' ]; then \
+	   $(SPICE_REDUCE) --infile="$(@D)/cell.spice_topcell" --outfile="$@"; \
+	else \
+	   $(SPICE_REDUCE) --infile="$?" --outfile="$@" ;\
+	fi
+else
+$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_topcell
+	#TASK=spice_reduce CELL=$(call GET_CAST_FULL_NAME,$(@D))
+	mkdir -p '$(@D)'
+	if [ -s '$(@D)/cell.spice_topcell' ]; then \
+	   $(SPICE_REDUCE) --infile="$(@D)/cell.spice_topcell" --outfile="$@"; \
+	else \
+	   $(SPICE_REDUCE) --infile="$?" --outfile="$@" ;\
+	fi
+endif
+
+
 
 # summarize starRC extract results
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.result
@@ -2404,53 +2446,53 @@ $(ROOT_TARGET_DIR)/%/drc.result: $(ROOT_TARGET_DIR)/%/drc.err $(ROOT_TARGET_DIR)
 
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.raw: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.result
 	#TASK=extract_raw MODE=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	$(RAWIFY) --task=extract --mode=totem --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
+	$(RAWIFY) --use-db=$(USEDB) --task=extract --mode=totem --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
 
 $(ROOT_TARGET_DIR)/%/extract.raw: $(ROOT_TARGET_DIR)/%/extract.result \
 	                          $(ROOT_TARGET_DIR)/%/cell.aspice
 	#TASK=extract_raw MODE=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	$(RAWIFY) --task=extract --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
+	$(RAWIFY) --use-db=$(USEDB) --task=extract --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
 
 $(ROOT_TARGET_DIR)/%/jlvs.raw: $(ROOT_TARGET_DIR)/%/jlvs.out $(ROOT_TARGET_DIR)/%/jlvs.err
 	#TASK=jlvs_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=jlvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=jlvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/hlvs.raw: $(ROOT_TARGET_DIR)/%/hlvs.result
 	#TASK=hlvs_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=hlvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=hlvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/lvs.raw: $(ROOT_TARGET_DIR)/%/lvs.result
 	#TASK=lvs_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=lvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=lvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/hdrc.raw: $(ROOT_TARGET_DIR)/%/hdrc.result
 	#TASK=hdrc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=hdrc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=hdrc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/antenna.raw: $(ROOT_TARGET_DIR)/%/antenna.result
 	#TASK=antenna_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=antenna --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=antenna --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/drc.raw: $(ROOT_TARGET_DIR)/%/drc.result
 	#TASK=drc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=drc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=drc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/frc.raw: $(ROOT_TARGET_DIR)/%/frc.result
 	#TASK=frc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --task=frc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=frc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 ### COVERAGE CHECK
