@@ -461,7 +461,7 @@ sub proteus_config {
         if exists $SS_r->{GS}{SPAR_DIR};
     print $fh "--lefdef-dir=$SS_r->{GS}{LEFDEF_DIR}\n"
         if exists $SS_r->{GS}{LEFDEF_DIR};
-    print $fh "--lve-path=$wdir/lve:/mnt/fulcrum/alta/lve/lve\n";
+    print $fh "--lve-path=$wdir/lve:/p/rrc/lve/lve\n"; # TODO: no absolute paths!
     print $fh "--output-dir=$wdir/proteus\n";
     print $fh "--scratch-dir=\n";
     print $fh "--base=$SS_r->{GS}{TOP}\n";
