@@ -1480,7 +1480,6 @@ endif # "$(HSIM_PRS_MAX_RES)" eq ""
 
 .PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out
 .PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.fsdb
-.PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.sig
 .PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.names
 .PRECIOUS: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.trace
 
@@ -1520,7 +1519,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.spice_hsim \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
-	  --print-nodes='Xenv.*' --measure-nodes="$$nodes" \
+	  --measure-nodes="$$nodes" \
 	  --delete=0 \
 	  --lve-root-dir='$(ROOT_TARGET_DIR)' \
 	  --sub-lve-root-dir='$(SUB_LVE_ROOT_DIR)' \
@@ -1531,33 +1530,12 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.spice_hsim \
 	&& if [ "${HSIM_DELETE}" = "1" ]; then /bin/rm -rf "$${working_dir}" ; fi;
 	$(CASTFILES_DEQUEUE_TASK)
 
-$(SPICE_DIR)/hsim/$(ENV)/%/hsim.sig: $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out
+$(SPICE_DIR)/hsim/$(ENV)/%/hsim.names $(SPICE_DIR)/hsim/$(ENV)/%/hsim.trace : $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out
 	$(CASTFILES_ENQUEUE_TASK)
-	if [[ $(call GET_SPICE_TYPE,$(@D)) == estimated || \
-	      $(call GET_SPICE_TYPE,$(@D)) == nogeometry ]] ; then \
-	  mksigs \
-	    --env '$(@D)/../../../../../../../../jflat$(ROUTED_SUFFIX)/hsim/$(call GET_NTH_RUN_PARAM,$(@D),$(DEFAULT_SPICE_PARAMS),2)' \
-	    --cdl '$(@D)/../../../../../../cell.spice_gds2' > '$(@D)/hsim.sig'; \
-        else \
-	  mksigs \
-	    --env '$(@D)/../../../../../../../../jflat$(ROUTED_SUFFIX)/hsim/$(call GET_NTH_RUN_PARAM,$(@D),$(DEFAULT_SPICE_PARAMS),2)' \
-	    --cdl '$(@D)/../../../../../../../cell.cdl_gds2' > '$(@D)/hsim.sig'; \
-        fi
-	$(CASTFILES_DEQUEUE_TASK)
-
-$(SPICE_DIR)/hsim/$(ENV)/%/hsim.names $(SPICE_DIR)/hsim/$(ENV)/%/hsim.trace : $(SPICE_DIR)/hsim/$(ENV)/%/hsim.sig
-	$(CASTFILES_ENQUEUE_TASK)
-	if [ `/bin/ls -l '$(@D)/hsim.fsdb' | awk '{print $$5}'` -le 1048576 ]; then \
-	   (cd '$(@D)'; \
-	   QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_fsdb2aplot' \
-	    $(EXEC_LOW_PACKAGE) fsdb2aplot --translate hsim.fsdb hsim ;\
-	   ) \
-	  else \
-	   (cd '$(@D)'; \
-	   QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_fsdb2aplot' \
-	    $(EXEC_LOW_PACKAGE) fsdb2aplot --translate --sig hsim.sig hsim.fsdb hsim ;\
-	   ) \
-	  fi
+	(cd '$(@D)'; \
+	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
+	 $(EXEC_LOW_PACKAGE) convert_trace --translate --fsdb hsim.fsdb hsim ;\
+	)
 	$(CASTFILES_DEQUEUE_TASK)
 
 # 10485760
@@ -1579,7 +1557,6 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.raw: $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/
 # XA (sadly, almost identical to HSIM, but is there no way to share the code?)
 .PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.out
 .PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.fsdb
-.PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.sig
 .PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.names
 .PRECIOUS: $(SPICE_DIR)/xa/$(ENV)/%/xa.trace
 
@@ -1619,7 +1596,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.spice_hsim \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
-	  --print-nodes='Xenv.*' --measure-nodes="$$nodes" \
+	  --measure-nodes="$$nodes" \
 	  --delete=0 \
 	  --lve-root-dir='$(ROOT_TARGET_DIR)' \
 	  --sub-lve-root-dir='$(SUB_LVE_ROOT_DIR)' \
@@ -1630,33 +1607,12 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.spice_hsim \
 	&& if [ "${HSIM_DELETE}" = "1" ]; then /bin/rm -rf "$${working_dir}" ; fi;
 	$(CASTFILES_DEQUEUE_TASK)
 
-$(SPICE_DIR)/xa/$(ENV)/%/xa.sig: $(SPICE_DIR)/xa/$(ENV)/%/xa.out
+$(SPICE_DIR)/xa/$(ENV)/%/xa.names $(SPICE_DIR)/xa/$(ENV)/%/xa.trace : $(SPICE_DIR)/xa/$(ENV)/%/xa.out
 	$(CASTFILES_ENQUEUE_TASK)
-	if [[ $(call GET_SPICE_TYPE,$(@D)) == estimated || \
-	      $(call GET_SPICE_TYPE,$(@D)) == nogeometry ]] ; then \
-	  mksigs \
-	    --env '$(@D)/../../../../../../../../jflat$(ROUTED_SUFFIX)/hsim/$(call GET_NTH_RUN_PARAM,$(@D),$(DEFAULT_SPICE_PARAMS),2)' \
-	    --cdl '$(@D)/../../../../../../cell.spice_gds2' > '$(@D)/xa.sig'; \
-        else \
-	  mksigs \
-	    --env '$(@D)/../../../../../../../../jflat$(ROUTED_SUFFIX)/hsim/$(call GET_NTH_RUN_PARAM,$(@D),$(DEFAULT_SPICE_PARAMS),2)' \
-	    --cdl '$(@D)/../../../../../../../cell.cdl_gds2' > '$(@D)/xa.sig'; \
-        fi
-	$(CASTFILES_DEQUEUE_TASK)
-
-$(SPICE_DIR)/xa/$(ENV)/%/xa.names $(SPICE_DIR)/xa/$(ENV)/%/xa.trace : $(SPICE_DIR)/xa/$(ENV)/%/xa.sig
-	$(CASTFILES_ENQUEUE_TASK)
-	if [ `/bin/ls -l '$(@D)/xa.fsdb' | awk '{print $$5}'` -le 1048576 ]; then \
-	   (cd '$(@D)'; \
-	   QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_fsdb2aplot' \
-	    $(EXEC_LOW_PACKAGE) fsdb2aplot --scale-time 1e-6 --translate xa.fsdb xa ;\
-	   ) \
-	  else \
-	   (cd '$(@D)'; \
-	   QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_fsdb2aplot' \
-	    $(EXEC_LOW_PACKAGE) fsdb2aplot --scale-time 1e-6 --translate --sig xa.sig xa.fsdb xa ;\
-	   ) \
-	  fi
+	(cd '$(@D)'; \
+	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
+	 $(EXEC_LOW_PACKAGE) convert_trace --scale-time 1e-6 --translate --fsdb xa.fsdb xa ;\
+	)
 	$(CASTFILES_DEQUEUE_TASK)
 
 # summary for transient xa
@@ -1677,7 +1633,6 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.raw: $(CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/$(EN
 # HSPICE
 .PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out
 .PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.csdf
-.PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.sig
 .PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.names
 .PRECIOUS: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.trace
 
@@ -1717,7 +1672,7 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.spice_hsim \
 	  --rc-reduction=$$reduce \
 	  --minC=$(MINC) --minR=$(MINR) \
 	  --run-time=$$time --process-corner=$$corner --vdd=$$true \
-	  --print-nodes='Xenv.*' --measure-nodes="$$nodes" \
+	  --measure-nodes="$$nodes" \
 	  --delete=0 \
 	  --lve-root-dir='$(ROOT_TARGET_DIR)' \
 	  --sub-lve-root-dir='$(SUB_LVE_ROOT_DIR)' \
@@ -1728,33 +1683,12 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.spice_hsim \
 	&& if [ "${HSIM_DELETE}" = "1" ]; then /bin/rm -rf "$${working_dir}" ; fi;
 	$(CASTFILES_DEQUEUE_TASK)
 
-$(SPICE_DIR)/hspice/$(ENV)/%/hspice.sig: $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out
+$(SPICE_DIR)/hspice/$(ENV)/%/hspice.names $(SPICE_DIR)/hspice/$(ENV)/%/hspice.trace : $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out
 	$(CASTFILES_ENQUEUE_TASK)
-	if [[ $(call GET_SPICE_TYPE,$(@D)) == estimated || \
-	      $(call GET_SPICE_TYPE,$(@D)) == nogeometry ]] ; then \
-	  mksigs \
-	    --env '$(@D)/../../../../../../../../jflat$(ROUTED_SUFFIX)/hsim/$(call GET_NTH_RUN_PARAM,$(@D),$(DEFAULT_SPICE_PARAMS),2)' \
-	    --cdl '$(@D)/../../../../../../cell.spice_gds2' > '$(@D)/hspice.sig'; \
-        else \
-	  mksigs \
-	    --env '$(@D)/../../../../../../../../jflat$(ROUTED_SUFFIX)/hsim/$(call GET_NTH_RUN_PARAM,$(@D),$(DEFAULT_SPICE_PARAMS),2)' \
-	    --cdl '$(@D)/../../../../../../../cell.cdl_gds2' > '$(@D)/hspice.sig'; \
-        fi
-	$(CASTFILES_DEQUEUE_TASK)
-
-$(SPICE_DIR)/hspice/$(ENV)/%/hspice.names $(SPICE_DIR)/hspice/$(ENV)/%/hspice.trace : $(SPICE_DIR)/hspice/$(ENV)/%/hspice.sig
-	$(CASTFILES_ENQUEUE_TASK)
-	if [ `/bin/ls -l '$(@D)/hspice.csdf' | awk '{print $$5}'` -le 1048576 ]; then \
-	  (cd '$(@D)'; \
-	   QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_csdf2aplot' \
-	    $(EXEC_LOW_PACKAGE) csdf2aplot --translate hspice.csdf hspice ;\
-	  ) \
-	  else \
-	  (cd '$(@D)'; \
-	   QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_csdf2aplot' \
-	    $(EXEC_LOW_PACKAGE) csdf2aplot --translate --sig hspice.sig hspice.csdf hspice ;\
-	  ) \
-	  fi
+	(cd '$(@D)'; \
+	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
+	 $(EXEC_LOW_PACKAGE) convert_trace --translate --csdf hspice.csdf hspice ;\
+	)
 	$(CASTFILES_DEQUEUE_TASK)
 
 # 10485760
@@ -1803,7 +1737,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/totem.out: $(SPICE_DIR)/cell.spf \
 	  $(PRS_DELAY) \
 	  $(CAP_LOAD) \
 	  --port-props='$(word 4,$^)' \
-	  --print-nodes='Xenv.*' --measure-nodes="$$nodes" \
+	  --measure-nodes="$$nodes" \
 	  --lve-dir='$(ROOT_TARGET_DIR)' \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	   2>&1 > "$@" && \
@@ -1840,7 +1774,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/cmm.out: $(SPICE_DIR)/hsim/$(ENV)/%/totem.out \
 	  $(PRS_DELAY) \
 	  $(CAP_LOAD) \
 	  --port-props='$(word 2,$^)' \
-	  --print-nodes='Xenv.*' --measure-nodes="$$nodes" \
+	  --measure-nodes="$$nodes" \
 	  --lve-dir='$(ROOT_TARGET_DIR)' \
 	  --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT)' \
 	   2>&1 > "$@" && \

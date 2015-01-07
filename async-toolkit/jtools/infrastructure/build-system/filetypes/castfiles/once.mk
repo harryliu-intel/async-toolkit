@@ -147,6 +147,7 @@ RENAME        := rename
 LEF_RENAME    := lef_rename
 DEF_RENAME    := def_rename
 SPICE_REDUCE  := spice_reduce
+SPICE2SPICE   := spice2spice --probe-ports=$(PROBE_PORTS) --probe-top-ports=$(PROBE_TOP_PORTS) --probe-gates=$(PROBE_GATES)
 PARSECELLNAME := $(LVE_PACKAGE_ROOT)/share/script/sh/util/parsecellname
 MKCDSWD       := mkcdswd
 RUNINCDSWD    := runincdswd
@@ -1960,7 +1961,6 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	st=$$status; \
 	exit $$st
 
-
 # rename spice file from cast to gds2 names
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2
 $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/estimated/cell.spice
@@ -1985,29 +1985,23 @@ $(ROOT_TARGET_DIR)/%/nogeometry/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/nogeometry
 	  --translated-cdl='$@'
 	$(CASTFILES_DEQUEUE_TASK)
 
+# post-process spice file
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.spice_rename
+$(ROOT_TARGET_DIR)/%/cell.spice_rename: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
+	#TASK=spice2spice CELL=$(call GET_CAST_FULL_NAME,$(@D))
+	mkdir -p '$(@D)'
+	if [ -s '$(@D)/cell.spice_topcell' ]; then \
+	   $(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$(@D)/cell.spice_topcell" "$@"; \
+	else \
+	   $(SPICE2SPICE) --top='$(call GET_GDS2_CDL_NAME,$(@D))' "$?" "$@" ;\
+	fi
+
 # delete resistor size info for hsim
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.spice_hsim
-ifeq ("$(GRAYBOX_MODE)", "")
-$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_gds2
+$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_rename
 	#TASK=spice_reduce CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
-	if [ -s '$(@D)/cell.spice_topcell' ]; then \
-	   $(SPICE_REDUCE) --infile="$(@D)/cell.spice_topcell" --outfile="$@"; \
-	else \
-	   $(SPICE_REDUCE) --infile="$?" --outfile="$@" ;\
-	fi
-else
-$(ROOT_TARGET_DIR)/%/cell.spice_hsim: $(ROOT_TARGET_DIR)/%/cell.spice_topcell
-	#TASK=spice_reduce CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	if [ -s '$(@D)/cell.spice_topcell' ]; then \
-	   $(SPICE_REDUCE) --infile="$(@D)/cell.spice_topcell" --outfile="$@"; \
-	else \
-	   $(SPICE_REDUCE) --infile="$?" --outfile="$@" ;\
-	fi
-endif
-
-
+	$(SPICE_REDUCE) --infile="$?" --outfile="$@"
 
 # summarize starRC extract results
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.result
