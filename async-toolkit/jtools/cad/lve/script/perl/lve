@@ -595,8 +595,6 @@ our $bump_nearest_end=0;
 our $power_sag=0;
 our $additive_resp = 0;
 our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
-our $maxNodePerAlintBin = 1000;
-our $maxAlintBinNum = 16;
 
 # sweep options
 my @skip = ();
@@ -1080,14 +1078,6 @@ if( !($graybox_list eq "") and ($graybox_mode eq "") ){
 }
 
 # Check that we've defined everything we need.
-our $minRC=0 unless defined $minRC;
-our $traceInternal=0 unless defined $traceInternal;
-our $traceAll=0 unless defined $traceAll;
-our $minAccurateR=1 unless defined $minAccurateR;
-our $minAccurateC=1e-18 unless defined $minAccurateC;
-our $minAccurateRC=0 unless defined $minAccurateRC;
-our $maxNodePerAlintBin = 1000 unless defined $maxNodePerAlintBin;
-our $maxAlintBinNum = 16 unless defined $maxAlintBinNum;
 $accurateMode = ($mode[0] eq "accurate") ? 1 : 0;
 $reduced_dspf = 0 if $accurateMode;
 $reduce_mode = "NO" if $accurateMode;
