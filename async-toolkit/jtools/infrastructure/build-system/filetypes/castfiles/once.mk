@@ -1028,7 +1028,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_spef1' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=1 \
 	  --threads=$(HERCULES_THREADS) \
@@ -1094,7 +1094,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2b.diag" QB_RUN_NAME='lve_spef2b' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=1 \
 	  --threads=$(STARRC_THREADS) \
@@ -1190,7 +1190,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --threads=$(HERCULES_THREADS) \
@@ -1260,7 +1260,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --threads=$(STARRC_THREADS) \
@@ -1361,7 +1361,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS) -l lvs=1 $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3b' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --cdl-cell-name="$$cell" \
@@ -1394,7 +1394,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3c' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --cdl-cell-name="$$cell" \
@@ -1470,7 +1470,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --threads=$(HERCULES_THREADS) \
@@ -1544,7 +1544,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --threads=$(STARRC_THREADS) \
@@ -1706,7 +1706,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l lvs=1  $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4c_extract' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --cdl-cell-name="$$cell" \
@@ -1741,7 +1741,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l lvs=1  $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4d_extract' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
 	  --cdl-cell-name="$$cell" \
@@ -1811,7 +1811,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=0 \
 	  --threads=$(HERCULES_THREADS) \
@@ -1881,7 +1881,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  qb $(EXTRACT_STARRC) \
+	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox-hercules=0 \
 	  --threads=$(STARRC_THREADS) \
@@ -2156,7 +2156,7 @@ $(ROOT_TARGET_DIR)/%/hlvs.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/hlvs.diag" QB_RUN_NAME='lve_hlvs_bb' \
-	  qb hlvs \
+	  $(QB) hlvs \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK_LVS) \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	  --threads=$(HERCULES_THREADS) \
@@ -2192,7 +2192,7 @@ $(ROOT_TARGET_DIR)/%/hlvs.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/hlvs.diag" QB_RUN_NAME='lve_hlvs_gb' \
-	  qb hlvs \
+	  $(QB) hlvs \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK_LVS) \
 	  --threads=$(HERCULES_THREADS) \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
@@ -2226,7 +2226,7 @@ $(ROOT_TARGET_DIR)/%/hlvs.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/hlvs.diag" QB_RUN_NAME='lve_hlvs_fl' \
-	  qb hlvs \
+	  $(QB) hlvs \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK_LVS) \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	  --threads=$(HERCULES_THREADS) \

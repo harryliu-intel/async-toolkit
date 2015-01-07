@@ -1505,7 +1505,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.spice_hsim \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hsim=1" \
 	QB_DIAG_FILE='$@.diag' \
 	QB_RUN_NAME='lve_hsim' \
-	qb $(HSIM) \
+	$(QB) $(HSIM) \
 	  --run-directory="$$working_dir" \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	  --cell-spice-file='$(word 1, $^)' \
@@ -1582,7 +1582,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.spice_hsim \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l xa=1" \
 	QB_DIAG_FILE='$@.diag' \
 	QB_RUN_NAME='lve_xa' \
-	qb $(XA) \
+	$(QB) $(XA) \
 	  --run-directory="$$working_dir" \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	  --cell-spice-file='$(word 1, $^)' \
@@ -1658,7 +1658,7 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.spice_hsim \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hspice=1" \
 	QB_DIAG_FILE='$@.diag' \
 	QB_RUN_NAME='lve_hspice' \
-	qb $(HSPICE) \
+	$(QB) $(HSPICE) \
 	  --run-directory="$$working_dir" \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	  --cell-spice-file='$(word 1, $^)' \
