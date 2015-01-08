@@ -19,6 +19,8 @@ BEGIN {
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
 use DB_File;
 
+$ENV{FULCRUM_NB_CONFIG}="/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config" if(not defined $ENV{FULCRUM_NB_CONFIG});
+
 # config file
 my $configfile = $ENV{FULCRUMCONFIG};
 $configfile = ".fulcrum.config" unless defined $configfile;
@@ -31,6 +33,22 @@ my $pedantic=-1;
 my $argverbose=0;
 my $isOA=0;
 my %projectversions=();
+sub setNBPOOL {
+  return if not defined $ENV{FULCRUM_NB_CONFIG};
+  return if not -e $ENV{FULCRUM_NB_CONFIG};
+  if (open (P, "<$ENV{FULCRUM_NB_CONFIG}")) {
+    while(<P>){
+      chomp;
+      next if (/^#/);      
+      if(/NBPOOL=(\S+)/){
+        $ENV{NBPOOL}=$1;
+        last;
+      }
+    }
+  }
+}
+
+
 
 sub gettmp {
     return if defined $ENV{TMP} and -d $ENV{TMP} and -w $ENV{TMP};
