@@ -166,7 +166,6 @@ my $umask = "";
 #translate grid to netbatch options
 my %qslot_map;
 my $nb_class_default="";
-my $nb_class_mem_core=0;
 parse_nbconfig();
 
 sub parse_nbconfig{
@@ -198,10 +197,8 @@ sub parse_nbconfig{
         }
       }if(/NBPOOL\s*=\s*(\S+)/){
         $ENV{NBPOOL}=$1;
-      }if(/CLASS_DEFAULT\s*=\s*(\S+)/){
-        $nb_class_default=$1;
-      }if(/CLASS_MEM_CORE\s*=\s*(\d+)/){
-        $nb_class_mem_core=$1;
+      }if(/(CLASS_DEFAULT|NBCLASS)\s*=\s*(\S+)/){
+        $nb_class_default=$2;
       }
     }
   }
@@ -251,7 +248,6 @@ sub mem2gigs {
     $size;
 }
 
-my @smartresource=();
 my @class_reservations=();
 my @licenses=();
 if ($oldflags =~ /[\s,](nano|np|nanoproteus)=(\d+)/) {
@@ -275,26 +271,26 @@ if ( $oldflags =~ /[\s,](cc|cores)=([^,\s]+)/) {
     push @class_reservations,"cores=$nb_core";
 }
 
-if($nb_class_mem_core > 0){
-    if($nb_class_default ne ""){
-      $nb_class_prefix=$nb_class_default;
-      $nb_class_prefix=~s/_(\d+)G(&&\d+C)?$//;
-      push @smartresource, "${nb_class_prefix}_${nb_mem}G";
-      push @smartresource, "${nb_core}C" if ($nb_core > 1);
-    }
-}else{
-    if ( $oldflags =~ /[\s,]suse=(\d+)/) {
-        if($nb_class_default=~/^SLES(\d+)$/){
-            push @smartresource, "SLES$1";
-        }else{
-            push @smartresource, $nb_class_default;
-        }
-    }else{
-        push @smartresource, $nb_class_default;
-    }
+my $nb_class=$nb_class_default;
+if ( $oldflags =~ /[\s,]suse=(\d+)/) {
+     $suse=$1;
+     if($nb_class=~/^SLES(\d+)/){
+        $nb_class="$`$suse$'";
+     }
 }
-my $sr=join("\&\&", @smartresource);
-$nflags .= " --class '$sr'" if @smartresource;
+
+if($nb_class =~ /(_|&&)(\d+G)/){
+      $nb_class="$`$1${nb_mem}G$'";
+      if($nb_core > 1){
+        if($nb_class =~ /(_|&&)(\d+C)/){
+           $nb_class="$`$1${nb_core}C$'";
+        }else{
+           $nb_class="${nb_class}&&${nb_core}C";
+        }
+      }
+}
+
+$nflags .= " --class '$nb_class'" if $nb_class ne "";
 my $cr=join(",", @class_reservations);
 $nflags .= " --class-reservation '$cr'" if @class_reservations;
 
