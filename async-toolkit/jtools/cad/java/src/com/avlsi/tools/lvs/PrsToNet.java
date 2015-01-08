@@ -206,7 +206,7 @@ public final class PrsToNet {
             netgraph.prepareForLvs(); // needed to find paths properly
             
             // add staticizers
-            netgraph.addStaticizers((NetGraph[]) gates.toArray(),
+            netgraph.addStaticizers((NetGraph[]) gates.toArray(new NetGraph[0]),
                                     staticizerGraph,weakInverterGraph,
                                     smallInverterGraph,true,
                                     castCell,cfp,cadencizer);
