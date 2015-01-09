@@ -825,7 +825,7 @@ public final class JFlat {
                 fqcnSpecInit = false;
             }
 
-            final Map toolMap = new HashMap();
+            final Map toolMap = new LinkedHashMap();
             final String[] tools = toolNames.split(",");
             for(int i=0; i<tools.length; i++ ) {
                 final CellFormatterFactory cellFormatterFactory = 
