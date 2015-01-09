@@ -11,6 +11,7 @@ BEGIN {
 # convert hierarchical name to lowercase hex ASCII format
 sub to_spice {
     my ($node) = @_;
+    return $node if ($node eq "0"); # never translate magical ground node!
     my $new = "";
     while ($node =~ s/(^[^\/]+)\///g) {
         $new .= "x" . string_to_hex($1) . ".";
