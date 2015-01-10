@@ -32,7 +32,7 @@ my $flatten_top = 0; # flatten top cell
 my $probe_top_ports = 0; # probe ports of top cell
 my $probe_ports = 0;     # probe all ports of SUBCKT's
 my $probe_gates = 0;     # probe base node names if they gate transistors
-my $skip_parms = "urx,ury,si_l,si_w,size0,mulid0,angle"; # hack
+my $skip_parms = "x,y,llx,lly,urx,ury,si_l,si_w,size0,mulid0,angle"; # hack
 
 # skip renaming estimated extraction primitives
 my %primitive;
@@ -67,13 +67,6 @@ my %skip_parms;
 foreach $parm (split(",",$skip_parms)) {
     $skip_parms{$parm} = 1;
 }
-$skip_parms{"urx"} = 1;
-$skip_parms{"ury"} = 1;
-$skip_parms{"si_l"} = 1;
-$skip_parms{"si_w"} = 1;
-$skip_parms{"size0"} = 1;
-$skip_parms{"mulid0"} = 1;
-$skip_parms{"angle"} = 1;
 
 #
 # Save options in header
