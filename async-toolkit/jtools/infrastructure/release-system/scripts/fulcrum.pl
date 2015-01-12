@@ -44,6 +44,10 @@ sub setNBPOOL {
         $ENV{NBPOOL}=$1;
         last;
       }
+      if(/(CLASS_DEFAULT|NBCLASS)=(\S+)/){
+        $ENV{NBCLASS}=$2;
+        last;
+      }
     }
   }
 }
