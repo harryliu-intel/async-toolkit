@@ -1449,6 +1449,7 @@ sub setup_cdswd {
     $cmd .= "'--target-dir=$GS_r->{WORK_DIR}/cds_wd' \\\n";
     $cmd .= "'--dfII-dir=$GS_r->{DFII_DIR}' \\\n";
     $cmd .= "--force \\\n";
+    $cmd .= "--p4-client=$GS_r->{P4_DFII_CLIENT} \\\n";
     $cmd .= "--user-template=$user_template \\\n";
     supersize_system($SS_r, $cmd, $LOCAL_JOB, {}, "/dev/null");
 }
