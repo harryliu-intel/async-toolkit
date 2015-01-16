@@ -164,6 +164,8 @@
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
                (cond (abstractCV inst->master=abstractCV)
                      (!abstractCV && (IsWiringCell inst) (dbDeleteObject inst))
+                     ((isStandardCell inst->master)
+                      (printf "WARNING: %s is a standard cell with no abstract\n" inst->cellName))
                      (t
                       (printf "ERROR: %s has no abstract view\n" inst->cellName)
                       statusDef=nil)
@@ -262,7 +264,8 @@
     subcells = nil
     (foreach inst CV->instances
              str = (strcat inst->libName ".wires")
-             (when (and inst->libName!=TechLibName
+             (when (and !(isStandardCell inst->master)
+                        inst->libName!=TechLibName
                         (member inst->master->cellView subcells)==nil
                         (or (strncmp inst->cellName str (strlen str))!=0
                             (member inst->cellName includeWiringCellNames)

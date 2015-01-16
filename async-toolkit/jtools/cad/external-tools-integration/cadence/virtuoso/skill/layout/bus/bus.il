@@ -881,48 +881,6 @@ wires_modtime = makeTable("wires" 0)
     )
   )
 
-; translate path layer to metal layers, or use specified layers
-(defun ChooseLayers (layers pathlayer @key (rotateMetals nil))
-  (cond (layers!=nil layers)
-        ((and layers==nil busKeepout==nil busTopMetal==nil)
-         (cond ((pathlayer==BusPath12) if(rotateMetals then BusMetal21 else BusMetal12))
-               ((pathlayer==BusPath23) if(rotateMetals then BusMetal32 else BusMetal23))
-               ((pathlayer==BusPath34) if(rotateMetals then BusMetal43 else BusMetal34))
-               ((pathlayer==BusPath45) if(rotateMetals then BusMetal54 else BusMetal45))
-               ((pathlayer==BusPath56) if(rotateMetals then BusMetal65 else BusMetal56))
-               ((pathlayer==BusPath67) if(rotateMetals then BusMetal76 else BusMetal67))
-               ((pathlayer==BusPath78) if(rotateMetals then BusMetal87 else BusMetal78))
-               ((pathlayer==BusPath89) if(rotateMetals then BusMetal98 else BusMetal89))
-               ((pathlayer==BusPath910) if(rotateMetals then BusMetal109 else BusMetal910))
-               (t (printf "ERROR: unrecognized bus lpp (%s %s)\n"
-                          (car pathlayer) (cadr pathlayer)) nil) 
-               ))
-        ((and layers==nil busKeepout==nil busTopMetal==t)
-         (cond ((pathlayer==BusPath12) BusMetal2)
-               ((pathlayer==BusPath23) BusMetal3)
-               ((pathlayer==BusPath34) BusMetal4)
-               ((pathlayer==BusPath45) BusMetal5)
-               ((pathlayer==BusPath56) BusMetal6)
-               ((pathlayer==BusPath67) BusMetal7)
-               ((pathlayer==BusPath78) BusMetal8)
-               ((pathlayer==BusPath89) BusMetal9)
-               ((pathlayer==BusPath910) BusMetal10)
-               (t (printf "ERROR: unrecognized bus lpp (%s %s)\n"
-                          (car pathlayer) (cadr pathlayer)) nil) 
-               ))
-        ((and layers==nil busKeepout==t)
-         (cond ((layer==BusPath12) if(rotateMetals then BusKeepout21 else BusKeepout12))
-               ((layer==BusPath23) if(rotateMetals then BusKeepout32 else BusKeepout23))
-               ((layer==BusPath34) if(rotateMetals then BusKeepout43 else BusKeepout34))
-               ((layer==BusPath45) if(rotateMetals then BusKeepout54 else BusKeepout45))
-               ((layer==BusPath56) if(rotateMetals then BusKeepout65 else BusKeepout56))
-               ((layer==BusPath67) if(rotateMetals then BusKeepout76 else BusKeepout67))
-               (t (printf "ERROR: unrecognized bus lpp (%s %s)\n"
-                          (car layer) (cadr layer)) nil) 
-               ))
-        )
-  )
-
 ; pick which bus prefix to use
 (defun ChoosePrefix (prefix path_prefix)
   (cond
@@ -1248,8 +1206,7 @@ wires_modtime = makeTable("wires" 0)
         FinalPath=(sprintf nil "%s/wires.il"
                  (NameGetCellPathFromCellName CV->cellName))
         (when (isFile FinalPath) (load FinalPath) )
-        (load (strcat ( ConfigFileGetValue TheCDSConfigTable "VIRTUOSO_HOME" ) "/share/skill/layout/cable/cable_defchan.il"))
-	)
+        )
   )
 
 ; load a file given a relative path from the cell directory (i.e. "../wires.il")
@@ -1317,11 +1274,7 @@ wires_modtime = makeTable("wires" 0)
     ; delete guide paths
     (foreach shape CV->shapes
              (cond ((and shape->objType=="path"
-                         (or shape->lpp==BusPath23
-                             shape->lpp==BusPath34
-                             shape->lpp==BusPath45
-                             shape->lpp==BusPath56
-                             shape->lpp==BusPath67))
+                         shape->purpose=="bus")
                     (dbDeleteObject shape)
                     )
                    )
