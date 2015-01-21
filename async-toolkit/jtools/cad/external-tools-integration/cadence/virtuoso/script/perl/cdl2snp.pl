@@ -13,21 +13,25 @@ use POSIX;
 $" = " ";
 
 # options and defaults
-$gridW = 0.042e-6;    # rounding grid for width
+$length   = 0.028e-6; # transistor length
+$gridW    = 0.042e-6; # rounding grid for width
 $maxNmosW = 2*$gridW; # maximum fold width for NMOS
 $maxPmosW = 2*$gridW; # maximum fold width for PMOS
 
 # usage banner
 sub usage() {
     die "Usage: $0\n" . 
-        " [--gridW gridW] [--maxNmosW nw] [--maxPmosW pw]\n" .
+        " [--length $length] [--gridW gridW]\n" .
+        " [--maxNmosW nw] [--maxPmosW pw]\n" .
         " <top_cell> <cdl_in> <snp_out>\n";
 }
 
 # parse arguments
 while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
     $flag = $1;
-    if ($flag eq "gridW") {
+    if ($flag eq "length") {
+        $length = $ARGV[1];
+    } elsif ($flag eq "gridW") {
         $gridW = $ARGV[1];
         shift @ARGV;
     } elsif ($flag eq "maxNmosW") {
@@ -140,6 +144,14 @@ while ($line) {
             }
             $parameters{$p} = $v;
         }
+
+        # subsitute some constants
+        $parameters{"w"} =~ s/DIFF_PITCH/$gridW/g;
+        $parameters{"w"} = eval($parameters{"w"});
+        $parameters{"l"} =~ s/TRANSISTOR_LENGTH/$length/g;
+        $parameters{"l"} = eval($parameters{"l"});
+        my $x = $parameters{"w"};
+        my $y = $parameters{"l"};
 
         # compute folds
         my $w = POSIX::ceil($parameters{"w"}/$gridW);
