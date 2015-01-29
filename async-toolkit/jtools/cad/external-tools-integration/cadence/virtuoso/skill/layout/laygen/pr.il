@@ -59,17 +59,9 @@ LaygenPlaceCmd = (strcat LaygenCmd
       (csh cmd)
       )
 
-    ; set device_row_offset
-    (cond (h2==1 (sprintf device_row_offset "%d,%d" n_offset p_offset))
-          (h2==2 (sprintf device_row_offset "%d,%d,%d,%d" n_offset p_offset p_offset n_offset))
-          (h2==3 (sprintf device_row_offset "%d,%d,%d,%d,%d,%d"
-                         n_offset p_offset p_offset n_offset n_offset p_offset))
-          (h2==4 (sprintf device_row_offset "%d,%d,%d,%d,%d,%d,%d,%d"
-                         n_offset p_offset p_offset n_offset n_offset p_offset p_offset n_offset))
-          (t (error "Unsupported height=%d" h))
-          )
-
     ; create place script
+    (sprintf device_row_offset "%d,%d,%d,%d"
+             n_offset p_offset p_offset n_offset)
     (sprintf cmd (strcat 
                   LaygenPlaceCmd
                   "-netlist %s.snp \\\n"
