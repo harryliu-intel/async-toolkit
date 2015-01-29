@@ -13,8 +13,6 @@ LaygenTcl  = "$LAYGENWARD/collateral/d04/d04_container.tcl"
                     "-arch_file %s \\\n"
                     "-tcl_container_file %s \\\n"
                     "-fabric d04 \\\n"
-                    "-placement_effort 2 \\\n"
-                    "-quality_effort 2 \\\n"
                     )
          LaygenExec LaygenRpg LaygenArch LaygenTcl)
 
@@ -24,11 +22,20 @@ LaygenPlaceCmd = (strcat LaygenCmd
                          )
 
 ; place, route, import
-(defun LaygenPR (cdlFile libName cellName
-                         @key (num_place 10)
-                         (shrink 0) (horz_routes 5) (h nil) (w nil) (upperLayer 1)
+(defun LaygenPR (cdlFile libName cellName @key
+                         (num_place 10) ; number of placements to try
+                         (shrink 0)     ; reduce width by this many poly pitches
+                         (h nil)        ; target height in microns; defaults to floorplan prBoundary
+                         (w nil)        ; target width  in microns; defaults to floorplan prBoundary
+                         (hor_routes 4) ; number of horizontal routes to allow per row (3-5)
+                         (upperlayer 1) ; top metal layer to use (1-2)
+                         (placement_effort 2) ; 0-3
+                         (quality_effort   1) ; 0-2
+                         (n_offset 0) ; move NMOS away from NWELL edge by this many dg (0-2)
+                         (p_offset 0) ; move PMOS away from NWELL edge by this many dg (0-2)
                          (doCdl t) (doPlace t) (doRoute t) (doImport t))
-  (let (CV dir bbox h2 w2 cmd obj file viewName out)
+  (let (CV dir bbox h2 w2 cmd obj file viewName out device_row_offset)
+
     ; get target bbox from floorplan view
     CV = (dbOpenCellViewByType libName cellName "floorplan" "maskLayout" "r")
     (unless CV (printf "NOTE: no floorplan view\n" cellName))
@@ -40,7 +47,6 @@ LaygenPlaceCmd = (strcat LaygenCmd
     w2 = (round w/GridPolyPitch)
     w2 = w2-shrink
     (when w2<4 doCDL=nil doPlace=nil doRoute=nil doImport=nil)
-    w  = w2*GridPolyPitch
 
     ; make working dir
     (sprintf dir "temp/laygen/%s/%s%d" cellName (if shrink<0 "n" "") (abs shrink))
@@ -53,6 +59,16 @@ LaygenPlaceCmd = (strcat LaygenCmd
       (csh cmd)
       )
 
+    ; set device_row_offset
+    (cond (h2==1 (sprintf device_row_offset "%d,%d" n_offset p_offset))
+          (h2==2 (sprintf device_row_offset "%d,%d,%d,%d" n_offset p_offset p_offset n_offset))
+          (h2==3 (sprintf device_row_offset "%d,%d,%d,%d,%d,%d"
+                         n_offset p_offset p_offset n_offset n_offset p_offset))
+          (h2==4 (sprintf device_row_offset "%d,%d,%d,%d,%d,%d,%d,%d"
+                         n_offset p_offset p_offset n_offset n_offset p_offset p_offset n_offset))
+          (t (error "Unsupported height=%d" h))
+          )
+
     ; create place script
     (sprintf cmd (strcat 
                   LaygenPlaceCmd
@@ -60,10 +76,15 @@ LaygenPlaceCmd = (strcat LaygenCmd
                   "-outdir place \\\n"
                   "-target_height %d \\\n"
                   "-target_area %d \\\n"
-                  "-placement_max_hor_routes %d \\\n"
                   "-placement_result_idx %d \\\n"
+                  "-placement_max_hor_routes %d \\\n"
+                  "-placement_effort %d \\\n"
+                  "-quality_effort %d \\\n"
+                  "-device_row_offset %s \\\n"
                   ">& %s.place.log")
-             cellName h2 w2-1 horz_routes*h2 num_place-1 cellName)
+             cellName h2 w2-1 num_place-1 hor_routes*h2
+             placement_effort quality_effort
+             device_row_offset cellName)
     file = (sprintf nil "%s/%s.place.csh" dir cellName)
     out = (outfile file)
     (fprintf out "#!/bin/csh\n%s\n" cmd)
@@ -73,11 +94,12 @@ LaygenPlaceCmd = (strcat LaygenCmd
     ; create route script
     (sprintf cmd (strcat 
                   LaygenCmd
-                  "-upperlayer m%d \\\n"
                   "-netlist tmp_$1.snp \\\n"
                   "-outdir $1 \\\n"
+                  "-upperlayer m%d \\\n"
+                  "-quality_effort %d \\\n"
                   ">& %s.route.$1.log")
-             upperLayer cellName)
+             upperlayer quality_effort cellName)
     file = (sprintf nil "%s/%s.route.csh" dir cellName)
     out = (outfile file)
     (fprintf out "#!/bin/csh\n%s\n" cmd)

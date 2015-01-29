@@ -49,7 +49,6 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
 my $top   = "$ARGV[0]";
 my $f_in  = "$ARGV[1]";
 my $f_out = "$ARGV[2]";
-print "$top\n";
 
 # report a fatal error
 sub error_msg {
