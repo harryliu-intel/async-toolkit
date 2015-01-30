@@ -481,7 +481,7 @@
               cellName    ; [t_cellName cellName]
               viewName    ; [t_viewName viewName]
               nil ; [t_techName techName] (see BUG 22162)
-              "abstract_proteus abstract"  ; [t_viewNameList viewNameList]
+              "abstract_proteus abstract floorplan"  ; [t_viewNameList viewNameList]
               (buildString SubcellLibNames) ; [t_masterLibs masterLibs]
               nil ; [ shared nil]
               nil ; [ noRouting nil]
