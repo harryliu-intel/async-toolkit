@@ -1427,7 +1427,37 @@ public class CDL2Cast {
         iw.write("{\n");
         iw.nextLevel();
 
-        if(!isLeaf) {
+        if(isLeaf) {
+            // write fixed size netlist to the SPEC
+            iw.write("netlist {\n");
+            iw.nextLevel();
+
+            final CDLFactoryInterface emitter =
+                new CDLFactoryEmitter(iw, true, 999, true, true) {
+                    public void makeCall(HierName name,
+                                         String subName,
+                                         HierName[] args,
+                                         Map parameters,
+                                         Environment env) {
+                        if (template.containsTemplate(subName)) {
+                            // flatten through
+                            flatten.makeCall(name, subName, args,
+                                             parameters, env);
+                        } else {
+                            // emit reference to undefined subcircuit as is
+                            super.makeCall(name, subName, args,
+                                           parameters, env);
+                        }
+                    }
+                };
+            flatten.setProxy(emitter);
+            template.execute(flatten);
+
+            iw.prevLevel();
+            iw.write("}\n");
+            iw.write("directives { fixed_size = true; }\n");
+        }
+        else {
             iw.write("subtypes {\n");
             iw.nextLevel();
 
@@ -1496,6 +1526,7 @@ public class CDL2Cast {
                 iw.prevLevel();
                 iw.write("}\n");
             }
+            // write sizable netlist to the CAST
             iw.write("netlist {\n");
             iw.nextLevel();
             final CDLFactoryInterface emitter =
@@ -1520,6 +1551,7 @@ public class CDL2Cast {
             template.execute(flatten);
             iw.prevLevel();
             iw.write("}\n");
+            iw.write("directives { fixed_size = false; }\n");
         }
         iw.prevLevel();
         iw.write("}\n\n");
