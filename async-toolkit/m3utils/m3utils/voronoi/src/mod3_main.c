@@ -37,6 +37,8 @@ mod3_start()
   hfl=NULL;
   sfl=NULL;
   efl=NULL;
+  
+  triples=NULL;
 }
 
 
