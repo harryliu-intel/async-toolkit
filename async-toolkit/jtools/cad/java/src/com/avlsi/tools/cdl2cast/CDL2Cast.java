@@ -102,10 +102,15 @@ import com.avlsi.file.cdl.parser.AspiceCellAdapter;
 
 public class CDL2Cast {
 
+    /** The names for Vdd and GND **/
+    static String Vdd;
+    static String GND;
+    private static Set IMPLIED_PORTS;
+  
     private static void usage( String m ) {
 
         final String className = CDL2Cast.class.getName();
-
+        
         System.out.println( "Usage: " +
                             System.getProperty( "java.home" ) +
                             System.getProperty( "file.separator" ) +
@@ -222,10 +227,11 @@ public class CDL2Cast {
             theArgs.getArgValue( "output-cast", null );
 
         /**
-         * The names for Vdd and GND (rename to canonical Vdd/GND).
+         * The names for Vdd and GND
          **/
-        final String Vdd = theArgs.getArgValue("vdd-node", "VDD");
-        final String GND = theArgs.getArgValue("gnd-node", "VSS");
+        Vdd = theArgs.getArgValue("vdd-node", "vcc");
+        GND = theArgs.getArgValue("gnd-node", "vss");
+        IMPLIED_PORTS = new LinkedHashSet(Arrays.asList(new Object[] { Vdd, GND }));
 
         /**
          * Prefixes to apply to node and instance names to make sure
@@ -382,8 +388,6 @@ public class CDL2Cast {
 
                             public String renameNode( final String oldNodeName )
                                 throws CDLRenameException {
-                                if      (oldNodeName.equals(Vdd)) return "Vdd";
-                                else if (oldNodeName.equals(GND)) return "GND";
                                 return escape(nodePrefix + oldNodeName);
                             }
 
@@ -760,8 +764,8 @@ public class CDL2Cast {
                 aspicer == null ? null : aspicer.getCell(fqcn);
             NetGraph netgraph = null;
             if (aspiceCell!=null) {
-                netgraph = new NetGraph(HierName.makeHierName("Vdd"),
-                                        HierName.makeHierName("GND"));
+                netgraph = new NetGraph(HierName.makeHierName(Vdd),
+                                        HierName.makeHierName(GND));
                 netgraph.addAspice(aspiceCell);
                 netgraph.prepareForLvs();
             }
@@ -1172,9 +1176,6 @@ public class CDL2Cast {
         return new Pair( portMap, portStems );
 
     }
-
-    private static final Set IMPLIED_PORTS =
-        new LinkedHashSet(Arrays.asList(new Object[] { "Vdd", "GND" }));
 
     /**
      * HACK to check for the nodes which are in the STD_CELL parent
