@@ -20,6 +20,7 @@ my $conf_file    = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot/gds2plot.conf";
 my $exclude_file = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot/exclude.in";
 my $format = "ppm"; # output format
 my $quality = 75; # for jpg conversion
+my $cell = "";
 
 # parse arguments
 while (@ARGV) {
@@ -36,6 +37,7 @@ while (@ARGV) {
     elsif ($ARGV[0] =~ /^--quality=(.*)/) { $quality = $1; }
     elsif ($ARGV[0] =~ /^--conf-file=(.*)/) { $conf_file = $1; }
     elsif ($ARGV[0] =~ /^--exclude-file=(.*)/) { $exclude_file = $1; }
+    elsif ($ARGV[0] =~ /^--cell=(.*)/) { $cell = $1; }
     else { $name = $ARGV[0]; }
     shift @ARGV;
 }
@@ -56,7 +58,8 @@ sub usage {
         " --format=[$format] # [ppm|png|jpg|tiff]\n" .
         " --quality=[$quality]\n" .
         " --conf-file=[$conf_file]\n" .
-        " --exclude-file=[$exclude_file]\n";
+        " --exclude-file=[$exclude_file]\n" .
+        " --cell=[$cell]\n";
 }
 
 # settings
@@ -69,6 +72,7 @@ my $PLOT = "gds2plot " .
     "--grid $GRID --tile $TILE " .
     "--jobs $JOBS " .
     "--in_min $BLACK --in_max $WHITE --gamma $GAMMA ";
+$PLOT .= "--cell $cell " unless ($cell eq "");
 
 # add exclude regular expressions
 unless ($exclude_file eq "") {
