@@ -1519,7 +1519,7 @@ public class CDL2Cast {
                 iw.nextLevel();
                 for (Iterator i = netgraph.getNodes().iterator(); i.hasNext(); ) {
                     NetGraph.NetNode node = (NetGraph.NetNode) i.next();
-                    if (!node.isPort() && !node.isStaticizerInverter() &&
+                    if (!node.isPort() && !node.isRail() && !node.isStaticizerInverter() &&
                         (node.isGate() || node.isOutput()))
                         iw.write("node \"" + node.name + "\";\n");
                 }
