@@ -3,6 +3,7 @@
 # options
 $"=",";
 my $plot_only = 0;
+my $negedge_offset = 0;
 my @slews = (4,8,16,32,64,128,256); # input slew in ps
 my @loads = (5); # (5,8,14,22,37,61,100) # output load in fF
 my @sims = ("leakage","rw","lookup");
@@ -29,6 +30,7 @@ while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
     elsif ($1 eq "loads")  { @loads = split(",",$2); }
     elsif ($1 eq "sims")   { @sims = split(",",$2); }
     elsif ($1 eq "lib-range") { ($n0,$n1) = split(":",$2); }
+    elsif ($1 eq "negedge-offset") { $negedge_offset = $2; }
     shift;
 }
 
@@ -39,7 +41,7 @@ for (my $i=$n0; $i<=$n1 && $i<@all_libs; $i++) {
 }
 
 my $NBRUN = "nbjob run --class \"SLES11&&24G\" --work-dir $ENV{PWD}";
-my $run_tcam = "$ENV{FULCRUM} run_tcam";
+my $run_tcam = "$ENV{FULCRUM} run_tcam --negedge-offset=$negedge_offset --plot-only=$plot_only";
 
 # Performance corners
 # RFFF, 0.75V,  125C and -40C
@@ -104,7 +106,7 @@ foreach my $sim (@sims) {
             foreach my $load (@loads) {
                 my @cmd = ();
                 push @cmd, "$NBRUN";
-                push @cmd, "--log-file lib.${slew}.${load}.log $run_tcam --plot-only=$plot_only " .
+                push @cmd, "--log-file lib.${slew}.${load}.log $run_tcam" .
                     "--html-suffix=\".${slew}.${load}\"";
                 foreach my $load (@loads) {
                     foreach my $lib (@libs) {
@@ -120,7 +122,7 @@ foreach my $sim (@sims) {
     elsif ($sim eq "lookup") {
         my @cmd = ();
         push @cmd, "$NBRUN";
-        push @cmd, "--log-file lookup.log $run_tcam --plot-only=$plot_only";
+        push @cmd, "--log-file lookup.log $run_tcam";
         foreach my $corner (@corner) {
             for (my $dv=0; $dv<@deltaV; $dv++) {
                 foreach my $temp (@temps) {
@@ -142,7 +144,7 @@ foreach my $sim (@sims) {
     elsif ($sim eq "rw") {
         @cmd = ();
         push @cmd, "$NBRUN";
-        push @cmd, "--log-file rw.log $run_tcam --plot-only=$plot_only";
+        push @cmd, "--log-file rw.log $run_tcam";
         foreach my $corner (@corner) {
             for (my $dv=0; $dv<@deltaV; $dv++) {
                 foreach my $temp (@temps) {
@@ -164,7 +166,7 @@ foreach my $sim (@sims) {
     elsif ($sim eq "leakage") {
         @cmd = ();
         push @cmd, "$NBRUN";
-        push @cmd, "--log-file leakage.log $run_tcam --plot-only=$plot_only";
+        push @cmd, "--log-file leakage.log $run_tcam";
         push @cmd, "leakage/tttt/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
         push @cmd, "leakage/rfff/0.915/105/$rcCorner/1/$slew/$load/$cfg1";
         $cmd = join(" ",@cmd);

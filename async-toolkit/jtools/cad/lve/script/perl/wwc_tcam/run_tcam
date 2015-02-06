@@ -29,6 +29,7 @@ my $plot_only = 0;
 my $scale_time = 1e-6;
 my $width = 40;
 my $slew_frac = 0.2;
+my $negedge_offset = 0; # ns: add to positive pulse width, subtract from negative pulse width
 my %cycles;
 $cycles{"rw"} = 6;
 $cycles{"lookup"} = 6;
@@ -39,6 +40,7 @@ $cycles{"lib"} = 15;
 while (@ARGV && $ARGV[0] =~ /^--(\S+)=(\S+)/) {
     if ($1 eq "plot-only") { $plot_only = $2; }
     elsif ($1 eq "html-suffix") { $html_suffix = $2; }
+    elsif ($1 eq "negedge-offset") { $negedge_offset = $2; }
     shift;
 }
 @ARGV>0 or usage();
@@ -163,7 +165,7 @@ sub write_tcam_env {
     if ($test eq "leakage") {
         print OUT "vclk $node 0 DC=0\n";
     } else {
-        my $w = $tau/2 - $slew_dt;
+        my $w = $tau/2 - $slew_dt + $negedge_offset;
         print OUT "vclk $node 0 PULSE ( 0 vtrue 2ns ${slew_dt}ns ${slew_dt}ns ${w}ns ${tau}ns )\n";
     }
 
