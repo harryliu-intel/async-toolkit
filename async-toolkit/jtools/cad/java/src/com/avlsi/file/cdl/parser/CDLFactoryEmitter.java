@@ -53,6 +53,17 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
      **/
     private final String callDelimiter;
 
+    /**
+     * Map transistor types
+     */
+    private final Map transistorTypeMap;
+
+    /**
+     * Optionally normalize transistor width and length to a grid.
+     **/
+    private final double widthGrid;
+    private final double lengthGrid;
+
     public CDLFactoryEmitter(final Writer w) {
         this(w, true);
     }
@@ -80,6 +91,17 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
                              final boolean quoteExpression,
                              final boolean evaluateTokens,
                              final String callDelimiter) {
+        this(w, filter0, maxLineSize, quoteExpression, evaluateTokens, callDelimiter,
+             null, 0, 0);
+    }
+
+    public CDLFactoryEmitter(final Writer w, boolean filter0, int maxLineSize,
+                             final boolean quoteExpression,
+                             final boolean evaluateTokens,
+                             final String callDelimiter,
+                             final Map transistorTypeMap,
+                             final double widthGrid,
+                             final double lengthGrid) {
         this.w = new PrintWriter(w);
         this.linesize = 0;
         this.filter0 = filter0;
@@ -87,6 +109,9 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         this.quoteExpression = quoteExpression;
         this.evaluateTokens = evaluateTokens;
         this.callDelimiter = callDelimiter;
+        this.transistorTypeMap = transistorTypeMap;
+        this.widthGrid = widthGrid;
+        this.lengthGrid = lengthGrid;
     }
 
 
@@ -170,9 +195,20 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         printws(stringNode(ng));
         printws(stringNode(ns));
         printws(stringNode(nb));
-        printws(type);
-        printws("w=" + getTokenVal(w, env));
-        printws("l=" + getTokenVal(l, env));
+        String new_type = type;
+        if (transistorTypeMap!=null) {
+            new_type = (String) transistorTypeMap.get(type);
+            if (new_type==null) new_type=type;
+        }
+        printws(new_type);
+        if (widthGrid>0) {
+            double x = Double.parseDouble(getTokenVal(w,env));
+            printws("w='" + Math.round(x/widthGrid) + "*TRANSISTOR_WIDTH_GRID'");
+        } else printws("w=" + getTokenVal(w, env));
+        if (lengthGrid>0) {
+            double x = Double.parseDouble(getTokenVal(l,env));
+            printws("l='" + Math.round(x/lengthGrid) + "*TRANSISTOR_LENGTH_GRID'");
+        } else printws("l=" + getTokenVal(l, env));
         keypair(parameters, env);
         println();
     }

@@ -21,6 +21,8 @@ import java.util.GregorianCalendar;
 import java.util.ListIterator;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import java.io.Writer;
 import java.io.PrintWriter;
@@ -40,6 +42,7 @@ import java.io.FileNotFoundException;
 import com.avlsi.cast.impl.Environment;
 import com.avlsi.cast.impl.LocalEnvironment;
 import com.avlsi.file.cdl.parser.CDLLexer;
+import com.avlsi.util.text.StringUtil;
 
 import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLNameInterface;
@@ -106,7 +109,17 @@ public class CDL2Cast {
     static String Vdd;
     static String GND;
     private static Set IMPLIED_PORTS;
-  
+
+    /** renaming table for transistor types **/
+    static Map transistorTypeMap;
+
+    /** normalize width and length **/
+    static double widthGrid;
+    static double lengthGrid;
+
+    /** should CAST include fized_size=false netlist? **/
+    static boolean netlistInCast;
+    
     private static void usage( String m ) {
 
         final String className = CDL2Cast.class.getName();
@@ -138,7 +151,11 @@ public class CDL2Cast {
                             "    [--bind-rul-in=/dev/null]\n" +
                             "    [--bind-rul-template=/dev/null]\n" +
                             "    [--skip-prs-generation]\n" +
-                            "    [--all-cells]\n"
+                            "    [--all-cells]\n" +
+                            "    [--netlist-in-cast]\n" +
+                            "    [--rename-transistor-type=old1:new1,old2:new2,...]\n" +
+                            "    [--width-grid=W]\n" +
+                            "    [--length-grid=L]\n"
                             );
         if (m != null && m.length() > 0)
             System.err.println ( m );
@@ -257,6 +274,23 @@ public class CDL2Cast {
             Double.parseDouble
             ( theArgs.getArgValue( "meters-per-input-unit", "1" ) );
 
+        /** 
+         * Emit width and length parameters as expressions of constants.
+         */
+        widthGrid  = Double.parseDouble(theArgs.getArgValue("width-grid","0"));
+        lengthGrid = Double.parseDouble(theArgs.getArgValue("length-grid","0"));
+
+        /**
+         * Transistor type renaming table.
+         **/
+        final String renameTransistorTypeString =
+            theArgs.getArgValue( "rename-transistor-type", "");
+        transistorTypeMap = new TreeMap();
+        for (String map : StringUtil.split(renameTransistorTypeString, ',')) {
+            final String[] keyval = StringUtil.split(map, ':');
+            transistorTypeMap.put(keyval[0],keyval[1]);
+        }
+ 
         /**
          * The refinement parent for generated digital CAST cells
          **/
@@ -284,6 +318,8 @@ public class CDL2Cast {
 
         final boolean skipPrsGeneration =
             theArgs.argExists("skip-prs-generation");
+
+        netlistInCast = theArgs.argExists("netlist-in-cast");
 
         if (! pedanticArgs.pedanticOK(false, true)) {
             usage(pedanticArgs.pedanticString());
@@ -1434,7 +1470,8 @@ public class CDL2Cast {
             iw.nextLevel();
 
             final CDLFactoryInterface emitter =
-                new CDLFactoryEmitter(iw, true, 999, true, true) {
+                new CDLFactoryEmitter(iw, true, 999, true, true, "" /*"/"*/,
+                                      transistorTypeMap, widthGrid, lengthGrid) {
                     public void makeCall(HierName name,
                                          String subName,
                                          HierName[] args,
@@ -1528,15 +1565,17 @@ public class CDL2Cast {
                 iw.write("}\n");
             }
             // write sizable netlist to the CAST
-            iw.write("netlist {\n");
-            iw.nextLevel();
-            final CDLFactoryInterface emitter =
-                new CDLFactoryEmitter(iw, true, 999, true, true) {
-                    public void makeCall(HierName name,
+            if (netlistInCast) {
+                iw.write("netlist {\n");
+                iw.nextLevel();
+                final CDLFactoryInterface emitter =
+                    new CDLFactoryEmitter(iw, true, 999, true, true, "" /*"/"*/,
+                                          transistorTypeMap, widthGrid, lengthGrid) {
+                        public void makeCall(HierName name,
                                          String subName,
-                                         HierName[] args,
-                                         Map parameters,
-                                         Environment env) {
+                                             HierName[] args,
+                                             Map parameters,
+                                             Environment env) {
                             if (template.containsTemplate(subName)) {
                                 // flatten through
                                 flatten.makeCall(name, subName, args,
@@ -1546,13 +1585,14 @@ public class CDL2Cast {
                                 super.makeCall(name, subName, args,
                                                parameters, env);
                             }
-                    }
-                };
-            flatten.setProxy(emitter);
-            template.execute(flatten);
-            iw.prevLevel();
-            iw.write("}\n");
-            iw.write("directives { fixed_size = false; }\n");
+                        }
+                    };
+                flatten.setProxy(emitter);
+                template.execute(flatten);
+                iw.prevLevel();
+                iw.write("}\n");
+                iw.write("directives { fixed_size = false; }\n");
+            }
         }
         iw.prevLevel();
         iw.write("}\n\n");
