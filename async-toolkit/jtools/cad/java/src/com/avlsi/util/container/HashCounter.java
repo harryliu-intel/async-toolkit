@@ -11,33 +11,31 @@ import java.util.HashMap;
 import java.util.Collection;
 import java.util.Map;
 
-public class HashCounter extends Counter {
-    private final Map map;
+public class HashCounter<E> extends Counter<E> {
+    private final Map<E,Integer> map;
 
     public HashCounter() {
-        this(new HashMap());
+        this(new HashMap<E,Integer>());
     }
 
-    public HashCounter(final Map map) {
+    public HashCounter(final Map<E,Integer> map) {
         this.map = map;
     }
     
-    public void add(Object o, int count) {
-        if(map.containsKey(o)) {
-            Integer i = (Integer)map.get(o);
-            map.put(o, new Integer(i.intValue()+count) );
-        }
-        else {
-            map.put(o, new Integer(count));
+    public void add(E e, int count) {
+        if(map.containsKey(e)) {
+            map.put(e, map.get(e) + count);
+        } else {
+            map.put(e, count);
         }
     }
   
-    public int getCount(Object o) {
-        Integer i = (Integer)map.get(o);
-        return (i==null ? 0 : i.intValue());
+    public int getCount(Object e) {
+        Integer count = map.get(e);
+        return count == null ? 0 : count;
     }
 
-    public Collection elements() {
+    public Collection<E> elements() {
         return map.keySet();
     }
 

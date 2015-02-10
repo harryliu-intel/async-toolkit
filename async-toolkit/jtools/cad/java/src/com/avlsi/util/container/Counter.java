@@ -10,50 +10,44 @@ package com.avlsi.util.container;
 import java.util.Collection;
 import java.util.Iterator;
 
-public abstract class Counter {
-   
-    public abstract void add(Object o, int count);
-    public abstract int getCount(Object o);
-    public abstract Collection elements();
+public abstract class Counter<E> {
+    public abstract void add(E e, int count);
+    public abstract int getCount(Object e);
+    public abstract Collection<E> elements();
 
     public int size() {
         return elements().size();
     }
 
-    public void add(Object o) {
-        add(o,1);
+    public void add(E e) {
+        add(e, 1);
     }
      
-    public void addAll(Counter counter) {
-        for(Iterator i=counter.elements().iterator(); i.hasNext(); ) {
-            Object o = i.next();
-            int count = counter.getCount(o);
-            add(o, count);
+    public void addAll(Counter<? extends E> counter) {
+        for (E e : counter.elements()) {
+            add(e, counter.getCount(e));
         }
     }
 
-    public void subtract(Object o) {
-        subtract(o,1);
+    public void subtract(E e) {
+        subtract(e, 1);
     }
     
-    public void subtract(Object o, int count) {
-        add(o,-count);
+    public void subtract(E e, int count) {
+        add(e, -count);
     }
     
-    public void subtractAll(Counter counter) {
-         for(Iterator i=counter.elements().iterator(); i.hasNext(); ) {
-            Object o = i.next();
-            int count = counter.getCount(o);
-            subtract(o, count);
+    public void subtractAll(Counter<? extends E> counter) {
+        for (E e : counter.elements()) {
+            subtract(e, counter.getCount(e));
         }
     }
   
     public int getTotalCount() {
         int count = 0;
-        for(Iterator i=elements().iterator(); i.hasNext(); ) {
-            Object o = i.next();
-            count += getCount(o);
-        }        
+        for (E e : elements()) {
+            count += getCount(e);
+        }
         return count;
     }
 
