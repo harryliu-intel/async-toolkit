@@ -73,31 +73,35 @@
 
     ; load netlist.il
     file = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
-    (load file)
+    (when (fileTimeModified file)
+      (load file)
+      w = NetListTable["width"]
+      h = NetListTable["height"]
 
-    ; delete incorrect nets
-    (foreach net CV->nets
-             (unless netTable[net]
-               (when verbose (fprintf LOG "%sDelete net %s\n" indent net->name))
-               (dbDeleteObject net)
-               )
-             )
+      ; delete incorrect nets
+      (foreach net CV->nets
+        (unless netTable[net]
+          (when verbose (fprintf LOG "%sDelete net %s\n" indent net->name))
+          (dbDeleteObject net)
+          )
+        )
 
-    ; delete incorrect terminals
-    (foreach term CV->terminals
-             (unless termTable[term]
-               (when verbose (fprintf LOG "%sDelete term %s\n" indent term->name))
-               (dbDeleteObject term)
-               )
-             )
+      ; delete incorrect terminals
+      (foreach term CV->terminals
+        (unless termTable[term]
+          (when verbose (fprintf LOG "%sDelete term %s\n" indent term->name))
+          (dbDeleteObject term)
+          )
+        )
 
-    ; delete incorrect instances
-    (foreach inst CV->instances
-             (unless instanceTable[inst] || (IsWiringCell CV)
-                     (fprintf LOG "%sDelete instance %s of %s\n" indent inst->name inst->cellName)
-                     (dbDeleteObject inst)
-                     )
-             )
+      ; delete incorrect instances
+      (foreach inst CV->instances
+        (unless instanceTable[inst] || (IsWiringCell CV)
+                (fprintf LOG "%sDelete instance %s of %s\n" indent inst->name inst->cellName)
+                (dbDeleteObject inst)
+                )
+        )
+      )
 
     ; update prBoundary of leaf cells, from layout view if it exists
     (unless realInstances
@@ -107,8 +111,6 @@
             points = layoutCV->prBoundary->points
             )
       (unless points
-        w = NetListTable["width"]
-        h = NetListTable["height"]
         (unless w&&l (error "undetermined height or width"))
         points = (list 0:0 w:0 w:h 0:h 0:0)
         )
