@@ -109,6 +109,7 @@
       (unless points
         w = NetListTable["width"]
         h = NetListTable["height"]
+        (unless w&&l (error "undetermined height or width"))
         points = (list 0:0 w:0 w:h 0:h 0:0)
         )
       (dbCreatePRBoundary CV points)
@@ -147,10 +148,10 @@
 ;;;;;;;;;;;;;;;;; functions called by cast2skill netlist.il files ;;;;;;;;;;;;;;;;;;;;
 
 (defun UpdateFloorplanCreateInstanceInNetlist (table instName libName cellName)
-  (let (inst master viewName w h x0 y0 arrayName gate_stack)
-    gate_stack = libName=="gate" || libName=="stack" || libName==TechLibName
-    realInstances = realInstances || !gate_stack
-    (when CV->viewName!="floorplan" || !gate_stack
+  (let (inst master viewName w h x0 y0 arrayName primitive)
+    primitive = libName=="gate" || libName=="stack" || libName=="resistor" || libName==TechLibName
+    realInstances = realInstances || !primitive
+    (when CV->viewName!="floorplan" || !primitive
           ; find existing inst and its viewName
           inst = (dbFindAnyInstByName CV instName)
           viewName = (if inst inst->viewName CV->viewName)
