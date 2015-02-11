@@ -568,8 +568,8 @@ library($libname) {
       direction : input;
       capacitance : $nt_max_cap{CLK};
       clock : true;
-      min_pulse_width_low  : 350;
-      min_pulse_width_high : 350;
+      min_pulse_width_low  : 300;
+      min_pulse_width_high : 300;
       min_period           : 800;
       max_transition	   : 100;
       internal_power() {
