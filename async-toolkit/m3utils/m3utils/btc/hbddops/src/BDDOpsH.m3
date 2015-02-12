@@ -5,6 +5,8 @@ IMPORT BDDSet, BDD;
 IMPORT Word;
 IMPORT SopBDD;
 IMPORT TextSet;
+IMPORT Debug;
+FROM Fmt IMPORT F;
 
 PROCEDURE AccumulateBDD(s  : BDDSet.T; 
                         op : PROCEDURE(a, b : BDD.T) : BDD.T;
@@ -46,13 +48,29 @@ PROCEDURE PfxFormat(x : BDD.T;
     END
   END PfxFormat;
 
-PROCEDURE XFormat(x : BDD.T; inQuotes : BOOLEAN) : TEXT =
+PROCEDURE XFormat(x : BDD.T; inQuotes := FALSE) : TEXT =
   BEGIN RETURN PfxFormat(x, "", inQuotes, aliasMapper := NIL) END XFormat;
+
+CONST DebugSubstitute = FALSE;
 
 PROCEDURE Substitute(in, v, by : BDD.T) : BDD.T =
   BEGIN
     WITH tx = BDD.MakeTrue (in, v),
          tf = BDD.MakeFalse(in, v) DO
+      
+      IF DebugSubstitute THEN
+        Debug.Out(F(" in    %s", XFormat(in)));
+        Debug.Out(F(" v     %s", XFormat(v)));
+        Debug.Out(F(" by    %s", XFormat(by)));
+        Debug.Out(  "-----");
+        Debug.Out(F(" tx    %s", XFormat(tx)));
+        Debug.Out(F(" tf    %s", XFormat(tf)));
+        Debug.Out(F(" by&tx %s", XFormat(BDD.And(by,tx))));      
+        Debug.Out(F("~by&tf %s", XFormat(BDD.And(by,tx))));
+        Debug.Out(F("res    %s", 
+                    XFormat(BDD.Or(BDD.And(by,tx),BDD.And(BDD.Not(by),tf)))));
+      END;
+
       RETURN BDD.Or(BDD.And(by,tx),BDD.And(BDD.Not(by),tf))
     END
   END Substitute;
