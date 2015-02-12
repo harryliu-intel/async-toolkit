@@ -111,7 +111,7 @@
             points = layoutCV->prBoundary->points
             )
       (unless points
-        (unless w&&l (error "undetermined height or width"))
+        (unless w&&h (error "undetermined height or width"))
         points = (list 0:0 w:0 w:h 0:h 0:0)
         )
       (dbCreatePRBoundary CV points)
