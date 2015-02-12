@@ -982,10 +982,8 @@ abstract public class TransistorSizingTool
                     // both depth and erf correction.
                     minAllowedSize = Math.max(minAllowedSize,
                                               minWidth *
-                                              hob.getSymmetrizationFactor() *
                                               hob.getCurrentSize() /
                                               hob.getWidth(depth));
-                    // don't use symmetrization factor for max_width constraints
                     maxAllowedSize = Math.min(maxAllowedSize,
                                               maxWidth *
                                               hob.getCurrentSize() /
