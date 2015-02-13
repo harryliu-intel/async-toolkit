@@ -9,7 +9,7 @@ UV_dx = -0.035     ; x bloat of uv1/uv2 implant layers relative to diffusion
 UV_dy =  0.021     ; y bloat of uv1/uv2 implant layers relative to diffusion
 
 ; Other settings
-LaygenVersion = 2012 ; sets a LaygenVersion cell property
+LaygenVersion = "d15q1ww05b_13752" ; sets a LaygenVersion cell property
 LaygenVssName = "vss"
 LaygenVccName = "vcc"
 
@@ -56,6 +56,11 @@ LaygenPinPurposeExists = (makeTable "pinPurposeExists" nil)
 LaygenPinPurposeExists["metal1"] = t
 LaygenPinPurposeExists["metal2"] = t
 
+; map net names
+LaygenNetMap = (makeTable "netMap" nil)
+LaygenNetMap[LaygenVssName] = GNDNetName
+LaygenNetMap[LaygenVccName] = VddNetName
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Top Level Function ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Import a *.gen file into a Virtuoso cell
@@ -84,7 +89,7 @@ LaygenPinPurposeExists["metal2"] = t
     ; label pwell, set LaygenVersion property, save and return
     (LaygenRect CV (list (list "pwellSubIso" "id"))
                 LaygenVssName pins[LaygenVssName] nil 0 0 GridPolyPitch GridDiffPitch)
-    (dbReplaceProp CV "LaygenVersion" "int" LaygenVersion)
+    (dbReplaceProp CV "LaygenVersion" "string" LaygenVersion)
     (dbSave CV)
     CV
     )
@@ -179,6 +184,7 @@ LaygenPinPurposeExists["metal2"] = t
              (when fill && (cadr lpp)=="drawing" lpp = (list (car lpp) "fill"))
              rect = (dbCreateRect CV lpp (list xl-dx:yl-dy xh+dx:yh+dy))
              (when net && !fill
+               net = (if LaygenNetMap[net] LaygenNetMap[net] net)
                rect->net = (dbFindNetByName CV net)
                (unless rect->net rect->net=(dbCreateNet CV net))
                (when pin
