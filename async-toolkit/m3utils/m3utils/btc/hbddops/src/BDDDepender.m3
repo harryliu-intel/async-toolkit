@@ -10,10 +10,14 @@ REVEAL
   T = Public BRANDED Brand OBJECT
     cache : BDDBDDSetTbl.T; 
   OVERRIDES
-    init := Init;
-    depends := Depends;
+    init      := Init;
+    depends   := Depends;
     isPlainOr := IsPlainOr;
+    flush     := Flush;
   END;
+
+PROCEDURE Flush(t : T; b : BDD.T) =
+  VAR s : BDDSet.T; BEGIN EVAL t.cache.delete(b, s) END Flush;
 
 PROCEDURE IsPlainOr(t : T; b : BDD.T) : BOOLEAN =
   VAR q := t.depends(b); 
@@ -34,5 +38,11 @@ PROCEDURE Depends(t : T; b : BDD.T) : BDDSet.T =
     RETURN s
   END Depends;
 
+PROCEDURE AllocIfNull(VAR dep : T) =
+  BEGIN
+    IF dep = NIL THEN
+      dep  := NEW(T).init();
+    END
+  END AllocIfNull;
 
 BEGIN END BDDDepender.

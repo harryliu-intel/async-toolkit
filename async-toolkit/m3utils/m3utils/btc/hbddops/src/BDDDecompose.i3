@@ -1,8 +1,7 @@
 (* $Id$ *)
 
 INTERFACE BDDDecompose;
-IMPORT BDDDepender, BDDList, BDD;
-IMPORT RefList;
+IMPORT BDDDepender, BDD;
 
 (* 
    Shen-McKellar-Weiner algorithm for boolean decomposition.
