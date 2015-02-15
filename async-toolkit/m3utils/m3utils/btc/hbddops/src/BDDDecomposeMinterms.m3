@@ -12,7 +12,7 @@ PROCEDURE Minterms(<*UNUSED*>t   : T;
                                                    BDD.True(),
                                                    BDD.True());
     c := 0;
-    res : Result := NEW(Result, v := BDD.New(pfx & "ROOT"), next := NIL);
+    res : Result := NEW(Result, v := BDD.New(pfx & "_ROOT"), next := NIL);
     root := res;
     rx := BDD.False();
     cx : BDD.T;
@@ -28,7 +28,7 @@ PROCEDURE Minterms(<*UNUSED*>t   : T;
     
     FOR i := FIRST(sop.rep^) TO LAST(sop.rep^) DO
       WITH conj = sop.rep[i],
-           vv   = BDD.New(pfx & Int(c)) (* AND plane output *) DO
+           vv   = BDD.New(pfx & "_" & Int(c)) (* AND plane output *) DO
         cx := BDD.True();
         FOR l := FIRST(conj^) TO LAST(conj^) DO
           cx := BDD.And(B(conj[l]),cx)
