@@ -33,6 +33,7 @@ Table    ("BDDCard", "BDD", "Cardinal")
 Table    ("BDDRefList", "BDD", "RefList")
 
 Module   ("BDDDecompose")
+implementation("BDDDecomposeMinterms")
 Module   ("BDDScanner")
 Module   ("BDDCanon")
 

@@ -18,8 +18,9 @@ REVEAL
   T = Public BRANDED Brand OBJECT
     dep : BDDDepender.T;
   OVERRIDES
-    init := Init;
-    attempt := Attempt;
+    init     := Init;
+    attempt  := Attempt;
+    minterms := Minterms;
   END;
 
 PROCEDURE Init(t : T; dep : BDDDepender.T) : T =

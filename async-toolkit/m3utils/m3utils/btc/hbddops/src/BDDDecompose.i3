@@ -18,6 +18,9 @@ TYPE
     (* attempt to decompose bx, returning Result.
        internal nodes are named (via BDD.New) using the prefix pfx *)
 
+    minterms(bx : BDD.T; pfx : TEXT) : Result;
+    (* brute-force approach using minterm expansion *)
+    
   END;
 
 TYPE 
@@ -39,6 +42,8 @@ TYPE
    the root node is always the last record in the list *)
 
 CONST Brand = "BDDDecompose";
+
+PROCEDURE Minterms(t : T; x : BDD.T; pfx : TEXT) : Result;
 
 END BDDDecompose.
 
