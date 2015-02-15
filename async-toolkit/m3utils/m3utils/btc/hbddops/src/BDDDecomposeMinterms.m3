@@ -12,7 +12,7 @@ PROCEDURE Minterms(<*UNUSED*>t   : T;
                                                    BDD.True(),
                                                    BDD.True());
     c := 0;
-    res : Result := NEW(Result, v := BDD.New(pfx & "_ROOT"), next := NIL);
+    res : Result := NEW(Result, v := NIL, next := NIL);
     root := res;
     rx := BDD.False();
     cx : BDD.T;
