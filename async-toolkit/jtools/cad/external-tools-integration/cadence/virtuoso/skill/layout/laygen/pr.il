@@ -39,7 +39,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
                          (batch "nbq --block") ; remote launch command; use nil to run locally
                          (jobs 32) ; maximum number of batch routing jobs
                          (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
-  (let (CV dir bbox cmd obj file viewName out device_row_offset trials)
+  (let (CV dir bbox cmd obj file viewName name out device_row_offset trials success)
 
     ; get height and width from parameters or floorplan view
     (when !h || !w
@@ -55,8 +55,10 @@ LaygenPlaceCmd = (strcat LaygenCmd
           )
     (when w<3 doCdl=nil doSnp=nil doPlace=nil doRoute=nil doImport=nil)
 
-    ; make working dir
-    (sprintf dir "temp/laygen/%s/%s" cellName shrink)
+    ; make working dir 
+    name = (sprintf nil "s%s_m%d_hr%d_nm%d_pm%d_no%d_po%d"
+                    shrink upperlayer hor_routes n_max p_max n_offset p_offset)
+    (sprintf dir "temp/laygen/%s/%s" cellName name)
     (csh (sprintf nil "mkdir -p %s" dir))
 
     ; generate CDL
@@ -128,7 +130,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
 
     ; delete old laygen views
     (for n 0 num_place-1
-         (sprintf viewName "laygen_%s_%d" shrink n)
+         (sprintf viewName "laygen_%s_%d" name n)
          obj = (ddGetObj libName cellName viewName)
          (when obj (ddDeleteObj obj))
          )
@@ -147,13 +149,14 @@ LaygenPlaceCmd = (strcat LaygenCmd
 
     ; import
     (for n 0 num_place-1
-         (sprintf viewName "laygen_%s_%d" shrink n)
+         (sprintf viewName "laygen_%s_%d" name n)
          (sprintf file "%s/%d/%s/u0.gen" dir n cellName)
          (when doImport && (fileTimeModified file)
                (printf "Import %s placement=%d\n" cellName n)
-               (LaygenImport file libName cellName ?viewName viewName)
+               CV = (LaygenImport file libName cellName ?viewName viewName)
+               (when (setof shape CV->shapes shape->layerName=="vcn")!=nil success=t)
                )
          )
+    success
     )
-  t
   )
