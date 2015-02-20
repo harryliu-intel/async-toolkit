@@ -763,7 +763,7 @@ public class CDL2Cast {
             }
 
             template.execute( sniffer );
-            if(sniffer.hasComponents() ) {
+            if(!sniffer.hasSubCells() ) {
                 leafSet.add(template);
                 for(Iterator j = sniffer.getSubCells(); j.hasNext(); ) {
                     String cellName = (String)j.next();
@@ -1551,9 +1551,9 @@ public class CDL2Cast {
         }
         else if (netgraph!=null) {
             ProductionRuleSet prs = netgraph.getProductionRuleSet();
+            iw.write("prs {\n");
+            iw.nextLevel();
             if (prs.size()>0) {
-                iw.write("prs {\n");
-                iw.nextLevel();
                 for (Iterator i = netgraph.getNodes().iterator(); i.hasNext(); ) {
                     NetGraph.NetNode node = (NetGraph.NetNode) i.next();
                     if (!node.isPort() && !node.isRail() && !node.isStaticizerInverter() &&
@@ -1561,9 +1561,10 @@ public class CDL2Cast {
                         iw.write("node \"" + node.name + "\";\n");
                 }
                 iw.write(prs.toString());
-                iw.prevLevel();
-                iw.write("}\n");
             }
+            iw.prevLevel();
+            iw.write("}\n");
+
             // write sizable netlist to the CAST
             if (netlistInCast) {
                 iw.write("netlist {\n");
