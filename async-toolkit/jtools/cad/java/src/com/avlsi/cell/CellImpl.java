@@ -19,6 +19,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import java.math.BigInteger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1231,13 +1232,8 @@ public class CellImpl implements CellInterface {
         } else if (type instanceof ChannelType) {
             final ChannelType channelType = (ChannelType) type;
 
-            // Interim hack to ignore 1ofN's and _1ofN's
-            if (channelType.getTypeName().startsWith("standard.channel.1of") ||
-                channelType.getTypeName().startsWith("standard.channel._1of"))
-                return;
-
             // e1ofN*M
-            final int N = extractN(channelType.getTypeName());
+            final BigInteger N = channelType.getNumValues();
             final int M = channelType.getWidth();
             // TODO: give way to control slack
             final int slack = 1;
@@ -1250,8 +1246,9 @@ public class CellImpl implements CellInterface {
             // can be looked up; for arrayed, width 1 channels, "[0]" will be
             // appended inside CoSimInfo.addChannelInfo to make the name look
             // identical to chanName below.
-            addNewChannelToCosimInfo(newname, slack, N, M,
-                                     channelType.isArrayed(), outCosimInfo);
+            addNewChannelToCosimInfo(newname, channelType.getTypeName(), slack,
+                                     N, M, channelType.isArrayed(),
+                                     outCosimInfo);
 
             // Fix for Bug 2373.  Add index for "wide" channels of width 1.
             // Do this before converting ][ -> , to get better channel
@@ -1541,6 +1538,10 @@ public class CellImpl implements CellInterface {
             javaCosimInfo.addInternalChannel(newChanName);
     }
 
+    private String getE1ofType(final int N) {
+        return "standard.channel.e1of(" + N + ")";
+    }
+
     /** Adds the channel and parameters specified by <code>spec</code>
      *  to <code>outCosimInfo.chanParams</code> and returns the name
      *  of the new channel.
@@ -1550,7 +1551,7 @@ public class CellImpl implements CellInterface {
         final String name = strtok.nextToken();
         if (!strtok.hasMoreTokens()) {
             // No spec, just name.  Assume e1of2  slack 0  
-            addNewChannelToCosimInfo(name, 0, 2, 1, false, outCosimInfo);
+            addNewChannelToCosimInfo(name, getE1ofType(2), 0, 2, 1, false, outCosimInfo);
             return name;
         }
         if (!strtok.nextToken().equals("(")) {
@@ -1587,7 +1588,7 @@ public class CellImpl implements CellInterface {
             throw new BadChannelSpec(name);
         }
 
-        addNewChannelToCosimInfo(name, slack, N, M, arrayed, outCosimInfo);
+        addNewChannelToCosimInfo(name, getE1ofType(N), slack, N, M, arrayed, outCosimInfo);
         return name;
     }
 
@@ -1601,12 +1602,20 @@ public class CellImpl implements CellInterface {
     }
 
     private void addNewChannelToCosimInfo
-        (final String name, final int slack,
+        (final String name, final String type, final int slack,
          final int N, final int M, final boolean isArrayed,
+         final CoSimInfo cosimInfo) {
+        addNewChannelToCosimInfo(name, type, slack, BigInteger.valueOf(N), M,
+                                 isArrayed, cosimInfo);
+    }
+
+    private void addNewChannelToCosimInfo
+        (final String name, final String type, final int slack,
+         final BigInteger N, final int M, final boolean isArrayed,
          final CoSimInfo cosimInfo) {
         // System.err.println("Adding channel " + name + " with parameters " +
         //         "e1of" + N + " * " + M + "  slack " + slack);
-        cosimInfo.addChannelInfo(name, slack, N, M, isArrayed);
+        cosimInfo.addChannelInfo(name, type, slack, N, M, isArrayed);
     }
 
     class BadChannelSpec extends RuntimeException {

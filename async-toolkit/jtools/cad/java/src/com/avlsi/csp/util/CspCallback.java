@@ -28,9 +28,7 @@ public class CspCallback implements DirectiveCallback {
     private boolean isChannel(final Value v) {
         if (v instanceof InstanceValue) {
             final CellInterface c = ((InstanceValue) v).getCell();
-            try {
-                return CellUtils.extractN(c.getFullyQualifiedType()) != -1;
-            } catch (NumberFormatException e) { }
+            return CellUtils.isAsyncChannel(c);
         }
         return false;
     }

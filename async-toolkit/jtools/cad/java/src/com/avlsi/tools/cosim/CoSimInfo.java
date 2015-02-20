@@ -7,6 +7,8 @@
 
 package com.avlsi.tools.cosim;
 
+import java.math.BigInteger;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,6 +24,8 @@ import com.avlsi.cell.CellInterface;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.tools.tsim.BufferedChannel;
+import com.avlsi.tools.tsim.BufferedNodeBDReadChannel;
+import com.avlsi.tools.tsim.BufferedNodeBDWriteChannel;
 import com.avlsi.tools.tsim.ChannelInput;
 import com.avlsi.tools.tsim.ChannelOutput;
 import com.avlsi.tools.tsim.MergeDevice;
@@ -32,6 +36,7 @@ import com.avlsi.tools.tsim.Statusable;
 import com.avlsi.tools.tsim.WideNode;
 import com.avlsi.tools.tsim.WideNodeImpl;
 import com.avlsi.util.container.Pair;
+import com.avlsi.util.math.BigIntegerUtil;
 import com.avlsi.util.debug.Debug;
 import com.avlsi.util.text.StringUtil;
 
@@ -198,17 +203,19 @@ public abstract class CoSimInfo {
     /**
      * Adds info on slack/N/M to the internal ChannelParameterDict.
      **/
-    public void addChannelInfo(final String name, final int slack,
-                               final int N, final int M,
+    public void addChannelInfo(final String name, final String type,
+                               final int slack,
+                               final BigInteger N, final int M,
                                final boolean isArrayed) {
-        addChannelInfo(name, slack, 1, 4, N, M, isArrayed);
+        addChannelInfo(name, type, slack, 1, 4, N, M, isArrayed);
     }
 
-    public void addChannelInfo(final String name, final int slack,
+    public void addChannelInfo(final String name, final String type,
+                               final int slack,
                                final int latency, final int cycle_time,
-                               final int N, final int M,
+                               final BigInteger N, final int M,
                                final boolean isArrayed) {
-        addChannelInfo(name,
+        addChannelInfo(name, type,
             new ChannelTimingInfo() {
                 public int getSlack() { return slack; }
                 public int getLatency() { return latency; }
@@ -221,12 +228,13 @@ public abstract class CoSimInfo {
             }, N, M, isArrayed);
     }
 
-    public void addChannelInfo(final String name, final ChannelTimingInfo cti,
-                               final int N, final int M,
+    public void addChannelInfo(final String name, final String type,
+                               final ChannelTimingInfo cti,
+                               final BigInteger N, final int M,
                                final boolean isArrayed) {
         final String realName = isArrayed && M == 1 ?
             StringUtil.replaceSubstring(name + "[0]", "][", ",") : name;
-        chanParams.addChannelParameters(realName, cti, N, M);
+        chanParams.addChannelParameters(realName, type, cti, N, M);
     }
 
     public void addNodeInfo(final String name, final int M,
@@ -288,8 +296,19 @@ public abstract class CoSimInfo {
             return cti.getSlack();
         }
 
+        private void validateBDChannel(final String name, final int slack,
+                                       final int width) {
+            if (slack <= 0)
+                throw new IllegalArgumentException(
+                        "Slackless BD channel " + name + " not supported");
+            if (width > 1)
+                throw new IllegalArgumentException(
+                        "Wide BD channel " + name + " not supported");
+        }
+
         public ChannelInput makeInputChannel(final String name,
-                                             final int radix,
+                                             final String type,
+                                             final BigInteger radix,
                                              final int width,
                                              final ChannelTimingInfo cti) {
             final int slack = getSlack(cti);
@@ -301,21 +320,42 @@ public abstract class CoSimInfo {
             final int fbLatency = (fbNeutral + fbValid) / 2;
             final int bbLatency =
                 cti.getCycleTime() - ffLatency - bfLatency - fbLatency;
-            return new NodeReadChannel(slack,
-                                       Math.round(ffLatency * digitalTau),
-                                       Math.round(bbLatency * digitalTau),
-                                       Math.round(fbNeutral * digitalTau),
-                                       Math.round(fbValid * digitalTau),
-                                       Math.round(bfLatency * digitalTau),
-                                       Math.round(cti.getCycleTimeIn() *
-                                                  digitalTau),
-                                       Math.round(cti.getCycleTimeOut() *
-                                                  digitalTau),
-                                       name, radix, width);
+            if (type.startsWith("standard.channel.e1of")) {
+                return new NodeReadChannel(slack,
+                                           Math.round(ffLatency * digitalTau),
+                                           Math.round(bbLatency * digitalTau),
+                                           Math.round(fbNeutral * digitalTau),
+                                           Math.round(fbValid * digitalTau),
+                                           Math.round(bfLatency * digitalTau),
+                                           Math.round(cti.getCycleTimeIn() *
+                                                      digitalTau),
+                                           Math.round(cti.getCycleTimeOut() *
+                                                      digitalTau),
+                                           name,
+                                           BigIntegerUtil.safeIntValue(radix),
+                                           width);
+            } else if (type.startsWith("standard.channel.bd")) {
+                validateBDChannel(name, slack, width);
+                final int W = radix.bitLength() - 1;
+                return new BufferedNodeBDReadChannel(
+                        slack,
+                        Math.round(200 * digitalTau),
+                        Math.round(0 * digitalTau),
+                        Math.round(ffLatency * digitalTau),
+                        Math.round(bbLatency * digitalTau),
+                        Math.round(fbLatency * digitalTau),
+                        Math.round(bfLatency * digitalTau),
+                        Math.round(cti.getCycleTimeIn() * digitalTau),
+                        Math.round(cti.getCycleTimeOut() * digitalTau),
+                        name, W, true);
+            } else {
+                throw new IllegalArgumentException("Unknown channel type " + type);
+            }
         }
 
         public ChannelOutput makeOutputChannel(final String name,
-                                               final int radix,
+                                               final String type,
+                                               final BigInteger radix,
                                                final int width,
                                                final ChannelTimingInfo cti) {
             final int slack = getSlack(cti);
@@ -327,16 +367,36 @@ public abstract class CoSimInfo {
             final int fbLatency = (fbNeutral + fbValid) / 2;
             final int bbLatency =
                 cti.getCycleTime() - ffLatency - bfLatency - fbLatency;
-            return new NodeWriteChannel(slack,
-                                        Math.round(ffLatency * digitalTau),
-                                        Math.round(bbLatency * digitalTau),
-                                        Math.round(fbLatency * digitalTau),
-                                        Math.round(bfLatency * digitalTau),
-                                        Math.round(cti.getCycleTimeIn() *
-                                                   digitalTau),
-                                        Math.round(cti.getCycleTimeOut() *
-                                                   digitalTau),
-                                        name, radix, width);
+            if (type.startsWith("standard.channel.e1of")) {
+                return new NodeWriteChannel(slack,
+                                            Math.round(ffLatency * digitalTau),
+                                            Math.round(bbLatency * digitalTau),
+                                            Math.round(fbLatency * digitalTau),
+                                            Math.round(bfLatency * digitalTau),
+                                            Math.round(cti.getCycleTimeIn() *
+                                                       digitalTau),
+                                            Math.round(cti.getCycleTimeOut() *
+                                                       digitalTau),
+                                            name,
+                                            BigIntegerUtil.safeIntValue(radix),
+                                            width);
+            } else if (type.startsWith("standard.channel.bd")) {
+                validateBDChannel(name, slack, width);
+                final int W = radix.bitLength() - 1;
+                return new BufferedNodeBDWriteChannel(
+                        slack,
+                        Math.round(600 * digitalTau),
+                        Math.round(0 * digitalTau),
+                        Math.round(ffLatency * digitalTau),
+                        Math.round(bbLatency * digitalTau),
+                        Math.round(fbLatency * digitalTau),
+                        Math.round(bfLatency * digitalTau),
+                        Math.round(cti.getCycleTimeIn() * digitalTau),
+                        Math.round(cti.getCycleTimeOut() * digitalTau),
+                        name, W, true);
+            } else {
+                throw new IllegalArgumentException("Unknown channel type " + type);
+            }
         }
     }
 

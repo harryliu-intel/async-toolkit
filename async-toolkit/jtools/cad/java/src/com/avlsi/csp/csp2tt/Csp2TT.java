@@ -44,6 +44,7 @@ import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
 import com.avlsi.util.container.Triplet;
+import com.avlsi.util.math.BigIntegerUtil;
 import com.avlsi.util.text.StringUtil;
 
 /**
@@ -335,23 +336,35 @@ public class Csp2TT {
             new ArrayList/*<RecordingChannelOutput>*/();
 
         public ChannelInput makeInputChannel(final String name,
-                                             final int radix,
+                                             final String type,
+                                             final BigInteger radix,
                                              final int width,
                                              final ChannelTimingInfo cti) {
             final ChannelInput chan =
-                new PlayingChannelInput(name, radix, width);
+                new PlayingChannelInput(name, getRadix(name, radix), width);
             inputChannels.add(chan);
             return chan;
         }
 
         public ChannelOutput makeOutputChannel(final String name,
-                                               final int radix,
+                                               final String type,
+                                               final BigInteger radix,
                                                final int width,
                                                final ChannelTimingInfo cti) {
             final ChannelOutput chan =
-                new RecordingChannelOutput(name, radix, width);
+                new RecordingChannelOutput(name, getRadix(name, radix), width);
             outputChannels.add(chan);
             return chan;
+        }
+
+        private int getRadix(final String name, final BigInteger radix) {
+            try {
+                return BigIntegerUtil.safeIntValue(radix);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(
+                    "Channel " + name + " with radix " + radix + " is too wide",
+                    e);
+            }
         }
 
         private List/*<PlayingChannelInput>*/ getInputChannels() {

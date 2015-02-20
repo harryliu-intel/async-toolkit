@@ -654,7 +654,7 @@ public class VariableAnalyzer {
         } else if (t instanceof com.avlsi.fast.ports.ChannelType) {
             final com.avlsi.fast.ports.ChannelType ct =
                 (com.avlsi.fast.ports.ChannelType) t;
-            return new ChannelType(computeChannelWidth(ct.getTypeName(),
+            return new ChannelType(computeChannelWidth(ct.getNumValues(),
                                                        ct.getWidth()),
                                    PortDirection.mapDirection(direction));
         } else if (t instanceof com.avlsi.fast.ports.NodeType) {
@@ -696,10 +696,9 @@ public class VariableAnalyzer {
      * Returns how many values a wide channel can carry.
      **/
     private static /*@ non_null @*/ BigInteger computeChannelWidth(
-            final /*@ non_null @*/ String channelTypeName,
+            final BigInteger narrow,
             final int width) {
-        return BigInteger.valueOf(getChannelBase(channelTypeName))
-                         .pow(width);
+        return narrow.pow(width);
     }
 
     /** Get a Map of the metaparameters of the current cell.  **/

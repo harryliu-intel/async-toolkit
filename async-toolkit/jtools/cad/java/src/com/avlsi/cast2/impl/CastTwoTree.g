@@ -1563,7 +1563,8 @@ options {
 
             Debug.assertTrue(channelType.getWidth() == 1);
             return new ChannelType(channelType.iterator(),
-                                   channelType.getTypeName(), width);
+                                   channelType.getTypeName(), width,
+                                   channelType.getNumValues());
         } else if (type instanceof NodeType) {
             final NodeType nodeType = (NodeType) type;
 
@@ -2555,10 +2556,10 @@ baseType[Environment metaEnv, Environment env, CellImpl cell,
               fullyQualifiedTypeName = moduleName + '.' + typeName;
           }
           PortTypeInterface portType;
-          if (moduleName.equals("standard.channel") &&
-              typeName.startsWith("e1of")) {
+          if (CellUtils.isAsyncChannel(subCell)) {
               portType = new ChannelType(subCell.getPortDefinitions(),
-                                         fullyQualifiedTypeName);
+                                         fullyQualifiedTypeName,
+                                         CellUtils.getNumValues(subCell));
           } else {
               portType = new StructureType(subCell.getPortDefinitions(),
                                            fullyQualifiedTypeName);

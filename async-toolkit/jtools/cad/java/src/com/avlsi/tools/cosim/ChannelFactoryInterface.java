@@ -6,6 +6,8 @@
 
 package com.avlsi.tools.cosim;
 
+import java.math.BigInteger;
+
 import com.avlsi.tools.tsim.ChannelInput;
 import com.avlsi.tools.tsim.ChannelOutput;
 
@@ -30,7 +32,8 @@ public interface ChannelFactoryInterface {
      * </jml></pre>
      **/
     ChannelInput makeInputChannel(String name,
-                                  int radix,
+                                  String type,
+                                  BigInteger radix,
                                   int width,
                                   ChannelTimingInfo cti);
 
@@ -47,7 +50,8 @@ public interface ChannelFactoryInterface {
      * </jml></pre>
      **/
     ChannelOutput makeOutputChannel(String name,
-                                    int radix,
+                                    String type,
+                                    BigInteger radix,
                                     int width,
                                     ChannelTimingInfo cti);
 }

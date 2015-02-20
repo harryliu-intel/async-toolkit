@@ -48,4 +48,13 @@ public class BigIntegerUtil {
             return part;
         }
     }
+
+    public static int safeIntValue(BigInteger v) {
+        if (v.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0 ||
+            v.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
+            throw new IllegalArgumentException(v + " too wide to fit into int");
+        } else {
+            return v.intValue();
+        }
+    }
 }

@@ -7,6 +7,7 @@
 
 package com.avlsi.tools.cosim;
 
+import java.math.BigInteger;
 import java.util.Hashtable;
 import com.avlsi.tools.tsim.ChannelInput;
 import com.avlsi.tools.tsim.ChannelOutput;
@@ -18,13 +19,16 @@ final class ChannelParameterDict {
 
     private final class Parameter {
         private final String name;
+        private final String type;
         private final ChannelTimingInfo cti;
-        private final int N;                // wires per enable (e1ofN)
-        private final int M;                // # e1ofN bundles per channel
+        private final BigInteger N;         // # of values over a narrow channel
+        private final int M;                // # of narrow channels
 
-        public Parameter(final String name, final ChannelTimingInfo cti,
-                         final int N, final int M) {
+        public Parameter(final String name, final String type,
+                         final ChannelTimingInfo cti,
+                         final BigInteger N, final int M) {
             this.name = name;
+            this.type = type;
             this.cti = cti;
             this.N = N;
             this.M = M;
@@ -38,7 +42,7 @@ final class ChannelParameterDict {
         public ChannelInput makeInputChannel(
                 final String nodenm,
                 final ChannelFactoryInterface factory) {
-            return factory.makeInputChannel(nodenm, N, M, cti);
+            return factory.makeInputChannel(nodenm, type, N, M, cti);
         }
 
         /**
@@ -49,7 +53,7 @@ final class ChannelParameterDict {
           public ChannelOutput makeOutputChannel(
                 final String nodenm,
                 final ChannelFactoryInterface factory) {
-            return factory.makeOutputChannel(nodenm, N, M, cti);
+            return factory.makeOutputChannel(nodenm, type, N, M, cti);
         }
     }
 
@@ -61,10 +65,10 @@ final class ChannelParameterDict {
         nodeParameters = new Hashtable();
     }
 
-    public void addChannelParameters(final String name,
+    public void addChannelParameters(final String name, final String type,
                                      final ChannelTimingInfo cti,
-                                     final int N, final int M) {
-        channelParameters.put(name, new Parameter(name, cti, N, M));
+                                     final BigInteger N, final int M) {
+        channelParameters.put(name, new Parameter(name, type, cti, N, M));
     }
 
     public void addChannelParameters(final ChannelParameterDict params,

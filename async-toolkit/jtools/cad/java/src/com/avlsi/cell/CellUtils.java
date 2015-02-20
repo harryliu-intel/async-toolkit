@@ -8,6 +8,7 @@
 package com.avlsi.cell;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -693,8 +694,10 @@ public final class CellUtils {
 
     public static class ChannelCreator extends MarkPort {
         private static ChannelType deArray(final ChannelType t) {
-            return t.isArrayed() ?
-                       new ChannelType(t.iterator(), t.getTypeName()) : t;
+            return t.isArrayed() ?  new ChannelType(t.iterator(),
+                                                    t.getTypeName(),
+                                                    t.getNumValues())
+                                 : t;
         }
 
         private static NodeType deArray(final NodeType t) {
@@ -793,8 +796,10 @@ public final class CellUtils {
 
     private static class ChannelConnection extends MarkPort {
         private static ChannelType deArray(final ChannelType t) {
-            return t.isArrayed() ?
-                       new ChannelType(t.iterator(), t.getTypeName()) : t;
+            return t.isArrayed() ?  new ChannelType(t.iterator(),
+                                                    t.getTypeName(),
+                                                    t.getNumValues())
+                                 : t;
         }
 
         private static NodeType deArray(final NodeType t) {
@@ -1062,10 +1067,10 @@ public final class CellUtils {
             final String moduleName = cell.getModuleName();
             final String typeName = cell.getType();
             // XXX: same code appears in CastTwoTree.g; should refactor
-            if (moduleName.equals("standard.channel") &&
-                typeName.substring(1).startsWith("1of")) {
+            if (isAsyncChannel(cell)) {
                 portType = new ChannelType(cell.getPortDefinitions(),
-                                           cell.getFullyQualifiedType());
+                                           cell.getFullyQualifiedType(),
+                                           CellUtils.getNumValues(cell));
             } else {
                 portType = new StructureType(cell.getPortDefinitions(),
                                              cell.getFullyQualifiedType());
@@ -1269,8 +1274,10 @@ public final class CellUtils {
             new ArrayList<PortDefinition>();
         (new MarkPort() {
             private ChannelType deArray(final ChannelType t) {
-                return t.isArrayed() ?
-                           new ChannelType(t.iterator(), t.getTypeName()) : t;
+                return t.isArrayed() ?  new ChannelType(t.iterator(),
+                                                        t.getTypeName(),
+                                                        t.getNumValues())
+                                     : t;
             }
             private NodeType deArray(final NodeType t) {
                 return t.isArrayed() ? new NodeType() : t;
@@ -2026,5 +2033,33 @@ public final class CellUtils {
             }
         }
         return portDirs;
+    }
+
+    /**
+     * Returns the FQCN of the refinement parent of all asynchronous channels.
+     **/
+    public static String getAsynchronousChannelParent() {
+        return "standard.channel.asynchronous_channel";
+    }
+
+    /**
+     * Returns true if the given cell is an asynchronous channel.
+     **/
+    public static boolean isAsyncChannel(CellInterface cell) {
+        final String ancestor = getAsynchronousChannelParent();
+        while (cell != null) {
+            if (cell.getFullyQualifiedType().equals(ancestor)) {
+                return true;
+            }
+            cell = cell.getDirectRefinementParent();
+        }
+        return false;
+    }
+
+    public static BigInteger getNumValues(final CellInterface chan) {
+        final BigInteger numValues = (BigInteger)
+            DirectiveUtils.getTopLevelDirective(chan,
+                                                DirectiveConstants.NUM_VALUES);
+        return numValues == null ? BigInteger.ONE : numValues;
     }
 }

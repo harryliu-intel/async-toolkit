@@ -29,6 +29,7 @@ import com.avlsi.cast.CastFileParser;
 import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.cell.CellInterface;
+import com.avlsi.cell.CellUtils;
 import com.avlsi.cell.ExclusiveNodeSet;
 import com.avlsi.cell.ExclusiveNodeSets;
 import com.avlsi.fast.ports.PortDefinition;
@@ -67,9 +68,6 @@ public final class Cell {
 
     /** Print lots of debugging information? Used by debugPrintln() **/
     public static boolean debug = false;
-
-    private static String stdAsyncChannelType = 
-        "standard.channel.asynchronous_channel";
 
     private static String dpuFragmentTypes[] = {
         "standard.base.DPU_DYB", "standard.base.DPU_BIT",
@@ -932,7 +930,8 @@ public final class Cell {
     private static void lookupBaseCells(final CastFileParser cfp) 
         throws Exception {
         if (stdAsyncChannel == null)
-            stdAsyncChannel = cfp.getFullyQualifiedCell(stdAsyncChannelType);
+            stdAsyncChannel =
+                cfp.getFullyQualifiedCell(CellUtils.getAsynchronousChannelParent());
         if (dpuFragmentCells == null) {
             dpuFragmentCells = new CellInterface[dpuFragmentTypes.length];
             for (int i=0; i<dpuFragmentTypes.length; i++)

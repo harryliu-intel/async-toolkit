@@ -7,6 +7,8 @@
 
 package com.avlsi.tools.cosim;
 
+import java.math.BigInteger;
+
 import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.cell.CellInterface;
 
@@ -34,18 +36,19 @@ public class CSPCoSimInfo extends CoSimInfo {
         return cdict;
     }
 
-    public void addChannelInfo(final String name, final int slack,
+    public void addChannelInfo(final String name, final String type,
+                               final int slack,
                                final int latency, final int cycle_time,
-                               final int N, final int M,
+                               final BigInteger N, final int M,
                                final boolean isArrayed) {
         if (parent == null) {
-            super.addChannelInfo(name, slack, latency, cycle_time, N, M,
+            super.addChannelInfo(name, type, slack, latency, cycle_time, N, M,
                                  isArrayed);
         } else {
             final ChannelTimingInfo cti =
                 DirectiveUtils.getTiming(parent, name);
             //System.err.println("CSP channel: " + parent.getFullyQualifiedType() + " " + name + " " + cti.getSlack() + " " + cti.getLatency() + " " + cti.getCycleTime());
-            super.addChannelInfo(name, cti, N, M, isArrayed);
+            super.addChannelInfo(name, type, cti, N, M, isArrayed);
         }
     }
 

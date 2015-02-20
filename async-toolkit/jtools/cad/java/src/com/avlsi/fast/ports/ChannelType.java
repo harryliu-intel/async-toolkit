@@ -13,6 +13,7 @@
 
 package com.avlsi.fast.ports;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -49,13 +50,19 @@ public final class ChannelType implements PortTypeInterface {
     private final Collection/*<PortDefinition>*/ subPortsList;
 
     /**
+     * Number of values that can be sent over the narrow channel
+     **/
+    private final BigInteger numValues;
+
+    /**
      * Class constructor.
      *
      * @param typeName  CAST type name, not null
      **/
     public ChannelType(final Iterator/*<PortDefinition>*/ ports,
-                       final String typeName) {
-        this(ports, typeName, 1, false);
+                       final String typeName,
+                       final BigInteger numValues) {
+        this(ports, typeName, 1, numValues, false);
     }
 
     /**
@@ -68,16 +75,19 @@ public final class ChannelType implements PortTypeInterface {
      **/
     public ChannelType(final Iterator/*<PortDefinition>*/ ports,
                        final String typeName,
-                       final int width) {
-        this(ports, typeName, width, true);
+                       final int width,
+                       final BigInteger numValues) {
+        this(ports, typeName, width, numValues, true);
     }
 
     private ChannelType(final Iterator/*<PortDefinition>*/ ports,
                         final String typeName,
-                        final int width, final boolean arrayed) {
+                        final int width, final BigInteger numValues,
+                        final boolean arrayed) {
         assert ports != null && typeName != null && width > 0;
         this.typeName = typeName;
         this.width = width;
+        this.numValues = numValues;
         this.arrayed = arrayed;
         this.subPortsList = new ArrayList/*<PortDefinition>*/();
         while (ports.hasNext()) add((PortDefinition) ports.next());
@@ -100,6 +110,15 @@ public final class ChannelType implements PortTypeInterface {
      **/
     public int getWidth() {
         return width;
+    }
+
+    /**
+     * Returns the number of values that can be sent over the narrow channel.
+     *
+     * @return number of values can be sent
+     **/
+    public BigInteger getNumValues() {
+        return numValues;
     }
 
     public boolean isArrayed() {

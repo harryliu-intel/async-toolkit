@@ -953,7 +953,8 @@ public class Cast2Verilog {
                 for (int i = 0; i < chanType.getWidth(); ++i) {
                     emitPorts(cell, name + '[' + i + ']',
                               new ChannelType(chanType.iterator(),
-                                              chanType.getTypeName()),
+                                              chanType.getTypeName(),
+                                              chanType.getNumValues()),
                               direction, dataNodes, enableNodes,
                               arrayInputNodes, arrayOutputNodes, inputPorts,
                               isArray, first, out, isLeaf, inJava, narrowPorts,

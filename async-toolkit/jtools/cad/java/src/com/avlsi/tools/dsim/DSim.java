@@ -15,6 +15,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 
+import java.math.BigInteger;
+
 import java.text.NumberFormat;
 
 import java.util.ArrayList;
@@ -1364,18 +1366,7 @@ public class DSim implements NodeWatcher {
                 protected void mark(final ChannelType channelType,
                                     final String name, final int direction,
                                     final boolean inArray) {
-                    boolean descend = flatten;
-
-                    if (!descend) {
-                        try {
-                            descend = CellUtils.extractN(
-                                        channelType.getTypeName()) < 1;
-                        } catch (NumberFormatException e) {
-                            descend = true;
-                        }
-                    }
-
-                    if (descend) {
+                    if (flatten) {
                         super.mark(channelType, name, direction, inArray);
                     }
                 }
@@ -3073,11 +3064,13 @@ public class DSim implements NodeWatcher {
         } else if (existNodes(base + ".", CellUtils.NEW_DFT_NODES)) {
             ui_out_verbose("New ChanDft handler installed on " + base + "\n");
             if (in) {
-                factory.makeInputChannel(base + ".D", 2, 1,
-                                         DEFAULT_TIMING_INFO);
+                factory.makeInputChannel(base + ".D", "standard.channel.e1of2",
+                                         BigInteger.valueOf(2),
+                                         1, DEFAULT_TIMING_INFO);
             } else {
-                factory.makeOutputChannel(base + ".D", 2, 1,
-                                          DEFAULT_TIMING_INFO);
+                factory.makeOutputChannel(base + ".D", "standard.channel.e1of2",
+                                          BigInteger.valueOf(2),
+                                          1, DEFAULT_TIMING_INFO);
                 resetNode.addWatch(new NewDftOutputHandler(base + ".C"));
             }
         } else {

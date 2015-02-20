@@ -7,6 +7,7 @@
 
 package com.avlsi.tools.cosim;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -71,8 +72,9 @@ public class JavaCoSimInfo extends CoSimInfo {
      * Overrides the slack value with a custom value if one was
      * specified in the java block.
      **/
-    public void addChannelInfo(final String name, final int slack,
-                               final int N, final int M,
+    public void addChannelInfo(final String name, final String type,
+                               final int slack,
+                               final BigInteger N, final int M,
                                final boolean isArrayed) {
         int realSlack=slack;
         if(customTimingInfo.containsKey(name)) {
@@ -81,7 +83,7 @@ public class JavaCoSimInfo extends CoSimInfo {
             // informs users of a recent behavior change
             System.err.println("Using "+realSlack+" instead of "+slack+" for slack on "+name);
         }
-        super.addChannelInfo(name, realSlack, N, M, isArrayed);
+        super.addChannelInfo(name, type, realSlack, N, M, isArrayed);
     }
 
     /**
