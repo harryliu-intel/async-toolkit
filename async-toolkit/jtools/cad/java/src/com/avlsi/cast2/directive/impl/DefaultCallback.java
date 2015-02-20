@@ -51,6 +51,8 @@ class DefaultCallback implements DirectiveCallback {
             final Value v = treeParser.expression(castParser.getAST(), env, false);
             if (type.equals(DirectiveConstants.INT_TYPE)) {
                 return new Integer(IntValue.valueOf(v).getValue().intValue());
+            } else if (type.equals(DirectiveConstants.BIGINT_TYPE)) {
+                return IntValue.valueOf(v).getValue();
             } else if (type.equals(DirectiveConstants.FLOAT_TYPE)) {
                 return new Float(FloatValue.valueOf(v).getValue());
             } else if (type.equals(DirectiveConstants.DOUBLE_TYPE)) {
@@ -183,6 +185,7 @@ class DefaultCallback implements DirectiveCallback {
         Object ret = null;
         value = value.trim();
         if (type.equals(DirectiveConstants.INT_TYPE) ||
+            type.equals(DirectiveConstants.BIGINT_TYPE) ||
             type.equals(DirectiveConstants.FLOAT_TYPE) ||
             type.equals(DirectiveConstants.DOUBLE_TYPE) ||
             type.equals(DirectiveConstants.BOOLEAN_TYPE)) {

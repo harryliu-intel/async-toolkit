@@ -168,6 +168,7 @@ public interface DirectiveConstants {
     String NAME_MAPPING = "name_mapping";
     String STRENGTH_GROUP = "strength_group";
     String IDLE_STATE = "idle_state";
+    String NUM_VALUES = "num_values";
 
     /** CSP timing directives */
     String SLACK = "slack";
@@ -233,6 +234,7 @@ public interface DirectiveConstants {
 
     /** Define data types here to enable external access */
     String INT_TYPE = "int";    
+    String BIGINT_TYPE = "bigint";    
     String FLOAT_TYPE = "float";
     String DOUBLE_TYPE = "double";
     String BOOLEAN_TYPE = "boolean";

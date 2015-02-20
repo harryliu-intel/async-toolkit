@@ -40,6 +40,7 @@ public class DirectiveTable {
     static {
         DirectiveCallback cb = new DefaultCallback();
         registerCallback(null, DirectiveConstants.INT_TYPE, cb);
+        registerCallback(null, DirectiveConstants.BIGINT_TYPE, cb);
         registerCallback(null, DirectiveConstants.FLOAT_TYPE, cb);
         registerCallback(null, DirectiveConstants.DOUBLE_TYPE, cb);
         registerCallback(null, DirectiveConstants.BOOLEAN_TYPE, cb);
@@ -607,6 +608,10 @@ public class DirectiveTable {
                           DirectiveConstants.IDLE_STATE,
                           DirectiveConstants.NODE_TYPE,
                           DirectiveConstants.INT_TYPE,
+                          null);
+        registerDirective(BlockInterface.CELL,
+                          DirectiveConstants.NUM_VALUES,
+                          DirectiveConstants.BIGINT_TYPE,
                           null);
 
         /**
