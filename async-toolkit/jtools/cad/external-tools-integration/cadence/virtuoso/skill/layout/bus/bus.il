@@ -457,7 +457,7 @@ wires_modtime = makeTable("wires" 0)
                            @key (flipX nil) (flipY nil) (isPin nil)
                            (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
                            (altLayerPatternList nil)
-                           (guideInstName nil) (guideInst nil) (shieldM2 t) (drawShield t)
+                           (guideInstName nil) (guideInst nil) (shieldM2 t) (drawShield nil)
                            (CV (geGetEditCellView)))
   (let (newpoints node width offset index x y hv
         offsetX offsetY nextOffset curOffset lastLayer curLayer tmpx tmpy
