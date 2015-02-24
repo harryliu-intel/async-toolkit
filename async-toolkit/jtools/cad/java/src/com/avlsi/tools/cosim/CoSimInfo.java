@@ -296,14 +296,20 @@ public abstract class CoSimInfo {
             return cti.getSlack();
         }
 
-        private void validateBDChannel(final String name, final int slack,
-                                       final int width) {
+        private int validateBDChannel(final String name, final int slack,
+                                      final BigInteger radix,
+                                      final int width) {
             if (slack <= 0)
                 throw new IllegalArgumentException(
                         "Slackless BD channel " + name + " not supported");
             if (width > 1)
                 throw new IllegalArgumentException(
                         "Wide BD channel " + name + " not supported");
+            final int radix0 = radix.compareTo(BigInteger.ZERO);
+            if (radix0 < 0)
+                throw new IllegalArgumentException(
+                        "Negative radix BD channel " + name + " not supported");
+            return radix0 == 0 ? 0 : radix.bitLength() - 1;
         }
 
         public ChannelInput makeInputChannel(final String name,
@@ -335,8 +341,7 @@ public abstract class CoSimInfo {
                                            BigIntegerUtil.safeIntValue(radix),
                                            width);
             } else if (type.startsWith("standard.channel.bd")) {
-                validateBDChannel(name, slack, width);
-                final int W = radix.bitLength() - 1;
+                final int W = validateBDChannel(name, slack, radix, width);
                 return new BufferedNodeBDReadChannel(
                         slack,
                         Math.round(200 * digitalTau),
@@ -381,8 +386,7 @@ public abstract class CoSimInfo {
                                             BigIntegerUtil.safeIntValue(radix),
                                             width);
             } else if (type.startsWith("standard.channel.bd")) {
-                validateBDChannel(name, slack, width);
-                final int W = radix.bitLength() - 1;
+                final int W = validateBDChannel(name, slack, radix, width);
                 return new BufferedNodeBDWriteChannel(
                         slack,
                         Math.round(600 * digitalTau),

@@ -109,8 +109,8 @@ public abstract class BufferedNodeBDChannel implements Statusable, ChannelStatus
     protected void instantiateNM() {
         resetNode = DSimUtil.getResetNode();
         final String fullname = StringUtil.replaceSubstring(name, "][", ",");
-        ack = findNodeOrDie(fullname + ".C.a");
-        req = findNodeOrDie(fullname + ".C.q");
+        ack = findNodeOrDie(fullname + (data.length == 0 ? "" : ".C") + ".a");
+        req = findNodeOrDie(fullname + (data.length == 0 ? "" : ".C") + ".q");
         for (int i = 0; i < data.length; ++i) {
             data[i] = findNodeOrDie(fullname + ".D[" + i + "]");
         }
