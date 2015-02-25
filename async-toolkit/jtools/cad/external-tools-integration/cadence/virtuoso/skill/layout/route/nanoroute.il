@@ -123,6 +123,7 @@
                                  " --routed"
                                  " --translate=cadence"
                                  " --cadence-name"
+                                 " --by-name"
                                  "&> exportVerilogNetlist.log")
                          BinRoot
                          CAST_PATH

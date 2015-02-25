@@ -1,6 +1,6 @@
 ; Replacement for ui/Nano/Prelayout/CreatePrelayout.il
 ;
-; Refers to nrCastQuery, nrIsRoutedCell, nrSyncToNetlist, NameFilterInstances,
+; Refers to nrCastQuery, nrIsRoutedCell, NameFilterInstances,
 ; CreateInstWithAlignmentProps, SetCellAlignment, CheckRoutedAlignment
 
 ; Top-level function to make a prelayout view and switch to it
@@ -129,7 +129,7 @@
                           (CreateInstWithAlignmentProps prelayoutCV instCV
                            instName (car transform) (cadr transform))
                           )
-                 (when SyncToNetlist (nrSyncToNetlist prelayoutCV))
+                 (when SyncToNetlist (UpdateFloorplan ?CV prelayoutCV))
                  (dbSave prelayoutCV)
                  (printf "Created %s(%s)...\n"
                          prelayoutCV->cellName prelayoutCV->viewName)

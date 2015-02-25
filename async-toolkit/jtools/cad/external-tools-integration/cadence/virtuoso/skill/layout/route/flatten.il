@@ -114,7 +114,7 @@
 
     ; route abutting pins too
     (when ConnectAbuttingPins
-      (nrCreateNeighborNetConnector CV 2*KeepoutPrBoundSpacing MetalLPPs ?maxFanout 2)
+      (nrCreateNeighborNetConnector CV DefaultWiringSpacing MetalLPPs ?maxFanout 2)
       )
 
     ; fill in fields for DEF export

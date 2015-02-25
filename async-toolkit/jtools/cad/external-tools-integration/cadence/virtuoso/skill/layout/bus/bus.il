@@ -9,8 +9,6 @@ defchan_patterns = nil ; global list of patterns for DrawTracks
 Startloadwires = 0
 wires_modtime = makeTable("wires" 0)
 
-(defvar ShieldNet list("GND" "VDD" "AVDD" "AGND"))
-
 (defun BusDefaults ()
   busContacts = t   ; draw the contacts
   busKeepout  = nil ; draw keepout instead of metal
@@ -445,7 +443,7 @@ wires_modtime = makeTable("wires" 0)
 
 ; add suffix to a prefix (unless the prefix is empty, in which case result is too)
 (defun AddSuffix (prefix suffix)
-  (cond (member(suffix ShieldNet) ||prefix==nil suffix)
+  (cond ((member suffix PowerNets) || prefix==nil suffix)
         (prefix!="" (sprintf nil "%s%s" prefix suffix))
         (prefix=="" "")
         )
@@ -759,8 +757,8 @@ wires_modtime = makeTable("wires" 0)
                                   startVias = (GetProp obj "BusStartVias" nil)
                                   endVias = (GetProp obj "BusEndVias" nil)
                                   pitch = (GetProp obj "BusArrayPitch" TrackPitch)
-                                  doubleVias = (GetProp obj "BusDoubleVias" t)
-                                  drawShield = (GetProp obj "DrawBusShields" t)
+                                  doubleVias = (GetProp obj "BusDoubleVias" nil)
+                                  drawShield = (GetProp obj "DrawBusShields" nil)
                                   rotateMetals = (GetProp obj "RotateMetalOrientation" nil)
                                   verticalVias = (GetProp obj "BusVerticalVias" nil)
                                   positiveVias = (GetProp obj "PositiveViaShift" nil)
@@ -778,7 +776,6 @@ wires_modtime = makeTable("wires" 0)
                                   (dbDeletePropByName obj "RotateMetalOrientation")
                                   (dbDeletePropByName obj "BusVerticalVias")
                                   (dbDeletePropByName obj "PositiveViaShift")
-
                                   ; set new properties
                                   (dbReplaceProp obj "BusPattern" "string" pattern)
                                   (dbReplaceProp obj "BusPrefix" "string" prefix)
