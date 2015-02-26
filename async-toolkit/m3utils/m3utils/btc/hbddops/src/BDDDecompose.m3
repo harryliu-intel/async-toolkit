@@ -272,7 +272,7 @@ PROCEDURE AttemptInternal(t : T;
     sz   := deps.size();
     arr  := SetToArr(deps);
     c    := NEW(REF ARRAY OF [0..1], sz);
-    rand := NEW(Random.Default).init();
+    rand := NEW(Random.Default).init(fixed := TRUE);
     badTbl := NEW(CardPairRefTbl.Default).init();
   BEGIN
 
