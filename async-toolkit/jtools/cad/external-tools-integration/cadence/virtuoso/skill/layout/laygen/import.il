@@ -72,6 +72,7 @@ LaygenNetMap[LaygenVccName] = VddNetName
     pins[LaygenVccName] = "input"
     CV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "w")
     (unless file (error "Can't read %s" filename))
+    (dbReplaceProp CV "CastCell" "boolean" t)
     (while (gets line file)
       fields = (parseString line " \n")
       type = (car fields)
