@@ -3,12 +3,26 @@
 ; $DateTime$
 ; $Author$
 
+; choose automatically which type of abstract to make
+(defun MakeAbstract (@key (CV (geGetEditCellView))
+                          (cutaroundpins t)
+                          (topMetal nil))
+  (if (IsLeafCell CV->cellName)
+    (MakeLeafAbstract ?CV CV)
+    (MakeSimpleAbstract ?CV CV ?cutaroundpins cutaroundpins ?topMetal topMetal)
+    )
+  )
+
+; compatibility wrapper for UI menu
+(defun MakeMidAbstract (@key (CV (geGetEditCellView)))
+  (MakeSimpleAbstract ?CV CV)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MakeSimpleAbstract ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
-                                (cutaroundpins nil)
-                                (topMetal TopMetal)
-                                (powerGrid nil))
+                                (cutaroundpins t)
+                                (topMetal TopMetal))
  (let (abstractCV name net fig term pinlayer)
 
   ; load wires.il and set topMetal
@@ -59,31 +73,7 @@
          )
     )
 
-  ; create power grid blockages (TODO: some other way; see BUG 24326) 
-  (when powerGrid
-    x2box = (rightEdge  prb->bBox)
-    x1box = (leftEdge   prb->bBox)
-    y2box = (topEdge    prb->bBox)
-    y1box = (bottomEdge prb->bBox)
-    numx2 = (round x2box/1.56)
-    numx1 = (round x1box/1.56)
-    numy2 = (round y2box/1.56)
-    numy1 = (round y1box/1.56)
-    (for i numx1 numx2
-         (for j numy1 numy2
-              (dbCreateRect abstractCV (list "M4" "boundary") (list i*1.56-0.105:j*1.56-0.105 i*1.56+0.105:j*1.56+0.105))
-              (dbCreateRect abstractCV (list "M5" "boundary") (list i*1.56-0.105:j*1.56-0.105 i*1.56+0.105:j*1.56+0.105))
-              (dbCreateRect abstractCV (list "M6" "boundary") (list i*1.56-0.105:j*1.56-0.105 i*1.56+0.105:j*1.56+0.105))
-              (dbCreateRect abstractCV (list "M7" "boundary") (list i*1.56-0.105:j*1.56-0.105 i*1.56+0.105:j*1.56+0.105))
-              (dbCreateRect abstractCV (list "M8" "boundary") (list i*1.56-0.25:j*1.56-0.31 i*1.56+0.25:j*1.56+0.31))
-              )
-         )
-    (for k numy1 numy2
-         (dbCreateRect abstractCV (list "M3" "boundary") (list numx1*1.56-0.105:k*1.56-0.1 numx2*1.56+0.105:k*1.56+0.1))
-         (dbCreateRect abstractCV (list "M8" "boundary") (list numx1*1.56-0.31:k*1.56-0.4 numx2*1.56+0.31:k*1.56+0.4))
-         )
-    )
-
+  ; save and exit
   (CopyKeepoutToBlockage abstractCV )
   (SetLefProperties abstractCV)
   (dbSave abstractCV)
@@ -91,55 +81,18 @@
   )
  )
 
-(defun AbstractCutAroundPins (cv pinlpp keepoutlpp
-                                 @key (otherpinlpp nil) (cutout nil))
-  (let (c)
-    (unless cutout cutout = MetalSpace[(car pinlpp)])
-    c = (min (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
-    (leLayerSize cv pinlpp c Scratch1LPP)
-    (when otherpinlpp (leLayerSize cv otherpinlpp c Scratch1LPP))
-    (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
-    (foreach shape cv->shapes
-      (cond (shape->lpp==keepoutlpp  (dbDeleteObject shape))
-            (shape->lpp==Scratch1LPP (dbDeleteObject shape))
-            (shape->lpp==Scratch2LPP shape->lpp=keepoutlpp))
-      )
-    )
-  t
-  )
-
-; KEEPOUT = (PRB & !KEEPOUT)-cutout/2
-(defun AbstractInvertKeepout (lpp cv1 cv2
-                                  @key (cutout nil))
-  (let (c)
-    (unless cutout cutout = MetalSpace[(car lpp)])
-    c = (min (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
-    (foreach shape cv1->shapes
-             (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
-             )
-    (leLayerSize cv2 Scratch1LPP c Scratch1LPP)
-    (leLayerSize cv2 BoundaryLPP -c/2 Scratch2LPP)
-    (leLayerAndNot cv2 Scratch2LPP Scratch1LPP lpp)
-    (foreach shape cv2->shapes
-             (cond (shape->lpp==Scratch1LPP (dbDeleteObject shape))
-                   (shape->lpp==Scratch2LPP (dbDeleteObject shape))
-                   )
-             )
-    )
-  t
-  )
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MakeLeafAbstract ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun MakeLeafAbstract (@key (CV (geGetEditCellView))
-                              (floodfillM3Keepout nil)
-                              (floodfillM2Keepout t)
-                              (floodfillM1Keepout t)
-                              (extendM3Keepout t)
-                              (extendM2Keepout t))
-  (let (abstractCV name net fig term pin prb prbSpacing
-        llPrB urPrB xy0 xy1 x0 y0 x1 y1
-        trackshape Vdd GND dd_CV layer purpose)
+                              (floodfillM2Keepout nil)
+                              (floodfillM1Keepout nil)
+                              (floodfillM0Keepout nil)
+                              (extendM2Keepout nil)
+                              (extendM1Keepout nil)
+                              (extendM0Keepout nil)
+                              )
+  (let (abstractCV name net fig term pin prb
+        Vdd GND dd_CV layer purpose)
 
     ; sanity check
     (when CV->viewName=="abstract"
@@ -165,46 +118,16 @@
     ; create prBoundary
     (dbCreatePRBoundary abstractCV (GetPrboundPoints CV))
     (dbCreatePolygon abstractCV BoundaryLPP (GetPrboundPoints CV))
-    llPrB=(car prb->bBox)
-    urPrB=(cadr prb->bBox)
 
-    ; flood fill keepout
+    ; flood fill 
+    (when floodfillM0Keepout (AbstractInvertKeepout MetalKeepout[0] CV abstractCV) )
     (when floodfillM1Keepout (AbstractInvertKeepout MetalKeepout[1] CV abstractCV) )
     (when floodfillM2Keepout (AbstractInvertKeepout MetalKeepout[2] CV abstractCV) )
-    (when floodfillM3Keepout (AbstractInvertKeepout MetalKeepout[3] CV abstractCV) )
 
-    ; extend M3 keepout to left and right sides of cell
-    prbSpacing = KeepoutM2to7WireSpacing/2
-    (when !floodfillM3Keepout && extendM3Keepout
-          (foreach shape CV->shapes
-                   (when shape->lpp==MetalDrawing[3] && !shape->pin && shape->objType!="label"
-                         xy0=(car  shape->bBox)
-                         xy1=(cadr shape->bBox)
-                         y0=(cadr xy0)
-                         y1=(cadr xy1)
-                         x0=(car llPrB)+prbSpacing
-                         x1=(car urPrB)-prbSpacing
-                         trackshape=(list x0:y0 x1:y1)
-                         (dbCreateRect abstractCV MetalKeepout[3] trackshape)
-                         )
-                   )
-          )
-
-    ; extend M2 keepout to top and bottom sides of cell
-    (when !floodfillM2Keepout && extendM2Keepout
-          (foreach shape CV->shapes
-                   (when shape->lpp==MetalDrawing[2] && !shape->pin && shape->objType!="label"
-                         xy0=(car  shape->bBox)
-                         xy1=(cadr shape->bBox)
-                         y0=(cadr xy0)
-                         y1=(cadr xy1)
-                         x0=(car llPrB)+prbSpacing
-                         x1=(car urPrB)-prbSpacing
-                         trackshape=(list x0:y0 x1:y1)
-                         (dbCreateRect abstractCV MetalKeepout[2] trackshape)
-                         )
-                   )
-          )
+    ; extend keepout to left and right sides of cell
+    (when !floodfillM2Keepout && extendM2Keepout (AbstractExtendHorizontal CV 2 prb->bBox))
+    (when !floodfillM1Keepout && extendM1Keepout (AbstractExtendVertical   CV 1 prb->bBox))
+    (when !floodfillM0Keepout && extendM0Keepout (AbstractExtendHorizontal CV 0 prb->bBox))
 
     ; convert Vdd/GND purposes to pins
     GND = (dbCreateNet abstractCV GNDNetName)
@@ -246,23 +169,21 @@
     (LabelPins ?CV abstractCV)
 
     ; chop flooded/extended keepout near pins
-    (AbstractCutAroundPins abstractCV MetalDrawing[2] MetalKeepout[2])
-    (AbstractCutAroundPins abstractCV MetalDrawing[3] MetalKeepout[3])
+    (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
 
-    ; copy explicit metal shapes to boundary purpose
+    ; copy explicit metal shapes to KeepoutPurpose
     (foreach shape CV->shapes
              layer   = (car  shape->lpp)
              purpose = (cadr shape->lpp)
              (when !shape->pin && shape->objType!="label" && (isMetal layer) &&
                    (purpose=="drawing" || purpose=="pin" || purpose=="vdd" || purpose=="gnd")
                    fig = (dbCopyFig shape abstractCV)
-                   fig->lpp = (list layer "boundary")
+                   fig->lpp = (list layer KeepoutPurpose)
                    )
              )
 
     ; chop keepout overlapping pins
-    (AbstractCutAroundPins abstractCV MetalDrawing[2] MetalKeepout[2] ?cutout 0:0)
-    (AbstractCutAroundPins abstractCV MetalDrawing[3] MetalKeepout[3] ?cutout 0:0)
+    (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
 
     ; create final boundary shapes and blockage objects
     (leMergeShapes abstractCV->shapes)
@@ -277,41 +198,25 @@
     )
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utilities ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; turn blockage from layers to objects
 (defun CopyKeepoutToBlockage (cv)
-  (let (points)
+  (let (points layer)
     (foreach shape cv->shapes
-      (foreach layer (list MetalKeepout[1] MetalKeepout[2] MetalKeepout[3] MetalKeepout[4]
-                           MetalKeepout[5] MetalKeepout[6] MetalKeepout[7] MetalKeepout[8])
-        (when shape->lpp==layer
-          points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
-                         (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
-                         (t shape->points)
-                         )
-          (when points (dbCreateLayerBlockage cv (car layer) "routing" points))
-          )
-        )
+      (for m 0 TopMetal
+           layer = MetalKeepout[m]
+           (when shape->lpp==layer
+             points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
+                            (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
+                            (t shape->points)
+                            )
+             (when points (dbCreateLayerBlockage cv (car layer) "routing" points))
+             )
+           )
       )
     )
   t
-  )
-
-(defun MakeMidAbstract ( @key (CV (geGetEditCellView))
-                              (cutaroundpins t)
-                              (topMetal nil))
-  (MakeSimpleAbstract ?CV CV ?cutaroundpins cutaroundpins
-                      ?topMetal topMetal
-                      ?powerGrid t) ; TODO: BUG 24326
-  )
-
-; choose which type of abstract to make
-(defun MakeAbstract ( @key (CV (geGetEditCellView))
-                           (cutaroundpins t)
-                           (topMetal nil))
-  (if (IsLeafCell CV->cellName)
-    (MakeLeafAbstract ?CV CV)
-    (MakeMidAbstract ?CV CV ?cutaroundpins cutaroundpins ?topMetal topMetal)
-    )
   )
 
 ; set properties for LEF export
@@ -324,4 +229,83 @@
     (when GND GND->sigType = "ground") ; USE GROUND
     (when Vdd Vdd->sigType = "supply") ; USE POWER
     )
+  )
+
+; Chop holes in flooded keepout around pins
+(defun AbstractCutAroundPins (cv pinlpp keepoutlpp
+                                 @key (otherpinlpp nil) (cutout nil))
+  (let (c)
+    (unless cutout cutout = MetalSpace[(car pinlpp)])
+    c = (min (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
+    (leLayerSize cv pinlpp c Scratch1LPP)
+    (when otherpinlpp (leLayerSize cv otherpinlpp c Scratch1LPP))
+    (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
+    (foreach shape cv->shapes
+      (cond (shape->lpp==keepoutlpp  (dbDeleteObject shape))
+            (shape->lpp==Scratch1LPP (dbDeleteObject shape))
+            (shape->lpp==Scratch2LPP shape->lpp=keepoutlpp))
+      )
+    )
+  t
+  )
+
+; Floodfill keepout: KEEPOUT = (PRB & !KEEPOUT)-cutout/2
+(defun AbstractInvertKeepout (lpp cv1 cv2
+                                  @key (cutout nil))
+  (let (c)
+    (unless cutout cutout = MetalSpace[(car lpp)])
+    c = (min (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
+    (foreach shape cv1->shapes
+             (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
+             )
+    (leLayerSize cv2 Scratch1LPP c Scratch1LPP)
+    (leLayerSize cv2 BoundaryLPP -c/2 Scratch2LPP)
+    (leLayerAndNot cv2 Scratch2LPP Scratch1LPP lpp)
+    (foreach shape cv2->shapes
+             (cond (shape->lpp==Scratch1LPP (dbDeleteObject shape))
+                   (shape->lpp==Scratch2LPP (dbDeleteObject shape))
+                   )
+             )
+    )
+  t
+  )
+
+; Extend keepout to block entire horizontal track
+(defun AbstractExtendHorizontal (CV m bbox)
+  (let (xy0 xy1 x0 y0 x1 y1 prbSpacing)
+    prbSpacing = (car MetalSpace[Metal[m]])/2
+    (foreach shape CV->shapes
+             (when shape->lpp==MetalDrawing[m] && !shape->pin && shape->objType!="label"
+                   xy0=(car  shape->bBox)
+                   xy1=(cadr shape->bBox)
+                   y0=(cadr xy0)
+                   y1=(cadr xy1)
+                   x0=(car (car bbox))+prbSpacing
+                   x1=(car (cadr bbox))-prbSpacing
+                   (dbCreateRect abstractCV MetalKeepout[m] (list x0:y0 x1:y1))
+                   )
+             )
+    )
+  t
+  )
+
+; Extend keepout to block entire vertical track
+(defun AbstractExtendVertical (CV m bbox)
+  (let (xy0 xy1 x0 y0 x1 y1 prbSpacing)
+    prbSpacing = (cadr MetalSpace[Metal[m]])/2
+    (foreach shape CV->shapes
+             (when shape->lpp==MetalDrawing[m] && !shape->pin && shape->objType!="label"
+                   xy0=(car  shape->bBox)
+                   xy1=(cadr shape->bBox)
+                   y0=(cadr xy0)
+                   y1=(cadr xy1)
+                   x0=(car xy0)
+                   x1=(car xy1)
+                   y0=(cadr (car bbox))+prbSpacing
+                   y1=(cadr (cadr bbox))-prbSpacing
+                   (dbCreateRect abstractCV MetalKeepout[m] (list x0:y0 x1:y1))
+                   )
+             )
+    )
+  t
   )
