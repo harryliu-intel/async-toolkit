@@ -182,6 +182,7 @@
      (when part=="wires" iswiring=t )
    )
    (when cell->name=="wires" iswiring=t)
+   (when (dbGetPropByName cell "CastCell")->value!="TRUE" iswiring=t)
    iswiring
 ))
 

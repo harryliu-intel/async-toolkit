@@ -74,6 +74,7 @@
     ; load netlist.il
     file = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
     (when (fileTimeModified file)
+      (dbReplaceProp CV "CastCell" "boolean" t)
       (load file)
       w = NetListTable["width"]
       h = NetListTable["height"]
@@ -96,7 +97,7 @@
 
       ; delete incorrect instances
       (foreach inst CV->instances
-        (unless instanceTable[inst] || (IsWiringCell CV)
+        (unless instanceTable[inst] || (IsWiringCell inst->master)
                 (fprintf LOG "%sDelete instance %s of %s\n" indent inst->name inst->cellName)
                 (dbDeleteObject inst)
                 )
