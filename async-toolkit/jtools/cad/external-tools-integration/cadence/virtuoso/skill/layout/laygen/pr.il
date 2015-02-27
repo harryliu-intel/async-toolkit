@@ -3,7 +3,7 @@
 ; Andrew Lines
 
 ; laygen configuration
-LaygenExec = "$LAYGENWARD/bin/sgrlfg"
+LaygenExec = "$LAYGENWARD/bin/sgrlfg.batch"
 LaygenRpg  = "$LAYGENWARD/collateral/d04/d04_rpg.txt"
 LaygenArch = "$LAYGENWARD/collateral/d04/d04.laygen"
 LaygenTcl  = "$LAYGENWARD/collateral/d04/d04_container.tcl"
@@ -30,18 +30,20 @@ LaygenPlaceCmd = (strcat LaygenCmd
                          (w nil)        ; target width  in pg;   defaults to floorplan prBoundary
                          (n_max 2)      ; max NMOS width in diffusion grids (2-3)
                          (p_max 2)      ; max PMOS width in diffusion grids (2-3)
-                         (hor_routes 4) ; number of horizontal routes to allow per row (3-5)
+                         (hor_routes 3) ; number of horizontal routes to allow per row (3-5)
                          (upperlayer 1) ; top metal layer to use (1-2)
                          (placement_effort 2) ; 0-3
                          (quality_effort   1) ; 0-2
                          (n_offset 1) ; move NMOS away from NWELL edge by this many dg (0-2)
                          (p_offset 0) ; move PMOS away from NWELL edge by this many dg (0-2)
+                         (port_order nil) ; list of port names from left to right
                          (batch "nbq --block") ; remote launch command; use nil to run locally
                          (jobs 32) ; maximum number of batch routing jobs
                          (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
-  (let (CV dir bbox cmd obj file viewName name out device_row_offset trials success)
+  (let (CV dir bbox cmd obj file viewName name out device_row_offset trials success wstr)
 
     ; get height and width from parameters or floorplan view
+    (when w shrink=0)
     (when !h || !w
       CV = (dbOpenCellViewByType libName cellName "floorplan" "maskLayout" "r")
       (unless CV (error "Must provide floorplan view or both ?h and ?w options\n"))
@@ -49,15 +51,17 @@ LaygenPlaceCmd = (strcat LaygenCmd
       (unless h h = (round ((cadr (cadr bbox)) - (cadr (car bbox)))/TrackPitch))
       (unless w w = (round ((car  (cadr bbox)) - (car  (car bbox)))/GridPolyPitch))
       )
-    (when (type shrink)==`fixnum
-          w = w-shrink
-          (sprintf shrink "%s%d" (if shrink<0 "n" "") (abs shrink))
+    (cond ((type shrink)==`fixnum
+           w = w-shrink
+           (sprintf wstr "%d" w)
+           )
+          (t wstr=shrink)
           )
     (when w<3 doCdl=nil doSnp=nil doPlace=nil doRoute=nil doImport=nil)
 
     ; make working dir 
-    name = (sprintf nil "s%s_m%d_hr%d_nm%d_pm%d_no%d_po%d"
-                    shrink upperlayer hor_routes n_max p_max n_offset p_offset)
+    name = (sprintf nil "w%s_m%d_hr%d_nm%d_pm%d_no%d_po%d"
+                    wstr upperlayer hor_routes n_max p_max n_offset p_offset)
     (sprintf dir "temp/laygen/%s/%s" cellName name)
     (csh (sprintf nil "mkdir -p %s" dir))
 
@@ -96,6 +100,8 @@ LaygenPlaceCmd = (strcat LaygenCmd
                   "-placement_effort %d \\\n"
                   "-quality_effort %d \\\n"
                   "-device_row_offset %s \\\n"
+                  (if port_order
+                      (sprintf nil "-port_order %s \\\n" (buildString port_order ",")) "")
                   ">& %s.place.log")
              cellName h (if shrink=="min" "min" (sprintf nil "%d" w-1))
              num_place-1 hor_routes*h
