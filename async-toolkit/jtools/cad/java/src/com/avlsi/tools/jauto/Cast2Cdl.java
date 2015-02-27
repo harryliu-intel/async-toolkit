@@ -459,9 +459,9 @@ public final class Cast2Cdl {
         final boolean verilogBlock =
             cell.containsVerilog() && handleVerilog && !cell.containsNetlist();
 
-        if ((CellUtils.isWiring(cell) && !verilogBlock) ||
-            (ignoreUnimpl && !seen.isEmpty() && !cell.hasNetlistBody() &&
-             !verilogBlock) ||
+        if (((CellUtils.isWiring(cell) && !verilogBlock) ||
+             (ignoreUnimpl && !cell.hasNetlistBody() &&
+              !verilogBlock)) && !seen.isEmpty() ||
             !seen.add(cell.getFullyQualifiedType())) return;
 
         outputGates(cell, castParser, emitter, cadencizer, seen, sortNetlist);
