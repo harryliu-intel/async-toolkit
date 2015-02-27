@@ -102,20 +102,20 @@
                 (dbDeleteObject inst)
                 )
         )
-      )
 
-    ; update prBoundary of leaf cells, from layout view if it exists
-    (unless realInstances
-      (when CV->prBoundary (dbDeleteObject CV->prBoundary))
-      (when CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
-            layoutCV = (dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r")
-            points = layoutCV->prBoundary->points
-            )
-      (unless points
-        (unless w&&h (error "undetermined height or width"))
-        points = (list 0:0 w:0 w:h 0:h 0:0)
+      ; update prBoundary of leaf cells, from layout view if it exists
+      (unless realInstances
+        (when CV->prBoundary (dbDeleteObject CV->prBoundary))
+        (when CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
+              layoutCV = (dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r")
+              points = layoutCV->prBoundary->points
+              )
+        (unless points
+          (unless w&&h (error "undetermined height or width in cell %s" CV->cellName))
+          points = (list 0:0 w:0 w:h 0:h 0:0)
+          )
+        (dbCreatePRBoundary CV points)
         )
-      (dbCreatePRBoundary CV points)
       )
 
     ; save
