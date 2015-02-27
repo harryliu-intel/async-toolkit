@@ -164,9 +164,9 @@
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
                (cond (abstractCV inst->master=abstractCV)
-                     (!abstractCV && (IsWiringCell inst) (dbDeleteObject inst))
                      ((isStandardCell inst->master)
                       (printf "WARNING: %s is a standard cell with no abstract\n" inst->cellName))
+                     (!abstractCV && (IsWiringCell inst->master) (dbDeleteObject inst))
                      (t
                       (printf "ERROR: %s has no abstract view\n" inst->cellName)
                       statusDef=nil)
