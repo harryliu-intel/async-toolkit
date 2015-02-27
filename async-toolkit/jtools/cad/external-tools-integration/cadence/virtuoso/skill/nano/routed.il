@@ -69,6 +69,9 @@ defun( nrIsRoutedCell ( libname cellname viewname
 
     CellView=dbOpenCellViewByType( libname cellname viewname )
 
+    ; if its not a CastCell assume its routed
+    (unless (IsCastCell CellView) isRoutedCell=t)
+
 ; if there is any cell from "gate" "stack" "tsmc13lg" "globals", don't inline them
     if( (strncmp( cellname "gate" 4)==0 || strncmp( cellname "stack" 5)==0 ) then  
        isRoutedCell= t)
