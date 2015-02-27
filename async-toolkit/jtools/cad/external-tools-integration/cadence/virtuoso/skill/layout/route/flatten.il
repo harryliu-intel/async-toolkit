@@ -2,15 +2,15 @@
 
 ; Top-level function to make a flatten view and switch to it
 (defun MakeFlatten
-  (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (RegenerateFromCast nil) ; force CAST query
-        (Proteus nil)            ; Proteus compatible POWER_GRID_TIEOFF
-        (Verbose nil)            ; verbose
-        (ConnectDanglingPins t)  ; paint metal on top of one-terminal subcell pins
-        (ConnectAbuttingPins t)  ; paint metal between nearby pins on the same net
-        (doMakePowerGrid t)      ; make power grid
-        (doPowerGridAbstract t)  ; generate abstract view of power grid
-        (decap nil)              ; add DECAP cells
+  (@key (CV (geGetEditCellView))   ; specify CellView or nil to use edit view
+        (RegenerateFromCast nil)   ; force CAST query
+        (Proteus nil)              ; Proteus compatible POWER_GRID_TIEOFF
+        (Verbose nil)              ; verbose
+        (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
+        (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
+        (doMakePowerGrid nil)      ; make power grid
+        (doPowerGridAbstract nil)  ; generate abstract view of power grid
+        (decap nil)                ; add DECAP cells
         )
   (let (MaxHeapSize FlattenCellsList Components RComponents CellBaseName
         type_sub PowerGridCellName OBSCellName flattenCV xalign yalign
