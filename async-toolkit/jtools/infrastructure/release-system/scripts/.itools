@@ -60,3 +60,4 @@ P:libqt 4.6.3
 P:gawk 3.1.6
 P:rsync 2.6.8
 P:graphviz latest
+glpsol /usr/intel/pkgs/glpk/4.44/bin/glpsol
