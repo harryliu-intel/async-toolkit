@@ -10,7 +10,7 @@
 #ifndef FULCRUM_EXCLUDED_GENERATED_INCLUDES
 #include "Sigscan.h"
 #endif
-#include "sdi2.h"
+#include <sdi2.h>
 
 //For asynchronous signal enumeration
 static char** signals=NULL;

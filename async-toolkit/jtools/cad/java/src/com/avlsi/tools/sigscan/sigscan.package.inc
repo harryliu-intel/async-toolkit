@@ -23,14 +23,14 @@ java com.avlsi.tools.sigscan.StringAttribute
 java com.avlsi.tools.sigscan.Transaction
 java com.avlsi.tools.sigscan.TransactionFiber
 java com.avlsi.tools.sigscan.TransactionType
-#$arch/lib/libSigscan.so	              libSigscan.so 775
-#ifarch i686
-#$arch/lib/libdwapi.so                 /p/rrc/tools/common/lib/libdwapi.so 775
-#$arch/lib/libsdi2-sst2-gcc_3.2.so     /p/rrc/tools/common/lib/libsdi2-sst2-gcc_3.2.so 775
-#$arch/lib/libdcapi.so                 /p/rrc/tools/common/lib/libdcapi.so 775
-#endif
-#ifarch x86_64
-#$arch/lib/libdwapi.so                 /p/rrc/tools/common/lib64/libdwapi.so 775 p
-#$arch/lib/libsdi2-sst2-gcc_3.2.so     /p/rrc/tools/common/lib64/libsdi2-sst2-gcc_3.2.so 775 p
-#$arch/lib/libdcapi.so                 /p/rrc/tools/common/lib64/libdcapi.so 775 p
-#endif
+$arch/lib/libSigscan.so	              libSigscan.so 775
+ifarch i686
+$arch/lib/libdwapi.so                 /nfs/site/eda/tools/cadence/incisive/14.10.002/linux_2.6.16_x86-64/tools/lib/libdwapi.so 775
+$arch/lib/libsdi2-sst2-gcc_3.2.so     /nfs/site/eda/tools/cadence/incisive/14.10.002/linux_2.6.16_x86-64/tools/lib/libsdi2-sst2-gcc_3.2.so 775
+$arch/lib/libdcapi.so                 /nfs/site/eda/tools/cadence/incisive/14.10.002/linux_2.6.16_x86-64/tools/lib/libdcapi.so 775
+endif
+ifarch x86_64
+$arch/lib/libdwapi.so                 /nfs/site/eda/tools/cadence/incisive/14.10.002/linux_2.6.16_x86-64/tools/lib/64bit/libdwapi.so 775 p
+$arch/lib/libsdi2-sst2-gcc_4.1.so     /nfs/site/eda/tools/cadence/incisive/14.10.002/linux_2.6.16_x86-64/tools/lib/64bit/libsdi2-sst2-gcc_4.1.so 775 p
+$arch/lib/libdcapi.so                 /nfs/site/eda/tools/cadence/incisive/14.10.002/linux_2.6.16_x86-64/tools/lib/64bit/libdcapi.so 775 p
+endif

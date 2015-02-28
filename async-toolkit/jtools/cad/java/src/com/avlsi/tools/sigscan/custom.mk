@@ -5,6 +5,6 @@ $(CURR_TARGET_DIR)/Sigscan.h: $(CURR_TARGET_DIR)/Sigscan
 
 CURR_RESULT_FILES := $(CURR_TARGET_DIR)/Sigscan.h $(CURR_RESULT_FILES)
 
-#$(CURR_TARGET_DIR)/sigscan.o: $(CURR_TARGET_DIR)/Sigscan.h
+$(CURR_TARGET_DIR)/sigscan.o: $(CURR_TARGET_DIR)/Sigscan.h
 
 

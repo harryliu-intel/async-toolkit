@@ -17,3 +17,4 @@ include ../../util/text/text.package.inc ../../util/text
 include ../../util/cmdlineargs/defimpl/defimpl.package.inc ../../util/cmdlineargs/defimpl
 include ../../util/mathexpression/impl/parser/parser.package.inc ../../util/mathexpression/impl/parser
 include verilog/verilog.package.inc verilog
+include ../sigscan/sigscan.package.inc ../sigscan
