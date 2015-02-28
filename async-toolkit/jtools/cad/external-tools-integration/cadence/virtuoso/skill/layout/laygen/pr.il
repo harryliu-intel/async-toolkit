@@ -22,25 +22,34 @@ LaygenPlaceCmd = (strcat LaygenCmd
                          )
 
 ; place, route, import
-(defun LaygenPR (libName cellName @key
-                         (cdlFile nil)  ; specify a CDL file; otherwise use cast2cdl
-                         (num_place 10) ; number of placements to try
-                         (shrink "min") ; reduce width by this many poly pitches; or minimum width
-                         (h nil)        ; target height in rows; defaults to floorplan prBoundary
-                         (w nil)        ; target width  in pg;   defaults to floorplan prBoundary
-                         (n_max 2)      ; max NMOS width in diffusion grids (2-3)
-                         (p_max 2)      ; max PMOS width in diffusion grids (2-3)
-                         (hor_routes 3) ; number of horizontal routes to allow per row (3-5)
-                         (upperlayer 1) ; top metal layer to use (1-2)
-                         (placement_effort 2) ; 0-3
-                         (quality_effort   1) ; 0-2
-                         (n_offset 1) ; move NMOS away from NWELL edge by this many dg (0-2)
-                         (p_offset 0) ; move PMOS away from NWELL edge by this many dg (0-2)
-                         (port_order nil) ; list of port names from left to right
-                         (batch "nbq --block") ; remote launch command; use nil to run locally
-                         (jobs 32) ; maximum number of batch routing jobs
-                         (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
-  (let (CV dir bbox cmd obj file viewName name out device_row_offset trials success wstr)
+(defun LaygenPR (@key
+                 (CV (geGetEditCellView)) ; get libName and cellName from current cell
+                 (libName  nil) ; explicit override
+                 (cellName nil) ; explicit override
+                 (cdlFile nil)  ; specify a CDL file; otherwise use cast2cdl
+                 (num_place 10) ; number of placements to try
+                 (shrink "min") ; reduce width by this many poly pitches; or minimum width
+                 (h nil)        ; target height in rows; defaults to floorplan prBoundary
+                 (w nil)        ; target width  in pg;   defaults to floorplan prBoundary
+                 (n_max 2)      ; max NMOS width in diffusion grids (2-3)
+                 (p_max 2)      ; max PMOS width in diffusion grids (2-3)
+                 (hor_routes 3) ; number of horizontal routes to allow per row (3-5)
+                 (upperlayer 1) ; top metal layer to use (1-2)
+                 (placement_effort 2) ; 0-3
+                 (quality_effort   1) ; 0-2
+                 (n_offset 1) ; move NMOS away from NWELL edge by this many dg (0-2)
+                 (p_offset 0) ; move PMOS away from NWELL edge by this many dg (0-2)
+                 (port_order nil) ; list of port names from left to right
+                 (batch_place "nbq --block") ; remote launch command (or nil)
+                 (batch_route "nbq --block") ; remote launch command (or nil)
+                 (jobs 32) ; maximum number of batch routing jobs
+                 (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
+  (let (dir bbox cmd obj file viewName name out device_row_offset trials success wstr)
+
+    ; pick libName cellName
+    (when CV&&!libName  libName  = CV->libName)
+    (when CV&&!cellName cellName = CV->cellName)
+    (unless libName&&cellName (error "Must specify ?CV or ?libName and ?cellName"))
 
     ; get height and width from parameters or floorplan view
     (when w shrink=0)
@@ -132,7 +141,8 @@ LaygenPlaceCmd = (strcat LaygenCmd
     ; place
     (when doPlace
       (printf "Place  %s height=%d width=%d placements=%d\n" cellName h w num_place)
-      (csh (sprintf nil "(cd %s; %s.place.csh)" dir cellName))
+      (csh (sprintf nil "(cd %s; %s %s.place.csh)" dir
+                    (if batch_place batch_place "") cellName))
       )
 
     ; delete old laygen views
@@ -151,7 +161,8 @@ LaygenPlaceCmd = (strcat LaygenCmd
     (when doRoute && trials!=""
       (printf "Route  %s placements %s\n" cellName trials)
       (csh (sprintf nil "(cd %s; echo %s | xargs --max-procs=%d --max-args=1 %s %s.route.csh)"
-                    dir trials (if batch jobs 1) (if batch batch "") cellName))
+                    dir trials (if batch_route jobs 1)
+                    (if batch_route batch_route "") cellName))
       )
 
     ; import
