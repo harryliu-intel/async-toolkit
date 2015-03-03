@@ -3,7 +3,7 @@
 ; Andrew Lines
 
 ; laygen configuration
-LaygenExec = "$LAYGENWARD/bin/sgrlfg.batch"
+LaygenExec = "$LAYGENWARD/bin/sgrlfg"
 LaygenRpg  = "$LAYGENWARD/collateral/d04/d04_rpg.txt"
 LaygenArch = "$LAYGENWARD/collateral/d04/d04.laygen"
 LaygenTcl  = "$LAYGENWARD/collateral/d04/d04_container.tcl"
