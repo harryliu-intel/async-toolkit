@@ -2,6 +2,7 @@
 include ../ubersize/ubersize.package ../ubersize
 include ../proteus/proteus.package ../proteus
 include ../lad_quake/lad_quake.inc ../lad_quake
+include ../rdt/rdt.inc ../rdt
 include ../lve/lve.package ../lve
 include ../java/src/com/avlsi/tools/synthesis/synthesis.package ../java/src/com/avlsi/tools/synthesis
 include ../java/src/com/avlsi/tools/slacker/slacker.package ../java/src/com/avlsi/tools/slacker
