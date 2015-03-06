@@ -198,15 +198,6 @@ public class Cast {
                                      port.getDirection());
     }
 
-    /** Get number of rails in a CAST channel */
-    private int getRails(final Type type, final CellUtils.Channel port) {
-        int rails = CellUtils.extractN(((ChannelType) port.getType()).getTypeName());
-        if (rails<0) System.err.println("WARNING: " + type.name + 
-                                        "/" + port.getFullName() + 
-                                        " is not an e1of(N) channel.");
-        return rails;
-    }
-
     private static Object getParameter(final CellUtils.Channel chan,
                                        final boolean hierName) {
         final String name = chan.getFullName();
@@ -333,8 +324,12 @@ public class Cast {
         final String parent =
             castChan.getParent() != null ? castChan.getParent().getFullName()
                                          : null;
-        int rails = getRails(type,castChan);
-        double cost = slacker.getCost(rails);
+        final CellInterface chanCell = getChannel(cell, castChan);
+        double cost = (Float) DirectiveUtils.getTopLevelDirective(chanCell,
+                DirectiveConstants.SLACKER_COST);
+        boolean chanDontTouch =
+            (Boolean) DirectiveUtils.getTopLevelDirective(chanCell,
+                DirectiveConstants.SLACKER_DONT_TOUCH);
         boolean leafOutput = type.isLeaf && !input;
         final SlackerDirective slackerDir = new SlackerDirective(cell);
 
@@ -358,7 +353,7 @@ public class Cast {
                 slackerDir.getHandshakes(castChan, leafOutput ? 1 : 0);
             int alignment = cell == topCell ? 0 // force slacker_alignment=0
                                             : slackerDir.getAlignment(castChan);
-            boolean dontTouch =  slackerDir.isDontTouch(castChan);
+            boolean dontTouch =  slackerDir.isDontTouch(castChan, chanDontTouch);
             float transitions = slackerDir.getTransitions(castChan, Float.NaN);
 
             // handle ignore-existing-slack option
@@ -393,14 +388,18 @@ public class Cast {
             boolean defaultDontTouch = (Boolean)
                 DirectiveUtils.getTopLevelDirective(cell,
                         DirectiveConstants.SLACKER_DONT_TOUCH);
-            boolean dontTouch = 
+            boolean dontTouch =
                 getBooleanDirective(
                         DirectiveUtils.getSubcellDirective(cell,
                             DirectiveConstants.SLACKER_DONT_TOUCH,
                             DirectiveConstants.POSSIBLY_WIDE_CHANNEL_TYPE),
-                        castChan, defaultDontTouch);
+                        castChan, chanDontTouch || defaultDontTouch);
 
             // find forward latency due to extra_delay on data rails
+            final Set rails = DirectiveUtils.getExplicitTrues(
+                    DirectiveUtils.getTopLevelDirective(chanCell,
+                        DirectiveConstants.SLACKER_USE_EXTRA_DELAY,
+                        DirectiveConstants.NODE_TYPE));
             float latency = Float.NEGATIVE_INFINITY;
             final Map dir = DirectiveUtils.getSubcellDirective(cell,
                     DirectiveConstants.EXTRA_DELAY,
@@ -409,8 +408,9 @@ public class Cast {
                     DirectiveUtils.getUps(dir));
             final Map dns = DirectiveUtils.canonizeKey(locals,
                     DirectiveUtils.getDowns(dir));
-            for (int i=0; i<rails; i++) {
-                final HierName hn = toHierName(name + ".d[" + i + "]");
+            for (Iterator i = rails.iterator(); i.hasNext(); ) {
+                final HierName rail = (HierName) i.next();
+                final HierName hn = HierName.append(toHierName(name), rail);
                 final HierName canon =
                     (HierName) locals.getCanonicalKey(hn);
                 Float up = (Float) ups.get(canon); // extra_delay on chan.d[i]+
@@ -440,6 +440,12 @@ public class Cast {
         }
     }
 
+    private static CellInterface getChannel(final CellInterface cell,
+                                            final CellUtils.Channel chan) {
+        final HierName name = toHierName(chan.getFullName()).head();
+        return cell.getSubcell(name);
+    }
+
     /** Create and add a local Slacker Channel with best canonical name */
     private Channel getChannel(final Type type,
                                final CellInterface cell,
@@ -458,7 +464,7 @@ public class Cast {
         for (Iterator i = narrowAliases.getAliases(canon); i.hasNext(); ) {
             final CellUtils.Channel chan = (CellUtils.Channel) i.next();
             HierName name = toHierName(chan.getFullName()).head();
-            final CellInterface subci = cell.getSubcell(name);
+            final CellInterface subci = getChannel(cell, chan);
             
             // is the channel locally declared?
             if (subci != null && subci.isChannel()) {

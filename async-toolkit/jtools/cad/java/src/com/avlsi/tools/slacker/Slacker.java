@@ -39,22 +39,15 @@ public class Slacker {
     /** All cell Types */
     final ArrayList types = new ArrayList();
 
-    /**
-     * Estimated area cost per slack; <code>costs[N]</code> contains the cost
-     * for a channel with N+1 rails.
-     **/
-    final double[] costs;
-
     /** Constructor */
     Slacker(String execSolve, String runDirectory,
             double cycleSlack, double globalFreeSlack, double hierWeight,
             boolean emitLeafResults, boolean ignoreExistingSlack,
             boolean allowNonInteger, boolean reportZeroBuffers,
             boolean reportSubcellTimes, boolean checkOnly, Boolean checkLeaf,
-            double costFreeSlack, double [] costs) {
+            double costFreeSlack) {
         this.execSolve = execSolve;
         this.runDirectory = runDirectory;
-        this.costs = costs;
         this.ignoreExistingSlack = ignoreExistingSlack;
         this.checkLeaf = checkLeaf;
         Type.emitLeafResults = emitLeafResults;
@@ -102,15 +95,7 @@ public class Slacker {
             Type type = (Type) i.next();
             type.slackResults(type==top);
         }
-    }
-
-    /**
-     * Given the number of rails, return the estimated area cost.
-     **/
-    public double getCost(final int rails) {
-        if (rails < 0) return 0; // unsupported channel type, no cost
-        if (rails <= costs.length) return costs[rails - 1];
-        return rails + 1; // default is data rails + enable rail
+        top.reportArrivalTime();
     }
 
     /** Usage banner */
@@ -132,7 +117,6 @@ public class Slacker {
                            "  [--cycle-slack=stages_of_slack_per_token]\n" +
                            "  [--global-free-slack=leftover_slack_at_slower_cycle_slack]\n" +
                            "  [--hierarchy-weight=cost_weight_per_depth]\n" +
-                           "  [--costs=<val>,<val>,<val>...]\n" +
                            "  [--cost-free-slack=<val>]\n" +
                            "  [--glpsol=glpsol]\n" +
                            "  [--keep-temp-files]");
@@ -178,8 +162,6 @@ public class Slacker {
         String globalFreeSlackStr = theArgs.getArgValue("global-free-slack",null);
         double globalFreeSlack = 0;
         if (globalFreeSlackStr!=null) globalFreeSlack = Double.parseDouble(globalFreeSlackStr);
-        final double[] costs =
-            CommandLineArgsUtil.getDoubleArgList(theArgs, "costs");
         String castCellName = theArgs.getArgValue("cell",null);
         final String logName = theArgs.getArgValue("log-file", null);
         final PrintStream log =
@@ -212,7 +194,7 @@ public class Slacker {
                                       emitLeafResults,ignoreExistingSlack,
                                       allowNonInteger,reportZeroBuffers,
                                       reportSubcellTimes,checkOnly,leafCheck,
-                                      costFreeSlack,costs);
+                                      costFreeSlack);
 
         // parse CAST
         final StandardParsingOption spo = enableInlining ?

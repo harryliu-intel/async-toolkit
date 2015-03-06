@@ -1240,6 +1240,11 @@ public class DirectiveTable {
                           DirectiveConstants.SLACKER_COST,
                           DirectiveConstants.FLOAT_TYPE,
                           null);
+        registerDirective(BlockInterface.CELL,
+                          DirectiveConstants.SLACKER_USE_EXTRA_DELAY,
+                          DirectiveConstants.NODE_TYPE,
+                          DirectiveConstants.BOOLEAN_TYPE,
+                          Boolean.FALSE);
 
         registerDirective(BlockInterface.CELL,
                           DirectiveConstants.SUPPRESS_FAULTS,
