@@ -8,12 +8,15 @@ import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.util.DirectiveUtils;
 import com.avlsi.cast2.util.StandardParsingOption;
 import com.avlsi.cell.CellInterface;
+import com.avlsi.cell.CellUtils;
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
 import com.avlsi.util.cmdlineargs.CommandLineArgsUtil;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.container.MultiSet;
+import com.avlsi.util.functions.UnaryPredicate;
+import com.avlsi.util.text.StringUtil;
 import com.avlsi.io.FileUtil;
 import com.avlsi.cast.CastFile;
 import com.avlsi.cast.CastFileParser;
@@ -33,6 +36,9 @@ public class Slacker {
     /** Ignore existing slack */
     final boolean ignoreExistingSlack;
 
+    /** Predicate to report arrival times for instances of a type */
+    final UnaryPredicate<String> reportInstance;
+
     /** Force top cell to be slacker_leaf=false, slacker_alignment=0 */
     final Boolean checkLeaf;
 
@@ -44,11 +50,13 @@ public class Slacker {
             double cycleSlack, double globalFreeSlack, double hierWeight,
             boolean emitLeafResults, boolean ignoreExistingSlack,
             boolean allowNonInteger, boolean reportZeroBuffers,
-            boolean reportSubcellTimes, boolean checkOnly, Boolean checkLeaf,
+            boolean reportSubcellTimes, UnaryPredicate<String> reportInstance,
+            boolean checkOnly, Boolean checkLeaf,
             double costFreeSlack) {
         this.execSolve = execSolve;
         this.runDirectory = runDirectory;
         this.ignoreExistingSlack = ignoreExistingSlack;
+        this.reportInstance = reportInstance;
         this.checkLeaf = checkLeaf;
         Type.emitLeafResults = emitLeafResults;
         Type.hierWeight      = hierWeight;
@@ -95,7 +103,9 @@ public class Slacker {
             Type type = (Type) i.next();
             type.slackResults(type==top);
         }
-        top.reportArrivalTime();
+        if (reportInstance != null) {
+            top.reportInstanceTimes(reportInstance);
+        }
     }
 
     /** Usage banner */
@@ -111,6 +121,7 @@ public class Slacker {
                            "  [--ignore-existing-slack]\n" +
                            "  [--report-zero-buffers]\n" +
                            "  [--report-subcell-times]\n" +
+                           "  [--report-instance-times=<cell>]\n" +
                            "  [--check-only]\n" +
                            "  [--check-leaf]\n" +
                            "  [--report-leaf]\n" +
@@ -138,6 +149,7 @@ public class Slacker {
         boolean keepTempFiles = theArgs.argExists("keep-temp-files");
         boolean reportZeroBuffers = theArgs.argExists("report-zero-buffers");
         boolean reportSubcellTimes = theArgs.argExists("report-subcell-times");
+        String reportInstanceTimes = theArgs.getArgValue("report-instance-times",null);
         boolean checkOnly = theArgs.argExists("check-only");
         boolean checkLeaf = theArgs.argExists("check-leaf");
         boolean reportLeaf = theArgs.argExists("report-leaf");
@@ -188,14 +200,6 @@ public class Slacker {
         File runFile = new File(runDirectory);
         runFile.mkdirs();
 
-        // create slacker object
-        Slacker slacker = new Slacker(execSolve,runDirectory,cycleSlack,
-                                      globalFreeSlack,hierWeight,
-                                      emitLeafResults,ignoreExistingSlack,
-                                      allowNonInteger,reportZeroBuffers,
-                                      reportSubcellTimes,checkOnly,leafCheck,
-                                      costFreeSlack);
-
         // parse CAST
         final StandardParsingOption spo = enableInlining ?
             new StandardParsingOption(theArgs) :
@@ -214,6 +218,28 @@ public class Slacker {
                 e, System.err);
             System.exit(1);
         }
+
+        // create slacker object
+        final UnaryPredicate matchType = reportInstanceTimes == null ? null :
+            CellUtils.getTypeMatcher(
+                Arrays.asList(StringUtil.split(reportInstanceTimes, ':')));
+        final UnaryPredicate<String> reportInstance = matchType == null ? null :
+            new UnaryPredicate<String>() {
+                public boolean evaluate(String s) {
+                    try {
+                        return matchType.evaluate(
+                                cfp.getFullyQualifiedCell(s));
+                    } catch (CastSemanticException e) { }
+                    return false;
+                }
+            };
+        Slacker slacker = new Slacker(execSolve,runDirectory,cycleSlack,
+                                      globalFreeSlack,hierWeight,
+                                      emitLeafResults,ignoreExistingSlack,
+                                      allowNonInteger,reportZeroBuffers,
+                                      reportSubcellTimes,reportInstance,
+                                      checkOnly,leafCheck,
+                                      costFreeSlack);
 
         System.err.println("NOTE: Slacker started  at " +
                            new SimpleDateFormat("HH:mm:ss MM/dd/yyyy").format(new Date()));

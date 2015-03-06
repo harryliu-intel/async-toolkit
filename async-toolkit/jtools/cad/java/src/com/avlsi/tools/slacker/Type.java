@@ -9,6 +9,7 @@ import com.avlsi.util.container.ObjectUtils;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.Triplet;
 import com.avlsi.util.ext.Exec;
+import com.avlsi.util.functions.UnaryPredicate;
 import java.util.List;
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
@@ -475,6 +476,33 @@ public class Type implements Comparable {
         }
         outputDir.write();
         System.out.println();
+    }
+
+    private String append(final String prefix, final String last) {
+        return prefix == null ? last : (prefix + "/" + last);
+    }
+
+    private void reportInstanceTimes(final UnaryPredicate<String> p,
+                                     final String prefix, final double t) {
+        if (prefix != null && p.evaluate(name)) {
+            System.out.println("instance_time(" + prefix + ") = " + t + ";");
+        }
+
+        for (Iterator i = subcells.iterator(); i.hasNext(); ) {
+            Subcell cell = (Subcell) i.next();
+            double earliest = Double.POSITIVE_INFINITY;
+            for (Iterator j = cell.inPorts.iterator(); j.hasNext(); ) {
+                Channel chan = (Channel) j.next();
+                earliest = Math.min(earliest, chan.dstTime);
+            }
+            cell.type.reportInstanceTimes(p, append(prefix, cell.name),
+                    Double.isInfinite(earliest) ? 0 : earliest);
+        }
+    }
+
+    /** Report arrival time of instances that pass the predicate */
+    public void reportInstanceTimes(UnaryPredicate p) {
+        reportInstanceTimes(p, null, 0);
     }
 
     /** initialize totalFreeSlack of all channels in this Type */
