@@ -225,7 +225,7 @@ strmFile                           "GDSIINAME"
 strmVersion                        "5"
 summaryFile                        ""
 # FIXME
-techLib                            "tsmc28"
+techLib                            "731"
 topCell                            "CELLNAME"
 userSkillFile                      ""
 viaMap                             ""
@@ -961,7 +961,7 @@ if (@skip_libs) {
 #        close $fl;
         print $fr "gate";
         print $fr "stack";
-        print $fr "tsmc28";
+        print $fr "731";
     }
     else {
         print $fr join("\n", @skip_libs);
