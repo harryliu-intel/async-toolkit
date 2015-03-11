@@ -111,7 +111,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
                   "-quality_effort %d \\\n"
                   "-device_row_offset %s \\\n"
                   (if port_order
-                      (sprintf nil "-port_order %s \\\n" (buildString port_order ",")) "")
+                      (sprintf nil "-port_order \"%s\" \\\n" (buildString port_order ",")) "")
                   ">& %s.place.log")
              cellName h (if shrink=="min" "min" (sprintf nil "%d" w-1))
              num_place-1 hor_routes*h
