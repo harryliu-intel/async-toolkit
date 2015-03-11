@@ -41,7 +41,10 @@ while (@ARGV) {
     else { $name = $ARGV[0]; }
     shift @ARGV;
 }
-usage() if (!-e "$name.gds");
+my $gds;
+if    (-e "$name.gds")   { $gds = "$name.gds"; }
+elsif (-e "$name.gds2" ) { $gds = "$name.gds2"; }
+else { usage(); }
 
 # usage banner
 sub usage {
@@ -90,7 +93,7 @@ for (my $i=0; $i<$JOBS; $i++) {
         printf("# Lauching $name, job $i\n");
         system("touch $name.do.$i");
         system("rm -f \"$name.out.$i\" \"$name.ppm.$i\"");
-        my $CMD  = "${PLOT} --gds \"$name.gds\" --ppm \"$name.ppm\" ";
+        my $CMD  = "${PLOT} --gds \"$gds\" --ppm \"$name.ppm\" ";
         if ($JOBS>1) { $CMD = "$QSUB -j \"$name.out.$i\" ${CMD} --job $i &"; }
         system($CMD);
     }
