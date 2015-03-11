@@ -36,9 +36,6 @@ public class Slacker {
     /** Ignore existing slack */
     final boolean ignoreExistingSlack;
 
-    /** Predicate to report arrival times for instances of a type */
-    final UnaryPredicate<String> reportInstance;
-
     /** Force top cell to be slacker_leaf=false, slacker_alignment=0 */
     final Boolean checkLeaf;
 
@@ -56,7 +53,6 @@ public class Slacker {
         this.execSolve = execSolve;
         this.runDirectory = runDirectory;
         this.ignoreExistingSlack = ignoreExistingSlack;
-        this.reportInstance = reportInstance;
         this.checkLeaf = checkLeaf;
         Type.emitLeafResults = emitLeafResults;
         Type.hierWeight      = hierWeight;
@@ -67,6 +63,7 @@ public class Slacker {
         Type.reportSubcellTimes = reportSubcellTimes;
         Type.checkOnly = checkOnly;
         Type.costFreeSlack = costFreeSlack;
+        Type.reportInstanceTimes = reportInstance;
     }
 
     /** Add this type to types list */
@@ -102,9 +99,6 @@ public class Slacker {
         for (Iterator i = types.iterator(); i.hasNext(); ) {
             Type type = (Type) i.next();
             type.slackResults(type==top);
-        }
-        if (reportInstance != null) {
-            top.reportInstanceTimes(reportInstance);
         }
     }
 

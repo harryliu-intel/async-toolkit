@@ -91,6 +91,12 @@ public class Type implements Comparable {
     /** Cycle-slack for internal handshake of slack buffers*/
     static double bufferCycleSlack = 5;
 
+    /** Predicate to determine which instance_time to report */
+    static UnaryPredicate reportInstanceTimes = null;
+
+    /** Accumulate any instance_times to report */
+    static Map<String,Double> instanceTimes = new TreeMap<String,Double>();
+
     /** Constructor */
     public Type(String name, boolean isLeaf) {
         this.name = name;
@@ -290,7 +296,7 @@ public class Type implements Comparable {
                     needsAnotherPass = true;
                 }
                 else {
-                    int importN = recursiveImport(results,0);
+                    int importN = recursiveImport(results,0,null);
                     Debug.assertTrue(N==importN);
                 }
                 System.out.println("Pass " + pass + ", " +
@@ -474,6 +480,12 @@ public class Type implements Comparable {
                 System.out.println("    // maximum anti-slack = " +
                                    maxAntiSlack);
         }
+        if (topType) {
+            for (Map.Entry<String,Double> time : instanceTimes.entrySet()) {
+                System.out.println("    // instance_time(" + time.getKey() +
+                                   ") = " + time.getValue());
+            }
+        }
         outputDir.write();
         System.out.println();
     }
@@ -482,27 +494,11 @@ public class Type implements Comparable {
         return prefix == null ? last : (prefix + "/" + last);
     }
 
-    private void reportInstanceTimes(final UnaryPredicate<String> p,
-                                     final String prefix, final double t) {
-        if (prefix != null && p.evaluate(name)) {
-            System.out.println("instance_time(" + prefix + ") = " + t + ";");
+    private void reportInstanceTime(final String instance, final double time) {
+        if (instance != null && reportInstanceTimes != null &
+            reportInstanceTimes.evaluate(name)) {
+            instanceTimes.put(instance, time);
         }
-
-        for (Iterator i = subcells.iterator(); i.hasNext(); ) {
-            Subcell cell = (Subcell) i.next();
-            double earliest = Double.POSITIVE_INFINITY;
-            for (Iterator j = cell.inPorts.iterator(); j.hasNext(); ) {
-                Channel chan = (Channel) j.next();
-                earliest = Math.min(earliest, chan.dstTime);
-            }
-            cell.type.reportInstanceTimes(p, append(prefix, cell.name),
-                    Double.isInfinite(earliest) ? 0 : earliest);
-        }
-    }
-
-    /** Report arrival time of instances that pass the predicate */
-    public void reportInstanceTimes(UnaryPredicate p) {
-        reportInstanceTimes(p, null, 0);
     }
 
     /** initialize totalFreeSlack of all channels in this Type */
@@ -708,15 +704,20 @@ public class Type implements Comparable {
     /**
      * Recursively process Types to import slack results.
      */    
-    private int recursiveImport(double [] results, int baseIndex) {
+    private int recursiveImport(double [] results, int baseIndex,
+                                String instance) {
 
         // pick timeIndex for leaf cells
-        if (isLeaf) timeIndex = baseIndex++;
+        if (isLeaf) {
+            timeIndex = baseIndex++;
+            reportInstanceTime(instance,results[timeIndex]);
+        }
 
         // recursively process subcells
         for (Iterator i = subcells.iterator(); i.hasNext(); ) {
             Subcell cell = (Subcell) i.next();
-            baseIndex = cell.type.recursiveImport(results,baseIndex);
+            baseIndex = cell.type.recursiveImport(results,baseIndex,
+                    append(instance, cell.name));
             attachChannelsToSubcell(cell);
         }
         baseIndex = attachPortTimes(baseIndex);
