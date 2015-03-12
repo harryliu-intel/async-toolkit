@@ -30,7 +30,7 @@ sedcmd=`which sed`
 
 
 verbose=
-jre_to_use="/usr/intel/pkgs/java/1.6.0.10-64";
+jre_to_use="/usr/intel/pkgs/java/1.8.0.31";
 jre_args=
 max_heap_size=80m
 min_heap_size=

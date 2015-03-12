@@ -63,7 +63,7 @@ public final class ObjectUtils {
         }
     }
 
-    public static <T extends Comparable<T>> int compare(T... o) {
+    public static int compare(Comparable... o) {
         for (int i = 0; i < o.length; i += 2) {
             final int comp = compare(o[i], o[i + 1]);
             if (comp != 0) return comp;

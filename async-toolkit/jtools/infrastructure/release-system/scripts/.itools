@@ -1,4 +1,4 @@
-java /usr/intel/pkgs/java/1.6.0.10-64/bin/java
+java /usr/intel/pkgs/java/1.8.0.31/bin/java
 iconv /usr/bin/iconv
 P:ImageMagick latest
 P:eclipse 3.5.1
@@ -8,7 +8,7 @@ P:p4 latest
 P:p4v 2013.2
 P:p4merge 2013.3
 P:zsh 4.3.12
-P:java 1.6.0.10-64
+P:java 1.8.0.31
 P:fvwm2 2.5.25
 P:git 1.6.6.2
 P:autotools 2.65
@@ -30,7 +30,6 @@ cmake /usr/intel/pkgs/cmake/2.8.1/bin/cmake
 P:python 2.6.5
 P:ghc 7.0.4
 P:mercurial 1.8.3
-java /usr/intel/pkgs/java/1.6.0.10-64/bin/java
 P:fvwm2 2.5.25
 P:git 1.6.6.2
 P:autotools 2.65

@@ -4,7 +4,7 @@
 JAVAFILES_CLASSES_JAR_ROOT :=$(call CONONICALIZE_PATH, $(CURR_PROJECT_DIR)/../jars)
 JAVAFILES_CLASSPATH := $(shell echo '$(JAVAFILES_CLASSES_JAR_ROOT)/antlr-2.7.2.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/concurrent.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/stringtemplate.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/jdom.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/xercesImpl.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/xml-apis.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/resolver.jar:$(JDK_ROOT)/lib/tools.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/tools.jar:$(JAVAFILES_CLASSES_JAR_ROOT)/JaCoP-3.2.jar' | sed -e 's/ //g')
 
-JAVAFILES_JAVAC_FLAGS := -g -deprecation -source 1.5 -J-Xmx256M
+JAVAFILES_JAVAC_FLAGS := -g -deprecation -source 8 -J-Xmx256M
 
 FULCRUM_JAVAC_FLAGS := +P +Pno-modifier-order +F -depend
 FULCRUM_JAVAC_FLAGS := $(FULCRUM_JAVAC_FLAGS) +Pno-unchecked-exception
