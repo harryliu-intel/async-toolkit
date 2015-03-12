@@ -279,7 +279,7 @@ public class CSP2Class {
     public Class compile(CellInterface cell)
         throws IOException, SemanticException {
         final String diskProp =
-            System.getProperty("com.avlsi.csp.csp2java.disk");
+            ""; // System.getProperty("com.avlsi.csp.csp2java.disk");
         if (diskProp == null)
             return memoryCompile(cell);
         else
@@ -327,7 +327,7 @@ public class CSP2Class {
             final PrintStream err =
                 new PrintStream(new FileOutputStream(javacErrFile));
             final String forkProp =
-                System.getProperty("com.avlsi.csp.csp2java.fork");
+                ""; // System.getProperty("com.avlsi.csp.csp2java.fork");
             if (forkProp == null) {
                 System.setErr(err);
                 exitValue = com.sun.tools.javac.Main.compile(
