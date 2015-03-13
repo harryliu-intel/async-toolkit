@@ -267,10 +267,10 @@ wires_modtime = makeTable("wires" 0)
     (if net!=nil fig->net = net)
     (cond (isPin
           (cond (y0==y1
-                rect = (dbCreateRect CV list( car(layer) "drawing" ) list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
+                rect = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
                 )
                 (x0==x1
-                rect = (dbCreateRect CV list( car(layer) "drawing" ) list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
+                rect = (dbCreateRect CV layer list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
                 )
                 (t (error "invalid coordinates for pins %f:%f %f:%f" x0 y0 x1 y1) 
                 )
