@@ -26,7 +26,7 @@
  (let (abstractCV name net fig term pinlayer)
 
   ; load wires.il and set topMetal
-  (LoadWires)
+  (LoadWires ?CV CV)
   (unless topMetal topMetal = bundled_top_layer)
 
   abstractCV=(dbOpenCellViewByType CV->libName CV->cellName "abstract" "maskLayout" "w")
