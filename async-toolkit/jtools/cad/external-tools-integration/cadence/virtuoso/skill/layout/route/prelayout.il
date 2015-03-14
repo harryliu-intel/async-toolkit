@@ -51,8 +51,8 @@
               ?mode "r")
 
       ; draw bus wires (specifically keepout)
-      (LoadWires)
-      (RefreshAllBuswires)
+      (LoadWires ?CV CV)
+      (RefreshAllBuswires ?CV CV)
       )
 
     ; set nonleaf property
@@ -108,7 +108,7 @@
           prelayoutCV = (dbCopyCellView CV CV->libName CV->cellName
                                         "prelayout" nil nil Overwrite)
           (cond (prelayoutCV
-                 (DeletePins ?cv prelayoutCV)
+                 (DeletePins ?CV prelayoutCV)
                  (CopyAlignmentProps CV prelayoutCV)
                  instances = (setof inst prelayoutCV->instances inst->libName!=TechLibName)
                  instances = (car (NameFilterInstances instances LibCellsToIgnore))

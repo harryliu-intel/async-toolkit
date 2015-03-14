@@ -459,81 +459,65 @@
 
 
 ; delete pins and labels
-(defun DeletePins (@key (cv nil))
-  (let (view)
-   (if cv then
-     view=cv
-   else
-     view=(geGetEditCellView)
-   )
-    (foreach obj view->shapes
-             (cond ((or obj->pin obj->objType=="label")
-                    (dbDeleteObject obj))
-                   )
-             )
-    )
+(defun DeletePins (@key (CV (geGetEditCellView)))
+  (foreach obj CV->shapes
+           (cond ((or obj->pin obj->objType=="label")
+                  (dbDeleteObject obj))
+                 )
+           )
   t
   )
 
-(defun RecursiveDeletePins (@key (cv nil))
- (let (view uniqueInstances cell)
-   (if cv then
-     view=cv
-   else
-     view=(geGetEditCellView)
-   )
-   (DeletePins ?cv cv)
-   uniqueInstances=nil
-   (foreach inst view->instances
-     (if !(member inst->cellName uniqueInstances->cellName ) then
-       uniqueInstances= (cons inst uniqueInstances )
-     )
-   )
-   (foreach inst uniqueInstances
-     cell = (nrOpenCellViewWritable inst->libName inst->cellName inst->viewName)
-     (when cell 
-       (RecursiveDeletePins ?cv cell)
-     )
-   )
- )
-)
-
-
-(defun DeletePinsByType (type)
-  (let ((view (geGetEditCellView)))
-    (foreach obj view->shapes
-     (when ( obj->pin )
-       (when ( dbGetPropByName obj "PinType" )->value == type
-         (dbDeleteObject obj)
-       )
-     )
+(defun RecursiveDeletePins (@key (CV (geGetEditCellView)))
+  (let (uniqueInstances cell)
+    (DeletePins ?CV CV)
+    uniqueInstances=nil
+    (foreach inst CV->instances
+             (if !(member inst->cellName uniqueInstances->cellName ) then
+                 uniqueInstances= (cons inst uniqueInstances )
+                 )
+             )
+    (foreach inst uniqueInstances
+             cell = (nrOpenCellViewWritable inst->libName inst->cellName inst->viewName)
+             (when cell 
+               (RecursiveDeletePins ?cv cell)
+               )
+             )
     )
   )
-  t )
 
-(defun DeletePinsExcludeType (type)
-  (let ((view (geGetEditCellView)))
-    (foreach obj view->shapes
-     (when ( obj->pin )
-       (when ( dbGetPropByName obj "PinType" )->value != type
-         (dbDeleteObject obj)
-       )
-     )
-    )
+(defun DeletePinsByType (type @key (CV (geGetEditCellView)))
+  (foreach obj CV->shapes
+           (when obj->pin
+             (when (dbGetPropByName obj "PinType")->value == type
+                   (dbDeleteObject obj)
+                   )
+             )
+           )
+  t
   )
-  t )
 
-(defun DeletePinsByPurpose (purpose)
-  (let ((view (geGetEditCellView)))
-    (foreach obj view->shapes
-     (when ( obj->pin )
-       (when (cadr obj->lpp) == purpose
-         (dbDeleteObject obj)
-       )
-     )
-    )
+(defun DeletePinsExcludeType (type @key (CV (geGetEditCellView)))
+  (foreach obj CV->shapes
+           (when obj->pin
+             (when (dbGetPropByName obj "PinType")->value != type
+                   (dbDeleteObject obj)
+                   )
+             )
+           )
+  t
   )
-  t )
+
+(defun DeletePinsByPurpose (purpose @key (CV (geGetEditCellView)))
+  (foreach obj CV->shapes
+           (when obj->pin
+             (when (cadr obj->lpp) == purpose
+                   (dbDeleteObject obj)
+                   )
+             )
+           )
+  t
+  )
 
 (defun PinUtilDeletePinsByType (view type)
   (let (obj)

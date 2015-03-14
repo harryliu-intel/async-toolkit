@@ -29,7 +29,7 @@
         )
   (let ()
     ; load wires.il and set options
-    (LoadWires)
+    (LoadWires ?CV CV)
     (unless bottomMetal bottomMetal = bundled_bottom_layer)
     (unless topMetal    topMetal    = bundled_top_layer)
 
@@ -569,11 +569,11 @@
   )
 
 ; Finish router import, user over-ridable in wires.il
-(defun FinishRouterImport ()
-  (DeleteKeepout)
-  (defun RunAfterImportDef () t)
-  (LoadWires)
-  (RunAfterImportDef)
+(defun FinishRouterImport (@key (CV (geGetEditCellView)))
+  (DeleteKeepout ?CV CV)
+  (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
+  (LoadWires ?CV CV)
+  (RunAfterImportDef ?CV CV)
   )
 
 ; make a floorplan view

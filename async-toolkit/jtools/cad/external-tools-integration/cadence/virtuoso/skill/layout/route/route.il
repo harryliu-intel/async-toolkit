@@ -32,7 +32,7 @@
     DoFile = (sprintf nil "%s/%s.do" RouterPDK type)
 
     ; load wires.il and set options
-    (LoadWires)
+    (LoadWires ?CV CV)
     (unless bottomMetal bottomMetal = (if type=="leaf" 1 bundled_bottom_layer))
     (unless topMetal    topMetal    = (if type=="leaf" 3 bundled_top_layer))
 

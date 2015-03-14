@@ -24,7 +24,7 @@
 */
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( DrawMidLevelPins ( @key (CellVue (UIGetCellView)) )
+defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) )
   let( ( 
         CellTerms
         Term
@@ -38,25 +38,25 @@ defun( DrawMidLevelPins ( @key (CellVue (UIGetCellView)) )
         Errport
        )
 
-;    when( IsLeafCell(CellVue~>cellName)
+;    when( IsLeafCell(CV~>cellName)
 ;          error("This is a leaf cell. DrawLeafCellPins() should be used instead !")
 ;        )
 
-    WarningFile = strcat(getWorkingDir() "/" CellVue~>cellName ".pins.warn")
-    ErrorFile   = strcat(getWorkingDir() "/" CellVue~>cellName ".pins.err")
+    WarningFile = strcat(getWorkingDir() "/" CV~>cellName ".pins.warn")
+    ErrorFile   = strcat(getWorkingDir() "/" CV~>cellName ".pins.err")
 
     warnport = outfile(WarningFile "w")
     Errport  = outfile(ErrorFile "w")
 
-    CellTerms = CellVue~>terminals
-    BusPinList = MidPinsScanBusPins(CellVue)
+    CellTerms = CV~>terminals
+    BusPinList = MidPinsScanBusPins(CV)
 
     foreach( Term CellTerms
        unless( (Term~>name == "GND") || (Term~>name == "Vdd")
             foreach( InstTerm Term~>net~>instTerms
 ;             when( InstTerm~>inst~>Protected
                unless( member(Term~>name BusPinList) || member(Term~>name CellPins)
-                 InPlacePinFig = MidPinsInheritPin(CellVue InstTerm~>inst InstTerm~>name Term~>name)
+                 InPlacePinFig = MidPinsInheritPin(CV InstTerm~>inst InstTerm~>name Term~>name)
                    when( InPlacePinFig~>LeafInPlacePin
               printf("*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term~>name InstTerm~>inst~>name)
              fprintf(warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term~>name InstTerm~>inst~>name)
@@ -78,7 +78,7 @@ t
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( MidPinsInheritPin (CellVue Inst TermName PinName)
+defun( MidPinsInheritPin (CV Inst TermName PinName)
   let( (
           InPlacePinFig InPlacePinFigList
           InPlacePinTrf
@@ -105,11 +105,11 @@ defun( MidPinsInheritPin (CellVue Inst TermName PinName)
 
    when( InPlacePinFig
      InPlacePinTrf = dbTransformBBox(InPlacePinFig~>bBox Inst~>transform)
-     TopPinFig = dbCreateRect(CellVue list(car(InPlacePinFig~>lpp) "pin") InPlacePinTrf)
-     TopPinNet = dbMakeNet(CellVue PinName)
+     TopPinFig = dbCreateRect(CV list(car(InPlacePinFig~>lpp) "pin") InPlacePinTrf)
+     TopPinNet = dbMakeNet(CV PinName)
      TopPin = dbCreatePin(TopPinNet TopPinFig)
      dbSetq( TopPin ( list "top" "bottom" "left" "right" ) accessDir )
-     PinLabel = MidPinsCreateLabel(CellVue TopPinFig)
+     PinLabel = MidPinsCreateLabel(CV TopPinFig)
 
      PinLabel~>parent = TopPinFig
 
@@ -148,13 +148,13 @@ t
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( MidPinsScanBusPins (CellVue)
+defun( MidPinsScanBusPins (CV)
   let( (
           BusPinList
           PinShape
         )
 
-   foreach( PinShape CellVue~>shapes
+   foreach( PinShape CV~>shapes
 
       when( PinShape~>pin~>net~>name && (PinShape~>PinType == "BusScript")
           BusPinList = cons(PinShape~>pin~>net~>name BusPinList)
@@ -166,7 +166,7 @@ BusPinList
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( MidPinsCreateLabel (CellVue PinShape)
+defun( MidPinsCreateLabel (CV PinShape)
   let( (
           UpRtX
           LwLtX
@@ -200,26 +200,21 @@ defun( MidPinsCreateLabel (CellVue PinShape)
            LabelRot = "R90"
            LabelHt  = PinWd/2
        )
-    PinLabel = dbCreateLabel(CellVue list( car(PinShape~>lpp) "pin") LwLtX+PinWd/2:LwLtY+PinHt/2 LabelName "centerCenter" LabelRot "stick" LabelHt)
+    PinLabel = dbCreateLabel(CV list( car(PinShape~>lpp) "pin") LwLtX+PinWd/2:LwLtY+PinHt/2 LabelName "centerCenter" LabelRot "stick" LabelHt)
 
     PinLabel
   )
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun RefreshPinDatabase ( @key (CellVue (UIGetCellView)) )
- let( (TermPin CellTerms Term)
-
-     CellTerms = CellVue~>terminals
-
-    foreach( Term CellTerms
-      unless( (Term~>name == "GND") || (Term~>name == "Vdd")
-            foreach( TermPin Term~>pins when(TermPin!=nil dbDeleteObject(TermPin)) )
-       )
-     )
+(defun RefreshPinDatabase ( @key (CV (UIGetCellView)) )
+  (foreach Term CV->terminals
+           (unless (Term~>name == "GND") || (Term~>name == "Vdd")
+                   (foreach TermPin Term~>pins (when TermPin!=nil (dbDeleteObject TermPin)))
+                   )
+           )
   t
- )
-)
+  )
 
 (defun DrawSyncInPlacePins ( @key (CV (UIGetCellView)) )
  (let ( mapfile maplist  rtlname_parts pinmap

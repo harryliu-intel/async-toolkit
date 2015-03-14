@@ -24,16 +24,16 @@
  ) 
 )
 
-(defun CanonicalizePins ( @key (cv (geGetEditCellView))
+(defun CanonicalizePins ( @key (CV (geGetEditCellView))
                                (tempdir (ConfigFileGetValue TheCDSConfigTable "TEMP"))
                                (castCell nil))
  (let (table pinname canon allpins pincount renamecount )
-  (cond (castCell==nil castCell=cv->cellName))
+  (cond (castCell==nil castCell=CV->cellName))
   table = (CanonicalizeLoadTable castCell ?tempdir tempdir )
   pincount=0
   renamecount=0
 
-  allpins = (PinUtilGetExistingPinFigs cv)
+  allpins = (PinUtilGetExistingPinFigs CV)
   (when table
     (foreach pin allpins
      pinname = pin->net->name
@@ -41,7 +41,7 @@
         pincount=pincount+1
         canon = (arrayref table pinname)
         (when canon!=nil && canon!=pinname
-          (PinUtilRenamePin cv pin canon)
+          (PinUtilRenamePin CV pin canon)
           (dbReplaceProp pin "CanonicalizedFrom" "string" pinname)
           renamecount=renamecount+1
         )

@@ -27,7 +27,7 @@
     (dbSave CV)
 
     ; options
-    (LoadWires)
+    (LoadWires ?CV CV)
     MaxHeapSize = (nrGetMaxHeapSize)
 
     ; generated cell or file names
@@ -99,7 +99,7 @@
     )
 
     ; draw pins
-    (RedrawAllPins)
+    (RedrawAllPins ?CV CV)
 
     ; canonicalize prerouted nets
     (CanonicalizeNets ?CV CV)

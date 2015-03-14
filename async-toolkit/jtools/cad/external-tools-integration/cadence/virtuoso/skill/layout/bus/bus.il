@@ -150,7 +150,7 @@ wires_modtime = makeTable("wires" 0)
 
     skilltemplate = (sprintf nil "\n   ; template wires skill for %s\n" CellView->cellName)
     skilltemplate = (strcat skilltemplate "\n   ; Add custom channel definitions here\n")
-    skilltemplate = (strcat skilltemplate "\n(defun DrawAll ()\n")
+    skilltemplate = (strcat skilltemplate "\n(defun DrawAll (@key (CV (geGetEditCellView)))\n")
     skilltemplate = (strcat skilltemplate "busGuideInstName = \"")
     skilltemplate = (strcat skilltemplate instname)
     skilltemplate = (strcat skilltemplate "\"\n")
@@ -200,22 +200,21 @@ wires_modtime = makeTable("wires" 0)
 )
 
 ; redraw everything
-(defun RefreshAllBuswires ()
-  (geDeselectAllFig)
-  (DeleteBusWires)
-  (DrawWires)
-  (DeleteUnusedNets)
+(defun RefreshAllBuswires (@key (CV (geGetEditCellView)))
+  (DeleteBusWires ?CV CV)
+  (DrawWires ?CV CV)
+  (DeleteUnusedNets ?CV CV)
 )
 
 ; redraw all pins in conjunction with inplace pins
-(defun RedrawAllPins ()
-    (DeletePinsExcludeType "Power")
-    (DeletePinsByPurpose "pin")
-    (DeletePinsByType "Inplace")
-    (RefreshPinDatabase)
-    (RefreshAllBuswires)
-    (CanonicalizePins)
-    (DrawMidLevelPins)
+(defun RedrawAllPins (@key (CV (geGetEditCellView)))
+    (DeletePinsExcludeType "Power" ?CV CV)
+    (DeletePinsByPurpose "pin" ?CV CV)
+    (DeletePinsByType "Inplace" ?CV CV)
+    (RefreshPinDatabase ?CV CV)
+    (RefreshAllBuswires ?CV CV)
+    (CanonicalizePins ?CV CV)
+    (DrawMidLevelPins ?CV CV)
 )
 
 ; Update layout_pg/layout view after editing bus wires without
@@ -718,7 +717,7 @@ wires_modtime = makeTable("wires" 0)
   (let (paths shapes pattern pre isPin startVias endVias flipX flipY pitch double shield rotate vertical positive props)
     paths = nil
     shapes = (geGetSelSet)
-    (cond (guideInstName!=nil CV = (GetGuideInst nil guideInstName)->master))
+    (cond (guideInstName!=nil CV = (GetGuideInst nil guideInstName ?CV CV)->master))
     (cond (shapes==nil shapes = CV->shapes))
     (foreach obj shapes
              pattern   = (GetProp obj "BusPattern" nil)
@@ -1015,7 +1014,7 @@ wires_modtime = makeTable("wires" 0)
                                       ?startVias startVias ?endVias endVias
                                       ?doubleVias doubleVias ?verticalVias verticalVias ?positiveVias positiveVias 
                                       ?guideInst guideInst
-                                      ?only_evens evens ?only_odds odds ?drawShield busShield)
+                                      ?only_evens evens ?only_odds odds ?drawShield busShield ?CV CV)
                     )
                   )
              )
@@ -1217,23 +1216,24 @@ wires_modtime = makeTable("wires" 0)
 
 ; load then draw wires.il for currently edited cellview
 (defun DrawWires (@key (CV (geGetEditCellView)))
-  (defun DrawAll () 
+  (defun DrawAll (@key (CV (geGetEditCellView))) 
     (printf "Default DrawAll: DrawTracks with paths in current cellview.\n")
     busPatterns = (append busPatterns defchan_patterns)
-    (DrawTracks)
-    (DrawObstructions)
+    (DrawTracks ?CV CV)
+    (DrawObstructions ?CV CV)
     t
     )
   (cond ((IsGuideInst CV)
          (printf "Can't draw wires inside the guide instance\n"))
         (t
-         (LoadWires)
-         (DrawAll)
+         (LoadWires ?CV CV)
+         (DrawAll ?CV CV)
          (when (dbFindAnyInstByName CV "autobuswires")
-           (DrawChannels nil nil nil nil ?guideInstName "autobuswires")
+           (DrawChannels nil nil nil nil ?guideInstName "autobuswires" ?CV CV)
            )
          )
         )
+  t
   )
 
 ; fix up pin names by using labels attached to them

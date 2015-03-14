@@ -92,7 +92,7 @@
              busKeepout busPatterns busUseDefaultPatterns)
 
     ; set guide instance
-    guideInst = (GetGuideInst guideInst guideInstName)
+    guideInst = (GetGuideInst guideInst guideInstName ?CV CV)
     view = guideInst->master
     (when !view view = CV)
 
@@ -105,8 +105,8 @@
     busKeepout = t
     busUseDefaultPatterns = nil
     busPatterns = (list (list "obstruction" node_TW))
-    (DrawChannels      nil nil nil nil ?guideInst guideInst)
-    (DrawChannelArrays nil nil nil nil nil nil ?guideInst guideInst)
+    (DrawChannels      nil nil nil nil ?guideInst guideInst ?CV CV)
+    (DrawChannelArrays nil nil nil nil nil nil ?guideInst guideInst ?CV CV)
 
     ; draw obstructM*
     (for i 2 7
