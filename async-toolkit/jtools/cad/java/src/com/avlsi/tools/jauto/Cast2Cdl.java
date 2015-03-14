@@ -205,8 +205,8 @@ public final class Cast2Cdl {
      * A factory that accumulates the names of cells being instantiated.
      **/
     private static class GateCalls extends CDLFactoryAdaptor {
-        private final List s;
-        public GateCalls(List s) {
+        private final List<String> s;
+        public GateCalls(List<String> s) {
             this.s = s;
         }
         public void makeCall(HierName name, String subName, HierName[] args,
@@ -218,8 +218,8 @@ public final class Cast2Cdl {
     /**
      * Returns the names of gates used in the netlist block of a cell.
      **/
-    public static List getGateInstantiations(final CellInterface cell) {
-        final List result = new ArrayList();
+    public static List<String> getGateInstantiations(final CellInterface cell) {
+        final List<String> result = new ArrayList<>();
         if (cell.containsNetlist()) {
             final NetlistBlock block = (NetlistBlock) cell.getBlockInterface().iterator(BlockInterface.NETLIST).next();
             block.getCDLTemplate().execute(new GateCalls(result));
@@ -369,13 +369,12 @@ public final class Cast2Cdl {
                                     final CastFileParser castParser,
                                     final CDLFactoryInterface emitter,
                                     final Cadencize cadencizer,
-                                    final Set seen,
+                                    final Set<String> seen,
                                     final boolean sortNetlist) throws IOException {
-        final List gates = getGateInstantiations(cell);
-        final SortedSet sorted = new TreeSet();
+        final List<String> gates = getGateInstantiations(cell);
+        final SortedSet<String> sorted = new TreeSet<>();
         sorted.addAll(gates);
-        for (Iterator i = sorted.iterator(); i.hasNext(); ) {
-            final String gateName = (String) i.next();
+        for (final String gateName : sorted) {
             if (!seen.add(gateName)) continue;
             try {
                 final CellInterface gate = loadCell(castParser, gateName);
