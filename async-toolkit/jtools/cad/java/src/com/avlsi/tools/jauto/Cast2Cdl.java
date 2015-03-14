@@ -470,10 +470,11 @@ public final class Cast2Cdl {
         final Set inlined =
             inline_layout ? inlineLayoutSet(cell) : Collections.EMPTY_SET;
         
-        SortedSet sorted = new TreeSet();
+        SortedSet<Pair<HierName,CellInterface>> sorted = new TreeSet<>(
+                (a, b) -> a.getFirst().compareTo(b.getFirst()));
                 
         for (Iterator i = cell.getLocalSubcellPairs(); i.hasNext(); ) {
-            sorted.add(i.next());
+            sorted.add((Pair<HierName,CellInterface>) i.next());
         }
 
         for (Iterator i = sorted.iterator(); i.hasNext(); ) {
