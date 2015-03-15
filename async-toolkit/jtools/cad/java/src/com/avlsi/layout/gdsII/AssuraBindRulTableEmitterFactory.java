@@ -190,12 +190,6 @@ public class AssuraBindRulTableEmitterFactory implements TableEmitterFactoryInte
                                                  ".",
                                                  e );
             }
-            catch ( IOException e ) {
-                throw new TableEmitterException( "Unable to open " + 
-                                                 outputFile.toString() +
-                                                 ".",
-                                                 e );
-            }
         }
         catch ( FileNotFoundException e ) {
             throw new TableEmitterException( "Unable to open " + 
