@@ -47,11 +47,11 @@ public final class CDLRenameFactory implements CDLFactoryInterface {
         this.ni = null;
     }
 
-    private String _(final HierName name) {
+    private String convert(final HierName name) {
         return name.getAsString('.');
     }
 
-    private HierName _(final String name) {
+    private HierName convert(final String name) {
         try {
             return HierName.makeHierName(name, '.');
         } catch (InvalidHierNameException e) {
@@ -60,7 +60,7 @@ public final class CDLRenameFactory implements CDLFactoryInterface {
     }
 
     private HierName renameNode(final HierName node) {
-        return _(renameNode(_(node)));
+        return convert(renameNode(convert(node)));
     }
 
     private String renameNode(final String node) {
@@ -73,7 +73,7 @@ public final class CDLRenameFactory implements CDLFactoryInterface {
 
     private HierName renameDevice(final HierName device) {
         try {
-            return _(ni.renameDevice(_(device)));
+            return convert(ni.renameDevice(convert(device)));
         } catch (CDLRenameException e) {
             throw new RenameException(
                 "Cannot rename device: " + device, subckt, e);
@@ -82,7 +82,7 @@ public final class CDLRenameFactory implements CDLFactoryInterface {
 
     private HierName renameSubCellInstance(final HierName instance) {
         try {
-            return _(ni.renameSubCellInstance(_(instance)));
+            return convert(ni.renameSubCellInstance(convert(instance)));
         } catch (CDLRenameException e) {
             throw new RenameException(
                 "Cannot rename instance: " + instance, subckt, e);
