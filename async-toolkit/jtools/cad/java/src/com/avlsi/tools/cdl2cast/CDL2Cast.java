@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import java.io.Writer;
 import java.io.PrintWriter;
@@ -1038,12 +1039,12 @@ public class CDL2Cast {
      * [0][1] -> (0,1)
      * [0,1] -> (0,1)
      **/
-    private final List parseBracketStr( final String bracketStr ) {
+    private final List<Integer> parseBracketStr( final String bracketStr ) {
         final int len = bracketStr.length();
 
         final StringBuffer accum = new StringBuffer();
 
-        final List ret = new ArrayList();
+        final List<Integer> ret = new ArrayList<>();
 
         boolean bracketOpen = false;
 
@@ -1107,7 +1108,7 @@ public class CDL2Cast {
      * a[0][1] -> (a,(0,1))
      * d -> (d,())
      **/
-    private final Pair parsePortNodeName( final String portNodeName ) {
+    private final Pair<String,List<Integer>> parsePortNodeName( final String portNodeName ) {
         final int len = portNodeName.length();
 
         final int indexOfFirstOpenBracket = portNodeName.indexOf( '[' );
@@ -1125,10 +1126,10 @@ public class CDL2Cast {
                 final String stem = portNodeName.substring( 0, indexOfFirstOpenBracket );
                 assert stem.length() > 0 ;
                 final String bracketStr = portNodeName.substring( indexOfFirstOpenBracket, indexOfLastCloseBracket + 1 );
-                return new Pair( stem, parseBracketStr( bracketStr ) );
+                return new Pair<>( stem, parseBracketStr( bracketStr ) );
             }
             else {
-                return new Pair( portNodeName, Collections.EMPTY_LIST );
+                return new Pair<>( portNodeName, Collections.emptyList() );
             }
         }
         else {
@@ -1149,33 +1150,31 @@ public class CDL2Cast {
      * returns
      * ({a->((0,1),(0,1)), b->((0,1)), d->(), DOG->()}, {b,a,d,DOG})
      **/
-    private Pair sniffArrays( final List ports /*<String>*/) {
-        final Map portMap = new HashMap(); /*<String, ArrayList<Integer>*/
-        final Set portStems = new LinkedHashSet(); /*<String*/
-        final Iterator i = ports.iterator();
+    private Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>>
+        sniffArrays( final List<String> ports ) {
+        final Map<String,List<Pair<Integer,Integer>>> portMap = new HashMap<>();
+        final Set<String> portStems = new LinkedHashSet<>();
 
-        while ( i.hasNext() ) {
-            final String currPortNode = ( String ) i.next();
-            final Pair portInfo = parsePortNodeName( currPortNode );
+        for (String currPortNode : ports) {
+            final Pair<String,List<Integer>> portInfo =
+                parsePortNodeName( currPortNode );
 
-            final String stem = ( String ) portInfo.getFirst();
-            final List indices = ( List ) portInfo.getSecond();
+            final String stem = portInfo.getFirst();
+            final List<Integer> indices = portInfo.getSecond();
 
-            final List existingPortDimensions = ( List ) portMap.get( stem );
+            final List<Pair<Integer,Integer>> existingPortDimensions =
+                portMap.get( stem );
 
             if ( existingPortDimensions == null ) {
-                final List dimensions;
+                final List<Pair<Integer,Integer>> dimensions;
                 if ( indices.size() > 0 ) {
-                    dimensions = new ArrayList( indices.size() );
-                    final Iterator indexIter = indices.iterator();
-                    while ( indexIter.hasNext() ) {
-                        final Integer index = ( Integer ) indexIter.next();
-                        final Pair minMaxPair = new Pair( index, index );
-                        dimensions.add( minMaxPair );
-                    }
+                    dimensions =
+                        indices.stream()
+                               .map(i -> new Pair<>( i, i ))
+                               .collect(Collectors.toList());
                 }
                 else {
-                    dimensions = Collections.EMPTY_LIST;
+                    dimensions = Collections.emptyList();
                 }
                 portMap.put( stem, dimensions );
                 portStems.add( stem );
@@ -1209,7 +1208,7 @@ public class CDL2Cast {
             }
         }
 
-        return new Pair( portMap, portStems );
+        return new Pair<>( portMap, portStems );
 
     }
 
