@@ -672,8 +672,8 @@ public class Template implements CDLFactoryInterface {
         templates.put(subName, new Template(templates, statements, in, out, subcktParam, mStreamName ));
     }
 
-    public Pair getArguments() {
-        return new Pair(in, out);
+    public Pair<String[],String[]> getArguments() {
+        return new Pair<>(in, out);
     }
 
     public Map getParameters() {

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import java.io.Writer;
 import java.io.PrintWriter;
@@ -1139,6 +1140,20 @@ public class CDL2Cast {
         }
     }
 
+    private Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>>
+        sniffArrays( Template template ) {
+        final Pair<String[],String[]> p = template.getArguments();
+        final String[] in = p.getFirst();
+        final String[] out = p.getSecond();
+
+        final List<String> ports =
+            Stream.concat(Arrays.stream(in), Arrays.stream(out))
+                  .filter(port -> !isImpliedPort(port))
+                  .collect(Collectors.toList());
+
+        return sniffArrays(ports);
+    }
+
     /**
      * Given a <code>List</code> of <code>ports</code>, return
      * a <code>Pair<Map,Set></code> of
@@ -1225,31 +1240,21 @@ public class CDL2Cast {
                                 final Writer writer)
         throws IOException {
         writer.write("(");
-        final Pair p = template.getArguments();
-        final String[] in = (String []) p.getFirst();
-        final String[] out = (String []) p.getSecond();
 
-        final List ports = new ArrayList();
-        for ( int i = 0 ; i < in.length ; ++i ) {
-            if (! isImpliedPort (in[i])) ports.add( in[i] );
-        }
+        final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
+            sniffArrays( template );
 
-        for ( int i = 0 ; i < out.length ; ++i ) {
-            if (! isImpliedPort (out[i])) ports.add( out[i] );
-        }
+        final Map<String,List<Pair<Integer,Integer>>> portMap =
+            portInfo.getFirst();
+        final Set<String> portStems = portInfo.getSecond();
 
-        final Pair portInfo = sniffArrays( ports );
-
-        final Map portMap = ( Map ) portInfo.getFirst();
-        final Set portStems = ( Set ) portInfo.getSecond();
-
-        final Iterator stemIter = portStems.iterator();
+        final Iterator<String> stemIter = portStems.iterator();
 
         if ( stemIter.hasNext() ) writer.write("node ");
 
         while ( stemIter.hasNext() ) {
-            final String stem = ( String ) stemIter.next();
-            final List dimensions = ( List ) portMap.get( stem );
+            final String stem = stemIter.next();
+            final List<Pair<Integer,Integer>> dimensions = portMap.get( stem );
             String dir = "-+";
             if (netgraph!=null) { // infer directionality of port
                 NetGraph.NetNode node =
@@ -1259,12 +1264,13 @@ public class CDL2Cast {
             }
             writer.write(dir + stem );
             if ( dimensions.size() > 0 ) {
-                final Iterator dimenIter = dimensions.iterator();
+                final Iterator<Pair<Integer,Integer>> dimenIter =
+                    dimensions.iterator();
                 writer.write( "[" );
                 while ( dimenIter.hasNext() ) {
-                    final Pair minMaxPair = ( Pair ) dimenIter.next();
-                    final Integer min = ( Integer ) minMaxPair.getFirst();
-                    final Integer max = ( Integer ) minMaxPair.getSecond();
+                    final Pair<Integer,Integer> minMaxPair = dimenIter.next();
+                    final Integer min = minMaxPair.getFirst();
+                    final Integer max = minMaxPair.getSecond();
                     assert min.intValue() <= max.intValue();
 
                     writer.write( min.toString() + ".." + max.toString() );
@@ -1274,7 +1280,7 @@ public class CDL2Cast {
                 }
                 writer.write( ']' );
             }
-	    if ( stemIter.hasNext() ) {
+            if ( stemIter.hasNext() ) {
                 writer.write( ", " );
             }
         }
