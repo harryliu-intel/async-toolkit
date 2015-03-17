@@ -68,6 +68,7 @@ import com.avlsi.file.cdl.parser.ReadCDLIntoFactory;
 import com.avlsi.file.cdl.parser.CDLFactoryInterface;
 import com.avlsi.file.cdl.parser.CDLFactoryAdaptor;
 import com.avlsi.file.cdl.parser.CDLFactoryEmitter;
+import com.avlsi.file.cdl.parser.CDLFactoryFilter;
 import com.avlsi.file.cdl.parser.CDLSimpleInterface;
 import com.avlsi.file.cdl.parser.CDLInterfaceSimplifier;
 import com.avlsi.file.cdl.parser.CDLInlineFactory;
@@ -122,6 +123,8 @@ public class CDL2Cast {
     /** should CAST include fized_size=false netlist? **/
     static boolean netlistInCast;
     
+    private final CellPortsReverseMapper reverseMap;
+
     private static void usage( String m ) {
 
         final String className = CDL2Cast.class.getName();
@@ -196,6 +199,66 @@ public class CDL2Cast {
         return dir;
     }
 
+    /**
+     * Used to find the name mapping from CAST to CDL, by "sandwiching" a
+     * CDLRenameFactory with instances from getBread.
+     **/
+    private static class CellPortsReverseMapper {
+        private final Map<String,String> cellMapping;
+        private final Map<String,Map<String,String>> nodeMapping;
+        String oldSub;
+        String[] oldIn;
+        String[] oldOut;
+        private class Proxy extends CDLFactoryFilter {
+            public Proxy(final CDLFactoryInterface inner) {
+                super(inner);
+            }
+            private void mapNodes(final Map<String,String> nodeMap,
+                                  final String[] from,
+                                  final String[] to) {
+                for (int i = 0; i < from.length; ++i) {
+                    nodeMap.put(from[i], to[i]);
+                }
+            }
+            public void beginSubcircuit(String subName, String[] in,
+                                        String[] out, Map parameters,
+                                        Environment env) {
+                // Due to the "sandwiching", this function body gets executed
+                // twice for each subcircuit definition: first with the
+                // original names, then immediately with renamed names.
+                if (oldSub == null) {
+                    oldSub = subName;
+                    oldIn = in;
+                    oldOut = out;
+                } else {
+                    cellMapping.put(subName, oldSub);
+                    final Map<String,String> nodeMap = new HashMap<>();
+                    mapNodes(nodeMap, in, oldIn);
+                    mapNodes(nodeMap, out, oldOut);
+                    nodeMapping.put(subName, nodeMap);
+                    oldSub = null;
+                }
+                super.beginSubcircuit(subName, in, out, parameters, env);
+            }
+        }
+        public CDLFactoryInterface getBread(final CDLFactoryInterface inner) {
+            return new Proxy(inner);
+        }
+        public CellPortsReverseMapper() {
+            cellMapping = new HashMap<>();
+            nodeMapping = new HashMap<>();
+        }
+        public String getCellName(final String cell) {
+            return cellMapping.get(cell);
+        }
+        public Map<String,String> getNodeMap(final String cell) {
+            return nodeMapping.get(cell);
+        }
+    }
+
+    public CDL2Cast(CellPortsReverseMapper reverseMap) {
+        this.reverseMap = reverseMap;
+    }
 
     public static void main(String[] args)
         throws Exception
@@ -320,6 +383,8 @@ public class CDL2Cast {
 
         final boolean skipPrsGeneration =
             theArgs.argExists("skip-prs-generation");
+
+        final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
 
         netlistInCast = theArgs.argExists("netlist-in-cast");
 
@@ -584,9 +649,14 @@ public class CDL2Cast {
                                                   aspicer );
                     }
 
+                    final CellPortsReverseMapper reverseMap =
+                        new CellPortsReverseMapper();
+
                     final CDLFactoryInterface renamedOutputFactory =
-                        new CDLRenameFactory(outputFactory,
-                                             cdlToCastNameInterfaceFactory);
+                        reverseMap.getBread(
+                            new CDLRenameFactory(
+                                reverseMap.getBread(outputFactory),
+                                cdlToCastNameInterfaceFactory));
 
                     /**
                      * Make templates and tables
@@ -607,7 +677,7 @@ public class CDL2Cast {
                     ReadCDLIntoFactory.readCDL( sourceCDLReader,
                                                 firstFactory );
 
-                    final CDL2Cast cdl2cast = new CDL2Cast();
+                    final CDL2Cast cdl2cast = new CDL2Cast(reverseMap);
                     try {
                         cdl2cast.writeTemplates(templates,
                                                 aspicer,
@@ -615,7 +685,8 @@ public class CDL2Cast {
                                                 outputSpecTreeDir,
                                                 outputCastTreeDir,
                                                 new String[] { refinementParent },
-                                                allCells );
+                                                allCells,
+                                                writeVerilogRTL );
                         outputCastCellsWriter.close();
 
                     }
@@ -692,7 +763,7 @@ public class CDL2Cast {
                                 final String[] refinementParents )
         throws Exception {
             writeTemplates(templates, aspicer, outputCastCellsWriter, outputSpecTreeDir,
-                outputCastTreeDir, refinementParents, false);
+                outputCastTreeDir, refinementParents, false, false);
     }
 
     public void writeTemplates( final Map templates,
@@ -701,7 +772,8 @@ public class CDL2Cast {
                                 final File outputSpecTreeDir,
                                 final File outputCastTreeDir,
                                 final String[] refinementParents,
-                                final Boolean allCells )
+                                final Boolean allCells,
+                                final boolean writeVerilogRTL )
         throws Exception {
 
         //determine which templates should be inlined.
@@ -837,6 +909,7 @@ public class CDL2Cast {
                                    templates,
                                    netgraph,
                                    flatten,
+                                   writeVerilogRTL,
                                    leafSet.contains(template),
                                    digitalWriter);
         }
@@ -1235,6 +1308,45 @@ public class CDL2Cast {
         return IMPLIED_PORTS.contains(name);
     }
 
+    /**
+     * Write out an actual port list appropriate for a Verilog block.  Since
+     * it's impossible to know whether a bit vector is declared as [MSB:LSB] or
+     * [LSB:MSB] without reading the Verilog, throw an exception if the port
+     * list contains arrays.
+     **/
+    private void writeVerilogActualPorts(final Template template,
+                                         final Map<String,String> nodeMap,
+                                         final IndentWriter iw)
+        throws IOException {
+        iw.write("(\n");
+        iw.nextLevel();
+        final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
+            sniffArrays(template);
+
+        final Map<String,List<Pair<Integer,Integer>>> portMap =
+            portInfo.getFirst();
+        final Set<String> portStems = portInfo.getSecond();
+
+        final Iterator<String> stemIter = portStems.iterator();
+
+        while (stemIter.hasNext()) {
+            final String stem = stemIter.next();
+            final List<Pair<Integer,Integer>> dimensions = portMap.get(stem);
+            if (!dimensions.isEmpty()) {
+                throw new RuntimeException("Can't handle arrayed port: " + stem);
+            }
+
+            iw.write("." + nodeMap.get(stem) + "(" + stem + ")");
+            if (stemIter.hasNext()) {
+                iw.write( ", " );
+            }
+            iw.write("\n");
+        }
+
+        iw.prevLevel();
+        iw.write(");\n");
+    }
+
     private void writeCellPorts(final Template template,
                                 final NetGraph netgraph,
                                 final Writer writer)
@@ -1442,6 +1554,25 @@ public class CDL2Cast {
         }
     }
 
+    private void writeVerilogBlock(final String blockName,
+                                   final String moduleName,
+                                   final Template template,
+                                   final IndentWriter iw)
+        throws IOException {
+        iw.write(blockName + " {\n");
+        iw.nextLevel();
+        iw.write(reverseMap.getCellName(moduleName));
+        final Map<String,String> nodeMap = reverseMap.getNodeMap(moduleName);
+        try {
+            writeVerilogActualPorts(template, nodeMap, iw);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Can't generate Verilog block for: " +
+                    moduleName, e);
+        }
+        iw.prevLevel();
+        iw.write("}\n");
+
+    }
 
     private void writeTemplateToSpecTree(final HierName fqcn,
                                          final Template template,
@@ -1520,6 +1651,7 @@ public class CDL2Cast {
                                          final Map templates,
                                          final NetGraph netgraph,
                                          final CDLInlineFactory flatten,
+                                         final boolean writeVerilogRTL,
                                          final boolean isLeaf,
                                          final Writer writer)
         throws IOException {
@@ -1598,6 +1730,13 @@ public class CDL2Cast {
                 iw.write("}\n");
                 iw.write("directives { fixed_size = false; }\n");
             }
+        }
+        if (writeVerilogRTL) {
+            iw.write("verilog {\n");
+            iw.nextLevel();
+            writeVerilogBlock("rtl", fqcn.getAsString('.'), template, iw);
+            iw.prevLevel();
+            iw.write("}\n");
         }
         iw.prevLevel();
         iw.write("}\n\n");
