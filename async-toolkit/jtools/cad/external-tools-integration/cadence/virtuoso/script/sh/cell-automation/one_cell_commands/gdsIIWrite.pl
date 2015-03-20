@@ -625,6 +625,8 @@ if ($layers ne "") {
             print "MASK $mask";
         }
     }
+} else {
+    $layertable = "$pdkroot/share/Fulcrum/stream/strmout.layermap";
 }
 $verbose = 1 if $debug;
 print STDERR "$0 @args" if $verbose;
