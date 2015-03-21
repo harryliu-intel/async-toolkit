@@ -2,121 +2,88 @@
 ;
 ; Copyright 2010 Fulcrum Microsystems.  All rights reserved.
 
-; Export, Route, Import using Nanoroute
+; Export, Route, Import
 (defun NanoRoute
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (bottomMetal nil)        ; bottom metal layer to use, or nil to use wires.il
+        (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
-        (SaveQuit t)             ; automatically save and quit NanoRoute
-        (Background nil)         ; select foreground or background
+        (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
-        (Ticket "np")            ; QSUB ticket: np, nano
-        (Mem 4000)               ; QSUB mem to request
-        (Soc (getShellEnvVar "SOC_SCRIPT")) ; which version of Encounter to use
-        (timingDriven nil)       ; use proteus script to route with timing constraints
-        (Verify t)               ; run VerifyGeom and VerifyConn at the end
-        (SkipCompleteNets t)     ; auto-skip complete nets
-        (strictNondefault t)     ; strict nondefault width/spacing rules
-        (AutoStop t)             ; stop routing if too many errors
-        (routeGND nil)           ; route GND net
-        (routeVdd nil)           ; route Vdd net
+        (Mem 4000)               ; memory to use
         (doVerilog t)            ; create .v
         (doLef t)                ; create .lef
         (doDef t)                ; create .def
         (doNondefaultDef t)      ; create _nondefault.def
-        (doTracksDef nil)        ; create _tracks.def
         (doSkipRouting t)        ; create SetSkipRouting.tcl
         )
   (let ()
-    ; load wires.il and set options
-    (LoadWires ?CV CV)
-    (unless bottomMetal bottomMetal = bundled_bottom_layer)
-    (unless topMetal    topMetal    = bundled_top_layer)
+    ; export
+    CV = (NanoRouteExport ?CV CV
+                          ?botMetal botMetal ?topMetal topMetal
+                          ?doVerilog doVerilog ?doLef doLef ?doDef doDef
+                          ?doNondefaultDef doNondefaultDef
+                          ?doSkipRouting doSkipRouting)
 
-    ; export files for NanoRoute
-    CV = (NanoRouteExport ?CV CV ?timingDriven timingDriven
-                          ?doVerilog doVerilog
-                          ?doLef doLef ?doDef doDef ?doNondefaultDef doNondefaultDef
-                          ?doTracksDef doTracksDef ?doSkipRouting doSkipRouting)
-
-    ; write TCL and config files
-    (ProteusConfig ?CV CV ?bottomMetal bottomMetal ?topMetal topMetal)
-    (NanoRouteTcl ?CV CV ?bottomMetal bottomMetal ?topMetal topMetal
-                  ?SkipCompleteNets SkipCompleteNets
-                  ?SaveQuit (or SaveQuit Background)
-                  ?Verify Verify ?AutoStop AutoStop
-                  ?strictNondefault strictNondefault
-                  ?routeGND routeGND ?routeVdd routeVdd)
-
-    ; run NanoRoute
-    (cond (timingDriven (ProteusRun ?CV CV ?Background Background ?Mem Mem))
-          (t (NanoRouteRun ?CV CV ?Background Background ?Ticket Ticket ?Mem Mem ?Soc Soc))
-          )
-             
-    ; import from NanoRoute
-    (cond (Background
-           (printf "NanoRoute running in background, finish with NanoRouteImport\n")
-           )
-          (t
-           (NanoRouteImport ?CV CV ?viewName importView)
-           )
+    ; route
+    (NanoRouteRun ?CV CV ?Background Background ?Mem Mem)
+    
+    ; import
+    (cond (Background (printf "NanoRoute running in background, finish with NanoRouteImport\n"))
+          (t (NanoRouteImport ?CV CV ?viewName importView))
           )
     CV
     )
   )
 
-; Export files for Proteus 
+; Export files to the router
 (defun NanoRouteExport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (Proteus nil)            ; target Proteus flow
-        (Synchronous nil)        ; target synchronous flow
-        (timingDriven nil)       ; target timing driven flow
-        (Verbose nil)            ; verbose feedback
-        (doVerilog t)            ; create .v
-        (doLef t)                ; create .lef
-        (doDef t)                ; create .def
-        (doNondefaultDef t)      ; create _nondefault.def
-        (doTracksDef nil)        ; create _tracks.def
-        (doSkipRouting t)        ; create SkipRouting.tcl
+        (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
+        (topMetal nil)           ; top metal layer to use, or nil to use wires.il
+        (doVerilog t)            ; create cellName.v
+        (doLef t)                ; create cellName.lef
+        (doDef t)                ; create cellName.def
+        (doNondefaultDef t)      ; create cellName_nondefault.def
+        (doSkipRouting t)        ; create cellName.SkipRouting.tcl
         )
-  (let (FulcrumPDKRoot BinRoot TEMP MaxHeapSize CAST_PATH DFII_DIR
-                       Components RComponents CellBaseName type_sub
-                       PowerGridCellName abstractCV
-                       VerilogFileName Command (statusVerilog t)
-                       LefCellsList pout (statusLef t) 
-                       pinmap dirmap (statusDef t)
-                       SkipRoutingFileName inplacedPins
-                       (statusNonDefault t) (statusTracks t) errorStr Custom)
+  (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR
+        PowerGridCellName abstractCV
+        Command (statusVerilog t)
+        LefCellsList pout (statusLef t) 
+        pinmap dirmap (statusDef t)
+        SkipRoutingFileName inplacedPins
+        (statusNonDefault t) errorStr)
+
+    ; load wires.il and set options
+    (LoadWires ?CV CV)
+    (unless botMetal botMetal = bundled_bottom_layer)
+    (unless topMetal topMetal = bundled_top_layer)
 
     ; global settings
-    FulcrumPDKRoot = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-    BinRoot = (PackageGetBinRoot)
-    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    MaxHeapSize = ( nrGetMaxHeapSize )
-    CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
+    CAST_PATH  = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
-    Custom = !(or Proteus timingDriven Synchronous)
+    TEMP     = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WDIR     = (strcat TEMP "/route/" CV->cellName)
+    MaxHeapSize = (nrGetMaxHeapSize)
+    (csh (strcat "mkdir -p " WDIR))
 
     ; make flatten view automatically
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
-      CV = (MakeFlatten ?CV CV ?Proteus Proteus))
+      CV = (MakeFlatten ?CV CV))
 
-    ; cell and file names
-    Components = (parseString CV->cellName ".")
-    RComponents = (reverse Components)
-    CellBaseName = (cadr RComponents)
-    (when (length RComponents)<3 (error "Cell name violates CAST conventions\n"))
-    type_sub = (sprintf nil "%s_%s" (cadr RComponents) (car RComponents)) 
-    PowerGridCellName = (strcat CV->libName ".wires." type_sub "_POWER_GRID_TIEOFF")
+    ; cell names
+    PowerGridCellName = (strcat CV->cellName "_pg")
+
+    ; write proteus.config
+    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal)
 
     ; export Verilog
-    (when (and Custom doVerilog)
-      VerilogFileName = (strcat CV->cellName ".v")
+    (when doVerilog
       Command = (sprintf nil
-                         (strcat "%s/prs2verilog"
+                         (strcat "prs2verilog"
                                  " --cast-path=%s"
                                  " --cell=%s"
-                                 " --outfile=%s"
+                                 " --outfile=%s/%s.v"
                                  " --max-heap-size=%dM"
                                  " --converter=netlist"
                                  " --skip-power-rail"
@@ -124,12 +91,12 @@
                                  " --translate=cadence"
                                  " --cadence-name"
                                  " --by-name"
-                                 "&> exportVerilogNetlist.log")
-                         BinRoot
+                                 "&> %s/%s.v.log")
                          CAST_PATH
                          CV->cellName
-                         VerilogFileName
-                         MaxHeapSize)
+                         WDIR CV->cellName
+                         MaxHeapSize
+                         WDIR CV->cellName)
       (printf "%s\n" Command)
       statusVerilog = (shell Command)
       )
@@ -137,7 +104,7 @@
     ; export LEF
     (when doLef
       ; write lef cells list
-      LefCellsList = (sprintf nil "%s.lef_cells_list" CV->cellName)
+      LefCellsList = (sprintf nil "%s/%s.lef_cells_list" WDIR CV->cellName)
       pout = (outfile LefCellsList)
       (foreach sub (ListLefSubcells ?CV CV ?includeWiringCellNames
                                     (list PowerGridCellName))
@@ -146,12 +113,12 @@
 
       ; export LEF for subcells
       statusLef = (ldtrLefWriteOA
-                   (sprintf nil "%s.lef" CV->cellName)
+                   (sprintf nil "%s/%s.lef" WDIR CV->cellName)
                    TechLibName
                    nil
                    LefCellsList
                    nil
-                   (sprintf nil "%s.lef.log" CV->cellName)
+                   (sprintf nil "%s/%s.lef.log" WDIR CV->cellName)
                    t
                    "5.7")
       )
@@ -160,7 +127,6 @@
     (when doDef
       statusDef = t
       ExportCV = (dbCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
-      (when Proteus (dbTransformCellView ExportCV 1.0 90.0)) ; rotate for Proteus
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
                (cond (abstractCV inst->master=abstractCV)
@@ -177,18 +143,19 @@
       ; export DEF
       (when statusDef
         statusDef = (ldtrDefWriteOA
-                     (sprintf nil "%s.def" CV->cellName)
+                     (sprintf nil "%s/%s.def" WDIR CV->cellName)
                      ExportCV->libName
                      ExportCV->cellName
                      ExportCV->viewName
-                     (sprintf nil "%s.def.log" CV->cellName)
+                     (sprintf nil "%s/%s.def.log" WDIR CV->cellName)
                      "5.7")
         )
+      (dbPurge ExportCV)
       )
 
-    ; write SetSkipRouting.tcl
+    ; write SetSkipRouting.tcl to avoid routing inplace pins
     (when doSkipRouting
-      SkipRoutingFileName = (strcat CV->cellName ".SetSkipRouting.tcl")
+      SkipRoutingFileName = (strcat WDIR "/" CV->cellName ".SetSkipRouting.tcl")
       pout=(outfile SkipRoutingFileName)
       (fprintf pout "proc ProteusUserSetSkipRouting {} {\n")
       inplacedPins=(FindInplacedPins CV)
@@ -205,37 +172,21 @@
     ; export DEF for nondefault rules
     (when doNondefaultDef
       Command = (sprintf nil
-                         (strcat "%s/cast2def"
+                         (strcat "cast2def"
                                  " --cast-path=%s"
                                  " --cell=%s"
-                                 " --outfile=%s"
+                                 " --outfile=%s/%s_nondefault.def"
                                  " --cadence-name"
                                  " --max-heap-size=%dM"
-                                 " &> exportNondefaultRuleDEF.log")
-                         BinRoot
+                                 " &> %s/%s_nondefault.def.log")
                          CAST_PATH
                          CV->cellName
-                         (strcat CV->cellName "_nondefault.def")
-                         MaxHeapSize)
+                         WDIR CV->cellName
+                         MaxHeapSize
+                         WDIR CV->cellName
+                         )
       (printf "%s\n" Command)
       statusNonDefault = (shell Command)
-      )
-
-    ; export DEF for wiring tracks
-    (when doTracksDef
-      Command = (sprintf nil
-                         (strcat "%s/genTracks"
-                                 " --refdef=%s"
-                                 " --outfile=%s"
-                                 " --track-pitch=%.3f"
-                                 " %s")
-                         BinRoot
-                         (strcat CV->cellName ".def")
-                         (strcat CV->cellName "_tracks.def")
-                         DefaultWiringPitch
-                         (if Proteus "--rotate" ""))
-      (printf "%s\n" Command)
-      statusTracks = (shell Command)
       )
 
     ; save
@@ -247,7 +198,6 @@
     (unless statusLef errorStr = (strcat errorStr " LEF"))
     (unless statusDef errorStr = (strcat errorStr " DEF"))
     (unless statusNonDefault errorStr = (strcat errorStr "NonDefaultDEF"))
-    (unless statusTracks errorStr = (strcat errorStr "TracksDEF"))
     (when errorStr!="" (error errorStr))
 
     ; return CV
@@ -261,14 +211,13 @@
   (@key (CV (geGetEditCellView))     ; specify CellView
         (includeWiringCellNames nil) ; include specified wiring cells
         )
-  (let (str subcells)
+  (let (subcells)
     subcells = nil
     (foreach inst CV->instances
-             str = (strcat inst->libName ".wires")
              (when (and !(isStandardCell inst->master)
                         inst->libName!=TechLibName
                         (member inst->master->cellView subcells)==nil
-                        (or (strncmp inst->cellName str (strlen str))!=0
+                        (or !(IsWiringCell inst->master)
                             (member inst->cellName includeWiringCellNames)
                             )
                         )
@@ -279,139 +228,53 @@
     )
   )
 
-; Shortcut for Proteus asynchronous defaults
-(defun ProteusExport (@key (CV (geGetEditCellView)))
-  (NanoRouteExport ?CV CV ?Proteus t))
-
-; Shortcut for Proteus synchronous defaults
-(defun SynchronousExport (@key (CV (geGetEditCellView)))
-  (NanoRouteExport ?CV CV ?Synchronous t))
-
-; Write TCL file to run NanoRoute
-(defun NanoRouteTcl
-  (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (bottomMetal 3)          ; bottom metal layer
-        (topMetal    7)          ; top metal layer
-        (Verify t)               ; run VerifyGeom and VerifyConn at the end
-        (SkipCompleteNets t)     ; auto-skip complete nets
-        (SaveQuit t)             ; automatically save and quit NanoRoute
-        (strictNondefault t)     ; strict nondefault width/spacing rules
-        (AutoStop t)             ; stop routing if too many errors
-        (routeGND nil)           ; route GND net
-        (routeVdd nil)           ; route Vdd net
-        )
-  (let (CmdFile file)
-    ; write TCL
-    CmdFile  = (strcat CV->cellName ".tcl")
-    file = (outfile CmdFile)
-    (unless file (error "Unable to write %s\n" CmdFile))
-    (fprintf file "set PDK_ROOT %s\n"
-             (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT"))
-    (fprintf file "set TOP \"%s\"\n" CV->cellName)
-    (fprintf file "set TOP_LAYER %d\n" topMetal)
-    (fprintf file "set BOTTOM_LAYER %d\n" bottomMetal)
-    (fprintf file "source $PDK_ROOT/share/Fulcrum/nano/nano.tcl\n")
-    (fprintf file "setNanoRouteMode -quiet -routeStrictlyHonorNonDefaultRule %s\n"
-             (if strictNondefault "true" "false"))
-    (fprintf file "setNanoRouteMode -quiet -drouteAutoStop %s\n"
-             (if AutoStop "true" "false"))
-    (fprintf file "FulcrumLoad\n")
-    (when SkipCompleteNets (fprintf file "FulcrumSkipCompleteNets\n"))
-    (unless routeGND (fprintf file "setAttribute -net GND -skip_routing true\n"))
-    (unless routeVdd (fprintf file "setAttribute -net Vdd -skip_routing true\n"))
-    (fprintf file "FulcrumRoute\n")
-    (when Verify (fprintf file "FulcrumVerify\n"))
-    (fprintf file "FulcrumSave\n")
-    (when SaveQuit (fprintf file "exit\n"))
-    (close file)
-    )
-  t
-  )
-
-; launch NanoRoute
-(defun NanoRouteRun
-  (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (Background nil)         ; run in foreground or background
-        (Ticket "np")            ; QSUB ticket: np, nano
-        (Mem 4000)               ; QSUB mem to request
-        (Soc (getShellEnvVar "SOC_SCRIPT")) ; which version of Encounter to use
-        )
-  (let (CmdFile LicenseStr QsubOptions Command defFile status)
-    ; files and options
-    CmdFile = (strcat CV->cellName ".tcl")
-    LicenseStr = ""
-    QsubOptions = (sprintf nil "qrsh -cwd -now n -l %s=1,mem=%dM,a=lx24-amd64 -N NanoRoute"
-                           Ticket Mem)
-    defFile = (strcat CV->cellName "_routed.def")
-
-    ; run
-    (shell (strcat "rm -rf " defFile))
-    Command = (sprintf nil "%s %s encounter -64 %s -init %s %s"
-                       (if Background QsubOptions "") Soc
-                       LicenseStr CmdFile (if Background "-nowin &" "-win"))
-    (printf "%s\n" Command)
-    status = (shell Command)
-    (unless status (error "Nanoroute failed\n"))
-
-    ; wait for slow filesystem until def is created
-    (or Background (WaitForFile defFile 60))
-    )
-  )
-
 ; write proteus.config
 (defun ProteusConfig
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
-        (bottomMetal 3)          ; bottom metal layer
-        (topMetal 7)             ; top metal layer
+        (botMetal 1)             ; bottom metal layer
+        (topMetal 8)             ; top metal layer
         )
-  (let (CAST_PATH DFII_DIR SPAR_DIR TEMP file)
+  (let (CAST_PATH DFII_DIR TEMP WDIR file)
     ; files and options
     CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
-    DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
-    SPAR_DIR = "/mnt/fulcrum/local/checkouts/alta/alta/layout/tsmc65/spar"
-    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    DFII_DIR  = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
+    TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WDIR      = (strcat TEMP "/route/" CV->cellName)
 
     ; write config file
-    file = (outfile (strcat CV->cellName ".config"))
+    file = (outfile (strcat WDIR "/proteus.config"))
     (fprintf file "--cast-path=%s\n" CAST_PATH)
     (fprintf file "--dfII-dir=%s\n" DFII_DIR)
-    (fprintf file "--spar-dir=%s\n" SPAR_DIR)
-    (fprintf file "--cast-dir=%s/cast\n" TEMP)
-    (fprintf file "--spec-dir=%s/spec\n" TEMP)
-    (fprintf file "--lefdef-dir=.\n")
-    (fprintf file "--lve-path=lve:/mnt/fulcrum/alta/lve/lve\n")
-    (fprintf file "--output-dir=%s/proteus\n" TEMP)
+    (fprintf file "--cast-dir=%s/cast\n" WDIR)
+    (fprintf file "--spec-dir=%s/spec\n" WDIR)
+    (fprintf file "--lefdef-dir=%s\n" WDIR)
     (fprintf file "--scratch-dir=\n")
-    (fprintf file "--base=%s\n" CV->cellName)
+    (fprintf file "--verilog=%s/%s.v\n" WDIR CV->cellName)
+    (fprintf file "--output-dir=%s\n" WDIR)
     (fprintf file "--cell=%s\n" CV->cellName)
-    (fprintf file "--scan-mode=off\n")
-    (fprintf file "--macro-integration=1\n")
-    (fprintf file "--bottom-layer=%d\n" bottomMetal)
+    (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
-    (fprintf file "--task=cast2rtl,rc,clockfree,encounter,summarize\n")
+    (fprintf file "--task=rdt_route\n")
     (close file)
     )
   )
 
-; timing driven routing with Proteus script
-(defun ProteusRun
+; Run the router
+(defun NanoRouteRun
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (Background nil)         ; run in background
         (Mem 4000)               ; qsub memory
-        (bottomMetal 3)          ; bottom metal layer
-        (topMetal 7)             ; top metal layer
         )
-  (let (TEMP defFile Command status)
+  (let (TEMP WDIR defFile Command status)
     ; files and options
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    defFile = (strcat TEMP "/proteus/" (cadr (reverse (parseString CV->cellName ".")))
-                      ".qdi.def")
+    WDIR = (strcat TEMP "/route/" CV->cellName)
+    defFile = (strcat WDIR "/" CV->cellName "_routed.def")
 
     ; run
     (shell (strcat "rm -rf " defFile))
-    (shell (strcat "ln -sf " defFile " " CV->cellName "_routed.def"))
-    Command = (sprintf nil "proteus --include=%s.config --mem=%dM%s"
-                       CV->cellName Mem (if Background " &" ""))
+    Command = (sprintf nil "proteus --include=%s/proteus.config --mem=%dM%s"
+                       WDIR Mem (if Background " &" ""))
     (printf "%s\n" Command)
     status = (shell Command)
     (unless status (error "Proteus failed\n"))
@@ -421,7 +284,7 @@
     )
   )
 
-; wait for file to appear on filesystem
+; Wait for file to appear on filesystem
 (defun WaitForFile (FileName MaxSeconds)
   (let (n)
     n=0
@@ -455,16 +318,23 @@
     )
   )
 
-; import from NanoRoute
+; Import from router
 (defun NanoRouteImport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (libName  CV->libName)
         (cellName CV->cellName)
         (viewName "layout")
-        (defFile (strcat (geGetEditCellView)->cellName "_routed.def")) ; def input file
-        (proteus nil) ; import from Proteus?
+        (defFile nil)
         )
-  (let (SubcellLibNames Command status ImportCV layoutCV floorplanCV win instmap nodemap)
+  (let (TEMP WDIR SubcellLibNames libPath logFile Command status ImportCV layoutCV floorplanCV
+             win instmap SubcellLibString)
+
+    ; directories and files
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WDIR = (strcat TEMP "/route/" CV->cellName)
+    (unless defFile
+      defFile = (strcat WDIR "/" (geGetEditCellView)->cellName "_routed.def")
+      )
 
     ; create library
     (when libName!=CV->libName
@@ -472,22 +342,25 @@
       )
 
     ; figure out libNames for all exported subcells
-    SubcellLibNames = (GetSubcellLibNames defFile)
+    SubcellLibNames  = (GetSubcellLibNames defFile)
+    SubcellLibString = (buildString SubcellLibNames)
 
     ; import def
+    libPath = (getShellEnvVar "DFII_DIR") 
+    logFile = (strcat defFile ".log")
     status = (ldtrDefReadOA
               defFile ; t_fileName
               libName ; t_libName
-              (getShellEnvVar "DFII_DIR") ; [t_libPath libPath]
-              cellName    ; [t_cellName cellName]
-              viewName    ; [t_viewName viewName]
+              libPath ; [t_libPath libPath]
+              cellName ; [t_cellName cellName]
+              viewName ; [t_viewName viewName]
               nil ; [t_techName techName] (see BUG 22162)
-              "abstract_proteus abstract floorplan"  ; [t_viewNameList viewNameList]
-              (buildString SubcellLibNames) ; [t_masterLibs masterLibs]
+              "layout abstract floorplan"  ; [t_viewNameList viewNameList]
+              SubcellLibString ; [t_masterLibs masterLibs]
               nil ; [ shared nil]
               nil ; [ noRouting nil]
-              (strcat defFile ".log") ; [ t_logName logName]
-              nil ; [ useCustomVias nil]
+              logFile ; [ t_logName logName]
+              t   ; [ useCustomVias nil]
               t   ; [ overwrite nil]
               nil ; [ createModHier nil]
               ; [ t_commentChar commentChar]
@@ -496,77 +369,26 @@
     (unless status (error "Unsuccessful defin\n"))
     ImportCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "a")
 
-    ; unrotate Proteus cells and wires, rename instances and nodes
-    (when proteus
-      instmap = (PinInstXrefTable)
-      nodemap = (PinNodeXrefTable)
-      (foreach inst (setof obj ImportCV->instances obj->viewName=="abstract_proteus")
-               (ImportProteusInstance CV instmap inst)
-               )
-      (dbTransformCellView ImportCV 1.0 -90.0)
-      )
-
     ; label pins
     (LabelPins ?CV ImportCV) 
 
-    ; change abstract instances to layout or floorplan view
-    (foreach inst (setof obj ImportCV->instances obj->viewName=="abstract")
-             layoutCV    = (dbOpenCellViewByType inst->libName inst->cellName "layout")
-             floorplanCV = (dbOpenCellViewByType inst->libName inst->cellName "floorplan")
-             (cond (layoutCV    inst->master=layoutCV)
-                   (floorplanCV inst->master=floorplanCV)
-                   )
-             )
-
     ; change window to ImportCV
     win = (hiGetCurrentWindow)
-    (cond (win
-           (geOpen ?lib libName ?cell cellName ?view viewName
-                   ?viewType "maskLayout" ?mode "a" ?window win))
-          (t
-           (geOpen ?lib libName ?cell cellName ?view viewName
-                   ?viewType "maskLayout" ?mode "a"))
-          )
+    (when win
+      (geOpen ?lib libName ?cell cellName ?view viewName
+              ?viewType "maskLayout" ?mode "a" ?window win)
+      )
 
     ; execute custom function
-    (FinishRouterImport)
+    (FinishRouterImport ?ImportCV)
 
     ; save layout
     (dbSave ImportCV)
 
-    ; fix VTL VTH spacing problems
-    (when proteus (FixVtlVth ?CV ImportCV))
-
-    ; create floorplan view for Proteus
-    (when proteus (MakeProteusFloorplanView ?CV ImportCV))
-
     ;return layout
     ImportCV
     )
-  )
-
-; defaults for importing Proteus cells
-(defun NanoProteusImport (defFile libName cellName @key (CV (geGetEditCellView)))
-  (NanoRouteImport ?libName libName ?cellName cellName ?defFile defFile ?proteus t ?CV CV)
-  )
-
-; HACK: special processing of Proteus instances
-(defun ImportProteusInstance (CV map inst)
-  (let (newname)
-    ; unrotate (swap X and Y)
-    (cond (inst->orient=="R0"   inst->orient="MXR90")
-          (inst->orient=="R180" inst->orient="MYR90")
-          (inst->orient=="MX"   inst->orient="R270")
-          (inst->orient=="MY"   inst->orient="R90")
-          )
-    ; change to layout view
-    inst->master = (dbOpenCellViewByType inst->libName inst->cellName "layout")
-    ; translate instance name
-    newname = (arrayref map inst->name)
-    (when newname && inst->name!=newname inst->name=newname)
-    inst
-    )
-  )
+)
 
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
@@ -574,54 +396,4 @@
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
   (RunAfterImportDef ?CV CV)
-  )
-
-; make a floorplan view
-(defun MakeProteusFloorplanView (@key (CV (geGetEditCellView)))
-  (let (fCV)
-    fCV = (dbOpenCellViewByType CV->libName CV->cellName "floorplan" "maskLayout" "w")
-    (unless fCV (error "Can't write floorplan view"))
-    (foreach inst (setof s CV->instances s->libName!=TechLibName && s->name!="tiehilo")
-             inst = (dbCopyFig inst fCV (list 0:0 "R0"))
-             inst->master = (dbOpenCellViewByType inst->libName inst->cellName "floorplan")
-             )
-    (when CV->prBoundary
-      (dbCopyFig CV->prBoundary fCV (list 0:0 "R0"))
-      )
-    fCV
-    )
-  )
-
-; grunt work to run Assura to draw some generated shapes in the current cell
-(defun SimpleAssuraLayerProcessor (AssuraLayerMappings rulName @key (CV (geGetEditCellView)))
-  (let (TEMP AssuraRuleFile AssuraRunLog assuraCV)
-    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s.rul"
-                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") rulName)
-    AssuraRunLog = (sprintf nil "%s/%s.%s.log" TEMP CV->cellName rulName)
-    (AssuraRunAssuraLayerProcessor
-     CV CV->libName CV->cellName rulName
-     AssuraRuleFile TEMP AssuraLayerMappings nil
-     ?AssuraRunLog AssuraRunLog
-     ?LeaveMess nil
-     )
-    assuraCV = (dbOpenCellViewByType CV->libName CV->cellName rulName nil "r")
-    (unless assuraCV (error "Unable to open %s %s %s\n" CV->libName CV->cellName rulName))
-    (foreach fig assuraCV->shapes (dbCopyFig fig CV))
-    (ddDeleteObj (ddGetObj CV->libName CV->cellName rulName nil nil "r"))
-    )
-  CV
-  )
-
-; fix VTL and VTH spacing
-(defun FixVtlVth (@key (CV (geGetEditCellView)))
-  (SimpleAssuraLayerProcessor
-   (list
-    (list "new_vtln" (list "VTL_N" "drawing"))
-    (list "new_vtlp" (list "VTL_P" "drawing"))
-    (list "new_vthn" (list "VTH_N" "drawing"))
-    (list "new_vthp" (list "VTH_P" "drawing"))
-    )
-   "fixVtlVth"
-   )
   )

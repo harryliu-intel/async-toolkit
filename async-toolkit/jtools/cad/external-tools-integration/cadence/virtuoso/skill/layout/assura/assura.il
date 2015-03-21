@@ -3,6 +3,27 @@
 ; $DateTime$
 ; $Author$
 
+; grunt work to run Assura to draw some generated shapes in the current cell
+(defun SimpleAssuraLayerProcessor (AssuraLayerMappings rulName @key (CV (geGetEditCellView)))
+  (let (TEMP AssuraRuleFile AssuraRunLog assuraCV)
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s.rul"
+                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") rulName)
+    AssuraRunLog = (sprintf nil "%s/%s.%s.log" TEMP CV->cellName rulName)
+    (AssuraRunAssuraLayerProcessor
+     CV CV->libName CV->cellName rulName
+     AssuraRuleFile TEMP AssuraLayerMappings nil
+     ?AssuraRunLog AssuraRunLog
+     ?LeaveMess nil
+     )
+    assuraCV = (dbOpenCellViewByType CV->libName CV->cellName rulName nil "r")
+    (unless assuraCV (error "Unable to open %s %s %s\n" CV->libName CV->cellName rulName))
+    (foreach fig assuraCV->shapes (dbCopyFig fig CV))
+    (ddDeleteObj (ddGetObj CV->libName CV->cellName rulName nil nil "r"))
+    )
+  CV
+  )
+
 (defun AssuraGetAreas ( CellView 
                         LPP
                         LeafCellPredicate )

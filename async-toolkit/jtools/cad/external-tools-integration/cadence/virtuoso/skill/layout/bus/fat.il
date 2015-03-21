@@ -143,9 +143,6 @@
 
     ; save importView
     (dbSave CV)
-
-    ; create layout view
-    (MakeLayout ?CV CV)
     CV
     )
   )

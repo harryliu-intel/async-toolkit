@@ -172,21 +172,24 @@
   t
   )
 
+; Has CastCell property, set by UpdateFloorplan or import flow
 (defun IsCastCell (CV)
   (dbGetPropByName CV "CastCell")->value=="TRUE"
   )
 
-(defun IsWiringCell (cell)
-  (let (iswiring)
-   iswiring = nil
-   (foreach part (parseString cell->cellName "." )
-     (when part=="wires" iswiring=t )
-   )
-   (when cell->name=="wires" iswiring=t)
-   (unless (IsCastCell cell) iswiring=t)
-   iswiring
-))
+; Return the wiring suffix of a cell name, or nil if none
+(defun GetWiringSuffix (CV)
+  (let (subtype components)
+    subtype = (car (last (parseString CV->cellName ".")))
+    components = (parseString subtype "_")
+    (when (length components)>1 (car (last components)))
+    )
+  )
 
+; Assume that a subtype with a "_" is some kind of wiring cell
+(defun IsWiringCell (CV)
+  !(IsCastCell CV) && (GetWiringSuffix CV)
+  )
 
 (defun IsGlobalsCell (cell)
   (let (isglobals)
@@ -197,7 +200,6 @@
    )
    isglobals
 ))
-
 
 (defun IsCustomWiringCell (cell)
   (let (iscustom)
