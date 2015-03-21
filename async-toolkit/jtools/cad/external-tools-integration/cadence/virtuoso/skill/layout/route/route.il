@@ -3,7 +3,7 @@
 ; Copyright 2010 Fulcrum Microsystems.  All rights reserved.
 
 ; Export, Route, Import
-(defun NanoRoute
+(defun Route
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
@@ -18,25 +18,25 @@
         )
   (let ()
     ; export
-    CV = (NanoRouteExport ?CV CV
+    CV = (RouteExport ?CV CV
                           ?botMetal botMetal ?topMetal topMetal
                           ?doVerilog doVerilog ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting)
 
     ; route
-    (NanoRouteRun ?CV CV ?Background Background ?Mem Mem)
+    (RouteRun ?CV CV ?Background Background ?Mem Mem)
     
     ; import
-    (cond (Background (printf "NanoRoute running in background, finish with NanoRouteImport\n"))
-          (t (NanoRouteImport ?CV CV ?viewName importView))
+    (cond (Background (printf "Route running in background, finish with RouteImport\n"))
+          (t (RouteImport ?CV CV ?viewName importView))
           )
     CV
     )
   )
 
 ; Export files to the router
-(defun NanoRouteExport
+(defun RouteExport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
@@ -260,7 +260,7 @@
   )
 
 ; Run the router
-(defun NanoRouteRun
+(defun RouteRun
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (Background nil)         ; run in background
         (Mem 4000)               ; qsub memory
@@ -319,7 +319,7 @@
   )
 
 ; Import from router
-(defun NanoRouteImport
+(defun RouteImport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (libName  nil)
         (cellName nil)
