@@ -321,25 +321,25 @@
 ; Import from router
 (defun NanoRouteImport
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
-        (libName  CV->libName)
-        (cellName CV->cellName)
+        (libName  nil)
+        (cellName nil)
         (viewName "layout")
         (defFile nil)
         )
   (let (TEMP WDIR SubcellLibNames libPath logFile Command status ImportCV layoutCV floorplanCV
              win instmap SubcellLibString)
 
+    ; choose libName and cellName
+    (unless libName  libName  = CV->libName)
+    (unless cellName cellName = CV->cellName)
+
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" CV->cellName)
-    (unless defFile
-      defFile = (strcat WDIR "/" (geGetEditCellView)->cellName "_routed.def")
-      )
+    (unless defFile defFile = (strcat WDIR "/" CV->cellName "_routed.def"))
 
     ; create library
-    (when libName!=CV->libName
-      (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
-      )
+    (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
 
     ; figure out libNames for all exported subcells
     SubcellLibNames  = (GetSubcellLibNames defFile)
@@ -370,7 +370,8 @@
     ImportCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "a")
 
     ; label pins
-    (LabelPins ?CV ImportCV) 
+    (LabelPins ?CV ImportCV)
+    (dbSave ImportCV)
 
     ; change window to ImportCV
     win = (hiGetCurrentWindow)
@@ -380,7 +381,7 @@
       )
 
     ; execute custom function
-    (FinishRouterImport ?ImportCV)
+    (FinishRouterImport ?CV ImportCV)
 
     ; save layout
     (dbSave ImportCV)
