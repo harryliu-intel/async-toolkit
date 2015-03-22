@@ -294,29 +294,25 @@
  (let (instcv xalign yalign instx insty aligned)
    aligned = t
    (unless inst->libName==TechLibName
-     instcv = (nrOpenCellViewReadable inst->libName inst->cellName inst->viewName)
-      xalign = (GetXAlignmentProp instcv)
-      (when !xalign 
-        xalign = MfgGrid
-      )
-      yalign = (GetYAlignmentProp instcv)
-      (when !yalign 
-        yalign = GridPitch
-      )
-      instx = (car inst->xy) || (car inst->mosaic->xy)
-      insty = (cadr inst->xy) || (cadr inst->mosaic->xy)
-      (when !(IsAligned instx xalign)
-        aligned = nil
-        (printf "Instance \"%s\" of type %s is misaligned in X\n" inst->name inst->cellName )
-      )
-      (when !(IsAligned insty yalign)
-        aligned = nil
-        (printf "Instance \"%s\" of type %s is misaligned in Y\n" inst->name inst->cellName )
-      )
-   )
+     instcv = inst->master
+     xalign = (GetXAlignmentProp instcv)
+     (unless xalign xalign = GridPolyPitch)
+     yalign = (GetYAlignmentProp instcv)
+     (unless yalign yalign = GridPitch)
+     instx = (car inst->xy) || (car inst->mosaic->xy)
+     insty = (cadr inst->xy) || (cadr inst->mosaic->xy)
+     (unless (IsAligned instx xalign)
+       aligned = nil
+       (printf "Instance \"%s\" of type %s is misaligned in X\n" inst->name inst->cellName )
+       )
+     (unless (IsAligned insty yalign)
+       aligned = nil
+       (printf "Instance \"%s\" of type %s is misaligned in Y\n" inst->name inst->cellName )
+       )
+     )
    aligned
+   )
  )
-)
 
 (defun AlignInstX (cv inst moveX)
  (let (instcv xalign  instx instx_new )

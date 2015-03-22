@@ -52,7 +52,7 @@
     ; set properties
     xalign = (GetXAlignmentProp CV)
     yalign = (GetYAlignmentProp CV)
-    (SetXAlignmentProp flattenCV (max (if xalign xalign 0) TrackPitch))
+    (SetXAlignmentProp flattenCV (max (if xalign xalign 0) GridPolyPitch))
     (SetYAlignmentProp flattenCV (max (if yalign yalign 0) GridPitch))
     (dbSave flattenCV)
 
