@@ -138,6 +138,11 @@
                       statusDef=nil)
                      )
                )
+      (for m 0 TopMetal ; hack to add obstruction on layers router shouldn't be using
+           (when (or m<botMetal m>topMetal)
+             (dbCreateLayerBlockage ExportCV Metal[m] "routing"  (GetPrboundPoints ExportCV))
+             )
+           )
       (dbSave ExportCV)
 
       ; export DEF
