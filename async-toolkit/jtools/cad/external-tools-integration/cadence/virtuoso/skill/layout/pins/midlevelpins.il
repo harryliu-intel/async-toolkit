@@ -10,8 +10,8 @@
     DrawMidLevelPins()
 --> Draws pins in a mid level cell
 --> Exits with an error when run on a Leaf Cell
---> Returns "CWD/cellname.pins.warn" with the pins drawn inplace from a leaf cell
---> Returns "CWD/cellname.pins.err" if a pin is missing in a subcell instance
+--> Returns "TEMP/cellname.pins.warn" with the pins drawn inplace from a leaf cell
+--> Returns "TEMP/cellname.pins.err" if a pin is missing in a subcell instance
 
     MidPinsInheritPin()
 --> Promotes a pin from the subcell to top level
@@ -26,6 +26,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) )
   let( ( 
+        TEMP
         CellTerms
         Term
         InstTerm
@@ -41,9 +42,9 @@ defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) )
 ;    when( IsLeafCell(CV~>cellName)
 ;          error("This is a leaf cell. DrawLeafCellPins() should be used instead !")
 ;        )
-
-    WarningFile = strcat(getWorkingDir() "/" CV~>cellName ".pins.warn")
-    ErrorFile   = strcat(getWorkingDir() "/" CV~>cellName ".pins.err")
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WarningFile = strcat(TEMP "/" CV~>cellName ".pins.warn")
+    ErrorFile   = strcat(TEMP "/" CV~>cellName ".pins.err")
 
     warnport = outfile(WarningFile "w")
     Errport  = outfile(ErrorFile "w")

@@ -56,19 +56,21 @@
     (verbose nil)  ; verbose reporting
     (dofix t)      ; rename nets, or nil for report only
     )
-    let( (namefile cmd skillfile NodeCanonicalMap )
+    let( (TEMP namefile name1file cmd skillfile NodeCanonicalMap )
+        TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
         NodeCanonicalMap=nil
         if(names && length(names) then
-            skillfile=sprintf( nil "%s/%s.ncanon.il" ConfigFileGetValue( TheCDSConfigTable "TEMP") CV~>cellName)
+            skillfile=sprintf( nil "%s/%s.ncanon.il" TEMP CV~>cellName)
             ; create name file for cast_query
-            namefile=outfile(sprintf(nil "%s.names" CV~>cellName ))
+            namefile=outfile(sprintf(nil "%s/%s.names" TEMP CV~>cellName ))
             foreach(name names fprintf(namefile "%s\n" name))
             close( namefile )
             ; uniqify the list, just in case
             shell(sprintf(nil "sort -u %s.names -o %s.names" CV~>cellName CV~>cellName))
             ; convert names to cast names for cast_query, output of cast_query is still cadence names
-            shell(sprintf(nil "cat %s.names | rename --type=node --from=cadence --to=cast > %s.names1" CV~>cellName CV~>cellName))
-            if(CanonicalQuery( sprintf(nil "%s.names1" CV~>cellName) skillfile CV~>cellName ?verbose verbose) then
+            shell(sprintf(nil "cat %s | rename --type=node --from=cadence --to=cast > %s"
+                              namefile name1file))
+            if(CanonicalQuery( name1file skillfile CV~>cellName ?verbose verbose) then
                 load( skillfile )
                 NodeCanonicalMap=NodeCanonicalTable()
             )
@@ -86,12 +88,13 @@
     (verbose nil)  ; verbose reporting
     (dofix t)      ; rename nets, or nil for report only
     )
-    let( (namefile namefilename cmd rv skillfile)
+    let( (TEMP namefile namefilename cmd rv skillfile)
+        TEMP = ConfigFileGetValue( TheCDSConfigTable "TEMP") 
         rv=t
-        skillfile=sprintf( nil "%s/%s.ncanon.il" ConfigFileGetValue( TheCDSConfigTable "TEMP") CV~>cellName)
+        skillfile=sprintf( nil "%s/%s.ncanon.il" TEMP CV~>cellName)
         if(query || ! isFile(skillfile) then
             ; create a list of names... lots of duplicates
-            namefilename=sprintf(nil "%s.names" CV~>cellName )
+            namefilename=sprintf(nil "%s/%s.names" TEMP CV~>cellName )
             namefile=outfile(namefilename)
             foreach( path setof(shape CV~>shapes shape~>net && shape~>net~>name)
                 fprintf(namefile "%s\n" path~>net~>name))
@@ -126,14 +129,15 @@
       (dofix t)
       (verbose nil)
       )
-    let((nnil tnnil ccnt pcnt ncnt tccnt tpcnt tncnt NodeCanonicalMap errfile errname rv termname)
+    let((TEMP nnil tnnil ccnt pcnt ncnt tccnt tpcnt tncnt NodeCanonicalMap errfile errname rv termname)
         load( tfile )
+        TEMP = ConfigFileGetValue( TheCDSConfigTable "TEMP") 
         rv=t
         NodeCanonicalMap=NodeCanonicalTable()
         ccnt=0
         pcnt=0
         ncnt=0
-        errname=sprintf(nil "%s.canon.err" CV~>cellName )
+        errname=sprintf(nil "%s/%s.canon.err" TEMP CV~>cellName )
         errfile=outfile(errname)
         nnil=length(setof(shape CV~>shapes shape~>objType=="path" && shape~>net==nil &&
                                 shape->purpose!="bus" && shape->purpose!="boundary"))
