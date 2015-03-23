@@ -250,7 +250,7 @@ static int parse (char *line)
       // strip "'"s
       if (*line == '\'')
       {
-	 strcpy (line, line+1);
+	 memmove (line, line+1, strlen(line));
 	 line[strlen (line) - 1] = 0;
       }
       ilen = strlen (line);
@@ -298,7 +298,7 @@ static void trim (char *s)
 
    t = s;
    while (isspace (*t)) t++;
-   strcpy (s, t);
+   memmove (s, t, strlen(t) + 1);
    for (t = s + strlen (s) - 1; t >= s && isspace (*t); t--);
    *++t = 0;
 }
