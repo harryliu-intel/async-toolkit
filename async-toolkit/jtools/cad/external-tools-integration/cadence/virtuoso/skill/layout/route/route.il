@@ -138,11 +138,6 @@
                       statusDef=nil)
                      )
                )
-      (for m 0 TopMetal ; hack to add obstruction on layers router shouldn't be using
-           (when (or m<botMetal m>topMetal)
-             (dbCreateLayerBlockage ExportCV Metal[m] "routing"  (GetPrboundPoints ExportCV))
-             )
-           )
       (dbSave ExportCV)
 
       ; export DEF
@@ -236,7 +231,7 @@
 ; write proteus.config
 (defun ProteusConfig
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
-        (botMetal 1)             ; bottom metal layer
+        (botMetal 0)             ; bottom metal layer
         (topMetal 8)             ; top metal layer
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
