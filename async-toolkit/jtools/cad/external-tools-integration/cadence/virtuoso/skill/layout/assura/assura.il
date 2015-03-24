@@ -7,7 +7,7 @@
 (defun SimpleAssuraLayerProcessor (AssuraLayerMappings rulName @key (CV (geGetEditCellView)))
   (let (TEMP AssuraRuleFile AssuraRunLog assuraCV)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s.rul"
+    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/assura/%s.rul"
                               (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") rulName)
     AssuraRunLog = (sprintf nil "%s/%s.%s.log" TEMP CV->cellName rulName)
     (AssuraRunAssuraLayerProcessor
