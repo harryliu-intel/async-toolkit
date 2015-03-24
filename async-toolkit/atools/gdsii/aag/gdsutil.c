@@ -3459,11 +3459,11 @@ void gds_exclude_regex (char *name)
 
    // some people seem to inadvertently add quotes incorrectly
    if (*name == '"' and name[strlen(name)-1] == '"') {
-      strcpy (name, name + 1);
+      memmove (name, name + 1, strlen(name));
       name[strlen(name)-1] = 0;
    }
    if (*name == '\'' and name[strlen(name)-1] == '\'') {
-      strcpy (name, name + 1);
+      memmove (name, name + 1, strlen(name));
       name[strlen(name)-1] = 0;
    }
    if (regcomp(&regex, name, 0)) {
@@ -3509,11 +3509,11 @@ void gds_exclude (char *name)
 
    // some people seem to inadvertently add quotes incorrectly
    if (*name == '"' and name[strlen(name)-1] == '"') {
-      strcpy (name, name + 1);
+      memmove (name, name + 1, strlen(name));
       name[strlen(name)-1] = 0;
    }
    if (*name == '\'' and name[strlen(name)-1] == '\'') {
-      strcpy (name, name + 1);
+      memmove (name, name + 1, strlen(name));
       name[strlen(name)-1] = 0;
    }
    if (gds_excluded (name)) // already added to list

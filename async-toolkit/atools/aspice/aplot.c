@@ -631,7 +631,7 @@ void write_panel(PANEL *panel)
       strcat(fifoname[i], panel->named->p.named[i].curve->name);
       strcat(fifoname[i], ".pwl");
       while ((s=strchr(fifoname[i], '|')))
-        strcpy (s, s+1);
+        memmove (s, s+1, strlen(s));
     }
 
   /*** plot all curve data ***/
