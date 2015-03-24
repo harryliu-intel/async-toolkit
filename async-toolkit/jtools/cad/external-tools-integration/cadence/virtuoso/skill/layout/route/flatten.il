@@ -4,13 +4,11 @@
 (defun MakeFlatten
   (@key (CV (geGetEditCellView))   ; specify CellView or nil to use edit view
         (RegenerateFromCast nil)   ; force CAST query
-        (Proteus nil)              ; Proteus compatible POWER_GRID_TIEOFF
         (Verbose nil)              ; verbose
         (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
         (doMakePowerGrid nil)      ; make power grid
         (doPowerGridAbstract nil)  ; generate abstract view of power grid
-        (decap nil)                ; add DECAP cells
         )
   (let (MaxHeapSize FlattenCellsList Components RComponents CellBaseName
         type_sub PowerGridCellName OBSCellName flattenCV xalign yalign
@@ -58,7 +56,7 @@
 
     ; Create power grid
     (when doMakePowerGrid
-      pgCV = (MakePowerGrid ?CV flattenCV ?Proteus Proteus ?decap decap)
+      pgCV = (MakePowerGrid ?CV flattenCV)
       (unless pgCV (error "Unable to create power grid\n"))
       )
 
@@ -154,52 +152,37 @@
 ; MakePowerGrid
 (defun MakePowerGrid
   (@key (CV (geGetEditCellView)) ; flatten CV
-        (Proteus nil) ; include M2 stripes
-        (sync_cable nil)
-        (polyfill t)
-        (decap nil)
+        (topMetal 8)
         )
-  (let (TEMP Components RComponents type_sub powerCellName
+  (let (TEMP powerCellName align
         inst prb PowerGridSize PGS prbObjPoints prb1 copyprb vertprb vertprbrec
         x1box x2box y1box y2box x1 y1 x2 x2 xy
-        AssuraLayerMappings AssuraRuleFile AssuraRunLog ErrorStr
-        powerCV ReplaceCellNameTable blks
-        count gridName gridCV rows cols transform points
-        tiehilo GND Vdd instGND instVdd
-        PolyGridSize PolyColSize XdirGridSize pr prblks fillLib fillName)
+        AssuraLayerMappings
+        powerCV pgMap blks
+        count gridName gridCV rows cols
+        tiehilo GND Vdd instGND instVdd)
 
     ; generated cell or file names
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    Components = (parseString CV->cellName ".")
-    RComponents = (reverse Components)
-    (when (length RComponents)<3 (error "Cell name violates CAST conventions\n"))
-    type_sub = (sprintf nil "%s_%s" (cadr RComponents) (car RComponents))
-    powerCellName = (strcat CV->libName ".wires." type_sub "_POWER_GRID_TIEOFF")
+    powerCellName = (strcat CV->cellName "_pg")
 
     ; delete old power grid instance if it exists
-    inst = (dbFindAnyInstByName CV "tiehilo")
+    inst = (dbFindAnyInstByName CV "pg")
     (when inst (dbDeleteObject inst))
 
     ; get prBoundary boundary shapes 
     (unless CV->prBoundary->points (error "Bad prBoundary"))
-    (cond (!sync_cable
-           prbObjPoints = CV->prBoundary->points
-           )
-          (sync_cable
-           prbObjPoints = (RotatePolygonPoints CV->prBoundary->points "MXR90")
-           )
-          )
+    prbObjPoints = CV->prBoundary->points
     prb1 = (dbCreatePolygon CV (list "prBoundary" "drawing") prbObjPoints)
     copyprb1 = (setof x CV->shapes x->lpp==(list "prBoundary" "drawing"))
 
-    ; checks for prBoundary drawing, if only one exists, if vertices are on 3.12u grid
+    ; checks for prBoundary drawing, that only one exists, and that vertices are on grid
+    align = gridAlignment[topMetal]
     (when (length copyprb1)!=1
           (error "ERROR: Check prBoundary layer. Either no prBoundary or more than one exists."))
     copyprb = (car copyprb1)
-    vertprb = (setof vertprb copyprb->points (CheckOffGrid vertprb))
-    vertprbrec = (setof vertprbrec copyprb->bBox (CheckOffGrid vertprbrec))
-    (when vertprb    (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprb))
-    (when vertprbrec (error "Not All prBoundary Vertices Are On 3.12u Grid: %L" vertprbrec))
+    vertprb = (setof vertprb copyprb->points (CheckOffGrid vertprb align))
+    (when vertprb (error "Not all prBoundary vertices are on grid: %L" vertprb))
     prb = (dbCopyShape copyprb CV)
     prb->lpp = (list "prBoundary" "boundary")
 
@@ -217,67 +200,43 @@
     x2 = (ceiling x2box/PGS)
     y2 = (ceiling y2box/PGS)
 
-    ; create prBoundary leaf boxes to block poly fill
-    prblks = (PaintOverSubcellPrBoundary (list "prBoundary" "leaf") ?CV CV)
-    when(sync_cable foreach(pr prblks  pr~>points = (RotatePolygonPoints pr->points "MXR90")) )
- 
     ; avoid M2 overlapping prBoundary of subcells (looks only one level down)
-    (when Proteus blks = (PaintOverSubcellPrBoundary (list "M2" "block") ?CV CV))
-
-    ; avoid M2 power grid everywhere
-    (unless Proteus blks = (list (dbCreatePolygon CV (list "M2" "block")
-                                                  (GetPrboundPoints CV))))
+    blks = (PaintOverSubcellPrBoundary (list Metal[2] "block") ?CV CV)
 
     ; find bottom left vertices of prbound to place Vdd/GND pins
     (cond (prb->objType == "polygon" xy = (car (SortVertices prb->points)))
           (t xy = x1box:y1box)
           )
 
-    ; run layer processing
+    ; run Assura rules
     AssuraLayerMappings = (list
-                           (list "fillpoly" (list "prBoundary" "leaf"))
-                           (list "power2top" (list "PO" "block"))
-                           (list "power2bot" (list "M1" "block"))
-                           (list "power2" (list "M2" "block"))
-                           (list "power3" (list "M3" "block"))
-                           (list "power4" (list "M4" "block"))
-                           (list "power5" (list "M5" "block"))
-                           (list "power6" (list "M6" "block"))
-                           (list "power7" (list "M7" "block"))
+                           (list "power2" (list Metal[2] "block"))
+                           (list "power3" (list Metal[3] "block"))
+                           (list "power4" (list Metal[4] "block"))
+                           (list "power5" (list Metal[5] "block"))
+                           (list "power6" (list Metal[6] "block"))
+                           (list "power7" (list Metal[7] "block"))
                            (list "prblk"  (list "prBoundary" "block"))
                            )
-    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s"
-                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-                              "makePowerGrid.rul")
-    AssuraRunLog = (sprintf nil "%s/%s.power_grid.log"
-                            TEMP CV->cellName)
-    ErrorStr = (AssuraRunAssuraLayerProcessor
-                CV CV->libName powerCellName "layout"
-                AssuraRuleFile
-                TEMP
-                AssuraLayerMappings
-                nil
-                ?AssuraRunLog AssuraRunLog
-                ?LeaveMess nil 
-                )
-    powerCV = (nrOpenCellViewWritable CV->libName powerCellName "layout")
+    powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
+    (dbSave powerCV)
+    (SimpleAssuraLayerProcessor AssuraLayerMappings "makePowerGrid" ?CV powerCV)
 
     ; define power grid cell names
-    ReplaceCellNameTable=makeTable("a" "")
-    ReplaceCellNameTable["PO"]="globals.wires.POWER_GRID_M2345678top"
-    ReplaceCellNameTable["M1"]="globals.wires.POWER_GRID_M2345678bot"
-    ReplaceCellNameTable["M2"]="globals.wires.POWER_GRID_M2345678"
-    ReplaceCellNameTable["M3"]="globals.wires.POWER_GRID_M345678"
-    ReplaceCellNameTable["M4"]="globals.wires.POWER_GRID_M45678"
-    ReplaceCellNameTable["M5"]="globals.wires.POWER_GRID_M5678"
-    ReplaceCellNameTable["M6"]="globals.wires.POWER_GRID_M678"
-    ReplaceCellNameTable["M7"]="globals.wires.POWER_GRID_M78"
+    pgMap=(makeTable "POWER_GRID" nil)
+    pgMap["m2"]="globals.POWER_GRID.m2345678_pg"
+    pgMap["m3"]="globals.POWER_GRID.m345678_pg"
+    pgMap["m4"]="globals.POWER_GRID.m45678_pg"
+    pgMap["m5"]="globals.POWER_GRID.m5678_pg"
+    pgMap["m6"]="globals.POWER_GRID.m678_pg"
+    pgMap["m7"]="globals.POWER_GRID.m78_pg"
+    pgMap["m8"]="globals.POWER_GRID.m8_pg"
 
     ; replace block shapes with power mosaics
     count=0
     (foreach lpp powerCV->lpps
-      gridName = ReplaceCellNameTable[lpp->layerName]
-      (when gridName!="" && lpp->purpose=="block"
+      gridName = pgMap[lpp->layerName]
+      (when gridName && lpp->purpose=="block"
         gridCV = (nrOpenCellViewReadable "globals" gridName "layout")
         (foreach shape lpp->shapes
           x1 = (leftEdge   shape->bBox)
@@ -296,19 +255,10 @@
       )
 
     ; create prBoundary, power pins, and instantiate power grid
-    (cond (!sync_cable
-           (dbCreatePRBoundary powerCV CV->prBoundary->points)
-           (CreatePowerPins powerCV "M8" xy t)
-           (CreatePowerPins CV      "M8" xy t)
-           tiehilo = (dbCreateInst CV powerCV "tiehilo" 0:0 "R0")
-           )
-          (sync_cable
-           (CreateSyncCablePowerPins CV "M3")
-           tiehilo = (dbCreateInst CV powerCV "tiehilo" 0:0 "MXR90")
-           (dbCreatePRBoundary powerCV
-                               (RotatePolygonPoints CV->prBoundary->points "MXR90"))
-           )
-          )
+    (dbCreatePRBoundary powerCV CV->prBoundary->points)
+    (CreatePowerPins powerCV "M8" xy t)
+    (CreatePowerPins CV      "M8" xy t)
+    tiehilo = (dbCreateInst CV powerCV "pg" 0:0 "R0")
 
     ; finish up power grid and pins
     (AnchorInstance tiehilo)
@@ -316,175 +266,23 @@
     Vdd = (dbFindNetByName CV VddNetName)
     instGND = (dbFindTermByName powerCV GNDNetName)
     instVdd = (dbFindTermByName powerCV VddNetName)
-    (unless sync_cable
-       instGND = (dbFindTermByName powerCV "GND")
-       instVdd = (dbFindTermByName powerCV "Vdd")
-       (dbCreateInstTerm GND tiehilo instGND)
-       (dbCreateInstTerm Vdd tiehilo instVdd)
-       )
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; FillPoly ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ; minimum sized poly x-axis grid
-    PolyGridSize = 2*GridPolyPitch
-    PolyColSize = (round PowerGridSize/PolyGridSize)
-
-    ; use prbleaf shapes to create poly fill mosaics
-    count=0
-    when( polyfill
-      decapCount = 0 ; returned as a global variable
-      (foreach shape (setof s powerCV->shapes s->lpp==(list "prBoundary" "leaf"))
-        x1 = (leftEdge   shape->bBox)
-        y1 = (bottomEdge shape->bBox)
-        x2 = (rightEdge  shape->bBox)
-        y2 = (topEdge    shape->bBox)
-        cols = (round (x2-x1)/PolyGridSize)
-        rows = (round (y2-y1)/PowerGridSize)
-        XdirGridSize = PolyGridSize
-        fillLib = "globals"
-        (cond (cols >= PolyColSize
-               fillLib = (if decap "lib.decap" "globals")
-               fillName = (if decap "lib.decap.DECAP.0"
-                            "globals.wires.POLY_FILL_DCAP")
-               cols = (round cols/PolyColSize)
-               decapCount = decapCount + (if decap cols*rows 0)
-               XdirGridSize = PowerGridSize)
-              (cols == 4
-               fillName = "globals.wires.POLY_FILL_S104"
-               cols = (round cols/4)
-               XdirGridSize = 4*PolyGridSize)
-              (cols == 2
-               fillName = "globals.wires.POLY_FILL_S52"
-               cols = (round cols/2)
-               XdirGridSize = 2*PolyGridSize)
-              (cols == 1
-               fillName = "globals.wires.POLY_FILL_S26"
-               cols = (round cols/1)
-               XdirGridSize = PolyGridSize)
-              (t (error "unexpected poly fill shape width %d" cols))
-              )
-        gridCV = (nrOpenCellViewReadable fillLib fillName "layout")
-        (dbCreateSimpleMosaic powerCV gridCV
-                              (sprintf nil "polyfill%d" count) x1:y1 "R0"
-                              rows cols PowerGridSize XdirGridSize)
-        count = count+1
-        )
-     )
+    instGND = (dbFindTermByName powerCV "GND")
+    instVdd = (dbFindTermByName powerCV "Vdd")
+    (dbCreateInstTerm GND tiehilo instGND)
+    (dbCreateInstTerm Vdd tiehilo instVdd)
 
     ; delete temporary shapes
     (dbDeleteObject prb)
     (dbDeleteObject prb1)
     (foreach x blks (dbDeleteObject x))
-    (foreach x prblks (dbDeleteObject x))
 
     ; save and return
     (dbSave CV)
     (dbSave powerCV)
     (dbClose powerCV)
-    (printf "decapCount=%d\n" decapCount)
     powerCV
     )
   )
-
-(defun WriteNanoTcl 
-  (@key (CV (geGetEditCellView)) ; select CV
-        (topLayer 7)
-        (bottomLayer 3)
-        )
-  (let (tclImportFile tclRunFile top bottom
-        instances uniqueInstances pout pout2 Command)
-
-    tclImportFile = (strcat CV->cellName ".import.tcl")
-    tclRunFile = (strcat CV->cellName ".run.tcl")
-    nondefaultDefFile = (strcat CV->cellName "_nondefault.def")
-    nondefaultDefLogFile = (strcat CV->cellName "_nondefault.def.log")
-    top=topLayer
-    bottom=bottomLayer
-
-    NonDefaultLefFile = (sprintf nil "%s/share/Fulcrum/cell_automation/router/%s"
-                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-                              "nondefault.lef")
-
-    instances= (setof inst CV->instances inst->libName!=TechLibName)
-    uniqueInstances=nil
-    foreach( inst instances
-      if( !member( inst~>libName uniqueInstances~>libName ) then
-        uniqueInstances=cons( inst uniqueInstances )
-      )
-    )
-
-      Command = sprintf( nil
-                "%s/cast2def --cast-path=%s --cell=%s --outfile=%s --cadence-name --max-heap-size=4G &> %s"
-                PackageGetBinRoot( )
-                ConfigFileGetValue( TheCDSConfigTable "CAST_PATH" )
-                CV->cellName 
-                nondefaultDefFile 
-                nondefaultDefLogFile 
-                )
-      printf( "%s\n" Command )
-      shell( Command )
-      printf( "Nondefault Rule File %s is created.\n" nondefaultDefFile)
-
-    pout=outfile(tclImportFile)
-    if( pout then
-      fprintf(pout "%s%s%s\n" "set rda_Input(ui_oa_designLib) {" CV~>libName "}")
-      fprintf(pout "%s%s%s\n" "set rda_Input(ui_oa_designCell) {" CV~>cellName "}")
-      fprintf(pout "%s%s%s\n" "set rda_Input(ui_oa_designView) {" CV~>viewName "}")
-      fprintf(pout "%s\n" "set rda_Input(ui_oa_abstractname) {abstract}")
-      fprintf(pout "%s\n" "set rda_Input(ui_oa_layoutname) {layout}")
-      fprintf(pout "%s\n" "set rda_Input(ui_pwrnet) {Vdd}")
-      fprintf(pout "%s\n" "set rda_Input(ui_gndnet) {GND}")
-      fprintf(pout "%s" "set rda_Input(ui_oa_reflib) {tsmc28")
-      foreach( inst uniqueInstances
-        fprintf( pout " %s" inst~>libName)
-      )
-      fprintf(pout "%s\n" "}")
-      close(pout)
-    )
-    printf( "Encounter import file %s is created.\n" tclImportFile)
-
-    pout2=outfile(tclRunFile)
-    if( pout2 then
-      fprintf(pout2 "%s\n" "setOaxMode -updateMode true")
-      fprintf(pout2 "%s %s\n" "loadConfig" tclImportFile)
-      fprintf(pout2 "%s %s\n" "loadLefFile" NonDefaultLefFile)
-      fprintf(pout2 "%s %s\n" "defIn" nondefaultDefFile)
-      fprintf(pout2 "%s%s%s\n" "set TOP \"" CV~>cellName "\"")
-      fprintf(pout2 "%s%s%s\n" "set LIB \"" CV~>libName "\"")
-      fprintf(pout2 "%s\n" "set VIEW \"nano\"")
-      fprintf(pout2 "%s %d\n" "set TOP_LAYER" top)
-      fprintf(pout2 "%s %d\n" "set BOTTOM_LAYER" bottom)
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeAllowPowerGroundPin true")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeWithLithoDriven false")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeWithSIDriven false")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeWithTimingDriven false")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeStrictlyHonorNonDefaultRule true")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeAutoGgrid false")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -drouteFixAntenna false")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -drouteUseMultiCutViaEffort medium")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -drouteAutoStop true")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeTopRoutingLayer    $TOP_LAYER")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeBottomRoutingLayer $BOTTOM_LAYER")
-      fprintf(pout2 "%s\n" "setAttribute -net GND -skip_routing true")
-      fprintf(pout2 "%s\n" "setAttribute -net Vdd -skip_routing true")
-      fprintf(pout2 "%s\n" "setNanoRouteMode -quiet -routeSelectedNetOnly false")
-      fprintf(pout2 "%s\n" "generateTracks
--m1HOffset 0.065 -m1HPitch 0.13 -m1VOffset 0.065 -m1VPitch 0.13
--m2HOffset 0.065 -m2HPitch 0.13 -m2VOffset 0.065 -m2VPitch 0.13
--m3HOffset 0.065 -m3HPitch 0.13 -m3VOffset 0.065 -m3VPitch 0.13
--m4HOffset 0.065 -m4HPitch 0.13 -m4VOffset 0.065 -m4VPitch 0.13
--m5HOffset 0.065 -m5HPitch 0.13 -m5VOffset 0.065 -m5VPitch 0.13
--m6HOffset 0.065 -m6HPitch 0.13 -m6VOffset 0.065 -m6VPitch 0.13
--m7HOffset 0.065 -m7HPitch 0.13 -m7VOffset 0.065 -m7VPitch 0.13
--m8HOffset 0.065 -m8HPitch 0.13 -m8VOffset 0.065 -m8VPitch 0.13")
-      fprintf(pout2 "%s\n" "routeDesign -globalDetail -noPlacementCheck")
-      fprintf(pout2 "%s\n" "saveOaDesign $LIB $TOP $VIEW")
-      fprintf(pout2 "%s\n" "exit")
-      close(pout2)
-    )
-    printf( "Encounter run file %s is created.\n" tclRunFile)
-  )
-)
 
 ; generate abstract of a power grid cell
 ; flattens and merges vdd and gnd purpose shapes
@@ -497,8 +295,8 @@
         AssuraLayerMappings AssuraRuleFile AssuraRunLog figsVdd figsGND)
 
     ; fing powergrid CV
-    inst = (dbFindAnyInstByName CV "tiehilo")
-    (unless inst (error "No tiehilo instance"))
+    inst = (dbFindAnyInstByName CV "pg")
+    (unless inst (error "No pg instance"))
     pgCV = inst->master
 
     ; run Assura makePowerGridAbstract.rul
@@ -593,15 +391,12 @@
 ; Mod operation converting float number to integer in terms of MfgGrid
 (defun GetNonZeroMod ( div dis )
   (mod (round div/MfgGrid) (round dis/MfgGrid)) != 0
-)
+  )
 
 ; Check vertices are on powergrid pitch
-(defun CheckOffGrid ( pt @key (XGrid 2*PowerGridPitch) (YGrid 2*PowerGridPitch) )
-  (let ((x (car pt))
-        (y (cadr pt)))
-   (GetNonZeroMod x XGrid) || (GetNonZeroMod y YGrid)
+(defun CheckOffGrid ( pt align )
+  (GetNonZeroMod (car pt) (car align)) || (GetNonZeroMod (cadr pt) (cadr align))
   )
-)
 
 ; sort a list of vertices by smallest Y then smallest X
 (defun SortVertices (vertices)
@@ -665,35 +460,3 @@
     )
   t
   )
-
-
-
-
-defun( CreateMissingAbstractList ( CellView CellsListFileName )
-  let((inst cellList fout)
-    cellList=nil
-    fout=outfile(CellsListFileName)
-    if( fout then 
-      foreach(inst CellView~>instances
-        if(!nrOpenCellViewReadable(inst->libName inst->cellName "abstract") &&
-           !member(inst->cellName cellList) then
-          cellList=cons(inst~>cellName cellList)
-            fprintf(fout "%s\n" inst~>cellName)
-        )
-      )
-      close(fout)
-    else printf("Error: file %s not writable\n" CellsListFileName)
-    )
-  )
-)
-
-(defun RotatePolygonPoints (pointlist orient)
-  let( ( I trfPoints )
-     for( I 0 length(pointlist)-1
-      when( orient == "MXR90"
-        trfPoints = append(trfPoints list(reverse(nth(I pointlist))))
-        )
-      )
-trfPoints
- )
-)
