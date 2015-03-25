@@ -204,7 +204,6 @@ GET_HDRC_SIGNOFFS_FROM_CDBDEP   = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1
 GET_DRC_SIGNOFFS_FROM_CDBDEP   = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))drc_signoff)
 GET_FRC_SIGNOFFS_FROM_CDBDEP    = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))frc_signoff)
 GET_LVS_SIGNOFF_FROM_CDBDEP     = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))lvs_signoff)
-GET_HLVS_SIGNOFF_FROM_CDBDEP    = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))hlvs_signoff)
 GET_DRC_CELL_SIGNOFF_FROM_CDBDEP = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))drc_signoff)
 GET_FRC_CELL_SIGNOFF_FROM_CDBDEP = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))frc_signoff)
 
@@ -543,7 +542,7 @@ $(ROOT_TARGET_DIR)/%/lib.lef: $(ROOT_TARGET_DIR)/%/df2.d
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 
-$(ROOT_TARGET_DIR)/%/hlvs_graybox_list: $(ROOT_TARGET_DIR)/%/hlvs_graybox_list.latest
+$(ROOT_TARGET_DIR)/%/lvs_graybox_list: $(ROOT_TARGET_DIR)/%/lvs_graybox_list.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 
 ifneq ("$(GRAYBOX_LIST)", "")
@@ -1026,11 +1025,11 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	extract_dir=`mktemp -d "$(WORKING_DIR)/$$cell.XXXXXX"`; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_spef1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=1 \
+	  --blackbox=1 \
 	  --threads=$(HERCULES_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1038,7 +1037,6 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --extract-corner='$(EXTRACT_CORNER)' \
 	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
-	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
@@ -1046,26 +1044,23 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
 	  --temperature=$(TEMPERATURE) \
 	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
-	  --starRC1-extra-options='$(STARRC1_EXTRA_OPTIONS)' \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@D)/spef.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2a.diag" QB_RUN_NAME='lve_spef2a' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=1 \
+	  --blackbox=1 \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1079,12 +1074,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
@@ -1096,7 +1088,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2b.diag" QB_RUN_NAME='lve_spef2b' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=1 \
+	  --blackbox=1 \
 	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1111,12 +1103,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
@@ -1129,7 +1118,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2c.diag" QB_RUN_NAME='lve_spef2c' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=1 \
+	  --blackbox=1 \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1143,12 +1132,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
@@ -1188,11 +1174,11 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	if [[ -f "$(@D)/graybox_list" ]]; then /bin/mv -f "$(@D)/graybox_list" "$(@D)/graybox_list.orig"; fi; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS),cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(HERCULES_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1201,7 +1187,6 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --extract-corner='$(EXTRACT_CORNER)' \
 	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
-	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1210,26 +1195,23 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
 	  --temperature=$(TEMPERATURE) \
 	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
-	  --starRC1-extra-options='$(STARRC1_EXTRA_OPTIONS)' \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
-	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@D)/extract.err' \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1245,12 +1227,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1262,7 +1241,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1279,12 +1258,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1297,7 +1273,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2c.diag" QB_RUN_NAME='lve_starRC2c' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1313,12 +1289,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1330,7 +1303,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3a' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1346,12 +1319,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1363,7 +1333,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3b' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1379,12 +1349,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1396,7 +1363,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3c' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1412,12 +1379,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1462,7 +1426,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	echo "#TASK=$(EXTRACT_STARRC) MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
 	status=0; \
-	echo "$(BLACKBOX_HERCULES)" > '$(@D)/blackbox-hercules'; \
+	echo "$(LVS_BLACKBOX)" > '$(@D)/blackbox'; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
 	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
 	extract_dir=`mktemp -d "$(WORKING_DIR)/$$cell.XXXXXX"`; \
@@ -1472,7 +1436,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(HERCULES_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1482,7 +1446,6 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --extract-corner='$(EXTRACT_CORNER)' \
 	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
-	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1491,12 +1454,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1504,14 +1464,14 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --temperature=$(TEMPERATURE) \
 	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
-	  --starRC1-extra-options='$(STARRC1_EXTRA_OPTIONS)' \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
-	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@D)/extract.err' \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1528,12 +1488,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1546,7 +1503,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1564,12 +1521,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1583,7 +1537,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2c.diag" QB_RUN_NAME='lve_starRC2c' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1600,12 +1554,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1638,7 +1589,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4a_drextract' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1655,12 +1606,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1673,7 +1621,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4b_extract' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1690,12 +1638,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1708,7 +1653,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4c_extract' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1725,12 +1670,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1743,7 +1685,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4d_extract' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=$(BLACKBOX_HERCULES) \
+	  --blackbox=$(LVS_BLACKBOX) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1760,12 +1702,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
@@ -1809,11 +1748,11 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	if [[ -f "$(@D)/graybox_list" ]]; then /bin/mv -f "$(@D)/graybox_list" "$(@D)/graybox_list.orig"; fi; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=0 \
+	  --blackbox=0 \
 	  --threads=$(HERCULES_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1822,7 +1761,6 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --extract-corner='$(EXTRACT_CORNER)' \
 	  --instance-port=$(INSTANCE_PORT) \
 	  --extract-power=$(EXTRACTPOWER) \
-	  --lvs=$(EXTRACT_LVS) \
 	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
 	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
@@ -1831,26 +1769,23 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
 	  --temperature=$(TEMPERATURE) \
 	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
-	  --starRC1-extra-options='$(STARRC1_EXTRA_OPTIONS)' \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
-	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@D)/extract.err' \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=0 \
+	  --blackbox=0 \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1866,12 +1801,9 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1883,7 +1815,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=0 \
+	  --blackbox=0 \
 	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
@@ -1900,12 +1832,9 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -1918,7 +1847,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2c.diag" QB_RUN_NAME='lve_starRC2c' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
-	  --blackbox-hercules=0 \
+	  --blackbox=0 \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1934,12 +1863,9 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --gray-cell-list='$(@D)/graybox_list' \
 	  --ignore-nvn=$(IGNORE_NVN) \
 	  --maxF=$(MAXF) \
-	  --merge-paths='$(MERGE_PATHS)' \
 	  --minC=$(MINEXTRACTEDC) \
 	  --minR=$(MINEXTRACTEDR) \
 	  --nvn-log='$(@D)/nvn.log' \
-	  --eplfix=$(EPLFIX) \
-	  --plug-wells=$$plugWells \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
 	  --swappin-log='$(@D)/swappin.err' \
@@ -2058,69 +1984,28 @@ $(ROOT_TARGET_DIR)/%/jlvs.out $(ROOT_TARGET_DIR)/%/jlvs.err: $(ROOT_TARGET_DIR)/
 	  1>'$(@D)/jlvs.out' 2>'$(@D)/jlvs.err' || true; \
 	task=jlvs && $(CASTFILES_DEQUEUE_TASK)
 
-# ASSURA LVS -- checks CDL versus GDS2
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/lvs.cls
-$(ROOT_TARGET_DIR)/%/lvs.cls: $(ROOT_TARGET_DIR)/%/cell.gds2 \
-			      $(ROOT_TARGET_DIR)/%/cell.bindrul \
-			      $(ROOT_TARGET_DIR)/%/../cell.cdl
-	#TASK=lvs CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	task=lvs && $(CASTFILES_ENQUEUE_TASK) && \
-	lvs_dir=`mktemp -d "$(WORKING_DIR)/lvs.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	ln -s '$(@D)/cell.gds2' $$lvs_dir/cell.gds2 ; \
-	chmod 2775 "$$lvs_dir" && cd "$$lvs_dir" && \
-	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_lvs' \
-	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS) -l lvs=1' \
-	  $(QEXEC) $(ASSURA_SCRIPT) \
-	  $(LVE_PACKAGE_ROOT)/share/script/perl/ve/front-end/vfe \
-	  VerificationType=AssuraLvs \
-	  RunName=lvs \
-	  IgnoreBulk=$(GET_TRUE_IGNORE_BULK_LVS) \
-	  LayoutCell="$(call GET_GDS2_CDL_NAME,$(@D))" \
-	  RuleFile=$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/extract.rul \
-	  CompareFile=$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/compare.rul \
-	  AssuraRsfInclude=$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/LVSinclude.rsf \
-	  WorkingDir=$$lvs_dir SchematicFile='$(@D)/../cell.cdl' \
-	  GDS2File=$$lvs_dir/cell.gds2 BindingFile='$(@D)/cell.bindrul' \
-	  $(addprefix AssuraSet.=,$(LVS_FLAGS-$(call GET_CADENCE_BASE_NAME,$(@D)))) \
-	  >"$$lvs_dir/vfeout"; \
-	  ( ( [ -s "$$lvs_dir/lvs.cls" ] && /bin/cp -p "$$lvs_dir/lvs.cls" '$@' && \
-	      [ -n "$$(grep 'Schematic and Layout Match' '$@')" ] ) || \
-	    ( cd "$$lvs_dir" && $(BZTAR) -cf '$(@D)/lvs.tar.bz2' ./* ) ) \
-	       && cd / && ( [[ $(KEEP_LVS_DIR) == 1 ]] || rm -rf "$$lvs_dir" ); \
-	task=lvs && $(CASTFILES_DEQUEUE_TASK)
 
-# summarize LVS results
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/lvs.result
-$(ROOT_TARGET_DIR)/%/lvs.result: $(ROOT_TARGET_DIR)/%/lvs.cls $(ROOT_TARGET_DIR)/%/df2.d
-	if [ -n "$$(grep 'Schematic and Layout Match' '$<')" ] ; then \
+$(ROOT_TARGET_DIR)/%/lvs.result: $(ROOT_TARGET_DIR)/%/lvs.err
+	if [ -n "$$(grep 'NVN SUCCESS' '$<')" ] ; then \
 		echo PASS > '$@'; \
 	elif [ -e "$(call GET_LVS_SIGNOFF_FROM_CDBDEP,$(@D)/df2.d)" ] ; then \
 		echo SIGNOFF > '$@'; \
 	else echo FAIL > '$@'; fi;
 
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/hlvs.result
-$(ROOT_TARGET_DIR)/%/hlvs.result: $(ROOT_TARGET_DIR)/%/hlvs.err
-	if [ -n "$$(grep 'NVN SUCCESS' '$<')" ] ; then \
-		echo PASS > '$@'; \
-	elif [ -e "$(call GET_HLVS_SIGNOFF_FROM_CDBDEP,$(@D)/df2.d)" ] ; then \
-		echo SIGNOFF > '$@'; \
-	else echo FAIL > '$@'; fi;
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/lvs_graybox_list
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/lvs_custom_list
 
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/hlvs_graybox_list
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/hlvs_custom_list
+LVS_TARGET := lvs_graybox_list
 
-HLVS_TARGET := hlvs_graybox_list
+ifneq ("$(LVS_GRAYBOX_LIST)","")
+LVS_TARGET := lvs_custom_list
+endif # "$(LVS_GRAYBOX_LIST)" ne ""
 
-ifneq ("$(HLVS_GRAYBOX_LIST)","")
-HLVS_TARGET := hlvs_custom_list
-endif # "$(HLVS_GRAYBOX_LIST)" ne ""
-
-$(ROOT_TARGET_DIR)/%/hlvs_graybox_list : $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
-	#TASK=create_hlvs_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
+$(ROOT_TARGET_DIR)/%/lvs_graybox_list : $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+	#TASK=create_lvs_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'; \
-	QB_DIAG_FILE='$(@D)/hlvs.graylist.diag' QB_RUN_NAME='lve_hlvs_graylist' \
+	QB_DIAG_FILE='$(@D)/lvs.graylist.diag' QB_RUN_NAME='lve_lvs_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
 	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
 	  --task=subcells --filter=one-level --routed \
@@ -2128,126 +2013,48 @@ $(ROOT_TARGET_DIR)/%/hlvs_graybox_list : $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGE
 	  --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
 	  : < '$@' ; \
 	  touch '$@' ; \
-	  sed -e 's/ //g' '$@' | sort -u -o '$@'
+	  if [ -s '$@' ] ; then \
+	  sed -e 's/ //g' '$@' | sort -u -o '$@'; fi;
 
-$(ROOT_TARGET_DIR)/%/hlvs_custom_list : $(HLVS_GRAYBOX_LIST)
-	#TASK=copy_hlvs_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
+$(ROOT_TARGET_DIR)/%/lvs_custom_list : $(LVS_GRAYBOX_LIST)
+	#TASK=copy_lvs_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'; \
-	if [[ -f '$(HLVS_GRAYBOX_LIST)' && -s '$(HLVS_GRAYBOX_LIST)' ]] ; then \
-	   sed -e 's/ //g' '$(HLVS_GRAYBOX_LIST)' | sort -u -o '$@'; \
+	if [[ -f '$(LVS_GRAYBOX_LIST)' && -s '$(LVS_GRAYBOX_LIST)' ]] ; then \
+	   sed -e 's/ //g' '$(LVS_GRAYBOX_LIST)' | sort -u -o '$@'; \
 	else \
 	   touch '$@' ; \
 	fi
 
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/hlvs.err
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/lvs.err
 
-ifeq ("$(HLVS_MODE)", "blackbox")
-$(ROOT_TARGET_DIR)/%/hlvs.err: \
+$(ROOT_TARGET_DIR)/%/lvs.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/$(HLVS_TARGET)
-	#TASK=hlvs_bb VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
+        $(ROOT_TARGET_DIR)/%/$(LVS_TARGET)
+	#TASK=lvs VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	status=0; \
-	task=hlvs && $(CASTFILES_ENQUEUE_TASK) && \
+	task=lvs && $(CASTFILES_ENQUEUE_TASK) && \
 	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
-	hlvs_dir=`mktemp -d "$(WORKING_DIR)/hlvs.XXXXXX"`; \
+	lvs_dir=`mktemp -d "$(WORKING_DIR)/lvs.XXXXXX"`; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
-	  QB_DIAG_FILE="$(@D)/hlvs.diag" QB_RUN_NAME='lve_hlvs_bb' \
-	  $(QB) hlvs \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK_LVS) \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	  QB_DIAG_FILE="$(@D)/lvs.diag" QB_RUN_NAME='lve_lvs' \
+	  $(QB) lvs \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
+	  --working-dir="$$lvs_dir" \
 	  --threads=$(HERCULES_THREADS) \
-	  --working-dir="$$hlvs_dir" \
 	  --cdl-file='$(@D)/cell.cdl_gds2' \
 	  --gds2-file='$(@D)/cell.gds2' \
-	  --gray-cell-list='$(@D)/$(HLVS_TARGET)' \
-	  --64bit=$(BIT64) \
-	  --plug-wells=$$plugWells \
-	  --mem=$(EXTRACT_MEM) \
-	  --priority=$(PRIORITY) \
+	  --gray-cell-list='$(@D)/$(LVS_TARGET)' \
+	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
 	  --cdl-cell-name="$$cell" \
-	  --eplfix=$(EPLFIX) \
-	  --hlvs-mode=$(HLVS_MODE) \
-	  --merge-paths='$(MERGE_PATHS)' \
-	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@)' && \
-	cd / && ( [[ $(KEEP_HLVS_DIR) == 1 ]] || rm -rf "$$hlvs_dir" ); \
-	task=hlvs && $(CASTFILES_DEQUEUE_TASK)
-
-else # "$(HLVS_MODE)" eq "blackbox" 35 lines back
-ifeq ("$(HLVS_MODE)", "graybox")
-$(ROOT_TARGET_DIR)/%/hlvs.err: \
-        $(ROOT_TARGET_DIR)/%/cell.gds2 \
-        $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/$(HLVS_TARGET)
-	#TASK=hlvs_gb VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	status=0; \
-	task=hlvs && $(CASTFILES_ENQUEUE_TASK) && \
-	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
-	hlvs_dir=`mktemp -d "$(WORKING_DIR)/hlvs.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
-	  QB_DIAG_FILE="$(@D)/hlvs.diag" QB_RUN_NAME='lve_hlvs_gb' \
-	  $(QB) hlvs \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK_LVS) \
-	  --threads=$(HERCULES_THREADS) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --working-dir="$$hlvs_dir" \
-	  --cdl-file='$(@D)/cell.cdl_gds2' \
-	  --gds2-file='$(@D)/cell.gds2' \
-	  --gray-cell-list='$(@D)/$(HLVS_TARGET)' \
-	  --64bit=$(BIT64) \
-	  --plug-wells=$$plugWells \
-	  --mem=$(EXTRACT_MEM) \
-	  --priority=$(PRIORITY) \
-	  --cdl-cell-name="$$cell" \
-	  --eplfix=$(EPLFIX) \
-	  --hlvs-mode=$(HLVS_MODE) \
-	  --merge-paths='$(MERGE_PATHS)' \
-	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@)' && \
-	cd / && ( [[ $(KEEP_HLVS_DIR) == 1 ]] || rm -rf "$$hlvs_dir" ); \
-	task=hlvs && $(CASTFILES_DEQUEUE_TASK)
-
-else # "$(HLVS_MODE)" eq "graybox" 35 lines back
-$(ROOT_TARGET_DIR)/%/hlvs.err: \
-        $(ROOT_TARGET_DIR)/%/cell.gds2 \
-        $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
-	#TASK=hlvs_fl VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	status=0; \
-	task=hlvs && $(CASTFILES_ENQUEUE_TASK) && \
-	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
-	hlvs_dir=`mktemp -d "$(WORKING_DIR)/hlvs.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
-	  QB_DIAG_FILE="$(@D)/hlvs.diag" QB_RUN_NAME='lve_hlvs_fl' \
-	  $(QB) hlvs \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK_LVS) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --threads=$(HERCULES_THREADS) \
-	  --working-dir="$$hlvs_dir" \
-	  --cdl-file='$(@D)/cell.cdl_gds2' \
-	  --gds2-file='$(@D)/cell.gds2' \
-	  --gray-cell-list='$(@D)/hlvs_graybox_list' \
-	  --64bit=$(BIT64) \
-	  --plug-wells=$$plugWells \
-	  --mem=$(EXTRACT_MEM) \
-	  --priority=$(PRIORITY) \
-	  --cdl-cell-name="$$cell" \
-	  --eplfix=$(EPLFIX) \
-	  --hlvs-mode=$(HLVS_MODE) \
-	  --merge-paths='$(MERGE_PATHS)' \
-	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@)' && \
-	cd / && ( [[ $(KEEP_HLVS_DIR) == 1 ]] || rm -rf "$$hlvs_dir" ); \
-	task=hlvs && $(CASTFILES_DEQUEUE_TASK)
-
-endif # "$(HLVS_MODE)" eq "graybox" 69 lines back
-endif # "$(HLVS_MODE)" eq "blackbox" 106 lines back
+	  --blackbox=$(LVS_BLACKBOX) \
+	  --icv-options=$(LVS_EXTRA_OPTIONS) \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@)' && \
+	cd / && ( [[ $(KEEP_LVS_DIR) == 1 ]] || rm -rf "$$lvs_dir" ); \
+	task=lvs && $(CASTFILES_DEQUEUE_TASK)
 
 # HERCULES ANTENNA
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/antenna.err
@@ -2453,17 +2260,12 @@ $(ROOT_TARGET_DIR)/%/jlvs.raw: $(ROOT_TARGET_DIR)/%/jlvs.out $(ROOT_TARGET_DIR)/
 	$(RAWIFY) --use-db=$(USEDB) --task=jlvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
-$(ROOT_TARGET_DIR)/%/hlvs.raw: $(ROOT_TARGET_DIR)/%/hlvs.result
-	#TASK=hlvs_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --use-db=$(USEDB) --task=hlvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
-	$(CASTFILES_DEQUEUE_TASK)
-
 $(ROOT_TARGET_DIR)/%/lvs.raw: $(ROOT_TARGET_DIR)/%/lvs.result
 	#TASK=lvs_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
 	$(RAWIFY) --use-db=$(USEDB) --task=lvs --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
+
 
 $(ROOT_TARGET_DIR)/%/hdrc.raw: $(ROOT_TARGET_DIR)/%/hdrc.result
 	#TASK=hdrc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))

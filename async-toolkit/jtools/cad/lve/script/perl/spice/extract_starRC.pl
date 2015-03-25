@@ -67,22 +67,18 @@ sub usage() {
     $usage .= "    --fulcrum-pdk-root=<path name> default()\n\n";
     $usage .= "    --flat (do flat extract, not really used)\n";
     $usage .= "    --dfII-dir=value (the dfII dir, used to find if subcells exist)\n";
-    $usage .= "    --lvs=(herc|icv) (tool to use for lvs, defaults to herc)\n";
     $usage .= "    HERCULES OPTIONS\n";
     $usage .= "    --fixbulk (extract ignorning missing well plugs\n";
-    $usage .= "    --eplfix=value (to fix rare issue with Avago Serdes)\n";
-    $usage .= "    --merge-paths=value (obscure option to hercules lvs)\n";
-    $usage .= "    --threads=value (how many threads for hercules, defaults to 2)\n";
-    $usage .= "    --extra-extract-equiv=value (file with list of extra equiv cast cells)\n";
-    $usage .= "    --starRC1-extra-options=value (extra options for hercules lvs\n";
     $usage .= "    ICV OPTIONS\n";
     $usage .= "    --threads=value (how many threads for ICV, defaults to 2)\n";
+    $usage .= "    --extra-extract-equiv=value (file with list of extra equiv cast cells)\n";
+    $usage .= "    --starRC1-extra-options=value (extra icv command options)\n";
     $usage .= "    STARRC OPTIONS\n";
     $usage .= "    --temperature=value (default 90C)\n";
     $usage .= "    --plug-wells=(0|1) (default 1)\n";
     $usage .= "    --pin-order-file=<filename with .SUBCKT cellname [ports] .ENDS> where defining the order of port list\n";
     $usage .= "    --gray-cell-list=<file name>\n";
-    $usage .= "    --blackbox-hercules=(0|1) (defaults to 1)\n";
+    $usage .= "    --blackbox=(0|1) (defaults to 0)\n";
     $usage .= "    --extractReduce=[YES|NO|LAYER|NO_EXTRA_LOOPS|HIGH]\n";
     $usage .= "    --spef=[0|1] generate a spef instead of spice\n";
     $usage .= "    --totem-mode=[0|1] for totem prep\n";
@@ -101,7 +97,6 @@ my $root_target_dir;
 my $current_target_dir;
 my $gdsii;
 my $del;
-my $plugWells;
 my $pin_order_file;
 my $graycell_file;
 my $mode_op;
@@ -122,10 +117,9 @@ my $minC;
 my $minCC;
 my $maxF;
 my $temperature;
-my $eplfix=0;
 my $magnification_factor=1.0;
 my $extra_extract_equiv="";
-my $starRC1_extra_options="";
+my $lvs_extra_options="";
 my $pdk_root;
 my $nvn_bind_file;
 my $nvn_log;
@@ -133,7 +127,7 @@ my $swappin_log;
 my $ignoreNVN=1;
 my $task;
 my $graycell_list="";
-my $blackboxHercules=0;
+my $blackbox=0;
 my $fixbulk=0;
 my $doflat=0;
 my $extractReduce="NO_EXTRA_LOOPS";
@@ -143,7 +137,6 @@ my $dfIIdir;
 my $threads=2;
 my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
-my $lvs='herc';
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
     my ($flag, $value) = split("=",$1);
@@ -162,8 +155,6 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $gdsii = $value;
     } elsif ($flag eq "delete") {
             $del = $value;
-    } elsif ($flag eq "plug-wells") {
-            $plugWells = $value;
     } elsif ($flag eq "pin-order-file") {
             $pin_order_file = $value;
     } elsif ($flag eq "gray-cell-list") {
@@ -204,32 +195,26 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $swappin_log = $value;
     } elsif ($flag eq "ignore-nvn") {
             $ignoreNVN = $value;
-    } elsif ($flag eq "blackbox-hercules") {
-            $blackboxHercules = $value;
+    } elsif ($flag eq "blackbox") {
+            $blackbox = $value;
     } elsif ($flag eq "task") {
         $task = $value;
     } elsif ($flag eq "extractReduce") {
         $extractReduce = $value;
     } elsif ($flag eq "spef") {
         $genspef = $value;
-    } elsif ($flag eq "merge-paths") {
-        $merge_paths = $value;
     } elsif ($flag eq "dfII-dir") {
         $dfIIdir = $value;
     } elsif ($flag eq "threads") {
         $threads = $value;
     } elsif ($flag eq "extra-extract-equiv") {
         $extra_extract_equiv = $value;
-    } elsif ($flag eq "starRC1-extra-options") {
-        $starRC1_extra_options = $value;
-    } elsif ($flag eq "eplfix") {
-        $eplfix = $value;
+    } elsif ($flag eq "lvs-extra-options") {
+        $lvs_extra_options = $value;
     } elsif ($flag eq "totem-mode") {
         $totem_mode = $value;
     } elsif ($flag eq "instance-port") {
         $instancePort = $value;
-    } elsif ($flag eq "lvs") {
-        $lvs = $value;
     } else {
         print STDERR "Error: argument --${flag}=${value} not recognized.\n";
         &usage();
@@ -276,10 +261,9 @@ if(! (!(defined $task) or
 
 defined $pin_order_file or $pin_order_file = "";
 defined $del or $del=1;
-defined $working_dir or $working_dir = "/mnt/fulcrum/scratch3a/cadadmin/";
+defined $working_dir or $working_dir = "$pwd";
 defined $task or $task = "stage1";
 defined $mode_op or $mode_op=0;
-defined $plugWells or $plugWells=0;
 defined $extractPower or $extractPower="NO";
 defined $extractedView or $extractedView="";
 defined $cdl_file or $cdl_file="";
@@ -292,7 +276,7 @@ defined $minR or $minR = 0.1;
 defined $minC or $minC = 0;
 defined $minCC or $minCC = 0;
 defined $ignoreNVN or $ignoreNVN = 1;
-defined $blackboxHercules or $blackboxHercules = 0;
+defined $blackbox or $blackbox = 0;
 defined $maxF or $maxF = 1e12;
 defined $temperature or $temperature = 90;
 defined $FireStepSize or $FireStepSize=7;
@@ -302,14 +286,15 @@ defined $pdk_root or $pdk_root="$ENV{FULCRUM_PDK_ROOT}";
 my $machine=`uname -m`;
 chomp $machine;
 $mode_op = 0 if ($machine =~ /x86_64/ and $ENV{PATH} =~ /SEV-32/);
-my $conf_dir="$pdk_root/share/Fulcrum/extract";
+my $conf_dir="$pdk_root/share/Fulcrum/starrcxt";
 my $AssuraHome="$pdk_root/share/Fulcrum/assura";
 my $extract_dir=$spice_target;
 $extract_dir =~ s:/[^/]*$::;
 $extract_dir =~ s:.*/::;
 $extract_dir =~ s/accurate/extracted/;
 
-defined $nvn_bind_file or $nvn_bind_file="$AssuraHome/bind.rul";
+#defined $nvn_bind_file or $nvn_bind_file="$AssuraHome/bind.rul";
+defined $nvn_bind_file or $nvn_bind_file="";
 
 my $escaped_cell_name="\Q$cell_name\E";
 
@@ -375,424 +360,37 @@ sub makegdsgraylist {
     }
 }
 
-sub run_nettran {
-    my ($spice, $devMap, $sch_out, $icv, $map) = @_;
-    my $herc_out = $sch_out . ".tmp";
-    my_system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$spice' -sp-slashSpace -sp-devMap '$devMap' -logFile nettran.log -outName '$herc_out'");
-    if (%{$map} || !$icv) {
-        open (GIN, "<$herc_out");
-        open (GOUT, ">$sch_out");
-        while (<GIN>) {
-            chomp;
-            # extra stuff added by icv_nettran
-            s/{TYPE [A-Z]+}// unless $icv;
-            if (%{$map}) {
-                if (/^(\{cell\s+|\{inst[^=]+=)(\S+)(.*)/) {
-                    $_ = "$1$map->{$2}$3" if (defined($map->{$2}));
-                }
-            }
-            print GOUT "$_\n";
-        }
-        close GIN;
-        close GOUT;
-        unlink $herc_out;
-    }
-    else {
-        rename $herc_out, $sch_out;
-    }
-}
 
-sub get_equiv {
-    my ($graylist, $extra_extract_equiv) = @_;
 
-    my %equiv = ();
-    if ($extra_extract_equiv ne '') {
-        open(my $fh, $extra_extract_equiv)
-            or die "Error: can't read $extra_extract_equiv: $!";
-        while (<$fh>) {
-            next if /^#/ || /^\s+$/;
-            my @parts = split;
-            my ($sch, $lay);
-            if (@parts == 1) {
-                ($sch, $lay) = ($parts[0], '');
-            } elsif (@parts == 2) {
-                ($sch, $lay) = ($parts[0], $parts[1]);
-            } else {
-                warn "Warning: malformed equiv on line $. in $extra_extract_equiv";
-            }
-            $equiv{$sch} = $lay;
-        }
-        close $fh;
-    }
-
-    my %nmap = ();
-    reName('rename', 'cast', 'gds2', 'cell', \%nmap, [ keys %equiv ])
-        if %equiv;
-
-    my %result = map { $graylist->{$_} => { $graylist->{$_} => 1 } } keys %{$graylist};
-    foreach my $sch (keys %equiv) {
-        my $schgds = $nmap{$sch};
-        $schgds = $graylist->{$schgds} if exists $graylist->{$schgds};
-        my $lay = $equiv{$sch};
-        if ($lay eq '') {
-            $lay = $schgds;
-        } else {
-            $lay = $graylist->{$lay} if exists $graylist->{$lay};
-        }
-        my $prev = $result{$schgds};
-        $prev = $result{$schgds} = {} unless $prev;
-        $prev->{$lay} = 1;
-    }
-
-    return \%result;
-}
-
-# map native transistors to macro model instantiations
-my $macro_models = Hercules::get_device_names($pdk_root);
-
-if($stage1 && $lvs eq 'herc'){
-
+if($stage1){
 ## CREATING DIRECTORY STRUCTURE AND COPYING FILES
     system("chmod 755 \"$working_dir\"");
-#    my_system("cp -f '$gdsii' '$working_dir/gdsii'" );
 
     print "Extraction Working directory is $working_dir\n";
-
     ##########################################################################
-    #                               Hercules                                 #
+    #                              ICV LVS                                   #
     ##########################################################################
-
-    print "Running Hercules LVS...\n";
-    makegdsgraylist($graycell_file);
-    $starRC_dir="$working_dir/starRC";
-    if( -e "$working_dir/starRC/group") {
-       my_system("rm -rf '$working_dir/starRC/group'");
-    }
-    my_system("mkdir -p '$starRC_dir'");
-    chdir "$starRC_dir";
-    if ($longcellnametop or $longcellnamegray) {
-        unlink "cell.gds2";
-        open (GIN, "rdgds '$gdsii' |");
-        open (GOUT, "| wrgds > cell.gds2");
-        while (<GIN>) {
-            chomp;
-            s/^  *//;
-            my ($x,$name)=split;
-            if ($x eq "SNAME" or $x eq "STRNAME") {
-                $_ = "$x $topcell" if ($longcellnametop and $name eq $cell_name);
-                $_ = "$x $graylist{$name}" if ($longcellnamegray and defined ($graylist{$name}));
-            }
-            print GOUT "$_\n";
-        }
-        close GIN;
-        close GOUT;
-    }
-    else {
-        my_system("rm -f cell.gds2; ln -s '$gdsii' cell.gds2");
-    }
-
-    my $equivalence="/* 	EQUIVALENCE = ./equiv */";
-    my $blackbox_file="/* 	BLACK_BOX_FILE = ./blackbox_file */";
-    my $doblackorgraybox="no";
-    if(-s $graycell_file){
-        $doblackorgraybox="yes";
-        open EQUIV_FILE, ">$starRC_dir/equiv" or die "CAN'T OPEN $starRC_dir/equiv for write\n";
-        print EQUIV_FILE "equiv $topcell=$topcell {}\n";
-        if( $blackboxHercules==1){
-           open BLACKBOX_FILE, ">$starRC_dir/blackbox_file" or die "CAN'T OPEN $starRC_dir/blackbox_file for write\n";
-           print BLACKBOX_FILE "LVS = {\n";
-        }
-        my $equiv = get_equiv(\%graylist, $extra_extract_equiv);
-        foreach my $sch (sort keys %{$equiv}) {
-            foreach my $lay (sort keys %{$equiv->{$sch}}) {
-                if ($blackboxHercules==1) {
-                    print BLACKBOX_FILE " $sch=$lay \n";
-                    print EQUIV_FILE "BLACK_BOX $sch=$lay {remove_layout_ports = {N_* }}\n";
-                }
-                else {
-                    print EQUIV_FILE "equiv $sch=$lay {}\n";
-                }
-            }
-        }
-        if( $blackboxHercules==1){
-            print BLACKBOX_FILE "}\n";
-            close(BLACKBOX_FILE );
-#            $blackbox_file=" 	BLACK_BOX_FILE = ./blackbox_file";
-        }
-        close(EQUIV_FILE);
-        $equivalence=" 	EQUIVALENCE = ./equiv";
-    }
-
-    my $lvs_process= "$conf_dir/hercules/LVS_Hercules.process";
-    my $lvs_rule_template= "$conf_dir/hercules/LVS_Hercules.rule";
-    my $lvs_deck= "$starRC_dir/lvs_deck";
-    my $lvs_rule= "$starRC_dir/LVS_Hercules.rule";
-    my $sch_out= "$starRC_dir/${cell_name}.sch_out";
-    my $herc_out = "$starRC_dir/temp.sch_out";
-    my_system("ln -s '$conf_dir/hercules/DFM' DFM");
-    # this is stupid but hercules cannot read an include filename
-    # with a ',' in it's path. (AAG)
-    symlink $cdl_file, "$starRC_dir/cell.cdl_gds2";
-    open (X, ">$starRC_dir/nettran.cdl");
-    print X "*.SCALE meter\n";
-    print X ".include '$starRC_dir/cell.cdl_gds2'\n";
-    close X;
-
-    Hercules::write_nettran_devmap("$starRC_dir/devMap", $macro_models);
-
-    my_system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$starRC_dir/nettran.cdl' -sp-slashSpace -sp-devMap '$starRC_dir/devMap' -logFile nettran.log -outName '$herc_out'");
-    if ($longcellnametop or $longcellnamegray) {
-        open (GIN, "<$herc_out");
-        open (GOUT, ">$sch_out");
-        while (<GIN>) {
-            chomp;
-            # extra stuff added by icv_nettran
-            s/{TYPE [A-Z]+}//;
-            if (/^.cell /) {
-                my ($x, $name) = split;
-                if ($name eq $cell_name and $longcellnametop) {
-                    $_ = "$x $topcell";
-                }
-                elsif (defined $graylist{$name} and $longcellnamegray) {
-                    $_ = "$x $graylist{$name}";
-                }
-            }
-            elsif (/^.inst /) {
-                s/\s*$//;
-                my ($x,$name) = split(/=/,$_);
-                if (defined($graylist{$name}) and $longcellnamegray) {
-                    $_ = "$x=$graylist{$name}";
-                }
-            }
-            print GOUT "$_\n";
-        }
-        close GIN;
-        close GOUT;
-        unlink $herc_out;
-    }
-    else {
-        # extra stuff added by icv_nettran
-        my_system("sed -e 's/{TYPE [A-Z][A-Z]*}//' '$herc_out' > '$sch_out'");
-        unlink("$herc_out");
-    }
-
-    open LVS_DECK, ">$lvs_deck" or die "CAN'T OPEN lvs_deck for write\n";
-    open LVS_RULE, "<$lvs_process"; # don't worry if this does not exist
-    while (<LVS_RULE>) {
-        print LVS_DECK;
-    }
-    close LVS_RULE;
-    open LVS_RULE_TEMPLATE, "<$lvs_rule_template" or die "CAN'T OPEN $lvs_rule_template for read\n";
-
-    my $line=<LVS_RULE_TEMPLATE>;
-    while($line !~/HEADER \{/){
-        if ($eplfix and ($line =~ /MESSAGE_ERROR/)) {
-           print LVS_DECK "        SCHEMATIC_GLOBAL = { GND }\n";
-        }
-        else {
-           print LVS_DECK $line;
-        }
-        # syntax for 65nm
-        if ($fixbulk and ($line =~ /^\s*EQUATE mos_type src_name/)) {
-           print LVS_DECK "        IGNORE = { BULK } \\\n";
-        }
-        $line=<LVS_RULE_TEMPLATE>;
-    }
-    print LVS_DECK <<END_OF_LVS_HEADER;
-HEADER {
-    INLIB = cell.gds2
-    OUTLIB = EV_OUT
-    BLOCK = $topcell
-    GROUP_DIR = group
-    FORMAT = GDSII
-    OUTPUT_FORMAT = GDSII
-    OUTPUT_LAYOUT_PATH = .
-    SCHEMATIC = $sch_out
-    SCHEMATIC_FORMAT = HERCULES
-    SCHEMATIC_TOP_BLOCK = $topcell
-$equivalence
-$blackbox_file
-}
-END_OF_LVS_HEADER
-
-    while(<LVS_RULE_TEMPLATE> !~/\}/){};
-    # OPTIONS SHOULD FOLLOW HEADER IMMEDIATELY
-    while($line=<LVS_RULE_TEMPLATE>){
-        print LVS_DECK $line;
-        last if $line =~ /^OPTIONS /;
-    }
-    while($line=<LVS_RULE_TEMPLATE>) {
-        # disable CMP-274 to allow empty cells in the schematic
-        $line =~ s/\bCMP-274\b//
-            if ($line =~ /MESSAGE_ENABLE.*\bCMP-274\b/);
-        last if $line =~ /^\}/;
-        print LVS_DECK $line;
-    }
-    if (-s "$starRC1_extra_options") {
-        my $fo;
-        if (open $fo, "<$starRC1_extra_options") {
-            while (<$fo>) {
-                print LVS_DECK;
-            }
-        }
-        close $fo;
-    }
-    print LVS_DECK "}\n";
-    while($line=<LVS_RULE_TEMPLATE>){
-       if ($line =~ /MERGE_PATHS *=/) {
-          $line =~ s/MERGE_PATHS=.*/MERGE_PATHS=TRUE/
-            if ($merge_paths);
-          $line =~ s/MERGE_PATHS=.*/MERGE_PATHS=FALSE/
-            if (! $merge_paths);
-       }
-       if ($eplfix and ($line =~ /MESSAGE_ERROR/)) {
-           print LVS_DECK "        SCHEMATIC_GLOBAL = { GND }\n";
-       }
-       else {
-           print LVS_DECK $line;
-       }
-       # syntax for 130nm
-       if ($fixbulk and ($line =~ /^ *EQUATE [NP]MOS/)) {
-          print LVS_DECK "        IGNORE = { BULK } \\\n";
-       }
-       # syntax for 65nm
-       if ($fixbulk and ($line =~ /^\s*EQUATE mos_type src_name/)) {
-          print LVS_DECK "        IGNORE = { BULK } \\\n";
-       }
-    }
-
-    close(LVS_DECK);
-    close(LVS_RULE_TEMPLATE);
-
-    if ($blackboxHercules) {
-        my_system("AVANTI_MULTI_BIG=FALSE LD_LIBRARY_PATH= BLACKBOX_MODE=$doblackorgraybox $ENV{HERC_SCRIPT} hercules -threads $threads -lvs-license $lvs_deck > hercules.log");
-    }
-    else {
-        my_system("LD_LIBRARY_PATH= BLACKBOX_MODE=$doblackorgraybox $ENV{HERC_SCRIPT} hercules -threads $threads -lvs-license $lvs_deck > hercules.log");
-    }
-
-    if( -e "$topcell.LVS_ERRORS" ){
-      if( -e "run_details/$topcell.cmperr" and defined $nvn_log ){
-          my_system("cp 'run_details/$topcell.cmperr' '$nvn_log'");
-      }
-
-      open LVS_ERRORS, "<$topcell.LVS_ERRORS";
-      my $Result=1;
-      while($line=<LVS_ERRORS>)  {
-        if($line=~/TOP BLOCK COMPARE RESULTS: PASS/ or $line=~/Top block compare result: PASS/){ $Result=0; }
-      }
-      if($Result == 0){
-        print "HERCULES/NVN SUCCESS!\n";
-      } else {
-        # note that the string 'NVN FAILED' must appear for lve
-        print "HERCULES/NVN FAILED: schematic and layout does not match.\n";
-        die "Error: HERCULES/NVN FAILED: schematic and layout does not match for $topcell\n";
-      }
-
-    } else {
-      die "Error: HERCULES/NVN FAILED: fail to extract layout for $topcell.\n";
-    }
-}
-
-if($stage1 && $lvs eq 'icv'){
-
-## CREATING DIRECTORY STRUCTURE AND COPYING FILES
-    system("chmod 755 \"$working_dir\"");
-#    my_system("cp -f '$gdsii' '$working_dir/gdsii'" );
-
-    print "Extraction Working directory is $working_dir\n";
-
-    ##########################################################################
-    #                                 ICV                                    #
-    ##########################################################################
-
     print "Running ICV LVS...\n";
-    makegdsgraylist($graycell_file);
     $starRC_dir="$working_dir/starRC";
     if( -e "$working_dir/starRC/group") {
        my_system("rm -rf '$working_dir/starRC/group'");
     }
     my_system("mkdir -p '$starRC_dir'");
     chdir "$starRC_dir";
-    if ($longcellnametop or $longcellnamegray) {
-        unlink "cell.gds2";
-        open (GIN, "rdgds '$gdsii' |");
-        open (GOUT, "| wrgds > cell.gds2");
-        while (<GIN>) {
-            chomp;
-            s/^  *//;
-            my ($x,$name)=split;
-            if ($x eq "SNAME" or $x eq "STRNAME") {
-                $_ = "$x $topcell" if ($longcellnametop and $name eq $cell_name);
-                $_ = "$x $graylist{$name}" if ($longcellnamegray and defined ($graylist{$name}));
-            }
-            print GOUT "$_\n";
-        }
-        close GIN;
-        close GOUT;
-    }
-    else {
-        my_system("rm -f cell.gds2; ln -s '$gdsii' cell.gds2");
-    }
-
-    my $equivalence;
-    my $doblackorgraybox="no";
-    if(-s $graycell_file){
-        $doblackorgraybox="yes";
-        $equivalence="equiv";
-        open EQUIV_FILE, ">$starRC_dir/equiv" or die "CAN'T OPEN $starRC_dir/equiv for write\n";
-        print EQUIV_FILE "equiv_options(equiv_cells={{\"$topcell\",\"$topcell\"}});\n";
-        my $equiv = get_equiv(\%graylist, $extra_extract_equiv);
-        foreach my $sch (sort keys %{$equiv}) {
-            foreach my $lay (sort keys %{$equiv->{$sch}}) {
-                my $type = $blackboxHercules == 1 ? 'lvs_black_box_options'
-                                                  : 'equiv_options';
-                print EQUIV_FILE "$type(equiv_cells={{\"$sch\",\"$lay\"}});\n";
-            }
-        }
-        close(EQUIV_FILE);
-    }
-
-    my $sch_out= "$starRC_dir/${cell_name}.sch_out";
-    # this is stupid but hercules cannot read an include filename
-    # with a ',' in it's path. (AAG)
-    symlink $cdl_file, "$starRC_dir/cell.cdl_gds2";
-    open (X, ">$starRC_dir/nettran.cdl");
-    print X "*.SCALE meter\n";
-    print X ".include '$starRC_dir/cell.cdl_gds2'\n";
-    close X;
-
-    Hercules::write_nettran_devmap("$starRC_dir/devMap", $macro_models);
-
-    my %map=();
-    %map=%graylist if $longcellnamegray;
-    $map{$cell_name}=$topcell if $longcellnametop;
-    run_nettran("$starRC_dir/nettran.cdl", "$starRC_dir/devMap", $sch_out, 1, \%map);
-
-    my $ilvs_dir="$pdk_root/share/Fulcrum/icv/ilvs";
-    my $ilvs_template="$ilvs_dir/ilvs_extract.tcl";
-    my $ilvs_deck= "$starRC_dir/ilvs_deck.tcl";
-    my_system("ln -s '$ilvs_dir/iLVS' iLVS");
-    my_system("cp", $ilvs_template, $ilvs_deck);
-
-    {
-        local %ENV = %ENV;
-        delete $ENV{'LD_LIBRARY_PATH'};
-        $ENV{'AVANTI_MULTI_BIG'}='FALSE';
-        $ENV{'TSMC_iLVS_LIB_PATH'}="$ilvs_dir/ICV_iLVS";
-        $ENV{'BLACKBOX_MODE'}=$doblackorgraybox;
-        my @cmd = ($ENV{'ICV_SCRIPT'}, 'icv',
-                   "-dp$threads",
-                   '-i', 'cell.gds2',
-                   '-s', $sch_out,
-                   '-sf', 'ICV',
-                   '-stc', $topcell,
-                   '-c', $topcell,
-                   '-lvs_license');
-        push @cmd, '-e', $equivalence if $equivalence;
-        push @cmd, $ilvs_deck;
-        my_system(@cmd);
-    }
+    my @lvs_cmd=("lvs",
+    "--working-dir=$starRC_dir",
+    "--gds2-file=$gdsii",
+    "--cdl-file=$cdl_file",
+    "--cdl-cell-name=$cdl_cell_name",
+    "--blackbox=$blackbox",
+    "--threads=$threads",
+    "--rc-database=1",
+    "--fulcrum-pdk-root=$pdk_root");
+    push @lvs_cmd, "--icv-options=$lvs_extra_options" if ($lvs_extra_options ne "");
+    push @lvs_cmd, "--gray-cell-list=$graycell_file" if ($graycell_file ne "");
+    push @lvs_cmd, "--extra-extract-equiv=$extra_extract_equiv" if (defined $extra_extract_equiv and $extra_extract_equiv ne "");
+    push @lvs_cmd, "$cell_name";
+    my_system(@lvs_cmd);
 
     if( -e "$topcell.LVS_ERRORS" ){
       if( -e "run_details/$topcell.cmperr" and defined $nvn_log ){
@@ -815,6 +413,8 @@ if($stage1 && $lvs eq 'icv'){
     } else {
       die "Error: ICV/NVN FAILED: fail to extract layout for $topcell.\n";
     }
+
+
 }
 
 if($stage2a){
@@ -822,7 +422,6 @@ if($stage2a){
     ##########################################################################
     #                               Pin Order File                           #
     ##########################################################################
-
         chdir "$starRC_dir";
 
         $graycell_list="";
@@ -889,11 +488,10 @@ if ($stage2b) {
     print "Running StarRC Extraction ...\n";
 
     chdir "$starRC_dir";
-    my $Tcad_Grid_File= "$conf_dir/starRC/nxtgrd";
-    if ( -f "$conf_dir/starRC/$extractCorner.nxtgrd") {
-        $Tcad_Grid_File= "$conf_dir/starRC/$extractCorner.nxtgrd";
+    my $Tcad_Grid_File= "$conf_dir/nxtgrd";
+    if ( -f "$conf_dir/$extractCorner.nxtgrd") {
+        $Tcad_Grid_File= "$conf_dir/$extractCorner.nxtgrd";
     }
-    my $Mapping_File= "$conf_dir/starRC/layer_map";
     my $spiceTemp= "${cell_name}.spf";
     $spiceTemp = "${cell_name}.spef" if $genspef;
     my $skip_cell_cmd="";
@@ -938,16 +536,10 @@ if ($stage2b) {
         $reduction="HIGH";
     }
 
-    my $hn_netlist = join("\n",
-        map { ( $_ =~ /_mac$/ ?
-                () : "HN_NETLIST_MODEL_NAME:          $_ ${_}_mac") }
-        @{$macro_models});
 
     my $lvsresult = "";
-    if (-d 'MILKYWAY_OUTPUT') {
-        $lvsresult = "MILKYWAY_DATABASE:              ./MILKYWAY_OUTPUT";
-    } elsif (-e 'STARRCXT.runset_rep') {
-        $lvsresult = "ICV_RUNSET_REPORT_FILE:         STARRCXT.runset_rep";
+    if (-e 'starrc.report') {
+        $lvsresult = "ICV_RUNSET_REPORT_FILE:         starrc.report";
     } else {
         die "Error: STAR_RC FAILED: Can't find LVS results.\n";
     }
@@ -974,9 +566,8 @@ XREF_LAYOUT_INST_PREFIX:        ld#
 XREF_LAYOUT_NET_PREFIX:         ln#
 OPERATING_TEMPERATURE:          $temperature
 $placement_info_file
-POWER_NETS:                     Vdd GND* *AGND* *AVDD* VDD* VSS* Vss *VFB*
+POWER_NETS:                     VCC Vdd GND* *AGND* *AVDD* VDD* VSS* Vss *VFB*
 TCAD_GRD_FILE:                  $Tcad_Grid_File
-MAPPING_FILE:                   $Mapping_File
 SPICE_SUBCKT_FILE:              $pin_file
 $skip_cell_cmd
 IGNORE_CAPACITANCE:             ALL RETAIN_GATE_DIFFUSION_COUPLING
@@ -1000,7 +591,6 @@ REMOVE_FLOATING_PORTS:          YES
 NETLIST_GROUND_NODE_NAME:       $netlist_gnd
 CASE_SENSITIVE:                 YES
 MAGNIFY_DEVICE_PARAMS:          NO
-$hn_netlist
 $multicore
 END_OF_STAR_CMD
 
@@ -1066,8 +656,9 @@ if ($stage2c) {
 
     chdir "$starRC_dir";
     print "Re-Formating Spice File ...\n";
-    open (BIND, "<$nvn_bind_file");
     my %bind=();
+    if(-r $nvn_bind_file){
+    open (BIND, "<$nvn_bind_file");
     while (<BIND>) {
         chomp;
         if (/^c /) {
@@ -1080,6 +671,7 @@ if ($stage2c) {
         }
     }
     close BIND;
+    }
     my $spiceTemp= "${cell_name}.spf";
     open( SOURCE, "<$spiceTemp") or die "Can't open '$spiceTemp' for reading.\n";
     open( TARGET, ">$spiceFile") or die "Can't open '$spiceFile' for writing.\n";
@@ -1151,10 +743,10 @@ if ($stage2c) {
           my $rest =$fields[6];
           $name=~s/^M//;
           if ($fixbulk) {
-              if (($type =~ /^nmos/) or ($type =~ /^nch/)) {
+              if ($type =~ /^n/) {
                 $term4="$GND";
               }
-              if (($type =~ /^pmos/) or ($type =~ /^pch/)) {
+              if ($type =~ /^p/) {
                 $term4="$Vdd";
               }
           }
@@ -1732,10 +1324,10 @@ sub nvn_spice1 {
     #make bind.rul
     open (P, "<$cdl_file");
     open (Q, ">$nvn_dir/cell.cdl_gds2");
-    my %ispower=("Vdd"=>1,"GND"=>1);
+    my %ispower=("Vdd"=>1,"GND"=>1,"VSS"=>1, "VCC"=>1);
     my %isresistor=(
-        "rm1" => 1,
-        "rm1w" => 1,
+        "rgcnfm1" => 1,
+        "rtcnfm1" => 1,
         "rm2" => 1,
         "rm2w" => 1,
         "rm3" => 1,
@@ -1797,7 +1389,11 @@ sub nvn_spice1 {
     }
     close P;
     close Q;
-    my_system("cp -f '$nvn_bind_file' '$nvn_dir/bind.rul'");
+    if($nvn_bind_file ne "") {
+        my_system("cp -f '$nvn_bind_file' '$nvn_dir/bind.rul'");
+    }else{
+        my_system("touch '$nvn_dir/bind.rul'");
+    }
     my_system("chmod 664 '$nvn_dir/bind.rul'");
     open BIND,">>$nvn_dir/bind.rul" or die "Cannot open $nvn_dir/bind.rul";
     print BIND "C $cdl_cell_name $cell_name\n";

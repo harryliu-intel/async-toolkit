@@ -24,7 +24,6 @@ my %dontsave=(
 my %noextracttask = (
     "antenna" => 1,
     "hdrc" => 1,
-    "hlvs" => 1,
     "jlvs" => 1,
     "lef" => 1,
     "lvs" => 1,
@@ -63,9 +62,8 @@ my $hsim_threads=1;
 my $hspice_threads=1;
 my $globalJreFlags="";
 my $jreFlags="";
-my $eplfix=0;
 my $extra_extract_equiv="";
-my $starRC1_extra_options="";
+my $lvs_extra_options="";
 my $clean_trace=1;
 my $mysqlhost="chipdev";
 my $mysqldb="lve";
@@ -160,8 +158,6 @@ sub forcetarget {
         $target =~ s/lvs.raw//;
         dounlink($target."lvs.cls");
         dounlink($target."lvs.tar.bz2");
-    }
-    elsif ($task eq "hlvs") {
     }
     elsif ($task eq "gds2") {
     }
@@ -410,7 +406,6 @@ my $output_dir      = "$ENV{PWD}";
 my $arg_output_dir  = $output_dir;
 my $slurp_dir       = "";
 my $deleteExtractDir= 1;    # clean up after extraction
-my $keepHlvsDir= 0;         # clean up after hlvs
 my $keepHdrcDir= 0;         # clean up after hdrc
 my $keepDrcDir= 0;          # clean up after drc
 my $keepFrcDir= 0;          # clean up after frc
@@ -419,9 +414,7 @@ my $keepLvsDir= 0;          # clean up after lvs
 my $hsimDeleteFiles= 1;
 my $monte_carlo=0;
 my $start_time=2;
-my $merge_paths=0;
 my $extract_corner="typical";
-my $extract_lvs="herc";
 my $extractdir="";
 my $extractdir_temp="";
 my $extractdir_corner="";
@@ -480,9 +473,7 @@ my $jobs      = 1;
 my $qsub      = 1;
 my $ignoreNVN = 0;
 my $ignoreDanglingPinCheck = 1;
-my $blackboxHercules = 0;
-my $hlvsmode = "flat";
-my $hlvs_graybox_list = "";
+my $lvsBlackbox = 0;
 my $qx        = 0;
 my $graybox_list = "";
 my $customSpice = "";
@@ -611,7 +602,6 @@ my @validtasks = (
     "frc",
     "gds2",
     "hdrc",
-    "hlvs",
     "hsim",
     "xa",
     "hspice",
@@ -1135,7 +1125,6 @@ else {
 my %forceqsub = (
     "drc" => 1,
     "lvs" => 1,
-    "hlvs" => 1,
     "extract" => 1,
     "hsim" => 1,
     "hspice" => 1,
@@ -1276,7 +1265,6 @@ CELL_NODEPROPS                   := $cell_nodeprops
 MAXF                             := $maxF
 DELETE_EXTRACT_DIR               := $deleteExtractDir
 DELETE_BUMPCHECK_DIR             := $delete_bumpcheck_dir
-KEEP_HLVS_DIR                    := $keepHlvsDir
 KEEP_HDRC_DIR                    := $keepHdrcDir
 KEEP_LVS_DIR                     := $keepLvsDir
 KEEP_DRC_DIR                     := $keepDrcDir
@@ -1310,9 +1298,9 @@ NAMED_RESISTOR_ARG               := $namedResistorArg
 LEFFILE                          := $lef_file
 DEFFILE                          := $def_file
 QX                               := $qx
-HLVS_GRAYBOX_LIST                := $hlvs_graybox_list
 GRAYBOX_LIST                     := $graybox_list
 GRAYBOX_MODE                     := $graybox_mode
+EXTRA_EQUIV                      := $extra_extract_equiv
 PRS_TAU                          := $prsTau
 POWER_SAG                        := $power_sag
 BUMP_SOURCE_PVT                  := @bump_source_pvt
@@ -1354,8 +1342,7 @@ ROOT_SLURP_DIR                   := $slurp_dir
 SIXTYFIVEMODE                    := $sixtyfivemode
 IGNORE_NVN                       := $ignoreNVN
 IGNORE_DANGLING_PIN_CHECK        := $ignoreDanglingPinCheck
-BLACKBOX_HERCULES                := $blackboxHercules
-HLVS_MODE                        := $hlvsmode
+LVS_BLACKBOX                     := $lvsBlackbox
 SUB_LVE_ROOT_DIR                 := $sub_lve_root_dir
 ABSTRACT_VIEW                    := $abstract_view
 SKIP_SUB_LVE                     := $skip_sub_lve
@@ -1370,9 +1357,7 @@ FULCRUM_PDK_PACKAGE_EXTRACT_ROOT := $pdk_extract_root
 EXTRACT_STARRC                   := $extract_starrc
 CUSTOM_SPICE                     := $customSpice
 CUSTOM_SPICE_INCLUDE             := $customSpiceInc
-MERGE_PATHS                      := $merge_paths
 EXTRACT_CORNER                   := $extract_corner
-EXTRACT_LVS                      := $extract_lvs
 EXTRACT_DIR                      := $extractdir
 LIBTRANSLATE                     := $libtranslate
 FAKESIZE                         := $fakesize
@@ -1391,9 +1376,7 @@ HERCULES_THREADS                 := $hercules_threads
 STARRC_THREADS                   := $starrc_threads
 HSIM_THREADS                     := $hsim_threads
 HSPICE_THREADS                   := $hspice_threads
-EPLFIX                           := $eplfix
-EXTRA_EQUIV                      := $extra_extract_equiv
-STARRC1_EXTRA_OPTIONS            := $starRC1_extra_options
+LVS_EXTRA_OPTIONS                := $lvs_extra_options
 INSTANCE_PORT                    := $instancePort
 MYSQLHOST                        := $mysqlhost
 MYSQLDB                          := $mysqldb
@@ -2343,25 +2326,6 @@ sub enumerate_targets {
                 $targ = "$cellpath/$validexview/lvs.raw";
                 addTarget($cell,$task,$targ);
             }
-        } elsif ($task eq "hlvs") {
-            if (@view_extracted and $validexview ne "") {
-                my $targ = "$cellpath/$validexview/cell.gds2";
-                addTarget($cell,$task,$targ);
-                $targ = "$cellpath/$validexview/hlvs.raw";
-                addTarget($cell,$task,$targ);
-                # force making of intermediate files
-                $targ = "$cellpath/$validexview/hlvs.err";
-                addTarget($cell,$task,$targ);
-                if ( $hlvsmode ne "flat") {
-                    if ( -f "$hlvs_graybox_list") {
-                        $targ = "$cellpath/$validexview/hlvs_custom_list";
-                    }
-                    else {
-                        $targ = "$cellpath/$validexview/hlvs_graybox_list";
-                    }
-                    addTarget($cell,$task,$targ);
-                }
-            }
         } elsif ($task eq "gds2") {
             if (@view_extracted and $validexview ne "") {
                 my $targ = "$cellpath/$validexview/cell.gds2";
@@ -2580,7 +2544,7 @@ sub usage {
     }
 
     $routed="default" if !defined $routed;
-    my $keep=($keepDrcDir and $keepHdrcDir and $keepLvsDir and $keepHlvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and ! $delete_bumpcheck_dir) ? 1 : 0;
+    my $keep=($keepDrcDir and $keepHdrcDir and $keepLvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and ! $delete_bumpcheck_dir) ? 1 : 0;
     my $force=join(",", @force);
 
     my $usage = <<EOF;
@@ -2613,7 +2577,6 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --keep-drc=[$keepDrcDir] (do not clean up after drc)
     --keep-frc=[$keepFrcDir] (do not clean up after frc)
     --keep-hdrc=[$keepHdrcDir] (do not clean up after hdrc)
-    --keep-hlvs=[$keepHlvsDir] (do not clean up after hlvs)
     --keep-lvs=[$keepLvsDir] (do not clean up after lvs)
     --keep-totem=[$keepTotemDir] (do not clean up after totem)
     --keep[-all]=[$keep] (do not clean up any of the above)
@@ -2626,10 +2589,9 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --layoutScaleY=[$layoutScaleY]  (Y coordinate scaling for estimated RC)
     --custom-config=[$custom_config]  (extra jauto options for estimated RC)
     --nowellplugs=[$nowellplugs] (fake the well plug connections)
-    --blackbox-hercules=[$blackboxHercules] (run Hercules in blackbox mode)
+    --lvs-blackbox=[$lvsBlackbox] (run in blackbox mode)
     --extract-corner=[$extract_corner] (one of t[yp], cb[est], rcb[est], cw[orst], rcw[orst], m10typ)
         CAUTION: do not use corner unless in a separate lve tree for now.
-    --extract-lvs=[$extract_lvs] (LVS tool, herc or icv)
     --named-resistor-layers=[$namedResistorLayers] (preserve resistors on these layers in accurate mode for EM analysis)
     --star-rc=[$star_rc] ( no need to use both, these are complementary)
     --simplex=[$simplex]
@@ -2646,7 +2608,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --abstract-view=[$abstract_view] (view used to generate LEF )
     --big-lef=[$big_lef] (for --task=lef only, default=1 )
     --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to blackbox equiv file)
-    --starRC1-extra-options=[$starRC1_extra_options] (add options to hercules lvs_deck)
+    --lvs-extra-options=[$lvs_extra_options] (add options to lvs command line)
     --instance-port=[$instancePort] (@validInstancePort)
 
   Extract Custom Options:
@@ -2657,6 +2619,11 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --qx=[$qx] ( gate level=1 or transistor level=0 )
     --lef-file=[$lef_file] (LEF file name for gate level extraction)
     --def-file=[$def_file] (DEF file name for gate level extraction)
+
+  LVS option for task lvs:
+    --lvs-blackbox=[$lvsBlackbox] (run in blackbox mode)
+    --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to equiv file)
+    --lvs-extra-options=[$lvs_extra_options] (add options to lvs command line)
 
   SPICE Options for hspice,hsim,xa tasks:
     --hspice-threads=[$hspice_threads] (number of hspice threads)
@@ -2746,7 +2713,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --65mode=[$sixtyfivemode] (fake 65nm gds2/cdl translate from 130 mode)
 
   Sweep Options (supports comma separated lists):
-    --task=[@task]  (alint,aspice,asta,captally,drc,extract,fakelib,gds2,hdrc,hlvs,hsim,hspice,xa,jlvs,lef,lib,lvs,plt,slint,spef,totem)
+    --task=[@task]  (alint,aspice,asta,captally,drc,extract,fakelib,gds2,hdrc,hsim,hspice,xa,jlvs,lef,lib,lvs,plt,slint,spef,totem)
     --mode=[@mode]  (create extracted/estimated/nogeometry/accurate/custom spice files)
     --view-mode-order=[@view_mode_order]  (search priority order of view/mode)
     --extracted-view=[@view_extracted]  (view to use for extracted/accurate RC)
@@ -2762,11 +2729,6 @@ USAGE: $0 [options] cell[:env][:node,node,...]
   HDRC Options
     --hdrc-density [$hdrc_density] (run density checks, normally off)
     --hercules-threads [$hercules_threads]
-
-  HLVS Options
-    --hlvs-mode=[$hlvsmode] (one of flat, graybox, blackbox: default flat)
-    --hlvs-graybox-list=[$hlvs_graybox_list] (override the auto generated graybox list)
-    --hlvs-eplfix=[$eplfix] (needed in some rare cases)
 
   RTE Options
     --digital-delay=[$digitalDelay] [(an integer value) digitalDelay for jdsim-auto ]
@@ -2852,18 +2814,15 @@ sub setOptions {
    $optionvalues{"maxF"} =  $maxF;
    $optionvalues{"extractTemp"} =  $extractTemp;
    $optionvalues{"deleteExtractDir"} =  $deleteExtractDir;
-   $optionvalues{"keep-hlvs"} =  $keepHlvsDir;
    $optionvalues{"keep-lvs"} =  $keepLvsDir;
    $optionvalues{"keep-hdrc"} =  $keepHdrcDir;
    $optionvalues{"keep-drc"} =  $keepDrcDir;
    $optionvalues{"keep-frc"} =  $keepFrcDir;
    $optionvalues{"keep-totem"} =  $keepTotemDir;
-   $optionvalues{"keep-all"} =  ( $keepHlvsDir and $keepLvsDir and $keepHdrcDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir);
+   $optionvalues{"keep-all"} =  ( $keepLvsDir and $keepHdrcDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir);
    $optionvalues{"ignore-nvn"} =  $ignoreNVN;
    $optionvalues{"ignore-dangling"} =  $ignoreDanglingPinCheck;
-   $optionvalues{"blackbox"} = $blackboxHercules;
-   $optionvalues{"hlvs-mode"} =  $hlvsmode;
-   $optionvalues{"hlvs-graybox-list"} =  $hlvs_graybox_list;
+   $optionvalues{"blackbox"} = $lvsBlackbox;
    $optionvalues{"reduced-dspf"} =  $reduced_dspf;
    $optionvalues{"reduce-mode"} =  $reduce_mode;
    $optionvalues{"layoutScaleX"} =  $layoutScaleX;
@@ -2871,9 +2830,7 @@ sub setOptions {
    $optionvalues{"mmonitor"} =  $mmonitor;
    $optionvalues{"layoutScaleY"} =  $layoutScaleY;
    $optionvalues{"custom-config"} =  $custom_config;
-   $optionvalues{"merge-paths"} =  $merge_paths;
    $optionvalues{"extract-corner"} =  $extract_corner;
-   $optionvalues{"extract-lvs"} =  $extract_lvs;
    $optionvalues{"qx"} =  $qx;
    $optionvalues{"lef-file"} =  $lef_file;
    $optionvalues{"def-file"} =  $def_file;
@@ -3025,9 +2982,8 @@ sub setOptions {
    $optionvalues{"hdrc-density"} =  $hdrc_density;
    $optionvalues{"noextractdeps"} =  $noextractdeps;
    $optionvalues{"keepMakefiles"} =  $deletemakefiles;
-   $optionvalues{"hlvs-eplfix"} =  $eplfix;
    $optionvalues{"extra-extract-equiv"} =  $extra_extract_equiv;
-   $optionvalues{"starRC1-extra-options"} =  $starRC1_extra_options;
+   $optionvalues{"lvs-extra-options"} =  $lvs_extra_options;
    $optionvalues{"instance-port"} = $instancePort;
    $optionvalues{"use-db"} =  $usedb;
    $optionvalues{"make"} =  $make;
@@ -3086,13 +3042,11 @@ sub processOption {
         }
         elsif ($key eq "deleteExtractDir")    { $deleteExtractDir = $value ? 1 : 0; }
         elsif ($key eq "delete-bumpcheck-dir"){ $delete_bumpcheck_dir = $value ? 1 : 0; }
-        elsif ($key eq "keep-hlvs")           { $keepHlvsDir = $value ? 1 : 0; }
         elsif ($key eq "keep-lvs")            { $keepLvsDir = $value ? 1 : 0; }
         elsif ($key eq "keep-hdrc")           { $keepHdrcDir = $value ? 1 : 0; }
         elsif ($key eq "keep-drc")            { $keepDrcDir = $value ? 1 : 0; }
         elsif ($key eq "keep-totem")          { $keepTotemDir = $value ? 1 : 0; }
         elsif ($key eq "keep" or $key eq "keep-all") {
-                                                $keepHlvsDir = $value ? 1 : 0;
                                                 $keepLvsDir = $value ? 1 : 0;
                                                 $keepHdrcDir = $value ? 1 : 0;
                                                 $keepDrcDir = $value ? 1 : 0;
@@ -3103,14 +3057,7 @@ sub processOption {
                                                 $delete_bumpcheck_dir = $value ? 0 : 1; }
         elsif ($key eq "ignore-nvn")          { $ignoreNVN = $value; }
         elsif ($key =~ /^ignore-dangling/)    { $ignoreDanglingPinCheck = $value; }
-        elsif ($key =~ /^blackbox/)           { $blackboxHercules = $value; }
-        elsif ($key eq "hlvs-mode")           { $hlvsmode = $value; }
-        elsif ($key eq "hlvs-graybox-list")   { if (! -f "$value") {
-                                                    die "hlvs graybox list '$value' does not exist";
-                                                }
-                                                $hlvs_graybox_list = canonicalizePath($value);
-                                                check_path($value);
-                                              }
+        elsif ($key =~ /^blackbox/)           { $lvsBlackbox = $value; }
         elsif ($key eq "reduced-dspf")        { $reduced_dspf = $value; }
         elsif ($key eq "reduce-mode")         { $reduce_mode = $value; }
         elsif ($key eq "layoutScaleX")        { $layoutScaleX = $value; }
@@ -3118,7 +3065,6 @@ sub processOption {
         elsif ($key eq "mmonitor")            { $mmonitor = $value; $ENV{LVE_MMONITOR}=$value; }
         elsif ($key eq "layoutScaleY")        { $layoutScaleY = $value; }
         elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); check_path($value); }
-        elsif ($key eq "merge-paths")         { $merge_paths=1; }
         elsif ($key eq "extract-corner")      {
             if ($value =~ /^t/i) {
                 $extract_corner = "typical";
@@ -3150,7 +3096,6 @@ sub processOption {
             #setup extract directory
             $extractdir="$extractdir_corner$extractdir_temp";
         }
-        elsif ($key eq "extract-lvs") { $extract_lvs = $value; }
 
         # extract_qx options
         elsif ($key eq "qx") { $qx = $value; }
@@ -3418,9 +3363,8 @@ sub processOption {
         elsif ($key eq "hdrc-density")       { $hdrc_density = $value; }
         elsif ($key eq "noextractdeps")      { $noextractdeps = $value; }
         elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
-        elsif ($key eq "hlvs-eplfix")        { $eplfix = $value; }
         elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value);}
-        elsif ($key eq "starRC1-extra-options") { $starRC1_extra_options = canonicalizePath($value);}
+        elsif ($key eq "lvs-extra-options") { $lvs_extra_options = canonicalizePath($value);}
         elsif ($key eq "instance-port") {
             if (grep { $value eq $_ } @validInstancePort) {
                 $instancePort = $value;
