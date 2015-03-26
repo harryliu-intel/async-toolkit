@@ -3,12 +3,13 @@
 ; Top-level function to make a flatten view and switch to it
 (defun MakeFlatten
   (@key (CV (geGetEditCellView))   ; specify CellView or nil to use edit view
+        (topMetal 8)               ; top metal for power grid
         (RegenerateFromCast nil)   ; force CAST query
         (Verbose nil)              ; verbose
         (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
-        (doMakePowerGrid nil)      ; make power grid
-        (doPowerGridAbstract nil)  ; generate abstract view of power grid
+        (doMakePowerGrid t)        ; make power grid
+        (doPowerGridAbstract t)    ; generate abstract view of power grid
         )
   (let (MaxHeapSize FlattenCellsList Components RComponents CellBaseName
         type_sub PowerGridCellName OBSCellName flattenCV xalign yalign
@@ -56,7 +57,7 @@
 
     ; Create power grid
     (when doMakePowerGrid
-      pgCV = (MakePowerGrid ?CV flattenCV)
+      pgCV = (MakePowerGrid ?CV flattenCV ?topMetal topMetal)
       (unless pgCV (error "Unable to create power grid\n"))
       )
 
@@ -253,11 +254,11 @@
 
     ; create prBoundary, power pins, and instantiate power grid
     (dbCreatePRBoundary powerCV CV->prBoundary->points)
-    (CreatePowerPins powerCV xy topMetal)
-    (CreatePowerPins CV      xy topMetal)
+    (dbCreatePolygon powerCV (list Metal[topMetal] "block") CV->prBoundary->points)
+    (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "inputOutput")
+    (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "inputOutput")
+    (CreatePowerPins CV xy topMetal)
     tiehilo = (dbCreateInst CV powerCV "pg" 0:0 "R0")
-
-    ; finish up power grid and pins
     (AnchorInstance tiehilo)
     GND = (dbFindNetByName CV GNDNetName)
     Vdd = (dbFindNetByName CV VddNetName)
@@ -284,8 +285,8 @@
 ; others layers become boundary purpose
 (defun MakePowerGridAbstract
   (@key (CV (geGetEditCellView)) ; flatten CellView
-        (powerLayers (list "M2" "M3" "M8"))) ; which layers to keep as pins
-  (let (TEMP inst pgCV dd pgaCV points
+        (powerLayers (list Metal[2] Metal[4] Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
+  (let (TEMP inst pgCV pgaCV
         AssuraLayerMappings AssuraRuleFile AssuraRunLog figsVdd figsGND)
 
     ; fing powergrid CV
@@ -295,39 +296,49 @@
 
     ; run Assura makePowerGridAbstract.rul
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    AssuraLayerMappings = (list
-                           (list "prbleaf" (list "M1" "boundary")) ; poly fill
-                           (list "m2v" (list "M2" "vdd"))
-                           (list "m2g" (list "M2" "gnd"))
-                           (list "m3v" (list "M3" "vdd"))
-                           (list "m3g" (list "M3" "gnd"))
-                           (list "m4v" (list "M4" "vdd"))
-                           (list "m4g" (list "M4" "gnd"))
-                           (list "m5v" (list "M5" "vdd"))
-                           (list "m5g" (list "M5" "gnd"))
-                           (list "m6v" (list "M6" "vdd"))
-                           (list "m6g" (list "M6" "gnd"))
-                           (list "m7v" (list "M7" "vdd"))
-                           (list "m7g" (list "M7" "gnd"))
-                           (list "m8v" (list "M8" "vdd"))
-                           (list "m8g" (list "M8" "gnd"))
-                           )
-    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/cell_automation/%s"
-                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-                              "makePowerGridAbstract.rul")
-    AssuraRunLog = (sprintf nil "%s/%s.abstract_pg.log"
-                            TEMP
-                            pgCV->cellName)
-    (AssuraRunAssuraLayerProcessor
-     pgCV
-     pgCV->libName pgCV->cellName "abstract"
-     AssuraRuleFile
-     TEMP
-     AssuraLayerMappings
-     nil
-     ?AssuraRunLog AssuraRunLog
-     ?LeaveMess nil
-     )
+    (when nil
+      ; BUG: Assura isn't working
+      AssuraLayerMappings = (list
+                             (list "m2v" (list Metal[2] "vdd"))
+                             (list "m2g" (list Metal[2] "gnd"))
+                             (list "m3v" (list Metal[3] "vdd"))
+                             (list "m3g" (list Metal[3] "gnd"))
+                             (list "m4v" (list Metal[4] "vdd"))
+                             (list "m4g" (list Metal[4] "gnd"))
+                             (list "m5v" (list Metal[5] "vdd"))
+                             (list "m5g" (list Metal[5] "gnd"))
+                             (list "m6v" (list Metal[6] "vdd"))
+                             (list "m6g" (list Metal[6] "gnd"))
+                             (list "m7v" (list Metal[7] "vdd"))
+                             (list "m7g" (list Metal[7] "gnd"))
+                             (list "m8v" (list Metal[8] "vdd"))
+                             (list "m8g" (list Metal[8] "gnd"))
+                             )
+      AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/assura/%s"
+                                (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
+                                "makePowerGridAbstract.rul")
+      AssuraRunLog = (sprintf nil "%s/%s.abstract_pg.log"
+                              TEMP
+                              pgCV->cellName)
+      (AssuraRunAssuraLayerProcessor
+       pgCV
+       pgCV->libName pgCV->cellName "abstract"
+       AssuraRuleFile
+       TEMP
+       AssuraLayerMappings
+       nil
+       ?AssuraRunLog AssuraRunLog
+       ?LeaveMess nil
+       )
+      )
+    (when t
+      ; BUG: work-around
+      pgaCV=(dbCopyCellView pgCV pgCV->libName pgCV->cellName "abstract" nil nil t)
+      (foreach inst pgaCV->instances (dbFlattenInst inst 32))
+      (foreach label (setof x pgaCV->shapes x->objType=="label") (dbDeleteObject label))
+      (leMergeShapes pgaCV->shapes)
+      (dbSave pgaCV)
+      )
     
     ; open power grid abstract
     pgaCV = (dbOpenCellViewByType pgCV->libName pgCV->cellName "abstract" "maskLayout" "a")
@@ -357,18 +368,9 @@
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV VddNetName) nil) figsVdd)
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV GNDNetName) nil) figsGND)
 
-    ; create placement blockage object over prBoundary leaf of fill cells
-    (foreach shape (setof s pgaCV->shapes s->lpp==(list "M1" "boundary"))
-      points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
-                     (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
-                     (t shape->points)
-                     )
-      (dbCreateAreaBlockage CV points) ; in flatten view directly
-      )
-
     ; convert remaining shapes to boundary
     (foreach shape (setof shape pgaCV->shapes !(member shape->layerName powerLayers))
-             shape->purpose="boundary"
+             shape->purpose=KeepoutPurpose
              )
     (CopyKeepoutToBlockage pgaCV)
 

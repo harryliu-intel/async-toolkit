@@ -69,7 +69,7 @@
 
     ; make flatten view automatically
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
-      CV = (MakeFlatten ?CV CV))
+      CV = (MakeFlatten ?CV CV ?topMetal topMetal))
 
     ; cell names
     PowerGridCellName = (strcat CV->cellName "_pg")
