@@ -605,7 +605,7 @@ wires_modtime = makeTable("wires" 0)
                            @key (flipX nil) (flipY nil) (isPin nil)
                            (startVias nil) (endVias nil) (doubleVias t) (verticalVias nil) (positiveVias nil) 
                            (guideInstName nil) (guideInst nil)
-                           (only_evens nil) (only_odds nil) (drawShield t)
+                           (only_evens nil) (only_odds nil) (drawShield nil)
                            (CV (geGetEditCellView)))
   (let (x y o hv xoff yoff newpoints index index_list
         (types (ClassifyPoints points))
