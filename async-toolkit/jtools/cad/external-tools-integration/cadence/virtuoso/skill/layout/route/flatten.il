@@ -155,7 +155,7 @@
         (topMetal 8)
         )
   (let (TEMP powerCellName align
-        inst prb PowerGridSize PGS prbObjPoints prb1 copyprb vertprb vertprbrec
+        inst prb vertprb
         x1box x2box y1box y2box x1 y1 x2 x2 xy
         AssuraLayerMappings
         powerCV pgMap blks
@@ -170,21 +170,12 @@
     inst = (dbFindAnyInstByName CV "pg")
     (when inst (dbDeleteObject inst))
 
-    ; get prBoundary boundary shapes 
+    ; get prBoundary boundary shapes
     (unless CV->prBoundary->points (error "Bad prBoundary"))
-    prbObjPoints = CV->prBoundary->points
-    prb1 = (dbCreatePolygon CV (list "prBoundary" "drawing") prbObjPoints)
-    copyprb1 = (setof x CV->shapes x->lpp==(list "prBoundary" "drawing"))
-
-    ; checks for prBoundary drawing, that only one exists, and that vertices are on grid
+    prb = (dbCreatePolygon CV (list "prBoundary" "boundary") CV->prBoundary->points)
     align = gridAlignment[topMetal]
-    (when (length copyprb1)!=1
-          (error "ERROR: Check prBoundary layer. Either no prBoundary or more than one exists."))
-    copyprb = (car copyprb1)
-    vertprb = (setof vertprb copyprb->points (CheckOffGrid vertprb align))
+    vertprb = (setof v prb->points (CheckOffGrid v align))
     (when vertprb (error "Not all prBoundary vertices are on grid: %L" vertprb))
-    prb = (dbCopyShape copyprb CV)
-    prb->lpp = (list "prBoundary" "boundary")
 
     ; get bounding box as an integer multiple of MfgGrid
     x1box = 1.0*(round (leftEdge   prb->bBox)/MfgGrid)
@@ -193,44 +184,50 @@
     y2box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
 
     ; minimum sized power grid
-    PowerGridSize = 2*PowerGridPitch
-    PGS = (round PowerGridSize/MfgGrid)
-    x1 = (floor   x1box/PGS)
-    y1 = (floor   y1box/PGS)
-    x2 = (ceiling x2box/PGS)
-    y2 = (ceiling y2box/PGS)
+    x1 = (floor   x1box/(round (car  align)/MfgGrid))
+    y1 = (floor   y1box/(round (cadr align)/MfgGrid))
+    x2 = (ceiling x2box/(round (car  align)/MfgGrid))
+    y2 = (ceiling y2box/(round (cadr align)/MfgGrid))
 
     ; avoid M2 overlapping prBoundary of subcells (looks only one level down)
     blks = (PaintOverSubcellPrBoundary (list Metal[2] "block") ?CV CV)
 
     ; find bottom left vertices of prbound to place Vdd/GND pins
-    (cond (prb->objType == "polygon" xy = (car (SortVertices prb->points)))
+    (cond (prb->objType=="polygon" xy = (car (SortVertices prb->points)))
           (t xy = x1box:y1box)
           )
 
     ; run Assura rules
-    AssuraLayerMappings = (list
-                           (list "power2" (list Metal[2] "block"))
-                           (list "power3" (list Metal[3] "block"))
-                           (list "power4" (list Metal[4] "block"))
-                           (list "power5" (list Metal[5] "block"))
-                           (list "power6" (list Metal[6] "block"))
-                           (list "power7" (list Metal[7] "block"))
-                           (list "prblk"  (list "prBoundary" "block"))
-                           )
     powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
     (dbSave powerCV)
-    (SimpleAssuraLayerProcessor AssuraLayerMappings "makePowerGrid" ?CV powerCV)
+    (when nil
+      ; BUG: Assura isn't working.  ICV may be used instead.
+      AssuraLayerMappings = (list
+                             (list "power2" (list Metal[2] "block"))
+                             (list "power3" (list Metal[3] "block"))
+                             (list "power4" (list Metal[4] "block"))
+                             (list "power5" (list Metal[5] "block"))
+                             (list "power6" (list Metal[6] "block"))
+                             (list "power7" (list Metal[7] "block"))
+                             (list "prblk"  (list "prBoundary" "block"))
+                             )
+      (SimpleAssuraLayerProcessor AssuraLayerMappings "makePowerGrid" ?CV powerCV)
+      )
+    (when t
+      ; BUG: temporary hack to avoid Assura layer processing
+      ; Ignores prBoundary shape and blockage layers
+      (dbCreateRect powerCV (list Metal[2] "block") prb->bBox)
+      )
 
     ; define power grid cell names
     pgMap=(makeTable "POWER_GRID" nil)
-    pgMap["m2"]="globals.POWER_GRID.m2345678_pg"
-    pgMap["m3"]="globals.POWER_GRID.m345678_pg"
-    pgMap["m4"]="globals.POWER_GRID.m45678_pg"
-    pgMap["m5"]="globals.POWER_GRID.m5678_pg"
-    pgMap["m6"]="globals.POWER_GRID.m678_pg"
-    pgMap["m7"]="globals.POWER_GRID.m78_pg"
-    pgMap["m8"]="globals.POWER_GRID.m8_pg"
+    (for m 2 topMetal
+         gridName = "globals.POWER_GRID.m"
+         (for n m topMetal
+              gridName = (strcat gridName (sprintf nil "%d" n))
+              )
+         pgMap[Metal[m]] = (strcat gridName "_pg")
+         )
 
     ; replace block shapes with power mosaics
     count=0
@@ -243,11 +240,11 @@
           y1 = (bottomEdge shape->bBox)
           x2 = (rightEdge  shape->bBox)
           y2 = (topEdge    shape->bBox)
-          cols = (round (x2-x1)/PowerGridSize)
-          rows = (round (y2-y1)/PowerGridSize)
+          cols = (round (x2-x1)/(car align))
+          rows = (round (y2-y1)/(cadr align))
           (dbCreateSimpleMosaic powerCV gridCV
                                 (sprintf nil "pg%d" count) x1:y1 "R0"
-                                rows cols PowerGridSize PowerGridSize)
+                                rows cols (cadr align) (car align))
           count = count+1
           (dbDeleteObject shape)
           )
@@ -256,8 +253,8 @@
 
     ; create prBoundary, power pins, and instantiate power grid
     (dbCreatePRBoundary powerCV CV->prBoundary->points)
-    (CreatePowerPins powerCV "M8" xy t)
-    (CreatePowerPins CV      "M8" xy t)
+    (CreatePowerPins powerCV xy topMetal)
+    (CreatePowerPins CV      xy topMetal)
     tiehilo = (dbCreateInst CV powerCV "pg" 0:0 "R0")
 
     ; finish up power grid and pins
@@ -266,14 +263,11 @@
     Vdd = (dbFindNetByName CV VddNetName)
     instGND = (dbFindTermByName powerCV GNDNetName)
     instVdd = (dbFindTermByName powerCV VddNetName)
-    instGND = (dbFindTermByName powerCV "GND")
-    instVdd = (dbFindTermByName powerCV "Vdd")
     (dbCreateInstTerm GND tiehilo instGND)
     (dbCreateInstTerm Vdd tiehilo instVdd)
 
     ; delete temporary shapes
     (dbDeleteObject prb)
-    (dbDeleteObject prb1)
     (foreach x blks (dbDeleteObject x))
 
     ; save and return
@@ -291,7 +285,7 @@
 (defun MakePowerGridAbstract
   (@key (CV (geGetEditCellView)) ; flatten CellView
         (powerLayers (list "M2" "M3" "M8"))) ; which layers to keep as pins
-  (let (inst pgCV dd pgaCV points
+  (let (TEMP inst pgCV dd pgaCV points
         AssuraLayerMappings AssuraRuleFile AssuraRunLog figsVdd figsGND)
 
     ; fing powergrid CV
@@ -300,6 +294,7 @@
     pgCV = inst->master
 
     ; run Assura makePowerGridAbstract.rul
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     AssuraLayerMappings = (list
                            (list "prbleaf" (list "M1" "boundary")) ; poly fill
                            (list "m2v" (list "M2" "vdd"))
@@ -321,13 +316,13 @@
                               (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
                               "makePowerGridAbstract.rul")
     AssuraRunLog = (sprintf nil "%s/%s.abstract_pg.log"
-                            (ConfigFileGetValue TheCDSConfigTable "TEMP")
+                            TEMP
                             pgCV->cellName)
     (AssuraRunAssuraLayerProcessor
      pgCV
      pgCV->libName pgCV->cellName "abstract"
      AssuraRuleFile
-     (ConfigFileGetValue TheCDSConfigTable "TEMP")
+     TEMP
      AssuraLayerMappings
      nil
      ?AssuraRunLog AssuraRunLog
@@ -437,26 +432,15 @@
   )
 
 ; Draw Vdd/GND pins
-(defun CreatePowerPins (CV layer xy label)
-  (let (x y fig net)
-    x = (car xy)
-    y = (cadr xy)
-
-    ; GND pin
-    net = (MakeNet CV GNDNetName)
-    fig = (dbCreateRect CV (list layer "gnd")
-                        (list x-0.09:y+3.12-0.09 x+0.09:y+3.12+0.09))
-    (dbReplaceProp fig "PinType" "string" "Power")
-    (dbCreatePin net fig)
-    (when label (LabelPin CV fig))
-    
-    ; Vdd pin
-    net = (MakeNet CV VddNetName)
-    fig = (dbCreateRect CV (list layer "vdd")
-                         (list x-0.09:y+1.56-0.09 x+0.09:y+1.56+0.09))
-    (dbReplaceProp fig "PinType" "string" "Power")
-    (dbCreatePin net fig)
-    (when label (LabelPin CV fig))
+(defun CreatePowerPins (CV xy topMetal)
+  (let (pattern)
+    (cond (topMetal==2 || topMetal==3 pattern=power_m2)
+          (topMetal==4 || topMetal==5 pattern=power_m4)
+          (topMetal==6 || topMetal==7 pattern=power_m6)
+          (topMetal==8 pattern=power_m8)
+          )
+    (DrawChannel nil pattern "" (list xy (car xy)+(car gridAlignment[topMetal]):(cadr xy))
+                 ?isPin t ?CV CV)
     )
   t
   )
