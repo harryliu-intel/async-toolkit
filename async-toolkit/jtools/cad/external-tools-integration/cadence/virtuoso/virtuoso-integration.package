@@ -265,7 +265,6 @@ share/skill/layout/hierarchy/instance.il                                   skill
 share/skill/layout/transform/transform.il                                  skill/layout/transform/transform.il                                      664 p
 share/skill/layout/cell/cellinfo.il                                        skill/layout/cell/cellinfo.il                                            664 p
 share/skill/layout/cell/constraints.il                                     skill/layout/cell/constraints.il                                         664 p
-share/skill/layout/powergrid/powergrid.il                                  skill/layout/powergrid/powergrid.il                                      664 p
 share/skill/layout/hierarchy/inline.il                                     skill/layout/hierarchy/inline.il                                         664 p
 share/skill/layout/leaf/lvsnodes.il                                        skill/layout/leaf/lvsnodes.il                                            664 p
 share/skill/layout/leaf/LayoutGridPoly.il                                  skill/layout/leaf/LayoutGridPoly.il 					    664 p
@@ -305,9 +304,6 @@ share/skill/layout/mid/compact.il                                          skill
 
 # used by mk_instances to dump floorplan info to text file for jauto.
 share/skill/layout/instancesfile/instance.il                               skill/layout/instancesfile/instance.il                                   664 p
-
-# power grids and tieoffs
-share/skill/layout/powergrid/AutoGeneratePowerGrid.il skill/layout/powergrid/AutoGeneratePowerGrid.il 664 p
 
 
 # pins
@@ -388,6 +384,7 @@ share/skill/layout/bus/util.il                        skill/layout/bus/util.il  
 share/skill/layout/bus/patterns.il                    skill/layout/bus/patterns.il                    664 p
 #share/skill/layout/bus/fat.il                         skill/layout/bus/fat.il                         664 p
 share/skill/layout/power_grid/power_grid.il           skill/layout/power_grid/power_grid.il           664 p
+share/skill/layout/power_grid/create_power_grid_cells.il skill/layout/power_grid/create_power_grid_cells.il 664 p
 
 # Router
 share/skill/layout/route/route.il                     skill/layout/route/route.il                 664 p 
