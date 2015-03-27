@@ -1,5 +1,7 @@
 ; Replacement for ui/Nano/Flatten/FlattenView.il
 
+useAssura = nil ; BUG: Assura isn't working!
+
 ; Top-level function to make a flatten view and switch to it
 (defun MakeFlatten
   (@key (CV (geGetEditCellView))   ; specify CellView or nil to use edit view
@@ -159,7 +161,7 @@
         inst prb vertprb
         x1box x2box y1box y2box x1 y1 x2 x2 xy
         AssuraLayerMappings
-        powerCV pgMap blks
+        powerCV pgMap blks power2
         count gridName gridCV rows cols
         tiehilo GND Vdd instGND instVdd)
 
@@ -199,9 +201,7 @@
           )
 
     ; run Assura rules
-    powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
-    (dbSave powerCV)
-    (when nil
+    (when useAssura
       ; BUG: Assura isn't working.  ICV may be used instead.
       AssuraLayerMappings = (list
                              (list "power2" (list Metal[2] "block"))
@@ -210,14 +210,19 @@
                              (list "power5" (list Metal[5] "block"))
                              (list "power6" (list Metal[6] "block"))
                              (list "power7" (list Metal[7] "block"))
-                             (list "prblk"  (list "prBoundary" "block"))
+                             (list "power8" (list Metal[8] "block"))
                              )
-      (SimpleAssuraLayerProcessor AssuraLayerMappings "makePowerGrid" ?CV powerCV)
+      powerCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGrid"
+                                      CV->libName powerCellName "layout" ?CV CV)
       )
-    (when t
+    (when !useAssura
       ; BUG: temporary hack to avoid Assura layer processing
-      ; Ignores prBoundary shape and blockage layers
-      (dbCreateRect powerCV (list Metal[2] "block") prb->bBox)
+      ; Uses prBoundary shape but ignores "block" purpose layers
+      powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
+      power2 = (dbCreatePolygon powerCV (list Metal[2] "block") prb->points)
+      (dbLayerTile powerCV (list Metal[2] "block") (list power2))
+      (dbDeleteObject power2)
+      (dbSave powerCV)
       )
 
     ; define power grid cell names
@@ -286,8 +291,7 @@
 (defun MakePowerGridAbstract
   (@key (CV (geGetEditCellView)) ; flatten CellView
         (powerLayers (list Metal[2] Metal[4] Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
-  (let (TEMP inst pgCV pgaCV
-        AssuraLayerMappings AssuraRuleFile AssuraRunLog figsVdd figsGND)
+  (let (TEMP inst pgCV pgaCV AssuraLayerMappings figsVdd figsGND)
 
     ; fing powergrid CV
     inst = (dbFindAnyInstByName CV "pg")
@@ -296,7 +300,7 @@
 
     ; run Assura makePowerGridAbstract.rul
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    (when nil
+    (when useAssura
       ; BUG: Assura isn't working
       AssuraLayerMappings = (list
                              (list "m2v" (list Metal[2] "vdd"))
@@ -314,24 +318,10 @@
                              (list "m8v" (list Metal[8] "vdd"))
                              (list "m8g" (list Metal[8] "gnd"))
                              )
-      AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/assura/%s"
-                                (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-                                "makePowerGridAbstract.rul")
-      AssuraRunLog = (sprintf nil "%s/%s.abstract_pg.log"
-                              TEMP
-                              pgCV->cellName)
-      (AssuraRunAssuraLayerProcessor
-       pgCV
-       pgCV->libName pgCV->cellName "abstract"
-       AssuraRuleFile
-       TEMP
-       AssuraLayerMappings
-       nil
-       ?AssuraRunLog AssuraRunLog
-       ?LeaveMess nil
-       )
+      pgaCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGridAbstract"
+                                    pgCV->libName pgCV->cellName "abstract" ?CV CV)
       )
-    (when t
+    (when !useAssura
       ; BUG: work-around
       pgaCV=(dbCopyCellView pgCV pgCV->libName pgCV->cellName "abstract" nil nil t)
       (foreach inst pgaCV->instances (dbFlattenInst inst 32))

@@ -3,25 +3,63 @@
 ; $DateTime$
 ; $Author$
 
-; grunt work to run Assura to draw some generated shapes in the current cell
-(defun SimpleAssuraLayerProcessor (AssuraLayerMappings rulName @key (CV (geGetEditCellView)))
-  (let (TEMP AssuraRuleFile AssuraRunLog assuraCV)
+; run Assura to generate shapes in a new cell
+(defun AssuraLayerProcessor (AssuraLayerMappings rulName libName cellName viewName
+                             @key (CV (geGetEditCellView)))
+  (let (PDK_ROOT TEMP WDIR AssuraRuleFile AssuraRunLog RSFFile out assuraCV)
+    PDK_ROOT = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/assura/%s.rul"
-                              (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") rulName)
-    AssuraRunLog = (sprintf nil "%s/%s.%s.log" TEMP CV->cellName rulName)
-    (AssuraRunAssuraLayerProcessor
-     CV CV->libName CV->cellName rulName
-     AssuraRuleFile TEMP AssuraLayerMappings nil
-     ?AssuraRunLog AssuraRunLog
-     ?LeaveMess nil
-     )
-    assuraCV = (dbOpenCellViewByType CV->libName CV->cellName rulName nil "r")
-    (unless assuraCV (error "Unable to open %s %s %s\n" CV->libName CV->cellName rulName))
-    (foreach fig assuraCV->shapes (dbCopyFig fig CV))
-    (ddDeleteObj (ddGetObj CV->libName CV->cellName rulName nil nil "r"))
+    WDIR = (strcat TEMP "/assura/" CV->cellName)
+    AssuraRuleFile = (sprintf nil "%s/share/Fulcrum/assura/%s.rul" PDK_ROOT rulName)
+    AssuraRunLog = (sprintf nil "%s/%s.log" WDIR rulName)
+    RSFFile = (sprintf nil "%s/%s.rsf" WDIR rulName)
+
+    ; write rsf file
+    (system (sprintf nil "mkdir -p %s" WDIR))
+    out = (outfile RSFFile) 
+    (fprintf out "(outFile\n")
+    (fprintf out " \"df2\"\n")
+    (fprintf out " \"%s\"\n" libName)
+    (fprintf out " \"%s\"\n" WDIR) ; (NameGetCellPathFromCellName cellName))
+    (fprintf out " \"%s\"\n" (strcat PDK_ROOT "/tech_lib.ascii"))
+    (fprintf out " flat\n")
+    (fprintf out " %s\n" (AssuraMakeOutLayersStringFromLayerMappings AssuraLayerMappings))
+    (fprintf out " )\n")
+    (fprintf out "(avParameters\n")
+    (fprintf out " ?outputErrorLib modifyExistingLibrary\n")
+    (fprintf out " ?flagMalformed nil\n")
+    (fprintf out " ?ignoreMissingOutLayer t\n")
+    (fprintf out " ?checkpointInterval saveByRule\n")
+    (fprintf out " ?avrpt t\n")
+    (fprintf out " ?inputLayout (\"df2\" \"%s\")\n" CV->libName)
+    (fprintf out " ?cellName \"%s\"\n" CV->cellName)
+    (fprintf out " ?viewName \"%s\"\n" CV->viewName)
+    (fprintf out " ?cdslib \"%s\"\n" (ddGetStartup "cds.lib"))
+    (fprintf out " ?techLib \"%s\"\n" (ddGetStartup "cds.lib"))
+    (fprintf out " ?rulesFile \"%s\"\n" AssuraRuleFile)
+    (fprintf out " ?runName \"%s\"\n" rulName)
+    (fprintf out " ?workingDirectory \"%s\"\n" WDIR)
+    (fprintf out " )\n")
+    (close out)
+
+    ; run Assura
+    (system (sprintf nil "assura %s > %s" RSFFile AssuraRunLog))
+
+    ; obsolete method
+    (when nil
+      (AssuraRunAssuraLayerProcessor
+       CV libName cellName viewName
+       AssuraRuleFile TEMP AssuraLayerMappings nil
+       ?AssuraRunLog AssuraRunLog
+       ?LeaveMess nil
+       )
+      )
+    
+    ; open output cell view
+    assuraCV = (dbOpenCellViewByType libName cellName viewName nil "a")
+    (unless assuraCV (error "Unable to open %s %s %s\n" libName cellName viewName))
+    assuraCV
     )
-  CV
   )
 
 (defun AssuraGetAreas ( CellView 
@@ -225,26 +263,23 @@ Cell=%s\" \"LayoutLibrary=%s\" \"LayoutView=%s\" \"RuleFile=%s\" \"WorkingDir=%s
 
 (defun AssuraMakeOutLayersStringFromLayerMappings ( AssuraLayerMappings )
   "Given a list of pairs ((assuraLayer LPP) ...), creates an outLayer string for  use in an .rsf file.  This string tells assura how to map between internal layers and dfII/gdsII layers in the outfile database." 
-  (let (
-        ( Result "" ) )
-    ( foreach
-      AssuraLayerMapping
-      AssuraLayerMappings
-      (let (
-            ( AssuraLayerName ( car AssuraLayerMapping ) )
-            ( TargetLPP ( cadr AssuraLayerMapping ) ) )
-        (let (
-              ( TargetLayerName ( car TargetLPP ) )
-              ( TargetLayerPurpose ( cadr TargetLPP ) ) )
-          ( setq Result ( sprintf 
-                          nil 
-                          "outLayer( %s \"%s\" type( \"%s\" ) ) %s" 
-                           AssuraLayerName
-                          TargetLayerName
-                          TargetLayerPurpose
-                          Result ) ) ) ) )
-    Result ) )
-
+  (let (Result)
+    (foreach AssuraLayerMapping AssuraLayerMappings
+             (let ((AssuraLayerName (car AssuraLayerMapping))
+                   (TargetLPP (cadr AssuraLayerMapping)))
+               (let ((TargetLayerName (car TargetLPP))
+                     (TargetLayerPurpose (cadr TargetLPP)))
+                 Result = (cons (sprintf nil 
+                                         "(outLayer %s \"%s\" (type \"%s\"))"
+                                         AssuraLayerName
+                                         TargetLayerName
+                                         TargetLayerPurpose) Result)
+                 )
+               )
+             )
+    (buildString Result "\n ")
+    )
+  )
 
 (defun AssuraPrepareCellForProcessing ( CellView TempLibName CellMappings )
   "Copies over all subcells of Cellview to temporary library called TempLibName according to CellMappings: a list of pairs (((srclibname srccellname srcviewname)->destcellname)...), and updates the instances in CellView accordingly.<br>  This is so assura can reference these cells in the output database using outfile.  See <skill AssuraFixGeneratedInstances> for the reverse process."
