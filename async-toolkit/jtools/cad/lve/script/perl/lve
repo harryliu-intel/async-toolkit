@@ -23,7 +23,6 @@ my %dontsave=(
 );
 my %noextracttask = (
     "antenna" => 1,
-    "hdrc" => 1,
     "jlvs" => 1,
     "lef" => 1,
     "lvs" => 1,
@@ -52,11 +51,12 @@ my $budgetcapindex=0;
 my $budgetcapvalue="1f";
 my $dobudget=1;
 my $extractskip6t=0;
-my $hdrc_density=0;
+my $drc_extra_options="";
 my $noextractdeps=0;
 my $deletemakefiles=1;
 my $astaTauBound=-1;
-my $hercules_threads=2;
+my $drclvs_threads=2;
+my $drc_flow='drcd,denall,drc_IPall';
 my $starrc_threads=1;
 my $hsim_threads=1;
 my $hspice_threads=1;
@@ -143,11 +143,6 @@ sub forcetarget {
         $target =~ s/drc.raw//;
         dounlink($target."drc.err");
         dounlink($target."drc.tar.bz2");
-    }
-    elsif ($task eq "hdrc") {
-        $target =~ s/hdrc.raw//;
-        dounlink($target."hdrc.err");
-        dounlink($target."hdrc.tar.bz2");
     }
     elsif ($task eq "frc") {
         $target =~ s/frc.raw//;
@@ -406,7 +401,6 @@ my $output_dir      = "$ENV{PWD}";
 my $arg_output_dir  = $output_dir;
 my $slurp_dir       = "";
 my $deleteExtractDir= 1;    # clean up after extraction
-my $keepHdrcDir= 0;         # clean up after hdrc
 my $keepDrcDir= 0;          # clean up after drc
 my $keepFrcDir= 0;          # clean up after frc
 my $keepTotemDir= 0;        # clean up after frc
@@ -601,7 +595,6 @@ my @validtasks = (
     "fakelib",
     "frc",
     "gds2",
-    "hdrc",
     "hsim",
     "xa",
     "hspice",
@@ -617,7 +610,7 @@ my @validtasks = (
     "cmm",
     "totem"
 );
-my @task = ("hdrc","drc","lvs","jlvs","extract","aspice","alint","stats","captally","lib", "plt","rte", "apl"); # which types of sims to run
+my @task = ("drc","lvs","jlvs","extract","aspice","alint","stats","captally","lib", "plt","rte", "apl"); # which types of sims to run
 my %taskSet = (); # hashed by task, 1 if that task used at all
 
 # target hash (cell->target list)
@@ -1129,7 +1122,6 @@ my %forceqsub = (
     "hsim" => 1,
     "hspice" => 1,
     "xa" => 1,
-    "hdrc" => 1,
     "rte" => 1,
 );
 
@@ -1265,7 +1257,6 @@ CELL_NODEPROPS                   := $cell_nodeprops
 MAXF                             := $maxF
 DELETE_EXTRACT_DIR               := $deleteExtractDir
 DELETE_BUMPCHECK_DIR             := $delete_bumpcheck_dir
-KEEP_HDRC_DIR                    := $keepHdrcDir
 KEEP_LVS_DIR                     := $keepLvsDir
 KEEP_DRC_DIR                     := $keepDrcDir
 KEEP_FRC_DIR                     := $keepFrcDir
@@ -1365,14 +1356,15 @@ BUDGETCAPINDEX                   := $budgetcapindex
 BUDGETCAPVALUE                   := $budgetcapvalue
 DOBUDGET                         := $dobudget
 EXTRACTSKIP6T                    := $extractskip6t
-HDRC_DENSITY                     := $hdrc_density
+DRC_EXTRA_OPTIONS                := $drc_extra_options
 ASTA_TAU                         := @astaTau
 ASTA_INPUT_SLEW                  := $astaInputSlew
 ASTA_OUTPUT_CAP                  := $astaOutputCap
 ASTA_WALLTIME                    := $astaWalltime
 ASTA_TAU_BOUND                   := $astaTauBound
 ASTA_THREADS                     := $astaThreads
-HERCULES_THREADS                 := $hercules_threads
+DRCLVS_THREADS                   := $drclvs_threads
+DRC_FLOW                         := $drc_flow
 STARRC_THREADS                   := $starrc_threads
 HSIM_THREADS                     := $hsim_threads
 HSPICE_THREADS                   := $hspice_threads
@@ -2290,13 +2282,6 @@ sub enumerate_targets {
                     }
                 }
             }
-        } elsif ($task eq "hdrc") { # actually IVS
-            if (@view_extracted and $validexview ne "") {
-                my $targ = "$cellpath/$validexview/cell.gds2";
-                addTarget($cell,$task,$targ);
-                $targ = "$cellpath/$validexview/hdrc.raw";
-                addTarget($cell,$task,$targ);
-            }
         } elsif ($task eq "drc") {
             if (@view_extracted and $validexview ne "") {
                 my $targ = "$cellpath/$validexview/cell.gds2";
@@ -2544,7 +2529,7 @@ sub usage {
     }
 
     $routed="default" if !defined $routed;
-    my $keep=($keepDrcDir and $keepHdrcDir and $keepLvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and ! $delete_bumpcheck_dir) ? 1 : 0;
+    my $keep=($keepDrcDir and $keepLvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and ! $delete_bumpcheck_dir) ? 1 : 0;
     my $force=join(",", @force);
 
     my $usage = <<EOF;
@@ -2576,7 +2561,6 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --delete-bumpcheck-dir=[$delete_bumpcheck_dir] (clean up after bump check)
     --keep-drc=[$keepDrcDir] (do not clean up after drc)
     --keep-frc=[$keepFrcDir] (do not clean up after frc)
-    --keep-hdrc=[$keepHdrcDir] (do not clean up after hdrc)
     --keep-lvs=[$keepLvsDir] (do not clean up after lvs)
     --keep-totem=[$keepTotemDir] (do not clean up after totem)
     --keep[-all]=[$keep] (do not clean up any of the above)
@@ -2599,6 +2583,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --sigma-factor [$sigma_factor] (value 0..1, use with extreme caution)
     --db-prefix [$dbprefix] (not for general use, for setting up mysql)
     --starrc-threads=[$starrc_threads] (number of StarRC processes)
+    --drclvs-threads=[$drclvs_threads] (number of lvs threads)
 
   Extract Graybox Options:
     --graybox-list=[$graybox_list] ( should be <filename> containing list of cell names)
@@ -2624,6 +2609,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --lvs-blackbox=[$lvsBlackbox] (run in blackbox mode)
     --extra-extract-equiv=[$extra_extract_equiv] (special use for adding equivs to equiv file)
     --lvs-extra-options=[$lvs_extra_options] (add options to lvs command line)
+    --drclvs-threads=[$drclvs_threads] (number of lvs threads)
 
   SPICE Options for hspice,hsim,xa tasks:
     --hspice-threads=[$hspice_threads] (number of hspice threads)
@@ -2713,7 +2699,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --65mode=[$sixtyfivemode] (fake 65nm gds2/cdl translate from 130 mode)
 
   Sweep Options (supports comma separated lists):
-    --task=[@task]  (alint,aspice,asta,captally,drc,extract,fakelib,gds2,hdrc,hsim,hspice,xa,jlvs,lef,lib,lvs,plt,slint,spef,totem)
+    --task=[@task]  (alint,aspice,asta,captally,drc,extract,fakelib,gds2,hsim,hspice,xa,jlvs,lef,lib,lvs,plt,slint,spef,totem)
     --mode=[@mode]  (create extracted/estimated/nogeometry/accurate/custom spice files)
     --view-mode-order=[@view_mode_order]  (search priority order of view/mode)
     --extracted-view=[@view_extracted]  (view to use for extracted/accurate RC)
@@ -2726,9 +2712,10 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --timed-delay=[@timed_delay]  (min:max random jitter pair)
     --cell-type=[$cell_type] (used to specify certain special conditions)
  
-  HDRC Options
-    --hdrc-density [$hdrc_density] (run density checks, normally off)
-    --hercules-threads [$hercules_threads]
+  DRC Options
+    --drc-extra-options [$drc_extra_options] (ICV command options for drc)
+    --drclvs-threads=[$drclvs_threads] (number of drc threads)
+    --drc-flow=[$drc_flow] (Specify which drc runset. Default: drcd,denall,drc_IPall)
 
   RTE Options
     --digital-delay=[$digitalDelay] [(an integer value) digitalDelay for jdsim-auto ]
@@ -2815,11 +2802,10 @@ sub setOptions {
    $optionvalues{"extractTemp"} =  $extractTemp;
    $optionvalues{"deleteExtractDir"} =  $deleteExtractDir;
    $optionvalues{"keep-lvs"} =  $keepLvsDir;
-   $optionvalues{"keep-hdrc"} =  $keepHdrcDir;
    $optionvalues{"keep-drc"} =  $keepDrcDir;
    $optionvalues{"keep-frc"} =  $keepFrcDir;
    $optionvalues{"keep-totem"} =  $keepTotemDir;
-   $optionvalues{"keep-all"} =  ( $keepLvsDir and $keepHdrcDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir);
+   $optionvalues{"keep-all"} =  ( $keepLvsDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir);
    $optionvalues{"ignore-nvn"} =  $ignoreNVN;
    $optionvalues{"ignore-dangling"} =  $ignoreDanglingPinCheck;
    $optionvalues{"blackbox"} = $lvsBlackbox;
@@ -2944,7 +2930,8 @@ sub setOptions {
    $optionvalues{"asta-output-cap"} =  $astaOutputCap;
    $optionvalues{"asta-walltime"} =  $astaWalltime;
    $optionvalues{"asta-tau-bound"} =  $astaTauBound;
-   $optionvalues{"hercules-threads"} =  $hercules_threads;
+   $optionvalues{"drclvs-threads"} =  $drclvs_threads;
+   $optionvalues{"drc-flow"} =  $drc_flow;
    $optionvalues{"starrc-threads"} =  $starrc_threads;
    $optionvalues{"hsim-threads"} =  $hsim_threads;
    $optionvalues{"hspice-threads"} =  $hspice_threads;
@@ -2979,7 +2966,7 @@ sub setOptions {
    $optionvalues{"env-cap-load"} =  $env_cap_load;
    $optionvalues{"db-prefix"} =  $dbprefix;
    $optionvalues{"redo-nodes"} = $redonodes;
-   $optionvalues{"hdrc-density"} =  $hdrc_density;
+   $optionvalues{"drc_extra_options"} =  $drc_extra_options;
    $optionvalues{"noextractdeps"} =  $noextractdeps;
    $optionvalues{"keepMakefiles"} =  $deletemakefiles;
    $optionvalues{"extra-extract-equiv"} =  $extra_extract_equiv;
@@ -3043,12 +3030,10 @@ sub processOption {
         elsif ($key eq "deleteExtractDir")    { $deleteExtractDir = $value ? 1 : 0; }
         elsif ($key eq "delete-bumpcheck-dir"){ $delete_bumpcheck_dir = $value ? 1 : 0; }
         elsif ($key eq "keep-lvs")            { $keepLvsDir = $value ? 1 : 0; }
-        elsif ($key eq "keep-hdrc")           { $keepHdrcDir = $value ? 1 : 0; }
         elsif ($key eq "keep-drc")            { $keepDrcDir = $value ? 1 : 0; }
         elsif ($key eq "keep-totem")          { $keepTotemDir = $value ? 1 : 0; }
         elsif ($key eq "keep" or $key eq "keep-all") {
                                                 $keepLvsDir = $value ? 1 : 0;
-                                                $keepHdrcDir = $value ? 1 : 0;
                                                 $keepDrcDir = $value ? 1 : 0;
                                                 $keepFrcDir = $value ? 1 : 0;
                                                 $keepTotemDir = $value ? 1 : 0;
@@ -3290,7 +3275,8 @@ sub processOption {
         #elsif ($key eq "asta-output-cap")   { $astaOutputCap = $value; }
         elsif ($key eq "asta-walltime")     { $astaWalltime = $value; }
         elsif ($key eq "asta-tau-bound")    { $astaTauBound = $value; }
-        elsif ($key eq "hercules-threads")  { $hercules_threads = $value; }
+        elsif ($key eq "drclvs-threads")    { $drclvs_threads = $value; }
+        elsif ($key eq "drc-flow")          { $drc_flow = $value; }
         elsif ($key eq "starrc-threads")    { $starrc_threads = $value; }
         elsif ($key eq "hsim-threads")      { $hsim_threads = $value > 1 ? 4: 1; }
         elsif ($key eq "hspice-threads")    { $hspice_threads = $value > 0 ? $value : 1; }
@@ -3360,7 +3346,7 @@ sub processOption {
         elsif ($key eq "env-cap-load")       { $env_cap_load = $value; }
         elsif ($key eq "db-prefix")          { $dbprefix = $value; }
         elsif ($key eq "redo-nodes")         { $redonodes = $value; $alint_incr=0 if ($redonodes ne "");}
-        elsif ($key eq "hdrc-density")       { $hdrc_density = $value; }
+        elsif ($key eq "drc_extra_options")       { $drc_extra_options = $value; }
         elsif ($key eq "noextractdeps")      { $noextractdeps = $value; }
         elsif ($key eq "keepMakefiles")      { $deletemakefiles = $value ? 0 : 1; }
         elsif ($key eq "extra-extract-equiv") { $extra_extract_equiv = canonicalizePath($value);}

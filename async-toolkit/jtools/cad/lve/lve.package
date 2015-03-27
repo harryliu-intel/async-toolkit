@@ -95,7 +95,7 @@ $arch/bin/spice_reduce.pl     script/perl/spice/spice_reduce.pl     755 p
 $arch/bin/fix_pinswap.pl      script/perl/fix_pinswap.pl            755 p
 $arch/bin/spefrename.pl       script/perl/spefrename.pl             755 p
 $arch/bin/lvs                 script/perl/spice/lvs.pl             755 p
-$arch/bin/hdrc                script/perl/hdrc.pl                   755 p
+$arch/bin/drc                 script/perl/drc.pl                   755 p
 $arch/bin/frc                 script/perl/frc.pl                    755 p
 $arch/bin/hlvsrename          script/perl/spice/hlvsrename.pl       755 p
 $arch/bin/parse_hlvs          script/perl/spice/parse_hlvs.pl       755 p
