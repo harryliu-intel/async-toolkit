@@ -1136,8 +1136,30 @@ wires_modtime = makeTable("wires" 0)
   newlist
   ))
 
-; load wires.il for currently edited cellview
+; load wires.il for this cell
 (defun LoadWires (@key (CV (geGetEditCellView)))
+  (BusDefaults)
+  (let (DFII_DIR dir components file)
+    DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
+    dir = (NameGetCellPathFromCellName CV->cellName)
+    (when (strncmp DFII_DIR dir (strlen DFII_DIR))==0
+          dir = (substring dir (strlen DFII_DIR)+2)
+          components = (parseString dir "/")
+          dir = ""
+          (for i 0 (length components)-1
+               dir = (strcat dir "/" (nth i components))
+               file = (strcat DFII_DIR dir "/" "wires.il")
+               (when (fileTimeModified file)!=nil
+                     (load file)
+                     )
+               )
+          )
+    )
+  )
+
+; BUG: doesn't work reliably!
+; load wires.il for currently edited cellview
+(defun OldLoadWires (@key (CV (geGetEditCellView)))
   (BusDefaults)
   (let (fl port Outfl outfl h txt var1 var2 text CN Cellname lngth Initial k i j finalpath initialpath FinalPath modtime variable1 variable2 Variable2 Match Initialize_wires l FileFound)
 	i=0
