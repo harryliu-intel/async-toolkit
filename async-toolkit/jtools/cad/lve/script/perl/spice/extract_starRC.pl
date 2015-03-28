@@ -390,7 +390,7 @@ if($stage1){
     push @lvs_cmd, "--gray-cell-list=$graycell_file" if ($graycell_file ne "");
     push @lvs_cmd, "--extra-extract-equiv=$extra_extract_equiv" if (defined $extra_extract_equiv and $extra_extract_equiv ne "");
     push @lvs_cmd, "$cell_name";
-    my_system(@lvs_cmd);
+    system(@lvs_cmd);
 
     if( -e "$topcell.LVS_ERRORS" ){
       if( -e "run_details/$topcell.cmperr" and defined $nvn_log ){

@@ -124,7 +124,7 @@ SUN_LOW_FLAGS     := $(QRSH_LOW_FLAGS) -l a=$(QSUB_ARCH)
 PACKAGE_FLAGS     := -l a=$(QSUB_ARCH) $(QRSH_FLAGS)
 PACKAGE_FLAGS_starRC2b  := -l a=$(QSUB_ARCH) $(QRSH_FLAGS_starRC2b)
 # needed because ICV is nasty to the qsub limits
-PACKAGE_FLAGS_hdrc  := $(shell echo '$(PACKAGE_FLAGS)' | sed -e 's/,h_vmem.*M -m a//')
+PACKAGE_FLAGS_drc  := $(shell echo '$(PACKAGE_FLAGS)' | sed -e 's/,h_vmem.*M -m a//')
 PACKAGE_LOW_FLAGS := -l a=$(QSUB_ARCH) $(QRSH_LOW_FLAGS)
 
 QEXEC_LINUX       := QB_LOCAL=0 QRSH_FLAGS='$(LINUX_FLAGS)' $(QB)
@@ -200,7 +200,6 @@ GET_CELL_NAME = $(shell $(BUILD)/filetypes/castfiles/getcellname "$(1)" "$(2)" )
 
 GET_FILES_FROM_CDBDEP           = $(shell cat '$(1)' | xargs -n 1 echo | grep '^/')
 GET_CELL_DIR_FROM_CDBDEP        = $(dir $(word 2,$(call GET_FILES_FROM_CDBDEP,$(1))))
-GET_HDRC_SIGNOFFS_FROM_CDBDEP   = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))hdrc_signoff)
 GET_DRC_SIGNOFFS_FROM_CDBDEP   = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))drc_signoff)
 GET_FRC_SIGNOFFS_FROM_CDBDEP    = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))frc_signoff)
 GET_LVS_SIGNOFF_FROM_CDBDEP     = $(wildcard $(call GET_CELL_DIR_FROM_CDBDEP,$(1))lvs_signoff)
@@ -1025,12 +1024,12 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	extract_dir=`mktemp -d "$(WORKING_DIR)/$$cell.XXXXXX"`; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_spef1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=1 \
-	  --threads=$(HERCULES_THREADS) \
+	  --threads=$(DRCLVS_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1174,12 +1173,12 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	if [[ -f "$(@D)/graybox_list" ]]; then /bin/mv -f "$(@D)/graybox_list" "$(@D)/graybox_list.orig"; fi; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS),cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS),cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --threads=$(HERCULES_THREADS) \
+	  --threads=$(DRCLVS_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1432,12 +1431,12 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	extract_dir=`mktemp -d "$(WORKING_DIR)/$$cell.XXXXXX"`; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --threads=$(HERCULES_THREADS) \
+	  --threads=$(DRCLVS_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1748,12 +1747,12 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	if [[ -f "$(@D)/graybox_list" ]]; then /bin/mv -f "$(@D)/graybox_list" "$(@D)/graybox_list.orig"; fi; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
-	  --threads=$(HERCULES_THREADS) \
+	  --threads=$(DRCLVS_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -2039,12 +2038,12 @@ $(ROOT_TARGET_DIR)/%/lvs.err: \
 	lvs_dir=`mktemp -d "$(WORKING_DIR)/lvs.XXXXXX"`; \
 	sync; \
 	sleep 1; \
-	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(HERCULES_THREADS) $(EXTRACT_FLAGS)" \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/lvs.diag" QB_RUN_NAME='lve_lvs' \
 	  $(QB) lvs \
 	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
 	  --working-dir="$$lvs_dir" \
-	  --threads=$(HERCULES_THREADS) \
+	  --threads=$(DRCLVS_THREADS) \
 	  --cdl-file='$(@D)/cell.cdl_gds2' \
 	  --gds2-file='$(@D)/cell.gds2' \
 	  --gray-cell-list='$(@D)/$(LVS_TARGET)' \
@@ -2055,6 +2054,7 @@ $(ROOT_TARGET_DIR)/%/lvs.err: \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@)' && \
 	cd / && ( [[ $(KEEP_LVS_DIR) == 1 ]] || rm -rf "$$lvs_dir" ); \
 	task=lvs && $(CASTFILES_DEQUEUE_TASK)
+
 
 # HERCULES ANTENNA
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/antenna.err
@@ -2069,7 +2069,7 @@ $(ROOT_TARGET_DIR)/%/antenna.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TAR
 	chmod 2775 "$$antenna_dir" && cd "$$antenna_dir" && \
 	   topcell=`fixhdrc --top-cell '$(call GET_GDS2_CDL_NAME,$(@D))' cell.gds2` && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_antenna' \
-	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS) -cwd -l hdrc=1,cc=$(HERCULES_THREADS)' \
+	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS) -cwd -l hdrc=1,cc=$(DRCLVS_THREADS)' \
 	  $(QEXEC) $(ICV_SCRIPT) icv \
 	  -c "$$topcell" \
 	  -f GDSII \
@@ -2083,7 +2083,7 @@ $(ROOT_TARGET_DIR)/%/antenna.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TAR
 	   ( ( [ -e "$$antenna_dir/antenna.err" ] && mv "$$antenna_dir/antenna.err" '$@' ) || \
 	   ( cd "$$antenna_dir" && $(BZTAR) -cf '$(@D)/antenna.tar.bz2' ./* ) ); \
 	fi \
-	&& cd / && ( [[ $(KEEP_HDRC_DIR) == 1 ]] || rm -rf "$$antenna_dir" ); \
+	&& cd / && ( [[ $(KEEP_DRC_DIR) == 1 ]] || rm -rf "$$antenna_dir" ); \
 	task=antenna && $(CASTFILES_DEQUEUE_TASK)
 
 # summarize Antenna DRC results
@@ -2107,11 +2107,11 @@ $(ROOT_TARGET_DIR)/%/frc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_
 	chmod 2755 "$$frc_dir" && cd "$$frc_dir" && \
 	topcell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_frc' \
-	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS_frc) -cwd -l cc=$(HERCULES_THREADS)' \
+	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS_frc) -cwd -l cc=$(DRCLVS_THREADS)' \
 	  $(QEXEC) $(FRC)\
 	  --working-dir="$$frc_dir" \
 	  --gds2-file="$(word 1, $^)" \
-	  --threads=$(HERCULES_THREADS) \
+	  --threads=$(DRCLVS_THREADS) \
 	  --view=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) \
 	  --dfII-dir='$(DFII_DIR)' \
 	  "$$topcell" \
@@ -2157,39 +2157,43 @@ $(ROOT_TARGET_DIR)/%/frc.result: $(ROOT_TARGET_DIR)/%/frc.err $(ROOT_TARGET_DIR)
 	fi
 
 # ICV DRC
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/hdrc.err
-$(ROOT_TARGET_DIR)/%/hdrc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/df2.d
-	#TASK=hdrc CELL=$(call GET_CAST_FULL_NAME,$(@D))
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/drc.err
+$(ROOT_TARGET_DIR)/%/drc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/df2.d
+	#TASK=drc CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	echo "$(REMOTE)"
-	task=hdrc && $(CASTFILES_ENQUEUE_TASK) && \
-	hdrc_dir=`mktemp -d "$(WORKING_DIR)/hdrc.XXXXXX"`; \
+	task=drc && $(CASTFILES_ENQUEUE_TASK) && \
+	drc_dir=`mktemp -d "$(WORKING_DIR)/drc.XXXXXX"`; \
 	sync; \
 	sleep 1; \
-	ln -s '$<' "$$hdrc_dir/cell.gds2" ; \
-	chmod 2755 "$$hdrc_dir" && cd "$$hdrc_dir" && \
+	ln -s '$<' "$$drc_dir/cell.gds2" ; \
+	chmod 2755 "$$drc_dir" && cd "$$drc_dir" && \
 	topcell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
-	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_hdrc' \
-	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS_hdrc) -cwd -l hdrc=1,cc=$(HERCULES_THREADS)' \
-	  $(QEXEC) $(ICV_SCRIPT) icv \
-	  -c "$$topcell" \
-	  -f GDSII \
-	  -i "$$hdrc_dir/cell.gds2" \
-	  -vue \
-	  $(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/icv/drc.rul \
-	2> "$$hdrc_dir/hdrc.log" 1> "$$hdrc_dir/hdrc.log" ; \
-	if [ -s "$$hdrc_dir/$$topcell.LAYOUT_ERRORS" ]; then \
-	   awk '/violation.* found/ {print r,$$(NF-2),$$(NF-1),$$NF} /:/ {r=$$1}' "$$hdrc_dir/$$topcell.LAYOUT_ERRORS" | egrep -v '^(IO_CONNECT_CORE_NET_VOLTAGE_IS_CORE.WARN|LUP\.6|PO.W.19__PO.S.43) '> "$$hdrc_dir/hdrc.err" ; \
-	   cp -p "$$hdrc_dir/$$topcell.LAYOUT_ERRORS" '$(@D)'/hdrc.layout_errs ; \
-	   ( ( [ -e "$$hdrc_dir/hdrc.err" ] && mv "$$hdrc_dir/hdrc.err" '$@' ) || \
-	   ( cd "$$hdrc_dir" && $(BZTAR) -cf '$(@D)/hdrc.tar.bz2' ./* ) ); \
-	fi \
-	&& cd / && ( [[ $(KEEP_HDRC_DIR) == 1 ]] || rm -rf "$$hdrc_dir" ); \
-	task=hdrc && $(CASTFILES_DEQUEUE_TASK)
+	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_drc' \
+	QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS_drc) -cwd ,cc=$(DRCLVS_THREADS)' \
+	$(QB) drc \
+	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
+	  --working-dir="$$drc_dir" \
+	  --threads=$(DRCLVS_THREADS) \
+	  --gds2-file='$(@D)/cell.gds2' \
+	  --flow=$(DRC_FLOW) \
+	  --icv-options=$(DRC_EXTRA_OPTIONS) \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@D)/drc.log' ; \
+	  /bin/rm -f '$@'; \
+	  for runset in  `echo "$(DRC_FLOW)" | sed -e 's/,/ /g'`; do \
+      echo "RUNSet is $(runset)"; \
+	    if [ -s "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" ]; then \
+    	   echo "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" ; \
+	       awk '/violation.* found/ {print r,$$(NF-2),$$(NF-1),$$NF} /:/ {r=$$1}' "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" >> '$@' ; \
+    	   cp -p "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" '$(@D)'/drc.$$runset.layout_errs ; \
+    	fi \
+	  done \
+	&& cd / && ( [[ $(KEEP_DRC_DIR) == 1 ]] || rm -rf "$$drc_dir" ); \
+	task=drc && $(CASTFILES_DEQUEUE_TASK)
 
 # summarize DRC results
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/hdrc.result
-$(ROOT_TARGET_DIR)/%/hdrc.result: $(ROOT_TARGET_DIR)/%/hdrc.err $(ROOT_TARGET_DIR)/%/df2.d
-	signoffFile="$(call GET_HDRC_SIGNOFFS_FROM_CDBDEP,$(@D)/df2.d)"; \
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/drc.result
+$(ROOT_TARGET_DIR)/%/drc.result: $(ROOT_TARGET_DIR)/%/drc.err $(ROOT_TARGET_DIR)/%/df2.d
+	signoffFile="$(call GET_DRC_SIGNOFFS_FROM_CDBDEP,$(@D)/df2.d)"; \
 	if [[ ( -e '$<' ) && ! ( -s '$<') ]] ; then \
 	  echo PASS > '$@'; \
 	else \
@@ -2204,46 +2208,6 @@ $(ROOT_TARGET_DIR)/%/hdrc.result: $(ROOT_TARGET_DIR)/%/hdrc.err $(ROOT_TARGET_DI
 	  fi; \
 	fi
 
-# ASSURA DRC
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/drc.err
-$(ROOT_TARGET_DIR)/%/drc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/df2.d
-	#TASK=drc CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	echo "$(REMOTE)"
-	task=drc && $(CASTFILES_ENQUEUE_TASK) && \
-	drc_dir=`mktemp -d "$(WORKING_DIR)/drc.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	ln -s '$<' "$$drc_dir/cell.gds2" ; \
-	chmod 2775 "$$drc_dir" && cd "$$drc_dir" && \
-	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_drc' \
-	  QB_LOCAL=0 QRSH_FLAGS='$(PACKAGE_FLAGS) -l drc=1' \
-	  $(QEXEC) $(ASSURA_SCRIPT) \
-	  $(LVE_PACKAGE_ROOT)/share/script/perl/ve/front-end/vfe \
-	  VerificationType=AssuraDrc \
-	  RunName=drc \
-	  LayoutCell='$(call GET_GDS2_CDL_NAME,$(@D))' \
-	  WorkingDir="$$drc_dir" \
-	  GDS2File=$$drc_dir/cell.gds2 \
-	  RuleFile=$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/drc.rul \
-	  $(addprefix AssuraSet.=,$(DRC_FLAGS-$(call GET_CADENCE_BASE_NAME,$(@D)))) \
-	  $(foreach signoff,$(call GET_DRC_SIGNOFFS_FROM_CDBDEP,$(@D)/df2.d),SignOff.='$(signoff)') \
-	> "$$drc_dir/vfeout"; \
-	( ( [ -e "$$drc_dir/drc.err" ] && mv "$$drc_dir/drc.err" '$@' ) || \
-	  ( cd "$$drc_dir" && $(BZTAR) -cf '$(@D)/drc.tar.bz2' ./* ) ) \
-	&& cd / && ( [[ $(KEEP_DRC_DIR) == 1 ]] || rm -rf "$$drc_dir" ); \
-	task=drc && $(CASTFILES_DEQUEUE_TASK)
-
-# summarize DRC results
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/drc.result
-$(ROOT_TARGET_DIR)/%/drc.result: $(ROOT_TARGET_DIR)/%/drc.err $(ROOT_TARGET_DIR)/%/df2.d
-	signoffFile="$(call GET_DRC_CELL_SIGNOFF_FROM_CDBDEP,$(@D)/df2.d)"; \
-	if [[ ( -e '$<' ) && ! ( -s '$<') ]] ; then \
-	  if [ -n "$$signoffFile" ] ; then \
-	    echo SIGNOFF > '$@'; \
-	  else \
-	    echo PASS > '$@'; \
-	  fi \
-	else echo FAIL > '$@'; fi;
 
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.raw: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.result
 	#TASK=extract_raw MODE=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
@@ -2267,10 +2231,10 @@ $(ROOT_TARGET_DIR)/%/lvs.raw: $(ROOT_TARGET_DIR)/%/lvs.result
 	$(CASTFILES_DEQUEUE_TASK)
 
 
-$(ROOT_TARGET_DIR)/%/hdrc.raw: $(ROOT_TARGET_DIR)/%/hdrc.result
-	#TASK=hdrc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
+$(ROOT_TARGET_DIR)/%/drc.raw: $(ROOT_TARGET_DIR)/%/drc.result
+	#TASK=drc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --use-db=$(USEDB) --task=hdrc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
+	$(RAWIFY) --use-db=$(USEDB) --task=drc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/antenna.raw: $(ROOT_TARGET_DIR)/%/antenna.result
@@ -2279,11 +2243,6 @@ $(ROOT_TARGET_DIR)/%/antenna.raw: $(ROOT_TARGET_DIR)/%/antenna.result
 	$(RAWIFY) --use-db=$(USEDB) --task=antenna --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
-$(ROOT_TARGET_DIR)/%/drc.raw: $(ROOT_TARGET_DIR)/%/drc.result
-	#TASK=drc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	$(CASTFILES_ENQUEUE_TASK) && \
-	$(RAWIFY) --use-db=$(USEDB) --task=drc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
-	$(CASTFILES_DEQUEUE_TASK)
 
 $(ROOT_TARGET_DIR)/%/frc.raw: $(ROOT_TARGET_DIR)/%/frc.result
 	#TASK=frc_raw CELL=$(call GET_CAST_FULL_NAME,$(@D))
@@ -2291,41 +2250,6 @@ $(ROOT_TARGET_DIR)/%/frc.raw: $(ROOT_TARGET_DIR)/%/frc.result
 	$(RAWIFY) --use-db=$(USEDB) --task=frc --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"; \
 	$(CASTFILES_DEQUEUE_TASK)
 
-### COVERAGE CHECK
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/coverage.tar.bz2
-$(ROOT_TARGET_DIR)/%/coverage.tar.bz2: $(ROOT_TARGET_DIR)/%/cell.gds2 $(ROOT_TARGET_DIR)/%/df2.d
-	#TASK=coverage CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	drc_dir=`mktemp -d "$(WORKING_DIR)/drc.XXXXXX"`; \
-	sync; \
-	sleep 1; \
-	ln -s '$(@D)/cell.gds2' $$drc_dir/cell.gds2 ; \
-	chmod 2775 "$$drc_dir" && cd "$$drc_dir" && \
-	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_coverage' \
-	  QRSH_FLAGS='$(QRSH_FLAGS)' \
-	  $(EXEC) $(ASSURA_SCRIPT) \
-	  $(LVE_PACKAGE_ROOT)/share/script/perl/ve/front-end/vfe \
-	  VerificationType=AssuraDrc \
-	  RunName=coverage \
-	  LayoutCell='$(call GET_GDS2_CDL_NAME,$(@D))' \
-	  WorkingDir="$$drc_dir" \
-	  GDS2File=$$drc_dir/cell.gds2 \
-	  AssuraSet.=Poly_Coverage \
-	  AssuraSet.=M1_Coverage \
-	  AssuraSet.=M2_Coverage \
-	  AssuraSet.=M3_Coverage \
-	  AssuraSet.=M4_Coverage \
-	  AssuraSet.=M5_Coverage \
-	  AssuraSet.=M6_Coverage \
-	  AssuraSet.=M7_Coverage \
-	  AssuraSet.=M8_Coverage \
-	  RuleFile=$(FULCRUM_PDK_PACKAGE_ROOT)/share/Fulcrum/assura/drc.coverage.rul \
-	  $(foreach signoff,$(call GET_DRC_SIGNOFFS_FROM_CDBDEP,$(@D)/df2.d),SignOff.='$(signoff)') \
-	  > "$$drc_dir/vfeout"; \
-	  [ -e "$$drc_dir/coverage.err" ] && ( cd "$$drc_dir"; $(BZTAR) -cf '$@' ./*; cd / && rm -rf "$$drc_dir")
-
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/coverage.err
-$(ROOT_TARGET_DIR)/%/coverage.err: $(ROOT_TARGET_DIR)/%/coverage.tar.bz2
-	$(BZTAR) -Oxf '$<' ./coverage.err > '$@'
 
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.captally
 
