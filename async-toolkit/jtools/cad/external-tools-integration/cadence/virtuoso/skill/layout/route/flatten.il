@@ -101,7 +101,7 @@ useAssura = nil ; BUG: Assura isn't working!
 
     ; draw pins
     (RedrawAllPins ?CV CV)
-
+    
     ; canonicalize prerouted nets
     (CanonicalizeNets ?CV CV)
 
@@ -433,6 +433,12 @@ useAssura = nil ; BUG: Assura isn't working!
           )
     (DrawChannel nil pattern "" (list xy (car xy)+(car gridAlignment[topMetal]):(cadr xy))
                  ?isPin t ?CV CV)
+    (foreach shape CV->shapes
+             (when shape->purpose=="gnd" || shape->purpose=="vdd"
+                   (dbReplaceProp shape "PinType" "string" "Power")
+                   (dbReplaceProp shape "BusScriptObject" "boolean" nil)
+                   )
+             )
     )
   t
   )
