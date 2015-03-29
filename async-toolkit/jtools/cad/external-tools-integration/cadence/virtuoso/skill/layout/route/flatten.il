@@ -326,7 +326,6 @@ useAssura = nil ; BUG: Assura isn't working!
       pgaCV=(dbCopyCellView pgCV pgCV->libName pgCV->cellName "abstract" nil nil t)
       (foreach inst pgaCV->instances (dbFlattenInst inst 32))
       (foreach label (setof x pgaCV->shapes x->objType=="label") (dbDeleteObject label))
-      (leMergeShapes pgaCV->shapes)
       (dbSave pgaCV)
       )
     
