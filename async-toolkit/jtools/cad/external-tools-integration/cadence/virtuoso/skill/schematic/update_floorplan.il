@@ -123,9 +123,9 @@
     )
   )
 
-; Open a CellView and create lib if necessary
-(defun UpdateFloorplanOpenCV (libName cellName viewName)
-  (let (lib libDir mode)
+; Create a new library according to Fulcrum conventions
+(defun UpdateFloorplanCreateLib (libName)
+  (let (libDir lib)
     (unless (ddGetObj libName)
       libDir = (strcat (ConfigFileGetValue TheCDSConfigTable "DFII_DIR") "/"
                        (buildString (parseString libName ".") "/"))
@@ -133,6 +133,14 @@
       lib = (dbCreateLib libName libDir)
       (techBindTechFile lib TechLibName "techfile.cds" t)
       )
+    )
+  t
+  )
+
+; Open a CellView and create lib if necessary
+(defun UpdateFloorplanOpenCV (libName cellName viewName)
+  (let (mode)
+    (UpdateFloorplanCreateLib libName)
     mode = (if (IsCellViewWritable libName cellName viewName) "a" "r")
     (dbOpenCellViewByType libName cellName viewName "maskLayout" mode)
     )
