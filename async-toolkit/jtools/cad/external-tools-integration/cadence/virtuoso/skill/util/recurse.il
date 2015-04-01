@@ -22,7 +22,11 @@
                )
       (when !filter || (apply filter (list CV))
             (printf "%s\n" CV->cellName)
-            (when action (apply action (list CV)))
+            (when action
+              (dbReopen CV "a")
+              (apply action (list CV))
+              (dbSave CV)
+              )
             result = (cons CV result)
             )
       )
