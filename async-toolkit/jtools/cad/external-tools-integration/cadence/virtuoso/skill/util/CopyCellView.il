@@ -7,8 +7,10 @@
                                      @optional (t_version nil) (g_contextId nil) (b_overwrite nil))
   (let (CV)
     (when b_overwrite
-      CV = (dbOpenCellViewByType t_libName t_cellName t_viewName)
-      (when CV (dbReopen CV "r"))
+      (when (ddGetObj t_libName t_cellName t_viewName)
+        CV = (dbOpenCellViewByType t_libName t_cellName t_viewName)
+        (when CV (dbReopen CV "r"))
+        )
       )
     CV = (dbCopyCellView d_srcCVId t_libName t_cellName t_viewName t_version g_contextId b_overwrite)
     (when CV (dbReopen CV "a"))
