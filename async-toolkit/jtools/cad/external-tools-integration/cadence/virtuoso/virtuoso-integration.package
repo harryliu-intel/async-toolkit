@@ -226,6 +226,7 @@ share/skill/layout/floorplanning/anchor.il                                 skill
 share/skill/layout/floorplanning/util.il                                   skill/layout/floorplanning/util.il                                       664 p
 share/skill/layout/floorplanning/updatefromlayout.il                       skill/layout/floorplanning/updatefromlayout.il                                      664 p
 share/skill/layout/gdsII/gdsIIhier.il                                      skill/layout/gdsII/gdsIIhier.il                                          664 p
+share/skill/layout/gdsII/import_gds.il                                     skill/layout/gdsII/import_gds.il                                          664 p
 share/skill/layout/import/import.il                                        skill/layout/import/import.il                                            664 p
 share/skill/layout/import/fp.il                                            skill/layout/import/fp.il                                                664 p
 share/skill/layout/leaf/well/regionwell.il                                 skill/layout/leaf/well/regionwell.il                                     664 p
