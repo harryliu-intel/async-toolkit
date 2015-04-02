@@ -135,6 +135,7 @@ java com.avlsi.tools.jauto.NetlistDistance
 # This is all the skill we use.
 
 # utility
+share/skill/util/CopyCellView.il                                           skill/util/CopyCellView.il                                               664 p
 share/skill/ui/util/license.il                                             skill/ui/util/license.il                                                 664 p
 share/skill/util/db.il                                                     skill/util/db.il                                                         664 p
 share/skill/util/defaults.il                                               skill/util/defaults.il                                                   664 p

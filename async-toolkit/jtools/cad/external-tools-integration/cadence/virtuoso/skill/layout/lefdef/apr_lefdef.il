@@ -466,7 +466,7 @@
            P4File(strcat(fp_dir "layout.oa"             ) "add")
            P4File(strcat(fp_dir "master.tag"            ) "add")
            P4File(strcat(fp_dir "thumbnail_128x128.png" ) "add")
-           newCV  = dbCopyCellView(delCV libLoc cellName "floorplan" nil nil t)
+           newCV  = betterCopyCellView(delCV libLoc cellName "floorplan" nil nil t)
            dbClose(delCV)
            dbClose(newCV)
           )

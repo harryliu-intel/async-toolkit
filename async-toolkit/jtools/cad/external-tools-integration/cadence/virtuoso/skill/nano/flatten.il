@@ -79,7 +79,7 @@ defun( nrFlattenView ( CellView flattenViewName
     ; do the rest of the steps
 
   
-  FlattenView= dbCopyCellView( CellView CellView~>libName CellView~>cellName flattenViewName nil nil t) 
+  FlattenView= betterCopyCellView( CellView CellView~>libName CellView~>cellName flattenViewName nil nil t) 
   dbSave( FlattenView )
   instances = t
   routedDirectiveList=nrCastQuery( FlattenView ?RegenerateFromCast RegenerateFromCast ?MaxHeapSize MaxHeapSize)

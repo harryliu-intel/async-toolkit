@@ -29,7 +29,7 @@ defun( CopyView ( SourceViewName DestViewName )
            obj=ddGetObj(LibName CellName DestViewName)
            if( obj then ddDeleteObj(obj))
 
-            DestView= ( dbCopyCellView
+            DestView= ( betterCopyCellView
                          SourceView
                          LibName
                          CellName

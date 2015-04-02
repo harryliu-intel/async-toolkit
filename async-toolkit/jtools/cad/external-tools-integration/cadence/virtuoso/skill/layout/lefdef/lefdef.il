@@ -619,7 +619,7 @@ defun( defDefOut (  libName cellName viewName
                           "M7_M6" "M7_M6min"
                         )
   if( transform then
-     cellView1=dbCopyCellView( cellView cellView~>libName cellView~>cellName strcat(cellView~>viewName "_" cadr(transform)))
+     cellView1=betterCopyCellView( cellView cellView~>libName cellView~>cellName strcat(cellView~>viewName "_" cadr(transform)))
      foreach( fig cellView1~>shapes
        dbMoveFig( fig cellView1 transform)
      )

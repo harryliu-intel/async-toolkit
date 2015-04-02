@@ -42,7 +42,7 @@
 
     ; copy CV to scratch_overlay view
     (when CV->viewName=="scratch_overlay" (error "Can't run from scratch_overlay view\n"))
-    scratchCV = (dbCopyCellView CV CV->libName CV->cellName "scratch_overlay" nil nil t)
+    scratchCV = (betterCopyCellView CV CV->libName CV->cellName "scratch_overlay" nil nil t)
     (unless scratchCV (error "Can't write scratch %s %s\n" CV->cellName CV->viewName))
 
     ; copy shapes from abstract view

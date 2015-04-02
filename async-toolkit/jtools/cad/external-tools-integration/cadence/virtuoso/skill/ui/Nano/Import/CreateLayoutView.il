@@ -60,7 +60,7 @@
       CellView = UIGetCellView()
 
       ; copy source cellview to layout cellview
-      LayoutCellView = dbCopyCellView( CellView CellView~>libName CellView~>cellName 
+      LayoutCellView = betterCopyCellView( CellView CellView~>libName CellView~>cellName 
         UICreateLayoutView_Form->UICreateLayoutView_LayoutView->value
         nil nil 
         UICreateLayoutView_Form->UICreateLayoutView_Overwrite->value

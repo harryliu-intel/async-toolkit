@@ -129,7 +129,7 @@
                          "drawing" ) )
                 ) )
             LayerStructs ) )
-        ( PreKeepOutCellView ( dbCopyCellView
+        ( PreKeepOutCellView ( betterCopyCellView
                                CellView
                                TempLibName 
                                TargetCellName
@@ -200,7 +200,7 @@
                      KeepOutViewRet )
                     (
                      (let (
-                           ( AbstractCellView ( dbCopyCellView
+                           ( AbstractCellView ( betterCopyCellView
                                                 CellView
                                                 TargetLibName
                                                 TargetCellName
@@ -277,7 +277,7 @@
                      KeepOutViewRet )
                     (
                      (let (
-                           ( RoutingCellView ( dbCopyCellView
+                           ( RoutingCellView ( betterCopyCellView
                                                CellView
                                                TargetLibName 
                                                TargetCellName

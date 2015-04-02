@@ -24,7 +24,7 @@
 	    printf("HVT subtype already exists %s\n" newCellName))
          when( ((cv != nil)&&(mcv != nil))
             printf("yes in distort/distort_pg\n")
-            ;dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            ;betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
 	foreach(inst cv->instances
 		when( inst->libName=="synthesis.shared.fill"

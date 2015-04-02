@@ -208,7 +208,7 @@ defun( nrInplacePins ( cellView
 (defun nrPrepareAbstract (CellView @key (keepLayoutSubcells t) (abstractView "abstract"))
   (let (views hasAbstractView hasAbstractEditView)
     ; copy to abstract_prep view
-    CellView=(dbCopyCellView CellView CellView->libName CellView->cellName
+    CellView=(betterCopyCellView CellView CellView->libName CellView->cellName
                              "abstract_prep" nil nil t )
     
     ; substitute abstract_edit or abstract subcells and flatten
@@ -306,7 +306,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
     CellView=nrOpenCellViewWritable( libName cellName targetViewName)
     if( CellView && srcCellView then
       dbClose(CellView)
-      CellView=dbCopyCellView( srcCellView libName cellName targetViewName nil nil t )
+      CellView=betterCopyCellView( srcCellView libName cellName targetViewName nil nil t )
       printf("Creating abstract pin...\n")
       nrCreateAbstractPin( CellView ?PowerNets PowerNets)
 
@@ -905,9 +905,9 @@ defun( createAbstractTmp ( abstractView )
 ; this may not be compatible with later versions
 ;     abstractTmpView=dbOpenCellViewByType( abstractView~>libName
 ;              abstractView~>libName abstractView~>cellName "abstract_tmp" nil "s" )
-     abstractTmpView=dbCopyCellView( abstractView
+     abstractTmpView=betterCopyCellView( abstractView
               "abstract_tmp" abstractView~>cellName "abstract_tmp" nil nil t )
-;     abstractTmpView=dbCopyCellView( abstractView
+;     abstractTmpView=betterCopyCellView( abstractView
 ;              abstractView~>libName abstractView~>cellName "abstract_tmp" nil nil t )
      foreach( pin abstractTmpView~>terminals
        if( member( pin~>net~>name powerNets ) then

@@ -103,7 +103,7 @@
         ( CellName ( getq Floorplan cellName ) ) )
     (let (
           ( Compacted
-            ( dbCopyCellView
+            ( betterCopyCellView
               Floorplan
               TargetLibName
               CellName
@@ -246,7 +246,7 @@
                                   WorkingDir
                                   RoutedViewName ) )
                       ( PreRoute
-                        ( dbCopyCellView
+                        ( betterCopyCellView
                           Compacted
                           TargetLibName
                           CellName
@@ -496,7 +496,7 @@
              ( printf "DRC Status: %s\n" (if DRCStatus "Passed" "Failed" ) )
              (let (
                    ( FinalView
-                     ( dbCopyCellView
+                     ( betterCopyCellView
                        SuccessView
                        TargetLibName
                        CellName

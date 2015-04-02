@@ -157,7 +157,7 @@
                                                   NewLibName ) ) ) ) ) ) ) )
                     (unless ErrorStr
                       (let (
-                            ( NewCellView ( dbCopyCellView
+                            ( NewCellView ( betterCopyCellView
                                             OldCellView
                                             NewLibName
                                             NewCellName

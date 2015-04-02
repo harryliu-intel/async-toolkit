@@ -173,7 +173,7 @@ oldGridPolyFilter = (lambda (CV)
     ; create scratch view with some flattened layer intersections
     obj = (ddGetObj CV->libName CV->cellName "cpo_scratch")
     (when obj (ddDeleteObj obj))
-    CV2 = (dbCopyCellView CV CV->libName CV->cellName "cpo_scratch" nil nil t)
+    CV2 = (betterCopyCellView CV CV->libName CV->cellName "cpo_scratch" nil nil t)
     (foreach inst CV2->instances (dbFlattenInst inst 32 t nil nil))
     (foreach via  CV2->vias      (dbFlattenInst via 32 t nil nil))
     (leMergeShapes (leLayerAnd CV2 (list "PM" "drawing1") (list "PO" "grd") Scratch1LPP))

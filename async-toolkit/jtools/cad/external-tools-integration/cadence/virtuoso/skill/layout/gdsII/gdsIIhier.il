@@ -682,7 +682,7 @@ are used as in export, but the keys in all the tables are names from
                     ;Copy the current cell to its new name in the
                     ;temporary library.
                     (let (
-                          ( CellViewCopy ( dbCopyCellView 
+                          ( CellViewCopy ( betterCopyCellView 
                                            CellViewToCopy
                                            GDSIILibraryName
                                            GDSIICellName
@@ -782,7 +782,7 @@ are used as in export, but the keys in all the tables are names from
                                     SubTypeName
                                     PartialExtractTable
                                     (let (
-                                          ( SubTypeCellView ( dbCopyCellView
+                                          ( SubTypeCellView ( betterCopyCellView
                                                               CellViewCopy
                                                               GDSIILibraryName
                                                               SubTypeName
@@ -851,7 +851,7 @@ are used as in export, but the keys in all the tables are names from
         (when ( and t ( tableToList CellsToCompleteBrokenNets ) )
         (let (
               ( CopyOfTopLevelCellView
-                ( dbCopyCellView
+                ( betterCopyCellView
                   TopLevelCellView
                   TempLibName
                   ( getq TopLevelCellView cellName )
@@ -1094,7 +1094,7 @@ are used as in export, but the keys in all the tables are names from
                     ( getq TopLevelCellViewForExport cellName ) )
             (let (
                   ( CopyOfRoot
-                    ( dbCopyCellView
+                    ( betterCopyCellView
                       TopLevelCellViewForExport
                       TempLibName
                       RootCellOutputName
@@ -1409,7 +1409,7 @@ are used as in export, but the keys in all the tables are names from
                         (if ( stringp CadenceLibDDObj )
                             ( setq ErrorStr CadenceLibDDObj )
                           (let (
-                                ( CellViewCopy ( dbCopyCellView 
+                                ( CellViewCopy ( betterCopyCellView 
                                                  CellViewToCopy
                                                  CadenceLibName
                                                  CadenceCellName

@@ -105,7 +105,7 @@
           )
          (t
           ; create new prelayout view
-          prelayoutCV = (dbCopyCellView CV CV->libName CV->cellName
+          prelayoutCV = (betterCopyCellView CV CV->libName CV->cellName
                                         "prelayout" nil nil Overwrite)
           (cond (prelayoutCV
                  (DeletePins ?CV prelayoutCV)

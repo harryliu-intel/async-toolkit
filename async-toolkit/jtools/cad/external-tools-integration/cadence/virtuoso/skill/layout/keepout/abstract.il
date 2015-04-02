@@ -109,7 +109,7 @@
     (when !abstractCV (error "Couldn't edit abstract view for %s\n" CV->cellName))
 
     ; flatten pcells and vias to abstract_temp view
-    CV=(dbCopyCellView CV CV->libName CV->cellName "abstract_temp" nil nil t)
+    CV=(betterCopyCellView CV CV->libName CV->cellName "abstract_temp" nil nil t)
     (when !CV (error "Couldn't edit abstract_temp view for %s\n" CV->cellName))
     (foreach inst CV->instances (dbFlattenInst inst 32 t))
     (foreach inst CV->vias      (dbFlattenInst inst 32 t))

@@ -284,7 +284,7 @@ Cell=%s\" \"LayoutLibrary=%s\" \"LayoutView=%s\" \"RuleFile=%s\" \"WorkingDir=%s
 (defun AssuraPrepareCellForProcessing ( CellView TempLibName CellMappings )
   "Copies over all subcells of Cellview to temporary library called TempLibName according to CellMappings: a list of pairs (((srclibname srccellname srcviewname)->destcellname)...), and updates the instances in CellView accordingly.<br>  This is so assura can reference these cells in the output database using outfile.  See <skill AssuraFixGeneratedInstances> for the reverse process."
   (let (
-        ( CellViewCopy ( dbCopyCellView
+        ( CellViewCopy ( betterCopyCellView
                          CellView
                          TempLibName
                          ( getq CellView cellName )
@@ -318,7 +318,7 @@ Cell=%s\" \"LayoutLibrary=%s\" \"LayoutView=%s\" \"RuleFile=%s\" \"WorkingDir=%s
                                         "r" ) ) )
                 (let (
                       ( CellViewCopy
-                        ( dbCopyCellView
+                        ( betterCopyCellView
                           CurrSrcCellView
                           TempLibName
                           TargetCellName
@@ -745,7 +745,7 @@ Cell=%s\" \"LayoutLibrary=%s\" \"LayoutView=%s\" \"RuleFile=%s\" \"WorkingDir=%s
                                              nil
                                              "a" ) ) )
                       (let ( 
-                            ( TargetCellView ( dbCopyCellView
+                            ( TargetCellView ( betterCopyCellView
                                                ResultCellView
                                                TargetLibraryName
                                                TargetCellName
@@ -849,7 +849,7 @@ Cell=%s\" \"LayoutLibrary=%s\" \"LayoutView=%s\" \"RuleFile=%s\" \"WorkingDir=%s
                    ( equal LibName CellView->libName )
                    CellView )
                   (
-                   ( dbCopyCellView
+                   ( betterCopyCellView
                      CellView
                      LibName
                      CellView->cellName

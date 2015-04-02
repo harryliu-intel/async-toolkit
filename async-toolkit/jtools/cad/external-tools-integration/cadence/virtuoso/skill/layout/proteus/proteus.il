@@ -126,7 +126,7 @@
 
 ; transform proteus abstract (swap X and Y coordinates)
 (defun ProteusTransformAbstract (@key (CV (geGetEditCellView)))
-  CV = (dbCopyCellView CV CV->libName CV->cellName
+  CV = (betterCopyCellView CV CV->libName CV->cellName
                        ProteusAbstractProteusViewName nil nil t)
   (foreach label (setof s CV->shapes s->objType=="label") label->parent=nil)
   (foreach shape (cons CV->prBoundary (append CV->shapes CV->blockages))

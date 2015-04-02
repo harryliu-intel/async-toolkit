@@ -38,7 +38,7 @@ defun( nrCreatePrelayout (libName cellName viewName prelayoutViewName
       PrelayoutView=nrOpenCellViewReadable(libName cellName prelayoutViewName)
       if( !PrelayoutView || ( Overwrite && !member( cellName processedCellList) ) then
         CellView=nrOpenCellViewReadable(libName cellName viewName)
-        PrelayoutView=dbCopyCellView(CellView libName cellName 
+        PrelayoutView=betterCopyCellView(CellView libName cellName 
           prelayoutViewName nil nil Overwrite)
         if( PrelayoutView then
           DeletePins( ?cv PrelayoutView )

@@ -1,6 +1,6 @@
 (defun MakeHVT (CellView ViewName)
 
-;  dbCopyCellView(cv LibName newCellName ViewName)
+;  betterCopyCellView(cv LibName newCellName ViewName)
 ;  ncv = nrOpenCellViewWritable( LibName newCellName ViewName )  
   vthn_shapes=setof( shape CellView->shapes 
     ( shape->lpp==NImplantLPP || shape->lpp==PImplantLPP  )&& 
@@ -462,7 +462,7 @@
          when( ((cv != nil)&&(mcv != nil)&&(lcv != nil))
 ;	foreach(shape mcv->shapes (dbDeleteObject shape))
 ;	foreach(inst cv->instances (dbDeleteObject inst))
-        dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+        betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeHVT( ncv ViewName)
 )))
@@ -504,7 +504,7 @@
 		printf("Cannot open %s. Cell has both lvt and hvt instances \n" CellName))
          when( ((cv != nil)&&(mcv == nil)&&(k!="1")&&(l!="1")&&(m!="1"))
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeHVT( ncv ViewName)
             )
@@ -524,7 +524,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeHSVT( ncv ViewName)
             )
@@ -544,7 +544,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeSHVT( ncv ViewName)
             )
@@ -564,7 +564,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeSLVT( ncv ViewName)
             )
@@ -584,7 +584,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeLSVT( ncv ViewName)
             )
@@ -604,7 +604,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeHLVT( ncv ViewName)
             )
@@ -624,7 +624,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeLHVT( ncv ViewName)
             )
@@ -664,7 +664,7 @@
 		printf("Cannot open %s. Cell has both lvt and hvt instances \n" CellName))
          when( ((cv != nil)&&(k!="1")&&(l!="1")&&(m!="1"))
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeLVT( ncv ViewName)
             )
@@ -688,7 +688,7 @@
             )
          when( cv != nil
             printf("yes\n")
-            dbCopyCellView(cv LibName newCellName ViewName nil nil t)
+            betterCopyCellView(cv LibName newCellName ViewName nil nil t)
             ncv = nrOpenCellViewWritable( LibName newCellName ViewName )
             MakeSVT( ncv ViewName)
             )

@@ -3,7 +3,7 @@
   (let (tempCV overlaps fig dd_CV)
 
     ; flatten pcells and vias to temp view
-    tempCV=(dbCopyCellView CV CV->libName CV->cellName "layout_temp" nil nil t)
+    tempCV=(betterCopyCellView CV CV->libName CV->cellName "layout_temp" nil nil t)
     (when !tempCV (error "Couldn't edit layout_temp view for %s\n" CV->cellName))
     (foreach inst tempCV->instances (dbFlattenInst inst 32 t))
     (foreach inst tempCV->vias      (dbFlattenInst inst 32 t))

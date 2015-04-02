@@ -23,7 +23,7 @@ defun( nrCreateFloorplan (libName cellName viewName floorplanViewName
     doneCellList=cons( cellName doneCellList )
     if( nrIsLeafCell( libName cellName viewName) then
       CellView=nrOpenCellViewReadable(libName cellName viewName)
-      FloorplanView=dbCopyCellView( CellView libName cellName floorplanViewName nil nil t) 
+      FloorplanView=betterCopyCellView( CellView libName cellName floorplanViewName nil nil t) 
       foreach( inst FloorplanView~>instances 
           if( inst~>objType=="mosaicInst" dbDeleteObject(inst~>mosaic) dbDeleteObject(inst) )
       )
@@ -45,7 +45,7 @@ defun( nrCreateFloorplan (libName cellName viewName floorplanViewName
       else
         CellView=nrOpenCellViewReadable(libName cellName viewName)
       )
-      FloorplanView=dbCopyCellView(CellView libName cellName floorplanViewName nil nil t)
+      FloorplanView=betterCopyCellView(CellView libName cellName floorplanViewName nil nil t)
       if( Verbose then printf("Creating mid cell: %s(%s)...\n" FloorplanView~>cellName FloorplanView~>viewName))
       instances= car( NameFilterInstances( FloorplanView~>instances LibCellsToIgnore ))
       if( instances then nrDeleteLayers( FloorplanView BoundaryLPP ))

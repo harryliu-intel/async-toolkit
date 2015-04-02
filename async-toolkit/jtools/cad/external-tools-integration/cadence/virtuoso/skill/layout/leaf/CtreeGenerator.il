@@ -519,7 +519,7 @@
 	    printf("Template Cell doesnot exists %s\n" TemplateCellName))
          when( ((cv == nil)&&(mcv != nil))
             printf("yes\n")
-            dbCopyCellView(mcv LibName CellName "scratch" nil nil t)
+            betterCopyCellView(mcv LibName CellName "scratch" nil nil t)
             ncv = nrOpenCellViewWritable( LibName CellName "scratch" )
 	    MakeCtree2( ncv ViewName)
 		dbSave(ncv)

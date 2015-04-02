@@ -124,7 +124,7 @@ defun( fjShrinkPrelayout ( CellName
       if( CellView130 == nil then 
          printf("Unable to open CellView %s %s(%s) for read."  LibName130 CellName ViewName130)
       )
-      CellView65=dbCopyCellView( CellView130 LibName65 CellName ViewName65 nil nil t)
+      CellView65=betterCopyCellView( CellView130 LibName65 CellName ViewName65 nil nil t)
       if( CellView65 == nil then 
          printf("Unable %s %s(%s) for write"  LibName130 CellName ViewName130)
       ) 

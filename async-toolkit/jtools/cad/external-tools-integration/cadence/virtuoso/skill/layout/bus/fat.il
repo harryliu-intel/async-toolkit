@@ -182,7 +182,7 @@
   (let (bundled_nets GND Vdd)
 
     ; copy to bundled view
-    CV = (dbCopyCellView CV CV->libName CV->cellName "bundled" nil nil t)
+    CV = (betterCopyCellView CV CV->libName CV->cellName "bundled" nil nil t)
 
     ; DrawBundledPins
     (DrawBundledPins CV)
@@ -247,7 +247,7 @@
     dstCV = (dbOpenCellViewByType libName buswires "layout" "maskLayout" "w")
     srcCV = (dbOpenCellViewByType libName cellName "bundled")
     (cond (importView!=CV->viewName
-           pgCV  = (dbCopyCellView CV libName cellName importView nil nil t))
+           pgCV  = (betterCopyCellView CV libName cellName importView nil nil t))
           (t pgCV=CV)
           )
     (if (and dstCV srcCV pgCV)==nil (error "Unable to open import views\n"))

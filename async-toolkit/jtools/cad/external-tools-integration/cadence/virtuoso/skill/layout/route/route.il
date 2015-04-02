@@ -126,7 +126,7 @@
     ; export DEF
     (when doDef
       statusDef = t
-      ExportCV = (dbCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
+      ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
                (cond (abstractCV inst->master=abstractCV)

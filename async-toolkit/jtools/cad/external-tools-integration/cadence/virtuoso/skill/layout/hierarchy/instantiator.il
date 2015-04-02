@@ -78,7 +78,7 @@
       )
 
     ;copy everything over
-    ( dbCopyCellView 
+    ( betterCopyCellView 
       CellView
       ( getq TargetCellView libName )
       ( getq TargetCellView cellName )
@@ -91,7 +91,7 @@
                ( getq CellView cellName )
                ( getq CellView viewName ) )
       ;clear the original
-      ( dbCopyCellView 
+      ( betterCopyCellView 
         EmptyCellView
         ( getq CellView libName )
         ( getq CellView cellName )
@@ -100,7 +100,7 @@
       )
 
     ;save the original - we'll restore it later
-    ( dbCopyCellView 
+    ( betterCopyCellView 
       TargetCellView
        ( getq EmptyCellView libName )
        ( getq EmptyCellView cellName )
@@ -368,7 +368,7 @@
 
     ;restore the original
     (unless NoWriteMode
-      ( dbCopyCellView 
+      ( betterCopyCellView 
         EmptyCellView
         ( getq CellView libName )
         ( getq CellView cellName )

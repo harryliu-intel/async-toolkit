@@ -346,7 +346,7 @@ t
   when( mbuf_CV ddDeleteObj(ddGetObj("chip.rrc.util.cable" mbuf_cell "floorplan")) )
 
    mbuf_CV  =   nrOpenCellViewReadableByName( mbuf_cell "cable")
-   lnewCV = dbCopyCellView( mbuf_CV "chip.rrc.util.cable" mbuf_cell "floorplan" nil nil t)
+   lnewCV = betterCopyCellView( mbuf_CV "chip.rrc.util.cable" mbuf_cell "floorplan" nil nil t)
            dbSave(lnewCV)
           dbClose(lnewCV)
 
@@ -361,7 +361,7 @@ t
 ;   when( newCV ddDeleteObj(ddGetObj("chip.rrc.util.cable" cable_cell "floorplan")) )
 ;
 ;   cab_CV = nrOpenCellViewWritableByName( cable_cell "cable")
-;   cabCV = dbCopyCellView( cab_CV "chip.rrc.util.cable" cable_cell "floorplan" nil nil t)
+;   cabCV = betterCopyCellView( cab_CV "chip.rrc.util.cable" cable_cell "floorplan" nil nil t)
 ;   )
 
    lnewCV  =   nrOpenCellViewWritableByName( mbuf_cell "floorplan" )
@@ -406,7 +406,7 @@ t
    when( newCV ddDeleteObj(ddGetObj("chip.rrc.util.cable" mbuf_cell "floorplan")) )
 
    mbuf_CV  =   nrOpenCellViewWritableByName( mbuf_cell "cable")
-   newCV = dbCopyCellView( mbuf_CV "chip.rrc.util.cable" mbuf_cell "floorplan" nil nil t)
+   newCV = betterCopyCellView( mbuf_CV "chip.rrc.util.cable" mbuf_cell "floorplan" nil nil t)
 
    cbl = car(setof( sh newCV~>shapes sh~>lpp==list("M8" "bus")))
 
@@ -461,8 +461,8 @@ t
    cabl_CV = nrOpenCellViewWritableByName( mbufL_cell  "cable")
    cabr_CV = nrOpenCellViewWritableByName( mbufR_cell  "cable")
 
-   dbCopyCellView( cabl_CV "chip.rrc.util.cable" mbufL_cell  "floorplan" nil nil t)
-   dbCopyCellView( cabr_CV "chip.rrc.util.cable" mbufR_cell  "floorplan" nil nil t)
+   betterCopyCellView( cabl_CV "chip.rrc.util.cable" mbufL_cell  "floorplan" nil nil t)
+   betterCopyCellView( cabr_CV "chip.rrc.util.cable" mbufR_cell  "floorplan" nil nil t)
 
    lcab_CV  = nrOpenCellViewWritableByName( mbufL_cell  "floorplan")
    rcab_CV  = nrOpenCellViewWritableByName( mbufR_cell  "floorplan")
@@ -564,7 +564,7 @@ t
    when( lnewRCV  CDSP4CellView(lnewRCV "edit") dbClose(lnewRCV))
    lnewCV  =   nrOpenCellViewWritableByName( mbuf_cell "floorplan")
    if( !lnewCV then CDSP4CellView(lnewCV "edit") else ddDeleteObj(ddGetObj("chip.rrc.util.cable" mbuf_cell "floorplan")) )
-   lnewCV = dbCopyCellView( mbuf_CV "chip.rrc.util.cable" mbuf_cell "floorplan" nil nil t)
+   lnewCV = betterCopyCellView( mbuf_CV "chip.rrc.util.cable" mbuf_cell "floorplan" nil nil t)
 
    newRCV = nrOpenCellViewReadableByName( cable_cell "floorplan")
    when( newRCV  CDSP4CellView(newRCV "edit") dbClose(newRCV))
@@ -956,7 +956,7 @@ t
 ;   names = GetCableNames( CableShape )
 ;   mbuf
 ; 
-;   newCV  = dbCopyCellView(delCV libLoc cellName "floorplan" nil nil t)
+;   newCV  = betterCopyCellView(delCV libLoc cellName "floorplan" nil nil t)
 ; 
 ;  )
 ; )

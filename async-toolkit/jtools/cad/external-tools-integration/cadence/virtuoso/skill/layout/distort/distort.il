@@ -1458,7 +1458,7 @@
         )
   (let (layoutCV tiehilo)
     (when CV->viewName=="distort_pg"
-          layoutCV = (dbCopyCellView CV CV->libName CV->cellName "distort" nil nil t)
+          layoutCV = (betterCopyCellView CV CV->libName CV->cellName "distort" nil nil t)
           (when !layoutCV (error "Unable to write layout view\n"))
           tiehilo = (dbFindAnyInstByName layoutCV "distort_tiehilo")
           (when tiehilo (dbDeleteObject tiehilo))

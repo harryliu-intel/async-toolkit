@@ -69,7 +69,7 @@ defun(  PlacerSearchDone ( CurrentPlacedScratchViewName
                    "maskLayout"
                    "a" ) ) )
              ( dbSave
-               ( dbCopyCellView
+               ( betterCopyCellView
                  PlacedView
                  LibName
                  CellName
@@ -78,7 +78,7 @@ defun(  PlacerSearchDone ( CurrentPlacedScratchViewName
                  nil
                  t ) )
              ( dbSave
-               ( dbCopyCellView
+               ( betterCopyCellView
                  PreRouteView
                  LibName
                  CellName
@@ -184,7 +184,7 @@ defun(  PlacerSearchDone ( CurrentPlacedScratchViewName
                      ( ddGetObj LibName CellName BestPreRouteViewName ) )
            (when ( not ( equal BestPlacedViewName PlacedViewName ) )
              ( dbSave 
-               ( dbCopyCellView
+               ( betterCopyCellView
                  ( dbOpenCellViewByType 
                    LibName
                    CellName
@@ -199,7 +199,7 @@ defun(  PlacerSearchDone ( CurrentPlacedScratchViewName
                  t ) ) )
            (when ( not ( equal BestPreRouteViewName PreRouteViewName ) )
              ( dbSave
-               ( dbCopyCellView
+               ( betterCopyCellView
                  ( dbOpenCellViewByType 
                    LibName
                    CellName

@@ -52,7 +52,7 @@ defun( RouterSearchDone ( CurrentRoutedScratchViewName
            dbSave(CurrentRoutedScratchView)
              
            ( dbSave
-             ( dbCopyCellView
+             ( betterCopyCellView
                CurrentRoutedScratchView
                LibName
                CellName
@@ -61,7 +61,7 @@ defun( RouterSearchDone ( CurrentRoutedScratchViewName
                nil
                t ) )
            ( dbSave
-             ( dbCopyCellView
+             ( betterCopyCellView
                ( dbOpenCellViewByType
                  LibName
                  CellName
@@ -190,7 +190,7 @@ defun( RouterSearchDone ( CurrentRoutedScratchViewName
                           )
                     (if ( not ( equal BestPreKeepOutRoutedViewName PreKeepOutRoutedViewName ) )
                         ( dbSave
-                          ( dbCopyCellView
+                          ( betterCopyCellView
                             ( dbOpenCellViewByType
                               LibName
                               CellName
@@ -205,7 +205,7 @@ defun( RouterSearchDone ( CurrentRoutedScratchViewName
                             t ) ) )
                     (if ( not ( equal BestRoutedViewName RoutedViewName ) )
                         ( dbSave
-                          ( dbCopyCellView
+                          ( betterCopyCellView
                             ( dbOpenCellViewByType
                               LibName
                               CellName
@@ -221,7 +221,7 @@ defun( RouterSearchDone ( CurrentRoutedScratchViewName
 
                     (let (
                           ( CellView 
-                            ( dbCopyCellView
+                            ( betterCopyCellView
                               ( dbOpenCellViewByType
                                 LibName
                                 CellName
