@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import java.io.Writer;
@@ -41,13 +42,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
+import com.avlsi.cast.impl.DenseSubscriptSpec;
 import com.avlsi.cast.impl.Environment;
 import com.avlsi.cast.impl.LocalEnvironment;
+import com.avlsi.cast.impl.Range;
 import com.avlsi.file.cdl.parser.CDLLexer;
 import com.avlsi.util.text.StringUtil;
 
 import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLNameInterface;
+import com.avlsi.file.cdl.util.rename.CDLNameInterfaceProxy;
 import com.avlsi.file.cdl.util.rename.BindRulNameInterfaceFactory;
 import com.avlsi.file.cdl.util.rename.CompositeCDLNameInterface;
 import com.avlsi.file.cdl.util.rename.CompositeCDLNameInterfaceFactory;
@@ -75,6 +79,7 @@ import com.avlsi.file.cdl.parser.CDLInlineFactory;
 import com.avlsi.file.cdl.parser.CDLScalingFactory;
 import com.avlsi.file.cdl.parser.Template;
 
+import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.Pair;
 
 import com.avlsi.file.common.HierName;
@@ -111,7 +116,7 @@ public class CDL2Cast {
     /** The names for Vdd and GND **/
     static String Vdd;
     static String GND;
-    private static Set IMPLIED_PORTS;
+    private static Set<String> IMPLIED_PORTS;
 
     /** renaming table for transistor types **/
     static Map transistorTypeMap;
@@ -124,6 +129,16 @@ public class CDL2Cast {
     static boolean netlistInCast;
     
     private final CellPortsReverseMapper reverseMap;
+
+    /**
+     * Characters used to delimit an array index.
+     **/
+    private final char[] busBitChars;
+
+    /**
+     * Characters used to delimit an array index in CAST.
+     **/
+    private static final char[] CAST_BUSBITCHARS = new char[] { '[', ']' };
 
     private static void usage( String m ) {
 
@@ -256,8 +271,87 @@ public class CDL2Cast {
         }
     }
 
-    public CDL2Cast(CellPortsReverseMapper reverseMap) {
+    private static String getCastArray(final String stem,
+                                       final List<Integer> indices) {
+        return indices.stream()
+                      .map(Object::toString)
+                      .collect(Collectors.joining(
+                                  ",",
+                                  stem + CAST_BUSBITCHARS[0],
+                                  String.valueOf(CAST_BUSBITCHARS[1])));
+    }
+
+    /**
+     * Detect node array references in the port list using custom bus bit
+     * characters, and rename them to valid CAST names.
+     **/
+    private class ArrayNamingFactory extends CDLFactoryAdaptor
+                                     implements CDLNameInterfaceFactory {
+        private final CDLNameInterfaceFactory chained;
+        private final Map<String,Map<String,String>> nodeMap;
+        private final Map<String,Map<String,String>> instMap;
+        private String currSubcircuit;
+        public ArrayNamingFactory(final CDLNameInterfaceFactory chained) {
+            this.chained = chained;
+            this.nodeMap = new HashMap<>();
+            this.instMap = new HashMap<>();
+        }
+        public CDLNameInterface getNameInterface(final String cellName)
+            throws CDLRenameException {
+            final CDLNameInterface next = chained.getNameInterface(cellName);
+            return new CDLNameInterfaceProxy(next) {
+                public String renameNode(String old) throws CDLRenameException {
+                    final Map<String,String> map = nodeMap.get(cellName);
+                    final String mapped = map == null ? null : map.get(old);
+                    return mapped == null ? next.renameNode(old) : mapped;
+                }
+                public String renameDevice(String old) throws CDLRenameException {
+                    final Map<String,String> map = instMap.get(cellName);
+                    final String mapped = map == null ? null : map.get(old);
+                    return mapped == null ? next.renameSubCellInstance(old)
+                                          : mapped;
+                }
+            };
+        }
+        private void addMapping(final Map<String,Map<String,String>> nameMap,
+                                final String orig,
+                                final String stem,
+                                final List<Integer> indices) {
+            Map<String,String> map = nameMap.get(currSubcircuit);
+            if (map == null) {
+                map = new HashMap<>();
+                nameMap.put(currSubcircuit, map);
+            }
+            map.put(orig, getCastArray(stem, indices));
+        }
+        public void beginSubcircuit(String subName, String[] in, String[] out,
+                                    Map parameters, Environment env) {
+            currSubcircuit = subName;
+            for (String port : getNonImpliedPorts(in, out)) {
+                final Pair<String,List<Integer>> portInfo =
+                    parsePortNodeName(port, busBitChars);
+                final List<Integer> indices = portInfo.getSecond();
+                if (!indices.isEmpty()) {
+                    addMapping(nodeMap, port, portInfo.getFirst(), indices);
+                }
+            }
+        }
+        public void makeCall(HierName name, String subName, HierName[] args,
+                             Map parameters, Environment env) {
+            final String sname = name.getCadenceString();
+            final Pair<String,List<Integer>> portInfo =
+                parsePortNodeName(sname, busBitChars);
+            final List<Integer> indices = portInfo.getSecond();
+            if (!indices.isEmpty()) {
+                addMapping(instMap, sname, portInfo.getFirst(), indices);
+            }
+        }
+    }
+
+    public CDL2Cast(CellPortsReverseMapper reverseMap, final char leftBitChar,
+                    final char rightBitChar) {
         this.reverseMap = reverseMap;
+        this.busBitChars = new char[] { leftBitChar, rightBitChar };
     }
 
     public static void main(String[] args)
@@ -313,7 +407,8 @@ public class CDL2Cast {
          **/
         Vdd = theArgs.getArgValue("vdd-node", "vcc");
         GND = theArgs.getArgValue("gnd-node", "vss");
-        IMPLIED_PORTS = new LinkedHashSet(Arrays.asList(new Object[] { Vdd, GND }));
+        IMPLIED_PORTS =
+            new LinkedHashSet<>(Arrays.asList(new String[] { Vdd, GND }));
 
         /**
          * Prefixes to apply to node and instance names to make sure
@@ -387,6 +482,11 @@ public class CDL2Cast {
         final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
 
         netlistInCast = theArgs.argExists("netlist-in-cast");
+
+        /**
+         * Bus bit characters to reconstitute array
+         **/
+        final String busBitChars = theArgs.getArgValue("bus-bit-chars", "[]");
 
         if (! pedanticArgs.pedanticOK(false, true)) {
             usage(pedanticArgs.pedanticString());
@@ -514,6 +614,15 @@ public class CDL2Cast {
                     final CDLNameInterfaceFactory castLegalizingNIF =
                         new TrivialCDLNameInterfaceFactory(castLegalizingNI);
 
+                    final CellPortsReverseMapper reverseMap =
+                        new CellPortsReverseMapper();
+
+                    final CDL2Cast cdl2cast = new CDL2Cast(reverseMap,
+                            busBitChars.charAt(0), busBitChars.charAt(1));
+
+                    final ArrayNamingFactory arrayNamingFactory =
+                        cdl2cast.new ArrayNamingFactory( castLegalizingNIF );
+
                     /**
                      * Maps from CDL names to desired CAST names w/ subtypes
                      * if not in bind.rul uses guaranteed CAST legal names
@@ -521,7 +630,7 @@ public class CDL2Cast {
                     final BindRulNameInterfaceFactory
                         cdlToCastNameInterfaceFactory =
                         new BindRulNameInterfaceFactory( inputBindRulReader,
-                                                         castLegalizingNIF );
+                                                         arrayNamingFactory );
 
                     /**
                      * Maps from CDL names to desired layout names
@@ -649,9 +758,6 @@ public class CDL2Cast {
                                                   aspicer );
                     }
 
-                    final CellPortsReverseMapper reverseMap =
-                        new CellPortsReverseMapper();
-
                     final CDLFactoryInterface renamedOutputFactory =
                         reverseMap.getBread(
                             new CDLRenameFactory(
@@ -662,8 +768,9 @@ public class CDL2Cast {
                      * Make templates and tables
                      **/
                     final CDLFactoryInterface splittingFactory =
-                        new SplittingFactory( renamedOutputFactory,
-                                              tableFactory);
+                        new SplittingFactory( arrayNamingFactory,
+                            new SplittingFactory( renamedOutputFactory,
+                                                  tableFactory) );
 
                     final CDLFactoryInterface firstFactory =
                         new CDLScalingFactory( metersPerInputUnit,
@@ -677,7 +784,6 @@ public class CDL2Cast {
                     ReadCDLIntoFactory.readCDL( sourceCDLReader,
                                                 firstFactory );
 
-                    final CDL2Cast cdl2cast = new CDL2Cast(reverseMap);
                     try {
                         cdl2cast.writeTemplates(templates,
                                                 aspicer,
@@ -1113,7 +1219,8 @@ public class CDL2Cast {
      * [0][1] -> (0,1)
      * [0,1] -> (0,1)
      **/
-    private final List<Integer> parseBracketStr( final String bracketStr ) {
+    private final List<Integer> parseBracketStr( final String bracketStr,
+                                                 final char[] busBitChars ) {
         final int len = bracketStr.length();
 
         final StringBuffer accum = new StringBuffer();
@@ -1125,16 +1232,14 @@ public class CDL2Cast {
         for ( int i = 0 ; i < len ; ++i ) {
             final char c = bracketStr.charAt( i );
 
-            switch ( c ) {
-            case '[':
+            if (c == busBitChars[0]) {
                 if ( bracketOpen ) {
                     throw new RuntimeException( "\"" +
                                                 bracketStr +
                                                 "\" is not a valid array index string." );
                 }
                 bracketOpen = true;
-                break;
-            case ']':
+            } else if (c == busBitChars[1]) {
                 if ( ! bracketOpen ) {
                     throw new RuntimeException( "\"" +
                                                 bracketStr +
@@ -1144,32 +1249,34 @@ public class CDL2Cast {
 
                 ret.add( new Integer( accum.toString() ) );
                 accum.delete( 0, accum.length() );
-                break;
-            case ',':
-                if ( ! bracketOpen ) {
+            } else {
+                switch ( c ) {
+                case ',':
+                    if ( ! bracketOpen ) {
+                        throw new RuntimeException( "\"" +
+                                                    bracketStr +
+                                                    "\" is not a valid array index string." );
+                    }
+                    ret.add( new Integer( accum.toString() ) );
+                    accum.delete( 0, accum.length() );
+                    break;
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    accum.append( c );
+                    break;
+                default:
                     throw new RuntimeException( "\"" +
                                                 bracketStr +
                                                 "\" is not a valid array index string." );
                 }
-                ret.add( new Integer( accum.toString() ) );
-                accum.delete( 0, accum.length() );
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                accum.append( c );
-                break;
-            default:
-                throw new RuntimeException( "\"" +
-                                            bracketStr +
-                                            "\" is not a valid array index string." );
             }
         }
         return ret;
@@ -1182,12 +1289,13 @@ public class CDL2Cast {
      * a[0][1] -> (a,(0,1))
      * d -> (d,())
      **/
-    private final Pair<String,List<Integer>> parsePortNodeName( final String portNodeName ) {
+    private final Pair<String,List<Integer>> parsePortNodeName(
+            final String portNodeName, final char[] busBitChars ) {
         final int len = portNodeName.length();
 
-        final int indexOfFirstOpenBracket = portNodeName.indexOf( '[' );
+        final int indexOfFirstOpenBracket = portNodeName.indexOf( busBitChars[0] );
 
-        final int indexOfLastCloseBracket = portNodeName.lastIndexOf( ']' );
+        final int indexOfLastCloseBracket = portNodeName.lastIndexOf( busBitChars[1] );
 
 
         if ( ( ( indexOfFirstOpenBracket == -1 ) &&
@@ -1200,7 +1308,7 @@ public class CDL2Cast {
                 final String stem = portNodeName.substring( 0, indexOfFirstOpenBracket );
                 assert stem.length() > 0 ;
                 final String bracketStr = portNodeName.substring( indexOfFirstOpenBracket, indexOfLastCloseBracket + 1 );
-                return new Pair<>( stem, parseBracketStr( bracketStr ) );
+                return new Pair<>( stem, parseBracketStr( bracketStr, busBitChars ) );
             }
             else {
                 return new Pair<>( portNodeName, Collections.emptyList() );
@@ -1209,22 +1317,20 @@ public class CDL2Cast {
         else {
             throw new RuntimeException( "\"" +
                                         portNodeName +
-                                        "\" is not a valid port name because a misplaced '[' or ']'." );
+                                        "\" is not a valid port name because a misplaced '" +
+                                        busBitChars[0] + "' or '" + busBitChars[1] + "'." );
         }
     }
 
-    private Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>>
-        sniffArrays( Template template ) {
-        final Pair<String[],String[]> p = template.getArguments();
-        final String[] in = p.getFirst();
-        final String[] out = p.getSecond();
+    private List<String> getNonImpliedPorts(String[] in, String[] out) {
+        return Stream.concat(Arrays.stream(in), Arrays.stream(out))
+                     .filter(port -> !isImpliedPort(port))
+                     .collect(Collectors.toList());
+    }
 
-        final List<String> ports =
-            Stream.concat(Arrays.stream(in), Arrays.stream(out))
-                  .filter(port -> !isImpliedPort(port))
-                  .collect(Collectors.toList());
-
-        return sniffArrays(ports);
+    private List<String> getNonImpliedPorts(Template t) {
+        final Pair<String[],String[]> p = t.getArguments();
+        return getNonImpliedPorts(p.getFirst(), p.getSecond());
     }
 
     /**
@@ -1239,13 +1345,13 @@ public class CDL2Cast {
      * ({a->((0,1),(0,1)), b->((0,1)), d->(), DOG->()}, {b,a,d,DOG})
      **/
     private Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>>
-        sniffArrays( final List<String> ports ) {
+        sniffArrays( final List<String> ports, final char[] busBitChars ) {
         final Map<String,List<Pair<Integer,Integer>>> portMap = new HashMap<>();
         final Set<String> portStems = new LinkedHashSet<>();
 
         for (String currPortNode : ports) {
             final Pair<String,List<Integer>> portInfo =
-                parsePortNodeName( currPortNode );
+                parsePortNodeName( currPortNode, busBitChars );
 
             final String stem = portInfo.getFirst();
             final List<Integer> indices = portInfo.getSecond();
@@ -1321,7 +1427,7 @@ public class CDL2Cast {
         iw.write("(\n");
         iw.nextLevel();
         final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
-            sniffArrays(template);
+            sniffArrays(getNonImpliedPorts(template), CAST_BUSBITCHARS);
 
         final Map<String,List<Pair<Integer,Integer>>> portMap =
             portInfo.getFirst();
@@ -1354,7 +1460,7 @@ public class CDL2Cast {
         writer.write("(");
 
         final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
-            sniffArrays( template );
+            sniffArrays( getNonImpliedPorts(template), CAST_BUSBITCHARS );
 
         final Map<String,List<Pair<Integer,Integer>>> portMap =
             portInfo.getFirst();
@@ -1484,18 +1590,19 @@ public class CDL2Cast {
         }
         public void makeCall(HierName name, String subName, HierName[] args,
                              Map parameters, Environment env) {
-            Map<String,HierName> implied = new HashMap<String,HierName>();
-            final List realargs;
-
-            Template template = (Template) templates.get(subName);
+            final List<String> realargs;
+            final Template template = (Template) templates.get(subName);
+            final Map<String,HierName> formalToActual = new HashMap<>();
             if (template == null) {
                 System.out.println("Warning: SUBCKT " + subckt +
                                    " instantiates unknown subcell " +
                                    name.getAsString('.') + "/" +
                                    subName);
-                realargs = Arrays.asList(args);
+                realargs = Arrays.stream(args)
+                                 .map(arg -> arg.getCadenceString())
+                                 .collect(Collectors.toList());
             } else {
-                realargs = new ArrayList();
+                realargs = new ArrayList<>();
                 final Pair p = template.getArguments();
                 final String[] in = (String []) p.getFirst();
                 final String[] out = (String []) p.getSecond();
@@ -1507,38 +1614,63 @@ public class CDL2Cast {
                 }
 
                 int argidx = 0;
-                for ( int i = 0 ; i < in.length && argidx < args.length;
-                      ++i, ++argidx ) {
-                    if (isImpliedPort (in[i])) {
-                        implied.put( in[i], args[argidx] );
-                    } else {
-                        realargs.add( args[argidx] );
-                    }
+                for (int i = 0; i < in.length && argidx < args.length;
+                     ++i, ++argidx) {
+                    formalToActual.put(in[i], args[argidx]);
+                }
+                for (int i = 0; i < out.length && argidx < args.length;
+                     ++i, ++argidx) {
+                    formalToActual.put(out[i], args[argidx]);
                 }
 
-                for ( int i = 0 ; i < out.length && argidx < args.length;
-                      ++i, ++argidx ) {
-                    if (isImpliedPort (out[i])) {
-                        implied.put( out[i], args[argidx] );
+                final Map<Boolean,List<String>> portsByImplied =
+                    Stream.concat(Arrays.stream(in), Arrays.stream(out))
+                          .collect(Collectors.partitioningBy(
+                                      port -> isImpliedPort(port)));
+
+                final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
+                    sniffArrays(portsByImplied.get(false), CAST_BUSBITCHARS);
+
+                final Map<String,List<Pair<Integer,Integer>>> dimsMap =
+                    portInfo.getFirst();
+                final Set<String> stems = portInfo.getSecond();
+                for (String stem : stems) {
+                    final List<Pair<Integer,Integer>> dims = dimsMap.get(stem);
+                    if (dims.isEmpty()) {
+                        final HierName actual = formalToActual.get(stem);
+                        realargs.add(actual.getCadenceString());
                     } else {
-                        realargs.add( args[argidx] );
+                        final DenseSubscriptSpec subscriptSpec =
+                            new DenseSubscriptSpec(
+                                dims.stream()
+                                    .map(r -> new Range(r.getFirst(),
+                                                        r.getSecond()))
+                                    .toArray(Range[]::new));
+                        realargs.add(
+                            IntStream.range(0, subscriptSpec.getNumElements())
+                                     .mapToObj(pos -> getCastArray(
+                                                 stem,
+                                                 CollectionUtils.asList(
+                                                     subscriptSpec.indexOf(pos))))
+                                     .map(formal -> formalToActual.get(formal))
+                                     .map(actual -> actual == null ?
+                                         "_" : actual.getCadenceString())
+                                     .collect(Collectors.joining(",", "{", "}")));
                     }
                 }
             }
 
             String cellModule = getCellModule(subName);
             w.print(cellModule + " " + name.getCadenceString() + "(" );
-            for(Iterator realarg = realargs.iterator(); realarg.hasNext(); ) {
-                w.print(" " + ((HierName) realarg.next()).getCadenceString());
-                if (realarg.hasNext()) w.print("," );
-            }
+            w.print(realargs.stream()
+                            .collect(Collectors.joining(",")));
             w.print(")");
 
             StringBuffer impliedPorts = new StringBuffer();
             boolean sameImplied = true;
             for(Iterator i = IMPLIED_PORTS.iterator(); i.hasNext(); ) {
                 final String imp = (String) i.next();
-                final HierName actual = implied.get(imp);
+                final HierName actual = formalToActual.get(imp);
                 if (actual == null) {
                     impliedPorts.append(imp);
                 } else {

@@ -67,7 +67,7 @@ public class CollectionUtils {
      * @param a  the array to convert
      * @return a List containing Integers
      */
-    public static List asList(int[] a) {
+    public static List<Integer> asList(int[] a) {
         Integer[] result = new Integer[a.length];
 
         for (int j = 0; j < a.length; j++)
