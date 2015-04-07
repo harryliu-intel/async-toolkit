@@ -146,11 +146,11 @@ sub write_tcam_env {
     # output loads
     $vss = to_spice("VSS");
     for (my $i=0; $i<512; $i++) {
-        $node = to_spice("RHIT[$i]");
+        $node = to_spice("load_RHIT[$i]");
         print OUT "C$node $node $vss ${load}fF\n";
     }
     for (my $i=0; $i<40; $i++) {
-        $node = to_spice("READ_DATA[$i]");
+        $node = to_spice("load_READ_DATA[$i]");
         print OUT "C$node $node $vss ${load}fF\n";
     }
 
