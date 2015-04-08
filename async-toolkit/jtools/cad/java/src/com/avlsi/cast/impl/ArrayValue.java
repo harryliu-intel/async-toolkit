@@ -241,8 +241,10 @@ public final class ArrayValue
         // do assignment in lexicographic order
         assert vals.length == av.vals.length;
         for (int i = 0; i < vals.length; ++i) {
-            accessArray(spec.indexOf(i)).assign(
-                    av.accessArray(av.spec.indexOf(i)), cell);
+            final Value avv = av.accessArray(av.spec.indexOf(i));
+            if (!(avv instanceof AnonymousValue)) {
+                accessArray(spec.indexOf(i)).assign(avv, cell);
+            }
         }
 
         return this;
@@ -332,15 +334,22 @@ public final class ArrayValue
             throw new InvalidOperationException("0-tuple connot be "
                     + "converted to an array");
 
-        final Type t = tv.accessTuple(0).getType();
+        Type t = null;
+        int tidx = -1;
         final Value[] vals = new Value[n];
 
         // make sure the types agree, and copy pointer to value
         for (int i = 0; i < n; ++i) {
             final Value v = tv.accessTuple(i);
-            if (!v.getType().equals(t))
-                throw new InvalidOperationException("types don't agree "
-                        + "for elems " + i + " and 0");
+            if (!(v instanceof AnonymousValue)) {
+                if (t == null) {
+                    t = v.getType();
+                    tidx = i;
+                } else if (!v.getType().equals(t)) {
+                    throw new InvalidOperationException("types don't agree "
+                            + "for elems " + i + " and " + tidx);
+                }
+            }
             vals[i] = v;
         }
 

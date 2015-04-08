@@ -3294,7 +3294,7 @@ returns [Value v]
     | f:NUM_REAL  { t = f; v = FloatValue.valueOf(f.getText()); }
     | o19:TRUE        { t = o19; v = BoolValue.valueOf(true); }
     | o20:FALSE       { t = o20; v = BoolValue.valueOf(false); }
-    | #( o21:ARRAY v1=expressionList[env, false] )
+    | #( o21:ARRAY v1=expressionList[env, anonymousAllowedP] )
       { t = o21; v = ArrayValue.fromTuple(v1); }
     // prs stuff
     /// XXX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
