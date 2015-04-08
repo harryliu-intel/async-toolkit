@@ -21,6 +21,8 @@ die "Cannot run in a directory to which you cannot write\n".
     "Change directories and run again\n" if ! -w ".";
 
 $ENV{PATH}="/usr/intel/bin:/bin:/usr/ucb:/usr/bin";
+$ENV{'FULCRUM_WRAPPER_DIR'} = "/nfs/sc/proj/ctg/mrl108/mrl/tools/bin"
+    unless defined $ENV{'FULCRUM_WRAPPER_DIR'};
 # specific paths
 my $binhome=$0;
 # name of this executable
