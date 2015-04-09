@@ -51,17 +51,23 @@
 ; FindSubcells postprocessing action suitable for WPRD SRAM's
 importPostProcessAction =
   (lambda (CV)
-    (let (text pcre1 pcre2)
+    (let (text pcre1 pcre2 pcre3)
       pcre1 = (pcreCompile "<")
       pcre2 = (pcreCompile ">")
+      pcre3 = (pcreCompile "/")
       (foreach label (setof x CV->shapes x->objType=="label")
                text = label->theLabel
                text = (car (parseString text ":"))   ; delete :* suffix
                text = (pcreReplace pcre1 text "[" 0) ; replace < with [
                text = (pcreReplace pcre2 text "]" 0) ; replace > with ]
+               text = (pcreReplace pcre3 text "." 0) ; replace / with .
                label->theLabel = text
                label->height = 0.02
                label->justify = "centerCenter"
+               )
+      (foreach inst CV->instances
+               text = (pcreReplace pcre3 inst->name "." 0) ; replace / with .
+               (when text!=inst->name inst->name=text)
                )
       (dbReplaceProp CV "CastCell" "boolean" t)
       )
