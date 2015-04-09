@@ -175,7 +175,8 @@ public class CDL2Cast {
                             "    [--netlist-in-cast]\n" +
                             "    [--rename-transistor-type=old1:new1,old2:new2,...]\n" +
                             "    [--width-grid=W]\n" +
-                            "    [--length-grid=L]\n"
+                            "    [--length-grid=L]\n" +
+                            "    [--bus-bit-chars=\"[]\"]\n"
                             );
         if (m != null && m.length() > 0)
             System.err.println ( m );
