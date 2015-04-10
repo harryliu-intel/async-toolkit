@@ -189,33 +189,34 @@ ReadLineCache = ( makeTable `readline nil )
   ( car ( StringUtilInnerParseNumber ( StringUtilStripWhiteSpace String ) ) ) )
 
 (defun StringUtilParseLengthString ( String )
-  (let (
-        ( ParseResult ( StringUtilInnerParseNumber String ) ) )
-    (let (
-          ( Num ( car ParseResult ) )
-          ( Rest ( StringUtilStripWhiteSpace ( cadr ParseResult ) ) ) )
+  (if (type String)!=`string String*1.0
       (let (
-            ( FirstCharOfRest ( substring Rest 1 1 ) ) )
-        (cond
-         (
-          ( or ( equal FirstCharOfRest "n" ) ( equal FirstCharOfRest "m" ) )
-          ( quotient ( float Num ) ( float 1000000000 ) ) )
-         (
-          ( equal FirstCharOfRest "u" )
-          ( quotient ( float Num ) ( float 1000000 ) ) )
-         (
-          ( or
-            ( equal FirstCharOfRest "e" )
-            ( equal FirstCharOfRest "E" ) )
+            ( ParseResult ( StringUtilInnerParseNumber String ) ) )
+        (let (
+              ( Num ( car ParseResult ) )
+              ( Rest ( StringUtilStripWhiteSpace ( cadr ParseResult ) ) ) )
           (let (
-                ( Exponent ( StringUtilParseNumber ( substring Rest 2 ( strlen Rest ) ) ) ) )
-            ( times
-              Num
-              ( exp
-                ( times Exponent ( log 10.0 ) ) ) ) ) )
-         (
-          t
-          Num ) ) ) ) ) )
+                ( FirstCharOfRest ( substring Rest 1 1 ) ) )
+            (cond
+             (
+              ( or ( equal FirstCharOfRest "n" ) ( equal FirstCharOfRest "m" ) )
+              ( quotient ( float Num ) ( float 1000000000 ) ) )
+             (
+              ( equal FirstCharOfRest "u" )
+              ( quotient ( float Num ) ( float 1000000 ) ) )
+             (
+              ( or
+                ( equal FirstCharOfRest "e" )
+                ( equal FirstCharOfRest "E" ) )
+              (let (
+                    ( Exponent ( StringUtilParseNumber ( substring Rest 2 ( strlen Rest ) ) ) ) )
+                ( times
+                  Num
+                  ( exp
+                    ( times Exponent ( log 10.0 ) ) ) ) ) )
+             (
+              t
+              Num ) ) ) ) ) ) )
 
 (defun StringUtilGetFirstChar ( String )
   ( substring String 1 1 ) )
