@@ -78,7 +78,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
     (when doCdl && !cdlFile
       (printf "Generate CDL for %s\n" cellName)
       (sprintf cdlFile "%s/%s.cdl" dir cellName)
-      (sprintf cmd (strcat "cast2cdl --process-dependent-name --cdl-mos-parameters=w,l " 
+      (sprintf cmd (strcat "cast2cdl --process-dependent-name --cdl-mos-parameters=m " 
                            "--cast-path=%s --cell=%s --output=%s/hier.cdl")
                (ConfigFileGetValue TheCDSConfigTable "CAST_PATH") cellName dir)
       (csh cmd)

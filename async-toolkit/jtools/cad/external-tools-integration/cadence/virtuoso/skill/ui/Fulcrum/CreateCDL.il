@@ -47,7 +47,7 @@
                   ( Command
                     ( sprintf 
                       nil
-                      "%s %s/cast2cdl --cast-path=%s --cell=%s --cadence-name --output=%s --max-heap-size=%dM --name-map=%s/share/Fulcrum/lve/transistor.map --process-dependent-name --64 --cdl-mos-parameters=w,l"
+                      "%s %s/cast2cdl --cast-path=%s --cell=%s --cadence-name --output=%s --max-heap-size=%dM --name-map=%s/share/Fulcrum/lve/transistor.map --process-dependent-name --64 --cdl-mos-parameters=m"
                       ExecCmd
                       ( PackageGetBinRoot )
                       ( ConfigFileGetValue TheCDSConfigTable "CAST_PATH" )

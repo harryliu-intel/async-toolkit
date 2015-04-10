@@ -151,7 +151,8 @@ while ($line) {
         $parameters{"l"} = eval($parameters{"l"});
         my $x = $parameters{"w"};
         my $y = $parameters{"l"};
-
+        $x *= $parameters{"m"} if (defined($parameters{"m"}));
+        
         # compute folds
         my $w = POSIX::ceil($parameters{"w"}/$gridW);
         my $maxW = $maxPmosW;
