@@ -80,7 +80,7 @@ while ($line) {
         $next_line = <IN>;
     }
     my $full = $line;
-    if ($line =~ s/^\.SUBCKT\s+//i) {
+    if ($line =~ s/^\.SUBCKT\s+//i || $line =~ s/^\.SUBCIRCUIT\s+//i) {
 
         # Begin Subcircuit Definition
         my @parameters = ();

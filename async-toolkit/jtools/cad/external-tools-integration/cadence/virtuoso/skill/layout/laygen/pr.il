@@ -52,7 +52,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
     (unless libName&&cellName (error "Must specify ?CV or ?libName and ?cellName"))
 
     ; get height and width from parameters or floorplan view
-    (when w shrink=0)
+    (when w&&w>0 shrink=0)
     (when !h || !w
       CV = (dbOpenCellViewByType libName cellName "floorplan" "maskLayout" "r")
       (unless CV (error "Must provide floorplan view or both ?h and ?w options\n"))
@@ -66,7 +66,6 @@ LaygenPlaceCmd = (strcat LaygenCmd
            )
           (t wstr=shrink)
           )
-    (when w<3 doCdl=nil doSnp=nil doPlace=nil doRoute=nil doImport=nil)
 
     ; make working dir 
     name = (sprintf nil "w%s_m%d_hr%d_nm%d_pm%d_no%d_po%d"
@@ -140,7 +139,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
 
     ; place
     (when doPlace
-      (printf "Place  %s height=%d width=%d placements=%d\n" cellName h w num_place)
+      (printf "Place  %s height=%d width=%s placements=%d\n" cellName h wstr num_place)
       (csh (sprintf nil "(cd %s; %s %s.place.csh)" dir
                     (if batch_place batch_place "") cellName))
       )
