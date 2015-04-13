@@ -9,7 +9,7 @@ UV_dx = -0.035     ; x bloat of uv1/uv2 implant layers relative to diffusion
 UV_dy =  0.021     ; y bloat of uv1/uv2 implant layers relative to diffusion
 
 ; Other settings
-LaygenVersion = "d15q1ww05b_13752" ; sets a LaygenVersion cell property
+LaygenVersion = "d15q1ww11a_13972" ; sets a LaygenVersion cell property
 LaygenVssName = "vss"
 LaygenVccName = "vcc"
 
@@ -49,10 +49,16 @@ LaygenPinMap["Out"] = "output"
 
 ; which layers can turn into pins (and which should add overlapping pin layer)
 LaygenPinLayers = (makeTable "pinLayers" nil)
-LaygenPinLayers["nwell"] = t
 LaygenPinLayers["metal1"] = t
 LaygenPinLayers["metal2"] = t
+LaygenPowerLayers = (makeTable "powerLayers" nil)
+LaygenPowerLayers["nwell"] = t
+LaygenPowerLayers["polycon"] = t
+LaygenPowerLayers["metal0"] = t
+LaygenPowerLayers["metal2"] =t
 LaygenPinPurposeExists = (makeTable "pinPurposeExists" nil)
+LaygenPinPurposeExists["polycon"] = t
+LaygenPinPurposeExists["metal0"] = t
 LaygenPinPurposeExists["metal1"] = t
 LaygenPinPurposeExists["metal2"] = t
 
@@ -87,9 +93,7 @@ LaygenNetMap[LaygenVccName] = VddNetName
       )
     (close file)
 
-    ; label pwell, set LaygenVersion property, save and return
-    (LaygenRect CV (list (list "pwellSubIso" "id"))
-                LaygenVssName pins[LaygenVssName] nil 0 0 GridPolyPitch GridDiffPitch)
+    ; set LaygenVersion property, save and return
     (dbReplaceProp CV "LaygenVersion" "string" LaygenVersion)
     (dbSave CV)
     CV
@@ -108,6 +112,8 @@ LaygenNetMap[LaygenVccName] = VddNetName
     yh = (LaygenCoord vars["yh"])
     (when (and xl xh yl yh)
       (dbCreatePRBoundary CV (list xl:yl xl:yh xh:yh xh:yl xl:yl))
+      (LaygenRect CV (list (list "pwellSubIso" "id"))
+                  LaygenVssName pins[LaygenVssName] nil xl yl xh yh)
       )
     )
   t
@@ -122,7 +128,10 @@ LaygenNetMap[LaygenVccName] = VddNetName
     yl = (LaygenCoord vars["yl"])
     yh = (LaygenCoord vars["yh"])
     lpps = LaygenLayerMap[vars["layer"]]
-    pin = (if LaygenPinLayers[vars["layer"]] pins[vars["net"]] nil)
+    pin = (if vars["net"] && (vars["net"]==LaygenVssName || vars["net"]==LaygenVccName)
+              (if LaygenPowerLayers[vars["layer"]] pins[vars["net"]] nil)
+              (if LaygenPinLayers[vars["layer"]]   pins[vars["net"]] nil)
+              )
     (LaygenRect CV lpps vars["net"] pin LaygenPinPurposeExists[vars["layer"]] xl yl xh yh)
     )
   t
