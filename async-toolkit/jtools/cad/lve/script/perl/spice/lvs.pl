@@ -241,6 +241,9 @@ sub prepare_clf_file {
 -D _drMaxError=100000000
 -D _drUSENDG=_drNO
 -D _drUSERDEFINESUIN
+-D _drMSR
+-D _drCaseSensitive
+-D _drTOPCHECK=_drmixed
 -i cell.gds2
 -s $sch_file
 -sf ICV
