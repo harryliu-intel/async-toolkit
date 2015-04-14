@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.OutputStreamWriter;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +42,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
@@ -3131,6 +3134,7 @@ public final class JFlat {
         private final static String Vdd = "Vdd";
         private final static String _RESET = "_RESET";
         private final static Pattern RSOURCE = Pattern.compile("standard\\.random\\.rsource_([ae])1of\\(?(\\d+)\\)?");
+        private final static Pattern BD_RSOURCE = Pattern.compile("standard\\.bd\\.rsource_bd\\((\\d+)\\)");
         private final Random random;
 
         HSIMFormatter( final PrintWriter pw,
@@ -3218,64 +3222,57 @@ public final class JFlat {
             processCell(cell, null, null, null);
         }
 
-        private int[] getRandomSequence(int max, int number) {
-            final int[] result = new int[number];
-            for (int i = 0; i < number; ++i) {
-                result[i] = random.nextInt(max);
-            }
-            return result;
-        }
-
-        private int[] getRandomSequence(int max) {
-            return getRandomSequence(max, randSeqLen);
-        }
-
         /**
          * Transform <code>rsource</code>s to <code>source</code>s, since
          * randomness cannot be simulated this way in SPICE.
          **/
         private CellInterface fixupRandom(final CellInterface cell) {
             final Matcher mat = RSOURCE.matcher(cell.getFullyQualifiedType());
+            final Matcher bdmat = BD_RSOURCE.matcher(cell.getFullyQualifiedType());
+            final StringBuffer sb = new StringBuffer();
+            Stream<Number> rstream = null;
             if (mat.matches()) {
-                final StringBuffer sb = new StringBuffer();
                 sb.append("standard.source.source_");
                 sb.append(mat.group(1)); // a or e
                 sb.append("1of(");
                 sb.append(mat.group(2)); // rails
-                sb.append(",");
                 final int rails;
                 try {
                     rails = Integer.parseInt(mat.group(2));
                 } catch (NumberFormatException e) {
                     throw new RuntimeException("Invalid number of rails in rsource: " + cell.getFullyQualifiedType(), e);
                 }
-
-                /**
-                 * A e1of1 channel can't really be "randomized", but
-                 * rsource_e1of1 no longer works properly when translated
-                 * normally, so substitution is still required.
-                 **/
-
-                final int[] rand = getRandomSequence(rails);
-                sb.append(rand.length);
-                sb.append(",{");
-                sb.append(rand[0]);
-                for (int i = 1; i < rand.length; ++i) {
-                    sb.append(",");
-                    sb.append(rand[i]);
-                }
-                sb.append("})");
-                final CellInterface src;
+                rstream = Stream.generate(() -> random.nextInt(rails));
+            } else if (bdmat.matches()) {
+                sb.append("standard.bd.source_bd(");
+                sb.append(bdmat.group(1)); // width
+                final int width;
                 try {
-                    src = cfp.getFullyQualifiedCell(sb.toString());
-                } catch (Exception e) {
-                    System.err.println("Warning: Cannot convert " + cell.getFullyQualifiedType() + " to " + sb + ": " + e);
-                    return cell;
+                    width = Integer.parseInt(bdmat.group(1));
+                } catch (NumberFormatException e) {
+                    throw new RuntimeException("Invalid width in bd_rsource: " + cell.getFullyQualifiedType(), e);
                 }
-                return src;
+                rstream = Stream.generate(() -> new BigInteger(width, random));
             } else {
                 return cell;
             }
+
+            sb.append(",");
+            sb.append(randSeqLen);
+            sb.append(",");
+            sb.append(rstream.limit(randSeqLen)
+                             .map(o -> o.toString())
+                             .collect(Collectors.joining(",", "{", "}")));
+            sb.append(")");
+
+            final CellInterface src;
+            try {
+                src = cfp.getFullyQualifiedCell(sb.toString());
+            } catch (Exception e) {
+                System.err.println("Warning: Cannot convert " + cell.getFullyQualifiedType() + " to " + sb + ": " + e);
+                return cell;
+            }
+            return src;
         }
 
         /**
