@@ -102,6 +102,28 @@ LaygenNetMap[LaygenVccName] = VddNetName
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utility Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; label the pwell for LVS
+(defun LaygenLabelPwell (@key (CV (geGetEditCellView)) (netName GNDNetName))
+  (let (lpp xy)
+    lpp = (list "pwellSubIso" "id")
+    (foreach shape CV->shapes (when shape->lpp==lpp (dbDeleteObject shape)))
+    (when CV->prBoundary
+      xy = (car (SortVertices CV->prBoundary->points))
+      label = (dbCreateLabel CV lpp xy netName "lowerLeft" "R0" "stick" 0.02)
+      )
+    )
+  t
+  )
+
+; use with FindSubcells to recursively add pwell label to all leaf cells with NMOS
+labelPwellAction =
+(lambda (CV)
+  (when (setof x CV->shapes x->layerName=="ndiff")!=nil
+        (LaygenLabelPwell ?CV CV)
+        )
+  t
+  )
+
 ; Define PRBoundary of cell
 (defun LaygenBbox (CV fields)
   (let (xl yl xh yh)
@@ -112,8 +134,7 @@ LaygenNetMap[LaygenVccName] = VddNetName
     yh = (LaygenCoord vars["yh"])
     (when (and xl xh yl yh)
       (dbCreatePRBoundary CV (list xl:yl xl:yh xh:yh xh:yl xl:yl))
-      (LaygenRect CV (list (list "pwellSubIso" "id"))
-                  LaygenVssName pins[LaygenVssName] nil xl yl xh yh)
+      (LaygenLabelPwell ?CV CV)
       )
     )
   t
@@ -201,7 +222,6 @@ LaygenNetMap[LaygenVccName] = VddNetName
                  pinrect = (if pin_purpose
                                (dbCreateRect CV (list (car lpp) "pin") (list xl-dx:yl-dy xh+dx:yh+dy))
                              rect)
-                 rect->net = rect->net
                  (dbCreatePin rect->net pinrect)->term->direction = pin
                  (LaygenLabelPin CV pinrect)
                  )
