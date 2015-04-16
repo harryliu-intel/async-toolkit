@@ -1737,6 +1737,8 @@ public class CDL2Cast {
             // write fixed size netlist to the SPEC
             iw.write("netlist {\n");
             iw.nextLevel();
+            if (widthGrid>0)  iw.write(".param TRANSISTOR_WIDTH_GRID=TRANSISTOR_WIDTH_GRID\n");
+            if (lengthGrid>0) iw.write(".param TRANSISTOR_LENGTH_GRID=TRANSISTOR_LENGTH_GRID\n");
 
             final CDLFactoryInterface emitter =
                 new CDLFactoryEmitter(iw, true, 999, true, true, "" /*"/"*/,
@@ -1838,6 +1840,9 @@ public class CDL2Cast {
             if (netlistInCast) {
                 iw.write("netlist {\n");
                 iw.nextLevel();
+                if (widthGrid>0)  iw.write(".param TRANSISTOR_WIDTH_GRID=TRANSISTOR_WIDTH_GRID\n");
+                if (lengthGrid>0) iw.write(".param TRANSISTOR_LENGTH_GRID=TRANSISTOR_LENGTH_GRID\n");
+
                 final CDLFactoryInterface emitter =
                     new CDLFactoryEmitter(iw, true, 999, true, true, "" /*"/"*/,
                                           transistorTypeMap, widthGrid, lengthGrid) {
