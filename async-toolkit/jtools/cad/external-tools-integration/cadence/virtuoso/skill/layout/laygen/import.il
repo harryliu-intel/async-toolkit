@@ -115,15 +115,6 @@ LaygenNetMap[LaygenVccName] = VddNetName
   t
   )
 
-; use with FindSubcells to recursively add pwell label to all leaf cells with NMOS
-labelPwellAction =
-(lambda (CV)
-  (when (setof x CV->shapes x->layerName=="ndiff")!=nil
-        (LaygenLabelPwell ?CV CV)
-        )
-  t
-  )
-
 ; Define PRBoundary of cell
 (defun LaygenBbox (CV fields)
   (let (xl yl xh yh)

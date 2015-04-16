@@ -38,3 +38,13 @@
 leafCellFilter = (lambda (CV) (dbGetPropByName CV "LeafCell")->value=="TRUE")
 editCellAction = (lambda (CV) (cdsp4edit ?CV CV))
 addCellAction = (lambda (CV) (cdsp4add ?CV CV))
+
+; Recursively add pwell label to all cells with ndiff.
+; Change GNDNetName for different assumptions.
+labelPwellAction =
+(lambda (CV)
+  (when (setof x CV->shapes x->layerName=="ndiff")!=nil
+        (LaygenLabelPwell ?CV CV)
+        )
+  t
+  )
