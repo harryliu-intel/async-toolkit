@@ -75,6 +75,9 @@ importPostProcessAction =
                text = (pcreReplace pcre3 inst->name "." 0) ; replace / with .
                (when text!=inst->name inst->name=text)
                )
+      (when (setof x CV->shapes x->layerName=="ndiff")!=nil
+            (LaygenLabelPwell ?CV CV ?netName "vss")
+            )
       )
     t
     )
