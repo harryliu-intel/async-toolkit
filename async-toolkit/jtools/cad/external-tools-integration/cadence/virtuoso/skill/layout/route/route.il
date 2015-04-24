@@ -360,7 +360,7 @@
               nil ; [ shared nil]
               nil ; [ noRouting nil]
               logFile ; [ t_logName logName]
-              t   ; [ useCustomVias nil]
+              nil ; [ useCustomVias nil]
               t   ; [ overwrite nil]
               nil ; [ createModHier nil]
               ; [ t_commentChar commentChar]
