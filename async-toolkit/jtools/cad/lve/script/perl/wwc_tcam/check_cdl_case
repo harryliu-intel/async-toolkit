@@ -1,0 +1,256 @@
+#!/usr/intel/bin/perl -w
+
+# Copyright 2012 Intel
+# Authors: Andrew Lines
+
+use FileHandle;
+use IPC::Open2;
+use POSIX;
+
+# Output record separator
+$" = " ";
+
+# usage banner
+sub usage() {
+    die "Usage: $0 <cdl>\n";
+}
+
+# global tables to check for case conflicts
+my %node_case;
+my %node_error;
+my %inst_case;
+my %inst_error;
+my %type_case;
+my %type_error;
+
+# check case conflicts of node names
+sub node_names {
+    foreach my $node (@_) {
+        my $x = lc($node);
+        if (!(defined $node_case{$x})) {
+            $node_case{$x} = $node;
+        }
+        if (defined $node_case{$x} && !($node_case{$x} eq $node)) {
+            $node_error{$node} = 1;
+            $node_error{$node_case{$x}} = 1;
+        }
+    }
+}
+
+# check type names
+sub type_names {
+    foreach my $type (@_) {
+        my $x = lc($type);
+        if (!(defined $type_case{$x})) {
+            $type_case{$x} = $type;
+        }
+        if (defined $type_case{$x} && !($type_case{$x} eq $type)) {
+            $type_error{$type} = 1;
+            $type_error{$type_case{$x}} = 1;
+        }
+    }
+}
+
+# check inst names
+sub inst_names {
+    foreach my $inst (@_) {
+        my $x = lc($inst);
+        if (!(defined $inst_case{$x})) {
+            $inst_case{$x} = $inst;
+        }
+        if (defined $inst_case{$x} && !($inst_case{$x} eq $inst)) {
+            $inst_error{$inst} = 1;
+            $inst_error{$inst_case{$x}} = 1;
+        }
+    }
+}
+
+# command line arguments
+@ARGV == 1 or usage();
+$f_in  = "$ARGV[0]";
+
+open IN,  "<$f_in"  or die "Can't open '$f_in' for reading.\n";
+
+#
+# subroutines
+#
+
+# report a fatal error
+sub error_msg {
+    die "$0: $f_in, line $.: $_[0]\n";
+}
+
+#
+# Parse CDL
+#
+
+$line = <IN>;
+$. = 0;
+my $cell = "";
+while ($line) {
+    $next_line = <IN>;
+    while (defined $next_line && $next_line =~ s/^\+/ /) {
+        chomp $line;
+        $line .= $next_line;
+        $next_line = <IN>;
+    }
+    my $full = $line;
+    if ($line =~ s/^\.SUBCKT\s+//i) {
+
+        #
+        # Begin Subcircuit Definition
+        #
+
+        my @parameters = ();
+        my @nodes = ();
+
+        $line =~ s/(\S+)\s+//;
+        $cell = $type = $1;
+        type_names($type);
+        while ($line =~ s/(\S+)\s*//) {
+            $arg = $1;
+            if ($arg =~ /(\S+)=(\S+)/) {
+                # Parameter and default.
+                # Default value saved in subc_arg will be used 
+                # if an instance fails to provide all parameters
+            } else {
+                # Node argument
+                my $node = $1;
+                node_names($node);
+            }
+        }
+        
+    } elsif ($line =~ s/^\.ENDS//i) {
+        
+        # check for aliasing of nodes and insts in this cell
+        my @node_errors = sort keys %node_error;
+        my @inst_errors = sort keys %inst_error;
+        if (@node_errors || @inst_errors) {
+            print "Node and instance name conflicts in $cell:\n";
+            foreach my $node (@node_errors) {
+                print "NODE: $node\n";
+            }
+            foreach my $inst (@inst_errors) {
+                print "INST: $inst\n";
+            }
+            print "\n";
+        }
+        %node_case = ();
+        %node_error = ();
+        %inst_case = ();
+        %inst_error = ();
+
+    } elsif ($line =~ s/^M//i) {
+
+        #
+        # MOSFET
+        #
+
+        my %parameters = ();
+        my @nodes = ();
+
+        $line =~s/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)//
+            or error_msg "Missing arguments in mosfet: $full";
+        my $name   = $1;
+        my $type   = $6;
+        my $drain  = $2;
+        my $gate   = $3;
+        my $source = $4;
+        my $bulk   = $5;
+
+        # create parameter list in aspice order
+        while ($line =~ s/(\S+)=//) {
+            my $p = $1;
+            my $v;
+            $line =~ s/(\S+)\s+//;
+            $v = $1;
+        }
+
+        # emit
+        inst_names($name);
+        node_names($drain,$gate,$source,$bulk);
+
+    } elsif ($line =~ s/^X//i) {
+
+        #
+        # Call to Subcircuit
+        #
+
+        my %parms = ();
+        my @parms = ();
+        my @nodes = ();
+        $line =~ s/^(\S+)\s*// or error_msg "Call lacks instance name: $full";
+        $name = $1;
+        while ($line =~ s/(\S+)=(\S+)\s*//) {
+            $parms{$1}=$2;
+            push @parms, $1;
+        }
+        $line =~ s/(\S+)\s*$// or error_msg "Call lacks SUBCKT name: $full";
+        $type = $1;
+        @nodes = split /\s+/, $line;
+        my $slash = pop @nodes; # FIXME: find better way to remove last "/"
+        if ($slash ne "/") { # slash is optional before subcircuit name
+            push @nodes, $slash;
+        }
+        inst_names($name);
+        node_names(@nodes);
+
+    } elsif ($line =~ s/^C//i) {
+	
+        #
+        # Capacitor
+        #
+
+        $line =~ s/^(\S*)\s*//;
+        $name = $1;
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no positive terminal: $full";
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no negative terminal: $full";
+        $neg = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Capacitor has no capacitance specifier: $full";
+        inst_names($name);
+        node_names($pos,$neg);
+
+    } elsif ($line =~ /^R/i) {
+
+        #
+        # Resistor
+        #
+
+        $line =~ s/^(\S*)\s*//;
+        $name = $1;
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no positive terminal: $full";
+        $pos = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no negative terminal: $full";
+        $neg = "$1";
+        $line =~ s/^(\S+)\s*//
+            or error_msg "Resistor has no resistance specifier: $full";
+        inst_names($name);
+        node_names($pos,$neg);
+
+    } elsif ($line =~ m/^.PARAM/i) {
+        # skip parameters
+    } elsif ($line =~ m/^\*/) {
+        # comment line, do nothing
+    } elsif ($line =~ s/^\s*\n//i ) {
+        # empty line with space, do nothing
+    } else {
+        # unknown line, error
+        error_msg "Unknown line type: $line";
+    }
+    $line = $next_line;
+}
+
+# check for aliasing if types
+my @type_errors = sort keys %type_error;
+if (@type_errors) {
+    print "SUBCKT name conflicts:\n";
+    foreach my $type (@type_errors) {
+        print "TYPE: $type\n";
+    }
+}
