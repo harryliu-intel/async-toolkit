@@ -43,7 +43,8 @@ LaygenPlaceCmd = (strcat LaygenCmd
                  (batch_place "nbq --block") ; remote launch command (or nil)
                  (batch_route "nbq --block") ; remote launch command (or nil)
                  (jobs 32) ; maximum number of batch routing jobs
-                 (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
+                 (import nil) ; import only
+                 (doCdl !import) (doSnp !import) (doPlace !import) (doRoute !import) (doImport t))
   (let (dir bbox cmd obj file viewName name out device_row_offset trials success wstr)
 
     ; pick libName cellName
