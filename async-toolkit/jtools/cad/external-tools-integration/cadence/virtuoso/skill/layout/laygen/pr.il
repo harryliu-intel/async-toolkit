@@ -44,8 +44,11 @@ LaygenPlaceCmd = (strcat LaygenCmd
                  (batch_route "nbq --block") ; remote launch command (or nil)
                  (jobs 32) ; maximum number of batch routing jobs
                  (import nil) ; import only
-                 (doCdl !import) (doSnp !import) (doPlace !import) (doRoute !import) (doImport t))
+                 (doCsh t) (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
   (let (dir bbox cmd obj file viewName name out device_row_offset trials success wstr)
+
+    ; import shortcut
+    (when import doCsh=nil doCdl=nil doSnp=nil doPlace=nil doRoute=nil)
 
     ; pick libName cellName
     (when CV&&!libName  libName  = CV->libName)
@@ -98,46 +101,50 @@ LaygenPlaceCmd = (strcat LaygenCmd
       )
 
     ; create place script
-    (sprintf device_row_offset "%d,%d,%d,%d"
-             n_offset p_offset p_offset n_offset)
-    (sprintf cmd (strcat 
-                  LaygenPlaceCmd
-                  "-netlist %s.snp \\\n"
-                  "-outdir place \\\n"
-                  "-target_height %d \\\n"
-                  "-target_area %s \\\n"
-                  "-placement_result_idx %d \\\n"
-                  "-placement_max_hor_routes %d \\\n"
-                  "-placement_effort %d \\\n"
-                  "-quality_effort %d \\\n"
-                  "-device_row_offset %s \\\n"
-                  (if port_order
-                      (sprintf nil "-port_order \"%s\" \\\n" (buildString port_order ",")) "")
-                  ">& %s.place.log")
-             cellName h (if shrink=="min" "min" (sprintf nil "%d" w-1))
-             num_place-1 hor_routes*h
-             placement_effort quality_effort
-             device_row_offset cellName)
-    file = (sprintf nil "%s/%s.place.csh" dir cellName)
-    out = (outfile file)
-    (fprintf out "#!/bin/csh\n%s\n" cmd)
-    (close out)
-    (csh (sprintf nil "chmod +x %s" file))
-
+    (when doCsh
+      (sprintf device_row_offset "%d,%d,%d,%d"
+               n_offset p_offset p_offset n_offset)
+      (sprintf cmd (strcat 
+                    LaygenPlaceCmd
+                    "-netlist %s.snp \\\n"
+                    "-outdir place \\\n"
+                    "-target_height %d \\\n"
+                    "-target_area %s \\\n"
+                    "-placement_result_idx %d \\\n"
+                    "-placement_max_hor_routes %d \\\n"
+                    "-placement_effort %d \\\n"
+                    "-quality_effort %d \\\n"
+                    "-device_row_offset %s \\\n"
+                    (if port_order
+                        (sprintf nil "-port_order \"%s\" \\\n" (buildString port_order ",")) "")
+                    ">& %s.place.log")
+               cellName h (if shrink=="min" "min" (sprintf nil "%d" w-1))
+               num_place-1 hor_routes*h
+               placement_effort quality_effort
+               device_row_offset cellName)
+      file = (sprintf nil "%s/%s.place.csh" dir cellName)
+      out = (outfile file)
+      (fprintf out "#!/bin/csh\n%s\n" cmd)
+      (close out)
+      (csh (sprintf nil "chmod +x %s" file))
+      )
+    
     ; create route script
-    (sprintf cmd (strcat 
-                  LaygenCmd
-                  "-netlist tmp_$1.snp \\\n"
-                  "-outdir $1 \\\n"
-                  "-upperlayer m%d \\\n"
-                  "-quality_effort %d \\\n"
-                  ">& %s.route.$1.log")
-             upperlayer quality_effort cellName)
-    file = (sprintf nil "%s/%s.route.csh" dir cellName)
-    out = (outfile file)
-    (fprintf out "#!/bin/csh\n%s\n" cmd)
-    (close out)
-    (csh (sprintf nil "chmod +x %s" file))
+    (when doCsh
+      (sprintf cmd (strcat 
+                    LaygenCmd
+                    "-netlist tmp_$1.snp \\\n"
+                    "-outdir $1 \\\n"
+                    "-upperlayer m%d \\\n"
+                    "-quality_effort %d \\\n"
+                    ">& %s.route.$1.log")
+               upperlayer quality_effort cellName)
+      file = (sprintf nil "%s/%s.route.csh" dir cellName)
+      out = (outfile file)
+      (fprintf out "#!/bin/csh\n%s\n" cmd)
+      (close out)
+      (csh (sprintf nil "chmod +x %s" file))
+      )
 
     ; place
     (when doPlace
