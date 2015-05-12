@@ -16,7 +16,7 @@
                                    (TempDir  (ConfigFileGetValue TheCDSConfigTable "TEMP"))
                                    (topMetal 8) ; top of power grid in tag view
                                    )
-  (let (libName CV tagCV trans ints prb fig align
+  (let (libName CV tagCV trans ints prb align lpp
                 gridCV colorCV fillCV power2 prb2 shapes count
                 x0box x1box y0box y1box x0 y0 x1 y1
                 rows cols frows fcols fx0 fy0 fx1 fy1)
@@ -31,17 +31,16 @@
 
     ; instantiate layout cell
     trans = (list 0:0 orientation 1.0)
-    inst = (dbCreateInst tagCV CV "inst_layout" 0:0 orientation);
+    inst = (dbCreateInst tagCV CV "inst_layout" 0:0 orientation)
 
     ; copy prb
+    (unless CV->prBoundary->points (error "No prBoundary"))
     prb = (dbCreatePRBoundary tagCV CV->prBoundary->points)
 
     ; copy non-power labels
     (foreach label (setof l CV->shapes l->objType=="label" && l->theLabel!=GNDNetName && l->theLabel!=VddNetName)
-             fig = (dbCopyFig label tagCV trans)
-             ;(dbCreateRect tagCV label->lpp
-             ;              (list (car fig->xy)-MfgGrid:(cadr fig->xy)-MfgGrid 
-             ;                    (car fig->xy)+MfgGrid:(cadr fig->xy)+MfgGrid))
+             lpp = (list (car label->lpp) "pin")
+             (MakeLayoutTagLabel tagCV lpp (dbTransformPoint label->xy trans) label->theLabel)
              )
 
     ; get bounding box as an integer multiple of MfgGrid
@@ -109,19 +108,29 @@
     ; label GND substrate (TODO: using pdkinfo.il)
     (for r 0 rows
          y = y0+(cadr align)*r
-         (dbCreateLabel tagCV (list "pwellSubIso" "id") x0:y GNDNetName "centerCenter" "R0" "stick" 50*MfgGrid)
+         (MakeLayoutTagLabel tagCV (list "pwellSubIso" "id") x0+(car align)/2:y GNDNetName ?addrect nil)
          )
 
     ; label Vdd substrate (TODO: using pdkinfo.il)
     (for r 0 rows-1
          y = y0+(cadr align)*(r+0.5)
-         (dbCreateLabel tagCV (list "nwell" "drawing") x0:y VddNetName "centerCenter" "R0" "stick" 50*MfgGrid)
+         (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
          )
-
+    
     ; TODO: metal fill
 
     ; finish
     (dbSave tagCV)
     tagCV
+    )
+  )
+
+; create a label on an optional tiny rectangle
+(defun MakeLayoutTagLabel (cv lpp xy label @key (addrect t))
+  (let (x y)
+    x=(car xy)
+    y=(cadr xy)
+    (dbCreateLabel cv lpp xy label "centerCenter" "R0" "stick" 50*MfgGrid)
+    (when addrect (dbCreateRect cv lpp (list x-MfgGrid:y-MfgGrid x+MfgGrid:y+MfgGrid)))
     )
   )
