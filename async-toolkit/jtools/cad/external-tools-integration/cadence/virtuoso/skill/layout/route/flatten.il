@@ -434,6 +434,7 @@ useAssura = nil ; BUG: Assura isn't working!
                  ?isPin t ?CV CV)
     (foreach shape CV->shapes
              (when shape->purpose=="gnd" || shape->purpose=="vdd"
+                   shape->lpp=(list (car shape->lpp) "pin") ; hack
                    (dbReplaceProp shape "PinType" "string" "Power")
                    (dbReplaceProp shape "BusScriptObject" "boolean" nil)
                    )
