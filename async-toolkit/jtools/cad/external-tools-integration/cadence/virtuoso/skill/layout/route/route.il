@@ -368,6 +368,7 @@
               )
     (unless status (error "Unsuccessful defin\n"))
     ImportCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "a")
+    (dbRefreshCellView ImportCV)
 
     ; label pins
     (LabelPins ?CV ImportCV)
