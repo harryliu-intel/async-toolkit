@@ -65,6 +65,7 @@
     TEMP     = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR     = (strcat TEMP "/route/" CV->cellName)
     MaxHeapSize = (nrGetMaxHeapSize)
+    (csh (strcat "rm -rf " WDIR))
     (csh (strcat "mkdir -p " WDIR))
 
     ; make flatten view automatically
