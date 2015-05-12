@@ -246,7 +246,7 @@ my $cadencelog = "/dev/null";
 my $assuralog = "/dev/null";
 my $pipolog;
 my $debug=0;
-my $cleanup=1;
+my $cleanup=0;
 my $flattenpcells=0;
 my $flattenvias=0;
 my $scale=1.0;
@@ -268,7 +268,7 @@ my $layertable="";
 my $cellmaptable="";
 my $noproperties=0;
 my $use_tag=0;
-my $tag_orientation="MXR90";
+my $tag_orientation="R0";
 my $verilog=0;
 my @defines=();
 
@@ -859,7 +859,7 @@ EFT
     else {
         open ($ft, ">$cdsWD/mktag.il");
         print $ft <<EFT;
-MakeLayoutTagCell("$pc" ?orientation "$tag_orientation" ?ViewName "$srcViewName" ?TargetViewName "${srcViewName}_tag" ?CastPath "$castpath" ?TempDir "$cdsWD" )
+MakeLayoutTagCell("$pc" ?orientation "$tag_orientation" ?viewName "$srcViewName" ?targetViewName "${srcViewName}_tag" ?CastPath "$castpath" ?TempDir "$cdsWD" )
 exit
 EFT
         close $ft;
