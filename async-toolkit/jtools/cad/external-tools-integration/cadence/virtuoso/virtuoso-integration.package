@@ -388,7 +388,7 @@ share/skill/layout/power_grid/power_grid.il           skill/layout/power_grid/po
 share/skill/layout/power_grid/create_power_grid_cells.il skill/layout/power_grid/create_power_grid_cells.il 664 p
 
 # Router
-share/skill/layout/route/route.il                     skill/layout/route/route.il                 664 p 
+share/skill/layout/route/route.il                     skill/layout/route/route.il                     664 p 
 share/skill/layout/route/prelayout.il                 skill/layout/route/prelayout.il                 664 p 
 share/skill/layout/route/flatten.il                   skill/layout/route/flatten.il                   664 p 
 share/skill/layout/route/routepath.il                 skill/layout/route/routepath.il                 664 p
@@ -397,6 +397,7 @@ share/skill/layout/route/trim.il                      skill/layout/route/trim.il
 share/skill/layout/route/ground.il                    skill/layout/route/ground.il                    664 p
 share/skill/layout/route/reset.il                     skill/layout/route/reset.il                     664 p
 share/skill/layout/route/sync.il                      skill/layout/route/sync.il                      664 p
+share/skill/layout/route/fill.il                      skill/layout/route/fill.il                      664 p 
 
 # Laygen
 share/skill/layout/laygen/import.il             skill/layout/laygen/import.il           664 p

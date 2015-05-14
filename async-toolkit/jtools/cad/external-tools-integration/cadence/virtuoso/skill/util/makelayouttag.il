@@ -117,7 +117,8 @@
          (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
          )
     
-    ; TODO: metal fill
+    ; metal fill
+    (TemplateFill ?topMetal topMetal)
 
     ; finish
     (dbSave tagCV)
