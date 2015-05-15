@@ -111,13 +111,13 @@
 
 ; fill using a template cell
 (defun TemplateFill (@key (CV (geGetEditCellView)) (topMetal 6) (levels 31))
-  (when topMetal>=0 (ChopFill "m0" ?xbloat 0.054 ?levels levels))
-  (when topMetal>=1 (ChopFill "m1" ?ybloat 0.042 ?levels levels))
-  (when topMetal>=2 (ChopFill "m2" ?xbloat 0.056 ?levels levels))
-  (when topMetal>=3 (ChopFill "m3" ?ybloat 0.056 ?levels levels))
-  (when topMetal>=4 (ChopFill "m4" ?xbloat 0.056 ?levels levels))
-  (when topMetal>=5 (ChopFill "m5" ?ybloat 0.056 ?levels levels))
-  (when topMetal>=6 (ChopFill "m6" ?xbloat 0.080 ?levels levels))
+  (when topMetal>=0 (ChopFill "m0" ?CV CV ?xbloat 0.054 ?levels levels))
+  (when topMetal>=1 (ChopFill "m1" ?CV CV ?ybloat 0.042 ?levels levels))
+  (when topMetal>=2 (ChopFill "m2" ?CV CV ?xbloat 0.056 ?levels levels))
+  (when topMetal>=3 (ChopFill "m3" ?CV CV ?ybloat 0.056 ?levels levels))
+  (when topMetal>=4 (ChopFill "m4" ?CV CV ?xbloat 0.056 ?levels levels))
+  (when topMetal>=5 (ChopFill "m5" ?CV CV ?ybloat 0.056 ?levels levels))
+  (when topMetal>=6 (ChopFill "m6" ?CV CV ?xbloat 0.080 ?levels levels))
   CV->modified=t
   CV
   )

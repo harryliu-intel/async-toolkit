@@ -118,7 +118,7 @@
          )
     
     ; metal fill
-    (TemplateFill ?topMetal topMetal)
+    ; (TemplateFill ?CV tagCV ?topMetal topMetal)
 
     ; finish
     (dbSave tagCV)
