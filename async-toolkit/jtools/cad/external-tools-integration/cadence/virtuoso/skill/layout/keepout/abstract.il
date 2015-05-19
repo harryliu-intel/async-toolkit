@@ -190,7 +190,7 @@
     (CopyKeepoutToBlockage abstractCV)
 
     ; save and exit
-    (SetLefProperties abstractCV)
+    (SetLefProperties abstractCV ?leaf t)
     (dbSave abstractCV)
     dd_CV = (ddGetObj abstractCV->libName abstractCV->cellName "abstract_temp")
     (when dd_CV (ddDeleteObj dd_CV))
@@ -220,9 +220,12 @@
   )
 
 ; set properties for LEF export
-(defun SetLefProperties (CV @key (powergrid nil))
+(defun SetLefProperties (CV @key (powergrid nil) (leaf nil))
   (let (Vdd GND)
-    CV->cellType = (if powergrid "cover" "block") ; CLASS [COVER|BLOCK]
+    (cond (powergrid CV->cellType="cover")
+          (leaf      CV->cellType="core")
+          (t         CV->cellType="block")
+          )
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
     GND = (dbFindNetByName CV GNDNetName)
     Vdd = (dbFindNetByName CV VddNetName)
