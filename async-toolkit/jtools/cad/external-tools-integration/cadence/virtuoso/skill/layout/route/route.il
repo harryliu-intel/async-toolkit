@@ -11,6 +11,7 @@
         (importView "layout")    ; view name to import wiring back to
         (Mem 4000)               ; memory to use
         (doVerilog t)            ; create .v
+        (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create .lef
         (doDef t)                ; create .def
         (doNondefaultDef t)      ; create _nondefault.def
@@ -20,7 +21,7 @@
     ; export
     CV = (RouteExport ?CV CV
                           ?botMetal botMetal ?topMetal topMetal
-                          ?doVerilog doVerilog ?doLef doLef ?doDef doDef
+                          ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting)
 
@@ -41,6 +42,7 @@
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (doVerilog t)            ; create cellName.v
+        (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
         (doNondefaultDef t)      ; create cellName_nondefault.def
@@ -49,7 +51,8 @@
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR
         PowerGridCellName abstractCV
         Command (statusVerilog t)
-        LefCellsList pout (statusLef t) 
+        lef_subcells LefCellsList GdsMapFile gds_name
+        pout (statusGds t) (statusLef t) 
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
         (statusNonDefault t) errorStr)
@@ -102,13 +105,43 @@
       statusVerilog = (shell Command)
       )
 
+    ; find subcells for GDS and LEF
+    lef_subcells = (ListLefSubcells ?CV CV ?includeWiringCellNames (list PowerGridCellName))
+
+    ; export GDS
+    (when doGds
+      (foreach sub lef_subcells
+               (shell (strcat "mkdir -p " WDIR "/gds"))
+               GdsMapFile = (sprintf nil "%s/gds/%s.map" WDIR sub->cellName)
+               pout = (outfile GdsMapFile)
+               gds_name = (translateName "cell" "cadence" "gds2" sub->cellName)
+               (fprintf pout "%s %s %s %s\n" sub->libName sub->cellName sub->viewName gds_name)
+               (close pout)
+               Command = (sprintf nil
+                                  (strcat "strmout"
+                                          " -view '%s'"
+                                          " -runDir %s/gds"
+                                          " -outputDir %s/gds"
+                                          " -layerMap $PDK_DIR/stream/strmout.layermap"
+                                          " -propMap $PDK_DIR/stream/prop.map"
+                                          " -objectMap $PDK_DIR/stream/objectmap"
+                                          " -cellListFile %s"
+                                          " -cellMap %s"
+                                          " -logFile %s.log"
+                                          " ; mv %s/gds/%s %s/gds/%s.gds")
+                                  sub->viewName WDIR WDIR
+                                  GdsMapFile GdsMapFile GdsMapFile
+                                  WDIR gds_name WDIR gds_name)
+               statusGds = statusGds && (shell Command)
+               )
+      )
+
     ; export LEF
     (when doLef
       ; write lef cells list
       LefCellsList = (sprintf nil "%s/%s.lef_cells_list" WDIR CV->cellName)
       pout = (outfile LefCellsList)
-      (foreach sub (ListLefSubcells ?CV CV ?includeWiringCellNames
-                                    (list PowerGridCellName))
+      (foreach sub lef_subcells
                (fprintf pout "%s %s abstract\n" sub->libName sub->cellName))
       (close pout)
 
@@ -196,6 +229,7 @@
     ; summarize errors
     errorStr = ""
     (unless statusVerilog errorStr = (strcat errorStr " Verilog"))
+    (unless statusGds errorStr = (strcat errorStr " GDS"))
     (unless statusLef errorStr = (strcat errorStr " LEF"))
     (unless statusDef errorStr = (strcat errorStr " DEF"))
     (unless statusNonDefault errorStr = (strcat errorStr "NonDefaultDEF"))
