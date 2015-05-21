@@ -9,7 +9,12 @@ UV_dx = -0.035     ; x bloat of uv1/uv2 implant layers relative to diffusion
 UV_dy =  0.021     ; y bloat of uv1/uv2 implant layers relative to diffusion
 
 ; Other settings
-LaygenVersion = "d15q1ww11a_13972" ; sets a LaygenVersion cell property
+LaygenVersion = (let (id str)
+                  id = (ipcBeginProcess "cd $LAYGENWARD; pwd -P")
+                  (ipcWait id)
+                  str = (ipcReadProcess id)
+                  (car (last (parseString str "/\n")))
+                  )
 LaygenVssName = "vss"
 LaygenVccName = "vcc"
 
