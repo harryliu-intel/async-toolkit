@@ -42,11 +42,8 @@ public class CspArray implements CspCloneableValue, Packable {
      **/
     public CspArray (final CspInteger min, final CspInteger max,
                      final Class elem) {
-
-        // XXX: this should throw an exception if the narrowing is invalid.
-
-        this.min = min.intValue();
-        this.max = max.intValue();
+        this.min = min.intValueExact();
+        this.max = max.intValueExact();
 
         ca = new CspValue[this.max - this.min + 1];
 
@@ -60,6 +57,10 @@ public class CspArray implements CspCloneableValue, Packable {
         }
     }
 
+    CspValue get (final int index) {
+        return ca[index - min];
+    }
+
     /**
      * Get the object stored at the given index.
      *
@@ -67,10 +68,7 @@ public class CspArray implements CspCloneableValue, Packable {
      * @return object stored at <var>index</var>
      **/
     public CspValue get (final CspInteger index) {
-
-        // XXX: this should throw an exception if the narrowing is invalid.
-
-        return ca[index.intValue() - min];
+        return get(index.intValueExact());
     }
 
     /**
@@ -85,10 +83,8 @@ public class CspArray implements CspCloneableValue, Packable {
      **/
     public CspValue get (final CspInteger index, String filename,
                          int line, int column) {
-
-        // XXX: this should throw an exception if the narrowing is invalid.
         try {
-            return ca[index.intValue() - min];
+            return get(index);
         } catch (ArrayIndexOutOfBoundsException e) {
             throw (CspArrayBoundsException)
                   new CspArrayBoundsException(index, min, max, filename, line,
@@ -139,9 +135,13 @@ public class CspArray implements CspCloneableValue, Packable {
         if (limits.length - start == 2) {
             return new CspArray(limits[start], limits[start + 1], elem);
         } else {
-            final int min = limits[start].intValue();
-            final int max = limits[start + 1].intValue();
-            final int len = max - min + 1;
+            final int min = limits[start].intValueExact();
+            final int max = limits[start + 1].intValueExact();
+            final long llen = (long) max - min + 1;
+            if (llen > Integer.MAX_VALUE) {
+                throw new ArithmeticException("Array too large (" + llen + " > 2^31-1)");
+            }
+            final int len = (int) llen;
             final CspValue[] content = new CspValue[len];
             for (int i = 0; i < len; ++i) {
                 content[i] = makeArray(limits, start + 2, elem);
