@@ -20,4 +20,5 @@ JAVAFILES_CLASSES_CACHE_ROOT := $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/cla
 JAVAFILES_JAVADOC_SOURCE_PATH := $(call CONONICALIZE_PATH, $(CURR_PROJECT_DIR)/../java/src)
 
 JAVAFILES_PARSERS_USED := $(JAVAFILES_PARSERS_USED) \
-                          $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/tools/jauto/CastQueryParser)
+                          $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/tools/jauto/CastQueryParser) \
+                          $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/csp/grammar/MemParser)

@@ -235,6 +235,10 @@ public class CspInteger implements CspCloneableValue {
         return getValue().intValue();
     }
 
+    public int intValueExact() {
+        return getValue().intValueExact();
+    }
+
     public long longValue() {
         return getValue().longValue();
     }

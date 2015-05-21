@@ -9,6 +9,7 @@ package com.avlsi.csp.csp2java.runtime;
 
 import java.math.BigInteger;
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 
+import com.avlsi.csp.grammar.MemParser;
 import com.avlsi.tools.dsim.DSim;
 import com.avlsi.tools.dsim.DSimUtil;
 import com.avlsi.tools.dsim.DigitalScheduler;
@@ -513,6 +515,28 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
 
     protected CspInteger _stable(CspNode node) throws InterruptedException {
         return CspInteger.valueOf(node.stable() ? -1 : 0);
+    }
+
+    protected CspInteger _readHexInts(CspString filename, CspInteger n,
+                                      CspArray data) {
+        List<BigInteger> ints = new ArrayList<>();
+        try (FileInputStream s = new FileInputStream(filename.toString())) {
+            MemParser.parseFile(s, filename.toString(), ints);
+        } catch (Exception e) {
+            outerr("Can't read data from " + filename + " at " + whereAmI +
+                   ": " + e.getMessage());
+            if (DSim.get().haltOnError) {
+                DSim.get().interrupt();
+            }
+            return CspInteger.ZERO;
+        }
+        final int ni = n.getValue().intValueExact();
+        final int len = Math.min(ints.size(), ni);
+        for (int i = 0, idx = data.getMinIndex(); i < len; ++i, ++idx) {
+            CspValue val = data.get(idx);
+            val.setValue(new CspInteger(ints.get(i)));
+        }
+        return CspInteger.valueOf(len);
     }
 
     /**

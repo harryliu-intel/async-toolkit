@@ -27,6 +27,7 @@ public class RefinementResolver extends VisitorByCategory {
         String RANDOM = "random";
         String TIME = "time";
         String ENERGY = "energy";
+        String READHEXINTS = "readHexInts";
     }
 
     // Define built-in functions
@@ -134,6 +135,23 @@ public class RefinementResolver extends VisitorByCategory {
                 new FunctionDeclaration(BuiltIn.ENERGY,
                                         getDeclarations(getDeclaration("val")),
                                         null,
+                                        new SequentialStatement()),
+                BuiltIn.READHEXINTS,
+                new FunctionDeclaration(BuiltIn.READHEXINTS,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("filename",
+                                                new StringType()),
+                                            getDeclaration("count"),
+                                            getDeclaration(
+                                                "result",
+                                                new ArrayType(
+                                                    new Range(
+                                                        new IntegerExpression(0),
+                                                        new IntegerExpression(0)),
+                                                    new IntegerType()),
+                                                Declarator.INOUT)
+                                        }),
+                                        new IntegerType(),
                                         new SequentialStatement())
             });
 
