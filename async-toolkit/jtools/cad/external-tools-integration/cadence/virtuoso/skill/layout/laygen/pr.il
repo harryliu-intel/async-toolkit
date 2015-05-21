@@ -40,12 +40,13 @@ LaygenPlaceCmd = (strcat LaygenCmd
                  (n_offset 1) ; move NMOS away from NWELL edge by this many dg (0-2)
                  (p_offset 0) ; move PMOS away from NWELL edge by this many dg (0-2)
                  (port_order nil) ; list of port names from left to right
+                 (options nil) ; list of strings to append with -option
                  (batch_place "nbq --block") ; remote launch command (or nil)
                  (batch_route "nbq --block") ; remote launch command (or nil)
                  (jobs 32) ; maximum number of batch routing jobs
                  (import nil) ; import only
                  (doCsh t) (doCdl t) (doSnp t) (doPlace t) (doRoute t) (doImport t))
-  (let (dir bbox cmd obj file viewName name out device_row_offset trials success wstr)
+  (let (dir bbox cmd obj file viewName name out device_row_offset trials success wstr option_str)
 
     ; import shortcut
     (when import doCsh=nil doCdl=nil doSnp=nil doPlace=nil doRoute=nil)
@@ -100,6 +101,12 @@ LaygenPlaceCmd = (strcat LaygenCmd
       (csh cmd)
       )
 
+    ; construct option_str
+    option_str = ""
+    (foreach option options
+             (sprintf option_str "%s-option \"%s\" \\\n" option_str option)
+             )
+
     ; create place script
     (when doCsh
       (sprintf device_row_offset "%d,%d,%d,%d"
@@ -117,6 +124,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
                     "-device_row_offset %s \\\n"
                     (if port_order
                         (sprintf nil "-port_order \"%s\" \\\n" (buildString port_order ",")) "")
+                    option_str
                     ">& %s.place.log")
                cellName h (if shrink=="min" "min" (sprintf nil "%d" w-1))
                num_place-1 hor_routes*h
@@ -137,6 +145,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
                     "-outdir $1 \\\n"
                     "-upperlayer m%d \\\n"
                     "-quality_effort %d \\\n"
+                    option_str
                     ">& %s.route.$1.log")
                upperlayer quality_effort cellName)
       file = (sprintf nil "%s/%s.route.csh" dir cellName)
