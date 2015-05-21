@@ -156,6 +156,7 @@ useAssura = nil ; BUG: Assura isn't working!
 (defun MakePowerGrid
   (@key (CV (geGetEditCellView)) ; flatten CV
         (topMetal 8)
+        (powerHookup t)
         )
   (let (TEMP powerCellName align
         inst prb vertprb
@@ -276,12 +277,31 @@ useAssura = nil ; BUG: Assura isn't working!
     (dbDeleteObject prb)
     (foreach x blks (dbDeleteObject x))
 
+    ; optional power hookups for Laygen cells
+    (when powerHookup (LaygenPowerHookup CV powerCV))
+
     ; save and return
     (dbSave CV)
     (dbSave powerCV)
     (dbClose powerCV)
     powerCV
     )
+  )
+
+; Create power hookups for Laygen cells
+; BUG: should be done by RDT flow but doesn't work yet
+(defun LaygenPowerHookup (CV powerCV)
+  (let (phCV bbox y (count 0))
+    phCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
+    (foreach inst (setof x CV->instances (dbGetPropByName x->master "LaygenVersion"))
+      bbox = (dbTransformBBox inst->master->prBoundary->bBox inst->transform)
+      y = (cadr (car bbox))
+      (foreach x (list (car (car bbox)) (car (cadr bbox)))
+        (dbCreateInst powerCV phCV (sprintf nil "ph%d" count++) x:y "R0")
+        )
+      )
+    )
+  t
   )
 
 ; generate abstract of a power grid cell
