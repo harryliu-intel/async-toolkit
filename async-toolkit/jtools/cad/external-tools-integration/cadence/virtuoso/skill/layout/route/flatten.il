@@ -57,18 +57,6 @@ useAssura = nil ; BUG: Assura isn't working!
     (SetYAlignmentProp flattenCV (max (if yalign yalign 0) GridPitch))
     (dbSave flattenCV)
 
-    ; Create power grid
-    (when doMakePowerGrid
-      pgCV = (MakePowerGrid ?CV flattenCV ?topMetal topMetal)
-      (unless pgCV (error "Unable to create power grid\n"))
-      )
-
-    ; Create power grid abstract
-    (when doPowerGridAbstract
-      pgCV = (MakePowerGridAbstract ?CV flattenCV)
-      (unless pgCV (error "Unable to create power grid abstract\n"))
-      )
-
     ; switch current window
     CV = flattenCV
     win = (hiGetCurrentWindow)
@@ -107,6 +95,18 @@ useAssura = nil ; BUG: Assura isn't working!
 
     ; warn or delete redundant non-canonical pins
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
+
+    ; Create power grid
+    (when doMakePowerGrid
+      pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal)
+      (unless pgCV (error "Unable to create power grid\n"))
+      )
+
+    ; Create power grid abstract
+    (when doPowerGridAbstract
+      pgCV = (MakePowerGridAbstract ?CV CV)
+      (unless pgCV (error "Unable to create power grid abstract\n"))
+      )
 
     ; place metal on top of dangling subcell pins for StarRC extraction
     (when ConnectDanglingPins
