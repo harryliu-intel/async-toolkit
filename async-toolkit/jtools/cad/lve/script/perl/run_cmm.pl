@@ -23,13 +23,13 @@ my $prsDelay=200e-12;
 my $capLoad=0;
 my $print_nodes;
 my $portprops="";
-my $dynsimulationtime="6n";
+my $time="10ns";
 $ENV{TOT_SCRIPT}="tot" if ! defined $ENV{TOT_SCRIPT};
 
 sub usage {
     my ($msg)=@_;
     print STDERR "$msg" if defined $msg;
-    print STDERR "Usage: run_totem <options>";
+    print STDERR "Usage: run_cmm <options>";
     exit 1;
 }
 
@@ -57,8 +57,9 @@ GetOptions (
     "prs-delay=s" => \$prsDelay,
     "cap-load=s" => \$capLoad,
     "port-props=s" => \$portprops,
-    "dynamic-simulation-time=s" => sub {$dynsimulationtime = $_[1] * 1e-9} 
+    "dynamic-simulation-time=s" => \$time
 ) or usage();
+my $dynsimulationtime=$time * 1e-9;
 $true =~ s/V//;
 $temp =~ s/C//;
 my $gdsfqcn=`echo "$fqcn" | rename --type=cell --from=cast --to=gds2`;
@@ -448,7 +449,7 @@ close FH;
 close FH_MOD;
 
 # hsim
-my $out_dir="$lve_dir/$fqcn_path/$view/$extract_corner/hsim/$env/$corner/${true}V/${temp}C/10ns";
+my $out_dir="$lve_dir/$fqcn_path/$view/$extract_corner/hsim/$env/$corner/${true}V/${temp}C/$time";
 my @nodes=();
 open P, "<$portprops";
 while (<P>) {
