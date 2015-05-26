@@ -74,6 +74,77 @@ public class Rename {
         String act(String in) throws CDLRenameException;
     }
 
+    private static RenameAction getActionByType(final String type,
+                                                final CDLNameInterface theNI) {
+        final RenameAction act;
+        if(type.equals("cell"))
+            act = new RenameAction() { public String act(String in) 
+                                              throws CDLRenameException { return theNI.renameCell(in); } };
+        else if(type.equals("node"))
+            act = new RenameAction() { public String act(String in) 
+                                              throws CDLRenameException { return theNI.renameNode(in); } };
+        else if(type.equals("instance"))
+            act = new RenameAction() { public String act(String in) 
+                                              throws CDLRenameException { return theNI.renameSubCellInstance(in); } };
+        else if(type.equals("model"))
+            act = new RenameAction() { public String act(String in) 
+                                              throws CDLRenameException { return theNI.renameTransistorModel(in); } };
+        else {
+            act = null;
+        }
+        return act;
+    }
+
+    private static CDLNameInterface identityNI;
+    private static CDLNameInterface cadenceNI;
+    private static CDLNameInterface gds2NI;
+    private static CDLNameInterface cadenceReverseNI;
+    private static CDLNameInterface gds2ReverseNI;
+
+    private static CDLNameInterface getForwardInterface(final String name) {
+        final CDLNameInterface ni;
+        if(name.equals("cast")) {
+            if (identityNI == null) identityNI = new IdentityNameInterface();
+            ni = identityNI;
+        } else if(name.equals("cadence")) {
+            if (cadenceNI == null) cadenceNI = new CadenceNameInterface();
+            ni = cadenceNI;
+        } else if(name.equals("gds2")) {
+            if (gds2NI == null) gds2NI = new GDS2NameInterface();
+            ni = gds2NI;
+        } else {
+            ni = null;
+        }
+        return ni;
+    }
+
+    private static CDLNameInterface getReverseInterface(final String name) {
+        final CDLNameInterface ni;
+        if(name.equals("cast")) {
+            if (identityNI == null) identityNI = new IdentityNameInterface();
+            ni = identityNI;
+        } else if(name.equals("cadence")) {
+            if (cadenceNI == null) cadenceReverseNI = new CadenceReverseNameInterface();
+            ni = cadenceReverseNI;
+        } else if(name.equals("gds2")) {
+            if (gds2NI == null) gds2ReverseNI = new GDS2ReverseNameInterface();
+            ni = gds2ReverseNI;
+        } else {
+            ni = null;
+        }
+        return ni;
+    }
+
+    private static CDLNameInterface getInterface(final String from, final String to) {
+        final CDLNameInterface toCast = getReverseInterface(from);
+        final CDLNameInterface fromCast = getForwardInterface(to);
+        if (toCast == null || fromCast == null) {
+            return null;
+        } else {
+            return new CompositeCDLNameInterface(toCast, fromCast);
+        }
+    }
+
     public static void main(String[] args)
         throws Exception
     {
@@ -107,94 +178,9 @@ public class Rename {
             throw new CDLRenameException( pedanticArgs.pedanticString() );
         }
 
+        final PrintStream out = System.out;
+        final BufferedReader in = new BufferedReader( new InputStreamReader(System.in));
         if (type != null && type.equals("all")) {
-
-            final CDLNameInterface nicast2cadence = new CadenceNameInterface();
-            final CDLNameInterface nicast2gds2 = new GDS2NameInterface();
-            final CDLNameInterface nicadence2cast = new CadenceReverseNameInterface();
-            final CDLNameInterface nicadence2gds2 = new CompositeCDLNameInterface(new CadenceReverseNameInterface(), 
-                                                       new GDS2NameInterface());
-            final CDLNameInterface nigds22cast = new GDS2ReverseNameInterface();
-            final CDLNameInterface nigds22cadence = new CompositeCDLNameInterface(new GDS2ReverseNameInterface(),
-                                                       new CadenceNameInterface());
-            final RenameAction actsame = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return in;}};
-            final RenameAction actcast2cadence4cell = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2cadence.renameCell(in);}};
-            final RenameAction actcast2cadence4node = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2cadence.renameNode(in);}};
-            final RenameAction actcast2cadence4instance = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2cadence.renameSubCellInstance(in);}};
-            final RenameAction actcast2cadence4model = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2cadence.renameTransistorModel(in);}};
-            final RenameAction actcast2gds24cell = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2gds2.renameCell(in);}};
-            final RenameAction actcast2gds24node = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2gds2.renameNode(in);}};
-            final RenameAction actcast2gds24instance = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2gds2.renameSubCellInstance(in);}};
-            final RenameAction actcast2gds24model = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicast2gds2.renameTransistorModel(in);}};
-            final RenameAction actcadence2cast4cell = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2cast.renameCell(in);}};
-            final RenameAction actcadence2cast4node = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2cast.renameNode(in);}};
-            final RenameAction actcadence2cast4instance = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2cast.renameSubCellInstance(in);}};
-            final RenameAction actcadence2cast4model = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2cast.renameTransistorModel(in);}};
-            final RenameAction actcadence2gds24cell = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2gds2.renameCell(in);}};
-            final RenameAction actcadence2gds24node = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2gds2.renameNode(in);}};
-            final RenameAction actcadence2gds24instance = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2gds2.renameSubCellInstance(in);}};
-            final RenameAction actcadence2gds24model = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nicadence2gds2.renameTransistorModel(in);}};
-            final RenameAction actgds22cast4cell = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cast.renameCell(in);}};
-            final RenameAction actgds22cast4node = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cast.renameNode(in);}};
-            final RenameAction actgds22cast4instance = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cast.renameSubCellInstance(in);}};
-            final RenameAction actgds22cast4model = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cast.renameTransistorModel(in);}};
-            final RenameAction actgds22cadence4cell = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cadence.renameCell(in);}};
-            final RenameAction actgds22cadence4node = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cadence.renameNode(in);}};
-            final RenameAction actgds22cadence4instance = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cadence.renameSubCellInstance(in);}};
-            final RenameAction actgds22cadence4model = new RenameAction() {
-                public String act(String in) throws CDLRenameException {
-                    return nigds22cadence.renameTransistorModel(in);}};
-
-            final PrintStream out = System.out;
-            final BufferedReader in = new BufferedReader( new InputStreamReader(System.in));
 
             String line;
             StringTokenizer tk = null;
@@ -215,149 +201,25 @@ public class Rename {
                 if (cnt == 1) lname = lx;
                 if (cnt > 1) ltype = lx;
                 if (cnt == 1 || cnt == 4) {
-                    theAct = actsame;
-                    if (ltype.equals("cell")) {
-                        if (lfrom.equals("cast")) {
-                            if (lto.equals("cadence")) {
-                                theAct = actcast2cadence4cell;
+                    final CDLNameInterface ni = getInterface(lfrom, lto);
+                    if (ni == null || (theAct = getActionByType(ltype, ni)) == null) {
+                        theAct = new RenameAction() {
+                            public String act(String in) throws CDLRenameException {
+                                return in;
                             }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcast2gds24cell;
-                            }
-                        }
-                        else if (lfrom.equals("cadence")) {
-                            if (lto.equals("cast")) {
-                                theAct = actcadence2cast4cell;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcadence2gds24cell;
-                            }
-                        }
-                        else if (lfrom.equals("gds2")) {
-                            if (lto.equals("cast")) {
-                                theAct = actgds22cast4cell;
-                            }
-                            else if (lto.equals("cadence")) {
-                                theAct = actgds22cadence4cell;
-                            }
-                        }
-                    }
-                    else if (ltype.equals("node")) {
-                        if (lfrom.equals("cast")) {
-                            if (lto.equals("cadence")) {
-                                theAct = actcast2cadence4node;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcast2gds24node;
-                            }
-                        }
-                        else if (lfrom.equals("cadence")) {
-                            if (lto.equals("cast")) {
-                                theAct = actcadence2cast4node;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcadence2gds24node;
-                            }
-                        }
-                        else if (lfrom.equals("gds2")) {
-                            if (lto.equals("cast")) {
-                                theAct = actgds22cast4node;
-                            }
-                            else if (lto.equals("cadence")) {
-                                theAct = actgds22cadence4node;
-                            }
-                        }
-                    }
-                    else if (ltype.equals("instance")) {
-                        if (lfrom.equals("cast")) {
-                            if (lto.equals("cadence")) {
-                                theAct = actcast2cadence4instance;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcast2gds24instance;
-                            }
-                        }
-                        else if (lfrom.equals("cadence")) {
-                            if (lto.equals("cast")) {
-                                theAct = actcadence2cast4instance;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcadence2gds24instance;
-                            }
-                        }
-                        else if (lfrom.equals("gds2")) {
-                            if (lto.equals("cast")) {
-                                theAct = actgds22cast4instance;
-                            }
-                            else if (lto.equals("cadence")) {
-                                theAct = actgds22cadence4instance;
-                            }
-                        }
-                    }
-                    else if (ltype.equals("model")) {
-                        if (lfrom.equals("cast")) {
-                            if (lto.equals("cadence")) {
-                                theAct = actcast2cadence4model;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcast2gds24model;
-                            }
-                        }
-                        else if (lfrom.equals("cadence")) {
-                            if (lto.equals("cast")) {
-                                theAct = actcadence2cast4model;
-                            }
-                            else if (lto.equals("gds2")) {
-                                theAct = actcadence2gds24model;
-                            }
-                        }
-                        else if (lfrom.equals("gds2")) {
-                            if (lto.equals("cast")) {
-                                theAct = actgds22cast4model;
-                            }
-                            else if (lto.equals("cadence")) {
-                                theAct = actgds22cadence4model;
-                            }
-                        }
+                        };
                     }
                     out.println( theAct.act( lname ));
                 }
             }
         }
         else {
-            CDLNameInterface ni = null;
-
             if(from == null || to == null || type == null) {
                 usage();
                 throw new CDLRenameException("Must specify a valid from,to name-system and type");
             }
 
-            if(from.equals("cast")) {
-                if(to.equals("cast"))
-                    ni = new IdentityNameInterface();
-                else if(to.equals("cadence"))
-                    ni = new CadenceNameInterface();
-                else if(to.equals("gds2"))
-                    ni = new GDS2NameInterface();            
-            }
-            else if(from.equals("cadence")) {
-                if(to.equals("cast"))
-                    ni = new CadenceReverseNameInterface();
-                else if(to.equals("cadence"))
-                    ni = new IdentityNameInterface();
-                else if(to.equals("gds2"))
-                    ni = new CompositeCDLNameInterface(new CadenceReverseNameInterface(), 
-                                                       new GDS2NameInterface());
-            }
-            else if(from.equals("gds2")) {
-                if(to.equals("cast"))
-                    ni = new GDS2ReverseNameInterface();
-                else if(to.equals("cadence"))
-                    ni = new CompositeCDLNameInterface(new GDS2ReverseNameInterface(),
-                                                       new CadenceNameInterface());
-                else if(to.equals("gds2"))
-                    ni = new IdentityNameInterface();
-            }
+            final CDLNameInterface ni = getInterface(from, to);
             if(ni == null) {
                 usage();
                 throw new CDLRenameException("Must specify a valid from,to name-system");
@@ -383,22 +245,8 @@ public class Rename {
                 theNI = ni;
             }
                 
-            final PrintStream out = System.out;
-            final BufferedReader in = new BufferedReader( new InputStreamReader(System.in));
-            RenameAction act = null;
+            final RenameAction act = getActionByType(type, theNI);
 
-            if(type.equals("cell"))
-                act = new RenameAction() { public String act(String in) 
-                                                  throws CDLRenameException { return theNI.renameCell(in); } };
-            else if(type.equals("node"))
-                act = new RenameAction() { public String act(String in) 
-                                                  throws CDLRenameException { return theNI.renameNode(in); } };
-            else if(type.equals("instance"))
-                act = new RenameAction() { public String act(String in) 
-                                                  throws CDLRenameException { return theNI.renameSubCellInstance(in); } };
-            else if(type.equals("model"))
-                act = new RenameAction() { public String act(String in) 
-                                                  throws CDLRenameException { return theNI.renameTransistorModel(in); } };
             if(act == null) {
                 usage();
                 throw new CDLRenameException("Must specify a valid type");
