@@ -26,6 +26,8 @@ import com.avlsi.file.cdl.util.rename.CadenceReverseNameInterface;
 import com.avlsi.file.cdl.util.rename.IdentityNameInterface;
 import com.avlsi.file.cdl.util.rename.CompositeCDLNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLRenameException;
+import com.avlsi.file.cdl.util.rename.MWNameInterface;
+import com.avlsi.file.cdl.util.rename.MWReverseNameInterface;
 
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
@@ -98,8 +100,10 @@ public class Rename {
     private static CDLNameInterface identityNI;
     private static CDLNameInterface cadenceNI;
     private static CDLNameInterface gds2NI;
+    private static CDLNameInterface mwNI;
     private static CDLNameInterface cadenceReverseNI;
     private static CDLNameInterface gds2ReverseNI;
+    private static CDLNameInterface mwReverseNI;
 
     private static CDLNameInterface getForwardInterface(final String name) {
         final CDLNameInterface ni;
@@ -112,6 +116,9 @@ public class Rename {
         } else if(name.equals("gds2")) {
             if (gds2NI == null) gds2NI = new GDS2NameInterface();
             ni = gds2NI;
+        } else if(name.equals("mw")) {
+            if (mwNI == null) mwNI = new MWNameInterface();
+            ni = mwNI;
         } else {
             ni = null;
         }
@@ -129,6 +136,9 @@ public class Rename {
         } else if(name.equals("gds2")) {
             if (gds2NI == null) gds2ReverseNI = new GDS2ReverseNameInterface();
             ni = gds2ReverseNI;
+        } else if(name.equals("mw")) {
+            if (mwReverseNI == null) mwReverseNI = new MWReverseNameInterface();
+            ni = mwReverseNI;
         } else {
             ni = null;
         }
