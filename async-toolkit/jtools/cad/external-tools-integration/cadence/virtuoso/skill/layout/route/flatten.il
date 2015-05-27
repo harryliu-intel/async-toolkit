@@ -299,8 +299,8 @@ useAssura = nil ; BUG: Assura isn't working!
                              (and hookupD04 (isStandardCell x->master))))
       bbox = (dbTransformBBox inst->master->prBoundary->bBox inst->transform)
       yp = (cadr gridAlignment[2])/2
-      y0 = (floor   (cadr (car  bbox))/yp)
-      y1 = (ceiling (cadr (cadr bbox))/yp)
+      y0 = (round (cadr (car  bbox))/yp)
+      y1 = (round (cadr (cadr bbox))/yp)
       (for row y0 y1-1
            odd = (mod row 2)!=0
            y = yp*(if odd row+1 row)
