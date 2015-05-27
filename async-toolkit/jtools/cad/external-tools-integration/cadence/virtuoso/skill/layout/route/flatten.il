@@ -292,16 +292,23 @@ useAssura = nil ; BUG: Assura isn't working!
 ; Create power hookups for Laygen and/or D04 cells
 ; BUG: should be done by RDT flow but doesn't work yet
 (defun LaygenPowerHookup (CV powerCV @key (hookupLaygen t) (hookupD04 t))
-  (let (phCV bbox y (count 0))
-    phCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
+  (let (phCV bbox yp y0 y1 y odd orient (count 0))
+    phCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP_HALF.0" "layout")
     (foreach inst (setof x CV->instances
                          (or (and hookupLaygen (dbGetPropByName x->master "LaygenVersion"))
                              (and hookupD04 (isStandardCell x->master))))
       bbox = (dbTransformBBox inst->master->prBoundary->bBox inst->transform)
-      y = (cadr (car bbox))
-      (foreach x (list (car (car bbox)) (car (cadr bbox)))
-        (dbCreateInst powerCV phCV (sprintf nil "ph%d" count++) x:y "R0")
-        )
+      yp = (cadr gridAlignment[2])/2
+      y0 = (floor   (cadr (car  bbox))/yp)
+      y1 = (ceiling (cadr (cadr bbox))/yp)
+      (for row y0 y1-1
+           odd = (mod row 2)==1
+           y = yp*(if odd row+1 row)
+           orient = (if odd "MX" "R0")
+           (foreach x (list (car (car bbox)) (car (cadr bbox)))
+                    (dbCreateInst powerCV phCV (sprintf nil "ph%d" count++) x:y orient)
+                    )
+           )
       )
     )
   t
