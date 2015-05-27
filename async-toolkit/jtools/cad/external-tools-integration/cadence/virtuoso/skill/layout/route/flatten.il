@@ -302,7 +302,7 @@ useAssura = nil ; BUG: Assura isn't working!
       y0 = (floor   (cadr (car  bbox))/yp)
       y1 = (ceiling (cadr (cadr bbox))/yp)
       (for row y0 y1-1
-           odd = (mod row 2)==1
+           odd = (mod row 2)!=0
            y = yp*(if odd row+1 row)
            orient = (if odd "MX" "R0")
            (foreach x (list (car (car bbox)) (car (cadr bbox)))
