@@ -156,7 +156,8 @@ useAssura = nil ; BUG: Assura isn't working!
 (defun MakePowerGrid
   (@key (CV (geGetEditCellView)) ; flatten CV
         (topMetal 8)
-        (powerHookup t)
+        (hookupLaygen t) ; HACK: add power hookups to all LayGen cells
+        (hookupD04 t)    ; HACK: add power hookups to all D04 cells
         )
   (let (TEMP powerCellName align
         inst prb vertprb
@@ -277,8 +278,8 @@ useAssura = nil ; BUG: Assura isn't working!
     (dbDeleteObject prb)
     (foreach x blks (dbDeleteObject x))
 
-    ; optional power hookups for Laygen cells
-    (when powerHookup (LaygenPowerHookup CV powerCV))
+    ; HACK: add explicit power hookups before exporting to ICC
+    (LaygenPowerHookup CV powerCV ?hookupLaygen hookupLaygen ?hookupD04 hookupD04)
 
     ; save and return
     (dbSave CV)
@@ -288,12 +289,14 @@ useAssura = nil ; BUG: Assura isn't working!
     )
   )
 
-; Create power hookups for Laygen cells
+; Create power hookups for Laygen and/or D04 cells
 ; BUG: should be done by RDT flow but doesn't work yet
-(defun LaygenPowerHookup (CV powerCV)
+(defun LaygenPowerHookup (CV powerCV @key (hookupLaygen t) (hookupD04 t))
   (let (phCV bbox y (count 0))
     phCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
-    (foreach inst (setof x CV->instances (dbGetPropByName x->master "LaygenVersion"))
+    (foreach inst (setof x CV->instances
+                         (or (and hookupLaygen (dbGetPropByName x->master "LaygenVersion"))
+                             (and hookupD04 (isStandardCell x->master))))
       bbox = (dbTransformBBox inst->master->prBoundary->bBox inst->transform)
       y = (cadr (car bbox))
       (foreach x (list (car (car bbox)) (car (cadr bbox)))
