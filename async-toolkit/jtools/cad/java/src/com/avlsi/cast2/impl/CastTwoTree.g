@@ -4439,8 +4439,10 @@ verilogImplictParameter[Environment env, List implied]
 verilogExplictParameter[Environment env, Map specified]
     {
         Value v = null;
+        ASTWithInfo p;
     }
-    : p:DOT_IDENT ( v = expr[env, true] )? RPAREN {
+    : ( p1:DOT_IDENT { p = p1; } | p2:ESCAPED_VERILOG_IDENT { p = p2; } )
+      ( v = expr[env, true] )? RPAREN {
         final String port = p.getText();
         if (specified.containsKey(port)) {
             final SemanticException se

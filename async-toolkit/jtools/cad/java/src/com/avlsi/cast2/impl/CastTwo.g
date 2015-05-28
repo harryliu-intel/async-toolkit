@@ -1151,7 +1151,8 @@ verilogImplicitParameter
 
 // snovak style
 verilogExplicitParameter
-    : DOT_IDENT LPAREN! ( selectionExpression )? RPAREN
+    : ( DOT_IDENT | DOT! ESCAPED_VERILOG_IDENT )
+      LPAREN! ( selectionExpression )? RPAREN
       // RPAREN instead of RPAREN!, because it resolves non-determinism later
       // in the tree parser
     ;
@@ -1403,6 +1404,10 @@ QuotedString
           final String ss = s.substring(1, s.length() - 1);
           $setText(ss);
       }
+    ;
+
+ESCAPED_VERILOG_IDENT
+    : '\\'! (~(' ' | '\t' | '\n' | '\r'))+
     ;
 
 protected
