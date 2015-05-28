@@ -55,8 +55,8 @@
 
 ; process one cell
 (defun UpdateFloorplanCore (CV indent)
-  (let (file NetListTable rx ux uy w h instanceTable netTable termTable
-             lastArrayName layoutCV points realInstances)
+  (let (netFile pinFile NetListTable rx ux uy w h instanceTable netTable termTable
+        lastArrayName layoutCV points realInstances pinDirection)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -71,11 +71,16 @@
     termTable = (makeTable "termTable" nil)
     lastArrayName = nil
 
-    ; load netlist.il
-    file = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
-    (when (fileTimeModified file)
+    ; load information from CAST
+    netFile = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
+    pinFile = (strcat dir "/" CV->cellName ".pindirection.il") 
+    (when (fileTimeModified netFile) && (fileTimeModified pinFile)
+
+      ; process pindirection.il and netlist.il
       (dbReplaceProp CV "CastCell" "boolean" t)
-      (load file)
+      (load pinFile)
+      pinDirection = (PinDirectionTable)
+      (load netFile)
       w = NetListTable["width"]
       h = NetListTable["height"]
 
@@ -216,13 +221,23 @@
   )
 
 (defun UpdateFloorplanAddTerminal (table termName)
-  (let (net term)
+  (let (net term direction)
+    direction = (if pinDirection pinDirection[termName] nil)
+    (cond (direction=="INPUT"  direction="input")
+          (direction=="OUTPUT" direction="output")
+          (t                   direction="inputOutput")
+          )
     net = (dbMakeNet CV termName)
     term = (dbFindTermByName CV termName)
-    (unless term
-      term=(dbCreateTerm net termName "inputOutput")
-      (when verbose (fprintf LOG "%sCreate term %s\n" indent termName))
-      )
+    (cond (term && term->direction!=direction
+           term->direction=direction
+           (when verbose (fprintf LOG "%sChange direction of term %s to %s\n" indent termName direction))
+           )
+          (!term
+           term=(dbCreateTerm net termName direction)
+           (when verbose (fprintf LOG "%sCreate %s term %s\n" indent direction termName))
+           )
+          )
     netTable[net] = t
     termTable[term] = t
     )
