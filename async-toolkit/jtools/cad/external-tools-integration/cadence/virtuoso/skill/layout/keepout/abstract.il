@@ -224,7 +224,7 @@
   (let (Vdd GND)
     (cond (powergrid CV->cellType="cover")
           (leaf      CV->cellType="core")
-          (t         CV->cellType="block")
+          (t         CV->cellType="core") ; TODO: "block" for large mid-level cells?
           )
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
     GND = (dbFindNetByName CV GNDNetName)
