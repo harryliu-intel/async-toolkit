@@ -206,22 +206,6 @@ public class Cast2Verilog {
         return errorExist;
     }
 
-    /**
-     * Do not write out a Verilog for a single cell more than once.
-     **/
-    private class NoRepeatVisitor implements Prs2Verilog.VisitorFactory {
-        private Prs2Verilog.SingleWriterVisitor single;
-        public NoRepeatVisitor(final Writer writer) {
-            single = new Prs2Verilog.SingleWriterVisitor(writer, true);
-        }
-        public VerilogVisitor getVisitor(final String cellName) {
-            return prsDone.add(cellName) ? single.getVisitor(cellName) : null;
-        }
-        public void doneVisitor(final VerilogVisitor visitor) {
-            single.doneVisitor(visitor);
-        }
-    }
-
     private static class GroupedChannel {
         private final CellInterface cell;
         private final Map<String,String> dirs;
@@ -798,7 +782,7 @@ public class Cast2Verilog {
                         wrapper, getCadencize(true),
                         beh == Mode.PRS ? null
                                         : ((Mode.VerilogMode) beh).getLevel(),
-                        new NoRepeatVisitor(out),
+                        new NoRepeatVisitor(out, prsDone),
                         new UnionCommandLineArgs(theArgs,
                             new CommandLineArgsDefImpl(
                                 new String[] { "--timescale" })),
