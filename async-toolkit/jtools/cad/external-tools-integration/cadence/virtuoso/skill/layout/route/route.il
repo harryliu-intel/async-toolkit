@@ -25,6 +25,9 @@
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting)
 
+    ; copy CV to importView so in-place pins don't need to wait on router to finish
+    (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
+
     ; route
     (RouteRun ?CV CV ?Background Background ?Mem Mem)
     
