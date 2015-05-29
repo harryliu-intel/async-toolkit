@@ -471,6 +471,8 @@ useAssura = nil ; BUG: Assura isn't working!
              )
     (dbAddFigsToPin (dbCreatePin (dbMakeNet CV VddNetName) nil) figsVdd)
     (dbAddFigsToPin (dbCreatePin (dbMakeNet CV GNDNetName) nil) figsGND)
+    (foreach fig figsVdd (LaygenLabelPin CV fig))
+    (foreach fig figsGND (LaygenLabelPin CV fig))
     )
   t
   )
