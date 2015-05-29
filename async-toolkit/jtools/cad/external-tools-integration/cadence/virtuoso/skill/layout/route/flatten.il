@@ -96,6 +96,9 @@ useAssura = nil ; BUG: Assura isn't working!
     ; warn or delete redundant non-canonical pins
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
 
+    ; cache topMetal
+    (dbReplaceProp CV "topMetal" "integer" topMetal)
+
     ; Create power grid
     (when doMakePowerGrid
       pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal)
