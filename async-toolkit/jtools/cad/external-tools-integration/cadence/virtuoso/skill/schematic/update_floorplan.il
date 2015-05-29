@@ -13,6 +13,7 @@
         (recurse t)    ; recursively update subcells
         (cast2skill t) ; run cast2skill first
         (verbose nil)  ; spam net and parameter changes too
+        (instancePrimitives nil) ; instantiate TechLibName instances
         )
   (let (mastersVisited cmd temp dir routed LOG pcre)
 
@@ -75,11 +76,16 @@
     netFile = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
     pinFile = (strcat dir "/" CV->cellName ".pindirection.il") 
     (when (fileTimeModified netFile) && (fileTimeModified pinFile)
-
-      ; process pindirection.il and netlist.il
+      ; mark this as a cell which exists in CAST
       (dbReplaceProp CV "CastCell" "boolean" t)
+
+      ; process pindirection.il
+      (putd `PinDirectionTable1 nil)
+      (putd `PinDirectionTable nil)
       (load pinFile)
       pinDirection = (PinDirectionTable)
+
+      ; process netlist.il
       (load netFile)
       w = NetListTable["width"]
       h = NetListTable["height"]
@@ -109,7 +115,7 @@
         )
 
       ; update prBoundary of leaf cells, from layout view if it exists
-      (unless realInstances
+      (when CV->viewName=="floorplan" && !realInstances
         (when CV->prBoundary (dbDeleteObject CV->prBoundary))
         (when CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
               layoutCV = (dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r")
@@ -167,7 +173,7 @@
   (let (inst master viewName w h x0 y0 arrayName primitive)
     primitive = libName=="gate" || libName=="stack" || libName=="resistor" || libName==TechLibName
     realInstances = realInstances || !primitive
-    (when CV->viewName!="floorplan" || !primitive
+    (when CV->viewName!="floorplan" && instancePrimitives || !primitive
           ; find existing inst and its viewName
           inst = (dbFindAnyInstByName CV instName)
           viewName = (if inst inst->viewName CV->viewName)
