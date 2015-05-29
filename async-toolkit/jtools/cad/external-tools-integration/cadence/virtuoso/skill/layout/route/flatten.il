@@ -108,6 +108,9 @@ useAssura = nil ; BUG: Assura isn't working!
       (unless pgCV (error "Unable to create power grid abstract\n"))
       )
 
+    ; create power pins
+    (CreatePowerPins topMetal ?CV CV)
+
     ; place metal on top of dangling subcell pins for StarRC extraction
     (when ConnectDanglingPins
       (nrCreateSingleNetConnector CV MetalLPPs ?MaxHeapSize MaxHeapSize)
@@ -161,7 +164,7 @@ useAssura = nil ; BUG: Assura isn't working!
         )
   (let (TEMP powerCellName align
         inst prb vertprb
-        x1box x2box y1box y2box x1 y1 x2 x2 xy
+        x1box x2box y1box y2box x1 y1 x2 x2
         AssuraLayerMappings
         powerCV pgMap blks power2
         count gridName gridCV rows cols
@@ -196,11 +199,6 @@ useAssura = nil ; BUG: Assura isn't working!
 
     ; avoid M2 overlapping prBoundary of subcells (looks only one level down)
     blks = (PaintOverSubcellPrBoundary (list Metal[2] "block") ?CV CV)
-
-    ; find bottom left vertices of prbound to place Vdd/GND pins
-    (cond (prb->objType=="polygon" xy = (car (SortVertices prb->points)))
-          (t xy = x1box:y1box)
-          )
 
     ; run Assura rules
     (when useAssura
@@ -264,7 +262,6 @@ useAssura = nil ; BUG: Assura isn't working!
     (dbCreatePolygon powerCV (list Metal[topMetal] "block") CV->prBoundary->points)
     (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "inputOutput")
     (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "inputOutput")
-    (CreatePowerPins CV xy topMetal)
     tiehilo = (dbCreateInst CV powerCV "pg" 0:0 "R0")
     (AnchorInstance tiehilo)
     GND = (dbFindNetByName CV GNDNetName)
@@ -320,7 +317,8 @@ useAssura = nil ; BUG: Assura isn't working!
 ; others layers become boundary purpose
 (defun MakePowerGridAbstract
   (@key (CV (geGetEditCellView)) ; flatten CellView
-        (powerLayers (list Metal[2] Metal[4] Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
+        (powerLayers (list Metal[2] Metal[3] Metal[4] Metal[5]
+                           Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
   (let (TEMP inst pgCV pgaCV AssuraLayerMappings figsVdd figsGND)
 
     ; fing powergrid CV
@@ -376,11 +374,11 @@ useAssura = nil ; BUG: Assura isn't working!
     ; this represents strongly connected pins needed for correct LEF
     (foreach shape (setof shape pgaCV->shapes (member shape->layerName powerLayers))
              (cond (shape->purpose=="vdd"
-                    shape->purpose="drawing" ; net?
+                    shape->purpose="drawing"
                     figsVdd = (cons shape figsVdd)
                     )
                    (shape->purpose=="gnd"
-                    shape->purpose="drawing" ; net?
+                    shape->purpose="drawing"
                     figsGND = (cons shape figsGND)
                     )
                    )
@@ -453,23 +451,26 @@ useAssura = nil ; BUG: Assura isn't working!
     )
   )
 
-; Draw Vdd/GND pins
-(defun CreatePowerPins (CV xy topMetal)
-  (let (pattern)
-    (cond (topMetal==2 || topMetal==3 pattern=power_m2)
-          (topMetal==4 || topMetal==5 pattern=power_m4)
-          (topMetal==6 || topMetal==7 pattern=power_m6)
-          (topMetal==8 pattern=power_m8)
-          )
-    (DrawChannel nil pattern "" (list xy (car xy)+(car gridAlignment[topMetal]):(cadr xy))
-                 ?isPin t ?CV CV)
-    (foreach shape CV->shapes
-             (when shape->purpose=="gnd" || shape->purpose=="vdd"
-                   shape->lpp=(list (car shape->lpp) "pin") ; hack
-                   (dbReplaceProp shape "PinType" "string" "Power")
-                   (dbReplaceProp shape "BusScriptObject" "boolean" nil)
+; Draw top-level Vdd/GND pins referring to power grid abstract
+(defun CreatePowerPins (topMetal @key (CV (geGetEditCellView)))
+  (let (inst pgaCV lpp new_shape figsVdd figsGND)
+    (DeletePinsByType "Power" ?CV CV)
+    inst = (dbFindAnyInstByName CV "pg")
+    (unless inst (error "No pg instance"))
+    pgaCV = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
+    (unless pgaCV (error "No pg abstract view"))
+    lpp = (list Metal[topMetal] "drawing")
+    (foreach shape (setof x pgaCV->shapes x->lpp==lpp)
+             new_shape = (dbCopyShape shape CV)
+             new_shape->lpp = (list (car new_shape->lpp) "pin") ; hack
+             (dbReplaceProp new_shape "PinType" "string" "Power")
+             (dbReplaceProp new_shape "BusScriptObject" "boolean" nil)
+             (cond (shape->net->name==VddNetName figsVdd = (cons new_shape figsVdd))
+                   (shape->net->name==GNDNetName figsGND = (cons new_shape figsGND))
                    )
              )
+    (dbAddFigsToPin (dbCreatePin (dbMakeNet CV VddNetName) nil) figsVdd)
+    (dbAddFigsToPin (dbCreatePin (dbMakeNet CV GNDNetName) nil) figsGND)
     )
   t
   )
