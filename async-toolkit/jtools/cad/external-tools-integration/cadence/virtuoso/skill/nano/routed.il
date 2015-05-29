@@ -10,7 +10,7 @@ defun( nrLoadRoutedDirective ( CellView
                         ( RegenerateFromCast nil )
                         ( MaxHeapSize (nrGetMaxHeapSize) )
                         )
-  let( ( TargetDFIIPath NetFile DirectivesFile Command routed DirectiveTable)
+  let( ( TargetDFIIPath NetFile DirectiveDir DirectivesFile ExecCmd Command routed DirectiveTable cellName)
     TargetDFIIPath = ConfigFileGetValue( TheCDSConfigTable "TEMP" )
     if( !isDir( TargetDFIIPath ) then createDir( TargetDFIIPath ))
     NetFile = sprintf( nil "%s/ilnets/%s.netlist.il"
@@ -144,7 +144,7 @@ defun( nrCastQuery ( CellView
                            ( MaxHeapSize (nrGetMaxHeapSize) )                 
                    )
 
-  let((routedTrueFile routedFalseFile p_in Command routedTrueList routedFalseList line)
+  let((routedTrueFile routedFalseFile p_in Command routedTrueList routedFalseList line cellName)
 
     TargetDFIIPath = ConfigFileGetValue( TheCDSConfigTable "TEMP" )
     DirectiveDir = sprintf( nil "%s/ildirectives" TargetDFIIPath )
