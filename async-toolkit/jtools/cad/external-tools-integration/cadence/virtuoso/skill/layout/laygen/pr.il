@@ -27,8 +27,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
                  (libName  nil) ; explicit override
                  (cellName nil) ; explicit override
                  (cdlFile nil)  ; specify a CDL file; otherwise use cast2cdl
-                 (num_place 1000) ; number of placements to do
-                 (num_route 10) ; number of placements to route
+                 (num_place 10) ; number of placements to try
                  (shrink "min") ; reduce width by this many poly pitches; or minimum width
                  (h nil)        ; target height in rows; defaults to floorplan prBoundary
                  (w nil)        ; target width  in pg;   defaults to floorplan prBoundary
@@ -172,7 +171,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
 
     ; route all placements, optionally using batch servers
     trials = ""
-    (for n 0 num_route-1
+    (for n 0 num_place-1
          (sprintf file "%s/tmp_%d.snp" dir n)
          (when (fileTimeModified file) (sprintf trials "%s%d " trials n))
          )
@@ -184,7 +183,7 @@ LaygenPlaceCmd = (strcat LaygenCmd
       )
 
     ; import
-    (for n 0 num_route-1
+    (for n 0 num_place-1
          (sprintf viewName "laygen_%s_%d" name n)
          (sprintf file "%s/%d/%s/u0.gen" dir n cellName)
          (when doImport && (fileTimeModified file)
