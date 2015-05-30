@@ -73,7 +73,7 @@
     ; label topMetal power supplies
     (for r 0 rows-1
          y = y0+(cadr align)*r
-         (CreatePowerPins tagCV x0:y topMetal)
+         (MakeLayoutTagPowerPins tagCV (list x0:y x1:y) topMetal)
          )
 
     ; switch to lower layer alignment grid
@@ -134,4 +134,24 @@
     (dbCreateLabel cv lpp xy label "centerCenter" "R0" "stick" 50*MfgGrid)
     (when addrect (dbCreateRect cv lpp (list x-MfgGrid:y-MfgGrid x+MfgGrid:y+MfgGrid)))
     )
+  )
+
+; Draw Vdd/GND pins as stripes on highest even metal layer
+(defun MakeLayoutTagPowerPins (CV points topMetal)
+  (let (pattern)
+    (cond (topMetal==2 || topMetal==3 pattern=power_m2)
+          (topMetal==4 || topMetal==5 pattern=power_m4)
+          (topMetal==6 || topMetal==7 pattern=power_m6)
+          (topMetal==8                pattern=power_m8)
+          (t (error "Requires 2<=topMetal<=8"))
+          )
+    (DrawChannel nil pattern "" points ?isPin t ?CV CV)
+    (foreach shape CV->shapes
+             (when shape->purpose=="gnd" || shape->purpose=="vdd"
+                   shape->lpp=(list (car shape->lpp) "pin") ; hack
+                   (dbReplaceProp shape "PinType" "string" "Power")
+                   )
+             )
+    )
+  t
   )
