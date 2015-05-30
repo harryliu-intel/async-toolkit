@@ -46,15 +46,15 @@
   ; invert keepout
   (for m 0 topMetal (AbstractInvertKeepout MetalKeepout[m] CV abstractCV))
 
-  ;copy pins to abstract
+  ; copy pins to abstract
   pinlayer = (makeTable "pinlayer" nil)
   (foreach shape CV->shapes
     (when shape->pin
       name=shape->net->name
       net=(dbFindNetByName abstractCV name)
-      (when !net net=(dbCreateNet abstractCV name))
+      (unless net net=(dbCreateNet abstractCV name))
       term=(dbFindTermByName abstractCV name)
-      (when !term (dbCreateTerm net name "inputOutput"))
+      (unless term term=(dbCreateTerm net name shape->pin->term->direction))
       fig=(dbCopyFig shape abstractCV)
       (dbCreatePin net fig)
       (for m 0 topMetal
@@ -62,7 +62,7 @@
            )
       )
     )
-  (PinUtilOrientLabels abstractCV)
+  (DeleteLabels ?CV abstractCV)
 
   ; chop keepouts around pins
   (when cutaroundpins
@@ -91,8 +91,7 @@
                               (extendM1Keepout nil)
                               (extendM0Keepout nil)
                               )
-  (let (abstractCV name net fig term pin prb
-        Vdd GND dd_CV layer purpose)
+  (let (abstractCV name net fig term pin prb dd_CV layer purpose)
 
     ; sanity check
     (when CV->viewName=="abstract"
@@ -129,27 +128,6 @@
     (when !floodfillM1Keepout && extendM1Keepout (AbstractExtendVertical   CV 1 prb->bBox))
     (when !floodfillM0Keepout && extendM0Keepout (AbstractExtendHorizontal CV 0 prb->bBox))
 
-    ; convert Vdd/GND purposes to pins
-    GND = (dbCreateNet abstractCV GNDNetName)
-    Vdd = (dbCreateNet abstractCV VddNetName)
-    (dbCreateTerm GND GND->name "inputOutput")
-    (dbCreateTerm Vdd Vdd->name "inputOutput")
-    (foreach shape CV->shapes
-             (unless shape->pin
-               (cond (shape->purpose=="gnd"
-                      fig = (dbCopyFig shape abstractCV)
-                      fig->lpp = (list (car fig->lpp) "drawing")
-                      (dbCreatePin GND (dbCopyFig shape abstractCV))
-                      )
-                     (shape->purpose=="vdd"
-                      fig = (dbCopyFig shape abstractCV)
-                      fig->lpp = (list (car fig->lpp) "drawing")
-                      (dbCreatePin Vdd (dbCopyFig shape abstractCV))
-                      )
-                     )
-               )
-             )
-
     ; copy pins on metal layers
     (foreach shape CV->shapes
              (when shape->pin && (isMetal (car shape->lpp))
@@ -157,7 +135,7 @@
                net=(dbFindNetByName abstractCV name)
                (unless net net=(dbCreateNet abstractCV name))
                term=(dbFindTermByName abstractCV name)
-               (unless term term=(dbCreateTerm net name "inputOutput"))
+               (unless term term=(dbCreateTerm net name shape->pin->term->direction))
                pin=(car term->pins)
                (unless pin pin=(dbCreatePin net nil))
                fig=(dbCopyFig shape abstractCV)
@@ -166,7 +144,6 @@
                )
              )
     (DeleteLabels ?CV abstractCV)
-    (LabelPins ?CV abstractCV)
 
     ; chop flooded/extended keepout near pins
     (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
