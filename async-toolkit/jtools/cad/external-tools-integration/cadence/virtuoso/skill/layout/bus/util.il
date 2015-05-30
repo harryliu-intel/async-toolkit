@@ -41,10 +41,10 @@
 
 ; relabel all pins
 (defun LabelPins (@key (CV (geGetEditCellView)))
-  (let (term pin)
-    (foreach term CV->terminals
-      (foreach pin term->pins
-        (when pin->fig && pin->fig->objType=="rect" (LabelPin CV pin->fig))
+  (foreach term CV->terminals
+    (foreach pin term->pins
+      (foreach fig pin->figs
+        (when fig->objType=="rect" (LabelPin CV fig))
         )
       )
     )
