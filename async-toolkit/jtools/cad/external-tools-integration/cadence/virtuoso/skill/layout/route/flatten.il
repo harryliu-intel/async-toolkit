@@ -13,8 +13,8 @@ useAssura = nil ; BUG: Assura isn't working!
         (doMakePowerGrid t)        ; make power grid
         (doPowerGridAbstract t)    ; generate abstract view of power grid
         )
-  (let (MaxHeapSize FlattenCellsList Components RComponents CellBaseName
-        type_sub PowerGridCellName OBSCellName flattenCV xalign yalign
+  (let (MaxHeapSize FlattenCellsList
+        PowerGridCellName flattenCV xalign yalign
         pgCV win TEMP)
 
     ; check viewName
@@ -34,13 +34,7 @@ useAssura = nil ; BUG: Assura isn't working!
     ; generated cell or file names
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     FlattenCellsList = (strcat TEMP "/" CV->cellName ".flatten_cells_list")
-    Components = (parseString CV->cellName ".")
-    RComponents = (reverse Components)
-    CellBaseName = (cadr RComponents)
-    (when (length RComponents)<3 (error "Cell name violates CAST conventions\n"))
-    type_sub = (sprintf nil "%s_%s" (cadr RComponents) (car RComponents))
-    OBSCellName = (strcat CV->libName ".wires." type_sub "_OBS")
-    PowerGridCellName = (strcat CV->libName ".wires." type_sub "_POWER_GRID_TIEOFF")
+    PowerGridCellName = (strcat CV->cellName "_pg")
 
     ; Create flatten view
     flattenCV = (nrFlattenView CV "flatten" PowerGridCellName "layout"
@@ -74,18 +68,18 @@ useAssura = nil ; BUG: Assura isn't working!
     instances= (append (car (NameFilterInstances instances LibCellsToIgnore))
                        (cadr (NameFilterInstances instances PowerGridCellPairRegExs)))
     uniqueInstances=nil
-    foreach( inst instances
-      if( !member( inst~>cellName uniqueInstances~>cellName ) then
-        uniqueInstances=cons( inst uniqueInstances )
+    (foreach inst instances
+      (when !(member inst->cellName uniqueInstances->cellName)
+            uniqueInstances=(cons inst uniqueInstances )
+            )
       )
-    )
-    pout=outfile(celllist_filename)
-    if( pout then
-      foreach( inst uniqueInstances
-        fprintf( pout "%s %s %s\n" inst~>libName inst~>cellName "abstract")
+    pout=(outfile celllist_filename)
+    (when pout
+      (foreach inst uniqueInstances
+               (fprintf pout "%s %s %s\n" inst->libName inst->cellName "abstract")
+               )
+      (close pout)
       )
-      close(pout)
-    )
 
     ; draw pins
     (RedrawAllPins ?CV CV)
@@ -132,19 +126,17 @@ useAssura = nil ; BUG: Assura isn't working!
         )
       )
 
-    ; fix pin directions TODO: use existing *.il file in temp
-    dirmap = (defGenerateP2DTable CV->cellName nil)
-    (when dirmap
-      (foreach term CV->terminals
-               ; lock pin location
-               (foreach pin term->pins
-                        (when pin->fig (dbSetPinFigPlacementStatus pin->fig "locked")))
-               ; set term direction
-               (cond (dirmap[term->name]=="INPUT"  term->direction = "input")
-                     (dirmap[term->name]=="OUTPUT" term->direction = "output")
-                     (dirmap[term->name]=="INOUT"  term->direction = "inputOutput"))
-               )
+    ; fix pin placement for DEF export
+    (foreach term CV->terminals
+      (foreach pin term->pins
+        (foreach fig pin->figs
+          (dbSetPinFigPlacementStatus fig "locked")
+          )
+        )
       )
+
+    ; update pin directions
+    (UpdateFloorplan ?CV CV ?recurse nil)
 
     ; set fields for LEF export
     (SetLefProperties CV)
