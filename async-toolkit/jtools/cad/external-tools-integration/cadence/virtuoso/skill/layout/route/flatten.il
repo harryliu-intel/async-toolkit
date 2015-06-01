@@ -155,7 +155,7 @@ useAssura = nil ; BUG: Assura isn't working!
   (@key (CV (geGetEditCellView)) ; flatten CV
         (topMetal 8)
         (hookupLaygen t) ; HACK: add power hookups to all LayGen cells
-        (hookupD04 t)    ; HACK: add power hookups to all D04 cells
+        (hookupD04 nil)    ; HACK: add power hookups to all D04 cells
         )
   (let (TEMP powerCellName align
         inst prb vertprb
