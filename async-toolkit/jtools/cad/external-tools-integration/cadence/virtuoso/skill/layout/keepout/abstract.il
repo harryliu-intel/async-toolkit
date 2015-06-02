@@ -234,7 +234,7 @@
                                   @key (cutout nil))
   (let (c)
     (unless cutout cutout = MetalSpace[(car lpp)])
-    c = (min (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
+    c = (max (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
     (foreach shape cv1->shapes
              (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
              )
