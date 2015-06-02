@@ -112,7 +112,7 @@ public abstract class BufferedNodeBDChannel implements Statusable, ChannelStatus
         ack = findNodeOrDie(fullname + (data.length == 0 ? "" : ".C") + ".a");
         req = findNodeOrDie(fullname + (data.length == 0 ? "" : ".C") + ".q");
         for (int i = 0; i < data.length; ++i) {
-            data[i] = findNodeOrDie(fullname + ".D[" + i + "]");
+            data[i] = DSim.get().findOrAddNode(fullname + ".D[" + i + "]");
         }
         instantiate();
     }
