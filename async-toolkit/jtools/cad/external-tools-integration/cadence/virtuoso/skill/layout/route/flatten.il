@@ -255,8 +255,8 @@ useAssura = nil ; BUG: Assura isn't working!
     ; create prBoundary, power pins, and instantiate power grid
     (dbCreatePRBoundary powerCV CV->prBoundary->points)
     (dbCreatePolygon powerCV (list Metal[topMetal] "block") CV->prBoundary->points)
-    (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "inputOutput")
-    (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "inputOutput")
+    (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "input")
+    (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "input")
     tiehilo = (dbCreateInst CV powerCV "pg" 0:0 "R0")
     (AnchorInstance tiehilo)
     GND = (dbFindNetByName CV GNDNetName)
