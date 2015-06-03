@@ -680,7 +680,8 @@ defun( nrCreateSingleNetConnector ( cellView pinLPPs
 ; Put a single metal piece over pins that does not route to other nets
 ; so that extraction spice will have top level net.
   let((pinRectList totalRectList newNetShapes rect pathpoints figCount CDLFile CellListFile DoneFunc Command
-      instances inst uniqueInstances OutputFile p)
+      instances inst uniqueInstances OutputFile p
+      danglingNodeList netName instName pinName cellName net thisInst layerName pathpoints path)
     figCount=0
     if( reportOnly then 
           fprintf(reportPort "Processing %s ...\n" cellView~>cellName)
