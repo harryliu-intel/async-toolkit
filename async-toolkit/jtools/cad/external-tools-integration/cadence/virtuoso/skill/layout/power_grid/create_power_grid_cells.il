@@ -12,6 +12,8 @@
               (for m bot top cellName = (strcat cellName (sprintf nil "%d" m)))
               cellName = (strcat cellName "_pg")
               (printf "%s\n" cellName)
+              CV = (dbOpenCellViewByType "globals" cellName "layout")
+              (when CV (cdsp4edit ?CV CV))
               CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
               (DrawPowerGrid bot top ?CV CV)
               (dbSave CV)
@@ -93,6 +95,12 @@
          (DrawPowerGridVias "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
          (DrawPowerGridVias "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
          )
+
+    ; convert to rectangles
+    (foreach s CV->shapes
+             (dbCreateRect CV s->lpp s->bBox)->net = s->net
+             (dbDeleteObject s)
+             )
     )
   CV
   )
