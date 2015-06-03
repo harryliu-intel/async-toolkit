@@ -74,8 +74,8 @@
     )
 
   ; save and exit
-  (CopyKeepoutToBlockage abstractCV )
-  (SetLefProperties abstractCV)
+  (CopyKeepoutToBlockage abstractCV)
+  (SetLefProperties abstractCV ?topMetal topMetal)
   (dbSave abstractCV)
   abstractCV
   )
@@ -197,11 +197,12 @@
   )
 
 ; set properties for LEF export
-(defun SetLefProperties (CV @key (powergrid nil) (leaf nil))
+(defun SetLefProperties (CV @key (powergrid nil) (leaf nil) (topMetal nil))
   (let (Vdd GND)
     (cond (powergrid CV->cellType="cover")
           (leaf      CV->cellType="core")
-          (t         CV->cellType="core") ; TODO: "block" for large mid-level cells?
+          (topMetal && topMetal<=2 CV->cellType="core") ; treat m2 mid-level cells as core
+          (t         CV->cellType="block")
           )
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
     GND = (dbFindNetByName CV GNDNetName)
@@ -214,32 +215,27 @@
 ; Chop holes in flooded keepout around pins
 (defun AbstractCutAroundPins (cv pinlpp keepoutlpp
                                  @key (otherpinlpp nil) (cutout nil))
-  (let (c)
-    (unless cutout cutout = MetalSpace[(car pinlpp)])
-    c = (min (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
-    (leLayerSize cv pinlpp c Scratch1LPP)
-    (when otherpinlpp (leLayerSize cv otherpinlpp c Scratch1LPP))
-    (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
-    (foreach shape cv->shapes
-      (cond (shape->lpp==keepoutlpp  (dbDeleteObject shape))
-            (shape->lpp==Scratch1LPP (dbDeleteObject shape))
-            (shape->lpp==Scratch2LPP shape->lpp=keepoutlpp))
-      )
-    )
+  (unless cutout cutout = MetalSpace[(car pinlpp)])
+  (betterLayerSize cv pinlpp cutout Scratch1LPP)
+  (when otherpinlpp (betterLayerSize cv otherpinlpp cutout Scratch1LPP))
+  (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
+  (foreach shape cv->shapes
+           (cond (shape->lpp==keepoutlpp  (dbDeleteObject shape))
+                 (shape->lpp==Scratch1LPP (dbDeleteObject shape))
+                 (shape->lpp==Scratch2LPP shape->lpp=keepoutlpp))
+           )
   t
   )
 
-; Floodfill keepout: KEEPOUT = (PRB & !KEEPOUT)-cutout/2
-(defun AbstractInvertKeepout (lpp cv1 cv2
-                                  @key (cutout nil))
-  (let (c)
-    (unless cutout cutout = MetalSpace[(car lpp)])
-    c = (max (car cutout) (cadr cutout)) ; BUG: can't size differently in X and Y dimensions?
+; Floodfill keepout: KEEPOUT = (shrink PRB MetalBoundarySpace) & !(grow KEEPOUT MetalSpace)
+(defun AbstractInvertKeepout (lpp cv1 cv2)
+  (let (shrink)
+    shrink = MetalBoundarySpace[(car lpp)]
     (foreach shape cv1->shapes
              (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
              )
-    (leLayerSize cv2 Scratch1LPP c Scratch1LPP)
-    (leLayerSize cv2 BoundaryLPP -c/2 Scratch2LPP)
+    (betterLayerSize cv2 Scratch1LPP MetalSpace[(car lpp)] Scratch1LPP)
+    (betterLayerSize cv2 BoundaryLPP -(car shrink):-(cadr shrink) Scratch2LPP)
     (leLayerAndNot cv2 Scratch2LPP Scratch1LPP lpp)
     (foreach shape cv2->shapes
              (cond (shape->lpp==Scratch1LPP (dbDeleteObject shape))
@@ -288,4 +284,32 @@
              )
     )
   t
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;; HACK: implement asymmetric leLayerSize ;;;;;;;;;;;;;;;;;;;;;;;
+
+; like leLayerSize but with asymmetric x:y bloat
+(defun betterLayerSize (CV lpp1 xy lpp2)
+  (let (points)
+    (foreach x (setof s CV->shapes s->lpp==lpp1 && s->objType!="label")
+             points = (if x->objType=="polygon" x->points (RectGetPoints x->bBox))
+             points = (betterGrowPoints points xy)
+             (dbCreatePolygon CV lpp2 points)
+             )
+    t
+    )
+  )
+
+; like pcGrowPoints but with asymmetric x:y bloat
+; CLEVER: bloat symmetrically by x and y separately then mix coordinates back together
+(defun betterGrowPoints (points xy)
+  (let (xpoints ypoints newpoints)
+    xpoints = (pcGrowPoints points (car  xy))
+    ypoints = (pcGrowPoints points (cadr xy))
+    (when (length xpoints)!=(length ypoints) (error "betterGrowPoints: (length xpoints)!=(length ypoints)"))
+    (for i 0 (length xpoints)-1
+         newpoints = (cons (car (nth i xpoints)):(cadr (nth i ypoints)) newpoints)
+         )
+    newpoints
+    )
   )
