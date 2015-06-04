@@ -121,7 +121,8 @@ public class CDL2SkillFactory implements CDLFactoryInterface {
         final String makeTerminalFormatStr =
             "( " + skillFunctionPrefix + "AddTerminal\n" +
             "  " + skillTableName + "\n" +
-            "  \"{0}\" )\n";
+            "  \"{0}\"\n" +
+            "  \"{1}\" )\n";
         
         
         // Transistor Count, Area, Width, Length
@@ -358,9 +359,11 @@ public class CDL2SkillFactory implements CDLFactoryInterface {
         }
     }
 
-    private String makeTerminalStr( final String terminalName ) {
+    private String makeTerminalStr( final String terminalName,
+                                    final String direction ) {
         final Object[] terminalParams = {
-            terminalName
+            terminalName,
+            direction
         };
         makeTerminalFormatter.format( terminalParams, accumulator, null );
         
@@ -372,11 +375,19 @@ public class CDL2SkillFactory implements CDLFactoryInterface {
 
     }
 
-    private void writeTerminal( final String terminalName ) {
+    private void writeTerminal( final String cellName,
+                                final String terminalName ) {
         if ( ! ( mWrittenNets.contains( terminalName ) ) ) {
             mWrittenNets.add( terminalName );
-            writeString( makeTerminalStr( terminalName ) );
+            writeString( makeTerminalStr( terminalName,
+                                          getDirection( cellName,
+                                                        terminalName ) ) );
         }
+    }
+
+    protected String getDirection( final String cellName,
+                                   final String terminalName ) {
+        return "inputOutput";
     }
 
     private String makeStatisticsString( final String cellName ) {
@@ -666,7 +677,7 @@ public class CDL2SkillFactory implements CDLFactoryInterface {
         mCellPorts.put( cellName, terminals );
 
         for ( i = 0 ; i < terminals.length ; ++i ) {
-            writeTerminal( terminals[i] );
+            writeTerminal( cellName, terminals[i] );
         }
     }
 

@@ -268,6 +268,16 @@ public final class Cast2Skill {
         targetWriter.close();
     }
 
+    private static HierName toHier( final String s ) {
+        final HierName hs;
+        try {
+            hs = HierName.makeHierName(s, '.');
+        } catch (InvalidHierNameException e) {
+            throw new RuntimeException("Cannot create HierName: " + s, e);
+        }
+        return hs;
+    }
+
     public static void main( final String args[] ) throws Exception {
         final CommandLineArgs parsedArgs = new CommandLineArgsDefImpl( args );
         final CommandLineArgs argsWithConfigs =
@@ -367,6 +377,7 @@ public final class Cast2Skill {
             final MessageFormat sizeEstimateFormatter =
                 new MessageFormat( sizeEstimateFormatStr );
             final Set<String> sizeError = new HashSet<String>();
+            final Set<String> portDirError = new HashSet<>();
             final CDL2SkillFactory skillFactory =
                 new CDL2SkillFactory( skillNetlistOutputDir,
                                       skillFunctionPrefix,
@@ -376,6 +387,8 @@ public final class Cast2Skill {
                                       cellTemplateMap,
                                       cellStatMap,
                                       techData ) {
+                    final Map<String,Map<String,Integer>> directions =
+                        new HashMap<>();
                     protected String makeStatisticsString(
                             final String subckt,
                             final CDLstat.CellStat stat ) {
@@ -405,6 +418,63 @@ public final class Cast2Skill {
                         }
                         
                         return sb.toString();
+                    }
+                    private void accumDir( final Map<String,Integer> map,
+                                           final HierName canon,
+                                           final Integer dir ) {
+                        final String s = canon.getAsString( '.' );
+                        Integer prevDir = map.get( s );
+                        if ( prevDir == null ) {
+                            map.put( s, dir );
+                        } else if ( ! prevDir.equals( dir ) ) {
+                            map.put( s, PortDefinition.INOUT );
+                        }
+                    }
+                    private Map<String,Integer> getDirection( final String subckt )
+                        throws Exception {
+                        Map<String,Integer> result = directions.get(subckt);
+                        if ( result == null ) {
+                            result = new HashMap<>();
+                            final CellInterface cell =
+                                castParser.getFullyQualifiedCell(
+                                    crni.renameCell( subckt ) );
+                            final Map<String,Integer> mp = CellUtils.markPorts(cell);
+                            final AliasedMap ports = cadencizer.convert(cell)
+                                                               .getPortNodes();
+                            for (String port : mp.keySet()) {
+                                final HierName canon = (HierName)
+                                    ports.getCanonicalKey( toHier( port ) );
+                                accumDir( result, canon, mp.get(port) );
+                            }
+                            directions.put( subckt, result );
+                        }
+                        return result;
+                    }
+                    protected String getDirection( final String subckt,
+                                                   final String terminalName ) {
+
+                        String result = super.getDirection( subckt, terminalName );
+                        try {
+                            final Map<String,Integer> directions =
+                                getDirection( subckt );
+                            final int dir =
+                                directions.get( crni.renameNode( terminalName ) );
+                            switch ( dir ) {
+                              case PortDefinition.IN:
+                                result = "input";
+                                break;
+                              case PortDefinition.OUT:
+                                result = "output";
+                                break;
+                              default:
+                                result = "inputOutput";
+                                break;
+                            }
+                        } catch (Exception e) {
+                            portDirError.add(subckt + ": " + terminalName + ": " +
+                                             e.getMessage());
+                        }
+                        return result;
                     }
                 };
             
@@ -460,11 +530,21 @@ public final class Cast2Skill {
                 throw new RuntimeException( skillFactory.getError() );
             }
 
-            if ( ! ignoreNetlist && ! sizeError.isEmpty() ) {
-                System.err.println(
-                        "Error estimating geometry of the following cell: " );
-                for ( String err : sizeError ) {
-                    System.err.println( "\t" + err );
+            if ( ! ignoreNetlist && ( ! sizeError.isEmpty() ||
+                                      ! portDirError.isEmpty() ) ) {
+                if ( ! sizeError.isEmpty() ) {
+                    System.err.println(
+                            "Error estimating geometry of the following cell: " );
+                    for ( String err : sizeError ) {
+                        System.err.println( "\t" + err );
+                    }
+                }
+                if ( ! portDirError.isEmpty() ) {
+                    System.err.println(
+                            "Error getting port directionality: " );
+                    for ( String err : portDirError ) {
+                        System.err.println( "\t" + err );
+                    }
                 }
                 System.exit( 1 );
             }
@@ -625,65 +705,6 @@ public final class Cast2Skill {
                     cadenceCellName = ni.renameCell(cellName);
                 }
 
-                // pindirection.il
-                final File currOutputFile = new File( outputDir, cadenceCellName + ".pindirection.il" );
-                System.out.println( "Generating \"" + currOutputFile.getAbsolutePath() + "\"." );
-
-                final OutputStream currOutputStream = new FileOutputStream( currOutputFile );
-
-                final Writer currOutputWriter = 
-                    new BufferedWriter( new OutputStreamWriter( currOutputStream, "UTF-8" ) );
-
-                int numpins = mp.size();
-                int pinsPerSegment = 3000;
-                int numsegments = ( (numpins-1)/pinsPerSegment ) + 1;
-                int pincnt=0;
-
-                Iterator i = new SortingIterator(mp.keySet().iterator());
-                for (int segment = 1; segment <= numsegments; segment++) {
-                    currOutputWriter.write("(defun PinDirectionTable"+segment+" ( )\n");
-                    currOutputWriter.write("  (let (\n");
-                    currOutputWriter.write("        ( Table ( makeTable `pd nil ) ) )\n");
-
-                    for (; i.hasNext() && pincnt < segment*pinsPerSegment; ) {
-                        pincnt++;
-                        final String s = (String) i.next();
-                        final HierName hs;
-                        try {
-                            hs = HierName.makeHierName(s, '.');
-                        } catch (InvalidHierNameException e) {
-                            throw new RuntimeException("Cannot create HierName: " + s, e);
-                        }
-                        final HierName canon = (HierName) ports.getCanonicalKey(hs);
-                        if (((Boolean) ports.getValue(hs)).booleanValue()) {
-                            currOutputWriter.write("          ( setarray Table \""+ni.renameNode(canon.getCadenceString())+"\" ");
-                            switch(Integer.parseInt((mp.get(s)).toString())) {
-                            case PortDefinition.IN:
-                                currOutputWriter.write(" \"INPUT\"" );
-                                break;
-                            case PortDefinition.OUT:
-                                currOutputWriter.write(" \"OUTPUT\"" );
-                                break;
-                            default:
-                                currOutputWriter.write(" \"INOUT\"" );
-                                break;
-                            }
-                            currOutputWriter.write(" )\n");
-                        }
-                    }
-                    currOutputWriter.write("    Table ) )\n\n");
-                }
-                currOutputWriter.write("(defun PinDirectionTable ( )\n");
-                currOutputWriter.write("  (let ( Key map\n");
-                currOutputWriter.write("        ( Table ( makeTable `pd nil ) ) )\n");
-                for (int segment = 1; segment <= numsegments; segment++) {
-                    currOutputWriter.write("        map = PinDirectionTable"+segment+"( )\n");
-                    currOutputWriter.write("        foreach( Key map\n");
-                    currOutputWriter.write("            ( setarray Table Key arrayref( map Key ) ) )\n");
-                }
-                currOutputWriter.write("    Table ) )\n\n");
-                currOutputWriter.close();
-
                 // canonical lookup
                 final File currOutputFile2 = new File( outputDir, cadenceCellName + ".canon.il" );
                 System.out.println( "Generating \"" + currOutputFile2.getAbsolutePath() + "\"." );
@@ -693,13 +714,13 @@ public final class Cast2Skill {
                 final Writer currOutputWriter2 = 
                     new BufferedWriter( new OutputStreamWriter( currOutputStream2, "UTF-8" ) );
 
-                numpins = mp.size();
-                pinsPerSegment = 2000;
-                numsegments = 0;
-                pincnt=0;
+                int numpins = mp.size();
+                int pinsPerSegment = 2000;
+                int numsegments = 0;
+                int pincnt=0;
 
                 final Set<HierName> seen = new HashSet<HierName>();
-                i = new SortingIterator(mp.keySet().iterator());
+                final Iterator i = new SortingIterator(mp.keySet().iterator());
                 for (; i.hasNext(); ) {
                     final String s = (String) i.next();
                     final HierName hs;
