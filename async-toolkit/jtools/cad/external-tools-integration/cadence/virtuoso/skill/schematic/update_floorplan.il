@@ -75,15 +75,21 @@
     ; load information from CAST
     netFile = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
     pinFile = (strcat dir "/" CV->cellName ".pindirection.il") 
-    (when (fileTimeModified netFile) && (fileTimeModified pinFile)
+    (when (fileTimeModified netFile)
       ; mark this as a cell which exists in CAST
       (dbReplaceProp CV "CastCell" "boolean" t)
 
       ; process pindirection.il
-      (putd `PinDirectionTable1 nil)
-      (putd `PinDirectionTable nil)
-      (load pinFile)
-      pinDirection = (PinDirectionTable)
+      (cond ((fileTimeModified pinFile)
+             (putd `PinDirectionTable1 nil)
+             (putd `PinDirectionTable nil)
+             (load pinFile)
+             pinDirection = (PinDirectionTable)
+             )
+            (t
+             (fprintf LOG "ERROR: No pindirection.il for %s\n" CV->cellName)
+             )
+            )
 
       ; process netlist.il
       (load netFile)
