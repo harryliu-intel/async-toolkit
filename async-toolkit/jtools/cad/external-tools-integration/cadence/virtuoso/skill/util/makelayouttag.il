@@ -132,7 +132,10 @@
     x=(car xy)
     y=(cadr xy)
     (dbCreateLabel cv lpp xy label "centerCenter" "R0" "stick" 50*MfgGrid)
-    (when addrect (dbCreateRect cv lpp (list x-MfgGrid:y-MfgGrid x+MfgGrid:y+MfgGrid)))
+    (when addrect
+      (dbCreatePin (dbMakeNet cv label)
+                   (dbCreateRect cv lpp (list x-MfgGrid:y-MfgGrid x+MfgGrid:y+MfgGrid)))
+      )
     )
   )
 
