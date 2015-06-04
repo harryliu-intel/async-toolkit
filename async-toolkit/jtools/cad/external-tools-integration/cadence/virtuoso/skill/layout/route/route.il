@@ -16,6 +16,8 @@
         (doDef t)                ; create .def
         (doNondefaultDef t)      ; create _nondefault.def
         (doSkipRouting t)        ; create SetSkipRouting.tcl
+        (hookupD04 nil)          ; add power hookups around d04 cells
+        (hookupLaygen t)         ; add power hookups around Laygen cells
         )
   (let ()
     ; export
@@ -23,7 +25,8 @@
                           ?botMetal botMetal ?topMetal topMetal
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
-                          ?doSkipRouting doSkipRouting)
+                          ?doSkipRouting doSkipRouting
+                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -50,6 +53,8 @@
         (doDef t)                ; create cellName.def
         (doNondefaultDef t)      ; create cellName_nondefault.def
         (doSkipRouting t)        ; create cellName.SkipRouting.tcl
+        (hookupD04 nil)          ; add power hookups around d04 cells
+        (hookupLaygen t)         ; add power hookups around Laygen cells
         )
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR
         PowerGridCellName abstractCV
@@ -76,7 +81,7 @@
 
     ; make flatten view automatically
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
-      CV = (MakeFlatten ?CV CV ?topMetal topMetal))
+      CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04))
 
     ; cell names
     PowerGridCellName = (strcat CV->cellName "_pg")

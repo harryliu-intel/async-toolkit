@@ -12,6 +12,8 @@ useAssura = nil ; BUG: Assura isn't working!
         (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
         (doMakePowerGrid t)        ; make power grid
         (doPowerGridAbstract t)    ; generate abstract view of power grid
+        (hookupD04 nil)            ; add power hookups around d04 cells
+        (hookupLaygen t)           ; add power hookups around Laygen cells
         )
   (let (MaxHeapSize FlattenCellsList
         PowerGridCellName flattenCV xalign yalign
@@ -95,7 +97,7 @@ useAssura = nil ; BUG: Assura isn't working!
 
     ; Create power grid
     (when doMakePowerGrid
-      pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal)
+      pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04)
       (unless pgCV (error "Unable to create power grid\n"))
       )
 
