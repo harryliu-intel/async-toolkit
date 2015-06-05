@@ -220,7 +220,7 @@
   )
 
 (defun UpdateFloorplanAddTerminal (table termName direction)
-  (let (net term direction)
+  (let (net term)
     net = (dbMakeNet CV termName)
     term = (dbFindTermByName CV termName)
     (cond (term && term->direction!=direction
