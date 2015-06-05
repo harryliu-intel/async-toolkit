@@ -171,13 +171,17 @@
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
-               (cond (abstractCV inst->master=abstractCV)
-                     ((isStandardCell inst->master)
-                      (printf "WARNING: %s is a standard cell with no abstract\n" inst->cellName))
-                     (!abstractCV && (IsWiringCell inst->master) (dbDeleteObject inst))
+               (cond (abstractCV
+                      inst->master=abstractCV
+                      inst->status=(if abstractCV->cellType=="core" "placed" "locked")
+                      )
+                     ((isStandardCell inst->master) inst->status="placed")
+                     ((isVendorMacro  inst->master) inst->status="locked")
+                     ((IsWiringCell   inst->master) (dbDeleteObject inst))
                      (t
                       (printf "ERROR: %s has no abstract view\n" inst->cellName)
-                      statusDef=nil)
+                      statusDef=nil
+                      )
                      )
                )
       (dbSave ExportCV)
@@ -258,6 +262,7 @@
     subcells = nil
     (foreach inst CV->instances
              (when (and !(isStandardCell inst->master)
+                        !(isVendorMacro  inst->master)
                         inst->libName!=TechLibName
                         (member inst->master->cellView subcells)==nil
                         (or !(IsWiringCell inst->master)
