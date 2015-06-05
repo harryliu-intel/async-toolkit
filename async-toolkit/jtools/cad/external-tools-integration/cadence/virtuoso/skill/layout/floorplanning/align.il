@@ -194,8 +194,8 @@
      location = (list inst->xy inst->cellName inst->orient)
        (when (IsInList location locations)
          misalignment = t
-         (printf "Duplicate instance placement of cell %s \n             in cell %s at (%.3f %.3f)\n" 
-                                  inst->cellName inst->cellView->cellName (car inst->xy) (cadr inst->xy))
+         (printf "Instance %s in cell %s overlaps another at (%.3f %.3f)\n" 
+                 inst->name cv->cellName (car inst->xy) (cadr inst->xy))
        )
      locations = (cons location locations)
 
@@ -245,7 +245,7 @@
     new_move=AlignInstX( cv inst move )
     if( new_move>0.0 then inst_moved=inst_moved+1 )
     if( new_move > move then
-      printf("Instance \"%s\" (%s) is moved by %.3f to snap to X alignment.\n" inst~>name inst~>cellName new_move)
+      printf("Instance %s (%s) is moved by %.3f to snap to X alignment.\n" inst~>name inst~>cellName new_move)
       move=new_move
     )
   )
@@ -303,11 +303,11 @@
      insty = (cadr inst->xy) || (cadr inst->mosaic->xy)
      (unless (IsAligned instx xalign)
        aligned = nil
-       (printf "Instance \"%s\" of type %s is misaligned in X\n" inst->name inst->cellName )
+       (printf "Instance %s of type %s is misaligned in X\n" inst->name inst->cellName )
        )
      (unless (IsAligned insty yalign)
        aligned = nil
-       (printf "Instance \"%s\" of type %s is misaligned in Y\n" inst->name inst->cellName )
+       (printf "Instance %s of type %s is misaligned in Y\n" inst->name inst->cellName )
        )
      )
    aligned
