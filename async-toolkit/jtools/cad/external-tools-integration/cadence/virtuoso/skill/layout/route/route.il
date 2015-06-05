@@ -244,7 +244,7 @@
     (unless statusGds errorStr = (strcat errorStr " GDS"))
     (unless statusLef errorStr = (strcat errorStr " LEF"))
     (unless statusDef errorStr = (strcat errorStr " DEF"))
-    (unless statusNonDefault errorStr = (strcat errorStr "NonDefaultDEF"))
+    (unless statusNonDefault errorStr = (strcat errorStr " NonDefaultDEF"))
     (when errorStr!="" (error errorStr))
 
     ; return CV
