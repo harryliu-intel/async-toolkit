@@ -234,6 +234,7 @@ sub prepare_clf_file {
 -I $icv_runset_path/util/Cadnav
 -I $icv_runset_path/util/denplot
 -I $working_dir
+-D _drIncludePort
 -D NOCLD
 -vue
 -dp$threads
