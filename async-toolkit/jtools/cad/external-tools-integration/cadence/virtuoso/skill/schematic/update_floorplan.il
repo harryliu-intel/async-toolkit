@@ -56,8 +56,8 @@
 
 ; process one cell
 (defun UpdateFloorplanCore (CV indent)
-  (let (netFile pinFile NetListTable rx ux uy w h instanceTable netTable termTable
-        lastArrayName layoutCV points realInstances pinDirection)
+  (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
+        lastArrayName layoutCV points realInstances)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -74,22 +74,9 @@
 
     ; load information from CAST
     netFile = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
-    pinFile = (strcat dir "/" CV->cellName ".pindirection.il") 
     (when (fileTimeModified netFile)
       ; mark this as a cell which exists in CAST
       (dbReplaceProp CV "CastCell" "boolean" t)
-
-      ; process pindirection.il
-      (cond ((fileTimeModified pinFile)
-             (putd `PinDirectionTable1 nil)
-             (putd `PinDirectionTable nil)
-             (load pinFile)
-             pinDirection = (PinDirectionTable)
-             )
-            (t
-             (fprintf LOG "ERROR: No pindirection.il for %s\n" CV->cellName)
-             )
-            )
 
       ; process netlist.il
       (load netFile)
@@ -232,13 +219,8 @@
   (makeTable "NetListTable" nil)
   )
 
-(defun UpdateFloorplanAddTerminal (table termName)
+(defun UpdateFloorplanAddTerminal (table termName direction)
   (let (net term direction)
-    direction = (if pinDirection pinDirection[termName] nil)
-    (cond (direction=="INPUT"  direction="input")
-          (direction=="OUTPUT" direction="output")
-          (t                   direction="inputOutput")
-          )
     net = (dbMakeNet CV termName)
     term = (dbFindTermByName CV termName)
     (cond (term && term->direction!=direction
