@@ -221,14 +221,11 @@ while ($line) {
         $line =~ s/^(\S+)\s*//
             or error_msg("Capacitor has no negative terminal: $full");
         $neg = "$1";
-        $line =~ s/^(\S+)\s*//
-            or error_msg("Capacitor has no capacitance specifier: $full");
-        $cap = $1;
         my_list_to_spice($name);
         node_names($pos,$neg);
-        print OUT "C$name $pos $neg $cap\n";
+        print OUT "C$name $pos $neg $line";
 
-    } elsif ($line =~ /^R/i) {
+    } elsif ($line =~ s/^R//i) {
 
         #
         # Resistor
@@ -237,17 +234,14 @@ while ($line) {
         $line =~ s/^(\S*)\s*//;
         $name = $1;
         $line =~ s/^(\S+)\s*//
-            or error_msg("Capacitor has no positive terminal: $full");
+            or error_msg("Resistor has no positive terminal: $full");
         $pos = "$1";
         $line =~ s/^(\S+)\s*//
-            or error_msg("Capacitor has no negative terminal: $full");
+            or error_msg("Resistor has no negative terminal: $full");
         $neg = "$1";
-        $line =~ s/^(\S+)\s*//
-            or error_msg("Capacitor has no capacitance specifier: $full");
-        $res = $1;
         my_list_to_spice($name);
         node_names($pos,$neg);
-        print OUT "R$name $pos $neg $res\n";
+        print OUT "R$name $pos $neg $line";
 
     } elsif ($line =~ m/^\*/) {
         # comment line, do nothing
