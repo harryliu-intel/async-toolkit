@@ -53,7 +53,7 @@ defun( nrIsCellViewWritable (CellView)
       ViewDDObj=ddGetObj( CellView->libName CellView->cellName CellView->viewName )
       filename = strcat( "/"  
                       buildString( reverse( cddr( reverse( parseString( CellView~>fileName "/")))) "/") 
-                      "/" CellView->viewName "/layout.cdb")
+                      "/" CellView->viewName "/layout.oa")
       writable=and( ddIsObjWritable(ViewDDObj) ddIsObjWritable(car(ViewDDObj->files)) isWritable(filename) )
     )
     writable
