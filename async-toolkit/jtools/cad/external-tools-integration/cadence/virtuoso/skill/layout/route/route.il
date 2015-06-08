@@ -354,6 +354,7 @@
              fields = (parseString line)
              (when (car fields)=="-"
                    libName = (GetCastLibName (caddr fields))
+                   (unless libName (printf "ERROR: can't parse %s\n" line))
                    (unless (member libName libNames)
                      libNames = (cons libName libNames)
                      )
