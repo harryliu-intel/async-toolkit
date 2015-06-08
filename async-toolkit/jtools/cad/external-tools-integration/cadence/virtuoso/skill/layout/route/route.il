@@ -386,6 +386,7 @@
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/route/" CV->cellName)
     (unless defFile defFile = (strcat WDIR "/" CV->cellName "_routed.def"))
+    (unless (fileTimeModified defFile) (error "Cannot read %s\n" defFile))
 
     ; create library
     (GDSIIHierMakeLibrary libName (getShellEnvVar "DFII_DIR") TechLibName)
