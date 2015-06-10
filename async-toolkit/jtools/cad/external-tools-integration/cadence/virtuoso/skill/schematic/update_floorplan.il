@@ -14,6 +14,7 @@
         (cast2skill t) ; run cast2skill first
         (verbose nil)  ; spam net and parameter changes too
         (instancePrimitives nil) ; instantiate TechLibName instances
+        (skipInstances nil) ; don't add/delete instances
         )
   (let (mastersVisited cmd temp dir routed LOG pcre)
 
@@ -100,11 +101,13 @@
         )
 
       ; delete incorrect instances
-      (foreach inst CV->instances
-        (unless inst->master==nil || instanceTable[inst] || (IsWiringCell inst->master)
-                (fprintf LOG "%sDelete instance %s of %s\n" indent inst->name inst->cellName)
-                (dbDeleteObject inst)
-                )
+      (unless skipInstances 
+        (foreach inst CV->instances
+          (unless inst->master==nil || instanceTable[inst] || (IsWiringCell inst->master)
+                  (fprintf LOG "%sDelete instance %s of %s\n" indent inst->name inst->cellName)
+                  (dbDeleteObject inst)
+                  )
+          )
         )
 
       ; update prBoundary of leaf cells, from layout view if it exists
@@ -166,7 +169,7 @@
   (let (inst master viewName w h x0 y0 arrayName primitive)
     primitive = libName=="gate" || libName=="stack" || libName=="resistor" || libName==TechLibName
     realInstances = realInstances || !primitive
-    (when CV->viewName!="floorplan" && instancePrimitives || !primitive
+    (when !skipInstances && (CV->viewName!="floorplan" && instancePrimitives || !primitive)
           ; find existing inst and its viewName
           inst = (dbFindAnyInstByName CV instName)
           viewName = (if inst inst->viewName CV->viewName)
