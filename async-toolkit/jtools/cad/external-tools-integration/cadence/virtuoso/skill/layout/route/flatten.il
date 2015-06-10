@@ -103,7 +103,7 @@ useAssura = nil ; BUG: Assura isn't working!
 
     ; Create power grid abstract
     (when doPowerGridAbstract
-      pgCV = (MakePowerGridAbstract ?CV CV)
+      pgCV = (MakePowerGridAbstract ?CV CV ?topMetal topMetal)
       (unless pgCV (error "Unable to create power grid abstract\n"))
       )
 
@@ -314,11 +314,16 @@ useAssura = nil ; BUG: Assura isn't working!
 ; others layers become boundary purpose
 (defun MakePowerGridAbstract
   (@key (CV (geGetEditCellView)) ; flatten CellView
-        (powerLayers (list Metal[0] Metal[1] Metal[2] Metal[3] Metal[4] Metal[5]
-                           Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
+        (topMetal 8)
+;       (powerLayers (list Metal[0] Metal[1] Metal[2] Metal[3] Metal[4] Metal[5]
+;                          Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
+        (powerLayers (list Metal[0] Metal[2]))) ; HACK: minimize number of pin shapes
   (let (TEMP inst pgCV pgaCV AssuraLayerMappings figsVdd figsGND)
+    
+    ; HACK: minimize number of pin shapes
+    powerLayers = (cons Metal[topMetal] powerLayers)
 
-    ; fing powergrid CV
+    ; find powergrid CV
     inst = (dbFindAnyInstByName CV "pg")
     (unless inst (error "No pg instance"))
     pgCV = inst->master
@@ -449,10 +454,10 @@ useAssura = nil ; BUG: Assura isn't working!
   )
 
 ; Draw top-level Vdd/GND pins referring to power grid abstract
-(defun CreatePowerPins (topMetal @key (CV (geGetEditCellView)))
+(defun CreatePowerPins (topMetal @key (CV (geGetEditCellView)) (suffix "_pg"))
   (let (pgaCV lpp new_shape figsVdd figsGND)
     (DeletePinsByType "Power" ?CV CV)
-    pgaCV = (dbOpenCellViewByType CV->libName (strcat CV->cellName "_pg") "abstract")
+    pgaCV = (dbOpenCellViewByType CV->libName (strcat CV->cellName suffix) "abstract")
     (unless pgaCV (error "No pg abstract view"))
     lpp = (list Metal[topMetal] "drawing")
     (foreach shape (setof x pgaCV->shapes x->lpp==lpp)
