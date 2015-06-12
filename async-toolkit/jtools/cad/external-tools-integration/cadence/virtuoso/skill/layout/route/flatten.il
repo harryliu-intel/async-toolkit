@@ -1,6 +1,7 @@
 ; Replacement for ui/Nano/Flatten/FlattenView.il
 
 useAssura = nil ; BUG: Assura isn't working!
+useICV = nil
 
 ; Top-level function to make a flatten view and switch to it
 (defun MakeFlatten
@@ -351,7 +352,29 @@ useAssura = nil ; BUG: Assura isn't working!
       pgaCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGridAbstract"
                                     pgCV->libName pgCV->cellName "abstract" ?CV CV)
       )
-    (when !useAssura
+    (when useICV
+      AssuraLayerMappings = (list
+                             (list "m2v" (list Metal[2] "vdd"))
+                             (list "m2g" (list Metal[2] "gnd"))
+                             (list "m3v" (list Metal[3] "vdd"))
+                             (list "m3g" (list Metal[3] "gnd"))
+                             (list "m4v" (list Metal[4] "vdd"))
+                             (list "m4g" (list Metal[4] "gnd"))
+                             (list "m5v" (list Metal[5] "vdd"))
+                             (list "m5g" (list Metal[5] "gnd"))
+                             (list "m6v" (list Metal[6] "vdd"))
+                             (list "m6g" (list Metal[6] "gnd"))
+                             (list "m7v" (list Metal[7] "vdd"))
+                             (list "m7g" (list Metal[7] "gnd"))
+                             (list "m8v" (list Metal[8] "vdd"))
+                             (list "m8g" (list Metal[8] "gnd"))
+                             )
+      pgaCV = (ICVLayerProcessorSimple AssuraLayerMappings "mergeShape"
+                                       pgCV->libName pgCV->cellName "abstract"
+                                       ?CV pgCV
+                                       ?inputLayerMap AssuraLayerMappings)
+      )
+    (when !useAssura && !useICV
       ; BUG: work-around
       pgaCV=(betterCopyCellView pgCV pgCV->libName pgCV->cellName "abstract" nil nil t)
       (foreach inst pgaCV->instances (dbFlattenInst inst 32))

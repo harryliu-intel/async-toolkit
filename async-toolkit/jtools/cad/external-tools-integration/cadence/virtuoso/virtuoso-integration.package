@@ -404,6 +404,9 @@ share/skill/layout/route/fill.il                      skill/layout/route/fill.il
 share/skill/layout/laygen/import.il             skill/layout/laygen/import.il           664 p
 share/skill/layout/laygen/pr.il                 skill/layout/laygen/pr.il               664 p
 
+# ICV
+share/skill/layout/icv/icv.il                         skill/layout/icv/icv.il                         664 p
+
 # distort to fix VIA7 overhang
 share/skill/layout/distort/distort.il                 skill/layout/distort/distort.il                 664 p
  
