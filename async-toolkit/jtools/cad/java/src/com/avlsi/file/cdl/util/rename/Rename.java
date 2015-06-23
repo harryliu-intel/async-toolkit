@@ -13,7 +13,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 import com.avlsi.tools.jauto.PartialExtract;
 import com.avlsi.util.container.Triplet;
@@ -35,35 +39,40 @@ import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
 import com.avlsi.util.cmdlineargs.defimpl.PedanticCommandLineArgs;
 
+import com.avlsi.util.container.Pair;
+
 /**
  *  A java version of rename.  Translates lines from stdin using the CDLRenameInterfaces.
  **/
 
 public class Rename {
 
-    public static void usagej() {
-        final String className = CDLRenamer.class.getName();
+    private static Map<String,Pair<CDLNameInterface,CDLNameInterface>> schemes =
+        new LinkedHashMap<>();
 
-        System.err.print( "Usage: " +
-                            System.getProperty( "java.home" ) +
-                            System.getProperty( "file.separator" ) +
-                            "bin" +
-                            System.getProperty( "file.separator" ) +
-                            "java " +
-                            " -classpath " +
-                            System.getProperty( "java.class.path" ) + " " +
-                            className + "\n" +
-                            "--type=[cell|node|instance|model|all]\n" +
-                            "--from=[cast,cadence,gds2]\n" +
-                            "--to=[cast,cadence,gds2]\n" );
+    static {
+        registerScheme("cast",
+                       new IdentityNameInterface(),
+                       new IdentityNameInterface());
+        registerScheme("cadence",
+                       new CadenceNameInterface(),
+                       new CadenceReverseNameInterface());
+        registerScheme("gds2",
+                       new GDS2NameInterface(),
+                       new GDS2ReverseNameInterface());
+        registerScheme("mw",
+                       new MWNameInterface(),
+                       new MWReverseNameInterface());
     }
 
     public static void usage( String m ) {
-
+        final String supported = schemes.keySet()
+                                        .stream()
+                                        .collect(Collectors.joining(","));
         System.err.print( "Usage: rename\n" +
                             "  --type=[cell|node|instance|model|all]\n" +
-                            "  --from=[cast,cadence,gds2]\n" +
-                            "  --to=[cast,cadence,gds2]\n" );
+                            "  --from=[" + supported + "]\n" +
+                            "  --to=[" + supported + "]\n" );
         if (m != null && m.length() > 0)
             System.err.print( m );
     }
@@ -97,52 +106,22 @@ public class Rename {
         return act;
     }
 
-    private static CDLNameInterface identityNI;
-    private static CDLNameInterface cadenceNI;
-    private static CDLNameInterface gds2NI;
-    private static CDLNameInterface mwNI;
-    private static CDLNameInterface cadenceReverseNI;
-    private static CDLNameInterface gds2ReverseNI;
-    private static CDLNameInterface mwReverseNI;
+    private static void registerScheme(final String name,
+                                       final CDLNameInterface forward,
+                                       final CDLNameInterface reverse) {
+        schemes.put(name, new Pair<>(forward, reverse));
+    }
 
     private static CDLNameInterface getForwardInterface(final String name) {
-        final CDLNameInterface ni;
-        if(name.equals("cast")) {
-            if (identityNI == null) identityNI = new IdentityNameInterface();
-            ni = identityNI;
-        } else if(name.equals("cadence")) {
-            if (cadenceNI == null) cadenceNI = new CadenceNameInterface();
-            ni = cadenceNI;
-        } else if(name.equals("gds2")) {
-            if (gds2NI == null) gds2NI = new GDS2NameInterface();
-            ni = gds2NI;
-        } else if(name.equals("mw")) {
-            if (mwNI == null) mwNI = new MWNameInterface();
-            ni = mwNI;
-        } else {
-            ni = null;
-        }
-        return ni;
+        return Optional.ofNullable(schemes.get(name))
+                       .map(p -> p.getFirst())
+                       .orElse(null);
     }
 
     private static CDLNameInterface getReverseInterface(final String name) {
-        final CDLNameInterface ni;
-        if(name.equals("cast")) {
-            if (identityNI == null) identityNI = new IdentityNameInterface();
-            ni = identityNI;
-        } else if(name.equals("cadence")) {
-            if (cadenceNI == null) cadenceReverseNI = new CadenceReverseNameInterface();
-            ni = cadenceReverseNI;
-        } else if(name.equals("gds2")) {
-            if (gds2NI == null) gds2ReverseNI = new GDS2ReverseNameInterface();
-            ni = gds2ReverseNI;
-        } else if(name.equals("mw")) {
-            if (mwReverseNI == null) mwReverseNI = new MWReverseNameInterface();
-            ni = mwReverseNI;
-        } else {
-            ni = null;
-        }
-        return ni;
+        return Optional.ofNullable(schemes.get(name))
+                       .map(p -> p.getSecond())
+                       .orElse(null);
     }
 
     private static CDLNameInterface getInterface(final String from, final String to) {
