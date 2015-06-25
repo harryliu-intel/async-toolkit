@@ -18,6 +18,7 @@
         (doSkipRouting t)        ; create SetSkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen t)         ; add power hookups around Laygen cells
+        (softMacro nil)          ; make instances moveable
         )
   (let ()
     ; export
@@ -26,7 +27,7 @@
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
-                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04)
+                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -55,6 +56,7 @@
         (doSkipRouting t)        ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen t)         ; add power hookups around Laygen cells
+        (softMacro nil)          ; make instances moveable
         )
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR
         PowerGridCellName abstractCV
@@ -63,7 +65,7 @@
         pout (statusGds t) (statusLef t) 
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
-        (statusNonDefault t) errorStr)
+        (statusNonDefault t) errorStr placed)
 
     ; load wires.il and set options
     (LoadWires ?CV CV)
@@ -171,11 +173,12 @@
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
+               placed = (if softMacro "placed" "locked")
                (cond (abstractCV
                       inst->master=abstractCV
-                      inst->status=(if abstractCV->cellType=="core" "placed" "locked")
+                      inst->status=(if abstractCV->cellType=="core" placed "locked")
                       )
-                     ((isStandardCell inst->master) inst->status="placed")
+                     ((isStandardCell inst->master) inst->status=placed)
                      ((isVendorMacro  inst->master) inst->status="locked")
                      ((IsWiringCell   inst->master) (dbDeleteObject inst))
                      (t
