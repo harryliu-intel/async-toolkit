@@ -301,4 +301,7 @@ $arch/bin/run_cmm       script/perl/run_cmm.pl       755 p
 #rte
 $arch/bin/rte_summarize     script/perl/rte_summarize.pl     755 p
 
+#nanotime
+$arch/bin/run_nanotime  script/perl/run_nanotime.pl  755 p
+
 include ../java/src/com/avlsi/tools/synthesis/synthesis.inc ../java/src/com/avlsi/tools/synthesis

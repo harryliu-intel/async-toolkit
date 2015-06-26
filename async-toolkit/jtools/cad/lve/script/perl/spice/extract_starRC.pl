@@ -81,6 +81,7 @@ sub usage() {
     $usage .= "    --blackbox=(0|1) (defaults to 0)\n";
     $usage .= "    --extractReduce=[YES|NO|LAYER|NO_EXTRA_LOOPS|HIGH]\n";
     $usage .= "    --spef=[0|1] generate a spef instead of spice\n";
+    $usage .= "    --nt-mode=[0|1] generate files for Nanotime\n";
     $usage .= "    --totem-mode=[0|1] for totem prep\n";
     $usage .= "    --instance-port=[CONDUCTIVE|NOT_CONDUCTIVE|SUPERCONDUCTIVE]\n";
     $usage .= "    NVN OPTIONS\n";
@@ -135,6 +136,7 @@ my $genspef=0;
 my $merge_paths=0;
 my $dfIIdir;
 my $threads=2;
+my $nt_mode=0;
 my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
 
@@ -211,6 +213,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $extra_extract_equiv = $value;
     } elsif ($flag eq "lvs-extra-options") {
         $lvs_extra_options = $value;
+    } elsif ($flag eq "nt-mode") {
+        $nt_mode = $value;
     } elsif ($flag eq "totem-mode") {
         $totem_mode = $value;
     } elsif ($flag eq "instance-port") {
@@ -492,8 +496,6 @@ if ($stage2b) {
     if ( -f "$conf_dir/$extractCorner.nxtgrd") {
         $Tcad_Grid_File= "$conf_dir/$extractCorner.nxtgrd";
     }
-    my $spiceTemp= "${cell_name}.spf";
-    $spiceTemp = "${cell_name}.spef" if $genspef;
     my $skip_cell_cmd="";
     if(-s $graycell_file) {
         $skip_cell_cmd="SKIP_CELLS_FILE: $graybox_list_file";
@@ -529,13 +531,28 @@ if ($stage2b) {
     }
     my $extraction_mode="RC";
     my $placement_info_file="";
+    my $ideal_spice_file="";
+    my $passive_params="YES";
+    my $hierSep='/';
     if ($totem_mode) {
         $extraction_mode="C";
         $placement_info_file="PLACEMENT_INFO_FILE:            YES";
         $tailcomments="NO";
         $reduction="HIGH";
     }
-
+    if ($nt_mode) {
+        $netlist_format="SPEF";
+        $reduction="NO";
+        $remove_dangling_branches = "NO";
+        $passive_params="NO";
+        $hierSep='.';
+        my $dpf = "${cell_name}.dpf";
+        $ideal_spice_file="NETLIST_IDEAL_SPICE_FILE:       $dpf";
+        symlink($dpf, 'cell.dpf');
+        symlink("${cell_name}.spef", 'cell.spef');
+    }
+    my $spiceExt = $netlist_format eq 'SPEF' ? 'spef' : 'spf';
+    my $spiceTemp = "${cell_name}.$spiceExt";
 
     my $lvsresult = "";
     if (-e 'starrc.report') {
@@ -571,8 +588,10 @@ TCAD_GRD_FILE:                  $Tcad_Grid_File
 SPICE_SUBCKT_FILE:              $pin_file
 $skip_cell_cmd
 IGNORE_CAPACITANCE:             ALL RETAIN_GATE_DIFFUSION_COUPLING
+HIERARCHICAL_SEPARATOR:         $hierSep
 NETLIST_FORMAT:                 $netlist_format
-NETLIST_PASSIVE_PARAMS:         YES
+NETLIST_PASSIVE_PARAMS:         $passive_params
+$ideal_spice_file
 * NETLIST_NODE_SECTION:         YES
 XREF:                           YES
 CELL_TYPE:                      SCHEMATIC

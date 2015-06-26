@@ -49,6 +49,7 @@ share/filetypes/castfiles/once.mk filetypes/castfiles/once.mk 664 p
 share/filetypes/castfiles/dir.mk filetypes/castfiles/dir.mk 664 p
 share/filetypes/castfiles/env.mk filetypes/castfiles/env.mk 664 p
 share/filetypes/castfiles/dirout.mk filetypes/castfiles/dirout.mk 664 p
+share/filetypes/castfiles/nanotime.mk filetypes/castfiles/nanotime.mk 664 p
 share/filetypes/pyfiles/dir.mk filetypes/pyfiles/dir.mk 664 p
 share/filetypes/pyfiles/once.mk filetypes/pyfiles/once.mk 664 p
 share/filetypes/pyfiles/dirout.mk filetypes/pyfiles/dirout.mk 664 p

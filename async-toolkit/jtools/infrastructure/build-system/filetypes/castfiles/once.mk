@@ -68,7 +68,8 @@ CASTFILES_UPDATE_SIGNATURE = \
 
 SPICE_TYPES := nogeometry estimated extracted  \
     accurate custom totem \
-    extracted$(EXTRACT_DIR) accurate$(EXTRACT_DIR) totem$(EXTRACT_DIR)
+    extracted$(EXTRACT_DIR) accurate$(EXTRACT_DIR) totem$(EXTRACT_DIR) \
+    nanotime$(EXTRACT_DIR)
 #1) run directory
 #2) default params
 #3) N
@@ -1159,6 +1160,9 @@ ifeq ("$(GRAYBOX_MODE)", "")
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice_gds2
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spf
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.dpf
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.spef
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
@@ -1886,6 +1890,126 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	st=$$status; \
 	exit $$st
 
+$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.spef \
+$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.dpf \
+$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
+	$(ROOT_TARGET_DIR)/%/cell.gds2 \
+	$(ROOT_TARGET_DIR)/%/cell.cdl_gds2
+	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
+	echo "#TASK=$(EXTRACT_STARRC) MODE=nanotime$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	mkdir -p '$(@D)'; \
+	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
+	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
+	extract_dir=`mktemp -d "$(WORKING_DIR)/$$cell.XXXXXX"`; \
+	if [[ -f "$(@D)/graybox_list" ]]; then /bin/mv -f "$(@D)/graybox_list" "$(@D)/graybox_list.orig"; fi; \
+	sync; \
+	sleep 1; \
+	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
+	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
+	  $(QB) $(EXTRACT_STARRC) \
+	  --64bit=$(BIT64) \
+	  --blackbox=0 \
+	  --threads=$(DRCLVS_THREADS) \
+	  --cdl-cell-name="$$cell" \
+	  --cdl-file='$(@D)/../cell.cdl_gds2' \
+	  --delete=0 \
+	  --dfII-dir='$(DFII_DIR)' \
+	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
+	  --extract-power=$(EXTRACTPOWER) \
+	  --extracted-view='$(EXTRACTED_VIEW)' \
+	  --extractReduce=$(REDUCE_MODE) \
+	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
+	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
+	  --gds2-file='$(@D)/../cell.gds2' \
+	  --gray-cell-list='$(@D)/graybox_list' \
+	  --ignore-nvn=$(IGNORE_NVN) \
+	  --maxF=$(MAXF) \
+	  --minC=$(MINEXTRACTEDC) \
+	  --minR=$(MINEXTRACTEDR) \
+	  --nvn-log='$(@D)/nvn.log' \
+	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
+	  --spice-topcell='$(@D)/cell.spice_topcell' \
+	  --swappin-log='$(@D)/swappin.err' \
+	  --temperature=$(TEMPERATURE) \
+	  --working-dir=$$extract_dir \
+	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
+	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
+	  --task='stage1' \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
+	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
+	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
+	  $(QB) $(EXTRACT_STARRC) \
+	  --64bit=$(BIT64) \
+	  --blackbox=0 \
+	  --cdl-cell-name="$$cell" \
+	  --cdl-file='$(@D)/../cell.cdl_gds2' \
+	  --delete=0 \
+	  --dfII-dir='$(DFII_DIR)' \
+	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
+	  --extract-power=$(EXTRACTPOWER) \
+	  --extracted-view='$(EXTRACTED_VIEW)' \
+	  --extractReduce=$(REDUCE_MODE) \
+	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
+	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
+	  --gds2-file='$(@D)/../cell.gds2' \
+	  --gray-cell-list='$(@D)/graybox_list' \
+	  --ignore-nvn=$(IGNORE_NVN) \
+	  --maxF=$(MAXF) \
+	  --minC=$(MINEXTRACTEDC) \
+	  --minR=$(MINEXTRACTEDR) \
+	  --nvn-log='$(@D)/nvn.log' \
+	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
+	  --spice-topcell='$(@D)/cell.spice_topcell' \
+	  --swappin-log='$(@D)/swappin.err' \
+	  --temperature=$(TEMPERATURE) \
+	  --working-dir=$$extract_dir \
+	  --task='stage2a' \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
+	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
+	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
+	  $(QB) $(EXTRACT_STARRC) \
+	  --64bit=$(BIT64) \
+	  --blackbox=0 \
+	  --threads=$(STARRC_THREADS) \
+	  --cdl-cell-name="$$cell" \
+	  --cdl-file='$(@D)/../cell.cdl_gds2' \
+	  --delete=0 \
+	  --dfII-dir='$(DFII_DIR)' \
+	  --extract-corner='$(EXTRACT_CORNER)' \
+	  --instance-port=$(INSTANCE_PORT) \
+	  --extract-power=$(EXTRACTPOWER) \
+	  --extracted-view='$(EXTRACTED_VIEW)' \
+	  --extractReduce=$(REDUCE_MODE) \
+	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
+	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
+	  --gds2-file='$(@D)/../cell.gds2' \
+	  --gray-cell-list='$(@D)/graybox_list' \
+	  --ignore-nvn=$(IGNORE_NVN) \
+	  --maxF=$(MAXF) \
+	  --minC=$(MINEXTRACTEDC) \
+	  --minR=$(MINEXTRACTEDR) \
+	  --nvn-log='$(@D)/nvn.log' \
+	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
+	  --spice-topcell='$(@D)/cell.spice_topcell' \
+	  --swappin-log='$(@D)/swappin.err' \
+	  --temperature=$(TEMPERATURE) \
+	  --working-dir=$$extract_dir \
+	  --nt-mode=1 \
+	  --task='stage2b' \
+	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
+	cp "$$extract_dir/starRC/cell.spef" '$(@D)/cell.spef' && \
+	cp "$$extract_dir/starRC/cell.dpf" '$(@D)/cell.dpf' && \
+	if [ "$(DELETE_EXTRACT_DIR)" != "0" ]; then /bin/rm -rf "$$extract_dir"; fi; \
+	status=$$?;
+	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
+		grep "Error" "$(@D)/extract.err" >&2 ; \
+		status=1; \
+	fi; \
+	task=extract && $(CASTFILES_DEQUEUE_TASK) ;\
+	exit $$status
+
 # rename spice file from cast to gds2 names
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2
 $(ROOT_TARGET_DIR)/%/estimated/cell.spice_gds2: $(ROOT_TARGET_DIR)/%/estimated/cell.spice
@@ -1946,6 +2070,16 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.result: \
 				$(ROOT_TARGET_DIR)/%/df2.d \
 				$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err \
 				$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spf
+	if (grep -q "NVN FAILED" '$(word 2,$^)') ; then \
+		echo FAIL > '$@'; \
+	elif [[ ! ( -s '$(word 3,$^)' ) ]] ; then \
+		echo FAIL > '$@'; \
+	else echo PASS > '$@'; fi;
+
+$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.result: \
+				$(ROOT_TARGET_DIR)/%/df2.d \
+				$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err \
+				$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.spef
 	if (grep -q "NVN FAILED" '$(word 2,$^)') ; then \
 		echo FAIL > '$@'; \
 	elif [[ ! ( -s '$(word 3,$^)' ) ]] ; then \
@@ -2212,6 +2346,10 @@ $(ROOT_TARGET_DIR)/%/drc.result: $(ROOT_TARGET_DIR)/%/drc.err $(ROOT_TARGET_DIR)
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.raw: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.result
 	#TASK=extract_raw MODE=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	$(RAWIFY) --use-db=$(USEDB) --task=extract --mode=totem --root='$(ROOT_TARGET_DIR)' --dir='$(@D)' --cell="$(call GET_CAST_FULL_NAME,$(@D))"
+
+$(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.raw: $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.result
+	#TASK=extract_raw MODE=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
+	touch '$@'
 
 $(ROOT_TARGET_DIR)/%/extract.raw: $(ROOT_TARGET_DIR)/%/extract.result \
 	                          $(ROOT_TARGET_DIR)/%/cell.aspice

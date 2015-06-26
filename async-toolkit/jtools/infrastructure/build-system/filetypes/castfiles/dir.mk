@@ -251,6 +251,13 @@ $(CURR_CELL_DIR)/%/df2.d: $(CURR_CELL_DFII_DIR)/%/layout.oa
 	$(CASTFILES_DEQUEUE_TASK)
 	: < '$@'
 
+$(CURR_CELL_DIR)/%/nanotime$(EXTRACT_DIR)/analog.mk: $(CURR_CELL_DIR)/cast.d
+	mkdir -p '$(@D)' && \
+	(echo 'SPICE_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(@D))' && \
+	 echo 'GDS_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(call CANONICALIZE_PATH,$(@D)/..))' && \
+	 echo 'CELL_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(call CANONICALIZE_PATH,$(@D)/../..))' && \
+	 echo 'include $$(BUILD)/filetypes/castfiles/nanotime.mk') > '$@'
+
 $(CURR_CELL_DIR)/%/analog.mk: $(CURR_CELL_DIR)/cast.d
 	mkdir -p '$(@D)'
 	echo 'SPICE_DIR := $(subst $(ROOT_TARGET_DIR),$$(ROOT_TARGET_DIR),$(@D))' > '$@'

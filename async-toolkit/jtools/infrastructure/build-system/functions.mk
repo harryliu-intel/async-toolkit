@@ -54,6 +54,9 @@ TO_LOWERCASE = $(shell $(PERL) -e '{print lv("$1");}' )
 
 CONONICALIZE_PATH = $(shell echo '$(1)' | $(GNUSED) -e 's,/\+,/,g' -e '{:lab s,/[^/]\+/\.\.,,; t lab}' -e 's,.*//,/,g' )
 
+# An implementation of CONONICALIZE_PATH that only use built-in functions found
+# in make 3.81 and later
+CANONICALIZE_PATH = $(if $(patsubst /%,,$(1)),$(patsubst /%,%,$(abspath /$(1))),$(abspath $(1)))
 
 UNIQ = $(shell echo '$(1)' | $(PERL) -e 'map { print "$$_ " if 1 == ++$$s{$$_}} split(" ",<>)')
 

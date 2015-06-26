@@ -405,6 +405,7 @@ my $keepDrcDir= 0;          # clean up after drc
 my $keepFrcDir= 0;          # clean up after frc
 my $keepTotemDir= 0;        # clean up after frc
 my $keepLvsDir= 0;          # clean up after lvs
+my $keepNanotimeDir=0;      # clean up after nanotime
 my $hsimDeleteFiles= 1;
 my $monte_carlo=0;
 my $start_time=2;
@@ -608,7 +609,8 @@ my @validtasks = (
     "spef",
     "stats",
     "cmm",
-    "totem"
+    "totem",
+    "nanotime"
 );
 my @task = ("drc","lvs","jlvs","extract","aspice","alint","stats","captally","lib", "plt","rte", "apl"); # which types of sims to run
 my %taskSet = (); # hashed by task, 1 if that task used at all
@@ -1261,6 +1263,7 @@ KEEP_LVS_DIR                     := $keepLvsDir
 KEEP_DRC_DIR                     := $keepDrcDir
 KEEP_FRC_DIR                     := $keepFrcDir
 KEEP_TOTEM_DIR                   := $keepTotemDir
+KEEP_NANOTIME_DIR                := $keepNanotimeDir
 TEMPERATURE                      := $extractTemp
 REDUCED_DSPF                     := $reduced_dspf
 REDUCE_MODE                      := $reduce_mode
@@ -1833,9 +1836,11 @@ sub enumerate_targets {
     my $cellpath = "$output_dir/$shortPath";
     my $hasextracted = 0;
     my $hastotem=0;
+    my $hasnanotime=0;
 
     foreach my $task (@task) {
         $hastotem = 1 if $task eq "totem" or $task eq "cmm";
+        $hasnanotime = 1 if $task eq "nanotime";
     }
     # include makefiles for cell
     addInclude("$cellpath/cell.mk");
@@ -1874,6 +1879,8 @@ sub enumerate_targets {
             addInclude("$cellpath/$view/$mode$corner_extension/analog.mk");
             addInclude("$cellpath/$view/totem$corner_extension/analog.mk")
                 if $hastotem;
+            addInclude("$cellpath/$view/nanotime$corner_extension/analog.mk")
+                if $hasnanotime;
             addInclude("$cellpath/$view/df2.d") if ($mode ne "nogeometry" and
                                                     $mode ne "custom");
             # if all the dependencies are there, include slurp.mk
@@ -1892,7 +1899,7 @@ sub enumerate_targets {
     foreach my $task (@task) {
         if (($task eq "extract") or ($task eq "hsim") or ($task eq "hspice") or ($task eq "xa") or
             ($task eq "aspice")  or ($task eq "alint") or ($task eq "lib") or ($task eq "totem") or
-            ($task eq "apl") or ($task eq "cmm")) {
+            ($task eq "apl") or ($task eq "cmm") or ($task eq "nanotime")) {
             $needExtract = 1 if ! $noextractdeps;
         }
         if ($task eq "spef") {
@@ -1916,6 +1923,7 @@ sub enumerate_targets {
                     next if defined($noextracttask{$task});
                     my $md=$mode;
                     $md = "totem" if $task eq "totem" or $task eq "cmm";
+                    $md = "nanotime" if $task eq "nanotime";
                     $targ = "$cellpath/$validexview/$md$corner_extension/extract.raw";
                     addTarget($cell,"extract",$targ, __LINE__);
                 }
@@ -2401,6 +2409,23 @@ sub enumerate_targets {
                     }
                 }
             }
+        } elsif ($task eq "nanotime") {
+            foreach my $view (get_views("extracted")) {
+                next if ($view ne $validexview);
+                foreach my $pvt (list_pvt()) {
+                    my ($corner,$true,$temp) = split(":",$pvt);
+                    foreach my $time (@time) {
+                        if ($corner eq "" or
+                            $true   eq "" or
+                            $temp   eq "") {
+                            error("empty list element");
+                        } else {
+                            my $targ = "$cellpath/$view/nanotime$corner_extension/$corner/${true}V/${temp}C/cell.lib";
+                            addTarget($cell,$task,$targ);
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -2529,7 +2554,7 @@ sub usage {
     }
 
     $routed="default" if !defined $routed;
-    my $keep=($keepDrcDir and $keepLvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and ! $delete_bumpcheck_dir) ? 1 : 0;
+    my $keep=($keepDrcDir and $keepLvsDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and $keepNanotimeDir and ! $delete_bumpcheck_dir) ? 1 : 0;
     my $force=join(",", @force);
 
     my $usage = <<EOF;
@@ -2563,6 +2588,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --keep-frc=[$keepFrcDir] (do not clean up after frc)
     --keep-lvs=[$keepLvsDir] (do not clean up after lvs)
     --keep-totem=[$keepTotemDir] (do not clean up after totem)
+    --keep-nanotime=[$keepNanotimeDir] (do not clean up after nanotime)
     --keep[-all]=[$keep] (do not clean up any of the above)
     --ignore-nvn=[$ignoreNVN] (continue with extraction even nvn fails)
     --ignore-dangling-pin-check=[$ignoreDanglingPinCheck] (continue with extraction even dangling pin check fails)
@@ -2805,7 +2831,8 @@ sub setOptions {
    $optionvalues{"keep-drc"} =  $keepDrcDir;
    $optionvalues{"keep-frc"} =  $keepFrcDir;
    $optionvalues{"keep-totem"} =  $keepTotemDir;
-   $optionvalues{"keep-all"} =  ( $keepLvsDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir);
+   $optionvalues{"keep-nanotime"} =  $keepNanotimeDir;
+   $optionvalues{"keep-all"} =  ( $keepLvsDir and $keepDrcDir and ! $deleteExtractDir and $keepFrcDir and $keepTotemDir and $keepNanotimeDir);
    $optionvalues{"ignore-nvn"} =  $ignoreNVN;
    $optionvalues{"ignore-dangling"} =  $ignoreDanglingPinCheck;
    $optionvalues{"blackbox"} = $lvsBlackbox;
@@ -3032,11 +3059,13 @@ sub processOption {
         elsif ($key eq "keep-lvs")            { $keepLvsDir = $value ? 1 : 0; }
         elsif ($key eq "keep-drc")            { $keepDrcDir = $value ? 1 : 0; }
         elsif ($key eq "keep-totem")          { $keepTotemDir = $value ? 1 : 0; }
+        elsif ($key eq "keep-nanotime")       { $keepNanotimeDir = $value ? 1 : 0; }
         elsif ($key eq "keep" or $key eq "keep-all") {
                                                 $keepLvsDir = $value ? 1 : 0;
                                                 $keepDrcDir = $value ? 1 : 0;
                                                 $keepFrcDir = $value ? 1 : 0;
                                                 $keepTotemDir = $value ? 1 : 0;
+                                                $keepNanotimeDir = $value ? 1 : 0;
                                                 $hsimDeleteFiles = $value ? 0 : 1;
                                                 $deleteExtractDir = $value ? 0 : 1;
                                                 $delete_bumpcheck_dir = $value ? 0 : 1; }
