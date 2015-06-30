@@ -158,13 +158,13 @@ useICV = nil
   (@key (CV (geGetEditCellView)) ; flatten CV
         (topMetal 8)
         (hookupLaygen t) ; HACK: add power hookups to all LayGen cells
-        (hookupD04 nil)    ; HACK: add power hookups to all D04 cells
+        (hookupD04 nil)  ; HACK: add power hookups to all D04 cells
         )
   (let (TEMP powerCellName align
         inst prb vertprb
         x1box x2box y1box y2box x1 y1 x2 x2
         AssuraLayerMappings
-        powerCV pgMap blks power2
+        powerCV pgMap blks
         count gridName gridCV rows cols
         tiehilo GND Vdd instGND instVdd)
 
@@ -214,18 +214,46 @@ useICV = nil
                                       CV->libName powerCellName "layout" ?CV CV)
       )
     (when !useAssura
-      ; BUG: temporary hack to avoid Assura layer processing
-      ; Uses prBoundary shape but ignores "block" purpose layers
-      powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
-      power2 = (dbCreatePolygon powerCV (list Metal[2] "block") prb->points)
-      (dbLayerTile powerCV (list Metal[2] "block") (list power2))
-      (dbDeleteObject power2)
-      (dbSave powerCV)
+      (let (power2 power4 power6 power8 temp3 temp7)
+        ; BUG: temporary hack to avoid Assura layer processing
+        powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
+        (FlattenBlockPurpose CV powerCV)
+
+        ; power grid blockages (BUG: ignores power blockages on odd layers)
+        (dbCreatePolygon powerCV MetalBlock[2] prb->points)
+        (leLayerAndNot powerCV MetalBlock[6] MetalBlock[8] (list "y6" "drawing"))
+        (leLayerOr     powerCV MetalBlock[6] MetalBlock[8] (list "y7" "drawing"))
+        (leLayerAndNot powerCV MetalBlock[4] (list "y7" "drawing") (list "y4" "drawing"))
+        (leLayerOr     powerCV MetalBlock[4] (list "y7" "drawing") (list "y3" "drawing"))
+        (leLayerAndNot powerCV MetalBlock[2] (list "y3" "drawing") (list "y2" "drawing"))
+        (foreach s powerCV->shapes (when s->purpose=="block" (dbDeleteObject s)))
+
+        ; chop into tiles
+        power8 = (setof s powerCV->shapes s->lpp==MetalBlock[8])
+        power6 = (setof s powerCV->shapes s->lpp==(list "y6" "drawing"))
+        power4 = (setof s powerCV->shapes s->lpp==(list "y4" "drawing"))
+        power2 = (setof s powerCV->shapes s->lpp==(list "y2" "drawing"))
+        temp3  = (setof s powerCV->shapes s->lpp==(list "y3" "drawing"))
+        temp7  = (setof s powerCV->shapes s->lpp==(list "y7" "drawing"))
+        (dbLayerTile powerCV MetalBlock[2] power2)
+        (dbLayerTile powerCV MetalBlock[4] power4)
+        (dbLayerTile powerCV MetalBlock[6] power6)
+        (dbLayerTile powerCV MetalBlock[8] power8)
+
+        ; delete temporary layers
+        (foreach s power2 (dbDeleteObject s))
+        (foreach s power4 (dbDeleteObject s))
+        (foreach s power6 (dbDeleteObject s))
+        (foreach s power8 (dbDeleteObject s))
+        (foreach s temp3  (dbDeleteObject s))
+        (foreach s temp7  (dbDeleteObject s))
+        (dbSave powerCV)
+        )
       )
 
-    ; define power grid cell names
+    ; map block purpose layers to power grid cell names
     pgMap=(makeTable "POWER_GRID" nil)
-    (for m 2 topMetal
+    (for m 2 topMetal-1
          gridName = "globals.POWER_GRID.m"
          (for n m topMetal
               gridName = (strcat gridName (sprintf nil "%d" n))
@@ -496,6 +524,28 @@ useICV = nil
     (dbAddFigsToPin (dbCreatePin (dbMakeNet CV GNDNetName) nil) figsGND)
     (foreach fig figsVdd (LaygenLabelPin CV fig))
     (foreach fig figsGND (LaygenLabelPin CV fig))
+    )
+  t
+  )
+
+
+; copy block purpose shapes from subcells
+; TODO: use ICV instead
+(defun FlattenBlockPurpose (CV dstCV)
+  (let (pg inst_trans pg_trans)
+    (foreach inst CV->instances
+             inst_trans = (dbGetInstTransform inst)
+             (foreach shape (setof s inst->master->shapes s->purpose=="block")
+                      (dbCopyShape shape dstCV inst_trans)
+                      )
+             pg = (dbFindAnyInstByName inst->master "pg")
+             (when pg
+               pg_trans = (dbGetInstTransform pg)
+               (foreach shape (setof s pg->master->shapes s->purpose=="block")
+                        (dbCopyShape shape dstCV (dbConcatTransform inst_trans pg_trans))
+                        )
+               )
+             )
     )
   t
   )
