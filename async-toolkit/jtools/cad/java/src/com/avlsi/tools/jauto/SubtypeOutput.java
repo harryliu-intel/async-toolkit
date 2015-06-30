@@ -2484,7 +2484,8 @@ public final class SubtypeOutput {
                  i.hasNext(); ) {
                 final Pair pair = (Pair) i.next();
                 final CellInterface subcell = (CellInterface) pair.getSecond();
-                if (CellUtils.isWiring(subcell)) continue;
+                if (!CellUtils.hasRouted(subcell) &&
+                    CellUtils.isWiring(subcell)) continue;
                 final HierName instanceName = (HierName) pair.getFirst();
 
                 final Pair types =
@@ -2549,7 +2550,9 @@ public final class SubtypeOutput {
                                       final float minWidth) throws IOException {
         final String subtype;
         final CellInterface ci = cell.cast_cell;
-        if (CellUtils.isLeaf(ci) || cell.isInternalEnv()) {
+        final boolean midRouted =
+            CellUtils.hasRouted(ci) && ci.containsCompleteSubcells();
+        if ((CellUtils.isLeaf(ci) && !midRouted) || cell.isInternalEnv()) {
             if (!cell.isInternalEnv() && CellUtils.isFixedSize(ci)) {
                 subtype = writeTemplate(policy, ci);
             } else {
@@ -2566,9 +2569,11 @@ public final class SubtypeOutput {
     public static String writeSubtype(final Policy policy,
                                       final CellInterface cell) throws IOException {
         final String subtype;
+        final boolean midRouted =
+            CellUtils.hasRouted(cell) && cell.containsCompleteSubcells();
         if (CellUtils.isInternalEnv(cell)) {
             subtype = writeEmptyBody(policy, cell);
-        } else if (CellUtils.isLeaf(cell)) {
+        } else if (CellUtils.isLeaf(cell) && !midRouted) {
             subtype = writeTemplate(policy, cell);
         } else {
             subtype = writeMidlevel(policy, cell);

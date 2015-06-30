@@ -118,6 +118,19 @@ public final class CellUtils {
         return routed == null ? isLeaf(cell) : routed.booleanValue();
     }
 
+    public static boolean hasRouted(final CellInterface cell) {
+        if (isRouted(cell, false)) {
+            return true;
+        }
+
+        for (Iterator i = cell.getLocalSubcellPairs(); i.hasNext(); ) {
+            final Pair pair = (Pair) i.next();
+            final CellInterface subcell = (CellInterface) pair.getSecond();
+            if (hasRouted(subcell)) return true;
+        }
+        return false;
+    }
+
     public static boolean isAstaBlackbox(final CellInterface cell) {
         Boolean bbox = (Boolean) DirectiveUtils.getTopLevelDirective(cell,
                 DirectiveConstants.ASTA_BLACKBOX);

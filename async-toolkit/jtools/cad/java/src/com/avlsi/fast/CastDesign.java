@@ -356,6 +356,7 @@ public final class CastDesign {
             HierName n = (HierName) p.getFirst();
             CellInterface sc = (CellInterface) p.getSecond();
             final boolean hasCsp = keepCsp && sc.hasRunnableCsp();
+            final boolean hasRouted = CellUtils.hasRouted(sc);
             if (sc.isNode() || skipCells.contains(sc.getFullyQualifiedType())) {
                 continue;
             }
@@ -366,12 +367,13 @@ public final class CastDesign {
             if (sct.isWiringCell &&
                 DirectiveUtils.getDirectiveBlock(sc.getBlockInterface())
                     == null &&
-                !hasCsp) {
+                !hasCsp &&
+                !hasRouted) {
                 continue;
             }
 
             ConnectionInfo conn = new ConnectionInfo(ct, sct, n, c);
-            if (!sct.isWiringCell || hasCsp) {
+            if (!sct.isWiringCell || hasCsp || hasRouted) {
                 ct.subcellconnections.put(n, conn);
                 sct.parentcellconnections.add(conn);
             }
@@ -1072,18 +1074,17 @@ public final class CastDesign {
                                 }
                             }
                         }
+
+                        // FIXME: possible cell/transistor mix in the future, don't use getLevel
+                        if((sta.getLevel() == 0) && (!neta.visited)){
+                            String msa = "WARNING";
+                            String msb = "Port net is not in the netgraph of the leaf cell.\n";
+                            String msc = "CellName: " + sta.typeName + "\n"
+                                + "NetName: " + neta.canonicalName.getCadenceString() + "\n";
+
+                            sta.design.getMessageCenter().createMessage(1, 99, msa, msb, msc);
+                        }
                     }
-
-                    // FIXME: possible cell/transistor mix in the future, don't use getLevel
-                    if((sta.getLevel() == 0) && (!neta.visited)){
-                        String msa = "WARNING";
-                        String msb = "Port net is not in the netgraph of the leaf cell.\n";
-                        String msc = "CellName: " + sta.typeName + "\n"
-                            + "NetName: " + neta.canonicalName.getCadenceString() + "\n";
-
-                        sta.design.getMessageCenter().createMessage(1, 99, msa, msb, msc);
-                    }
-
 
                     // check cells next
                     for (Iterator itc = neta.getSetSubcellNets().iterator(); itc.hasNext(); ) {

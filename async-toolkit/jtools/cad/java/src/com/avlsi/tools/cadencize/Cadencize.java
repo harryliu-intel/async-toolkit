@@ -134,6 +134,8 @@ public final class Cadencize {
                 return cell.containsNetlist();
             } else if (block == BlockInterface.CSP) {
                 return !impl && cell.containsRunnableCsp();
+            } else if (block == BlockInterface.CELL) {
+                return CellUtils.isWiring(cell) && CellUtils.hasRouted(cell);
             } else {
                 return false;
             }
@@ -705,7 +707,8 @@ public final class Cadencize {
 
         // mark ports used by verilog body or CSP body
         if (callback.mark(cell, BlockInterface.VERILOG) ||
-            callback.mark(cell, BlockInterface.CSP)) {
+            callback.mark(cell, BlockInterface.CSP) ||
+            callback.mark(cell, BlockInterface.CELL)) {
             // It is unnecessary to eliminated unused ports in Verilog, because
             // not part of the flow that generates CDL for layout should care
             // about the verilog block, so mark all ports as used so that any
