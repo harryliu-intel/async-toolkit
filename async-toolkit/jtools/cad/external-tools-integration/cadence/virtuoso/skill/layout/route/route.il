@@ -260,12 +260,24 @@
 (defun ListLefSubcells
   (@key (CV (geGetEditCellView))     ; specify CellView
         (includeWiringCellNames nil) ; include specified wiring cells
+        (excludeCellsFile            ; exclude these cells too
+         (strcat (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR") "/cell_list"))
         )
-  (let (subcells)
+  (let (fin cellName excluded subcells)
+    excluded=(makeTable "excluded" nil)
+    (when excludeCellsFile
+      fin = (infile excludeCellsFile)
+      (unless fin (error "Can't read %s\n" excludeCellsFile))
+      (while (fscanf fin "%s" cellName)
+        excluded[cellName] = t
+        )
+      (close fin)
+      )
     subcells = nil
     (foreach inst CV->instances
              (when (and !(isStandardCell inst->master)
                         !(isVendorMacro  inst->master)
+                        !(excluded[inst->cellName])
                         inst->libName!=TechLibName
                         (member inst->master->cellView subcells)==nil
                         (or !(IsWiringCell inst->master)
