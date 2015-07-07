@@ -103,7 +103,8 @@
       ; delete incorrect instances
       (unless skipInstances 
         (foreach inst CV->instances
-          (unless inst->master==nil || instanceTable[inst] || (IsWiringCell inst->master)
+          (unless inst->master==nil || instanceTable[inst] ||
+                  !(IsCastCell inst->master) (IsWiringCell inst->master)
                   (fprintf LOG "%sDelete instance %s of %s\n" indent inst->name inst->cellName)
                   (dbDeleteObject inst)
                   )
