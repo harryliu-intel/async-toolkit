@@ -123,10 +123,10 @@
             (mod2==0 && leftOverlaps && rightOverlaps && w>xb
                      x0=xbloat
                      )
-            (mod2==0 && leftOverlaps && !rightOverlaps && w>l+xb
+            (mod2==0 && leftOverlaps && !rightOverlaps && w>=l+xb
                      x0=xbloat
                      )
-            (mod2==0 && !leftOverlaps && rightOverlaps && w>l+xb
+            (mod2==0 && !leftOverlaps && rightOverlaps && w>=l+xb
                      x1=-xbloat
                      )
             (mod2==0 && (leftOverlaps!=nil)!=(rightOverlaps!=nil)
@@ -141,10 +141,10 @@
             (mod2==1 && botOverlaps && topOverlaps && h>yb
                      y0=ybloat
                      )
-            (mod2==1 && botOverlaps && !topOverlaps && h>l+yb
+            (mod2==1 && botOverlaps && !topOverlaps && h>=l+yb
                      y0=ybloat
                      )
-            (mod2==1 && !botOverlaps && topOverlaps && h>l+yb
+            (mod2==1 && !botOverlaps && topOverlaps && h>=l+yb
                      y1=-ybloat
                      )
             (mod2==1 && (botOverlaps!=nil)!=(topOverlaps!=nil)
@@ -176,7 +176,7 @@
   (let (b xy mosaic)
     (cond ((atom a) && (a->objType=="rect" || a->objType=="polygon" ||
                         a->objType=="path" || a->objType=="pathSeg") a->bBox)
-          (!(atom a) && (car a)->objType=="inst"
+          (!(atom a) && ((car a)->objType=="inst" || (car a)->objType=="stdVia")
             b = (TransformOverlapBBox (cadr a))
             (if b (dbTransformBBox b (dbGetInstTransform (car a))) nil)
             )
