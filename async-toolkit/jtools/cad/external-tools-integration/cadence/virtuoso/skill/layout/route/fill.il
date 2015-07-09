@@ -13,14 +13,15 @@
                           (CV (geGetEditCellView))
                           (xbloat nil)
                           (ybloat nil)
-                          (levels 31)
+                          (flatCV nil)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk lpp_tmp rect bbox shapes new_shapes
-        overlaps fill_shapes new_fill_shapes
+        overlaps fill_shapes new_fill_shapes purposes
         x y x0 y0 x1 y1 x0box y0box x1box y1box cols rows align w h l del xb yb
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
     ; options
+    (unless flatCV flatCV=(MakeFlatView ?CV CV))
     mod2 = (mod layerNum 2)
     layerName = Metal[layerNum]
     (unless xbloat xbloat = (car  MetalSpace[layerName])*(1-mod2))
@@ -57,12 +58,11 @@
     lpp_fill = (list layerName "fill")
     lpp_blk  = (list layerName "blockage")
     lpp_tmp  = (list "y1" "drawing")
-    (foreach purpose (list "drawing" "fill" "gnd" "vdd")
-             overlaps = (dbGetOverlaps CV CV->bBox (list layerName purpose) levels)
-             (foreach x overlaps
-                      bbox = (TransformOverlapBBox x)
-                      (when bbox (dbCreateRect CV lpp_blk bbox))
-                      )
+    purposes = (list "drawing" "fill" "gnd" "vdd")
+    (foreach s flatCV->shapes
+             (when s->objType!="label" && s->layerName==layerName && (member s->purpose purposes)!=nil
+                   (dbCreateRect CV lpp_blk s->bBox)
+                   )
              )
 
     ; copy from fill template
@@ -80,7 +80,9 @@
 
     ; chop fill template with blockage purpose
     prb = (dbCreatePolygon CV BoundaryLPP
-                           (betterGrowPoints (GetPrboundPoints CV) -xbloat/2:-ybloat/2))
+                           (betterGrowPoints (GetPrboundPoints CV)
+                                             (list -(car  MetalBoundarySpace[layerName])
+                                                   -(cadr MetalBoundarySpace[layerName]))))
     (leLayerAndNot CV lpp_fill lpp_blk lpp_tmp)
     new_shapes = (leLayerAnd CV lpp_tmp BoundaryLPP lpp_fill)
 
@@ -96,8 +98,8 @@
       del=nil
       (cond (mod2==0
              w=(rightEdge s->bBox)-(leftEdge s->bBox)
-             leftOverlaps = (dbGetOverlaps CV (list (leftEdge s->bBox):(bottomEdge s->bBox)
-                                                    (leftEdge s->bBox):(topEdge s->bBox)) lpp_blk)
+             leftOverlaps  = (dbGetOverlaps CV (list (leftEdge s->bBox):(bottomEdge s->bBox)
+                                                     (leftEdge s->bBox):(topEdge s->bBox)) lpp_blk)
              rightOverlaps = (dbGetOverlaps CV (list (rightEdge s->bBox):(bottomEdge s->bBox)
                                                      (rightEdge s->bBox):(topEdge s->bBox)) lpp_blk)
              )
@@ -190,15 +192,28 @@
   )
 
 ; fill using a template cell
-(defun TemplateFill (@key (CV (geGetEditCellView)) (topMetal 6) (levels 31))
-  (DeleteAutoGen ?propName "TemplateFill")
-  (when topMetal>=0 (ChopFill 0 ?CV CV ?levels levels))
-  (when topMetal>=1 (ChopFill 1 ?CV CV ?levels levels))
-  (when topMetal>=2 (ChopFill 2 ?CV CV ?levels levels))
-  (when topMetal>=3 (ChopFill 3 ?CV CV ?levels levels))
-  (when topMetal>=4 (ChopFill 4 ?CV CV ?levels levels))
-  (when topMetal>=5 (ChopFill 5 ?CV CV ?levels levels))
-  (when topMetal>=6 (ChopFill 6 ?CV CV ?levels levels))
-  CV->modified=t
+(defun TemplateFill (@key (CV (geGetEditCellView)) (topMetal 6))
+  (let (flatCV)
+    (DeleteAutoGen ?propName "TemplateFill")
+    flatCV = (MakeFlatView ?CV CV)
+    (when topMetal>=0 (ChopFill 0 ?CV CV ?flatCV flatCV))
+    (when topMetal>=1 (ChopFill 1 ?CV CV ?flatCV flatCV))
+    (when topMetal>=2 (ChopFill 2 ?CV CV ?flatCV flatCV))
+    (when topMetal>=3 (ChopFill 3 ?CV CV ?flatCV flatCV))
+    (when topMetal>=4 (ChopFill 4 ?CV CV ?flatCV flatCV))
+    (when topMetal>=5 (ChopFill 5 ?CV CV ?flatCV flatCV))
+    (when topMetal>=6 (ChopFill 6 ?CV CV ?flatCV flatCV))
+    (ddDeleteObj (ddGetObj flatCV->libName flatCV->cellName flatCV->viewName))
+    CV->modified=t
+    CV
+    )
+  )
+
+; TODO: with ICV layer processing
+(defun MakeFlatView (@key (CV (geGetEditCellView)))
+  CV = (betterCopyCellView CV CV->libName CV->cellName "flat" nil nil t)
+  (foreach x CV->instances (dbFlattenInst x 31 t nil nil))
+  (foreach x CV->vias (dbFlattenInst x 31 t nil nil))
+  (dbSave CV)
   CV
   )
