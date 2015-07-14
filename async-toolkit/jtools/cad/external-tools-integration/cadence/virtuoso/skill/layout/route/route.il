@@ -49,7 +49,7 @@
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
         (doVerilog t)            ; create cellName.v
-        (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
+        (doGds nil)              ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
         (doNondefaultDef t)      ; create cellName_nondefault.def
