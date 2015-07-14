@@ -265,10 +265,10 @@ if ($sim eq "xa") {
 .option XA_CMD="set_wildcard_rule -match* one"
 .option XA_CMD="set_message_option -limit 100"
 EOF
-}
 # sneaky bug: this option prevents waveforms from being written to the fsdb file
 print RUN_FILE ".OPTION XA_CMD=\"set_monte_carlo_option -simulate_nominal 0\"\n" if ($seed>0);
 print RUN_FILE "\n";
+}
 
 ################################### HSPICE specific #######################################
 
@@ -345,11 +345,13 @@ print RUN_FILE<<EOF;
 .include '$cell_spice_file'
 
 * Power supplies
-V0m GND      0 0
-V1m Vdd      0 pwl (0 0 0.5ns Vdd)
-V2m Vdd_env  Vdd 0
-V3m Vdd_cell Vdd 0
-V4m _RESET   0 pwl (0 0 $time_cell 0 '$time_cell+1ns' Vdd)
+.global COUPLING_GND
+V0c GND     0 0
+V0e GND_env 0 0
+V1c Vdd     0 pwl (0 0 0.5ns Vdd)
+V1e Vdd_env 0 pwl (0 0 0.5ns Vdd)
+Vres _RESET 0 pwl (0 0 $time_cell 0 '$time_cell+1ns' Vdd)
+V0cg COUPLING_GND 0 0
 
 EOF
 
@@ -364,13 +366,13 @@ if (!($env_spice_file eq "")) {
 .param PrsMaxRes=$prsmaxres
 .param PrsMinRes=$prsminres
 .param PrsDelay=$prsdelay
-Xenv GND GND Vdd_env Vdd_cell _RESET _RESET $env_name
+Xenv GND_env GND Vdd_env Vdd _RESET _RESET $env_name
 
 EOF
 } else  {
 ## self oscillating input cell.spice
     print RUN_FILE<<EOF;
-Xenv GND Vdd_cell _RESET $cell_name
+Xenv GND Vdd _RESET $cell_name
 
 EOF
 }
@@ -412,12 +414,12 @@ foreach $node (@measure_nodes)  {
 EOF
 }
 
-### branch V3m powering Circuit under Test
+### branch V1c powering Circuit under Test
 print RUN_FILE<<EOF;
 * Power measurements
-.probe i(V3m)
-.measure tran avg_curr avg par('-i(V3m)') from=$power_window_start to=$power_window_stop
-.measure tran max_curr max par('-i(V3m)') from=$power_window_start to=$power_window_stop
+.probe i(V0c) i(V1c)
+.measure tran avg_curr avg par('-i(V1c)') from=$power_window_start to=$power_window_stop
+.measure tran max_curr max par('-i(V1c)') from=$power_window_start to=$power_window_stop
 .measure tran avg_power PARAM='(avg_curr*Vdd)'
 .measure tran max_power PARAM='(max_curr*Vdd)'
 
