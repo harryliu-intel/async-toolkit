@@ -409,10 +409,7 @@ my $keepNanotimeDir=0;      # clean up after nanotime
 my $hsimDeleteFiles= 1;
 my $monte_carlo=0;
 my $start_time=2;
-my $extract_corner="typical";
-my $extractdir="";
-my $extractdir_temp="";
-my $extractdir_corner="";
+my $extract_corner="tttt";
 my $custom_config = "$ENV{PWD}/custom.config"; # extra jauto options
 my $tech_asp="tech.asp";
 my $tech_alint_asp="tech_alint.asp";
@@ -532,8 +529,7 @@ our $probeTopPorts = "";
 our $probePorts = "";
 our $probeGates = "";
 our $maxF=10e9;
-my  $extractTemp_default=90;
-our $extractTemp=$extractTemp_default;
+our $extractTemp=90;
 our $reduced_dspf=0;
 our $reduce_mode="NO";
 our $tail_comments=0;
@@ -869,6 +865,7 @@ foreach my $option (@options) {
 
 # and finally process all the command line options
 &processOptions(\@options);
+
 # convert taus from ps to seconds
 if ($sigma_factor < 0 or $sigma_factor > 1) {
    print STDERR "Sigma-factor of $sigma_factor is out of range 0..1\n";
@@ -1213,12 +1210,13 @@ my @mode_order=("custom", "accurate",  "extracted",  "estimated",  "nogeometry")
 if(scalar(@view_mode_order)==0){
   foreach my $mode (@mode_order){
     foreach my $view (get_views($mode)) {
-      my $dir = ($mode eq 'extracted' || $mode eq 'accurate') ? "$mode$extractdir"
+      my $dir = ($mode eq 'extracted' || $mode eq 'accurate') ? "${mode}-${extract_corner}-${extractTemp}"
                                                               : $mode;
       push @view_mode_order, "$view/$dir";
     }  
   }
 }
+
 
 # pass parameters to makefile system
 {
@@ -1352,7 +1350,7 @@ EXTRACT_STARRC                   := $extract_starrc
 CUSTOM_SPICE                     := $customSpice
 CUSTOM_SPICE_INCLUDE             := $customSpiceInc
 EXTRACT_CORNER                   := $extract_corner
-EXTRACT_DIR                      := $extractdir
+EXTRACT_DIR                      := -${extract_corner}-${extractTemp}
 LIBTRANSLATE                     := $libtranslate
 FAKESIZE                         := $fakesize
 BUDGETCAPINDEX                   := $budgetcapindex
@@ -1849,7 +1847,7 @@ sub enumerate_targets {
     foreach my $mode (@mode) {
         $hasextracted=1 if ($mode eq "extracted" or $mode eq "accurate");
     }
-    $corner_extension=$extractdir if ($hasextracted);
+    $corner_extension="-${extract_corner}-${extractTemp}" if ($hasextracted);
     my @checkedFiles;
     foreach my $view (get_views("extracted")) {
         my $path="$dfIIPath/$view/layout.oa";
@@ -2600,7 +2598,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --custom-config=[$custom_config]  (extra jauto options for estimated RC)
     --nowellplugs=[$nowellplugs] (fake the well plug connections)
     --lvs-blackbox=[$lvsBlackbox] (run in blackbox mode)
-    --extract-corner=[$extract_corner] (one of t[yp], cb[est], rcb[est], cw[orst], rcw[orst], m10typ)
+    --extract-corner=[$extract_corner] (4 letter code for extract corner)
         CAUTION: do not use corner unless in a separate lve tree for now.
     --named-resistor-layers=[$namedResistorLayers] (preserve resistors on these layers in accurate mode for EM analysis)
     --star-rc=[$star_rc] ( no need to use both, these are complementary)
@@ -3046,14 +3044,7 @@ sub processOption {
         elsif ($key eq "minCC")               { $minCC = $value; }
         elsif ($key eq "named-resistor-layers") {$namedResistorLayers = $value; }
         elsif ($key eq "maxF")                { $maxF = $value; }
-        elsif ($key eq "extractTemp")         {
-            $extractTemp = $value;
-            if ($value != $extractTemp_default) { #for backward compatible
-                $extractdir_temp = "-$value";
-            }
-            #setup extract directory
-            $extractdir="$extractdir_corner$extractdir_temp";
-        }
+        elsif ($key eq "extractTemp")         { $extractTemp = $value; }
         elsif ($key eq "deleteExtractDir")    { $deleteExtractDir = $value ? 1 : 0; }
         elsif ($key eq "delete-bumpcheck-dir"){ $delete_bumpcheck_dir = $value ? 1 : 0; }
         elsif ($key eq "keep-lvs")            { $keepLvsDir = $value ? 1 : 0; }
@@ -3079,37 +3070,7 @@ sub processOption {
         elsif ($key eq "mmonitor")            { $mmonitor = $value; $ENV{LVE_MMONITOR}=$value; }
         elsif ($key eq "layoutScaleY")        { $layoutScaleY = $value; }
         elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); check_path($value); }
-        elsif ($key eq "extract-corner")      {
-            if ($value =~ /^t/i) {
-                $extract_corner = "typical";
-            }
-            elsif ($value =~ /^cw/i) {
-                $extract_corner = "cworst";
-                $extractdir_corner = "-cwo";
-            }
-            elsif ($value =~ /^rcw/i) {
-                $extract_corner = "rcworst";
-                $extractdir_corner = "-rcw";
-            }
-            elsif ($value =~ /^cb/i) {
-                $extract_corner = "cbest";
-                $extractdir_corner = "-cbe";
-            }
-            elsif ($value =~ /^rcb/i) {
-                $extract_corner = "rcbest";
-                $extractdir_corner = "-rcb";
-            }
-            elsif ($value =~ /^m10typ/) {
-                $extract_corner="m10typ";
-                $extractdir_corner = "-m10typ";
-            }
-            else {
-                $errors++;
-                print STDERR "Unknown extract_corner $value, using $extract_corner\n";
-            }
-            #setup extract directory
-            $extractdir="$extractdir_corner$extractdir_temp";
-        }
+        elsif ($key eq "extract-corner")      { $extract_corner = $value; }
 
         # extract_qx options
         elsif ($key eq "qx") { $qx = $value; }
