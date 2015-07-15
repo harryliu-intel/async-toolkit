@@ -490,19 +490,31 @@ if ($stage2b) {
     ##########################################################################
 
     print "Running StarRC Extraction ...\n";
-
     chdir "$starRC_dir";
-    my $Tcad_Grid_File= "$conf_dir/nxtgrd";
+
+    # read default star.cmd from PDK
+    my %cmd;
+    open CMD_IN, "<$pdk_root/share/Fulcrum/starrcxt/star.cmd" or
+        die "can't read $pdk_root/share/Fulcrum/starrcxt/star.cmd";
+    while (my $line = <CMD_IN>) {
+        if ($line =~ /^\*/) {}
+        elsif ($line =~ /^(\S+):\s*(.*)$/) {
+            $cmd{$1} = $2;
+        }
+    }
+    close CMD_IN;
+
+    # set options
+    $cmd{"TCAD_GRD_FILE"} = "$conf_dir/nxtgrd";
     if ( -f "$conf_dir/$extractCorner.nxtgrd") {
-        $Tcad_Grid_File= "$conf_dir/$extractCorner.nxtgrd";
+        $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$extractCorner.nxtgrd";
     }
     my $skip_cell_cmd="";
     if(-s $graycell_file) {
-        $skip_cell_cmd="SKIP_CELLS_FILE: $graybox_list_file";
+        $cmd{"SKIP_CELLS_FILE"} = $graybox_list_file;
     } else {
-        $skip_cell_cmd="SKIP_CELLS:                   !*";
+        $cmd{"SKIP_CELLS"} = "!*";
     }
-
     my $tailcomments="NO";
     my $reduction=$extractReduce;
     if ($extractReduce =~ /^(NO_EXTRA_LOOPS|YES|HIGH)$/) {
@@ -515,7 +527,6 @@ if ($stage2b) {
         $reduction = "NO_EXTRA_LOOPS";
         $tailcomments="NO";
     }
-    open STAR_CMD, ">star_cmd" or die "Can not create star_cmd file!\n";
     my ($netlist_format, $netlist_gnd, $remove_dangling_branches);
     if ($genspef) {
         $netlist_format="SPEF";
@@ -529,14 +540,12 @@ if ($stage2b) {
         $netlist_gnd="COUPLING_GND";
         $remove_dangling_branches = "YES";
     }
-    my $extraction_mode="RC";
-    my $placement_info_file="";
-    my $ideal_spice_file="";
+    $cmd{"EXTRACTION"} = "RC";
     my $passive_params="YES";
     my $hierSep='/';
     if ($totem_mode) {
-        $extraction_mode="C";
-        $placement_info_file="PLACEMENT_INFO_FILE:            YES";
+        $cmd{"EXTRACTION"} = "C";
+        $cmd{"PLACEMENT_INFO_FILE"} = "YES";
         $tailcomments="NO";
         $reduction="HIGH";
     }
@@ -547,80 +556,52 @@ if ($stage2b) {
         $passive_params="NO";
         $hierSep='.';
         my $dpf = "${cell_name}.dpf";
-        $ideal_spice_file="NETLIST_IDEAL_SPICE_FILE:       $dpf";
+        $cmd{"NETLIST_IDEAL_SPICE_FILE"} = $dpf;
         symlink($dpf, 'cell.dpf');
         symlink("${cell_name}.spef", 'cell.spef');
     }
     my $spiceExt = $netlist_format eq 'SPEF' ? 'spef' : 'spf';
     my $spiceTemp = "${cell_name}.$spiceExt";
-
-    my $lvsresult = "";
     if (-e 'starrc.report') {
-        $lvsresult = "ICV_RUNSET_REPORT_FILE:         starrc.report";
+        $cmd{"ICV_RUNSET_REPORT_FILE"} = "starrc.report";
     } else {
         die "Error: STAR_RC FAILED: Can't find LVS results.\n";
     }
-
-    my $multicore = "";
     if ($threads > 1) {
-        $multicore = "NUM_CORES:                      $threads\n" .
-                     "STARRC_DP_STRING:               list localhost:$threads";
+        $cmd{"NUM_CORES"} = $threads;
+        $cmd{"STARRC_DP_STRING"}= "list localhost:$threads";
     }
-    print STAR_CMD <<END_OF_STAR_CMD;
 
-BLOCK: $topcell
-$lvsresult
-MILKYWAY_EXTRACT_VIEW:          YES
-STAR_DIRECTORY:                 STAR
-EXTRACTION:                     $extraction_mode
-MODE:                           400
-EXTRACT_VIA_CAPS:               YES
-DENSITY_OUTSIDE_BLOCK:          0.5
-COUPLE_TO_GROUND:               NO
-INSTANCE_PORT:                  $instancePort
-NETLIST_REMOVE_DANGLING_BRANCHES: $remove_dangling_branches
-XREF_LAYOUT_INST_PREFIX:        ld#
-XREF_LAYOUT_NET_PREFIX:         ln#
-OPERATING_TEMPERATURE:          $temperature
-$placement_info_file
-POWER_NETS:                     VCC Vdd GND* *AGND* *AVDD* VDD* VSS* Vss *VFB*
-TCAD_GRD_FILE:                  $Tcad_Grid_File
-SPICE_SUBCKT_FILE:              $pin_file
-$skip_cell_cmd
-IGNORE_CAPACITANCE:             ALL RETAIN_GATE_DIFFUSION_COUPLING
-HIERARCHICAL_SEPARATOR:         $hierSep
-NETLIST_FORMAT:                 $netlist_format
-NETLIST_PASSIVE_PARAMS:         $passive_params
-$ideal_spice_file
-* NETLIST_NODE_SECTION:         YES
-XREF:                           YES
-CELL_TYPE:                      SCHEMATIC
-TRANSLATE_RETAIN_BULK_LAYERS:   YES
-NET_TYPE:                       SCHEMATIC
-NETLIST_CONNECT_SECTION:        YES
-* OBSERVATION_POINTS:           *
-NETLIST_FILE:                   $spiceTemp
-POWER_EXTRACT:                  $extractPower
-NETLIST_TAIL_COMMENTS:          $tailcomments
-REDUCTION:                      $reduction
-* NETLIST_DELIMITER:            :
-REMOVE_DANGLING_NETS:           YES
-REMOVE_FLOATING_NETS:           YES
-REMOVE_FLOATING_PORTS:          YES
-NETLIST_GROUND_NODE_NAME:       $netlist_gnd
-CASE_SENSITIVE:                 YES
-MAGNIFY_DEVICE_PARAMS:          NO
-$multicore
-END_OF_STAR_CMD
+    # override some default commands
+    $cmd{"BLOCK"} = $topcell;
+    $cmd{"INSTANCE_PORT"} = $instancePort;
+    $cmd{"NETLIST_REMOVE_DANGLING_BRANCHES"} = $remove_dangling_branches;
+    $cmd{"OPERATING_TEMPERATURE"} = $temperature;
+    $cmd{"SPICE_SUBCKT_FILE"} = $pin_file;
+    $cmd{"HIERARCHICAL_SEPARATOR"} = $hierSep;
+    $cmd{"NETLIST_FORMAT"} = $netlist_format;
+    $cmd{"NETLIST_PASSIVE_PARAMS"} = $passive_params;
+    $cmd{"NETLIST_FILE"} = $spiceTemp;
+    $cmd{"POWER_EXTRACT"} = $extractPower;
+    $cmd{"NETLIST_TAIL_COMMENTS"} = $tailcomments;
+    $cmd{"REDUCTION"} = $reduction;
+    $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
 
-    close(STAR_CMD);
+    # print out star.cmd for this run
+    open STAR_CMD, ">star.cmd" or die "Can not create star.cmd file!\n";
+    foreach my $key (sort keys %cmd) {
+        print STAR_CMD "${key}: $cmd{$key}\n";
+    }
+    close STAR_CMD;
 
+    # run starRc
     {
         local $ENV{'PATH'} = $ENV{'PATH'} . ":.";
-        my_system("LD_LIBRARY_PATH= $ENV{STAR_SCRIPT} StarXtract -clean star_cmd > star.log");
+        my_system("LD_LIBRARY_PATH= $ENV{STAR_SCRIPT} StarXtract -clean star.cmd > star.log");
     }
-
     print "StarRC Extraction ... done\n";
+
+    # postprocess
     if ($totem_mode) { # modify spf file
         open (I, "<$spiceTemp");
         open (O, ">cell.spf");
