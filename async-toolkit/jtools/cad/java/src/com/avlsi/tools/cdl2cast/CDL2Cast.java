@@ -114,8 +114,8 @@ import com.avlsi.file.cdl.parser.AspiceCellAdapter;
 public class CDL2Cast {
 
     /** The names for Vdd and GND **/
-    static String Vdd;
-    static String GND;
+    static String[] power_nets;
+    static String[] ground_nets;
     private static Set<String> IMPLIED_PORTS;
 
     /** renaming table for transistor types **/
@@ -404,12 +404,15 @@ public class CDL2Cast {
             theArgs.getArgValue( "output-cast", null );
 
         /**
-         * The names for Vdd and GND
+         * The names for Vdd and GND.  The first nodes in each list
+         * are assumed to be implicit ports.
          **/
-        Vdd = theArgs.getArgValue("vdd-node", "vcc");
-        GND = theArgs.getArgValue("gnd-node", "vss");
+        String VddString = theArgs.getArgValue("vdd-node", "vcc");
+        String GNDString = theArgs.getArgValue("gnd-node", "vss");
+        power_nets  = StringUtil.split(VddString, ',');
+        ground_nets = StringUtil.split(GNDString, ',');
         IMPLIED_PORTS =
-            new LinkedHashSet<>(Arrays.asList(new String[] { Vdd, GND }));
+            new LinkedHashSet<>(Arrays.asList(new String[] { power_nets[0], ground_nets[0] }));
 
         /**
          * Prefixes to apply to node and instance names to make sure
@@ -981,8 +984,7 @@ public class CDL2Cast {
                 aspicer == null ? null : aspicer.getCell(fqcn);
             NetGraph netgraph = null;
             if (aspiceCell!=null) {
-                netgraph = new NetGraph(HierName.makeHierName(Vdd),
-                                        HierName.makeHierName(GND));
+                netgraph = new NetGraph(power_nets,ground_nets);
                 netgraph.addAspice(aspiceCell);
                 netgraph.prepareForLvs();
             }

@@ -323,6 +323,10 @@ public final class NetGraph {
         /** Total gate area that this node drives (NFET/PFET) **/
         double[] gateLoad = { 0.0, 0.0 };
 
+        /** Is this a power supply? **/
+        boolean isPower  = false;
+        boolean isGround = false;
+
         /** Construct a NetNode with a given HierName, or null for unnamed. */
         NetNode (HierName name) {
             if (name == null)
@@ -406,12 +410,12 @@ public final class NetGraph {
 
         /** Check if this NetNode is Vdd. */
         public boolean isVdd () {
-            return this == Vdd;
+            return isPower;
         }
 
         /** Check if this NetNode is GND. */
         public boolean isGND () {
-            return this == GND;
+            return isGround;
         }
 
         /** Check if this NetNode is a power rail. */
@@ -1412,8 +1416,8 @@ public final class NetGraph {
         problems = new ArrayList();       
         nodes = new MultiSet();
         nostaticizers = new HashSet();
-        Vdd = createNetNode(HierName.makeHierName("Vdd"));
-        GND = createNetNode(HierName.makeHierName("GND"));
+        Vdd = createNetNode(HierName.makeHierName("Vdd")); Vdd.isPower=true;
+        GND = createNetNode(HierName.makeHierName("GND")); GND.isGround=true;
         defaultWidth  = 0;
         defaultLength = 0;
         nextNodeNum = 1;
@@ -1452,8 +1456,8 @@ public final class NetGraph {
                 HierName canon = (HierName) namespace.getCanonicalKey(h);
                 this.nostaticizers.add(canon);
             }
-        Vdd = createNetNode(VddName);
-        GND = createNetNode(GndName);
+        Vdd = createNetNode(VddName); Vdd.isPower=true;
+        GND = createNetNode(GndName); GND.isPower=true;
         this.defaultWidth  = defaultWidth;
         this.defaultLength = defaultLength;
         nextNodeNum = 1;
@@ -1473,9 +1477,21 @@ public final class NetGraph {
              VddName, GndName, 0, 0, nostaticizers);
     }
 
-    /** Construct an empty NetGraph with minimal options.  Used by CDL2Cast. */
-    public NetGraph(final HierName Vdd, final HierName GND) {
-        this(null,null,null,Vdd,GND,null);
+    /**
+     * Construct an empty NetGraph with minimal options.  Used by
+     * CDL2Cast.  This is the only constructor to support multiple
+     * power_nets and ground_nets so far.
+     */
+    public NetGraph(final String[] power_nets, final String[] ground_nets) {
+        this(null,null,null,
+             HierName.makeHierName(power_nets[0]),
+             HierName.makeHierName(ground_nets[0]),null);
+        for (String str : power_nets) {
+            NetNode node = createNetNode(HierName.makeHierName(str)); node.isPower=true;
+        }
+        for (String str : ground_nets) {
+            NetNode node = createNetNode(HierName.makeHierName(str)); node.isGround=true;
+        }
         pathsToRailOnly = true; // don't stop paths until they reach rails
     }
 
