@@ -3190,7 +3190,6 @@ public final class NetGraph {
      **/
     public ProductionRuleSet getProductionRuleSet() {
         assumeStrongInverters = true;
-        ExclusiveNodeSets original_exclusives = exclusives;
         implyExclusiveInverters(); // imply that inverters are exclusive
         prepareForLvs(); // find paths again with new exclusions
         assumeStrongInverters = false;
@@ -3246,8 +3245,8 @@ public final class NetGraph {
                 MultiSet dualUp = Dnf.dual(netUp);
                 netDn = Dnf.conjunct(netDn,dualUp);
                 netUp = Dnf.conjunct(netUp,dualDn);
-                netDn = Dnf.getCanonicalForm(netDn,ProductionRule.UP,original_exclusives);
-                netUp = Dnf.getCanonicalForm(netUp,ProductionRule.DOWN,original_exclusives);
+                netDn = Dnf.getCanonicalForm(netDn,ProductionRule.UP,exclusives);
+                netUp = Dnf.getCanonicalForm(netUp,ProductionRule.DOWN,exclusives);
             }
 
             // add dn production rule
