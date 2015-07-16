@@ -3196,6 +3196,17 @@ public final class NetGraph {
         assumeStrongInverters = false;
         ProductionRuleSet prs = new ProductionRuleSet();
 
+        // map nodes to the root of an a driving inverter chain, if any
+        TreeMap inverter_map = new TreeMap(); 
+        for (Iterator t = nodes.iterator(); t.hasNext(); ) {
+            NetNode node = (NetNode) t.next();
+            if (node.inverseOf!=null) {
+                inverter_map.put(node.name,node.inverseOf.name);
+            } else if (node.interferingInverseOf!=null) {
+                inverter_map.put(node.name,node.interferingInverseOf.name);
+            }
+        }
+
         // translate each output node into PRS
         for (Iterator t = nodes.iterator(); t.hasNext(); ) {
             NetNode node = (NetNode) t.next();
@@ -3240,7 +3251,7 @@ public final class NetGraph {
             }
 
             // add dn production rule
-            guard = Dnf.getBooleanExpression(netDn,true,null);
+            guard = Dnf.getBooleanExpression(netDn,true,combinational ? null : inverter_map);
             powerSupply = GND.name;
             direction   = ProductionRule.DOWN;
             rule = new ProductionRule(guard,target,powerSupply,direction,
@@ -3249,7 +3260,7 @@ public final class NetGraph {
             if (netDn.size()>0) prs.addProductionRule(rule);
 
             // add up production rule
-            guard = Dnf.getBooleanExpression(netUp,false,null);
+            guard = Dnf.getBooleanExpression(netUp,false,combinational ? null : inverter_map);
             powerSupply = Vdd.name;
             direction   = ProductionRule.UP;
             rule = new ProductionRule(guard,target,powerSupply,direction,
