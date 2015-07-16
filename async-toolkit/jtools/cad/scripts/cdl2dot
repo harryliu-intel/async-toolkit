@@ -352,11 +352,12 @@ def dump_graph(thegraph, file):
     file.write( '}\n');
 
 def parse_options():
+    global Vdd, GND, substrates, rank
     has_one_percent_i = re.compile("%i");
     file = sys.stdin
     nametemplate = None
     bindFileName = None
-    (opts, args) = getopt.getopt(sys.argv[1:], "o:t:h", ['help', 'usage'])
+    (opts, args) = getopt.getopt(sys.argv[1:], "o:t:h:v:g:", ['help', 'usage'])
     if debug:
         print opts
         print args
@@ -372,10 +373,17 @@ def parse_options():
                 usage(1)
         elif o == "-t":
             bindFileName = a
+        elif o == "-v":
+            Vdd = a;
+        elif o == "-g":
+            GND = a;
         else:
             usage(1);
     if len(args) == 1:
         file = open(args[0], "r")
+
+    substrates = { 'N' : GND, 'P' : Vdd }
+    rank = { Vdd : "min", GND : "max" }
 
     return (file, nametemplate, bindFileName)
 

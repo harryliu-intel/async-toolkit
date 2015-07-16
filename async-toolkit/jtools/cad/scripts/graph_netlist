@@ -30,6 +30,8 @@ my $inline_gates = 0;
 my $inline_staticizers = 0;
 my $no_cleanup = 0;
 my $format = "ps";
+my $gnd = "GND";
+my $vdd = "Vdd";
 
 my $usage_string = "Usage: graph_netlist \n" .
 "    [--config=<file>]              Standard config file option\n" .
@@ -38,6 +40,8 @@ my $usage_string = "Usage: graph_netlist \n" .
 "    [--include-all]                Include everything in the circuit graph\n" .
 "    [--no-cleanup]                 Leave temporary files in /scratch\n" .
 "    [--format=<format>]            Output format (ps, gif, etc.)\n" .
+"    [--gnd=<node>]                 Ground (defaults to GND)\n" .
+"    [--vdd=<node>]                 Power (defaults to Vdd)\n" .
 "    fully.qualified.cell.NUM       Cell to graph\n\n" .
 "Outputs a graph of the cell's transistor netlist to \n" .
 "fully.qualified.cell.NUM.ps (extension subject to change if the --format\n" .
@@ -78,6 +82,12 @@ while ($ARGV[0]) {
         }
         elsif ($option eq "rotate") {
             $grotate = $val;
+        }
+        elsif ($option eq "gnd") {
+            $gnd = $val;
+        }
+        elsif ($option eq "vdd") {
+            $vdd = $val;
         }
         else {
             print STDERR $usage_string;
@@ -172,10 +182,10 @@ system($cmd) && die "ERROR: CDL Inliner failed.\n";
 # Run cdl2dot
 #
 if ( $format eq "ps" ) { 
-    $cmd = $cdl2dot . " -o $tempDir/%i.dot '$tempDir/cell.cdl'";
+    $cmd = $cdl2dot . " -v '$vdd' -g '$gnd' -o $tempDir/%i.dot '$tempDir/cell.cdl'";
 }
 else {
-    $cmd = $cdl2dot . " '$tempDir/cell.cdl' >$tempDir/0.dot";
+    $cmd = $cdl2dot . " -v '$vdd' -g '$gnd' '$tempDir/cell.cdl' >$tempDir/0.dot";
 }
 
 system($cmd) && warn "(WARNING): cdl2dot failed.\n";
