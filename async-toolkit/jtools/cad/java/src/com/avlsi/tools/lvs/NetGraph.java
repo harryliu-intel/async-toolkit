@@ -120,6 +120,9 @@ public final class NetGraph {
     /** Default width and length for transistors **/
     private final double defaultWidth, defaultLength; 
 
+    /** For cdl2prs, assume inverters overpower other paths **/
+    private boolean assumeStrongInverters = false;
+
     /** Instance of a library gate, used by NetNode. */
     public static class GateInstance {
 
@@ -617,6 +620,9 @@ public final class NetGraph {
             node.visited=true;
             for (Iterator t = node.edges.iterator(); t.hasNext(); ) {
                 NetEdge edge = (NetEdge) t.next();
+                if (assumeStrongInverters &&
+                    node.interferingInverseOf!=null &&
+                    edge.gate!=node.interferingInverseOf) continue;
                 if (edge.type!=type) continue; // recurse through desired type only
                 if (edge.precharge) continue; // ignore precharge transistors
                 ArrayList newedges = new ArrayList(pathedges);
@@ -3174,56 +3180,21 @@ public final class NetGraph {
     }
     
     /**
-     * Imply that inverter structures overpower other fanins of output
-     * nodes.  Eliminates the interfering paths.  Used to guess prs
-     * for cells with lots of pass gates.
-     **/
-    private void implyStrongInverters() {
-        for (Iterator t = nodes.iterator(); t.hasNext(); ) {
-            NetNode node = (NetNode) t.next();
-            if (!node.output) continue;
-            if (node.interferingInverseOf == null) continue;
-            MultiSet newpaths = new MultiSet();
-            for (Iterator s = node.paths.iterator(); s.hasNext(); ) {
-                NetPath path = (NetPath) s.next();
-                if (path.edges.size()!=1) continue;
-                NetEdge edge = (NetEdge) (path.getEdges().get(0));
-                if (edge.gate != node.interferingInverseOf) continue;
-                newpaths.add(path);
-            }
-            node.paths = newpaths;
-        }
-    }
-    
-    /**
      * Return a ProductionRuleSet generated from the NetGraph.  Used
      * by CDL2Cast to generate simulatable PRS for standard gates or
      * licensed cores.  Handles pass gates, as long as you pull to
-     * correct rail through proper transistor type.  Automatically
-     * assumes inverter in/out are exclusive for generating paths.
-     * Also assumes inverter subgraphs overpower other fanins.
-     * 
-     * In the PRS any guard which is driven by a chain of inverters is
-     * replaced with the root of that chain in the appropriate sense.
-     * This avoids problems simulating temporary inteference of
-     * pass-gates in DSim.
+     * correct rail through proper transistor type.
+     *
+     * Non-combinational gates are automatically strengthened to avoid
+     * tranisent interference, such as an XOR gate using a and _a.
      **/
     public ProductionRuleSet getProductionRuleSet() {
+        assumeStrongInverters = true;
+        ExclusiveNodeSets original_exclusives = exclusives;
         implyExclusiveInverters(); // imply that inverters are exclusive
         prepareForLvs(); // find paths again with new exclusions
-        implyStrongInverters(); // delete paths that interfere with inverters
+        assumeStrongInverters = false;
         ProductionRuleSet prs = new ProductionRuleSet();
-
-        // map nodes to the root of an a driving inverter chain, if any
-        TreeMap inverter_map = new TreeMap(); 
-        for (Iterator t = nodes.iterator(); t.hasNext(); ) {
-            NetNode node = (NetNode) t.next();
-            if (node.inverseOf!=null) {
-                inverter_map.put(node.name,node.inverseOf.name);
-            } else if (node.interferingInverseOf!=null) {
-                inverter_map.put(node.name,node.interferingInverseOf.name);
-            }
-        }
 
         // translate each output node into PRS
         for (Iterator t = nodes.iterator(); t.hasNext(); ) {
@@ -3251,12 +3222,25 @@ public final class NetGraph {
             int direction;
             ProductionRule rule;
             
+            // get DNF's (excluding paths which include both a and _a)
+            netDn = Dnf.getCanonicalForm(netDn,ProductionRule.UP,exclusives);
+            netUp = Dnf.getCanonicalForm(netUp,ProductionRule.DOWN,exclusives);
+
             // check for combinational logic
             boolean combinational = node.isCombinational();
 
-            // add down production rule
-            netDn = Dnf.getCanonicalForm(netDn,ProductionRule.UP,exclusives);
-            guard = Dnf.getBooleanExpression(netDn,true,combinational ? null : inverter_map);
+            // remove potential interference: dn & ~up -> x-    up & ~dn -> x+
+            if (!combinational) {
+                MultiSet dualDn = Dnf.dual(netDn);
+                MultiSet dualUp = Dnf.dual(netUp);
+                netDn = Dnf.conjunct(netDn,dualUp);
+                netUp = Dnf.conjunct(netUp,dualDn);
+                netDn = Dnf.getCanonicalForm(netDn,ProductionRule.UP,original_exclusives);
+                netUp = Dnf.getCanonicalForm(netUp,ProductionRule.DOWN,original_exclusives);
+            }
+
+            // add dn production rule
+            guard = Dnf.getBooleanExpression(netDn,true,null);
             powerSupply = GND.name;
             direction   = ProductionRule.DOWN;
             rule = new ProductionRule(guard,target,powerSupply,direction,
@@ -3265,8 +3249,7 @@ public final class NetGraph {
             if (netDn.size()>0) prs.addProductionRule(rule);
 
             // add up production rule
-            netUp = Dnf.getCanonicalForm(netUp,ProductionRule.DOWN,exclusives);
-            guard = Dnf.getBooleanExpression(netUp,false,combinational ? null : inverter_map);
+            guard = Dnf.getBooleanExpression(netUp,false,null);
             powerSupply = Vdd.name;
             direction   = ProductionRule.UP;
             rule = new ProductionRule(guard,target,powerSupply,direction,

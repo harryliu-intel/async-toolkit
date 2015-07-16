@@ -236,6 +236,30 @@ public class Dnf {
         return c;
     }
 
+    /** Conjuct of two DNF's */
+    public static MultiSet conjunct(MultiSet a, MultiSet b) {
+        MultiSet c = new MultiSet();
+        for (Iterator i = a.iterator(); i.hasNext(); ) {
+            MultiSet term_a = (MultiSet) i.next();
+            for (Iterator j = b.iterator(); j.hasNext(); ) {
+                MultiSet term_b = (MultiSet) j.next();
+                MultiSet term_c = new MultiSet();
+                term_c.addAllIfUnique(term_a);
+                term_c.addAllIfUnique(term_b);
+                c.add(term_c);
+            }
+        }
+        return c;
+    }
+
+    /** Disjunct of two DNF's */
+    public static MultiSet disjunct(MultiSet a, MultiSet b) {
+        MultiSet c = new MultiSet();
+        c.addAllIfUnique(a);
+        c.addAllIfUnique(b);
+        return c;
+    }
+
     /** 
      * Return the dual of a DNF.
      * May still have superset or exclusive terms,
