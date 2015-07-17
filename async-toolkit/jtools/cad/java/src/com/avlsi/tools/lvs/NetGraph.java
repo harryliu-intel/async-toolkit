@@ -517,45 +517,33 @@ public final class NetGraph {
         
         /** Set inverseOf field of this NetNode, set inverse field of fanin node. */
         void findInverter () {
-            if ( !this.output ) return;
-            NetNode fanin = null;
-            NetNode power = null;
-            boolean Pfound = false;
-            boolean Nfound = false;
+            if (this.isRail()) return;
+            NetNode faninN = null;
+            NetNode faninP = null;
             boolean interfering = false;
+            boolean complex = false;
             final Iterator t = edges.iterator();
             while ( t.hasNext() ) {
                 final NetEdge edge = (NetEdge) t.next();
 
-                // identify power supply, if any
-                if      (edge.source.isRail()) power = edge.source;
-                else if (edge.drain.isRail())  power = edge.drain;
+                // found a 1N or 1P edge to appropriate power rail
+                if (edge.type==DeviceTypes.P_TYPE && (edge.source.isVdd() || edge.drain.isVdd())) {
+                    if (faninP==null) faninP=edge.gate;
+                    else if (faninP!=edge.gate) complex=true;
+                }
+                else if (edge.type==DeviceTypes.N_TYPE && (edge.source.isGND() || edge.drain.isGND())) {
+                    if (faninN==null) faninN=edge.gate;
+                    else if (faninN!=edge.gate) complex=true;
+                } else {
+                    interfering = true;
+                }
+            }
+            if (!complex && faninN!=null && faninN==faninP) {
+                if (interfering) interferingInverseOf = faninN;
                 else {
-                    interfering = true;
-                    continue;
+                    inverseOf = faninN;
+                    faninN.inverse = this;
                 }
-
-                // check power supply
-                if (((edge.type == DeviceTypes.P_TYPE) && (!power.isVdd()))||
-                    ((edge.type == DeviceTypes.N_TYPE) && (!power.isGND()))) {
-                    interfering = true;
-                    continue;
-                }
-                
-                // actually found a 1N or 1P edge to appropriate power rail
-                if (edge.type == DeviceTypes.P_TYPE) Pfound = true;
-                if (edge.type == DeviceTypes.N_TYPE) Nfound = true;
-                
-                // ensure all fanin gates are the same
-                if (fanin == null) fanin = edge.gate; // set fanin
-                else if (fanin != edge.gate) interfering = true;  // not same fanin
-            }
-            if (Nfound && Pfound && !interfering) {
-                inverseOf = fanin;
-                fanin.inverse = this;
-            }
-            else if (Nfound && Pfound) {
-                interferingInverseOf = fanin;
             }
         }
 
@@ -593,10 +581,12 @@ public final class NetGraph {
             return "NetNode: name=" + name + 
                 " edges=" + edges.size() + 
                 " visited=" + visited + 
-                " output=" + output + "\n" +
-                " inverse=" + (inverse != null ? inverse.name.toString() : "null") +
-                " inverseOf=" + (inverseOf != null ? inverseOf.name.toString() : "null") +
-                " feedbackFrom=" + (feedbackFrom != null ? feedbackFrom.name.toString() : "null") +
+                " output=" + output +
+                (inverse!=null ? " inverse=" + inverse.name.toString() : "") +
+                (inverseOf!=null ? " inverseOf=" + inverseOf.name.toString() : "") +
+                (interferingInverseOf!=null ? " interferingInverseOf=" +
+                 interferingInverseOf.name.toString() : "") +
+                (feedbackFrom!=null ? " feedbackFrom=" + feedbackFrom.name.toString() : "") +
                 " nonFeedback=" + nonFeedback;
         }
 
