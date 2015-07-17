@@ -498,7 +498,7 @@ if ($stage2b) {
         die "can't read $pdk_root/share/Fulcrum/starrcxt/star.cmd";
     while (my $line = <CMD_IN>) {
         if ($line =~ /^\*/) {}
-        elsif ($line =~ /^(\S+):\s*(.*)$/) {
+        elsif ($line =~ /^(\S+):\s*(\S.*)$/) {
             $cmd{$1} = $2;
         }
     }
