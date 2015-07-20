@@ -1447,7 +1447,7 @@ public final class NetGraph {
                 this.nostaticizers.add(canon);
             }
         Vdd = createNetNode(VddName); Vdd.isPower=true;
-        GND = createNetNode(GndName); GND.isPower=true;
+        GND = createNetNode(GndName); GND.isGround=true;
         this.defaultWidth  = defaultWidth;
         this.defaultLength = defaultLength;
         nextNodeNum = 1;
