@@ -159,6 +159,7 @@ useICV = nil
         (topMetal 8)
         (hookupLaygen t) ; HACK: add power hookups to all LayGen cells
         (hookupD04 nil)  ; HACK: add power hookups to all D04 cells
+        (powerCellView "layout") ; used by MakeLayoutTagCell
         )
   (let (TEMP powerCellName align
         inst prb vertprb
@@ -211,12 +212,12 @@ useICV = nil
                              (list "power8" (list Metal[8] "block"))
                              )
       powerCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGrid"
-                                      CV->libName powerCellName "layout" ?CV CV)
+                                      CV->libName powerCellName powerCellView ?CV CV)
       )
     (when !useAssura
       (let (power2 power4 power6 power8 temp3 temp7)
         ; BUG: temporary hack to avoid Assura layer processing
-        powerCV = (dbOpenCellViewByType CV->libName powerCellName "layout" "maskLayout" "w")
+        powerCV = (dbOpenCellViewByType CV->libName powerCellName powerCellView "maskLayout" "w")
         (FlattenBlockPurpose CV powerCV)
 
         ; power grid blockages (BUG: ignores power blockages on odd layers)
@@ -266,7 +267,7 @@ useICV = nil
     (foreach lpp powerCV->lpps
       gridName = pgMap[lpp->layerName]
       (when gridName && lpp->purpose=="block"
-        gridCV = (nrOpenCellViewReadable "globals" gridName "layout")
+        gridCV = (dbOpenCellViewByType "globals" gridName "layout")
         (foreach shape lpp->shapes
           x1 = (leftEdge   shape->bBox)
           y1 = (bottomEdge shape->bBox)
