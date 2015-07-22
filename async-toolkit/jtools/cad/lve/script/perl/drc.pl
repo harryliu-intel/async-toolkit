@@ -25,6 +25,7 @@ sub usage {
     print STDERR "$msg\n" if defined $msg;
     my $usage  = "Usage: lvs [args] cell\n";
     $usage .= "    --working-dir=[$working_dir]\n";
+    $usage .= "    --icv-runset-path=[$icv_runset_path] (DRC runset path)\n";
     $usage .= "    --gds2-file=[$gdsii] (Provide source layout by gdsii file.)\n";
     $usage .= "    --gds2-list=[$gdsii] (Provide source layout by a file list contains gdsii file)\n";
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
@@ -51,6 +52,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $threads = $value;
     } elsif ($flag eq "flow") {
         $flow = $value;
+    } elsif ($flag eq "icv-runset-path") {
+        $icv_runset_path = $value;
     } elsif ($flag eq "icv-options") {
         $icv_options = $value;
     } elsif ($flag eq "fulcrum-pdk-root") {

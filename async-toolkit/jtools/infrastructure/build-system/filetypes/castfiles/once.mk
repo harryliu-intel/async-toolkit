@@ -2310,6 +2310,7 @@ $(ROOT_TARGET_DIR)/%/drc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_
 	  --threads=$(DRCLVS_THREADS) \
 	  --gds2-file='$(@D)/cell.gds2' \
 	  --flow=$(DRC_FLOW) \
+	  --icv-runset-path=$(ICV_RUNSET_PATH) \
 	  --icv-options=$(DRC_EXTRA_OPTIONS) \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@D)/drc.log' ; \
 	  /bin/rm -f '$@'; \

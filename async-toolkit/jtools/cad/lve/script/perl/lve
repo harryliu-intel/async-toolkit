@@ -1381,6 +1381,7 @@ ASTA_TAU_BOUND                   := $astaTauBound
 ASTA_THREADS                     := $astaThreads
 DRCLVS_THREADS                   := $drclvs_threads
 DRC_FLOW                         := $drc_flow
+ICV_RUNSET_PATH                  := $icv_runset_path
 STARRC_THREADS                   := $starrc_threads
 HSIM_THREADS                     := $hsim_threads
 HSPICE_THREADS                   := $hspice_threads
@@ -2759,6 +2760,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --drc-extra-options [$drc_extra_options] (ICV command options for drc)
     --drclvs-threads=[$drclvs_threads] (number of drc threads)
     --drc-flow=[$drc_flow] (Specify which drc runset. Default: drcd,denall,drc_IPall)
+    --icv-runset-path=[$icv_runset_path] (ICV runset path)
 
   RTE Options
     --digital-delay=[$digitalDelay] [(an integer value) digitalDelay for jdsim-auto ]
@@ -2976,6 +2978,7 @@ sub setOptions {
    $optionvalues{"asta-tau-bound"} =  $astaTauBound;
    $optionvalues{"drclvs-threads"} =  $drclvs_threads;
    $optionvalues{"drc-flow"} =  $drc_flow;
+   $optionvalues{"icv-runset-path"} =  $icv_runset_path;
    $optionvalues{"starrc-threads"} =  $starrc_threads;
    $optionvalues{"hsim-threads"} =  $hsim_threads;
    $optionvalues{"hspice-threads"} =  $hspice_threads;
@@ -3286,6 +3289,7 @@ sub processOption {
         elsif ($key eq "asta-tau-bound")    { $astaTauBound = $value; }
         elsif ($key eq "drclvs-threads")    { $drclvs_threads = $value; }
         elsif ($key eq "drc-flow")          { $drc_flow = $value; }
+        elsif ($key eq "icv-runset-path")          { $icv_runset_path = $value; }
         elsif ($key eq "starrc-threads")    { $starrc_threads = $value; }
         elsif ($key eq "hsim-threads")      { $hsim_threads = $value > 1 ? 4: 1; }
         elsif ($key eq "hspice-threads")    { $hspice_threads = $value > 0 ? $value : 1; }
