@@ -464,7 +464,16 @@
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
   (DeleteKeepout ?CV CV)
+  (ConvertFill ?CV CV)
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
   (RunAfterImportDef ?CV CV)
+  )
+
+; Convert ICC's fill nets to fill purpose
+(defun ConvertFill (@key (CV (geGetEditCellView)))
+  (foreach fig (dbFindNetByName CV "floatiss_")->figs
+           fig->lpp = (list (car fig->lpp) "fill")
+           )
+  t
   )
