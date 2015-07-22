@@ -49,6 +49,7 @@ my $vdd = 0.9;
 my $temp = 25;
 my $sigma_factor = 1;
 my $time           = 20e-9;
+my $slope_time     = 1e-9; # slopes of power supplies and reset
 my $start_time     = 2e-9; # how long to reset circuit
 my $measure_offset = 4e-9; # how much longer to wait before measuring
 my $rc_reduce = 1;
@@ -56,6 +57,9 @@ my $reset_offset = 0;
 my $power_window = "";
 my $env_spice_file = "";
 my $accurate = 0;
+my %power;
+my %ground;
+my %reset;
 
 # TODO: spice model information should be in PDK
 # NOTE: uses env $hspice_model_root $hspice_model $PDMI_LIB $hspice_lib_models
@@ -92,6 +96,9 @@ sub usage() {
     $usage .= "    --totem-mode (for running totem dynamic\n";
     $usage .= "    --sigma-factor (to vary corner limits, 0..1)\n";
     $usage .= "    --extra-includes (for files needed for running totem in hsim)\n";
+    $usage .= "    --power:node=voltage  (specify a power  supply)\n";
+    $usage .= "    --ground:node=voltage (specify a ground supply)\n";
+    $usage .= "    --reset:node=voltage  (specify a _RESET input)\n";
     die "$usage";
 }
 
@@ -161,6 +168,12 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
         @out_nodes=split(/,/,$value);
+    } elsif ($flag =~ /^power:(\S+)$/) {
+        $power{$1} = $value;
+    } elsif ($flag =~ /^ground:(\S+)$/) {
+        $ground{$1} = $value;
+    } elsif ($flag =~ /^reset:(\S+)$/) {
+        $reset{$1} = $value;
     } else {
         print "ERROR: argument --${flag}=${value} not recognized.\n";
 	&usage();
@@ -178,11 +191,11 @@ my $cell_name = $ARGV[0];
 my $env_name = $ARGV[1];
 my $escaped_cell_name="\Q$cell_name\E";
 my $bsim = "tech";
-my $Vlo="Vdd*0.45";
-my $Vhi="Vdd*0.55";
-my $V50="Vdd*0.5";
-my $V10="Vdd*0.1";
-my $V90="Vdd*0.9";
+my $Vlo="true*0.45";
+my $Vhi="true*0.55";
+my $V50="true*0.5";
+my $V10="true*0.1";
+my $V90="true*0.9";
 if ($accurate) { $xa_level = 7; }
 
 # handle monte-carlo
@@ -297,7 +310,7 @@ print RUN_FILE "\n";
 # standard settings and transistor models
 print RUN_FILE<<EOF;
 * Settings
-.param Vdd=$vdd
+.param true=$vdd
 .param temp=$temp
 .temp $temp
 
@@ -346,14 +359,20 @@ print RUN_FILE<<EOF;
 
 * Power supplies
 .global COUPLING_GND
-V0c GND     0 0
-V0e GND_env 0 0
-V1c Vdd     0 pwl (0 0 0.5ns Vdd)
-V1e Vdd_env 0 pwl (0 0 0.5ns Vdd)
-Vres _RESET 0 pwl (0 0 $time_cell 0 '$time_cell+1ns' Vdd)
-V0cg COUPLING_GND 0 0
-
+Vcg    COUPLING_GND 0 0
 EOF
+
+foreach my $net (sort keys %ground) {
+    print RUN_FILE "V${net} ${net} 0 pwl (0 0 $slope_time $ground{$net})\n"
+}
+foreach my $net (sort keys %power) {
+    print RUN_FILE "V${net} ${net} 0 pwl (0 0 $slope_time $power{$net})\n";
+}
+foreach my $net (sort keys %reset) {
+    my $t = $start_time+$slope_time;
+    print RUN_FILE "V${net} ${net} 0 pwl (0 0 $start_time 0 $t $reset{$net})\n";
+}
+print RUN_FILE "\n";
 
 if (!($env_spice_file eq "")) {
 ## auto generated env file specified
@@ -366,7 +385,7 @@ if (!($env_spice_file eq "")) {
 .param PrsMaxRes=$prsmaxres
 .param PrsMinRes=$prsminres
 .param PrsDelay=$prsdelay
-Xenv GND_env GND Vdd_env Vdd _RESET _RESET $env_name
+Xenv GND Vdd _RESET $env_name
 
 EOF
 } else  {
@@ -414,17 +433,19 @@ foreach $node (@measure_nodes)  {
 EOF
 }
 
-### branch V1c powering Circuit under Test
-print RUN_FILE<<EOF;
-* Power measurements
-.probe i(V0c) i(V1c)
-.measure tran avg_curr avg par('-i(V1c)') from=$power_window_start to=$power_window_stop
-.measure tran max_curr max par('-i(V1c)') from=$power_window_start to=$power_window_stop
-.measure tran avg_power PARAM='(avg_curr*Vdd)'
-.measure tran max_power PARAM='(max_curr*Vdd)'
+### measure current and power
+print RUN_FILE "* Power measurements\n";
+foreach my $net (sort keys %power) {
+    my $win = "from=$power_window_start to=$power_window_stop";
+    print RUN_FILE ".probe i(V$net)\n";
+    print RUN_FILE ".measure tran ${net}_avg_current avg i(V$net) $win\n";
+    print RUN_FILE ".measure tran ${net}_max_current max i(V$net) $win\n";
+    print RUN_FILE ".measure tran ${net}_avg_power PARAM='(-${net}_avg_current*$power{$net})'\n";
+    print RUN_FILE ".measure tran ${net}_max_power PARAM='(-${net}_max_current*$power{$net})'\n";
+}
+print RUN_FILE "\n";
 
-EOF
-
+### end
 print RUN_FILE ".end\n";
 close(RUN_FILE);
 

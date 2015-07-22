@@ -1086,8 +1086,8 @@ sub lve_summarize {
             unless $fh == 0;
         foreach my $line (sort @raw) {
             my ($status, $task, $cell, $path, %results) = parse_raw_line($line);
-            if ($task eq "hsim" && defined $results{power}) {
-                print $fh "[$status] Power: $results{power}W<br>\n"
+            if ($task eq "hsim" && defined $results{power} && defined $results{supply}) {
+                print $fh "[$status] Supply=$results{supply} Power=$results{power}W<br>\n"
                     unless $fh == 0;
             }
         }

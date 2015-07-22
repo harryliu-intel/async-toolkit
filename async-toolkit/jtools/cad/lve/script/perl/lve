@@ -99,6 +99,9 @@ my $minAccurateR=1;
 my $minAccurateC=1e-18;
 my $minAccurateRC=0;
 my $accurateMode=0;
+my %power;
+my %ground;
+my %reset;
 
 sub dounlink {
     my ($file,$dir)=@_;
@@ -891,6 +894,18 @@ my $lvedbfile=lve_db_filename($output_dir);
 #if user explicitly disables db, don't use it.
 #$usedb=1 if ( -s "$lvedbfile" and -w "$lvedbfile" );
 
+# power, ground, reset
+my $power_ground_reset_args = "";
+foreach my $net (sort keys %ground) {
+    $power_ground_reset_args .= " --ground:$net=$ground{$net}";
+}
+foreach my $net (sort keys %power) {
+    $power_ground_reset_args .= " --power:$net=$power{$net}";
+}
+foreach my $net (sort keys %reset) {
+    $power_ground_reset_args .= " --reset:$net=$reset{$net}";
+}
+
 if ($usedb) {
     $dbprefix=lve_create_db($output_dir, $pdk_root, $dbprefix);
     if ( -w "$lvedbfile" or $dbprefix ne "") {
@@ -1397,6 +1412,7 @@ SIGMA_FACTOR                     := $sigma_factor
 DBPREFIX                         := $dbprefix
 REDONODES                        := $redonodes
 ENV_CAP_LOAD                     := $env_cap_load
+POWER_GROUND_RESET_ARGS          := $power_ground_reset_args
 EOF
 }
 
@@ -2653,6 +2669,9 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --env-cap-load=[$env_cap_load] (put additional load in Farads on ports)
     --monte-carlo=[$monte_carlo] (how many monte carlo seeds to run)
     --start-time=[$start_time] (how long to assert reset)
+    --power:node=voltage  (specify a power  supply)
+    --ground:node=voltage (specify a ground supply)
+    --reset:node=voltage  (specify a _RESET input)
 
   Aspice/Alint Options:
     --minCC=[$minCC]  (minimum coupling capacitance for aspice)
@@ -3370,6 +3389,11 @@ sub processOption {
         elsif ($key eq "history-per-node")      {$depth = $value;}
         elsif ($key eq "cycle-count")      {$cycleCount = $value;}
         elsif ($key eq "no-cell-lock")      {$no_cell_lock = $value;}
+
+        # power, ground, reset supplies
+        elsif ($key =~ /^power:(\S+)$/)  { $power{$1}  = $value; }
+        elsif ($key =~ /^ground:(\S+)$/) { $ground{$1} = $value; }
+        elsif ($key =~ /^reset:(\S+)$/)  { $reset{$1}  = $value; }
 
         # unknown option
         else {

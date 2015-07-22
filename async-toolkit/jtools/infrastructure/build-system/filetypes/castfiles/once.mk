@@ -157,9 +157,9 @@ EXTRACT       := extract
 EXTRACT_GRAYBOX := extract_graybox
 LEFDEFWRITE   := lefdefWrite
 LEFWRITE      := lefWrite
-HSIM          := hsim --sim=hsim
-HSPICE        := hsim --sim=hspice
-XA            := hsim --sim=xa
+HSIM          := hsim --sim=hsim $(POWER_GROUND_RESET_ARGS)
+HSPICE        := hsim --sim=hspice $(POWER_GROUND_RESET_ARGS)
+XA            := hsim --sim=xa $(POWER_GROUND_RESET_ARGS)
 RAWIFY        := lve_raw --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_ROOT)'
 FRC           := frc --fulcrum-pdk-root='$(FULCRUM_PDK_PACKAGE_ROOT)'
 ASPICE        := local_aspice --disk-space=$(DISK_SPACE)

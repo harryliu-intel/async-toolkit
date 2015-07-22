@@ -202,7 +202,7 @@ public final class JFlat {
                            + " | --tool=check [--check-all-csp]\n"
                            + " | --tool=new-aspice [--internalRules=[0|1]]\n"
                            + " | --tool=hsim [ --hsim-translate=[ cadence | gds2 | none ]\n"
-                           + "                 --hsim-isolate-cell --hsim-rand-seed=<seed> --hsim-rand-length=<length> ]\n"
+                           + "                 --hsim-rand-seed=<seed> --hsim-rand-length=<length> ]\n"
                            + " | --tool=cdl [ --cdl-translate=[ cadence | gds2 | none ]\n"
                            + "              [ --cdl-name-map=<name map file> ]\n"
                            + "              [ --cdl-mos-parameters=<param,param,...> ]\n"
@@ -559,7 +559,6 @@ public final class JFlat {
                 System.err.println("Invalid rand-length or rand-seed options specified.");
                 return null;
             }
-            final boolean isolateCell = args.argExists("hsim-isolate-cell");
             final String renameStr = args.getArgValue("hsim-translate", "cadence");
             final CDLNameInterface renamer;
             if (renameStr.equals("cadence")) {
@@ -574,7 +573,7 @@ public final class JFlat {
             }
             return new SimpleCellFormatterFactory(pwf) {
                     public CellFormatterInterface getFormatter(PrintWriter pw) {
-                        return new HSIMFormatter(pw, castParser, len, seed, isolateCell, renamer, cadencizer );
+                        return new HSIMFormatter(pw, castParser, len, seed, renamer, cadencizer );
                     }
                 };
         } else if (tool.equals("env-ntpc")) {
@@ -3128,7 +3127,6 @@ public final class JFlat {
         private final Cadencize cadencizer;
         private final Set seen;
         private int deviceId;
-        private final boolean isolateCell;
         private final CDLNameInterface renamer;
         private final static String GND = "GND";
         private final static String Vdd = "Vdd";
@@ -3141,14 +3139,12 @@ public final class JFlat {
                        final CastFileParser cfp, 
                        final int randSeqLen,
                        final long seed,
-                       final boolean isolateCell,
                        final CDLNameInterface renamer,
                        final Cadencize cadencizer ) {
             this.w = pw;
             this.pw = new CDLWriter(pw, 79);
             this.cfp = cfp;
             this.randSeqLen = randSeqLen;
-            this.isolateCell = isolateCell;
             this.cadencizer = cadencizer;
             this.seen = new HashSet();
             this.deviceId = 0;
@@ -3421,8 +3417,6 @@ public final class JFlat {
             // if !hasCompletePrs && !hasSubcells
             final List ports = new ArrayList();
             final List impliedPorts = new ArrayList();
-            final Map<HierName,String> isolatedPorts =
-                new HashMap<HierName,String>();
             for (Iterator i = NetlistAdapter.getParameterList(cell, cadencizer).iterator(); i.hasNext(); ) {
                 final HierName p = (HierName) i.next();
                 final String pn = printNode(p);
@@ -3459,11 +3453,6 @@ public final class JFlat {
                         (HierName) localNodes.getCanonicalKey(makeHierName(p));
                     final String pn = printNode(canon);
                     impliedPorts.add(pn);
-                    if (isolateCell) {
-                        final String isolated = pn + "_cell";
-                        impliedPorts.add(isolated);
-                        isolatedPorts.put(canon, isolated);
-                    }
                 }
 
                 // if there are no reset found, add dummy reset ports
@@ -3473,13 +3462,6 @@ public final class JFlat {
                                 makeHierName(localReset));
                 final String pn = printNode(canon);
                 impliedPorts.add(pn);
-                if (isolateCell) {
-                    final String isolated = pn + "_cell";
-                    impliedPorts.add(isolated);
-                    if (localReset != null && !envReset) {
-                        isolatedPorts.put(canon, isolated);
-                    }
-                }
             }
 
             /* The environment should be a fully contained cell, since it
@@ -3627,10 +3609,6 @@ public final class JFlat {
                         (HierName)localNodes.getCanonicalKey(canon);
                     if (actual == null) actual = canon;
                     String pn = printNode(actual);
-                    final String isolated = isolatedPorts.get(actual);
-                    if (isolateCell && isolated != null) {
-                        pn = isolated;
-                    }
                     subports.add(pn);
                 }
                 pw.X("test",
@@ -3647,6 +3625,10 @@ public final class JFlat {
                                 final CellDelay delay,
                                 final InstanceData instData) {
             final Set targets = new HashSet();
+            // isolate current draw of PRS from power supplies
+            pw.E(nextDevice(), "ENV_PRS_TRUE",  "0", "VCVS", new String[]{Vdd,"0","gain=1"});
+            pw.E(nextDevice(), "ENV_PRS_FALSE", "0", "VCVS", new String[]{GND,"0","gain=1"});
+            // emit the PRS
             for (final Iterator i = prs.getProductionRules(); i.hasNext(); ) {
                 final ProductionRule pr = (ProductionRule) i.next();
                 printPR(pr, delay, instData, targets);
@@ -3687,18 +3669,18 @@ public final class JFlat {
                 final String targ_src = target + "_3a_source";
                 final String np, nn;
                 if (pr.getDirection() == ProductionRule.UP) {
-                    np = Vdd;
+                    np = "ENV_PRS_TRUE";
                     nn = targ_src;
                 } else {
                     np = targ_src;
-                    nn = GND;
+                    nn = "ENV_PRS_FALSE";
                 }
 
                 args.add(0, "AND(" + count + ")");
                 args.add("0,PrsMaxRes");
                 args.add("Vlo,PrsMaxRes");
                 args.add("Vhi,PrsMinRes");
-                args.add("Vdd,PrsMinRes");
+                args.add("true,PrsMinRes");
 
                 pw.G(nextDevice(), np, nn, "vcr",
                      (String[]) args.toArray(new String[0]));
