@@ -169,6 +169,8 @@ public interface DirectiveConstants {
     String STRENGTH_GROUP = "strength_group";
     String IDLE_STATE = "idle_state";
     String NUM_VALUES = "num_values";
+    String POWER_NET = "power_net";
+    String GROUND_NET = "ground_net";
 
     /** CSP timing directives */
     String SLACK = "slack";

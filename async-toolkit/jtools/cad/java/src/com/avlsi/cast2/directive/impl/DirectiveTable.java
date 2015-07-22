@@ -247,6 +247,8 @@ public class DirectiveTable {
         registerDirective(CELL, RESET_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(SUBCELL, RESET_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(SUBCELL, FLOORPLAN_ARRAY, ARRAYED_INSTANCE_TYPE, STRING_TYPE, null);
+        registerDirective(CELL, POWER_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, GROUND_NET, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
 
         /** updatenetlist directives **/
         registerDirective(CELL, BASE_TRANSISTOR_LAYOUT_WIDTH, FLOAT_TYPE, new Float(0.0));
