@@ -57,6 +57,7 @@ my $deletemakefiles=1;
 my $astaTauBound=-1;
 my $drclvs_threads=2;
 my $drc_flow='drcd,denall,drc_IPall';
+my $icv_runset_path='';
 my $starrc_threads=1;
 my $hsim_threads=1;
 my $hspice_threads=1;
