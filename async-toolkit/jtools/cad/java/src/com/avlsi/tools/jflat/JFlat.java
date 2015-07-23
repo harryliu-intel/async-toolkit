@@ -3378,6 +3378,26 @@ public final class JFlat {
             return null;
         }
 
+        private void copyAliases(final AliasedMap from, final AliasedSet to) {
+            for (Iterator i = from.getCanonicalKeys(); i.hasNext(); ) {
+                final Object key = i.next();
+                for (Iterator j = from.getAliases(key); j.hasNext(); ) {
+                    final Object alias = j.next();
+                    to.makeEquivalent(key, alias);
+                }
+            }
+        }
+
+        private String[] getActuals(final CellInterface cell,
+                                    final AliasedSet aliases) {
+            return NetlistAdapter.getParameterList(cell, cadencizer)
+                                 .stream()
+                                 .map(p -> printNode((HierName)
+                                             aliases.getCanonicalKey(p)))
+                                 .collect(Collectors.toList())
+                                 .toArray(new String[0]);
+        }
+
         /**
          * Output the exclusion properties, connections, and, if 
          * <code>isEnv</code> the prs for the cell.
@@ -3415,67 +3435,16 @@ public final class JFlat {
 
             // XXX: we might want to do error checking, ie error
             // if !hasCompletePrs && !hasSubcells
-            final List ports = new ArrayList();
-            final List impliedPorts = new ArrayList();
-            for (Iterator i = NetlistAdapter.getParameterList(cell, cadencizer).iterator(); i.hasNext(); ) {
-                final HierName p = (HierName) i.next();
-                final String pn = printNode(p);
-                ports.add(pn);
-            }
-
-            if (parentCell != null) {
-                final HierName hreset = HierName.makeHierName(_RESET);
-                // names of the GND, Vdd and _RESET in this cell
-                final String localGND =
-                    CellUtils.getLocalImpliedName(parentCell, GND);
-                final String localVdd =
-                    CellUtils.getLocalImpliedName(parentCell, Vdd);
-
-                // XXX: this should be refactored with other tools
-                boolean envReset = false;
-                String localReset = CellUtils.getResetName(parentCell);
-                if (localReset == null) {
-                    if (cell.getCanonicalName(hreset) != null) {
-                        localReset = _RESET;
-                        envReset = true;
-                    }
-                }
-
-                if (localGND == null || localVdd == null) {
-                    throw new RuntimeException(
-                        "HSIM requires GND and Vdd as implied ports in " +
-                        parentCell.getFullyQualifiedType());
-                }
-
-                // order of the ports must match what the hsim script expects
-                for (String p : Arrays.asList(localGND, localVdd)) {
-                    final HierName canon =
-                        (HierName) localNodes.getCanonicalKey(makeHierName(p));
-                    final String pn = printNode(canon);
-                    impliedPorts.add(pn);
-                }
-
-                // if there are no reset found, add dummy reset ports
-                final HierName canon =
-                    localReset == null ? hreset :
-                        (HierName) localNodes.getCanonicalKey(
-                                makeHierName(localReset));
-                final String pn = printNode(canon);
-                impliedPorts.add(pn);
-            }
-
-            /* The environment should be a fully contained cell, since it
-             * instantiates the cell being tested, so it should only have
-             * implied ports in CAST as its ports.
-             */
+            final String[] portNames = 
+                 NetlistAdapter.getParameterList(cell, cadencizer)
+                               .stream()
+                               .map(p -> printNode(p))
+                               .collect(Collectors.toList())
+                               .toArray(new String[0]);
 
             final String cellName = (envName == null ? 
                                      cell.getFullyQualifiedType() :
                                      envName);
-            final String[] portNames = (String[]) 
-                (parentCell == null ?
-                 ports.toArray(new String[0]) :
-                 impliedPorts.toArray(new String[0]) ); 
             pw.subckt(printCell(cellName),portNames,new String[0], new String[0]);
 
             // Canonicalize the production rules
@@ -3483,18 +3452,6 @@ public final class JFlat {
             prs.canonicalizeNames(localNodes);
             final CellDelay delay = new CellDelay(cell, cadencizer);
             processPRS(prs,delay,instData);
-
-            final AliasedSet parentLocalNodes;
-            final Map myPorts;
-            if (parentCell == null) {
-                parentLocalNodes = null;
-                myPorts = null;
-            } else {
-                parentLocalNodes =
-                    cadencizer.convert(parentCell).getLocalNodes();
-                // The cell and its environment should have the same ports
-                myPorts = CellUtils.markPorts(parentCell);
-            }
 
             // Emit subcircuit calls
             for (final Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
@@ -3505,28 +3462,6 @@ public final class JFlat {
                     (CellInterface) fixupCells.get(instance);
                 if (CellUtils.isWiring(subcell)) continue;
 
-                /* To take into account aliases that might occur inside the
-                 * cell being tested, we first determine if a node is connected
-                 * to one of the nodes in the port list, which is shared
-                 * between the cell and its environment.  If so, then lookup
-                 * its name in the port list, get the canonical name of the
-                 * port in the context of the cell, get the first port
-                 * associated with that canonical name, and emit its canonical
-                 * name in the context of the environment cell.  Example:
-
-                 define A()(e1of4 -a, -b) {
-                 prs {
-                 node abe;
-                 a.e = b.e = abe;
-                 }
-                 env {
-                 digital {
-                 rsource_e1of4 _(a);
-                 rsource_e1of4 _(b);
-                 }
-                 }
-                 }
-                */
                 final List subports = new ArrayList();
                 final Collection paramList;
                 if (realSubcell == null) {
@@ -3545,40 +3480,8 @@ public final class JFlat {
                 for (Iterator j = paramList.iterator(); j.hasNext(); ) {
                     final HierName subportName =
                         HierName.append(instance, (HierName) j.next());
-                    HierName canon = null;
-                    if (parentCell != null) {
-                        for (Iterator k = localNodes.getAliases(subportName);
-                             k.hasNext(); ) {
-                            final HierName portAlias = (HierName) k.next();
-                            if (myPorts.containsKey(portAlias.getAsString('.')))
-                                {
-                                    canon = portAlias;
-                                    break;
-                                }
-                        }
-                    }
-                    if (canon == null) {
-                        canon = subportName;
-                    } else {
-                        /* We can't directly call getAliases because the
-                         * aliases are stored in a circular list, and the
-                         * iterator returned by it depends on where you are on
-                         * the list.  By calling getCanonicalKey first, we
-                         * ensure the iterator returned iterates over the
-                         * aliases in the same order for all aliases of a key.
-                         */
-                        canon = (HierName) parentLocalNodes.getCanonicalKey(canon);
-                        for (Iterator k = parentLocalNodes.getAliases(canon);
-                             k.hasNext(); ) {
-                            final HierName portAlias = (HierName) k.next();
-                            if (myPorts.containsKey(portAlias.getAsString('.')))
-                                {
-                                    canon = portAlias;
-                                    break;
-                                }
-                        }
-                    }
-                    canon = (HierName) localNodes.getCanonicalKey(canon);
+                    final HierName canon =
+                        (HierName) localNodes.getCanonicalKey(subportName);
                     subports.add(printNode(canon));
                 }
 
@@ -3590,35 +3493,26 @@ public final class JFlat {
                      new String[0]);
             }
 
-            // Emit one more subcircuit call to instantiate the real circuit
-            if (parentCell != null) {
-                final List subports = new ArrayList();
-                for (Iterator i = NetlistAdapter.getParameterList(parentCell, cadencizer).iterator(); i.hasNext(); ) {
-                    HierName canon =
-                        (HierName) parentLocalNodes.getCanonicalKey((HierName) i.next());
-                    for (Iterator j = parentLocalNodes.getAliases(canon);
-                         j.hasNext(); ) {
-                        final HierName portAlias = (HierName) j.next();                        
-                        if (myPorts.containsKey(portAlias.getAsString('.'))) {
-                            canon = portAlias;
-                            break;
-                        }
-                    }
-
-                    HierName actual =
-                        (HierName)localNodes.getCanonicalKey(canon);
-                    if (actual == null) actual = canon;
-                    String pn = printNode(actual);
-                    subports.add(pn);
-                }
-                pw.X("test",
-                     (String[]) subports.toArray(new String[0]),
-                     printCell(parentCell.getFullyQualifiedType()),
-                     new String[0]);
-            }
-
             pw.ends(printCell(envName == null ?  cell.getFullyQualifiedType() :
                               envName));
+
+            // Emit dut and env instantiations
+            if (parentCell != null) {
+                final AliasedMap dutPorts =
+                    cadencizer.convert(parentCell).getPortNodes();
+                final AliasedMap envPorts =
+                    cadencizer.convert(cell).getPortNodes();
+                final AliasedSet combined =
+                    new AliasedSet(dutPorts.getComparator());
+                copyAliases(dutPorts, combined);
+                copyAliases(envPorts, combined);
+
+                pw.X("dut", getActuals(parentCell, combined),
+                     printCell(parentCell.getFullyQualifiedType()),
+                     new String[0]);
+                pw.X("env", getActuals(cell, combined), printCell(envName),
+                     new String[0]);
+            }
         }
 
         private void processPRS(final ProductionRuleSet prs,

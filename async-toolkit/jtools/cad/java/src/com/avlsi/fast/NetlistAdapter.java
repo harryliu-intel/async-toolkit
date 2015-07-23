@@ -202,15 +202,15 @@ public class NetlistAdapter implements AbstractNetlist {
     }
 
     /** Obtain the port list in a consistent way using Cadencize. */
-    public static SortedSet getParameterList(final CellInterface ci) {
+    public static SortedSet<HierName> getParameterList(final CellInterface ci) {
         return getParameterList(ci, new Cadencize(true));
     }
 
-    public static SortedSet getParameterList(final CellInterface ci,
-                                             final Cadencize c) {
+    public static SortedSet<HierName> getParameterList(final CellInterface ci,
+                                                       final Cadencize c) {
         /* Cadencize to find the port list. */
         final CadenceInfo cinfo = c.convert(ci);
-        TreeSet port = new TreeSet();
+        TreeSet<HierName> port = new TreeSet<>();
         AliasedMap portNodes = cinfo.getPortNodes();
         for (Iterator i = portNodes.getCanonicalKeys(); i.hasNext(); ) {
             final HierName h = (HierName) i.next();
