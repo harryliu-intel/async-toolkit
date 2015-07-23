@@ -1499,8 +1499,6 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.spice_hsim \
 	type=$(call GET_SPICE_TYPE,$(@D)); \
 	reduce=$$([[ $$type == extracted ]] && echo 1 || echo 0); \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 3,$^)' | sort -u | \
-		$(RENAME) --type=node --from=cast --to=gds2 | \
-		$(GNUGAWK) '{print "Xenv.Xtest." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hsim=1" \
 	QB_DIAG_FILE='$@.diag' \
@@ -1576,8 +1574,6 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.out: $(SPICE_DIR)/cell.spice_hsim \
 	type=$(call GET_SPICE_TYPE,$(@D)); \
 	reduce=$$([[ $$type == extracted ]] && echo 1 || echo 0); \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 3,$^)' | sort -u | \
-		$(RENAME) --type=node --from=cast --to=gds2 | \
-		$(GNUGAWK) '{print "Xenv.Xtest." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l xa=1" \
 	QB_DIAG_FILE='$@.diag' \
@@ -1652,8 +1648,6 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.out: $(SPICE_DIR)/cell.spice_hsim \
 	type=$(call GET_SPICE_TYPE,$(@D)); \
 	reduce=$$([[ $$type == extracted ]] && echo 1 || echo 0); \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 3,$^)' | sort -u | \
-		$(RENAME) --type=node --from=cast --to=gds2 | \
-		$(GNUGAWK) '{print "Xenv.Xtest." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hspice=1" \
 	QB_DIAG_FILE='$@.diag' \
@@ -1719,7 +1713,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/totem.out: $(SPICE_DIR)/cell.spf \
 	work_dir=`mktemp -d "$(WORKING_DIR)/totem.XXXXXX"`; \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 3,$^)' | sort -u | \
 		$(RENAME) --type=node --from=cast --to=gds2 | \
-		$(GNUGAWK) '{print "Xenv.Xtest." $$1}' | \
+		$(GNUGAWK) '{print "Xdut." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_totem' \
 	  $(EXEC_PACKAGE) run_totem \
@@ -1756,7 +1750,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/cmm.out: $(SPICE_DIR)/hsim/$(ENV)/%/totem.out \
 	work_dir=`mktemp -d "$(WORKING_DIR)/cmm.XXXXXX"`; \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 1,$^)' | sort -u | \
 		$(RENAME) --type=node --from=cast --to=gds2 | \
-		$(GNUGAWK) '{print "Xenv.Xtest." $$1}' | \
+		$(GNUGAWK) '{print "Xdut." $$1}' | \
 	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_cmm' \
 	  $(EXEC_PACKAGE) run_cmm \

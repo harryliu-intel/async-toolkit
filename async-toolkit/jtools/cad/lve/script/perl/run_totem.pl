@@ -302,9 +302,7 @@ open (FH, "<$file") or die "Cannot open $file";
 open (FH_MOD, "> $mod_file") or die "Cannot open $mod_file";
 while (<FH>) {
   chomp;
-  s/v3m/V3m/g;
-  s/v5m/V5m/g;
-  s/xcell/Xenv.Xtest/;
+  s/xcell/Xdut/;
   # the transistors inside the macro model is called "main"
   #s/\)'\)$/.main)')/ if /^.probe (vdd|gnd)/;
   print FH_MOD;
@@ -332,7 +330,7 @@ else {
     $capLoad="";
 }
 my_system ("mkdir -p '$out_dir'");
-my_system ("hsim --run-directory='$work_dir/hsim' --fulcrum-pdk-root='$fulcrum_pdk_root' --cell-spice-file='$work_dir/design_data/aplmmx_dynamic/cell.spf' --env-spice-file='$lve_dir/$fqcn_path/jflat.routed/hsim/$env' --extra-includes='$work_dir/design_data/aplmmx_dynamic/$gdsfqcn.aplmmx_mod' --accurate=0 --hsim-vdd=2 --prs-cap=1e-13 --prs-delay=$prsDelay --prs-min-res=30 --prs-max-res=1e9 --rc-reduction=1 --minC=5e-18 --minR=10 --run-time=$total_sim_time --process-corner=$corner --sigma-factor=$sigma_factor --vdd=$true --print-nodes='Xenv.*,Xenv.Xtest.*' --measure-nodes='$measure_nodes' --delete=0 --lve-root-dir='$lve_dir' --totem-mode=1 --sub-lve-root-dir='$lve_dir' --output-dir='$out_dir' --sim=hsim --temp=$temp $capLoad '$gdsfqcn' '${gdsfqcn}_U_env' 1>'$out_dir/hsim.tmp' 2>'$out_dir/hsim.err'");
+my_system ("hsim --run-directory='$work_dir/hsim' --fulcrum-pdk-root='$fulcrum_pdk_root' --cell-spice-file='$work_dir/design_data/aplmmx_dynamic/cell.spf' --env-spice-file='$lve_dir/$fqcn_path/jflat.routed/hsim/$env' --extra-includes='$work_dir/design_data/aplmmx_dynamic/$gdsfqcn.aplmmx_mod' --accurate=0 --hsim-vdd=2 --prs-cap=1e-13 --prs-delay=$prsDelay --prs-min-res=30 --prs-max-res=1e9 --rc-reduction=1 --minC=5e-18 --minR=10 --run-time=$total_sim_time --process-corner=$corner --sigma-factor=$sigma_factor --vdd=$true --print-nodes='Xenv.*,Xdut.*' --measure-nodes='$measure_nodes' --delete=0 --lve-root-dir='$lve_dir' --totem-mode=1 --sub-lve-root-dir='$lve_dir' --output-dir='$out_dir' --sim=hsim --temp=$temp $capLoad '$gdsfqcn' '${gdsfqcn}_U_env' 1>'$out_dir/hsim.tmp' 2>'$out_dir/hsim.err'");
 #my_system("cp -p '$work_dir/hsim/hsim.mt' '$out_dir/hsim.mt'");
 my_system("cp -p '$work_dir/hsim/hsim.fsdb' '$out_dir/hsim.fsdb'");
 chdir("$work_dir/design_data/aplmmx_dynamic");

@@ -208,6 +208,16 @@ $monte_carlo = "SWEEP MONTE=1" if ($seed>0);
 my $option_seed = "";
 $option_seed = ".option seed=$seed\n" if ($seed>0);
 
+# rename nodes from CAST to GDS2
+my %gds2NodeName;
+my @nodes;
+push @nodes, @measure_nodes;
+push @nodes, @out_nodes;
+push @nodes, keys %power;
+push @nodes, keys %ground;
+push @nodes, keys %reset;
+&reName("rename","cast","gds2","node",\%gds2NodeName,\@nodes);
+
 ########################################## Run ##########################################
 
 # start run_file
@@ -334,7 +344,8 @@ if (defined($sub_lve_root_dir) and -d "$sub_lve_root_dir/spicelib") {
 # capacitive load on outputs
 if (@out_nodes and $cap_load > 0) {
     foreach my $node (@out_nodes) {
-        print RUN_FILE "C$node Xenv.Xtest.$node 0 $cap_load\n";
+        $node = $gds2NodeName{$node};
+        print RUN_FILE "C$node $node 0 $cap_load\n";
     }
 }
 
@@ -362,15 +373,18 @@ print RUN_FILE<<EOF;
 Vcg    COUPLING_GND 0 0
 EOF
 
-foreach my $net (sort keys %ground) {
-    print RUN_FILE "V${net} ${net} 0 pwl (0 0 $slope_time $ground{$net})\n"
+foreach my $node (sort keys %ground) {
+    my $name = $gds2NodeName{$node};
+    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $ground{$node})\n"
 }
-foreach my $net (sort keys %power) {
-    print RUN_FILE "V${net} ${net} 0 pwl (0 0 $slope_time $power{$net})\n";
+foreach my $node (sort keys %power) {
+    my $name = $gds2NodeName{$node};
+    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $power{$node})\n";
 }
-foreach my $net (sort keys %reset) {
+foreach my $node (sort keys %reset) {
+    my $name = $gds2NodeName{$node};
     my $t = $start_time+$slope_time;
-    print RUN_FILE "V${net} ${net} 0 pwl (0 0 $start_time 0 $t $reset{$net})\n";
+    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $start_time 0 $t $reset{$node})\n";
 }
 print RUN_FILE "\n";
 
@@ -378,30 +392,24 @@ if (!($env_spice_file eq "")) {
 ## auto generated env file specified
     print RUN_FILE<<EOF;
 * Environment
-.include '$env_spice_file'
 .param Vlo='$Vlo'
 .param Vhi='$Vhi'
 .param PrsCap=$prscap
 .param PrsMaxRes=$prsmaxres
 .param PrsMinRes=$prsminres
 .param PrsDelay=$prsdelay
-Xenv GND Vdd _RESET $env_name
-
-EOF
-} else  {
-## self oscillating input cell.spice
-    print RUN_FILE<<EOF;
-Xenv GND Vdd _RESET $cell_name
-
+.include '$env_spice_file'
 EOF
 }
+print RUN_FILE "\n";
 
 ## simulate
 print RUN_FILE "* Simulate\n";
 print RUN_FILE ".tran 1ps $time $monte_carlo\n\n";
 
 ### measure frequency and slew
-foreach $node (@measure_nodes)  {
+foreach $node (@measure_nodes) {
+    $node = $gds2NodeName{$node};
     print RUN_FILE "* Average Cycle time and Frequency over various intervals\n";
     for (my $n = 1; $n<=64; $n*=2) {
         my $end = 1+$n;
@@ -435,15 +443,16 @@ EOF
 
 ### measure current and power
 print RUN_FILE "* Power measurements\n";
-foreach my $net (sort keys %power) {
+foreach my $node (sort keys %power) {
+    $node = $gds2NodeName{$node};
     my $win = "from=$power_window_start to=$power_window_stop";
-    print RUN_FILE ".probe i(V$net)\n";
-    print RUN_FILE ".measure tran ${net}_avg_current avg i(V$net) $win\n";
-    print RUN_FILE ".measure tran ${net}_max_current max i(V$net) $win\n";
-    print RUN_FILE ".measure tran ${net}_avg_power PARAM='(-${net}_avg_current*$power{$net})'\n";
-    print RUN_FILE ".measure tran ${net}_max_power PARAM='(-${net}_max_current*$power{$net})'\n";
+    print RUN_FILE ".probe i(V$node)\n";
+    print RUN_FILE ".measure tran AvgCurrent_${node} avg i(V$node) $win\n";
+    print RUN_FILE ".measure tran MaxCurrent_${node} max i(V$node) $win\n";
+    print RUN_FILE ".measure tran AvgPower_${node} PARAM='(-AvgCurrent_${node}*$power{$node})'\n";
+    print RUN_FILE ".measure tran MaxPower_${node} PARAM='(-MaxCurrent_${node}*$power{$node})'\n";
+    print RUN_FILE "\n";
 }
-print RUN_FILE "\n";
 
 ### end
 print RUN_FILE ".end\n";

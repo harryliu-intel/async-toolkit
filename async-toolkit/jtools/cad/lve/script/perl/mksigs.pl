@@ -29,7 +29,7 @@ my @nodes;
 open (P, "<$envfile") or die "Error: Cannot open $envfile in mksigs";
 while (<P>) {
     chomp;
-    if (/^Xtest/) {
+    if (/^Xdut/) {
         $line = $_;
         $_=<P>;
         chomp;
@@ -79,7 +79,7 @@ foreach my $node (sort keys %env) {
     print "v(Xenv.$node)";
 }
 foreach my $node (sort keys %test) {
-    print "v(Xenv.Xtest.$node)";
+    print "v(Xdut.$node)";
 }
-print "i(V3m)";
+print "i(VVdd)";
 exit 0;

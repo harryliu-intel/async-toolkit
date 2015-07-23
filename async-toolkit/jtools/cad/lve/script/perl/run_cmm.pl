@@ -440,9 +440,7 @@ open (FH, "<$file") or die "Cannot open $file";
 open (FH_MOD, "> $mod_file") or die "Cannot open $mod_file";
 while (<FH>) {
   chomp;
-  s/v3m/V3m/g;
-  s/v5m/V5m/g;
-  s/xcell/Xenv.Xtest/;
+  s/xcell/Xdut/;
   print FH_MOD;
 }
 close FH;
