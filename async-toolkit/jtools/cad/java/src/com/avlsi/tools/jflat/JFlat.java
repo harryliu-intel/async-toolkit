@@ -3394,8 +3394,7 @@ public final class JFlat {
                                  .stream()
                                  .map(p -> printNode((HierName)
                                              aliases.getCanonicalKey(p)))
-                                 .collect(Collectors.toList())
-                                 .toArray(new String[0]);
+                                 .toArray(String[]::new);
         }
 
         /**
@@ -3439,8 +3438,7 @@ public final class JFlat {
                  NetlistAdapter.getParameterList(cell, cadencizer)
                                .stream()
                                .map(p -> printNode(p))
-                               .collect(Collectors.toList())
-                               .toArray(new String[0]);
+                               .toArray(String[]::new);
 
             final String cellName = (envName == null ? 
                                      cell.getFullyQualifiedType() :
