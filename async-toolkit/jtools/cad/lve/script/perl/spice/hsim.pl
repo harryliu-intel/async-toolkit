@@ -373,18 +373,19 @@ print RUN_FILE<<EOF;
 Vcg    COUPLING_GND 0 0
 EOF
 
+# drive power, ground, reset from Xenv's namespace
 foreach my $node (sort keys %ground) {
     my $name = $gds2NodeName{$node};
-    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $ground{$node})\n"
+    print RUN_FILE "V${name} Xenv.${name} 0 pwl (0 0 $slope_time $ground{$node})\n"
 }
 foreach my $node (sort keys %power) {
     my $name = $gds2NodeName{$node};
-    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $power{$node})\n";
+    print RUN_FILE "V${name} Xenv.${name} 0 pwl (0 0 $slope_time $power{$node})\n";
 }
 foreach my $node (sort keys %reset) {
     my $name = $gds2NodeName{$node};
     my $t = $start_time+$slope_time;
-    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $start_time 0 $t $reset{$node})\n";
+    print RUN_FILE "V${name} Xenv.${name} 0 pwl (0 0 $start_time 0 $t $reset{$node})\n";
 }
 print RUN_FILE "\n";
 
