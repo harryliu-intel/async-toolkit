@@ -1494,6 +1494,8 @@ $ENV{CDS_AUTO_64BIT}="ALL" if ($bit64 and ($os_arch eq "SunOS-sun4u" or
 $ENV{TEMP}="/scratch" if(!defined $ENV{TEMP} or $ENV{TEMP} eq "/tmp");
 # qb and build-system/filetypes/castfiles/once.mk
 $ENV{FULCRUM_PDK_PACKAGE_ROOT} = $pdk_root;
+# write runset cache information to working temp directory
+$ENV{'ICV_RUNSET_CACHE_DIR'} = "$output_dir/temp/.icvrscache";
 
 # make command line
 $makeFlags = "$makeFlags -n " if($justPrint);
