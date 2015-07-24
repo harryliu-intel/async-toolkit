@@ -14,7 +14,7 @@
                                    (targetViewName "layout_tag")
                                    (CastPath (ConfigFileGetValue TheCDSConfigTable "CAST_PATH"))
                                    (TempDir  (ConfigFileGetValue TheCDSConfigTable "TEMP"))
-                                   (topMetal 8) ; top of power grid in tag view
+                                   (topMetal nil) ; top of power grid in tag view
                                    )
   (let (libName CV tagCV powerCV trans ints prb align lpp
                 gridCV colorCV fillCV power2 prb2 shapes count
@@ -50,6 +50,9 @@
     y1box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
 
     ; top-metal grid
+    (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
+    (unless topMetal (error "topMetal not specified in command-line or cell property"))
+
     align = gridAlignment[topMetal]
     x0 = (floor   x0box/(round (car  align)/MfgGrid))
     y0 = (floor   y0box/(round (cadr align)/MfgGrid))
