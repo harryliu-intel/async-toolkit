@@ -84,6 +84,7 @@ sub usage() {
     $usage .= "    --nt-mode=[0|1] generate files for Nanotime\n";
     $usage .= "    --totem-mode=[0|1] for totem prep\n";
     $usage .= "    --instance-port=[CONDUCTIVE|NOT_CONDUCTIVE|SUPERCONDUCTIVE]\n";
+    $usage .= "    --ccp=[0|1] (whether to enable CCP; defaults to 0\n";
     $usage .= "    NVN OPTIONS\n";
     $usage .= "    --nvn-bind-file=<name> (for renaming devices in extracted netlist)\n";
     $usage .= "    --nvn-log=<filename> (the .cls file from nvn on transistor netlist)\n";
@@ -139,6 +140,7 @@ my $threads=2;
 my $nt_mode=0;
 my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
+my $ccp=0;
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
     my ($flag, $value) = split("=",$1);
@@ -219,6 +221,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $totem_mode = $value;
     } elsif ($flag eq "instance-port") {
         $instancePort = $value;
+    } elsif ($flag eq "ccp") {
+        $ccp = $value;
     } else {
         print STDERR "Error: argument --${flag}=${value} not recognized.\n";
         &usage();
@@ -483,6 +487,19 @@ if($stage2a){
             close(PINFILE);
         }
 }
+
+sub read_starcmd {
+    my ($file, $cmd) = @_;
+    open my $fh, $file or die "Can't read $file: $!";
+    while (my $line = <$fh>) {
+        if ($line =~ /^\*/) {}
+        elsif ($line =~ /^(\S+):\s*(\S.*)$/) {
+            $cmd->{$1} = $2;
+        }
+    }
+    close $fh;
+}
+
 if ($stage2b) {
 
     ##########################################################################
@@ -493,16 +510,8 @@ if ($stage2b) {
     chdir "$starRC_dir";
 
     # read default star.cmd from PDK
-    my %cmd;
-    open CMD_IN, "<$pdk_root/share/Fulcrum/starrcxt/star.cmd" or
-        die "can't read $pdk_root/share/Fulcrum/starrcxt/star.cmd";
-    while (my $line = <CMD_IN>) {
-        if ($line =~ /^\*/) {}
-        elsif ($line =~ /^(\S+):\s*(\S.*)$/) {
-            $cmd{$1} = $2;
-        }
-    }
-    close CMD_IN;
+    my %cmd = ();
+    read_starcmd("$conf_dir/star.cmd", \%cmd);
 
     # set options
     $cmd{"TCAD_GRD_FILE"} = "$conf_dir/nxtgrd";
@@ -586,6 +595,23 @@ if ($stage2b) {
     $cmd{"NETLIST_TAIL_COMMENTS"} = $tailcomments;
     $cmd{"REDUCTION"} = $reduction;
     $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
+    $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/via_coverage.custom";
+
+    # setup CCP
+    if ($ccp) {
+        my %ccpcmd = ();
+        read_starcmd("$conf_dir/ccp.cmd", \%ccpcmd);
+        $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$conf_dir/device_map";
+        $ccpcmd{'RCMODEL_MAP_FILE'} = "$conf_dir/rc_map";
+        $ccpcmd{'STARRCXT_CCP_EXECUTABLE'} = "$ENV{CCP_INSTALL_PATH}/ccp";
+        $ccpcmd{'STARRCXT_CCP_VERSION'} = "$ENV{CCP_VERSION}";
+        $ccpcmd{'UPF_FILE'} = "$conf_dir/be.upf";
+        $ccpcmd{'VIA_FILE'} = "$conf_dir/via_table.ctf";
+        open my $fh, '>', 'ccp.cmd' or die "Can't create ccp.cmd: $!";
+        print $fh join('', map { "$_: $ccpcmd{$_}\n" } sort keys %ccpcmd);
+        close($fh);
+        $cmd{'CCP_EXTRACTION_FILE'} = 'ccp.cmd';
+    }
 
     # print out star.cmd for this run
     open STAR_CMD, ">star.cmd" or die "Can not create star.cmd file!\n";

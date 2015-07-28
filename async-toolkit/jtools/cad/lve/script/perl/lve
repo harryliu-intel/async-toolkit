@@ -581,6 +581,7 @@ our $bump_nearest_end=0;
 our $power_sag=0;
 our $additive_resp = 0;
 our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
+our $ccp=0;
 
 # sweep options
 my @skip = ();
@@ -1038,7 +1039,7 @@ foreach my $pvtval (@pvt) {
 # see bug 11704, removed output_dir
 my $aspice_path="$lve_root/share/asp:$pdk_root/share/Fulcrum/asp:" .
     "$pdk_root/share/Fulcrum/bsim:$pdk_root/share/Fulcrum/bsim/\$\$ASPICE_CORNER";
-my $extract_starrc="extract_starRC";
+my $extract_starrc=($ccp ? "$ENV{SCARLET_SCRIPT} " : "") . "extract_starRC";
 
 # check budgetcapindex
 if ($budgetcapindex < 0 or $budgetcapindex > $#delayCap) {
@@ -1367,6 +1368,7 @@ CUSTOM_SPICE                     := $customSpice
 CUSTOM_SPICE_INCLUDE             := $customSpiceInc
 EXTRACT_CORNER                   := $extract_corner
 EXTRACT_DIR                      := -${extract_corner}-${extractTemp}
+CCP                              := $ccp
 LIBTRANSLATE                     := $libtranslate
 FAKESIZE                         := $fakesize
 BUDGETCAPINDEX                   := $budgetcapindex
@@ -2628,6 +2630,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --db-prefix [$dbprefix] (not for general use, for setting up mysql)
     --starrc-threads=[$starrc_threads] (number of StarRC processes)
     --drclvs-threads=[$drclvs_threads] (number of lvs threads)
+    --ccp=[$ccp] (whether to enable StarCCP)
 
   Extract Graybox Options:
     --graybox-list=[$graybox_list] ( should be <filename> containing list of cell names)
@@ -2866,6 +2869,7 @@ sub setOptions {
    $optionvalues{"layoutScaleY"} =  $layoutScaleY;
    $optionvalues{"custom-config"} =  $custom_config;
    $optionvalues{"extract-corner"} =  $extract_corner;
+   $optionvalues{"ccp"} =  $ccp;
    $optionvalues{"qx"} =  $qx;
    $optionvalues{"lef-file"} =  $lef_file;
    $optionvalues{"def-file"} =  $def_file;
@@ -3096,6 +3100,7 @@ sub processOption {
         elsif ($key eq "layoutScaleY")        { $layoutScaleY = $value; }
         elsif ($key eq "custom-config")       { $custom_config = canonicalizePath($value); check_path($value); }
         elsif ($key eq "extract-corner")      { $extract_corner = $value; }
+        elsif ($key eq "ccp")                 { $ccp = $value; }
 
         # extract_qx options
         elsif ($key eq "qx") { $qx = $value; }

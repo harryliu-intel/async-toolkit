@@ -1031,6 +1031,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=1 \
 	  --threads=$(DRCLVS_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1061,6 +1062,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=1 \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1090,6 +1092,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=1 \
 	  --threads=$(STARRC_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1119,6 +1122,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=1 \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1168,7 +1172,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	echo "#TASK=$(EXTRACT_STARRC)  MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	echo "#TASK=extract_starRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
 	status=0; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
@@ -1183,6 +1187,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(DRCLVS_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1215,6 +1220,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1246,6 +1252,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(STARRC_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1277,6 +1284,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1307,6 +1315,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1337,6 +1346,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1367,6 +1377,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
@@ -1426,7 +1437,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	echo "#TASK=$(EXTRACT_STARRC) MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	echo "#TASK=extract_starRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
 	status=0; \
 	echo "$(LVS_BLACKBOX)" > '$(@D)/blackbox'; \
@@ -1441,6 +1452,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(DRCLVS_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1475,6 +1487,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1508,6 +1521,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(STARRC_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1541,6 +1555,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1593,6 +1608,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1625,6 +1641,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1657,6 +1674,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1689,6 +1707,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=$(LVS_BLACKBOX) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
@@ -1742,7 +1761,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	echo "#TASK=$(EXTRACT_STARRC) MODE=totem$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	echo "#TASK=extract_starRC MODE=totem$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
 	status=0; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
@@ -1757,6 +1776,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
 	  --threads=$(DRCLVS_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1789,6 +1809,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1820,6 +1841,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
 	  --threads=$(STARRC_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1851,6 +1873,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1896,7 +1919,7 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	$(ROOT_TARGET_DIR)/%/cell.gds2 \
 	$(ROOT_TARGET_DIR)/%/cell.cdl_gds2
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
-	echo "#TASK=$(EXTRACT_STARRC) MODE=nanotime$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
+	echo "#TASK=extract_starRC MODE=nanotime$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
 	task=extract && $(CASTFILES_ENQUEUE_TASK) && \
 	cell=$$(echo '$(call GET_GDS2_CDL_NAME,$(@D))' ); \
@@ -1910,6 +1933,7 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
 	  --threads=$(DRCLVS_THREADS) \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1942,6 +1966,7 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
+	  --ccp=$(CCP) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
@@ -1972,6 +1997,7 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	  $(QB) $(EXTRACT_STARRC) \
 	  --64bit=$(BIT64) \
 	  --blackbox=0 \
+	  --ccp=$(CCP) \
 	  --threads=$(STARRC_THREADS) \
 	  --cdl-cell-name="$$cell" \
 	  --cdl-file='$(@D)/../cell.cdl_gds2' \
