@@ -201,7 +201,10 @@
   (let (Vdd GND)
     (cond (powergrid CV->cellType="cover")
           (leaf      CV->cellType="core")
-          (topMetal && topMetal<=2 CV->cellType="core") ; treat m2 mid-level cells as core
+          (topMetal && topMetal<=2 && CV->prBoundary &&
+                    (topEdge CV->prBoundary->bBox)-(bottomEdge CV->prBoundary->bBox)<=2.01*GridPitch
+                    CV->cellType="core"
+                    ) ; treat m2 mid-level cells as core
           (t         CV->cellType="block")
           )
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
