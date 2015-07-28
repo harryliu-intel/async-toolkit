@@ -289,27 +289,26 @@ sub my_list_to_spice {
 
 # convert node names, renaming the first subnet to be the real node
 sub node_names {
-    if ($icf) {
-        for (my $i=0; $i<@_; $i++) {
-            my $node = my_from_spice($_[$i]);
-            if ($node =~ /(.*):(.*)/ ) { # has base:subnet format
-                my $base = $1;
-                my $subnet = $2;
-                if (!defined($first_subnet{$base})) {
-                    $first_subnet{$base} = $subnet;
-                }
-                if ($first_subnet{$base} eq $subnet) {
-                    $node = $base; # strip off the subnet, make this the canonical node
-                }
-            } else { # not a subnet
-                if (!defined($first_subnet{$node})) {
-                    $first_subnet{$node} = "";
-                } elsif (!($first_subnet{$node} eq "")) {
-                    $node = "$node:"; # some other subnet got to be the base
-                }
+    for (my $i=0; $i<@_; $i++) {
+        my $node = $_[$i];
+        $node = my_from_spice($_[$i]) if ($icf);
+        if ($node =~ /(.*):(.*)/ ) { # has base:subnet format
+            my $base = $1;
+            my $subnet = $2;
+            if (!defined($first_subnet{$base})) {
+                $first_subnet{$base} = $subnet;
             }
-            $_[$i] = $node;
+            if ($first_subnet{$base} eq $subnet) {
+                $node = $base; # strip off the subnet, make this the canonical node
+            }
+        } else { # not a subnet
+            if (!defined($first_subnet{$node})) {
+                $first_subnet{$node} = "";
+            } elsif (!($first_subnet{$node} eq "")) {
+                $node = "$node:"; # some other subnet got to be the base
+            }
         }
+        $_[$i] = $node;
     }
     if ($rename) { list_to_spice(@_); }
 }
