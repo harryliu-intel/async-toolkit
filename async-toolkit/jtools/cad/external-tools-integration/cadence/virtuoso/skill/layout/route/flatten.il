@@ -254,7 +254,7 @@ useICV = nil
 
     ; map block purpose layers to power grid cell names
     pgMap=(makeTable "POWER_GRID" nil)
-    (for m 2 topMetal-1
+    (for m 2 (max 2 topMetal-1)
          gridName = "globals.POWER_GRID.m"
          (for n m topMetal
               gridName = (strcat gridName (sprintf nil "%d" n))
