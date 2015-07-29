@@ -1012,6 +1012,28 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spef :\
 	touch '$@'
 	: < '$@'
 
+EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
+	--ccp=$(CCP) \
+	--cdl-cell-name="$$cell" \
+	--cdl-file='$(@D)/../cell.cdl_gds2' \
+	--dfII-dir='$(DFII_DIR)' \
+	--extract-corner='$(EXTRACT_CORNER)' \
+	--extract-power=$(EXTRACTPOWER) \
+	--extracted-view='$(EXTRACTED_VIEW)' \
+	--fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
+	--fixbulk=$(GET_TRUE_IGNORE_BULK) \
+	--gds2-file='$(@D)/../cell.gds2' \
+	--gray-cell-list='$(@D)/graybox_list' \
+	--ignore-nvn=$(IGNORE_NVN) \
+	--instance-port=$(INSTANCE_PORT) \
+	--maxF=$(MAXF) \
+	--minC=$(MINEXTRACTEDC) \
+	--minR=$(MINEXTRACTEDR) \
+	--nvn-log='$(@D)/nvn.log' \
+	--swappin-log='$(@D)/swappin.err' \
+	--temperature=$(TEMPERATURE) \
+	--working-dir=$$extract_dir
+
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spef_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
@@ -1027,123 +1049,47 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_spef1' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=1 \
 	  --threads=$(DRCLVS_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
 	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 > '$(@D)/spef.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2a.diag" QB_RUN_NAME='lve_spef2a' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=1 \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2b.diag" QB_RUN_NAME='lve_spef2b' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=1 \
 	  --threads=$(STARRC_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --totem-mode=0 \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spef2c.diag" QB_RUN_NAME='lve_spef2c' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=1 \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' && \
 	/bin/mv -f "$(@D)/cell.spef_gds2.tmp" "$(@D)/cell.spef_gds2"; \
@@ -1183,224 +1129,77 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS),cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(DRCLVS_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
 	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(STARRC_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --totem-mode=0 \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2c.diag" QB_RUN_NAME='lve_starRC2c' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3a' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage3a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS) -l lvs=1 $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3b' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage3b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC3.diag" QB_RUN_NAME='lve_starRC3c' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage3c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	if [[ -f "$(@D)/cell.spice_gds2.tmp" ]]; then mv -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2"; fi; \
@@ -1448,139 +1247,55 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hercules=1,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(DRCLVS_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
 	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --threads=$(STARRC_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --totem-mode=0 \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2c.diag" QB_RUN_NAME='lve_starRC2c' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' ; \
 	if [[ $(SKIP_SUB_LVE) == 0 ]]; then \
@@ -1605,134 +1320,50 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	fi;\
 	QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4a_drextract' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage4a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err'; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4b_extract' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage4b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l lvs=1  $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4c_extract' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage4c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l lvs=1  $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE='$(@D)/cell.spice_gds2.diag' QB_RUN_NAME='lve4d_extract' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=$(LVS_BLACKBOX) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --current-target-dir=$(ROOT_TARGET_DIR) \
 	  --delete=$(DELETE_EXTRACT_DIR) \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --root-target-dir=$(SUB_LVE_ROOT_DIR) \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage4d' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	if [[ -f "$(@D)/cell.spice_gds2.tmp" ]]; then mv -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2"; fi; \
@@ -1772,131 +1403,47 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
 	  --threads=$(DRCLVS_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
 	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
 	  --threads=$(STARRC_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --totem-mode=1 \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2c.diag" QB_RUN_NAME='lve_starRC2c' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2c' \
 	   '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
 	  rm -f "$(@D)/cell.spice_gds2.tmp" "$(@D)/cell.spice_gds2" "$(@D)/cell.spice_topcell"; \
@@ -1929,99 +1476,36 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	sleep 1; \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) ,cc=$(DRCLVS_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_hercules.diag" QB_RUN_NAME='lve_starRC1' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
 	  --threads=$(DRCLVS_THREADS) \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --extra-extract-equiv='$(EXTRA_EQUIV)' \
 	  --lvs-extra-options='$(LVS_EXTRA_OPTIONS)' \
 	  --task='stage1' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &>'$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2a.diag" QB_RUN_NAME='lve_starRC2a' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
-	  --ccp=$(CCP) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --task='stage2a' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' \
 	&& QRSH_FLAGS="$(PACKAGE_FLAGS_starRC2b) -l starrc=1,cc=$(STARRC_THREADS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_starRC2b.diag" QB_RUN_NAME='lve_starRC2b' \
-	  $(QB) $(EXTRACT_STARRC) \
-	  --64bit=$(BIT64) \
+	  $(QB) $(EXTRACT_STARRC) $(EXTRACT_COMMON_OPTIONS) \
 	  --blackbox=0 \
-	  --ccp=$(CCP) \
 	  --threads=$(STARRC_THREADS) \
-	  --cdl-cell-name="$$cell" \
-	  --cdl-file='$(@D)/../cell.cdl_gds2' \
 	  --delete=0 \
-	  --dfII-dir='$(DFII_DIR)' \
-	  --extract-corner='$(EXTRACT_CORNER)' \
-	  --instance-port=$(INSTANCE_PORT) \
-	  --extract-power=$(EXTRACTPOWER) \
-	  --extracted-view='$(EXTRACTED_VIEW)' \
 	  --extractReduce=$(REDUCE_MODE) \
-	  --fixbulk=$(GET_TRUE_IGNORE_BULK) \
-	  --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_EXTRACT_ROOT) \
-	  --gds2-file='$(@D)/../cell.gds2' \
-	  --gray-cell-list='$(@D)/graybox_list' \
-	  --ignore-nvn=$(IGNORE_NVN) \
-	  --maxF=$(MAXF) \
-	  --minC=$(MINEXTRACTEDC) \
-	  --minR=$(MINEXTRACTEDR) \
-	  --nvn-log='$(@D)/nvn.log' \
 	  --spice-target='$(@D)/cell.spice_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spice_topcell' \
-	  --swappin-log='$(@D)/swappin.err' \
-	  --temperature=$(TEMPERATURE) \
-	  --working-dir=$$extract_dir \
 	  --nt-mode=1 \
 	  --task='stage2b' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/extract.err' && \
