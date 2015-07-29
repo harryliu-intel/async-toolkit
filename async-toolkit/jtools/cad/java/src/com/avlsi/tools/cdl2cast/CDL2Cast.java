@@ -128,6 +128,9 @@ public class CDL2Cast {
     /** should CAST include fized_size=false netlist? **/
     static boolean netlistInCast;
     
+    /** Only import leaf cells **/
+    static boolean onlyLeafCells;
+    
     private final CellPortsReverseMapper reverseMap;
 
     /**
@@ -173,6 +176,7 @@ public class CDL2Cast {
                             "    [--skip-prs-generation]\n" +
                             "    [--all-cells]\n" +
                             "    [--netlist-in-cast]\n" +
+                            "    [--only-leaf-cells]\n" +
                             "    [--rename-transistor-type=old1:new1,old2:new2,...]\n" +
                             "    [--width-grid=W]\n" +
                             "    [--length-grid=L]\n" +
@@ -486,6 +490,7 @@ public class CDL2Cast {
         final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
 
         netlistInCast = theArgs.argExists("netlist-in-cast");
+        onlyLeafCells = theArgs.argExists("only-leaf-cells");
 
         /**
          * Bus bit characters to reconstitute array
@@ -989,6 +994,10 @@ public class CDL2Cast {
                 netgraph.prepareForLvs();
             }
 
+            // skip non-leaf cells if we are only importing leaf cells
+            boolean isLeaf = leafSet.contains(template);
+            if (!isLeaf && onlyLeafCells) continue;
+
             final Writer specWriter =
                 openFile( cellPath(outputSpecTreeDir, cellModule),
                           subType + ".cast" );
@@ -999,7 +1008,7 @@ public class CDL2Cast {
                                     template,
                                     netgraph,
                                     flatten,
-                                    leafSet.contains(template),
+                                    isLeaf,
                                     specWriter);
 
             specWriter.close();
@@ -1011,16 +1020,16 @@ public class CDL2Cast {
                  aspicer != null &&
                  aspiceCell == null ) ) continue;
             cellModuleDone.add(cellModule);
-
+            
             writeTemplateToCastTree(hName,
-                                   refinementParents,
-                                   template,
-                                   templates,
-                                   netgraph,
-                                   flatten,
-                                   writeVerilogRTL,
-                                   leafSet.contains(template),
-                                   digitalWriter);
+                                    refinementParents,
+                                    template,
+                                    templates,
+                                    netgraph,
+                                    flatten,
+                                    writeVerilogRTL,
+                                    isLeaf,
+                                    digitalWriter);
         }
 
         /**

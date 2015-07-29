@@ -75,6 +75,7 @@
 
     ; load information from CAST
     netFile = (strcat dir "/ilnets/" CV->cellName ".netlist.il")
+    (dbReplaceProp CV "CastCell" "boolean" nil)
     (when (fileTimeModified netFile)
       ; mark this as a cell which exists in CAST
       (dbReplaceProp CV "CastCell" "boolean" t)
