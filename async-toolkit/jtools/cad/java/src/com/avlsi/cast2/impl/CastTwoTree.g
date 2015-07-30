@@ -4380,11 +4380,11 @@ verilogStatements[Environment env, VerilogBlock.NamedBlock nb]
 
 verilogStatement[Environment env, VerilogBlock.NamedBlock nb]
     {
-        final List implied = new ArrayList();
-        final Map specified = new LinkedHashMap();
-        final List files = new ArrayList();
+        final List<Value> implied = new ArrayList<>();
+        final Map<String,Value> specified = new LinkedHashMap<>();
+        final List<String> files = new ArrayList<>();
         TupleValue tuple = null;
-        final List params = new ArrayList();
+        final List<Value> params = new ArrayList<>();
     }
     : module:IDENT
       ( tuple = expressionList[env, false] {
@@ -4420,23 +4420,25 @@ verilogStatement[Environment env, VerilogBlock.NamedBlock nb]
     | directiveBlock[env, nb, BlockInterface.VERILOG]
     ;
 
-verilogParameters[Environment env, List implied, Map specified]
+verilogParameters[Environment env, List<Value> implied,
+                  Map<String,Value> specified]
     : ( verilogParameter[env, implied, specified] )+
     ;
 
-verilogParameter[Environment env, List implied, Map specified]
+verilogParameter[Environment env, List<Value> implied,
+                 Map<String,Value> specified]
     : verilogImplictParameter[env, implied]
     | verilogExplictParameter[env, specified]
     ;
 
-verilogImplictParameter[Environment env, List implied]
+verilogImplictParameter[Environment env, List<Value> implied]
     {
         Value v = null;
     }
     : v = expr[env, true] { implied.add(v); }
     ;
 
-verilogExplictParameter[Environment env, Map specified]
+verilogExplictParameter[Environment env, Map<String,Value> specified]
     {
         Value v = null;
         ASTWithInfo p;
@@ -4454,7 +4456,7 @@ verilogExplictParameter[Environment env, Map specified]
       }
     ;
 
-verilogFiles[Environment env, List files]
+verilogFiles[Environment env, List<String> files]
     : ( s:QuotedString { files.add(s.getText()); } )+
     ;
 

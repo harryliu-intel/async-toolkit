@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.avlsi.cast.impl.Value;
 import com.avlsi.cell.CellImpl;
 import com.avlsi.fast.BlockInterface;
 import com.avlsi.util.container.FlatteningIterator;
@@ -47,13 +48,14 @@ public class VerilogBlock extends BlockCommon {
      **/
     public static class Instance {
         private final String module;
-        private final List parameters;
-        private final List files;
-        private final List impliedPorts;
-        private final Map explicitPorts;
-        public Instance(final String module, final List parameters,
-                        final List impliedPorts, final Map explicitPorts,
-                        final List files) {
+        private final List<Value> parameters;
+        private final List<String> files;
+        private final List<Value> impliedPorts;
+        private final Map<String,Value> explicitPorts;
+        public Instance(final String module, final List<Value> parameters,
+                        final List<Value> impliedPorts,
+                        final Map<String,Value> explicitPorts,
+                        final List<String> files) {
             this.module = module;
             this.parameters = parameters;
             this.impliedPorts = impliedPorts;
@@ -74,7 +76,7 @@ public class VerilogBlock extends BlockCommon {
         /**
          * Return parameters of the instantiation.
          **/
-        public Iterator getParameters() {
+        public Iterator<Value> getParameters() {
             return parameters.iterator();
         }
 
@@ -83,7 +85,7 @@ public class VerilogBlock extends BlockCommon {
          *
          * @return An iterator of <code>String</code>s.
          **/
-        public Iterator getFiles() {
+        public Iterator<String> getFiles() {
             return files.iterator();
         }
 
@@ -92,10 +94,10 @@ public class VerilogBlock extends BlockCommon {
          * The order of the ports as specified by the iterator is the order
          * that they were specified in CAST.
          *
-         * @return An iterator of <code>String</code>s, or <code>null</code> if
+         * @return An iterator of <code>Value</code>s, or <code>null</code> if
          * port connections is specified explicitly.
          **/
-        public Iterator getPortsByOrder() {
+        public Iterator<Value> getPortsByOrder() {
             return impliedPorts == null ? null : impliedPorts.iterator();
         }
 
@@ -109,7 +111,7 @@ public class VerilogBlock extends BlockCommon {
          * to <code>Value</code>), or <code>null</code> if port connections is
          * specified implicitly.
          **/
-        public Iterator getPortsByName() {
+        public Iterator<Map.Entry<String,Value>> getPortsByName() {
             return explicitPorts == null ? null : explicitPorts.entrySet().iterator();
         }
     }
@@ -150,7 +152,7 @@ public class VerilogBlock extends BlockCommon {
          *
          * @return an iterator of <code>Instance</code>s.
          **/
-        public abstract Iterator getInstances();
+        public abstract Iterator<Instance> getInstances();
 
         /**
          * Add a list of files depended on by this verilog block.
@@ -164,7 +166,7 @@ public class VerilogBlock extends BlockCommon {
          *
          * @return an iterator of <code>String</code>s.
          **/
-        public abstract Iterator getFiles();
+        public abstract Iterator<String> getFiles();
 
         /**
          * Get the name of this verilog block.
@@ -175,14 +177,14 @@ public class VerilogBlock extends BlockCommon {
     }
 
     public static class SimpleNamedBlock extends NamedBlock {
-        private final List instances;
-        private final LinkedList files;
+        private final List<Instance> instances;
+        private final LinkedList<String> files;
         private final String name;
 
         public SimpleNamedBlock(final String name) {
             this.name = name;
-            this.instances = new ArrayList();
-            this.files = new LinkedList();
+            this.instances = new ArrayList<>();
+            this.files = new LinkedList<>();
         }
 
         @Override
@@ -191,7 +193,7 @@ public class VerilogBlock extends BlockCommon {
         }
 
         @Override
-        public Iterator getInstances() {
+        public Iterator<Instance> getInstances() {
             return instances.iterator();
         }
 
@@ -201,7 +203,7 @@ public class VerilogBlock extends BlockCommon {
         }
 
         @Override
-        public Iterator getFiles() {
+        public Iterator<String> getFiles() {
             return files.iterator();
         }
 
@@ -229,8 +231,8 @@ public class VerilogBlock extends BlockCommon {
         }
 
         @Override
-        public Iterator getInstances() {
-            final Iterator i = child.getInstances();
+        public Iterator<Instance> getInstances() {
+            final Iterator<Instance> i = child.getInstances();
             return i.hasNext() ? i : parent.getInstances();
         }
 
@@ -240,8 +242,8 @@ public class VerilogBlock extends BlockCommon {
         }
 
         @Override
-        public Iterator getFiles() {
-            return new FlatteningIterator(
+        public Iterator<String> getFiles() {
+            return new FlatteningIterator<String>(
                     Arrays.asList(parent.getFiles(),
                                   child.getFiles()).iterator());
         }
