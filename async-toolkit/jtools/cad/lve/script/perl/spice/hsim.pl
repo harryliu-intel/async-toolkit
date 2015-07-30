@@ -385,7 +385,9 @@ foreach my $node (sort keys %power) {
 foreach my $node (sort keys %reset) {
     my $name = $gds2NodeName{$node};
     my $t = $start_time+$slope_time;
-    print RUN_FILE "V${name} Xenv.${name} 0 pwl (0 0 $start_time 0 $t $reset{$node})\n";
+    foreach my $pre ("Xdut","Xenv") { # TODO: use power_nets directive
+        print RUN_FILE "V${pre}.${name} ${pre}.${name} 0 pwl (0 0 $start_time 0 $t $reset{$node})\n";
+    }
 }
 print RUN_FILE "\n";
 
