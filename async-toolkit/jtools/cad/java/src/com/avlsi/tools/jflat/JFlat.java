@@ -42,8 +42,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.stream.Stream;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
@@ -3397,6 +3398,41 @@ public final class JFlat {
                                  .toArray(String[]::new);
         }
 
+        private String getAliases(final AliasedSet aliases,
+                                  final HierName key) {
+            final HierName canon = (HierName) aliases.getCanonicalKey(key);
+            final Iterable<HierName> alias = CollectionUtils.iterable(
+                        (Iterator<HierName>) aliases.getAliases(canon));
+            return Stream.concat(Stream.of(canon),
+                                 StreamSupport.stream(alias.spliterator(),
+                                                      false)
+                                              .filter(p -> p != canon))
+                         .map(p -> printNode(p))
+                         .collect(Collectors.joining("="));
+        }
+
+        private Stream<String> getNetDirectives(final CellInterface cell,
+                                                final AliasedSet aliases,
+                                                final String directive) {
+            return ((Set<HierName>) DirectiveUtils.canonize(
+                           aliases,
+                           DirectiveUtils.getExplicitTrues(
+                               DirectiveUtils.getTopLevelDirective(cell,
+                                   directive, DirectiveConstants.NODE_TYPE))))
+                       .stream()
+                       .filter(p -> aliases.getCanonicalKey(p) != null)
+                       .map(p -> directive + ":" + getAliases(aliases, p));
+        }
+
+        private Stream<String> getNetDirectives(final CellInterface cell,
+                                                final AliasedSet aliases) {
+            return Stream.of(
+                    getNetDirectives(cell, aliases, DirectiveConstants.GROUND_NET),
+                    getNetDirectives(cell, aliases, DirectiveConstants.POWER_NET),
+                    getNetDirectives(cell, aliases, DirectiveConstants.RESET_NET))
+                  .reduce(Stream.empty(), Stream::concat);
+        }
+
         /**
          * Output the exclusion properties, connections, and, if 
          * <code>isEnv</code> the prs for the cell.
@@ -3417,6 +3453,23 @@ public final class JFlat {
              * for use later.  In particular, this is necessary since the meta
              * parameter to the sources are randomly generated. */
             final Map fixupCells = new HashMap();
+
+            AliasedSet combined = null;
+            if (parentCell != null) {
+                final AliasedMap dutPorts =
+                    cadencizer.convert(parentCell).getPortNodes();
+                final AliasedMap envPorts =
+                    cadencizer.convert(cell).getPortNodes();
+                combined = new AliasedSet(dutPorts.getComparator());
+                copyAliases(dutPorts, combined);
+                copyAliases(envPorts, combined);
+
+                w.println("** JFlat:begin");
+                w.print(getNetDirectives(parentCell, combined)
+                            .map(s -> "** JFlat:" + s + "\n")
+                            .collect(Collectors.joining("")));
+                w.println("** JFlat:end");
+            }
 
             // recurse to subcells
             for (final Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
@@ -3496,15 +3549,6 @@ public final class JFlat {
 
             // Emit dut and env instantiations
             if (parentCell != null) {
-                final AliasedMap dutPorts =
-                    cadencizer.convert(parentCell).getPortNodes();
-                final AliasedMap envPorts =
-                    cadencizer.convert(cell).getPortNodes();
-                final AliasedSet combined =
-                    new AliasedSet(dutPorts.getComparator());
-                copyAliases(dutPorts, combined);
-                copyAliases(envPorts, combined);
-
                 pw.X("dut", getActuals(parentCell, combined),
                      printCell(parentCell.getFullyQualifiedType()),
                      new String[0]);

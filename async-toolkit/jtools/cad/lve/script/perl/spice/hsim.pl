@@ -57,9 +57,9 @@ my $reset_offset = 0;
 my $power_window = "";
 my $env_spice_file = "";
 my $accurate = 0;
-my %power;
-my %ground;
-my %reset;
+my %default_voltage = ('ground' => 0, 'power' => 'true', 'reset' => 'true');
+my %voltage;
+my %special_net;
 
 # TODO: spice model information should be in PDK
 # NOTE: uses env $hspice_model_root $hspice_model $PDMI_LIB $hspice_lib_models
@@ -96,9 +96,10 @@ sub usage() {
     $usage .= "    --totem-mode (for running totem dynamic\n";
     $usage .= "    --sigma-factor (to vary corner limits, 0..1)\n";
     $usage .= "    --extra-includes (for files needed for running totem in hsim)\n";
-    $usage .= "    --power:node=voltage  (specify a power  supply)\n";
-    $usage .= "    --ground:node=voltage (specify a ground supply)\n";
-    $usage .= "    --reset:node=voltage  (specify a _RESET input)\n";
+    $usage .= "    --default-ground=voltage (specify default ground voltage)\n";
+    $usage .= "    --default-power=voltage (specify default power voltage)\n";
+    $usage .= "    --default-reset=voltage (specify default reset voltage)\n";
+    $usage .= "    --voltage:node=voltage (set voltage for specific ground/power/reset nets)\n";
     die "$usage";
 }
 
@@ -168,12 +169,10 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
         @out_nodes=split(/,/,$value);
-    } elsif ($flag =~ /^power:(\S+)$/) {
-        $power{$1} = $value;
-    } elsif ($flag =~ /^ground:(\S+)$/) {
-        $ground{$1} = $value;
-    } elsif ($flag =~ /^reset:(\S+)$/) {
-        $reset{$1} = $value;
+    } elsif ($flag =~ "default-(power|ground|reset)") {
+        $default_voltage{$1} = $value;
+    } elsif ($flag =~ /^voltage:(\S+)$/) {
+        $voltage{$1} = $value;
     } else {
         print "ERROR: argument --${flag}=${value} not recognized.\n";
 	&usage();
@@ -213,9 +212,7 @@ my %gds2NodeName;
 my @nodes;
 push @nodes, @measure_nodes;
 push @nodes, @out_nodes;
-push @nodes, keys %power;
-push @nodes, keys %ground;
-push @nodes, keys %reset;
+push @nodes, keys %voltage;
 &reName("rename","cast","gds2","node",\%gds2NodeName,\@nodes);
 
 ########################################## Run ##########################################
@@ -373,20 +370,53 @@ print RUN_FILE<<EOF;
 Vcg    COUPLING_GND 0 0
 EOF
 
-# drive power and ground from Xdut's namespace but reset from Xenv's namespace
-foreach my $node (sort keys %ground) {
-    my $name = $gds2NodeName{$node};
-    print RUN_FILE "V${name} Xdut.${name} 0 pwl (0 0 $slope_time $ground{$node})\n"
+# determine the canonical name of power/ground/reset nets from comments emitted
+# by JFlat
+my %canon = ();
+if ($env_spice_file ne "") {
+    open($fh, $env_spice_file) or die "Can't open $env_spice_file: $!";
+    while (<$fh>) {
+        if (/^\*\* JFlat:begin/../^\*\* JFlat:end/) {
+            last if /^\*\* JFlat:end/;
+            chomp;
+            if (/^\*\* JFlat:(ground|power|reset)_net:(.*)/) {
+                my $type = $1;
+                my @aliases = split /=/, $2;
+                foreach my $alias (@aliases) {
+                    $canon{$alias} = $aliases[0];
+                }
+                push @{$special_net{$type}}, $aliases[0];
+            }
+        }
+    }
+    close($fh);
+
+    # canonicalize node names with specified voltages
+    my %old_voltage = %voltage;
+    %voltage = ();
+    foreach my $node (keys %old_voltage) {
+        my $name = $gds2NodeName{$node};
+        $name = $canon{$name} if exists($canon{$name});
+        $voltage{$name} = $old_voltage{$node};
+    }
 }
-foreach my $node (sort keys %power) {
-    my $name = $gds2NodeName{$node};
-    print RUN_FILE "V${name} Xdut.${name} 0 pwl (0 0 $slope_time $power{$node})\n";
+
+sub get_voltage {
+    my ($name, $type) = @_;
+    return exists($voltage{$name}) ? $voltage{$name} : $default_voltage{$type};
 }
-foreach my $node (sort keys %reset) {
-    my $name = $gds2NodeName{$node};
+
+# drive power, ground, and reset
+foreach my $type ('ground', 'power') {
+    foreach my $name (sort @{$special_net{$type}}) {
+        my $v = get_voltage($name, $type);
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $v)\n"
+    }
+}
+foreach my $name (sort @{$special_net{'reset'}}) {
     my $t = $start_time+$slope_time;
-    print RUN_FILE "V${name} Xenv.${name} 0 pwl (0 0 $start_time 0 $t $reset{$node})\n";
-    print RUN_FILE "Vdut_${name} Xenv.${name} Xdut.${name} 0\n";
+    my $v = get_voltage($name, 'reset');
+    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $start_time 0 $t $v)\n";
 }
 print RUN_FILE "\n";
 
@@ -445,14 +475,14 @@ EOF
 
 ### measure current and power
 print RUN_FILE "* Power measurements\n";
-foreach my $node (sort keys %power) {
-    $node = $gds2NodeName{$node};
+foreach my $node (sort @{$special_net{'power'}}) {
     my $win = "from=$power_window_start to=$power_window_stop";
     print RUN_FILE ".probe i(V$node)\n";
     print RUN_FILE ".measure tran AvgCurrent_${node} avg i(V$node) $win\n";
     print RUN_FILE ".measure tran MaxCurrent_${node} max i(V$node) $win\n";
-    print RUN_FILE ".measure tran AvgPower_${node} PARAM='(-AvgCurrent_${node}*$power{$node})'\n";
-    print RUN_FILE ".measure tran MaxPower_${node} PARAM='(-MaxCurrent_${node}*$power{$node})'\n";
+    my $v = get_voltage($node, 'power');
+    print RUN_FILE ".measure tran AvgPower_${node} PARAM='(-AvgCurrent_${node}*$v)'\n";
+    print RUN_FILE ".measure tran MaxPower_${node} PARAM='(-MaxCurrent_${node}*$v)'\n";
     print RUN_FILE "\n";
 }
 

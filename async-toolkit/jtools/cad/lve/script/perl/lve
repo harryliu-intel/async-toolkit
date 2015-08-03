@@ -100,9 +100,8 @@ my $minAccurateR=1;
 my $minAccurateC=1e-18;
 my $minAccurateRC=0;
 my $accurateMode=0;
-my %power;
-my %ground;
-my %reset;
+my %default_voltage = ('ground' => 0, 'power' => 'true', 'reset' => 'true');
+my %voltage;
 
 sub dounlink {
     my ($file,$dir)=@_;
@@ -897,16 +896,9 @@ my $lvedbfile=lve_db_filename($output_dir);
 #$usedb=1 if ( -s "$lvedbfile" and -w "$lvedbfile" );
 
 # power, ground, reset
-my $power_ground_reset_args = "";
-foreach my $net (sort keys %ground) {
-    $power_ground_reset_args .= " --ground:$net=$ground{$net}";
-}
-foreach my $net (sort keys %power) {
-    $power_ground_reset_args .= " --power:$net=$power{$net}";
-}
-foreach my $net (sort keys %reset) {
-    $power_ground_reset_args .= " --reset:$net=$reset{$net}";
-}
+my $power_ground_reset_args =
+    join('', map { " --default-$_=$default_voltage{$_}" } keys %default_voltage)
+  . join('', map { " --voltage:$_=$voltage{$_}" } keys %voltage);
 
 if ($usedb) {
     $dbprefix=lve_create_db($output_dir, $pdk_root, $dbprefix);
@@ -2676,9 +2668,10 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --env-cap-load=[$env_cap_load] (put additional load in Farads on ports)
     --monte-carlo=[$monte_carlo] (how many monte carlo seeds to run)
     --start-time=[$start_time] (how long to assert reset)
-    --power:node=voltage  (specify a power  supply)
-    --ground:node=voltage (specify a ground supply)
-    --reset:node=voltage  (specify a _RESET input)
+    --default-ground=[$default_voltage{'ground'}] (specify default ground voltage)
+    --default-power=[$default_voltage{'power'}] (specify default power voltage)
+    --default-reset=[$default_voltage{'reset'}] (specify default reset voltage)
+    --voltage:node=voltage (set voltage for specific ground/power/reset nets)
 
   Aspice/Alint Options:
     --minCC=[$minCC]  (minimum coupling capacitance for aspice)
@@ -3037,6 +3030,13 @@ sub setOptions {
    $optionvalues{"measured-delay"} =  $measuredDelay;
    $optionvalues{"history-per-node"} =  $depth;
    $optionvalues{"cycle-count"} =  $cycleCount;
+   # power, ground, reset supplies
+   foreach my $type (keys %default_voltage) {
+       $optionvalues{"default-$type"} = $default_voltage{$type};
+   }
+   foreach my $node (keys %voltage) {
+       $optionvalues{"voltage:$node"} = $voltage{$node};
+   }
 }
 
 sub processOptions {
@@ -3403,9 +3403,8 @@ sub processOption {
         elsif ($key eq "no-cell-lock")      {$no_cell_lock = $value;}
 
         # power, ground, reset supplies
-        elsif ($key =~ /^power:(\S+)$/)  { $power{$1}  = $value; }
-        elsif ($key =~ /^ground:(\S+)$/) { $ground{$1} = $value; }
-        elsif ($key =~ /^reset:(\S+)$/)  { $reset{$1}  = $value; }
+        elsif ($key =~ /^default-(power|ground|reset)$/) { $default_voltage{$1} = $value; }
+        elsif ($key =~ /^voltage:(\S+)$/) { $voltage{$1} = $value; }
 
         # unknown option
         else {
