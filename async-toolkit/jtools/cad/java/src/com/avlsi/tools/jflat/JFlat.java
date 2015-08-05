@@ -3129,9 +3129,8 @@ public final class JFlat {
         private final Set seen;
         private int deviceId;
         private final CDLNameInterface renamer;
-        private final static String GND = "GND";
-        private final static String Vdd = "Vdd";
-        private final static String _RESET = "_RESET";
+        private String GND;
+        private String Vdd;
         private final static Pattern RSOURCE = Pattern.compile("standard\\.random\\.rsource_([ae])1of\\(?(\\d+)\\)?");
         private final static Pattern BD_RSOURCE = Pattern.compile("standard\\.bd\\.rsource_bd\\((\\d+)\\)");
         private final Random random;
@@ -3411,26 +3410,57 @@ public final class JFlat {
                          .collect(Collectors.joining("="));
         }
 
-        private Stream<String> getNetDirectives(final CellInterface cell,
-                                                final AliasedSet aliases,
-                                                final String directive) {
+        private Stream<HierName> getNetDirectives(final CellInterface cell,
+                                                  final AliasedSet aliases,
+                                                  final String directive) {
             return ((Set<HierName>) DirectiveUtils.canonize(
                            aliases,
                            DirectiveUtils.getExplicitTrues(
                                DirectiveUtils.getTopLevelDirective(cell,
                                    directive, DirectiveConstants.NODE_TYPE))))
                        .stream()
-                       .filter(p -> aliases.getCanonicalKey(p) != null)
-                       .map(p -> directive + ":" + getAliases(aliases, p));
+                       .filter(p -> aliases.getCanonicalKey(p) != null);
         }
 
-        private Stream<String> getNetDirectives(final CellInterface cell,
-                                                final AliasedSet aliases) {
+        private Stream<String> getNetString(final CellInterface cell,
+                                            final AliasedSet aliases,
+                                            final String directive) {
+            return getNetDirectives(cell, aliases, directive).map(
+                    p -> directive + ":" + getAliases(aliases, p));
+        }
+
+        private Stream<String> getNetString(final CellInterface cell,
+                                            final AliasedSet aliases) {
             return Stream.of(
-                    getNetDirectives(cell, aliases, DirectiveConstants.GROUND_NET),
-                    getNetDirectives(cell, aliases, DirectiveConstants.POWER_NET),
-                    getNetDirectives(cell, aliases, DirectiveConstants.RESET_NET))
+                    getNetString(cell, aliases, DirectiveConstants.GROUND_NET),
+                    getNetString(cell, aliases, DirectiveConstants.POWER_NET),
+                    getNetString(cell, aliases, DirectiveConstants.RESET_NET))
                   .reduce(Stream.empty(), Stream::concat);
+        }
+
+        private String pickSupplyName(final CellInterface cell,
+                                      final AliasedSet aliases,
+                                      final String directive,
+                                      final String def) {
+            final TreeSet<HierName> candidates =
+                getNetDirectives(cell, aliases, directive).collect(
+                        Collectors.toCollection(TreeSet::new));
+            final String result;
+            if (candidates.isEmpty()) {
+                result = def;
+                System.err.println("Warning: No " + directive + " in " +
+                        cell.getFullyQualifiedType() + ", using default " +
+                        def);
+            } else {
+                final HierName first = candidates.first();
+                result = printNode(first);
+                if (candidates.size() > 1) {
+                    System.err.println("Warning: Too many " + directive + " in " +
+                            cell.getFullyQualifiedType() + ": " + candidates +
+                            " using " + first);
+                }
+            }
+            return result;
         }
 
         /**
@@ -3465,7 +3495,7 @@ public final class JFlat {
                 copyAliases(envPorts, combined);
 
                 w.println("** JFlat:begin");
-                w.print(getNetDirectives(parentCell, combined)
+                w.print(getNetString(parentCell, combined)
                             .map(s -> "** JFlat:" + s + "\n")
                             .collect(Collectors.joining("")));
                 w.println("** JFlat:end");
@@ -3500,9 +3530,15 @@ public final class JFlat {
 
             // Canonicalize the production rules
             final ProductionRuleSet prs = cell.getProductionRuleSet();
-            prs.canonicalizeNames(localNodes);
-            final CellDelay delay = new CellDelay(cell, cadencizer);
-            processPRS(prs,delay,instData);
+            if (prs.size() > 0) {
+                prs.canonicalizeNames(localNodes);
+                final CellDelay delay = new CellDelay(cell, cadencizer);
+                GND = pickSupplyName(cell, localNodes,
+                                     DirectiveConstants.GROUND_NET, "GND");
+                Vdd = pickSupplyName(cell, localNodes,
+                                     DirectiveConstants.POWER_NET, "Vdd");
+                processPRS(prs,delay,instData);
+            }
 
             // Emit subcircuit calls
             for (final Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
