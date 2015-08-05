@@ -20,6 +20,7 @@ import com.avlsi.cast.impl.TupleValue;
 import com.avlsi.cast.impl.LocalEnvironment;
 import com.avlsi.cast.impl.Value;
 import static com.avlsi.cast2.directive.DirectiveConstants.ALINT_SCENARIO_TYPE;
+import static com.avlsi.cast2.directive.DirectiveConstants.INSTANCE_TYPE;
 import static com.avlsi.cast2.directive.DirectiveConstants.NODE_TYPE;
 import static com.avlsi.cast2.directive.DirectiveConstants.HALFOP_TYPE;
 import static com.avlsi.cast2.directive.DirectiveConstants.DEEP_HALFOP_TYPE;
@@ -225,7 +226,8 @@ public class PrsDirective extends DirectiveBlock {
                 }
             }
 
-            if (type.equals(NODE_TYPE)) {
+            if (type.equals(NODE_TYPE) ||
+                type.equals(INSTANCE_TYPE)) {
                 return new PrefixNode();
             } else if (type.equals(HALFOP_TYPE) ||
                        type.equals(DEEP_HALFOP_TYPE)) {
@@ -244,7 +246,8 @@ public class PrsDirective extends DirectiveBlock {
          * How to extract the prefix and suffix for a given type?
          **/
         private Extract howExtract(final String type) {
-            if (type.equals(NODE_TYPE)) {
+            if (type.equals(NODE_TYPE) ||
+                type.equals(INSTANCE_TYPE)) {
                 return new ExtractNode();
             } else if (type.equals(HALFOP_TYPE)) {
                 return new ExtractHalfop();
