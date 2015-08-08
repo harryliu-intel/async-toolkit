@@ -60,6 +60,8 @@ typedef struct _list
 #define OP_POW 21
 #define OP_EXP 22
 #define OP_LOG 23
+#define OP_SIN 24
+#define OP_COS 25
 
 /*** prototype ***/
 void parse_expression_main(LEX *lex, LEX2DP *lex2dp, void *data,
@@ -141,6 +143,20 @@ void parse_expression_item(LEX *lex, LEX2DP *lex2dp, void *data,
     parse_expression_main(lex,lex2dp,data,expression,0);
     lex_eatif_sym(lex,")");
     add_operator(expression,OP_LOG);
+    }
+  else if (lex_eatif_sym(lex,"SIN"))
+    {
+    lex_eatif_sym(lex,"(");
+    parse_expression_main(lex,lex2dp,data,expression,0);
+    lex_eatif_sym(lex,")");
+    add_operator(expression,OP_SIN);
+    }
+  else if (lex_eatif_sym(lex,"COS"))
+    {
+    lex_eatif_sym(lex,"(");
+    parse_expression_main(lex,lex2dp,data,expression,0);
+    lex_eatif_sym(lex,")");
+    add_operator(expression,OP_COS);
     }
   else if (lex_eatif_sym(lex,"EXP"))
     {
@@ -296,6 +312,8 @@ void print_expression(FILE *fout, LIST *expression)
     case OP_INT:   fprintf(fout,"INT"); break;
     case OP_EXP:   fprintf(fout,"EXP"); break;
     case OP_LOG:   fprintf(fout,"LOG"); break;
+    case OP_SIN:   fprintf(fout,"SIN"); break;
+    case OP_COS:   fprintf(fout,"COS"); break;
     case OP_MIN:   fprintf(fout,"MIN "); break;
     case OP_MAX:   fprintf(fout,"MAX "); break;
     case OP_IF:    fprintf(fout,"? "); break;
@@ -342,6 +360,8 @@ double evaluate_expression(LIST *expression)
     case OP_INT:   s[tos-1]=(int)s[tos-1]; break;
     case OP_EXP:   s[tos-1]=exp(s[tos-1]); break;
     case OP_LOG:   s[tos-1]=log(s[tos-1]); break;
+    case OP_SIN:   s[tos-1]=sin(s[tos-1]); break;
+    case OP_COS:   s[tos-1]=cos(s[tos-1]); break;
     default:       assert(0);
       }
     }
