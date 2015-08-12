@@ -3665,9 +3665,9 @@ public final class JFlat {
                     final boolean up = pr.getDirection() == ProductionRule.UP;
                     final int extraDelay = instData == null ? 0 :
                         Math.round(instData.getExtraDelay(up, pr.getTarget()));
-                    final int after = (int) delay.getDelay(pr.getTarget(), up, 100) + extraDelay;
-                    String afterStr = pr.isAbsolute() ? after + "ps" :
-                        "'" + (after>0 ? after : 1)/100.0 + "*PrsDelay'";
+                    int after = (int) delay.getDelay(pr.getTarget(), up, 100) + extraDelay;
+                    after = (after>0 ? after : 1); // avoid 0 delays, because they don't work
+                    String afterStr = pr.isAbsolute() ? after + "ps" : "'" + after/100.0 + "*PrsDelay'";
                     pw.E(nextDevice(), target, GND, "delay",
                          new String[] { targ_src, GND, "TD=" + afterStr});
                 }
