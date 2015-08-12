@@ -57,6 +57,7 @@ sub usage() {
     $usage .= "    --cdl-cell-name=<cell> (defaults to cell)\n";
     $usage .= "    --spice-topcell=<file name> default(`pwd`/cellname.top)\n";
     $usage .= "    --spice-target=<file name> default(`pwd`/cellname.spice)\n";
+    $usage .= "    --node-props=<node-prop>\n";
     $usage .= "    --extract-power=[NO|YES|DEVICE_LAYERS] (default NO)\n";
     $usage .= "    --extracted-view=[]\n";
     $usage .= "    --extract-corner=[name] (default typical)\n";
@@ -140,6 +141,7 @@ my $threads=2;
 my $nt_mode=0;
 my $totem_mode=0;
 my $instancePort='CONDUCTIVE';
+my $nodeprops;
 my $ccp=0;
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
@@ -223,6 +225,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $instancePort = $value;
     } elsif ($flag eq "ccp") {
         $ccp = $value;
+    } elsif ($flag eq "node-props") {
+        $nodeprops = $value;
     } else {
         print STDERR "Error: argument --${flag}=${value} not recognized.\n";
         &usage();
@@ -393,6 +397,7 @@ if($stage1){
     "--blackbox=$blackbox",
     "--threads=$threads",
     "--rc-database=1",
+    "--node-props=$nodeprops",
     "--fulcrum-pdk-root=$pdk_root");
     push @lvs_cmd, "--icv-options=$lvs_extra_options" if ($lvs_extra_options ne "");
     push @lvs_cmd, "--gray-cell-list=$graycell_file" if ($graycell_file ne "");

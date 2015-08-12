@@ -21,7 +21,7 @@ BEGIN {
         &ns_to_ps &summarizeStatus &archive_extrace_files
         &mktemp_workdir &cleanUp_workdir &is_node_archive &archive_memberNamed
         &em_unit_freq &em_unit &archive_getcontent &archive_addfile &check_path
-        &archive_getfiletimestamp
+        &archive_getfiletimestamp &parse_nodeprops
     );
 }
 
@@ -738,6 +738,54 @@ sub em_unit {
   }
   return ($scal,$l*$scal) if (defined $l);
   return ($scal);
+}
+
+sub parse_nodeprops {
+    my ($file) = @_;
+    my $result = {};
+    local $_;
+    my @columns = ('is_signoff',
+                   'is_dynamic',
+                   'delay+',
+                   'delay-',
+                   'estimated_delay_signoff+',
+                   'estimated_delay_signoff-',
+                   'slew_signoff+',
+                   'slew_signoff-',
+                   'skew_signoff+',
+                   'skew_signoff-',
+                   'bump_signoff+',
+                   'bump_signoff-',
+                   'wirewidth',
+                   'wirespace',
+                   'activity_factor',
+                   'alint_max_bump_fanin',
+                   'direction',
+                   'thresh_bump_signoff+',
+                   'thresh_bump_signoff-',
+                   'leakage_signoff',
+                   'is_staticizer',
+                   'is_ground',
+                   'is_power');
+    open(my $fh, $file) || die "Can't open $file: $!";
+    while (<$fh>) {
+        my @fields = split;
+        my $node = shift @fields;
+        my $signoff = $node eq 'SIGNOFF' ? 1 : 0;
+        $node = shift @fields if $signoff;
+        unshift @fields, $signoff;
+        foreach my $col (@columns) {
+            my $val = shift @fields;
+            if (defined($val)) {
+                $result->{$node}->{$col} = $val;
+            } else {
+                die "Nodeprops file $file is malformed at line $.";
+            }
+        }
+    }
+    close $fh;
+
+    return $result;
 }
 
 

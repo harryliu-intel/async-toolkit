@@ -11,7 +11,7 @@ BEGIN {
 use Cwd;
 use IPC::Open2;
 use Getopt::Long;
-use LveUtil qw /reName/;
+use LveUtil qw /reName parse_nodeprops/;
 
 
 $ENV{SNPSLMD_QUEUE}="true";
@@ -31,6 +31,7 @@ my $icv_options;
 my $threads=2;
 my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/latest";
 my $rc_database=0;
+my $nodeprops='';
 
 sub usage {
     my ($msg) = @_;
@@ -49,6 +50,7 @@ sub usage {
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
     $usage .= "    --threads=[$threads] (ICV thread)\n";
     $usage .= "    --rc-database=[$rc_database] (Generate RC database)\n";
+    $usage .= "    --node-props=[$nodeprops] (Node properties file to find supply nets)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
 
     print STDERR "$usage\n";
@@ -103,6 +105,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             }else{
               $rc_database = 1;
             }
+    } elsif ($flag eq "node-props") {
+        $nodeprops = $value;
     } else {
         print STDERR "Error: argument --${flag}=${value} not recognized.\n";
         &usage();
@@ -220,13 +224,34 @@ sub main{
 sub prepare_clf_file {
    my ($sch_file, $equivlance_file)=@_;
 
-   #link userfine runset to define POWER/GROUND
-   system('ln', '-sf', "$pdk_root/share/Fulcrum/icv/lvs/my_userdefines.rs", "my_userdefines.rs");
+   # write supply net derived from CAST
+   my $supply_file="$working_dir/lve_supplies.rs";
+   open(my $supply_fh, ">$supply_file") or die "Cannot write to $supply_file\n";
+   if ($nodeprops) {
+      my $props=parse_nodeprops($nodeprops);
+      my @types=('ground', 'power');
+      my %nets=();
+      foreach my $type (@types) {
+         $nets{$type}=[ grep { $props->{$_}->{"is_$type"} } keys %{$props} ];
+      }
+      my %nmap=();
+      reName('rename', 'cast', 'gds2', 'node', \%nmap,
+             [ map { @{$nets{$_}} } @types ]);
+      foreach my $type (@types) {
+         print $supply_fh "lve_$type = {" .
+                          join(', ', map { "\"$nmap{$_}\"" } @{$nets{$type}}) .
+                          "};\n";
+      }
+   } else {
+      print $supply_fh "// --node-props not given\n";
+   }
+   close($supply_fh);
 
    my $lvs_clf_file="$working_dir/lvs.clf";
    open(LVS_CLF, ">$lvs_clf_file") or die "Cannot write to $lvs_clf_file\n";
    print LVS_CLF <<ET;
 -I .
+-I $pdk_root/share/Fulcrum/icv/lvs
 -I $icv_runset_path/PXL_ovrd
 -I $icv_runset_path/PXL
 -I $icv_runset_path/StandAlone/dotOne

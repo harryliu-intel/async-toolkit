@@ -1032,13 +1032,15 @@ EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 	--nvn-log='$(@D)/nvn.log' \
 	--swappin-log='$(@D)/swappin.err' \
 	--temperature=$(TEMPERATURE) \
-	--working-dir=$$extract_dir
+	--working-dir=$$extract_dir \
+	--node-props='$(@D)/../../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)'
 
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spef_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list
+        $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list \
+        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=extract_spefRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	status=0; \
@@ -1116,7 +1118,8 @@ ifeq ("$(GRAYBOX_MODE)", "")
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
-        $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
+        $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
+        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1234,7 +1237,8 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_topcell \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list
+        $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list \
+        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1390,7 +1394,8 @@ endif # "$(GRAYBOX_MODE)" eq "" 592 lines back
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spf: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
-        $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
+        $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
+        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=totem$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1464,7 +1469,8 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.spef \
 $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.dpf \
 $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	$(ROOT_TARGET_DIR)/%/cell.gds2 \
-	$(ROOT_TARGET_DIR)/%/cell.cdl_gds2
+	$(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
+	$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=nanotime$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1673,7 +1679,8 @@ $(ROOT_TARGET_DIR)/%/lvs_custom_list : $(LVS_GRAYBOX_LIST)
 $(ROOT_TARGET_DIR)/%/lvs.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/$(LVS_TARGET)
+        $(ROOT_TARGET_DIR)/%/$(LVS_TARGET) \
+        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=lvs VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	status=0; \
@@ -1695,6 +1702,7 @@ $(ROOT_TARGET_DIR)/%/lvs.err: \
 	  --cdl-cell-name="$$cell" \
 	  --blackbox=$(LVS_BLACKBOX) \
 	  --icv-options=$(LVS_EXTRA_OPTIONS) \
+	  --node-props='$(@D)/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@)' && \
 	cd / && ( [[ $(KEEP_LVS_DIR) == 1 ]] || rm -rf "$$lvs_dir" ); \
 	task=lvs && $(CASTFILES_DEQUEUE_TASK)

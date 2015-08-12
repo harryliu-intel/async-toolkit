@@ -746,6 +746,10 @@ public final class CastQuery {
             }
         }
 
+        private static String printBoolean(final boolean x) {
+            return x ? "1" : "0";
+        }
+
         private static float update(boolean top, float current, float other) {
             if (Float.isNaN(current)) {
                 return other;
@@ -1316,6 +1320,19 @@ public final class CastQuery {
                 CellUtils.getCanonicalDir(new HashMap<HierName,Integer>(),
                                           cell, nodes);
 
+            final Set<HierName> powerNets = DirectiveUtils.canonize(
+                    nodes,
+                    DirectiveUtils.getExplicitTrues(
+                        DirectiveUtils.getTopLevelDirective(cell,
+                            DirectiveConstants.POWER_NET,
+                            DirectiveConstants.NODE_TYPE)));
+            final Set<HierName> groundNets = DirectiveUtils.canonize(
+                    nodes,
+                    DirectiveUtils.getExplicitTrues(
+                        DirectiveUtils.getTopLevelDirective(cell,
+                            DirectiveConstants.GROUND_NET,
+                            DirectiveConstants.NODE_TYPE)));
+
             header("Local nodes of " + cell.getFullyQualifiedType() + ":\n", w);
             final PropagateInfo defSignoff = new PropagateInfo();
             Iterator i = new SortingIterator(nodes.getCanonicalKeys());
@@ -1434,11 +1451,10 @@ public final class CastQuery {
                 w.write(" " + printDouble(threshBumpSignoffUp));
                 w.write(" " + printDouble(threshBumpSignoffDn));
                 w.write(" " + printDouble(leakageSignoff));
-                String staStr = "0";
-                if (isStaticizer) {
-                    staStr = "1";
-                }
-                w.write(" " + staStr);
+                w.write(" " + printBoolean(isStaticizer));
+                w.write(" " + printBoolean(groundNets.contains(canon)));
+                w.write(" " + printBoolean(powerNets.contains(canon)));
+
                 w.write("\n");
             }
         }
