@@ -580,7 +580,7 @@ our $bump_nearest_end=0;
 our $power_sag=0;
 our $additive_resp = 0;
 our $delete_bumpcheck_dir= 1;    # clean up after bumpcheck
-our $ccp=0;
+our $ccp=1; # use CCP+StarRC to extract
 
 # sweep options
 my @skip = ();
