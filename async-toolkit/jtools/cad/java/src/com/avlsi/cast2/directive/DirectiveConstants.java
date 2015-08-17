@@ -115,6 +115,7 @@ public interface DirectiveConstants {
     String TIMED_JITTER = "timed_jitter";
     String PRS_NETLIST_MISMATCH_OK = "prs_netlist_mismatch_ok";
     String PROTEUS_TAG = "proteus_tag"; // for taging proteus imported cast
+    String PROTEUS_NODE_ROLE = "proteus_node_role";
 
     String POWERGRID_GNDNET = "powergrid_gndnet";
     String POWERGRID_VDDNET = "powergrid_vddnet";
