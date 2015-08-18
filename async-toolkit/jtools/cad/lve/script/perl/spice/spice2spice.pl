@@ -42,6 +42,9 @@ $primitive{"wireres"} = 1;
 # used to create an alias to one subnet
 my %first_subnet;
 
+# used to probe nodes
+my %probes;
+
 # command line arguments
 while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)=(.*)/) {
     if    ($1 eq "top") { $top = $2; }
@@ -94,6 +97,8 @@ while ($line) {
         #
         # Begin Subcircuit Definition
         #
+        %probes = ();
+        %first_subnet = ();
 
         my @parameters = ();
         my @nodes = ();
@@ -123,14 +128,16 @@ while ($line) {
         if ($probe_ports && !($cell =~ /^stack/ || $cell =~ /^gate/) ||
             $probe_top_ports && $cell eq $top) {
             foreach my $node (@nodes) {
-                print OUT ".probe v($node)\n";
+                $probes{$node} = 1;
             }
         }
             
     } elsif ($line =~ s/^\.ENDS//i) {
 
-        %first_subnet = ();
         my $flat_top = $flatten_top && ($cell eq $top);
+        foreach my $node (sort keys %probes) {
+            print OUT ".probe v($node)\n";
+        }
         print OUT ".ENDS\n" unless ($flat_top);
 
     } elsif ($line =~ s/^M//i) {
@@ -173,7 +180,7 @@ while ($line) {
         if ($probe_gates) {
             my $n = $gate;
             if ($gate =~ /(.*):(.*)/ ) { $n = $1; }
-            print OUT ".probe v($n)\n";
+            $probes{$n} = 1;
         }
 
     } elsif ($line =~ s/^X//i) {
