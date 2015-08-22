@@ -30,6 +30,6 @@ $(CURR_TARGET_DIR)/liberty_wrap.o: $(CURR_TARGET_DIR)/liberty_wrap.c
 
 $(CURR_TARGET_DIR)/$(LIBERTY_PARSER_DIST)/Makefile: $(shell find $(LIBERTY_PARSER_DIR) -type f)
 	rm -rf '$(@D)' && \
-	cp -a $(LIBERTY_PARSER_DIR) '$(@D)' && \
+	rsync -qaz --no-p --chmod=ugo=rwX $(LIBERTY_PARSER_DIR)/ '$(@D)' && \
 	cd '$(@D)' && \
 	./configure CFLAGS=-fPIC
