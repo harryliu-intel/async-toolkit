@@ -6,7 +6,7 @@ IMPORT BDDTripleHash;
 IMPORT Word;
 IMPORT Debug;
 IMPORT BDDSet, BDDSetDef, BDDTextTbl, BDDBDDTbl;
-IMPORT IO;
+(*IMPORT IO;*)
 
 IMPORT Fmt; FROM Fmt IMPORT Int;
 
@@ -32,9 +32,15 @@ PROCEDURE NodeVar(v : T) : T =
   VAR b : T; BEGIN
     <*ASSERT v # false*>
     <*ASSERT v # true*>
+(*
     IF v.root.tab = NIL THEN
+      <*ASSERT v.root = true OR v.root = false*>
       IO.Put(v.name & "\n")
     END;
+*)
+
+    IF v.root.tab = NIL THEN InitTab(v.root) END;
+
     <*ASSERT v.root.tab # NIL*>
     IF BDDTripleHash.Get(v.root.tab, Pair { true, false } , b) THEN
       RETURN b
@@ -51,9 +57,9 @@ PROCEDURE NodeVar(v : T) : T =
 (* monitored. *)
 TYPE
   Root = T OBJECT
-    mu : MUTEX; (* as yet unused *)
+    (*mu : MUTEX;*) (* as yet unused *)
     id : CARDINAL;
-    tab : BDDTripleHash.T;
+    tab : BDDTripleHash.T := NIL;
     cache := ARRAY Op OF BDDTripleHash.T { NIL, .. };
   END;
 
@@ -116,12 +122,14 @@ PROCEDURE And(b1, b2 : T) : T =
       RETURN l
     END;
 
+    IF b1.root.tab = NIL THEN InitTab(b1.root) END;
     IF NOT BDDTripleHash.Get(b1.root.tab, Pair { l, r } , b) THEN
       b := NEW(T).init();
       b.root := b1.root;
       b.root.id := b1.root.id;
       b.l := l;
       b.r := r;
+      IF b.root.tab = NIL THEN InitTab(b.root) END;
       EVAL BDDTripleHash.Put(b.root.tab, Pair { l, r }, (b));
     END;
 
@@ -168,12 +176,14 @@ PROCEDURE Or(b1, b2 : T) : T =
       RETURN l
     END;
 
+    IF b1.root.tab = NIL THEN InitTab(b1.root) END;
     IF NOT BDDTripleHash.Get(b1.root.tab, Pair { l, r } , b) THEN
       b := NEW(T).init();
       b.root := b1.root;
       b.root.id := b1.root.id;
       b.l := l;
       b.r := r;
+      IF b.root.tab = NIL THEN InitTab(b.root) END;
       EVAL BDDTripleHash.Put(b.root.tab, Pair { l, r }, (b));
     END;
 
@@ -206,6 +216,7 @@ PROCEDURE Not(b1 : T) : T =
     l := Not(b1.l);
     r := Not(b1.r);
     
+    IF b1.root.tab = NIL THEN InitTab(b1.root) END;
     IF NOT BDDTripleHash.Get(b1.root.tab, Pair { l, r }, b) THEN
       b := NEW(T).init();
       b.root := b1.root;
@@ -261,6 +272,7 @@ PROCEDURE MakeTrue(b, v : T) : T =
       RETURN l
     END;
 
+    IF b.root.tab = NIL THEN InitTab(b.root) END;
     IF NOT BDDTripleHash.Get(b.root.tab, Pair { l, r }, b1) THEN
       b1 := NEW(T).init();
       b1.root := b.root;
@@ -314,6 +326,7 @@ PROCEDURE MakeFalse(b, v : T) : T =
       RETURN l
     END;
 
+    IF b.root.tab = NIL THEN InitTab(b.root) END;
     IF NOT BDDTripleHash.Get(b.root.tab, Pair { l, r }, b1) THEN
       b1 := NEW(T).init();
       b1.root := b.root;
@@ -333,6 +346,14 @@ PROCEDURE True() : T = BEGIN RETURN true END True;
 
 PROCEDURE False() : T = BEGIN RETURN false END False;
 
+PROCEDURE InitTab(r : Root) =
+  BEGIN
+    r.tab := NEW(BDDTripleHash.Default).init(1);
+    <*ASSERT r.l = true*>
+    <*ASSERT r.r = false*>
+    EVAL BDDTripleHash.Put(r.tab, Pair { true, false }, (r));
+  END InitTab;
+
 PROCEDURE New(name : TEXT) : T = 
   VAR res : Root := NEW(Root).init(); BEGIN 
     res.name := name;
@@ -340,13 +361,15 @@ PROCEDURE New(name : TEXT) : T =
     res.l := true; res.r := false; 
     <*ASSERT nextId >= 2*>
     res.id := nextId;
-    res.tab := NEW(BDDTripleHash.Default).init(128);
+(*
+    res.tab := NEW(BDDTripleHash.Default).init(1);
+    EVAL BDDTripleHash.Put(res.tab, Pair { res.l, res.r }, (res));
+*)
 (*
     FOR i := FIRST(res.cache) TO LAST(res.cache) DO
       res.cache[i] := NEW(BDDTripleHash.Default).init(64)
     END;
 *)
-    EVAL BDDTripleHash.Put(res.tab, Pair { res.l, res.r }, (res));
     INC(nextId);
     RETURN res
   END New;
