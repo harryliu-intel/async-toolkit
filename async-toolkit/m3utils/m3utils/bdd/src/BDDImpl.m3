@@ -54,7 +54,7 @@ TYPE
     mu : MUTEX; (* as yet unused *)
     id : CARDINAL;
     tab : BDDTripleHash.T;
-    cache : ARRAY Op OF BDDTripleHash.T;
+    cache := ARRAY Op OF BDDTripleHash.T { NIL, .. };
   END;
 
 VAR
@@ -70,6 +70,14 @@ PROCEDURE Order(VAR b1, b2 : T) =
     
 (* hmm *)
 
+PROCEDURE InitTripleHash(VAR cache : BDDTripleHash.T) =
+  CONST
+    DefSiz = 8;
+  BEGIN
+    <*ASSERT cache = NIL*>
+    cache := NEW(BDDTripleHash.Default).init(DefSiz)
+  END InitTripleHash;
+
 PROCEDURE And(b1, b2 : T) : T =
   VAR 
     tripleHash : BDDTripleHash.T;
@@ -84,7 +92,12 @@ PROCEDURE And(b1, b2 : T) : T =
 
     Order(b1,b2);
 
-    tripleHash := b1.root.cache[Op.And];
+    WITH op = Op.And DO
+      IF b1.root.cache[op] = NIL THEN
+        InitTripleHash(b1.root.cache[op])
+      END;
+      tripleHash := b1.root.cache[op]
+    END;
 
     IF BDDTripleHash.Get(tripleHash, Pair { b1, b2 } , b) THEN
       RETURN b
@@ -131,7 +144,12 @@ PROCEDURE Or(b1, b2 : T) : T =
 
     Order(b1,b2);
 
-    tripleHash := b1.root.cache[Op.Or];
+    WITH op = Op.Or DO
+      IF b1.root.cache[op] = NIL THEN
+        InitTripleHash(b1.root.cache[op])
+      END;
+      tripleHash := b1.root.cache[op]
+    END;
 
     IF BDDTripleHash.Get(tripleHash, Pair { b1, b2 } , b) THEN
       RETURN b
@@ -173,7 +191,13 @@ PROCEDURE Not(b1 : T) : T =
     ELSIF b1 = false THEN RETURN true
     END;
 
-    tripleHash := b1.root.cache[Op.Not];
+    WITH op = Op.Not DO
+      IF b1.root.cache[op] = NIL THEN
+        InitTripleHash(b1.root.cache[op])
+      END;
+      tripleHash := b1.root.cache[op]
+    END;
+
     <*ASSERT tripleHash # NIL*>
     IF BDDTripleHash.Get(tripleHash, Pair { b1, true }, b) THEN
       RETURN b
@@ -213,7 +237,12 @@ PROCEDURE MakeTrue(b, v : T) : T =
 
     (* { b.root.id < v.root.id } *)
     
-    tripleHash := b.root.cache[Op.MakeTrue];
+    WITH op = Op.MakeTrue DO
+      IF b.root.cache[op] = NIL THEN
+        InitTripleHash(b.root.cache[op])
+      END;
+      tripleHash := b.root.cache[op]
+    END;
 
     IF BDDTripleHash.Get(tripleHash, Pair { b, v }, b1) THEN
       RETURN b1
@@ -261,7 +290,12 @@ PROCEDURE MakeFalse(b, v : T) : T =
 
     (* { b.root.id < v.root.id } *)
     
-    tripleHash := b.root.cache[Op.MakeFalse];
+    WITH op = Op.MakeFalse DO
+      IF b.root.cache[op] = NIL THEN
+        InitTripleHash(b.root.cache[op])
+      END;
+      tripleHash := b.root.cache[op]
+    END;
 
     IF BDDTripleHash.Get(tripleHash, Pair { b, v }, b1) THEN
       RETURN b1
@@ -307,9 +341,11 @@ PROCEDURE New(name : TEXT) : T =
     <*ASSERT nextId >= 2*>
     res.id := nextId;
     res.tab := NEW(BDDTripleHash.Default).init(128);
+(*
     FOR i := FIRST(res.cache) TO LAST(res.cache) DO
       res.cache[i] := NEW(BDDTripleHash.Default).init(64)
     END;
+*)
     EVAL BDDTripleHash.Put(res.tab, Pair { res.l, res.r }, (res));
     INC(nextId);
     RETURN res
