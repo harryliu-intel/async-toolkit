@@ -72,7 +72,7 @@ PROCEDURE Order(VAR b1, b2 : T) =
 
 PROCEDURE InitTripleHash(VAR cache : BDDTripleHash.T) =
   CONST
-    DefSiz = 8;
+    DefSiz = 2;
   BEGIN
     <*ASSERT cache = NIL*>
     cache := NEW(BDDTripleHash.Default).init(DefSiz)
