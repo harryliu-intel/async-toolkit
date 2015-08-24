@@ -220,6 +220,7 @@ public class DirectiveTable {
         registerDirective(CELL, IDLE_STATE, NODE_TYPE, INT_TYPE, null);
         registerDirective(CELL, NUM_VALUES, BIGINT_TYPE, null);
         registerDirective(CELL, PROTEUS_NODE_ROLE, NODE_TYPE, STRING_TYPE, null);
+        registerDirective(CELL, PROTEUS_CELL_TYPE, STRING_TYPE, null);
 
         /**
          * Register Directives for Automated Layout.  Used by autopins, autobus
