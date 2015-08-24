@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 import com.avlsi.tools.jauto.PartialExtract;
@@ -65,10 +66,12 @@ public class Rename {
                        new MWReverseNameInterface());
     }
 
+    public static Stream<String> getNamespaces() {
+        return schemes.keySet().stream();
+    }
+
     public static void usage( String m ) {
-        final String supported = schemes.keySet()
-                                        .stream()
-                                        .collect(Collectors.joining(","));
+        final String supported = getNamespaces().collect(Collectors.joining(","));
         System.err.print( "Usage: rename\n" +
                             "  --type=[cell|node|instance|model|all]\n" +
                             "  --from=[" + supported + "]\n" +
@@ -124,11 +127,15 @@ public class Rename {
                        .orElse(null);
     }
 
-    private static CDLNameInterface getInterface(final String from, final String to) {
+    public static CDLNameInterface getInterface(final String from, final String to) {
         final CDLNameInterface toCast = getReverseInterface(from);
         final CDLNameInterface fromCast = getForwardInterface(to);
         if (toCast == null || fromCast == null) {
             return null;
+        } else if (toCast instanceof IdentityNameInterface) {
+            return fromCast;
+        } else if (fromCast instanceof IdentityNameInterface) {
+            return toCast;
         } else {
             return new CompositeCDLNameInterface(toCast, fromCast);
         }
