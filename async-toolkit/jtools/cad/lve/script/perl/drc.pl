@@ -132,14 +132,14 @@ ET
 
    print CF "$icv_options \\\n" if (defined $icv_options and $icv_options ne "");
    if(-r $gdsii) {
-      print CF "-i ".abs_path($gdsii)." \\\n";
+      print CF "-i \'".abs_path($gdsii)."\' \\\n";
    }elsif(-r $gdsii_list) {
       open(FL,"<$gdsii_list");
       while(<FL>){
         chomp;
         s/\s+//g;
         next if ($_ eq "");
-        print CF "-i ".abs_path($_)." \\\n";
+        print CF "-i \'".abs_path($_)."\' \\\n";
       }
       close(FL);
    }
