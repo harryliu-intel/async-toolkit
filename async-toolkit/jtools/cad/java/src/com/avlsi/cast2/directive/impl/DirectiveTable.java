@@ -61,6 +61,8 @@ public class DirectiveTable {
         registerCallback(null, LAYER_TYPE, LayerCallback.getInstance());
         registerCallback(null, COSIM_SPEC_TYPE, CoSimSpecCallback.getInstance());
         registerCallback(null, ALINT_SCENARIO_TYPE, PrsCallback.getInstance());
+        registerCallback(null, PRS_EXPR_TYPE, PrsCallback.getInstance());
+        registerCallback(null, DEEP_PRS_EXPR_TYPE, PrsCallback.getInstance());
 
         /**
          * Register RTE directives and set default values
@@ -221,6 +223,7 @@ public class DirectiveTable {
         registerDirective(CELL, NUM_VALUES, BIGINT_TYPE, null);
         registerDirective(CELL, PROTEUS_NODE_ROLE, NODE_TYPE, STRING_TYPE, null);
         registerDirective(CELL, PROTEUS_CELL_TYPE, STRING_TYPE, null);
+        registerDirective(CELL, PROTEUS_LIBERTY_FUNCTION, NODE_TYPE, PRS_EXPR_TYPE, null);
 
         /**
          * Register Directives for Automated Layout.  Used by autopins, autobus

@@ -30,6 +30,7 @@ import com.avlsi.cast2.impl.CastTwoTreeParser;
 import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.directive.impl.DirectiveCallback;
 import com.avlsi.prs.ProductionRuleSet;
+import com.avlsi.util.bool.BooleanExpressionInterface;
 import com.avlsi.util.container.Pair;
 
 public class PrsCallback implements DirectiveCallback {
@@ -125,6 +126,31 @@ public class PrsCallback implements DirectiveCallback {
         return result;
     }
 
+    private BooleanExpressionInterface resolvePrsExpr(String value,
+                                                      Environment env,
+                                                      boolean deep) {
+        final CastPrsParser prsParser = (CastPrsParser)
+            CastTwoParser.getParser(CastPrsParser.class, value, 0, 0,
+                                    "<no name>");
+        try {
+            prsParser.startPrsExpression();
+        } catch (RecognitionException e) {
+            return null;
+        } catch (TokenStreamException e) {
+            return null;
+        }
+
+        final AST prsExpr = prsParser.getAST();
+
+        final CastTwoTreeParser treeParser = new CastTwoTreeParser();
+
+        try {
+            return treeParser.prsExpression(prsExpr, env, deep);
+        } catch (RecognitionException e) {
+            return null;
+        }
+    }
+
     private Value resolveAlintScenario(String value, Environment env) {
         final CastTwoParser castParser =
             CastTwoParser.getParser(value, 0, 0, "<no name>");
@@ -175,6 +201,10 @@ public class PrsCallback implements DirectiveCallback {
             ret = resolveRule(value, env, false);
         } else if (type.equals(DirectiveConstants.DEEP_RULE_TYPE)) {
             ret = resolveRule(value, env, true);
+        } else if (type.equals(DirectiveConstants.PRS_EXPR_TYPE)) {
+            ret = resolvePrsExpr(value, env, false);
+        } else if (type.equals(DirectiveConstants.DEEP_PRS_EXPR_TYPE)) {
+            ret = resolvePrsExpr(value, env, true);
         } else if (type.equals(DirectiveConstants.ALINT_SCENARIO_TYPE)) {
             ret = resolveAlintScenario(value, env);
         }

@@ -92,6 +92,10 @@ prsModifiers
       ( ( AFTER | AFTER_PS ) expression )? 
     ;
 
+startPrsExpression
+    : expr:prsExpression EOF! { #startPrsExpression = #expr; }
+    ;
+
 prsExpression
     : poe:prsOrExpression
     {

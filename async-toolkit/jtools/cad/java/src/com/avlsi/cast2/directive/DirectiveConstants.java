@@ -117,6 +117,7 @@ public interface DirectiveConstants {
     String PROTEUS_TAG = "proteus_tag"; // for taging proteus imported cast
     String PROTEUS_NODE_ROLE = "proteus_node_role";
     String PROTEUS_CELL_TYPE = "proteus_cell_type";
+    String PROTEUS_LIBERTY_FUNCTION = "proteus_liberty_function";
 
     String POWERGRID_GNDNET = "powergrid_gndnet";
     String POWERGRID_VDDNET = "powergrid_vddnet";
@@ -260,4 +261,6 @@ public interface DirectiveConstants {
     String LAYER_TYPE = "layer";
     String COSIM_SPEC_TYPE = "cosim_spec";
     String ALINT_SCENARIO_TYPE = "alint_scenario";
+    String PRS_EXPR_TYPE = "prs_expr";
+    String DEEP_PRS_EXPR_TYPE = "deep_prs_expr";
 }

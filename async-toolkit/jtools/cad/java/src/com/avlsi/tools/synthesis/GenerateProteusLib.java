@@ -1,6 +1,7 @@
 package com.avlsi.tools.synthesis;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
@@ -22,13 +23,22 @@ import com.avlsi.cell.CellInterface;
 import com.avlsi.file.cdl.util.rename.CDLNameInterface;
 import com.avlsi.file.cdl.util.rename.CDLRenameException;
 import com.avlsi.file.cdl.util.rename.Rename;
+import com.avlsi.file.common.HierName;
+import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.file.liberty.parser.*;
 import com.avlsi.io.FileSearchPath;
+import com.avlsi.tools.cadencize.Cadencize;
+import com.avlsi.util.bool.AndBooleanExpressionInterface;
+import com.avlsi.util.bool.BooleanExpressionInterface;
+import com.avlsi.util.bool.BooleanExpressionVisitorInterface;
+import com.avlsi.util.bool.HierNameAtomicBooleanExpression;
+import com.avlsi.util.bool.OrBooleanExpressionInterface;
 import com.avlsi.util.cmdlineargs.CommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
 import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
 import com.avlsi.util.cmdlineargs.defimpl.UnionCommandLineArgs;
+import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.CollectionUtils;
 
 public class GenerateProteusLib {
@@ -54,6 +64,7 @@ public class GenerateProteusLib {
 
     private final CastFileParser cfp;
     private final LibertyParser parser;
+    private final Cadencize cad;
 
     /** From input lib to CAST */
     private final WrappedNameInterface libToCast;
@@ -78,6 +89,7 @@ public class GenerateProteusLib {
                               final CDLNameInterface castToLib) {
         this.cfp = cfp;
         this.parser = parser;
+        this.cad = new Cadencize(true, Cadencize.NETLIST_PRIORITY);
         this.libToCast = new WrappedNameInterface(libToCast);
         this.castToLib = new WrappedNameInterface(castToLib);
     }
@@ -176,6 +188,54 @@ public class GenerateProteusLib {
             });
     }
 
+    private String getFunction(final BooleanExpressionInterface expr,
+                               final AliasedSet aliases) {
+        final StringBuilder sb = new StringBuilder();
+        expr.visitWith(
+            new BooleanExpressionVisitorInterface() {
+                private void junction(final boolean sense,
+                                      final Collection terms,
+                                      final char op) {
+                    if (!sense) sb.append('!');
+                    sb.append('(');
+                    boolean first = true;
+                    for (BooleanExpressionInterface term :
+                            (Collection<BooleanExpressionInterface>) terms) {
+                        if (first) first = false;
+                        else sb.append(op);
+                        term.visitWith(this);
+                    }
+                    sb.append(')');
+                }
+                public void visit(AndBooleanExpressionInterface and) {
+                    junction(and.getSense(), and.getConjuncts(), '*');
+                }
+                public void visit(OrBooleanExpressionInterface or) {
+                    junction(or.getSense(), or.getDisjuncts(), '+');
+                }
+                public void visit(HierNameAtomicBooleanExpression atom) {
+                    sb.append('(');
+                    if (!atom.getSense()) {
+                        sb.append('!');
+                    }
+                    sb.append(castToLib.renameNode(
+                                ((HierName) aliases.getCanonicalKey(
+                                    atom.getName())).getAsString('.')));
+                    sb.append(')');
+                }
+            });
+        return sb.toString();
+    }
+
+    private HierName canonize(final AliasedSet aliases, final String name) {
+        try {
+            return (HierName) aliases.getCanonicalKey(
+                        HierName.makeHierName(name, '.'));
+        } catch (InvalidHierNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Annotates proteus directives */
     public void annotateDirective() {
         final LibertyGroup libraryGroup = getLibraryGroup();
@@ -194,6 +254,7 @@ public class GenerateProteusLib {
             final LibertyGroup cellGroup = entry.getValue();
             try {
                 final CellInterface cell = cfp.getFullyQualifiedCell(cellName);
+                final AliasedSet aliases = cad.convert(cell).getLocalNodes();
                 String cellType = (String)
                     DirectiveUtils.getTopLevelDirective(cell,
                             DirectiveConstants.PROTEUS_CELL_TYPE);
@@ -201,6 +262,25 @@ public class GenerateProteusLib {
                     cellType = "seq_logic";
                 }
                 setSimpleAttribute(cellGroup, "proteus_cell_type", cellType);
+
+                final Map<HierName,BooleanExpressionInterface> funcs =
+                    (Map<HierName,BooleanExpressionInterface>)
+                    DirectiveUtils.canonizeKey(aliases,
+                        DirectiveUtils.getTopLevelDirective(cell,
+                                DirectiveConstants.PROTEUS_LIBERTY_FUNCTION,
+                                DirectiveConstants.NODE_TYPE));
+                CollectionUtils.stream(cellGroup.getGroups())
+                               .filter(g -> g.getGroupType().equals("pin"))
+                               .forEach(g -> {
+                                    HierName canon =
+                                        canonize(aliases, g.getNames().next());
+                                    BooleanExpressionInterface func =
+                                        funcs.get(canon);
+                                    if (func != null) {
+                                        setSimpleAttribute(g, "function",
+                                            getFunction(func, aliases));
+                                    }
+                               });
             } catch (CastSemanticException e) {
                 System.err.println("Can't parse CAST for " + cellName);
             }
