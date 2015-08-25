@@ -5,5 +5,7 @@
 # $Author$
 
 java com.avlsi.tools.synthesis.GenerateLogicLibrary
+java com.avlsi.tools.synthesis.GenerateProteusLib
 $arch/bin/synthesis.sh              synthesis.sh 775
 $arch/bin/generatelib.sh            generatelib.sh 775
+$arch/bin/generate_proteus_lib.sh   generate_proteus_lib.sh 775

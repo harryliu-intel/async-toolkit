@@ -22,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.avlsi.util.functions.BinaryFunction;
 import com.avlsi.util.functions.BinaryPredicate;
@@ -266,6 +268,10 @@ public class CollectionUtils {
 
     public static <T> Iterable<T> iterable(T[]... o) {
         return iterable(new Array2DIterator<T>(o));
+    }
+
+    public static <T> Stream<T> stream(Iterator<T> it) {
+        return StreamSupport.stream(iterable(it).spliterator(), false);
     }
 
     /* This is a method that returns a Collection of Collection. The collection is a partition 

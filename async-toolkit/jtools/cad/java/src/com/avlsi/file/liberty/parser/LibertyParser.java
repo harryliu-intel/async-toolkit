@@ -1,8 +1,8 @@
 package com.avlsi.file.liberty.parser;
 
-import static com.avlsi.file.liberty.parser.libertyConstants.*;
+import java.util.Iterator;
 
-public class LibertyParser {
+public class LibertyParser implements libertyConstants {
     static {
         System.loadLibrary("Liberty");
     }
@@ -15,26 +15,30 @@ public class LibertyParser {
         }
     }
 
-    private final int[] err = { -1 };
-    private void clearErr() {
-        err[0] = SI2DR_NO_ERROR;
-    }
-    private void checkErr(final String func) {
-        if (err[0] != SI2DR_NO_ERROR) {
-            throw new LibertyParserException(err[0], func);
-        }
-    }
-
     public LibertyParser() {
-        clearErr();
+        final int[] err = { SI2DR_NO_ERROR };
         liberty.si2drPIInit(err);
-        checkErr("si2drPIInit");
+        LibertyUtil.checkErr("si2drPIInit", err);
     }
 
     public LibertyParser(final String libName) {
         this();
-        clearErr();
+        final int[] err = { SI2DR_NO_ERROR };
         liberty.si2drReadLibertyFile(libName, err);
-        checkErr("si2drReadLibertyFile");
+        LibertyUtil.checkErr("si2drReadLibertyFile", err);
+    }
+
+    public Iterator<LibertyGroup> getGroups() {
+        final int[] err = { SI2DR_NO_ERROR };
+        final SWIGTYPE_p_void groups = liberty.si2drPIGetGroups(err);
+        LibertyUtil.checkErr("si2drPIGetGroups", err);
+        return new LibertyGroupIterator(groups);
+    }
+
+    public void writeLibertyFile(final String filename,
+                                 final LibertyGroup group) {
+        final int[] err = { SI2DR_NO_ERROR };
+        liberty.si2drWriteLibertyFile(filename, group.getHandle(), err);
+        LibertyUtil.checkErr("si2drWriteLibertyFile", err);
     }
 }
