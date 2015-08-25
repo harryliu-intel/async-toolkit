@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.LinkedList;
@@ -248,7 +248,18 @@ public class GenerateProteusLib {
                            .collect(Collectors.toMap(
                                        g -> libToCast.renameCell(
                                            g.getNames().next()),
-                                       Function.identity()));
+                                       Function.identity(),
+                                       (a, b) -> b,
+                                       LinkedHashMap::new));
+
+        // name the library after the first cell defined
+        if (!cells.isEmpty()) {
+            final String libName = libraryGroup.getNames().next();
+            libraryGroup.deleteName(libName);
+            libraryGroup.addName(
+                    castToLib.renameCell(cells.keySet().iterator().next()));
+        }
+
         for (Map.Entry<String,LibertyGroup> entry : cells.entrySet()) {
             final String cellName = entry.getKey();
             final LibertyGroup cellGroup = entry.getValue();
@@ -300,12 +311,10 @@ public class GenerateProteusLib {
         final CommandLineArgs theArgs =
             new CachingCommandLineArgs(argsWithConfigs);
 
-        final String cellName = theArgs.getArgValue("cell", null);
         final String castPath = theArgs.getArgValue("cast-path", ".");
         final StandardParsingOption spo = new StandardParsingOption(theArgs);
         final CastFileParser cfp = new CastFileParser(
                 new FileSearchPath(castPath), "2", spo);
-        final CellInterface cell = cfp.getFullyQualifiedCellPretty(cellName, 2);
 
         final String inputLib = theArgs.getArgValue("input-lib", null);
         final String outputLib = theArgs.getArgValue("output-lib", "/dev/stdout");
