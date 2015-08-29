@@ -15,7 +15,10 @@ package com.avlsi.util.bool;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Boolean expression that is a conjunction of other Boolean expressions.
@@ -26,24 +29,19 @@ import java.util.Iterator;
 public class OrBooleanExpression extends AbstractBooleanExpression
             implements OrBooleanExpressionInterface {
     private static final boolean debug = true;
-    private final ArrayList terms;
+    private final ArrayList<BooleanExpressionInterface> terms;
     
     /**
      * Constructor.
      **/
-    public OrBooleanExpression(boolean nonNegated, Collection terms) {
+    public OrBooleanExpression(boolean nonNegated,
+                               Collection<BooleanExpressionInterface> terms) {
         super(nonNegated);
         if (debug) {
-            this.terms = new ArrayList();
-            Iterator i=terms.iterator();
-            while (i.hasNext()) {
-                AbstractBooleanExpression e =
-                    (AbstractBooleanExpression) i.next();
-                this.terms.add(e);
-            }
-        } else {
-            this.terms = new ArrayList(terms);
+            terms.forEach(t -> {
+                    assert t instanceof AbstractBooleanExpression; });
         }
+        this.terms = new ArrayList<>(terms);
     }
 
     /**
@@ -71,18 +69,15 @@ public class OrBooleanExpression extends AbstractBooleanExpression
         }
 
         /* at least one sub-term is not a one-level-conjunction */
-        Iterator i=terms.iterator();
-        ArrayList newTerms = new ArrayList();
-        while (i.hasNext()) {
-            AbstractBooleanExpression e =
-                (AbstractBooleanExpression) i.next();
+        ArrayList<BooleanExpressionInterface> newTerms = new ArrayList<>();
+        terms.forEach(e -> {
             if (e instanceof AndBooleanExpressionInterface &&
-                    ((AndBooleanExpressionInterface)e).oneLevelConjunction()) {
+                    ((AndBooleanExpressionInterface) e).oneLevelConjunction()) {
                 newTerms.add(e);
             } else {
                 newTerms.addAll(e.DNFForm().getDisjuncts());
             }
-        }
+        });
 
         return new OrBooleanExpression(true, newTerms);
     }
@@ -93,27 +88,23 @@ public class OrBooleanExpression extends AbstractBooleanExpression
         }
 
         // Convert all sub-expressions to CNFs
-        Iterator i=terms.iterator();
-        ArrayList CNFs = new ArrayList();
-        while (i.hasNext()) {
-            AbstractBooleanExpression e =
-                (AbstractBooleanExpression) i.next();
-            CNFs.add(e.CNFForm());
-        }
+        final List<AndBooleanExpressionInterface> CNFs =
+            terms.stream()
+                 .map(e -> e.CNFForm())
+                 .collect(Collectors.toList());
 
         // Breed them together:
         // To be satisfied, all disjuncts must be satisfied, which
         // means at least one conjunct from each disjunct must be satisfied
         // so we loop through all possible combinations.
-        i=CNFs.iterator();
-        if (!i.hasNext()) {
+        if (CNFs.isEmpty()) {
             // We have no CNFs.  We are an empty or expression, so trivially
             // false.  This means we need to return an and of an empty or.
             // Since we are empty, we can use ourselves.
-            Collection us = new ArrayList();
-            us.add(this);
-            return new AndBooleanExpression(true, us);
+            return new AndBooleanExpression(true, Collections.singleton(this));
         }
+
+        Iterator i=CNFs.iterator();
         Collection conjunctAccumulator = ((AndBooleanExpressionInterface)i.next()).getConjuncts();
         while (i.hasNext()) {
             Collection newConjuncts = ((AndBooleanExpressionInterface)i.next()).getConjuncts();
@@ -136,7 +127,7 @@ public class OrBooleanExpression extends AbstractBooleanExpression
         return new AndBooleanExpression(true, conjunctAccumulator);
     }
 
-    public Collection getDisjuncts() {
+    public Collection<BooleanExpressionInterface> getDisjuncts() {
         return terms;
     }
 
@@ -165,38 +156,20 @@ public class OrBooleanExpression extends AbstractBooleanExpression
     }
 
     public int hashCode() {
-        int result = 0;
-        for (Iterator i = terms.iterator(); i.hasNext(); ) {
-            result += i.next().hashCode();
-        }   
-        return result;
+        return terms.hashCode();
     }
 
     /* Will go away in re-factoring */
     private boolean inDNFForm() {
-        for (Iterator i = terms.iterator(); i.hasNext();) {
-            BooleanExpressionInterface e = (BooleanExpressionInterface)i.next();
-            if (!(e instanceof AndBooleanExpressionInterface) ||
-                    !((AndBooleanExpressionInterface)e).oneLevelConjunction()) {
-                return false;
-            }
-        }
-        return true;
+        return terms.stream()
+                    .allMatch(e -> e instanceof AndBooleanExpressionInterface &&
+                                   ((AndBooleanExpressionInterface) e).
+                                        oneLevelConjunction());
     }
 
 
     public boolean oneLevelDisjunction() {
-        if (!sense) {
-            return false;
-        }
-        for (Iterator i = terms.iterator();i.hasNext();) {
-            BooleanExpressionInterface e =
-               (BooleanExpressionInterface) i.next();
-            if (!(e instanceof AbstractAtomicBooleanExpression)) {
-                return false;
-            }
-        }
-        return true;
+        return getSense() && AbstractBooleanExpression.oneLevel(terms);
     }
 
     public String toString() {

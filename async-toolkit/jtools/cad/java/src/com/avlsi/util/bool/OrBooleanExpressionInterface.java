@@ -23,7 +23,7 @@ public interface OrBooleanExpressionInterface extends BooleanExpressionInterface
     /**
      * @todo denney what does this do?
      **/
-    Collection getDisjuncts();
+    Collection<BooleanExpressionInterface> getDisjuncts();
 
     /**
      * @todo denney what does this do?

@@ -9,6 +9,7 @@
 package com.avlsi.util.bool;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.ArrayList;
 
 /**
@@ -45,19 +46,15 @@ public abstract class AbstractAtomicBooleanExpression
     /**
      * Our disjucts are a list of one: ourself.
      **/
-    public Collection getDisjuncts() {
-        ArrayList rv = new ArrayList();
-        rv.add(this);
-        return rv;
+    public Collection<BooleanExpressionInterface> getDisjuncts() {
+        return Collections.singleton(this);
     }
 
     /**
      * Our conjuncts are a list of one: ourself.
      **/
-    public Collection getConjuncts() {
-        ArrayList rv = new ArrayList();
-        rv.add(this);
-        return rv;
+    public Collection<BooleanExpressionInterface> getConjuncts() {
+        return Collections.singleton(this);
     }
 
     public boolean oneLevelDisjunction() {

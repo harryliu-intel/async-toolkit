@@ -19,6 +19,7 @@ package com.avlsi.util.functions;
  * @author Jesse Rosenstock
  * @version $Name:  $ $Date$
  **/
+@FunctionalInterface
 public interface UnaryAction<A> {
     void execute(A a);
 }

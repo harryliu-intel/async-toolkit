@@ -13,9 +13,9 @@
 
 package com.avlsi.util.bool;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
 /**
  * Base class for boolean expressions.
@@ -68,46 +68,37 @@ public abstract class AbstractBooleanExpression implements BooleanExpressionInte
      *     ie "true" / "false"
      * @param op  the operation, ie '&', '|'
      **/
-    String toUserVisibleString(final Collection terms,
-                               final String unit,
-                               final char op) {
-        final StringBuffer sb = new StringBuffer();
+    String toUserVisibleString(
+            final Collection<BooleanExpressionInterface> terms,
+            final String unit, final char op) {
+        final StringBuilder sb = new StringBuilder();
 
-        if (!sense)
+        if (!getSense()) {
             sb.append("~");
+        }
 
-        final Iterator i = terms.iterator();
-        if (!i.hasNext())
+        if (terms.isEmpty()) {
             sb.append(unit);
-        else {
-            sb.append('(');
-
-            boolean first = true;
-            while (i.hasNext()) {
-                if (first)
-                    first = false;
-                else
-                    sb.append(op);
-
-                sb.append(((BooleanExpressionInterface) i.next())
-                        .toUserVisibleString());
-            }
-
-            sb.append(')');
+        } else {
+            sb.append(terms.stream()
+                           .map(t -> t.toUserVisibleString())
+                           .collect(Collectors.joining(Character.toString(op),
+                                                       "(", ")")));
         }
 
         return sb.toString();
     }
 
 
-    public static Collection negateTerms(Collection terms) {
-            ArrayList rv = new ArrayList(terms.size());
-            Iterator i=terms.iterator();
-            while (i.hasNext()) {
-                AbstractBooleanExpression e = (AbstractBooleanExpression)
-                    i.next();
-                rv.add(e.negated());
-            }
-            return rv;
+    public static Collection<BooleanExpressionInterface>
+    negateTerms(Collection<BooleanExpressionInterface> terms) {
+        return terms.stream()
+                    .map(e -> e.negated())
+                    .collect(Collectors.toList());
+    }
+
+    static boolean oneLevel(final Collection<BooleanExpressionInterface> terms) {
+        return terms.stream()
+                    .allMatch(e -> e instanceof AbstractAtomicBooleanExpression);
     }
 }

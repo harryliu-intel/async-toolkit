@@ -28,7 +28,7 @@ public interface AndBooleanExpressionInterface extends BooleanExpressionInterfac
      * returns a Collection containing all of the sub expressions that
      * this is a conjunct of.
      **/
-    Collection getConjuncts();
+    Collection<BooleanExpressionInterface> getConjuncts();
 
     /**
      * @todo denney what does this do?

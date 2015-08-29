@@ -14,8 +14,11 @@
 package com.avlsi.util.bool;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
@@ -39,19 +42,6 @@ import com.avlsi.util.functions.UnaryFunction;
  **/
 public final class BooleanUtils {
     /**
-     * Returns a collection containing the two
-     * <code>BooleanExpressionInterface</code>s.
-     **/
-    private Collection collect(
-            final BooleanExpressionInterface be1,
-            final BooleanExpressionInterface be2) {
-        final Collection c = new ArrayList();
-        c.add(be1);
-        c.add(be2);
-        return c;
-    }
-
-    /**
      * Returns the logical not of the expression.
      **/
     public BooleanExpressionInterface not(
@@ -63,18 +53,26 @@ public final class BooleanUtils {
      * Returns the logical and of the two expressions.
      **/
     public BooleanExpressionInterface and(
-            final BooleanExpressionInterface be1,
-            final BooleanExpressionInterface be2) {
-        return new AndBooleanExpression(true, collect(be1, be2));
+            final BooleanExpressionInterface... be) {
+        return new AndBooleanExpression(true, Arrays.asList(be));
     }
 
     /**
      * Returns or of the two expressions.
      **/
     public BooleanExpressionInterface or(
+            final BooleanExpressionInterface... be) {
+        return new OrBooleanExpression(true, Arrays.asList(be));
+    }
+
+    /**
+     * Returns xor of the two expressions.
+     **/
+    public BooleanExpressionInterface xor(
             final BooleanExpressionInterface be1,
             final BooleanExpressionInterface be2) {
-        return new OrBooleanExpression(true, collect(be1, be2));
+        return this.or(this.and(be1, this.not(be2)),
+                       this.and(this.not(be1), be2));
     }
 
     /**
@@ -82,11 +80,17 @@ public final class BooleanUtils {
      **/
     public BooleanExpressionInterface literal(final String s) {
         try {
-            return new HierNameAtomicBooleanExpression(true,
-                    HierName.makeHierName( s, '.'));
+            return literal(HierName.makeHierName(s, '.'));
         } catch (InvalidHierNameException e) {
             throw new AssertionFailure(e);
         }
+    }
+
+    /**
+     * Returns literal.
+     **/
+    public BooleanExpressionInterface literal(final HierName n) {
+        return new HierNameAtomicBooleanExpression(true, n);
     }
 
     /**
@@ -111,7 +115,7 @@ public final class BooleanUtils {
     public static BooleanExpressionInterface
         mapBooleanExpressionHierNames(
                 final BooleanExpressionInterface be,
-                final UnaryFunction hierNameMapper) {
+                final UnaryFunction<HierName,HierName> hierNameMapper) {
         return HierNameMappingVisitor.map(be, hierNameMapper);
     }
 
@@ -126,22 +130,19 @@ public final class BooleanUtils {
      **/
     public static void foreachHierName(
             final BooleanExpressionInterface be,
-            final UnaryAction hierNameAction) {
-        HierNameMappingVisitor.map(be, new UnaryFunction() {
-                public Object execute(final Object o) {
-                    hierNameAction.execute(o);
-                    return o;
-                }
-            });
+            final UnaryAction<HierName> hierNameAction) {
+        HierNameMappingVisitor.map(be,
+                x -> { hierNameAction.execute(x); return x; });
     }
 
     private static class HierNameMappingVisitor 
         implements BooleanExpressionVisitorInterface {
 
-        private final UnaryFunction hierNameMapper;
+        private final UnaryFunction<HierName,HierName> hierNameMapper;
         private BooleanExpressionInterface result;
 
-        private HierNameMappingVisitor(final UnaryFunction hierNameMapper) {
+        private HierNameMappingVisitor(
+                final UnaryFunction<HierName,HierName> hierNameMapper) {
             this.hierNameMapper = hierNameMapper;
             this.result = null;
         }
@@ -183,16 +184,21 @@ public final class BooleanUtils {
         public void visit(HierNameAtomicBooleanExpression atomicExpr) {
             result =
                 new HierNameAtomicBooleanExpression(atomicExpr.getSense(),
-                    (HierName) hierNameMapper.execute(atomicExpr.getName()));
+                        hierNameMapper.execute(atomicExpr.getName()));
         }
 
         public static BooleanExpressionInterface map(
                 final BooleanExpressionInterface expr,
-                final UnaryFunction hierNameMapper) {
+                final UnaryFunction<HierName,HierName> hierNameMapper) {
             final HierNameMappingVisitor v =
                 new HierNameMappingVisitor(hierNameMapper);
             expr.visitWith(v);
             return v.getResult();
         }
+    }
+
+    public static boolean evaluate(final BooleanExpressionInterface e,
+                                   final Predicate<HierName> env) {
+        return BooleanExpressionEvaluator.evaluate(e, env);
     }
 }
