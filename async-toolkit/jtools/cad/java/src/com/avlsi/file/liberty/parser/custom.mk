@@ -33,3 +33,9 @@ $(CURR_TARGET_DIR)/$(LIBERTY_PARSER_DIST)/Makefile: $(shell find $(LIBERTY_PARSE
 	rsync -qaz --no-p --chmod=ugo=rwX $(LIBERTY_PARSER_DIR)/ '$(@D)' && \
 	cd '$(@D)' && \
 	./configure CFLAGS=-fPIC
+
+MAKE_ANTLR_RULES_G_FILE_NAME := Function.g
+MAKE_ANTLR_RULES_LEXER_NAME  := FunctionLexer
+MAKE_ANTLR_RULES_PARSER_NAME := FunctionParser
+MAKE_ANTLR_RULES_TOKEN_TYPES_NAME := FunctionLexer
+include $(BUILD_SYSTEM_ROOT)/filetypes/antlrfiles/mkantlrrules.mk

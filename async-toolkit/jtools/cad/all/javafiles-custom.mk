@@ -22,4 +22,5 @@ JAVAFILES_JAVADOC_SOURCE_PATH := $(call CONONICALIZE_PATH, $(CURR_PROJECT_DIR)/.
 JAVAFILES_PARSERS_USED := $(JAVAFILES_PARSERS_USED) \
                           $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/tools/jauto/CastQueryParser) \
                           $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/csp/grammar/MemParser) \
+                          $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/file/liberty/parser/FunctionParser) \
                           $(call CONONICALIZE_PATH, $(CURR_TARGET_DIR)/../java/src/com/avlsi/file/liberty/parser/liberty)
