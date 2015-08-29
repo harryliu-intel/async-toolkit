@@ -51,6 +51,13 @@ public final class ProductionRuleSet {
     }
 
     /**
+     * Adds all production rules from the given set to the end of the list.
+     **/
+    public void addProductionRule(final ProductionRuleSet prs) {
+        productionRuleList.addAll(prs.productionRuleList);
+    }
+
+    /**
      * Ensures that all nodes use only the canonical node name, as defined
      * in <code>aliases</code>.
      **/

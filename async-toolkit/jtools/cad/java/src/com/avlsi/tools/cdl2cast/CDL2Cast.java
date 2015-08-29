@@ -7,6 +7,7 @@ package com.avlsi.tools.cdl2cast;
 
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +23,7 @@ import java.util.ListIterator;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -79,6 +80,13 @@ import com.avlsi.file.cdl.parser.CDLInlineFactory;
 import com.avlsi.file.cdl.parser.CDLScalingFactory;
 import com.avlsi.file.cdl.parser.Template;
 
+import com.avlsi.file.liberty.parser.FunctionParser;
+import com.avlsi.file.liberty.parser.LibertyParser;
+import com.avlsi.file.liberty.parser.LibertyGroup;
+
+import com.avlsi.util.bool.BooleanExpressionInterface;
+import com.avlsi.util.bool.BooleanUtils;
+
 import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.Pair;
 
@@ -99,6 +107,7 @@ import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
 import com.avlsi.layout.gdsII.AssuraBindRulTableEmitterFactory;
 
 import com.avlsi.tools.lvs.NetGraph;
+import com.avlsi.prs.ProductionRule;
 import com.avlsi.prs.ProductionRuleSet;
 import com.avlsi.file.aspice.AspiceFile;
 import com.avlsi.file.cdl.parser.AspiceCellAdapter;
@@ -108,7 +117,8 @@ import com.avlsi.file.cdl.parser.AspiceCellAdapter;
  * of .cast files in a spec tree and digital tree, and a SKILL names.il table
  * directory of mappings from existing layout names -> desired layout names which
  * will be used in gds2hier.il dfII library munging.  It includes prs generated
- * from NetGraph.
+ * from NetGraph, or alternatively, from the function attributes from a Liberty
+ * description.
  **/
 
 public class CDL2Cast {
@@ -142,6 +152,16 @@ public class CDL2Cast {
      * Characters used to delimit an array index in CAST.
      **/
     private static final char[] CAST_BUSBITCHARS = new char[] { '[', ']' };
+
+    /**
+     * Used to create boolean expressions for PRS generation.
+     **/
+    private final BooleanUtils bu = new BooleanUtils();
+
+    /**
+     * Cached map from cell to map of pin to function, using Liberty names.
+     **/
+    private Map<String,Map<String,String>> libertyFunctions;
 
     private static void usage( String m ) {
 
@@ -180,7 +200,8 @@ public class CDL2Cast {
                             "    [--rename-transistor-type=old1:new1,old2:new2,...]\n" +
                             "    [--width-grid=W]\n" +
                             "    [--length-grid=L]\n" +
-                            "    [--bus-bit-chars=\"[]\"]\n"
+                            "    [--bus-bit-chars=\"[]\"]\n" +
+                            "    [--liberty-file=file]\n"
                             );
         if (m != null && m.length() > 0)
             System.err.println ( m );
@@ -497,6 +518,12 @@ public class CDL2Cast {
          **/
         final String busBitChars = theArgs.getArgValue("bus-bit-chars", "[]");
 
+
+        /** Liberty file from which to extract PRS */
+        final Optional<LibertyParser> libertyParser =
+            Optional.ofNullable(theArgs.getArgValue("liberty-file", null))
+                    .map(LibertyParser::new);
+
         if (! pedanticArgs.pedanticOK(false, true)) {
             usage(pedanticArgs.pedanticString());
         }
@@ -796,6 +823,7 @@ public class CDL2Cast {
                     try {
                         cdl2cast.writeTemplates(templates,
                                                 aspicer,
+                                                libertyParser,
                                                 outputCastCellsWriter,
                                                 outputSpecTreeDir,
                                                 outputCastTreeDir,
@@ -833,14 +861,16 @@ public class CDL2Cast {
         return fqcn.getSuffixString();
     }
 
-    public String getCellModule(String fqcn) {
+    private static HierName toHier(final String s) {
         try {
-            final HierName hName =
-                HierName.makeHierName(fqcn,'.');
-            return getCellModule(hName).getCadenceString();
+            return HierName.makeHierName(s, '.');
         } catch(InvalidHierNameException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String getCellModule(String fqcn) {
+        return getCellModule(toHier(fqcn)).getCadenceString();
     }
 
     /**
@@ -872,17 +902,7 @@ public class CDL2Cast {
      **/
     public void writeTemplates( final Map templates,
                                 final AspiceCellAdapter aspicer,
-                                final Writer outputCastCellsWriter,
-                                final File outputSpecTreeDir,
-                                final File outputCastTreeDir,
-                                final String[] refinementParents )
-        throws Exception {
-            writeTemplates(templates, aspicer, outputCastCellsWriter, outputSpecTreeDir,
-                outputCastTreeDir, refinementParents, false, false);
-    }
-
-    public void writeTemplates( final Map templates,
-                                final AspiceCellAdapter aspicer,
+                                final Optional<LibertyParser> libertyParser,
                                 final Writer outputCastCellsWriter,
                                 final File outputSpecTreeDir,
                                 final File outputCastTreeDir,
@@ -1026,6 +1046,7 @@ public class CDL2Cast {
                                     template,
                                     templates,
                                     netgraph,
+                                    libertyParser,
                                     flatten,
                                     writeVerilogRTL,
                                     isLeaf,
@@ -1791,11 +1812,109 @@ public class CDL2Cast {
         iw.write("}\n");
     }
 
+    /** Interpret BitSet as an unsigned integer, and increment it. */
+    private void incrementBitSet(final BitSet s) {
+        final int zeroBit = s.nextClearBit(0);
+        s.clear(0, zeroBit);
+        s.set(zeroBit);
+    }
+
+    /** Create a possibly negated boolean literal */
+    private BooleanExpressionInterface literal(final boolean nonNegated,
+                                               final HierName n) {
+        final BooleanExpressionInterface result = bu.literal(n);
+        return nonNegated ? result : bu.not(result);
+    }
+
+    /** Generate prs from the boolean function that drives target */
+    private void createRules(final BooleanExpressionInterface func,
+                             final HierName target,
+                             final ProductionRuleSet rules) {
+        final Map<HierName,Integer> literals = new TreeMap<>();
+        BooleanUtils.foreachHierName(func,
+                x -> literals.computeIfAbsent(x, y -> literals.size()));
+        final int size = literals.size();
+        final BitSet inputs = new BitSet(size);
+        while (!inputs.get(size)) {
+            final boolean output =
+                BooleanUtils.evaluate(func, x -> inputs.get(literals.get(x)));
+            final BooleanExpressionInterface guard;
+            if (size == 0) {
+                // constant expression with no literals
+                guard = bu.literal(power_nets[0]);
+            } else {
+                guard = bu.and(
+                    literals.entrySet()
+                            .stream()
+                            .map(e -> literal(inputs.get(e.getValue()),
+                                                         e.getKey()))
+                            .toArray(BooleanExpressionInterface[]::new));
+            }
+            final ProductionRule rule = new ProductionRule(
+                    guard, target, null,
+                    output ? ProductionRule.UP : ProductionRule.DOWN,
+                    false, true, false, false, -1, false);
+            rules.addProductionRule(rule);
+            incrementBitSet(inputs);
+        }
+    }
+
+    /** Returns a stream of groups matching the given type. */
+    private Stream<LibertyGroup> findGroup(final Iterator<LibertyGroup> groups,
+                                           final String type) {
+        return CollectionUtils.stream(groups)
+                              .filter(g -> g.getGroupType().equals(type));
+    }
+
+    /** Group types that indicate a cell is sequential */
+    private static Set<String> SEQUENTIAL_GROUP_TYPES =
+        new HashSet<>(Arrays.asList("ff", "ff_bank", "latch", "latch_bank"));
+
+    /** Returns whether the liberty cell is combinational */
+    private boolean isCombinational(final LibertyGroup cell) {
+        return CollectionUtils.stream(cell.getGroups())
+                              .map(g -> g.getGroupType())
+                              .noneMatch(n -> SEQUENTIAL_GROUP_TYPES.contains(n));
+    }
+
+    /** Returns map from cell to map of pin to function. */
+    private Map<String,Map<String,String>>
+    findLibertyFunctions(final LibertyParser libertyParser) {
+        final Map<String,Map<String,String>> funcs = new HashMap<>();
+        findGroup(libertyParser.getGroups(), "library")
+            .flatMap(lib -> findGroup(lib.getGroups(), "cell"))
+            .filter(cell -> isCombinational(cell))
+            .forEach(cell -> {
+                findGroup(cell.getGroups(), "pin")
+                    .forEach(pin -> {
+                        Optional.ofNullable(pin.findAttrByName("function"))
+                                .ifPresent(func -> {
+                                    funcs.computeIfAbsent(cell.getNames().next(),
+                                                          k -> new HashMap<>())
+                                         .put(pin.getNames().next(),
+                                              func.getSimpleAttr()
+                                                  .getStringValue());
+                                });
+                    });
+            });
+        return funcs;
+    }
+
+    /** Returns map from pin to function for the given cell. */
+    private Map<String,String> getLibertyFunction(LibertyParser libertyParser,
+                                                  String cell) {
+        if (libertyFunctions == null) {
+            libertyFunctions = findLibertyFunctions(libertyParser);
+        }
+        return libertyFunctions.getOrDefault(cell, Collections.emptyMap());
+    }
+
     private void writeTemplateToCastTree(final HierName fqcn,
                                          final String[] refinementParents,
                                          final Template template,
                                          final Map templates,
                                          final NetGraph netgraph,
+                                         final Optional<LibertyParser> libertyParser,
                                          final CDLInlineFactory flatten,
                                          final boolean writeVerilogRTL,
                                          final boolean isLeaf,
@@ -1805,6 +1924,8 @@ public class CDL2Cast {
         final IndentWriter iw = new IndentWriter(writer);
 
         final HierName cellModule = getCellModule(fqcn);
+
+        final String cellName = fqcn.getAsString('.');
 
         writeCellHeader(cellModule.getSuffixString(),
                         refinementParents,
@@ -1833,20 +1954,56 @@ public class CDL2Cast {
             iw.write("}\n");
         }
         else if (netgraph!=null) {
-            ProductionRuleSet prs = netgraph.getProductionRuleSet();
+            final ProductionRuleSet prs = new ProductionRuleSet();
+            boolean declareInternal = false;
+            // try to generate PRS from Liberty file if available
+            if (libertyParser.isPresent()) {
+                final String origName = reverseMap.getCellName(cellName);
+                final Map<HierName,HierName> forwardMap = new HashMap<>();
+                reverseMap.getNodeMap(cellName)
+                          .entrySet()
+                          .stream()
+                          .forEach(e -> forwardMap.put(toHier(e.getValue()),
+                                                       toHier(e.getKey())));
+                getLibertyFunction(libertyParser.get(), origName)
+                    .entrySet()
+                    .stream()
+                    .forEach(et -> {
+                        try {
+                            BooleanExpressionInterface func =
+                                BooleanUtils.mapBooleanExpressionHierNames(
+                                    FunctionParser.parse(et.getValue()),
+                                    x -> forwardMap.get(x));
+                            createRules(func,
+                                forwardMap.get(toHier(et.getKey())), prs);
+                        } catch (Exception e) {
+                            System.err.println("Error generating PRS: " + e);
+                        }
+                    });
+            }
+
+            // if PRS cannot be generated from Liberty, try CDL
+            if (prs.size() == 0) {
+                prs.addProductionRule(netgraph.getProductionRuleSet());
+                declareInternal = true;
+            }
+
             if (prs.size()>0) {
                 iw.write("prs {\n");
                 iw.nextLevel();
-                for (Iterator i = netgraph.getNodes().iterator(); i.hasNext(); ) {
-                    NetGraph.NetNode node = (NetGraph.NetNode) i.next();
-                    if (!node.isPort() && !node.isRail() && !node.isStaticizerInverter() &&
-                        (node.isGate() || node.isOutput()))
-                        iw.write("node \"" + node.name + "\";\n");
+                if (declareInternal) {
+                    for (Iterator i = netgraph.getNodes().iterator(); i.hasNext(); ) {
+                        NetGraph.NetNode node = (NetGraph.NetNode) i.next();
+                        if (!node.isPort() && !node.isRail() && !node.isStaticizerInverter() &&
+                            (node.isGate() || node.isOutput()))
+                            iw.write("node \"" + node.name + "\";\n");
+                    }
                 }
                 iw.write(prs.toString());
                 iw.prevLevel();
                 iw.write("}\n");
             }
+
             // write sizable netlist to the CAST
             if (netlistInCast) {
                 iw.write("netlist {\n");
@@ -1883,7 +2040,7 @@ public class CDL2Cast {
         if (writeVerilogRTL) {
             iw.write("verilog {\n");
             iw.nextLevel();
-            writeVerilogBlock("rtl", fqcn.getAsString('.'), template, iw);
+            writeVerilogBlock("rtl", cellName, template, iw);
             iw.prevLevel();
             iw.write("}\n");
         }
