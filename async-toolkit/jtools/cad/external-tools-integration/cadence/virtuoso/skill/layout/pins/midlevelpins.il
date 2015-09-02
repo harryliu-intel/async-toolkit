@@ -53,9 +53,8 @@ defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) )
     BusPinList = MidPinsScanBusPins(CV)
 
     foreach( Term CellTerms
-       unless( (Term~>name == "GND") || (Term~>name == "Vdd")
+       unless( (Term~>name == GNDNetName) || (Term~>name == VddNetName)
             foreach( InstTerm Term~>net~>instTerms
-;             when( InstTerm~>inst~>Protected
                unless( member(Term~>name BusPinList) || member(Term~>name CellPins)
                  InPlacePinFig = MidPinsInheritPin(CV InstTerm~>inst InstTerm~>name Term~>name)
                    when( InPlacePinFig~>LeafInPlacePin
@@ -66,9 +65,8 @@ defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) )
               printf("*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term~>name InstTerm~>name InstTerm~>inst~>name)
              fprintf(Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term~>name InstTerm~>name InstTerm~>inst~>name) 
                        )
-                 CellPins = cons(InPlacePinFig~>net~>name CellPins)
+                   ; CellPins = cons(InPlacePinFig~>net~>name CellPins) ; this line keeps only 1 inplace pin
                     )
-;                ) ; Checks if Instance is protected
               )
        )
      )
@@ -81,30 +79,18 @@ t
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( MidPinsInheritPin (CV Inst TermName PinName)
   let( (
-          InPlacePinFig InPlacePinFigList
+          InPlacePinList
           InPlacePinTrf
+          InPlacePinFig
           TopPinFig
           TopPinNet
           TopPin
-          PinLabel PinShape PinList
+          PinLabel PinShape
         )
 
-;     InPlacePinFigList = dbFindTermByName(Inst->master TermName)~>pins~>fig
-;    hasty fix by stevemc because it wasn't getting all of the subcell pins
-     PinList=dbFindTermByName(Inst->master TermName)~>pins
-     foreach(pin PinList
-       when(pin->fig
-         InPlacePinFigList = list(pin->fig)
-       )
-     )
-
-  when( !InPlacePinFigList
-     InPlacePinFigList = setof(PinShape Inst->master~>shapes PinShape~>pin~>net~>name==TermName)
-   )
-
-  InPlacePinFig = car(setof(PinShape InPlacePinFigList !InValidPinLayer(PinShape)))
-
-   when( InPlacePinFig
+  InPlacePinList = (dbFindTermByName Inst->master TermName)->pins
+  (foreach InPlacePin setof(pin InPlacePinList pin->fig && !InValidPinLayer(pin->fig))
+     InPlacePinFig = InPlacePin->fig
      InPlacePinTrf = dbTransformBBox(InPlacePinFig~>bBox Inst~>transform)
      TopPinFig = dbCreateRect(CV list(car(InPlacePinFig~>lpp) "pin") InPlacePinTrf)
      TopPinNet = dbMakeNet(CV PinName)
@@ -210,7 +196,7 @@ defun( MidPinsCreateLabel (CV PinShape)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun RefreshPinDatabase ( @key (CV (UIGetCellView)) )
   (foreach Term CV->terminals
-           (unless (Term~>name == "GND") || (Term~>name == "Vdd")
+           (unless (Term~>name == GNDNetName) || (Term~>name == VddNetName)
                    (foreach TermPin Term~>pins (when TermPin!=nil (dbDeleteObject TermPin)))
                    )
            )
