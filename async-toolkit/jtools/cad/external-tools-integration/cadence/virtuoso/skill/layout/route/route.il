@@ -19,6 +19,7 @@
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen t)         ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
+        (metalFill t)            ; add metal fill
         )
   (let ()
     ; export
@@ -27,6 +28,7 @@
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
+                          ?metalFill metalFill
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
@@ -57,14 +59,16 @@
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen t)         ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
+        (metalFill t)            ; add metal fill
         )
-  (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR
+  (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR
         PowerGridCellName abstractCV
         Command (statusVerilog t)
         lef_subcells LefCellsList GdsMapFile gds_name
         pout (statusGds t) (statusLef t) 
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
+        excludeCellsFile
         (statusNonDefault t) errorStr placed)
 
     ; load wires.il and set options
@@ -75,6 +79,7 @@
     ; global settings
     CAST_PATH  = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
+    SPAR_DIR = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR") 
     TEMP     = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR     = (strcat TEMP "/route/" CV->cellName)
     MaxHeapSize = (nrGetMaxHeapSize)
@@ -116,7 +121,11 @@
       )
 
     ; find subcells for GDS and LEF
-    lef_subcells = (ListLefSubcells ?CV CV ?includeWiringCellNames (list PowerGridCellName))
+    excludeCellsFile = (strcat SPAR_DIR "/cell_list")
+    (when !softMacro excludeCellsFile=nil) ; BUG: custom flow should get LEF from SPAR_DIR too
+    lef_subcells = (ListLefSubcells ?CV CV
+                                    ?includeWiringCellNames (list PowerGridCellName)
+                                    ?excludeCellsFile excludeCellsFile)
 
     ; export GDS
     (when doGds
@@ -260,8 +269,7 @@
 (defun ListLefSubcells
   (@key (CV (geGetEditCellView))     ; specify CellView
         (includeWiringCellNames nil) ; include specified wiring cells
-        (excludeCellsFile            ; exclude these cells too
-         (strcat (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR") "/cell_list"))
+        (excludeCellsFile nil)       ; exclude these cells too
         )
   (let (fin cellName excluded subcells)
     excluded=(makeTable "excluded" nil)
@@ -318,6 +326,7 @@
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
     (fprintf file "--task=rdt_route\n")
+    (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (close file)
     )
   )
