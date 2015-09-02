@@ -22,13 +22,14 @@
 
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
                                 (cutaroundpins t)
-                                (topMetal TopMetal))
+                                (topMetal nil))
  (let (abstractCV name net fig term pinlayer)
 
-  ; load wires.il and set topMetal
-  (LoadWires ?CV CV)
-  (unless topMetal topMetal = bundled_top_layer)
+  ; set topMetal
+  (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
+  (unless topMetal (LoadWires ?CV CV) topMetal = bundled_top_layer)
 
+  ; create view
   abstractCV=(dbOpenCellViewByType CV->libName CV->cellName "abstract" "maskLayout" "w")
   (when !abstractCV
     (printf "Couldn't edit abstract view for %s\n" CV->cellName)
