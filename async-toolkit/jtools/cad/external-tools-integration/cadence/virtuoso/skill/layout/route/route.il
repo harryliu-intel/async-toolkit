@@ -481,8 +481,13 @@
 
 ; Convert ICC's fill nets to fill purpose
 (defun ConvertFill (@key (CV (geGetEditCellView)))
-  (foreach fig (dbFindNetByName CV "floatiss_")->figs
-           fig->lpp = (list (car fig->lpp) "fill")
-           )
-  t
+  (let (pcre)
+    pcre = (pcreCompile "^syn_generated_")
+    (foreach fig CV->shapes
+             (when fig->net!=nil && (fig->net->name=="floatiss_" || (pcreExecute pcre fig->net->name))
+                   fig->lpp = (list (car fig->lpp) "fill")
+                   )
+             )
+    )
+    t
   )
