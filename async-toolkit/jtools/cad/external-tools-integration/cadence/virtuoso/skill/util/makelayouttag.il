@@ -51,7 +51,7 @@
 
     ; top-metal grid
     (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
-    (unless topMetal (error "topMetal not specified in command-line or cell property"))
+    (unless topMetal topMetal = 2)
 
     align = gridAlignment[topMetal]
     x0 = (floor   x0box/(round (car  align)/MfgGrid))
