@@ -76,45 +76,49 @@ defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) )
 t
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( MidPinsInheritPin (CV Inst TermName PinName)
-  let( (
-          InPlacePinList
-          InPlacePinTrf
-          InPlacePinFig
-          TopPinFig
-          TopPinNet
-          TopPin
-          PinLabel PinShape
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Promote pins from a subcell to inplace pins for a given terminal.
+; All pins on the top metal layer used by them get promoted.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MidPinsInheritPin (CV Inst TermName PinName)
+  (let (InPlacePinList
+        transform
+        fig
+        TopPinFig
+        TopPinNet
+        TopPin
+        PinLabel PinShape
+        topMetal
         )
 
-  InPlacePinList = (dbFindTermByName Inst->master TermName)->pins
-  (foreach InPlacePin setof(pin InPlacePinList pin->fig && !InValidPinLayer(pin->fig))
-     InPlacePinFig = InPlacePin->fig
-     InPlacePinTrf = dbTransformBBox(InPlacePinFig~>bBox Inst~>transform)
-     TopPinFig = dbCreateRect(CV list(car(InPlacePinFig~>lpp) "pin") InPlacePinTrf)
-     TopPinNet = dbMakeNet(CV PinName)
-     TopPin = dbCreatePin(TopPinNet TopPinFig)
-     dbSetq( TopPin ( list "top" "bottom" "left" "right" ) accessDir )
-     PinLabel = MidPinsCreateLabel(CV TopPinFig)
+    ; candidate pins with figures attached
+    InPlacePinList = (setof x (dbFindTermByName Inst->master TermName)->pins x->fig)
 
-     PinLabel~>parent = TopPinFig
-
-     if( (InPlacePinFig~>PinType == "BusScript") || (InPlacePinFig~>BusPin == "TRUE")
-         then
-           MidPinsSetPinType(TopPinFig "bus")
-         else
-           MidPinsSetPinType(TopPinFig "leaf")
-        )
+    ; limit the candidates to those on the top metal layer among the set
+    topMetal = -1
+    (foreach pin InPlacePinList
+      (for m 0 TopMetal (when pin->fig->layerName==Metal[m] topMetal=(max topMetal m)))
       )
-TopPinFig
-  )
-)
+    InPlacePinList = (setof x InPlacePinList x->fig->layerName==Metal[topMetal])
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( InValidPinLayer (PinShape)
-  (car(PinShape~>lpp) == "CO" || car(PinShape~>lpp) == "PO" || car(PinShape~>lpp) == "M1")
-)
+    ; draw inplace pins
+    (foreach pin InPlacePinList
+      fig = pin->fig
+      transform = (dbTransformBBox fig->bBox Inst->transform)
+      TopPinFig = (dbCreateRect CV (list (car fig->lpp) "pin") transform)
+      TopPinNet = (dbMakeNet CV PinName)
+      TopPin    = (dbCreatePin TopPinNet TopPinFig)
+      TopPin->accessDir = (list "top" "bottom" "left" "right" )
+      PinLabel = (MidPinsCreateLabel CV TopPinFig)
+      PinLabel->parent = TopPinFig
+      (if fig->PinType=="BusScript" || fig->BusPin=="TRUE"
+          (MidPinsSetPinType TopPinFig "bus")
+          (MidPinsSetPinType TopPinFig "leaf")
+          )
+      )
+    TopPinFig
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 defun( MidPinsSetPinType (PinShape InPlacePinType)
