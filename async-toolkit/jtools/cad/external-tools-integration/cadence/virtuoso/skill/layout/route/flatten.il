@@ -177,6 +177,10 @@ useICV = nil
     inst = (dbFindAnyInstByName CV "pg")
     (when inst (dbDeleteObject inst))
 
+    ; clear power grid cell
+    powerCV = (dbOpenCellViewByType CV->libName powerCellName powerCellView "maskLayout" "w")
+    (unless powerCV (error "Can't write %s\n " powerCellName))
+
     ; get prBoundary boundary shapes
     (unless CV->prBoundary->points (error "Bad prBoundary"))
     prb = (dbCreatePolygon CV (list "prBoundary" "boundary") CV->prBoundary->points)
@@ -217,7 +221,6 @@ useICV = nil
     (when !useAssura
       (let (power2 power4 power6 power8 temp3 temp7)
         ; BUG: temporary hack to avoid Assura layer processing
-        powerCV = (dbOpenCellViewByType CV->libName powerCellName powerCellView "maskLayout" "w")
         (FlattenBlockPurpose CV powerCV)
 
         ; power grid blockages (BUG: ignores power blockages on odd layers)
