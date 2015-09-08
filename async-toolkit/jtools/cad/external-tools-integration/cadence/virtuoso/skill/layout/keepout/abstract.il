@@ -178,20 +178,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utilities ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; turn blockage from layers to objects
+; copy MetalKeepout and ViaKeepout to blockage objects
 (defun CopyKeepoutToBlockage (cv)
-  (let (points layer)
+  (let (points valid)
     (foreach shape cv->shapes
-      (for m 0 TopMetal
-           layer = MetalKeepout[m]
-           (when shape->lpp==layer
-             points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
-                            (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
-                            (t shape->points)
-                            )
-             (when points (dbCreateLayerBlockage cv (car layer) "routing" points))
-             )
-           )
+      valid=nil
+      (for m 0 TopMetal   valid = valid || shape->lpp==MetalKeepout[m])
+      (for m 0 TopMetal-1 valid = valid || shape->lpp==ViaKeepout[m])
+      (when valid
+        points = (cond (shape->objType=="path" (dbConvertPathToPolygon shape)->points)
+                       (shape->objType=="rect" (RectGetPolygonPoints shape->bBox))
+                       (t shape->points)
+                       )
+        (when points (dbCreateLayerBlockage cv shape->layerName "routing" points))
+        )
       )
     )
   t
