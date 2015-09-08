@@ -8,7 +8,8 @@
 ; Import a GDS file and rename all subcells to CAST conventions
 (defun ImportGDS (gdsFileName libName cellName
                               @key
-                              (subtype 0)
+                              (prefix (strcat libName "."))
+                              (suffix ".0")
                               (action importPostProcessAction)
                               )
   (let (PDK_DIR cmd status CV)
@@ -30,10 +31,8 @@
     ; copy cells to destination library
     CV = (dbOpenCellViewByType "import_gds_temp" cellName "layout")
     (unless CV (error "unable to open import_gds_temp %s layout\n" cellName))
-    (CopyToNewLib libName ?CV CV
-                  ?cellNamePrefix (strcat libName ".")
-                  ?cellNameSuffix (strcat "." (sprintf nil "%d" subtype)))
-    cellName = (sprintf nil "%s.%s.%d" libName cellName subtype)
+    (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix)
+    cellName = (sprintf nil "%s%s%s" prefix cellName suffix)
 
     ; delete import_gds_temp library
     (ddDeleteObj (ddGetObj "import_gds_temp"))
@@ -87,22 +86,22 @@ importPostProcessAction =
 ; cells like vias.  Adds optional prefix and suffix to cellNames.
 (defun CopyToNewLib (libName @key (CV (geGetEditCellView))
                              (visited (makeTable "visited" nil))
-                             (cellNamePrefix "")
-                             (cellNameSuffix "")
+                             (prefix "")
+                             (suffix "")
                              )
   (let (newCV)
     newCV = visited[CV]
     (unless newCV
       (printf "CopyToNewLib: %s %s %s\n" CV->libName CV->cellName CV->viewName)
-      newCV = (betterCopyCellView CV libName (strcat cellNamePrefix CV->cellName cellNameSuffix)
+      newCV = (betterCopyCellView CV libName (strcat prefix CV->cellName suffix)
                                   CV->viewName nil nil t)
       (when newCV
         visited[CV] = newCV
         (foreach inst (setof x newCV->instances x->libName==CV->libName)
                  inst->master = (CopyToNewLib libName
                                               ?CV inst->master ?visited visited
-                                              ?cellNamePrefix cellNamePrefix
-                                              ?cellNameSuffix cellNameSuffix)
+                                              ?prefix prefix
+                                              ?suffix suffix)
                  )
         (dbSave newCV)
         )
