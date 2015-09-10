@@ -481,13 +481,22 @@
 
 ; Convert ICC's fill nets to fill purpose
 (defun ConvertFill (@key (CV (geGetEditCellView)))
-  (let (pcre)
+  (let (pcre fill n)
+    n=0
+    fill = (makeTable "fill" nil)
     pcre = (pcreCompile "^syn_generated_")
     (foreach fig CV->shapes
              (when fig->net!=nil && (fig->net->name=="floatiss_" || (pcreExecute pcre fig->net->name))
                    fig->lpp = (list (car fig->lpp) "fill")
+                   ; BUG: why are there so many duplicates in routed DEF?
+                   (when fig->objType=="rect"
+                         (cond (fill[(list fig->lpp fig->bBox)] (dbDeleteObject fig) n++)
+                               (t fill[(list fig->lpp fig->bBox)]=t)
+                               )
+                         )
                    )
              )
+    (when n>0 (printf "WARNING: %d duplicate fill rectangles deleted!\n" n))
     )
     t
   )
