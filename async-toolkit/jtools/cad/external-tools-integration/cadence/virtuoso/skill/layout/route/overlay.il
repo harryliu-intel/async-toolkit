@@ -99,16 +99,28 @@
     )
   )
 
-; copy block purpose shapes from subcells
-(defun RecursiveFlattenLPP (CV dstCV lpp @key (transform (list 0:0 "R0")))
-  (foreach shape (setof s CV->shapes s->lpp==lpp)
-           (dbCopyShape shape dstCV transform)
-           )
-  (foreach inst CV->instances
-           inst_trans = (dbConcatTransform transform (dbGetInstTransform inst))
-           (RecursiveFlattenLPP inst->master dstCV lpp
-                                ?transform (dbConcatTransform transform (dbGetInstTransform inst))
-                                )
-           )
-  t
+; Copy desired LPP shapes from subcells.  Skip CV's discovered not to have that LPP.
+(defun RecursiveFlattenLPP (CV dstCV lpp
+                               @key (transform (list 0:0 "R0"))
+                                    (emptyCells (makeTable "emptyCells" nil)))
+  (let (e empty)
+    empty = t
+    (foreach lpps (setof x CV->lpps x->layerName==(car lpp) && x->purpose==(cadr lpp))
+             (foreach shape lpps->shapes
+                      (dbCopyShape shape dstCV transform)
+                      empty = nil
+                      )
+             )
+    (foreach inst CV->instances
+             (unless emptyCells[inst->master]
+               e = (RecursiveFlattenLPP inst->master dstCV lpp
+                                        ?transform (dbConcatTransform (dbGetInstTransform inst) transform)
+                                        ?emptyCells emptyCells
+                                        )
+               empty = (and e empty)
+               )
+             )
+    (when empty emptyCells[CV]=t)
+    empty
+    )
   )
