@@ -817,6 +817,7 @@ subcircuitEnd
 
     import com.avlsi.file.cdl.parser.CDLFactoryInterface;
     import com.avlsi.file.cdl.parser.CDLLexer.InfoToken;
+    import com.avlsi.file.cdl.parser.CDLLexer.NameToken;
     import com.avlsi.file.common.HierName;
     import com.avlsi.file.common.InvalidHierNameException;
     import com.avlsi.cast.impl.ArrayValue;
@@ -936,6 +937,35 @@ options {
             }
         }
         return clean;
+    }
+
+    /**
+     * Parse [mname] ( val | key=val ).  Added $.MODEL=mname to
+     * <code>binding</code> if model name exists; returns val.
+     **/
+    private InfoToken parseModelValue(final Environment env,
+                                      final List<InfoToken> param,
+                                      final Map<String,InfoToken> binding,
+                                      final String key) {
+        InfoToken val = null;
+        int currParam = 0;
+        if (binding.containsKey(key)) {
+            val = binding.remove(key);
+        } else if (binding.containsKey(key.toUpperCase())) {
+            val = binding.remove(key.toUpperCase());
+        }
+        if (param.size() > currParam) {
+            InfoToken token = param.get(currParam++);
+            if (val != null ||
+                param.size() > currParam ||
+                token instanceof NameToken && token.getValue(env) == null) {
+                binding.put("$.MODEL", token);
+            } else {
+                val = token;
+            }
+        }
+        if (val == null && param.size() > currParam) val = param.get(currParam++);
+        return val;
     }
 }
 
@@ -1085,16 +1115,8 @@ resistor[Environment env,  CDLFactoryInterface factory]
         Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( r:RESISTOR n1:NODE n2:NODE parameterList[ env, param, binding ] ) {
-            // Rxxxxxxx n1 n2 ( resistance | R=resistance )
-            InfoToken res = null;
-            int currParam = 0;
-            if (binding.containsKey("r")) res = binding.remove("r");
-            else if (binding.containsKey("R")) res = binding.remove("R");
-            else if (param.size() > currParam) res = param.get(currParam++);
-            if (param.size() > currParam ) {
-                InfoToken token = param.get(currParam);
-                binding.put("$.MODEL", token);
-            }
+            // Rxxxxxxx n1 n2 [mname] ( resistance | R=resistance )
+            InfoToken res = parseModelValue(env, param, binding, "r");
             if (res == null) {
                 throw new RecognitionException("No resistance specified for resistor " + r.getText() + "!");
             } else {
@@ -1114,11 +1136,8 @@ capacitor[Environment env,  CDLFactoryInterface factory]
     }
     :   #( c:CAPACITOR npos:NODE nneg:NODE
            parameterList[ env, param, binding ] ) {
-            // Cxxxxxx n+ n- capacitance
-            InfoToken cap = null;
-            if (param.size() >= 1) {
-                cap = param.get(0);
-            }
+            // Cxxxxxx n+ n- [mname] ( capacitance | C=capacitance )
+            InfoToken cap = parseModelValue(env, param, binding, "c");
             if (cap == null) {
                 throw new RecognitionException("No capacitance specified for capacitor " + c.getText() + "!");
             } else {
@@ -1193,7 +1212,7 @@ diode[Environment env,  CDLFactoryInterface factory]
     }
     :   #( d:DIODE dpos:NODE dneg:NODE dtype:NODE
            parameterList[ env, param, binding ] ) {
-            // Dxxxxxxx type n1 n2 ( area | area=area )
+            // Dxxxxxxx n1 n2 type ( area | area=area )
             InfoToken area = null;
             if (binding.containsKey("area")) area = binding.remove("area");
             else if (binding.containsKey("AREA")) area = binding.remove("AREA");
