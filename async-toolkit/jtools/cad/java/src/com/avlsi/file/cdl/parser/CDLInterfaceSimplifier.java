@@ -143,6 +143,8 @@ public abstract class CDLInterfaceSimplifier implements CDLFactoryInterface, CDL
 
     public static double getValue(final CDLLexer.InfoToken val,
                                   final Environment env) {
+        if (val == null) return Double.NaN;
+
         final Double result = val.getValue(env);
         if (result == null) {
             throw new RuntimeException("Cannot evaluate floating point expression: " + val);

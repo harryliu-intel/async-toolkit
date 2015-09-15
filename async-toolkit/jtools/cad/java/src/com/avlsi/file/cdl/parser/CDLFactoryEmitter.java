@@ -10,8 +10,10 @@ package com.avlsi.file.cdl.parser;
 import java.io.PrintWriter;
 import java.io.Writer;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import antlr.Token;
 
@@ -63,6 +65,11 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
      **/
     private final double widthGrid;
     private final double lengthGrid;
+
+    /**
+     * Key used to identify model name for resistors and capacitors.
+     **/
+    private static final String MODEL_KEY = "$.MODEL";
 
     public CDLFactoryEmitter(final Writer w) {
         this(w, true);
@@ -164,13 +171,19 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         return filter0 && val == 0;
     }
 
-    private void keypair(Map parameters, Environment env) {
+    private void keypair(Map parameters, Environment env, Set exclude) {
         for (Iterator i = parameters.entrySet().iterator(); i.hasNext(); ) {
             Map.Entry entry = (Map.Entry) i.next();
             String key = (String) entry.getKey();
-            Token val = (Token) entry.getValue();
-            printws(key + "=" + getTokenVal(val, env));
+            if (!exclude.contains(key)) {
+                Token val = (Token) entry.getValue();
+                printws(key + "=" + getTokenVal(val, env));
+            }
         }
+    }
+
+    private void keypair(Map parameters, Environment env) {
+        keypair(parameters, env, Collections.emptySet());
     }
 
     private String getTokenVal(Token token, Environment env) {
@@ -232,8 +245,10 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         print("R" + name.getCadenceString());
         printws(stringNode(n1));
         printws(stringNode(n2));
-        printws(getTokenVal(val, env));
-        keypair(parameters, env);
+        final Token mname = (Token) parameters.get(MODEL_KEY);
+        if (mname != null) printws(stringToken(mname));
+        if (val != null) printws(getTokenVal(val, env));
+        keypair(parameters, env, Collections.singleton(MODEL_KEY));
         println();
     }
 
@@ -244,8 +259,10 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         print("C" + name.getCadenceString());
         printws(stringNode(npos));
         printws(stringNode(nneg));
+        final Token mname = (Token) parameters.get(MODEL_KEY);
+        if (mname != null) printws(stringToken(mname));
         printws(getTokenVal(val, env));
-        keypair(parameters, env);
+        keypair(parameters, env, Collections.singleton(MODEL_KEY));
         println();
     }
 

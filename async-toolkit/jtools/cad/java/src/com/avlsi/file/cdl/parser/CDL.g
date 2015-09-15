@@ -1117,15 +1117,11 @@ resistor[Environment env,  CDLFactoryInterface factory]
     :   #( r:RESISTOR n1:NODE n2:NODE parameterList[ env, param, binding ] ) {
             // Rxxxxxxx n1 n2 [mname] ( resistance | R=resistance )
             InfoToken res = parseModelValue(env, param, binding, "r");
-            if (res == null) {
-                throw new RecognitionException("No resistance specified for resistor " + r.getText() + "!");
-            } else {
-                factory.makeResistor(toHier(#r.getToken(), env),
-                                     toHier(#n1.getToken(), env),
-                                     toHier(#n2.getToken(), env),
-                                     res,
-                                     binding, env);
-            }
+            factory.makeResistor(toHier(#r.getToken(), env),
+                                 toHier(#n1.getToken(), env),
+                                 toHier(#n2.getToken(), env),
+                                 res,
+                                 binding, env);
         }
     ;
 

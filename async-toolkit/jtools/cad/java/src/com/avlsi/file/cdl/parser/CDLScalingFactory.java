@@ -93,12 +93,16 @@ public final class CDLScalingFactory implements CDLFactoryInterface {
         
     }
     
+    private CDLLexer.InfoToken scale(CDLLexer.InfoToken val, double factor) {
+        return val == null ? null : new ScalingToken(val, factor);
+    }
+
     public void makeResistor(HierName name, HierName n1, HierName n2,
                              CDLLexer.InfoToken val, Map parameters, Environment env) {
         mChained.makeResistor( name,
                                n1,
                                n2,
-                               new ScalingToken( val, mResistanceScaleFactor ),
+                               scale( val, mResistanceScaleFactor ),
                                parameters,
                                env );
     }
@@ -109,7 +113,7 @@ public final class CDLScalingFactory implements CDLFactoryInterface {
         mChained.makeCapacitor( name,
                                 npos,
                                 nneg,
-                                new ScalingToken( val, mCapacitanceScaleFactor ),
+                                scale( val, mCapacitanceScaleFactor ),
                                 parameters,
                                 env );
     }
@@ -124,8 +128,8 @@ public final class CDLScalingFactory implements CDLFactoryInterface {
                                  nd,
                                  ng,
                                  nb,
-                                 new ScalingToken( w, mMosWidthScaleFactor ),
-                                 new ScalingToken( l, mMosLengthScaleFactor ),
+                                 scale( w, mMosWidthScaleFactor ),
+                                 scale( l, mMosLengthScaleFactor ),
                                  parameters,
                                  env );
     }
@@ -137,7 +141,7 @@ public final class CDLScalingFactory implements CDLFactoryInterface {
                             type,
                             npos,
                             nneg,
-                            new ScalingToken( area, mDiodeAreaScaleFactor ),
+                            scale( area, mDiodeAreaScaleFactor ),
                             parameters,
                             env );
                                               
@@ -149,7 +153,7 @@ public final class CDLScalingFactory implements CDLFactoryInterface {
         mChained.makeInductor( name,
                                npos,
                                nneg,
-                               new ScalingToken( val, mInductanceScaleFactor ),
+                               scale( val, mInductanceScaleFactor ),
                                parameters,
                                env );
     }
@@ -162,7 +166,7 @@ public final class CDLScalingFactory implements CDLFactoryInterface {
                              nc,
                              nb,
                              ne,
-                             new ScalingToken( area, mBipolarAreaScaleFactor ),
+                             scale( area, mBipolarAreaScaleFactor ),
                              parameters,
                              env );
                                               
