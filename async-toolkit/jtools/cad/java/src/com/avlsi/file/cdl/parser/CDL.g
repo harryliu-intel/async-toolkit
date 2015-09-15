@@ -816,6 +816,7 @@ subcircuitEnd
     import java.util.Stack;
 
     import com.avlsi.file.cdl.parser.CDLFactoryInterface;
+    import com.avlsi.file.cdl.parser.CDLLexer.NameToken;
     import com.avlsi.file.common.HierName;
     import com.avlsi.file.common.InvalidHierNameException;
     import com.avlsi.cast.impl.ArrayValue;
@@ -1034,7 +1035,7 @@ subcircuitEnd[ Environment env, CDLFactoryInterface factory ]
     ;
 
 
-parameterList [ Environment env, List param, Map binding ]
+parameterList [ Environment env, List<NameToken> param, Map<String,NameToken> binding ]
     :   #( PARAMETERS ( parameter[ env, param, binding ] )+ )
     ;
 
@@ -1042,12 +1043,12 @@ deviceList [ Environment env, CDLFactoryInterface factory ]
     :   #( DEVICES ( device[ env, factory ] )* )
     ;
 
-parameter[ Environment env, List param, Map binding ]
+parameter[ Environment env, List<NameToken> param, Map<String,NameToken> binding ]
     :   #( NOEQUAL node:NODE ) {
-            param.add(node.getToken());
+            param.add((NameToken) node.getToken());
         }
     |   #( EQUAL key:NODE val:NODE ) {
-            binding.put(key.getToken().getText(), val.getToken());
+            binding.put(key.getToken().getText(), (NameToken) val.getToken());
         }
     ;
       
@@ -1092,8 +1093,8 @@ device[ Environment env, CDLFactoryInterface factory ]
 
 resistor[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( r:RESISTOR n1:NODE n2:NODE parameterList[ env, param, binding ] ) {
             // Rxxxxxxx n1 n2 ( resistance | R=resistance )
@@ -1103,7 +1104,7 @@ resistor[Environment env,  CDLFactoryInterface factory]
             else if (binding.containsKey("R")) res = binding.remove("R");
             else if (param.size() > currParam) res = param.get(currParam++);
             if (param.size() > currParam ) {
-                CDLLexer.NameToken token = (CDLLexer.NameToken)param.get(currParam);
+                NameToken token = param.get(currParam);
                 binding.put("$.MODEL", token);
             }
             if (res == null) {
@@ -1120,8 +1121,8 @@ resistor[Environment env,  CDLFactoryInterface factory]
 
 capacitor[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( c:CAPACITOR npos:NODE nneg:NODE
            parameterList[ env, param, binding ] ) {
@@ -1144,8 +1145,8 @@ capacitor[Environment env,  CDLFactoryInterface factory]
 
 transistor[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( t:TRANSISTOR nd:NODE ng:NODE ns:NODE nb:NODE mname:NODE  
             parameterList[ env, param, binding ] ) {
@@ -1175,8 +1176,8 @@ transistor[Environment env,  CDLFactoryInterface factory]
 
 inductor[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( l0:INDUCTOR lpos:NODE lneg:NODE
            parameterList[ env, param, binding ] ) {
@@ -1199,8 +1200,8 @@ inductor[Environment env,  CDLFactoryInterface factory]
 
 diode[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( d:DIODE dpos:NODE dneg:NODE dtype:NODE
            parameterList[ env, param, binding ] ) {
@@ -1224,8 +1225,8 @@ diode[Environment env,  CDLFactoryInterface factory]
 
 bipolar[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( q:BIPOLAR nc:NODE nb:NODE ne:NODE mname:NODE
            parameterList[ env, param, binding ] ) {
@@ -1250,8 +1251,8 @@ bipolar[Environment env,  CDLFactoryInterface factory]
 
 subcell[Environment env,  CDLFactoryInterface factory]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<NameToken> param = new ArrayList<>();
+        Map<String,NameToken> binding = new LinkedHashMap<>();
     }
     :   #( call:SUBCELL parameterList[ env, param, binding ] ) {
             final int slash = findList(param, "/");
