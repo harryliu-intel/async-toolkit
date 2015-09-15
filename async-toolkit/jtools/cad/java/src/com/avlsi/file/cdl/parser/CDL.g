@@ -816,7 +816,7 @@ subcircuitEnd
     import java.util.Stack;
 
     import com.avlsi.file.cdl.parser.CDLFactoryInterface;
-    import com.avlsi.file.cdl.parser.CDLLexer.NameToken;
+    import com.avlsi.file.cdl.parser.CDLLexer.InfoToken;
     import com.avlsi.file.common.HierName;
     import com.avlsi.file.common.InvalidHierNameException;
     import com.avlsi.cast.impl.ArrayValue;
@@ -857,30 +857,20 @@ options {
     }
 
     private String toStr(final Token t, Environment env) {
-        return ((CDLLexer.InfoToken) t).getText(env);
+        return ((InfoToken) t).getText(env);
     }
 
     private HierName toHier(final Token t, Environment env) {
         return makeHierName(toStr(t, env), '.');
     }
 
-    private Double toDouble(final Environment env, final Object token)
+    private Double toDouble(final Environment env, final InfoToken token)
     throws RecognitionException {
-        final Double ret = ((CDLLexer.InfoToken) token).getValue(env);
+        final Double ret = token.getValue(env);
         if (ret == null) {
             throw new RecognitionException("Expecting an numerical value, found " + token + "!");
         }
         return ret;
-    }
-
-    private Double bind(final Environment env, final Double val,
-                        final Map binding, final String key)
-    throws RecognitionException {
-        if (val == null && binding.containsKey(key)) {
-            return toDouble(env, binding.get(key));
-        } else {
-            return val;
-        }
     }
 
     private int findList(final List l, final String text) {
@@ -892,10 +882,10 @@ options {
         return -1;
     }
 
-    private void bindParams(final Map binding, final Environment env) throws RecognitionException {
-        for (Iterator i = binding.entrySet().iterator(); i.hasNext(); ) {
-            final Map.Entry entry = (Map.Entry) i.next();
-            final Symbol key = Symbol.create((String) entry.getKey());
+    private void bindParams(final Map<String,InfoToken> binding,
+                            final Environment env) throws RecognitionException {
+        for (Map.Entry<String,InfoToken> entry : binding.entrySet()) {
+            final Symbol key = Symbol.create(entry.getKey());
             final Double val = toDouble(env, entry.getValue());
             if (val == null) {
                 throw new RecognitionException("Invalid value specified for parameter " + key.getString() + "!");
@@ -969,8 +959,8 @@ goal [ Environment env, CDLFactoryInterface factory ]
 
 param [ Environment env ]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( PARAM parameterList[ env, param, binding ] {
             bindParams(binding, env);
@@ -979,8 +969,6 @@ param [ Environment env ]
 
 subcircuit [ Environment env, CDLFactoryInterface factory ]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
         Environment localEnv = new BlockEnvironment(env);
     }
     :   subcircuitStart[ localEnv, factory ]
@@ -990,18 +978,18 @@ subcircuit [ Environment env, CDLFactoryInterface factory ]
 
 subcircuitStart[ Environment env, CDLFactoryInterface factory ]
     {
-        List param = new ArrayList();
-        Map binding = new LinkedHashMap();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( SUBCKT parameterList[ env, param, binding ] )  {
-            List input = new ArrayList(), output = new ArrayList();
+            List<String> input = new ArrayList<>(), output = new ArrayList<>();
             String subName = null;
             if (param.size() >= 1) {
-                Iterator i = param.iterator();
-                subName = ((CDLLexer.InfoToken) i.next()).getText(env);
-                List current = input;
+                Iterator<InfoToken> i = param.iterator();
+                subName = i.next().getText(env);
+                List<String> current = input;
                 while (i.hasNext()) {
-                    CDLLexer.InfoToken t = (CDLLexer.InfoToken) i.next();
+                    InfoToken t = i.next();
                     String ttext = t.getText(env);
                     if (ttext.equals("/")) {
                         if (current == input) {
@@ -1019,8 +1007,8 @@ subcircuitStart[ Environment env, CDLFactoryInterface factory ]
             bindParams(binding, env);
             subNameStack.push(subName);
             factory.beginSubcircuit(subName,
-                                    (String[]) input.toArray(new String[0]),
-                                    (String[]) output.toArray(new String[0]),
+                                    input.toArray(new String[0]),
+                                    output.toArray(new String[0]),
                                     binding,
                                     env);
         }
@@ -1035,7 +1023,7 @@ subcircuitEnd[ Environment env, CDLFactoryInterface factory ]
     ;
 
 
-parameterList [ Environment env, List<NameToken> param, Map<String,NameToken> binding ]
+parameterList [ Environment env, List<InfoToken> param, Map<String,InfoToken> binding ]
     :   #( PARAMETERS ( parameter[ env, param, binding ] )+ )
     ;
 
@@ -1043,12 +1031,12 @@ deviceList [ Environment env, CDLFactoryInterface factory ]
     :   #( DEVICES ( device[ env, factory ] )* )
     ;
 
-parameter[ Environment env, List<NameToken> param, Map<String,NameToken> binding ]
+parameter[ Environment env, List<InfoToken> param, Map<String,InfoToken> binding ]
     :   #( NOEQUAL node:NODE ) {
-            param.add((NameToken) node.getToken());
+            param.add((InfoToken) node.getToken());
         }
     |   #( EQUAL key:NODE val:NODE ) {
-            binding.put(key.getToken().getText(), (NameToken) val.getToken());
+            binding.put(key.getToken().getText(), (InfoToken) val.getToken());
         }
     ;
       
@@ -1093,18 +1081,18 @@ device[ Environment env, CDLFactoryInterface factory ]
 
 resistor[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( r:RESISTOR n1:NODE n2:NODE parameterList[ env, param, binding ] ) {
             // Rxxxxxxx n1 n2 ( resistance | R=resistance )
-            Object res = null;
+            InfoToken res = null;
             int currParam = 0;
             if (binding.containsKey("r")) res = binding.remove("r");
             else if (binding.containsKey("R")) res = binding.remove("R");
             else if (param.size() > currParam) res = param.get(currParam++);
             if (param.size() > currParam ) {
-                NameToken token = param.get(currParam);
+                InfoToken token = param.get(currParam);
                 binding.put("$.MODEL", token);
             }
             if (res == null) {
@@ -1113,7 +1101,7 @@ resistor[Environment env,  CDLFactoryInterface factory]
                 factory.makeResistor(toHier(#r.getToken(), env),
                                      toHier(#n1.getToken(), env),
                                      toHier(#n2.getToken(), env),
-                                     (CDLLexer.InfoToken) res,
+                                     res,
                                      binding, env);
             }
         }
@@ -1121,13 +1109,13 @@ resistor[Environment env,  CDLFactoryInterface factory]
 
 capacitor[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( c:CAPACITOR npos:NODE nneg:NODE
            parameterList[ env, param, binding ] ) {
             // Cxxxxxx n+ n- capacitance
-            Object cap = null;
+            InfoToken cap = null;
             if (param.size() >= 1) {
                 cap = param.get(0);
             }
@@ -1137,7 +1125,7 @@ capacitor[Environment env,  CDLFactoryInterface factory]
                 factory.makeCapacitor(toHier(#c.getToken(), env),
                                       toHier(#npos.getToken(), env),
                                       toHier(#nneg.getToken(), env),
-                                      (CDLLexer.InfoToken) cap, binding,
+                                      cap, binding,
                                       env);
             }
         }   
@@ -1145,12 +1133,12 @@ capacitor[Environment env,  CDLFactoryInterface factory]
 
 transistor[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( t:TRANSISTOR nd:NODE ng:NODE ns:NODE nb:NODE mname:NODE  
             parameterList[ env, param, binding ] ) {
-            Object w = null, l = null;
+            InfoToken w = null, l = null;
 
             if (binding.containsKey("W")) w = binding.remove("W");
             else if (binding.containsKey("w")) w = binding.remove("w");
@@ -1167,8 +1155,8 @@ transistor[Environment env,  CDLFactoryInterface factory]
                                        toHier(#nd.getToken(), env),
                                        toHier(#ng.getToken(), env),
                                        toHier(#nb.getToken(), env),
-                                       (CDLLexer.InfoToken) w,
-                                       (CDLLexer.InfoToken) l,
+                                       w,
+                                       l,
                                        binding, env);
             }
         }
@@ -1176,13 +1164,13 @@ transistor[Environment env,  CDLFactoryInterface factory]
 
 inductor[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( l0:INDUCTOR lpos:NODE lneg:NODE
            parameterList[ env, param, binding ] ) {
             // Lxxxxxx n+ n- inductance
-            Object ind = null;
+            InfoToken ind = null;
             if (param.size() >= 1) {
                 ind = param.get(0);
             }
@@ -1192,7 +1180,7 @@ inductor[Environment env,  CDLFactoryInterface factory]
                 factory.makeInductor(toHier(#l0.getToken(), env),
                                      toHier(#lpos.getToken(), env),
                                      toHier(#lneg.getToken(), env),
-                                     (CDLLexer.InfoToken) ind,
+                                     ind,
                                      binding, env);
             }
         }
@@ -1200,13 +1188,13 @@ inductor[Environment env,  CDLFactoryInterface factory]
 
 diode[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( d:DIODE dpos:NODE dneg:NODE dtype:NODE
            parameterList[ env, param, binding ] ) {
             // Dxxxxxxx type n1 n2 ( area | area=area )
-            Object area = null;
+            InfoToken area = null;
             if (binding.containsKey("area")) area = binding.remove("area");
             else if (binding.containsKey("AREA")) area = binding.remove("AREA");
             else if (param.size() >= 1) area = param.get(0);
@@ -1217,7 +1205,7 @@ diode[Environment env,  CDLFactoryInterface factory]
                                   dtype.getText(),
                                   toHier(#dpos.getToken(), env),
                                   toHier(#dneg.getToken(), env),
-                                  (CDLLexer.InfoToken) area,
+                                  area,
                                   binding, env);
             }
         }
@@ -1225,13 +1213,13 @@ diode[Environment env,  CDLFactoryInterface factory]
 
 bipolar[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( q:BIPOLAR nc:NODE nb:NODE ne:NODE mname:NODE
            parameterList[ env, param, binding ] ) {
             // Qxxxxxxx nc nb ne type ( area | area=area )
-            Object area = null;
+            InfoToken area = null;
             if (binding.containsKey("area")) area = binding.remove("area");
             else if (binding.containsKey("AREA")) area = binding.remove("AREA");
             else if (param.size() >= 1) area = param.get(0);
@@ -1243,7 +1231,7 @@ bipolar[Environment env,  CDLFactoryInterface factory]
                                     toHier(#nc.getToken(), env),
                                     toHier(#nb.getToken(), env),
                                     toHier(#ne.getToken(), env),
-                                    (CDLLexer.InfoToken) area,
+                                    area,
                                     binding, env);
             }
         }
@@ -1251,8 +1239,8 @@ bipolar[Environment env,  CDLFactoryInterface factory]
 
 subcell[Environment env,  CDLFactoryInterface factory]
     {
-        List<NameToken> param = new ArrayList<>();
-        Map<String,NameToken> binding = new LinkedHashMap<>();
+        List<InfoToken> param = new ArrayList<>();
+        Map<String,InfoToken> binding = new LinkedHashMap<>();
     }
     :   #( call:SUBCELL parameterList[ env, param, binding ] ) {
             final int slash = findList(param, "/");
@@ -1261,21 +1249,21 @@ subcell[Environment env,  CDLFactoryInterface factory]
             //findList should always return >= -1
             assert ( slash >= -1 );
             
-            final CDLLexer.InfoToken subToken;
+            final InfoToken subToken;
             //If there is a slash, it must only be followed by exactly one token.
             if ( slash > -1 ) {
                 if ( ( slash + 2 ) != param.size() ) {    
                     throw new RecognitionException("Improper subcell specification in call " + call);
                 }
                 else {
-                    subToken = (CDLLexer.InfoToken) param.get(slash + 1);
+                    subToken = param.get(slash + 1);
                     numSubCircuitArgs = slash;
                 }
             }
             else {
                 final int indexOfLast = param.size() - 1;
                 //There was no slash so subname is last element of param list.
-                subToken = (CDLLexer.InfoToken) param.get(indexOfLast);
+                subToken = param.get(indexOfLast);
                 numSubCircuitArgs = indexOfLast;
             }
 
