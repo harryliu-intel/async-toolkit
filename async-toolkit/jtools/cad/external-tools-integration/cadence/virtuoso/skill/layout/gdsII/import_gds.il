@@ -42,9 +42,12 @@
     CV = (dbOpenCellViewByType libName cellName "layout" nil "a")
     (when action (FindSubcells ?action action ?CV CV))
 
-    ; return top-level CV
+    ; more processing of top level cell
     (dbReplaceProp CV "CastCell" "boolean" t) ; top-level only
+    (LabelsToPins ?CV CV) ; create pins by finding labels on "pin" purpose rectangles
     (dbSave CV)
+
+    ; return top-level CV
     CV
     )
   )
@@ -108,5 +111,26 @@ importPostProcessAction =
         )
       )
     newCV
+    )
+  )
+
+; Use labels to create pins
+(defun LabelsToPins (@key (CV (geGetEditCellView))
+                          (purpose "pin")
+                          )
+  (let (n net)
+    n=0
+    labels = (setof x CV->shapes x->objType=="label")
+    (foreach label (setof x CV->shapes x->objType=="label" && x->purpose==purpose)
+             overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0)
+             (foreach rect (setof x overlaps x->objType=="rect")
+                      net = (dbMakeNet CV label->theLabel)
+                      (when rect->net!=net
+                        (dbCreatePin net rect)
+                        n++
+                        )
+                      )
+             )
+    n
     )
   )
