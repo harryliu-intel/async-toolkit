@@ -208,7 +208,7 @@ noInfo                             ""
 #noOutputTextDisplays
 #noOutputUnplacedInst
 noWarn                             ""
-objectMap                          ""
+objectMap                          "OBJECTMAP"
 outputDir                          "."
 pathToPolygon
 pinAttNum                          "0"
@@ -661,7 +661,10 @@ my $assurarule = "$pdkroot/share/Fulcrum/assura/bind.rul";
 #$err+=check_readable_file "$assurarule", "Cannot find Assura bind.rul file in PDK"
 #    if $pdkroot ne "";
 my $propmap = "$pdkroot/share/Fulcrum/stream/prop.map";
+my $objmap = "$pdkroot/share/Fulcrum/stream/objectmap";
 $err+=check_readable_file "$propmap", "Cannot find prop.map file in PDK"
+    if $pdkroot ne "";
+$err+=check_readable_file "$objmap", "Cannot find objectmap file in PDK"
     if $pdkroot ne "";
 usage if $err;
 
@@ -982,6 +985,7 @@ $myrsf =~ s/PROPMAP//g;
 else {
 $myrsf =~ s/PROPMAP/$propmap/g;
 }
+$myrsf =~ s/OBJECTMAP/$objmap/g;
 $myrsf =~ s/LIBNAME/$libName/g;
 $myrsf =~ s:GDSIINAME:$tmpgds:g;
 $myrsf =~ s/LOGFILE/$pipolog/g;
