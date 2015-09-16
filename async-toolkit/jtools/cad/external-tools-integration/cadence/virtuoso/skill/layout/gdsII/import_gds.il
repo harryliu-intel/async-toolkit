@@ -44,6 +44,7 @@
 
     ; return top-level CV
     (dbReplaceProp CV "CastCell" "boolean" t) ; top-level only
+    (dbSave CV)
     CV
     )
   )
