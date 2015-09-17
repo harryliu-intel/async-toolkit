@@ -448,11 +448,13 @@ public class CDL2SkillFactory implements CDLFactoryInterface {
             writeConnection( instanceName, "", ns1 );
             writeConnection( instanceName, "", ns2 );
 
-            final Double rVal = val.getValue( env );
+            final String rVal =
+                val == null ? "nil"
+                            : val.getValue( env ).toString();
 
             writeInstanceParameter( instanceName,
                                     "",
-                                    rVal.toString() );            
+                                    rVal );
         }
     }
 
