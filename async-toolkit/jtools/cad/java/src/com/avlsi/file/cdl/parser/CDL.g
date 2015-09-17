@@ -45,6 +45,9 @@ options {
     private boolean extension = false;
     private boolean nl = false;
 
+    /** Parameter used to identify model name for resistors and capacitors. */
+    public static String MODEL_PARAMETER = "$.MODEL";
+
     public CDLLexer(Reader in, boolean extension) {
         this(in);
         this.extension = extension;
@@ -959,7 +962,7 @@ options {
             if (val != null ||
                 param.size() > currParam ||
                 token instanceof NameToken && token.getValue(env) == null) {
-                binding.put("$.MODEL", token);
+                binding.put(CDLLexer.MODEL_PARAMETER, token);
             } else {
                 val = token;
             }

@@ -13,7 +13,9 @@ import java.io.IOException;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 
 import com.avlsi.cast.impl.Environment;
@@ -22,6 +24,7 @@ import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
 
 import com.avlsi.file.cdl.parser.CDLLexer;
+import static com.avlsi.file.cdl.parser.CDLLexer.MODEL_PARAMETER;
 import com.avlsi.file.cdl.parser.CDLFactoryInterface;
 
 import com.avlsi.file.cdl.util.rename.CDLRenameException;
@@ -30,6 +33,8 @@ import com.avlsi.file.cdl.util.rename.CDLNameInterface;
 /**
  * An CDLFactoryInterface that can be used to rename nodes and names of circuit
  * components to another format
+ *
+ * TODO: reimplement as CDLRenameFactory + CDLFactoryEmitter
  **/
 public class CDLRenamerFactory implements CDLFactoryInterface {
    
@@ -152,6 +157,7 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
     
 
     private void writeParameters( final Map parameters,
+                                  final Set exclude,
                                   final Environment env,
                                   final OutputInfo output ) throws IOException {
         final StringBuffer accumulator = new StringBuffer();
@@ -160,6 +166,8 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
             
             final Map.Entry entry = ( Map.Entry ) i.next();
             final String key = ( String ) entry.getKey();
+            if ( exclude.contains( key ) ) continue;
+
             final CDLLexer.InfoToken val = ( CDLLexer.InfoToken ) entry.getValue();
             final String valStr = val.getSpiceString( env );
             
@@ -168,7 +176,11 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
         }
     }
 
-    
+    private void writeParameters( final Map parameters,
+                                  final Environment env,
+                                  final OutputInfo output ) throws IOException {
+        writeParameters( parameters, Collections.emptySet(), env, output );
+    }
 
     public void makeResistor( HierName name,
                               HierName n1,
@@ -188,8 +200,13 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
                     currInfo.print( "R" + currInfo.renameDevice( name ) );
                     currInfo.printws( currInfo.renameNode( n1 ) );
                     currInfo.printws( currInfo.renameNode( n2 ) );
-                    currInfo.printws( val.getText( env ) );
-                    writeParameters( parameters, env, currInfo );
+                    final CDLLexer.InfoToken mname = ( CDLLexer.InfoToken )
+                        parameters.get( MODEL_PARAMETER );
+                    if (mname != null) currInfo.printws( mname.getText() );
+                    if (val != null) currInfo.printws( val.getText( env ) );
+                    writeParameters( parameters,
+                                     Collections.singleton(MODEL_PARAMETER),
+                                     env, currInfo );
                     currInfo.println();
                 }
             }
@@ -219,8 +236,13 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
                     currInfo.print( "C" + currInfo.renameDevice( name ) );
                     currInfo.printws( currInfo.renameNode( npos ) );
                     currInfo.printws( currInfo.renameNode( nneg ) );
+                    final CDLLexer.InfoToken mname = ( CDLLexer.InfoToken )
+                        parameters.get( MODEL_PARAMETER );
+                    if (mname != null) currInfo.printws( mname.getText() );
                     currInfo.printws( val.getText( env ) );
-                    writeParameters( parameters, env, currInfo );
+                    writeParameters( parameters,
+                                     Collections.singleton(MODEL_PARAMETER),
+                                     env, currInfo );
                     currInfo.println();
 
                 }

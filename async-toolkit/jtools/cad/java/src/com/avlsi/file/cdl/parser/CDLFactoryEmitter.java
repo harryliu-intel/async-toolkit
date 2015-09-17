@@ -66,11 +66,6 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
     private final double widthGrid;
     private final double lengthGrid;
 
-    /**
-     * Key used to identify model name for resistors and capacitors.
-     **/
-    private static final String MODEL_KEY = "$.MODEL";
-
     public CDLFactoryEmitter(final Writer w) {
         this(w, true);
     }
@@ -245,10 +240,10 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         print("R" + name.getCadenceString());
         printws(stringNode(n1));
         printws(stringNode(n2));
-        final Token mname = (Token) parameters.get(MODEL_KEY);
+        final Token mname = (Token) parameters.get(CDLLexer.MODEL_PARAMETER);
         if (mname != null) printws(stringToken(mname));
         if (val != null) printws(getTokenVal(val, env));
-        keypair(parameters, env, Collections.singleton(MODEL_KEY));
+        keypair(parameters, env, Collections.singleton(CDLLexer.MODEL_PARAMETER));
         println();
     }
 
@@ -259,10 +254,10 @@ public class CDLFactoryEmitter implements CDLFactoryInterface, CDLSimpleInterfac
         print("C" + name.getCadenceString());
         printws(stringNode(npos));
         printws(stringNode(nneg));
-        final Token mname = (Token) parameters.get(MODEL_KEY);
+        final Token mname = (Token) parameters.get(CDLLexer.MODEL_PARAMETER);
         if (mname != null) printws(stringToken(mname));
         printws(getTokenVal(val, env));
-        keypair(parameters, env, Collections.singleton(MODEL_KEY));
+        keypair(parameters, env, Collections.singleton(CDLLexer.MODEL_PARAMETER));
         println();
     }
 
