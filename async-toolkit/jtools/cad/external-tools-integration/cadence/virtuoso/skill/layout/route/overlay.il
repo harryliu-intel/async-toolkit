@@ -1,15 +1,15 @@
 ; Add various overlay mosaics, similar to MakePowerGrid
 
 ; Add COLOR_GRID avoiding "color":"block"
-(defun MakeColorGrid (@key (CV (geGetEditCellView)))
-  (MakeOverlayGrid "color" (list "color" "block")
+(defun MakeColorGrid (@key (CV (geGetEditCellView)) (overlayView "layout"))
+  (MakeOverlayGrid "color" overlayView (list "color" "block")
                    (dbOpenCellViewByType "globals" "globals.COLOR_GRID.m012345_color" "layout")
                    ?CV CV)
   )
 
 ; Add CHECK_GRID avoiding "check":"block"
-(defun MakeCheckGrid (@key (CV (geGetEditCellView)))
-  (MakeOverlayGrid "check" (list "check" "block")
+(defun MakeCheckGrid (@key (CV (geGetEditCellView)) (overlayView "layout"))
+  (MakeOverlayGrid "check" overlayView (list "check" "block")
                    (dbOpenCellViewByType "globals" "globals.CHECK_GRID.0" "layout")
                    ?CV CV)
   )
@@ -17,6 +17,7 @@
 ; Add overlay cell with moasics within prBoundary but avoiding blockLPP
 (defun MakeOverlayGrid
   (overlayName     ; cellName suffix for overlay
+   overlayView     ; viewName for overlay
    blockLPP        ; LPP that blocks mosaic
    gridCV          ; CV to build the moasic
    @key (CV (geGetEditCellView)) ; target CV
@@ -33,7 +34,7 @@
     (when inst (dbDeleteObject inst))
 
     ; clear overlay grid cell
-    overlayCV = (dbOpenCellViewByType CV->libName overlayCellName "layout" "maskLayout" "w")
+    overlayCV = (dbOpenCellViewByType CV->libName overlayCellName overlayView "maskLayout" "w")
     (unless overlayCV (error "Can't write %s\n " overlayCellName))
 
     ; get alignment

@@ -17,7 +17,7 @@
                                    (topMetal nil) ; top of power grid in tag view
                                    )
   (let (libName CV tagCV powerCV trans ints prb align lpp
-                gridCV colorCV fillCV power2 prb2 shapes count
+                gridCV colorCV checkCV fillCV power2 prb2 shapes count
                 x0box x1box y0box y1box x0 y0 x1 y1
                 rows cols frows fcols fx0 fy0 fx1 fy1)
     ; read source CV
@@ -67,10 +67,8 @@
 
     ; add power grid
     powerCV = (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag")
-
-    ; add color grid (TODO: handle custom color grids such as those in SRAM's)
-    colorCV = (dbOpenCellViewByType "globals" "globals.COLOR_GRID.m012345_color" "layout")
-    (dbCreateSimpleMosaic tagCV colorCV "cg" x0:y0 "R0" rows cols (cadr align) (car align))
+    colorCV = (MakeColorGrid ?CV tagCV ?overlayView "layout_tag")
+    checkCV = (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag")
 
     ; label topMetal power supplies
     (for r 0 rows-1
