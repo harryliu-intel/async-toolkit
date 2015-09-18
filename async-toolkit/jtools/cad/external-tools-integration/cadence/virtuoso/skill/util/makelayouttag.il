@@ -49,10 +49,12 @@
     y0box = 1.0*(round (bottomEdge prb->bBox)/MfgGrid)
     y1box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
 
-    ; top-metal grid
+    ; power grid
     (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
     (unless topMetal topMetal = 2)
+    powerCV = (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag")
 
+    ; align to topMetal grid for power pins
     align = gridAlignment[topMetal]
     x0 = (floor   x0box/(round (car  align)/MfgGrid))
     y0 = (floor   y0box/(round (cadr align)/MfgGrid))
@@ -65,23 +67,26 @@
     cols = (round (x1-x0)/(car  align))
     rows = (round (y1-y0)/(cadr align))
 
-    ; add power grid
-    powerCV = (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag")
-    colorCV = (MakeColorGrid ?CV tagCV ?overlayView "layout_tag")
-    checkCV = (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag")
-
     ; label topMetal power supplies
     (for r 0 rows-1
          y = y0+(cadr align)*r
          (MakeLayoutTagPowerPins tagCV (list x0:y x1:y) topMetal)
          )
 
-    ; switch to lower layer alignment grid
+    ; align to m2 grid for filler cells
     align = gridAlignment[2]
+    x0 = (floor   x0box/(round (car  align)/MfgGrid))
+    y0 = (floor   y0box/(round (cadr align)/MfgGrid))
+    x1 = (ceiling x1box/(round (car  align)/MfgGrid))
+    y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
+    x0 = (x0-1) * (car  align)
+    y0 = (y0-1) * (cadr align)
+    x1 = (x1+1) * (car  align)
+    y1 = (y1+1) * (cadr align)
     cols = (round (x1-x0)/(car  align))
     rows = (round (y1-y0)/(cadr align))
 
-    ; add fill cells (TOOD: refactor this code with skill/layout/route/flatten.il perhaps)
+    ; add fill cells (TODO: refactor this code with skill/layout/route/overlay.il perhaps)
     power2 = (dbCreateRect tagCV (list Metal[8] "block") (list x0:y0 x1:y1))
     prb2   = (dbCreatePolygon tagCV (list "prBoundary" "boundary") prb->points)
     shapes = (leLayerAndNot tagCV (list Metal[8] "block") (list "prBoundary" "boundary") (list Metal[2] "block"))
@@ -116,7 +121,28 @@
          y = y0+(cadr align)*(r+0.5)
          (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
          )
-    
+
+    ; align to m8 for check and color grids
+    align = gridAlignment[8]
+    x0 = (floor   x0box/(round (car  align)/MfgGrid))
+    y0 = (floor   y0box/(round (cadr align)/MfgGrid))
+    x1 = (ceiling x1box/(round (car  align)/MfgGrid))
+    y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
+    x0 = (x0-1) * (car  align)
+    y0 = (y0-1) * (cadr align)
+    x1 = (x1+1) * (car  align)
+    y1 = (y1+1) * (cadr align)
+    cols = (round (x1-x0)/(car  align))
+    rows = (round (y1-y0)/(cadr align))
+
+    ; expand prBoundary
+    (dbDeleteObject prb)
+    prb = (dbCreatePRBoundary tagCV (list x0:y0 x1:y0 x1:y1 x0:y1))
+
+    ;  add color and check grids
+    colorCV = (MakeColorGrid ?CV tagCV ?overlayView "layout_tag")
+    checkCV = (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag")
+
     ; metal fill
     ; (TemplateFill ?CV tagCV ?topMetal topMetal)
 
