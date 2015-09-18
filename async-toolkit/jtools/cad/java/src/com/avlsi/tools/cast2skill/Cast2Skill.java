@@ -634,12 +634,14 @@ public final class Cast2Skill {
                         }
                     };
                 
+                /* BUG: avoid AutoPins because it doesn't work in 14nm
                 processCells( pinsCellProcessorFactory,
                               castParser,
                               cellSet,
                               hashTableEmitterFactory,
                               autoPinsDir,
                               ".pins.il" );
+                */
             }
 
             final String verilogBlock = theArgs.getArgValue( "verilog-block", "rtl");
