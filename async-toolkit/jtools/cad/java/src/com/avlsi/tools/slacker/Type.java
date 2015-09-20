@@ -495,7 +495,7 @@ public class Type implements Comparable {
     }
 
     private void reportInstanceTime(final String instance, final double time) {
-        if (instance != null && reportInstanceTimes != null &
+        if (instance != null && reportInstanceTimes != null &&
             reportInstanceTimes.evaluate(name)) {
             instanceTimes.put(instance, time);
         }
