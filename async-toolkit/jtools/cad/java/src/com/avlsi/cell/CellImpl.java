@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.StringTokenizer;
+import java.util.stream.Stream;
 
 import com.avlsi.cast.CastSemanticException;
 import com.avlsi.cast2.directive.DirectiveConstants;
@@ -301,7 +302,7 @@ public class CellImpl implements CellInterface {
     /**
      * A list of cells that this cell inherited from via &lt;+.
      **/
-    private final List/*<CellInterface>*/ inheritedCells;
+    private final List<CellInterface> inheritedCells;
 
     private final Map/*<Position>*/ instancePositions;
 
@@ -370,7 +371,7 @@ public class CellImpl implements CellInterface {
         blocks.iterator(BlockInterface.SUBCELL).add(new SubcellBlock());
         blocks.iterator(BlockInterface.CSP).add(new CspBlock());
         blocks.iterator(BlockInterface.JAVA).add(new JavaBlock());
-        this.inheritedCells = new ArrayList/*<CellInterface>*/();
+        this.inheritedCells = new ArrayList<>();
         this.instancePositions = new LinkedHashMap/*<Position>*/();
     }
 
@@ -2699,8 +2700,8 @@ public class CellImpl implements CellInterface {
         return cell;
     }
 
-    public Iterator getInheritedCells() {
-        return inheritedCells.iterator();
+    public Stream<CellInterface> getInheritedCells() {
+        return inheritedCells.stream();
     }
 
     /**

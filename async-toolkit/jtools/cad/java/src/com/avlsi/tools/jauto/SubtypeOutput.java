@@ -401,12 +401,9 @@ public final class SubtypeOutput {
      * Return the attribute cells inherited by the given cell.
      **/
     private static String[] getAttributes(final CellInterface cell) {
-        final ArrayList result = new ArrayList();
-        for (Iterator i = cell.getInheritedCells(); i.hasNext(); ) {
-            final CellInterface attr = (CellInterface) i.next();
-            result.add(attr.getFullyQualifiedType());
-        }
-        return (String []) result.toArray(new String[0]);
+        return cell.getInheritedCells()
+                   .map(c -> c.getFullyQualifiedType())
+                   .toArray(String[]::new);
     }
 
     private static void emitDirective(final BlockIterator bi,

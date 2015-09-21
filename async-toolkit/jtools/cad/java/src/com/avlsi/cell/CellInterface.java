@@ -14,7 +14,7 @@
 package com.avlsi.cell;
 
 import java.util.Iterator;
-
+import java.util.stream.Stream;
 
 import com.avlsi.csp.ast.CSPProgram;
 import com.avlsi.csp.csp2java.runtime.CspSnoopingInterface;
@@ -467,12 +467,12 @@ public interface CellInterface extends HierarchyInterface {
     CellInterface inlineLayoutSubcells();
 
     /**
-     * Returns an iterator of attribute cells that this cell inherited.  The
-     * order of the cells returned by iterator are the same as reading the
+     * Returns a stream of attribute cells that this cell inherited.  The
+     * order of the cells returned by the stream are the same as reading the
      * attribute cells from left to right in CAST.  In other words, the first
      * <code>CellInterface</code> returned is the most overriding.
      **/
-    Iterator/*<CellInterface>*/ getInheritedCells();
+    Stream<CellInterface> getInheritedCells();
 
     /**
      * Returns the name that the implied port <code>self</code> must connect to

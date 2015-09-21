@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -1443,8 +1444,9 @@ public final class CellUtils {
      * recursively check the cell's refinement parents, and return whatever
      * value is returned by the recursive call.
      **/
-    public static boolean matchRefinement(final CellInterface cell,
-                                          final UnaryPredicate check) {
+    public static boolean matchRefinement(
+            final CellInterface cell,
+            final UnaryPredicate<CellInterface> check) {
         if (cell == null) return false;
         if (check.evaluate(cell)) return true;
         return matchRefinement(cell.getDirectRefinementParent(), check);
@@ -1456,14 +1458,26 @@ public final class CellUtils {
      * satisfied, return <code>true</code>; otherwise, return
      * <code>false</code>.
      **/
-    public static boolean matchInheritance(final CellInterface cell,
-                                           final UnaryPredicate check) {
-        for (Iterator i = cell.getInheritedCells(); i.hasNext(); ) {
-            final CellInterface attrib = (CellInterface) i.next();
-            if (check.evaluate(attrib)) return true;
-            if (matchInheritance(attrib, check)) return true;
-        }
-        return false;
+    public static boolean matchInheritance(
+            final CellInterface cell,
+            final UnaryPredicate<CellInterface> check) {
+        return cell.getInheritedCells()
+                   .anyMatch(attrib -> check.evaluate(attrib) ||
+                                       matchInheritance(attrib, check));
+    }
+
+    /**
+     * Return a <code>UnaryPredicate</code> object that when used to evaluate a
+     * <code>CellInterface</code> object will return <code>true</code> if the
+     * cell or any of its refinement or inheritance ancestors refines or
+     * inherits a cell that satisfied the predicate <code>matcher</code>.
+     **/
+    public static UnaryPredicate<CellInterface> getTypeMatcher(
+            final UnaryPredicate<CellInterface> matcher) {
+        final UnaryPredicate<CellInterface> inheritanceCheck =
+            c -> CellUtils.matchInheritance(c, matcher);
+        return c -> CellUtils.matchRefinement(c, matcher) ||
+                    CellUtils.matchRefinement(c, inheritanceCheck);
     }
 
     /**
@@ -1476,37 +1490,19 @@ public final class CellUtils {
      * any parameterization of a metaparameterized cell is to be matched, then
      * use just the base name of the cell, without the metaparameters.
      **/
-    public static UnaryPredicate getTypeMatcher(final Collection candidates) {
-        final UnaryPredicate refinementCheck = new UnaryPredicate() {
-            public boolean evaluate(final Object o) {
-                final CellInterface c = (CellInterface) o;
-                for (Iterator i = candidates.iterator(); i.hasNext(); ) {
-                    final String candidate = (String) i.next();
-                    final String type = c.getFullyQualifiedType();
-                    if (candidate.equals(type) ||
-                        candidate.equals(CellUtils.getBaseType(type))) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        };
-        final UnaryPredicate inheritanceCheck = new UnaryPredicate() {
-            public boolean evaluate(final Object o) {
-                final CellInterface c = (CellInterface) o;
-                return CellUtils.matchInheritance(c, refinementCheck);
-            }
-        };
-        final UnaryPredicate typeCheck = new UnaryPredicate() {
-            public boolean evaluate(final Object o) {
-                final CellInterface cell = (CellInterface) o;
-                return CellUtils.matchRefinement(cell, refinementCheck) ||
-                       CellUtils.matchRefinement(cell, inheritanceCheck);
-            }
-        };
-
-        return typeCheck;
+    public static UnaryPredicate<CellInterface> getTypeMatcher(
+            final Set<String> candidates) {
+        return getTypeMatcher(
+            c -> candidates.contains(c.getFullyQualifiedType()) ||
+                 candidates.contains(
+                         CellUtils.getBaseType(c.getFullyQualifiedType())));
     }
+
+    public static UnaryPredicate<CellInterface> getTypeMatcher(
+            final Collection<String> candidates) {
+        return getTypeMatcher(new HashSet<String>(candidates));
+    }
+
 
     public interface SizingEnvCreator {
         void getInternalEnv(final CellInterface cell,
@@ -1514,7 +1510,7 @@ public final class CellUtils {
                             final Map<HierName,CellInterface> subcells);
     }
 
-    private static UnaryPredicate INHERITS_LEAF =
+    private static UnaryPredicate<CellInterface> INHERITS_LEAF =
         getTypeMatcher(Arrays.asList(
                     "standard.base.leaf",
                     "standard.process.imported_proteus_cell"));
