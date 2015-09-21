@@ -566,13 +566,14 @@ public class Cast {
                 if (isFragment(subci))
                     fragmentSubcells.add(subci.getFullyQualifiedType());
             }
+            // warn about fragment subcells but continue anyways (for BD)
             if (fragmentSubcells.size()>0) {
                 System.err.println("WARNING: " + type.name + 
                                    " should set slacker_leaf=true\n" +
                                    "  or all of these should " + fragmentSubcells);
             }
             // process subcells
-            else for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
+            for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                 final Pair p = (Pair) i.next();
                 final CellInterface subci = (CellInterface) p.getSecond();
                 if (subci.isChannel() || subci.isNode()) continue;
