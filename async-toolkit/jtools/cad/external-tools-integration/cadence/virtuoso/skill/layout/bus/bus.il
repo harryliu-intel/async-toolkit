@@ -441,7 +441,7 @@ wires_modtime = makeTable("wires" 0)
 
 ; add suffix to a prefix (unless the prefix is empty, in which case result is too)
 (defun AddSuffix (prefix suffix)
-  (cond ((member suffix PowerNets) || prefix==nil suffix)
+  (cond ((member suffix PowerGroundNets) || prefix==nil suffix)
         (prefix!="" (sprintf nil "%s%s" prefix suffix))
         (prefix=="" "")
         )

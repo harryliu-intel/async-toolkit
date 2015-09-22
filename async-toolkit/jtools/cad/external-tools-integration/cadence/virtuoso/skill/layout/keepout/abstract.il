@@ -199,7 +199,7 @@
 
 ; set properties for LEF export
 (defun SetLefProperties (CV @key (powergrid nil) (leaf nil) (topMetal nil))
-  (let (Vdd GND)
+  (let (net)
     (cond (powergrid CV->cellType="cover")
           (leaf      CV->cellType="core")
           (topMetal && topMetal<=2 && CV->prBoundary &&
@@ -209,10 +209,14 @@
           (t         CV->cellType="block")
           )
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
-    GND = (dbFindNetByName CV GNDNetName)
-    Vdd = (dbFindNetByName CV VddNetName)
-    (when GND GND->sigType = "ground") ; USE GROUND
-    (when Vdd Vdd->sigType = "supply") ; USE POWER
+    (foreach name PowerNets
+             net = (dbFindNetByName CV name)
+             (when net net->sigType = "supply") ; USE POWER
+             )
+    (foreach name GroundNets
+             net = (dbFindNetByName CV name)
+             (when net net->sigType = "ground") ; USE GROUND
+             )
     )
   )
 
