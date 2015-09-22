@@ -400,6 +400,7 @@ share/skill/layout/route/reset.il                     skill/layout/route/reset.i
 share/skill/layout/route/sync.il                      skill/layout/route/sync.il                      664 p
 share/skill/layout/route/fill.il                      skill/layout/route/fill.il                      664 p 
 share/skill/layout/route/overlay.il                   skill/layout/route/overlay.il                   664 p 
+share/skill/layout/route/color.il                     skill/layout/route/color.il                     664 p 
 
 # Laygen
 share/skill/layout/laygen/import.il             skill/layout/laygen/import.il           664 p
