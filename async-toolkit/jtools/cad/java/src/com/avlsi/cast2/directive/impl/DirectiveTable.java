@@ -382,6 +382,7 @@ public class DirectiveTable {
         registerDirective(CELL, SLACKER_TRANSITIONS, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CELL, SLACKER_COST, FLOAT_TYPE, null);
         registerDirective(CELL, SLACKER_USE_EXTRA_DELAY, NODE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, SLACKER_CHANNEL, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, SUPPRESS_FAULTS, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, PORT_GROUP, POSSIBLY_WIDE_CHANNEL_TYPE, STRING_TYPE, null);
         registerDirective(CELL, GROUP_FREQUENCY, STRING_TYPE, FLOAT_TYPE, null);

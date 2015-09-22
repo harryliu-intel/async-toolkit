@@ -615,7 +615,7 @@ public final class CellUtils {
         return s == null ? null : toHier(s);
     }
 
-    public static class Channel implements Comparable {
+    public static class Channel implements Comparable<Channel> {
         private final HierName instance;
         private final String name;
         private final PortTypeInterface type;
@@ -635,7 +635,7 @@ public final class CellUtils {
             this.index = index;
             this.group = group;
             this.direction = direction;
-            this.children = new ArrayList<Channel>();
+            this.children = new ArrayList<>();
         }
         public Channel(final HierName instance, final String name,
                        final Channel parent, final PortTypeInterface type,
@@ -684,8 +684,7 @@ public final class CellUtils {
         public boolean isBidirectional() {
             return realDirection() == 0;
         }
-        public int compareTo(final Object other) {
-            final Channel o = (Channel) other;
+        public int compareTo(final Channel o) {
             int x = ObjectUtils.compare(getInstance(), o.getInstance());
             return x == 0 ? ObjectUtils.compare(getName(), o.getName()) : x;
         }
@@ -910,19 +909,26 @@ public final class CellUtils {
         }
     }
 
+    @FunctionalInterface
+    public interface ChannelConnectionPredicate {
+        boolean test(Channel out, Channel in,
+                     AliasedSet/*<Channel>*/ connections);
+    }
+
     private static void groupChannel(
         final AliasedSet/*<Channel>*/ connections,
-        final Collection/*<Pair<Channel,Channel>>*/ parts,
+        final Collection<Pair<Channel,Channel>> parts,
         final AliasedSet/*<Channel>*/ whole,
+        final ChannelConnectionPredicate isConnected,
         final boolean useGroup) {
 
         for (Iterator i = connections.getCanonicalKeys(); i.hasNext(); ) {
-            final Collection input = new HashSet();
-            final Collection output = new HashSet();
-            final Collection inout = new HashSet();
-            final Collection childInput = new ArrayList();
-            final Collection childOutput = new ArrayList();
-            final Collection childInout = new ArrayList();
+            final Collection<Channel> input = new HashSet<>();
+            final Collection<Channel> output = new HashSet<>();
+            final Collection<Channel> inout = new HashSet<>();
+            final Collection<Channel> childInput = new ArrayList<>();
+            final Collection<Channel> childOutput = new ArrayList<>();
+            final Collection<Channel> childInout = new ArrayList<>();
             final Object canon = i.next();
             for (Iterator j = connections.getAliases(canon); j.hasNext(); ) {
                 final Channel chan = (Channel) j.next();
@@ -939,7 +945,7 @@ public final class CellUtils {
             // source, and make the rest into sinks
             for (Iterator j = childInout.iterator(); j.hasNext(); ) {
                 final Channel chan = (Channel) j.next();
-                final Collection coll;
+                final Collection<Channel> coll;
                 if (childOutput.isEmpty()) {
                     childOutput.add(chan);
                     coll = output;
@@ -959,14 +965,17 @@ public final class CellUtils {
                 for (Iterator k = input.iterator(); k.hasNext(); ) {
                     final Channel in = (Channel) k.next();
 
-                    if (whole.areEquivalent(out, in) ||
-                        out.getChildren().size() != in.getChildren().size()) {
+                    if (whole.areEquivalent(out, in)) {
                         continue;
                     }
 
                     boolean connected = true;
 
-                    if (useGroup) {
+                    if (isConnected != null) {
+                        connected = isConnected.test(out, in, connections);
+                    } else if (out.getChildren().size() != in.getChildren().size()) {
+                        connected = false;
+                    } else if (useGroup) {
                         final Set<Channel> outChildren =
                             new HashSet<Channel>(out.getChildren());
                         for (Channel inChild : in.getChildren()) {
@@ -1017,7 +1026,7 @@ public final class CellUtils {
                         final Channel inParent = in.getParent();
                         if (outParent == null || inParent == null || 
                             !whole.areEquivalent(outParent, inParent)) {
-                            parts.add(new Pair(out, in));
+                            parts.add(new Pair<Channel,Channel>(out, in));
                         }
                     }
                 }
@@ -1185,6 +1194,32 @@ public final class CellUtils {
                          final Cadencize cad,
                          // a "verilog aware" Cadencize
                          Cadencize vcad) {
+        return getChannelConnection(cell, nodeConnections, narrowConnections,
+                wideConnections, nodeAliases, narrowAliases, wideAliases,
+                null, null, null,
+                nodeConverter, narrowConverter, flattenNodes, internal,
+                allowTwist, cad, vcad);
+    }
+
+    public static <T> AliasedSet getChannelConnection(
+            final CellInterface cell,
+            final Collection<Pair<Channel,Channel>> nodeConnections,
+            final Collection<Pair<Channel,Channel>> narrowConnections,
+            final Collection<Pair<Channel,Channel>> wideConnections,
+            final AliasedSet nodeAliases,
+            final AliasedSet narrowAliases,
+            final AliasedSet wideAliases,
+            final ChannelConnectionPredicate nodeConnected,
+            final ChannelConnectionPredicate narrowConnected,
+            final ChannelConnectionPredicate wideConnected,
+            final Set nodeConverter,
+            final Set narrowConverter,
+            final Map flattenNodes,
+            final boolean internal,
+            final boolean allowTwist,
+            final Cadencize cad,
+            // a "verilog aware" Cadencize
+            Cadencize vcad) {
         final MultiMap nodeChannel = new MultiMap();
         final AliasedSet locals = cad.convertChannels(cell, flattenNodes);
         (new ChannelConnection(nodeChannel, null, locals)).mark(cell);
@@ -1231,9 +1266,11 @@ public final class CellUtils {
             }
         }
 
-        groupChannel(nodeAliases, nodeConnections, narrowAliases, allowTwist);
-        groupChannel(narrowAliases, narrowConnections, wideAliases, false);
-        groupChannel(wideAliases, wideConnections, null, false);
+        groupChannel(nodeAliases, nodeConnections, narrowAliases,
+                     nodeConnected, allowTwist);
+        groupChannel(narrowAliases, narrowConnections, wideAliases,
+                     narrowConnected, false);
+        groupChannel(wideAliases, wideConnections, null, wideConnected, false);
 
         if (nodeConnections != null) {
             for (Iterator i = nodeConnections.iterator(); i.hasNext(); ) {

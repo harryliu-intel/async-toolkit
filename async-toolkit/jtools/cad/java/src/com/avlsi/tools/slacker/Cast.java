@@ -513,13 +513,128 @@ public class Cast {
             return null;
         }
 
+        final CellUtils.ChannelConnectionPredicate
+            nodeConnected = new CellUtils.ChannelConnectionPredicate() {
+                private CellInterface getSubcell(HierName name) {
+                    CellInterface curr = cell;
+                    while (curr != null) {
+                        Pair<HierName,HierName> p =
+                            CellUtils.getFirstInstance(curr, name, true);
+                        assert p.getFirst() != null;
+                        curr = curr.getSubcell(p.getFirst());
+                        if (p.getSecond() == null) {
+                            break;
+                        } else {
+                            name = p.getSecond();
+                        }
+                    }
+                    return curr;
+                }
+
+                private boolean isSlackerChannel(CellInterface cell) {
+                    return (Boolean) DirectiveUtils.getTopLevelDirective(cell,
+                            DirectiveConstants.SLACKER_CHANNEL);
+                }
+
+                private void getSlackerChannels(
+                        HierName prefix, CellInterface cell,
+                        List<Pair<HierName,CellInterface>> result) {
+                    if (isSlackerChannel(cell)) {
+                        result.add(new Pair<HierName,CellInterface>(prefix, cell));
+                    } else {
+                        for (Iterator i = cell.getPortSubcellPairs();
+                                i.hasNext(); ) {
+                            Pair<HierName,CellInterface> p =
+                                (Pair<HierName,CellInterface>) i.next();
+                            getSlackerChannels(
+                                    HierName.append(prefix, p.getFirst()),
+                                    p.getSecond(),
+                                    result);
+                        }
+                    }
+                }
+
+                private CellUtils.Channel getChannel(final HierName name) {
+                    final Pair<HierName,HierName> p =
+                        CellUtils.getFirstInstance(cell, name, true);
+                    final CellInterface subcell = cell.getSubcell(p.getFirst());
+                    final HierName inst, chan;
+                    if (subcell.isNode() || subcell.isChannel()) {
+                        inst = null;
+                        chan = name;
+                    } else {
+                        inst = p.getFirst();
+                        chan = p.getSecond();
+                    }
+                    return new CellUtils.Channel(inst, chan.getAsString('.'),
+                                                 null, null, -1, -1);
+                }
+
+                private List<String> getNodes(final CellInterface ci) {
+                    final List<String> result = new ArrayList<>();
+                    (new CellUtils.MarkPort() {
+                        protected void mark(
+                            final com.avlsi.fast.ports.NodeType nodeType,
+                            final String name, final int direction) {
+                            result.add(name);
+                        }
+                    }).mark(ci);
+                    return result;
+                }
+
+                public boolean test(CellUtils.Channel out,
+                                    CellUtils.Channel in,
+                                    AliasedSet/*<Channel>*/ connections) {
+                    final HierName outInst = toHierName(out.getFullName());
+                    final CellInterface outCell = getSubcell(outInst);
+                    final HierName inInst = toHierName(in.getFullName());
+                    final CellInterface inCell = getSubcell(inInst);
+                    final List<Pair<HierName,CellInterface>> outSlackerChans =
+                        new ArrayList<>();
+                    final List<Pair<HierName,CellInterface>> inSlackerChans =
+                        new ArrayList<>();
+                    getSlackerChannels(outInst, outCell, outSlackerChans);
+                    getSlackerChannels(inInst, inCell, inSlackerChans);
+
+                    final int outSize = outSlackerChans.size();
+                    boolean connected = false;
+                    if (outSize == inSlackerChans.size()) {
+                        for (int i = 0; i < outSize; ++i) {
+                            Pair<HierName,CellInterface> oc =
+                                outSlackerChans.get(i);
+                            Pair<HierName,CellInterface> ic =
+                                inSlackerChans.get(i);
+                            connected =
+                                oc.getSecond() == ic.getSecond() &&
+                                getNodes(oc.getSecond())
+                                    .stream()
+                                    .map(x -> toHierName(x))
+                                    .allMatch(x ->
+                                        connections.areEquivalent(
+                                            getChannel(
+                                                HierName.append(
+                                                    oc.getFirst(),
+                                                    x)),
+                                            getChannel(
+                                                HierName.append(
+                                                    ic.getFirst(),
+                                                    x))));
+                            if (!connected) break;
+                        }
+                    }
+                    return connected;
+                }
+            };
+
         // get channel information for this cell
         final AliasedSet/*<HierName>*/ locals =
             CellUtils.getChannelConnection(
                 cell, null, null, null,
                 nodeAliases, narrowAliases,
                 new AliasedSet(new NaturalOrderComparator()),
-                new HashSet(), new HashSet(), Collections.EMPTY_MAP, true);
+                nodeConnected, null, null,
+                new HashSet(), new HashSet(), Collections.EMPTY_MAP, true, false,
+                new com.avlsi.tools.cadencize.Cadencize(false), null);
 
         // identify all e1of(N) channels
         final Map narrowChannels = new HashMap();

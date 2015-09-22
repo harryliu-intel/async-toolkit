@@ -220,6 +220,7 @@ public interface DirectiveConstants {
     String SLACKER_TRANSITIONS = "slacker_transitions";
     String SLACKER_COST = "slacker_cost";
     String SLACKER_USE_EXTRA_DELAY = "slacker_use_extra_delay";
+    String SLACKER_CHANNEL = "slacker_channel";
 
     /** ASTA directives */
     String ASTA_BLACKBOX = "asta_blackbox";
