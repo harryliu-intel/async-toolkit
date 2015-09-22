@@ -14,7 +14,7 @@ useICV = nil
         (doMakePowerGrid t)        ; make power grid
         (doPowerGridAbstract t)    ; generate abstract view of power grid
         (hookupD04 nil)            ; add power hookups around d04 cells
-        (hookupLaygen t)           ; add power hookups around Laygen cells
+        (hookupLaygen nil)         ; add power hookups around Laygen cells
         )
   (let (MaxHeapSize FlattenCellsList
         PowerGridCellName flattenCV xalign yalign
@@ -157,8 +157,8 @@ useICV = nil
 (defun MakePowerGrid
   (@key (CV (geGetEditCellView)) ; flatten CV
         (topMetal 8)
-        (hookupLaygen t) ; HACK: add power hookups to all LayGen cells
-        (hookupD04 nil)  ; HACK: add power hookups to all D04 cells
+        (hookupLaygen nil) ; HACK: add power hookups to all LayGen cells
+        (hookupD04 nil)    ; HACK: add power hookups to all D04 cells
         (powerCellView "layout") ; used by MakeLayoutTagCell
         )
   (let (TEMP powerCellName align
