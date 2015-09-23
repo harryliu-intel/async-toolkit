@@ -14,10 +14,14 @@
                                    (targetViewName "layout_tag")
                                    (CastPath (ConfigFileGetValue TheCDSConfigTable "CAST_PATH"))
                                    (TempDir  (ConfigFileGetValue TheCDSConfigTable "TEMP"))
-                                   (topMetal nil) ; top of power grid in tag view
+                                   (topMetal 8)
+                                   (doPower t)
+                                   (doCheck t)
+                                   (doColor t)
+                                   (doFill nil)
                                    )
-  (let (libName CV tagCV powerCV trans ints prb align lpp
-                gridCV colorCV checkCV fillCV power2 prb2 shapes count
+  (let (libName CV tagCV trans ints prb align lpp
+                gridCV fillCV power2 prb2 shapes count
                 x0box x1box y0box y1box x0 y0 x1 y1
                 rows cols frows fcols fx0 fy0 fx1 fy1)
     ; read source CV
@@ -36,6 +40,7 @@
     ; copy prb
     (unless CV->prBoundary->points (error "No prBoundary"))
     prb = (dbCreatePRBoundary tagCV CV->prBoundary->points)
+    prb2 = (dbCreatePolygon tagCV (list "prBoundary" "boundary") prb->points)
 
     ; copy non-power labels
     (foreach label (setof l CV->shapes l->objType=="label" && l->theLabel!=GNDNetName && l->theLabel!=VddNetName)
@@ -49,12 +54,7 @@
     y0box = 1.0*(round (bottomEdge prb->bBox)/MfgGrid)
     y1box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
 
-    ; power grid
-    (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
-    (unless topMetal topMetal = 2)
-    powerCV = (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag")
-
-    ; align to topMetal grid for power pins
+    ; align to m8 for power, color, check grids
     align = gridAlignment[topMetal]
     x0 = (floor   x0box/(round (car  align)/MfgGrid))
     y0 = (floor   y0box/(round (cadr align)/MfgGrid))
@@ -67,6 +67,15 @@
     cols = (round (x1-x0)/(car  align))
     rows = (round (y1-y0)/(cadr align))
 
+    ; expand prBoundary
+    (dbDeleteObject prb)
+    prb = (dbCreatePRBoundary tagCV (list x0:y0 x1:y0 x1:y1 x0:y1))
+
+    ;  add power, color, check grids
+    (when doPower (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag"))
+    (when doColor (MakeColorGrid ?CV tagCV ?overlayView "layout_tag"))
+    (when doCheck (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag"))
+
     ; label topMetal power supplies
     (for r 0 rows-1
          y = y0+(cadr align)*r
@@ -75,20 +84,11 @@
 
     ; align to m2 grid for filler cells
     align = gridAlignment[2]
-    x0 = (floor   x0box/(round (car  align)/MfgGrid))
-    y0 = (floor   y0box/(round (cadr align)/MfgGrid))
-    x1 = (ceiling x1box/(round (car  align)/MfgGrid))
-    y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
-    x0 = (x0-1) * (car  align)
-    y0 = (y0-1) * (cadr align)
-    x1 = (x1+1) * (car  align)
-    y1 = (y1+1) * (cadr align)
     cols = (round (x1-x0)/(car  align))
     rows = (round (y1-y0)/(cadr align))
 
     ; add fill cells (TODO: refactor this code with skill/layout/route/overlay.il perhaps)
     power2 = (dbCreateRect tagCV (list Metal[8] "block") (list x0:y0 x1:y1))
-    prb2   = (dbCreatePolygon tagCV (list "prBoundary" "boundary") prb->points)
     shapes = (leLayerAndNot tagCV (list Metal[8] "block") (list "prBoundary" "boundary") (list Metal[2] "block"))
     (dbLayerTile tagCV (list Metal[2] "block") shapes)
     (dbDeleteObject prb2)
@@ -122,29 +122,8 @@
          (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
          )
 
-    ; align to m8 for check and color grids
-    align = gridAlignment[8]
-    x0 = (floor   x0box/(round (car  align)/MfgGrid))
-    y0 = (floor   y0box/(round (cadr align)/MfgGrid))
-    x1 = (ceiling x1box/(round (car  align)/MfgGrid))
-    y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
-    x0 = (x0-1) * (car  align)
-    y0 = (y0-1) * (cadr align)
-    x1 = (x1+1) * (car  align)
-    y1 = (y1+1) * (cadr align)
-    cols = (round (x1-x0)/(car  align))
-    rows = (round (y1-y0)/(cadr align))
-
-    ; expand prBoundary
-    (dbDeleteObject prb)
-    prb = (dbCreatePRBoundary tagCV (list x0:y0 x1:y0 x1:y1 x0:y1))
-
-    ;  add color and check grids
-    colorCV = (MakeColorGrid ?CV tagCV ?overlayView "layout_tag")
-    checkCV = (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag")
-
     ; metal fill
-    ; (TemplateFill ?CV tagCV ?topMetal topMetal)
+    (when doFill (TemplateFill ?CV tagCV ?topMetal topMetal))
 
     ; finish
     (dbSave tagCV)
