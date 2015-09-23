@@ -40,7 +40,7 @@ sub usage {
 
 
 while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
-    my ($flag, $value) = split("=",$1);
+    my ($flag, $value) = split("=",$1,2);
     $value=1 if ! defined $value;
     if ($flag eq "working-dir") {
             $working_dir = $value;
