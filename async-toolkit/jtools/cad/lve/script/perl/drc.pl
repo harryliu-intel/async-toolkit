@@ -14,7 +14,7 @@ my $pwd=getcwd();
 my $working_dir = "$pwd";
 my $gdsii="";
 my $gdsii_list="";
-my $icv_options;
+my $icv_options="";
 my $threads=2;
 my $flow="drcd";
 my $pdk_root="";
@@ -23,7 +23,7 @@ my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/run
 sub usage {
     my ($msg) = @_;
     print STDERR "$msg\n" if defined $msg;
-    my $usage  = "Usage: lvs [args] cell\n";
+    my $usage  = "Usage: drc [args] cell\n";
     $usage .= "    --working-dir=[$working_dir]\n";
     $usage .= "    --icv-runset-path=[$icv_runset_path] (DRC runset path)\n";
     $usage .= "    --gds2-file=[$gdsii] (Provide source layout by gdsii file.)\n";
@@ -130,7 +130,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -f GDSII \\
 ET
 
-   print CF "$icv_options \\\n" if (defined $icv_options and $icv_options ne "");
+   print CF "$icv_options \\\n" if (defined $icv_options ne "");
    if(-r $gdsii) {
       print CF "-i \'".abs_path($gdsii)."\' \\\n";
    }elsif(-r $gdsii_list) {
