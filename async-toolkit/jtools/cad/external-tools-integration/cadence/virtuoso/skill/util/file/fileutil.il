@@ -55,7 +55,7 @@
     (while ( and
              ( equal Ret 0 )
              PathParts )
-      ( setq CurrPath ( strcat CurrPath ( strcat "/" ( car PathParts ) ) ) )
+      ( setq CurrPath ( strcat CurrPath "/" ( car PathParts ) ) )
       ( setq PathParts ( cdr PathParts ) )
       (unless ( isDir CurrPath )
         (if MakeParents
