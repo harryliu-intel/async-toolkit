@@ -61,7 +61,7 @@
         (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         )
-  (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR
+  (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
         Command (statusVerilog t)
         lef_subcells LefCellsList GdsMapFile gds_name
@@ -80,6 +80,8 @@
     CAST_PATH  = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
     SPAR_DIR = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR") 
+    PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") 
+                      "/share/Fulcrum")
     TEMP     = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR     = (strcat TEMP "/route/" CV->cellName)
     MaxHeapSize = (nrGetMaxHeapSize)
@@ -141,14 +143,15 @@
                                           " -view '%s'"
                                           " -runDir %s/gds"
                                           " -outputDir %s/gds"
-                                          " -layerMap $PDK_DIR/stream/strmout.layermap"
-                                          " -propMap $PDK_DIR/stream/prop.map"
-                                          " -objectMap $PDK_DIR/stream/objectmap"
+                                          " -layerMap %s/stream/strmout.layermap"
+                                          " -propMap %s/stream/prop.map"
+                                          " -objectMap %s/stream/objectmap"
                                           " -cellListFile %s"
                                           " -cellMap %s"
                                           " -logFile %s.log"
                                           " ; mv %s/gds/%s %s/gds/%s.gds")
                                   sub->viewName WDIR WDIR
+                                  PDK_DIR PDK_DIR PDK_DIR
                                   GdsMapFile GdsMapFile GdsMapFile
                                   WDIR gds_name WDIR gds_name)
                statusGds = statusGds && (shell Command)
