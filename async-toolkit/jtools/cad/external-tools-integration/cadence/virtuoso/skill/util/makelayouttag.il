@@ -21,7 +21,7 @@
                                    (doFill nil)
                                    )
   (let (libName CV tagCV trans ints prb align lpp
-                gridCV fillCV power2 prb2 shapes count
+                gridCV fillCV hookCV power2 prb2 shapes count
                 x0box x1box y0box y1box x0 y0 x1 y1
                 rows cols frows fcols fx0 fy0 fx1 fy1)
     ; read source CV
@@ -94,7 +94,9 @@
     (dbDeleteObject prb2)
     (dbDeleteObject power2)
     (foreach obj shapes (dbDeleteObject obj))
-    fillCV = (nrOpenCellViewReadable "globals" "globals.POWER_GRID.fill_pg" "layout")
+    fillCV = (dbOpenCellViewByType "globals" "globals.POWER_GRID.fill_pg" "layout")
+    hookCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
+ 
     count = 0
     (foreach shape (setof s tagCV->shapes s->lpp==(list Metal[2] "block"))
              fx0 = (leftEdge   shape->bBox)
@@ -104,9 +106,14 @@
              fcols = (round (fx1-fx0)/(car  align))
              frows = (round (fy1-fy0)/(cadr align))
              (dbCreateSimpleMosaic tagCV fillCV
-                                   (sprintf nil "fill%d" count) fx0:fy0 "R0"
+                                   (sprintf nil "fill%d" count++) fx0:fy0 "R0"
                                    frows fcols (cadr align) (car align))
-             count = count+1
+             (dbCreateSimpleMosaic tagCV hookCV
+                                   (sprintf nil "fill%d" count++) fx0:fy0 "R0"
+                                   frows 1 (cadr align) 0)
+             (dbCreateSimpleMosaic tagCV hookCV
+                                   (sprintf nil "fill%d" count++) fx1:fy0 "R0"
+                                   frows 1 (cadr align) 0)
              (dbDeleteObject shape)
              )
 
