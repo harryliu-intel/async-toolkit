@@ -125,3 +125,65 @@
     empty
     )
   )
+
+(defun CreateColorGridCell ()
+  (let (CV x y n h sort_x sort_y paths)
+    CV = (dbOpenCellViewByType "globals" "globals.COLOR_GRID.m012345_color" "layout" "maskLayout" "w")
+    x = (car  gridAlignment[8])
+    y = (cadr gridAlignment[8])
+    (dbCreatePRBoundary CV (list 0:0 x:0 x:y 0:y))
+
+    ; horizontal layers
+    h = powerOverhang[0]
+    n = (round y/(cadr gridAlignment[0]))
+    (DrawChannelArray nil power_m0 "" 0:n-1 pitch_m0 (list -h:0 x+h:0) ?CV CV)
+    (for i 0 n*tracks_m0-1 (DrawChannel BusMetal01 (NodeChan 0 i) "" (list -h:0 x+h:0) ?CV CV))
+
+    h = powerOverhang[2]
+    n = (round y/(cadr gridAlignment[2]))
+    (DrawChannelArray nil power_m2 "" 0:n-1 pitch_m2 (list -h:0 x+h:0) ?CV CV)
+    (for i 0 n*tracks_m2-1 (DrawChannel BusMetal23 (NodeChan 2 i) "" (list -h:0 x+h:0) ?CV CV))
+
+    h = powerOverhang[4]
+    n = (round y/(cadr gridAlignment[4]))
+    (DrawChannelArray nil power_m4 "" 0:n-1 pitch_m4 (list -h:0 x+h:0) ?CV CV)
+    (for i 0 n*tracks_m4-1 (DrawChannel BusMetal45 (NodeChan 4 i) "" (list -h:0 x+h:0) ?CV CV))
+
+    ; vertical layers
+    h = powerOverhang[3]
+    n = (round x/(car gridAlignment[3]))
+    (DrawChannelArray nil power_m3 "" 0:n-1 pitch_m3 (list 0:-h 0:y+h) ?CV CV)
+    (for i 0 n*tracks_m3-1 (DrawChannel BusMetal23 (NodeChan 3 i) "" (list 0:-h 0:y+h) ?CV CV))
+
+    h = powerOverhang[5]
+    n = (round x/(car gridAlignment[5]))
+    (DrawChannelArray nil power_m5 "" 0:n-1 pitch_m5 (list 0:-h 0:y+h) ?CV CV)
+    (for i 0 n*tracks_m5-1 (DrawChannel BusMetal45 (NodeChan 5 i) "" (list 0:-h 0:y+h) ?CV CV))
+
+    ; convert all shapes to complement
+    (foreach x (setof y CV->shapes y->layerName=="m0") x->lpp=(list "mc0" "complement"))
+    (foreach x (setof y CV->shapes y->layerName=="m2") x->lpp=(list "mc2" "complement"))
+    (foreach x (setof y CV->shapes y->layerName=="m3") x->lpp=(list "mc3" "complement"))
+    (foreach x (setof y CV->shapes y->layerName=="m4") x->lpp=(list "mc4" "complement"))
+    (foreach x (setof y CV->shapes y->layerName=="m5") x->lpp=(list "mc5" "complement"))
+    (leMergeShapes CV->shapes)
+
+    ; sort and delete every other track
+    sort_x = (lambda (a b) (car  (car a->points))<(car  (car b->points)))
+    sort_y = (lambda (a b) (cadr (car a->points))<(cadr (car b->points)))
+    paths = (sort (setof y CV->shapes y->layerName=="mc0") sort_y)
+    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m0 (dbDeleteObject (nth i paths))))
+    paths = (sort (setof y CV->shapes y->layerName=="mc2") sort_y)
+    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m2 (dbDeleteObject (nth i paths))))
+    paths = (sort (setof y CV->shapes y->layerName=="mc3") sort_x)
+    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m3 (dbDeleteObject (nth i paths))))
+    paths = (sort (setof y CV->shapes y->layerName=="mc4") sort_y)
+    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m4 (dbDeleteObject (nth i paths))))
+    paths = (sort (setof y CV->shapes y->layerName=="mc5") sort_x)
+    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m5 (dbDeleteObject (nth i paths))))
+
+    ; save and return
+    (dbSave CV)
+    CV
+    )
+  )

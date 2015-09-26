@@ -7,7 +7,7 @@
 ; should be set in wires.il
 (defun MapBusPattern (name @key (defaults busUseDefaultPatterns) (patterns busPatterns))
   (let (pattern)
-    (when defaults pattern = (MapBusPatternPDK name))
+    (when defaults pattern = mapBusPatternPDK[name])
     (unless pattern pattern = (cadr (car (setof p patterns name==(car p)))))
     pattern
     )

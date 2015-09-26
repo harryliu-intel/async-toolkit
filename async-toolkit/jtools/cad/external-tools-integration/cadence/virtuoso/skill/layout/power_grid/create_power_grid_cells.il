@@ -16,7 +16,6 @@
               (when CV (cdsp4edit ?CV CV))
               CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
               (DrawPowerGrid bot top ?CV CV)
-              (dbSave CV)
               (cdsp4add ?CV CV)
               )
          )
@@ -26,65 +25,58 @@
 
 ; draw power stripes and vias in a POWER_GRID cell
 (defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)))
-  (let (xalign yalign rows cols h y)
+  (let (xalign yalign rows cols y s l h)
+    (foreach x CV->shapes (dbDeleteObject x))
     xalign = (car  gridAlignment[topMetal])
     yalign = (cadr gridAlignment[topMetal])
 
     ; metal2
     (when botMetal<=2 && topMetal>=2
+          h = powerOverhang[2]
           rows = (round yalign/(cadr gridAlignment[2]))
-          (DrawChannelArray nil power_m2 "" 0:rows-1 pitch_m2 (list 0:0 xalign:0) ?CV CV)
+          (DrawChannelArray nil power_m2 "" 0:rows-1 pitch_m2 (list -h:0 xalign+h:0) ?CV CV)
           )
     
     ; metal 3
-    (when botMetal<=3 && topMetal >=3
-          h = power_overhang_m3
-          rows = (round yalign/(cadr gridAlignment[3]))
-          cols = (round xalign/(car  gridAlignment[3]))
-          (for row 0 rows-1
-               y=pitch_m2*row
-               (DrawChannelArray nil power_m3g "" 0:cols-1 pitch_m3 (list 0:y        0:y+h)      ?CV CV)
-               (DrawChannelArray nil power_m3v "" 0:cols-1 pitch_m3 (list 0:y+BP/2-h 0:y+BP/2+h) ?CV CV)
-               (DrawChannelArray nil power_m3g "" 0:cols-1 pitch_m3 (list 0:y+BP-h   0:y+BP)     ?CV CV)
-               )
+    (when botMetal<=3 && topMetal>=3
+          h = powerOverhang[3]
+          cols = (round xalign/(car gridAlignment[3]))
+          (DrawChannelArray nil power_m3 "" 0:cols-1 pitch_m3 (list 0:-h 0:yalign+h) ?CV CV)
           )
 
     ; metal4
     (when botMetal<=4 && topMetal>=4
+          h = powerOverhang[4]
           rows = (round yalign/(cadr gridAlignment[4]))
-          (DrawChannelArray nil power_m4 "" 0:rows-1 pitch_m4 (list 0:0 xalign:0) ?CV CV)
+          (DrawChannelArray nil power_m4 "" 0:rows-1 pitch_m4 (list -h:0 xalign+h:0) ?CV CV)
           )
     
     ; metal 5
-    (when botMetal<=5 && topMetal >=5
-          h = power_overhang_m5
-          rows = (round yalign/(cadr gridAlignment[5]))
-          cols = (round xalign/(car  gridAlignment[5]))
-          (for row 0 rows-1
-               y=pitch_m4*row
-               (DrawChannelArray nil power_m5g "" 0:cols-1 pitch_m5 (list 0:y-h      0:y+h)      ?CV CV)
-               (DrawChannelArray nil power_m5v "" 0:cols-1 pitch_m5 (list 0:y+BP/2-h 0:y+BP/2+h) ?CV CV)
-               (DrawChannelArray nil power_m5g "" 0:cols-1 pitch_m5 (list 0:y+BP-h   0:y+BP+h)   ?CV CV)
-               )
+    (when botMetal<=5 && topMetal>=5
+          h = powerOverhang[5]
+          cols = (round xalign/(car gridAlignment[5]))
+          (DrawChannelArray nil power_m5 "" 0:cols-1 pitch_m5 (list 0:-h 0:yalign+h) ?CV CV)
           )
 
     ; metal6
     (when botMetal<=6 && topMetal>=6
+          h = powerOverhang[6]
           rows = (round yalign/(cadr gridAlignment[6]))
-          (DrawChannelArray nil power_m6 "" 0:rows-1 pitch_m6 (list 0:0 xalign:0) ?CV CV)
+          (DrawChannelArray nil power_m6 "" 0:rows-1 pitch_m6 (list -h:0 xalign+h:0) ?CV CV)
           )
 
     ; metal7
     (when botMetal<=7 && topMetal>=7
-          h = power_overhang_m7
+          h = powerOverhang[7]
           cols = (round xalign/(car gridAlignment[7]))
           (DrawChannelArray nil power_m7 "" 0:cols-1 pitch_m7 (list 0:-h 0:yalign+h) ?CV CV)
           )
 
     ; metal8
     (when botMetal<=8 && topMetal>=8
+          h = powerOverhang[8]
           rows = (round yalign/(cadr gridAlignment[8]))
-          (DrawChannelArray nil power_m8 "" 0:rows-1 pitch_m8 (list 0:0 xalign:0) ?CV CV)
+          (DrawChannelArray nil power_m8 "" 0:rows-1 pitch_m8 (list -h:0 xalign+h:0) ?CV CV)
           )
 
     ; merge duplicate shapes
@@ -101,6 +93,7 @@
              (dbCreateRect CV s->lpp s->bBox)->net = s->net
              (dbDeleteObject s)
              )
+    (dbSave CV)
     )
   CV
   )

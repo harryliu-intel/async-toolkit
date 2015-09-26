@@ -33,7 +33,7 @@
     x0=0 y0=0 x1=0 y1=0 rows=1 cols=1
     align = 0:0
     (unless fillCV
-      cellName = "globals.FILL_TEMPLATE.m0123456_fill"
+      cellName = "globals.FILL_TEMPLATE.m012345678_fill"
       (printf "using default %s\n" cellName)
       fillCV = (dbOpenCellViewByType "globals" cellName "layout")
       align = gridAlignment[8]
@@ -192,9 +192,9 @@
   )
 
 ; fill using a template cell
-(defun TemplateFill (@key (CV (geGetEditCellView)) (topMetal 6))
+(defun TemplateFill (@key (CV (geGetEditCellView)) (topMetal 8))
   (let (flatCV)
-    (DeleteAutoGen ?propName "TemplateFill")
+    (DeleteAutoGen ?propName "TemplateFill" ?CV CV)
     flatCV = (MakeFlatView ?CV CV)
     (when topMetal>=0 (ChopFill 0 ?CV CV ?flatCV flatCV))
     (when topMetal>=1 (ChopFill 1 ?CV CV ?flatCV flatCV))
@@ -203,6 +203,8 @@
     (when topMetal>=4 (ChopFill 4 ?CV CV ?flatCV flatCV))
     (when topMetal>=5 (ChopFill 5 ?CV CV ?flatCV flatCV))
     (when topMetal>=6 (ChopFill 6 ?CV CV ?flatCV flatCV))
+    (when topMetal>=7 (ChopFill 7 ?CV CV ?flatCV flatCV))
+    (when topMetal>=8 (ChopFill 8 ?CV CV ?flatCV flatCV))
     (ddDeleteObj (ddGetObj flatCV->libName flatCV->cellName flatCV->viewName))
     CV->modified=t
     CV
@@ -216,4 +218,56 @@
   (foreach x CV->vias (dbFlattenInst x 31 t nil nil))
   (dbSave CV)
   CV
+  )
+
+; utility to draw the fill shapes
+(defun CreateFillTemplateCell ()
+  (let (CV x y n)
+    CV = (dbOpenCellViewByType "globals" "globals.FILL_TEMPLATE.m012345678_fill" "layout" "maskLayout" "w")
+    x = (car  gridAlignment[8])
+    y = (cadr gridAlignment[8])
+    
+    ; horizontal layers
+    n = (round y/(cadr gridAlignment[0]))
+    (DrawChannelArray nil power_m0 "" 0:n-1 pitch_m0 (list 0:0 x:0) ?CV CV)
+    (for i 0 n*tracks_m0-1 (DrawChannel BusMetal01 (NodeChan 0 i) "" (list 0:0 x:0) ?CV CV))
+
+    n = (round y/(cadr gridAlignment[2]))
+    (DrawChannelArray nil power_m2 "" 0:n-1 pitch_m2 (list 0:0 x:0) ?CV CV)
+    (for i 0 n*tracks_m2-1 (DrawChannel BusMetal23 (NodeChan 2 i) "" (list 0:0 x:0) ?CV CV))
+
+    n = (round y/(cadr gridAlignment[4]))
+    (DrawChannelArray nil power_m4 "" 0:n-1 pitch_m4 (list 0:0 x:0) ?CV CV)
+    (for i 0 n*tracks_m4-1 (DrawChannel BusMetal45 (NodeChan 4 i) "" (list 0:0 x:0) ?CV CV))
+
+    n = (round y/(cadr gridAlignment[6]))
+    (DrawChannelArray nil power_m6 "" 0:n-1 pitch_m6 (list 0:0 x:0) ?CV CV)
+    (for i 0 n*tracks_m6-1 (DrawChannel BusMetal67 (NodeChan 6 i) "" (list 0:0 x:0) ?CV CV))
+
+    n = (round y/(cadr gridAlignment[8]))
+    (DrawChannelArray nil power_m8 "" 0:n-1 pitch_m8 (list 0:0 x:0) ?CV CV)
+    (for i 0 n*tracks_m8-1 (DrawChannel BusMetal78 (NodeChan 8 i) "" (list 0:0 x:0) ?CV CV))
+
+    ; vertical layers
+    n = (round x/(car gridAlignment[1]))
+    (for i 0 n*tracks_m1 (DrawChannel BusMetal01 (NodeChan 1 i) "" (list 0:0 0:y) ?CV CV))
+
+    n = (round x/(car gridAlignment[3]))
+    (DrawChannelArray nil power_m3 "" 0:n-1 pitch_m3 (list 0:0 0:y) ?CV CV)
+    (for i 0 n*tracks_m3-1 (DrawChannel BusMetal23 (NodeChan 3 i) "" (list 0:0 0:y) ?CV CV))
+
+    n = (round x/(car gridAlignment[5]))
+    (DrawChannelArray nil power_m5 "" 0:n-1 pitch_m5 (list 0:0 0:y) ?CV CV)
+    (for i 0 n*tracks_m5-1 (DrawChannel BusMetal45 (NodeChan 5 i) "" (list 0:0 0:y) ?CV CV))
+
+    n = (round x/(car gridAlignment[7]))
+    (DrawChannelArray nil power_m7  "" 0:n-1 pitch_m7 (list 0:0 0:y) ?CV CV)
+    (for i 0 n*tracks_m7-1  (DrawChannel BusMetal67 (NodeChan 7 i) "" (list 0:0 0:y) ?CV CV))
+
+    ; convert all shapes to fill purpose and return CV
+    (foreach x CV->shapes x->purpose="fill")
+    (leMergeShapes CV->shapes)
+    (dbSave CV)
+    CV
+    )
   )
