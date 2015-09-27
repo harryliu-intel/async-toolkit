@@ -111,9 +111,10 @@ public class Csp2Verilog {
         try {
             final VisitorInterface visitor;
             if (enableSystemVerilog) {
-                visitor = new SystemVerilogEmitter(
-                    cellInfo, pw, warningWriter, errorWriter, debugWriter,
-                    resetNodeName, registerBitWidth, strictVars, probFilter);
+                visitor = new SystemVerilogEmitter(cellInfo, inputPorts,
+                    pw, warningWriter, errorWriter, debugWriter,
+                    resetNodeName, registerBitWidth, strictVars,
+                    implicitInit, probFilter);
             } else {
                 visitor = new VerilogEmitter(cellInfo, inputPorts,
                     pw, warningWriter, errorWriter, debugWriter,

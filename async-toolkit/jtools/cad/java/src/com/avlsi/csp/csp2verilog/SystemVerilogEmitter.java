@@ -8,6 +8,7 @@
 package com.avlsi.csp.csp2verilog;
 
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +29,7 @@ import com.avlsi.csp.grammar.ParseRange;
 import com.avlsi.csp.grammar.ParsePosition;
 import com.avlsi.csp.util.CSPCellInfo;
 import com.avlsi.csp.util.DeclarationProcessor;
+import com.avlsi.csp.util.FilterInitializers;
 import com.avlsi.csp.util.RefinementResolver;
 import com.avlsi.csp.util.ProblemFilter;
 import com.avlsi.csp.util.UniqueLabel;
@@ -45,6 +48,7 @@ import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.HashCounter;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.Triplet;
+import com.avlsi.util.math.BigIntegerUtil;
 import com.avlsi.util.text.StringUtil;
 
 /**
@@ -53,12 +57,12 @@ import com.avlsi.util.text.StringUtil;
  * @author Jesse Rosenstock
  * @version $Revision$ $Date$
  **/
-public class SystemVerilogEmitter implements VisitorInterface {
+public class SystemVerilogEmitter extends CommonEmitter {
     private final CSPCellInfo cellInfo;
 
-    // State needed for traversal
-    final PrintWriter out;
+    private final Collection/*<String>*/ inputPorts;
 
+    // State needed for traversal
     private final PrintWriter debugWriter;
 
     private final PrintWriter warningWriter;
@@ -66,14 +70,9 @@ public class SystemVerilogEmitter implements VisitorInterface {
     private final PrintWriter errorWriter;
 
     /**
-     * Number of bits to use for variables;
+     * The type of register to use for boolean variables.
      **/
-    private final int registerBitWidth;
-    
-    /**
-     * The type of register to use for variables.
-     **/
-    private final String registerType;
+    private final String boolType;
 
     /**
      * The name of reset signal
@@ -95,8 +94,6 @@ public class SystemVerilogEmitter implements VisitorInterface {
         new RefinementResolver(RefinementResolver.NAME);
 
     private ComplexAccess complexAccess = null;
-
-    private boolean arrayDeclRange = false;
 
     private final UniqueLabel labels = new UniqueLabel(new HashMap());
 
@@ -129,7 +126,14 @@ public class SystemVerilogEmitter implements VisitorInterface {
     private final List/*<Pair<String,Integer>>*/ arbiters =
         new ArrayList/*<Pair<String,Integer>>*/();
 
+    private final Set<ExpressionInterface> lvalues =
+        new HashSet<ExpressionInterface>();
+
     private final boolean strictVars;
+
+    private final boolean implicitInit;
+
+    private int scope = 0;
 
     private final ProblemFilter problems;
 
@@ -158,15 +162,25 @@ public class SystemVerilogEmitter implements VisitorInterface {
 
         private final LinkedList/*<Index>*/ array;
         private final LinkedList/*<String>*/ structure;
+        private final Type ty;
         private Object base;
         public ComplexAccess() {
+            this((Type) null);
+        }
+        public ComplexAccess(final ExpressionInterface expr) {
+            this(lvalues.contains(expr) ? (Type) null
+                                        : analysisResults.getType(expr));
+        }
+        public ComplexAccess(final Type ty) {
             this.array = new LinkedList/*<Index>*/();
             this.structure = new LinkedList/*<String>*/();
+            this.ty = ty;
         }
         public ComplexAccess(final ComplexAccess other) {
             this.array = new LinkedList/*<Index>*/(other.array);
             this.structure = new LinkedList/*<String>*/(other.structure);
             this.base = other.base;
+            this.ty = other.ty;
         }
         private void accessArray(final Index idx, final boolean forward) {
             if (forward) array.addLast(idx);
@@ -193,8 +207,34 @@ public class SystemVerilogEmitter implements VisitorInterface {
             base = token;
         }
         private void emit(final String hierarchy,
-                          final String channelPart) throws VisitorException {
+                          final String channelPart,
+                          final Type ty) throws VisitorException {
             final StringBuffer buf = new StringBuffer();
+            String concat = null;
+            if (ty instanceof IntegerType) {
+                final IntegerType it = (IntegerType) ty;
+                if (it.getDeclaredWidth() != null) {
+                    final int width = getIntegerConstant(it.getDeclaredWidth());
+                    if (it.isSigned()) {
+                        buf.append("(util.sign_extend(");
+                        concat = "))";
+                    } else {
+                        buf.append("($signed({ ");
+                        buf.append(Math.max(1, registerBitWidth - width));
+                        buf.append("'b0, ");
+                        concat = " }))";
+                    }
+                }
+            } else if (ty instanceof NodeType) {
+                final NodeType nt = (NodeType) ty;
+                if (nt.isArrayed()) {
+                    buf.append("($signed({ ");
+                    buf.append(Math.max(1, registerBitWidth - nt.getWidth()));
+                    buf.append("'b0, ");
+                    concat = " }))";
+                }
+            }
+
             buf.append(hierarchy);
             buf.append("\\");
             buf.append((String) tokenVerilogNameMap.get(base));
@@ -210,6 +250,9 @@ public class SystemVerilogEmitter implements VisitorInterface {
                 ((Index) i.next()).write();
                 out.print("]");
             }
+            if (concat != null) {
+                out.print(concat);
+            }
         }
         public void write(final String channelPart) throws VisitorException {
             final ComplexAccess mapped = mapComplexArgument(this);
@@ -217,7 +260,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
             if (hierarchy != null && getHierarchy() == hierarchy)
                 hierarchy = null;
             mapped.emit(hierarchy == null ? "" : escape(hierarchy) + ".",
-                        channelPart);
+                        channelPart, ty);
         }
         public void write() throws VisitorException {
             write("");
@@ -228,7 +271,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
         public ComplexAccess map(final ComplexAccess previous) {
             if (previous == null) return this;
 
-            final ComplexAccess result = new ComplexAccess();
+            final ComplexAccess result = new ComplexAccess(previous.ty);
             result.array.addAll(previous.array);
             result.array.addAll(array);
             result.structure.addAll(previous.structure);
@@ -279,8 +322,10 @@ public class SystemVerilogEmitter implements VisitorInterface {
         public void declare(final String base) throws VisitorException {
             if (type instanceof StringType) {
                 out.print("`CSP_STRING ");
+            } else if (type instanceof BooleanType) {
+                out.print(boolType); out.ws();
             } else {
-                out.print(registerType + ' ');
+                out.print(getRegisterType((IntegerType) type)); out.ws();
             }
             out.print(getStructurePart(base));
             for (Iterator i = array.iterator(); i.hasNext(); ) {
@@ -302,13 +347,34 @@ public class SystemVerilogEmitter implements VisitorInterface {
         }
     }
 
+    private String getLoopVarType(final Range r) {
+        final ExpressionInterface minExpr = r.getMinExpression();
+        final ExpressionInterface maxExpr = r.getMaxExpression();
+        if (minExpr instanceof IntegerExpression &&
+            maxExpr instanceof IntegerExpression) {
+            BigInteger min = new BigInteger(
+                    ((IntegerExpression) minExpr).getValue(),
+                    ((IntegerExpression) minExpr).getRadix());
+            BigInteger max = new BigInteger(
+                    ((IntegerExpression) maxExpr).getValue(),
+                    ((IntegerExpression) maxExpr).getRadix());
+            max = max.add(BigInteger.ONE);
+            if (min.signum() == -1) min = min.negate();
+            if (max.signum() == -1) max = max.negate();
+            int lindex = Math.max(min.bitLength(), max.bitLength());
+            return "bit signed [" + lindex + ":0]";
+        } else {
+            return registerType;
+        }
+    }
+
     private void emitForLoop(final String var, final Range r)
         throws VisitorException {
         out.print("for (" + var + " = ");
         r.getMinExpression().accept(this);
-        out.print("; " + var + " <= ");
+        out.print(';'); out.ws(); out.print(var + " <= ");
         r.getMaxExpression().accept(this);
-        out.print("; " + var + " = " + var + " + 1)");
+        out.print(';'); out.ws(); out.print(var + " = " + var + " + 1)");
     }
 
     private void emitChannelPart(final ExpressionInterface chanExpr,
@@ -331,6 +397,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
     }
 
     public SystemVerilogEmitter(final CSPCellInfo cellInfo,
+                                final Collection/*<String>*/ inputPorts,
                                 final PrintWriter out,
                                 final PrintWriter warningWriter,
                                 final PrintWriter errorWriter,
@@ -338,18 +405,20 @@ public class SystemVerilogEmitter implements VisitorInterface {
                                 final String resetNodeName,
                                 final int registerBitWidth,
                                 final boolean strictVars,
+                                final boolean implicitInit,
                                 final ProblemFilter problems) { 
+        super(out, registerBitWidth);
         this.cellInfo = cellInfo;
-        this.out = out;
+        this.inputPorts = inputPorts;
         this.warningWriter = warningWriter;
         this.errorWriter = errorWriter;
         this.debugWriter = debugWriter;
         this.analyzer = new VariableAnalyzer(cellInfo);
         this.analysisResults = null;
-        this.registerBitWidth = registerBitWidth;
-        this.registerType = "reg signed [" + (registerBitWidth - 1) + ":0]";
+        this.boolType = "bit";
         this.resetNodeName = resetNodeName;
         this.strictVars = strictVars;
+        this.implicitInit = implicitInit;
         this.problems = problems;
     }
 
@@ -360,33 +429,16 @@ public class SystemVerilogEmitter implements VisitorInterface {
         out.print(')');
     }
 
-    private void processBinary(final AbstractBinaryExpression expr,
-            final String op)
-        throws VisitorException {
-        out.print('(');
-        expr.getLeft().accept(this);
-        out.print(' ' + op + ' ');
-        expr.getRight().accept(this);
-        out.print(')');
-    }
-
-    private void processCompare(final AbstractBinaryExpression expr,
-            final String op)
-        throws VisitorException {
-        // convert truth values of 0 and 1 to 0 and -1
-        out.print("(-");
-        processBinary(expr, op);
-        out.print(')');
-    }
-
     private void processSpecialBinary(final AbstractBinaryExpression expr,
             final String func)
         throws VisitorException {
         // REVIEW: What is the overhead of functions?  Should we
         // do this inline with a temporary variable?
         out.print(func + '(');
+        lvalues.add(expr.getLeft());
         expr.getLeft().accept(this);
-        out.print(", ");
+        out.print(','); out.ws();
+        lvalues.add(expr.getRight());
         expr.getRight().accept(this);
         out.print(')');
     }
@@ -422,53 +474,6 @@ public class SystemVerilogEmitter implements VisitorInterface {
         return undeclaredVars;
     }
 
-    private void outputMetaArray(final String name, final Collection indices) {
-        out.print(name);
-        for (Iterator i = indices.iterator(); i.hasNext(); ) {
-            out.print("[" + i.next() + "]");
-        }
-        out.print(" = ");
-    }
-
-    private void processMetaParameter(final String name,
-                                      final MetaParamTypeInterface type,
-                                      final Collection indices) {
-        if (type instanceof ArrayMetaParam) {
-            final ArrayMetaParam amp = (ArrayMetaParam) type;
-            final List newidx = new ArrayList(indices);
-            newidx.add(null);
-            for (int i = amp.getMinIndex(); i <= amp.getMaxIndex(); ++i) {
-                newidx.set(newidx.size() - 1, new Integer(i));
-                processMetaParameter(name, amp.get(i), newidx);
-            }
-        } else if (type instanceof BooleanMetaParam) {
-            if (!indices.isEmpty()) {
-                outputMetaArray(name, indices);
-                if (((BooleanMetaParam) type).toBoolean()) {
-                    out.println("-1;");
-                } else {
-                    out.println("0;");
-                }
-            }
-        } else if (type instanceof IntegerMetaParam) {
-            if (!indices.isEmpty()) {
-                outputMetaArray(name, indices);
-                processBigInteger(((IntegerMetaParam) type).toBigInteger(), 10);
-                out.println(";");
-            }
-        } else if (!indices.isEmpty()) {
-            throw new AssertionError("Cannot handle type: " + type);
-        }
-    }
-
-    private void processMetaParameters() {
-        for (Iterator i = cellInfo.getMetaParamDefinitions(); i.hasNext(); ) {
-            MetaParamDefinition mp = (MetaParamDefinition) i.next();
-            processMetaParameter(mp.getName(), mp.getType(),
-                                 Collections.EMPTY_LIST);
-        }
-    }
-
     private void outputProgramBody(CSPProgram e) throws VisitorException {
         declareVariables();
 
@@ -498,20 +503,23 @@ public class SystemVerilogEmitter implements VisitorInterface {
         out.println("always @(posedge " + resetNodeName + " )");
         out.println("begin : main ");
 
-        processMetaParameters();
-
         final Set/*<String>*/ undeclaredVars = processResults(analysisResults);
         // assign to 0
-        for (Iterator i = undeclaredVars.iterator(); i.hasNext(); ) {
-            final String var = escape((String) i.next());
-            out.println(var + " = 0;");
+        if (implicitInit) {
+            for (Iterator i = undeclaredVars.iterator(); i.hasNext(); ) {
+                final String var = escape((String) i.next());
+                out.println(var + " = 0;");
+            }
+            out.println();
         }
-        out.println();
 
         // handle initializer statement to deal with top-level constants
         // TODO: Share top-level constants, as this wastes memory
-        if (e.getInitializerStatement() != null)
-            e.getInitializerStatement().accept(this);
+        if (e.getInitializerStatement() != null) {
+            final FilterInitializers filter =
+                new FilterInitializers(analysisResults, allUsedTokens);
+            filter.filter(e.getInitializerStatement()).accept(this);
+        }
 
         // csp body
         processingBody = true;
@@ -531,6 +539,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
         // declare and initialize the undeclared variables
         try {
             analysisResults = analyzer.getResults(e, resolver);
+            allUsedTokens.addAll(analysisResults.getUsedTokens());
         } catch (VariableAnalysisException x) {
             throw new VisitorException(x.getMessage());
         }
@@ -552,6 +561,8 @@ public class SystemVerilogEmitter implements VisitorInterface {
             outputConstructors();
             outputArbiters();
         }
+
+        out.flush();
     }
 
     /**
@@ -598,7 +609,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
         throws VisitorException {
         boolean writeNow = false;
         if (complexAccess == null) {
-            complexAccess = new ComplexAccess();
+            complexAccess = new ComplexAccess(e);
             writeNow = true;
         }
         complexAccess.accessArray(e.getIndexExpression());
@@ -610,62 +621,6 @@ public class SystemVerilogEmitter implements VisitorInterface {
         }
     }
 
-    public void visitConditionalAndExpression(ConditionalAndExpression e)
-        throws VisitorException {
-        // don't have to do anything to the operands, because -1 is also true
-        processCompare(e, "&&");
-    }
-
-    public void visitConditionalOrExpression(ConditionalOrExpression e)
-        throws VisitorException {
-        // don't have to do anything to the operands, because -1 is also true
-        processCompare(e, "||");
-    }
-
-    private void processConstantBitRange(BitRangeExpression e, boolean rhs)
-        throws VisitorException {
-        final IntegerExpression maxExpr =
-            (IntegerExpression) e.getMaxExpression();
-        final IntegerExpression minExpr =
-            (IntegerExpression) e.getMinExpression();
-        final BigInteger maxBit =
-            new BigInteger(maxExpr.getValue(), maxExpr.getRadix());
-        final BigInteger minBit = minExpr == null ?
-            null
-          : new BigInteger(minExpr.getValue(), minExpr.getRadix());
-        if (!rhs) out.print("($signed({1'd0, ");
-        e.getBitsExpression().accept(this);
-        out.print('[' + maxBit.toString(10));
-        if (minBit != null && !maxBit.equals(minBit))
-            out.print(':' + minBit.toString(10));
-        out.print(']');
-        if (!rhs) out.print("}))");
-    }
-
-    private boolean needBitRangeFunction(final BitRangeExpression e) {
-        // If both min and max are constants, and if we are not part-selecting
-        // on an array element[1], then we can use Verilog's constant
-        // part-select.
-        // [1] Seems to be a ncverilog restriction, as part-selecting an array
-        // element is legal per the Verilog 2001 spec 4.2.2 (p. 55).
-        if (e.getMaxExpression() instanceof IntegerExpression) {
-            if (e.getMinExpression() == null) return false;
-            else if (e.getMinExpression() instanceof IntegerExpression) {
-                final IntegerExpression maxExpr =
-                    (IntegerExpression) e.getMaxExpression();
-                final IntegerExpression minExpr =
-                    (IntegerExpression) e.getMinExpression();
-                final BigInteger maxBit =
-                    new BigInteger(maxExpr.getValue(), maxExpr.getRadix());
-                final BigInteger minBit =
-                    new BigInteger(minExpr.getValue(), minExpr.getRadix());
-                return !(e.getBitsExpression() instanceof IdentifierExpression)
-                    && !maxBit.equals(minBit);
-            }
-        }
-        return true;
-    }
-
     public void visitBitRangeExpression(BitRangeExpression e)
         throws VisitorException {
         // The csp grammar only allows bit extraction from arrays,
@@ -675,21 +630,36 @@ public class SystemVerilogEmitter implements VisitorInterface {
                e.getBitsExpression() instanceof MemberAccessExpression:
                "Invalid bit range expression found at: " + e.getParseRange().fullString();
 
+        lvalues.add(e.getBitsExpression());
         if (needBitRangeFunction(e)) {
             // can't use constant part-select, use special function
             out.print("util.bit_extract" +
                       (e.getMinExpression() == null ? "2" : "3") +
                       "(");
             e.getBitsExpression().accept(this);
-            out.print(", ");
+            out.print(','); out.ws();
+            lvalues.add(e.getMaxExpression());
             e.getMaxExpression().accept(this);
             if (e.getMinExpression() != null) {
-                out.print(", ");
+                out.print(','); out.ws();
+                lvalues.add(e.getMinExpression());
                 e.getMinExpression().accept(this);
             }
             out.print(')');
         } else {
-            processConstantBitRange(e, false);
+            processSimpleBitRange(e, false);
+        }
+    }
+
+    private void printArg(final ExpressionInterface arg)
+        throws VisitorException {
+        lvalues.add(arg);
+        if (analysisResults.getType(arg) instanceof StringType) {
+            arg.accept(this); 
+        } else {
+            out.print("util.hex_string(");
+            arg.accept(this); 
+            out.print(")");
         }
     }
 
@@ -703,41 +673,54 @@ public class SystemVerilogEmitter implements VisitorInterface {
                 ((IdentifierExpression) func).getIdentifier() : null;
 
         if ("print".equals(funcName)) {
-            out.println("`ifdef ENABLE_CSP_PRINT");
-            out.println("$write(\"%t:%m: \", $time);");
-            final List args = new ArrayList();
-            CollectionUtils.addAll(args, e.getActuals());
-            args.add(args.remove(0));
-            for (int i = 0; i < args.size(); ++i) {
-                final ExpressionInterface arg =
-                    (ExpressionInterface) args.get(i);
-                if (analysisResults.getType(arg) instanceof StringType) {
-                    out.print("csp_string.write(");
-                } else {
-                    out.print("util.display_hex(");
-                }
-                arg.accept(this); 
-                out.println(");");
-                if (i < args.size() - 1) {
-                    out.print("$write(\" ");
-                    if (i == args.size() - 2) out.print("(tag=");
-                    out.println("\");");
-                }
+            final Iterator<ExpressionInterface> args = e.getActuals();
+            final ExpressionInterface arg1 = args.next();
+            final ExpressionInterface arg2 =
+                args.hasNext() ? args.next() : null;
+
+            if (arg2 == null) {
+                out.print("`CAST2VERILOG_CSP_PRINT(");
+                printArg(arg1);
+            } else {
+                out.print("`CAST2VERILOG_CSP_PRINT2(");
+                printArg(arg1);
+                out.print(", ");
+                printArg(arg2);
             }
-            if (args.size() < 2) out.println("$display;");
-            else out.println("$display(\")\");");
-            out.println("`endif");
+            out.println(")");
+            return;
+        } else if ("assert".equals(funcName)) {
+            final Iterator args = e.getActuals();
+            final ExpressionInterface guard = (ExpressionInterface) args.next();
+            lvalues.add(guard);
+            final ExpressionInterface message =
+                args.hasNext() ? (ExpressionInterface) args.next()
+                               : null;
+            if (message != null) lvalues.add(message);
+
+            out.print("`CAST2VERILOG_CSP_ASSERT" +
+                      (message == null ? "" : "2") + "(\"" +
+                      e.getParseRange().fullString() + "\", ");
+            guard.accept(this);
+            if (message != null) {
+                out.print(','); out.ws();
+                message.accept(this);
+            }
+            out.println(")");
             return;
         } else if ("choose".equals(funcName)) {
             Iterator i = e.getActuals(); 
             // XXX: Add null exception handling
             ExpressionInterface arg = (ExpressionInterface) i.next();
+            lvalues.add(arg);
             arg.accept(this); 
-            out.print(" ? "); 
+            out.ws(); out.print('?'); out.ws();
             arg = (ExpressionInterface) i.next();
+            lvalues.add(arg);
             arg.accept(this); 
-            out.print(" : "); 
+            out.ws(); out.print(':'); out.ws();
             arg = (ExpressionInterface) i.next();
+            lvalues.add(arg);
             arg.accept(this); 
             return;
         } else if ("random".equals(funcName) ||
@@ -746,25 +729,30 @@ public class SystemVerilogEmitter implements VisitorInterface {
             Iterator i = e.getActuals(); 
             out.print("util." + funcName + "(");
             final ExpressionInterface arg = (ExpressionInterface) i.next();
+            lvalues.add(arg);
             arg.accept(this); 
             out.println(")");
             return;
         } else if ("wait".equals(funcName)) {
             final Iterator i = e.getActuals(); 
-            out.print("#((");
+            out.print("`CAST2VERILOG_WAIT(");
             final ExpressionInterface arg = (ExpressionInterface) i.next();
-            arg.accept(this); 
-            // divide by 100 to change from DSim units to transitions
-            out.println(") * `PRS2VERILOG_TAU / 100);");
+            lvalues.add(arg);
+            arg.accept(this); // in DSim units
+            out.println(");");
             return;
         } else if ("string".equals(funcName)) {
             out.print("util.csp_string(");
             for (Iterator i = e.getActuals(); i.hasNext(); ) {
                 final ExpressionInterface arg = (ExpressionInterface) i.next();
+                lvalues.add(arg);
                 arg.accept(this); 
-                if (i.hasNext()) out.print(" , ");
+                if (i.hasNext()) { out.ws(); out.print(','); out.ws(); }
             }
             out.println(")");
+            return;
+        } else if ("time".equals(funcName)) {
+            out.println("`CAST2VERILOG_TIME");
             return;
         }
         throw new VisitorException("Unsupported function calls found: " + e.getParseRange().fullString());
@@ -787,79 +775,6 @@ public class SystemVerilogEmitter implements VisitorInterface {
         processSpecialBinary(e, "util.pow");
     }
 
-    public void visitEqualityExpression(EqualityExpression e)
-        throws VisitorException {
-        processCompare(e, "==");
-    }
-
-    public void visitGreaterEqualExpression(GreaterEqualExpression e)
-        throws VisitorException {
-        processCompare(e, ">=");
-    }
-
-    public void visitGreaterThanExpression(GreaterThanExpression e)
-        throws VisitorException {
-        processCompare(e, ">");
-    }
-
-    public void visitInequalityExpression(InequalityExpression e)
-        throws VisitorException {
-        processCompare(e, "!=");
-    }
-
-    public void visitLessEqualExpression(LessEqualExpression e)
-        throws VisitorException {
-        processCompare(e, "<=");
-    }
-
-    public void visitLessThanExpression(LessThanExpression e)
-        throws VisitorException {
-        processCompare(e, "<");
-    }
-
-    /**
-     * Output an integer constant as a signed expression.  If radix is 2, 8, or
-     * 10, use the "b", "o" and "d" base specifiers respectively.  Otherwise,
-     * output in hexdecimal.
-     *
-     * @param bi integer to output
-     * @param radix radix to use
-     **/
-    private void processBigInteger(BigInteger bi, final int radix) {
-        // all constants must be signed, because "if any operand is unsigned,
-        // the result is unsigned, regardless of the operator" (4.5.1)
-        if (!arrayDeclRange) out.print("$signed(");
-
-        if (bi.signum() == -1) {
-            // if the number is negative, prepend a negative sign, and process
-            // it's absolute value
-            bi = bi.negate();
-            out.print('-');
-        }
-
-        final int width = bi.bitLength() + 1; // plus 1 for the sign bit
-
-        if (!arrayDeclRange) out.print(width);
-        out.print('\'');
-        if (radix == 2)
-            out.print("b" + bi.toString(2));
-        else if (radix == 8)
-            out.print("o" + bi.toString(8));
-        else if (radix == 10)
-            out.print("d" + bi.toString(10));
-        else {
-            // write other bases in hex for no particular reason
-            out.print("h" + bi.toString(16));
-        }
-        if (!arrayDeclRange) out.print(")");
-    }
-
-    public void visitIntegerExpression(IntegerExpression e)
-        throws VisitorException {
-        processBigInteger(new BigInteger(e.getValue(), e.getRadix()),
-                          e.getRadix());
-    }
-
     public void visitLeftShiftExpression(LeftShiftExpression e)
         throws VisitorException {
         // handles negative shift amounts
@@ -879,7 +794,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
     public void visitIdentifierExpression(IdentifierExpression e)
         throws VisitorException {
         if (complexAccess == null) {
-            complexAccess = new ComplexAccess();
+            complexAccess = new ComplexAccess(e);
             complexAccess.setBase(analysisResults.getIdentToken(e));
             complexAccess.write();
             complexAccess = null;
@@ -942,14 +857,12 @@ public class SystemVerilogEmitter implements VisitorInterface {
         // Add - to compensate for difference in verilog and csp
         // comparison semantics.
         if (type.getDirection() == PortDirection.IN) {
-            out.print("(-(");
+            out.print("(");
             emitChannelData(chanExpr);
-            out.println(" >= 0))");
+            out.println(" >= 0)");
         } else {
             assert type.getDirection() == PortDirection.OUT;
-            out.print('-');
             emitChannelEnable(chanExpr);
-            out.println();
         }
     }
 
@@ -964,11 +877,16 @@ public class SystemVerilogEmitter implements VisitorInterface {
         processSpecialBinary(e, "util.remainder");
     }
 
+    private void processString(String s) {
+        final String esc =
+            '"' + StringUtil.quoteASCIIString(s, ESCAPE_MAP) + '"';
+        out.print("csp_string.init($bits(" + esc + "),"); out.ws();
+        out.print(esc + ")");
+    }
+
     public void visitStringExpression(StringExpression e)
         throws VisitorException {
-        final String esc =
-            '"' + StringUtil.quoteASCIIString(e.getValue(), ESCAPE_MAP) + '"';
-        out.print("csp_string.init($bits(" + esc + "), " + esc + ")");
+        processString(e.getValue());
     }
 
     public void visitSubtractExpression(SubtractExpression e)
@@ -977,15 +895,16 @@ public class SystemVerilogEmitter implements VisitorInterface {
     }
 
     private void processStructureAccess(final String field,
-                                        final ExpressionInterface e)
+                                        final ExpressionInterface structExpr,
+                                        final ExpressionInterface accessExpr)
         throws VisitorException {
         boolean writeNow = false;
         if (complexAccess == null) {
-            complexAccess = new ComplexAccess();
+            complexAccess = new ComplexAccess(accessExpr);
             writeNow = true;
         }
         complexAccess.accessStructure(field, false);
-        e.accept(this);
+        structExpr.accept(this);
         if (writeNow) {
             final ComplexAccess old = complexAccess;
             complexAccess = null;
@@ -995,12 +914,13 @@ public class SystemVerilogEmitter implements VisitorInterface {
 
     public void visitStructureAccessExpression(StructureAccessExpression e)
         throws VisitorException {
-        processStructureAccess(e.getFieldName(), e.getStructureExpression());
+        processStructureAccess(e.getFieldName(), e.getStructureExpression(), e);
     }
 
     public void visitMemberAccessExpression(MemberAccessExpression e)
         throws VisitorException {
-        processStructureAccess(e.getMemberName(), e.getStructureExpression());
+        processStructureAccess(e.getMemberName(), e.getStructureExpression(),
+                               e);
     }
 
     private void processBooleanChannel(ExpressionInterface chanExpr,
@@ -1010,9 +930,9 @@ public class SystemVerilogEmitter implements VisitorInterface {
         else {
             final boolean bool =
                 analysisResults.getType(rhs) instanceof BooleanType;
-            if (bool) out.print("(-(");
+            if (bool) out.print("(");
             emitChannelData(chanExpr);
-            if (bool) out.print("!= 0))");
+            if (bool) out.print("!= 0)");
         }
     }
 
@@ -1035,14 +955,14 @@ public class SystemVerilogEmitter implements VisitorInterface {
         if (t instanceof IntegerType || t instanceof BooleanType ||
             t instanceof StringType) {
             lhs.write();
-            out.print(" = ");
+            out.ws(); out.print('='); out.ws();
             rhs.write();
             out.println(";");
         } else if (t instanceof ArrayType) {
             final ArrayType at = (ArrayType) t;
             out.println("begin : " + genBlock());
             final String var = "loop$" + indices;
-            out.println(registerType + " " + var + ";");
+            out.println(getLoopVarType(at.getRange()) + " " + var + ";");
             emitForLoop(var, at.getRange());
             out.println(" begin");
             lhs.accessArray(var);
@@ -1071,6 +991,106 @@ public class SystemVerilogEmitter implements VisitorInterface {
         }
     }
 
+    private void emitPack(final ComplexAccess expr, final Type t)
+        throws VisitorException {
+        if (t instanceof BooleanType) {
+            expr.write();
+        } else if (t instanceof IntegerType) {
+            final IntegerType it = (IntegerType) t;
+            final int width = getIntegerConstant(it.getDeclaredWidth()) - 1;
+            expr.write();
+            out.print("[" + width + ":0]");
+        } else if (t instanceof ArrayType) {
+            final ArrayType at = (ArrayType) t;
+            final Range r = at.getRange();
+            final int min = getIntegerConstant(r.getMinExpression());
+            final int max = getIntegerConstant(r.getMaxExpression());
+            boolean first = true;
+            for (int i = max; i >= min; --i) {
+                if (first) first = false;
+                else { out.print(','); out.ws(); }
+                final ComplexAccess nexpr = new ComplexAccess(expr);
+                nexpr.accessArray(Integer.toString(i));
+                emitPack(nexpr, at.getElementType());
+            }
+        } else if (t instanceof StructureType) {
+            final Pair p = (Pair) resolver.getResolvedStructures().get(t);
+            final StructureDeclaration sdecl =
+                (StructureDeclaration) p.getSecond();
+            final boolean[] first = new boolean[] { true };
+            final DeclarationProcessor proc = new DeclarationProcessor() {
+                public void process(final Declarator d)
+                    throws VisitorException {
+                    final ComplexAccess nexpr = new ComplexAccess(expr);
+                    final String id = d.getIdentifier().getIdentifier();
+                    nexpr.accessStructure(id);
+                    if (first[0]) first[0] = false;
+                    else { out.print(','); out.ws(); }
+                    emitPack(nexpr, d.getTypeFragment());
+                }
+            };
+            proc.process(sdecl.getDeclarations());
+        } else {
+            throw new AssertionError("Cannot pack: " + t);
+        }
+    }
+
+    private ComplexAccess getComplexAccess(final ExpressionInterface expr)
+        throws VisitorException {
+        complexAccess = new ComplexAccess(expr);
+        expr.accept(this);
+        final ComplexAccess result = complexAccess;
+        complexAccess = null;
+        return result;
+    }
+
+    private void emitPack(final ExpressionInterface structure)
+        throws VisitorException {
+        emitPack(getComplexAccess(structure),
+                 (Type) analysisResults.getType(structure));
+    }
+
+    // Fix up booleans, specifically, true is unpacked as 1, but needs to be
+    // turned to -1
+    private void emitUnpack(final ComplexAccess expr, final Type t)
+        throws VisitorException {
+        if (t instanceof BooleanType) {
+        } else if (t instanceof IntegerType) {
+        } else if (t instanceof ArrayType) {
+            final ArrayType at = (ArrayType) t;
+            final Range r = at.getRange();
+            final int min = getIntegerConstant(r.getMinExpression());
+            final int max = getIntegerConstant(r.getMaxExpression());
+            for (int i = max; i >= min; --i) {
+                final ComplexAccess nexpr = new ComplexAccess(expr);
+                nexpr.accessArray(Integer.toString(i));
+                emitUnpack(nexpr, at.getElementType());
+            }
+        } else if (t instanceof StructureType) {
+            final Pair p = (Pair) resolver.getResolvedStructures().get(t);
+            final StructureDeclaration sdecl =
+                (StructureDeclaration) p.getSecond();
+            final DeclarationProcessor proc = new DeclarationProcessor() {
+                public void process(final Declarator d)
+                    throws VisitorException {
+                    final ComplexAccess nexpr = new ComplexAccess(expr);
+                    final String id = d.getIdentifier().getIdentifier();
+                    nexpr.accessStructure(id);
+                    emitUnpack(nexpr, d.getTypeFragment());
+                }
+            };
+            proc.process(sdecl.getDeclarations());
+        } else {
+            throw new AssertionError("Cannot unpack: " + t);
+        }
+    }
+
+    private void emitUnpack(final ExpressionInterface structure)
+        throws VisitorException {
+        emitUnpack(getComplexAccess(structure),
+                   (Type) analysisResults.getType(structure));
+    }
+
     /**
      * Process an assignment statement.
      *
@@ -1086,6 +1106,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
                                             ExpressionInterface chanExpr,
                                             AssignmentStatement stmt)
         throws VisitorException {
+        lvalues.add(lhs);
         final boolean op =
             stmt != null && stmt.getKind() != AssignmentStatement.EQUAL;
         if (lhs instanceof BitRangeExpression &&
@@ -1097,13 +1118,17 @@ public class SystemVerilogEmitter implements VisitorInterface {
                       (bitRangeExpression.getMinExpression() == null ?
                           "3" : "4") +
                       "(");
+            lvalues.add(bitRangeExpression.getBitsExpression());
             bitRangeExpression.getBitsExpression().accept(this);
-            out.print(", ");
+            out.print(','); out.ws();
+            lvalues.add(rhs);
             processBooleanChannel(chanExpr, rhs);
-            out.print(", ");
+            out.print(','); out.ws();
+            lvalues.add(bitRangeExpression.getMaxExpression());
             bitRangeExpression.getMaxExpression().accept(this);
             if (bitRangeExpression.getMinExpression() != null) {
-                out.print(", ");
+                out.print(','); out.ws();
+                lvalues.add(bitRangeExpression.getMinExpression());
                 bitRangeExpression.getMinExpression().accept(this);
             }
             out.println(");");
@@ -1126,28 +1151,27 @@ public class SystemVerilogEmitter implements VisitorInterface {
             final boolean lstr =
                 stmt != null && stmt.getKind() == AssignmentStatement.ADD &&
                 (analysisResults.getType(lhs) instanceof StringType);
-            final boolean lbool =
-                (analysisResults.getType(lhs) instanceof BooleanType);
             final boolean rstr =
                 lstr && !(analysisResults.getType(rhs) instanceof StringType);
 
             if (op) out.print("util.assign_" +
                               (lstr ? "concat" : stmt.getKindString()) + "(");
             if (lhs instanceof BitRangeExpression) {
-                processConstantBitRange((BitRangeExpression) lhs, true);
+                final BitRangeExpression bre = (BitRangeExpression) lhs;
+                lvalues.add(bre.getBitsExpression());
+                processSimpleBitRange(bre, true);
             } else {
                 lhs.accept(this);
             }
-            if (op) out.print(" , ");
+            if (op) { out.ws(); out.print(','); out.ws(); }
             else {
                 out.print(" = ");
-                if (lbool) out.print("$signed(");
             }
             if (rstr) out.print("util.csp_string(");
+            lvalues.add(rhs);
             processBooleanChannel(chanExpr, rhs);
             if (rstr) out.print(", 10)");
             if (op) out.print(" )");
-            else if (lbool) out.print(')');
             out.println(';');
 
             if (false) {
@@ -1164,6 +1188,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
     private static final Map/*<String,String>*/ BUILTIN_FUNCTIONS =
         CollectionUtils.mapify(
             new String[] { "print", "util.display_hex",
+                           "assert", "assert",
                            "eventQueueIsEmpty", null,
                            "random", "random",
                            "srandom", "srandom",
@@ -1174,7 +1199,11 @@ public class SystemVerilogEmitter implements VisitorInterface {
                            // without function in guards, this isn't very useful
                            "stable", null,
                            "string", "string",
-                           "enableDSimErrors", null});
+                           "enableDSimErrors", null,
+                           "time", "time",
+                           "pack", "pack",
+                           "unpack", "unpack",
+                           "energy", "energy" });
 
     private String getFullName(
             final FunctionDeclaration decl,
@@ -1214,6 +1243,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
             (VariableAnalyzer.Results) functionAnalyzerCache.get(decl);
         if (results == null) {
             results = analyzer.getResults(decl, initStmt, resolver);
+            allUsedTokens.addAll(results.getUsedTokens());
             problems.process(results.getErrors(strictVars));
             functionAnalyzerCache.put(decl, results);
         }
@@ -1329,8 +1359,10 @@ public class SystemVerilogEmitter implements VisitorInterface {
                 final IdentifierExpression ident = dor.getIdentifier();
                 final Type t = (Type) analysisResults.getIdentToken(ident);
                 lastVerilogTokenMap.remove(t);
-                outputFormalParameter(ident, t, argIter, label, "inout ",
-                                      comma);
+                outputFormalParameter(ident, t, argIter, label,
+                        dor.getDirection() == Declarator.IN ? "input "
+                                                            : "inout ",
+                        comma);
             }
         }
         // return value
@@ -1454,6 +1486,11 @@ public class SystemVerilogEmitter implements VisitorInterface {
     private void processFunctionCall(final FunctionCallExpression e,
                                      final ExpressionInterface lhs)
         throws VisitorException {
+        for (Iterator arg = e.getActuals(); arg.hasNext(); ) {
+            lvalues.add((ExpressionInterface) arg.next());
+        }
+        if (lhs != null) lvalues.add(lhs);
+
         final Pair/*<CSPProgram,FunctionDeclaration>*/ p =
             (Pair) resolver.getResolvedFunctions().get(e);
         final Object decl = p == null ? null : p.getSecond();
@@ -1467,17 +1504,36 @@ public class SystemVerilogEmitter implements VisitorInterface {
                     throw new VisitorException(
                             "Unsupported builtin function at " +
                             e.getParseRange().fullString());
-                } else if (name == "util.display_hex" || name == "wait") { 
-                   visitFunctionCallExpression(e); // process builtin funcs 
+                } else if (name == "util.display_hex" || name == "wait" ||
+                           name == "assert") { 
+                    visitFunctionCallExpression(e); // process builtin funcs 
                 } else if (name == "srandom") {
-                   System.out.println("N.B. srandom() function being skipped");
+                    System.out.println("N.B. srandom() function being skipped");
                 } else if (name == "choose" || name == "random" ||
                            name == "string" || name == "log2" ||
-                           name == "log4") { 
-                   lhs.accept(this);
-                   out.print(" = ");
-                   visitFunctionCallExpression(e); // process builtin funcs 
-                   out.println(" ; ");
+                           name == "log4" || name == "time") { 
+                    lhs.accept(this);
+                    out.print(" = ");
+                    visitFunctionCallExpression(e); // process builtin funcs 
+                    out.println(" ; ");
+                } else if (name == "pack") {
+                    lhs.accept(this);
+                    out.print(" = { ");
+                    final Iterator i = e.getActuals();
+                    emitPack((ExpressionInterface) i.next());
+                    out.println(" }; ");
+                } else if (name == "unpack") {
+                    out.print("{ ");
+                    final Iterator i = e.getActuals();
+                    final ExpressionInterface structure =
+                        (ExpressionInterface) i.next();
+                    emitPack(structure);
+                    out.print(" } = ");
+                    ((ExpressionInterface) i.next()).accept(this);
+                    out.println(" ;");
+                    emitUnpack(structure);
+                } else if (name == "energy") {
+                    // do nothing
                 }
             } else {
                 throw new VisitorException("Call to unknown function at " +
@@ -1516,7 +1572,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
                 } else {
                     ((Index) o).write();
                 }
-                if (i.hasNext()) out.print(", ");
+                if (i.hasNext()) { out.print(','); out.ws(); }
             }
             out.print(")");
         }
@@ -1580,10 +1636,23 @@ public class SystemVerilogEmitter implements VisitorInterface {
             // Special case the 1 guard case into a simple while loop
             final GuardedCommand gc =
                 (GuardedCommand) s.getGuardedCommands().next();
+            final StatementInterface guardStmt;
+            if (gc instanceof GuardedCommandWithStatement) {
+                guardStmt =
+                    ((GuardedCommandWithStatement) gc).getGuardStatement();
+            } else {
+                guardStmt = null;
+            }
+            if (guardStmt != null) {
+                guardStmt.accept(this);
+            }
             out.print("while (");
             gc.getGuard().accept(this);
             out.println(") begin");
             gc.getCommand().accept(this);
+            if (guardStmt != null) {
+                guardStmt.accept(this);
+            }
             out.println("end");
         } else {
             out.println("begin : " + genBlock());
@@ -1622,6 +1691,12 @@ public class SystemVerilogEmitter implements VisitorInterface {
             int guardNum = 0;
             for (Iterator i = s.getGuardedCommands(); i.hasNext(); ) {
                 final GuardedCommand gc = (GuardedCommand) i.next();
+
+                if (gc instanceof GuardedCommandWithStatement) {
+                    final GuardedCommandWithStatement gcws =
+                        (GuardedCommandWithStatement) gc;
+                    gcws.getGuardStatement().accept(this);
+                }
 
                 out.print("if (");
                 gc.getGuard().accept(this);
@@ -1668,14 +1743,21 @@ public class SystemVerilogEmitter implements VisitorInterface {
             } else if (!isRepetition) {
                 // handle case that no guards are true
                 // REVIEW: This might not be the best way to handle waiting
-                out.print("wait(");
+                out.print("@(");
                 boolean first = true;
-                for (Iterator i = s.getGuardedCommands(); i.hasNext(); ) {
-                    final GuardedCommand gc = (GuardedCommand) i.next();
-                    if (!first)
-                        out.print(" || ");
+                for (Iterator i = inputPorts.iterator(); i.hasNext(); ) {
+                    final String inputPort = (String) i.next();
+                    if (!first) {
+                        out.ws(); out.print("or"); out.ws();
+                    }
                     first = false;
-                    gc.getGuard().accept(this);
+                    out.print(inputPort + " ");
+                }
+                if (first) {
+                    // if there are no inputs at all to the cell, deadlock by
+                    // waiting for the chosenGuard variable to change, which
+                    // cannot happen
+                    out.print(chosenGuard + " ");
                 }
                 out.println(");");
 
@@ -1854,6 +1936,12 @@ public class SystemVerilogEmitter implements VisitorInterface {
         out.println(" = 1;");
     }
 
+    private void processConcat(final String var, final String literal) {
+        out.print(var + " = csp_string.concat(" + var + ", ");
+        processString(literal);
+        out.println(");");
+    }
+
     public void visitSendStatement(SendStatement s)
         throws VisitorException {
         // R!x == ( [  R.e ] ; R.d = POSMOD(x, numValues)
@@ -1876,12 +1964,48 @@ public class SystemVerilogEmitter implements VisitorInterface {
         emitChannelEnable(chanExpr);
         out.println(");");
 
+        lvalues.add(s.getRightHandSide());
+
+        final boolean pow2 = BigIntegerUtil.isPowerOf2(numValues);
+
+        if (!pow2) {
+            out.print("if ((");
+            // it's okay to evaluate the rhs multiple times because rhs is
+            // guaranteed to be a simple variable
+            s.getRightHandSide().accept(this);
+            out.print(" < 1'sb0) || (");
+            s.getRightHandSide().accept(this);
+            out.print(" >= ");
+            processBigInteger(numValues, 10);
+            out.println("))");
+            out.print("`CAST2VERILOG_CSP_WARNING(\"" +
+                      s.getParseRange().fullString() + "\", " +
+                      "util.posmod_warning(");
+            s.getRightHandSide().accept(this);
+            out.print(", ");
+            processBigInteger(numValues.subtract(BigInteger.ONE), 10);
+            out.println("))");
+        }
+
         emitChannelData(chanExpr);
-        out.print(" = util.posmod(");
-        s.getRightHandSide().accept(this);
-        out.println(", ");
-        processBigInteger(numValues, 16);
-        out.println(");");
+        out.print(" = ");
+        if (numValues.equals(BigInteger.ONE)) {
+            out.print("0");
+        } else {
+            if (pow2) {
+                processBigInteger(numValues.subtract(BigInteger.ONE), 16);
+                out.print(" & (");
+            } else {
+                out.print("util.posmod(");
+            }
+            s.getRightHandSide().accept(this);
+            if (!pow2) {
+                out.println(", ");
+                processBigInteger(numValues, 16);
+            }
+            out.print(")");
+        }
+        out.println(';');
 
         out.print("wait(!");
         emitChannelEnable(chanExpr);
@@ -1893,15 +2017,12 @@ public class SystemVerilogEmitter implements VisitorInterface {
 
     public void visitSequentialStatement(SequentialStatement s)
         throws VisitorException {
+        ++scope;
         for (final Iterator i = s.getStatements(); i.hasNext(); ) {
             final StatementInterface stmt = (StatementInterface) i.next();
             stmt.accept(this);
-            if (processingBody) {
-                out.println("`ifdef CAST2VERILOG_DEBUG_DELAY");
-                out.println("#(`CAST2VERILOG_DEBUG_DELAY);");
-                out.println("`endif");
-            }
         }   
+        --scope;
     }
 
     public void visitErrorStatement(ErrorStatement s)
@@ -1961,7 +2082,6 @@ public class SystemVerilogEmitter implements VisitorInterface {
         final ComplexDeclaration decl = new ComplexDeclaration();
         declareType(t, decl, results);
 
-        arrayDeclRange = true;
         // just emit declaration
         for (Iterator i = results.iterator(); i.hasNext(); ) {
             final ComplexDeclaration cdecl = (ComplexDeclaration) i.next();
@@ -1969,20 +2089,20 @@ public class SystemVerilogEmitter implements VisitorInterface {
             cdecl.declare(id);
             if (i.hasNext()) out.println(delim);
         }
-        arrayDeclRange = false;
     }
 
     private Map/*<Type,String>*/ tokenVerilogNameMap =
         new HashMap/*<Type,String>*/();
     private Map/*<Type,String>*/ lastVerilogTokenMap =
-        new HashMap/*<Type,String>*/();
+        new LinkedHashMap/*<Type,String>*/();
     private Map/*<Type,String>*/ hierarchyNameMap =
         new HashMap/*<Type,String>*/();
+    private Set<Type> allUsedTokens = new HashSet<Type>();
     private void updateTokenVerilogMap(final String hierarchy) {
         lastVerilogTokenMap.clear();
         final Map/*<Type,String>*/ tokenIdentMap =
             analysisResults.getTokenIdentMap();
-        final Set/*<Type>*/ initializerTokens =
+        final Set<Type> initializerTokens =
             analysisResults.getInitializerTokens();
         final HashCounter counter = new HashCounter();
         for (Iterator i = tokenIdentMap.entrySet().iterator(); i.hasNext(); ) {
@@ -2005,7 +2125,8 @@ public class SystemVerilogEmitter implements VisitorInterface {
                  baseType instanceof BooleanType ||
                  baseType instanceof StringType ||
                  baseType instanceof StructureType) &&
-                !initializerTokens.contains(type))
+                !initializerTokens.contains(type) &&
+                allUsedTokens.contains(type))
                 lastVerilogTokenMap.put(type, realId);
             hierarchyNameMap.put(type, hierarchy);
         }
@@ -2048,7 +2169,7 @@ public class SystemVerilogEmitter implements VisitorInterface {
             final ArrayType at = (ArrayType) t;
             out.println("begin : " + genBlock());
             final String var = "loop$" + dims;
-            out.println(registerType + " " + var + ";");
+            out.println(getLoopVarType(at.getRange()) + " " + var + ";");
             emitForLoop(var, at.getRange());
             out.println(" begin");
             ident.accessArray(var);
@@ -2088,8 +2209,10 @@ public class SystemVerilogEmitter implements VisitorInterface {
 
                 // declaration has been emitted at top of block by
                 // declareVariables(), just assign here
-                initVar(t, declarator.getIdentifier(), 0,
-                        declarator.getInitializer());
+                final ExpressionInterface init  = declarator.getInitializer();
+                if (implicitInit || init != null || scope > 1) {
+                    initVar(t, declarator.getIdentifier(), 0, init);
+                }
             }
         }
 
