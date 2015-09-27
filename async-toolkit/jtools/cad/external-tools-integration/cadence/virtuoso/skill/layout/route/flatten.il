@@ -363,44 +363,34 @@ useICV = nil
 
     ; run Assura makePowerGridAbstract.rul
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    (when useAssura
-      ; BUG: Assura isn't working
-      AssuraLayerMappings = (list
-                             (list "m2v" (list Metal[2] "vdd"))
-                             (list "m2g" (list Metal[2] "gnd"))
-                             (list "m3v" (list Metal[3] "vdd"))
-                             (list "m3g" (list Metal[3] "gnd"))
-                             (list "m4v" (list Metal[4] "vdd"))
-                             (list "m4g" (list Metal[4] "gnd"))
-                             (list "m5v" (list Metal[5] "vdd"))
-                             (list "m5g" (list Metal[5] "gnd"))
-                             (list "m6v" (list Metal[6] "vdd"))
-                             (list "m6g" (list Metal[6] "gnd"))
-                             (list "m7v" (list Metal[7] "vdd"))
-                             (list "m7g" (list Metal[7] "gnd"))
-                             (list "m8v" (list Metal[8] "vdd"))
-                             (list "m8g" (list Metal[8] "gnd"))
-                             )
+    AssuraLayerMappings = (list
+                           (list "m2v" (list Metal[2] "vdd"))
+                           (list "m2g" (list Metal[2] "gnd"))
+                           (list "m2f" (list Metal[2] "fill"))
+                           (list "m3v" (list Metal[3] "vdd"))
+                           (list "m3g" (list Metal[3] "gnd"))
+                           (list "m3f" (list Metal[3] "fill"))
+                           (list "m4v" (list Metal[4] "vdd"))
+                           (list "m4g" (list Metal[4] "gnd"))
+                           (list "m4f" (list Metal[4] "fill"))
+                           (list "m5v" (list Metal[5] "vdd"))
+                           (list "m5g" (list Metal[5] "gnd"))
+                           (list "m5f" (list Metal[5] "fill"))
+                           (list "m6v" (list Metal[6] "vdd"))
+                           (list "m6g" (list Metal[6] "gnd"))
+                           (list "m6f" (list Metal[6] "fill"))
+                           (list "m7v" (list Metal[7] "vdd"))
+                           (list "m7g" (list Metal[7] "gnd"))
+                           (list "m7f" (list Metal[7] "fill"))
+                           (list "m8v" (list Metal[8] "vdd"))
+                           (list "m8g" (list Metal[8] "gnd"))
+                           (list "m8f" (list Metal[8] "fill"))
+                           )
+    (when useAssura ; BUG: Assura isn't working
       pgaCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGridAbstract"
                                     pgCV->libName pgCV->cellName "abstract" ?CV CV)
       )
-    (when useICV
-      AssuraLayerMappings = (list
-                             (list "m2v" (list Metal[2] "vdd"))
-                             (list "m2g" (list Metal[2] "gnd"))
-                             (list "m3v" (list Metal[3] "vdd"))
-                             (list "m3g" (list Metal[3] "gnd"))
-                             (list "m4v" (list Metal[4] "vdd"))
-                             (list "m4g" (list Metal[4] "gnd"))
-                             (list "m5v" (list Metal[5] "vdd"))
-                             (list "m5g" (list Metal[5] "gnd"))
-                             (list "m6v" (list Metal[6] "vdd"))
-                             (list "m6g" (list Metal[6] "gnd"))
-                             (list "m7v" (list Metal[7] "vdd"))
-                             (list "m7g" (list Metal[7] "gnd"))
-                             (list "m8v" (list Metal[8] "vdd"))
-                             (list "m8g" (list Metal[8] "gnd"))
-                             )
+    (when useICV ; NOTE not well tested yet?
       pgaCV = (ICVLayerProcessorSimple AssuraLayerMappings "mergeShape"
                                        pgCV->libName pgCV->cellName "abstract"
                                        ?CV pgCV
@@ -444,7 +434,7 @@ useICV = nil
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV GNDNetName) nil) figsGND)
 
     ; convert remaining shapes to boundary
-    (foreach shape (setof shape pgaCV->shapes !(member shape->layerName powerLayers))
+    (foreach shape (setof shape pgaCV->shapes shape->pin==nil)
              shape->purpose=KeepoutPurpose
              )
     (CopyKeepoutToBlockage pgaCV)
