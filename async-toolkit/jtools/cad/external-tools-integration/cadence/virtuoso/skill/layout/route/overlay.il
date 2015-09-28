@@ -160,30 +160,36 @@
     (DrawChannelArray nil power_m5 "" 0:n-1 pitch_m5 (list 0:-h 0:y+h) ?CV CV)
     (for i 0 n*tracks_m5-1 (DrawChannel BusMetal45 (NodeChan 5 i) "" (list 0:-h 0:y+h) ?CV CV))
 
-    ; convert all shapes to complement
-    (foreach x (setof y CV->shapes y->layerName=="m0") x->lpp=(list "mc0" "complement"))
-    (foreach x (setof y CV->shapes y->layerName=="m2") x->lpp=(list "mc2" "complement"))
-    (foreach x (setof y CV->shapes y->layerName=="m3") x->lpp=(list "mc3" "complement"))
-    (foreach x (setof y CV->shapes y->layerName=="m4") x->lpp=(list "mc4" "complement"))
-    (foreach x (setof y CV->shapes y->layerName=="m5") x->lpp=(list "mc5" "complement"))
+    ; merge duplicates
     (leMergeShapes CV->shapes)
 
     ; sort and delete every other track
     sort_x = (lambda (a b) (car  (car a->points))<(car  (car b->points)))
     sort_y = (lambda (a b) (cadr (car a->points))<(cadr (car b->points)))
-    paths = (sort (setof y CV->shapes y->layerName=="mc0") sort_y)
-    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m0 (dbDeleteObject (nth i paths))))
-    paths = (sort (setof y CV->shapes y->layerName=="mc2") sort_y)
-    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m2 (dbDeleteObject (nth i paths))))
-    paths = (sort (setof y CV->shapes y->layerName=="mc3") sort_x)
-    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m3 (dbDeleteObject (nth i paths))))
-    paths = (sort (setof y CV->shapes y->layerName=="mc4") sort_y)
-    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m4 (dbDeleteObject (nth i paths))))
-    paths = (sort (setof y CV->shapes y->layerName=="mc5") sort_x)
-    (for i 0 (length paths)-1 (when (mod i 2)==first_color_m5 (dbDeleteObject (nth i paths))))
+    paths = (sort (setof y CV->shapes y->layerName=="m0") sort_y)
+    (for i 0 (length paths)-1 (ChooseComplementOrBackbone (nth i paths) (mod i 2)==first_color_m0))
+    paths = (sort (setof y CV->shapes y->layerName=="m2") sort_y)
+    (for i 0 (length paths)-1 (ChooseComplementOrBackbone (nth i paths) (mod i 2)==first_color_m2))
+    paths = (sort (setof y CV->shapes y->layerName=="m3") sort_x)
+    (for i 0 (length paths)-1 (ChooseComplementOrBackbone (nth i paths) (mod i 2)==first_color_m3))
+    paths = (sort (setof y CV->shapes y->layerName=="m4") sort_y)
+    (for i 0 (length paths)-1 (ChooseComplementOrBackbone (nth i paths) (mod i 2)==first_color_m4))
+    paths = (sort (setof y CV->shapes y->layerName=="m5") sort_x)
+    (for i 0 (length paths)-1 (ChooseComplementOrBackbone (nth i paths) (mod i 2)==first_color_m5))
 
     ; save and return
     (dbSave CV)
     CV
     )
+  )
+
+(defun ChooseComplementOrBackbone (shape backbone)
+  (cond (backbone shape->lpp = (list (car shape->lpp) "backBone"))
+        (shape->layerName=="m0" shape->lpp = (list "mc0" "complement"))
+        (shape->layerName=="m2" shape->lpp = (list "mc2" "complement"))
+        (shape->layerName=="m3" shape->lpp = (list "mc3" "complement"))
+        (shape->layerName=="m4" shape->lpp = (list "mc4" "complement"))
+        (shape->layerName=="m5" shape->lpp = (list "mc5" "complement"))
+        )
+  t
   )
