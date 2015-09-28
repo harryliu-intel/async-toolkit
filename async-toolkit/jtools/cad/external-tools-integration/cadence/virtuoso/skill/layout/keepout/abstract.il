@@ -22,8 +22,10 @@
 
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
                                 (cutaroundpins t)
-                                (topMetal nil))
- (let (abstractCV name net fig term pinlayer)
+                                (topMetal nil)
+                                (includeVias t)
+                                )
+ (let (abstractCV name net fig term pinlayer lpp)
 
   ; set topMetal
   (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
@@ -72,6 +74,15 @@
            (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?otherpinlpp MetalPin[m])
            )
          )
+    )
+
+  ; create keepout for topMetal-1 vias
+  (when includeVias
+    lpp = (list Via[topMetal-1] "drawing")
+    (RecursiveFlattenLPP CV abstractCV lpp)
+    (foreach shape (setof x abstractCV->shapes x->lpp==lpp)
+             shape->lpp = (list (car shape->lpp) "keepout")
+             )
     )
 
   ; save and exit
