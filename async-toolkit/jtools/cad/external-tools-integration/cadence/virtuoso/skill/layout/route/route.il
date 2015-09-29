@@ -39,7 +39,7 @@
     
     ; import
     (cond (Background (printf "Route running in background, finish with RouteImport\n"))
-          (t (RouteImport ?CV CV ?viewName importView))
+          (t CV = (RouteImport ?CV CV ?viewName importView))
           )
     CV
     )
