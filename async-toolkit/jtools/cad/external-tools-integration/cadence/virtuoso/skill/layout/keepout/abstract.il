@@ -25,7 +25,7 @@
                                 (topMetal nil)
                                 (includeVias t)
                                 )
- (let (abstractCV name net fig term pinlayer lpp)
+ (let (abstractCV name net fig term pinlayer inLayerMap outLayerMap)
 
   ; set topMetal
   (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
@@ -78,11 +78,11 @@
 
   ; create keepout for topMetal-1 vias
   (when includeVias
-    lpp = (list Via[topMetal-1] "drawing")
-    (RecursiveFlattenLPP CV abstractCV lpp)
-    (foreach shape (setof x abstractCV->shapes x->lpp==lpp)
-             shape->lpp = (list (car shape->lpp) "keepout")
+    (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+             inLayerMap = (cons (list "x" (list Via[topMetal-1] purpose)) inLayerMap)
              )
+    outLayerMap = (list (list "x" (list Via[topMetal-1] "keepout")))
+    (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
     )
 
   ; save and exit

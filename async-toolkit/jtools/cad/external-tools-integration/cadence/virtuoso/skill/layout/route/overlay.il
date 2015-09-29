@@ -64,7 +64,7 @@
     scratchLPP = (list "y2" "drawing")
     (dbCreatePRBoundary overlayCV prb->points)
     prb = (dbCreatePolygon overlayCV prbLPP prb->points)
-    (RecursiveFlattenLPP CV overlayCV blockLPP)
+    (ICVMergeShapes CV overlayCV (list blockLPP))
     overlay_shapes = (leLayerAndNot overlayCV prbLPP blockLPP scratchLPP)
     (dbLayerTile overlayCV scratchLPP overlay_shapes)
 
@@ -97,32 +97,6 @@
     (dbSave overlayCV)
     (dbClose overlayCV)
     overlayCV
-    )
-  )
-
-; Copy desired LPP shapes from subcells.  Skip CV's discovered not to have that LPP.
-(defun RecursiveFlattenLPP (CV dstCV lpp
-                               @key (transform (list 0:0 "R0"))
-                                    (emptyCells (makeTable "emptyCells" nil)))
-  (let (e empty)
-    empty = t
-    (foreach lpps (setof x CV->lpps x->layerName==(car lpp) && x->purpose==(cadr lpp))
-             (foreach shape lpps->shapes
-                      (dbCopyShape shape dstCV transform)
-                      empty = nil
-                      )
-             )
-    (foreach inst CV->instances
-             (unless emptyCells[inst->master]
-               e = (RecursiveFlattenLPP inst->master dstCV lpp
-                                        ?transform (dbConcatTransform (dbGetInstTransform inst) transform)
-                                        ?emptyCells emptyCells
-                                        )
-               empty = (and e empty)
-               )
-             )
-    (when empty emptyCells[CV]=t)
-    empty
     )
   )
 

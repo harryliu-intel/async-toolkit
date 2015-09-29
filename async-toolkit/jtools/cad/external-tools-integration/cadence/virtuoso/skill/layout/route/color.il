@@ -7,8 +7,7 @@
                   ("mc0draw" ("mc0" "drawing")))
     outMapping = '(("a" ("mc0" "complement"))
                    ("b" ("m0" "backBone")))
-    (ICVLayerProcessorSimple outMapping "reverseColorM0" CV->libName cellName "layout"
-                             ?CV CV ?inputLayerMap inMapping)
-    (dbOpenCellViewByType CV->libName cellName "layout" "maskLayout" "r")
+    dstCV = (dbOpenCellViewByType CV->libName cellName "layout" "maskLayout" "w")
+    (ICVLayerProcessorSimple CV dstCV "reverseColorM0" inMapping outMapping)
     )
   )

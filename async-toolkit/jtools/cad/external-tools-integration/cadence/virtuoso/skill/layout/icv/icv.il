@@ -113,30 +113,32 @@ write_openaccess(\n\
         )
         (error "Can't write ICV run set: %s\n" topRunset)))))
 
-; convenience function to ICVLayerProcessor
-(defun ICVLayerProcessorSimple (outLayerMap runSetName libName cellName viewName
-                                @key (CV (geGetEditCellView))
-                                     dstCV
-                                     srcLibName
-                                     srcCellName
-                                     srcViewName
-                                     inputLayerMap)
-  (if CV
-    (let ()
-      srcLibName = CV->libName
-      srcCellName = CV->cellName
-      srcViewName = CV->viewName))
-  (if dstCV
-    (let ()
-      libName = dstCV->libName
-      cellName = dstCV->cellName
-      viewName = dstCV->viewName))
-  (let ((result (ICVLayerProcessor inputLayerMap outLayerMap runSetName
-                                   srcLibName srcCellName srcViewName
-                                   libName cellName viewName)))
-    (if (car result) == 0
-      (or (dbOpenCellViewByType libName cellName viewName nil "a")
-          (error "Unable to open ICV output %s %s %s (log file: %s)\n"
-                 libName cellName viewName (cadr result)))
+; convenience function for ICVLayerProcessor
+; Copies resulting shapes to dstCV
+(defun ICVLayerProcessorSimple (CV dstCV runSetName inLayerMap outLayerMap)
+  (let (result tempCV)
+    result = (ICVLayerProcessor inLayerMap outLayerMap runSetName
+                                CV->libName CV->cellName CV->viewName
+                                dstCV->libName dstCV->cellName "icv_temp")
+    tempCV = (dbOpenCellViewByType dstCV->libName dstCV->cellName "icv_temp")
+    (if (car result)==0
+      (or tempCV (error "Unable to open ICV output %s %s %s (log file: %s)\n"
+                        dstCV->libName dstCV->cellName dstCV->viewName (cadr result)))
       (error "ICV run failed on %s %s %s for runset %s (log file: %s)\n"
-             CV->libName CV->cellName CV->viewName runSetName (cadr result)))))
+             CV->libName CV->cellName CV->viewName runSetName (cadr result))
+      )
+    (foreach shape tempCV->shapes (dbCopyFig shape dstCV))
+    (ddDeleteObj (ddGetObj dstCV->libName dstCV->cellName "icv_temp"))
+    dstCV
+    )
+  )
+
+; Use ICV to flatten a specified list of LPP's
+(defun ICVMergeShapes (CV dstCV lpps)
+  (let (map tempCV)
+    (foreach lpp lpps
+             map = (cons (list (sprintf nil "%s_%s" (car lpp) (cadr lpp)) lpp) map)
+             )
+    (ICVLayerProcessorSimple CV dstCV "mergeShape" map map)
+    )
+  )

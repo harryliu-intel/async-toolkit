@@ -1,7 +1,7 @@
 ; Replacement for ui/Nano/Flatten/FlattenView.il
 
-useAssura = nil ; BUG: Assura isn't working!
-useICV = nil
+useAssura = nil
+useICV = t
 
 ; Top-level function to make a flatten view and switch to it
 (defun MakeFlatten
@@ -164,7 +164,7 @@ useICV = nil
   (let (TEMP powerCellName align
         inst prb vertprb
         x1box x2box y1box y2box x1 y1 x2 x2
-        AssuraLayerMappings
+        layerMap
         powerCV pgMap blks
         count gridName gridCV rows cols
         tiehilo GND Vdd instGND instVdd)
@@ -204,23 +204,21 @@ useICV = nil
     blks = (PaintOverSubcellPrBoundary (list Metal[2] "block") ?CV CV)
 
     ; run Assura rules
-    (when useAssura
-      ; BUG: Assura isn't working.  ICV may be used instead.
-      AssuraLayerMappings = (list
-                             (list "power2" (list Metal[2] "block"))
-                             (list "power3" (list Metal[3] "block"))
-                             (list "power4" (list Metal[4] "block"))
-                             (list "power5" (list Metal[5] "block"))
-                             (list "power6" (list Metal[6] "block"))
-                             (list "power7" (list Metal[7] "block"))
-                             (list "power8" (list Metal[8] "block"))
-                             )
-      powerCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGrid"
+    (when useAssura ; BUG: Assura isn't working.  ICV may be used instead.
+      layerMap = (list
+                  (list "power2" (list Metal[2] "block"))
+                  (list "power3" (list Metal[3] "block"))
+                  (list "power4" (list Metal[4] "block"))
+                  (list "power5" (list Metal[5] "block"))
+                  (list "power6" (list Metal[6] "block"))
+                  (list "power7" (list Metal[7] "block"))
+                  (list "power8" (list Metal[8] "block"))
+                  )
+      powerCV = (AssuraLayerProcessor layerMap "makePowerGrid"
                                       CV->libName powerCellName powerCellView ?CV CV)
       )
-    (when !useAssura
+    (when !useAssura ; BUG: temporary hack to avoid Assura layer processing
       (let (power2 power4 power6 power8 temp3 temp7)
-        ; BUG: temporary hack to avoid Assura layer processing
         (FlattenBlockPurpose CV powerCV)
 
         ; power grid blockages (BUG: ignores power blockages on odd layers)
@@ -351,7 +349,7 @@ useICV = nil
 ;       (powerLayers (list Metal[0] Metal[1] Metal[2] Metal[3] Metal[4] Metal[5]
 ;                          Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
         (powerLayers (list Metal[0] Metal[2]))) ; HACK: minimize number of pin shapes
-  (let (TEMP inst pgCV pgaCV AssuraLayerMappings figsVdd figsGND)
+  (let (inst pgCV pgaCV lpps figsVdd figsGND)
     
     ; HACK: minimize number of pin shapes
     powerLayers = (cons Metal[topMetal] powerLayers)
@@ -361,43 +359,17 @@ useICV = nil
     (unless inst (error "No pg instance"))
     pgCV = inst->master
 
-    ; run Assura makePowerGridAbstract.rul
-    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    AssuraLayerMappings = (list
-                           (list "m2v" (list Metal[2] "vdd"))
-                           (list "m2g" (list Metal[2] "gnd"))
-                           (list "m2f" (list Metal[2] "fill"))
-                           (list "m3v" (list Metal[3] "vdd"))
-                           (list "m3g" (list Metal[3] "gnd"))
-                           (list "m3f" (list Metal[3] "fill"))
-                           (list "m4v" (list Metal[4] "vdd"))
-                           (list "m4g" (list Metal[4] "gnd"))
-                           (list "m4f" (list Metal[4] "fill"))
-                           (list "m5v" (list Metal[5] "vdd"))
-                           (list "m5g" (list Metal[5] "gnd"))
-                           (list "m5f" (list Metal[5] "fill"))
-                           (list "m6v" (list Metal[6] "vdd"))
-                           (list "m6g" (list Metal[6] "gnd"))
-                           (list "m6f" (list Metal[6] "fill"))
-                           (list "m7v" (list Metal[7] "vdd"))
-                           (list "m7g" (list Metal[7] "gnd"))
-                           (list "m7f" (list Metal[7] "fill"))
-                           (list "m8v" (list Metal[8] "vdd"))
-                           (list "m8g" (list Metal[8] "gnd"))
-                           (list "m8f" (list Metal[8] "fill"))
-                           )
-    (when useAssura ; BUG: Assura isn't working
-      pgaCV = (AssuraLayerProcessor AssuraLayerMappings "makePowerGridAbstract"
-                                    pgCV->libName pgCV->cellName "abstract" ?CV CV)
+    ; flatten and merge fill, gnd, vdd purpose shapes on many layers.
+    lpps = (list (list "vcn" "drawing"))
+    (foreach purpose (list "vdd" "gnd" "fill")
+             (for m 0 TopMetal lpps = (cons (list Metal[m] purpose) lpps))
+             (for m 0 TopMetal-1 lpps = (cons (list Via[m] purpose) lpps))
+             )
+    (when useICV
+      pgaCV = (dbOpenCellViewByType pgCV->libName pgCV->cellName "abstract" "maskLayout" "w")
+      pgaCV = (ICVMergeShapes pgCV pgaCV lpps)
       )
-    (when useICV ; NOTE not well tested yet?
-      pgaCV = (ICVLayerProcessorSimple AssuraLayerMappings "mergeShape"
-                                       pgCV->libName pgCV->cellName "abstract"
-                                       ?CV pgCV
-                                       ?inputLayerMap AssuraLayerMappings)
-      )
-    (when !useAssura && !useICV
-      ; BUG: work-around
+    (when !useICV ; BUG: work-around if ICV not available
       pgaCV=(betterCopyCellView pgCV pgCV->libName pgCV->cellName "abstract" nil nil t)
       (foreach inst pgaCV->instances (dbFlattenInst inst 32))
       (foreach label (setof x pgaCV->shapes x->objType=="label") (dbDeleteObject label))
@@ -409,9 +381,6 @@ useICV = nil
     pgaCV = (dbOpenCellViewByType pgCV->libName pgCV->cellName "abstract" "maskLayout" "a")
     (unless pgaCV (error "Unable to read %s abstract\n" pgCV->cellName))
 
-    ; merge shapes (too damn slow)
-    ; (leMergeShapes pgaCV->shapes)
-    
     ; create prBoundary object
     (dbCreatePRBoundary pgaCV (GetPrboundPoints pgCV))
     (dbCreatePolygon pgaCV BoundaryLPP (GetPrboundPoints pgCV))
