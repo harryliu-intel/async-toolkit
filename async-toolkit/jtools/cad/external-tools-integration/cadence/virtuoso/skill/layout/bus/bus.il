@@ -263,7 +263,7 @@ wires_modtime = makeTable("wires" 0)
     fig->beginExt = (if beginExt width/2 0)
     fig->endExt = (if endExt width/2 0)
     (if net!=nil fig->net = net)
-    (cond (isPin
+    (cond (isPin && net
           (cond (y0==y1
                 rect = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
                 )
