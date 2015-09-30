@@ -11,6 +11,7 @@
                               (prefix (strcat libName "."))
                               (suffix ".0")
                               (action importPostProcessAction)
+                              (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
                               )
   (let (PDK_DIR cmd status CV)
     ; stream in GDS into import_gds_temp library
@@ -28,9 +29,17 @@
     ; create destination library if necessary
     (UpdateFloorplanCreateLib libName)
 
-    ; copy cells to destination library
+    ; open imported top CV
     CV = (dbOpenCellViewByType "import_gds_temp" cellName "layout")
     (unless CV (error "unable to open import_gds_temp %s layout\n" cellName))
+
+    ; set CopyExact property
+    (when setCopyExact
+      (FindSubcells ?CV CV ?filter setCopyExact
+                    ?action (lambda (CV) (dbReplaceProp CV "CopyExact" "string" CV->cellName)))
+      )
+
+    ; copy cells to destination library
     (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix)
     cellName = (sprintf nil "%s%s%s" prefix cellName suffix)
 
