@@ -39,17 +39,6 @@
 ./calarm/csvalign/CVS/Entries
 ./calarm/csvalign/CVS/Repository
 ./calarm/csvalign/CVS/Root
-./calarm/csvalign/FreeBSD4/.M3EXPORTS
-./calarm/csvalign/FreeBSD4/.M3IMPTAB
-./calarm/csvalign/FreeBSD4/.M3OVERRIDES
-./calarm/csvalign/FreeBSD4/.M3SHIP
-./calarm/csvalign/FreeBSD4/.M3WEB
-./calarm/csvalign/FreeBSD4/Main.mo
-./calarm/csvalign/FreeBSD4/_m3main.mc
-./calarm/csvalign/FreeBSD4/_m3main.ms
-./calarm/csvalign/FreeBSD4/_m3main.o
-./calarm/csvalign/FreeBSD4/csvalign
-./calarm/csvalign/FreeBSD4/csvalign.m3x
 ./calarm/csvalign/src/CVS/Entries
 ./calarm/csvalign/src/CVS/Repository
 ./calarm/csvalign/src/CVS/Root
