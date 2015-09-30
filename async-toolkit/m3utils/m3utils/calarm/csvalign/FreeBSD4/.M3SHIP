@@ -1,1 +1,0 @@
-install_file("csvalign", "/usr/local/lib/m3/pkg/csvalign/FreeBSD4", "0644")
