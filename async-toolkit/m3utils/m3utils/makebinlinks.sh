@@ -50,6 +50,11 @@ ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
 ${ROOT}/calarm/transposecsv/${BINDIR}/transposecsv
 ${ROOT}/calarm/csvalign/${BINDIR}/csvalign
 ${ROOT}/calarm/comet/cometcatenate/${BINDIR}/cometcatenate
+${ROOT}/spice/ct/${BINDIR}/ct
+${ROOT}/spice/asserter/${BINDIR}/asserter
+${ROOT}/tcam/schmoozer/${BINDIR}/schmoozer
+${ROOT}/tcam/spicebuilder/${BINDIR}/spicebuilder
+${ROOT}/nb/nbavail/${BINDIR}/nbavail
 "
 
 SCRIPTS="
@@ -60,7 +65,10 @@ ${ROOT}/calarm/finlib/src/parsegoogle.awk
 ${ROOT}/calarm/finlib/src/googledata_canada.sh
 ${ROOT}/calarm/expense/src/oanda.sh
 ${ROOT}/invoicing/proc.awk
+${ROOT}/tcam/schmoozer/src/square.sh
+${ROOT}/tcam/schmoozer/src/runspice.sh
 "
+
 mkdir ${TGTDIR} || echo Proceeding...
 
 for p in ${PROGS}; do
