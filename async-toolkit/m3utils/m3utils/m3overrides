@@ -164,3 +164,5 @@ override("tradingscreen", TOP & "/calarm")
 
 % Ohai
 override("ohailog", TOP & "/ohai")
+
+override ("spicelib", TOP & "/spice")
