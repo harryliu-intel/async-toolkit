@@ -1,0 +1,8 @@
+INTERFACE UnsafeWriter;
+IMPORT Wr;
+
+PROCEDURE WriteI(wr : Wr.T; q : INTEGER);
+
+PROCEDURE WriteLRA(wr : Wr.T; READONLY q : ARRAY OF LONGREAL);
+
+END UnsafeWriter.

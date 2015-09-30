@@ -1,0 +1,50 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+
+module ("Tran")
+sequence ("Tran", "Tran")
+%module ("Dims")
+module ("DimsTranSeqTbl")
+module ("SpiceLineWriter")
+interface("Verb")
+interface("Command")
+sequence("Command", "Command")
+
+module ("BitInteger")
+interface ("Bit")
+%interface ("Sim")
+
+module ("TcamSequencer")
+module ("TcamSimulation")
+module ("Nodes")
+list ("Nodes", "Nodes")
+interface ("Intf")
+module ("Src")
+module ("MemoTranSeq")
+interface ("SimParams")
+module ("SimDumper")
+interface ("Rdr")
+
+interface("Tcam")
+interface("SimModel")	
+module ("TcamModel")
+module ("X01")
+
+sequence("Src", "Src")
+module ("Valenv")
+interface ("NodeRec")
+sequence ("NodeRec", "NodeRec")
+
+table("TextSrc", "Text", "Src")
+%module ("Assertion")
+
+%list("Assertion","Assertion")
+sequence("AssertionList","AssertionList")
+
+%interface("ProbeMode")
+
+implementation ("Main")
+
+program ("spicebuilder")

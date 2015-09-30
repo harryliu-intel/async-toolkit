@@ -1,0 +1,39 @@
+INTERFACE SimDumper;
+IMPORT Wr, SimParams;
+IMPORT Dims, Intf;
+IMPORT Pathname;
+IMPORT Sim, TextSeq;
+IMPORT SimModel;
+IMPORT ProbeMode;
+IMPORT AssertionList;
+
+PROCEDURE DumpIt(wr : Wr.T; 
+                 sp : SimParams.T; 
+                 sim : Sim.T; 
+                 pm : ProbeMode.T;
+                 modelName : TEXT;
+                 modelPath : Pathname.T);
+
+PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T);
+
+VAR dutName : TEXT;
+VAR Vdd     : LONGREAL;
+VAR Temp    : LONGREAL;
+
+PROCEDURE AddNodes(nm            : TEXT;
+                   READONLY dims : Dims.T;
+                   intf          : Intf.T);
+
+PROCEDURE DeclSequence(libFile       : Pathname.T;
+                       type          : TEXT;
+                       READONLY args : ARRAY OF TEXT);
+
+
+PROCEDURE SetDutName(nm : TEXT);
+
+PROCEDURE AddDigitalModel(model : SimModel.T; clockNm : TEXT; aWr : Wr.T) : AssertionList.T;
+
+VAR simExtras : ARRAY Sim.T OF TextSeq.T;
+
+
+END SimDumper.

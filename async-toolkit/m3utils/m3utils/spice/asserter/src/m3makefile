@@ -1,0 +1,7 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+
+implementation ("Main")
+
+program ("asserter")

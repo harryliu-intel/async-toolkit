@@ -1,0 +1,12 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+
+table ("LRPairRef", "LongRealPair", "Refany")
+interface ("XY")
+list("XY","XY")
+
+implementation ("Schmoozer")
+
+program ("schmoozer")

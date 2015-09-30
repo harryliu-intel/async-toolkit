@@ -1,0 +1,11 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+
+Module ("Dims")
+Interface ("Sim")
+Interface ("ProbeMode")
+Module ("Assertion")
+List ("Assertion","Assertion")
+
+library ("spicelib")

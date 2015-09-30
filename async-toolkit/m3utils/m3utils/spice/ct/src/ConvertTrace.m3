@@ -1,0 +1,297 @@
+MODULE ConvertTrace EXPORTS Main;
+IMPORT Params;
+IMPORT FileRd;
+IMPORT Rd;
+IMPORT Debug;
+IMPORT TextSeq;
+IMPORT Text;
+IMPORT FileWr, Wr;
+IMPORT Math;
+FROM Fmt IMPORT LongReal,Int, F;
+IMPORT FS;
+IMPORT UnsafeWriter;
+IMPORT Time;
+
+VAR doDebug := FALSE;
+
+PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
+  BEGIN 
+    RETURN NUMBER(buf) >= NUMBER(pfx) AND SUBARRAY(buf,0,NUMBER(pfx)) = pfx
+  END StartsWith;
+
+PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
+
+  PROCEDURE Push(s, l : CARDINAL) =
+    BEGIN
+      names.addhi(Text.FromChars(SUBARRAY(line,s,l-s-1)));
+      INC(c)
+    END Push;
+
+  PROCEDURE Get(c : CHAR) =
+    BEGIN
+      <*ASSERT line[p] = c *>
+      INC(p)
+    END Get;
+
+  VAR
+    p := 0;
+    c := 0;
+    n := NUMBER(line);
+    s := 0;
+  BEGIN
+    WHILE p < n DO
+      IF line[p] = '\'' THEN
+        INC(p);
+        Get('v');
+        Get('(');
+        s := p;
+        WHILE line[p] # '\'' DO
+          INC(p)
+        END;
+        Push(s,p)
+      END;
+      INC(p)
+    END;
+
+
+    RETURN c
+  END DoNames;
+
+EXCEPTION ShortRead;
+
+PROCEDURE DoData(READONLY line : ARRAY OF CHAR; 
+                 f             : BOOLEAN) : CARDINAL 
+  RAISES { ShortRead } =
+
+  PROCEDURE Char() : CHAR RAISES { ShortRead } =
+    BEGIN
+      IF p > LAST(line) THEN 
+        RAISE ShortRead 
+      ELSE
+        RETURN line[p]
+      END
+    END Char;
+
+  PROCEDURE Get(c : CHAR)  RAISES { ShortRead } =
+    BEGIN
+      <*ASSERT Char() = c *>
+      INC(p)
+    END Get;
+
+  PROCEDURE GetInt(VAR z : INTEGER) : CARDINAL  RAISES { ShortRead } =
+    VAR
+      neg := FALSE;
+      s := p;
+    BEGIN
+      WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO INC(p) END;
+      IF Char() = '-' THEN neg := TRUE; INC(p) END;
+      s := p;
+      WHILE Char() IN SET OF CHAR { '0' .. '9' } DO 
+        z := z * 10 + ORD(Char()) - ORD('0');
+        INC(p)
+      END;
+      IF neg THEN z := -z END;
+      RETURN  p-s
+    END GetInt;
+
+  PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN  RAISES { ShortRead } =
+    VAR  
+      len : CARDINAL;
+      m := 0;
+      x := 0;
+    BEGIN
+      WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO 
+        INC(p); IF p = LAST(line)+1 THEN RETURN FALSE END
+      END;
+      m := 0;
+      EVAL GetInt(m);
+      Get('.');
+      len := GetInt(m);
+      Get('e');
+      EVAL GetInt(x);
+      z := FLOAT(m,LONGREAL) * Exp[x-len];
+      IF doDebug THEN Debug.Out("GetLR " & LongReal(z)) END;
+      RETURN TRUE
+    END GetLR;
+
+  VAR
+    p     := 0;
+    dummy := 0;
+    got := 0;
+    z : LONGREAL;
+  BEGIN
+    TRY
+      IF f THEN
+        INC(lbp);
+        IF lbp = NUMBER(lbuff[0]) THEN
+          FlushData();
+          lbp := 0
+        END;
+        lbq := 0;
+        EVAL GetLR(lbuff[lbq,lbp]); INC(lbq);
+        EVAL GetInt(dummy);
+      END;
+      WHILE GetLR(z) DO lbuff[lbq,lbp] := z; INC(lbq); INC(got) END;
+      RETURN got
+    EXCEPT
+      ShortRead =>
+      IF lbp # 0 THEN  (* abandon current timestep *)
+        DEC(lbp);
+        lbq := NUMBER(lbuff^);
+        FlushData()
+      END;
+      RAISE ShortRead
+    END
+  END DoData;
+
+TYPE
+  AParser = PROCEDURE(READONLY l : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL 
+              RAISES { ShortRead };
+
+PROCEDURE NullParser(<*UNUSED*>READONLY line : ARRAY OF CHAR; 
+                     <*UNUSED*>f : BOOLEAN) : CARDINAL =
+  BEGIN
+    RETURN 1
+  END NullParser;
+
+CONST 
+  MaxMem = 16*1024*1024; (* fit at least one row *)
+
+PROCEDURE FlushData() =
+  BEGIN
+    IF doDebug THEN
+      Debug.Out(F("FlushData lbp %s lbq %s names %s", Int(lbp), Int(lbq), Int(names.size())));
+      <*ASSERT lbq = names.size()*>
+      FOR j := 0 TO lbp-1 DO
+        FOR i := 0 TO lbq-1 DO
+          Debug.Out(LongReal(lbuff[i,j]) & " ")
+        END;
+        Debug.Out("")
+      END
+    END;
+
+    FOR i := 0 TO lbq-1 DO
+      UnsafeWriter.WriteLRA(wdWr[i], SUBARRAY(lbuff[i],0,lbp))
+    END
+  END FlushData;
+
+PROCEDURE FormatFN(i : CARDINAL) : TEXT =
+  BEGIN RETURN F("%08s", Int(i)) END FormatFN;
+
+PROCEDURE WriteNames() =
+  BEGIN
+    wdWr := NEW(REF ARRAY OF Wr.T, names.size());
+
+    WITH wr = FileWr.Open(ofn & ".names") DO
+
+      FOR i := 0 TO names.size()-1 DO
+        WITH wr2 = FileWr.Open(wd & "/" & FormatFN(i)) DO
+          wdWr[i] := wr2
+        END;
+        Wr.PutText(wr, names.get(i));
+        Wr.PutChar(wr, '\n')
+      END;
+      Wr.Close(wr)
+    END;
+  END WriteNames;
+
+VAR
+  names := NEW(TextSeq.T).init();
+  ifn := Params.Get(1);
+  ofn := Params.Get(2);
+
+  rd  := FileRd.Open(ifn);
+
+  buf : ARRAY [0..8191] OF CHAR;
+
+  lbuff : REF ARRAY OF ARRAY OF LONGREAL;
+  lbp := 0; lbq := 0;
+
+  Exp : ARRAY [-300..300] OF LONGREAL;
+  parser : AParser := NullParser;
+  start : CARDINAL;
+  first : BOOLEAN;
+  wdWr : REF ARRAY OF Wr.T;
+  wd := "ct.work";
+BEGIN
+  names.addhi("TIME");
+  TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
+
+  FOR i := FIRST(Exp) TO LAST(Exp) DO
+    Exp[i] := Math.pow(10.0d0,FLOAT(i,LONGREAL))
+  END;
+
+  TRY
+  LOOP
+    WITH n = Rd.GetSubLine(rd,buf) DO
+
+      IF n = NUMBER(buf) THEN 
+        Debug.Error("line too long")
+      ELSIF n = 0 THEN
+        IF Rd.EOF(rd) THEN
+          FlushData();
+          Rd.Close(rd);
+          EXIT
+        END
+      ELSE 
+        WITH line = SUBARRAY(buf,0,n) DO
+          IF doDebug THEN
+            Debug.Out("line " & Text.FromChars(line))
+          END;
+          start := 0;
+          first := FALSE;
+
+          IF    StartsWith(line,ARRAY OF CHAR { '#' }) THEN
+            first := TRUE;
+
+            IF    StartsWith(line,ARRAY OF CHAR { '#', 'N' }) THEN
+              parser := DoNames
+            ELSIF StartsWith(line,ARRAY OF CHAR { '#', 'C' }) THEN
+              IF parser = DoNames THEN
+                WriteNames();
+
+                WITH n = names.size(),
+                     l = BYTESIZE(LONGREAL),
+                     q = MaxMem DIV (n * l) DO
+                  lbuff := NEW(REF ARRAY OF ARRAY OF LONGREAL, n, q)
+                END;
+              END;
+
+              parser := DoData
+            ELSIF StartsWith(line,ARRAY OF CHAR { '#', ';' }) THEN
+              parser := NullParser
+            END;
+            start := 2
+          END;
+
+          EVAL parser(SUBARRAY(line,start,n-start),first)
+        END
+      END
+    END
+  END
+  EXCEPT
+    ShortRead => Debug.Warning("Short read on final line, data may be corrupted")
+  END;
+
+  FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO Wr.Close(wdWr[i]) END;
+
+  WITH tWr = FileWr.Open(ofn & ".trace") DO
+    UnsafeWriter.WriteI(tWr, 1);
+    UnsafeWriter.WriteI(tWr, TRUNC(Time.Now()));
+    UnsafeWriter.WriteI(tWr, names.size());
+
+    FOR i := FIRST(wdWr^) TO LAST(wdWr^) DO 
+      WITH rd = FileRd.Open(wd & "/" & FormatFN(i)) DO
+        LOOP
+          WITH n = Rd.GetSub(rd, buf) DO
+            IF n = 0 THEN EXIT END;
+            Wr.PutString(tWr, SUBARRAY(buf,0,n))
+          END
+        END;
+        Rd.Close(rd)
+      END
+    END;
+    Wr.Close(tWr)
+  END
+
+END ConvertTrace.
