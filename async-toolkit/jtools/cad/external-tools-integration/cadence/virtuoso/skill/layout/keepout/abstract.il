@@ -23,9 +23,8 @@
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
                                 (cutaroundpins t)
                                 (topMetal nil)
-                                (includeVias t)
                                 )
- (let (abstractCV name net fig term pinlayer inLayerMap outLayerMap)
+ (let (abstractCV name net fig term pinlayer map inLayerMap outLayerMap)
 
   ; set topMetal
   (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
@@ -49,6 +48,27 @@
   ; invert keepout
   (for m 0 topMetal (AbstractInvertKeepout MetalKeepout[m] CV abstractCV))
 
+  ; create keepout for vias above topMetal-1 and metal above topMetal
+  (for m topMetal-1 TopMetal-1
+       name = (sprintf nil "v%d" m)
+       map = (list name)
+       (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                map = (append map (list (list Via[m] purpose)))
+                )
+       inLayerMap = (cons map inLayerMap)
+       outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
+       )
+  (for m topMetal+1 TopMetal
+       name = (sprintf nil "m%d" m)
+       map = (list name)
+       (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                map = (append map (list (list Metal[m] purpose)))
+                )
+       inLayerMap = (cons map inLayerMap)
+       outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
+       )
+  (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
+
   ; copy pins to abstract
   pinlayer = (makeTable "pinlayer" nil)
   (foreach shape CV->shapes
@@ -59,9 +79,10 @@
       term=(dbFindTermByName abstractCV name)
       (unless term term=(dbCreateTerm net name shape->pin->term->direction))
       fig=(dbCopyFig shape abstractCV)
+      fig->lpp = (list (car fig->lpp) "drawing")
       (dbCreatePin net fig)
-      (for m 0 topMetal
-           (when shape->lpp==MetalDrawing[m] || shape->lpp==MetalPin[m] pinlayer[m]=t)
+      (for m 0 TopMetal
+           (when shape->layerName==Metal[m] pinlayer[m]=t)
            )
       )
     )
@@ -69,20 +90,11 @@
 
   ; chop keepouts around pins
   (when cutaroundpins
-    (for m 0 topMetal
+    (for m 0 TopMetal
          (when pinlayer[m]
-           (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?otherpinlpp MetalPin[m])
+           (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m])
            )
          )
-    )
-
-  ; create keepout for topMetal-1 vias
-  (when includeVias
-    (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-             inLayerMap = (cons (list "x" (list Via[topMetal-1] purpose)) inLayerMap)
-             )
-    outLayerMap = (list (list "x" (list Via[topMetal-1] "keepout")))
-    (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
     )
 
   ; save and exit
@@ -232,11 +244,9 @@
   )
 
 ; Chop holes in flooded keepout around pins
-(defun AbstractCutAroundPins (cv pinlpp keepoutlpp
-                                 @key (otherpinlpp nil) (cutout nil))
+(defun AbstractCutAroundPins (cv pinlpp keepoutlpp @key (cutout nil))
   (unless cutout cutout = MetalSpace[(car pinlpp)])
   (betterLayerSize cv pinlpp cutout Scratch1LPP)
-  (when otherpinlpp (betterLayerSize cv otherpinlpp cutout Scratch1LPP))
   (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
   (foreach shape cv->shapes
            (cond (shape->lpp==keepoutlpp  (dbDeleteObject shape))
