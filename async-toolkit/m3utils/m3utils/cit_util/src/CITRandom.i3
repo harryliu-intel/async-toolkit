@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CITRandom.i3,v 1.2 2005/02/16 22:14:23 mika Exp $ *)
 
 INTERFACE CITRandom;
 IMPORT Random;

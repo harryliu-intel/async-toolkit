@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeString.i3,v 1.6 2008/10/27 08:53:08 mika Exp $ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

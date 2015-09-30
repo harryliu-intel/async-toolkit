@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CTZ.i3,v 1.3 2011/02/10 00:16:47 mika Exp $ *)
 
 INTERFACE CTZ;
 FROM Ctypes IMPORT const_char_star, char_star;

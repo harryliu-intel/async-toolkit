@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TZ.m3,v 1.10 2011/01/01 20:16:29 mika Exp $ *)
 
 UNSAFE MODULE TZ;
 IMPORT UtimeOpsC, Date, XTime AS Time;
@@ -10,9 +10,6 @@ IMPORT FS, Env;
 IMPORT Ctypes;
 IMPORT Word;
 IMPORT Thread;
-IMPORT Fmt;
-IMPORT SchedulerIndirection; (* to conform with CM3 DatePosix.m3... *)
-IMPORT UtimeWrap;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -50,7 +47,7 @@ PROCEDURE Init(t : T; tz : TEXT; disableChecking : BOOLEAN) : T RAISES { OSError
 
     t.tz := tz; 
     t.hashV := Text.Hash(tz);
-    t.cache.itime := FIRST(INTEGER); (* impossible key *)
+    t.cache.itime := -1; (* impossible key *)
     RETURN t 
   END Init;
 
@@ -59,9 +56,7 @@ PROCEDURE SetCurTZ(to : TEXT) =
   BEGIN
     IF NOT Text.Equal(to,CurTZ) THEN
       WITH s = CopyTtoS(to) DO
-        SchedulerIndirection.DisableSwitching();
         CTZ.setTZ(s);
-        SchedulerIndirection.EnableSwitching();
         FreeCopiedS(s)
       END;
       CurTZ := to
@@ -71,9 +66,7 @@ PROCEDURE SetCurTZ(to : TEXT) =
 PROCEDURE GetOldTZ() : TEXT =
   (* mu must be locked *)
   BEGIN
-        SchedulerIndirection.DisableSwitching();
     WITH res = CopyStoT(CTZ.getenv(TZTZ)) DO
-        SchedulerIndirection.EnableSwitching();
       IF Debug.GetLevel() > 30 THEN 
         Thread.Release(mu); (* avoid re-entrant locking (Debug uses TZ) *)
         TRY
@@ -93,9 +86,6 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
 
     d : Date.T;
   BEGIN
-    IF Debug.GetLevel() >= 20 THEN
-      Debug.Out("Localtime : " & Fmt.LongReal(timeArg) & " unixepoch=" & Fmt.LongReal(UnixEpoch))
-    END;
     (* first of all, see if the conversion is in the same minute
        as we just converted.  If so, modify return value accordingly
        and return it, saving system calls, etc. *)
@@ -125,11 +115,8 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
       END
     END;
     
-            IF Debug.GetLevel() >= 20 THEN
-              Debug.Out("TZ.Localtime: time=" & Fmt.LongReal(time))
-            END;
     VAR
-      tms := UtimeWrap.make_T();
+      tms   := UtimeOpsC.make_T();
       clock : Ctypes.long;
       oldTZ : TEXT;
     BEGIN
@@ -142,6 +129,9 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
             (*
             (* Debug.Out MAY call time functions, which may call us back,
                leading to locking against ourselves *)
+            IF Debug.GetLevel() >= 20 THEN
+              Debug.Out("TZ.Localtime: time=" & Fmt.LongReal(time))
+            END;
             *)
             
             clock := itime;
@@ -167,7 +157,7 @@ PROCEDURE Localtime(t : T; timeArg : Time.T) : Date.T =
               d.zone := CopyStoT(UtimeOpsC.Get_zone(tm))
             END
           FINALLY
-            UtimeWrap.delete_T(tms);
+            UtimeOpsC.delete_T(tms);
             SetCurTZ(oldTZ)
           END
         END;
@@ -185,7 +175,7 @@ PROCEDURE Mktime(t : T; d : Date.T) : Time.T =
       SetCurTZ(t.tz);
       
       VAR
-        tm := UtimeWrap.make_T();
+        tm  := UtimeOpsC.make_T();
       BEGIN
         TRY
           tm := UtimeOpsC.localtime_r(SomeTimeT, (* any legal time *)
@@ -203,7 +193,7 @@ PROCEDURE Mktime(t : T; d : Date.T) : Time.T =
           END
         END
       FINALLY
-        UtimeWrap.delete_T(tm);
+        UtimeOpsC.delete_T(tm)
       END
       END
     END
@@ -227,9 +217,7 @@ BEGIN
   END;
 
   WITH s = CopyTtoS(CurTZ) DO
-    SchedulerIndirection.DisableSwitching();
     CTZ.setTZ(s);
-    SchedulerIndirection.EnableSwitching();
     FreeCopiedS(s)
   END
 END TZ.

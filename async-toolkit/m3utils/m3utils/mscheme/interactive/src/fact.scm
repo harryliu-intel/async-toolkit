@@ -1,4 +1,4 @@
-;; $Id$
+;; $Id: fact.scm,v 1.2 2008/10/06 08:17:48 mika Exp $
 ;;
 ;; Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
 ;;

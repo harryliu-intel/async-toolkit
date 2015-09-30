@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ParametricSplineRep.i3,v 1.1 2001/10/10 07:39:56 mika Exp $ *)
 
 (* private interface for use by this package *)
 INTERFACE ParametricSplineRep;

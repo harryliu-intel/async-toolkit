@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Spline.m3,v 1.2 2001/10/10 07:39:56 mika Exp $ *)
 
 MODULE Spline;
 IMPORT DerivRidders;

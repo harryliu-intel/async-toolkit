@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ParametricSplineImpl.ig,v 1.4 2001/09/20 19:17:40 mika Exp $ *)
 
 GENERIC INTERFACE ParametricSplineImpl(BaseSpline);
 IMPORT ParametricSpline;

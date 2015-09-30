@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sighandler.c,v 1.1 2008/10/14 07:51:11 mika Exp $ */
 
 #include <signal.h>
 

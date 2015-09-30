@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXType.mg,v 1.7 2011/01/19 16:01:40 mika Exp $ *)
 
 GENERIC MODULE SXType(Elem);
 IMPORT XTime AS Time, SXClass, SX, SXRoot;
@@ -18,7 +18,6 @@ REVEAL
     waitFor      := WaitFor;
     numUpdates   := NumUpdates;
     uninitialize := Uninitialize;
-    initialized  := Initialized;
     attachName   := AttachName;
     getName      := GetName;
     setValidator := SetValidator;
@@ -56,9 +55,6 @@ PROCEDURE TDebugInfo(t : T) : TEXT =
   (* we could add a lot of debuginfo in SX, threads, etc. *)
 
 PROCEDURE Uninitialize(t : T) = BEGIN t.updates := 0 END Uninitialize;
-
-PROCEDURE Initialized(t : T) : BOOLEAN = 
-  BEGIN RETURN t.updates # 0 END Initialized;
 
 PROCEDURE InitVal(var : Var; val : Elem.T) : Var =
   BEGIN

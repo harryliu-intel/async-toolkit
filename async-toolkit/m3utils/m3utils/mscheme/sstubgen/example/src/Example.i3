@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Example.i3,v 1.11 2010/04/22 20:05:48 mika Exp $ *)
 
 INTERFACE Example;
 IMPORT Text;

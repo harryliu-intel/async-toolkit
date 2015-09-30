@@ -1,4 +1,4 @@
-;; $Id$
+;; $Id: basic-mbe.scm,v 1.1 2008/11/18 16:25:32 mika Exp $
 ;;
 ;; from mbe.scm from norvig.com
 

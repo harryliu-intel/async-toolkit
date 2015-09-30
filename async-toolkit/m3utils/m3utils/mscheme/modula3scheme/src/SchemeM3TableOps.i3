@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeM3TableOps.i3,v 1.1 2008/10/22 05:08:22 mika Exp $ *)
 
 INTERFACE SchemeM3TableOps;
 IMPORT Scheme, RT0;

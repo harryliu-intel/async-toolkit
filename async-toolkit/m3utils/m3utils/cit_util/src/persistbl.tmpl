@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: persistbl.tmpl,v 1.1 2007/05/31 12:30:15 mika Exp $ */
 readonly proc _persistentTable (nm, elem, intElemTbl, vis) is
 	build_generic_intf("Persistent" & nm & "Tbl", "PersistentTable", [elem, intElemTbl], vis)	
 	build_generic_impl("Persistent" & nm & "Tbl", "PersistentTable", [elem, intElemTbl])

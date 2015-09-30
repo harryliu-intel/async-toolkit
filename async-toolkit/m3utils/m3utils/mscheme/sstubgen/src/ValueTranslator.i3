@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ValueTranslator.i3,v 1.2 2009/03/29 18:54:25 mika Exp $ *)
 
 INTERFACE ValueTranslator;
 

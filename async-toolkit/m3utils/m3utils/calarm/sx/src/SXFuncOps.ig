@@ -1,7 +1,7 @@
-(* $Id$ *)
+(* $Id: SXFuncOps.ig,v 1.6 2010/11/03 17:19:52 mika Exp $ *)
 
 GENERIC INTERFACE SXFuncOps(Arg, Result);
-IMPORT SXInt, SX;
+IMPORT SXInt;
 
 (* everything returned here is really an OpResult *)
 
@@ -34,30 +34,20 @@ PROCEDURE NAryFunc(READONLY a : ARRAY OF Arg.T; f : FN; opName : TEXT := NIL) : 
 
 TYPE 
   O1 = OBJECT METHODS
-    op(a : Arg.Base) : Result.Base RAISES { SX.Uninitialized };
+    op(a : Arg.Base) : Result.Base;
   END;
 
   O2 = OBJECT METHODS
-    op(a, b : Arg.Base) : Result.Base RAISES { SX.Uninitialized };
+    op(a, b : Arg.Base) : Result.Base;
   END;
   
   ON = OBJECT METHODS
-    op(READONLY a : ARRAY OF Arg.Base) : Result.Base RAISES { SX.Uninitialized };
+    op(READONLY a : ARRAY OF Arg.Base) : Result.Base;
   END;
 
 PROCEDURE UnaryOFunc(a : Arg.T; op : O1; opName : TEXT := NIL) : Result.T;
-
 PROCEDURE BinaryOFunc(a, b : Arg.T; op : O2; opName : TEXT := NIL) : Result.T;
-
-PROCEDURE NAryOFunc(READONLY a : ARRAY OF Arg.T; 
-                    op : ON; opName : TEXT := NIL) : Result.T;
-
-PROCEDURE NAryOUFunc(READONLY a : ARRAY OF Arg.T; 
-                     op : ON; 
-                     un : CARDINAL := 0; 
-                     opName : TEXT := NIL) : Result.T;
-(* same as NAryOFunc, except that up to and including u operands are 
-   allowed to be uninitialized *)
+PROCEDURE NAryOFunc(READONLY a : ARRAY OF Arg.T; op : ON; opName : TEXT := NIL) : Result.T;
 
 (* ********************************************************************** *)
 

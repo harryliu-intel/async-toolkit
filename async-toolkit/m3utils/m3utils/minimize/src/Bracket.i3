@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Bracket.i3,v 1.4 2004/10/22 05:28:24 mika Exp $ *)
 
 INTERFACE Bracket;
 IMPORT Fmt;
@@ -19,6 +19,18 @@ PROCEDURE Brent(bracket : Trio; f : Function.T; tol : LONGREAL;
 PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
                  prec: CARDINAL := LR.MaxSignifDigits - 1;
                  literal := FALSE) : TEXT;
+
+(* the following are wrappers for Scheme programming, easier than
+   dealing with VAR parameters *)
+
+TYPE XYTrio = RECORD x, y : Trio END;
+
+PROCEDURE SchemeInitial(bracket : Trio; func : Function.T) : XYTrio;
+
+TYPE Pair = RECORD x, y : LONGREAL END;
+
+PROCEDURE SchemeBrent(bracket : Trio; f : Function.T; tol : LONGREAL) : Pair;
+
 
 END Bracket.
 

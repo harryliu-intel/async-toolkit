@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: RemoteFileRd.m3,v 1.2 2008/10/10 00:44:58 mika Exp $ *)
 
 MODULE RemoteFileRd;
 IMPORT Pathname, Rd, OSError, ProcUtils, Text, FileRd, TextRd;

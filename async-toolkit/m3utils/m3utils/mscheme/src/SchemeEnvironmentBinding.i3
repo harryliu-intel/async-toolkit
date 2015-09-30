@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeEnvironmentBinding.i3,v 1.2 2011/03/03 20:42:47 mika Exp $ *)
 
 INTERFACE SchemeEnvironmentBinding;
 IMPORT SchemeSymbol, SchemeObject;

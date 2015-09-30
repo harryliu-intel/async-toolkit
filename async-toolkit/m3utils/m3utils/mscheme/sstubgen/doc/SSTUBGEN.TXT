@@ -1,4 +1,4 @@
-$Id$
+$Id: SSTUBGEN.TXT,v 1.6 2009/01/14 11:06:16 mika Exp $
 
 The latest version of this file can always be found by going to the
 top level of the repository and running "cvs update -d ."...

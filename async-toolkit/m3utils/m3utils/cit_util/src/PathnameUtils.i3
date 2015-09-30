@@ -1,6 +1,6 @@
 (* Copyright (c) 2000 California Institute of Technology *)
 (* All rights reserved. See the file COPYRIGHT for a full description. *)
-(* $Id$ *)
+(* $Id: PathnameUtils.i3,v 1.6 2004/11/03 20:57:56 kp Exp $ *)
 
 INTERFACE PathnameUtils;
 IMPORT OSError;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: DerivRidders.m3,v 1.2 2001/10/10 07:39:54 mika Exp $ *)
 
 MODULE DerivRidders; (* num. rec. /c 2nd pp. 188--189 *)
 IMPORT LRFunction AS Function;

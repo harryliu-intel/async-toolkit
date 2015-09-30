@@ -5,7 +5,7 @@
    Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2010/07/04 22:45:28 mika Exp $ *)
 
 MODULE Main;
 IMPORT TZ, IO, Random;

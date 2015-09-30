@@ -1,0 +1,585 @@
+module test0
+  (
+input  logic [57-1:0] i_data,
+input  logic [7-1:0] i_chk,
+
+output logic          o_err_detect,
+output logic          o_err_multpl,
+output logic [57-1:0] o_data,
+output logic [7-1:0] o_chk,
+  );
+logic  xor0000;
+logic  xor0001;
+logic  xor0002;
+logic  xor0003;
+logic  xor0004;
+logic  xor0005;
+logic  xor0006;
+logic  xor0007;
+logic  xor0008;
+logic  xor0009;
+logic  xor0010;
+logic  xor0011;
+logic  xor0012;
+logic  xor0013;
+logic  xor0014;
+logic  xor0015;
+logic  xor0016;
+logic  xor0017;
+logic  xor0018;
+logic  xor0019;
+logic  xor0020;
+logic  xor0021;
+logic  xor0022;
+logic  xor0023;
+logic  xor0024;
+logic  xor0025;
+logic  xor0026;
+logic  xor0027;
+logic  xor0028;
+logic  xor0029;
+logic  xor0030;
+logic  xor0031;
+logic  xor0032;
+logic  xor0033;
+logic  xor0034;
+logic  xor0035;
+logic  xor0036;
+logic  xor0037;
+logic  xor0038;
+logic  xor0039;
+logic  xor0040;
+logic  xor0041;
+logic  xor0042;
+logic  xor0043;
+logic  xor0044;
+logic  xor0045;
+logic  xor0046;
+logic  xor0047;
+logic  xor0048;
+logic  xor0049;
+logic  xor0050;
+logic  xor0051;
+logic  xor0052;
+logic  xor0053;
+logic  xor0054;
+logic  xor0055;
+logic  xor0056;
+logic  xor0056;
+logic  xor0057;
+logic  xor0058;
+logic  xor0058;
+logic  xor0059;
+logic[5:-1] ecc_parity;
+logic  syn_0000_n;
+logic  syn_0000;
+logic  syn_0001_n;
+logic  syn_0001;
+logic  syn_0002_n;
+logic  syn_0002;
+logic  syn_0003_n;
+logic  syn_0003;
+logic  syn_0004_n;
+logic  syn_0004;
+logic  syn_0005_n;
+logic  syn_0005;
+logic  nand0072;
+logic  nand0073;
+logic  nand0074;
+logic  nand0075;
+logic  nand0076;
+logic  nand0077;
+logic  nand0078;
+logic  nand0079;
+logic  nand0080;
+logic  nand0081;
+logic  nand0082;
+logic  nand0083;
+logic  nand0084;
+logic  nand0085;
+logic  nand0086;
+logic  nand0087;
+logic  nor0088;
+logic  nor0089;
+logic  nor0090;
+logic  nor0091;
+logic  nor0092;
+logic  nor0093;
+logic  nor0094;
+logic  nor0095;
+logic  nor0096;
+logic  nor0097;
+logic  nor0098;
+logic  nor0099;
+logic  nor0100;
+logic  nor0101;
+logic  nor0102;
+logic  nor0103;
+logic  nor0104;
+logic  nor0105;
+logic  nor0106;
+logic  nor0107;
+logic  nor0108;
+logic  nor0109;
+logic  nor0110;
+logic  nor0111;
+logic  nor0112;
+logic  nor0113;
+logic  nor0114;
+logic  nor0115;
+logic  nor0116;
+logic  nor0117;
+logic  nor0118;
+logic  nor0119;
+logic  nor0120;
+logic  nor0121;
+logic  nor0122;
+logic  nor0123;
+logic  nor0124;
+logic  nor0125;
+logic  nor0126;
+logic  nor0127;
+logic  nor0128;
+logic  nor0129;
+logic  nor0130;
+logic  nor0131;
+logic  nor0132;
+logic  nor0133;
+logic  nor0134;
+logic  nor0135;
+logic  nor0136;
+logic  nor0137;
+logic  nor0138;
+logic  nor0139;
+logic  nor0140;
+logic  nor0141;
+logic  nor0142;
+logic  nor0143;
+logic  nor0144;
+logic  nor0145;
+logic  nor0146;
+logic  nor0147;
+logic  nor0148;
+logic  nor0149;
+logic  nor0150;
+logic  nor0151;
+logic[63:0] input_data;
+logic[63:0] corrected;
+assign xor0056 = xor0047;
+assign xor0058 = xor0046;
+assign ecc_parity[-1] = xor0059;
+assign ecc_parity[0] = xor0042;
+assign ecc_parity[1] = xor0045;
+assign ecc_parity[2] = xor0048;
+assign ecc_parity[3] = xor0051;
+assign ecc_parity[4] = xor0054;
+assign ecc_parity[5] = xor0056;
+assign invert0000 = nor0088;
+assign invert0001 = nor0089;
+assign invert0002 = nor0090;
+assign invert0003 = nor0091;
+assign invert0004 = nor0092;
+assign invert0005 = nor0093;
+assign invert0006 = nor0094;
+assign invert0007 = nor0095;
+assign invert0008 = nor0096;
+assign invert0009 = nor0097;
+assign invert0010 = nor0098;
+assign invert0011 = nor0099;
+assign invert0012 = nor0100;
+assign invert0013 = nor0101;
+assign invert0014 = nor0102;
+assign invert0015 = nor0103;
+assign invert0016 = nor0104;
+assign invert0017 = nor0105;
+assign invert0018 = nor0106;
+assign invert0019 = nor0107;
+assign invert0020 = nor0108;
+assign invert0021 = nor0109;
+assign invert0022 = nor0110;
+assign invert0023 = nor0111;
+assign invert0024 = nor0112;
+assign invert0025 = nor0113;
+assign invert0026 = nor0114;
+assign invert0027 = nor0115;
+assign invert0028 = nor0116;
+assign invert0029 = nor0117;
+assign invert0030 = nor0118;
+assign invert0031 = nor0119;
+assign invert0032 = nor0120;
+assign invert0033 = nor0121;
+assign invert0034 = nor0122;
+assign invert0035 = nor0123;
+assign invert0036 = nor0124;
+assign invert0037 = nor0125;
+assign invert0038 = nor0126;
+assign invert0039 = nor0127;
+assign invert0040 = nor0128;
+assign invert0041 = nor0129;
+assign invert0042 = nor0130;
+assign invert0043 = nor0131;
+assign invert0044 = nor0132;
+assign invert0045 = nor0133;
+assign invert0046 = nor0134;
+assign invert0047 = nor0135;
+assign invert0048 = nor0136;
+assign invert0049 = nor0137;
+assign invert0050 = nor0138;
+assign invert0051 = nor0139;
+assign invert0052 = nor0140;
+assign invert0053 = nor0141;
+assign invert0054 = nor0142;
+assign invert0055 = nor0143;
+assign invert0056 = nor0144;
+assign invert0057 = nor0145;
+assign invert0058 = nor0146;
+assign invert0059 = nor0147;
+assign invert0060 = nor0148;
+assign invert0061 = nor0149;
+assign invert0062 = nor0150;
+assign invert0063 = nor0151;
+assign input_data[0] = i_chk    [0]
+assign o_chk     [0] = corrected[0]
+assign input_data[1] = i_chk    [1]
+assign o_chk     [1] = corrected[1]
+assign input_data[2] = i_chk    [2]
+assign o_chk     [2] = corrected[2]
+assign input_data[3] = i_data   [0]
+assign o_data    [0] = corrected[3]
+assign input_data[4] = i_chk    [3]
+assign o_chk     [3] = corrected[4]
+assign input_data[5] = i_data   [1]
+assign o_data    [1] = corrected[5]
+assign input_data[6] = i_data   [2]
+assign o_data    [2] = corrected[6]
+assign input_data[7] = i_data   [3]
+assign o_data    [3] = corrected[7]
+assign input_data[8] = i_chk    [4]
+assign o_chk     [4] = corrected[8]
+assign input_data[9] = i_data   [4]
+assign o_data    [4] = corrected[9]
+assign input_data[10] = i_data   [5]
+assign o_data    [5] = corrected[10]
+assign input_data[11] = i_data   [6]
+assign o_data    [6] = corrected[11]
+assign input_data[12] = i_data   [7]
+assign o_data    [7] = corrected[12]
+assign input_data[13] = i_data   [8]
+assign o_data    [8] = corrected[13]
+assign input_data[14] = i_data   [9]
+assign o_data    [9] = corrected[14]
+assign input_data[15] = i_data   [10]
+assign o_data    [10] = corrected[15]
+assign input_data[16] = i_chk    [5]
+assign o_chk     [5] = corrected[16]
+assign input_data[17] = i_data   [11]
+assign o_data    [11] = corrected[17]
+assign input_data[18] = i_data   [12]
+assign o_data    [12] = corrected[18]
+assign input_data[19] = i_data   [13]
+assign o_data    [13] = corrected[19]
+assign input_data[20] = i_data   [14]
+assign o_data    [14] = corrected[20]
+assign input_data[21] = i_data   [15]
+assign o_data    [15] = corrected[21]
+assign input_data[22] = i_data   [16]
+assign o_data    [16] = corrected[22]
+assign input_data[23] = i_data   [17]
+assign o_data    [17] = corrected[23]
+assign input_data[24] = i_data   [18]
+assign o_data    [18] = corrected[24]
+assign input_data[25] = i_data   [19]
+assign o_data    [19] = corrected[25]
+assign input_data[26] = i_data   [20]
+assign o_data    [20] = corrected[26]
+assign input_data[27] = i_data   [21]
+assign o_data    [21] = corrected[27]
+assign input_data[28] = i_data   [22]
+assign o_data    [22] = corrected[28]
+assign input_data[29] = i_data   [23]
+assign o_data    [23] = corrected[29]
+assign input_data[30] = i_data   [24]
+assign o_data    [24] = corrected[30]
+assign input_data[31] = i_data   [25]
+assign o_data    [25] = corrected[31]
+assign input_data[32] = i_chk    [6]
+assign o_chk     [6] = corrected[32]
+assign input_data[33] = i_data   [26]
+assign o_data    [26] = corrected[33]
+assign input_data[34] = i_data   [27]
+assign o_data    [27] = corrected[34]
+assign input_data[35] = i_data   [28]
+assign o_data    [28] = corrected[35]
+assign input_data[36] = i_data   [29]
+assign o_data    [29] = corrected[36]
+assign input_data[37] = i_data   [30]
+assign o_data    [30] = corrected[37]
+assign input_data[38] = i_data   [31]
+assign o_data    [31] = corrected[38]
+assign input_data[39] = i_data   [32]
+assign o_data    [32] = corrected[39]
+assign input_data[40] = i_data   [33]
+assign o_data    [33] = corrected[40]
+assign input_data[41] = i_data   [34]
+assign o_data    [34] = corrected[41]
+assign input_data[42] = i_data   [35]
+assign o_data    [35] = corrected[42]
+assign input_data[43] = i_data   [36]
+assign o_data    [36] = corrected[43]
+assign input_data[44] = i_data   [37]
+assign o_data    [37] = corrected[44]
+assign input_data[45] = i_data   [38]
+assign o_data    [38] = corrected[45]
+assign input_data[46] = i_data   [39]
+assign o_data    [39] = corrected[46]
+assign input_data[47] = i_data   [40]
+assign o_data    [40] = corrected[47]
+assign input_data[48] = i_data   [41]
+assign o_data    [41] = corrected[48]
+assign input_data[49] = i_data   [42]
+assign o_data    [42] = corrected[49]
+assign input_data[50] = i_data   [43]
+assign o_data    [43] = corrected[50]
+assign input_data[51] = i_data   [44]
+assign o_data    [44] = corrected[51]
+assign input_data[52] = i_data   [45]
+assign o_data    [45] = corrected[52]
+assign input_data[53] = i_data   [46]
+assign o_data    [46] = corrected[53]
+assign input_data[54] = i_data   [47]
+assign o_data    [47] = corrected[54]
+assign input_data[55] = i_data   [48]
+assign o_data    [48] = corrected[55]
+assign input_data[56] = i_data   [49]
+assign o_data    [49] = corrected[56]
+assign input_data[57] = i_data   [50]
+assign o_data    [50] = corrected[57]
+assign input_data[58] = i_data   [51]
+assign o_data    [51] = corrected[58]
+assign input_data[59] = i_data   [52]
+assign o_data    [52] = corrected[59]
+assign input_data[60] = i_data   [53]
+assign o_data    [53] = corrected[60]
+assign input_data[61] = i_data   [54]
+assign o_data    [54] = corrected[61]
+assign input_data[62] = i_data   [55]
+assign o_data    [55] = corrected[62]
+assign input_data[63] = i_data   [56]
+assign o_data    [56] = corrected[63]
+a28_xor4_a1 u_a28_xor4_a1_0000 (input_data[0001], input_data[0000], input_data[0003], input_data[0002], xor0000);
+a28_xor4_a1 u_a28_xor4_a1_0001 (input_data[0005], input_data[0004], input_data[0007], input_data[0006], xor0001);
+a28_xor4_a1 u_a28_xor4_a1_0002 (input_data[0009], input_data[0008], input_data[0011], input_data[0010], xor0002);
+a28_xor4_a1 u_a28_xor4_a1_0003 (input_data[0015], input_data[0014], input_data[0013], input_data[0012], xor0003);
+a28_xor4_a1 u_a28_xor4_a1_0004 (input_data[0019], input_data[0018], input_data[0017], input_data[0016], xor0004);
+a28_xor4_a1 u_a28_xor4_a1_0005 (input_data[0021], input_data[0020], input_data[0023], input_data[0022], xor0005);
+a28_xor4_a1 u_a28_xor4_a1_0006 (input_data[0025], input_data[0024], input_data[0027], input_data[0026], xor0006);
+a28_xor4_a1 u_a28_xor4_a1_0007 (input_data[0028], input_data[0031], input_data[0030], input_data[0029], xor0007);
+a28_xor4_a1 u_a28_xor4_a1_0008 (input_data[0035], input_data[0034], input_data[0033], input_data[0032], xor0008);
+a28_xor4_a1 u_a28_xor4_a1_0009 (input_data[0037], input_data[0036], input_data[0039], input_data[0038], xor0009);
+a28_xor4_a1 u_a28_xor4_a1_0010 (input_data[0041], input_data[0040], input_data[0043], input_data[0042], xor0010);
+a28_xor4_a1 u_a28_xor4_a1_0011 (input_data[0046], input_data[0045], input_data[0044], input_data[0047], xor0011);
+a28_xor4_a1 u_a28_xor4_a1_0012 (input_data[0051], input_data[0050], input_data[0049], input_data[0048], xor0012);
+a28_xor4_a1 u_a28_xor4_a1_0013 (input_data[0053], input_data[0052], input_data[0055], input_data[0054], xor0013);
+a28_xor4_a1 u_a28_xor4_a1_0014 (input_data[0059], input_data[0058], input_data[0057], input_data[0056], xor0014);
+a28_xor4_a1 u_a28_xor4_a1_0015 (input_data[0063], input_data[0062], input_data[0061], input_data[0060], xor0015);
+a28_xor4_a1 u_a28_xor4_a1_0016 (input_data[0005], input_data[0007], input_data[0001], input_data[0003], xor0016);
+a28_xor4_a1 u_a28_xor4_a1_0017 (input_data[0009], input_data[0015], input_data[0011], input_data[0013], xor0017);
+a28_xor4_a1 u_a28_xor4_a1_0018 (input_data[0019], input_data[0017], input_data[0021], input_data[0023], xor0018);
+a28_xor4_a1 u_a28_xor4_a1_0019 (input_data[0025], input_data[0027], input_data[0031], input_data[0029], xor0019);
+a28_xor4_a1 u_a28_xor4_a1_0020 (input_data[0035], input_data[0037], input_data[0033], input_data[0039], xor0020);
+a28_xor4_a1 u_a28_xor4_a1_0021 (input_data[0041], input_data[0043], input_data[0045], input_data[0047], xor0021);
+a28_xor4_a1 u_a28_xor4_a1_0022 (input_data[0051], input_data[0053], input_data[0049], input_data[0055], xor0022);
+a28_xor4_a1 u_a28_xor4_a1_0023 (input_data[0063], input_data[0059], input_data[0061], input_data[0057], xor0023);
+a28_xor4_a1 u_a28_xor4_a1_0024 (input_data[0007], input_data[0006], input_data[0003], input_data[0002], xor0024);
+a28_xor4_a1 u_a28_xor4_a1_0025 (input_data[0015], input_data[0014], input_data[0011], input_data[0010], xor0025);
+a28_xor4_a1 u_a28_xor4_a1_0026 (input_data[0019], input_data[0018], input_data[0023], input_data[0022], xor0026);
+a28_xor4_a1 u_a28_xor4_a1_0027 (input_data[0027], input_data[0031], input_data[0030], input_data[0026], xor0027);
+a28_xor4_a1 u_a28_xor4_a1_0028 (input_data[0035], input_data[0034], input_data[0039], input_data[0038], xor0028);
+a28_xor4_a1 u_a28_xor4_a1_0029 (input_data[0046], input_data[0043], input_data[0042], input_data[0047], xor0029);
+a28_xor4_a1 u_a28_xor4_a1_0030 (input_data[0051], input_data[0050], input_data[0055], input_data[0054], xor0030);
+a28_xor4_a1 u_a28_xor4_a1_0031 (input_data[0063], input_data[0062], input_data[0059], input_data[0058], xor0031);
+a28_xor4_a1 u_a28_xor4_a1_0032 (input_data[0005], input_data[0004], input_data[0007], input_data[0006], xor0032);
+a28_xor4_a1 u_a28_xor4_a1_0033 (input_data[0015], input_data[0014], input_data[0013], input_data[0012], xor0033);
+a28_xor4_a1 u_a28_xor4_a1_0034 (input_data[0021], input_data[0020], input_data[0023], input_data[0022], xor0034);
+a28_xor4_a1 u_a28_xor4_a1_0035 (input_data[0028], input_data[0031], input_data[0030], input_data[0029], xor0035);
+a28_xor4_a1 u_a28_xor4_a1_0036 (input_data[0037], input_data[0036], input_data[0039], input_data[0038], xor0036);
+a28_xor4_a1 u_a28_xor4_a1_0037 (input_data[0046], input_data[0045], input_data[0044], input_data[0047], xor0037);
+a28_xor4_a1 u_a28_xor4_a1_0038 (input_data[0053], input_data[0052], input_data[0055], input_data[0054], xor0038);
+a28_xor4_a1 u_a28_xor4_a1_0039 (input_data[0063], input_data[0062], input_data[0061], input_data[0060], xor0039);
+a28_xor4_a1 u_a28_xor4_a1_0040 (xor0017, xor0018, xor0016, xor0019, xor0040);
+a28_xor4_a1 u_a28_xor4_a1_0041 (xor0020, xor0023, xor0021, xor0022, xor0041);
+a28_xor2_a1 u_a28_xor2_a1_0042 (xor0040, xor0041, xor0042);
+a28_xor4_a1 u_a28_xor4_a1_0043 (xor0027, xor0025, xor0026, xor0024, xor0043);
+a28_xor4_a1 u_a28_xor4_a1_0044 (xor0030, xor0028, xor0031, xor0029, xor0044);
+a28_xor2_a1 u_a28_xor2_a1_0045 (xor0043, xor0044, xor0045);
+a28_xor4_a1 u_a28_xor4_a1_0046 (xor0035, xor0033, xor0034, xor0032, xor0046);
+a28_xor4_a1 u_a28_xor4_a1_0047 (xor0038, xor0036, xor0039, xor0037, xor0047);
+a28_xor2_a1 u_a28_xor2_a1_0048 (xor0046, xor0047, xor0048);
+a28_xor4_a1 u_a28_xor4_a1_0049 (xor0002, xor0010, xor0006, xor0014, xor0049);
+a28_xor4_a1 u_a28_xor4_a1_0050 (xor0035, xor0033, xor0039, xor0037, xor0050);
+a28_xor2_a1 u_a28_xor2_a1_0051 (xor0049, xor0050, xor0051);
+a28_xor4_a1 u_a28_xor4_a1_0052 (xor0006, xor0014, xor0004, xor0012, xor0052);
+a28_xor4_a1 u_a28_xor4_a1_0053 (xor0038, xor0035, xor0034, xor0039, xor0053);
+a28_xor2_a1 u_a28_xor2_a1_0054 (xor0053, xor0052, xor0054);
+a28_xor4_a1 u_a28_xor4_a1_0055 (xor0010, xor0008, xor0014, xor0012, xor0055);
+a28_xor2_a1 u_a28_xor2_a1_0056 (xor0055, xor0056, xor0056);
+a28_xor4_a1 u_a28_xor4_a1_0057 (xor0002, xor0000, xor0006, xor0004, xor0057);
+a28_xor2_a1 u_a28_xor2_a1_0058 (xor0057, xor0058, xor0058);
+a28_xor2_a1 u_a28_xor2_a1_0059 (xor0056, xor0058, xor0059);
+a28_inv1_a1 u_a28_inv1_a1_0060 (ecc_parity[0], syn_0000_n);
+a28_inv1_a1 u_a28_inv1_a1_0061 (syn_0000_n, syn_0000);
+a28_inv1_a1 u_a28_inv1_a1_0062 (ecc_parity[1], syn_0001_n);
+a28_inv1_a1 u_a28_inv1_a1_0063 (syn_0001_n, syn_0001);
+a28_inv1_a1 u_a28_inv1_a1_0064 (ecc_parity[2], syn_0002_n);
+a28_inv1_a1 u_a28_inv1_a1_0065 (syn_0002_n, syn_0002);
+a28_inv1_a1 u_a28_inv1_a1_0066 (ecc_parity[3], syn_0003_n);
+a28_inv1_a1 u_a28_inv1_a1_0067 (syn_0003_n, syn_0003);
+a28_inv1_a1 u_a28_inv1_a1_0068 (ecc_parity[4], syn_0004_n);
+a28_inv1_a1 u_a28_inv1_a1_0069 (syn_0004_n, syn_0004);
+a28_inv1_a1 u_a28_inv1_a1_0070 (ecc_parity[5], syn_0005_n);
+a28_inv1_a1 u_a28_inv1_a1_0071 (syn_0005_n, syn_0005);
+a28_nand3_a1 u_a28_nand3_a1_0072 (syn_0002_n, syn_0001_n, syn_0000_n, nand0072);
+a28_nand3_a1 u_a28_nand3_a1_0073 (syn_0002_n, syn_0001_n, syn_0000, nand0073);
+a28_nand3_a1 u_a28_nand3_a1_0074 (syn_0002_n, syn_0001, syn_0000_n, nand0074);
+a28_nand3_a1 u_a28_nand3_a1_0075 (syn_0002_n, syn_0001, syn_0000, nand0075);
+a28_nand3_a1 u_a28_nand3_a1_0076 (syn_0002, syn_0001_n, syn_0000_n, nand0076);
+a28_nand3_a1 u_a28_nand3_a1_0077 (syn_0002, syn_0001_n, syn_0000, nand0077);
+a28_nand3_a1 u_a28_nand3_a1_0078 (syn_0002, syn_0001, syn_0000_n, nand0078);
+a28_nand3_a1 u_a28_nand3_a1_0079 (syn_0002, syn_0001, syn_0000, nand0079);
+a28_nand3_a1 u_a28_nand3_a1_0080 (syn_0003_n, syn_0005_n, syn_0004_n, nand0080);
+a28_nand3_a1 u_a28_nand3_a1_0081 (syn_0003, syn_0005_n, syn_0004_n, nand0081);
+a28_nand3_a1 u_a28_nand3_a1_0082 (syn_0003_n, syn_0004, syn_0005_n, nand0082);
+a28_nand3_a1 u_a28_nand3_a1_0083 (syn_0004, syn_0003, syn_0005_n, nand0083);
+a28_nand3_a1 u_a28_nand3_a1_0084 (syn_0003_n, syn_0005, syn_0004_n, nand0084);
+a28_nand3_a1 u_a28_nand3_a1_0085 (syn_0003, syn_0005, syn_0004_n, nand0085);
+a28_nand3_a1 u_a28_nand3_a1_0086 (syn_0003_n, syn_0004, syn_0005, nand0086);
+a28_nand3_a1 u_a28_nand3_a1_0087 (syn_0004, syn_0003, syn_0005, nand0087);
+a28_nor2_a1 u_a28_nor2_a1_0088 (nand0072, nand0080, nor0088);
+a28_nor2_a1 u_a28_nor2_a1_0089 (nand0080, nand0073, nor0089);
+a28_nor2_a1 u_a28_nor2_a1_0090 (nand0074, nand0080, nor0090);
+a28_nor2_a1 u_a28_nor2_a1_0091 (nand0075, nand0080, nor0091);
+a28_nor2_a1 u_a28_nor2_a1_0092 (nand0080, nand0076, nor0092);
+a28_nor2_a1 u_a28_nor2_a1_0093 (nand0077, nand0080, nor0093);
+a28_nor2_a1 u_a28_nor2_a1_0094 (nand0078, nand0080, nor0094);
+a28_nor2_a1 u_a28_nor2_a1_0095 (nand0079, nand0080, nor0095);
+a28_nor2_a1 u_a28_nor2_a1_0096 (nand0072, nand0081, nor0096);
+a28_nor2_a1 u_a28_nor2_a1_0097 (nand0081, nand0073, nor0097);
+a28_nor2_a1 u_a28_nor2_a1_0098 (nand0081, nand0074, nor0098);
+a28_nor2_a1 u_a28_nor2_a1_0099 (nand0075, nand0081, nor0099);
+a28_nor2_a1 u_a28_nor2_a1_0100 (nand0081, nand0076, nor0100);
+a28_nor2_a1 u_a28_nor2_a1_0101 (nand0081, nand0077, nor0101);
+a28_nor2_a1 u_a28_nor2_a1_0102 (nand0078, nand0081, nor0102);
+a28_nor2_a1 u_a28_nor2_a1_0103 (nand0081, nand0079, nor0103);
+a28_nor2_a1 u_a28_nor2_a1_0104 (nand0072, nand0082, nor0104);
+a28_nor2_a1 u_a28_nor2_a1_0105 (nand0073, nand0082, nor0105);
+a28_nor2_a1 u_a28_nor2_a1_0106 (nand0074, nand0082, nor0106);
+a28_nor2_a1 u_a28_nor2_a1_0107 (nand0075, nand0082, nor0107);
+a28_nor2_a1 u_a28_nor2_a1_0108 (nand0076, nand0082, nor0108);
+a28_nor2_a1 u_a28_nor2_a1_0109 (nand0077, nand0082, nor0109);
+a28_nor2_a1 u_a28_nor2_a1_0110 (nand0078, nand0082, nor0110);
+a28_nor2_a1 u_a28_nor2_a1_0111 (nand0079, nand0082, nor0111);
+a28_nor2_a1 u_a28_nor2_a1_0112 (nand0072, nand0083, nor0112);
+a28_nor2_a1 u_a28_nor2_a1_0113 (nand0083, nand0073, nor0113);
+a28_nor2_a1 u_a28_nor2_a1_0114 (nand0074, nand0083, nor0114);
+a28_nor2_a1 u_a28_nor2_a1_0115 (nand0075, nand0083, nor0115);
+a28_nor2_a1 u_a28_nor2_a1_0116 (nand0083, nand0076, nor0116);
+a28_nor2_a1 u_a28_nor2_a1_0117 (nand0077, nand0083, nor0117);
+a28_nor2_a1 u_a28_nor2_a1_0118 (nand0078, nand0083, nor0118);
+a28_nor2_a1 u_a28_nor2_a1_0119 (nand0083, nand0079, nor0119);
+a28_nor2_a1 u_a28_nor2_a1_0120 (nand0084, nand0072, nor0120);
+a28_nor2_a1 u_a28_nor2_a1_0121 (nand0084, nand0073, nor0121);
+a28_nor2_a1 u_a28_nor2_a1_0122 (nand0084, nand0074, nor0122);
+a28_nor2_a1 u_a28_nor2_a1_0123 (nand0075, nand0084, nor0123);
+a28_nor2_a1 u_a28_nor2_a1_0124 (nand0084, nand0076, nor0124);
+a28_nor2_a1 u_a28_nor2_a1_0125 (nand0084, nand0077, nor0125);
+a28_nor2_a1 u_a28_nor2_a1_0126 (nand0078, nand0084, nor0126);
+a28_nor2_a1 u_a28_nor2_a1_0127 (nand0084, nand0079, nor0127);
+a28_nor2_a1 u_a28_nor2_a1_0128 (nand0072, nand0085, nor0128);
+a28_nor2_a1 u_a28_nor2_a1_0129 (nand0085, nand0073, nor0129);
+a28_nor2_a1 u_a28_nor2_a1_0130 (nand0074, nand0085, nor0130);
+a28_nor2_a1 u_a28_nor2_a1_0131 (nand0075, nand0085, nor0131);
+a28_nor2_a1 u_a28_nor2_a1_0132 (nand0076, nand0085, nor0132);
+a28_nor2_a1 u_a28_nor2_a1_0133 (nand0077, nand0085, nor0133);
+a28_nor2_a1 u_a28_nor2_a1_0134 (nand0078, nand0085, nor0134);
+a28_nor2_a1 u_a28_nor2_a1_0135 (nand0079, nand0085, nor0135);
+a28_nor2_a1 u_a28_nor2_a1_0136 (nand0072, nand0086, nor0136);
+a28_nor2_a1 u_a28_nor2_a1_0137 (nand0086, nand0073, nor0137);
+a28_nor2_a1 u_a28_nor2_a1_0138 (nand0086, nand0074, nor0138);
+a28_nor2_a1 u_a28_nor2_a1_0139 (nand0075, nand0086, nor0139);
+a28_nor2_a1 u_a28_nor2_a1_0140 (nand0086, nand0076, nor0140);
+a28_nor2_a1 u_a28_nor2_a1_0141 (nand0077, nand0086, nor0141);
+a28_nor2_a1 u_a28_nor2_a1_0142 (nand0078, nand0086, nor0142);
+a28_nor2_a1 u_a28_nor2_a1_0143 (nand0086, nand0079, nor0143);
+a28_nor2_a1 u_a28_nor2_a1_0144 (nand0087, nand0072, nor0144);
+a28_nor2_a1 u_a28_nor2_a1_0145 (nand0087, nand0073, nor0145);
+a28_nor2_a1 u_a28_nor2_a1_0146 (nand0087, nand0074, nor0146);
+a28_nor2_a1 u_a28_nor2_a1_0147 (nand0087, nand0075, nor0147);
+a28_nor2_a1 u_a28_nor2_a1_0148 (nand0087, nand0076, nor0148);
+a28_nor2_a1 u_a28_nor2_a1_0149 (nand0087, nand0077, nor0149);
+a28_nor2_a1 u_a28_nor2_a1_0150 (nand0078, nand0087, nor0150);
+a28_nor2_a1 u_a28_nor2_a1_0151 (nand0087, nand0079, nor0151);
+xor2 u_xor2_0152(i_d[0], invert0000, corrected[0]);
+xor2 u_xor2_0152(i_d[1], invert0001, corrected[1]);
+xor2 u_xor2_0152(i_d[2], invert0002, corrected[2]);
+xor2 u_xor2_0152(i_d[3], invert0003, corrected[3]);
+xor2 u_xor2_0152(i_d[4], invert0004, corrected[4]);
+xor2 u_xor2_0152(i_d[5], invert0005, corrected[5]);
+xor2 u_xor2_0152(i_d[6], invert0006, corrected[6]);
+xor2 u_xor2_0152(i_d[7], invert0007, corrected[7]);
+xor2 u_xor2_0152(i_d[8], invert0008, corrected[8]);
+xor2 u_xor2_0152(i_d[9], invert0009, corrected[9]);
+xor2 u_xor2_0152(i_d[10], invert0010, corrected[10]);
+xor2 u_xor2_0152(i_d[11], invert0011, corrected[11]);
+xor2 u_xor2_0152(i_d[12], invert0012, corrected[12]);
+xor2 u_xor2_0152(i_d[13], invert0013, corrected[13]);
+xor2 u_xor2_0152(i_d[14], invert0014, corrected[14]);
+xor2 u_xor2_0152(i_d[15], invert0015, corrected[15]);
+xor2 u_xor2_0152(i_d[16], invert0016, corrected[16]);
+xor2 u_xor2_0152(i_d[17], invert0017, corrected[17]);
+xor2 u_xor2_0152(i_d[18], invert0018, corrected[18]);
+xor2 u_xor2_0152(i_d[19], invert0019, corrected[19]);
+xor2 u_xor2_0152(i_d[20], invert0020, corrected[20]);
+xor2 u_xor2_0152(i_d[21], invert0021, corrected[21]);
+xor2 u_xor2_0152(i_d[22], invert0022, corrected[22]);
+xor2 u_xor2_0152(i_d[23], invert0023, corrected[23]);
+xor2 u_xor2_0152(i_d[24], invert0024, corrected[24]);
+xor2 u_xor2_0152(i_d[25], invert0025, corrected[25]);
+xor2 u_xor2_0152(i_d[26], invert0026, corrected[26]);
+xor2 u_xor2_0152(i_d[27], invert0027, corrected[27]);
+xor2 u_xor2_0152(i_d[28], invert0028, corrected[28]);
+xor2 u_xor2_0152(i_d[29], invert0029, corrected[29]);
+xor2 u_xor2_0152(i_d[30], invert0030, corrected[30]);
+xor2 u_xor2_0152(i_d[31], invert0031, corrected[31]);
+xor2 u_xor2_0152(i_d[32], invert0032, corrected[32]);
+xor2 u_xor2_0152(i_d[33], invert0033, corrected[33]);
+xor2 u_xor2_0152(i_d[34], invert0034, corrected[34]);
+xor2 u_xor2_0152(i_d[35], invert0035, corrected[35]);
+xor2 u_xor2_0152(i_d[36], invert0036, corrected[36]);
+xor2 u_xor2_0152(i_d[37], invert0037, corrected[37]);
+xor2 u_xor2_0152(i_d[38], invert0038, corrected[38]);
+xor2 u_xor2_0152(i_d[39], invert0039, corrected[39]);
+xor2 u_xor2_0152(i_d[40], invert0040, corrected[40]);
+xor2 u_xor2_0152(i_d[41], invert0041, corrected[41]);
+xor2 u_xor2_0152(i_d[42], invert0042, corrected[42]);
+xor2 u_xor2_0152(i_d[43], invert0043, corrected[43]);
+xor2 u_xor2_0152(i_d[44], invert0044, corrected[44]);
+xor2 u_xor2_0152(i_d[45], invert0045, corrected[45]);
+xor2 u_xor2_0152(i_d[46], invert0046, corrected[46]);
+xor2 u_xor2_0152(i_d[47], invert0047, corrected[47]);
+xor2 u_xor2_0152(i_d[48], invert0048, corrected[48]);
+xor2 u_xor2_0152(i_d[49], invert0049, corrected[49]);
+xor2 u_xor2_0152(i_d[50], invert0050, corrected[50]);
+xor2 u_xor2_0152(i_d[51], invert0051, corrected[51]);
+xor2 u_xor2_0152(i_d[52], invert0052, corrected[52]);
+xor2 u_xor2_0152(i_d[53], invert0053, corrected[53]);
+xor2 u_xor2_0152(i_d[54], invert0054, corrected[54]);
+xor2 u_xor2_0152(i_d[55], invert0055, corrected[55]);
+xor2 u_xor2_0152(i_d[56], invert0056, corrected[56]);
+xor2 u_xor2_0152(i_d[57], invert0057, corrected[57]);
+xor2 u_xor2_0152(i_d[58], invert0058, corrected[58]);
+xor2 u_xor2_0152(i_d[59], invert0059, corrected[59]);
+xor2 u_xor2_0152(i_d[60], invert0060, corrected[60]);
+xor2 u_xor2_0152(i_d[61], invert0061, corrected[61]);
+xor2 u_xor2_0152(i_d[62], invert0062, corrected[62]);
+xor2 u_xor2_0152(i_d[63], invert0063, corrected[63]);
+endmodule

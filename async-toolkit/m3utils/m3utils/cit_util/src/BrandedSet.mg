@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: BrandedSet.mg,v 1.2 2000/11/25 20:04:32 mika Exp $ *)
 GENERIC MODULE BrandedSet(Elem);
 IMPORT Word;
 

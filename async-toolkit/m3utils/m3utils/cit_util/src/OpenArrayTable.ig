@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: OpenArrayTable.ig,v 1.2 2000/11/09 23:30:28 mika Exp $ *)
 
 (* Copyright 1992 Digital Equipment Corporation.             *)
 (* Distributed only by permission.                           *)

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ObjectFactory.i3,v 1.3 2008/05/01 03:37:14 mika Exp $ *)
 INTERFACE ObjectFactory;
 IMPORT Word;
 

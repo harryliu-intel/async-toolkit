@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeAutoTbl.ig,v 1.1 2008/10/22 05:08:22 mika Exp $ *)
 
 GENERIC INTERFACE SchemeAutoTbl(Tbl, Key, Value);
 

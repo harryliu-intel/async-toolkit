@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LRArrayOps.m3,v 1.4 2006/06/22 09:58:19 mika Exp $ *)
 
 MODULE LRArrayOps;
 IMPORT LongrealArraySort;

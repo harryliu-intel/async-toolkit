@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: display.scm,v 1.3 2009/03/05 18:08:11 mika Exp $
 ;;
 
 (require-modules "basic-defs")

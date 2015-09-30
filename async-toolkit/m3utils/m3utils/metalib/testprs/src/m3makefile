@@ -1,0 +1,9 @@
+import ("libm3")
+import ("arith")
+import ("metalib")
+
+m3_optimize("T")
+
+implementation ("Main")
+
+program ("testprs")

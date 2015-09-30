@@ -19,7 +19,7 @@
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
 (*                                                                           *)
-(* $Id$ *)
+(* $Id: DebugFmtPointer.m3,v 1.2 2002/10/28 04:31:08 mika Exp $ *)
 
 UNSAFE MODULE DebugFmtPointer EXPORTS Debug;
 IMPORT Word, Fmt;

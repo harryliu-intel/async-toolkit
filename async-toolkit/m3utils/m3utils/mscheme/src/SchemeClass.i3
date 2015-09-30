@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeClass.i3,v 1.9 2009/04/26 08:44:35 mika Exp $ *)
 
 
 (*

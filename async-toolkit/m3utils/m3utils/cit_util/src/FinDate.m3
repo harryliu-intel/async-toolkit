@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: FinDate.m3,v 1.3 2011/01/16 15:16:16 mika Exp $ *)
 
 MODULE FinDate;
 IMPORT Scan, TextReader, FloatMode, Lex;
@@ -6,8 +6,6 @@ IMPORT Fmt, Text, Integer;
 IMPORT Date, XTime AS Time;
 IMPORT Word;
 IMPORT IntFinDateTbl;
-
-CONST TE = Text.Equal;
 
 PROCEDURE ParseCmdLine(c : TEXT) : T RAISES { ParseError } =
   BEGIN
@@ -76,30 +74,6 @@ PROCEDURE ParseFed(date :TEXT) : T RAISES { ParseError } =
       FloatMode.Trap, Lex.Error, TextReader.NoMore => RAISE ParseError
     END
   END ParseFed;
-
-PROCEDURE ParseBritish(date :TEXT) : T RAISES { ParseError } =
-  VAR
-    reader := NEW(TextReader.T).init(date);
-  BEGIN
-    TRY
-      VAR
-        c1 := reader.nextE("/");
-        c2 := reader.nextE("/");
-        c3 := reader.nextE("/");
-        day :=   Scan.Int(c1);
-        month := Scan.Int(c2);
-        year :=  Scan.Int(c3);
-      BEGIN
-        IF NOT reader.isEmpty() THEN RAISE ParseError END;
-        
-        ValiDate(year, month, day);
-        
-        RETURN T { year, month, day }
-      END
-    EXCEPT
-      FloatMode.Trap, Lex.Error, TextReader.NoMore => RAISE ParseError
-    END
-  END ParseBritish;
 
 PROCEDURE ParseAmerican(date :TEXT) : T RAISES { ParseError } =
   VAR
@@ -223,32 +197,9 @@ PROCEDURE FromDate(d : Date.T) : T =
     RETURN T { year := d.year, month := ORD(d.month) + 1, day := d.day }
   END FromDate;
 
-PROCEDURE Morning(t : T) : Date.T =
-  BEGIN
-    RETURN Date.T { year := t.year,
-                    month := VAL(t.month-1,Date.Month),
-                    day := t.day,
-                    hour := 0,
-                    minute := 0,
-                    second := 0, 
-                    offset := 0,
-                    zone := NIL,
-                    weekDay := FIRST(Date.WeekDay) }
-  END Morning;
-
-PROCEDURE DayOfWeek(t : T) : Date.WeekDay =
-  <*FATAL Date.Error*>
-  BEGIN
-    WITH morning  = Morning(t),
-         tm       = Date.ToTime(morning),  (* probably uses UTC *)
-         d        = Date.FromTime(tm, z := Date.UTC) DO
-      RETURN d.weekDay
-    END
-  END DayOfWeek;
-
 PROCEDURE Yesterday(zone : Date.TimeZone) : T =
   CONST
-    Steps = ARRAY Date.WeekDay OF [1..3] { 2, 3, 1, 1, 1, 1, 1 };
+    Steps = ARRAY Date.WeekDay OF CARDINAL { 2, 3, 1, 1, 1, 1, 1 };
   VAR
     t := Time.Now();
     d := Date.FromTime(t, z := zone);
@@ -366,7 +317,7 @@ PROCEDURE FromMicrosoftOLE(m : CARDINAL) : T RAISES { OutOfRange } =
     RETURN FromJulian(ZeroByMicrosoftOLE + m)
   END FromMicrosoftOLE;
 
-PROCEDURE ParseJulian(t : TEXT) : T RAISES { ParseError } =
+PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } =
   BEGIN
     TRY
       RETURN FromJulian(Scan.Int(t))
@@ -378,17 +329,6 @@ PROCEDURE ParseJulian(t : TEXT) : T RAISES { ParseError } =
       RETURN FromJulian(ROUND(Scan.LongReal(t)))
     EXCEPT
       Lex.Error, FloatMode.Trap, OutOfRange => (* skip *)
-    END;
-  
-    RAISE ParseError
-  END ParseJulian;
-
-PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } =
-  BEGIN
-    TRY
-      RETURN ParseJulian(t)
-    EXCEPT
-      ParseError => (* skip *)
     END;
 
     TRY
@@ -444,14 +384,6 @@ PROCEDURE MYEqual(READONLY a, b : MonthYear) : BOOLEAN =
   BEGIN RETURN a = b END MYEqual;
 
 (**********************************************************************)
-
-PROCEDURE ParseSpecificFormat(t : TEXT) : SpecificFormat RAISES { ParseError }=
-  BEGIN
-    FOR i := FIRST(SpecificFormat) TO LAST(SpecificFormat) DO
-      IF TE(t, SpecificFormatNames[i]) THEN RETURN i END
-    END;
-    RAISE ParseError
-  END ParseSpecificFormat;
 
 VAR
   LongAgoJulian := Julian(LongAgo);

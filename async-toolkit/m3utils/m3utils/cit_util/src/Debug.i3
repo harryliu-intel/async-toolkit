@@ -19,7 +19,7 @@
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
 (*                                                                           *)
-(* $Id$ *)
+(* $Id: Debug.i3,v 1.22 2009/09/09 10:27:14 mika Exp $ *)
 
 INTERFACE Debug;
 
@@ -36,7 +36,6 @@ INTERFACE Debug;
      DEBUGFILTER env. variable
    
      @M3debugtrace=<filename>[,<filename>...]  RT arg
-     @M3debugappend=<filename>[,<filename>...]  RT arg
 *)
 
 IMPORT Fmt, Wr, Pathname;

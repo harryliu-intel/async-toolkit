@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXRoot.i3,v 1.5 2011/01/19 16:01:40 mika Exp $ *)
 
 INTERFACE SXRoot;
 (* just defines the SX.T type *)

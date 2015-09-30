@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeInputPortClass.i3,v 1.1 2009/04/27 01:04:19 mika Exp $ *)
 
 INTERFACE SchemeInputPortClass;
 IMPORT SchemeInputPort;

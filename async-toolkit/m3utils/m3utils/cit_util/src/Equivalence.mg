@@ -18,7 +18,7 @@
 (*  provided "as is" without express or implied warranty. Export of this     *)
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
-(* $Id$ *)
+(* $Id: Equivalence.mg,v 1.9 2003/10/05 08:24:00 mika Exp $ *)
 
 GENERIC MODULE Equivalence(Elem, ElemList, ElemElemTbl, ElemElemListTbl);
 

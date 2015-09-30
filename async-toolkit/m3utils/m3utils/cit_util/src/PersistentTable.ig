@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: PersistentTable.ig,v 1.4 2007/05/31 22:50:05 mika Exp $ *)
 
 GENERIC INTERFACE PersistentTable(Elem, IntElemTbl);
 IMPORT Pathname;

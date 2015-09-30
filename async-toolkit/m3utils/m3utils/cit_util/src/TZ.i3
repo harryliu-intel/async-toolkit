@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TZ.i3,v 1.3 2010/07/04 22:45:28 mika Exp $ *)
 
 INTERFACE TZ;
 IMPORT Date, Time, Pathname, OSError;

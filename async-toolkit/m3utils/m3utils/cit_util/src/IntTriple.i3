@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: IntTriple.i3,v 1.1 2007/05/31 12:00:54 mika Exp $ *)
 
 INTERFACE IntTriple;
 

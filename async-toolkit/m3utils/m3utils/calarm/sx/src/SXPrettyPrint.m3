@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXPrettyPrint.m3,v 1.4 2011/01/20 00:53:59 mika Exp $ *)
 
 MODULE SXPrettyPrint;
 IMPORT Wr, SX, SXRoot, Thread;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: IntForRat.i3,v 1.5 2003/08/21 02:05:32 kp Exp $ *)
 INTERFACE IntForRat;
 IMPORT Word;
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LU2F.ig,v 1.1 2008/01/22 08:23:29 mika Exp $ *)
 
 UNSAFE GENERIC INTERFACE LU2F(M);
 

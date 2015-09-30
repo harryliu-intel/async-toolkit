@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: BDD.m3,v 1.2 2000/11/21 05:47:46 mika Exp $ *)
 MODULE BDD;
 
 (* this module implements higher-level BDD routines. *)

@@ -1,5 +1,5 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: Matrix.m3,v 1.8 2008/01/21 22:53:17 mika Exp $ *)
 (* an inefficient matrix library *)
 (* it is inefficient because things are done with newly allocated matrices *)
 (* rather than in-place *)

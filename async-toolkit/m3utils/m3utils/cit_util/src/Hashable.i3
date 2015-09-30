@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Hashable.i3,v 1.1 2011/01/31 02:31:59 mika Exp $ *)
 
 
 INTERFACE Hashable;

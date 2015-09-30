@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: StepFunction.i3,v 1.2 2007/07/18 15:55:21 mika Exp $ *)
 
 INTERFACE StepFunction;
 

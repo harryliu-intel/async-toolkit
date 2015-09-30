@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Bracket.m3,v 1.3 2001/10/10 07:39:55 mika Exp $ *)
 
 MODULE Bracket;
 IMPORT Debug;
@@ -154,5 +154,21 @@ PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
                   Fmt.LongReal(bracket.c,style,prec,literal) & " " &
            " }"
   END Format;
+
+PROCEDURE SchemeInitial(bracket : Trio; func : Function.T) : XYTrio =
+  VAR res : XYTrio;
+  BEGIN
+    res.y := Initial(bracket, func);
+    res.x := bracket;
+    RETURN res
+  END SchemeInitial;
+
+PROCEDURE SchemeBrent(bracket : Trio; f : Function.T; tol : LONGREAL) : Pair =
+  VAR
+    res : Pair;
+  BEGIN
+    res.y := Brent(bracket,f,tol,res.x);
+    RETURN res
+  END SchemeBrent;
 
 BEGIN END Bracket.

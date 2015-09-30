@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Cache.ig,v 1.7 2007/06/23 23:09:41 mika Exp $ *)
 
 GENERIC INTERFACE Cache(Key, Value);
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Solve.m3,v 1.4 2002/04/10 09:14:54 mika Exp $ *)
 MODULE Solve;
 IMPORT Debug, LRFunction;
 

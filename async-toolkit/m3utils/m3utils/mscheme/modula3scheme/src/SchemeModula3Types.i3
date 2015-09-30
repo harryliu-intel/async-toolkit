@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeModula3Types.i3,v 1.2 2009/04/25 21:45:21 mika Exp $ *)
 
 INTERFACE SchemeModula3Types;
 IMPORT SchemeObject, Scheme, SchemePrimitive;

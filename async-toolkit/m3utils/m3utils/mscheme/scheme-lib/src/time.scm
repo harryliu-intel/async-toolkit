@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: time.scm,v 1.2 2008/11/19 11:24:09 mika Exp $
 ;;
 
 ;; time functions

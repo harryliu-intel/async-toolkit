@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Map.mg,v 1.5 2002/04/04 10:10:10 mika Exp $ *)
 
 GENERIC MODULE Map(From, To);
 IMPORT Word;

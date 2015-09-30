@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: BrandedSet.ig,v 1.2 2000/11/24 06:17:51 mika Exp $ *)
 GENERIC INTERFACE BrandedSet(Elem, Set);
 IMPORT Word;
 

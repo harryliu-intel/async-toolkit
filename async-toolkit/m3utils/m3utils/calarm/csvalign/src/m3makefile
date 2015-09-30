@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.2 2012/07/08 20:40:28 mika Exp $ */
 
 import ("libm3")
 import ("parseparams")

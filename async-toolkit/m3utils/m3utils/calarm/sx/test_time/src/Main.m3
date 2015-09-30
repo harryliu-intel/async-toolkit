@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2008/11/03 00:10:09 mika Exp $ *)
 
 MODULE Main;
 IMPORT SXTime, SXSelect, Fmt, Debug, SX;

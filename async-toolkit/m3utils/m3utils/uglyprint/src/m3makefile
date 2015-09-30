@@ -1,0 +1,10 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+
+m3_optimize("T")
+
+implementation ("UglyPrint")
+
+program ("uglyprint")

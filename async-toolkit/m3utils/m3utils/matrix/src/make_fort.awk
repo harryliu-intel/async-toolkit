@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
 
 #
-# $Id$
+# $Id: make_fort.awk,v 1.6 2008/02/02 12:55:43 mika Exp $
 #
 
 function process_file(fn,extension,type) {

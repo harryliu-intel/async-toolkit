@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXBoolOps.i3,v 1.2 2007/12/20 13:50:31 mika Exp $ *)
 
 INTERFACE SXBoolOps;
 IMPORT SXBool AS Bool;

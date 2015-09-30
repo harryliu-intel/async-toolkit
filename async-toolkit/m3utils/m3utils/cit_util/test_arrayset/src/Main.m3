@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2007/06/24 22:17:50 mika Exp $ *)
 
 MODULE Main;
 IMPORT Random, CardSetDef, CardSetArray;

@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: sstubgen.scm,v 1.36 2011/03/31 21:16:15 mika Exp $
 ;;
 ;;
 ;; Process Modula-3 interfaces in Scheme
@@ -1380,17 +1380,11 @@
           )
 
          ((Object Opaque) 
-          (imports 'insert! 'SchemeConvertHooks)
           (string-append
-           "    TYPECASE x OF" dnl
-           "      "m3tn"(xx) => RETURN xx" dnl
-           "    ELSE" dnl
-           "      IF SchemeConvertHooks.AttemptConvertToModula(TYPECODE("m3tn"), x) THEN" dnl
-           "        RETURN x" dnl
-           "      ELSE" dnl
-           "        RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
-           "      END" dnl
-           "    END" dnl
+           "    IF NOT ISTYPE(x,"m3tn") THEN" dnl
+           "      RAISE Scheme.E(\"Not of type "m3tn" : \" & SchemeUtils.Stringify(x))" dnl
+           "    END;" dnl
+           "    RETURN x" 
            )
           )
 
@@ -1790,7 +1784,7 @@
 
 (define (spit-out-intf intf-name proc-stubs converter-intfs env)
   (string-append
-   (if is-unsafe "UNSAFE " "") "INTERFACE " intf-name ";" dnl
+   "INTERFACE " intf-name ";" dnl
    "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
    (format-imports env)
    dnl
@@ -2015,7 +2009,7 @@
     (imports 'insert! 'SchemePair)
     
     (string-flatten
-     (if is-unsafe "UNSAFE " "") "MODULE " intf-name ";" dnl
+     "MODULE " intf-name ";" dnl
      "(* AUTOMATICALLY GENERATED DO NOT EDIT *)" dnl
      (format-imports env)
      dnl

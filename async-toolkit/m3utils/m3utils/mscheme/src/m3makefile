@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.41 2011/03/03 19:54:52 mika Exp $ */
 
 /* 
    Copyright (c) Generation Capital Ltd., 2008.  All rights reserved.
@@ -82,8 +82,6 @@ Netobj("SchemeEnvironment", "T")
 
 Module("SchemeUnixDeps")
 module("SchemeProfilerSysDep")
-Module("SchemeConvertHooks")
-List("SchemeConvertHooks","SchemeConvertHooks")
 
 c_source("schemeUnixDeps")
 

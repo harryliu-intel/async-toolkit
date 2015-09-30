@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ConjGradient.m3,v 1.5 2002/11/12 02:04:31 kp Exp $ *)
 
 MODULE ConjGradient;
 IMPORT Matrix, Compress, Debug;

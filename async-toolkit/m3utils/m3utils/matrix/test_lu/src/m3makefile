@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.1 2008/02/06 04:43:02 mika Exp $ */
 
 import ("matrix")
 

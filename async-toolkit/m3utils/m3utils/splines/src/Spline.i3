@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Spline.i3,v 1.4 2001/10/10 07:39:56 mika Exp $ *)
 
 INTERFACE Spline;
 IMPORT LRFunction, LRPoint;

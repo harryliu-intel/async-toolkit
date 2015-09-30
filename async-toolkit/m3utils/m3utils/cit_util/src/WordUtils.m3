@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: WordUtils.m3,v 1.4 2004/07/14 01:48:53 mika Exp $ *)
 MODULE WordUtils;
 
 PROCEDURE FromRails(READONLY rails: Rails): T =

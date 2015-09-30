@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SX.i3,v 1.5 2010/11/19 04:55:40 mika Exp $ *)
 
 INTERFACE SX;
 IMPORT SXRoot;

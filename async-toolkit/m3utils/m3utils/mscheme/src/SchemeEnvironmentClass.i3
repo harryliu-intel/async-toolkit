@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeEnvironmentClass.i3,v 1.3 2011/03/03 09:08:29 mika Exp $ *)
 
 INTERFACE SchemeEnvironmentClass;
 

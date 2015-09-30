@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TypeTranslator.m3,v 1.7 2009/04/25 21:45:21 mika Exp $ *)
 
 MODULE TypeTranslator;
 

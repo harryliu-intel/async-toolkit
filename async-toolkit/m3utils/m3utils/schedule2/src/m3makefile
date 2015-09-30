@@ -1,0 +1,12 @@
+import ("libm3")
+import ("cit_util")
+import ("set")
+import ("parseparams")
+
+m3_optimize("T")
+
+interface ("Port")
+module("Search")
+implementation ("Main")
+
+program ("schedule2")

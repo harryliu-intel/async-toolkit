@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: CTZ.c,v 1.1 2011/01/01 20:16:29 mika Exp $ */
 
 #include <time.h>
 #include <stdlib.h>

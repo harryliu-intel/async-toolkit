@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: RemoteFileRd.i3,v 1.2 2008/10/10 05:54:29 mika Exp $ *)
 
 INTERFACE RemoteFileRd;
 IMPORT Pathname, Rd, OSError;

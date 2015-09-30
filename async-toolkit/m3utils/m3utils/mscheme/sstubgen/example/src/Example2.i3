@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Example2.i3,v 1.2 2011/02/19 20:49:28 mika Exp $ *)
 
 INTERFACE Example2;
 

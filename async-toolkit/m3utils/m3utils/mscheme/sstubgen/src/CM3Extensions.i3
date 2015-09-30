@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CM3Extensions.i3,v 1.2 2009/04/25 22:01:05 mika Exp $ *)
 
 INTERFACE CM3Extensions;
 IMPORT RefRefTbl;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SlowTextCompress.i3,v 1.5 2010/07/08 08:35:58 mika Exp $ *)
 
 INTERFACE SlowTextCompress;
 IMPORT Rd, Wr, ProcUtils;

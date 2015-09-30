@@ -1,0 +1,31 @@
+import ("libm3")
+import ("metalib")
+
+m3_optimize("T")
+
+Module("Arith")
+Module("ArithP")
+Module("ArithR")
+Module("ArithRep")
+Module("ArithOps")
+
+Table("ArithRef", "Arith", "Refany")
+
+Table("NodePairLongReal", "NodePair", "LongrealType")
+Table("NodePairLongRealPair", "NodePair", "LongRealPair")
+
+Module("PRS")
+Interface("PRSClass")
+Module("PRSimulate")
+Module("Scenario")
+
+Interface("TimingModel")
+Module("Transition")
+KeyPair("Transition", "Transition", "Transition")
+List("Transition","Transition")
+%Module("Example") % changed interpolation model, broke code
+Module("Circuit")
+
+Table("TransitionPred", "TransitionPair", "Boolean")
+
+library ("arith")

@@ -1,5 +1,5 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: Quantity.m3,v 1.3 2001/09/18 01:53:27 mika Exp $ *)
 MODULE Quantity;
 IMPORT RefSet,RefSetList AS RefSetDef ,Fmt;
 IMPORT Math; (* exp, log, ... *)

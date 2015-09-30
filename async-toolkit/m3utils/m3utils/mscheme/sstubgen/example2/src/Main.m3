@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2010/11/05 21:59:10 mika Exp $ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

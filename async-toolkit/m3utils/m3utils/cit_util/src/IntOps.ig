@@ -1,7 +1,7 @@
 GENERIC INTERFACE IntOps(Int, TextIntTbl);
 IMPORT Random;
 IMPORT Pathname;
-(* $Id$ *)
+(* $Id: IntOps.ig,v 1.10 2003/08/24 02:43:15 kp Exp $ *)
 
 TYPE
   T = Int.T;

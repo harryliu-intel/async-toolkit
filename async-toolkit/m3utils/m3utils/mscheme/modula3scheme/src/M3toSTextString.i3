@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: M3toSTextString.i3,v 1.1 2008/10/22 05:08:22 mika Exp $ *)
 
 INTERFACE M3toSTextString;
 IMPORT SchemeString, Scheme;

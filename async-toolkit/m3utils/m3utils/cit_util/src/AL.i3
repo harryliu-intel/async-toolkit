@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: AL.i3,v 1.1 2007/06/21 01:16:32 mika Exp $ *)
 
 INTERFACE AL;
 IMPORT AtomList;
@@ -8,7 +8,5 @@ IMPORT AtomList;
 TYPE T = AtomList.T;
 
 PROCEDURE Format(t : T) : TEXT;
-
-PROCEDURE FromTextArr(READONLY words : ARRAY OF TEXT) : T;
 
 END AL.

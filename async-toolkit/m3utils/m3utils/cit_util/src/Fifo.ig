@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Fifo.ig,v 1.6 2009/01/27 04:56:52 mika Exp $ *)
 
 GENERIC INTERFACE Fifo(Elem);
 

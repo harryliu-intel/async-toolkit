@@ -1,4 +1,4 @@
-$Id$
+$Id: README,v 1.1 2008/01/22 13:47:17 mika Exp $
 
 There are some tricks to link Fortran and Modula-3 in this package.
 

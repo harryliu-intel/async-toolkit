@@ -5,7 +5,7 @@
    Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
-(* $Id$ *)
+(* $Id: Main.m3,v 1.2 2008/06/07 06:45:04 mika Exp $ *)
 
 MODULE Main;
 IMPORT FancyFmt, IO;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ParametricSplineImpl.mg,v 1.3 2001/10/10 07:39:56 mika Exp $ *)
 
 GENERIC MODULE ParametricSplineImpl(BaseSpline);
 IMPORT ParametricSpline, ParametricSplineRep;

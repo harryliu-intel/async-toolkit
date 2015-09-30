@@ -1,8 +1,0 @@
-import("term")
-
-% this is how you create a custom-context command-loop.
-Interface("MyContext")
-CommandLoop("My", "MyContext")
-
-jmplementation("Main")
-program("testcl")

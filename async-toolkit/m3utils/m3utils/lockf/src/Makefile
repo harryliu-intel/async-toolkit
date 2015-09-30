@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Makefile,v 1.1 2008/11/01 15:38:42 mika Exp $
 
 all: lockf lockf.1.gz
 

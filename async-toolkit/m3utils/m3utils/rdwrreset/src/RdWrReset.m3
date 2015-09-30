@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: RdWrReset.m3,v 1.1 2008/11/26 18:32:40 mika Exp $ *)
 
 MODULE RdWrReset;
 IMPORT Rd AS R, Wr AS W;

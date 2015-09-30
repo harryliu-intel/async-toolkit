@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Stuff.m3,v 1.1 2004/11/22 00:05:04 mika Exp $ *)
 
 MODULE Stuff;
 IMPORT Word;

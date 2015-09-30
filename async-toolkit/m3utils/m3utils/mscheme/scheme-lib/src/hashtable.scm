@@ -1,4 +1,4 @@
-;; $Id$ 
+;; $Id: hashtable.scm,v 1.8 2010/11/07 06:12:15 mika Exp $ 
 ;; 
 ;; Scheme hash tables
 ;;

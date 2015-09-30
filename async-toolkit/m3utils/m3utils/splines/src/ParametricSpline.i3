@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ParametricSpline.i3,v 1.7 2001/09/24 18:54:11 mika Exp $ *)
 
 INTERFACE ParametricSpline;
 IMPORT Spline;

@@ -1,5 +1,5 @@
 (* Copyright (c) 2000, 2008 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: LU2.ig,v 1.2 2008/02/06 04:43:02 mika Exp $ *)
 GENERIC INTERFACE LU2(M);
 FROM Matrix IMPORT Singular;
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: AscTimeParse.m3,v 1.2 2009/07/05 19:54:34 mika Exp $ *)
 
 MODULE AscTimeParse;
 IMPORT TZ, XTime AS Time, Date, Text, Scan;

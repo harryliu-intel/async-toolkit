@@ -1,4 +1,4 @@
-# $Id$ 
+# $Id: m3subdir.mk,v 1.3 2000/11/12 00:22:05 mika Exp $ 
 PRE_MAKE?=echo
 PRE_MAKE_CLEAN?=echo
 all: 

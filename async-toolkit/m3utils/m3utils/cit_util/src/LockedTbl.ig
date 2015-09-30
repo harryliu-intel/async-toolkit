@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LockedTbl.ig,v 1.1 2008/11/02 17:52:24 mika Exp $ *)
 
 GENERIC INTERFACE LockedTbl(KeyValueTbl);
 

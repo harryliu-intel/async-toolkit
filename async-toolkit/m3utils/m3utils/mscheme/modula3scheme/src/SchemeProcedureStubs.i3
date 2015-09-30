@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeProcedureStubs.i3,v 1.2 2009/05/02 11:18:04 mika Exp $ *)
 
 INTERFACE SchemeProcedureStubs;
 
@@ -45,9 +45,5 @@ PROCEDURE RegisterTypePickle(READONLY typeCodes : ARRAY OF [-1..LAST(RT0.Typecod
   (* types is a list of typecodes, or -1 for non-reference types *)
   (* pickle is a Scheme list of the type descriptors for each of the
      types listed *)
-
-(* will implementation attempt to map runtime errors to exception? *)
-PROCEDURE GetMapRuntimeErrors() : BOOLEAN;
-PROCEDURE SetMapRuntimeErrors(to : BOOLEAN);
 
 END SchemeProcedureStubs.

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: XTime.m3,v 1.6 2009/07/07 14:19:14 mika Exp $ *)
 
 MODULE XTime;
 IMPORT Time;
@@ -146,7 +146,7 @@ PROCEDURE DebugOut(txt : TEXT) =
   END DebugOut;
 
 TYPE 
-  Closure = Thread.SizedClosure OBJECT
+  Closure = Thread.Closure OBJECT
     rd : Rd.T;
     mu : MUTEX;
     c  : Thread.Condition;
@@ -252,8 +252,7 @@ BEGIN
             TRY
               conn := TCP.Connect(ep);
               
-              WITH cl = NEW(Closure,
-                            stackSize := 4096,
+              WITH cl = NEW(Closure, 
                             rd := ConnRW.NewRd(conn), 
                             mu := NEW(MUTEX), 
                             c  := NEW(Thread.Condition)) DO

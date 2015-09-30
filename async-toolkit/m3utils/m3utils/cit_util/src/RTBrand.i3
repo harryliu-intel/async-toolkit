@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: RTBrand.i3,v 1.4 2009/04/03 07:47:59 mika Exp $ *)
 INTERFACE RTBrand;
 IMPORT RT0;
 

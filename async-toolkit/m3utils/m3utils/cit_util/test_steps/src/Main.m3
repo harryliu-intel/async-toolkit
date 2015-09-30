@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2007/07/15 20:38:32 mika Exp $ *)
 
 MODULE Main;
 IMPORT StepFunction; FROM StepFunction IMPORT DomainError;

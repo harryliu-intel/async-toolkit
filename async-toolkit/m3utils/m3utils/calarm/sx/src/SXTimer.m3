@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXTimer.m3,v 1.5 2011/01/19 16:22:41 mika Exp $ *)
 
 MODULE SXTimer;
 IMPORT XTime AS Time;
@@ -6,32 +6,20 @@ IMPORT Thread;
 IMPORT SXLongReal;
 IMPORT LongrealPQ;
 IMPORT SXIterator;
-IMPORT Fmt, Debug;
-
-VAR DoDebug := Debug.DebugThis("SXTIMER");
 
 REVEAL
   Private = SXLongReal.Var BRANDED OBJECT END; (* this is cool! *)
 
   T = Public BRANDED Brand OBJECT
     granularity : LONGREAL;
-    c : CARDINAL;
   OVERRIDES
     init := Init;
     dependsOn := SXIterator.NullNull;
   END;
 
-VAR
-  c := 0;
-  cMu := NEW(MUTEX);
-
 PROCEDURE Init(t : T; granularity : LONGREAL) : T =
   BEGIN
     EVAL SXLongReal.T.init(t);
-    LOCK cMu DO
-      t.c := c;
-      INC(c)
-    END;
     t.granularity := granularity;
     t.set(Time.Now());
     Register(t);
@@ -41,7 +29,7 @@ PROCEDURE Init(t : T; granularity : LONGREAL) : T =
 PROCEDURE Register(t : T) =
   BEGIN
     LOCK mu DO
-      pq.insert(NEW(Elt, priority := Time.Now() + t.granularity, t := t));
+      pq.insert(NEW(Elt, when := Time.Now() + t.granularity, t := t));
       Thread.Alert(main)
     END
   END Register;
@@ -49,6 +37,7 @@ PROCEDURE Register(t : T) =
 TYPE
   Elt = LongrealPQ.Elt OBJECT
     t    : T;
+    when : Time.T;
     sx   : SXLongReal.Var;
   END;
 
@@ -72,17 +61,10 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
       LOOP
         TRY
           WITH now = Time.Now() DO
-            WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).priority < now DO
+            WHILE pq.size() > 0 AND NARROW(pq.min(),Elt).when < now DO
               WITH head = NARROW(pq.deleteMin(),Elt) DO 
                 head.t.set(now);
-                head.priority := now + head.t.granularity;
-
-                IF DoDebug THEN 
-                  Debug.Out("SXTimer.Loop ("&Fmt.Int(head.t.c)&"): set " & 
-                    Fmt.LongReal(now) & " -> " & 
-                    Fmt.LongReal(head.priority) & " size=" & 
-                    Fmt.Int(pq.size()))
-                END;
+                head.when := now + head.t.granularity;
                 pq.insert(head)
               END
             END;
@@ -90,7 +72,7 @@ PROCEDURE Loop(<*UNUSED*>cl : Thread.Closure) : REFANY =
             IF pq.size() = 0 THEN
               Sleep(1000.0d0) (* a long time *)
             ELSE
-              Sleep(NARROW(pq.min(),Elt).priority-Time.Now())
+              Sleep(NARROW(pq.min(),Elt).when-Time.Now())
             END
           END
         EXCEPT

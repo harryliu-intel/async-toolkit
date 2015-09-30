@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SetArray.ig,v 1.1 2007/06/24 22:17:49 mika Exp $ *)
 
 GENERIC INTERFACE SetArray(Elem, ElemSet);
 

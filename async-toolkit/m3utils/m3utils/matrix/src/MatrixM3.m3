@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: MatrixM3.m3,v 1.2 2008/01/22 01:52:17 mika Exp $ *)
 
 MODULE MatrixM3;
 FROM Matrix IMPORT T, GetDim, DimensionMismatch;

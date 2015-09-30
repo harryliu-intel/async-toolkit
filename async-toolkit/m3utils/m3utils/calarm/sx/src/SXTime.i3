@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXTime.i3,v 1.4 2009/05/22 20:03:05 mika Exp $ *)
 
 INTERFACE SXTime;
 IMPORT Time, SXLongReal, SXInt;

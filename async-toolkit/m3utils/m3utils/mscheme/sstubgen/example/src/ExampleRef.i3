@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ExampleRef.i3,v 1.1 2009/05/02 11:18:04 mika Exp $ *)
 
 INTERFACE ExampleRef;
 

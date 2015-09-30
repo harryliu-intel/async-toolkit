@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Matrix2.ig,v 1.8 2009/06/08 03:18:14 mika Exp $ *)
 
 GENERIC INTERFACE Matrix2(Elem);
 IMPORT Matrix;

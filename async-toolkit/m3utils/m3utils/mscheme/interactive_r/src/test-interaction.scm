@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: test-interaction.scm,v 1.2 2009/11/28 12:11:34 mika Exp $
 ;;
 ;; test "interaction"
 ;;

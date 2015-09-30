@@ -18,7 +18,7 @@
 (*  provided "as is" without express or implied warranty. Export of this     *)
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
-(* $Id$ *)
+(* $Id: Equivalence.ig,v 1.10 2004/03/06 22:29:34 mika Exp $ *)
 
 GENERIC INTERFACE Equivalence(Elem, ElemList, ElemElemTbl, ElemElemListTbl);
 

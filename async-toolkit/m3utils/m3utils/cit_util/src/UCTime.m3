@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: UCTime.m3,v 1.5 2011/01/01 17:59:55 mika Exp $ *)
 
 UNSAFE MODULE UCTime;
 IMPORT XTime AS Time;
@@ -6,13 +6,12 @@ IMPORT UtimeOpsC;
 IMPORT M3toC;
 FROM Ctypes IMPORT char_star, long_star;
 IMPORT Text;
-IMPORT UtimeWrap;
 
 PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
   VAR
     clockbuff : ARRAY [0..4] OF INTEGER; (* portable, hopefully... *)
     buff : ARRAY [0..25] OF CHAR;
-    tm := UtimeWrap.make_T();
+    tm := UtimeOpsC.make_T();
   BEGIN
     TRY
     UtimeOpsC.write_double_clock(clock,ADR(clockbuff));
@@ -39,7 +38,7 @@ PROCEDURE ctime(clock : Time.T; keepNL, showTZ : BOOLEAN) : TEXT =
       END
     END
     FINALLY
-      UtimeWrap.delete_T(tm)
+      UtimeOpsC.delete_T(tm)
     END
   END ctime;
 

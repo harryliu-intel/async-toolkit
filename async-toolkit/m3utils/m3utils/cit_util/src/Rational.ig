@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Rational.ig,v 1.3 2001/12/03 06:57:25 mika Exp $ *)
 GENERIC INTERFACE Rational(BaseInt);
 IMPORT Word;
 

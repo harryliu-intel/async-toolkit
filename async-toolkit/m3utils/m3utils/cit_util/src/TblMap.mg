@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TblMap.mg,v 1.3 2011/02/17 00:38:05 mika Exp $ *)
 
 GENERIC MODULE TblMap(Tbl, Map);
 IMPORT MapError;

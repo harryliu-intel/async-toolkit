@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Factory.ig,v 1.4 2008/11/11 09:33:05 mika Exp $ *)
 
 GENERIC INTERFACE Factory(Of);
 IMPORT ObjectFactory;

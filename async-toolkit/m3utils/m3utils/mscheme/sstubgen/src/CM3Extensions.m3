@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CM3Extensions.m3,v 1.2 2009/04/25 22:01:05 mika Exp $ *)
 
 MODULE CM3Extensions;
 IMPORT RefRefTbl;

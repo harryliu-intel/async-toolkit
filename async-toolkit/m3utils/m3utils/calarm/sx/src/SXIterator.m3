@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXIterator.m3,v 1.1 2011/01/19 16:01:40 mika Exp $ *)
 
 MODULE SXIterator;
 IMPORT SXRoot;

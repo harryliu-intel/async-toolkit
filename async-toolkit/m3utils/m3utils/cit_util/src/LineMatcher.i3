@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LineMatcher.i3,v 1.1 2007/07/15 20:38:31 mika Exp $ *)
 
 INTERFACE LineMatcher;
 IMPORT RegEx, Rd, AtomList;

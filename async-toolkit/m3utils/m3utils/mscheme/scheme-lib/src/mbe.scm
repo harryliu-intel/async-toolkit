@@ -1,4 +1,4 @@
-;; $Id$
+;; $Id: mbe.scm,v 1.2 2008/11/18 16:52:08 mika Exp $
 ;;
 ;; downloaded from norvig.com 2008/11/18
 ;;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Scheme.m3,v 1.69 2011/03/14 00:50:11 mika Exp $ *)
 
 (*
   Copyright (c) 2008, 2009, Generation Capital Ltd.  All rights reserved.
@@ -145,9 +145,6 @@ PROCEDURE ReadInitialFiles(t : T; READONLY files : ARRAY OF Pathname.T)
   BEGIN
     EVAL t.loadRd(NEW(TextRd.T).init(SchemePrimitives.Code));
     FOR i := FIRST(files) TO LAST(files) DO
-      IF Debug.GetLevel() >= 20 THEN
-        Debug.Out("Scheme.ReadInitialFiles: " & files[i])
-      END;
       EVAL t.loadFile(SchemeString.FromText(files[i]))
     END
   END ReadInitialFiles;

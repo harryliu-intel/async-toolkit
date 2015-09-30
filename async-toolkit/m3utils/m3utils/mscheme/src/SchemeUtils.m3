@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeUtils.m3,v 1.34 2011/03/12 06:16:36 mika Exp $ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
@@ -21,7 +21,6 @@ IMPORT RefSeq, RefPair, RefPairSeq;
 IMPORT Scan;
 IMPORT Lex, FloatMode;
 IMPORT SchemeEnvironmentBinding;
-IMPORT SchemeConvertHooks;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -476,17 +475,15 @@ PROCEDURE StringifyQ(x : Object; quoted : BOOLEAN) : TEXT RAISES { E } =
     END
   END StringifyQ;
 
-PROCEDURE StringifyB(x      : Object; 
+PROCEDURE StringifyB(x : Object; 
                      quoted : BOOLEAN; 
-                     buf    : Wx.T;
-                     seen   : RefSeq.T) RAISES { E } =
+                     buf : Wx.T;
+                     seen : RefSeq.T) RAISES { E } =
 
   PROCEDURE Put(txt : TEXT) = BEGIN Wx.PutText(buf,txt) END Put;
   PROCEDURE PutC(c : CHAR) = BEGIN Wx.PutChar(buf,c) END PutC;
 
   BEGIN
-    EVAL SchemeConvertHooks.AttemptConvertToScheme(x);
-
     IF seen = NIL THEN seen := NEW(RefSeq.T).init() END;
 
     FOR i := 0 TO seen.size()-1 DO
@@ -575,9 +572,7 @@ PROCEDURE StringifyB(x      : Object;
         END
       END
     FINALLY
-      WITH s = seen.remhi() DO
-        <*ASSERT s = x *>
-      END
+      <*ASSERT seen.remhi() = x *>
     END
   END StringifyB;
 

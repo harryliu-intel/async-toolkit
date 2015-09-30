@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: RTBrandCM3.m3,v 1.6 2009/05/08 04:46:59 mika Exp $ *)
 
 UNSAFE MODULE RTBrandCM3 EXPORTS RTBrand;
 IMPORT Ctypes, M3toC;

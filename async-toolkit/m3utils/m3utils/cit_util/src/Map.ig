@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Map.ig,v 1.7 2011/02/17 00:38:05 mika Exp $ *)
 
 GENERIC INTERFACE Map(From,To);
 IMPORT Word;

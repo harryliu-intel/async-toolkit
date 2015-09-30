@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.2 2005/04/18 20:54:42 mika Exp $ */
 
 /*import("netobj")*/
 import("tcp")

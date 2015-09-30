@@ -1,4 +1,4 @@
-;; $Id$
+;; $Id: marketdata-hfdate-conversion.scm,v 1.1 2009/11/26 18:31:01 mika Exp $
 
 (define (date-from-index tz-name)
   (lambda (market-data index)

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Cache.mg,v 1.7 2007/06/23 23:09:42 mika Exp $ *)
 
 GENERIC MODULE Cache(Key, Value, KeyRefTbl);
 IMPORT Thread;

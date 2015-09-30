@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: compiler.scm,v 1.1 2009/06/28 11:38:26 mika Exp $
 ;;
 
 (require-modules "hashtable" "struct")

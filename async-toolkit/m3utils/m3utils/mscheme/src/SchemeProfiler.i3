@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeProfiler.i3,v 1.2 2009/03/17 17:01:12 mika Exp $ *)
 
 INTERFACE SchemeProfiler;
 IMPORT SchemeProcedure, Time, TextIntTbl;

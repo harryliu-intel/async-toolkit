@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: IntSetBits.m3,v 1.1 2009/03/27 19:14:54 mika Exp $ *)
 
 MODULE IntSetBits;
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.3 2007/05/31 22:50:05 mika Exp $ *)
 
 MODULE Main;
 IMPORT PersistentIntRefTbl AS ObjectStore;

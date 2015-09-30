@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: Makefile,v 1.2 2009/01/14 17:45:41 mika Exp $
 #
 
 # this thing only works with BSD make.

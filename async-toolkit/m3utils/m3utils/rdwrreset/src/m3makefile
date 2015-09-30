@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.1 2008/11/26 18:32:40 mika Exp $ */
 import ("libm3")
 
 Module("RdWrReset")

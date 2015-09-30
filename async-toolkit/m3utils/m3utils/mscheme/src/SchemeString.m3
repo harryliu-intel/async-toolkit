@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeString.m3,v 1.5 2008/10/27 08:53:08 mika Exp $ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.
@@ -25,9 +25,7 @@ PROCEDURE FromText(txt : TEXT) : T =
 
 PROCEDURE ToText(t : Scheme.Object) : TEXT RAISES { Scheme.E } =
   BEGIN 
-    IF t =  NIL THEN
-      RETURN NIL
-    ELSIF ISTYPE(t, T) THEN 
+    IF t # NIL AND ISTYPE(t, T) THEN 
       RETURN Text.FromChars(NARROW(t,T)^) 
     ELSE RETURN ToText(Error("expected a string, got: " & StringifyT(t)))
     END

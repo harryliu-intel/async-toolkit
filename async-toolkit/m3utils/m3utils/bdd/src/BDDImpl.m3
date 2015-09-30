@@ -1,14 +1,13 @@
-(* $Id$ *)
+(* $Id: BDDImpl.m3,v 1.3 2001/01/10 08:54:45 mika Exp $ *)
 (* revelation of BDD.T *)
-MODULE BDDImpl EXPORTS BDD, BDDDepends, BDDImpl, BDDSystemState, BDDCleaner;
+MODULE BDDImpl EXPORTS BDD, BDDPrivate, BDDDepends;
 IMPORT BDDPair;
 IMPORT BDDTripleHash;
 IMPORT Word;
 IMPORT Debug;
-IMPORT BDDSet, BDDSetDef, BDDTextTbl, BDDBDDTbl;
-(*IMPORT IO;*)
+IMPORT BDDSet, BDDSetDef;
 
-IMPORT Fmt; FROM Fmt IMPORT Int;
+IMPORT Fmt;
 
 TYPE
   Op = { And, Not, Or, MakeTrue, MakeFalse };
@@ -17,38 +16,12 @@ TYPE
 REVEAL
   T = BRANDED Brand OBJECT
     l , r : T;
-    root  : Root;
-    tag   : CARDINAL; (* for hashing *)
-    name  : TEXT;
+    root : Root;
+    tag : CARDINAL; (* for hashing *)
+    name : TEXT;
   METHODS
     init() : T := Init;
   END;
-
-PROCEDURE Right(a : T) : T = BEGIN RETURN a.r END Right;
-
-PROCEDURE Left(a : T) : T = BEGIN RETURN a.l END Left;
-
-PROCEDURE NodeVar(v : T) : T = 
-  VAR b : T; BEGIN
-    <*ASSERT v # false*>
-    <*ASSERT v # true*>
-(*
-    IF v.root.tab = NIL THEN
-      <*ASSERT v.root = true OR v.root = false*>
-      IO.Put(v.name & "\n")
-    END;
-*)
-
-    IF v.root.tab = NIL THEN InitTab(v.root) END;
-
-    <*ASSERT v.root.tab # NIL*>
-    IF BDDTripleHash.Get(v.root.tab, Pair { true, false } , b) THEN
-      RETURN b
-    ELSE
-      (* can this happen?, and is this right?? *)
-      RETURN v.root
-    END
-  END NodeVar;
 
 (* this special object is used as a literal. *)
 (* in order to allow garbage collection, the caches and the lookup table *)
@@ -57,17 +30,20 @@ PROCEDURE NodeVar(v : T) : T =
 (* monitored. *)
 TYPE
   Root = T OBJECT
-    (*mu : MUTEX;*) (* as yet unused *)
+    mu : MUTEX; (* as yet unused *)
     id : CARDINAL;
-    tab : BDDTripleHash.T := NIL;
-    cache := ARRAY Op OF BDDTripleHash.T { NIL, .. };
+    tab : BDDTripleHash.T;
+    cache : ARRAY Op OF BDDTripleHash.T;
   END;
 
 VAR
   mu := NEW(MUTEX);
+  nextTag := 0;
   
 PROCEDURE Init(self : T) : T = 
   BEGIN LOCK mu DO self.tag := nextTag; INC(nextTag) END; RETURN self END Init;
+
+PROCEDURE GetId(self : T) : CARDINAL = BEGIN RETURN self.root.id END GetId;
 
 PROCEDURE Order(VAR b1, b2 : T) = 
   BEGIN
@@ -75,14 +51,6 @@ PROCEDURE Order(VAR b1, b2 : T) =
   END Order;
     
 (* hmm *)
-
-PROCEDURE InitTripleHash(VAR cache : BDDTripleHash.T) =
-  CONST
-    DefSiz = 2;
-  BEGIN
-    <*ASSERT cache = NIL*>
-    cache := NEW(BDDTripleHash.Default).init(DefSiz)
-  END InitTripleHash;
 
 PROCEDURE And(b1, b2 : T) : T =
   VAR 
@@ -98,12 +66,7 @@ PROCEDURE And(b1, b2 : T) : T =
 
     Order(b1,b2);
 
-    WITH op = Op.And DO
-      IF b1.root.cache[op] = NIL THEN
-        InitTripleHash(b1.root.cache[op])
-      END;
-      tripleHash := b1.root.cache[op]
-    END;
+    tripleHash := b1.root.cache[Op.And];
 
     IF BDDTripleHash.Get(tripleHash, Pair { b1, b2 } , b) THEN
       RETURN b
@@ -122,14 +85,12 @@ PROCEDURE And(b1, b2 : T) : T =
       RETURN l
     END;
 
-    IF b1.root.tab = NIL THEN InitTab(b1.root) END;
     IF NOT BDDTripleHash.Get(b1.root.tab, Pair { l, r } , b) THEN
       b := NEW(T).init();
       b.root := b1.root;
       b.root.id := b1.root.id;
       b.l := l;
       b.r := r;
-      IF b.root.tab = NIL THEN InitTab(b.root) END;
       EVAL BDDTripleHash.Put(b.root.tab, Pair { l, r }, (b));
     END;
 
@@ -152,12 +113,7 @@ PROCEDURE Or(b1, b2 : T) : T =
 
     Order(b1,b2);
 
-    WITH op = Op.Or DO
-      IF b1.root.cache[op] = NIL THEN
-        InitTripleHash(b1.root.cache[op])
-      END;
-      tripleHash := b1.root.cache[op]
-    END;
+    tripleHash := b1.root.cache[Op.Or];
 
     IF BDDTripleHash.Get(tripleHash, Pair { b1, b2 } , b) THEN
       RETURN b
@@ -176,14 +132,12 @@ PROCEDURE Or(b1, b2 : T) : T =
       RETURN l
     END;
 
-    IF b1.root.tab = NIL THEN InitTab(b1.root) END;
     IF NOT BDDTripleHash.Get(b1.root.tab, Pair { l, r } , b) THEN
       b := NEW(T).init();
       b.root := b1.root;
       b.root.id := b1.root.id;
       b.l := l;
       b.r := r;
-      IF b.root.tab = NIL THEN InitTab(b.root) END;
       EVAL BDDTripleHash.Put(b.root.tab, Pair { l, r }, (b));
     END;
 
@@ -197,18 +151,11 @@ PROCEDURE Not(b1 : T) : T =
     tripleHash : BDDTripleHash.T;
     b, l, r : T;
   BEGIN
-    IF    b1 = true THEN RETURN false
+    IF b1 = true THEN RETURN false
     ELSIF b1 = false THEN RETURN true
     END;
 
-    WITH op = Op.Not DO
-      IF b1.root.cache[op] = NIL THEN
-        InitTripleHash(b1.root.cache[op])
-      END;
-      tripleHash := b1.root.cache[op]
-    END;
-
-    <*ASSERT tripleHash # NIL*>
+    tripleHash := b1.root.cache[Op.Not];
     IF BDDTripleHash.Get(tripleHash, Pair { b1, true }, b) THEN
       RETURN b
     END;
@@ -216,7 +163,6 @@ PROCEDURE Not(b1 : T) : T =
     l := Not(b1.l);
     r := Not(b1.r);
     
-    IF b1.root.tab = NIL THEN InitTab(b1.root) END;
     IF NOT BDDTripleHash.Get(b1.root.tab, Pair { l, r }, b) THEN
       b := NEW(T).init();
       b.root := b1.root;
@@ -248,12 +194,7 @@ PROCEDURE MakeTrue(b, v : T) : T =
 
     (* { b.root.id < v.root.id } *)
     
-    WITH op = Op.MakeTrue DO
-      IF b.root.cache[op] = NIL THEN
-        InitTripleHash(b.root.cache[op])
-      END;
-      tripleHash := b.root.cache[op]
-    END;
+    tripleHash := b.root.cache[Op.MakeTrue];
 
     IF BDDTripleHash.Get(tripleHash, Pair { b, v }, b1) THEN
       RETURN b1
@@ -272,7 +213,6 @@ PROCEDURE MakeTrue(b, v : T) : T =
       RETURN l
     END;
 
-    IF b.root.tab = NIL THEN InitTab(b.root) END;
     IF NOT BDDTripleHash.Get(b.root.tab, Pair { l, r }, b1) THEN
       b1 := NEW(T).init();
       b1.root := b.root;
@@ -302,12 +242,7 @@ PROCEDURE MakeFalse(b, v : T) : T =
 
     (* { b.root.id < v.root.id } *)
     
-    WITH op = Op.MakeFalse DO
-      IF b.root.cache[op] = NIL THEN
-        InitTripleHash(b.root.cache[op])
-      END;
-      tripleHash := b.root.cache[op]
-    END;
+    tripleHash := b.root.cache[Op.MakeFalse];
 
     IF BDDTripleHash.Get(tripleHash, Pair { b, v }, b1) THEN
       RETURN b1
@@ -326,7 +261,6 @@ PROCEDURE MakeFalse(b, v : T) : T =
       RETURN l
     END;
 
-    IF b.root.tab = NIL THEN InitTab(b.root) END;
     IF NOT BDDTripleHash.Get(b.root.tab, Pair { l, r }, b1) THEN
       b1 := NEW(T).init();
       b1.root := b.root;
@@ -346,50 +280,28 @@ PROCEDURE True() : T = BEGIN RETURN true END True;
 
 PROCEDURE False() : T = BEGIN RETURN false END False;
 
-PROCEDURE InitTab(r : Root) =
-  BEGIN
-    r.tab := NEW(BDDTripleHash.Default).init(1);
-    <*ASSERT r.l = true*>
-    <*ASSERT r.r = false*>
-    EVAL BDDTripleHash.Put(r.tab, Pair { true, false }, (r));
-  END InitTab;
-
 PROCEDURE New(name : TEXT) : T = 
   VAR res : Root := NEW(Root).init(); BEGIN 
     res.name := name;
     res.root := res;
     res.l := true; res.r := false; 
-    <*ASSERT nextId >= 2*>
     res.id := nextId;
-(*
-    res.tab := NEW(BDDTripleHash.Default).init(1);
-    EVAL BDDTripleHash.Put(res.tab, Pair { res.l, res.r }, (res));
-*)
-(*
+    res.tab := NEW(BDDTripleHash.Default).init(128);
     FOR i := FIRST(res.cache) TO LAST(res.cache) DO
       res.cache[i] := NEW(BDDTripleHash.Default).init(64)
     END;
-*)
+    EVAL BDDTripleHash.Put(res.tab, Pair { res.l, res.r }, (res));
     INC(nextId);
     RETURN res
   END New;
 
-PROCEDURE Format(x : T; symtab : REFANY := NIL; pfx : TEXT := "") : TEXT =
-  VAR nm : TEXT;
+PROCEDURE Format(x : T) : TEXT =
   BEGIN
-    IF symtab # NIL AND NARROW(symtab, BDDTextTbl.T).get(x, nm) THEN
-      RETURN pfx & nm
-    END;
-    TYPECASE x OF
-      Root(r) =>
-        IF    r.id = 1 THEN RETURN "TRUE"
-        ELSIF r.id = 0 THEN RETURN "FALSE"
-        END
-    ELSE
-      (* skip *)
+    IF x = true THEN RETURN "TRUE"
+    ELSIF x = false THEN RETURN "FALSE"
     END;
 
-    IF x.name # NIL THEN RETURN pfx & x.name END;
+    IF x.name # NIL THEN RETURN x.name END;
 
     RETURN Fmt.Int(x.root.id) & " && (" & Format(x.l) & ") || (" & Format(x.r) &
            ") && ~" & Fmt.Int(x.root.id)
@@ -399,8 +311,8 @@ PROCEDURE Format(x : T; symtab : REFANY := NIL; pfx : TEXT := "") : TEXT =
   BEGIN RETURN a.tag END Hash;
 
 VAR
-  true, false : Root;
-  nextId : CARDINAL;
+  true,false : Root;
+  nextId : CARDINAL := 2;
 
 PROCEDURE Size(b1 : T) : CARDINAL =
   VAR seen := NEW(BDDSetDef.T).init();
@@ -444,141 +356,18 @@ PROCEDURE Depends(b1 : T) : BDDSet.T =
     RETURN res
   END Depends;
 
-PROCEDURE GetId(a : T) : INTEGER = BEGIN RETURN a.root.id END GetId;
-
-REVEAL
-  SystemState = BRANDED "BDD SystemState" OBJECT
-    true, false : Root;
-    nextTag     : CARDINAL;
-    nextId      : CARDINAL;
-  END;
-
-VAR
-  nextTag : CARDINAL;
-
-PROCEDURE SetSystemState(s : SystemState) =
-  BEGIN
-    true    := s.true;   <*ASSERT true.id = 1*>
-    false   := s.false;  <*ASSERT false.id = 0*>
-    nextTag := s.nextTag;
-
-    <*ASSERT s.nextId >= 2*>
-    nextId  := s.nextId;
-  END SetSystemState;
-
-PROCEDURE GetSystemState() : SystemState =
-  BEGIN
-    RETURN NEW(SystemState, 
-               true    := true, 
-               false   := false, 
-               nextTag := nextTag,
-               nextId  := nextId)
-  END GetSystemState;
-
-PROCEDURE NewDefaultSystemState() : SystemState =
-  VAR 
-    t, f : Root;
-  BEGIN
-    t := NEW(Root).init();
-    t.root := t;
-    t.id := 1;
-    t.r := t;
-    t.l := t;
-    t.name := "TRUE";
-    
-    f := NEW(Root).init();
-    f.root := f;
-    f.r := f;
-    f.l := f;
-    f.id := 0;
-    f.name := "FALSE";
-
-    WITH sys = NEW(SystemState, 
-                   true    := t, 
-                   false   := f, 
-                   nextTag := 0, 
-                   nextId  := 2) 
-     DO
-      RETURN sys
-    END
-  END NewDefaultSystemState;
-
-REVEAL
-  (* this is really a major hack
-
-     point is to save memory on small, independent BDDs and to be able
-     to still use those in pickles *)
-  Cleaner = PublicCleaner BRANDED "BDD Cleaner" OBJECT
-    s   : SystemState;
-    map : BDDBDDTbl.T;
-  OVERRIDES
-    init  := InitC;
-    state := StateC;
-    clean := CleanC;
-  END;
-
-PROCEDURE InitC(c : Cleaner) : Cleaner =
-  BEGIN
-    c.s := NewDefaultSystemState();
-    c.map := NEW(BDDBDDTbl.Default).init();
-    EVAL c.map.put(false, c.s.false);
-    EVAL c.map.put(true,  c.s.true);
-    RETURN c
-  END InitC;
-
-PROCEDURE StateC(c : Cleaner) : SystemState =
-  BEGIN RETURN c.s END StateC;
-
-PROCEDURE CleanC(c : Cleaner; b : T) : T =
-  VAR
-    z : T;
-    saveState := GetSystemState();
-  BEGIN
-    IF NOT c.map.get(b, z) THEN
-      IF ISTYPE(b, Root) THEN
-        <*ASSERT c.s # saveState *>
-
-        <*ASSERT NARROW(b,Root).id >= 2*>
-
-        SetSystemState(c.s);
-        z := New(NARROW(b, Root).name);
-        
-        Debug.Out("made new z " & Format(z));
-        Debug.Out("z.id = " & Int(NARROW(z,Root).id));
-        <*ASSERT NARROW(z,Root).id >= 2*>
-      ELSE
-        WITH oo        = c.clean(b.root),
-             ll        = c.clean(b.l),
-             rr        = c.clean(b.r) DO
-          <*ASSERT c.s # saveState *>
-          SetSystemState(c.s);
-          z := Or(And(oo,ll),
-                  And(rr,Not(oo)))
-        END
-      END;
-
-      c.s := GetSystemState();
-      <*ASSERT c.s # saveState *>
-      SetSystemState(saveState);
-
-      EVAL c.map.put(b, z)
-    END;
-
-    Debug.Out("---");
-    Debug.Out("b pre-clean: " & Format(b)) ;
-    IF b.root.tab # NIL THEN
-      Debug.Out("b.root.tab.size: " & Int(b.root.tab.size()));
-    END;
-    Debug.Out("z post-clean: " & Format(z));
-    IF z.root.tab # NIL THEN
-      Debug.Out("z.root.tab.size: " & Int(z.root.tab.size()));
-    END;
-
-    RETURN z
-  END CleanC;
-
 BEGIN 
-  SetSystemState(NewDefaultSystemState())
+  true := NEW(Root).init();
+  true.root := true;
+  true.id := 1;
+  true.r := true;
+  true.l := true;
+
+  false := NEW(Root).init();
+  false.root := false;
+  false.r := false;
+  false.l := false;
+  false.id := 0;
 END BDDImpl.
 
 

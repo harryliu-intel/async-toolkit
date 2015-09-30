@@ -21,4 +21,4 @@ lockf isn't running.  As long as the lockfile is kept completely under
 the management of lockf, there is no problem, but there is a subtle race
 condition if it's not.
 
-$Id$
+$Id: HOWTO-USE,v 1.1 2008/11/01 15:38:42 mika Exp $

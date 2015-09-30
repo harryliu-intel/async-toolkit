@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeM3TableOps.m3,v 1.1 2008/10/22 05:08:22 mika Exp $ *)
 
 MODULE SchemeM3TableOps;
 IMPORT CardAtomPair, CARefTbl;

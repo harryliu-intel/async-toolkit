@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Hashable.m3,v 1.1 2011/02/04 14:20:06 mika Exp $ *)
 
 MODULE Hashable;
 IMPORT Word;

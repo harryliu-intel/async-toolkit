@@ -19,7 +19,7 @@
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
 (*                                                                           *)
-(* $Id$ *)
+(* $Id: TextUtilsFmt.m3,v 1.1 2000/10/27 07:27:09 mika Exp $ *)
 
 MODULE TextUtilsFmt EXPORTS TextUtils;
 IMPORT TextList;

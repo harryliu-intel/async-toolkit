@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: MatrixFGlue.m3,v 1.3 2010/07/08 08:25:16 mika Exp $ *)
 
 UNSAFE MODULE MatrixFGlue EXPORTS Matrix;
 IMPORT MatrixM3;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeAutoTbl.mg,v 1.1 2008/10/22 05:08:22 mika Exp $ *)
 
 GENERIC MODULE SchemeAutoTbl(Tbl, Key, Value);
 IMPORT SchemeM3TableOps;

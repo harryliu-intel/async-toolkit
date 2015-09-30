@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: M2M3.ig,v 1.5 2008/02/04 00:10:46 mika Exp $ *)
 
 GENERIC INTERFACE M2M3(M2);
 

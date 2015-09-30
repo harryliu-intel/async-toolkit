@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXClass.i3,v 1.2 2007/05/22 01:37:38 mika Exp $ *)
 
 INTERFACE SXClass;
 IMPORT SXRoot;

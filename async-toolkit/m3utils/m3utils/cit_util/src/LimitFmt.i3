@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LimitFmt.i3,v 1.1 2009/02/12 00:14:09 mika Exp $ *)
 INTERFACE LimitFmt;
 
 PROCEDURE LongReal(lr, maxError : LONGREAL) : TEXT; 

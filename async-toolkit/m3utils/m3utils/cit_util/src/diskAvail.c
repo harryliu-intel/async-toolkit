@@ -5,7 +5,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 
-/* $Id$ */
+/* $Id: diskAvail.c,v 1.2 2007/12/16 06:45:05 mika Exp $ */
 
 int
 diskAvail(const char * path,

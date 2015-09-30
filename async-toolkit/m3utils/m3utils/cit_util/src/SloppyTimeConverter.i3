@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SloppyTimeConverter.i3,v 1.1 2009/05/24 21:40:17 mika Exp $ *)
 
 INTERFACE SloppyTimeConverter;
 IMPORT Time, HMTime, TZ;

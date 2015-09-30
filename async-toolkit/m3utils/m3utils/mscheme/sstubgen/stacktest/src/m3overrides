@@ -4,5 +4,5 @@
 
 %override ("libm3", ROOT & "/m3-libs")
 %override ("m3tk", ROOT & "/m3-tools")
-/* $Id$ */
+/* $Id: m3overrides,v 1.1 2009/05/11 23:44:49 mika Exp $ */
 include("../../../../m3overrides")

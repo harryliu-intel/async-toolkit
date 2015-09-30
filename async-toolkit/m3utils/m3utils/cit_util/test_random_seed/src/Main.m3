@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2003/08/05 18:14:12 mika Exp $ *)
 
 (* Random-seed demo program *)
 

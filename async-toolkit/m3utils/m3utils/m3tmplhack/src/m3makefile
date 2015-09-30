@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.7 2009/03/29 07:27:13 mika Exp $ */
 import("cit_common")
 import("m3tk")
 implementation("Main")

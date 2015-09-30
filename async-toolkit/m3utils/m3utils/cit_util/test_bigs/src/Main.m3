@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2001/11/28 03:30:06 mika Exp $ *)
 
 MODULE Main;
 IMPORT BigInt;

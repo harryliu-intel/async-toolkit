@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LRArrayOps.i3,v 1.4 2006/06/22 09:58:18 mika Exp $ *)
 
 INTERFACE LRArrayOps;
 

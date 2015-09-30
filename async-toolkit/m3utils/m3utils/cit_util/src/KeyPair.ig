@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: KeyPair.ig,v 1.2 2008/12/20 11:02:33 mika Exp $ *)
 
 GENERIC INTERFACE KeyPair(Key1, Key2);
 (* generic interface used to construct pairs as table keys *)

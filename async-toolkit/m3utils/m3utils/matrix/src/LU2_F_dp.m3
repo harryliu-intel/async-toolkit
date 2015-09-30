@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LU2_F_dp.m3,v 1.1 2008/02/02 11:20:22 mika Exp $ *)
 
 UNSAFE MODULE LU2_F_dp;
 IMPORT LRMatrix2 AS M;

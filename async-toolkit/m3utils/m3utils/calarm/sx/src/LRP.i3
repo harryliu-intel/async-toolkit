@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LRP.i3,v 1.1 2008/02/18 13:17:05 mika Exp $ *)
 
 INTERFACE LRP;
 IMPORT LongRealPair;

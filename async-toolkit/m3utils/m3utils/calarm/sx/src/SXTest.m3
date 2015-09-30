@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXTest.m3,v 1.2 2007/05/22 01:37:38 mika Exp $ *)
 
 MODULE SXTest;
 IMPORT Thread, SXLongReal, Debug, Fmt;

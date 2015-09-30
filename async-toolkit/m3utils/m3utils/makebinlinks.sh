@@ -8,6 +8,9 @@ TGTDIR="${HOME}/bin.`uname -m`"
 SGTDIR="${HOME}/bin.script"
 
 PROGS="
+${ROOT}/wrap/${BINDIR}/wrap
+${ROOT}/timing/${BINDIR}/timing
+${ROOT}/lockf/${BINDIR}/lockf
 ${ROOT}/calarm/anova/program/${BINDIR}/anova
 ${ROOT}/calarm/regress/calcmetric/${BINDIR}/calcmetric
 ${ROOT}/calarm/htmltable/cgidb/${BINDIR}/cgidb
@@ -38,7 +41,6 @@ ${ROOT}/calarm/regress/resample/${BINDIR}/resample
 ${ROOT}/calarm/twslib/switchtickers/${BINDIR}/switchtickers
 ${ROOT}/calarm/anova/tabulate/${BINDIR}/tabulate
 ${ROOT}/throttle/${BINDIR}/throttle
-${ROOT}/trasher/${BINDIR}/trasher
 ${ROOT}/calarm/trade/${BINDIR}/trade
 ${ROOT}/calarm/twslib/testtrade2/client/${BINDIR}/tradeclient
 ${ROOT}/calarm/twslib/testtrade2/server/${BINDIR}/tradeserver
@@ -48,9 +50,6 @@ ${ROOT}/calarm/fastrw/datagen/${BINDIR}/datagen
 ${ROOT}/calarm/transposecsv/${BINDIR}/transposecsv
 ${ROOT}/calarm/csvalign/${BINDIR}/csvalign
 ${ROOT}/calarm/comet/cometcatenate/${BINDIR}/cometcatenate
-${ROOT}/cardturk/turkprocess/${BINDIR}/turkprocess
-${ROOT}/cardturk/turkscheme/${BINDIR}/turkscheme
-${ROOT}/cardturk/turksessiond/${BINDIR}/turksessiond
 "
 
 SCRIPTS="

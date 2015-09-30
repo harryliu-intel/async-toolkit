@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CompilerHooks.i3,v 1.1 2009/06/28 11:38:26 mika Exp $ *)
 
 INTERFACE CompilerHooks;
 FROM Scheme IMPORT E;

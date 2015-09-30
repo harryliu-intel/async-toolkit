@@ -1,14 +1,13 @@
-(* $Id$ *)
+(* $Id: HMTime.i3,v 1.1 2009/05/05 08:07:02 mika Exp $ *)
 
 (* 
-   Copyright (c) 2007-2008, 2011 Generation Capital Ltd.  All rights reserved.
+   Copyright (c) 2007-2008, Generation Capital Ltd.  All rights reserved.
    
    Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
 INTERFACE HMTime;
 IMPORT Date, Word, FinDate;
-IMPORT Time, TZ;
 
 EXCEPTION ParseError;
 
@@ -20,14 +19,8 @@ TYPE T = RECORD hour   : [0..23];
 CONST First = T {  0,  0,  0 };
 CONST Last  = T { 23, 59, 59 }; (* what about the leap second? *)
 
-TYPE F1224 = { F24, F12 };
-
-CONST F1224Names = ARRAY F1224 OF TEXT { "F24", "F12" };
-
-PROCEDURE ParseF1224(t : TEXT) : F1224 RAISES { ParseError };
-
-PROCEDURE Parse(t : TEXT; f1224 := F1224.F24) : T RAISES { ParseError };
-  (* parse from HH:MM:SS or HH:MM format; if F1224 = F1224.F12 expect AM or PM to follow *)
+PROCEDURE Parse(t : TEXT) : T RAISES { ParseError };
+  (* parse from HH:MM:SS or HH:MM format *)
 
 PROCEDURE ParseSubsecond(t : TEXT; VAR (*OUT*) sub : LONGREAL) : T 
   RAISES { ParseError };
@@ -38,9 +31,6 @@ CONST ParseFIX = Parse;
 
 PROCEDURE Format(t : T) : TEXT;
   (* format in HH:MM:SS (always!) format *)
-
-PROCEDURE FormatHMs(t : T) : TEXT;
-  (* format in HH:MM[:SS] format *)
 
 CONST FormatFIX = Format;
 
@@ -68,8 +58,6 @@ EXCEPTION Overflow(CARDINAL); (* arg is excess. *)
 
 PROCEDURE Advance(READONLY a : T; bySeconds : CARDINAL) : T 
   RAISES { Overflow };
-
-PROCEDURE Today(tz : TZ.T; READONLY hm : T) : Time.T;
 
 CONST Brand = "HMTime";
 

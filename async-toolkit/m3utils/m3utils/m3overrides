@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3overrides,v 1.120 2011/01/28 04:09:48 mika Exp $ */
 
 /* .top is made by the Makefile before building anything */
 include(".top")
@@ -8,14 +8,14 @@ include(".top")
 /* clean.. */
 
 if defined("pm3_version") 
-        /* Polytechnique de Montreal Modula-3 */
-  option("shared_lib","")
-  if not equal(TARGET,"NT386GNU")
-    option("optimization","T") 
-  end
+      	/* Polytechnique de Montreal Modula-3 */
+	option("shared_lib","")
+	if not equal(TARGET,"NT386GNU")
+		option("optimization","T") 
+	end
 else
  if defined("CM3_VERSION")
-        /* Critical Mass Modula-3 */
+      	/* Critical Mass Modula-3 */
 % see http://www.elegosoft.com/cm3/doc/help/cm3/cm3.html
 
 % not sure about this:
@@ -23,28 +23,28 @@ else
 
       m3_optimize("")
  else 
-  /* SRC Modula-3 */
-  m3_option ("-X2@-static@")
+	/* SRC Modula-3 */
+	m3_option ("-X2@-static@")
  end
 end
 
 /* these are the packages that are part of this distribution */
 
 override("prsparse",TOP)
-override("magic",TOP & "/vlsi")
-override("magicextras",TOP & "/vlsi")
+override("magic",TOP)
+override("magicextras",TOP)
 override("cit_common",TOP)
 override("cit_util",TOP)
 override("bdd",TOP)
 override("cptr",TOP)
 override("bool",TOP)
-override("sop",TOP & "/vlsi")
-override("boxes",TOP & "/vlsi")
-override("simplegrid",TOP & "/vlsi")
-override("router",TOP & "/vlsi")
+override("sop",TOP)
+override("boxes",TOP)
+override("simplegrid",TOP)
+override("router",TOP)
 override("term",TOP)
-override("m3-3",TOP & "/vlsi")
-override("klay",TOP & "/vlsi")
+override("m3-3",TOP)
+override("klay",TOP)
 override("paneman",TOP)
 override("parserlib",TOP & "/parserlib")
 override("ktoklib",TOP & "/parserlib")
@@ -53,40 +53,40 @@ override("drawcontext",TOP)
 override("dcpane",TOP & "/drawcontext")
 override("tasks",TOP)
 override("matrix",TOP)
-override("layout",TOP & "/vlsi")
+override("layout",TOP)
 override("minimize",TOP)
 override("convex",TOP)
 override("splines",TOP)
 override("integrate",TOP)
 override("softmax",TOP)
 override("pattern",TOP)
-override("gatematrix",TOP & "/vlsi")
-override("angbrmacro",TOP & "/vlsi")
+override("gatematrix",TOP)
+override("angbrmacro",TOP)
 override("defmacro",TOP)
-override("colc",TOP & "/vlsi")
+override("colc",TOP)
 override("tree",TOP)
 override("magandspice",TOP & "/mika/vconv/mag")
-override("celldb",TOP & "/vlsi")
-override("sysiphus_parse",TOP  & "/vlsi"& "/sysiphus")
-override("sysiphus_lib",TOP  & "/vlsi"& "/sysiphus")
+override("celldb",TOP)
+override("sysiphus_parse",TOP & "/sysiphus")
+override("sysiphus_lib",TOP & "/sysiphus")
 override("finlib",TOP & "/calarm")
 override("keylib",TOP & "/calarm")
-override("matcher",TOP & "/vlsi")
-override("optree",TOP & "/vlsi")
-override("operators", TOP & "/vlsi")
+override("matcher",TOP)
+override("optree",TOP)
+override("operators", TOP)
 override("rsa",TOP)
 override("tuple",TOP & "/verif")
-override("ld2layout", TOP & "/vlsi")
-override("gdsII", TOP & "/vlsi")
+override("ld2layout", TOP)
+override("gdsII", TOP)
 override("voronoi", TOP)
 override("voronoi2", TOP) /* replacement for above.. better? */
 override("color", TOP)
 override("mst", TOP)
 override("ld", TOP)
 override("ld_parse", TOP & "/ld")
-override("cast", TOP & "/vlsi")
+override("cast", TOP)
 override("cs2", TOP & "/cs2")
-override("pro", TOP & "/vlsi")
+override("pro", TOP)
 override("gnuplot", TOP)
 override("rdwr", TOP)
 override("rdwrreset", TOP)
@@ -161,21 +161,6 @@ override("dollarparser", TOP & "/calarm/gcmonitor")
 override("eurolib", TOP & "/calarm/euromm")
 
 override("tradingscreen", TOP & "/calarm")
-override("csv", TOP & "/calarm")
-
-override("cometlib", TOP & "/calarm/comet")
-
-override("turklib", TOP & "/cardturk")
 
 % Ohai
 override("ohailog", TOP & "/ohai")
-
-override("json", TOP)
-
-override("hsim", TOP & "/btc")
-override("hprs", TOP & "/btc")
-override("hbddops", TOP & "/btc")
-override("hparselib", TOP & "/btc")
-override("procbdd", TOP & "/btc")
-override("physlib", TOP & "/btc")
-override("critlib", TOP & "/btc/hsim")

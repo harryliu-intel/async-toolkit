@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2005/05/03 23:20:24 kp Exp $ *)
 
 MODULE Main;
 IMPORT Debug;

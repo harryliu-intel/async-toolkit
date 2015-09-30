@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeM3.m3,v 1.25 2011/03/03 09:08:29 mika Exp $ *)
 
 MODULE SchemeM3;
 

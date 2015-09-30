@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.1 2002/11/10 22:46:48 thielman Exp $ */
 
 import("libm3")
 import("bdd")

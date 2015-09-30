@@ -14,7 +14,7 @@
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
 (*                                                                           *)
-(* $Id$ *)
+(* $Id: SIsuffix.m3,v 1.3 2001/07/29 22:13:54 kp Exp $ *)
 
 MODULE SIsuffix;
 IMPORT Text;

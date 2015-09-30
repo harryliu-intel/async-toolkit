@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TCPMaker.i3,v 1.3 2009/10/02 14:01:32 mika Exp $ *)
 
 INTERFACE TCPMaker;
 IMPORT TCP, IP, Thread;

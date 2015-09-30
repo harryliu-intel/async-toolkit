@@ -1,0 +1,18 @@
+/Makefile/1.2/Wed Jan 17 02:30:48 2001//
+D/sizeof_time_t////
+D/src////
+D/test_arrayset////
+D/test_bigs////
+D/test_debugbig////
+D/test_fancyfmt////
+D/test_formatsubsecond////
+D/test_idgen////
+D/test_perf////
+D/test_procutils////
+D/test_random_seed////
+D/test_rats////
+D/test_remfile////
+D/test_stats////
+D/test_steps////
+D/test_store////
+D/test_time////

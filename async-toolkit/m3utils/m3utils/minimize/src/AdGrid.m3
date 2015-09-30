@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: AdGrid.m3,v 1.6 2002/04/04 10:10:19 mika Exp $ *)
 
 MODULE AdGrid EXPORTS AdGrid;
 IMPORT AdGridChild;

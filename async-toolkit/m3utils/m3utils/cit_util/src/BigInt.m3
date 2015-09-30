@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: BigInt.m3,v 1.9 2003/08/21 03:28:30 kp Exp $ *)
 
 MODULE BigInt;
 IMPORT CardSeq, Integer;
@@ -153,7 +153,7 @@ PROCEDURE Compare(a, b : T) : CompRet =
 
 PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 
-PROCEDURE NewInternal(x : [FIRST(INTEGER)+1..LAST(INTEGER)]) : T =
+PROCEDURE New(x : INTEGER) : T =
   VAR
     c := ABS(x);
     s := NEW(NSeq).init(1);
@@ -167,15 +167,6 @@ PROCEDURE NewInternal(x : [FIRST(INTEGER)+1..LAST(INTEGER)]) : T =
       RETURN NEW(T, sign := 1, rep := s)
     ELSE
       RETURN NEW(T, sign := -1, rep := s)
-    END
-  END NewInternal;
-
-PROCEDURE New(x : INTEGER) : T =
-  BEGIN
-    IF x = FIRST(INTEGER) THEN
-      RETURN Sub(New(FIRST(INTEGER)+1),One)
-    ELSE
-      RETURN NewInternal(x)
     END
   END New;
 
@@ -431,8 +422,6 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
     <* ASSERT base <= 16 *>
     a := Abs(a);
 
-    IF Equal(a,Zero) THEN RETURN "0" END;
-
     WHILE NOT Equal(a,Zero) DO
       VAR
         d : T;
@@ -481,24 +470,7 @@ PROCEDURE ToLongReal(a : T) : LONGREAL =
     END;
   END ToLongReal;
 
-PROCEDURE ToInt(a : T) : INTEGER RAISES { OutOfRange } =
-  BEGIN 
-    IF Compare(a, IntFirst) = -1 THEN 
-      RAISE OutOfRange
-    ELSIF Compare(a, IntLast) = +1 THEN 
-      RAISE OutOfRange
-    ELSE
-      WITH lr = ToLongReal(a) DO
-        RETURN ROUND(lr)
-      END
-    END
-  END ToInt;
-
-VAR
-  IntLast, IntFirst : T;
 BEGIN 
   Zero := New(0);
   One := New(1);
-  IntLast  := New(LAST(INTEGER));
-  IntFirst := New(FIRST(INTEGER)); (* depends on One *)
 END BigInt.

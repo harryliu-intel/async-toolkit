@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: UtimeOpsC.i3,v 1.4 2011/01/01 17:59:55 mika Exp $ *)
 
 UNSAFE INTERFACE UtimeOpsC;
 FROM Ctypes IMPORT char_star, long_star;

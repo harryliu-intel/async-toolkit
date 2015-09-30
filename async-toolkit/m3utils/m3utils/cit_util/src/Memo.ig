@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Memo.ig,v 1.1 2010/11/05 11:32:55 mika Exp $ *)
 
 GENERIC INTERFACE Memo(Map,Tbl);
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.4 2011/01/04 19:25:54 mika Exp $ *)
 
 MODULE Main;
 IMPORT SXInt;

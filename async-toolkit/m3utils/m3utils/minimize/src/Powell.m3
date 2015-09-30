@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Powell.m3,v 1.3 2001/10/10 07:39:55 mika Exp $ *)
 
 MODULE Powell;
 IMPORT Matrix, Compress;

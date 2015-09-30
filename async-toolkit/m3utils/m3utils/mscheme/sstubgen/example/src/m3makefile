@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.17 2011/02/19 20:49:28 mika Exp $ */
 import ("cit_util")
 import ("mscheme")
 import ("modula3scheme")
@@ -28,7 +28,6 @@ SchemeStubs("ExampleRef")
 SchemeStubs("Fmt")
 SchemeStubs("Wr")
 SchemeStubs("Text")
-SchemeStubs("TextUtils")
 SchemeStubs("TextWr")
 SchemeStubs("TextRd")
 SchemeStubs("FileWr")

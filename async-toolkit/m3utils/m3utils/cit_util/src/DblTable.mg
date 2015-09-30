@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: DblTable.mg,v 1.3 2000/11/15 10:12:43 mika Exp $ *)
 
 GENERIC MODULE DblTable(Key, Value, KeyValueTbl, ValueKeySetTbl, KeySet);
 IMPORT Word;

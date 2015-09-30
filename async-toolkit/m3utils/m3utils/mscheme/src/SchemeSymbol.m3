@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeSymbol.m3,v 1.3 2009/03/16 16:45:14 mika Exp $ *)
 
 (*
   Copyright (c) 2008, Generation Capital Ltd.  All rights reserved.

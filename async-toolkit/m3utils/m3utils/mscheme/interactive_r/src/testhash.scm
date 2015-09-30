@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: testhash.scm,v 1.1 2008/11/17 14:16:38 mika Exp $
 ;;
 
 (require-modules "hashtable")

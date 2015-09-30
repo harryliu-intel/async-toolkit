@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: basic-defs.scm,v 1.5 2011/03/14 04:59:00 mika Exp $
 ;;
 
 (define (nth lst n)

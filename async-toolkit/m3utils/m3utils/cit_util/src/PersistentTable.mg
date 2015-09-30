@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: PersistentTable.mg,v 1.6 2007/06/29 09:19:58 mika Exp $ *)
 
 GENERIC MODULE PersistentTable(Elem, IntElemTbl);
 IMPORT Pathname;

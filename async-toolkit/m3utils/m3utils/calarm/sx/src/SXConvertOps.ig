@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXConvertOps.ig,v 1.2 2008/10/31 06:09:17 mika Exp $ *)
 
 GENERIC INTERFACE SXConvertOps(Elem);
 IMPORT SXInt, SXBool;

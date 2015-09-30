@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXType.ig,v 1.9 2008/12/08 05:48:39 mika Exp $ *)
 
 GENERIC INTERFACE SXType(Elem);
 

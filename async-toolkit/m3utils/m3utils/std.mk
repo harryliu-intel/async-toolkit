@@ -1,4 +1,4 @@
-# $Id$
+# $Id: std.mk,v 1.3 2004/07/14 02:10:05 mika Exp $
 
 # define this one if you want to catch functions missing from headers
 #ANNOYINGFLAGS= -Wmissing-declarations -pedantic -ansi -Wredundant-decls 

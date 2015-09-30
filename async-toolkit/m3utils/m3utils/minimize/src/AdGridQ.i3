@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: AdGridQ.i3,v 1.4 2002/04/04 10:10:19 mika Exp $ *)
 
 INTERFACE AdGridQ;
 IMPORT Word, AdGridChild AS Child;

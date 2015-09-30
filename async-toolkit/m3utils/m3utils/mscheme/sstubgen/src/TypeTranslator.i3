@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TypeTranslator.i3,v 1.7 2009/04/26 08:44:35 mika Exp $ *)
 
 INTERFACE TypeTranslator;
 

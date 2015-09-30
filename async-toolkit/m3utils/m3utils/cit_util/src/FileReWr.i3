@@ -1,6 +1,6 @@
 (* Copyright (c) 2000 California Institute of Technology *)
 (* All rights reserved. See the file COPYRIGHT for a full description. *)
-(* $Id$ *)
+(* $Id: FileReWr.i3,v 1.2 2004/06/26 00:47:42 kp Exp $ *)
 
 INTERFACE FileReWr;
 IMPORT Wr, Pathname;

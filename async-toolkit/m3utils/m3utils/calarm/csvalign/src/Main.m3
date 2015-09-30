@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.5 2012/07/08 20:40:28 mika Exp $ *)
 
 MODULE Main;
 

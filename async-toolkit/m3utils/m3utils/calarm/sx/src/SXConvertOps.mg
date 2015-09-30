@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXConvertOps.mg,v 1.2 2008/10/31 06:09:17 mika Exp $ *)
 
 GENERIC MODULE SXConvertOps(Elem, Int_ElemFuncOps, Elem_IntFuncOps, Elem_BoolFuncOps);
 IMPORT SXInt, SXBool;

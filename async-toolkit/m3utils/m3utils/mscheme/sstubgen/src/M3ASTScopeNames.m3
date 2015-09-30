@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: M3ASTScopeNames.m3,v 1.1 2009/04/05 19:40:57 mika Exp $ *)
 
 MODULE M3ASTScopeNames;
 IMPORT M3AST_AS, M3AST_SM;

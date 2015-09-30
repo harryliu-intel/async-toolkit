@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.12 2011/01/19 16:01:40 mika Exp $ */
 import ("libm3")
 import ("cit_util")
 import ("set")
@@ -9,7 +9,6 @@ Interface("SXRoot")
 Interface("SXClass")
 Module("SX")
 Interface("SXSelect")
-Interface("SXDebug")
 
 /* most of the code in SX is generic: */
 template("sxtype")
@@ -103,9 +102,6 @@ Module("SXTimer")
 
 Module("SXIterator")
 Module("SXPrettyPrint")
-
-template ("sxsloppybuf")
-Generic_module("SXSloppyBuf")
 
 library ("sx")
 

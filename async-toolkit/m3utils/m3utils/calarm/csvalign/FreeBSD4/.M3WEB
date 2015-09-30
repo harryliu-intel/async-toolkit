@@ -1,0 +1,45 @@
+Main.m3 678
+$ 0
+@Main.m3
+AMain
+G46d79418 97e237e2 64
+Qb9286be7 46d79418
+Re52d8cb4 2 00000000 0
+Ss 8805098f
+Sw b9286be7
+R8c768151 2 00000000 0
+Ss 8805098f
+Sw b9286be7
+Red70519e 1 56e16863 0
+Sc 56e16863
+V77d26e16 e545939d 3 0 1 96
+Xapply Main.RWCApply
+Lrd 0 32 fa67ef2f
+Lwr 32 32 62761487
+Lmapper 64 32 ed70519e
+Vdeae5f70 9d8fb489 0 0 0 0 Main_^%#%^__0001M
+Rbe1506bf 1 1c1c45e6 0
+Srwc 77d26e16
+N4d3373b8 195c2a74 0 1023 16
+F6d77674e 4d3373b8 56e16863 8192
+R6feb1d3b 1 fa67ef2f 0
+Srd fa67ef2f
+M330ebcd7 56e16863 256
+Pe397683d 46d79418
+DMain
+CRdWrPipe
+CAL
+COSError
+CThread
+CRd
+CDebug
+CRefSeq
+CTextSeq
+CFileRd
+CText
+CWr
+CStdio
+CParseParams
+CRTHooks
+E77d26e16 Main.RdWrClosure
+Edeae5f70 Main.Failure

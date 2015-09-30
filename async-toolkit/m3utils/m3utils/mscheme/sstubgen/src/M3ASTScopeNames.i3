@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: M3ASTScopeNames.i3,v 1.1 2009/04/05 19:40:57 mika Exp $ *)
 
 INTERFACE M3ASTScopeNames;
 IMPORT RefSeq;

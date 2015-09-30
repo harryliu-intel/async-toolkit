@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: MapMap.ig,v 1.1 2010/11/13 02:02:27 mika Exp $ *)
 
 GENERIC INTERFACE MapMap(Map1, Map2);
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeReadLine.i3,v 1.3 2009/11/26 15:05:55 mika Exp $ *)
 
 INTERFACE SchemeReadLine;
 IMPORT ReadLine, Scheme, NetObj, ReadLineError;

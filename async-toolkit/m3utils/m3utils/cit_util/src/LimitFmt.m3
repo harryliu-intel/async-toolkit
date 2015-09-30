@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LimitFmt.m3,v 1.1 2009/02/12 00:14:09 mika Exp $ *)
 
 MODULE LimitFmt;
 IMPORT Scan, Fmt;

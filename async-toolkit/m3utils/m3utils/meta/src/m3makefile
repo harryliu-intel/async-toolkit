@@ -1,0 +1,73 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+
+import ("modula3scheme")
+import ("m3readline")
+import ("schemereadline")
+import ("sstubgen")
+
+import ("metalib")
+
+import ("arith")
+import ("minimize")
+
+
+m3_optimize("T")
+
+implementation ("Main")
+
+SchemeStubs("Name")
+SchemeStubs("NameList")
+SchemeStubs("NameRefTbl")
+SchemeStubs("NameSeq")
+SchemeStubs("NameNameTbl")
+SchemeStubs("NameNameListTbl")
+SchemeStubs("NameSet")
+SchemeStubs("NameSetDef")
+SchemeStubs("RefList")
+SchemeStubs("Text")
+SchemeStubs("Rd")
+SchemeStubs("Wr")
+SchemeStubs("FileRd")
+SchemeStubs("Debug")
+SchemeStubs("Atom")
+SchemeStubs("AtomList")
+SchemeStubs("Dsim")
+SchemeStubs("MetaUtils")
+SchemeStubs("TypeTables")
+SchemeStubs("Fingerprint")
+SchemeStubs("NodePairRefTbl")
+SchemeStubs("NodePair")
+SchemeStubs("Directives")
+SchemeStubs("Lexer") % probably dont need this
+
+SchemeStubs("Arith")
+SchemeStubs("ArithR")
+SchemeStubs("ArithP")
+SchemeStubs("ArithRep")
+SchemeStubs("ArithOps")
+
+SchemeStubs("PRS")
+SchemeStubs("PRSClass")
+SchemeStubs("PRSimulate")
+SchemeStubs("Scenario")
+SchemeStubs("TimingModel")
+SchemeStubs("Transition")
+SchemeStubs("TransitionList")
+%SchemeStubs("Example")
+SchemeStubs("Spline")
+SchemeStubs("CubicSpline")
+SchemeStubs("Bracket")
+SchemeStubs("LRFunction")
+
+SchemeStubs("Circuit")
+SchemeStubs("NameNameSetTbl")
+SchemeStubs("LongFloat")
+SchemeStubs("FloatMode")
+
+ExportSchemeStubs("meta") 
+importSchemeStubs() 
+
+program ("meta")

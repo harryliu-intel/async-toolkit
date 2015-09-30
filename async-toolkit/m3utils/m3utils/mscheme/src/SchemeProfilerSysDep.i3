@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeProfilerSysDep.i3,v 1.3 2009/07/09 17:09:55 mika Exp $ *)
 
 INTERFACE SchemeProfilerSysDep;
 FROM SchemeUnixDeps IMPORT struct_rusage;

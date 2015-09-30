@@ -1,0 +1,26 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+%import ("mscheme")
+
+%import ("modula3scheme")
+%import ("m3readline")
+%import ("schemereadline")
+%import ("sstubgen")
+
+import ("bdd")
+
+m3_optimize("T")
+
+sequence ("BDD", "BDD")
+table("CardBDD", "Cardinal", "BDD")
+
+module ("BDDSetHash")
+
+table ("BDDSetHashRef", "BDDSetHash", "Refany")
+table ("BDDIntPair", "BDD", "IntPair")
+table ("IntPairBDD", "IntPair", "BDD")
+
+implementation ("Main")
+
+program ("schedule")

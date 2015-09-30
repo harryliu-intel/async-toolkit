@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Matrix2LRType.m3,v 1.2 2008/02/04 00:10:46 mika Exp $ *)
 
 MODULE Matrix2LRType;
 IMPORT Fmt;

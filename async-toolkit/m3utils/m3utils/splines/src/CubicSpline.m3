@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CubicSpline.m3,v 1.1 2001/09/11 02:18:07 mika Exp $ *)
 
 MODULE CubicSpline;
 

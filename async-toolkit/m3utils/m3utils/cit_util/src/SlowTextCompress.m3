@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SlowTextCompress.m3,v 1.7 2010/07/13 08:20:34 mika Exp $ *)
 
 MODULE SlowTextCompress;
 IMPORT Rd, Wr, UnixFilter, ProcUtils;

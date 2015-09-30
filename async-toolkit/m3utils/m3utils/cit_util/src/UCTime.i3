@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: UCTime.i3,v 1.1 2008/12/24 10:52:36 mika Exp $ *)
 
 INTERFACE UCTime;
 IMPORT Time;

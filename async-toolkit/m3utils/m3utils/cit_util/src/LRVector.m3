@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LRVector.m3,v 1.1 2001/10/24 18:27:38 penzes Exp $ *)
 
 MODULE LRVector;
 IMPORT Math;

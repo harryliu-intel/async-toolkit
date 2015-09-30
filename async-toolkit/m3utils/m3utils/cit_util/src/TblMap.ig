@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TblMap.ig,v 1.4 2011/02/17 00:38:05 mika Exp $ *)
 
 GENERIC INTERFACE TblMap(Tbl, Map);
 

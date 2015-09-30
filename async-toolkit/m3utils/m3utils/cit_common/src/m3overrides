@@ -1,2 +1,2 @@
-/* $Id$ */
+/* $Id: m3overrides,v 1.1 2001/06/18 02:00:37 kp Exp $ */
 include("../../m3overrides")

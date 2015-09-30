@@ -1,5 +1,5 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: Quantity.i3,v 1.2 2001/09/18 01:53:27 mika Exp $ *)
 INTERFACE Quantity;
 IMPORT RefSet;
 

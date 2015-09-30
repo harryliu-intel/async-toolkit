@@ -1,4 +1,4 @@
-(* $Id$
+(* $Id: LRPt.i3,v 1.2 2005/01/24 01:10:18 kp Exp $
    Like LRPoint.i3, but field names are consistent with Point.i3.
 *)
 

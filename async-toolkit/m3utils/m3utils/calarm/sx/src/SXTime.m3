@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXTime.m3,v 1.5 2010/03/24 09:34:45 mika Exp $ *)
 
 MODULE SXTime;
 IMPORT XTime AS Time, SXLongReal, Thread, SXInt;
@@ -8,7 +8,7 @@ PROCEDURE log2(x : LONGREAL) : LONGREAL =
   BEGIN RETURN log(x) / log(2.0d0) END log2;
 
 TYPE
-  Closure = Thread.SizedClosure OBJECT
+  Closure = Thread.Closure OBJECT
     interval, next : Time.T;
     sx : SXLongReal.Var;
     ix : SXInt.Var;
@@ -85,8 +85,6 @@ PROCEDURE NextFrom(now, interval, offset : Time.T) : Time.T =
     END
   END NextFrom;
 
-CONST StackSize = 4096;
-
 PROCEDURE New(interval, offset : Time.T) : SXLongReal.T =
   BEGIN
     WITH sx = NEW(SXLongReal.Var).initVal(Time.Now()),
@@ -95,8 +93,7 @@ PROCEDURE New(interval, offset : Time.T) : SXLongReal.T =
                            interval := interval, 
                            next := Next(interval,offset),
                            sx := sx,
-                           ix := ix, 
-                           stackSize := StackSize));
+                           ix := ix));
       RETURN sx
     END
   END New;
@@ -109,8 +106,7 @@ PROCEDURE NewCounter(interval, offset : Time.T) : SXInt.T =
                            interval := interval, 
                            next := Next(interval,offset),
                            sx := sx,
-                           ix := ix, 
-                           stackSize := StackSize));
+                           ix := ix));
       RETURN ix
     END
   END NewCounter;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: TypeCM3.m3,v 1.2 2009/04/25 22:04:26 mika Exp $ *)
 MODULE TypeCM3 EXPORTS Type;
 IMPORT Atom, Value;
 

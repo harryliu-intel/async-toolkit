@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LRVector.i3,v 1.3 2005/04/25 21:47:17 mika Exp $ *)
 
 INTERFACE LRVector;
 

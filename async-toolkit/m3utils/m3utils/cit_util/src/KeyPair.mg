@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: KeyPair.mg,v 1.3 2008/12/20 11:02:33 mika Exp $ *)
 
 GENERIC MODULE KeyPair(Key1, Key2);
 IMPORT Word;

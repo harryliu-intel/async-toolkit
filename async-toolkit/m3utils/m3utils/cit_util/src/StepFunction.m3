@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: StepFunction.m3,v 1.3 2009/06/14 09:14:24 mika Exp $ *)
 
 MODULE StepFunction;
 IMPORT LongRealSeq, LongRealPair, LongrealSetDef, LongrealArraySort;

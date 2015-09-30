@@ -1,5 +1,5 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: LU.i3,v 1.2 2006/05/21 23:18:03 mika Exp $ *)
 INTERFACE LU;
 IMPORT Matrix;
 

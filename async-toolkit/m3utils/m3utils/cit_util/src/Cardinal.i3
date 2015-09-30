@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Cardinal.i3,v 1.1 2001/11/26 22:40:00 mika Exp $ *)
 
 INTERFACE Cardinal;
 IMPORT Word;

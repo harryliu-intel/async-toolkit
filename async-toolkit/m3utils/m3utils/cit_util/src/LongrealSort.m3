@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: LongrealSort.m3,v 1.1 2006/01/03 18:21:50 mika Exp $ *)
 
 MODULE LongrealSort;
 IMPORT LongrealArraySort;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Factory.mg,v 1.5 2008/11/11 09:33:05 mika Exp $ *)
 
 GENERIC MODULE Factory(Of);
 IMPORT Word, Text;

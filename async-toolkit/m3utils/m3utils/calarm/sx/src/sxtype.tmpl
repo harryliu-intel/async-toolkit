@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sxtype.tmpl,v 1.4 2008/10/31 06:09:17 mika Exp $ */
 
 readonly proc build_renamed_generic_impl (export, generic, args, nm) is
   local file = nm & ".m3"
@@ -41,7 +41,7 @@ readonly proc _sxIntOps (nm, elem, vis) is
 	local mebool = "SX" & nm & "_BoolFuncOps" 
 
 	build_generic_intf("SX" & nm & "Ops", "SXNumOps", [elem], vis)
-	build_generic_impl("SX" & nm & "Ops", "SXIntOps", [elem])
+	build_generic_impl("SX" & nm & "Ops", "SXIntOps", [elem, meme])
 	build_renamed_generic_impl("SX" & nm & "Ops", "SXNumOps", [elem, meme, meint, mebool],
 	                           "SX"  & nm & "Ops2")
 end
@@ -61,7 +61,7 @@ readonly proc _sxRealOps (nm, elem, vis) is
 	local mebool = "SX" & nm & "_BoolFuncOps" 
 
 	build_generic_intf("SX" & nm & "Ops", "SXNumOps", [elem], vis)
-	build_generic_impl("SX" & nm & "Ops", "SXRealOps", [elem])
+	build_generic_impl("SX" & nm & "Ops", "SXRealOps", [elem, meme])
 	build_renamed_generic_impl("SX" & nm & "Ops", "SXNumOps", [elem, meme, meint, mebool],
 	                           "SX"  & nm & "Ops2")
 	build_generic_intf("SX" & nm & "ConvertOps", "SXConvertOps", [elem], vis)

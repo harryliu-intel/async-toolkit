@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SloppyTimeConverter.m3,v 1.2 2009/07/05 19:54:34 mika Exp $ *)
 
 MODULE SloppyTimeConverter;
 IMPORT XTime AS Time, TZ, HMTime, SortedLongrealRefTbl, TZRefTbl;

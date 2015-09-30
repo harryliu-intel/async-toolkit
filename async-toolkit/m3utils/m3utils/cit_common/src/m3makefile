@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.10 2011/02/15 08:35:10 mika Exp $ */
 %m3_option("-X2@-pg@")
 %m3_option("-g")
 %remove_m3_option("-O")

@@ -1,5 +1,5 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: Newton.i3,v 1.1 2000/12/15 08:07:06 mika Exp $ *)
 INTERFACE Newton;
 IMPORT Quantity,Matrix;
 

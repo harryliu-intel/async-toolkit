@@ -1,5 +1,5 @@
 c
-c     $Id$
+c     $Id: muld.f,v 1.3 2008/01/22 06:30:35 mika Exp $
 c
       subroutine muld(a, b, p, ar, ac, bc)
       implicit none

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: UtimeOpsC.c,v 1.7 2011/01/01 20:16:29 mika Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,7 +133,6 @@ UtimeOpsC__localtime_r(double clock, struct tm *result)
 
 	struct tm *res= localtime_r(&clocki, result);
 #if 0
-	printf("clock: %f\n", clock);
 	printf("tm: %d %d %d\n", res->tm_hour, res->tm_min, res->tm_sec);
 	printf("tm: %s\n", res->tm_zone);
 #endif

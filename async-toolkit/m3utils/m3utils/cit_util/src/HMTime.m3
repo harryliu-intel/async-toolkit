@@ -1,11 +1,8 @@
-(* $Id$ *)
+(* $Id: HMTime.m3,v 1.1 2009/05/05 08:07:02 mika Exp $ *)
 
 MODULE HMTime;
 IMPORT TextReader, Scan, Lex, FloatMode, Date, Fmt;
 IMPORT FinDate, Word;
-IMPORT Text, TextUtils;
-
-CONST TE = Text.Equal;
 
 PROCEDURE Format(t : T) : TEXT =
   CONST
@@ -13,19 +10,6 @@ PROCEDURE Format(t : T) : TEXT =
   BEGIN
     RETURN Fmt.F("%02s:%02s:%02s", I(t.hour), I(t.minute), I(t.second))
   END Format;
-
-PROCEDURE FormatHMs(t : T) : TEXT =
-  CONST
-    I = Fmt.Int;
-  VAR 
-    res := Fmt.F("%02s:%02s", I(t.hour), I(t.minute));
-  BEGIN
-    IF t.second = 0 THEN
-      RETURN res
-    ELSE
-      RETURN res & Fmt.F(":%02s", I(t.second))
-    END
-  END FormatHMs;
 
 PROCEDURE Check(h,m,s : INTEGER) RAISES { ParseError } =
   BEGIN
@@ -40,43 +24,21 @@ PROCEDURE Check(h,m,s : INTEGER) RAISES { ParseError } =
     END
   END Check;
 
-PROCEDURE Parse(t : TEXT; f : F1224) : T RAISES { ParseError } = 
+PROCEDURE Parse(t : TEXT) : T RAISES { ParseError } = 
   BEGIN
     TRY
-
-      PROCEDURE ParseAmPm(lower : TEXT) : BOOLEAN =
-        BEGIN
-          IF TE(lower, "am") THEN (* skip *)
-          ELSIF TE(lower, "pm") THEN INC(h,12)
-          ELSE RETURN FALSE
-          END;
-          RETURN TRUE
-        END ParseAmPm;
-
       VAR
         reader := NEW(TextReader.T).init(t);
         h, m := Scan.Int(reader.nextE(":"));
-        s := 0;
       BEGIN
-        (* hmm *)
-
-        IF f = F1224.F24 THEN
-          IF NOT reader.empty() THEN
-            WITH s = Scan.Int(reader.nextE("")) DO
-              Check(h,m,s);
-            END
+        IF NOT reader.empty() THEN
+          WITH s = Scan.Int(reader.nextE(":")) DO
+            Check(h,m,s);
+            RETURN T { h, m, s }
           END
         ELSE
-          WITH trail = TextUtils.ToLower(reader.nextE(":")) DO
-            IF NOT ParseAmPm(trail) THEN
-              s := Scan.Int(trail); 
-              IF NOT ParseAmPm(TextUtils.ToLower(reader.nextE(""))) THEN
-                RAISE ParseError
-              END
-            END;
-          END
-        END;
-        RETURN T { h, m, s }
+          RETURN T { h, m, 0 }
+        END
       END
     EXCEPT
       TextReader.NoMore, Lex.Error, FloatMode.Trap => RAISE ParseError
@@ -169,13 +131,5 @@ PROCEDURE FromSeconds(s : CARDINAL) : T RAISES { Overflow } =
 
     RETURN t
   END FromSeconds;
-
-PROCEDURE ParseF1224(t : TEXT) : F1224 RAISES { ParseError } = 
-  BEGIN
-    FOR i := FIRST(F1224) TO LAST(F1224) DO
-      IF TE(t, F1224Names[i]) THEN RETURN i END
-    END;
-    RAISE ParseError
-  END ParseF1224;
 
 BEGIN END HMTime.

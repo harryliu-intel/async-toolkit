@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CubicSpline.i3,v 1.3 2001/09/11 20:54:24 mika Exp $ *)
 
 INTERFACE CubicSpline;
 IMPORT Spline;

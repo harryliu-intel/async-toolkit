@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeModula3TypesCM3.m3,v 1.1 2009/04/25 21:45:21 mika Exp $ *)
 
 MODULE SchemeModula3TypesCM3 EXPORTS SchemeModula3Types;
 FROM SchemeUtils IMPORT Stringify;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: DblTable.ig,v 1.4 2000/11/29 09:11:24 mika Exp $ *)
 
 GENERIC INTERFACE DblTable(Key, Value, KeyValueTbl, ValueKeySetTbl, KeySet);
 IMPORT Word;

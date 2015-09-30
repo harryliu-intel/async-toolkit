@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: BDDTest.m3,v 1.1 2002/11/10 22:46:48 thielman Exp $ *)
 MODULE BDDTest EXPORTS Main;
 IMPORT BDD,Debug,Fmt;
 IMPORT RTProcess;

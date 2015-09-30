@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: FileUtils.i3,v 1.2 2007/05/01 07:47:41 mika Exp $ *)
 
 INTERFACE FileUtils;
 IMPORT Pathname, OSError, Thread, Rd, Wr;

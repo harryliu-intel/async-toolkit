@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SharedSequence.ig,v 1.1 2006/03/24 12:29:12 mika Exp $ *)
 
 GENERIC INTERFACE SharedSequence(Elem, ElemSeq);
 

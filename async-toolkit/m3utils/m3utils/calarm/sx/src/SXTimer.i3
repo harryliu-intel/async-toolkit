@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXTimer.i3,v 1.3 2010/12/02 07:14:40 mika Exp $ *)
 
 INTERFACE SXTimer;
 IMPORT SXLongReal;

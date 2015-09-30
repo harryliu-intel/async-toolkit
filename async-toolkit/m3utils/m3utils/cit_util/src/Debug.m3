@@ -4,10 +4,9 @@
 (*  Debugging output and aborting the program.                               *)
 (*                                                                           *)
 (*  Copyright (c) 2000 California Institute of Technology                    *)
+(*  All rights reserved.                                                     *)
 (*  Department of Computer Science                                           *)
 (*  Pasadena, CA 91125.                                                      *)
-(*  Copyright (c) 2006-2011 Generation Capital Ltd.                          *)
-(*  All rights reserved.                                                     *)
 (*                                                                           *)
 (*  Author: Mika Nystrom <mika@cs.caltech.edu>                               *)
 (*                                                                           *)
@@ -20,10 +19,10 @@
 (*  software outside of the United States of America may require an          *)
 (*  export license.                                                          *)
 (*                                                                           *)
-(* $Id$ *)
+(* $Id: Debug.m3,v 1.33 2009/09/09 10:36:22 mika Exp $ *)
 
 MODULE Debug;
-FROM DebugClass IMPORT level, mu, streams;
+FROM DebugClass IMPORT level;
 IMPORT TextSet;
 IMPORT TextSetDef;
 IMPORT FileRd;
@@ -32,7 +31,9 @@ IMPORT BreakHere;
 IMPORT Thread;
 IMPORT OSError;
 IMPORT Wr, TextWr, Text;
-IMPORT Env;
+FROM Stdio IMPORT stderr;
+IMPORT Env, Scan;
+IMPORT FloatMode, Lex;
 IMPORT Fmt;
 IMPORT Process;
 IMPORT ThreadF;
@@ -353,7 +354,9 @@ PROCEDURE RegisterErrorHook(err: OutHook) =
 VAR
   debugFilter := Env.Get("DEBUGFILTER");
   triggers: TextSet.T;
+  streams := DebugStreamList.List1(DebugStream.T { stderr }); 
   (* protected by mu *)
+  mu := NEW(MUTEX);
   calls := 0;
 
 CONST
@@ -421,6 +424,17 @@ BEGIN
     END
   END;
 
+  VAR
+    debugStr := Env.Get("DEBUGLEVEL");
+  BEGIN
+    TRY
+      IF debugStr # NIL THEN level := Scan.Int(debugStr) END
+    EXCEPT
+      Lex.Error, FloatMode.Trap => 
+        Error("DEBUGLEVEL set to nonsense! \"" & debugStr & "\"",TRUE)
+    END
+  END;
+
   WITH targetstring = RTParams.Value("debugtrace") DO
     IF targetstring # NIL THEN
       VAR 
@@ -430,40 +444,6 @@ BEGIN
         WHILE p # NIL DO
           TRY
             AddStream(FileWr.Open(p.head))
-          EXCEPT
-            OSError.E(x) =>
-            Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)
-          END;
-          p := p.tail
-        END
-      END(*VAR BEGIN*)
-    END(*IF*)
-  END(*WITH*);
-
-  WITH targetstring = RTParams.Value("pidfile") DO
-    IF targetstring # NIL THEN
-      TRY
-        WITH wr = FileWr.Open(targetstring) DO
-          Wr.PutText(wr, Fmt.Int(Process.GetMyID()));
-          Wr.PutChar(wr, '\n');
-          Wr.Close(wr)
-        END
-      EXCEPT
-        Wr.Failure, OSError.E => 
-        Error("Couldn't write PID to \"" & targetstring & "\"", exit := TRUE)
-      END
-    END
-  END;
-
-  WITH targetstring = RTParams.Value("debugappend") DO
-    IF targetstring # NIL THEN
-      VAR 
-        reader := NEW(TextReader.T).init(targetstring); 
-        p := reader.shatter(",", endDelims := "");
-      BEGIN
-        WHILE p # NIL DO
-          TRY
-            AddStream(FileWr.OpenAppend(p.head))
           EXCEPT
             OSError.E(x) =>
             Error("Couldn't add file \"" & p.head & "\" to debug streams: OSError.E: " & AL.Format(x), exit := FALSE)

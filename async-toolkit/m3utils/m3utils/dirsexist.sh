@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id$
+# $Id: dirsexist.sh,v 1.3 2001/01/14 00:59:19 mika Exp $
 #
 # dirsexist.sh -- take $* and print it, but only for those words that are
 # existing directories

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: MatrixM3_only.m3,v 1.2 2010/07/08 08:25:16 mika Exp $ *)
 
 MODULE MatrixM3_only EXPORTS Matrix;
 IMPORT MatrixM3;

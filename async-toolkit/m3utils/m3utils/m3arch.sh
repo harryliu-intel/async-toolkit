@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id$
+# $Id: m3arch.sh,v 1.4 2009/11/08 22:05:28 mika Exp $
 #
 UNAME=uname
 TR=tr
@@ -30,10 +30,6 @@ elif [ "x$OS$PROCESSOR2" = "xDarwinpowerpc" ]; then
 elif [ "x$OS" = "xLinux" ]; then
   if [ "x$PROCESSOR" = "xx86_64" ]; then
     M3ARCH="AMD64_LINUX"
-  elif [ "x$PROCESSOR" = "xarmv6l" ]; then
-    M3ARCH="ARM_LINUX"
-  elif [ "x$PROCESSOR" = "xarmv7l" ]; then
-    M3ARCH="ARM_LINUX"
   else
     M3ARCH="LINUXLIBC6"
   fi

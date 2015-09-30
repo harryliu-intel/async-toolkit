@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: IntForRat.m3,v 1.4 2003/08/19 04:47:56 kp Exp $ *)
 
 MODULE IntForRat;
 IMPORT Integer;

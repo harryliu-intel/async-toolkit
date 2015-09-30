@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SetArray.mg,v 1.1 2007/06/24 22:17:49 mika Exp $ *)
 
 GENERIC MODULE SetArray(Elem, ElemSet);
 

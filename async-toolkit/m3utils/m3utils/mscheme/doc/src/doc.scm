@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: doc.scm,v 1.3 2009/01/14 17:45:41 mika Exp $
 ;;
 
 (require-modules "basic-defs" "display" "mergesort" "hashtable")

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Compress.i3,v 1.5 2001/10/10 07:39:55 mika Exp $ *)
 
 INTERFACE Compress;
 IMPORT Matrix;

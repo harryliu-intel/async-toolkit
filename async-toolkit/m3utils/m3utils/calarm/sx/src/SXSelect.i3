@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXSelect.i3,v 1.4 2010/11/19 04:55:40 mika Exp $ *)
 
 INTERFACE SXSelect;
 IMPORT SX, SXRef;

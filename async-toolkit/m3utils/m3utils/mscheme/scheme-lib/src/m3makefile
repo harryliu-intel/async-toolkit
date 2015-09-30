@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.10 2009/11/26 18:31:01 mika Exp $ */
 import ("libm3")
 
 resource ("m3.scm")
@@ -18,7 +18,6 @@ resource ("history.scm")
 resource ("struct.scm")
 resource ("pregexp/pregexp.scm")
 resource ("marketdata-hfdate-conversion.scm")
-resource ("addresses.scm")
 
 bundle ("SchemeDefsBundle")
 

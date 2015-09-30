@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ParametricSpline.m3,v 1.7 2001/10/10 07:39:56 mika Exp $ *)
 
 MODULE ParametricSpline;
 IMPORT ParametricSplineRep;

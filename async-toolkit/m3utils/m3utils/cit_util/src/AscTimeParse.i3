@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: AscTimeParse.i3,v 1.1 2009/05/05 08:07:02 mika Exp $ *)
 
 INTERFACE AscTimeParse;
 IMPORT TZ, Time;

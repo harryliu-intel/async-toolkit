@@ -1,0 +1,33 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+
+import ("modula3scheme")
+import ("m3readline")
+import ("schemereadline")
+import ("sstubgen")
+
+import ("metalib")
+
+import ("arith")
+import ("minimize")
+
+
+m3_optimize("T")
+
+module("Wrap")
+implementation ("Main")
+
+SchemeStubs("Text")
+SchemeStubs("Rd")
+SchemeStubs("Wr")
+SchemeStubs("FileWr")
+SchemeStubs("FileRd")
+SchemeStubs("TextUtils")
+SchemeStubs("Wrap")
+SchemeStubs("Debug")
+ExportSchemeStubs("wrap") 
+importSchemeStubs() 
+
+program ("wrap")

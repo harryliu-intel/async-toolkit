@@ -1,10 +1,9 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.160 2011/02/17 00:38:05 mika Exp $ */
 
 import ("netobj")
 import("cit_common")
 import("set")
 import("rdwrreset")
-import("m3core")
 
 if defined("CM3_VERSION")
 	import ("libbuf")
@@ -15,9 +14,9 @@ template("texthack")
 template("generics")
 Interface("DblRefany")
 Module("Debug")
-Interface("DebugStream")
-List("DebugStream", "DebugStream")
-Module("DebugClass")
+interface("DebugStream")
+list("DebugStream", "DebugStream")
+Interface("DebugClass")
 implementation("DebugFmtPointer")
 Module("BreakHere")
 Module("TextUtils")
@@ -49,20 +48,17 @@ Generic_module("SetArray")
 
 Interface("RTBrand")
 Interface("RefRecord")
-Interface("SchedulerIndirection")
 if defined("CM3_VERSION")
 %	implementation("WxDefault")
 	implementation("RTBrandCM3")
 	import("patternmatching")
         implementation("RefRecordCM3")
-        implementation("SchedulerIndirectionCM3")
 else
 	Interface("RuntimeError")
 	Interface("Wx")
         implementation("Wx")
 	implementation("RTBrand")
         implementation("RefRecord")
-        implementation("SchedulerIndirectionPM3")
 end
 c_source("printf")
 interface("Cprintf")
@@ -360,7 +356,6 @@ implementation("SafeTZ")
 
 Module("FinDate")
 Module("HMTime")
-implementation("HMTimeToday")
 
 Table("IntFinDate", "Integer", "FinDate")
 Array_sort("FinDate","FinDate")
@@ -379,13 +374,7 @@ Module ("XTime")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Module   ("LRElem")
-Array_sort("LRElem", "LRElem")
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 module   ("UtimeOpsC")
-module   ("UtimeWrap")
 c_source ("UtimeOpsC")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,5 +1,5 @@
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
-(* $Id$ *)
+(* $Id: LU.m3,v 1.4 2008/01/16 10:30:42 mika Exp $ *)
 MODULE LU;
 IMPORT Matrix;
 

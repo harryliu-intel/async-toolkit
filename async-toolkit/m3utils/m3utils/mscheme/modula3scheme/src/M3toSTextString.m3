@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: M3toSTextString.m3,v 1.1 2008/10/22 05:08:22 mika Exp $ *)
 
 MODULE M3toSTextString;
 IMPORT Text, Scheme;

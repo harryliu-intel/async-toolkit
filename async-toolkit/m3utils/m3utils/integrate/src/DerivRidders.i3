@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: DerivRidders.i3,v 1.2 2001/10/10 07:39:54 mika Exp $ *)
 
 INTERFACE DerivRidders;
 IMPORT LRFunction AS Function;

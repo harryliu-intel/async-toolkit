@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: set.scm,v 1.3 2009/04/20 18:00:31 mika Exp $
 ;;
 
 (require-modules "hashtable")

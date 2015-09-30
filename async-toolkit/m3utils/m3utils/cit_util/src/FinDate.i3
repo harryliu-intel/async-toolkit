@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: FinDate.i3,v 1.3 2011/01/16 17:47:31 mika Exp $ *)
 
 INTERFACE FinDate;
 IMPORT Date, Time;
@@ -37,25 +37,6 @@ PROCEDURE ParseFed(date : TEXT) : T RAISES { ParseError };
 PROCEDURE ParseAmerican(date : TEXT) : T RAISES { ParseError };
   (* parse from format MM/DD/YYYY *)
 
-PROCEDURE ParseBritish(date : TEXT) : T RAISES { ParseError };
-  (* parse from format DD/MM/YYYY *)
-
-PROCEDURE ParseJulian(date : TEXT) : T RAISES { ParseError };
-  (* parse from integer or floating Julian format *)
-
-TYPE 
-  SpecificFormat = { VMS, ISO, US, UK, FIX, Julian, Permissive };
-
-CONST
-  SpecificFormatNames  = ARRAY SpecificFormat OF TEXT { "VMS", "ISO", "US", "UK", "FIX", "Julian", "Permissive" };
-
-PROCEDURE ParseSpecificFormat(fname : TEXT) : SpecificFormat RAISES { ParseError };
-
-TYPE SpecificParser = PROCEDURE (x : TEXT) : T RAISES { ParseError };
-
-CONST
-  SpecificParsers = ARRAY SpecificFormat OF SpecificParser { ParseDaily, ParseFed, ParseAmerican, ParseBritish, ParseCmdLine, ParseJulian, Parse };
-
 CONST ParseFIX = ParseCmdLine;
   (* parse from format YYYYMMDD *)
 
@@ -93,13 +74,6 @@ PROCEDURE FromTime(t : Time.T;
                    zone : Date.TimeZone := NIL (* Local if NIL *)) : T;
 
 PROCEDURE FromDate(d : Date.T) : T;
-
-PROCEDURE Morning(t : T) : Date.T; 
-  (* midnight this morning, producing a Date.T without the time zone
-     or weekDay fields set to anything sensible.  This is suitable for
-     passing to a TZ's mktime method. *)
-
-PROCEDURE DayOfWeek(t : T) : Date.WeekDay;
 
 PROCEDURE Today(zone : Date.TimeZone := NIL (* Local if NIL *)) : T;
 

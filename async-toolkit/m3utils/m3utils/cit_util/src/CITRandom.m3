@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: CITRandom.m3,v 1.4 2005/03/01 07:20:32 mika Exp $ *)
 
 (* Copyright (C) 1989, Digital Equipment Corporation           *)
 (* All rights reserved.                                        *)

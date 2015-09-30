@@ -1,5 +1,5 @@
 ;; 
-;; $Id$
+;; $Id: gnuplot.scm,v 1.2 2008/11/08 20:09:44 mika Exp $
 ;;
 ;; basic Scheme definitions for GNUPLOT
 ;;

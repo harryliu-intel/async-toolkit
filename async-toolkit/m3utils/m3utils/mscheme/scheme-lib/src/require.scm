@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: require.scm,v 1.4 2009/06/16 01:34:21 mika Exp $
 ;;
 ;; require.scm -- simple module system
 ;;

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SXGenOps.mg,v 1.2 2007/12/20 13:50:31 mika Exp $ *)
 
 GENERIC MODULE SXGenOps(Elem, Elem_ElemFuncOps);
 IMPORT SXBool, SXInt, SXBool_IntFuncOps;

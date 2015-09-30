@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Solve.i3,v 1.2 2002/04/04 10:10:19 mika Exp $ *)
 INTERFACE Solve;
 IMPORT LRFunction;
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: ProcUtils.m3,v 1.21 2011/02/17 21:07:02 mika Exp $ *)
 
 MODULE ProcUtils;
 
@@ -39,7 +39,7 @@ TYPE
     wait := Wait;
   END;
 
-  MainClosure = Thread.SizedClosure OBJECT
+  MainClosure = Thread.Closure OBJECT
     c: PrivateCompletion;
     src: Rd.T;
     wd0: Pathname.T;
@@ -100,7 +100,7 @@ PROCEDURE Run(source: Rd.T;
              po := ForkWriter(stdout),
              pe := ForkWriter(stderr),
              pi := ForkReader(stdin),
-             main := NEW(MainClosure, src:=source, wd0:=wd0, stackSize := 8192));
+             main := NEW(MainClosure, src:=source, wd0:=wd0));
   BEGIN
     c.main.c := c;
     c.th := Thread.Fork(c.main);

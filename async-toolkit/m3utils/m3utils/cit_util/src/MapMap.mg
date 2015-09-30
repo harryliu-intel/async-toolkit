@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: MapMap.mg,v 1.2 2010/11/13 02:06:32 mika Exp $ *)
 
 GENERIC MODULE MapMap(Map1, Map2);
 

@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Cardinal.m3,v 1.1 2001/11/26 22:40:00 mika Exp $ *)
 
 MODULE Cardinal;
 IMPORT Integer;

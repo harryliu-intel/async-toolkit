@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeProcedureStubs.m3,v 1.8 2011/03/13 18:10:43 mika Exp $ *)
 
 MODULE SchemeProcedureStubs;
 
@@ -265,15 +265,11 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
     
     WHILE ops # NIL DO
       IF ops.nam = name THEN
-        IF mapRuntimeErrors THEN
-          TRY
-            RETURN ops.proc(interp, obj, rest)
-          EXCEPT
-            <*NOWARN*>RuntimeError.E(err) =>
-            RAISE E("EXCEPTION! RuntimeError! calling out to Modula-3 code, op=" & SchemeSymbol.ToText(name) & " " &  RuntimeError.Tag(err) & "\n")
-          END
-        ELSE
+        TRY
           RETURN ops.proc(interp, obj, rest)
+        EXCEPT
+          <*NOWARN*>RuntimeError.E(err) =>
+          RAISE E("EXCEPTION! RuntimeError! calling out to Modula-3 code, op=" & SchemeSymbol.ToText(name) & " " &  RuntimeError.Tag(err) & "\n")
         END
       END;
       ops := ops.next
@@ -459,13 +455,5 @@ PROCEDURE ConditionallyConvertSymbolToPair(obj : Object) : SchemePair.T
       RAISE E("Can't convert to symbol-pair : " & Stringify(obj))
     END
   END ConditionallyConvertSymbolToPair;
-
-VAR mapRuntimeErrors := TRUE;
-
-PROCEDURE GetMapRuntimeErrors() : BOOLEAN = 
-  BEGIN RETURN mapRuntimeErrors END GetMapRuntimeErrors;
-
-PROCEDURE SetMapRuntimeErrors(to : BOOLEAN) =
-  BEGIN mapRuntimeErrors := to END SetMapRuntimeErrors;
 
 BEGIN END SchemeProcedureStubs.

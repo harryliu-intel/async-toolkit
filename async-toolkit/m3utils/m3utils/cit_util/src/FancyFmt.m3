@@ -5,7 +5,7 @@
    Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
-(* $Id$ *)
+(* $Id: FancyFmt.m3,v 1.2 2008/06/07 06:45:04 mika Exp $ *)
 
 MODULE FancyFmt;
 FROM Fmt IMPORT Style, Base;

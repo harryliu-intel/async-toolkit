@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Tree.ig,v 1.1 2004/09/18 00:35:27 mika Exp $ *)
 
 GENERIC INTERFACE Tree(Elem);
 

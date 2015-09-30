@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Main.m3,v 1.1 2010/03/14 20:47:03 mika Exp $ *)
 
 MODULE Main;
 IMPORT Math;

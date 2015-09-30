@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: program.c,v 1.1 2009/04/24 07:09:13 mika Exp $ */
 
 /* simple readline front-end with blocking communications in both directions */
 

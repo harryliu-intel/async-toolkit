@@ -1,6 +1,6 @@
 (* Copyright (c) 2000 California Institute of Technology *)
 (* All rights reserved. See the file COPYRIGHT for a full description. *)
-(* $Id$ *)
+(* $Id: ListF.ig,v 1.3 2004/04/17 00:42:20 kp Exp $ *)
 
 GENERIC INTERFACE ListF(Elem, ElemList);
 IMPORT Word;

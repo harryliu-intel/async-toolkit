@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: SchemeInteraction.i3,v 1.3 2009/11/28 12:11:34 mika Exp $ *)
 
 INTERFACE SchemeInteraction;
 IMPORT Scheme;

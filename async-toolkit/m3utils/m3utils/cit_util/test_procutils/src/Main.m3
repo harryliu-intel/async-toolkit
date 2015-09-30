@@ -5,7 +5,7 @@
    Author: Mika Nystrom <mika@alum.mit.edu>
 *)
 
-(* $Id$ *)
+(* $Id: Main.m3,v 1.2 2010/07/08 08:35:58 mika Exp $ *)
 
 MODULE Main;
 IMPORT SlowTextCompress;

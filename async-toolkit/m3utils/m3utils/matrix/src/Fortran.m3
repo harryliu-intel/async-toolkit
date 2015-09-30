@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Fortran.m3,v 1.1 2005/04/20 00:08:49 mika Exp $ *)
 
 MODULE Fortran;
 FROM Math IMPORT sqrt;

@@ -1,5 +1,5 @@
 ;;
-;; $Id$
+;; $Id: subdivide.scm,v 1.2 2010/04/06 03:10:35 mika Exp $
 ;;
 
 ;; example Scheme code to recursively subdivide rectangle in Euclidean plane

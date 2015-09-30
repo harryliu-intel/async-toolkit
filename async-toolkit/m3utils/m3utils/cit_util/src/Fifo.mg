@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Fifo.mg,v 1.5 2007/05/09 04:55:14 mika Exp $ *)
 
 GENERIC MODULE Fifo(Elem);
 

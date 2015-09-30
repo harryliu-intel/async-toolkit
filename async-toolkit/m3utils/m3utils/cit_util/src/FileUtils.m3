@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: FileUtils.m3,v 1.2 2007/05/01 07:47:41 mika Exp $ *)
 
 MODULE FileUtils;
 IMPORT Wr, Rd, Thread, OSError, FileRd, FileWr, TextWr;

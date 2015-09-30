@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: Chmod.m3,v 1.1 2006/03/12 11:05:32 mika Exp $ *)
 
 UNSAFE MODULE Chmod;
 IMPORT M3toC, Unix, Pathname, Ctypes;

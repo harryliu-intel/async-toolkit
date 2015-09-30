@@ -32,7 +32,6 @@ IMPORT SchemeString;
 IMPORT Csighandler; (* no-readline *)
 IMPORT SchemeModula3Types;
 IMPORT SchemeEnvironment;
-IMPORT SchemeBoolean;
 
 TYPE ContextClosure = M3Context.Closure OBJECT
     wr: Wr.T;
@@ -166,7 +165,6 @@ BEGIN
           scm.bind("the-protos", TypeTranslator.protoList);
           scm.bind("the-basetypes", TypeTranslator.basetypeList);
           scm.bind("the-sourcefiles", AstToType.filenames);
-          scm.bind("is-unsafe", SchemeBoolean.FromBool(AstToType.isUnsafe));
           FOR i := FIRST(args) TO LAST(args) DO
             Debug.Out("Loading SCM file " & args[i]);
             WITH str = SchemeString.FromText(args[i]) DO
