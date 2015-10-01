@@ -1,5 +1,4 @@
 MODULE ConvertTrace EXPORTS Main;
-IMPORT Params;
 IMPORT FileRd;
 IMPORT Rd;
 IMPORT Debug;
@@ -11,6 +10,12 @@ FROM Fmt IMPORT LongReal,Int, F;
 IMPORT FS;
 IMPORT UnsafeWriter;
 IMPORT Time;
+IMPORT ParseParams;
+IMPORT Stdio;
+IMPORT Pathname;
+IMPORT TextUtils;
+IMPORT Scan;
+IMPORT Lex, FloatMode;
 
 VAR doDebug := FALSE;
 
@@ -23,7 +28,7 @@ PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
 
   PROCEDURE Push(s, l : CARDINAL) =
     BEGIN
-      names.addhi(Text.FromChars(SUBARRAY(line,s,l-s-1)));
+      names.addhi(RenameBack(Text.FromChars(SUBARRAY(line,s,l-s-1))));
       INC(c)
     END Push;
 
@@ -52,7 +57,6 @@ PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
       END;
       INC(p)
     END;
-
 
     RETURN c
   END DoNames;
@@ -97,20 +101,30 @@ PROCEDURE DoData(READONLY line : ARRAY OF CHAR;
   PROCEDURE GetLR(VAR z : LONGREAL) : BOOLEAN  RAISES { ShortRead } =
     VAR  
       len : CARDINAL;
+      f : INTEGER;
       m := 0;
       x := 0;
+      neg : BOOLEAN;
     BEGIN
       WHILE NOT Char() IN SET OF CHAR { '-', '0' .. '9' } DO 
         INC(p); IF p = LAST(line)+1 THEN RETURN FALSE END
       END;
       m := 0;
-      EVAL GetInt(m);
+      EVAL GetInt(m); 
+      f := m;
+      m := ABS(m);
+      neg := m = -f;
       Get('.');
       len := GetInt(m);
       Get('e');
       EVAL GetInt(x);
       z := FLOAT(m,LONGREAL) * Exp[x-len];
-      IF doDebug THEN Debug.Out("GetLR " & LongReal(z)) END;
+      IF neg THEN z := -z END;
+      IF doDebug THEN 
+        Debug.Out(F("GetLR %s -> %s x (%s - %s) -> %s",
+                    Int(f), Int(m), Int(x), Int(len),
+                    LongReal(z)))
+      END;
       RETURN TRUE
     END GetLR;
 
@@ -195,12 +209,44 @@ PROCEDURE WriteNames() =
     END;
   END WriteNames;
 
+PROCEDURE RenameBack(txt : TEXT) : TEXT =
+  VAR
+    otxt := txt;
+  BEGIN
+    TRY
+    IF dutName = NIL THEN 
+      RETURN txt
+    ELSE
+      VAR pfx := dutName & ".";
+          p := 0;
+          res := "";
+      BEGIN
+        IF TextUtils.HavePrefix(txt, pfx) THEN
+          txt := TextUtils.RemovePrefix(txt, pfx);
+        ELSE
+          pfx := ""
+        END;
+        IF  Text.GetChar(txt,p) # 'h'  THEN RAISE Lex.Error END;
+        INC(p);
+        WHILE p < Text.Length(txt) DO
+          res := res & Text.FromChar(VAL(Scan.Int(Text.Sub(txt,p,2),
+                                                  defaultBase := 16),CHAR));
+          INC(p,2)
+        END;
+        RETURN pfx & res
+      END
+    END
+    EXCEPT
+      Lex.Error, FloatMode.Trap => 
+      Debug.Error("Cant convert node \"" & otxt & "\"")
+    END
+  END RenameBack;
+
 VAR
   names := NEW(TextSeq.T).init();
-  ifn := Params.Get(1);
-  ofn := Params.Get(2);
+  ifn, ofn : Pathname.T;
 
-  rd  := FileRd.Open(ifn);
+  rd  :Rd.T;
 
   buf : ARRAY [0..8191] OF CHAR;
 
@@ -213,7 +259,20 @@ VAR
   first : BOOLEAN;
   wdWr : REF ARRAY OF Wr.T;
   wd := "ct.work";
+  dutName : TEXT := NIL;
+  pp := NEW(ParseParams.T).init(Stdio.stderr);
 BEGIN
+  IF pp.keywordPresent("-rename") THEN
+    dutName := pp.getNext()
+  END;
+
+  ifn := pp.getNext();
+  ofn := pp.getNext();
+
+  pp.finish();
+
+  rd  := FileRd.Open(ifn);
+  
   names.addhi("TIME");
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
 
@@ -229,7 +288,11 @@ BEGIN
         Debug.Error("line too long")
       ELSIF n = 0 THEN
         IF Rd.EOF(rd) THEN
-          FlushData();
+          IF lbp # 0 THEN
+            DEC(lbp);
+            lbq := NUMBER(lbuff^);
+            FlushData()
+          END;
           Rd.Close(rd);
           EXIT
         END

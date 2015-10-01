@@ -51,6 +51,12 @@ BEGIN
     modelPath := pp.getNext()
   END;
 
+  IF pp.keywordPresent("-runlvl") THEN
+    SimDumper.runLvl := pp.getNextInt()
+  END;
+  
+  SimDumper.rename := pp.keywordPresent("-rename");
+
   IF pp.keywordPresent("-step") THEN
     simParams.step := pp.getNextLongReal()
   END;

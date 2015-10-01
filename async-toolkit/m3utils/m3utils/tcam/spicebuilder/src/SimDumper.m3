@@ -25,6 +25,7 @@ IMPORT AssertionList;
 IMPORT ProbeMode;
 IMPORT TextSetDef;
 IMPORT Params;
+IMPORT TextUtils;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*> (* sloppy! *)
@@ -33,6 +34,28 @@ CONST LR = Fmt.LongReal;
 
 CONST TE = Text.Equal;
 
+PROCEDURE Renamer(txt : TEXT) : TEXT =
+  VAR
+    dutPfx : TEXT;
+  BEGIN
+    IF rename THEN
+      dutPfx := dutName & ".";
+      IF TextUtils.HavePrefix(txt, dutPfx) THEN
+        txt := TextUtils.RemovePrefix(txt,dutPfx)
+      ELSE
+        dutPfx := ""
+      END;
+      VAR res := "h"; 
+      BEGIN
+        FOR i := 0 TO Text.Length(txt)-1 DO
+          res := res & F("%02s", Int(ORD(Text.GetChar(txt,i)), base := 16))
+        END;
+        RETURN dutPfx & res
+      END
+    ELSE
+      RETURN txt
+    END
+  END Renamer;
 
 PROCEDURE DumpProbes(wr : Wr.T; of : NodeRecSeq.T) =
   BEGIN
@@ -40,7 +63,7 @@ PROCEDURE DumpProbes(wr : Wr.T; of : NodeRecSeq.T) =
 
     FOR i := 0 TO of.size()-1 DO
       WITH rdr = of.get(i) DO
-        Wr.PutText(wr, F(".PROBE TRAN v(%s)\n", rdr.nm))
+        Wr.PutText(wr, F(".PROBE TRAN v(%s)\n", Renamer(rdr.nm)))
       END
     END
   END DumpProbes;
@@ -238,7 +261,7 @@ PROCEDURE DumpSpiceHeader(wr        : Wr.T;
         P("* HSPICE options");
         P(".PARAM ceil(x)='x<0 ? int(x) : int(x) < x ? int(x)+1 : int(x)'");
         P(F(".OPTION CSDF%s",probeOpt));
-        P(".OPTION runlvl=5"); (* second most accurate *)
+        P(".OPTION runlvl="&Int(runLvl)); 
         P(".OPTION warnlimit=2000");
         P(".OPTION dcon=1");
       END;
@@ -329,7 +352,7 @@ PROCEDURE DumpData(wr         : Wr.T;
       P("\n.TRAN DATA=dsrc\n");
       FOR i := 0 TO srcs.size()-1 DO
         WITH rec = srcs.get(i) DO
-          P(F("V%s %s 0 PWL(TIME, pv%s)", Int(i+1), rec.sNm, Int(i+1)))
+          P(F("V%s %s 0 PWL(TIME, pv%s)", Int(i+1), Renamer(rec.sNm), Int(i+1)))
         END
       END;
       P("\n.DATA dsrc");
@@ -353,7 +376,7 @@ PROCEDURE DumpData(wr         : Wr.T;
                hdd = nds.trans.get(rec.idx^,seq) DO
             Debug.Out("dumping " & rec.nds.nm & Dims.Format(rec.idx^));
             <*ASSERT hdd*>
-            lw.word(F("V%s %s 0 PWLZ", Int(i+1), rec.sNm));
+            lw.word(F("V%s %s 0 PWLZ", Int(i+1), Renamer(rec.sNm)));
 
             lw.word("(");
             VAR
@@ -432,7 +455,7 @@ PROCEDURE DumpInstantiation(wr : Wr.T) =
       DumpArgList(lw,dutArgs[i])
     END;
     lw.word("/");
-    lw.word(dutType);
+    lw.word(Renamer(dutType));
     lw.eol()
   END DumpInstantiation;
 
@@ -447,7 +470,7 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; arg : TEXT) =
           WITH iter = Dims.Iterate(nds.dims^),
                q    = Dims.Clone  (nds.dims^) DO
             WHILE iter.next(q^) DO
-              lw.word(arg & Dims.Format(q^))
+              lw.word(Renamer(arg & Dims.Format(q^)))
             END
           END;
           RETURN

@@ -387,6 +387,8 @@ CONST DutName = "X1";
 
 VAR simParams : SimParams.T;
 
+VAR extractPath := "/p/hlp/thkoo1/lion/tcam/inway7_extraction/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000_rcx/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000.sp";
+
 PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
 
   TYPE
@@ -424,7 +426,9 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     PP(AT { "holdfrac" }                , holdFrac);
     PP(AT { "setupfrac" }               , setupFrac);
     PP(AT { "risefrac", "risefallfrac" }, riseFallFrac);
-    
+
+    IF pp.keywordPresent("-extractpath") THEN extractPath := pp.getNext() END;
+
     IF pp.keywordPresent("-prog") THEN
       VAR found := FALSE;
           nm := pp.getNext();
@@ -481,7 +485,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     AddNodes("RESET_N"  , Scalar        , NEW(SeqSrc    , q := Seq[V.Rset]
                                                         , c := theClock ) );
 
-  SimDumper.DeclSequence("/p/hlp/thkoo1/lion/tcam/inway7_extraction/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000_rcx/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000.sp",
+  SimDumper.DeclSequence(extractPath,
                "ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl",
                ARRAY OF TEXT { "ADDR", 
                                "CFG",
@@ -501,7 +505,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
 
 
 
-  SimDumper.simExtras[Sim.T.XA].addhi(".OPTION XA_CMD=\"probe_waveform_voltage X1.* -limit 2\"");
+  SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %s* -limit 2\"", SimDumper.Renamer(DutName & ".")))
 
 
 END Build;

@@ -35,5 +35,10 @@ PROCEDURE AddDigitalModel(model : SimModel.T; clockNm : TEXT; aWr : Wr.T) : Asse
 
 VAR simExtras : ARRAY Sim.T OF TextSeq.T;
 
+VAR runLvl : [1..6] := 5; (* hspice run level *)
+    
+VAR rename := FALSE;
+
+PROCEDURE Renamer(txt : TEXT) : TEXT;
 
 END SimDumper.
