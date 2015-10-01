@@ -1063,7 +1063,6 @@ public final class CellUtils {
             for (Iterator j = nodeChannel.get(i.next()).iterator();
                  j.hasNext(); ) {
                 Channel channel = (Channel) j.next();
-                int level = 0;
                 for (int k = 0; k < parentLevels; ++k) {
                     final Channel parent = channel.getParent();
                     if (parent == null) break;
@@ -1201,7 +1200,7 @@ public final class CellUtils {
                 allowTwist, cad, vcad);
     }
 
-    public static <T> AliasedSet getChannelConnection(
+    public static AliasedSet getChannelConnection(
             final CellInterface cell,
             final Collection<Pair<Channel,Channel>> nodeConnections,
             final Collection<Pair<Channel,Channel>> narrowConnections,
