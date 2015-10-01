@@ -401,6 +401,7 @@ share/skill/layout/route/sync.il                      skill/layout/route/sync.il
 share/skill/layout/route/fill.il                      skill/layout/route/fill.il                      664 p 
 share/skill/layout/route/overlay.il                   skill/layout/route/overlay.il                   664 p 
 share/skill/layout/route/color.il                     skill/layout/route/color.il                     664 p 
+share/skill/layout/route/implant.il                   skill/layout/route/implant.il                   664 p 
 
 # Laygen
 share/skill/layout/laygen/import.il             skill/layout/laygen/import.il           664 p
