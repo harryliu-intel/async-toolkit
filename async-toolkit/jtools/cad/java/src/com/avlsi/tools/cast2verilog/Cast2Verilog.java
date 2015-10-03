@@ -2923,7 +2923,7 @@ public class Cast2Verilog {
 
         new Csp2Verilog(warningWriter, errorWriter, debugWriter, resetName,
                         registerBitWidth, probFilter, enableSystemVerilog)
-        .convert(cell, inputPorts, out);
+        .convert(cell, bodyName, inputPorts, out);
 
         out.println("endmodule     // CSP body ");
         out.println();

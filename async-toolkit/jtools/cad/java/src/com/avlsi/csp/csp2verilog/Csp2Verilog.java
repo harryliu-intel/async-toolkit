@@ -101,6 +101,7 @@ public class Csp2Verilog {
      * @param pw  PrintWriter to which to write the generated class.
      **/
     private void genCode(final CSPProgram p,
+                         final String moduleName,
                          final CSPCellInfo cellInfo,
                          final Collection/*<String>*/ inputPorts,
                          final boolean strictVars,
@@ -118,6 +119,7 @@ public class Csp2Verilog {
             } else {
                 visitor = new VerilogEmitter(cellInfo, inputPorts,
                     pw, warningWriter, errorWriter, debugWriter,
+                    moduleName,
                     resetNodeName, registerBitWidth, strictVars,
                     implicitInit, probFilter);
             }
@@ -149,6 +151,7 @@ public class Csp2Verilog {
      *        PrintWriter to which the verilog should be written.
      **/
     public void convert(final CellInterface cell,
+                        final String moduleName,
                         final Collection/*<String>*/ inputPorts,
                         final PrintWriter out)
         throws SemanticException {
@@ -183,7 +186,7 @@ public class Csp2Verilog {
             ((Boolean) DirectiveUtils.getCspDirective(
                            cell,
                            DirectiveConstants.IMPLICIT_INIT)).booleanValue();
-        genCode(unrolled, cell.getCSPInfo(), inputPorts, strictVars,
+        genCode(unrolled, moduleName, cell.getCSPInfo(), inputPorts, strictVars,
                 implicitInit, out);
     }
 
@@ -250,7 +253,7 @@ public class Csp2Verilog {
               resetNodeName, registerBitWidth,
               getProblemFilter(systemErrWriter), enableSystemVerilog,
               debugTransformation)
-        .convert(cell, Collections.EMPTY_LIST, out);
+        .convert(cell, "TOP", Collections.EMPTY_LIST, out);
         out.close();
     }
     public static ProblemFilter getProblemFilter(final PrintWriter pw) {

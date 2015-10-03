@@ -70,6 +70,12 @@ public class VerilogEmitter extends CommonEmitter {
     private final PrintWriter errorWriter;
 
     /**
+     * The module name of the container.  Used to create upward references to
+     * module variables.
+     **/
+    private final String moduleName;
+
+    /**
      * The type of register to use for boolean variables.
      **/
     private final String boolType;
@@ -402,6 +408,7 @@ public class VerilogEmitter extends CommonEmitter {
                           final PrintWriter warningWriter,
                           final PrintWriter errorWriter,
                           final PrintWriter debugWriter,
+                          final String moduleName,
                           final String resetNodeName,
                           final int registerBitWidth,
                           final boolean strictVars,
@@ -413,6 +420,7 @@ public class VerilogEmitter extends CommonEmitter {
         this.warningWriter = warningWriter;
         this.errorWriter = errorWriter;
         this.debugWriter = debugWriter;
+        this.moduleName = moduleName;
         this.analyzer = new VariableAnalyzer(cellInfo);
         this.analysisResults = null;
         this.boolType = "bit";
@@ -555,7 +563,7 @@ public class VerilogEmitter extends CommonEmitter {
         }
 
         if (!problems.hasError()) {
-            updateTokenVerilogMap(null);
+            updateTokenVerilogMap(moduleName);
             outputProgramBody(e);
             outputFunctions(e.getInitializerStatement());
             outputConstructors();
