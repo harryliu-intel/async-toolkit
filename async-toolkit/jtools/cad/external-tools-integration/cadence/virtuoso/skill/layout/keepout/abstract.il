@@ -115,7 +115,7 @@
                               (extendM1Keepout nil)
                               (extendM0Keepout nil)
                               )
-  (let (abstractCV name net fig term pin prb dd_CV layer purpose)
+  (let (abstractCV name net fig term pin prb dd_CV layer purpose map inLayerMap outLayerMap)
 
     ; sanity check
     (when CV->viewName=="abstract"
@@ -172,16 +172,32 @@
     ; chop flooded/extended keepout near pins
     (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
 
-    ; copy explicit metal shapes to KeepoutPurpose
-    (foreach shape CV->shapes
-             layer   = (car  shape->lpp)
-             purpose = (cadr shape->lpp)
-             (when !shape->pin && shape->objType!="label" && (isMetal layer) &&
-                   (purpose=="drawing" || purpose=="pin" || purpose=="vdd" || purpose=="gnd")
-                   fig = (dbCopyFig shape abstractCV)
-                   fig->lpp = (list layer KeepoutPurpose)
-                   )
+    ; create keepout for vias and metal
+    map = (list "vcn")
+    (foreach purpose (list "drawing" "fill")
+             map = (append map (list (list "vcn" purpose)))
              )
+    inLayerMap = (cons map inLayerMap)
+    outLayerMap = (cons (list "vcn" (list "vcn" KeepoutPurpose)) outLayerMap)
+    (for m 0 1
+         name = (sprintf nil "v%d" m)
+         map = (list name)
+         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                  map = (append map (list (list Via[m] purpose)))
+                  )
+         inLayerMap = (cons map inLayerMap)
+         outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
+         )
+    (for m 0 2
+         name = (sprintf nil "m%d" m)
+         map = (list name)
+         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                  map = (append map (list (list Metal[m] purpose)))
+                  )
+         inLayerMap = (cons map inLayerMap)
+         outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
+         )
+    (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
 
     ; chop keepout overlapping pins
     (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
@@ -205,7 +221,7 @@
 (defun CopyKeepoutToBlockage (cv)
   (let (points valid)
     (foreach shape cv->shapes
-      valid=nil
+      valid = (shape->lpp==(list "vcn" "keepout"))
       (for m 0 TopMetal   valid = valid || shape->lpp==MetalKeepout[m])
       (for m 0 TopMetal-1 valid = valid || shape->lpp==ViaKeepout[m])
       (when valid
