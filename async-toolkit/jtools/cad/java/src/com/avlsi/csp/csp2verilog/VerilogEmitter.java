@@ -392,14 +392,345 @@ public class VerilogEmitter extends CommonEmitter {
         old.write(part);
     }
 
-    private void emitChannelEnable(final ExpressionInterface chanExpr)
-        throws VisitorException {
-        emitChannelPart(chanExpr, "$enable");
+    private interface ChannelOperations {
+        void visitProbeExpression(ExpressionInterface chanExpr)
+            throws VisitorException;
+        void visitPeekExpression(ExpressionInterface chanExpr)
+            throws VisitorException;
+        void visitSendStatement(SendStatement s) throws VisitorException;
+        void visitReceiveStatement(ReceiveStatement s) throws VisitorException;
+        void processChannel(ExpressionInterface chanExpr, boolean bool)
+            throws VisitorException;
     }
 
-    private void emitChannelData(final ExpressionInterface chanExpr)
-        throws VisitorException {
-        emitChannelPart(chanExpr, "$data");
+    private ChannelOperations getChannelOperation(
+            final ExpressionInterface chanExpr) {
+        final ChannelType chanType =
+            (ChannelType) analysisResults.getType(chanExpr);
+        final String typeName = chanType.getTypeName();
+        if (typeName.startsWith("standard.channel.bd")) {
+            return new BDChannelOperations();
+        } else if (typeName.startsWith("standard.channel.e1of")) {
+            return new E1ofNChannelOperations();
+        } else {
+            throw new RuntimeException("No support for channel type: " +
+                    typeName);
+        }
+    }
+
+    private class E1ofNChannelOperations implements ChannelOperations {
+        private void emitChannelEnable(final ExpressionInterface chanExpr)
+            throws VisitorException {
+            emitChannelPart(chanExpr, "$enable");
+        }
+
+        private void emitChannelData(final ExpressionInterface chanExpr)
+            throws VisitorException {
+            emitChannelPart(chanExpr, "$data");
+        }
+
+        public void visitProbeExpression(ExpressionInterface chanExpr)
+            throws VisitorException {
+            // #L == (L.d >= 0)
+            // #R == R.e
+
+            // The type checking pass should have ensured that this is indeed
+            // a channel type.
+            final ChannelType type = 
+                (ChannelType) analysisResults.getType(chanExpr);
+            // Add - to compensate for difference in verilog and csp
+            // comparison semantics.
+            if (type.getDirection() == PortDirection.IN) {
+                out.print("(");
+                emitChannelData(chanExpr);
+                out.println(" >= 0)");
+            } else {
+                assert type.getDirection() == PortDirection.OUT;
+                emitChannelEnable(chanExpr);
+            }
+        }
+
+        public void visitPeekExpression(ExpressionInterface chanExpr)
+            throws VisitorException {
+            //  inside guard: #L? == L.d
+            // outside guard: #L? == ( [ L.d >= 0 ] ; L.d )
+            // FunctionPreprocessor converts peeks outside of guards
+            // to assignment statements that are handled specially
+            // in this file by visitAssignmentStatement
+            // It converts peeks within guards by pre-pending AND of
+            // probes to the expression.
+            // Thus, here, we just need to spit L.d
+            emitChannelData(chanExpr);
+        }
+
+        public void visitSendStatement(SendStatement s)
+            throws VisitorException {
+            // R!x == ( [  R.e ] ; R.d = POSMOD(x, numValues)
+            //        ; [ !R.e ] ; R.d = -1 )
+            // Good test cases include:
+            // 1. R[getTime() % N]!x
+            // This will ensure channel is evaluated only once
+            
+            final ExpressionInterface chanExpr = s.getChannelExpression();
+
+            // The type checking pass should have ensured that this is indeed
+            // a channel type and that the direction is appropriate
+            final ChannelType type =
+                (ChannelType) analysisResults.getType(chanExpr);
+            assert type.getDirection() == PortDirection.OUT;
+            final BigInteger numValues = type.getNumValues();
+            assert numValues.signum() == 1;
+
+            out.print("wait(");
+            visitProbeExpression(chanExpr);
+            out.println(");");
+
+            lvalues.add(s.getRightHandSide());
+
+            final boolean pow2 = BigIntegerUtil.isPowerOf2(numValues);
+
+            if (!pow2) {
+                out.print("if ((");
+                // it's okay to evaluate the rhs multiple times because rhs is
+                // guaranteed to be a simple variable
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                out.print(" < 1'sb0) || (");
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                out.print(" >= ");
+                processBigInteger(numValues, 10);
+                out.println("))");
+                out.print("`CAST2VERILOG_CSP_WARNING(\"" +
+                          s.getParseRange().fullString() + "\", " +
+                          "util.posmod_warning(");
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                out.print(", ");
+                processBigInteger(numValues.subtract(BigInteger.ONE), 10);
+                out.println("))");
+            }
+
+            emitChannelData(chanExpr);
+            out.print(" = ");
+            if (numValues.equals(BigInteger.ONE)) {
+                out.print("0");
+            } else {
+                if (pow2) {
+                    processBigInteger(numValues.subtract(BigInteger.ONE), 16);
+                    out.print(" & (");
+                } else {
+                    out.print("util.posmod(");
+                }
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                if (!pow2) {
+                    out.println(", ");
+                    processBigInteger(numValues, 16);
+                }
+                out.print(")");
+            }
+            out.println(';');
+
+            out.print("wait(!");
+            emitChannelEnable(chanExpr);
+            out.println(");");
+
+            emitChannelData(chanExpr);
+            out.println(" = -1;");
+        }
+
+        public void visitReceiveStatement(ReceiveStatement s)
+            throws VisitorException {
+            // This expansion requires slack of at least 1 to get probe
+            // sends to behave properly.
+            // L?x == ( [ L.d >= 0 ] ; x = L.d ; L.e = 0
+            //        ; [ L.d <  0 ] ; L.e = 1 )
+            // Good test cases include:
+            // 1. L[getTime() % N]?x
+            // 2. L[x]?x
+            // These will ensure channel is evaluated only once
+            
+            final ExpressionInterface chanExpr = s.getChannelExpression();
+
+            out.print("wait(");
+            emitChannelData(chanExpr);
+            out.println(" >= 0);");
+
+            if (s.getRightHandSide() != null)
+                processAssignmentStatement(s.getRightHandSide(),
+                                           s.getRightHandSide(), chanExpr,
+                                           null);
+
+            emitChannelEnable(chanExpr);
+            out.println(" = 0;");
+
+            out.print("wait(");
+            emitChannelData(chanExpr);
+            out.println(" < 0);");
+
+            emitChannelEnable(chanExpr);
+            out.println(" = 1;");
+        }
+
+        public void processChannel(ExpressionInterface chanExpr, boolean bool)
+            throws VisitorException {
+            if (bool) out.print("(");
+            emitChannelData(chanExpr);
+            if (bool) out.print("!= 0)");
+        }
+    }
+
+    private class BDChannelOperations implements ChannelOperations {
+        private void emitChannelAck(final ExpressionInterface chanExpr)
+            throws VisitorException {
+            emitChannelPart(chanExpr, "$ack");
+        }
+
+        private void emitChannelReq(final ExpressionInterface chanExpr)
+            throws VisitorException {
+            emitChannelPart(chanExpr, "$req");
+        }
+
+        private void emitChannelData(final ExpressionInterface chanExpr)
+            throws VisitorException {
+            emitChannelPart(chanExpr, "$data");
+        }
+
+        private void emitChannelDataRhs(final ExpressionInterface chanExpr)
+            throws VisitorException {
+            out.print("$signed({1'b0, ");
+            emitChannelData(chanExpr);
+            out.print("})");
+        }
+
+        public void visitProbeExpression(ExpressionInterface chanExpr)
+            throws VisitorException {
+            // #L == (L.C.q != L.C.a)
+            // #R == (R.C.q == R.c.a)
+
+            final ChannelType type = 
+                (ChannelType) analysisResults.getType(chanExpr);
+            final String op =
+                type.getDirection() == PortDirection.IN ? "!=" : "==";
+
+            out.print("(");
+            emitChannelReq(chanExpr);
+            out.print(" " + op + " ");
+            emitChannelAck(chanExpr);
+            out.print(")");
+        }
+
+        public void visitPeekExpression(ExpressionInterface chanExpr)
+            throws VisitorException {
+            //  inside guard: #L? == L.d
+            // outside guard: #L? == ( [ L.d >= 0 ] ; L.d )
+            // FunctionPreprocessor converts peeks outside of guards
+            // to assignment statements that are handled specially
+            // in this file by visitAssignmentStatement
+            // It converts peeks within guards by pre-pending AND of
+            // probes to the expression.
+            // Thus, here, we just need to spit L.d
+            emitChannelDataRhs(chanExpr);
+        }
+
+        public void visitSendStatement(SendStatement s)
+            throws VisitorException {
+            // R!x == ( [ #R ]; R.d = POSMOD(x, numValues); R.q = ~R.q )
+            // Good test cases include:
+            // 1. R[getTime() % N]!x
+            // This will ensure channel is evaluated only once
+            
+            final ExpressionInterface chanExpr = s.getChannelExpression();
+
+            // The type checking pass should have ensured that this is indeed
+            // a channel type and that the direction is appropriate
+            final ChannelType type =
+                (ChannelType) analysisResults.getType(chanExpr);
+            assert type.getDirection() == PortDirection.OUT;
+            final BigInteger numValues = type.getNumValues();
+            assert numValues.signum() == 1;
+
+            out.print("wait(");
+            visitProbeExpression(chanExpr);
+            out.println(");");
+
+            lvalues.add(s.getRightHandSide());
+
+            final boolean pow2 = BigIntegerUtil.isPowerOf2(numValues);
+
+            if (!pow2) {
+                out.print("if ((");
+                // it's okay to evaluate the rhs multiple times because rhs is
+                // guaranteed to be a simple variable
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                out.print(" < 1'sb0) || (");
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                out.print(" >= ");
+                processBigInteger(numValues, 10);
+                out.println("))");
+                out.print("`CAST2VERILOG_CSP_WARNING(\"" +
+                          s.getParseRange().fullString() + "\", " +
+                          "util.posmod_warning(");
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                out.print(", ");
+                processBigInteger(numValues.subtract(BigInteger.ONE), 10);
+                out.println("))");
+            }
+
+            emitChannelData(chanExpr);
+            out.print(" = ");
+            if (numValues.equals(BigInteger.ONE)) {
+                out.print("0");
+            } else {
+                if (pow2) {
+                    processBigInteger(numValues.subtract(BigInteger.ONE), 16);
+                    out.print(" & (");
+                } else {
+                    out.print("util.posmod(");
+                }
+                s.getRightHandSide().accept(VerilogEmitter.this);
+                if (!pow2) {
+                    out.println(", ");
+                    processBigInteger(numValues, 16);
+                }
+                out.print(")");
+            }
+            out.println(';');
+
+            emitChannelReq(chanExpr);
+            out.print(" = ~");
+            emitChannelReq(chanExpr);
+            out.println(";");
+        }
+
+        public void visitReceiveStatement(ReceiveStatement s)
+            throws VisitorException {
+            // L?x == ( [ #L ]; x = L.d; L.a = ~L.a )
+            // Good test cases include:
+            // 1. L[getTime() % N]?x
+            // 2. L[x]?x
+            // These will ensure channel is evaluated only once
+            
+            final ExpressionInterface chanExpr = s.getChannelExpression();
+
+            out.print("wait(");
+            visitProbeExpression(chanExpr);
+            out.println(");");
+
+            if (s.getRightHandSide() != null)
+                processAssignmentStatement(s.getRightHandSide(),
+                                           s.getRightHandSide(), chanExpr,
+                                           null);
+
+            emitChannelAck(chanExpr);
+            out.print(" = ~");
+            emitChannelAck(chanExpr);
+            out.println(";");
+        }
+
+        public void processChannel(ExpressionInterface chanExpr, boolean bool)
+            throws VisitorException {
+            if (bool) out.print("(");
+            emitChannelDataRhs(chanExpr);
+            if (bool) out.print("!= 0)");
+        }
     }
 
     public VerilogEmitter(final CSPCellInfo cellInfo,
@@ -841,37 +1172,14 @@ public class VerilogEmitter extends CommonEmitter {
 
     public void visitPeekExpression(PeekExpression e)
         throws VisitorException {
-        //  inside guard: #L? == L.d
-        // outside guard: #L? == ( [ L.d >= 0 ] ; L.d )
-        // FunctionPreprocessor converts peeks outside of guards
-        // to assignment statements that are handled specially
-        // in this file by visitAssignmentStatement
-        // It converts peeks within guards by pre-pending AND of
-        // probes to the expression. 
-        // Thus, here, we just need to spit L.d
-        emitChannelData(e.getChannelExpression());
+        getChannelOperation(e.getChannelExpression())
+            .visitPeekExpression(e.getChannelExpression());
     }
 
     public void visitProbeExpression(ProbeExpression e)
         throws VisitorException {
-        // #L == (L.d >= 0)
-        // #R == R.e
-
-        final ExpressionInterface chanExpr = e.getChannelExpression();
-        // The type checking pass should have ensured that this is indeed
-        // a channel type.
-        final ChannelType type = 
-            (ChannelType) analysisResults.getType(chanExpr);
-        // Add - to compensate for difference in verilog and csp
-        // comparison semantics.
-        if (type.getDirection() == PortDirection.IN) {
-            out.print("(");
-            emitChannelData(chanExpr);
-            out.println(" >= 0)");
-        } else {
-            assert type.getDirection() == PortDirection.OUT;
-            emitChannelEnable(chanExpr);
-        }
+        getChannelOperation(e.getChannelExpression())
+            .visitProbeExpression(e.getChannelExpression());
     }
 
     public void visitReceiveExpression(ReceiveExpression e)
@@ -938,9 +1246,7 @@ public class VerilogEmitter extends CommonEmitter {
         else {
             final boolean bool =
                 analysisResults.getType(rhs) instanceof BooleanType;
-            if (bool) out.print("(");
-            emitChannelData(chanExpr);
-            if (bool) out.print("!= 0)");
+            getChannelOperation(chanExpr).processChannel(chanExpr, bool);
         }
     }
 
@@ -1589,17 +1895,17 @@ public class VerilogEmitter extends CommonEmitter {
     public void visitAssignmentStatement(AssignmentStatement s)
         throws VisitorException {
         final ExpressionInterface rhs = s.getRightHandSide();
-        // Here we handle peeks outside of guards as a special case of the rhs of assignments 
-        // because the FunctionPreprocessor transforms peeks outside of guards as
-        // x = #X? + 0 into temp = #X?; x = temp + 0
+        // Here we handle peeks outside of guards as a special case of the rhs
+        // of assignments because the FunctionPreprocessor transforms peeks
+        // outside of guards as x = #X? + 0 into temp = #X?; x = temp + 0
         // Peeks inside guards are handled in visitPeekExpressions
         if (rhs instanceof PeekExpression) {
             // outside guard: #L? == ( [ L.d >= 0 ] ; L.d )
             final ExpressionInterface chanExpr =
                 ((PeekExpression) rhs).getChannelExpression();
             out.print("wait(");
-            emitChannelData(chanExpr);
-            out.println(" >= 0);");
+            getChannelOperation(chanExpr).visitProbeExpression(chanExpr);
+            out.println(");");
             processAssignmentStatement(s.getLeftHandSide(), rhs,
                                        chanExpr, null);
         } else if (rhs instanceof FunctionCallExpression) {
@@ -1913,35 +2219,8 @@ public class VerilogEmitter extends CommonEmitter {
 
     public void visitReceiveStatement(ReceiveStatement s)
         throws VisitorException {
-        // This expansion requires slack of at least 1 to get probe
-        // sends to behave properly.
-        // L?x == ( [ L.d >= 0 ] ; x = L.d ; L.e = 0
-        //        ; [ L.d <  0 ] ; L.e = 1 )
-        // Good test cases include:
-        // 1. L[getTime() % N]?x
-        // 2. L[x]?x
-        // These will ensure channel is evaluated only once
-        
-        final ExpressionInterface chanExpr = s.getChannelExpression();
-
-        out.print("wait(");
-        emitChannelData(chanExpr);
-        out.println(" >= 0);");
-
-        if (s.getRightHandSide() != null)
-            processAssignmentStatement(s.getRightHandSide(),
-                                       s.getRightHandSide(), chanExpr,
-                                       null);
-
-        emitChannelEnable(chanExpr);
-        out.println(" = 0;");
-
-        out.print("wait(");
-        emitChannelData(chanExpr);
-        out.println(" < 0);");
-
-        emitChannelEnable(chanExpr);
-        out.println(" = 1;");
+        getChannelOperation(s.getChannelExpression())
+            .visitReceiveStatement(s);
     }
 
     private void processConcat(final String var, final String literal) {
@@ -1952,75 +2231,8 @@ public class VerilogEmitter extends CommonEmitter {
 
     public void visitSendStatement(SendStatement s)
         throws VisitorException {
-        // R!x == ( [  R.e ] ; R.d = POSMOD(x, numValues)
-        //        ; [ !R.e ] ; R.d = -1 )
-        // Good test cases include:
-        // 1. R[getTime() % N]!x
-        // This will ensure channel is evaluated only once
-        
-        final ExpressionInterface chanExpr = s.getChannelExpression();
-
-        // The type checking pass should have ensured that this is indeed
-        // a channel type and that the direction is appropriate
-        final ChannelType type =
-            (ChannelType) analysisResults.getType(chanExpr);
-        assert type.getDirection() == PortDirection.OUT;
-        final BigInteger numValues = type.getNumValues();
-        assert numValues.signum() == 1;
-
-        out.print("wait(");
-        emitChannelEnable(chanExpr);
-        out.println(");");
-
-        lvalues.add(s.getRightHandSide());
-
-        final boolean pow2 = BigIntegerUtil.isPowerOf2(numValues);
-
-        if (!pow2) {
-            out.print("if ((");
-            // it's okay to evaluate the rhs multiple times because rhs is
-            // guaranteed to be a simple variable
-            s.getRightHandSide().accept(this);
-            out.print(" < 1'sb0) || (");
-            s.getRightHandSide().accept(this);
-            out.print(" >= ");
-            processBigInteger(numValues, 10);
-            out.println("))");
-            out.print("`CAST2VERILOG_CSP_WARNING(\"" +
-                      s.getParseRange().fullString() + "\", " +
-                      "util.posmod_warning(");
-            s.getRightHandSide().accept(this);
-            out.print(", ");
-            processBigInteger(numValues.subtract(BigInteger.ONE), 10);
-            out.println("))");
-        }
-
-        emitChannelData(chanExpr);
-        out.print(" = ");
-        if (numValues.equals(BigInteger.ONE)) {
-            out.print("0");
-        } else {
-            if (pow2) {
-                processBigInteger(numValues.subtract(BigInteger.ONE), 16);
-                out.print(" & (");
-            } else {
-                out.print("util.posmod(");
-            }
-            s.getRightHandSide().accept(this);
-            if (!pow2) {
-                out.println(", ");
-                processBigInteger(numValues, 16);
-            }
-            out.print(")");
-        }
-        out.println(';');
-
-        out.print("wait(!");
-        emitChannelEnable(chanExpr);
-        out.println(");");
-
-        emitChannelData(chanExpr);
-        out.println(" = -1;");
+        getChannelOperation(s.getChannelExpression())
+            .visitSendStatement(s);
     }
 
     public void visitSequentialStatement(SequentialStatement s)

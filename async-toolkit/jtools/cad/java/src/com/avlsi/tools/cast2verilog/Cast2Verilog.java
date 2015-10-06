@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -37,7 +38,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.text.MessageFormat;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import com.avlsi.cast.CastFileParser;
 import com.avlsi.cast.CastSemanticException;
@@ -48,6 +54,7 @@ import com.avlsi.cast2.util.StandardParsingOption;
 import com.avlsi.cell.CellInterface;
 import com.avlsi.cell.CellImpl;
 import com.avlsi.cell.CellUtils;
+import com.avlsi.cell.CellUtils.MarkPort;
 import com.avlsi.cell.NoSuchEnvironmentException;
 import com.avlsi.csp.csp2java.SemanticException;
 import com.avlsi.csp.csp2verilog.Csp2Verilog;
@@ -65,6 +72,7 @@ import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.file.common.HierName;
 import com.avlsi.io.FileSearchPath;
 import com.avlsi.io.NullWriter;
+import com.avlsi.io.Separator;
 import com.avlsi.prs.ProductionRule;
 import com.avlsi.tools.cadencize.Cadencize;
 import com.avlsi.tools.cosim.ChannelTimingInfo;
@@ -94,13 +102,15 @@ import com.avlsi.util.container.AliasedMap;
 import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.FlatteningIterator;
+import com.avlsi.util.container.IterableIterator;
+import com.avlsi.util.container.MappingIterator;
 import com.avlsi.util.container.MultiMap;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.Triplet;
+import com.avlsi.util.functions.UnaryFunction;
+import com.avlsi.util.math.BigIntegerUtil;
 import com.avlsi.util.text.NaturalStringComparator;
 import com.avlsi.util.text.StringUtil;
-
-
 
 /**
  * Generates Verilog from Cast 
@@ -122,17 +132,6 @@ public class Cast2Verilog {
         "CAST2VERILOG_ANNOTATE_DELAYBIAS";
     private static final String extraDelayAnnotationName =
         "CAST2VERILOG_ANNOTATE_EXTRADELAY";
-    private final Set /*<Pair<Integer,Integer>>*/ usedWide2NarrowConvs = 
-        new TreeSet (new Comparator() {
-            public int compare(final Object o1, final Object o2) {
-                final int[] i1 = (int[]) o1;
-                final int[] i2 = (int[]) o2;
-                for (int i = 0; i < 3; ++i) {
-                    if (i1[i] != i2[i]) return i1[i] - i2[i];
-                }
-                return 0;
-            }
-        });
 
     private final Map subcellNames;
 
@@ -175,6 +174,375 @@ public class Cast2Verilog {
 
     private Cadencize vcad = null;  // Verilog Cadencize
     private Cadencize cad = null;   // non-Verilog Cadencize
+
+    private static String esc(String s) {
+        return VerilogUtil.escapeIfNeeded(s);
+    }
+
+    private interface ChannelEmitter {
+        ChannelType getType();
+        Stream<String> getComponents();
+        default int getNumBitsWide(ChannelType chanType) {
+            return Cast2Verilog.getNumBitsWide(chanType);
+        }
+        default int getNumBitsNarrow(ChannelType chanType) {
+            return Cast2Verilog.getNumBitsNarrow(chanType);
+        }
+        default void emitPassThru(PrintWriter out, ChannelType lport, ChannelType rport) {}
+
+        default void emitPortDeclaration(String name,
+                                         List<ArrayType> arrays,
+                                         int direction,
+                                         IntFunction<String> netTypeFunction,
+                                         String suffix,
+                                         Separator out) {}
+        default void emitPortInitializer(String name,
+                                         List<ArrayType> arrays,
+                                         int direction,
+                                         PrintWriter out) {}
+        default void getInputPorts(String name,
+                                   List<ArrayType> arrays,
+                                   int direction,
+                                   List<String> inputPorts) {}
+        String getSlackWrapperName(int direction, int slack);
+        default void emitSlackWrapper(final String name,
+                                      int direction,
+                                      String actualSuffix,
+                                      Function<String,ChannelTimingInfo> ctiFunc,
+                                      String reset,
+                                      PrintWriter out) {
+            final ChannelTimingInfo cti = ctiFunc.apply(name);
+            final int slack = cti.getSlack();
+            final float latency = numTransitions(cti.getLatency());
+            final float cycletime = numTransitions(cti.getCycleTime());
+            final int bitWidth = getNumBitsWide(getType());
+
+            // emit timing buffer instantiation
+            out.print(getSlackWrapperName(direction, slack));
+
+            out.print(" #(.bit_width(" + (bitWidth - 1) + "), ");
+            out.print(".cycle_time (" + cycletime + "), ");
+            if (slack != 0) {
+                out.print(".slack (" + slack + "), ");
+                out.print(".forward_latency (" + latency + "), ");
+                out.print(".cycle_time_in (" +
+                          numTransitions(cti.getCycleTimeIn()) + "), ");
+                out.print(".cycle_time_out (" +
+                          numTransitions(cti.getCycleTimeOut()) + "), ");
+            }
+            if (direction < 0) {
+                out.print(".fb_neutral (" +
+                          numTransitions(cti.getDataNeutralEnableLatency()) +
+                          "), ");
+                out.print(".fb_valid (" +
+                          numTransitions(cti.getDataValidEnableLatency()) +
+                          ")");
+            } else {
+                out.print(".bf_latency (" +
+                          numTransitions(cti.getEnableDataLatency()) + ")");
+            }
+            out.println(") " + esc("tb_" + name) + " (");
+            final Separator sout = new Separator(out);
+            sout.print("." + resetNodeName + " (" + esc(reset) + ")"); 
+            final Pair<String,String> parts = mungeArray(name);
+            emitChannelConnection(direction < 0 ? "L" : "R", name, null, sout);
+            emitChannelConnection(direction < 0 ? "R" : "L",
+                    x -> Optional.of(esc(parts.getFirst() + x + actualSuffix) +
+                                     parts.getSecond()),
+                    null, sout);
+            out.println(");");
+        }
+        default void emitBodyInstantiation(String name, String actualSuffix,
+                                           Separator out) {
+            getComponents()
+                  .forEach(s -> out.print("." + esc(name + s) + "(" +
+                                          esc(name + s + actualSuffix) + ")"));
+        }
+        default void emitChannelConnection(String formal,
+                                           Function<String,Optional<String>> actualFunc,
+                                           String hier, Separator sout) {
+            getComponents().forEach(s -> {
+                String actualHier = actualFunc.apply(s)
+                                              .map(x -> hierRef(hier, x))
+                                              .orElse("/*NC*/");
+                sout.print("  ." + esc(formal + s) + "(" + actualHier + ")");
+            });
+        }
+        default void emitChannelConnection(String formal, final String actual,
+                                           String hier, Separator sout) {
+            emitChannelConnection(
+                    formal,
+                    x -> Optional.ofNullable(actual).map(y -> esc(y + x)),
+                    hier, sout);
+        }
+        default void emitWideConverterInstantiation(
+                final CellUtils.Channel wide,
+                final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+                final String hier,
+                final PrintWriter out) {
+            throw new RuntimeException(
+                    "emitWideConverterInstantiation not implemented");
+        }
+        void emitChannelDecl(String name, PrintWriter out);
+        void emitNarrowConverterInstantiation(
+                final CellUtils.Channel narrow,
+                final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+                final String hier,
+                final PrintWriter out);
+    }
+
+    private static class E1ofNChannelEmitter implements ChannelEmitter {
+        private ChannelType chanType;
+        public E1ofNChannelEmitter(ChannelType chanType) {
+            this.chanType = chanType;
+        }
+        public ChannelType getType() {
+            return chanType;
+        }
+        public Stream<String> getComponents() {
+            return Stream.of("$data", "$enable");
+        }
+        public void emitPortDeclaration(String name,
+                                        List<ArrayType> arrays,
+                                        int direction,
+                                        IntFunction<String> netTypeFunction,
+                                        String suffix,
+                                        Separator out) {
+            final int bitWidth = getNumBitsWide(chanType);
+            out.print(netTypeFunction.apply(direction) + " signed [" +
+                      (bitWidth - 1) + ":0] " + 
+                      esc(name + "$data" + suffix) +
+                      getArrayDecl(arrays));
+            out.print(netTypeFunction.apply(-direction) + " " +
+                      esc(name + "$enable" + suffix) +
+                      getArrayDecl(arrays));
+        }
+        public void emitPortInitializer(String name,
+                                        List<ArrayType> arrays,
+                                        int direction,
+                                        PrintWriter out) {
+            final String minusOne = arrays.isEmpty() ? "-1" : "'{default:-1}";
+            final String one = arrays.isEmpty() ? "1" : "'{default:1}";
+            if (direction > 0) {
+                out.println(esc(name + "$data") + " = " + minusOne + ";");
+            } else {
+                out.println(esc(name + "$enable") + " = " + one + ";");
+            }
+        }
+        public void getInputPorts(String name,
+                                  List<ArrayType> arrays,
+                                  int direction,
+                                  List<String> inputPorts) {
+            if (direction > 0) {
+                inputPorts.add(esc(name + "$enable"));
+            } else {
+                inputPorts.add(esc(name + "$data"));
+            }
+        }
+        public String getSlackWrapperName(int direction, int slack) {
+            return "`CAST2VERILOG_" + 
+                   (direction < 0 ? "INPUT" : "OUTPUT") +
+                   "_TIMINGBUFFER" +
+                   (slack == 0 ? "_SLACK0" : "");
+        }
+        public void emitWideConverterInstantiation(
+                final CellUtils.Channel wide,
+                final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+                final String hier,
+                final PrintWriter out) {
+            final int base = BigIntegerUtil.safeIntValue(chanType.getNumValues());
+            final int width = chanType.getWidth();
+            final int narrowBits = getNumBitsNarrow(chanType);
+            final int wideBits = getNumBitsWide(chanType);
+
+            final String module =
+                "csp_e1of_" + (wide.isInput() ? "narrowwide" : "widenarrow");
+            final String params = "#(" + base + "," +
+                                         width + "," +
+                                         narrowBits + "," +
+                                         wideBits +
+                                  ")";
+            final String otherWide = portMap.get(wide).getFullName();
+            out.println(esc(module) + params + " " + esc("conv_" + otherWide) + "(");
+
+            final Separator sout = new Separator(out);
+
+            // output connections to the wide side of the converter
+            emitChannelConnection("WIDE", otherWide, hier, sout);
+
+            // output connections to the narrow side of the converter
+            for (String s : new String[] { "$data", "$enable" }) {
+                sout.print("  ." + esc("NARROW" + s) + "(" +
+                           wide.getChildren()
+                               .stream()
+                               .map(narrow -> portMap.get(narrow).getFullName())
+                               .map(chan -> hierRef(hier, esc(chan + s)))
+                               .collect(Collectors.joining(", ", "{", "}")) +
+                           ")");
+            }
+
+            out.println(");"); 
+        }
+        public void emitChannelDecl(String name, PrintWriter out) {
+            declareWire(name + "$data", getNumBitsWide(chanType), out);
+            declareWire(name + "$enable", 0, out);
+        }
+        public void emitNarrowConverterInstantiation(
+                final CellUtils.Channel narrow,
+                final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+                final String hier,
+                final PrintWriter out) {
+            final ChannelType type = (ChannelType) narrow.getType();
+            final int base = BigIntegerUtil.safeIntValue(type.getNumValues());
+
+            final String otherNarrow = portMap.get(narrow).getFullName();
+            out.print(narrow.isInput() ? "Nodes2ChannelConv2"
+                                       : "Channel2NodesConv2");
+            out.print(" #(.base(" + base + "), ");
+            out.print(".numBits(" + getNumBitsNarrow(type) + ")) "); 
+            out.println("\\conv_" + otherNarrow + " (");
+
+            final Separator sout = new Separator(out);
+            // output connections to the narrow side of the converter
+            getChannelEmitter(type).
+                emitChannelConnection("channel", otherNarrow, hier, sout);
+
+            // output connections to the node side of the converter
+            // the order is d[0], d[1], ...
+            final Collection<CellUtils.Channel> children = narrow.getChildren();
+            final Iterator<CellUtils.Channel> i = children.iterator();
+            final Function<CellUtils.Channel,String> nameFunc =
+                node -> hierRef(hier, esc(portMap.get(node).getFullName()));
+            sout.print(".nodes(" +
+                       IntStream.range(1, children.size())
+                                .mapToObj(n -> i.next())
+                                .map(nameFunc)
+                                .collect(Collectors.joining(", ", "{", "}")) +
+                       ")");
+
+            // output connection to enable
+            sout.print(".enable(" + nameFunc.apply(i.next()) + ")");
+            out.println(");");
+        }
+        public int getNumBitsNarrow(final ChannelType chanType) {
+            // add 1 bit for sign bit
+            return Cast2Verilog.getNumBitsNarrow(chanType) + 1;
+        }
+        public int getNumBitsWide(final ChannelType chanType) {
+            // add 1 bit for sign bit
+            return Cast2Verilog.getNumBitsWide(chanType) + 1;
+        }
+    }
+
+    private static class BDChannelEmitter implements ChannelEmitter {
+        private ChannelType chanType;
+        public BDChannelEmitter(ChannelType chanType) {
+            this.chanType = chanType;
+        }
+        public ChannelType getType() {
+            return chanType;
+        }
+        public Stream<String> getComponents() {
+            return Stream.of("$data", "$req", "$ack");
+        }
+        public void emitPortDeclaration(String name,
+                                        List<ArrayType> arrays,
+                                        int direction,
+                                        IntFunction<String> netTypeFunction,
+                                        String suffix,
+                                        Separator out) {
+            final int bitWidth = getNumBitsWide(chanType);
+            out.print(netTypeFunction.apply(direction) + " signed [" +
+                      (bitWidth - 1) + ":0] " + 
+                      esc(name + "$data" + suffix) +
+                      getArrayDecl(arrays));
+            out.print(netTypeFunction.apply(direction) + " " +
+                      esc(name + "$req" + suffix) +
+                      getArrayDecl(arrays));
+            out.print(netTypeFunction.apply(-direction) + " " +
+                      esc(name + "$ack" + suffix) +
+                      getArrayDecl(arrays));
+        }
+        public void emitPortInitializer(String name,
+                                        List<ArrayType> arrays,
+                                        int direction,
+                                        PrintWriter out) {
+            final String zero = arrays.isEmpty() ? "0" : "'{default:0}";
+            if (direction > 0) {
+                out.println(esc(name + "$data") + " = " + zero + ";");
+                out.println(esc(name + "$req") + " = " + zero + ";");
+            } else {
+                out.println(esc(name + "$ack") + " = " + zero + ";");
+            }
+        }
+        public void getInputPorts(String name,
+                                  List<ArrayType> arrays,
+                                  int direction,
+                                  List<String> inputPorts) {
+            if (direction > 0) {
+                inputPorts.add(esc(name + "$ack"));
+            } else {
+                inputPorts.add(esc(name + "$data"));
+                inputPorts.add(esc(name + "$req"));
+            }
+        }
+        public String getSlackWrapperName(int direction, int slack) {
+            return "`CAST2VERILOG_BD_" + 
+                   (direction < 0 ? "INPUT" : "OUTPUT") +
+                   "_TIMINGBUFFER" +
+                   (slack == 0 ? "_SLACK0" : "");
+        }
+        public void emitChannelDecl(String name, PrintWriter out) {
+            declareWire(name + "$data", getNumBitsWide(chanType), out);
+            declareWire(name + "$req", 0, out);
+            declareWire(name + "$ack", 0, out);
+        }
+        public void emitNarrowConverterInstantiation(
+                final CellUtils.Channel narrow,
+                final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+                final String hier,
+                final PrintWriter out) {
+            final ChannelType type = (ChannelType) narrow.getType();
+
+            final String otherNarrow = portMap.get(narrow).getFullName();
+            out.print(narrow.isInput() ? "BDNodes2ChannelConv2"
+                                       : "BDChannel2NodesConv2");
+            out.print(" #(.numBits(" + getNumBitsNarrow(type) + ")) "); 
+            out.println("\\conv_" + otherNarrow + " (");
+
+            final Separator sout = new Separator(out);
+            // output connections to the narrow side of the converter
+            getChannelEmitter(type).
+                emitChannelConnection("channel", otherNarrow, hier, sout);
+
+            // output connections to the node side of the converter
+            // the order is d[0], d[1], ...
+            final Collection<CellUtils.Channel> children = narrow.getChildren();
+            final Iterator<CellUtils.Channel> i = children.iterator();
+            final Function<CellUtils.Channel,String> nameFunc =
+                node -> hierRef(hier, esc(portMap.get(node).getFullName()));
+            sout.print(".req(" + nameFunc.apply(i.next()) + ")");
+            sout.print(".ack(" + nameFunc.apply(i.next()) + ")");
+            sout.print(".nodes(" +
+                       CollectionUtils.stream(i)
+                                .map(n -> i.next())
+                                .map(nameFunc)
+                                .collect(Collectors.joining(", ", "{", "}")) +
+                       ")");
+            out.println(");");
+        }
+    }
+
+    private static ChannelEmitter getChannelEmitter(final ChannelType chanType) {
+        final String type = chanType.getTypeName();
+        if (type.startsWith("standard.channel.bd")) {
+            return new BDChannelEmitter(chanType);
+        } else if (type.startsWith("standard.channel.e1of")) {
+            return new E1ofNChannelEmitter(chanType);
+        } else {
+            throw new RuntimeException("No support for channel type: " + type);
+        }
+    }
 
     private static class IgnoreWiring extends Cadencize.DefaultCallback {
         public IgnoreWiring(final int considerVerilog) {
@@ -837,6 +1205,22 @@ public class Cast2Verilog {
         public boolean getSignedness() { return signedness; }
     }
 
+    private void walkPortList(final CSPCellInfo cellInfo,
+                              final boolean narrowPorts,
+                              final MarkPort marker) {
+        for (PortDefinition port :
+                new IterableIterator<PortDefinition>(
+                    new MappingIterator<PortDefinition,PortDefinition>(
+                            cellInfo.getPortDefinitions(),
+                            port -> new PortDefinition(
+                                        port.getName(),
+                                        mungeArrays(port.getType(),
+                                                    narrowPorts),
+                                        port.getDirection())))) {
+            marker.mark(Collections.singleton(port).iterator());
+        }
+    }
+
     /**
      * Fills in (data nodes, enable nodes, arrayInputNode, arrayOutputNodes).
      **/
@@ -945,6 +1329,8 @@ public class Cast2Verilog {
                               verilogPorts, groupedChannels);
                 }
             } else {
+                final ChannelEmitter emitter = getChannelEmitter(chanType);
+
                 final VerilogPort vdata = new VerilogPort();
                 final VerilogPort venable = new VerilogPort();
 
@@ -964,8 +1350,9 @@ public class Cast2Verilog {
                     ((isArray || !isLeaf) && !inJava) ||
                     (inJava && groupedChannels == null);
                 final String outputType = outWire ? "output" : "output reg";
-                final String dataDirection;
-                final String enableDirection;
+                final String forwardDirection;
+                final String reverseDirection;
+
                 if (direction == PortDefinition.OUT) {
                     if (isArray) {
                         addNonNull(arrayInputNodes,
@@ -979,11 +1366,11 @@ public class Cast2Verilog {
                         addNonNull(inputPorts, enable);
                     }
 
-                    dataDirection = outputType;
+                    forwardDirection = outputType;
                     vdata.setDirection(VerilogPort.OUTPUT);
                     vdata.setNetType(outWire ? VerilogPort.WIRE
                                              : VerilogPort.REG);
-                    enableDirection = "input";
+                    reverseDirection = "input";
                     venable.setDirection(VerilogPort.INPUT);
                     venable.setNetType(VerilogPort.WIRE);
                 } else {
@@ -1000,10 +1387,10 @@ public class Cast2Verilog {
                         addNonNull(inputPorts, data);
                     }
 
-                    dataDirection = "input";
+                    forwardDirection = "input";
                     vdata.setDirection(VerilogPort.INPUT);
                     vdata.setNetType(VerilogPort.WIRE);
-                    enableDirection = outputType;
+                    reverseDirection = outputType;
                     venable.setDirection(VerilogPort.OUTPUT);
                     venable.setNetType(outWire ? VerilogPort.WIRE
                                                : VerilogPort.REG);
@@ -1012,7 +1399,7 @@ public class Cast2Verilog {
                     out.println(',');
                 /* Always print out wide channels */
                 final String bitWidth =
-                    "[" + (getNumBitsWide(chanType) - 1) + ":0]";
+                    "[" + getNumBitsWide(chanType) + ":0]";
                 final String fullGroup, groupName;
                 if (groupedChannels == null) {
                     fullGroup = null;
@@ -1023,13 +1410,13 @@ public class Cast2Verilog {
                     fullGroup = groupedChannels.lookupGroupName(prettyName);
                 }
                 if (fullGroup == null) {
-                    out.println(dataDirection + " signed " + bitWidth + " " +
+                    out.println(forwardDirection + " signed " + bitWidth + " " +
                                 data + ',');
-                    out.print(enableDirection + ' ' + enable);
+                    out.print(reverseDirection + ' ' + enable);
                     addNonNull(verilogPorts, vdata);
                     addNonNull(verilogPorts, venable);
                 } else {
-                    out.print(dataDirection + " signed " + bitWidth + " " +
+                    out.print(forwardDirection + " signed " + bitWidth + " " +
                               "\\" + fullGroup + ' ');
                     vdata.setName(fullGroup);
                     vdata.setGroup(new Pair<String,String>(groupName,
@@ -1132,36 +1519,6 @@ public class Cast2Verilog {
         }
     }
 
-    private static String getChannelConverterName(final int base, 
-                             final int len, final boolean n2w) {
-        return "project.cast2verilog.nw." +
-               (n2w ? "NarrowWide" : "WideNarrow") +
-               "(" + base + "," + len + ")";
-    }
-
-    /* Creates channel converter module by recursively calling Cast2Verilog
-       on a special cast cell checked in specifically for this purpose */
-    /*
-    private static void emitChannelConverterModule(final CastFileParser cfp,
-                                            final PrintWriter warningWriter,
-                                            final PrintWriter errorWriter,
-                                            final PrintWriter debugWriter,
-                                            final PrintWriter out,
-                                            final int base,
-                                            final int len,
-                                            final boolean n2w,
-                                            final int registerBitWidth)
-        throws CastSemanticException, SemanticException {
-        final String name = getChannelConverterName(base, len, n2w);
-        final CellInterface cell = cfp.getFullyQualifiedCell(name);
-        final Map behaviors = new HashMap();
-        behaviors.put(cell.getFullyQualifiedType(), Mode.CSP);
-        new Cast2Verilog(warningWriter, errorWriter, debugWriter, behaviors,
-                         registerBitWidth)
-            .convert(cell, null, out, false, null);
-    }
-    */
-
     private void repeatN(final String format, final int N,
                          final PrintWriter out) {
         repeatN(new MessageFormat(format), N, out);
@@ -1185,119 +1542,49 @@ public class Cast2Verilog {
         }
     }
 
-    private void emitNarrowWideConverter(final PrintWriter out,
-                                         final int base, final int len) {
-        final int narrowBits = getNumBitsNarrow(base) - 1;
-        final int wideBits = getNumBitsWide(base, len) - 1;
-
-        out.print("module \\" + getChannelConverterName(base, len, true));
-        out.println(" (");
-
-        repeatN("input signed [" + narrowBits + ":0] \\NARROW[{0}]$data , output \\NARROW[{0}]$enable ,", len, out);
-
-        out.println("output reg signed [" + wideBits + ":0] \\WIDE$data , " +
-                    "input \\WIDE$enable );");
-
-        out.println("reg signed [" + wideBits + ":0] x;");
-
-        repeatN("assign \\NARROW[{0}]$enable  = \\WIDE$enable ;", len, out);
-
-        out.println("always @* begin");
-        out.println("if (");
-        repeatN("(\\NARROW[{0}]$data >= 0)", len, "&\n", out);
-        out.println(") begin");
-        out.println("x = 0;");
-        for (int i = 0; i < len; ++i) {
-            out.println("x = " + base + " * x + \\NARROW[" + (len - i - 1) +
-                        "]$data ;");
-        }
-        out.println("\\WIDE$data = x;");
-        out.println("end");
-        out.println("else if (");
-        repeatN("(\\NARROW[{0}]$data < 0)", len, "&\n", out);
-        out.println(") begin");
-        out.println("\\WIDE$data = -1;");
-        out.println("end");
-        out.println("end");
-
-        out.println("endmodule");
-    }
-
-    private void emitWideNarrowConverter(final PrintWriter out,
-                                         final int base,
-                                         final int len) {
-        final int narrowBits = getNumBitsNarrow(base) - 1;
-        final int wideBits = getNumBitsWide(base, len) - 1;
-
-        out.print("module \\" + getChannelConverterName(base, len, false));
-        out.println(" (");
-
-        repeatN("output reg signed [" + narrowBits + ":0] \\NARROW[{0}]$data , input \\NARROW[{0}]$enable ,", len, out);
-
-        out.println("input signed [" + wideBits + ":0] \\WIDE$data , " +
-                    "output reg \\WIDE$enable );");
-
-        out.println("reg signed [" + wideBits + ":0] x;");
-
-        out.println("always @* begin");
-        out.println("if (");
-        repeatN("(\\NARROW[{0}]$enable )", len, "&\n", out);
-        out.println(") begin");
-        out.println("\\WIDE$enable = 1;");
-        out.println("end");
-        out.println("else if (");
-        repeatN("(!\\NARROW[{0}]$enable )", len, "&\n", out);
-        out.println(") begin");
-        out.println("\\WIDE$enable = 0;");
-        out.println("end");
-        out.println("end");
-
-        out.println("always @* begin");
-        out.println("if (\\WIDE$data >= 0) begin");
-        out.println("x = \\WIDE$data ;");
-        repeatN("\\NARROW[{0}]$data = x % " + base + "; x = x / " + base + ";",
-                len, out);
-        out.println("end");
-        out.println("else begin");
-        repeatN("\\NARROW[{0}]$data = -1;", len, out);
-        out.println("end");
-        out.println("end");
-
-        out.println("endmodule");
-    }
-
     /**
      * Returns a port definition with all arrays pushed down to the
      * leaves and structures brought up to the top.
      **/
     private PortTypeInterface mungeArrays(
-            final PortTypeInterface portType) {
-        return mungeArrays(portType, null);
+            final PortTypeInterface portType,
+            final boolean narrowPorts) {
+        return mungeArrays(portType, null, narrowPorts);
     }
 
     private PortTypeInterface mungeArrays(
             final PortTypeInterface portType,
-            final com.avlsi.fast.ports.ArrayType arrays) {
-        if (portType instanceof com.avlsi.fast.ports.ArrayType) {
-            final com.avlsi.fast.ports.ArrayType arrayType =
-                (com.avlsi.fast.ports.ArrayType) portType;
+            final ArrayType arrays,
+            final boolean narrowPorts) {
+        if (portType instanceof ArrayType) {
+            final ArrayType arrayType = (ArrayType) portType;
 
             return mungeArrays(arrayType.getArrayedType(),
-                               (com.avlsi.fast.ports.ArrayType)
+                               (ArrayType)
                                    substituteArray(arrays,
-                                       new com.avlsi.fast.ports.ArrayType(
+                                       new ArrayType(
                                            null, arrayType.getMinIndex(),
-                                           arrayType.getMaxIndex())));
-        } else if (portType instanceof com.avlsi.fast.ports.ChannelType) {
-            return substituteArray(arrays, portType);
-        } else if (portType instanceof com.avlsi.fast.ports.NodeType) {
+                                           arrayType.getMaxIndex())),
+                               narrowPorts);
+        } else if (portType instanceof ChannelType) {
+            final ChannelType channelType = (ChannelType) portType;
+            if (narrowPorts && channelType.isArrayed()) {
+                return mungeArrays(
+                        new ArrayType(channelType.getSingular(),
+                                      0,
+                                      channelType.getWidth() - 1),
+                        arrays, narrowPorts);
+            } else {
+                return substituteArray(arrays, portType);
+            }
+        } else if (portType instanceof NodeType) {
             return substituteArray(arrays, portType);
         } else {
-            assert portType instanceof com.avlsi.fast.ports.StructureType;
-            final com.avlsi.fast.ports.StructureType structureType =
-                (com.avlsi.fast.ports.StructureType) portType;
-            final com.avlsi.fast.ports.StructureType newStructureType =
-                new com.avlsi.fast.ports.StructureType();
+            assert portType instanceof StructureType;
+            final StructureType structureType =
+                (StructureType) portType;
+            final StructureType newStructureType =
+                new StructureType();
 
             for (Iterator i = structureType.iterator(); i.hasNext(); ) {
                 final PortDefinition portDefinition =
@@ -1305,7 +1592,8 @@ public class Cast2Verilog {
                 newStructureType.add(
                         new PortDefinition(
                             portDefinition.getName(),
-                            mungeArrays(portDefinition.getType(), arrays),
+                            mungeArrays(portDefinition.getType(), arrays,
+                                        narrowPorts),
                             portDefinition.getDirection()));
             }
 
@@ -1320,14 +1608,14 @@ public class Cast2Verilog {
      * with the innermost arrayed type as <code>null</code>.
      **/
     private PortTypeInterface substituteArray(
-            final com.avlsi.fast.ports.ArrayType arrays,
+            final ArrayType arrays,
             final PortTypeInterface type) {
         if (arrays == null) {
             return type;
         } else {
-            return new com.avlsi.fast.ports.ArrayType(
+            return new ArrayType(
                     substituteArray(
-                        (com.avlsi.fast.ports.ArrayType)
+                        (ArrayType)
                             arrays.getArrayedType(),
                         type),
                     arrays.getMinIndex(),
@@ -1335,74 +1623,10 @@ public class Cast2Verilog {
         }
     }
 
-    private void declareArrayRegs(CSPCellInfo cellInfo, PrintWriter out) {
-        for (Iterator i = cellInfo.getPortDefinitions(); i.hasNext(); ) {
-            final PortDefinition portDefinition = (PortDefinition) i.next();
-            declareArrayRegs(portDefinition.getName(),
-                             mungeArrays(portDefinition.getType()),
-                             portDefinition.getDirection(), "", out);
-        }
-    }
-
-    private void declareArrayRegs(final String name,
-                                  final PortTypeInterface portType,
-                                  final int direction,
-                                  final String arrayPart,
-                                  PrintWriter out) {
-        if (portType instanceof com.avlsi.fast.ports.ArrayType) {
-            final com.avlsi.fast.ports.ArrayType arrayType =
-                (com.avlsi.fast.ports.ArrayType) portType;
-            declareArrayRegs(name, arrayType.getArrayedType(), direction,
-                    arrayPart + "[" + arrayType.getMaxIndex() + ":" +
-                    arrayType.getMinIndex() + "]", out);
-        } else if (portType instanceof com.avlsi.fast.ports.ChannelType) {
-            // We only do something if we are part of an array
-            if (arrayPart != "") {
-                final com.avlsi.fast.ports.ChannelType chanType =
-                    (com.avlsi.fast.ports.ChannelType) portType;
-                final String data = '\\' + name + "$data " + arrayPart;
-                final String enable = '\\' + name + "$enable " + arrayPart;
-                final int bitWidth = getNumBitsWide(chanType); 
-                out.println("reg signed [" + (bitWidth-1) + ":0] " +
-                            data + ';');
-                out.println("reg " + enable + ';');
-            }
-        } else if (portType instanceof com.avlsi.fast.ports.NodeType) {
-            // We only do something if we are part of an array
-            if (arrayPart != "") {
-                final com.avlsi.fast.ports.NodeType nodeType =
-                    (com.avlsi.fast.ports.NodeType) portType;
-                final String width = nodeType.isArrayed() ?
-                    ("[" + (nodeType.getWidth() - 1) + ":0] ") : "";
-                out.println("reg " + width + '\\' + name + ' ' +
-                            arrayPart + ';');
-            }
-        } else {
-            assert portType instanceof com.avlsi.fast.ports.StructureType;
-            final com.avlsi.fast.ports.StructureType structureType =
-                (com.avlsi.fast.ports.StructureType) portType;
-
-            // We should not have encountered any arrays yet because
-            // of the call to mungeArrays().
-            assert arrayPart == "";
-
-            for (Iterator i = structureType.iterator(); i.hasNext(); ) {
-                final PortDefinition portDefinition =
-                    (PortDefinition) i.next();
-                declareArrayRegs(name + '.' + portDefinition.getName(),
-                                 portDefinition.getType(),
-                                 PortDefinition.updateDirection(
-                                     direction,
-                                     portDefinition.getDirection()),
-                                 arrayPart, out);
-            }
-        }
-    }
-
     /**
      * Moves all array accesses to the end of the string <code>s</code>.
      **/
-    private String mungeArray(String s) {
+    private static Pair<String,String> mungeArray(String s) {
         // Recover ]['s that were deleted earlier
         s = StringUtil.replaceSubstring(s, ",", "][");
         final StringBuffer nonArrayPart = new StringBuffer(s.length());
@@ -1415,11 +1639,8 @@ public class Cast2Verilog {
             arrayPart.append(s.substring(m.start(), m.end()));
             start = m.end();
         }
-
         nonArrayPart.append(s.substring(start, s.length()));
-        nonArrayPart.append(arrayPart);
-
-        return nonArrayPart.toString();
+        return new Pair<>(nonArrayPart.toString(), arrayPart.toString());
     }
 
     private void emitHelperFunctions(PrintWriter out) {
@@ -1792,28 +2013,6 @@ public class Cast2Verilog {
     }
 
     /**
-     * Emits Verilog declaration of Wide2Narrow and Narrow2Wide converters
-     * stored in usedWide2NarrowConvs.
-     **/
-    private void emitConverterModules(CastFileParser cfp, PrintWriter out) 
-        throws CastSemanticException, SemanticException {
-        for (Iterator i = usedWide2NarrowConvs.iterator(); i.hasNext();) {
-            final int[] params = (int[]) i.next();
-
-            // Old style converters were generated from CAST
-            // emitChannelConverterModule(cfp, warningWriter, errorWriter, 
-            //    debugWriter, out, params[0], params[1], params[2] == 0,
-            //    registerBitWidth); 
-
-            if (params[2] == 0) {
-                emitNarrowWideConverter(out, params[0], params[1]);
-            } else {
-                emitWideNarrowConverter(out, params[0], params[1]);
-            }
-        }
-    }
-
-    /**
      * Prints usage message and exits.
      **/
     private static void usage() {
@@ -2035,7 +2234,6 @@ public class Cast2Verilog {
              generateIfDef);
         c2v.emitHelperFunctions(out);
         c2v.convert(cellEnv, instanceName, out, behOut, theArgs);
-        c2v.emitConverterModules(cfp, out);
         if (c2v.checkError()) {
             System.err.println("Errors found during translation; output file " +
                                "may be incorrect.");
@@ -2167,8 +2365,10 @@ public class Cast2Verilog {
 
         // write out header for module
         out.println("module \\" + moduleName + " (");
-        emitPortList(cell, null, null, null, null, null,
-                     out, false, false, narrowInstances.contains(null));
+        new EmitFlatPortDeclarations(new Separator(out),
+                dir -> (dir > 0 ? "output" : "input"), "",
+                narrowInstances.contains(null))
+            .mark(cell.getCSPInfo().getPortDefinitions());
         out.println(");");
 
         final Map flattenNodes = new HashMap();
@@ -2228,14 +2428,15 @@ public class Cast2Verilog {
             // calculate the port connection for the subcell module
             // instantiation
             final HashSet aliasedPorts = new HashSet();
-            final TreeSet actualPorts = new TreeSet(new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    final Triplet t1 = (Triplet) o1;
-                    final Triplet t2 = (Triplet) o2;
-                    return NaturalStringComparator.compareString(
-                                t1.getSecond(), t2.getSecond());
-                }
-            });
+            final TreeSet<Triplet<PortTypeInterface,String,List<String>>> actualPorts =
+                new TreeSet<>(
+                    new Comparator<Triplet<PortTypeInterface,String,List<String>>>() {
+                        public int compare(Triplet<PortTypeInterface,String,List<String>> t1,
+                                           Triplet<PortTypeInterface,String,List<String>> t2) {
+                            return NaturalStringComparator.compareString(
+                                        t1.getSecond(), t2.getSecond());
+                        }
+                    });
 
             for (Iterator j = CellUtils.getPortChannels(wrapper,
                     getCadencize(true), verilog,
@@ -2245,7 +2446,7 @@ public class Cast2Verilog {
                 final String formal = getFormalName(portAliases, subchan);
                 if (formal == null) continue;
 
-                final List actuals = new ArrayList();
+                final List<String> actuals = new ArrayList<>();
                 final PortTypeInterface subtype = subchan.getType();
                 if (portAliases == null && subtype instanceof NodeType &&
                     ((NodeType) subtype).isArrayed()) {
@@ -2288,26 +2489,24 @@ public class Cast2Verilog {
                 // others are handled earlier in assign statements
                 if (portAliases != null && !aliasedPorts.add(formal)) continue;
 
-                actualPorts.add(new Triplet(subtype, formal, actuals));
+                actualPorts.add(new Triplet<>(subtype, formal, actuals));
             }
 
             // emit the subcell module instantiation
             out.println('\\' + convertedName + "  \\" + instanceName + "  (");
-            for (Iterator j = actualPorts.iterator(); j.hasNext(); ) {
-                final Triplet triple = (Triplet) j.next();
-                final PortTypeInterface type =
-                    (PortTypeInterface) triple.getFirst();
-                final String formal = (String) triple.getSecond();
-                final List actuals = (List) triple.getThird();
+            final Separator sout = new Separator(out);
+            for (Triplet<PortTypeInterface,String,List<String>> triple : actualPorts) {
+                final PortTypeInterface type = triple.getFirst();
+                final String formal = triple.getSecond();
+                final List<String> actuals = triple.getThird();
                 if (type instanceof NodeType) {
                     emitNodeConnection(cell, instanceName, formal, actuals,
-                                       out);
+                                       sout);
                 } else {
                     assert actuals.size() == 1;
-                    emitChannelConnection(cell, instanceName, formal,
-                                          (String) actuals.get(0), out);
+                    getChannelEmitter((ChannelType) type)
+                        .emitChannelConnection(formal, actuals.get(0), null, sout);
                 }
-                if (j.hasNext()) out.println(',');
             }
             out.println(");");
         }
@@ -2343,15 +2542,19 @@ public class Cast2Verilog {
 
             // Wide to narrow converters
             for (final CellUtils.Channel wide : narrowWideConverters) {
-                usedWide2NarrowConvs.add(
-                    instantiateWideNarrowConverter(wide, portToLocalMap,
-                                                   moduleName, out));
+                getChannelEmitter((ChannelType) wide.getType())
+                    .emitWideConverterInstantiation(
+                            wide,
+                            portToLocalMap,
+                            moduleName,
+                            out);
             }
 
             // Narrow to node converters
             for (final CellUtils.Channel narrow : nodeNarrowConverters) {
-                instantiateNarrowNodeConverter(narrow, portToLocalMap,
-                                               moduleName, out);
+                getChannelEmitter((ChannelType) narrow.getType())
+                    .emitNarrowConverterInstantiation(narrow,
+                            portToLocalMap, moduleName, out);
             }
             out.println("endmodule        // converter module");
         }
@@ -2360,7 +2563,7 @@ public class Cast2Verilog {
 
     private void addLocalName(final CellUtils.Channel source,
                               final CellUtils.Channel sink,
-                              final Map portMap,
+                              final Map<CellUtils.Channel,CellUtils.Channel> portMap,
                               final Set alreadyDeclared,
                               final Map flattenNodes,
                               final Collection needAssign,
@@ -2382,8 +2585,7 @@ public class Cast2Verilog {
 
         if (!portMap.containsKey(source)) portMap.put(source, local);
         else if (local == sink) {
-            final CellUtils.Channel prev =
-                (CellUtils.Channel) portMap.get(source);
+            final CellUtils.Channel prev = portMap.get(source);
             if (prev.getInstance() == null) {
                 needAssign.add(new Pair(prev, local));
             } else {
@@ -2391,13 +2593,10 @@ public class Cast2Verilog {
             }
         }
         if (portMap.containsKey(sink)) {
-            final CellUtils.Channel prev =
-                (CellUtils.Channel) portMap.get(sink);
+            final CellUtils.Channel prev = portMap.get(sink);
             if (!prev.equals(local)) {
-                final CellUtils.Channel old =
-                    (CellUtils.Channel) simplifyMap(portMap, prev);
-                final CellUtils.Channel curr =
-                    (CellUtils.Channel) simplifyMap(portMap, local);
+                final CellUtils.Channel old = simplifyMap(portMap, prev);
+                final CellUtils.Channel curr = simplifyMap(portMap, local);
                 final CellUtils.Channel from, to;
                 if ((old.getInstance() == null) !=
                     (curr.getInstance() == null)) {
@@ -2420,8 +2619,8 @@ public class Cast2Verilog {
         }
     }
 
-    private void declareWire(final String name, final int width,
-                             final PrintWriter out) {
+    private static void declareWire(final String name, final int width,
+                                    final PrintWriter out) {
         out.println("wire" + (width > 0 ? " [" + (width - 1) + ":0] " : " ") +
                     VerilogUtil.escapeIfNeeded(name) + ";");
     }
@@ -2443,92 +2642,53 @@ public class Cast2Verilog {
             }
         } else {
             final ChannelType chan = (ChannelType) type;
-            declareWire(fullName + "$data", getNumBitsWide(chan), out);
-            declareWire(fullName + "$enable", 0, out);
+            getChannelEmitter(chan).emitChannelDecl(fullName, out);
         }
     }
 
-    private int[] instantiateWideNarrowConverter(final CellUtils.Channel wide,
-                                                 final Map portMap,
-                                                 final String hier,
-                                                 final PrintWriter out) {
-        final ChannelType type = (ChannelType) wide.getType();
-        final int base = getBase(type);
-        final int width = type.getWidth();
-
-        final String otherWide =
-            ((CellUtils.Channel) portMap.get(wide)).getFullName();
-
-        final String convType =
-            getChannelConverterName(base, width, wide.isInput());
-        out.println("\\" + convType + " \\conv_" + otherWide + " (");
-
-        // output connections to the wide side of the converter
-        emitChannelConnection("WIDE", otherWide, hier, out);
-
-        // output connections to the narrow side of the converter
-        int j = 0;
-        for (Iterator i = wide.getChildren().iterator(); i.hasNext(); ++j) {
-            if (i.hasNext()) out.println(",");
-            final CellUtils.Channel narrow = (CellUtils.Channel) i.next();
-            final String otherNarrow =
-                ((CellUtils.Channel) portMap.get(narrow)).getFullName();
-            emitChannelConnection("NARROW[" + j + "]", otherNarrow, hier, out);
-        }
-
-        // output connection to reset
-        out.println(");"); 
-
-        return new int[] { base, width, wide.isInput() ? 0 : 1 };
-    }
-
-    private void instantiateNarrowNodeConverter(final CellUtils.Channel narrow,
-                                                final Map portMap,
-                                                final String hier,
-                                                final PrintWriter out) {
+    private void instantiateNarrowNodeConverter(
+            final CellUtils.Channel narrow,
+            final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+            final String hier,
+            final PrintWriter out) {
         final ChannelType type = (ChannelType) narrow.getType();
         final int base = getBase(type);
         final int width = type.getWidth();
 
-        final String otherNarrow =
-            ((CellUtils.Channel) portMap.get(narrow)).getFullName();
+        final String otherNarrow = portMap.get(narrow).getFullName();
         out.print(narrow.isInput() ? "Nodes2ChannelConv2"
                                    : "Channel2NodesConv2");
         out.print(" #(.base(" + base + "), ");
-        out.print(".numBits(" + getNumBitsNarrow(type) + ")) "); 
+        out.print(".numBits(" + (getNumBitsNarrow(type) + 1) + ")) "); 
         out.println("\\conv_" + otherNarrow + " (");
 
+        final Separator sout = new Separator(out);
         // output connections to the narrow side of the converter
-        emitChannelConnection("channel", otherNarrow, hier, out);
-        out.println(",");
+        getChannelEmitter(type).
+            emitChannelConnection("channel", otherNarrow, hier, sout);
 
         // output connections to the node side of the converter
         // the order is d[0], d[1], ...
-        out.print(".nodes ({");
-        final Collection nodes = narrow.getChildren();
-        final Iterator i = nodes.iterator();
-        for (int j = 0; j < nodes.size() - 1; ++j) {
-            final CellUtils.Channel node = (CellUtils.Channel) i.next();
-            final String otherNode =
-                ((CellUtils.Channel) portMap.get(node)).getFullName();
-            out.print(hierRef(hier, VerilogUtil.escapeIfNeeded(otherNode)));
-            if (j < nodes.size() - 2) out.print(", ");
-        }
-        out.println("}),");
+        final Collection<CellUtils.Channel> children = narrow.getChildren();
+        final Iterator<CellUtils.Channel> i = children.iterator();
+        final Function<CellUtils.Channel,String> nameFunc =
+            node -> hierRef(hier, esc(portMap.get(node).getFullName()));
+        sout.print(".nodes(" +
+                   IntStream.range(1, children.size())
+                            .mapToObj(n -> i.next())
+                            .map(nameFunc)
+                            .collect(Collectors.joining(", ", "{", "}")) +
+                   ")");
 
         // output connection to enable
-        final CellUtils.Channel node = (CellUtils.Channel) i.next();
-        final String otherNode =
-            ((CellUtils.Channel) portMap.get(node)).getFullName();
-        out.println(".enable(" +
-                    hierRef(hier, VerilogUtil.escapeIfNeeded(otherNode)) +
-                    "));");
+        sout.print(".enable(" + nameFunc.apply(i.next()) + ")");
+        out.println(");");
     }
 
     private void declConverterVars(final Collection converters,
                                    final Set alreadyDeclared,
                                    final Map flattenNodes,
-                                   final Map portMap,
+                                   final Map<CellUtils.Channel,CellUtils.Channel> portMap,
                                    final PrintWriter out) {
         for (Iterator i = converters.iterator(); i.hasNext();) { 
             final CellUtils.Channel parent = (CellUtils.Channel) i.next();
@@ -2568,25 +2728,27 @@ public class Cast2Verilog {
         }
     }
 
-    private Object simplifyMap(final Map portMap, final Object key) {
-        final Object value = portMap.get(key);
+    private CellUtils.Channel simplifyMap(
+            final Map<CellUtils.Channel,CellUtils.Channel> portMap,
+            final CellUtils.Channel key) {
+        final CellUtils.Channel value = portMap.get(key);
         if (value == null || value == key) {
             return key;
         } else {
-            final Object last = simplifyMap(portMap, value);
+            final CellUtils.Channel last = simplifyMap(portMap, value);
             portMap.put(key, last);
             return last;
         }
     }
 
-    private Map processPortConnections(
+    private Map<CellUtils.Channel,CellUtils.Channel> processPortConnections(
             final CellInterface cell,
             final Map flattenNodes,
             final Set narrowInstances,
             final Set<CellUtils.Channel> nodeNarrowConverters,
             final Set<CellUtils.Channel> narrowWideConverters,
             final PrintWriter out) {
-        final Map portMap = new HashMap();
+        final Map<CellUtils.Channel,CellUtils.Channel> portMap = new HashMap<>();
 
         final Collection nodeConnections = new ArrayList();
         final Collection narrowConnections = new ArrayList();
@@ -2663,8 +2825,8 @@ public class Cast2Verilog {
 
         // Compute the transitive closure of the name mapping to find the
         // ultimate name to use
-        for (Iterator i = portMap.entrySet().iterator(); i.hasNext(); ) {
-            final Map.Entry entry = (Map.Entry) i.next();
+        for (Map.Entry<CellUtils.Channel,CellUtils.Channel> entry :
+                portMap.entrySet()) {
             entry.setValue(simplifyMap(portMap, entry.getValue()));
         }
 
@@ -2697,128 +2859,53 @@ public class Cast2Verilog {
         return CellUtils.extractN(chanType.getTypeName());
     }
 
-    private int getNumBitsNarrow(PortTypeInterface portType) {
-        if (portType instanceof ChannelType) {
-            return getNumBitsNarrow((ChannelType) portType);
-        } else {
-            return(1);
-        }
-    }
-
     /***
        Find the number of bits we need to model each narrow channel element 
        of a possibly wide channel. 
     ***/
-    private int getNumBitsNarrow(ChannelType chanType) {
-        return getNumBitsNarrow(CellUtils.extractN(chanType.getTypeName()));
-    }
-
-    private int getNumBitsNarrow(final int rails) {
-        // Regardless if the channel is wide, the number of narrow bits
-        // only depends on the base type
-        final BigInteger numValues = BigInteger.valueOf(rails);
-        // We can carry numValues values in base type, including 0.
-        // numValues - 1 is the largest we can carry.
-        // See how many bits that takes.
-        final int bitWidth = numValues.subtract(BigInteger.ONE).bitLength();
-        // Use bitWidth + 1 bits for the port so we can handle
-        // negative numbers, too.
-        return(bitWidth + 1);
-    }
-
-    private int getNumBitsWide(PortTypeInterface portType) {
-        if (portType instanceof ChannelType) {
-            return getNumBitsWide((ChannelType) portType);
-        } else {
-            return(1);
-        }
+    private static int getNumBitsNarrow(ChannelType chanType) {
+        final BigInteger numValues = chanType.getNumValues();
+        final int bitWidth = BigIntegerUtil.log2(numValues);
+        return bitWidth;
     }
 
     /***
        Find the number of bits we need model the data in possibly wide channels
      **/
-    private int getNumBitsWide(ChannelType chanType) {
-        return getNumBitsWide(CellUtils.extractN(chanType.getTypeName()),
-                              chanType.getWidth());
+    private static int getNumBitsWide(ChannelType chanType) {
+        final BigInteger narrowNumValues = chanType.getNumValues();
+        final int width = chanType.getWidth();
+        final BigInteger numValues = narrowNumValues.pow(width);
+        final int bitWidth = BigIntegerUtil.log2(numValues);
+        return bitWidth;
     }
 
-    private int getNumBitsWide(final int rails, final int width) {
-        final BigInteger numValues = BigInteger.valueOf(rails).pow(width);
-        // We can carry numValues values, including 0.
-        // numValues - 1 is the largest we can carry.
-        // See how many bits that takes.
-        final int bitWidth = numValues.subtract(BigInteger.ONE).bitLength();
-        // Use bitWidth + 1 bits for the port so we can 
-        // handle negative numbers, too.
-        return(bitWidth + 1);
-    }
-
-    /**
-     * Same as emitChannelConnection(String, String, PrintWriter), except also
-     * log a warning if there is no connection.
-     **/
-    private void emitChannelConnection(final CellInterface parent,
-                                       final HierName instance,
-                                       final String formal,
-                                       final String actual,
-                                       final PrintWriter out) {
-        if (actual == null) {
-            logger.warning("In " + parent.getFullyQualifiedType() +
-                           ", port " + formal + " of instance " +
-                           instance + " is unconnected.");
-        }
-        emitChannelConnection(formal, actual, null, out);
-    }
-
-    private String hierRef(final String hier, final String local) {
-        return hier == null ? local
-                            : VerilogUtil.escapeIfNeeded(hier) + "." + local;
-    }
-
-    /**
-     * Emits argument passing of channel using Verilog dot notation, expanding
-     * data and enable.
-     **/
-    private void emitChannelConnection(final String formal, final String actual,
-                                       final String hier,
-                                       final PrintWriter out) {
-        out.println("  .\\" + formal + "$data  (" + 
-                    (actual == null ? "/*NC*/"
-                                    : hierRef(hier, "\\" + actual + "$data ")) +
-                    "),");
-        out.print("  .\\" + formal + "$enable  (" +
-                  (actual == null ? "/*NC*/"
-                                  : hierRef(hier, "\\" + actual + "$enable ")) +
-                  ")");
+    private static String hierRef(final String hier, final String local) {
+        return hier == null ? local : esc(hier) + "." + local;
     }
 
     private void emitNodeConnection(final CellInterface parent,
                                     final HierName instance,
                                     final String formal,
-                                    final List actuals,
-                                    final PrintWriter out) {
-        boolean unconnected = false;
-
-        final String port = "  .\\" + formal + " (";
-        out.print(port);
+                                    final List<String> actuals,
+                                    final Separator sout) {
+        final String preamble = "  ." + esc(formal) + "(";
+        final String actual;
         if (actuals.size() == 1) {
-            final String actual = (String) actuals.get(0);
-            out.print((actual == null ? "/*NC*/" : "\\" + actual + " "));
-            unconnected |= actual == null;
+            actual = actuals.stream()
+                            .map(act -> act == null ? "/*NC*/" : esc(act))
+                            .findFirst()
+                            .get();
         } else {
             final String spaces =
-                ",\n" + StringUtil.repeatString(" ", port.length() + 2);
-            out.print("{ ");
-            for (Iterator i = actuals.iterator(); i.hasNext(); ) {
-                final String actual = (String) i.next();
-                out.print(actual == null ? "1'dx" : "\\" + actual + " ");
-                unconnected |= actual == null;
-                if (i.hasNext()) out.print(spaces);
-            }
-            out.print("} ");
+                ",\n" + StringUtil.repeatString(" ", preamble.length() + 1);
+            actual = actuals.stream()
+                            .map(act -> act == null ? "1'dx" : esc(act))
+                            .collect(Collectors.joining(spaces, "{", "}"));
         }
-        out.print(")");
+        sout.print(preamble + actual + ")");
 
+        boolean unconnected = actuals.stream().anyMatch(x -> x == null);
         if (unconnected) {
             logger.warning("In " + parent.getFullyQualifiedType() +
                            ", port " + formal + " of instance " +
@@ -2829,8 +2916,195 @@ public class Cast2Verilog {
     /**
      * Convert DSim units to number of transitions.
      **/
-    private float numTransitions(final float dsimUnits) {
+    private static float numTransitions(final float dsimUnits) {
         return dsimUnits / 100f;
+    }
+
+    private static String getArrayDecl(List<ArrayType> arrays) {
+        final int size = arrays.size();
+        if (size == 0) {
+            return "";
+        } else {
+            return arrays.stream()
+                         .map(ary -> ary.getMaxIndex() + ":" +
+                                     ary.getMinIndex())
+                         .collect(Collectors.joining("][", "[", "]"));
+        }
+    }
+
+    private static int getArrayElements(List<ArrayType> arrays) {
+        return arrays.stream()
+                     .mapToInt(ary -> ary.getMaxIndex() - ary.getMinIndex() + 1)
+                     .reduce(1, (a, b) -> a * b);
+    }
+
+    private class IgnoreArrayPorts extends MarkPort {
+        protected final List<ArrayType> arrays = new ArrayList<>();
+        protected void mark(final ArrayType arrayType, final String name,
+                            final int direction, final boolean inArray) {
+            PortTypeInterface baseType = arrayType;
+            while (baseType instanceof ArrayType) {
+                final ArrayType aType = (ArrayType) baseType;
+                arrays.add(aType);
+                baseType = aType.getArrayedType();
+            }
+            mark(baseType, name, direction, false);
+        }
+    }
+
+    private class EmitPortDeclarations extends IgnoreArrayPorts {
+        private final Separator out;
+        private final IntFunction<String> netTypeFunction;
+        private final String suffix;
+        public EmitPortDeclarations(final Separator out,
+                                    final IntFunction<String> netTypeFunction,
+                                    final String suffix) {
+            this.out = out;
+            this.netTypeFunction = netTypeFunction;
+            this.suffix = suffix;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction, final boolean inArray) {
+            getChannelEmitter(channelType)
+                .emitPortDeclaration(name, arrays, direction, netTypeFunction,
+                                     suffix, out);
+            arrays.clear();
+        }
+        protected void mark(final NodeType nodeType, final String name,
+                            final int direction, final boolean inArray) {
+            final String width;
+            if (nodeType.isArrayed()) {
+                width = "[" + (nodeType.getWidth() - 1) + ":0] ";
+            } else {
+                width = "";
+            }
+            out.print(netTypeFunction.apply(direction) + " " + width +
+                      VerilogUtil.escapeIfNeeded(name) +
+                      getArrayDecl(arrays));
+        }
+    }
+
+    private class PossiblyNarrowMarkPort extends MarkPort {
+        private final boolean narrowPorts;
+        public PossiblyNarrowMarkPort(final boolean narrowPorts) {
+            this.narrowPorts = narrowPorts;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction, final boolean inArray) {
+            final boolean isArray = channelType.isArrayed() && narrowPorts;
+            final String newName =
+                arrayName(channelType, name, inArray, isArray);
+            if (isArray) {
+                mark(channelType, newName, direction, channelType.getWidth());
+            } else {
+                mark(channelType, newName, direction);
+            }
+        }
+    }
+
+    private class EmitFlatPortDeclarations extends PossiblyNarrowMarkPort {
+        private final Separator out;
+        private final IntFunction<String> netTypeFunction;
+        private final String suffix;
+        public EmitFlatPortDeclarations(final Separator out,
+                                        final IntFunction<String> netTypeFunction,
+                                        final String suffix,
+                                        final boolean narrowPorts) {
+            super(narrowPorts);
+            this.out = out;
+            this.netTypeFunction = netTypeFunction;
+            this.suffix = suffix;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction) {
+            getChannelEmitter(channelType)
+                .emitPortDeclaration(name, Collections.emptyList(), direction,
+                                     netTypeFunction, suffix, out);
+        }
+        protected void mark(final NodeType nodeType, final String name,
+                            final int direction, final boolean inArray) {
+            final String width;
+            if (nodeType.isArrayed()) {
+                width = "[" + (nodeType.getWidth() - 1) + ":0] ";
+            } else {
+                width = "";
+            }
+            out.print(netTypeFunction.apply(direction) + " " + width +
+                      VerilogUtil.escapeIfNeeded(name));
+        }
+    }
+
+    private class EmitBodyInstantiation extends IgnoreArrayPorts {
+        private final Separator out;
+        private final String actualSuffix;
+        public EmitBodyInstantiation(final Separator out,
+                                     final String actualSuffix) {
+            this.out = out;
+            this.actualSuffix = actualSuffix;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction, final boolean inArray) {
+            getChannelEmitter(channelType)
+                .emitBodyInstantiation(name, actualSuffix, out);
+            arrays.clear();
+        }
+        protected void mark(final NodeType nodeType, final String name,
+                            final int direction, final boolean inArray) {
+            out.print("." + VerilogUtil.escapeIfNeeded(name) + "(" +
+                      VerilogUtil.escapeIfNeeded(name) + ")");
+        }
+    }
+
+    private class EmitPortInitializers extends IgnoreArrayPorts {
+        private final PrintWriter out;
+        public EmitPortInitializers(final PrintWriter out) {
+            this.out = out;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction, final boolean inArray) {
+            getChannelEmitter(channelType)
+                .emitPortInitializer(name, arrays, direction, out);
+            arrays.clear();
+        }
+    }
+
+    private class CollectInputPorts extends IgnoreArrayPorts {
+        private final List<String> inputPorts;
+        public CollectInputPorts(List<String> inputPorts) {
+            this.inputPorts = inputPorts;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction, final boolean inArray) {
+            getChannelEmitter(channelType)
+                .getInputPorts(name, arrays, direction, inputPorts);
+            arrays.clear();
+        }
+        protected void mark(final NodeType nodeType, final String name,
+                            final int direction, final boolean inArray) {
+            inputPorts.add(VerilogUtil.escapeIfNeeded(name));
+        }
+    }
+
+    private class EmitSlackWrappers extends PossiblyNarrowMarkPort {
+        private final PrintWriter out;
+        private final String actualSuffix;
+        private final String reset;
+        private final Function<String,ChannelTimingInfo> ctiFunc;
+        public EmitSlackWrappers(final PrintWriter out, final String actualSuffix,
+                                 final String reset,
+                                 final Function<String,ChannelTimingInfo> ctiFunc) {
+            super(false);
+            this.out = out;
+            this.actualSuffix = actualSuffix;
+            this.reset = reset;
+            this.ctiFunc = ctiFunc;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction) {
+            getChannelEmitter(channelType)
+                .emitSlackWrapper(name, direction, actualSuffix, ctiFunc,
+                                  reset, out);
+        }
     }
 
     /**
@@ -2844,83 +3118,30 @@ public class Cast2Verilog {
 
         final String bodyName = moduleName + (emitSlackWrappers ? "$body" : "");
         out.println("module \\" + bodyName + " (");
-        final List/*<String>*/ dataNodes = new ArrayList/*<String>*/();
-        final List/*<String>*/ enableNodes = new ArrayList/*<String>*/();
-        final List/*<Pair<String,Integer>>*/ arrayInputNodes =
-            new ArrayList/*<Pair<String,Integer>>*/();
-        final List/*<Pair<String,Integer>>*/ arrayOutputNodes =
-            new ArrayList/*<Pair<String,Integer>>*/();
-        final List/*<String>*/ inputPorts = new ArrayList/*<String>*/();
-        /* Call emit PortList - do not flatten wide channels */
-        emitPortList(cell, dataNodes, enableNodes,
-                 arrayInputNodes, arrayOutputNodes, inputPorts, out, true);
+
+        final Separator sout = new Separator(out);
+        walkPortList(
+                cell.getCSPInfo(), false,
+                new EmitPortDeclarations(
+                    sout, dir -> (dir > 0 ? "output reg" : "input"), ""));
         out.println(");");
         emitTimeScale(out);
 
-        // declare the array regs for array inputs and outputs
-        declareArrayRegs(cell.getCSPInfo(), out);
-
-        // emit the continuous assigments for array outputs
-        // which assign non-arrayed ports to elements of arrayed
-        // internals (because Verilog does not support arrayed
-        // ports)
-        for (Iterator i = arrayOutputNodes.iterator(); i.hasNext(); ) {
-            final Pair/*<String,Integer>*/ p = (Pair) i.next();
-            final String outputNode = (String) p.getFirst();
-
-            out.println("assign " + outputNode + " = " +
-                    mungeArray(outputNode) + ';');
-        }
-
-        // emit always blocks for the array inputs to set
-        // arrayed internals to non-arrayed ports (because
-        // Verilog does not support arrayed ports)
-        for (Iterator i = arrayInputNodes.iterator(); i.hasNext(); ) {
-            final Pair/*<String,Integer>*/ p = (Pair) i.next();
-            final String inputNode = (String) p.getFirst();
-
-            final String munged = mungeArray(inputNode);
-            out.println("always @* " + munged + " = " + inputNode + ';');
-            inputPorts.add(munged);
-        }
-
         final String resetName = getResetName(cell);
+
         // initialize port variables
         out.println("always @(negedge " + resetName + " )");
         out.println("begin : init_ports");
         out.println("disable main;");
-
-        // set all enables to 1 and data rails to -1
-        for (Iterator i = dataNodes.iterator(); i.hasNext(); ) {
-            final String dataNode = (String) i.next();
-            out.println(dataNode + "  = $signed(-1);");
-        }
-
-        for (Iterator i = enableNodes.iterator(); i.hasNext(); ) {
-            final String enableNode = (String) i.next();
-            out.println(enableNode + "  = 1;");
-        }
-
-        // set array output data regs to -1, indicating no data
-        for (Iterator i = arrayOutputNodes.iterator(); i.hasNext(); ) {
-            final Pair/*<String,Integer>*/ p = (Pair) i.next();
-            final String outputNode = (String) p.getFirst();
-            final Integer value = (Integer) p.getSecond();
-
-            if (value != null)
-                out.println(mungeArray(outputNode) + " = $signed(" +
-                            value + ");");
-        }
-
-        // don't initialize our input array enable regs, the always
-        // blocks will take care of it for us.
-
+        walkPortList(cell.getCSPInfo(), false, new EmitPortInitializers(out));
         out.println("end");
         out.println();
 
         if (probFilter == null)
             probFilter = Csp2Verilog.getProblemFilter(warningWriter);
 
+        final ArrayList<String> inputPorts = new ArrayList<>();
+        walkPortList(cell.getCSPInfo(), false, new CollectInputPorts(inputPorts));
         new Csp2Verilog(warningWriter, errorWriter, debugWriter, resetName,
                         registerBitWidth, probFilter, enableSystemVerilog)
         .convert(cell, bodyName, inputPorts, out);
@@ -2986,10 +3207,10 @@ public class Cast2Verilog {
             PrintWriter out) {
 
         // emit module name and port list declaration
-        // throw away resulting lists as we should need them
         out.println("module \\" + moduleName + " (");
-        /* Call emit PortList - keep wide channels wide */
-        emitPortList(cell, null, null, null, null, null, out, false);
+        new EmitFlatPortDeclarations(new Separator(out),
+                dir -> (dir > 0 ? "output" : "input"), "", false)
+            .mark(cell.getCSPInfo().getPortDefinitions());
         out.println(");");
 
         // Collect channels require special handling
@@ -3021,89 +3242,18 @@ public class Cast2Verilog {
                 }
             }   
         }).mark(portDefs);
-        for (Iterator i = partialFlatPorts.iterator(); i.hasNext(); ) {
-            final PortDefinition port = (PortDefinition) i.next();
 
-            // Find direction, wideChannelInfo, and bit-widths
-            final int dir = port.getDirection();
-            final String portName  = port.getName();
-            final PortTypeInterface portType = port.getType();
+        final String bundleSuffix = "_wrap";
+        walkPortList(
+                cell.getCSPInfo(), false,
+                new EmitPortDeclarations(new Separator(out, ";\n"),
+                                         dir -> "wire",
+                                         bundleSuffix));
+        out.println(";");
 
-            if (portType instanceof NodeType) continue;
-
-            assert portType instanceof ChannelType :
-            "found non-channel type " + portType + " port after flattening"; 
-
-            final ChannelType chanType = (ChannelType) portType;
-
-            final int bitWidth = getNumBitsWide(chanType); 
-
-            // Declare necessary new wires.
-            // Only one or the other is needed as the
-            // port list offers the other (based on direction)
-            if (dir == PortDefinition.IN) {
-                out.println("wire [" + (bitWidth-1) + ":0] \\" + portName + 
-                      "$data_snk " + ';');
-                out.println("wire \\" + portName + "$enable_src " + ';');
-            } else {
-                out.println("wire [" + (bitWidth-1) + ":0] \\" + portName + 
-                      "$data_src " + ';');
-                out.println("wire \\" + portName + "$enable_snk " + ';');
-            }
-
-            // Find slack parameters; 0 stages by default
-            final ChannelTimingInfo cti = 
-                DirectiveUtils.getTiming(cell, block, portName, 0);
-            final int slack = cti.getSlack();
-            final float latency = numTransitions(cti.getLatency());
-            final float cycletime = numTransitions(cti.getCycleTime());
-
-            // emit timing buffer instantiation
-            if (dir == PortDefinition.IN) {
-                out.print("`CAST2VERILOG_INPUT_TIMINGBUFFER");
-            } else {
-                out.print("`CAST2VERILOG_OUTPUT_TIMINGBUFFER");
-            }
-            if (slack == 0) out.print("_SLACK0");
-
-            out.print(" #(.bit_width(" + (bitWidth-1) + "), ");
-            out.print(".cycle_time (" + cycletime + "), ");
-            if (slack != 0) {
-                out.print(".slack (" + slack + "), ");
-                out.print(".forward_latency (" + latency + "), ");
-                out.print(".cycle_time_in (" +
-                          numTransitions(cti.getCycleTimeIn()) + "), ");
-                out.print(".cycle_time_out (" +
-                          numTransitions(cti.getCycleTimeOut()) + "), ");
-            }
-            if (dir == PortDefinition.IN) {
-                out.print(".fb_neutral (" +
-                          numTransitions(cti.getDataNeutralEnableLatency()) +
-                          "), ");
-                out.print(".fb_valid (" +
-                          numTransitions(cti.getDataValidEnableLatency()) +
-                          ")");
-            } else {
-                out.print(".bf_latency (" +
-                          numTransitions(cti.getEnableDataLatency()) + ")");
-            }
-            out.println(") \\tb_" + portName + " ( ");
-            out.print("." + resetNodeName + " (" + getResetName(cell) + " )"); 
-            if (dir == PortDefinition.IN) {
-                out.println(",");
-                out.println(". L$data  (\\" + portName + "$data ), ");
-                out.println(". L$enable  (\\" + portName + "$enable ),");
-                out.println(". R$data  (\\" + portName + "$data_snk ),");
-                out.print(". R$enable (\\" + portName + "$enable_src ) "); 
-            } else {
-                out.println(",");
-                out.println(". L$data  (\\" + portName + "$data_src ),");
-                out.println(". L$enable  (\\" + portName + "$enable_snk ),");
-                out.println(". R$data  (\\" + portName + "$data ), ");
-                out.print(". R$enable (\\" + portName + "$enable ) "); 
-            }
-            out.println(");");
-        }
+        new EmitSlackWrappers(out, bundleSuffix, getResetName(cell),
+                x -> DirectiveUtils.getTiming(cell, block, x, 0))
+            .mark(cell.getCSPInfo().getPortDefinitions());
 
         // Handle special case for ChanDft
         final Iterator<PortDefinition> chanDftIn = inChanDft.iterator();
@@ -3131,51 +3281,11 @@ public class Cast2Verilog {
        
         // instance name = "body" for now
         out.println('\\' + bodyName + "  body(");
-
-        // instantiate verilog cell for CSP body using dot notation
-        // for arguments.  
-        portDefs = cell.getCSPInfo().getPortDefinitions();
-        final Collection flatPorts = new ArrayList();
-        (new CellUtils.FlattenPortDefinitions(flatPorts) {
-            protected void mark(final StructureType structureType,
-                                final String name, final int direction) {
-                final String tag = structureType.getTag();
-                if (!CellUtils.isDftChannel(cell, tag) &&
-                    !CellUtils.isSramSerialChannel(tag)) {
-                    super.mark(structureType, name, direction);
-                }
-            }   
-        }).mark(portDefs);
-        for (Iterator i = flatPorts.iterator(); i.hasNext(); ) {
-            final PortDefinition port = (PortDefinition) i.next();
-            // Find direction, wideChannelInfo, and bit-widths
-            final int dir = port.getDirection();
-            final String portName  = port.getName();
-            final PortTypeInterface portType = port.getType();
-
-            if (portType instanceof NodeType) {
-                out.print("    .\\" + portName + " (\\" + portName + " )");
-            } else {
-                assert portType instanceof ChannelType;
-                final ChannelType chanType = (ChannelType) portType; 
-                final int bitWidth = getNumBitsWide(chanType); 
-                if (dir == PortDefinition.IN) {
-                    out.println("    .\\" + portName + "$data  (\\" +
-                         portName + "$data_snk ),");
-                    out.print("    .\\" + portName + "$enable  (\\" +
-                         portName + "$enable_src )");
-                } else {
-                    assert dir == PortDefinition.OUT;
-                    out.println("    .\\" + portName + "$data  (\\" +
-                        portName + "$data_src ),");
-                    out.print("    .\\" + portName + "$enable  (\\" +
-                        portName + "$enable_snk )");
-                }
-            }
-            if (i.hasNext()) out.println(",");
-        }
+        walkPortList(
+                cell.getCSPInfo(), false,
+                new EmitBodyInstantiation(new Separator(out), bundleSuffix));
         out.println(");");
-       
+
         out.println("endmodule       // slack wrapper");
         out.println("");
     }

@@ -29,6 +29,11 @@ public class ChannelType extends Type {
     private final /*@ non_null @*/ PortDirection direction;
 
     /**
+     * CAST type name for the channel.
+     **/
+    private final /*@ non_null @*/ String typeName; 
+
+    /**
      * Class constructor
      *
      * @param numValues
@@ -36,9 +41,11 @@ public class ChannelType extends Type {
      *        from <code>0</code> to <code>numValues - 1</code>.
      **/
     public ChannelType(final /*@ non_null @*/ BigInteger numValues,
-                       final /*@ non_null @*/ PortDirection direction) {
+                       final /*@ non_null @*/ PortDirection direction,
+                       final /*@ non_null @*/ String typeName) {
         this.numValues = numValues;
         this.direction = direction;
+        this.typeName = typeName;
     }
 
     /**
@@ -54,6 +61,13 @@ public class ChannelType extends Type {
      **/
     public /*@ non_null @*/ PortDirection getDirection() {
         return direction;
+    }
+
+    /**
+     * Returns the CAST type name of the channel.
+     **/
+    public /*@ non_null @*/ String getTypeName() {
+        return typeName;
     }
 
     public void accept(VisitorInterface v) throws VisitorException {

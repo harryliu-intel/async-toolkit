@@ -656,7 +656,8 @@ public class VariableAnalyzer {
                 (com.avlsi.fast.ports.ChannelType) t;
             return new ChannelType(computeChannelWidth(ct.getNumValues(),
                                                        ct.getWidth()),
-                                   PortDirection.mapDirection(direction));
+                                   PortDirection.mapDirection(direction),
+                                   ct.getTypeName());
         } else if (t instanceof com.avlsi.fast.ports.NodeType) {
             final com.avlsi.fast.ports.NodeType nt =
                 (com.avlsi.fast.ports.NodeType) t;

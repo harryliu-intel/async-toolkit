@@ -125,6 +125,11 @@ public final class ChannelType implements PortTypeInterface {
         return arrayed;
     }
 
+    public ChannelType getSingular() {
+        return new ChannelType(iterator(), getTypeName(), 1, getNumValues(),
+                               false);
+    }
+
     public String toString() {
         return typeName + (width > 1 ? "*" + width : "");
     }
