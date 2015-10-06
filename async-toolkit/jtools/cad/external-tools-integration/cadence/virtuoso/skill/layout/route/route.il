@@ -20,6 +20,7 @@
         (hookupLaygen t)         ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
+        (topHalo nil)            ; add halos inside prBoundary
         )
   (let ()
     ; export
@@ -28,7 +29,6 @@
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
-                          ?metalFill metalFill
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
@@ -59,7 +59,6 @@
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen t)         ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
-        (metalFill t)            ; add metal fill
         )
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
@@ -96,7 +95,7 @@
     PowerGridCellName = (strcat CV->cellName "_pg")
 
     ; write proteus.config
-    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal)
+    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill ?topHalo topHalo)
 
     ; export Verilog
     (when doVerilog
@@ -307,6 +306,8 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (botMetal 0)             ; bottom metal layer
         (topMetal 8)             ; top metal layer
+        (metalFill t)
+        (topHalo nil)
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR file)
     ; files and options
@@ -330,6 +331,7 @@
     (fprintf file "--top-layer=%d\n" topMetal)
     (fprintf file "--task=rdt_route\n")
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
+    (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (close file)
     )
   )
