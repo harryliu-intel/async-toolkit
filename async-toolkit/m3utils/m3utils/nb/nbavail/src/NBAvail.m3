@@ -7,6 +7,8 @@ IMPORT TextList;
 IMPORT Time, TZ;
 IMPORT Date;
 IMPORT IO;
+IMPORT Thread;
+IMPORT Env;
 FROM Fmt IMPORT F, Int, Bool;
 
 CONST TE = Text.Equal;
@@ -50,11 +52,26 @@ PROCEDURE Contains(p : TextList.T; w : TEXT) : BOOLEAN =
   END Contains;
 
 BEGIN
-  Debug.SetLevel(0); (* turn off debugging regardless of env. *)
+  IF Env.Get("DEBUGNBAVAIL") = NIL THEN
+    Debug.SetLevel(0) (* turn off debugging regardless of env. *)
+  END;
 
   workingHours := NowIsWorkingHours();
   Debug.Out("cmd : " & cmd);
-  status := ProcUtils.ToText(cmd);
+
+  LOOP
+    TRY
+      Debug.Out("attempt");
+      status := ProcUtils.ToText(cmd);
+      Debug.Out("cmd done");
+      EXIT
+    EXCEPT
+      ProcUtils.ErrorExit => 
+      Debug.Out("error exit!");
+      Thread.Pause(1.0d0)
+    END
+  END;
+
   Debug.Out("result : " & status);
   
   waiters := 0;
@@ -83,15 +100,17 @@ BEGIN
   Debug.Out("runners      " & Int(runners));
   Debug.Out("workingHours " & Bool(workingHours));
 
-  CONST
-    OutOfHoursMultiplier =    2;
   VAR
-    maxRunning          := 1000;
-    maxWaiting          :=  100;
+    maxRunning, maxWaiting : CARDINAL;
+
   BEGIN
-    IF NOT workingHours THEN
-      maxRunning := maxRunning * OutOfHoursMultiplier;
-      maxWaiting := maxWaiting (* * OutOfHoursMultiplier *);
+    IF workingHours THEN
+      maxRunning :=  600;
+      maxWaiting :=    1 + 
+                           MAX(ROUND(FLOAT (maxRunning - runners,REAL)/FLOAT(maxRunning,REAL) * 100.0),0)
+    ELSE
+      maxRunning := 2000;
+      maxWaiting :=   50
     END;
 
     WITH totalJobs = waiters + runners,

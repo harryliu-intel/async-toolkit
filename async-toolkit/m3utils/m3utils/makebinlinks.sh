@@ -66,7 +66,7 @@ ${ROOT}/calarm/finlib/src/googledata_canada.sh
 ${ROOT}/calarm/expense/src/oanda.sh
 ${ROOT}/invoicing/proc.awk
 ${ROOT}/tcam/schmoozer/src/square.sh
-${ROOT}/tcam/schmoozer/src/runspice.sh
+${ROOT}/tcam/spicebuilder/src/runspice.sh
 "
 
 mkdir ${TGTDIR} || echo Proceeding...

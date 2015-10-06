@@ -19,6 +19,7 @@ IMPORT TextUtils;
 IMPORT OSError, AL;
 IMPORT XYList;
 IMPORT TextSeq;
+IMPORT Lex, FloatMode;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*>
@@ -249,10 +250,10 @@ TYPE
     init() : MeshNode := InitMN;
   END;
   
-  NodeState = {  Running ,  Fail ,  Pass  };
+  NodeState = {  Running ,  Fail ,  Pass ,  ErrorExit  };
 
 CONST NodeStateNames = ARRAY NodeState OF TEXT {
-                "Running", "FAIL", "PASS" };
+                "Running", "FAIL", "PASS", "ErrorExit" };
 
 TYPE
   Square = ARRAY [0..1] OF ARRAY [0..1] OF MeshNode;
@@ -327,8 +328,11 @@ PROCEDURE SearchForResults() : BOOLEAN =
           mn.state := NodeState.Pass
         ELSIF TE(ln, "FAIL") THEN
           mn.state := NodeState.Fail
+        ELSIF  TE(ln, "NOTYET") THEN
+          mn.state := NodeState.ErrorExit
         ELSE
-          <*ASSERT FALSE*>
+          Debug.Warning("Unknown result \"" & ln & "\", marking as error");
+          mn.state := NodeState.ErrorExit
         END;
         ChangedState(mn);
 
@@ -447,7 +451,8 @@ PROCEDURE WakeWatcher(w : Watcher) =
       END
     END;
 
-    IF    count[NodeState.Pass] # 0 AND count[NodeState.Fail] # 0 THEN
+    IF    (count[NodeState.Pass] # 0 AND count[NodeState.Fail] # 0) OR
+           count[NodeState.ErrorExit] # 0 THEN
       Debug.Out("Different states!");
       Subdivide(w);
       w.done := TRUE
@@ -590,11 +595,28 @@ CONST NetBatchString = "nbq";
 
 CONST FNFmt = "%08s";
 
+PROCEDURE FindSim(READONLY v : ARRAY OF Val) : TEXT =
+  BEGIN
+    FOR i := FIRST(v) TO LAST(v) DO
+      TYPECASE v[i] OF 
+        StepVal(st) =>
+        TYPECASE st.s OF 
+          Variety(vv) =>
+          IF vv.param = simP THEN
+            RETURN vv.cover[st.i]
+          END
+        ELSE (* skip *) END
+      ELSE (* skip *) END
+    END;
+    <*ASSERT FALSE*>
+  END FindSim;
+
 PROCEDURE LaunchSingleJob(READONLY v : ARRAY OF Val; id : CARDINAL) =
   VAR
     jdn := F("%s/" & FNFmt,absRoot,Int(id));
     nbs := F("%s --log-file-dir %s", NetBatchString, dn);
-    command := F("%s %s %s " & FNFmt & " ", nbs, cmdNm, absRoot, Int(id));
+    command := F("%s %s %s " & FNFmt & " %s ", 
+                 nbs, cmdNm, absRoot, Int(id), FindSim(v));
   BEGIN
     TRY
       FS.CreateDirectory(jdn)
@@ -673,7 +695,20 @@ PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
 VAR launchThr := Thread.Fork(NEW(Thread.Closure, apply := LaunchApply));
 
 PROCEDURE GetLaunchQuota() : CARDINAL =
-  BEGIN RETURN Scan.Int(ProcUtils.ToText("nbavail")) END GetLaunchQuota;
+  BEGIN 
+    LOOP
+      TRY
+        RETURN Scan.Int(ProcUtils.ToText("nbavail")) 
+      EXCEPT
+        ProcUtils.ErrorExit(x) => 
+        Debug.Warning("Trouble running nbavail: " & ProcUtils.FormatError(x));
+      |
+        Lex.Error, FloatMode.Trap =>        
+        Debug.Warning("Trouble parsing output of nbavail...")
+      END;
+      Thread.Pause(10.0d0)
+    END
+  END GetLaunchQuota;
 
 PROCEDURE Add(s : Settings) =
   BEGIN
@@ -739,6 +774,39 @@ PROCEDURE XATempSim() =
             min := -40.0d0, max := 125.0d0, step := 32.5d0));
   END XATempSim;
 
+PROCEDURE ThreeCornerSim() =
+  BEGIN
+    (* what's going on with temperature? *)
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "ssss", "tttt", "ffff" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo, 
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.50d0,  800.0d6 },
+            max     := LR01 {  1.30d0, 2600.0d6 },
+            minStep := LR01 { 0.010d0,   30.0d6 },
+            maxStep := LR01 { 0.100d0,  300.0d6 }));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := 125.0d0, step := 32.5d0));
+  END ThreeCornerSim;
+
+PROCEDURE SevenCornerSim() =
+  BEGIN
+    (* what's going on with temperature? *)
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := 
+          RT(TA { "rfff","tttt","rffs","rfsf","rsss","rssf","rsfs"  }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo, 
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.50d0,  800.0d6 },
+            max     := LR01 {  1.30d0, 2600.0d6 },
+            minStep := LR01 { 0.020d0,   45.0d6 },
+            maxStep := LR01 { 0.100d0,  225.0d6 }));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := 125.0d0, step := 65.0d0));
+  END SevenCornerSim;
+
 PROCEDURE TestSim() =
   BEGIN
     Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
@@ -796,7 +864,7 @@ BEGIN
 
 (*  SimulatorSim();*)
 
-  XATempSim();
+  SevenCornerSim();
 
   Run(settings);
   Wr.Close(r1Wr);

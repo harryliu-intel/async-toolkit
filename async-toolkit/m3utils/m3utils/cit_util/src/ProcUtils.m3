@@ -262,7 +262,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                 RAISE ErrorExit(NEW(ExitCode, code := code))
               END;
 
-              Debug.Out("Exec done");
+              IF DoDebug THEN Debug.Out("Exec done") END;
             END
           EXCEPT
             OSError.E(e) => 
@@ -327,7 +327,9 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           IF DoDebug THEN Debug.Out("Exec Returned") END;
         END
       EXCEPT Rd.EndOfFile =>
-        Debug.Out("ProcUtils.Apply : short read, putting semicolon");
+        IF DoDebug THEN
+          Debug.Out("ProcUtils.Apply : short read, putting semicolon")
+        END;
         PutArg();
         c := ';';
         Exec();

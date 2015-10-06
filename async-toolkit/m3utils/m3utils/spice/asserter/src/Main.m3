@@ -155,9 +155,13 @@ BEGIN
     FOR i := FIRST(time^) TO LAST(time^) DO
       time[i] := GetLR()
     END;
-    Debug.Out(F("%s timesteps min %s step %s max %s", 
-                Int(steps), 
-                LR(time[0]), LR(time[1]-time[0]), LR(time[LAST(time^)])));
+
+    IF NUMBER(time^) >= 2 THEN
+      Debug.Out(F("%s timesteps min %s step %s max %s", 
+                  Int(steps), 
+                  LR(time[0]), LR(time[1]-time[0]), LR(time[LAST(time^)])))
+    END;
+
     FOR j := 1 TO n-1 DO
       IF j MOD 1000 = 0 THEN Debug.Out(Int(j) & " names") END;
       IF assertions[j] # NIL THEN
@@ -200,16 +204,30 @@ BEGIN
             END
           END
         END
-      END;
+      END
     END;
-    Rd.Close(tRd);
-
+    Rd.Close(tRd)
   END;
-  IF fail THEN
-    IO.Put("FAIL\n");
-    Process.Exit(1)
-  ELSE
-    IO.Put("PASS\n");
-    Process.Exit(0)
+
+  VAR
+    remAss := 0;
+  BEGIN
+    FOR i := FIRST(assertions^) TO LAST(assertions^) DO
+      IF assertions[i] # NIL THEN
+        INC(remAss, assertions[i].size())
+      END
+    END;
+    Debug.Out(Int(remAss) & " assertions remaining");
+
+    IF fail THEN
+      IO.Put("FAIL\n");
+      Process.Exit(1)
+    ELSIF remAss > 0 THEN
+      IO.Put("NOTYET\n");
+      Process.Exit(0)
+    ELSE
+      IO.Put("PASS\n");
+      Process.Exit(0)
+    END
   END
 END Main.
