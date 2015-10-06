@@ -7,6 +7,11 @@
 ; $Id$
 ; $DateTime$
 
+; convenience wrapper
+(defun MakeLayoutTag (@key (CV (geGetEditCellView)) (doFill nil))
+  (MakeLayoutTagCell CV->cellName ?doFill doFill)
+  )
+
 ; top-level called by gdsIIWrite.pl
 (defun MakeLayoutTagCell (cellName @key
                                    (viewName "layout")
