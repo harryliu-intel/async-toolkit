@@ -412,7 +412,7 @@ public class Cast2Verilog {
             final Collection<CellUtils.Channel> children = narrow.getChildren();
             final Iterator<CellUtils.Channel> i = children.iterator();
             final Function<CellUtils.Channel,String> nameFunc =
-                node -> hierRef(hier, esc(portMap.get(node).getFullName()));
+                node -> hierRef(hier, esc(getActualName(portMap, node)));
             sout.print(".nodes(" +
                        IntStream.range(1, children.size())
                                 .mapToObj(n -> i.next())
@@ -520,7 +520,7 @@ public class Cast2Verilog {
             final Collection<CellUtils.Channel> children = narrow.getChildren();
             final Iterator<CellUtils.Channel> i = children.iterator();
             final Function<CellUtils.Channel,String> nameFunc =
-                node -> hierRef(hier, esc(portMap.get(node).getFullName()));
+                node -> hierRef(hier, esc(getActualName(portMap, node)));
             sout.print(".req(" + nameFunc.apply(i.next()) + ")");
             sout.print(".ack(" + nameFunc.apply(i.next()) + ")");
             sout.print(".nodes(" +
@@ -2320,8 +2320,8 @@ public class Cast2Verilog {
         return cell;
     }
 
-    private final String getActualName(final Map portLocalMap,
-                                       final CellUtils.Channel chan) {
+    private final static String getActualName(final Map portLocalMap,
+                                              final CellUtils.Channel chan) {
         final CellUtils.Channel local =
             (CellUtils.Channel) portLocalMap.get(chan);
         if (local == null) {
@@ -2644,45 +2644,6 @@ public class Cast2Verilog {
             final ChannelType chan = (ChannelType) type;
             getChannelEmitter(chan).emitChannelDecl(fullName, out);
         }
-    }
-
-    private void instantiateNarrowNodeConverter(
-            final CellUtils.Channel narrow,
-            final Map<CellUtils.Channel,CellUtils.Channel> portMap,
-            final String hier,
-            final PrintWriter out) {
-        final ChannelType type = (ChannelType) narrow.getType();
-        final int base = getBase(type);
-        final int width = type.getWidth();
-
-        final String otherNarrow = portMap.get(narrow).getFullName();
-        out.print(narrow.isInput() ? "Nodes2ChannelConv2"
-                                   : "Channel2NodesConv2");
-        out.print(" #(.base(" + base + "), ");
-        out.print(".numBits(" + (getNumBitsNarrow(type) + 1) + ")) "); 
-        out.println("\\conv_" + otherNarrow + " (");
-
-        final Separator sout = new Separator(out);
-        // output connections to the narrow side of the converter
-        getChannelEmitter(type).
-            emitChannelConnection("channel", otherNarrow, hier, sout);
-
-        // output connections to the node side of the converter
-        // the order is d[0], d[1], ...
-        final Collection<CellUtils.Channel> children = narrow.getChildren();
-        final Iterator<CellUtils.Channel> i = children.iterator();
-        final Function<CellUtils.Channel,String> nameFunc =
-            node -> hierRef(hier, esc(portMap.get(node).getFullName()));
-        sout.print(".nodes(" +
-                   IntStream.range(1, children.size())
-                            .mapToObj(n -> i.next())
-                            .map(nameFunc)
-                            .collect(Collectors.joining(", ", "{", "}")) +
-                   ")");
-
-        // output connection to enable
-        sout.print(".enable(" + nameFunc.apply(i.next()) + ")");
-        out.println(");");
     }
 
     private void declConverterVars(final Collection converters,
