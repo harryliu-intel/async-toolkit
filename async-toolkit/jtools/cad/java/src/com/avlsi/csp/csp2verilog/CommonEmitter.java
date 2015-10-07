@@ -27,19 +27,32 @@ abstract class CommonEmitter implements VisitorInterface {
         this.registerType = "bit signed [" + (registerBitWidth - 1) + ":0]";
     }
 
-    protected String getRegisterType(final IntegerType t)
+    protected int getRegisterWidth(final IntegerType t)
         throws VisitorException {
-        final boolean signed;
         final int width;
         if (t.getDeclaredWidth() == null) {
             if (t instanceof TemporaryIntegerType && t.getInterval() != null) {
                 width = CspUtils.getWidth(t.getInterval(), registerBitWidth);
+            } else {
+                width = registerBitWidth;
+            }
+        } else {
+            width = getIntegerConstant(t.getDeclaredWidth());
+        }
+        return width;
+    }
+
+    protected String getRegisterType(final IntegerType t)
+        throws VisitorException {
+        final boolean signed;
+        final int width = getRegisterWidth(t);
+        if (t.getDeclaredWidth() == null) {
+            if (t instanceof TemporaryIntegerType && t.getInterval() != null) {
                 signed = true;
             } else {
                 return registerType;
             }
         } else {
-            width = getIntegerConstant(t.getDeclaredWidth());
             signed = t.isSigned();
         }
         return "bit " + (signed ? "signed " : "") + "[" + (width - 1) + ":0]";

@@ -1517,7 +1517,8 @@ public class VerilogEmitter extends CommonEmitter {
                            "time", "time",
                            "pack", "pack",
                            "unpack", "unpack",
-                           "energy", "energy" });
+                           "energy", "energy",
+                           "readHexInts", "readHexInts" });
 
     private String getFullName(
             final FunctionDeclaration decl,
@@ -1833,8 +1834,8 @@ public class VerilogEmitter extends CommonEmitter {
                 } else if (name == "pack") {
                     lhs.accept(this);
                     out.print(" = { ");
-                    final Iterator i = e.getActuals();
-                    emitPack((ExpressionInterface) i.next());
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    emitPack(i.next());
                     out.println(" }; ");
                 } else if (name == "unpack") {
                     out.print("{ ");
@@ -1848,6 +1849,33 @@ public class VerilogEmitter extends CommonEmitter {
                     emitUnpack(structure);
                 } else if (name == "energy") {
                     // do nothing
+                } else if (name == "readHexInts") {
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    final ExpressionInterface file = i.next();
+                    final ExpressionInterface count = i.next();
+                    final ExpressionInterface array = i.next();
+                    final ArrayType ty =
+                        (ArrayType) analysisResults.getType(array);
+
+                    out.print("ReadHexInts#(");
+                    ty.getRange().getMinExpression().accept(this);
+                    out.print(",");
+                    ty.getRange().getMaxExpression().accept(this);
+                    out.print(",");
+                    out.print(
+                        getRegisterWidth((IntegerType) ty.getElementType()));
+                    out.print(",");
+                    out.print(registerBitWidth);
+                    out.print(")::readHexInts(");
+                    out.print("__csp_to_sv_string(");
+                    file.accept(this);
+                    out.print("),");
+                    array.accept(this);
+                    out.print(",");
+                    count.accept(this);
+                    out.print(",");
+                    lhs.accept(this);
+                    out.println(");");
                 }
             } else {
                 throw new VisitorException("Call to unknown function at " +
