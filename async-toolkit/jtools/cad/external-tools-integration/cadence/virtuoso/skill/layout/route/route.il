@@ -478,31 +478,19 @@
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
   (DeleteKeepout ?CV CV)
-  (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes betterx
+  (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
   (RunAfterImportDef ?CV CV)
   )
 
-; Convert ICC's fill nets to fill purpose
+; Convert ICC's fill rects to fill purpose
 (defun ConvertFill (@key (CV (geGetEditCellView)))
-  (let (pcre fill n)
-    n=0
-    fill = (makeTable "fill" nil)
-    pcre = (pcreCompile "^syn_generated_")
-    (foreach fig CV->shapes
-             (when fig->net!=nil && (fig->net->name=="floatiss_" || (pcreExecute pcre fig->net->name))
-                   fig->lpp = (list (car fig->lpp) "fill")
-                   ; BUG: why are there so many duplicates in routed DEF?
-                   (when fig->objType=="rect"
-                         (cond (fill[(list fig->lpp fig->bBox)] (dbDeleteObject fig) n++)
-                               (t fill[(list fig->lpp fig->bBox)]=t)
-                               )
-                         )
-                   )
-             )
-    (when n>0 (printf "WARNING: %d duplicate fill rectangles deleted!\n" n))
-    )
-    t
+  (foreach fig CV->shapes
+           (when fig->objType=="rect" && fig->pin==nil
+                 fig->lpp = (list (car fig->lpp) "fill")
+                 )
+           )
+  t
   )
