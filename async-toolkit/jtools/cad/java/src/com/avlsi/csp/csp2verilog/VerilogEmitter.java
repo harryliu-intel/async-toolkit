@@ -1518,7 +1518,9 @@ public class VerilogEmitter extends CommonEmitter {
                            "pack", "pack",
                            "unpack", "unpack",
                            "energy", "energy",
-                           "readHexInts", "readHexInts" });
+                           "readHexInts", "readHexInts",
+                           "dumpOff", "dumpOff",
+                           "dumpOn", "dumpOn" });
 
     private String getFullName(
             final FunctionDeclaration decl,
@@ -1876,6 +1878,10 @@ public class VerilogEmitter extends CommonEmitter {
                     out.print(",");
                     lhs.accept(this);
                     out.println(");");
+                } else if (name == "dumpOn") {
+                    out.println("$dumpon;");
+                } else if (name == "dumpOff") {
+                    out.println("$dumpoff;");
                 }
             } else {
                 throw new VisitorException("Call to unknown function at " +

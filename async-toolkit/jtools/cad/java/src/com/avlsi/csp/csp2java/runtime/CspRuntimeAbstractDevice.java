@@ -569,6 +569,10 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         return energy.toBigInteger().doubleValue() * 1e-15;
     }
 
+    protected void _dumpOn() {}
+
+    protected void _dumpOff() {}
+
     /**
      * A function to be run while ~_RESET.  By default it does nothing.  It
      * will be overriden if there is a CSP function called resetNodes().

@@ -28,6 +28,8 @@ public class RefinementResolver extends VisitorByCategory {
         String TIME = "time";
         String ENERGY = "energy";
         String READHEXINTS = "readHexInts";
+        String DUMPON = "dumpOn";
+        String DUMPOFF = "dumpOff";
     }
 
     // Define built-in functions
@@ -152,6 +154,16 @@ public class RefinementResolver extends VisitorByCategory {
                                                 Declarator.INOUT)
                                         }),
                                         new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.DUMPON,
+                new FunctionDeclaration(BuiltIn.DUMPON,
+                                        new DeclarationList(),
+                                        new BooleanType(),
+                                        new SequentialStatement()),
+                BuiltIn.DUMPOFF,
+                new FunctionDeclaration(BuiltIn.DUMPOFF,
+                                        new DeclarationList(),
+                                        new BooleanType(),
                                         new SequentialStatement())
             });
 
