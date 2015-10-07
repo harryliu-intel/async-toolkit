@@ -3029,8 +3029,9 @@ public class Cast2Verilog {
             } else {
                 width = "";
             }
+            final String newName = arrayName(nodeType, name, inArray, false);
             out.print(netTypeFunction.apply(direction) + " " + width +
-                      VerilogUtil.escapeIfNeeded(name));
+                      VerilogUtil.escapeIfNeeded(newName));
         }
     }
 
