@@ -10,6 +10,7 @@ IMPORT IO;
 IMPORT Thread;
 IMPORT Env;
 FROM Fmt IMPORT F, Int, Bool;
+IMPORT TextUtils;
 
 CONST TE = Text.Equal;
 
@@ -18,6 +19,7 @@ VAR
 
   status : TEXT;
   waiters, runners : CARDINAL;
+  user := Env.Get("USER");
 
 
 PROCEDURE NowIsWorkingHours() : BOOLEAN =
@@ -50,6 +52,28 @@ PROCEDURE Contains(p : TextList.T; w : TEXT) : BOOLEAN =
     END;
     RETURN FALSE
   END Contains;
+
+PROCEDURE UserJobs() : CARDINAL =
+  VAR    
+    cmd := "nbqstat user=" & user;
+    data := ProcUtils.ToText(cmd);
+    rd   := TextRd.New(data);
+    cnt := 0;
+    dummy : CARDINAL;
+  BEGIN
+    TRY
+      LOOP
+        WITH line = Rd.GetLine(rd) DO
+          IF TextUtils.FindSub(line, user, dummy) THEN
+            INC(cnt)
+          END
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => (* skip *)
+    END;
+    RETURN cnt
+  END UserJobs; 
 
 BEGIN
   IF Env.Get("DEBUGNBAVAIL") = NIL THEN
@@ -101,7 +125,7 @@ BEGIN
   Debug.Out("workingHours " & Bool(workingHours));
 
   VAR
-    maxRunning, maxWaiting : CARDINAL;
+    maxRunning, maxWaiting, maxUser : CARDINAL;
 
   BEGIN
     IF workingHours THEN
@@ -113,10 +137,22 @@ BEGIN
       maxWaiting :=   50
     END;
 
+    maxUser := maxRunning;
+    
+    WITH envMaxRun  = Env.Get("NBAVAIL_MAXRUN"),
+         envMaxWait = Env.Get("NBAVAIL_MAXWAIT"),
+         envMaxUser = Env.Get("NBAVAIL_MAXUSER") DO
+      IF envMaxRun  # NIL THEN maxRunning := Scan.Int(envMaxRun ) END;      
+      IF envMaxWait # NIL THEN maxWaiting := Scan.Int(envMaxWait) END;
+      IF envMaxUser # NIL THEN maxUser    := Scan.Int(envMaxUser) END;
+    END;
+
     WITH totalJobs = waiters + runners,
+         userJobs  = UserJobs(),
          runSlack  = maxRunning - totalJobs,
-         waitSlack = maxWaiting - waiters DO
-      IO.Put(Int(MAX(0, MIN(runSlack,waitSlack))) & "\n")
+         waitSlack = maxWaiting - waiters,
+         userSlack = maxUser    - userJobs DO
+      IO.Put(Int(MAX(0, MIN(runSlack,MIN(waitSlack,userSlack)))) & "\n")
     END
   END
 END NBAvail.
