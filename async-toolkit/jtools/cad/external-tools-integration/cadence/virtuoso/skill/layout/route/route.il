@@ -29,7 +29,8 @@
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
-                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro)
+                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro
+                          ?metalFill metalFill ?topHalo topHalo)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -59,6 +60,8 @@
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen t)         ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
+        (metalFill t)            ; add metal fill
+        (topHalo nil)            ; add halos inside prBoundary
         )
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
