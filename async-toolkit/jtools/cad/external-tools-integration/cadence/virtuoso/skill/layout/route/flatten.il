@@ -1,6 +1,5 @@
 ; Replacement for ui/Nano/Flatten/FlattenView.il
 
-useAssura = nil
 useICV = t
 
 ; Top-level function to make a flatten view and switch to it
@@ -162,11 +161,11 @@ useICV = t
         (powerCellView "layout") ; used by MakeLayoutTagCell
         )
   (let (TEMP powerCellName align
-        inst prb vertprb
-        x1box x2box y1box y2box x1 y1 x2 x2
-        layerMap
-        powerCV pgMap blks
-        count gridName gridCV rows cols
+        inst prb
+        x0 y0 x1 y1
+        inLayerMap outLayerMap shapes a b srcCV top
+        powerCV pgMap
+        count gridCV rows cols
         tiehilo GND Vdd instGND instVdd)
 
     ; generated cell or file names
@@ -184,110 +183,76 @@ useICV = t
     ; get prBoundary boundary shapes
     (unless CV->prBoundary->points (error "Bad prBoundary"))
     prb = (dbCreatePolygon CV (list "prBoundary" "boundary") CV->prBoundary->points)
+    (dbSave CV)
     align = gridAlignment[topMetal]
-    vertprb = (setof v prb->points (CheckOffGrid v align))
-    (when vertprb (error "Not all prBoundary vertices are on grid: %L" vertprb))
-
-    ; get bounding box as an integer multiple of MfgGrid
-    x1box = 1.0*(round (leftEdge   prb->bBox)/MfgGrid)
-    x2box = 1.0*(round (rightEdge  prb->bBox)/MfgGrid)
-    y1box = 1.0*(round (bottomEdge prb->bBox)/MfgGrid)
-    y2box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
-
-    ; minimum sized power grid
-    x1 = (floor   x1box/(round (car  align)/MfgGrid))
-    y1 = (floor   y1box/(round (cadr align)/MfgGrid))
-    x2 = (ceiling x2box/(round (car  align)/MfgGrid))
-    y2 = (ceiling y2box/(round (cadr align)/MfgGrid))
-
-    ; avoid M2 overlapping prBoundary of subcells (looks only one level down)
-    blks = (PaintOverSubcellPrBoundary (list Metal[2] "block") ?CV CV)
-
-    ; run Assura rules
-    (when useAssura ; BUG: Assura isn't working.  ICV may be used instead.
-      layerMap = (list
-                  (list "power2" (list Metal[2] "block"))
-                  (list "power3" (list Metal[3] "block"))
-                  (list "power4" (list Metal[4] "block"))
-                  (list "power5" (list Metal[5] "block"))
-                  (list "power6" (list Metal[6] "block"))
-                  (list "power7" (list Metal[7] "block"))
-                  (list "power8" (list Metal[8] "block"))
-                  )
-      powerCV = (AssuraLayerProcessor layerMap "makePowerGrid"
-                                      CV->libName powerCellName powerCellView ?CV CV)
+    (when (CheckPointsOffGrid prb->points align)
+      (error "Not all prBoundary vertices are on grid")
       )
-    (when !useAssura ; BUG: temporary hack to avoid Assura layer processing
-      (let (power2 power4 power6 power8 temp3 temp7)
-        (FlattenBlockPurpose CV powerCV)
+    
+    ; ICV layers
+    outLayerMap = (list
+                   (list "power2" MetalBlock[2])
+                   (list "power3" MetalBlock[3])
+                   (list "power4" MetalBlock[4])
+                   (list "power5" MetalBlock[5])
+                   (list "power6" MetalBlock[6])
+                   (list "power7" MetalBlock[7])
+                   (list "power8" MetalBlock[8])
+                   )
+    inLayerMap = (cons (list "prb" (list "prBoundary" "boundary")) outLayerMap)
 
-        ; power grid blockages (BUG: ignores power blockages on odd layers)
-        (dbCreatePolygon powerCV MetalBlock[2] prb->points)
-        (leLayerAndNot powerCV MetalBlock[6] MetalBlock[8] (list "y6" "drawing"))
-        (leLayerOr     powerCV MetalBlock[6] MetalBlock[8] (list "y7" "drawing"))
-        (leLayerAndNot powerCV MetalBlock[4] (list "y7" "drawing") (list "y4" "drawing"))
-        (leLayerOr     powerCV MetalBlock[4] (list "y7" "drawing") (list "y3" "drawing"))
-        (leLayerAndNot powerCV MetalBlock[2] (list "y3" "drawing") (list "y2" "drawing"))
-        (foreach s powerCV->shapes (when s->purpose=="block" (dbDeleteObject s)))
+    ; loop until power grid is built up to topMetal
+    srcCV = CV
+    top = 0
+    count = 0
+    (while top<topMetal
+      top=topMetal
 
-        ; chop into tiles
-        power8 = (setof s powerCV->shapes s->lpp==MetalBlock[8])
-        power6 = (setof s powerCV->shapes s->lpp==(list "y6" "drawing"))
-        power4 = (setof s powerCV->shapes s->lpp==(list "y4" "drawing"))
-        power2 = (setof s powerCV->shapes s->lpp==(list "y2" "drawing"))
-        temp3  = (setof s powerCV->shapes s->lpp==(list "y3" "drawing"))
-        temp7  = (setof s powerCV->shapes s->lpp==(list "y7" "drawing"))
-        (dbLayerTile powerCV MetalBlock[2] power2)
-        (dbLayerTile powerCV MetalBlock[4] power4)
-        (dbLayerTile powerCV MetalBlock[6] power6)
-        (dbLayerTile powerCV MetalBlock[8] power8)
+      ; run ICV to find the highest "block" purpose regions
+      (ICVLayerProcessorSimple srcCV powerCV "MakePowerGrid" inLayerMap outLayerMap)
 
-        ; delete temporary layers
-        (foreach s power2 (dbDeleteObject s))
-        (foreach s power4 (dbDeleteObject s))
-        (foreach s power6 (dbDeleteObject s))
-        (foreach s power8 (dbDeleteObject s))
-        (foreach s temp3  (dbDeleteObject s))
-        (foreach s temp7  (dbDeleteObject s))
-        (dbSave powerCV)
-        )
-      )
+      ; chop into tiles
+      (for m 2 topMetal
+           shapes = (setof s powerCV->shapes s->lpp==MetalBlock[m])
+           (dbLayerTile powerCV MetalBlock[m] shapes)
+           (foreach s shapes (dbDeleteObject s))
+           )
 
-    ; map block purpose layers to power grid cell names
-    pgMap=(makeTable "POWER_GRID" nil)
-    (for m 2 (max 2 topMetal-1)
-         gridName = "globals.POWER_GRID.m"
-         (for n m topMetal
-              gridName = (strcat gridName (sprintf nil "%d" n))
-              )
-         pgMap[Metal[m]] = (strcat gridName "_pg")
-         )
-
-    ; replace block shapes with power mosaics
-    count=0
-    (foreach lpp powerCV->lpps
-      gridName = pgMap[lpp->layerName]
-      (when gridName && lpp->purpose=="block"
-        gridCV = (dbOpenCellViewByType "globals" gridName "layout")
-        (foreach shape lpp->shapes
-          x1 = (leftEdge   shape->bBox)
-          y1 = (bottomEdge shape->bBox)
-          x2 = (rightEdge  shape->bBox)
-          y2 = (topEdge    shape->bBox)
-          cols = (round (x2-x1)/(car align))
-          rows = (round (y2-y1)/(cadr align))
+      ; replace block shapes with power mosaics
+      (foreach shape (setof s powerCV->shapes s->purpose=="block" && s->objType=="rect")
+        (for n 2 TopMetal (when shape->lpp==MetalBlock[n] a=n))
+        b = (MaxAlignedMetalLayer shape->bBox)
+        (when b<a (error "%s:%s not grid aligned\n" shape->layerName shape->purpose))
+        b = (min b topMetal)
+        top = (min b top)
+        (when b>a
+          align = gridAlignment[b]
+          gridCV = (ChoosePowerGridCell a b)
+          x0 = (leftEdge   shape->bBox)
+          y0 = (bottomEdge shape->bBox)
+          x1 = (rightEdge  shape->bBox)
+          y1 = (topEdge    shape->bBox)
+          cols = (round (x1-x0)/(car  align))
+          rows = (round (y1-y0)/(cadr align))
           (dbCreateSimpleMosaic powerCV gridCV
-                                (sprintf nil "pg%d" count) x1:y1 "R0"
+                                (sprintf nil "pg%d" count++) x0:y0 "R0"
                                 rows cols (cadr align) (car align))
-          count = count+1
+          (dbCreateRect powerCV MetalBlock[b] shape->bBox) ; block up to Metal[b]
           (dbDeleteObject shape)
           )
         )
+      (dbSave powerCV)
+      (printf "MakePowerGrid top=%d count=%d\n" top count)
+      srcCV = powerCV ; use powerCV as scratch to build more layers of power grid
       )
 
-    ; create prBoundary, power pins, and instantiate power grid
+    ; delete temporary shapes, draw prBoundary and top block shape
+    (dbDeleteObject prb)
+    (foreach s powerCV->shapes (when s->purpose=="block" (dbDeleteObject s)))
     (dbCreatePRBoundary powerCV CV->prBoundary->points)
     (dbCreatePolygon powerCV (list Metal[topMetal] "block") CV->prBoundary->points)
+
+    ; create power pins and instantiate power grid
     (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "input")
     (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "input")
     tiehilo = (dbCreateInst CV powerCV "pg" 0:0 "R0")
@@ -298,10 +263,6 @@ useICV = t
     instVdd = (dbFindTermByName powerCV VddNetName)
     (dbCreateInstTerm GND tiehilo instGND)
     (dbCreateInstTerm Vdd tiehilo instVdd)
-
-    ; delete temporary shapes
-    (dbDeleteObject prb)
-    (foreach x blks (dbDeleteObject x))
 
     ; HACK: add explicit power hookups before exporting to ICC
     (LaygenPowerHookup CV powerCV ?hookupLaygen hookupLaygen ?hookupD04 hookupD04)
@@ -420,13 +381,29 @@ useICV = t
   )
 
 ; Mod operation converting float number to integer in terms of MfgGrid
-(defun GetNonZeroMod ( div dis )
+(defun GetNonZeroMod (div dis)
   (mod (round div/MfgGrid) (round dis/MfgGrid)) != 0
   )
 
 ; Check vertices are on powergrid pitch
-(defun CheckOffGrid ( pt align )
-  (GetNonZeroMod (car pt) (car align)) || (GetNonZeroMod (cadr pt) (cadr align))
+(defun CheckOffGrid (point align)
+  (GetNonZeroMod (car point) (car align)) || (GetNonZeroMod (cadr point) (cadr align))
+  )
+
+; Check if a list of points is off grid
+(defun CheckPointsOffGrid (points align)
+  (CheckOffGrid (car points) align) || (cdr points) && (CheckPointsOffGrid (cdr points) align)
+  )
+
+; Figure out the highest metal layer which is grid aligned for a list of points
+(defun MaxAlignedMetalLayer (points)
+  (let (top)
+    top=0
+    (for m 2 TopMetal
+         (unless (CheckPointsOffGrid points gridAlignment[m]) top=m)
+         )
+    top
+    )
   )
 
 ; sort a list of vertices by smallest Y then smallest X
@@ -491,24 +468,13 @@ useICV = t
   t
   )
 
-
-; copy block purpose shapes from subcells
-; TODO: use ICV instead
-(defun FlattenBlockPurpose (CV dstCV)
-  (let (pg inst_trans pg_trans)
-    (foreach inst CV->instances
-             inst_trans = (dbGetInstTransform inst)
-             (foreach shape (setof s inst->master->shapes s->purpose=="block")
-                      (dbCopyShape shape dstCV inst_trans)
-                      )
-             pg = (dbFindAnyInstByName inst->master "pg")
-             (when pg
-               pg_trans = (dbGetInstTransform pg)
-               (foreach shape (setof s pg->master->shapes s->purpose=="block")
-                        (dbCopyShape shape dstCV (dbConcatTransform inst_trans pg_trans))
-                        )
-               )
-             )
+; Choose power grid cell
+(defun ChoosePowerGridCell (bot top)
+  (let (gridName)
+    gridName = "globals.POWER_GRID.m"
+    (for n bot top gridName = (strcat gridName (sprintf nil "%d" n)))
+    gridName = (strcat gridName "_pg")
+    (dbOpenCellViewByType "globals" gridName "layout")
     )
-  t
   )
+  
