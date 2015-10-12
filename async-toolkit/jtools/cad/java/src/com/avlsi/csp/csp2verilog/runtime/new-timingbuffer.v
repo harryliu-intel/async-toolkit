@@ -20,8 +20,7 @@ module output_timing_buffer$
      output reg signed [bit_width:0] R$data,
      input R$enable);
 
-timeunit 1ns;
-timeprecision 1fs;
+`PRS2VERILOG_TIMESCALE
 
 // circular buffer holds data values
 reg signed [bit_width:0] x[slack-1:0];
@@ -130,8 +129,7 @@ module input_timing_buffer$
      output reg signed [bit_width:0] R$data,
      input R$enable);
 
-timeunit 1ns;
-timeprecision 1fs;
+`PRS2VERILOG_TIMESCALE
 
 // circular buffer holds data values
 reg signed [bit_width:0] x[slack-1:0];
@@ -239,8 +237,7 @@ module output_timing_buffer$s0
      output reg signed [bit_width:0] R$data,
      input R$enable);
 
-timeunit 1ns;
-timeprecision 1fs;
+`PRS2VERILOG_TIMESCALE
 
 reg signed [bit_width:0] x;
 reg ready;
@@ -302,8 +299,7 @@ module input_timing_buffer$s0
      output reg signed [bit_width:0] R$data,
      input R$enable);
 
-timeunit 1ns;
-timeprecision 1fs;
+`PRS2VERILOG_TIMESCALE
 
 reg signed [bit_width:0] x;
 reg ready;
