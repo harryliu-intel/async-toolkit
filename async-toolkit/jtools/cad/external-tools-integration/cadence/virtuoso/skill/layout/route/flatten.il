@@ -225,7 +225,7 @@ useICV = t
         (when b<a (error "%s:%s not grid aligned\n" shape->layerName shape->purpose))
         b = (min b topMetal)
         top = (min b top)
-        (when b>a
+        (when b>a || a==2 && b==2
           align = gridAlignment[b]
           gridCV = (ChoosePowerGridCell a b)
           x0 = (leftEdge   shape->bBox)
