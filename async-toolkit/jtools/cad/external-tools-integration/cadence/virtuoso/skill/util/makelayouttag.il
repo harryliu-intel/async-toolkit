@@ -8,8 +8,8 @@
 ; $DateTime$
 
 ; convenience wrapper
-(defun MakeLayoutTag (@key (CV (geGetEditCellView)) (doFill nil))
-  (MakeLayoutTagCell CV->cellName ?doFill doFill)
+(defun MakeLayoutTag (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8) (doFill nil))
+  (MakeLayoutTagCell CV->cellName ?doFill doFill ?botMetal botMetal ?topMetal topMetal)
   )
 
 ; top-level called by gdsIIWrite.pl
@@ -19,6 +19,7 @@
                                    (targetViewName "layout_tag")
                                    (CastPath (ConfigFileGetValue TheCDSConfigTable "CAST_PATH"))
                                    (TempDir  (ConfigFileGetValue TheCDSConfigTable "TEMP"))
+                                   (botMetal 0) ; used for TemplateFill
                                    (topMetal 8)
                                    (doPower t)
                                    (doCheck t)
@@ -138,7 +139,7 @@
          )
 
     ; metal fill
-    (when doFill (TemplateFill ?CV tagCV ?topMetal topMetal))
+    (when doFill (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal topMetal))
 
     ; finish
     (dbSave tagCV)
