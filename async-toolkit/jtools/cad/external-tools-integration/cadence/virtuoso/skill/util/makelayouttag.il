@@ -27,7 +27,7 @@
                                    )
   (let (libName CV tagCV trans ints prb align lpp
                 gridCV fillCV hookCV power2 prb2 shapes count
-                x0box x1box y0box y1box x0 y0 x1 y1
+                x0box x1box y0box y1box ox0 ox1 x0 y0 x1 y1
                 rows cols frows fcols fx0 fy0 fx1 fy1)
     ; read source CV
     libName = (GetCastLibName cellName)
@@ -65,6 +65,8 @@
     y0 = (floor   y0box/(round (cadr align)/MfgGrid))
     x1 = (ceiling x1box/(round (car  align)/MfgGrid))
     y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
+    ox0 = x0 * (car align)
+    ox1 = x1 * (car align)
     x0 = (x0-1) * (car  align)
     y0 = (y0-1) * (cadr align)
     x1 = (x1+1) * (car  align)
@@ -84,7 +86,8 @@
     ; label topMetal power supplies
     (for r 0 rows-1
          y = y0+(cadr align)*r
-         (MakeLayoutTagPowerPins tagCV (list x0:y x1:y) topMetal)
+         (MakeLayoutTagPowerPins tagCV (list x0:y ox0:y) topMetal)
+         (MakeLayoutTagPowerPins tagCV (list ox1:y x1:y) topMetal)
          )
 
     ; align to m2 grid for filler cells
