@@ -4,8 +4,11 @@
 // Copyright 2004 - 2013 Intel Corporation
 // All Rights Reserved.
 
+`ifndef PRS2VERILOG_TIMEUNIT
+`define PRS2VERILOG_TIMEUNIT 1ns
+`endif
 `define PRS2VERILOG_DELAY(prsDelay, delayBias, extraDelay)                     \
-    (((prsDelay)*(delayBias)+(extraDelay))*`PRS2VERILOG_TAU*1ns)
+    (((prsDelay)*(delayBias)+(extraDelay))*`PRS2VERILOG_TAU*`PRS2VERILOG_TIMEUNIT)
 
 /******************************************************************************/
 /** CAST2VERILOG_TIME
@@ -16,10 +19,10 @@
  *
  ******************************************************************************/
 `define CAST2VERILOG_TIME                                                      \
-    ((100.0/(`PRS2VERILOG_TAU*1ns))*$realtime)
+    ((100.0/(`PRS2VERILOG_TAU*`PRS2VERILOG_TIMEUNIT))*$realtime)
 
 `define CAST2VERILOG_WAIT(waitTime)                                            \
-    #((waitTime)*(`PRS2VERILOG_TAU*1ns)/100.0)
+    #((waitTime)*(`PRS2VERILOG_TAU*`PRS2VERILOG_TIMEUNIT)/100.0)
 
 `define PRS2VERILOG_TIMESCALE                                                  \
-    timeunit 1ns; timeprecision 1fs;
+    timeunit `PRS2VERILOG_TIMEUNIT; timeprecision 1fs;
