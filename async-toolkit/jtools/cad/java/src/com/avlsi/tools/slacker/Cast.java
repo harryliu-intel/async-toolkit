@@ -324,7 +324,7 @@ public class Cast {
         final String parent =
             castChan.getParent() != null ? castChan.getParent().getFullName()
                                          : null;
-        final CellInterface chanCell = getChannel(cell, castChan);
+        final CellInterface chanCell = getSubcell(cell, toHierName(name));
         double cost = (Float) DirectiveUtils.getTopLevelDirective(chanCell,
                 DirectiveConstants.SLACKER_COST);
         boolean chanDontTouch =
@@ -495,6 +495,40 @@ public class Cast {
                                            CellUtils.CHANNEL_TYPE));
     }
 
+    private static CellInterface getSubcell(final CellInterface cell,
+                                            HierName name) {
+        CellInterface curr = cell;
+        while (curr != null) {
+            Pair<HierName,HierName> p =
+                CellUtils.getFirstInstance(curr, name, true);
+            assert p.getFirst() != null;
+            curr = curr.getSubcell(p.getFirst());
+            if (p.getSecond() == null) {
+                break;
+            } else {
+                name = p.getSecond();
+            }
+        }
+        return curr;
+    }
+
+    private static CellUtils.Channel getChannel(final CellInterface cell,
+                                                final HierName name) {
+        final Pair<HierName,HierName> p =
+            CellUtils.getFirstInstance(cell, name, true);
+        final CellInterface subcell = cell.getSubcell(p.getFirst());
+        final HierName inst, chan;
+        if (subcell.isNode() || subcell.isChannel()) {
+            inst = null;
+            chan = name;
+        } else {
+            inst = p.getFirst();
+            chan = p.getSecond();
+        }
+        return new CellUtils.Channel(inst, chan.getAsString('.'), null, null,
+                                     -1, -1);
+    }
+
     /** Create a new Slacker Type given a CellInterface */
     public Type process(final CellInterface cell) {
         final String typeName = cell.getFullyQualifiedType();
@@ -515,22 +549,6 @@ public class Cast {
 
         final CellUtils.ChannelConnectionPredicate
             nodeConnected = new CellUtils.ChannelConnectionPredicate() {
-                private CellInterface getSubcell(HierName name) {
-                    CellInterface curr = cell;
-                    while (curr != null) {
-                        Pair<HierName,HierName> p =
-                            CellUtils.getFirstInstance(curr, name, true);
-                        assert p.getFirst() != null;
-                        curr = curr.getSubcell(p.getFirst());
-                        if (p.getSecond() == null) {
-                            break;
-                        } else {
-                            name = p.getSecond();
-                        }
-                    }
-                    return curr;
-                }
-
                 private boolean isSlackerChannel(CellInterface cell) {
                     return (Boolean) DirectiveUtils.getTopLevelDirective(cell,
                             DirectiveConstants.SLACKER_CHANNEL);
@@ -554,22 +572,6 @@ public class Cast {
                     }
                 }
 
-                private CellUtils.Channel getChannel(final HierName name) {
-                    final Pair<HierName,HierName> p =
-                        CellUtils.getFirstInstance(cell, name, true);
-                    final CellInterface subcell = cell.getSubcell(p.getFirst());
-                    final HierName inst, chan;
-                    if (subcell.isNode() || subcell.isChannel()) {
-                        inst = null;
-                        chan = name;
-                    } else {
-                        inst = p.getFirst();
-                        chan = p.getSecond();
-                    }
-                    return new CellUtils.Channel(inst, chan.getAsString('.'),
-                                                 null, null, -1, -1);
-                }
-
                 private List<String> getNodes(final CellInterface ci) {
                     final List<String> result = new ArrayList<>();
                     (new CellUtils.MarkPort() {
@@ -586,9 +588,9 @@ public class Cast {
                                     CellUtils.Channel in,
                                     AliasedSet/*<Channel>*/ connections) {
                     final HierName outInst = toHierName(out.getFullName());
-                    final CellInterface outCell = getSubcell(outInst);
+                    final CellInterface outCell = getSubcell(cell, outInst);
                     final HierName inInst = toHierName(in.getFullName());
-                    final CellInterface inCell = getSubcell(inInst);
+                    final CellInterface inCell = getSubcell(cell, inInst);
                     final List<Pair<HierName,CellInterface>> outSlackerChans =
                         new ArrayList<>();
                     final List<Pair<HierName,CellInterface>> inSlackerChans =
@@ -611,11 +613,11 @@ public class Cast {
                                     .map(x -> toHierName(x))
                                     .allMatch(x ->
                                         connections.areEquivalent(
-                                            getChannel(
+                                            getChannel(cell,
                                                 HierName.append(
                                                     oc.getFirst(),
                                                     x)),
-                                            getChannel(
+                                            getChannel(cell,
                                                 HierName.append(
                                                     ic.getFirst(),
                                                     x))));
