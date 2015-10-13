@@ -105,7 +105,6 @@
     (foreach obj shapes (dbDeleteObject obj))
     fillCV = (dbOpenCellViewByType "globals" "globals.POWER_GRID.fill_pg" "layout")
     hookCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
- 
     count = 0
     (foreach shape (setof s tagCV->shapes s->lpp==(list Metal[2] "block"))
              fx0 = (leftEdge   shape->bBox)
@@ -117,12 +116,14 @@
              (dbCreateSimpleMosaic tagCV fillCV
                                    (sprintf nil "fill%d" count++) fx0:fy0 "R0"
                                    frows fcols (cadr align) (car align))
-             (dbCreateSimpleMosaic tagCV hookCV
-                                   (sprintf nil "fill%d" count++) fx0:fy0 "R0"
-                                   frows 1 (cadr align) 0)
-             (dbCreateSimpleMosaic tagCV hookCV
-                                   (sprintf nil "fill%d" count++) fx1:fy0 "R0"
-                                   frows 1 (cadr align) 0)
+             (when (isStandardCell CV) || (dbGetPropByName CV "LaygenVersion")
+                   (dbCreateSimpleMosaic tagCV hookCV
+                                         (sprintf nil "fill%d" count++) fx0:fy0 "R0"
+                                         frows 1 (cadr align) 0)
+                   (dbCreateSimpleMosaic tagCV hookCV
+                                         (sprintf nil "fill%d" count++) fx1:fy0 "R0"
+                                         frows 1 (cadr align) 0)
+                   )
              (dbDeleteObject shape)
              )
 
