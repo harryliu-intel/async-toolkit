@@ -66,7 +66,7 @@
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
         Command (statusVerilog t)
-        lef_subcells LefCellsList GdsMapFile gds_name
+        lef_subcells GdsMapFile gds_name
         pout (statusGds t) (statusLef t) 
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
@@ -133,52 +133,12 @@
 
     ; export GDS
     (when doGds
-      (foreach sub lef_subcells
-               (shell (strcat "mkdir -p " WDIR "/gds"))
-               GdsMapFile = (sprintf nil "%s/gds/%s.map" WDIR sub->cellName)
-               pout = (outfile GdsMapFile)
-               gds_name = (translateName "cell" "cadence" "gds2" sub->cellName)
-               (fprintf pout "%s %s %s %s\n" sub->libName sub->cellName sub->viewName gds_name)
-               (close pout)
-               Command = (sprintf nil
-                                  (strcat "strmout"
-                                          " -view '%s'"
-                                          " -runDir %s/gds"
-                                          " -outputDir %s/gds"
-                                          " -layerMap %s/stream/strmout.layermap"
-                                          " -propMap %s/stream/prop.map"
-                                          " -objectMap %s/stream/objectmap"
-                                          " -cellListFile %s"
-                                          " -cellMap %s"
-                                          " -logFile %s.log"
-                                          " ; mv %s/gds/%s %s/gds/%s.gds")
-                                  sub->viewName WDIR WDIR
-                                  PDK_DIR PDK_DIR PDK_DIR
-                                  GdsMapFile GdsMapFile GdsMapFile
-                                  WDIR gds_name WDIR gds_name)
-               statusGds = statusGds && (shell Command)
-               )
+      statusGds = (ExportCellsGDS (strcat WDIR "/gds") lef_subcells)
       )
 
     ; export LEF
     (when doLef
-      ; write lef cells list
-      LefCellsList = (sprintf nil "%s/%s.lef_cells_list" WDIR CV->cellName)
-      pout = (outfile LefCellsList)
-      (foreach sub lef_subcells
-               (fprintf pout "%s %s abstract\n" sub->libName sub->cellName))
-      (close pout)
-
-      ; export LEF for subcells
-      statusLef = (ldtrLefWriteOA
-                   (sprintf nil "%s/%s.lef" WDIR CV->cellName)
-                   TechLibName
-                   nil
-                   LefCellsList
-                   nil
-                   (sprintf nil "%s/%s.lef.log" WDIR CV->cellName)
-                   t
-                   "5.7")
+      statusLef = (ExportCellsLEF (strcat WDIR "/" CV->cellName) lef_subcells)
       )
 
     ; export DEF
@@ -300,7 +260,7 @@
                subcells = (cons inst->master->cellView subcells)
                )
              )
-    subcells
+    (sort subcells (lambda (a b) (strcmp a->cellName b->cellName)<0))
     )
   )
 
@@ -496,4 +456,59 @@
                  )
            )
   t
+  )
+
+; Write GDS for a list of cell-views
+(defun ExportCellsGDS (directory cells)
+  (let (PDK_DIR GdsMapFile pout gds_name Command (statusGds t))
+    PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
+    (foreach cell cells
+             (shell (strcat "mkdir -p " directory))
+             GdsMapFile = (sprintf nil "%s/%s.map" directory cell->cellName)
+             pout = (outfile GdsMapFile)
+             gds_name = (translateName "cell" "cadence" "gds2" cell->cellName)
+             (fprintf pout "%s %s %s %s\n" cell->libName cell->cellName cell->viewName gds_name)
+             (close pout)
+             Command = (sprintf nil
+                                (strcat "strmout"
+                                        " -view '%s'"
+                                        " -runDir %s"
+                                        " -outputDir %s"
+                                        " -layerMap %s/stream/strmout.layermap"
+                                        " -propMap %s/stream/prop.map"
+                                        " -objectMap %s/stream/objectmap"
+                                        " -cellListFile %s"
+                                        " -cellMap %s"
+                                        " -logFile %s.log"
+                                        " ; mv %s/%s %s/%s.gds")
+                                cell->viewName directory directory
+                                PDK_DIR PDK_DIR PDK_DIR
+                                GdsMapFile GdsMapFile GdsMapFile
+                                directory gds_name directory gds_name)
+               statusGds = statusGds && (shell Command)
+               )
+    statusGds
+    )
+  )
+
+; Write LEF for a list of cell-views
+(defun ExportCellsLEF (filename cells)
+  (let (LefCellsList pout)
+    ; write lef cells list
+    LefCellsList = (sprintf nil "%s.lef_cells_list" filename)
+    pout = (outfile LefCellsList)
+    (foreach c cells (fprintf pout "%s %s abstract\n" c->libName c->cellName))
+    (close pout)
+    
+    ; export LEF for cells
+    (ldtrLefWriteOA
+     (sprintf nil "%s.lef" filename)
+     TechLibName
+     nil
+     LefCellsList
+     nil
+     (sprintf nil "%s.lef.log" filename)
+     t
+     "5.7")
+    )
   )
