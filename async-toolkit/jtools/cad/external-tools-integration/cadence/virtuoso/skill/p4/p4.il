@@ -249,7 +249,7 @@
                           ( Command
                             ( sprintf
                               nil
-                              "/p/rrc/tools/bin/fulcrum %s"
+                              "%s"
                               P4CommandScript ) ) )
                       
                       (let (
