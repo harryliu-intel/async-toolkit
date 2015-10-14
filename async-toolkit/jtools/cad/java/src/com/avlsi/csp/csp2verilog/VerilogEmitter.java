@@ -1879,9 +1879,9 @@ public class VerilogEmitter extends CommonEmitter {
                     lhs.accept(this);
                     out.println(");");
                 } else if (name == "dumpOn") {
-                    out.println("$dumpon;");
+                    out.println("`CAST2VERILOG_DUMP_ON");
                 } else if (name == "dumpOff") {
-                    out.println("$dumpoff;");
+                    out.println("`CAST2VERILOG_DUMP_OFF");
                 }
             } else {
                 throw new VisitorException("Call to unknown function at " +
