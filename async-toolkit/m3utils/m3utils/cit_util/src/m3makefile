@@ -379,6 +379,8 @@ c_source ("UtimeOpsC")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Module ("FastNumParse")
+
 Library("cit_util")
 
 
