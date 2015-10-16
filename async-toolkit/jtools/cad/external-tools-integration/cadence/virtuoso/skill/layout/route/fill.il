@@ -16,7 +16,7 @@
                           (flatCV nil)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk lpp_tmp rect bbox shapes new_shapes
-        overlaps fill_shapes new_fill_shapes purposes
+        overlaps fill_shapes new_fill_shapes purposes altLayer
         x y x0 y0 x1 y1 x0box y0box x1box y1box cols rows align w h l del xb yb
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
@@ -59,8 +59,15 @@
     lpp_blk  = (list layerName "blockage")
     lpp_tmp  = (list "y1" "drawing")
     purposes = (list "drawing" "fill" "gnd" "vdd")
+    altLayer = (makeTable "altLayer" nil)
+    altLayer[Metal[0]]="mc0"
+    altLayer[Metal[2]]="mc2"
+    altLayer[Metal[3]]="mc3"
+    altLayer[Metal[4]]="mc4"
+    altLayer[Metal[5]]="mc5"
     (foreach s flatCV->shapes
-             (when s->objType!="label" && s->layerName==layerName && (member s->purpose purposes)!=nil
+             (when s->objType!="label" && (s->layerName==layerName || s->layerName==altLayer[layerName]) &&
+                   (member s->purpose purposes)!=nil
                    (dbCreateRect CV lpp_blk s->bBox)
                    )
              )
