@@ -16,7 +16,7 @@
                           (flatCV nil)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk lpp_tmp rect bbox shapes new_shapes
-        overlaps fill_shapes new_fill_shapes purposes altLayer
+        overlaps fill_shapes new_fill_shapes lpps mc sp
         x y x0 y0 x1 y1 x0box y0box x1box y1box cols rows align w h l del xb yb
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
@@ -58,17 +58,26 @@
     lpp_fill = (list layerName "fill")
     lpp_blk  = (list layerName "blockage")
     lpp_tmp  = (list "y1" "drawing")
-    purposes = (list "drawing" "fill" "gnd" "vdd")
-    altLayer = (makeTable "altLayer" nil)
-    altLayer[Metal[0]]="mc0"
-    altLayer[Metal[2]]="mc2"
-    altLayer[Metal[3]]="mc3"
-    altLayer[Metal[4]]="mc4"
-    altLayer[Metal[5]]="mc5"
+    mc = (sprintf nil "mc%d" layerNum)
+    (foreach purpose (list "drawing" "fill" "gnd" "vdd")
+             lpps = (cons (list layerName purpose) lpps)
+             lpps = (cons (list mc purpose) lpps)
+             )
     (foreach s flatCV->shapes
-             (when s->objType!="label" && (s->layerName==layerName || s->layerName==altLayer[layerName]) &&
-                   (member s->purpose purposes)!=nil
-                   (dbCreateRect CV lpp_blk s->bBox)
+             (when s->objType!="label" && (member s->lpp lpps)!=nil
+                   bbox = s->bBox
+                   (cond (mod2==0
+                          sp=(cadr MetalSpace[layerName])
+                          bbox = (list (car (car  bbox)):(cadr (car  bbox))-sp
+                                       (car (cadr bbox)):(cadr (cadr bbox))+sp)
+                          )
+                         (t
+                          sp=(car MetalSpace[layerName])
+                          bbox = (list (car (car  bbox))-sp:(cadr (car  bbox))
+                                       (car (cadr bbox))+sp:(cadr (cadr bbox)))
+                          )
+                         )
+                   (dbCreateRect CV lpp_blk bbox)
                    )
              )
 
@@ -84,7 +93,6 @@
                        )
               )
          )
-
     ; chop fill template with blockage purpose
     prb = (dbCreatePolygon CV BoundaryLPP
                            (betterGrowPoints (GetPrboundPoints CV)
