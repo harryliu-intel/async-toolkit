@@ -27,9 +27,9 @@
                                    (doFill nil)
                                    )
   (let (libName CV tagCV trans ints prb align lpp
-                gridCV fillCV hookCV power2 prb2 shapes count
+                gridCV hookCV power2 prb2 shapes count
                 x0box x1box y0box y1box ox0 ox1 x0 y0 x1 y1
-                rows cols frows fcols fx0 fy0 fx1 fy1)
+                rows cols frows fx0 fy0 fx1 fy1)
     ; read source CV
     libName = (GetCastLibName cellName)
     CV = (dbOpenCellViewByType libName cellName viewName)
@@ -79,11 +79,6 @@
     (dbDeleteObject prb)
     prb = (dbCreatePRBoundary tagCV (list x0:y0 x1:y0 x1:y1 x0:y1))
 
-    ;  add power, color, check grids
-    (when doPower (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag"))
-    (when doColor (MakeColorGrid ?CV tagCV ?overlayView "layout_tag"))
-    (when doCheck (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag"))
-
     ; label topMetal power supplies
     (for r 0 rows-1
          y = y0+(cadr align)*r
@@ -103,20 +98,16 @@
     (dbDeleteObject prb2)
     (dbDeleteObject power2)
     (foreach obj shapes (dbDeleteObject obj))
-    fillCV = (dbOpenCellViewByType "globals" "globals.POWER_GRID.fill_pg" "layout")
     hookCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
     count = 0
     (foreach shape (setof s tagCV->shapes s->lpp==(list Metal[2] "block"))
-             fx0 = (leftEdge   shape->bBox)
-             fy0 = (bottomEdge shape->bBox)
-             fx1 = (rightEdge  shape->bBox)
-             fy1 = (topEdge    shape->bBox)
-             fcols = (round (fx1-fx0)/(car  align))
-             frows = (round (fy1-fy0)/(cadr align))
-             (dbCreateSimpleMosaic tagCV fillCV
-                                   (sprintf nil "fill%d" count++) fx0:fy0 "R0"
-                                   frows fcols (cadr align) (car align))
+             count = (FillBox shape->bBox ?CV tagCV ?n count)
              (when (isStandardCell CV) || (dbGetPropByName CV "LaygenVersion")
+                   fx0 = (car (car shape->bBox))
+                   fy0 = (cadr (car shape->bBox))
+                   fx1 = (car (cadr shape->bBox))
+                   fy1 = (cadr (cadr shape->bBox))
+                   frows = (round (fy1-fy0)/(cadr gridAlignment[2]))
                    (dbCreateSimpleMosaic tagCV hookCV
                                          (sprintf nil "fill%d" count++) fx0:fy0 "R0"
                                          frows 1 (cadr align) 0)
@@ -139,8 +130,11 @@
          (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
          )
 
-    ; metal fill
+    ;  add metall fill and power, color, check grids
     (when doFill (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal topMetal))
+    (when doPower (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag"))
+    (when doColor (MakeColorGrid ?CV tagCV ?overlayView "layout_tag"))
+    (when doCheck (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag"))
 
     ; finish
     (dbSave tagCV)
@@ -179,4 +173,41 @@
              )
     )
   t
+  )
+
+; draw filler cells in a bBox
+(defun FillBox (bbox @key (CV (geGetEditCellView)) (n 0))
+  (let (fill x0 y0 x1 y1 xa ya w y orient w3 we)
+    fill = (makeTable "fill" nil)
+    fill[1] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z01" "layout")
+    fill[2] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z02" "layout")
+    fill[3] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z03" "layout")
+    x0 = (car  (car  bbox))
+    y0 = (cadr (car  bbox))
+    x1 = (car  (cadr bbox))
+    y1 = (cadr (cadr bbox))
+    xa = (car gridAlignment[2])
+    ya = (cadr gridAlignment[2])/2
+    x0 = (round x0/xa)
+    y0 = (round y0/ya)
+    x1 = (round x1/xa)
+    y1 = (round y1/ya)
+    w = x1-x0
+    (for row y0 y1-1
+         y = (if (mod row 2)==0 row*ya (row+1)*ya)
+         orient = (if (mod row 2)==0 "R0" "MX")
+         w3 = w/3
+         we = (mod w 3)
+         (when w3>0
+           (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
+           (dbCreateSimpleMosaic CV fill[3] (sprintf nil "fill%d" n++)
+                                 x0*xa:y orient 1 w3 GridPitch 3*GridPolyPitch)
+           )
+         (when we>0
+           (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
+           (dbCreateInst CV fill[we] (sprintf nil "fill%d" n++) (x0+3*w3)*xa:y orient)
+           )
+         )
+    )
+  n
   )
