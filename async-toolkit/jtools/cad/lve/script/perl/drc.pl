@@ -32,6 +32,7 @@ sub usage {
     $usage .= "    --threads=[$threads] (ICV thread)\n";
     $usage .= "    --flow=[$flow] (DRC runset selection. Default will run $flow)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
+    $usage .= "    --help (Shows this menu)\n";
 
 
     print STDERR "$usage\n";
@@ -58,6 +59,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $icv_options = $value;
     } elsif ($flag eq "fulcrum-pdk-root") {
             $pdk_root = $value  if(defined $value);
+    } elsif ($flag eq "help") {
+        &usage();
     } else {
         print STDERR "Error: argument --${flag}=${value} not recognized.\n";
         &usage();
