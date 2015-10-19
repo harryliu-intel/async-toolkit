@@ -21,7 +21,7 @@
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
     ; options
-    (unless flatCV flatCV=(MakeFlatView ?CV CV))
+    (unless flatCV flatCV=(MakeFlatBlockageView ?CV CV))
     mod2 = (mod layerNum 2)
     layerName = Metal[layerNum]
     (unless xbloat xbloat = (car  MetalSpace[layerName])*(1-mod2))
@@ -58,28 +58,7 @@
     lpp_fill = (list layerName "fill")
     lpp_blk  = (list layerName "blockage")
     lpp_tmp  = (list "y1" "drawing")
-    mc = (sprintf nil "mc%d" layerNum)
-    (foreach purpose (list "drawing" "fill" "gnd" "vdd")
-             lpps = (cons (list layerName purpose) lpps)
-             lpps = (cons (list mc purpose) lpps)
-             )
-    (foreach s flatCV->shapes
-             (when s->objType!="label" && (member s->lpp lpps)!=nil
-                   bbox = s->bBox
-                   (cond (mod2==0
-                          sp=(cadr MetalSpace[layerName])
-                          bbox = (list (car (car  bbox)):(cadr (car  bbox))-sp
-                                       (car (cadr bbox)):(cadr (cadr bbox))+sp)
-                          )
-                         (t
-                          sp=(car MetalSpace[layerName])
-                          bbox = (list (car (car  bbox))-sp:(cadr (car  bbox))
-                                       (car (cadr bbox))+sp:(cadr (cadr bbox)))
-                          )
-                         )
-                   (dbCreateRect CV lpp_blk bbox)
-                   )
-             )
+    (foreach s flatCV->shapes (when s->lpp==lpp_blk (dbCopyFig s CV (list 0:0 "R0"))))
 
     ; copy from fill template
     fill_shapes = (setof x fillCV->shapes (and x->layerName==layerName x->purpose=="fill"))
@@ -207,10 +186,10 @@
   )
 
 ; fill using a template cell
-(defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8))
+(defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8) (deleteOld t))
   (let (flatCV)
-    (DeleteAutoGen ?propName "TemplateFill" ?CV CV)
-    flatCV = (MakeFlatView ?CV CV)
+    (when deleteOld (DeleteAutoGen ?propName "TemplateFill" ?CV CV))
+    flatCV = (MakeFlatBlockageView ?CV CV)
     (when topMetal>=0 && 0>=botMetal (ChopFill 0 ?CV CV ?flatCV flatCV))
     (when topMetal>=1 && 1>=botMetal (ChopFill 1 ?CV CV ?flatCV flatCV))
     (when topMetal>=2 && 2>=botMetal (ChopFill 2 ?CV CV ?flatCV flatCV))
@@ -226,13 +205,27 @@
     )
   )
 
-; TODO: with ICV layer processing
-(defun MakeFlatView (@key (CV (geGetEditCellView)))
-  CV = (betterCopyCellView CV CV->libName CV->cellName "flat" nil nil t)
-  (foreach x CV->instances (dbFlattenInst x 31 t nil nil))
-  (foreach x CV->vias (dbFlattenInst x 31 t nil nil))
-  (dbSave CV)
-  CV
+; Flatten all real metal shapes to blockage purpose
+(defun MakeFlatBlockageView (@key (CV (geGetEditCellView)))
+  (let (inLayerMap outLayerMap flatCV name map) 
+    flatCV = (dbOpenCellViewByType CV->libName CV->cellName "flat_blockage" "maskLayout" "w")
+    (for m 0 TopMetal
+         name = (sprintf nil "m%d" m)
+         outLayerMap = (cons (list name (list Metal[m] "blockage")) outLayerMap)
+         map = (list name)
+         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                  map = (append map (list (list name purpose)))
+                  )
+         name = (sprintf nil "mc%d" m)
+         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                  map = (append map (list (list name purpose)))
+                  )
+         inLayerMap = (cons map inLayerMap)
+         )
+    (ICVLayerProcessorSimple CV flatCV "mergeShape" inLayerMap outLayerMap)
+    (dbSave flatCV)
+    flatCV
+    )
   )
 
 ; utility to draw the fill shapes

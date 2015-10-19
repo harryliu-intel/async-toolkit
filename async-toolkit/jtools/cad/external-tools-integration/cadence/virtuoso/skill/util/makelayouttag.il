@@ -8,8 +8,10 @@
 ; $DateTime$
 
 ; convenience wrapper
-(defun MakeLayoutTag (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8) (doFill nil))
-  (MakeLayoutTagCell CV->cellName ?doFill doFill ?botMetal botMetal ?topMetal topMetal)
+(defun MakeLayoutTag (@key (CV (geGetEditCellView))
+                           (botMetal 0) (midMetal nil) (topMetal TopMetal) (doFill nil) (doHalo nil))
+  (MakeLayoutTagCell CV->cellName ?doFill doFill ?botMetal botMetal ?midMetal midMetal ?topMetal topMetal
+                     ?doHalo doHalo)
   )
 
 ; top-level called by gdsIIWrite.pl
@@ -20,11 +22,13 @@
                                    (CastPath (ConfigFileGetValue TheCDSConfigTable "CAST_PATH"))
                                    (TempDir  (ConfigFileGetValue TheCDSConfigTable "TEMP"))
                                    (botMetal 0) ; used for TemplateFill
-                                   (topMetal 8)
+                                   (midMetal nil) ; used for TemplateFill
+                                   (topMetal TopMetal)
                                    (doPower t)
                                    (doCheck t)
                                    (doColor t)
                                    (doFill nil)
+                                   (doHalo nil)
                                    )
   (let (libName CV tagCV trans ints prb align lpp
                 gridCV hookCV power2 prb2 shapes count
@@ -101,7 +105,7 @@
     hookCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
     count = 0
     (foreach shape (setof s tagCV->shapes s->lpp==(list Metal[2] "block"))
-             count = (FillBox shape->bBox ?CV tagCV ?n count)
+             count = (FillBox shape->bBox ?CV tagCV ?n count ?doHalo doHalo)
              (when (isStandardCell CV) || (dbGetPropByName CV "LaygenVersion")
                    fx0 = (car (car shape->bBox))
                    fy0 = (cadr (car shape->bBox))
@@ -130,11 +134,22 @@
          (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
          )
 
-    ;  add metall fill and power, color, check grids
-    (when doFill (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal topMetal))
+    ;  add power, color, check grids
     (when doPower (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag"))
     (when doColor (MakeColorGrid ?CV tagCV ?overlayView "layout_tag"))
     (when doCheck (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag"))
+
+    ;  add metal fill
+    (when doFill
+      ; fill at CV's topMetal and up everywhere
+      (unless midMetal midMetal = (dbGetPropByName CV "topMetal")->value)
+      (unless midMetal midMetal = topMetal)
+      (printf "TemplateFill botMetal=%d midMetal=%d topMetal=%d\n" botMetal midMetal topMetal)
+      (TemplateFill ?CV tagCV ?botMetal midMetal ?topMetal topMetal)
+      ; fill outside CV below topMetal
+      (leChopShape tagCV->prBoundary CV->prBoundary->points t t)
+      (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal midMetal-1 ?deleteOld nil)
+      )
 
     ; finish
     (dbSave tagCV)
@@ -176,12 +191,13 @@
   )
 
 ; draw filler cells in a bBox
-(defun FillBox (bbox @key (CV (geGetEditCellView)) (n 0))
-  (let (fill x0 y0 x1 y1 xa ya w y orient w3 we)
+(defun FillBox (bbox @key (CV (geGetEditCellView)) (n 0) (doHalo nil))
+  (let (fill x0 y0 x1 y1 xa ya xl w y s orient w3 we hlh)
     fill = (makeTable "fill" nil)
     fill[1] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z01" "layout")
     fill[2] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z02" "layout")
     fill[3] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z03" "layout")
+    hlv = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.hlv00nd.z00" "layout")
     x0 = (car  (car  bbox))
     y0 = (cadr (car  bbox))
     x1 = (car  (cadr bbox))
@@ -195,17 +211,29 @@
     w = x1-x0
     (for row y0 y1-1
          y = (if (mod row 2)==0 row*ya (row+1)*ya)
+         s = w
+         xl = x0
+         (when doHalo && s>=8
+               (when (mod row 2)==0
+                     (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
+                     (dbCreateInst CV hlv (sprintf nil "fill%d" n++) x0*xa:y "R0")
+                     (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
+                     (dbCreateInst CV hlv (sprintf nil "fill%d" n++) x1*xa:y "MY")
+                     )
+               s=s-8
+               xl=xl+4
+               )
          orient = (if (mod row 2)==0 "R0" "MX")
-         w3 = w/3
-         we = (mod w 3)
+         w3 = s/3
+         we = (mod s 3)
          (when w3>0
            (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
            (dbCreateSimpleMosaic CV fill[3] (sprintf nil "fill%d" n++)
-                                 x0*xa:y orient 1 w3 GridPitch 3*GridPolyPitch)
+                                 xl*xa:y orient 1 w3 GridPitch 3*GridPolyPitch)
            )
          (when we>0
            (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
-           (dbCreateInst CV fill[we] (sprintf nil "fill%d" n++) (x0+3*w3)*xa:y orient)
+           (dbCreateInst CV fill[we] (sprintf nil "fill%d" n++) (xl+3*w3)*xa:y orient)
            )
          )
     )
