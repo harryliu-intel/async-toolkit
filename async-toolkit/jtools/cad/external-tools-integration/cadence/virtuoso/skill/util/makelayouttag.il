@@ -122,17 +122,17 @@
              (dbDeleteObject shape)
              )
 
-    ; label GND substrate (TODO: using pdkinfo.il)
-    (for r 0 rows
-         y = y0+(cadr align)*r
-         (MakeLayoutTagLabel tagCV (list "pwellSubIso" "id") x0+(car align)/2:y GNDNetName ?addrect nil)
-         )
-
-    ; label Vdd substrate (TODO: using pdkinfo.il)
-    (for r 0 rows-1
-         y = y0+(cadr align)*(r+0.5)
-         (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
-         )
+    ; label GND substrate and Vdd nwell (TODO: using pdkinfo.il)
+    (unless doHalo
+      (for r 0 rows
+           y = y0+(cadr align)*r
+           (MakeLayoutTagLabel tagCV (list "pwellSubIso" "id") x0+(car align)/2:y GNDNetName ?addrect nil)
+           )
+      (for r 0 rows-1
+           y = y0+(cadr align)*(r+0.5)
+           (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
+           )
+      )
 
     ;  add power, color, check grids
     (when doPower (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag"))
