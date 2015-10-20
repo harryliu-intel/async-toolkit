@@ -113,7 +113,7 @@
                  instances = (setof inst prelayoutCV->instances inst->libName!=TechLibName)
                  instances = (car (NameFilterInstances instances LibCellsToIgnore))
                  ; recurse on each instance
-                 (foreach inst instances
+                 (foreach inst (setof x instances x->viewName!="layout")
                           instName  = inst->name
                           transform = inst->transform
                           instCV = (MakePrelayoutRecurse
