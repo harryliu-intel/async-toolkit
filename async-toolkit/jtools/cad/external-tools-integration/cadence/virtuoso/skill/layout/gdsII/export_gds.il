@@ -15,6 +15,7 @@
                   ?action (lambda (CV) (fprintf fmap "%s %s %s %s\n"
                                                 CV->libName CV->cellName CV->viewName
                                                 (dbGetPropByName CV "CopyExact")->value))
+                  ?CV CV
                   )
     (close fmap)
 
