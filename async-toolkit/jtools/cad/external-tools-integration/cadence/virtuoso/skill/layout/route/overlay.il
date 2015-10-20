@@ -138,7 +138,7 @@
 (defun CreateColorGridCell ()
   (let (CV x y n sort_x sort_y paths)
     CV = (dbOpenCellViewByType "globals" "globals.COLOR_GRID.m012345_color" "layout" "maskLayout" "w")
-    x = (car  gridAlignment[8])
+    x = (car  gridAlignment[5])
     y = (cadr gridAlignment[8])
     (dbCreatePRBoundary CV (list 0:0 x:0 x:y 0:y))
 
