@@ -110,6 +110,10 @@
           (cond (prelayoutCV
                  (DeletePins ?CV prelayoutCV)
                  (CopyAlignmentProps CV prelayoutCV)
+                 ; flatten mosaics before other processing (HACK?)
+                 (foreach inst (setof x prelayoutCV->instances x->objType=="mosaic")
+                          (dbFlattenInst inst 1)
+                          )
                  instances = (setof inst prelayoutCV->instances inst->libName!=TechLibName)
                  instances = (car (NameFilterInstances instances LibCellsToIgnore))
                  ; recurse on each instance
