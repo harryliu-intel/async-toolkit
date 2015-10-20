@@ -22,7 +22,7 @@
    gridCV          ; CV to build the moasic
    @key (CV (geGetEditCellView)) ; target CV
    )
-  (let (TEMP overlayCellName inst overlayCV align prb vertprb
+  (let (TEMP overlayCellName inst overlayCV xa ya align prb vertprb
         x1box x2box y1box y2box x1 y1 x2 x2 count rows cols)
 
     ; generated cell or file names
@@ -32,14 +32,16 @@
     ; delete old overlay grid instance if it exists
     inst = (dbFindAnyInstByName CV overlayName)
     (when inst (dbDeleteObject inst))
+    (dbSave CV)
 
     ; clear overlay grid cell
     overlayCV = (dbOpenCellViewByType CV->libName overlayCellName overlayView "maskLayout" "w")
     (unless overlayCV (error "Can't write %s\n " overlayCellName))
 
     ; get alignment
-    align = (list (car  (cadr gridCV->prBoundary->bBox)) - (car  (car gridCV->prBoundary->bBox))
-                  (cadr (cadr gridCV->prBoundary->bBox)) - (cadr (car gridCV->prBoundary->bBox)))
+    xa = (car  (cadr gridCV->prBoundary->bBox)) - (car  (car gridCV->prBoundary->bBox))
+    ya = (cadr (cadr gridCV->prBoundary->bBox)) - (cadr (car gridCV->prBoundary->bBox))
+    align = (list xa ya)
 
     ; get prBoundary boundary shapes
     prb = CV->prBoundary
@@ -47,19 +49,7 @@
     vertprb = (setof v prb->points (CheckOffGrid v align))
     (when vertprb (error "Not all prBoundary vertices are on grid: %L" vertprb))
 
-    ; get bounding box as an integer multiple of MfgGrid
-    x1box = 1.0*(round (leftEdge   prb->bBox)/MfgGrid)
-    x2box = 1.0*(round (rightEdge  prb->bBox)/MfgGrid)
-    y1box = 1.0*(round (bottomEdge prb->bBox)/MfgGrid)
-    y2box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
-
-    ; minimum sized overlay grid
-    x1 = (floor   x1box/(round (car  align)/MfgGrid))
-    y1 = (floor   y1box/(round (cadr align)/MfgGrid))
-    x2 = (ceiling x2box/(round (car  align)/MfgGrid))
-    y2 = (ceiling y2box/(round (cadr align)/MfgGrid))
-
-    ; BUG: temporary hack to avoid Assura layer processing
+    ; Layer processing to merge shapes recursively
     prbLPP = (list "prBoundary" "boundary")
     scratchLPP = (list "y2" "drawing")
     (dbCreatePRBoundary overlayCV prb->points)
@@ -79,15 +69,37 @@
     count=0
     (foreach shape (setof s overlayCV->shapes s->lpp==scratchLPP)
       x1 = (leftEdge   shape->bBox)
-      y1 = (bottomEdge shape->bBox)
       x2 = (rightEdge  shape->bBox)
+      cols = (round (x2-x1)/xa)
+      y1 = (bottomEdge shape->bBox)
       y2 = (topEdge    shape->bBox)
-      cols = (round (x2-x1)/(car align))
-      rows = (round (y2-y1)/(cadr align))
-      (dbCreateSimpleMosaic overlayCV gridCV
-                            (sprintf nil "%s%d" overlayName count) x1:y1 "R0"
-                            rows cols (cadr align) (car align))
-      count = count+1
+
+      ; half-height cells on bottom edge
+      (when (round y1/ya)*2 != (round y1/(ya/2))
+            topCV = (dbOpenCellViewByType gridCV->libName (strcat gridCV->cellName "_top") "layout")
+            (unless topCV (error "Couldn't open top overlay"))
+            y1 = y1-ya/2
+            (dbCreateSimpleMosaic overlayCV topCV
+                                  (sprintf nil "%s%d" overlayName count++) x1:y1 "R0" 1 cols ya xa)
+            y1 = y1+ya
+            )
+      
+      ; half-height cells on top edge
+      (when (round y2/ya)*2 != (round y2/(ya/2))
+            y2 = y2-ya/2
+            botCV = (dbOpenCellViewByType gridCV->libName (strcat gridCV->cellName "_bot") "layout")
+            (unless botCV (error "Couldn't open bot overlay"))
+            (dbCreateSimpleMosaic overlayCV botCV
+                                  (sprintf nil "%s%d" overlayName count++) x1:y2 "R0" 1 cols ya xa)
+            )
+
+      ; full-height cells
+      rows = (round (y2-y1)/ya)
+      (when rows>0
+        (dbCreateSimpleMosaic overlayCV gridCV
+                              (sprintf nil "%s%d" overlayName count++) x1:y1 "R0" rows cols ya xa)
+        )
+
       (dbDeleteObject shape)
       )
 
@@ -100,6 +112,29 @@
     )
   )
 
+; create half cells too
+(defun CreateColorGridCells ()
+  (let (CV botCV topCV)
+    CV = (CreateColorGridCell)
+    botCV = (betterCopyCellView CV CV->libName (strcat CV->cellName "_bot") "layout" nil nil t)
+    topCV = (betterCopyCellView CV CV->libName (strcat CV->cellName "_top") "layout" nil nil t)
+    bbox = (list -1:(cadr gridAlignment[5]) (car gridAlignment[8])+1:(cadr gridAlignment[8])+1)
+    (foreach shape botCV->shapes
+             (leChopShape shape (RectGetPoints bbox) t t)
+             )
+    (leChopShape botCV->prBoundary (RectGetPoints bbox) t t)
+    (dbSave botCV)
+    bbox = (list -1:-1 (car gridAlignment[8])+1:(cadr gridAlignment[5]))
+    (foreach shape topCV->shapes
+             (leChopShape shape (RectGetPoints bbox) t t)
+             )
+    (leChopShape topCV->prBoundary (RectGetPoints bbox) t t)
+    (dbSave topCV)
+    CV
+    )
+  )
+
+; create a full lego color grid
 (defun CreateColorGridCell ()
   (let (CV x y n sort_x sort_y paths)
     CV = (dbOpenCellViewByType "globals" "globals.COLOR_GRID.m012345_color" "layout" "maskLayout" "w")
