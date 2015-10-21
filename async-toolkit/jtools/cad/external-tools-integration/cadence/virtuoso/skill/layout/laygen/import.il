@@ -272,17 +272,25 @@ LaygenNetMap[LaygenVccName] = VddNetName
              xh = x+w/2
              yl = 0.021
              yh = 0.147
-             (LaygenRect CV tcn_lpps GNDNetName "input" t xl yl xh yh)
+             (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+               (LaygenRect CV tcn_lpps GNDNetName "input" t xl yl xh yh)
+               )
              yl = 2*ya-0.147
              yh = 2*ya-0.021
-             (LaygenRect CV tcn_lpps GNDNetName "input" t xl yl xh yh)
-             (when nil ; these don't seem to be added for vcc
+             (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+               (LaygenRect CV tcn_lpps GNDNetName "input" t xl yl xh yh)
+               )
+             (when nil ; D04 cells don't seem to need tcn for vcc
                yl = 0.252
                yh = 0.42
-               (LaygenRect CV tcn_lpps VddNetName "input" t xl yl xh yh)
+               (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+                 (LaygenRect CV tcn_lpps VddNetName "input" t xl yl xh yh)
+                 )
                yl = 2*ya-0.42
                yh = 2*ya-0.252
-               (LaygenRect CV tcn_lpps VddNetName "input" t xl yl xh yh)
+               (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+                 (LaygenRect CV tcn_lpps VddNetName "input" t xl yl xh yh)
+                 )
                )
              )
     (dbSave CV)
