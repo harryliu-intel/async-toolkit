@@ -98,6 +98,9 @@ LaygenNetMap[LaygenVccName] = VddNetName
       )
     (close file)
 
+    ; add power hookup shapes
+    (LaygenFixPowerHookup ?CV CV)
+
     ; set LaygenVersion property, save and return
     (dbReplaceProp CV "LaygenVersion" "string" LaygenVersion)
     (dbSave CV)
@@ -248,4 +251,47 @@ LaygenNetMap[LaygenVccName] = VddNetName
     label->parent = fig ; label moves with figure
     )
   t
+  )
+
+; Adds tcn shapes where gcn power hookups are needed
+(defun LaygenFixPowerHookup (@key (CV (geGetEditCellView)))
+  (let (bbox x0 y0 x1 y1 ya h w gcn tcn tcn_lpps xl xh yl yh)
+    bbox = CV->prBoundary->bBox
+    x0 = (car (car bbox))
+    y0 = (cadr (car bbox))
+    x1 = (car (cadr bbox))
+    y1 = (cadr (cadr bbox))
+    ya = (cadr gridAlignment[2])/2
+    h = (y1-y0)/ya
+    w = 0.028
+    gcn = (list "gcn" "pin")
+    tcn = (list "tcn" "drawing")
+    tcn_lpps = (list tcn)
+    (foreach x (list x0 x1)
+             xl = x-w/2
+             xh = x+w/2
+             yl = 0.021
+             yh = 0.168
+             (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+               (LaygenRect CV tcn_lpps GNDNetName "input" t xl yl xh yh)
+               )
+             yl = 0.252
+             yh = 0.42
+             (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+               (LaygenRect CV tcn_lpps VddNetName "input" t xl yl xh yh)
+               )
+             yl = 2*ya-0.42
+             yh = 2*ya-0.252
+             (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+               (LaygenRect CV tcn_lpps VddNetName "input" t xl yl xh yh)
+               )
+             yl = 2*ya-0.168
+             yh = 2*ya-0.021
+             (when (dbGetOverlaps CV (list xl:yl xh:yh) gcn 0)
+               (LaygenRect CV tcn_lpps GNDNetName "input" t xl yl xh yh)
+               )
+             )
+    (dbSave CV)
+    CV
+    )
   )
