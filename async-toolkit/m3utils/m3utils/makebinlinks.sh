@@ -51,6 +51,7 @@ ${ROOT}/calarm/transposecsv/${BINDIR}/transposecsv
 ${ROOT}/calarm/csvalign/${BINDIR}/csvalign
 ${ROOT}/calarm/comet/cometcatenate/${BINDIR}/cometcatenate
 ${ROOT}/spice/ct/${BINDIR}/ct
+${ROOT}/spice/vplot/${BINDIR}/vplot
 ${ROOT}/spice/asserter/${BINDIR}/asserter
 ${ROOT}/tcam/schmoozer/${BINDIR}/schmoozer
 ${ROOT}/tcam/spicebuilder/${BINDIR}/spicebuilder

@@ -1,0 +1,14 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+
+Table("TextCard", "Text", "Cardinal")
+Table("TextTextSet", "Text", "TextSet")
+
+Module ("TextCard")
+Array_sort ("TextCard", "TextCard")
+
+implementation ("Main")
+
+program ("spiceflat")

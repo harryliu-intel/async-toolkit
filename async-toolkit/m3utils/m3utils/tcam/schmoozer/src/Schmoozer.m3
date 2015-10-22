@@ -18,8 +18,15 @@ IMPORT Wr, FileWr;
 IMPORT TextUtils;
 IMPORT OSError, AL;
 IMPORT XYList;
-IMPORT TextSeq;
 IMPORT Lex, FloatMode;
+IMPORT ParseParams;
+IMPORT Stdio;
+IMPORT NbCommand, NbCommandSeq;
+IMPORT Env;
+IMPORT IntSetDef, IntSet;
+IMPORT TextRd;
+IMPORT TextReader;
+IMPORT CardSetDef;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*>
@@ -55,7 +62,6 @@ PROCEDURE InitParam(p : Param) : Param =
     RETURN p
   END InitParam;
   
-
 VAR
   probeP  := NEW(DiscreteParam,
                  nm := "probemode",
@@ -128,6 +134,12 @@ VAR
                  flag := "temp",
                  saneMin := -100.0d0, saneMax := 200.0d0).init();
 
+  spfP    := NEW(RealParam,
+                 nm := "spf",
+                 flag := "spf",
+                 saneMin := 0.0d0, saneMax := 1.0d30).init();
+
+
   clkP    := NEW(RealParam,
                  nm := "clk",
                  flag := "clk",
@@ -140,6 +152,14 @@ PROCEDURE RT(READONLY z : TA) : REF TA =
     res^ := z;
     RETURN res
   END RT;
+
+PROCEDURE RL(READONLY z : LA) : REF LA =
+  VAR
+    res := NEW(REF LA, NUMBER(z));
+  BEGIN
+    res^ := z;
+    RETURN res
+  END RL;
 
 TYPE
   Settings = BRANDED OBJECT 
@@ -161,6 +181,12 @@ TYPE
     min, max, step : LONGREAL;
   OVERRIDES 
     n := NSweep;
+  END;
+
+  SweepSpecific = SingleSettings OBJECT
+    v : REF ARRAY OF LONGREAL;
+  OVERRIDES 
+    n := NSweepSpecific;
   END;
 
   Schmoo = Settings OBJECT
@@ -209,6 +235,11 @@ PROCEDURE FormatV(v : Val) : TEXT =
         WITH lr = MIN(w.min + FLOAT(st.i,LR)*w.step, w.max) DO
           str := LongReal(lr)
         END
+      |
+        SweepSpecific(w) => 
+        WITH lr = w.v[st.i] DO
+          str := LongReal(lr)
+        END
       ELSE
         <*ASSERT FALSE*>
       END;
@@ -230,10 +261,14 @@ PROCEDURE NVariety(v : Variety) : CARDINAL =
 PROCEDURE NSweep(s : Sweep) : CARDINAL =
   BEGIN RETURN CEILING((s.max-s.min)/s.step)+1 END NSweep;
 
+PROCEDURE NSweepSpecific(s : SweepSpecific) : CARDINAL =
+  BEGIN RETURN NUMBER(s.v^) END NSweepSpecific;
+
 PROCEDURE NSchmoo(<*UNUSED*>s : Schmoo) : CARDINAL = BEGIN RETURN 1 END NSchmoo;
 
 TYPE
   TA = ARRAY OF TEXT;
+  LA = ARRAY OF LR;
   LR = LONGREAL;
   RP01 = ARRAY [0..1] OF RealParam;
   LR01 = ARRAY [0..1] OF LR;
@@ -279,6 +314,8 @@ PROCEDURE Run(s : RefSeq.T) =
     n   := s.size();
     lim := NEW(REF Dims.T, n); (* lim     *)
     q   := Dims.Clone(lim^);   (* cur val *)
+    c   := 0;
+    missing : IntSet.T;
   BEGIN
     FOR i := FIRST(lim^) TO LAST(lim^) DO
       lim[i] := NARROW(s.get(i),Settings).n();
@@ -296,73 +333,249 @@ PROCEDURE Run(s : RefSeq.T) =
     END;
 
     WHILE activeNodes.size() # 0 DO
-      IF NOT SearchForResults() THEN
+
+      (* lost lambs approach:
+         1. see what's missing out of NB
+         2. pick up any results
+         3. see if anything is missing and didnt yield results -- those
+            are the real lost lambs! 
+      *)
+
+      missing := NIL;
+
+      IF c = 100 THEN
+        missing := SearchForLostLambs();
+        c := 0
+      ELSE
+        INC(c)
+      END;
+
+      (* missing may be NIL *)
+
+      IF NOT SearchForResults(missing) THEN
         Thread.Pause(0.10d0);
+      END;
+
+      IF missing # NIL THEN
+        Debug.Out("Schmoozer.Run : missing.size() = " & Int(missing.size()));
+        RelaunchLostLambs(missing)
       END
+      
     END
 
   END Run;
 
-PROCEDURE SearchForResults() : BOOLEAN =
+PROCEDURE RelaunchLostLambs(lambs : IntSet.T) =
+  VAR
+    iter := lambs.iterate();
+    nbId : INTEGER;
+    nbCmd : NbCommand.T;
+  BEGIN
+    WHILE iter.next(nbId) DO
+      IF FindJobByNbId(nbId, nbCmd) THEN
+        LOCK nbMu DO
+          nbCmd.nbId := -1;
+          nbCmd.started := LAST(Time.T);
+        END;
+        Debug.Out("Re-enqueuing job " & Int(nbCmd.id));
+        Enqueue(nbCmd)
+      ELSE
+        Debug.Warning(F("Cant find lamb %s ?????", Int(nbId)))
+      END
+    END
+    
+  END RelaunchLostLambs;
+
+PROCEDURE SearchForLostLambs() : IntSet.T =
+  VAR
+    cmd := "nbqstat user=" & user;
+    dummy : CARDINAL;
+    lambs := NEW(IntSetDef.T).init();
+  BEGIN
+
+    (* nbJobs contains running or waiting jobs *)
+    (* search through jobs that ought to be running *)
+    VAR
+      id : CARDINAL;
+      r : REFANY;
+    BEGIN
+      LOCK nbMu DO
+        WITH iter = jobsById.iterate() DO
+          WHILE iter.next(id, r) DO
+            WITH nbc = NARROW(r, NbCommand.T) DO
+              IF nbc.nbId # -1 THEN 
+                Debug.Out("SearchForLostLambs: should be running: " & 
+                  Int(nbc.nbId));
+                EVAL lambs.insert(nbc.nbId)
+              END
+            END
+          END
+        END
+      END
+    END;
+
+    WITH data = ProcUtils.ToText(cmd),
+         rd   = TextRd.New(data) DO
+      TRY
+        LOOP
+          WITH line = Rd.GetLine(rd) DO
+            IF TextUtils.FindSub(line, user, dummy) THEN
+              (* match *)
+              WITH rdr = NEW(TextReader.T).init(line),
+                   stateStr = rdr.nextE(" ", skipNulls := TRUE),
+                   jobId    = Scan.Int(rdr.nextE(" ")) DO
+                Debug.Out("SearchForLostLambs: found job " & Int(jobId));
+                EVAL lambs.delete(jobId)
+              END
+            END
+          END
+        END
+      EXCEPT
+        Rd.EndOfFile => (* skip *)
+      END
+    END;
+
+    Debug.Out(Int(lambs.size()) & " lamb(s) missing");
+    VAR nbid : INTEGER;
+        iter := lambs.iterate();
+    BEGIN
+      WHILE iter.next(nbid) DO
+        Debug.Out("Missing lamb : " & Int(nbid))
+      END
+    END;
+
+    RETURN lambs
+  END SearchForLostLambs;
+
+PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN =
+  (* missing may be NIL *)
+
+  PROCEDURE RemoveFromMissing() =
+    BEGIN
+      <*ASSERT missing # NIL*>
+      LOCK nbMu DO
+        VAR 
+          iter := jobsById.iterate();
+          id : CARDINAL;
+          r : REFANY;
+        BEGIN
+          WHILE iter.next(id,r) DO
+            WITH nbc = NARROW(r, NbCommand.T) DO
+              IF foundSet.member(nbc.id) THEN
+                Debug.Out(F("Found missing lamb %s %s", 
+                            Int(nbc.id), Int(nbc.nbId)));
+                EVAL missing.delete(nbc.nbId)
+              END
+            END
+          END  
+        END
+      END
+    END RemoveFromMissing;
+
+  PROCEDURE MarkAsNotRunning() =
+    VAR
+      id : CARDINAL;
+      iter := foundSet.iterate();
+      r : REFANY;
+    BEGIN
+      WHILE iter.next(id) DO
+        WITH hadIt = jobsById.get(id, r) DO
+          IF hadIt THEN 
+            LOCK nbMu DO
+              WITH nbc = NARROW(r, NbCommand.T) DO
+                nbc.nbId := -1;
+                nbc.started := LAST(Time.T);
+              END
+            END
+          ELSE
+            Debug.Warning(F("Exited job %s wasn't running???", Int(id)))
+          END
+        END
+      END
+    END MarkAsNotRunning;
+
+  PROCEDURE ProcessOutput(mn : MeshNode; ln : TEXT) =
+    BEGIN
+          IF    TE(ln, "PASS") THEN
+            mn.state := NodeState.Pass
+          ELSIF TE(ln, "FAIL") THEN
+            mn.state := NodeState.Fail
+          ELSIF  TE(ln, "NOTYET") THEN
+            mn.state := NodeState.ErrorExit
+          ELSE
+            Debug.Warning("Unknown result \"" & ln & "\", marking as error");
+            mn.state := NodeState.ErrorExit
+          END;
+          ChangedState(mn);
+
+          WITH wr = FileWr.Open(resultsDn & "/" & fn),
+               sWr = pfWr[mn.state] DO
+            
+            Wr.PutText(r1Wr, fn); Wr.PutChar(r1Wr, ' ');
+            
+            FOR i := FIRST(mn.args^) TO LAST(mn.args^) DO
+              WITH cmd = mn.args[i].format() DO
+                Wr.PutText(wr, cmd);
+                Wr.PutChar(wr, '\n');
+                
+                Wr.PutText(r1Wr, cmd); Wr.PutChar(r1Wr, ' ');
+                Wr.PutText(sWr, cmd); Wr.PutChar(sWr, ' ')
+              END
+            END;
+            Wr.PutText(wr, "PassFail ");
+            Wr.PutText(wr, NodeStateNames[mn.state]);
+            Wr.PutChar(wr, '\n');
+            Wr.Close(wr);
+
+            Wr.PutText(r1Wr, NodeStateNames[mn.state]);
+            Wr.PutChar(r1Wr, '\n');
+            Wr.Flush(r1Wr);
+            Wr.PutChar(sWr, '\n');
+            Wr.Flush(sWr);
+          END
+        END ProcessOutput;
+
   VAR
     found := FALSE;
     iter  := FS.Iterate(doneDn);
     fn : Pathname.T;
     rd : Rd.T;
     r  : REFANY;
+    foundSet := NEW(CardSetDef.T).init();
   BEGIN
     WHILE iter.next(fn) DO
       found := TRUE;
       Debug.Out("Found \"" & fn & "\"");
-      rd := FileRd.Open(dn & "/" & fn & "/result");
+      EVAL foundSet.insert(Scan.Int(fn));
+      rd := FileRd.Open(rootDn & "/" & fn & "/result");
       WITH i     = Scan.Int(fn),
            ln    = Rd.GetLine(rd),
            hadIt = activeNodes.delete(i, r),
            mn    = NARROW(r, MeshNode) DO
+
+        Debug.Out(F("activeNodes.delete(%s)",Int(i)));
+
         Debug.Out(F("%s %s", fn, ln));
         Rd.Close(rd);
         FS.DeleteFile(doneDn & "/" & fn);
-        <*ASSERT hadIt*>
-        
-        IF    TE(ln, "PASS") THEN
-          mn.state := NodeState.Pass
-        ELSIF TE(ln, "FAIL") THEN
-          mn.state := NodeState.Fail
-        ELSIF  TE(ln, "NOTYET") THEN
-          mn.state := NodeState.ErrorExit
+        IF hadIt THEN
+          ProcessOutput(mn, ln)
         ELSE
-          Debug.Warning("Unknown result \"" & ln & "\", marking as error");
-          mn.state := NodeState.ErrorExit
-        END;
-        ChangedState(mn);
-
-        WITH wr = FileWr.Open(resultsDn & "/" & fn),
-             sWr = pfWr[mn.state] DO
-
-          Wr.PutText(r1Wr, fn); Wr.PutChar(r1Wr, ' ');
-
-          FOR i := FIRST(mn.args^) TO LAST(mn.args^) DO
-            WITH cmd = mn.args[i].format() DO
-              Wr.PutText(wr, cmd);
-              Wr.PutChar(wr, '\n');
-              
-              Wr.PutText(r1Wr, cmd); Wr.PutChar(r1Wr, ' ');
-              Wr.PutText(sWr, cmd); Wr.PutChar(sWr, ' ')
-            END
-          END;
-          Wr.PutText(wr, "PassFail ");
-          Wr.PutText(wr, NodeStateNames[mn.state]);
-          Wr.PutChar(wr, '\n');
-          Wr.Close(wr);
-
-          Wr.PutText(r1Wr, NodeStateNames[mn.state]);
-          Wr.PutChar(r1Wr, '\n');
-          Wr.Flush(r1Wr);
-          Wr.PutChar(sWr, '\n');
-          Wr.Flush(sWr);
+          Debug.Warning(F("Received result for unknown job %s", Int(i)))
         END
       END
     END;
+
+    (* sequencing here is very tricky!!!! *)
+    (* go through foundSet and remove from missing *)
+    IF missing # NIL THEN
+      RemoveFromMissing()
+    END;
+
+    (* now also ensure that the jobs are marked as not running anymore *)
+
+    MarkAsNotRunning();
+
     RETURN found
   END SearchForResults;
 
@@ -479,7 +692,7 @@ PROCEDURE LaunchSchmoo(pfx : RefSeq.T; READONLY q : Dims.T; schmoo : Schmoo) =
     FOR i := FIRST(valPfx^) TO LAST(valPfx^) DO
       WITH s = NARROW(pfx.get(i),Settings) DO
         TYPECASE s OF
-          Variety, Sweep =>
+          Variety, Sweep, SweepSpecific =>
           valPfx[i] := NEW(StepVal, i := q[i])
         |
           Schmoo => valPfx[i] := NEW(SchmooVal)
@@ -499,6 +712,11 @@ PROCEDURE LaunchSchmoo(pfx : RefSeq.T; READONLY q : Dims.T; schmoo : Schmoo) =
         actStep[i] := (schmoo.max[i]-schmoo.min[i])/FLOAT(initSz[i]-1,LONGREAL)
       END
     END;
+
+    Debug.Out(F("LaunchShmoo initSz = %s x %s", 
+                Int(initSz[0]),
+                Int(initSz[1])));
+
     initXY   := NEW(REF ARRAY OF ARRAY OF LR01, initSz[0], initSz[1]);
 
     inst := NEW(SchmooInstance, 
@@ -515,11 +733,20 @@ PROCEDURE LaunchSchmoo(pfx : RefSeq.T; READONLY q : Dims.T; schmoo : Schmoo) =
       END
     END;
 
-    FOR i := 0 TO initSz[0]-2 DO
-      FOR j := 0 TO initSz[1]-2 DO
-        LaunchSquare(inst,
-                     XYSquare { XYRow { initXY[i  ,j  ], initXY[i  ,j+1] } ,
-                                XYRow { initXY[i+1,j  ], initXY[i+1,j+1] } } )
+    IF initSz[0] = 1 OR initSz[1] = 1 THEN
+      (* user is requesting something that cant be subdivided *)
+      FOR i := 0 TO initSz[0]-1 DO
+        FOR j := 0 TO initSz[1]-1 DO
+          LaunchIndivisible(inst, initXY[i,j])
+        END
+      END
+    ELSE
+      FOR i := 0 TO initSz[0]-2 DO
+        FOR j := 0 TO initSz[1]-2 DO
+          LaunchSquare(inst,
+                       XYSquare { XYRow { initXY[i  ,j  ], initXY[i  ,j+1] } ,
+                                  XYRow { initXY[i+1,j  ], initXY[i+1,j+1] } } )
+        END
       END
     END
   END LaunchSchmoo;
@@ -532,6 +759,33 @@ PROCEDURE Split(x, y : LR01) : LR01 =
 
 VAR
   nextWatcherId := 0;
+
+PROCEDURE LaunchIndivisible(inst : SchmooInstance; x : LR01) =
+  (* called when user has requested something that cant be subdivided,
+     kind of a hack! *)
+  VAR
+    r : REFANY;
+    new : MeshNode;
+  BEGIN
+    IF inst.meshTab.get(ToPair(x),r) THEN
+      new := r
+    ELSE
+      new := NEW(MeshNode, x := x).init()
+    END;
+    (* no watchers since we cant subdivide *)
+    WITH m = new,
+         an = NUMBER(inst.valPfx^),
+         allVals = NEW(REF ARRAY OF Val, an) DO
+      SUBARRAY(allVals^,0, NUMBER(inst.valPfx^)) := inst.valPfx^;
+      allVals[an-1] := NEW(SchmooVal,
+                           s := inst.schmoo,
+                           x := m.x);
+      LaunchSingleJob(allVals^, m.id);
+      m.args := allVals;
+      Debug.Out(F("activeNodes.put(%s)",Int(m.id)));
+      EVAL activeNodes.put(m.id, m)
+    END
+  END LaunchIndivisible;
 
 PROCEDURE LaunchSquare(inst : SchmooInstance; sq : XYSquare) =
   VAR
@@ -582,6 +836,7 @@ PROCEDURE LaunchSquare(inst : SchmooInstance; sq : XYSquare) =
         
         LaunchSingleJob(allVals^, m.id);
         m.args := allVals;
+        Debug.Out(F("activeNodes.put(%s)",Int(m.id)));
         EVAL activeNodes.put(m.id, m)
       END
     END
@@ -614,7 +869,7 @@ PROCEDURE FindSim(READONLY v : ARRAY OF Val) : TEXT =
 PROCEDURE LaunchSingleJob(READONLY v : ARRAY OF Val; id : CARDINAL) =
   VAR
     jdn := F("%s/" & FNFmt,absRoot,Int(id));
-    nbs := F("%s --log-file-dir %s", NetBatchString, dn);
+    nbs := F("%s --log-file-dir %s", NetBatchString, rootDn);
     command := F("%s %s %s " & FNFmt & " %s ", 
                  nbs, cmdNm, absRoot, Int(id), FindSim(v));
   BEGIN
@@ -631,22 +886,78 @@ PROCEDURE LaunchSingleJob(READONLY v : ARRAY OF Val; id : CARDINAL) =
       command := command & " " & v[i].format();
     END;
     Debug.Out(F("command %s : %s", Int(id), command));
-    Enqueue(command);
+    Wr.PutText(clogWr, F("%s %s\n", Int(id), command));
+    Wr.Flush  (clogWr);
+    WITH nbCmd = NEW(NbCommand.T, id := id, cmd := command) DO
+      Enqueue(nbCmd);
+      LOCK nbMu DO
+        EVAL jobsById.put(id, nbCmd)
+      END
+    END
   END LaunchSingleJob;
 
-VAR cmdQ  := NEW(TextSeq.T).init();
+VAR cmdQ  := NEW(NbCommandSeq.T).init();
 VAR cmdMu := NEW(MUTEX);
 VAR cmdC  := NEW(Thread.Condition);
 
-PROCEDURE Enqueue(command : TEXT) =
+PROCEDURE Enqueue(command : NbCommand.T) =
   BEGIN
     LOCK cmdMu DO cmdQ.addhi(command); Thread.Signal(cmdC) END
   END Enqueue;
 
+VAR nbMu       := NEW(MUTEX);
+VAR jobsById   := NEW(CardRefTbl.Default).init();
+
+PROCEDURE FindJobByNbId(nbId : INTEGER; VAR nbCmd : NbCommand.T) : BOOLEAN =
+  BEGIN
+    IF nbId = -1 THEN
+      Debug.Warning("Searching for NbCommand with NBID -1, can't exist!");
+      RETURN FALSE
+    END;
+    LOCK nbMu DO
+      VAR 
+        iter := jobsById.iterate();
+        id : CARDINAL;
+        r : REFANY;
+      BEGIN
+        WHILE iter.next(id, r) DO
+          WITH cand = NARROW(r, NbCommand.T) DO
+            IF cand.nbId = nbId THEN nbCmd := cand; RETURN TRUE END
+          END
+        END
+      END
+    END;
+    RETURN FALSE
+  END FindJobByNbId;
+
+PROCEDURE IntAfter(in, word : TEXT) : INTEGER RAISES { Lex.Error } =
+  TYPE
+    SC = SET OF CHAR;
+  VAR
+    p : CARDINAL;
+    n := Text.Length(in);
+  BEGIN
+    IF NOT TextUtils.FindSub(in, word, p) THEN RAISE Lex.Error END;
+    
+    p := p + Text.Length(word);
+
+    WHILE p < n AND NOT Text.GetChar(in, p) IN SC { '-', '0'..'9' } DO
+      INC(p)
+    END;
+
+    IF p = n THEN RAISE Lex.Error END;
+    
+    VAR s := p+1;
+    BEGIN
+      WHILE Text.GetChar(in, s) IN SC { '0'..'9' } DO INC(s) END;
+      RETURN Scan.Int(Text.Sub(in, p, s-p))
+    END
+  END IntAfter;
+
 PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
   VAR
     quota := GetLaunchQuota();
-    cmd : TEXT;
+    cmd : NbCommand.T;
   BEGIN
     LOOP(*forever*)
 
@@ -664,19 +975,28 @@ PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
 
       DEC(quota);
 
-      Debug.Out("actually launching command, rem. quota " & Int(quota) & " " &
-        cmd);
+      Debug.Out(F("actually launching command, rem. quota %s : %s %s",
+                  Int(quota), Int(cmd.id), cmd.cmd));
 
       VAR 
         success := FALSE;
+        output : TEXT;
       CONST
         Attempts = 10;
       BEGIN
         FOR i := 1 TO Attempts DO
           TRY
-            WITH output = ProcUtils.ToText(cmd) DO
-              Debug.Out("command output : " & output)
+            output := ProcUtils.ToText(cmd.cmd);
+            Debug.Out("command output : " & output);
+
+            WITH nbId = IntAfter(output, "JobID") DO
+              Debug.Out("NB id is " & Int(nbId));
+              LOCK nbMu DO 
+                cmd.nbId := nbId;
+                cmd.started := Time.Now()
+              END
             END;
+
             success := TRUE; EXIT
           EXCEPT
             ProcUtils.ErrorExit(x) =>
@@ -685,7 +1005,7 @@ PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
           END
         END;
         IF NOT success THEN 
-          Debug.Error("Command failed repeatedly : " & cmd) 
+          Debug.Error("Command failed repeatedly : " & cmd.cmd) 
         END
       END
 
@@ -774,6 +1094,53 @@ PROCEDURE XATempSim() =
             min := -40.0d0, max := 125.0d0, step := 32.5d0));
   END XATempSim;
 
+PROCEDURE WideSim() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo,
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.00d0,  200.0d6 },
+            max     := LR01 {  1.50d0, 3200.0d6 },
+            minStep := LR01 { 0.0075d0,  10.0d6 },
+            maxStep := LR01 { 0.100d0,  200.0d6 }));
+    Add(NEW(Sweep, param := tempP,
+            min := 25.0d0, max := 25.0d0, step := 1.0d0));
+  END WideSim;
+
+PROCEDURE SpfSim() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo, 
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.50d0,  800.0d6 },
+            max     := LR01 {  1.00d0, 2200.0d6 },
+            minStep := LR01 { 0.006d0,   20.0d6 },
+            maxStep := LR01 { 0.048d0,  160.0d6 }));
+    Add(NEW(Sweep, param := tempP, 
+            min := 25.0d0, max := 25.0d0, step := 1.0d0));
+    Add(NEW(SweepSpecific, param := spfP,
+            v := RL(LA { 0.10d0, 0.03d0, 0.01d0, 0.003d0, 0.001d0, 0.0003d0, 0.0d0 })));
+  END SpfSim;
+
+PROCEDURE QuickSim() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo, 
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.50d0,  600.0d6 },
+            max     := LR01 {  1.00d0, 2600.0d6 },
+            minStep := LR01 {  0.001d0,   4.0d6 },
+            maxStep := LR01 {  0.050d0,  200.0d6 }));
+    Add(NEW(Sweep, param := tempP, 
+            min := 25.0d0, max := 25.0d0, step := 1.0d0));
+  END QuickSim;
+
 PROCEDURE ThreeCornerSim() =
   BEGIN
     (* what's going on with temperature? *)
@@ -822,6 +1189,21 @@ PROCEDURE TestSim() =
             min := 0.0d0, max := 0.0d0, step := 20.0d0));
   END TestSim;
 
+PROCEDURE SingleSim() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo, 
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.85d0, 1000.0d6 },
+            max     := LR01 {  0.85d0, 1000.0d6 },
+            minStep := LR01 { 0.100d0,   10.0d6 },
+            maxStep := LR01 { 0.100d0,   10.0d6 }));
+    Add(NEW(Sweep, param := tempP, 
+            min := 0.0d0, max := 0.0d0, step := 20.0d0));
+  END SingleSim;
+
 
 
 VAR
@@ -829,7 +1211,7 @@ VAR
   nowD     := Date.FromTime(now);
   settings := NEW(RefSeq.T).init();
   frac     := now-FLOAT(TRUNC(now),Time.T);
-  dn       := F("schmoozer%04s-%02s-%02s@", 
+  rootDn   := F("schmoozer%04s-%02s-%02s@", 
                 Int(nowD.year), Int(ORD(nowD.month)+1), Int(nowD.day)) &
               F("%02s:%02s:%02s.%03s",
                 Int(nowD.hour), Int(nowD.minute), Int(nowD.second), 
@@ -837,34 +1219,53 @@ VAR
 
   cmdNm    := "runspice.sh";
   absRoot : Pathname.T;
-  doneDn : Pathname.T := dn & "/done";
-  resultsDn : Pathname.T := dn & "/results";
-  resultsFn : Pathname.T := dn & "/results.dat"; (* single file *)
+  doneDn, resultsDn, resultsFn : Pathname.T;
+  clogFn  : Pathname.T;
+  clogWr  : Wr.T;
+
   r1Wr : Wr.T;
-  pfWr : ARRAY [NodeState.Fail .. NodeState.Pass] OF Wr.T;
+  pfWr : ARRAY [NodeState.Fail .. NodeState.ErrorExit] OF Wr.T;
+  pp := NEW(ParseParams.T).init(Stdio.stderr);
+
+  user := Env.Get("USER");
 CONST
   TestOnly   = FALSE;
   TempRange  = TRUE;
   AllCorners = TRUE;
   BothSims   = FALSE;
 BEGIN
-  FS.CreateDirectory(dn); (* source of everything *)
+  IF pp.keywordPresent("-dn") THEN
+    rootDn := pp.getNext()
+  END;
+
+  doneDn := rootDn & "/done";
+  resultsDn := rootDn & "/results";
+  resultsFn := rootDn & "/results.dat"; (* single file *)
+  clogFn    := rootDn & "/commands.dat";
+
+  FS.CreateDirectory(rootDn); (* source of everything *)
   FS.CreateDirectory(doneDn);
   FS.CreateDirectory(resultsDn);
   r1Wr := FileWr.Open(resultsFn);
-  
+
+  clogWr := FileWr.Open(clogFn);
+
   FOR i := FIRST(pfWr) TO LAST(pfWr) DO
-    pfWr[i] := FileWr.Open(dn & 
+    pfWr[i] := FileWr.Open(rootDn & 
                    "/" & 
                    TextUtils.ToLower(NodeStateNames[i]) & 
                    ".dat")
   END;
 
-  absRoot := FS.GetAbsolutePathname(dn);
+  absRoot := FS.GetAbsolutePathname(rootDn);
 
 (*  SimulatorSim();*)
 
-  SevenCornerSim();
+(*  SevenCornerSim();*)
+(*  WideSim(); *)
+(*  QuickSim();*)
+(*  SingleSim(); *)
+  SpfSim();
 
   Run(settings);
   Wr.Close(r1Wr);
@@ -888,7 +1289,7 @@ BEGIN
         fn := TextUtils.Replace(fn, " ", "__");
         fn := TextUtils.Replace(fn, "-", "_");
 
-        wr := FileWr.Open(dn & "/" & fn & "_boundary.dat");
+        wr := FileWr.Open(rootDn & "/" & fn & "_boundary.dat");
         VAR q := si.minSquares; BEGIN
           WHILE q # NIL DO
             Wr.PutText(wr, F("%s %s\n", 
@@ -901,7 +1302,9 @@ BEGIN
       END;
       p := p.tail
     END
-  END
+  END;
+
+  Wr.Close(clogWr)
 END Schmoozer.
 
   

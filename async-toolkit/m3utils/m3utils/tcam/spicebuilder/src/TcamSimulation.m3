@@ -413,6 +413,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     holdFrac     := 0.150d0;
     cyc : LONGREAL;
     pt := ProgType.Def;
+    spfParam     := 0.0d0;
 
   PROCEDURE RunTheProgram(pt : ProgType) =
     BEGIN
@@ -429,6 +430,8 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
 
     IF pp.keywordPresent("-extractpath") THEN extractPath := pp.getNext() END;
 
+    IF pp.keywordPresent("-spf") THEN spfParam := pp.getNextLongReal() END;
+
     IF pp.keywordPresent("-prog") THEN
       VAR found := FALSE;
           nm := pp.getNext();
@@ -441,7 +444,20 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
         IF NOT found THEN Debug.Error("Unknown TCAM program \"" & nm & "\"") END
       END
     END;
-    
+
+   (**********************************************************************)
+
+    IF spfParam # 0.0d0 THEN
+      WITH minCap = 1.0d-16 / spfParam,
+           minRes = 1.0d0 /        spfParam,
+           ccapToGcap = 2.0d0 * minCap DO
+        SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"load_ba_file -file tcam.spf -min_cap %s -min_res %s -ccap_to_gcap %s\"",
+                                              LR(minCap),
+                                              LR(minRes),
+                                              LR(ccapToGcap)))
+      END
+    END;
+
     cyc      := (1.0d0/spd);
 
     defConstraints.hold := holdFrac * cyc;
@@ -504,9 +520,9 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
                                "WEN" });
 
 
-
+(*
   SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %s* -limit 2\"", SimDumper.Renamer(DutName & ".")))
-
+*)
 
 END Build;
 

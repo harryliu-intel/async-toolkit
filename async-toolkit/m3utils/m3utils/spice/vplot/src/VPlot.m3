@@ -17,7 +17,7 @@ IMPORT Triangle;
 IMPORT TriangleSet, TriangleSetDef;
 IMPORT TriangleSeq;
 IMPORT Wr, FileWr;
-
+IMPORT IO, Process;
 (* read schmoozer results and make boundary plots *)
 
 CONST TE = Text.Equal;
@@ -456,12 +456,28 @@ PROCEDURE MarkNeighbors(tris         : TriangleSet.T;
     END
   END MarkNeighbors;
 
+PROCEDURE ParamsGet(i : CARDINAL) : TEXT =
+  BEGIN
+    IF i >= Params.Count THEN
+      Usage();
+      Process.Exit(1)
+    END;
+    RETURN Params.Get(i)
+  END ParamsGet;
+
+PROCEDURE Usage() =
+  BEGIN
+    IO.Put(
+        F("usage: %s <directory of schmoo results> <abscissas> <ordinates>\n",
+          Params.Get(0)))
+  END Usage;
+
 VAR
-  dirNm : Pathname.T := Params.Get(1);
+  dirNm : Pathname.T := ParamsGet(1);
   fn : Pathname.T;
 BEGIN
-  params.addhi(Params.Get(2));
-  params.addhi(Params.Get(3));
+  params.addhi(ParamsGet(2));
+  params.addhi(ParamsGet(3));
   
   WITH iter = FS.Iterate(dirNm) DO
     WHILE iter.next(fn) DO

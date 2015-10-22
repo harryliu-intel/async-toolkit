@@ -7,6 +7,9 @@ table ("LRPairRef", "LongRealPair", "Refany")
 interface ("XY")
 list("XY","XY")
 
+interface ("NbCommand")
+sequence ("NbCommand", "NbCommand")
+
 implementation ("Schmoozer")
 
 program ("schmoozer")
