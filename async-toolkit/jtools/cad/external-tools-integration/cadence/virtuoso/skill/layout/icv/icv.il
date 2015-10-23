@@ -117,6 +117,7 @@ write_openaccess(\n\
 ; Copies resulting shapes to dstCV
 (defun ICVLayerProcessorSimple (CV dstCV runSetName inLayerMap outLayerMap)
   (let (result tempCV)
+    (FindSubcells ?CV CV ?action (lambda (CV) t)) ; must save all subcells before ICV
     result = (ICVLayerProcessor inLayerMap outLayerMap runSetName
                                 CV->libName CV->cellName CV->viewName
                                 dstCV->libName dstCV->cellName "icv_temp")
