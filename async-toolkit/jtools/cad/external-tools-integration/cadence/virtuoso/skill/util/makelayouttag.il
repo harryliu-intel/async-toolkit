@@ -143,7 +143,7 @@
     (when doFill
       ; fill at CV's topMetal and up everywhere
       (unless midMetal midMetal = (dbGetPropByName CV "topMetal")->value)
-      (unless midMetal midMetal = topMetal)
+      (unless midMetal midMetal = botMetal)
       (printf "TemplateFill botMetal=%d midMetal=%d topMetal=%d\n" botMetal midMetal topMetal)
       (TemplateFill ?CV tagCV ?botMetal midMetal ?topMetal topMetal)
       ; fill outside CV below topMetal
