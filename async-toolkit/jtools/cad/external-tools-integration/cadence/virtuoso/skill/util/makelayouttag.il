@@ -192,11 +192,12 @@
 
 ; draw filler cells in a bBox
 (defun FillBox (bbox @key (CV (geGetEditCellView)) (n 0) (doHalo nil))
-  (let (fill x0 y0 x1 y1 xa ya xl w y s orient w3 we hlh)
+  (let (fill x0 y0 x1 y1 xa ya xl w y s orient w3 we hlh tap)
     fill = (makeTable "fill" nil)
     fill[1] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z01" "layout")
     fill[2] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z02" "layout")
     fill[3] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z03" "layout")
+    tap = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.tap02nd.z05" "layout")
     hlv = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.hlv00nd.z00" "layout")
     x0 = (car  (car  bbox))
     y0 = (cadr (car  bbox))
@@ -223,6 +224,14 @@
                s=s-8
                xl=xl+4
                )
+         (when s>=5
+           (when (mod row 2)==0
+                 (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
+                 (dbCreateInst CV tap (sprintf nil "fill%d" n++) x0*xa:y "R0")
+                 )
+           s=s-5
+           xl=xl+5
+           )
          orient = (if (mod row 2)==0 "R0" "MX")
          w3 = s/3
          we = (mod s 3)
