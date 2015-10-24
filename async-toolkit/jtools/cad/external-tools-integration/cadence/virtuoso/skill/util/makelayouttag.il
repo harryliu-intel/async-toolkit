@@ -141,14 +141,14 @@
 
     ;  add metal fill
     (when doFill
-      ; fill at CV's topMetal and up everywhere
+      ; fill above CV's topMetal everywhere
       (unless midMetal midMetal = (dbGetPropByName CV "topMetal")->value)
       (unless midMetal midMetal = botMetal)
       (printf "TemplateFill botMetal=%d midMetal=%d topMetal=%d\n" botMetal midMetal topMetal)
-      (TemplateFill ?CV tagCV ?botMetal midMetal ?topMetal topMetal)
-      ; fill outside CV below topMetal
+      (TemplateFill ?CV tagCV ?botMetal midMetal+1 ?topMetal topMetal)
+      ; fill outside CV at or below topMetal
       (leChopShape tagCV->prBoundary CV->prBoundary->points t t)
-      (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal midMetal-1 ?deleteOld nil)
+      (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal midMetal ?deleteOld nil)
       )
 
     ; finish
