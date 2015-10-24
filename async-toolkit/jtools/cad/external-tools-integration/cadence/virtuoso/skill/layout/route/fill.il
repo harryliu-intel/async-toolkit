@@ -15,8 +15,8 @@
                           (ybloat nil)
                           (flatCV nil)
                           )
-  (let (layerName cellName mod2 fillCV lpp_fill lpp_blk lpp_tmp rect bbox shapes new_shapes
-        overlaps fill_shapes new_fill_shapes lpps mc sp
+  (let (layerName cellName mod2 fillCV lpp_fill lpp_blk rect bbox
+        overlaps fill_shapes mc sp
         x y x0 y0 x1 y1 x0box y0box x1box y1box cols rows align w h l del xb yb
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
@@ -68,20 +68,17 @@
               y=y0+row*(cadr align)
               (foreach shape fill_shapes
                        shape = (dbCopyFig shape CV (list x:y "R0"))
-                       new_fill_shapes = (cons shape new_fill_shapes)
                        )
               )
          )
+
     ; chop fill template with blockage purpose
-    prb = (dbCreatePolygon CV BoundaryLPP
-                           (betterGrowPoints (GetPrboundPoints CV)
-                                             (list -(car  MetalBoundarySpace[layerName])
-                                                   -(cadr MetalBoundarySpace[layerName]))))
-    (leLayerAndNot CV lpp_fill lpp_blk lpp_tmp)
-    new_shapes = (leLayerAnd CV lpp_tmp BoundaryLPP lpp_fill)
+    fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
+    (leLayerAndNot CV lpp_fill lpp_blk lpp_fill)
+    (foreach x fill_shapes (dbDeleteObject x))
 
     ; trim fill shapes
-    (foreach s new_shapes
+    (foreach s (setof x CV->shapes x->lpp==lpp_fill)
       w=0
       h=0
       l=MetalMinLength[layerName]
@@ -159,10 +156,18 @@
             )
       )
     
+    ; chop fill with shrunken prBoundary
+    prb = (dbCreatePolygon CV BoundaryLPP
+                           (betterGrowPoints (GetPrboundPoints CV)
+                                             (list -(car  MetalBoundarySpace[layerName])
+                                                   -(cadr MetalBoundarySpace[layerName]))))
+    fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
+    (leLayerAnd CV lpp_fill BoundaryLPP lpp_fill)
+    (foreach x fill_shapes (dbDeleteObject x))
+
     ; delete temporary shapes
+    (foreach x CV->shapes (when x->lpp==lpp_blk (dbDeleteObject x)))
     (dbDeleteObject prb)
-    (foreach x new_fill_shapes (dbDeleteObject x))
-    (foreach x (setof x CV->shapes (or x->lpp==lpp_blk x->lpp==lpp_tmp)) (dbDeleteObject x))
     t
     )
   )
