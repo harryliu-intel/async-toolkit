@@ -98,7 +98,7 @@ main();
 
 ##########################################################################
 sub main{
-  foreach my $f (keys %drc_runsets){
+  foreach my $f (@flows) {
     my $drc_run_dir="$working_dir/$f";
     system('mkdir', '-p', "$drc_run_dir"); 
     run_drc($drc_run_dir, $drc_runsets{$f});
