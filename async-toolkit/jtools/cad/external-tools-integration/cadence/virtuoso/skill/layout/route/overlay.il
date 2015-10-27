@@ -118,13 +118,13 @@
     CV = (CreateColorGridCell)
     botCV = (betterCopyCellView CV CV->libName (strcat CV->cellName "_bot") "layout" nil nil t)
     topCV = (betterCopyCellView CV CV->libName (strcat CV->cellName "_top") "layout" nil nil t)
-    bbox = (list -1:(cadr gridAlignment["color"]) (car gridAlignment["color"])+1:(cadr gridAlignment["color"])+1)
+    bbox = (list -1:(cadr gridAlignment["color"])/2 (car gridAlignment["color"])+1:(cadr gridAlignment["color"])+1)
     (foreach shape botCV->shapes
              (leChopShape shape (RectGetPoints bbox) t t)
              )
     (leChopShape botCV->prBoundary (RectGetPoints bbox) t t)
     (dbSave botCV)
-    bbox = (list -1:-1 (car gridAlignment["color"])+1:(cadr gridAlignment["color"]))
+    bbox = (list -1:-1 (car gridAlignment["color"])+1:(cadr gridAlignment["color"])/2)
     (foreach shape topCV->shapes
              (leChopShape shape (RectGetPoints bbox) t t)
              )
