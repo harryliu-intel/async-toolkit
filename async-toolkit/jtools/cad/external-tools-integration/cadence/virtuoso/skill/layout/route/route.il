@@ -17,7 +17,7 @@
         (doNondefaultDef t)      ; create _nondefault.def
         (doSkipRouting t)        ; create SetSkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
-        (hookupLaygen t)         ; add power hookups around Laygen cells
+        (hookupLaygen nil)       ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
@@ -58,7 +58,7 @@
         (doNondefaultDef t)      ; create cellName_nondefault.def
         (doSkipRouting t)        ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
-        (hookupLaygen t)         ; add power hookups around Laygen cells
+        (hookupLaygen nil)       ; add power hookups around Laygen cells
         (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
@@ -127,9 +127,7 @@
     ; find subcells for GDS and LEF
     excludeCellsFile = (strcat SPAR_DIR "/cell_list")
     (when !softMacro excludeCellsFile=nil) ; BUG: custom flow should get LEF from SPAR_DIR too
-    lef_subcells = (ListLefSubcells ?CV CV
-                                    ?includeWiringCellNames (list PowerGridCellName)
-                                    ?excludeCellsFile excludeCellsFile)
+    lef_subcells = (ListLefSubcells ?CV CV ?excludeCellsFile excludeCellsFile)
 
     ; export GDS
     (when doGds
@@ -233,10 +231,9 @@
 ; includes power grid, excludes other wiring cells
 (defun ListLefSubcells
   (@key (CV (geGetEditCellView))     ; specify CellView
-        (includeWiringCellNames nil) ; include specified wiring cells
         (excludeCellsFile nil)       ; exclude these cells too
         )
-  (let (fin cellName excluded subcells)
+  (let (fin cellName excluded subcells found)
     excluded=(makeTable "excluded" nil)
     (when excludeCellsFile
       fin = (infile excludeCellsFile)
@@ -247,17 +244,16 @@
       (close fin)
       )
     subcells = nil
+    found = (makeTable "found" nil)
     (foreach inst CV->instances
              (when (and !(isStandardCell inst->master)
                         !(isVendorMacro  inst->master)
                         !(excluded[inst->cellName])
                         inst->libName!=TechLibName
-                        (member inst->master->cellView subcells)==nil
-                        (or !(IsWiringCell inst->master)
-                            (member inst->cellName includeWiringCellNames)
-                            )
+                        !found[inst->master->cellView]
                         )
                subcells = (cons inst->master->cellView subcells)
+               found[inst->master->cellView] = t
                )
              )
     (sort subcells (lambda (a b) (strcmp a->cellName b->cellName)<0))
