@@ -165,7 +165,7 @@ useICV = t
         x0 y0 x1 y1
         inLayerMap outLayerMap shapes a b srcCV top
         powerCV pgMap
-        count gridCV rows cols
+        count gridCV halfCV rows cols
         tiehilo GND Vdd instGND instVdd)
 
     ; generated cell or file names
@@ -226,17 +226,45 @@ useICV = t
         b = (min b topMetal)
         top = (min b top)
         (when b>a || a==2 && b==2
+          (printf "a=%d b=%d\n" a b)
+          ; rectangle coordinates
           align = gridAlignment[b]
+          xa = (car align)
+          ya = (cadr align)
           gridCV = (ChoosePowerGridCell a b)
           x0 = (leftEdge   shape->bBox)
           y0 = (bottomEdge shape->bBox)
           x1 = (rightEdge  shape->bBox)
           y1 = (topEdge    shape->bBox)
           cols = (round (x1-x0)/(car  align))
-          rows = (round (y1-y0)/(cadr align))
-          (dbCreateSimpleMosaic powerCV gridCV
-                                (sprintf nil "pg%d" count++) x0:y0 "R0"
-                                rows cols (cadr align) (car align))
+
+          ; half-height cells on bottom edge
+          (when (round y0/ya)*2 != (round y0/(ya/2))
+                halfCV = (ChoosePowerGridCell a b ?half t)
+                y0 = y0+ya/2
+                (dbCreateSimpleMosaic powerCV halfCV
+                                      (sprintf nil "pg%d" count++) x0:y0 "MX"
+                                      1 cols (cadr align) (car align))
+                )
+          
+          ; half-height cells on top edge
+          (when (round y1/ya)*2 != (round y1/(ya/2))
+                y1 = y1-ya/2
+                halfCV = (ChoosePowerGridCell a b ?half t)
+                (dbCreateSimpleMosaic powerCV halfCV
+                                      (sprintf nil "pg%d" count++) x0:y1 "R0"
+                                      1 cols (cadr align) (car align))
+                )
+
+          ; full-height cells
+          rows = (round (y1-y0)/ya)
+          (when rows>0
+            (dbCreateSimpleMosaic powerCV gridCV
+                                  (sprintf nil "pg%d" count++) x0:y0 "R0"
+                                  rows cols (cadr align) (car align))
+            )
+
+          ; block and delete guide shape
           (dbCreateRect powerCV MetalBlock[b] shape->bBox) ; block up to Metal[b]
           (dbDeleteObject shape)
           )
@@ -397,10 +425,12 @@ useICV = t
 
 ; Figure out the highest metal layer which is grid aligned for a list of points
 (defun MaxAlignedMetalLayer (points)
-  (let (top)
+  (let (top align)
     top=0
     (for m 2 TopMetal
-         (unless (CheckPointsOffGrid points gridAlignment[m]) top=m)
+         align = gridAlignment[m]
+         (when m==8 align=gridAlignment["lego"]) ; HACK: special case for M8
+         (unless (CheckPointsOffGrid points align) top=m)
          )
     top
     )
@@ -472,12 +502,14 @@ useICV = t
   )
 
 ; Choose power grid cell
-(defun ChoosePowerGridCell (bot top)
-  (let (gridName)
+(defun ChoosePowerGridCell (bot top @key (half nil))
+  (let (CV gridName)
     gridName = "globals.POWER_GRID.m"
     (for n bot top gridName = (strcat gridName (sprintf nil "%d" n)))
     gridName = (strcat gridName "_pg")
-    (dbOpenCellViewByType "globals" gridName "layout")
+    (when half gridName = (strcat gridName "_half"))
+    CV = (dbOpenCellViewByType "globals" gridName "layout")
+    (unless CV (error "couldn't open %s\n" gridName))
+    CV
     )
   )
-  
