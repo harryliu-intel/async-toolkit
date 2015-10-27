@@ -192,11 +192,12 @@
 
 ; draw filler cells in a bBox
 (defun FillBox (bbox @key (CV (geGetEditCellView)) (n 0) (doHalo nil))
-  (let (fill x0 y0 x1 y1 xa ya xl w y s orient w3 we hlh tap)
+  (let (fill x0 y0 x1 y1 xa ya xl w y s orient wdiv wmod hlh tap)
     fill = (makeTable "fill" nil)
     fill[1] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z01" "layout")
     fill[2] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z02" "layout")
     fill[3] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z03" "layout")
+    fill[4] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bar01nn.z04" "layout")
     tap = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.tap02nd.z05" "layout")
     hlv = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.hlv00nd.z00" "layout")
     x0 = (car  (car  bbox))
@@ -233,16 +234,16 @@
            xl=xl+5
            )
          orient = (if (mod row 2)==0 "R0" "MX")
-         w3 = s/3
-         we = (mod s 3)
-         (when w3>0
+         wdiv = s/4
+         wmod = (mod s 4)
+         (when wdiv>0
            (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
-           (dbCreateSimpleMosaic CV fill[3] (sprintf nil "fill%d" n++)
-                                 xl*xa:y orient 1 w3 GridPitch 3*GridPolyPitch)
+           (dbCreateSimpleMosaic CV fill[4] (sprintf nil "fill%d" n++)
+                                 xl*xa:y orient 1 wdiv GridPitch 4*GridPolyPitch)
            )
-         (when we>0
+         (when wmod>0
            (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
-           (dbCreateInst CV fill[we] (sprintf nil "fill%d" n++) (xl+3*w3)*xa:y orient)
+           (dbCreateInst CV fill[wmod] (sprintf nil "fill%d" n++) (xl+4*wdiv)*xa:y orient)
            )
          )
     )
