@@ -17,6 +17,15 @@
               CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
               (DrawPowerGrid bot top ?CV CV)
               (cdsp4add ?CV CV)
+              (when top==topMetal
+                cellName = (strcat cellName "_half")
+                (printf "%s\n" cellName)
+                CV = (dbOpenCellViewByType "globals" cellName "layout")
+                (when CV (cdsp4edit ?CV CV))
+                CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
+                (DrawPowerGrid bot top ?CV CV ?half t)
+                (cdsp4add ?CV CV)
+                )
               )
          )
     )
@@ -24,11 +33,12 @@
   )
 
 ; draw power stripes and vias in a POWER_GRID cell
-(defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)))
-  (let (xalign yalign rows cols y s l h)
+(defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)) (half nil))
+  (let (xalign yalign rows cols y s l h half_power_m8)
     (foreach x CV->shapes (dbDeleteObject x))
     xalign = (car  gridAlignment[topMetal])
     yalign = (cadr gridAlignment[topMetal])
+    (when half yalign=yalign/2) ; for half-grids up to m8
 
     ; metal2
     (when botMetal<=2 && topMetal>=2
@@ -75,8 +85,11 @@
     ; metal8
     (when botMetal<=8 && topMetal>=8
           h = powerOverhang[8]
-          rows = (round yalign/(cadr gridAlignment[8]))
-          (DrawChannelArray nil power_m8 "" 0:rows-1 pitch_m8 (list -h:0 xalign+h:0) ?CV CV)
+          (for i 0 ((length power_m8)/2)
+               half_power_m8 = (append half_power_m8 (list (nth i power_m8)))
+               )
+          (DrawChannelArray nil (if half half_power_m8 power_m8) ""
+                            0:0 pitch_m8 (list -h:0 xalign+h:0) ?CV CV)
           )
 
     ; merge duplicate shapes
