@@ -226,7 +226,6 @@ useICV = t
         b = (min b topMetal)
         top = (min b top)
         (when b>a || a==2 && b==2
-          (printf "a=%d b=%d\n" a b)
           ; rectangle coordinates
           align = gridAlignment[b]
           xa = (car align)
