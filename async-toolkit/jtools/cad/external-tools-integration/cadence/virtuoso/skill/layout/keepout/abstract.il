@@ -24,7 +24,7 @@
                                 (cutaroundpins t)
                                 (topMetal nil)
                                 )
- (let (abstractCV name net fig term pinlayer map inLayerMap outLayerMap)
+ (let (abstractCV name net fig term pinlayer map inLayerMap outLayerMap inst)
 
   ; set topMetal
   (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
@@ -45,29 +45,51 @@
   prb = (dbCreatePRBoundary abstractCV (GetPrboundPoints CV))
   (dbCreatePolygon abstractCV BoundaryLPP (GetPrboundPoints CV))
 
-  ; invert keepout
-  (for m 0 topMetal (AbstractInvertKeepout MetalKeepout[m] CV abstractCV))
+  ; instantiate layout view so we can flatten its shapes
+  inst = (dbCreateInst abstractCV CV "inst" 0:0 "R0")
 
-  ; create keepout for vias above topMetal-1 and metal above topMetal
-  (for m topMetal-1 TopMetal-1
-       name = (sprintf nil "v%d" m)
+  ; invert keepout (use blockage layer to avoid polygons with too many points)
+  (for m 0 topMetal (AbstractInvertKeepout (list Metal[m] "blockage") CV abstractCV))
+  
+  ; flood via keepout (use blockage layer to avoid polygons with too many points)
+  (for m -1 topMetal-2 (AbstractInvertKeepout (list Via[m] "blockage") CV abstractCV
+                                              ?space 0:0
+                                              ?shrink MetalBoundarySpace[Metal[m+1]]))
+
+  ; create keepout for all existing vias and metal
+  (for m -1 TopMetal-1
+       name = Via[m]
        map = (list name)
-       (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+       (foreach purpose (list "drawing" "gnd" "vdd" "fill" "keepout")
                 map = (append map (list (list Via[m] purpose)))
                 )
        inLayerMap = (cons map inLayerMap)
        outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
+       map = (list (sprintf nil "flood_%s" Via[m]) (list Via[m] "blockage"))
+       inLayerMap = (cons map inLayerMap)
        )
-  (for m topMetal+1 TopMetal
-       name = (sprintf nil "m%d" m)
+  (for m 0 TopMetal
+       name = Metal[m]
        map = (list name)
-       (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+       (foreach purpose (list "drawing" "gnd" "vdd" "fill" "keepout")
                 map = (append map (list (list Metal[m] purpose)))
                 )
        inLayerMap = (cons map inLayerMap)
        outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
+       map = (list (sprintf nil "flood_%s" Metal[m]) (list Metal[m] "blockage"))
+       inLayerMap = (cons map inLayerMap)
        )
-  (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
+  (ICVLayerProcessorSimple abstractCV abstractCV "MakeAbstract" inLayerMap outLayerMap)
+
+  ; convert blockages to keepout (avoid polygons with too many points)
+  (foreach shape abstractCV->shapes
+           (when shape->purpose=="blockage"
+                 shape->lpp = (list (car shape->lpp) "keepout")
+                 )
+           )
+
+  ; delete the inst
+  (dbDeleteObject inst)
 
   ; copy pins to abstract
   pinlayer = (makeTable "pinlayer" nil)
@@ -180,7 +202,7 @@
     inLayerMap = (cons map inLayerMap)
     outLayerMap = (cons (list "vcn" (list "vcn" KeepoutPurpose)) outLayerMap)
     (for m 0 1
-         name = (sprintf nil "v%d" m)
+         name = Via[m]
          map = (list name)
          (foreach purpose (list "drawing" "gnd" "vdd" "fill")
                   map = (append map (list (list Via[m] purpose)))
@@ -189,7 +211,7 @@
          outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
          )
     (for m 0 2
-         name = (sprintf nil "m%d" m)
+         name = Metal[m]
          map = (list name)
          (foreach purpose (list "drawing" "gnd" "vdd" "fill")
                   map = (append map (list (list Metal[m] purpose)))
@@ -203,7 +225,7 @@
     (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
 
     ; create final boundary shapes and blockage objects
-    (leMergeShapes abstractCV->shapes)
+    ; (leMergeShapes abstractCV->shapes)
     (CopyKeepoutToBlockage abstractCV)
 
     ; save and exit
@@ -273,13 +295,14 @@
   )
 
 ; Floodfill keepout: KEEPOUT = (shrink PRB MetalBoundarySpace) & !(grow KEEPOUT MetalSpace)
-(defun AbstractInvertKeepout (lpp cv1 cv2)
-  (let (shrink)
-    shrink = MetalBoundarySpace[(car lpp)]
+(defun AbstractInvertKeepout (lpp cv1 cv2 @key (space nil) (shrink nil))
+  (let ()
+    (unless space  space= MetalSpace[(car lpp)])
+    (unless shrink shrink=MetalBoundarySpace[(car lpp)])
     (foreach shape cv1->shapes
              (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
              )
-    (betterLayerSize cv2 Scratch1LPP MetalSpace[(car lpp)] Scratch1LPP)
+    (betterLayerSize cv2 Scratch1LPP space Scratch1LPP)
     (betterLayerSize cv2 BoundaryLPP -(car shrink):-(cadr shrink) Scratch2LPP)
     (leLayerAndNot cv2 Scratch2LPP Scratch1LPP lpp)
     (foreach shape cv2->shapes
