@@ -6,6 +6,9 @@
   (foreach obj (setof x CV->vias (dbGetPropByName x propName)->value)
        (dbDeleteObject obj)
        )
+  (foreach obj (setof x CV->instances (dbGetPropByName x propName)->value)
+       (dbDeleteObject obj)
+       )
   )
 
 ; Chop fill to avoid other purposes
