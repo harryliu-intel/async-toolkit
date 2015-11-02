@@ -94,12 +94,14 @@ t
     ; candidate pins with figures attached
     InPlacePinList = (setof x (dbFindTermByName Inst->master TermName)->pins x->fig)
 
-    ; limit the candidates to those on the top metal layer among the set
-    topMetal = -1
-    (foreach pin InPlacePinList
-      (for m 0 TopMetal (when pin->fig->layerName==Metal[m] topMetal=(max topMetal m)))
-      )
-    InPlacePinList = (setof x InPlacePinList x->fig->layerName==Metal[topMetal])
+    ; limit the candidates to those on the top metal layer among the set for power nets
+    (when (member PinName PowerGroundNets)!=nil
+          topMetal = -1
+          (foreach pin InPlacePinList
+                   (for m 0 TopMetal (when pin->fig->layerName==Metal[m] topMetal=(max topMetal m)))
+                   )
+          InPlacePinList = (setof x InPlacePinList x->fig->layerName==Metal[topMetal])
+          )
 
     ; draw inplace pins
     (foreach pin InPlacePinList
