@@ -274,11 +274,11 @@
     (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
     (foreach name PowerNets
              net = (dbFindNetByName CV name)
-             (when net net->sigType = "supply") ; USE POWER
+             (when net net->term->direction="inputOutput" net->sigType = "supply") ; USE POWER
              )
     (foreach name GroundNets
              net = (dbFindNetByName CV name)
-             (when net net->sigType = "ground") ; USE GROUND
+             (when net net->term->direction="inputOutput" net->sigType = "ground") ; USE GROUND
              )
     )
   )
