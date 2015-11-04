@@ -197,7 +197,7 @@
     fill[1] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z01" "layout")
     fill[2] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z02" "layout")
     fill[3] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.spc00nn.z03" "layout")
-    fill[4] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bar01nn.z04" "layout")
+    fill[4] = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bar00nn.z04" "layout")
     tap = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.tap02nd.z05" "layout")
     hlv = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.hlv00nd.z00" "layout")
     x0 = (car  (car  bbox))
