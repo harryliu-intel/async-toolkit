@@ -504,11 +504,21 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 ; Find subcell pins connecting to given net.  Returns a list of lists,
 ; where the inner list is a layerName followed by a list of rectangles
 ; in the parent coordinate system.
-(defun nrFindPinShapes (net pinLPPs)
+(defun nrFindPinShapes (net pinLPPs @key (topShapes nil))
   (let (layerName inst transform tmp pinRectList lppList ret)
     (foreach lpp pinLPPs
       layerName = (car lpp)
       pinRectList = nil
+
+      ; shapes from top level
+      (when topShapes
+        (foreach rect (setof a net->figs a->lpp==lpp &&
+                             (a->objType=="rect" || a->objType=="path" || a->objType=="pathSeg"))
+                 pinRectList = (cons rect->bBox pinRectList)
+                 )
+        )
+
+      ; shapes from subcell pins
       (foreach instTerm net->instTerms
         inst = instTerm->inst
         (when inst->libName!=TechLibName

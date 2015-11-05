@@ -12,12 +12,12 @@
   )
 
 ; connect subcells pins of a net with short paths or vias
-(defun RouteNearbyNet (net @key (CV (geGetEditCellView)))
+(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil))
   (let (n MasterRectList layerName pinRectList layerNum space len
           rect1 rect2 bbox1 bbox2 overlap rect
           viaDef via list1 list2 xy wb wt viaName viaDef via)
     n=0
-    MasterRectList = (nrFindPinShapes net MetalLPPs)
+    MasterRectList = (nrFindPinShapes net MetalLPPs ?topShapes topShapes)
 
     ; add paths between subcell pins that align at e2e spacing
     (foreach pinRectList MasterRectList
