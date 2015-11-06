@@ -1,15 +1,16 @@
 ; Export GDS for current cell without all the name conversion we normally need
 (defun ExportGDS (@key (CV (geGetEditCellView)) (gdsFile nil) (layerMapFile nil))
-  (let (TEMP PDK_DIR Command status cellMapFile fmap)
+  (let (TEMP WDIR PDK_DIR Command status cellMapFile fmap)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WDIR = (strcat TEMP "/gds/" CV->cellName)
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
                       "/share/Fulcrum")
-    (unless gdsFile (sprintf gdsFile "%s/gds/%s.gds" TEMP CV->cellName))
+    (unless gdsFile (sprintf gdsFile "%s/%s.gds" WDIR CV->cellName))
     (unless layerMapFile (sprintf layerMapFile "%s/stream/strmout.layermap" PDK_DIR))
-    (shell (strcat "mkdir -p " TEMP "/gds"))
+    (shell (strcat "mkdir -p " WDIR))
 
     ; write cellmap to rename CopyExact cells back to their original name
-    cellMapFile = (sprintf nil "%s/gds/%s.cellmap" TEMP CV->cellName)
+    cellMapFile = (sprintf nil "%s/%s.cellmap" WDIR CV->cellName)
     fmap = (outfile cellMapFile)
     (FindSubcells ?filter (lambda (CV) (dbGetPropByName CV "CopyExact")!=nil)
                   ?action (lambda (CV) (fprintf fmap "%s %s %s %s\n"
@@ -25,18 +26,18 @@
                                " -library '%s'"
                                " -topCell '%s'"
                                " -view '%s'"
-                               " -runDir %s/gds"
-                               " -outputDir %s/gds"
-                               " -layerMap %s"
-                               " -propMap %s/stream/prop.map"
-                               " -objectMap %s/stream/objectmap"
-                               " -cellMap %s"
-                               " -logFile %s/gds/%s.log"
-                               " -strmFile %s")
+                               " -runDir '%s'"
+                               " -outputDir '%s'"
+                               " -layerMap '%s'"
+                               " -propMap '%s/stream/prop.map'"
+                               " -objectMap '%s/stream/objectmap'"
+                               " -cellMap '%s'"
+                               " -logFile '%s/%s.log'"
+                               " -strmFile '%s'")
                        CV->libName CV->cellName CV->viewName
-                       TEMP TEMP layerMapFile
+                       WDIR WDIR layerMapFile
                        PDK_DIR PDK_DIR cellMapFile
-                       TEMP CV->cellName
+                       WDIR CV->cellName
                        gdsFile)
     status = (shell Command)
     (printf (if status "SUCCESS\n" "FAIL\n"))
