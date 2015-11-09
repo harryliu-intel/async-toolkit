@@ -41,7 +41,7 @@
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
-                  (when overlap
+                  (when overlap && !(BBoxAnd rect1 rect2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
                     (dbAddFigToNet rect net)
                     (dbReplaceProp rect "autogen" "string" "RouteNearby")
