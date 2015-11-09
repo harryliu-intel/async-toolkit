@@ -126,6 +126,7 @@ sub run_drc {
 setenv DR_CPYDB $run_dir/CPYDB
 setenv ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
 $ENV{'ICV_SCRIPT'} 'icv' -I . \\
+-I $pdk_root/share/Fulcrum/icv/drc \\
 -I $icv_runset_path/PXL_ovrd \\
 -I $icv_runset_path/PXL \\
 -I $icv_runset_path/StandAlone/dotOne \\
