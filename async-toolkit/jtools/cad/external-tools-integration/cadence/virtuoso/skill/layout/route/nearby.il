@@ -2,20 +2,21 @@
 ; plus functionality to strap intersecting pins with vias
 
 ; route nearby nets with short paths or vias only
-(defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil))
+(defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes nil) (offGrid nil))
   (let (n)
     n=0
     (unless nets nets=(setof a CV->nets (member a->name PowerGroundNets)==nil))
-    (foreach net nets n=n+(RouteNearbyNet net ?CV CV))
+    (foreach net nets n=n+(RouteNearbyNet net ?CV CV ?topShapes topShapes ?offGrid offGrid))
     n
     )
   )
 
 ; connect subcells pins of a net with short paths or vias
-(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil))
-  (let (n MasterRectList layerName pinRectList layerNum space len
+(defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil) (offGrid nil))
+  (let (tech n MasterRectList layerName pinRectList layerNum space len
           rect1 rect2 bbox1 bbox2 overlap rect
           viaDef via list1 list2 xy wb wt viaName viaDef via)
+    tech = (techGetTechFile CV)
     n=0
     MasterRectList = (nrFindPinShapes net MetalLPPs ?topShapes topShapes)
 
@@ -62,14 +63,25 @@
           overlap = (BBoxAnd rect1 rect2)
           (when overlap && (dbGetOverlaps CV overlap ViaDrawing[v] 2)==nil
             xy = (BBoxGetCenter overlap)
-            wb = (GetTrackWidth v   xy)
+            wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v   xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
-            wt = (GetTrackWidth v+1 xy)
+            wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
             (unless wt (error "no track width for %d %g:%g\n" v+1 (car xy) (cadr xy)))
+            wb = (round wb/MfgGrid)
+            wt = (round wt/MfgGrid)
             viaName = viaTable[(list v wb wt)]
-            (unless viaName (error "no viaName for %d %g %g\n" v wb wt))
-            viaDef = (techFindViaDefByName (techGetTechFile CV) viaName)
-            via = (dbCreateVia CV viaDef xy "R0")
+            (unless viaName (error "no viaTablefor %d %d %d\n" v wb wt))
+            (cond ((atom viaName)
+                   viaDef = (techFindViaDefByName tech viaName)
+                   params = nil
+                   )
+                  (t
+                   viaDef = (techFindViaDefByName tech (car viaName))
+                   params = (cdr viaName)
+                   viaName = (car viaName)
+                   )
+                  ) 
+            via = (dbCreateVia CV viaDef xy "R0" params)
             via->net = net
             (dbReplaceProp via "autogen" "string" "RouteNearby")
             (printf "%s on %s\n" Via[v] net->name)
@@ -79,5 +91,13 @@
         )
       )
     n
+    )
+  )
+
+; get the width of a wire from its layer number and bBox
+(defun GetWireWidth (m bbox)
+  (if (mod m 2)==0
+    (cadr (cadr bbox))-(cadr (car bbox)) ; horizontal wire
+    (car  (cadr bbox))-(car  (car bbox)) ; vertical wire
     )
   )

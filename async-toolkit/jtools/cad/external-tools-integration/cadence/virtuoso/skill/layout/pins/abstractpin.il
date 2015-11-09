@@ -512,7 +512,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 
       ; shapes from top level
       (when topShapes
-        (foreach rect (setof a net->figs a->lpp==lpp &&
+        (foreach rect (setof a net->cellView->shapes a->net==net && a->lpp==lpp &&
                              (a->objType=="rect" || a->objType=="path" || a->objType=="pathSeg"))
                  pinRectList = (cons rect->bBox pinRectList)
                  )
