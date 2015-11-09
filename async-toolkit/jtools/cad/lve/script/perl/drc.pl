@@ -16,6 +16,8 @@ my $gdsii="";
 my $gdsii_list="";
 my $icv_options="";
 my $threads=2;
+my $mem=1;
+my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
 my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/latest";
@@ -30,6 +32,8 @@ sub usage {
     $usage .= "    --gds2-list=[$gdsii] (Provide source layout by a file list contains gdsii file)\n";
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
     $usage .= "    --threads=[$threads] (ICV thread)\n";
+    $usage .= "    --jobs=[$jobs] (Netbatch jobs; if specified, --threads is per job)\n";
+    $usage .= "    --mem=[$mem] (Memory in GB, if Netbatch enabled)\n";
     $usage .= "    --flow=[$flow] (DRC runset selection. Default will run $flow)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
     $usage .= "    --help (Shows this menu)\n";
@@ -51,6 +55,10 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $gdsii_list = $value;
     } elsif ($flag eq "threads") {
         $threads = $value;
+    } elsif ($flag eq "jobs") {
+        $jobs = $value;
+    } elsif ($flag eq "mem") {
+        $mem = $value;
     } elsif ($flag eq "flow") {
         $flow = $value;
     } elsif ($flag eq "icv-runset-path") {
@@ -116,6 +124,7 @@ sub run_drc {
    print CF <<ET;
 #!/usr/intel/bin/tcsh -f
 setenv DR_CPYDB $run_dir/CPYDB
+setenv ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
 $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -I $icv_runset_path/PXL_ovrd \\
 -I $icv_runset_path/PXL \\
@@ -126,12 +135,17 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -I $run_dir \\
 -D NOCLD \\
 -vue \\
--dp$threads \\
--turbo \\
 -D _drMaxError=100000000 \\
 -D _drUSENDG=_drNO \\
 -f GDSII \\
 ET
+   if ($jobs > 0) {
+     print CF "-dp \\\n" .
+              "-dphosts \$NB_PARALLEL_JOB_HOSTS \\\n";
+   } else {
+     print CF "-dp$threads \\\n" .
+              "-turbo \\\n";
+   }
 
    print CF "$icv_options \\\n" if (defined $icv_options ne "");
    if(-r $gdsii) {
@@ -150,6 +164,15 @@ ET
     print CF "$runset\n";
     close(CF);
     `chmod +x $cmd_file`;
-    system("cd '$run_dir';  $cmd_file");
+    my $cmd;
+    if ($jobs > 0) {
+        my $slots = $jobs * $threads;
+        $cmd = "nbjob run --mode interactive " .
+               "--parallel slots=$slots,slots_per_host=$threads,exit_on_master_finish=true ".
+               "--class-reservation cores=1,memory=$mem $cmd_file";
+    } else {
+        $cmd = $cmd_file;
+    }
+    system("cd '$run_dir';  $cmd");
 }
 
