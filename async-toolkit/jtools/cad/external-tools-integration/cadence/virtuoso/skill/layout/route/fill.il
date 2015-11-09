@@ -19,7 +19,7 @@
                           (flatCV nil)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk rect bbox
-        overlaps fill_shapes mc sp
+        overlaps fill_shapes new_fill_shapes mc sp
         x y x0 y0 x1 y1 x0box y0box x1box y1box cols rows align w h l del xb yb
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
@@ -63,25 +63,29 @@
     lpp_tmp  = (list "y1" "drawing")
     (foreach s flatCV->shapes (when s->lpp==lpp_blk (dbCopyFig s CV (list 0:0 "R0"))))
 
+    ; protect existing fill
+    (foreach x CV->shapes x->lpp==lpp_fill (dbReplaceProp x "protectFill" "boolean" t))
+
     ; copy from fill template
     fill_shapes = (setof x fillCV->shapes (and x->layerName==layerName x->purpose=="fill"))
+    new_fill_shapes = nil
     (for col 0 cols-1
          x=x0+col*(car  align)
          (for row 0 rows-1
               y=y0+row*(cadr align)
               (foreach shape fill_shapes
                        shape = (dbCopyFig shape CV (list x:y "R0"))
+                       new_fill_shapes = (cons shape new_fill_shapes)
                        )
               )
          )
 
     ; chop fill template with blockage purpose
-    fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
     (leLayerAndNot CV lpp_fill lpp_blk lpp_fill)
-    (foreach x fill_shapes (dbDeleteObject x))
+    (foreach x new_fill_shapes (dbDeleteObject x))
 
     ; trim fill shapes
-    (foreach s (setof x CV->shapes x->lpp==lpp_fill)
+    (foreach s (setof x CV->shapes x->lpp==lpp_fill && !(dbGetPropByName x "protectFill")->value)
       w=0
       h=0
       l=MetalMinLength[layerName]
@@ -154,7 +158,6 @@
             (t
              s->bBox = (list (leftEdge  s->bBox)+x0:(bottomEdge s->bBox)+y0
                              (rightEdge s->bBox)+x1:(topEdge    s->bBox)+y1)
-             (dbReplaceProp s "TemplateFill" "boolean" t)
              )
             )
       )
@@ -164,9 +167,14 @@
                            (betterGrowPoints (GetPrboundPoints CV)
                                              (list -(car  MetalBoundarySpace[layerName])
                                                    -(cadr MetalBoundarySpace[layerName]))))
-    fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
+    fill_shapes = (setof x CV->shapes x->lpp==lpp_fill && !(dbGetPropByName x "protectFill")->value)
     (leLayerAnd CV lpp_fill BoundaryLPP lpp_fill)
     (foreach x fill_shapes (dbDeleteObject x))
+
+    ; set TemplateFill property
+    (foreach shape (setof x CV->shapes x->lpp==lpp_fill && !(dbGetPropByName x "protectFill")->value)
+             (dbReplaceProp shape "TemplateFill" "boolean" t)
+             )
 
     ; delete temporary shapes
     (foreach x CV->shapes (when x->lpp==lpp_blk (dbDeleteObject x)))
