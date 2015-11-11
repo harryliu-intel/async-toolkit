@@ -143,3 +143,55 @@ importPostProcessAction =
     n
     )
   )
+
+; replace d04 cells with vendor.intel.d04 versions
+(defun ReplaceD04Cells (libName)
+  (let (lib CV prop redo found subCV)
+    found = (makeTable "found" nil)
+    lib = (ddGetObj libName)
+    (foreach cell lib->cells
+             CV = (dbOpenCellViewByType libName cell->name "layout")
+             redo = nil
+             (foreach inst CV->instances
+                      prop = (dbGetPropByName inst->master "CopyExact")->value
+                      redo = redo || prop && (strncmp prop "d04" 3)==0
+                      )
+             (when redo
+               (cdsp4edit ?CV CV)
+               (printf "Replacing D04 cells in %s\n" CV->cellName)
+               (foreach inst CV->instances
+                        prop = (dbGetPropByName inst->master "CopyExact")->value
+                        newCellName = (RenameD04 prop)
+                        (when newCellName
+                          subCV = (dbOpenCellViewByType "vendor.intel.d04" newCellName "layout")
+                          (cond (subCV inst->master=subCV)
+                                (!found[newCellName]
+                                 (printf "WARNING: %s not found in library vendor.intel.d04\n" newCellName)
+                                 )
+                                )
+                          found[newCellname]=t
+                          )
+                        )
+               (dbSave CV)
+               )
+             )
+    )
+  t
+  )
+
+; Map a D04 cell to its new name, or nil if its not a D04 cell
+(defun RenameD04 (cellName)
+  (let (len newCellName lib_length subtype_length)
+    newCellname = nil
+    lib_length = 3
+    subtype_length = 3
+    len = (strlen cellName)
+    (when (strncmp cellName "d04" 3)==0 && len==13
+          newCellName = (strcat "vendor.intel.d04."
+                                (substring cellName lib_length+1 len-lib_length-subtype_length) "."
+                                (substring cellName len-subtype_length+1 subtype_length)
+                                )
+          )
+    newCellName
+    )
+  )
