@@ -53,7 +53,7 @@ defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil))
     BusPinList = MidPinsScanBusPins(CV)
 
     foreach( Term CellTerms
-       when( include_supply || !((Term~>name == GNDNetName) || (Term~>name == VddNetName))
+       when( include_supply || (member Term->name PowerGroundNets)==nil
             foreach( InstTerm Term~>net~>instTerms
                unless( member(Term~>name BusPinList) || member(Term~>name CellPins)
                  InPlacePinFig = MidPinsInheritPin(CV InstTerm~>inst InstTerm~>name Term~>name)
