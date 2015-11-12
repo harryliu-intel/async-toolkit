@@ -15,7 +15,7 @@
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil) (offGrid nil))
   (let (tech n MasterRectList layerName pinRectList layerNum space len
           rect1 rect2 bbox1 bbox2 overlap rect
-          viaDef via list1 list2 xy wb wt viaName viaDef via)
+          viaDef via list1 list2 xy wb wt viaName viaDef via via_space avoid_vias)
     tech = (techGetTechFile CV)
     n=0
     MasterRectList = (nrFindPinShapes net MetalLPPs ?topShapes topShapes)
@@ -58,34 +58,40 @@
       list2 = (setof a MasterRectList (car a)==Metal[v+1])
       list1 = (cadr (car list1))
       list2 = (cadr (car list2))
+      via_space = viaSpace[Via[v]]
       (foreach rect1 list1
         (foreach rect2 list2
           overlap = (BBoxAnd rect1 rect2)
-          (when overlap && (dbGetOverlaps CV overlap ViaDrawing[v] 2)==nil
-            xy = (BBoxGetCenter overlap)
-            wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v   xy))
-            (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
-            wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
-            (unless wt (error "no track width for %d %g:%g\n" v+1 (car xy) (cadr xy)))
-            wb = (round wb/MfgGrid)
-            wt = (round wt/MfgGrid)
-            viaName = viaTable[(list v wb wt)]
-            (unless viaName (error "no viaTablefor %d %d %d\n" v wb wt))
-            (cond ((atom viaName)
-                   viaDef = (techFindViaDefByName tech viaName)
-                   params = nil
-                   )
-                  (t
-                   viaDef = (techFindViaDefByName tech (car viaName))
-                   params = (cdr viaName)
-                   viaName = (car viaName)
-                   )
-                  ) 
-            via = (dbCreateVia CV viaDef xy "R0" params)
-            via->net = net
-            (dbReplaceProp via "autogen" "string" "RouteNearby")
-            (printf "%s on %s\n" Via[v] net->name)
-            n++
+          (when overlap
+            avoid_vias = (BBoxExpandHorizontal
+                          (BBoxExpandVertical overlap (cadr via_space)-MfgGrid)
+                          (car via_space)-MfgGrid)
+            (when (dbGetOverlaps CV avoid_vias ViaDrawing[v] 32)==nil
+              xy = (BBoxGetCenter overlap)
+              wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v   xy))
+              (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
+              wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
+              (unless wt (error "no track width for %d %g:%g\n" v+1 (car xy) (cadr xy)))
+              wb = (round wb/MfgGrid)
+              wt = (round wt/MfgGrid)
+              viaName = viaTable[(list v wb wt)]
+              (unless viaName (error "no viaTablefor %d %d %d\n" v wb wt))
+              (cond ((atom viaName)
+                     viaDef = (techFindViaDefByName tech viaName)
+                     params = nil
+                     )
+                    (t
+                     viaDef = (techFindViaDefByName tech (car viaName))
+                     params = (cdr viaName)
+                     viaName = (car viaName)
+                     )
+                    ) 
+              via = (dbCreateVia CV viaDef xy "R0" params)
+              via->net = net
+              (dbReplaceProp via "autogen" "string" "RouteNearby")
+              (printf "%s on %s\n" Via[v] net->name)
+              n++
+              )
             )
           )
         )
