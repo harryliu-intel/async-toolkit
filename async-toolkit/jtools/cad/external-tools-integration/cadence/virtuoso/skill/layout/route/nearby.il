@@ -14,11 +14,11 @@
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil) (offGrid nil))
   (let (tech n MasterRectList layerName pinRectList layerNum space len
-          rect1 rect2 bbox1 bbox2 overlap rect
+          net1 net2 rect1 rect2 bbox1 bbox2 overlap rect
           viaDef via list1 list2 xy wb wt viaName viaDef via via_space avoid_vias)
     tech = (techGetTechFile CV)
     n=0
-    MasterRectList = (nrFindPinShapes net MetalLPPs ?topShapes topShapes)
+    MasterRectList = (nrFindPinShapesWithNet net MetalLPPs ?topShapes topShapes)
 
     ; add paths between subcell pins that align at e2e spacing
     (foreach pinRectList MasterRectList
@@ -29,8 +29,10 @@
              len = (length pinRectList)
              (for a 0 len-1
                (for b a+1 len-1
-                  rect1 = (nth a pinRectList)
-                  rect2 = (nth b pinRectList)
+                  net1 = (car  (nth a pinRectList))
+                  net2 = (car  (nth b pinRectList))
+                  rect1 = (cadr (nth a pinRectList))
+                  rect2 = (cadr (nth b pinRectList))
                   (cond ((mod layerNum 2)==0
                          bbox1 = (BBoxExpandHorizontal rect1 (car space))
                          bbox2 = (BBoxExpandHorizontal rect2 (car space))
@@ -41,7 +43,7 @@
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
-                  (when overlap && !(BBoxAnd rect1 rect2)
+                  (when (net1==nil || net1!=net2) && overlap && !(BBoxAnd rect1 rect2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
                     (dbAddFigToNet rect net)
                     (dbReplaceProp rect "autogen" "string" "RouteNearby")
@@ -59,10 +61,14 @@
       list1 = (cadr (car list1))
       list2 = (cadr (car list2))
       via_space = viaSpace[Via[v]]
-      (foreach rect1 list1
-        (foreach rect2 list2
+      (foreach e1 list1
+        (foreach e2 list2
+          net1  = (car  e1)
+          rect1 = (cadr e1)
+          net2  = (car  e2)
+          rect2 = (cadr e2)
           overlap = (BBoxAnd rect1 rect2)
-          (when overlap
+          (when overlap && (net1==nil || net1!=net2)
             avoid_vias = (BBoxExpandHorizontal
                           (BBoxExpandVertical overlap (cadr via_space)-MfgGrid)
                           (car via_space)-MfgGrid)

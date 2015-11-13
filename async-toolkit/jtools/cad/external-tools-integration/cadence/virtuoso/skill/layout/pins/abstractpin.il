@@ -538,6 +538,42 @@ defun( nrCreateMidAbstract ( libName cellName viewName
     )
   )
 
+; Same as above but include the net in the subcell with the rectangle
+; to avoid connecting the same net in the same subcell.
+(defun nrFindPinShapesWithNet (net pinLPPs @key (topShapes nil))
+  (let (layerName inst transform tmp pinRectList lppList ret)
+    (foreach lpp pinLPPs
+      layerName = (car lpp)
+      pinRectList = nil
+
+      ; shapes from top level
+      (when topShapes
+        (foreach rect (setof a net->cellView->shapes a->net==net && a->lpp==lpp &&
+                             (a->objType=="rect" || a->objType=="path" || a->objType=="pathSeg"))
+                 pinRectList = (cons (list nil rect->bBox) pinRectList)
+                 )
+        )
+
+      ; shapes from subcell pins
+      (foreach instTerm net->instTerms
+        inst = instTerm->inst
+        (when inst->libName!=TechLibName
+          transform = (geGetInstTransform inst)
+          (foreach pin instTerm->term->pins
+            (when (car pin->fig->lpp)==layerName
+              tmp = (nrConvertFigToRectList pin->fig)
+              tmp = (nrRectListTransform tmp transform)
+              (foreach rect tmp pinRectList = (cons (list pin->fig->net rect) pinRectList))
+              )
+            )
+          )
+        )
+      (when pinRectList ret = (cons (list layerName pinRectList) ret))
+      )
+    ret
+    )
+  )
+
 defun( nrFindInstPinShapes ( thisInst pinName pinLPPs )
 ; Find all Rectagles of subcell pin that connects to a paticular top level net
   let((realInstances pinFigs pinRectList thisPinFigs shapes lpp)
