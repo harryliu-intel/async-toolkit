@@ -66,7 +66,7 @@
     ; protect old fill
     (foreach x CV->shapes
              (when x->lpp==lpp_fill
-               x->lpp=(list (car lpp_fill) "drawing")
+               x->lpp=(list (car x->lpp) "drawing")
                (dbReplaceProp x "protectFill" "boolean" t)
                )
              )
@@ -182,7 +182,8 @@
     ; restore protectFill
     (foreach x CV->shapes
              (when (dbGetPropByName x "protectFill")->value
-                   x->lpp=lpp_fill
+                   x->lpp=(list (car x->lpp) "fill")
+                   (dbDeletePropByName x "protectFill")
                    )
              )
 
