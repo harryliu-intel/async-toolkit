@@ -166,6 +166,7 @@ share/skill/util/binarysearch/search.il                                    skill
 share/skill/util/cellview.il                                               skill/util/cellview.il                                                   664 p
 share/skill/util/profile.il                                                skill/util/profile.il                                                    664 p
 share/skill/util/recurse.il                                                skill/util/recurse.il                                                    664 p
+share/skill/util/via.il                                                    skill/util/via.il                                                        664 p
 
 # geometry
 share/skill/layout/geometry/segmenttree.il                                 skill/layout/geometry/segmenttree.il                                     664 p
