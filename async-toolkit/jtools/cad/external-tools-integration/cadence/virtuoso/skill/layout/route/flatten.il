@@ -14,6 +14,7 @@ useICV = t
         (doPowerGridAbstract t)    ; generate abstract view of power grid
         (hookupD04 nil)            ; add power hookups around d04 cells
         (hookupLaygen nil)         ; add power hookups around Laygen cells
+        (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
         )
   (let (MaxHeapSize FlattenCellsList
         PowerGridCellName flattenCV xalign yalign
@@ -97,7 +98,8 @@ useICV = t
 
     ; Create power grid
     (when doMakePowerGrid
-      pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04)
+      pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
+                            ?noPowerFill noPowerFill)
       (unless pgCV (error "Unable to create power grid\n"))
       )
 
@@ -159,6 +161,7 @@ useICV = t
         (hookupLaygen nil) ; HACK: add power hookups to all LayGen cells
         (hookupD04 nil)    ; HACK: add power hookups to all D04 cells
         (powerCellView "layout") ; used by MakeLayoutTagCell
+        (noPowerFill nil)
         )
   (let (TEMP powerCellName align
         inst prb
@@ -230,7 +233,7 @@ useICV = t
           align = gridAlignment[b]
           xa = (car align)
           ya = (cadr align)
-          gridCV = (ChoosePowerGridCell a b)
+          gridCV = (ChoosePowerGridCell a b ?noPowerFill noPowerFill)
           x0 = (leftEdge   shape->bBox)
           y0 = (bottomEdge shape->bBox)
           x1 = (rightEdge  shape->bBox)
@@ -239,7 +242,7 @@ useICV = t
 
           ; half-height cells on bottom edge
           (when (round y0/ya)*2 != (round y0/(ya/2))
-                halfCV = (ChoosePowerGridCell a b ?half t)
+                halfCV = (ChoosePowerGridCell a b ?half t ?noPowerFill noPowerFill)
                 y0 = y0+ya/2
                 (dbCreateSimpleMosaic powerCV halfCV
                                       (sprintf nil "pg%d" count++) x0:y0 "MX"
@@ -249,7 +252,7 @@ useICV = t
           ; half-height cells on top edge
           (when (round y1/ya)*2 != (round y1/(ya/2))
                 y1 = y1-ya/2
-                halfCV = (ChoosePowerGridCell a b ?half t)
+                halfCV = (ChoosePowerGridCell a b ?half t ?noPowerFill noPowerFill)
                 (dbCreateSimpleMosaic powerCV halfCV
                                       (sprintf nil "pg%d" count++) x0:y1 "R0"
                                       1 cols (cadr align) (car align))
@@ -501,9 +504,9 @@ useICV = t
   )
 
 ; Choose power grid cell
-(defun ChoosePowerGridCell (bot top @key (half nil))
+(defun ChoosePowerGridCell (bot top @key (half nil) (noPowerFill nil))
   (let (CV gridName)
-    gridName = "globals.POWER_GRID.m"
+    gridName = (if noPowerFill "globals.POWER_GRID_NO_FILL.m" "globals.POWER_GRID.m")
     (for n bot top gridName = (strcat gridName (sprintf nil "%d" n)))
     gridName = (strcat gridName "_pg")
     (when half gridName = (strcat gridName "_half"))

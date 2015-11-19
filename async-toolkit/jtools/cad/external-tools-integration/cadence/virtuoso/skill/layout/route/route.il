@@ -21,6 +21,7 @@
         (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
+        (noPowerFill nil)
         )
   (let ()
     ; export
@@ -30,7 +31,8 @@
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro
-                          ?metalFill metalFill ?topHalo topHalo)
+                          ?metalFill metalFill ?topHalo topHalo
+                          ?noPowerFill noPowerFill)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -62,6 +64,7 @@
         (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
+        (noPowerFill nil)
         )
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
@@ -92,7 +95,8 @@
 
     ; make flatten view automatically
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
-      CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04))
+      CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
+                        ?noPowerFill noPowerFill))
 
     ; cell names
     PowerGridCellName = (strcat CV->cellName "_pg")
