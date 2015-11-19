@@ -4,7 +4,6 @@
 # $DateTime$
 # $Author$
 
-
 function exit_func() {
   if [ -f "$strace_dump" ] ; then
     rm -f $strace_dump
