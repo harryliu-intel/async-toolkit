@@ -4,18 +4,18 @@
 ; and staples is hard-coded for 1273.
 
 ; create a complete set of POWER_GRID cells
-(defun CreatePowerGridCells (@key (botMetal 2) (topMetal 8))
+(defun CreatePowerGridCells (@key (botMetal 2) (topMetal 8) (noFill nil))
   (let (CV cellName)
     (for bot botMetal topMetal
          (for top bot topMetal
-              cellName = "globals.POWER_GRID.m"
+              cellName = (if noFill "globals.POWER_GRID_NO_FILL.m" "globals.POWER_GRID.m")
               (for m bot top cellName = (strcat cellName (sprintf nil "%d" m)))
               cellName = (strcat cellName "_pg")
               (printf "%s\n" cellName)
               CV = (dbOpenCellViewByType "globals" cellName "layout")
               (when CV (cdsp4edit ?CV CV))
               CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
-              (DrawPowerGrid bot top ?CV CV)
+              (DrawPowerGrid bot top ?CV CV ?noFill noFill)
               (cdsp4add ?CV CV)
               (when top==topMetal
                 cellName = (strcat cellName "_half")
@@ -23,7 +23,7 @@
                 CV = (dbOpenCellViewByType "globals" cellName "layout")
                 (when CV (cdsp4edit ?CV CV))
                 CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
-                (DrawPowerGrid bot top ?CV CV ?half t)
+                (DrawPowerGrid bot top ?CV CV ?half t ?noFill noFill)
                 (cdsp4add ?CV CV)
                 )
               )
@@ -33,7 +33,7 @@
   )
 
 ; draw power stripes and vias in a POWER_GRID cell
-(defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)) (half nil))
+(defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)) (half nil) (noFill nil))
   (let (xalign yalign rows cols y s l h half_power_m8)
     (foreach x CV->shapes (dbDeleteObject x))
     xalign = (car  gridAlignment[topMetal])
@@ -106,6 +106,15 @@
              (dbCreateRect CV s->lpp s->bBox)->net = s->net
              (dbDeleteObject s)
              )
+
+    ; delete fill shapes
+    (when noFill
+      (foreach shape CV->shapes
+               (when shape->purpose=="fill" (dbDeleteObject shape))
+               )
+      )
+
+    ; save
     (dbSave CV)
     )
   CV
