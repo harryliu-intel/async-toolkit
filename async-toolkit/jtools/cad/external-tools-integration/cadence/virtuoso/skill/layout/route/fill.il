@@ -18,6 +18,7 @@
                           (ybloat nil)
                           (flatCV nil)
                           (chopAtBoundary t)
+                          (ignoreFill nil)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk rect bbox
         overlaps fill_shapes mc sp
@@ -25,7 +26,8 @@
         leftOverlaps rightOverlaps topOverlaps botOverlaps
         ) 
     ; options
-    (unless flatCV flatCV=(MakeFlatBlockageView ?CV CV))
+    (unless flatCV flatCV=(MakeFlatBlockageView ?botMetal layerNum ?topMetal layerNum
+                                                ?CV CV ?ignoreFill ignoreFill))
     mod2 = (mod layerNum 2)
     layerName = Metal[layerNum]
     (unless xbloat xbloat = (car  MetalSpace[layerName])*(1-mod2))
@@ -216,11 +218,11 @@
   )
 
 ; fill using a template cell
-(defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8) (deleteOld t)
-                          (chopAtBoundary t))
+(defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal TopMetal) (deleteOld t)
+                          (chopAtBoundary t) (ignoreFill nil))
   (let (flatCV)
     (when deleteOld (DeleteAutoGen ?propName "TemplateFill" ?CV CV))
-    flatCV = (MakeFlatBlockageView ?CV CV)
+    flatCV = (MakeFlatBlockageView ?botMetal botMetal ?topMetal topMetal ?CV CV ?ignoreFill ignoreFill)
     (for m botMetal topMetal (ChopFill m ?CV CV ?flatCV flatCV ?chopAtBoundary chopAtBoundary))
     (ddDeleteObj (ddGetObj flatCV->libName flatCV->cellName flatCV->viewName))
     CV->modified=t
@@ -229,18 +231,21 @@
   )
 
 ; Flatten all real metal shapes to blockage purpose
-(defun MakeFlatBlockageView (@key (CV (geGetEditCellView)))
-  (let (inLayerMap outLayerMap flatCV name map) 
+(defun MakeFlatBlockageView (@key (botMetal 0) (topMetal TopMetal)
+                                  (CV (geGetEditCellView)) (ignoreFill nil))
+  (let (inLayerMap outLayerMap purposes flatCV name map) 
     flatCV = (dbOpenCellViewByType CV->libName CV->cellName "flat_blockage" "maskLayout" "w")
-    (for m 0 TopMetal
+    (for m botMetal topMetal
          name = (sprintf nil "m%d" m)
          outLayerMap = (cons (list name (list Metal[m] "blockage")) outLayerMap)
          map = (list name)
-         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+         purposes = (list "drawing" "gnd" "vdd")
+         (unless ignoreFill purposes = (cons "fill" purposes))
+         (foreach purpose purposes
                   map = (append map (list (list name purpose)))
                   )
          name = (sprintf nil "mc%d" m)
-         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+         (foreach purpose purposes
                   map = (append map (list (list name purpose)))
                   )
          inLayerMap = (cons map inLayerMap)
