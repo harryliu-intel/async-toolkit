@@ -17,6 +17,7 @@
                           (xbloat nil)
                           (ybloat nil)
                           (flatCV nil)
+                          (chopAtBoundary t)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk rect bbox
         overlaps fill_shapes mc sp
@@ -171,9 +172,11 @@
                            (betterGrowPoints (GetPrboundPoints CV)
                                              (list -(car  MetalBoundarySpace[layerName])
                                                    -(cadr MetalBoundarySpace[layerName]))))
-    fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
-    (leLayerAnd CV lpp_fill BoundaryLPP lpp_fill)
-    (foreach x fill_shapes (dbDeleteObject x))
+    (when chopAtBoundary
+      fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
+      (leLayerAnd CV lpp_fill BoundaryLPP lpp_fill)
+      (foreach x fill_shapes (dbDeleteObject x))
+      )
 
     ; set TemplateFill property on new fill shapes
     fill_shapes = (setof x CV->shapes x->lpp==lpp_fill)
@@ -213,19 +216,12 @@
   )
 
 ; fill using a template cell
-(defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8) (deleteOld t))
+(defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal 8) (deleteOld t)
+                          (chopAtBoundary t))
   (let (flatCV)
     (when deleteOld (DeleteAutoGen ?propName "TemplateFill" ?CV CV))
     flatCV = (MakeFlatBlockageView ?CV CV)
-    (when topMetal>=0 && 0>=botMetal (ChopFill 0 ?CV CV ?flatCV flatCV))
-    (when topMetal>=1 && 1>=botMetal (ChopFill 1 ?CV CV ?flatCV flatCV))
-    (when topMetal>=2 && 2>=botMetal (ChopFill 2 ?CV CV ?flatCV flatCV))
-    (when topMetal>=3 && 3>=botMetal (ChopFill 3 ?CV CV ?flatCV flatCV))
-    (when topMetal>=4 && 4>=botMetal (ChopFill 4 ?CV CV ?flatCV flatCV))
-    (when topMetal>=5 && 5>=botMetal (ChopFill 5 ?CV CV ?flatCV flatCV))
-    (when topMetal>=6 && 6>=botMetal (ChopFill 6 ?CV CV ?flatCV flatCV))
-    (when topMetal>=7 && 7>=botMetal (ChopFill 7 ?CV CV ?flatCV flatCV))
-    (when topMetal>=8 && 8>=botMetal (ChopFill 8 ?CV CV ?flatCV flatCV))
+    (for m botMetal topMetal (ChopFill m ?CV CV ?flatCV flatCV ?chopAtBoundary chopAtBoundary))
     (ddDeleteObj (ddGetObj flatCV->libName flatCV->cellName flatCV->viewName))
     CV->modified=t
     CV
