@@ -345,7 +345,7 @@ public abstract class CoSimInfo {
                 return new BufferedNodeBDReadChannel(
                         slack,
                         Math.round(200 * digitalTau),
-                        Math.round(0 * digitalTau),
+                        Math.round(1 * digitalTau),
                         Math.round(ffLatency * digitalTau),
                         Math.round(bbLatency * digitalTau),
                         Math.round(fbLatency * digitalTau),
@@ -390,7 +390,7 @@ public abstract class CoSimInfo {
                 return new BufferedNodeBDWriteChannel(
                         slack,
                         Math.round(600 * digitalTau),
-                        Math.round(0 * digitalTau),
+                        Math.round(1 * digitalTau),
                         Math.round(ffLatency * digitalTau),
                         Math.round(bbLatency * digitalTau),
                         Math.round(fbLatency * digitalTau),
