@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -54,6 +55,7 @@ import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
 import com.avlsi.file.cdl.util.rename.CadenceReverseNameInterface;
 import com.avlsi.file.cdl.util.rename.GDS2NameInterface;
 import com.avlsi.file.cdl.util.rename.IdentityNameInterface;
+import com.avlsi.file.cdl.util.rename.Rename;
 import com.avlsi.io.FileSearchPath;
 import com.avlsi.io.SearchPath;
 import com.avlsi.io.SearchPathFile;
@@ -880,6 +882,8 @@ public class Prs2Verilog {
     }
 
     private static void usage() {
+        final String translateSchemes =
+            Rename.getNamespaces().collect(Collectors.joining(" | "));
         System.err.print(
 "Usage: java com.avlsi.tools.prs2verilog.Prs2Verilog\n" +
 "   --cast-path=<path> (CAST path; defaults to .)\n" +
@@ -906,7 +910,7 @@ public class Prs2Verilog {
 "   [--gates=<list of gates seperated by :>] (list of gates to match with for minimize-tri-reg option)\n" +
 "   [--config=<path to process.config that contains technology data>] (required for minimize-tri-reg option)\n" +
 "   [--by-name] (connect ports by name; only for netlist converter)\n" +
-"   [--translate=<cadence | gds2 | oliver>] (name translation)\n" +
+"   [--translate=<" + translateSchemes + ">] (name translation)\n" +
 "   [--skip-power-rail] (tell netlist, netgraph converter to skip power rails)\n" +
 "   [--routed] (makes netlist converter consider routed directives)\n" +
 "   [--cadence-name] (treat cell name as a Cadence name; no cosim spec allowed)\n" +
@@ -978,16 +982,13 @@ public class Prs2Verilog {
         final CDLNameInterface renamer;
         if (translate == null) {
             renamer = null;
-        } else if (translate.equals("gds2")) {
-            renamer = new GDS2NameInterface();
-        } else if (translate.equals("cadence")) {
-            renamer = new CadenceNameInterface();
-        } else if (translate.equals("oliver")) {
-            renamer = new OliverRenamer();
         } else {
-            renamer = null;
-            System.err.println("Unknown name translation method: " + translate);
-            System.exit(1);
+            renamer = Rename.getInterface("cast", translate);
+            if (renamer == null) {
+                System.err.println("Unknown name translation method: " +
+                                   translate);
+                System.exit(1);
+            }
         }
 
         /* This may now work 
