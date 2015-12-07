@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import com.avlsi.cast.CastCacheManager;
 import com.avlsi.cast.CastFileParser;
 import com.avlsi.cast.CastSyntaxException;
 import com.avlsi.cast.CastSemanticException;
@@ -1051,7 +1052,8 @@ public class Prs2Verilog {
             }
         };
         final CastFileParser cfp =
-            new CastFileParser(castPath, castVersion, spo);
+            CastCacheManager.getDefault().getCastFileParser(
+                castPath, castVersion, spo);
 
         final CastDesign design;
         final String targetName;
