@@ -44,16 +44,19 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
 
         private final int m_MaxLineSize;
         private int m_CurrLineSize;
+        private final String m_callDelimiter;
 
         private final CDLNameInterface m_RenameInterface;
 
         public OutputInfo( final Writer cdlOutput,
                            final CDLNameInterface renameInterface,
-                           final int maxLineSize ) {
+                           final int maxLineSize,
+                           final String callDelimiter ) {
             m_CDLOutput = cdlOutput;
             m_RenameInterface = renameInterface;
             m_CurrLineSize = 0;
             m_MaxLineSize = maxLineSize;
+            m_callDelimiter = callDelimiter;
         }
 
         public void print( final StringBuffer s ) throws IOException {
@@ -79,6 +82,12 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
             }
             m_CDLOutput.write( s );
             m_CurrLineSize += s.length() + 1;
+        }
+
+        public void printCallDelimiter( ) throws IOException {
+            if ( !m_callDelimiter.equals("") ) {
+                printws( m_callDelimiter );
+            }
         }
 
         public void println( ) throws IOException {
@@ -147,10 +156,12 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
 
     public void addNameInterface( final Writer cdlOutput,
                                   final CDLNameInterface nameInterface,
-                                  final int maxLineSize ) {
+                                  final int maxLineSize,
+                                  final String callDelimiter ) {
         final OutputInfo newInfo = new OutputInfo( cdlOutput,
                                                    nameInterface,
-                                                   maxLineSize );
+                                                   maxLineSize,
+                                                   callDelimiter );
         m_OutputInfos.add( newInfo );
     }
 
@@ -407,7 +418,7 @@ public class CDLRenamerFactory implements CDLFactoryInterface {
                     for ( int i = 0 ; i < args.length ; ++i ) {
                         currInfo.printws( currInfo.renameNode( args[i] ) );
                     }
-                    currInfo.printws( "/" );
+                    currInfo.printCallDelimiter();
                     currInfo.printws( currInfo.renameCell( subName ) );
                     writeParameters( parameters, env, currInfo );
                     currInfo.println();

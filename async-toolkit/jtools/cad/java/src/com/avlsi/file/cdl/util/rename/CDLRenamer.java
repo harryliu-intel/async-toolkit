@@ -145,6 +145,7 @@ public class CDLRenamer  {
             "   [--translated-nmap=file]\n" +
             "   [--layout-net-prefix=string]\n" +
             "   [--layout-inst-prefix=string]\n" +
+            "   [--call-delimiter=string]\n" +
             "   (only understands conditionals and loops if nmap specified)\n" );
         if (m != null && m.length() > 0)
             System.err.print( m );
@@ -226,6 +227,9 @@ public class CDLRenamer  {
 
         final String layoutInstPrefix =
             theArgs.getArgValue( "layout-inst-prefix", null );
+
+        final String callDelimiter =
+            theArgs.getArgValue( "call-delimiter", "/" );
 
         pedanticArgs.argTag("rcx-cell-map");
         pedanticArgs.argTag("rcx-pipo-map");
@@ -368,7 +372,8 @@ public class CDLRenamer  {
                             
                         cdlFactory.addNameInterface( cdlWriter,
                                                      reloadableNameInterface,
-                                                     76 );
+                                                     76,
+                                                     callDelimiter );
 
                         ReadCDLIntoFactory.readCDL( sourceCDLReader,
                                                     cdlFactory );
@@ -385,7 +390,8 @@ public class CDLRenamer  {
                     else {                            
                         cdlFactory.addNameInterface( cdlWriter,
                                                      filteredInterface,
-                                                     76 );                            
+                                                     76,
+                                                     callDelimiter );                            
                         ReadCDLIntoFactory.readCDLSimple( sourceCDLReader,
                                                           cdlFactory );
                     }
