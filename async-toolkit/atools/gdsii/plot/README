@@ -1,0 +1,65 @@
+GDS plotting package
+gds2plot & plot
+Authors: Andrew Lines & Aubrey Grey
+Copyright: Intel, 2015
+Support: andrew.lines@intel.com
+
+--------------------------------------------------------------------------------
+Gds2plot is a C program that renders high quality plots of a GDS file.
+It uses two configuration files.  The first, usually called
+gds2plot.conf, defines the layer mapping from GDS to RGBA values.  The
+syntax is:
+
+#     R     G     B     A       (boolean expression of gds2 layernum:datatype)
+paint 0-255 0-255 0-255 0.0-1.0 layer # comment
+paint ...
+
+The GDS layer can be defined as layernum or layernum:datatype and
+combined into boolean expressions with parantheses, ||, &&, !, ==, !=
+boolean operators.  Typical uses of this feature are to imply ndiff
+from diffusion and n-implant, or to combine B and C metal colorings.
+
+The layers are painted in order starting with a white background.
+Alpha is the opacity of the layer, where 1.0 means completely opaque
+(replaces the previous color) and 0.0 is completely transparent.
+Experience has shown that the lowest layers should be opaque, and
+upper layers get gradually more transparent.  The colors of the lower
+layers came from Magic's default palette circa 1994.
+
+Gds2plot loads the GDS database into memory, then renders at
+manufacturing grid resolution (just like making masks).  To reduce
+memory consumption, it only renders a square tile typically 20000
+pixels square at a time.  After the tile is rendered, it is
+down-scaled to the output resolution.  Once all the tiles in
+horizontal stripe are rendered, the data is written to a ppm file.
+
+For large GDS files, it saves a lot of memory and runtime to stream
+out a GDS file with only relevant layernum:datatype and no labels.
+The gds2plot_layer_map.rules is an example compatible with Virtuoso.
+
+--------------------------------------------------------------------------------
+Plot is a perl script wrapper that is the normal way to use gds2plot.
+It breaks the task into parallel jobs using netbatch, then stitches
+the stripes back together and converts the final image to a standard
+format like png.  Typical usage is "plot --jobs=16 myfile" which will
+plot myfile.gds to myfile.png using default options.  If you run in
+another directory you should create sym-links or specify the conf-file
+and exclude-file arguments and include the gds2plot directory in your
+search path.  If you want to plot a subcell, use the --cell option to
+specify its GDS name.  By default gds2plot will auto-detect the
+top-level cell (a cell which is not instantiated by any other cell).
+
+If you specify jobs>0 plot will use netbatch to launch multiple
+stripes in parallel.  Netbatch will use the environment variables
+NBPOOL, NBQSLOT, NBCLASS.  The output of each job is saved to
+basename.out.# where # is the job number.  It creates a basename.do.#
+file which prevents a subsequent call of plot from launching that job
+again.  If a job crashes, delete that basename.do.# file and run plot
+again, and it will just rerun jobs for the missing do files.  After
+the jobs have finished (or partially finished) you can run plot again
+with the same arguments to concatenate the basename.ppm.# files into a
+single file and convert it to the desired output format (png).  It is
+wise to log into one of the netbatch servers to check the memory
+usage, and in subsequent runs specify the --mem option appropriately.
+
+Type "plot" to get a usage banner with simple comments.
