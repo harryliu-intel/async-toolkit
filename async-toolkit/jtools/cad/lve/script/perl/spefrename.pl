@@ -9,21 +9,21 @@ use strict;
 
 # comes directly from StarRC
 my $from  = "gds2";
-my $to = "cast";
+my $to = "cadence";
 my $verbose = 0;
 my $spefin;
 my $spefout;
 
 GetOptions(
     "verbose" => \$verbose,
-    "from=s" => \$spefin,
-    "to=s" => \$spefout,
+    "from=s" => \$from,
+    "to=s" => \$to,
 ) or die;
 
 my $rename = "fulcrum rename";
 $rename = "rename" if (`which rename` =~ m:/tools/:);
-my $npid = open2(\*RDN,\*WRN, "$rename --type=node --from=gds2 --to=cadence");
-my $cpid = open2(\*RDC,\*WRC, "$rename --type=cell --from=gds2 --to=cadence");
+my $npid = open2(\*RDN,\*WRN, "$rename --type=node --from=$from --to=$to");
+my $cpid = open2(\*RDC,\*WRC, "$rename --type=cell --from=$from --to=$to");
 $spefin  = shift;
 $spefout = shift;
 
@@ -60,15 +60,27 @@ sub ilookup {
     $rname;
 }
 
-open (STDIN, "<$spefin") if defined $spefin;
-open (STDOUT, ">$spefout") if defined $spefout;
+open (STDIN, "<$spefin") or die "Can't open $spefin: $!"
+    if defined $spefin;
+open (STDOUT, ">$spefout") or die "Can't open $spefout: $!"
+    if defined $spefout;
 my $cn=0;
 my $mode="";
 
+# StarRC hierarchical divider is independent of namespace
+my $starhier="/";
+
+# hierarchical divider in from namespace
+chomp(my $fromhier=`echo . | $rename --type=node --from=cast --to=$from`);
+
 while (<STDIN>) {
     chomp;
+    if (/^\*BUS_DELIMITER/) {
+        $_ = "*BUS_DELIMITER <>";
+    }
     if ($mode eq "namemap" and /^\*\d+ /) {
         my ($n,$name)=split;
+        $name =~ s/\Q$starhier\E/$fromhier/g;
         $name = nxl($name);
         $rcmap{$n}=$name;
         $nmap{$name}=$n;
