@@ -15,20 +15,19 @@ my $MAX  = 13200;  # pixels, 22 inches @ 600 DPI, use 25200 for 42 inches @ 600 
 my $BLACK = 95;    # black point for gamma correction
 my $WHITE = 255;   # white point for gamma correction
 my $GAMMA = 0.75;  # gamma for gamma correction
-my $SWAPXY = 0;    # rotate image
-my $conf_file = "";
-my $exclude_file = "";
-if (defined($ENV{FULCRUM_PDK_ROOT})) {
-    $conf_file    = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot/gds2plot.conf";
-    $exclude_file = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot/exclude.in";
-}
-my $format = "ppm"; # output format
+my $gds = "";
+my $pdk_dir = ".";
+$pdk_dir = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot" if (defined($ENV{FULCRUM_PDK_ROOT}));
+my $conf_file    = "$pdk_dir/gds2plot.conf";
+my $exclude_file = "$pdk_dir/exclude.in";
+my $format = "png"; # output format
 my $quality = 75; # for jpg conversion
 my $cell = "";
 
 # parse arguments
 while (@ARGV) {
     if    ($ARGV[0] =~ /^--jobs=(.*)/)  { $JOBS  = $1; }
+    elsif ($ARGV[0] =~ /^--gds=(.*)/)   { $gds = $1; }
     elsif ($ARGV[0] =~ /^--mem=(.*)/)   { $MEM   = $1; }
     elsif ($ARGV[0] =~ /^--max=(.*)/)   { $MAX   = $1; }
     elsif ($ARGV[0] =~ /^--grid=(.*)/)  { $GRID  = $1; }
@@ -36,7 +35,6 @@ while (@ARGV) {
     elsif ($ARGV[0] =~ /^--black=(.*)/) { $BLACK = $1; }
     elsif ($ARGV[0] =~ /^--white=(.*)/) { $WHITE = $1; }
     elsif ($ARGV[0] =~ /^--gamma=(.*)/) { $GAMMA = $1; }
-    elsif ($ARGV[0] =~ /^--swapXY=(.*)/) { $SWAPXY = $1; }
     elsif ($ARGV[0] =~ /^--format=(.*)/) { $format = $1; }
     elsif ($ARGV[0] =~ /^--quality=(.*)/) { $quality = $1; }
     elsif ($ARGV[0] =~ /^--conf-file=(.*)/) { $conf_file = $1; }
@@ -45,28 +43,27 @@ while (@ARGV) {
     else { $name = $ARGV[0]; }
     shift @ARGV;
 }
-my $gds;
-if    (-e "$name.gds")   { $gds = "$name.gds"; }
-elsif (-e "$name.gds2" ) { $gds = "$name.gds2"; }
-else { usage(); }
+if ($gds eq "" && !($name eq "")) { $gds = "$name.gds"; }
+if (!(-e $gds)) { usage(); }
 
 # usage banner
 sub usage {
     die "USAGE: plot basename\n" .
-        " --max=[$MAX]\n" .
-        " --grid=[$GRID]\n" .
-        " --tile=[$TILE]\n" .
-        " --jobs=[$JOBS]\n" .
-        " --mem=[$MEM]\n" .
-        " --black=[$BLACK]\n" .
-        " --white=[$WHITE]\n" .
-        " --gamma=[$GAMMA]\n" .
-        " --swapXY=[$SWAPXY]\n" .
+        " --max=[$MAX] # maximum x or y pixel dimensions\n" .
+        " --jobs=[$JOBS] # number of parallel jobs to launch with nbq\n" .
+        " --mem=[$MEM] # memory to request for jobs (bytes)\n" .
+        " # rarely used options\n" .
+        " --gds=[$gds] # GDS file name\n" .
+        " --grid=[$GRID] # manufacturing grid in GDS units\n" .
+        " --tile=[$TILE] # x/y dimension of tiles to rendor\n" .
+        " --black=[$BLACK] # black level for gamma correction (0-255)\n" .
+        " --white=[$WHITE] # white level for gamma correction (0-255)\n" .
+        " --gamma=[$GAMMA] # gamma factor for gamma correction\n" .
         " --format=[$format] # [ppm|png|jpg|tiff]\n" .
-        " --quality=[$quality]\n" .
-        " --conf-file=[$conf_file]\n" .
-        " --exclude-file=[$exclude_file]\n" .
-        " --cell=[$cell]\n";
+        " --quality=[$quality] # jpg quality\n" .
+        " --conf-file=[$conf_file] # GDS to RGBA mapping file\n" .
+        " --exclude-file=[$exclude_file] # file with regular expressions of cell names to exclude\n" .
+        " --cell=[$cell] # top level cell in GDS file (will auto-detect if not given)\n";
 }
 
 # settings
@@ -75,7 +72,7 @@ $WHITE = $WHITE/255.0;
 my $QSUB = "nbq --class-reservation fRM=$MEM";
 my $PLOT = "gds2plot " .
     "--conf $conf_file " . 
-    "--x $MAX --y $MAX --swapXY $SWAPXY " .
+    "--x $MAX --y $MAX " .
     "--grid $GRID --tile $TILE " .
     "--jobs $JOBS " .
     "--in_min $BLACK --in_max $WHITE --gamma $GAMMA ";
