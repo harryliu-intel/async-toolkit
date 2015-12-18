@@ -548,6 +548,7 @@ if ($stage2b) {
         $netlist_gnd="GND";
         $reduction = "YES";
         $remove_dangling_branches = "NO";
+        $cmd{"XREF"}="COMPLETE";
     }
     else {
         $netlist_format="NETNAME";
@@ -1287,11 +1288,11 @@ sub convertInstName {
     my ($oldName)=@_;
     chomp($oldName);
     # process two cases:
-    # 1. XinstName/XinstName ==> instName_D_instName
+    # 1. XinstName/instName ==> instName_D_instName
     # 2. XinstName ==> instName
 
     $oldName=~s/^X//;
-    $oldName=~s/\/X/_D_/g;
+    $oldName=~s/\//_D_/g;
     $oldName=~s/:/_D_/g;
 
     return "$oldName";
@@ -1301,7 +1302,7 @@ sub convertNetName {
     my ($oldName)=@_;
     chomp($oldName);
     # process two cases:
-    # 1. XinstName/XinstName:pinName ==> instName_D_instName_D_pinName
+    # 1. XinstName/instName:pinName ==> instName_D_instName_D_pinName
     #    XinstName:pinName ==> instName_D_pinName
     # 2. XinstName/netName:number  ==> instName_D_netName:number
     #    netName:number  ==> netName:number
@@ -1310,7 +1311,7 @@ sub convertNetName {
     my $lastPart="$parts[$#parts]";
     $oldName=~s/$lastPart$//;
     $oldName=~s/^X//;
-    $oldName=~s/\/X/_D_/g;
+    $oldName=~s/\//_D_/g;
     $oldName=~s/\/$/_D_/g;
     $oldName=~s/:/_D_/g;
     @parts=split(":", $lastPart);
@@ -1547,7 +1548,7 @@ sub nvn_spice2 {
                my $lastPart="$parts[$#parts]";
                $fields[1]=~s/$lastPart$//;
                $fields[1]=~s/^X//;
-               $fields[1]=~s/\/X/_D_/g;
+               $fields[1]=~s/\//_D_/g;
                $fields[1]=~s/\/$/_D_/g;
                $fields[1]="$fields[1]$lastPart";
                if( $fields[2] ne $fields[1] ){
@@ -1558,7 +1559,7 @@ sub nvn_spice2 {
                chomp($_);
                my @fields=split(' ', $_);
                $fields[1]=~s/^X//;
-               $fields[1]=~s/\/X/_D_/g;
+               $fields[1]=~s/\//_D_/g;
                $fields[1]=~s/\//_D_/g;
                $fields[2]=~s/^X//;
                print NMAPI "$fields[2] $fields[1]\n";

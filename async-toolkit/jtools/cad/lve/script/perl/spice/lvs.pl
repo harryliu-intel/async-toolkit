@@ -298,7 +298,7 @@ sub prepare_sch_file {
   %map=%graylist if $longcellnamegray;
   $map{$cell_name}=$topcell if $longcellnametop;
 
-  system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$working_dir/nettran.cdl' -sp-slashSpace -logFile nettran.log -outName '$sch_out_tmp'");
+  system("LD_LIBRARY_PATH= $ENV{ICV_SCRIPT} icv_nettran -sp '$working_dir/nettran.cdl' -sp-chopXPrefix -logFile nettran.log -outName '$sch_out_tmp'");
   if (%map) {
         open (GIN, "<$sch_out_tmp");
         open (GOUT, ">$sch_out");

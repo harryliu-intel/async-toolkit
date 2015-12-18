@@ -983,6 +983,7 @@ $(ROOT_TARGET_DIR)/%/cell.cdl_gds2: $(ROOT_TARGET_DIR)/%/../cell.cdl
 	  --name-in=cadence \
 	  --name-out=gds2 \
 	  --translated-cdl='$@.tmp' \
+	  --call-delimiter= \
 	&& mv -f '$@.tmp' '$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 
@@ -1008,9 +1009,9 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spef :\
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spef_gds2
 	QRSH_FLAGS="$(PACKAGE_LOW_FLAGS) $(EXTRACT_FLAGS)" \
 	  QB_DIAG_FILE="$(@D)/cell.extract_spefrn.diag" QB_RUN_NAME='lve_spefrn' \
-	  $(QB) spefrename --from=gds2 --to=cast '$<' '$@'
-	touch '$@'
-	: < '$@'
+	  $(QB) spefrename --from=gds2 --to=cast '$<' '$@.tmp' \
+	&& mv '$@.tmp' '$@' \
+	&& : < '$@'
 
 EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 	--ccp=$(CCP) \
