@@ -61,13 +61,10 @@ procedure( CycleSnapGrids()
     SetSnapping( ?xSnap MfgGrid ?ySnap MfgGrid )
   )
   when( mod(CycleSnap 4)==1
-    SetSnapping( ?xSnap DefaultWiringPitch/2 ?ySnap DefaultWiringPitch/2 )
+    SetSnapping( ?xSnap pitch_m1 ?ySnap pitch_m2 )
   )
   when( mod(CycleSnap 4)==2
-    SetSnapping( ?xSnap TrackPitch/2 ?ySnap TrackPitch/2 )
-  )
-  when( mod(CycleSnap 4)==3
-    SetSnapping( ?xSnap GridPitch ?ySnap GridPitch )
+    SetSnapping( ?xSnap pitch_m3 ?ySnap pitch_m4 )
   )
   CycleSnap = CycleSnap+1
 )
