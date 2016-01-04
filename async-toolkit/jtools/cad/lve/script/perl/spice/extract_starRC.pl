@@ -679,6 +679,19 @@ if ($stage2c) {
         while (<P>) {
             chomp;
             s/\\//;
+            if (/^(\*I.*\*D\s+)(\S+)$/) {
+                my ($prefix, $cellName) = ($1, $2);
+                $cellName = $reversegraylist{$cellName} if defined ($reversegraylist{$cellName});
+                $_ = "$prefix$cellName";
+            }
+            my $name_map = 0;
+            if ((/^\*NAME_MAP/ and $name_map = 1)..(!$name_map and /^\*[^\d]/)) {
+                if (/^(\*\d+\s+)(\S+)$/) {
+                    my ($prefix, $name) = ($1, $2);
+                    $name =~ s/\//_D_/g;
+                    $_ = "$prefix$name";
+                }
+            }
             print Q "$_\n";
         }
         close Q;

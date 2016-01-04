@@ -67,12 +67,6 @@ open (STDOUT, ">$spefout") or die "Can't open $spefout: $!"
 my $cn=0;
 my $mode="";
 
-# StarRC hierarchical divider is independent of namespace
-my $starhier="/";
-
-# hierarchical divider in from namespace
-chomp(my $fromhier=`echo . | $rename --type=node --from=cast --to=$from`);
-
 while (<STDIN>) {
     chomp;
     if (/^\*BUS_DELIMITER/) {
@@ -80,7 +74,6 @@ while (<STDIN>) {
     }
     if ($mode eq "namemap" and /^\*\d+ /) {
         my ($n,$name)=split;
-        $name =~ s/\Q$starhier\E/$fromhier/g;
         $name = nxl($name);
         $rcmap{$n}=$name;
         $nmap{$name}=$n;
