@@ -525,9 +525,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         } catch (Exception e) {
             outerr("Can't read data from " + filename + " at " + whereAmI +
                    ": " + e.getMessage());
-            if (DSim.get().haltOnError) {
-                DSim.get().interrupt();
-            }
+            // if (DSim.get().haltOnError) DSim.get().interrupt();
             return CspInteger.ZERO;
         }
         final int ni = n.getValue().intValueExact();
