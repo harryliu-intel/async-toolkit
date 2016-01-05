@@ -169,6 +169,14 @@ SPICE2ASPICE_OPTS := --isopotential-layers '$(ISOPOTENTIALLAYERS)'
 ifeq ("$(strip $(ISOPOTENTIALLAYERS))","")
 SPICE2ASPICE_OPTS := 
 endif
+CDLALIASES    := cdlaliases "$(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)" --gates-regex='^(gate|stack)\\..*'
+ifeq ("$(GRAYBOX_MODE)", "")
+CDLALIASES_OPTS =
+CDLALIASES_DEPS =
+else
+CDLALIASES_OPTS =--graybox-list='$(@D)/graybox_list'
+CDLALIASES_DEPS =$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list
+endif
 MAKE_ASPICE_IN := make_aspice_in
 MAKE_ALINT_IN := make_alint_in
 MERGE_ALINT_OUT := merge_alint_out
@@ -254,6 +262,22 @@ endif # "$(ROOT_SLURP_DIR)" ne ""
 $(ROOT_TARGET_DIR)/%/cell.mk: $(ROOT_TARGET_DIR)/%/cell.mk.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases
+
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+	mv '$@.tmp' '$@'
+
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+	mv '$@.tmp' '$@'
+
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+	mv '$@.tmp' '$@'
+
 # convert cell.spice_gds2 to cell.aspice for --mode=extracted
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.spice
@@ -286,7 +310,8 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice: $(ROOT_TARGET_DIR)/%/totem$
 	task=renamer && $(CASTFILES_DEQUEUE_TASK)
 
 ifneq ("$(NOEXTRACTDEPS)", "1")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -297,13 +322,15 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/e
 	  --cell '$(call GET_CAST_CDL_NAME,$(@D))' \
 	  --define-topcell \
 	  --minC $(MINC) --minR $(MINR) --minRC $(MINRC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$(@D)/cell.spice' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	mv -f '$@.tmp' '$@'; \
 	else rm -f '$@' && touch '$@'; fi; \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -314,6 +341,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem
 	  --cell '$(call GET_CAST_CDL_NAME,$(@D))' \
 	  --define-topcell \
 	  --minC $(MINC) --minR $(MINR) --minRC $(MINRC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$(@D)/cell.spice' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	mv -f '$@.tmp' '$@'; \
@@ -321,7 +349,8 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 endif # "$(NOEXTRACTDEPS)" ne "1" 36 lines back
 # note depends on the extracted directory for the results
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -333,6 +362,7 @@ $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/ex
           --define-topcell \
 	  $(NAMED_RESISTOR_ARG) \
 	  --minC $(MINACCURATEC) --minR $(MINACCURATER) --minRC $(MINACCURATERC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	mv -f '$@.tmp' '$@'; \
@@ -353,7 +383,8 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice: $(ROOT_TARGET_DIR)/%/ex
 	task=renamer && $(CASTFILES_DEQUEUE_TASK)
 
 ifneq ("$(NOEXTRACTDEPS)", "1")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -364,6 +395,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/e
 	  --cell '$(call GET_CAST_CDL_NAME,$(@D))' \
 	  --define-topcell \
 	  --minC $(MINC) --minR $(MINR) --minRC $(MINRC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	  touch '$(<D)/cell.spice_include' && \
@@ -372,7 +404,8 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/e
 	else rm -f '$@' && touch '$@'; fi; \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -383,6 +416,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem
 	  --cell '$(call GET_CAST_CDL_NAME,$(@D))' \
 	  --define-topcell \
 	  --minC $(MINC) --minR $(MINR) --minRC $(MINRC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	  touch '$(<D)/cell.spice_include' && \
@@ -392,7 +426,8 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/totem
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 endif # "$(NOEXTRACTDEPS)" ne "1" 40 lines back
 
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -404,6 +439,7 @@ $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/ex
           --define-topcell \
 	  $(NAMED_RESISTOR_ARG) \
 	  --minC $(MINACCURATEC) --minR $(MINACCURATER) --minRC $(MINACCURATERC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	  touch '$(<D)/cell.spice_include' && \
@@ -416,7 +452,8 @@ endif # "$(GRAYBOX_MODE)" eq "" 156 lines back
 # convert cell.spice_gds2 to cell.aspice for --mode=accurate
 
 ifeq ("$(GRAYBOX_MODE)", "")
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
 	#TASK=rc_spice2aspice MODE=accurate$(EXTRACT_DIR) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
@@ -429,13 +466,16 @@ $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/ex
           --define-topcell \
 	  $(NAMED_RESISTOR_ARG) \
 	  --minC $(MINACCURATEC) --minR $(MINACCURATER) --minRC $(MINACCURATERC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	mv -f '$@.tmp' '$@'; \
 	else rm -f '$@' && touch '$@'; fi; \
 	task=rc_spice2aspice && $(CASTFILES_DEQUEUE_TASK)
 else # "$(GRAYBOX_MODE)" eq ""
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_include
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases \
+	$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_include
 	#TASK=rc_spice2aspice MODE=accurate$(EXTRACT_DIR) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
@@ -448,6 +488,7 @@ $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cell.aspice: $(ROOT_TARGET_DIR)/%/ex
           --define-topcell \
 	  $(NAMED_RESISTOR_ARG) \
 	  --minC $(MINACCURATEC) --minR $(MINACCURATER) --minRC $(MINACCURATERC) \
+	  --alias-file '$(@D)/cdl.aliases' \
 	  $(SPICE2ASPICE_OPTS) '$<' '$@.tmp' \
 	  1> '$(@D)/rc_spice2aspice.out' 2> '$(@D)/rc_spice2aspice.err' && \
 	sed -e '/^\*/d' -e 's:$(ROOT_TARGET_DIR)/::' -e 's/extracted/accurate/' -e 's:$(ROOT_SLURP_DIR)/::' -e 's/^.inc[^ ]*/.include/i' -e "s/'/"\""/g" -e 's/\.spice_gds2/.aspice/' '$(<D)/cell.spice_include' > '$@' && \
@@ -1041,6 +1082,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list \
+        $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases \
         $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=extract_spefRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
@@ -1093,6 +1135,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --spef=1 \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
+	  --alias-file='$(@D)/cdl.aliases' \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' && \
 	/bin/mv -f "$(@D)/cell.spef_gds2.tmp" "$(@D)/cell.spef_gds2"; \

@@ -32,7 +32,7 @@ See <a href=http://internal/eng/depot/sw/cad/doc/flow/ExtractionFlow.pdf>a flow 
 DOC
 
 use Cwd;
-use LveUtil qw /reName/;
+use LveUtil qw /reName2 read_cdl_aliases/;
 use Hercules;
 
 
@@ -55,6 +55,7 @@ sub usage() {
     $usage .= "    --64bit=(0|1) (default 0)\n";
     $usage .= "    --cdl-file=<file name>\n";
     $usage .= "    --cdl-cell-name=<cell> (defaults to cell)\n";
+    $usage .= "    --alias-file=<file name> (CDL aliases, for SPEF canonicalization)\n";
     $usage .= "    --spice-topcell=<file name> default(`pwd`/cellname.top)\n";
     $usage .= "    --spice-target=<file name> default(`pwd`/cellname.spice)\n";
     $usage .= "    --node-props=<node-prop>\n";
@@ -105,6 +106,7 @@ my $graycell_file;
 my $mode_op;
 my $cdl_file;
 my $cdl_cell_name;
+my $alias_file;
 my $spice_target;
 my $spice_topcell;
 my $extractPower;
@@ -171,6 +173,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $cdl_file = $value;
     } elsif ($flag eq "cdl-cell-name") {
             $cdl_cell_name = $value;
+    } elsif ($flag eq "alias-file") {
+            $alias_file = $value;
     } elsif ($flag eq "spice-target") {
             $spice_target = $value;
     } elsif ($flag eq "spice-topcell") {
@@ -673,6 +677,10 @@ if ($stage2c) {
 
     makegdsgraylist($graycell_file);
     if ($genspef) {
+        my %canonical = ();
+        my %reNameContext = ();
+        my $cast_cell = reName2(\%reNameContext, 'cell', 'gds2', 'cast', $cell_name);
+        read_cdl_aliases(\%canonical, $alias_file) if $alias_file;
         my $spiceTemp= "${cell_name}.spef";
         open (P, "<$starRC_dir/$spiceTemp");
         open (Q, ">$spice_target");
@@ -689,6 +697,10 @@ if ($stage2c) {
                 if (/^(\*\d+\s+)(\S+)$/) {
                     my ($prefix, $name) = ($1, $2);
                     $name =~ s/\//_D_/g;
+                    my $cast_name = reName2(\%reNameContext, 'node', 'gds2', 'cast', $name);
+                    my $canon = $canonical{$cast_cell}->{$cast_name};
+                    $name = reName2(\%reNameContext, 'node', 'cast', 'gds2', $canon)
+                        if $canon;
                     $_ = "$prefix$name";
                 }
             }

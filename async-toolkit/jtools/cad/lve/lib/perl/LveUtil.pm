@@ -7,6 +7,7 @@ use IPC::Open2;
 use IPC::Open3;
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 use Archive::Extract;
+use File::Spec;
 
 
 
@@ -17,11 +18,11 @@ BEGIN {
         &round_float &is_numeric &get_nth_run_param &read_localnodes
         &find_cells &find_rawfiles &find_fqcns &fqcn_to_path &partition_fqcnminus 
         &read_include_file &read_cell_list &parseArgs &includeConfig 
-        &error &canonicalizePath &my_system &reName &reNameNode &dfIIDir
+        &error &canonicalizePath &my_system &reName &reName2 &reNameNode &dfIIDir
         &ns_to_ps &summarizeStatus &archive_extrace_files
         &mktemp_workdir &cleanUp_workdir &is_node_archive &archive_memberNamed
         &em_unit_freq &em_unit &archive_getcontent &archive_addfile &check_path
-        &archive_getfiletimestamp &parse_nodeprops
+        &archive_getfiletimestamp &parse_nodeprops &read_cdl_aliases
     );
 }
 
@@ -100,6 +101,16 @@ sub reName {
         die "Fatal: reName failed";
     }
     # kill the zombie
+}
+
+sub reName2 {
+    my ($context, $type, $from, $to, $name) = @_;
+    $context->{'pid'} = open2($context->{'read'}, $context->{'write'}, "rename --type=all")
+        unless $context->{'pid'} && (kill 0, $context->{'pid'}) == 1;
+    my ($rh, $wh) = ($context->{'read'}, $context->{'write'});
+    print $wh "$type $from $to $name\n";
+    chomp(my $result = <$rh>);
+    return $result;
 }
 
 sub reNameNode {
@@ -788,5 +799,20 @@ sub parse_nodeprops {
     return $result;
 }
 
+sub read_cdl_aliases {
+    my ($canonical, @aliasFiles) = @_;
+    foreach my $aliasFile (@aliasFiles) {
+        open(my $fh, "$aliasFile") or die "Cannot open $aliasFile: $!";
+        chomp(my $fqcn = <$fh>);
+        while (<$fh>) {
+            chomp;
+            my @names = split /=/;
+            foreach my $name (@names) {
+                $canonical->{$fqcn}->{$name} = $names[0];
+            }
+        }
+        close($fh);
+    }
+}
 
 1;

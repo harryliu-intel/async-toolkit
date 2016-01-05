@@ -14,6 +14,9 @@ use Getopt::Long;
 # graybox extracted cells, it will canonicalize nodes used to instantiate
 # grayboxed subcircuits.  It strips off arguments that only it understands and
 # passes the rest of the arguments to rc_spice2aspice.
+#
+# Functionality to generate CDL aliases has been moved into the Makefile; this
+# wrapper can be removed
 
 sub usage() {
     die "Usage: $0 --root-target-dir <dir>\n" .
@@ -31,19 +34,6 @@ my $cell;
 my $view;
 my $mode;
 my @saved_args = ();
-
-sub getGrayboxDir {
-    my $cell = shift;
-    $cell =~ s/\./\//g;
-    my $lmode=$mode;
-    $lmode="extracted" if $mode eq "accurate";
-    return "$rootTargetDir/$cell/$view/$lmode";
-}
-
-sub getGrayboxList {
-    my $cell = shift;
-    return getGrayboxDir($cell) . "/graybox_list";
-}
 
 my $definetopcell=0;
 
@@ -69,6 +59,7 @@ my %options = (
     "quote" => sub { push @saved_args, "--quote";},
     "estimated" => sub { push @saved_args, "--estimated";},
     "include=s" => sub { push @saved_args, ('--include', $_[1]);},
+    "alias-file=s" => sub { push @saved_args, ('--alias-file', $_[1]);},
     "named-resistors" => sub { push @saved_args, "--named-resistors";},
     "named-resistor-layers=s" => sub { push @saved_args, ('--named-resistor-layers', $_[1]);},
     "fix-unconnected-ports" => sub { push @saved_args, "--fix-unconnected-ports";},
@@ -76,29 +67,6 @@ my %options = (
 );
 
 GetOptions ( %options );
-
-my %aliasFiles = ();
-
-sub findCDLAliases {
-    my $fqcn = shift;
-    my $graydir = getGrayboxDir($fqcn);
-    my $grayfile = getGrayboxList($fqcn);
-    my $result = $graydir . "/cdl.aliases";
-    if ($mode ne "accurate" or ! -f $result) {
-        my $cmd = "cdlaliases $javaArgs --cell=\"$fqcn\"";
-        $cmd .= " --graybox-list=\"$grayfile\"" if (-r $grayfile);
-        $cmd .= " --gates-regex=\"^(gate|stack)\\\\..*\"";
-        $cmd .= " < \"$graydir/../../cell.cdl\"";
-        $cmd .= " > \"$result\"";
-        system($cmd) == 0 or die "Cannot execute $cmd: $?";
-    }
-    $aliasFiles{$result} = 1;
-}
-
-findCDLAliases($cell);
-foreach my $aliasFile (keys %aliasFiles) {
-    unshift @saved_args, ("--alias-file", $aliasFile);
-}
 
 push @saved_args, ("--cell", "$cell") if ! $definetopcell;
 push @saved_args, @ARGV;

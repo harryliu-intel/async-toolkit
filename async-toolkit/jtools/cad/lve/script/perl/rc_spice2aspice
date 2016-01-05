@@ -3,9 +3,17 @@
 # Copyright 2003 Fulcrum Microsystems.  All rights reserved.
 # Authors: Andrew Lines, Clayton Otey, Chris Britchford
 
+BEGIN {
+    my $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+
 use FileHandle;
 use IPC::Open2;
 use POSIX;
+use LveUtil qw/read_cdl_aliases/;
 
 # Usage: rc_spice2aspice <spice-filename> <aspice-filename>
 
@@ -427,18 +435,7 @@ sub print_unknown_or_missing {
 #
 # Read the files of aliases; setup a map from aliases to canonical nodes
 #
-foreach my $aliasFile (@aliasFiles) {
-    open(my $fh, "$aliasFile") or die "Cannot open $aliasFile: $!";
-    chomp(my $fqcn = <$fh>);
-    while (<$fh>) {
-        chomp;
-        my @names = split /=/;
-        foreach my $name (@names) {
-            $canonical{$fqcn}->{$name} = $names[0];
-        }
-    }
-    close($fh);
-}
+read_cdl_aliases(\%canonical, @aliasFiles);
 
 #
 # Do linewise translation of cdl to aspice
