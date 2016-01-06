@@ -208,11 +208,12 @@ public class CDLAliases extends CDLFactoryAdaptor {
 
         public void printAlias(final String prefix, final String name,
                                final Collection names) {
-            final Set sorted = new TreeSet();
+            final Set sorted = new TreeSet(HierName.getPortComparator());
             for (Iterator i = names.iterator(); i.hasNext(); ) {
                 sorted.add(s2h(append(prefix, (String) i.next())));
             }
-            sorted.add(s2h(append(prefix, name)));
+            sorted.add(HierName.makePortName(s2h(append(prefix, name)),
+                                             isPort(name)));
             printList(sorted.iterator(), "=");
         }
 
