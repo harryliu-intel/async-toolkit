@@ -63,6 +63,12 @@ $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/cast.d
 $(CURR_CELL_DIR)/cell.cdl: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/cdl/default.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 
+$(CURR_CELL_DIR)/%/../cell.cdl.routed: $(CURR_CELL_DIR)/cell.cdl.routed
+	sync
+
+$(CURR_CELL_DIR)/cell.cdl.routed: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/routed-cdl/default.latest
+	$(CASTFILES_UPDATE_SIGNATURE)
+
 $(CURR_CELL_DIR)/cell.stats: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/query/default.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 

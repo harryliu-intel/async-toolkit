@@ -56,6 +56,7 @@ sub usage() {
     $usage .= "    --cdl-file=<file name>\n";
     $usage .= "    --cdl-cell-name=<cell> (defaults to cell)\n";
     $usage .= "    --alias-file=<file name> (CDL aliases, for SPEF canonicalization)\n";
+    $usage .= "    --routed-alias-file=<file name> (CDL aliases, for SPEF canonicalization)\n";
     $usage .= "    --spice-topcell=<file name> default(`pwd`/cellname.top)\n";
     $usage .= "    --spice-target=<file name> default(`pwd`/cellname.spice)\n";
     $usage .= "    --node-props=<node-prop>\n";
@@ -107,6 +108,7 @@ my $mode_op;
 my $cdl_file;
 my $cdl_cell_name;
 my $alias_file;
+my $routed_alias_file;
 my $spice_target;
 my $spice_topcell;
 my $extractPower;
@@ -175,6 +177,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $cdl_cell_name = $value;
     } elsif ($flag eq "alias-file") {
             $alias_file = $value;
+    } elsif ($flag eq "routed-alias-file") {
+            $routed_alias_file = $value;
     } elsif ($flag eq "spice-target") {
             $spice_target = $value;
     } elsif ($flag eq "spice-topcell") {
@@ -677,10 +681,25 @@ if ($stage2c) {
 
     makegdsgraylist($graycell_file);
     if ($genspef) {
-        my %canonical = ();
         my %reNameContext = ();
         my $cast_cell = reName2(\%reNameContext, 'cell', 'gds2', 'cast', $cell_name);
+
+        my %canonical = ();
         read_cdl_aliases(\%canonical, $alias_file) if $alias_file;
+        my $curr = $canonical{$cast_cell} || {};
+        my %routed_canonical = ();
+        read_cdl_aliases(\%routed_canonical, $routed_alias_file) if $routed_alias_file;
+        my $routed_curr = $routed_canonical{$cast_cell} || {};
+        my %remap = map { $curr->{$_} => $routed_curr->{$_} }
+                        grep { exists $curr->{$_} } keys %{$routed_curr};
+        foreach my $node (keys %{$curr}) {
+            my $canon = $curr->{$node};
+            if (exists($remap{$canon})) {
+                $canon = $remap{$canon};
+                $curr->{$node} = $canon;
+            }
+        }
+
         my $spiceTemp= "${cell_name}.spef";
         open (P, "<$starRC_dir/$spiceTemp");
         open (Q, ">$spice_target");

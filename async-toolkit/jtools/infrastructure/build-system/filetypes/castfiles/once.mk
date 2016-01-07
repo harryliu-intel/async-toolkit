@@ -169,7 +169,7 @@ SPICE2ASPICE_OPTS := --isopotential-layers '$(ISOPOTENTIALLAYERS)'
 ifeq ("$(strip $(ISOPOTENTIALLAYERS))","")
 SPICE2ASPICE_OPTS := 
 endif
-CDLALIASES    := cdlaliases "$(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)" --gates-regex='^(gate|stack)\\..*'
+CDLALIASES    := cdlaliases $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS) --gates-regex='^(gate|stack)\\..*'
 ifeq ("$(GRAYBOX_MODE)", "")
 CDLALIASES_OPTS =
 CDLALIASES_DEPS =
@@ -265,6 +265,9 @@ $(ROOT_TARGET_DIR)/%/cell.mk: $(ROOT_TARGET_DIR)/%/cell.mk.latest
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases.routed
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed
 
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
@@ -275,6 +278,18 @@ $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/..
 	mv '$@.tmp' '$@'
 
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+	mv '$@.tmp' '$@'
+
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed: $(ROOT_TARGET_DIR)/%/../cell.cdl.routed $(CDLALIASES_DEPS)
+	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+	mv '$@.tmp' '$@'
+
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases.routed: $(ROOT_TARGET_DIR)/%/../cell.cdl.routed $(CDLALIASES_DEPS)
+	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+	mv '$@.tmp' '$@'
+
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed: $(ROOT_TARGET_DIR)/%/../cell.cdl.routed $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
@@ -1083,6 +1098,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases \
+        $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed \
         $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 	#TASK=extract_spefRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
@@ -1136,6 +1152,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --spice-target='$(@D)/cell.spef_gds2.tmp' \
 	  --spice-topcell='$(@D)/cell.spef_topcell' \
 	  --alias-file='$(@D)/cdl.aliases' \
+	  --routed-alias-file='$(@D)/cdl.aliases.routed' \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' && \
 	/bin/mv -f "$(@D)/cell.spef_gds2.tmp" "$(@D)/cell.spef_gds2"; \

@@ -204,7 +204,8 @@ public final class JFlat {
                            + " | --tool=new-aspice [--internalRules=[0|1]]\n"
                            + " | --tool=hsim [ --hsim-translate=[ cadence | gds2 | none ]\n"
                            + "                 --hsim-rand-seed=<seed> --hsim-rand-length=<length> ]\n"
-                           + " | --tool=cdl [ --cdl-translate=[ cadence | gds2 | none ]\n"
+                           + " | --tool=cdl|routed-cdl\n"
+                           + "              [ --cdl-translate=[ cadence | gds2 | none ]\n"
                            + "              [ --cdl-name-map=<name map file> ]\n"
                            + "              [ --cdl-mos-parameters=<param,param,...> ]\n"
                            + "              [ --cdl-call-delimiter=<string> ]\n"
@@ -469,10 +470,11 @@ public final class JFlat {
                     
                 }
             };
-        } else if (tool.equals("cdl")) {
+        } else if (tool.equals("cdl") || tool.equals("routed-cdl")) {
 
             final String renameStr = 
                 args.getArgValue("cdl-translate", "cadence");
+            final boolean routed = tool.equals("routed-cdl");
             final CDLNameInterface nameInterface;
             if(renameStr.equals("cadence")) {
                 nameInterface = new CadenceNameInterface( true );
@@ -535,14 +537,14 @@ public final class JFlat {
                                      String envName) {
                         if ( envName == "default" ) {
                             final PrintWriter pw = (PrintWriter)
-                                pwf.getPrintWriter("cdl", cellName, envName)
+                                pwf.getPrintWriter(tool, cellName, envName)
                                    .getFirst();
                             // Use a new instance of Cadencize, because the
                             // CDLFormatter never takes into account routed
                             return new CDLFormatter(
                                 pw, fqcnSpec, castParser, nameInterfaceFactory,
                                 mosParams, callDelimiter, cdlCells,
-                                cdlCadencizer);
+                                routed ? cadencizer : cdlCadencizer, routed);
                         } else {
                             return null;
                         }
@@ -2833,6 +2835,7 @@ public final class JFlat {
         private final String callDelimiter;
         private final String[] cdlCells;
         private final Cadencize mCadencizer;
+        private final boolean routed;
 
         public CDLFormatter( final PrintWriter pw,
                              final PartialExtract.CellPlusMinus fqcnSpec,
@@ -2841,7 +2844,8 @@ public final class JFlat {
                              final String[] mosParams,
                              final String callDelimiter,
                              final String[] cdlCells,
-                             final Cadencize cadencizer ) { 
+                             final Cadencize cadencizer,
+                             final boolean routed ) { 
             this.fqcnSpec = fqcnSpec;
             this.pw = pw;
             this.cfp = cfp;
@@ -2849,12 +2853,13 @@ public final class JFlat {
             this.mosParams = mosParams;
             this.callDelimiter = callDelimiter;
             this.cdlCells = cdlCells;
+            this.routed = routed;
             mCadencizer = cadencizer;
         }
 
         public CellInterface prepCell(CellInterface cell,
                                       CellInterface routed) {
-            return cell;
+            return this.routed ? routed : cell;
         }
         
         public void outputCell(final CellInterface cell,

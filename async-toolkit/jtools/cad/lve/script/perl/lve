@@ -1157,7 +1157,7 @@ my $aspiceOptions = ($traceR ? "-traceR " : "") .
     ($countScenarios ? "-count_scenarios " : "");
 my $globals = "";
 
-my $jflat_tools = "cdl,query";
+my $jflat_tools = "cdl,routed-cdl,query";
 my $use_routed = 0;
 
 if($cycleCount > 0) {
