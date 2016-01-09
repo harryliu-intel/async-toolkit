@@ -23,6 +23,7 @@ my $exclude_file = "$pdk_dir/exclude.in";
 my $format = "png"; # output format
 my $quality = 75; # for jpg conversion
 my $cell = "";
+my $monitor = 1;
 
 # parse arguments
 while (@ARGV) {
@@ -40,6 +41,7 @@ while (@ARGV) {
     elsif ($ARGV[0] =~ /^--conf-file=(.*)/) { $conf_file = $1; }
     elsif ($ARGV[0] =~ /^--exclude-file=(.*)/) { $exclude_file = $1; }
     elsif ($ARGV[0] =~ /^--cell=(.*)/) { $cell = $1; }
+    elsif ($ARGV[0] =~ /^--monitor=(.*)/) { $monitor = $1; }
     else { $name = $ARGV[0]; }
     shift @ARGV;
 }
@@ -63,7 +65,8 @@ sub usage {
         " --quality=[$quality] # jpg quality\n" .
         " --conf-file=[$conf_file] # GDS to RGBA mapping file\n" .
         " --exclude-file=[$exclude_file] # file with regular expressions of cell names to exclude\n" .
-        " --cell=[$cell] # top level cell in GDS file (will auto-detect if not given)\n";
+        " --cell=[$cell] # top level cell in GDS file (will auto-detect if not given)\n" .
+        " --monitor=[$monitor] # monitor interval in minutes, or 0 to disable\n";
 }
 
 # settings
@@ -89,14 +92,40 @@ unless ($exclude_file eq "") {
 }
 
 # run stripes
+my $launched=0;
 for (my $i=0; $i<$JOBS; $i++) {
     if (!(-e "$name.do.$i")) {
         printf("# Lauching $name, job $i\n");
         system("touch $name.do.$i");
         system("rm -f \"$name.out.$i\" \"$name.ppm.$i\"");
         my $CMD  = "${PLOT} --gds \"$gds\" --ppm \"$name.ppm\" ";
-        if ($JOBS>1) { $CMD = "$QSUB -j \"$name.out.$i\" ${CMD} --job $i &"; }
+        if ($JOBS>1) { $CMD = "$QSUB -j \"$name.out.$i\" ${CMD} --job $i &"; $launched++; }
         system($CMD);
+    }
+}
+
+# monitor progress
+if ($monitor>0 && $launched>0) {
+    my $sleep_period = $monitor*60;
+    print "Monitoring progress every $monitor minutes.\n";
+    while(1) {
+        my $jobs_done = 0;
+        for (my $j = 0; $j < $JOBS; $j++) {
+            my $curr_out_file = "${name}.out.${j}";
+            if (-e $curr_out_file) {
+                open (FH, "< $curr_out_file") or 
+                    die "Cannot read output progress file $curr_out_file";
+                my @out_file_txt = <FH>;
+                if (grep( /^Finished/ , @out_file_txt)) {
+                    $jobs_done++;
+                }
+                close FH;
+            }
+        }
+        my $curr_time = localtime;
+        print "Progress at $curr_time, $jobs_done of $JOBS finished.\n";
+        sleep $sleep_period;
+        last if ($jobs_done==$JOBS);
     }
 }
 
@@ -117,5 +146,6 @@ if ($ok) {
 if (-e "$name.ppm" && !($format eq "ppm")) {
     my $q = "";
     $q = "-quality $quality" if ($format eq "jpg");
+    print "Converting $name.ppm to $name.$format\n";
     system("convert $q $name.ppm $name.$format");
 }
