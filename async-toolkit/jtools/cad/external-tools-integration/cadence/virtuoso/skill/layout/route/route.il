@@ -376,8 +376,8 @@
 
     ; directories and files
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    WDIR = (strcat TEMP "/route/" CV->cellName)
-    (unless defFile defFile = (strcat WDIR "/" CV->cellName "_routed.def"))
+    WDIR = (strcat TEMP "/route/" cellName)
+    (unless defFile defFile = (strcat WDIR "/" cellName "_routed.def"))
     (unless (fileTimeModified defFile) (error "Cannot read %s\n" defFile))
 
     ; create library
