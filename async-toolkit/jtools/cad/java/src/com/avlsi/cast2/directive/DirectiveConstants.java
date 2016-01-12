@@ -195,6 +195,8 @@ public interface DirectiveConstants {
     String SUPPRESS_FAULTS = "suppress_faults";
     String DYNAMIC_SLACK = "dynamic_slack";
     String IMPLICIT_INIT = "implicit_init";
+    String INTERNAL_SLACK = "internal_slack";
+    String SYNCHRONIZE_CHANNELS = "synchronize_channels";
 
     /** Scan related directives */
     String ASYNC_SCAN_INPUTS = "async_scan_inputs";

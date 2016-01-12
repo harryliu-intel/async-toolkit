@@ -218,6 +218,7 @@ public abstract class CoSimInfo {
         addChannelInfo(name, type,
             new ChannelTimingInfo() {
                 public int getSlack() { return slack; }
+                public int getInternalSlack() { return 0; }
                 public int getLatency() { return latency; }
                 public int getCycleTime() { return cycle_time; }
                 public int getDataNeutralEnableLatency() { return 0; }

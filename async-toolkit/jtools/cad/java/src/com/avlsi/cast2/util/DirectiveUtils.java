@@ -273,8 +273,7 @@ public final class DirectiveUtils {
      *
      * Also verify that all values are Boolean.
      **/
-    public static Set getExplicitTrues(Map m) {
-        Set s = new HashSet();
+    public static Set getExplicitTrues(Map m, Set s) {
         Iterator i = m.entrySet().iterator();
         while (i.hasNext()) {
             Map.Entry e = (Map.Entry) i.next();
@@ -283,6 +282,10 @@ public final class DirectiveUtils {
             }
         }
         return s;
+    }
+
+    public static Set getExplicitTrues(Map m) {
+        return getExplicitTrues(m, new HashSet());
     }
 
     /**
@@ -854,6 +857,9 @@ public final class DirectiveUtils {
             }
         }
 
+        final Integer _internalSlack = (Integer) getBlockDirective(cell, block, DirectiveConstants.INTERNAL_SLACK, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final int internalSlack = _internalSlack == null ? 0 : _internalSlack;
+
         // find forward latency
         final float latency;
         final Float _latency = (Float) getBlockDirective(cell, block, DirectiveConstants.LATENCY, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
@@ -913,6 +919,7 @@ public final class DirectiveUtils {
 
         return new ChannelTimingInfo() {
             public int getSlack() { return slack; }
+            public int getInternalSlack() { return internalSlack; }
             public int getLatency() {
                 return Math.round(latency * timeUnit);
             }

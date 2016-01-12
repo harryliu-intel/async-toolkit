@@ -3043,6 +3043,7 @@ public class DSim implements NodeWatcher {
     private static final ChannelTimingInfo DEFAULT_TIMING_INFO =
         new ChannelTimingInfo() {
             public int getSlack() { return 1; }
+            public int getInternalSlack() { return 0; }
             public int getLatency() { return 200; }
             public int getCycleTime() { return 1800; }
             public int getDataNeutralEnableLatency() { return 725; }

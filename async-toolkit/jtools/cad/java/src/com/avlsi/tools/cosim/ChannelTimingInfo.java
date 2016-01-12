@@ -7,6 +7,11 @@ public interface ChannelTimingInfo {
     int getSlack();
 
     /**
+     * Return internal slack as number of full buffers.
+     **/
+    int getInternalSlack();
+
+    /**
      * Return forward latency, in DSim units.
      **/
     int getLatency();
