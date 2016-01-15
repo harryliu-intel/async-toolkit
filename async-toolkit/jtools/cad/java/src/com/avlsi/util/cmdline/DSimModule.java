@@ -829,7 +829,7 @@ public class DSimModule extends CmdLine {
     }
 
     private void cspGet(final Collection<String> names, final int frame,
-                        final Pattern pat) {
+                        final Pattern pat, final PrintWriter pw) {
         final boolean[] nothing = new boolean[] { true };
         processVariables(
             names,
@@ -839,19 +839,19 @@ public class DSimModule extends CmdLine {
                 public void execute(String name,
                                     Map.Entry<String,CspValue> entry) {
                     final CspValue var = entry.getValue();
-                    System.out.println("  " + name + '.' + entry.getKey() +
-                                       ": " + cspValueString(var));
+                    pw.println("  " + name + '.' + entry.getKey() + ": " +
+                               cspValueString(var));
                     nothing[0] = false;
                 }
             });
         if (nothing[0]) {
-            System.out.println("No matching variables found.");
+            System.err.println("No matching variables found.");
         }
     }
 
     private void cspSet(final Collection<String> names, final Pattern pat,
                         final int frame, final CspInteger val,
-                        final boolean isBool) {
+                        final boolean isBool, final PrintWriter pw) {
         final boolean[] nothing = new boolean[] { true };
         processVariables(
             names,
@@ -864,24 +864,23 @@ public class DSimModule extends CmdLine {
                     if (isBool == (var instanceof CspBoolean)) {
                         final String old = cspValueString(var);
                         var.setValue(val);
-                        System.out.println("  " + name + '.' + entry.getKey() +
-                                           ": " + cspValueString(var) +
-                                           " (" + old + ")");
+                        pw.println("  " + name + '.' + entry.getKey() + ": " +
+                                   cspValueString(var) + " (" + old + ")");
                         nothing[0] = false;
                     }
                 }
             });
         if (nothing[0]) {
-            System.out.println("No matching " + (isBool ? "bool" : "int") +
+            System.err.println("No matching " + (isBool ? "bool" : "int") +
                                " variables found.");
         }
     }
 
-    private void cspWhere(final Collection<String> names) {
+    private void cspWhere(final Collection<String> names, final PrintWriter pw) {
         for (String name : names) {
             final CspRuntimeAbstractDevice dev =
                 (CspRuntimeAbstractDevice) dsim.getDevice(name);
-            System.out.println(name + ':');
+            pw.println(name + ':');
             final Collection<StackFrame> frames = dev.getFrames();
             StackFrame lastFrame = null;
             int i = 0;
@@ -893,7 +892,7 @@ public class DSimModule extends CmdLine {
                                                 : lastFrame.getCallLocation();
                 if (ppos == null) ppos = "no information";
 
-                System.out.printf("  %2d: %s (%s)\n", i, funcName, ppos);
+                pw.printf("  %2d: %s (%s)\n", i, funcName, ppos);
 
                 lastFrame = frame;
                 ++i;
@@ -943,7 +942,7 @@ public class DSimModule extends CmdLine {
     }
 
     private void cspEnergy(final Collection<String> names,
-                           final boolean reset) {
+                           final boolean reset, final PrintWriter pw) {
         final AlignColumn ac = new AlignColumn(new ArrayList<String[]>(), 2);
         double sum = 0.0;
         for (String name : names) {
@@ -960,9 +959,9 @@ public class DSimModule extends CmdLine {
         ac.add("Total", String.format("%.3e J", sum));
 
         for (Iterator<String> i = ac.getLine(" "); i.hasNext(); ) {
-            System.out.print(i.next());
-            if (reset) System.out.print(" -> 0");
-            System.out.println();
+            pw.print(i.next());
+            if (reset) pw.print(" -> 0");
+            pw.println();
         }
     }
 
@@ -2858,10 +2857,14 @@ public class DSimModule extends CmdLine {
                              regex);
             }
         },
-        new CmdCommand("csp",
-                "csp [<device>] where | [get | set] [[<frame>:]<variable> [<value>]] |" +
-                "               energy [reset]",
-                "Print CSP stack trace, get or set CSP variables",
+        new RedirectCommand("csp",
+                "csp [<device>] <command> [>|>>file]",
+                "Print stack trace, get/set variables, get energy for CSP devices",
+                "Available commands are:\n" +
+                "  where\n" +
+                "  get [[<frame>:]<variable>]\n" +
+                "  set [<frame>:]<variable> <value>\n" +
+                "  energy [reset]\n\n" +
                 "<device> is a glob expression that selects devices.\n" +
                 "<frame> is the stack frame number from where; defaults to the bottom frame.\n" +
                 "<variable> is a glob expression that selects variables.\n" +
@@ -2896,7 +2899,7 @@ public class DSimModule extends CmdLine {
                 }
                 return new Pair<Integer,String>(frame, regex);
             }
-            public void execute(final String[] args) {
+            public void execute(final String[] args, final PrintWriter pw) {
                 if (args == null || args.length < 2) {
                     System.out.println("Usage: " + usage);
                     return;
@@ -2922,10 +2925,10 @@ public class DSimModule extends CmdLine {
 
                         final Pattern pat =
                             Pattern.compile(StringUtil.getRegexForGlob(regex));
-                        cspGet(devices, frame, pat);
+                        cspGet(devices, frame, pat, pw);
                     } else if (cmd.equals("set")) {
                         if (args.length != 4) {
-                            System.out.println("Not enough arguments to set.");
+                            System.err.println("Not enough arguments to set.");
                             return;
                         }
 
@@ -2960,33 +2963,33 @@ public class DSimModule extends CmdLine {
                                 val = new CspInteger(new BigInteger(s, radix));
                                 isBool = false;
                             } catch (NumberFormatException e) {
-                                System.out.println(
+                                System.err.println(
                                         "Value is expected to be \"true\", " +
                                         "\"false\", or a number: " + args[3]);
                                 return;
                             }
                         }
 
-                        cspSet(devices, pat, frame, val, isBool);
+                        cspSet(devices, pat, frame, val, isBool, pw);
                     } else if (cmd.equals("where")) {
-                        cspWhere(devices);
+                        cspWhere(devices, pw);
                     } else if (cmd.equals("energy")) {
                         boolean reset = false;
                         if (args.length == 3) {
                             if (args[2].equals("reset")) {
                                 reset = true;
                             } else {
-                                System.out.println(
+                                System.err.println(
                                         "Invalid argument to energy " +
                                         "(only \"reset\" accepted): " +
                                         args[2]);
                                 return;
                             }
                         } else if (args.length > 3) {
-                            System.out.println("Too many arguments to energy.");
+                            System.err.println("Too many arguments to energy.");
                             return;
                         }
-                        cspEnergy(devices, reset);
+                        cspEnergy(devices, reset, pw);
                     } else {
                         System.out.println("Unknown command: " + cmd);
                         return;
