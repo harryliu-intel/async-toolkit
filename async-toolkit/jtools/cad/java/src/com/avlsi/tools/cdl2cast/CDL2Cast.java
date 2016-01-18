@@ -163,6 +163,8 @@ public class CDL2Cast {
      **/
     private Map<String,Map<String,String>> libertyFunctions;
 
+    private static final String LIBERTY_PRS_DEFINE = "USE_LIBERTY_PRS";
+
     private static void usage( String m ) {
 
         final String className = CDL2Cast.class.getName();
@@ -1954,8 +1956,7 @@ public class CDL2Cast {
             iw.write("}\n");
         }
         else if (netgraph!=null) {
-            final ProductionRuleSet prs = new ProductionRuleSet();
-            boolean declareInternal = false;
+            final ProductionRuleSet libertyPrs = new ProductionRuleSet();
             // try to generate PRS from Liberty file if available
             if (libertyParser.isPresent()) {
                 final String origName = reverseMap.getCellName(cellName);
@@ -1975,32 +1976,49 @@ public class CDL2Cast {
                                     FunctionParser.parse(et.getValue()),
                                     x -> forwardMap.get(x));
                             createRules(func,
-                                forwardMap.get(toHier(et.getKey())), prs);
+                                forwardMap.get(toHier(et.getKey())), libertyPrs);
                         } catch (Exception e) {
                             System.err.println("Error generating PRS: " + e);
                         }
                     });
             }
 
-            // if PRS cannot be generated from Liberty, try CDL
-            if (prs.size() == 0) {
-                prs.addProductionRule(netgraph.getProductionRuleSet());
-                declareInternal = true;
-            }
+            // generate PRS from CDL
+            final ProductionRuleSet cdlPrs = new ProductionRuleSet();
+            cdlPrs.addProductionRule(netgraph.getProductionRuleSet());
 
-            if (prs.size()>0) {
+            if (cdlPrs.size() > 0 || libertyPrs.size() > 0) {
                 iw.write("prs {\n");
-                iw.nextLevel();
-                if (declareInternal) {
+                final boolean hasBoth = cdlPrs.size() > 0 && libertyPrs.size() > 0;
+                if (libertyPrs.size() > 0) {
+                    if (hasBoth) {
+                        iw.write("[ " + LIBERTY_PRS_DEFINE + " ->\n");
+                    }
+                    iw.nextLevel();
+                    iw.write(libertyPrs.toString());
+                    iw.prevLevel();
+                    if (hasBoth) {
+                        iw.write("]\n");
+                    }
+                }
+
+                if (cdlPrs.size() > 0) {
+                    if (hasBoth) {
+                        iw.write("[ ~" + LIBERTY_PRS_DEFINE + " ->\n");
+                    }
+                    iw.nextLevel();
                     for (Iterator i = netgraph.getNodes().iterator(); i.hasNext(); ) {
                         NetGraph.NetNode node = (NetGraph.NetNode) i.next();
                         if (!node.isPort() && !node.isRail() && !node.isStaticizerInverter() &&
                             (node.isGate() || node.isOutput()))
                             iw.write("node \"" + node.name + "\";\n");
                     }
+                    iw.write(cdlPrs.toString());
+                    iw.prevLevel();
+                    if (hasBoth) {
+                        iw.write("]\n");
+                    }
                 }
-                iw.write(prs.toString());
-                iw.prevLevel();
                 iw.write("}\n");
             }
 
