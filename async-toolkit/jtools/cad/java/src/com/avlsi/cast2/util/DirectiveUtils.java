@@ -869,8 +869,12 @@ public final class DirectiveUtils {
         final float latency;
         final Float _latency = (Float) getWideDir.apply(DirectiveConstants.LATENCY);
         if (_latency == null) {
-            final Float lps = (Float) getBlockDirective(cell, block, DirectiveConstants.LATENCY_PER_STAGE);
-            latency = lps.floatValue() * stages;
+            if (slack == 0) {
+                latency = 0;
+            } else {
+                final Float lps = (Float) getBlockDirective(cell, block, DirectiveConstants.LATENCY_PER_STAGE);
+                latency = lps.floatValue() * stages;
+            }
         } else {
             latency = _latency.floatValue();
         }
