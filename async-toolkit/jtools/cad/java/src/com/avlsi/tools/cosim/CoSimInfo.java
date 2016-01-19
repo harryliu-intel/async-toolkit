@@ -313,6 +313,15 @@ public abstract class CoSimInfo {
             return radix0 == 0 ? 0 : radix.bitLength() - 1;
         }
 
+        private int getBDSlack(final String name, int slack) {
+            if (slack == 0) {
+                slack = 1;
+                System.err.println("WARNING: slackless BD channel " + name +
+                        " not supported; assuming slack of 1.");
+            }
+            return slack;
+        }
+
         public ChannelInput makeInputChannel(final String name,
                                              final String type,
                                              final BigInteger radix,
@@ -342,9 +351,10 @@ public abstract class CoSimInfo {
                                            BigIntegerUtil.safeIntValue(radix),
                                            width);
             } else if (type.startsWith("standard.channel.bd")) {
-                final int W = validateBDChannel(name, slack, radix, width);
+                final int bdslack = getBDSlack(name, slack);
+                final int W = validateBDChannel(name, bdslack, radix, width);
                 return new BufferedNodeBDReadChannel(
-                        slack,
+                        bdslack,
                         Math.round(200 * digitalTau),
                         Math.round(1 * digitalTau),
                         Math.round(ffLatency * digitalTau),
@@ -387,9 +397,10 @@ public abstract class CoSimInfo {
                                             BigIntegerUtil.safeIntValue(radix),
                                             width);
             } else if (type.startsWith("standard.channel.bd")) {
-                final int W = validateBDChannel(name, slack, radix, width);
+                final int bdslack = getBDSlack(name, slack);
+                final int W = validateBDChannel(name, bdslack, radix, width);
                 return new BufferedNodeBDWriteChannel(
-                        slack,
+                        bdslack,
                         Math.round(600 * digitalTau),
                         Math.round(1 * digitalTau),
                         Math.round(ffLatency * digitalTau),
