@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.function.Function;
 
 import com.avlsi.cast2.directive.impl.DirectiveComparator;
 import com.avlsi.cast2.directive.impl.DirectiveSource;
@@ -812,28 +813,32 @@ public final class DirectiveUtils {
                                               final String block,
                                               final String channel,
                                               final int defStages) {
+        final Function<String,Object> getWideDir = dir ->
+            getBlockDirective(cell, block, dir, DirectiveConstants.WIDE_CHANNEL_TYPE)
+                   .get(channel);
+
         // find dynamic_slack, a scalar quantity that describes the maximum
         // number of tokens in a channel while still cycling at cycle_time
-        final Integer dynslack = (Integer) getBlockDirective(cell, block, DirectiveConstants.DYNAMIC_SLACK, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Integer dynslack = (Integer) getWideDir.apply(DirectiveConstants.DYNAMIC_SLACK);
 
         // find cycle_time
         final Float defaultct = (Float) getBlockDirective(cell, block, DirectiveConstants.DEFAULT_CYCLE_TIME);
-        final Float ct = (Float) getBlockDirective(cell, block, DirectiveConstants.CYCLE_TIME, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float ct = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME);
         final float cycleTime =
             ct == null ? defaultct.floatValue() : ct.floatValue();
 
         // find cycle_time_in
-        final Float cti = (Float) getBlockDirective(cell, block, DirectiveConstants.CYCLE_TIME_IN, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float cti = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME_IN);
         final float cycleTimeIn = cti == null ? cycleTime : cti.floatValue();
 
         // find cycle_time_out
-        final Float cto = (Float) getBlockDirective(cell, block, DirectiveConstants.CYCLE_TIME_OUT, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float cto = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME_OUT);
         final float cycleTimeOut = cto == null ? cycleTime : cto.floatValue();
 
         // find slack
         final int slack;
-        final Integer _slack = (Integer) getBlockDirective(cell, block, DirectiveConstants.SLACK, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
-        final Integer _stages = (Integer) getBlockDirective(cell, block, DirectiveConstants.STAGES, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Integer _slack = (Integer) getWideDir.apply(DirectiveConstants.SLACK);
+        final Integer _stages = (Integer) getWideDir.apply(DirectiveConstants.STAGES);
         final Float sps = (Float) getBlockDirective(cell, block, DirectiveConstants.SLACK_PER_STAGE);
         final int stages = _stages == null ? defStages : _stages.intValue();
         final float dynamicCycleTime;
@@ -857,12 +862,12 @@ public final class DirectiveUtils {
             }
         }
 
-        final Integer _internalSlack = (Integer) getBlockDirective(cell, block, DirectiveConstants.INTERNAL_SLACK, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Integer _internalSlack = (Integer) getWideDir.apply(DirectiveConstants.INTERNAL_SLACK);
         final int internalSlack = _internalSlack == null ? 0 : _internalSlack;
 
         // find forward latency
         final float latency;
-        final Float _latency = (Float) getBlockDirective(cell, block, DirectiveConstants.LATENCY, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float _latency = (Float) getWideDir.apply(DirectiveConstants.LATENCY);
         if (_latency == null) {
             final Float lps = (Float) getBlockDirective(cell, block, DirectiveConstants.LATENCY_PER_STAGE);
             latency = lps.floatValue() * stages;
@@ -886,27 +891,27 @@ public final class DirectiveUtils {
 
         // find data-enable latency
         final float fbLatency;
-        final Float _fbLatency = (Float) getBlockDirective(cell, block, DirectiveConstants.FB, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float _fbLatency = (Float) getWideDir.apply(DirectiveConstants.FB);
         if (_fbLatency == null) {
             fbLatency = 3;
         } else {
             fbLatency = _fbLatency.floatValue();
         }
 
-        final Float _fbNeutral = (Float) getBlockDirective(cell, block, DirectiveConstants.FB_NEUTRAL, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float _fbNeutral = (Float) getWideDir.apply(DirectiveConstants.FB_NEUTRAL);
         final float fbNeutral =
             Math.max(0, _fbNeutral == null ?
                             fbScale * (fbLatency + defaultUpDelay - 1)
                           : _fbNeutral.floatValue());
 
-        final Float _fbValid = (Float) getBlockDirective(cell, block, DirectiveConstants.FB_VALID, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float _fbValid = (Float) getWideDir.apply(DirectiveConstants.FB_VALID);
         final float fbValid =
             Math.max(0, _fbValid == null ?
                             fbScale * (fbLatency + defaultDnDelay - 1)
                           : _fbValid.floatValue());
 
         // find enable-data latency
-        final Float _bfLatency = (Float) getBlockDirective(cell, block, DirectiveConstants.BF, DirectiveConstants.WIDE_CHANNEL_TYPE).get(channel);
+        final Float _bfLatency = (Float) getWideDir.apply(DirectiveConstants.BF);
         final float bfLatency;
         if (_bfLatency == null) {
             bfLatency = 2 * bfScale;
