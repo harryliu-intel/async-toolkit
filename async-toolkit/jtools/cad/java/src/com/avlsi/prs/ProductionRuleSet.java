@@ -16,6 +16,8 @@ package com.avlsi.prs;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.avlsi.util.container.AliasedSet;
 
@@ -31,14 +33,18 @@ public final class ProductionRuleSet {
     /**
      * List of the production rules.
      **/
-    private ArrayList productionRuleList = new ArrayList();
+    private ArrayList<ProductionRule> productionRuleList = new ArrayList<>();
 
     /**
      * Returns an unmodifiable iterator through the production rules, 
      * in the order they were added.
      **/
-    public Iterator getProductionRules() {
+    public Iterator<ProductionRule> getProductionRules() {
         return Collections.unmodifiableList(productionRuleList).iterator();
+    }
+
+    public Stream<ProductionRule> stream() {
+        return productionRuleList.stream();
     }
 
     /**
@@ -62,10 +68,9 @@ public final class ProductionRuleSet {
      * in <code>aliases</code>.
      **/
     public void canonicalizeNames(final AliasedSet aliases) {
-        for (int i = 0; i < productionRuleList.size(); ++i) {
-            final ProductionRule pr =
-                (ProductionRule) productionRuleList.get(i);
-
+        final int elems = productionRuleList.size();
+        for (int i = 0; i < elems; ++i) {
+            final ProductionRule pr = productionRuleList.get(i);
             productionRuleList.set(i, pr.canonicalizeNames(aliases));
         }
     }
@@ -81,12 +86,7 @@ public final class ProductionRuleSet {
      * String representation for debugging only.
      **/
     public String toString() {
-        final StringBuffer sb = new StringBuffer();
-        for (final Iterator iPr = getProductionRules(); iPr.hasNext(); ) {
-            final ProductionRule pr = (ProductionRule) iPr.next();
-            sb.append(pr.toString()).append('\n');
-        }
-        return sb.toString();
+        return stream().map(pr -> pr + "\n").collect(Collectors.joining());
     }
 
     public int size() {
