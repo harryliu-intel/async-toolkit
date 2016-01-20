@@ -165,6 +165,12 @@ public class CDL2Cast {
 
     private static final String LIBERTY_PRS_DEFINE = "USE_LIBERTY_PRS";
 
+    /**
+     * Boolean expressions involving equal or more number of literals will be
+     * converted to a truth table.
+     **/
+    private static final int MIN_TRUTH_TABLE_LITERALS = 5;
+
     private static void usage( String m ) {
 
         final String className = CDL2Cast.class.getName();
@@ -1828,13 +1834,11 @@ public class CDL2Cast {
         return nonNegated ? result : bu.not(result);
     }
 
-    /** Generate prs from the boolean function that drives target */
+    /** Generate prs by creating a truth table */
     private void createRules(final BooleanExpressionInterface func,
                              final HierName target,
+                             final Map<HierName,Integer> literals,
                              final ProductionRuleSet rules) {
-        final Map<HierName,Integer> literals = new TreeMap<>();
-        BooleanUtils.foreachHierName(func,
-                x -> literals.computeIfAbsent(x, y -> literals.size()));
         final int size = literals.size();
         final BitSet inputs = new BitSet(size);
         while (!inputs.get(size)) {
@@ -1858,6 +1862,25 @@ public class CDL2Cast {
                     false, true, false, false, -1, false);
             rules.addProductionRule(rule);
             incrementBitSet(inputs);
+        }
+    }
+
+    /** Generate prs from the boolean function that drives target */
+    private void createRules(final BooleanExpressionInterface func,
+                             final HierName target,
+                             final ProductionRuleSet rules) {
+        final Map<HierName,Integer> literals = new TreeMap<>();
+        BooleanUtils.foreachHierName(func,
+                x -> literals.computeIfAbsent(x, y -> literals.size()));
+        if (literals.size() == 0 ||  // handle constant expression
+            literals.size() >= MIN_TRUTH_TABLE_LITERALS) {
+            createRules(func, target, literals, rules);
+        } else {
+            final ProductionRule rule = new ProductionRule(
+                    func, target, null, ProductionRule.UP,
+                    false, true, false, false, -1, false);
+            rules.addProductionRule(rule);
+            rules.addProductionRule(rule.combinationalComplement(null));
         }
     }
 
