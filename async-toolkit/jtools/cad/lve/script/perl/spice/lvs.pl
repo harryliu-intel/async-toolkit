@@ -277,6 +277,8 @@ sub prepare_clf_file {
 -c $topcell
 ET
     print LVS_CLF "-D _drRCextract\n"  if ($rc_database);
+    # v0.8.1 runset bug prevents unconditional use of flag, fixed in v1.2.0
+    print LVS_CLF "-D _drDONTCMPCAPS\n" unless ($rc_database);
     print LVS_CLF "-e $equivlance_file\n" if (-r $equivlance_file);
     print LVS_CLF "$icv_options\n" if (defined $icv_options and $icv_options ne "");
 
