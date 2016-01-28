@@ -149,7 +149,7 @@
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
-               placed = (if softMacro "placed" "locked")
+               placed = (if softMacro (if inst->status inst->status "placed") "locked")
                (cond (abstractCV
                       inst->master=abstractCV
                       inst->status=(if abstractCV->cellType=="core" placed "locked")

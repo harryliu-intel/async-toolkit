@@ -28,8 +28,7 @@
                       (append GateLibCellPairRegExs StackLibCellPairRegExs)))
 
     ; recurse
-    mapToPrelayout = (makeTable "mapToPrelayout" nil)
-    CV = (MakePrelayoutRecurse CV mapToPrelayout
+    CV = (MakePrelayoutRecurse CV
                                ?RegenerateFromCast RegenerateFromCast
                                ?Overwrite Overwrite
                                ?SyncToNetlist SyncToNetlist
@@ -81,14 +80,18 @@
   )
 
 ; recursively create prelayout views
-(defun MakePrelayoutRecurse (CV mapToPrelayout @key
+(defun MakePrelayoutRecurse (CV @key
+                                (mapToPrelayout (makeTable "mapToPrelayout" nil))
                                 (RegenerateFromCast t) (Overwrite t)
                                 (SyncToNetlist t) (Verbose nil)
                                 (routedDirectiveList nil) (LibCellsToIgnore nil))
   (let (prelayoutCV instances instName transform instCV)
 
    ; terminate on routed=true cells or recurse
-   (cond ((nrIsRoutedCell CV->libName CV->cellName CV->viewName
+   (cond (mapToPrelayout[CV] ; already created
+          prelayoutCV = mapToPrelayout[CV]
+          )
+         ((nrIsRoutedCell CV->libName CV->cellName CV->viewName
                           ?routedDirectiveList routedDirectiveList
                           ?Verbose Verbose
                           ?RegenerateFromCast RegenerateFromCast)
@@ -99,9 +102,6 @@
                          "prelayout" "maskLayout" "r") ||
                         (dbOpenCellViewByType CV->libName CV->cellName
                          "floorplan" "maskLayout" "r")
-          )
-         (mapToPrelayout[CV] ; already created
-          prelayoutCV = mapToPrelayout[CV]
           )
          (t
           ; create new prelayout view
@@ -122,16 +122,15 @@
                           transform = inst->transform
                           instCV = (MakePrelayoutRecurse
                                     inst->master->cellView
-                                    mapToPrelayout
+                                    ?mapToPrelayout mapToPrelayout
                                     ?routedDirectiveList routedDirectiveList
                                     ?Verbose Verbose
                                     ?RegenerateFromCast RegenerateFromCast
                                     ?Overwrite Overwrite
                                     ?LibCellsToIgnore LibCellsToIgnore
                                     ?SyncToNetlist SyncToNetlist)
-                          (dbDeleteObject inst)
-                          (CreateInstWithAlignmentProps prelayoutCV instCV
-                           instName (car transform) (cadr transform))
+                          inst->master = instCV
+                          (SetInstAlignmentProps inst)
                           )
                  (when SyncToNetlist (UpdateFloorplan ?CV prelayoutCV))
                  (dbSave prelayoutCV)

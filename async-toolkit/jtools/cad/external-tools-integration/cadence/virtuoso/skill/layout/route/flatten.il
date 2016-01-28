@@ -125,7 +125,6 @@ useICV = t
     ; fill in fields for DEF export
     (foreach inst CV->instances
       (unless inst->typeName==TechLibName
-        inst->status = "locked" ; FIXED
         (when inst->cellName==PowerGridCellName inst->source = "dist") ; SOURCE DIST
         )
       )

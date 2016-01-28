@@ -352,20 +352,24 @@
   )
 )
 
+(defun SetInstAlignmentProps (inst)
+  (let (xalign yalign)
+    xalign = (GetXAlignmentProp inst->master)
+    yalign = (GetYAlignmentProp inst->master)
+    (unless xalign xalign = MfgGrid)
+    (unless yalign yalign = GridPitch)
+    (SetXAlignmentProp inst xalign)
+    (SetYAlignmentProp inst yalign)
+    inst
+    )
+  )
+
 (defun CreateInstWithAlignmentProps (cv master name point orient)
- (let (newinst cellv xalign yalign)
-   newinst = (dbCreateInst cv master name point orient)
-   cellv = (nrOpenCellViewReadable newinst->libName newinst->cellName newinst->viewName)
-   xalign = (GetXAlignmentProp cellv)
-   yalign = (GetYAlignmentProp cellv)
-   (when !xalign
-     xalign = MfgGrid)
-   (when !yalign
-     yalign = GridPitch)
-   (SetXAlignmentProp newinst xalign)
-   (SetYAlignmentProp newinst yalign)
- )
-)
+  (let (newinst)
+    newinst = (dbCreateInst cv master name point orient)
+    (SetInstAlignmentProps newinst)
+    )
+  )
 
 (defun GetMaxXAlignmentOfSet (set)
  (let (maxalign cellv align)

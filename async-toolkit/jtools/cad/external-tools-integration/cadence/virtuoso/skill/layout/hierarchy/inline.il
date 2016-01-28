@@ -235,6 +235,8 @@
                                   ConnMap
                                   CopyPins ) )
                               )
+                          ; combine properties
+                          ( CombineInstanceProperties Instance NewInstance )
                           ( setq NewFigs ( cons NewInstance NewFigs ) )
                   ;get connectivity 
                           ( foreach InstTerm ( getq ConnectivitySubInstance conns )
@@ -361,3 +363,21 @@
                ( getq Figure name ) )
              name ) ) )
     NewFig ) )
+
+; Combine parent and child instance properties.  Child property takes
+; precedence.  Also inherits parent->status.
+(defun CombineInstanceProperties (parent child @key (prop_list nil))
+  (let (parent_prop child_prop)
+    (unless child->status child->status=parent->status)
+    (foreach prop prop_list
+             child_prop  = (dbGetPropByName child  prop)
+             (unless child_prop
+               parent_prop = (dbGetPropByName parent prop)
+               (when parent_prop
+                 (dbReplaceProp child prop parent_prop->valueType parent_prop->value)
+                 )
+               )
+             )
+    )
+  t
+  )
