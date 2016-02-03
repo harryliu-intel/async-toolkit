@@ -13,6 +13,7 @@
         )
       )
     CV = (dbCopyCellView d_srcCVId t_libName t_cellName t_viewName t_version g_contextId b_overwrite)
+    (unless CV (error "betterCopyCellView couldn't copy to %s %s %s\n" t_libName t_cellName t_viewName))
     (when CV (dbReopen CV "a"))
     CV
     )
