@@ -61,9 +61,6 @@ my %default_voltage = ('ground' => 0, 'power' => 'true', 'reset' => 'true');
 my %voltage;
 my %special_net;
 
-# TODO: spice model information should be in PDK
-# NOTE: uses env $hspice_model_root $hspice_model $PDMI_LIB $hspice_lib_models
-
 # usage banner
 sub usage() {
     $usage  = "USAGE: hsim  [args] cell env\n";
@@ -492,10 +489,8 @@ close(RUN_FILE);
 
 ################################# Create run script #####################################
 
-open SCRIPT,">run" or die "Can't write to run script";
-print SCRIPT "#!/bin/bash\n";
-print SCRIPT "export hspice_lib_models=\$hspice_lib_models\n";
-print SCRIPT "export PDMI_LIB=\$PDMI_LIB\n";
+system("cp \"$pdk_root/share/Fulcrum/spice/run.sh\" run"); # default UPF paths
+open SCRIPT,">>run" or die "Can't append to run script";
 if ($sim eq "hspice") {
     my $hsim_mc = "";
     $hsim_mc = "-monte 1" if ($seed>0);
