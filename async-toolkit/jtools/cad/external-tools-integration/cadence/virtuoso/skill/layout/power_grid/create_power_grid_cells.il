@@ -97,8 +97,11 @@
 
     ; vias
     (for m botMetal topMetal-1
-         (DrawPowerGridVias "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
-         (DrawPowerGridVias "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
+         (DrawPowerGridVias "gnd" "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
+         (DrawPowerGridVias "vdd" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
+         (when m>botMetal && m<topMetal-1 ; don't add fill vias to bottom or top layer to avoid DRC
+               (DrawPowerGridVias "fill" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeFillVdd[m] ?CV CV)
+               )
          )
 
     ; convert to rectangles
@@ -121,31 +124,33 @@
   )
 
 ; draw vias where power stripes cross
-(defun DrawPowerGridVias (purpose layer1 layer2 via_layer via_size @key (CV (geGetEditCellView)))
+(defun DrawPowerGridVias (purpose1 purpose2 layer1 layer2 via_layer via_size @key (CV (geGetEditCellView)))
   (let (lpp1 lpp2 x y w h)
-    lpp1 = (list layer1 purpose)
-    lpp2 = (list layer2 purpose)
-    w = (car  via_size)/2
-    h = (cadr via_size)/2
-    (foreach shape1 (setof x CV->shapes x->lpp==lpp1)
-             (foreach shape2 (dbGetOverlaps CV shape1->bBox lpp2 0)
-                      x = nil
-                      y = nil
-                      (cond ((car (car shape1->points))==(car (cadr shape1->points))
-                             x = (car (car shape1->points))
-                             )
-                            (t
-                             y = (cadr (car shape1->points)))
-                            )
-                      (cond ((car (car shape2->points))==(car (cadr shape2->points))
-                             x = (car (car shape2->points))
-                             )
-                            (t
-                             y = (cadr (car shape2->points)))
-                            )
-                      (dbCreateRect CV (list via_layer purpose) (list x-w:y-h x+w:y+h))
-                      )
-             )
+    lpp1 = (list layer1 purpose1)
+    lpp2 = (list layer2 purpose2)
+    (when via_size
+      w = (car  via_size)/2
+      h = (cadr via_size)/2
+      (foreach shape1 (setof x CV->shapes x->lpp==lpp1)
+               (foreach shape2 (dbGetOverlaps CV shape1->bBox lpp2 0)
+                        x = nil
+                        y = nil
+                        (cond ((car (car shape1->points))==(car (cadr shape1->points))
+                               x = (car (car shape1->points))
+                               )
+                              (t
+                               y = (cadr (car shape1->points)))
+                              )
+                        (cond ((car (car shape2->points))==(car (cadr shape2->points))
+                               x = (car (car shape2->points))
+                               )
+                              (t
+                               y = (cadr (car shape2->points)))
+                              )
+                        (dbCreateRect CV (list via_layer purpose1) (list x-w:y-h x+w:y+h))
+                        )
+               )
+      )
     )
   t
   )
