@@ -232,7 +232,7 @@ useICV = t
           align = gridAlignment[b]
           xa = (car align)
           ya = (cadr align)
-          gridCV = (ChoosePowerGridCell a b ?noPowerFill noPowerFill)
+          gridCV = (ChoosePowerGridCell a b)
           x0 = (leftEdge   shape->bBox)
           y0 = (bottomEdge shape->bBox)
           x1 = (rightEdge  shape->bBox)
@@ -241,7 +241,7 @@ useICV = t
 
           ; half-height cells on bottom edge
           (when (round y0/ya)*2 != (round y0/(ya/2))
-                halfCV = (ChoosePowerGridCell a b ?half t ?noPowerFill noPowerFill)
+                halfCV = (ChoosePowerGridCell a b ?half t)
                 y0 = y0+ya/2
                 (dbCreateSimpleMosaic powerCV halfCV
                                       (sprintf nil "pg%d" count++) x0:y0 "MX"
@@ -251,7 +251,7 @@ useICV = t
           ; half-height cells on top edge
           (when (round y1/ya)*2 != (round y1/(ya/2))
                 y1 = y1-ya/2
-                halfCV = (ChoosePowerGridCell a b ?half t ?noPowerFill noPowerFill)
+                halfCV = (ChoosePowerGridCell a b ?half t)
                 (dbCreateSimpleMosaic powerCV halfCV
                                       (sprintf nil "pg%d" count++) x0:y1 "R0"
                                       1 cols (cadr align) (car align))
@@ -275,12 +275,15 @@ useICV = t
       srcCV = powerCV ; use powerCV as scratch to build more layers of power grid
       )
 
+    ; hack: if noPowerFill do a bunch more crap
+    (when noPowerFill (PatchPowerFill CV powerCV))
+
     ; delete temporary shapes, draw prBoundary and top block shape
     (dbDeleteObject prb)
     (foreach s powerCV->shapes (when s->purpose=="block" (dbDeleteObject s)))
     (dbCreatePRBoundary powerCV CV->prBoundary->points)
     (dbCreatePolygon powerCV (list Metal[topMetal] "block") CV->prBoundary->points)
-
+    
     ; create power pins and instantiate power grid
     (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "input")
     (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "input")
@@ -303,6 +306,54 @@ useICV = t
     powerCV
     )
   )
+
+; Allow router to use the middle track between GND stripes on M2-M5.
+; Swaps mosaics to POWER_GRID_NO_FILL versions, but add back some fill
+; on the prBoundary and near hard macros.  Very nasty.  Expected to
+; run from within MakePowerGrid after any old pg instance has been
+; deleted.
+(defun PatchPowerFill (CV pgCV)
+  (let (tempCV inLayerMap outLayerMap len)
+    tempCV = (dbOpenCellViewByType CV->libName (strcat CV->cellName "_fill_temp")
+                                   "layout" "maskLayout" "w")
+
+    ; flatten pg fill to tempCV
+    (for m 2 5
+         outLayerMap = (cons (list (sprintf nil "f%d" m) (list Metal[m] "fill")) outLayerMap)
+         )
+    (ICVLayerProcessorSimple pgCV tempCV "mergeShape" outLayerMap outLayerMap)
+
+    ; flatten CV block purpose shapes to tempCV
+    inLayerMap = (list (list "b3" (list Metal[3] "block"))
+                       (list "b4" (list Metal[4] "block"))
+                       (list "b5" (list Metal[5] "block"))
+                       (list "b6" (list Metal[6] "block"))
+                       (list "b7" (list Metal[7] "block"))
+                       (list "b8" (list Metal[8] "block")))
+    (ICVLayerProcessorSimple CV tempCV "mergeShape" inLayerMap inLayerMap)
+
+    ; keep fill shapes near block shapes, save back to pgCV
+    (dbCreatePolygon tempCV (list "prBoundary" "drawing") CV->prBoundary->points)
+    inLayerMap = (append inLayerMap outLayerMap)
+    inLayerMap = (cons (list "prb" (list "prBoundary" "drawing")) inLayerMap)
+    (ICVLayerProcessorSimple tempCV pgCV "PatchPowerFill" inLayerMap outLayerMap)
+
+    ; swap POWER_GRID cells to NO_FILL version
+    len = (strlen "globals.POWER_GRID")
+    (foreach inst pgCV->instances
+             (when (strncmp inst->cellName "globals.POWER_GRID" len)==0
+                   inst->master = (dbOpenCellViewByType inst->libName
+                                                        (strcat "globals.POWER_GRID_NO_FILL"
+                                                                (substring inst->cellName len+1))
+                                                        "layout")
+                   )
+             )
+
+    ; clean up
+    (dbSave pgCV)
+    pgCV
+    )
+ )
 
 ; Create power hookups for Laygen and/or D04 cells
 ; BUG: should be done by RDT flow but doesn't work yet
