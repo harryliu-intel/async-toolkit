@@ -17,7 +17,7 @@
               CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
               (DrawPowerGrid bot top ?CV CV ?noFill noFill)
               (cdsp4add ?CV CV)
-              (when top==topMetal
+              (when top==TopMetal
                 cellName = (strcat cellName "_half")
                 (printf "%s\n" cellName)
                 CV = (dbOpenCellViewByType "globals" cellName "layout")
@@ -42,7 +42,7 @@
 
     ; metal2
     (when botMetal<=2 && topMetal>=2
-          h = powerOverhang[2]
+          h = (if botMetal==topMetal 0 powerOverhang[2]) ; backward compatibility for M2 mid-cells
           rows = (round yalign/(cadr gridAlignment[2]))
           (DrawChannelArray nil power_m2 "" 0:rows-1 pitch_m2 (list -h:0 xalign+h:0) ?CV CV)
           )
