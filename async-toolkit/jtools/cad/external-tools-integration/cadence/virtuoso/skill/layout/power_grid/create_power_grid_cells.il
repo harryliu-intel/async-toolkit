@@ -99,9 +99,7 @@
     (for m botMetal topMetal-1
          (DrawPowerGridVias "gnd" "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
          (DrawPowerGridVias "vdd" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
-         (when m>botMetal && m<topMetal-1 ; don't add fill vias to bottom or top layer to avoid DRC
-               (DrawPowerGridVias "fill" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeFillVdd[m] ?CV CV)
-               )
+         (DrawPowerGridVias "vdd" "fill" Metal[m] Metal[m+1] Via[m] ViaSizeVddFill[m] ?CV CV)
          )
 
     ; convert to rectangles
@@ -147,7 +145,7 @@
                               (t
                                y = (cadr (car shape2->points)))
                               )
-                        (dbCreateRect CV (list via_layer purpose1) (list x-w:y-h x+w:y+h))
+                        (dbCreateRect CV (list via_layer purpose2) (list x-w:y-h x+w:y+h))
                         )
                )
       )
