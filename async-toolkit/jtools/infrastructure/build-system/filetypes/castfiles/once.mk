@@ -1156,8 +1156,8 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' && \
 	/bin/mv -f "$(@D)/cell.spef_gds2.tmp" "$(@D)/cell.spef_gds2"; \
-	if ( grep -q "Error" "$(@D)/spef.err" ) ; then \
-		grep "Error" "$(@D)/spef.err" >&2 ; \
+	if ( grep -q "\<Error" "$(@D)/spef.err" ) ; then \
+		grep "\<Error" "$(@D)/spef.err" >&2 ; \
 		rm -f "$(@D)/cell.spef_gds2"; touch "$(@D)/cell.spef_gds2"; \
 	fi; \
 	exit $$status
@@ -1272,8 +1272,8 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	elif [[ $(IGNORE_NVN) == 0 ]] && grep -q 'NVN FAILED' "$(@D)/extract.err" ; then \
 		rm -f "$(@D)/cell.spice_gds2" ; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
-	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
-		grep "Error" "$(@D)/extract.err" >&2 ; \
+	if ( grep -q "\<Error" "$(@D)/extract.err" ) ; then \
+		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 		rm -f "$(@D)/cell.spice_gds2"; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
 	mkdir -p "$(ROOT_TARGET_DIR)/spicelib"; \
@@ -1437,8 +1437,8 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
 	elif [[ $(IGNORE_NVN) == 0 ]] && grep -q 'NVN FAILED' "$(@D)/extract.err" ; then \
 		rm -f "$(@D)/cell.spice_gds2" ; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
-	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
-		grep "Error" "$(@D)/extract.err" >&2 ; \
+	if ( grep -q "\<Error" "$(@D)/extract.err" ) ; then \
+		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 		rm -f "$(@D)/cell.spice_gds2"; touch "$(@D)/cell.spice_gds2"; \
 	fi; \
 	mkdir -p "$(ROOT_TARGET_DIR)/spicelib"; \
@@ -1518,8 +1518,8 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$
 	  --outfile='$(@D)/cell.spf'; \
 	cp "$$extract_dir/starRC/cell.placement_info" '$(@D)/cell.placement_info' ; \
 	if [ "$(DELETE_EXTRACT_DIR)" != "0" ]; then /bin/rm -rf "$$extract_dir"; fi; \
-	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
-		grep "Error" "$(@D)/extract.err" >&2 ; \
+	if ( grep -q "\<Error" "$(@D)/extract.err" ) ; then \
+		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 	fi; \
 	mkdir -p "$(ROOT_TARGET_DIR)/spicelib"; \
 	task=extract && $(CASTFILES_DEQUEUE_TASK) ;\
@@ -1580,8 +1580,8 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	cp "$$extract_dir/starRC/cell.dpf" '$(@D)/cell.dpf' && \
 	if [ "$(DELETE_EXTRACT_DIR)" != "0" ]; then /bin/rm -rf "$$extract_dir"; fi; \
 	status=$$?;
-	if ( grep -q "Error" "$(@D)/extract.err" ) ; then \
-		grep "Error" "$(@D)/extract.err" >&2 ; \
+	if ( grep -q "\<Error" "$(@D)/extract.err" ) ; then \
+		grep "\<Error" "$(@D)/extract.err" >&2 ; \
 		status=1; \
 	fi; \
 	task=extract && $(CASTFILES_DEQUEUE_TASK) ;\
