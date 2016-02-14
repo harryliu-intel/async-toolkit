@@ -166,7 +166,7 @@ int main (int argc, char *argv[]) {
    FILE *tif = NULL;
    int Nsubpixels=1,xmax=1600,ymax=1200,swapXY=0;
    int i,x0,y0,x1,y1,xsize,ysize,tile=20000;
-   int job=0,jobs=1,tiles,current_job,job_tiles,tilesperjob;
+   int job=0,jobs=1,tiles,current_job,job_tiles,tilesperjob,my_rows;
    int bbox_x0=0,bbox_x1=0,bbox_y0=0,bbox_y1=0; // bounding box of topcell
    int valid_x0=0,valid_x1=0,valid_y0=0,valid_y1=0; // was bounding box specified
    double start_time;
@@ -313,6 +313,7 @@ int main (int argc, char *argv[]) {
    /*** generate blank file ***/
    current_job=0;
    job_tiles=0;
+   my_rows=0;
    tilesperjob=(tiles+jobs-1)/jobs;
    int save_jobs = jobs;
    int save_tiles = tiles;
@@ -327,6 +328,7 @@ int main (int argc, char *argv[]) {
      }
      job_tiles++; // count another tile for this job
      if (current_job!=job) continue; // not my problem
+     my_rows++;
      
      /*** start this stripe ***/
      y0=y1-tile; if (y0<bbox_y0) y0=bbox_y0;
@@ -342,6 +344,7 @@ int main (int argc, char *argv[]) {
    }
    if (ppm) fflush(ppm);
    if (tif) fflush(tif);
+   printf("Will render %d rows\n",my_rows);
 
    /*** process stripes ***/
    current_job=0;
