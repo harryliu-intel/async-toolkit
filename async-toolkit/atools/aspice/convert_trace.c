@@ -80,15 +80,15 @@ int main(int argc, char *argv[]) {
     if (! strncmp(argv[i],"--", 2)) {
       if (! strncmp(argv[i],"--translate",11))
         translate=1;
-      else if (!strncmp(argv[i], "--sigfile",9) && i < argc)
+      else if (i+1<argc && !strncmp(argv[i], "--sigfile",9))
         sigfile = argv[++i];
-      else if (!strncmp(argv[i], "--fsdb",6) && i < argc)
+      else if (i+1<argc && !strncmp(argv[i], "--fsdb",6))
         { fsdb=1; infile = argv[++i];}
-      else if (!strncmp(argv[i], "--csdf",6) && i < argc)
+      else if (i+1<argc && !strncmp(argv[i], "--csdf",6))
         { csdf=1; infile = argv[++i];}
-      else if (!strncmp(argv[i], "--scale-time",12) && i < argc)
+      else if (i+1<argc && !strncmp(argv[i], "--scale-time",12))
         sscanf(argv[++i],"%f",&scale_time);
-      else if (!strncmp(argv[i], "--time-step",11) && i < argc)
+      else if (i+1<argc && !strncmp(argv[i], "--time-step",11))
         sscanf(argv[++i],"%f",&time_step);
       else usage();
     }
