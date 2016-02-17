@@ -1607,7 +1607,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.names $(SPICE_DIR)/xa/$(ENV)/%/xa.trace : $(SPICE_DI
 	$(CASTFILES_ENQUEUE_TASK)
 	(cd '$(@D)'; \
 	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
-	 $(EXEC_LOW_PACKAGE) convert_trace --scale-time 1e-6 --translate --fsdb xa.fsdb xa ;\
+	 $(EXEC_LOW_PACKAGE) convert_trace --translate --fsdb xa.fsdb xa ;\
 	)
 	$(CASTFILES_DEQUEUE_TASK)
 
