@@ -910,18 +910,19 @@ public class AutoSimulateCell  {
     }
     
     /** check for potential deadlock **/
-    public boolean checkDeadlock(boolean status){
+    public boolean checkDeadlock(long start_time, boolean status){
         
         /* if we haven't already detected an error condition, we check for 
          * deadlock. Just make sure that we got to where we wanted by cycling
          */
         if(!status){
             if(cycle_mode == CYCLE_BY_TIME){
-                if(sim.getTime() < cycle_time.intValue() - cycleMargin || 
-                   sim.getTime() > cycle_time.intValue() + cycleMargin ){
+                long desired = start_time + cycle_time;
+                if(sim.getTime() < desired - cycleMargin || 
+                   sim.getTime() > desired + cycleMargin ){
                     final String msg =
                         "FATAL: cycle by time terminated prematurly -- " +
-                        "potential deadlock. Desired time: " + cycle_time +
+                        "potential deadlock. Desired time: " + desired +
                         " actual time: " + sim.getTime();
                     results.println(msg);
                     results.br();
@@ -1408,6 +1409,7 @@ public class AutoSimulateCell  {
             }
         }
         
+        long start_time = 0;
         if(cycle_mode == CYCLE_BY_TIME){
             error |= reset(DSim.TIMED_RANDOM);
             setJitter();
@@ -1415,6 +1417,7 @@ public class AutoSimulateCell  {
             printHtmlStdout("[INFO] cycling for " +cycle_time.intValue() 
                             +" DSim time units", true);
             System.out.println("Before cycling");
+            start_time = this.sim.getTime();
             this.sim.cycle(cycle_time.intValue());
             System.out.println("After cycling");
             resclass.setCycleNode(false);
@@ -1433,7 +1436,7 @@ public class AutoSimulateCell  {
             error |= checkMergeDevices();
         
         /** check for potential deadlock **/
-        error |= checkDeadlock(error);
+        error |= checkDeadlock(start_time, error);
         
         /** now lets do converage analysis **/
         coverageAnalysis();
