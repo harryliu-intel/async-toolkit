@@ -1,6 +1,6 @@
 ; Export GDS for current cell without all the name conversion we normally need
 (defun ExportGDS (@key (CV (geGetEditCellView)) (gdsFile nil) (layerMapFile nil)
-                       (renameCell nil))
+                       (renameCell nil) (flattenVias nil))
   (let (TEMP WDIR PDK_DIR Command status cellMapFile fmap)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR = (strcat TEMP "/gds/" CV->cellName)
@@ -36,6 +36,7 @@
     ; strmout command line arguments
     Command = (sprintf nil
                        (strcat "strmout"
+                               (if flattenVias " -flattenVias" "")
                                " -library '%s'"
                                " -topCell '%s'"
                                " -view '%s'"
