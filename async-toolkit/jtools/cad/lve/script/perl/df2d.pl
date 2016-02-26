@@ -5,6 +5,7 @@
 
 use strict;
 use Getopt::Long;
+use IO::File;
 my $verbose=0;
 
 sub usage {
@@ -17,7 +18,8 @@ Usage: df2d <options>
     --view=<viewname>     : the dfII cellview
     --lib=<libname>       : the dfII libname
     --fulcrum-pdk-root    : the pdk root
-    --output-file=<df2,d> : the lve root directory
+    --format=<format>     : output format, script or make
+    --target=<target>     : the make target
 EU
 exit 1;
 }
@@ -27,7 +29,8 @@ my $cell;
 my $view="layout";
 my $lib;
 my %libdir=();
-my $outputfile;
+my $target;
+my $format='make';
 my $pdk_root;
 my @errs=();
 my %skiplibs=("gate"=>1, "stack"=>1, "tsmc28"=>1);
@@ -37,7 +40,8 @@ GetOptions (
     "fulcrum-pdk-root=s" => \$pdk_root,
     "view=s" => \$view,
     "lib=s" => \$lib,
-    "output-file=s" => \$outputfile,
+    "target=s" => \$target,
+    "format=s" => \$format,
     "cell=s" => \$cell,
     "verbose" => \$verbose,
 ) or usage;
@@ -50,6 +54,7 @@ length($view) or usage("View name seems invalid");
 $lib=$cell;
 $lib =~ s/\.[^\.]+\.[^\.]+$//;
 length($lib) or usage("Lib name seems invalid");
+$format eq "make" or $format eq "script" or die usage("Invalid output format");
 
 open (P, "<$dfIIdir/cds.lib.generated") or usage("Cannot open cds.lib.generated");
 while (<P>) {
@@ -104,6 +109,7 @@ sub search {
     my $df=cast2cadence($lib,$cell,$view);
     local (*P, $_);
     if ( -s "$df/layout.oa") {
+        $cdbs{"$df/layout.oa"}=1;
         my @stat=stat("$df/layout.oa");
         my $mtimely=$stat[9];
         my $mtimedb=0;
@@ -151,24 +157,33 @@ sub search {
     }
 }
 
+sub make_escape {
+    my ($token) = @_;
+    $token =~ s/#/\\#/g;
+    return $token;
+}
+
 my $cadcell=`echo '$cell' | rename --max-heap-size=80m --type=cell --from=cast --to=cadence`;
 chomp $cadcell;
 search ($lib, $cadcell, $view);
 
 my $celldir=$cell;
 $celldir =~ s:\.:/:g;
-if (open(P, ">$outputfile")) {
-    select P;
+my $fh = new IO::Handle;
+$fh->fdopen(fileno(STDOUT), 'w') or die "Can't fdopen STDOUT: $!";
+select $fh;
+if ($format eq 'script') {
+    local $, = "\n";
+    local $\ = "\n";
+    print sort keys %cdbs;
+} else {
+    local $\ = "\n";
+    print "CDBDEP_TARGET_FILES := " . make_escape($target);
+    print "CDBDEP_PREREQ_FILES := " .
+          join(" \\\n", map { make_escape($_) } sort keys %cdbs);
+    print '$(CDBDEP_TARGET_FILES): $(call OPTIONAL_PREREQ,$(CDBDEP_PREREQ_FILES))';
 }
-print "CDBDEP_TARGET_FILES := $outputfile ";
-print "\$(CDBDEP_TARGET_FILES): \\";
-my $top = cast2cadence($lib,$cadcell,$view);
-$top =~ s/#/\\#/g;
-print "$top/layout.oa \\";
-foreach my $cdb (sort keys %cdbs) {
-    $cdb =~ s/#/\\#/g;
-    print "$cdb \\" if ($cdb ne "$top/layout.oa");
-}
+push @errs, "I/O error writing output" if $fh->error;
 if (@errs) {
     print STDERR "Error: ".join("\nError: ", @errs);
     exit 1;

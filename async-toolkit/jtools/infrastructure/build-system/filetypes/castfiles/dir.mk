@@ -259,7 +259,8 @@ $(CURR_CELL_DIR)/%/df2.d: $(CURR_CELL_DFII_DIR)/%/layout.oa
 	    --cell '$(call GET_CAST_FULL_NAME,$(@D))' \
 	    --view $(call GET_NTH_FROM_LAST_DIR,$(@D),1) \
 	    --fulcrum-pdk-root=$(FULCRUM_PDK_PACKAGE_ROOT) \
-	    --output-file '$@' && \
+	    --target '$@' > '$@.tmp' && \
+	mv '$@.tmp' '$@'; \
 	$(CASTFILES_DEQUEUE_TASK)
 	: < '$@'
 

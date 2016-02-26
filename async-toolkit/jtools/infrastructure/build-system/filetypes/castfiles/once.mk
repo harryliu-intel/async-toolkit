@@ -82,6 +82,9 @@ GET_NTH_RUN_PARAM = $(if $(strip $(call GET_NTH_RUN_PARAM_IMPL,$(1),$(3))),$(cal
 LVE_SKIP = $(findstring $(1),$(LVE_SKIP_TASKS))
 GET_CORNER = $(word 1,$(subst _, ,$(1)))
 GET_SEED = $(or $(word 2,$(subst _, ,$(1))),0)
+OPTIONAL_PREREQ = $(foreach prereq,$(1),$(if $(realpath $(prereq)),$(prereq),FORCE))
+
+FORCE:
 
 # select how to execute linux or sun commands
 QB := qb

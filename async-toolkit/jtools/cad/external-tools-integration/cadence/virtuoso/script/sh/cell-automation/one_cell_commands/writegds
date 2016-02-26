@@ -107,7 +107,7 @@ sub writegds {
     my $outgds="$working_dir/cell.gds2";
     $outgds="$working_dir/top.gds2" if $topcell;
     if ( -s "$outgds") {
-        my @depend=`df2d --dfII-dir='$dfII_dir' --cell='$cell' --view=layout --output-file=/dev/stdout`;
+        my @depend=`df2d --dfII-dir='$dfII_dir' --cell='$cell' --view=layout --format=script`;
         chomp @depend;
         my $outofdate=$force;
         my @stat=stat($outgds);
@@ -115,10 +115,6 @@ sub writegds {
         $outofdate=1 if ! -s $outgds;
         foreach my $file (@depend) {
             last if $outofdate;
-            next if $file =~ /CDBDEP_TAR/;
-            $file =~ s/\s*\\//;
-            $file =~ s/\\//g;
-            $file =~ s/\s//g;
             my $cn=$file;
             $cn =~ s:$dfII_dir/::;
             $cn =~ s:\/layout/.*::;
