@@ -1063,6 +1063,7 @@ public class JavaEmitter implements VisitorInterface {
         out.println("import com.avlsi.tools.dsim.DSim;");
         out.println("import com.avlsi.tools.sigscan.LoggedLogicArray;");
         out.println("import com.avlsi.tools.sigscan.LoggedLong;");
+        out.println("import com.avlsi.tools.sigscan.LoggedString;");
         out.println("import com.avlsi.tools.tsim.AbstractDevice;");
         out.println("import com.avlsi.tools.tsim.Arbiter;");
         out.println("import com.avlsi.tools.tsim.Arbiter.Action;");
@@ -1326,6 +1327,27 @@ public class JavaEmitter implements VisitorInterface {
                 out.println("protected void setValue(final BigInteger val) {");
                     out.println("super.setValue(val);");
                     out.println("if (logged != null) logged.set(val.longValue(), getTime());");
+                out.println("}");
+            out.println("}");
+
+            out.println("public class LoggedCspString extends CspString {");
+                out.println("private final LoggedString logged;");
+                out.println("public LoggedCspString(String varName) {");
+                    out.println("this(varName, new CspString());");
+                out.println("}");
+                out.println("public LoggedCspString(String varName, CspString val) {");
+                    out.println("super(val.toString());");
+                    out.println("CspRuntimeAbstractDevice parent = getSelf();");
+                    out.println("logged = parent.getSigscan() == null ? null : new LoggedString(getLoggingScope(), varName, parent.getSigscan(), parent.getDebugOpts(), true);");
+                    out.println("if (logged != null) logged.set(val.toString(), getTime());");
+                out.println("}");
+                out.println("public LoggedCspString(String varName, String parsePos, CspString val) {");
+                    out.println("this(varName, val);");
+                    out.println("topFrame().addVariable(varName, parsePos, this);");
+                out.println("}");
+                out.println("public void setValue(final CspString val) {");
+                    out.println("super.setValue(val);");
+                    out.println("if (logged != null) logged.set(val.toString(), getTime());");
                 out.println("}");
             out.println("}");
 
@@ -2701,6 +2723,8 @@ public class JavaEmitter implements VisitorInterface {
         } else {
             if (t instanceof BooleanType) {
                 out.print("LoggedCspBoolean");
+            } else if (t instanceof StringType) {
+                out.print("LoggedCspString");
             } else if (t instanceof StructureType) {
                 final StructureType st = (StructureType) t;
                 final Pair p = (Pair) resolver.getResolvedStructures().get(st);
@@ -2840,11 +2864,25 @@ public class JavaEmitter implements VisitorInterface {
                         out.print(")");
                     }
                 } else if (varT instanceof StringType) {
+                    if (proc.generateLoggedType()) {
+                        out.print("new LoggedCspString(" +
+                                  proc.getPrefix() + " + \"" +
+                                  dr.getIdentifier().getIdentifier() +
+                                  "\", ");
+                        if (proc.isTopLevel()) {
+                            out.print("\"" +
+                                      getLocation(dr.getIdentifier()) +
+                                      "\", ");
+                        }
+                    } else {
+                        out.print("(");
+                    }
                     if (init == null) {
                         out.print("new CspString()");
                     } else {
                         init.accept(this);
                     }
+                    out.print(")");
                 } else if (varT instanceof ArrayType) {
 
                     // Array type
