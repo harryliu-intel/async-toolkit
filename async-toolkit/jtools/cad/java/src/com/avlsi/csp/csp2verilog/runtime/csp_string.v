@@ -40,6 +40,8 @@ function [`CSP_STRING_WHOLE] init(input integer size,
                                   input [`CSP_STRING_ASCII] value);
 begin
     init = 0;
+    // in VCS, $bits("") == 8, correct for that case
+    if (size == 8 && value == 0) size = 0;
     if (size / 8 > `CSP_STRING_MAX) begin
 `ifdef CSP_STRING_WARNING
         $display("%t:%m: CSP string constant truncated to maximum string size", $time);
