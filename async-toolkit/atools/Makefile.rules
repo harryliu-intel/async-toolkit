@@ -4,10 +4,10 @@
 # $Author$
 
 # directory setup
-ARCH         = $(shell echo `uname -s`-`uname -m` | sed "s/ //g")
-LIB_DIR      = $(TOP)/lib
-INSTALL_DIR  = $(HOME)/bin/$(ARCH)
-MAN_DIR      = $(HOME)/man/man1
+ARCH     = $(shell echo `uname -s`-`uname -m` | sed "s/ //g")
+LIB_DIR  = $(TOP)/lib
+BIN_DIR  = $(TOP)/bin/$(ARCH)
+MAN_DIR  = $(TOP)/man/man1
 
 # tools setup
 CC          = gcc # -pg
@@ -18,23 +18,13 @@ OPT         = -O3 -Wall -funroll-loops -ffast-math -finline-limit=20000
 
 # architecture dependent setup
 ifeq ($(ARCH),Linux-i686)
-#  CADENCE_LIB  = /usr/local/cadence/current/LDV/tools/lib
-#  SDI2_INCLUDE = /usr/local/cadence/current/LDV/tools/transrecord/include
-#  SDI2_LIB     = -Wl,-rpath $(CADENCE_LIB) -L$(CADENCE_LIB) -lsdi2c
   CFLAGS = -I$(LIB_DIR) $(OPT) -ggdb -march=pentium3 -DPREFETCH -DSIMD # -I$(SDI2_INCLUDE) -DSST2
-#  LFLAGS = -lm -lreadline -ltermcap $(LIB_DIR)/castlib.a # $(SDI2_LIB)
   LFLAGS = -lm -lreadline $(LIB_DIR)/castlib.a # $(SDI2_LIB)
 endif
 
 ifeq ($(ARCH),Linux-x86_64)
   CFLAGS = -I$(LIB_DIR) $(OPT) -ggdb -march=opteron -m64 -DPREFETCH -DSIMD
-#  LFLAGS = -lm -lreadline -ltermcap $(LIB_DIR)/castlib.a
   LFLAGS = -lm -lreadline $(LIB_DIR)/castlib.a
-endif
-
-ifeq ($(ARCH),Darwin-PowerMacintosh)
-  CFLAGS = -I$(LIB_DIR) $(OPT) -DPREFETCH -DSIMD
-  LFLAGS = -lm -lreadline -ltermcap $(LIB_DIR)/castlib.a
 endif
 
 # template make rules
@@ -48,7 +38,9 @@ install::
 	@$(MAKE) --no-print-directory subdirs TARGET=install
 
 install:: all
-	@for t in $(INSTALL_TARGETS) "" ; do [ -z "$$t" ] || (echo "Installing $$t" ; $(INSTALL) $$t $(INSTALL_DIR)) || exit 1 ; done
+	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(MAN_DIR)
+	@for t in $(INSTALL_TARGETS) "" ; do [ -z "$$t" ] || (echo "Installing $$t" ; $(INSTALL) $$t $(BIN_DIR)) || exit 1 ; done
 	@for t in $(MAN_TARGETS) "" ; do [ -z "$$t" ] || (echo "Installing $$t" ; $(INSTALL_MAN) $$t $(MAN_DIR)) || exit 1 ; done
 
 clean::

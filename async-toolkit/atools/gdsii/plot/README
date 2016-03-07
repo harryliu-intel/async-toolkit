@@ -1,6 +1,8 @@
 GDS plotting package
 gds2plot & plot
 Authors: Andrew Lines & Aubrey Grey
+Contributors: Alicia Klinefelter
+Inspired by: Mika Nystroem's "magplot"
 Copyright: Intel, 2015
 Support: andrew.lines@intel.com
 

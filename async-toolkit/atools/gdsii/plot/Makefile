@@ -1,6 +1,6 @@
 TOP = ../..
 BIN_TARGETS = gds2plot
-INSTALL_TARGETS = $(BIN_TARGETS)
+INSTALL_TARGETS = $(BIN_TARGETS) plot
 include $(TOP)/Makefile.rules
 
 gds2plot: gds2plot.o ../aag/gdsiilib.a
