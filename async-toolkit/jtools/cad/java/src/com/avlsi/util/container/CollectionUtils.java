@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -361,5 +362,17 @@ public class CollectionUtils {
                 iter.remove();
             }
         };
+    }
+
+    public static IntStream rangeClosed(final int startInclusive,
+                                        final int endInclusive) {
+        IntStream result;
+        if (startInclusive <= endInclusive) {
+            result = IntStream.rangeClosed(startInclusive, endInclusive);
+        } else {
+            result = IntStream.rangeClosed(endInclusive, startInclusive)
+                              .map(x -> startInclusive - (x - endInclusive));
+        }
+        return result;
     }
 }
