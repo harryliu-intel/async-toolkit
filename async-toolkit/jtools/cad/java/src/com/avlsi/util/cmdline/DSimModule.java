@@ -823,6 +823,8 @@ public class DSimModule extends CmdLine {
     private String cspValueString(final CspValue var) {
         if (var instanceof CspBoolean) {
             return Boolean.toString(((CspBoolean) var).booleanValue());
+        } else if (var instanceof CspInteger) {
+            return "0x" + ((CspInteger) var).toString(16);
         } else {
             return var.toString();
         }
