@@ -5,6 +5,7 @@
 
 use strict;
 use Getopt::Long;
+use FindBin;
 
 select STDERR;
 $|=1;
@@ -19,28 +20,8 @@ sub usage {
 }
 
 # specific paths
-my $binhome=$0;
-# find cononical path to this executable
-if ( $binhome =~ m:^/:) {
-    $binhome =~ s:/[^/]+$::;
-}
-else {
-    my $pwd = `pwd`;
-    chomp $pwd;
-    if ( $binhome =~ m:/: ) {
-        $binhome =~ s:/[^/]+$::;
-        chdir $binhome;
-        $binhome=`pwd`;
-        chomp $binhome;
-        chdir $pwd;
-    }
-    else {
-        $binhome=$pwd;
-    }
-}
-
-$binhome = "/p/rrc/tools/bin"
-    if ! -x "$binhome/updatefmdb.pl";
+my $binhome=$FindBin::Bin;
+my $updatefmdb="$binhome/updatefmdb.pl";
 
 my $toolhome="";
 my $verbose=0;
@@ -58,6 +39,10 @@ my %options = (
 GetOptions ( %options ) or usage;
 
 my $toolhomearg="";
+if ( ! -x $updatefmdb ) {
+    print STDERR "$updatefmdb doesn't exist, it should be a sibling of $0";
+    usage;
+}
 if ( "$toolhome" ne "" ) {
     if ( -d "$toolhome" ) {
         $toolhomearg="--toolhome=$toolhome";
@@ -68,13 +53,6 @@ if ( "$toolhome" ne "" ) {
     }
 }
 $toolhome =~ s:/$::;
-if ($toolhome =~ m:/p/rrc/tools/: or $toolhome eq "") {
-    die "You must be tsbuild user to update global db's"
-        if ( ! -w "/p/rrc/tools/fulcrum/config" );
-    foreach my $arch ( "intel-x86_64") {
-       system "P4PORT=ssl:p4proxy19.devtools.intel.com:2510 P4USER=sys_system P4CONFIG= P4CLIENT=system-$arch-fulcrum p4 sync 2>/dev/null";
-    }
-}
 
 die "You do not have write permission to $toolhome"
     if ( $toolhome ne "" and ! -w "$toolhome" );
@@ -106,7 +84,7 @@ my $pid;
 foreach my $arch (keys %archname) {
     if ($targetarch{$archname{$arch}}) {
         print STDERR "Starting $archname{$arch}" if $verbose;
-        my $cmd="$binhome/updatefmdb.pl $toolhomearg $verbosearg";
+        my $cmd="$updatefmdb $toolhomearg $verbosearg";
         $cmd .= " --branch $branch" if $branch ne "";
         if ($pid = fork ) {
             $pid{$pid}=$archname{$arch};
