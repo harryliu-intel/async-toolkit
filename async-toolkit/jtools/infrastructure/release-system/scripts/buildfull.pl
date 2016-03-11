@@ -156,7 +156,7 @@ PDKDIRS
 my $targetarch="all";    # default build all arch
 my $ROOT_PROJECT_DIR;
 my $ROOT_TARGET_DIR;
-my $BUILD_SYSTEM_ROOT="";
+my $BUILD_SYSTEM_ROOT;
 my $PACKAGE_STORAGE="";
 my $toolhome="";
 my $package_storage_set=0;
@@ -618,10 +618,12 @@ if (! $fixed_project ) {
 $ENV{PATH} = "/usr/intel/bin:/bin:/usr/bin:$top/bin:$ENV{PATH}";
 my $makelinks="";
 $makelinks="--links" if $links and ( ! ($ROOT_PROJECT_DIR =~ m:^/scratch:));
-my $makecmd="make -f '$BUILD_SYSTEM_ROOT/Makefile' 'ROOT_PROJECT_DIR=$ROOT_PROJECT_DIR' 'ROOT_TARGET_DIR=$ROOT_TARGET_DIR' 'BUILD_SYSTEM_ROOT=$BUILD_SYSTEM_ROOT' MAKELINKS=$makelinks";
 # arg checking
-if ( ! -d "$BUILD_SYSTEM_ROOT" ) {
-    usage ("build-system-root $BUILD_SYSTEM_ROOT does not exist");
+if (defined($BUILD_SYSTEM_ROOT)) {
+    usage ("build-system-root $BUILD_SYSTEM_ROOT does not exist")
+        unless -d $BUILD_SYSTEM_ROOT;
+} else {
+    usage ("build-system-root not specified") unless $dosync;
 }
 if ( ! -d "$ROOT_PROJECT_DIR" and ! ( mkdir "$ROOT_PROJECT_DIR" ) ) {
     system "mkdir -p '$ROOT_PROJECT_DIR'";
@@ -658,6 +660,9 @@ if ($dosync) {
     open (P, "| $p4cmd client -i");
     print P "$template\n";
     close P;
+    $BUILD_SYSTEM_ROOT = "$ROOT_PROJECT_DIR/" . ($pdkbuild ? 'sw/' : '') .
+                         'infrastructure/build-system'
+        unless defined($BUILD_SYSTEM_ROOT);
 }
 if (defined ($argchange) and $dosync and ! $overwrite) {
     $headchange = getheadchange ($p4cmd) unless defined ($headchange);
@@ -676,6 +681,7 @@ if (! defined ($headchange)) {
 }
 my $buildid="$aname-$headchange-official";
 $buildid="$aname-${branch}_$headchange-official" if $branch ne "";
+my $makecmd="make -f '$BUILD_SYSTEM_ROOT/Makefile' 'ROOT_PROJECT_DIR=$ROOT_PROJECT_DIR' 'ROOT_TARGET_DIR=$ROOT_TARGET_DIR' 'BUILD_SYSTEM_ROOT=$BUILD_SYSTEM_ROOT' MAKELINKS=$makelinks";
 if ($branch eq "") {
     $makecmd .= " INTEL=1 BUILD_CHANGE_NUMBER=$headchange FULCRUM_BUILD_ID=$buildid FULCRUM_RESULTS_DIR=$PACKAGE_STORAGE";
 }
