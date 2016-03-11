@@ -6,9 +6,11 @@
 use strict;
 use FindBin;
 
+my $top = "/nfs/sc/proj/ctg/mrl108/mrl/tools";
+
 BEGIN {
     my $correctitools="$FindBin::Bin/.itools";
-    $correctitools="/p/rrc/tools/.itools" unless -e $correctitools;
+    $correctitools="$top/bin/.itools" unless -e $correctitools;
     if ( $ENV{USER_ITOOLS} ne $correctitools) {
         $ENV{USER_ITOOLS}=$correctitools;
         exec "$0",@ARGV;
@@ -21,28 +23,11 @@ die "Cannot run in a directory to which you cannot write\n".
     "Change directories and run again\n" if ! -w ".";
 
 $ENV{PATH}="/usr/intel/bin:/bin:/usr/ucb:/usr/bin";
-$ENV{'FULCRUM_WRAPPER_DIR'} = "/nfs/sc/proj/ctg/mrl108/mrl/tools/bin"
+$ENV{'FULCRUM_WRAPPER_DIR'} = "$top/bin"
     unless defined $ENV{'FULCRUM_WRAPPER_DIR'};
 # specific paths
-my $binhome=$0;
-# name of this executable
-my $exec=$0;
-$exec =~ s:.*/::;
-# find cononical path to this executable
-if ( $binhome =~ m:^/:) {
-    $binhome =~ s:/[^/]+$::;
-}
-else {
-    my $pwd = `pwd`;
-    chomp $pwd;
-    if ( $binhome =~ m:/: ) {
-        $binhome =~ s:/[^/]+$::;
-        chdir $binhome;
-    }
-    $binhome=`pwd`;
-    chomp $binhome;
-    chdir $pwd;
-}
+my $binhome=$FindBin::Bin;
+my $exec=$FindBin::Script;
 
 # point to specific sub-tools
 my $buildfulcrum="$binhome/$exec";
@@ -76,7 +61,6 @@ if ($user eq "") {
     }
 }
 my $p4user = $user;
-$p4user = "sys_system" if ($user eq "johndoe" or $user eq "tsbuild");
 my $p4port=$ENV{P4PORT} if defined $ENV{P4PORT};
 $p4port = "ssl:p4proxy19.devtools.intel.com:2510" if $p4port !~ /^ssl/;
 
@@ -172,11 +156,9 @@ PDKDIRS
 my $targetarch="all";    # default build all arch
 my $ROOT_PROJECT_DIR;
 my $ROOT_TARGET_DIR;
-my $TOOLS_HOME_DEFAULT="/p/rrc/tools/fulcrum";
-my $PACKAGE_STORAGE_DEFAULT="$TOOLS_HOME_DEFAULT/packages";
-my $BUILD_SYSTEM_ROOT="$TOOLS_HOME_DEFAULT/build-system";
-my $PACKAGE_STORAGE=$PACKAGE_STORAGE_DEFAULT;
-my $toolhome="$TOOLS_HOME_DEFAULT/tools";
+my $BUILD_SYSTEM_ROOT="";
+my $PACKAGE_STORAGE="";
+my $toolhome="";
 my $package_storage_set=0;
 my $TOOLS_TARGET;
 my $headchange;
@@ -307,19 +289,14 @@ sub usage {
         print STDERR "Error: $msg\n\n";
     }
     my @help=(
-   "--build-system <dir>     : Where the build system is, if you want to use ".
-   "your own. Defaults to /home/local/common/fulcrum/build-system ".
-   "The build system always is p4 sync'd to the latest change nr ".
-   "regardless of the specified change number if the root is the ".
-   "default root above.",
+   "--build-system <dir>     : Where the build system is.",
    "--root-project-dir <dir> : Used if you want to keep the project dir, otherwise ".
    "it is temp. Not recommended.",
    "--root-target-dir <dir>  : Used if you want to keep the target dir, otherwise it ".
    "is temp.",
-   "--package-storage <dir>  : default is $PACKAGE_STORAGE_DEFAULT. Use this to set ".
+   "--package-storage <dir>  : default is <toolhome>/packages. Use this to set ".
    "a local.",
-   "--toolhome <dir>         : default is $TOOLS_HOME_DEFAULT. Use this to set ".
-   "a local packages area.",
+   "--toolhome <dir>         : Use this to set a packages area.",
    "--verbose                : a little more detail",
    "--log-file               : a place for the log file, default is a log....log ".
    "name. The log file has more data than you typically want.",
@@ -593,15 +570,13 @@ $ROOT_TARGET_DIR =~ s:/$::;
 $PACKAGE_STORAGE =~ s:/$::;
 $PACKAGE_STORAGE =~ s:/(tools|packages)$::;
 $PACKAGE_STORAGE .= "/packages";
-if ($user ne "tsbuild" or "$PACKAGE_STORAGE" ne "$PACKAGE_STORAGE_DEFAULT") {
-    system "mkdir -p '$PACKAGE_STORAGE' >/dev/null 2>&1";
-    if ( ! ( -d "$PACKAGE_STORAGE" ) or ! ( -w "$PACKAGE_STORAGE" ) ) {
-        usage "Cannot create specified $PACKAGE_STORAGE directory";
-    }
+
+system "mkdir -p '$PACKAGE_STORAGE' >/dev/null 2>&1";
+if ( ! ( -d "$PACKAGE_STORAGE" ) or ! ( -w "$PACKAGE_STORAGE" ) ) {
+    usage "Cannot create specified $PACKAGE_STORAGE directory";
 }
-if (! -w "$PACKAGE_STORAGE" or ! -d "$PACKAGE_STORAGE" or
-        ($user ne "tsbuild" and
-            "$PACKAGE_STORAGE" eq "$PACKAGE_STORAGE_DEFAULT") ) {
+
+if (! -w "$PACKAGE_STORAGE" or ! -d "$PACKAGE_STORAGE" ) {
     usage "You do not have permission to write to $PACKAGE_STORAGE";
 }
 #here
@@ -640,11 +615,7 @@ if (! $fixed_project ) {
     $ROOT_PROJECT_DIR=tempdir("$scratchdir/project.XXXXXX", CLEANUP => $cleanup);
     $force = 1; # always force removal and build when temporaries used
 }
-if ( "$BUILD_SYSTEM_ROOT" eq "/p/rrc/tools/fulcrum/build-system" and $user eq "tsbuild") {
-    # make sure the build system is up to date
-    system "P4CLIENT=tsbuild-build-system $p4cmd sync >/dev/null 2>\&1";
-}
-$ENV{PATH} = "/usr/intel/bin:/bin:/usr/bin:/p/rrc/tools/bin:$ENV{PATH}";
+$ENV{PATH} = "/usr/intel/bin:/bin:/usr/bin:$top/bin:$ENV{PATH}";
 my $makelinks="";
 $makelinks="--links" if $links and ( ! ($ROOT_PROJECT_DIR =~ m:^/scratch:));
 my $makecmd="make -f '$BUILD_SYSTEM_ROOT/Makefile' 'ROOT_PROJECT_DIR=$ROOT_PROJECT_DIR' 'ROOT_TARGET_DIR=$ROOT_TARGET_DIR' 'BUILD_SYSTEM_ROOT=$BUILD_SYSTEM_ROOT' MAKELINKS=$makelinks";
@@ -1065,13 +1036,6 @@ foreach my $toolname (sort {$b cmp $a} keys %packages_found) {
 }
 
 # done installing, finally re-index the stuff
-
-if ($toolhome =~ m:^$TOOLS_HOME_DEFAULT: ) {
-    foreach my $arch ( "fedora","solaris8","fedora-x86_64") {
-        system "P4USER=$p4user P4CONFIG= P4CLIENT=system-$arch-fulcrum-config p4 sync 2>/dev/null";
-        system "P4USER=$p4user P4CONFIG= P4CLIENT=system-$arch-fulcrum p4 sync 2>/dev/null";
-    }
-}
 foreach my $arch (@allqarch) {
     print STDERR "$arch\n" if $verbose;
     $toolhome =~ s:/(pdk|tools)$::;
