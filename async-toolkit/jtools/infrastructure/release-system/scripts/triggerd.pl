@@ -12,7 +12,7 @@ sub WNOHANG {1;}
 
 sub usage {
     print <<EF;
-Usage: triggerd [--toolhome dir] [--verbose] [--port <port>] [--host <host>]
+Usage: triggerd [--toolhome dir] [--verbose] [--port <port>] [--host <host>] [build args...]
 EF
 exit 1;
 }
@@ -158,7 +158,7 @@ usage unless $rhost;
 usage unless -d $toolhome;
 
 $toolhome =~ s:/(tools|pdk|packages)$::;
-$buildcmd .= " --toolhome $toolhome";
+$buildcmd .= " --toolhome $toolhome" . join('', map { " \Q$_\E" } @ARGV);
 
 $verbose=1 if $test;
 my $sockpack;
