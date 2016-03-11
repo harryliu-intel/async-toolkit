@@ -2,24 +2,28 @@
 
 use strict;
 
+use File::Spec::Functions;
+
+use FindBin qw($Bin);
+
 use Getopt::Long;
 
 sub WNOHANG {1;}
 
 sub usage {
     print <<EF;
-Usage: triggerd [--target dir] [--verbose] [--port <port>] [--host <host>]
+Usage: triggerd [--toolhome dir] [--verbose] [--port <port>] [--host <host>]
 EF
 exit 1;
 }
 
-$ENV{USER_ITOOLS}="/p/rrc/tools/.itools";
-my $buildhome="/nfs/site/home/tsbuild/logs";
+$ENV{USER_ITOOLS}=catfile($Bin, '.itools');
+my $buildhome="/nfs/sc/proj/ctg/mrl108/mrln1adm/trigger";
 my $osbuild = "lx24-amd64";
-my $fulcrum = "/p/rrc/tools/fulcrum";
+my $fulcrum = "/nfs/sc/proj/ctg/mrl108/mrl/tools/fulcrum";
 my $toolhome= $fulcrum;
-my $buildcmd = "$fulcrum/bin/buildfull.pl --target-arch Linux-x86_64";
-my $indexcmd = "$fulcrum/bin/updateall.pl --target-arch Linux-x86_64";
+my $buildcmd = "$Bin/buildfull.pl --target-arch Linux-x86_64";
+my $indexcmd = "$Bin/updateall.pl --target-arch Linux-x86_64";
 my $addr;
 my $child0;
 my $child1;
@@ -34,8 +38,7 @@ my $why="";
 my $branch="";
 my $change = "";
 my $port=6777;
-my $rhost="";
-my $target = "";
+my $rhost="mprcs055";
 my $test=0;
 my $rv;
 my @queue=();
@@ -120,38 +123,43 @@ sub catchchild {
     $SIG{ALRM}="catchchild";
 }
 
-$ENV{PATH}="/usr/intel/bin:/p/rrc/tools/triggerbin:/p/rrc/tools/bin:/bin:/usr/bin";
+$ENV{PATH}="/usr/intel/bin:$Bin:/bin:/usr/bin";
 
-open (P, "<$toolhome/config/trigger") or die;
-while (<P>) {
-    chomp;
-    my ($name,$value)=split;
-    if (defined ($value)) {
-        if ($name eq "port" and $value =~ m/^\d+$/) {
-            $port = $value;
-        }
-        if ($name eq "host" and $value =~ m/^[a-z][a-z0-9]+$/) {
-            $rhost = $value;
-        }
-    }
-}
-close P;
-
+my ($argport, $arghost, $cfgport, $cfghost);
 GetOptions (
-    "toolhome=s" => \$target,
+    "toolhome=s" => \$toolhome,
     "verbose|v" => \$verbose,
-    "port=n" => \$port,
-    "host=s" => \$rhost,
+    "port=n" => \$argport,
+    "host=s" => \$arghost,
     "test" => \$test,
 ) or usage;
 
-usage unless ($port =~ m/^\d+$/);
-usage unless ( -d "$target" or "$target" eq "");
-if ($target ne "") {
-    $buildcmd .= " --toolhome $target";
-    $toolhome = $target;
-    $toolhome =~ s:/(tools|pdk|packages)$::;
+if (open (P, "<$toolhome/config/trigger")) {
+    while (<P>) {
+        chomp;
+        my ($name,$value)=split;
+        if (defined ($value)) {
+            if ($name eq "port" and $value =~ m/^\d+$/) {
+                $cfgport = $value;
+            }
+            if ($name eq "host" and $value =~ m/^[a-z][a-z0-9]+$/) {
+                $cfghost = $value;
+            }
+        }
+    }
+    close P;
 }
+
+$port = $argport || $cfgport || $port;
+$rhost = $arghost || $cfghost || $rhost;
+
+usage unless ($port =~ m/^\d+$/);
+usage unless $rhost;
+usage unless -d $toolhome;
+
+$toolhome =~ s:/(tools|pdk|packages)$::;
+$buildcmd .= " --toolhome $toolhome";
+
 $verbose=1 if $test;
 my $sockpack;
 my $thishost;
@@ -298,7 +306,7 @@ while (1) {
         $tbchange =~ s/.*-//;
         my $localbranch="";
         $localbranch="--branch $branch" if $branch ne "";
-        push @queue, ["$fulcrum/bin/tb-install.pl $packages $toolhome/tools ; $fulcrum/bin/updateall.pl $localbranch --toolhome $toolhome",$user,$packages,$osbuild,"/dev/null",$cc];
+        push @queue, ["$Bin/tb-install.pl $packages $toolhome/tools ; $Bin/updateall.pl $localbranch --toolhome $toolhome",$user,$packages,$osbuild,"/dev/null",$cc];
     }
     elsif ($packages eq "reindex") {
         push @queue, ["$localindexcmd > $buildhome/buildLo$$ 2>&1",$user,"reindex",$osbuild,"/tmp/buildLo$$",$cc];

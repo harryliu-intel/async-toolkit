@@ -5,15 +5,6 @@ use Socket;
 use Getopt::Long;
 use DB_File;
 
-BEGIN {
-    my $correctitools="/p/rrc/tools/.itools";
-    if ( $ENV{USER_ITOOLS} ne $correctitools) {
-        $ENV{USER_ITOOLS}=$correctitools;
-        exec "$0",@ARGV;
-    }
-}
-
-
 sub doshut {
    shutdown (SOCK, 2);
    close (SOCK);
@@ -21,7 +12,7 @@ sub doshut {
 }
 
 sub usage {
-    print STDERR "Usage: trigger [-v] [--branch bali] <package list>\n";
+    print STDERR "Usage: trigger [-v] [--toolhome toolhome] [--branch bali] <package list>\n";
     print STDERR "   <package list> is one of\n";
     print STDERR "      list of tool packages\n";
     print STDERR "      list of pdk packages\n";
@@ -33,7 +24,7 @@ sub usage {
 
 my $package="";
 my $port=6777;
-my $rhost="tslx002";
+my $rhost="mprcs055";
 my $verbose=0;
 my $user=`whoami`;
 my $branch="";
@@ -46,50 +37,58 @@ my $to=2;
 my $aname=`uname -sm`;
 chomp $aname;
 $aname =~ s/ /-/;
-my $toolhome = "/p/rrc/tools/fulcrum";
+my $toolhome = "/nfs/sc/proj/ctg/mrl108/mrl/tools/fulcrum";
 
-# ignore branch for donotbuild and for alldb
-my $config = "$toolhome/config";
-open (P, "<$config/$aname/donotbuild");
-while (<P>) {
-    chomp;
-    $donotbuild{$_}=1;
-}
-close P;
-my %db;
-my %all;
-dbmopen (%db, "$config/$aname/alldb", 0) or die "Cannot open alldb";
-foreach my $key (keys %db) {
-    my ($pkg)=split(/:/,$key);
-    $all{$pkg}=1;
-}
-dbmclose %db;
-$all{all}=1; # just in case it is not in alldb
-open (P, "<$config/trigger") || die;
-while (<P>) {
-    chomp;
-    my ($name,$value)=split;
-    if (defined ($value)) {
-        if ($name eq "port" and $value =~ m/^\d+$/) {
-            $port = $value;
-        }
-        if ($name eq "host" and $value =~ m/^[a-z][a-z0-9]+$/) {
-            $rhost = $value;
-        }
-    }
-}
-close P;
-
+my ($argport, $arghost, $cfgport, $cfghost);
 GetOptions (
 	"verbose|v" => \$verbose,
-	"port=n" => \$port,
-	"host=s" => \$rhost,
+    "toolhome=s" => \$toolhome,
+	"port=n" => \$argport,
+	"host=s" => \$arghost,
 	"timeout|t=n" => \$to,
         "os=s" => \$os,
 #        "branch=s" => \$branch,
         "change=i" => \$change,
         "cc=s" => \$cc,
 ) or usage;
+
+# ignore branch for donotbuild and for alldb
+my $config = "$toolhome/config";
+if (open (P, "<$config/$aname/donotbuild")) {
+    while (<P>) {
+        chomp;
+        $donotbuild{$_}=1;
+    }
+    close P;
+}
+my %db;
+my %all;
+if (dbmopen (%db, "$config/$aname/alldb", 0)) {
+    foreach my $key (keys %db) {
+        my ($pkg)=split(/:/,$key);
+        $all{$pkg}=1;
+    }
+    dbmclose %db;
+}
+$all{all}=1; # just in case it is not in alldb
+if (open (P, "<$config/trigger")) {
+    while (<P>) {
+        chomp;
+        my ($name,$value)=split;
+        if (defined ($value)) {
+            if ($name eq "port" and $value =~ m/^\d+$/) {
+                $cfgport = $value;
+            }
+            if ($name eq "host" and $value =~ m/^[a-z][a-z0-9]+$/) {
+                $cfghost = $value;
+            }
+        }
+    }
+    close P;
+}
+
+$port = $argport || $cfgport || $port;
+$rhost = $arghost || $cfghost || $rhost;
 
 $package="";
 foreach my $f (@ARGV) {
