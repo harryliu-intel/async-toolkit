@@ -6,9 +6,10 @@
 use strict;
 use FindBin;
 
+my $top = '/nfs/sc/proj/ctg/mrl108/mrl/tools';
 BEGIN {
     my $correctitools="$FindBin::Bin/.itools";
-    $correctitools="/p/rrc/tools/.itools" unless -e $correctitools;
+    $correctitools="$top/bin/.itools" unless -e $correctitools;
     if ( $ENV{USER_ITOOLS} ne $correctitools) {
         $ENV{USER_ITOOLS}=$correctitools;
         exec "$0",@ARGV;
@@ -283,7 +284,7 @@ sub iAmCadence {
 }
 
 # directories
-my $fulcrum="/p/rrc/tools/fulcrum";
+my $fulcrum="$top/fulcrum";
 my $defaultfulcrum = $fulcrum;
 my $argtoolhome = "$fulcrum/tools";
 my $defaulttoolhome = $argtoolhome;
