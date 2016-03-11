@@ -47,6 +47,3 @@ $(CURR_TARGET_DIR)/Makefile: $(BUILD_SYSTEM_ROOT)/subdir.mk.gen
                                            `dirname "$@"`                 \
 					   "$(PWD)"                       \
 				           "$(MAKE_WITH_MAKE_PWD_ONLY)"
-
-$(CURR_PROJECT_DIR)/Makefile: $(CURR_TARGET_DIR)/Makefile
-	cp "$<" "$@"
