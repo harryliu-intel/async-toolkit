@@ -159,6 +159,7 @@ usage unless -d $toolhome;
 
 $toolhome =~ s:/(tools|pdk|packages)$::;
 $buildcmd .= " --toolhome $toolhome" . join('', map { " \Q$_\E" } @ARGV);
+$indexcmd .= " --toolhome $toolhome";
 
 $verbose=1 if $test;
 my $sockpack;
