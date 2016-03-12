@@ -181,20 +181,6 @@ if [ -n "$verbose" ] ; then
     echo "stringtemplate JAR file is \"$stringtemplate_jar\"."
 fi
 
-# tools jar handling
-
-tools_jar=
-
-if [ -z $TOOLS_JAR ] ; then
-  tools_jar="$jarroot/tools.jar"
-else
-  tools_jar=$TOOLS_JAR
-fi
-
-if [ -n "$verbose" ] ; then
-    echo "tools JAR file is \"$tools_jar\"."
-fi
-
 jars_in_package=
 
 if [ -d "$jarroot" ] ; then
@@ -209,7 +195,7 @@ if [ -n "$verbose" ] ; then
     echo ""
 fi
 
-class_path=$antlr_jar:$concurrent_jar:$stringtemplate_jar:$tools_jar
+class_path=$antlr_jar:$concurrent_jar:$stringtemplate_jar
 
 if [ -n "$class_cache" ] ; then
   class_path="$class_path:$class_cache"
