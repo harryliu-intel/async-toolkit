@@ -1,1 +1,1 @@
-fulcrum-tsmc28-pdk 302267
+fulcrum-731-pdk 331913

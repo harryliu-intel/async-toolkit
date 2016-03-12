@@ -1,4 +1,3 @@
 #os fedora-x86_64
-all 302557
+all 331913
 include releasepdk
-include tbdev
