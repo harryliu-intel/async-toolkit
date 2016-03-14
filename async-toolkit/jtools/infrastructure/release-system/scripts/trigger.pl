@@ -24,7 +24,7 @@ sub usage {
 
 my $package="";
 my $port=6777;
-my $rhost="mprcs055";
+my $rhost="mrl-triggerd";
 my $verbose=0;
 my $user=`whoami`;
 my $branch="";
