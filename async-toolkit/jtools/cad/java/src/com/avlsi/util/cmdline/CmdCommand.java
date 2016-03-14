@@ -11,6 +11,7 @@ package com.avlsi.util.cmdline;
 
 import java.util.StringTokenizer;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import com.avlsi.util.text.StringUtil;
 
 /**
@@ -18,6 +19,10 @@ import com.avlsi.util.text.StringUtil;
  * modules can be handled uniformly.
  **/
 public class CmdCommand implements CmdModule {
+    private final static Pattern BACKSLASH2 = Pattern.compile("\\\\\\\\");
+    private final static Pattern ARGUMENT_DELIMITER =
+        Pattern.compile("(?:(?<!\\\\)(?=\"))|(?:(?<=[^\\\\]\"))");
+
     String name, usage, desc, pad;
     String shortUsage;
     String extDesc;
@@ -130,7 +135,11 @@ public class CmdCommand implements CmdModule {
 
     /** Breaks up arguments first by quoted strings, then by whitespace. **/
     public static String[] splitArgs(String args) { 
-        String qsplit[] = splitArgs(args, "\"", true);
+        // substitute \\ first to handle \\" correctly
+        String noslash = BACKSLASH2.matcher(args).replaceAll("\000");
+        String qsplit[] = ARGUMENT_DELIMITER.splitAsStream(noslash)
+                                            .map(s -> s.replace("\000", "\\"))
+                                            .toArray(String[]::new);
         ArrayList split = new ArrayList();
         int len = (qsplit!=null) ? qsplit.length : 0;
         for (int i=0; i<len; i++) {
