@@ -28,6 +28,8 @@ public class RefinementResolver extends VisitorByCategory {
         String TIME = "time";
         String ENERGY = "energy";
         String READHEXINTS = "readHexInts";
+        String CHR = "chr";
+        String ORD = "ord";
         String DUMPON = "dumpOn";
         String DUMPOFF = "dumpOff";
     }
@@ -153,6 +155,18 @@ public class RefinementResolver extends VisitorByCategory {
                                                     new IntegerType()),
                                                 Declarator.INOUT)
                                         }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.CHR,
+                new FunctionDeclaration(BuiltIn.CHR,
+                                        getDeclarations(getDeclaration("val")),
+                                        new StringType(),
+                                        new SequentialStatement()),
+                BuiltIn.ORD,
+                new FunctionDeclaration(BuiltIn.ORD,
+                                        getDeclarations(
+                                            getDeclaration("str",
+                                                new StringType())),
                                         new IntegerType(),
                                         new SequentialStatement()),
                 BuiltIn.DUMPON,

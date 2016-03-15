@@ -571,6 +571,18 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
 
     protected void _dumpOff() {}
 
+    protected CspInteger _ord(final CspString s) {
+        return new CspInteger(
+                new BigInteger(
+                    CollectionUtils.reverse(s.toString().getBytes())));
+    }
+
+    protected CspString _chr(final CspInteger val) {
+        return new CspString(
+                new String(
+                    CollectionUtils.reverse(val.toBigInteger().toByteArray())));
+    }
+
     /**
      * A function to be run while ~_RESET.  By default it does nothing.  It
      * will be overriden if there is a CSP function called resetNodes().

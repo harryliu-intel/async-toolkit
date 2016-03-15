@@ -375,4 +375,18 @@ public class CollectionUtils {
         }
         return result;
     }
+
+    private static void swap(byte[] x, int i, int j) {
+        byte v = x[i];
+        x[i] = x[j];
+        x[j] = v;
+    }
+
+    public static byte[] reverse(byte[] x) {
+        int j = x.length - 1;
+        for (int i = 0; i < x.length / 2; ++i, --j) {
+            swap(x, i, j);
+        }
+        return x;
+    }
 }
