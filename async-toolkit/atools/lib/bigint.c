@@ -125,14 +125,16 @@ BIGINT *bigint_from_int(int value)
   return b;
   }
 
-/*** create a BIGINT given a long long value ***/
-BIGINT *bigint_from_longlong(long long value)
+/*** create a BIGINT given a unsinged long long value ***/
+BIGINT *bigint_from_ull(unsigned long long value)
   {
   BIGINT *b;
   b = alloc_bigint();
   extend_bigint(b);
+  extend_bigint(b);
   b->value = (int) value;
   b->next->value = (int) (value>>32);
+  b->next->next->value = 0;
   return b;
   }
 
@@ -173,9 +175,9 @@ BIGINT *copy_bigint(BIGINT *b1)
 /********************* arithmetic on BIGINT's ************************/
 
 /*** convert int to long long without sign extension ***/
-long long itoll(int x)
+unsigned long long int_to_ull(int x)
   {
-  return ((long long) x) & 0xFFFFFFFFL;
+  return ((unsigned long long) x) & 0xFFFFFFFFL;
   }
 
 /*** test for 0 ***/
@@ -241,7 +243,7 @@ void canonicalize_bigint(BIGINT *b)
 BIGINT *add_bigint(BIGINT *b1, BIGINT *b2)
   {
   int cin=0,v1=0,v2=0;
-  long long l;
+  unsigned long long l;
   BIGINT *b,*sum;
   b = sum = alloc_bigint();
   while ((b1!=NULL) || (b2!=NULL))
@@ -253,7 +255,7 @@ BIGINT *add_bigint(BIGINT *b1, BIGINT *b2)
     else { v2 = b2->value; b2 = b2->next; }
 
     /*** add ***/
-    l = itoll(v1) + itoll(v2) + itoll(cin);
+    l = int_to_ull(v1) + int_to_ull(v2) + int_to_ull(cin);
     b->value = (int) l;
     cin = ((int) (l>>32))&1;
 
@@ -274,7 +276,7 @@ BIGINT *add_bigint(BIGINT *b1, BIGINT *b2)
 BIGINT *sub_bigint(BIGINT *b1, BIGINT *b2)
   {
   int cin=1,v1=0,v2=0;
-  long long l;
+  unsigned long long l;
   BIGINT *b,*diff;
   b = diff = alloc_bigint();
   while ((b1!=NULL) || (b2!=NULL))
@@ -286,7 +288,7 @@ BIGINT *sub_bigint(BIGINT *b1, BIGINT *b2)
     else { v2 = b2->value; b2 = b2->next; }
 
     /*** subtract ***/
-    l = itoll(v1) + itoll(~v2) + itoll(cin);
+    l = int_to_ull(v1) + int_to_ull(~v2) + int_to_ull(cin);
     b->value = (int) l;
     cin = ((int) (l>>32))&1;
 
@@ -307,7 +309,7 @@ BIGINT *sub_bigint(BIGINT *b1, BIGINT *b2)
 BIGINT *neg_bigint(BIGINT *b1)
   {
   int cin=1,v1=0;
-  long long l;
+  unsigned long long l;
   BIGINT *b,*neg;
   b = neg = alloc_bigint();
   while (b1!=NULL)
@@ -317,7 +319,7 @@ BIGINT *neg_bigint(BIGINT *b1)
     else { v1 = b1->value; b1 = b1->next; }
 
     /*** negate ***/
-    l = itoll(~v1) + itoll(cin);
+    l = int_to_ull(~v1) + int_to_ull(cin);
     b->value = (int) l;
     cin = ((int) (l>>32))&1;
 
@@ -527,7 +529,7 @@ BIGINT *shl_bigint(BIGINT *b1, BIGINT *b2)
   while (b1!=NULL)
     {
     v1 = b1->value;
-    l = (itoll(v1)<<a) | l;
+    l = (int_to_ull(v1)<<a) | l;
     b->value = (int) l;
     b1 = b1->next;
     l = (l>>32) & 0xFFFFFFFFL;
@@ -537,7 +539,7 @@ BIGINT *shl_bigint(BIGINT *b1, BIGINT *b2)
 
   /*** handle overflow ***/
   v1 = (v1<0) ? -1 : 0;
-  b->value = (itoll(v1)<<a) | l;
+  b->value = (int_to_ull(v1)<<a) | l;
 
   /*** canonicalize and return ***/
   free_bigint(b1o);
@@ -579,7 +581,7 @@ BIGINT *shr_bigint(BIGINT *b1, BIGINT *b2)
     else v = (b1->value<0) ? -1 : 0;
 
     /*** shift right ***/
-    l = (itoll(v) << 32) | itoll(b1->value);
+    l = (int_to_ull(v) << 32) | int_to_ull(b1->value);
     l = l>>a;
     b->value = (int) l;
 
@@ -639,7 +641,7 @@ BIGINT *bit_ins_bigint(BIGINT *b1, BIGINT *b2, BIGINT *lo, BIGINT *hi)
       }
 
     /*** pick new value, adjust l ***/
-    l = (itoll(b2->value)<<32) | ((l>>32) & 0xFFFFFFFFL);
+    l = (int_to_ull(b2->value)<<32) | ((l>>32) & 0xFFFFFFFFL);
     v = (int) (l>>(32-ilo));
 
     /*** assign b1 ***/
@@ -691,7 +693,7 @@ BIGINT *bit_ext_bigint(BIGINT *b1, BIGINT *lo, BIGINT *hi)
     if (b1->next==NULL) extend_bigint(b1);
 
     /*** shift right ***/
-    l = (itoll(b1->next->value) << 32) | itoll(b1->value);
+    l = (int_to_ull(b1->next->value) << 32) | int_to_ull(b1->value);
     l = l>>ilo;
     b->value = (int) l;
     if (len<32) b->value = b->value & ~(-1<<len);
@@ -731,7 +733,7 @@ BIGINT *mul_bigint(BIGINT *b1, BIGINT *b2)
     for (p2=t2; p2!=NULL; p2=p2->next)
       {
       /*** accumulate 64 bit product term ***/
-      tmp1 = bigint_from_longlong(itoll(p1->value) * itoll(p2->value));
+      tmp1 = bigint_from_ull(int_to_ull(p1->value) * int_to_ull(p2->value));
       tmp2 = add_bigint(e1,e2);
       tmp3 = shl_bigint(tmp1,tmp2);
       move_bigint(a,add_bigint(a,tmp3));
