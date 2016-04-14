@@ -716,11 +716,11 @@ public class SystemVerilogEmitter extends CommonEmitter {
             arg.accept(this); 
             out.ws(); out.print('?'); out.ws();
             arg = (ExpressionInterface) i.next();
-            lvalues.add(arg);
+            lvalues.remove(arg);
             arg.accept(this); 
             out.ws(); out.print(':'); out.ws();
             arg = (ExpressionInterface) i.next();
-            lvalues.add(arg);
+            lvalues.remove(arg);
             arg.accept(this); 
             return;
         } else if ("random".equals(funcName) ||
