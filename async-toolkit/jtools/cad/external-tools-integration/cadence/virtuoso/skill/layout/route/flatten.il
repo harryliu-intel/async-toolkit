@@ -187,6 +187,7 @@ useICV = t
     prb = (dbCreatePolygon CV (list "prBoundary" "boundary") CV->prBoundary->points)
     (dbSave CV)
     align = gridAlignment[topMetal]
+    (when topMetal==8 align=gridAlignment["lego"]) ; HACK: special case for M8
     (when (CheckPointsOffGrid prb->points align)
       (error "Not all prBoundary vertices are on grid")
       )
