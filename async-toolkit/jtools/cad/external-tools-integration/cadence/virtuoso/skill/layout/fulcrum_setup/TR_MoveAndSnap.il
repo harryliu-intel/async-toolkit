@@ -1,9 +1,9 @@
 ; global variables for alignment
-MoveAndSnap_xSnap=PowerGridPitch
-MoveAndSnap_ySnap=PowerGridPitch*2
+MoveAndSnap_xSnap=pitch_m3
+MoveAndSnap_ySnap=pitch_m4
 
-MoveAndSnapGate_xSnap=GatePitch/2
-MoveAndSnapGate_ySnap=GatePitch
+MoveAndSnapGate_xSnap=GatePitch
+MoveAndSnapGate_ySnap=PowerGridPitch
 
 ; Check to See if the selected objects is out of window
 procedure( TR_MoveAndSnap_ProcCheckWindow( @key
