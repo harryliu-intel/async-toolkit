@@ -824,6 +824,10 @@ primaryExpression
     | TRUE
     | FALSE
     | anonymousArray
+    | s:QuotedString {
+        #s.setType(NUM_INT);
+        #s.setText(com.avlsi.util.math.BigIntegerUtil.fromASCII(#s.getText()).toString());
+      }
     | LPAREN! conditionalInclusiveOrExpression RPAREN!
     | primitiveType LPAREN! coe:conditionalInclusiveOrExpression! RPAREN! {
         #primaryExpression = #( #primaryExpression, #coe );

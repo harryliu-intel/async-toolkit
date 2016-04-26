@@ -572,9 +572,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
     protected void _dumpOff() {}
 
     protected CspInteger _ord(final CspString s) {
-        return new CspInteger(
-                new BigInteger(
-                    CollectionUtils.reverse(s.toString().getBytes())));
+        return new CspInteger(BigIntegerUtil.fromASCII(s.toString()));
     }
 
     protected CspString _chr(final CspInteger val) {

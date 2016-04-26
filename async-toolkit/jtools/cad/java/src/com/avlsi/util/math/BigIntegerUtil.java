@@ -1,6 +1,7 @@
 package com.avlsi.util.math;
 
 import java.math.BigInteger;
+import com.avlsi.util.container.CollectionUtils;
 
 public class BigIntegerUtil {
     private BigIntegerUtil() { }
@@ -56,5 +57,9 @@ public class BigIntegerUtil {
         } else {
             return v.intValue();
         }
+    }
+
+    public static BigInteger fromASCII(final String s) {
+        return new BigInteger(CollectionUtils.reverse(s.getBytes()));
     }
 }
