@@ -1,0 +1,11 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+
+sequence("LongRealPair", "LongRealPair")
+table("TextCard", "Text", "Cardinal")
+
+implementation ("Main")
+
+program ("prsgen")
