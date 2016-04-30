@@ -25,21 +25,13 @@ IMPORT LongRealPairSeq AS LRPairSeq;
 IMPORT LongRealSeq     AS LRSeq;
 
 IMPORT Fmt;
+IMPORT Pathname;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
 
 EXCEPTION Syntax(TEXT);
-
-TYPE
-  Clock = RECORD
-    nm : TEXT;
-    period, duty : LONGREAL;
-  END;
-
-VAR
-  theClock : Clock; (* master clock *)
 
 TYPE
   Struct = RefSeq.T;
@@ -404,7 +396,7 @@ PROCEDURE Setup() =
     OneSeq .addhi(1)
   END Setup;
 
-PROCEDURE MakeTheClock() RAISES { Syntax, Wr.Failure } =
+PROCEDURE MakeTheClock(nm : TEXT) RAISES { Syntax, Wr.Failure } =
   VAR
     rise   := GetLongReal("rise");
     fall   := GetLongReal("fall");
@@ -446,7 +438,7 @@ PROCEDURE MakeTheClock() RAISES { Syntax, Wr.Failure } =
           wf.addhi(LRPair.T { t+hi+fall/2.0d0, 0.0d0 })
         END
       END;
-      EmitWaveform(theClock.nm, wf)
+      EmitWaveform(nm, wf)
     END
   END MakeTheClock;
 
@@ -483,16 +475,9 @@ PROCEDURE ParseInput(rd : Rd.T)
               EVAL params.put(pn, pv)
             END
           ELSIF TE(tk.head, "clock") THEN
-            WITH cn = Tok(tk, 1),
-                 cpt = Tok(tk, 2),
-                 cdt = Tok(tk, 3),
-                 cp = GetLongReal(cpt),
-                 cd = GetLongReal(cdt) DO
+            WITH cn = Tok(tk, 1) DO
               Debug.Out(F("Defining clock %s", cn));
-              EVAL params.put("period", cp);
-              EVAL params.put("duty", cd);
-              theClock := Clock { cn, cp, cd };
-              MakeTheClock()
+              MakeTheClock(cn)
             END
           ELSIF TE(tk.head, "drive") THEN
             WITH nms  = ParseNames(Tok(tk,1)),
@@ -692,7 +677,31 @@ PROCEDURE EmitWaveform(nm : TEXT; wf : Waveform) RAISES { Wr.Failure } =
         Wr.PutText(wr, F("%s %s\n", Fmt.LongReal(p.k1), vs));
       END
     END;
-    Wr.PutText(wr, F("} -repeat 0.0 -real 0.0 -imaginary 0.0 %s\n", nm))
+    Wr.PutText(wr, F("} -repeat 0.0 -real 0.0 -imaginary 0.0 %s\n", nm));
+
+    IF gnuplot # NIL THEN
+      VAR fn := gnuplot & "/" & nm & ".dat";
+          wr : Wr.T;
+      BEGIN
+        TRY
+          wr := FileWr.Open(fn);
+        
+          Wr.PutText(wr, F("%s %s\n", "0.0 ", LongReal(wf.get(0).k2)));
+          FOR i := 0 TO wf.size()-1 DO
+            WITH r = wf.get(i) DO
+              Wr.PutText(wr, F("%s %s\n", LongReal(r.k1), LongReal(r.k2)))
+            END
+          END;
+          Wr.Close(wr)
+        EXCEPT
+          Wr.Failure(x) => Debug.Error("I/O error while writing \"" &
+            fn & "\" : Wr.Failure : " & AL.Format(x))
+        |
+          OSError.E(x) => Debug.Error("Error while opening/closing \"" &
+            fn & "\" : OSError.E : " & AL.Format(x))
+        END
+      END
+    END
   END EmitWaveform;
 
 PROCEDURE EmitHeader() RAISES { Wr.Failure } =
@@ -708,7 +717,8 @@ VAR
   params := NEW(TextLRTbl.Default).init();
   wr := Stdio.stdout;
   rd := Stdio.stdin;
-
+  gnuplot : Pathname.T := NIL;
+  
 PROCEDURE GetLongReal(txt : TEXT) : LONGREAL RAISES { Syntax } =
   BEGIN
     TRY
@@ -729,6 +739,10 @@ PROCEDURE GetLongReal(txt : TEXT) : LONGREAL RAISES { Syntax } =
   
 BEGIN
   TRY
+    IF pp.keywordPresent("-gnuplot") OR pp.keywordPresent("-gp") THEN
+      gnuplot := pp.getNext()
+    END;
+    
     WHILE pp.keywordPresent("-param") OR pp.keywordPresent("-p") DO
       WITH pn = pp.getNext(),
            pvt = pp.getNext(),
@@ -776,9 +790,9 @@ BEGIN
     Syntax(e) =>
     Debug.Error("Syntax error while parsing input : " & e)
   |
-    Rd.Failure(x) => Debug.Error("I/O error while reading input : OSError.E : " & AL.Format(x))
+    Rd.Failure(x) => Debug.Error("I/O error while reading input : Rd.Failure : " & AL.Format(x))
   |
-    Wr.Failure(x) => Debug.Error("I/O error while writing output : OSError.E : " & AL.Format(x))
+    Wr.Failure(x) => Debug.Error("I/O error while writing output : Wr.Failure : " & AL.Format(x))
   END
   
 END Main.

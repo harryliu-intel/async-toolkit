@@ -11,9 +11,8 @@ param period 1000e-12
 param duty      0.50
 
 # clock statement
-# clock name period duty - can use param
-# clock must precede drive statements
-clock clk period duty
+# rise, fall, period, duty must be pre-defined
+clock clk 
 
 # doffset is how long after the clock to trigger the data changes
 # measurement is relative to the half-crossing
@@ -21,6 +20,9 @@ param doffset 600e-12
 
 # params can also be stated on cmd line
 
+# params can be changed as desired and apply to following statements
+param rise 150e-12
+param fall 150e-12
 
 
 # signal is held if nothing else is stated
@@ -30,6 +32,9 @@ drive reset_n       001
 # are arrays always little endian?
 drive addr[0:9]     00010101(0101)
 drive data[0]       00010001(0001)
+
+# make wen a bit later as a demonstration
+param doffset 650e-12
 drive wen           00010101(0101)
 
 drive data[1:39]    0
