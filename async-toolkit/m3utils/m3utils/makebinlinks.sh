@@ -53,6 +53,7 @@ ${ROOT}/calarm/comet/cometcatenate/${BINDIR}/cometcatenate
 ${ROOT}/spice/ct/${BINDIR}/ct
 ${ROOT}/spice/vplot/${BINDIR}/vplot
 ${ROOT}/spice/asserter/${BINDIR}/asserter
+${ROOT}/spice/prsgen/${BINDIR}/prsgen
 ${ROOT}/tcam/schmoozer/${BINDIR}/schmoozer
 ${ROOT}/tcam/spicebuilder/${BINDIR}/spicebuilder
 ${ROOT}/nb/nbavail/${BINDIR}/nbavail

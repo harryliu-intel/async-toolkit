@@ -489,6 +489,8 @@ PROCEDURE ParseInput(rd : Rd.T)
                  cp = GetLongReal(cpt),
                  cd = GetLongReal(cdt) DO
               Debug.Out(F("Defining clock %s", cn));
+              EVAL params.put("period", cp);
+              EVAL params.put("duty", cd);
               theClock := Clock { cn, cp, cd };
               MakeTheClock()
             END
