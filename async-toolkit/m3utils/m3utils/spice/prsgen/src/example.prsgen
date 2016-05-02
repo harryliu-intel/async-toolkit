@@ -48,11 +48,16 @@ drive mask[0:39]    0
 # sign extension...
 drive lhit[0:511]   1
 
-drive cfg[0:11]     =16_cf9
+drive cfg[0:11]     =0=16_cf9
 
 
 probe addr[0:6]
 probe cfg[0:11]
+
+# ranges dont have to go from 0, nor do they have to go up
+# down is OK (means same thing, though, unlike in Verilog)
+probe test_node[0:3][10:1]
+probe lotsa_dimensions[0:3][0:2][11:13][109:111]
 
 # why % here?
 probe islice64_40/chunk_btm/arr[0]/tbit0[31]%a[0]

@@ -24,17 +24,23 @@ PROCEDURE StartsWith(READONLY buf, pfx : ARRAY OF CHAR) : BOOLEAN =
     RETURN NUMBER(buf) >= NUMBER(pfx) AND SUBARRAY(buf,0,NUMBER(pfx)) = pfx
   END StartsWith;
 
+TYPE CSet = SET OF CHAR; 
+CONST iSet = CSet { 'i', 'I' };
+
 PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
 
-  PROCEDURE Push(s, l : CARDINAL) =
+  PROCEDURE Push(s, l : CARDINAL; isCurr : BOOLEAN) =
+    VAR
+      pfx := "";
     BEGIN
-      names.addhi(RenameBack(Text.FromChars(SUBARRAY(line,s,l-s-1))));
+      IF isCurr THEN pfx := "I:" END;
+      names.addhi(pfx & RenameBack(Text.FromChars(SUBARRAY(line,s,l-s-1))));
       INC(c)
     END Push;
 
-  PROCEDURE Get(c : CHAR) =
+  PROCEDURE Get(s : CSet) =
     BEGIN
-      <*ASSERT line[p] = c *>
+      <*ASSERT line[p] IN s *>
       INC(p)
     END Get;
 
@@ -43,17 +49,19 @@ PROCEDURE DoNames(READONLY line : ARRAY OF CHAR; f : BOOLEAN) : CARDINAL =
     c := 0;
     n := NUMBER(line);
     s := 0;
+    isCurr : BOOLEAN;
   BEGIN
     WHILE p < n DO
       IF line[p] = '\'' THEN
         INC(p);
-        Get('v');
-        Get('(');
+        isCurr := line[p] IN iSet; 
+        Get(CSet { 'v', 'V' } + iSet);
+        Get(CSet { '(' } );
         s := p;
         WHILE line[p] # '\'' DO
           INC(p)
         END;
-        Push(s,p)
+        Push(s,p, isCurr)
       END;
       INC(p)
     END;
