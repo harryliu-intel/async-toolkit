@@ -11,28 +11,28 @@ param duty   0.50
 
 clock clk 
 # doffset is how long after the clock to trigger the data changes
-param doffset 600e-12 
+param doffset 300e-12 
 
-drive reset_n       001111111111
-drive addr[0:9]     000101010101
-drive data[0]       000100010001
-drive wen           000101010101
-drive ren           0
-drive ken           0
+drive ~%reset_n         001111111111
+drive {~%addr[0:9]}     000101010101
+drive {~%data[0]}       000100010001
+drive ~%wen             000101010101
+drive ~%ren             0
+drive ~%ken             0
 
-drive data[1:39]    0
-drive mask[0:39]    0
+drive {~%data[1:39]}    0
+drive {~%mask[0:39]}    0
 
-drive lhit[0:511]   1
-drive cfg[0:11]     =16_cf9
-probe addr[0:6]
-probe cfg[0:11]
+drive {~%lhit[0:511]}   1
+drive {~%cfg[0:11]}     =16_cf9
+probe {~%addr[0:6]}
+probe {~%cfg[0:11]}
 
 # why % here?
-probe islice64_40/chunk_btm/arr[0]/tbit0[31]%a[0]
+probe {~/islice64_40/chunk_btm/arr[0]/tbit0[31]%a[0]}
 
-initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x0[0] 1
-initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x0[1] 0
-initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x1[0] 0
-initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x1[1] 1
+initial {~/islice64_40/chunk_btm/arr[0]/tbit0[0]:x0[0]} 1
+initial {~/islice64_40/chunk_btm/arr[0]/tbit0[0]:x0[1]} 0
+initial {~/islice64_40/chunk_btm/arr[0]/tbit0[0]:x1[0]} 0
+initial {~/islice64_40/chunk_btm/arr[0]/tbit0[0]:x1[1]} 1
 

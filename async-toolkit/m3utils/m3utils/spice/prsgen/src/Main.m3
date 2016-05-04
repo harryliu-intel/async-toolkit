@@ -1,5 +1,15 @@
 MODULE Main;
 
+(* 
+   prsgen program
+
+   waveform generator for PRESTO from
+   simple digital file description
+*)
+
+(* Author : mika.nystroem@intel.com *)
+(*          May 3, 2016             *)
+
 IMPORT FileRd;
 IMPORT ParseParams, Stdio;
 IMPORT TextLongRealTbl AS TextLRTbl;
@@ -317,7 +327,7 @@ PROCEDURE ParseVals(token : TEXT) : ValSeq RAISES { Syntax } =
             EVAL GetC();
             SetBase();
             Debug.Out("Set base to " & Int(base))
-          ELSIF c = '=' THEN
+          ELSIF c IN SET OF CHAR { '=', '(', ')' } THEN
             EXIT
           ELSE
             soFar.addhi(GetC())
@@ -371,9 +381,10 @@ PROCEDURE ParseVals(token : TEXT) : ValSeq RAISES { Syntax } =
         IF    c = '=' THEN
           res.cycles.addhi(GetNumber())
         ELSIF c = '(' THEN
-          codaStart := p+1
+          codaStart := res.cycles.size();
+          Debug.Out("codaStart = " & Int(codaStart));
         ELSIF c = ')' THEN
-          res.codaRepeat := p-codaStart;
+          res.codaRepeat := res.cycles.size()-codaStart;
           Debug.Out("codaRepeat = " & Int(res.codaRepeat));
           RETURN res
         ELSIF c = '0' THEN
@@ -639,6 +650,32 @@ PROCEDURE CreateInitial(struct : Struct;
 
   (**********************************************************************)
 
+VAR srcId := 0;
+    
+PROCEDURE MakeSourceName(nm : TEXT) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := 0 TO Text.Length(nm)-1 DO
+      WITH c = Text.GetChar(nm, i) DO
+        CASE c OF
+          '{', '}' => (* skip *)
+        |
+          'a'..'z', 'A'..'Z', '_', '0'..'9' => Wx.PutChar(wx, c)
+        ELSE
+          Wx.PutChar(wx, '_')
+        END
+      END
+    END;
+
+    WITH res = Wx.ToText(wx) &
+         Fmt.Pad(Int(srcId), length := 8, padChar := '0') DO
+      INC(srcId);
+      RETURN res
+    END
+      
+  END MakeSourceName;
+  
 PROCEDURE EmitInitial(nm : TEXT; v : [0..1]) RAISES { Wr.Failure } =
   VAR inits : TEXT;
   BEGIN
@@ -677,7 +714,14 @@ PROCEDURE EmitWaveform(nm : TEXT; wf : Waveform) RAISES { Wr.Failure } =
         Wr.PutText(wr, F("%s %s\n", Fmt.LongReal(p.k1), vs));
       END
     END;
-    Wr.PutText(wr, F("} -repeat 0.0 -real 0.0 -imaginary 0.0 %s\n", nm));
+
+    WITH srcNm = MakeSourceName(nm) DO
+      Wr.PutText(wr, F("} -repeat 0.0 -real 0.0 -imaginary 0.0 %s\n",
+                       srcNm));
+      
+      Wr.PutText(wr, F("set_source -silent -stimuli %s -ref_net gnd %s\n",
+                       srcNm, nm))
+    END;
 
     IF gnuplot # NIL THEN
       VAR fn := gnuplot & "/" & nm & ".dat";

@@ -30,7 +30,8 @@ drive reset_n       001
 
 # repeat group of four:
 # are arrays always little endian?
-drive addr[0:9]     00010101(0101)
+drive addr[0:9]     0     0       0     10101(0101)
+drive bigaddr[0:9]  =10_0 =10_511 =10_0 (=16_1ff =0 =0)
 drive data[0]       00010001(0001)
 
 # make wen a bit later as a demonstration
