@@ -856,4 +856,8 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
             return sb.toString();
         }
     }
+
+    protected CspInteger _walltime() {
+        return new CspInteger(BigInteger.valueOf(System.nanoTime()));
+    }
 }
