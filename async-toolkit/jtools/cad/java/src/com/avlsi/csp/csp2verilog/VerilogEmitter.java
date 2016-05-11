@@ -1027,7 +1027,6 @@ public class VerilogEmitter extends CommonEmitter {
                 printArg(arg2);
             }
             out.println(")");
-            return;
         } else if ("assert".equals(funcName)) {
             final Iterator args = e.getActuals();
             final ExpressionInterface guard = (ExpressionInterface) args.next();
@@ -1046,7 +1045,6 @@ public class VerilogEmitter extends CommonEmitter {
                 message.accept(this);
             }
             out.println(")");
-            return;
         } else if ("choose".equals(funcName)) {
             Iterator i = e.getActuals(); 
             // XXX: Add null exception handling
@@ -1061,7 +1059,6 @@ public class VerilogEmitter extends CommonEmitter {
             arg = (ExpressionInterface) i.next();
             lvalues.remove(arg);
             arg.accept(this); 
-            return;
         } else if ("random".equals(funcName) ||
                    "log2".equals(funcName) ||
                    "log4".equals(funcName)) {
@@ -1071,7 +1068,6 @@ public class VerilogEmitter extends CommonEmitter {
             lvalues.add(arg);
             arg.accept(this); 
             out.println(")");
-            return;
         } else if ("wait".equals(funcName)) {
             final Iterator i = e.getActuals(); 
             out.print("`CAST2VERILOG_WAIT(");
@@ -1079,7 +1075,6 @@ public class VerilogEmitter extends CommonEmitter {
             lvalues.add(arg);
             arg.accept(this); // in DSim units
             out.println(");");
-            return;
         } else if ("string".equals(funcName)) {
             out.print("util.csp_string(");
             for (Iterator i = e.getActuals(); i.hasNext(); ) {
@@ -1089,12 +1084,18 @@ public class VerilogEmitter extends CommonEmitter {
                 if (i.hasNext()) { out.ws(); out.print(','); out.ws(); }
             }
             out.println(")");
-            return;
         } else if ("time".equals(funcName)) {
             out.println("`CAST2VERILOG_TIME");
-            return;
+        } else if ("chr".equals(funcName) || "ord".equals(funcName)) {
+            out.println("csp_string." + funcName + "(");
+            final Iterator<ExpressionInterface> args = e.getActuals();
+            final ExpressionInterface arg = args.next();
+            lvalues.add(arg);
+            arg.accept(this);
+            out.println(")");
+        } else {
+            throw new VisitorException("Unsupported function calls found: " + e.getParseRange().fullString());
         }
-        throw new VisitorException("Unsupported function calls found: " + e.getParseRange().fullString());
     }
 
     public void visitDivideExpression(DivideExpression e)
@@ -1499,29 +1500,6 @@ public class VerilogEmitter extends CommonEmitter {
         }
     }
 
-    private static final Map/*<String,String>*/ BUILTIN_FUNCTIONS =
-        CollectionUtils.mapify(
-            new String[] { "print", "util.display_hex",
-                           "assert", "assert",
-                           "eventQueueIsEmpty", null,
-                           "random", "random",
-                           "srandom", "srandom",
-                           "choose", "choose",
-                           "log2", "log2",
-                           "log4", "log4",
-                           "wait", "wait",
-                           // without function in guards, this isn't very useful
-                           "stable", null,
-                           "string", "string",
-                           "enableDSimErrors", null,
-                           "time", "time",
-                           "pack", "pack",
-                           "unpack", "unpack",
-                           "energy", "energy",
-                           "readHexInts", "readHexInts",
-                           "dumpOff", "dumpOff",
-                           "dumpOn", "dumpOn" });
-
     private String getFullName(
             final FunctionDeclaration decl,
             final List/*<Object>*/ arrayArg) throws VisitorException {
@@ -1816,30 +1794,26 @@ public class VerilogEmitter extends CommonEmitter {
             final ExpressionInterface func = e.getFunctionExpression();
             if (func instanceof IdentifierExpression) {
                 name = ((IdentifierExpression) func).getIdentifier();
-                name = (String) BUILTIN_FUNCTIONS.get(name);
-                if (name == null) {
-                    throw new VisitorException(
-                            "Unsupported builtin function at " +
-                            e.getParseRange().fullString());
-                } else if (name == "util.display_hex" || name == "wait" ||
-                           name == "assert") { 
+                if (name.equals("print") || name.equals("wait") ||
+                    name.equals("assert")) { 
                     visitFunctionCallExpression(e); // process builtin funcs 
-                } else if (name == "srandom") {
+                } else if (name.equals("srandom")) {
                     System.out.println("N.B. srandom() function being skipped");
-                } else if (name == "choose" || name == "random" ||
-                           name == "string" || name == "log2" ||
-                           name == "log4" || name == "time") { 
+                } else if (name.equals("choose") || name.equals("random") ||
+                           name.equals("string") || name.equals("log2") ||
+                           name.equals("log4") || name.equals("time") ||
+                           name.equals("ord") || name.equals("chr")) { 
                     lhs.accept(this);
                     out.print(" = ");
                     visitFunctionCallExpression(e); // process builtin funcs 
                     out.println(" ; ");
-                } else if (name == "pack") {
+                } else if (name.equals("pack")) {
                     lhs.accept(this);
                     out.print(" = { ");
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     emitPack(i.next());
                     out.println(" }; ");
-                } else if (name == "unpack") {
+                } else if (name.equals("unpack")) {
                     out.print("{ ");
                     final Iterator i = e.getActuals();
                     final ExpressionInterface structure =
@@ -1849,9 +1823,9 @@ public class VerilogEmitter extends CommonEmitter {
                     ((ExpressionInterface) i.next()).accept(this);
                     out.println(" ;");
                     emitUnpack(structure);
-                } else if (name == "energy") {
+                } else if (name.equals("energy")) {
                     // do nothing
-                } else if (name == "readHexInts") {
+                } else if (name.equals("readHexInts")) {
                     final Iterator<ExpressionInterface> i = e.getActuals();
                     final ExpressionInterface file = i.next();
                     final ExpressionInterface count = i.next();
@@ -1878,10 +1852,15 @@ public class VerilogEmitter extends CommonEmitter {
                     out.print(",");
                     lhs.accept(this);
                     out.println(");");
-                } else if (name == "dumpOn") {
+                } else if (name.equals("dumpOn")) {
                     out.println("`CAST2VERILOG_DUMP_ON");
-                } else if (name == "dumpOff") {
+                } else if (name.equals("dumpOff")) {
                     out.println("`CAST2VERILOG_DUMP_OFF");
+                } else {
+                    // not supported: eventQueueIsEmpty, stable, enableDSimErrors
+                    throw new VisitorException(
+                            "Unsupported builtin function at " +
+                            e.getParseRange().fullString());
                 }
             } else {
                 throw new VisitorException("Call to unknown function at " +

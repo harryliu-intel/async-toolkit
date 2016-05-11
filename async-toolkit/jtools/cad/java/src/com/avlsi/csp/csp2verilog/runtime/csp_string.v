@@ -103,6 +103,32 @@ begin
     end
 end
 endfunction
+
+function [`CSP_STRING_WHOLE] reverse(input [`CSP_STRING_WHOLE] s);
+integer i, l;
+begin
+    l = s[`CSP_STRING_LENGTH];
+    for (i = 0; i < l; i = i + 1) begin
+        reverse[(i + 1) * 8 -: 8] = s[(l - i) * 8 -: 8];
+    end
+    reverse[`CSP_STRING_LENGTH] = s[`CSP_STRING_LENGTH];
+end
+endfunction
+
+function [`CSP_STRING_WHOLE] ord(input [`CSP_STRING_WHOLE] val);
+`CSP_STRING rev;
+begin
+    rev = reverse(val);
+    ord = rev[`CSP_STRING_ASCII];
+end
+endfunction
+
+function [`CSP_STRING_WHOLE] chr(input [`CSP_STRING_ASCII] val);
+begin
+    chr = reverse(inits(val));
+end
+endfunction
+
 endmodule
 
 `ifdef CSP_STRING_SELF_TEST
