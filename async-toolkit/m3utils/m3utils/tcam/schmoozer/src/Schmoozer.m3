@@ -144,6 +144,16 @@ VAR
                  nm := "clk",
                  flag := "clk",
                  saneMin := 100.0d6, saneMax := 20.0d9).init();
+
+  deckP   := NEW(DiscreteParam,
+                 nm := "deck",
+                 flag := "deck",
+                 vals := RT(TA { 
+                                 "bothrs", (* s.b. default *)
+                                 "writers",
+                                 "readrs",
+                                 "nors"
+  })).init();
   
 PROCEDURE RT(READONLY z : TA) : REF TA =
   VAR
@@ -344,16 +354,43 @@ PROCEDURE Run(s : RefSeq.T) =
       missing := NIL;
 
       IF c = 100 THEN
-        missing := SearchForLostLambs();
-        c := 0
+        TRY
+          missing := SearchForLostLambs();
+          c := 0
+        EXCEPT
+          ProcUtils.ErrorExit(x) =>
+          Debug.Warning("SearchForLostLambs raised ErrorExit : " &
+            Debug.UnNil(x.error))
+        |
+          Rd.Failure(x) =>
+          Debug.Warning("SearchForLostLambs raised Rd.Failure : " &
+            AL.Format(x))
+        |
+          OSError.E(x) =>
+          Debug.Warning("SearchForLostLambs raised OSError.E : " &
+            AL.Format(x))
+        |
+          Parse =>
+          Debug.Warning("SearchForLostLambs couldnt parse output")
+        END
       ELSE
         INC(c)
       END;
 
       (* missing may be NIL *)
 
-      IF NOT SearchForResults(missing) THEN
-        Thread.Pause(0.10d0);
+      TRY
+        IF NOT SearchForResults(missing) THEN
+          Thread.Pause(0.10d0);
+        END
+      EXCEPT
+        OSError.E(x) => Debug.Error("Schmoozer.Run SearchForResults : OSError.E : " &
+          AL.Format(x))
+      |
+        Rd.Failure(x) => Debug.Error("Schmoozer.Run SearchForResults : Rd.Failure : " &
+          AL.Format(x))
+      |
+        Parse => Debug.Error("Schmoozer.Run SearchForResults : parse error")
       END;
 
       IF missing # NIL THEN
@@ -386,7 +423,10 @@ PROCEDURE RelaunchLostLambs(lambs : IntSet.T) =
     
   END RelaunchLostLambs;
 
-PROCEDURE SearchForLostLambs() : IntSet.T =
+EXCEPTION Parse;
+          
+PROCEDURE SearchForLostLambs() : IntSet.T
+  RAISES { ProcUtils.ErrorExit, Rd.Failure, OSError.E, Parse } =
   VAR
     cmd := "nbqstat user=" & user;
     dummy : CARDINAL;
@@ -432,6 +472,8 @@ PROCEDURE SearchForLostLambs() : IntSet.T =
         END
       EXCEPT
         Rd.EndOfFile => (* skip *)
+      |
+        TextReader.NoMore, FloatMode.Trap, Lex.Error => RAISE Parse
       END
     END;
 
@@ -447,7 +489,8 @@ PROCEDURE SearchForLostLambs() : IntSet.T =
     RETURN lambs
   END SearchForLostLambs;
 
-PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN =
+PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN
+  RAISES { OSError.E, Parse, Rd.Failure } =
   (* missing may be NIL *)
 
   PROCEDURE RemoveFromMissing() =
@@ -494,47 +537,47 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN =
       END
     END MarkAsNotRunning;
 
-  PROCEDURE ProcessOutput(mn : MeshNode; ln : TEXT) =
+  PROCEDURE ProcessOutput(mn : MeshNode; ln : TEXT) RAISES { OSError.E } =
     BEGIN
-          IF    TE(ln, "PASS") THEN
-            mn.state := NodeState.Pass
-          ELSIF TE(ln, "FAIL") THEN
-            mn.state := NodeState.Fail
-          ELSIF  TE(ln, "NOTYET") THEN
-            mn.state := NodeState.ErrorExit
-          ELSE
-            Debug.Warning("Unknown result \"" & ln & "\", marking as error");
-            mn.state := NodeState.ErrorExit
-          END;
-          ChangedState(mn);
-
-          WITH wr = FileWr.Open(resultsDn & "/" & fn),
-               sWr = pfWr[mn.state] DO
-            
-            Wr.PutText(r1Wr, fn); Wr.PutChar(r1Wr, ' ');
-            
-            FOR i := FIRST(mn.args^) TO LAST(mn.args^) DO
-              WITH cmd = mn.args[i].format() DO
-                Wr.PutText(wr, cmd);
-                Wr.PutChar(wr, '\n');
-                
-                Wr.PutText(r1Wr, cmd); Wr.PutChar(r1Wr, ' ');
-                Wr.PutText(sWr, cmd); Wr.PutChar(sWr, ' ')
-              END
-            END;
-            Wr.PutText(wr, "PassFail ");
-            Wr.PutText(wr, NodeStateNames[mn.state]);
+      IF    TE(ln, "PASS") THEN
+        mn.state := NodeState.Pass
+      ELSIF TE(ln, "FAIL") THEN
+        mn.state := NodeState.Fail
+      ELSIF  TE(ln, "NOTYET") THEN
+        mn.state := NodeState.ErrorExit
+      ELSE
+        Debug.Warning("Unknown result \"" & ln & "\", marking as error");
+        mn.state := NodeState.ErrorExit
+      END;
+      ChangedState(mn);
+      
+      WITH wr = FileWr.Open(resultsDn & "/" & fn),
+           sWr = pfWr[mn.state] DO
+        
+        Wr.PutText(r1Wr, fn); Wr.PutChar(r1Wr, ' ');
+        
+        FOR i := FIRST(mn.args^) TO LAST(mn.args^) DO
+          WITH cmd = mn.args[i].format() DO
+            Wr.PutText(wr, cmd);
             Wr.PutChar(wr, '\n');
-            Wr.Close(wr);
-
-            Wr.PutText(r1Wr, NodeStateNames[mn.state]);
-            Wr.PutChar(r1Wr, '\n');
-            Wr.Flush(r1Wr);
-            Wr.PutChar(sWr, '\n');
-            Wr.Flush(sWr);
+            
+            Wr.PutText(r1Wr, cmd); Wr.PutChar(r1Wr, ' ');
+            Wr.PutText(sWr, cmd); Wr.PutChar(sWr, ' ')
           END
-        END ProcessOutput;
-
+        END;
+        Wr.PutText(wr, "PassFail ");
+        Wr.PutText(wr, NodeStateNames[mn.state]);
+        Wr.PutChar(wr, '\n');
+        Wr.Close(wr);
+        
+        Wr.PutText(r1Wr, NodeStateNames[mn.state]);
+        Wr.PutChar(r1Wr, '\n');
+        Wr.Flush(r1Wr);
+        Wr.PutChar(sWr, '\n');
+        Wr.Flush(sWr);
+      END
+    END ProcessOutput;
+    
   VAR
     found := FALSE;
     iter  := FS.Iterate(doneDn);
@@ -543,6 +586,7 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN =
     r  : REFANY;
     foundSet := NEW(CardSetDef.T).init();
   BEGIN
+    TRY
     WHILE iter.next(fn) DO
       found := TRUE;
       Debug.Out("Found \"" & fn & "\"");
@@ -564,6 +608,9 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN =
           Debug.Warning(F("Received result for unknown job %s", Int(i)))
         END
       END
+    END
+    EXCEPT
+      FloatMode.Trap, Lex.Error, Rd.EndOfFile => RAISE Parse
     END;
 
     (* sequencing here is very tricky!!!! *)
@@ -930,7 +977,8 @@ PROCEDURE FindJobByNbId(nbId : INTEGER; VAR nbCmd : NbCommand.T) : BOOLEAN =
     RETURN FALSE
   END FindJobByNbId;
 
-PROCEDURE IntAfter(in, word : TEXT) : INTEGER RAISES { Lex.Error } =
+PROCEDURE IntAfter(in, word : TEXT) : INTEGER
+  RAISES { Lex.Error, FloatMode.Trap } =
   TYPE
     SC = SET OF CHAR;
   VAR
@@ -999,8 +1047,18 @@ PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
 
             success := TRUE; EXIT
           EXCEPT
+            OSError.E, Rd.Failure =>
+            Debug.Warning("LaunchApply : caught OSError or Rd.Failure");
+            Thread.Pause(100.0d0)
+            
+          |
+            FloatMode.Trap, Lex.Error =>
+            Debug.Warning("LaunchApply : caught FloatMode.Trap or Lex.Error");
+            Thread.Pause(100.0d0)
+            
+          |
             ProcUtils.ErrorExit(x) =>
-            Debug.Warning("raised error : " & ProcUtils.FormatError(x));
+            Debug.Warning("LaunchApply : caught error ErrorExit : " & ProcUtils.FormatError(x));
             Thread.Pause(10.0d0)
           END
         END;
@@ -1020,6 +1078,12 @@ PROCEDURE GetLaunchQuota() : CARDINAL =
       TRY
         RETURN Scan.Int(ProcUtils.ToText("nbavail")) 
       EXCEPT
+        OSError.E(x) => 
+        Debug.Warning("Trouble running nbavail: OSError.E " & AL.Format(x))
+      |
+        Rd.Failure(x) => 
+        Debug.Warning("Trouble running nbavail: Rd.Failure " & AL.Format(x))
+      |
         ProcUtils.ErrorExit(x) => 
         Debug.Warning("Trouble running nbavail: " & ProcUtils.FormatError(x));
       |
@@ -1141,6 +1205,24 @@ PROCEDURE QuickSim() =
             min := 25.0d0, max := 25.0d0, step := 1.0d0));
   END QuickSim;
 
+PROCEDURE LatchSim() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := 25.0d0, max := 25.0d0, step := 1.0d0));
+
+    (* for now: bigtime hack, add this last: *)
+    Add(NEW(Variety, param := deckP  , cover := RT(TA {   "bothrs", "readrs", "writers", "nors" })));
+    Add(NEW(Schmoo, 
+            param   := RP01 {    vddP,     clkP },
+            min     := LR01 {  0.50d0,  300.0d6 },
+            max     := LR01 {  1.20d0, 2600.0d6 },
+            minStep := LR01 {  0.002d0,   4.0d6 },
+            maxStep := LR01 {  0.050d0,  200.0d6 }));
+  END LatchSim;
+
 PROCEDURE ThreeCornerSim() =
   BEGIN
     (* what's going on with temperature? *)
@@ -1243,6 +1325,8 @@ BEGIN
   resultsFn := rootDn & "/results.dat"; (* single file *)
   clogFn    := rootDn & "/commands.dat";
 
+  <*FATAL OSError.E*>
+  BEGIN
   FS.CreateDirectory(rootDn); (* source of everything *)
   FS.CreateDirectory(doneDn);
   FS.CreateDirectory(resultsDn);
@@ -1258,14 +1342,15 @@ BEGIN
   END;
 
   absRoot := FS.GetAbsolutePathname(rootDn);
+  END;
 
 (*  SimulatorSim();*)
 
 (*  SevenCornerSim();*)
 (*  WideSim(); *)
-(*  QuickSim();*)
+  LatchSim();
 (*  SingleSim(); *)
-  SpfSim();
+(*  SpfSim(); *)
 
   Run(settings);
   Wr.Close(r1Wr);
