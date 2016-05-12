@@ -129,11 +129,11 @@ BEGIN
 
   BEGIN
     IF workingHours THEN
-      maxRunning :=  600;
+      maxRunning :=  800;
       maxWaiting :=    1 + 
-                           MAX(ROUND(FLOAT (maxRunning - runners,REAL)/FLOAT(maxRunning,REAL) * 100.0),0)
+                           MAX(ROUND(FLOAT (maxRunning - runners,REAL)/FLOAT(maxRunning,REAL) * 50.0),0)
     ELSE
-      maxRunning := 2000;
+      maxRunning := 2400;
       maxWaiting :=   50
     END;
 
