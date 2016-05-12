@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import java.text.MessageFormat;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import com.avlsi.cast.CastFileParser;
 import com.avlsi.cast.CastSemanticException;
@@ -134,6 +135,8 @@ public class Cast2Verilog {
         "CAST2VERILOG_ANNOTATE_EXTRADELAY";
     private static final String moduleInstanceName =
         "CAST2VERILOG_INSTANCE";
+    private static final String dutInstance = "x";
+    private static final String envInstance = "_env";
 
     private final Map subcellNames;
 
@@ -168,6 +171,12 @@ public class Cast2Verilog {
      * redefinition.
      **/
     private boolean generateIfDef;
+
+    /**
+     * Whether to generate a full testbench that will drive the supplies
+     * and reset.
+     **/
+    private boolean generateTb;
 
     /**
      * Set to true if errors were encountered during translation.
@@ -768,7 +777,8 @@ public class Cast2Verilog {
                    final CoSimParameters params,
                    final int registerBitWidth,
                    final boolean enableSystemVerilog,
-                   final boolean generateIfDef) {
+                   final boolean generateIfDef,
+                   final boolean generateTb) {
         this.subcellNames = new HashMap();
         this.convertedCells = new HashSet /*<String>*/ (); 
         this.warningWriter = warningWriter;
@@ -781,6 +791,7 @@ public class Cast2Verilog {
         this.leafExtraDelay = new HashMap();
         this.enableSystemVerilog = enableSystemVerilog;
         this.generateIfDef = generateIfDef;
+        this.generateTb = generateTb;
         this.errorExist = false;
     }
 
@@ -986,6 +997,30 @@ public class Cast2Verilog {
         }
     }
 
+    private void getTbDirective(final CellInterface cell,
+                                final AliasedSet aliases,
+                                final HierName prefix,
+                                final String directive,
+                                final Map<HierName,String> result) {
+        final Set<HierName> nodes = (Set<HierName>)
+            DirectiveUtils.getExplicitTrues(
+                DirectiveUtils.getTopLevelDirective(cell,
+                    directive, DirectiveConstants.NODE_TYPE));
+        nodes.stream()
+             .map(h -> (HierName) aliases.getCanonicalKey(HierName.append(prefix, h)))
+             .filter(h -> h != null)
+             .forEach(h -> result.put(h, directive));
+    }
+
+    private void getTbDirective(final CellInterface cell,
+                                final AliasedSet aliases,
+                                final HierName prefix,
+                                final Map<HierName,String> result) {
+        getTbDirective(cell, aliases, prefix, DirectiveConstants.GROUND_NET, result);
+        getTbDirective(cell, aliases, prefix, DirectiveConstants.POWER_NET, result);
+        getTbDirective(cell, aliases, prefix, DirectiveConstants.RESET_NET, result);
+    }
+
     // Convert cell to verilog and emit to file 
     private String convert(final /*@ non_null @*/ CellInterface cell,
                            final HierName prefix,
@@ -1006,6 +1041,22 @@ public class Cast2Verilog {
             " prefix = " + (prefix == null ? "null" : prefix.getAsString('.')) +
             " behavior = " + (beh == null ? "null" : beh.toString());
         logger.info("begin convert " + logstr);
+
+        final Map<HierName,String> tbNets = new TreeMap<HierName,String>();
+        if (topLevel && generateTb) {
+            final AliasedSet aliases =
+                getCadencize(false).convert(cell).getLocalNodes();
+            getTbDirective(cell, aliases, null, tbNets);
+            if (tbNets.isEmpty()) {
+                // TODO: need to look at the environment as well
+                final HierName hDut = HierName.makeHierName(dutInstance);
+                final CellInterface dut = cell.getSubcell(hDut);
+                if (dut != null) {
+                    getTbDirective(dut, aliases, hDut, tbNets);
+                }
+            }
+        }
+
         if (beh == Mode.SUBCELLS) {
             // map from instance name to converted module name
             final Map<HierName,String> subcells =
@@ -1072,11 +1123,13 @@ public class Cast2Verilog {
 
             // determine if this subcell has been processed already
             final String suffix = narrowPort ? "$narrow" : "";
-            result = getSubcellName(type + suffix, subcells);
+            result = topLevel && generateTb ? "TESTBENCH"
+                                            : getSubcellName(type + suffix, subcells);
             if (convertedCells.add(result)) {
                 ifdef(result, out);
                 emitModuleForCellWithSubcells(cell, prefix, result, subcells,
-                                              topLevel, narrowInstances, out);
+                                              topLevel, tbNets, narrowInstances,
+                                              out);
                 endif(out);
             }
         } else if (beh == Mode.CSP) {
@@ -2030,6 +2083,7 @@ public class Cast2Verilog {
             "    [--ifdef] (surround module definitions with ifdef)\n" +
             "    [--file-list=<file>] (Verilog block dependencies)\n" +
             "    [--behavior-report=<file>] (report CSP and PRS instances)\n" +
+            "    [--generate-testbench] (generate simple testbench)\n" +
             "    [--version] (print version information)\n");
         System.exit(1);
     }
@@ -2103,18 +2157,18 @@ public class Cast2Verilog {
         final CellInterface cell = cfp.getFullyQualifiedCellPretty(cellName, 2);
 
         final CoSimParameters params = new CoSimParameters();
-        CoSimHelper.setCoSimParams("x", cell, cosim.getCoSimSpecList(), params,
+        CoSimHelper.setCoSimParams(dutInstance, cell, cosim.getCoSimSpecList(), params,
                                    null, false);
 
         final HierName instanceName;
         final CellInterface cellEnv;
         if (envName == null) {
-            instanceName = HierName.makeHierName("x");
+            instanceName = HierName.makeHierName(dutInstance);
             cellEnv = cell;
         } else {
             try {
                 final CellInterface envCell = cell.getEnvironment(envName);
-                CoSimHelper.setCoSimParams("_env", envCell,
+                CoSimHelper.setCoSimParams(envInstance, envCell,
                              new CoSimSpecList(
                                  new CoSimSpec[] { cosim.getEnvSpec() }),
                              params, null, false);
@@ -2128,7 +2182,7 @@ public class Cast2Verilog {
             final CellImpl impl =
                 CellUtils.getEnvWithCell(cell, envName,
                                          cell.getType() + "_" + envName,
-                                         "_env", "x");
+                                         envInstance, dutInstance);
 
             // bring the implied ports up to the cell enclosing the original
             // cell and the environment
@@ -2143,7 +2197,7 @@ public class Cast2Verilog {
 
             // create port definitions for the implied ports, and setup
             // connections
-            final HierName instance = HierName.makeHierName("x");
+            final HierName instance = HierName.makeHierName(dutInstance);
             for (Iterator i = cell.getPortDefinitions(); i.hasNext(); ) {
                 final PortDefinition def = (PortDefinition) i.next();
                 if (cell.isImpliedPort(def.getName())) {
@@ -2230,10 +2284,11 @@ public class Cast2Verilog {
         final boolean enableSystemVerilog =
             theArgs.argExists("enable-system-verilog");
         final boolean generateIfDef = theArgs.argExists("ifdef");
+        final boolean generateTb = theArgs.argExists("generate-testbench");
         final Cast2Verilog c2v = new Cast2Verilog(systemErrWriter, 
              systemErrWriter, systemErrWriter, params,
              Integer.parseInt(registerWidth), enableSystemVerilog,
-             generateIfDef);
+             generateIfDef, generateTb);
         c2v.emitHelperFunctions(out);
         c2v.convert(cellEnv, instanceName, out, behOut, theArgs);
         if (c2v.checkError()) {
@@ -2362,16 +2417,40 @@ public class Cast2Verilog {
             final String moduleName,
             final Map<HierName,String> subcells, 
             final boolean topLevel,
+            final Map<HierName,String> tbNets,
             final Set/*<HierName>*/ narrowInstances,
             PrintWriter out) {
 
         // write out header for module
         out.println("module \\" + moduleName + " (");
         new EmitFlatPortDeclarations(new Separator(out),
-                dir -> (dir > 0 ? "output" : "input"), "",
+                dir -> (dir > 0 ? "output" : "input"),
+                h -> tbNets.containsKey(HierName.makeHierNameUnchecked(h, '.')),
+                "",
                 narrowInstances.contains(null))
             .mark(cell.getCSPInfo().getPortDefinitions());
         out.println(");");
+
+        for (Map.Entry<HierName,String> tbNet : tbNets.entrySet()) {
+            final List<String> resets = new ArrayList<>();
+            final String net =
+                VerilogUtil.escapeIfNeeded(tbNet.getKey().getAsString('.'));
+            if (tbNet.getValue().equals(DirectiveConstants.GROUND_NET)) {
+                out.println("supply0 " + net + ";");
+            } else if (tbNet.getValue().equals(DirectiveConstants.POWER_NET)) {
+                out.println("supply1 " + net + ";");
+            } else if (tbNet.getValue().equals(DirectiveConstants.RESET_NET)) {
+                out.println("wire " + net + ";");
+                resets.add(net);
+            }
+            if (!resets.isEmpty()) {
+                out.println("`CAST2VERILOG_RESET #(.RESETS(" + resets.size() + ")) " +
+                            VerilogUtil.escapeIfNeeded("cast2verilog$reset") +
+                            "(.reset_n(" +
+                            resets.stream().collect(Collectors.joining(", ", "{", "}")) +
+                            "));");
+            }
+        }
 
         final Map flattenNodes = new HashMap();
         for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
@@ -2495,7 +2574,9 @@ public class Cast2Verilog {
             }
 
             // emit the subcell module instantiation
-            out.println('\\' + convertedName + "  \\" + instanceName + "  (");
+            out.println(VerilogUtil.escapeIfNeeded(convertedName) + " " +
+                        VerilogUtil.escapeIfNeeded(instanceName.toString()) +
+                        " (");
             final Separator sout = new Separator(out);
             for (Triplet<PortTypeInterface,String,List<String>> triple : actualPorts) {
                 final PortTypeInterface type = triple.getFirst();
@@ -2969,13 +3050,22 @@ public class Cast2Verilog {
         private final Separator out;
         private final IntFunction<String> netTypeFunction;
         private final String suffix;
+        private final Predicate<String> omit;
         public EmitFlatPortDeclarations(final Separator out,
                                         final IntFunction<String> netTypeFunction,
+                                        final String suffix,
+                                        final boolean narrowPorts) {
+            this(out, netTypeFunction, x -> false, suffix, narrowPorts);
+        }
+        public EmitFlatPortDeclarations(final Separator out,
+                                        final IntFunction<String> netTypeFunction,
+                                        final Predicate<String> omit,
                                         final String suffix,
                                         final boolean narrowPorts) {
             super(narrowPorts);
             this.out = out;
             this.netTypeFunction = netTypeFunction;
+            this.omit = omit;
             this.suffix = suffix;
         }
         protected void mark(final ChannelType channelType, final String name,
@@ -2993,8 +3083,10 @@ public class Cast2Verilog {
                 width = "";
             }
             final String newName = arrayName(nodeType, name, inArray, false);
-            out.print(netTypeFunction.apply(direction) + " " + width +
-                      VerilogUtil.escapeIfNeeded(newName));
+            if (!omit.test(newName)) {
+                out.print(netTypeFunction.apply(direction) + " " + width +
+                          VerilogUtil.escapeIfNeeded(newName));
+            }
         }
     }
 
