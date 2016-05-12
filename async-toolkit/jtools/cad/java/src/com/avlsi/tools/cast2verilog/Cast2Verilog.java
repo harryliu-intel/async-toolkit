@@ -132,6 +132,8 @@ public class Cast2Verilog {
         "CAST2VERILOG_ANNOTATE_DELAYBIAS";
     private static final String extraDelayAnnotationName =
         "CAST2VERILOG_ANNOTATE_EXTRADELAY";
+    private static final String moduleInstanceName =
+        "CAST2VERILOG_INSTANCE";
 
     private final Map subcellNames;
 
@@ -3079,7 +3081,7 @@ public class Cast2Verilog {
         throws SemanticException {
 
         final String bodyName = moduleName + (emitSlackWrappers ? "$body" : "");
-        out.println("module \\" + bodyName + " (");
+        out.println("module " + VerilogUtil.escapeIfNeeded(bodyName) + "(");
 
         final Separator sout = new Separator(out);
         walkPortList(
@@ -3090,6 +3092,10 @@ public class Cast2Verilog {
         emitTimeScale(out);
 
         final String resetName = getResetName(cell);
+
+        out.println("string " + moduleInstanceName +
+                    (emitSlackWrappers ? "" : " = $psprintf(\"%m\")") +
+                    ";");
 
         // initialize port variables
         out.println("always @(negedge " + resetName + " )");
@@ -3169,7 +3175,7 @@ public class Cast2Verilog {
             PrintWriter out) {
 
         // emit module name and port list declaration
-        out.println("module \\" + moduleName + " (");
+        out.println("module " + VerilogUtil.escapeIfNeeded(moduleName) + "(");
         new EmitFlatPortDeclarations(new Separator(out),
                 dir -> (dir > 0 ? "output" : "input"), "", false)
             .mark(cell.getCSPInfo().getPortDefinitions());
@@ -3213,6 +3219,9 @@ public class Cast2Verilog {
                                          bundleSuffix));
         out.println(";");
 
+        out.println("initial " + VerilogUtil.escapeIfNeeded(bodyName) + "." + 
+                    moduleInstanceName + " = $psprintf(\"%m\");");
+
         new EmitSlackWrappers(out, bundleSuffix, getResetName(cell),
                 x -> DirectiveUtils.getTiming(cell, block, x, 0))
             .mark(cell.getCSPInfo().getPortDefinitions());
@@ -3242,7 +3251,7 @@ public class Cast2Verilog {
         }
        
         // instance name = "body" for now
-        out.println('\\' + bodyName + "  body(");
+        out.println(VerilogUtil.escapeIfNeeded(bodyName) + " body(");
         walkPortList(
                 cell.getCSPInfo(), false,
                 new EmitBodyInstantiation(new Separator(out), bundleSuffix));

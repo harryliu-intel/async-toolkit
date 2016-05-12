@@ -15,8 +15,7 @@
     begin                                                                     \
         var string __msg;                                                     \
         __msg = __csp_to_sv_string(msg);                                      \
-        $write("%t: %m: %s\n", $time, __msg);                                 \
-        $display("%s\n", __msg);                                              \
+        $write("%t: %s: %s\n", $time, CAST2VERILOG_INSTANCE, __msg);          \
     end
 
 `define CAST2VERILOG_CSP_PRINT2(tag, msg)                                     \
@@ -25,8 +24,7 @@
         var string __msg, __tag;                                              \
         __msg = __csp_to_sv_string(msg);                                      \
         __tag = __csp_to_sv_string(tag);                                      \
-        $write("%t: %m: %s (tag: %s)\n", $time __msg, __tag);                 \
-        $display("%s (tag: %s)\n", __msg, __tag);                             \
+        $write("%t: %s: %s (tag: %s)\n", $time, CAST2VERILOG_INSTANCE, __msg, __tag); \
     end
 
 `else
