@@ -379,9 +379,10 @@ VAR
     SN := LAST(CARDINAL)
   };
     
-  I0 := SI( 0);
-  I1 := SI( 1);
-  IN1:= SI(-1);
+  I0   := SI( 0);
+  I1   := SI( 1);
+  Icf9 := SI(16_cf9);
+  IN1  := SI(-1);
 
 CONST DutName = "X1";
 
@@ -414,6 +415,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     cyc : LONGREAL;
     pt := ProgType.Def;
     spfParam     := 0.0d0;
+    verboseNodes : BOOLEAN;
 
   PROCEDURE RunTheProgram(pt : ProgType) =
     BEGIN
@@ -431,6 +433,8 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     IF pp.keywordPresent("-extractpath") THEN extractPath := pp.getNext() END;
 
     IF pp.keywordPresent("-spf") THEN spfParam := pp.getNextLongReal() END;
+
+    verboseNodes := pp.keywordPresent("-verbosenodes");
 
     IF pp.keywordPresent("-prog") THEN
       VAR found := FALSE;
@@ -471,14 +475,14 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
 
     RunTheProgram(pt);
 
-    Compile(prog, Seq);
+    Compile(prog, Seq, FALSE);
 
     SimDumper.SetDutName(DutName);
     AddNodes(ClockName  , Scalar        , theClock                        );
     AddNodes("VDD"      , Scalar        , NEW(IntegerSrc, val := I1     ) );
     AddNodes("VSS"      , Scalar        , NEW(IntegerSrc, val := I0     ) );
     
-    AddNodes("CFG"      , Dims.T { C.CN } , NEW(IntegerSrc, val := I0     ) );
+    AddNodes("CFG"      , Dims.T { C.CN } , NEW(IntegerSrc, val := Icf9   ) );
 
     AddNodes("ADDR"     , Dims.T { C.LN } , NEW(SeqSrc    , q := Seq[V.Addr]
                                                         , c := theClock ) );
@@ -520,10 +524,15 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
                                "WEN" });
 
 
-(*
-  SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %s* -limit 2\"", SimDumper.Renamer(DutName & ".")))
-*)
-
+  IF verboseNodes THEN
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %s* -limit 2\"", SimDumper.Renamer(DutName & "."))); 
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xmid[0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xinputs.* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xchunk[0].Xe[0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xchunk[0].Xz[0].Xz[0][0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xctrl.* -limit 10\"", SimDumper.Renamer(DutName & ".")))
+  END
+    
 END Build;
 
 PROCEDURE GetModel() : SimModel.T = 
@@ -553,18 +562,24 @@ PROCEDURE DefProgram(prog : CommandSeq.T) =
     AddCmd(  Cmd { V.Rset                    });
     AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ,            -1,  0 }); (* 4.5 *)
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ,            -1,  1 }); (* 6.5 *)
+    AddCmd(  Cmd { V.Nop                     });
     (* works if no more writes here *)
 
     AddCmd(  Cmd { V.Look,             0     });
 
     AddCmd(  Cmd { V.Writ, 16_00c0edbabe,  2 });
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ, 16_00c001d00d,  3 });
+    AddCmd(  Cmd { V.Nop                     });
 
     AddCmd(  Cmd { V.Look,             0     });
 
     AddCmd(  Cmd { V.Writ, 16_ffffffff00,  4 }); (* 10.5 *)
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ,            -1,  5 }); (* 12.5 *)
+    AddCmd(  Cmd { V.Nop                     });
 
     AddCmd(  Cmd { V.Look,             0     });
 
@@ -581,7 +596,9 @@ PROCEDURE DefProgram(prog : CommandSeq.T) =
     AddCmd(  Cmd { V.Look,             0     });
 
     AddCmd(  Cmd { V.Read,             0     });
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Read,             1     });
+    AddCmd(  Cmd { V.Nop                     });
 
     AddCmd(  Cmd { V.Look,             0     });
 
@@ -600,6 +617,17 @@ PROCEDURE DefProgram(prog : CommandSeq.T) =
     AddCmd(  Cmd { V.Look, 2_0000000000000000000000000000000000000111     });
 
     AddCmd(  Cmd { V.Look, 2_0000000000000000000000000000000000001111     });
+
+    (* do some illegal stuff *)
+    AddCmd(  Cmd { V.Writ,             0,  0 }); (* 4.5 *)
+    AddCmd(  Cmd { V.Nop                     });
+    AddCmd(  Cmd { V.Writ,            -1,  0 }); (* 4.5 *)
+    AddCmd(  Cmd { V.Look,             0     });
+    AddCmd(  Cmd { V.Look,             0     });
+    AddCmd(  Cmd { V.Read,             0     });
+    AddCmd(  Cmd { V.Look,             0     });
+    AddCmd(  Cmd { V.Look,             0     });
+
   END DefProgram;
 
 (**********************************************************************)
@@ -618,7 +646,9 @@ PROCEDURE ShortProgram(prog : CommandSeq.T) =
     AddCmd(  Cmd { V.Rset                    });
     AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ,            -1,  0 }); (* 4.5 *)
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ,            -1,  1 }); (* 6.5 *)
+    AddCmd(  Cmd { V.Nop                     });
     (* works if no more writes here *)
 
     AddCmd(  Cmd { V.Look,             0     });
@@ -626,7 +656,9 @@ PROCEDURE ShortProgram(prog : CommandSeq.T) =
     AddCmd(  Cmd { V.Look,             0     });
 
     AddCmd(  Cmd { V.Writ, 16_ffffffff00,  4 }); (* 10.5 *)
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Writ,            -1,  5 }); (* 12.5 *)
+    AddCmd(  Cmd { V.Nop                     });
 
     AddCmd(  Cmd { V.Look,             0     });
 
@@ -643,7 +675,9 @@ PROCEDURE ShortProgram(prog : CommandSeq.T) =
     AddCmd(  Cmd { V.Look,             0     });
 
     AddCmd(  Cmd { V.Read,             0     });
+    AddCmd(  Cmd { V.Nop                     });
     AddCmd(  Cmd { V.Read,             1     });
+    AddCmd(  Cmd { V.Nop                     });
 
     AddCmd(  Cmd { V.Look,             0     });
 

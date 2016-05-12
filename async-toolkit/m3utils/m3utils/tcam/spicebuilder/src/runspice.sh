@@ -27,6 +27,17 @@ step=10e-12
 SRCDIR=/p/hlp/thkoo1/lion/tcam/inway7_extraction/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000_rcx/
 PFX=ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000
 
+if [ "$1" = "-deck" ]; then
+    shift
+    deck=$1
+    shift
+    SRCDIR=/nfs/sc/disks/hlp_0015/mnystroe/tcam
+    PFX=tcam_${deck}
+fi
+
+SPFILE=${PFX}.sp
+
+
 # example problem: make y=x^2 curve!
 if [ "test" = "NOtest" ]; then
     echo ${2} ${8} ${10}
@@ -43,17 +54,17 @@ else
     pwd
 
     if   [ "${sim}" = "xa" ]; then
-        cp ${PFX}.sp tcam.sp
+        cp ${SPFILE} tcam.sp
         
         ln -sf ${SRCDIR}/${PFX}.spf ./tcam.spf # wont work for hspice
 
-        echo spicebuilder -extractpath tcam.sp -step ${step} $* 
-        spicebuilder -extractpath tcam.sp -step ${step} $*  > spicebuilder.log 2>&1 
+        echo spicebuilder -pm io -extractpath tcam.sp -step ${step} $* 
+        spicebuilder -pm io -extractpath tcam.sp -step ${step} $*  > spicebuilder.log 2>&1 
         xa out.spice
         convert_trace --scale-time 1e-6 --time-step ${step} --fsdb xa.fsdb --translate out
         rm xa.fsdb
     elif [ "${sim}" = "hspice" ]; then
-        spice2spice --rename=1 ${PFX}.sp tcam.sp
+        spice2spice --rename=1 ${SPFILE} tcam.sp
         echo spicebuilder -rename -runlvl 1 -extractpath tcam.sp -step ${step} $*
         spicebuilder -rename -runlvl 1 -extractpath tcam.sp -step ${step} $*  > spicebuilder.log 2>&1 
         hspice -64 out.spice > hspice.log 2>&1

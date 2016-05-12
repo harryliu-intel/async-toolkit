@@ -4,7 +4,8 @@ IMPORT BitInteger;
 IMPORT Verb;
 
 PROCEDURE Compile(prog          : CommandSeq.T;
-                  VAR      seq  : ARRAY Verb.T OF REF ARRAY OF BitInteger.T);
+                  VAR      seq  : ARRAY Verb.T OF REF ARRAY OF BitInteger.T;
+                  autoNops      := TRUE);
 
 PROCEDURE AddKey(prog   : CommandSeq.T;
                  keyIdx : CARDINAL;

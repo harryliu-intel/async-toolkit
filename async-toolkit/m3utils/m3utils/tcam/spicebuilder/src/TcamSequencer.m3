@@ -8,7 +8,8 @@ IMPORT Word;
 CONST SI = BitInteger.Small;
 
 PROCEDURE Compile(prog          : CommandSeq.T;
-                  VAR      seq  : ARRAY Verb.T OF REF ARRAY OF BitInteger.T) =
+                  VAR      seq  : ARRAY Verb.T OF REF ARRAY OF BitInteger.T;
+                  autoNops      : BOOLEAN) =
 
   PROCEDURE Clear() =
     BEGIN FOR i := FIRST(buf) TO LAST(buf) DO buf[i] := SI(0) END END Clear;
@@ -128,7 +129,9 @@ PROCEDURE AddKey(prog   : CommandSeq.T;
       END
     END;
     prog.addhi(Command.T { Verb.T.Writ, z[0], keyIdx*2   });
+    prog.addhi(Command.T { Verb.T.Nop });
     prog.addhi(Command.T { Verb.T.Writ, z[1], keyIdx*2+1 });
+    prog.addhi(Command.T { Verb.T.Nop })
   END AddKey;
 
 BEGIN END TcamSequencer.
