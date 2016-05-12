@@ -411,6 +411,17 @@ public final class HierName implements Comparable {
         return p;
     }
 
+    public static HierName makeHierNameUnchecked(final String hierNameString,
+                                                 final char separator) {
+        try {
+            return makeHierName(hierNameString, separator);
+        } catch (InvalidHierNameException e) {
+            throw (IllegalArgumentException)
+                new IllegalArgumentException("Bad HierName " + hierNameString)
+                    .initCause(e);
+        }
+    }
+
     /**
      * Given a HierName prefix and suffix, return the canonical HierName 
      * for this pair of (prefix, name).  If 
