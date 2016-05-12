@@ -129,6 +129,17 @@ begin
 end
 endfunction
 
+function [`CSP_STRING_WHOLE] getArgValue(input [`CSP_STRING_WHOLE] arg,
+                                         input [`CSP_STRING_WHOLE] def);
+reg [`CSP_STRING_ASCII] s;
+begin
+    if ($value$plusargs($psprintf("%s=%%s", __csp_to_sv_string(arg)), s))
+        getArgValue = inits(s);
+    else
+        getArgValue = def;
+end
+endfunction
+
 endmodule
 
 `ifdef CSP_STRING_SELF_TEST

@@ -1093,6 +1093,17 @@ public class VerilogEmitter extends CommonEmitter {
             lvalues.add(arg);
             arg.accept(this);
             out.println(")");
+        } else if ("getArgValue".equals(funcName)) {
+            out.print("csp_string.getArgValue(");
+            final Iterator<ExpressionInterface> args = e.getActuals();
+            final ExpressionInterface arg1 = args.next();
+            final ExpressionInterface arg2 = args.next();
+            lvalues.add(arg1);
+            arg1.accept(this);
+            out.print(", ");
+            lvalues.add(arg2);
+            arg2.accept(this);
+            out.println(")");
         } else {
             throw new VisitorException("Unsupported function calls found: " + e.getParseRange().fullString());
         }
@@ -1802,7 +1813,8 @@ public class VerilogEmitter extends CommonEmitter {
                 } else if (name.equals("choose") || name.equals("random") ||
                            name.equals("string") || name.equals("log2") ||
                            name.equals("log4") || name.equals("time") ||
-                           name.equals("ord") || name.equals("chr")) { 
+                           name.equals("ord") || name.equals("chr") ||
+                           name.equals("getArgValue")) { 
                     lhs.accept(this);
                     out.print(" = ");
                     visitFunctionCallExpression(e); // process builtin funcs 

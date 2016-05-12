@@ -33,6 +33,7 @@ public class RefinementResolver extends VisitorByCategory {
         String DUMPON = "dumpOn";
         String DUMPOFF = "dumpOff";
         String WALLTIME = "walltime";
+        String GETARGVALUE = "getArgValue";
     }
 
     // Define built-in functions
@@ -184,6 +185,15 @@ public class RefinementResolver extends VisitorByCategory {
                 new FunctionDeclaration(BuiltIn.WALLTIME,
                                         new DeclarationList(),
                                         new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.GETARGVALUE,
+                new FunctionDeclaration(BuiltIn.GETARGVALUE,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("arg",
+                                                new StringType()),
+                                            getDeclaration("def",
+                                                new StringType()) }),
+                                        new StringType(),
                                         new SequentialStatement())
             });
 
