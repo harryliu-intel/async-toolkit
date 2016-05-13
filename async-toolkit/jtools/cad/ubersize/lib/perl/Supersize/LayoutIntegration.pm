@@ -355,7 +355,8 @@ sub update_floorplan {
         print IL "(UpdateFloorplan ?cellName \"$fqcn\")\n(exit)\n";
         close IL;
         my $cmd = "cd $cds_wd; \\\n" .
-            (path_to_tool($SS_r, "layoutPlus"))[0] . " -replay replay.il -nograph \\\n";
+            (path_to_tool($SS_r, "layoutPlus"))[0] . 
+            " -log \"$cds_wd/CDS.log\" -replay replay.il -nograph \\\n";
         supersize_system($SS_r, $cmd, $LOCAL_JOB);
         return;
     }
@@ -1488,7 +1489,8 @@ sub layout {
     }
     close IL;
     my $cmd = "cd $cds_wd; \\\n";
-    $cmd .= (path_to_tool($SS_r, "layoutPlus"))[0] . " -replay replay.il \\\n";
+    $cmd .= (path_to_tool($SS_r, "layoutPlus"))[0] . 
+        " -log \"$cds_wd/CDS.log\" -replay replay.il \\\n";
     supersize_system($SS_r, $cmd, $LOCAL_JOB, {}, "/dev/stdout");
 }
 
