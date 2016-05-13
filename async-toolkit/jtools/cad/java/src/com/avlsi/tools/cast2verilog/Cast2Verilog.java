@@ -3303,6 +3303,7 @@ public class Cast2Verilog {
             }   
         }).mark(portDefs);
 
+        final String bodyInst = "body";
         final String bundleSuffix = "_wrap";
         walkPortList(
                 cell.getCSPInfo(), false,
@@ -3311,7 +3312,7 @@ public class Cast2Verilog {
                                          bundleSuffix));
         out.println(";");
 
-        out.println("initial " + VerilogUtil.escapeIfNeeded(bodyName) + "." + 
+        out.println("initial " + VerilogUtil.escapeIfNeeded(bodyInst) + "." + 
                     moduleInstanceName + " = $psprintf(\"%m\");");
 
         new EmitSlackWrappers(out, bundleSuffix, getResetName(cell),
@@ -3343,7 +3344,8 @@ public class Cast2Verilog {
         }
        
         // instance name = "body" for now
-        out.println(VerilogUtil.escapeIfNeeded(bodyName) + " body(");
+        out.println(VerilogUtil.escapeIfNeeded(bodyName) + " " +
+                    VerilogUtil.escapeIfNeeded(bodyInst) + "(");
         walkPortList(
                 cell.getCSPInfo(), false,
                 new EmitBodyInstantiation(new Separator(out), bundleSuffix));
