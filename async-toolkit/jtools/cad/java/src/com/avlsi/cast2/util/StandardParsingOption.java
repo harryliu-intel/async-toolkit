@@ -74,6 +74,11 @@ public class StandardParsingOption implements CastParsingOption {
     private final boolean hackBug16459;
 
     /**
+     * Enable to not refine standard.channel.bdc from asynchronous_channel
+     **/
+    private final boolean hackOrphanBdc;
+
+    /**
      * Whether to check ports are connected properly between subcells.
      **/
     private final boolean checkConnections;
@@ -115,6 +120,7 @@ public class StandardParsingOption implements CastParsingOption {
         hackBug3771 = args.argExists("enable-bug3771-compatibility");
         hackBug7068 = args.argExists("enable-bug7068-compatibility");
         hackBug16459 = args.argExists("enable-bug16459-compatibility");
+        hackOrphanBdc = args.argExists("enable-orphan-bdc");
         checkConnections = args.argExists("check-connections");
         if (checkConnections) {
             final String s = args.getArgValue("check-connections", "");
@@ -190,5 +196,9 @@ public class StandardParsingOption implements CastParsingOption {
 
     public boolean bug16459HackEnabled() {
         return hackBug16459;
+    }
+
+    public boolean orphanBdcHackEnabled() {
+        return hackOrphanBdc;
     }
 }

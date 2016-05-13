@@ -2620,6 +2620,11 @@ channelDeclaration[Environment env]
     {
         try {
             final Symbol cellTypeSymbol = Symbol.create(name.getText());
+            if (opt.orphanBdcHackEnabled() &&
+                moduleName.equals("standard.channel") &&
+                name.getText().equals("bdc")) {
+                refinement = null;
+            }
             env.bind(cellTypeSymbol, 
                      new UserDefinedValue(env, cellTypeSymbol, metas,
                                           netGroup, fakeEmptyPorts(name),

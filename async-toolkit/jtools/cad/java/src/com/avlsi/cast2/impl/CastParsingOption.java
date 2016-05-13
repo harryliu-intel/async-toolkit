@@ -68,6 +68,11 @@ public interface CastParsingOption {
     boolean bug16459HackEnabled();
 
     /**
+     * Tells the parser if it should make standard.channel.bdc an orphan.
+     **/
+    boolean orphanBdcHackEnabled();
+
+    /**
      * The default choice.
      **/
     class DefaultParsingOption implements CastParsingOption {
@@ -81,6 +86,7 @@ public interface CastParsingOption {
         public boolean bug3771HackEnabled() { return false; }
         public boolean bug7068HackEnabled() { return false; }
         public boolean bug16459HackEnabled() { return false; }
+        public boolean orphanBdcHackEnabled() { return false; }
     }
 
     CastParsingOption DEFAULT = new DefaultParsingOption();
