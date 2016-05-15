@@ -290,7 +290,7 @@
     (foreach inst (setof a CV->instances
                          (and a->libName!=TechLibName (length a->instTerms)>2))
              typeName = typeCastMap[inst->cellName]
-             (fprintf file "    %s %s()();\n" typeName inst->name)
+             (fprintf file "    %s %s;\n" typeName inst->name)
              pinCastMap = pinCastMaps[inst->master]
              (unless pinCastMap
                pinCastMap = (GetCastPinNameMap typeName)
