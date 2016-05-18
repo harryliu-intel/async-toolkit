@@ -36,11 +36,11 @@ import java.util.NoSuchElementException;
  * class.
  * @see <a href="http://internal/bugzilla/show_bug.cgi?id=1168">Bug#1168</a>
  **/
-public class MultiSet extends AbstractCollection 
-    implements Collection, Comparable {
+public class MultiSet<E> extends AbstractCollection<E>
+    implements Collection<E>, Comparable<MultiSet<E>> {
   private boolean fully_sorted; // is the MultiSet completely  or lazy-?
-  private final Comparator comp; // a comparison class
-  private final List elems; // holds the objects of the MultiSet
+  private final Comparator<? super E> comp; // a comparison class
+  private final List<E> elems; // holds the objects of the MultiSet
 
   /**
    * Constructs an empty multi-set using the element's natural order
@@ -51,18 +51,18 @@ public class MultiSet extends AbstractCollection
   }
  
   /** Create an empty MultiSet with the specified comparison method. */
-  public MultiSet(Comparator comp)
+  public MultiSet(Comparator<? super E> comp)
     {
     this.comp=comp;
     fully_sorted=true;
-    elems=new ArrayList();
+    elems=new ArrayList<>();
     }
 
   /**
    * Constructs a multi-set containing the elements from the collection,
    * using the element's natural order as the comparator.
    **/
-  public MultiSet(final Collection coll) {
+  public MultiSet(final Collection<? extends E> coll) {
       this();
       addAll(coll);
   }
@@ -71,7 +71,8 @@ public class MultiSet extends AbstractCollection
    * Constructs a multi-set containing the elements from the collection,
    * using the element's natural order as the comparator.
    **/
-  public MultiSet(final Collection coll, final Comparator comp) {
+  public MultiSet(final Collection<? extends E> coll,
+                  final Comparator<? super E> comp) {
       this(comp);
       addAll(coll);
   }
@@ -94,7 +95,7 @@ public class MultiSet extends AbstractCollection
    * class.
    * @see <a href="http://internal/bugzilla/show_bug.cgi?id=1168">Bug#1168</a>
    **/
-  private int binarySearch(int lo, int hi, Object obj, Comparator comp)
+  private int binarySearch(int lo, int hi, E obj, Comparator<? super E> comp)
     {
     // we should be able to just do this, but it doesn't seem to work:
     // return Collections.binarySearch(elems.subList(lo, hi), obj, comp);
@@ -119,7 +120,7 @@ public class MultiSet extends AbstractCollection
    * that compares equal to <code>obj</code> using the current
    * Comparator.  Returns -1 if no such element was found.
    **/
-  private int binarySearch(int lo, int hi, Object obj)
+  private int binarySearch(int lo, int hi, E obj)
     {
     return binarySearch(lo, hi, obj, comp);
     }
@@ -138,7 +139,7 @@ public class MultiSet extends AbstractCollection
    * class.
    * @see <a href="http://internal/bugzilla/show_bug.cgi?id=1168">Bug#1168</a>
    */
-  public Object find(Object obj)
+  public E find(E obj)
     {
     int i = findIndex(obj);
     if (i>=0) return elems.get(i);
@@ -159,7 +160,7 @@ public class MultiSet extends AbstractCollection
    * class.
    * @see <a href="http://internal/bugzilla/show_bug.cgi?id=1168">Bug#1168</a>
    */
-  public int findIndex(Object obj)
+  public int findIndex(E obj)
     {
     int i,max=elems.size();
     if (fully_sorted) // binary search through  list
@@ -182,7 +183,7 @@ public class MultiSet extends AbstractCollection
     }
 
   /** Enumerate all objects which match under current comparison method. */
-  public Iterator findAll(final Object obj)
+  public Iterator<E> findAll(final E obj)
     {
     return findAll(obj, comp);
     }
@@ -194,14 +195,14 @@ public class MultiSet extends AbstractCollection
    * comparator C2 if for any two objects O1 and O2, sgn(C1.comp(O1, O2)) ==
    * sgn(C2.comp(O1, O2)) || C1.comp(O1, O2) == 0.
    **/
-  public Iterator findAll(final Object obj, final Comparator comp)
+  public Iterator<E> findAll(final E obj, final Comparator<? super E> comp)
     {
     int i,j,max=elems.size();
     sort(); // easier to do if fully sorted
     i=binarySearch(0,max,obj,comp);
     while ((i>0)&&(comp.compare(elems.get(i-1),obj)==0)) i--; // find first match
     final int start=i;
-    return new Iterator()
+    return new Iterator<E>()
       {
       private int j=start;
 
@@ -211,7 +212,7 @@ public class MultiSet extends AbstractCollection
 	return false;
 	}
 
-      public Object next()
+      public E next()
 	{
         if (!hasNext()) throw new NoSuchElementException();
         return elems.get(j++);
@@ -240,18 +241,18 @@ public class MultiSet extends AbstractCollection
       if (s) nv[i2] = elems.get(i1++);
       else   nv[i2] = elems.get(i0++);
       }
-    for (i2=0; i2<max; i2++) elems.set(i2+a,nv[i2]);
+    for (i2=0; i2<max; i2++) elems.set(i2+a,(E) nv[i2]);
     }
 
   /** Get nth sorted element. */
-  public Object get(int index)
+  public E get(int index)
     {
     sort();
     return elems.get(index);
     }
 
   /** Add a new object to the set then lazy-sort. */
-  public boolean add(Object obj)
+  public boolean add(E obj)
     {
     int max,step;
     fully_sorted=false;
@@ -267,10 +268,11 @@ public class MultiSet extends AbstractCollection
     {
     int i,max=elems.size();
     sort(); // easier to do if fully sorted
-    i=binarySearch(0,max,obj); // find any match
+    E elem = (E) obj;
+    i=binarySearch(0,max,elem); // find any match
     if (i<0) return false; // no matches found
-    while ((i>0)&&(comp.compare(elems.get(i-1),obj)==0)) i--; // find first match
-    while ((i<elems.size())&&(comp.compare(elems.get(i),obj)==0)) elems.remove(i);
+    while ((i>0)&&(comp.compare(elems.get(i-1),elem)==0)) i--; // find first match
+    while ((i<elems.size())&&(comp.compare(elems.get(i),elem)==0)) elems.remove(i);
     return true; // one or more matches removed
     }
 
@@ -289,37 +291,37 @@ public class MultiSet extends AbstractCollection
       }
     }
 
-  /** Lexicographically compare this set to another (implements Comparator). */
-  public static class MultiSetComparator implements Comparator
+  public static <E> int compare(MultiSet<E> a, MultiSet<E> b)
     {
-    public static int compare(MultiSet a, MultiSet b)
+    a.sort();
+    b.sort();
+    int c,amax=a.elems.size(),bmax=b.elems.size();
+    if (!a.comp.equals(b.comp))
+        throw new InconsistentlySortedException();
+    a.sort(); b.sort(); // must be fully sorted
+    for (int i=0; (i<amax)&&(i<bmax); i++)
       {
-      a.sort();
-      b.sort();
-      int c,amax=a.elems.size(),bmax=b.elems.size();
-      if (!a.comp.equals(b.comp))
-          throw new InconsistentlySortedException();
-      a.sort(); b.sort(); // must be fully sorted
-      for (int i=0; (i<amax)&&(i<bmax); i++)
-	{
-	c=a.comp.compare(a.elems.get(i),b.elems.get(i));
-	if (c<0) return -1;
-	if (c>0) return  1;
-	}
-      if (amax<bmax) return -1;
-      if (amax>bmax) return  1;
-      return 0;
+      c=a.comp.compare(a.elems.get(i),b.elems.get(i));
+      if (c<0) return -1;
+      if (c>0) return  1;
       }
-    public int compare(Object A, Object B)
+    if (amax<bmax) return -1;
+    if (amax>bmax) return  1;
+    return 0;
+    }
+
+  /** Lexicographically compare this set to another (implements Comparator). */
+  public static class MultiSetComparator<E> implements Comparator<MultiSet<E>>
+    {
+    public int compare(MultiSet<E> a, MultiSet<E> b)
       {
-      MultiSet a=(MultiSet)A, b=(MultiSet)B;
-      return MultiSetComparator.compare(a, b);
+      return MultiSet.<E>compare(a, b);
       }
     }
 
   /** Lexicographically compare this set to another (implements Comparable) */
-  public int compareTo (Object B) {
-    return MultiSetComparator.compare(this, (MultiSet) B);
+  public int compareTo (MultiSet<E> B) {
+    return compare(this, B);
   }
 
   /****************** Simple but convenient methods *******************/
@@ -329,23 +331,23 @@ public class MultiSet extends AbstractCollection
   }
 
   /** Add a Collection of objects. */
-  public boolean addAll(final Collection c)
+  public boolean addAll(final Collection<? extends E> c)
     {
-    for (final Iterator i = c.iterator(); i.hasNext(); )
+    for (final Iterator<? extends E> i = c.iterator(); i.hasNext(); )
         add(i.next());
     return true;
     }
 
   /** Add a new object only if it wasn't already in the MultiSet. */
-  public void addIfUnique(Object obj)
+  public void addIfUnique(E obj)
     {
     if (find(obj)==null) add(obj);
     }
 
   /** Add a Collection of new objects if they are unique. */
-  public void addAllIfUnique(final Collection c)
+  public void addAllIfUnique(final Collection<? extends E> c)
     {
-    for (final Iterator i = c.iterator(); i.hasNext(); )
+    for (final Iterator<? extends E> i = c.iterator(); i.hasNext(); )
         addIfUnique(i.next());
     }
 
@@ -353,7 +355,7 @@ public class MultiSet extends AbstractCollection
    *  NOTE: Uses comparator of the other set.
    *  NOTE: An empty set is considered a subset of any other set.
    */
-  public boolean isSubset(MultiSet s)
+  public boolean isSubset(MultiSet<E> s)
     {
     for (int i=0; i<elems.size(); i++)
       if (s.find(elems.get(i))==null) return false;
@@ -361,14 +363,14 @@ public class MultiSet extends AbstractCollection
     }
 
   /** Return an enumeration of all sorted objects in the MultiSet. */
-  public Iterator iterator()
+  public Iterator<E> iterator()
     {
     sort();
     return elems.iterator();
     }
 
   /** Return a sorted list **/
-  public List list()
+  public List<E> list()
     {
     sort();
     return elems;
