@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
 
 /**
  * Keep some objects lazy-sorted, allowing fast finds and adds.
@@ -37,7 +38,7 @@ import java.util.NoSuchElementException;
  * @see <a href="http://internal/bugzilla/show_bug.cgi?id=1168">Bug#1168</a>
  **/
 public class MultiSet<E> extends AbstractCollection<E>
-    implements Collection<E>, Comparable<MultiSet<E>> {
+    implements Collection<E>, Comparable<MultiSet<E>>, Iterable<E> {
   private boolean fully_sorted; // is the MultiSet completely  or lazy-?
   private final Comparator<? super E> comp; // a comparison class
   private final List<E> elems; // holds the objects of the MultiSet
@@ -367,6 +368,12 @@ public class MultiSet<E> extends AbstractCollection<E>
     {
     sort();
     return elems.iterator();
+    }
+
+  public Stream<E> stream()
+    {
+    sort();
+    return elems.stream();
     }
 
   /** Return a sorted list **/

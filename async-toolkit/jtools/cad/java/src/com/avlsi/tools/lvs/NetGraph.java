@@ -20,6 +20,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.stream.Collectors;
 
 import com.avlsi.cast.CastFileParser;
 import com.avlsi.cast.CastSemanticException;
@@ -94,7 +95,7 @@ public final class NetGraph {
     List problems;
 
     /** All NetNodes in this NetGraph, sorted by name. */
-    MultiSet nodes;
+    MultiSet<NetNode> nodes;
 
     /** the set of nodes we don't want staticizers on. */
     public final Set nostaticizers;
@@ -1404,7 +1405,7 @@ public final class NetGraph {
         namespace = ci.getLocalNodes();
         exclusives = exclusiveSets.canonicalizeNames(namespace);
         problems = new ArrayList();       
-        nodes = new MultiSet();
+        nodes = new MultiSet<>();
         nostaticizers = new HashSet();
         Vdd = createNetNode(HierName.makeHierName("Vdd")); Vdd.isPower=true;
         GND = createNetNode(HierName.makeHierName("GND")); GND.isGround=true;
@@ -1438,7 +1439,7 @@ public final class NetGraph {
         else exclusives = new ExclusiveNodeSets();
         if (ProblemList != null) problems = ProblemList;
         else problems = new ArrayList();
-        nodes = new MultiSet();
+        nodes = new MultiSet<>();
         this.nostaticizers = new HashSet();
         if (nostaticizers != null) 
             for (Iterator i = nostaticizers.iterator(); i.hasNext(); ) {
@@ -1487,16 +1488,7 @@ public final class NetGraph {
 
     /** Check if this netgraph is empty (0 netedges). */
     public boolean isEmpty() {
-        Iterator ita;
-        NetNode  nna;
-        boolean  empty;
-        ita = nodes.iterator();
-        while(ita.hasNext()) {
-            nna = (NetNode)ita.next();
-            if(nna.edges.size() != 0)
-                return false;
-        }
-        return true;
+        return nodes.stream().allMatch(x -> x.edges.isEmpty());
     }
 
     /** Returns set of all exclusive node sets in the NetGraph **/
@@ -1686,8 +1678,7 @@ public final class NetGraph {
 
         // Remove all transistors that aren't gates.
         Set unmatched = new HashSet();
-        for (Iterator i = nodes.iterator(); i.hasNext(); ) {
-            NetNode n = (NetNode) i.next();
+        for (NetNode n: nodes) {
             if (!n.output || (n.gate != null)) continue;
             unmatched.add(n.name);
             n.deleteEdges();
@@ -2378,54 +2369,42 @@ public final class NetGraph {
     }
 
     /** Get all nodes of this NetGraph. */
-    public Collection getNodes() {
-        return (Collection) nodes;
+    public Collection<NetNode> getNodes() {
+        return nodes;
     }
 
     /** Get output nodes of this NetGraph. */
-    public Collection getOutputNodes() {
-        List l = new ArrayList();
-        for (Iterator i = nodes.iterator(); i.hasNext(); ) {
-//            l.add((NetNode) i.next());
-            NetNode n = (NetNode) i.next();
-            if (n.isOutput()) l.add(n);
-
-        }
-        return (Collection) l;
+    public Collection<NetNode> getOutputNodes() {
+        return nodes.stream().filter(NetNode::isOutput)
+                             .collect(Collectors.toList());
     }
 
     /** Get staticizer nodes of this NetGraph. */
-    public Collection getStaticizerNodes() {
-        List l = new ArrayList();
-        for (Iterator i = nodes.iterator(); i.hasNext(); ) {
-            NetNode n = (NetNode) i.next();
-            if (n.isStaticizerInverter()) l.add(n);
-        }
-        return (Collection) l;
+    public Collection<NetNode> getStaticizerNodes() {
+        return nodes.stream().filter(NetNode::isStaticizerInverter)
+                             .collect(Collectors.toList());
     }
 
     /** Get all edges of this NetGraph. */
-    public Collection getEdges() {
-        ArrayList edges = new ArrayList();
-        for (Iterator t = nodes.iterator(); t.hasNext(); ) {
-            NetNode node = (NetNode) t.next();
+    public Collection<NetEdge> getEdges() {
+        ArrayList<NetEdge> edges = new ArrayList<>();
+        for (NetNode node : nodes) {
             for (Iterator s = node.edges.iterator(); s.hasNext(); ) {
                 NetEdge edge = (NetEdge) s.next();
                 if (edge.source == node) edges.add(edge); // don't double report
             }
         }
-        return (Collection) edges;
+        return edges;
     }
 
     /** Get all paths of this NetGraph. */
-    Collection getPaths() {
-        ArrayList paths = new ArrayList();
-        for (Iterator t = nodes.iterator(); t.hasNext(); ) {
-            NetNode node = (NetNode) t.next();
+    Collection<NetPath> getPaths() {
+        ArrayList<NetPath> paths = new ArrayList<>();
+        for (NetNode node : nodes) {
             for (Iterator s = node.paths.iterator(); s.hasNext(); ) 
                 paths.add((NetPath) s.next());
         }
-        return (Collection) paths;
+        return paths;
     }
 
     /** Return a string of CDL format edges. */
