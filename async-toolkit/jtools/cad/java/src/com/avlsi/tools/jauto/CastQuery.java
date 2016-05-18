@@ -1336,11 +1336,10 @@ public final class CastQuery {
             header("Local nodes of " + cell.getFullyQualifiedType() + ":\n", w);
             final PropagateInfo defSignoff = new PropagateInfo();
             Iterator i = new SortingIterator(nodes.getCanonicalKeys());
-            Iterator sinv_i = null;
-            if (staticizer) {
-                final Collection staticizerNodes = new NetGraph(cell, cad, cfp).getStaticizerNodes();
-                sinv_i = staticizerNodes.iterator();
-            }
+            final Iterator<NetGraph.NetNode> sinv_i =
+                staticizer ? new NetGraph(cell, cad, cfp).getStaticizerNodes()
+                                                         .iterator()
+                           : Collections.emptyIterator();
             while (i.hasNext() || sinv_i.hasNext()) {
                 HierName canon;
                 boolean isStaticizer = false;
