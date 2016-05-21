@@ -79,6 +79,9 @@ foreach my $a (@targetarch) {
 }
 my $verbosearg="&>/dev/null";
 $verbosearg="--verbose" if $verbose;
+
+system "/usr/intel/bin/p4 -p ssl:p4proxy17.devtools.intel.com:2510 -u sys_build -c mrln1adm-fulcrum-config sync";
+
 my %pid;
 my $pid;
 foreach my $arch (keys %archname) {
