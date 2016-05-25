@@ -3603,8 +3603,8 @@ public final class JFlat {
                                 final InstanceData instData) {
             final Set targets = new HashSet();
             // isolate current draw of PRS from power supplies
-            pw.E(nextDevice(), "ENV_PRS_TRUE",  "0", "VCVS", new String[]{Vdd,"0","gain=1"});
-            pw.E(nextDevice(), "ENV_PRS_FALSE", "0", "VCVS", new String[]{GND,"0","gain=1"});
+            pw.E(nextDevice(), "ENV_PRS_TRUE",  "0", "VCVS", new String[]{Vdd,"0","1"});
+            pw.E(nextDevice(), "ENV_PRS_FALSE", "0", "VCVS", new String[]{GND,"0","1"});
             // emit the PRS
             for (final Iterator i = prs.getProductionRules(); i.hasNext(); ) {
                 final ProductionRule pr = (ProductionRule) i.next();
