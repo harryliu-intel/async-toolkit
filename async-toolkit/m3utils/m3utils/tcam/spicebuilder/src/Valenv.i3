@@ -17,7 +17,7 @@ TYPE
     getSngl(nm : TEXT) : X01.T;
     getArry(nm : TEXT) : REF ARRAY OF X01.T;
 
-    knownOutput (nm : TEXT; READONLY idx : Dims.T; dly : CARDINAL; v : Bit.T);
+    knownOutput (nm : TEXT; READONLY idx : Dims.T; dly : CARDINAL; v : Bit.T; assertHoldOffset : LONGREAL);
 
     getAssertions() : AssertionList.T;
   END;

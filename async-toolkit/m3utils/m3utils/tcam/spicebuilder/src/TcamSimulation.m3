@@ -8,7 +8,7 @@ IMPORT Src;
 IMPORT Intf;
 IMPORT Nodes, Debug;
 IMPORT Tran;
-FROM Fmt IMPORT F; IMPORT Fmt;
+FROM Fmt IMPORT F, LongReal; IMPORT Fmt;
 IMPORT RefSeq;
 IMPORT CommandSeq;
 IMPORT DimsTranSeqTbl;
@@ -28,11 +28,6 @@ IMPORT Text;
 CONST TE = Text.Equal;
 
 CONST LR = Fmt.LongReal;
-
-(*
-VAR
-  sem := NEW(Semaphore, ring := NewSemSrcSentinel());
-*)
 
 TYPE
   IntegerSrc = Src.T BRANDED OBJECT 
@@ -390,6 +385,10 @@ VAR simParams : SimParams.T;
 
 VAR extractPath := "/p/hlp/thkoo1/lion/tcam/inway7_extraction/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000_rcx/ip736hs3p111dtcam_512x40m1b8wd_nnnnnnl_wwc_tcam_512_40_4000.sp";
 
+    assertHoldFrac := 0.0d0; (* ugly global! -- not a permanent solution *)
+    assertHoldTime := 0.0d0; (* ugly global! -- not a permanent solution *)
+    cycleTime := LAST(LONGREAL); (* ditto *)
+
 PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
 
   TYPE
@@ -411,7 +410,7 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     spd          := 1.0d9;
     riseFallFrac := 0.02d0;
     setupFrac    := 0.000d0;
-    holdFrac     := 0.150d0;
+    holdFrac     := 0.500d0;
     cyc : LONGREAL;
     pt := ProgType.Def;
     spfParam     := 0.0d0;
@@ -429,6 +428,16 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     PP(AT { "holdfrac" }                , holdFrac);
     PP(AT { "setupfrac" }               , setupFrac);
     PP(AT { "risefrac", "risefallfrac" }, riseFallFrac);
+
+    PP(AT { "assertholdfrac" }          , assertHoldFrac);
+    PP(AT { "assertholdtime" }          , assertHoldTime);
+
+    cycleTime := 1.0d0 / spd;
+
+    Debug.Out(F("cycleTime %s assertHoldFrac %s",
+              LongReal(cycleTime),
+              LongReal(assertHoldFrac)));
+              
 
     IF pp.keywordPresent("-extractpath") THEN extractPath := pp.getNext() END;
 
@@ -530,13 +539,23 @@ PROCEDURE Build(pp : ParseParams.T; sp : SimParams.T) =
     SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xinputs.* -limit 10\"", SimDumper.Renamer(DutName & ".")));
     SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xchunk[0].Xe[0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
     SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xchunk[0].Xz[0].Xz[0][0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
-    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xctrl.* -limit 10\"", SimDumper.Renamer(DutName & ".")))
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xchunk[0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xchunk[0].b[0]* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xmid[0].* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].a[0]* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].hit[0]* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].b* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.Xslice[0].Xctrl.* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.addr2* -limit 10\"", SimDumper.Renamer(DutName & ".")));
+    SimDumper.simExtras[Sim.T.XA].addhi(F(".OPTION XA_CMD=\"probe_waveform_voltage %sXtcam.ADDR2* -limit 10\"", SimDumper.Renamer(DutName & ".")))
   END
     
 END Build;
 
 PROCEDURE GetModel() : SimModel.T = 
-  BEGIN RETURN NEW(TcamModel.T).init(C) END GetModel;
+  BEGIN
+    RETURN NEW(TcamModel.T).init(C, cycleTime, assertHoldFrac, assertHoldTime)
+  END GetModel;
 
 VAR riseFall := LAST(LONGREAL);
 
@@ -685,6 +704,54 @@ PROCEDURE ShortProgram(prog : CommandSeq.T) =
 
   END ShortProgram;
 
+  (**********************************************************************)
+
+PROCEDURE ReadWriteProgram(prog : CommandSeq.T) =
+
+  TYPE
+    Cmd = Command.T;
+    V   = Verb.T;
+
+  PROCEDURE AddCmd(c : Cmd) =
+    BEGIN prog.addhi(c) END AddCmd;
+
+  BEGIN
+    AddCmd(  Cmd { V.Rset                    });
+    AddCmd(  Cmd { V.Rset                    });
+    AddCmd(  Cmd { V.Nop                     });
+    AddCmd(  Cmd { V.Writ,            -1,  0 }); 
+    AddCmd(  Cmd { V.Nop                     });
+    AddCmd(  Cmd { V.Writ,            -1,  1 }); 
+    AddCmd(  Cmd { V.Nop                     });
+    AddCmd(  Cmd { V.Writ,            -1,  2 }); 
+    AddCmd(  Cmd { V.Nop                     });
+    AddCmd(  Cmd { V.Writ,            -1,  3 }); 
+    AddCmd(  Cmd { V.Nop                     });
+
+    (* now we should hit at both entry 0 and entry 1 *)
+
+    AddCmd(  Cmd { V.Look,             0     });
+    AddCmd(  Cmd { V.Writ,            0,  0 }); 
+
+    (* now we should miss *)
+    AddCmd(  Cmd { V.Look,             0     });
+
+    AddCmd(  Cmd { V.Read,            0,  0 }); 
+
+    AddCmd(  Cmd { V.Look,             0     });
+
+    AddCmd(  Cmd { V.Writ,            -1,  0 }); 
+
+    AddCmd(  Cmd { V.Look,             0     });
+
+    AddCmd(  Cmd { V.Read,            0,  0 }); 
+
+    (* make sure we have enough sim time to get all transitions! *)
+    AddCmd(  Cmd { V.Nop                     });
+    AddCmd(  Cmd { V.Nop                     });
+
+  END ReadWriteProgram;
+
 (**********************************************************************)
 
 PROCEDURE MinimalProgram(prog : CommandSeq.T) =
@@ -707,12 +774,12 @@ PROCEDURE MinimalProgram(prog : CommandSeq.T) =
 
 (**********************************************************************)
 
-TYPE ProgType = { Def, Short, Minimal };
-CONST  ProgNames = ARRAY ProgType OF TEXT { "def", "short", "minimal" };
+TYPE ProgType = { Def, Short, Minimal, ReadWrite };
+CONST  ProgNames = ARRAY ProgType OF TEXT { "def", "short", "minimal", "rw" };
 
 TYPE ProgProc = PROCEDURE(prog : CommandSeq.T);
 
 CONST Progs = ARRAY ProgType OF ProgProc 
-  { DefProgram, ShortProgram, MinimalProgram };
+  { DefProgram, ShortProgram, MinimalProgram, ReadWriteProgram };
 
 BEGIN END TcamSimulation.

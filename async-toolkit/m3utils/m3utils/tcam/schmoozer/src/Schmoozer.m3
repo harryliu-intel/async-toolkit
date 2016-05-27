@@ -1,5 +1,5 @@
-MODULE Schmoozer EXPORTS Main;
-IMPORT ProbeMode, Sim;
+MODULE Schmoozer;
+IMPORT Schmooze;
 IMPORT RefSeq;
 IMPORT Dims;
 IMPORT Debug;
@@ -7,7 +7,7 @@ IMPORT RefList;
 IMPORT FS;
 IMPORT Time, Date;
 FROM Fmt IMPORT Int, LongReal, F;
-IMPORT LRPairRefTbl, LongRealPair;
+IMPORT LRSeqRefTbl AS PointRefTbl;
 IMPORT ProcUtils;
 IMPORT Pathname;
 IMPORT CardRefTbl;
@@ -27,30 +27,23 @@ IMPORT IntSetDef, IntSet;
 IMPORT TextRd;
 IMPORT TextReader;
 IMPORT CardSetDef;
+IMPORT TextCardTbl;
+IMPORT LongRealSeq AS LRSeq;
+IMPORT LongRealSeq AS Point;
+IMPORT LRSeqSeq AS PointSeq;
+IMPORT MeshNode, MeshNodeList;
+IMPORT Word;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*>
 
 CONST TE = Text.Equal;
+CONST NbTimeout = 60.0d0; (* timeout for all NB commands *)
 
-TYPE
-  Param = BRANDED OBJECT 
-    nm   : TEXT;
-    flag : TEXT;
-  METHODS
-    init() : Param := InitParam;
-  END;
-
-  RealParam = Param OBJECT
-    saneMin, saneMax : LONGREAL;
-  END;
-  
-  DiscreteParam = Param OBJECT
-    vals : REF TA;
-  END;
-
-  IntParam = Param OBJECT
-    min, max : INTEGER;
+REVEAL
+  Param = PublicParam BRANDED OBJECT
+  OVERRIDES
+    init := InitParam;
   END;
 
 VAR
@@ -61,99 +54,6 @@ PROCEDURE InitParam(p : Param) : Param =
     allParams.addhi(p);
     RETURN p
   END InitParam;
-  
-VAR
-  probeP  := NEW(DiscreteParam,
-                 nm := "probemode",
-                 flag := "probemode",
-                 vals := RT(ProbeMode.Names)).init();
-
-  cornerP := NEW(DiscreteParam,
-                 nm := "corner",
-                 flag := "m",
-                 vals := RT(TA { 
-                                 "afnoif",
-                                 "afnois",
-                                 "bghlhh",
-                                 "bghllh",
-                                 "bghlth",
-                                 "bglhll",
-                                 "bglhll2",
-                                 "bglhlt",
-                                 "bgllll",
-                                 "bgtlhh",
-                                 "ffff",
-                                 "ffvss",
-                                 "pfff",
-                                 "psss",
-                                 "rafas",
-                                 "rasaf",
-                                 "rfafs",
-                                 "rfafs_gs",
-                                 "rfasf",
-                                 "rfasf_gs",
-                                 "rfff",
-                                 "rfffaf",
-                                 "rfffaf_gs",
-                                 "rffs",
-                                 "rffx",
-                                 "rffxaf",
-                                 "rfsf",
-                                 "rfxf",
-                                 "rfxfaf",
-                                 "rsafs",
-                                 "rsafs_gf",
-                                 "rsasf",
-                                 "rsasf_gf",
-                                 "rsfs",
-                                 "rssf",
-                                 "rsss",
-                                 "rsssas",
-                                 "rsssas_gf",
-                                 "rssx",
-                                 "rssxas",
-                                 "rsxs",
-                                 "rsxsas",
-                                 "ssss",
-                                 "ssvff",
-                                 "tttt"
-  })).init();
-
-  simP    := NEW(DiscreteParam,
-                 nm := "simulator",
-                 flag := "f",
-                 vals := RT(Sim.Names)).init();
-
-  vddP    := NEW(RealParam,
-                 nm := "vdd",
-                 flag := "vdd",
-                 saneMin := 0.20d0, saneMax := 2.0d0).init();
-
-  tempP   := NEW(RealParam,
-                 nm := "temp",
-                 flag := "temp",
-                 saneMin := -100.0d0, saneMax := 200.0d0).init();
-
-  spfP    := NEW(RealParam,
-                 nm := "spf",
-                 flag := "spf",
-                 saneMin := 0.0d0, saneMax := 1.0d30).init();
-
-
-  clkP    := NEW(RealParam,
-                 nm := "clk",
-                 flag := "clk",
-                 saneMin := 100.0d6, saneMax := 20.0d9).init();
-
-  deckP   := NEW(DiscreteParam,
-                 nm := "deck",
-                 flag := "deck",
-                 vals := RT(TA { 
-                                 "bothrs", (* s.b. default *)
-                                 "writers",
-                                 "readrs",
-                                 "nors"
-  })).init();
   
 PROCEDURE RT(READONLY z : TA) : REF TA =
   VAR
@@ -171,65 +71,59 @@ PROCEDURE RL(READONLY z : LA) : REF LA =
     RETURN res
   END RL;
 
-TYPE
-  Settings = BRANDED OBJECT 
-  METHODS
-    n() : CARDINAL;
-  END;
+PROCEDURE RP(READONLY z : PA) : REF PA =
+  VAR
+    res := NEW(REF PA, NUMBER(z));
+  BEGIN
+    res^ := z;
+    RETURN res
+  END RP;
 
-  SingleSettings = Settings OBJECT
-    param : Param;
-  END;
-
-  Variety = SingleSettings OBJECT
-    cover : REF TA;
+REVEAL
+  Variety =  SingleSettings OBJECT
+    cover : REF TA; END BRANDED OBJECT
   OVERRIDES 
     n := NVariety;
   END;
 
-  Sweep = SingleSettings OBJECT
-    min, max, step : LONGREAL;
+  Sweep =  SingleSettings OBJECT
+    min, max, step : LONGREAL; END BRANDED OBJECT
   OVERRIDES 
     n := NSweep;
   END;
 
-  SweepSpecific = SingleSettings OBJECT
-    v : REF ARRAY OF LONGREAL;
+  SweepSpecific =  SingleSettings OBJECT
+    v : REF ARRAY OF LONGREAL; END BRANDED OBJECT
   OVERRIDES 
     n := NSweepSpecific;
   END;
 
-  Schmoo = Settings OBJECT
-    param                      : ARRAY [0..1] OF RealParam;
-    min, max, minStep, maxStep : ARRAY [0..1] OF LONGREAL;
+  Schmoo =  PublicSchmoo BRANDED OBJECT
   OVERRIDES
     n := NSchmoo;
   END;
 
-  Job = OBJECT 
-    settings : RefSeq.T; (* settings *)
-  END;
-
+TYPE
   Val = OBJECT
     s : Settings;
   METHODS
-    format() : TEXT := FormatV;
+    format(tool : Tool) : TEXT := FormatV;
   END;
 
   StepVal = Val OBJECT i : CARDINAL END;
 
-  SchmooVal = Val OBJECT x : LR01 END;
+  SchmooVal = Val OBJECT x : Point.T END;
 
   SchmooInstance = OBJECT
     schmoo     : Schmoo;
-    meshTab    : LRPairRefTbl.T;
+    meshTab    : PointRefTbl.T;
     valPfx     : REF ARRAY OF Val;
     minSquares : XYList.T := NIL;
   END;
 
 VAR schmooInstances : RefList.T := NIL;
 
-PROCEDURE FormatV(v : Val) : TEXT =
+PROCEDURE FormatV(v : Val; tool : Tool) : TEXT =
   VAR 
     str : TEXT;
   BEGIN
@@ -253,12 +147,28 @@ PROCEDURE FormatV(v : Val) : TEXT =
       ELSE
         <*ASSERT FALSE*>
       END;
-      RETURN F("-%s %s", NARROW(st.s,SingleSettings).param.flag, str)
+      WITH ss = NARROW(st.s,SingleSettings) DO
+        IF tool = ss.param.tool THEN
+          RETURN F("-%s %s", ss.param.flag, str)
+        ELSE
+          RETURN ""
+        END
+      END
     |
       SchmooVal(sc) =>
-      WITH ss = NARROW(sc.s, Schmoo) DO
-        RETURN F("-%s %s -%s %s", ss.param[0].flag, LongReal(sc.x[0]), 
-                                  ss.param[1].flag, LongReal(sc.x[1]))
+      VAR
+        ss := NARROW(sc.s, Schmoo);
+        str := "";
+        first := TRUE;
+      BEGIN
+        FOR q := FIRST(ss.param^) TO LAST(ss.param^) DO
+          IF ss.param[q].tool = tool THEN
+            IF NOT first THEN str := str & " " END;
+            str := str & F("-%s %s", ss.param[q].flag, LongReal(FromList(sc.x)[q]));
+            first := FALSE
+          END
+        END;
+        RETURN str
       END 
     ELSE
       <*ASSERT FALSE*>
@@ -276,43 +186,53 @@ PROCEDURE NSweepSpecific(s : SweepSpecific) : CARDINAL =
 
 PROCEDURE NSchmoo(<*UNUSED*>s : Schmoo) : CARDINAL = BEGIN RETURN 1 END NSchmoo;
 
-TYPE
-  TA = ARRAY OF TEXT;
-  LA = ARRAY OF LR;
-  LR = LONGREAL;
-  RP01 = ARRAY [0..1] OF RealParam;
-  LR01 = ARRAY [0..1] OF LR;
-  I01  = ARRAY [0..1] OF INTEGER;
-
-TYPE
-  MeshNode = OBJECT
+REVEAL
+  MeshNode.T = BRANDED OBJECT
     id    : CARDINAL;
-    x     : LR01;
+    x     : Point.T;
     state := NodeState.Running; (* ?? *)
     watchers : RefList.T := NIL;
     args  : REF ARRAY OF Val;
   METHODS
-    init() : MeshNode := InitMN;
+    init() : MeshNode.T := InitMN;
   END;
-  
+
+TYPE
   NodeState = {  Running ,  Fail ,  Pass ,  ErrorExit  };
 
 CONST NodeStateNames = ARRAY NodeState OF TEXT {
                 "Running", "FAIL", "PASS", "ErrorExit" };
 
 TYPE
-  Square = ARRAY [0..1] OF ARRAY [0..1] OF MeshNode;
-  XYSquare = ARRAY [0..1] OF XYRow;
-  XYRow = ARRAY [0..1] OF LR01;
-
-  Watcher = OBJECT
+  PWatcher = OBJECT
     id     : CARDINAL;
     s      : SchmooInstance;
-    square : Square;
     done   := FALSE;
+  METHODS
+    wake();
+    subdivide();
+  END;
+  
+  LWatcher = PWatcher OBJECT
+    cube : MeshNodeList.T;
+  OVERRIDES
+    wake := WakeLWatcher;
+    subdivide := LSubdivide;
   END;
 
-PROCEDURE InitMN(mn : MeshNode) : MeshNode =
+  (* representation of a coordinate cube:
+
+     the binary index into the list of points is the combination of
+     coordinates
+
+     i.e., index 0 is the "bottom right" corner 
+           index 2^N-1 is the "top left" corner
+
+     each individual dimension delta can be calculated from just
+     these two points 
+  *)
+
+PROCEDURE InitMN(mn : MeshNode.T) : MeshNode.T =
   BEGIN
     mn.id := nextJobId;
     INC(nextJobId);
@@ -361,6 +281,9 @@ PROCEDURE Run(s : RefSeq.T) =
           ProcUtils.ErrorExit(x) =>
           Debug.Warning("SearchForLostLambs raised ErrorExit : " &
             Debug.UnNil(x.error))
+        |
+          ProcUtils.Timeout =>
+          Debug.Warning("SearchForLostLambs raised Timeout")
         |
           Rd.Failure(x) =>
           Debug.Warning("SearchForLostLambs raised Rd.Failure : " &
@@ -426,7 +349,7 @@ PROCEDURE RelaunchLostLambs(lambs : IntSet.T) =
 EXCEPTION Parse;
           
 PROCEDURE SearchForLostLambs() : IntSet.T
-  RAISES { ProcUtils.ErrorExit, Rd.Failure, OSError.E, Parse } =
+  RAISES { ProcUtils.ErrorExit, ProcUtils.Timeout, Rd.Failure, OSError.E, Parse } =
   VAR
     cmd := "nbqstat user=" & user;
     dummy : CARDINAL;
@@ -454,7 +377,7 @@ PROCEDURE SearchForLostLambs() : IntSet.T
       END
     END;
 
-    WITH data = ProcUtils.ToText(cmd),
+    WITH data = ProcUtils.ToText(cmd, timeout := NbTimeout),
          rd   = TextRd.New(data) DO
       TRY
         LOOP
@@ -462,9 +385,9 @@ PROCEDURE SearchForLostLambs() : IntSet.T
             IF TextUtils.FindSub(line, user, dummy) THEN
               (* match *)
               WITH rdr = NEW(TextReader.T).init(line),
-                   stateStr = rdr.nextE(" ", skipNulls := TRUE),
+                   <*UNUSED*>stateStr = rdr.nextE(" ", skipNulls := TRUE),
                    jobId    = Scan.Int(rdr.nextE(" ")) DO
-                Debug.Out("SearchForLostLambs: found job " & Int(jobId));
+                Debug.Out("SearchForLostLambs: found job " & Int(jobId), 20);
                 EVAL lambs.delete(jobId)
               END
             END
@@ -537,7 +460,7 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN
       END
     END MarkAsNotRunning;
 
-  PROCEDURE ProcessOutput(mn : MeshNode; ln : TEXT) RAISES { OSError.E } =
+  PROCEDURE ProcessOutput(mn : MeshNode.T; ln : TEXT) RAISES { OSError.E } =
     BEGIN
       IF    TE(ln, "PASS") THEN
         mn.state := NodeState.Pass
@@ -555,14 +478,18 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN
            sWr = pfWr[mn.state] DO
         
         Wr.PutText(r1Wr, fn); Wr.PutChar(r1Wr, ' ');
-        
-        FOR i := FIRST(mn.args^) TO LAST(mn.args^) DO
-          WITH cmd = mn.args[i].format() DO
-            Wr.PutText(wr, cmd);
-            Wr.PutChar(wr, '\n');
-            
-            Wr.PutText(r1Wr, cmd); Wr.PutChar(r1Wr, ' ');
-            Wr.PutText(sWr, cmd); Wr.PutChar(sWr, ' ')
+
+        FOR t := FIRST(Tool) TO LAST(Tool) DO
+          FOR i := FIRST(mn.args^) TO LAST(mn.args^) DO
+            WITH cmd = mn.args[i].format(t) DO
+              IF Text.Length(cmd) # 0 THEN
+                Wr.PutText(wr, cmd);
+                Wr.PutChar(wr, '\n');
+                
+                Wr.PutText(r1Wr, cmd); Wr.PutChar(r1Wr, ' ');
+                Wr.PutText(sWr, cmd); Wr.PutChar(sWr, ' ')
+              END
+            END
           END
         END;
         Wr.PutText(wr, "PassFail ");
@@ -595,7 +522,7 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN
       WITH i     = Scan.Int(fn),
            ln    = Rd.GetLine(rd),
            hadIt = activeNodes.delete(i, r),
-           mn    = NARROW(r, MeshNode) DO
+           mn    = NARROW(r, MeshNode.T) DO
 
         Debug.Out(F("activeNodes.delete(%s)",Int(i)));
 
@@ -626,115 +553,178 @@ PROCEDURE SearchForResults(missing : IntSet.T) : BOOLEAN
     RETURN found
   END SearchForResults;
 
-PROCEDURE ChangedState(mn : MeshNode) =
+PROCEDURE ChangedState(mn : MeshNode.T) =
   VAR
     p := mn.watchers;
   BEGIN
     Debug.Out(F("%s watchers", Int(RefList.Length(mn.watchers))));
     WHILE p # NIL DO
-      WakeWatcher(p.head);
+      NARROW(p.head,PWatcher).wake();
       p := p.tail
     END
   END ChangedState;
 
-PROCEDURE DebugPt(nm : TEXT; x : LR01) =
-  BEGIN
-    Debug.Out(F("%s %12s %12s", nm, LongReal(x[0]), LongReal(x[1])))
-  END DebugPt;
+PROCEDURE LSubdivide(w : LWatcher) =
 
-PROCEDURE Subdivide(w : Watcher) =
+  VAR
+    ll := w.cube.head;
+    ur := MeshNodeList.Nth(w.cube, MeshNodeList.Length(w.cube)-1);
+    ndims := ll.x.size();
+    (* these two are indexed by dimension *)
+    d := NEW(REF ARRAY OF LONGREAL, ndims);
+    c := NEW(REF ARRAY OF LRSeq.T, ndims);
+    split := FALSE;
+    xc := NEW(REF ARRAY OF LONGREAL, ndims); (* centroid *)
   BEGIN
-    WITH x00 = w.square[0,0].x,
-         x01 = w.square[0,1].x,
-         x10 = w.square[1,0].x,
-         x11 = w.square[1,1].x,
-         
-         xn =  Split(x00,x01), 
-         xe =  Split(x11,x01),
-         xs =  Split(x11,x10),
-         xw =  Split(x00,x10),
-         xc =  Split(xw ,xe ),
-         
-         (* x00    xn    x01
-            xw     xc    xe
-            x10    xs    x11 *)
-         
-         mm = ARRAY [0..2] OF ARRAY [0..2] OF LR01 {
-                ARRAY [0..2] OF LR01 { x00, xn , x01},
-                ARRAY [0..2] OF LR01 { xw , xc , xe },
-                ARRAY [0..2] OF LR01 { x10, xs , x11} } DO
-      
-      DebugPt("x00", x00);
-      DebugPt("x01", x01);
-      DebugPt("x10", x10);
-      DebugPt("x11", x11);
-      
-      DebugPt("xn ", xn);
-      DebugPt("xe ", xe);
-      DebugPt("xs ", xs);
-      DebugPt("xw ", xw);
-      DebugPt("xc ", xc);
-      
-      <*ASSERT x00[1] = x10[1]*>
-      <*ASSERT x00[0] = x01[0]*>
-      IF x11[0]-x00[0] <= w.s.schmoo.minStep[0]   AND
-         x11[1]-x00[1] <= w.s.schmoo.minStep[1]     THEN
-        (* achieved minstep, stop! *)
-        Debug.Out("Achieved minstep, quitting here.");
-        w.s.minSquares := XYList.Cons(xc, w.s.minSquares);
-        RETURN
+    Debug.Out(F("LSubdivide subdividing (%s , %s)", FormatPoint(ll.x), FormatPoint(ur.x)));
+    
+    FOR dim := 0 TO ndims-1 DO
+      c[dim] := NEW(LRSeq.T).init()
+    END;
+
+    (* calculate the steps in each dimension and calculate the centroid 
+       of the current voxel *)
+    FOR dim := 0 TO ndims-1 DO
+      d [dim] :=  FromList(ur.x)[dim] - FromList(ll.x)[dim]           ;
+      xc[dim] := (FromList(ur.x)[dim] + FromList(ll.x)[dim]) / 2.0d0
+    END;
+
+    Debug.Out(F("LSubdivide delta    %s", FormatPoint(ToList(d^))));
+    Debug.Out(F("LSubdivide centroid %s", FormatPoint(ToList(xc^))));
+    
+    FOR dim := 0 TO ndims-1 DO
+      (* the boundary of the parent voxel is always included *)
+      c[dim].addhi(ll.x.get(dim));
+
+      (* if we are still allowed to split, then split in this dimension *)
+      IF d[dim] > w.s.schmoo.minStep[dim] +
+                  xc[dim] * w.s.schmoo.minRatio[dim]
+       THEN
+        split := TRUE;
+        c[dim].addhi(xc[dim])
       END;
-      
-      FOR i := FIRST(mm) TO LAST(mm)-1 DO
-        FOR j := FIRST(mm[i]) TO LAST(mm[i])-1 DO
-          LaunchSquare(w.s, 
-                       XYSquare { XYRow { mm[i  ,j  ], mm[i  ,j+1] },
-                                  XYRow { mm[i+1,j  ], mm[i+1,j+1] }
-          }
-          )
+
+      (* and add the other boundary of the parent voxel *)
+      c[dim].addhi(ur.x.get(dim));
+
+      FOR i := 0 TO c[dim].size()-1 DO
+        Debug.Out(F("Subdivide dim %s coord %s", Int(dim), LongReal(c[dim].get(i))))
+      END
+    END;
+
+    IF split THEN
+      (* at least one dimension has been split *)
+      LaunchMesh(c^, w.s)
+    ELSE
+      Debug.Out("Achieved minstep, quitting here.");
+      w.s.minSquares := XYList.Cons(ToList(xc^), w.s.minSquares)
+    END
+  END LSubdivide;
+
+PROCEDURE LaunchMesh(READONLY c : ARRAY OF LRSeq.T; inst : SchmooInstance) =
+
+  PROCEDURE Launch(ll, ur : Point.T;
+                   d : CARDINAL) =
+    (* recursively generate all the child voxels of the current voxel,
+       using the steps in each dimension *)
+    BEGIN
+      IF d = ndims THEN
+        LaunchList(inst, MakeCube(ll, ur))
+      ELSE
+        Debug.Out(F("Launch d %s c[d].size() %s",Int(d), Int(c[d].size())));
+        
+        FOR i := 0 TO c[d].size()-2 DO
+          ll.put(d, c[d].get(i  ));
+          ur.put(d, c[d].get(i+1));
+          Debug.Out(F("Calling Launch( %s , %s )", FormatPoint(ll), FormatPoint(ur)));
+          Launch(ll, ur, d+1)
         END
       END
-    END
-  END Subdivide;
+    END Launch;
 
-PROCEDURE WakeWatcher(w : Watcher) =
+  VAR
+    ndims := NUMBER(c);
+  BEGIN
+    WITH ll = EmptyPoint(), ur = EmptyPoint() DO
+      FOR i := 0 TO ndims-1 DO
+        ll.addhi(LAST(LONGREAL));
+        ur.addhi(FIRST(LONGREAL))
+      END;
+      Launch(ll, ur, 0)
+    END
+  END LaunchMesh;
+  
+PROCEDURE EmptyPoint() : Point.T =
+  BEGIN RETURN NEW(Point.T).init() END EmptyPoint;
+  
+PROCEDURE MakeCube(ll, ur : Point.T) : PointSeq.T =
+  VAR
+    d := ll.size();        (* dimensionality *)
+    n := Word.Shift(1, d); (* size of cube *)
+    next : Point.T;
+    res := NEW(PointSeq.T).init();
+  BEGIN
+    Debug.Out(F("MakeCube ll=%s ur=%s", FormatPoint(ll), FormatPoint(ur)));
+    FOR i := 0 TO n-1 DO
+      next := EmptyPoint();
+      FOR b := 0 TO d-1 DO
+        WITH q = Word.Extract(i, b, 1) DO
+          CASE q OF
+            0 => next.addhi(ll.get(b))
+          |
+            1 => next.addhi(ur.get(b))
+          ELSE
+            <*ASSERT FALSE*>
+          END
+        END
+      END(* FOR b *);
+      Debug.Out("MakeCube next=" & FormatPoint(next));
+      res.addhi(next)
+    END;
+    RETURN res
+  END MakeCube;
+
+PROCEDURE WakeLWatcher(w : LWatcher) =
   VAR
     count := ARRAY NodeState OF CARDINAL { 0, .. };
+    p := w.cube;
   BEGIN
     IF w.done THEN RETURN END; (* crud *)
-    Debug.Out("WakeWatcher " & Int(w.id));
+    Debug.Out("WakeLWatcher " & Int(w.id));
     w.done := TRUE;
 
-    FOR i := FIRST(w.square) TO LAST(w.square) DO
-      FOR j := FIRST(w.square[i]) TO LAST(w.square[i]) DO
-        INC(count[w.square[i,j].state])
-      END
+    WHILE p # NIL DO
+      INC(count[p.head.state]);
+      p := p.tail
     END;
 
     IF    (count[NodeState.Pass] # 0 AND count[NodeState.Fail] # 0) OR
            count[NodeState.ErrorExit] # 0 THEN
       Debug.Out("Different states!");
-      Subdivide(w);
+      w.subdivide();
       w.done := TRUE
     ELSIF count[NodeState.Running] # 0 THEN
-      Debug.Out(F("WakeWatcher: node(s) still running, going back to sleep"));
+      Debug.Out(F("WakeLWatcher: node(s) still running, going back to sleep"));
       w.done := FALSE
     ELSE
-      <*ASSERT count[NodeState.Pass] = 4 OR count[NodeState.Fail] = 4*>
+      WITH len = MeshNodeList.Length(w.cube) DO
+        <*ASSERT count[NodeState.Pass] = len OR count[NodeState.Fail] = len *>
+      END;
       Debug.Out("All states the same, nothing to do here");
       w.done := TRUE
     END
-  END WakeWatcher;
-
+  END WakeLWatcher;
 
 PROCEDURE LaunchSchmoo(pfx : RefSeq.T; READONLY q : Dims.T; schmoo : Schmoo) =
   (* note we can launch many schmoos *)
   VAR
+    ndims := NUMBER(schmoo.param^);
     valPfx := NEW(REF ARRAY OF Val, NUMBER(q));
-    initSz : I01;
-    initXY : REF ARRAY OF ARRAY OF LR01;
-    actStep : LR01;
+    
+    actStep := NEW(REF ARRAY OF LONGREAL, ndims);
     inst : SchmooInstance;
+    c := NEW(REF ARRAY OF LRSeq.T, ndims);
+    split := FALSE;
   BEGIN
     FOR i := FIRST(valPfx^) TO LAST(valPfx^) DO
       WITH s = NARROW(pfx.get(i),Settings) DO
@@ -750,130 +740,126 @@ PROCEDURE LaunchSchmoo(pfx : RefSeq.T; READONLY q : Dims.T; schmoo : Schmoo) =
       valPfx[i].s := pfx.get(i)
     END;
 
-    <*ASSERT NUMBER(q) = pfx.size()-1*>
-    FOR i := 0 TO 1 DO
-      initSz[i] := CEILING((schmoo.max[i]-schmoo.min[i])/schmoo.maxStep[i])+1;
-      IF schmoo.max[i] = schmoo.min[i] THEN
-        actStep[i] := 0.0d0
-      ELSE
-        actStep[i] := (schmoo.max[i]-schmoo.min[i])/FLOAT(initSz[i]-1,LONGREAL)
-      END
+    FOR dim := 0 TO ndims-1 DO
+      c[dim] := NEW(LRSeq.T).init()
     END;
-
-    Debug.Out(F("LaunchShmoo initSz = %s x %s", 
-                Int(initSz[0]),
-                Int(initSz[1])));
-
-    initXY   := NEW(REF ARRAY OF ARRAY OF LR01, initSz[0], initSz[1]);
 
     inst := NEW(SchmooInstance, 
                 schmoo     := schmoo, 
                 valPfx     := valPfx,
-                meshTab    := NEW(LRPairRefTbl.Default).init());
-
+                meshTab    := NEW(PointRefTbl.Default).init());
+    
     schmooInstances := RefList.Cons(inst, schmooInstances);
 
-    FOR i := 0 TO initSz[0]-1 DO
-      FOR j := 0 TO initSz[1]-1 DO
-        initXY[i,j] := LR01{ schmoo.min[0]+actStep[0]*FLOAT(i,LR),
-                             schmoo.min[1]+actStep[1]*FLOAT(j,LR) }
+    <*ASSERT NUMBER(q) = pfx.size()-1*>
+    FOR i := 0 TO ndims-1 DO
+      IF schmoo.max[i] = schmoo.min[i] THEN
+        actStep[i] := 0.0d0
+      ELSE
+        split := TRUE;
+        WITH dd = CEILING((schmoo.max[i]-schmoo.min[i])/schmoo.maxStep[i])+1 DO
+          actStep[i] := (schmoo.max[i]-schmoo.min[i])/FLOAT(dd-1,LONGREAL)
+        END
+      END;
+
+      (* generate all the coordinate points for each dimension *)
+      VAR
+        p := schmoo.min[i];
+      BEGIN
+        (* careful with roundoff here.
+
+           final p should really be schmoo.max[i] but with roundoff it
+           might be a bit smaller (and if looked for c.gethi() = schmoo.max,
+           the program would likely never terminate
+        *)
+        REPEAT
+          c[i].addhi(p);
+          p := p + actStep[i]
+        UNTIL c[i].gethi() > schmoo.max[i] - actStep[i]/2.0d0;
       END
     END;
 
-    IF initSz[0] = 1 OR initSz[1] = 1 THEN
-      (* user is requesting something that cant be subdivided *)
-      FOR i := 0 TO initSz[0]-1 DO
-        FOR j := 0 TO initSz[1]-1 DO
-          LaunchIndivisible(inst, initXY[i,j])
-        END
-      END
+    IF split THEN
+      LaunchMesh(c^, inst)
     ELSE
-      FOR i := 0 TO initSz[0]-2 DO
-        FOR j := 0 TO initSz[1]-2 DO
-          LaunchSquare(inst,
-                       XYSquare { XYRow { initXY[i  ,j  ], initXY[i  ,j+1] } ,
-                                  XYRow { initXY[i+1,j  ], initXY[i+1,j+1] } } )
-        END
-      END
+      <* ASSERT FALSE *> (* this worked before but semantics were screwed up *)
     END
   END LaunchSchmoo;
 
-PROCEDURE ToPair(x : LR01) : LongRealPair.T =
-  BEGIN RETURN LongRealPair.T { x[0], x[1] } END ToPair;
+ 
 
-PROCEDURE Split(x, y : LR01) : LR01 =
-  BEGIN RETURN LR01 { (x[0]+y[0])/2.0d0, (x[1]+y[1])/2.0d0 } END Split;
+PROCEDURE ToList(READONLY x : ARRAY OF LR) : Point.T =
+  VAR res := EmptyPoint();
+  BEGIN
+    FOR i := FIRST(x) TO LAST(x) DO
+      res.addhi(x[i])
+    END;
+    RETURN res
+  END ToList;
+
+PROCEDURE FromList(l : Point.T) : REF LA =
+  VAR
+    res := NEW(REF LA, l.size());
+  BEGIN
+    FOR i := 0 TO l.size()-1 DO
+      res[i] := l.get(i)
+    END;
+    RETURN res
+  END FromList;
 
 VAR
   nextWatcherId := 0;
 
-PROCEDURE LaunchIndivisible(inst : SchmooInstance; x : LR01) =
-  (* called when user has requested something that cant be subdivided,
-     kind of a hack! *)
-  VAR
-    r : REFANY;
-    new : MeshNode;
+PROCEDURE FormatPoint(p : Point.T) : TEXT =
+  VAR res := "";
   BEGIN
-    IF inst.meshTab.get(ToPair(x),r) THEN
-      new := r
-    ELSE
-      new := NEW(MeshNode, x := x).init()
+    FOR i := 0 TO p.size()-1 DO
+      res := res & " " & LongReal(p.get(i))
     END;
-    (* no watchers since we cant subdivide *)
-    WITH m = new,
-         an = NUMBER(inst.valPfx^),
-         allVals = NEW(REF ARRAY OF Val, an) DO
-      SUBARRAY(allVals^,0, NUMBER(inst.valPfx^)) := inst.valPfx^;
-      allVals[an-1] := NEW(SchmooVal,
-                           s := inst.schmoo,
-                           x := m.x);
-      LaunchSingleJob(allVals^, m.id);
-      m.args := allVals;
-      Debug.Out(F("activeNodes.put(%s)",Int(m.id)));
-      EVAL activeNodes.put(m.id, m)
-    END
-  END LaunchIndivisible;
-
-PROCEDURE LaunchSquare(inst : SchmooInstance; sq : XYSquare) =
+    RETURN res
+  END FormatPoint;
+  
+PROCEDURE LaunchList(inst : SchmooInstance; p : PointSeq.T) =
   VAR
     new := NEW(RefSeq.T).init();
-    m : Square;
+    m : MeshNodeList.T;
     r : REFANY;
   BEGIN
-    DebugPt("LaunchSquare sq[0,0]", sq[0,0]);
-    DebugPt("LaunchSquare sq[0,1]", sq[0,1]);
-    DebugPt("LaunchSquare sq[1,0]", sq[1,0]);
-    DebugPt("LaunchSquare sq[1,1]", sq[1,1]);
-
-    FOR i := FIRST(sq) TO LAST(sq) DO
-      FOR j := FIRST(sq[i]) TO LAST(sq[i]) DO
-        IF inst.meshTab.get(ToPair(sq[i,j]),r) THEN
-          m[i,j] := r;
+    FOR i := 0 TO p.size()-1 DO
+      Debug.Out("LaunchList " & FormatPoint(p.get(i)))
+    END;
+    
+    FOR i := 0 TO p.size()-1 DO
+      WITH pp = p.get(i) DO
+        IF inst.meshTab.get(pp, r) THEN
+          (* it already exists, link to old run *)
+          m := MeshNodeList.Cons(r, m)
         ELSE
-          m[i,j] := NEW(MeshNode, x := sq[i,j]).init();
-          EVAL inst.meshTab.put(ToPair(sq[i,j]),m[i,j]);
-          new.addhi(m[i,j])
+          m := MeshNodeList.Cons(NEW(MeshNode.T, x := pp).init(), m);
+          EVAL inst.meshTab.put(pp, m.head);
+          new.addhi(m.head)
         END
       END
     END;
+
+    m := MeshNodeList.ReverseD(m);
+    
     VAR
-      w := NEW(Watcher, id := nextWatcherId, s := inst, square := m);
+      w := NEW(LWatcher, id := nextWatcherId, s := inst, cube := m);
+      mp := m;
     BEGIN
       INC(nextWatcherId);
-      FOR i := FIRST(sq) TO LAST(sq) DO
-        FOR j := FIRST(sq[i]) TO LAST(sq[i]) DO
-          Debug.Out(F("Adding watcher %s to cmd %s ", 
-                      Int(w.id), Int(m[i,j].id)));
-          m[i,j].watchers := RefList.Cons(w, m[i,j].watchers)
-        END
-      END;
-      
-      (* the watcher COULD be ready to run *)
-      WakeWatcher(w)
+      WHILE mp # NIL DO
+        Debug.Out(F("Adding watcher %s to cmd %s ", 
+                    Int(w.id), Int(mp.head.id)));
+        mp.head.watchers := RefList.Cons(w, mp.head.watchers);
+        mp := mp.tail
+      END
     END;
-    (* actually launch jobs *)
+    
+    (* actually launch new jobs *)
     FOR i := 0 TO new.size()-1 DO
-      WITH m       = NARROW(new.get(i),MeshNode),
+      WITH m       = NARROW(new.get(i),MeshNode.T),
            an      = NUMBER(inst.valPfx^),
            allVals = NEW(REF ARRAY OF Val, an) DO
         SUBARRAY(allVals^, 0, NUMBER(inst.valPfx^)) := inst.valPfx^;
@@ -887,8 +873,8 @@ PROCEDURE LaunchSquare(inst : SchmooInstance; sq : XYSquare) =
         EVAL activeNodes.put(m.id, m)
       END
     END
-  END LaunchSquare;
-
+  END LaunchList;
+  
 VAR
   nextJobId := 0;
   activeNodes := NEW(CardRefTbl.Default).init();
@@ -913,12 +899,62 @@ PROCEDURE FindSim(READONLY v : ARRAY OF Val) : TEXT =
     <*ASSERT FALSE*>
   END FindSim;
 
+PROCEDURE FormatCommand(id : CARDINAL;
+                        pfx : TEXT;
+                        READONLY v : ARRAY OF Val;
+                        memoize : BOOLEAN;
+                        VAR didMemoize : BOOLEAN) : TEXT =
+  VAR
+    command := pfx;
+    beforeSpice := command;
+    afterSpice := "";
+    memoId : CARDINAL;
+    
+  BEGIN
+    didMemoize := FALSE;
+    FOR t := FIRST(Tool) TO LAST(Tool) DO
+      FOR i := FIRST(v) TO LAST(v) DO
+        <*ASSERT v[i] # NIL*>
+        WITH fm = v[i].format(t) DO
+          IF Text.Length(fm) # 0 THEN
+            command := command & " " & fm;
+            IF t = Tool.PostSpice THEN
+              afterSpice := afterSpice & " " & fm
+            ELSE
+              beforeSpice := beforeSpice & " " & fm
+            END
+          END
+        END
+      END
+    END;
+
+    IF memoize THEN
+      Debug.Out("FormatCommand seeking memo string : " & beforeSpice);
+      
+      IF memoCmds.get(beforeSpice, memoId) THEN
+        Debug.Out("FormatCommand found old command " & Int(memoId) & " -> " & Int(id));
+        command := F(" -memoize " & FNFmt & " %s", Int(memoId), command);
+        didMemoize := TRUE
+      ELSE
+        Debug.Out("FormatCommand remembering new command");
+        EVAL memoCmds.put(beforeSpice, id)
+      END
+    END;
+
+    RETURN command
+  END FormatCommand;
+
+VAR memoCmds := NEW(TextCardTbl.Default).init();
+  
 PROCEDURE LaunchSingleJob(READONLY v : ARRAY OF Val; id : CARDINAL) =
   VAR
     jdn := F("%s/" & FNFmt,absRoot,Int(id));
     nbs := F("%s --log-file-dir %s", NetBatchString, rootDn);
-    command := F("%s %s %s " & FNFmt & " %s ", 
-                 nbs, cmdNm, absRoot, Int(id), FindSim(v));
+    command1 := F("%s %s %s " & FNFmt & " ", 
+                  nbs, cmdNm, absRoot, Int(id));
+    command2 := FindSim(v) & " ";
+    command : TEXT;
+    didMemoize : BOOLEAN;
   BEGIN
     TRY
       FS.CreateDirectory(jdn)
@@ -927,31 +963,67 @@ PROCEDURE LaunchSingleJob(READONLY v : ARRAY OF Val; id : CARDINAL) =
       Debug.Error("Couldnt create directory \""& jdn & "\" : OSError.E : " &
         AL.Format(x))
     END;
-    
-    FOR i := FIRST(v) TO LAST(v) DO
-      <*ASSERT v[i] # NIL*>
-      command := command & " " & v[i].format();
-    END;
+
+    command := command1 & FormatCommand(id, command2, v, memoize := TRUE,
+                                        didMemoize := didMemoize);
+
     Debug.Out(F("command %s : %s", Int(id), command));
     Wr.PutText(clogWr, F("%s %s\n", Int(id), command));
     Wr.Flush  (clogWr);
-    WITH nbCmd = NEW(NbCommand.T, id := id, cmd := command) DO
-      Enqueue(nbCmd);
+    VAR nbCmd := NEW(NbCommand.T, id := id, cmd := command);
+        pri := FIRST(Pri);
+    BEGIN
+      IF didMemoize THEN pri := LAST(Pri) END;
+     
+      Enqueue(nbCmd, pri);
       LOCK nbMu DO
         EVAL jobsById.put(id, nbCmd)
       END
     END
   END LaunchSingleJob;
 
-VAR cmdQ  := NEW(NbCommandSeq.T).init();
+CONST NPri = 2;
+TYPE Pri = [0..NPri-1];
+VAR cmdQ  : ARRAY Pri OF NbCommandSeq.T;
 VAR cmdMu := NEW(MUTEX);
 VAR cmdC  := NEW(Thread.Condition);
 
-PROCEDURE Enqueue(command : NbCommand.T) =
+PROCEDURE Enqueue(command : NbCommand.T; pri := FIRST(Pri)) =
   BEGIN
-    LOCK cmdMu DO cmdQ.addhi(command); Thread.Signal(cmdC) END
+    Debug.Out("Enqueue command with pri " & Int(pri));
+    LOCK cmdMu DO cmdQ[pri].addhi(command); Thread.Signal(cmdC) END;
+    Debug.Out("Enqueue command done");
   END Enqueue;
 
+PROCEDURE Dequeue() : NbCommand.T =
+
+  PROCEDURE Size() : CARDINAL =
+    VAR res := 0;
+    BEGIN
+      FOR i := FIRST(Pri) TO LAST(Pri) DO
+        res := res + cmdQ[i].size()
+      END;
+      RETURN res
+    END Size;
+    
+  BEGIN
+    LOCK cmdMu DO
+      Debug.Out("Dequeue : " & Int(Size()) & " commands waiting to run");
+      FOR i := FIRST(Pri) TO LAST(Pri) DO
+        Debug.Out(F("Dequeue cmdQ[%s] size %s", Int(i), Int(cmdQ[i].size())))
+      END;
+      WHILE Size() = 0 DO Thread.Wait(cmdMu, cmdC) END;
+      (* \exists i s.t.  cmdQ[i].size() > 0 *)
+      FOR i := FIRST(Pri) TO LAST(Pri) DO
+        IF cmdQ[i].size() # 0 THEN
+          Debug.Out("Dequeue command from queue " & Int(i));
+          RETURN cmdQ[i].remlo()
+        END
+      END;
+      <*ASSERT FALSE*>
+    END
+  END Dequeue;
+  
 VAR nbMu       := NEW(MUTEX);
 VAR jobsById   := NEW(CardRefTbl.Default).init();
 
@@ -1004,27 +1076,18 @@ PROCEDURE IntAfter(in, word : TEXT) : INTEGER
 
 PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
   VAR
-    quota := GetLaunchQuota();
     cmd : NbCommand.T;
   BEGIN
     LOOP(*forever*)
 
-      WHILE quota = 0 DO
-        quota := GetLaunchQuota();
-        IF quota = 0 THEN Thread.Pause(5.0d0) END;
-      END;
-      (* quota > 0 *)
+      WHILE NOT GetQuota() DO Thread.Pause(0.1d0) END;
 
-      LOCK cmdMu DO
-        WHILE cmdQ.size() = 0 DO Thread.Wait(cmdMu, cmdC) END;
-        (* cmdQ.size() > 0 *)
-        cmd := cmdQ.remlo()
-      END;
+      (* got quota *)
 
-      DEC(quota);
+      cmd := Dequeue();
 
-      Debug.Out(F("actually launching command, rem. quota %s : %s %s",
-                  Int(quota), Int(cmd.id), cmd.cmd));
+      Debug.Out(F("LaunchApply actually launching command: %s %s",
+                  Int(cmd.id), cmd.cmd));
 
       VAR 
         success := FALSE;
@@ -1034,15 +1097,16 @@ PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
       BEGIN
         FOR i := 1 TO Attempts DO
           TRY
-            output := ProcUtils.ToText(cmd.cmd);
-            Debug.Out("command output : " & output);
+            output := ProcUtils.ToText(cmd.cmd, timeout := NbTimeout);
+            Debug.Out("LaunchApply command output : " & output);
 
             WITH nbId = IntAfter(output, "JobID") DO
-              Debug.Out("NB id is " & Int(nbId));
+              Debug.Out("LaunchApply NB id is " & Int(nbId));
               LOCK nbMu DO 
                 cmd.nbId := nbId;
                 cmd.started := Time.Now()
-              END
+              END;
+              Debug.Out("LaunchApply: nbMu released")
             END;
 
             success := TRUE; EXIT
@@ -1060,23 +1124,92 @@ PROCEDURE LaunchApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
             ProcUtils.ErrorExit(x) =>
             Debug.Warning("LaunchApply : caught error ErrorExit : " & ProcUtils.FormatError(x));
             Thread.Pause(10.0d0)
+          |
+            ProcUtils.Timeout =>
+            Debug.Warning("LaunchApply : caught timeout");
+            Thread.Pause(10.0d0)
           END
         END;
         IF NOT success THEN 
-          Debug.Error("Command failed repeatedly : " & cmd.cmd) 
+          Debug.Error("LaunchApply : command failed repeatedly : " & cmd.cmd) 
         END
       END
 
     END
   END LaunchApply;
 
-VAR launchThr := Thread.Fork(NEW(Thread.Closure, apply := LaunchApply));
+CONST NLaunchers = 10;
+      
+PROCEDURE StartLaunchers() =
+  BEGIN
+    FOR i := 0 TO NLaunchers-1 DO
+      EVAL Thread.Fork(NEW(Thread.Closure, apply := LaunchApply))
+    END
+  END StartLaunchers;
+    
+(**********************************************************************)
 
+VAR q : CARDINAL := 0;
+VAR qMu := NEW(MUTEX);
+    
+PROCEDURE QuotaApply(<*UNUSED*>cl : Thread.Closure) : REFANY =
+  VAR
+    tq : CARDINAL;
+    delay : LONGREAL;
+
+  CONST
+    DelayIncr = 0.5d0;
+    DelayMax  = 5.0d0;
+
+  BEGIN
+    LOOP
+      (* wait until we run out of quota *)
+      REPEAT
+        LOCK qMu DO tq := q END;
+        IF tq > 0 THEN Thread.Pause(0.1d0) END
+      UNTIL tq = 0;
+
+      delay := 0.5d0;
+
+      (* theres a race condition here.
+         launch threads can get quota, then we can find nbavail before
+         jobs have been launched, overrunning our buffer *)
+      
+      WHILE tq = 0 DO
+        tq := GetLaunchQuota();
+        LOCK qMu DO q := tq END;
+        IF tq = 0 THEN
+          Thread.Pause(delay);
+          delay := MIN(delay + DelayIncr, DelayMax)
+        END
+      END
+    END
+  END QuotaApply;
+
+PROCEDURE GetQuota() : BOOLEAN =
+  BEGIN
+    LOCK qMu DO
+      IF q > 0 THEN
+        DEC(q);
+        Debug.Out("GetQuota : rem. quota " & Int(q));
+        RETURN TRUE
+      ELSE
+        RETURN FALSE
+      END
+    END
+  END GetQuota;
+
+(**********************************************************************)
+  
 PROCEDURE GetLaunchQuota() : CARDINAL =
   BEGIN 
     LOOP
       TRY
-        RETURN Scan.Int(ProcUtils.ToText("nbavail")) 
+        Debug.Out("GetLaunchQuota: trying to run nbavail");
+        WITH res = Scan.Int(ProcUtils.ToText("nbavail", timeout := NbTimeout))  DO
+          Debug.Out("GetLaunchQuota: res = " & Int(res));
+          RETURN res
+        END
       EXCEPT
         OSError.E(x) => 
         Debug.Warning("Trouble running nbavail: OSError.E " & AL.Format(x))
@@ -1086,6 +1219,9 @@ PROCEDURE GetLaunchQuota() : CARDINAL =
       |
         ProcUtils.ErrorExit(x) => 
         Debug.Warning("Trouble running nbavail: " & ProcUtils.FormatError(x));
+      |
+        ProcUtils.Timeout => 
+        Debug.Warning("Trouble running nbavail: timeout")
       |
         Lex.Error, FloatMode.Trap =>        
         Debug.Warning("Trouble parsing output of nbavail...")
@@ -1107,187 +1243,109 @@ PROCEDURE Add(s : Settings) =
       settings.addlo(s)
     END
   END Add;
-
-
-PROCEDURE AllCornerSim() =
+  
+PROCEDURE Process(READONLY a : ARRAY OF Schmooze.T) =
   BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, 
-            cover := NARROW(cornerP,DiscreteParam).vals (*RT(TA { "tttt" })*)
-    ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.50d0,  500.0d6 },
-            max     := LR01 {  1.25d0, 2500.0d6 },
-            minStep := LR01 { 0.010d0,    5.0d6 },
-            maxStep := LR01 { 0.100d0,  200.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := -40.0d0, max := 125.0d0, step := 40.0d0));
-  END AllCornerSim;
+    IF pp.keywordPresent ("-schmooze") THEN
+      WITH snm = pp.getNext() DO
+        FOR i := FIRST(a) TO LAST(a) DO
+          IF TE(a[i].nm,  snm) THEN
+            a[i].p(); RETURN
+          END
+        END;
+        Debug.Error("unknown schmooze \"" & snm & "\"")
+      END
+    ELSE
+      a[0].p()
+    END
+  END Process;
 
-PROCEDURE SimulatorSim() =
+PROCEDURE Setup(simPA : DiscreteParam) =
   BEGIN
-    (* what's going on with temperature? *)
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa", "hspice" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.70d0, 1000.0d6 },
-            max     := LR01 {  1.05d0, 1500.0d6 },
-            minStep := LR01 { 0.050d0,   10.0d6 },
-            maxStep := LR01 { 0.100d0,   50.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := -40.0d0, max := 125.0d0, step := 40.0d0));
-  END SimulatorSim;
+    simP := simPA;
+    FOR i := FIRST(Pri) TO LAST(Pri) DO
+      cmdQ[i] :=   NEW(NbCommandSeq.T).init()
+    END;
 
-PROCEDURE XATempSim() =
+    EVAL Thread.Fork(NEW(Thread.Closure, apply := QuotaApply));
+
+    StartLaunchers();
+
+    IF pp.keywordPresent("-dn") THEN
+      rootDn := pp.getNext()
+    END;
+    
+    doneDn := rootDn & "/done";
+    resultsDn := rootDn & "/results";
+    resultsFn := rootDn & "/results.dat"; (* single file *)
+    clogFn    := rootDn & "/commands.dat";
+    
+    <*FATAL OSError.E*>
+    BEGIN
+      FS.CreateDirectory(rootDn); (* source of everything *)
+      FS.CreateDirectory(doneDn);
+      FS.CreateDirectory(resultsDn);
+      r1Wr := FileWr.Open(resultsFn);
+      
+      clogWr := FileWr.Open(clogFn);
+      
+      FOR i := FIRST(pfWr) TO LAST(pfWr) DO
+        pfWr[i] := FileWr.Open(rootDn & 
+                       "/" & 
+                       TextUtils.ToLower(NodeStateNames[i]) & 
+                       ".dat")
+      END;
+      
+      absRoot := FS.GetAbsolutePathname(rootDn);
+    END;
+  END Setup;
+
+PROCEDURE RunAll() =
   BEGIN
-    (* what's going on with temperature? *)
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa", "hspice" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.65d0, 1000.0d6 },
-            max     := LR01 {  1.00d0, 2200.0d6 },
-            minStep := LR01 { 0.005d0,   15.0d6 },
-            maxStep := LR01 { 0.050d0,  150.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := -40.0d0, max := 125.0d0, step := 32.5d0));
-  END XATempSim;
 
-PROCEDURE WideSim() =
+  pp.finish();
+  
+  Run(settings);
+  Wr.Close(r1Wr);
+  FOR i := FIRST(pfWr) TO LAST(pfWr) DO
+    Wr.Close(pfWr[i])
+  END;
+
+  (* dump minSquares *)
+  VAR
+    p := schmooInstances;
+    fn : Pathname.T;
+    wr : Wr.T;
   BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo,
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.00d0,  200.0d6 },
-            max     := LR01 {  1.50d0, 3200.0d6 },
-            minStep := LR01 { 0.0075d0,  10.0d6 },
-            maxStep := LR01 { 0.100d0,  200.0d6 }));
-    Add(NEW(Sweep, param := tempP,
-            min := 25.0d0, max := 25.0d0, step := 1.0d0));
-  END WideSim;
+    WHILE p # NIL DO
+      WITH si = NARROW(p.head, SchmooInstance) DO
+        fn := "";
+        FOR t := FIRST(Tool) TO LAST(Tool) DO
+          FOR i := FIRST(si.valPfx^) TO LAST(si.valPfx^) DO
+            WITH cmd = si.valPfx[i].format(t) DO fn := fn & cmd END
+          END
+        END;
 
-PROCEDURE SpfSim() =
-  BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.50d0,  800.0d6 },
-            max     := LR01 {  1.00d0, 2200.0d6 },
-            minStep := LR01 { 0.006d0,   20.0d6 },
-            maxStep := LR01 { 0.048d0,  160.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := 25.0d0, max := 25.0d0, step := 1.0d0));
-    Add(NEW(SweepSpecific, param := spfP,
-            v := RL(LA { 0.10d0, 0.03d0, 0.01d0, 0.003d0, 0.001d0, 0.0003d0, 0.0d0 })));
-  END SpfSim;
+        fn := TextUtils.Replace(fn, " ", "__");
+        fn := TextUtils.Replace(fn, "-", "_");
 
-PROCEDURE QuickSim() =
-  BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.50d0,  600.0d6 },
-            max     := LR01 {  1.00d0, 2600.0d6 },
-            minStep := LR01 {  0.001d0,   4.0d6 },
-            maxStep := LR01 {  0.050d0,  200.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := 25.0d0, max := 25.0d0, step := 1.0d0));
-  END QuickSim;
+        wr := FileWr.Open(rootDn & "/" & fn & "_boundary.dat");
+        VAR q := si.minSquares; BEGIN
+          WHILE q # NIL DO
+            Wr.PutText(wr, FormatPoint(q.head));
+            Wr.PutChar(wr, '\n');
+            q := q.tail
+          END
+        END;
+        Wr.Close(wr)
+      END;
+      p := p.tail
+    END
+  END;
 
-PROCEDURE LatchSim() =
-  BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Sweep, param := tempP, 
-            min := 25.0d0, max := 25.0d0, step := 1.0d0));
-
-    (* for now: bigtime hack, add this last: *)
-    Add(NEW(Variety, param := deckP  , cover := RT(TA {   "bothrs", "readrs", "writers", "nors" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.50d0,  300.0d6 },
-            max     := LR01 {  1.20d0, 2600.0d6 },
-            minStep := LR01 {  0.002d0,   4.0d6 },
-            maxStep := LR01 {  0.050d0,  200.0d6 }));
-  END LatchSim;
-
-PROCEDURE ThreeCornerSim() =
-  BEGIN
-    (* what's going on with temperature? *)
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "ssss", "tttt", "ffff" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.50d0,  800.0d6 },
-            max     := LR01 {  1.30d0, 2600.0d6 },
-            minStep := LR01 { 0.010d0,   30.0d6 },
-            maxStep := LR01 { 0.100d0,  300.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := -40.0d0, max := 125.0d0, step := 32.5d0));
-  END ThreeCornerSim;
-
-PROCEDURE SevenCornerSim() =
-  BEGIN
-    (* what's going on with temperature? *)
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := 
-          RT(TA { "rfff","tttt","rffs","rfsf","rsss","rssf","rsfs"  }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.50d0,  800.0d6 },
-            max     := LR01 {  1.30d0, 2600.0d6 },
-            minStep := LR01 { 0.020d0,   45.0d6 },
-            maxStep := LR01 { 0.100d0,  225.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := -40.0d0, max := 125.0d0, step := 65.0d0));
-  END SevenCornerSim;
-
-PROCEDURE TestSim() =
-  BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.75d0, 1000.0d6 },
-            max     := LR01 {  0.85d0, 1010.0d6 },
-            minStep := LR01 { 0.001d0,    1.0d6 },
-            maxStep := LR01 { 0.100d0,   10.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := 0.0d0, max := 0.0d0, step := 20.0d0));
-  END TestSim;
-
-PROCEDURE SingleSim() =
-  BEGIN
-    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
-    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
-    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
-    Add(NEW(Schmoo, 
-            param   := RP01 {    vddP,     clkP },
-            min     := LR01 {  0.85d0, 1000.0d6 },
-            max     := LR01 {  0.85d0, 1000.0d6 },
-            minStep := LR01 { 0.100d0,   10.0d6 },
-            maxStep := LR01 { 0.100d0,   10.0d6 }));
-    Add(NEW(Sweep, param := tempP, 
-            min := 0.0d0, max := 0.0d0, step := 20.0d0));
-  END SingleSim;
-
-
-
+  Wr.Close(clogWr)
+  END RunAll;
+  
 VAR
   now      := Time.Now();
   nowD     := Date.FromTime(now);
@@ -1310,87 +1368,8 @@ VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
 
   user := Env.Get("USER");
-CONST
-  TestOnly   = FALSE;
-  TempRange  = TRUE;
-  AllCorners = TRUE;
-  BothSims   = FALSE;
-BEGIN
-  IF pp.keywordPresent("-dn") THEN
-    rootDn := pp.getNext()
-  END;
 
-  doneDn := rootDn & "/done";
-  resultsDn := rootDn & "/results";
-  resultsFn := rootDn & "/results.dat"; (* single file *)
-  clogFn    := rootDn & "/commands.dat";
-
-  <*FATAL OSError.E*>
-  BEGIN
-  FS.CreateDirectory(rootDn); (* source of everything *)
-  FS.CreateDirectory(doneDn);
-  FS.CreateDirectory(resultsDn);
-  r1Wr := FileWr.Open(resultsFn);
-
-  clogWr := FileWr.Open(clogFn);
-
-  FOR i := FIRST(pfWr) TO LAST(pfWr) DO
-    pfWr[i] := FileWr.Open(rootDn & 
-                   "/" & 
-                   TextUtils.ToLower(NodeStateNames[i]) & 
-                   ".dat")
-  END;
-
-  absRoot := FS.GetAbsolutePathname(rootDn);
-  END;
-
-(*  SimulatorSim();*)
-
-(*  SevenCornerSim();*)
-(*  WideSim(); *)
-  LatchSim();
-(*  SingleSim(); *)
-(*  SpfSim(); *)
-
-  Run(settings);
-  Wr.Close(r1Wr);
-  FOR i := FIRST(pfWr) TO LAST(pfWr) DO
-    Wr.Close(pfWr[i])
-  END;
-
-  (* dump minSquares *)
-  VAR
-    p := schmooInstances;
-    fn : Pathname.T;
-    wr : Wr.T;
-  BEGIN
-    WHILE p # NIL DO
-      WITH si = NARROW(p.head, SchmooInstance) DO
-        fn := "";
-        FOR i := FIRST(si.valPfx^) TO LAST(si.valPfx^) DO
-          WITH cmd = si.valPfx[i].format() DO fn := fn & cmd END
-        END;
-
-        fn := TextUtils.Replace(fn, " ", "__");
-        fn := TextUtils.Replace(fn, "-", "_");
-
-        wr := FileWr.Open(rootDn & "/" & fn & "_boundary.dat");
-        VAR q := si.minSquares; BEGIN
-          WHILE q # NIL DO
-            Wr.PutText(wr, F("%s %s\n", 
-                             LongReal(q.head[0]), 
-                             LongReal(q.head[1])));
-            q := q.tail
-          END
-        END;
-        Wr.Close(wr)
-      END;
-      p := p.tail
-    END
-  END;
-
-  Wr.Close(clogWr)
-END Schmoozer.
+BEGIN END Schmoozer.
 
   
 

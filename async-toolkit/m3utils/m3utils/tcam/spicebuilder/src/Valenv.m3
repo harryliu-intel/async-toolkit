@@ -69,7 +69,7 @@ PROCEDURE SetTime(t : T; tm : LONGREAL) =
         p : AssertionList.T := t.buf.remlo();
       BEGIN
         WHILE p # NIL DO
-          p.head.tm := t.curTm;
+          p.head.tm := t.curTm + p.head.offset;
           t.assertions := AssertionList.Cons(p.head, t.assertions);
           p := p.tail
         END
@@ -130,16 +130,21 @@ PROCEDURE KnownOutput(t            : T;
                       nm           : TEXT; 
                       READONLY idx : Dims.T; 
                       dly          : CARDINAL; 
-                      v            : Bit.T) =
+                      v            : Bit.T;
+                      holdOffset   : LONGREAL) =
   BEGIN
     dly := dly-1; (* asserts that dly >= 1 *)
 
     WHILE t.buf.size()-1 < dly DO t.buf.addhi(NIL) END;
 
+    <*ASSERT holdOffset > -1.0d10 *>
+    <*ASSERT holdOffset < +1.0d10 *>
+    
     t.buf.put(dly, AssertionList.Cons(Assertion.T { nm & Dims.Format(idx),
                                                     FIRST(LONGREAL), (* dummy *)
                                                     t.minV[v],
-                                                    t.maxV[v] },
+                                                    t.maxV[v],
+                                                    holdOffset },
                                       t.buf.get(dly)))
   END KnownOutput;
 

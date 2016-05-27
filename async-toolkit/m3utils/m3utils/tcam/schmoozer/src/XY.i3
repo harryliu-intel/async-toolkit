@@ -1,7 +1,8 @@
 INTERFACE XY;
+IMPORT LongRealSeq AS P;
 
 TYPE
-  T = ARRAY[0..1] OF LONGREAL;
+  T = P.T;
 
 CONST Brand = "XY";
 

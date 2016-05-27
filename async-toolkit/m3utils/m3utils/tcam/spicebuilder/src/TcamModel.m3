@@ -14,14 +14,25 @@ REVEAL
   T = Public BRANDED OBJECT
     c    : Tcam.T;
     conf : REF ARRAY OF ARRAY OF X01.T;
+    assertHoldFrac : LONGREAL;
+    assertHoldTime : LONGREAL;
+    cycleTime : LONGREAL;
   OVERRIDES
     init := Init;
     simStep := SimStep;
   END;
 
-PROCEDURE Init(t : T; READONLY c : Tcam.T) : T = 
+PROCEDURE Init(t : T; READONLY c : Tcam.T; cycleTime, assertHoldFrac, assertHoldTime : LONGREAL) : T = 
   BEGIN 
-    t.c := c; 
+    t.c := c;
+    <*ASSERT assertHoldFrac > -1.0d10 *>
+    <*ASSERT assertHoldFrac < +1.0d10 *>
+    <*ASSERT cycleTime > -1.0d10 *>
+    <*ASSERT cycleTime < +1.0d10 *>
+
+    t.assertHoldFrac := assertHoldFrac;
+    t.assertHoldTime := assertHoldTime;
+    t.cycleTime := cycleTime;
     t.conf := NEW(REF ARRAY OF ARRAY OF X01.T, 2*c.N, c.W);
     FOR i := FIRST(t.conf^) TO LAST(t.conf^) DO
       FOR j := FIRST(t.conf[i]) TO LAST(t.conf[i]) DO
@@ -90,7 +101,7 @@ PROCEDURE SimStep(t : T; e : Valenv.T) =
   PROCEDURE DoRen() =
     BEGIN
       WITH z = t.conf[addr] DO
-        Produce(2, "READ_DATA", z)
+        Produce(2, "READ_DATA", z, t.assertHoldFrac, t.assertHoldTime)
       END
     END DoRen;
 
@@ -117,13 +128,16 @@ PROCEDURE SimStep(t : T; e : Valenv.T) =
           END
         END
       END;
-      Produce(1, "RHIT", rhit^)
+      Produce(1, "RHIT", rhit^, t.assertHoldFrac, t.assertHoldTime)
     END DoKen;
 
   PROCEDURE Reset() = 
     BEGIN (* skip *) END Reset;
 
-  PROCEDURE Produce(dly : CARDINAL; nm : TEXT; READONLY val : ARRAY OF X01.T) =
+  PROCEDURE Produce(dly : CARDINAL;
+                    nm : TEXT;
+                    READONLY val : ARRAY OF X01.T;
+                    assertHoldFrac, assertHoldTime : LONGREAL) =
     BEGIN
       FOR i := FIRST(val) TO LAST(val) DO
         IF val[i] # X01.T.VX THEN
@@ -132,11 +146,18 @@ PROCEDURE SimStep(t : T; e : Valenv.T) =
                       Int(dly),
                       nm, Dims.Format(Dims.T { i }),
                       X01.Names[val[i]]));
-          e.knownOutput(nm, Dims.T { i }, dly, X01.ToBit(val[i]))
+          e.knownOutput(nm, Dims.T { i }, dly, X01.ToBit(val[i]), assertHoldFrac * t.cycleTime + assertHoldTime)
         END
       END
     END Produce;
 
+  PROCEDURE WarnOnQ() =
+    BEGIN
+      IF q THEN
+        Debug.Warning("ren/wen/ken active at the same time!")
+      END
+    END WarnOnQ;
+    
   BEGIN
     Debug.Out(F("TcamModel.SimStep @ %s wen %s ren %s ken %s",
                 LR(e.getTime()),
@@ -148,9 +169,9 @@ PROCEDURE SimStep(t : T; e : Valenv.T) =
       Reset() 
     ELSE
       q := FALSE;
-      IF ren THEN <*ASSERT NOT q*> DoRen(); q := TRUE END;
-      IF wen THEN <*ASSERT NOT q*> DoWen(); q := TRUE END;
-      IF ken THEN <*ASSERT NOT q*> DoKen(); q := TRUE END;
+      IF ren THEN WarnOnQ(); DoRen(); q := TRUE END;
+      IF wen THEN WarnOnQ(); DoWen(); q := TRUE END;
+      IF ken THEN WarnOnQ(); DoKen(); q := TRUE END;
     END
   END SimStep;
 

@@ -144,7 +144,7 @@ PROCEDURE DumpIt(wr        : Wr.T;
     last : LONGREAL;
 
   CONST
-    MaxTimeMargin = 5.0d-9;
+    MaxTimeMargin = 5.0d-9; (* dirty hack *)
 
   BEGIN
     theRdrs := NEW(NodeRecSeq.T).init();
@@ -501,12 +501,14 @@ PROCEDURE AddDigitalModel(model   : SimModel.T;
     clockNds : Nodes.T := NIL;
     clockSeq : TranSeq.T;
     v := LAST(LONGREAL);
+
     env := NEW(Valenv.T).init(dutName,
                               theSrcs, 
                               Valenv.Lims { -1.0d0      *Vdd, 
                                              1.0d0/4.0d0*Vdd,
                                              3.0d0/4.0d0*Vdd,
-                                             2.0d0      *Vdd });
+                                             2.0d0      *Vdd }
+                              );
   BEGIN
     (* find clock node *)
     clockNm := dutName & "." & clockNm;

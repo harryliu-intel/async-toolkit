@@ -4,12 +4,28 @@ import ("parseparams")
 import ("spicelib")
 
 table ("LRPairRef", "LongRealPair", "Refany")
+table ("LRListRef", "LRList", "Refany")
+
+module ("LRList")
+list ("LRList", "LRList")
+module ("LRSeq")
+list ("LRSeq", "LRSeq")
+table ("LRSeqRef", "LRSeq", "Refany")
+sequence("LRSeq", "LRSeq")
+
 interface ("XY")
 list("XY","XY")
+table ("TextCard", "Text", "Cardinal")
 
 interface ("NbCommand")
 sequence ("NbCommand", "NbCommand")
 
-implementation ("Schmoozer")
+module ("Schmoozer")
+implementation ("SchmoozerSim")
+interface ("Schmooze")
+module ("DefParams")
+
+interface ("MeshNode")
+list ("MeshNode", "MeshNode")
 
 program ("schmoozer")
