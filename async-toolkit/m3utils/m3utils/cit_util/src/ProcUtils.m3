@@ -24,6 +24,8 @@ IMPORT OSError;
 IMPORT Atom;
 IMPORT AL;
 IMPORT Debug;
+IMPORT Time;
+IMPORT Usignal;
 
 <* FATAL Thread.Alerted *>
 
@@ -46,6 +48,7 @@ TYPE
     created := FALSE;
     mu : MUTEX;
     cn : Thread.Condition;
+    sub : Process.T := NIL;
   OVERRIDES
     apply := Apply;
   END;
@@ -211,7 +214,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               sub := Process.Create(l.head, params^,
                                     NIL, wd,
                                     stdin, stdout,stderr);
-              
+
               LOCK self.mu DO
                 (* mark process as created so that requester can continue 
                    
@@ -220,6 +223,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                    opened for writing by the subprocess, which happens
                    in Process.Create.
                 *)
+                self.sub := sub;
                 self.created := TRUE;
                 Thread.Signal(self.cn)
               END;
@@ -272,6 +276,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
       END
     END Exec;
 
+  <*FATAL Timeout*>
   BEGIN
     IF wd = NIL THEN wd := "."; END;
     TRY
@@ -407,18 +412,21 @@ PROCEDURE Wait(c: PrivateCompletion) RAISES { ErrorExit } =
 
   END Wait;
 
-
 (* Helpers *)
 
 PROCEDURE ToText(source: T;
                  stderr:  Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure, ErrorExit, OSError.E } =
+                 wd0: Pathname.T := NIL;
+                 timeout := LAST(Time.T)): TEXT
+  RAISES { Rd.Failure, ErrorExit, OSError.E, Timeout } =
   VAR
     rd: Rd.T;
     srcRd := TextRd.New(source);
-    comp : Completion;
+    comp : PrivateCompletion;
     res : TEXT;
+    watchdog : Thread.T := NIL;
+    alerted := FALSE;
   BEGIN
     comp := RdToRd(srcRd, stderr, stdin, wd0, rd);
     IF DoDebug THEN Debug.Out("Reading out rd") END;
@@ -437,14 +445,101 @@ PROCEDURE ToText(source: T;
        did not read from it! 
     *)
 
-    res := Rd.GetText(rd, LAST(INTEGER));
+    (* start watchdog if requested *)
+    IF timeout # LAST(Time.T) THEN
+      WITH et = Time.Now() + timeout DO
+        watchdog := Thread.Fork(NEW(WatchdogCl,
+                                    killSub := comp.main.sub,
+                                    alertTh := Thread.Self(),
+                                    alertAt := et))
+      END
+    END;
+
+    TRY
+      IF DoDebug THEN Debug.Out("ProcUtils.ToText: Calling Rd.GetText") END;
+
+      (* this doesnt seem to work as expected: even if this thread 
+         is alerted here, Rd.GetText doesn't return! *)
+      
+      res := Rd.GetText(rd, LAST(INTEGER));
+      IF Thread.TestAlert() THEN
+        alerted := TRUE
+      END;
+      IF DoDebug THEN Debug.Out("ProcUtils.ToText: Rd.GetText returned alerted=" & Fmt.Bool(alerted)) END
+    EXCEPT
+      Thread.Alerted =>
+      IF DoDebug THEN Debug.Out("ProcUtils.ToText: Rd.GetText alerted") END;
+      alerted := TRUE
+    END;
+
+    (* kill the watchdog *)
+    IF watchdog # NIL THEN
+      Thread.Alert(watchdog);
+      EVAL Thread.Join(watchdog);
+      IF DoDebug THEN Debug.Out("ProcUtils.ToText: Killed watchdog") END
+    END;
+    
     IF DoDebug THEN Debug.Out("ProcUtils.ToText: Calling comp.wait()") END;
     comp.wait();
+    (* because of how the watchdog works...(it kills the subprocess
+       and attempts to alert us) 
+       if we get a ProcUtils.ErrorExit here, maybe we should catch it,
+       check whether TestAlert is true.  If so, raise Timeout.
+       Else re-raise ErrorExit *)
+       
+    
     IF DoDebug THEN Debug.Out("ProcUtils.ToText: comp.wait() done") END;
     TRY Rd.Close(rd) EXCEPT ELSE END;
     IF DoDebug THEN Debug.Out("ProcUtils.ToText: Rd.Close done") END;
-    RETURN res;
+    IF alerted THEN
+      RAISE Timeout
+    ELSE
+      RETURN res;
+    END
   END ToText;
+
+TYPE
+  WatchdogCl = Thread.Closure OBJECT
+    alertTh : Thread.T;
+    alertAt : Time.T;
+    killSub : Process.T;
+  OVERRIDES
+    apply := WDApply;
+  END;
+
+PROCEDURE WDApply(cl : WatchdogCl) : REFANY =
+  BEGIN
+    IF DoDebug THEN Debug.Out("Watchdog started") END;
+    TRY
+      LOOP
+        WITH now = Time.Now() DO
+          IF DoDebug THEN Debug.Out(Fmt.F("Watchdog now %s deadline %s wait %s",
+                                      Fmt.LongReal(now),
+                                      Fmt.LongReal(cl.alertAt),
+                                      Fmt.LongReal(cl.alertAt-now))) END;
+          IF now < cl.alertAt THEN
+            Thread.AlertPause(cl.alertAt - now)
+          ELSE
+            IF DoDebug THEN Debug.Out("Watchdog alerting") END;
+            Thread.Alert(cl.alertTh);
+
+            WITH subId = Process.GetID(cl.killSub) DO
+              IF DoDebug THEN Debug.Out("Watchdog killing sub: INT") END;
+              EVAL Usignal.kill(subId, Usignal.SIGINT);
+              Thread.Pause(1.0d0);
+              IF DoDebug THEN Debug.Out("Watchdog killing sub: KILL") END;
+              EVAL Usignal.kill(subId, Usignal.SIGKILL);
+              IF DoDebug THEN Debug.Out("Watchdog done") END
+            END;
+
+            RETURN NIL
+          END
+        END
+      END
+    EXCEPT
+      Thread.Alerted => RETURN NIL
+    END
+  END WDApply;
 
 PROCEDURE RdToRd(source: Rd.T;
                  stderr: Writer := NIL;

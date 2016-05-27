@@ -39,6 +39,20 @@ VAR
   rd := FileRd.Open("in.bz2");
   wr := FileWr.Open("out");
 BEGIN
+  Debug.Out("Running \"sleep 10\" with standard timeout");
+  Debug.Out(ProcUtils.ToText("sleep 10"));
+  Debug.Out("Done successfully");
+
+  Debug.Out("Running \"sleep 10\" with 5-second timeout");
+  TRY
+    Debug.Out(ProcUtils.ToText("sleep 10", timeout := 5.0d0));
+    Debug.Out("Done successfully---should not have happened");
+  EXCEPT
+    ProcUtils.Timeout => Debug.Out("Timed out, as expected.")
+  |
+    ProcUtils.ErrorExit => Debug.Out("Failure exit, maybe as expected.")
+  END;
+  
   TRY
     SlowTextCompress.RdWr(SlowTextCompress.Mode.Decompress,rd,wr);
   EXCEPT
