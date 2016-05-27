@@ -11,16 +11,27 @@ IMPORT Thread;
 IMPORT Env;
 FROM Fmt IMPORT F, Int, Bool;
 IMPORT TextUtils;
+IMPORT Process;
 
 CONST TE = Text.Equal;
 
 VAR
-  cmd := "nbstatus jobs --target sc_normal --fi jobid:count,status,qslot::40 --gr status qslot=='/sse/rrc/layout'";
+  cmd := "nbstatus jobs --target sc_normal --fi jobid:count,status,qslot::40 --gr status qslot=='" & NBqslot() & "'";
 
   status : TEXT;
   waiters, runners : CARDINAL;
   user := Env.Get("USER");
 
+PROCEDURE NBqslot() : TEXT =
+  BEGIN
+    WITH e = Env.Get("NBQSLOT") DO
+      IF e = NIL THEN
+        RETURN "/sse/hlp/fe/OTHERS"
+      ELSE
+        RETURN e
+      END
+    END
+  END NBqslot;
 
 PROCEDURE NowIsWorkingHours() : BOOLEAN =
   VAR
@@ -75,6 +86,10 @@ PROCEDURE UserJobs() : CARDINAL =
     RETURN cnt
   END UserJobs; 
 
+CONST
+  maxFail = 10;
+VAR
+  fail := 0;
 BEGIN
   IF Env.Get("DEBUGNBAVAIL") = NIL THEN
     Debug.SetLevel(0) (* turn off debugging regardless of env. *)
@@ -86,13 +101,19 @@ BEGIN
   LOOP
     TRY
       Debug.Out("attempt");
-      status := ProcUtils.ToText(cmd);
+      status := ProcUtils.ToText(cmd, timeout := 20.00d0);
       Debug.Out("cmd done");
       EXIT
     EXCEPT
-      ProcUtils.ErrorExit => 
+      ProcUtils.ErrorExit, ProcUtils.Timeout => 
       Debug.Out("error exit!");
-      Thread.Pause(1.0d0)
+      Thread.Pause(1.0d0);
+      INC(fail);
+      IF fail > maxFail THEN
+        (* really failed *)
+        IO.Put("0\n");
+        Process.Exit(1)
+      END
     END
   END;
 
