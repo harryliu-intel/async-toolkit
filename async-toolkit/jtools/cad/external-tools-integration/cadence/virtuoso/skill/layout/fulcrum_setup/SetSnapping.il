@@ -66,6 +66,9 @@ procedure( CycleSnapGrids()
   when( mod(CycleSnap 4)==2
     SetSnapping( ?xSnap pitch_m3 ?ySnap pitch_m4 )
   )
+  when( mod(CycleSnap 4)==3
+    SetSnapping( ?xSnap (car gridAlignment["lego"]) ?ySnap (cadr gridAlignment["lego"]) )
+  )
   CycleSnap = CycleSnap+1
 )
 
