@@ -23,8 +23,10 @@
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
                                 (cutaroundpins t)
                                 (topMetal nil)
+                                (convertpinvias t)
                                 )
- (let (abstractCV name net fig term pinlayer map inLayerMap outLayerMap inst)
+ (let (abstractCV name net fig term pinlayer map inLayerMap outLayerMap inst 
+       allpinfigs pinsonlayer allblockages viashape)
 
   ; set topMetal
   (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
@@ -50,7 +52,7 @@
 
   ; invert keepout (use blockage layer to avoid polygons with too many points)
   (for m 0 topMetal (AbstractInvertKeepout (list Metal[m] "blockage") CV abstractCV))
-  
+
   ; flood via keepout (use blockage layer to avoid polygons with too many points)
   ; keep vias within a lego spacing of the prBoundary just to be safe!
   (for m -1 topMetal-2 (AbstractInvertKeepout (list Via[m] "blockage") CV abstractCV ?space 0:0))
@@ -81,6 +83,7 @@
        map = (list (sprintf nil "flood_%s" Metal[m]) (list Metal[m] "blockage"))
        inLayerMap = (cons map inLayerMap)
        )
+
   (ICVLayerProcessorSimple abstractCV abstractCV "MakeAbstract" inLayerMap outLayerMap)
 
   ; convert blockages to keepout (avoid polygons with too many points)
@@ -92,6 +95,7 @@
 
   ; delete the inst
   (dbDeleteObject inst)
+
 
   ; copy pins to abstract
   pinlayer = (makeTable "pinlayer" nil)
@@ -105,6 +109,7 @@
       fig=(dbCopyFig shape abstractCV)
       fig->lpp = (list (car fig->lpp) "drawing")
       (dbCreatePin net fig)
+      allpinfigs = (cons fig allpinfigs) 
       (for m 0 TopMetal
            (when shape->layerName==Metal[m] pinlayer[m]=t)
            )
@@ -120,6 +125,45 @@
            )
          )
     )
+
+  ; for pins, convert the via- or via+ into a pin with the same net
+  ; try to filter out the big floodfilled blockage
+  (when convertpinvias
+    (for m 0 TopMetal
+         (when pinlayer[m]
+           pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
+           (foreach pin pinsonlayer
+             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
+             (foreach via allblockages
+               viashape = (car via)
+               (when (GetFigArea viashape) < DefaultWiringPitch
+                 (AttachViaToPin pin via)
+                 )
+               )
+             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
+             (foreach via allblockages
+               viashape = (car via)
+               (when (GetFigArea viashape) < DefaultWiringPitch
+                 (AttachViaToPin pin via)
+                 )
+               )
+             )
+           )
+         )
+    )
+
+    ; make all remaining vias a member of NULL net, per Georgois's request
+    nullnet = (dbCreateNet abstractCV "NULL")
+    (for m 0 TopMetal
+      (foreach viashape abstractCV->shapes
+        (when (car viashape->lpp)==Via[m]
+          (when !viashape->net
+            (dbCreatePin nullnet viashape)
+            )
+          )
+        )
+      )
+
 
   ; save and exit
   (CopyKeepoutToBlockage abstractCV)
@@ -138,8 +182,11 @@
                               (extendM2Keepout nil)
                               (extendM1Keepout nil)
                               (extendM0Keepout nil)
+                              (convertpinvias t)
                               )
-  (let (abstractCV name net fig term pin prb dd_CV layer purpose map inLayerMap outLayerMap)
+  (let (abstractCV name net fig term pin prb dd_CV layer purpose map inLayerMap outLayerMap
+         allpinfigs pinsonlayer allblockages viashape m nullnet
+         )
 
     ; sanity check
     (when CV->viewName=="abstract"
@@ -189,6 +236,7 @@
                fig=(dbCopyFig shape abstractCV)
                fig->lpp = (list (car fig->lpp) "drawing")
                (dbAddFigToPin pin fig) ; strongly connected figures
+               allpinfigs = (cons fig allpinfigs) 
                )
              )
     (DeleteLabels ?CV abstractCV)
@@ -229,6 +277,53 @@
     ; create final boundary shapes and blockage objects
     ; (leMergeShapes abstractCV->shapes)
     (CopyKeepoutToBlockage abstractCV)
+
+  ; for pins, convert the via- or via+ into a pin with the same net
+  ; try to filter out the big floodfilled blockage
+  (when convertpinvias
+    m = 0
+           pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
+           (foreach pin pinsonlayer
+             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
+             (foreach via allblockages
+               viashape = (car via)
+               (when (GetFigArea viashape) < DefaultWiringPitch
+                 (AttachViaToPin pin via)
+                 )
+               )
+             )
+    (for m 1 2
+           pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
+           (foreach pin pinsonlayer
+             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
+             (foreach via allblockages
+               viashape = (car via)
+               (when (GetFigArea viashape) < DefaultWiringPitch
+                 (AttachViaToPin pin via)
+                 )
+               )
+             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
+             (foreach via allblockages
+               viashape = (car via)
+               (when (GetFigArea viashape) < DefaultWiringPitch
+                 (AttachViaToPin pin via)
+                 )
+               )
+             )
+           )
+    )
+
+    ; make all remaining vias a member of NULL net, per Georgois's request
+    nullnet = (dbCreateNet abstractCV "NULL")
+    (for m 0 2
+      (foreach viashape abstractCV->shapes
+        (when (car viashape->lpp)==Via[m]
+          (when !viashape->net
+            (dbCreatePin nullnet viashape)
+            )
+          )
+        )
+      )
 
     ; save and exit
     (SetLefProperties abstractCV ?leaf t)
@@ -357,6 +452,36 @@
   t
   )
 
+; find overlaps on "keepout" purpose, return list of polygon/blockage pairs 
+(defun FindBlockageOverlaps (CV bbox layerName)
+  (let (alloverlaps overlaps keepouts keepout blockage)
+    alloverlaps = (dbGetOverlaps CV bbox)
+    keepouts = (setof overlap alloverlaps (car overlap->lpp)==layerName && (cadr overlap->lpp)=="keepout")
+    (foreach keepout keepouts
+      blockage = (car (setof blockage CV->blockages blockage->bBox==keepout->bBox))
+      ; if this (car) doesn't work right, we'll have to do something more clever to loop through
+      ; all overlapping blockages 
+      overlaps = (cons (list keepout blockage) overlaps)
+      )
+    overlaps
+    )
+  )
+
+; for via keepout on pin make it into a pin with same connectivity and delete blockage
+; used in conjunction with FindBlockageOverlap above
+(defun AttachViaToPin (pinfig blockage)
+  (let (viafig block)
+    viafig = (car blockage)
+    viafig->lpp = (list (car viafig->lpp) "drawing")
+    (dbCreatePin pinfig->net viafig)
+    block=(cadr blockage)
+    (when block
+      (dbDeleteObject block)
+      )
+    )
+  )
+
+
 ;;;;;;;;;;;;;;;;;;;;;;; HACK: implement asymmetric leLayerSize ;;;;;;;;;;;;;;;;;;;;;;;
 
 ; like leLayerSize but with asymmetric x:y bloat
@@ -384,3 +509,5 @@
     newpoints
     )
   )
+
+
