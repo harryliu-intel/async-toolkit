@@ -458,9 +458,8 @@ sub resubtype_match {
         (my $basetype = $k) =~ s/^[^:]+://;
         if ($inst ne "" && $basetype ne $base_of_subtype) {
             print STDERR "Warning: Inconsistent base type specified for " .
-                         "$instname2.\nLeaving instance unchanged.\n";
-            $basetype = "";
-            return ($basetype, $new_subtype, $instname);
+                         "$instname2.\n";
+            # TODO: Check legality of refinement ancestor!
         }
         ($new_subtype = ${$typemap_ref}{$k}) =~ s/^[^:]*://;
 
