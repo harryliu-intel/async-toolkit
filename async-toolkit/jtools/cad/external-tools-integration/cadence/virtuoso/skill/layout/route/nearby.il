@@ -63,9 +63,9 @@
       (foreach e1 list1
         (foreach e2 list2
           net1  = (car  e1)
-          rect1 = (cadr e1)
+          rect1 = (BBoxCanonicalize (cadr e1))
           net2  = (car  e2)
-          rect2 = (cadr e2)
+          rect2 = (BBoxCanonicalize (cadr e2))
           overlap = (BBoxAnd rect1 rect2)
           (when overlap && (net1==nil || net1!=net2)
             xy = (BBoxGetCenter overlap)
@@ -76,7 +76,7 @@
             wb = (round wb/MfgGrid)
             wt = (round wt/MfgGrid)
             viaName = viaTable[(list v wb wt)]
-            (unless viaName (error "no viaTablefor %d %d %d\n" v wb wt))
+            (unless viaName (error "no viaTable for %d %d %d\n" v wb wt))
             (cond ((atom viaName)
                    viaDef = (techFindViaDefByName tech viaName)
                    params = nil
