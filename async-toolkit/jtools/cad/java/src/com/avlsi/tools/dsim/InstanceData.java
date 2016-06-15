@@ -258,9 +258,14 @@ public class InstanceData {
             this.product = product;
         }
         public Object getAttribute(final HierName instance) {
-            return instance == null ? current 
-                                    : product.execute(directives.get(instance),
-                                                      current);
+            Object result = this.current;
+            final Iterator<Pair<HierName,HierName>> splits =
+                HierName.getSplitsIterator(instance);
+            while (splits.hasNext()) {
+                final HierName prefix = splits.next().getFirst();
+                result = product.execute(directives.get(prefix), result);
+            }
+            return result;
         }
         public AttributeInterface translate(final CellInterface cell,
                                             final CellInterface subcell,
