@@ -47,6 +47,9 @@ import java.util.TreeSet;
 import java.util.TreeMap;
 import java.util.StringTokenizer;
 import java.util.Date;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.avlsi.cast.impl.Environment;
 import com.avlsi.cast.impl.FloatValue;
@@ -1929,9 +1932,23 @@ public class Jauto {
             subtypePolicy = null;
         } else if (mode.equals(SUBTYPE_MODE)) {
             subtypePolicy = null;
-            final Object o = writeSubtype.execute(new SubtypeOutput.Subtype(Integer.parseInt(subtype), subtypePath, subtypeHeader, layoutAttribute, writeSubtype, design, missingAlias), cell);
-            if (o instanceof IOException) {
-                System.err.println("Cannot write subtype " + ((IOException) o).getMessage());
+            Supplier<Stream<String>> subtypeSupplier;
+            try {
+                int minSubtype = Integer.parseInt(subtype);
+                subtypeSupplier = () ->
+                    IntStream.rangeClosed(minSubtype, Integer.MAX_VALUE)
+                             .mapToObj(x -> Integer.toString(x));
+            } catch (NumberFormatException e) {
+                subtypeSupplier = () -> Stream.of(subtype);
+            }
+
+            try {
+                final Object o = writeSubtype.execute(new SubtypeOutput.Subtype(subtypeSupplier, subtypePath, subtypeHeader, layoutAttribute, writeSubtype, design, missingAlias), cell);
+                if (o instanceof IOException) {
+                    System.err.println("Cannot write subtype " + ((IOException) o).getMessage());
+                }
+            } catch (SubtypeOutput.NoSubtypeAvailableException e) {
+                System.err.println("No available subtype for: " + e.getMessage());
             }
         } else if (mode.equals(SIZE_MODE) || mode.equals(CHARGE_MODE)) {
             final Map globalNetMap = Collections.EMPTY_MAP;

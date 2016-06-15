@@ -26,10 +26,14 @@ import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.SortedMap;
 import java.util.TreeSet;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.avlsi.cast.*;
 import com.avlsi.cast2.directive.DirectiveConstants;
@@ -94,6 +98,12 @@ public final class SubtypeOutput {
     private static final Writer NOWRITE = NullWriter.getInstance();
     private SubtypeOutput() {
         throw new AssertionError();
+    }
+
+    public static class NoSubtypeAvailableException extends RuntimeException {
+        public NoSubtypeAvailableException(String message) {
+            super(message);
+        }
     }
 
     /**
@@ -232,40 +242,28 @@ public final class SubtypeOutput {
     }
 
     /**
-     * Return the next available subtype given a directory and constraints on
-     * subtype ranges.  Subtypes are assumed to have filenames of the form
-     * X.cast, where X, the subtype, is a non-negative integer.  If L is the
-     * largest subtype in a directory, then the next available subtype N is
-     * max(L + 1, minSubtype).  If N &gt; maxSubtype, than <code>null</code> is
-     * returned.
+     * Return the next available subtype, if any, given a directory and a
+     * stream of candidates.
      **/
-    private static String findNextSubtype(final File dir,
-                                          final int minSubtype,
-                                          final int maxSubtype) {
-        final int[] result = new int[1];
-        result[0] = -1;
-        // XXX: Should cache directory information
-        dir.list(new FilenameFilter() {
-            public boolean accept(final File from, final String name) {
-                if (name.endsWith(".cast")) {
-                    String index = name.substring(0, name.length() - 5);
-                    try {
-                        result[0] = Math.max(result[0], Integer.parseInt(index));
-                    } catch (NumberFormatException e) { }
-                }
-                return false;
-            }
-        });
-        result[0] = Math.max(result[0] + 1, minSubtype);
-        if (result[0] > maxSubtype) return null;
-        else return Integer.toString(result[0]);
+    private static Optional<String> findNextSubtype(
+            final File dir, final Stream<String> candidates) {
+        return candidates.filter(x -> !new File(dir, x + ".cast").exists())
+                         .findFirst();
+    }
+
+    private static Optional<String> findNextSubtype(final File dir,
+                                                    final int minSubtype,
+                                                    final int maxSubtype) {
+        return findNextSubtype(dir,
+                IntStream.rangeClosed(minSubtype, maxSubtype)
+                         .mapToObj(x -> Integer.toString(x)));
     }
 
     /**
      * Return the next available subtype given a directory.  This is equivalent
      * to findNextSubtype(dir, 0, Integer.MAX_VALUE).
      **/
-    private static String findNextSubtype(final File dir) {
+    private static Optional<String> findNextSubtype(final File dir) {
         return findNextSubtype(dir, 0, Integer.MAX_VALUE);
     }
 
@@ -731,7 +729,7 @@ public final class SubtypeOutput {
     public static class Subtype implements Policy {
         private final File path;
         private final Format header;
-        private final int minSubtype, maxSubtype;
+        private final Supplier<Stream<String>> subtypeSupplier;
         private final Map seen;
         private final Set warn;
         private String defaultAttribute, current;
@@ -796,25 +794,15 @@ public final class SubtypeOutput {
             return Collections.singletonMap(BlockInterface.CELL, top);
         }
 
-        public Subtype(final int minSubtype, final String path,
+        public Subtype(final Supplier<Stream<String>> subtypeSupplier,
+                       final String path,
                        final Format header, final String layoutAttribute,
-                       final BinaryFunction writeSubtype,
-                       final CastDesign design,
-                       final Map<String,Exception> missingAlias) {
-            this(path, header, minSubtype, Integer.MAX_VALUE, layoutAttribute,
-                 writeSubtype, design, missingAlias);
-        }
-
-        public Subtype(final String path, final Format header,
-                       final int minSubtype, final int maxSubtype,
-                       final String layoutAttribute,
                        final BinaryFunction writeSubtype,
                        final CastDesign design,
                        final Map<String,Exception> missingAlias) {
             this.path = new File(path);
             this.header = header;
-            this.minSubtype = minSubtype;
-            this.maxSubtype = maxSubtype;
+            this.subtypeSupplier = subtypeSupplier;
             this.seen = new HashMap();
             this.warn = new HashSet();
             this.current = null;
@@ -832,7 +820,8 @@ public final class SubtypeOutput {
             final String base = resolveMapping(cell);
             final File dir = cellPath(path, base);
             final String subtyped =
-                findNextSubtype(dir, minSubtype, maxSubtype);
+                findNextSubtype(dir, subtypeSupplier.get()).orElseThrow(
+                        () -> new NoSubtypeAvailableException(type));
             final Writer writer = openFile(dir, subtyped + ".cast");
 
             final Map directives = getDirectives(cell);
@@ -1345,7 +1334,9 @@ public final class SubtypeOutput {
             final String type = cell.getFullyQualifiedType();
             final String module = cell.getModuleName();
             final File dir = cellPath(path, module);
-            final String subtyped = findNextSubtype(dir, minSubtype, maxSubtype);
+            final String subtyped =
+                findNextSubtype(dir, minSubtype, maxSubtype).orElseThrow(
+                        () -> new NoSubtypeAvailableException(type));
             final Writer writer = openFile(dir, subtyped + ".cast");
             spec.put(type, subtyped);
 
@@ -1409,7 +1400,8 @@ public final class SubtypeOutput {
             } else {
                 final String type = current.getFullyQualifiedType();
                 final String subtype =
-                    findNextSubtype(dir, minSubtype, maxSubtype);
+                    findNextSubtype(dir, minSubtype, maxSubtype).orElseThrow(
+                            () -> new NoSubtypeAvailableException(type));
                 if (subtype == null) {
                     throw new RuntimeException(
                             "No available subtype in range " + minSubtype +
@@ -1681,7 +1673,8 @@ public final class SubtypeOutput {
                 } else {
                     module = cell.getModuleName();
                     final File dir = cellPath(path, module);
-                    next = findNextSubtype(dir, minSubtype, maxSubtype);
+                    next = findNextSubtype(dir, minSubtype, maxSubtype).orElseThrow(
+                            () -> new NoSubtypeAvailableException(module));
                     writer = openFile(dir, next + ".cast");
                     setSubtype(module + "." + next);
 
