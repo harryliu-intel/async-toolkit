@@ -387,28 +387,22 @@ sub resubtype {
         }
     }
 
-    # Add remaining arguments to the new subtype list
-    my @resubtype_list = ();
-    push @resubtype_list, @{shift_next_list(\@_)} if (num_args(\@_));
-    return if (!@resubtype_list && !%typemap);
+    # Add remaining arguments to the typemap
+    if (num_args(\@_)) {
+        my @bad = ();
+        foreach my $line (@{shift_next_list(\@_)}) {
+            if (!add_reuse_entry($SS_r, \%typemap, $line)) {
+                push @bad, $line;
+            }
+        }
+        if (@bad) {
+            command_die($SS_r, "Error: Bad subtype specifications:\n " .
+               join("\n ", @bad));
+       }
+    }
+    return if (!%typemap);
     if (num_args(\@_)) {
         command_die($SS_r, "Wrong number of arguments to resubtype");
-    }
-
-    # Build map of type (+instance) to subtype number
-    print "Determining type map:\n" if ($SS_r->{GS}{DEBUG});
-    foreach my $line (@resubtype_list) {
-        if ($line =~ /^(.+)\.(\d[^\.]*)$/) {
-            $typemap{$1} = $line;
-            print "  $1 -> $line\n" if ($SS_r->{GS}{DEBUG});
-        }
-        elsif ($line =~ /^([^\s:]+)\s*:>\s*([^\s]+)\s*$/) {
-            $typemap{$1} = $2;
-            print "  $1 -> $2\n" if ($SS_r->{GS}{DEBUG});
-        }
-        else {
-            command_die($SS_r, "Error: Bad subtype specification:\n $line.");
-        }
     }
 
     # Initialize return variables
@@ -722,17 +716,31 @@ sub read_reuse_spec {
     while (<REUSE>) {
         next if (/^\s*\#/ || /^\s*$/);
         chomp;
-        if (/^\s*([^\s:]+)\s*:>\s*([^\s]+)\s*$/) {
-            $map_r->{$1} = $2;
-        }
-        elsif (/^\s*(\S+)\s*$/) {
-            $map_r->{basetype_of($1)} = $1;
-        }
-        else {
+        if (!add_reuse_entry($SS_r, $map_r, $_)) {
             print "Warning: invalid syntax in reuse file on line $.\n";
         }
     }
     close REUSE;
+}
+
+# Parse a reuse spec line, and return 0 if the reuse spec is improperly
+# formatted, 1 otherwise.
+sub add_reuse_entry {
+    my ($SS_r, $map_r, $line) = @_;
+    my $good = 1;
+    if ($line =~ /^\s*([^\s:]+)\s*:>\s*([^\s]+)\s*$/) {
+        $map_r->{$1} = $2;
+        print "  $1 -> $2\n" if ($SS_r->{GS}{DEBUG});
+    }
+    elsif ($line =~ /^\s*([^.]+\..+)\s*$/) {
+        my $base = basetype_of($1);
+        $map_r->{$base} = $1;
+        print "  $base -> $1\n" if ($SS_r->{GS}{DEBUG});
+    }
+    else {
+        $good = 0;
+    }
+    return $good;
 }
 
 # Parses a subtype file, returning a list of the following:
