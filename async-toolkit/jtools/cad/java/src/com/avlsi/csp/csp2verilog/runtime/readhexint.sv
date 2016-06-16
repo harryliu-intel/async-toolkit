@@ -1,7 +1,7 @@
-virtual class ReadHexInts #(parameter MEM_MIN,
-                            parameter MEM_MAX,
-                            parameter MEM_WIDTH,
-                            parameter WIDTH);
+virtual class ReadHexInts #(parameter MEM_MIN = 0,
+                            parameter MEM_MAX = 0,
+                            parameter MEM_WIDTH = 0,
+                            parameter WIDTH = 0);
   static task readHexInts(input string filename,
                           output bit signed [MEM_WIDTH-1:0] result[MEM_MIN:MEM_MAX],
                           input bit signed [WIDTH-1:0] count,
