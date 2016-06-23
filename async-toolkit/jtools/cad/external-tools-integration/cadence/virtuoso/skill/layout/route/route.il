@@ -156,7 +156,10 @@
                       )
                      ((isStandardCell inst->master) inst->status=placed)
                      ((isVendorMacro  inst->master) inst->status="locked")
-                     ((IsWiringCell   inst->master) (dbDeleteObject inst))
+                     ((IsWiringCell   inst->master)
+                      (printf "NOTE: flattening wiring cell %s\n" inst->cellName)
+                      (dbFlattenInst inst 32)
+                      )
                      (t
                       (printf "ERROR: %s has no abstract view\n" inst->cellName)
                       statusDef=nil
