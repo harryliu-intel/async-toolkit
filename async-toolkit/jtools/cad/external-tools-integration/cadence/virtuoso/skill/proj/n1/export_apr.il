@@ -1,3 +1,4 @@
+; export GDS and LEF for all standard cells needed for APR
 (defun ExportAPR ()
   (ExportLefGds "APR"
     (list
@@ -18,15 +19,13 @@
      "lib.util.ctree.CTREE3.1n"
      "lib.util.ctree.CTREE3.2n"
      "lib.util.ctree.CTREE3.3n"
+     ; custom datapath cells
+     "lib.bd.standard.merge.BD_MERGE_DATA-L2-R.0"
      ; BD_CONTROLLER
      "lib.bd.metastable.arbiter.BD_ARBITER_CTRL.0"
      "lib.bd.standard.merge.BD_MERGE_CTRL-L2-R.0"
      "lib.bd.standard.split.BD_ALT_SPLIT_CTRL-L2-R.0"
-     "lib.bd.6T.bank.BD_SRAM_CTRL.0"
      "lib.bd.standard.split.BD_SPLIT_CTRL-L2-R.0"
-     ;"lib.bd.standard.merge.BD_MERGE_DATA-L2-R.2"
-     ;"lib.bd.standard.merge.BD_MERGE_DATA-L2-R.1"
-     "lib.bd.standard.merge.BD_MERGE_DATA-L2-R.0"
      "lib.bd.standard.merge.BD_ALT_MERGE_CTRL-L2-R.0"
      "lib.bd.standard.receive.BD_RECV_CTRL.0"
      "lib.bd.standard.send.BD_SEND_CTRL.0"
@@ -34,6 +33,32 @@
      "lib.bd.standard.pipeline.BD_ISOLATE_CTRL.0"
      "lib.bd.standard.pipeline.BD_TOK_CTRL.0"
      "lib.bd.standard.pipeline.BD_CTRL.0"
+     ; SRAM controller
+     "lib.bd.6T.bank.BD_SRAM_CTRL.0"
+     ; new BD_CONTROLLER (nominal thresold)
+     "lib.bd.metastable.arbiter.ARBITER_CTRL.0n"
+     "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0n"
+     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0n"
+     "lib.bd.standard.pipeline.CTRL.0n"
+     "lib.bd.standard.pipeline.ISOLATE_CTRL.0n"
+     "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0n"
+     "lib.bd.standard.pipeline.TOK_CTRL.0n"
+     "lib.bd.standard.receive.RECV_CTRL.0n"
+     "lib.bd.standard.send.SEND_CTRL.0n"
+     "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0n"
+     "lib.bd.standard.split.SPLIT_CTRL-L2-R.0n"
+     ; new BD_CONTROLLER (UV1 thresold)
+     "lib.bd.metastable.arbiter.ARBITER_CTRL.0"
+     "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0"
+     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
+     "lib.bd.standard.pipeline.CTRL.0"
+     "lib.bd.standard.pipeline.ISOLATE_CTRL.0"
+     "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"
+     "lib.bd.standard.pipeline.TOK_CTRL.0"
+     "lib.bd.standard.receive.RECV_CTRL.0"
+     "lib.bd.standard.send.SEND_CTRL.0"
+     "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0"
+     "lib.bd.standard.split.SPLIT_CTRL-L2-R.0"
      ; physical cells
      "globals.bdc01ld.z04"
      "globals.bdc01ld.z08"
