@@ -22,6 +22,7 @@ use Supersize::ModifySubtypes;
 use Supersize::Util;
 use Supersize::TypeUtil;
 use Supersize::JavaUtil;
+use Supersize::LayoutIntegration;
 use Term::ANSIColor;
 use Text::Wrap;
 
@@ -459,9 +460,9 @@ sub proteus_config {
         if exists $SS_r->{GS}{DFII_DIR};
     print $fh "--spar-dir=$SS_r->{GS}{SPAR_DIR}\n"
         if exists $SS_r->{GS}{SPAR_DIR};
-    print $fh "--lefdef-dir=$SS_r->{GS}{LEFDEF_DIR}/temp/route/$SS_r->{GS}{TOP}\n"
+    print $fh "--lefdef-dir=$SS_r->{GS}{LEFDEF_DIR}/temp/route/" . to_cadence($SS_r->{GS}{TOP}) . "\n"
         if exists $SS_r->{GS}{LEFDEF_DIR};
-    print $fh "--lve-path=$wdir/lve:/p/rrc/lve/lve\n"; # TODO: no absolute paths!
+    print $fh "--lve-path=$wdir/lve\n";
     print $fh "--output-dir=$wdir/proteus\n";
     print $fh "--scratch-dir=\n";
     print $fh "--base=$SS_r->{GS}{TOP}\n";
