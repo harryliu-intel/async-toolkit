@@ -198,13 +198,15 @@ public interface DirectiveConstants {
     String INTERNAL_SLACK = "internal_slack";
     String SYNCHRONIZE_CHANNELS = "synchronize_channels";
 
-    /** Scan related directives */
+    /** DFX related directives */
     String ASYNC_SCAN_INPUTS = "async_scan_inputs";
     String ASYNC_SCAN_OUTPUTS = "async_scan_outputs";
     String ASYNC_SCAN = "async_scan";
     String PROTEUS_SCAN_MODEL = "proteus_scan_model";
     String PROTEUS_SCAN_MACROS = "proteus_scan_macros";
     String PROTEUS_SCAN_DECLONE = "proteus_scan_declone";
+    String TUNABLE_DELAY_MUL = "tunable_delay_mul";
+    String TUNABLE_DELAY_ADD = "tunable_delay_add";
 
     /** Slacker directives */
     String SLACKER_LEAF = "slacker_leaf";

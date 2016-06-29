@@ -355,13 +355,15 @@ public class DirectiveTable {
         registerDirective(CSP, DISABLE_CHANDFT_HANDLER, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CSP, IMPLICIT_INIT, BOOLEAN_TYPE, Boolean.TRUE);
 
-        /** Proteus directives */
+        /** DFX directives */
         registerDirective(CELL, ASYNC_SCAN_INPUTS, BOOLEAN_TYPE, null);
         registerDirective(CELL, ASYNC_SCAN_OUTPUTS, BOOLEAN_TYPE, null);
         registerDirective(CELL, ASYNC_SCAN, POSSIBLY_WIDE_CHANNEL_TYPE, BOOLEAN_TYPE, null);
         registerDirective(CELL, PROTEUS_SCAN_MODEL, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, PROTEUS_SCAN_MACROS, BOOLEAN_TYPE, null);
         registerDirective(CELL, PROTEUS_SCAN_DECLONE, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, TUNABLE_DELAY_ADD, BOOLEAN_TYPE, null);
+        registerDirective(CELL, TUNABLE_DELAY_MUL, BOOLEAN_TYPE, null);
 
         /** Slacker directives */
         registerDirective(CELL, SLACKER_LEAF, BOOLEAN_TYPE, null);
