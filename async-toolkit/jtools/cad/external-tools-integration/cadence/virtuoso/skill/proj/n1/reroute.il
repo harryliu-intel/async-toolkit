@@ -20,8 +20,8 @@
     aCV  = (dbOpenCellViewByType libName cellName "abstract")
     (when pgCV (cdsp4add ?CV pgCV))
     (when aCV  (cdsp4add ?CV aCV))
+    lCV
     )
-  t
   )
 
 (defun RouteLeaves ()
@@ -77,11 +77,18 @@
   t
   )
 
-(defun RouteSouth ()
-  (RouteCell "chip.n1.pads.PADS.10000"   8)
-  (RouteCell "chip.n1.test0.TEST0.10000" 8)
-  (RouteCell "chip.n1.test1.TEST1.10000" 8)
-  (RouteCell "chip.n1.testm.TESTM.10000" 8)
+; route a custom cell with TOP_HALO
+(defun RouteTopCell (cellName)
+  (let (CV)
+    CV = (RouteCell cellName 8)
+    (MakeColorGrid ?CV CV)
+    CV
+    )
+  )
+
+(defun RouteTopCells ()
+  (RouteTopCell "chip.n1.pads.PADS.10000")
+  (RouteTopCell "core.neuro.neuron.EMPTY_NEURON.10000")
   t
   )
 
