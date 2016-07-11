@@ -1,6 +1,6 @@
 ; scripts to reroute everything in N1 (above fragment level)
 
-(defun RouteCell (cellName topMetal)
+(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid nil))
   (let (lCV pgCV aCV fCV cgCV libName)
     libName = (GetCastLibName cellName)
     fCV  = (dbOpenCellViewByType libName cellName "floorplan")
@@ -14,6 +14,13 @@
     (when aCV  (cdsp4edit ?CV aCV))
     lCV = (Route ?CV fCV ?topMetal topMetal 
                  ?hookupLaygen nil ?Mem 16384 ?metalFill t)
+    (FixBDC ?CV lCV)
+    (when redoPG
+      (MakePowerGrid ?CV lCV ?topMetal 8)
+      (MakePowerGridAbstract ?CV lCV ?topMetal 8)
+      (CreatePowerPins 8 ?CV lCV)
+      )
+    (when colorGrid (MakeColorGrid ?CV lCV))
     (MakeSimpleAbstract ?CV lCV ?topMetal topMetal)
     (cdsp4add ?CV lCV)
     pgCV = (dbOpenCellViewByType libName (strcat cellName "_pg") "layout")
@@ -69,27 +76,18 @@
   )
 
 (defun RouteNoc ()
-  (RouteCell "core.neuro.tile.E_CABLE.1000" 6)
-  (RouteCell "core.neuro.tile.N_CABLE.1000" 6)
-  (RouteCell "core.neuro.tile.HALF_N_CABLE.1000" 6)
+  (RouteCell "core.neuro.tile.E_CABLE.1000" 6 ?redoPG ?colorGrid t) 
+  (RouteCell "core.neuro.tile.N_CABLE.1000" 6 ?redoPG ?colorGrid t)
+  (RouteCell "core.neuro.tile.HALF_N_CABLE.1000" 6 ?redoPG ?colorGrid t)
   (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_6_6_2_1_true_true_true_true-R.1000" 4)
   (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_6_6_2_true_true_true_true-R.1000" 6)
-  (RouteCell "core.neuro.tile.DOUBLE_ROUTER.1000" 8)
+  (RouteCell "core.neuro.tile.DOUBLE_ROUTER.1000" 8 ?colorGrid t)
   t
   )
 
-; route a custom cell with TOP_HALO
-(defun RouteTopCell (cellName)
-  (let (CV)
-    CV = (RouteCell cellName 8)
-    (MakeColorGrid ?CV CV)
-    CV
-    )
-  )
-
 (defun RouteTopCells ()
-  (RouteTopCell "chip.n1.pads.PADS.10000")
-  (RouteTopCell "core.neuro.neuron.EMPTY_NEURON.10000")
+  (RouteCell "chip.n1.pads.PADS.10000" 8 ?colorGrid t)
+  (RouteCell "core.neuro.neuron.EMPTY_NEURON.10000" 8 ?colorGrid t)
   t
   )
 
@@ -202,3 +200,21 @@
     )
   t
   )
+
+; replace bdc01's with our custom versions
+(defun FixBDC (@key (CV (geGetEditCellView)))
+  (let (old4 old8 new4 new8 n mapInstance)
+    n=0
+    old4 = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bdc01ld.z04" "layout")
+    old8 = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bdc01ld.z08" "layout")
+    new4 = (dbOpenCellViewByType "globals" "globals.bdc01ld.z04" "layout")
+    new8 = (dbOpenCellViewByType "globals" "globals.bdc01ld.z08" "layout")
+    mapInstance = (makeTable "mapInstance" nil)
+    mapInstance[old4]=new4
+    mapInstance[old8]=new8
+    (foreach inst CV->instances
+             (when mapInstance[inst->master] inst->master=mapInstance[inst->master] n++)
+             )
+    n
+    )
+)
