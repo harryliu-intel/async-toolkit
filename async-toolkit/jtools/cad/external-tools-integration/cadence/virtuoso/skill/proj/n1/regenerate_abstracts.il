@@ -1,9 +1,10 @@
 (defun RegenerateAbstracts ()
-  (let (cells currCV leaf mid topmet)
+  (let (cells currCV leaf bd mid tunable topmet)
 
     leaf=nil
+    bd=t
     mid=nil
-    tunable=t
+    tunable=nil
 
     (when leaf
     cells = (list
@@ -24,22 +25,6 @@
      "lib.util.ctree.CTREE3.1n"
      "lib.util.ctree.CTREE3.2n"
      "lib.util.ctree.CTREE3.3n"
-     ; BD_CONTROLLER
-     "lib.bd.metastable.arbiter.BD_ARBITER_CTRL.0"
-     "lib.bd.standard.merge.BD_MERGE_CTRL-L2-R.0"
-     "lib.bd.standard.split.BD_ALT_SPLIT_CTRL-L2-R.0"
-     "lib.bd.6T.bank.BD_SRAM_CTRL.0"
-     "lib.bd.standard.split.BD_SPLIT_CTRL-L2-R.0"
-     ;"lib.bd.standard.merge.BD_MERGE_DATA-L2-R.2"
-     ;"lib.bd.standard.merge.BD_MERGE_DATA-L2-R.1"
-     "lib.bd.standard.merge.BD_MERGE_DATA-L2-R.0"
-     "lib.bd.standard.merge.BD_ALT_MERGE_CTRL-L2-R.0"
-     "lib.bd.standard.receive.BD_RECV_CTRL.0"
-     "lib.bd.standard.send.BD_SEND_CTRL.0"
-     "lib.bd.standard.pipeline.BD_ISOLATE_TOK_CTRL.0"
-     "lib.bd.standard.pipeline.BD_ISOLATE_CTRL.0"
-     "lib.bd.standard.pipeline.BD_TOK_CTRL.0"
-     "lib.bd.standard.pipeline.BD_CTRL.0"
      ; physical cells
      ;"globals.bdc01ld.z04"
      ;"globals.bdc01ld.z08"
@@ -60,6 +45,43 @@
         (MakeLeafAbstract ?CV currCV)
        )
     )
+
+    (when bd
+    cells = (list
+     ; BD_CONTROLLER
+     "lib.bd.metastable.arbiter.ARBITER_CTRL.0"
+     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
+     "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0"
+     "lib.bd.standard.split.SPLIT_CTRL-L2-R.0"
+     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
+     "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0"
+     "lib.bd.standard.receive.RECV_CTRL.0"
+     "lib.bd.standard.send.SEND_CTRL.0"
+     "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"
+     "lib.bd.standard.pipeline.ISOLATE_CTRL.0"
+     "lib.bd.standard.pipeline.TOK_CTRL.0"
+     "lib.bd.standard.pipeline.CTRL.0"
+;     "lib.bd.6T.bank.BD_SRAM_CTRL.0"
+     )
+
+
+     (foreach cell cells
+        currCV = (nrOpenCellViewReadableByName cell "abstract")
+        ( CDSP4Edit
+                 ( ConfigFileGetValue TheCDSConfigTable "P4USER" )
+                 ( ConfigFileGetValue TheCDSConfigTable "P4PASSWD" )
+                 ( ConfigFileGetValue TheCDSConfigTable "P4CLIENT" )
+                 ( ConfigFileGetValue TheCDSConfigTable "P4CONFIG" )
+                   currCV 
+                 ( ConfigFileGetValue TheCDSConfigTable "TEMP" ) 
+                 )
+        currCV = (nrOpenCellViewReadableByName cell "layout")
+        topmet = 2
+        (MakeAbstract ?CV currCV ?topMetal topmet)
+;        (MakeLeafAbstract ?CV currCV)
+       )
+    )
+
 
     (when mid
     cells = (list
