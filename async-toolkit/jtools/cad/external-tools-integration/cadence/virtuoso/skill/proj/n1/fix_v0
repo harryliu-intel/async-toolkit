@@ -1,0 +1,39 @@
+#!/usr/intel/bin/perl -w
+
+# get arguments
+@ARGV==1 or die "USAGE: fix_v0 LAYOUT_ERRORS \n";
+my $file = $ARGV[0];
+open IN,"<$file" || die("ERROR: can't read $file \n");
+open OUT,">fix_v0.il" || die("ERROR: can't open fix_v0.il \n");
+
+# write header of skill file
+print OUT <<EOF;
+(defun Draw_V0TPX (xy \@key (CV (geGetEditCellView)))
+  (let (viaDef ax ay x y)
+    viaDef = (techFindViaDefByName (techGetTechFile CV) "via0TPX")
+    x = (car xy)
+    y = (cadr xy)
+    ax = (x + 0.021) 
+    ay = (y + 0.021) 
+    (dbCreateVia CV viaDef ax:ay "R0")
+  )
+)
+
+EOF
+
+my $err = "";
+my $count = 0;
+while (my $line = <IN>) {
+  chomp($line);
+  if ($line =~ /^(\S+): /) {
+    $err = $1;
+  }
+  elsif (($err eq "V0_328" || $err eq "V0_24") && $line =~ /^\S+\s+\((\S+),\s+(\S+)\)/) {
+    print OUT "(Draw_V0TPX $1:$2)\n";
+    $count++;
+  }
+}
+print "Fixed $count bridge vias\n";
+
+close IN;
+close OUT;
