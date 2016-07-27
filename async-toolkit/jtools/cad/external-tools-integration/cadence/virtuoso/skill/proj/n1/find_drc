@@ -1,0 +1,69 @@
+#!/usr/intel/bin/perl -w
+
+@ARGV==2 or die "USAGE: find_drc cell LAYOUT_ERRORS\n";
+my $cell = $ARGV[0];
+my $file = $ARGV[1];
+my $radius = 0.2;
+my @boxes;
+if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEURON/ ) {
+    @boxes = ("3.36:-478.8:420:-57.456", "30.24:-478.8:420:-3.192");
+} elsif ($cell =~ /^chip_n1_io_IO/ ) {
+    @boxes = ("-50.4:-95.76:50.4:0");
+} elsif ($cell =~ /^chip_n1_testm_TESTM/ ) {
+    @boxes = ("-420:-319.2:420:0")
+} elsif ($cell eq "neuro_top" || $cell =~ /^chip_n1_N1/) {
+    @boxes = ("0:0:3870.72:4117.68","0:0:3810.24:4194.288");
+}
+my $shrink_x = 0.1;
+my $shrink_y = 0.1;
+
+my $num=0;
+my $err="";
+my %errors;
+open IN, "<$file" or die;
+while (my $line = <IN>) {
+    if ($line =~ /^(\S+): /) { $err = $1; }
+    elsif ($line =~ /^(\S+)\s+\((\S+),\s*(\S+)\)/ ) {
+        if ($1 eq $cell) {
+            my $x = $2;
+            my $y = $3;
+            my $found = 1;
+            if (@boxes>0) { $found = 0; }
+            foreach my $box (@boxes) {
+                if (in_box($x,$y,$box)) { $found=1; }
+            }
+            unless ($found) { next; }
+            # if ($err =~ /M\d_47/) { next; }
+            # if ($err =~ /V0_328/) { next; }
+            $num++;
+            $found = 0;
+            foreach my $key (keys %errors) {
+                my ($kx, $ky) = split(":",$key);
+                if (abs($x-$kx)<$radius && abs($y-$ky)<$radius) {
+                    $errors{$key} .= " $err";
+                    $found = 1;
+                    next;
+                }
+            }
+            unless ($found) { $errors{"$x:$y"} = $err; }
+        }
+    }
+}
+close IN;
+print "; $num total DRC errors\n";
+
+foreach my $key (sort keys %errors) {
+    my ($x, $y) = split(":",$key);
+    my $err = $errors{$key};
+    printf "(GoToLocation $x $y 2000) ; $err\n";
+}
+
+sub in_box {
+    my ($x,$y,$box) = @_;
+    my ($x0,$y0,$x1,$y1) = split(":",$box);
+    $x0 += $shrink_x;
+    $x1 -= $shrink_x;
+    $y0 += $shrink_y;
+    $y1 -= $shrink_y;
+    return ($x>=$x0 && $x<=$x1 && $y>=$y0 && $y<$y1);
+}
