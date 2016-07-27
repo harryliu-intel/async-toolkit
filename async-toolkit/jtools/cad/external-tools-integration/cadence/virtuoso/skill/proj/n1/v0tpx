@@ -1,0 +1,52 @@
+#!/usr/intel/bin/perl -w
+use Getopt::Long;
+use List::Util qw(first min max);
+use DateTime;
+use List::Util 'sum';
+use Getopt::Long qw(:config pass_through);
+use strict;
+
+# get arguments
+@ARGV==1 or die "USAGE: v0tpx LAYOUT_ERRORS \n";
+my $file = $ARGV[0];
+my $err = "V0_328";
+my $init_done = 0;
+open IN,"<$file" || die("ERROR: can't read $file \n");
+open OUT,">$err.il" || die("ERROR: can't open $err.il \n");
+while(my $line = <IN>){
+  chomp($line);
+  if(!$init_done) {
+    my $line2 = $line;
+    until($line2 =~ /ERROR\s+DETAILS/){
+      $line2 = <IN>;
+    }
+    $init_done = 1;
+    $line = $line2;
+  }
+  if($line =~ /$err:/) {
+
+    my $line2 = <IN>;
+    ##Continue till you hit the co-ordinates
+    while($line2 !~ /lower left/ && $line2 !~ /upper right/){
+      $line2 = <IN>;
+    }
+
+    $line2 = <IN>;
+    while($line2 !~ /^-------/){
+      if($line2 =~ /\((\S+)\s*,\s*(\S+)\)\s*\((\S+)\s*,\s*(\S+)\)/) {
+        print OUT "(Draw_V0TPX $1:$2)\n";
+      }
+      $line2 = <IN>;
+      last unless defined $line2;
+    }
+    last;
+  }
+}
+close IN;
+close OUT;
+
+sub trim {
+  my $s = shift;
+  $s =~ s/^\s+|\s+$//g;
+  return $s 
+}
