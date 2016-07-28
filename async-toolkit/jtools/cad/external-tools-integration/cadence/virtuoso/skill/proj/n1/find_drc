@@ -33,8 +33,6 @@ while (my $line = <IN>) {
                 if (in_box($x,$y,$box)) { $found=1; }
             }
             unless ($found) { next; }
-            # if ($err =~ /M\d_47/) { next; }
-            # if ($err =~ /V0_328/) { next; }
             $num++;
             $found = 0;
             foreach my $key (keys %errors) {
@@ -50,12 +48,32 @@ while (my $line = <IN>) {
     }
 }
 close IN;
-print "; $num total DRC errors\n";
+print "; $num total DRC errors\n\n";
 
-foreach my $key (sort keys %errors) {
-    my ($x, $y) = split(":",$key);
-    my $err = $errors{$key};
-    printf "(GoToLocation $x $y 2000) ; $err\n";
+# report errors by layer
+foreach my $layer ("M0", "V0", "M1", "V1", "M2", "V2", "M3", "V3", "M4", "V4", "M5", "V5", "M6", "V6",
+                   "M7", "V7", "M8", "V8", "M9", "V9", "TM1", "TV1", "other") {
+    print "; $layer\n";
+    foreach my $key (sort keys %errors) {
+        my ($x, $y) = split(":",$key);
+        my $err = $errors{$key};
+        if (get_layer($err) eq "$layer") {
+            printf "(GoToLocation $x $y 2000) ; $err\n";
+        }
+    }
+    print "\n";
+}
+
+sub get_layer {
+    my ($errors) = (@_);
+    my $layer = "";
+    foreach my $field (split(" ",$errors)) {
+        if ($field =~ /(\S+)_/) {
+            if ($layer eq "") { $layer = $1; }
+            elsif ($layer ne $1) { $layer = "other"; }
+        }
+    }
+    return $layer;        
 }
 
 sub in_box {
