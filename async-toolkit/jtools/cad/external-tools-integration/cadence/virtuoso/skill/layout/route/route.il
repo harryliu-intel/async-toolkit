@@ -417,7 +417,7 @@
 
     ; HACK: redraw power pins because they don't import correctly from DEF
     topMetal = (dbGetPropByName CV "topMetal")->value
-    (when topMetal (CreatePowerPins topMetal ?CV ImportCV))
+    (when topMetal (CreatePowerPins ?topMetal topMetal ?CV ImportCV))
 
     ; label pins
     (LabelPins ?CV ImportCV)

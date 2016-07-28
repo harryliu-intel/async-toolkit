@@ -18,7 +18,7 @@
     (when redoPG
       (MakePowerGrid ?CV lCV ?topMetal 8)
       (MakePowerGridAbstract ?CV lCV ?topMetal 8)
-      (CreatePowerPins 8 ?CV lCV)
+      (CreatePowerPins ?topMetal 8 ?CV lCV)
       )
     (when colorGrid (MakeColorGrid ?CV lCV))
     (MakeSimpleAbstract ?CV lCV ?topMetal topMetal)

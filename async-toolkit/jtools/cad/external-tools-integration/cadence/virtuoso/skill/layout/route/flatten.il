@@ -110,7 +110,7 @@ useICV = t
       )
 
     ; create power pins
-    (CreatePowerPins topMetal ?CV CV)
+    (CreatePowerPins ?topMetal topMetal ?CV CV)
 
     ; place metal on top of dangling subcell pins for StarRC extraction
     (when ConnectDanglingPins
@@ -528,8 +528,10 @@ useICV = t
   )
 
 ; Draw top-level Vdd/GND pins referring to power grid abstract
-(defun CreatePowerPins (topMetal @key (CV (geGetEditCellView)) (suffix "_pg"))
+(defun CreatePowerPins (@key (CV (geGetEditCellView)) (topMetal nil))
   (let (inst pgaCV lpp new_shape figsVdd figsGND)
+    (unless topMetal topMetal = (dbFindProp CV "topMetal")->value)
+    (unless topMetal topMetal = TopMetal)
     (DeletePinsByType "Power" ?CV CV)
     inst = (dbFindAnyInstByName CV "pg")
     (when inst pgaCV = (dbOpenCellViewByType inst->libName inst->cellName "abstract"))
