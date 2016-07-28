@@ -15,7 +15,7 @@ if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEUR
     @boxes = ("-50.4:-319.2:62.16:-150.024","0:-95.76:62.16:0","62.16:-319.2:369.6:0");
 } elsif ($cell =~ /^chip_n1_testm_TESTM/ ) {
     @boxes = ("-420:-319.2:420:0")
-} elsif ($cell eq "neuro_top" || $cell =~ /^chip_n1_N1/) {
+} elsif ($cell eq "neuro_top" || $cell =~ /^chip_n1_TOP/) {
     @boxes = ("0:0:1270.08:1244.88");
 }
 my $shrink_x = 0.1;
@@ -55,8 +55,12 @@ close IN;
 print "; $num total DRC errors\n\n";
 
 # report errors by layer
-foreach my $layer ("M0", "V0", "M1", "V1", "M2", "V2", "M3", "V3", "M4", "V4", "M5", "V5", "M6", "V6",
-                   "M7", "V7", "M8", "V8", "M9", "V9", "TM1", "TV1", "other") {
+my %layers;
+foreach my $key (sort keys %errors) {
+    my $layer = get_layer($errors{$key});
+    $layers{$layer} = 1;
+}
+foreach my $layer (sort keys %layers) {
     print "; $layer\n";
     foreach my $key (sort keys %errors) {
         my ($x, $y) = split(":",$key);
@@ -72,12 +76,12 @@ sub get_layer {
     my ($errors) = (@_);
     my $layer = "";
     foreach my $field (split(" ",$errors)) {
-        if ($field =~ /(\S+)_/) {
+        if ($field =~ /([^_]+)_/) {
             if ($layer eq "") { $layer = $1; }
             elsif ($layer ne $1) { $layer = "other"; }
         }
     }
-    return $layer;        
+    return $layer;
 }
 
 sub in_box {
