@@ -9,10 +9,14 @@ if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEUR
     @boxes = ("3.36:-478.8:420:-57.456", "30.24:-478.8:420:-3.192");
 } elsif ($cell =~ /^chip_n1_io_IO/ ) {
     @boxes = ("-50.4:-95.76:50.4:0");
+} elsif ($cell =~ /^chip_n1_test0_TEST0/ ) {
+    @boxes = ("0:-319.2:305.76:0","305.76:-95.76:369.6:0","305.76:-319.2:420:-150.024");
+} elsif ($cell =~ /^chip_n1_test1_TEST1/ ) {
+    @boxes = ("-50.4:-319.2:62.16:-150.024","0:-95.76:62.16:0","62.16:-319.2:369.6:0");
 } elsif ($cell =~ /^chip_n1_testm_TESTM/ ) {
     @boxes = ("-420:-319.2:420:0")
 } elsif ($cell eq "neuro_top" || $cell =~ /^chip_n1_N1/) {
-    @boxes = ("0:0:3870.72:4117.68","0:0:3810.24:4194.288");
+    @boxes = ("0:0:1270.08:1244.88");
 }
 my $shrink_x = 0.1;
 my $shrink_y = 0.1;
