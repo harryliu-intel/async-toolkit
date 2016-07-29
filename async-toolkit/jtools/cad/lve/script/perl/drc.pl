@@ -138,6 +138,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -vue \\
 -D _drMaxError=100000000 \\
 -D _drCOVER_BY_BCID=_drYES \\
+-D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
 -f GDSII \\
 ET
