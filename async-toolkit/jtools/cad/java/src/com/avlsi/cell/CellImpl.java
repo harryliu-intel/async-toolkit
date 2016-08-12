@@ -36,6 +36,8 @@ import java.util.TreeMap;
 import java.util.StringTokenizer;
 import java.util.stream.Stream;
 
+import java.util.function.Predicate;
+
 import com.avlsi.cast.CastSemanticException;
 import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.impl.CastParsingOption;
@@ -1159,8 +1161,8 @@ public class CellImpl implements CellInterface {
     }
 
     /** true if production rule set is not empty **/
-    private boolean hasProductionRules() {
-        return getProductionRuleSet().
+    private static boolean hasProductionRules(CellInterface cell) {
+        return cell.getProductionRuleSet().
             getProductionRules().hasNext();
     }
 
@@ -2013,81 +2015,42 @@ public class CellImpl implements CellInterface {
     //
     //
 
+    private boolean hasProperty(Predicate<CellInterface> property) {
+        if (property.test(this)) {
+            return true;
+        }
+
+        for (final Iterator iSubcellPair = getSubcellPairs();
+                iSubcellPair.hasNext(); ) {
+            final Pair pair = (Pair) iSubcellPair.next();
+            final CellImpl subcell = ((CellImpl) pair.getSecond());
+
+            if (subcell.hasProperty(property)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Returns true if this cell or any of its subcells have non-
      * env production rules.
      **/
     public boolean hasRealProductionRule() {
-        // check the prs of this cell, returning true if a non-env
-        // pr appears
-        for (final Iterator iPr
-                = getProductionRuleSet().getProductionRules();
-                iPr.hasNext(); ) {
-            final ProductionRule pr = (ProductionRule) iPr.next();
-            return true;
-        }
-
-        // if any of its subcells have a real production rule,
-        // then this one does, so return true.
-        // TODO: this could be improved by iterating over the
-        // types of subcells, rather than the names, and
-        // further improved by caching the results.
-        for (final Iterator iSubcellPair = getSubcellPairs();
-                iSubcellPair.hasNext(); ) {
-            final Pair pair = (Pair) iSubcellPair.next();
-            final CellInterface subcell = ((CellImpl) pair.getSecond());
-
-            if (subcell.hasRealProductionRule())
-                return true;
-        }
-
-        // otherwise, return false, no real production rules
-        return false;
+        return hasProperty(x -> hasProductionRules(x));
     }
 
     public boolean hasNetlistBody() {
-        // Should refactor with hasRealProductionRule above
-        if (containsNetlist()) return true;
-        for (final Iterator iSubcellPair = getSubcellPairs();
-                iSubcellPair.hasNext(); ) {
-            final Pair pair = (Pair) iSubcellPair.next();
-            final CellInterface subcell = ((CellImpl) pair.getSecond());
-
-            if (subcell.hasNetlistBody())
-                return true;
-        }
-
-        return false;
+        return hasProperty(x -> x.containsNetlist());
     }
 
     public boolean hasVerilog() {
-        // Should refactor with hasRealProductionRule above
-        if (containsVerilog()) return true;
-        for (final Iterator iSubcellPair = getSubcellPairs();
-                iSubcellPair.hasNext(); ) {
-            final Pair pair = (Pair) iSubcellPair.next();
-            final CellInterface subcell = ((CellImpl) pair.getSecond());
-
-            if (subcell.hasVerilog())
-                return true;
-        }
-
-        return false;
+        return hasProperty(x -> x.containsVerilog());
     }
 
     public boolean hasRunnableCsp() {
-        // Should refactor with hasRealProductionRule above
-        if (containsRunnableCsp()) return true;
-        for (final Iterator iSubcellPair = getSubcellPairs();
-                iSubcellPair.hasNext(); ) {
-            final Pair pair = (Pair) iSubcellPair.next();
-            final CellInterface subcell = ((CellImpl) pair.getSecond());
-
-            if (subcell.hasRunnableCsp())
-                return true;
-        }
-
-        return false;
+        return hasProperty(x -> x.containsRunnableCsp());
     }
 
     public BlockInterface getBlockInterface() {
@@ -2248,7 +2211,7 @@ public class CellImpl implements CellInterface {
         // so we can tell whether or not our cell defines its own
         // production rules
         if (parent.hasPrsBlock && hasPrsBlock && parent.prsBlockIsComplete
-            && hasProductionRules()) {
+            && hasProductionRules(this)) {
             // if parent has a complete prs block, we are not
             // allowed to have one.
             throw new RefinementException
