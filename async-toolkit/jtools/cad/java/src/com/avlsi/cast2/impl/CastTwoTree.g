@@ -2464,6 +2464,7 @@ baseType[Environment metaEnv, Environment env, CellImpl cell,
               throw se;
           }
           final UserDefinedValue typeVal = (UserDefinedValue) val;
+          if (!typeVal.isNamedEnvironment()) envContainer = null;
 
           // 3
           final Environment bodyEnv = typeVal.getEnvironment();
@@ -2630,7 +2631,7 @@ channelDeclaration[Environment env]
                                           netGroup, fakeEmptyPorts(name),
                                           null, inheritanceList,
                                           refinement, body, moduleName,
-                                          UserDefinedValue.CHANNEL));
+                                          UserDefinedValue.CHANNEL, false));
         } catch (SymbolRedeclaredException e) {
             throw semanticWrapperException("type " + name.getText()
                 + " redeclared", e, name);
@@ -2671,7 +2672,7 @@ aliasDeclaration[Environment env]
                      new UserDefinedValue(env, cellTypeSymbol, metas,
                                           null, null, null, null,
                                           refinement, block, moduleName,
-                                          UserDefinedValue.ALIAS_CELL));
+                                          UserDefinedValue.ALIAS_CELL, false));
         } catch (SymbolRedeclaredException e) {
             throw semanticWrapperException("type " + name.getText()
                 + " redeclared", e, name);
@@ -2953,7 +2954,7 @@ typeDeclaration[Environment env, boolean isEnv]
                                           (isEnv ? p : null),
                                           inheritanceList,
                                           refinement, b, moduleName,
-                                          structureType));
+                                          structureType, isEnv));
         } catch (SymbolRedeclaredException e) {
             throw semanticWrapperException("type " + id.getText()
                 + " redeclared", e, id);

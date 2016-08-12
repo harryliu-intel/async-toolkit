@@ -81,6 +81,8 @@ public final class UserDefinedValue extends Value {
     private final String moduleName;
     /** Whether it's a cell, attributes cell, alias cell, or a channel **/
     private final int structureType;
+    /** Whether it's a named environment **/
+    private final boolean isEnv;
 
     // cellMap, aliasesMap, cellConstantsMap, prsEnvMap and subcellsEnvMap
     // are conceptually very similar, but accessed at different points
@@ -157,7 +159,7 @@ public final class UserDefinedValue extends Value {
             final AST impliedPortParamList,
             final AST body)
     {
-        this(env, cellTypeSymbol, metaParamList, portParamList, impliedPortParamList, null, null, null, body, null, CELL);
+        this(env, cellTypeSymbol, metaParamList, portParamList, impliedPortParamList, null, null, null, body, null, CELL, false);
     }
 
     public UserDefinedValue(
@@ -171,7 +173,8 @@ public final class UserDefinedValue extends Value {
             final AST refinementParent,
             final AST body,
             final String moduleName,
-            final int structureType)
+            final int structureType,
+            final boolean isEnv)
     {
         super(true);
 
@@ -198,6 +201,7 @@ public final class UserDefinedValue extends Value {
                          (structureType == ALIAS_CELL),
                      "UserDefinedValue given bad structure type: " + structureType);
         this.structureType = structureType;
+        this.isEnv = isEnv;
     }
 
     public Value assign(final Value v, final CellImpl cell)
@@ -395,6 +399,13 @@ public final class UserDefinedValue extends Value {
     }
 
     /**
+     * Returns whether it's a named environment.
+     **/
+    public boolean isNamedEnvironment() {
+        return isEnv;
+    }
+
+    /**
      * Return the cell where this cell is an environment, or <code>null</code>
      * if this cell is not an environment.
      **/
@@ -406,6 +417,9 @@ public final class UserDefinedValue extends Value {
      * Set the cell where this cell is an environment.
      **/
     public void updateEnvironmentContainer(final UserDefinedValue cell) {
+        assert isEnv : "setting " + cell.getFullyQualifiedType() +
+                       " as environment container of non-named environment " +
+                       getFullyQualifiedType();
         environmentContainer = cell;
     }
 
