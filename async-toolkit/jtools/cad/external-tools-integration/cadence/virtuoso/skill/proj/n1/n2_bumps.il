@@ -110,7 +110,7 @@
   ; NW bumps for bd(17) x input (3 rows tall)
   CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NW.20000_bumps" "layout" "maskLayout" "w")
   (DrawBumps (list (list "Vdd" "Vdd" "Vdd" "Vdd" "VDDION" "VDDION" "VDDION" "VDDION" "Vdd" "Vdd" "Vdd" "Vdd")
-                   (list "GND" "x15" "x13" "x11" "x9"     "GND"    "GND"    "xa"     "x7"  "x5"  "x3"  "x1")
+                   (list nil   "x15" "x13" "x11" "x9"     "GND"    "GND"    "xa"     "x7"  "x5"  "x3"  "x1")
                    (list "x16" "x14" "x12" "x10" "x8"     "VDDION" "VDDION" "xq"     "x6"  "x4"  "x2"  "x0")
                    )
              ?filename "n2_bumps_nw.txt" ?CV CV)
