@@ -199,8 +199,27 @@ public class Cast2Verilog {
         default int getNumBitsNarrow(ChannelType chanType) {
             return Cast2Verilog.getNumBitsNarrow(chanType);
         }
-        default void emitPassThru(PrintWriter out, ChannelType lport, ChannelType rport) {}
+        default void emitPassThru(PrintWriter out, String inChan, String outChan) {
+            final List<String> inComp = new ArrayList<>();
+            final List<String> outComp = new ArrayList<>();
+            // inputs
+            getInputPorts(inChan, Collections.emptyList(), -1, inComp);
+            getInputPorts(outChan, Collections.emptyList(), -1, outComp);
+            for (int i = 0; i < inComp.size(); ++i) {
+                out.println("assign " + esc(outComp.get(i)) + " = " +
+                            esc(inComp.get(i)) + ";");
+            }
 
+            // outputs
+            inComp.clear();
+            outComp.clear();
+            getInputPorts(inChan, Collections.emptyList(), 1, inComp);
+            getInputPorts(outChan, Collections.emptyList(), 1, outComp);
+            for (int i = 0; i < inComp.size(); ++i) {
+                out.println("assign " + esc(inComp.get(i)) + " = " +
+                            esc(outComp.get(i)) + ";");
+            }
+        }
         default void emitPortDeclaration(String name,
                                          List<ArrayType> arrays,
                                          int direction,
@@ -2883,16 +2902,8 @@ public class Cast2Verilog {
                 final String sinkName = nodeVerilogName(sink);
                 out.println("assign " + sinkName + " = " + sourceName + ";");
             } else {
-                out.println("assign " +
-                            VerilogUtil.escapeIfNeeded(sink.getFullName() +
-                                                       "$data") + " = " +
-                            VerilogUtil.escapeIfNeeded(source.getFullName() +
-                                                       "$data") + ";");
-                out.println("assign " +
-                            VerilogUtil.escapeIfNeeded(source.getFullName() +
-                                                       "$enable") + " = " +
-                            VerilogUtil.escapeIfNeeded(sink.getFullName() +
-                                                       "$enable") + ";");
+                getChannelEmitter((ChannelType) source.getType()).
+                    emitPassThru(out, source.getFullName(), sink.getFullName());
             }
         }
 
@@ -3246,10 +3257,8 @@ public class Cast2Verilog {
 
             if (lport.getType() instanceof ChannelType &&
                 rport.getType() instanceof ChannelType) {
-                out.println("assign \\" + output + "$data = \\" +
-                                          input + "$data ;");
-                out.println("assign \\" + input + "$enable = \\" +
-                                          output + "$enable ;");
+                getChannelEmitter((ChannelType) lport.getType()).
+                    emitPassThru(out, input, output);
             } else {
                 out.println("assign \\" + output + " = \\" + input + " ;");
             }
