@@ -49,18 +49,18 @@
     (when bd
     cells = (list
      ; BD_CONTROLLER
-     "lib.bd.metastable.arbiter.ARBITER_CTRL.0"
-     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
-     "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0"
-     "lib.bd.standard.split.SPLIT_CTRL-L2-R.0"
-     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
-     "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0"
-     "lib.bd.standard.receive.RECV_CTRL.0"
+;     "lib.bd.metastable.arbiter.ARBITER_CTRL.0"
+;     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
+;     "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0"
+;     "lib.bd.standard.split.SPLIT_CTRL-L2-R.0"
+;     "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
+;     "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0"
+;     "lib.bd.standard.receive.RECV_CTRL.0"
      "lib.bd.standard.send.SEND_CTRL.0"
-     "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"
-     "lib.bd.standard.pipeline.ISOLATE_CTRL.0"
-     "lib.bd.standard.pipeline.TOK_CTRL.0"
-     "lib.bd.standard.pipeline.CTRL.0"
+;     "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"
+;     "lib.bd.standard.pipeline.ISOLATE_CTRL.0"
+;     "lib.bd.standard.pipeline.TOK_CTRL.0"
+;     "lib.bd.standard.pipeline.CTRL.0"
 ;     "lib.bd.6T.bank.BD_SRAM_CTRL.0"
      )
 
