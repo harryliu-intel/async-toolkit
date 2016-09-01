@@ -88,8 +88,8 @@
 
   ; Lakemont bumps (2 rows tall)
   CV = (dbOpenCellViewByType "chip.n2.lakemont" "chip.n2.lakemont.LAKEMONT.20000_bumps" "layout" "maskLayout" "w")
-  (DrawBumps (list (list "VSS"      "VSS"      "VSS"     "VSS"     "VSS"      "VSS")
-                   (list "VDDA_LMT" "VDDM_LMT" "VDD_LMT" "VDD_LMT" "VDDM_LMT" "VDDM_LMT")
+  (DrawBumps (list (list "VSS"  "VSS"  "VSS" "VSS" "VSS"  "VSS")
+                   (list "VDDA" "VDDM" "VDD" "VDD" "VDDM" "VDDM")
                    )
              ?filename "n2_bumps_lakemont.txt" ?CV CV)
 
