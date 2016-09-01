@@ -58,7 +58,7 @@
 ; process one cell
 (defun UpdateFloorplanCore (CV indent)
   (let (netFile NetListTable rx ux uy w h instanceTable netTable termTable
-        lastArrayName layoutCV points realInstances)
+        lastArrayName layoutCV points realInstances prop isLeaf)
     (fprintf LOG "%sUpdate floorplan of %s\n" indent CV->cellName)
     mastersVisited[CV] = t
 
@@ -113,7 +113,10 @@
         )
 
       ; update prBoundary of leaf cells, from layout view if it exists
-      (when CV->viewName=="floorplan" && !realInstances
+      isLeaf = !realInstances
+      prop = (dbGetPropByName CV "LeafCell")
+      (when prop isLeaf=prop->value=="TRUE")
+      (when CV->viewName=="floorplan" && isLeaf
         (when CV->prBoundary (dbDeleteObject CV->prBoundary))
         (when CV->viewName=="floorplan" && (ddGetObj CV->libName CV->cellName "layout")
               layoutCV = (dbOpenCellViewByType CV->libName CV->cellName "layout" "maskLayout" "r")
