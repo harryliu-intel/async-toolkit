@@ -4,6 +4,7 @@
 ; $Author$
 
 
+; AVOID: nrCastQuery does almost the same thing and is normally used instead.
 defun( nrLoadRoutedDirective ( CellView 
                         @key
                         ( Verbose nil )
@@ -57,6 +58,8 @@ defun( nrLoadRoutedDirective ( CellView
    )
 )
 
+; Tests if the specified cell is routed=true.  Uses a bunch of silly
+; shortcuts before actually running cast_query.
 defun( nrIsRoutedCell ( libname cellname viewname                     
                         @key
                         ( routedDirectiveList nil )
@@ -64,7 +67,7 @@ defun( nrIsRoutedCell ( libname cellname viewname
                         ( RegenerateFromCast nil )
                         ( MaxHeapSize (nrGetMaxHeapSize) )
                       )
-  let( ( isRoutedCell CellView temp routedStatus routedStatus1 InstLibNames InstCellNames)
+  let( ( isRoutedCell CellView )
     isRoutedCell= nil
 
     CellView=dbOpenCellViewByType( libname cellname viewname )
@@ -72,25 +75,20 @@ defun( nrIsRoutedCell ( libname cellname viewname
     ; if its not a CastCell assume its routed
     (unless (IsCastCell CellView) isRoutedCell=t)
 
-; if there is any cell from "gate" "stack" "tsmc13lg" "globals", don't inline them
+    ; if there is any cell from "gate" "stack" "tsmc13lg" "globals", don't inline them
     if( (strncmp( cellname "gate" 4)==0 || strncmp( cellname "stack" 5)==0 ) then  
        isRoutedCell= t)
 
-; assume all leaf cell to be routed.
+    ; assume all leaf cell to be routed.
     if( nrIsLeafCell( libname cellname viewname ) then isRoutedCell= t)
-; if there is no routing directive, run cast2skill
-    if(( RegenerateFromCast || isRoutedCell==nil ) then
-      if( routedDirectiveList then 
-        routedStatus=cond(
-                 ( member( cellname routedDirectiveList ) "yes" )
-                 ( t "no" ) )
-      else 
-        routedStatus = nrLoadRoutedDirective( CellView ?RegenerateFromCast RegenerateFromCast ?Verbose Verbose ?MaxHeapSize MaxHeapSize )
+
+    ; check routedDirectiveList
+    if( isRoutedCell==nil then
+      unless( routedDirectiveList
+              routedDirectiveList = nrCastQuery( CellView ?RegenerateFromCast RegenerateFromCast)
+              )
+      isRoutedCell = member( cellname routedDirectiveList )!=nil
       )
-      if(Verbose 
-        printf("Loading cast Directive \"%s\" for cell %s... \n" routedStatus CellView~>cellName ))
-    )
-    if((routedStatus=="yes") isRoutedCell= t )
     isRoutedCell 
   )
 )
@@ -110,7 +108,7 @@ defun( nrIsLeafCell ( libname cellname viewname
                     ( "" ) )
     when( !isFile(filename)
       Command = sprintf( nil
-                "%s %s/cast_query --cast-path=%s --cell=%s --output=%s --cadence-name  --max-heap-size=%dM --task=subcells --filter=\"leaf&!ancestor=standard.base.proteus\""
+                "%s %s/cast_query --cast-path=%s --cell=%s --output=%s --cadence-name  --max-heap-size=%dM --task=subcells --filter=\"leaf&!ancestor=standard.attributes.proteus\""
                 ExecCmd
                 PackageGetBinRoot( )
                 castpath
@@ -138,6 +136,8 @@ defun( nrIsLeafCell ( libname cellname viewname
 )
    
 
+; Horribly named function.  Returns a list of cellName strings for all
+; routed subcells of specified CellView, including CellView itself.
 defun( nrCastQuery ( CellView
                            @key
                            ( RegenerateFromCast t )                 
@@ -172,7 +172,7 @@ defun( nrCastQuery ( CellView
     routedTrueList=nil
     while( gets( line p_in)
       sscanf( line "%s" cellName )
-      if( cellName != CellView~>cellName then routedTrueList= cons( cellName routedTrueList )) 
+      routedTrueList= cons( cellName routedTrueList ) 
     )
     close(p_in)
     routedTrueList

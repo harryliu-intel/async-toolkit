@@ -34,7 +34,8 @@
                                ?SyncToNetlist SyncToNetlist
                                ?Verbose Verbose
                                ?routedDirectiveList routedDirectiveList
-                               ?LibCellsToIgnore LibCellsToIgnore)
+                               ?LibCellsToIgnore LibCellsToIgnore
+                               ?top t)
 
     ; add buswires instance
     (AddBusWires ?CV CV)
@@ -84,17 +85,18 @@
                                 (mapToPrelayout (makeTable "mapToPrelayout" nil))
                                 (RegenerateFromCast t) (Overwrite t)
                                 (SyncToNetlist t) (Verbose nil)
-                                (routedDirectiveList nil) (LibCellsToIgnore nil))
+                                (routedDirectiveList nil) (LibCellsToIgnore nil)
+                                (top nil))
   (let (prelayoutCV instances instName transform instCV)
 
    ; terminate on routed=true cells or recurse
    (cond (mapToPrelayout[CV] ; already created
           prelayoutCV = mapToPrelayout[CV]
           )
-         ((nrIsRoutedCell CV->libName CV->cellName CV->viewName
-                          ?routedDirectiveList routedDirectiveList
-                          ?Verbose Verbose
-                          ?RegenerateFromCast RegenerateFromCast)
+         (!top && (nrIsRoutedCell CV->libName CV->cellName CV->viewName
+                                  ?routedDirectiveList routedDirectiveList
+                                  ?Verbose Verbose
+                                  ?RegenerateFromCast RegenerateFromCast)
           ; return CV for layout, prelayout, or floorplan in that order
           prelayoutCV = (dbOpenCellViewByType CV->libName CV->cellName
                          "layout"    "maskLayout" "r") ||
