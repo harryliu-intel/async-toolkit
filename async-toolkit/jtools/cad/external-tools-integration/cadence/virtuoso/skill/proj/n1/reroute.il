@@ -64,10 +64,11 @@
   (RouteCell "core.noc.router.forward.FILTER_B2A_POSEDGE_1of_CTRL.1000" 2)
   (RouteCell "core.noc.crossbar.datapath.TAIL_CONTROL.1000" 2)
   (RouteCell "core.noc.crossbar.arbiter.SLACKLESS_ARBITER2.1000" 3)
-  (RouteCell "core.io.fpio.FPIO.1000" 4)
+  (RouteCell "core.io.fpio.FPIO.20000" 4)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20730-R.0" 3)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0" 3)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_65535-R.0" 3)
+  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0h" 3)
   t
   )
 
