@@ -14,7 +14,7 @@
     (when aCV  (cdsp4edit ?CV aCV))
     lCV = (Route ?CV fCV ?topMetal topMetal 
                  ?hookupLaygen nil ?Mem 16384 ?metalFill t)
-    (FixBDC ?CV lCV)
+    ; (FixBDC ?CV lCV)
     (when redoPG
       (MakePowerGrid ?CV lCV ?topMetal 8)
       (MakePowerGridAbstract ?CV lCV ?topMetal 8)
