@@ -140,16 +140,18 @@
     (when doCheck (MakeCheckGrid ?CV tagCV ?overlayView "layout_tag"))
 
     ;  add metal fill
-    (when doFill
-      ; fill above CV's topMetal everywhere
-      (unless midMetal midMetal = (dbGetPropByName CV "topMetal")->value)
-      (unless midMetal midMetal = botMetal)
-      (printf "TemplateFill botMetal=%d midMetal=%d topMetal=%d\n" botMetal midMetal topMetal)
-      (TemplateFill ?CV tagCV ?botMetal midMetal+1 ?topMetal topMetal)
-      ; fill outside CV at or below topMetal
-      (leChopShape tagCV->prBoundary CV->prBoundary->points t t)
-      (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal midMetal ?deleteOld nil)
-      )
+    (cond (doFill && midMetal!=nil
+           ; fill above CV's topMetal everywhere
+           (TemplateFill ?CV tagCV ?botMetal midMetal+1 ?topMetal topMetal)
+           ; fill outside CV at or below topMetal
+           (leChopShape tagCV->prBoundary CV->prBoundary->points t t)
+           (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal midMetal ?deleteOld nil)
+           )
+          (doFill && midMetal==nil
+           ; just fill all layers from botMetal to topMetal
+           (TemplateFill ?CV tagCV ?botMetal botMetal ?topMetal topMetal)
+           )
+          )
 
     ; finish
     (dbSave tagCV)
