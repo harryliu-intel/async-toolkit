@@ -3036,6 +3036,7 @@ public class Cast2Verilog {
             out.print(netTypeFunction.apply(direction) + " " + width +
                       VerilogUtil.escapeIfNeeded(name) +
                       getArrayDecl(arrays));
+            arrays.clear();
         }
     }
 
@@ -3119,6 +3120,7 @@ public class Cast2Verilog {
                             final int direction, final boolean inArray) {
             out.print("." + VerilogUtil.escapeIfNeeded(name) + "(" +
                       VerilogUtil.escapeIfNeeded(name) + ")");
+            arrays.clear();
         }
     }
 
@@ -3131,6 +3133,10 @@ public class Cast2Verilog {
                             final int direction, final boolean inArray) {
             getChannelEmitter(channelType)
                 .emitPortInitializer(name, arrays, direction, out);
+            arrays.clear();
+        }
+        protected void mark(final NodeType nodeType, final String name,
+                            final int direction, final boolean inArray) {
             arrays.clear();
         }
     }
@@ -3149,6 +3155,7 @@ public class Cast2Verilog {
         protected void mark(final NodeType nodeType, final String name,
                             final int direction, final boolean inArray) {
             inputPorts.add(VerilogUtil.escapeIfNeeded(name));
+            arrays.clear();
         }
     }
 
