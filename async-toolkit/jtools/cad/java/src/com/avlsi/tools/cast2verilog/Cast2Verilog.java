@@ -206,8 +206,8 @@ public class Cast2Verilog {
             getInputPorts(inChan, Collections.emptyList(), -1, inComp);
             getInputPorts(outChan, Collections.emptyList(), -1, outComp);
             for (int i = 0; i < inComp.size(); ++i) {
-                out.println("assign " + esc(outComp.get(i)) + " = " +
-                            esc(inComp.get(i)) + ";");
+                out.println("assign " + outComp.get(i) + " = " +
+                            inComp.get(i) + ";");
             }
 
             // outputs
@@ -216,8 +216,8 @@ public class Cast2Verilog {
             getInputPorts(inChan, Collections.emptyList(), 1, inComp);
             getInputPorts(outChan, Collections.emptyList(), 1, outComp);
             for (int i = 0; i < inComp.size(); ++i) {
-                out.println("assign " + esc(inComp.get(i)) + " = " +
-                            esc(outComp.get(i)) + ";");
+                out.println("assign " + inComp.get(i) + " = " +
+                            outComp.get(i) + ";");
             }
         }
         default void emitPortDeclaration(String name,
