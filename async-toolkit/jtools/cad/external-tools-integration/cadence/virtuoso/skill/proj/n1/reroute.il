@@ -77,9 +77,9 @@
   )
 
 (defun RouteNoc ()
-  (RouteCell "core.neuro.tile.E_CABLE.1000" 6 ?redoPG ?colorGrid t) 
-  (RouteCell "core.neuro.tile.N_CABLE.1000" 6 ?redoPG ?colorGrid t)
-  (RouteCell "core.neuro.tile.HALF_N_CABLE.1000" 6 ?redoPG ?colorGrid t)
+  (RouteCell "core.neuro.tile.E_CABLE.1000" 6 ?redoPG t ?colorGrid t) 
+  (RouteCell "core.neuro.tile.N_CABLE.1000" 6 ?redoPG t ?colorGrid t)
+  (RouteCell "core.neuro.tile.HALF_N_CABLE.1000" 6 ?redoPG t ?colorGrid t)
   (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_6_6_2_1_true_true_true_true-R.1000" 4)
   (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_6_6_2_true_true_true_true-R.1000" 6)
   (RouteCell "core.neuro.tile.DOUBLE_ROUTER.1000" 8 ?colorGrid t)
