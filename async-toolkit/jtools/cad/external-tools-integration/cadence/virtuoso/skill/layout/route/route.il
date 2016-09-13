@@ -130,7 +130,6 @@
 
     ; find subcells for GDS and LEF
     excludeCellsFile = (strcat SPAR_DIR "/cell_list")
-    (when !softMacro excludeCellsFile=nil) ; BUG: custom flow should get LEF from SPAR_DIR too
     lef_subcells = (ListLefSubcells ?CV CV ?excludeCellsFile excludeCellsFile)
 
     ; export GDS
@@ -279,6 +278,7 @@
     ; files and options
     CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     DFII_DIR  = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
+    SPAR_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
     TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR      = (strcat TEMP "/route/" CV->cellName)
 
@@ -286,6 +286,7 @@
     file = (outfile (strcat WDIR "/proteus.config"))
     (fprintf file "--cast-path=%s\n" CAST_PATH)
     (fprintf file "--dfII-dir=%s\n" DFII_DIR)
+    (fprintf file "--spar-dir=%s\n" SPAR_DIR)
     (fprintf file "--cast-dir=%s/cast\n" WDIR)
     (fprintf file "--spec-dir=%s/spec\n" WDIR)
     (fprintf file "--lefdef-dir=%s\n" WDIR)
