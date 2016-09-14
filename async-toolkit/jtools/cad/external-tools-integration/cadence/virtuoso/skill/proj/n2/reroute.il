@@ -1,7 +1,7 @@
 ; scripts to reroute everything in N2 (above fragment level)
 
 (defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid nil))
-  (let (lCV pgCV aCV fCV cgCV libName)
+  (let (lCV pgCV aCV fCV cgCV libName fillCV bbox h w)
     libName = (GetCastLibName cellName)
     fCV  = (dbOpenCellViewByType libName cellName "floorplan")
     lCV  = (dbOpenCellViewByType libName cellName "layout")
@@ -18,14 +18,25 @@
       (MakePowerGrid ?CV lCV ?topMetal 8)
       (MakePowerGridAbstract ?CV lCV ?topMetal 8)
       (CreatePowerPins ?topMetal 8 ?CV lCV)
+      (when topMetal==6
+        fillCV = (dbOpenCellViewByType "globals" "globals.FILL_GRID.m78_fill" "layout")
+        bbox = lCV->prBoundary->bBox
+        h = (cadr (cadr bbox)) - (cadr (car bbox))
+        w = (car (cadr bbox)) - (car (car bbox))
+        h = (round h/(cadr gridAlignment[8]))
+        w = (round w/(car  gridAlignment[8]))
+        (dbCreateSimpleMosaic lCV fillCV "fill" (car bbox) "R0"
+                              h w (cadr gridAlignment[8]) (car gridAlignment[8]))
+        (dbSave lCV)
+        )
       )
-    (when colorGrid (MakeColorGrid ?CV lCV))
-    (MakeSimpleAbstract ?CV lCV ?topMetal topMetal)
-    (cdsp4add ?CV lCV)
+    (when colorGrid cgCV = (MakeColorGrid ?CV lCV))
+    aCV = (MakeSimpleAbstract ?CV lCV ?topMetal topMetal)
     pgCV = (dbOpenCellViewByType libName (strcat cellName "_pg") "layout")
-    aCV  = (dbOpenCellViewByType libName cellName "abstract")
+    (when lCV (cdsp4add ?CV lCV))
     (when pgCV (cdsp4add ?CV pgCV))
     (when aCV  (cdsp4add ?CV aCV))
+    (when cgCV (cdsp4add ?CV cgCV))
     lCV
     )
   )
@@ -47,9 +58,8 @@
   ; small leaf cells
   (RouteCell "lib.bd.6T.bank.BD_SRAM_CTRL.0" 2)
   (RouteCell "lib.bd.6T.bank.SRAM_BANK_CTRL.0" 3)
-  (RouteCell "core.noc.router.forward.FILTER_B2A_POSEDGE_1of_CTRL.1000" 2) ; TODO: eliminate
   (RouteCell "core.noc.crossbar.datapath.TAIL_CONTROL.1000" 2)
-  (RouteCell "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.1000" 3)
+  (RouteCell "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" 2)
   (RouteCell "core.io.fpio.FPIO.20000" 4)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20730-R.0" 3)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0" 3)
