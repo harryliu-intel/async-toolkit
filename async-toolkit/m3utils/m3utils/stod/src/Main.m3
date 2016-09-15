@@ -36,8 +36,12 @@ CONST WS         = "\t ";
       Script     = "stod.script";
       (*Sudo     = "sudo -u srodaadm ";*)
       Sudo       = "";
+(*
       fileServer = "sccfsv03a";
       volName    = "aggr1_sccfs03n04a_H";
+*)
+      fileServer = "sccfsv03a";
+      volName    = "aggr2_sccfs03n04a_H";
 
 VAR pattern : RegEx.Pattern;
 

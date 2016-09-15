@@ -302,6 +302,27 @@ PROCEDURE WideOutputHoldTimeSchmoo() =
             maxStep := RL ( LR01 {  0.125d-9,  800.0d6 })));
   END WideOutputHoldTimeSchmoo;
 
+PROCEDURE OutHoldCorners() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt", "rsss", "rfff", "rfsf", "rssf", "rsfs" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := 25.0d0, max := 110.0d0, step := 85.0d0));
+    Add(NEW(Sweep,
+            param := assertHoldP, min := 0.00d0, max := 1.00d0, step := 0.25d0));
+
+    (* for now: bigtime hack, add this last: *)
+    Add(NEW(Variety, param := deckP  , cover := RT(TA {   "nors" })));
+    Add(NEW(Schmoo, 
+            param   := RP ( RP01 {    vddP,     clkP } ),
+            min     := RL ( LR01 {  0.25d0,  250.0d6 } ),
+            max     := RL ( LR01 {  1.25d0, 8000.0d6 } ),
+            minStep := RL ( LR01 {  0.010d0,  10.0d6 } ),
+            minRatio:= RL ( LR01 { 0.000d0,  000.01d0 } ),
+            maxStep := RL ( LR01 {  0.100d0,  800.0d6 })));
+  END OutHoldCorners;
+
 PROCEDURE OutputHoldSchmooWriteRS() =
   BEGIN
     Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
@@ -379,6 +400,24 @@ PROCEDURE Quick3DSchmoo() =
             minRatio:= RL ( LR02 {      0.000d0,  000.0d-2, 0.000d0 } ),
             maxStep := RL ( LR02 {      0.090d0,   525.0d6, 0.200d0 })));
   END Quick3DSchmoo;
+
+
+PROCEDURE BigSchmoo() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt", "rsss", "rfff", "rfsf", "rssf", "rsfs" }) ));
+    Add(NEW(Sweep, param := assertHoldP, 
+            min := 0.5d0, max := 0.5d0, step := 1.0d0));
+    Add(NEW(Variety, param := deckP  , cover := RT(TA {   "bothrs" })));
+    Add(NEW(Schmoo, 
+            param   := RP ( RP02 {        tempP,      clkP,    vddP } ),
+            min     := RL ( LR02 {       -50.0d0,   500.0d6, 0.450d0 } ),
+            max     := RL ( LR02 {       125.00d0,  7000.0d6, 1.150d0 } ),
+            minStep := RL ( LR02 {      5.0d0,   100.0d6, 0.025d0 } ),
+            minRatio:= RL ( LR02 {      0.000d0,  000.0d-2, 0.000d0 } ),
+            maxStep := RL ( LR02 {      25.0d0,   525.0d6, 0.200d0 })));
+  END BigSchmoo;
 
 PROCEDURE HoldSim() =
   BEGIN
@@ -469,11 +508,6 @@ PROCEDURE SingleSim() =
             min := 0.0d0, max := 0.0d0, step := 20.0d0));
   END SingleSim;
 
-CONST
-  TestOnly   = FALSE;
-  TempRange  = TRUE;
-  AllCorners = TRUE;
-  BothSims   = FALSE;
 BEGIN
 
   Schmoozer.Setup(
@@ -496,11 +530,16 @@ BEGIN
     Schmooze.T { SevenCornerSim            , "7corners" },
     Schmooze.T { ThreeCornerSim            , "3corners" },
     Schmooze.T { AllCornerSim              , "allcorners" },
+    Schmooze.T { OutHoldCorners            , "outholdcorners" },
+    
     Schmooze.T { WideSim                   , "wide" },
+    Schmooze.T { XATempSim                 , "xatemp" },
     Schmooze.T { QuickSim                  , "quick" },
     Schmooze.T { LatchSim                  , "latch" },
     Schmooze.T { SingleSim                 , "single" },
     Schmooze.T { SpfSim                    , "spf" },
+    Schmooze.T { TestSim                   , "test" },
+    Schmooze.T { BigSchmoo                 , "big" },
     Schmooze.T { SimulatorSim              , "simulator" }
   });
 

@@ -15,6 +15,13 @@ IMPORT Process;
 
 CONST TE = Text.Equal;
 
+TYPE Holiday = RECORD  y : [0..9999]; m : [1..12]; d : [1..31] END;
+
+CONST Holidays = ARRAY OF Holiday {
+  Holiday { 2016,  5, 30 }, (* Memorial Day 2016 *)
+  Holiday {    0, 12, 25 }  (* Christmas any year *)
+  };
+
 VAR
   cmd := "nbstatus jobs --target sc_normal --fi jobid:count,status,qslot::40 --gr status qslot=='" & NBqslot() & "'";
 
@@ -35,10 +42,11 @@ PROCEDURE NBqslot() : TEXT =
 
 PROCEDURE NowIsWorkingHours() : BOOLEAN =
   VAR
-  now := Time.Now();
-  tz := TZ.New("America/Los_Angeles");
-  nowD := tz.localtime(now);
-
+    now := Time.Now();
+    tz := TZ.New("America/Los_Angeles");
+    nowD := tz.localtime(now);
+    hol := FALSE;
+  
   CONST 
     DayNames = ARRAY Date.WeekDay OF TEXT 
     { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
@@ -47,9 +55,20 @@ PROCEDURE NowIsWorkingHours() : BOOLEAN =
                 Int(nowD.hour), Int(nowD.minute), Int(nowD.second), 
                 DayNames[nowD.weekDay]));
 
+    FOR i := FIRST(Holidays) TO LAST(Holidays) DO
+      WITH h = Holidays[i] DO
+        IF (nowD.year = h.y OR h.y = 0) AND ORD(nowD.month)+1 = h.m AND nowD.day = h.d THEN
+          hol := TRUE;
+          EXIT
+        END
+      END
+    END;
+    
     RETURN nowD.hour >= 6 AND nowD.hour <= 17 
-          AND 
-           nowD.weekDay >= Date.WeekDay.Mon AND nowD.weekDay <= Date.WeekDay.Fri
+        AND nowD.weekDay >= Date.WeekDay.Mon
+        AND nowD.weekDay <= Date.WeekDay.Fri
+        AND NOT hol;
+    
   END NowIsWorkingHours;
 
 VAR
