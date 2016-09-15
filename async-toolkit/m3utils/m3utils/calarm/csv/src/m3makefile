@@ -1,0 +1,8 @@
+/* $Id: m3makefile,v 1.2 2012/04/07 18:02:59 mika Exp $ */
+import ("libm3")
+import ("cit_util")
+
+Module    ("CSVParse")
+Module    ("CSVWrite")
+
+library   ("csv")

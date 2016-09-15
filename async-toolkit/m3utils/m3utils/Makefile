@@ -80,7 +80,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
 PARSERLIBS=parserlib/ktoklib parserlib/kyacclib parserlib/klexlib parserlib/ktok parserlib/klex parserlib/kyacc parserlib/kext parserlib/parserlib
 
-SHIPDIRS=commandrw cit_common m3tmplhack m3texthack rdwrreset cit_util m3browserhack stabletable term $(PARSERLIBS) tasks trie angbrmacro defmacro matrix magic magicextras bdd cptr bool sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib verif/tuple voronoi voronoi2 ld/ld_parse ld cs2/cs2 rdwr labeltest m3curses gnuplot xmlparse tz mscheme/schemesig mscheme/scheme-lib mscheme mscheme/modula3scheme calarm/sx calarm/m3readline mscheme/schemereadline calarm/gw lockf
+SHIPDIRS=commandrw cit_common m3tmplhack m3texthack rdwrreset cit_util m3browserhack stabletable term $(PARSERLIBS) tasks trie angbrmacro defmacro matrix magic magicextras bdd cptr bool vlsi/sop mst boxes simplegrid rpc router cit_parse paneman drawcontext drawcontext/dcpane m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree operators celldb matcher sysiphus/sysiphus_parse sysiphus/sysiphus_lib verif/tuple voronoi voronoi2 ld/ld_parse ld cs2/cs2 rdwr labeltest m3curses gnuplot xmlparse tz mscheme/schemesig mscheme/scheme-lib mscheme mscheme/modula3scheme calarm/sx calarm/m3readline mscheme/schemereadline calarm/gw lockf
 
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
