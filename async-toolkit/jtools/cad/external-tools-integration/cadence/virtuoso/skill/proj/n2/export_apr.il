@@ -23,7 +23,7 @@
      "lib.bd.standard.merge.BD_MERGE_DATA-L2-R.0"
      ; SRAM controller
      "lib.bd.6T.bank.BD_SRAM_CTRL.0"
-     "lib.bd.6T.sram.SRAM_BANK_CTRL.0"
+     "lib.bd.6T.bank.SRAM_BANK_CTRL.0"
      ; new BD_CONTROLLER (nominal thresold)
      "lib.bd.metastable.arbiter.ARBITER_CTRL.0n"
      "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0n"
