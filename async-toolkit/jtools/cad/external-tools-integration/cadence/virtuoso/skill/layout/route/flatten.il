@@ -25,6 +25,7 @@ useICV = t
       (error "Wrong view: Call MakePrelayout or MakeFlatten on floorplan/prelayout view\n"))
 
     ; create prelayout view if necessray
+    (printf "Flatten- MakePrelayout Start %s\n" (getCurrentTime))
     (when CV->viewName=="floorplan" CV = (MakePrelayout ?CV CV))
 
     ; save prelayout view
@@ -40,6 +41,7 @@ useICV = t
     PowerGridCellName = (strcat CV->cellName "_pg")
 
     ; Create flatten view
+    (printf "Flatten- nrFlattenView Start %s\n" (getCurrentTime))
     flattenCV = (nrFlattenView CV "flatten" PowerGridCellName "layout"
                                FlattenCellsList ?Verbose Verbose
                                ?DeleteWires nil
@@ -97,6 +99,7 @@ useICV = t
     (dbReplaceProp CV "topMetal" "integer" topMetal)
 
     ; Create power grid
+    (printf "Flatten- MakePowerGrid Start %s\n" (getCurrentTime))
     (when doMakePowerGrid
       pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                             ?noPowerFill noPowerFill)
@@ -139,6 +142,7 @@ useICV = t
       )
 
     ; update pin directions
+    (printf "Flatten- UpdateFloorplan Start %s\n" (getCurrentTime))
     (UpdateFloorplan ?CV CV ?recurse nil)
 
     ; set fields for LEF export
