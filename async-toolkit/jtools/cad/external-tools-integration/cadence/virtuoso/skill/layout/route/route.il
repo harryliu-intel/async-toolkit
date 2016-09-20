@@ -76,6 +76,8 @@
         excludeCellsFile
         (statusNonDefault t) errorStr placed)
 
+    (printf "Export Start %s\n" (getCurrentTime))
+
     ; load wires.il and set options
     (LoadWires ?CV CV)
     (unless botMetal botMetal = bundled_bottom_layer)
@@ -93,7 +95,9 @@
     (csh (strcat "rm -rf " WDIR))
     (csh (strcat "mkdir -p " WDIR))
 
+
     ; make flatten view automatically
+    (printf "Flatten Start %s\n" (getCurrentTime))
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                         ?noPowerFill noPowerFill))
@@ -106,6 +110,7 @@
 
     ; export Verilog
     (when doVerilog
+      (printf "Verilog Start %s\n" (getCurrentTime))
       Command = (sprintf nil
                          (strcat "prs2verilog"
                                  " --cast-path=%s"
@@ -134,16 +139,19 @@
 
     ; export GDS
     (when doGds
+      (printf "GDS Start %s\n" (getCurrentTime))
       statusGds = (ExportCellsGDS (strcat WDIR "/gds") lef_subcells)
       )
 
     ; export LEF
     (when doLef
+      (printf "LEF Start %s\n" (getCurrentTime))
       statusLef = (ExportCellsLEF (strcat WDIR "/" CV->cellName) lef_subcells)
       )
 
     ; export DEF
     (when doDef
+      (printf "DEF Start %s\n" (getCurrentTime))
       statusDef = t
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
@@ -228,6 +236,7 @@
     (unless statusNonDefault errorStr = (strcat errorStr " NonDefaultDEF"))
     (when errorStr!="" (error errorStr))
 
+    (printf "Export Finish %s\n" (getCurrentTime))
     ; return CV
     CV
     )
@@ -497,11 +506,16 @@
 
 ; Write LEF for a list of cell-views
 (defun ExportCellsLEF (filename cells)
-  (let (LefCellsList pout)
+  (let (LefCellsList MWLefCellsList pout)
     ; write lef cells list
     LefCellsList = (sprintf nil "%s.lef_cells_list" filename)
     pout = (outfile LefCellsList)
     (foreach c cells (fprintf pout "%s %s abstract\n" c->libName c->cellName))
+    (close pout)
+    ; write another without the lib and view so that it can be read directly later
+    MWLefCellsList = (sprintf nil "%s.gen_db_mw.lef_cells_list" filename)
+    pout = (outfile MWLefCellsList)
+    (foreach c cells (fprintf pout "%s\n" c->cellName))
     (close pout)
     
     ; export LEF for cells
