@@ -65,6 +65,10 @@
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0" 3)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_65535-R.0" 3)
   (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0h" 3)
+  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_32-R.0h" 3)
+  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_39357-R.0h" 3)
+  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_59185-R.0h" 3)
+
   t
   )
 
@@ -80,6 +84,10 @@
   (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_5_5_2_true_true_true_true-R.20000" 6)
   (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8 ?colorGrid t)
   (RouteCell "chip.n2.pads.PADS.20000" 8 ?colorGrid t)
+  ; new for NORTH
+  (RouteCell "chip.n2.north.BRIDGE_CABLE.20000" 6 ?redoPG t ?colorGrid t)
+  (RouteCell "chip.n2.pads.PADS_IN_BD-L17-R.20000" 8 ?colorGrid t)
+  (RouteCell "chip.n2.pads.PADS_OUT_BD-L17-R.20000" 8 ?colorGrid t)
   t
   )
 
