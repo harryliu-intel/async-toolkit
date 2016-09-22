@@ -1,6 +1,4 @@
-; export GDS and LEF for all standard cells needed for APR
-(defun ExportAPR ()
-  (ExportLefGds "APR"
+spar_cell_list =
     (list
      ; CTREE
      "lib.util.ctree.CTREE2.0"
@@ -73,10 +71,25 @@
      "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L22-R.10000"
      "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L24-R.10000"
      )
-    )
+
+; regenerate abstracts
+(defun UpdateAbstractAPR ()
+  (foreach cellName spar_cell_list
+           CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "abstract")
+           (cdsp4edit ?CV CV)
+           CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "layout")
+           (MakeAbstract ?CV CV)
+           )
   t
   )
 
+; export GDS and LEF for all standard cells needed for APR
+(defun ExportAPR ()
+  (ExportLefGds "APR" spar_cell_list)
+  t
+  )
+
+; export GDS and LEF for a list of cells
 (defun ExportLefGds (basename cellNames)
   (let (cells TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
