@@ -108,7 +108,7 @@ defun( nrIsLeafCell ( libname cellname viewname
                     ( "" ) )
     when( !isFile(filename)
       Command = sprintf( nil
-                "%s %s/cast_query --cast-path=%s --cell=%s --output=%s --cadence-name  --max-heap-size=%dM --task=subcells --filter=\"leaf&!ancestor=standard.attributes.proteus\""
+                "%s %s/cast_query --cast-path=%s --cell=%s --output=%s --cadence-name --translate=cadence --max-heap-size=%dM --task=subcells --filter=\"leaf&!ancestor=standard.attributes.proteus\""
                 ExecCmd
                 PackageGetBinRoot( )
                 castpath
