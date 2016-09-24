@@ -1018,6 +1018,7 @@ public class Cast2Verilog {
 
     private void getTbDirective(final CellInterface cell,
                                 final AliasedSet aliases,
+                                final AliasedSet localAliases,
                                 final HierName prefix,
                                 final String directive,
                                 final Map<HierName,String> result) {
@@ -1026,18 +1027,19 @@ public class Cast2Verilog {
                 DirectiveUtils.getTopLevelDirective(cell,
                     directive, DirectiveConstants.NODE_TYPE));
         nodes.stream()
-             .map(h -> (HierName) aliases.getCanonicalKey(HierName.append(prefix, h)))
-             .filter(h -> h != null)
+             .filter(h -> aliases.getCanonicalKey(HierName.append(prefix, h)) != null)
+             .map(h -> (HierName) localAliases.getCanonicalKey(h))
              .forEach(h -> result.put(h, directive));
     }
 
     private void getTbDirective(final CellInterface cell,
                                 final AliasedSet aliases,
+                                final AliasedSet localAliases,
                                 final HierName prefix,
                                 final Map<HierName,String> result) {
-        getTbDirective(cell, aliases, prefix, DirectiveConstants.GROUND_NET, result);
-        getTbDirective(cell, aliases, prefix, DirectiveConstants.POWER_NET, result);
-        getTbDirective(cell, aliases, prefix, DirectiveConstants.RESET_NET, result);
+        getTbDirective(cell, aliases, localAliases, prefix, DirectiveConstants.GROUND_NET, result);
+        getTbDirective(cell, aliases, localAliases, prefix, DirectiveConstants.POWER_NET, result);
+        getTbDirective(cell, aliases, localAliases, prefix, DirectiveConstants.RESET_NET, result);
     }
 
     // Convert cell to verilog and emit to file 
@@ -1065,13 +1067,19 @@ public class Cast2Verilog {
         if (topLevel && generateTb) {
             final AliasedSet aliases =
                 getCadencize(false).convert(cell).getLocalNodes();
-            getTbDirective(cell, aliases, null, tbNets);
+            getTbDirective(cell, aliases, aliases, null, tbNets);
             if (tbNets.isEmpty()) {
                 // TODO: need to look at the environment as well
                 final HierName hDut = HierName.makeHierName(dutInstance);
                 final CellInterface dut = cell.getSubcell(hDut);
                 if (dut != null) {
-                    getTbDirective(dut, aliases, hDut, tbNets);
+                    final AliasedSet localAliases =
+                        getCadencize(false).convert(dut).getLocalNodes();
+                    // use TESTBENCH aliases to make sure the node in the
+                    // directive is a port, but store canonical name in the
+                    // context of the DUT -- the implied port name will be the
+                    // local net name in TESTBENCH
+                    getTbDirective(dut, aliases, localAliases, hDut, tbNets);
                 }
             }
         }
@@ -2450,8 +2458,8 @@ public class Cast2Verilog {
             .mark(cell.getCSPInfo().getPortDefinitions());
         out.println(");");
 
+        final List<String> resets = new ArrayList<>();
         for (Map.Entry<HierName,String> tbNet : tbNets.entrySet()) {
-            final List<String> resets = new ArrayList<>();
             final String net =
                 VerilogUtil.escapeIfNeeded(tbNet.getKey().getAsString('.'));
             if (tbNet.getValue().equals(DirectiveConstants.GROUND_NET)) {
@@ -2462,13 +2470,13 @@ public class Cast2Verilog {
                 out.println("wire " + net + ";");
                 resets.add(net);
             }
-            if (!resets.isEmpty()) {
-                out.println("`CAST2VERILOG_RESET #(.RESETS(" + resets.size() + ")) " +
-                            VerilogUtil.escapeIfNeeded("cast2verilog$reset") +
-                            "(.reset_n(" +
-                            resets.stream().collect(Collectors.joining(", ", "{", "}")) +
-                            "));");
-            }
+        }
+        if (!resets.isEmpty()) {
+            out.println("`CAST2VERILOG_RESET #(.RESETS(" + resets.size() + ")) " +
+                        VerilogUtil.escapeIfNeeded("cast2verilog$reset") +
+                        "(.reset_n(" +
+                        resets.stream().collect(Collectors.joining(", ", "{", "}")) +
+                        "));");
         }
 
         final Map flattenNodes = new HashMap();
