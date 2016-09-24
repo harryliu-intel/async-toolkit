@@ -299,8 +299,8 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
                                  final String box) {
         final VerilogObject[] args = new VerilogObject[clk != null ? 4 : 3];
         args[0] = lookupNode(out);
-        args[1] = up == null ? constify(lookupNode(GND, "wire")) : up;
-        args[2] = dn == null ? constify(lookupNode(GND, "wire")) : dn;
+        args[1] = up == null ? constify(lookupNode(GND, "supply0")) : up;
+        args[2] = dn == null ? constify(lookupNode(GND, "supply0")) : dn;
         if (clk != null) args[3] = lookupNode(clk, "wire");
         return factory.moduleInst(factory.ident("network_" + out,
                                                 mAlwaysEscape),
