@@ -168,14 +168,22 @@ public abstract class NetgraphGateConverter extends AbstractConverter {
     protected VerilogObject[] getDelayExpr(final HierName node) {
         if (!outputDelay && (clk != null || transportUp != null)) return null;
         final float up = cell.getDelay().getDelay(node, true, tau);
+        final VerilogObject upObj =
+            cell.getDelay().isAbsolute(node, true) ?
+                factory.expr(String.format("%.3fps", up * 100.0 / tau))
+              : getDelayExpr(factory.expr(fmt.sprintf(up)),
+                             getDelayBiasParameter(),
+                             getExtraDelayParameter(node, true));
+                
         final float dn = cell.getDelay().getDelay(node, false, tau);
-        return new VerilogObject[] {
-            getDelayExpr(factory.expr(fmt.sprintf(up)),
-                         getDelayBiasParameter(),
-                         getExtraDelayParameter(node, true)),
-            getDelayExpr(factory.expr(fmt.sprintf(dn)),
-                         getDelayBiasParameter(),
-                         getExtraDelayParameter(node, false)) };
+        final VerilogObject dnObj =
+            cell.getDelay().isAbsolute(node, false) ?
+                factory.expr(String.format("%.3fps", dn * 100.0 / tau))
+              : getDelayExpr(factory.expr(fmt.sprintf(dn)),
+                             getDelayBiasParameter(),
+                             getExtraDelayParameter(node, false));
+
+        return new VerilogObject[] { upObj, dnObj };
     }
 
     protected VerilogObject getDelay(final HierName node) {

@@ -35,6 +35,7 @@ public final class CellDelay {
     private final float nativeUpDelay, nativeDnDelay;
     private final Map upAfterDelays;
     private final Map dnAfterDelays;
+    private final Map<HierName,Boolean> isAbsDelay;
     private final Map upDelayBias;
     private final Map dnDelayBias;
     private final Map upExtraDelay;
@@ -73,9 +74,12 @@ public final class CellDelay {
 
         this.upAfterDelays = new HashMap();
         this.dnAfterDelays = new HashMap();
+        this.isAbsDelay = new HashMap<>();
 
         final Set badUpSet = new HashSet();
         final Set badDnSet = new HashSet();
+
+        final Set badAbsDelay = new HashSet();
 
         while (prsIterator.hasNext()) {
             final ProductionRule pr = (ProductionRule) prsIterator.next();
@@ -85,6 +89,12 @@ public final class CellDelay {
                    direction == ProductionRule.DOWN;
             final Map delayMap =
                 direction == ProductionRule.UP ? upAfterDelays : dnAfterDelays;
+
+            isAbsDelay.merge(target, pr.isAbsolute(),
+                             (oldV, newV) -> {
+                                if (oldV != newV) badAbsDelay.add(target);
+                                return oldV || newV;
+                             });
 
             final int after = pr.getAfter();
             assert after >= 0 || after == -1 : "Invalid after delay: " + pr;
@@ -112,6 +122,11 @@ public final class CellDelay {
         for (Iterator i = badDnSet.iterator(); i.hasNext(); ) {
             final HierName target = (HierName) i.next();
             System.err.println("Warning: half operator " + target + "- in cell " + cell.getFullyQualifiedType() + " has inconsistent after delay, using a delay of " + dnAfterDelays.get(target));
+        }
+
+        for (Iterator i = badAbsDelay.iterator(); i.hasNext(); ) {
+            final HierName target = (HierName) i.next();
+            System.err.println("Warning: half operator " + target + " in cell " + cell.getFullyQualifiedType() + " has both after and after_ps delay");
         }
 
         final Map delayBias = DirectiveUtils.getPrsDirective(cell, DirectiveConstants.DELAYBIAS, DirectiveConstants.HALFOP_TYPE);
@@ -209,6 +224,13 @@ public final class CellDelay {
     public float getDelay(final HierName node, final boolean up,
                           final float tau) {
         return getDelay(node, up) * tau;
+    }
+
+    /**
+     * Return whether the node has an absolute delay.
+     **/
+    public boolean isAbsolute(final HierName node, final boolean up) {
+        return isAbsDelay.getOrDefault(node, false);
     }
 
     public String toString() {
