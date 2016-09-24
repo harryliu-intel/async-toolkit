@@ -3102,6 +3102,38 @@ public class Cast2Verilog {
         }
     }
 
+    private class EmitNodeArrayAssign extends MarkPort {
+        private final PrintWriter out;
+        public EmitNodeArrayAssign(final PrintWriter out) {
+            this.out = out;
+        }
+        protected void mark(final ChannelType channelType, final String name,
+                            final int direction) {
+        }
+        protected void mark(final NodeType nodeType, final String name,
+                            final int direction, final boolean inArray) {
+            if (inArray) {
+                final String newName = arrayName(nodeType, name, inArray, false);
+                final Pair<String,String> parts = mungeArray(newName);
+                final String indexed =
+                    VerilogUtil.escapeIfNeeded(parts.getFirst()) +
+                    parts.getSecond();
+                final String nonindexed = VerilogUtil.escapeIfNeeded(newName);
+
+                final String lhs, rhs;
+                if (direction > 0) {
+                    lhs = nonindexed;
+                    rhs = indexed;
+                } else {
+                    lhs = indexed;
+                    rhs = nonindexed;
+                }
+
+                out.println("assign " + lhs + " = " + rhs + ";");
+            }
+        }
+    }
+
     private class EmitBodyInstantiation extends IgnoreArrayPorts {
         private final Separator out;
         private final String actualSuffix;
@@ -3327,6 +3359,9 @@ public class Cast2Verilog {
                                          dir -> "wire",
                                          bundleSuffix));
         out.println(";");
+
+        new EmitNodeArrayAssign(out)
+            .mark(cell.getCSPInfo().getPortDefinitions());
 
         out.println("initial " + VerilogUtil.escapeIfNeeded(bodyInst) + "." + 
                     moduleInstanceName + " = $psprintf(\"%m\");");
