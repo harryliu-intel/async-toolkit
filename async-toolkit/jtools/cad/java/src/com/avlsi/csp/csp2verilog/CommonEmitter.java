@@ -9,7 +9,7 @@ import com.avlsi.csp.util.CspUtils;
 import com.avlsi.io.IndentPrintWriter;
 
 abstract class CommonEmitter implements VisitorInterface {
-    final LengthAwareWriter out;
+    LengthAwareWriter out;
 
     /**
      * Number of bits to use for variables with unspecified length
