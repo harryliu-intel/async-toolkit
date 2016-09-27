@@ -13,6 +13,8 @@
 
 package com.avlsi.csp.csp2java.runtime;
 
+import java.util.function.Function;
+
 import com.avlsi.csp.csp2java.runtime.Fold.BinaryFunction;
 
 /**
@@ -104,9 +106,14 @@ public class CspArray implements CspCloneableValue, Packable {
     }
 
     public CspCloneableValue duplicate() {
+        return duplicate(v -> v.duplicate());
+    }
+
+    public CspCloneableValue duplicate(
+            Function<CspCloneableValue,CspValue> elemMapFunc) {
         final CspValue[] dup = new CspValue[ca.length];
         for (int i = 0; i < ca.length; ++i)
-            dup[i] = ((CspCloneableValue) ca[i]).duplicate();
+            dup[i] = elemMapFunc.apply((CspCloneableValue) ca[i]);
         return new CspArray(min, max, dup);
     }
 

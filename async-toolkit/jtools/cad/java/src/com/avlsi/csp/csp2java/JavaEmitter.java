@@ -1678,10 +1678,8 @@ public class JavaEmitter implements VisitorInterface {
             if (arg != null && arg.getTypeFragment() instanceof IntegerType) {
                 final IntegerType ty = (IntegerType) arg.getTypeFragment();
                 if (copy) {
-                    if (ty.getDeclaredWidth() == null) {
-                        out.print("new CspInteger(");
-                    } else {
-                        out.print("new FiniteCspInteger(");
+                    out.print("RuntimeUtils.copyInt(");
+                    if (ty.getDeclaredWidth() != null) {
                         processWidth(ty.getDeclaredWidth());
                         out.print(", " + ty.isSigned() + ", ");
                     }
@@ -1710,6 +1708,19 @@ public class JavaEmitter implements VisitorInterface {
                     }
                     out.print("))");
                 }
+            } else if (arg != null &&
+                       arg.getTypeFragment() instanceof ArrayType &&
+                       ((ArrayType) arg.getTypeFragment()).getElementType()
+                           instanceof IntegerType) {
+                final IntegerType ty = (IntegerType)
+                       ((ArrayType) arg.getTypeFragment()).getElementType();
+                out.print("RuntimeUtils." + (copy ? "copy" : "shadow") + "IntArray(");
+                if (ty.getDeclaredWidth() != null) {
+                    processWidth(ty.getDeclaredWidth());
+                    out.print(", " + ty.isSigned() + ", ");
+                }
+                actual.accept(this);
+                out.print(")");
             } else {
                 if (copy) {
                     final Type t = analysisResults.getType(actual);

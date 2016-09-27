@@ -22,6 +22,7 @@ java com.avlsi.csp.csp2java.runtime.LoggedCspArray
 java com.avlsi.csp.csp2java.runtime.NonDeterminismException
 java com.avlsi.csp.csp2java.runtime.Packable
 java com.avlsi.csp.csp2java.runtime.LinkageHelper
+java com.avlsi.csp.csp2java.runtime.RuntimeUtils
 java com.avlsi.csp.csp2java.runtime.StackFrame
 java com.avlsi.csp.csp2java.runtime.ShadowCspInteger
 include ../../../tools/sigscan/sigscan.package.inc ../../../tools/sigscan
