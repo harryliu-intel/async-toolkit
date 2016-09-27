@@ -1710,10 +1710,10 @@ public class JavaEmitter implements VisitorInterface {
                 }
             } else if (arg != null &&
                        arg.getTypeFragment() instanceof ArrayType &&
-                       ((ArrayType) arg.getTypeFragment()).getElementType()
+                       CspUtils.getBaseType(arg.getTypeFragment())
                            instanceof IntegerType) {
-                final IntegerType ty = (IntegerType)
-                       ((ArrayType) arg.getTypeFragment()).getElementType();
+                final IntegerType ty =
+                    (IntegerType) CspUtils.getBaseType(arg.getTypeFragment());
                 out.print("RuntimeUtils." + (copy ? "copy" : "shadow") + "IntArray(");
                 if (ty.getDeclaredWidth() != null) {
                     processWidth(ty.getDeclaredWidth());
@@ -2751,13 +2751,6 @@ public class JavaEmitter implements VisitorInterface {
         }
     }
 
-    private Type deArray(Type t) {
-        while (t instanceof ArrayType) {
-            t = ((ArrayType) t).getElementType();
-        }
-        return t;
-    }
-
     private void processDeclaration(Declaration d, boolean formalP,
                                     DeclaratorProcessor proc)
         throws VisitorException {
@@ -2937,7 +2930,7 @@ public class JavaEmitter implements VisitorInterface {
 
                     out.print(" }, ");
 
-                    final Type et = deArray(at.getElementType());
+                    final Type et = CspUtils.getBaseType(at.getElementType());
                     if (proc.generateLoggedType()) processLoggedType(et);
                     else {
                         et.accept(this);

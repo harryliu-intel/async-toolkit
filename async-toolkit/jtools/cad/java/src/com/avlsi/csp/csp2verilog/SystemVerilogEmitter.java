@@ -28,6 +28,7 @@ import com.avlsi.csp.ast.*;
 import com.avlsi.csp.grammar.ParseRange;
 import com.avlsi.csp.grammar.ParsePosition;
 import com.avlsi.csp.util.CSPCellInfo;
+import com.avlsi.csp.util.CspUtils;
 import com.avlsi.csp.util.DeclarationProcessor;
 import com.avlsi.csp.util.FilterInitializers;
 import com.avlsi.csp.util.RefinementResolver;
@@ -2118,9 +2119,7 @@ public class SystemVerilogEmitter extends CommonEmitter {
             // they are in the cell's port list.  The cell ports translate to
             // module ports, which are visible to tasks defined in the module,
             // so we do not need to do anything to them.
-            Type baseType = type;
-            while (baseType instanceof ArrayType)
-                baseType = ((ArrayType) baseType).getElementType();
+            final Type baseType = CspUtils.getBaseType(type);
             if ((baseType instanceof IntegerType ||
                  baseType instanceof BooleanType ||
                  baseType instanceof StringType ||
