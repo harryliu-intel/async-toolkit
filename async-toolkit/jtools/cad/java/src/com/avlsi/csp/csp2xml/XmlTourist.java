@@ -684,7 +684,15 @@ public class XmlTourist implements VisitorInterface {
     }
     
     public void visitIntegerType(IntegerType t) throws VisitorException {
-	print("<IntegerType const=\"" + t.isConst() + "\" " + pos(t) + "/>");
+        beginTag("IntegerType const=\"" + t.isConst() +
+                 "\" signed=\"" + t.isSigned() +
+                 "\" " + pos(t));
+        if (t.getDeclaredWidth() != null) {
+            beginTag("width");
+            t.getDeclaredWidth().accept(this);
+            endTag("width");
+        }
+        endTag("IntegerType");
     }
     
     public void visitBooleanType(BooleanType t) throws VisitorException {
