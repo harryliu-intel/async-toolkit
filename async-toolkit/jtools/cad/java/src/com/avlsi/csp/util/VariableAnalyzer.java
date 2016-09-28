@@ -1222,19 +1222,6 @@ public class VariableAnalyzer {
                         report("output.bitrange.unsupported", arg,
                                decl.getIdentifier().getIdentifier());
                     }
-
-                    if (actualType instanceof ArrayType) {
-                        final Type actBase = CspUtils.getBaseType(actualType);
-                        final Type forBase = CspUtils.getBaseType(formalType);
-                        if (actBase instanceof IntegerType &&
-                            forBase instanceof IntegerType) {
-                            final String wa = getWidthString(actBase);
-                            final String wf = getWidthString(forBase);
-                            if (!wa.equals(wf)) {
-                                report("array.width.mismatch", arg, wf, wa);
-                            }
-                        }
-                    }
                 }
             }
 

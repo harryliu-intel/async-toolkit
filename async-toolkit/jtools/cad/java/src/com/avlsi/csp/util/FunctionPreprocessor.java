@@ -880,6 +880,16 @@ public class FunctionPreprocessor extends VisitorByCategory {
                n instanceof MemberAccessExpression;
     }
 
+    private static IntegerType getIntArrayBaseType(final Type ty) {
+        if (ty instanceof ArrayType) {
+            final Type baseType = CspUtils.getBaseType(ty);
+            if (baseType instanceof IntegerType) {
+                return (IntegerType) baseType;
+            }
+        }
+        return null;
+    }
+
     public void visitFunctionCallExpression(FunctionCallExpression e)
         throws VisitorException {
         // Find function call declaration using refinement resolver
@@ -934,24 +944,36 @@ public class FunctionPreprocessor extends VisitorByCategory {
             types = c.iterator();
         }
 
+        List<AbstractASTNodeInterface> copyback = new ArrayList<>();
         int count = 0;
         for (Iterator i = e.getActuals(); i.hasNext(); ++count) {
             final ExpressionInterface arg = (ExpressionInterface) i.next();
             final Type currType = analysisResults.getType(arg);
+            final IntegerType currElemType = getIntArrayBaseType(currType);
+
             final Declarator d;
             final int dir;
+            final IntegerType formElemType;
             if (types == null) {
                 d = null;
                 dir = Declarator.NONE;
+                formElemType = null;
             } else {
                 if (types.hasNext()) {
                     d = (Declarator) types.next();
                     dir = d.getDirection();
+                    formElemType = getIntArrayBaseType(d.getTypeFragment());
                 } else throw new VisitorExceptionWithLocation(
                         "More arguments to function " + name +
                         " than expected (expecting " + count + ")",
                         arg);
             }
+
+            final boolean diffWidthIntArray =
+                currElemType != null &&
+                formElemType != null &&
+                CspUtils.getIntegerConstant(currElemType.getDeclaredWidth()) !=
+                    CspUtils.getIntegerConstant(formElemType.getDeclaredWidth());
 
             final Usage u = copyNeeded == null ? null : copyNeeded.get(count);
             final boolean needCopy =
@@ -970,13 +992,22 @@ public class FunctionPreprocessor extends VisitorByCategory {
 
             final ExpressionInterface actual;
             if ((dir != Declarator.IN || !needCopy) &&
-                isAssignable(getResult())) {
+                isAssignable(getResult()) &&
+                !diffWidthIntArray) {
                 actual = (ExpressionInterface) getResult();
             } else {
                 actual = gensym(); // temp var for actual
                 // create var statement for actual for resolved
                 // functions
-                if (currType != null) {
+                if (diffWidthIntArray) {
+                    preamble.add(createVarStatement(actual, d.getTypeFragment()));
+                    if (larg) {
+                        copyback.add(
+                            new AssignmentStatement(
+                                (ExpressionInterface) getResult(), actual)
+                            .epr(arg));
+                    }
+                } else if (currType != null) {
                     preamble.add(createVarStatement(actual, currType)); 
                 }
                 actual.epr(arg);
@@ -1019,9 +1050,16 @@ public class FunctionPreprocessor extends VisitorByCategory {
             }
 
             if (noReturn) {
-                setResult(funcall);
+                if (copyback.isEmpty()) {
+                    setResult(funcall);
+                } else {
+                    preamble.add(new ExpressionStatement(funcall).epr(e));
+                    preamble.addAll(copyback);
+                    setResult(new BooleanExpression(true).epr(e));
+                }
             } else {
                 preamble.add(new AssignmentStatement(temp, funcall).epr(e));
+                preamble.addAll(copyback);
                 setResult(temp);
             }
         }
@@ -1213,7 +1251,8 @@ public class FunctionPreprocessor extends VisitorByCategory {
         throws VisitorException {
         s.getExpression().accept(getVisitor());
         final StatementInterface si;
-        if (getResult() instanceof IdentifierExpression) {
+        if (getResult() instanceof IdentifierExpression ||
+            getResult() instanceof IntegerExpression) {
             si = (StatementInterface) new SkipStatement().epr(s);
         } else {
             si = (StatementInterface) new ExpressionStatement(
