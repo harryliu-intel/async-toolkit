@@ -135,6 +135,8 @@ public class Cast2Verilog {
         "CAST2VERILOG_ANNOTATE_EXTRADELAY";
     private static final String moduleInstanceName =
         "CAST2VERILOG_INSTANCE";
+    private static final String globalResetName =
+        "`CAST2VERILOG_GLOBAL_RESET";
     private static final String dutInstance = "x";
     private static final String envInstance = "_env";
 
@@ -3426,8 +3428,7 @@ public class Cast2Verilog {
     private static String getResetName(final CellInterface cell) {
         final String name = getResetName(cell, null);
         if (name == null) {
-            throw new RuntimeException("Cannot find the reset node in " +
-                                       cell.getFullyQualifiedType());
+            return globalResetName;
         } else {
             return name;
         }
