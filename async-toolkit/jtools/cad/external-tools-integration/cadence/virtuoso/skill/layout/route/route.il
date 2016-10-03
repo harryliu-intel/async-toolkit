@@ -454,6 +454,7 @@
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
   (DeleteKeepout ?CV CV)
+  (InstantiateColorGrid ?CV CV)
   (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
