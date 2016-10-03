@@ -146,7 +146,7 @@ importPostProcessAction =
 
 ; replace d04 cells with vendor.intel.d04 versions
 (defun ReplaceD04Cells (libName)
-  (let (lib CV prop redo found subCV)
+  (let (lib CV prop redo found newCellName subCV)
     found = (makeTable "found" nil)
     lib = (ddGetObj libName)
     (foreach cell lib->cells
@@ -195,3 +195,42 @@ importPostProcessAction =
     newCellName
     )
   )
+
+; replace d8 cells with vendor.intel.fill versions
+(defun ReplaceD8Cells (libName)
+  (let (lib CV prop redo found newCellName subCV)
+    found = (makeTable "found" nil)
+    lib = (ddGetObj libName)
+    (foreach cell lib->cells
+             CV = (dbOpenCellViewByType libName cell->name "layout")
+             redo = nil
+             (foreach inst CV->instances
+                      prop = (dbGetPropByName inst->master "CopyExact")->value
+                      redo = redo || prop && (strncmp prop "d8" 2)==0
+                      )
+             (when redo
+               (cdsp4edit ?CV CV)
+               (printf "Replacing D8 cells in %s\n" CV->cellName)
+               (foreach inst CV->instances
+                        prop = (dbGetPropByName inst->master "CopyExact")->value
+                        newCellName = (strcat "vendor.intel.fill." prop ".0")
+                        (when newCellName
+                          subCV = (dbOpenCellViewByType "vendor.intel.fill" newCellName "layout")
+                          (when subCV
+			     (printf "     %s -> %s\n" inst->master->cellName subCV->cellName)
+                             (cond (subCV inst->master=subCV)
+                                (!found[newCellName]
+                                 (printf "WARNING: %s not found in library vendor.intel.fill\n" newCellName)
+                                 )
+                                )
+			     )
+                          found[newCellname]=t
+                          )
+                        )
+               (dbSave CV)
+               )
+             )
+    )
+  t
+  )
+
