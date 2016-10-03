@@ -197,3 +197,16 @@
         )
   t
   )
+
+(defun InstantiateColorGrid (@key (CV (geGetEditCellView)))
+  (let (colorCV)
+     colorCV = (nrOpenCellViewReadable CV->libName (strcat CV->cellName "_color") "layout")
+     (if colorCV then
+        (dbCreateInst CV colorCV "color" 0:0 "R0")
+     else
+        (MakeColorGrid ?CV CV)
+     )
+
+    )
+  )
+
