@@ -1,13 +1,17 @@
 package com.avlsi.csp.util;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import com.avlsi.csp.ast.*;
@@ -206,6 +210,23 @@ public class RefinementResolver extends VisitorByCategory {
         return builtinFunctions.values().contains(decl);
     }
 
+    private static final ResourceBundle INVALID = new NullResourceBundle();
+    private static ResourceBundle resourceBundle = null;
+
+    public static ResourceBundle getResourceBundle() {
+        if (resourceBundle == null) {
+            try {
+                resourceBundle = ResourceBundle.getBundle(
+                        "com.avlsi.csp.resources.refinement");
+            } catch (MissingResourceException e) {
+                System.err.println(
+                        "Cannot load refinement resolver error messages.");
+                resourceBundle = INVALID;
+            }
+        }
+        return resourceBundle;
+    }
+
     public interface Policy {
         /**
          * Determine whether a function declaration is the function to invoke
@@ -262,32 +283,31 @@ public class RefinementResolver extends VisitorByCategory {
 
     private final Policy policy;
     private CSPProgram currentProgram;
+    private CSPProgram topProgram;
     private StatementInterface stmt;
     private SequentialStatement initStmt;
     private FunctionDeclaration currentFunc;
     private StructureDeclaration currentStruct;
-    private Map/*<FunctionCallExpression,Pair<CSPProgram, FunctionDeclaration>>*/ functionMap;
-    private Map/*<StructureType,Pair<CSPProgram,StructureDeclaration>>*/ structureMap;
-    private Set/*<FunctionDeclaration>*/ usedFunctions;
-    private Set/*<StructureDeclaration>*/ usedStructures;
+    private Map<FunctionCallExpression,Pair<CSPProgram,AbstractASTNode>> functionMap;
+    private Map<StructureType,Pair<CSPProgram,StructureDeclaration>> structureMap;
+    private Set<FunctionDeclaration> usedFunctions;
+    private Set<StructureDeclaration> usedStructures;
+    private final List<Problem> problems;
 
     public RefinementResolver(final Policy policy) {
         this.policy = policy;
+        this.problems = new ArrayList<>();
     }
 
     public void resolve(final CSPProgram p) throws VisitorException {
+        topProgram = p;
         currentProgram = p;
         currentFunc = null;
         currentStruct = null;
-        functionMap =
-            new IdentityHashMap/*<FunctionCallExpression,
-                                  Pair<CSPProgram,FunctionDeclaration>>*/();
-        structureMap =
-            new IdentityHashMap/*<StructureType,
-                                  Pair<CSPProgram,
-                                       StructureDeclaration>>*/();
-        usedFunctions = new LinkedHashSet/*<FunctionDeclaration>*/();
-        usedStructures = new LinkedHashSet/*<StructureDeclaration>*/();
+        functionMap = new IdentityHashMap<>();
+        structureMap = new IdentityHashMap<>();
+        usedFunctions = new LinkedHashSet<>();
+        usedStructures = new LinkedHashSet<>();
         final Pair stmts = resolveStatement(p);
         initStmt = (SequentialStatement) stmts.getFirst();
         if (initStmt != null) initStmt.accept(getVisitor());
@@ -302,27 +322,27 @@ public class RefinementResolver extends VisitorByCategory {
         final CSPProgram result = new CSPProgram();
         result.epr(currentProgram);
 
-        for (Iterator i = usedFunctions.iterator(); i.hasNext(); ) {
-            result.addFunctionDeclaration((FunctionDeclaration) i.next());
-        }
-        for (Iterator i = usedStructures.iterator(); i.hasNext(); ) {
-            result.addStructureDeclaration((StructureDeclaration) i.next());
-        }
+        usedFunctions.forEach(f -> result.addFunctionDeclaration(f));
+        usedStructures.forEach(s -> result.addStructureDeclaration(s));
         if (stmt != null) result.setStatement(stmt);
         if (initStmt != null) result.setInitializerStatement(initStmt);
         return result;
+    }
+
+    public List<Problem> getProblems() {
+        return problems;
     }
 
     public StatementInterface getStatement() {
         return stmt;
     }
 
-    public Map/*<FunctionCallExpression,Pair<CSPProgram, FunctionDeclaration>>*/
+    public Map<FunctionCallExpression,Pair<CSPProgram, AbstractASTNode>>
     getResolvedFunctions() {
         return functionMap;
     }
 
-    public Map/*<StructureType,Pair<CSPProgram,StructureDeclaration>>*/
+    public Map<StructureType,Pair<CSPProgram,StructureDeclaration>>
     getResolvedStructures() {
         return structureMap;
     }
@@ -346,102 +366,147 @@ public class RefinementResolver extends VisitorByCategory {
         return result;
     }
 
-    private Pair/*<CSPProgram,FunctionDeclaration>*/ findBuiltin(
+    private Pair<CSPProgram,AbstractASTNode> findBuiltin(
             final FunctionCallExpression e) {
         for (Iterator i = builtinFunctions.values().iterator(); i.hasNext(); ) {
             final FunctionDeclaration decl = (FunctionDeclaration) i.next();
             if (policy.isMatch(null, decl, e)) {
-                return new Pair/*<CSPProgram,FunctionDeclaration>*/(null, decl);
+                return new Pair<>(null, decl);
             }
         }
         return null;
     }
 
-    private Pair/*<CSPProgram,FunctionDeclaration>*/ findLocal(
-            final CSPProgram p,
-            final FunctionCallExpression e) {
+    private void findLocal(final CSPProgram p,
+                           final FunctionCallExpression e,
+                           final List<Pair<CSPProgram,AbstractASTNode>> funs) {
         for (Iterator i = p.getFunctionDeclarations(); i.hasNext(); ) {
             final FunctionDeclaration decl = (FunctionDeclaration) i.next();
-            if (decl == currentFunc)
+            if (decl == currentFunc) {
                 break;
-            else if (policy.isMatch(p, decl, e))
-                return new Pair/*<CSPProgram,FunctionDeclaration>*/(p, decl);
+            } else if (policy.isMatch(p, decl, e)) {
+                funs.add(new Pair<>(p, decl));
+                return;
+            }
         }
         for (Iterator i = p.getStructureIterator(); i.hasNext(); ) {
             final StructureDeclaration decl = (StructureDeclaration) i.next();
-            if (decl == currentStruct)
+            if (decl == currentStruct) {
                 break;
-            else if (policy.isMatch(p, decl, e))
-                return new Pair/*<CSPProgram,FunctionDeclaration>*/(p, decl);
+            } else if (policy.isMatch(p, decl, e)) {
+                funs.add(new Pair<>(p, decl));
+                return;
+            }
         }
-        return null;
     }
 
-    private Pair/*<CSPProgram,StructureDeclaration>*/ findLocal(
-            final CSPProgram p,
-            final StructureType t) {
+    private void findLocal(final CSPProgram p,
+                           final StructureType t,
+                           final List<Pair<CSPProgram,StructureDeclaration>> strs) {
         for (Iterator i = p.getStructureIterator(); i.hasNext(); ) {
             final StructureDeclaration decl = (StructureDeclaration) i.next();
-            if (decl == currentStruct)
+            if (decl == currentStruct) {
                 break;
-            else if (policy.isMatch(p, decl, t))
-                return new Pair/*<CSPProgram,StructureDeclaration>*/(p, decl);
+            } else if (policy.isMatch(p, decl, t)) {
+                strs.add(new Pair<>(p, decl));
+                return;
+            }
         }
-        return null;
     }
 
-    private Pair/*<CSPProgram,FunctionDeclaration>*/ findFunction(
+    private void findFunction(final CSPProgram p,
+                              final FunctionCallExpression e,
+                              final List<Pair<CSPProgram,AbstractASTNode>> funs)
+        throws VisitorException {
+        findLocal(p, e, funs);
+        for (Iterator i = p.getRefinementParents().iterator(); i.hasNext(); ) {
+            final CSPProgram parent = (CSPProgram) i.next();
+            findFunction(parent, e, funs);
+        }
+    }
+
+    private Pair<CSPProgram,AbstractASTNode> findFunction(
             final CSPProgram p,
             final FunctionCallExpression e)
         throws VisitorException {
-        Pair/*<CSPProgram,FunctionDeclaration>*/ result = findLocal(p, e);
-        for (Iterator i = p.getRefinementParents().iterator();
-             i.hasNext() && result == null; ) {
-            final CSPProgram parent = (CSPProgram) i.next();
-            result = findFunction(parent, e);
+        final List<Pair<CSPProgram,AbstractASTNode>> funs = new ArrayList<>();
+        findFunction(p, e, funs);
+
+        if (funs.size() > 1) {
+            final String funcName;
+            if (e.getFunctionExpression() instanceof IdentifierExpression) {
+                funcName = ((IdentifierExpression) e.getFunctionExpression())
+                                .getIdentifier();
+            } else {
+                funcName = "(no name)";
+            }
+            report("function.overridden", e, funcName,
+                   funs.get(0).getSecond().getParseRange().fullString(),
+                   funs.get(1).getSecond().getParseRange().fullString());
         }
-        if (result != null) {
-            final Object func = result.getSecond();
+
+        final Pair<CSPProgram,AbstractASTNode> last =
+            funs.isEmpty() ? null : funs.get(0);
+
+        if (last != null) {
+            final AbstractASTNode func = last.getSecond();
             if (func instanceof FunctionDeclaration) {
                 final CSPProgram oldProg = currentProgram;
                 final FunctionDeclaration oldFunc = currentFunc;
-                currentProgram = (CSPProgram) result.getFirst();
+                currentProgram = last.getFirst();
                 currentFunc = (FunctionDeclaration) func;
                 processFunctionDeclaration(currentFunc);
                 currentProgram = oldProg;
                 currentFunc = oldFunc;
             }
         }
-        return result;
+        return last;
     }
 
-    private Pair/*<CSPProgram,StructureDeclaration>*/ findStructure(
+    private void findStructure(final CSPProgram p,
+                               final StructureType t,
+                               final List<Pair<CSPProgram,StructureDeclaration>> strs)
+        throws VisitorException {
+        findLocal(p, t, strs);
+        for (Iterator i = p.getRefinementParents().iterator(); i.hasNext(); ) {
+            final CSPProgram parent = (CSPProgram) i.next();
+            findStructure(parent, t, strs);
+        }
+    }
+
+    private Pair<CSPProgram,StructureDeclaration> findStructure(
             final CSPProgram p,
             final StructureType t)
         throws VisitorException {
-        Pair/*<CSPProgram,StructureDeclaration>*/ result = findLocal(p, t);
-        for (Iterator i = p.getRefinementParents().iterator();
-             i.hasNext() && result == null; ) {
-            final CSPProgram parent = (CSPProgram) i.next();
-            result = findStructure(parent, t);
+        final List<Pair<CSPProgram,StructureDeclaration>> strs = new ArrayList<>();
+        findLocal(p, t, strs);
+
+        final Pair<CSPProgram,StructureDeclaration> last =
+            strs.isEmpty() ? null : strs.get(0);
+
+        if (strs.size() > 1) {
+            report("structure.overridden", t, t.getName(),
+                   strs.get(0).getSecond().getParseRange().fullString(),
+                   strs.get(1).getSecond().getParseRange().fullString());
         }
-        if (result != null) {
+
+        if (last != null) {
             final CSPProgram oldProg = currentProgram;
             final StructureDeclaration oldStruct = currentStruct;
-            currentProgram = (CSPProgram) result.getFirst();
-            currentStruct = (StructureDeclaration) result.getSecond();
+            currentProgram = last.getFirst();
+            currentStruct = last.getSecond();
             processStructureDeclaration(currentStruct);
             currentProgram = oldProg;
             currentStruct = oldStruct;
         }
-        return result;
+        return last;
     }
 
     private void resolveFunction(final CSPProgram p,
                                  final FunctionCallExpression e)
         throws VisitorException {
         final boolean isBuiltin;
-        Pair/*<CSPProgram,FunctionDeclaration>*/ decl = findBuiltin(e);
+        Pair<CSPProgram,AbstractASTNode> decl = findBuiltin(e);
         if (decl == null) {
             isBuiltin = false;
             decl = findFunction(p, e);
@@ -452,10 +517,9 @@ public class RefinementResolver extends VisitorByCategory {
         if (decl != null && !isBuiltin) {
             final Object o = decl.getSecond();
             if (o instanceof FunctionDeclaration) {
-                usedFunctions.add(o);
+                usedFunctions.add((FunctionDeclaration) o);
             } else {
-                assert o instanceof StructureDeclaration;
-                usedStructures.add(o);
+                usedStructures.add((StructureDeclaration) o);
             }
         }
     }
@@ -463,7 +527,7 @@ public class RefinementResolver extends VisitorByCategory {
     private void resolveStructure(final CSPProgram p,
                                   final StructureType t)
         throws VisitorException {
-        Pair/*<CSPProgram,StructureDeclaration>*/ decl = findStructure(p, t);
+        Pair<CSPProgram,StructureDeclaration> decl = findStructure(p, t);
         structureMap.put(t, decl);
         if (decl != null) usedStructures.add(decl.getSecond());
     }
@@ -493,7 +557,7 @@ public class RefinementResolver extends VisitorByCategory {
 
     public void visitFunctionCallExpression(final FunctionCallExpression e)
         throws VisitorException {
-        resolveFunction(currentProgram, e);
+        resolveFunction(topProgram, e);
         super.visitFunctionCallExpression(e);
     }
 
@@ -503,11 +567,27 @@ public class RefinementResolver extends VisitorByCategory {
 
     public void visitStructureType(final StructureType t)
         throws VisitorException {
-        resolveStructure(currentProgram, t);
+        resolveStructure(topProgram, t);
     }
 
     public void visitIntegerType(IntegerType t) throws VisitorException {
         final ExpressionInterface width = t.getDeclaredWidth();
         if (width != null) width.accept(getVisitor());
+    }
+
+    private void report(final String s, final AbstractASTNodeInterface a,
+                        final Object... args) {
+        problems.add(new SimpleProblem("refinement." + s, a.getParseRange(), args) {
+            public String getMessage() {
+                final ResourceBundle rb = getResourceBundle();
+                if (rb != INVALID) {
+                    try {
+                        return MessageFormat.format(rb.getString(getCode()), args);
+                    } catch (MissingResourceException e) { }
+                }
+
+                return errorCode;
+            }
+        });
     }
 }

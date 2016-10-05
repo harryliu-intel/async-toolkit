@@ -1047,6 +1047,7 @@ public class JavaEmitter implements VisitorInterface {
     public void visitCSPProgram(CSPProgram e) throws VisitorException {
         resolver.resolve(e);
         e = resolver.getCSPProgram();
+        probFilter.process(resolver.getProblems());
 
         String filename = e.getParseRange().start.filename;
 

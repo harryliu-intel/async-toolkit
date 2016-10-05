@@ -319,6 +319,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
         if (resolver == null) {
             resolver = new RefinementResolver(RefinementResolver.NAME);
             resolver.resolve(p);
+            problems.addAll(resolver.getProblems());
         }
 
         currentProgram = p;
