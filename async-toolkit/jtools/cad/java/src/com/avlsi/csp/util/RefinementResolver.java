@@ -379,7 +379,7 @@ public class RefinementResolver extends VisitorByCategory {
 
     private void findLocal(final CSPProgram p,
                            final FunctionCallExpression e,
-                           final List<Pair<CSPProgram,AbstractASTNode>> funs) {
+                           final Set<Pair<CSPProgram,AbstractASTNode>> funs) {
         for (Iterator i = p.getFunctionDeclarations(); i.hasNext(); ) {
             final FunctionDeclaration decl = (FunctionDeclaration) i.next();
             if (decl == currentFunc) {
@@ -402,7 +402,7 @@ public class RefinementResolver extends VisitorByCategory {
 
     private void findLocal(final CSPProgram p,
                            final StructureType t,
-                           final List<Pair<CSPProgram,StructureDeclaration>> strs) {
+                           final Set<Pair<CSPProgram,StructureDeclaration>> strs) {
         for (Iterator i = p.getStructureIterator(); i.hasNext(); ) {
             final StructureDeclaration decl = (StructureDeclaration) i.next();
             if (decl == currentStruct) {
@@ -416,7 +416,7 @@ public class RefinementResolver extends VisitorByCategory {
 
     private void findFunction(final CSPProgram p,
                               final FunctionCallExpression e,
-                              final List<Pair<CSPProgram,AbstractASTNode>> funs)
+                              final Set<Pair<CSPProgram,AbstractASTNode>> funs)
         throws VisitorException {
         findLocal(p, e, funs);
         for (Iterator i = p.getRefinementParents().iterator(); i.hasNext(); ) {
@@ -429,7 +429,8 @@ public class RefinementResolver extends VisitorByCategory {
             final CSPProgram p,
             final FunctionCallExpression e)
         throws VisitorException {
-        final List<Pair<CSPProgram,AbstractASTNode>> funs = new ArrayList<>();
+        final Set<Pair<CSPProgram,AbstractASTNode>> funs =
+            new LinkedHashSet<>();
         findFunction(p, e, funs);
 
         if (funs.size() > 1) {
@@ -440,13 +441,15 @@ public class RefinementResolver extends VisitorByCategory {
             } else {
                 funcName = "(no name)";
             }
+            final Iterator<Pair<CSPProgram,AbstractASTNode>> iter =
+                funs.iterator();
             report("function.overridden", e, funcName,
-                   funs.get(0).getSecond().getParseRange().fullString(),
-                   funs.get(1).getSecond().getParseRange().fullString());
+                   iter.next().getSecond().getParseRange().fullString(),
+                   iter.next().getSecond().getParseRange().fullString());
         }
 
         final Pair<CSPProgram,AbstractASTNode> last =
-            funs.isEmpty() ? null : funs.get(0);
+            funs.isEmpty() ? null : funs.iterator().next();
 
         if (last != null) {
             final AbstractASTNode func = last.getSecond();
@@ -465,7 +468,7 @@ public class RefinementResolver extends VisitorByCategory {
 
     private void findStructure(final CSPProgram p,
                                final StructureType t,
-                               final List<Pair<CSPProgram,StructureDeclaration>> strs)
+                               final Set<Pair<CSPProgram,StructureDeclaration>> strs)
         throws VisitorException {
         findLocal(p, t, strs);
         for (Iterator i = p.getRefinementParents().iterator(); i.hasNext(); ) {
@@ -478,16 +481,19 @@ public class RefinementResolver extends VisitorByCategory {
             final CSPProgram p,
             final StructureType t)
         throws VisitorException {
-        final List<Pair<CSPProgram,StructureDeclaration>> strs = new ArrayList<>();
-        findLocal(p, t, strs);
+        final Set<Pair<CSPProgram,StructureDeclaration>> strs =
+            new LinkedHashSet<>();
+        findStructure(p, t, strs);
 
         final Pair<CSPProgram,StructureDeclaration> last =
-            strs.isEmpty() ? null : strs.get(0);
+            strs.isEmpty() ? null : strs.iterator().next();
 
         if (strs.size() > 1) {
+            final Iterator<Pair<CSPProgram,StructureDeclaration>> iter =
+                strs.iterator();
             report("structure.overridden", t, t.getName(),
-                   strs.get(0).getSecond().getParseRange().fullString(),
-                   strs.get(1).getSecond().getParseRange().fullString());
+                   iter.next().getSecond().getParseRange().fullString(),
+                   iter.next().getSecond().getParseRange().fullString());
         }
 
         if (last != null) {
