@@ -13,8 +13,10 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.avlsi.csp.ast.*;
+import com.avlsi.csp.grammar.ParseRange;
 import com.avlsi.util.container.CollectionUtils;
 import com.avlsi.util.container.Pair;
 
@@ -433,7 +435,12 @@ public class RefinementResolver extends VisitorByCategory {
             new LinkedHashSet<>();
         findFunction(p, e, funs);
 
-        if (funs.size() > 1) {
+        final Set<ParseRange> defs =
+            funs.stream()
+                .map(def -> def.getSecond().getParseRange())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (defs.size() > 1) {
             final String funcName;
             if (e.getFunctionExpression() instanceof IdentifierExpression) {
                 funcName = ((IdentifierExpression) e.getFunctionExpression())
@@ -441,11 +448,10 @@ public class RefinementResolver extends VisitorByCategory {
             } else {
                 funcName = "(no name)";
             }
-            final Iterator<Pair<CSPProgram,AbstractASTNode>> iter =
-                funs.iterator();
+            final Iterator<ParseRange> iter = defs.iterator();
             report("function.overridden", e, funcName,
-                   iter.next().getSecond().getParseRange().fullString(),
-                   iter.next().getSecond().getParseRange().fullString());
+                   iter.next().fullString(),
+                   iter.next().fullString());
         }
 
         final Pair<CSPProgram,AbstractASTNode> last =
@@ -488,12 +494,15 @@ public class RefinementResolver extends VisitorByCategory {
         final Pair<CSPProgram,StructureDeclaration> last =
             strs.isEmpty() ? null : strs.iterator().next();
 
-        if (strs.size() > 1) {
-            final Iterator<Pair<CSPProgram,StructureDeclaration>> iter =
-                strs.iterator();
+        final Set<ParseRange> defs =
+            strs.stream()
+                .map(def -> def.getSecond().getParseRange())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (defs.size() > 1) {
+            final Iterator<ParseRange> iter = defs.iterator();
             report("structure.overridden", t, t.getName(),
-                   iter.next().getSecond().getParseRange().fullString(),
-                   iter.next().getSecond().getParseRange().fullString());
+                   iter.next().fullString(),
+                   iter.next().fullString());
         }
 
         if (last != null) {
