@@ -470,6 +470,8 @@ sub proteus_config {
         if exists $SS_r->{GS}{PROTEUS_ABSTRACT};
     print $fh "--cell=$SS_r->{GS}{PROTEUS_CELL}\n"
         if exists $SS_r->{GS}{PROTEUS_CELL};
+    print $fh "--cast-define=" . join('::', @{$SS_r->{GL}{CAST_DEFINES}}) . "\n"
+        if exists $SS_r->{GL}{CAST_DEFINES};
     print $fh "--task=spr\n";
     print $fh "$extra_args\n";
     close $fh;
