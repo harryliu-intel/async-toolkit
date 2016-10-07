@@ -18,7 +18,6 @@
         (doSkipRouting t)        ; create SetSkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen nil)       ; add power hookups around Laygen cells
-        (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
         (noPowerFill nil)
@@ -30,7 +29,7 @@
                           ?doVerilog doVerilog ?doGds doGds ?doLef doLef ?doDef doDef
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
-                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04 ?softMacro softMacro
+                          ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                           ?metalFill metalFill ?topHalo topHalo
                           ?noPowerFill noPowerFill)
 
@@ -61,7 +60,6 @@
         (doSkipRouting t)        ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen nil)       ; add power hookups around Laygen cells
-        (softMacro nil)          ; make instances moveable
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
         (noPowerFill nil)
@@ -156,7 +154,7 @@
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
-               placed = (if softMacro (if inst->status inst->status "placed") "locked")
+               placed = (if inst->status inst->status "placed") ; keep inst->status if it exists
                (cond (abstractCV
                       inst->master=abstractCV
                       inst->status=(if abstractCV->cellType=="core" placed "locked")
