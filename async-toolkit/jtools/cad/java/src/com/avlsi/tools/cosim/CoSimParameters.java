@@ -8,7 +8,10 @@
 package com.avlsi.tools.cosim;
 
 import java.util.Hashtable;
+import java.util.Optional;
+import java.util.function.Predicate;
 
+import com.avlsi.cell.CellInterface;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.tools.tsim.Arbiter;
@@ -115,11 +118,12 @@ public class CoSimParameters {
     }
 
     public void setBehavior(final String name, final int value, 
-                            final boolean narrow, final boolean routed) {
+                            final boolean narrow,
+                            final Predicate<CellInterface> descend) {
         assert value == DIGITAL;
         final Parameter p = setSimpleBehavior(name, value);
         p.setNarrowSubcell(narrow);
-        p.setRoutedSubcell(routed);
+        p.setDescendPredicate(descend);
     }
 
     /**
@@ -160,9 +164,9 @@ public class CoSimParameters {
         return p == null ? false : p.isNarrowSubcell();
     }
 
-    public boolean isRoutedSubcell(final String name) {
+    public Optional<Predicate<CellInterface>> getDescendPredicate(final String name) {
         final Parameter p = getParam(name);
-        return p == null ? false : p.isRoutedSubcell();
+        return p == null ? Optional.empty() : p.getDescendPredicate();
     }
 
     private static final class Parameter {
@@ -170,14 +174,14 @@ public class CoSimParameters {
         private int arbitrationMode;
         private String verilogLevel;
         private boolean narrowSubcell;
-        private boolean routedSubcell;
+        private Optional<Predicate<CellInterface>> descendPredicate;
 
         Parameter(final int behavior, final int arbitrationMode) {
             this.behavior = behavior;
             this.arbitrationMode = arbitrationMode;
             this.verilogLevel = null;
             this.narrowSubcell = false;
-            this.routedSubcell = false;
+            this.descendPredicate = Optional.empty();
         }
 
         void setBehavior(final int behavior) {
@@ -213,12 +217,12 @@ public class CoSimParameters {
             return narrowSubcell;
         }
 
-        void setRoutedSubcell(final boolean routedSubcell) {
-            this.routedSubcell = routedSubcell;
+        void setDescendPredicate(final Predicate<CellInterface> p) {
+            descendPredicate = Optional.of(p);
         }
 
-        boolean isRoutedSubcell() {
-            return routedSubcell;
+        Optional<Predicate<CellInterface>> getDescendPredicate() {
+            return descendPredicate;
         }
     }
 }

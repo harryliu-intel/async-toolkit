@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Represents a list of cosimulation modes.
@@ -57,6 +58,16 @@ public final class ModeList implements AcceptorInterface {
      **/
     public Iterator<Mode> iterator() {
         return Collections.unmodifiableList(Arrays.asList(modes)).iterator();
+    }
+
+    /**
+     * Returns an <code>Stream&lt;Mode&gt;</code> of the
+     *   modes  in which to attempt simulation.
+     * @return an <code>Stream&lt;Mode&gt;</code> of the
+     *   methods in which to attempt simulation, not null.
+     **/
+    public Stream<Mode> stream() {
+        return Stream.of(modes);
     }
 
     public String toString() {

@@ -239,17 +239,12 @@ public class CoSimHelper {
     }
 
     private static ModeList updateModeList(final ModeList modeList) {
-        final List result = new ArrayList();
-        for (final Iterator i = modeList.iterator(); i.hasNext(); ) {
-            final Mode m = (Mode) i.next();
-            if (m != Mode.SUBCELLS_ROUTED && m instanceof Mode.SubcellsMode) {
-                final boolean narrow = isNarrow(modeList);
-                result.add(narrow ? Mode.SUBCELLS_NARROW : Mode.SUBCELLS);
-            } else {
-                result.add(m);
-            }
-        }
-        return new ModeList((Mode[]) result.toArray(new Mode[0]));
+        return new ModeList(
+            modeList.stream()
+                    .map(m -> m instanceof Mode.SubcellsMode &&
+                              isNarrow(modeList) ? ((Mode.SubcellsMode) m).makeNarrow()
+                                                 : m)
+                    .toArray(Mode[]::new));
     }
 
     /**
@@ -313,7 +308,7 @@ public class CoSimHelper {
                     coSimParams.setBehavior(instanceName,
                             CoSimParameters.DIGITAL,
                             subMode.isNarrow(),
-                            subMode.isRouted());
+                            subMode.getDescendPredicate());
 
                     if (verbose)
                         System.out.println("Set behavior of " +
@@ -322,9 +317,8 @@ public class CoSimHelper {
                     // stop when a routed hierarchy is found, but always
                     // recurse into the top-level subcells, even if it is
                     // routed
-                    if (realInstance != null &&
-                        subMode.isRouted() &&
-                        CellUtils.isRouted(cell)) return;
+                    if (realInstance != null && !subMode.descendInto(cell))
+                        return;
 
                     // recurse to subcells, dropping irrelevant instspecs,
                     // keeping relevant ones, and substituting the one for

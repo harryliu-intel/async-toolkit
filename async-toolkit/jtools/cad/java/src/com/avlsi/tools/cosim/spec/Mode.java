@@ -7,6 +7,10 @@
 
 package com.avlsi.tools.cosim.spec;
 
+import java.util.Optional;
+import java.util.function.Predicate;
+
+import com.avlsi.cell.CellInterface;
 import com.avlsi.util.container.ObjectUtils;
 
 /**
@@ -40,8 +44,6 @@ public class Mode implements AcceptorInterface {
      * Subcells mode.
      **/
     public static final Mode SUBCELLS = new SubcellsMode();
-    public static final Mode SUBCELLS_NARROW = new SubcellsMode(true);
-    public static final Mode SUBCELLS_ROUTED = new SubcellsMode(false, true);
 
     /**
      * PRS mode.
@@ -63,23 +65,31 @@ public class Mode implements AcceptorInterface {
 
     public static final class SubcellsMode extends Mode {
         private final boolean narrow;
-        private final boolean routed;
+        private final Predicate<CellInterface> descend;
         SubcellsMode() {
             this(false);
         }
         SubcellsMode(final boolean narrow) {
-            this(narrow, false);
+            this(narrow, x -> true);
         }
-        SubcellsMode(final boolean narrow, final boolean routed) {
+        public SubcellsMode(final boolean narrow,
+                            final Predicate<CellInterface> descend) {
             this.narrow = narrow;
-            this.routed = routed;
+            this.descend = descend;
         }
         public String toString() { return "subcells"; }
+        public SubcellsMode makeNarrow() {
+            return isNarrow() ? this
+                              : new SubcellsMode(true, getDescendPredicate());
+        }
         public boolean isNarrow() {
             return narrow;
         }
-        public boolean isRouted() {
-            return routed;
+        public boolean descendInto(final CellInterface x) {
+            return descend.test(x);
+        }
+        public Predicate<CellInterface> getDescendPredicate() {
+            return descend;
         }
     }
 
