@@ -1,0 +1,106 @@
+#!/usr/intel/bin/perl -w
+
+@ARGV==2 or die "USAGE: find_drc cell LAYOUT_ERRORS\n";
+my $cell = $ARGV[0];
+my $file = $ARGV[1];
+my $radius = 0.2;
+my @boxes;
+if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEURON/ ) {
+    @boxes = ("3.36:-478.8:420:-57.456", "30.24:-478.8:420:-3.192");
+} elsif ($cell =~ /^chip_n2_io_IO/ ) {
+    @boxes = ("-50.4:-95.76:50.4:0");
+} elsif ($cell =~ /^chip_n2_test0_TEST0/ ) {
+    @boxes = ("0:-153.216:161.28:0","161.28:-306.432:295.68:0","295.68:-95.76:433.44:0");
+} elsif ($cell =~ /^chip_n2_test1_TEST1/ ) {
+    @boxes = ("-50.4:-319.2:62.16:-150.024","0:-95.76:62.16:0","62.16:-319.2:369.6:0");
+} elsif ($cell =~ /^core_neuro_tile_DOUBLE_ROUTER/ ) {
+    @boxes = ("-31.92:-57.456:31.92:57.456");
+} elsif ($cell =~ /^chip_n2_pads_PADS/ ) {
+    @boxes = ("-188.16:0:161.28:210.672");
+} elsif ($cell =~ /^chip_n2_lakemont_LAKEMONT/ ) {
+    @boxes = ("-483.84:-306.432:-80.64:-25.536","-80.64:-306.432:26.88:-25.536","26.88:-306.432:483.84:-6.384");
+} elsif ($cell =~ /^chip_n2_lakemont_CPU_SHIM/ ) {
+    @boxes = ("-483.84:-6.384:-80.64:0","-80.64:-25.536:26.88:0","26.88:-6.384:483.84");
+} elsif ($cell =~ /^chip_n2_north_BRIDGE/ ) {
+    @boxes = ("-483.84:0:483.84:306.432");
+} elsif ($cell eq "neuro_top" || $cell =~ /^chip_n2_TOP/) {
+    @boxes = ("0:0:1270.08:1244.88");
+} elsif ($cell eq "8slh73l_tma1_0a") {
+#    @boxes = ("0:0:334.32:3934.12","7519.68:0:7827.12:3934.12","334.32:0:7519.68:90.972","334.32:3828.804:7519.68:3934.12");
+    @boxes = ("22.782:22.68:2290.68:1009.68");
+}
+my $shrink_x = 0.1;
+my $shrink_y = 1.596;#0.1;
+
+my $num=0;
+my $err="";
+my %errors;
+open IN, "<$file" or die;
+while (my $line = <IN>) {
+    if ($line =~ /^(\S+): /) { $err = $1; }
+    elsif ($line =~ /^(\S+)\s+\((\S+),\s*(\S+)\)/ ) {
+        if ($1 eq $cell) {
+            my $x = $2;
+            my $y = $3;
+            my $found = 1;
+            if (@boxes>0) { $found = 0; }
+            foreach my $box (@boxes) {
+                if (in_box($x,$y,$box)) { $found=1; }
+            }
+            unless ($found) { next; }
+            $num++;
+            $found = 0;
+            foreach my $key (keys %errors) {
+                my ($kx, $ky) = split(":",$key);
+                if (abs($x-$kx)<$radius && abs($y-$ky)<$radius) {
+                    $errors{$key} .= " $err";
+                    $found = 1;
+                    next;
+                }
+            }
+            unless ($found) { $errors{"$x:$y"} = $err; }
+        }
+    }
+}
+close IN;
+print "; $num total DRC errors\n\n";
+
+# report errors by layer
+my %layers;
+foreach my $key (sort keys %errors) {
+    my $layer = get_layer($errors{$key});
+    $layers{$layer} = 1;
+}
+foreach my $layer (sort keys %layers) {
+    print "; $layer\n";
+    foreach my $key (sort keys %errors) {
+        my ($x, $y) = split(":",$key);
+        my $err = $errors{$key};
+        if (get_layer($err) eq "$layer") {
+            printf "(GoToLocation $x $y 2000) ; $err\n";
+        }
+    }
+    print "\n";
+}
+
+sub get_layer {
+    my ($errors) = (@_);
+    my $layer = "";
+    foreach my $field (split(" ",$errors)) {
+        if ($field =~ /([^_]+)_/) {
+            if ($layer eq "") { $layer = $1; }
+            elsif ($layer ne $1) { $layer = "other"; }
+        }
+    }
+    return $layer;
+}
+
+sub in_box {
+    my ($x,$y,$box) = @_;
+    my ($x0,$y0,$x1,$y1) = split(":",$box);
+    $x0 += $shrink_x;
+    $x1 -= $shrink_x;
+    $y0 += $shrink_y;
+    $y1 -= $shrink_y;
+    return ($x>=$x0 && $x<=$x1 && $y>=$y0 && $y<$y1);
+}
