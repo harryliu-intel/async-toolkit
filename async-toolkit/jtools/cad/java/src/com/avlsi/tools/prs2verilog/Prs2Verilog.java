@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -810,9 +811,10 @@ public class Prs2Verilog {
 
         final SimpleChooser chooser =
             level == null ? null : new SimpleChooser(level);
+        final VerilogFactoryInterface factory =
+            getVerilogFactoryWithRenaming(theArgs);
         final Map dependencies =
-            writeVerilog(ct, "netgraph", theArgs,
-                         new VerilogFactoryImpl(),
+            writeVerilog(ct, "netgraph", theArgs, factory,
                          vfact, true, chooser, false, cad, false, false);
 
         verilogFiles(dependencies, validVerilogFiles);
@@ -836,10 +838,9 @@ public class Prs2Verilog {
 
         final CellType ct = findCell(top, cell.getFullyQualifiedType());
 
-        final VerilogFactoryInterface factory = renamer == null ?
-            new VerilogFactoryImpl() :
-            new SimpleRenamingVerilogFactory(renamer);
-
+        final VerilogFactoryInterface factory =
+            getVerilogFactoryWithRenaming(Optional.ofNullable(renamer));
+            
         final Map dependencies =
             writeVerilog(ct, "netlist", theArgs, factory,
                          vfact, true, null, false, cad, false, stopRecurse,
@@ -880,6 +881,32 @@ public class Prs2Verilog {
             chooser = new DefaultChooser(names[0], m);
         }
         return chooser;
+    }
+
+    private static VerilogFactoryInterface getVerilogFactoryWithRenaming(
+            final Optional<CDLNameInterface> renamer) {
+        return renamer.map(x -> (VerilogFactoryInterface) new SimpleRenamingVerilogFactory(x))
+                      .orElse(new VerilogFactoryImpl());
+    }
+
+    private static VerilogFactoryInterface getVerilogFactoryWithRenaming(
+            final CommandLineArgs theArgs) {
+        final String translate = theArgs.getArgValue("translate", null);
+        CDLNameInterface renamer;
+        if (translate == null) {
+            renamer = null;
+        } else {
+            renamer = Rename.getInterface("cast", translate);
+            if (renamer == null) {
+                System.err.println("Unknown name translation method: " +
+                                   translate);
+                System.exit(1);
+            }
+        }
+        if (renamer instanceof GDS2NameInterface) {
+            renamer = new KeywordRenamer(renamer);
+        }
+        return getVerilogFactoryWithRenaming(Optional.ofNullable(renamer));
     }
 
     private static void usage() {
@@ -977,19 +1004,6 @@ public class Prs2Verilog {
             System.err.println("Minimizing tri-state registers only works with netgraph converter."); 
             usage();
             System.exit(1);
-        }
-
-        final String translate = theArgs.getArgValue("translate", null);
-        final CDLNameInterface renamer;
-        if (translate == null) {
-            renamer = null;
-        } else {
-            renamer = Rename.getInterface("cast", translate);
-            if (renamer == null) {
-                System.err.println("Unknown name translation method: " +
-                                   translate);
-                System.exit(1);
-            }
         }
 
         /* This may now work 
@@ -1091,12 +1105,8 @@ public class Prs2Verilog {
             System.err.println("Cell " + ci.getFullyQualifiedType() + " not found!");
         } else {
             final Set files = new LinkedHashSet();
-            final VerilogFactoryInterface factory = renamer == null ?
-                new VerilogFactoryImpl() :
-                new SimpleRenamingVerilogFactory(
-                    renamer instanceof GDS2NameInterface ?
-                        (CDLNameInterface) new KeywordRenamer(renamer)
-                      : renamer);
+            final VerilogFactoryInterface factory =
+                getVerilogFactoryWithRenaming(theArgs);
 
             final VisitorFactory vf;
             if (outdir != null) {

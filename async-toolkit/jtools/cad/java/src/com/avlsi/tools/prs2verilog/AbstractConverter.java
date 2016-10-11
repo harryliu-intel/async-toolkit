@@ -540,9 +540,9 @@ public abstract class AbstractConverter implements ConverterInterface {
             final List params = (List) p.getFirst();
             final List ports = (List) p.getSecond();
             final VerilogObject instName =
-                factory.ident((instance == null ? "inst"
-                                                : (instance.toString() + "$"))
-                              + id, mAlwaysEscape);
+                dontRename((instance == null ? "inst"
+                                             : (instance.toString() + "$"))
+                            + id, mAlwaysEscape);
             final VerilogObject moduleName =
                 dontRename(inst.getModule(), mAlwaysEscape);
             insts.add(factory.moduleInst(instName, moduleName, toArray(params),
