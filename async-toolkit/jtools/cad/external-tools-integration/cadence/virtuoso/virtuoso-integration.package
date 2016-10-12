@@ -418,7 +418,8 @@ share/skill/layout/distort/distort.il                 skill/layout/distort/disto
  
 # Project Specific
 share/skill/proj/n1/export_apr.il                     skill/proj/n1/export_apr.il                     664 p
-
+share/skill/proj/n1/fix_spc.il                        skill/proj/n1/fix_spc.il                        664 p
+share/skill/proj/n2/plc_pwr.il                        skill/proj/n2/plc_pwr.il                        664 p
 
 
 #new gds2cdl script
