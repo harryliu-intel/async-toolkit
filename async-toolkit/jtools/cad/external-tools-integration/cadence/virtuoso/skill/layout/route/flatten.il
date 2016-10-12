@@ -15,6 +15,7 @@ useICV = t
         (hookupD04 nil)            ; add power hookups around d04 cells
         (hookupLaygen nil)         ; add power hookups around Laygen cells
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
+        (doPowerGates nil)	   ; use POWER_GRID_GATED instead of POWER_GRID
         )
   (let (MaxHeapSize FlattenCellsList
         PowerGridCellName flattenCV xalign yalign
@@ -102,13 +103,13 @@ useICV = t
     (printf "Flatten- MakePowerGrid Start %s\n" (getCurrentTime))
     (when doMakePowerGrid
       pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                            ?noPowerFill noPowerFill)
+                            ?noPowerFill noPowerFill ?doPowerGates doPowerGates)
       (unless pgCV (error "Unable to create power grid\n"))
       )
 
     ; Create power grid abstract
     (when doPowerGridAbstract
-      pgCV = (MakePowerGridAbstract ?CV CV ?topMetal topMetal)
+      pgCV = (MakePowerGridAbstract ?CV CV ?topMetal topMetal ?doPowerGates doPowerGates)
       (unless pgCV (error "Unable to create power grid abstract\n"))
       )
 
@@ -165,6 +166,7 @@ useICV = t
         (hookupD04 nil)    ; HACK: add power hookups to all D04 cells
         (powerCellView "layout") ; used by MakeLayoutTagCell
         (noPowerFill nil)
+        (doPowerGates nil)
         )
   (let (TEMP powerCellName align
         inst prb
@@ -277,11 +279,13 @@ useICV = t
         )
       (dbSave powerCV)
       (printf "MakePowerGrid top=%d count=%d\n" top count)
+      (when doPowerGates (printf "Making power grid for gated Vdd\n"))
       srcCV = powerCV ; use powerCV as scratch to build more layers of power grid
       )
 
     ; hack: if noPowerFill do a bunch more crap
     (when noPowerFill (PatchPowerFill CV powerCV))
+    (when doPowerGates (PatchPowerGates CV powerCV))
 
     ; delete temporary shapes, draw prBoundary and top block shape
     (dbDeleteObject prb)
@@ -360,6 +364,27 @@ useICV = t
     )
  )
 
+(defun PatchPowerGates (CV pgCV)
+  (let (tempCV inLayerMap outLayerMap len)
+
+    ; swap POWER_GRID cells to GATED version
+    len = (strlen "globals.POWER_GRID")
+    (foreach inst pgCV->instances
+             (when (strncmp inst->cellName "globals.POWER_GRID" len)==0
+                   inst->master = (dbOpenCellViewByType inst->libName
+                                                        (strcat "globals.POWER_GRID_GATED"
+                                                                (substring inst->cellName len+1))
+                                                        "layout")
+                   )
+             )
+
+    ; clean up
+    (dbSave pgCV)
+    pgCV
+    )
+ )
+
+
 ; Create power hookups for Laygen and/or D04 cells
 ; BUG: should be done by RDT flow but doesn't work yet
 (defun LaygenPowerHookup (CV powerCV @key (hookupLaygen t) (hookupD04 t))
@@ -393,9 +418,11 @@ useICV = t
   (@key (CV (geGetEditCellView)) ; flatten CellView
         (topMetal 8)
 ;       (powerLayers (list Metal[0] Metal[1] Metal[2] Metal[3] Metal[4] Metal[5]
-;                          Metal[6] Metal[7] Metal[8]))) ; which layers to keep as pins
-        (powerLayers (list Metal[0] Metal[2]))) ; HACK: minimize number of pin shapes
-  (let (inst pgCV pgaCV lpps figsVdd figsGND)
+;                          Metal[6] Metal[7] Metal[8])) ; which layers to keep as pins
+        (powerLayers (list Metal[0] Metal[2] Metal[3])) ; HACK: minimize number of pin shapes
+	(doPowerGates nil)
+	)
+  (let (inst pgCV pgaCV lpps figsVdd figsGND figsVddg)
     
     ; HACK: minimize number of pin shapes
     powerLayers = (cons Metal[topMetal] powerLayers)
@@ -434,19 +461,68 @@ useICV = t
     ; create power pins on specified metal layers
     ; only create 1 pin each for Vdd and GND and add figures to it
     ; this represents strongly connected pins needed for correct LEF
+
+    ; HACK: hastily added some speculative processing for power gating
+    (when doPowerGates (printf "Making power grid abstract for gated Vdd\n"))
     (foreach shape (setof shape pgaCV->shapes (member shape->layerName powerLayers))
+      (cond (shape->purpose=="gnd"
+             shape->purpose="drawing"
+             figsGND = (cons shape figsGND)
+             )
+            )
+
+      (when doPowerGates
+        (when (MetalNumber ?lpp shape->lpp) < 2
+              ; normal
              (cond (shape->purpose=="vdd"
                     shape->purpose="drawing"
                     figsVdd = (cons shape figsVdd)
                     )
-                   (shape->purpose=="gnd"
+		   )
+	  )
+        (when (MetalNumber ?lpp shape->lpp) == 2
+              ; m2 vdd becomes Vddg pins
+             (cond (shape->purpose=="vdd"
                     shape->purpose="drawing"
-                    figsGND = (cons shape figsGND)
+                    figsVddg = (cons shape figsVddg)
                     )
-                   )
-             )
+		   )
+          )
+        (when 3 <= (MetalNumber ?lpp shape->lpp) && (MetalNumber ?lpp shape->lpp) < 5
+              ; mx vdd becomes Vddg pins
+	      ; mx fill becomes Vdd pins
+             (cond (shape->purpose=="vdd"
+                    shape->purpose="drawing"
+                    figsVddg = (cons shape figsVddg)
+                    )
+		   )
+             (cond (shape->purpose=="fill"
+                    shape->purpose="drawing"
+                    figsVdd = (cons shape figsVdd)
+                    )
+		   )
+	  )
+        (when (MetalNumber ?lpp shape->lpp) > 5
+              ; normal
+             (cond (shape->purpose=="vdd"
+                    shape->purpose="drawing"
+                    figsVdd = (cons shape figsVdd)
+                    )
+		   )
+	  )
+	)
+      (when !doPowerGates
+             (cond (shape->purpose=="vdd"
+                    shape->purpose="drawing"
+                    figsVdd = (cons shape figsVdd)
+                    )
+		   )
+        )
+      )
+
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV VddNetName) nil) figsVdd)
     (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV GNDNetName) nil) figsGND)
+    (dbAddFigsToPin (dbCreatePin (dbMakeNet pgaCV "Vddg") nil) figsVddg)
 
     ; convert remaining shapes to boundary
     (foreach shape (setof shape pgaCV->shapes shape->pin==nil)

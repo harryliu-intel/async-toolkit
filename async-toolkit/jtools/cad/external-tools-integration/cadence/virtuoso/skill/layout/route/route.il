@@ -63,6 +63,7 @@
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
         (noPowerFill nil)
+	(doPowerGates nil)       ; optionally skip export of placed pillars
         )
   (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
@@ -98,7 +99,7 @@
     (printf "Flatten Start %s\n" (getCurrentTime))
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                        ?noPowerFill noPowerFill))
+                        ?noPowerFill noPowerFill ?doPowerGates doPowerGates))
 
     ; cell names
     PowerGridCellName = (strcat CV->cellName "_pg")
@@ -171,6 +172,10 @@
                       )
                      )
                )
+      (unless doPowerGates
+        (DeletePwrGateCells ?CV ExportCV)
+        )
+
       (dbSave ExportCV)
 
       ; export DEF
