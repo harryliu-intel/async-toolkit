@@ -4,18 +4,20 @@
 ; and staples is hard-coded for 1273.
 
 ; create a complete set of POWER_GRID cells
-(defun CreatePowerGridCells (@key (botMetal 2) (topMetal 8) (noFill nil))
+(defun CreatePowerGridCells (@key (botMetal 2) (topMetal 8) (noFill nil) (gated nil))
   (let (CV cellName)
     (for bot botMetal topMetal
          (for top bot topMetal
               cellName = (if noFill "globals.POWER_GRID_NO_FILL.m" "globals.POWER_GRID.m")
+              (for m bot top cellName = (strcat cellName (sprintf nil "%d" m)))
+              cellName = (if gated "globals.POWER_GRID_GATED.m" "globals.POWER_GRID.m")
               (for m bot top cellName = (strcat cellName (sprintf nil "%d" m)))
               cellName = (strcat cellName "_pg")
               (printf "%s\n" cellName)
               CV = (dbOpenCellViewByType "globals" cellName "layout")
               (when CV (cdsp4edit ?CV CV))
               CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
-              (DrawPowerGrid bot top ?CV CV ?noFill noFill)
+              (DrawPowerGrid bot top ?CV CV ?noFill noFill ?gated gated)
               (cdsp4add ?CV CV)
               (when top==TopMetal
                 cellName = (strcat cellName "_half")
@@ -23,17 +25,18 @@
                 CV = (dbOpenCellViewByType "globals" cellName "layout")
                 (when CV (cdsp4edit ?CV CV))
                 CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
-                (DrawPowerGrid bot top ?CV CV ?half t ?noFill noFill)
+                (DrawPowerGrid bot top ?CV CV ?half t ?noFill noFill ?gated gated)
                 (cdsp4add ?CV CV)
                 )
               )
          )
+
     )
   t
   )
 
 ; draw power stripes and vias in a POWER_GRID cell
-(defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)) (half nil) (noFill nil))
+(defun DrawPowerGrid (botMetal topMetal @key (CV (geGetEditCellView)) (half nil) (noFill nil) (gated nil))
   (let (xalign yalign rows cols y s l h half_power_m8)
     (foreach x CV->shapes (dbDeleteObject x))
     xalign = (car  gridAlignment[topMetal])
@@ -96,11 +99,22 @@
     (leMergeShapes CV->shapes)
 
     ; vias
-    (for m botMetal topMetal-1
-         (DrawPowerGridVias "gnd" "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
-         (DrawPowerGridVias "vdd" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
-         (DrawPowerGridVias "vdd" "fill" Metal[m] Metal[m+1] Via[m] ViaSizeVddFill[m] ?CV CV)
-         )
+    ; for initial vdd gating scheme, v5 are missing and 
+    ; fill stripes would connect to each other but it makes a via cluster
+    (if !gated then
+      (for m botMetal topMetal-1
+        (DrawPowerGridVias "gnd" "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
+        (DrawPowerGridVias "vdd" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
+        (DrawPowerGridVias "vdd" "fill" Metal[m] Metal[m+1] Via[m] ViaSizeVddFill[m] ?CV CV)
+        )
+    else
+      (for m botMetal topMetal-1
+        (DrawPowerGridVias "gnd" "gnd" Metal[m] Metal[m+1] Via[m] ViaSizeGND[m] ?CV CV)
+        (when m!=5
+          (DrawPowerGridVias "vdd" "vdd" Metal[m] Metal[m+1] Via[m] ViaSizeVdd[m] ?CV CV)
+          )
+        )
+      )
 
     ; convert to rectangles
     (foreach s CV->shapes
