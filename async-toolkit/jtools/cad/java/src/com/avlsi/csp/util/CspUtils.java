@@ -30,4 +30,13 @@ public class CspUtils {
         }
         return ty;
     }
+
+    public static ArrayType setBaseType(ArrayType aty, Type baseTy) {
+        if (aty.getElementType() instanceof ArrayType) {
+            ArrayType elTy = (ArrayType) aty.getElementType();
+            return new ArrayType(aty.getRange(), setBaseType(elTy, baseTy));
+        } else {
+            return new ArrayType(aty.getRange(), baseTy);
+        }
+    }
 }

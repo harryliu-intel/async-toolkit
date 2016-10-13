@@ -1001,7 +1001,10 @@ public class FunctionPreprocessor extends VisitorByCategory {
                 // create var statement for actual for resolved
                 // functions
                 if (diffWidthIntArray) {
-                    preamble.add(createVarStatement(actual, d.getTypeFragment()));
+                    final ArrayType aty = (ArrayType) currType;
+                    preamble.add(
+                            createVarStatement(actual,
+                                CspUtils.setBaseType(aty, formElemType)));
                     if (larg) {
                         copyback.add(
                             new AssignmentStatement(
