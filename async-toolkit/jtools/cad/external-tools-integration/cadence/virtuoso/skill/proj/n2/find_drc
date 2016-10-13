@@ -12,7 +12,7 @@ if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEUR
 } elsif ($cell =~ /^chip_n2_test0_TEST0/ ) {
     @boxes = ("0:-153.216:161.28:0","161.28:-306.432:295.68:0","295.68:-95.76:433.44:0");
 } elsif ($cell =~ /^chip_n2_test1_TEST1/ ) {
-    @boxes = ("-50.4:-319.2:62.16:-150.024","0:-95.76:62.16:0","62.16:-319.2:369.6:0");
+    @boxes = ("50.4:-95.76:161.28:-6.384","161.28:-306.432:483.84:-6.384");
 } elsif ($cell =~ /^core_neuro_tile_DOUBLE_ROUTER/ ) {
     @boxes = ("-31.92:-57.456:31.92:57.456");
 } elsif ($cell =~ /^chip_n2_pads_PADS/ ) {
