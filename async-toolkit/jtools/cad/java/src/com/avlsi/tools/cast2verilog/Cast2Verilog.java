@@ -241,7 +241,7 @@ public class Cast2Verilog {
                                       int direction,
                                       String actualSuffix,
                                       Function<String,ChannelTimingInfo> ctiFunc,
-                                      String reset,
+                                      String reset, // already escaped
                                       PrintWriter out) {
             final ChannelTimingInfo cti = ctiFunc.apply(name);
             final int slack = cti.getSlack();
@@ -275,7 +275,7 @@ public class Cast2Verilog {
             }
             out.println(") " + esc("tb_" + name) + " (");
             final Separator sout = new Separator(out);
-            sout.print("." + resetNodeName + " (" + esc(reset) + ")"); 
+            sout.print("." + resetNodeName + " (" + reset + ")"); 
             final Pair<String,String> parts = mungeArray(name);
             emitChannelConnection(direction < 0 ? "L" : "R", name, null, sout);
             emitChannelConnection(direction < 0 ? "R" : "L",
