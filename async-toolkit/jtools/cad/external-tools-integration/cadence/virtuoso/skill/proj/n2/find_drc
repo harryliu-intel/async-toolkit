@@ -30,7 +30,7 @@ if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEUR
     @boxes = ("22.782:22.68:2290.68:1009.68");
 }
 my $shrink_x = 0.1;
-my $shrink_y = 1.596;#0.1;
+my $shrink_y = 0.1;
 
 my $num=0;
 my $err="";
