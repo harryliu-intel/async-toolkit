@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.Set;
 
@@ -46,6 +47,13 @@ import com.avlsi.util.debug.Debug;
 import com.avlsi.util.functions.UnaryFunction;
 
 class GateConverter extends NetgraphGateConverter {
+    /**
+     * An upperbound on the number of disjunctions allowed to test if the logic
+     * is combinational.  The test involves converting the half-operators to
+     * DNF form, which may have exponential cost.
+     **/
+    private static final int LIMIT = 8;
+
     private final MultiMap up, down;
     public GateConverter(final CellType cell,
                          final VerilogFactoryInterface factory,
@@ -71,6 +79,27 @@ class GateConverter extends NetgraphGateConverter {
                                                    cell.namespace,
                                                    cell.exclusives);
         return dnfDn.compareTo(dualUp) == 0;
+    }
+
+    /**
+     * Return true if <param>orUp</param> is the dual of <param>orDn</param>,
+     * and false otherwise.  Return empty if the expressions are too large to
+     * compute the answer.
+     **/
+    private Optional<Boolean> isCombinational(
+            final OrBooleanExpressionInterface orUp,
+            final OrBooleanExpressionInterface orDn,
+            final int sizeUp,
+            final int sizeDn,
+            final int limit) {
+        if (sizeUp > limit || sizeDn > limit) {
+            return Optional.empty();
+        } else {
+            // choose the smaller formula for the negation to try to be more
+            // efficient
+            return Optional.of(isCombinational(sizeUp < sizeDn ? orUp : orDn,
+                                               sizeUp < sizeDn ? orDn : orUp));
+        }
     }
 
     public VerilogObject convert(final CommandLineArgs theArgs,
@@ -114,7 +143,9 @@ class GateConverter extends NetgraphGateConverter {
                                                                      prsUp);
             final OrBooleanExpression orDn = new OrBooleanExpression(true,
                                                                      prsDn);
-            if (assumeCombinational || isCombinational(orUp, orDn)) {
+            if (assumeCombinational ||
+                isCombinational(orUp, orDn, prsUp.size(), prsDn.size(), LIMIT)
+                    .orElse(false)) {
                 final GateMaker gateUp = new GateMaker(node);
                 orUp.visitWith(gateUp);
             } else {
