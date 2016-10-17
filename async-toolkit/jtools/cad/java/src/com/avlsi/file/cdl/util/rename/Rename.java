@@ -206,6 +206,8 @@ public class Rename {
                         };
                     }
                     out.println( theAct.act( lname ));
+                } else {
+                    throw new CDLRenameException("Invalid input line");
                 }
             }
         }

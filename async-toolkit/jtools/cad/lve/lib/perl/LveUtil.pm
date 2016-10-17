@@ -110,6 +110,7 @@ sub reName2 {
     my ($rh, $wh) = ($context->{'read'}, $context->{'write'});
     print $wh "$type $from $to $name\n";
     chomp(my $result = <$rh>);
+    die "Exception in reName2: type=$type from=$from to=$to name=$name" unless $result;
     return $result;
 }
 
