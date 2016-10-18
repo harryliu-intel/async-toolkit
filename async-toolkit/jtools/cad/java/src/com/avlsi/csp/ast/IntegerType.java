@@ -110,7 +110,16 @@ public class IntegerType extends Type {
     }
 
     public String toString() {
-        return "int";
+        final String type =
+            isSigned() && getDeclaredWidth() != null ? "sint" : "int";
+        String width = "";
+        if (getDeclaredWidth() != null) {
+            BigInteger w = CspUtils.getIntegerConstant(getDeclaredWidth());
+            if (w != null) {
+                width = "(" + w + ")";
+            }
+        }
+        return type + width;
     }
 
     /**

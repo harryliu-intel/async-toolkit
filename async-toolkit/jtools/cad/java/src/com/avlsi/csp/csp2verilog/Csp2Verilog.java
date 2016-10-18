@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -63,6 +64,7 @@ public class Csp2Verilog {
     private final ProblemFilter probFilter;
     private final boolean debugTransformation;
     private final boolean enableSystemVerilog;
+    private List<StructureDeclaration> structDecls = Collections.emptyList();
 
     public Csp2Verilog(PrintWriter warningWriter,
                        PrintWriter errorWriter,
@@ -111,19 +113,23 @@ public class Csp2Verilog {
 
         try {
             final VisitorInterface visitor;
+            VerilogEmitter emitter = null;
             if (enableSystemVerilog) {
                 visitor = new SystemVerilogEmitter(cellInfo, inputPorts,
                     pw, warningWriter, errorWriter, debugWriter,
                     resetNodeName, registerBitWidth, strictVars,
                     implicitInit, probFilter);
             } else {
-                visitor = new VerilogEmitter(cellInfo, inputPorts,
+                emitter = new VerilogEmitter(
+                    cellInfo, inputPorts,
                     pw, warningWriter, errorWriter, debugWriter,
                     moduleName,
                     resetNodeName, registerBitWidth, strictVars,
                     implicitInit, probFilter);
+                visitor = emitter;
             }
             p.accept(visitor);
+            if (emitter != null) structDecls = emitter.getStructureDeclaration();
         } catch (VisitorException e) {
             throw new SemanticException(e);
         }
@@ -188,6 +194,10 @@ public class Csp2Verilog {
                            DirectiveConstants.IMPLICIT_INIT)).booleanValue();
         genCode(unrolled, moduleName, cell.getCSPInfo(), inputPorts, strictVars,
                 implicitInit, out);
+    }
+    
+    public List<StructureDeclaration> getStructureDeclaration() {
+        return structDecls;
     }
 
     /**

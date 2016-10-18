@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 
 import com.avlsi.cell.CellUtils;
@@ -2520,5 +2521,13 @@ public class VerilogEmitter extends CommonEmitter {
     private void unsupported(AbstractASTNode n) throws VisitorException {
         throw new VisitorException("CSP construct not yet supported at " +
                                    n.getParseRange().fullString());
+    }
+    
+    public List<StructureDeclaration> getStructureDeclaration() {
+        return resolver.getResolvedStructures()
+                       .values()
+                       .stream()
+                       .map(p -> p.getSecond())
+                       .collect(Collectors.toList());
     }
 }

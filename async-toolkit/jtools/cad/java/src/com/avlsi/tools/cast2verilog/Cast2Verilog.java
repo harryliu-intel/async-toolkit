@@ -57,9 +57,12 @@ import com.avlsi.cell.CellImpl;
 import com.avlsi.cell.CellUtils;
 import com.avlsi.cell.CellUtils.MarkPort;
 import com.avlsi.cell.NoSuchEnvironmentException;
+import com.avlsi.csp.ast.Declarator;
+import com.avlsi.csp.ast.StructureDeclaration;
 import com.avlsi.csp.csp2java.SemanticException;
 import com.avlsi.csp.csp2verilog.Csp2Verilog;
 import com.avlsi.csp.util.CSPCellInfo;
+import com.avlsi.csp.util.DeclarationProcessor;
 import com.avlsi.csp.util.UniqueLabel;
 import com.avlsi.csp.util.ProblemFilter;
 import com.avlsi.fast.BlockInterface;
@@ -184,6 +187,11 @@ public class Cast2Verilog {
      * Set to true if errors were encountered during translation.
      **/
     private boolean errorExist;
+
+    /**
+     * Collection of all used structure declarations.
+     **/
+    List<StructureDeclaration> structDecls = new ArrayList<>();
 
     private Cadencize vcad = null;  // Verilog Cadencize
     private Cadencize cad = null;   // non-Verilog Cadencize
@@ -2113,6 +2121,7 @@ public class Cast2Verilog {
             "    [--file-list=<file>] (Verilog block dependencies)\n" +
             "    [--behavior-report=<file>] (report CSP and PRS instances)\n" +
             "    [--generate-testbench] (generate simple testbench)\n" +
+            "    [--structure-declarations=<file>] (write used struct decls)\n" +
             "    [--version] (print version information)\n");
         System.exit(1);
     }
@@ -2314,6 +2323,7 @@ public class Cast2Verilog {
             theArgs.argExists("enable-system-verilog");
         final boolean generateIfDef = theArgs.argExists("ifdef");
         final boolean generateTb = theArgs.argExists("generate-testbench");
+
         final Cast2Verilog c2v = new Cast2Verilog(systemErrWriter, 
              systemErrWriter, systemErrWriter, params,
              Integer.parseInt(registerWidth), enableSystemVerilog,
@@ -2324,6 +2334,26 @@ public class Cast2Verilog {
             System.err.println("Errors found during translation; output file " +
                                "may be incorrect.");
             System.exit(1);
+        }
+
+        final String structDeclFile = theArgs.getArgValue("structure-declarations", null);
+        if (structDeclFile != null) {
+            final PrintWriter w = new PrintWriter(new FileWriter(structDeclFile));
+            final DeclarationProcessor proc = new DeclarationProcessor() {
+                public void process(final Declarator d)
+                    throws com.avlsi.csp.ast.VisitorException {
+                    w.println(d.getTypeFragment() + " " + d.getIdentifier().getIdentifier());
+                }
+            };
+            Set<String> seen = new HashSet<>();
+            for (StructureDeclaration decl : c2v.structDecls) {
+                if (seen.add(decl.getParseRange().fullString())) {
+                    w.println("structure " + decl.getName());
+                    proc.process(decl.getDeclarations());
+                    w.println();
+                }
+            }
+            w.close();
         }
 
         final String filelist = theArgs.getArgValue("file-list", null);
@@ -3262,9 +3292,11 @@ public class Cast2Verilog {
 
         final ArrayList<String> inputPorts = new ArrayList<>();
         walkPortList(cell.getCSPInfo(), false, new CollectInputPorts(inputPorts));
-        new Csp2Verilog(warningWriter, errorWriter, debugWriter, resetName,
-                        registerBitWidth, probFilter, enableSystemVerilog)
-        .convert(cell, bodyName, inputPorts, out);
+        final Csp2Verilog c2v =
+            new Csp2Verilog(warningWriter, errorWriter, debugWriter, resetName,
+                            registerBitWidth, probFilter, enableSystemVerilog);
+        c2v.convert(cell, bodyName, inputPorts, out);
+        structDecls.addAll(c2v.getStructureDeclaration());
 
         out.println("endmodule     // CSP body ");
         out.println();
