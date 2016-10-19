@@ -341,7 +341,7 @@ public class DirectiveTable {
         registerDirective(CSP, CYCLE_TIME, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CYCLE_TIME_IN, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CYCLE_TIME_OUT, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
-        registerDirective(CSP, DEFAULT_CYCLE_TIME, FLOAT_TYPE, new Float(18));
+        registerDirective(CSP, DEFAULT_CYCLE_TIME, FLOAT_TYPE, new Float(10));
         registerDirective(CSP, FB, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, FB_NEUTRAL, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, FB_VALID, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
