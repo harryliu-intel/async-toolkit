@@ -5,8 +5,8 @@ my $cell = $ARGV[0];
 my $file = $ARGV[1];
 my $radius = 0.2;
 my @boxes;
-if ($cell =~ /^core_neuro_neuron_NEURON/ || $cell =~ /^core_neuro_dumb_DUMB_NEURON/ ) {
-    @boxes = ("3.36:-478.8:420:-57.456", "30.24:-478.8:420:-3.192");
+if ($cell =~ /^core_neuro_neuron_v1_NEURON/ || $cell =~ /^core_neuro_neuron_NEURON/ ) {
+    @boxes = ("3.36:-689.472:31.92:-57.456", "31.92:-689.472:483.84:-3.192");
 } elsif ($cell =~ /^chip_n2_io_IO/ ) {
     @boxes = ("-50.4:-95.76:50.4:0");
 } elsif ($cell =~ /^chip_n2_test0_TEST0/ ) {
