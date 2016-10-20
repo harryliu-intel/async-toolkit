@@ -8,7 +8,7 @@
 ; Import a GDS file and rename all subcells to CAST conventions
 (defun ImportGDS (gdsFileName libName cellName
                               @key
-                              (prefix (strcat libName "."))
+                              (prefix nil)
                               (suffix ".0")
                               (action importPostProcessAction)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
@@ -40,6 +40,7 @@
       )
 
     ; copy cells to destination library
+    (unless prefix prefix = (strcat libName "."))
     (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix)
     cellName = (sprintf nil "%s%s%s" prefix cellName suffix)
 
