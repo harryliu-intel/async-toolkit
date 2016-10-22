@@ -230,7 +230,7 @@
          (when s>=5
            (when (mod row 2)==0
                  (while (dbFindAnyInstByName CV (sprintf nil "fill%d" n)) n++)
-                 (dbCreateInst CV tap (sprintf nil "fill%d" n++) x0*xa:y "R0")
+                 (dbCreateInst CV tap (sprintf nil "fill%d" n++) xl*xa:y "R0")
                  )
            s=s-5
            xl=xl+5
