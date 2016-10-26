@@ -61,13 +61,8 @@
   (RouteCell "core.noc.crossbar.datapath.TAIL_CONTROL.1000" 2)
   (RouteCell "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" 2)
   (RouteCell "core.io.fpio.FPIO.20000" 4)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20730-R.0" 3)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0" 3)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_65535-R.0" 3)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_20598-R.0h" 3)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_32-R.0h" 3)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_39357-R.0h" 3)
-  (RouteCell "lib.qdi.serial.funny_register.CONFIG_SHIFT_FIFO-L16_59185-R.0h" 3)
+  (RouteCell "lib.qdi.serial.funny_register.SHIFT_FIFO-L16_0-R.0" 3)
+  (RouteCell "lib.qdi.serial.funny_register.SHIFT_FIFO-L16_0-R.0h" 3)
 
   t
   )
