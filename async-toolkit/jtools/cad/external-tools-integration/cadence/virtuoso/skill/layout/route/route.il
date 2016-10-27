@@ -73,7 +73,7 @@
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
         excludeCellsFile
-        (statusNonDefault t) errorStr placed)
+        (statusNonDefault t) (errorStr "") placed)
 
     (printf "Export Start %s\n" (getCurrentTime))
 
@@ -167,7 +167,7 @@
                       (dbFlattenInst inst 32)
                       )
                      (t
-                      (printf "ERROR: %s has no abstract view\n" inst->cellName)
+                      errorStr = (strcat "No abstract view for " inst->cellName)
                       statusDef=nil
                       )
                      )
@@ -231,11 +231,10 @@
     (dbSave CV)
 
     ; summarize errors
-    errorStr = ""
     (unless statusVerilog errorStr = (strcat errorStr " Verilog"))
-    (unless statusGds errorStr = (strcat errorStr " GDS"))
-    (unless statusLef errorStr = (strcat errorStr " LEF"))
-    (unless statusDef errorStr = (strcat errorStr " DEF"))
+    (unless statusGds errorStr = (strcat " GDS Error. " errorStr))
+    (unless statusLef errorStr = (strcat " LEF Error. " errorStr))
+    (unless statusDef errorStr = (strcat " DEF Error. " errorStr))
     (unless statusNonDefault errorStr = (strcat errorStr " NonDefaultDEF"))
     (when errorStr!="" (error errorStr))
 
