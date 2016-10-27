@@ -29,7 +29,7 @@ defun( nrFlattenView ( CellView flattenViewName
 
   ;check if this cell is actually supposed to be routed
   ignore_routed=t
-  (when !(nrIsRoutedCell CellView->libName CellView->cellName CellView->viewName)
+  (when nil ;!(nrIsRoutedCell CellView->libName CellView->cellName CellView->viewName)
      ignore_routed = hiDisplayAppDBox(
         ?name 'RoutedErrorDialogBox
         ?dboxText "The current cell is not set to be routed.\nDo you want to proceed anyway?"
