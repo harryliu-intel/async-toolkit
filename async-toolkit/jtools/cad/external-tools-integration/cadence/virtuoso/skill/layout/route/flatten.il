@@ -231,7 +231,7 @@ useICV = t
       (foreach shape (setof s powerCV->shapes s->purpose=="block" && s->objType=="rect")
         (for n 2 TopMetal (when shape->lpp==MetalBlock[n] a=n))
         b = (MaxAlignedMetalLayer shape->bBox)
-        (when b<a (error "%s:%s not grid aligned\n" shape->layerName shape->purpose))
+        (when b<a (error "%s:%s not grid aligned at %f:%f\n" shape->layerName shape->purpose (caar shape->bBox) (cadar shape->bBox) ))
         b = (min b topMetal)
         top = (min b top)
         (when b>a || a==2 && b==2
