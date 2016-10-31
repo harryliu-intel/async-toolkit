@@ -61,9 +61,12 @@
   (RouteCell "core.noc.crossbar.datapath.TAIL_CONTROL.1000" 2)
   (RouteCell "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" 2)
   (RouteCell "core.io.fpio.FPIO.20000" 4)
-  (RouteCell "lib.qdi.serial.funny_register.SHIFT_FIFO-L16_0-R.0" 3)
-  (RouteCell "lib.qdi.serial.funny_register.SHIFT_FIFO-L16_0-R.0h" 3)
 
+  ; a bunch of SHIFT_FIFOs
+  (for w 8 16
+       (RouteCell (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0"  w) 3)
+       (RouteCell (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0h" w) 3)
+       )
   t
   )
 
