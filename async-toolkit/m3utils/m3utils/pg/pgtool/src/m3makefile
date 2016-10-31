@@ -1,0 +1,25 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+
+import ("csv")
+
+table ("RangeRef", "Range", "Refany")
+sorted_table ("RangeRef", "Range", "Refany")
+table ("TextRangeTbl", "Text", "SortedRangeRefTbl")
+
+table ("RangeText", "Range", "Text")
+sorted_table ("RangeText", "Range", "Text")
+
+interface ("SBAddress")
+
+module ("Range")
+list ("Range", "Range")
+table ("TextRangeList", "Text", "RangeList")
+
+table ("TextCard", "Text", "Cardinal")
+
+implementation ("Main")
+
+program ("genpg")
