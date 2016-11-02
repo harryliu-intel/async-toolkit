@@ -43,6 +43,7 @@
 
 (defun RouteLeaves ()
   ; new BD controllers
+  (RouteCell "lib.bd.source.bitgen.BDC_BG.0" 2)
   (RouteCell "lib.bd.standard.pipeline.CTRL.0" 2)
   (RouteCell "lib.bd.standard.pipeline.TOK_CTRL.0" 2)
   (RouteCell "lib.bd.standard.pipeline.ISOLATE_CTRL.0" 2)
@@ -134,7 +135,8 @@
 
 ; make nominal threshold new BD controllers from the UV1 threshold ones
 (defun MakeNominalControllers ()
-  (foreach cellName (list "lib.bd.standard.pipeline.CTRL.0"
+  (foreach cellName (list "lib.bd.source.bitgen.BDC_BG.0"
+                          "lib.bd.standard.pipeline.CTRL.0"
                           "lib.bd.standard.pipeline.TOK_CTRL.0"
                           "lib.bd.standard.pipeline.ISOLATE_CTRL.0"
                           "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"

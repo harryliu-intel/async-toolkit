@@ -23,6 +23,7 @@ spar_cell_list =
      "lib.bd.6T.bank.BD_SRAM_CTRL.0"
      "lib.bd.6T.bank.SRAM_BANK_CTRL.0"
      ; new BD_CONTROLLER (nominal thresold)
+     "lib.bd.source.bitgen.BDC_BG.0n"
      "lib.bd.metastable.arbiter.ARBITER_CTRL.0n"
      "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0n"
      "lib.bd.standard.merge.MERGE_CTRL-L2-R.0n"
@@ -36,6 +37,7 @@ spar_cell_list =
      "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0n"
      "lib.bd.standard.split.SPLIT_CTRL-L2-R.0n"
      ; new BD_CONTROLLER (UV1 thresold)
+     "lib.bd.source.bitgen.BDC_BG.0"
      "lib.bd.metastable.arbiter.ARBITER_CTRL.0"
      "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0"
      "lib.bd.standard.merge.MERGE_CTRL-L2-R.0"
