@@ -403,17 +403,22 @@ sub get_voltage {
     return exists($voltage{$name}) ? $voltage{$name} : $default_voltage{$type};
 }
 
-# drive power, ground, and reset
+# drive power, ground, and reset using special_net directives from CAST
 foreach my $type ('ground', 'power') {
+    unless (defined $special_net{$type}) {
+        die "missing ${type}_net directive";
+    }
     foreach my $name (sort @{$special_net{$type}}) {
         my $v = get_voltage($name, $type);
         print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $v)\n"
     }
 }
-foreach my $name (sort @{$special_net{'reset'}}) {
-    my $t = $start_time+$slope_time;
-    my $v = get_voltage($name, 'reset');
-    print RUN_FILE "V${name} ${name} 0 pwl (0 0 $start_time 0 $t $v)\n";
+if (defined $special_net{'reset'}) {
+    foreach my $name (sort @{$special_net{'reset'}}) {
+        my $t = $start_time+$slope_time;
+        my $v = get_voltage($name, 'reset');
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $start_time 0 $t $v)\n";
+    }
 }
 print RUN_FILE "\n";
 
