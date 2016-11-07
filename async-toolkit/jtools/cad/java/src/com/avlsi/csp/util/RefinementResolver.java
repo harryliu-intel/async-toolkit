@@ -440,7 +440,7 @@ public class RefinementResolver extends VisitorByCategory {
                 .map(def -> def.getSecond().getParseRange())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        if (defs.size() > 1) {
+        if (defs.size() > 1 && e != RESET_FUNCTION_CALL) {
             final String funcName;
             if (e.getFunctionExpression() instanceof IdentifierExpression) {
                 funcName = ((IdentifierExpression) e.getFunctionExpression())
