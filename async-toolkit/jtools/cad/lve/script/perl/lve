@@ -822,6 +822,7 @@ foreach my $option (@options) {
     if (ref ($option) ne "ARRAY") {
         my ($cell,$envs,$nodes) = split(":",$option);
         my ($basecell,$plusminus) = partition_fqcnminus($cell);
+        next if exists $celllock{$basecell};
         my $celldir=$basecell;
         $celldir =~ s/\./\//g;
         my $scelldir="$selected_output_dir/$celldir";
@@ -861,7 +862,7 @@ foreach my $option (@options) {
             $unlocked=0;
         }
         push @cells,$basecell if $unlocked;
-        $celllock{$basecell}=1 if ! $unlocked;
+        $celllock{$basecell}=!$unlocked;
     }
 }
 &reName($rename,"cast","cadence","cell",\%cadenceName,\@cells);
