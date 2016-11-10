@@ -6,6 +6,14 @@
   t
   )
 
+; draw inplace pins for VDDIO
+(defun DrawPinsVDDIO (@key (CV (geGetEditCellView)))
+  (foreach inst CV->instances
+           (MidPinsInheritPin CV inst "VDDIO" "VDDIO")
+           )
+  t
+  )
+
 ; Do a bunch of crap to regenerate correct pins on Proteus layout view
 ; Must provide a reference cell to copy pins from
 (defun FixProteusPins (srcCellName @key (CV (geGetEditCellView)))
