@@ -10,6 +10,7 @@
                               @key
                               (prefix nil)
                               (suffix ".0")
+                              (mapCellName nil) ; lambda on cellName to choose libName/cellName
                               (action importPostProcessAction)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
                               )
@@ -26,9 +27,6 @@
     (unless status (error "strmin failed\n"))
     (ddUpdateLibList)
 
-    ; create destination library if necessary
-    (UpdateFloorplanCreateLib libName)
-
     ; open imported top CV
     CV = (dbOpenCellViewByType "import_gds_temp" cellName "layout")
     (unless CV (error "unable to open import_gds_temp %s layout\n" cellName))
@@ -41,15 +39,13 @@
 
     ; copy cells to destination library
     (unless prefix prefix = (strcat libName "."))
-    (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix)
-    cellName = (sprintf nil "%s%s%s" prefix cellName suffix)
+    CV = (CopyToNewLib libName ?CV CV ?prefix prefix ?suffix suffix ?mapCellName mapCellName)
 
     ; delete import_gds_temp library
     (ddDeleteObj (ddGetObj "import_gds_temp"))
     (shell "rm -rf import_gds_temp")
 
     ; FindSubcells to recursively rename stuff
-    CV = (dbOpenCellViewByType libName cellName "layout" nil "a")
     (when action (FindSubcells ?action action ?CV CV))
 
     ; more processing of top level cell
@@ -95,27 +91,41 @@ importPostProcessAction =
     t
     )
 
-; Recursively change libName of subcells.  Recurses only to instances
-; with the same libName as the parent to avoid renaming technology
-; cells like vias.  Adds optional prefix and suffix to cellNames.
+; Recursively copy a cell hierarchy to a new library.  Recurses only
+; to instances with the same libName as the parent to avoid renaming
+; technology cells like vias.  Adds optional prefix and suffix to
+; cellNames.  Or use lambda function mapCellName to map the cellName to
+; a new libName and cellName.
 (defun CopyToNewLib (libName @key (CV (geGetEditCellView))
                              (visited (makeTable "visited" nil))
                              (prefix "")
                              (suffix "")
+                             (mapCellName nil) ; lambda on cellName to return (list libName cellName)
                              )
-  (let (newCV)
+  (let (newCV lib_cell libN cellN)
     newCV = visited[CV]
     (unless newCV
-      (printf "CopyToNewLib: %s %s %s\n" CV->libName CV->cellName CV->viewName)
-      newCV = (betterCopyCellView CV libName (strcat prefix CV->cellName suffix)
-                                  CV->viewName nil nil t)
+      (cond (mapCellName
+             lib_cell = (apply mapCellName (list CV->cellName))
+             libN  = (car  lib_cell)
+             cellN = (cadr lib_cell)
+             )
+            (t
+             libN  = libName
+             cellN = (strcat prefix CV->cellName suffix)
+             )
+            )
+      (printf "CopyToNewLib: %s %s %s\n" libN cellN CV->viewName)
+      (UpdateFloorplanCreateLib libN) ; create destination library if necessary
+      newCV = (betterCopyCellView CV libN cellN CV->viewName nil nil t)
       (when newCV
         visited[CV] = newCV
         (foreach inst (setof x newCV->instances x->libName==CV->libName)
                  inst->master = (CopyToNewLib libName
                                               ?CV inst->master ?visited visited
                                               ?prefix prefix
-                                              ?suffix suffix)
+                                              ?suffix suffix
+                                              ?mapCellName mapCellName)
                  )
         (dbSave newCV)
         )
