@@ -13,22 +13,21 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Comparator;
 
-public class SortingIterator implements Iterator {
+public class SortingIterator<T> implements Iterator<T> {
 
-    private final Iterator i;
+    private final Iterator<T> i;
 
     /**
      * @param i  The iterator whose next method should be transformed
-     * @param p  The comparator to sort with
+     * @param c  The comparator to sort with
      **/
-    public SortingIterator(final Iterator i, final Comparator c) {
-        final List list = new ArrayList();
+    public SortingIterator(final Iterator<T> i, final Comparator<T> c) {
+        final List<T> list = new ArrayList<>();
         for (; i.hasNext(); ) {
             list.add(i.next());
         }
-        final Object[] array = list.toArray();
-        Arrays.sort(array,c);
-        this.i = Arrays.asList(array).iterator();
+        list.sort(c);
+        this.i = list.iterator();
     }
 
     public SortingIterator(final Iterator i) {
@@ -39,7 +38,7 @@ public class SortingIterator implements Iterator {
         return i.hasNext();
     }
 
-    public Object next() {
+    public T next() {
         return i.next();
     }
 
