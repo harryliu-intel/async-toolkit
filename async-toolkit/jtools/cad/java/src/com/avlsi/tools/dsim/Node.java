@@ -132,6 +132,16 @@ public final class Node implements Event, Waitable {
     private static final byte GENERATION_BIT = 0x10;
 
     private byte flags = 0;
+
+    private boolean testFlag(final byte flagBit) { return (flags & flagBit) != 0; }
+    private void setFlag(final boolean b, final byte flagBit) {
+        if (b) {
+            flags |= flagBit;
+        } else {
+            flags &= ~flagBit;
+        }
+    }
+
     // /** linkage with aspice ... is this nodes value controlled by */
     // private boolean hasDigitalFanin;
 
@@ -206,24 +216,12 @@ public final class Node implements Event, Waitable {
     /** Returns the next time that we should fire. **/
     public long getTime() { return eventTime; }
     /** Returns whether we should fire at a random time. **/
-    public boolean isRandom() { return (flags & RANDOM_BIT) != 0; }
+    public boolean isRandom() { return testFlag(RANDOM_BIT); }
     /** sets whether we should fire at a random time. **/
-    public void setRandom(boolean b) {
-        if (b) {
-            flags |= RANDOM_BIT;
-        } else {
-            flags &= ~RANDOM_BIT;
-        }
-    }
+    public void setRandom(boolean b) { setFlag(b, RANDOM_BIT); }
 
-    public boolean getGeneration() { return (flags & GENERATION_BIT) != 0; }
-    public void setGeneration(boolean b) {
-        if (b) {
-            flags |= GENERATION_BIT;
-        } else {
-            flags &= ~GENERATION_BIT;
-        }
-    }
+    public boolean getGeneration() { return testFlag(GENERATION_BIT); }
+    public void setGeneration(boolean b) { setFlag(b, GENERATION_BIT); }
 
     /**
      * Add another rule we might trigger.
@@ -288,28 +286,21 @@ public final class Node implements Event, Waitable {
     }
 
     /** Do we stop the simulation on change? **/
-    public boolean getBreakpoint() { return (flags & BREAKPT_BIT) != 0; }
+    public boolean getBreakpoint() { return testFlag(BREAKPT_BIT); }
 
     /** Sets whether we stop the simulation on change. **/
-    public void setBreakpoint(boolean b) {
-        if (b) {
-            flags |= BREAKPT_BIT;
-        } else {
-            flags &= ~BREAKPT_BIT;
-        }
-    }
+    public void setBreakpoint(boolean b) { setFlag(b, BREAKPT_BIT); }
 
     /** Do we care if node goes unstable (per pending direction)? **/
     public boolean isUnstable(int pending) {
-        if      (pending==VALUE_0) return (flags & UNSTAB_DN_BIT) != 0;
-        else if (pending==VALUE_1) return (flags & UNSTAB_UP_BIT) != 0;
+        if      (pending==VALUE_0) return testFlag(UNSTAB_DN_BIT);
+        else if (pending==VALUE_1) return testFlag(UNSTAB_UP_BIT);
         else return false;
     }
 
     /** Sets whether we care if node goes unstable (per direction). **/
     public void setUnstable(boolean updir) {
-        if (updir) flags |= UNSTAB_UP_BIT;
-        else       flags |= UNSTAB_DN_BIT;
+        setFlag(true, updir ? UNSTAB_UP_BIT : UNSTAB_DN_BIT);
     }
 
     /** Returns the current number of transitions this node has undergone. **/
