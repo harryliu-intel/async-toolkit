@@ -137,6 +137,7 @@ import com.avlsi.util.cmdlineargs.CommandLineArgs;
 import com.avlsi.util.container.AliasedMap;
 import com.avlsi.util.container.AliasedSet;
 import com.avlsi.util.container.CollectionUtils;
+import com.avlsi.util.container.FilteringIterator;
 import com.avlsi.util.container.IterableIterator;
 import com.avlsi.util.container.Map2SetAdapter;
 import com.avlsi.util.container.MappingIterator;
@@ -4550,6 +4551,14 @@ public class DSim implements NodeWatcher {
                 new CellDelay(cell, localNodes, prsSet.getProductionRules(),
                               instData.getDelayBias(null), true);
 
+            final Set<HierName> initOnReset = (Set<HierName>)
+                DirectiveUtils.canonize(localNodes,
+                    DirectiveUtils.getExplicitTrues(
+                        DirectiveUtils.getPrsDirective(
+                            cell,
+                            DirectiveConstants.INITIALIZE_ON_RESET,
+                            DirectiveConstants.NODE_TYPE)));
+
             final Node localVdd, localGND;
             try {
                 localVdd = findNode(HierName.makeHierName(prefix, "Vdd"));
@@ -4605,6 +4614,7 @@ public class DSim implements NodeWatcher {
                 final boolean isochronic = pr.isIsochronic();
                 final Node target = lookupNode(h);
 
+                target.setInit(initOnReset.contains(canonTarget));
                 target.setSlew(defaultSlew);
 
                 // mark unstable nodes
@@ -5800,6 +5810,28 @@ public class DSim implements NodeWatcher {
                 n.foreachRule(ruleFunc);
                 n.setGeneration(!gen);
             }
+        }
+    }
+
+    /**
+     * Returns an iterator over nodes.  Each node is visited only once, even if
+     * it has multiple aliases.
+     **/
+    public Iterator<Node> getNodes() {
+        if (nodes.isEmpty()) {
+            return Collections.<Node>emptyList().iterator();
+        } else {
+            final boolean gen = nodes.values().iterator().next().getGeneration();
+            return new FilteringIterator<Node>(
+                    nodes.values().iterator(),
+                    n -> {
+                        if (n.getGeneration() == gen) {
+                            n.setGeneration(!gen);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    });
         }
     }
 

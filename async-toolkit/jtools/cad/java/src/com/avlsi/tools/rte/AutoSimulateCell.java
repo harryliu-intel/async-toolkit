@@ -10,6 +10,7 @@ package com.avlsi.tools.rte;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.*;
 import java.util.zip.*;
 import com.avlsi.util.htmlWriter.*;
 import com.avlsi.cell.CellInterface;
@@ -168,6 +169,7 @@ public class AutoSimulateCell  {
     private int dataSet;
 
     private final boolean ruleCoverage;
+    private Random rand = new Random(1);
     
     /** Constructor **/
     public AutoSimulateCell(String modulename, String cellType, 
@@ -443,7 +445,7 @@ public class AutoSimulateCell  {
         printHtmlStdout("[INFO] DSim Random on (" +randstr +").", true);
         
         DSimUtil dutil = new DSimUtil();
-        dutil.resetDSim(DSimUtil.STANDARD_RESET);
+        dutil.resetDSim(DSimUtil.STANDARD_RESET, getResetInit());
 
         boolean unstab = !sim.getNodesWithValue(Node.VALUE_U).isEmpty();
         if(unstab)
@@ -452,6 +454,10 @@ public class AutoSimulateCell  {
         else
             printHtmlStdout("[INFO] Done with Reset",true);
         return unstab;
+    }
+
+    private IntSupplier getResetInit() {
+        return () -> rand.nextBoolean() ? 1 : 0;
     }
     
     private Float useDef(final Float val, final Float def) {
@@ -1221,6 +1227,7 @@ public class AutoSimulateCell  {
     public void reseed(){
         dsim_rseed = System.currentTimeMillis();
         sim.setRandomSeed(dsim_rseed);
+        rand.setSeed(dsim_rseed);
         printHtmlStdout("[INFO] Setting DSim random seed to " +dsim_rseed, 
                         true);
     }
@@ -1298,7 +1305,8 @@ public class AutoSimulateCell  {
                 done = dutil.resetStressTest(this.resetStresstests,
                                              this.resetStresscycles,
                                              getSimName(cycle_node).toString(),
-                                             DSimUtil.STANDARD_RESET); 
+                                             DSimUtil.STANDARD_RESET,
+                                             getResetInit()); 
                 error |= !done;
                 if(!done){
                     printHtmlStdout("[FAIL] Reset Stress Test Appears to "

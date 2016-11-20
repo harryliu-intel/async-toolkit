@@ -130,6 +130,7 @@ public final class Node implements Event, Waitable {
     private static final byte UNSTAB_UP_BIT = 0x4;
     private static final byte RANDOM_BIT = 0x8;
     private static final byte GENERATION_BIT = 0x10;
+    private static final byte INIT_BIT = 0x20;
 
     private byte flags = 0;
 
@@ -222,6 +223,9 @@ public final class Node implements Event, Waitable {
 
     public boolean getGeneration() { return testFlag(GENERATION_BIT); }
     public void setGeneration(boolean b) { setFlag(b, GENERATION_BIT); }
+
+    public boolean getInit() { return testFlag(INIT_BIT); }
+    public void setInit(boolean b) { setFlag(b, INIT_BIT); }
 
     /**
      * Add another rule we might trigger.

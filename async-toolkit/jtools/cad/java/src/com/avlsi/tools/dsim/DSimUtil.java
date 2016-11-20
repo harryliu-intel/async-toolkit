@@ -12,6 +12,9 @@ import com.avlsi.file.common.HierName;
 import com.avlsi.cell.CellUtils;
 import com.avlsi.cell.CellInterface;
 import com.avlsi.util.functions.BinaryPredicate;
+import com.avlsi.util.container.IterableIterator;
+import com.avlsi.util.container.FilteringIterator;
+import com.avlsi.util.container.SortingIterator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +24,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.function.IntSupplier;
 
 /**
  * Static DSim utility functions.
@@ -90,7 +94,7 @@ public class DSimUtil {
      * @throws IllegalArgumentException
      * @throws IllegalStateException
      **/
-    public void resetDSim(int protocol) {
+    public void resetDSim(int protocol, IntSupplier init) {
         // Store initial state
         int     random_state = dsim.getRandom();
         boolean warn_state   = dsim.getWarn();
@@ -120,6 +124,7 @@ public class DSimUtil {
             // Reset and cycle
             //_Reset.setValueAndEnqueueDependents(Node.VALUE_0);
             resetNode.scheduleImmediate(Node.VALUE_0);
+            initResetNodes(init);
             dsim.cycle(-1);
 
             // Turn on error checking & reporting, then exit reset
@@ -141,6 +146,7 @@ public class DSimUtil {
                 //_SReset.setValueAndEnqueueDependents(Node.VALUE_0);
                 _PReset.scheduleImmediate(Node.VALUE_0);
                 _SReset.scheduleImmediate(Node.VALUE_0);
+                initResetNodes(init);
                 dsim.cycle(-1);
 
                 // Turn on error checking & reporting, then raise _PReset
@@ -213,7 +219,8 @@ public class DSimUtil {
     public boolean resetStressTest(int numTests, 
 				   int numCycles, 
 				   String cycleNode,
-				   int resetProtocol) {
+				   int resetProtocol,
+                   IntSupplier init) {
 	boolean done = true;
 	int cnode_tcounts;
         Node cnode = dsim.findNode(cycleNode);
@@ -227,7 +234,7 @@ public class DSimUtil {
         }
 	
         for (int i=0; i<numTests; i++) {
-            resetDSim(resetProtocol);
+            resetDSim(resetProtocol, init);
 	    cnode_tcounts = cnode.getTCount();
             dsim.cycle(cnode,2*numCycles);
             if (cnode.getTCount()-2*numCycles < cnode_tcounts) {
@@ -237,6 +244,16 @@ public class DSimUtil {
             }
         }
 	return done;
+    }
+
+    public void initResetNodes(final IntSupplier s) {
+        for (Node n :
+                new IterableIterator<Node>(
+                    new SortingIterator<Node>(
+                        new FilteringIterator<Node>(
+                            dsim.getNodes(), n -> n.getInit())))) {
+            n.setValueAndEnqueueDependents((byte) s.getAsInt());
+        }
     }
 
     public void resetInputNodes(final CellInterface cell,

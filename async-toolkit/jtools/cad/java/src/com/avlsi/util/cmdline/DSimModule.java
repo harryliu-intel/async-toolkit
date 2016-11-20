@@ -40,12 +40,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.Enumeration;
+import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -91,6 +94,9 @@ import com.avlsi.file.common.InvalidHierNameException;
 import com.avlsi.io.FileSearchPath;
 import com.avlsi.io.SearchPath;
 
+import com.avlsi.util.container.CollectionUtils;
+import com.avlsi.util.container.FilteringIterator;
+import com.avlsi.util.container.IterableIterator;
 import com.avlsi.util.container.NaturalOrderComparator;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.container.StringContainerIterator;
@@ -109,9 +115,6 @@ import com.avlsi.util.exception.ExceptionUtils;
 import com.avlsi.util.text.StringUtil;
 import com.avlsi.util.text.PrintfFormat;
 import com.avlsi.util.text.NaturalStringComparator;
-import com.avlsi.util.container.CollectionUtils;
-import com.avlsi.util.container.FilteringIterator;
-import com.avlsi.util.container.IterableIterator;
 import com.avlsi.util.functions.BinaryAction;
 import com.avlsi.util.functions.BinaryPredicate;
 import com.avlsi.util.functions.NumericPredicate;
@@ -147,6 +150,31 @@ public class DSimModule extends CmdLine {
 
     /** Number of ASTA threads **/
     int astaThreads = 2;
+
+    /** Random source for initialize_reset_nodes **/
+    Random rand = new Random(1);
+
+    /** Reset method for initialize_reset_nodes **/
+    public enum ResetInitMethod implements Function<Random,IntSupplier> {
+        ZERO {
+            public IntSupplier apply(final Random r) {
+                return () -> 0;
+            }
+        },
+        ONE {
+            public IntSupplier apply(final Random r) {
+                return () -> 1;
+            }
+        },
+        RANDOM {
+            public IntSupplier apply(final Random r) {
+                return () -> r.nextBoolean() ? 1 : 0;
+            }
+        };
+
+        public abstract IntSupplier apply(Random r);
+    }
+    ResetInitMethod initMethod = ResetInitMethod.RANDOM;
 
     private RunStaticTiming sta = null;
     private RunSlewChecks slint = null;
@@ -2308,6 +2336,7 @@ public class DSimModule extends CmdLine {
                         try {
                             long seed = validateLongArg(args, 0, true);
                             dsim.setRandomSeed(seed);
+                            rand.setSeed(seed);
                         } catch (Exception e) { 
                             System.out.println("Usage: "+usage);
                         }
@@ -2328,6 +2357,7 @@ public class DSimModule extends CmdLine {
                         try {
                             long seed = validateLongArg(args, 0, true);
                             dsim.setRandomSeed(seed);
+                            rand.setSeed(seed);
                         } catch (Exception e) { 
                             System.out.println("Usage: "+usage);
                         }
@@ -2348,6 +2378,7 @@ public class DSimModule extends CmdLine {
                         try {
                             long seed = validateLongArg(args, 0, true);
                             dsim.setRandomSeed(seed);
+                            rand.setSeed(seed);
                         } catch (Exception e) { 
                             System.out.println("Usage: "+usage);
                         }
@@ -2529,7 +2560,7 @@ public class DSimModule extends CmdLine {
                 }
                 try {
                     if (utils == null) utils = new DSimUtil();
-                    utils.resetDSim(protocol);
+                    utils.resetDSim(protocol, initMethod.apply(rand));
                 }
                 catch (Exception e) {
                     System.out.println("Error: "+e.getMessage());
@@ -2711,7 +2742,8 @@ public class DSimModule extends CmdLine {
                 try {
                     if (utils == null) utils = new DSimUtil();
                     boolean done = 
-			utils.resetStressTest(numTests,numCycles,args[2],protocol);
+			utils.resetStressTest(numTests,numCycles,args[2],protocol,
+                                              initMethod.apply(rand));
 		    if(!done){
 			System.out.println("Reset Stress Test Deadlocked");	
 		    }
@@ -3961,6 +3993,48 @@ public class DSimModule extends CmdLine {
                             }
                         }
                     );
+                }
+            }
+        },
+        new CmdCommand("initialize_reset_nodes",
+            "initialize_reset_nodes [-i] <0|1|random>",
+            "Set how initialize_on_reset nodes will be initialized",
+            "Set how nodes annotated with the initialize_on_reset directive will be\n" +
+            "initialized at reset.  Optionally use -i to set nodes immediately.  Use\n" +
+            "norandom, timed_random, random to set random seed.") {
+            public void execute(String args[]) { 
+                if (checkDSim()) {
+                    if (args == null || args.length < 1) {
+                        System.out.println("Error: Incorrect number of " +
+                                           "arguments.");
+                        return;
+                    }
+
+                    boolean immediate = false;
+                    String method = null;
+                    if (args[0].equals("-i")) {
+                        immediate = true;
+                        if (args.length > 1) method = args[1];
+                    } else {
+                        method = args[0];
+                    }
+
+                    if (method != null) {
+                        if (method.equals("0")) {
+                            initMethod = ResetInitMethod.ZERO;
+                        } else if (method.equals("1")) {
+                            initMethod = ResetInitMethod.ONE;
+                        } else if (method.equals("random")) {
+                            initMethod = ResetInitMethod.RANDOM;
+                        } else {
+                            System.out.println("Error: 0, 1, or random expected.");
+                            return;
+                        }
+                    }
+
+                    if (immediate) {
+                        utils.initResetNodes(initMethod.apply(rand));
+                    }
                 }
             }
         }
