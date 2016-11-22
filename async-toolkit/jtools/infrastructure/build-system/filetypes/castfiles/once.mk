@@ -186,6 +186,12 @@ MERGE_ALINT_OUT := merge_alint_out
 MAKE_ASTA_IN := make_asta_in
 MAKE_SLINT_IN := make_slint_in
 
+ifeq ($(DO_CONVERT_TRACE),"1")
+CONVERT_TRACE := convert_trace --translate
+else
+CONVERT_TRACE := echo SKIP: convert_trace --translate
+endif
+
 # DEFINE JAVA TOOLS (with memory allocation)
 JFLAT         := jflat $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
 JAUTO         := jauto $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS)
@@ -1897,12 +1903,12 @@ $(ROOT_TARGET_DIR)/%/drc.err: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' &> '$(@D)/drc.log' ; \
 	  /bin/rm -f '$@'; \
 	  for runset in  `echo "$(DRC_FLOW)" | sed -e 's/,/ /g'`; do \
-      echo "RUNSet is $(runset)"; \
+            echo "RUNSet is $(runset)"; \
 	    if [ -s "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" ]; then \
-    	   echo "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" ; \
-	       awk '/violation.* found/ {print r,$$(NF-2),$$(NF-1),$$NF} /:/ {r=$$1}' "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" >> '$@' ; \
-    	   cp -p "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" '$(@D)'/drc.$$runset.layout_errs ; \
-    	fi \
+	      echo "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" ; \
+	      awk '/violation.* found/ {print r,$$(NF-2),$$(NF-1),$$NF} /:/ {r=$$1}' "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" >> '$@' ; \
+	      cp -p "$$drc_dir/$$runset/$$topcell.LAYOUT_ERRORS" '$(@D)'/drc.$$runset.layout_errs ; \
+	    fi \
 	  done \
 	&& cd / && ( [[ $(KEEP_DRC_DIR) == 1 ]] || rm -rf "$$drc_dir" ); \
 	task=drc && $(CASTFILES_DEQUEUE_TASK)

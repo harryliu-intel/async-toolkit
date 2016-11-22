@@ -490,6 +490,7 @@ my $taskLock  = 0;
 my $bit64 = 0;
 my $remote = "";
 my $skip_sub_lve = 1;
+my $do_convert_trace = 1;
 my $big_lef = 1;
 my $star_rc=1;
 my $simplex=0;
@@ -1410,6 +1411,7 @@ DBPREFIX                         := $dbprefix
 REDONODES                        := $redonodes
 ENV_CAP_LOAD                     := $env_cap_load
 POWER_GROUND_RESET_ARGS          := $power_ground_reset_args
+DO_CONVERT_TRACE                 := $do_convert_trace
 EOF
 }
 
@@ -2664,6 +2666,7 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --probeTopPorts=[$probeTopPorts]            (save waveforms for ports of top cell)
     --probePorts=[$probePorts]               (save waveforms for ports of all cells)
     --probeGates=[$probeGates]               (save waveforms for any node that gates a transistor)
+    --convertTrace=[$do_convert_trace]  (convert waveforms to aplot format)
 
   SPICE and Aspice shared options:
     --env-cap-load=[$env_cap_load] (put additional load in Farads on ports)
@@ -3154,6 +3157,7 @@ sub processOption {
         elsif ($key eq "probeTopPorts")     { $probeTopPorts = $value; }
         elsif ($key eq "probePorts")        { $probePorts = $value; }
         elsif ($key eq "probeGates")        { $probeGates = $value; }
+        elsif ($key eq "convertTrace")      { $do_convert_trace = $value; }
 
         # aspice options
         elsif ($key eq "tech-asp")          { $tech_asp = canonicalizePath($value); check_path($value); }

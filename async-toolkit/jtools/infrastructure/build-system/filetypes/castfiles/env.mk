@@ -1532,7 +1532,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.names $(SPICE_DIR)/hsim/$(ENV)/%/hsim.trace : $(
 	$(CASTFILES_ENQUEUE_TASK)
 	(cd '$(@D)'; \
 	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
-	 $(EXEC_LOW_PACKAGE) convert_trace --translate --fsdb hsim.fsdb hsim ;\
+	 $(EXEC_LOW_PACKAGE) $(CONVERT_TRACE) --fsdb hsim.fsdb hsim ;\
 	)
 	$(CASTFILES_DEQUEUE_TASK)
 
@@ -1607,7 +1607,7 @@ $(SPICE_DIR)/xa/$(ENV)/%/xa.names $(SPICE_DIR)/xa/$(ENV)/%/xa.trace : $(SPICE_DI
 	$(CASTFILES_ENQUEUE_TASK)
 	(cd '$(@D)'; \
 	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
-	 $(EXEC_LOW_PACKAGE) convert_trace --translate --fsdb xa.fsdb xa ;\
+	 $(EXEC_LOW_PACKAGE) $(CONVERT_TRACE) --fsdb xa.fsdb xa ;\
 	)
 	$(CASTFILES_DEQUEUE_TASK)
 
@@ -1681,7 +1681,7 @@ $(SPICE_DIR)/hspice/$(ENV)/%/hspice.names $(SPICE_DIR)/hspice/$(ENV)/%/hspice.tr
 	$(CASTFILES_ENQUEUE_TASK)
 	(cd '$(@D)'; \
 	 QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_convert_trace' \
-	 $(EXEC_LOW_PACKAGE) convert_trace --translate --csdf hspice.csdf hspice ;\
+	 $(EXEC_LOW_PACKAGE) $(CONVERT_TRACE) --csdf hspice.csdf hspice ;\
 	)
 	$(CASTFILES_DEQUEUE_TASK)
 
