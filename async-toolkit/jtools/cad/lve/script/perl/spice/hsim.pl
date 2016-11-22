@@ -439,7 +439,7 @@ print RUN_FILE "\n";
 
 ## simulate
 print RUN_FILE "* Simulate\n";
-print RUN_FILE ".tran 1ps $time $monte_carlo\n\n";
+print RUN_FILE ".tran 1ps $time UIC $monte_carlo\n\n";
 
 ### measure frequency and slew
 foreach $node (@measure_nodes) {
