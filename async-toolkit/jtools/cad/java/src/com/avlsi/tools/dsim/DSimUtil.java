@@ -18,6 +18,7 @@ import com.avlsi.util.container.SortingIterator;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Map;
@@ -251,7 +252,12 @@ public class DSimUtil {
                 new IterableIterator<Node>(
                     new SortingIterator<Node>(
                         new FilteringIterator<Node>(
-                            dsim.getNodes(), n -> n.getInit())))) {
+                            dsim.getNodes(), n -> n.getInit()),
+                        new Comparator<Node>() {
+                            public int compare(Node a, Node b) {
+                                return a.getName().compareTo(b.getName());
+                            }
+                        }))) {
             n.setValueAndEnqueueDependents((byte) s.getAsInt());
         }
     }
