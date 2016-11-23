@@ -37,6 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
@@ -4551,13 +4552,12 @@ public class DSim implements NodeWatcher {
                 new CellDelay(cell, localNodes, prsSet.getProductionRules(),
                               instData.getDelayBias(null), true);
 
-            final Set<HierName> initOnReset = (Set<HierName>)
-                DirectiveUtils.canonize(localNodes,
-                    DirectiveUtils.getExplicitTrues(
-                        DirectiveUtils.getPrsDirective(
-                            cell,
-                            DirectiveConstants.INITIALIZE_ON_RESET,
-                            DirectiveConstants.NODE_TYPE)));
+            final Map<HierName,Integer> initOnReset = (Map<HierName,Integer>)
+                DirectiveUtils.canonizeKey(localNodes,
+                    DirectiveUtils.getPrsDirective(
+                        cell,
+                        DirectiveConstants.INITIALIZE_ON_RESET,
+                        DirectiveConstants.NODE_TYPE));
 
             final Node localVdd, localGND;
             try {
@@ -4614,7 +4614,11 @@ public class DSim implements NodeWatcher {
                 final boolean isochronic = pr.isIsochronic();
                 final Node target = lookupNode(h);
 
-                target.setInit(initOnReset.contains(canonTarget));
+                Optional.ofNullable(initOnReset.get(canonTarget))
+                        .ifPresent(v -> target.setInit(
+                                    v == 0 ? Node.Init.ZERO
+                                           : v == 1 ? Node.Init.ONE
+                                                    : Node.Init.RANDOM));
                 target.setSlew(defaultSlew);
 
                 // mark unstable nodes

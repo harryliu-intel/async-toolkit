@@ -252,13 +252,25 @@ public class DSimUtil {
                 new IterableIterator<Node>(
                     new SortingIterator<Node>(
                         new FilteringIterator<Node>(
-                            dsim.getNodes(), n -> n.getInit()),
+                            dsim.getNodes(),
+                            n -> n.getInit() != Node.Init.UNDEFINED),
                         new Comparator<Node>() {
                             public int compare(Node a, Node b) {
                                 return a.getName().compareTo(b.getName());
                             }
                         }))) {
-            n.setValueAndEnqueueDependents((byte) s.getAsInt());
+            final byte init;
+            switch (n.getInit()) {
+              case ZERO:
+                init = 0; break;
+              case ONE:
+                init = 1; break;
+              case RANDOM:
+                init = (byte) s.getAsInt(); break;
+              default:
+                throw new AssertionError("init value = " + n.getInit());
+            }
+            n.setValueAndEnqueueDependents(init);
         }
     }
 

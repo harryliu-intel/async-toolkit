@@ -130,17 +130,50 @@ public final class Node implements Event, Waitable {
     private static final byte UNSTAB_UP_BIT = 0x4;
     private static final byte RANDOM_BIT = 0x8;
     private static final byte GENERATION_BIT = 0x10;
-    private static final byte INIT_BIT = 0x20;
+    private static final byte INIT_0_BIT = 0x20;
+    private static final byte INIT_1_BIT = 0x40;
+
+    public enum Init {
+        UNDEFINED(0),
+        ZERO(1),
+        ONE(2),
+        RANDOM(3);
+
+        private final int value;
+        private Init(int value) {
+            this.value = value;
+        }
+        public byte toFlags(final byte flags) {
+            byte result = flags;
+            result = setFlag(result, (value & 1) != 0, INIT_0_BIT);
+            result = setFlag(result, (value & 2) != 0, INIT_1_BIT);
+            return result;
+        }
+        public static Init fromFlags(final byte flags) {
+            boolean init0 = testFlag(flags, INIT_0_BIT);
+            boolean init1 = testFlag(flags, INIT_1_BIT);
+            if (init1) {
+                return init0 ? RANDOM : ONE;
+            } else {
+                return init0 ? ZERO : UNDEFINED;
+            }
+        }
+    }
 
     private byte flags = 0;
 
-    private boolean testFlag(final byte flagBit) { return (flags & flagBit) != 0; }
+    private static boolean testFlag(final byte flags, final byte flagBit) {
+        return (flags & flagBit) != 0;
+    }
+    private boolean testFlag(final byte flagBit) {
+        return testFlag(flags, flagBit);
+    }
+    private static byte setFlag(final byte flags, final boolean b,
+                                final byte flagBit) {
+        return (byte) (b ? (flags | flagBit) : (flags & ~flagBit));
+    }
     private void setFlag(final boolean b, final byte flagBit) {
-        if (b) {
-            flags |= flagBit;
-        } else {
-            flags &= ~flagBit;
-        }
+        flags = setFlag(flags, b, flagBit);
     }
 
     // /** linkage with aspice ... is this nodes value controlled by */
@@ -224,8 +257,8 @@ public final class Node implements Event, Waitable {
     public boolean getGeneration() { return testFlag(GENERATION_BIT); }
     public void setGeneration(boolean b) { setFlag(b, GENERATION_BIT); }
 
-    public boolean getInit() { return testFlag(INIT_BIT); }
-    public void setInit(boolean b) { setFlag(b, INIT_BIT); }
+    public Init getInit() { return Init.fromFlags(flags); }
+    public void setInit(Init init) { flags = init.toFlags(flags); }
 
     /**
      * Add another rule we might trigger.
