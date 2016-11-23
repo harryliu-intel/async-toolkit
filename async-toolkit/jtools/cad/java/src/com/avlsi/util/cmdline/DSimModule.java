@@ -191,6 +191,11 @@ public class DSimModule extends CmdLine {
     /** Previous exception stack trace.  (See bug 1843) */
     private String lastStackTrace = "No previous exception!";
 
+    private DSimUtil getUtils() {
+        if (utils == null) utils = new DSimUtil();
+        return utils;
+    }
+
     public DSimModule() {
         super(false);
         // utils = new DSimUtil();
@@ -2208,7 +2213,7 @@ public class DSimModule extends CmdLine {
                 }
             }
             public void postExecute(String args[]) {
-                if (utils != null) utils.printMeasureStats(resetStats);
+                getUtils().printMeasureStats(resetStats);
                 if (dsim.useDelayMode(DSim.MEASURED_TAU)) {
                     final float[] slewStat = Node.getSlewStat();
                     System.out.println("Slew rate over all rules: (" +
@@ -2466,13 +2471,12 @@ public class DSimModule extends CmdLine {
                         return;
                     }
 
-                    if (utils == null) utils = new DSimUtil();
                     if (args.length >= 1 &&
                         args[args.length - 1].equals("off")) {
                         end = args.length - 1;
                         action = new NodeIterator() {
                             public void processNode(HierName name, Node node) {
-                                if (node != null) utils.haltOff(node);
+                                if (node != null) getUtils().haltOff(node);
                             }
                         };
                     } else {
@@ -2502,7 +2506,7 @@ public class DSimModule extends CmdLine {
                         end = args.length - 2;
                         action = new NodeIterator() {
                             public void processNode(HierName name, Node node) {
-                                if (node != null) utils.haltOn(node, p, tpc);
+                                if (node != null) getUtils().haltOn(node, p, tpc);
                             }
                         };
                     }
@@ -2559,8 +2563,7 @@ public class DSimModule extends CmdLine {
                     }
                 }
                 try {
-                    if (utils == null) utils = new DSimUtil();
-                    utils.resetDSim(protocol, initMethod.apply(rand));
+                    getUtils().resetDSim(protocol, initMethod.apply(rand));
                 }
                 catch (Exception e) {
                     System.out.println("Error: "+e.getMessage());
@@ -2740,10 +2743,10 @@ public class DSimModule extends CmdLine {
                 }
 
                 try {
-                    if (utils == null) utils = new DSimUtil();
-                    boolean done = 
-			utils.resetStressTest(numTests,numCycles,args[2],protocol,
-                                              initMethod.apply(rand));
+                    boolean done =
+                        getUtils().resetStressTest(numTests, numCycles, args[2],
+                                                   protocol,
+                                                   initMethod.apply(rand));
 		    if(!done){
 			System.out.println("Reset Stress Test Deadlocked");	
 		    }
@@ -2773,7 +2776,6 @@ public class DSimModule extends CmdLine {
                     System.out.println("Usage: "+usage);
                     return;
                 }
-                if (utils == null) utils = new DSimUtil();
                 int i = 0;
                 boolean verbose = false;
                 boolean continuous = false;
@@ -2782,7 +2784,7 @@ public class DSimModule extends CmdLine {
                         if (args[i].substring(1).equals("v"))
                             verbose = true;
                         else if (args[i].substring(1).equals("clear"))
-                            utils.clearMeasures();
+                            getUtils().clearMeasures();
                         else if (args[i].substring(1).equals("c"))
                             continuous = true;
                         else {
@@ -2791,11 +2793,11 @@ public class DSimModule extends CmdLine {
                         }
                     }
                     else {
-                        utils.addMeasure(args[i],continuous);
+                        getUtils().addMeasure(args[i],continuous);
                     }
                     i++;
                 }
-                utils.setMeasureVerbosity(verbose);
+                getUtils().setMeasureVerbosity(verbose);
             }
         },
         new CmdCommand("cosimulate",
@@ -4033,7 +4035,7 @@ public class DSimModule extends CmdLine {
                     }
 
                     if (immediate) {
-                        utils.initResetNodes(initMethod.apply(rand));
+                        getUtils().initResetNodes(initMethod.apply(rand));
                     }
                 }
             }
@@ -4105,8 +4107,7 @@ public class DSimModule extends CmdLine {
                             cosim.getCoSimSpecList(),
                             cosim.getEnvName(), "_env", cosim.getEnvSpec());
             if (emptyEnv) {
-                if (utils == null) utils = new DSimUtil();
-                utils.resetInputNodes(dsim.getCell(), instanceName);
+                getUtils().resetInputNodes(dsim.getCell(), instanceName);
             }
         } catch (IllegalArgumentException e) {
             saveStackTrace(e);
