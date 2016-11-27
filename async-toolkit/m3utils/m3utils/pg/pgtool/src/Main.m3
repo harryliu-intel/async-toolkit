@@ -1,5 +1,12 @@
 MODULE Main;
 
+(* genpg 
+   Policy-Group recognizer RTL generator.
+   Author : Mika Nystrom <mika.nystroem@intel.com>
+
+   Usage: genpg [-allminterms] [-sv <sv-output-name>] [-bits <address-bits>] [-skipHoles] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] <input-CSV-name>
+ *)
+
 IMPORT CSVParse;
 IMPORT Rd, FileRd;
 IMPORT Debug;
@@ -36,31 +43,13 @@ VAR
 TYPE
   Field = { Name, Base, Length, Group };
 
-CONST
-  (* the following array is peculiar to HLP.  Should add facility to
-     read the PGs from elsewhere for more flexibility. *)
-  PolicyGroupArr = ARRAY [0..7] OF TEXT
-  { "PG0",
-    "PG1",
-    "PG2",
-    "PG3",
-    "PG4",
-    "PG5",
-    "PG6",
-    "PG7" };
-  DefaultIdx = LAST(PolicyGroupArr) + 1;
-  
-TYPE
-  (*PolicyGroupIdx = [FIRST(PolicyGroupArr) .. LAST(PolicyGroupArr)];*)
-  ExtPolicyGroupIdx = [FIRST(PolicyGroupArr)  .. DefaultIdx];
-
-PROCEDURE MapPGnameToNumber(str : TEXT) : ExtPolicyGroupIdx =
+PROCEDURE MapPGnameToNumber(str : TEXT) : CARDINAL =
   BEGIN
-    IF TE(str, "PG_DEFAULT") THEN
+    IF TE(str, PgDefaultName) THEN
       RETURN DefaultIdx
     END;
 
-    FOR i := FIRST(PolicyGroupArr) TO LAST(PolicyGroupArr) DO
+    FOR i := FIRST(PolicyGroupArr^) TO LAST(PolicyGroupArr^) DO
       IF TE(str, PolicyGroupArr[i]) THEN RETURN i END
     END;
 
@@ -580,6 +569,8 @@ PROCEDURE AssertNoGaps() =
   END AssertNoGaps;
 
 (**********************************************************************)
+(*TYPE ExtPolicyGroupIdx = [FIRST(PolicyGroupArr)  .. DefaultIdx];*)
+TYPE ExtPolicyGroupIdx = CARDINAL;
 
 TYPE
   Sections = { Prolog, Decls, Code, Epilog };
@@ -590,9 +581,19 @@ PROCEDURE FmtSVCard(a : Address.T) : TEXT =
     RETURN "'h" & Fmt.Int(a, base := 16)
   END FmtSVCard;
 
+PROCEDURE NewCardArr() : REF ARRAY OF CARDINAL =
+  VAR
+    res := NEW(REF ARRAY OF CARDINAL, DefaultIdx + 1);
+  BEGIN
+    FOR i := FIRST(res^) TO LAST(res^) DO
+      res[i] := 0
+    END;
+    RETURN res
+  END NewCardArr;
+
 PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
   VAR
-    p := ARRAY ExtPolicyGroupIdx OF CARDINAL  { 0, .. };
+    p := NewCardArr();
 
   PROCEDURE O(str : TEXT; ptgt : Wr.T := NIL) RAISES { Wr.Failure } =
     BEGIN
@@ -647,14 +648,14 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
   PROCEDURE DumpPgListDebug() RAISES { Wr.Failure } =
     BEGIN
       O(F(" // policy group PG_DEFAULT"));
-      FOR i := FIRST(PolicyGroupArr) TO LAST(PolicyGroupArr) DO
+      FOR i := FIRST(PolicyGroupArr^) TO LAST(PolicyGroupArr^) DO
         O(F(" // policy group %5s \"%s\"", Fmt.Int(i), PolicyGroupArr[i]));
       END
     END DumpPgListDebug;
 
   PROCEDURE DeclareMinterms() RAISES { Wr.Failure } =
     BEGIN
-      FOR i := FIRST(ExtPolicyGroupIdx) TO LAST(ExtPolicyGroupIdx) DO
+      FOR i := 0 TO DefaultIdx DO
         IF p[i] # 0 AND i # pgToSkip THEN
           O(F("  logic[%s-1:0]  m%s;", Fmt.Int(p[i]), Fmt.Int(i)))
         END
@@ -663,12 +664,12 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
     
   PROCEDURE DeclareOneHot() RAISES { Wr.Failure } =
     BEGIN
-      O(F("  logic[%s-1:0] pg1;", Fmt.Int(NUMBER(ExtPolicyGroupIdx))))
+      O(F("  logic[%s-1:0] pg1;", Fmt.Int(DefaultIdx + 1)));
     END DeclareOneHot;
 
   PROCEDURE EmitMinterms() RAISES { Wr.Failure } =
     BEGIN
-      FOR i := FIRST(ExtPolicyGroupIdx) TO LAST(ExtPolicyGroupIdx) DO
+      FOR i := 0 TO DefaultIdx DO
         IF i = pgToSkip THEN
           Debug.Out(F("EmitMinterms : skipping PG %s", Fmt.Int(i)))
         ELSE
@@ -678,12 +679,12 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
       END
     END EmitMinterms;
 
-  PROCEDURE CountMinterms() : ARRAY ExtPolicyGroupIdx OF CARDINAL =
+  PROCEDURE CountMinterms() : REF ARRAY OF CARDINAL =
     VAR
       iter := allRanges.iterateOrdered();
       n  : REFANY;
       r  : Range.T;
-      res := ARRAY ExtPolicyGroupIdx OF CARDINAL { 0, .. };
+      res := NewCardArr();
     BEGIN
       WHILE iter.next(r, n) DO
         WITH pgi = MapPGnameToNumber(r.group) DO
@@ -710,7 +711,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
     
   PROCEDURE EmitOneHotCombBlocks() RAISES { Wr.Failure } =
     BEGIN
-      FOR i := FIRST(ExtPolicyGroupIdx) TO LAST(ExtPolicyGroupIdx) DO
+      FOR i := 0 TO DefaultIdx DO
         EmitOneHotCombBlock(i)
       END
     END EmitOneHotCombBlocks;
@@ -727,8 +728,8 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
       END;
       
       O(F(  ""));
-      O(F(  "    if      (0)  /* skip */ ;"));
-      FOR i := FIRST(PolicyGroupArr) TO LAST(PolicyGroupArr) DO
+      O(F(  "    if      (0)  /* skip */ ; // lintra s-60131 \"stand-alone semicolon\""));
+      FOR i := FIRST(PolicyGroupArr^) TO LAST(PolicyGroupArr^) DO
         IF i # pgToSkip THEN
           O(F("    else if (pg1[%-3s]) pg = %s;", Fmt.Int(i), Fmt.Int(i)))
         END
@@ -769,6 +770,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
     O("  output hlp_imn_pkg::pg_bit_t                   o_pg            ");
     O(");                                                               ");
     O("                                                                 ");
+    O("  // lintra -50503 \"Naming - use of double underscore\"         ");
     O("                                                                 ");
     O("  //import packages                                              ");
     O("  import hlp_pkg::*;                                             ");
@@ -782,7 +784,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
     cur := tgt[Sections.Code];
     WITH cnt = CountMinterms() DO
       Debug.Out("CountMinterms");
-      FOR i := FIRST(cnt) TO LAST(cnt) DO
+      FOR i := FIRST(cnt^) TO LAST(cnt^) DO
         Debug.Out(F("pgi %s cnt %s", Fmt.Int(i), Fmt.Int(cnt[i])));
       END;
       IF NOT allTerms THEN
@@ -791,7 +793,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
           maxCnt := cnt[0];
         BEGIN
           pgToSkip := 0;
-          FOR i := FIRST(cnt) TO LAST(cnt) DO
+          FOR i := FIRST(cnt^) TO LAST(cnt^) DO
             IF cnt[i] > maxCnt THEN
               maxCnt := cnt[i]; pgToSkip := i
             END
@@ -818,6 +820,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E } =
     O("    else if (i_v)                                                ");
     O("      o_pg <= pg;                                                ");
     O("  end // always_ff begin                                         ");
+    O("  // lintra +50503 \"Naming - use of double underscore\"         ");
     O("endmodule                                                        ");
 
     WITH wr = FileWr.Open(pn) DO
@@ -1059,7 +1062,21 @@ PROCEDURE MaxSetBit(w : Word.T) : [-1..Word.Size-1] =
   
 (**********************************************************************)
   
+CONST
+  DefPolicyGroupArr = ARRAY OF TEXT
+  { "PG0",
+    "PG1",
+    "PG2",
+    "PG3",
+    "PG4",
+    "PG5",
+    "PG6",
+    "PG7" };
+  
 VAR
+  PgDefaultName := "PG_DEFAULT";
+  PolicyGroupArr : REF ARRAY OF TEXT;
+  DefaultIdx : CARDINAL;
   buf : ARRAY Field OF TEXT;
   csv : CSVParse.T;
   fn : Pathname.T;
@@ -1068,9 +1085,15 @@ VAR
   svOutput : Pathname.T := NIL;
   bits := -1;
   allTerms : BOOLEAN;
-  pgToSkip : [-1..LAST(ExtPolicyGroupIdx)] := -1;
+  pgToSkip : [-1..LAST(CARDINAL)] := -1;
 BEGIN
-
+  (* setup default PGs per HLP HAS *)
+  PolicyGroupArr := NEW(REF ARRAY OF TEXT, NUMBER(DefPolicyGroupArr));
+  DefaultIdx := LAST(PolicyGroupArr^)+1;
+  FOR i := FIRST(DefPolicyGroupArr) TO LAST(DefPolicyGroupArr) DO
+    PolicyGroupArr[i] := DefPolicyGroupArr[i];
+  END;
+  
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
       allTerms := pp.keywordPresent("-allminterms");
@@ -1078,6 +1101,21 @@ BEGIN
       IF pp.keywordPresent("-bits") THEN bits := pp.getNextInt() END;
       skipHoles := pp.keywordPresent("-skipholes");
       attemptElimOverlaps := pp.keywordPresent("-elimoverlaps");
+
+      IF pp.keywordPresent("-defpgnm") THEN
+        PgDefaultName := pp.getNext()
+      END;
+
+      IF pp.keywordPresent("-G") OR pp.keywordPresent("--policygroups") THEN
+        WITH n = pp.getNextInt() DO
+          PolicyGroupArr := NEW(REF ARRAY OF TEXT, n);
+          DefaultIdx := n;
+          FOR i := 0 TO n-1 DO
+            PolicyGroupArr[i] := pp.getNext()
+          END
+        END
+      END;
+
       pp.skipParsed();
       fn := pp.getNext();
       pp.finish();
@@ -1086,7 +1124,6 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Command-line params wrong.")
   END;
-
   
   TRY
     rd := FileRd.Open(fn);
