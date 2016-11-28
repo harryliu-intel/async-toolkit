@@ -186,7 +186,7 @@ MERGE_ALINT_OUT := merge_alint_out
 MAKE_ASTA_IN := make_asta_in
 MAKE_SLINT_IN := make_slint_in
 
-ifeq ($(DO_CONVERT_TRACE),"1")
+ifeq ("$(DO_CONVERT_TRACE)","1")
 CONVERT_TRACE := convert_trace --translate
 else
 CONVERT_TRACE := echo SKIP: convert_trace --translate
