@@ -149,9 +149,8 @@ defun( MidPinsScanBusPins (CV)
 
    foreach( PinShape CV~>shapes
 
-      when( PinShape~>pin~>net~>name && (PinShape~>PinType == "BusScript")
+      when( PinShape~>pin~>net~>name && (PinShape~>PinType=="BusScript" || PinShape~>PinType==nil)
           BusPinList = cons(PinShape~>pin~>net~>name BusPinList)
-          dbReplaceProp(PinShape "BusInPlacePin" "boolean" "TRUE")
         )
     )
 BusPinList
