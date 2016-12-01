@@ -191,9 +191,10 @@ sub main{
 
   fix_gds_long_name(); 
   
-  my $equivlance_file=prepare_equiv_file();
+  my %lvs_options = ();
+  my $equivlance_file=prepare_equiv_file(\%lvs_options);
   my $schematic_file=prepare_sch_file();
-  my $clf_file=prepare_clf_file($schematic_file,$equivlance_file);
+  my $clf_file=prepare_clf_file($schematic_file,$equivlance_file,\%lvs_options);
 
   {
       local %ENV = %ENV;
@@ -222,7 +223,7 @@ sub main{
 
 
 sub prepare_clf_file {
-   my ($sch_file, $equivlance_file)=@_;
+   my ($sch_file, $equivlance_file, $lvs_options)=@_;
 
    # write supply net derived from CAST
    my $supply_file="$working_dir/lve_supplies.rs";
@@ -246,6 +247,15 @@ sub prepare_clf_file {
       print $supply_fh "// --node-props not given\n";
    }
    close($supply_fh);
+
+   if (%{$lvs_options}) {
+      my $user_options = "$working_dir/p12723_UserIncrementalOptions.rs";
+      open(my $options_fh, ">$user_options") or die "Cannot write to $user_options\n";
+      print $options_fh "lvs_options(\n" .
+                        join(",\n", map { "$_ = $lvs_options->{$_}" } sort keys %{$lvs_options}) .
+                        ");\n";
+      close($options_fh);
+   }
 
    my $lvs_clf_file="$working_dir/lvs.clf";
    open(LVS_CLF, ">$lvs_clf_file") or die "Cannot write to $lvs_clf_file\n";
@@ -401,6 +411,7 @@ sub get_equiv {
 
 
 sub prepare_equiv_file{
+  my ($lvs_options) = @_;
   my %equiv=();
   my %requiv=();
   my $equivalence="equiv"; 
@@ -412,14 +423,18 @@ sub prepare_equiv_file{
       print EQUIV_FILE "equiv_options(equiv_cells={{\"$cdlname\",\"$topcell\"}});\n";
       my $equiv = get_equiv(\%graylist, $extra_extract_equiv);
       
+      my %preserved_cells = ();
       foreach my $sch (sort keys %{$equiv}) {
           foreach my $lay (sort keys %{$equiv->{$sch}}) {
               my $type = $blackbox == 1 ? 'lvs_black_box_options'
                                                 : 'equiv_options';
+              $preserved_cells{$lay} = 1;
               print EQUIV_FILE "$type(equiv_cells={{\"$sch\",\"$lay\"}});\n";
           }
       }
       close(EQUIV_FILE);
+      $lvs_options->{'device_extraction_preserved_cells'} =
+          "{ " . join(",\n", map { "\"$_\"" } sort keys %preserved_cells) . " }";
   }
 
   return $equivalence;
