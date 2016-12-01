@@ -43,7 +43,8 @@ foreach my $file (@files) {
 
         # snarf results
 	if (defined($results{power}) && is_numeric($results{power})) {
-	    $power{$key} = (int ($results{power} * 1e9 + 0.5))/1e9;
+            unless (defined $power{$key}) { $power{$key} = 0; }
+            $power{$key} += (int ($results{power} * 1e9 + 0.5))/1e9;
 	}
 	elsif (defined($results{frequency}) && is_numeric($results{frequency})) {
             my $f = int (1000 * $results{frequency} + 0.5);
