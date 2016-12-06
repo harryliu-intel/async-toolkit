@@ -5,6 +5,7 @@ my $cell = $ARGV[0];
 my $file = $ARGV[1];
 my $radius = 0.2;
 my @boxes;
+
 if ($cell =~ /^core_neuro_neuron_v1_NEURON/ || $cell =~ /^core_neuro_neuron_NEURON/ ) {
     @boxes = ("3.36:-689.472:31.92:-57.456", "31.92:-689.472:483.84:-3.192");
 } elsif ($cell =~ /^chip_n2_io_IO/ ) {
@@ -17,12 +18,19 @@ if ($cell =~ /^core_neuro_neuron_v1_NEURON/ || $cell =~ /^core_neuro_neuron_NEUR
     @boxes = ("-31.92:-57.456:31.92:57.456");
 } elsif ($cell =~ /^chip_n2_pads_PADS/ ) {
     @boxes = ("-188.16:0:161.28:210.672");
+} elsif ($cell =~ /^chip_n2_pads_PADS_IN_BD/ ) {
+    die("ducklicker\n");
+    @boxes = ("0:6.384:1935.36:153.216");
+} elsif ($cell =~ /^chip_n2_pads_PADS_OUT_BD/ ) {
+    @boxes = ("0:6.384:1774.08:153.216");
 } elsif ($cell =~ /^chip_n2_lakemont_LAKEMONT/ ) {
     @boxes = ("-483.84:-306.432:-80.64:-25.536","-80.64:-306.432:26.88:-25.536","26.88:-306.432:483.84:-6.384");
 } elsif ($cell =~ /^chip_n2_lakemont_CPU_SHIM/ ) {
     @boxes = ("-483.84:-6.384:-80.64:0","-80.64:-25.536:26.88:0","26.88:-6.384:483.84");
 } elsif ($cell =~ /^chip_n2_north_BRIDGE/ ) {
     @boxes = ("-483.84:0:483.84:306.432");
+} elsif ($cell =~ /^chip_n2_north_NORTH/ ) {
+    @boxes = ("0:0:3709.44:459.648","3709.44:0:3870.72:306.432");
 } elsif ($cell eq "neuro_top" || $cell =~ /^chip_n2_TOP/) {
     @boxes = ("0:0:1270.08:1244.88");
 } elsif ($cell eq "8slh73l_tma1_0a") {
@@ -63,7 +71,7 @@ while (my $line = <IN>) {
     }
 }
 close IN;
-print "; $num total DRC errors\n\n";
+print "; $num total DRC errors in $cell\n\n";
 
 # report errors by layer
 my %layers;
