@@ -953,7 +953,6 @@ $(ROOT_TARGET_DIR)/%/estimated/extract.result: \
 	  --castInRoot='$(CAST_PATH)' \
 	  --cdlRoot="$$working_dir" \
 	  --outRoot="$$working_dir" \
-          --subtypePath="$$working_dir" \
           --layoutRoot='$(@D)/instances' \
           --layoutScaleX=$(LAYOUT_SCALE_X) \
           --layoutScaleY=$(LAYOUT_SCALE_Y) \
@@ -1004,7 +1003,6 @@ $(ROOT_TARGET_DIR)/%/nogeometry/extract.result: $(ROOT_TARGET_DIR)/%/cast.change
 	  --castInRoot='$(CAST_PATH)' \
 	  --cdlRoot="$$working_dir" \
 	  --outRoot="$$working_dir" \
-          --subtypePath="$$working_dir" \
           --package-root=$(LVE_PACKAGE_ROOT) \
           --new-spice \
           --spice-output=cell.spice \
