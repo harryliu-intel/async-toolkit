@@ -51,6 +51,7 @@ import com.avlsi.fast.metaparameters.MetaParamTypeInterface;
 import com.avlsi.csp.grammar.ParseRange;
 import com.avlsi.csp.grammar.ParsePosition;
 import com.avlsi.csp.util.CSPCellInfo;
+import com.avlsi.csp.util.ConstantEvaluator;
 import com.avlsi.csp.util.CspUtils;
 import com.avlsi.csp.util.DeclarationProcessor;
 import com.avlsi.csp.util.Problem;
@@ -167,6 +168,9 @@ public class JavaEmitter implements VisitorInterface {
     private final Set identUsed = new HashSet();
 
     private final ProblemFilter probFilter;
+
+    private final Map<ExpressionInterface,Boolean> falseGuards =
+        new IdentityHashMap<>();
 
     public JavaEmitter(final String packageName,
                        final String className,
@@ -1047,6 +1051,14 @@ public class JavaEmitter implements VisitorInterface {
     public void visitCSPProgram(CSPProgram e) throws VisitorException {
         resolver.resolve(e);
         e = resolver.getCSPProgram();
+        if (emitCoverageProbes) {
+            ConstantEvaluator.evaluate(e, (before, after) -> {
+                falseGuards.merge(
+                    before, 
+                    !CspUtils.getBooleanConstant(after).orElse(true),
+                    (vold, vnew) -> vold && vnew);
+            });
+        }
         probFilter.process(resolver.getProblems());
 
         String filename = e.getParseRange().start.filename;
@@ -1449,9 +1461,8 @@ public class JavaEmitter implements VisitorInterface {
             out.print("if (");
             gc.getGuard().accept(this);
             out.println(".booleanValue()) {");
-                emitOneProbe((AbstractASTNode)gc.getCommand(),
-                             "nondeterministic repetition statement alternative");
-                gc.getCommand().accept(this);
+                possiblyEmitCommand(gc,
+                        "nondeterministic repetition statement alternative");
                 if (breakP)
                     out.println("break;");
             out.println("}");
@@ -2147,17 +2158,35 @@ public class JavaEmitter implements VisitorInterface {
         recurseDeterministicGuards(s.getGuardedCommands(), s, trueIdx, 0);
     }
 
+    private String getLineColumn(final AbstractASTNode node) {
+        final ParseRange pr=node.getParseRange();
+        return "line " + pr.start.line + ", column " + pr.start.column +
+               " to line " + pr.end.line + ", column " + pr.end.column;
+    }
+
     protected void emitOneProbe(AbstractASTNode node,
                                 String type) {
         if(emitCoverageProbes) {
-            ParseRange pr=node.getParseRange();
-            out.println("/* coverage probe (line "+
-                        pr.start.line+", column "+pr.start.column+
-                        " to line "+pr.end.line+", column "+pr.end.column+") */");
+            out.println("/* coverage probe (" + getLineColumn(node) + ") */");
             out.println("Monitor.global.setHit(hitTableOffset+"+probeCount+");");
-            probes.add(new ProbeInfo(pr, type,
+            probes.add(new ProbeInfo(node.getParseRange(), type,
                                      cellInfo.getAbbreviatedType()));
             probeCount++;
+        }
+    }
+
+    private void possiblyEmitCommand(GuardedCommand gc, String type)
+        throws VisitorException {
+        if (falseGuards.getOrDefault(gc.getGuard(), false)) {
+            if (emitCoverageProbes) {
+                out.println("/* coverage probe elided for false guard (" +
+                            getLineColumn(gc) + ") */");
+            }
+            out.println("assert false : \"false guard (" + getLineColumn(gc) +
+                        ") executed\";");
+        } else {
+            emitOneProbe((AbstractASTNode) gc.getCommand(), type);
+            gc.getCommand().accept(this);
         }
     }
                                 
@@ -2191,9 +2220,8 @@ public class JavaEmitter implements VisitorInterface {
                 out.println("{"); // [1]
                 for (int j = 0; j < vardecl.length; j++)
                     vardecl[j].execute();
-                emitOneProbe((AbstractASTNode)gc.getCommand(),
-                             "repetition or selection statement alternative");
-                gc.getCommand().accept(this);
+                possiblyEmitCommand(gc,
+                        "repetition or selection statement alternative");
                 if (breakLabel != null)
                     out.println("break " + breakLabel + ';');
                 else
@@ -2462,10 +2490,9 @@ public class JavaEmitter implements VisitorInterface {
                 out.println("new Action() {");
                 out.println("public void execute() " +
                             "throws InterruptedException {");
-                emitOneProbe((AbstractASTNode)gc.getCommand(),
+                possiblyEmitCommand(gc,
                              "nondeterministic selection "+
                              "statement alternative");
-                gc.getCommand().accept(this);
                 out.println("}");
                 out.println("}");
                 out.println("));");

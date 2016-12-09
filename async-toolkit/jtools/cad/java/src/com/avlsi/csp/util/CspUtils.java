@@ -1,8 +1,10 @@
 package com.avlsi.csp.util;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import com.avlsi.csp.ast.*;
+import com.avlsi.csp.csp2java.runtime.CspInteger;
 
 public class CspUtils {
     public static BigInteger getIntegerConstant(final ExpressionInterface e) {
@@ -12,6 +14,11 @@ public class CspUtils {
         } else {
             return null;
         }
+    }
+
+    public static Optional<Boolean> getBooleanConstant(final ExpressionInterface e) {
+        return Optional.ofNullable(getIntegerConstant(e))
+                       .map(v -> new CspInteger(v).booleanValue());
     }
 
     public static int getWidth(final Interval x, final int def) {

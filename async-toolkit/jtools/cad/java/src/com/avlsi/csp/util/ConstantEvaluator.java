@@ -18,7 +18,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import com.avlsi.csp.ast.*;
 import com.avlsi.csp.csp2java.runtime.CspInteger;
@@ -35,10 +37,15 @@ public class ConstantEvaluator implements VisitorInterface {
     private final SymbolTable<Value> table;
     private boolean inLoop = false;
     private boolean inInitializers = false;
+    private final Optional<ExpressionObserver> guardObserver;
 
     public interface Value {
         Type getType();
         Object getValue();
+    }
+
+    public interface ExpressionObserver
+        extends BiConsumer<ExpressionInterface,ExpressionInterface> {
     }
 
     /**
@@ -50,13 +57,37 @@ public class ConstantEvaluator implements VisitorInterface {
      * @return unrolled program with no constant variables
      **/
     public static CSPProgram evaluate(final CSPProgram p)
-    throws VisitorException {
-        final ConstantEvaluator e = new ConstantEvaluator();
+        throws VisitorException {
+        return evaluate(p, Optional.empty());
+    }
+
+    /**
+     * Returns a new {@link CSPProgram} that is the same as the given program,
+     * except with all constant variables removed, and iterators with constant
+     * bounds unrolled.
+     *
+     * @param p program to process
+     * @param guardObserver observer of guard expression evaluation
+     * @return unrolled program with no constant variables
+     **/
+    public static CSPProgram evaluate(
+            final CSPProgram p,
+            final ExpressionObserver guardObserver)
+        throws VisitorException {
+        return evaluate(p, Optional.of(guardObserver));
+    }
+
+    private static CSPProgram evaluate(
+            final CSPProgram p,
+            final Optional<ExpressionObserver> guardObserver)
+        throws VisitorException {
+        final ConstantEvaluator e = new ConstantEvaluator(guardObserver);
         e.visitCSPProgram(p);
         return (CSPProgram) e.result;
     }
 
-    private ConstantEvaluator() {
+    private ConstantEvaluator(Optional<ExpressionObserver> guardObserver) {
+        this.guardObserver = guardObserver;
         this.table = new SymbolTable<Value>();
     }
 
@@ -861,6 +892,8 @@ public class ConstantEvaluator implements VisitorInterface {
             final StatementInterface command = (StatementInterface) result;
             processLinkageTerms(gc.getLinkageTerms());
             
+            guardObserver.ifPresent(obs -> obs.accept(gc.getGuard(), guard));
+
             if (gc.getGuard() == guard && gc.getCommand() == command &&
                 gc.getLinkageTerms() == result) {
                 result = g;
