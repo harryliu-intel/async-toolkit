@@ -864,4 +864,10 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
     protected CspString _getArgValue(CspString arg, CspString def) {
         return def;
     }
+
+    protected void _cover(final CspInteger expr) {
+    }
+
+    protected void _cover(final CspInteger expr, final CspString msg) {
+    }
 }

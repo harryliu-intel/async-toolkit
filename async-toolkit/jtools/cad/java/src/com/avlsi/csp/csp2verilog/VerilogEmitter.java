@@ -1870,6 +1870,7 @@ public class VerilogEmitter extends CommonEmitter {
                     out.println("`CAST2VERILOG_DUMP_ON");
                 } else if (name.equals("dumpOff")) {
                     out.println("`CAST2VERILOG_DUMP_OFF");
+                } else if (name.equals("cover")) {
                 } else {
                     // not supported: eventQueueIsEmpty, stable, enableDSimErrors
                     throw new VisitorException(

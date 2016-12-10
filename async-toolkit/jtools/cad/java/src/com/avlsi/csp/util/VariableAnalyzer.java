@@ -945,7 +945,8 @@ public class VariableAnalyzer {
             setVoid(e);
         }
 
-        private void processBuiltinAssert(final FunctionCallExpression e)
+        private void processBuiltinAssert(final FunctionCallExpression e,
+                                          final String name)
             throws VisitorException {
             int count = 0;
             for (Iterator i = e.getActuals(); i.hasNext(); ++count) {
@@ -954,18 +955,18 @@ public class VariableAnalyzer {
                 final Type ty = getType(arg);
                 if (count == 0) {
                     if (!isBoolean(ty)) {
-                        report("invalid.assert.argument1", arg, ty);
+                        report("invalid." + name + ".argument1", arg, ty);
                     }
                 } else if (count == 1) {
                     if (!isString(ty)) {
-                        report("invalid.assert.argument2", arg, ty);
+                        report("invalid." + name + ".argument2", arg, ty);
                     }
                 } else if (count == 2) {
-                    report("too.many.arguments", arg, "assert");
+                    report("too.many.arguments", arg, name);
                 }
             }
             if (count == 0) {
-                report("too.few.arguments", e, "assert");
+                report("too.few.arguments", e, name);
             }
             setVoid(e);
         }
@@ -1152,8 +1153,8 @@ public class VariableAnalyzer {
                     processBuiltinPrint(e);
                 } else if ("string".equals(name)) {
                     processBuiltinString(e);
-                } else if ("assert".equals(name)) {
-                    processBuiltinAssert(e);
+                } else if ("assert".equals(name) || "cover".equals(name)) {
+                    processBuiltinAssert(e, name);
                 } else if ("pack".equals(name)) {
                     processBuiltinPack(e);
                 } else if ("unpack".equals(name)) {

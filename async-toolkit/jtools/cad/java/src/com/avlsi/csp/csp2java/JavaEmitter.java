@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 
 import com.avlsi.cell.CellUtils;
 import com.avlsi.csp.ast.*;
@@ -67,6 +68,7 @@ import com.avlsi.csp.util.VisitorExceptionWithLocation;
 import com.avlsi.tools.dsim.ExceptionPrettyPrinter;
 
 import com.avlsi.util.container.CollectionUtils;
+import com.avlsi.util.container.IterableIterator;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.functions.BinaryFunction;
 import com.avlsi.util.functions.NullaryAction;
@@ -169,7 +171,7 @@ public class JavaEmitter implements VisitorInterface {
 
     private final ProblemFilter probFilter;
 
-    private final Map<ExpressionInterface,Boolean> falseGuards =
+    private final Map<ExpressionInterface,Boolean> falseExprs =
         new IdentityHashMap<>();
 
     public JavaEmitter(final String packageName,
@@ -1052,12 +1054,12 @@ public class JavaEmitter implements VisitorInterface {
         resolver.resolve(e);
         e = resolver.getCSPProgram();
         if (emitCoverageProbes) {
-            ConstantEvaluator.evaluate(e, (before, after) -> {
-                falseGuards.merge(
+            ConstantEvaluator.ExpressionObserver obs = (before, after) ->
+                falseExprs.merge(
                     before, 
                     !CspUtils.getBooleanConstant(after).orElse(true),
                     (vold, vnew) -> vold && vnew);
-            });
+            ConstantEvaluator.evaluate(e, obs, obs);
         }
         probFilter.process(resolver.getProblems());
 
@@ -2053,7 +2055,7 @@ public class JavaEmitter implements VisitorInterface {
                     if (s.getElseStatement() == null) {
                         out.println("break " + label + ";");
                     } else {
-                        emitOneProbe((AbstractASTNode)s.getElseStatement(),
+                        emitOneProbe(s.getElseStatement(),
                                      "deterministic repetition statement else clause");
                         s.getElseStatement().accept(this);
                         out.println("break;");
@@ -2158,26 +2160,70 @@ public class JavaEmitter implements VisitorInterface {
         recurseDeterministicGuards(s.getGuardedCommands(), s, trueIdx, 0);
     }
 
-    private String getLineColumn(final AbstractASTNode node) {
+    private String getLineColumn(final AbstractASTNodeInterface node) {
         final ParseRange pr=node.getParseRange();
         return "line " + pr.start.line + ", column " + pr.start.column +
                " to line " + pr.end.line + ", column " + pr.end.column;
     }
 
-    protected void emitOneProbe(AbstractASTNode node,
-                                String type) {
-        if(emitCoverageProbes) {
-            out.println("/* coverage probe (" + getLineColumn(node) + ") */");
-            out.println("Monitor.global.setHit(hitTableOffset+"+probeCount+");");
-            probes.add(new ProbeInfo(node.getParseRange(), type,
-                                     cellInfo.getAbbreviatedType()));
-            probeCount++;
+    private Optional<FunctionCallExpression> hasFunctionCallTo(
+            final StatementInterface s,
+            final String name) {
+        if (s instanceof ExpressionStatement) {
+            final ExpressionInterface expr =
+                ((ExpressionStatement) s).getExpression();
+            if (expr instanceof FunctionCallExpression) {
+                final FunctionCallExpression func =
+                    (FunctionCallExpression) expr;
+                final ExpressionInterface funcExpr =
+                    func.getFunctionExpression();
+                if (funcExpr instanceof IdentifierExpression &&
+                    ((IdentifierExpression) funcExpr).getIdentifier()
+                                                     .equals(name)) {
+                    return Optional.of(func);
+                }
+            }
+        } else if (s instanceof SequentialStatement) {
+            for (StatementInterface s1 : new IterableIterator<StatementInterface>(
+                    ((SequentialStatement) s).getStatements())) {
+                final Optional<FunctionCallExpression> result =
+                    hasFunctionCallTo(s1, name);
+                if (result.isPresent()) return result;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean isFirstActualFalse(final FunctionCallExpression e) {
+        final Iterator<ExpressionInterface> it = e.getActuals();
+        final boolean result = it.hasNext() ?
+            falseExprs.getOrDefault(it.next(), false) : false;
+        return result;
+    }
+
+    protected void emitOneProbe(StatementInterface node, String type) {
+        if (emitCoverageProbes) {
+            if (hasFunctionCallTo(node, "cover").map(f -> isFirstActualFalse(f))
+                                                .orElse(false)) {
+                out.println("/* coverage probe elided for cover(false) (" +
+                            getLineColumn(node) + ") */");
+            } else if (hasFunctionCallTo(node, "assert").map(f -> isFirstActualFalse(f))
+                                                        .orElse(false)) {
+                out.println("/* coverage probe elided for assert(false) (" +
+                            getLineColumn(node) + ") */");
+            } else {
+                out.println("/* coverage probe (" + getLineColumn(node) + ") */");
+                out.println("Monitor.global.setHit(hitTableOffset+"+probeCount+");");
+                probes.add(new ProbeInfo(node.getParseRange(), type,
+                                         cellInfo.getAbbreviatedType()));
+                probeCount++;
+            }
         }
     }
 
     private void possiblyEmitCommand(GuardedCommand gc, String type)
         throws VisitorException {
-        if (falseGuards.getOrDefault(gc.getGuard(), false)) {
+        if (falseExprs.getOrDefault(gc.getGuard(), false)) {
             if (emitCoverageProbes) {
                 out.println("/* coverage probe elided for false guard (" +
                             getLineColumn(gc) + ") */");
@@ -2185,7 +2231,7 @@ public class JavaEmitter implements VisitorInterface {
             out.println("assert false : \"false guard (" + getLineColumn(gc) +
                         ") executed\";");
         } else {
-            emitOneProbe((AbstractASTNode) gc.getCommand(), type);
+            emitOneProbe(gc.getCommand(), type);
             gc.getCommand().accept(this);
         }
     }
@@ -2323,14 +2369,14 @@ public class JavaEmitter implements VisitorInterface {
                                         ", " + waitableVar + ");");
                             out.println("break;");
                         } else {
-                            emitOneProbe((AbstractASTNode)s.getElseStatement(),
+                            emitOneProbe(s.getElseStatement(),
                                          "deterministic selection statement else clause");
                             s.getElseStatement().accept(this);
                             out.println("break " + label + ';');
                         }
                     } else {
                         if (s.getElseStatement() != null) {
-                            emitOneProbe((AbstractASTNode)s.getElseStatement(),
+                            emitOneProbe(s.getElseStatement(),
                                          "deterministic selection statement else clause");
                             s.getElseStatement().accept(this);
                             out.println("break;");
@@ -2400,7 +2446,7 @@ public class JavaEmitter implements VisitorInterface {
                 if (s.getElseStatement() == null) {
                     out.println("break;");
                 } else {
-                    emitOneProbe((AbstractASTNode)s.getElseStatement(),
+                    emitOneProbe(s.getElseStatement(),
                                  "nondeterministic repetition else statement");
                     s.getElseStatement().accept(this);
                 }

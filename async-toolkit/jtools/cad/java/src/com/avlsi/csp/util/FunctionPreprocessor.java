@@ -1046,7 +1046,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
             } else if (name.equals("string")) {
                 preamble.add(createVarStatement(temp, new StringType()));
             } else if (name.equals("print") || name.equals("assert") ||
-                       name.equals("unpack")) {
+                       name.equals("cover") || name.equals("unpack")) {
                 noReturn = true;
             } else if (name.equals("pack")) {
                 preamble.add(createVarStatement(temp,

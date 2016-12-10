@@ -38,6 +38,7 @@ public class ConstantEvaluator implements VisitorInterface {
     private boolean inLoop = false;
     private boolean inInitializers = false;
     private final Optional<ExpressionObserver> guardObserver;
+    private final Optional<ExpressionObserver> actualObserver;
 
     public interface Value {
         Type getType();
@@ -58,7 +59,7 @@ public class ConstantEvaluator implements VisitorInterface {
      **/
     public static CSPProgram evaluate(final CSPProgram p)
         throws VisitorException {
-        return evaluate(p, Optional.empty());
+        return evaluate(p, Optional.empty(), Optional.empty());
     }
 
     /**
@@ -68,26 +69,34 @@ public class ConstantEvaluator implements VisitorInterface {
      *
      * @param p program to process
      * @param guardObserver observer of guard expression evaluation
+     * @param actualObserver observer of actual parameter evaluation
      * @return unrolled program with no constant variables
      **/
     public static CSPProgram evaluate(
             final CSPProgram p,
-            final ExpressionObserver guardObserver)
+            final ExpressionObserver guardObserver,
+            final ExpressionObserver actualObserver)
         throws VisitorException {
-        return evaluate(p, Optional.of(guardObserver));
+        return evaluate(p,
+                        Optional.of(guardObserver),
+                        Optional.of(actualObserver));
     }
 
     private static CSPProgram evaluate(
             final CSPProgram p,
-            final Optional<ExpressionObserver> guardObserver)
+            final Optional<ExpressionObserver> guardObserver,
+            final Optional<ExpressionObserver> actualObserver)
         throws VisitorException {
-        final ConstantEvaluator e = new ConstantEvaluator(guardObserver);
+        final ConstantEvaluator e =
+            new ConstantEvaluator(guardObserver, actualObserver);
         e.visitCSPProgram(p);
         return (CSPProgram) e.result;
     }
 
-    private ConstantEvaluator(Optional<ExpressionObserver> guardObserver) {
+    private ConstantEvaluator(Optional<ExpressionObserver> guardObserver,
+                              Optional<ExpressionObserver> actualObserver) {
         this.guardObserver = guardObserver;
+        this.actualObserver = actualObserver;
         this.table = new SymbolTable<Value>();
     }
 
@@ -573,6 +582,8 @@ public class ConstantEvaluator implements VisitorInterface {
             final ExpressionInterface arg = (ExpressionInterface) i.next();
             arg.accept(this);
             ne.addActual((ExpressionInterface) result);
+            actualObserver.ifPresent(
+                    obs -> obs.accept(arg, (ExpressionInterface) result));
             same &= arg == result;
         }
 
