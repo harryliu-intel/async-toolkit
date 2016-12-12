@@ -26,7 +26,7 @@ USAGE: recursive_graybox [options] [top_cells]
     --fulcrum-pdk-root=[$pdk_root]
     --max-heap-size=[$max_heap_size]
     --cast-path=[$cast_path]
-    --hierarchy=[$hierarchy] ([floorplan|layout|graybox])
+    --hierarchy=[$hierarchy] ([floorplan|routed|graybox])
     --cells=[cell_file]
 EU
     exit 1;
