@@ -4,10 +4,16 @@
 ; tracks.  Puts the vias in an overlay cell.  Vias avoid m9:block
 ; which is used in the PADS region.
 
-; this is edited from n1/ directory because we changed the m9 pattern
+; this is edited from proj/n1 directory because we changed the m9 pattern
 
-(defun PowerV8 (@key (CV (geGetEditCellView)))
-  (let (viaCV)
+(defun PowerV8 (@key (CV (geGetEditCellView))
+                     (xp 1.68)  ; horizontal pitch for potential v8
+                     (yp 0.798) ; vertical   pitch for potential v8 (NOTE: half the 1.596 pitch)
+                     (xo 0.0)   ; horizontal offset (TODO: should be xp/2)
+                     (yo 0.0)   ; vertical   offset
+                     (supplies (list "GND" "Vdd" "GND" "VDDM")) ; repeats endlessly at constant wire pitch
+                     )
+  (let (viaCV inst overhang via8 bbox x0 x1 y0 y1 s sx sy name net done filter rect via)
     inst = (dbFindAnyInstByName CV "vias")
     (when inst (dbDeleteObject inst))
     overhang = 0.84 ; minimum m8 overhang from center of v8
@@ -15,8 +21,6 @@
     (dbCreatePRBoundary viaCV CV->prBoundary->points)
     (dbCreatePolygon viaCV (list "m9" "block") CV->prBoundary->points)
     via8 = (techFindViaDefByName (techGetTechFile CV) "via8")
-    xp = 1.68
-    yp = 0.798 ; the VDDM in PADS is half-way between Vdd and GND
     bbox = CV->prBoundary->bBox
     x0 = (car  (car  bbox))
     x1 = (car  (cadr bbox))
@@ -28,14 +32,11 @@
     y1 = (round y1/yp)
     (for x x0 x1-1
          (for y y0+1 y1-1
-              s=(mod x-x0 4) ; 4 stripes of m9
-              sx=x*xp;+1.68
-              sy=y*yp
-              (cond (s==1 name="Vdd")
-                    (s==3 name="VDDM")
-                    (t    name="GND")
-                    )
-              net = (dbMakeNet viaCV name)
+              s    = (mod x-x0 (length supplies))
+              sx   = x*xp+xo
+              sy   = y*yp+yo
+              name = (nth s supplies)
+              net  = (dbMakeNet viaCV name)
               done = nil
               filter = (lambda (shape) shape->net->name==name)
               (when (dbGetOverlaps CV (list sx:sy sx:sy) (list "m9" "block") 32)==nil
@@ -45,7 +46,7 @@
                       rect = (TransformOverlapBBox overlap ?filter filter)
                       (when !done && rect &&
                          (leftEdge rect)<=sx-overhang && (rightEdge rect)>=sx+overhang
-                         (printf "%s v8 at %g:%g to m8:%s\n" net->name sx sy purpose)
+                         (printf "%s v8 at %g:%g to m8:%s\n" name sx sy purpose)
                          via = (MyDrawVia viaCV via8 sx:sy 0.88 0.38 net)
                          done = t
                          )
