@@ -88,7 +88,7 @@ foreach my $cell (keys %cells) {
         }
     }
     $cmd = "$cast_query --task=subcells --routed --cell=\"$cell\"" .
-        " --filter=\"ancestor=standard.base.flat_extract\"";
+        " --filter=\"ancestor=standard.attributes.flat_extract\"";
     open (P, "$cmd |");
     while (<P>) {
         if (/^\s*(\S+)\s*$/) {
@@ -97,7 +97,7 @@ foreach my $cell (keys %cells) {
     }
     if ($hierarchy eq "graybox") {
         $cmd = "$cast_query --task=subcells --routed --cell=\"$cell\"" .
-            " --filter=\"ancestor=standard.base.graybox_extract\"";
+            " --filter=\"ancestor=standard.attributes.graybox_extract\"";
         open (P, "$cmd |");
         while (<P>) {
             if (/^\s*(\S+)\s*$/) {
