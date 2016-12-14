@@ -788,7 +788,7 @@ if ($stage2c) {
           $cellName = $reversegraylist{$cellName} if defined ($reversegraylist{$cellName});
           print TARGET "X$newName\n";
           for(my $k=0; $k<$#pin_list; $k++){
-            if($pin_list[$k]=~/$oldName/){
+            if($pin_list[$k]=~/^$oldName/ && $pin_list[$k]!~/^${oldName}_D_/){
               $pin_list[$k]=~s/$oldName//;
               $pin_list[$k]=substr($pin_list[$k], 1, length($pin_list[$k])-1);
               $pin_list[$k]="${newName}_D_$pin_list[$k]";
