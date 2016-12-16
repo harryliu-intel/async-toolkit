@@ -735,6 +735,17 @@ public class VerilogEmitter extends CommonEmitter {
         }
     }
 
+    private void println(String s, AbstractASTNodeInterface node) {
+        out.print(s);
+        if (node != null) {
+            final ParseRange pr = node.getParseRange();
+            if (pr != ParseRange.EMPTY) {
+                out.print(" // " + pr.fullString());
+            }
+        }
+        out.println();
+    }
+
     public VerilogEmitter(final CSPCellInfo cellInfo,
                           final Collection/*<String>*/ inputPorts,
                           final PrintWriter out,
@@ -1990,7 +2001,7 @@ public class VerilogEmitter extends CommonEmitter {
             }
             out.print("while (");
             gc.getGuard().accept(this);
-            out.println(") begin");
+            println(") begin", gc);
             gc.getCommand().accept(this);
             if (guardStmt != null) {
                 guardStmt.accept(this);
@@ -2042,7 +2053,7 @@ public class VerilogEmitter extends CommonEmitter {
 
                 out.print("if (");
                 gc.getGuard().accept(this);
-                out.println(')');
+                println(")", gc.getGuard());
 
                 out.println("begin");
                 if (isDeterministic) // remember true guard
@@ -2111,7 +2122,7 @@ public class VerilogEmitter extends CommonEmitter {
             guardNum = 0;
             for (Iterator i = s.getGuardedCommands(); i.hasNext(); ) {
                 final GuardedCommand gc = (GuardedCommand) i.next();
-                out.println(guardNum + " : begin");
+                println(guardNum + " : begin", gc.getCommand());
                 gc.getCommand().accept(this);
                 if (!isRepetition) {
                     // HACK: end loop by setting chosenGuard to -1
@@ -2173,7 +2184,7 @@ public class VerilogEmitter extends CommonEmitter {
             s.getIndexVarExpression().accept(this);
             out.print("=");
             s.getIndexVarExpression().accept(this);
-            out.println(" + 1) begin ");
+            println(" + 1) begin ", s);
             s.getStatement().accept(this); 
             out.println("end");
             out.println("end");
@@ -2234,7 +2245,7 @@ public class VerilogEmitter extends CommonEmitter {
         for (Iterator i = s.getStatements(); i.hasNext(); ) {
             final StatementInterface stmt = (StatementInterface) i.next();
 
-            out.println("begin");
+            println("begin", stmt);
 
             // emit the parallel code
             stmt.accept(this);
