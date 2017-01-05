@@ -79,22 +79,45 @@
 
 (defun DrawBumpsN2 ()
   
-  ; SOUTH bumps for FPIO, resn, clk (2 rows tall)
-  CV = (dbOpenCellViewByType "chip.n2.south" "chip.n2.south.SOUTH.20000_bumps" "layout" "maskLayout" "w")
-  (DrawBumps (list (list nil    "resn"  "ip" "op" "clk"   "VSS")
-                   (list "VDDM" "VDDIOS" "id" "od" "VDDIOS" "VDDM"))
+  ; SOUTH bumps includes S bd(17), E bd(9), FPIO, resn, clk (2 rows tall) plus a row of LMT/T0A
+  CV = (dbOpenCellViewByType "chip.n2.south" "chip.n2.south.SOUTH.20001_bumps" "layout" "maskLayout" "w")
+  (DrawBumps (list
+		(list 
+		      nil   "sx15" "sx13" "sx11" "sx9" "VDDIOS" "VDDIOS" "sxa" "sx7"  "sx5"  "sx3"  "sx1" 
+		      "VSS"
+		      "sy1" "sy3"  "sy5"  "sy7"  "VDDIOS" "VDDIOS" "sya" "sy9" "sy11" "sy13" "sy15"
+		      "VSS" "resn" "VDDIOS" "VDDIOS" "clk" "VSS"
+		      nil "ey7" "ey5" "VDDIOS" "VDDIOS" "eya" "ey3" "ey1"
+		      nil "ex1" "ex3" "exa" "VDDIOS" "VDDIOS" "ex5" "ex7" nil
+		)
+		(list 
+		      "sx16" "sx14" "sx12" "sx10" "sx8" "GND" "GND" "sxq" "sx6" "sx4" "sx2" "sx0" 
+		      "VSS"
+		      "sy0" "sy2" "sy4" "sy6" "VSS" "VSS" "syq" "sy8" "sy10" "sy12" "sy14" "sy16" 
+		      "id" "od" "ip" "op" nil 
+		      nil "ey6" "ey4" "VSS" "VSS" "eyq" "ey2" "ey0"
+		      nil "ex0" "ex2" "exq" "VSS" "VSS" "ex4" "ex6" "ex8"
+		)
+
+		(list 
+		      "VDDM" "GND" "Vdd" "GND"
+		      "VDDM" "GND" "Vdd" "GND"
+		      "VDDM" "GND" "Vdd" "GND"
+		      "VDDM" "GND" "Vdd" "GND"
+		      "VDDM" "GND" "Vdd" "GND"
+		      "VDDM" "GND" "Vdd" "GND"
+		      "VDDM" "GND" "VDDM" "GND" "VDDM"
+		)
+
+		)
              ?filename "n2_bumps_s.txt" ?CV CV)
 
 
-  ; Lakemont bumps (2 rows tall)
-  CV = (dbOpenCellViewByType "chip.n2.lakemont" "chip.n2.lakemont.LAKEMONT.20000_bumps" "layout" "maskLayout" "w")
-  (DrawBumps (list (list "VSS"  "VSS"  "VSS" "VSS" "VSS"  "VSS")
-                   (list "VDDA" "VDDM" "VDD" "VDD" "VDDM" "VDDM")
-                   )
-             ?filename "n2_bumps_lakemont.txt" ?CV CV)
+
+
 
   ; MESH bumps (45 rows tall)
-  CV = (dbOpenCellViewByType "core.neuro.mesh" "core.neuro.mesh.MESH.20000_bumps" "layout" "maskLayout" "w")
+  CV = (dbOpenCellViewByType "core.neuro.mesh" "core.neuro.mesh.MESH.20001_bumps" "layout" "maskLayout" "w")
   bumps = nil
   (for y 0 44
        (cond ((mod y 4)==1 rail="VDD")
@@ -105,21 +128,33 @@
        (for x 0 23 row = (cons rail row))
        bumps = (append bumps (list row))
        )
-  (DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV)
+  ;(DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV)
 
-  ; NW bumps for bd(17) x input (3 rows tall)
-  CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NW.20000_bumps" "layout" "maskLayout" "w")
-  (DrawBumps (list (list "VDD" "VDD" "VDD" "VDD" "VDDION" "VDDION" "VDDION" "VDDION" "VDD" "VDD" "VDD" "VDD")
-                   (list nil   "x15" "x13" "x11" "x9"     "VSS"    "VSS"    "xa"     "x7"  "x5"  "x3"  "x1")
-                   (list "x16" "x14" "x12" "x10" "x8"     "VDDION" "VDDION" "xq"     "x6"  "x4"  "x2"  "x0")
-                   )
-             ?filename "n2_bumps_nw.txt" ?CV CV)
+  ; NORTH bumps for bd(17) x input (2 rows tall)
+  CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NORTH.20001_bumps" "layout" "maskLayout" "w")
+  (DrawBumps (list 
+                   (list nil nil
+		   	 "wy7" "wy5" "VSS"    "VSS"    "wya" "wy3" "wy1" "VSS"
+		         "wx1" "wx3" "wxa" "VSS" "VSS" "wx5" "wx7"
+			 nil nil nil nil nil nil nil
+			 "nx15" "nx13" "nx11" "nx9" "VSS" "VSS" "nxa" "nx7" "nx5" "nx3" "nx1" "VSS"
+			 "ny1" "ny3" "ny5" "ny7" "VSS" "VSS" "nya" "ny9" "ny11" "ny13" "ny15" "VSS" "VSS"
+		   	 )
+                   (list nil nil 
+		   	 "wy6" "wy4" "VDDION" "VDDION" "wyq" "wy2" "wy0" "VSS"
+		         "wx0" "wx2" "wxq" "VDDION" "VDDION" "wx4" "wx6" "wx8"
+			 nil nil nil nil nil
+			 "nx16" "nx14" "nx12" "nx10" "nx8" "VDDION" "VDDION" "nxq" "nx6" "nx4" "nx2" "nx0" "VSS"
+			 "ny0" "ny2" "ny4" "ny6" "VDDION" "VDDION" "nyq" "ny8" "ny10" "ny12" "ny14" "ny16" 
+			 )
+		   )
+             ?filename "n2_bumps_n.txt" ?CV CV)
 
-  ; NE bumps for bd(17) y output (3 rows tall)
-  CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NE.20000_bumps" "layout" "maskLayout" "w")
-  (DrawBumps (list (list "VDD" "VDD" "VDD" "VDD" "VDDION" "VDDION"  "VDDION" "VDDION" "VDD" "VDD" "VDD" "VDD")
-                   (list "y0"  "y2"  "y4"  "y6"  "yq"     "VSS"     "VSS"    "y8"     "y10" "y12" "y14" "y16")
-                   (list "y1"  "y3"  "y5"  "y7"  "ya"     "VDDION"  "VDDION" "y9"     "y11" "y13" "y15" nil)
-                   )
-             ?filename "n2_bumps_ne.txt" ?CV CV)
-  )
+
+)
+
+
+(defun bmp () 
+ (load "vip/proj/n2/n2_bumps.il")
+ (DrawBumpsN2)
+)
