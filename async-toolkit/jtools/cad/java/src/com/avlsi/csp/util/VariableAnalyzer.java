@@ -135,7 +135,7 @@ public class VariableAnalyzer {
         private boolean inInitializer;
         final RefinementResolver resolver;
         private Set declarationWarned = new HashSet();
-        private Collection/*<VariableAnalyzerVisitorException>*/ errors;
+        private Collection<TypeError> errors;
 
         public Results(final RefinementResolver resolver) {
             this(resolver, Collections.EMPTY_MAP);
@@ -155,7 +155,7 @@ public class VariableAnalyzer {
             this.inFunctionInitializer = false;
             this.inInitializer = false;
             this.resolver = resolver;
-            this.errors = new ArrayList();
+            this.errors = new ArrayList<>();
         }
 
         public void useIdent(final IdentifierExpression ident,
@@ -400,8 +400,8 @@ public class VariableAnalyzer {
             return result;
         }
 
-        public Collection getErrors(final boolean strictVars) {
-            final Collection result = new ArrayList();
+        public Collection<Problem> getErrors(final boolean strictVars) {
+            final Collection<Problem> result = new ArrayList<>();
             result.addAll(errors);
             result.addAll(getUndeclaredErrors(strictVars));
             return result;
@@ -1610,6 +1610,15 @@ public class VariableAnalyzer {
             if (!isInteger(ty) && !isBoolean(ty)) {
                 processPacked(s.getRightHandSide(), ty,
                               "int.bool.packed.expected");
+                final int size = getPackSize(ty);
+                if (size > 0) {
+                    final Type chanTy = getType(s.getChannelExpression());
+                    final Interval ch = getInterval(chanTy);
+                    final Interval rhs = new Interval(size);
+                    if (!ch.union(rhs).equals(ch)) {
+                        report("implicit.pack.truncated", s, chanTy, size);
+                    }
+                }
             }
         }
 

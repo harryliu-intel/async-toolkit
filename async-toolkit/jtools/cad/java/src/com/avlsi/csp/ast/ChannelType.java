@@ -80,6 +80,6 @@ public class ChannelType extends Type {
     }
 
     public String toString() {
-        return "e1of" + numValues.toString();
+        return getTypeName();
     }
 }

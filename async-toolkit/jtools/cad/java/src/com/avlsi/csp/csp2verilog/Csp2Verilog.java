@@ -272,6 +272,7 @@ public class Csp2Verilog {
         final UnaryFunction classifier = ProblemFilter.getClassifier(
             new HashSet(Arrays.asList("type.checker.undeclared.set.unused",
                                       "preprocessor.assign.to.input",
+                                      "type.checker.implicit.pack.truncated",
                                       "type.checker.invalid.guard")));
         final BinaryFunction filter = new BinaryFunction() {
             public Object execute(final Object o1, final Object o2) {

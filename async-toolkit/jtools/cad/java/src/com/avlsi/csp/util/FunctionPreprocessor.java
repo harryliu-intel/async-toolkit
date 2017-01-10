@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.avlsi.csp.ast.*;
 import com.avlsi.csp.grammar.ParseRange;
@@ -314,6 +315,13 @@ public class FunctionPreprocessor extends VisitorByCategory {
             super.visitFunctionCallExpression(e);
         }
     }
+    private void addAnalyzerErrors() {
+        problems.addAll(
+            analysisResults.getErrors(false)
+                           .stream()
+                           .filter(e -> e.getCode().equals("type.checker.implicit.pack.truncated"))
+                           .collect(Collectors.toList()));
+    }
     public void visitCSPProgram(CSPProgram p) throws VisitorException
     {
         if (resolver == null) {
@@ -347,6 +355,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
                 try {
                     analysisResults =
                         analyzer.getResults(decl, initStmt, resolver);
+                    addAnalyzerErrors();
                 } catch (VariableAnalysisException x) {
                     throw new VisitorException(x.getMessage(), x);
                 }
@@ -364,6 +373,7 @@ public class FunctionPreprocessor extends VisitorByCategory {
 
         try {
             analysisResults = analyzer.getResults(p, resolver);
+            addAnalyzerErrors();
         } catch (VariableAnalysisException x) {
             throw new VisitorException(x.getMessage(), x);
         }

@@ -200,7 +200,8 @@ public class JavaEmitter implements VisitorInterface {
             ProblemFilter.getClassifier(
                 new HashSet(Arrays.asList(
                     new Object[] { "type.checker.undeclared.set.unused",
-                                   "type.checker.invalid.guard" }))),
+                                   "type.checker.invalid.guard",
+                                   "type.checker.implicit.pack.truncated" }))),
             new BinaryFunction() {
                 public Object execute(final Object o1, final Object o2) {
                     JavaEmitter.this.ensureNewline();
