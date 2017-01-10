@@ -29,6 +29,7 @@ import com.avlsi.util.debug.Debug;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1587,25 +1588,9 @@ public class VariableAnalyzer {
             }
         }
 
-        public void visitReceiveStatement(ReceiveStatement s)
+        private void channelImplicitPack(AbstractChannelStatement s,
+                                         boolean send)
             throws VisitorException {
-            s.getChannelExpression().accept(this);
-            expectChannel(s.getChannelExpression(), PortDirection.IN);
-            if (s.getRightHandSide() != null) {
-                processLvalue(s.getRightHandSide());
-                final Type ty = getType(s.getRightHandSide());
-                if (!isInteger(ty) && !isBoolean(ty)) {
-                    processPacked(s.getRightHandSide(), ty,
-                                  "int.bool.packed.expected");
-                }
-            }
-        }
-
-        public void visitSendStatement(SendStatement s)
-            throws VisitorException {
-            s.getChannelExpression().accept(this);
-            expectChannel(s.getChannelExpression(), PortDirection.OUT);
-            s.getRightHandSide().accept(this);
             final Type ty = getType(s.getRightHandSide());
             if (!isInteger(ty) && !isBoolean(ty)) {
                 processPacked(s.getRightHandSide(), ty,
@@ -1614,12 +1599,34 @@ public class VariableAnalyzer {
                 if (size > 0) {
                     final Type chanTy = getType(s.getChannelExpression());
                     final Interval ch = getInterval(chanTy);
-                    final Interval rhs = new Interval(size);
-                    if (!ch.union(rhs).equals(ch)) {
-                        report("implicit.pack.truncated", s, chanTy, size);
+                    final Interval op = new Interval(size);
+                    if (!ch.union(op).equals(send ? ch : op)) {
+                        report("implicit.pack.truncated", s,
+                               send ? "sending" : "receiving",
+                               size,
+                               send ? "to" : "from",
+                               chanTy);
                     }
                 }
             }
+        }
+
+        public void visitReceiveStatement(ReceiveStatement s)
+            throws VisitorException {
+            s.getChannelExpression().accept(this);
+            expectChannel(s.getChannelExpression(), PortDirection.IN);
+            if (s.getRightHandSide() != null) {
+                processLvalue(s.getRightHandSide());
+                channelImplicitPack(s, false);
+            }
+        }
+
+        public void visitSendStatement(SendStatement s)
+            throws VisitorException {
+            s.getChannelExpression().accept(this);
+            expectChannel(s.getChannelExpression(), PortDirection.OUT);
+            s.getRightHandSide().accept(this);
+            channelImplicitPack(s, true);
         }
 
         public void visitSequentialStatement(SequentialStatement s)
@@ -2039,24 +2046,13 @@ public class VariableAnalyzer {
             }
             return o;
         }
-        private void report(final String s, final AbstractASTNodeInterface a) {
-            report(s, a, null);
-        }
         private void report(final String s, final AbstractASTNodeInterface a,
-                            final Object o1) {
-            report(s, a, o1, null);
-        }
-        private void report(final String s, final AbstractASTNodeInterface a,
-                            final Object o1, final Object o2) {
-            report(s, a, o1, o2, null);
-        }
-        private void report(final String s, final AbstractASTNodeInterface a,
-                            final Object o1, final Object o2, final Object o3) {
+                            final Object... o) {
             results.errors.add(new TypeError("type.checker." + s,
                                              a.getParseRange(),
-                                             new Object[] { clarify(o1),
-                                                            clarify(o2),
-                                                            clarify(o3) }));
+                                             Arrays.stream(o)
+                                                   .map(x -> clarify(x))
+                                                   .toArray()));
         }
 
         private Interval getInterval(final Type ty) {
