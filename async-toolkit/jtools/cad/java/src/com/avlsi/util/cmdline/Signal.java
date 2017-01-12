@@ -21,8 +21,16 @@ public class Signal implements sun.misc.SignalHandler {
     /** Interface to pass in to <code>setHandler</code> ignore a signal. **/
     public static final Handler IGNORE = new Handler() { public void execute() {} };
     /** Valid signal types to pass into <code>setHandler</code> function**/
-    public static final sun.misc.Signal SIGINT = new sun.misc.Signal("INT");
-    public static final sun.misc.Signal SIGHUP = new sun.misc.Signal("HUP");
+    private static sun.misc.Signal getSignal(String s) {
+        try {
+            return new sun.misc.Signal(s);
+        } catch (IllegalArgumentException e) {
+            // HUP is not a valid signal on Windows
+            return null;
+        }
+    }
+    public static final sun.misc.Signal SIGINT = getSignal("INT");
+    public static final sun.misc.Signal SIGHUP = getSignal("HUP");
     static sun.misc.Signal signals[] = {
         SIGINT, SIGHUP
     };

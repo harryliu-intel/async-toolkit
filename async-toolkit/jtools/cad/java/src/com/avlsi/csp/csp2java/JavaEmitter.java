@@ -213,6 +213,9 @@ public class JavaEmitter implements VisitorInterface {
         this.synthesizable = synthesizable;
     }
 
+    private String escapeLiteral(String s) {
+        return s.replace("\\", "\\\\");
+    }
 
     private String getTypeString(final PortDefinition p) {
         String result = (String) structureTypeHash.get(p);
@@ -1534,7 +1537,7 @@ public class JavaEmitter implements VisitorInterface {
         isPortArray = false;
         e.getIndexExpression().accept(this);
         ParsePosition pp = e.getIndexExpression().getParseRange().start;
-        out.print(", \"" + pp.filename + "\", " +
+        out.print(", \"" + escapeLiteral(pp.filename) + "\", " +
                   pp.line + ", " + pp.column);
         out.print(")");
 
@@ -2135,7 +2138,7 @@ public class JavaEmitter implements VisitorInterface {
                                 " + \" and \" + " + idx +
                                 " + \" true for deterministic repetition" +
                                 " or selection at \" + \"" +
-                                where.getParseRange().start.filename +
+                                escapeLiteral(where.getParseRange().start.filename) +
                                 ':' + where.getParseRange().toString()+
                                 "\");");
                     out.println("}");
@@ -2665,7 +2668,7 @@ public class JavaEmitter implements VisitorInterface {
 
     private String getLocation(AbstractASTNodeInterface node) {
         final ParseRange pr = node.getParseRange();
-        final String fname = pr.start.filename;
+        final String fname = escapeLiteral(pr.start.filename);
         return fname + ' ' + pr.toString();
     }
 
