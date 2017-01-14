@@ -82,7 +82,7 @@ COMMENT_1
        ( options { generateAmbigWarnings=false; }
        : { LA(2) != '/' }? '*'
        | '\n' { newline(); }
-       | ~('*' | '\n' | '\r')
+       | ~('*' | '\n')
        )*
       "*/"
     { $setType(Token.SKIP); }
