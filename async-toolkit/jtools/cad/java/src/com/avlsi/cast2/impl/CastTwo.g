@@ -1333,7 +1333,7 @@ LT_OR           : "<|"  ;
 LT_COMMA        : "<,"  ;
 
 WS
-    : ( ' ' | '\t' | '\f' | ( '\n' { newline(); } ) )
+    : ( ' ' | '\t' | '\f' | ( '\n' { newline(); } ) | '\r' )
     { $setType(Token.SKIP); }
     ;
 
@@ -1342,7 +1342,7 @@ COMMENT_1
            ( options { generateAmbigWarnings=false; }
            :    { LA(2) != '/' }? '*'
            |    '\n'            {newline();}
-           |   ~('*' | '\n' | '\r')
+           |   ~('*' | '\n')
            )*
           "*/"
         {$setType(Token.SKIP);}
