@@ -377,7 +377,6 @@ if ($qrsh) {
                             if ( $out_line =~ /Your job has been queued .*JobID (\d+)/) {
                                $jobid=$1;
                             } else {
-                               $out_line =~ s/\s*$//; $out_line =~ s/^\s*//;
                                printf "%s\n", $out_line;
                             }
                             $out_line = "";
@@ -402,7 +401,6 @@ if ($qrsh) {
                                 ($err_line =~ /has started on.*intel.com/) or
                                 ($err_line =~ /no version information available/)) {
                             } else {
-                               $err_line =~ s/\s*$//; $err_line =~ s/^\s*//;
                                printf STDERR "%s\n", $err_line;
                             }
                             $err_line = "";
