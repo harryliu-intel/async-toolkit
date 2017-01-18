@@ -411,6 +411,8 @@ if ($qrsh) {
                     }
                 }
             }
+            print $out_line;
+            print STDERR $err_line;
             close ERR;
             close OUT;
             waitpid($pid, 0);
