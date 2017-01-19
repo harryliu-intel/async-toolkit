@@ -162,9 +162,10 @@
       (let ( 
             ( RLibNameComponents ( cdr ( cdr RComponents ) ) )
             ( LibName nil ) )
-        if( rexMatchp("^[a-z_0-9]+$" car(RLibNameComponents))==nil then
-           RLibNameComponents=cdr(RLibNameComponents)
-        )
+; taking this out for now because it messed up the library lib.qdi.6T.6T
+;        if( rexMatchp("^[a-z_0-9]+$" car(RLibNameComponents))==nil then
+;           RLibNameComponents=cdr(RLibNameComponents)
+;        )
         ( foreach
           Component
           ( reverse RLibNameComponents )
