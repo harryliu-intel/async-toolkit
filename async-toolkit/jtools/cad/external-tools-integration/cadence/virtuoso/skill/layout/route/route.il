@@ -1,4 +1,4 @@
-; Automated routing using VCAR.  Wastes less time than the old UI.
+; Automated routing using ICC
 ;
 ; Copyright 2010 Fulcrum Microsystems.  All rights reserved.
 
@@ -56,8 +56,8 @@
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
-        (doNondefaultDef t)      ; create cellName_nondefault.def
-        (doSkipRouting t)        ; create cellName.SkipRouting.tcl
+        (doNondefaultDef nil)    ; create cellName_nondefault.def
+        (doSkipRouting nil)      ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
@@ -65,7 +65,7 @@
         (noPowerFill nil)
 	(doPowerGates nil)       ; optionally skip export of placed pillars
         )
-  (let (TEMP WDIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
+  (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         PowerGridCellName abstractCV
         Command (statusVerilog t)
         lef_subcells GdsMapFile gds_name
@@ -90,6 +90,7 @@
                       "/share/Fulcrum")
     TEMP     = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR     = (strcat TEMP "/route/" CV->cellName)
+    LEFDEF_DIR  = (strcat WDIR "/lefdef")
     MaxHeapSize = (nrGetMaxHeapSize)
     (csh (strcat "rm -rf " WDIR))
     (csh (strcat "mkdir -p " WDIR))
@@ -139,13 +140,13 @@
     ; export GDS
     (when doGds
       (printf "GDS Start %s\n" (getCurrentTime))
-      statusGds = (ExportCellsGDS (strcat WDIR "/gds") lef_subcells)
+      statusGds = (ExportCellsGDS (strcat LEFDEF_DIR "/gds") lef_subcells)
       )
 
     ; export LEF
     (when doLef
       (printf "LEF Start %s\n" (getCurrentTime))
-      statusLef = (ExportCellsLEF (strcat WDIR "/" CV->cellName) lef_subcells)
+      statusLef = (ExportCellsLEF (strcat LEFDEF_DIR "/" CV->cellName) lef_subcells)
       )
 
     ; export DEF
@@ -181,11 +182,11 @@
       ; export DEF
       (when statusDef
         statusDef = (ldtrDefWriteOA
-                     (sprintf nil "%s/%s.def" WDIR CV->cellName)
+                     (sprintf nil "%s/%s.def" LEFDEF_DIR CV->cellName)
                      ExportCV->libName
                      ExportCV->cellName
                      ExportCV->viewName
-                     (sprintf nil "%s/%s.def.log" WDIR CV->cellName)
+                     (sprintf nil "%s/%s.def.log" LEFDEF_DIR CV->cellName)
                      "5.7")
         )
       (dbPurge ExportCV)
@@ -285,13 +286,15 @@
         (metalFill t)
         (topHalo nil)
         )
-  (let (CAST_PATH DFII_DIR TEMP WDIR file)
+  (let (CAST_PATH DFII_DIR TEMP WDIR LEFDEF_DIR PROTEUS_DIR file)
     ; files and options
     CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     DFII_DIR  = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
     SPAR_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
     TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR      = (strcat TEMP "/route/" CV->cellName)
+    PROTEUS_DIR = (strcat WDIR "/proteus")
+    LEFDEF_DIR  = (strcat WDIR "/lefdef")
 
     ; write config file
     file = (outfile (strcat WDIR "/proteus.config"))
@@ -300,14 +303,13 @@
     (fprintf file "--spar-dir=%s\n" SPAR_DIR)
     (fprintf file "--cast-dir=%s/cast\n" WDIR)
     (fprintf file "--spec-dir=%s/spec\n" WDIR)
-    (fprintf file "--lefdef-dir=%s\n" WDIR)
-    (fprintf file "--scratch-dir=\n")
-    (fprintf file "--verilog=%s/%s.v\n" WDIR CV->cellName)
-    (fprintf file "--output-dir=%s\n" WDIR)
-    (fprintf file "--cell=%s\n" CV->cellName)
+    (fprintf file "--lefdef-dir=%s\n" LEFDEF_DIR)
+    (fprintf file "--output-dir=%s\n" PROTEUS_DIR)
+    (fprintf file "--cell=%s" (GetCastCellName CV->cellName))
+    (fprintf file "--base=%s" (GetCastCellName CV->cellName))
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
-    (fprintf file "--task=rdt_route\n")
+    (fprintf file "--task=route\n")
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (close file)
@@ -533,3 +535,42 @@
      "5.7")
     )
   )
+
+
+(defun GetCastCellName (cellname
+                       @key (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
+                            (castpath ConfigFileGetValue(TheCDSConfigTable "CAST_PATH")) )
+  (let (castname filename ExecCmd Command file)
+    castname "junk"
+    filename = strcat( tempdir "/" cellname ".castname" )
+    ExecCmd = cond( ( ( boundp( `ExecCmd ) && stringp( ExecCmd ) ) 
+                               ExecCmd )
+                    ( "" ) )
+
+    when( !isFile(filename)
+      Command = sprintf( nil
+                "echo %s | %s %s/rename --type=cell --from=cadence --to=cast > %s"
+		cellname
+                ExecCmd
+                PackageGetBinRoot( )
+		filename
+                )
+       printf( "%s\n" Command )
+       shell( Command )
+    )
+
+    file=infile( filename )
+    if( file then
+      while( gets( line file )
+        when( line=car(parseString(line " "))
+          castname = line
+        )
+      )
+    else
+      printf("Can't open file %s.\n" filename)
+    )
+    close( file )
+    castname
+  )
+)
+
