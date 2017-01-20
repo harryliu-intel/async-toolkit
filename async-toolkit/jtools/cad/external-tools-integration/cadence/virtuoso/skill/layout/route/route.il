@@ -126,9 +126,9 @@
                                  "&> %s/%s.v.log")
                          CAST_PATH
                          CV->cellName
-                         WDIR CV->cellName
+                         LEFDEF_DIR CV->cellName
                          MaxHeapSize
-                         WDIR CV->cellName)
+                         LEFDEF_DIR CV->cellName)
       (printf "%s\n" Command)
       statusVerilog = (shell Command)
       )
@@ -194,7 +194,7 @@
 
     ; write SetSkipRouting.tcl to avoid routing inplace pins
     (when doSkipRouting
-      SkipRoutingFileName = (strcat WDIR "/" CV->cellName ".SetSkipRouting.tcl")
+      SkipRoutingFileName = (strcat LEFDEF_DIR "/" CV->cellName ".SetSkipRouting.tcl")
       pout=(outfile SkipRoutingFileName)
       (fprintf pout "proc ProteusUserSetSkipRouting {} {\n")
       inplacedPins=(FindInplacedPins CV)
@@ -220,9 +220,9 @@
                                  " &> %s/%s_nondefault.def.log")
                          CAST_PATH
                          CV->cellName
-                         WDIR CV->cellName
+                         LEFDEF_DIR CV->cellName
                          MaxHeapSize
-                         WDIR CV->cellName
+                         LEFDEF_DIR CV->cellName
                          )
       (printf "%s\n" Command)
       statusNonDefault = (shell Command)
