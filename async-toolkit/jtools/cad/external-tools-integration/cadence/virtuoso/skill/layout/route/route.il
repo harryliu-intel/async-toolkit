@@ -10,7 +10,7 @@
         (Background nil)         ; optionally run in the background
         (importView "layout")    ; view name to import wiring back to
         (Mem 4000)               ; memory to use
-        (doVerilog t)            ; create .v
+        (doVerilog nil)          ; create .v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create .lef
         (doDef t)                ; create .def
@@ -52,7 +52,7 @@
   (@key (CV (geGetEditCellView)) ; specify CellView or nil to use edit view
         (botMetal nil)           ; bottom metal layer to use, or nil to use wires.il
         (topMetal nil)           ; top metal layer to use, or nil to use wires.il
-        (doVerilog t)            ; create cellName.v
+        (doVerilog nil)          ; create cellName.v
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
