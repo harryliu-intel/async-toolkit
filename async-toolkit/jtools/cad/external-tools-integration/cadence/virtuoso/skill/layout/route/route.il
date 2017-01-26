@@ -574,3 +574,8 @@
   )
 )
 
+; Change placement status of all instances to "locked".  Use in floorplan view of custom cells.
+(defun LockInstances (@key (CV (geGetEditCellView)) (status "locked"))
+  (foreach inst CV->instances inst->status=status)
+  t
+  )
