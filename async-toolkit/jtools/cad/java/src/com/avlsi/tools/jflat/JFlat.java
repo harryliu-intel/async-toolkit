@@ -3653,11 +3653,17 @@ public final class JFlat {
                     nn = "ENV_PRS_FALSE";
                 }
 
+                // PWL approximation of a linear conductance curve with threshold Vlo
                 args.add(0, "AND(" + count + ")");
                 args.add("0,PrsMaxRes");
-                args.add("Vlo,PrsMaxRes");
-                args.add("Vhi,PrsMinRes");
-                args.add("true,PrsMinRes");
+                int pts=10;
+                for (int i=0; i<=pts; i++) {
+                    double x = 1.0*i/pts;
+                    args.add("'Vlo+(Vmax-Vlo)*" + x + "'" +
+                             "," +
+                             "'1/(1/PrsMaxRes+(1/PrsMinRes-1/PrsMaxRes)*" + x + ")'");
+                }
+                args.add("'2*Vmax',PrsMinRes");
 
                 pw.G(nextDevice(), np, nn, "vcr",
                      (String[]) args.toArray(new String[0]));

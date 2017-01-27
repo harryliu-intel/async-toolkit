@@ -189,6 +189,7 @@ my $escaped_cell_name="\Q$cell_name\E";
 my $bsim = "tech";
 my $Vlo="true*0.45";
 my $Vhi="true*0.55";
+my $Vmax="2.0";
 my $V50="true*0.5";
 my $V10="true*0.1";
 my $V90="true*0.9";
@@ -428,6 +429,7 @@ if (!($env_spice_file eq "")) {
 * Environment
 .param Vlo='$Vlo'
 .param Vhi='$Vhi'
+.param Vmax='$Vmax'
 .param PrsCap=$prscap
 .param PrsMaxRes=$prsmaxres
 .param PrsMinRes=$prsminres
