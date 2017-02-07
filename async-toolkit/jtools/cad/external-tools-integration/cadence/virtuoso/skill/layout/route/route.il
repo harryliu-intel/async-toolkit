@@ -461,9 +461,11 @@
   (InstantiateColorGrid ?CV CV)
   (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
+  (CopyPinsFromSourceView ?CV CV)
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
   (RunAfterImportDef ?CV CV)
+  (printf "Route Import finished.\n")
   )
 
 ; Convert ICC's fill rects to fill purpose
@@ -579,3 +581,39 @@
   (foreach inst CV->instances inst->status=status)
   t
   )
+
+
+(defun CopyPinsFromSourceView (@key (CV (geGetEditCellView)) (srcCV nil))
+  (let (fCV fig net pin trm)
+    ; assumes same cell name unless specified
+    (unless srcCV
+      fCV = (dbOpenCellViewByType CV->libName CV->cellName "floorplan")
+      (unless fCV (printf "Source view not found.\n"))
+    )
+    (when fCV
+      (DeletePins ?CV CV)
+      (foreach trm CV->terminals (dbDeleteObject trm))
+      (foreach trm CV->terminals (dbDeleteObject trm))
+
+      (foreach shape fCV->shapes
+        (when shape->pin
+          net = (dbMakeNet CV shape->net->name)
+	  trm = (dbCreateTerm net net->name shape->pin->term->direction)
+          fig = (dbCopyFig shape CV)
+          pin = (dbCreatePin net fig); net->name trm)
+
+          ; need to be sure we have drawing purpose too
+	  (when fig->purpose=="pin" && 
+	        (dbGetPropByName fig "PinType")->value=="BusScript"
+             (dbCreateRect CV (list fig->layerName "drawing") fig->bBox)
+          )
+        )
+       )
+
+    (CreatePowerPins ?CV CV)
+    (dbSave CV)
+    CV
+    )
+  )
+)
+
