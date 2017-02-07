@@ -266,9 +266,11 @@ wires_modtime = makeTable("wires" 0)
     (cond (isPin && net
           (cond (y0==y1
                 rect = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
+                rect = (dbCreateRect CV (list (car layer) "pin") list(x0:y0-width/2 x1:y1+width/2)) ; add pin purpose
                 )
                 (x0==x1
                 rect = (dbCreateRect CV layer list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
+                rect = (dbCreateRect CV (list (car layer) "pin") list(x0-width/2:y0 x1+width/2:y1)) ; add pin purpose
                 )
                 (t (error "invalid coordinates for pins %f:%f %f:%f" x0 y0 x1 y1) 
                 )
