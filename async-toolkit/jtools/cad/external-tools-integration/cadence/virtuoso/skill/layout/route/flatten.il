@@ -466,7 +466,7 @@ useICV = t
     (when doPowerGates (printf "Making power grid abstract for gated Vdd\n"))
     (foreach shape (setof shape pgaCV->shapes (member shape->layerName powerLayers))
       (cond (shape->purpose=="gnd"
-             shape->purpose="drawing"
+             shape->purpose="pin"
              figsGND = (cons shape figsGND)
              )
             )
@@ -475,7 +475,7 @@ useICV = t
         (when (MetalNumber ?lpp shape->lpp) < 2
               ; normal
              (cond (shape->purpose=="vdd"
-                    shape->purpose="drawing"
+                    shape->purpose="pin"
                     figsVdd = (cons shape figsVdd)
                     )
 		   )
@@ -483,7 +483,7 @@ useICV = t
         (when (MetalNumber ?lpp shape->lpp) == 2
               ; m2 vdd becomes Vddg pins
              (cond (shape->purpose=="vdd"
-                    shape->purpose="drawing"
+                    shape->purpose="pin"
                     figsVddg = (cons shape figsVddg)
                     )
 		   )
@@ -492,12 +492,12 @@ useICV = t
               ; mx vdd becomes Vddg pins
 	      ; mx fill becomes Vdd pins
              (cond (shape->purpose=="vdd"
-                    shape->purpose="drawing"
+                    shape->purpose="pin"
                     figsVddg = (cons shape figsVddg)
                     )
 		   )
              (cond (shape->purpose=="fill"
-                    shape->purpose="drawing"
+                    shape->purpose="pin"
                     figsVdd = (cons shape figsVdd)
                     )
 		   )
@@ -505,7 +505,7 @@ useICV = t
         (when (MetalNumber ?lpp shape->lpp) > 5
               ; normal
              (cond (shape->purpose=="vdd"
-                    shape->purpose="drawing"
+                    shape->purpose="pin"
                     figsVdd = (cons shape figsVdd)
                     )
 		   )
@@ -513,7 +513,7 @@ useICV = t
 	)
       (when !doPowerGates
              (cond (shape->purpose=="vdd"
-                    shape->purpose="drawing"
+                    shape->purpose="pin"
                     figsVdd = (cons shape figsVdd)
                     )
 		   )
@@ -617,10 +617,10 @@ useICV = t
     (when inst pgaCV = (dbOpenCellViewByType inst->libName inst->cellName "abstract"))
     (unless pgaCV (printf "WARNING: no pg instance to make power pins from!"))
     (when pgaCV
-      lpp = (list Metal[topMetal] "drawing")
+      lpp = (list Metal[topMetal] "pin")
       (foreach shape (setof x pgaCV->shapes x->lpp==lpp)
                new_shape = (dbCopyShape shape CV)
-               new_shape->lpp = (list (car new_shape->lpp) "pin") ; hack
+;               new_shape->lpp = (list (car new_shape->lpp) "pin") ; hack
                (dbReplaceProp new_shape "PinType" "string" "Power")
                (dbReplaceProp new_shape "BusScriptObject" "boolean" nil)
                (cond (shape->net->name==VddNetName figsVdd = (cons new_shape figsVdd))
@@ -631,6 +631,8 @@ useICV = t
       (dbAddFigsToPin (dbCreatePin (dbMakeNet CV GNDNetName) nil) figsGND)
       (foreach fig figsVdd (LaygenLabelPin CV fig))
       (foreach fig figsGND (LaygenLabelPin CV fig))
+      (DrawPinsVDDM ?CV CV)
+      (DrawPinsVDDIO ?CV CV)
       )
     )
   t
@@ -647,4 +649,20 @@ useICV = t
     (unless CV (error "couldn't open %s\n" gridName))
     CV
     )
+  )
+
+; draw inplace pins for VDDM
+(defun DrawPinsVDDM (@key (CV (geGetEditCellView)))
+  (foreach inst CV->instances
+           (MidPinsInheritPin CV inst "VDDM" "VDDM")
+           )
+  t
+  )
+
+; draw inplace pins for VDDIO
+(defun DrawPinsVDDIO (@key (CV (geGetEditCellView)))
+  (foreach inst CV->instances
+           (MidPinsInheritPin CV inst "VDDIO" "VDDIO")
+           )
+  t
   )
