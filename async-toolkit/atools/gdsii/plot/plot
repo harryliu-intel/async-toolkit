@@ -124,28 +124,38 @@ if ($monitor>0 && $launched>0) {
         }
         my $curr_time = localtime;
         print "Progress at $curr_time, $jobs_done of $JOBS finished.\n";
+	catppm();
+	convert();
         sleep $sleep_period;
         last if ($jobs_done==$JOBS);
     }
 }
+catppm();
+convert();
+
 
 # concatenate final image if all stripes exist
-my $ok=1;
-for (my $i=0; $i<$JOBS; $i++) {
-    if (!(-e "$name.ppm.$i")) { $ok = 0; }
-}
-if ($ok) {
-    printf("Concatenating $name.ppm\n");
-    system("rm -f $name.ppm");
+sub catppm {
+    my $ok=1;
     for (my $i=0; $i<$JOBS; $i++) {
-        system("cat $name.ppm.$i >> $name.ppm");
+	if (!(-e "$name.ppm.$i")) { $ok = 0; }
+    }
+    if ($ok) {
+	printf("Concatenating $name.ppm\n");
+	system("rm -f $name.ppm");
+	for (my $i=0; $i<$JOBS; $i++) {
+	    system("cat $name.ppm.$i >> $name.ppm");
+	}
     }
 }
 
 # convert output format
-if (-e "$name.ppm" && !($format eq "ppm")) {
-    my $q = "";
-    $q = "-quality $quality" if ($format eq "jpg");
-    print "Converting $name.ppm to $name.$format\n";
-    system("convert $q $name.ppm $name.$format");
+sub convert {
+    if (-e "$name.ppm" && !($format eq "ppm")) {
+	my $q = "";
+	$q = "-quality $quality" if ($format eq "jpg");
+	print "Converting $name.ppm to $name.$format\n";
+	system("convert $q $name.ppm $name.$format");
+    }
 }
+
