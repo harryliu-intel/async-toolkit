@@ -201,6 +201,7 @@ wires_modtime = makeTable("wires" 0)
 
 ; redraw everything
 (defun RefreshAllBuswires (@key (CV (geGetEditCellView)))
+  (LoadWires)
   (DeleteBusWires ?CV CV)
   (DrawWires ?CV CV)
   (DeleteUnusedNets ?CV CV)
@@ -250,7 +251,7 @@ wires_modtime = makeTable("wires" 0)
 ; draw an individual segment of a path
 (defun DrawSegment (name layer width xy0 xy1 beginExt endExt isPin
                          @key (guideInst nil) (CV (geGetEditCellView)))
-  (let (nxy0 nxy1 x0 y0 x1 y1 fig rect net label pin)
+  (let (nxy0 nxy1 x0 y0 x1 y1 fig rect1 rect2 net label pin)
     nxy0 = (busTransformPoint xy0 guideInst)
     nxy1 = (busTransformPoint xy1 guideInst)
     x0 = (car nxy0)
@@ -265,23 +266,24 @@ wires_modtime = makeTable("wires" 0)
     (if net!=nil fig->net = net)
     (cond (isPin && net
           (cond (y0==y1
-                rect = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
-                rect = (dbCreateRect CV (list (car layer) "pin") list(x0:y0-width/2 x1:y1+width/2)) ; add pin purpose
+                rect1 = (dbCreateRect CV layer list(x0:y0-width/2 x1:y1+width/2)) ; pins should be rectangles
+                rect2 = (dbCreateRect CV (list (car layer) "pin") list(x0:y0-width/2 x1:y1+width/2)) ; add pin purpose
                 )
                 (x0==x1
-                rect = (dbCreateRect CV layer list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
-                rect = (dbCreateRect CV (list (car layer) "pin") list(x0-width/2:y0 x1+width/2:y1)) ; add pin purpose
+                rect1 = (dbCreateRect CV layer list(x0-width/2:y0 x1+width/2:y1)) ; pins should be rectangles
+                rect2 = (dbCreateRect CV (list (car layer) "pin") list(x0-width/2:y0 x1+width/2:y1)) ; add pin purpose
                 )
                 (t (error "invalid coordinates for pins %f:%f %f:%f" x0 y0 x1 y1) 
                 )
           )
            (dbDeleteObject fig) ; delete the path
-           pin = (dbCreatePin net rect) ; create a pin
-           (SetBusProp rect)
-           (dbReplaceProp rect "PinType" "string" "BusScript")
+           pin = (dbCreatePin net rect2) ; create a pin
+           (SetBusProp rect1)
+           (SetBusProp rect2)
+           (dbReplaceProp rect2 "PinType" "string" "BusScript")
            pin->accessDir = (list "left" "right" "top" "bottom")
            pin->term->direction = "inputOutput"
-           (LabelPin CV rect)
+           (LabelPin CV rect2)
            )
           )
     )
@@ -899,6 +901,7 @@ wires_modtime = makeTable("wires" 0)
     ; process guide paths
     (cond ((or paths==nil (atom paths))
            paths = (GetPaths paths ?CV (if guideInst->master guideInst->master CV))))
+
     (foreach path paths
              props   = (car path)
              points  = (cadr path)
@@ -953,6 +956,7 @@ wires_modtime = makeTable("wires" 0)
     ; process all guide paths
     (cond ((or paths==nil (atom paths))
            paths = (GetPaths paths ?CV (if guideInst->master guideInst->master CV))))
+
     (foreach path paths
              props  = (car path)
              points = (cadr path)
