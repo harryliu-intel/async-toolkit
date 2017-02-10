@@ -527,7 +527,7 @@ sub canonicalizePath {
         # I tried to use Cwd::abs_path, and it works sometimes and
         # others times it does not. This seems much more reliable.
 
-        $canonPath=`cd $thePath; /bin/tcsh -c pwd`;
+        $canonPath=`cd $thePath; /bin/tcsh -f -c pwd`;
         chomp $canonPath;
     }
     else {
