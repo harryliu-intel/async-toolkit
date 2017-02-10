@@ -176,6 +176,7 @@
       (unless doPowerGates
         (DeletePwrGateCells ?CV ExportCV)
         )
+      (CheckPinsForExport ?CV ExportCV)
 
       (dbSave ExportCV)
 
@@ -614,6 +615,21 @@
     (dbSave CV)
     CV
     )
+  )
+)
+
+
+; function to validate pins while exporting to proteus
+; for now, just checks that we don't have any on complement purpose since ICC crashes
+; it would certainly be reasonable to enhance this function to check other things like pin direction
+(defun CheckPinsForExport (@key (CV (geGetEditCellView)) )
+  (let (fig ok)
+    ok = t
+    (when (setof fig CV->shapes fig->layerName=="mc0")
+      (error "Shape found on mc0 drawing. ICC doesn't like this.\n")
+    ok = nil
+    )
+  ok
   )
 )
 
