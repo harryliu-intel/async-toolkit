@@ -35,8 +35,8 @@ BEGIN {
         &job_is_running
         &save_job_state
         &restore_job_state
-        $JOB_KILLED
-        &JOB_EXIT
+        JOB_KILLED
+        JOB_EXIT
         &get_active_command
         &fqcn_to_file
         &fqcn_to_directory
@@ -398,8 +398,8 @@ sub check_free_system_memory {
 #
 # Where $status is either of the following:
 # 
-my $JOB_KILLED = -1;
-my $JOB_EXIT   = 0;
+use constant JOB_KILLED => -1;
+use constant JOB_EXIT   => 0;
 #
 # and $exit_status is the exit status of $cmd, unless $cmd couldn't be started.
 #
@@ -487,7 +487,7 @@ sub kill_job {
 
     # Invoke callback
     my $callback = $SS_r->{IGV}{concurrent}{$job_file}{CALLBACK};
-    eval "$callback(\$SS_r, \$job_file, \$JOB_KILLED);";
+    eval "$callback(\$SS_r, \$job_file, Supersize::Util::JOB_KILLED);";
     if ($@) {
         print STDERR "Error: $@";
     }
@@ -542,7 +542,7 @@ sub check_jobs {
             # Invoke callback
             my $callback = $SS_r->{IGV}{concurrent}{$job_file}{CALLBACK};
             (my $package = $callback) =~ s/::[^:]+$//;
-            eval "$callback(\$SS_r, \$job_file, \$JOB_EXIT, \$status);";
+            eval "$callback(\$SS_r, \$job_file, Supersize::Util::JOB_EXIT, \$status);";
             if ($@) {
                 print STDERR "Error in callback $callback: $@";
             }
