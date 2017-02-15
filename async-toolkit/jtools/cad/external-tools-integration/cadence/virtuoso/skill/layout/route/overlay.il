@@ -14,6 +14,13 @@
                    ?CV CV)
   )
 
+; Add filler avoiding "m8":"block"
+(defun MakeFillGrid (@key (CV (geGetEditCellView)) (overlayView "layout"))
+  (MakeOverlayGrid "fill" overlayView (list "m8" "block")
+                   (dbOpenCellViewByType "globals" "globals.FILL0p5x0p5.uptom8" "layout")
+                   ?CV CV)
+  )
+
 ; Add overlay cell with moasics within prBoundary but avoiding blockLPP
 (defun MakeOverlayGrid
   (overlayName     ; cellName suffix for overlay

@@ -157,12 +157,19 @@
 
 
 ; make filled dummy block using prbound
-(defun CreateBlockDummy (@key (CV (geGetEditCellView)) (invert nil))
-  (let (prb prb_shrink)
+(defun FillDummyView (@key (CV (geGetEditCellView)) (invert nil))
+  (let (fillcell)
+     (foreach inst CV->instances (dbDeleteObject inst))
+     (foreach shape CV->shapes (dbDeleteObject shape))
      (AddTopHalo ?CV CV ?invert invert ?fill_metal t)
-
-     ; Never got around to finishing this. After top_halo, we just need to place the mosaics of filler.
-
+     (MakeFillGrid ?CV CV)
+     (MakeColorGrid ?CV CV)
+     fillcell = (dbFindAnyInstByName CV "fill")
+     (dbFlattenInst fillcell 1)
+     fillcell = (dbFindAnyInstByName CV "color")
+     (dbFlattenInst fillcell 1)
+     (dbSave CV)
+     CV
      )
   )
 
