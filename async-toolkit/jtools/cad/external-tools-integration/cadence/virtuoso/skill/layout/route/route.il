@@ -20,6 +20,7 @@
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
+        (softMacro nil)          ; lock all instances
         (noPowerFill nil)
         )
   (let ()
@@ -30,7 +31,7 @@
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                          ?metalFill metalFill ?topHalo topHalo
+                          ?metalFill metalFill ?topHalo topHalo ?softMacro softMacro
                           ?noPowerFill noPowerFill)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
@@ -62,6 +63,7 @@
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
         (topHalo nil)            ; add halos inside prBoundary
+        (softMacro nil)          ; lock all instances
         (noPowerFill nil)
 	(doPowerGates nil)       ; optionally skip export of placed pillars
         )
@@ -157,6 +159,7 @@
       (foreach inst ExportCV->instances
                abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
                placed = (if inst->status inst->status "placed") ; keep inst->status if it exists
+               (unless softMacro placed="locked")
                (cond (abstractCV
                       inst->master=abstractCV
                       inst->status=(if abstractCV->cellType=="core" placed "locked")
