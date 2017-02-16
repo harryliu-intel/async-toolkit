@@ -201,7 +201,6 @@ wires_modtime = makeTable("wires" 0)
 
 ; redraw everything
 (defun RefreshAllBuswires (@key (CV (geGetEditCellView)))
-  (LoadWires ?CV CV)
   (DeleteBusWires ?CV CV)
   (DrawWires ?CV CV)
   (DeleteUnusedNets ?CV CV)
@@ -1155,82 +1154,12 @@ wires_modtime = makeTable("wires" 0)
           (for i 0 (length components)-1
                dir = (strcat dir "/" (nth i components))
                file = (strcat DFII_DIR dir "/" "wires.il")
-               (when (fileTimeModified file)!=nil
-                     (load file)
-                     )
+               (load file)
                )
           )
     )
   )
 
-; BUG: doesn't work reliably!
-; load wires.il for currently edited cellview
-(defun OldLoadWires (@key (CV (geGetEditCellView)))
-  (BusDefaults)
-  (let (fl port Outfl outfl h txt var1 var2 text CN Cellname lngth Initial k i j finalpath initialpath FinalPath modtime variable1 variable2 Variable2 Match Initialize_wires l FileFound)
-	i=0
-	l=0
-	Match=0
-	Cellname=(NameGetCellPathFromCellName CV->cellName)
-	piece=parseString( Cellname "/" )
-	lngth=length(piece)
-	println(Cellname)
-	Initial=nth(1 piece)
-	finalpath=""
-	for(j 6 lngth-1
-	FileFound=0
-	Initialize_wires=0
-	for(i 0 j
-	initialpath=nth(i piece)
-	finalpath=strcat(finalpath "/" initialpath)
-	i=i+1)
-	FinalPath=strcat(finalpath "/" "wires.il")
-	modtime = (fileTimeModified FinalPath)
-	when(modtime!=nil
-		when((Startloadwires==0)
-		load(FinalPath)
-		printf("Loading %s \n" FinalPath)
-		wires_modtime[Startloadwires]=list(FinalPath modtime)
-		Startloadwires=Startloadwires+1
-		)
-		when((Startloadwires!=0)
-		for(l 0 length(wires_modtime)-1
-			variable1=car(wires_modtime[l])
-			variable2=cadr(wires_modtime[l])
-				when((variable1!=FinalPath)
-					FileFound=1
-					)
-				when((variable1==FinalPath)&&(modtime>variable2)
-					load(FinalPath)
-					printf("Loading %s \n" FinalPath)
-					wires_modtime[l]=list(FinalPath modtime)
-					Initialize_wires=1
-					)
-				when((variable1==FinalPath)&&(modtime<=variable2)
-					Initialize_wires=1
-					)
-			l=l+1
-			)
-
-		when( FileFound == 1 && Initialize_wires == 0
-			load(FinalPath)
-			printf("Loading %s \n" FinalPath)			
-			wires_modtime[Startloadwires]=list(FinalPath modtime)
-			Startloadwires=Startloadwires+1			
-			)
-		))
-	l=0
-	j=j+1
-	finalpath=""
-	i=0
-	)
-
-        ;always load the primary cell's file
-        FinalPath=(sprintf nil "%s/wires.il"
-                 (NameGetCellPathFromCellName CV->cellName))
-        (when (isFile FinalPath) (load FinalPath) )
-        )
-  )
 
 ; load a file given a relative path from the cell directory (i.e. "../wires.il")
 (defun LoadRelative (path @key (CV (geGetEditCellView)))
