@@ -1,6 +1,6 @@
 ; scripts to reroute everything in N2 (above fragment level)
 
-(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid nil))
+(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid nil) (importOnly nil))
   (let (lCV pgCV aCV fCV cgCV libName fillCV bbox h w)
     libName = (GetCastLibName cellName)
     fCV  = (dbOpenCellViewByType libName cellName "floorplan")
@@ -12,8 +12,10 @@
     (when pgCV (cdsp4edit ?CV pgCV))
     (when cgCV (cdsp4edit ?CV cgCV))
     (when aCV  (cdsp4edit ?CV aCV))
-    lCV = (Route ?CV fCV ?topMetal topMetal 
-                 ?hookupLaygen nil ?Mem 16384 ?metalFill t)
+    lCV = (if importOnly
+            (RouteImport ?CV fCV)
+            (Route ?CV fCV ?topMetal topMetal ?Mem 16384)
+            )
     (when redoPG
       (MakePowerGrid ?CV lCV ?topMetal 8)
       (MakePowerGridAbstract ?CV lCV ?topMetal 8)
@@ -100,11 +102,10 @@
   t
   )
 
-(defun ExportProteusCell (baseName cellName @key (noPowerFill nil))
+(defun ExportProteusCell (baseName cellName)
   libName = (GetCastLibName cellName)
   (cdsp4edit ?CV (dbOpenCellViewByType libName (strcat baseName "_pg") "layout"))
-  (RouteExport ?CV (dbOpenCellViewByType libName baseName "floorplan") ?softMacro t
-               ?hookupLaygen nil ?noPowerFill noPowerFill)
+  (RouteExport ?CV (dbOpenCellViewByType libName baseName "floorplan") ?softMacro t)
   t
   )
 
