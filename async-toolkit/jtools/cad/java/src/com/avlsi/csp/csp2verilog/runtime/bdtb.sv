@@ -97,15 +97,17 @@ begin : main2
 
             // wait for timing
             wait(ready_forw[num_out%slack] & ready_out);
+
+            // finish R!x[num_out]
+            #(toData * `PRS2VERILOG_TAU);
+            R$data = x[num_out%slack];
+
             ready_forw[num_out%slack] = 0;
             ready_back[num_out%slack] <=
                 #(backward_latency * `PRS2VERILOG_TAU) 1;
             ready_out = 0;
             ready_out <= #(cycle_time_out * `PRS2VERILOG_TAU) 1;
 
-            // finish R!x[num_out]
-            #(toData * `PRS2VERILOG_TAU);
-            R$data = x[num_out%slack];
             num_out = num_out+1;
 
             #(fromData * `PRS2VERILOG_TAU);
@@ -191,14 +193,14 @@ begin : main
             // start L?x[num_in]
             wait(L$req != L$ack);
 
+            #(toData * `PRS2VERILOG_TAU);
+            x[num_in%slack] = L$data;
+
             ready_back[num_in%slack] = 0;
             ready_forw[num_in%slack] <=
                 #(forward_latency * `PRS2VERILOG_TAU) 1;
             ready_in = 0;
             ready_in <= #(cycle_time_in * `PRS2VERILOG_TAU) 1;
-
-            #(toData * `PRS2VERILOG_TAU);
-            x[num_in%slack] = L$data;
 
             num_in = num_in+1;
 
