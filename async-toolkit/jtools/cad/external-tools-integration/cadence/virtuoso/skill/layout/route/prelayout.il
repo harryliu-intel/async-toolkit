@@ -49,11 +49,10 @@
               ?view CV->viewName
               ?viewType "maskLayout"
               ?mode "r")
-
-      ; draw bus wires (specifically keepout)
-      (LoadWires ?CV CV)
-      (RefreshAllBuswires ?CV CV)
       )
+
+    ; draw bus wires (specifically keepout)
+    (RefreshAllBuswires ?CV CV)
 
     ; set nonleaf property
     (SetLeafProp CV nil)

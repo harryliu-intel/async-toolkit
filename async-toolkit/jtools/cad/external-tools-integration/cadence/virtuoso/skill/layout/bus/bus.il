@@ -201,7 +201,7 @@ wires_modtime = makeTable("wires" 0)
 
 ; redraw everything
 (defun RefreshAllBuswires (@key (CV (geGetEditCellView)))
-  (LoadWires)
+  (LoadWires ?CV CV)
   (DeleteBusWires ?CV CV)
   (DrawWires ?CV CV)
   (DeleteUnusedNets ?CV CV)
