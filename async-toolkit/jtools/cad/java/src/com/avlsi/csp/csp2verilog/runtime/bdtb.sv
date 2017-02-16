@@ -53,6 +53,7 @@ begin
     ready_out = 1;
     L$ack     = 0;
     R$req     = 0;
+    R$data    = 0;
     for (i=0 ; i<slack ; i=i+1)
         begin
             ready_back[i] = 1;
@@ -259,6 +260,7 @@ begin
 
     L$ack = 0;
     R$req = 0;
+    R$data= 0;
     ready = 1;
 end
 
