@@ -76,17 +76,27 @@
   )
 
 (defun RouteMid ()
+  ; cables
   (RouteCell "core.neuro.tile.E_CABLE.20000" 6 ?redoPG t ?colorGrid t) 
   (RouteCell "core.neuro.tile.N_CABLE.20000" 6 ?redoPG t ?colorGrid t)
+  (RouteCell "core.neuro.tile.N_CABLE_1ROW.20000" 6 ?redoPG t ?colorGrid t) 
+  (RouteCell "core.neuro.tile.N_CABLE_MC.20000" 6 ?redoPG t ?colorGrid t) 
+  (RouteCell "core.neuro.tile.N_CABLE_MC_TALL.20000" 6 ?redoPG t ?colorGrid t) 
+  (RouteCell "core.neuro.tile.N_CABLE_TALL.20000" 6 ?redoPG t ?colorGrid t) 
   (RouteCell "chip.n2.south.BYPASS.20000" 6 ?redoPG t ?colorGrid t)
+  (RouteCell "chip.n2.south.GO_WEST.20000" 6 ?redoPG t ?colorGrid t)
+
+  ; DOUBLE_ROUTER
   (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_5_5_2_1_true_true_true_true-R.20000" 4)
   (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_5_5_2_true_true_true_true-R.20000" 6)
   (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8 ?colorGrid t)
+
+  ; SOUTH/NORTH
   (RouteCell "chip.n2.pads.PADS.20000" 8 ?colorGrid t)
-  ; new for NORTH
-  (RouteCell "chip.n2.north.BRIDGE_CABLE.20000" 6 ?redoPG t ?colorGrid t)
-  (RouteCell "chip.n2.pads.PADS_IN_BD-L17-R.20000" 8 ?colorGrid t)
-  (RouteCell "chip.n2.pads.PADS_OUT_BD-L17-R.20000" 8 ?colorGrid t)
+  (RouteCell "core.noc.router.MESH_ROUTER(5,5,16,7,7,0,true,true,true,true).20000" 4) 
+  (RouteCell "core.noc.router.forward.MESH_FORWARD(5,16,7,7,0,1,true,true,true,true).20000" 6) 
+  (RouteCell "chip.n2.pads.PADS_IN_BD-L9-R.20000" 8 ?colorGrid t)
+  (RouteCell "chip.n2.pads.PADS_OUT_BD-L9-R.20000" 8 ?colorGrid t)
   t
   )
 
@@ -101,7 +111,8 @@
 (defun ExportProteus ()
   (ExportProteusCell "chip.n2.io.BASE_IO.20000"             "chip.n2.io.IO.20000")
   (ExportProteusCell "chip.n2.lakemont.BASE_CPU_SHIM.20000" "chip.n2.lakemont.CPU_SHIM.20000")
-  (ExportProteusCell "core.neuro.neuron.v1.BASE_NEURON.20000" "core.neuro.neuron.v1.NEURON.20000")
+  (ExportProteusCell "core.neuro.bridge.BASE_BRIDGE.20000"  "core.neuro.bridge.BRIDGE.20000")
+  (ExportProteusCell "chip.n2.pio.BASE_PIO_CABLE.20000"     "chip.n2.pio.PIO_CABLE.20000")
   t
   )
 
