@@ -10,9 +10,9 @@ module bd_output_timing_buffer$
     #(parameter bit_width = 1,
                 slack = 1, 
                 forward_latency = 0,
-                cycle_time     = 18,
-                cycle_time_in  = 18,
-                cycle_time_out = 18,
+                cycle_time     = 10,
+                cycle_time_in  = 10,
+                cycle_time_out = 10,
                 bf_latency = 2)
     (input _RESET,
      input signed [bit_width:0] L$data,
@@ -22,8 +22,8 @@ module bd_output_timing_buffer$
      output reg R$req,
      input R$ack);
 `PRS2VERILOG_TIMESCALE
-localparam fromData = 6;
-localparam toData = 0;
+localparam fromData = 2;
+localparam toData = 2;
 
 // circular buffer holds data values
 reg signed [bit_width:0] x[slack-1:0];
@@ -81,10 +81,10 @@ begin : main
 
             ready_back[num_in%slack] = 0;
             ready_forw[num_in%slack] <=
-                #(forward_latency * `PRS2VERILOG_TAU) 1;
+                `CAST2VERILOG_WAIT(100.0*forward_latency) 1;
             num_in = num_in+1;
 
-            #(cycle_time_in * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*cycle_time_in);
         end
 end
 
@@ -99,18 +99,18 @@ begin : main2
             wait(ready_forw[num_out%slack] & ready_out);
 
             // finish R!x[num_out]
-            #(toData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*toData);
             R$data = x[num_out%slack];
 
             ready_forw[num_out%slack] = 0;
             ready_back[num_out%slack] <=
-                #(backward_latency * `PRS2VERILOG_TAU) 1;
+                `CAST2VERILOG_WAIT(100.0*backward_latency) 1;
             ready_out = 0;
-            ready_out <= #(cycle_time_out * `PRS2VERILOG_TAU) 1;
+            ready_out <= `CAST2VERILOG_WAIT(100.0*cycle_time_in) 1;
 
             num_out = num_out+1;
 
-            #(fromData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*fromData);
             R$req = ~R$req;
         end
 end
@@ -123,9 +123,9 @@ module bd_input_timing_buffer$
     #(parameter bit_width = 1,
                 slack = 1, 
                 forward_latency = 0,
-                cycle_time     = 18,
-                cycle_time_in  = 18,
-                cycle_time_out = 18,
+                cycle_time     = 10,
+                cycle_time_in  = 10,
+                cycle_time_out = 10,
                 fb_neutral = 7.25,
                 fb_valid = 6.75)
     (input _RESET,
@@ -138,7 +138,7 @@ module bd_input_timing_buffer$
 `PRS2VERILOG_TIMESCALE
 
 localparam fromData = 2;
-localparam toData = 0;
+localparam toData = 2;
 
 // circular buffer holds data values
 reg signed [bit_width:0] x[slack-1:0];
@@ -193,19 +193,19 @@ begin : main
             // start L?x[num_in]
             wait(L$req != L$ack);
 
-            #(toData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*toData);
             x[num_in%slack] = L$data;
 
             ready_back[num_in%slack] = 0;
             ready_forw[num_in%slack] <=
-                #(forward_latency * `PRS2VERILOG_TAU) 1;
+                `CAST2VERILOG_WAIT(100.0*forward_latency) 1;
             ready_in = 0;
-            ready_in <= #(cycle_time_in * `PRS2VERILOG_TAU) 1;
+            ready_in <= `CAST2VERILOG_WAIT(100.0*cycle_time_in) 1;
 
             num_in = num_in+1;
 
             // finish L?x[num_in]
-            #(fromData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*fromData);
             L$ack = ~L$ack;
         end
 end
@@ -224,10 +224,10 @@ begin : main2
 
             ready_forw[num_out%slack] = 0;
             ready_back[num_out%slack] <=
-                #(backward_latency * `PRS2VERILOG_TAU) 1;
+                `CAST2VERILOG_WAIT(100.0*backward_latency) 1;
             num_out = num_out+1;
 
-            #(cycle_time_out * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*cycle_time_out);
         end
 end
 endmodule 
@@ -237,7 +237,7 @@ endmodule
 
 module bd_output_timing_buffer$s0
     #(parameter bit_width = 1,
-                cycle_time = 18,
+                cycle_time = 10,
                 bf_latency = 2)
     (input _RESET,
      input signed [bit_width:0] L$data,
@@ -247,8 +247,8 @@ module bd_output_timing_buffer$s0
      output reg R$req,
      input R$ack);
 `PRS2VERILOG_TIMESCALE
-localparam fromData = 2000; //6;
-localparam toData = 2000; //0;
+localparam fromData = 2; //6;
+localparam toData = 2; //0;
 
 reg ready;
 integer num_toks = 0;
@@ -273,16 +273,16 @@ begin : main
             wait(ready);
 
             wait(R$req == R$ack && L$req != L$ack);
-            #(toData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*toData);
             R$data = L$data;
 //$display("%t %m sent %x", $time, L$data);
             L$ack = ~L$ack;
 
             ready = 0;
-            ready <= #(cycle_time * `PRS2VERILOG_TAU) 1;
+            ready <= `CAST2VERILOG_WAIT(100.0*cycle_time) 1;
             num_toks = num_toks+1;
 
-            #(fromData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*fromData);
             R$req = ~R$req;
         end
 end
@@ -293,7 +293,7 @@ endmodule
 
 module bd_input_timing_buffer$s0
     #(parameter bit_width = 1,
-                cycle_time = 18,
+                cycle_time = 10,
                 fb_neutral = 7.25,
                 fb_valid = 6.75)
     (input _RESET,
@@ -305,8 +305,8 @@ module bd_input_timing_buffer$s0
      input R$ack);
 `PRS2VERILOG_TIMESCALE
 
-localparam fromData = 2000; //2;
-localparam toData = 2000; //0;
+localparam fromData = 2; //2;
+localparam toData = 2; //0;
 
 reg ready;
 integer num_toks = 0;
@@ -331,16 +331,16 @@ begin : main
             wait(ready);
 
             wait(R$req == R$ack && L$req != L$ack);
-            #(toData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*toData);
             R$data = L$data;
 //$display("%t %m received %x", $time, R$data);
             R$req = ~R$req;
 
             ready = 0;
-            ready <= #(cycle_time * `PRS2VERILOG_TAU) 1;
+            ready <= `CAST2VERILOG_WAIT(100.0*cycle_time) 1;
             num_toks = num_toks+1;
 
-            #(fromData * `PRS2VERILOG_TAU);
+            `CAST2VERILOG_WAIT(100.0*fromData);
             L$ack = ~L$ack;
         end
 end
