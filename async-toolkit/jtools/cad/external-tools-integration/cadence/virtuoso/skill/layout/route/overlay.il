@@ -114,7 +114,6 @@
     (dbCreateInst CV overlayCV overlayName 0:0 "R0")
     (dbSave CV)
     (dbSave overlayCV)
-    (dbClose overlayCV)
     overlayCV
     )
   )
