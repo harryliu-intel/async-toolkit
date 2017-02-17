@@ -120,6 +120,8 @@ useICV = t
       (unless cgCV (error "Unable to create color grid\n"))
       cgCV = (betterCopyCellView cgCV cgCV->libName cgCV->cellName "abstract" nil nil t)
       (unless cgCV (error "Unable to create color grid abstract\n"))
+      (SetLefProperties cgCV ?powergrid t)
+      (dbSave cgCV)
       )
 
     ; create power pins
