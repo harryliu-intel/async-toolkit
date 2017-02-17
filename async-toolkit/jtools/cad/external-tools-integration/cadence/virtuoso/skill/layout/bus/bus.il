@@ -1154,7 +1154,9 @@ wires_modtime = makeTable("wires" 0)
           (for i 0 (length components)-1
                dir = (strcat dir "/" (nth i components))
                file = (strcat DFII_DIR dir "/" "wires.il")
-               (load file)
+               (when (fileTimeModified file)!=nil
+                     (load file)
+                     )
                )
           )
     )
