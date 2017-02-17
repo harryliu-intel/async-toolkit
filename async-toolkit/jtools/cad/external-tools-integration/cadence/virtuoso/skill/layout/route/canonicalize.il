@@ -134,17 +134,19 @@
         TEMP = ConfigFileGetValue( TheCDSConfigTable "TEMP") 
         rv=t
         NodeCanonicalMap=NodeCanonicalTable()
+        nnil=0
         ccnt=0
         pcnt=0
         ncnt=0
         errname=sprintf(nil "%s/%s.canon.err" TEMP CV~>cellName )
         errfile=outfile(errname)
-        nnil=length(setof(shape CV~>shapes shape~>objType=="path" && shape~>net==nil &&
-                                shape->purpose!="bus" && shape->purpose!="boundary"))
-        if(nnil then
-            if(verbose printf( "Error: paths exist without connectivity\n"))
-            if(errfile fprintf( errfile "Error: paths exist without connectivity\n"))
-            rv=nil)
+        foreach( path setof(shape CV~>shapes shape~>objType=="path" && shape~>net==nil &&
+                                  shape->purpose=="drawing")
+            if(verbose printf( "Unconnected path converted to keepout\n"))
+            if(errfile fprintf( errfile "Unconnected path converted to keepout\n"))
+            path->lpp = list( path->layerName "keepout")
+            nnil=nnil+1
+            )
         foreach( path setof(shape CV~>shapes shape~>net && shape~>net~>name)
             let( (newname net )
                 pcnt=pcnt+1
