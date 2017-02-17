@@ -34,7 +34,7 @@
                           ?doSkipRouting doSkipRouting
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                           ?metalFill metalFill ?topHalo topHalo ?softMacro softMacro
-                          ?noPowerFill noPowerFill ?timingDriven timingDriven)
+                          ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -68,6 +68,7 @@
         (softMacro nil)          ; lock all instances
         (noPowerFill nil)
 	(doPowerGates nil)       ; optionally skip export of placed pillars
+        (colorGrid t)            ; add a color grid to flatten view
         (timingDriven t)
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
