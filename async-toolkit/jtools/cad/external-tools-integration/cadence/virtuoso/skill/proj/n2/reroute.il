@@ -1,6 +1,6 @@
 ; scripts to reroute everything in N2 (above fragment level)
 
-(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid nil) (importOnly nil))
+(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid t) (importOnly nil) (timingDriven t))
   (let (lCV pgCV aCV fCV cgCV libName fillCV bbox h w)
     libName = (GetCastLibName cellName)
     fCV  = (dbOpenCellViewByType libName cellName "floorplan")
@@ -14,7 +14,7 @@
     (when aCV  (cdsp4edit ?CV aCV))
     lCV = (if importOnly
             (RouteImport ?CV fCV)
-            (Route ?CV fCV ?topMetal topMetal ?Mem 16384)
+            (Route ?CV fCV ?topMetal topMetal ?timingDriven timingDriven ?colorGrid colorGrid ?Mem 16384)
             )
     (when redoPG
       (MakePowerGrid ?CV lCV ?topMetal 8)
@@ -32,9 +32,8 @@
         (dbSave lCV)
         )
       )
-    (when colorGrid cgCV = (MakeColorGrid ?CV lCV))
-    aCV = (MakeSimpleAbstract ?CV lCV ?topMetal topMetal)
     pgCV = (dbOpenCellViewByType libName (strcat cellName "_pg") "layout")
+    cgCV = (dbOpenCellViewByType libName (strcat cellName "_color") "layout")
     (when lCV (cdsp4add ?CV lCV))
     (when pgCV (cdsp4add ?CV pgCV))
     (when aCV  (cdsp4add ?CV aCV))
@@ -43,62 +42,66 @@
     )
   )
 
+(defun RouteLeaf (cellName topMetal)
+  (RouteCell cellname topMetal ?timingDriven nil ?colorGrid nil)
+  )
+
 (defun RouteLeaves ()
   ; new BD controllers
-  (RouteCell "lib.bd.source.bitgen.BDC_BG.0" 2)
-  (RouteCell "lib.bd.standard.pipeline.CTRL.0" 2)
-  (RouteCell "lib.bd.standard.pipeline.TOK_CTRL.0" 2)
-  (RouteCell "lib.bd.standard.pipeline.ISOLATE_CTRL.0" 2)
-  (RouteCell "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0" 2)
-  (RouteCell "lib.bd.standard.send.SEND_CTRL.0" 2)
-  (RouteCell "lib.bd.standard.receive.RECV_CTRL.0" 2)
-  (RouteCell "lib.bd.standard.split.SPLIT_CTRL-L2-R.0" 2)
-  (RouteCell "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0" 2)
-  (RouteCell "lib.bd.standard.merge.MERGE_CTRL-L2-R.0" 2) 
-  (RouteCell "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0" 2)
-  (RouteCell "lib.bd.metastable.arbiter.ARBITER_CTRL.0" 2)
+  (RouteLeaf "lib.bd.source.bitgen.BDC_BG.0" 2)
+  (RouteLeaf "lib.bd.standard.pipeline.CTRL.0" 2)
+  (RouteLeaf "lib.bd.standard.pipeline.TOK_CTRL.0" 2)
+  (RouteLeaf "lib.bd.standard.pipeline.ISOLATE_CTRL.0" 2)
+  (RouteLeaf "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0" 2)
+  (RouteLeaf "lib.bd.standard.send.SEND_CTRL.0" 2)
+  (RouteLeaf "lib.bd.standard.receive.RECV_CTRL.0" 2)
+  (RouteLeaf "lib.bd.standard.split.SPLIT_CTRL-L2-R.0" 2)
+  (RouteLeaf "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0" 2)
+  (RouteLeaf "lib.bd.standard.merge.MERGE_CTRL-L2-R.0" 2) 
+  (RouteLeaf "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0" 2)
+  (RouteLeaf "lib.bd.metastable.arbiter.ARBITER_CTRL.0" 2)
 
   ; small leaf cells
-  (RouteCell "lib.bd.6T.bank.BD_SRAM_CTRL.0" 2)
-  (RouteCell "lib.bd.6T.bank.SRAM_BANK_CTRL.0" 3)
-  (RouteCell "core.noc.crossbar.datapath.TAIL_CONTROL.1000" 2)
-  (RouteCell "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" 2)
-  (RouteCell "core.io.fpio.FPIO.20000" 4)
+  (RouteLeaf "lib.bd.6T.bank.BD_SRAM_CTRL.0" 2)
+  (RouteLeaf "lib.bd.6T.bank.SRAM_BANK_CTRL.0" 3)
+  (RouteLeaf "core.noc.crossbar.datapath.TAIL_CONTROL.1000" 2)
+  (RouteLeaf "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" 2)
+  (RouteLeaf "core.io.fpio.FPIO.20000" 4)
 
   ; a bunch of SHIFT_FIFOs
   (for w 8 16
-       (RouteCell (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0"  w) 3)
-       (RouteCell (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0h" w) 3)
+       (RouteLeaf (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0"  w) 3)
+       (RouteLeaf (sprintf nil "lib.qdi.serial.funny_register.SHIFT_FIFO-L%d_0-R.0h" w) 3)
        )
   t
   )
 
 (defun RouteTest ()
-  (RouteCell "lib.bd.6T.bank.ROUTED_SRAM_BANK-L512_24-R.1000" 6)
+  (RouteLeaf "lib.bd.6T.bank.ROUTED_SRAM_BANK-L512_24-R.1000" 6)
   )
 
 (defun RouteMid ()
   ; cables
-  (RouteCell "core.neuro.tile.E_CABLE.20000" 6 ?redoPG t ?colorGrid t) 
-  (RouteCell "core.neuro.tile.N_CABLE.20000" 6 ?redoPG t ?colorGrid t)
-  (RouteCell "core.neuro.tile.N_CABLE_1ROW.20000" 6 ?redoPG t ?colorGrid t) 
-  (RouteCell "core.neuro.tile.N_CABLE_MC.20000" 6 ?redoPG t ?colorGrid t) 
-  (RouteCell "core.neuro.tile.N_CABLE_MC_TALL.20000" 6 ?redoPG t ?colorGrid t) 
-  (RouteCell "core.neuro.tile.N_CABLE_TALL.20000" 6 ?redoPG t ?colorGrid t) 
-  (RouteCell "chip.n2.south.BYPASS.20000" 6 ?redoPG t ?colorGrid t)
-  (RouteCell "chip.n2.south.GO_WEST.20000" 6 ?redoPG t ?colorGrid t)
+  (RouteCell "core.neuro.tile.E_CABLE.20000" 6 ?redoPG t) 
+  (RouteCell "core.neuro.tile.N_CABLE.20000" 6 ?redoPG t)
+  (RouteCell "core.neuro.tile.N_CABLE_1ROW.20000" 6 ?redoPG t) 
+  (RouteCell "core.neuro.tile.N_CABLE_MC.20000" 6 ?redoPG t) 
+  (RouteCell "core.neuro.tile.N_CABLE_MC_TALL.20000" 6 ?redoPG t) 
+  (RouteCell "core.neuro.tile.N_CABLE_TALL.20000" 6 ?redoPG t) 
+  (RouteCell "chip.n2.south.BYPASS.20000" 6 ?redoPG t)
+  (RouteCell "chip.n2.south.GO_WEST.20000" 6 ?redoPG t ?timingDriven nil) ; BUG: timingDriven
 
-  ; DOUBLE_ROUTER
-  (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_5_5_2_1_true_true_true_true-R.20000" 4)
-  (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_5_5_2_true_true_true_true-R.20000" 6)
-  (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8 ?colorGrid t)
+  ; MESH_ROUTERs and DOUBLE_ROUTER
+  (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_5_5_2_1_true_true_true_true-R.20000" 4 ?colorGrid nil)
+  (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_5_5_2_true_true_true_true-R.20000" 6 ?colorGrid nil)
+  (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8 ?colorGrid nil)
+  (RouteCell "core.noc.router.MESH_ROUTER(5,5,16,7,7,0,true,true,true,true).20000" 4 ?colorGrid nil) 
+  (RouteCell "core.noc.router.forward.MESH_FORWARD(5,16,7,7,0,1,true,true,true,true).20000" 6 ?colorGrid nil) 
 
   ; SOUTH/NORTH
-  (RouteCell "chip.n2.pads.PADS.20000" 8 ?colorGrid t)
-  (RouteCell "core.noc.router.MESH_ROUTER(5,5,16,7,7,0,true,true,true,true).20000" 4) 
-  (RouteCell "core.noc.router.forward.MESH_FORWARD(5,16,7,7,0,1,true,true,true,true).20000" 6) 
-  (RouteCell "chip.n2.pads.PADS_IN_BD-L9-R.20000" 8 ?colorGrid t)
-  (RouteCell "chip.n2.pads.PADS_OUT_BD-L9-R.20000" 8 ?colorGrid t)
+  (RouteCell "chip.n2.pads.PADS.20000" 8)
+  (RouteCell "chip.n2.pads.PADS_IN_BD-L9-R.20000" 8)
+  (RouteCell "chip.n2.pads.PADS_OUT_BD-L9-R.20000" 8)
   t
   )
 

@@ -12,6 +12,7 @@ useICV = t
         (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
         (doMakePowerGrid t)        ; make power grid
         (doPowerGridAbstract t)    ; generate abstract view of power grid
+        (colorGrid t)              ; add a color grid
         (hookupD04 nil)            ; add power hookups around d04 cells
         (hookupLaygen nil)         ; add power hookups around Laygen cells
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
@@ -19,7 +20,7 @@ useICV = t
         )
   (let (MaxHeapSize FlattenCellsList
         PowerGridCellName flattenCV xalign yalign
-        pgCV win TEMP)
+        pgCV cgCV win TEMP)
 
     ; check viewName
     (when (and CV->viewName!="floorplan" CV->viewName!="prelayout")
@@ -111,6 +112,14 @@ useICV = t
     (when doPowerGridAbstract
       pgCV = (MakePowerGridAbstract ?CV CV ?topMetal topMetal ?doPowerGates doPowerGates)
       (unless pgCV (error "Unable to create power grid abstract\n"))
+      )
+
+    ; Create color grid
+    (when colorGrid
+      cgCV = (MakeColorGrid ?CV CV)
+      (unless cgCV (error "Unable to create color grid\n"))
+      cgCV = (betterCopyCellView cgCV cgCV->libName cgCV->cellName "abstract" nil nil t)
+      (unless cgCV (error "Unable to create color grid abstract\n"))
       )
 
     ; create power pins

@@ -22,6 +22,8 @@
         (topHalo nil)            ; add halos inside prBoundary
         (softMacro nil)          ; lock all instances
         (noPowerFill nil)
+        (colorGrid t)            ; add a color grid to flatten view
+        (timingDriven t)
         )
   (let ()
     ; export
@@ -32,7 +34,7 @@
                           ?doSkipRouting doSkipRouting
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                           ?metalFill metalFill ?topHalo topHalo ?softMacro softMacro
-                          ?noPowerFill noPowerFill)
+                          ?noPowerFill noPowerFill ?timingDriven timingDriven)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -66,9 +68,10 @@
         (softMacro nil)          ; lock all instances
         (noPowerFill nil)
 	(doPowerGates nil)       ; optionally skip export of placed pillars
+        (timingDriven t)
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
-        PowerGridCellName abstractCV
+        abstractCV
         Command (statusVerilog t)
         lef_subcells GdsMapFile gds_name
         pout (statusGds t) (statusLef t) 
@@ -102,13 +105,12 @@
     (printf "Flatten Start %s\n" (getCurrentTime))
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                        ?noPowerFill noPowerFill ?doPowerGates doPowerGates))
-
-    ; cell names
-    PowerGridCellName = (strcat CV->cellName "_pg")
+                        ?noPowerFill noPowerFill ?doPowerGates doPowerGates
+                        ?colorGrid colorGrid))
 
     ; write proteus.config
-    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill ?topHalo topHalo)
+    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill ?topHalo topHalo
+                   ?timingDriven timingDriven)
 
     ; export Verilog
     (when doVerilog
@@ -289,6 +291,7 @@
         (topMetal 8)             ; top metal layer
         (metalFill t)
         (topHalo nil)
+        (timingDriven t)
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR LEFDEF_DIR PROTEUS_DIR file)
     ; files and options
@@ -318,6 +321,7 @@
     (fprintf file "--task=route\n")
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
+    (fprintf file "--timing-driven-route=%d\n" (if timingDriven 1 0))
     (close file)
     )
   )
@@ -464,7 +468,6 @@
 ; Finish router import, user over-ridable in wires.il
 (defun FinishRouterImport (@key (CV (geGetEditCellView)))
   (DeleteKeepout ?CV CV)
-  (InstantiateColorGrid ?CV CV)
   (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
   (CopyPinsFromSourceView ?CV CV)
