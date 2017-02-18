@@ -276,6 +276,7 @@ wires_modtime = makeTable("wires" 0)
                 )
           )
            (dbDeleteObject fig) ; delete the path
+           rect1->net = net
            pin = (dbCreatePin net rect2) ; create a pin
            (SetBusProp rect1)
            (SetBusProp rect2)
