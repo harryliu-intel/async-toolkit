@@ -42,7 +42,7 @@
     SaveQuitStr = (sprintf nil "-do %s/savequit.do" RouterPDK)
     
     ; load wires.il and set options
-    (LoadWires)
+    (LoadWires ?CV CV)
     (unless bundled_channels (error "No bundled_channels defined in wires.il\n"))
     (unless bottomMetal bottomMetal = bundled_bottom_layer)
     (unless topMetal    topMetal    = bundled_top_layer)
@@ -552,7 +552,7 @@
 
 ; for user feedback
 (defun MatchBundledChannels (@key (CV (geGetEditCellView)))
-  (LoadWires)
+  (LoadWires ?CV CV)
   (foreach entry (MatchBundledChannelsCore CV)
            (printf "Pattern=%s Channel=%s\n" (car entry) (cadr entry))
            )
