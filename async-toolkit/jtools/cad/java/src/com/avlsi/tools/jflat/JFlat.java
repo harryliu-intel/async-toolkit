@@ -67,7 +67,6 @@ import com.avlsi.cell.CellDelay;
 import com.avlsi.cell.CellImpl;
 import com.avlsi.cell.CellInterface;
 import com.avlsi.cell.CellUtils;
-import com.avlsi.cell.ChildrenFirstCellInterfaceIterator;
 import com.avlsi.cell.ExclusiveNodeSet;
 import com.avlsi.cell.ExclusiveNodeSets;
 import com.avlsi.cell.NoSuchEnvironmentException;
