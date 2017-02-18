@@ -188,7 +188,7 @@ public class CellImpl implements CellInterface {
      * Map from HierName (subcell usage name) to CellInterface
      * (the cell instance).
      **/
-    private final Map/*<HierName,CellInterface>*/ subcellMap;
+    private final Map<HierName,CellInterface> subcellMap;
 
     /**
      * Map from HierName (subcell usage name) to a Triplet
@@ -350,7 +350,7 @@ public class CellImpl implements CellInterface {
                      definitionKind == CHANNEL ||
                      definitionKind == ALIAS_CELL);
         this.definitionKind = definitionKind;
-        this.subcellMap = new LinkedHashMap/*<HierName,CellInterface>*/();
+        this.subcellMap = new LinkedHashMap<>();
         this.subtypeMap =
             new HashMap/*<HierName,
                          Triplet<CellInterface,CellInterface,Boolean>>*/();
@@ -568,11 +568,12 @@ public class CellImpl implements CellInterface {
      * Returns an Iterator of Pairs of HierName and CellInterface for
      * non-inlined subcells.
      **/
-    public Iterator getSubcellPairs() {
-        return new FilteringIterator(getAllSubcellPairs(),
-            new UnaryPredicate() {
-                public boolean evaluate(final Object o) {
-                    return !isInlinedSubcell((HierName) ((Pair) o).getFirst());
+    public Iterator<Pair<HierName,CellInterface>> getSubcellPairs() {
+        return new FilteringIterator<Pair<HierName,CellInterface>>(
+            getAllSubcellPairs(),
+            new UnaryPredicate<Pair<HierName,CellInterface>>() {
+                public boolean evaluate(final Pair<HierName,CellInterface> p) {
+                    return !isInlinedSubcell(p.getFirst());
                 }});
     }
 
@@ -580,13 +581,16 @@ public class CellImpl implements CellInterface {
      * Returns an Iterator of Pairs of HierName and CellInterface for
      * all subcells, even inlined ones.
      **/
-    public Iterator getAllSubcellPairs() {
-        return new MappingIterator(
+    public Iterator<Pair<HierName,CellInterface>> getAllSubcellPairs() {
+        return new MappingIterator<Entry<HierName,CellInterface>,
+                                   Pair<HierName,CellInterface>>(
             Collections.unmodifiableMap(subcellMap).entrySet().iterator(),
-            new UnaryFunction() {
-                public Object execute(final Object o) {
-                    final Entry entry = (Entry) o;
-                    return new Pair(entry.getKey(), entry.getValue());
+            new UnaryFunction<Entry<HierName,CellInterface>,
+                              Pair<HierName,CellInterface>>() {
+                public Pair<HierName,CellInterface>
+                execute(final Entry<HierName,CellInterface> entry) {
+                    return new Pair<HierName,CellInterface>(entry.getKey(),
+                                                            entry.getValue());
                 }
             });
     }
@@ -2108,7 +2112,7 @@ public class CellImpl implements CellInterface {
                             parent.getFullyQualifiedType());
                 }
                 
-                subcellMap.put(cellName, subtypeInfo.getSecond());
+                subcellMap.put(cellName, (CellInterface) subtypeInfo.getSecond());
                 // If the newly refined subcell should be inlined.
                 if (((Boolean) subtypeInfo.getThird()).booleanValue()) {
                     try {

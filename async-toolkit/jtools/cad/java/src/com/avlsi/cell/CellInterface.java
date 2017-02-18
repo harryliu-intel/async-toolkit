@@ -30,6 +30,7 @@ import com.avlsi.tools.cosim.ChannelDictionary;
 import com.avlsi.tools.cosim.CSPCoSimInfo;
 import com.avlsi.tools.cosim.DeviceConstructionException;
 import com.avlsi.tools.cosim.JavaCoSimInfo;
+import com.avlsi.util.container.Pair;
 
 /**
  * Data structure for instantiated cells.  Contains all the information a
@@ -109,13 +110,13 @@ public interface CellInterface extends HierarchyInterface {
      * Returns an Iterator of Pairs of HierName and CellInterface,
      * including inlined subcells.
      **/
-    Iterator/*<Pair<HierName,CellInterface>>*/ getAllSubcellPairs();
+    Iterator<Pair<HierName,CellInterface>> getAllSubcellPairs();
 
     /**
      * Returns an Iterator of Pairs of HierName and CellInterface,
      * excluding inlined subcells.
      **/
-    Iterator/*<Pair<HierName,CellInterface>>*/ getSubcellPairs();
+    Iterator<Pair<HierName,CellInterface>> getSubcellPairs();
 
     /**
      * Returns an Iterator of Pairs of HierName and CellInterface
