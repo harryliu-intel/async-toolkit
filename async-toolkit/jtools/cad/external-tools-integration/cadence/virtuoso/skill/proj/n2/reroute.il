@@ -88,8 +88,9 @@
   (RouteCell "core.neuro.tile.N_CABLE_MC.20000" 6 ?redoPG t) 
   (RouteCell "core.neuro.tile.N_CABLE_MC_TALL.20000" 6 ?redoPG t) 
   (RouteCell "core.neuro.tile.N_CABLE_TALL.20000" 6 ?redoPG t) 
-  (RouteCell "chip.n2.south.BYPASS.20000" 6 ?redoPG t)
   (RouteCell "chip.n2.south.GO_WEST.20000" 6 ?redoPG t ?timingDriven nil) ; BUG: timingDriven
+  (RouteCell "chip.n2.pio.BASE_PIO_CABLE.20000" 6 ?redoPG t)
+  (RouteCell "chip.n2.south.BYPASS.20000" 6 ?redoPG t)
 
   ; MESH_ROUTERs and DOUBLE_ROUTER
   (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_5_5_2_1_true_true_true_true-R.20000" 4 ?colorGrid nil)
@@ -116,7 +117,7 @@
   (ExportProteusCell "chip.n2.io.BASE_IO.20000"             "chip.n2.io.IO.20000")
   (ExportProteusCell "chip.n2.lakemont.BASE_CPU_SHIM.20000" "chip.n2.lakemont.CPU_SHIM.20000")
   (ExportProteusCell "core.neuro.bridge.BASE_BRIDGE.20000"  "core.neuro.bridge.BRIDGE.20000")
-  (ExportProteusCell "chip.n2.pio.BASE_PIO_CABLE.20000"     "chip.n2.pio.PIO_CABLE.20000")
+  ; (ExportProteusCell "chip.n2.pio.BASE_PIO_CABLE.20000"     "chip.n2.pio.PIO_CABLE.20000")
   t
   )
 
