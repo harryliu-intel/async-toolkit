@@ -9,6 +9,8 @@ package com.avlsi.cell;
 
 import java.lang.String;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -22,6 +24,7 @@ import com.avlsi.file.common.HierName;
 
 import com.avlsi.util.container.FilteringIterator;
 import com.avlsi.util.container.Pair;
+import com.avlsi.util.functions.BinaryPredicate;
 import com.avlsi.util.functions.UnaryPredicate;
 
 
@@ -29,19 +32,21 @@ public class ChildrenFirstCellInterfaceIterator
 implements Iterator<CellInterface> {
 
     private static class StackFrame {
-        private final Iterator mSubcellPairsIter;
-        private final CellInterface mCell;
+        private final Iterator<Pair<HierName,CellInterface>> mSubcellPairsIter;
+        private final BinaryPredicate<List<CellInterface>,CellInterface> mFilter;
+        private final ArrayList<CellInterface> mPath;
 
-        public StackFrame( final CellInterface cell ,
-                           final UnaryPredicate<CellInterface> filter ) {
-            mCell = cell;
+        public StackFrame( final ArrayList<CellInterface> path,
+                           final BinaryPredicate<List<CellInterface>,CellInterface> filter ) {
+            mPath = path;
+            mFilter = filter;
             mSubcellPairsIter =
-                new FilteringIterator(
-                    mCell.getSubcellPairs(),
+                new FilteringIterator<Pair<HierName,CellInterface>>(
+                    getCell().getSubcellPairs(),
                     new UnaryPredicate<Pair<HierName,CellInterface>>() {
                         public boolean evaluate(
                             final Pair<HierName,CellInterface> p ) {
-                            return filter.evaluate( p.getSecond() );
+                            return filter.evaluate( mPath, p.getSecond() );
                         }
                     });
         }
@@ -50,14 +55,14 @@ implements Iterator<CellInterface> {
             return mSubcellPairsIter.hasNext();
         }
 
-        public CellInterface nextSubcellMaster() {
-            final Pair instancePair = ( Pair ) mSubcellPairsIter.next();
-            final CellInterface master = ( CellInterface ) instancePair.getSecond();
-            return master;
+        public StackFrame nextSubcellMaster() {
+            final ArrayList<CellInterface> nextPath = new ArrayList<>(mPath);
+            nextPath.add( mSubcellPairsIter.next().getSecond() );
+            return new StackFrame( nextPath, mFilter );
         }
 
         public CellInterface getCell() {
-            return mCell;
+            return mPath.get( mPath.size() - 1 );
         }
     }
 
@@ -67,20 +72,23 @@ implements Iterator<CellInterface> {
     
     private CellInterface mNextCell;
 
-    private final UnaryPredicate<CellInterface> mFilterPredicate;
+    private final BinaryPredicate<List<CellInterface>,CellInterface> mFilterPredicate;
     
     public ChildrenFirstCellInterfaceIterator( final CellInterface root ) {
-        this( root, new UnaryPredicate.Constant<CellInterface>( true ) );
+        this( root, (a, b) -> true );
     }
 
     public ChildrenFirstCellInterfaceIterator(
             final CellInterface root,
-            final UnaryPredicate<CellInterface> filter ) {
+            final BinaryPredicate<List<CellInterface>,CellInterface> filter ) {
         mStack = new LinkedList<StackFrame>();
         mVisitedSet = new HashSet<String>();
         mNextCell = null;
         mFilterPredicate = filter;
-        mStack.addFirst( new StackFrame( root, mFilterPredicate ) );
+        mStack.addFirst(
+                new StackFrame(
+                    new ArrayList<>( Collections.singleton( root ) ),
+                    mFilterPredicate ) );
     }
 
     public boolean hasNext() {
@@ -88,12 +96,12 @@ implements Iterator<CellInterface> {
             while ( ( mStack.size() != 0 ) && ( mNextCell == null ) ) {
                 final StackFrame currFrame = mStack.getFirst();
                 if ( currFrame.hasNextSubcell() ) {
-                    final CellInterface nextSubcellMaster = currFrame.nextSubcellMaster();
-                    final String subcellMasterName = nextSubcellMaster.getFullyQualifiedType();
+                    final StackFrame nextSubcellMaster = currFrame.nextSubcellMaster();
+                    final String subcellMasterName =
+                        nextSubcellMaster.getCell().getFullyQualifiedType();
                     
                     if ( ! ( mVisitedSet.contains( subcellMasterName ) ) ) {
-                        mStack.addFirst( new StackFrame( nextSubcellMaster,
-                                                         mFilterPredicate ) );
+                        mStack.addFirst( nextSubcellMaster );
                     }
                 }
                 else {

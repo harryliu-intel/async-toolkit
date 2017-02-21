@@ -3860,6 +3860,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                               final boolean printHeader,
                               final boolean noRecurse,
                               final boolean instantiationOrder,
+                              final boolean inclusivePrune,
                               final String outputSeperator,
                               final Writer outputWriter ) 
     throws IOException {
@@ -3912,10 +3913,19 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                                              : (Map) new TreeMap();
                 final UnaryPredicate<CellInterface> unprune =
                     new UnaryPredicate.Not<CellInterface>( prunePredicate );
+
+                final BinaryPredicate<List<CellInterface>,CellInterface> exprune =
+                    (p, c) -> {
+                        if (inclusivePrune) {
+                            return unprune.evaluate(c);
+                        } else {
+                            return unprune.evaluate(p.get(p.size() - 1));
+                        }
+                    };
                 final Iterator cellIter = instantiationOrder ?
                       sortCellInterfaceByLevel( rootCell, unprune )
                     : new ChildrenFirstCellInterfaceIterator(
-                            rootCell, unprune );
+                            rootCell, exprune );
 
                 while ( cellIter.hasNext() ) {
                     final CellInterface currCell =
@@ -3966,6 +3976,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                               final String translatorName,
                               final boolean noHeader,
                               final boolean instantiationOrder,
+                              final boolean inclusivePrune,
                               final boolean routed,
                               final String separator,
                               final Writer output )
@@ -3988,6 +3999,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                translatorName,
                noHeader,
                instantiationOrder,
+               inclusivePrune,
                separator,
                output );
     }
@@ -4032,6 +4044,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                               final String translatorName,
                               final boolean noHeader,
                               final boolean instantiationOrder,
+                              final boolean inclusivePrune,
                               final String separator,
                               final Writer output ) 
     throws CastSemanticException, RecognitionException, TokenStreamException,
@@ -4069,6 +4082,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                ! noHeader,
                noRecurse,
                instantiationOrder,
+               inclusivePrune,
                separator,
                output );
     }
@@ -4158,6 +4172,9 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
         final boolean instantiationOrder =
             theArgs.argExists("instantiation-order");
 
+        final boolean inclusivePrune =
+            !theArgs.argExists("exclusive-prune");
+
         try {
             query( castParser,
                    realName,
@@ -4169,6 +4186,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                    translateScheme,
                    ! printHeader,
                    instantiationOrder,
+                   inclusivePrune,
                    routed,
                    hierSep,
                    w );

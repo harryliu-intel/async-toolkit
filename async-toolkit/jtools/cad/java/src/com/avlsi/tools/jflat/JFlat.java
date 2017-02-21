@@ -649,6 +649,7 @@ public final class JFlat {
                                                              translatorName,
                                                              noHeader,
                                                              false,
+                                                             true,
                                                              sep,
                                                              pw );
                                         }
