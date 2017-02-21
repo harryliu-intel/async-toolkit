@@ -253,11 +253,11 @@ sub set_directive  {
     my $subtype_to_value_mr;
 
     if ($type == $TYPE_SCALAR) {
-        my @subtypes = @{shift_next_list(\@_)};
-        if (!@subtypes) {
+        my $subtypes = shift_next_list(\@_);
+        if (!defined $subtypes) {
             command_die($SS_r, "No subtypes specified.");
         }
-        foreach my $s (@subtypes) {
+        foreach my $s (@{$subtypes}) {
             $subtype_to_value_mr->{$s} = $value;
         }
     }
