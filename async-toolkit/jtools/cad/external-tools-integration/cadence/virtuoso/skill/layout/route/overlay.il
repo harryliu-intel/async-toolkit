@@ -128,11 +128,13 @@
     (foreach shape botCV->shapes
              (leChopShape shape (RectGetPoints bbox) t t)
              )
+    (leChopShape botCV->prBoundary (RectGetPoints bbox) t t)
     (dbSave botCV)
     bbox = (list -1:-1 (car gridAlignment["color"])+1:(cadr gridAlignment["color"])/2)
     (foreach shape topCV->shapes
              (leChopShape shape (RectGetPoints bbox) t t)
              )
+    (leChopShape topCV->prBoundary (RectGetPoints bbox) t t)
     (dbSave topCV)
     CV
     )
@@ -144,6 +146,7 @@
     CV = (dbOpenCellViewByType "globals" "globals.COLOR_GRID.m012345_color" "layout" "maskLayout" "w")
     x = (car  gridAlignment["color"])
     y = (cadr gridAlignment["color"])
+    (dbCreatePRBoundary CV (list 0:0 x:0 x:y 0:y))
 
     ; horizontal layers
     n = (round y/(cadr gridAlignment[0]))
