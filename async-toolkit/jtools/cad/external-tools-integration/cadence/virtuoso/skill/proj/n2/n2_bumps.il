@@ -79,34 +79,43 @@
 
 (defun DrawBumpsN2 ()
   
-  ; SOUTH bumps includes S bd(17), E bd(9), FPIO, resn, clk (2 rows tall) plus a row of LMT/T0A
-  CV = (dbOpenCellViewByType "chip.n2.south" "chip.n2.south.SOUTH.20001_bumps" "layout" "maskLayout" "w")
+  ; SOUTH bumps includes S bd(9), E bd(9), FPIO, resn, clk (2 rows tall) plus a row of LMT/T0A
+  CV = (dbOpenCellViewByType "chip.n2.south" "chip.n2.south.SOUTH.20000_bumps" "layout" "maskLayout" "w")
   (DrawBumps (list
 		(list 
-		      nil   "sx15" "sx13" "sx11" "sx9" "VDDIOS" "VDDIOS" "sxa" "sx7"  "sx5"  "sx3"  "sx1" 
-		      "VSS"
-		      "sy1" "sy3"  "sy5"  "sy7"  "VDDIOS" "VDDIOS" "sya" "sy9" "sy11" "sy13" "sy15"
-		      "VSS" "resn" "VDDIOS" "VDDIOS" "clk" "VSS"
-		      nil "ey7" "ey5" "VDDIOS" "VDDIOS" "eya" "ey3" "ey1"
-		      nil "ex1" "ex3" "exa" "VDDIOS" "VDDIOS" "ex5" "ex7" nil
+		      nil   "sy7" "sy5" "VDDIOS" "VDDIOS" "sya" "sy3"  "sy1" 
+		      "GND"
+		      "sx0" "sx2"  "sxq" "VDDIOS" "VDDIOS" "sx4" "sx6" "sx8" 
+
+		      "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd"
+		      "GND" "resn" "VDDIOS" "VDDIOS" "clk" "GND"
+		      "Vdd" 
+
+		      "ex8" "ex6" "ex4" "VDDIOS" "VDDIOS" "exq" "ex2" "ex0"
+		      "GND" "ey1" "ey3" "eya" "VDDIOS" "VDDIOS" "ey5" "ey7" "GND"
 		)
 		(list 
-		      "sx16" "sx14" "sx12" "sx10" "sx8" "GND" "GND" "sxq" "sx6" "sx4" "sx2" "sx0" 
-		      "VSS"
-		      "sy0" "sy2" "sy4" "sy6" "VSS" "VSS" "syq" "sy8" "sy10" "sy12" "sy14" "sy16" 
-		      "id" "od" "ip" "op" nil 
-		      nil "ey6" "ey4" "VSS" "VSS" "eyq" "ey2" "ey0"
-		      nil "ex0" "ex2" "exq" "VSS" "VSS" "ex4" "ex6" "ex8"
+		      "sy8" "sy6" "sy4" "GND" "GND" "syq" "sy2" "sy0"
+		      "GND"
+		      "sx1" "sx3" "sxa" "GND" "GND" "sx5" "sx7" "GND"
+
+		      "GND" "GND" "GND" "GND" "GND" "GND" "GND"
+		      "id" "od" "GND" "GND" "ip" "op"
+		      "GND" 
+
+		      "GND" "ex7" "ex5" "GND" "GND" "exa" "ex3" "ex1"
+		      "GND" "ey0" "ey2" "eyq" "GND" "GND" "ey4" "ey6" "ey8"
 		)
 
 		(list 
-		      "VDDM" "GND" "Vdd" "GND"
-		      "VDDM" "GND" "Vdd" "GND"
-		      "VDDM" "GND" "Vdd" "GND"
-		      "VDDM" "GND" "Vdd" "GND"
-		      "VDDM" "GND" "Vdd" "GND"
-		      "VDDM" "GND" "Vdd" "GND"
-		      "VDDM" "GND" "VDDM" "GND" "VDDM"
+		      "VDDM" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
+		      "Vdd" "Vdd" "VDDM" "VDDM" "Vdd" "Vdd"
+		      "VDDM" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
+		      "Vdd" "Vdd" "VDDM" "VDDM" "Vdd" "Vdd"
+		      "VDDM" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
+		      "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
+		      "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
+		      "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
 		)
 
 		)
@@ -117,35 +126,35 @@
 
 
   ; MESH bumps (45 rows tall)
-  CV = (dbOpenCellViewByType "core.neuro.mesh" "core.neuro.mesh.MESH.20001_bumps" "layout" "maskLayout" "w")
+  CV = (dbOpenCellViewByType "core.neuro.mesh" "core.neuro.mesh.MESH.20000_bumps" "layout" "maskLayout" "w")
   bumps = nil
   (for y 0 44
        (cond ((mod y 4)==1 rail="VDD")
              ((mod y 4)==3 rail="VDDM")
-             (t rail="VSS")
+             (t rail="GND")
              )
        row = nil
-       (for x 0 23 row = (cons rail row))
+       (for x 0 47 row = (cons rail row))
        bumps = (append bumps (list row))
        )
-  ;(DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV)
+  (DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV)
 
   ; NORTH bumps for bd(17) x input (2 rows tall)
-  CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NORTH.20001_bumps" "layout" "maskLayout" "w")
+  CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NORTH.20000_bumps" "layout" "maskLayout" "w")
   (DrawBumps (list 
-                   (list nil nil
-		   	 "wy7" "wy5" "VSS"    "VSS"    "wya" "wy3" "wy1" "VSS"
-		         "wx1" "wx3" "wxa" "VSS" "VSS" "wx5" "wx7"
-			 nil nil nil nil nil nil nil
-			 "nx15" "nx13" "nx11" "nx9" "VSS" "VSS" "nxa" "nx7" "nx5" "nx3" "nx1" "VSS"
-			 "ny1" "ny3" "ny5" "ny7" "VSS" "VSS" "nya" "ny9" "ny11" "ny13" "ny15" "VSS" "VSS"
+                   (list nil
+		   	 "wy7" "wy5" "GND"    "GND"    "wya" "wy3" "wy1" "GND"
+		         "wx0" "wx2" "wxq" "GND" "GND" "wx4" "wx6" "wx8" "Vdd"
+			 "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd"
+			 "nx7" "nx5" "GND" "GND" "nxa" "nx3" "nx1" "GND"
+			 "ny0" "ny2" "nyq" "GND" "GND" "ny4" "ny6" "ny8"
 		   	 )
-                   (list nil nil 
-		   	 "wy6" "wy4" "VDDION" "VDDION" "wyq" "wy2" "wy0" "VSS"
-		         "wx0" "wx2" "wxq" "VDDION" "VDDION" "wx4" "wx6" "wx8"
-			 nil nil nil nil nil
-			 "nx16" "nx14" "nx12" "nx10" "nx8" "VDDION" "VDDION" "nxq" "nx6" "nx4" "nx2" "nx0" "VSS"
-			 "ny0" "ny2" "ny4" "ny6" "VDDION" "VDDION" "nyq" "ny8" "ny10" "ny12" "ny14" "ny16" 
+                   (list  
+		   	 "wy8" "wy6" "wy4" "VDDION" "VDDION" "wyq" "wy2" "wy0" "GND"
+		         "wx1" "wx3" "wxa" "VDDION" "VDDION" "wx5" "wx7" "GND"
+			 "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND"
+			 "nx8" "nx6" "nx4" "VDDION" "VDDION" "nxq" "nx2" "nx0" "GND"
+			 "ny1" "ny3" "nya" "VDDION" "VDDION" "ny5" "ny7" 
 			 )
 		   )
              ?filename "n2_bumps_n.txt" ?CV CV)
