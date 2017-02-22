@@ -56,6 +56,10 @@
     (when pgCV (cdsp4edit ?CV pgCV))
     (when cgCV (cdsp4edit ?CV cgCV))
     (RouteExport ?CV fpCV ?softMacro t)
+    pgCV = (dbOpenCellViewByType libName (strcat baseName "_pg") "layout")
+    cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
+    (when pgCV (cdsp4add ?CV pgCV))
+    (when cgCV (cdsp4add ?CV cgCV))
     )
   )
 
