@@ -109,7 +109,10 @@
 
 (defun ExportProteusCell (baseName cellName)
   libName = (GetCastLibName cellName)
-  (cdsp4edit ?CV (dbOpenCellViewByType libName (strcat baseName "_pg") "layout"))
+  pgCV = (dbOpenCellViewByType libName (strcat baseName "_pg") "layout")
+  cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
+  (when pgCV (cdsp4edit ?CV pgCV))
+  (when cgCV (cdsp4edit ?CV cgCV))
   (RouteExport ?CV (dbOpenCellViewByType libName baseName "floorplan") ?softMacro t)
   t
   )
