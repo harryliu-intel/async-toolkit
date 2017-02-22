@@ -109,16 +109,19 @@
 
 (defun ExportProteusCell (baseName cellName)
   libName = (GetCastLibName cellName)
+  fpCV  = (dbOpenCellViewByType libName baseName "floorplan")
   pgCV = (dbOpenCellViewByType libName (strcat baseName "_pg") "layout")
   cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
   (when pgCV (cdsp4edit ?CV pgCV))
   (when cgCV (cdsp4edit ?CV cgCV))
-  (RouteExport ?CV (dbOpenCellViewByType libName baseName "floorplan") ?softMacro t)
+  (RouteExport ?CV fpCV ?softMacro t)
   t
   )
 
 (defun ExportProteus ()
   (ExportProteusCell "chip.n2.io.BASE_IO.20000"             "chip.n2.io.IO.20000")
+  (ExportProteusCell "chip.n2.test0.BASE_TEST0.20000"       "chip.n2.test0.TEST0.20000")
+  (ExportProteusCell "chip.n2.test1.BASE_TEST1.20000"       "chip.n2.test1.TEST1.20000")
   (ExportProteusCell "chip.n2.lakemont.BASE_CPU_SHIM.20000" "chip.n2.lakemont.CPU_SHIM.20000")
   (ExportProteusCell "core.neuro.bridge.BASE_BRIDGE.20000"  "core.neuro.bridge.BRIDGE.20000")
   t
