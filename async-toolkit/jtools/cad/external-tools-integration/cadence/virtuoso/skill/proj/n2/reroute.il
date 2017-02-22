@@ -72,7 +72,7 @@
   (RouteLeaf "lib.bd.standard.receive.RECV_CTRL.0" 2)
   (RouteLeaf "lib.bd.standard.split.SPLIT_CTRL-L2-R.0" 2)
   (RouteLeaf "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0" 2)
-  (RouteLeaf "lib.bd.standard.merge.MERGE_CTRL-L2-R.0" 2) 
+  (RouteLeaf "lib.bd.standard.merge.MERGE_CTRL-L2-R.0" 2)
   (RouteLeaf "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0" 2)
   (RouteLeaf "lib.bd.metastable.arbiter.ARBITER_CTRL.0" 2)
 
@@ -97,22 +97,22 @@
 
 (defun RouteMid ()
   ; cables
-  (RouteCell "core.neuro.tile.E_CABLE.20000" 6 ?redoPG t) 
+  (RouteCell "core.neuro.tile.E_CABLE.20000" 6 ?redoPG t)
   (RouteCell "core.neuro.tile.N_CABLE.20000" 6 ?redoPG t)
-  (RouteCell "core.neuro.tile.N_CABLE_1ROW.20000" 6 ?redoPG t) 
-  (RouteCell "core.neuro.tile.N_CABLE_MC.20000" 6 ?redoPG t) 
-  (RouteCell "core.neuro.tile.N_CABLE_MC_TALL.20000" 6 ?redoPG t) 
-  (RouteCell "core.neuro.tile.N_CABLE_TALL.20000" 6 ?redoPG t) 
+  (RouteCell "core.neuro.tile.N_CABLE_TALL.20000" 6 ?redoPG t)
+  (RouteCell "core.neuro.tile.N_CABLE_1ROW.20000" 6 ?redoPG t)
+  (RouteCell "core.neuro.tile.N_CABLE_MC.20000" 6 ?redoPG t)
+  (RouteCell "core.neuro.tile.N_CABLE_MC_TALL.20000" 6 ?redoPG t)
   (RouteCell "chip.n2.south.GO_WEST.20000" 6 ?redoPG t ?timingDriven nil) ; BUG: timingDriven
-  (RouteCell "chip.n2.pio.PIO_CABLE.20000" 6 ?redoPG t)
   (RouteCell "chip.n2.south.BYPASS.20000" 6 ?redoPG t)
+  (RouteCell "chip.n2.pio.PIO_CABLE.20000" 6 ?redoPG t)
 
   ; MESH_ROUTERs and DOUBLE_ROUTER
   (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_5_5_2_1_true_true_true_true-R.20000" 4 ?colorGrid nil)
+  (RouteCell "core.noc.router.forward.MESH_FORWARD-L5_16_7_7_0_1_true_true_true_true-R.20000" 4 ?colorGrid nil)
   (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_5_5_2_true_true_true_true-R.20000" 6 ?colorGrid nil)
-  (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8 ?colorGrid nil)
-  (RouteCell "core.noc.router.MESH_ROUTER(5,5,16,7,7,0,true,true,true,true).20000" 4 ?colorGrid nil) 
-  (RouteCell "core.noc.router.forward.MESH_FORWARD(5,16,7,7,0,1,true,true,true,true).20000" 6 ?colorGrid nil) 
+  (RouteCell "core.noc.router.MESH_ROUTER-L5_5_16_7_7_0_true_true_true_true-R.20000" 6 ?colorGrid nil)
+  (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8)
 
   ; SOUTH/NORTH
   (RouteCell "chip.n2.pads.PADS.20000" 8)
