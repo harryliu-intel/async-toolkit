@@ -47,6 +47,20 @@
   (RouteCell cellname topMetal ?timingDriven nil ?colorGrid nil)
   )
 
+(defun ExportProteusCell (baseName cellName)
+  (let (libName fpCV pgCV cgCV)
+    libName = (GetCastLibName cellName)
+    fpCV  = (dbOpenCellViewByType libName baseName "floorplan")
+    pgCV = (dbOpenCellViewByType libName (strcat baseName "_pg") "layout")
+    cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
+    (when pgCV (cdsp4edit ?CV pgCV))
+    (when cgCV (cdsp4edit ?CV cgCV))
+    (RouteExport ?CV fpCV ?softMacro t)
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Route Cells ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defun RouteLeaves ()
   ; new BD controllers
   (RouteLeaf "lib.bd.source.bitgen.BDC_BG.0" 2)
@@ -107,119 +121,12 @@
   t
   )
 
-(defun ExportProteusCell (baseName cellName)
-  libName = (GetCastLibName cellName)
-  fpCV  = (dbOpenCellViewByType libName baseName "floorplan")
-  pgCV = (dbOpenCellViewByType libName (strcat baseName "_pg") "layout")
-  cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
-  (when pgCV (cdsp4edit ?CV pgCV))
-  (when cgCV (cdsp4edit ?CV cgCV))
-  (RouteExport ?CV fpCV ?softMacro t)
-  t
-  )
-
+; Export all APR blocks except for those in NEURON
 (defun ExportProteus ()
   (ExportProteusCell "chip.n2.io.BASE_IO.20000"             "chip.n2.io.IO.20000")
   (ExportProteusCell "chip.n2.test0.BASE_TEST0.20000"       "chip.n2.test0.TEST0.20000")
   (ExportProteusCell "chip.n2.test1.BASE_TEST1.20000"       "chip.n2.test1.TEST1.20000")
   (ExportProteusCell "chip.n2.lakemont.BASE_CPU_SHIM.20000" "chip.n2.lakemont.CPU_SHIM.20000")
   (ExportProteusCell "core.neuro.bridge.BASE_BRIDGE.20000"  "core.neuro.bridge.BRIDGE.20000")
-  t
-  )
-
-; Conform check and color overlays were instantiated
-(defun VerifyOverlays ()
-  (let (err CV cellName libName inst)
-    err = ""
-    (foreach cellName (list "core.neuro.tile.E_CABLE.1000"
-                            "core.neuro.tile.N_CABLE.1000"
-                            "core.neuro.tile.DOUBLE_ROUTER.1000"
-                            "chip.n1.pads.PADS.10000"
-                            "chip.n1.test0.TEST0.10000"
-                            "chip.n1.test1.TEST1.10000"
-                            "chip.n1.testm.TESTM.10000"
-                            "chip.n1.io.IO.10000"
-                            "core.neuro.neuron.NEURON.10000")
-             libName = (GetCastLibName cellName)
-             CV = (dbOpenCellViewByType libName cellName "layout")
-             inst = (dbFindAnyInstByName CV "color")
-             (unless inst err=(strcat err (sprintf  nil "ERROR: %s missing color overlay\n" cellName)))
-             )
-    cellName = "chip.n1.N1.10000"
-    libName = (GetCastLibName cellName)
-    CV = (dbOpenCellViewByType libName cellName "layout")
-    inst = (dbFindAnyInstByName CV "check")
-    (unless inst err=(strcat err (sprintf nil "ERROR: %s missing check overlay\n" cellName)))
-    (unless err=="" (printf err))
-    err==""
-    )
-  )
-
-; make nominal threshold new BD controllers from the UV1 threshold ones
-(defun MakeNominalControllers ()
-  (foreach cellName (list "lib.bd.source.bitgen.BDC_BG.0"
-                          "lib.bd.standard.pipeline.CTRL.0"
-                          "lib.bd.standard.pipeline.TOK_CTRL.0"
-                          "lib.bd.standard.pipeline.ISOLATE_CTRL.0"
-                          "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"
-                          "lib.bd.standard.send.SEND_CTRL.0"
-                          "lib.bd.standard.receive.RECV_CTRL.0"
-                          "lib.bd.standard.split.SPLIT_CTRL-L2-R.0"
-                          "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0"
-                          "lib.bd.standard.merge.MERGE_CTRL-L2-R.0" 
-                          "lib.bd.standard.merge.ALT_MERGE_CTRL-L2-R.0"
-                          "lib.bd.metastable.arbiter.ARBITER_CTRL.0")
-           (MakeNominalController cellName)
-           )
-  t
-  )
-
-; make nominal threshold new BD controller from the UV1 threshold one
-(defun MakeNominalController (cellName)
-  (let (libName CV newName map)
-    libName = (GetCastLibName cellName)
-    newName = (strcat cellName "n")
-
-    ; edit views
-    CV = (dbOpenCellViewByType libName newName "floorplan")
-    (when CV (cdsp4edit ?CV CV))
-    CV = (dbOpenCellViewByType libName newName "layout")
-    (when CV (cdsp4edit ?CV CV))
-    CV = (dbOpenCellViewByType libName newName "abstract")
-    (when CV (cdsp4edit ?CV CV))
-    
-    ; copy floorplan view
-    CV = (dbOpenCellViewByType libName cellName "floorplan")
-    CV = (betterCopyCellView CV libName newName "floorplan" nil nil t)
-    (UpdateFloorplan ?CV CV)
-    (dbSave CV)
-    (cdsp4add ?CV CV)
-
-    ; copy abstract view
-    CV = (dbOpenCellViewByType libName cellName "abstract")
-    CV = (betterCopyCellView CV libName newName "abstract" nil nil t)
-    (dbSave CV)
-    (cdsp4add ?CV CV)
-
-    ; replace physical cells with nominal threshold versions
-    map = (makeTable "map" nil)
-    map["vendor.intel.d04.spc00ln.z01"]="vendor.intel.d04.spc00nn.z01";
-    map["vendor.intel.d04.spc00ln.z02"]="vendor.intel.d04.spc00nn.z02";
-    map["vendor.intel.d04.spc00ln.z03"]="vendor.intel.d04.spc00nn.z03";
-    map["vendor.intel.d04.spc00ln.z04"]="vendor.intel.d04.spc00nn.z04";
-    map["vendor.intel.d04.tap02ld.z05"]="vendor.intel.d04.tap02nd.z05";
-
-    ; copy layout view
-    CV = (dbOpenCellViewByType libName cellName "layout")
-    CV = (betterCopyCellView CV libName newName "layout" nil nil t)
-    (UpdateFloorplan ?CV CV)
-    (foreach sub CV->instances
-             (when map[sub->cellName]
-               sub->master = (dbOpenCellViewByType sub->libName map[sub->cellName] sub->viewName)
-               )
-             )
-    (dbSave CV)
-    (cdsp4add ?CV CV)
-    )
   t
   )
