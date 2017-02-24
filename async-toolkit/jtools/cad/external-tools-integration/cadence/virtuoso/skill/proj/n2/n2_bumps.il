@@ -83,28 +83,32 @@
   CV = (dbOpenCellViewByType "chip.n2.south" "chip.n2.south.SOUTH.20000_bumps" "layout" "maskLayout" "w")
   (DrawBumps (list
 		(list 
-		      nil   "sy7" "sy5" "VDDIOS" "VDDIOS" "sya" "sy3"  "sy1" 
-		      "GND"
-		      "sx0" "sx2"  "sxq" "VDDIOS" "VDDIOS" "sx4" "sx6" "sx8" 
+		      nil
+		      "sy7" "sy5" "VDDIOS" "sya" "VDDIOS" "sy3" "sy1" 
+		      "VDDIOS"
+		      "sx0" "sx2"  "sx4" "VDDIOS" "sxq" "VDDIOS" "sx6" "sx8" 
+		      "VDDIOS"
+		      "Vdd" "Vdd" "Vdd" "Vdd" "Vdd"
+		      "GND" "resn" "VDDIOS" "VDDIOS" "clk" "GND" "GND"
 
-		      "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd"
-		      "GND" "resn" "VDDIOS" "VDDIOS" "clk" "GND"
-		      "Vdd" 
-
-		      "ex8" "ex6" "ex4" "VDDIOS" "VDDIOS" "exq" "ex2" "ex0"
-		      "GND" "ey1" "ey3" "eya" "VDDIOS" "VDDIOS" "ey5" "ey7" "GND"
+		      "VDDIOS"
+		      "ex7" "ex5" "VDDIOS" "exa" "VDDIOS" "ex3" "ex1"
+		      "VDDIOS" 
+		      "ey0" "ey2" "ey4" "VDDIOS" "eyq" "VDDIOS" "ey6" "ey8"
+		      "VDDIOS"
 		)
 		(list 
-		      "sy8" "sy6" "sy4" "GND" "GND" "syq" "sy2" "sy0"
-		      "GND"
-		      "sx1" "sx3" "sxa" "GND" "GND" "sx5" "sx7" "GND"
+		      "VDDM"
+		      "sy8" "sy6" "GND" "syq" "GND" "sy4" "sy2" "sy0"
+		      "Vdd"
+		      "sx1" "sx3" "GND" "sxa" "GND" "sx5" "sx7" "VDDM"
 
-		      "GND" "GND" "GND" "GND" "GND" "GND" "GND"
+		      "GND" "GND" "GND" "GND" "GND" "GND"
 		      "id" "od" "GND" "GND" "ip" "op"
-		      "GND" 
-
-		      "GND" "ex7" "ex5" "GND" "GND" "exa" "ex3" "ex1"
-		      "GND" "ey0" "ey2" "eyq" "GND" "GND" "ey4" "ey6" "ey8"
+		      
+		      "VDDM"
+		      "ex8" "ex6" "GND" "exq" "GND" "ex4" "ex2" "ex0"
+		      "Vdd" "ey1" "ey3" "GND" "eya" "GND" "ey5" "ey7" "VDDM"
 		)
 
 		(list 
@@ -116,6 +120,7 @@
 		      "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
 		      "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
 		      "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
+		      "Vdd"
 		)
 
 		)
@@ -142,19 +147,21 @@
   ; NORTH bumps for bd(17) x input (2 rows tall)
   CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NORTH.20000_bumps" "layout" "maskLayout" "w")
   (DrawBumps (list 
-                   (list nil
-		   	 "wy7" "wy5" "GND"    "GND"    "wya" "wy3" "wy1" "GND"
-		         "wx0" "wx2" "wxq" "GND" "GND" "wx4" "wx6" "wx8" "Vdd"
-			 "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd"
-			 "nx7" "nx5" "GND" "GND" "nxa" "nx3" "nx1" "GND"
-			 "ny0" "ny2" "nyq" "GND" "GND" "ny4" "ny6" "ny8"
+                   (list "VDDM"
+		   	 "wy7" "wy5" "GND" "wya" "GND" "wy3" "wy1" "Vdd"
+		         "wx0" "wx2" "wx4" "GND" "wxq" "GND" "wx6" "wx8" "VDDM"
+			 "VDDM" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "VDDM"
+			 "VDDM"
+			 "nx7" "nx5" "GND" "nxa" "GND" "nx3" "nx1" "GND"
+			 "ny0" "ny2" "ny4" "GND" "nyq" "GND" "ny6" "ny8" "VDDM"
 		   	 )
-                   (list  
-		   	 "wy8" "wy6" "wy4" "VDDION" "VDDION" "wyq" "wy2" "wy0" "GND"
-		         "wx1" "wx3" "wxa" "VDDION" "VDDION" "wx5" "wx7" "GND"
-			 "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND"
-			 "nx8" "nx6" "nx4" "VDDION" "VDDION" "nxq" "nx2" "nx0" "GND"
-			 "ny1" "ny3" "nya" "VDDION" "VDDION" "ny5" "ny7" 
+                   (list "VDDION"
+		   	 "wy8" "wy6" "VDDION" "wyq" "VDDION" "wy4" "wy2" "wy0" "VDDION"
+		         "wx1" "wx3" "VDDION" "wxa" "VDDION" "wx5" "wx7" "VDDION"
+			 "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND"
+			 "VDDION"
+			 "nx8" "nx6" "VDDION" "nxq" "VDDION" "nx4" "nx2" "nx0" "VDDION"
+			 "ny1" "ny3" "VDDION" "nya" "VDDION" "ny5" "ny7" 
 			 )
 		   )
              ?filename "n2_bumps_n.txt" ?CV CV)
