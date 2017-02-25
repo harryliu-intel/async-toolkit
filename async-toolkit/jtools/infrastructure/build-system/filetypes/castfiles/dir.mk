@@ -32,8 +32,6 @@ endif # "$(strip $(CDL_NAME_MAP))" eq ""
 .PRECIOUS: $(CURR_CELL_DIR)/cell.scenarios$(ROUTED_SUFFIX)
 .PRECIOUS: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/%.nodes
 .PRECIOUS: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/env-ntpc/%.nodes.latest
-.PRECIOUS: $(CURR_CELL_DIR)/%/cell.cdl
-.PRECIOUS: $(CURR_CELL_DIR)/%/../cell.cdl
 .PRECIOUS: $(CURR_CELL_DIR)/%/cast.changed
 .PRECIOUS: $(CURR_CELL_DIR)/cell.cdl
 .PRECIOUS: $(CURR_CELL_DIR)/cast.changed
@@ -47,24 +45,10 @@ $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/% : $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX
 $(CURR_CELL_DIR)/%/cast.changed: $(CURR_CELL_DIR)/cell.cdl
 	touch '$@'
 
-$(CURR_CELL_DIR)/%/../cell.cdl: $(CURR_CELL_DIR)/cell.cdl
-	sync
-
-$(CURR_CELL_DIR)/%/cell.cdl: $(CURR_CELL_DIR)/cell.cdl
-	sync
-#	ln -sf ../cell.cdl '$@'
-
-$(CURR_CELL_DIR)/%/cell.stats: $(CURR_CELL_DIR)/cell.stats
-	sync
-	ln -sf '$<' '$@'
-
 $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/cast.d
 
 $(CURR_CELL_DIR)/cell.cdl: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/cdl/default.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
-
-$(CURR_CELL_DIR)/%/../cell.cdl.routed: $(CURR_CELL_DIR)/cell.cdl.routed
-	sync
 
 $(CURR_CELL_DIR)/cell.cdl.routed: $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/routed-cdl/default.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
@@ -79,8 +63,6 @@ PORTPROPS_SOURCE  := $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/query/default.latest
 PORTPROPS_TARGET  := $(CURR_CELL_DIR)/cell.portprops
 NODEPROPS_SOURCE := $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/node-props/default.latest
 NODEPROPS_TARGET := $(CURR_CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
-NODEPROPS_SOURCE_PATTERN := $(CURR_CELL_DIR)/%/jflat$(ROUTED_SUFFIX)/node-props/default.latest
-NODEPROPS_TARGET_PATTERN := $(CURR_CELL_DIR)/%/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
 
 ifneq ("$(CELL_LOCALPROPS)","")
     ifeq ($(shell test -s "$(CELL_LOCALPROPS)" ; echo $$?), 0)
@@ -100,7 +82,6 @@ $(LOCALPROPS_TARGET) : $(LOCALPROPS_SOURCE)
 ifneq ("$(CELL_NODEPROPS)","")
     ifeq ($(shell test -s "$(CELL_NODEPROPS)" ; echo $$?), 0)
         NODEPROPS_SOURCE := $(CELL_NODEPROPS)
-        NODEPROPS_SOURCE_PATTERN := $(CELL_NODEPROPS)
 endif # $(shell test -s "$(CELL_NODEPROPS)" ; echo $$?) eq 0
 endif # "$(CELL_NODEPROPS)" ne ""
 ifneq ($(shell cmp "$(NODEPROPS_TARGET)" "$(NODEPROPS_SOURCE)" 2>/dev/null | wc -l), 0)
@@ -108,9 +89,6 @@ ifneq ($(shell cmp "$(NODEPROPS_TARGET)" "$(NODEPROPS_SOURCE)" 2>/dev/null | wc 
 endif # $(shell cmp "$(NODEPROPS_TARGET)" "$(NODEPROPS_SOURCE)" 2>/dev/null | wc -l) ne 0
 # this is needed to complete the dependencies on initial runs.
 $(NODEPROPS_TARGET) : $(NODEPROPS_SOURCE)
-	$(CASTFILES_UPDATE_SIGNATURE)
-# pattern rules for /../ upward references, unsafe as described in bug 28447
-$(NODEPROPS_TARGET_PATTERN) : $(NODEPROPS_SOURCE_PATTERN)
 	$(CASTFILES_UPDATE_SIGNATURE)
 
 $(PORTPROPS_TARGET) : $(PORTPROPS_SOURCE)
@@ -232,10 +210,11 @@ $(CURR_CELL_DIR)/jflat$(ROUTED_SUFFIX)/%.latest: $(CURR_CELL_DIR)/.nodes$(ROUTED
 	$(CASTFILES_DEQUEUE_TASK)
 
 
+.SECONDEXPANSION:
 
 $(CURR_CELL_DIR)/%/slurp.mk : $(CURR_SLURP_DIR)/%/df2.d \
                               $(CURR_CELL_DIR)/%/df2.d \
-			      $(CURR_SLURP_DIR)/%/../cell.cdl \
+			      $$(call CANONICALIZE_PATH,$(CURR_SLURP_DIR)/%/../cell.cdl) \
 			      $(CURR_CELL_DIR)/cast.d
 	rm -f '$@'
 	touch '$@'

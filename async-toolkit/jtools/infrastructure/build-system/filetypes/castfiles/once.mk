@@ -1,3 +1,5 @@
+.SECONDEXPANSION:
+
 ifeq ("$(CASTFILES)","1")
 
 ifeq ("$(strip $(LVE_PACKAGE_ROOT))","")
@@ -278,27 +280,27 @@ $(ROOT_TARGET_DIR)/%/cell.mk: $(ROOT_TARGET_DIR)/%/cell.mk.latest
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed
 
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases: $(ROOT_TARGET_DIR)/%/../cell.cdl $(CDLALIASES_DEPS)
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed: $(ROOT_TARGET_DIR)/%/../cell.cdl.routed $(CDLALIASES_DEPS)
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl.routed) $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases.routed: $(ROOT_TARGET_DIR)/%/../cell.cdl.routed $(CDLALIASES_DEPS)
+$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl.routed) $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed: $(ROOT_TARGET_DIR)/%/../cell.cdl.routed $(CDLALIASES_DEPS)
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl.routed) $(CDLALIASES_DEPS)
 	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
@@ -523,7 +525,7 @@ endif # "$(GRAYBOX_MODE)" eq "" 41 lines back
 
 # convert cell.spice_gds2 to cell.aspice for --mode=estimated or --mode=nogeometry or --mode=custom
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.aspice
-$(ROOT_TARGET_DIR)/%/cell.aspice: $(ROOT_TARGET_DIR)/%/cell.spice $(ROOT_TARGET_DIR)/%/../cell.cdl
+$(ROOT_TARGET_DIR)/%/cell.aspice: $(ROOT_TARGET_DIR)/%/cell.spice $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl)
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	if [ -s '$<' ] ; then \
 	task=rc_spice2aspice && $(CASTFILES_ENQUEUE_TASK) && \
@@ -627,7 +629,7 @@ endif # "$(GRAYBOX_LIST)" ne ""
 # this probably should be changed, but not now: AAG 9/27/2010
 
 ifeq ("$(GRAYBOX_MODE)", "subcells")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_subcell_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
@@ -640,7 +642,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_
 	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
 	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_subcell_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
@@ -655,7 +657,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)
 
 else # "$(GRAYBOX_MODE)" eq "subcells" 27 lines back
 ifeq ("$(GRAYBOX_MODE)", "routed")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_routed_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
@@ -669,7 +671,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_
 	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
 	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_routed_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
@@ -685,7 +687,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)
 
 else # "$(GRAYBOX_MODE)" eq "routed" 29 lines back
 ifeq ("$(GRAYBOX_MODE)", "leaf")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_leaf_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
@@ -698,7 +700,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_
 	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
 	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_leaf_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
@@ -808,7 +810,7 @@ endif # "$(DEFFILE)" eq ""
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.bindrul
 
 ifneq ("$(NOEXTRACTDEPS)", "1")
-$(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/cell.bindrul: $(ROOT_TARGET_DIR)/%/../cell.cdl $(ROOT_TARGET_DIR)/%/df2.d
+$(ROOT_TARGET_DIR)/%/$(GDS2_TARGET) $(ROOT_TARGET_DIR)/%/cell.bindrul: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(ROOT_TARGET_DIR)/%/df2.d
 	#TASK=gds2 VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	/bin/rm -f "$(@D)/$(GDS2_TARGET)"
 	if [[ ( -n "$(call LVE_SKIP,gds2)" ) && ( -e '$@' ) ]] ; then exit; fi; \
@@ -861,7 +863,7 @@ endif # "$(NOEXTRACTDEPS)" ne "1" 48 lines back
 GDS2_TARGET10x := cell.gds2_lambda2
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/$(GDS2_TARGET10x)
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.bindrul
-$(ROOT_TARGET_DIR)/%/cell.gds2_lambda2 $(ROOT_TARGET_DIR)/%/cell.bindrul: $(ROOT_TARGET_DIR)/%/../cell.cdl $(ROOT_TARGET_DIR)/%/df2.d
+$(ROOT_TARGET_DIR)/%/cell.gds2_lambda2 $(ROOT_TARGET_DIR)/%/cell.bindrul: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(ROOT_TARGET_DIR)/%/df2.d
 	#TASK=gds2_10x VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	if [[ ( -n "$(call LVE_SKIP,gds2)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	task=gds2_10x && $(CASTFILES_ENQUEUE_TASK) ; \
@@ -1038,7 +1040,7 @@ $(ROOT_TARGET_DIR)/%/custom/extract.result: $(CUSTOM_SPICE)
 
 # rename cdl to gds2 names
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cell.cdl_gds2
-$(ROOT_TARGET_DIR)/%/cell.cdl_gds2: $(ROOT_TARGET_DIR)/%/../cell.cdl
+$(ROOT_TARGET_DIR)/%/cell.cdl_gds2: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl)
 	$(CASTFILES_ENQUEUE_TASK) && \
 	QB_DIAG_FILE='$@.diag' QB_RUN_NAME='lve_rename' \
 	$(EXEC_LOW_PACKAGE) $(CDL_RENAMER) \
@@ -1106,7 +1108,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed \
-        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
+        $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX))
 	#TASK=extract_spefRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	status=0; \
@@ -1187,7 +1189,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
+        $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1306,7 +1308,7 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/extract.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list \
-        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
+        $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=extracted$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1463,7 +1465,7 @@ $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spice_gds2 \
 $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/extract.err $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cell.spf: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
+        $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=totem$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1538,7 +1540,7 @@ $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/cell.dpf \
 $(ROOT_TARGET_DIR)/%/nanotime$(EXTRACT_DIR)/extract.err: \
 	$(ROOT_TARGET_DIR)/%/cell.gds2 \
 	$(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
-	$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
+	$$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX))
 	if [[ ( -n "$(call LVE_SKIP,extract)" ) && ( -e '$@' ) ]] ; then exit; fi; \
 	echo "#TASK=extract_starRC MODE=nanotime$(EXTRACT_DIR) VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))"; \
 	mkdir -p '$(@D)'; \
@@ -1719,7 +1721,7 @@ ifneq ("$(LVS_GRAYBOX_LIST)","")
 LVS_TARGET := lvs_custom_list
 endif # "$(LVS_GRAYBOX_LIST)" ne ""
 
-$(ROOT_TARGET_DIR)/%/lvs_graybox_list : $(ROOT_TARGET_DIR)/%/df2.d $(ROOT_TARGET_DIR)/%/../cast.d
+$(ROOT_TARGET_DIR)/%/lvs_graybox_list : $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
 	#TASK=create_lvs_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'; \
 	QB_DIAG_FILE='$(@D)/lvs.graylist.diag' QB_RUN_NAME='lve_lvs_graylist' \
@@ -1748,7 +1750,7 @@ $(ROOT_TARGET_DIR)/%/lvs.err: \
         $(ROOT_TARGET_DIR)/%/cell.gds2 \
         $(ROOT_TARGET_DIR)/%/cell.cdl_gds2 \
         $(ROOT_TARGET_DIR)/%/$(LVS_TARGET) \
-        $(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)
+        $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX))
 	#TASK=lvs VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),1) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	status=0; \

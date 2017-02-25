@@ -25,12 +25,6 @@ BUDGET_TAU := 43:20e-12 45:20.93e-12
 .PRECIOUS: $(SPICE_DIR)/alint/%/fullcell.timing
 .PRECIOUS: $(SPICE_DIR)/alint/%/cell.slack
 .PRECIOUS: $(foreach tau,$(BUDGET_TAU),$(SPICE_DIR)/alint/%/cell.paths_top.$(word 1,$(subst :, ,$(tau))))
-.PRECIOUS: $(SPICE_DIR)/../../floorplan/estimated/instances/.instances
-.PRECIOUS: $(CELL_DIR)/floorplan/estimated/instances/.instances
-.PRECIOUS: $(SPICE_DIR)/alint/%/../../../../../../floorplan/estimated/instances/.instances
-.PRECIOUS: $(SPICE_DIR)/../../layout/extracted/instances/.instances
-.PRECIOUS: $(CELL_DIR)/layout/extracted/instances/.instances
-.PRECIOUS: $(SPICE_DIR)/alint/%/../../../../../../layout/extracted/instances/.instances
 
 $(SPICE_DIR)/alint/%/cell.slack : \
     $(SPICE_DIR)/alint/%/cell.timing \
