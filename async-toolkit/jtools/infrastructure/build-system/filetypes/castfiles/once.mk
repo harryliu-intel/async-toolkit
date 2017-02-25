@@ -174,14 +174,7 @@ SPICE2ASPICE_OPTS := --isopotential-layers '$(ISOPOTENTIALLAYERS)'
 ifeq ("$(strip $(ISOPOTENTIALLAYERS))","")
 SPICE2ASPICE_OPTS := 
 endif
-CDLALIASES    := cdlaliases $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS) --gates-regex='^(gate|stack)\\..*'
-ifeq ("$(GRAYBOX_MODE)", "")
-CDLALIASES_OPTS =
-CDLALIASES_DEPS =
-else
-CDLALIASES_OPTS =--graybox-list='$(@D)/graybox_list'
-CDLALIASES_DEPS =$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list
-endif
+CDLALIASES    = cdlaliases $(GLOBAL_JAVA_FLAGS) $(GLOBAL_JRE_FLAGS) --gates-regex='^(gate|stack)\\..*' $(if $(GRAYBOX_MODE),--graybox-list='$(@D)/graybox_list')
 MAKE_ASPICE_IN := make_aspice_in
 MAKE_ALINT_IN := make_alint_in
 MERGE_ALINT_OUT := merge_alint_out
@@ -273,35 +266,14 @@ endif # "$(ROOT_SLURP_DIR)" ne ""
 $(ROOT_TARGET_DIR)/%/cell.mk: $(ROOT_TARGET_DIR)/%/cell.mk.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases.routed
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed
-.PRECIOUS: $(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed
-
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(CDLALIASES_DEPS)
-	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/cdl.aliases
+$(ROOT_TARGET_DIR)/%/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl) $(ROOT_TARGET_DIR)/%/graybox_list
+	$(CDLALIASES) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(CDLALIASES_DEPS)
-	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
-	mv '$@.tmp' '$@'
-
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl) $(CDLALIASES_DEPS)
-	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
-	mv '$@.tmp' '$@'
-
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl.routed) $(CDLALIASES_DEPS)
-	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
-	mv '$@.tmp' '$@'
-
-$(ROOT_TARGET_DIR)/%/accurate$(EXTRACT_DIR)/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl.routed) $(CDLALIASES_DEPS)
-	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
-	mv '$@.tmp' '$@'
-
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cell.cdl.routed) $(CDLALIASES_DEPS)
-	$(CDLALIASES) $(CDLALIASES_OPTS) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
+.PRECIOUS: $(ROOT_TARGET_DIR)/%/cdl.aliases.routed
+$(ROOT_TARGET_DIR)/%/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl.routed) $(ROOT_TARGET_DIR)/%/graybox_list
+	$(CDLALIASES) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
 # convert cell.spice_gds2 to cell.aspice for --mode=extracted
