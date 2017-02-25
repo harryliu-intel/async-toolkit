@@ -629,92 +629,28 @@ endif # "$(GRAYBOX_LIST)" ne ""
 # this probably should be changed, but not now: AAG 9/27/2010
 
 ifeq ("$(GRAYBOX_MODE)", "subcells")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
-	#TASK=create_subcell_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
-	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	 --task=subcells --filter=one-level \
-	 --output='$@' \
-	 --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
-	 : < '$@' ; \
-	 touch '$@' ; \
-	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
-	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
+GRAYBOX_LIST_OPTS = --filter=one-level
+else ifeq ("$(GRAYBOX_MODE)", "routed")
+GRAYBOX_LIST_OPTS = --filter=one-level --routed
+else ifeq ("$(GRAYBOX_MODE)", "leaf")
+GRAYBOX_LIST_OPTS = --filter=leaf --routed
+else
+GRAYBOX_LIST_OPTS =
+endif
 
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
-	#TASK=create_subcell_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
-	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	 --task=subcells --filter=one-level \
-	 --output='$@' \
-	 --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
-	 : < '$@' ; \
-	 touch '$@' ; \
-	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
-	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
-
-else # "$(GRAYBOX_MODE)" eq "subcells" 27 lines back
-ifeq ("$(GRAYBOX_MODE)", "routed")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
-	#TASK=create_routed_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
+$(ROOT_TARGET_DIR)/%/graybox_list.latest: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../df2.d) $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cast.d)
+	#TASK=create_graybox_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
 	mkdir -p '$(@D)'
 	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
 	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
 	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	 --task=subcells --filter=one-level --routed \
+	 --task=subcells $(GRAYBOX_LIST_OPTS) \
 	 --output='$@' \
 	 --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
 	 : < '$@' ; \
 	 touch '$@' ; \
 	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
 	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
-
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
-	#TASK=create_routed_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	mkdir -p '$(@D)'
-	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
-	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	 --task=subcells --filter=one-level --routed \
-	 --output='$@' \
-	 --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
-	 : < '$@' ; \
-	 touch '$@' ; \
-	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
-	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
-
-else # "$(GRAYBOX_MODE)" eq "routed" 29 lines back
-ifeq ("$(GRAYBOX_MODE)", "leaf")
-$(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
-	#TASK=create_leaf_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
-	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	 --task=subcells --filter=leaf --routed \
-	 --output='$@' \
-	 --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
-	 : < '$@' ; \
-	 touch '$@' ; \
-	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
-	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
-
-$(ROOT_TARGET_DIR)/%/totem$(EXTRACT_DIR)/graybox_list.latest: $(ROOT_TARGET_DIR)/%/df2.d $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../cast.d)
-	#TASK=create_leaf_list VIEW=$(call GET_NTH_FROM_LAST_DIR,$(@D),2) CELL=$(call GET_CAST_FULL_NAME,$(@D))
-	QB_DIAG_FILE='$(@D)/graylist.diag' QB_RUN_NAME='lve_graylist' \
-	  QB_LOCAL=$(QB_LOCAL) QRSH_FLAGS="$(PACKAGE_FLAGS)" \
-	   $(EXEC) $(CAST_QUERY) --cast-path='$(CAST_PATH)' \
-	 --task=subcells --filter=leaf --routed \
-	 --output='$@' \
-	 --cell='$(call GET_CAST_FULL_NAME,$(@D))'; \
-	 : < '$@' ; \
-	 if [[ -e '$(GRAYBOX_LIST)' ]] ; then sed -e 's/ //g' '$(GRAYBOX_LIST)' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; \
-	 else  sed -e 's/ //g' '$@' | sort -u -o '$@'.tmp ; mv -f '$@'.tmp '$@'; fi
-
-endif # "$(GRAYBOX_MODE)" eq "leaf" 26 lines back
-endif # "$(GRAYBOX_MODE)" eq "routed" 57 lines back
-endif # "$(GRAYBOX_MODE)" eq "subcells" 86 lines back
 
 # create lef & def from DFII
 ifeq ("$(GRAYBOX_MODE)", "")
