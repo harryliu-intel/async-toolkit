@@ -267,12 +267,12 @@ $(ROOT_TARGET_DIR)/%/cell.mk: $(ROOT_TARGET_DIR)/%/cell.mk.latest
 	$(CASTFILES_UPDATE_SIGNATURE)
 
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cdl.aliases
-$(ROOT_TARGET_DIR)/%/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl) $(ROOT_TARGET_DIR)/%/graybox_list
+$(ROOT_TARGET_DIR)/%/cdl.aliases: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl) $(if $(GRAYBOX_MODE),$(ROOT_TARGET_DIR)/%/graybox_list)
 	$(CDLALIASES) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
 .PRECIOUS: $(ROOT_TARGET_DIR)/%/cdl.aliases.routed
-$(ROOT_TARGET_DIR)/%/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl.routed) $(ROOT_TARGET_DIR)/%/graybox_list
+$(ROOT_TARGET_DIR)/%/cdl.aliases.routed: $$(call CANONICALIZE_PATH,$(ROOT_TARGET_DIR)/%/../../cell.cdl.routed) $(if $(GRAYBOX_MODE),$(ROOT_TARGET_DIR)/%/graybox_list)
 	$(CDLALIASES) --cell='$(call GET_CAST_CDL_NAME,$(@D))' < '$<' > '$@.tmp' && \
 	mv '$@.tmp' '$@'
 
