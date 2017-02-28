@@ -4,6 +4,8 @@
                   (stagger nil)
                   (xpitch 96*1.68)
                   (ypitch 96*1.596)
+                  (delta_west -24*1.68) ; optionally shift westmost bumps
+                  (delta_east  24*1.68) ; optionally shift eastmost bumps
                   (cellName "globals.BUMP.2")
                   (filename "bumps.txt")
                   (CV (geGetEditCellView)))
@@ -20,7 +22,8 @@
     (for row 0 rows-1
          y = yoff + ypitch*row
          (for col 0 cols-1
-              x = xoff + xpitch*col + (if stagger && (mod row 2)==1 xpitch/2 0)
+              x = xoff + xpitch*col + (if stagger && (mod row 2)==1 xpitch/2 0) +
+                (if col==0 delta_west 0) + (if col==cols-1 delta_east 0)
               name = (nth col (nth row names))
               (when name
                 instname = (if bumpNum[name]==0 (sprintf nil "bump_%s" name)
@@ -126,10 +129,6 @@
 		)
              ?filename "n2_bumps_s.txt" ?CV CV)
 
-
-
-
-
   ; MESH bumps (45 rows tall)
   CV = (dbOpenCellViewByType "core.neuro.mesh" "core.neuro.mesh.MESH.20000_bumps" "layout" "maskLayout" "w")
   bumps = nil
@@ -165,10 +164,7 @@
 			 )
 		   )
              ?filename "n2_bumps_n.txt" ?CV CV)
-
-
 )
-
 
 (defun bmp () 
  (load "vip/proj/n2/n2_bumps.il")
