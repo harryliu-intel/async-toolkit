@@ -47,9 +47,9 @@
   (RouteCell cellname topMetal ?timingDriven nil ?colorGrid nil)
   )
 
-(defun ExportProteusCell (baseName cellName)
+(defun ExportProteusCell (baseName)
   (let (libName fpCV pgCV cgCV)
-    libName = (GetCastLibName cellName)
+    libName = (GetCastLibName baseName)
     fpCV  = (dbOpenCellViewByType libName baseName "floorplan")
     pgCV = (dbOpenCellViewByType libName (strcat baseName "_pg") "layout")
     cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
@@ -60,6 +60,18 @@
     cgCV = (dbOpenCellViewByType libName (strcat baseName "_color") "layout")
     (when pgCV (cdsp4add ?CV pgCV))
     (when cgCV (cdsp4add ?CV cgCV))
+    t
+    )
+  )
+
+(defun ImportCell (cellName)
+  (let (libName lCV)
+    libName = (GetCastLibName cellName)
+    lCV = (dbOpenCellViewByType libName cellName "layout")
+    (when lCV (cdsp4edit ?CV lCV))
+    lCV = (RouteImport ?libName libName ?cellName cellName)
+    (cdsp4add ?CV lCV)
+    t
     )
   )
 
@@ -125,12 +137,24 @@
   t
   )
 
+; list of APR blocks excluding NEURON
+apr_cells = (list
+             (list "core.neuro.bridge.BASE_BRIDGE.20000"  "core.neuro.bridge.BRIDGE.20000")
+             (list "chip.n2.io.BASE_IO.20000"             "chip.n2.io.IO.20000")
+             (list "chip.n2.test0.BASE_TEST0.20000"       "chip.n2.test0.TEST0.20000")
+             (list "chip.n2.test1.BASE_TEST1.20000"       "chip.n2.test1.TEST1.20000")
+             (list "chip.n2.lakemont.BASE_CPU_SHIM.20000" "chip.n2.lakemont.CPU_SHIM.20000")
+             (list "chip.n2.lakemont.LAKEMONT.20000"      "chip.n2.lakemont.LAKEMONT.20000")
+             )
+
 ; Export all APR blocks except for those in NEURON
 (defun ExportProteus ()
-  (ExportProteusCell "chip.n2.io.BASE_IO.20000"             "chip.n2.io.IO.20000")
-  (ExportProteusCell "chip.n2.test0.BASE_TEST0.20000"       "chip.n2.test0.TEST0.20000")
-  (ExportProteusCell "chip.n2.test1.BASE_TEST1.20000"       "chip.n2.test1.TEST1.20000")
-  (ExportProteusCell "chip.n2.lakemont.BASE_CPU_SHIM.20000" "chip.n2.lakemont.CPU_SHIM.20000")
-  (ExportProteusCell "core.neuro.bridge.BASE_BRIDGE.20000"  "core.neuro.bridge.BRIDGE.20000")
+  (foreach x apr_cells (ExportProteusCell (car x)))
+  t
+  )
+
+; Import all APR blocks except for those in NEURON
+(defun ImportProteus ()
+  (foreach x apr_cells (ImportCell (cadr x)))
   t
   )
