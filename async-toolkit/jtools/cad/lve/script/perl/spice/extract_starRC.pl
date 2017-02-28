@@ -345,6 +345,7 @@ my $topcell=$longcellnametop ? "TOP_CELL" : $cell_name;
 my $longcellnamegray=0;
 my %graylist=();
 my %reversegraylist=();
+my %reNameContext = ();
 
 sub makegdsgraylist {
     my ($graycell_file) = @_;
@@ -681,7 +682,6 @@ if ($stage2c) {
 
     makegdsgraylist($graycell_file);
     if ($genspef) {
-        my %reNameContext = ();
         my $cast_cell = reName2(\%reNameContext, 'cell', 'gds2', 'cast', $cell_name);
 
         my %canonical = ();
@@ -700,33 +700,8 @@ if ($stage2c) {
             }
         }
 
-        my $spiceTemp= "${cell_name}.spef";
-        open (P, "<$starRC_dir/$spiceTemp");
-        open (Q, ">$spice_target");
-        while (<P>) {
-            chomp;
-            s/\\//;
-            if (/^(\*I.*\*D\s+)(\S+)$/) {
-                my ($prefix, $cellName) = ($1, $2);
-                $cellName = $reversegraylist{$cellName} if defined ($reversegraylist{$cellName});
-                $_ = "$prefix$cellName";
-            }
-            my $name_map = 0;
-            if ((/^\*NAME_MAP/ and $name_map = 1)..(!$name_map and /^\*[^\d]/)) {
-                if (/^(\*\d+\s+)(\S+)$/) {
-                    my ($prefix, $name) = ($1, $2);
-                    $name =~ s/\//_D_/g;
-                    my $cast_name = reName2(\%reNameContext, 'node', 'gds2', 'cast', $name);
-                    my $canon = $canonical{$cast_cell}->{$cast_name};
-                    $name = reName2(\%reNameContext, 'node', 'cast', 'gds2', $canon)
-                        if $canon;
-                    $_ = "$prefix$name";
-                }
-            }
-            print Q "$_\n";
-        }
-        close Q;
-        close P;
+        reformat_spef("$starRC_dir/${cell_name}.spef", $spice_target, $canonical{$cast_cell});
+
         exit 0;
     }
 
@@ -748,7 +723,44 @@ if ($stage2c) {
     }
     close BIND;
     }
-    my $spiceTemp= "${cell_name}.spf";
+    reformat_spice("${cell_name}.spf", $spiceFile, \%bind);
+    print "Re-Formating Spice File ... done.\n";
+
+    my_system("cp -f '$spiceFile' '$spice_topcell'");
+}
+
+sub reformat_spef {
+    my ($spiceTemp, $spice_target, $canonical) = @_;
+    open (P, "<$spiceTemp") or die "Can't open $spiceTemp: $!";
+    open (Q, ">$spice_target") or die "Can't open $spice_target: $!";
+    while (<P>) {
+        chomp;
+        s/\\//;
+        if (/^(\*I.*\*D\s+)(\S+)$/) {
+            my ($prefix, $cellName) = ($1, $2);
+            $cellName = $reversegraylist{$cellName} if defined ($reversegraylist{$cellName});
+            $_ = "$prefix$cellName";
+        }
+        my $name_map = 0;
+        if ((/^\*NAME_MAP/ and $name_map = 1)..(!$name_map and /^\*[^\d]/)) {
+            if (/^(\*\d+\s+)(\S+)$/) {
+                my ($prefix, $name) = ($1, $2);
+                $name =~ s/\//_D_/g;
+                my $cast_name = reName2(\%reNameContext, 'node', 'gds2', 'cast', $name);
+                my $canon = $canonical->{$cast_name};
+                $name = reName2(\%reNameContext, 'node', 'cast', 'gds2', $canon)
+                    if $canon;
+                $_ = "$prefix$name";
+            }
+        }
+        print Q "$_\n";
+    }
+    close Q;
+    close P;
+}
+
+sub reformat_spice {
+    my ($spiceTemp, $spiceFile, $bind) = @_;
     open( SOURCE, "<$spiceTemp") or die "Can't open '$spiceTemp' for reading.\n";
     open( TARGET, ">$spiceFile") or die "Can't open '$spiceFile' for writing.\n";
     $. = 0;
@@ -862,7 +874,7 @@ if ($stage2c) {
           $term2 = convertNetName( $term2 );
           # in lieu of changing bind.rul file, and so spice will work
           # this really should be a rule in the PDK or in STARRC
-          $device = $bind{$device} if defined $bind{$device};
+          $device = $bind->{$device} if defined $bind->{$device};
           print TARGET "D$name $term1 $term2 $device $rest\n";
       }
       elsif ($line =~ /^C/i) {
@@ -926,7 +938,7 @@ if ($stage2c) {
             print TARGET "$name $term1 $term2 $res";
             if ($term1x ne $term2x) {
                 my ($a,$dev)=split(/=/, $fields[4]);
-                $dev = $bind{$dev} if defined $bind{$dev};
+                $dev = $bind->{$dev} if defined $bind->{$dev};
                 $fields[4] = "$a=$dev";
                 print TARGET " $fields[4]" if $term1x ne $term2x;
             }
@@ -943,9 +955,6 @@ if ($stage2c) {
 
     close(SOURCE);
     close(TARGET);
-    print "Re-Formating Spice File ... done.\n";
-
-    my_system("cp -f '$spiceFile' '$spice_topcell'");
 }
 
 
