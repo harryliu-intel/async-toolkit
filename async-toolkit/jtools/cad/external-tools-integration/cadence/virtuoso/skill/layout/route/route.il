@@ -41,7 +41,7 @@
 
     ; route
     (RouteRun ?CV CV ?Background Background ?Mem Mem)
-    
+
     ; import
     (cond (Background (printf "Route running in background, finish with RouteImport\n"))
           (t CV = (RouteImport ?CV CV ?viewName importView))
@@ -75,7 +75,7 @@
         abstractCV
         Command (statusVerilog t)
         lef_subcells GdsMapFile gds_name
-        pout (statusGds t) (statusLef t) 
+        pout (statusGds t) (statusLef t)
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
         excludeCellsFile
@@ -91,8 +91,8 @@
     ; global settings
     CAST_PATH  = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     DFII_DIR = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
-    SPAR_DIR = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR") 
-    PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") 
+    SPAR_DIR = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
+    PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
                       "/share/Fulcrum")
     TEMP     = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR     = (strcat TEMP "/route/" CV->cellName)
@@ -205,7 +205,7 @@
       pout=(outfile SkipRoutingFileName)
       (fprintf pout "proc ProteusUserSetSkipRouting {} {\n")
       inplacedPins=(FindInplacedPins CV)
-      (foreach pinName inplacedPins 
+      (foreach pinName inplacedPins
                rexCompile("\\[")
                pinName=(rexReplace pinName "\\\\[" 0)
                rexCompile("\\]")
@@ -416,7 +416,7 @@
     SubcellLibString = (buildString SubcellLibNames)
 
     ; import def
-    libPath = (getShellEnvVar "DFII_DIR") 
+    libPath = (getShellEnvVar "DFII_DIR")
     logFile = (strcat defFile ".log")
     status = (ldtrDefReadOA
               defFile ; t_fileName
@@ -471,7 +471,7 @@
   (DeleteKeepout ?CV CV)
   (ConvertFill ?CV CV)    ; HACK: ICC should distinguish fill shapes better
   (FixFillerCells ?CV CV) ; HACK: change threshold of spc00 to avoid NV1/PV1 DRC errors
-  (CopyPinsFromSourceView ?CV CV)
+  (FixImportedPins ?CV CV) ; HACK: make sure pins and labels are "pin" purpose
   (defun RunAfterImportDef (@key (CV (geGetEditCellView))) t)
   (LoadWires ?CV CV)
   (RunAfterImportDef ?CV CV)
@@ -534,7 +534,7 @@
     pout = (outfile MWLefCellsList)
     (foreach c cells (fprintf pout "%s\n" c->cellName))
     (close pout)
-    
+
     ; export LEF for cells
     (ldtrLefWriteOA
      (sprintf nil "%s.lef" filename)
@@ -555,7 +555,7 @@
   (let (castname filename ExecCmd Command file)
     castname "junk"
     filename = strcat( tempdir "/" cellname ".castname" )
-    ExecCmd = cond( ( ( boundp( `ExecCmd ) && stringp( ExecCmd ) ) 
+    ExecCmd = cond( ( ( boundp( `ExecCmd ) && stringp( ExecCmd ) )
                                ExecCmd )
                     ( "" ) )
 
@@ -592,7 +592,22 @@
   t
   )
 
+; Converts pins and labels to "pin" purpose
+(defun FixImportedPins (@key (CV (geGetEditCellView)))
+  (let (net)
+    (foreach label (setof x CV->shapes x->objType=="label")
+             label->lpp = (list (car label->lpp) "pin")
+             )
+    (foreach pin (setof x CV->shapes x->objType=="rect" x->pin)
+             rect = (dbCreateRect CV pin->lpp pin->bBox)
+             rect->net=pin->net
+             pin->lpp = (list (car pin->lpp) "pin")
+             )
+    )
+  CV
+  )
 
+; OBSOLETE: Copy pins from a floorplan view
 (defun CopyPinsFromSourceView (@key (CV (geGetEditCellView)) (srcCV nil))
   (let (fCV fig net pin trm)
     ; assumes same cell name unless specified
@@ -613,7 +628,7 @@
           pin = (dbCreatePin net fig); net->name trm)
 
           ; need to be sure we have drawing purpose too
-	  (when fig->purpose=="pin" && 
+	  (when fig->purpose=="pin" &&
 	        (dbGetPropByName fig "PinType")->value=="BusScript"
              (dbCreateRect CV (list fig->layerName "drawing") fig->bBox)
           )
