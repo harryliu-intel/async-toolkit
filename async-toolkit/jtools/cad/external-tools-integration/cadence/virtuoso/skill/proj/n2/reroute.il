@@ -158,3 +158,11 @@ apr_cells = (list
   (foreach x apr_cells (ImportCell (cadr x)))
   t
   )
+
+; Do chip-assembly steps on a top level layout cell
+(defun UpdateTopCell (@key (CV (geGetEditCellView)))
+  (UpdateFloorplan ?CV CV ?recurse nil)
+  (RedrawAllPins ?CV CV)
+  (RouteNearby ?CV CV)
+  CV
+  )
