@@ -677,3 +677,13 @@ useICV = t
            )
   t
   )
+
+; Draw inplace power-ground pins for upper level cells
+(defun DrawPinsPowerGround (@key (CV (geGetEditCellView)))
+  (foreach inst CV->instances
+           (foreach name PowerGroundNets
+                    (MidPinsInheritPin CV inst name name)
+                    )
+           )
+  t
+  )
