@@ -87,31 +87,31 @@
   (DrawBumps (list
 		(list 
 		      nil
-		      "sy7" "sy5" "VDDIOS" "sya" "VDDIOS" "sy3" "sy1" 
-		      "VDDIOS"
-		      "sx0" "sx2"  "sx4" "VDDIOS" "sxq" "VDDIOS" "sx6" "sx8" 
-		      "VDDIOS"
+		      "Y[1].D[7]" "Y[1].D[5]" "VDDIO" "Y[1].C.a" "VDDIO" "Y[1].D[3]" "Y[1].D[1]" 
+		      "VDDIO"
+		      "X[1].D[0]" "X[1].D[2]"  "X[1].D[4]" "VDDIO" "X[1].C.q" "VDDIO" "X[1].D[6]" "X[1].D[8]" 
+		      "VDDIO"
 		      "Vdd" "Vdd" "Vdd" "Vdd" "Vdd"
-		      "GND" "resn" "VDDIOS" "VDDIOS" "clk" "GND" "GND"
+		      "GND" "resn" "VDDIO" "VDDIO" "clk" "GND" "GND"
 
-		      "VDDIOS"
-		      "ex7" "ex5" "VDDIOS" "exa" "VDDIOS" "ex3" "ex1"
-		      "VDDIOS" 
-		      "ey0" "ey2" "ey4" "VDDIOS" "eyq" "VDDIOS" "ey6" "ey8"
-		      "VDDIOS"
+		      "VDDIO"
+		      "X[0].D[7]" "X[0].D[5]" "VDDIO" "X[0].C.a" "VDDIO" "X[0].D[3]" "X[0].D[1]"
+		      "VDDIO" 
+		      "Y[0].D[0]" "Y[0].D[2]" "Y[0].D[4]" "VDDIO" "Y[0].C.q" "VDDIO" "Y[0].D[6]" "Y[0].D[8]"
+		      "VDDIO"
 		)
 		(list 
 		      "VDDM"
-		      "sy8" "sy6" "GND" "syq" "GND" "sy4" "sy2" "sy0"
+		      "Y[1].D[8]" "Y[1].D[6]" "GND" "Y[1].C.q" "GND" "Y[1].D[4]" "Y[1].D[2]" "Y[1].D[0]"
 		      "Vdd"
-		      "sx1" "sx3" "GND" "sxa" "GND" "sx5" "sx7" "VDDM"
+		      "X[1].D[1]" "X[1].D[3]" "GND" "X[1].C.a" "GND" "X[1].D[5]" "X[1].D[7]" "VDDM"
 
 		      "GND" "GND" "GND" "GND" "GND" "GND"
 		      "id" "od" "GND" "GND" "ip" "op"
 		      
 		      "VDDM"
-		      "ex8" "ex6" "GND" "exq" "GND" "ex4" "ex2" "ex0"
-		      "Vdd" "ey1" "ey3" "GND" "eya" "GND" "ey5" "ey7" "VDDM"
+		      "X[0].D[8]" "X[0].D[6]" "GND" "X[0].C.q" "GND" "X[0].D[4]" "X[0].D[2]" "X[0].D[0]"
+		      "Vdd" "Y[0].D[1]" "Y[0].D[3]" "GND" "Y[0].C.a" "GND" "Y[0].D[5]" "Y[0].D[7]" "VDDM"
 		)
 
 		(list 
@@ -127,13 +127,16 @@
 		)
 
 		)
-             ?filename "n2_bumps_s.txt" ?CV CV)
+             ?filename "n2_bumps_s.txt" ?CV CV
+	     ;?delta_west 0
+	     ;?delta_east 0
+	     )
 
   ; MESH bumps (45 rows tall)
   CV = (dbOpenCellViewByType "core.neuro.mesh" "core.neuro.mesh.MESH.20000_bumps" "layout" "maskLayout" "w")
   bumps = nil
   (for y 0 44
-       (cond ((mod y 4)==1 rail="VDD")
+       (cond ((mod y 4)==1 rail="Vdd")
              ((mod y 4)==3 rail="VDDM")
              (t rail="GND")
              )
@@ -141,29 +144,36 @@
        (for x 0 47 row = (cons rail row))
        bumps = (append bumps (list row))
        )
-  (DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV)
+  (DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV
+	     ;?delta_west 0
+	     ;?delta_east 0
+	     )
 
   ; NORTH bumps for bd(17) x input (2 rows tall)
   CV = (dbOpenCellViewByType "chip.n2.north" "chip.n2.north.NORTH.20000_bumps" "layout" "maskLayout" "w")
   (DrawBumps (list 
                    (list "VDDM"
-		   	 "wy7" "wy5" "GND" "wya" "GND" "wy3" "wy1" "Vdd"
-		         "wx0" "wx2" "wx4" "GND" "wxq" "GND" "wx6" "wx8" "VDDM"
+		   	 "Y[0].D[7]" "Y[0].D[5]" "GND" "Y[0].C.a" "GND" "Y[0].D[3]" "Y[0].D[1]" "Vdd"
+		         "X[0].D[0]" "X[0].D[2]" "X[0].D[4]" "GND" "X[0].C.q" "GND" "X[0].D[6]" "X[0].D[8]" "VDDM"
 			 "VDDM" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "Vdd" "VDDM"
 			 "VDDM"
-			 "nx7" "nx5" "GND" "nxa" "GND" "nx3" "nx1" "GND"
-			 "ny0" "ny2" "ny4" "GND" "nyq" "GND" "ny6" "ny8" "VDDM"
+			 "X[1].D[7]" "X[1].D[5]" "GND" "X[1].C.a" "GND" "X[1].D[3]" "X[1].D[1]" "GND"
+			 "Y[1].D[0]" "Y[1].D[2]" "Y[1].D[4]" "GND" "Y[1].C.q" "GND" "Y[1].D[6]" "Y[1].D[8]" "VDDM"
 		   	 )
                    (list "VDDION"
-		   	 "wy8" "wy6" "VDDION" "wyq" "VDDION" "wy4" "wy2" "wy0" "VDDION"
-		         "wx1" "wx3" "VDDION" "wxa" "VDDION" "wx5" "wx7" "VDDION"
+		   	 "Y[0].D[8]" "Y[0].D[6]" "VDDIO" "Y[0].C.q" "VDDIO" "Y[0].D[4]" "Y[0].D[2]" "Y[0].D[0]" "VDDIO"
+		         "X[0].D[1]" "X[0].D[3]" "VDDIO" "X[0].C.a" "VDDIO" "X[0].D[5]" "X[0].D[7]" "VDDIO"
 			 "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND" "GND"
-			 "VDDION"
-			 "nx8" "nx6" "VDDION" "nxq" "VDDION" "nx4" "nx2" "nx0" "VDDION"
-			 "ny1" "ny3" "VDDION" "nya" "VDDION" "ny5" "ny7" 
+			 "VDDIO"
+			 "X[1].D[8]" "X[1].D[6]" "VDDIO" "X[1].C.q" "VDDIO" "X[1].D[4]" "X[1].D[2]" "X[1].D[0]" "VDDIO"
+			 "Y[1].D[1]" "Y[1].D[3]" "VDDIO" "Y[1].C.a" "VDDIO" "Y[1].D[5]" "Y[1].D[7]" 
 			 )
 		   )
-             ?filename "n2_bumps_n.txt" ?CV CV)
+             ?filename "n2_bumps_n.txt" ?CV CV
+	     ;?delta_west 0
+	     ;?delta_east 0
+	     )
+
 )
 
 (defun bmp () 
