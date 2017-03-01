@@ -9,6 +9,8 @@ package com.avlsi.csp.coverage;
 import com.avlsi.util.debug.Debug;
 
 import java.util.*;
+import java.util.function.*;
+import java.util.stream.*;
 import java.io.*;
 import java.util.zip.*;
 
@@ -49,7 +51,7 @@ import java.util.zip.*;
 public class Monitor {
     public volatile int[] hitTable;
     ProbeInfo[] probeTable;
-    HashMap registeredTypes; // map of String -> RegisteredType
+    Map<String,RegisteredType> registeredTypes; // map of String -> RegisteredType
     int totalEntries;
     private int allocEntries;
 
@@ -71,7 +73,7 @@ public class Monitor {
 	allocEntries = 128;
 	hitTable = new int[allocEntries];
 	probeTable = new ProbeInfo[allocEntries];
-	registeredTypes = new HashMap();
+	registeredTypes = new HashMap<>();
     }
 
     /** Holds information for each type which has been registered by
@@ -134,7 +136,7 @@ public class Monitor {
 	if(debug) System.err.println("Monitor.register("+type+", "+info.length+", "+lastModified+")");
 	checkInit();
 	if(registeredTypes.containsKey(type)) {
-	    RegisteredType rt = (RegisteredType)registeredTypes.get(type);
+	    RegisteredType rt = registeredTypes.get(type);
 	    if(rt.lastModified!=lastModified) {
 		System.err.println("Warning: source file has changed since last coverage"+
 				   " run, registering probes anyway");
@@ -255,12 +257,9 @@ public class Monitor {
 
 	zs.putNextEntry(new ZipEntry("types"));
 	w=new OutputStreamWriter(zs);
-	Iterator i=registeredTypes.keySet().iterator();
-	while(i.hasNext()) {
-	    String s=(String)i.next();
-	    RegisteredType rt=(RegisteredType)registeredTypes.get(s);
-	    w.write(s+" "+rt.toString()+"\n");
-	}
+        for (Map.Entry<String,RegisteredType> e : registeredTypes.entrySet()) {
+            w.write(e.getKey()+" "+e.getValue().toString()+"\n");
+        }
 	w.flush();
 	w=null;
 	zs.closeEntry();
@@ -339,5 +338,41 @@ public class Monitor {
         for(int i=0; i<totalEntries; i++) {
             hitTable[i]=0;
         }
+    }
+
+    private void accumulateFrom(Monitor src, Predicate<String> accumModified) {
+        for (Map.Entry<String,RegisteredType> e :
+                src.registeredTypes.entrySet()) {
+            final String type = e.getKey();
+            final RegisteredType srcrt = e.getValue();
+            RegisteredType rt = registeredTypes.get(type);
+            if (rt == null) {
+                int offset = extendTable(srcrt.numProbes);
+                rt = new RegisteredType(srcrt.lastModified, srcrt.numProbes,
+                                           offset);
+                registeredTypes.put(type, rt);
+                System.arraycopy(src.probeTable, srcrt.hitTableOffset,
+                                 probeTable, rt.hitTableOffset,
+                                 srcrt.numProbes);
+            }
+            if (rt.lastModified != srcrt.lastModified ||
+                rt.numProbes != srcrt.numProbes) {
+                if (!accumModified.test(type)) {
+                    continue;
+                }
+            }
+            for (int i = 0; i < rt.numProbes; i++) {
+                hitTable[rt.hitTableOffset + i] +=
+                    src.hitTable[srcrt.hitTableOffset + i];
+            }
+        }
+    }
+
+    static Monitor merge(Stream<Monitor> ms,
+                         BiPredicate<Monitor,String> accumModified) {
+        Monitor result = new Monitor();
+        ms.forEach(m ->
+                result.accumulateFrom(m, t -> accumModified.test(m, t)));
+        return result;
     }
 }
