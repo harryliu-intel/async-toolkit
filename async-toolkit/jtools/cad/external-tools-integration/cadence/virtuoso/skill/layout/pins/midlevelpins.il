@@ -91,21 +91,22 @@ t
         topMetal
         )
 
-    ; candidate pins with figures attached
-    InPlacePinList = (setof x (dbFindTermByName Inst->master TermName)->pins x->fig)
+    ; candidate pin figures
+    (foreach pin (dbFindTermByName Inst->master TermName)->pins
+             InPlacePinList = (append InPlacePinList pin->figs)
+             )
 
     ; limit the candidates to those on the top metal layer among the set for power nets
     (when (member PinName PowerGroundNets)!=nil
           topMetal = -1
-          (foreach pin InPlacePinList
-                   (for m 0 TopMetal (when pin->fig->layerName==Metal[m] topMetal=(max topMetal m)))
+          (foreach fig InPlacePinList
+                   (for m 0 TopMetal (when fig->layerName==Metal[m] topMetal=(max topMetal m)))
                    )
-          InPlacePinList = (setof x InPlacePinList x->fig->layerName==Metal[topMetal])
+          InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
           )
 
     ; draw inplace pins
-    (foreach pin InPlacePinList
-      fig = pin->fig
+    (foreach fig InPlacePinList
       transform = (dbTransformBBox fig->bBox Inst->transform)
       TopPinFig = (dbCreateRect CV (list (car fig->lpp) "pin") transform)
       TopPinNet = (dbMakeNet CV PinName)
