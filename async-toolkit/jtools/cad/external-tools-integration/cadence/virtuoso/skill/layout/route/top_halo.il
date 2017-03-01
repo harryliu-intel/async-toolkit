@@ -160,7 +160,11 @@
 (defun FillDummyView (@key (CV (geGetEditCellView)) (invert nil))
   (let (fillcell)
      (foreach inst CV->instances (dbDeleteObject inst))
-     (foreach shape CV->shapes (dbDeleteObject shape))
+     (foreach shape CV->shapes 
+        (unless shape->pin || shape->objType=="label"
+           (dbDeleteObject shape)
+           )
+        )
      (AddTopHalo ?CV CV ?invert invert ?fill_metal t)
      (MakeFillGrid ?CV CV)
      (MakeColorGrid ?CV CV)
