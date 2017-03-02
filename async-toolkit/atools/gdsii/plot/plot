@@ -23,7 +23,7 @@ my $exclude_file = "$pdk_dir/exclude.in";
 my $format = "png"; # output format
 my $quality = 75; # for jpg conversion
 my $cell = "";
-my $monitor = 1;
+my $monitor = 10; # 10 minutes default monitor period
 
 # parse arguments
 while (@ARGV) {
