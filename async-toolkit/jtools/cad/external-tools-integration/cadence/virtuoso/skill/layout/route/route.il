@@ -594,14 +594,18 @@
 
 ; Converts pins and labels to "pin" purpose
 (defun FixImportedPins (@key (CV (geGetEditCellView)))
-  (let (net)
-    (foreach label (setof x CV->shapes x->objType=="label")
-             label->lpp = (list (car label->lpp) "pin")
+  (let (net purpose)
+    (foreach label (setof x CV->shapes x->objType=="label" && x->purpose=="drawing")
+             label->lpp = (list label->layerName "pin")
              )
-    (foreach pin (setof x CV->shapes x->objType=="rect" x->pin)
-             rect = (dbCreateRect CV pin->lpp pin->bBox)
-             rect->net=pin->net
-             pin->lpp = (list (car pin->lpp) "pin")
+    (foreach pin (setof x CV->shapes x->objType=="rect" && x->pin && x->purpose=="drawing")
+             (cond ((member pin->net->name PowerNets)  purpose="vdd")
+                   ((member pin->net->name GroundNets) purpose="gnd")
+                   (t                                  purpose="drawing")
+                   )
+             rect = (dbCreateRect CV (list pin->layerName purpose) pin->bBox)
+             rect->net = pin->net
+             pin->lpp = (list pin->layerName "pin")
              )
     )
   CV
