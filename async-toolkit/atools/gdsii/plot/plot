@@ -74,7 +74,7 @@ $BLACK = $BLACK/255.0;
 $WHITE = $WHITE/255.0;
 my $QSUB = "nbq --class-reservation fRM=$MEM";
 my $PLOT = "gds2plot " .
-    "--conf $conf_file " . 
+    "--conf $conf_file " .
     "--x $MAX --y $MAX " .
     "--grid $GRID --tile $TILE " .
     "--jobs $JOBS " .
@@ -113,7 +113,7 @@ if ($monitor>0 && $launched>0) {
         for (my $j = 0; $j < $JOBS; $j++) {
             my $curr_out_file = "${name}.out.${j}";
             if (-e $curr_out_file) {
-                open (FH, "< $curr_out_file") or 
+                open (FH, "< $curr_out_file") or
                     die "Cannot read output progress file $curr_out_file";
                 my @out_file_txt = <FH>;
                 if (grep( /^Finished/ , @out_file_txt)) {
@@ -125,7 +125,6 @@ if ($monitor>0 && $launched>0) {
         my $curr_time = localtime;
         print "Progress at $curr_time, $jobs_done of $JOBS finished.\n";
 	catppm();
-	convert();
         sleep $sleep_period;
         last if ($jobs_done==$JOBS);
     }
@@ -158,4 +157,3 @@ sub convert {
 	system("convert $q $name.ppm $name.$format");
     }
 }
-
