@@ -24,57 +24,44 @@
 */
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-defun( DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil))
-  let( ( 
-        TEMP
-        CellTerms
-        Term
-        InstTerm
-        CellPins
-        BusPinList
-        InPlacePinFig
+(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil))
+  (let (TEMP
         WarningFile
         ErrorFile
         Warnport
         Errport
-       )
+        CellTerms
+        BusPinList
+        InPlacePinFig)
 
-;    when( IsLeafCell(CV~>cellName)
-;          error("This is a leaf cell. DrawLeafCellPins() should be used instead !")
-;        )
-    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    WarningFile = strcat(TEMP "/" CV~>cellName ".pins.warn")
-    ErrorFile   = strcat(TEMP "/" CV~>cellName ".pins.err")
+    TEMP        = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WarningFile = (strcat TEMP "/" CV->cellName ".pins.warn")
+    ErrorFile   = (strcat TEMP "/" CV->cellName ".pins.err")
+    Warnport    = (outfile WarningFile "w")
+    Errport     = (outfile ErrorFile "w")
+    CellTerms   = (setof x CV->terminals include_supply || (member x->name PowerGroundNets)==nil)
+    BusPinList  = (MidPinsScanBusPins CV)
 
-    warnport = outfile(WarningFile "w")
-    Errport  = outfile(ErrorFile "w")
-
-    CellTerms = CV~>terminals
-    BusPinList = MidPinsScanBusPins(CV)
-
-    foreach( Term CellTerms
-       when( include_supply || (member Term->name PowerGroundNets)==nil
-            foreach( InstTerm Term~>net~>instTerms
-               unless( member(Term~>name BusPinList) || member(Term~>name CellPins)
-                 InPlacePinFig = MidPinsInheritPin(CV InstTerm~>inst InstTerm~>name Term~>name)
-                   when( InPlacePinFig~>LeafInPlacePin
-              printf("*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term~>name InstTerm~>inst~>name)
-             fprintf(warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term~>name InstTerm~>inst~>name)
-                      )
-                   when( !InPlacePinFig
-              printf("*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term~>name InstTerm~>name InstTerm~>inst~>name)
-             fprintf(Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term~>name InstTerm~>name InstTerm~>inst~>name) 
-                       )
-                   ; CellPins = cons(InPlacePinFig~>net~>name CellPins) ; this line keeps only 1 inplace pin
-                    )
-              )
-       )
-     )
-    close(warnport)
-    close(Errport)
- )
-t
-)
+    (foreach Term CellTerms
+      (foreach InstTerm Term->net->instTerms
+        (unless (member Term->name BusPinList)
+          InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name)
+          (when InPlacePinFig->LeafInPlacePin
+            (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
+            (fprintf Warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
+            )
+          (when !InPlacePinFig
+            (printf "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name)
+            (fprintf Errport "*ERROR* Failed to make top pin \"%s\" due to missing pin \"%s\" inside instance \"%s\" \n" Term->name InstTerm->name InstTerm->inst->name) 
+            )
+          )
+        )
+      )
+    (close Warnport)
+    (close Errport)
+    )
+  t
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Promote pins from a subcell to inplace pins for a given terminal.
