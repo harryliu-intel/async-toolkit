@@ -4,8 +4,8 @@
                   (stagger nil)
                   (xpitch 96*1.68)
                   (ypitch 96*1.596)
-                  (delta_west -24*1.68) ; optionally shift westmost bumps
-                  (delta_east  24*1.68) ; optionally shift eastmost bumps
+                  (delta_west -32*1.68) ; optionally shift westmost bumps
+                  (delta_east  32*1.68) ; optionally shift eastmost bumps
                   (cellName "globals.BUMP.2")
                   (filename "bumps.txt")
                   (CV (geGetEditCellView)))
@@ -101,7 +101,7 @@
 		      "VDDIO"
 		)
 		(list 
-		      "VDDM"
+		      nil ; "VDDM" this is the missing bump for asymmetry
 		      "Y[1].D[8]" "Y[1].D[6]" "GND" "Y[1].C.q" "GND" "Y[1].D[4]" "Y[1].D[2]" "Y[1].D[0]"
 		      "Vdd"
 		      "X[1].D[1]" "X[1].D[3]" "GND" "X[1].C.a" "GND" "X[1].D[5]" "X[1].D[7]" "VDDM"
