@@ -43,15 +43,15 @@
 
 ; label top-level bumps based on subcells of *_bumps
 (defun LabelBumps (@key (CV (geGetEditCellView)))
-  (let (inst transform x y rect pinfile finished pcre num)
+  (let (transform x y rect pinfile finished pcre num)
     num =0
     pcre = (pcreCompile ".*_bumps")
     finished = (makeTable "finished" nil)
     pinfile = (outfile "n2_bumps.die")
     (DeleteAutoGen ?CV CV)
-    (foreach inst (setof x CV->instances (pcreExecute pcre x->cellName))
+    (foreach inst (setof x CV->instances x->name=="loihi" || (pcreExecute pcre x->cellName))
              transform = (dbGetInstTransform inst)
-             (foreach fig (setof x inst->master->shapes x->objType=="label" && x->lpp==(list "tm1" "drawing"))
+             (foreach fig (setof x inst->master->shapes x->objType=="label" && x->layerName=="tm1")
                       fig = (dbCopyFig fig CV transform)
                       (dbReplaceProp fig "autogen" "boolean" t)
                       (cond (finished[fig->xy] (dbDeleteObject fig)) ; delete duplicates
