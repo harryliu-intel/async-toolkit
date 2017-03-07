@@ -208,6 +208,7 @@ public interface DirectiveConstants {
     String PROTEUS_SCAN_DECLONE = "proteus_scan_declone";
     String TUNABLE_DELAY_MUL = "tunable_delay_mul";
     String TUNABLE_DELAY_ADD = "tunable_delay_add";
+    String TUNABLE_DELAY_CONFIG = "tunable_delay_config";
 
     /** Slacker directives */
     String SLACKER_LEAF = "slacker_leaf";

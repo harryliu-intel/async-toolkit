@@ -363,8 +363,9 @@ public class DirectiveTable {
         registerDirective(CELL, PROTEUS_SCAN_MODEL, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, PROTEUS_SCAN_MACROS, BOOLEAN_TYPE, null);
         registerDirective(CELL, PROTEUS_SCAN_DECLONE, BOOLEAN_TYPE, Boolean.FALSE);
-        registerDirective(CELL, TUNABLE_DELAY_ADD, BOOLEAN_TYPE, null);
-        registerDirective(CELL, TUNABLE_DELAY_MUL, BOOLEAN_TYPE, null);
+        registerDirective(CELL, TUNABLE_DELAY_ADD, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CELL, TUNABLE_DELAY_MUL, BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(SUBCELL, TUNABLE_DELAY_CONFIG, NODE_TYPE, INT_TYPE, null);
 
         /** Slacker directives */
         registerDirective(CELL, SLACKER_LEAF, BOOLEAN_TYPE, null);
