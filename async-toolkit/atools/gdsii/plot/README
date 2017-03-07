@@ -56,10 +56,10 @@ search path.  If you want to plot a subcell, use the --cell option to
 specify its GDS name.  By default gds2plot will auto-detect the
 top-level cell (a cell which is not instantiated by any other cell).
 
-An --excude-file=exclude.in contains a set of regular expressions
+An --exclude-file=exclude.in contains a set of regular expressions
 (perl style) of cell names to skip when plotting.  This is typically
 used to skip fill cells so that "empty" space actually looks empty.  A
-sample exlcude.in is provided to skip D04 fill cells.
+sample exclude.in is provided to skip D04 fill cells.
 
 If you specify jobs>0 plot will use netbatch to launch multiple
 stripes in parallel.  Netbatch will use the environment variables
@@ -73,6 +73,10 @@ with the same arguments to concatenate the basename.ppm.# files into a
 single file and convert it to the desired output format (png).  It is
 wise to log into one of the netbatch servers to check the memory
 usage, and in subsequent runs specify the --mem option appropriately.
+If --monitor=10 (the default) the host will query the progress of the
+jobs every 10 minutes and concatenate the ppm file for early viewing.
+After all have completed, it will convert the ppm to another image
+format (--format=png by default) using the "convert" utility.
 
 -------------------------------- USAGE -----------------------------------------
 
@@ -133,3 +137,55 @@ simple comments.
 (7) View the result with "gimp your_file.png".  Gimp is useful for
     scaling the image to make smaller plots (for e-mail or PowerPoint)
     and for converting image formats.
+
+------------------------- PRINTING & FRAMING -----------------------------------
+
+To produce high quality posters, first choose your resolution very
+carefully.  I recommend 600DPI for color plots on high-end printers
+with a native resolution of 2400DPI (sub-pixels are necessary to mix
+colors).  Calculate your desired size and leave an inch for margin.
+The default --max=13200 is intended for 24x24 inch plots with 1 inch
+margin.  That is, 22x22 inches of image at 600DPI.
+
+Convert the image to a PDF file using a tool like "gimp".  Open the
+ppm or png, use Image/Print Size menu to set X/Y resolution to 600DPI.
+Use Image/Canvas Size set Width/Height to 24 inches.  Then File/Export
+As to a pdf file.  This sets the meta-data in the PDF file correctly
+so that when a print shop imports it, it will automatically have the
+right DPI and margins.  Otherwise there is a risk that they will
+accidentally scale your image, degrading the quality.  Burn images to
+a DVD, or use a USB stick if you have a big one (a typical image is
+250MB).
+
+For printing, I recommend 65lb gloss paper.  Typical printing costs
+are $5 setup plus $8/ft^2 per copy.  So a color plot of 2x2 feet
+should be around $32.  CopyMan in downtown Portland is quite
+competent.
+
+After printing, have the paper dry-mounted to a 3/16 inch deep foam
+core.  This supports the paper and prevents it from wrinkling over
+many years.  For temporary displays this is all you need.  Blick's
+does dry-mounting for about $25 for 2x2 foot.
+
+For framing, I recommend Nelison Bainbridge black metal frame kits
+with 13/32 inch depth.  These come as 2 sets of 2 edges with 1 inch
+multiples, so make sure you target integer inch sizes.  If you want to
+buy a complete frame, be aware that only a few sizes are available
+(24x24 and 24x18 are fairly common).  Custom frames sizes are
+unnecessarily expensive.  Mounting kits are sold separately.  The
+frame kits and mounting kit should cost around $30, also readily
+available at Blick's.
+
+Finally, you need a plexiglass/acrylic/lexan sheet of 1/8 inch thick.
+Glass is too heavy for larger sizes.  This should cost around $25 for
+2x2 feet.  Check the available sizes, since only a few are widely
+stocked.  Some internet suppliers will cut them, but Blick's will not.
+I have had bad luck with many suppliers, with imperfections in several
+items.  They are usually covered in protective film so you can't
+inspect them carefully, but definitely look for visible scratches.  Be
+prepared to return them if they are damaged.
+
+Assembly takes about 10 minutes, which you can get down to 5 minutes
+with some practice.  Keep everything sealed and protected from dust.
+
+The total cost of a 2x2 framed poster should be around $100-$125.
