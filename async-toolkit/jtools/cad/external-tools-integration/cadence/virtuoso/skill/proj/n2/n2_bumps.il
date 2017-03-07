@@ -47,7 +47,8 @@
     num =0
     pcre = (pcreCompile ".*_bumps")
     finished = (makeTable "finished" nil)
-    pinfile = (outfile "n2_bumps.die")
+    pinfile = (outfile "n2_bumps.txt")
+    (fprintf pinfile "# NET X Y\n")
     (DeleteAutoGen ?CV CV)
     (foreach inst (setof x CV->instances x->name=="loihi" || (pcreExecute pcre x->cellName))
              transform = (dbGetInstTransform inst)
@@ -66,13 +67,13 @@
                              rect->net = (dbMakeNet CV fig->theLabel)
                              (dbCreatePin rect->net rect)
                              (dbReplaceProp rect "autogen" "boolean" t)
-                             (fprintf pinfile "%d bumpR1_85x85um %g %g 0 UNDEFINED %s, | (GRD,GRID) (PRB,true)
- (BUMPCELL,DUMMY) (LAYER_TYPE,C4BUMP_WBPAD) (NET_EXT,%s) (TSV,false)\n"
-                                      num++ x y fig->theLabel fig->theLabel)
+                             (fprintf pinfile "%s %g %g\n" fig->theLabel x y)
+                             num++
                              )
                             )
                       )
              )
+    (fprintf pinfile "# %d bumps\n" num)
     (close pinfile)
     )
   t
