@@ -180,7 +180,10 @@ apr_cells = (list
 ; Do chip-assembly steps on a top level layout cell
 (defun UpdateTopCell (@key (CV (geGetEditCellView)))
   (UpdateFloorplan ?CV CV ?recurse nil)
-  (RedrawAllPins ?CV CV)
+  (RefreshAllBuswires ?CV CV)
+  (CanonicalizePins ?CV CV)
+  (DrawMidLevelPins ?CV CV)
   (RouteNearby ?CV CV)
+  (dbSave CV)
   CV
   )
