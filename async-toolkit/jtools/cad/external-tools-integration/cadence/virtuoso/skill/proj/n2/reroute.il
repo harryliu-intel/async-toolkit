@@ -149,7 +149,7 @@
   (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8)
 
   ; SOUTH/NORTH
-  (RouteCell "chip.n2.pads.PADS.20000" 8)
+  (RouteCell "chip.n2.pads.PADS.20000" 8 ?timingDriven nil) ; BUG: timingDriven
   (RouteCell "chip.n2.pads.PADS_IN_BD-L9-R.20000" 8)
   (RouteCell "chip.n2.pads.PADS_OUT_BD-L9-R.20000" 8)
   t
