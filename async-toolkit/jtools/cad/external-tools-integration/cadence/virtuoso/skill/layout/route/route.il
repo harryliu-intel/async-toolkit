@@ -319,7 +319,7 @@
     (fprintf file "--base=%s" (GetCastCellName CV->cellName))
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
-    (fprintf file "--task=route\n")
+    (fprintf file "--task=route%s\n" (if timingDriven ",extract,pv" ""))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if timingDriven 1 0))
