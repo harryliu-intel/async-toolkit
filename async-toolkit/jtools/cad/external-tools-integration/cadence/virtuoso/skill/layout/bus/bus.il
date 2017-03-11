@@ -207,14 +207,14 @@ wires_modtime = makeTable("wires" 0)
 )
 
 ; redraw all pins in conjunction with inplace pins
-(defun RedrawAllPins (@key (CV (geGetEditCellView)))
+(defun RedrawAllPins (@key (CV (geGetEditCellView)) (include_supply nil))
     (DeletePinsExcludeType "Power" ?CV CV)
     (DeletePinsByPurpose "pin" ?CV CV)
     (DeletePinsByType "InPlace" ?CV CV)
     (RefreshPinDatabase ?CV CV)
     (RefreshAllBuswires ?CV CV)
     (CanonicalizePins ?CV CV)
-    (DrawMidLevelPins ?CV CV)
+    (DrawMidLevelPins ?CV CV ?include_supply include_supply)
 )
 
 ; Update layout_pg/layout view after editing bus wires without
