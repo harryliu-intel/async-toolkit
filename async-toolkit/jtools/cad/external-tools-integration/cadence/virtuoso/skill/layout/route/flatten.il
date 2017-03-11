@@ -1,4 +1,6 @@
-; Replacement for ui/Nano/Flatten/FlattenView.il
+; Flatten floorplan view to flatten view.  CAST cells without
+; routed=true are inlined.  Also adds power and color grids, and runs
+; UpdateFloorplan and RedrawAllPins and preps for DEF export.
 
 useICV = t
 
@@ -10,28 +12,17 @@ useICV = t
         (Verbose nil)              ; verbose
         (ConnectDanglingPins t)    ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins nil)  ; paint metal between nearby pins on the same net
-        (doMakePowerGrid t)        ; make power grid
-        (doPowerGridAbstract t)    ; generate abstract view of power grid
+        (powerGrid t)              ; add a power grid
         (colorGrid t)              ; add a color grid
         (hookupD04 nil)            ; add power hookups around d04 cells
         (hookupLaygen nil)         ; add power hookups around Laygen cells
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
         (doPowerGates nil)	   ; use POWER_GRID_GATED instead of POWER_GRID
         )
-  (let (MaxHeapSize FlattenCellsList
-        PowerGridCellName flattenCV xalign yalign
-        pgCV cgCV win TEMP)
+  (let (MaxHeapSize TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
 
     ; check viewName
-    (when (and CV->viewName!="floorplan" CV->viewName!="prelayout")
-      (error "Wrong view: Call MakePrelayout or MakeFlatten on floorplan/prelayout view\n"))
-
-    ; create prelayout view if necessray
-    (printf "Flatten- MakePrelayout Start %s\n" (getCurrentTime))
-    (when CV->viewName=="floorplan" CV = (MakePrelayout ?CV CV))
-
-    ; save prelayout view
-    (dbSave CV)
+    (when CV->viewName!="floorplan" (error "call MakeFlatten on floorplan view\n"))
 
     ; options
     (LoadWires ?CV CV)
@@ -39,82 +30,43 @@ useICV = t
 
     ; generated cell or file names
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    FlattenCellsList = (strcat TEMP "/" CV->cellName ".flatten_cells_list")
     PowerGridCellName = (strcat CV->cellName "_pg")
+    ColorGridCellName = (strcat CV->cellName "_color")
 
-    ; Create flatten view
-    (printf "Flatten- nrFlattenView Start %s\n" (getCurrentTime))
-    flattenCV = (nrFlattenView CV "flatten" PowerGridCellName "layout"
-                               FlattenCellsList ?Verbose Verbose
-                               ?DeleteWires nil
-                               ?RegenerateFromCast RegenerateFromCast
-                               ?MaxHeapSize MaxHeapSize)
-    (unless flattenCV (error "Unable to create flatten view\n"))
-
-    ; set properties
+    ; get alignment properties
     xalign = (GetXAlignmentProp CV)
     yalign = (GetYAlignmentProp CV)
-    (SetXAlignmentProp flattenCV (max (if xalign xalign 0) GridPolyPitch))
-    (SetYAlignmentProp flattenCV (max (if yalign yalign 0) GridPitch))
-    (dbSave flattenCV)
 
-    ; switch current window
-    CV = flattenCV
-    win = (hiGetCurrentWindow)
-    (when win (geOpen ?window win
-                      ?lib  CV->libName
-                      ?cell CV->cellName
-                      ?view CV->viewName
-                      ?viewType "maskLayout"
-                      ?mode "a")
-          )
+    ; Create flatten view from floorplan view
+    CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast)
 
-    ; create FlattenCellsList file
-    celllist_filename = FlattenCellsList
-    instances= (setof inst CV->instances inst->libName!=TechLibName)
-    instances= (append (car (NameFilterInstances instances LibCellsToIgnore))
-                       (cadr (NameFilterInstances instances PowerGridCellPairRegExs)))
-    uniqueInstances=nil
-    (foreach inst instances
-      (when !(member inst->cellName uniqueInstances->cellName)
-            uniqueInstances=(cons inst uniqueInstances )
-            )
-      )
-    pout=(outfile celllist_filename)
-    (when pout
-      (foreach inst uniqueInstances
-               (fprintf pout "%s %s %s\n" inst->libName inst->cellName "abstract")
-               )
-      (close pout)
-      )
+    ; cache various information in CV properties
+    (dbReplaceProp CV "topMetal" "integer" topMetal)
+    (SetXAlignmentProp CV (max (if xalign xalign 0) GridPolyPitch))
+    (SetYAlignmentProp CV (max (if yalign yalign 0) GridPitch))
+    (SetLeafProp CV nil)
+    (SetLefProperties CV)
+
+    ; update connectivity
+    (UpdateFloorplan ?CV CV ?recurse nil)
 
     ; draw pins
-    (RedrawAllPins ?CV CV)
-    
-    ; canonicalize prerouted nets
+    (AddBusWires ?CV CV)
+    (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal)
     (CanonicalizeNets ?CV CV)
-
-    ; warn or delete redundant non-canonical pins
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
 
-    ; cache topMetal
-    (dbReplaceProp CV "topMetal" "integer" topMetal)
-
-    ; Create power grid
-    (printf "Flatten- MakePowerGrid Start %s\n" (getCurrentTime))
-    (when doMakePowerGrid
+    ; Create power grid and abstract
+    (when powerGrid
       pgCV = (MakePowerGrid ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                             ?noPowerFill noPowerFill ?doPowerGates doPowerGates)
       (unless pgCV (error "Unable to create power grid\n"))
-      )
-
-    ; Create power grid abstract
-    (when doPowerGridAbstract
       pgCV = (MakePowerGridAbstract ?CV CV ?topMetal topMetal ?doPowerGates doPowerGates)
       (unless pgCV (error "Unable to create power grid abstract\n"))
+      (CreatePowerPins ?topMetal topMetal ?CV CV)
       )
 
-    ; Create color grid
+    ; Create color grid and abstract
     (when colorGrid
       cgCV = (MakeColorGrid ?CV CV)
       (unless cgCV (error "Unable to create color grid\n"))
@@ -124,27 +76,22 @@ useICV = t
       (dbSave cgCV)
       )
 
-    ; create power pins
-    (CreatePowerPins ?topMetal topMetal ?CV CV)
-
     ; place metal on top of dangling subcell pins for StarRC extraction
     (when ConnectDanglingPins
       (nrCreateSingleNetConnector CV MetalLPPs ?MaxHeapSize MaxHeapSize)
       )
 
-    ; route abutting pins too
+    ; route abutting pins
     (when ConnectAbuttingPins
-      (nrCreateNeighborNetConnector CV DefaultWiringSpacing MetalLPPs ?maxFanout 2)
+      (RouteNearby ?CV CV)
       )
 
-    ; fill in fields for DEF export
+    ; fix things for DEF export
     (foreach inst CV->instances
-      (unless inst->typeName==TechLibName
-        (when inst->cellName==PowerGridCellName inst->source = "dist") ; SOURCE DIST
-        )
+      (when inst->cellName==PowerGridCellName || inst->cellName==ColorGridCellName
+            inst->source = "dist" ; SOURCE DIST
+            )
       )
-
-    ; fix pin placement for DEF export
     (foreach term CV->terminals
       (foreach pin term->pins
         (foreach fig pin->figs
@@ -152,16 +99,17 @@ useICV = t
           )
         )
       )
-
-    ; update pin directions
-    (printf "Flatten- UpdateFloorplan Start %s\n" (getCurrentTime))
-    (UpdateFloorplan ?CV CV ?recurse nil)
-
-    ; set fields for LEF export
-    (SetLefProperties CV)
-
-    ; for DEF export
     (CopyKeepoutToBlockage CV)
+
+    ; switch current window to flatten view
+    win = (hiGetCurrentWindow)
+    (when win (geOpen ?window win
+                      ?lib  CV->libName
+                      ?cell CV->cellName
+                      ?view CV->viewName
+                      ?viewType "maskLayout"
+                      ?mode "a")
+          )
 
     ; return flatten view
     (dbSave CV)
@@ -208,7 +156,7 @@ useICV = t
     (when (CheckPointsOffGrid prb->points align)
       (error "Not all prBoundary vertices are on grid")
       )
-    
+
     ; ICV layers
     outLayerMap = (list
                    (list "power2" MetalBlock[2])
@@ -242,7 +190,8 @@ useICV = t
       (foreach shape (setof s powerCV->shapes s->purpose=="block" && s->objType=="rect")
         (for n 2 TopMetal (when shape->lpp==MetalBlock[n] a=n))
         b = (MaxAlignedMetalLayer shape->bBox)
-        (when b<a (error "%s:%s not grid aligned at %f:%f\n" shape->layerName shape->purpose (caar shape->bBox) (cadar shape->bBox) ))
+        (when b<a (error "%s:%s not grid aligned at %f:%f\n" shape->layerName shape->purpose
+                         (caar shape->bBox) (cadar shape->bBox) ))
         b = (min b topMetal)
         top = (min b top)
         (when b>a || a==2 && b==2
@@ -265,7 +214,7 @@ useICV = t
                                       (sprintf nil "pg%d" count++) x0:y0 "MX"
                                       1 cols (cadr align) (car align))
                 )
-          
+
           ; half-height cells on top edge
           (when (round y1/ya)*2 != (round y1/(ya/2))
                 y1 = y1-ya/2
@@ -303,7 +252,7 @@ useICV = t
     (foreach s powerCV->shapes (when s->purpose=="block" (dbDeleteObject s)))
     (dbCreatePRBoundary powerCV CV->prBoundary->points)
     (dbCreatePolygon powerCV (list Metal[topMetal] "block") CV->prBoundary->points)
-    
+
     ; create power pins and instantiate power grid
     (dbCreateTerm (MakeNet powerCV GNDNetName) GNDNetName "input")
     (dbCreateTerm (MakeNet powerCV VddNetName) VddNetName "input")
@@ -434,7 +383,7 @@ useICV = t
 	(doPowerGates nil)
 	)
   (let (inst pgCV pgaCV lpps figsVdd figsGND figsVddg)
-    
+
     ; HACK: minimize number of pin shapes
     powerLayers = (cons Metal[topMetal] powerLayers)
 
@@ -460,7 +409,7 @@ useICV = t
       (foreach shape pgaCV->shapes (when shape->purpose=="block" (dbDeleteObject shape)))
       (dbSave pgaCV)
       )
-    
+
     ; open power grid abstract
     pgaCV = (dbOpenCellViewByType pgCV->libName pgCV->cellName "abstract" "maskLayout" "a")
     (unless pgaCV (error "Unable to read %s abstract\n" pgCV->cellName))
@@ -594,11 +543,11 @@ useICV = t
         )
   )
 
-; Check vertices are on lowest Y-coord 
+; Check vertices are on lowest Y-coord
 (defun CheckBotVert ( pt bottom )
   (let ((x (car pt))
         (y (cadr pt)))
-  y == bottom 
+  y == bottom
   )
 )
 
@@ -631,7 +580,6 @@ useICV = t
       lpp = (list Metal[topMetal] "pin")
       (foreach shape (setof x pgaCV->shapes x->lpp==lpp)
                new_shape = (dbCopyShape shape CV)
-;               new_shape->lpp = (list (car new_shape->lpp) "pin") ; hack
                (dbReplaceProp new_shape "PinType" "string" "Power")
                (dbReplaceProp new_shape "BusScriptObject" "boolean" nil)
                (cond (shape->net->name==VddNetName figsVdd = (cons new_shape figsVdd))
@@ -642,8 +590,6 @@ useICV = t
       (dbAddFigsToPin (dbCreatePin (dbMakeNet CV GNDNetName) nil) figsGND)
       (foreach fig figsVdd (LaygenLabelPin CV fig))
       (foreach fig figsGND (LaygenLabelPin CV fig))
-      (DrawPinsVDDM ?CV CV)
-      (DrawPinsVDDIO ?CV CV)
       )
     )
   t
@@ -686,4 +632,92 @@ useICV = t
                     )
            )
   t
+  )
+
+; go straight from floorplan to flatten view
+(defun DirectFlatten (@key (CV (geGetEditCellView)) (RegenerateFromCast nil) (flatViewName "flatten"))
+  (let (not_routed progress)
+
+    ; create flatten view
+    CV = (betterCopyCellView CV CV->libName CV->cellName flatViewName nil nil t)
+
+    ; query CAST routed directives
+    not_routed = (filterCastQuery ?CV CV ?RegenerateFromCast RegenerateFromCast
+                                  ?filter "!directive=routed:true")
+
+    ; flatten everything that should be flattened, convert the rest to layout views
+    progress=t
+    (while progress
+      progress=nil
+      (foreach inst CV->instances
+               (cond (inst->objType=="mosaic"
+                      (dbFlattenInst inst 1)
+                      progress=t
+                      )
+                     (not_routed[inst->cellName] && inst->viewName=="floorplan"
+                      (TrivialInline inst ?CV CV)
+                      progress=t
+                      )
+                     (inst->viewName!="layout"
+                      lCV = (dbOpenCellViewByType inst->libName inst->cellName "layout")
+                      (when lCV inst->master=lCV)
+                      )
+                     )
+               )
+      )
+    )
+  CV
+  )
+
+; inline one level with correct instance names but no extra work
+(defun TrivialInline (inst @key (CV (geGetEditCellView)))
+  (foreach sub inst->master->instances
+           sub = (dbCopyFig sub CV inst->transform)
+           sub->name = (strcat inst->name "." sub->name)
+           )
+  (dbDeleteObject inst)
+  t
+  )
+
+; Run a cast query for subcells with a specified filter condition,
+; returning a mapping table from cellName to t|nil.
+(defun filterCastQuery (@key
+                        (filter "")
+                        (CV (geGetEditCellView))
+                        (RegenerateFromCast t)
+                        (MaxHeapSize (nrGetMaxHeapSize))
+                        )
+  (let (dir file Command cells p_in line cellName)
+
+    ; choose directory
+    dir = (strcat (ConfigFileGetValue TheCDSConfigTable "TEMP") "/ildirectives")
+    (unless (isDir dir)
+      (when (system (strcat "mkdir " dir))!=0 (error "failed to create dir %s.\n" dir))
+      )
+
+    ; call cast_query to get a file
+    file = (strcat dir "/" CV->cellName ".query.txt")
+    (when !(isFile file) || RegenerateFromCast
+          Command = (sprintf nil
+                             (strcat "%s/cast_query --cast-path=%s --cell=%s --task=subcells "
+                                     "--filter=\"%s\" "
+                                     "--translate=cadence --cadence-name --output=%s "
+                                     "--max-heap-size=%dM --64")
+                             (PackageGetBinRoot)
+                             (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
+                             CV->cellName filter file MaxHeapSize
+                             )
+          (shell Command)
+          )
+
+    ; read the file and return table of cellNames
+    cells = (makeTable filter nil)
+    p_in = (infile file)
+    (while (gets line p_in)
+      (sscanf line "%s" cellName)
+      cells[cellName]=t
+      )
+    (close p_in)
+    cells
+    )
   )
