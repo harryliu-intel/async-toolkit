@@ -24,7 +24,7 @@
 */
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil))
+(defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal -1))
   (let (TEMP
         WarningFile
         ErrorFile
@@ -45,7 +45,8 @@
     (foreach Term CellTerms
       (foreach InstTerm Term->net->instTerms
         (unless (member Term->name BusPinList)
-          InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name)
+          InPlacePinFig = (MidPinsInheritPin CV InstTerm->inst InstTerm->name Term->name
+                                             ?topMetal supply_topMetal)
           (when InPlacePinFig->LeafInPlacePin
             (printf "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
             (fprintf Warnport "*WARNING* Top Level pin \"%s\" is drawn inplace from leaf cell instance \"%s\" \n" Term->name InstTerm->inst->name)
@@ -67,7 +68,7 @@
 ; Promote pins from a subcell to inplace pins for a given terminal.
 ; All pins on the top metal layer used by them get promoted.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MidPinsInheritPin (CV Inst TermName PinName)
+(defun MidPinsInheritPin (CV Inst TermName PinName @key (topMetal -1))
   (let (InPlacePinList
         transform
         fig
@@ -75,7 +76,6 @@
         TopPinNet
         TopPin
         PinLabel PinShape
-        topMetal
         )
 
     ; candidate pin figures
@@ -85,10 +85,11 @@
 
     ; limit the candidates to those on the top metal layer among the set for power nets
     (when (member PinName PowerGroundNets)!=nil
-          topMetal = -1
-          (foreach fig InPlacePinList
-                   (for m 0 TopMetal (when fig->layerName==Metal[m] topMetal=(max topMetal m)))
-                   )
+          (when topMetal<0
+            (foreach fig InPlacePinList
+                     (for m 0 TopMetal (when fig->layerName==Metal[m] topMetal=(max topMetal m)))
+                     )
+            )
           InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
           )
 
