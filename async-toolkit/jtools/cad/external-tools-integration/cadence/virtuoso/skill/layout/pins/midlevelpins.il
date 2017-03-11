@@ -85,11 +85,9 @@
 
     ; limit the candidates to those on the top metal layer among the set for power nets
     (when (member PinName PowerGroundNets)!=nil
-          (when topMetal<0
-            (foreach fig InPlacePinList
-                     (for m 0 TopMetal (when fig->layerName==Metal[m] topMetal=(max topMetal m)))
-                     )
-            )
+          (foreach fig InPlacePinList
+                   (for m 0 TopMetal (when fig->layerName==Metal[m] topMetal=(max topMetal m)))
+                   )
           InPlacePinList = (setof x InPlacePinList x->layerName==Metal[topMetal])
           )
 
