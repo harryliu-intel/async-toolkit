@@ -1,6 +1,6 @@
 #!/usr/intel/bin/perl -w
 
-@ARGV>0 or die "USAGE: virtuoso_replay 1.il 2.il ...]";
+@ARGV>0 or die "USAGE: virtuoso_replay 1.il 2.il ...\n";
 $MEM = 16*1024;
 foreach $file (@ARGV) {
     my $base = $file;
