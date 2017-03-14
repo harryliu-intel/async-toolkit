@@ -143,9 +143,9 @@
 
   ; MESH_ROUTERs and DOUBLE_ROUTER
   (RouteCell "core.noc.router.forward.MESH_FORWARD-L8_16_5_5_2_1_true_true_true_true-R.20000" 4 ?colorGrid nil)
-  (RouteCell "core.noc.router.forward.MESH_FORWARD-L5_16_7_7_0_1_true_true_true_true-R.20000" 4 ?colorGrid nil)
+  (RouteCell "core.noc.router.forward.MESH_FORWARD-L5_16_7_7_0_1_true_true_true_true-R.20001" 4 ?colorGrid nil)
   (RouteCell "core.noc.router.MESH_ROUTER-L8_8_16_5_5_2_true_true_true_true-R.20000" 6 ?colorGrid nil)
-  (RouteCell "core.noc.router.MESH_ROUTER-L5_5_16_7_7_0_true_true_true_true-R.20000" 6 ?colorGrid nil)
+  (RouteCell "core.noc.router.MESH_ROUTER-L5_5_16_7_7_0_true_true_true_true-R.20001" 6 ?colorGrid nil)
   (RouteCell "core.neuro.tile.DOUBLE_ROUTER.20000" 8)
 
   ; SOUTH/NORTH
