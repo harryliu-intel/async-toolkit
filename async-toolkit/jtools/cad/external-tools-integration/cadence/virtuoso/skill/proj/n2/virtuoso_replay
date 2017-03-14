@@ -1,0 +1,9 @@
+#!/usr/intel/bin/perl -w
+
+@ARGV>0 or die "USAGE: virtuoso_replay 1.il 2.il ...]";
+$MEM = 16*1024;
+foreach $file (@ARGV) {
+    system("nbq --class-reservation fRM=$MEM -j ${file}.out " .
+           "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
+           "virtuoso -log $file.log -replay $file -nograph");
+}
