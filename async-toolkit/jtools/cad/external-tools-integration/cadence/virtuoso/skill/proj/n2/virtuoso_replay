@@ -3,7 +3,15 @@
 @ARGV>0 or die "USAGE: virtuoso_replay 1.il 2.il ...]";
 $MEM = 16*1024;
 foreach $file (@ARGV) {
-    system("nbq --class-reservation fRM=$MEM -j ${file}.out " .
+    my $base = $file;
+    $base =~ s/\.il$//g;
+    system("mkdir -p ${base}.cdswd");
+    system("$ENV{FULCRUM} mkcdswd --target-dir=${base}.cdswd " .
+           "--dfII-dir=$ENV{DFII_DIR} --cast-path=$ENV{CAST_PATH} " .
+           "--user-template=$ENV{WD}/cds_wd/template_$ENV{PROCESS} " .
+           "--force --p4-client=$ENV{HW_CLIENT}");
+    system("(cd ${base}.cdswd; " .
+           "nbq --class-reservation fRM=$MEM -j ${base}.out " .
            "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
-           "virtuoso -log $file.log -replay $file -nograph");
+           "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
 }
