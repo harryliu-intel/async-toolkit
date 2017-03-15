@@ -44,7 +44,7 @@
   )
 
 (defun RouteLeaf (cellName topMetal)
-  (RouteCell cellname topMetal ?timingDriven nil ?colorGrid nil)
+  (RouteCell cellName topMetal ?timingDriven nil ?colorGrid nil)
   )
 
 (defun ExportProteusCell (baseName)
