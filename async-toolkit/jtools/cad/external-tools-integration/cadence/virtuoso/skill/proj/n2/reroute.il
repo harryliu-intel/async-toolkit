@@ -178,10 +178,18 @@ apr_cells = (list
   )
 
 ; Do chip-assembly steps on a top level layout cell
-(defun UpdateTopCell (@key (CV (geGetEditCellView)) (topMetal 8))
-  (UpdateFloorplan ?CV CV ?recurse nil)
-  (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal)
-  (RouteNearby ?CV CV)
-  (dbSave CV)
+(defun UpdateTopCell (@key (CV (geGetEditCellView)))
+  (let (TopMetal)
+    TopMetal = 10
+    (UpdateFloorplan ?CV CV ?recurse nil)
+    (DeletePins ?CV CV)
+    (DeleteAutoGen ?CV CV)
+    (LabelBumps ?CV CV)
+    (RefreshAllBuswires ?CV CV)
+    (DrawMidLevelPins ?CV CV ?include_supply t ?supply_topMetal 8)
+    (CanonicalizePins ?CV CV)
+    (RouteNearby ?CV CV)
+    (dbSave CV)
+    )
   CV
   )
