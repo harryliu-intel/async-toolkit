@@ -18,8 +18,10 @@
           viaDef via list1 list2 xy wb wt viaName viaDef via)
     tech = (techGetTechFile CV)
     n=0
-    lpps = MetalLPPs
-    (for m 0 TopMetal lpps = (cons MetalPin[m] lpps))
+    (for m 0 TopMetal
+         lpps = (cons MetalDrawing[m] lpps)
+         lpps = (cons MetalPin[m] lpps)
+         )
     MasterRectList = (nrFindPinShapesWithNet net lpps ?topShapes topShapes)
 
     ; add paths between subcell pins that align at e2e spacing
@@ -28,6 +30,7 @@
              pinRectList=(cadr pinRectList) 
              layerNum = MetalNum[layerName]
              space = MetalSpace[layerName]
+             (unless space (error "No MetalSpace defined for layer %s\n" layerName))
              len = (length pinRectList)
              (for a 0 len-1
                (for b a+1 len-1
