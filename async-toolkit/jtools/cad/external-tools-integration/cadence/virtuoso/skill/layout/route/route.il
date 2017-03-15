@@ -19,11 +19,12 @@
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
-        (topHalo nil)            ; add halos inside prBoundary
-        (softMacro nil)          ; lock all instances
         (noPowerFill nil)
         (colorGrid t)            ; add a color grid to flatten view
         (timingDriven t)
+        (softMacro nil)          ; run APR
+        (abstractCellName nil)   ; DFII name for APR abstract cell
+        (targetCellName nil)     ; DFII name for APR target   cell
         )
   (let ()
     ; export
@@ -33,7 +34,8 @@
                           ?doNondefaultDef doNondefaultDef
                           ?doSkipRouting doSkipRouting
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
-                          ?metalFill metalFill ?topHalo topHalo ?softMacro softMacro
+                          ?metalFill metalFill ?softMacro softMacro
+                          ?abstractCellName abstractCellName ?targetCellName targetCellName
                           ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
@@ -44,7 +46,10 @@
 
     ; import
     (cond (Background (printf "Route running in background, finish with RouteImport\n"))
-          (t CV = (RouteImport ?CV CV ?viewName importView))
+          (t
+           (unless targetCellName targetCellName = CV->cellName)
+           CV = (RouteImport ?libName (GetCastLibName targetCellName)
+                             ?cellName targetCellName ?viewName importView))
           )
     CV
     )
@@ -64,12 +69,13 @@
         (hookupD04 nil)          ; add power hookups around d04 cells
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
-        (topHalo nil)            ; add halos inside prBoundary
-        (softMacro nil)          ; lock all instances
         (noPowerFill nil)
 	(doPowerGates nil)       ; optionally skip export of placed pillars
         (colorGrid t)            ; add a color grid to flatten view
-        (timingDriven t)
+        (timingDriven t)         ; timing driven custom routing
+        (softMacro nil)          ; run APR
+        (abstractCellName nil)   ; DFII name for APR abstract cell
+        (targetCellName nil)     ; DFII name for APR target   cell
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
@@ -110,8 +116,9 @@
                         ?colorGrid colorGrid))
 
     ; write proteus.config
-    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill ?topHalo topHalo
-                   ?timingDriven timingDriven)
+    (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill
+                   ?timingDriven timingDriven ?softMacro softMacro
+                   ?abstractCellName abstractCellName ?targetCellName targetCellName)
 
     ; export Verilog
     (when doVerilog
@@ -291,8 +298,10 @@
         (botMetal 0)             ; bottom metal layer
         (topMetal 8)             ; top metal layer
         (metalFill t)
-        (topHalo nil)
         (timingDriven t)
+        (softMacro nil)          ; run APR
+        (abstractCellName nil)   ; DFII name of APR abstract cell
+        (targetCellName nil)     ; DFII name of APR target   cell
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR LEFDEF_DIR PROTEUS_DIR file)
     ; files and options
@@ -315,14 +324,28 @@
     (fprintf file "--spec-dir=%s\n" SPEC_DIR)
     (fprintf file "--lefdef-dir=%s\n" LEFDEF_DIR)
     (fprintf file "--output-dir=%s\n" PROTEUS_DIR)
-    (fprintf file "--cell=%s" (GetCastCellName CV->cellName))
-    (fprintf file "--base=%s" (GetCastCellName CV->cellName))
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
-    (fprintf file "--task=route%s\n" (if timingDriven ",extract,pv" ""))
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
-    (fprintf file "--top-halo=%d\n" (if topHalo 1 0))
-    (fprintf file "--timing-driven-route=%d\n" (if timingDriven 1 0))
+    (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
+    (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
+    (cond (softMacro
+           (unless abstractCellName && targetCellName
+                   (error "must specify ?abstractName and ?targetCellName for ?softMacro t\n")
+                   )
+           (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
+           (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
+           (fprintf file "--task=spr,extract,pv\n")
+           (fprintf file "--pv-generate-eco=1 --pv-eco-opts=setup,hold,mpw\n")
+           )
+          (timingDriven
+           (fprintf file "--cell=%s\n" (GetCastCellName CV->cellName))
+           (fprintf file "--task=route,extract,pv\n")
+           )
+          (t
+           (fprintf file "--cell=%s\n" (GetCastCellName CV->cellName))
+           (fprintf file "--task=route\n"))
+          )
     (close file)
     )
   )
@@ -481,7 +504,7 @@
 ; Convert ICC's fill rects to fill purpose
 (defun ConvertFill (@key (CV (geGetEditCellView)))
   (foreach fig CV->shapes
-           (when fig->objType=="rect" && fig->pin==nil && 
+           (when fig->objType=="rect" && fig->pin==nil &&
                  (fig->net->name=="floatiss_" || (strncmp fig->net->name "syn_generated" 13)==0)
                  fig->lpp = (list (car fig->lpp) "fill")
                  fig->net = nil
@@ -546,11 +569,12 @@
      nil
      (sprintf nil "%s.lef.log" filename)
      t
-     "5.7")
+     "5.7"
+     )
     )
   )
 
-
+; convert a cell name from DFII to CAST
 (defun GetCastCellName (cellname
                        @key (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
                             (castpath ConfigFileGetValue(TheCDSConfigTable "CAST_PATH")) )
@@ -576,7 +600,7 @@
     file=infile( filename )
     if( file then
       while( gets( line file )
-        when( line=car(parseString(line " "))
+        when( line=car(parseString(line " \n"))
           castname = line
         )
       )
