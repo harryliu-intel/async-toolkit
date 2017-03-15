@@ -188,8 +188,8 @@ apr_cells = (list
     (RefreshAllBuswires ?CV CV)
     (DrawMidLevelPins ?CV CV ?include_supply t ?supply_topMetal 8)
     (CanonicalizePins ?CV CV)
-    (RouteNearby ?CV CV)
-    (dbSave CV)
     )
+  (RouteNearby ?CV CV)
+  (dbSave CV)
   CV
   )
