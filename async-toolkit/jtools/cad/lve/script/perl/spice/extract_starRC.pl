@@ -309,6 +309,7 @@ $mode_op = 0 if ($machine =~ /x86_64/ and $ENV{PATH} =~ /SEV-32/);
 my $conf_dir="$pdk_root/share/Fulcrum/starrcxt";
 my $AssuraHome="$pdk_root/share/Fulcrum/assura";
 my $extract_dir=$spice_target;
+my $upf_version="x2r1u1";
 $extract_dir =~ s:/[^/]*$::;
 $extract_dir =~ s:.*/::;
 $extract_dir =~ s/accurate/extracted/;
@@ -528,9 +529,9 @@ if ($stage2b) {
     read_starcmd("$conf_dir/star.cmd", \%cmd);
 
     # set options
-    $cmd{"TCAD_GRD_FILE"} = "$conf_dir/nxtgrd";
-    if ( -f "$conf_dir/$extractCorner.nxtgrd") {
-        $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$extractCorner.nxtgrd";
+    $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$upf_version.nxtgrd";
+    if ( -f "$conf_dir/$upf_version.$extractCorner.nxtgrd") {
+        $cmd{"TCAD_GRD_FILE"} = "$conf_dir/$upf_version.$extractCorner.nxtgrd";
     }
     my $skip_cell_cmd="";
     if(-s $graycell_file) {
@@ -610,18 +611,18 @@ if ($stage2b) {
     $cmd{"NETLIST_TAIL_COMMENTS"} = $tailcomments;
     $cmd{"REDUCTION"} = $reduction;
     $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
-    $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/via_coverage.custom";
+    $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/$upf_version.via_coverage.custom";
 
     # setup CCP
     if ($ccp) {
         my %ccpcmd = ();
         read_starcmd("$conf_dir/ccp.cmd", \%ccpcmd);
-        $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$conf_dir/device_map";
-        $ccpcmd{'RCMODEL_MAP_FILE'} = "$conf_dir/rc_map";
+        $ccpcmd{'DEVICE_MODEL_MAP_FILE'} = "$conf_dir/$upf_version.device_map";
+        $ccpcmd{'RCMODEL_MAP_FILE'} = "$conf_dir/$upf_version.rc_map";
         $ccpcmd{'STARRCXT_CCP_EXECUTABLE'} = "$ENV{CCP_INSTALL_PATH}/ccp";
         $ccpcmd{'STARRCXT_CCP_VERSION'} = "$ENV{CCP_VERSION}";
-        $ccpcmd{'UPF_FILE'} = "$conf_dir/be.upf";
-        $ccpcmd{'VIA_FILE'} = "$conf_dir/via_table.ctf";
+        $ccpcmd{'UPF_FILE'} = "$conf_dir/$upf_version.be.upf";
+        $ccpcmd{'VIA_FILE'} = "$conf_dir/$upf_version.via_table.ctf";
         open my $fh, '>', 'ccp.cmd' or die "Can't create ccp.cmd: $!";
         print $fh join('', map { "$_: $ccpcmd{$_}\n" } sort keys %ccpcmd);
         close($fh);
