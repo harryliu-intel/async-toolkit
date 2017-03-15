@@ -7,13 +7,10 @@
                   (delta_west -32*1.68) ; optionally shift westmost bumps
                   (delta_east  32*1.68) ; optionally shift eastmost bumps
                   (cellName "globals.BUMP.2")
-                  (filename "bumps.txt")
                   (CV (geGetEditCellView)))
-  (let (file rows cols xoff yoff x y name instname bump bumpNum)
+  (let (rows cols xoff yoff x y name instname bump bumpNum)
     bumpNum = (makeTable "bumpNum" 0)
     bump = (dbOpenCellViewByType (GetCastLibName cellName) cellName "layout")
-    file = (outfile filename)
-    (fprintf file "# %s\n" CV->cellName)
     rows = (length names)
     cols = (length (car names))
     xoff = (if stagger xpitch/4 xpitch/2)
@@ -31,11 +28,9 @@
                 (dbCreateInst CV bump instname x:y "R0")
                 (dbCreateLabel CV (list "tm1" "drawing") x:y name "centerCenter" "R0" "stick" 15)
                 bumpNum[name]++
-                (fprintf file "%s : %g %g\n" name x y)
                 )
               )
          )
-    (close file)
     (dbSave CV)
     )
   t
@@ -43,12 +38,10 @@
 
 ; label top-level bumps based on subcells of *_bumps
 (defun LabelBumps (@key (CV (geGetEditCellView)))
-  (let (transform x y rect pinfile finished pcre num)
-    num =0
+  (let (transform x y rect finished pcre num)
+    num = 0
     pcre = (pcreCompile ".*_bumps")
     finished = (makeTable "finished" nil)
-    pinfile = (outfile "n2_bumps.txt")
-    (fprintf pinfile "# NET X Y\n")
     (DeleteAutoGen ?CV CV)
     (foreach inst (setof x CV->instances x->name=="loihi" || (pcreExecute pcre x->cellName))
              transform = (dbGetInstTransform inst)
@@ -67,16 +60,13 @@
                              rect->net = (dbMakeNet CV fig->theLabel)
                              (dbCreatePin rect->net rect)
                              (dbReplaceProp rect "autogen" "boolean" t)
-                             (fprintf pinfile "%s %g %g\n" fig->theLabel x y)
                              num++
                              )
                             )
                       )
              )
-    (fprintf pinfile "# %d bumps\n" num)
-    (close pinfile)
+    num
     )
-  t
   )
 
 ;;;;;;;;;;;;;;;;;;;; Create bumps for N2 assuming square pitch, 6 bumps tile width ;;;;;;;;;;;;;;;
@@ -124,7 +114,7 @@
                  "VDDA" "VDDM" "Vdd" "Vdd" "VDDM" "VDDM"
                  )
 		)
-             ?filename "n2_bumps_s.txt" ?CV CV
+             ?CV CV
 	     ;?delta_west 0
 	     ;?delta_east 0
 	     )
@@ -141,7 +131,7 @@
        (for x 0 47 row = (cons rail row))
        bumps = (append bumps (list row))
        )
-  (DrawBumps bumps ?filename "n2_bumps_mesh.txt" ?CV CV
+  (DrawBumps bumps ?CV CV
 	     ;?delta_west 0
 	     ;?delta_east 0
 	     )
@@ -172,13 +162,8 @@
                "VDDIO" "Y[1].D[1]" "Y[1].D[3]" "VDDIO" "Y[1].C.a" "VDDIO" "Y[1].D[5]" "Y[1].D[7]" nil
                )
               )
-             ?filename "n2_bumps_n.txt" ?CV CV
+             ?CV CV
 	     ;?delta_west 0
 	     ;?delta_east 0
 	     )
-)
-
-(defun bmp ()
- (load "vip/proj/n2/n2_bumps.il")
- (DrawBumpsN2)
 )
