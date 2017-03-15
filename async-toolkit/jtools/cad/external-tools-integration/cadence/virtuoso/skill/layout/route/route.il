@@ -481,8 +481,10 @@
 ; Convert ICC's fill rects to fill purpose
 (defun ConvertFill (@key (CV (geGetEditCellView)))
   (foreach fig CV->shapes
-           (when fig->objType=="rect" && fig->pin==nil && fig->net->name=="floatiss_"
+           (when fig->objType=="rect" && fig->pin==nil && 
+                 (fig->net->name=="floatiss_" || (strncmp fig->net->name "syn_generated" 13)==0)
                  fig->lpp = (list (car fig->lpp) "fill")
+                 fig->net = nil
                  )
            )
   t
