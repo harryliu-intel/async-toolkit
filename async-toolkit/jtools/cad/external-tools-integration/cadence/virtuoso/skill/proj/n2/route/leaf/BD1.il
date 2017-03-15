@@ -1,0 +1,7 @@
+(load "~/cds_wd/N2/n2/reroute.il")
+(RouteLeaf "lib.bd.source.bitgen.BDC_BG.0" 2)
+(RouteLeaf "lib.bd.standard.pipeline.CTRL.0" 2)
+(RouteLeaf "lib.bd.standard.pipeline.TOK_CTRL.0" 2)
+(RouteLeaf "lib.bd.standard.pipeline.ISOLATE_CTRL.0" 2)
+(RouteLeaf "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0" 2)
+(exit)
