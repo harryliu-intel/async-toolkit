@@ -34,7 +34,7 @@
     ; copy floorplan view
     CV = (dbOpenCellViewByType libName cellName "floorplan")
     CV = (betterCopyCellView CV libName newName "floorplan" nil nil t)
-    (UpdateFloorplan ?CV CV)
+    (UpdateFloorplan ?CV CV ?recurse nil)
     (dbSave CV)
     (cdsp4add ?CV CV)
 
@@ -55,7 +55,7 @@
     ; copy layout view
     CV = (dbOpenCellViewByType libName cellName "layout")
     CV = (betterCopyCellView CV libName newName "layout" nil nil t)
-    (UpdateFloorplan ?CV CV)
+    (UpdateFloorplan ?CV CV ?recurse nil)
     (foreach sub CV->instances
              (when map[sub->cellName]
                sub->master = (dbOpenCellViewByType sub->libName map[sub->cellName] sub->viewName)
