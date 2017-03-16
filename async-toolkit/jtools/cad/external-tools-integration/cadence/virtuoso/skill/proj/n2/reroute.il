@@ -85,7 +85,7 @@
   )
 
 ; translate a bunch of subcells
-(defun SubstituteSubcells (translate @key (CV (geGetEditCellView)))
+(defun SubstituteSubcells (translate @key (CV (geGetEditCellView)) (countOnly nil))
   (let (old new n map)
     n=0
     map = (makeTable "map" nil)
@@ -95,7 +95,10 @@
              map[old]=new
              )
     (foreach inst CV->instances
-             (when map[inst->cellName] inst->master=map[inst->master] n++)
+             (when map[inst->cellName]
+               (unless countOnly inst->master=map[inst->master])
+               n++
+               )
              )
     n
     )
