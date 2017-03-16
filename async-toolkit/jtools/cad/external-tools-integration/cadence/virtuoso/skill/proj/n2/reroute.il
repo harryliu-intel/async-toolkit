@@ -84,23 +84,71 @@
     )
   )
 
-; replace bdc01's with our custom versions
-(defun FixBDC (@key (CV (geGetEditCellView)))
-  (let (old4 old8 new4 new8 n mapInstance)
+; translate a bunch of subcells
+(defun SubstituteSubcells (translate @key (CV (geGetEditCellView)))
+  (let (old new n map)
     n=0
-    old4 = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bdc01ld.z04" "layout")
-    old8 = (dbOpenCellViewByType "vendor.intel.d04" "vendor.intel.d04.bdc01ld.z08" "layout")
-    new4 = (dbOpenCellViewByType "globals" "globals.bdc01ld.z04" "layout")
-    new8 = (dbOpenCellViewByType "globals" "globals.bdc01ld.z08" "layout")
-    mapInstance = (makeTable "mapInstance" nil)
-    mapInstance[old4]=new4
-    mapInstance[old8]=new8
+    map = (makeTable "map" nil)
+    (foreach x translate
+             old = (car x)
+             new = (dbOpenCellViewByType (GetCastLibName (cadr x)) (cadr x) "layout")
+             map[old]=new
+             )
     (foreach inst CV->instances
-             (when mapInstance[inst->master] inst->master=mapInstance[inst->master] n++)
+             (when map[inst->cellName] inst->master=map[inst->master] n++)
              )
     n
     )
-)
+  )
+
+; replace bdc01's with our custom versions
+(defun FixBDC (@key (CV (geGetEditCellView)))
+  (SubstituteSubcells (list (list "vendor.intel.d04.bdc01ld.z04" "globals.bdc01ld.z04")
+                            (list "vendor.intel.d04.bdc01ld.z08" "globals.bdc01ld.z08")
+                            )
+                      ?CV CV)
+  )
+
+; replace I.0 library cells with K.0 equivalents
+(defun FixK0 (@key (CV (geGetEditCellView)))
+  (SubstituteSubcells (list (list "vendor.intel.d04.bdc01nd.z04" "vendor.intel.d04.bdck1nd.z04")
+                            (list "vendor.intel.d04.bdc01nd.z08" "vendor.intel.d04.bdck1nd.z08")
+                            (list "vendor.intel.d04.bdc01nd.z16" "vendor.intel.d04.bdck1nd.z16")
+                            (list "vendor.intel.d04.bdc01nd.z32" "vendor.intel.d04.bdck1nd.z32")
+                            (list "vendor.intel.d04.bdc01nd.z64" "vendor.intel.d04.bdck1nd.z64") 
+
+                            (list "vendor.intel.d04.bdc01ld.z04" "vendor.intel.d04.bdck1ld.z04")
+                            (list "vendor.intel.d04.bdc01ld.z08" "vendor.intel.d04.bdck1ld.z08")
+                            (list "vendor.intel.d04.bdc01ld.z16" "vendor.intel.d04.bdck1ld.z16")
+                            (list "vendor.intel.d04.bdc01ld.z32" "vendor.intel.d04.bdck1ld.z32")
+                            (list "vendor.intel.d04.bdc01ld.z64" "vendor.intel.d04.bdck1ld.z64")
+
+                            (list "vendor.intel.d04.bdc01wd.z04" "vendor.intel.d04.bdck1wd.z04")
+                            (list "vendor.intel.d04.bdc01wd.z08" "vendor.intel.d04.bdck1wd.z08")
+                            (list "vendor.intel.d04.bdc01wd.z16" "vendor.intel.d04.bdck1wd.z16")
+                            (list "vendor.intel.d04.bdc01wd.z32" "vendor.intel.d04.bdck1wd.z32")
+                            (list "vendor.intel.d04.bdc01wd.z64" "vendor.intel.d04.bdck1wd.z64")
+
+                            (list "vendor.intel.d04.bar00nn.z04" "vendor.intel.d04.bark1nn.z04")
+                            (list "vendor.intel.d04.bar00nn.z08" "vendor.intel.d04.bark1nn.z08")
+                            (list "vendor.intel.d04.bar00nn.z16" "vendor.intel.d04.bark1nn.z16")
+                            (list "vendor.intel.d04.bar00nn.z32" "vendor.intel.d04.bark1nn.z32")
+                            (list "vendor.intel.d04.bar00nn.z64" "vendor.intel.d04.bark1nn.z64") 
+
+                            (list "vendor.intel.d04.bar00ln.z04" "vendor.intel.d04.bark1ln.z04")
+                            (list "vendor.intel.d04.bar00ln.z08" "vendor.intel.d04.bark1ln.z08")
+                            (list "vendor.intel.d04.bar00ln.z16" "vendor.intel.d04.bark1ln.z16")
+                            (list "vendor.intel.d04.bar00ln.z32" "vendor.intel.d04.bark1ln.z32")
+                            (list "vendor.intel.d04.bar00ln.z64" "vendor.intel.d04.bark1ln.z64") 
+
+                            (list "vendor.intel.d04.bar00wn.z04" "vendor.intel.d04.bark1wn.z04")
+                            (list "vendor.intel.d04.bar00wn.z08" "vendor.intel.d04.bark1wn.z08")
+                            (list "vendor.intel.d04.bar00wn.z16" "vendor.intel.d04.bark1wn.z16")
+                            (list "vendor.intel.d04.bar00wn.z32" "vendor.intel.d04.bark1wn.z32")
+                            (list "vendor.intel.d04.bar00wn.z64" "vendor.intel.d04.bark1wn.z64") 
+                           )
+                      ?CV CV)
+  )
 
 ; Do chip-assembly steps on a top level layout cell
 (defun UpdateTopCell (@key (CV (geGetEditCellView)))
