@@ -105,7 +105,7 @@
 ; Do chip-assembly steps on a top level layout cell
 (defun UpdateTopCell (@key (CV (geGetEditCellView)))
   (let (TopMetal)
-    TopMetal = 10
+    TopMetal = 11
     (UpdateFloorplan ?CV CV ?recurse nil)
     (DeletePins ?CV CV)
     (DeleteAutoGen ?CV CV)
