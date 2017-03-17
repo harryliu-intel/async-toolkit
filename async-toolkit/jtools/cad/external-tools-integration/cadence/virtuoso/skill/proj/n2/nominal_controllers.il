@@ -1,5 +1,6 @@
-; make nominal threshold new BD controllers from the UV1 threshold ones
-(defun MakeNominalControllers ()
+; make additional BD_CONTROLLER's by copying and editing base ones
+(defun MakeMoreControllers ()
+  ; make 0n threshold versions
   (foreach cellName (list "lib.bd.source.bitgen.BDC_BG.0"
                           "lib.bd.standard.pipeline.CTRL.0"
                           "lib.bd.standard.pipeline.TOK_CTRL.0"
@@ -14,6 +15,12 @@
                           "lib.bd.metastable.arbiter.ARBITER_CTRL.0")
            (MakeNominalController cellName)
            )
+
+  ; make FLOP_TOK_CTRL's too
+  (CopyController "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0"
+                  "lib.bd.standard.pipeline.FLOP_TOK_CTRL.0")
+  (CopyController "lib.bd.standard.pipeline.ISOLATE_TOK_CTRL.0n"
+                  "lib.bd.standard.pipeline.FLOP_TOK_CTRL.0n")
   t
   )
 
@@ -65,4 +72,17 @@
     (cdsp4add ?CV CV)
     )
   t
+  )
+
+; edit/copy for FLOP_TOK_CTRL
+(defun CopyController (from to)
+  (let (fromCV toCV)
+    (foreach view (list "floorplan" "abstract" "layout")
+             fromCV = (dbOpenCellViewByType (GetCastLibName from) from view)
+             toCV   = (dbOpenCellViewByType (GetCastLibName to) to view)
+             (when toCV (cdsp4edit ?CV toCV))
+             (betterCopyCellView fromCV (GetCastLibName to) to view nil nil t)
+             )
+    toCV
+    )
   )
