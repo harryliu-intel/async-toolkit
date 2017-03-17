@@ -40,7 +40,7 @@
   )
 
 ; label top-level bumps based on subcells of *_bumps
-(defun LabelBumps (@key (CV (geGetEditCellView)) (w 85.0) (purpose "pin"))
+(defun LabelBumps (@key (CV (geGetEditCellView)) (w 85.0) (lpp (list "c4" "pin")))
   (let (transform x y rect finished pcre num)
     num = 0
     pcre = (pcreCompile ".*_bumps")
@@ -54,12 +54,11 @@
                       (cond (finished[fig->xy] (dbDeleteObject fig)) ; delete duplicates
                             (t
                              finished[fig->xy] = t
-                             fig->lpp = (list "c4" purpose)
+                             fig->lpp = lpp
                              fig->height = 8
                              x = (car fig->xy)
                              y = (cadr fig->xy)
-                             rect = (dbCreateRect CV (list "c4" purpose)
-                                                  (list x-w/2:y-w/2 x+w/2:y+w/2))
+                             rect = (dbCreateRect CV lpp (list x-w/2:y-w/2 x+w/2:y+w/2))
                              rect->net = (dbMakeNet CV fig->theLabel)
                              (dbCreatePin rect->net rect)
                              (dbReplaceProp rect "autogen" "boolean" t)
