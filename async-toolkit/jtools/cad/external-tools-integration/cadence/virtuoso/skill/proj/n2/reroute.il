@@ -85,21 +85,23 @@
   )
 
 ; translate a bunch of subcells
-(defun SubstituteSubcells (translate @key (CV (geGetEditCellView)) (countOnly nil))
+(defun SubstituteSubcells (translate @key (CV (geGetEditCellView)))
   (let (old new n map)
     n=0
     map = (makeTable "map" nil)
     (foreach x translate
              old = (car x)
              new = (dbOpenCellViewByType (GetCastLibName (cadr x)) (cadr x) "layout")
+             (unless new (error "Can't open %s\n" (cadr x)))
              map[old]=new
              )
-    (foreach inst CV->instances
-             (when map[inst->cellName]
-               (unless countOnly inst->master=map[inst->master])
-               n++
+    (when (setof y CV->instances map[y->cellName])
+      (cdsp4edit ?CV CV)
+      (foreach inst CV->instances
+               (when map[inst->cellName] inst->master=map[inst->cellName] n++)
                )
-             )
+      (dbSave CV)
+      )
     n
     )
   )
