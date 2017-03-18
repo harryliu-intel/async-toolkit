@@ -14,6 +14,7 @@
     (when pgCV (cdsp4edit ?CV pgCV))
     (when cgCV (cdsp4edit ?CV cgCV))
     (when aCV  (cdsp4edit ?CV aCV))
+    (when topMetal<2 fCV = (MakeFlatten ?CV CV ?topMetal 2 ?colorGrid colorGrid)) ; need M2 power grid
     lCV = (if importOnly
             (RouteImport ?CV fCV)
             (Route ?CV fCV ?topMetal topMetal ?timingDriven timingDriven ?colorGrid colorGrid ?Mem 16384)
