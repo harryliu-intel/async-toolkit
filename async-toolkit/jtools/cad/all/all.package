@@ -12,6 +12,7 @@ include ../java/src/com/avlsi/tools/presto/presto.package ../java/src/com/avlsi/
 include ../java/src/com/avlsi/tools/dsim/dsim.package ../java/src/com/avlsi/tools/dsim
 include ../java/src/com/avlsi/tools/cast2verilog/cast2verilog.package ../java/src/com/avlsi/tools/cast2verilog
 include ../java/src/com/avlsi/csp/coverage/coverage.package.inc ../java/src/com/avlsi/csp/coverage
+include ../java/src/com/avlsi/csp/csp2xml/csp2xml.package.inc ../java/src/com/avlsi/csp/csp2xml
 include ../external-tools-integration/cadence/virtuoso/virtuoso-integration.package ../external-tools-integration/cadence/virtuoso
 include ../c/gdsii/gdsii.package ../c/gdsii
 include ../scripts/support/support.package ../scripts/support
