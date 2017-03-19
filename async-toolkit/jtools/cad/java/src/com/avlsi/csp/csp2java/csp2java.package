@@ -6,5 +6,4 @@
 
 java com.avlsi.csp.csp2java.CSP2Java
 include ../resources/resources.package.inc ../resources
-share/java/csp2java.jar		csp2java.jar 664
 $arch/bin/csp2java.sh		csp2java.sh 775
