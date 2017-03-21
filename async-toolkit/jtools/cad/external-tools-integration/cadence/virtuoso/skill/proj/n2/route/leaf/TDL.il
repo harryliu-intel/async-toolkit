@@ -17,7 +17,7 @@
 
 ; route all the TDL's
 (for i 1 12
-     CV = (RouteTDL (sprintf nil "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L%d-R.10000" 2*i))
+     CV = (RouteLeaf (sprintf nil "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L%d-R.10000" 2*i) 2)
      (PatchTDL ?CV CV)
      )
 
