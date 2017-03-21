@@ -161,7 +161,7 @@
                "VDDIO" "VDDIO" "VDDIO" "VDDIO" "VDDIO" "VDDIO"
                ; PIO
                "VDDIO" "X[1].D[8]" "X[1].D[6]" "VDDIO" "X[1].C.q" "VDDIO" "X[1].D[4]" "X[1].D[2]" "X[1].D[0]"
-               "VDDIO" "Y[1].D[1]" "Y[1].D[3]" "VDDIO" "Y[1].C.a" "VDDIO" "Y[1].D[5]" "Y[1].D[7]" (list "VDDIO" 2*off)
+               "VDDIO" "Y[1].D[1]" "Y[1].D[3]" "VDDIO" "Y[1].C.a" "VDDIO" "Y[1].D[5]" "Y[1].D[7]" (list "VDDIO" 3*off)
                )
               )
              ?CV CV
