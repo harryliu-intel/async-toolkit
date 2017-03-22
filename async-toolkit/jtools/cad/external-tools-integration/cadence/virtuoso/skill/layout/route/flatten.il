@@ -671,9 +671,10 @@ useICV = t
 
 ; inline one level with correct instance names but no extra work
 (defun TrivialInline (inst @key (CV (geGetEditCellView)))
-  (foreach sub inst->master->instances
-           sub = (dbCopyFig sub CV inst->transform)
-           sub->name = (strcat inst->name "." sub->name)
+  (foreach sub1 inst->master->instances
+           sub2 = (dbCopyFig sub1 CV inst->transform)
+           sub2->name = (strcat inst->name "." sub1->name)
+           (when inst->status=="locked" sub2->status="locked")
            )
   (dbDeleteObject inst)
   t
