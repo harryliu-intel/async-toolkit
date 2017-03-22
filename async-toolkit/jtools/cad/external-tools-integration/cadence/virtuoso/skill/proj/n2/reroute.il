@@ -173,17 +173,9 @@
   CV
   )
 
-; post-processing to remove M2 fill and delete incorrect GND power hookups
+; post-processing to remove M2 fill
 (defun PatchTDL (@key (CV (geGetEditCellView)))
-  (let (bbox x0 x1)
-    bbox = CV->prBoundary->bBox
-    x0 = (car (car  bbox)) + 0.42
-    x1 = (car (cadr bbox)) - 0.42
-    (foreach x CV->shapes (when x->lpp==(list "m2" "fill") (dbDeleteObject x)))
-    (foreach x (setof via CV->vias via->net->name=="GND" && (car via->xy)>=x0 && (car via->xy)<=x1)
-             (dbDeleteObject x)
-             )
-    (dbSave CV)
-    CV = (MakeSimpleAbstract ?topMetal 1 ?CV CV)
-    )
+  (foreach x CV->shapes (when x->lpp==(list "m2" "fill") (dbDeleteObject x)))
+  (dbSave CV)
+  CV = (MakeSimpleAbstract ?topMetal 1 ?CV CV)
   )
