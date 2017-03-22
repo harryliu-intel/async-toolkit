@@ -20,7 +20,6 @@ spar_cell_list =
      ; custom datapath cells
      "lib.bd.standard.merge.BD_MERGE_DATA-L2-R.0"
      ; SRAM controller
-     "lib.bd.6T.bank.BD_SRAM_CTRL.0"
      "lib.bd.6T.bank.SRAM_BANK_CTRL.0"
      ; new BD_CONTROLLER (nominal thresold)
      "lib.bd.source.bitgen.BDC_BG.0n"
