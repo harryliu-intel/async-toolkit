@@ -265,6 +265,9 @@
          map = (list name)
          (foreach purpose (list "drawing" "gnd" "vdd" "fill")
                   map = (append map (list (list Metal[m] purpose)))
+                  (when m==0 || m==2 ; complement layers too
+                        map = (append map (list (list (sprintf nil "mc%d" m) purpose)))
+                        )
                   )
          inLayerMap = (cons map inLayerMap)
          outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
