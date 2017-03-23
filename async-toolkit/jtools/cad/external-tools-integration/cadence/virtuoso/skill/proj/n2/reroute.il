@@ -156,6 +156,15 @@
                       ?CV CV)
   )
 
+; use spc cells with no M0 for TOP_HALO cells
+(defun FixSPC (@key (CV (geGetEditCellView)))
+  (SubstituteSubcells (list (list "vendor.intel.d04.spc00nn.z01" "globals.spc00nn.z01")
+                            (list "vendor.intel.d04.spc00nn.z02" "globals.spc00nn.z02")
+                            (list "vendor.intel.d04.spc00nn.z03" "globals.spc00nn.z03")
+                            )
+                      ?CV CV)
+  )
+
 ; Do chip-assembly steps on a top level layout cell
 (defun UpdateTopCell (@key (CV (geGetEditCellView)))
   (let (TopMetal)
