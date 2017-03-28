@@ -281,3 +281,22 @@ defun( AreaHtmlFooter ()
    footer = "\n</html>\n</table>\n"
    footer
 ))
+
+(defun printPrPolygonTilePoints (xGrow yGrow)
+  CV=(geGetEditCellView)
+  points=(betterGrowPoints CV->prBoundary->points xGrow:yGrow)
+  (dbCreatePolygon CV (list "y1" "drawing") points)
+  shapes = (setof x CV->shapes x->layerName=="y1")
+  tiles = (dbLayerTile CV "y1" shapes)
+  (foreach tile tiles (printf "%g %g %g %g\n" (leftEdge tile->bBox) (bottomEdge tile->bBox) (rightEdge tile->bBox) (topEdge tile->bBox)))
+  shapes = (setof x CV->shapes x->layerName=="y1")
+  (foreach shape shapes (dbDeleteObject shape))
+)
+
+(defun GetPrPolygons ()
+  (printPrPolygonTilePoints 0 0)
+)
+
+(defun GetDrcPolygons ()
+  (printPrPolygonTilePoints -0.42 -0.399)
+)
