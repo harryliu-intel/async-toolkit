@@ -102,6 +102,24 @@ public class Functions {
                 return result;
             }
         },
+        "floor", new Function() {
+            public Value invoke(final TupleValue args)
+                throws InvalidOperationException {
+                checkLength(args, 1);
+                final Value v = args.accessTuple(0);
+                final Value result;
+                if (v instanceof IntValue) {
+                    result = v;
+                } else if (v instanceof FloatValue) {
+                    result = IntValue.valueOf(
+                        String.format("%.0f",
+                                      Math.floor(((FloatValue) v).getValue())));
+                } else {
+                    throw new InvalidOperationException("Expecting int or float; found " + v.getType().getString());
+                }
+                return result;
+            }
+        },
         "log2", new Function() {
             public Value invoke(final TupleValue args)
                 throws InvalidOperationException {
@@ -129,6 +147,15 @@ public class Functions {
                 final Value v = args.accessTuple(1);
                 checkType(v, IntValue.TYPE, 2);
                 return IntValue.valueOf(BigIntegerUtil.log(((IntValue) base).getValue(), ((IntValue) v).getValue()));
+            }
+        },
+        "ln", new Function() {
+            public Value invoke(final TupleValue args)
+                throws InvalidOperationException {
+                checkLength(args, 1);
+                final Value v = args.accessTuple(0);
+                checkType(v, FloatValue.TYPE, 1);
+                return FloatValue.valueOf(Math.log(((FloatValue) v).getValue()));
             }
         },
         "min", new MinMax(true),
