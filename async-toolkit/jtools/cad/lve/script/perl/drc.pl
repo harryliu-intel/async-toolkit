@@ -29,7 +29,7 @@ sub usage {
     $usage .= "    --working-dir=[$working_dir]\n";
     $usage .= "    --icv-runset-path=[$icv_runset_path] (DRC runset path)\n";
     $usage .= "    --gds2-file=[$gdsii] (Provide source layout by gdsii file.)\n";
-    $usage .= "    --gds2-list=[$gdsii] (Provide source layout by a file list contains gdsii file)\n";
+    $usage .= "    --gds2-list=[$gdsii_list] (Provide source layout by a file list contains gdsii file)\n";
     $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
     $usage .= "    --threads=[$threads] (ICV thread)\n";
     $usage .= "    --jobs=[$jobs] (Netbatch jobs; if specified, --threads is per job)\n";
@@ -83,6 +83,7 @@ my $cell_name = shift;
 chomp $working_dir;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
+$gdsii = $cell_name . ".gds" if ($gdsii eq "" && $gdsii_list eq "");
 
 #check if flow is valid
 my %drc_runsets;

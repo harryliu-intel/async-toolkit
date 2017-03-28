@@ -515,33 +515,11 @@
 
 ; Write GDS for a list of cell-views
 (defun ExportCellsGDS (directory cells)
-  (let (PDK_DIR GdsMapFile pout gds_name Command (statusGds t))
-    PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT") "/share/Fulcrum")
+  (let (status (statusGds t))
     (foreach cell cells
-             (shell (strcat "mkdir -p " directory))
-             GdsMapFile = (sprintf nil "%s/%s.map" directory cell->cellName)
-             pout = (outfile GdsMapFile)
-             gds_name = (translateName "cell" "cadence" "gds2" cell->cellName)
-             (fprintf pout "%s %s %s %s\n" cell->libName cell->cellName cell->viewName gds_name)
-             (close pout)
-             Command = (sprintf nil
-                                (strcat "strmout"
-                                        " -view '%s'"
-                                        " -runDir %s"
-                                        " -outputDir %s"
-                                        " -layerMap %s/stream/strmout.layermap"
-                                        " -propMap %s/stream/prop.map"
-                                        " -objectMap %s/stream/objectmap"
-                                        " -cellListFile %s"
-                                        " -cellMap %s"
-                                        " -logFile %s.log"
-                                        " ; mv %s/%s %s/%s.gds")
-                                cell->viewName directory directory
-                                PDK_DIR PDK_DIR PDK_DIR
-                                GdsMapFile GdsMapFile GdsMapFile
-                                directory gds_name directory gds_name)
-               statusGds = statusGds && (shell Command)
-               )
+             status = (ExportGDS ?CV cell ?directory directory)
+             statusGds = statusGds && status
+             )
     statusGds
     )
   )
