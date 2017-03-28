@@ -5,7 +5,7 @@
                        (layerMapFile nil)
                        (renameCell (lambda (cellName) (translateName "cell" "cadence" "gds2" cellName)))
                        (flattenVias t))
-  (let (TEMP PDK_DIR Command status cellMapFile fmap gdsName used)
+  (let (TEMP PDK_DIR Command status cellMapFile fmap gdsName name used)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     (unless directory directory = (strcat TEMP "/gds/" CV->cellName))
     PDK_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
@@ -21,19 +21,14 @@
     cellMapFile = (sprintf nil "%s/%s.cellmap" directory gdsName)
     fmap = (outfile cellMapFile)
     used = (makeTable "used" nil)
-    (FindSubcells ?CV CV
-                  ?action (lambda (CV)
-                            (let (name)
-                              name = (CellNameGDS ?CV CV ?renameCell renameCell)
-                              (when used[name] (strcat name "_" CV->viewName))
-                              (fprintf fmap "%s %s %s %s\n"
-                                       CV->libName CV->cellName CV->viewName name)
-                              used[name]=t
-                              )
-                            )
-                  )
+    (foreach subCV (FindSubcells ?CV CV)
+             name = (CellNameGDS ?CV subCV ?renameCell renameCell)
+             (when used[name] name = (strcat name "_" subCV->viewName)) ; disambiguate
+             (fprintf fmap "%s %s %s %s\n" subCV->libName subCV->cellName subCV->viewName name)
+             used[name]=t
+             )
     (close fmap)
-
+    
     ; strmout command line arguments
     Command = (sprintf nil
                        (strcat "strmout"
