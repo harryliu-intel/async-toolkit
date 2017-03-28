@@ -132,7 +132,56 @@ public class Functions {
             }
         },
         "min", new MinMax(true),
-        "max", new MinMax(false)
+        "max", new MinMax(false),
+        "exp", new Function() {
+            public Value invoke(final TupleValue args)
+                throws InvalidOperationException {
+                checkLength(args, 1);
+                final Value v = args.accessTuple(0);
+                checkType(v, FloatValue.TYPE, 1);
+                return FloatValue.valueOf(Math.exp(((FloatValue) v).getValue()));
+            }
+        },
+        "fixed_point", new Function() {
+            public Value invoke(final TupleValue args)
+                throws InvalidOperationException {
+                checkLength(args, 2);
+                final Value x = args.accessTuple(0);
+                checkType(x, FloatValue.TYPE, 1);
+                final Value xpt = args.accessTuple(1);
+                checkType(xpt, IntValue.TYPE, 2);
+
+                int ipt = 0;
+                try {
+                    ipt = IntValue.valueOf(xpt).getValue().intValueExact();
+                } catch (ArithmeticException e) {
+                    throw new InvalidOperationException(
+                            "Fixed point precision too large: " + xpt);
+                }
+
+                final double xscaled =
+                    Math.scalb(FloatValue.valueOf(x).getValue(), ipt);
+                if (Double.isInfinite(xscaled) || Double.isNaN(xscaled)) {
+                    throw new InvalidOperationException(
+                        "Fixed point representation too large for double: " +
+                        xscaled);
+                }
+
+                final double xint = Math.floor(xscaled);
+                if (xint > Long.MAX_VALUE || xint < Long.MIN_VALUE) {
+                    throw new InvalidOperationException(
+                        "Fixed point representation too large for long: " +
+                        xint);
+                }
+
+                long result = Math.round(xint);
+                if (xscaled - xint >= 0.5) {
+                    result++;
+                }
+
+                return IntValue.valueOf(Long.toString(result));
+            }
+        }
     });
 
     public static Value invokeFunction(final String name, final TupleValue args)
