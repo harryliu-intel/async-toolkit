@@ -125,8 +125,14 @@ public class Functions {
                 throws InvalidOperationException {
                 checkLength(args, 1);
                 final Value v = args.accessTuple(0);
-                checkType(v, IntValue.TYPE, 1);
-                return IntValue.valueOf(BigIntegerUtil.log2(((IntValue) v).getValue()));
+                if (v instanceof IntValue) {
+                    return IntValue.valueOf(BigIntegerUtil.log2(((IntValue) v).getValue()));
+                } else if (v instanceof FloatValue) {
+                    return FloatValue.valueOf(
+                        Math.log(((FloatValue) v).getValue()) / Math.log(2.0));
+                } else {
+                    throw new InvalidOperationException("Expecting int or float; found " + v.getType().getString());
+                }
             }
         },
         "log4", new Function() {
@@ -134,8 +140,14 @@ public class Functions {
                 throws InvalidOperationException {
                 checkLength(args, 1);
                 final Value v = args.accessTuple(0);
-                checkType(v, IntValue.TYPE, 1);
-                return IntValue.valueOf(BigIntegerUtil.log4(((IntValue) v).getValue()));
+                if (v instanceof IntValue) {
+                    return IntValue.valueOf(BigIntegerUtil.log4(((IntValue) v).getValue()));
+                } else if (v instanceof FloatValue) {
+                    return FloatValue.valueOf(
+                        Math.log(((FloatValue) v).getValue()) / Math.log(4.0));
+                } else {
+                    throw new InvalidOperationException("Expecting int or float; found " + v.getType().getString());
+                }
             }
         },
         "log", new Function() {
@@ -143,10 +155,21 @@ public class Functions {
                 throws InvalidOperationException {
                 checkLength(args, 2);
                 final Value base = args.accessTuple(0);
-                checkType(base, IntValue.TYPE, 1);
                 final Value v = args.accessTuple(1);
-                checkType(v, IntValue.TYPE, 2);
-                return IntValue.valueOf(BigIntegerUtil.log(((IntValue) base).getValue(), ((IntValue) v).getValue()));
+                if (base instanceof IntValue && v instanceof IntValue) {
+                    return IntValue.valueOf(
+                            BigIntegerUtil.log(((IntValue) base).getValue(),
+                                               ((IntValue) v).getValue()));
+                } else if (base instanceof FloatValue && v instanceof FloatValue) {
+                    return FloatValue.valueOf(
+                            Math.log(((FloatValue) v).getValue()) /
+                            Math.log(((FloatValue) base).getValue()));
+                } else {
+                    throw new InvalidOperationException(
+                            "Expecting (int, int) or (float, float); found (" +
+                            base.getType().getString() + ", "  +
+                            v.getType().getString() + ")");
+                }
             }
         },
         "ln", new Function() {
