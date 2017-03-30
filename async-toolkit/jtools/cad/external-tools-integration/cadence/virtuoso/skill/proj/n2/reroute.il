@@ -35,7 +35,7 @@
         (dbSave lCV)
         )
       )
-    aCV = (MakeSimpleAbstract ?CV lCV ?topMetal topMetal)
+    aCV = (if topMetal==2 (MakeLeafAbstract ?CV lCV) (MakeSimpleAbstract ?CV lCV ?topMetal topMetal))
     pgCV = (dbOpenCellViewByType libName (strcat cellName "_pg") "layout")
     cgCV = (dbOpenCellViewByType libName (strcat cellName "_color") "layout")
     (when lCV (cdsp4add ?CV lCV))

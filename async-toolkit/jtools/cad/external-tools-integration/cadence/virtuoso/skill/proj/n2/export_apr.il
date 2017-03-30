@@ -82,7 +82,7 @@ spar_cell_list =
            (cdsp4edit ?CV CV)
            CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "layout")
            (if cellName=="lib.bd.6T.bank.SRAM_BANK_CTRL.0"
-             (MakeSimpleAbstract ?CV CV) ; CLASS BLOCK
+             (MakeSimpleAbstract ?CV CV ?topMetal 3) ; CLASS BLOCK
              (MakeLeafAbstract ?CV CV)   ; CLASS CORE
              )
            )
