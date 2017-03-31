@@ -60,7 +60,7 @@ sub export_gds {
     my $gds = catfile($workdir, "$cell.gds");
     open(my $fh, '>', $replay) || die "Can't write to replay.il: $!";
     print $fh <<EOF;
-(ExportGDS ?CV (nrOpenCellViewReadableByName \"$cell\" \"$view\") ?gdsFile \"$gds\")
+(ExportGDS ?CV (nrOpenCellViewReadableByName \"$cell\" \"$view\") ?gdsFile \"$gds\" ?directory \"$workdir\" ?renameCell nil)
 EOF
     close $fh;
     my $cmd = "cd \Q$cdswd\E && layout ".
