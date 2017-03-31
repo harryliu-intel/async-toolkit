@@ -8,7 +8,6 @@ foreach $file (@ARGV) {
     system("mkdir -p ${base}.cdswd");
     system("$ENV{FULCRUM} mkcdswd --target-dir=${base}.cdswd " .
            "--dfII-dir=$ENV{DFII_DIR} --cast-path=$ENV{CAST_PATH} " .
-           "--user-template=$ENV{WD}/cds_wd/template_$ENV{PROCESS} " .
            "--force --p4-client=$ENV{HW_CLIENT}");
     system("(cd ${base}.cdswd; " .
            "nbq --class-reservation fRM=$MEM -j ${base}.out " .
