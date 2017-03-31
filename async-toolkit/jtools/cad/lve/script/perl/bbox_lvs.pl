@@ -60,7 +60,7 @@ sub export_gds {
     my $gds = catfile($workdir, "$cell.gds");
     open(my $fh, '>', $replay) || die "Can't write to replay.il: $!";
     print $fh <<EOF;
-(ExportGDS ?CV (nrOpenCellViewReadableByName \"$cell\" \"$view\") ?gdsFile \"$gds\" ?directory \"$workdir\" ?renameCell nil)
+(ExportGDS ?CV (nrOpenCellViewReadableByName \"$cell\" \"$view\") ?gdsFile \"$gds\" ?directory \"$workdir\")
 EOF
     close $fh;
     my $cmd = "cd \Q$cdswd\E && layout ".
@@ -69,8 +69,7 @@ EOF
               "-replay \Q$replay\E < /dev/null >\Q$workdir/strm.out\E";
     system($cmd) == 0 or die "Failed to execute $cmd: $?\n";
     
-    my $gdsdir = catdir($cdswd, 'temp', 'gds', $cell);
-    my $cellmap = catfile($gdsdir, 'xStrmOut_cellMap.txt');
+    my $cellmap = catfile($workdir, 'xStrmOut_cellMap.txt');
     my %mapping = ();
     die "Stream file not generated: $gds" unless -e $gds;
     if (open(my $mh, '<', $cellmap)) {
