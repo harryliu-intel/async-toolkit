@@ -45,6 +45,17 @@ wires_modtime = makeTable("wires" 0)
     )
   )
 
+; add buswires if it exists
+(defun AddBusWires (@key (CV (geGetEditCellView)) (name "buswires"))
+  (let (busCV)
+    busCV = (ReadCV CV->libName (strcat CV->cellName "_" name) "layout")
+    (when busCV && (dbFindAnyInstByName CV name)==nil
+          (dbCreateInst CV busCV name 0:0 "R0")
+          )
+    )
+  t
+  )
+
 (defun EditGuideInstInPlace ()
   (let (cell)
   cell=(GetGuideInst nil busGuideInstName)

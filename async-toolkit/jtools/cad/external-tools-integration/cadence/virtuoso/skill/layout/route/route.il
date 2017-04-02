@@ -167,7 +167,7 @@
       statusDef = t
       ExportCV = (betterCopyCellView CV CV->libName CV->cellName "export_tmp" nil nil t)
       (foreach inst ExportCV->instances
-               abstractCV  = (dbOpenCellViewByType inst->libName inst->cellName "abstract")
+               abstractCV  = (ReadCV inst->libName inst->cellName "abstract")
                placed = (if inst->status inst->status "placed") ; keep inst->status if it exists
                (unless softMacro placed="locked")
                (cond (abstractCV
@@ -620,7 +620,7 @@
   (let (fCV fig net pin trm)
     ; assumes same cell name unless specified
     (unless srcCV
-      fCV = (dbOpenCellViewByType CV->libName CV->cellName "floorplan")
+      fCV = (ReadCV CV->libName CV->cellName "floorplan")
       (unless fCV (printf "Source view not found.\n"))
     )
     (when fCV
@@ -664,4 +664,3 @@
   ok
   )
 )
-

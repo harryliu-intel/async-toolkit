@@ -47,14 +47,14 @@ useICV = t
     (SetLeafProp CV nil)
     (SetLefProperties CV)
 
-    ; update connectivity
-    (UpdateFloorplan ?CV CV ?recurse nil)
-
     ; draw pins
     (AddBusWires ?CV CV)
     (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal)
     (CanonicalizeNets ?CV CV)
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
+
+    ; update connectivity
+    (UpdateFloorplan ?CV CV ?recurse nil)
 
     ; Create power grid and abstract
     (when powerGrid
@@ -659,7 +659,7 @@ useICV = t
                       progress=t
                       )
                      (inst->viewName!="layout"
-                      lCV = (dbOpenCellViewByType inst->libName inst->cellName "layout")
+                      lCV = (ReadCV inst->libName inst->cellName "layout")
                       (when lCV inst->master=lCV)
                       )
                      )

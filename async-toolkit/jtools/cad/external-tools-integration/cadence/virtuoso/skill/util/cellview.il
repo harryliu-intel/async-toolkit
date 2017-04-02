@@ -51,6 +51,11 @@
     )
   )
 
+; Open for read but silently return nil if CV doesn't exist
+(defun ReadCV (libName cellName viewName)
+  (when (ddGetObj libName cellName viewName) (dbOpenCellViewByType libName cellName viewName))
+  )
+
 ; cycle between available view in the given window
 (defun CycleViews ()
   (when (mod CycleView 6)==0
