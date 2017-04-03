@@ -40,13 +40,6 @@ useICV = t
     ; Create flatten view from floorplan view
     CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast)
 
-    ; cache various information in CV properties
-    (dbReplaceProp CV "topMetal" "integer" topMetal)
-    (SetXAlignmentProp CV (max (if xalign xalign 0) GridPolyPitch))
-    (SetYAlignmentProp CV (max (if yalign yalign 0) GridPitch))
-    (SetLeafProp CV nil)
-    (SetLefProperties CV)
-
     ; draw pins
     (AddBusWires ?CV CV)
     (RedrawAllPins ?CV CV ?include_supply t ?supply_topMetal topMetal)
@@ -55,6 +48,13 @@ useICV = t
 
     ; update connectivity
     (UpdateFloorplan ?CV CV ?recurse nil)
+
+    ; cache various information in CV properties
+    (dbReplaceProp CV "topMetal" "integer" topMetal)
+    (SetXAlignmentProp CV (max (if xalign xalign 0) GridPolyPitch))
+    (SetYAlignmentProp CV (max (if yalign yalign 0) GridPitch))
+    (SetLeafProp CV nil)
+    (SetLefProperties CV)
 
     ; Create power grid and abstract
     (when powerGrid
