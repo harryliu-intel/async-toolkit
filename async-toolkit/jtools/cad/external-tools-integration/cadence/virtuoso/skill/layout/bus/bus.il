@@ -274,6 +274,7 @@ wires_modtime = makeTable("wires" 0)
     net = (MakeNet CV name)
     fig->beginExt = (if beginExt width/2 0)
     fig->endExt = (if endExt width/2 0)
+    fig->routeStatus = "locked"
     (if net!=nil fig->net = net)
     (cond (isPin && net
           (cond (y0==y1
@@ -341,6 +342,7 @@ wires_modtime = makeTable("wires" 0)
                                (busTransformPoint xy guideInst)
                                contactOrientation
                   )
+           inst->routeStatus = "locked"
            when( corrected
            layer2 = evalstring(car(parseString(nth(0 parseString(type "_")) "M")))
            layer1 = evalstring(car(parseString(nth(1 parseString(type "_")) "M")))
