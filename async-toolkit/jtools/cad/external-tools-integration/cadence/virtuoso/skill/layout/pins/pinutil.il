@@ -498,13 +498,17 @@
   )
 
 (defun DeletePinsExcludeType (type @key (CV (geGetEditCellView)))
-  (foreach obj CV->shapes
-           (when obj->pin
-             (when (dbGetPropByName obj "PinType")->value != type
-                   (dbDeleteObject obj)
-                   )
+  (let (to_delete)
+    to_delete = (makeTable "to_delete" nil)
+    (foreach obj CV->shapes
+             (when obj->pin
+               (when (dbGetPropByName obj "PinType")->value != type
+                     to_delete[obj] = t
+                     )
+               )
              )
-           )
+    (foreach x to_delete (dbDeleteObject x))
+    )
   t
   )
 
