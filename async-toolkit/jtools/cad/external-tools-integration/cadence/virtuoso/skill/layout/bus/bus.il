@@ -731,11 +731,11 @@ wires_modtime = makeTable("wires" 0)
 
 ; get list of waypoints and layers from (optionally) named shapes
 (defun GetPaths (name @key (guideInstName nil) (CV (geGetEditCellView)))
-  (let (paths shapes pattern pre isPin startVias endVias flipX flipY pitch double shield rotate vertical positive props)
-    paths = nil
-    shapes = (geGetSelSet)
+  (let (paths shapes pattern pre isPin startVias endVias flipX flipY pitch double
+              shield rotate vertical positive props)
     (cond (guideInstName!=nil CV = (GetGuideInst nil guideInstName ?CV CV)->master))
-    (cond (shapes==nil shapes = CV->shapes))
+    shapes = (setof x CV->shapes x->objType=="path" && (geIsFigSelected x)) ; avoid geGetSelSet
+    (unless shapes shapes = (setof x CV->shapes x->objType=="path"))
     (foreach obj shapes
              pattern   = (GetProp obj "BusPattern" nil)
              pre       = (GetProp obj "BusPrefix" "")
@@ -750,10 +750,10 @@ wires_modtime = makeTable("wires" 0)
              rotate    = (GetProp obj "RotateMetalOrientation" nil)
              vertical  = (GetProp obj "BusVerticalVias" nil)
              positive  = (GetProp obj "PositiveViaShift" nil)
-             props = (list pattern obj->lpp pre isPin startVias endVias flipX flipY pitch double shield rotate vertical positive)
-             (cond ((and obj->objType=="path" pattern!=nil (or name==nil pattern==name))
-                    paths = (cons (list props obj->points) paths))
-                   )
+             props = (list pattern obj->lpp pre isPin startVias endVias flipX flipY pitch double
+                           shield rotate vertical positive)
+             (when (and pattern!=nil (or name==nil pattern==name))
+               paths = (cons (list props obj->points) paths))
              )
     paths
     )
