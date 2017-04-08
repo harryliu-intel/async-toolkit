@@ -50,6 +50,7 @@
                   overlap = (BBoxAnd bbox1 bbox2)
                   (when (net1==nil || net1!=net2) && overlap && !(BBoxAnd rect1 rect2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
+                    rect->routeStatus="locked"
                     (dbAddFigToNet rect net)
                     (dbReplaceProp rect "autogen" "string" "RouteNearby")
                     (printf "%s on %s\n" layerName net->name)
@@ -93,6 +94,7 @@
                    )
                   ) 
             via = (dbCreateVia CV viaDef xy "R0" params)
+            via->routeStatus="locked"
             via->net = net
             (dbReplaceProp via "autogen" "string" "RouteNearby")
             (printf "%s on %s\n" Via[v] net->name)

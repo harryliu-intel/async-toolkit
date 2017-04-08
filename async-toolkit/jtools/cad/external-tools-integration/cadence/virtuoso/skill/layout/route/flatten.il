@@ -83,7 +83,7 @@ useICV = t
 
     ; route abutting pins
     (when ConnectAbuttingPins
-      (RouteNearby ?CV CV)
+      (RouteNearby ?CV CV ?topShapes t)
       )
 
     ; fix things for DEF export
