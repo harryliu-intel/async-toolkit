@@ -735,6 +735,7 @@ wires_modtime = makeTable("wires" 0)
               shield rotate vertical positive props)
     (cond (guideInstName!=nil CV = (GetGuideInst nil guideInstName ?CV CV)->master))
     shapes = (setof x CV->shapes x->objType=="path" && (geIsFigSelected x)) ; avoid geGetSelSet
+    (when shapes (printf "GetPaths with selected shapes only"))
     (unless shapes shapes = (setof x CV->shapes x->objType=="path"))
     (foreach obj shapes
              pattern   = (GetProp obj "BusPattern" nil)
