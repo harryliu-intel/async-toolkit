@@ -48,7 +48,9 @@
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
-                  (when (net1==nil || net1!=net2) && overlap && !(BBoxAnd rect1 rect2)
+                  ; connect two top shapes or two pin shapes
+                  (when (net1==nil && net2==nil || net1!=nil && net2!=nil && net1!=net2) &&
+                        overlap && !(BBoxAnd rect1 rect2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
                     rect->routeStatus="locked"
                     (dbAddFigToNet rect net)
