@@ -48,9 +48,7 @@
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
-                  ; connect two top shapes or two pin shapes
-                  (when (net1==nil && net2==nil || net1!=nil && net2!=nil && net1!=net2) &&
-                        overlap && !(BBoxAnd rect1 rect2)
+                  (when net1!=nil && net2!=nil && net1!=net2 && overlap && !(BBoxAnd rect1 rect2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
                     rect->routeStatus="locked"
                     (dbAddFigToNet rect net)
@@ -62,7 +60,7 @@
                )
              )
 
-    ; add vias between subcell pins that overlap
+    ; add vias between subcell pins or top-level shapes that overlap
     (for v 0 TopMetal-1
       list1 = (setof a MasterRectList (car a)==Metal[v])
       list2 = (setof a MasterRectList (car a)==Metal[v+1])
