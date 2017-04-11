@@ -53,10 +53,11 @@
 (defun RouteProteus (baseName targetName abstractName @key (exportOnly nil))
   (let (libName fpCV pgCV cgCV lCV)
     libName = (GetCastLibName baseName)
-    lCV  = (ReadCV libName targetName "layout")
     fpCV = (ReadCV libName baseName "floorplan")
+    lCV  = (ReadCV libName targetName "layout")
     pgCV = (ReadCV libName (strcat baseName "_pg") "layout")
     cgCV = (ReadCV libName (strcat baseName "_color") "layout")
+    (when lCV  (cdsp4edit ?CV lCV))
     (when pgCV (cdsp4edit ?CV pgCV))
     (when cgCV (cdsp4edit ?CV cgCV))
     (cond (exportOnly
