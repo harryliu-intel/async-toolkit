@@ -26,7 +26,10 @@
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
         )
-  (let ()
+  (let (TEMP WDIR)
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WDIR = (strcat TEMP "/route/" CV->cellName)
+
     ; export
     CV = (RouteExport ?CV CV
                           ?botMetal botMetal ?topMetal topMetal
@@ -49,7 +52,10 @@
           (t
            (unless targetCellName targetCellName = CV->cellName)
            CV = (RouteImport ?libName (GetCastLibName targetCellName)
-                             ?cellName targetCellName ?viewName importView))
+                             ?cellName targetCellName ?viewName importView
+                             ?defFile (strcat WDIR "/" targetCellName "_routed.def")
+                             )
+           )
           )
     CV
     )
