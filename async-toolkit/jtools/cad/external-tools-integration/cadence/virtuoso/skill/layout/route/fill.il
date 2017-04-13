@@ -244,10 +244,12 @@
          (foreach purpose purposes
                   map = (append map (list (list name purpose)))
                   )
-         name = (sprintf nil "mc%d" m)
-         (foreach purpose purposes
-                  map = (append map (list (list name purpose)))
-                  )
+         (when m==0 || m>=2 && m<=5
+               name = (sprintf nil "mc%d" m)
+               (foreach purpose purposes
+                        map = (append map (list (list name purpose)))
+                        )
+               )
          inLayerMap = (cons map inLayerMap)
          )
     (ICVLayerProcessorSimple CV flatCV "mergeShape" inLayerMap outLayerMap)
