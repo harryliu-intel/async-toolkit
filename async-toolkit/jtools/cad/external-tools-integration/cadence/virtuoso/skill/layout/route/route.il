@@ -25,6 +25,7 @@
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
+        (ecoIter 0)              ; number of spr ECO passes
         )
   (let (TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -39,7 +40,8 @@
                           ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                           ?metalFill metalFill ?softMacro softMacro
                           ?abstractCellName abstractCellName ?targetCellName targetCellName
-                          ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid)
+                          ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
+                          ?ecoIter ecoIter)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t))
@@ -82,6 +84,7 @@
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name for APR abstract cell
         (targetCellName nil)     ; DFII name for APR target   cell
+        (ecoIter 0)              ; number of spr ECO passes
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
         abstractCV
@@ -124,7 +127,8 @@
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill
                    ?timingDriven timingDriven ?softMacro softMacro
-                   ?abstractCellName abstractCellName ?targetCellName targetCellName)
+                   ?abstractCellName abstractCellName ?targetCellName targetCellName
+                   ?ecoIter ecoIter)
 
     ; export Verilog
     (when doVerilog
@@ -308,6 +312,7 @@
         (softMacro nil)          ; run APR
         (abstractCellName nil)   ; DFII name of APR abstract cell
         (targetCellName nil)     ; DFII name of APR target   cell
+        (ecoIter 0)              ; number of spr ECO passes
         )
   (let (CAST_PATH DFII_DIR TEMP WDIR LEFDEF_DIR PROTEUS_DIR file)
     ; files and options
@@ -334,6 +339,7 @@
     (fprintf file "--top-layer=%d\n" topMetal)
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
+    (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
     (cond (softMacro
            (unless abstractCellName && targetCellName
@@ -341,7 +347,7 @@
                    )
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
            (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
-           (fprintf file "--task=spr,extract,pv\n")
+           (fprintf file "--task=spr\n")
            (fprintf file "--pv-generate-eco=1 --pv-eco-opts=setup,hold,mpw\n")
            )
           (timingDriven

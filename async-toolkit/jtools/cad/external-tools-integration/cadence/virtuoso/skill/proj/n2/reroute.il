@@ -77,7 +77,8 @@
                               )
            )
           (t
-           lCV = (Route ?CV fpCV ?softMacro t ?targetCellName targetName ?abstractCellName abstractName)
+           lCV = (Route ?CV fpCV ?softMacro t ?targetCellName targetName ?abstractCellName abstractName
+                        ?ecoIter 2)
            (when lCV (cdsp4add ?CV lCV))
            )
           )
