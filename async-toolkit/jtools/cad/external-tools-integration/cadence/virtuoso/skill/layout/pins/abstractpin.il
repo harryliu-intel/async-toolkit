@@ -521,7 +521,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
       ; shapes from subcell pins
       (foreach instTerm net->instTerms
         inst = instTerm->inst
-        (when inst->libName!=TechLibName
+        (when inst->libName!=TechLibName && inst->status=="locked"
           transform = (geGetInstTransform inst)
           (foreach pin instTerm->term->pins
             (when (car pin->fig->lpp)==layerName
@@ -557,7 +557,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
       ; shapes from subcell pins
       (foreach instTerm net->instTerms
         inst = instTerm->inst
-        (when inst->libName!=TechLibName
+        (when inst->libName!=TechLibName && inst->status=="locked"
           transform = (geGetInstTransform inst)
           (foreach pin instTerm->term->pins
             (when (car pin->fig->lpp)==layerName

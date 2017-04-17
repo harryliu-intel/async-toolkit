@@ -17,7 +17,8 @@ useICV = t
         (hookupD04 nil)            ; add power hookups around d04 cells
         (hookupLaygen nil)         ; add power hookups around Laygen cells
         (noPowerFill nil)          ; use POWER_GRID_NO_FILL instead of POWER_GRID
-        (doPowerGates nil)	   ; use POWER_GRID_GATED instead of POWER_GRID
+        (doPowerGates nil)         ; use POWER_GRID_GATED instead of POWER_GRID
+        (softMacro nil)            ; when !softMacro, lock all instances
         )
   (let (MaxHeapSize TEMP PowerGridCellName ColorGridCellName xalign yalign win pgCV cgCV)
 
@@ -39,6 +40,9 @@ useICV = t
 
     ; Create flatten view from floorplan view
     CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast)
+
+    ; lock all instances unless softMacro
+    (unless softMacro (foreach x CV->instances x->status="locked"))
 
     ; draw pins
     (AddBusWires ?CV CV)

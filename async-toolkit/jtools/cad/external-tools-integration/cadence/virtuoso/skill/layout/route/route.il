@@ -122,7 +122,7 @@
     (when (or CV->viewName=="floorplan" CV->viewName=="prelayout")
       CV = (MakeFlatten ?CV CV ?topMetal topMetal ?hookupLaygen hookupLaygen ?hookupD04 hookupD04
                         ?noPowerFill noPowerFill ?doPowerGates doPowerGates
-                        ?colorGrid colorGrid))
+                        ?colorGrid colorGrid ?softMacro softMacro))
 
     ; write proteus.config
     (ProteusConfig ?CV CV ?botMetal botMetal ?topMetal topMetal ?metalFill metalFill
