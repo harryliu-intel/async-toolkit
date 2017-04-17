@@ -314,7 +314,7 @@
         (targetCellName nil)     ; DFII name of APR target   cell
         (ecoIter 0)              ; number of spr ECO passes
         )
-  (let (CAST_PATH DFII_DIR TEMP WDIR LEFDEF_DIR PROTEUS_DIR file)
+  (let (CAST_PATH DFII_DIR TEMP WDIR file)
     ; files and options
     CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     CAST_DIR  = (ConfigFileGetValue TheCDSConfigTable "CAST_DIR")
@@ -323,8 +323,6 @@
     SPAR_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
     TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR      = (strcat TEMP "/route/" CV->cellName)
-    PROTEUS_DIR = (strcat WDIR "/proteus")
-    LEFDEF_DIR  = (strcat WDIR "/lefdef")
 
     ; write config file
     file = (outfile (strcat WDIR "/proteus.config"))
@@ -333,8 +331,8 @@
     (fprintf file "--spar-dir=%s\n" SPAR_DIR)
     (fprintf file "--cast-dir=%s\n" CAST_DIR)
     (fprintf file "--spec-dir=%s\n" SPEC_DIR)
-    (fprintf file "--lefdef-dir=%s\n" LEFDEF_DIR)
-    (fprintf file "--output-dir=%s\n" PROTEUS_DIR)
+    (fprintf file "--lefdef-dir=lefdef\n")
+    (fprintf file "--output-dir=proteus\n")
     (fprintf file "--bottom-layer=%d\n" botMetal)
     (fprintf file "--top-layer=%d\n" topMetal)
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
@@ -376,7 +374,7 @@
 
     ; run
     (shell (strcat "rm -rf " defFile))
-    Command = (sprintf nil "proteus --include=%s/proteus.config --mem=%dM %s"
+    Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s"
                        WDIR Mem (if Background "&" "--runlocal=1"))
     (printf "%s\n" Command)
     status = (shell Command)
