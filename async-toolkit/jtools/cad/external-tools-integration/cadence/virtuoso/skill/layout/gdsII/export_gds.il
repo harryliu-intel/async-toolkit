@@ -3,7 +3,7 @@
                        (directory nil)
                        (gdsFile nil)
                        (layerMapFile nil)
-                       (flattenVias t))
+                       (flattenVias nil))
   (let (TEMP PDK_DIR Command status cellMapFile fmap gdsName name used CID)
     (unless CV->objType=="cellView" (error "CV not valid"))
     CID = (NameStartRename "cell" "cadence" "gds2")
