@@ -375,7 +375,7 @@
     ; run
     (shell (strcat "rm -rf " defFile))
     Command = (sprintf nil "cd \"%s\"; proteus --include=proteus.config --mem=%dM %s"
-                       WDIR Mem (if Background "&" "--runlocal=1"))
+                       WDIR Mem (if Background "&" "--runlocal=1 --runlocal-pv=0"))
     (printf "%s\n" Command)
     status = (shell Command)
     (unless status (error "Proteus failed\n"))
