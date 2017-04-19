@@ -81,12 +81,12 @@ useICV = t
       )
 
     ; place metal on top of dangling subcell pins for StarRC extraction
-    (when ConnectDanglingPins
+    (when ConnectDanglingPins && !softMacro
       (nrCreateSingleNetConnector CV MetalLPPs ?MaxHeapSize MaxHeapSize)
       )
 
     ; route abutting pins
-    (when ConnectAbuttingPins
+    (when ConnectAbuttingPins && !softMacro
       (RouteNearby ?CV CV ?topShapes t)
       )
 
