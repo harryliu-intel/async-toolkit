@@ -64,8 +64,8 @@ hiSetBindKey( "Layout"  "<Ctrl>v"  "hiDisplayForm( trAlignCellsVForm )" )
 
 hiSetBindKey( "Layout"  "Ctrl Shift <Key>p"  "Floorplan( )" )
 
-hiSetBindKey( "Layout"  "Alt Ctrl <Key>p"   "TR_FloorplanArray( )" )
-hiSetBindKey( "Layout"  "Alt <Key>p"        "ArrayCells( )" )
+;hiSetBindKey( "Layout"  "Alt Ctrl <Key>p"   "TR_FloorplanArray( )" )
+;hiSetBindKey( "Layout"  "Alt <Key>p"        "ArrayCells( )" )
 
 hiSetBindKey( "Layout"  "<Key>n"  "ShowNameInstance( )" )
 hiSetBindKey( "Layout"  "<Ctrl>n"  "ShowNameMaster( )" )
@@ -84,15 +84,15 @@ hiSetBindKey( "Layout" "<Shift>l" "DB_FlipGroup( \"LR\" )" )
 
 ; MoveAndSnap
 ; ===========
-(hiSetBindKey "Layout"  "Alt<Key>Left"  "(MoveAndSnap \"L\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Right" "(MoveAndSnap \"R\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Up"    "(MoveAndSnap \"U\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Down"  "(MoveAndSnap \"D\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>z"     "(MoveAndSnap \"L\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>c"     "(MoveAndSnap \"R\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>s"     "(MoveAndSnap \"U\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>x"     "(MoveAndSnap \"D\" )" )
-(hiSetBindKey "Layout"  "<Key>F5"    "TR_MoveAndSnap( )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Left"  "(MoveAndSnap \"L\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Right" "(MoveAndSnap \"R\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Up"    "(MoveAndSnap \"U\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Down"  "(MoveAndSnap \"D\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>z"     "(MoveAndSnap \"L\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>c"     "(MoveAndSnap \"R\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>s"     "(MoveAndSnap \"U\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>x"     "(MoveAndSnap \"D\" )" )
+;(hiSetBindKey "Layout"  "<Key>F5"    "TR_MoveAndSnap( )" )
 
 ; vi-style cell movement bindings
 (hiSetBindKey "Layout"  "Ctrl<Key>h" "(MoveAndSnap \"L\" )" )
@@ -112,8 +112,7 @@ hiSetBindKey( "Layout"  "Ctrl <Key>p"  "TR_Floorplanner( )" )
 
 ; CrawFish Module
 ; ===============
-
-hiSetBindKey( "Layout"  "Ctrl <Key>q"       "TR_AssuraLVS( )" )
+;hiSetBindKey( "Layout"  "Ctrl <Key>q"       "TR_AssuraLVS( )" )
 
 ; olap
 ; ===============
@@ -122,7 +121,7 @@ hiSetBindKey( "Layout"  "Ctrl Shift<Key>o"       "FL_Overlap( )" )
 
 ; Enhancement
 ; ===========
-hiSetBindKey( "Layout"  "Alt <Key>q"       "TR_ChangeInstNameProcGUI( )" )
+;hiSetBindKey( "Layout"  "Alt <Key>q"       "TR_ChangeInstNameProcGUI( )" )
 
 )
 

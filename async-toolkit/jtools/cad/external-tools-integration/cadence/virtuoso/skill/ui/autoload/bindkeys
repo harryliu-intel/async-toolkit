@@ -2,7 +2,7 @@
 (FulcrumDefaults)
 
 ( hiSetBindKey "Layout" "Ctrl<key>m" "leHiMarkNet()" )
-( hiSetBindKey "Layout" "Alt<key>m" "leHiUnmarkNet(nil)" )
+;( hiSetBindKey "Layout" "Alt<key>m" "leHiUnmarkNet(nil)" )
 ( hiSetBindKey "Layout" "y" "leToggleGravity()" )
 ( hiSetBindKey "Layout" "n" "ToggleNameDisplay()" )
 ( hiSetBindKey "Layout" "Ctrl<key>r" "hiRedraw()" )
@@ -21,15 +21,15 @@
 ( hiSetBindKey "Layout" "d" "geDeselectPoint()" )
 ( hiSetBindKey "Layout" "Ctrl<key>w" "leCloseWindow()" )
 ( hiSetBindKey "Layout" "Ctrl<key>v" "leSetEnv(\"orientation\" \"MX\")" )
-( hiSetBindKey "Layout" "Alt<key>v" "leSetEnv(\"orientation\" \"MY\")" )
+;( hiSetBindKey "Layout" "Alt<key>v" "leSetEnv(\"orientation\" \"MY\")" )
 ( hiSetBindKey "Layout" "Ctrl<Key>e" "CycleSnapGrids()" )
 ( hiSetBindKey "Layout" "Ctrl Alt<Key>v" "CycleViews()" )
 ( hiSetBindKey "Layout" "Ctrl Alt<Key>f" "StepViewBack()" )
 
 ; bindkeys for bus scripts
 ( hiSetBindKey "Layout" "Ctrl<key>b" "SetPattern(nil)" )
-( hiSetBindKey "Layout" "Alt<key>b" "DrawWires( )" )
-( hiSetBindKey "Layout" "Alt<key>d" "DeleteWiresAndKeepout( )" )
+;( hiSetBindKey "Layout" "Alt<key>b" "DrawWires( )" )
+;( hiSetBindKey "Layout" "Alt<key>d" "DeleteWiresAndKeepout( )" )
 ( hiSetBindKey "Layout" "Ctrl Alt<key>b" "RefreshAllBuswires()" )
 ( hiSetBindKey "Layout" "Ctrl Alt<key>g" "RedrawAllPins()" )
 ( hiSetBindKey "Layout" "Ctrl<key>x" "EditGuideInstInPlace()" )
@@ -42,26 +42,26 @@
 ( hiSetBindKey "Layout" "Shift<Btn5Down>" "(hiZoomRelativeScale (hiGetCurrentWindow) 0.75)" )
 
 ; leaf cell gate/stack functions
-( hiSetBindKey "Layout" "Alt<Key>k"       "(UIStackChainsFormCB)")
-( hiSetBindKey "Layout" "Alt<Key>f"       "(UIFoldChainsFormCB)")
-( hiSetBindKey "Layout" "Alt<Key>i"       "(UIInlineCB)")
-( hiSetBindKey "Layout" "Shift<Key>l"     "(AddHiLiteLabels)" )
-( hiSetBindKey "Layout" "Alt<Key>l"       "(TR_AddHiLiteLabels)" )
-( hiSetBindKey "Layout" "Alt<Key>l"       "(TR_AddHiLiteLabels)" )
-( hiSetBindKey "Layout" "Ctrl<Key>h"      "(SetHandLayoutSelectedObjects)" )
-( hiSetBindKey "Layout" "Ctrl Alt<Key>h"  "(SetHandLayoutAllObjects)" )
+;( hiSetBindKey "Layout" "Alt<Key>k"       "(UIStackChainsFormCB)")
+;( hiSetBindKey "Layout" "Alt<Key>f"       "(UIFoldChainsFormCB)")
+;( hiSetBindKey "Layout" "Alt<Key>i"       "(UIInlineCB)")
+;( hiSetBindKey "Layout" "Shift<Key>l"     "(AddHiLiteLabels)" )
+;( hiSetBindKey "Layout" "Alt<Key>l"       "(TR_AddHiLiteLabels)" )
+;( hiSetBindKey "Layout" "Alt<Key>l"       "(TR_AddHiLiteLabels)" )
+;( hiSetBindKey "Layout" "Ctrl<Key>h"      "(SetHandLayoutSelectedObjects)" )
+;( hiSetBindKey "Layout" "Ctrl Alt<Key>h"  "(SetHandLayoutAllObjects)" )
 
 ;adding grid poly and cut poly to layout
-( hiSetBindKey "Layout" "Ctrl<Key>y"       "DrawGridPoly()" )
-( hiSetBindKey "Layout" "Alt<Key>y"       "DeleteGridPoly()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>y"       "DrawGridPoly()" )
+;( hiSetBindKey "Layout" "Alt<Key>y"       "DeleteGridPoly()" )
 
 ;adding Implants to layout
-( hiSetBindKey "Layout" "Ctrl<Key>i"  "Implant()" )
-( hiSetBindKey "Layout" "Ctrl<Key>q"  "DeleteImplant()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>i"  "Implant()" )
+;( hiSetBindKey "Layout" "Ctrl<Key>q"  "DeleteImplant()" )
 
 ; cell alignment form
 ( hiSetBindKey "Layout" "g" "OpenAlignForm()" )
-( hiSetBindKey "Layout" "Alt<key>g" "AlignSelectedV()" )
+;( hiSetBindKey "Layout" "Alt<key>g" "AlignSelectedV()" )
 ( hiSetBindKey "Layout" "Ctrl<key>g" "AlignSelectedH()" )
 
 
@@ -116,26 +116,26 @@ hiSetBindKey( "Layout"  "Ctrl Shift <Key>Down"  "MoveToSnapAlignV( \"B\" )" )
 hiSetBindKey( "Layout"  "<Ctrl>s"  "SelectSameMaster( )" )
 
 hiSetBindKey( "Layout"  "Ctrl Shift<Key>p" "Floorplan( )" )
-hiSetBindKey( "Layout"  "Alt Ctrl<Key>p"   "TR_FloorplanArray( )" )
-hiSetBindKey( "Layout"  "Alt<Key>p"        "ArrayCells( )" )
+;hiSetBindKey( "Layout"  "Alt Ctrl<Key>p"   "TR_FloorplanArray( )" )
+;hiSetBindKey( "Layout"  "Alt<Key>p"        "ArrayCells( )" )
 hiSetBindKey( "Layout"  "Ctrl<Key>p"       "TR_Floorplanner( )" )
 
 hiSetBindKey( "Layout" "<Key>F6" "hiDisplayForm( A )" )
 
-hiSetBindKey( "Layout"  "Alt<Key>n"        "AnchorSelectedInstances( )" )
-hiSetBindKey( "Layout"  "Ctrl<Key>n"       "UnAnchorSelectedInstances( )" )
+;hiSetBindKey( "Layout"  "Alt<Key>n"        "AnchorSelectedInstances( )" )
+;hiSetBindKey( "Layout"  "Ctrl<Key>n"       "UnAnchorSelectedInstances( )" )
 
 
 ; MoveAndSnap
 ; ===========
-(hiSetBindKey "Layout"  "Alt<Key>Left"  "(MoveAndSnap \"L\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Right" "(MoveAndSnap \"R\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Up"    "(MoveAndSnap \"U\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>Down"  "(MoveAndSnap \"D\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>z"     "(MoveAndSnap \"L\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>c"     "(MoveAndSnap \"R\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>s"     "(MoveAndSnap \"U\" )" )
-(hiSetBindKey "Layout"  "Alt<Key>x"     "(MoveAndSnap \"D\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Left"  "(MoveAndSnap \"L\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Right" "(MoveAndSnap \"R\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Up"    "(MoveAndSnap \"U\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>Down"  "(MoveAndSnap \"D\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>z"     "(MoveAndSnap \"L\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>c"     "(MoveAndSnap \"R\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>s"     "(MoveAndSnap \"U\" )" )
+;(hiSetBindKey "Layout"  "Alt<Key>x"     "(MoveAndSnap \"D\" )" )
 (hiSetBindKey "Layout"  "<Key>F5"       "TR_MoveAndSnap( )" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Left"  "(LockMoveAndSnap)" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>Right" "(LockMoveAndSnap)" )
@@ -144,7 +144,7 @@ hiSetBindKey( "Layout"  "Ctrl<Key>n"       "UnAnchorSelectedInstances( )" )
 
 (hiSetBindKey "Layout"  "<Key>F4"       "TR_FindInstance( )" )
 (hiSetBindKey "Layout"  "Ctrl Shift<Key>o"  "FL_Overlap( )" )
-(hiSetBindKey "Layout"  "Alt <Key>q"       "TR_ChangeInstNameProcGUI( )" )
+;(hiSetBindKey "Layout"  "Alt <Key>q"       "TR_ChangeInstNameProcGUI( )" )
 
 
 
