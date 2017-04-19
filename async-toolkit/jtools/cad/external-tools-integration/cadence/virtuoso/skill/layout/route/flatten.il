@@ -718,6 +718,7 @@ useICV = t
     ; read the file and return table of cellNames
     cells = (makeTable filter nil)
     p_in = (infile file)
+    (unless p_in (error "filterCastQuery unable to read %s\n" file))
     (while (gets line p_in)
       (sscanf line "%s" cellName)
       cells[cellName]=t

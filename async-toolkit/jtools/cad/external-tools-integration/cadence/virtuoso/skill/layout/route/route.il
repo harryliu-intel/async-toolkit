@@ -279,7 +279,7 @@
     excluded=(makeTable "excluded" nil)
     (when excludeCellsFile
       fin = (infile excludeCellsFile)
-      (unless fin (error "Can't read %s\n" excludeCellsFile))
+      (unless fin (error "ListLefSubcells unable to read %s\n" excludeCellsFile))
       (while (fscanf fin "%s" cellName)
         excluded[cellName] = t
         )
@@ -400,6 +400,7 @@
 (defun GetSubcellLibNames (defFile)
   (let (file line libName libNames comp)
     file = (infile defFile)
+    (unless file (error "GetSubcellLibNames unable to read %s\n" defFile))
     (while (gets line file)
       (cond ((strncmp line "COMPONENTS" 10)==0 comp=t)
             ((strncmp line "END COMPONENTS" 14)==0 comp=nil)
@@ -564,41 +565,34 @@
 
 ; convert a cell name from DFII to CAST
 (defun GetCastCellName (cellname
-                       @key (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
-                            (castpath ConfigFileGetValue(TheCDSConfigTable "CAST_PATH")) )
-  (let (castname filename ExecCmd Command file)
-    castname "junk"
-    filename = strcat( tempdir "/" cellname ".castname" )
-    ExecCmd = cond( ( ( boundp( `ExecCmd ) && stringp( ExecCmd ) )
-                               ExecCmd )
-                    ( "" ) )
-
-    when( !isFile(filename)
-      Command = sprintf( nil
-                "echo %s | %s %s/rename --type=cell --from=cadence --to=cast > %s"
-		cellname
-                ExecCmd
-                PackageGetBinRoot( )
-		filename
-                )
-       printf( "%s\n" Command )
-       shell( Command )
-    )
-
-    file=infile( filename )
-    if( file then
-      while( gets( line file )
-        when( line=car(parseString(line " \n"))
-          castname = line
-        )
+                        @key (tempdir ConfigFileGetValue(TheCDSConfigTable "TEMP"))
+                             (castpath ConfigFileGetValue(TheCDSConfigTable "CAST_PATH")))
+  (let (castname filename ExecCmd Command file line)
+    filename = (strcat tempdir "/" cellname ".castname")
+    ExecCmd = (if (boundp `ExecCmd) && (stringp ExecCmd) ExecCmd "")
+    (unless (isFile filename)
+      Command = (sprintf nil
+                         "echo %s | %s %s/rename --type=cell --from=cadence --to=cast > %s"
+                         cellname
+                         ExecCmd
+                         (PackageGetBinRoot)
+                         filename
+                         )
+      (printf "%s\n" Command)
+      (shell Command )
       )
-    else
-      printf("Can't open file %s.\n" filename)
-    )
-    close( file )
+    
+    file=(infile filename)
+    (unless file (error "GetCastCellName unable to read %s\n" filename))
+    (while (gets line file)
+      (when line=(car (parseString line " \n"))
+            castname = line
+            )
+      )
+    (close file)
     castname
+    )
   )
-)
 
 ; Change placement status of all instances to "locked".  Use in floorplan view of custom cells.
 (defun LockInstances (@key (CV (geGetEditCellView)) (status "locked"))
