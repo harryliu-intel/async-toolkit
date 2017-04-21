@@ -20,7 +20,11 @@ BEGIN {
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
 use DB_File;
 
-$ENV{FULCRUM_NB_CONFIG}="/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config" if(not defined $ENV{FULCRUM_NB_CONFIG});
+if(not defined $ENV{FULCRUM_NB_CONFIG}) {
+  if ( (not defined  $ENV{NBPOOL}) || (not defined $ENV{NBQSLOT}) || (not defined $ENV{NBCLASS}) ) {
+      $ENV{FULCRUM_NB_CONFIG}="/nfs/sc/proj/ctg/mrl108/mrl/tools/local/fulcrum_nb.config";
+  }
+}
 
 # config file
 my $configfile = $ENV{FULCRUMCONFIG};
