@@ -14,6 +14,7 @@ my @bboxes = ();
 my $workdir = '.';
 my @deletes = ();
 my $runset = '/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/latest';
+my $user_equiv = '';
 
 sub usage {
     local $, = " ";
@@ -25,6 +26,7 @@ Usage: $0
 	--runset=[$runset] (Location of LVS runsets)
 	--work-dir=[$workdir] (Working directory)
 	--delete=[@deletes] (Deletes the CAST cell from layout; specify any number of times)
+	--generate-user-equiv=[$user_equiv] (How to generate user-intended equiv: FULL_NAME_CASE_SENSITIVE | NONE)
 	[@bboxes] (List of CAST names of blackbox cells)
 EOF
     exit 1;
@@ -136,7 +138,7 @@ EOF
 }
 
 sub run_lvs {
-    my ($gds, $sch, $cell, $bboxes, $deletes, $workdir) = @_;
+    my ($gds, $sch, $cell, $bboxes, $deletes, $user_equiv, $workdir) = @_;
     my $pdk = $ENV{FULCRUM_PDK_ROOT};
 
     my $clf = catfile($workdir, 'lvs.clf');
@@ -205,6 +207,16 @@ EOF
         close($ch);
     }
 
+    if ($user_equiv ne '') {
+        my $lvsopt = catfile($workdir, 'user_LVSoptions');
+        open(my $fh, '>', $lvsopt) or die "Can't write to $lvsopt: $!";
+        print $fh <<EOF;
+generate_user_equivs = $user_equiv,
+generate_system_equivs = true
+EOF
+        close $fh;
+    }
+
     my $cmd = "cd \Q$workdir\E && $ENV{ICV_SCRIPT} icv -clf lvs.clf";
     system($cmd) == 0 or die "Failed to run ICV $cmd: $?";
 }
@@ -227,4 +239,5 @@ print "Starting LVS...\n";
 run_lvs($gds, $icv, $mapping->{$cast_cell},
         [ grep { defined($_) } map { $mapping->{$_} } @bboxes ],
         [ grep { defined($_) } map { $mapping->{$_} } @deletes ],
+        $user_equiv,
         $workdir);
