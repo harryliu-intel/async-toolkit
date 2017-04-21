@@ -13,7 +13,8 @@
                      (yo 0.0)   ; vertical   offset
                      (supplies (list "GND" "Vdd" "GND" "VDDM")) ; repeats endlessly at constant wire pitch
                      )
-  (let (viaCV inst overhang via8 bbox x0 x1 y0 y1 s sx sy name net done filter rect via)
+  (let (num viaCV inst overhang via8 bbox x0 x1 y0 y1 s sx sy name net done filter rect via)
+    num = (length supplies)
     inst = (dbFindAnyInstByName CV "vias")
     (when inst (dbDeleteObject inst))
     overhang = 0.84 ; minimum m8 overhang from center of v8
@@ -32,7 +33,7 @@
     y1 = (round y1/yp)
     (for x x0 x1-1
          (for y y0+1 y1-1
-              s    = (mod x-x0 (length supplies))
+              s    = (mod (mod x num)+num num) ; positive modulo of x; pattern aligned to origin
               sx   = x*xp+xo
               sy   = y*yp+yo
               name = (nth s supplies)
