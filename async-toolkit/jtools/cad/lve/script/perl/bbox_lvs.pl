@@ -37,6 +37,7 @@ GetOptions("cast-path=s" => \$castpath,
            "top=s" => \$cast_cell,
            "runset=s" => \$runset,
            "delete=s" => \@deletes,
+           "generate-user-equiv=s" => \$user_equiv,
            "work-dir=s" => \$workdir) || usage();
 
 @bboxes = @ARGV;
