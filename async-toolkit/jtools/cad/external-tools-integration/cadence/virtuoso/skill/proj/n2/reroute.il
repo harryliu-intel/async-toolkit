@@ -188,6 +188,7 @@
 (defun UpdateTopCell (@key (CV (geGetEditCellView)))
   (let (TopMetal)
     TopMetal = 11
+    (foreach inst CV->instances inst->status="locked")
     (UpdateFloorplan ?CV CV ?recurse nil)
     (DeletePins ?CV CV)
     (DeleteAutoGen ?CV CV)
