@@ -41,6 +41,9 @@ useICV = t
     ; Create flatten view from floorplan view
     CV = (DirectFlatten ?CV CV ?RegenerateFromCast RegenerateFromCast)
 
+    ; update connectivity (TODO: eliminate one of these, but this one connects subcell pins)
+    (UpdateFloorplan ?CV CV ?recurse nil)
+
     ; lock all instances unless softMacro
     (unless softMacro (foreach x CV->instances x->status="locked"))
 
@@ -50,7 +53,7 @@ useICV = t
     (CanonicalizeNets ?CV CV)
     (DeleteRedundantPins ?CV CV ?warnOnly !delete_redundant_pins)
 
-    ; update connectivity
+    ; update connectivity (TODO: eliminate one of these, but this one sets top-level pin directions)
     (UpdateFloorplan ?CV CV ?recurse nil)
 
     ; cache various information in CV properties
