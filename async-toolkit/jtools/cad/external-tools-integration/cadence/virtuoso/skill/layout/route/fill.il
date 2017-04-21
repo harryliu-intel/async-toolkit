@@ -199,24 +199,6 @@
     )
   )
 
-; transform overlap shapes up to a top level bbox
-(defun TransformOverlapBBox (a)
-  (let (b xy mosaic)
-    (cond ((atom a) && (a->objType=="rect" || a->objType=="polygon" ||
-                        a->objType=="path" || a->objType=="pathSeg") a->bBox)
-          (!(atom a) && ((car a)->objType=="inst" || (car a)->objType=="stdVia")
-            b = (TransformOverlapBBox (cadr a))
-            (if b (dbTransformBBox b (dbGetInstTransform (car a))) nil)
-            )
-          (!(atom a) && (car a)->objType=="mosaic"
-            (printf "WARNING: ignoring shapes in mosaic %s\n" (car a)->name)
-            nil
-            )
-          (t nil)
-          )
-    )
-  )
-
 ; fill using a template cell
 (defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal TopMetal) (deleteOld t)
                           (chopAtBoundary t) (ignoreFill nil))

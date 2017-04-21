@@ -70,7 +70,7 @@
   (let (b xy mosaic)
     (cond ((atom a) && (a->objType=="rect" || a->objType=="polygon" ||
                         a->objType=="path" || a->objType=="pathSeg")
-           (if (apply filter (list a)) a->bBox nil)
+           (if !filter || (apply filter (list a)) a->bBox nil)
            )
           (!(atom a) && ((car a)->objType=="inst" || (car a)->objType=="stdVia")
             b = (TransformOverlapBBox (cadr a) ?filter filter)
