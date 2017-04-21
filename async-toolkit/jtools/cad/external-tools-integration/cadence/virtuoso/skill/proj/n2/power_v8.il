@@ -33,7 +33,8 @@
     y1 = (round y1/yp)
     (for x x0 x1-1
          (for y y0+1 y1-1
-              s    = (mod (mod x num)+num num) ; positive modulo of x; pattern aligned to origin
+              s    = (mod x-x0 num) ; left edge aligned
+              ; s    = (mod (mod x num)+num num) ; origin aligned
               sx   = x*xp+xo
               sy   = y*yp+yo
               name = (nth s supplies)
