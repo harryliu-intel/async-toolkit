@@ -9,7 +9,7 @@
 (defun PowerV8 (@key (CV (geGetEditCellView))
                      (xp 1.68)  ; horizontal pitch for potential v8
                      (yp 0.798) ; vertical   pitch for potential v8 (NOTE: half the 1.596 pitch)
-                     (xo 0.0)   ; horizontal offset (TODO: should be xp/2)
+                     (xo 0.84)  ; horizontal offset
                      (yo 0.0)   ; vertical   offset
                      (supplies (list "GND" "Vdd" "GND" "VDDM")) ; repeats endlessly at constant wire pitch
                      )
