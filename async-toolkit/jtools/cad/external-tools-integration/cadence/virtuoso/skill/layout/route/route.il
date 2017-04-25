@@ -621,18 +621,18 @@
 
 ; OBSOLETE: Copy pins from a floorplan view
 (defun CopyPinsFromSourceView (@key (CV (geGetEditCellView)) (srcCV nil))
-  (let (fCV fig net pin trm)
+  (let (fig net pin trm)
     ; assumes same cell name unless specified
     (unless srcCV
-      fCV = (ReadCV CV->libName CV->cellName "floorplan")
-      (unless fCV (printf "Source view not found.\n"))
+      srcCV = (ReadCV CV->libName CV->cellName "floorplan")
+      (unless srcCV (printf "Source view not found.\n"))
     )
-    (when fCV
+    (when srcCV
       (DeletePins ?CV CV)
       (foreach trm CV->terminals (dbDeleteObject trm))
       (foreach trm CV->terminals (dbDeleteObject trm))
 
-      (foreach shape fCV->shapes
+      (foreach shape srcCV->shapes
         (when shape->pin
           net = (dbMakeNet CV shape->net->name)
 	  trm = (dbCreateTerm net net->name shape->pin->term->direction)
