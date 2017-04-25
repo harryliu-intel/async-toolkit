@@ -167,3 +167,28 @@
              ?CV CV
 	     )
   )
+
+; draw Balls from Pins.csv to debug them
+(defun DrawBalls (@key (file "Pins.csv") (CV (geGetEditCellView)) (w 85.0) (lpp (list "c4" "drawing")))
+  (let (fin )
+    fin = (infile file)
+    (while (gets line fin)
+      elems = (parseString line ",")
+      (when (car elems)=="A1"
+        x = (atof (nth 5 elems))
+        y = (atof (nth 6 elems))
+        name = (nth 7 elems)
+        xy = (dbTransformPoint x:y (list 0:0 "MY"))
+        x = (car xy)
+        y = (cadr xy)
+        (printf "%s %g %g\n" name x y)
+        rect = (dbCreateRect CV lpp (list x-w/2:y-w/2 x+w/2:y+w/2))
+        rect->net = (dbMakeNet CV name)
+        (dbCreatePin rect->net rect)
+        label = (LabelPin CV rect)
+        (dbReplaceProp rect  "autogen" "boolean" t)
+        )
+      )
+    )
+  t
+  )
