@@ -35,6 +35,8 @@ spar_cell_list =
      "lib.bd.standard.send.SEND_CTRL.0n"
      "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0n"
      "lib.bd.standard.split.SPLIT_CTRL-L2-R.0n"
+     ; super new SAFE_CTRL
+     "lib.bd.standard.pipeline.SAFE_CTRL.0n"
      ; new BD_CONTROLLER (UV1 thresold)
      "lib.bd.source.bitgen.BDC_BG.0"
      "lib.bd.metastable.arbiter.ARBITER_CTRL.0"
