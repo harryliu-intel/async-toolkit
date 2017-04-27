@@ -1,5 +1,13 @@
+
 (defun DrawCE1 (@key (CV (geGetEditCellView)))
-  (leLayerSize CV (list "ce2" "drawing") -0.168 (list "ce1" "drawing"))
+  (foreach shape CV->shapes
+    (when shape->lpp==(list "ce1" "drawing") (dbDeleteObject shape))
+  )
+  (leLayerSize CV (list "ce2" "drawing") -0.168 Scratch1LPP)
+  (leLayerAndNot CV Scratch1LPP (list "ce1" "keepout") (list "ce1" "drawing"))
+  (foreach shape CV->shapes
+    (when shape->lpp==Scratch1LPP (dbDeleteObject shape))
+  )
   t
   )
 
