@@ -1804,7 +1804,12 @@ public class VariableAnalyzer {
         private void processUnary(final AbstractUnaryExpression e)
             throws VisitorException {
             e.getExpression().accept(this);
-            setType(e, getType(e.getExpression()));
+            final Type ty = getType(e.getExpression());
+            if (isInteger(ty)) {
+                setInteger(e);
+            } else {
+                setType(e, getType(e.getExpression()));
+            }
         }
 
         private void processBinary(final AbstractBinaryExpression e) 

@@ -1022,7 +1022,10 @@ public class FunctionPreprocessor extends VisitorByCategory {
                             .epr(arg));
                     }
                 } else if (currType != null) {
-                    preamble.add(createVarStatement(actual, currType)); 
+                    final Type varType =
+                        currType instanceof IntegerType ? new TemporaryIntegerType()
+                                                        : currType;
+                    preamble.add(createVarStatement(actual, varType));
                 }
                 actual.epr(arg);
                 preamble.add(
