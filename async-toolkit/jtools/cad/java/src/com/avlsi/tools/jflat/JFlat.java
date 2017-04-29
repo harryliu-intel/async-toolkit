@@ -3603,8 +3603,12 @@ public final class JFlat {
                                 final InstanceData instData) {
             final Set targets = new HashSet();
             // isolate current draw of PRS from power supplies
+            // and resistive voltage divider to create a node at half voltage
             pw.E(nextDevice(), "ENV_PRS_TRUE",  "0", "VCVS", new String[]{Vdd,"0","1"});
             pw.E(nextDevice(), "ENV_PRS_FALSE", "0", "VCVS", new String[]{GND,"0","1"});
+            pw.R(nextDevice(), "ENV_PRS_TRUE",  "ENV_PRS_MID", null, "PrsMaxRes", new String[0]);
+            pw.R(nextDevice(), "ENV_PRS_FALSE", "ENV_PRS_MID", null, "PrsMaxRes", new String[0]);
+
             // emit the PRS
             for (final Iterator i = prs.getProductionRules(); i.hasNext(); ) {
                 final ProductionRule pr = (ProductionRule) i.next();
@@ -3634,9 +3638,9 @@ public final class JFlat {
                     final String cName = printNode(conj.getName());
                     if (conj.getSense()) {
                         args.add(cName);
-                        args.add(GND);
+                        args.add("ENV_PRS_MID");
                     } else {
-                        args.add(Vdd);
+                        args.add("ENV_PRS_MID");
                         args.add(cName);
                     }
                     ++count;
@@ -3653,21 +3657,14 @@ public final class JFlat {
                     nn = "ENV_PRS_FALSE";
                 }
 
-                // PWL approximation of a linear conductance curve with threshold Vlo
+                // resistance changes from PrsMaxRes to PrsMinRes as input crosses ENV_PRS_MID
                 args.add(0, "AND(" + count + ")");
+                args.add("-1,PrsMaxRes");
                 args.add("0,PrsMaxRes");
-                int pts=10;
-                for (int i=0; i<=pts; i++) {
-                    double x = 1.0*i/pts;
-                    args.add("'Vlo+(Vmax-Vlo)*" + x + "'" +
-                             "," +
-                             "'1/(1/PrsMaxRes+(1/PrsMinRes-1/PrsMaxRes)*" + x + ")'");
-                }
-                args.add("'2*Vmax',PrsMinRes");
-
+                args.add("0,PrsMinRes");
+                args.add("1,PrsMinRes");
                 pw.G(nextDevice(), np, nn, "vcr",
                      (String[]) args.toArray(new String[0]));
-
                 args.clear();
 
                 if (targets.add(target)) {
