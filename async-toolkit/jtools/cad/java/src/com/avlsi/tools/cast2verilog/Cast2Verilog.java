@@ -1815,7 +1815,7 @@ public class Cast2Verilog {
         out.println("function " + size + " posmod(");
         out.println("    input signed " + size + " numer,");
         out.println("    input signed " + size + " denom);");
-        out.println("posmod = $unsigned((numer % denom + denom) % denom);");
+        out.println("posmod = $unsigned(((numer % denom) + denom) % denom);");
         out.println("endfunction");
         out.println();
 
