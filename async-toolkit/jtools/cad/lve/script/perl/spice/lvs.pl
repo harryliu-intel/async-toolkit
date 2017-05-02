@@ -29,7 +29,7 @@ my $extra_extract_equiv="";
 my $blackbox=0;
 my $icv_options;
 my $threads=2;
-my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/v1.3.0p1";
+my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/v1.8.0";
 my $rc_database=0;
 my $nodeprops='';
 

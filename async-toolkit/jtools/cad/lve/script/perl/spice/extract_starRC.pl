@@ -309,7 +309,7 @@ $mode_op = 0 if ($machine =~ /x86_64/ and $ENV{PATH} =~ /SEV-32/);
 my $conf_dir="$pdk_root/share/Fulcrum/starrcxt";
 my $AssuraHome="$pdk_root/share/Fulcrum/assura";
 my $extract_dir=$spice_target;
-my $upf_version="x2r1u1";
+my $upf_version="x2r2";
 $extract_dir =~ s:/[^/]*$::;
 $extract_dir =~ s:.*/::;
 $extract_dir =~ s/accurate/extracted/;
