@@ -29,7 +29,7 @@
                       cx = (x2 - (x2-x1)/2)
                       cy = (y2 - (y2-y1)/2)
                       pgtyp = (if pin->net->name == "GND" "GROUND" "POWER" ) 
-                      (fprintf pout "%s_%d %g %g v7 %s\n" pin->net->name n
+                      (fprintf pout "%s_%d %g %g m8 %s\n" pin->net->name n
                                cx cy pgtyp)
                       n++
                       )
