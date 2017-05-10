@@ -3206,12 +3206,12 @@ public final class JFlat {
                                final CellInterface envCell)
             throws CellFormatterException, IOException {
             if (envCell == null) {
-                if (cell != null) processCell(cell);
+                if (cell != null) processCell(cell, false);
             } else {
                 final AliasedSet aliases = cadencizer.convert(cell).getLocalNodes();
                 final InstanceData instData = new InstanceData();
                 instData.updateExtraDelay(cell, aliases);
-                processCell(envCell, cell.getFullyQualifiedType() + "_env", cell, instData);
+                processCell(envCell, true, cell.getFullyQualifiedType() + "_env", cell, instData);
             }
 
             // checkError also flushes
@@ -3219,8 +3219,9 @@ public final class JFlat {
                 throw new IOException();
         }
 
-        private void processCell(final CellInterface cell) {
-            processCell(cell, null, null, null);
+        private void processCell(final CellInterface cell, final boolean isEnv)
+            throws CellFormatterException, IOException  {
+            processCell(cell, isEnv, null, null, null);
         }
 
         /**
@@ -3475,9 +3476,11 @@ public final class JFlat {
          * @param isEnv  If the cell results from a named environment.
          **/
         private void processCell(final CellInterface cell,
+                                 final boolean isEnv,
                                  final String envName,
                                  final CellInterface parentCell,
-                                 final InstanceData instData) {
+                                 final InstanceData instData)
+            throws CellFormatterException, IOException  {
             if (!seen.add(cell.getFullyQualifiedType())) return;
 
             // XXX: we can't print out rules involving ERROR because
@@ -3513,7 +3516,7 @@ public final class JFlat {
                 if (!CellUtils.isWiring(subcell)) {
                     final CellInterface fixed = fixupRandom(subcell);
                     if (fixed != subcell) fixupCells.put(p.getFirst(), fixed);
-                    processCell(fixed);
+                    processCell(fixed, isEnv);
                 }
             }
 
@@ -3543,6 +3546,10 @@ public final class JFlat {
                 Vdd = pickSupplyName(cell, localNodes,
                                      DirectiveConstants.POWER_NET, "Vdd");
                 processPRS(prs,delay,instData);
+            }
+            else if (isEnv && cell.containsNetlist() ) { // lower precedence than PRS
+                System.err.println("Using env netlist in " + cellName);
+                processNetlist(cell);
             }
 
             // Emit subcircuit calls
@@ -3596,6 +3603,16 @@ public final class JFlat {
                 pw.X("env", getActuals(cell, combined), printCell(envName),
                      new String[0]);
             }
+        }
+
+        // TODO: proper SPICE syntax instead of CDL?
+        private void processNetlist(final CellInterface cell)
+            throws CellFormatterException, IOException {
+            final BlockIterator bi = cell.getBlockInterface().iterator(BlockInterface.NETLIST);
+            if (!bi.hasNext()) return;
+            final NetlistBlock nb = (NetlistBlock) bi.next();
+            if (nb.isEmpty()) return;
+            nb.getCDLTemplate().execute(new CDLFactoryEmitter(w, true, 79));
         }
 
         private void processPRS(final ProductionRuleSet prs,
