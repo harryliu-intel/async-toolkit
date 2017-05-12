@@ -47,7 +47,7 @@ public class Type implements Comparable {
     double maxAntiSlack = 0;
 
     /** Target cycleSlack */
-    static double cycleSlack = 9;
+    static double cycleSlack = 10; // 9 for QDI 18tpc
     
     /** Free slack on all channels */
     static double globalFreeSlack = 0;
@@ -86,10 +86,10 @@ public class Type implements Comparable {
     static int numIntegerVariables = 0;
     
     /** Minimum latency per slack buffer */
-    static double latencyPerBuffer = 1;
+    static double latencyPerBuffer = 2; // 1 for QDI BUF
     
-    /** Cycle-slack for internal handshake of slack buffers*/
-    static double bufferCycleSlack = 5;
+    /** Free slack on internal handshake of slack buffers */
+    static double bufferFreeSlack = 6; // 2 for QDI BUF assuming 18tpc
 
     /** Predicate to determine which instance_time to report */
     static UnaryPredicate reportInstanceTimes = null;
@@ -656,7 +656,7 @@ public class Type implements Comparable {
             chan.slackIndex = baseIndex++;
 
             // minimize freeSlack = cost * (slack / maxLatency - num_buffers)
-            double maxLatency = latencyPerBuffer + (cycleSlack - bufferCycleSlack)/2;
+            double maxLatency = latencyPerBuffer + bufferFreeSlack + globalFreeSlack;
             double cost = costFreeSlack*weight*chan.cost;
             ObjectiveTerm.addObjectiveTerm(chan.slackIndex,
                                            cost/maxLatency,objectiveTerms);

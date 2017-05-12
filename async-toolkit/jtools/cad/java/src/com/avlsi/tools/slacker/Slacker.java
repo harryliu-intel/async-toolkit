@@ -163,7 +163,7 @@ public class Slacker {
         final FileSearchPath castPath =
             new FileSearchPath(theArgs.getArgValue( "cast-path", "." ));
         String cycleSlackStr = theArgs.getArgValue("cycle-slack",null);
-        double cycleSlack = 9;
+        double cycleSlack = 10;
         if (cycleSlackStr!=null) cycleSlack = Double.parseDouble(cycleSlackStr);
         String globalFreeSlackStr = theArgs.getArgValue("global-free-slack",null);
         double globalFreeSlack = 0;
