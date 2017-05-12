@@ -689,6 +689,11 @@ public class Cast {
                                    " should set slacker_leaf=true\n" +
                                    "  or all of these should " + fragmentSubcells);
             }
+            // warn about cell with no subcells
+            if (!cell.containsSubcells()) {
+                System.err.println("WARNING: " + type.name + 
+                                   " should set slacker_leaf=true");
+            }
             // process subcells
             for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                 final Pair p = (Pair) i.next();
