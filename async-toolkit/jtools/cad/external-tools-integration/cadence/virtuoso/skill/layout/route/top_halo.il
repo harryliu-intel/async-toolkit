@@ -11,9 +11,26 @@
   t
   )
 
-; Add TOP_HALO given a prBoundary.  May need to invert to get
-; interior/exterior correct, but usually seems to work by default.
-(defun AddTopHalo (@key (CV (geGetEditCellView)) (invert nil) (fill_metal nil))
+; Detect if a polygon is clockwise.  Works by adding up the sign of all cross products at the corners.
+(defun IsPolygonClockwise (points)
+  (let (l n tot)
+    tot = 0
+    l = (length points)
+    (for x 0 l-1
+         p0 = (nth x points)
+         p1 = (nth (mod x+1 l) points)
+         p2 = (nth (mod x+2 l) points)
+         v01 = (car p1)-(car p0):(cadr p1)-(cadr p0)
+         v12 = (car p2)-(car p1):(cadr p2)-(cadr p1)
+         cross = (car v01)*(cadr v12) - (cadr v01)*(car v12) ; Z element of 3D vector cross product
+         tot = tot + (if cross>0 1 -1)
+         )
+    tot>0
+    )
+  )
+
+; Add TOP_HALO given a prBoundary.
+(defun AddTopHalo (@key (CV (geGetEditCellView)) (fill_metal nil))
   (let (vCV nCV ncCV scCV niCV siCV points num idx point last next c name x y xa ya w h)
     ; delete old halo
     (DeleteTopHalo ?CV CV)
@@ -27,11 +44,12 @@
     niCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_tap" "layout")
     siCV = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_tap" "layout")
 
+    ; with metal fill
     vCVm  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.v_m2345678"  "layout")
-    nCVm  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m2345678"      "layout")
-    sCVm  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m2345678"      "layout")
-    ncCVm = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m2345678"     "layout")
-    scCVm = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m2345678"     "layout")
+    nCVm  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.n_m2345678"  "layout")
+    sCVm  = (dbOpenCellViewByType "globals" "globals.TOP_HALO.s_m2345678"  "layout")
+    ncCVm = (dbOpenCellViewByType "globals" "globals.TOP_HALO.nc_m2345678" "layout")
+    scCVm = (dbOpenCellViewByType "globals" "globals.TOP_HALO.sc_m2345678" "layout")
     niCVm = (dbOpenCellViewByType "globals" "globals.TOP_HALO.ni_m2345678" "layout")
     siCVm = (dbOpenCellViewByType "globals" "globals.TOP_HALO.si_m2345678" "layout")
 
@@ -39,7 +57,7 @@
     xa = (car gridAlignment["lego"])
     ya = (cadr gridAlignment["lego"])
     points = CV->prBoundary->points
-    points = (if invert (reverse points) points)
+    points = (if (IsPolygonClockwise points) points (reverse points))
     num = (length points)
     idx = 0
 
@@ -157,7 +175,7 @@
 
 
 ; make filled dummy block using prbound
-(defun FillDummyView (@key (CV (geGetEditCellView)) (invert nil))
+(defun FillDummyView (@key (CV (geGetEditCellView)))
   (let (fillcell)
      (foreach inst CV->instances (dbDeleteObject inst))
      (foreach shape CV->shapes 
@@ -165,7 +183,7 @@
            (dbDeleteObject shape)
            )
         )
-     (AddTopHalo ?CV CV ?invert invert ?fill_metal t)
+     (AddTopHalo ?CV CV ?fill_metal t)
      (MakeFillGrid ?CV CV)
      (MakeColorGrid ?CV CV)
      fillcell = (dbFindAnyInstByName CV "fill")
