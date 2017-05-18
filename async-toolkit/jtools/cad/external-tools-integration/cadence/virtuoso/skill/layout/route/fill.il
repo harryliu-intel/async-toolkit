@@ -241,7 +241,7 @@
   )
 
 ; utility to draw the fill shapes
-(defun CreateFillTemplateCell ()
+(defun CreateFillTemplateCell (@key (powerTracks nil))
   (let (CV x y n)
     CV = (dbOpenCellViewByType "globals" "globals.FILL_TEMPLATE.m012345678_fill" "layout" "maskLayout" "w")
     x = (car  gridAlignment[8])
@@ -249,23 +249,23 @@
     
     ; horizontal layers
     n = (round y/(cadr gridAlignment[0]))
-    (DrawChannelArray nil power_m0 "" 0:n-1 pitch_m0 (list 0:0 x:0) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m0 "" 0:n-1 pitch_m0 (list 0:0 x:0) ?CV CV))
     (for i 0 n*tracks_m0-1 (DrawChannel BusMetal01 (NodeChan 0 i) "" (list 0:0 x:0) ?CV CV))
 
     n = (round y/(cadr gridAlignment[2]))
-    (DrawChannelArray nil power_m2 "" 0:n-1 pitch_m2 (list 0:0 x:0) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m2 "" 0:n-1 pitch_m2 (list 0:0 x:0) ?CV CV))
     (for i 0 n*tracks_m2-1 (DrawChannel BusMetal23 (NodeChan 2 i) "" (list 0:0 x:0) ?CV CV))
 
     n = (round y/(cadr gridAlignment[4]))
-    (DrawChannelArray nil power_m4 "" 0:n-1 pitch_m4 (list 0:0 x:0) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m4 "" 0:n-1 pitch_m4 (list 0:0 x:0) ?CV CV))
     (for i 0 n*tracks_m4-1 (DrawChannel BusMetal45 (NodeChan 4 i) "" (list 0:0 x:0) ?CV CV))
 
     n = (round y/(cadr gridAlignment[6]))
-    (DrawChannelArray nil power_m6 "" 0:n-1 pitch_m6 (list 0:0 x:0) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m6 "" 0:n-1 pitch_m6 (list 0:0 x:0) ?CV CV))
     (for i 0 n*tracks_m6-1 (DrawChannel BusMetal67 (NodeChan 6 i) "" (list 0:0 x:0) ?CV CV))
 
     n = (round y/(cadr gridAlignment[8]))
-    (DrawChannelArray nil power_m8 "" 0:n-1 pitch_m8 (list 0:0 x:0) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m8 "" 0:n-1 pitch_m8 (list 0:0 x:0) ?CV CV))
     (for i 0 n*tracks_m8-1 (DrawChannel BusMetal78 (NodeChan 8 i) "" (list 0:0 x:0) ?CV CV))
 
     ; vertical layers
@@ -273,15 +273,15 @@
     (for i 0 n*tracks_m1 (DrawChannel BusMetal01 (NodeChan 1 i) "" (list 0:0 0:y) ?CV CV))
 
     n = (round x/(car gridAlignment[3]))
-    (DrawChannelArray nil power_m3 "" 0:n-1 pitch_m3 (list 0:0 0:y) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m3 "" 0:n-1 pitch_m3 (list 0:0 0:y) ?CV CV))
     (for i 0 n*tracks_m3-1 (DrawChannel BusMetal23 (NodeChan 3 i) "" (list 0:0 0:y) ?CV CV))
 
     n = (round x/(car gridAlignment[5]))
-    (DrawChannelArray nil power_m5 "" 0:n-1 pitch_m5 (list 0:0 0:y) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m5 "" 0:n-1 pitch_m5 (list 0:0 0:y) ?CV CV))
     (for i 0 n*tracks_m5-1 (DrawChannel BusMetal45 (NodeChan 5 i) "" (list 0:0 0:y) ?CV CV))
 
     n = (round x/(car gridAlignment[7]))
-    (DrawChannelArray nil power_m7  "" 0:n-1 pitch_m7 (list 0:0 0:y) ?CV CV)
+    (when powerTracks (DrawChannelArray nil power_m7  "" 0:n-1 pitch_m7 (list 0:0 0:y) ?CV CV))
     (for i 0 n*tracks_m7-1  (DrawChannel BusMetal67 (NodeChan 7 i) "" (list 0:0 0:y) ?CV CV))
 
     ; convert all shapes to fill purpose and return CV
