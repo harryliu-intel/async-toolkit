@@ -14,10 +14,10 @@
                    ?CV CV)
   )
 
-; Add filler avoiding "m8":"block"
+; Add filler avoiding "m2":"block"
 (defun MakeFillGrid (@key (CV (geGetEditCellView)) (overlayView "layout"))
-  (MakeOverlayGrid "fill" overlayView (list "m8" "block")
-                   (dbOpenCellViewByType "globals" "globals.FILL0p5x0p5.uptom8" "layout")
+  (MakeOverlayGrid "fill" overlayView (list "m2" "block")
+                   (dbOpenCellViewByType "globals" "globals.FILL_GRID.uptom8_fill" "layout")
                    ?CV CV)
   )
 
