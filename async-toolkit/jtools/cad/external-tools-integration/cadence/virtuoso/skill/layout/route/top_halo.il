@@ -58,7 +58,6 @@
 
          ; instantiate a corner
          name = (sprintf nil "halo_%d" idx++)
-         namem = (sprintf nil "halom_%d" idx++)
 	 (cond
                (c=="se" (dbCreateSimpleMosaic CV scCV name point "R0" 1 1 ya xa))
                (c=="en" (dbCreateSimpleMosaic CV scCV name point "MY" 1 1 ya xa))
@@ -80,7 +79,6 @@
 
          ; instantiate an edge
          name = (sprintf nil "halo_%d" idx++)
-         namem = (sprintf nil "halo_%d" idx++)
          h = (abs (round ((cadr next)-(cadr point))/ya))
          w = (abs (round ((car next)-(car point))/xa))
          x = (car point)
@@ -135,13 +133,14 @@
 ; Add CHIP_HALO given a prBoundary.
 (defun AddChipHalo (@key (CV (geGetEditCellView)))
   (let (vCV nCV ncCV scCV niCV siCV)
+    ; n/s and i/c confusingly swapped because this goes OUTSIDE the prBoundary
     vCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.v"  "layout")
-    nCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.n"  "layout")
-    sCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.s"  "layout")
-    ncCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.nc" "layout")
-    scCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.sc" "layout")
-    niCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.ni" "layout")
-    siCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.si" "layout")
+    nCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.s"  "layout")
+    sCV  = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.n"  "layout")
+    ncCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.si" "layout")
+    scCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.ni" "layout")
+    niCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.sc" "layout")
+    siCV = (dbOpenCellViewByType "globals" "globals.CHIP_HALO.nc" "layout")
     (AddHalo vCV nCV sCV ncCV scCV niCV siCV ?CV CV ?outside t)
     )
   )
