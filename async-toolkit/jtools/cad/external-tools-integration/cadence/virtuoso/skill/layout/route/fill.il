@@ -19,6 +19,7 @@
                           (flatCV nil)
                           (chopAtBoundary t)
                           (ignoreFill nil)
+                          (powerTracks nil)
                           )
   (let (layerName cellName mod2 fillCV lpp_fill lpp_blk rect bbox
         overlaps fill_shapes mc sp
@@ -39,7 +40,8 @@
     x0=0 y0=0 x1=0 y1=0 rows=1 cols=1
     align = 0:0
     (unless fillCV
-      cellName = "globals.FILL_TEMPLATE.m012345678_fill"
+      cellName = (if powerTracks "globals.FILL_TEMPLATE.m012345678_fill_pg"
+                   "globals.FILL_TEMPLATE.m012345678_fill")
       (printf "using default %s\n" cellName)
       fillCV = (dbOpenCellViewByType "globals" cellName "layout")
       align = gridAlignment[8]
@@ -201,11 +203,12 @@
 
 ; fill using a template cell
 (defun TemplateFill (@key (CV (geGetEditCellView)) (botMetal 0) (topMetal TopMetal) (deleteOld t)
-                          (chopAtBoundary t) (ignoreFill nil))
+                          (chopAtBoundary t) (ignoreFill nil) (powerTracks nil))
   (let (flatCV)
     (when deleteOld (DeleteAutoGen ?propName "TemplateFill" ?CV CV))
     flatCV = (MakeFlatBlockageView ?botMetal botMetal ?topMetal topMetal ?CV CV ?ignoreFill ignoreFill)
-    (for m botMetal topMetal (ChopFill m ?CV CV ?flatCV flatCV ?chopAtBoundary chopAtBoundary))
+    (for m botMetal topMetal (ChopFill m ?CV CV ?flatCV flatCV ?chopAtBoundary chopAtBoundary
+                                       ?powerTracks powerTracks))
     (ddDeleteObj (ddGetObj flatCV->libName flatCV->cellName flatCV->viewName))
     CV->modified=t
     CV
@@ -242,8 +245,10 @@
 
 ; utility to draw the fill shapes
 (defun CreateFillTemplateCell (@key (powerTracks nil))
-  (let (CV x y n)
-    CV = (dbOpenCellViewByType "globals" "globals.FILL_TEMPLATE.m012345678_fill" "layout" "maskLayout" "w")
+  (let (CV x y n cellName)
+    cellName = (if powerTracks "globals.FILL_TEMPLATE.m012345678_fill_pg"
+                 "globals.FILL_TEMPLATE.m012345678_fill")
+    CV = (dbOpenCellViewByType "globals" cellName "layout" "maskLayout" "w")
     x = (car  gridAlignment[8])
     y = (cadr gridAlignment[8])
     
