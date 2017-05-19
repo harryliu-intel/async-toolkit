@@ -30,10 +30,7 @@
                                    (doFill nil)
                                    (doHalo nil)
                                    )
-  (let (libName CV tagCV trans ints prb align lpp
-                gridCV hookCV power2 prb2 shapes count
-                x0box x1box y0box y1box ox0 ox1 x0 y0 x1 y1
-                rows cols frows fx0 fy0 fx1 fy1)
+  (let (libName CV tagCV trans prb lpp)
     ; read source CV
     libName = (GetCastLibName cellName)
     CV = (dbOpenCellViewByType libName cellName viewName)
@@ -45,94 +42,30 @@
 
     ; instantiate layout cell
     trans = (list 0:0 orientation 1.0)
-    inst = (dbCreateInst tagCV CV "inst_layout" 0:0 orientation)
+    (dbCreateInst tagCV CV "inst_layout" 0:0 orientation)
 
     ; copy prb
     (unless CV->prBoundary->points (error "No prBoundary"))
     prb = (dbCreatePRBoundary tagCV CV->prBoundary->points)
-    prb2 = (dbCreatePolygon tagCV (list "prBoundary" "boundary") prb->points)
 
     ; copy non-power labels
-    (foreach label (setof l CV->shapes l->objType=="label" && l->theLabel!=GNDNetName && l->theLabel!=VddNetName)
+    (foreach label (setof l CV->shapes l->objType=="label" &&
+                          l->theLabel!=GNDNetName && l->theLabel!=VddNetName)
              lpp = (list (car label->lpp) "pin")
              (MakeLayoutTagLabel tagCV lpp (dbTransformPoint label->xy trans) label->theLabel)
              )
 
-    ; get bounding box as an integer multiple of MfgGrid
-    x0box = 1.0*(round (leftEdge   prb->bBox)/MfgGrid)
-    x1box = 1.0*(round (rightEdge  prb->bBox)/MfgGrid)
-    y0box = 1.0*(round (bottomEdge prb->bBox)/MfgGrid)
-    y1box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
-
-    ; align to m8 for power, color, check grids
-    align = gridAlignment[topMetal]
-    x0 = (floor   x0box/(round (car  align)/MfgGrid))
-    y0 = (floor   y0box/(round (cadr align)/MfgGrid))
-    x1 = (ceiling x1box/(round (car  align)/MfgGrid))
-    y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
-    ox0 = x0 * (car align)
-    ox1 = x1 * (car align)
-    x0 = (x0-1) * (car  align)
-    y0 = (y0-1) * (cadr align)
-    x1 = (x1+1) * (car  align)
-    y1 = (y1+1) * (cadr align)
-    cols = (round (x1-x0)/(car  align))
-    rows = (round (y1-y0)/(cadr align))
-
-    ; expand prBoundary
-    (dbDeleteObject prb)
-    prb = (dbCreatePRBoundary tagCV (list x0:y0 x1:y0 x1:y1 x0:y1))
-
-    ; label topMetal power supplies
-    (for r 0 rows-1
-         y = y0+(cadr align)*r
-         (MakeLayoutTagPowerPins tagCV (list x0:y ox0:y) topMetal)
-         (MakeLayoutTagPowerPins tagCV (list ox1:y x1:y) topMetal)
-         )
-
-    ; align to m2 grid for filler cells
-    align = gridAlignment[2]
-    cols = (round (x1-x0)/(car  align))
-    rows = (round (y1-y0)/(cadr align))
-
-    ; add fill cells (TODO: refactor this code with skill/layout/route/overlay.il perhaps)
-    power2 = (dbCreateRect tagCV (list Metal[8] "block") (list x0:y0 x1:y1))
-    shapes = (leLayerAndNot tagCV (list Metal[8] "block") (list "prBoundary" "boundary") (list Metal[2] "block"))
-    (dbLayerTile tagCV (list Metal[2] "block") shapes)
-    (dbDeleteObject prb2)
-    (dbDeleteObject power2)
-    (foreach obj shapes (dbDeleteObject obj))
-    hookCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
-    count = 0
-    (foreach shape (setof s tagCV->shapes s->lpp==(list Metal[2] "block"))
-             count = (FillBox shape->bBox ?CV tagCV ?n count ?doHalo doHalo)
-             (when (isStandardCell CV) || (dbGetPropByName CV "LaygenVersion")
-                   fx0 = (car (car shape->bBox))
-                   fy0 = (cadr (car shape->bBox))
-                   fx1 = (car (cadr shape->bBox))
-                   fy1 = (cadr (cadr shape->bBox))
-                   frows = (round (fy1-fy0)/(cadr gridAlignment[2]))
-                   (dbCreateSimpleMosaic tagCV hookCV
-                                         (sprintf nil "fill%d" count++) fx0:fy0 "R0"
-                                         frows 1 (cadr align) 0)
-                   (dbCreateSimpleMosaic tagCV hookCV
-                                         (sprintf nil "fill%d" count++) fx1:fy0 "R0"
-                                         frows 1 (cadr align) 0)
-                   )
-             (dbDeleteObject shape)
-             )
-
-    ; label GND substrate and Vdd nwell (TODO: using pdkinfo.il)
-    (unless doHalo
-      (for r 0 rows
-           y = y0+(cadr align)*r
-           (MakeLayoutTagLabel tagCV (list "pwellSubIso" "id") x0+(car align)/2:y GNDNetName ?addrect nil)
+    ; either add CHIP_HALO or a bunch of filler cells
+    (cond ((HasTopHalo ?CV tagCV)
+           (AddChipHalo ?CV tagCV)
+           doPower=nil
+           doColor=nil
+           doFill=nil
            )
-      (for r 0 rows-1
-           y = y0+(cadr align)*(r+0.5)
-           (MakeLayoutTagLabel tagCV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
+          (t
+           (FillTagCell ?CV tagCV ?topMetal topMetal ?doHalo doHalo)
            )
-      )
+          )
 
     ;  add power, color, check grids
     (when doPower (MakePowerGrid ?CV tagCV ?topMetal topMetal ?powerCellView "layout_tag"))
@@ -157,6 +90,94 @@
     (dbSave tagCV)
     tagCV
     )
+  )
+
+; Add d04 filler cells to a tag view outside the prBoundary
+(defun FillTagCell (@key (CV geGetEditCellView) (topMetal TopMetal) (doHalo nil))
+  (let (prb prb2 x0box x1box y0box y1box align x0 y0 x1 y1 ox0 ox1 y
+            cols rows power2 shapes hookCV count fx0 fy0 fx1 fy1 frows)
+
+    ; get prBoundary
+    prb = CV->prBoundary
+    prb2 = (dbCreatePolygon CV (list "prBoundary" "boundary") prb->points)
+
+    ; get bounding box as an integer multiple of MfgGrid
+    x0box = 1.0*(round (leftEdge   prb->bBox)/MfgGrid)
+    x1box = 1.0*(round (rightEdge  prb->bBox)/MfgGrid)
+    y0box = 1.0*(round (bottomEdge prb->bBox)/MfgGrid)
+    y1box = 1.0*(round (topEdge    prb->bBox)/MfgGrid)
+
+    ; align to m8 for power, color, check grids
+    align = gridAlignment[topMetal]
+    x0 = (floor   x0box/(round (car  align)/MfgGrid))
+    y0 = (floor   y0box/(round (cadr align)/MfgGrid))
+    x1 = (ceiling x1box/(round (car  align)/MfgGrid))
+    y1 = (ceiling y1box/(round (cadr align)/MfgGrid))
+    ox0 = x0 * (car align)
+    ox1 = x1 * (car align)
+    x0 = (x0-1) * (car  align)
+    y0 = (y0-1) * (cadr align)
+    x1 = (x1+1) * (car  align)
+    y1 = (y1+1) * (cadr align)
+    cols = (round (x1-x0)/(car  align))
+    rows = (round (y1-y0)/(cadr align))
+
+    ; expand prBoundary
+    (dbDeleteObject prb)
+    prb = (dbCreatePRBoundary CV (list x0:y0 x1:y0 x1:y1 x0:y1))
+
+    ; label topMetal power supplies
+    (for r 0 rows-1
+         y = y0+(cadr align)*r
+         (MakeLayoutTagPowerPins CV (list x0:y ox0:y) topMetal)
+         (MakeLayoutTagPowerPins CV (list ox1:y x1:y) topMetal)
+         )
+
+    ; align to m2 grid for filler cells
+    align = gridAlignment[2]
+    cols = (round (x1-x0)/(car  align))
+    rows = (round (y1-y0)/(cadr align))
+
+    ; add fill cells (TODO: refactor this code with skill/layout/route/overlay.il perhaps)
+    power2 = (dbCreateRect CV (list Metal[8] "block") (list x0:y0 x1:y1))
+    shapes = (leLayerAndNot CV (list Metal[8] "block") (list "prBoundary" "boundary") (list Metal[2] "block"))
+    (dbLayerTile CV (list Metal[2] "block") shapes)
+    (dbDeleteObject prb2)
+    (dbDeleteObject power2)
+    (foreach obj shapes (dbDeleteObject obj))
+    hookCV = (dbOpenCellViewByType "globals" "globals.POWER_HOOKUP.0" "layout")
+    count = 0
+    (foreach shape (setof s CV->shapes s->lpp==(list Metal[2] "block"))
+             count = (FillBox shape->bBox ?CV CV ?n count ?doHalo doHalo)
+             (when (isStandardCell CV) || (dbGetPropByName CV "LaygenVersion")
+                   fx0 = (car (car shape->bBox))
+                   fy0 = (cadr (car shape->bBox))
+                   fx1 = (car (cadr shape->bBox))
+                   fy1 = (cadr (cadr shape->bBox))
+                   frows = (round (fy1-fy0)/(cadr gridAlignment[2]))
+                   (dbCreateSimpleMosaic CV hookCV
+                                         (sprintf nil "fill%d" count++) fx0:fy0 "R0"
+                                         frows 1 (cadr align) 0)
+                   (dbCreateSimpleMosaic CV hookCV
+                                         (sprintf nil "fill%d" count++) fx1:fy0 "R0"
+                                         frows 1 (cadr align) 0)
+                   )
+             (dbDeleteObject shape)
+             )
+
+    ; label GND substrate and Vdd nwell (TODO: using pdkinfo.il)
+    (unless doHalo
+      (for r 0 rows
+           y = y0+(cadr align)*r
+           (MakeLayoutTagLabel CV (list "pwellSubIso" "id") x0+(car align)/2:y GNDNetName ?addrect nil)
+           )
+      (for r 0 rows-1
+           y = y0+(cadr align)*(r+0.5)
+           (MakeLayoutTagLabel CV (list "nwell" "drawing") x0+(car align)/2:y VddNetName)
+           )
+      )
+    )
+  CV
   )
 
 ; create a label on an optional tiny rectangle
