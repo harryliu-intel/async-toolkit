@@ -48,9 +48,8 @@
     (unless CV->prBoundary->points (error "No prBoundary"))
     prb = (dbCreatePRBoundary tagCV CV->prBoundary->points)
 
-    ; copy non-power labels
-    (foreach label (setof l CV->shapes l->objType=="label" &&
-                          l->theLabel!=GNDNetName && l->theLabel!=VddNetName)
+    ; copy labels
+    (foreach label (setof l CV->shapes l->objType=="label")
              lpp = (list (car label->lpp) "pin")
              (MakeLayoutTagLabel tagCV lpp (dbTransformPoint label->xy trans) label->theLabel)
              )
