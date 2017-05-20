@@ -164,6 +164,8 @@
         )
       )
 
+  ; add M1 blockage on edges
+  (BlockEdgeM1 ?CV abstractCV)
 
   ; save and exit
   (CopyKeepoutToBlockage abstractCV)
@@ -185,7 +187,7 @@
                               (convertpinvias t)
                               )
   (let (abstractCV name net fig term pin prb dd_CV layer purpose map inLayerMap outLayerMap
-         allpinfigs pinsonlayer allblockages viashape m nullnet
+         allpinfigs pinsonlayer allblockages viashape m nullnet hasM2fill
          )
 
     ; sanity check
@@ -196,6 +198,9 @@
     ; check for prBoundary first
     prb = (GetPrbound CV)
     (unless prb (error "No prBoundary object in %s\n" CV->cellName))
+
+    ; check if it has m2 fill shapes
+    hasM2fill = (setof x CV->shapes x->lpp==(list "m2" "fill"))!=nil 
 
     ; create empty abstract view
     (printf "Generating abstract of %s at %s\n" CV->cellName (getCurrentTime))
@@ -276,6 +281,9 @@
 
     ; chop keepout overlapping pins
     (for m 0 2 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
+
+    ; add M1:keepout on edges if M2:fill is used in cell
+    (when hasM2fill (BlockEdgeM1 ?CV abstractCV))
 
     ; create final boundary shapes and blockage objects
     ; (leMergeShapes abstractCV->shapes)
@@ -509,4 +517,25 @@
     )
   )
 
-
+; Add additional M1 keepout on vertical edges of prBoundary
+; to prevent ICC from causing many hard-to-fix routing errors
+(defun BlockEdgeM1 (@key (CV (geGetEditCellView)))
+  (let (points len w s p0 p1 x0 x1 y0 y1)
+    w = (cadr (car node_m1[0]))
+    s = (cadr MetalBoundarySpace[Metal[1]])
+    points = CV->prBoundary->points
+    len = (length points)
+    (for i 0 len-1
+         p0 = (nth i points)
+         p1 = (nth (mod i+1 len) points)
+         (when (car p0)==(car p1)
+               x0 = (car p0) - w/2
+               x1 = (car p0) + w/2
+               y0 = (min (cadr p0) (cadr p1)) + s
+               y1 = (max (cadr p0) (cadr p1)) - s
+               (dbCreateRect CV MetalKeepout[1] (list x0:y0 x1:y1))
+               )
+         )
+    )
+  t
+  )
