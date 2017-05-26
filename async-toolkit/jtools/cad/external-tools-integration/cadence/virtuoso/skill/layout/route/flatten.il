@@ -582,7 +582,7 @@ useICV = t
     (DeletePinsByType "Power" ?CV CV)
     inst = (dbFindAnyInstByName CV "pg")
     (when inst pgaCV = (dbOpenCellViewByType inst->libName inst->cellName "abstract"))
-    (unless pgaCV (printf "WARNING: no pg instance to make power pins from!"))
+    (unless pgaCV (printf "WARNING: no pg instance to make power pins from!\n"))
     (when pgaCV
       lpp = (list Metal[topMetal] "pin")
       (foreach shape (setof x pgaCV->shapes x->lpp==lpp)
