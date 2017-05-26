@@ -430,7 +430,7 @@
         (defFile nil)
         )
   (let (TEMP WDIR SubcellLibNames libPath logFile Command status ImportCV layoutCV floorplanCV
-             win instmap SubcellLibString topMetal)
+             win instmap SubcellLibString)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -473,10 +473,6 @@
     (unless status (error "Unsuccessful defin\n"))
     ImportCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "a")
     (dbRefreshCellView ImportCV)
-
-    ; HACK: redraw power pins because they don't import correctly from DEF
-    topMetal = (dbGetPropByName CV "topMetal")->value
-    (when topMetal (CreatePowerPins ?topMetal topMetal ?CV ImportCV))
 
     ; label pins
     (LabelPins ?CV ImportCV)
