@@ -71,6 +71,20 @@
     )
   )
 
+; print XY coordinates of all labels to a text file
+(defun PrintLabels (@key (CV (geGetEditCellView)) (filename "labels.txt"))
+  (let (OUT)
+    OUT=(outfile filename)
+    (foreach s CV->shapes
+             (when s->objType=="label"
+                   (fprintf OUT "%s %g %g\n" s->theLabel (car s->xy) (cadr s->xy))
+                   )
+             )
+    (close OUT)
+    )
+  filename
+  )
+
 ;;;;;;;;;;;;;;;;;;;; Create bumps for N2 assuming square pitch, 6 bumps tile width ;;;;;;;;;;;;;;;
 
 (defun DrawBumpsN2 ()
