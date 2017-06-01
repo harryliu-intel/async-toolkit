@@ -77,7 +77,7 @@
     OUT=(outfile filename)
     (foreach s CV->shapes
              (when s->objType=="label"
-                   (fprintf OUT "%s %g %g\n" s->theLabel (car s->xy) (cadr s->xy))
+                   (fprintf OUT "%s %s %g %g\n" s->theLabel s->layerName (car s->xy) (cadr s->xy))
                    )
              )
     (close OUT)
