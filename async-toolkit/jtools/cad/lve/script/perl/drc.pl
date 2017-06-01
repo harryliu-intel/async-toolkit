@@ -141,7 +141,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -D _drCOVER_BY_BCID=_drYES \\
 -D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
--f GDSII \\
+-f OASIS \\
 ET
    if ($jobs > 0) {
      print CF "-dp \\\n" .
