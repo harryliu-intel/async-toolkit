@@ -21,6 +21,8 @@ my $jobs=0;
 my $flow="drcd";
 my $pdk_root="";
 my $icv_runset_path="/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/latest";
+my $oasis = 0;
+my $format = "GDSII";
 
 sub usage {
     my ($msg) = @_;
@@ -35,6 +37,7 @@ sub usage {
     $usage .= "    --jobs=[$jobs] (Netbatch jobs; if specified, --threads is per job)\n";
     $usage .= "    --mem=[$mem] (Memory in GB, if Netbatch enabled)\n";
     $usage .= "    --flow=[$flow] (DRC runset selection. Default will run $flow)\n";
+    $usage .= "    --oasis=[$oasis] (output oasis format)\n";
     $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
     $usage .= "    --help (Shows this menu)\n";
 
@@ -61,6 +64,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
         $mem = $value;
     } elsif ($flag eq "flow") {
         $flow = $value;
+    } elsif ($flag eq "oasis") {
+        $oasis = $value;
     } elsif ($flag eq "icv-runset-path") {
         $icv_runset_path = $value;
     } elsif ($flag eq "icv-options") {
@@ -84,6 +89,7 @@ chomp $working_dir;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
 $gdsii = $cell_name . ".gds" if ($gdsii eq "" && $gdsii_list eq "");
+$format = "OASIS" if ($oasis);
 
 #check if flow is valid
 my %drc_runsets;
@@ -141,7 +147,7 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -D _drCOVER_BY_BCID=_drYES \\
 -D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
--f OASIS \\
+-f $format \\
 ET
    if ($jobs > 0) {
      print CF "-dp \\\n" .
