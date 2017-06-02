@@ -1,5 +1,5 @@
 ; add v9+ fill mosaic, avoiding existing TM1
-(defun FillV9UP (@key (CV (geGetEditCellView)) (y0 35*1.596))
+(defun FillV9UP (@key (CV (geGetEditCellView)) (y0 35*1.596) (col0 -584) (col1 584))
   (let (fillCV x y dy n inst tm1 old_type type todo)
     n=0
     y=y0
@@ -20,12 +20,12 @@
          fillCV = (ReadCV "globals" (sprintf nil "globals.FILL_V9UP.%s_sig_x1" width) "layout")
          tm1sig = (car (setof x fillCV->shapes x->lpp==(list "tm1" "drawing")))->bBox
          old_type = ""
-         old_x = -584*6.672
-         (for col -584 584
+         old_x = col0*6.672
+         (for col col0 col1
               x = 6.72 * col
               bbox = (dbTransformBBox tm1 (list x:y "R0"))
               bboxsig = (dbTransformBBox tm1sig (list x:y "R0"))
-              (cond (col==584 type="")
+              (cond (col==col1 type="")
                     ((dbGetOverlaps CV bbox (list "tm1" "drawing") 32)==nil
                      type="gnd"
                      )
@@ -56,6 +56,11 @@
              )
     n
     )
+  )
+
+; Different defaults for SOUTH
+(defun FillV9UP_SOUTH (@key (CV (geGetEditCellView)))
+  (FillV9UP ?CV CV ?y0 -403.788 ?col0 -578 ?col1 575)
   )
 
 (defun FillV9UP_Stripe (n x0 x1 y width type @key (CV (geGetEditCellView)) (xp 6.72))
