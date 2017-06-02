@@ -21,11 +21,11 @@
          tm1sig = (car (setof x fillCV->shapes x->lpp==(list "tm1" "drawing")))->bBox
          old_type = ""
          old_x = -584*6.672
-         (for col -584 584
+         (for col -584 583
               x = 6.72 * col
               bbox = (dbTransformBBox tm1 (list x:y "R0"))
               bboxsig = (dbTransformBBox tm1sig (list x:y "R0"))
-              (cond (col==584 type="")
+              (cond (col==583 type="")
                     ((dbGetOverlaps CV bbox (list "tm1" "drawing") 32)==nil
                      type="gnd"
                      )
@@ -84,7 +84,9 @@
       x=x+2*cols2*xp
       )
     (when cols1>0
-      (printf "WARNING: skipping %s at %g:%g\n" CV1->cellName x y)
+      inst = (dbCreateSimpleMosaic CV CV1 (sprintf nil "fill_tm1_%d" n) x:y "R0" 1 cols1 1.596 xp)
+      (dbReplaceProp inst "autogen" "boolean" t)
+      n++
       x=x+cols1*xp
       )
     )
