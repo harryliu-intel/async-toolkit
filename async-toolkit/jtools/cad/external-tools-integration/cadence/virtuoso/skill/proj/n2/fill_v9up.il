@@ -21,11 +21,11 @@
          tm1sig = (car (setof x fillCV->shapes x->lpp==(list "tm1" "drawing")))->bBox
          old_type = ""
          old_x = -584*6.672
-         (for col -584 583
+         (for col -584 584
               x = 6.72 * col
               bbox = (dbTransformBBox tm1 (list x:y "R0"))
               bboxsig = (dbTransformBBox tm1sig (list x:y "R0"))
-              (cond (col==583 type="")
+              (cond (col==584 type="")
                     ((dbGetOverlaps CV bbox (list "tm1" "drawing") 32)==nil
                      type="gnd"
                      )
