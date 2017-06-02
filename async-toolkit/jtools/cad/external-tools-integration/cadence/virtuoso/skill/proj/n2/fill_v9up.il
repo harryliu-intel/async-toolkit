@@ -60,7 +60,7 @@
 
 ; Different defaults for SOUTH
 (defun FillV9UP_SOUTH (@key (CV (geGetEditCellView)))
-  (FillV9UP ?CV CV ?y0 -403.788 ?col0 -578 ?col1 575)
+  (FillV9UP ?CV CV ?y0 -403.788 ?col0 -578 ?col1 577)
   )
 
 (defun FillV9UP_Stripe (n x0 x1 y width type @key (CV (geGetEditCellView)) (xp 6.72))
