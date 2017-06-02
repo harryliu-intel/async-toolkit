@@ -1,5 +1,5 @@
 ; add v9+ fill mosaic, avoiding existing TM1
-(defun FillV9UP (@key (CV (geGetEditCellView)) (y0 35*1.596) (col0 -584) (col1 584))
+(defun FillV9UP (@key (CV (geGetEditCellView)) (y0 35*1.596) (col0 -577) (col1 577))
   (let (fillCV x y dy n inst tm1 old_type type todo)
     n=0
     y=y0
@@ -31,12 +31,7 @@
                      )
                     ((dbGetOverlaps CV bboxsig (list "m9" "drawing") 32)==nil &&
                      (dbGetOverlaps CV bboxsig (list "v9" "drawing") 32)==nil &&
-                     (dbGetOverlaps CV (list (car (car bboxsig)):(cadr (car  bboxsig))
-                                             (car (car bboxsig)):(cadr (cadr bboxsig)))
-                                    (list "tm1" "drawing") 32)!=nil &&
-                     (dbGetOverlaps CV (list (car (cadr bboxsig)):(cadr (car  bboxsig))
-                                             (car (cadr bboxsig)):(cadr (cadr bboxsig)))
-                                    (list "tm1" "drawing") 32)!=nil
+                     (InsideTM1 CV bboxsig)
                      type="sig"
                      )
                     (t
@@ -58,9 +53,30 @@
     )
   )
 
+; Check to see if a bbox is inside existing TM1
+; quite a bit of a hack -- scans across horizontally
+(defun InsideTM1 (CV bbox)
+  (let (x0 y0 x1 y1 c0 c1 x ok)
+    x0 = (car  (car  bbox))
+    y0 = (cadr (car  bbox))
+    x1 = (car  (cadr bbox))
+    y1 = (cadr (cadr bbox))
+    c0 = (floor   (x0/1.68))
+    c1 = (ceiling (x1/1.68))
+    ok = t
+    (for c c0 c1
+         x = c*1.68
+         x = (max x0 x)
+         x = (min x1 x)
+         ok = ok && (dbGetOverlaps CV (list x:y0 x:y1) (list "tm1" "drawing") 32)!=nil
+         )
+    ok
+    )
+  )
+
 ; Different defaults for SOUTH
 (defun FillV9UP_SOUTH (@key (CV (geGetEditCellView)))
-  (FillV9UP ?CV CV ?y0 -403.788 ?col0 -578 ?col1 577)
+  (FillV9UP ?CV CV ?y0 -403.788)
   )
 
 (defun FillV9UP_Stripe (n x0 x1 y width type @key (CV (geGetEditCellView)) (xp 6.72))
