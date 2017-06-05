@@ -17,7 +17,7 @@
     num = (length supplies)
     inst = (dbFindAnyInstByName CV "vias")
     (when inst (dbDeleteObject inst))
-    overhang = 0.84 ; minimum m8 overhang from center of v8
+    overhang = 0.52 ; minimum m8 overhang from center of v8
     viaCV = (dbOpenCellViewByType CV->libName (strcat CV->cellName "_vias") "layout" "maskLayout" "w")
     (dbCreatePRBoundary viaCV CV->prBoundary->points)
     (dbCreatePolygon viaCV (list "m9" "block") CV->prBoundary->points)
