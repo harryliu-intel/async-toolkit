@@ -16,20 +16,22 @@
          fillCV = (ReadCV "globals" (sprintf nil "globals.FILL_V9UP.%s_gnd_x1" width) "layout")
          tm1 = (car (setof x fillCV->shapes x->lpp==(list "tm1" "drawing")))->bBox
          tm1 = (BBoxExpandHorizontal tm1 5.5)
-         tm1 = (BBoxExpandVertical tm1 5.5)
+         tm1 = (BBoxExpandVertical   tm1 5.5)
          fillCV = (ReadCV "globals" (sprintf nil "globals.FILL_V9UP.%s_sig_x1" width) "layout")
          tm1sig = (car (setof x fillCV->shapes x->lpp==(list "tm1" "drawing")))->bBox
          fillCV = (ReadCV "globals" (sprintf nil "globals.FILL_V9UP.%s_mim_x1" width) "layout")
          ce2 = (car (setof x fillCV->shapes x->lpp==(list "ce2" "drawing")))->bBox
-         ce2 = (BBoxExpandHorizontal ce2 1)
-         ce2 = (BBoxExpandVertical ce2 1)
+         ce2 = (BBoxExpandVertical   ce2 1)
+         ce2a = (BBoxExpandHorizontal ce2 1.6)
+         ce2b = (BBoxExpandHorizontal ce2 1)
          old_type = ""
          old_x = col0*6.672
          (for col col0 col1
               x = 6.72 * col
               bbox = (dbTransformBBox tm1 (list x:y "R0"))
               bboxsig = (dbTransformBBox tm1sig (list x:y "R0"))
-              bboxce2 = (dbTransformBBox ce2 (list x:y "R0"))
+              bboxce2a = (dbTransformBBox ce2a (list x:y "R0"))
+              bboxce2b = (dbTransformBBox ce2b (list x:y "R0"))
               (cond (col==col1 type="")
                     ((dbGetOverlaps CV bbox (list "tm1" "drawing") 32)==nil
                      type="gnd"
@@ -39,8 +41,8 @@
                      (InsideTM1 CV bboxsig)
                      type="sig"
                      )
-                    ((dbGetOverlaps CV bboxce2 (list "ce2" "drawing") 32)==nil &&
-                     (dbGetOverlaps CV bboxce2 (list "v9" "drawing") 32)==nil
+                    ((dbGetOverlaps CV bboxce2b (list "ce2" "drawing") 32)==nil &&
+                     (dbGetOverlaps CV bboxce2a (list "v9"  "drawing") 32)==nil
                      type="mim"
                      )
                     (t
