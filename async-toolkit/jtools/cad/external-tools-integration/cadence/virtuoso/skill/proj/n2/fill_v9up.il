@@ -1,6 +1,6 @@
 ; add v9+ fill mosaic, avoiding existing TM1
 (defun FillV9UP (@key (CV (geGetEditCellView)) (y0 35*1.596) (col0 -577) (col1 577))
-  (let (fillCV x y dy n inst tm1 old_type type todo)
+  (let (fillCV x y dy n inst tm1 old_type type todo bbox bboxsig bboxce2)
     n=0
     y=y0
     (for row 0 8
@@ -19,12 +19,17 @@
          tm1 = (BBoxExpandVertical tm1 5.5)
          fillCV = (ReadCV "globals" (sprintf nil "globals.FILL_V9UP.%s_sig_x1" width) "layout")
          tm1sig = (car (setof x fillCV->shapes x->lpp==(list "tm1" "drawing")))->bBox
+         fillCV = (ReadCV "globals" (sprintf nil "globals.FILL_V9UP.%s_mim_x1" width) "layout")
+         ce2 = (car (setof x fillCV->shapes x->lpp==(list "ce2" "drawing")))->bBox
+         ce2 = (BBoxExpandHorizontal ce2 1)
+         ce2 = (BBoxExpandVertical ce2 1)
          old_type = ""
          old_x = col0*6.672
          (for col col0 col1
               x = 6.72 * col
               bbox = (dbTransformBBox tm1 (list x:y "R0"))
               bboxsig = (dbTransformBBox tm1sig (list x:y "R0"))
+              bboxce2 = (dbTransformBBox ce2 (list x:y "R0"))
               (cond (col==col1 type="")
                     ((dbGetOverlaps CV bbox (list "tm1" "drawing") 32)==nil
                      type="gnd"
@@ -33,6 +38,10 @@
                      (dbGetOverlaps CV bboxsig (list "v9" "drawing") 32)==nil &&
                      (InsideTM1 CV bboxsig)
                      type="sig"
+                     )
+                    ((dbGetOverlaps CV bboxce2 (list "ce2" "drawing") 32)==nil &&
+                     (dbGetOverlaps CV bboxce2 (list "v9" "drawing") 32)==nil
+                     type="mim"
                      )
                     (t
                      type=""
