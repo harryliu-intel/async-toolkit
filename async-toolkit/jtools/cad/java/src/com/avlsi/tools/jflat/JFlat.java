@@ -94,6 +94,7 @@ import com.avlsi.file.cdl.util.rename.CDLNameInterface;
 import com.avlsi.file.cdl.util.rename.GDS2NameInterface;
 import com.avlsi.file.cdl.util.rename.IdentityNameInterface;
 import com.avlsi.file.cdl.util.rename.ReloadableNameInterface;
+import com.avlsi.file.cdl.util.rename.Rename;
 import com.avlsi.file.common.DeviceTypes;
 import com.avlsi.file.common.HierName;
 import com.avlsi.file.common.InvalidHierNameException;
@@ -186,6 +187,7 @@ public final class JFlat {
      * Prints usage message and exits with the specified status.
      **/
     private static void usage( String m ) {
+        final String translaters = Rename.getNamespaces().collect(Collectors.joining(" | "));
         System.err.println("Usage:\n"
                            + " [ --cast-path=castpath ]\n"
                            + " [ --cast-version=1 | --cast-version=2 ]\n" 
@@ -204,7 +206,7 @@ public final class JFlat {
                            + " | --tool=hsim [ --hsim-translate=[ cadence | gds2 | none ]\n"
                            + "                 --hsim-rand-seed=<seed> --hsim-rand-length=<length> ]\n"
                            + " | --tool=cdl|routed-cdl\n"
-                           + "              [ --cdl-translate=[ cadence | gds2 | none ]\n"
+                           + "              [ --cdl-translate=[ " + translaters + " ]\n"
                            + "              [ --cdl-name-map=<name map file> ]\n"
                            + "              [ --cdl-mos-parameters=<param,param,...> ]\n"
                            + "              [ --cdl-call-delimiter=<string> ]\n"
@@ -474,15 +476,10 @@ public final class JFlat {
             final String renameStr = 
                 args.getArgValue("cdl-translate", "cadence");
             final boolean routed = tool.equals("routed-cdl");
-            final CDLNameInterface nameInterface;
-            if(renameStr.equals("cadence")) {
-                nameInterface = new CadenceNameInterface( true );
-            }
-            else if(renameStr.equals("gds2")) {
-                nameInterface = new GDS2NameInterface();
-            }
-            else {
-                nameInterface = new IdentityNameInterface();
+            final CDLNameInterface nameInterface = Rename.getInterface("cast", renameStr);
+            if (nameInterface == null) {
+                System.err.println("Unsupported name scheme: " + renameStr);
+                return null;
             }
 
             final String argNameMap = args.getArgValue("cdl-name-map", null);
