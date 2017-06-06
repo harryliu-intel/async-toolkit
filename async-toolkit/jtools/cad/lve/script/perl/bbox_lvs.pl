@@ -15,6 +15,7 @@ my $workdir = '.';
 my @deletes = ();
 my $runset = '/nfs/sc/proj/ctg/mrl108/mrl/tools/rdt/kits/p1273_14.2.1/runsets/icvalidator/verification_runsets/latest';
 my $user_equiv = '';
+my $icv_options = '';
 
 sub usage {
     local $, = " ";
@@ -27,6 +28,7 @@ Usage: $0
 	--work-dir=[$workdir] (Working directory)
 	--delete=[@deletes] (Deletes the CAST cell from layout; specify any number of times)
 	--generate-user-equiv=[$user_equiv] (How to generate user-intended equiv: FULL_NAME_CASE_SENSITIVE | NONE)
+	--icv-options=[$icv_options] (Additional ICV options)
 	[@bboxes] (List of CAST names of blackbox cells)
 EOF
     exit 1;
@@ -38,6 +40,7 @@ GetOptions("cast-path=s" => \$castpath,
            "runset=s" => \$runset,
            "delete=s" => \@deletes,
            "generate-user-equiv=s" => \$user_equiv,
+           "icv-options=s" => \$icv_options,
            "work-dir=s" => \$workdir) || usage();
 
 @bboxes = @ARGV;
@@ -165,6 +168,7 @@ sub run_lvs {
 -D _drCaseSensitive
 -D _drTOPCHECK=_drmixed
 -D _drDONTCMPCAPS
+$icv_options
 -i $gds
 -s $sch
 -sf ICV
