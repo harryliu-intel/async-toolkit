@@ -177,8 +177,7 @@ EOF
     my $supplies = catfile($workdir, 'lve_supplies.rs');
     open(my $ph, '>', $supplies) or die "Can't write to $supplies: $!";
     print $ph <<EOF;
-lve_ground = {"vss", "GND"};
-lve_power = {"vccneuro_0p75", "vccneuro_1p0", "vccneuro_1p8", "Vdd", "VDDIO", "VDDM", "vcc"};
+// empty, rely on default lve_ground/lve_power definition
 EOF
     close($ph);
 
