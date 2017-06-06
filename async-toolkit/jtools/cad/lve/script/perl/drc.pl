@@ -134,6 +134,7 @@ setenv DR_CPYDB $run_dir/CPYDB
 setenv ICV_RSH_COMMAND $ENV{'FULCRUM_PACKAGE_ROOT'}/bin/icvrsh
 $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -I $pdk_root/share/Fulcrum/icv/drc \\
+-I $pdk_root/share/Fulcrum/icv/lvs \\
 -I $icv_runset_path/PXL_ovrd \\
 -I $icv_runset_path/PXL \\
 -I $icv_runset_path/StandAlone/dotOne \\
@@ -147,6 +148,8 @@ $ENV{'ICV_SCRIPT'} 'icv' -I . \\
 -D _drCOVER_BY_BCID=_drYES \\
 -D _drICFBCIDEXCEPTION=_drYES \\
 -D _drUSENDG=_drNO \\
+-D _drUSERDEFINESUIN \\
+-D _drCaseSensitive \\
 -f $format \\
 ET
    if ($jobs > 0) {
