@@ -39,9 +39,9 @@
               sx   = x*xp+xo
               sy   = y*yp+yo
               name = (nth s supplies)
-              net  = (dbMakeNet viaCV name)
+              net  = (if name (dbMakeNet viaCV name) nil)
               done = nil
-              filter = (lambda (shape) shape->net->name==name)
+              filter = (lambda (shape) name==nil || shape->net->name==name)
               (when (!checkerboard || (mod (mod x 2)+2 2)==(mod (mod y 2)+2 2)) &&
                     (dbGetOverlaps CV (list sx:sy sx:sy) (list "m9" "block") 32)==nil
                 (foreach purpose (list "pin" "vdd" "gnd" "drawing") ; precedence order
@@ -50,7 +50,7 @@
                       rect = (TransformOverlapBBox overlap ?filter filter)
                       (when !done && rect &&
                          (leftEdge rect)<=sx-overhang && (rightEdge rect)>=sx+overhang
-                         (printf "%s v8 at %g:%g to m8:%s\n" name sx sy purpose)
+                         (printf "%s v8 at %g:%g to m8:%s\n" (if name name "nil") sx sy purpose)
                          via = (MyDrawVia viaCV via8 sx:sy 0.88 0.38 net)
                          done = t
                          )
