@@ -14,11 +14,12 @@
                      (checkerboard nil) ; for filler, only connect vias in a checkerboard
                      (supplies (list "GND" "Vdd" "GND" "VDDM")) ; repeats endlessly at constant wire pitch
                      )
-  (let (num viaCV inst overhang via8 bbox x0 x1 y0 y1 s sx sy name net done filter rect via)
+  (let (num viaCV inst overhang_x overhang_y via8 bbox x0 x1 y0 y1 s sx sy name net done filter rect via)
     num = (length supplies)
     inst = (dbFindAnyInstByName CV "vias")
     (when inst (dbDeleteObject inst))
-    overhang = 0.52 ; minimum m8 overhang from center of v8
+    overhang_x = 0.52  ; minimum m8 horizontal overhang from center of v8
+    overhang_y = 0.234 ; minimum m8 vertical   overhang from center of v8
     viaCV = (dbOpenCellViewByType CV->libName (strcat CV->cellName "_vias") "layout" "maskLayout" "w")
     (dbCreatePRBoundary viaCV CV->prBoundary->points)
     (dbCreatePolygon viaCV (list "m9" "block") CV->prBoundary->points)
@@ -28,12 +29,12 @@
     x1 = (car  (cadr bbox))
     y0 = (cadr (car  bbox))
     y1 = (cadr (cadr bbox))
-    x0 = (round x0/xp)
-    x1 = (round x1/xp)
-    y0 = (round y0/yp)
-    y1 = (round y1/yp)
+    x0 = (floor x0/xp)
+    x1 = (ceiling x1/xp)
+    y0 = (floor y0/yp)
+    y1 = (ceiling y1/yp)
     (for x x0 x1-1
-         (for y y0+1 y1-1
+         (for y y0 y1-1
               ; s    = (mod x-x0 num) ; left edge aligned
               s    = (mod (mod x num)+num num) ; origin aligned
               sx   = x*xp+xo
@@ -49,7 +50,8 @@
                     (foreach overlap (dbGetOverlaps CV (list sx:sy sx:sy) (list "m8" purpose) 32)
                       rect = (TransformOverlapBBox overlap ?filter filter)
                       (when !done && rect &&
-                         (leftEdge rect)<=sx-overhang && (rightEdge rect)>=sx+overhang
+                         (leftEdge   rect)<=sx-overhang_x && (rightEdge rect)>=sx+overhang_x &&
+                         (bottomEdge rect)<=sy-overhang_y && (topEdge   rect)>=sy+overhang_y
                          (printf "%s v8 at %g:%g to m8:%s\n" name sx sy purpose)
                          via = (MyDrawVia viaCV via8 sx:sy 0.88 0.38 net)
                          done = t
