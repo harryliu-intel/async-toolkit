@@ -11,6 +11,7 @@
                      (yp 0.798) ; vertical   pitch for potential v8 (NOTE: half the 1.596 pitch)
                      (xo 0.84)  ; horizontal offset
                      (yo 0.0)   ; vertical   offset
+                     (checkerboard nil) ; for filler, only connect vias in a checkerboard
                      (supplies (list "GND" "Vdd" "GND" "VDDM")) ; repeats endlessly at constant wire pitch
                      )
   (let (num viaCV inst overhang via8 bbox x0 x1 y0 y1 s sx sy name net done filter rect via)
@@ -41,7 +42,8 @@
               net  = (dbMakeNet viaCV name)
               done = nil
               filter = (lambda (shape) shape->net->name==name)
-              (when (dbGetOverlaps CV (list sx:sy sx:sy) (list "m9" "block") 32)==nil
+              (when (!checkerboard || (mod (mod x 2)+2 2)==(mod (mod y 2)+2 2)) &&
+                    (dbGetOverlaps CV (list sx:sy sx:sy) (list "m9" "block") 32)==nil
                 (foreach purpose (list "pin" "vdd" "gnd" "drawing") ; precedence order
                   (unless done
                     (foreach overlap (dbGetOverlaps CV (list sx:sy sx:sy) (list "m8" purpose) 32)
