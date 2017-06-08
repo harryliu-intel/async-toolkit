@@ -5,7 +5,6 @@
     (when inst (dbDeleteObject inst))
     overhang = 0.52 ; minimum m8 overhang from center of v8
     viaCV = (dbOpenCellViewByType CV->libName (strcat CV->cellName "_vias") "layout" "maskLayout" "w")
-    (dbCreatePRBoundary viaCV CV->prBoundary->points)
     via8 = (techFindViaDefByName (techGetTechFile CV) "via8")
     v8_w = 0.88
     v8_h = 0.38
@@ -24,7 +23,7 @@
           x = (floor sx/1.68)
           y = (floor sy/1.596)
           do_via = (mod (mod x 2)+2 2)==(mod (mod y 2)+2 2)
-          (cond ((mod (mod y 2)+2 2)==0 yd=0.54 yu=0)
+          (cond ((mod (mod y 2)+2 2)==1 yd=0.54 yu=0)
                 (t                      yu=0.54 yd=0)
                 )
           blah = (if do_via
