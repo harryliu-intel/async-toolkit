@@ -88,7 +88,8 @@ my $cell_name = shift;
 chomp $working_dir;
 $pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
 -d $pdk_root or usage("fulcrum-pdk-root improperly defined");
-$gdsii = $cell_name . ".gds" if ($gdsii eq "" && $gdsii_list eq "");
+$gdsii = $cell_name . ".gds" if (!$oasis && $gdsii eq "" && $gdsii_list eq "");
+$gdsii = $cell_name . ".oas" if ( $oasis && $gdsii eq "" && $gdsii_list eq "");
 $format = "OASIS" if ($oasis);
 
 #check if flow is valid
