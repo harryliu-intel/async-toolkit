@@ -134,6 +134,12 @@
                       ?CV CV)
   )
 
+(defun FixERC (originalCell replacementCell @key (CV (geGetEditCellView)))
+  (SubstituteSubcells (list (list originalCell replacementCell)
+                            )
+                      ?CV CV)
+  )
+
 ; replace I.0 library cells with K.0 equivalents
 (defun FixK0 (@key (CV (geGetEditCellView)))
   (SubstituteSubcells (list (list "vendor.intel.d04.bdc01nd.z04" "vendor.intel.d04.bdck1nd.z04")
