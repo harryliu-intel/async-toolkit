@@ -21,6 +21,8 @@ spar_cell_list =
      "lib.bd.standard.merge.BD_MERGE_DATA-L2-R.0"
      ; SRAM controller
      "lib.bd.6T.bank.SRAM_BANK_CTRL.0"
+     "lib.bd.6T.bank.SRAM_BANK_CTRL_SLOWER.0"
+     "lib.bd.6T.bank.SRAM_BANK_CTRL_SLOWEST.0"
      ; new BD_CONTROLLER (nominal thresold)
      "lib.bd.source.bitgen.BDC_BG.0n"
      "lib.bd.metastable.arbiter.ARBITER_CTRL.0n"
@@ -83,7 +85,7 @@ spar_cell_list =
            CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "abstract")
            (cdsp4edit ?CV CV)
            CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "layout")
-           (if cellName=="lib.bd.6T.bank.SRAM_BANK_CTRL.0"
+           (if (strncmp cellName "lib.bd.6T.bank.SRAM_BANK_CTRL" (strlen "lib.bd.6T.bank.SRAM_BANK_CTRL"))==0
              (MakeSimpleAbstract ?CV CV ?topMetal 3) ; CLASS BLOCK
              (MakeLeafAbstract ?CV CV)   ; CLASS CORE
              )
