@@ -14,7 +14,6 @@ BEGIN {
         $ENV{USER_ITOOLS}=$correctitools;
         exec "$0",@ARGV;
     }
-    $ENV{NBCONF}="/nfs/site/gen/adm/netbatch/conf";
 }
 
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
