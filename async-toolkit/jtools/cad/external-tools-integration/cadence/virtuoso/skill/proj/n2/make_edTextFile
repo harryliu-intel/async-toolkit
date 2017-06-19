@@ -1,0 +1,18 @@
+#!/usr/intel/bin/perl -w
+
+@ARGV==1 or die "USAGE: make_edTextFile *.cellmap\n";
+open IN, "$ARGV[0]" or die "can't read $ARGV[0]\n";
+open OUT, ">edTextFile" or die "can't write edTextFile\n";
+print OUT "edtext={\n";
+my @lines;
+while (my $line = <IN>) {
+    $line =~ /\S+\s+\S+\s+\S+\s+(\S+)/;
+    my $cell = $1;
+    if ($cell =~ /^d04/ || $cell =~ /^d8/ || $cell =~ /^x73/) {
+        push @lines, " {cell=\"$cell\",text=\"vss\",layer_number=36,data_type=6,x=0,y=0}";
+    }
+}
+print OUT join(",\n",sort(@lines));
+print OUT "\n}\n";
+close IN;
+close OUT;
