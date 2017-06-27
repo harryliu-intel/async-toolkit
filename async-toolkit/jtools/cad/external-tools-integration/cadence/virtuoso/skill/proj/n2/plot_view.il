@@ -53,10 +53,13 @@ plot_cells = (list "chip.n2.lakemont.cro.CRO.0" "chip.n1.pads.HSMV.0" "chip.n1.p
 
 ; write GDS for a list of plot views
 (defun ExportAllPlotViews (cells)
-  (let (TEMP WDIR cvs)
+  (let (TEMP WDIR layerMapFile)
+    layerMapFile = (strcat (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
+                           "/share/Fulcrum/plot/gds2plot_layer_map.rules")
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
-    WDIR = (strcat TEMP "/export")
-    (foreach x cells (ExportGDS ?CV (ReadCV (GetCastLibName x) x "plot") ?directory WDIR))
+    WDIR = (strcat TEMP "/plot")
+    (foreach x cells (ExportGDS ?CV (ReadCV (GetCastLibName x) x "plot")
+                                ?directory WDIR ?layerMapFile layerMapFile))
     )
   t
   )
