@@ -1,0 +1,62 @@
+; make a "plot" view that removes fill shapes
+(defun MakePlotView (@key (CV (geGetEditCellView)))
+  (let (plotCV inLayerMap outLayerMap)
+    inLayerMap = (list
+                  (list "nwell" (list "nwell" "drawing"))
+                  (list "ndiff" (list "ndiff" "drawing"))
+                  (list "pdiff" (list "pdiff" "drawing"))
+                  (list "poly"  (list "poly" "drawing"))
+                  (list "gcn" (list "gcn" "drawing"))
+                  (list "tcn" (list "tcn" "drawing"))
+                  (list "vcn" (list "vcn" "drawing"))
+                  (list "m0" (list "m0" "drawing") (list "mc0" "drawing"))
+                  (list "v0" (list "v0" "drawing"))
+                  (list "m1" (list "m1" "drawing"))
+                  (list "v1" (list "v1" "drawing"))
+                  (list "m2" (list "m2" "drawing") (list "mc2" "drawing"))
+                  (list "v2" (list "v2" "drawing"))
+                  (list "m3" (list "m3" "drawing") (list "mc3" "drawing"))
+                  (list "v3" (list "v3" "drawing"))
+                  (list "m4" (list "m4" "drawing") (list "mc4" "drawing"))
+                  (list "v4" (list "v4" "drawing"))
+                  (list "m5" (list "m5" "drawing") (list "mc5" "drawing"))
+                  (list "v5" (list "v5" "drawing"))
+                  (list "m6" (list "m6" "drawing"))
+                  (list "v6" (list "v6" "drawing"))
+                  (list "m7" (list "m7" "drawing"))
+                  (list "v7" (list "v7" "drawing"))
+                  (list "m8" (list "m8" "drawing"))
+                  (list "v8" (list "v8" "drawing"))
+                  (list "m9" (list "m9" "drawing"))
+                  (list "v9" (list "v9" "drawing"))
+                  (list "tm1" (list "tm1" "drawing"))
+                  (list "tv1" (list "tv1" "drawing"))
+                  (list "c4" (list "c4" "drawing"))
+                  )
+    outLayerMap = inLayerMap
+    plotCV = (dbOpenCellViewByType CV->libName CV->cellName "plot" "maskLayout" "w")
+    plotCV = (ICVLayerProcessorSimple CV plotCV "MakePlotView" inLayerMap outLayerMap)
+    (dbSave plotCV)
+    )
+  )
+
+; list of cells to make plot views for
+(load "import_srams.il")
+plot_cells = (list "chip.n2.lakemont.cro.CRO.0" "chip.n1.pads.HSMV.0" "chip.n1.pads.COMMON.0")
+(foreach x srams plot_cells = (cons (strcat sramLibName "." x ".0") plot_cells))
+
+; make plot views of SRAM, CRO, HSMV, COMMON blocks
+(defun MakeAllPlotViews (cells)
+  (foreach x cells (MakePlotView ?CV (ReadCV (GetCastLibName x) x "layout")))
+  t
+  )
+
+; write GDS for a list of plot views
+(defun ExportAllPlotViews (cells)
+  (let (TEMP WDIR cvs)
+    TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
+    WDIR = (strcat TEMP "/export")
+    (foreach x cells (ExportGDS ?CV (ReadCV (GetCastLibName x) x "plot") ?directory WDIR))
+    )
+  t
+  )
