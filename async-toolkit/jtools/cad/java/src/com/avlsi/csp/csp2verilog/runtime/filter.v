@@ -16,6 +16,7 @@
  ************************************************************/
 
 module  \lib.metastable.primitive.filter.FILTER  (D0,D1, GND,Vdd, _D0,_D1);
+`PRS2VERILOG_TIMESCALE
   inout  _D0,_D1;
   output D0,D1;
   input  GND,Vdd;
@@ -62,8 +63,8 @@ module  \lib.metastable.primitive.filter.FILTER  (D0,D1, GND,Vdd, _D0,_D1);
    
   
 
-  not #((`PRS2VERILOG_TAU) * 1.25, (`PRS2VERILOG_TAU) * 0.75) gate_D0 (D0,_D0);
-  not #((`PRS2VERILOG_TAU) * 1.25, (`PRS2VERILOG_TAU) * 0.75) gate_D1 (D1,_D1);
+  not #(`PRS2VERILOG_DELAY(1, 1, 0), `PRS2VERILOG_DELAY(1, 1, 0)) gate_D0 (D0,_D0);
+  not #(`PRS2VERILOG_DELAY(1, 1, 0), `PRS2VERILOG_DELAY(1, 1, 0)) gate_D1 (D1,_D1);
 
 
 task reset_timer;

@@ -10,6 +10,7 @@ share/cast2verilog/csp_error.v         csp_error.v         644  p
 share/cast2verilog/csp_print.v         csp_print.v         644  p
 share/cast2verilog/csp_string.v        csp_string.v        644  p
 share/cast2verilog/define.v            define.v            644  p
+share/cast2verilog/filter.v            filter.v            644  p
 share/cast2verilog/new-timingbuffer.v  new-timingbuffer.v  644  p
 share/cast2verilog/nodeconverter.v     nodeconverter.v     644  p
 share/cast2verilog/nwwn.sv             nwwn.sv             644  p
