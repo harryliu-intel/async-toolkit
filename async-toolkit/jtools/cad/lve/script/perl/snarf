@@ -20,7 +20,7 @@ if (@files==0) {
 my @sims = ("aspice","hsim","hspice","xa");
 my @field = ("","","","","","","","");
 my @diff = (0,0,0,0,0,0,0,0);
-my %freq = ();
+my %frequency = ();
 my %power = ();
 
 # parse the files
@@ -88,10 +88,11 @@ foreach $key (sort keys %power) {
     }
     if (defined $frequency{$key}) {
         my @f = split(",",$frequency{$key});
+        my $freq = join(",",sort(@f));
         my $e = int(0.5 + 1e15*$power{$key}/($f[0]*1e6))/1000;
         print_field("$power{$key}W",$field_length[8]);
         print_field("${e}pJ",$field_length[9]);
-        print_field("$frequency{$key}MHz",$field_length[10]);
+        print_field("${freq}MHz",$field_length[10]);
     } else {
         print_field("$power{$key}W",$field_length[8]);
     }
