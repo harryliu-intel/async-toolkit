@@ -9,6 +9,7 @@ IMPORT Scan;
 IMPORT FloatMode, Lex;
 IMPORT Wr;
 IMPORT TextSetDef;
+IMPORT Process;
 
 <*FATAL Thread.Alerted*>
 
@@ -258,5 +259,8 @@ BEGIN
       Wr.PutChar(Stdio.stdout, '\n')
     END;
     Wr.Close(Stdio.stdout)
-  END
+  END;
+  IF overlaps.size() # 0 THEN 
+    Process.Exit(1)
+  END 
 END Overlaps.
