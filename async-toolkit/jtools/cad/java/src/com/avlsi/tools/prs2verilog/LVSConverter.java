@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.avlsi.cell.CellInterface;
 import com.avlsi.cell.CellUtils;
@@ -73,6 +75,29 @@ class LVSConverter extends AbstractConverter {
         for (Iterator i = cell.getAllSubcellConnections().iterator();
              i.hasNext(); ) {
             final ConnectionInfo ci = (ConnectionInfo) i.next();
+            final Iterator<String> suffix = 
+                Stream.concat(Stream.of(""),
+                              IntStream.rangeClosed(0, Integer.MAX_VALUE)
+                                       .mapToObj(x -> Integer.toString(x)))
+                      .iterator();
+
+            final List subblock = verilogBlock(
+                ci.nameInParent,
+                cell.namespace,
+                ci.child.cast_cell,
+                chooser,
+                new DefaultBlockValue(this, cell.namespace,
+                    new UnaryFunction() {
+                      public Object execute(final Object o) {
+                          return "wire";
+                      }
+                    }),
+                vinst -> ci.nameInParent + suffix.next());
+            if (subblock != null) {
+                items.addAll(subblock);
+                continue;
+            }
+
             final ArrayList args = new ArrayList();
 
             if (ci.child.cast_cell.containsNetlist()) {
