@@ -289,8 +289,13 @@ public class CoSimHelper {
             final Mode mode = (Mode) i.next();
             hasMode = true;
             if (mode == Mode.SPICE) {
-                // spice level cosimulation not yet supported, treat as if
-                // cells do not support it
+                // spice level cosimulation not yet supported, but accept
+                // mode specification
+                if (cell.containsNetlist()) {
+                    coSimParams.setBehavior(instanceName,
+                            CoSimParameters.SPICE);
+                    return;
+                }
             } else if (mode == Mode.PRS) {
                 if (cell.containsCompletePrs()) {
                     coSimParams.setBehavior(instanceName,
@@ -634,7 +639,7 @@ public class CoSimHelper {
     public static void getBehaviorByType(final CellInterface cell,
                                          final CoSimParameters params,
                                          final HierName prefix,
-                                         final MultiMap result) {
+                                         final MultiMap<String,Mode> result) {
         if (cell.isNode() || cell.isChannel()) return;
         final String sinst = prefix.getAsString('.');
         final int beh = params.lookupBehavior(sinst);

@@ -4391,6 +4391,9 @@ public class DSim implements NodeWatcher {
 
                 return;
             }
+            if ((behavior & CoSimParameters.SPICE) != 0) {
+                throw new IllegalStateException("SPICE behavior not supported.");
+            }
             if ((behavior & CoSimParameters.DIGITAL) != 0) {
                 /* Cosimulation with digital.  At the moment, this is the only
                  * kind of cosimulation supported.  */

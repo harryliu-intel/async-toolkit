@@ -26,7 +26,8 @@ public class CoSimParameters {
     public static final int CSP = 8;
     public static final int VERILOG = 16;
     public static final int NULL = 32;
-    public static final int BEH_ALL = 64;
+    public static final int SPICE = 64;
+    public static final int BEH_ALL = 128;
     public CoSimParameters() { table = new Hashtable(); }
 
     /**

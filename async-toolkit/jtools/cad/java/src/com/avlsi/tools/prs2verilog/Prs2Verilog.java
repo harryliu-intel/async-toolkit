@@ -169,19 +169,22 @@ public class Prs2Verilog {
     }
 
     public static class CosimChooser implements VerilogChooser {
-        private final MultiMap typeBehaviors;
-        public CosimChooser(final MultiMap typeBehaviors) {
+        private final MultiMap<String,Mode> typeBehaviors;
+        public CosimChooser(final MultiMap<String,Mode> typeBehaviors) {
             this.typeBehaviors = typeBehaviors;
         }
         public VerilogBlock.NamedBlock choose(final CellInterface cell,
                                               final VerilogBlock vb) {
-            final Collection behs =
-                (Collection) typeBehaviors.get(cell.getFullyQualifiedType());
-            assert behs.size() == 1;
-            final Mode m = (Mode) behs.iterator().next();
-            if (m instanceof Mode.VerilogMode) {
-                final String level = ((Mode.VerilogMode) m).getLevel();
-                return vb.getNamedBlock(level);
+            final Collection<Mode> behs =
+                typeBehaviors.get(cell.getFullyQualifiedType());
+
+            if (behs != null) {
+                assert behs.size() == 1;
+                final Mode m = behs.iterator().next();
+                if (m instanceof Mode.VerilogMode) {
+                    final String level = ((Mode.VerilogMode) m).getLevel();
+                    return vb.getNamedBlock(level);
+                }
             }
             return null;
         }
@@ -618,7 +621,7 @@ public class Prs2Verilog {
             final String envName = cosim.getEnvName();
 
             final CoSimParameters coSimParams = new CoSimParameters();
-            final MultiMap behaviorType = new MultiMap();
+            final MultiMap<String,Mode> behaviorType = new MultiMap<>();
             CoSimHelper.setCoSimParams("x", castCell, cosim.getCoSimSpecList(),
                                        coSimParams, null, false);
             CoSimHelper.getBehaviorByType(castCell, coSimParams,
@@ -635,20 +638,16 @@ public class Prs2Verilog {
                                               behaviorType);
             }
 
-            final List tooManyBehaviors = new ArrayList();
-            for (Iterator i = behaviorType.keySet().iterator(); i.hasNext(); ) {
-                final String key = (String) i.next();
-                final Collection behs = (Collection) behaviorType.get(key);
-                if (behs.size() > 1) tooManyBehaviors.add(key);
-            }
+            final List<String> tooManyBehaviors =
+                behaviorType.keySet().stream()
+                                     .filter(k -> behaviorType.get(k).size() > 1)
+                                     .collect(Collectors.toList());
             if (!tooManyBehaviors.isEmpty()) {
                 System.err.println("Only one behavior per cell is supported:");
-                for (Iterator i = tooManyBehaviors.iterator(); i.hasNext(); ) {
-                    final String key = (String) i.next();
+                for (String key : tooManyBehaviors) {
                     System.err.print(key + ":");
-                    final Collection behs = (Collection) behaviorType.get(key);
-                    for (Iterator j = behs.iterator(); j.hasNext(); ) {
-                        System.err.print(" " + j.next());
+                    for (Mode m : behaviorType.get(key)) {
+                        System.err.print(" " + m);
                     }
                 }
                 System.err.println();
@@ -1085,16 +1084,19 @@ public class Prs2Verilog {
                                           "x");
         }
 
-        // Ignore all verilog blocks when using the netlist converter.  The
-        // generated files are used for routing, so the module ports must match
-        // what is in CDL.  Considering verilog blocks may cause a port to be
-        // marked as used when it isn't really used in CDL.
-        final boolean ignoreVerilog = converter.equals("netlist") &&
-                                      !theArgs.argExists("uninline-verilog");
-        final VerilogChooser chooser =
-            ignoreVerilog ? null : getChooser(cosim, castCell, theArgs);
+        final VerilogChooser chooser = getChooser(cosim, castCell, theArgs);
 
-        final Cadencize cad = new Cadencize(true, !ignoreVerilog);
+        final Cadencize cad = new Cadencize(true,
+            new Cadencize.DefaultCallback(Cadencize.VERILOG_NONE) {
+                public boolean mark(CellInterface cell, String block) {
+                    if (block == BlockInterface.VERILOG) {
+                        return AbstractConverter.chooseVerilog(cell, chooser) != null;
+                    } else {
+                        return super.mark(cell, block);
+                    }
+                }
+            }
+        );
         design = loadDesign(ci, cad, theArgs);
         final CellType newCell =
             loadCell(design, ci, cfp, minimizeTriRegs, gates);
