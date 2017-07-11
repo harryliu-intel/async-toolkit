@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import com.avlsi.cast.impl.Value;
 import com.avlsi.cast.impl.ArrayValue;
@@ -525,6 +526,17 @@ public abstract class AbstractConverter implements ConverterInterface {
                                 final CellInterface cell,
                                 final Prs2Verilog.VerilogChooser chooser,
                                 final BlockValue bv) {
+        final int[] id = new int[1];
+        final String prefix = instance == null ? "inst" : (instance.toString() + "$");
+        return verilogBlock(instance, ns, cell, chooser, bv,
+                            vinst -> prefix + id[0]++);
+    }
+
+    protected List verilogBlock(final HierName instance, final AliasedSet ns,
+                                final CellInterface cell,
+                                final Prs2Verilog.VerilogChooser chooser,
+                                final BlockValue bv,
+                                final Function<VerilogBlock.Instance,String> nameFunc) {
         final VerilogBlock.NamedBlock nb = chooseVerilog(cell, chooser);
         if (nb == null) return null;
         final List insts = new ArrayList();
@@ -539,10 +551,8 @@ public abstract class AbstractConverter implements ConverterInterface {
             final Pair p = verilogInstance(inst, instance, ns, factory, bv);
             final List params = (List) p.getFirst();
             final List ports = (List) p.getSecond();
-            final VerilogObject instName =
-                dontRename((instance == null ? "inst"
-                                             : (instance.toString() + "$"))
-                            + id, mAlwaysEscape);
+            final String name = nameFunc.apply(inst);
+            final VerilogObject instName = dontRename(name, mAlwaysEscape);
             final VerilogObject moduleName =
                 dontRename(inst.getModule(), mAlwaysEscape);
             insts.add(factory.moduleInst(instName, moduleName, toArray(params),
