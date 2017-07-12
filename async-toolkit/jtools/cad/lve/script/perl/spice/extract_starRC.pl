@@ -78,6 +78,7 @@ sub usage() {
     $usage .= "    --starRC1-extra-options=value (extra icv command options)\n";
     $usage .= "    STARRC OPTIONS\n";
     $usage .= "    --temperature=value (default 90C)\n";
+    $usage .= "    --extra-temperature=value (default '')\n";
     $usage .= "    --plug-wells=(0|1) (default 1)\n";
     $usage .= "    --pin-order-file=<filename with .SUBCKT cellname [ports] .ENDS> where defining the order of port list\n";
     $usage .= "    --gray-cell-list=<file name>\n";
@@ -124,6 +125,7 @@ my $minC;
 my $minCC;
 my $maxF;
 my $temperature;
+my @extra_temperature;
 my $magnification_factor=1.0;
 my $extra_extract_equiv="";
 my $lvs_extra_options="";
@@ -199,6 +201,8 @@ while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
             $maxF = $value;
     } elsif ($flag eq "temperature") {
             $temperature = $value;
+    } elsif ($flag eq "extra-temperature") {
+            @extra_temperature = split(/\s+/, $value);
     } elsif ($flag eq "fulcrum-pdk-root") {
             $pdk_root = $value;
     } elsif ($flag eq "nvn-bind-file") {
@@ -613,6 +617,28 @@ if ($stage2b) {
     $cmd{"NETLIST_GROUND_NODE_NAME"} = $netlist_gnd;
     $cmd{"VIA_COVERAGE_OPTION_FILE"} = "$conf_dir/$upf_version.via_coverage.custom";
 
+    # setup up SMC (only SPEF output supported for now)
+    if ($netlist_format eq 'SPEF' && @extra_temperature) {
+        my $cmd = '';
+        my @corners = ();
+        foreach my $t ($temperature, @extra_temperature) {
+            my $corner = "t$t";
+            push @corners, $corner;
+            $cmd .= <<EOF;
+CORNER_NAME: $corner
+TCAD_GRD_FILE: $cmd{'TCAD_GRD_FILE'}
+OPERATING_TEMPERATURE: $t
+
+EOF
+        }
+        open my $fh, '>', 'corners.cmd' or die "Can't create corners.cmd: $!";
+        print $fh $cmd;
+        close($fh);
+        $cmd{'SIMULTANEOUS_MULTI_CORNER'} = 'YES';
+        $cmd{'CORNERS_FILE'} = 'corners.cmd';
+        $cmd{'SELECTED_CORNERS'} = join(' ', @corners);
+    }
+
     # setup CCP
     if ($ccp) {
         my %ccpcmd = ();
@@ -623,6 +649,7 @@ if ($stage2b) {
         $ccpcmd{'STARRCXT_CCP_VERSION'} = "$ENV{CCP_VERSION}";
         $ccpcmd{'UPF_FILE'} = "$conf_dir/$upf_version.be.upf";
         $ccpcmd{'VIA_FILE'} = "$conf_dir/$upf_version.via_table.ctf";
+        $ccpcmd{'NUM_THREADS'} = $threads;
         open my $fh, '>', 'ccp.cmd' or die "Can't create ccp.cmd: $!";
         print $fh join('', map { "$_: $ccpcmd{$_}\n" } sort keys %ccpcmd);
         close($fh);
@@ -701,7 +728,14 @@ if ($stage2c) {
             }
         }
 
-        reformat_spef("$starRC_dir/${cell_name}.spef", $spice_target, $canonical{$cast_cell});
+        if (@extra_temperature) {
+            reformat_spef("$starRC_dir/${cell_name}.spef.t$temperature", "$spice_target", $canonical{$cast_cell});
+            foreach my $t (@extra_temperature) {
+                reformat_spef("$starRC_dir/${cell_name}.spef.t$t", "$spice_target.$t", $canonical{$cast_cell});
+            }
+        } else {
+            reformat_spef("$starRC_dir/${cell_name}.spef", "$spice_target", $canonical{$cast_cell});
+        }
 
         exit 0;
     }

@@ -1006,6 +1006,7 @@ EXTRACT_COMMON_OPTIONS=--64bit=$(BIT64) \
 	--nvn-log='$(@D)/nvn.log' \
 	--swappin-log='$(@D)/swappin.err' \
 	--temperature=$(TEMPERATURE) \
+	--extra-temperature='$(EXTRA_TEMPERATURE)' \
 	--working-dir=$$extract_dir \
 	--node-props='$(@D)/../../cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX)'
 
@@ -1072,7 +1073,10 @@ $(ROOT_TARGET_DIR)/%/extracted$(EXTRACT_DIR)/spef.err: \
 	  --routed-alias-file='$(@D)/cdl.aliases.routed' \
 	  --task='stage2c' \
 	  '$(call GET_GDS2_CDL_NAME,$(@D))' 2>&1 >> '$(@D)/spef.err' && \
-	/bin/mv -f "$(@D)/cell.spef_gds2.tmp" "$(@D)/cell.spef_gds2"; \
+	/bin/mv -f "$(@D)/cell.spef_gds2.tmp" "$(@D)/cell.spef_gds2" && \
+	for t in $(EXTRA_TEMPERATURE); do \
+		/bin/mv -f "$(@D)/cell.spef_gds2.tmp.$$t" "$(@D)/cell.spef_gds2.$$t"; \
+	done; \
 	if ( grep -q "\<Error" "$(@D)/spef.err" ) ; then \
 		grep "\<Error" "$(@D)/spef.err" >&2 ; \
 		rm -f "$(@D)/cell.spef_gds2"; touch "$(@D)/cell.spef_gds2"; \

@@ -301,7 +301,7 @@ BEGIN {
     
     @svars = qw/ accurateMode astaInputSlew astaOutputCap astaThreads astaWalltime extractTemp hsimAccurate hsimPrsCap hsimPrsDelay hsimPrsMaxRes hsimPrsMinRes hsimVdd internalRules internalWires layoutScaleX layoutScaleY maxAlintBinNum maxBumpFanin maxDelayFanin maxF maxNodePerAlintBin minAccurateC minAccurateR minAccurateRC minC minCC minExtractedC minExtractedR minR minRC pdk_root prsTau reduce_mode reduced_dspf slintAbsMargin slintInputSlew slintOcvMargin traceAll traceInternal traceR probePorts probeTopPorts probeGates/;
 
-    @avars = qw/ bumpCC delayCC bumpTau delayTau astaTau time true corner temp mode view_estimated view_extracted timed_delay /;
+    @avars = qw/ bumpCC delayCC bumpTau delayTau astaTau time true corner temp mode view_estimated view_extracted timed_delay extraExtractTemp /;
 
     my @vars =();
     push @vars,map { "\@$_"; } @avars;
@@ -534,6 +534,7 @@ our $probePorts = "";
 our $probeGates = "";
 our $maxF=10e9;
 our $extractTemp=90;
+our @extraExtractTemp=();
 our $reduced_dspf=0;
 our $reduce_mode="NO";
 our $tail_comments=0;
@@ -1274,6 +1275,7 @@ KEEP_FRC_DIR                     := $keepFrcDir
 KEEP_TOTEM_DIR                   := $keepTotemDir
 KEEP_NANOTIME_DIR                := $keepNanotimeDir
 TEMPERATURE                      := $extractTemp
+EXTRA_TEMPERATURE                := @extraExtractTemp
 REDUCED_DSPF                     := $reduced_dspf
 REDUCE_MODE                      := $reduce_mode
 LAMBDA                           := $lambda
@@ -3077,7 +3079,7 @@ sub processOption {
         elsif ($key eq "minCC")               { $minCC = $value; }
         elsif ($key eq "named-resistor-layers") {$namedResistorLayers = $value; }
         elsif ($key eq "maxF")                { $maxF = $value; }
-        elsif ($key eq "extractTemp")         { $extractTemp = $value; }
+        elsif ($key eq "extractTemp")         { ($extractTemp, @extraExtractTemp) = split(/,/, $value); }
         elsif ($key eq "deleteExtractDir")    { $deleteExtractDir = $value ? 1 : 0; }
         elsif ($key eq "delete-bumpcheck-dir"){ $delete_bumpcheck_dir = $value ? 1 : 0; }
         elsif ($key eq "keep-lvs")            { $keepLvsDir = $value ? 1 : 0; }
