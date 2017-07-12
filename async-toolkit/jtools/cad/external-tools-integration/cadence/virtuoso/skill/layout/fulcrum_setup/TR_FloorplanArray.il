@@ -9,99 +9,86 @@
   ind
   )
 
+; return lower left bounding box over a list of instances
+(defun LowerLeftOfInstances (instances)
+  (let (x y minX minY)
+    (foreach inst instances
+             x = (car  inst->xy)
+             y = (cadr inst->xy)
+             (when minX==nil || x<minX minX=x)
+             (when minY==nil || y<minY minY=y)
+             )
+    (when minX && minY minX:minY)
+    )
+  )
+
 ; Aligns an array of cells using transformation:
 ; (x,y) = Sum_i {(dx_i, dy_i) * index_i}
 ; normal     example (ArrayCells (list 4.8:0 0:9.6))
 ; transposed example (ArrayCells (list 0:9.6 4.8:0))
 ;
-; ArrayCells( list( 15:0 0:38.4 ) ?WildCardString "slk_ex[+].mb[+]")
+; ArrayCells( list( 15:0 0:38.4 ) ?WildCardString "slk_ex\\[.*\\].mb\\[.*\\]")
 ;
-(defun ArrayCells ( matrix @key ( WildCardString nil ) 
-				( Inline t ) 
-				)
-
-	; Local Variables
-	let((	minX x xx
-		minY y yy
-		)
-
-	if( WildCardString && WildCardString != "ENTER WILDCARD STRING" && WildCardString != ""
-		then
-			geDeselectAllFig( )
-			FindInstance( ?instName list( nil WildCardString )) 
-	)
-
-	SelectedCellList = geGetSelSet( )
-
-	; Initiate minX and minY to the right hand corner of the bBox
-	minX = caadr( geGetWindowCellView( )->bBox )
-	minY = cadadr( geGetWindowCellView( )->bBox )
-
-  	(foreach SelectedCell SelectedCellList 
-           	(if SelectedCell->objType == "inst" then
-
-               		; parse indices from instance name
-               		name = SelectedCell -> name
-               		indices = (GetIndices name)
-
-               		; get current coordinates
-               		x = (car  SelectedCell -> xy )
-               		y = (cadr SelectedCell -> xy )
-               
-               		; compute offset
-               		xDiff = -x
-               		yDiff = -y
-               		(foreach xy matrix
-                        	dx = (car xy)
-                        	dy = (cadr xy)
-                        	index = (car indices)
-                        	indices = (cdr indices)
-                        	(cond ((and index!=nil (atom dx) (atom dy))
-                                       xDiff = xDiff + dx * index
-                                       yDiff = yDiff + dy * index
-                                       )
-                                      ((and index!=nil (nth index xy)!=nil)
-                                       xDiff = xDiff + (car  (nth index xy))
-                                       yDiff = yDiff + (cadr (nth index xy))
-                                       )
-                                      )
+(defun ArrayCells ( matrix @key ( CV (geGetEditCellView))
+                                ( WildCardString nil ) 
                                 )
-                          	
+  (let (x y dx dy xDiff yDiff oldXY newXY pcre SelectedCellList name indices)
 
-               		; move instance
-               		dbMoveFig( SelectedCell, nil, (list xDiff:yDiff "R0"))
+    ; choose instances to array
+    (cond (WildCardString && WildCardString!=""
+           pcre = (pcreCompile WildCardString)
+           SelectedCellList = (setof x CV->instances (pcreExecute pcre x->name))
+           )
+          (t
+           SelectedCellList = (setof x (geGetSelSet) x->objType=="inst" && x->cellView==CV)
+           )
+          )
 
-               		; get current coordinates
-               		x = (car  SelectedCell -> xy )
-               		y = (cadr SelectedCell -> xy )			
+    ; find original lower left xy of cells
+    oldXY =  (LowerLeftOfInstances SelectedCellList)
 
-			; Update minX and minY
-			if( ( y <= minY && x < minX ) || ( x <= minX && y < minY )
-				then
-					minX = x
-					minY = y
-					xx = xDiff
-					yy = yDiff
-			)
+    ; Process instances
+    (foreach SelectedCell SelectedCellList 
 
- 		else    
-			; ignore non instances
-			geDeselectObject( SelectedCell )
-               	)
-	)
+      ; parse indices from instance name
+      name = SelectedCell->name
+      indices = (GetIndices name)
 
-	; Move based on minX and minY
-	if( Inline
-		then
-			foreach( SelectedCell SelectedCellList
+      ; get current coordinates
+      x = (car  SelectedCell->xy)
+      y = (cadr SelectedCell->xy)
 
-				dbMoveFig( SelectedCell, nil, (list -xx:-yy "R0"))
-			)
-	)
+      ; compute offset
+      xDiff = -x
+      yDiff = -y
+      (foreach xy matrix
+        dx = (car xy)
+        dy = (cadr xy)
+        index = (car indices)
+        indices = (cdr indices)
+        (cond ((and index!=nil (atom dx) (atom dy))
+               xDiff = xDiff + dx * index
+               yDiff = yDiff + dy * index
+               )
+              ((and index!=nil (nth index xy)!=nil)
+               xDiff = xDiff + (car  (nth index xy))
+               yDiff = yDiff + (cadr (nth index xy))
+               )
+              )
+        )
 
-	); end let
-	t
-)
+      ; move instance
+      (dbMoveFig SelectedCell CV (list xDiff:yDiff "R0"))
+      )
+
+    ; adjust based on differnce of lower left
+    newXY = (LowerLeftOfInstances SelectedCellList)
+    (foreach SelectedCell SelectedCellList
+      (dbMoveFig SelectedCell CV (list (car oldXY)-(car newXY):(cadr oldXY)-(cadr newXY) "R0"))
+      )
+    )
+  t
+  )
 
 ; Wraparound GUI
 procedure( TR_FloorplanArray( )
@@ -116,13 +103,6 @@ procedure( TR_FloorplanArray( )
 		?defValue "0:2.88*8"
                 ?editable t )
 
-        TR_FloorplanArray_InlineField = hiCreateToggleField( 
-                ?name 'TR_FloorplanArray_InlineField
-                ?prompt "Inline" 
-		?choices list( list( `Inline "Yes" ) )
-		?defValue list( t )
-                )
-
         TR_FloorplanArray_WorkOnSelectedField = hiCreateToggleField( 
                 ?name 'TR_FloorplanArray_WorkOnSelectedField
                 ?prompt "Manual Select" 
@@ -133,21 +113,19 @@ procedure( TR_FloorplanArray( )
 
         TR_FloorplanArray_WildCardStringField = hiCreateStringField( 
                 ?name 'TR_FloorplanArray_WildCardStringField
-		?defValue "ENTER WILDCARD STRING"
+		?defValue nil
                 ?editable nil 
 		)
 
         TR_FloorplanArray_Form = hiCreateAppForm( 
                 ?name 'TR_FloorplanArray_Form
                 ?fields  list( 	
-				list( TR_FloorplanArray_InlineField 0:0 150:30 100 )
 				list( TR_FloorplanArray_Matrix 200:0 200:30 100 )
 				list( TR_FloorplanArray_WorkOnSelectedField 0:30 150:30 100 )
 				list( TR_FloorplanArray_WildCardStringField 200:30 200:30 0 )
 				)
                 ?callback "ArrayCells(  evalstring( sprintf( nil \"list(%s)\" TR_FloorplanArray_Form->TR_FloorplanArray_Matrix->value ))
 					?WildCardString TR_FloorplanArray_WildCardStringField->value 
-					?Inline 	TR_FloorplanArray_InlineField->Inline->value
 					)" 
         )
 

@@ -21,7 +21,6 @@
       matrix=UIArrayCells_Form->UIArrayCells_Matrix->value
       ArrayCells(evalstring( sprintf(nil "list( %s )" matrix)) 
                ?WildCardString UIArrayCells_Form->UIArrayCells_WildCardString->value
-               ?Inline UIArrayCells_Form->UIArrayCells_Inline->value
       )
     )
   )
@@ -41,10 +40,6 @@
                   ?name `UIArrayCells_WildCardString
                   ?prompt "WildCardString" 
                   ?defValue "" )
-                 ( hiCreateBooleanButton
-                  ?name `UIArrayCells_Inline
-                  ?buttonText "Inline" 
-                  ?defValue t )
                  ) 
         ( hiCreateAppForm
           ?name `UIArrayCells_Form
