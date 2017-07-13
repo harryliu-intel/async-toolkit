@@ -30,13 +30,13 @@ public class CSPCellInfo {
     private final String type;
 
     /** Contains {@link com.avlsi.fast.metaparameters.MetaParamDefinition}s. **/
-    private final Collection/*<MetaParamDefinition>*/ metaParamDefinitions;
+    private final Collection<MetaParamDefinition> metaParamDefinitions;
 
     /** Contains {@link com.avlsi.fast.ports.PortDefinition}s. **/
     private final Collection<PortDefinition> portDefinitions;
 
     public CSPCellInfo(final String type,
-                       final Collection/*<MetaParamDefinition>*/
+                       final Collection<MetaParamDefinition>
                            metaParamDefinitions,
                        final Collection<PortDefinition>
                            portDefinitions) {
@@ -53,7 +53,7 @@ public class CSPCellInfo {
         return CellUtils.hashMetaParameters(getType(), 10000);
     }
     
-    public Iterator/*<MetaParamDefinition>*/ getMetaParamDefinitions() {
+    public Iterator<MetaParamDefinition> getMetaParamDefinitions() {
         return Collections.unmodifiableCollection(metaParamDefinitions).iterator();
     }
 

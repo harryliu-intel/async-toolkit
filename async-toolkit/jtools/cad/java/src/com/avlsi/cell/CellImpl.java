@@ -226,7 +226,7 @@ public class CellImpl implements CellInterface {
     private final Set/*<HierName>*/ adoptedSet;
 
     /** List of {@link com.avlsi.fast.metaparameters.MetaParamDefinition}s. **/
-    private final List/*<MetaParamDefinition>*/ metaParamDefinitions;
+    private final List<MetaParamDefinition> metaParamDefinitions;
 
     /**
      * Map from names of ports (Strings) to their {@link
@@ -358,7 +358,7 @@ public class CellImpl implements CellInterface {
         this.portSubcellSet = new HashSet/*<HierName>*/();
         this.inlinedSubcellSet = new HashSet/*<HierName>*/();
         this.adoptedSet = new HashSet/*<HierName>*/();
-        this.metaParamDefinitions = new ArrayList/*<MetaParamDefinition>*/();
+        this.metaParamDefinitions = new ArrayList<>();
         this.portDefinitions = new LinkedHashMap<String,PortDefinition>();
         this.impliedPortMapping = new LinkedHashMap<String,String>();
         this.envExtraPortMapping = new LinkedHashMap<String,String>();
@@ -732,7 +732,7 @@ public class CellImpl implements CellInterface {
                 }});
     }
 
-    public Iterator getMetaParamDefinitions() {
+    public Iterator<MetaParamDefinition> getMetaParamDefinitions() {
         return Collections.unmodifiableList(metaParamDefinitions).iterator();
     }
 
@@ -1472,9 +1472,7 @@ public class CellImpl implements CellInterface {
         final DeviceParameters params =
             new DeviceParameters(cellName.getAsString('.'),
                     false,
-                    (MetaParamDefinition[])
-                        metaParamDefinitions.toArray(
-                             new MetaParamDefinition[0]),
+                    metaParamDefinitions.toArray(new MetaParamDefinition[0]),
                     arbitrationMode,
                     seed,
                     digitalTau);
