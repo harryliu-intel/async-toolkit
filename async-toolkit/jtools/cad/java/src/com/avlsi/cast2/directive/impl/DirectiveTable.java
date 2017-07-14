@@ -56,6 +56,7 @@ public class DirectiveTable {
         registerCallback(null, CHANNEL_TYPE, InstanceCallback.getInstance());
         registerCallback(null, WIDE_CHANNEL_TYPE, CspCallback.getInstance());
         registerCallback(null, POSSIBLY_WIDE_CHANNEL_TYPE, CspCallback.getInstance());
+        registerCallback(null, CSP_LVALUE, CspCallback.getInstance());
         registerCallback(null, INSTANCE_TYPE, InstanceCallback.getInstance());
         registerCallback(null, ARRAYED_INSTANCE_TYPE, InstanceCallback.getInstance());
         registerCallback(null, LAYER_TYPE, LayerCallback.getInstance());
@@ -350,6 +351,7 @@ public class DirectiveTable {
         registerDirective(CSP, TIME_UNIT, INT_TYPE, new Integer(100));
         registerDirective(CSP, INTERNAL_SLACK, WIDE_CHANNEL_TYPE, INT_TYPE, null);
         registerDirective(CSP, SYNCHRONIZE_CHANNELS, arrayify(WIDE_CHANNEL_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
+        registerDirective(CSP, SLACKER_TIME, CSP_LVALUE, FLOAT_TYPE, new Float(0));
 
         // see bug 6085
         registerDirective(CSP, STRICT_VARS, BOOLEAN_TYPE, Boolean.FALSE);

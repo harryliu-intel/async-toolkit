@@ -1,5 +1,7 @@
 package com.avlsi.csp.util;
 
+import java.io.StringReader;
+
 import antlr.RecognitionException;
 import antlr.TokenStreamSelector;
 import antlr.TokenStreamException;
@@ -14,13 +16,18 @@ import com.avlsi.cast.impl.InstanceValue;
 import com.avlsi.cast.impl.InvalidOperationException;
 import com.avlsi.cast.impl.Range;
 import com.avlsi.cast.impl.SubscriptSpecInterface;
+import com.avlsi.cast.impl.TokenWithInfo;
 import com.avlsi.cast.impl.Value;
 import com.avlsi.cast2.impl.CastTwoParser;
 import com.avlsi.cast2.impl.CastTwoTreeParser;
 import com.avlsi.cast2.directive.DirectiveConstants;
 import com.avlsi.cast2.directive.impl.DirectiveCallback;
+import com.avlsi.csp.ast.*;
+import com.avlsi.csp.grammar.CspLexer;
+import com.avlsi.csp.grammar.CspParser;
 import com.avlsi.tools.cosim.CoSimChannelNames;
 import com.avlsi.util.container.Pair;
+import com.avlsi.csp.ast.ExpressionInterface;
 
 public class CspCallback implements DirectiveCallback {
     private static CspCallback singleton = null;
@@ -145,6 +152,63 @@ public class CspCallback implements DirectiveCallback {
         return null;
     }
 
+    static class FullySpecifiedValue extends VisitorByCategory {
+        boolean valid = true;
+        public void visitStructureAccessExpression(StructureAccessExpression e)
+            throws VisitorException {
+            valid = false;
+        }
+        public void visitFunctionCallExpression(FunctionCallExpression e)
+            throws VisitorException {
+            valid = false;
+        }
+        public void visitArrayAccessExpression(ArrayAccessExpression e)
+            throws VisitorException {
+            super.visitArrayAccessExpression(e);
+            valid &= e.getIndexExpression() instanceof IntegerExpression;
+        }
+        public void visitBitRangeExpression(BitRangeExpression e)
+            throws VisitorException {
+            super.visitBitRangeExpression(e);
+            valid &= (e.getMinExpression() == null ||
+                      e.getMinExpression() instanceof IntegerExpression) &&
+                     e.getMaxExpression() instanceof IntegerExpression;
+        }
+    }
+
+    private ExpressionInterface getLvalue(final String value,
+                                          final Environment env) {
+        final CspLexer cspLexer = new CspLexer(new StringReader(value));
+        cspLexer.setLine(0);
+        cspLexer.setColumn(0);
+        cspLexer.setFilename("<no file>");
+        cspLexer.setTokenObjectClass(TokenWithInfo.class.getName());
+        final CspParser cspParser = new CspParser(cspLexer);
+        cspParser.setFilename("<no file>");
+        try {
+            final ExpressionInterface lvalue = cspParser.startLvalue();
+            final CSPProgram prog = new CSPProgram();
+            prog.setStatement(new ExpressionStatement(lvalue));
+            prog.setInitializerStatement(CastTwoTreeParser.makeCSPConstantInitializers(env));
+            // use constant evaluator to remove references to loop variables in
+            // the directives block
+            final CSPProgram progConst = ConstantEvaluator.evaluate(prog);
+            final ExpressionInterface lvalueConst =
+                ((ExpressionStatement) progConst.getStatement()).getExpression();
+            final FullySpecifiedValue fsv = new FullySpecifiedValue();
+            lvalueConst.accept(fsv);
+            return fsv.valid ? lvalueConst : null;
+        } catch (RecognitionException e) {
+            return null;
+        } catch (TokenStreamException e) {
+            return null;
+        } catch (InvalidOperationException e) {
+            return null;
+        } catch (VisitorException e) {
+            return null;
+        }
+    }
+
     private CspCallback() { }
 
     /**
@@ -159,6 +223,8 @@ public class CspCallback implements DirectiveCallback {
             return getNames(value, env, false);
         } else if (type.equals(DirectiveConstants.POSSIBLY_WIDE_CHANNEL_TYPE)) {
             return getNames(value, env, true);
+        } else if (type.equals(DirectiveConstants.CSP_LVALUE)) {
+            return getLvalue(value, env);
         } else {
             return null;
         }

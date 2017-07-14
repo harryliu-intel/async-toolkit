@@ -569,6 +569,9 @@ identifier returns [IdentifierExpression ident = null]
     : id:IDENT {ident = new IdentifierExpression(id.getText());
                 ident.epr(id);}
     ;
+startLvalue returns [ExpressionInterface expr = null]
+    : expr=lvalue EOF
+    ;
 lvalue returns [ExpressionInterface expr = null]
     { ExpressionInterface e1, e2 = null;
       FunctionCallExpression funcCall = null; }

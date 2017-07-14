@@ -270,4 +270,5 @@ public interface DirectiveConstants {
     String ALINT_SCENARIO_TYPE = "alint_scenario";
     String PRS_EXPR_TYPE = "prs_expr";
     String DEEP_PRS_EXPR_TYPE = "deep_prs_expr";
+    String CSP_LVALUE = "csp_lvalue";
 }

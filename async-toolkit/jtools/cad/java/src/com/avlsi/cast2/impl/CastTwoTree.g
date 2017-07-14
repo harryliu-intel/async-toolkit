@@ -1645,7 +1645,7 @@ options {
         }
     }
 
-    private static SequentialStatement makeCSPConstantInitializers
+    public static SequentialStatement makeCSPConstantInitializers
             (final Environment env) throws InvalidOperationException {
         final SequentialStatement stmt = new SequentialStatement();
         for (EnvironmentEntryIterator iEE = env.entryIterator();
