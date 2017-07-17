@@ -64,20 +64,17 @@ spar_cell_list =
      "globals.TOP_HALO.v_tap"
      "globals.TOP_HALO.ni_tap"
      "globals.TOP_HALO.si_tap"
-     ; tunable delay lines
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L2-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L4-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L6-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L8-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L10-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L12-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L14-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L16-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L18-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L20-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L22-R.10000"
-     "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L24-R.10000"
      )
+
+; tunable delay lines
+(for i 1 12
+  spar_cell_list = (cons (sprintf nil "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L%d-R.10000" 2*i) spar_cell_list)
+  )
+
+; PULSE_CTRL
+(for i 0 15
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d-R.0" i) spar_cell_list)
+  )
 
 ; regenerate abstracts
 (defun UpdateAbstractAPR ()
