@@ -53,6 +53,9 @@ spar_cell_list =
      "lib.bd.standard.send.SEND_CTRL.0"
      "lib.bd.standard.split.ALT_SPLIT_CTRL-L2-R.0"
      "lib.bd.standard.split.SPLIT_CTRL-L2-R.0"
+     ; gen 3 controllers
+     "lib.bd.standard.nopipe.RECV_CTRL.0"
+     "lib.bd.standard.nopipe.SEND_CTRL.0"
      ; TOP_HALO (physical only but very common)
      "globals.TOP_HALO.n"
      "globals.TOP_HALO.s"
