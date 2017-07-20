@@ -74,7 +74,7 @@ useICV = t
       )
 
     ; Create color grid and abstract
-    (when colorGrid
+    (when colorGrid && topMetal>=5
       cgCV = (MakeColorGrid ?CV CV)
       (unless cgCV (error "Unable to create color grid\n"))
       cgCV = (betterCopyCellView cgCV cgCV->libName cgCV->cellName "abstract" nil nil t)
