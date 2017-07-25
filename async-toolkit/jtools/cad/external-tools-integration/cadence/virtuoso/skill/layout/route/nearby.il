@@ -14,7 +14,7 @@
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes nil) (offGrid nil))
   (let (lpps tech n MasterRectList layerName pinRectList layerNum space len
-          net1 net2 rect1 rect2 bbox1 bbox2 overlap rect
+          inst1 inst2 net1 net2 rect1 rect2 bbox1 bbox2 overlap rect
           viaDef via list1 list2 xy wb wt viaName viaDef via)
     tech = (techGetTechFile CV)
     n=0
@@ -33,22 +33,25 @@
              (unless space (error "No MetalSpace defined for layer %s\n" layerName))
              len = (length pinRectList)
              (for a 0 len-1
+               inst1 = (car   (nth a pinRectList))
+               net1  = (cadr  (nth a pinRectList))
+               rect1 = (caddr (nth a pinRectList))
                (for b a+1 len-1
-                  net1 = (car  (nth a pinRectList))
-                  net2 = (car  (nth b pinRectList))
-                  rect1 = (cadr (nth a pinRectList))
-                  rect2 = (cadr (nth b pinRectList))
+                  inst2 = (car   (nth b pinRectList))
+                  net2  = (cadr  (nth b pinRectList))
+                  rect2 = (caddr (nth b pinRectList))
                   (cond ((mod layerNum 2)==0
                          bbox1 = (BBoxExpandHorizontal rect1 (car space))
                          bbox2 = (BBoxExpandHorizontal rect2 (car space))
-                         )
+                        )
                         (t
                          bbox1 = (BBoxExpandVertical rect1 (cadr space))
                          bbox2 = (BBoxExpandVertical rect2 (cadr space))
                          )
                         )
                   overlap = (BBoxAnd bbox1 bbox2)
-                  (when net1!=nil && net2!=nil && net1!=net2 && overlap && !(BBoxAnd rect1 rect2)
+                  (when overlap && !(BBoxAnd rect1 rect2) 
+                        && net1!=nil && net2!=nil && (net1!=net2 || inst1!=inst2)
                     rect = (dbCreateRect CV (list layerName "drawing") overlap)
                     rect->routeStatus="locked"
                     (dbAddFigToNet rect net)
@@ -60,6 +63,9 @@
                )
              )
 
+    ; use any new shapes as input to vias phase
+    MasterRectList = (nrFindPinShapesWithNet net lpps ?topShapes topShapes)
+
     ; add vias between subcell pins or top-level shapes that overlap
     (for v 0 TopMetal-1
       list1 = (setof a MasterRectList (car a)==Metal[v])
@@ -67,13 +73,15 @@
       list1 = (cadr (car list1))
       list2 = (cadr (car list2))
       (foreach e1 list1
+        inst1 = (car   e1)
+        net1  = (cadr  e1)
+        rect1 = (BBoxCanonicalize (caddr e1))
         (foreach e2 list2
-          net1  = (car  e1)
-          rect1 = (BBoxCanonicalize (cadr e1))
-          net2  = (car  e2)
-          rect2 = (BBoxCanonicalize (cadr e2))
+          inst2 = (car  e2)
+          net2  = (cadr e2)
+          rect2 = (BBoxCanonicalize (caddr e2))
           overlap = (BBoxAnd rect1 rect2)
-          (when overlap && (net1==nil || net1!=net2)
+          (when overlap && (net1==nil || (net1!=net2 || inst1!=inst2))
             xy = (BBoxGetCenter overlap)
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v   xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))

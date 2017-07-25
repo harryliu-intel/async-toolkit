@@ -538,8 +538,8 @@ defun( nrCreateMidAbstract ( libName cellName viewName
     )
   )
 
-; Same as above but include the net in the subcell with the rectangle
-; to avoid connecting the same net in the same subcell.
+; Same as above but include the net and inst in the subcell with the
+; rectangle to avoid connecting the same net in the same subcell.
 (defun nrFindPinShapesWithNet (net pinLPPs @key (topShapes nil))
   (let (layerName inst transform tmp pinRectList lppList ret)
     (foreach lpp pinLPPs
@@ -550,7 +550,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
       (when topShapes
         (foreach rect (setof a net->cellView->shapes a->net==net && a->lpp==lpp &&
                              (a->objType=="rect" || a->objType=="path" || a->objType=="pathSeg"))
-                 pinRectList = (cons (list nil rect->bBox) pinRectList)
+                 pinRectList = (cons (list nil nil rect->bBox) pinRectList)
                  )
         )
 
@@ -563,7 +563,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
             (when (car pin->fig->lpp)==layerName
               tmp = (nrConvertFigToRectList pin->fig)
               tmp = (nrRectListTransform tmp transform)
-              (foreach rect tmp pinRectList = (cons (list pin->fig->net rect) pinRectList))
+              (foreach rect tmp pinRectList = (cons (list inst pin->fig->net rect) pinRectList))
               )
             )
           )
