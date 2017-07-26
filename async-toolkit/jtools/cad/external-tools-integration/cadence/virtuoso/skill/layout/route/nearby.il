@@ -63,9 +63,6 @@
                )
              )
 
-    ; use any new shapes as input to vias phase
-    MasterRectList = (nrFindPinShapesWithNet net lpps ?topShapes topShapes)
-
     ; add vias between subcell pins or top-level shapes that overlap
     (for v 0 TopMetal-1
       list1 = (setof a MasterRectList (car a)==Metal[v])
