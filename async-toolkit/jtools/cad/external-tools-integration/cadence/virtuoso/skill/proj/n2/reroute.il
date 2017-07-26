@@ -212,5 +212,5 @@
 (defun PatchTDL (@key (CV (geGetEditCellView)))
   (foreach x CV->shapes (when x->lpp==(list "m2" "fill") (dbDeleteObject x)))
   (dbSave CV)
-  CV = (MakeSimpleAbstract ?topMetal 1 ?CV CV)
+  CV = (MakeLeafAbstract ?CV CV)
   )
