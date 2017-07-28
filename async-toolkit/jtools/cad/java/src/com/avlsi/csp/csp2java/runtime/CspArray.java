@@ -186,9 +186,9 @@ public class CspArray implements CspCloneableValue, Packable {
         return start;
     }
 
-    public int unpack(final CspInteger unpacked, int start) {
+    public int unpack(final CspInteger packed, int start) {
         for (CspValue val : ca) {
-            start = ((Packable) val).unpack(unpacked, start);
+            start = ((Packable) val).unpack(packed, start);
         }
         return start;
     }
