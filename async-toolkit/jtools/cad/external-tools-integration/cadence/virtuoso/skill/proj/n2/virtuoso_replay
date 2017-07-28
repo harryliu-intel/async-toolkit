@@ -1,16 +1,27 @@
 #!/usr/intel/bin/perl -w
+use strict;
+use warnings;
 
 @ARGV>0 or die "USAGE: virtuoso_replay 1.il 2.il ...\n";
-$MEM = 16*1024;
-foreach $file (@ARGV) {
+my $MEM = 16*1024;
+my $count = 0;
+foreach my $file (@ARGV) {
     my $base = $file;
     $base =~ s/\.il$//g;
     system("mkdir -p ${base}.cdswd");
     system("$ENV{FULCRUM} mkcdswd --target-dir=${base}.cdswd " .
            "--dfII-dir=$ENV{DFII_DIR} --cast-path=$ENV{CAST_PATH} " .
            "--force --p4-client=$ENV{HW_CLIENT}");
+
+    # Workaround for Xvnc server sharing
+    # Valid Xvnc display range from [10..99] (excluding +)
+    my $display = ($count % 90) + 10;
+    $ENV{CDS_XVNC_TENBASE} = $display / 10;
+    $ENV{CDS_XVNC_OFFSET} = $display % 10;
+
     system("(cd ${base}.cdswd; " .
            "nbq --class-reservation fRM=$MEM -j ${base}.out " .
            "$ENV{FULCRUM} --cadence assura_oa,$ENV{ICV_VERSION} " .
            "virtuoso -log ${base}.log -replay $ENV{PWD}/${file} -nograph)");
+    $count++;
 }
