@@ -81,6 +81,11 @@ spar_cell_list =
     )
   )
 
+; PULSE_SEND_CTRL
+(for i 0 8
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.send.PULSE_SEND_CTRL-L%d-R.0" i) spar_cell_list)
+  )
+
 ; regenerate abstracts
 (defun UpdateAbstractAPR ()
   (foreach cellName spar_cell_list
