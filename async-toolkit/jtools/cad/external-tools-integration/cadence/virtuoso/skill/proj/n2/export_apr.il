@@ -70,21 +70,23 @@ spar_cell_list =
      )
 
 ; tunable delay lines
-(for i 1 12
-  spar_cell_list = (cons (sprintf nil "lib.util.delay.tunable.BINARY_CS_DELAY_STAGE-L%d-R.10000" 2*i) spar_cell_list)
+(for i 1 16
+  spar_cell_list = (cons (sprintf nil "lib.util.delay.tunable.TDL-L%d-R.0" i) spar_cell_list)
   )
 
 ; PULSE_CTRL
-(for i 0 15
-  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d-R.0" i) spar_cell_list)
+(for i 0 8
+  (foreach s (list "false" "true")
+    spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d_%s-R.0" i s) spar_cell_list)
+    )
   )
 
 ; regenerate abstracts
 (defun UpdateAbstractAPR ()
   (foreach cellName spar_cell_list
-           CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "abstract")
-           (cdsp4edit ?CV CV)
-           CV = (dbOpenCellViewByType (GetCastLibName cellName) cellName "layout")
+           CV = (ReadCV (GetCastLibName cellName) cellName "abstract")
+           (when CV (cdsp4edit ?CV CV))
+           CV = (ReadCV (GetCastLibName cellName) cellName "layout")
            (if (strncmp cellName "lib.bd.6T.bank.SRAM_BANK_CTRL" (strlen "lib.bd.6T.bank.SRAM_BANK_CTRL"))==0
              (MakeSimpleAbstract ?CV CV ?topMetal 3) ; CLASS BLOCK
              (MakeLeafAbstract ?CV CV)   ; CLASS CORE
