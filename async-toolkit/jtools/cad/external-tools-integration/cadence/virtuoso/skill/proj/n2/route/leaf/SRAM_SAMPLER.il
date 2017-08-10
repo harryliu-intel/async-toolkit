@@ -1,0 +1,6 @@
+(load "~/cds_wd/N2/n2/reroute.il")
+(let (PowerGroundNets)
+  PowerGroundNets = (list GNDNetName VddNetName)
+  (RouteLeaf "lib.synchronous.6T.sram.SRAM_SAMPLER.0" 4)
+  )
+(exit)
