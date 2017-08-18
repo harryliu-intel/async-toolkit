@@ -4,9 +4,9 @@ MODULE Main;
    Policy-Group recognizer RTL generator.
    Author : Mika Nystrom <mika.nystroem@intel.com>
 
-   Usage: genpg [-allminterms] [-sv <sv-output-name>] [-bits <address-bits>] [-skipHoles] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] <input-CSV-name>
+   Usage: genpg [-allminterms] [-sv <sv-output-name>] [-bits <address-bits>] [-skipHoles] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)
  *)
-
+IMPORT XMLParse;
 IMPORT CSVParse;
 IMPORT Rd, FileRd;
 IMPORT Debug;
@@ -32,6 +32,8 @@ IMPORT TextWr;
 IMPORT AL;
 IMPORT TextTextTbl, TextSeq;
 IMPORT Wx;
+IMPORT TextRd, PgToolSVTemplates, Bundle;
+IMPORT CharSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -83,9 +85,12 @@ VAR totLen := 0;
 
     widest := ARRAY Field OF CARDINAL { 0 , .. };
     
-PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT) =
+PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT; lenPerByte : CARDINAL) =
+
+  (* lenPerByte 8 if size in bits, 1 if size in bytes *)
   VAR
     rl : SortedRangeTbl.T;
+    len : CARDINAL;
   BEGIN
     IF Debug.GetLevel() >= 100 THEN
       FOR f := FIRST(Field) TO LAST(Field) DO
@@ -103,8 +108,15 @@ PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT) =
     END;
 
     WITH base = ParseLiteral(b[Field.Base]),
-         len  = ParseLiteral(b[Field.Length]),
+         lenU = ParseLiteral(b[Field.Length]),
          grp  =              b[Field.Group]    DO
+
+      IF lenU MOD lenPerByte # 0 THEN
+        Debug.Error(F("specified len 0x%s , not divisible by 0x%s", Int16(lenU), Int16(lenPerByte)))
+      END;
+
+      len := lenU DIV lenPerByte;
+      
       IF Debug.GetLevel() >= 100 THEN
         Debug.Out(F("range start %s len %s pg %s",
                     Int16(base),
@@ -573,8 +585,11 @@ PROCEDURE AssertNoGaps() =
 TYPE ExtPolicyGroupIdx = CARDINAL;
 
 TYPE
-  Sections = { Prolog, Decls, Code, Epilog };
+  Sections = { Prolog, Early, BaseStrap, Decls, Code, Epilog };
   Streams = ARRAY Sections OF Wr.T ;
+
+CONST
+  SectionNames = ARRAY Sections OF TEXT { "PROLOG", "EARLY", "BASESTRAP", "DECLS", "CODE", "EPILOG" };
   
 PROCEDURE FmtSVCard(a : Address.T) : TEXT =
   BEGIN
@@ -638,7 +653,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
             O(F("  assign m%s[%s] = %s;",
                 Fmt.Int(idx),
                 Fmt.Int(pp),
-                RangeExpr("i_addr", r.lo, r.lo+r.len)));
+                RangeExpr("addr", r.lo, r.lo+r.len)));
             INC(pp)
           END
         END
@@ -661,6 +676,25 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
         END
       END
     END DeclareMinterms;
+
+  PROCEDURE EmitBaseStrapArg() RAISES { Wr.Failure } =
+    BEGIN
+      O(F("input logic [(%s)-1:0] i_basestrap,", baseStrapBits))
+    END EmitBaseStrapArg;
+
+  PROCEDURE DeclareAddr() RAISES { Wr.Failure } =
+    BEGIN
+      O("  logic[$bits(i_addr)-1:0] addr;")
+    END DeclareAddr;
+    
+  PROCEDURE EmitAddrCalc() RAISES { Wr.Failure } =
+    BEGIN
+      IF baseStrapBits = NIL THEN
+        O("  assign addr = i_addr;")
+      ELSE
+        O("  assign addr = i_addr - i_basestrap;")
+      END
+    END EmitAddrCalc;
     
   PROCEDURE DeclareOneHot() RAISES { Wr.Failure } =
     BEGIN
@@ -760,13 +794,15 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
         Rd.EndOfFile => (* skip *)
       END
     END CopyInFromReader;
-    
+
+ 
+  VAR 
+    cur : Wr.T;
+
+  PROCEDURE OldDoEmitAll() RAISES { Wr.Failure, OSError.E, Rd.Failure } =
   VAR
     tgt : Streams;
-
-    cur : Wr.T;
   BEGIN
-
     FOR i := FIRST(tgt) TO LAST(tgt) DO tgt[i] := TextWr.New() END;
     
     cur := tgt[Sections.Prolog];
@@ -779,6 +815,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
     O("                                                                 ");
     O("`include \"hlp_checkers_ext.vs\"                                 ");
     O("                                                                 ");
+    cur := tgt[Sections.Early];
     DumpPgListDebug();
     O("                                                                 ");
     O("module hlp_sai_security_addr_pg                                  ");
@@ -855,7 +892,117 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
       END;
       Wr.Close(wr)
     END
+  END OldDoEmitAll;
+  
+  PROCEDURE DoEmitAll() RAISES { Wr.Failure, OSError.E, Rd.Failure } =
+  VAR
+    tgt : Streams;
+  BEGIN
+    FOR i := FIRST(tgt) TO LAST(tgt) DO tgt[i] := TextWr.New() END;
+    
+    cur := tgt[Sections.Prolog];
+    IF copyRightPath # NIL THEN
+      CopyInFromPath(copyRightPath)
+    END;
+
+    cur := tgt[Sections.Early];
+    DumpPgListDebug();
+
+    IF baseStrapBits # NIL THEN
+      cur := tgt[Sections.BaseStrap];
+      EmitBaseStrapArg()
+    END;
+
+    cur := tgt[Sections.Code];
+    EmitAddrCalc();
+    WITH cnt = CountMinterms() DO
+      Debug.Out("CountMinterms");
+      FOR i := FIRST(cnt^) TO LAST(cnt^) DO
+        Debug.Out(F("pgi %s cnt %s", Fmt.Int(i), Fmt.Int(cnt[i])));
+      END;
+      IF NOT allTerms THEN
+        (* determine which PG to skip generating *)
+        VAR
+          maxCnt := cnt[0];
+        BEGIN
+          pgToSkip := 0;
+          FOR i := FIRST(cnt^) TO LAST(cnt^) DO
+            IF cnt[i] > maxCnt THEN
+              maxCnt := cnt[i]; pgToSkip := i
+            END
+          END
+        END
+      END;
+      Debug.Out(F("CountMinterms : pgToSkip = %s", Fmt.Int(pgToSkip)))
+    END;
+    EmitMinterms();
+    EmitOneHotCombBlocks();
+    EmitEncodePGBlock();
+
+    EmitSharedExpressions(tgt);
+    
+    cur := tgt[Sections.Decls];
+    DeclareAddr();
+    DeclareMinterms();
+    DeclareOneHot();
+
+    cur := tgt[Sections.Epilog];
+    WITH wr = FileWr.Open(pn) DO
+      FOR i := FIRST(tgt) TO LAST(tgt) DO
+        CopyTill(templateRd, wr, "**" & SectionNames[i] & "**");
+        Wr.PutText(wr, TextWr.ToText(tgt[i]))
+      END;
+      CopyTill(templateRd, wr, NIL);
+      Wr.Close(wr)
+    END
+  END DoEmitAll;
+  
+  BEGIN
+    DoEmitAll()
   END DumpSV;
+
+PROCEDURE CopyTill(rd : Rd.T; wr : Wr.T; tag : TEXT) RAISES { Rd.Failure, Wr.Failure } =
+
+  PROCEDURE TagFound() : BOOLEAN =
+    VAR 
+      len : CARDINAL;
+    BEGIN
+      IF tag = NIL THEN RETURN FALSE END;
+      len := Text.Length(tag);
+      FOR i := 0 TO Text.Length(tag)-1 DO
+        WITH j = s.size()-len+i DO
+          IF j<0 THEN RETURN FALSE END;
+          IF Text.GetChar(tag,i) # s.get(j) THEN RETURN FALSE END
+        END
+      END;
+      RETURN TRUE
+    END TagFound;
+
+  PROCEDURE RewindOutputTag() =
+    BEGIN
+      FOR i := Text.Length(tag)-1 TO 0 BY -1 DO
+        WITH c = s.remhi() DO
+          <*ASSERT c = Text.GetChar(tag,i)*>
+        END
+      END
+    END RewindOutputTag;
+
+  VAR
+    s := NEW(CharSeq.T).init();
+  BEGIN
+    TRY
+      LOOP
+        s.addhi(Rd.GetChar(rd)); 
+        IF TagFound() THEN RewindOutputTag(); EXIT END; (* found tag, quit *)
+      END
+    EXCEPT 
+      Rd.EndOfFile => (* skip *)
+    END;
+    (* convert buffer *)
+    FOR i := 0 TO s.size()-1 DO
+      Wr.PutChar(wr, s.get(i))
+    END
+  END CopyTill;
 
 VAR exprTbl := NEW(TextTextTbl.Default).init();
     exprSeq := NEW(TextSeq.T).init();
@@ -911,7 +1058,7 @@ PROCEDURE RangeExpr(var : TEXT; lo, lm : CARDINAL) : TEXT =
     hiW  : Word.T := lm-1;
     di := -1;
   BEGIN
-    (* (i_addr >= %s) & (i_addr < %s) *)
+    (* (addr >= %s) & (addr < %s) *)
     Debug.Out(F("RangeExpr(%s, %s, %s)", var, FmtSVCard(lo), FmtSVCard(lm)));
     
     FOR i := Word.Size-1 TO 0 BY -1 DO
@@ -1098,21 +1245,210 @@ CONST
     "PG5",
     "PG6",
     "PG7" };
+
+PROCEDURE DoCSV(fn : Pathname.T) =
+  VAR
+    buf : ARRAY Field OF TEXT;
+    csv : CSVParse.T;
+  BEGIN
+    
+    TRY
+      rd := FileRd.Open(fn);
+      csv := NEW(CSVParse.T).init(rd);
+      
+      csv.startLine();
+      csv.startLine();
+      LOOP
+        TRY
+          csv.startLine();
+          FOR i := FIRST(Field) TO LAST(Field) DO
+            buf[i] := csv.cell()
+          END;
+          IF NOT TextUtils.HavePrefix(buf[FIRST(buf)], "//") THEN
+            ProcessBuf(buf, 1)
+          END
+        EXCEPT
+          CSVParse.EndOfLine => (* wrong syntax *)
+        END
+      END
+    EXCEPT
+      Rd.Failure(x) =>
+      Debug.Error("I/O error while reading input : Rd.Failure : "& AL.Format(x))
+    |
+      OSError.E(x) =>
+      Debug.Error("Error while opening input : OSError.E : "& AL.Format(x))
+    |
+      Rd.EndOfFile =>
+      (* done *)
+      TRY Rd.Close(rd) EXCEPT ELSE <*ASSERT FALSE*> END
+    END;
+
+  END DoCSV;
+
+PROCEDURE DebugDumpParser(p : XMLParse.T; level : CARDINAL := 0) =
+  VAR
+    aIter := p.iterateAttrs();
+    cIter := p.iterateChildren();
+    leader : TEXT;
+    attr : XMLParse.Attr;
+    child : XMLParse.T;
+  BEGIN
+    WITH ca = NEW(REF ARRAY OF CHAR, level)^ DO
+      FOR i := FIRST(ca) TO LAST(ca) DO ca[i] := '.' END;
+      leader := Text.FromChars(ca)
+    END;
+
+    WHILE aIter.next(attr) DO
+      Debug.Out(leader & " attr " & attr.tag & " = " & attr.attr)
+    END;
+
+    WHILE cIter.next(child) DO
+      Debug.Out(leader &
+                " child " & child.getEl() & " : " & DeWhiteSpace(child.getCharData()));
+      DebugDumpParser(child, level+1)
+    END
+    
+  END DebugDumpParser;
+
+  (**********************************************************************)
+
+PROCEDURE GenerateOutput() =
+  BEGIN
+    Debug.Out("allRanges : " & Fmt.Int(allRanges.size()));
+
+    PrintStats();
+
+    IF attemptElimOverlaps THEN
+      AttemptElimOverlaps()
+    END;
+    
+    IF NOT CheckForOverlaps(FALSE) THEN
+      Debug.Error("There were overlaps.  Cant continue")
+    END;
+    
+    MergeGroups();
+
+    PrintStats();
+
+    IF NOT CheckForOverlaps(TRUE) THEN
+      Debug.Error("Internal program error---overlaps created")
+    END;
+
+    IF skipHoles THEN
+      IF ExtendIntoGaps() THEN
+        MergeGroups()
+      END
+    END;
+
+    PrintStats();
+
+    IF NOT CheckForOverlaps(TRUE) THEN
+      Debug.Error("Internal program error---overlaps created")
+    END;
+
+    DebugDump();
+    
+    IF skipHoles THEN AssertNoGaps() END;
+
+    IF svOutput # NIL THEN
+      TRY
+        DumpSV(svOutput)
+      EXCEPT
+        Wr.Failure(x) =>
+        Debug.Error("I/O error while writing SV output : Wr.Failure : "&
+          AL.Format(x))
+      |
+        Rd.Failure(x) =>
+        Debug.Error("I/O error while reading SV template : Rd.Failure : "&
+          AL.Format(x))
+      |
+        OSError.E(x) =>
+        Debug.Error("Error while opening SV output : OSError.E : "& AL.Format(x))
+      END
+    END
+  END GenerateOutput;
+
+PROCEDURE DeWhiteSpace(txt : TEXT) : TEXT =
+  CONST
+    White = SET OF CHAR { '\t', ' ', '\n', '\r' };
+  BEGIN
+    FOR i := 0 TO Text.Length(txt)-1 DO
+      IF NOT Text.GetChar(txt, i) IN White THEN RETURN txt END
+    END;
+    RETURN ""
+  END DeWhiteSpace;
+
+PROCEDURE DoCRIF(fn : Pathname.T) =
+  VAR
+    parser : XMLParse.T;
+  BEGIN
+    parser := XMLParse.DoIt(fn);
+
+    (*IF Debug.GetLevel() >= 10 THEN DebugDumpParser(parser) END*)
+    TraverseXML(NEW(CRIFVisitor), parser)
+  END DoCRIF;
+
+TYPE
+  XMLVisitor = OBJECT METHODS
+    visit(node, parent : XMLParse.T)
+  END;
+
+PROCEDURE TraverseXML(visitor : XMLVisitor;
+                      root    : XMLParse.T;
+                      parent  : XMLParse.T := NIL) =
+  VAR
+    cIter := root.iterateChildren();
+    child : XMLParse.T;
+  BEGIN
+    visitor.visit(root, parent);
+    WHILE cIter.next(child) DO TraverseXML(visitor, child, root) END
+  END TraverseXML;
+
+PROCEDURE CRIFVisit(<*UNUSED*>visitor : CRIFVisitor;
+                    node    : XMLParse.T;
+                    <*UNUSED*>parent  : XMLParse.T) =
+  BEGIN
+    IF TE(node.getEl(), "register") THEN
+      (* this is a register *)
+      WITH name           = node.getChild("name").getCharData(),
+           addressOffsetT = node.getChild("addressOffset").getCharData(),
+           sizeT          = node.getChild("size").getCharData(),
+           pg             = node.getChild("Security_PolicyGroup").getCharData() DO
+        Debug.Out(F("reg %s off %s sz %s pg %s",
+                    name, addressOffsetT, sizeT, pg));
+
+        WITH buf = ARRAY Field OF TEXT { name, addressOffsetT, sizeT, pg } DO
+          ProcessBuf(buf, 8)
+        END
+      END
+    END
+  END CRIFVisit;
+
+TYPE CRIFVisitor = XMLVisitor OBJECT OVERRIDES visit := CRIFVisit END;
   
 VAR
   PgDefaultName := "PG_DEFAULT";
   PolicyGroupArr : REF ARRAY OF TEXT;
   DefaultIdx : CARDINAL;
-  buf : ARRAY Field OF TEXT;
-  csv : CSVParse.T;
-  fn : Pathname.T;
+  bits := -1;
+  pgToSkip : [-1..LAST(CARDINAL)] := -1;
+  copyRightPath : Pathname.T := NIL;
+  allTerms : BOOLEAN;
+
+VAR
   skipHoles : BOOLEAN;
   attemptElimOverlaps : BOOLEAN;
   svOutput : Pathname.T := NIL;
-  bits := -1;
-  allTerms : BOOLEAN;
-  pgToSkip : [-1..LAST(CARDINAL)] := -1;
-  copyRightPath : Pathname.T := NIL;
+  ifn : Pathname.T;
+
+TYPE
+  InputMode = { Default, CSV, CRIF };
+
+VAR
+  mode := InputMode.Default;
+  templateRd : Rd.T := NIL;
+  baseStrapBits : TEXT := NIL;
+  
 BEGIN
   (* setup default PGs per HLP HAS *)
   PolicyGroupArr := NEW(REF ARRAY OF TEXT, NUMBER(DefPolicyGroupArr));
@@ -1143,101 +1479,58 @@ BEGIN
         END
       END;
 
+      IF pp.keywordPresent("-basestrapbits") THEN
+        baseStrapBits := pp.getNext() 
+      END;
+
+      IF pp.keywordPresent("-template") THEN
+        WITH tfn = pp.getNext() DO
+          TRY
+            templateRd := FileRd.Open(tfn)
+          EXCEPT
+            OSError.E(x) => Debug.Error(F("Couldnt open template file \"%s\", OSError.E : %s", tfn, AL.Format(x)))
+          END
+        END
+      END;
+
       IF pp.keywordPresent("-copyrightpath") THEN
         copyRightPath := pp.getNext()
       END;
 
+      IF pp.keywordPresent("-csv") THEN
+        ifn := pp.getNext();
+        mode := InputMode.CSV
+      ELSIF pp.keywordPresent("-crif") THEN
+        ifn := pp.getNext();
+        mode := InputMode.CRIF
+      END;
+      
       pp.skipParsed();
-      fn := pp.getNext();
+
+      IF mode = InputMode.Default THEN
+        ifn := pp.getNext();
+        mode := InputMode.CSV
+      END;
+      
       pp.finish();
     END;
     IF bits = -1 THEN Debug.Error("Must specify -bits") END
   EXCEPT
     ParseParams.Error => Debug.Error("Command-line params wrong.")
   END;
-  
-  TRY
-    rd := FileRd.Open(fn);
-    csv := NEW(CSVParse.T).init(rd);
-    
-    csv.startLine();
-    csv.startLine();
-    LOOP
-      TRY
-        csv.startLine();
-        FOR i := FIRST(Field) TO LAST(Field) DO
-          buf[i] := csv.cell()
-        END;
-        IF NOT TextUtils.HavePrefix(buf[FIRST(buf)], "//") THEN
-          ProcessBuf(buf)
-        END
-      EXCEPT
-        CSVParse.EndOfLine => (* wrong syntax *)
-      END
-    END
-  EXCEPT
-    Rd.Failure(x) =>
-    Debug.Error("I/O error while reading input : Rd.Failure : "& AL.Format(x))
+
+  (* if no template specf'd, use default *)
+  IF templateRd = NIL THEN
+    templateRd := TextRd.New(Bundle.Get(PgToolSVTemplates.Get(),"hlp_pg_template.sv"))
+  END;
+
+  CASE mode OF
+    InputMode.CSV => DoCSV(ifn)
   |
-    OSError.E(x) =>
-    Debug.Error("Error while opening input : OSError.E : "& AL.Format(x))
-  |
-    Rd.EndOfFile =>
-    (* done *)
-    TRY Rd.Close(rd) EXCEPT ELSE <*ASSERT FALSE*> END
+    InputMode.CRIF => DoCRIF(ifn)
+  ELSE
+    <*ASSERT FALSE*>
   END;
 
-  Debug.Out("allRanges : " & Fmt.Int(allRanges.size()));
-
-  PrintStats();
-
-  IF attemptElimOverlaps THEN
-    AttemptElimOverlaps()
-  END;
-  
-  IF NOT CheckForOverlaps(FALSE) THEN
-    Debug.Error("There were overlaps.  Cant continue")
-  END;
-  
-  MergeGroups();
-
-  PrintStats();
-
-  IF NOT CheckForOverlaps(TRUE) THEN
-    Debug.Error("Internal program error---overlaps created")
-  END;
-
-  IF skipHoles THEN
-    IF ExtendIntoGaps() THEN
-      MergeGroups()
-    END
-  END;
-
-  PrintStats();
-
-  IF NOT CheckForOverlaps(TRUE) THEN
-    Debug.Error("Internal program error---overlaps created")
-  END;
-
-  DebugDump();
-  
-  IF skipHoles THEN AssertNoGaps() END;
-
-  IF svOutput # NIL THEN
-    TRY
-      DumpSV(svOutput)
-    EXCEPT
-      Wr.Failure(x) =>
-      Debug.Error("I/O error while writing SV output : Wr.Failure : "&
-        AL.Format(x))
-    |
-      Rd.Failure(x) =>
-      Debug.Error("I/O error while reading SV template : Rd.Failure : "&
-        AL.Format(x))
-    |
-      OSError.E(x) =>
-      Debug.Error("Error while opening SV output : OSError.E : "& AL.Format(x))
-    END
-  END
-  
+  GenerateOutput()
 END Main.

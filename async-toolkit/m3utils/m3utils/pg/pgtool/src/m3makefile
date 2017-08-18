@@ -2,6 +2,7 @@ import ("libm3")
 import ("set")
 import ("parseparams")
 import ("mscheme")
+import ("xmlparse")
 
 import ("csv")
 
@@ -19,6 +20,9 @@ list ("Range", "Range")
 table ("TextRangeList", "Text", "RangeList")
 
 table ("TextCard", "Text", "Cardinal")
+
+resource ("hlp_pg_template.sv")
+bundle ("PgToolSVTemplates")
 
 implementation ("Main")
 
