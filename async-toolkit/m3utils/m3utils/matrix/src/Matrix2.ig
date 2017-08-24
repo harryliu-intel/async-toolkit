@@ -18,6 +18,8 @@ PROCEDURE Zero(VAR a : M);
 PROCEDURE MakeUnit(VAR a : M);
 
 PROCEDURE MulSM(s : Base; READONLY a : M; VAR res : M);
+PROCEDURE MulSV(s : Base; READONLY a : V; VAR res : V);
+PROCEDURE AddSV(s : Base; READONLY a : V; VAR res : V); (* add s to each elem *)
 PROCEDURE MulMM(READONLY a, b : M; VAR res : M);
 
 PROCEDURE MulMV(READONLY a : M; READONLY v : V; VAR res : V);
@@ -97,6 +99,11 @@ PROCEDURE AddM(READONLY a, b : M; VAR c : M);
 PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
                             bw : Elem.T; READONLY b : M;
                             VAR c : M);
+  (* c <- aw * a + bw * b *)
+
+PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
+                             bw : Elem.T; READONLY b : V;
+                             VAR c : V);
   (* c <- aw * a + bw * b *)
 
 END Matrix2.

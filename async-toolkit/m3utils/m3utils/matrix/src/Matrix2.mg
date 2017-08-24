@@ -434,6 +434,20 @@ PROCEDURE MulSM(s : Base; READONLY a : M; VAR c : M) =
     END
   END MulSM;
 
+PROCEDURE MulSV(s : Base; READONLY a : V; VAR c : V) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      c[i] := s * a[i]
+    END
+  END MulSV;
+
+PROCEDURE AddSV(s : Base; READONLY a : V; VAR c : V) =
+  BEGIN 
+    FOR i := FIRST(c) TO LAST(c) DO
+      c[i] := s + a[i]
+    END
+  END AddSV;
+
 PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
                             bw : Elem.T; READONLY b : M;
                             VAR c : M) =
@@ -444,6 +458,15 @@ PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
       END
     END
   END LinearCombination;
+
+PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
+                             bw : Elem.T; READONLY b : V;
+                             VAR c : V) =
+  BEGIN
+    FOR i := FIRST(c) TO LAST(c) DO
+      c[i] := aw*a[i] + bw*b[i] 
+    END
+  END LinearCombinationV;
 
 BEGIN END Matrix2.
 
