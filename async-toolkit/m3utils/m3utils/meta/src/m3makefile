@@ -12,6 +12,7 @@ import ("metalib")
 
 import ("arith")
 import ("minimize")
+import ("splines")
 
 
 m3_optimize("T")
