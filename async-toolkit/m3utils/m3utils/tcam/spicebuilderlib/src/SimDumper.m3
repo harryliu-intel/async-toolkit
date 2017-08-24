@@ -26,6 +26,10 @@ IMPORT ProbeMode;
 IMPORT TextSetDef;
 IMPORT Params;
 IMPORT TextUtils;
+IMPORT TextList;
+IMPORT SimMeasurement, SimMeasurementSeq;
+IMPORT LongRealSeq AS LRSeq;
+IMPORT NodeMeasurement, NodeMeasurementSetDef;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*> (* sloppy! *)
@@ -57,16 +61,29 @@ PROCEDURE Renamer(txt : TEXT) : TEXT =
     END
   END Renamer;
 
-PROCEDURE DumpProbes(wr : Wr.T; of : NodeRecSeq.T) =
+PROCEDURE DumpProbes(wr : Wr.T; of : NodeRecSeq.T; type : TEXT) =
   BEGIN
+    <*ASSERT TE(type,"v") OR TE(type, "i")*>
     Wr.PutText(wr, "\n");
 
     FOR i := 0 TO of.size()-1 DO
       WITH rdr = of.get(i) DO
-        Wr.PutText(wr, F(".PROBE TRAN v(%s)\n", Renamer(rdr.nm)))
+        Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, Renamer(rdr.nm)))
       END
     END
   END DumpProbes;
+
+PROCEDURE DumpNodeProbes(wr : Wr.T; of : TextSeq.T; type : TEXT) =
+  BEGIN
+    <*ASSERT TE(type,"v") OR TE(type, "i")*>
+    Wr.PutText(wr, "\n");
+
+    FOR i := 0 TO of.size()-1 DO
+      WITH rdr = of.get(i) DO
+        Wr.PutText(wr, F(".PROBE TRAN %s(%s)\n", type, (*sigh*)Renamer(dutName & "." & rdr)))
+      END
+    END
+  END DumpNodeProbes;
 
 PROCEDURE MakeDictionaries(srcs, rdrs : NodeRecSeq.T) =
 
@@ -125,14 +142,17 @@ PROCEDURE FillInSrc(nrc         : NodeRec.T;
     END
   END FillInSrc;
 
-
 VAR
   lst      : NodesList.T  := NIL;
   theSrcs  : NodeRecSeq.T := NIL;
   theRdrs  : NodeRecSeq.T := NIL;
 
+CONST
+  MaxTimeMargin = 1.0d-9; (* dirty hack *)
+
+
 PROCEDURE DumpIt(wr        : Wr.T; 
-                 sp        : SimParams.T; 
+                 VAR sp    : SimParams.T; 
                  sim       : Sim.T; 
                  pm        : ProbeMode.T;
                  modelName : TEXT;
@@ -142,9 +162,6 @@ PROCEDURE DumpIt(wr        : Wr.T;
   VAR
     srcData : REF ARRAY OF ARRAY OF LONGREAL;
     last : LONGREAL;
-
-  CONST
-    MaxTimeMargin = 5.0d-9; (* dirty hack *)
 
   BEGIN
     theRdrs := NEW(NodeRecSeq.T).init();
@@ -157,7 +174,7 @@ PROCEDURE DumpIt(wr        : Wr.T;
     MakeTransitionSequences(theSrcs);
 
     last := FindFinalRequestedTransition(theSrcs);
-    sp.maxTime := last + MaxTimeMargin;
+    sp.maxTime := last;
 
     IO.Put("Setting max simulation time to " & LR(sp.maxTime) & "\n");
 
@@ -175,18 +192,35 @@ PROCEDURE DumpIt(wr        : Wr.T;
 
   END DumpIt;
 
-PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T) =
+VAR measurements := NEW(SimMeasurementSeq.T).init();
+    
+PROCEDURE AddMeasurement(m : SimMeasurement.T) =
   BEGIN
+    measurements.addhi(m)
+  END AddMeasurement;
+  
+PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T) =
+
+  PROCEDURE P(txt : TEXT) =
+    BEGIN Wr.PutText(wr, txt); Wr.PutChar(wr, '\n') END P;
+
+  BEGIN
+    IF sim = Sim.T.XA THEN
+      P(F("\n.TRAN step=%s stop=%s\n",
+          LR(sp.step),
+          LR(sp.maxTime)))
+    END;
+    
     DumpInstantiation(wr);
 
     IF pm = ProbeMode.T.IO OR pm = ProbeMode.T.Outputs THEN
       Debug.Out("Dumping rdr probes: " & Int(theRdrs.size()));
-      DumpProbes(wr, theRdrs)
+      DumpProbes(wr, theRdrs, "v")
     END;
 
     IF pm = ProbeMode.T.IO THEN
       Debug.Out("Dumping src probes: " & Int(theSrcs.size()));
-      DumpProbes(wr, theSrcs)
+      DumpProbes(wr, theSrcs, "v")
     END;
 
     IF pm = ProbeMode.T.Assertions THEN
@@ -206,13 +240,58 @@ PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T) =
           END;
           p := p.tail
         END;
-        DumpProbes(wr, seq)
+        DumpProbes(wr, seq, "v")
       END
     END;
 
+    FOR i := FIRST(ProbeType) TO LAST(ProbeType) DO
+      VAR
+        seq := NEW(TextSeq.T).init();
+        p := probes[i];
+      BEGIN
+        WHILE p # NIL DO
+          GetUnrenamedArgs(seq, p.head);
+          p := p.tail
+        END;
+        Debug.Out(F("Dumping user requested probes \"%s\" : %s items %s nodes",
+                  ProbeString[i],
+                  Int(TextList.Length(probes[i])),
+                  Int(seq.size())));
+        DumpNodeProbes(wr, seq, ProbeString[i])
+      END
+    END;
+
+    (* measurement probes *)
+    WITH set = NEW(NodeMeasurementSetDef.T).init() DO
+      FOR i := 0 TO measurements.size()-1 DO
+        WITH m   = NARROW(measurements.get(i), SimMeasurement.T) DO
+          m.visitNodeMeasurements(set)
+        END
+      END;
+      VAR
+        iter := set.iterate();
+        nn : NodeMeasurement.T;
+        seq := ARRAY ProbeType OF TextSeq.T { NEW(TextSeq.T).init(), .. };
+      BEGIN
+        WHILE iter.next(nn) DO
+          seq[nn.quantity].addhi(nn.nm)
+        END;
+
+        FOR tp := FIRST(ProbeType) TO LAST(ProbeType) DO
+          DumpNodeProbes(wr, seq[tp], ProbeString[tp])
+        END
+      END
+    END;
+    
     DumpSpiceFooter(wr)
   END FinishDump;
 
+CONST ProbeString = ARRAY ProbeType OF TEXT { "v", "i" };
+
+VAR varModels : TEXT := NIL;
+
+PROCEDURE SetVarModels(to : TEXT) = BEGIN varModels := to END SetVarModels;
+      
 PROCEDURE DumpSpiceHeader(wr        : Wr.T; 
                           sim       : Sim.T; 
                           pm        : ProbeMode.T;
@@ -272,6 +351,10 @@ PROCEDURE DumpSpiceHeader(wr        : Wr.T;
     END;
 
     P(F(".LIB \"%s\" %s", modelPath, modelName));
+    IF varModels # NIL THEN
+      P("");
+      P(varModels)
+    END;
     P("");
     P(F(".include \"%s\"\n",dutLibFn));
     P("")
@@ -402,11 +485,7 @@ PROCEDURE DumpData(wr         : Wr.T;
         END
       END;
       
-      P(F("\n.TRAN step=%s stop=%s\n",
-          LR(sp.step),
-          LR(sp.maxTime)))
     END
-    
   END DumpData;
 
 PROCEDURE SetDutName(nm : TEXT) =
@@ -436,7 +515,11 @@ VAR
   dutLibFn : Pathname.T;
   dutType  : TEXT;
   dutArgs  : REF ARRAY OF TEXT;
+  probes   := ARRAY ProbeType OF TextList.T { NIL, .. };
 
+PROCEDURE AddProbes(type : ProbeType; to : TEXT) =
+  BEGIN probes[type] := TextList.Cons(to, probes[type]) END AddProbes;
+  
 PROCEDURE DeclSequence(libFile       : Pathname.T;
                        type          : TEXT;
                        READONLY args : ARRAY OF TEXT) =
@@ -451,15 +534,23 @@ PROCEDURE DumpInstantiation(wr : Wr.T) =
     lw := NEW(SpiceLineWriter.T).init(wr);
   BEGIN
     lw.word(dutName);
-    FOR i := FIRST(dutArgs^) TO LAST(dutArgs^) DO
-      DumpArgList(lw,dutArgs[i])
-    END;
+    DumpArgList(lw, nodeSeq);
     lw.word("/");
     lw.word(Renamer(dutType));
     lw.eol()
   END DumpInstantiation;
 
-PROCEDURE DumpArgList(lw : SpiceLineWriter.T; arg : TEXT) =
+PROCEDURE MakeUnrenamedArgList() : TextSeq.T =
+  VAR
+    seq := NEW(TextSeq.T).init();
+  BEGIN
+    FOR i := FIRST(dutArgs^) TO LAST(dutArgs^) DO
+      GetUnrenamedArgs(seq, dutArgs[i])
+    END;
+    RETURN seq
+  END MakeUnrenamedArgList;
+
+PROCEDURE GetUnrenamedArgs(out : TextSeq.T; arg : TEXT) =
   VAR
     p := lst;
     search := dutName & "." & arg;
@@ -470,7 +561,7 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; arg : TEXT) =
           WITH iter = Dims.Iterate(nds.dims^),
                q    = Dims.Clone  (nds.dims^) DO
             WHILE iter.next(q^) DO
-              lw.word(Renamer(arg & Dims.Format(q^)))
+              out.addhi(arg & Dims.Format(q^))
             END
           END;
           RETURN
@@ -479,10 +570,57 @@ PROCEDURE DumpArgList(lw : SpiceLineWriter.T; arg : TEXT) =
       p := p.tail
     END;
     Debug.Error("No arg named \"" & arg & "\"")
+  END GetUnrenamedArgs;
+  
+PROCEDURE DumpArgList(lw : SpiceLineWriter.T; reorder : TextSeq.T) =
+  VAR
+    argLst := MakeUnrenamedArgList();
+    success := TRUE;
+    nm : TEXT;
+  BEGIN
+    IF reorder = NIL THEN
+      FOR i := 0 TO argLst.size()-1 DO
+        lw.word(Renamer(argLst.get(i)))
+      END
+    ELSE
+      (* check argLst *)
+      IF reorder.size() # argLst.size() THEN
+        Debug.Error(F("arg list length %s not same as args provided %s",
+                      Fmt.Int(reorder.size()), Fmt.Int(argLst.size())),
+                    FALSE);
+        success := FALSE
+      END;
+      WITH s = NEW(TextSetDef.T).init() DO
+        FOR i := 0 TO reorder.size()-1 DO
+          WITH hadIt = s.insert(reorder.get(i)) DO <*ASSERT NOT hadIt*> END;
+        END;
+        FOR i := 0 TO argLst.size()-1 DO
+          IF NOT s.delete(argLst.get(i)) THEN
+            Debug.Error(F("arg mismatch: we provide %s, not found in dut",
+                            argLst.get(i)), FALSE);
+            success := FALSE
+          END
+        END;
+        IF s.size() # 0 THEN
+          success := FALSE;
+          WITH iter = s.iterate() DO
+            WHILE iter.next(nm) DO
+              Debug.Error(F("Unmatched argument in dut \"%s\"", nm), FALSE)
+            END
+          END
+        END
+      END;
+      IF NOT success THEN
+        Debug.Error("Reordering of arguments failed")
+      END;
+      (* list is OK *)
+      FOR i := 0 TO reorder.size()-1 DO
+        lw.word(Renamer(reorder.get(i)))
+      END
+    END(* IF reorder # NIL *)
   END DumpArgList;
 
 (**********************************************************************)
-
 
 PROCEDURE AddNodes(nm            : TEXT;
                    READONLY dims : Dims.T;
@@ -496,7 +634,8 @@ PROCEDURE AddNodes(nm            : TEXT;
 
 PROCEDURE AddDigitalModel(model   : SimModel.T; 
                           clockNm : TEXT; 
-                          aWr     : Wr.T) : AssertionList.T =
+                          aWr     : Wr.T;
+                          VAR sp      : SimParams.T) : AssertionList.T =
   VAR
     clockNds : Nodes.T := NIL;
     clockSeq : TranSeq.T;
@@ -508,7 +647,8 @@ PROCEDURE AddDigitalModel(model   : SimModel.T;
                                              1.0d0/4.0d0*Vdd,
                                              3.0d0/4.0d0*Vdd,
                                              2.0d0      *Vdd }
-                              );
+    );
+    clockTrans := NEW(LRSeq.T).init();
   BEGIN
     (* find clock node *)
     clockNm := dutName & "." & clockNm;
@@ -541,6 +681,7 @@ PROCEDURE AddDigitalModel(model   : SimModel.T;
 
         IF go THEN
           WITH ct = tran.t + (trig-v)/(nv-v)*tran.rf DO
+            clockTrans.addhi(ct);
             env.setTime(ct);
             model.simStep(env)
           END
@@ -554,19 +695,63 @@ PROCEDURE AddDigitalModel(model   : SimModel.T;
       p := q;
     BEGIN
       Debug.Out(Int(AssertionList.Length(p)) & " assertions");
+      Debug.Out(F("maxTime is " & Fmt.LongReal(sp.maxTime)));
 
       WHILE p # NIL DO
         WITH a = p.head DO
+          IF a.tm > sp.maxTime THEN
+            (*
+            Debug.Error("Assertions stretch beyond end of simulation!")
+            *)
+            sp.maxTime := a.tm + MaxTimeMargin;
+          END;
           Wr.PutText(aWr, F("ASSERTRANGE %s %s %s %s\n", 
                             dutName & "." & a.nm, 
                             LR(a.tm), LR(a.minV), LR(a.maxV)))
         END;
         p := p.tail
       END;
+
+      (* measurements *)
+      FOR i := 0 TO measurements.size()-1 DO
+        WITH m = NARROW(measurements.get(i),SimMeasurement.Default),
+             mcc = NEW(MyClockConverter, clockTrans := clockTrans) DO
+          Wr.PutText(aWr, m.format(dutName&".", mcc));
+          Wr.PutChar(aWr, '\n')
+        END
+      END;
+      
       RETURN q
     END
   END AddDigitalModel;
 
+TYPE
+  MyClockConverter = SimMeasurement.ClockConverter OBJECT
+    clockTrans : LRSeq.T;
+  OVERRIDES
+    timeOfCycle := MCCTimeOfCycle;
+  END;
+
+PROCEDURE MCCTimeOfCycle(mcc : MyClockConverter; x : LONGREAL) : LONGREAL =
+  BEGIN RETURN TimeOfCycle(mcc.clockTrans, x) END MCCTimeOfCycle;
+
+PROCEDURE TimeOfCycle(seq : LRSeq.T; x : LONGREAL) : LONGREAL =
+  VAR
+    fc := FLOOR  (x);
+    cc := fc + 1;
+    p  := x - FLOAT(fc,LONGREAL);
+    ft := seq.get(fc);
+    ct := seq.get(cc);
+  BEGIN
+    Debug.Out(F("x %s fc %s cc %s", LR(x), Int(fc), Int(cc)));
+    RETURN p*ct + (1.0d0-p)*ft
+  END TimeOfCycle;
+
+VAR nodeSeq : TextSeq.T := NIL;
+
+PROCEDURE SetInterfaceNodeSequence(seq : TextSeq.T) =
+  BEGIN nodeSeq := seq END SetInterfaceNodeSequence;
+  
 BEGIN 
   simExtras := ARRAY Sim.T OF TextSeq.T { NEW(TextSeq.T).init(),
                                           NEW(TextSeq.T).init() };

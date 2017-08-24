@@ -1,0 +1,70 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("varlib")
+
+Module ("Tran")
+Sequence ("Tran", "Tran")
+%module ("Dims")
+Module ("DimsTranSeqTbl")
+Module ("SpiceLineWriter")
+Interface("Verb")
+Interface("Command")
+Sequence("Command", "Command")
+
+Module ("BitInteger")
+Interface ("Bit")
+%interface ("Sim")
+
+Module ("TcamSequencer")
+Module ("TcamSimulation")
+Module ("TcamSimulationSDG64")
+Module ("Nodes")
+List ("Nodes", "Nodes")
+Interface ("Intf")
+Module ("Src")
+Module ("MemoTranSeq")
+Interface ("SimParams")
+Module ("SimDumper")
+Interface ("Rdr")
+
+Interface("Tcam")
+Interface("SimModel")	
+Module ("TcamModel")
+Module ("X01")
+
+Sequence("Src", "Src")
+Module ("Valenv")
+Interface ("NodeRec")
+Sequence ("NodeRec", "NodeRec")
+
+Table("TextSrc", "Text", "Src")
+%module ("Assertion")
+
+%list("Assertion","Assertion")
+Sequence("AssertionList","AssertionList")
+
+%interface("ProbeMode")
+
+template("genmain")
+Generic_module("GenMain")
+Module("SimSupport")
+
+Module("StandardSettings")
+
+Module("TcamPrograms")
+Module("SimMeasurement")
+Sequence("SimMeasurement", "SimMeasurement")
+
+Interface ("ProbeType")
+Module("NodeMeasurement")
+MkSet("NodeMeasurement", "NodeMeasurement")
+MkSetDef("NodeMeasurement", "NodeMeasurement")
+Table("NodeMeasurementRef", "NodeMeasurement", "Refany")
+
+resource ("sdg_tcam64_42_nodelist")
+
+bundle ("TcamIONodes")
+
+library ("spicebuilderlib")

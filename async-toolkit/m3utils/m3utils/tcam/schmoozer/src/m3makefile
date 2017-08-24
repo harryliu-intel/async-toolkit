@@ -2,6 +2,10 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("spicelib")
+import ("spicebuilderlib")
+import ("matrix")
+import ("minimize")
+import ("newuoa")
 
 table ("LRPairRef", "LongRealPair", "Refany")
 table ("LRListRef", "LRList", "Refany")
@@ -27,5 +31,12 @@ module ("DefParams")
 
 interface ("MeshNode")
 list ("MeshNode", "MeshNode")
+
+interface ("ThreadX")
+list ("Thread", "ThreadX")
+
+interface("SchmoozerResult")
+
+module ("ConstrainedSpace")
 
 program ("schmoozer")

@@ -3,15 +3,24 @@ IMPORT Schmoozer, Schmooze;
 
 IMPORT ProbeMode, Sim;
 
-FROM Schmoozer IMPORT DiscreteParam, RealParam;
-FROM Schmoozer IMPORT Variety, Sweep, Schmoo, SweepSpecific;
-FROM Schmoozer IMPORT LA, TA, RP01, LR01, RP02, LR02;
+FROM Schmoozer IMPORT DiscreteParam, RealParam, IntParam;
+FROM Schmoozer IMPORT Variety, Sweep, Schmoo, SweepSpecific, SpecificInt, VarOpt;
+FROM Schmoozer IMPORT LA, TA, IA, RP01, LR01, RP02, LR02;
 FROM Schmoozer IMPORT Tool;
-FROM Schmoozer IMPORT Add, RL, RT, RP;
+FROM Schmoozer IMPORT Add, RL, RT, RP, RI;
 
 FROM DefParams IMPORT vddP, clkP, tempP, holdP;
 FROM Schmoozer IMPORT simP;
+IMPORT TcamPrograms;
+IMPORT Text;
+IMPORT Debug;
+IMPORT ParseParams;
+FROM Fmt IMPORT F;
+IMPORT Stdio;
+IMPORT TcamSimulationSDG64;
 
+CONST TE = Text.Equal;
+      
 VAR
   probeP  := NEW(DiscreteParam,
                  nm := "probemode",
@@ -20,7 +29,7 @@ VAR
 
   cornerP := NEW(DiscreteParam,
                  nm := "corner",
-                 flag := "m",
+                 flag := "corner",
                  vals := RT(TA { 
                                  "afnoif",
                                  "afnois",
@@ -98,6 +107,29 @@ VAR
                                  "nors"
   })).init();
 
+  measurementP := NEW(DiscreteParam,
+                      tool := Tool.PostSpice,
+                      nm := "measure",
+                      flag := "measure",
+                      vals := RT( TA { "bitlinebump",
+                                       "hitlinedroop" }));
+                      
+
+  progP   := NEW(DiscreteParam,
+                 tool := Tool.Script,
+                 nm := "prog",
+                 flag := "prog",
+                 vals := RT( TcamPrograms.Names )
+  ).init();
+
+  cfgP := NEW(IntParam,
+              tool := Tool.SpiceBuilder,
+              nm   := "cfg",
+              flag := "cfg",
+              min  := 0,
+              max  := 16_fff,
+              base := 16);
+  
 PROCEDURE AllCornerSim() =
   BEGIN
     Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
@@ -133,6 +165,195 @@ PROCEDURE SimulatorSim() =
             min := -40.0d0, max := 125.0d0, step := 40.0d0));
   END SimulatorSim;
 
+  (* ********************  variation sims below here  ******************** *)
+
+  (* get the correct dimension names for pessimization *)
+TYPE
+  DefDimGetter = Schmoozer.DimGetter OBJECT OVERRIDES
+    dims := DDGdims;
+  END;
+
+PROCEDURE DDGdims(<*UNUSED*>ddg : DefDimGetter;
+                  varName, modelName : TEXT) : REF ARRAY OF TEXT =
+  BEGIN
+    RETURN TcamSimulationSDG64.GetVarNames(varName, modelName)
+  END DDGdims;
+
+PROCEDURE SingleVar() =
+  BEGIN
+    (* variation sim! *)
+    varSfx := "_var";
+    
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Variety, param := progP  , cover := RT(TA {  "var" })));
+    Add(NEW(Variety, param := measurementP  , cover := RT(TA {  "bitlinebump" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := -40.0d0, step := 40.0d0));
+    Add(NEW(Sweep, param := vddP, 
+            min := 0.75d0, max := 0.75d0, step := 0.1d0));
+    Add(NEW(Sweep, param := clkP, 
+            min := 1000.0d6, max := 1000.0d6, step := 100.0d6));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_000 })));
+    Add(NEW(VarOpt,
+            stopParam := vddP,
+            stopRatio := 0.6d0,
+            optMult   := -1.0d0, (* maximize *)
+            varName := "stability",
+            dims := NEW(DefDimGetter),
+            radius := RL(
+               LA { 2.0d0 }
+    )));
+  END SingleVar;
+
+PROCEDURE MaybeFailVar() =
+  BEGIN
+    (* variation sim! *)
+    varSfx := "_var";
+    
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Variety, param := progP  , cover := RT(TA {  "var" })));
+    Add(NEW(Variety, param := measurementP  , cover := RT(TA {  "bitlinebump" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := -40.0d0, step := 40.0d0));
+    Add(NEW(Sweep, param := vddP, 
+            min := 0.600d0, max := 0.600d0, step := 0.1d0));
+    Add(NEW(Sweep, param := clkP, 
+            min := 1000.0d6, max := 1000.0d6, step := 100.0d6));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_000 })));
+    Add(NEW(VarOpt,
+            stopParam := vddP,
+            stopRatio := 0.6d0,
+            optMult   := -1.0d0, (* maximize *)
+            varName := "stability",
+            dims := NEW(DefDimGetter),
+            radius := RL(
+               LA { 5.5d0 }
+    )));
+  END MaybeFailVar;
+
+PROCEDURE MultiVar() =
+  BEGIN
+    (* variation sim! *)
+    varSfx := "_var";
+    
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Variety, param := progP  , cover := RT(TA {  "var" })));
+    Add(NEW(Variety, param := measurementP  , cover := RT(TA {  "bitlinebump" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := 100.0d0, step := 140.0d0));
+    Add(NEW(Sweep, param := vddP, 
+            min := 0.45d0, max := 0.65d0, step := 0.025d0));
+    Add(NEW(Sweep, param := clkP, 
+            min := 500.0d6, max := 500.0d6, step := 100.0d6));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_000, 16_fc0 })));
+    Add(NEW(VarOpt,
+            dims := NEW(DefDimGetter),
+            optMult   := -1.0d0, (* maximize *)
+            varName := "stability",
+            radius := RL(
+               LA { 0.0d0, 2.5d0, 5.5d0, 6.0d0 }
+
+    )));
+  END MultiVar;
+
+PROCEDURE LeakVar() =
+  BEGIN
+    (* variation sim! *)
+    varSfx := "_leakvar";
+    
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io"       })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "rfff", "tttt"       }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa"       })));
+    Add(NEW(Variety, param := progP  , cover := RT(TA {  "singlehit" })));
+    Add(NEW(Variety, param := measurementP  , cover := RT(TA {  "hitlinedroop" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := 110.0d0, step := 150.0d0));
+    Add(NEW(Sweep, param := vddP, 
+            min := 0.45d0, max := 1.05d0, step := 0.300d0));
+    Add(NEW(Sweep, param := clkP, 
+            min := 250.0d6, max := 250.0d6, step := 100.0d6));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_fc0, 16_fc7 })));
+    Add(NEW(VarOpt,
+            dims := NEW(DefDimGetter),
+            optMult   := +1.0d0, (* minimize *)
+            stopParam := vddP,
+            stopRatio := 0.2d0,
+            varName := "hit_leakage",
+            radius := RL(
+               LA { 0.0d0, 1.0d0, 3.0d0, 5.0d0, 5.5d0, 6.0d0 }
+    )));
+  END LeakVar;
+
+PROCEDURE LeakVar2() =
+  BEGIN
+    (* variation sim! *)
+    varSfx := "_leakvar";
+    
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io"       })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt", "ffff", "rfff", "pfff"       }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa"       })));
+    Add(NEW(Variety, param := progP  , cover := RT(TA {  "singlehit" })));
+    Add(NEW(Variety, param := measurementP  , cover := RT(TA {  "hitlinedroop" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := 110.0d0, max := 110.0d0, step := 150.0d0));
+    Add(NEW(Sweep, param := vddP, 
+            min := 0.450d0, max := 0.750d0, step := 0.100d0));
+    Add(NEW(Sweep, param := clkP, 
+            min := 250.0d6, max := 250.0d6, step := 100.0d6));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_fc0, 16_fc7 })));
+    Add(NEW(VarOpt,
+            dims := NEW(DefDimGetter),
+            optMult   := +1.0d0, (* minimize *)
+            stopParam := vddP,
+            stopRatio := 0.2d0,
+            varName := "hit_leakage",
+            radius := RL(
+               LA { 0.0d0, 4.5d0, 5.5d0, 6.0d0 }
+    )));
+  END LeakVar2;
+
+PROCEDURE LeakVarBroken() =
+  BEGIN
+    (* variation sim! *)
+    varSfx := "_leakvar";
+    
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io"       })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA {   "ffff"       }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa"       })));
+    Add(NEW(Variety, param := progP  , cover := RT(TA {  "singlehit" })));
+    Add(NEW(Variety, param := measurementP  , cover := RT(TA {  "hitlinedroop" })));
+    Add(NEW(Sweep, param := tempP, 
+            min := 110.0d0, max := 110.0d0, step := 150.0d0));
+    Add(NEW(Sweep, param := vddP, 
+            min := 0.450d0, max := 0.450d0, step := 0.100d0));
+    Add(NEW(Sweep, param := clkP, 
+            min := 250.0d6, max := 250.0d6, step := 100.0d6));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_fc7 })));
+    Add(NEW(VarOpt,
+            dims := NEW(DefDimGetter),
+            optMult   := +1.0d0, (* minimize *)
+            stopParam := vddP,
+            stopRatio := 0.2d0,
+            varName := "hit_leakage",
+            radius := RL(
+               LA { 0.0d0, 4.0d0, 5.0d0, 6.0d0 }
+    )));
+  END LeakVarBroken;
+
+  (**********************************************************************)
+  
 PROCEDURE XATempSim() =
   BEGIN
     (* what's going on with temperature? *)
@@ -191,7 +412,7 @@ PROCEDURE QuickSim() =
     Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
     Add(NEW(Schmoo, 
             param   := RP ( RP01 {    vddP,     clkP } ),
-            min     := RL ( LR01 {  0.50d0,  600.0d6 } ),
+            min     := RL ( LR01 {  0.30d0,  600.0d6 } ),
             max     := RL ( LR01 {  1.00d0, 2600.0d6 } ),
             minStep := RL ( LR01 {  0.001d0,   4.0d6 } ),
             minRatio:= RL ( LR01 { 0.000d0,  000.0d0 } ),
@@ -259,6 +480,60 @@ PROCEDURE OutputHoldSchmoo() =
             minRatio:= RL ( LR01 { 0.000d0,  000.0d0 } ),
             maxStep := RL ( LR01 {  0.140d0,  800.0d6 })));
   END OutputHoldSchmoo;
+
+PROCEDURE TempHVSchmoo() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Sweep,
+            param := vddP, min := 1.10d0, max := 1.10d0, step := 0.10d0));
+    Add(NEW(Sweep, param := assertHoldP, 
+            min := 0.0d0, max := 0.50d0, step := 0.50d0));
+    Add(NEW(Schmoo, 
+            param   := RP ( RP01 {    tempP,     clkP } ),
+            min     := RL ( LR01 {  -40.0d0, 4200.0d6 } ),
+            max     := RL ( LR01 {  0.00d0, 5800.0d6 } ),
+            minStep := RL ( LR01 {  0.4d0,   6.0d6 } ),
+            minRatio:= RL ( LR01 { 0.000d0,  000.0d0 } ),
+            maxStep := RL ( LR01 {  4.0d0,  60.0d6 })));
+  END TempHVSchmoo;
+
+PROCEDURE WideTempHVSchmoo() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Sweep,
+            param := vddP, min := 1.10d0, max := 1.10d0, step := 0.10d0));
+    Add(NEW(Sweep, param := assertHoldP, 
+            min := 0.0d0, max := 0.50d0, step := 0.50d0));
+    Add(NEW(Schmoo, 
+            param   := RP ( RP01 {    tempP,     clkP } ),
+            min     := RL ( LR01 {  -40.0d0,  3200.0d6 } ),
+            max     := RL ( LR01 {  120.00d0, 5800.0d6 } ),
+            minStep := RL ( LR01 {  1.6d0,   14.0d6 } ),
+            minRatio:= RL ( LR01 { 0.000d0,  000.0d0 } ),
+            maxStep := RL ( LR01 {  16.0d0,  140.0d6 })));
+  END WideTempHVSchmoo;
+
+PROCEDURE WideTempVSchmoo() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Sweep,
+            param := vddP, min := 0.55d0, max := 1.10d0, step := 0.10d0));
+    Add(NEW(Sweep, param := assertHoldP, 
+            min := 0.0d0, max := 0.50d0, step := 0.50d0));
+    Add(NEW(Schmoo, 
+            param   := RP ( RP01 {    tempP,     clkP } ),
+            min     := RL ( LR01 {  -40.0d0,  320.0d6 } ),
+            max     := RL ( LR01 {  120.00d0, 5800.0d6 } ),
+            minStep := RL ( LR01 {  1.0d0,   0.0d0 } ),
+            minRatio:= RL ( LR01 { 0.000d0,  000.01d0 } ),
+            maxStep := RL ( LR01 {  16.0d0,  200.0d6 })));
+  END WideTempVSchmoo;
 
 PROCEDURE WideOutputHoldSchmoo() =
   BEGIN
@@ -401,7 +676,6 @@ PROCEDURE Quick3DSchmoo() =
             maxStep := RL ( LR02 {      0.090d0,   525.0d6, 0.200d0 })));
   END Quick3DSchmoo;
 
-
 PROCEDURE BigSchmoo() =
   BEGIN
     Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
@@ -492,6 +766,24 @@ PROCEDURE TestSim() =
             min := 0.0d0, max := 0.0d0, step := 20.0d0));
   END TestSim;
 
+PROCEDURE CfgSim() =
+  BEGIN
+    Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
+    Add(NEW(Variety, param := cornerP, cover := RT(TA { "tttt" }) ));
+    Add(NEW(Variety, param := simP   , cover := RT(TA {   "xa" })));
+    Add(NEW(Schmoo, 
+            param   := RP ( RP01 {    vddP ,     clkP } ),
+            min     := RL ( LR01 {  0.45d0 ,  300.0d6 } ),
+            max     := RL ( LR01 {  1.00d0 , 3000.0d6 } ),
+            minStep := RL ( LR01 {  0.010d0,   50.0d6 } ),
+            minRatio:= RL ( LR01 {  0.000d0,  000.0d0 } ),
+            maxStep := RL ( LR01 {  0.100d0,  200.0d6 })));
+    Add(NEW(Sweep, param := tempP, 
+            min := -40.0d0, max := 110.0d0, step := 75.0d0));
+    Add(NEW(SpecificInt, param := cfgP,
+            v := RI(IA { 16_cf9, 16_fc0, 16_000 })))
+  END CfgSim;
+
 PROCEDURE SingleSim() =
   BEGIN
     Add(NEW(Variety, param := probeP , cover := RT(TA {   "io" })));
@@ -508,16 +800,20 @@ PROCEDURE SingleSim() =
             min := 0.0d0, max := 0.0d0, step := 20.0d0));
   END SingleSim;
 
+VAR
+  varSfx := "";
+  pp := NEW(ParseParams.T).init(Stdio.stderr);
 BEGIN
-
-  Schmoozer.Setup(
+  Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID });
+  Schmoozer.Setup(pp,
       NEW(DiscreteParam,
           nm := "simulator",
           flag := "f",
           vals := RT(Sim.Names)).init()
       );
   
-  Schmoozer.Process( ARRAY OF Schmooze.T {
+  Schmoozer.Process(pp,
+                    ARRAY OF Schmooze.T {
     Schmooze.T { HoldSim                   , "hold" },
     Schmooze.T { OutputHoldSim             , "outhold" },
     Schmooze.T { OutputHoldSchmoo          , "outholdschmoo" },
@@ -540,10 +836,35 @@ BEGIN
     Schmooze.T { SpfSim                    , "spf" },
     Schmooze.T { TestSim                   , "test" },
     Schmooze.T { BigSchmoo                 , "big" },
-    Schmooze.T { SimulatorSim              , "simulator" }
+    Schmooze.T { TempHVSchmoo              , "temphv" },
+    Schmooze.T { WideTempHVSchmoo          , "widetemphv" },
+    Schmooze.T { WideTempVSchmoo           , "widetempv" },
+    Schmooze.T { CfgSim                    , "cfg" },
+    Schmooze.T { SimulatorSim              , "simulator" },
+
+    (* variation simulations follow *)
+    Schmooze.T { SingleVar                 , "singlevar" },
+    Schmooze.T { MultiVar                  , "multivar" },
+    Schmooze.T { MaybeFailVar              , "maybefailvar" },
+    Schmooze.T { LeakVar                   , "leakvar" },
+    Schmooze.T { LeakVarBroken             , "leakvarbroken" },
+    Schmooze.T { LeakVar2                  , "leakvar2" }
+  
   });
 
-  Schmoozer.RunAll()
+  IF pp.keywordPresent("-design") THEN
+    WITH design = pp.getNext() DO
+      IF TE(design, "sdg64") THEN
+        Schmoozer.SetExtraCmdHack(F(" -srcdir /p/hlp/mnystroe/tcam/tcam64_42_extracted -p1274 -pfx s742rf040b064e1r1w1tbehsaa4pc2%s -design sdg64",varSfx))
+      ELSIF TE(design, "andrew") THEN
+          (* skip *)
+      ELSE
+        Debug.Error(F("Unknown design \"%s\"", design))
+      END
+    END
+  END;
+  
+  Schmoozer.RunAll(pp)
 END SchmoozerSim.
 
   

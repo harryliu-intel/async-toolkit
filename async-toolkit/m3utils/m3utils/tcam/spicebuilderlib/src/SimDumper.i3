@@ -6,15 +6,18 @@ IMPORT Sim, TextSeq;
 IMPORT SimModel;
 IMPORT ProbeMode;
 IMPORT AssertionList;
+IMPORT SimMeasurement;
 
 PROCEDURE DumpIt(wr : Wr.T; 
-                 sp : SimParams.T; 
+                 VAR sp : SimParams.T; 
                  sim : Sim.T; 
                  pm : ProbeMode.T;
                  modelName : TEXT;
                  modelPath : Pathname.T);
 
-PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T);
+PROCEDURE SetVarModels(varModels : TEXT);
+
+PROCEDURE FinishDump(wr : Wr.T; pm : ProbeMode.T; ass : AssertionList.T; READONLY sp : SimParams.T; sim : Sim.T);
 
 VAR dutName : TEXT;
 VAR Vdd     : LONGREAL;
@@ -31,7 +34,7 @@ PROCEDURE DeclSequence(libFile       : Pathname.T;
 
 PROCEDURE SetDutName(nm : TEXT);
 
-PROCEDURE AddDigitalModel(model : SimModel.T; clockNm : TEXT; aWr : Wr.T) : AssertionList.T;
+PROCEDURE AddDigitalModel(model : SimModel.T; clockNm : TEXT; aWr : Wr.T; VAR sp : SimParams.T) : AssertionList.T;
 
 VAR simExtras : ARRAY Sim.T OF TextSeq.T;
 
@@ -41,4 +44,14 @@ VAR rename := FALSE;
 
 PROCEDURE Renamer(txt : TEXT) : TEXT;
 
+PROCEDURE SetInterfaceNodeSequence(seq : TextSeq.T);
+  (* set the correct order of interface nodes to override the default
+     order *)
+
+TYPE ProbeType = SimMeasurement.ProbeType;
+
+PROCEDURE AddProbes(type : ProbeType; to : TEXT);
+
+PROCEDURE AddMeasurement(m : SimMeasurement.T);
+  
 END SimDumper.

@@ -10,6 +10,7 @@ IMPORT Assertion;
 IMPORT Src;
 IMPORT MemoTranSeq;
 IMPORT Debug;
+IMPORT Fmt; FROM Fmt IMPORT F;
 
 REVEAL
   T = Public BRANDED OBJECT
@@ -109,7 +110,9 @@ PROCEDURE GetArry(t : T; nm : TEXT) : REF ARRAY OF X01.T =
     nm := t.dutName & "." & nm;
     WITH hadIt = t.tbl.get(nm, src) DO <*ASSERT hadIt*> END;
     WITH dims = src.nodes.dims DO
-      <*ASSERT NUMBER(dims^) = 1*>
+      IF NUMBER(dims^) # 1 THEN
+        Debug.Error(F("Valenv.GetArry: attempting to get linear array \"%s\" of dimension %s", nm, Fmt.Int(NUMBER(dims^))))
+      END;
       res := NEW(REF ARRAY OF X01.T, dims[0]);
       FOR i := 0 TO dims[0]-1 DO
         WITH v = MemoTranSeq.Interpolate(src.getSeq(Dims.T { i } ),t.curTm) DO

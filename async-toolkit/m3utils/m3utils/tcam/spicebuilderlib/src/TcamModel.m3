@@ -7,6 +7,7 @@ IMPORT Word;
 IMPORT Dims;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, Bool; IMPORT Fmt;
+IMPORT TextUtils;
 
 CONST LR = Fmt.LongReal;
 
@@ -17,14 +18,19 @@ REVEAL
     assertHoldFrac : LONGREAL;
     assertHoldTime : LONGREAL;
     cycleTime : LONGREAL;
+    nc : NamingConvention;
   OVERRIDES
     init := Init;
     simStep := SimStep;
   END;
 
-PROCEDURE Init(t : T; READONLY c : Tcam.T; cycleTime, assertHoldFrac, assertHoldTime : LONGREAL) : T = 
+PROCEDURE Init(t : T;
+               READONLY c : Tcam.T;
+               cycleTime, assertHoldFrac, assertHoldTime : LONGREAL;
+               nc : NamingConvention) : T = 
   BEGIN 
     t.c := c;
+    t.nc := nc;
     <*ASSERT assertHoldFrac > -1.0d10 *>
     <*ASSERT assertHoldFrac < +1.0d10 *>
     <*ASSERT cycleTime > -1.0d10 *>
@@ -84,24 +90,34 @@ PROCEDURE FmtArry(READONLY a : ARRAY OF X01.T) : TEXT =
   END FmtArry;
 
 PROCEDURE SimStep(t : T; e : Valenv.T) =
-  VAR
-    wen   :=     ToBool(e.getSngl("WEN"             ));
-    ren   :=     ToBool(e.getSngl("REN"             ));
-    ken   :=     ToBool(e.getSngl("KEN"             ));
-    rst   := NOT ToBool(e.getSngl("RESET_N"         ));
 
-    addr  :=     ToCard(e.getArry("ADDR"            )^);
-    data  :=            e.getArry("DATA"              );
-    slice :=            e.getArry("SLICE_EN"          );
-    lhit  :=            e.getArry("LHIT"              );
-    mask  :=            e.getArry("MASK"              );
+  PROCEDURE C(nm : TEXT) : TEXT =
+    BEGIN
+      CASE t.nc OF
+        NamingConvention.Andrew => RETURN nm
+      |
+        NamingConvention.SDG    => RETURN TextUtils.ToLower(nm)
+      END
+    END C;
+    
+  VAR
+    wen   :=     ToBool(e.getSngl(C("WEN"             )));
+    ren   :=     ToBool(e.getSngl(C("REN"             )));
+    ken   :=     ToBool(e.getSngl(C("KEN"             )));
+    rst   := NOT ToBool(e.getSngl(C("RESET_N"         )));
+
+    addr  :=     ToCard(e.getArry(C("ADDR"            ))^);
+    data  :=            e.getArry(C("DATA"            )  );
+    slice : REF ARRAY OF X01.T;
+    lhit  :=            e.getArry(C("LHIT"            )  );
+    mask  :=            e.getArry(C("MASK"            )  );
 
     q : BOOLEAN;
 
   PROCEDURE DoRen() =
     BEGIN
       WITH z = t.conf[addr] DO
-        Produce(2, "READ_DATA", z, t.assertHoldFrac, t.assertHoldTime)
+        Produce(2, C("READ_DATA"), z, t.assertHoldFrac, t.assertHoldTime)
       END
     END DoRen;
 
@@ -128,7 +144,7 @@ PROCEDURE SimStep(t : T; e : Valenv.T) =
           END
         END
       END;
-      Produce(1, "RHIT", rhit^, t.assertHoldFrac, t.assertHoldTime)
+      Produce(1, C("RHIT"), rhit^, t.assertHoldFrac, t.assertHoldTime)
     END DoKen;
 
   PROCEDURE Reset() = 
@@ -159,6 +175,14 @@ PROCEDURE SimStep(t : T; e : Valenv.T) =
     END WarnOnQ;
     
   BEGIN
+    IF t.c.SN = 1 AND t.nc = NamingConvention.SDG THEN
+      (* note that the SDG single-slice TCAM uses a scalar name for slice_en *)
+      slice := NEW(REF ARRAY OF X01.T, 1);
+      slice[0] := e.getSngl(C("SLICE_EN"))
+    ELSE
+      slice :=            e.getArry(C("SLICE_EN"        )  )
+    END;
+      
     Debug.Out(F("TcamModel.SimStep @ %s wen %s ren %s ken %s",
                 LR(e.getTime()),
                 Bool(wen),

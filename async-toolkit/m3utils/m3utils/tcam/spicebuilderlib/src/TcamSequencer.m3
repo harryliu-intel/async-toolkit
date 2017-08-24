@@ -8,8 +8,7 @@ IMPORT Word;
 CONST SI = BitInteger.Small;
 
 PROCEDURE Compile(prog          : CommandSeq.T;
-                  VAR      seq  : ARRAY Verb.T OF REF ARRAY OF BitInteger.T;
-                  autoNops      : BOOLEAN) =
+                  VAR      seq  : ARRAY Verb.T OF REF ARRAY OF BitInteger.T) =
 
   PROCEDURE Clear() =
     BEGIN FOR i := FIRST(buf) TO LAST(buf) DO buf[i] := SI(0) END END Clear;
