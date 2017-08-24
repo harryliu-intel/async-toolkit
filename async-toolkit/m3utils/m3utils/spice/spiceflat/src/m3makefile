@@ -2,12 +2,23 @@ import ("libm3")
 import ("cit_util")
 import ("parseparams")
 import ("spicelib")
+import ("m3readline")
 
 Table("TextCard", "Text", "Cardinal")
 Table("TextTextSet", "Text", "TextSet")
 
 Module ("TextCard")
 Array_sort ("TextCard", "TextCard")
+
+Module ("SpiceInstance")
+
+MkSet("SpiceInstance", "SpiceInstance")
+MkSetDef("SpiceInstance", "SpiceInstance")
+Table("SpiceInstanceRef", "SpiceInstance", "Refany")
+
+Table("TextSpiceInstanceSet", "Text", "SpiceInstanceSet")
+
+Module ("FlatUI")
 
 implementation ("Main")
 

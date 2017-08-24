@@ -1,12 +1,13 @@
 MODULE Main;
 
+(* spiceflat <spice-deck-filename> <top-cell> *)
+
 IMPORT SpiceFormat;
 IMPORT FileRd;
 IMPORT Params;
 IMPORT SpiceCircuit;
 IMPORT Debug; FROM Debug IMPORT UnNil;
 IMPORT Wr, FileWr;
-IMPORT Stdio;
 IMPORT SpiceObject;
 FROM Fmt IMPORT Int, F;
 IMPORT Thread;
@@ -16,8 +17,19 @@ IMPORT TextTextSetTbl;
 IMPORT TextSeq;
 IMPORT TextCard;
 IMPORT TextCardArraySort;
+IMPORT TextArraySort;
+IMPORT TextUtils, Integer, Text;
+IMPORT TextSpiceInstanceSetTbl;
+IMPORT OSError;
+IMPORT SpiceInstance, SpiceInstanceSetDef;
+IMPORT SpiceInstanceSet;
+IMPORT TextTextTbl;
+IMPORT FlatUI;
 
 <*FATAL Thread.Alerted*>
+<*FATAL Wr.Failure, OSError.E*> (* ugly *)
+
+CONST TE = Text.Equal;
 
 TYPE OType = { Null, R, C, M, X, Unknown };
 CONST ONames = ARRAY OType OF TEXT { "NULL", "R", "C", "M", "X", "UNKNOWN" };
@@ -78,6 +90,7 @@ PROCEDURE Visit(nm    : TEXT;
               hadIt := spice.subCkts.get(x.type, ckt);
               seenIt : BOOLEAN;
             BEGIN
+              <*ASSERT hadIt*>
               seenIt := subs.insert(x.type);
               Visit(nm & "." & x.name, wr, ckt, level+1)
             END
@@ -284,6 +297,214 @@ PROCEDURE DumpBriefFlat(wr         : Wr.T;
     END
   END DumpBriefFlat;
 
+  (**********************************************************************)
+
+PROCEDURE AddAlias(symTab : TextTextSetTbl.T; fm, to : TEXT) =
+  VAR
+    fSet, tSet : TextSet.T;
+    a : TEXT;
+  BEGIN
+    IF symTab.get(fm, fSet) AND symTab.get(to, tSet) THEN
+      (* merge case, nasty *)
+      WITH new = fSet.union(tSet),
+           iter = new.iterate() DO
+        WHILE iter.next(a) DO EVAL symTab.put(a, new) END
+      END
+    ELSIF symTab.get(fm, fSet) OR symTab.get(to, fSet) THEN
+      EVAL fSet.insert(to);
+      EVAL symTab.put(to, fSet);
+      EVAL symTab.put(fm, fSet)
+    ELSE
+      (* no records at all, add *)
+      WITH new = NEW(TextSetDef.T).init() DO
+        EVAL new.insert(fm);
+        EVAL new.insert(to);
+        EVAL symTab.put(fm, new);
+        EVAL symTab.put(to, new)
+      END
+    END
+  END AddAlias;
+  
+PROCEDURE VisitCktNodes(pfx    : TEXT;
+                        symTab : TextTextSetTbl.T;
+                        ckt    : SpiceCircuit.T;
+                        pNms   : TextSeq.T;
+                        assocs : TextSpiceInstanceSetTbl.T;
+                        me     : SpiceInstance.T) =
+  (* build symbol table for every circuit node in system *)
+  VAR
+    sckt : SpiceCircuit.T;
+  BEGIN
+    IF pNms # NIL THEN
+      <*ASSERT pNms.size() = ckt.params.size()*>
+      FOR i := 0 TO pNms.size()-1 DO
+        AddAlias(symTab, pNms.get(i), pfx & "." & ckt.params.get(i))
+      END
+    ELSE
+      FOR i := 0 TO ckt.params.size()-1 DO
+        WITH tn = pfx & "." & ckt.params.get(i) DO
+          (* dont lose nodes that have only one place *)
+          AddAlias(symTab, tn, tn)
+        END
+      END
+    END;
+    FOR i := 0 TO ckt.elements.size()-1 DO
+      WITH elem     = ckt.elements.get(i),
+           flatName = pfx & "." & elem.name,
+           inst     = NEW(SpiceInstance.T).init(flatName, elem, me) DO
+        (* associate element, no matter what it is, with nodes connected *)
+        FOR i := 0 TO elem.terminals.size()-1 DO
+          Associate(assocs, pfx & "." & elem.terminals.get(i), inst)
+        END;
+
+        TYPECASE elem OF
+          SpiceObject.X(x) =>
+          WITH nm   = pfx & "." & elem.name,
+               gotType = spice.subCkts.get(x.type, sckt),
+               fNmSeq  = NEW(TextSeq.T).init() DO
+            <*ASSERT gotType*>
+
+            FOR i := 0 TO x.terminals.size()-1 DO
+              fNmSeq.addhi(pfx & "." & x.terminals.get(i))
+            END;
+            
+            VisitCktNodes(nm, symTab, sckt, fNmSeq, assocs, inst)
+          END
+        ELSE
+          (* skip *)
+        END;
+
+      END
+    END
+  END VisitCktNodes;
+
+PROCEDURE Associate(tbl : TextSpiceInstanceSetTbl.T;
+                    tNm : TEXT;
+                    obj : SpiceInstance.T) =
+  VAR
+    s : SpiceInstanceSet.T;
+  BEGIN
+    (* just record the fact that the instance "touches" the node somehow.
+       this is not great, we still have to search to figure out how they
+       are associated *)
+
+    IF NOT tbl.get(tNm, s) THEN
+      s := NEW(SpiceInstanceSetDef.T).init();
+      EVAL tbl.put(tNm, s)
+    END;
+    EVAL s.insert(obj)
+  END Associate;
+
+PROCEDURE Canonicalize(nm : TEXT;
+                       VAR canon : TEXT;
+                       canonTbl : TextTextTbl.T) : BOOLEAN =
+  BEGIN
+    (* ground is special case... *)
+    IF TextUtils.HaveSuffix(nm, ".vss") THEN canon := "vss"; RETURN TRUE END;
+
+    IF canonTbl.get(nm, canon) THEN
+      RETURN TRUE
+    ELSE
+      (* unknown node, its own best friend *)
+      canon := nm;
+      RETURN FALSE
+    END
+  END Canonicalize;
+  
+PROCEDURE CleanAssocs(tbl      : TextSpiceInstanceSetTbl.T;
+                      canonTbl : TextTextTbl.T) : TextSpiceInstanceSetTbl.T =
+  VAR
+    new := NEW(TextSpiceInstanceSetTbl.Default).init();
+    iter := tbl.iterate();
+    nm, canon : TEXT;
+    s : SpiceInstanceSet.T;
+    inst : SpiceInstance.T;
+  BEGIN
+    WHILE iter.next(nm, s) DO
+      EVAL Canonicalize(nm, canon, canonTbl);
+      WITH jter = s.iterate() DO
+        WHILE jter.next(inst) DO
+          Associate(new, canon, inst)
+        END
+      END
+    END;
+    tbl := TextSpiceInstanceSetTbl.Default.init(tbl);
+    iter := new.iterate();
+    RETURN new
+  END CleanAssocs;
+  
+PROCEDURE DumpSymtab(wr : Wr.T;
+                     symTab : TextTextSetTbl.T;
+                     (*OUT*)canonTbl : TextTextTbl.T)
+  RAISES { Wr.Failure } =
+  VAR
+    iter := symTab.iterate();
+    done := NEW(TextSetDef.T).init();
+    n : TEXT;
+    a : TextSet.T;
+    nn, mas, na := 0;
+    mca : TEXT := "**NIL**";
+  BEGIN
+    WHILE iter.next(n, a) DO
+      IF NOT done.member(n) THEN
+        INC(nn);
+        INC(na, a.size());
+        WITH ca = DumpSingleList(wr, a, done, canonTbl) DO
+          IF a.size() > mas THEN
+            mca := ca;
+            mas := a.size()
+          END
+        END
+      END;
+      Wr.PutChar(wr, '\n')
+    END;
+
+    Debug.Out(F("%-10s nets", Int(nn)));
+    Debug.Out(F("%-10s aliases", Int(na)));
+    Debug.Out(F("%-10s max aliases in net %s", Int(mas), mca));
+  END DumpSymtab;
+
+PROCEDURE DumpSingleList(wr : Wr.T; aliases : TextSet.T; done : TextSet.T; canonTbl : TextTextTbl.T) : TEXT
+  RAISES { Wr.Failure } =
+  VAR
+    arr := NEW(REF ARRAY OF TEXT, aliases.size());
+    iter := aliases.iterate();
+    i := 0;
+    q : TEXT;
+  BEGIN
+    WHILE iter.next(q) DO
+      arr[i] := q;
+      EVAL done.insert(arr[i]);
+      INC(i)
+    END;
+    <*ASSERT i = NUMBER(arr^)*>
+    TextArraySort.Sort(arr^, AliasSortOrder);
+
+    FOR i := FIRST(arr^) TO LAST(arr^) DO
+      EVAL canonTbl.put(arr[i], arr[0]);
+      Wr.PutText(wr, arr[i]);
+      IF i # LAST(arr^) THEN
+        Wr.PutChar(wr, ' ')
+      END
+    END;
+
+    RETURN arr[0] (* lead node *)
+  END DumpSingleList;
+
+PROCEDURE AliasSortOrder(a, b : TEXT) : [-1..1] =
+  BEGIN
+    WITH aDots = TextUtils.CountCharOccurences(a, '.'),
+         bDots = TextUtils.CountCharOccurences(b, '.') DO
+      IF aDots # bDots THEN RETURN
+        Integer.Compare(aDots, bDots)
+      ELSE
+        RETURN Text.Compare(a, b)
+      END
+    END
+  END AliasSortOrder;
+  
+  (**********************************************************************)
+
 VAR
   rd := FileRd.Open(Params.Get(1));
   top := Params.Get(2);
@@ -321,5 +542,25 @@ BEGIN
     DumpBriefFlat(bwr, top, typeCntTbl);
     Wr.Close(bwr)
   END;
+
+  (* print out all the aliases ... *)
+  VAR
+    topName := "X1"; (* s.b. cmd-line param *)
+    symTab := NEW(TextTextSetTbl.Default).init();
+    assocs := NEW(TextSpiceInstanceSetTbl.Default).init();
+    topInstance := NEW(SpiceInstance.T).init("X1", NIL (* not right *), NIL);
+    canonTbl := NEW(TextTextTbl.Default).init();
+  BEGIN
+    VisitCktNodes(topName, symTab, topCkt, NIL, assocs, topInstance);
+    WITH wr = FileWr.Open("aliases.txt") DO
+      DumpSymtab(wr, symTab, canonTbl);
+      Wr.Close(wr)
+    END;
+
+    (* clean up assocs, merging any unmerged aliases *)
+    assocs := CleanAssocs(assocs, canonTbl);
+
+    FlatUI.REPL(assocs, symTab, canonTbl)
+  END
 
 END Main.
