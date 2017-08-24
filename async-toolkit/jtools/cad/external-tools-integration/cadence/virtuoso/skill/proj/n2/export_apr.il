@@ -56,6 +56,8 @@ spar_cell_list =
      ; gen 3 controllers
      "lib.bd.standard.nopipe.RECV_CTRL.0"
      "lib.bd.standard.nopipe.SEND_CTRL.0"
+     "lib.bd.convert.qdi.BD_TO_QDI_CTRL.0"
+     "lib.bd.convert.qdi.QDI_TO_BD_CTRL.0"
      ; TOP_HALO (physical only but very common)
      "globals.TOP_HALO.n"
      "globals.TOP_HALO.s"
