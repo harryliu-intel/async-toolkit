@@ -134,17 +134,20 @@ abstract class CommonEmitter implements VisitorInterface {
     void processSimpleBitRange(BitRangeExpression e, boolean rhs)
         throws VisitorException {
         if (!rhs) out.print("($signed({1'd0, ");
+        e.getBitsExpression().accept(this);
+        processSimpleBitRangeIndex(e);
+        if (!rhs) out.print("}))");
+    }
 
+    void processSimpleBitRangeIndex(final BitRangeExpression e)
+        throws VisitorException {
         final ExpressionInterface maxExpr = e.getMaxExpression();
         final ExpressionInterface minExpr = e.getMinExpression();
-        e.getBitsExpression().accept(this);
         out.print('['); maxExpr.accept(this);
         if (minExpr != null) {
             out.print(':'); minExpr.accept(this);
         }
         out.print(']');
-
-        if (!rhs) out.print("}))");
     }
 
     int getIntegerConstant(final ExpressionInterface e)
