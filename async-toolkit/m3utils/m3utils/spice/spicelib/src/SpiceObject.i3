@@ -1,6 +1,10 @@
 INTERFACE SpiceObject;
 IMPORT TextSeq;
 IMPORT Wr;
+IMPORT Word;
+IMPORT Refany;
+
+(* data structure describing hierarchical object *)
 
 TYPE
   T <: Public;
@@ -32,4 +36,8 @@ TYPE
 
 CONST Brand = "SpiceObject";
 
+CONST Equal = Refany.Equal;
+
+PROCEDURE Hash(a : T) : Word.T;
+  
 END SpiceObject.

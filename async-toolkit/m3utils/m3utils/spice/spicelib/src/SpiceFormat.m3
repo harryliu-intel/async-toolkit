@@ -2,25 +2,27 @@ MODULE SpiceFormat;
 IMPORT Rd;
 IMPORT Debug;
 IMPORT Text;
-FROM Fmt IMPORT Int, F;
 IMPORT SpiceCircuitList, TextSpiceCircuitTbl;
 IMPORT TextSeq;
 IMPORT SpiceObjectSeq;
 IMPORT SpiceCircuit;
-IMPORT SpiceObject, SpiceObjectParse;
-IMPORT Scan;
+IMPORT SpiceObjectParse;
 FROM SpiceFileFormat IMPORT White;
+IMPORT Thread;
 
-CONST TE = Text.Equal;
-VAR Verbose := TRUE;
+VAR Verbose := FALSE;
 
 PROCEDURE GetSingleLine(rd : Rd.T; 
                         VAR p : CARDINAL; 
                         VAR buff : REF ARRAY OF CHAR;
-                        VAR lNo : CARDINAL ) : CARDINAL =
+                        VAR lNo : CARDINAL ) : CARDINAL
+  RAISES { Rd.Failure, Thread.Alerted } =
   VAR
     len : CARDINAL;
   BEGIN
+    IF buff = NIL OR NUMBER(buff^) = 0 THEN
+      buff := NEW(REF ARRAY OF CHAR, 1)
+    END;
     LOOP
       len := Rd.GetSubLine(rd, SUBARRAY(buff^, p, NUMBER(buff^)-p));
       IF len = 0 THEN
@@ -49,18 +51,45 @@ PROCEDURE GetSingleLine(rd : Rd.T;
     END
   END GetSingleLine;
 
-PROCEDURE GetLine(rd : Rd.T; VAR buff : REF ARRAY OF CHAR; VAR lNo : CARDINAL) : [-1..LAST(CARDINAL)] =
+PROCEDURE GetLine(rd : Rd.T;
+                  VAR buff : REF ARRAY OF CHAR;
+                  VAR lNo : CARDINAL) : [-1..LAST(CARDINAL)] RAISES { Rd.Failure, Thread.Alerted } =
   VAR 
     p : CARDINAL := 0;
+    <*FATAL Rd.EndOfFile*>
   BEGIN
     LOOP
       p := GetSingleLine(rd, p, buff, lNo);
       IF Rd.EOF(rd) THEN RETURN -1 END;
-      WITH c = Rd.GetChar(rd) DO
-        IF c # '+' THEN Rd.UnGetChar(rd); RETURN p END
+      LOOP
+        (* eat the next live character.
+           if a + keep getting stuff, else return here *)
+        WITH c = Rd.GetChar(rd) DO
+          CASE c OF
+            '+' => EXIT
+          |
+            ' ', '\t' => AddToBuff(buff, p, c)(* skip *)
+          ELSE
+            Rd.UnGetChar(rd); RETURN p
+          END
+        END
       END
     END
   END GetLine;
+
+PROCEDURE AddToBuff(VAR buff : REF ARRAY OF CHAR;
+                    VAR p : CARDINAL;
+                    c : CHAR) =
+  BEGIN
+    IF p = NUMBER(buff^) THEN
+      WITH new = NEW(REF ARRAY OF CHAR, 2*NUMBER(buff^)) DO
+        SUBARRAY(new^, 0, NUMBER(buff^)) := buff^;
+        buff := new
+      END
+    END;
+    buff[p] := c;
+    INC(p)
+  END AddToBuff;
 
 
 TYPE

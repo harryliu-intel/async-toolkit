@@ -18,4 +18,9 @@ Interface ("SpiceCircuit")
 List ("SpiceCircuit","SpiceCircuit")
 Table ("TextSpiceCircuit", "Text", "SpiceCircuit")
 
+MkSet("SpiceObject", "SpiceObject")
+MkSetDef("SpiceObject", "SpiceObject")
+Table("SpiceObjectRef", "SpiceObject", "Refany")
+Table("TextSpiceObjectSet", "Text", "SpiceObjectSet")
+
 library ("spicelib")

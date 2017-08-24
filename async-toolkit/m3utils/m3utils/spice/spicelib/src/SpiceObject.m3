@@ -11,6 +11,7 @@ IMPORT SpiceCircuit;
 IMPORT SpiceObject, SpiceObjectParse;
 IMPORT Scan;
 FROM SpiceFileFormat IMPORT White;
+IMPORT Word;
 
 CONST TE = Text.Equal;
 
@@ -45,7 +46,7 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
         (* start subcircuit *)
         WITH new   = NEW(SpiceCircuit.T, 
                          elements := NEW(SpiceObjectSeq.T).init(),
-                         params := NEW(TextSeq.T).init()),
+                         params   := NEW(TextSeq.T).init()),
              hadIt = GetWord(line, p, new.name) DO
           <*ASSERT hadIt*>
           WHILE GetWord(line, p, str) DO
@@ -71,18 +72,41 @@ PROCEDURE ParseLine(VAR circuit : SpiceCircuitList.T; (* circuit stack *)
           VAR w : TEXT;
               got := GetWord(line, p, w);
           BEGIN
-            <*ASSERT got*>
-            IF TE(w, "/") THEN EXIT END;
+            (* we have just read a word from the line 
+               
+               some systems produce
+
+               Xnm tnm0 tnm1 .. tnmN-1 / typeName
+
+               others produce
+
+               Xnm tnm0 tnm1 .. tnmN-1 typeName
+
+               for the former we look for the slash
+               for the latter we have to back up once having parsed
+               the typeName as a terminal name 
+            *)
+            IF NOT got OR TE(w, "/") THEN
+              IF NOT got THEN
+                x.type := x.terminals.remhi()
+              ELSE (*IF TE(w, "/")*)
+                (* easy syntax, typename delimited by slash *)
+                WITH gotType = GetWord(line,p,x.type) DO
+                  <*ASSERT gotType*> (* syntax *)
+                END
+              END;
+
+              (* validate typeName *)
+              WITH haveIt  = subCkts.get(x.type,ckt) DO
+                <*ASSERT haveIt*>  (* definition *)
+                <*ASSERT x.terminals.size() = ckt.params.size()*>
+                <*ASSERT x.type # NIL*>
+              END;
+              EXIT
+            END;
             x.terminals.addhi(w)
           END
         END(*POOL*);
-        WITH gotType = GetWord(line,p,x.type),
-             haveIt  = subCkts.get(x.type,ckt) DO
-          <*ASSERT gotType*> (* syntax *)
-          <*ASSERT haveIt*>  (* definition *)
-          <*ASSERT x.terminals.size() = ckt.params.size()*>
-          <*ASSERT x.type # NIL*>
-        END;
         o := x
       END
     ELSIF CaseIns(line[0],'M') THEN
@@ -253,6 +277,8 @@ PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;
     RETURN TRUE
   END GetWord;
 
-
+PROCEDURE Hash(a : T) : Word.T = BEGIN
+  RETURN Text.Hash(a.name) END Hash;
+  
 BEGIN END SpiceObject.
 
