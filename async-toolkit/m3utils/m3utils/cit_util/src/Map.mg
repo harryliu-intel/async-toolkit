@@ -60,7 +60,7 @@ PROCEDURE EvalHint(a : T; x : From.T) =
             EVAL Thread.Join(t)
           END
         END;
-        threads.addlo(Thread.Fork(NEW(MapClosure, a := a, x := x)));
+        threads.addlo(Thread.Fork(NEW(MapClosure, a := a, x := From.Copy(x))));
       END
     END
   END EvalHint;

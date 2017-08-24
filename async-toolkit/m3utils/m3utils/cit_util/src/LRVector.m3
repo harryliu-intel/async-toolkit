@@ -13,4 +13,7 @@ PROCEDURE Norm(v : T) : LONGREAL =
     RETURN Math.sqrt(res)
   END Norm;
 
+PROCEDURE Copy(a : T) : T =
+  VAR res := NEW(T, NUMBER(a^)); BEGIN res^ := a^; RETURN res END Copy;
+
 BEGIN END LRVector.
