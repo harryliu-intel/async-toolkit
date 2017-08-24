@@ -37,6 +37,7 @@ PROCEDURE Initial(VAR bracket : Trio;
         BEGIN dum := a; a := b; b := dum END Swap;
         
       BEGIN
+        func.evalHint(bx);
         fa := func.eval(ax);
         fb := func.eval(bx);
         IF fb > fa THEN Swap(ax,bx); Swap(fb,fa) END;

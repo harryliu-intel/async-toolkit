@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_util")
 import ("parseparams")
+import ("spicebuilderlib")
 
 implementation ("Main")
 

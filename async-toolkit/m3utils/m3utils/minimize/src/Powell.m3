@@ -58,8 +58,6 @@ PROCEDURE Minimize(VAR p : LRVector.T;
 
       INC(iter);
     END (* LOOP *)
-
-
   END Minimize;
                   
 BEGIN END Powell.
