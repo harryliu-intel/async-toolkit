@@ -620,8 +620,10 @@ public class FunctionPreprocessor extends VisitorByCategory {
             else setResult(constructNode(e, (ExpressionInterface) getResult()));
         } else {
             final ExpressionInterface temp = gensym();
-            if (e instanceof ProbeExpression)
-                preamble.add(createVarStatement(temp, new BooleanType())); 
+            final Type ty =
+                e instanceof ProbeExpression ? new BooleanType()
+                                             : new TemporaryIntegerType();
+            preamble.add(createVarStatement(temp, ty));
             preamble.add(new AssignmentStatement(temp, 
                 (AbstractChannelExpression)
                 constructNode(e, (ExpressionInterface) getResult())).epr(e));
