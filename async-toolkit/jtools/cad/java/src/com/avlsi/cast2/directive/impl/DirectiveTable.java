@@ -375,6 +375,8 @@ public class DirectiveTable {
         registerDirective(CELL, SLACKER_NTPC, FLOAT_TYPE, null);
         registerDirective(CELL, SLACKER_IS_SLACK, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, SLACKER_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
+        registerDirective(CELL, CONDITION_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
+        registerDirective(CELL, CONDITION_GROUP, POSSIBLY_WIDE_CHANNEL_TYPE, INT_TYPE, new Integer(0));
         registerDirective(CELL, SLACKER_FREE_SLACK, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(SUBCELL, SLACKER_FREE_SLACK, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(CELL, SLACKER_ELASTICITY, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));

@@ -227,6 +227,8 @@ public interface DirectiveConstants {
     String SLACKER_COST = "slacker_cost";
     String SLACKER_USE_EXTRA_DELAY = "slacker_use_extra_delay";
     String SLACKER_CHANNEL = "slacker_channel";
+    String CONDITION_TIME = "condition_time";
+    String CONDITION_GROUP = "condition_group";
 
     /** ASTA directives */
     String ASTA_BLACKBOX = "asta_blackbox";
