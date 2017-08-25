@@ -1,0 +1,8 @@
+/* $Id: .parsertop,v 1.2 2006/05/29 06:51:48 mika Exp $ */
+
+/* on the NT target, we define TOP directly when we call m3build ... */
+if not equal(TARGET,"NT386GNU") 
+  include("../.top")
+end
+
+_PARSER_TOP=TOP & "/parserlib"
