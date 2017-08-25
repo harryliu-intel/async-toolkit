@@ -16,8 +16,8 @@
 include("../m3overrides")
 
 /* these are the packages that are part of this distribution */
-/* .parsertop is made by the Makefile before building anything */
-include(".parsertop")
+/* parsertop is made by the Makefile before building anything */
+include("parsertop")
 override("ktoklib", _PARSER_TOP)
 override("klexlib", _PARSER_TOP)
 override("kyacclib", _PARSER_TOP)
