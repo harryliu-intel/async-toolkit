@@ -1,0 +1,11 @@
+% lists are unused and should be deleted
+
+readonly proc Causal (nm, elem, elempair, elemlongrealtbl, elempairlongrealtbl, elem_elemset_tbl, elemseq, elemreftbl) is
+  build_generic_intf(nm, "Causal", [elem, elem & "Set", elemseq], VISIBLE)
+  build_generic_impl(nm, "Causal", [elem, elem & "Set", elem & "SetDef", elemlongrealtbl, elem_elemset_tbl, elemseq, elemreftbl])
+end
+
+readonly proc Causall (nm, elem, elempair, elemlongrealtbl, elempairlongrealtbl, elem_elemset_tbl, elemset, elemsetdef, elemseq, elemreftbl) is
+  build_generic_intf(nm, "Causal", [elem, elemset, elemseq], VISIBLE)
+  build_generic_impl(nm, "Causal", [elem, elemset, elemsetdef, elemlongrealtbl, elem_elemset_tbl, elemseq, elemreftbl])
+end

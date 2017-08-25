@@ -1,0 +1,49 @@
+/* $Id: m3makefile,v 1.15 2009/06/12 00:25:21 mika Exp $ */
+
+import ("parserlib")
+import ("libm3")
+import ("finlib")
+import ("cit_util")
+
+Module("OrthoPoly")
+Module("FactorialDesign")
+Interface("FactorialBindings")
+Module("FactorialResults")
+Module("FactorialValues")
+
+Module("FactorialSuper") 
+
+Module("FactorialDatum")
+List("FactorialDatum","FactorialDatum")
+
+Module("ANOVA")
+module("ANOVASuper")
+module("ANOVAClass")
+Module("FactorialIndex")
+table("IndexedData", "FactorialIndex", "LongrealList")
+table("IndexedAttachments", "FactorialIndex", "RefList")
+
+Token("cmd")
+Lexer("cmd","cmd")
+Extended("cmdLexExt")
+Parser("cmd","cmd")
+Extended("cmdParseExt")
+
+Module("FactorialVarBindings")
+/* List("FactorialVarBindings","FactorialVarBindings") */
+
+Module("TeXHalign")
+
+Generic_module ("Subarrays")
+template ("subarrays")
+
+Subarrays("Card","Cardinal")
+Subarrays("Text","Text") /* just for testing, not used */
+/* Module("CardSubsets") */
+
+Module("ANOVAProgramBits")
+
+library("anova")
+
+
+
