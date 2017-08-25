@@ -1,7 +1,7 @@
-(* $Id: BDDPrivate.i3,v 1.2 2000/11/21 05:47:46 mika Exp $ *)
+(* $Id: BDDPrivate.i3,v 1.3 2014/01/15 04:34:47 mika Exp $ *)
 INTERFACE BDDPrivate;
 IMPORT BDD;
 
-PROCEDURE GetId(self : BDD.T) : CARDINAL;
+CONST GetId = BDD.GetId;
 
 END BDDPrivate.
