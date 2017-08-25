@@ -1,10 +1,12 @@
-/* $Id: m3makefile,v 1.4 2002/11/10 22:46:47 thielman Exp $ */
+/* $Id: m3makefile,v 1.11 2014/11/20 10:30:40 mika Exp $ */
 m3_option("-g")
 m3_option("-times")
 /*m3_option("-X2@-pg@")*/
 /*m3_option("-Z")*/
 /*remove_m3_option("-O")*/
-import("cit_util")
+import ("libm3")
+import ("set")
+import ("cit_util") /* CardSet */
 
 Module("BDD")
 List("BDD","BDD")
@@ -20,6 +22,17 @@ Table ("BDDRef", "BDD", "Refany")
 MkSet ("BDD", "BDD")
 MkSetDef ("BDD", "BDD")
 
+Sequence ("BDD", "BDD")
+
+Table ("BDDText", "BDD", "Text")
+Table ("BDDBDD", "BDD", "BDD")
+
+Interface("BDDImpl")
+
+Module ("BDDTruthTable")
+
+Interface ("BDDSystemState")
+Interface ("BDDCleaner")
 
 import("libm3")
 library("bdd")
