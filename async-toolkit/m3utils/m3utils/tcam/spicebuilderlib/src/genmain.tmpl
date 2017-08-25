@@ -1,0 +1,7 @@
+readonly proc _genmain(nm, sim, vis) is
+        build_generic_intf(nm&"Main", "GenMain", [], vis)
+        build_generic_impl(nm&"Main", "GenMain", [sim])
+end
+
+readonly proc genMain(nm, elem) is _genmain(nm, elem, HIDDEN) end
+readonly proc GenMain(nm, elem) is _genmain(nm, elem, VISIBLE) end

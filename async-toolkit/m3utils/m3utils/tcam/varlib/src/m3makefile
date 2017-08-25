@@ -1,0 +1,39 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("parserlib")
+
+Module ("Variation")
+Module ("Perturbation")
+Interface ("PerturbationRep")
+List   ("Perturbation", "Perturbation")
+
+Module ("LibData")
+
+MkSet ("LibData", "LibData")
+MkSetDef ("LibData", "LibData")
+Table ("LibDataRef", "LibData", "Refany")
+
+Table ("TextLibDataSet", "Text", "LibDataSet")
+Sequence ("TextPair", "TextPair")
+
+Module ("Variation_p1274_0x1r1")
+Module ("Variation_p1274_3x2r1")
+
+Module ("VarExpr")
+Interface ("Assignment")
+List ("Assignment", "Assignment")
+
+Token("cmd")
+Lexer("cmd","cmd")
+Extended("cmdLexExt")
+Parser("cmd","cmd")
+Extended("cmdParseExt")
+
+Module ("HspVariation")
+
+%implementation ("TestVar")
+%program ("testvarlib")
+library ("varlib")
+
