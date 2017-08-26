@@ -2,7 +2,8 @@
 ; cells and options are in the route/[leaf|mid|apr] directories
 ; which can be run with virtuoso_replay *.il.
 
-(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid t) (importOnly nil) (timingDriven t))
+(defun RouteCell (cellName topMetal @key (redoPG nil) (colorGrid t)
+                           (importOnly nil) (timingDriven t) (nearby nil))
   (let (lCV pgCV aCV fCV cgCV libName fillCV bbox h w)
     libName = (GetCastLibName cellName)
     fCV  = (ReadCV libName cellName "floorplan")
@@ -15,10 +16,18 @@
     (when cgCV (cdsp4edit ?CV cgCV))
     (when aCV  (cdsp4edit ?CV aCV))
     (when topMetal<2 fCV = (MakeFlatten ?CV CV ?topMetal 2 ?colorGrid colorGrid)) ; need M2 power grid
-    lCV = (if importOnly
-            (RouteImport ?CV fCV)
-            (Route ?CV fCV ?topMetal topMetal ?timingDriven timingDriven ?colorGrid colorGrid ?Mem 16384)
-            )
+    (cond (nearby
+           lCV = (MakeFlatten ?CV fCV ?topMetal topMetal)
+           lCV = (betterCopyCellView lCV lCV->libName lCV->cellName "layout" nil nil t)
+           (TemplateFill ?topMetal topMetal ?CV lCV)
+           )
+          (importOnly
+           lCV = (RouteImport ?CV fCV)
+           )
+          (t 
+           lCV = (Route ?CV fCV ?topMetal topMetal ?timingDriven timingDriven ?colorGrid colorGrid ?Mem 16384)
+           )
+          )
     (when redoPG
       (MakePowerGrid ?CV lCV ?topMetal 8)
       (MakePowerGridAbstract ?CV lCV ?topMetal 8)
@@ -46,8 +55,8 @@
     )
   )
 
-(defun RouteLeaf (cellName topMetal)
-  (RouteCell cellName topMetal ?timingDriven nil ?colorGrid nil)
+(defun RouteLeaf (cellName topMetal @key (nearby nil))
+  (RouteCell cellName topMetal ?timingDriven nil ?colorGrid nil ?nearby nearby)
   )
 
 (defun RouteProteus (baseName targetName abstractName @key (exportOnly nil) (importOnly nil))
