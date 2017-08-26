@@ -3,4 +3,5 @@
      CV = (RouteLeaf (sprintf nil "lib.util.delay.tunable.TDL-L%d-R.0" i) 2)
      (PatchTDL ?CV CV)
      )
+(RouteCell "lib.util.delay.tunable.SIZE_TDL.0" 4 ?timingDriven nil)
 (exit)
