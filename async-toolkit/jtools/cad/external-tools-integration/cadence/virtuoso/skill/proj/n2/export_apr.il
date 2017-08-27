@@ -20,10 +20,8 @@ spar_cell_list =
 
 ; CTREE
 (for i 0 3
-  (foreach s (list "" "n")
-    spar_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE2.%d%s" i s) spar_cell_list)
-    spar_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE3.%d%s" i s) spar_cell_list)
-    )
+  spar_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE2.%d" i) spar_cell_list)
+  spar_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE3.%d" i) spar_cell_list)
   )
 
 ; TDL
@@ -39,6 +37,14 @@ spar_cell_list =
     spar_cell_list = (cons (sprintf nil "lib.bd.standard.send.PULSE_SEND_CTRL-L%d_%s-R.0" i s) spar_cell_list)
     )
   )
+
+; add nominal threshold versions if they exist
+nom_cell_list = nil
+(foreach cellName spar_cell_list
+  CV = (ReadCV (GetCastLibName cellName) (strcat cellName "n") "layout")
+  (when CV nom_cell_list = (cons CV->cellName nom_cell_list))
+  )
+spar_cell_list = (append spar_cell_list nom_cell_list)
 
 ; regenerate abstracts
 (defun UpdateAbstractAPR ()

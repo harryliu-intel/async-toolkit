@@ -1,0 +1,27 @@
+#!/usr/intel/bin/perl -w
+#
+# Script to create nominal threshold versions of SPEC files
+# according to simple expression matching rules.
+
+while (my $file = shift @ARGV) {
+    my $cell = $file;
+    $cell =~ s/\.cast//g;
+    print "$cell\n";
+    open IN, "<$file";
+    open OUT, ">${cell}n.cast";
+    while (my $line = <IN>) {
+        if ($line =~ /^(.*vendor\.intel\.d04\......)l(.\.....*)$/ ) {
+            $line = "${1}n${2}\n";
+        }
+        elsif ($line =~ /^(.*\"\d+)(\".*)$/ ) {
+            $line = "${1}n${2}\n";
+        }
+        elsif ($line =~ /^(.*\S+\.0)(\s+\S+.*)$/) {
+            $line = "${1}n${2}\n";
+        }
+        print OUT $line;
+    }
+    close IN;
+    close OUT;
+    system("p4 -c $ENV{HW_CLIENT} add \"${cell}n.cast\"");
+}
