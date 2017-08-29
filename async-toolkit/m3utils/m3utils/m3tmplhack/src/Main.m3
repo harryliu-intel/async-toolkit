@@ -28,7 +28,16 @@ CONST
   ModuleMode = "module";
   RawVers = "$Id$";
 VAR
-  Version := Text.Sub(RawVers, 15, Text.Length(RawVers) - 17);
+  Version := GetVersion();
+
+PROCEDURE GetVersion() : TEXT =
+  BEGIN
+    IF Text.Length(RawVers) > 17 THEN
+      RETURN Text.Sub(RawVers, 15, Text.Length(RawVers) - 17)
+    ELSE
+      RETURN "3.14159265359"
+    END
+  END GetVersion;
 
 PROCEDURE FormatNames(args: TextReader.T; countLimit := LAST(INTEGER)): TEXT =
   VAR
