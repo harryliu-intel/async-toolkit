@@ -1,0 +1,49 @@
+$Id$
+
+m3build/m3ship are a bit tricky to deal with.
+
+To get m3ship to install things where you want them to go, use
+PKG_INSTALL="dest dir"
+
+Remember to check if build_standalone is necessary if you're not
+going to m3ship to /usr/local.
+
+To distribute just part of this repository, just delete the directories
+you don't want to distribute.  The dirsexist.sh shell script will make
+sure that only the right things are built.
+
+
+Any pared down version of the repository needs the following files and
+directories at the top level in order for packages using cit_util to work:
+
+- Makefile  
+- Make.defs
+- cit_common
+- cit_util
+- dirsexist.sh
+- hack
+- m3overrides
+- m3subdir.mk
+- m3tmplhack
+
+##################################
+# Deprecated 20050126 by jd
+# HOWTOSHIPATCALTECH:
+# ~kp/bin/devup [modules]
+
+# m3arch.sh
+# Is a script which determines the modula3 build directory based on the
+#	information provided by uname.  This is done without creating 
+#	test directories.
+
+# Exporting
+make install-to-async
+
+##################################
+
+I have upgraded everything to use PM3-1.1.15's libraries.  The
+reason for this is that we use parseparams all over the place, and
+it's silly to import Karl's version for this.  Also Network Objects
+are in the newer PM3 distributions.
+
+External dependencies are listed in the file DEPENDENCIES

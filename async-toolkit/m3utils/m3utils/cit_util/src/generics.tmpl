@@ -1,0 +1,187 @@
+
+/* generic template generator. */
+/* commands: gmodule, ginterface, gimplementation. */
+/* other commands: build_generic_module. */
+
+/* $Id$ */
+
+
+_M3TMPLHACK = TOP & "/m3tmplhack/" & BUILD_DIR & "/m3tmplhack"
+
+readonly proc Build_generic_module(nam, gen, args1, args2) is
+        build_generic_intf(nam, gen, args1, VISIBLE)
+        build_generic_impl(nam, gen, args2)
+end
+
+readonly proc build_generic_module(nam, gen, args1, args2) is
+        build_generic_intf(nam, gen, args1, HIDDEN)
+        build_generic_impl(nam, gen, args2)
+end
+
+readonly proc Build_generic_interface(nam, gen, args) is
+	build_generic_intf(nam, gen, args, VISIBLE)
+end
+
+readonly proc build_generic_interface(nam, gen, args) is
+	build_generic_intf(nam, gen, args, HIDDEN)
+end
+
+build_generic_implementation = build_generic_impl
+Build_generic_implementation = build_generic_impl
+
+if not defined("_exec")
+ readonly proc _exec(cmd) is
+	if defined("CM3_VERSION")
+		exec(cmd)
+	else
+		write (cmd, CR)
+    local ret = exec(cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
+	end
+ end
+end
+
+/* fork_exec is just normal exec on SRC and P M3 */
+if not defined ("_fork_exec") 
+  readonly proc _fork_exec(cmd) is
+    if defined("CM3_VERSION")
+      fork_exec(cmd)
+    else
+      _exec(cmd)
+    end
+  end
+end
+
+if not defined ("_fork_wait")
+  readonly proc _fork_wait(cmd) is
+    if defined("CM3_VERSION")
+      fork_wait()
+    end
+  end
+end
+
+/****************************************/
+
+readonly proc derived_template(nm) is
+	template("../" & BUILD_DIR & "/" & nm)
+end
+
+readonly proc _check_clean(g) is
+	if defined("_clean")
+		write("delete " & g, CR)
+		/* deleting this file causes staleness, 
+			which is desired effect of clean. */
+		delete_file(g)
+	end
+end
+
+/*
+assumption: templates need only be generated when m3makefile changes.
+extra cleaning required if these commands are used 
+in a template imported by m3makefile!
+*/
+
+readonly proc gmodule_template(nm, src) is
+	local makefile = path_of("m3makefile")
+	local f = nm & ".tmpl"
+	local g = nm & ".generate_tmpl"
+	local intf = src & ".ig"
+	local impl = src & ".mg"
+        if equal(nm, src)
+          intf = path_of(intf)
+          impl = path_of(impl)
+        end
+	local sources = [makefile, intf, impl]
+	if stale(f, sources) or stale(g, sources)
+		> g in
+			write("module", CR)
+                        write(nm, CR)
+			write(intf, CR)
+			write(impl, CR)
+		end
+		_exec([_M3TMPLHACK,g])
+	end
+	_check_clean(g)
+	derived_template(nm)
+end
+
+readonly proc gother_template(nm,src,kind,ext) is
+	local makefile = path_of("m3makefile")
+	local base = nm & "_" & kind
+	local f = base & ".tmpl"
+	local g = base & ".generate_tmpl"
+	local source = path_of(src & "." & ext)
+	local sources = [makefile, source]
+	if stale(f, sources) or stale(g, sources)
+		> g in
+			write(kind, CR)
+                        write(nm, CR)
+			write(source, CR)
+		end
+		_exec([_M3TMPLHACK,g])
+	end
+	_check_clean(g)
+	derived_template(base)
+end
+
+readonly proc gmodule(nm) is
+	generic_module(nm)
+	gmodule_template(nm,nm)
+end
+
+readonly proc Gmodule(nm) is
+	Generic_module(nm)
+	gmodule_template(nm,nm)
+end
+
+readonly proc ginterface(nm) is
+	generic_interface(nm)
+	gother_template(nm,nm, "interface", "ig")
+end
+
+readonly proc Ginterface(nm) is
+	Generic_interface(nm)
+	gother_template(nm,nm, "interface", "ig")
+end
+
+readonly proc gimplementation(nm) is
+	generic_implementation(nm)
+	gother_template(nm, "implementation", "mg")
+end
+
+readonly proc Gimplementation(nm) is
+	Generic_implementation(nm)
+	gother_template(nm, "implementation", "mg")
+end
+
+readonly proc gmojule(nm) is
+	local rename = nm & "_2"
+	generic_mojule(nm, rename)
+	gmodule_template(nm, rename)
+end
+
+readonly proc Gmojule(nm) is
+	local rename = nm & "_2"
+	Generic_mojule(nm, rename)
+	gmodule_template(nm, rename)
+end
+
+readonly proc gjnterface(nm) is
+	generic_jnterface(nm)
+	gother_template(nm, "interface", "ig")
+end
+
+readonly proc Gjnterface(nm) is
+	Generic_jnterface(nm)
+	gother_template(nm, "interface", "ig")
+end
+
+readonly proc gjmplementation(nm) is
+	generic_jmplementation(nm)
+	gother_template(nm, "implementation", "mg")
+end
+
+readonly proc Gjmplementation(nm) is
+	Generic_jmplementation(nm)
+	gother_template(nm, "implementation", "mg")
+end

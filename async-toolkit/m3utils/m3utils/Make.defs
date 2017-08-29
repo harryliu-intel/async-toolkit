@@ -1,0 +1,70 @@
+# $Id$ 
+
+#
+# File controlled by environment variables (.login on Unix/csh, .bash_profile
+# on Cygwin/Unix/bash)
+#
+#
+# CYGWIN: using CYGWIN (special hacks for PM3-Klagenfurt(?))
+#   DRAKKAR: at Drakkar (not at Caltech/Gen Cap)
+# !CYGWIN:
+#   CM3: use Critical Mass compiler (rather than Polytechnique de Montreal
+#        or SRC)
+#
+
+ifdef CYGWIN
+
+  M3BUILDPROGRAM=m3build
+  M3BUILDCLEANTARGET= clean
+  M3SHIPOPTS=
+  SHIP=1
+
+  ifdef DRAKKAR
+    USER=Administrator
+  else # !DRAKKAR  --- i.e., somewhere at Caltech
+    USER=mika
+  endif # !DRAKKAR
+
+  M3BUILDOPTS= -F  \\home\\$(USER)\\t\\.top -F \\home\\$(USER)\\t\\parserlib\\.parsertop
+  M3SHIPPROGRAM=/home/$(USER)/t/cygwinhacks/m3ship.sh
+
+else #### !CYGWIN => UNIX ####
+
+# GNU Make 3.80, 3.81, and 3.82 seem to support different ways of saying "else if"
+# maximal compatibility by avoiding the construct entirely
+
+  M3BUILDPROGRAM=m3build
+  M3BUILDOPTS= -O
+  M3BUILDCLEANTARGET= clean
+  M3SHIPPROGRAM=m3ship
+  M3SHIPOPTS=
+
+  GC_USECM3 := $(shell ./use_cm3.sh)
+
+  ifdef CM3  # on MacOS and other newer systems
+    GC_USECM3=1
+    M3BUILDPROGRAM=cm3
+    M3BUILDOPTS= -override
+    M3BUILDCLEANTARGET= -clean
+    M3SHIPPROGRAM=cm3
+    M3SHIPOPTS=-ship
+  endif
+  ifdef GC_USECM3  
+    M3BUILDPROGRAM=cm3
+    M3BUILDOPTS= -override
+    M3BUILDCLEANTARGET= -clean
+    M3SHIPPROGRAM=cm3
+    M3SHIPOPTS=-ship
+  endif
+endif
+
+# all targets:
+
+ifdef SHIP
+  M3SHIP=$(M3SHIPPROGRAM) $(M3SHIPOPTS)
+else
+  M3SHIP= echo
+endif
+
+M3BUILD= $(M3BUILDPROGRAM) $(M3BUILDOPTS)
+M3BUILDCLEAN= $(M3BUILD) $(M3BUILDCLEANTARGET)

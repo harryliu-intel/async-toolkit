@@ -1,0 +1,67 @@
+#
+# $Id$
+#
+
+===== Basic instructions =====
+
+If you are just building, not maintaining, just 
+
+export CYGWIN=1
+
+before compiling.
+
+If you are not building as user "mika", you will have to make some
+changes to Make.defs (please look at that file).
+
+===== From-Scratch Installation =====
+
+Installing this system on Cygwin can be a little tricky.  So far, it's
+only been tested with the old PM3 distribution from Klagenfurt (?).
+This PM3 comes on 44 "floppies" and is installed in accordance with the
+instructions (in German) located at
+
+http://www.1o0.de/wi-links/informatik/praxis/programmiersprachen/modula3/installation/windows/windows.html
+
+Having installed the PM3 distribution, building small, self-contained 
+Modula-3 programs should be no problem.
+
+However, it is different with this software distribution.  During the
+build process, tools are built that are used later on in the same build
+process.  For various reasons, m3 "overrides" don't seem to work right on
+Cygwin/PM3-Klagenfurt, so we build a "distribution" system and m3ship
+everything.
+
+===== IMPORTANT SECTION FOLLOWS =====
+
+The main thing that has to be done to simplify the work of the build
+system is to make sure that DOS and Cygwin directory paths match AS
+MUCH AS POSSIBLE.  This is difficult, because by default, Cygwin has
+a different view of the "root" of the filesystem from the standard
+DOS view.  Running under Cygwin, the Klagenfurt system unfortunately
+sometimes takes the DOS view and sometimes takes the Cygwin view.
+The situation is further complicated by the fact that Windows doesn't
+have proper symbolic links.
+
+The saving grace is that Cygwin DOES have proper symbolic links.
+The solution is therefore to make the directory structure that is desired
+under DOS and then link to it from within the Cygwin hierarchy.
+
+Therefore:
+
+Move the users' home directories to 
+
+C:\home
+
+and make the links as follows:
+
+    Cygwin link                                DOS equivalent
+ /home -> /cygdrive/c/home                 C:\cygwin\home -> C:\home
+ 
+etc.
+
+The filenames are still occasionally polluted by DOS things like
+backslashes and drive letters.  The scripts in cygwinhacks should take
+care of most of the remaining problems of this sort.
+
+I am not sure this system can be made to work if your system disk
+is called anything other than C:.  Best not to try.

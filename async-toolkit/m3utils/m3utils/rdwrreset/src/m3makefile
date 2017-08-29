@@ -1,0 +1,6 @@
+/* $Id$ */
+import ("libm3")
+
+Module("RdWrReset")
+
+library ("rdwrreset")

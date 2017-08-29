@@ -1,0 +1,181 @@
+/* $Id$ */
+
+/* .top is made by the Makefile before building anything */
+include(".top")
+
+/* when overriding, ld.so doesn't know where to find libraries */
+/* this is even more true if we want to move the binaries or */
+/* clean.. */
+
+if defined("pm3_version") 
+        /* Polytechnique de Montreal Modula-3 */
+  option("shared_lib","")
+  if not equal(TARGET,"NT386GNU")
+    option("optimization","T") 
+  end
+else
+ if defined("CM3_VERSION")
+        /* Critical Mass Modula-3 */
+% see http://www.elegosoft.com/cm3/doc/help/cm3/cm3.html
+
+% not sure about this:
+      build_standalone()
+
+      m3_optimize("")
+ else 
+  /* SRC Modula-3 */
+  m3_option ("-X2@-static@")
+ end
+end
+
+/* these are the packages that are part of this distribution */
+
+override("prsparse",TOP)
+override("magic",TOP & "/vlsi")
+override("magicextras",TOP & "/vlsi")
+override("cit_common",TOP)
+override("cit_util",TOP)
+override("bdd",TOP)
+override("cptr",TOP)
+override("bool",TOP)
+override("sop",TOP & "/vlsi")
+override("boxes",TOP & "/vlsi")
+override("simplegrid",TOP & "/vlsi")
+override("router",TOP & "/vlsi")
+override("term",TOP)
+override("m3-3",TOP & "/vlsi")
+override("klay",TOP & "/vlsi")
+override("paneman",TOP)
+override("parserlib",TOP & "/parserlib")
+override("ktoklib",TOP & "/parserlib")
+override("cit_parse",TOP)
+override("drawcontext",TOP)
+override("dcpane",TOP & "/drawcontext")
+override("tasks",TOP)
+override("matrix",TOP)
+override("layout",TOP & "/vlsi")
+override("minimize",TOP)
+override("convex",TOP)
+override("splines",TOP)
+override("integrate",TOP)
+override("softmax",TOP)
+override("pattern",TOP)
+override("gatematrix",TOP & "/vlsi")
+override("angbrmacro",TOP & "/vlsi")
+override("defmacro",TOP)
+override("colc",TOP & "/vlsi")
+override("tree",TOP)
+override("magandspice",TOP & "/mika/vconv/mag")
+override("celldb",TOP & "/vlsi")
+override("sysiphus_parse",TOP  & "/vlsi"& "/sysiphus")
+override("sysiphus_lib",TOP  & "/vlsi"& "/sysiphus")
+override("finlib",TOP & "/calarm")
+override("keylib",TOP & "/calarm")
+override("matcher",TOP & "/vlsi")
+override("optree",TOP & "/vlsi")
+override("operators", TOP & "/vlsi")
+override("rsa",TOP)
+override("tuple",TOP & "/verif")
+override("ld2layout", TOP & "/vlsi")
+override("gdsII", TOP & "/vlsi")
+override("voronoi", TOP)
+override("voronoi2", TOP) /* replacement for above.. better? */
+override("color", TOP)
+override("mst", TOP)
+override("ld", TOP)
+override("ld_parse", TOP & "/ld")
+override("cast", TOP & "/vlsi")
+override("cs2", TOP & "/cs2")
+override("pro", TOP & "/vlsi")
+override("gnuplot", TOP)
+override("rdwr", TOP)
+override("rdwrreset", TOP)
+override("commandrw", TOP)
+override("m3curses", TOP)
+override("xmlparse", TOP)
+override("stabletable", TOP)
+override("trie", TOP)
+override("marching", TOP)
+
+override("mscheme",        TOP)
+override("modula3scheme",  TOP & "/mscheme")
+override("schemesig",      TOP & "/mscheme")
+override("schemereadline", TOP & "/mscheme")
+override("scodegen",       TOP & "/mscheme")
+override("scheme-lib",     TOP & "/mscheme")
+override("sstubgen",       TOP & "/mscheme")
+
+override("tz", TOP)
+
+override("anova", TOP & "/calarm")
+override("wavelets", TOP & "/calarm")
+override("htmltable", TOP & "/calarm")
+override("postgresql", TOP & "/calarm")
+override("ratsql", TOP & "/calarm")
+override("twslib", TOP & "/calarm")
+override("pricemonitor", TOP & "/calarm/twslib")
+override("regresslib", TOP & "/calarm")
+override("regressparsing", TOP & "/calarm/regress")
+override("traderulelib", TOP & "/calarm")
+override("smarttraderule", TOP & "/calarm")
+override("marketmakingcommon", TOP & "/calarm/marketmaking")
+override("marketmakingtestrule", TOP & "/calarm/marketmaking")
+override("mmport", TOP & "/calarm/marketmaking")
+override("mmrv", TOP & "/calarm/marketmaking")
+
+override("fasthf", TOP & "/calarm")
+override("fastrw", TOP & "/calarm")
+override("marketdatadump", TOP & "/calarm")
+override("sx", TOP & "/calarm")
+override("hftrading", TOP & "/calarm")
+override("m3gen", TOP & "/calarm")
+override("m3readline", TOP & "/calarm")
+override("excelrtd", TOP & "/calarm")
+override("mktsim", TOP & "/calarm")
+override("gnuplotter", TOP & "/calarm/anova")
+override("gw", TOP & "/calarm")
+
+% FIX stuff...
+override("fixcommon", TOP & "/calarm/fix")
+override("fix40", TOP & "/calarm/fix")
+override("fix41", TOP & "/calarm/fix")
+override("fix42", TOP & "/calarm/fix")
+override("fix43", TOP & "/calarm/fix")
+override("fix44", TOP & "/calarm/fix")
+
+%override("testtrade2", TOP & "/calarm/twslib")  % broken up into the following libraries...
+override("twslogger", TOP & "/calarm/twslib")
+override("inventory", TOP & "/calarm/twslib/testtrade2")
+override("tradecore", TOP & "/calarm/twslib/testtrade2")
+override("fixmonitor", TOP & "/calarm/twslib/testtrade2")
+override("twsmonitor", TOP & "/calarm/twslib/testtrade2")
+override("tradingstrategy", TOP & "/calarm/twslib/testtrade2")
+override("serverframework", TOP & "/calarm/twslib/testtrade2")
+
+override("gcomsdb",  TOP & "/calarm/gcoms")
+override("gcomslib", TOP & "/calarm/gcoms")
+override("gcomsportfolio", TOP & "/calarm/gcoms")
+
+override("dollarparser", TOP & "/calarm/gcmonitor")
+
+override("eurolib", TOP & "/calarm/euromm")
+
+override("tradingscreen", TOP & "/calarm")
+override("csv", TOP & "/calarm")
+
+override("cometlib", TOP & "/calarm/comet")
+
+override("turklib", TOP & "/cardturk")
+
+% Ohai
+override("ohailog", TOP & "/ohai")
+
+override("json", TOP)
+
+override("hsim", TOP & "/btc")
+override("hprs", TOP & "/btc")
+override("hbddops", TOP & "/btc")
+override("hparselib", TOP & "/btc")
+override("procbdd", TOP & "/btc")
+override("physlib", TOP & "/btc")
+override("critlib", TOP & "/btc/hsim")

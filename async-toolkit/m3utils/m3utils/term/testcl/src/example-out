@@ -1,0 +1,24 @@
+cl-test> help
+add <val> -- add <val> to accumulator
+^D -- exit the command loop
++ <val> -- add <val> to accumulator
+quit -- exit the command loop
+? -- display list of commands
+print -- display accumulator value
+input <filename> -- execute commands from a file
+load <filename> -- execute commands from a file
+save <filename> -- save previously-executed commands
+source <filename> -- execute commands from a file
+help -- display list of commands
+cl-test> print
+acc = 0
+cl-test> add 
+error: 1 argument expected
+cl-test> add h
+error: expected integer argument
+cl-test> add 3
+cl-test> print
+acc = 3
+cl-test> quit
+lithium% run 2
+cl-test> 

@@ -1,0 +1,24 @@
+
+The program "lockf" is used to lock arbitrary Unix commands from each
+other.  A good example is when you want to be sure that exactly one 
+instance of a program is running at all times.  In that case, you can
+create a cron job that attempts to restart the program once per minute.
+We use lockf to lock the instances against each other:
+
+In crontab:
+
+* * * * *    export PATH=<desired PATH>; lockf -s -t 0 <path of lockfile> <arbitrary Unix command>
+
+The lockfile must be in a filesystem that supports advisory locking (flock).
+Usually, /tmp is safe.
+
+For the TTE, we might want something like this:
+
+* * * * * /home/tomcat/TTE/lockf/lockf -s -t 0 /tmp/tte.lock java -classpath :../jars/Tidy.jar:../jars/activation.jar:../jars/ant-launcher.jar:../jars/ant.jar:../jars/antlr-2.7.6.jar:../jars/asm-attrs.jar:../jars/asm.jar:../jars/avalon-logkit-2.1.jar:../jars/bsh-2.0b1.jar:../jars/c3p0-0.9.1.jar:../jars/cglib-2.1.3.jar:../jars/commons-beanutils-1.7.0.jar:../jars/commons-collections-3.1.jar:../jars/commons-dbcp-1.2.2.jar:../jars/commons-lang-2.1.jar:../jars/commons-logging-1.0.4.jar:../jars/commons-pool-1.3.jar:../jars/concurrent-1.3.2.jar:../jars/connector.jar:../jars/dom4j-1.6.1.jar:../jars/ehcache-1.2.3.jar:../jars/ezmorph-1.0.4.jar:../jars/freemarker.jar:../jars/hibernate-tools.jar:../jars/hibernate3.jar:../jars/httpunit.jar:../jars/jaas.jar:../jars/javassist.jar:../jars/jboss-cache.jar:../jars/jboss-common.jar:../jars/jboss-jmx.jar:../jars/jboss-system.jar:../jars/jdbc2_0-stdext.jar:../jars/jdom-1.0.jar:../jars/jgroups-2.2.8.jar:../jars/json-lib-2.2-jdk15.jar:../jars/jstl.jar:../jars/jta.jar:../jars/jtidy-r8-20060801.jar:../jars/junit.jar:../jars/junitee-anttask.jar:../jars/junitee.jar:../jars/log4j-1.2.12.jar:../jars/mail.jar:../jars/mysql-connector-java-5.1.5-bin.jar:../jars/oro-2.0.8.jar:../jars/oscache-2.1.jar:../jars/proxool-0.8.3.jar:../jars/quartz-all-1.6.0.jar:../jars/sitemesh-2.3.jar:../jars/spring-mock.jar:../jars/spring.jar:../jars/standard.jar:../jars/swarmcache-1.0rc2.jar:../jars/tk-autopatch-1.0.2-src.jar:../jars/tk-autopatch-1.0.2.jar:../jars/tk-util-1.1.2.jar:../jars/velocity-1.5.jar:../jars/werken-xpath-0.9.4.jar:../jars/examples/*.jar:../jars/lib/core/*.jar:../jars/lib/build/*.jar:../jars/lib/optional/*.jar::../jars/mysql-connector-java-5.1.5-bin.jar:../jars/mysql-connector-java-5.1.5/mysql-connector-java-5.1.5-bin.jar:jailScheme:../jars/quartz-1.6.0/quartz-1.6.0.jar:../jars/commons-logging-1.1.jar:target/targetingengine-1.0-SNAPSHOT.jar:../jars/spring-2.0.5.jar com.levinc.tengine.CronTriggerExample  -h db2
+
+Please be careful and don't delete the lockfile without being sure that
+lockf isn't running.  As long as the lockfile is kept completely under
+the management of lockf, there is no problem, but there is a subtle race
+condition if it's not.
+
+$Id$

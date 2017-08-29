@@ -1,0 +1,14 @@
+import("libm3")
+import("cit_util")
+import("ktoklib")
+
+Module("Prec")
+Module("Sym")
+List("Sym", "Sym")
+Module("SymListParse")
+Module("Rule")
+List("Rule", "Rule")
+Table("TextPrec", "Text", "Prec")
+Module("YaccParse")
+
+library("kyacclib")

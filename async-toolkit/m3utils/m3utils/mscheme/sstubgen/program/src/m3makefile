@@ -1,0 +1,13 @@
+/* $Id$ */
+import ("libm3")
+import ("m3tk")
+import ("mscheme")
+import ("modula3scheme")
+import ("schemereadline")
+import ("m3readline")
+import ("cit_util")
+import ("sstubgen")
+
+implementation("Main")
+
+program ("sstubgen")

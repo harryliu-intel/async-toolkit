@@ -1,0 +1,16 @@
+$Id$ 
+
+This is the XML Parse library.  It's a simple Modula-3 wrapper over
+the C expat library.
+
+You'll need: 
+
+expat installed
+expat.h header file in /usr/local/include
+
+Because of "features" in the Modula-3 compiler system, the header
+file must be in /usr/local/include.  If it's not, you have to edit
+xmlParse.c .
+
+Only the most basic expat features are supported right now, and not
+well.  Feel free to improve the software.

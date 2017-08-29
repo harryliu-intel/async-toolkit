@@ -1,0 +1,6 @@
+/* $Id$ */
+import("cit_common")
+import("m3tk")
+implementation("Main")
+standalone("")
+program("m3tmplhack")

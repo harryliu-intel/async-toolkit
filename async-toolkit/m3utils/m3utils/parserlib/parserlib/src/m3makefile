@@ -1,0 +1,5 @@
+template("parser")
+import("libm3")
+Module("SeekRdClass")
+Module("SeekRd")
+library("parserlib")
