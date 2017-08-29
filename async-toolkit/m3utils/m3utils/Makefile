@@ -101,7 +101,7 @@ BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dc
 # RULES BELOW HERE
 #
 
-intel: std regress
+intel: std regress intel-install
 std: .top ships m3subs
 regress: std regsubs
 regressfix: fix regress
@@ -218,5 +218,12 @@ cleansubs:
 
 fix:
 	cd calarm/fix/gen/src; ./gen.sh
+
+intel-install:
+	rm -rf bin.script bin.`uname -m` bin
+	./copybins.sh .
+	mkdir bin || true
+	mv bin.script/* bin.`uname -m`/* bin
+	rmdir bin.script bin.`uname -m`
 
 # this is the end of the Makefile
