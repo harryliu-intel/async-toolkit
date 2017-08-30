@@ -41,6 +41,8 @@ TYPE
     parsingField : Wx.T := NIL;
     depth : CARDINAL := 0;
     processBuf : Processor;
+    gotErrors := FALSE;
+    errBuff := "";
   OVERRIDES
     start := Start;
     attr := Attr;
@@ -101,16 +103,23 @@ PROCEDURE End(self : Simple) =
                     UnNil(ft[Fields.Size]),
                     UnNil(ft[Fields.SecurityPG])));
 
-        CheckForNulls(ft, SET OF Fields { Fields.Name,
-                                          Fields.AddressOffset,
-                                          Fields.Size,
-                                          Fields.SecurityPG });
-
-        self.processBuf(ARRAY PgField.T OF TEXT { ft[Fields.Name],
-                                                  ft[Fields.AddressOffset],
-                                                  ft[Fields.Size],
-                                                  ft[Fields.SecurityPG] },
-                        LenPerByte);
+        WITH nullErr = CheckForNulls(ft, SET OF Fields { Fields.Name,
+                                                         Fields.AddressOffset,
+                                                         Fields.Size,
+                                                         Fields.SecurityPG })
+         DO
+          IF nullErr # NIL THEN
+            Debug.Error("register error : \n" & nullErr & "\n", exit := FALSE);
+            self.errBuff := self.errBuff & nullErr;
+            self.gotErrors := TRUE
+          ELSE
+            self.processBuf(ARRAY PgField.T OF TEXT { ft[Fields.Name],
+                                                      ft[Fields.AddressOffset],
+                                                      ft[Fields.Size],
+                                                      ft[Fields.SecurityPG] },
+                            LenPerByte)
+          END
+        END
         
       END;
       self.parsingReg := NIL;
@@ -119,22 +128,23 @@ PROCEDURE End(self : Simple) =
   END End;
 
 PROCEDURE CheckForNulls(READONLY ft : ARRAY Fields OF TEXT;
-                        reqd : SET OF Fields) =
+                        reqd : SET OF Fields) : TEXT =
   BEGIN
     FOR i := FIRST(ft) TO LAST(ft) DO
       IF i IN reqd AND ft[i] = NIL THEN
         VAR
-          errStr := "CheckForNulls : null required field in register: ";
+          errStr := "CheckForNulls : null required field in register: \n  ";
           r : TEXT;
         BEGIN
           FOR j := FIRST(ft) TO LAST(ft) DO
             IF j IN reqd THEN r := " [REQUIRED]" ELSE r := "" END;
-            errStr := errStr & "\n" & CRIFfields[j] & r & " : " & UnNil(ft[j])
+            errStr := errStr & "\n  " & CRIFfields[j] & r & " : " & UnNil(ft[j])
           END;
-          Debug.Error(errStr)
+          RETURN errStr
         END
       END
-    END
+    END;
+    RETURN NIL
   END CheckForNulls;
   
 PROCEDURE CharData(self : Simple; READONLY data : ARRAY OF CHAR) : Disp =
@@ -158,7 +168,15 @@ PROCEDURE Parse(path : Pathname.T; processBuf : Processor) =
       EVAL stream.interesting.insert(CRIFfields[i])
     END;
     
-    stream.parse()
+    stream.parse();
+
+    IF stream.gotErrors THEN
+      CONST
+        CautionText = "GOT REGISTER ERRORS -- REFUSING TO GENERATE OUTPUT!";
+      BEGIN
+        Debug.Error(CautionText);
+      END
+    END
   END Parse;
 
 TYPE
