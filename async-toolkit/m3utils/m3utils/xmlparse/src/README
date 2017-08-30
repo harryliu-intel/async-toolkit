@@ -1,4 +1,4 @@
-$Id$ 
+$Id: README,v 1.1 2007/04/21 20:17:18 mika Exp $ 
 
 This is the XML Parse library.  It's a simple Modula-3 wrapper over
 the C expat library.
