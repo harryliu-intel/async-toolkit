@@ -1,26 +1,30 @@
 (* this interface would be nice -- one day *)
 
 INTERFACE XMLParseStream;
+IMPORT Pathname;
 
 TYPE
-  El = OBJECT METHODS
-    charData(txt   : TEXT);
-    attr    (named : TEXT);
-    end     ()            : El; (* chance to rewrite obj *)
+  T <: Public;
+
+  Public = OBJECT METHODS
+    parse();
+
+    (* the following are abstracts, all must be overridden *)
+    start(el : TEXT) : Disp;
+    attr(tag, attr : TEXT) : Disp;
+    end();
+    charData(READONLY data : ARRAY OF CHAR) : Disp;
   END;
-  
-  T = OBJECT METHODS
-    start   (parent : El; nm : TEXT) : El;
-  END;
+
+  Disp = { Continue,  (* keep parsing *)
+           Abort,     (* dont parse me *)
+           Pop        (* stop parsing my parent *)
+  };
 
   FileStream <: T OBJECT METHODS
     init(pn : Pathname.T) : FileStream;
   END;
-
-  TextStream <: T OBJECT METHODS
-    init(str : TEXT) : TextStream;
-  END;
-
+  
 CONST Brand = "XMLParseStream";
 
 END XMLParseStream.

@@ -1,10 +1,10 @@
 (* $Id: XMLParse.m3,v 1.6 2013/03/30 07:15:28 mika Exp $ *)
 
-UNSAFE MODULE XMLParse;
+UNSAFE MODULE XMLParse EXPORTS XMLParse, XMLParseImpl;
 
 (* this module is unsafe only because it uses M3toC *)
 
-IMPORT xmlParser;
+IMPORT xmlParser, xmlParserUnsafe;
 IMPORT Ctypes, M3toC, Debug, RefSeq, TextWr, Wr;
 IMPORT Text;
 IMPORT Pathname;
@@ -13,12 +13,19 @@ IMPORT Thread;
 IMPORT RTCollector; (* Enable/Disable to avoid stepping on malloc *)
 IMPORT SchedulerIndirection;  (* enable/disable to avoid malloc on malloc *)
 IMPORT TextList;
+IMPORT Fmt;
+IMPORT xmlParserContext;
+FROM xmlParserTypes IMPORT StartProc, AttrProc, EndProc, CharDataProc;
+
+TYPE Context = xmlParserContext.T;
 
 CONST TE = Text.Equal;
 
-PROCEDURE Start(stuff : REFANY; el : Ctypes.const_char_star) = 
+VAR DoDebug := Debug.GetLevel() > 10;
+    
+PROCEDURE Start(<*UNUSED*>c : Context; stuff : REFANY; el : Ctypes.const_char_star) = 
   BEGIN
-    IF Debug.GetLevel() > 10 THEN
+    IF DoDebug THEN
       Debug.Out("Start: " & M3toC.CopyStoT(el),11)
     END;
 
@@ -47,7 +54,9 @@ PROCEDURE Start(stuff : REFANY; el : Ctypes.const_char_star) =
 
   END Start;
 
-PROCEDURE AttrP(stuff : REFANY; tag, attr : Ctypes.const_char_star) =
+PROCEDURE AttrP(<*UNUSED*>c : Context;
+                stuff : REFANY;
+                tag, attr : Ctypes.const_char_star) =
   BEGIN
     WITH u = NARROW(stuff, REF U)^ DO
       IF u.ignore > 0 THEN RETURN END;
@@ -55,13 +64,15 @@ PROCEDURE AttrP(stuff : REFANY; tag, attr : Ctypes.const_char_star) =
                     tag := M3toC.CopyStoT(tag), 
                     attr := M3toC.CopyStoT(attr)))
     END;
-    Debug.Out("Attr: " & M3toC.CopyStoT(tag) & " = " & M3toC.CopyStoT(attr),11)
+    IF DoDebug THEN
+      Debug.Out("Attr: " & M3toC.CopyStoT(tag) & " = " & M3toC.CopyStoT(attr),11)
+    END
   END AttrP;
 
-PROCEDURE End(stuff : REFANY) =
+PROCEDURE End(<*UNUSED*>c : Context; stuff : REFANY) =
   BEGIN 
     (* fill in T fields *)
-    IF Debug.GetLevel() > 10 THEN
+    IF DoDebug THEN
       Debug.Out("End.",11)
     END;
 
@@ -89,7 +100,10 @@ PROCEDURE End(stuff : REFANY) =
 
   END End;
 
-PROCEDURE CharData(stuff : REFANY; len : CARDINAL; data : Ctypes.const_char_star) =
+PROCEDURE CharData(<*UNUSED*>c : Context;
+                   stuff : REFANY;
+                   len : CARDINAL;
+                   data : Ctypes.const_char_star) =
   <* FATAL Thread.Alerted, Wr.Failure *>
   VAR
     cp : REF CHAR;
@@ -110,7 +124,8 @@ PROCEDURE CharData(stuff : REFANY; len : CARDINAL; data : Ctypes.const_char_star
 VAR
   avoidTags : TextList.T;
 
-PROCEDURE DoIt(p : Pathname.T; avoidTagsArg : TextList.T) : T =
+<*UNUSED*>
+PROCEDURE DoItMonolithic(p : Pathname.T; avoidTagsArg : TextList.T) : T =
   VAR
     ru := NEW(REF U);
   BEGIN
@@ -130,7 +145,79 @@ PROCEDURE DoIt(p : Pathname.T; avoidTagsArg : TextList.T) : T =
     END;
 
     RETURN ru^
+  END DoItMonolithic;
+
+PROCEDURE ToC() =
+  BEGIN
+    RTCollector.Disable(); (* xmlParser uses malloc *)
+    SchedulerIndirection.DisableSwitching();
+  END ToC;
+
+PROCEDURE FromC() =
+  BEGIN
+    SchedulerIndirection.EnableSwitching();
+    RTCollector.Enable();
+  END FromC;
+  
+PROCEDURE DoIt(p : Pathname.T; avoidTagsArg : TextList.T) : T =
+  VAR
+    ru := NEW(REF U);
+  BEGIN
+    ru^ := NIL;
+    avoidTags := avoidTagsArg;
+
+    DoItImpl(p, ru, Start, AttrP, End, CharData, NIL);
+
+    RETURN ru^
   END DoIt;
+
+PROCEDURE DoItImpl(p            : Pathname.T;
+                   stuff        : REFANY;
+                   start        : StartProc;
+                   attr         : AttrProc;
+                   end          : EndProc;
+                   charData     : CharDataProc;
+                   post         : PostProc) =
+  VAR
+    cnt := 0;
+    context : ADDRESS;
+    res : INTEGER;
+    contextIsNull : BOOLEAN;
+  BEGIN
+    WITH s = M3toC.CopyTtoS(p) DO
+      TRY
+        ToC();
+        context := xmlParser.xmlParserInit(s, stuff, start, attr, end, charData);
+        contextIsNull := xmlParser.xmlParseContextIsNull(context) # 0;
+        FromC();
+
+        IF contextIsNull THEN
+          Debug.Error("XML Parser init error")
+        END;
+        
+        REPEAT
+          WITH susp = (xmlParser.xmlParserIsSuspended(context) = 1) DO
+            IF DoDebug THEN Debug.Out("suspended = " & Fmt.Bool(susp)) END;
+            IF susp THEN
+              ToC(); res := xmlParser.xmlParseResumeParser(context); FromC();
+              IF DoDebug THEN Debug.Out("resumeParser " & Fmt.Int(res)) END
+            ELSE
+              ToC(); res := xmlParser.xmlParseChunk(context); FromC();
+              IF DoDebug THEN Debug.Out("parseChunk " & Fmt.Int(res)) END
+            END
+          END;
+          INC(cnt);
+          IF res < 0 THEN
+            Debug.Error("XML Parser error")
+          END;
+          IF post # NIL THEN post(context, stuff) END;
+        UNTIL res = 0;
+      FINALLY
+        ToC(); xmlParserUnsafe.xmlParseDestroy(context); FromC();
+        M3toC.FreeCopiedS(s)
+      END
+    END
+  END DoItImpl;
 
 PROCEDURE DoText(t : TEXT) : T =
   VAR

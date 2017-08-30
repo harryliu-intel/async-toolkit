@@ -3,9 +3,15 @@ import ("libm3")
 import ("cit_util")
 
 c_source("xmlParser")
-interface("xmlParser")
+Interface("xmlParser")
+implementation("xmlParser")
+Interface("xmlParserUnsafe")
+Interface("xmlParserTypes")
+Interface("xmlParserContext") /* should be in ..Types? */
 
 Module("XMLParse")
+Module("XMLParseStream")
+Interface("XMLParseImpl")
 
 library("xmlparse")
 
