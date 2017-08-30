@@ -83,17 +83,53 @@ VAR
 PROCEDURE NewRL() : SortedRangeTbl.T =
   BEGIN RETURN NEW(SortedRangeTbl.Default).init() END NewRL;
 
-PROCEDURE InsertOrdered(p : SortedRangeTbl.T; READONLY r : Range.T) =
+PROCEDURE InsertOrdered(p : SortedRangeTbl.T; READONLY r : Range.T) : BOOLEAN =
+  VAR
+    ok := TRUE;
   BEGIN
     (* we should check for clean and dirty overlap cases here and behave
-       accordingly *)
-    EVAL p.put(r, r.group)
+       accordingly
+
+       note that range comparison is on range.lo *)
+
+    VAR
+      iterU := p.iterateOrdered(up := TRUE);
+      iterD := p.iterateOrdered(up := FALSE);
+      nxt, prv : Range.T;
+      nxtG, prvG : REFANY;
+    BEGIN
+      iterU.seek(r); 
+      IF iterU.next(nxt, nxtG) THEN
+        <*ASSERT nxt.lo >= r.lo*>
+        IF r.lo + r.len > nxt.lo THEN
+          (* found an overlap *)
+          Debug.Warning(F("Register overlap %s %s <-> %s %s", r.userData, Range.Format(r), nxt.userData, Range.Format(nxt)));
+          ok := FALSE
+        END
+      END;
+      iterD.seek(r);
+      IF iterD.next(prv, prvG) THEN
+        <*ASSERT prv.lo <= r.lo*>
+        IF prv.lo + prv.len > r.lo THEN
+          (* found an overlap *)
+          Debug.Warning(F("Register overlap %s %s <-> %s %s", prv.userData, Range.Format(prv), r.userData, Range.Format(r)));
+          ok := FALSE
+        END
+      END;
+    END;
+    
+    EVAL p.put(r, r.group);
+
+    RETURN ok
   END InsertOrdered;
   
 VAR totLen := 0;
 
     widest := ARRAY Field OF CARDINAL { 0 , .. };
-    
+
+VAR
+  procBufOK := TRUE;
+  
 PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT; lenPerByte : CARDINAL) =
 
   (* lenPerByte 8 if size in bits, 1 if size in bytes *)
@@ -139,9 +175,9 @@ PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT; lenPerByte : CARDINAL) =
         EVAL pgs.put(grp, rl)
       END;
       WITH range = NEW(Range.T) DO
-        range^ := Range.B { base, len, grp };
-        InsertOrdered(rl, range);
-        InsertOrdered(allRanges, range);
+        range^ := Range.B { base, len, grp, b[Field.Name] };
+        IF NOT InsertOrdered(rl, range) THEN procBufOK := FALSE END;
+        IF NOT InsertOrdered(allRanges, range) THEN procBufOK := FALSE END;
         EVAL reverse.put(range, b[Field.Name]);
       END
     END
@@ -337,9 +373,9 @@ PROCEDURE CheckForOverlaps(checkMerges : BOOLEAN) : BOOLEAN =
             IF reverse.get(r, rn) THEN pr := TRUE END;
 
             IF pr THEN
-              w := F("\nOVERLAP REGISTER(S) INVOLVED: %s <-> %s", qn, rn)
+              w := F("\nOVERLAP REGISTER(S) POSSIBLY INVOLVED: %s <-> %s", qn, rn)
             END;
-            Debug.Warning(F("FOUND OVERLAP : %s <-> %s%s", Range.Format(q), Range.Format(r),w));
+            Debug.Warning(F("FOUND PG RANGE OVERLAP DURING MERGE: %s <-> %s%s", Range.Format(q), Range.Format(r),w));
             
           END;
           success := FALSE
@@ -1563,5 +1599,9 @@ BEGIN
     <*ASSERT FALSE*>
   END;
 
+  IF NOT procBufOK THEN
+    Debug.Error("register overlaps detected---cant continue")
+  END;
+  
   GenerateOutput()
 END Main.

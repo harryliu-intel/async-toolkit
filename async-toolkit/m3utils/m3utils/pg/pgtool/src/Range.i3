@@ -3,7 +3,7 @@ IMPORT SBAddress AS Address;
 IMPORT Word;
 
 TYPE
-  B = RECORD lo, len : Address.T; group : TEXT END;
+  B = RECORD lo, len : Address.T; group : TEXT; userData : REFANY END;
   T = REF B;
 
 CONST Brand = "Range";

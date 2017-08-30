@@ -24,11 +24,11 @@ PROCEDURE CanMerge(READONLY a, b : T; VAR c : T) : BOOLEAN =
   BEGIN
     IF    a.lo + a.len = b.lo AND Text.Equal(a.group, b.group) THEN
       c := NEW(T);
-      c^ := B { a.lo, a.len + b.len, a.group };
+      c^ := B { a.lo, a.len + b.len, a.group, NIL };
       RETURN TRUE
     ELSIF b.lo + b.len = a.lo AND Text.Equal(a.group, b.group) THEN
       c := NEW(T);
-      c^ := B { b.lo, a.len + b.len, a.group };
+      c^ := B { b.lo, a.len + b.len, a.group, NIL };
       RETURN TRUE
     ELSE
       RETURN FALSE
