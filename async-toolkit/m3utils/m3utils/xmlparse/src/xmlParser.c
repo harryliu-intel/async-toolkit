@@ -147,8 +147,12 @@ xmlParserString(const char *string,
 }
 
 int
-xmlParserMain(const char *path,
-	      void *stuff, startCall s, attrCall a, endCall e, charDataCall c)
+xmlParserMain(const char  *path,
+	      void        *stuff,
+              startCall    s,
+              attrCall     a,
+              endCall      e,
+              charDataCall c)
 {
   FILE *ifp;
 

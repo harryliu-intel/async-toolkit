@@ -24,6 +24,9 @@ table ("TextCard", "Text", "Cardinal")
 resource ("hlp_pg_template.sv")
 bundle ("PgToolSVTemplates")
 
+module ("PgCRIF")
+interface ("PgField")
+
 implementation ("Main")
 
 program ("genpg")

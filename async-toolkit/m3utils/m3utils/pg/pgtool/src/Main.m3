@@ -3,9 +3,8 @@ MODULE Main;
 (* genpg 
    Policy-Group recognizer RTL generator.
    Author : Mika Nystrom <mika.nystroem@intel.com>
+*)
 
-   Usage: genpg [-allminterms] [-sv <sv-output-name>] [-bits <address-bits>] [-skipHoles] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)
- *)
 IMPORT XMLParse;
 IMPORT CSVParse;
 IMPORT Rd, FileRd;
@@ -34,16 +33,30 @@ IMPORT TextTextTbl, TextSeq;
 IMPORT Wx;
 IMPORT TextRd, PgToolSVTemplates, Bundle;
 IMPORT CharSeq;
+IMPORT Process;
+IMPORT Params;
+IMPORT PgField;
+IMPORT PgCRIF;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
-      
+
+      Usage =
+        "[-h|--help] [-allminterms] [-sv <sv-output-name>] [-T|--template <sv-template-name>] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
+
+
+PROCEDURE DoUsage() : TEXT =
+  BEGIN
+    RETURN
+      Params.Get(0) & ": usage: " & Usage
+  END DoUsage;
+  
 VAR
   rd : Rd.T;
 
 TYPE
-  Field = { Name, Base, Length, Group };
+  Field = PgField.T;
 
 PROCEDURE MapPGnameToNumber(str : TEXT) : CARDINAL =
   BEGIN
@@ -61,10 +74,6 @@ PROCEDURE MapPGnameToNumber(str : TEXT) : CARDINAL =
   
 PROCEDURE Int16(x : INTEGER) : TEXT =
   BEGIN RETURN Fmt.Int(x, base := 16) END Int16;
-
-CONST
-  FieldNames = ARRAY Field OF TEXT { "name", "base", "length", "policy_group" };
-  (* should assert these are present on line 1 *)
 
 VAR
   pgs := NEW(TextRangeTblTbl.Default).init();
@@ -94,14 +103,14 @@ PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT; lenPerByte : CARDINAL) =
   BEGIN
     IF Debug.GetLevel() >= 100 THEN
       FOR f := FIRST(Field) TO LAST(Field) DO
-        Debug.Out(F("ProcessBuf : %s : %s", FieldNames[f], b[f]))
+        Debug.Out(F("ProcessBuf : %s : %s", PgField.Names[f], b[f]))
       END
     END;
 
     FOR f := FIRST(Field) TO LAST(Field) DO
       WITH l = Text.Length(b[f]) DO
         IF l > widest[f] THEN
-          Debug.Out(F("widest %s <- %s", FieldNames[f], b[f]));
+          Debug.Out(F("widest %s <- %s", PgField.Names[f], b[f]));
           widest[f] := l
         END
       END
@@ -795,11 +804,11 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
       END
     END CopyInFromReader;
 
- 
   VAR 
     cur : Wr.T;
 
-  PROCEDURE OldDoEmitAll() RAISES { Wr.Failure, OSError.E, Rd.Failure } =
+<*UNUSED*>
+PROCEDURE OldDoEmitAll() RAISES { Wr.Failure, OSError.E, Rd.Failure } =
   VAR
     tgt : Streams;
   BEGIN
@@ -1378,7 +1387,7 @@ PROCEDURE DeWhiteSpace(txt : TEXT) : TEXT =
     RETURN ""
   END DeWhiteSpace;
 
-PROCEDURE DoCRIF(fn : Pathname.T) =
+PROCEDURE OldDoCRIF(fn : Pathname.T) =
   VAR
     parser : XMLParse.T;
   BEGIN
@@ -1386,7 +1395,7 @@ PROCEDURE DoCRIF(fn : Pathname.T) =
 
     (*IF Debug.GetLevel() >= 10 THEN DebugDumpParser(parser) END*)
     TraverseXML(NEW(CRIFVisitor), parser)
-  END DoCRIF;
+  END OldDoCRIF;
 
 TYPE
   XMLVisitor = OBJECT METHODS
@@ -1425,7 +1434,7 @@ PROCEDURE CRIFVisit(<*UNUSED*>visitor : CRIFVisitor;
   END CRIFVisit;
 
 TYPE CRIFVisitor = XMLVisitor OBJECT OVERRIDES visit := CRIFVisit END;
-  
+
 VAR
   PgDefaultName := "PG_DEFAULT";
   PolicyGroupArr : REF ARRAY OF TEXT;
@@ -1436,7 +1445,7 @@ VAR
   allTerms : BOOLEAN;
 
 VAR
-  skipHoles : BOOLEAN;
+  skipHoles := TRUE;
   attemptElimOverlaps : BOOLEAN;
   svOutput : Pathname.T := NIL;
   ifn : Pathname.T;
@@ -1462,9 +1471,18 @@ BEGIN
       allTerms := pp.keywordPresent("-allminterms");
       IF pp.keywordPresent("-sv") THEN svOutput := pp.getNext() END;
       IF pp.keywordPresent("-bits") THEN bits := pp.getNextInt() END;
-      skipHoles := pp.keywordPresent("-skipholes");
+      IF pp.keywordPresent("-skipholes") THEN
+        (* skip *)
+      ELSIF pp.keywordPresent("-noskipholes") THEN
+        skipHoles := FALSE
+      END;
       attemptElimOverlaps := pp.keywordPresent("-elimoverlaps");
 
+      IF pp.keywordPresent("-h") OR pp.keywordPresent("--help") THEN
+        Wr.PutText(Stdio.stderr, DoUsage() & "\n");
+        Process.Exit(0)
+      END;
+      
       IF pp.keywordPresent("-defpgnm") THEN
         PgDefaultName := pp.getNext()
       END;
@@ -1483,7 +1501,7 @@ BEGIN
         baseStrapBits := pp.getNext() 
       END;
 
-      IF pp.keywordPresent("-template") THEN
+      IF pp.keywordPresent("--template") OR pp.keywordPresent("-T") THEN
         WITH tfn = pp.getNext() DO
           TRY
             templateRd := FileRd.Open(tfn)
@@ -1516,7 +1534,7 @@ BEGIN
     END;
     IF bits = -1 THEN Debug.Error("Must specify -bits") END
   EXCEPT
-    ParseParams.Error => Debug.Error("Command-line params wrong.")
+    ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
   END;
 
   (* if no template specf'd, use default *)
@@ -1527,7 +1545,7 @@ BEGIN
   CASE mode OF
     InputMode.CSV => DoCSV(ifn)
   |
-    InputMode.CRIF => DoCRIF(ifn)
+    InputMode.CRIF => PgCRIF.Parse(ifn, ProcessBuf)
   ELSE
     <*ASSERT FALSE*>
   END;
