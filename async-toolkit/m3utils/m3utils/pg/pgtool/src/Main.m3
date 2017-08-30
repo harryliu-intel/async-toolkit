@@ -43,7 +43,7 @@ IMPORT PgCRIF;
 CONST TE = Text.Equal;
 
       Usage =
-        "[-h|--help] [-allminterms] [-sv <sv-output-name>] [-T|--template <sv-template-name>] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
+        "[-h|--help] [-allminterms] [-sv <sv-output-name>] [-T|--template <sv-template-name>] [--emit-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
 
 
 PROCEDURE DoUsage() : TEXT =
@@ -1509,6 +1509,19 @@ BEGIN
             OSError.E(x) => Debug.Error(F("Couldnt open template file \"%s\", OSError.E : %s", tfn, AL.Format(x)))
           END
         END
+      END;
+
+      IF pp.keywordPresent("--emit-template") THEN
+        VAR
+          buff : ARRAY [0..8191] OF CHAR;
+          c : CARDINAL;
+        BEGIN
+          REPEAT
+            c := Rd.GetSub(templateRd, buff);
+            Wr.PutString(Stdio.stdout, SUBARRAY(buff, 0, c))
+          UNTIL c = 0
+        END;
+        Process.Exit(0)
       END;
 
       IF pp.keywordPresent("-copyrightpath") THEN
