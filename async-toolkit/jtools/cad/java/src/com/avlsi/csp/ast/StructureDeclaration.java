@@ -73,12 +73,10 @@ public class StructureDeclaration extends AbstractASTNode {
      *
      * @return map from <code>String</code> to <code>Type</code>
      **/
-    public Map getMap() {
-        final Map result = new HashMap();
-        for (Iterator i = declarations.getDeclarations(); i.hasNext(); ) {
-            final Declaration decl = (Declaration) i.next();
-            result.putAll(decl.getMap());
-        }
+    public Map<String,Type> getMap() {
+        final Map<String,Type> result = new HashMap<>();
+        declarations.getDeclarations().forEachRemaining(
+            decl -> result.putAll(decl.getMap()));
         return result;
     }
 }

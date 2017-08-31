@@ -24,17 +24,17 @@ import java.util.List;
  * @version $Revision$ $Date$
  **/
 public class DeclarationList extends AbstractASTNode {
-    private final List declarations;
+    private final List<Declaration> declarations;
 
     public DeclarationList() {
-        declarations = new ArrayList();
+        declarations = new ArrayList<>();
     }
 
     public void addDeclaration(final Declaration d) {
         declarations.add (d);
     }
 
-    public Iterator getDeclarations() {
+    public Iterator<Declaration> getDeclarations() {
         return declarations.iterator();
     }
 }
