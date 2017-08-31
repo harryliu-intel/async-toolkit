@@ -43,7 +43,7 @@ IMPORT PgCRIF;
 CONST TE = Text.Equal;
 
       Usage =
-        "[-h|--help] [-allminterms] [-sv <sv-output-name>] [-T|--template <sv-template-name>] [--emit-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
+        "[-h|--help] [-allminterms] [-sv <sv-output-name>] [-T|--template <sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
 
 
 PROCEDURE DoUsage() : TEXT =
@@ -1551,7 +1551,7 @@ BEGIN
         END
       END;
 
-      IF pp.keywordPresent("--emit-template") THEN
+      IF pp.keywordPresent("--display-template") THEN
         VAR
           buff : ARRAY [0..8191] OF CHAR;
           c : CARDINAL;
