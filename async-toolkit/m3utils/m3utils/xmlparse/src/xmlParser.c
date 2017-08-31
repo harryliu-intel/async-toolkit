@@ -19,6 +19,8 @@
  * Read an XML document from standard input and print an element
  * outline on standard output.
  * Must be used with Expat compiled for UTF-8 output.
+ * extensively modified and extended by 
+ *    Mika Nystrom <mika@alum.mit.edu><mika.nystroem@intel.com>
  */
 
 
@@ -224,6 +226,9 @@ struct parse_context {
   FILE        *ifp;
 };
 
+/**********************************************************************/
+/* functions below are for use with "detached" parsing */
+
 void *
 xmlParserInit(const char  *patha,
 	      void        *stuff,
@@ -320,7 +325,9 @@ xmlParseResumeParser(void *ca)
   return XML_ResumeParser(context->p);
 }
 
-/* constants */
+/**********************************************************************/
+/* export constants -- to Modula-3 */
+
 long int
 xmlStatusError(void)
 {
@@ -339,6 +346,8 @@ xmlStatusSuspended(void)
   return XML_STATUS_SUSPENDED;
 }
 
+/**********************************************************************/
+
 long int
 xmlParserIsSuspended(void *ca)
 {
@@ -349,6 +358,23 @@ xmlParserIsSuspended(void *ca)
   return status.parsing == XML_SUSPENDED;
 }
 
+/**********************************************************************/
+
+/* below here:
+   a simple memory allocation scheme to copy a small batch of data 
+
+   We need this because even when we stop the XML_Parse parser, we are
+   not guaranteed that we can use its references after the callback
+   returns, even though the parser is stopped!  So we make a copy of
+   the references, and we free that copy when we are done handling
+   them (not long after).
+
+   If expat just guaranteed that the references were OK to use until
+   the parser is restarted we wouldnt need any of this stuff.  But I
+   dont think it does.  The documentation doesnt seem to say but I
+   believe we had problems when we tried.
+
+*/
 
 static char     *copyBuff = NULL;
 static long int  copyBuff_size;
@@ -368,6 +394,7 @@ copyBuff_check_create(void)
 
 const char *
 xmlLenCopy(const char *s, long int len)
+/* copy an array of characters */
 {
   char *tgt;
   copyBuff_check_create();
@@ -386,6 +413,7 @@ xmlLenCopy(const char *s, long int len)
 
 const char *
 xmlNullCopy(const char *s)
+/* copy a null-terminated string */
 {
   int len = strlen(s) + 1; /* mem req't includes term null */
   const char *res = xmlLenCopy(s, len);
@@ -397,6 +425,7 @@ xmlNullCopy(const char *s)
 
 void
 xmlCopyFree(void)
+/* free everything copied since the last call to xmlCopyFree */
 {
   copyBuff_p = 0;
 }

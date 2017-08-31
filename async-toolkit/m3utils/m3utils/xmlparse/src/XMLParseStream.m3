@@ -1,4 +1,7 @@
 UNSAFE MODULE XMLParseStream;
+
+(* this module adapts the C callbacks from expat to Modula-3 OOP callbacks *)
+
 FROM Ctypes IMPORT const_char_star;
 IMPORT XMLParseImpl;
 IMPORT Debug, Fmt; FROM Fmt IMPORT F, Int;
@@ -35,7 +38,27 @@ REVEAL
 
 VAR DoDebug := Debug.GetLevel() > 10;
 
+(* the read loop in XMLParse does the following:
+
+   parse some stuff, wait for expat's XML_Parse to return, call Post (below).
+
+   what we do is that if we hit atag we're interested in, we stop the
+   parser and return.  This means that the expat parser ALMOST
+   immediately returns in a stopped state, causing our parse loop to
+   call Post below.
+
+   We can't do all the work in the callbacks because during XML_Parse,
+   thread switching and garbage collection are turned off!  Well we
+   could, but we'd run out of memory pretty quickly, and we don't want
+   that to happen, do we?
+
+   So instead we create a record of the callback from expat, using a 
+   Result object, and force XML_Parse to return.  We then handle the 
+   Result record in the Post method, when Modula-3 is operating normally.
+*)
+    
 PROCEDURE SetResult(c : xmlParserContext.T; state : State; to : Result) =
+  (* stop XML parser and set result *)
   BEGIN
     IF NOT state.stopped THEN
       WITH stopRes = xmlParser.xmlParseStopParser(c, 1) DO
@@ -49,7 +72,7 @@ PROCEDURE SetResult(c : xmlParserContext.T; state : State; to : Result) =
     state.result := to
   END SetResult;
 
-(* called from C *)
+(* called from C, thread switching and GC turned off *)
 PROCEDURE DoStart(c : xmlParserContext.T; s : REFANY; el : const_char_star) =
   VAR
     state := NARROW(s, State);
@@ -63,7 +86,7 @@ PROCEDURE DoStart(c : xmlParserContext.T; s : REFANY; el : const_char_star) =
     SetResult(c, state, NEW(Start, el := xmlNullCopy(el)))
   END DoStart;
 
-(* called from C *)
+(* called from C, thread switching and GC turned off *)
 PROCEDURE DoAttr(c : xmlParserContext.T; s : REFANY; tag, attr : const_char_star) =
   VAR
     state := NARROW(s, State);
@@ -73,6 +96,7 @@ PROCEDURE DoAttr(c : xmlParserContext.T; s : REFANY; tag, attr : const_char_star
     SetResult(c, state, NEW(Attr, tag := xmlNullCopy(tag), attr := xmlNullCopy(attr)))
   END DoAttr;
 
+(* called from C, thread switching and GC turned off *)
 PROCEDURE DoEnd(c : xmlParserContext.T; s : REFANY) =
   VAR
     state := NARROW(s, State);
@@ -89,7 +113,7 @@ PROCEDURE DoEnd(c : xmlParserContext.T; s : REFANY) =
     SetResult(c, state, NEW(End));
   END DoEnd;
 
-(* called from C *)
+(* called from C, thread switching and GC turned off *)
 PROCEDURE DoCharData(c : xmlParserContext.T;
                      s : REFANY;
                      len : CARDINAL;
@@ -103,6 +127,9 @@ PROCEDURE DoCharData(c : xmlParserContext.T;
   END DoCharData;
 
 PROCEDURE DoPost(<*UNUSED*>c : xmlParserContext.T; s : REFANY) =
+  (* this routine is called at the end of the read/parse loop that interacts
+     with C, and it is called in a pure Modula-3 environment, with
+     thread switching and garbage collection turned on *)
   VAR
     state := NARROW(s, State);
   BEGIN
@@ -198,6 +225,7 @@ PROCEDURE DoPost(<*UNUSED*>c : xmlParserContext.T; s : REFANY) =
   END DoPost;
 
 PROCEDURE Buff2Text(len : CARDINAL; data : const_char_star) : TEXT =
+  (* this routine is actually only used for debugging *)
   VAR
     charCopy := NEW(REF ARRAY OF CHAR, len);
     x := LOOPHOLE(data,ADDRESS);
@@ -214,6 +242,7 @@ PROCEDURE Buff2Text(len : CARDINAL; data : const_char_star) : TEXT =
   END Buff2Text;
   
 TYPE
+  (* the state of our parsing *)
   State = OBJECT
     depth := 0;
     ignoreUntil := LAST(CARDINAL);
