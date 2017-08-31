@@ -1,4 +1,12 @@
 MODULE PgCRIF;
+
+(* parse Security Policy Group information from a CRIF XML file.
+
+   Author: Mika Nystrom <mika.nystroem@intel.com>
+
+   August 2017
+*)
+
 IMPORT Debug, XMLParseStream, Pathname; FROM Debug IMPORT UnNil;
 FROM Fmt IMPORT F, Int;
 IMPORT Text;
@@ -22,6 +30,7 @@ CONST
   (* the CRIF path to get to a register element *)
 
   RegTagName = CRIFhierarchy[LAST(CRIFhierarchy)];
+  (* the tag that corresponds to a register spec *)
 
   CRIFfields = ARRAY Fields OF TEXT {
     "name",
@@ -32,27 +41,49 @@ CONST
     "Security_Read_CP_Secured",
     "Security_WriteAccess_Str"
   };
-  (* CRIF fields we care about *)
+  (* CRIF fields we care about (we currently dont process all of them *)
   
 TYPE
+  (* the actual XML parsing is done in XMLParseStream.FileStream
+
+     here we override the callback methods of that object and implement
+     the business logic 
+  *)
   Simple = XMLParseStream.FileStream OBJECT
     interesting : TextSet.T := NIL;
+    (* interesting is the tags we are at all interested in *)
+    
     parsingReg : Register := NIL;
+    (* register that we are currently parsing *)
+    
     parsingField : Wx.T := NIL;
+    (* field that we are currently parsing (=stuffing with chardata *)
+    
     depth : CARDINAL := 0;
+    (* depth of XML a.t.m. *)
+    
     processBuf : Processor;
+    (* callback to the main program, called when we have a complete
+       register spec *)
+    
     gotErrors := FALSE;
+    (* remember that we got errors.. *)
+    
     errBuff := "";
+    (* ..and remember the output *)
+    
   OVERRIDES
-    start := Start;
-    attr := Attr;
-    end := End;
+    (* these are all the callbacks to XMLParseStream.FileStream *)
+    start    := Start;
+    attr     := Attr;
+    end      := End;
     charData := CharData;
   END;
 
   Disp = XMLParseStream.Disp;
 
 PROCEDURE Start(self : Simple; el : TEXT) : Disp =
+  (* callback on XML el start *)
   BEGIN
     INC(self.depth);
     Debug.Out(F("start %s dep %s", el, Int(self.depth)));
@@ -62,6 +93,8 @@ PROCEDURE Start(self : Simple; el : TEXT) : Disp =
     END;
 
     IF TE(el, RegTagName) THEN
+      (* starting a new register *)
+      <*ASSERT self.parsingReg = NIL*>
       Debug.Out("New register, depth " & Int(self.depth));
       self.parsingReg := NEW(Register, depth := self.depth)
     ELSIF self.parsingReg # NIL THEN
@@ -77,12 +110,14 @@ PROCEDURE Start(self : Simple; el : TEXT) : Disp =
   END Start;
   
 PROCEDURE Attr(<*UNUSED*>self : Simple; tag, attr : TEXT) : Disp =
+  (* callback on XML attr *)
   BEGIN
     Debug.Out(F("attr %s %s", tag, attr));
     RETURN Disp.Continue
   END Attr;
   
 PROCEDURE End(self : Simple) =
+  (* callback on XML el end *)
   BEGIN
     DEC(self.depth);
     Debug.Out(F("end, dep <- %s", Int(self.depth)));
@@ -148,6 +183,10 @@ PROCEDURE CheckForNulls(READONLY ft : ARRAY Fields OF TEXT;
   END CheckForNulls;
   
 PROCEDURE CharData(self : Simple; READONLY data : ARRAY OF CHAR) : Disp =
+  (* callback on XML char data.
+     Note that a single char data field can be returned in several goes.
+
+     So we build up the chardata using a Wx.T before passing it on *)
   BEGIN
     Debug.Out(F("chardata %s", Text.FromChars(data)));
     IF self.parsingField # NIL THEN

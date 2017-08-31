@@ -86,40 +86,37 @@ PROCEDURE NewRL() : SortedRangeTbl.T =
 PROCEDURE InsertOrdered(p : SortedRangeTbl.T; READONLY r : Range.T) : BOOLEAN =
   VAR
     ok := TRUE;
-  BEGIN
-    (* we should check for clean and dirty overlap cases here and behave
-       accordingly
-
-       note that range comparison is on range.lo *)
-
-    VAR
       iterU := p.iterateOrdered(up := TRUE);
       iterD := p.iterateOrdered(up := FALSE);
       nxt, prv : Range.T;
       nxtG, prvG : REFANY;
-    BEGIN
-      iterU.seek(r); 
-      IF iterU.next(nxt, nxtG) THEN
-        <*ASSERT nxt.lo >= r.lo*>
-        IF r.lo + r.len > nxt.lo THEN
-          (* found an overlap *)
-          Debug.Warning(F("Register overlap %s %s <-> %s %s", r.userData, Range.Format(r), nxt.userData, Range.Format(nxt)));
-          ok := FALSE
-        END
-      END;
-      iterD.seek(r);
-      IF iterD.next(prv, prvG) THEN
-        <*ASSERT prv.lo <= r.lo*>
-        IF prv.lo + prv.len > r.lo THEN
-          (* found an overlap *)
-          Debug.Warning(F("Register overlap %s %s <-> %s %s", prv.userData, Range.Format(prv), r.userData, Range.Format(r)));
-          ok := FALSE
-        END
-      END;
+  BEGIN
+    (* check for clean and dirty overlap cases here and behave
+       accordingly
+       
+       note that range comparison is on range.lo *)
+    
+    iterU.seek(r); 
+    IF iterU.next(nxt, nxtG) THEN
+      <*ASSERT nxt.lo >= r.lo*>
+      IF r.lo + r.len > nxt.lo THEN
+        (* found an overlap *)
+        Debug.Error(F("Register overlap %s %s <-> %s %s", r.userData, Range.Format(r), nxt.userData, Range.Format(nxt)), exit := FALSE);
+        ok := FALSE
+      END
+    END;
+    iterD.seek(r);
+    IF iterD.next(prv, prvG) THEN
+      <*ASSERT prv.lo <= r.lo*>
+      IF prv.lo + prv.len > r.lo THEN
+        (* found an overlap *)
+        Debug.Error(F("Register overlap %s %s <-> %s %s", prv.userData, Range.Format(prv), r.userData, Range.Format(r)), exit := FALSE);
+        ok := FALSE
+      END
     END;
     
     EVAL p.put(r, r.group);
-
+    
     RETURN ok
   END InsertOrdered;
   
@@ -845,6 +842,7 @@ PROCEDURE DumpSV(pn : Pathname.T) RAISES { Wr.Failure, OSError.E, Rd.Failure } =
 
 <*UNUSED*>
 PROCEDURE OldDoEmitAll() RAISES { Wr.Failure, OSError.E, Rd.Failure } =
+  (* dead code *)
   VAR
     tgt : Streams;
   BEGIN
@@ -1423,7 +1421,9 @@ PROCEDURE DeWhiteSpace(txt : TEXT) : TEXT =
     RETURN ""
   END DeWhiteSpace;
 
+<*UNUSED*>
 PROCEDURE OldDoCRIF(fn : Pathname.T) =
+  (* dead code *)
   VAR
     parser : XMLParse.T;
   BEGIN
@@ -1434,6 +1434,7 @@ PROCEDURE OldDoCRIF(fn : Pathname.T) =
   END OldDoCRIF;
 
 TYPE
+  (* dead code *)
   XMLVisitor = OBJECT METHODS
     visit(node, parent : XMLParse.T)
   END;
@@ -1441,6 +1442,7 @@ TYPE
 PROCEDURE TraverseXML(visitor : XMLVisitor;
                       root    : XMLParse.T;
                       parent  : XMLParse.T := NIL) =
+  (* dead code *)
   VAR
     cIter := root.iterateChildren();
     child : XMLParse.T;
@@ -1452,6 +1454,7 @@ PROCEDURE TraverseXML(visitor : XMLVisitor;
 PROCEDURE CRIFVisit(<*UNUSED*>visitor : CRIFVisitor;
                     node    : XMLParse.T;
                     <*UNUSED*>parent  : XMLParse.T) =
+  (* dead code *)
   BEGIN
     IF TE(node.getEl(), "register") THEN
       (* this is a register *)
@@ -1469,6 +1472,7 @@ PROCEDURE CRIFVisit(<*UNUSED*>visitor : CRIFVisitor;
     END
   END CRIFVisit;
 
+(* dead code *)
 TYPE CRIFVisitor = XMLVisitor OBJECT OVERRIDES visit := CRIFVisit END;
 
 VAR
