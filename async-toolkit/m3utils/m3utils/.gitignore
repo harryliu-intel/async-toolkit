@@ -1,3 +1,13 @@
 .top
 AMD64_LINUX/
 bin/
+*~
+.nfs*
+.*.swp
+*.bak
+*.orig
+*.junk
+*.pyc
+\#*
+#*#
+
