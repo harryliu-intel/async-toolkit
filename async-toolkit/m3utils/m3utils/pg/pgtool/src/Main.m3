@@ -1592,7 +1592,15 @@ BEGIN
 
   (* if no template specf'd, use default *)
   IF templateRd = NIL THEN
-    templateRd := TextRd.New(Bundle.Get(PgToolSVTemplates.Get(),"hlp_pg_template.sv"))
+    VAR
+      templateNm := "pg_template.sv";
+      bundleTxt := Bundle.Get(PgToolSVTemplates.Get(),templateNm);
+    BEGIN
+      IF bundleTxt = NIL THEN
+        Debug.Error(F("Trouble reading bundle for template \"%s\"",templateNm))
+      END;
+      templateRd := TextRd.New(bundleTxt);
+    END
   END;
 
   CASE mode OF
