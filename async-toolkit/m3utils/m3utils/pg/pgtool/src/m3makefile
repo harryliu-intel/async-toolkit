@@ -21,7 +21,7 @@ table ("TextRangeList", "Text", "RangeList")
 
 table ("TextCard", "Text", "Cardinal")
 
-resource ("hlp_pg_template.sv")
+resource ("pg_template.sv")
 bundle ("PgToolSVTemplates")
 
 module ("PgCRIF")

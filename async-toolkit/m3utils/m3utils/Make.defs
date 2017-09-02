@@ -11,7 +11,7 @@
 #   CM3: use Critical Mass compiler (rather than Polytechnique de Montreal
 #        or SRC)
 #
-
+CM3_HOME := /p/mst/utils/cm3
 ifdef CYGWIN
 
   M3BUILDPROGRAM=m3build
@@ -50,7 +50,7 @@ else #### !CYGWIN => UNIX ####
     M3SHIPOPTS=-ship
   endif
   ifdef GC_USECM3  
-    M3BUILDPROGRAM=cm3
+    M3BUILDPROGRAM=$(CM3_HOME)/bin/cm3
     M3BUILDOPTS= -override
     M3BUILDCLEANTARGET= -clean
     M3SHIPPROGRAM=cm3
