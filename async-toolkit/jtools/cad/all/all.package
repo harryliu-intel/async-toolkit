@@ -37,3 +37,4 @@ share/java/resolver.jar ../java/jars/resolver.jar 640 p
 share/java/stringtemplate.jar ../java/jars/stringtemplate.jar 640 p
 share/java/xercesImpl.jar ../java/jars/xercesImpl.jar 640 p
 share/java/xml-apis.jar ../java/jars/xml-apis.jar 640 p
+share/java/ST-4.0.8.jar ../java/jars/ST-4.0.8.jar 640 p
