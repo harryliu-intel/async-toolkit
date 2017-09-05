@@ -43,7 +43,7 @@ IMPORT PgCRIF;
 CONST TE = Text.Equal;
 
       Usage =
-        "[-h|--help] [-allminterms] [-sv <sv-output-name>] [-T|--template <sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
+        "[-h|--help] [-allminterms] [(-D|--bind) <tag> <value>]* [-sv <sv-output-name>] [-T|--template <sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
 
 
 PROCEDURE DoUsage() : TEXT =
@@ -990,19 +990,42 @@ PROCEDURE OldDoEmitAll() RAISES { Wr.Failure, OSError.E, Rd.Failure } =
     DeclareOneHot();
 
     cur := tgt[Sections.Epilog];
-    WITH wr = FileWr.Open(pn) DO
+    VAR wr := TextWr.New(); BEGIN
       FOR i := FIRST(tgt) TO LAST(tgt) DO
         CopyTill(templateRd, wr, "**" & SectionNames[i] & "**");
         Wr.PutText(wr, TextWr.ToText(tgt[i]))
       END;
       CopyTill(templateRd, wr, NIL);
-      Wr.Close(wr)
+      wr := MakeSubstitutions(wr);
+      WITH nwr = FileWr.Open(pn) DO
+        Wr.PutText(nwr, TextWr.ToText(wr));
+        Wr.Close(nwr)
+      END
     END
   END DoEmitAll;
   
   BEGIN
     DoEmitAll()
   END DumpSV;
+
+PROCEDURE MakeSubstitutions(wr : TextWr.T) : TextWr.T =
+  VAR
+    nm, val : TEXT;
+    ot : TEXT;
+  BEGIN
+    ot := TextWr.ToText(wr);
+    WITH new  = TextWr.New(),
+         iter = bindings.iterate() DO
+      WHILE iter.next(nm,val) DO
+        WITH tag = "**" & nm & "**" DO
+          Debug.Out(F("MakeSubstitutions replacing \"%s\" -> \"%s\"", tag, val));
+          ot := TextUtils.Replace(ot, tag, val)
+        END
+      END;
+      Wr.PutText(new, ot);
+      RETURN new
+    END
+  END MakeSubstitutions;
 
 PROCEDURE CopyTill(rd : Rd.T; wr : Wr.T; tag : TEXT) RAISES { Rd.Failure, Wr.Failure } =
 
@@ -1497,7 +1520,7 @@ VAR
   mode := InputMode.Default;
   templateRd : Rd.T := NIL;
   baseStrapBits : TEXT := NIL;
-  
+  bindings := NEW(TextTextTbl.Default).init();
 BEGIN
   (* setup default PGs per HLP HAS *)
   PolicyGroupArr := NEW(REF ARRAY OF TEXT, NUMBER(DefPolicyGroupArr));
@@ -1510,7 +1533,12 @@ BEGIN
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
       allTerms := pp.keywordPresent("-allminterms");
       IF pp.keywordPresent("-sv") THEN svOutput := pp.getNext() END;
-      IF pp.keywordPresent("-bits") THEN bits := pp.getNextInt() END;
+      IF pp.keywordPresent("-bits") THEN
+        bits := pp.getNextInt();
+        (* predefine ADDR_BITS *)
+        EVAL bindings.put("ADDR_BITS", Fmt.Int(bits))
+      END;
+      
       IF pp.keywordPresent("-skipholes") THEN
         (* skip *)
       ELSIF pp.keywordPresent("-noskipholes") THEN
@@ -1533,7 +1561,8 @@ BEGIN
           DefaultIdx := n;
           FOR i := 0 TO n-1 DO
             PolicyGroupArr[i] := pp.getNext()
-          END
+          END;
+          EVAL bindings.put("NUM_PG", Fmt.Int(n))
         END
       END;
 
@@ -1574,6 +1603,16 @@ BEGIN
       ELSIF pp.keywordPresent("-crif") THEN
         ifn := pp.getNext();
         mode := InputMode.CRIF
+      END;
+
+      (* defines should be last so we can override implicit defines *)
+      WHILE pp.keywordPresent("-D") OR pp.keywordPresent("--bind") DO
+        VAR
+          nm := pp.getNext();
+          vl := pp.getNext();
+        BEGIN
+          EVAL bindings.put(nm,vl)
+        END
       END;
       
       pp.skipParsed();
