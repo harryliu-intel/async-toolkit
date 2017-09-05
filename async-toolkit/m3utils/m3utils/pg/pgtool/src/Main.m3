@@ -43,7 +43,7 @@ IMPORT PgCRIF;
 CONST TE = Text.Equal;
 
       Usage =
-        "[-h|--help] [-allminterms] [(-D|--bind) <tag> <value>]* [-sv <sv-output-name>] [-T|--template HLP|MST|DEFAULT|<sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
+        "[-h|--help] [-allminterms] [(-D|--bind) <tag> <value>]* ([-M|--module <module-name>]|[-sv <sv-output-name>]) [-T|--template HLP|MST|DEFAULT|<sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
 
 
 PROCEDURE DoUsage() : TEXT =
@@ -1556,7 +1556,15 @@ BEGIN
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
       allTerms := pp.keywordPresent("-allminterms");
+
+      IF pp.keywordPresent("-M") OR pp.keywordPresent("--module") THEN
+        WITH modName = pp.getNext() DO
+          EVAL bindings.put("MODULE_NAME", modName);
+          svOutput := modName & ".sv"
+        END
+      END;
       IF pp.keywordPresent("-sv") THEN svOutput := pp.getNext() END;
+
       IF pp.keywordPresent("-bits") THEN
         bits := pp.getNextInt();
         (* predefine ADDR_BITS *)
