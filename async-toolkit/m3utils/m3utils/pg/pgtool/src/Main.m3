@@ -43,7 +43,7 @@ IMPORT PgCRIF;
 CONST TE = Text.Equal;
 
       Usage =
-        "[-h|--help] [-allminterms] [(-D|--bind) <tag> <value>]* [-sv <sv-output-name>] [-T|--template <sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
+        "[-h|--help] [-allminterms] [(-D|--bind) <tag> <value>]* [-sv <sv-output-name>] [-T|--template HLP|MST|DEFAULT|<sv-template-name>] [--display-template] [-bits <address-bits>] [-[no]skipholes] [-elimoverlaps] [-defpgnm <PG_DEFAULT-name>] [-G|--policygroups <n> <pg(0)-name>...<pg(n-1)-name>] ([-crif <input-CRIF-name>] | [-csv] <input-CSV-name>)";
 
 
 PROCEDURE DoUsage() : TEXT =
@@ -1496,8 +1496,32 @@ PROCEDURE CRIFVisit(<*UNUSED*>visitor : CRIFVisitor;
   END CRIFVisit;
 
 (* dead code *)
-TYPE CRIFVisitor = XMLVisitor OBJECT OVERRIDES visit := CRIFVisit END;
+TYPE
+  CRIFVisitor = XMLVisitor OBJECT OVERRIDES visit := CRIFVisit END;
 
+  (**********************************************************************)
+
+PROCEDURE LoadTemplate(nm : TEXT) =
+  BEGIN
+    TRY
+      templateRd := FileRd.Open(nm)
+    EXCEPT
+      OSError.E =>
+      VAR
+        bundleTxt := Bundle.Get(PgToolSVTemplates.Get(),nm);
+      BEGIN
+        IF bundleTxt = NIL THEN
+          Debug.Error(F("Cant find template \"%s\"", nm))
+        END;
+        templateRd := TextRd.New(bundleTxt);
+      END
+    END
+  END LoadTemplate;
+
+  (**********************************************************************)
+
+     
+     
 VAR
   PgDefaultName := "PG_DEFAULT";
   PolicyGroupArr : REF ARRAY OF TEXT;
@@ -1572,12 +1596,16 @@ BEGIN
 
       IF pp.keywordPresent("--template") OR pp.keywordPresent("-T") THEN
         WITH tfn = pp.getNext() DO
-          TRY
-            templateRd := FileRd.Open(tfn)
-          EXCEPT
-            OSError.E(x) => Debug.Error(F("Couldnt open template file \"%s\", OSError.E : %s", tfn, AL.Format(x)))
+          IF TE(tfn, "HLP") THEN
+            LoadTemplate("hlp_pg_template.sv")
+          ELSIF TE (tfn, "DEFAULT") OR TE(tfn, "MST") THEN
+            LoadTemplate("pg_template.sv")
+          ELSE
+            LoadTemplate(tfn)
           END
         END
+      ELSE
+        LoadTemplate("pg_template.sv")
       END;
 
       IF pp.keywordPresent("--display-template") THEN
@@ -1627,19 +1655,6 @@ BEGIN
     IF bits = -1 THEN Debug.Error("Must specify -bits") END
   EXCEPT
     ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
-  END;
-
-  (* if no template specf'd, use default *)
-  IF templateRd = NIL THEN
-    VAR
-      templateNm := "pg_template.sv";
-      bundleTxt := Bundle.Get(PgToolSVTemplates.Get(),templateNm);
-    BEGIN
-      IF bundleTxt = NIL THEN
-        Debug.Error(F("Trouble reading bundle for template \"%s\"",templateNm))
-      END;
-      templateRd := TextRd.New(bundleTxt);
-    END
   END;
 
   CASE mode OF
