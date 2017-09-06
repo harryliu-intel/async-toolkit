@@ -19,6 +19,8 @@ mkdir -p ${TGTDIR}
 mkdir -p ${SGTDIR}
 
 PROGS="
+${ROOT}/perlfe/${BINDIR}/perlfe
+${ROOT}/rdl/svpp/${BINDIR}/svpp
 ${ROOT}/pg/pgtool/${BINDIR}/genpg
 ${ROOT}/wrap/${BINDIR}/wrap
 ${ROOT}/timing/${BINDIR}/timing

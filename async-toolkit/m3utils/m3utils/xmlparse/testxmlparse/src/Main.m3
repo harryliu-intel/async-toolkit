@@ -4,9 +4,10 @@ IMPORT Debug;
 FROM Fmt IMPORT F;
 IMPORT Text;
 IMPORT TextSet, TextSetDef;
+IMPORT Params;
 
-CONST
-  Path = "/nfs/sc/disks/hlp_0015/mnystroe/git-tricks/merge/hlp-hw/pg/pgtool/src/crif.xml";
+VAR
+  Path := Params.Get(1);
 
 TYPE
   Simple = XMLParseStream.FileStream OBJECT
@@ -64,13 +65,8 @@ CONST
   };
 
 VAR
-  stream : Simple := 
-      NEW(Simple, interesting := NEW(TextSetDef.T).init()).init(Path);
+  stream : Simple := NEW(Simple).init(Path);
 BEGIN
-  FOR i := FIRST(InterestingEls) TO LAST(InterestingEls) DO
-    EVAL stream.interesting.insert(InterestingEls[i])
-  END;
-  
   stream.parse()
 END Main.
  
