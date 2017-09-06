@@ -184,10 +184,57 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               IF DoDebug THEN
                 Debug.Out("ProcUtils.Apply.Exec: creating subprocess")
               END;
+<<<<<<< HEAD
               sub := Process.Create(l.head, params^,
                                     NIL, wd,
                                     stdin, stdout,stderr);
              
+||||||| parent of da4add0... added READLINEFE capability to override default readlinefe location/path
+              sub := Process.Create(l.head, params^,
+                                    NIL, wd,
+                                    stdin, stdout,stderr);
+
+              LOCK self.mu DO
+                (* mark process as created so that requester can continue 
+                   
+                   This routine is NOT allowed to continue until the Pipe
+                   between the subprocess and the calling process has been
+                   opened for writing by the subprocess, which happens
+                   in Process.Create.
+                *)
+                self.sub := sub;
+                self.created := TRUE;
+                Thread.Signal(self.cn)
+              END;
+
+=======
+              TRY 
+                sub := Process.Create(l.head, params^,
+                                      NIL, wd,
+                                      stdin, stdout,stderr);
+              EXCEPT
+                OSError.E(x) =>
+                  Debug.Out("Got exception OSError.E in Process.Create(" & l.head & "...) : " & AL.Format(x));
+                  RAISE OSError.E(x)
+              END;
+              IF DoDebug THEN
+                Debug.Out("ProcUtils.Apply.Exec: created subprocess")
+              END;
+
+              LOCK self.mu DO
+                (* mark process as created so that requester can continue 
+                   
+                   This routine is NOT allowed to continue until the Pipe
+                   between the subprocess and the calling process has been
+                   opened for writing by the subprocess, which happens
+                   in Process.Create.
+                *)
+                self.sub := sub;
+                self.created := TRUE;
+                Thread.Signal(self.cn)
+              END;
+
+>>>>>>> da4add0... added READLINEFE capability to override default readlinefe location/path
               IF DoDebug THEN
                 Debug.Out("ProcUtils.Apply.Exec: waiting for subprocess")
               END;
