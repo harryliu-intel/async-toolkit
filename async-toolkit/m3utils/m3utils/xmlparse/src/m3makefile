@@ -1,11 +1,17 @@
-/* $Id$ */
+/* $Id: m3makefile,v 1.5 2014/01/03 16:56:43 mika Exp $ */
 import ("libm3")
 import ("cit_util")
 
 c_source("xmlParser")
-interface("xmlParser")
+Interface("xmlParser")
+implementation("xmlParser")
+Interface("xmlParserUnsafe")
+Interface("xmlParserTypes")
+Interface("xmlParserContext") /* should be in ..Types? */
 
 Module("XMLParse")
+Module("XMLParseStream")
+Interface("XMLParseImpl")
 
 library("xmlparse")
 

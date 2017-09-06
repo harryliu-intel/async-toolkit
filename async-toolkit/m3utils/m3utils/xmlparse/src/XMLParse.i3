@@ -1,4 +1,4 @@
-(* $Id$ *)
+(* $Id: XMLParse.i3,v 1.4 2013/03/30 07:15:28 mika Exp $ *)
 
 INTERFACE XMLParse;
 IMPORT Pathname;
