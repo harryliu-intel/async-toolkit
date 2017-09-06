@@ -1,0 +1,47 @@
+in 1 second
+
+we increment by i_num f_1588 times.
+
+we decrement by i_denom f_fclk times.
+
+---------------------------------------
+assume that we start with zero phase.
+
+clock ticks of 1588 clock are at time
+
+0, p_1588, 2*p_1588, ...
+
+assume that the last clock we saw on 1588 is C_1588
+0, 1, 2, 3, ..., C_1588
+
+It happened at time t_1588 =C_1588*p_1588
+
+...
+
+t_fclk = C_fclk*p_fclk
+
+what we care about is the time difference between fclk and 1588:
+
+t [s]     = C_1588*p_1588   - C_fclk*p_fclk                      (1)
+
+t [s] * K = C_1588*p_1588*K - C_fclk*p_fclk*K                    (2)
+
+
+p_1588 = p_base * r_1588
+p_fclk = p_base * r_fclk
+
+where r_1588 and r_fclk are SMALL INTEGERS
+
+t/p_base = C_1588*r_1588 - C_fclk*r_fclk
+
+timing unit of VCS is set to 1ps
+
+f_1588 = 257/(256*1000)*1e12  
+f_fclk = 1/2000    *1e12  
+
+p_1588 = 256/257 * 1000 * 1e-12 = d_1588/n_1588 * 1e-12
+p_fclk =           2000 * 1e-12 = d_fclk/n_fclk * 1e-12
+
+
+
+t [s] * K = n_1588*d_1588/n_1588*1e-12*K - n_fclk*d_fclk/n_fclk*1e-12*K
