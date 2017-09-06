@@ -171,10 +171,11 @@ Table("TextLongRealRef", "Text", "LongRealRef")
 
 Interface("Threadd")
 Sequence("Thread","Threadd")
-Map("LRFunction","LongrealType","LongrealType")
-Map("LRScalarField","LRVector","LongrealType")
+Module("MyLongrealType")
+Map("LRFunction","MyLongrealType","MyLongrealType")
+Map("LRScalarField","LRVector","MyLongrealType")
 Map("LRVectorField","LRVector","LRVector")
-Map("LRParametricCurve", "LongrealType", "LRPoint")
+Map("LRParametricCurve", "MyLongrealType", "LRPoint")
 
 Module("Pointe")
 
@@ -389,6 +390,8 @@ module   ("UtimeWrap")
 c_source ("UtimeOpsC")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Module ("FastNumParse")
 
 Library("cit_util")
 
