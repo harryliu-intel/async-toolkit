@@ -188,7 +188,7 @@ PROCEDURE StartProc(t : Default; doDebug : BOOLEAN) RAISES { Error.E } =
     IF doDebug THEN debug := " -d" END;
 
     IF NOT t.manualStart THEN
-      t.completion := ProcUtils.RunText("readlinefe "&Fmt.Int(t.port) & debug, 
+      t.completion := ProcUtils.RunText(fePath & " " &Fmt.Int(t.port) & debug, 
                                         stdout := ProcUtils.Stdout(), 
                                         stdin := ProcUtils.Stdin(), 
                                         stderr := ProcUtils.Stderr())
@@ -637,4 +637,10 @@ PROCEDURE GetVar(t : Std; name : TEXT) : REFANY =
     END
   END GetVar;
 
-BEGIN END ReadLine.
+VAR
+  fePath : Pathname.T := "readlinefe";
+BEGIN 
+  WITH np = Env.Get("READLINEFE") DO
+    IF np # NIL THEN fePath := np END
+  END
+END ReadLine.

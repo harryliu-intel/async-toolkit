@@ -211,9 +211,18 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               IF DoDebug THEN
                 Debug.Out("ProcUtils.Apply.Exec: creating subprocess")
               END;
-              sub := Process.Create(l.head, params^,
-                                    NIL, wd,
-                                    stdin, stdout,stderr);
+              TRY 
+                sub := Process.Create(l.head, params^,
+                                      NIL, wd,
+                                      stdin, stdout,stderr);
+              EXCEPT
+                OSError.E(x) =>
+                  Debug.Out("Got exception OSError.E in Process.Create(" & l.head & "...) : " & AL.Format(x));
+                  RAISE OSError.E(x)
+              END;
+              IF DoDebug THEN
+                Debug.Out("ProcUtils.Apply.Exec: created subprocess")
+              END;
 
               LOCK self.mu DO
                 (* mark process as created so that requester can continue 
