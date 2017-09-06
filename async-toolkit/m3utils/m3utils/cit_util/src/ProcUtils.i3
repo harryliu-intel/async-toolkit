@@ -1,9 +1,10 @@
-(* $Id$ *)
+(* $Id: ProcUtils.i3,v 1.10 2009/03/20 03:58:20 mika Exp $ *)
 
 INTERFACE ProcUtils;
 IMPORT Rd, Wr, Pathname;
 IMPORT AtomList;
 IMPORT OSError;
+IMPORT Time;
 
 TYPE
   T = TEXT;
@@ -15,6 +16,7 @@ TYPE
 (* run the command(s) and return their output text *)
 
 EXCEPTION ErrorExit(Error);
+EXCEPTION Timeout;          
 
 TYPE Error = OBJECT error : TEXT END; 
      (* generic errors, e.g., Rd.Failure *)
@@ -31,7 +33,9 @@ PROCEDURE FormatError(e : Error) : TEXT;
 PROCEDURE ToText(source: T;
                  stderr: Writer := NIL;
                  stdin: Reader := NIL;
-                 wd0: Pathname.T := NIL): TEXT RAISES { Rd.Failure, ErrorExit, OSError.E } ;
+                 wd0: Pathname.T := NIL;
+                 timeout := LAST(Time.T)): TEXT
+  RAISES { Rd.Failure, ErrorExit, OSError.E, Timeout } ;
 
 PROCEDURE RdToRd(source: Rd.T;
                  stderr: Writer := NIL;
