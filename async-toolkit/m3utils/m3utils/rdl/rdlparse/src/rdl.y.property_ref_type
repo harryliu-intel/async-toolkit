@@ -1,6 +1,0 @@
-  addrmap                 T_ADDRMAP        
-  reg                     T_REG            
-  regfile                 T_REGFILE        
-  field                   T_FIELD          
-  ref                     T_REF            
-                          T_               
