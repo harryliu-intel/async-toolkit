@@ -1,0 +1,12 @@
+  true                    T_TRUE           
+  false                   T_FALSE          
+  rw                      T_RW             
+  wr                      T_WR             
+  r                       T_R              
+  w                       T_W              
+  na                      T_NA             
+  compact                 T_COMPACT        
+  regalign                T_REGALIGN       
+  fullalign               T_FULLALIGN      
+  hw                      T_HW             
+  sw                      T_SW             

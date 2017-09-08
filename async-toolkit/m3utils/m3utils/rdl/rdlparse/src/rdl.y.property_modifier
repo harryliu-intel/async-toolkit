@@ -1,0 +1,5 @@
+  posedge                 T_POSEDGE        
+  negedge                 T_NEGEDGE        
+  bothedge                T_BOTHEDGE       
+  level                   T_LEVEL          
+  nonsticky               T_NONSTICKY      

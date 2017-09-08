@@ -1,0 +1,13 @@
+import ("libm3")
+import ("cit_util")
+import ("parserlib")
+
+Token("rdl")
+Lexer("rdl","rdl")
+Parser("rdl","rdl")
+
+%library("rdlparse")
+
+implementation ("Main")
+
+program ("parserdl")

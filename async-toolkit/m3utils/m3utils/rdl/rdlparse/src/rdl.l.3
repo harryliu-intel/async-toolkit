@@ -1,0 +1,9 @@
+
+T_mID      (\\{L}|{L})({D}|{L})*
+
+T_mVNUM       {BSPEC}{D16}+
+T_mNUM        ({D}*{BSPEC}{D16}+)|{D}+|("0x"{D16}+)
+T_mSTR         \"({ESCQ}|[^"])*\"
+T_mDREF       "->"
+T_mINC        "+="
+T_mMOD        "%="

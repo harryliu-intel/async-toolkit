@@ -1,0 +1,6 @@
+  signal                  T_SIGNAL         
+  addrmap                 T_ADDRMAP        
+  reg                     T_REG            
+  regfile                 T_REGFILE        
+  field                   T_FIELD          
+  all                     T_ALL            
