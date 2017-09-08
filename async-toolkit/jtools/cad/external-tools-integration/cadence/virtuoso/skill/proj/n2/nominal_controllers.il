@@ -13,18 +13,22 @@ uv1_cell_list =
      )
 
 ; CTREE
-;(for i 0 3
-;  uv1_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE2.%d" i) uv1_cell_list)
-;  uv1_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE3.%d" i) uv1_cell_list)
-;  )
+(for i 0 3
+  uv1_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE2.%d" i) uv1_cell_list)
+  uv1_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE3.%d" i) uv1_cell_list)
+  )
 
 ; PULSE_CTRL/PULSE_SEND_CTRL
+extra_cell_list = nil
 (for i 0 8
   (foreach s (list "false" "true")
-    uv1_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d_%s-R.0"  i s) uv1_cell_list)
-    uv1_cell_list = (cons (sprintf nil "lib.bd.standard.send.PULSE_SEND_CTRL-L%d_%s-R.0" i s) uv1_cell_list)
+    extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d_%s-R.0"  i s) extra_cell_list)
+    extra_cell_list = (cons (sprintf nil "lib.bd.standard.send.PULSE_SEND_CTRL-L%d_%s-R.0" i s) extra_cell_list)
     )
   )
+
+uv1_cell_list = (append uv1_cell_list extra_cell_list)
+
 
 ; make additional BD_CONTROLLER's by copying and editing base ones
 (defun MakeNominalControllers ()
