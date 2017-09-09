@@ -2524,28 +2524,13 @@ public class DSimModule extends CmdLine {
             "  status U\n" +
             "  warnall; noignoreerror\n" +
             "  set _Reset:1\n\n" +
-            "When protocol==1, the old-style _PReset/_SReset reset procedure\n"+
-            "is executed:\n\n"+
-            "  random\n"+
-            "  set _SReset:0 _PReset:0 GND:0 Vdd:1\n" +
-            "  cycle\n" +
-            "  status U\n" +
-            "  warnall; noignoreerror\n" +
-            "  set _PReset:1\n" +
-            "  cycle\n" +
-            "  status U\n" +
-            "  set _SReset:1\n\n" +
             "In each case, the state of 'warn', 'ignorerror', and 'rand' is\n"+
-            "restored to whatever it was prior to the reset.  If castversion\n"+
-            "is 1, the default protocol is 1; otherwise, 0 is the default.") {
+            "restored to whatever it was prior to the reset.") {
             public void execute(String args[]) { 
                 if (!checkFile()) return;
                 //was:
                 // resetDSim(castVersion);
                 int protocol = DSimUtil.STANDARD_RESET;
-                if (castVersion != null && castVersion.equals("1")) {
-                    protocol = DSimUtil.SP_RESET;
-                }
                 if (args != null) {
                     if (args.length > 1) {
                         System.out.println("Usage: "+usage);
@@ -2554,11 +2539,8 @@ public class DSimModule extends CmdLine {
                     if (args[0].equals("0")) {
                         protocol = DSimUtil.STANDARD_RESET;
                     }
-                    else if (args[0].equals("1")) {
-                        protocol = DSimUtil.SP_RESET;
-                    }
                     else {
-                        System.out.println("Valid protocols: 0,1.");
+                        System.out.println("Valid protocols: 0.");
                         return;
                     }
                 }

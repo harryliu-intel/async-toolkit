@@ -37,24 +37,20 @@ public class DSimUtil {
     private CombinedNodeWatcher<HaltOnCycleWatcher> haltWatcher = null;
     private Node GND;
     private Node Vdd;
-    private Node _SReset;
-    private Node _PReset;
-    private Node _Reset;
     private Node _RESET;
+    private Node START;
+    private Node DLY;
     private Node ERROR;
     private Node ENV_RESET;
 
     public static final int STANDARD_RESET = 0;
-    public static final int SP_RESET       = 1;
 
     public static final HierName _RESET_NAME =
         HierName.makeHierName("_RESET");
-    public static final HierName _Reset_NAME =
-        HierName.makeHierName("_Reset");
-    public static final HierName _SReset_NAME =
-        HierName.makeHierName("_SReset");
-    public static final HierName _PReset_NAME =
-        HierName.makeHierName("_PReset");
+    public static final HierName START_NAME =
+        HierName.makeHierName("START");
+    public static final HierName DLY_NAME =
+        HierName.makeHierName("DLY");
     // FIXME: _env should not be hardcoded here, as it could be different
     public static final HierName ENV_RESET_NAME =
         HierName.append(HierName.makeHierName("_env"), _RESET_NAME);
@@ -67,30 +63,17 @@ public class DSimUtil {
         dsim = DSim.get();
         GND = dsim.findNode("GND");
         Vdd = dsim.findNode("Vdd");
-        _SReset = dsim.findNode(_SReset_NAME);
-        _PReset = dsim.findNode(_PReset_NAME);
-        _Reset = dsim.findNode(_Reset_NAME);
         _RESET = dsim.findNode(_RESET_NAME);
+        START  = dsim.findNode(START_NAME);
+        DLY    = dsim.findNode(DLY_NAME);
         ENV_RESET = dsim.findNode(ENV_RESET_NAME);
         ERROR = dsim.findNode("ERROR");
-
-        /*
-        if (GND == null || Vdd == null || ERROR == null) {
-            throw new IllegalStateException(
-                "Node GND, Vdd, or ERROR is not defined.");
-        }
-        if (_Reset == null && (_SReset == null || _PReset == null)) {
-            throw new IllegalStateException("No known reset nodes defined.");
-        }
-        */
     }
 
     /** 
-     * Resets DSim, either with _SReset &amp; _PReset or with a 
-     * single _Reset signal (set by protocol, SP_RESET and 
-     * STANDARD_RESET respectively).  Reset is performed with
-     * full random (untimed) transitions.  Following reset, the
-     * timing model is restored to its prior value.
+     * Resets DSim.  Reset is performed with full random (untimed)
+     * transitions.  Following reset, the timing model is restored to
+     * its prior value.  START+ follows _RESET+.
      * 
      * @throws IllegalArgumentException
      * @throws IllegalStateException
@@ -110,21 +93,17 @@ public class DSimUtil {
 
         // Initialize nodes
         //dsim.clearEventQueues();
-        GND.setValueAndEnqueueDependents(Node.VALUE_0);
-        Vdd.setValueAndEnqueueDependents(Node.VALUE_1);
+        if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
+        if (GND!=null) GND.setValueAndEnqueueDependents(Node.VALUE_0);
+        if (Vdd!=null) Vdd.setValueAndEnqueueDependents(Node.VALUE_1);
 
         if (protocol == STANDARD_RESET) {
             Node resetNode = _RESET;
-            if (resetNode == null) resetNode = _Reset;
             if (resetNode == null) resetNode = ENV_RESET;
-            if (resetNode == null) {
-                throw new IllegalStateException(
-                      "Neither _RESET, _Reset, nor env._RESET exist.");
-            }
                
             // Reset and cycle
-            //_Reset.setValueAndEnqueueDependents(Node.VALUE_0);
-            resetNode.scheduleImmediate(Node.VALUE_0);
+            if (resetNode!=null) resetNode.scheduleImmediate(Node.VALUE_0);
+            if (START!=null) START.scheduleImmediate(Node.VALUE_0);
             initResetNodes(init);
             dsim.cycle(-1);
 
@@ -137,44 +116,16 @@ public class DSimUtil {
             }
             dsim.setWarn(true);
             dsim.setError(true);
-            //_Reset.setValueAndEnqueueDependents(Node.VALUE_1);
-            resetNode.scheduleImmediate(Node.VALUE_1);
-        }
-        else if (protocol == SP_RESET) {
-            if (_PReset != null && _SReset != null) {
-                // Reset and cycle
-                //_PReset.setValueAndEnqueueDependents(Node.VALUE_0);
-                //_SReset.setValueAndEnqueueDependents(Node.VALUE_0);
-                _PReset.scheduleImmediate(Node.VALUE_0);
-                _SReset.scheduleImmediate(Node.VALUE_0);
-                initResetNodes(init);
-                dsim.cycle(-1);
 
-                // Turn on error checking & reporting, then raise _PReset
-                Set unstabSet = dsim.getNodesWithValue(Node.VALUE_U);
-                if (!unstabSet.isEmpty()) {
-                    System.out.println(
-                        "Nodes unstable during reset:");
-                    printNodeSet(unstabSet);
-                }
-                dsim.setWarn(true);
-                dsim.setError(true);
-                //_PReset.setValueAndEnqueueDependents(Node.VALUE_1);
-                _PReset.scheduleImmediate(Node.VALUE_1);
-                dsim.cycle(-1);
-
-                // List status U nodes, then raise _SReset
-                unstabSet = dsim.getNodesWithValue(Node.VALUE_U);
-                if (!unstabSet.isEmpty()) {
-                    System.out.println(
-                        "Nodes unstable following _PReset+:");
-                    printNodeSet(unstabSet);
-                }
-                //_SReset.setValueAndEnqueueDependents(Node.VALUE_1);
-                _SReset.scheduleImmediate(Node.VALUE_1);
+            // de-assert _RESET
+            if (resetNode!=null) {
+                resetNode.scheduleImmediate(Node.VALUE_1);
             }
-            else {
-                throw new IllegalStateException("Reset nodes do not exist.");
+
+            // second phase doreset if START node exists
+            if (START!=null) {
+                if (resetNode!=null) dsim.cycle(-1);
+                START.scheduleImmediate(Node.VALUE_1);
             }
         }
         else {
@@ -189,16 +140,13 @@ public class DSimUtil {
     }
 
     /**
-     * Returns the best of what DSim has to offer in the way of
-     * reset nodes.  Preferentially picks _RESET, then _Reset,
-     * then _env._RESET, then _SReset, then _PReset, then null.
+     * Returns the best of what DSim has to offer in the way of reset
+     * nodes.  Preferentially picks _RESET, then _env._RESET, then
+     * null.
      **/
     public static Node getResetNode() {
         Node n = DSim.get().findNode(_RESET_NAME);
-        if (n == null) n = DSim.get().findNode(_Reset_NAME);
         if (n == null) n = DSim.get().findNode(ENV_RESET_NAME);
-        if (n == null) n = DSim.get().findNode(_SReset_NAME);
-        if (n == null) n = DSim.get().findNode(_PReset_NAME);
         return n;
     }
 
@@ -210,7 +158,7 @@ public class DSimUtil {
      * @param numTests Number of reset cycles to run.
      * @param numCycles Number of cycles to run for between each reset.
      * @param cycleNode Node to use for post-reset cycling.
-     * @param resetProtocol Reset protocol to use (SP_RESET or STANDARD_RESET).
+     * @param resetProtocol Reset protocol to use (STANDARD_RESET).
      * 
      * @throws IllegalArgumentException
      * @throws IllegalStateException

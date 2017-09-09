@@ -1439,7 +1439,6 @@ public class DSim implements NodeWatcher {
             // create implied port connections from ci to fakeEnv
             final Map<HierName,HierName> connections =
                 new HashMap<HierName,HierName>();
-            HierName upperReset = null, lowerReset = null;
             for (Iterator i = ci.getPortSubcellPairs(); i.hasNext(); ) {
                 final Pair p = (Pair) i.next();
                 final HierName hinst = (HierName) p.getFirst();
@@ -1453,15 +1452,10 @@ public class DSim implements NodeWatcher {
                     } catch (InvalidHierNameException e) {
                         throw new AssertionError(e);
                     }
-                    if (parent.equals(DSimUtil._RESET_NAME)) upperReset = hinst;
-                    if (parent.equals(DSimUtil._Reset_NAME)) lowerReset = hinst;
+                    if (parent.equals(DSimUtil._RESET_NAME)) resetPortName = hinst;
                     connections.put(hinst, parent);
                 }
             }
-
-            resetPortName =
-                upperReset == null ? (lowerReset == null ? null : lowerReset)
-                                   : upperReset;
 
             if (resetPortName != null) {
                 resetNodeName = connections.get(resetPortName);
