@@ -44,6 +44,22 @@ camelize()
     echo $in | sed 's/\.dat$//' | sed  -e 's/_\(.\)/\U\1/g' -e 's/^\(.\)/\U\1/'
 }
 
+mk_e_fragment()
+{
+    fn=$1
+    base=$2
+    nm=$3
+    echo mk_e_fragment $fn $base $nm
+    efn=../AMD64_LINUX/${base}.e.fragment
+    cat  > ${efn} <<EOF
+
+IMPORT ${nm};
+
+${base}: { val: ${nm}.T }
+EOF
+    cat ${fn} | awk "{printf(\"  %-25s { \$\$ := ${nm}.T.%s }\n\", \$1, \$1)}" >> ${efn}
+}
+
 cat *.dat | sort | grep -v '^$' | uniq | awk '{printf("T_%-15s \"%s\"\n",toupper($1),$1)}' > rdl.l.2
 
 cat rdl.l.[0-9] > rdl.l
@@ -55,9 +71,11 @@ cat rdl.t.[0-9] > rdl.t
 for file in *.dat; do
   base=`basename ${file} .dat`
   cat ${file} | awk '{printf("  %-23s T_%-15s\n", $1, toupper($1))}' > rdl.y.${base}
-  make_interface ${file} `camelize ${file}`
+  intf=`camelize ${file}`
+  make_interface ${file} ${intf}
+  mk_e_fragment ${file} ${base} ${intf}
 done
 
-
+cpp -P -I../AMD64_LINUX rdlParseExt.ee -o rdlParseExt.e
 
 
