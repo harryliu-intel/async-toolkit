@@ -1,95 +1,52 @@
 %source rdl.t rdl.y
 %import rdlLexExt rdlParse
+
 %module {
 IMPORT rdlLexExt;
 IMPORT Debug;
-IMPORT PredefProperty;
+IMPORT RdlPredefProperty;
+IMPORT RdlPropertyModifier;
+IMPORT RdlPropertyComponent;
+IMPORT RdlPropertyRvalueKeyword;
+IMPORT RdlComponentDefType;
+IMPORT RdlOrigin;
+
+IMPORT RdlComponentDef;
+IMPORT RdlPropertyComponentDisjunction;
+
 VAR doDebug := Debug.DebugThis("rdlParseExt");
 }
+
 %interface {
-IMPORT PredefProperty;
+IMPORT RdlPredefProperty;
+IMPORT RdlPropertyModifier;
+IMPORT RdlPropertyComponent;
+IMPORT RdlPropertyRvalueKeyword;
+IMPORT RdlComponentDefType;
+IMPORT RdlOrigin;
+
+IMPORT RdlComponentDef;
+IMPORT RdlPropertyComponentDisjunction;
 }
-IMPORT PredefProperty;
-predef_property: { val: PredefProperty.T }
-  name { $$ := PredefProperty.T.name }
-  desc { $$ := PredefProperty.T.desc }
-  arbiter { $$ := PredefProperty.T.arbiter }
-  rset { $$ := PredefProperty.T.rset }
-  rclr { $$ := PredefProperty.T.rclr }
-  woclr { $$ := PredefProperty.T.woclr }
-  woset { $$ := PredefProperty.T.woset }
-  we { $$ := PredefProperty.T.we }
-  wel { $$ := PredefProperty.T.wel }
-  swwe { $$ := PredefProperty.T.swwe }
-  swwel { $$ := PredefProperty.T.swwel }
-  hwset { $$ := PredefProperty.T.hwset }
-  hwclr { $$ := PredefProperty.T.hwclr }
-  swmod { $$ := PredefProperty.T.swmod }
-  swacc { $$ := PredefProperty.T.swacc }
-  sticky { $$ := PredefProperty.T.sticky }
-  stickybit { $$ := PredefProperty.T.stickybit }
-  intr { $$ := PredefProperty.T.intr }
-  anded { $$ := PredefProperty.T.anded }
-  ored { $$ := PredefProperty.T.ored }
-  xored { $$ := PredefProperty.T.xored }
-  counter { $$ := PredefProperty.T.counter }
-  overflow { $$ := PredefProperty.T.overflow }
-  sharedextbus { $$ := PredefProperty.T.sharedextbus }
-  errextbus { $$ := PredefProperty.T.errextbus }
-  reset { $$ := PredefProperty.T.reset }
-  littleendian { $$ := PredefProperty.T.littleendian }
-  bigendian { $$ := PredefProperty.T.bigendian }
-  rsvdset { $$ := PredefProperty.T.rsvdset }
-  rsvdsetX { $$ := PredefProperty.T.rsvdsetX }
-  bridge { $$ := PredefProperty.T.bridge }
-  shared { $$ := PredefProperty.T.shared }
-  msb0 { $$ := PredefProperty.T.msb0 }
-  lsb0 { $$ := PredefProperty.T.lsb0 }
-  sync { $$ := PredefProperty.T.sync }
-  async { $$ := PredefProperty.T.async }
-  cpuif_reset { $$ := PredefProperty.T.cpuif_reset }
-  field_reset { $$ := PredefProperty.T.field_reset }
-  activehigh { $$ := PredefProperty.T.activehigh }
-  activelow { $$ := PredefProperty.T.activelow }
-  singlepulse { $$ := PredefProperty.T.singlepulse }
-  underflow { $$ := PredefProperty.T.underflow }
-  incr { $$ := PredefProperty.T.incr }
-  decr { $$ := PredefProperty.T.decr }
-  incrwidth { $$ := PredefProperty.T.incrwidth }
-  decrwidth { $$ := PredefProperty.T.decrwidth }
-  incrvalue { $$ := PredefProperty.T.incrvalue }
-  decrvalue { $$ := PredefProperty.T.decrvalue }
-  saturate { $$ := PredefProperty.T.saturate }
-  decrsaturate { $$ := PredefProperty.T.decrsaturate }
-  threshold { $$ := PredefProperty.T.threshold }
-  decrthreshold { $$ := PredefProperty.T.decrthreshold }
-  dontcompare { $$ := PredefProperty.T.dontcompare }
-  donttest { $$ := PredefProperty.T.donttest }
-  internal { $$ := PredefProperty.T.internal }
-  alignment { $$ := PredefProperty.T.alignment }
-  regwidth { $$ := PredefProperty.T.regwidth }
-  fieldwidth { $$ := PredefProperty.T.fieldwidth }
-  signalwidth { $$ := PredefProperty.T.signalwidth }
-  accesswidth { $$ := PredefProperty.T.accesswidth }
-  sw { $$ := PredefProperty.T.sw }
-  hw { $$ := PredefProperty.T.hw }
-  addressing { $$ := PredefProperty.T.addressing }
-  precedence { $$ := PredefProperty.T.precedence }
-  encode { $$ := PredefProperty.T.encode }
-  resetsignal { $$ := PredefProperty.T.resetsignal }
-  clock { $$ := PredefProperty.T.clock }
-  mask { $$ := PredefProperty.T.mask }
-  enable { $$ := PredefProperty.T.enable }
-  hwenable { $$ := PredefProperty.T.hwenable }
-  hwmask { $$ := PredefProperty.T.hwmask }
-  haltmask { $$ := PredefProperty.T.haltmask }
-  haltenable { $$ := PredefProperty.T.haltenable }
-  halt { $$ := PredefProperty.T.halt }
-  next { $$ := PredefProperty.T.next }
+
+#include "predef_property.e.fragment"
+#include "property_modifier.e.fragment"
+#include "property_component.e.fragment"
+#include "property_rvalue_keyword.e.fragment"
+#include "component_def_type.e.fragment"
+#include "origin.e.fragment"
+
+
 property_definition:
-  initial {
+  initial               {
     IF doDebug THEN
       Debug.Out("registering user defined property " & $1)
     END;
     rdlLexExt.RegisterUserdefProperty($1)
 }
+
+component_def: { val: RdlComponentDef.T }
+
+property_component_disjunction: { val : RdlPropertyComponentDisjunction.T }
+  single { $$ := RdlPropertyComponentDisjunction.T { $1 } }
+  list   { $$ := RdlPropertyComponentDisjunction.T { $1 } + $2 }            

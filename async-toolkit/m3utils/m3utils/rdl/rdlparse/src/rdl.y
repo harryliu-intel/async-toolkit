@@ -288,6 +288,11 @@ property_assign_rhs:
   concat                  concat
 
 property_rvalue_constant:
+  num                     num
+  str                     str
+  keyword                 property_rvalue_keyword
+
+property_rvalue_keyword:
   true                    T_TRUE           
   false                   T_FALSE          
   rw                      T_RW             
@@ -300,8 +305,6 @@ property_rvalue_constant:
   fullalign               T_FULLALIGN      
   hw                      T_HW             
   sw                      T_SW             
-  num                     num
-  str                     str
 
 enum_body:
   x                       '{' enum_entry_seq '}'

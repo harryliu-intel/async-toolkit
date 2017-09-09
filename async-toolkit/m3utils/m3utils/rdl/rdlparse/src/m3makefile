@@ -11,7 +11,19 @@ extended("rdlParseExt")
 
 %library("rdlparse")
 
-derived_interface ("PredefProperty", VISIBLE)
+derived_interface ("RdlPredefProperty", VISIBLE)
+derived_interface ("RdlPropertyModifier", VISIBLE)
+derived_interface ("RdlPropertyComponent", VISIBLE)
+derived_interface ("RdlPropertyRvalueKeyword", VISIBLE)
+derived_interface ("RdlComponentDefType", VISIBLE)
+derived_interface ("RdlOrigin",VISIBLE)
+
+interface ("RdlRootElem")
+interface ("RdlComponentDef")
+interface ("RdlEnumDef")
+interface ("RdlComponentDefClass")
+interface ("RdlPropertyComponentDisjunction")
+
 implementation ("Main")
 
 program ("parserdl")

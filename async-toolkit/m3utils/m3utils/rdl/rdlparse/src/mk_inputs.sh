@@ -1,8 +1,12 @@
 #!/bin/sh -x
-rm -rf ../AMD64_LINUX
-mkdir ../AMD64_LINUX
 
-rm -f rdl.y.*
+DERIV=../AMD64_LINUX
+
+rm -rf ${DERIV}
+mkdir ${DERIV}
+
+#rm -f rdl.y.*
+rm -f rdlParseExt.e
 rm -f rdl.l
 rm -f rdl.t
 
@@ -10,7 +14,7 @@ make_interface()
 {
     fn=$1
     nm=$2
-    ifn=../AMD64_LINUX/${nm}.i3
+    ifn=${DERIV}/${nm}.i3
     cat > ${ifn} <<EOF
 INTERFACE ${nm};
 
@@ -41,7 +45,7 @@ EOF
 camelize()
 {
     in=$1;
-    echo $in | sed 's/\.dat$//' | sed  -e 's/_\(.\)/\U\1/g' -e 's/^\(.\)/\U\1/'
+    echo $in | sed 's/\.dat$//' | sed  -e 's/_\(.\)/\U\1/g' -e 's/^\(.\)/Rdl\U\1/'
 }
 
 mk_e_fragment()
@@ -50,7 +54,7 @@ mk_e_fragment()
     base=$2
     nm=$3
     echo mk_e_fragment $fn $base $nm
-    efn=../AMD64_LINUX/${base}.e.fragment
+    efn=${DERIV}/${base}.e.fragment
     cat  > ${efn} <<EOF
 
 IMPORT ${nm};
@@ -70,12 +74,12 @@ cat rdl.t.[0-9] > rdl.t
 
 for file in *.dat; do
   base=`basename ${file} .dat`
-  cat ${file} | awk '{printf("  %-23s T_%-15s\n", $1, toupper($1))}' > rdl.y.${base}
+  cat ${file} | awk '{printf("  %-23s T_%-15s\n", $1, toupper($1))}' > ${DERIV}/rdl.y.${base}
   intf=`camelize ${file}`
   make_interface ${file} ${intf}
   mk_e_fragment ${file} ${base} ${intf}
 done
 
-cpp -P -I../AMD64_LINUX rdlParseExt.ee -o rdlParseExt.e
+cpp -P -I${DERIV} rdlParseExt.ee -o rdlParseExt.e
 
 
