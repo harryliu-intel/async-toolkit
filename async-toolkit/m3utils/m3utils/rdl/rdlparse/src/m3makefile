@@ -6,8 +6,12 @@ Token("rdl")
 Lexer("rdl","rdl")
 Parser("rdl","rdl")
 
+extended("rdlLexExt")
+extended("rdlParseExt")
+
 %library("rdlparse")
 
+derived_interface ("PredefProperty", VISIBLE)
 implementation ("Main")
 
 program ("parserdl")

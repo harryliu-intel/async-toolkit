@@ -66,7 +66,8 @@ property_assign:
   postP                    post_property_assign ';'
 
 property_definition:
-  x                        T_PROPERTY T_mID '{' property_body '}' ';'
+  initial                  T_PROPERTY T_mID '{' property_body '}' ';'
+  redefinition             T_PROPERTY T_mPROPERTY '{' property_body '}' ';'
 
 id:
   id                       T_mID
@@ -184,7 +185,7 @@ instance_ref_elem:
 
 property:
   predefP                 predef_property
-  userdefP                T_mID
+  userdefP                T_mPROPERTY
 
 predef_property:
   name                    T_NAME           

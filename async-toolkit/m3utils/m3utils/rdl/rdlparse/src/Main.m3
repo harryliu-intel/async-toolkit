@@ -1,11 +1,11 @@
 MODULE Main;
-IMPORT rdlLex;
-IMPORT rdlParse;
+IMPORT rdlLexExt;
+IMPORT rdlParseExt;
 IMPORT Stdio;
 
 VAR
-  lexer := NEW(rdlLex.T);
-  parser := NEW(rdlParse.T);
+  lexer := NEW(rdlLexExt.T);
+  parser := NEW(rdlParseExt.T);
   rd := Stdio.stdin;
 BEGIN
   EVAL lexer.setRd(rd);

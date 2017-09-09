@@ -10,3 +10,4 @@
 %token T_mINC
 %token T_mMOD
 %token T_mDREF
+%token T_mPROPERTY
