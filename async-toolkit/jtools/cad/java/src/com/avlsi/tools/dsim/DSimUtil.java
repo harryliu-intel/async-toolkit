@@ -93,7 +93,6 @@ public class DSimUtil {
 
         // Initialize nodes
         //dsim.clearEventQueues();
-        if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
         if (GND!=null) GND.setValueAndEnqueueDependents(Node.VALUE_0);
         if (Vdd!=null) Vdd.setValueAndEnqueueDependents(Node.VALUE_1);
 
@@ -102,10 +101,16 @@ public class DSimUtil {
             if (resetNode == null) resetNode = ENV_RESET;
                
             // Reset and cycle
+            if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
             if (resetNode!=null) resetNode.scheduleImmediate(Node.VALUE_0);
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
             initResetNodes(init);
             dsim.cycle(-1);
+
+            // Restore DSim state
+            dsim.setWarn(warn_state);
+            dsim.setError(error_state);
+            dsim.setRandom(random_state);
 
             // Turn on error checking & reporting, then exit reset
             Set unstabSet = dsim.getNodesWithValue(Node.VALUE_U);
@@ -114,8 +119,6 @@ public class DSimUtil {
                     "Nodes unstable during reset:");
                 printNodeSet(unstabSet);
             }
-            dsim.setWarn(true);
-            dsim.setError(true);
 
             // de-assert _RESET
             if (resetNode!=null) {
@@ -133,10 +136,6 @@ public class DSimUtil {
                 "Unknown reset protocol specified: "+protocol);
         }
 
-        // Restore DSim state
-        dsim.setWarn(warn_state);
-        dsim.setError(error_state);
-        dsim.setRandom(random_state);
     }
 
     /**
