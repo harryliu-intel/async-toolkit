@@ -149,6 +149,10 @@ public class DSimUtil {
         return n;
     }
 
+    public static Node getStartNode() {
+        return DSim.get().findNode(START_NAME);
+    }
+
     /**
      * Performs repeated random-timing reset tests.  This test is intended
      * to catch timing races involving reset (such as the one that killed

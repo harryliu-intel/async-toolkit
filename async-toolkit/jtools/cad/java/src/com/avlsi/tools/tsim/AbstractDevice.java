@@ -1294,8 +1294,14 @@ public abstract class AbstractDevice implements Runnable, Startable
         Wait wait = new Wait(null, null, new Node[]{resetNode}, null);
         wait.select();
         if (DEBUG) {
-            System.err.println(getFullname()+" Starting Awakening.  Time is " + DSim.get().getTime());
-
+            System.err.println(getFullname()+" Starting Awakening RESET.  Time is " + DSim.get().getTime());
+        }
+        Node startNode = DSimUtil.getStartNode();
+        if (startNode != null) {
+            new Wait(null, null, new Node[]{startNode}, null).select();
+            if (DEBUG) {
+                System.err.println(getFullname()+" Starting Awakening START.  Time is " + DSim.get().getTime());
+            }
         }
         new WakeAt(DSim.get().getTime() + 00, this).sleepTil();
         if (DEBUG) {

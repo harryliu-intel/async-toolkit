@@ -610,11 +610,7 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
             printUnstableException();
         }
 
-        wait = new Wait(null, null, new Node[]{resetNode}, null);
-        wait.select();
-        new WakeAt(DSim.get().getTime() + 00, this).sleepTil();
-
-        return;
+        super.waitForReset();
     }
 
     protected void printUnstableException() {
