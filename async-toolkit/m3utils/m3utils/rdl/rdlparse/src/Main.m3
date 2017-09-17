@@ -8,6 +8,7 @@ IMPORT Debug;
 IMPORT IO;
 IMPORT RdlPropertyBody;
 FROM Fmt IMPORT F;
+IMPORT TextSetDef;
 
 CONST
   Usage = "[--print-user-def-properties]";
@@ -16,8 +17,8 @@ PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
 VAR
-  lexer  := NEW(rdlLexExt.T);
-  parser := NEW(rdlParseExt.T);
+  lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
+  parser := NEW(rdlParseExt.T, lexer := lexer);
   rd     := Stdio.stdin;
   printUserDefProperties : BOOLEAN;
 BEGIN

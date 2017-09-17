@@ -2,31 +2,33 @@
 %import rdlTok rdlLex
 
 %module {
-IMPORT TextSetDef, TextSet;
+IMPORT TextSet;
 IMPORT Debug;
 VAR doDebug := Debug.DebugThis("rdlLexExt");
 
-VAR userDefProperties := NEW(TextSetDef.T).init();
+PROCEDURE RegisterUserdefProperty(lexer : T; txt : TEXT) =
+  BEGIN EVAL lexer.userDefProperties.insert(txt) END RegisterUserdefProperty;
 
-PROCEDURE RegisterUserdefProperty(txt : TEXT) =
-  BEGIN EVAL userDefProperties.insert(txt) END RegisterUserdefProperty;
-
-PROCEDURE GetUserDefProperties() : TextSet.T =
-  BEGIN RETURN userDefProperties END GetUserDefProperties;
+PROCEDURE GetUserDefProperties(lexer : T) : TextSet.T =
+  BEGIN RETURN lexer.userDefProperties END GetUserDefProperties;
 }
 
 %interface {
 IMPORT TextSet;
 
-PROCEDURE RegisterUserdefProperty(txt : TEXT);
+PROCEDURE RegisterUserdefProperty(lexer : T; txt : TEXT);
 
-PROCEDURE GetUserDefProperties() : TextSet.T;
+PROCEDURE GetUserDefProperties(lexer : T) : TextSet.T;
+}
+
+%public {
+  userDefProperties : TextSet.T;
 }
 
 T_mID: { val : TEXT }
 T_mPROPERTY: { val : TEXT }
 
-T_mID {IF userDefProperties.member($) THEN
+T_mID {IF self.userDefProperties.member($) THEN
          IF doDebug THEN Debug.Out("Returning user defined property " & $) END;
          RETURN NEW(T_mPROPERTY, val := $)
        ELSE

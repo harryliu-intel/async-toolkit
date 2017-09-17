@@ -102,6 +102,7 @@ IMPORT TextPropertyBodyTbl;
 %public {
     val : RdlRootElemList.T;
     userDefProperties : TextPropertyBodyTbl.T := NIL;
+    lexer : rdlLexExt.T;
 }
 
 #include "predef_property.e.fragment"
@@ -311,7 +312,7 @@ property_definition: { val : RdlPropertyDef.T }
     IF doDebug THEN
       Debug.Out("registering user defined property " & $1)
     END;
-    rdlLexExt.RegisterUserdefProperty($1);
+    rdlLexExt.RegisterUserdefProperty(self.lexer, $1);
     IF self.userDefProperties = NIL THEN
       self.userDefProperties := NEW(TextPropertyBodyTbl.Default).init();
     END;
