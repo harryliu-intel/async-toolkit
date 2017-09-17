@@ -1,5 +1,7 @@
 INTERFACE RdlPropertyAssign;
-TYPE T = ROOT BRANDED OBJECT END;
+IMPORT RdlRootElem;
+
+TYPE T = RdlRootElem.T BRANDED OBJECT END;
 
 CONST Brand = "RdlPropertyAssign";
 

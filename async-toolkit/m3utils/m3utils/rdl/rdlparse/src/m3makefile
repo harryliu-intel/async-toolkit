@@ -66,6 +66,9 @@ interface ("RdlConcatElem")
 list ("RdlConcatElem","RdlConcatElem")
 
 interface ("RdlProperty")
+interface ("RdlPropertyDef")
+interface ("RdlRootElem")
+list ("RdlRootElem", "RdlRootElem")
 
 implementation ("Main")
 

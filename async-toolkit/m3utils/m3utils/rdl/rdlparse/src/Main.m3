@@ -6,6 +6,7 @@ IMPORT ParseParams;
 IMPORT Params;
 IMPORT Debug;
 IMPORT IO;
+IMPORT RdlPropertyBody;
 FROM Fmt IMPORT F;
 
 CONST
@@ -42,10 +43,11 @@ BEGIN
   (* generate output: *)
   IF printUserDefProperties THEN
     VAR
-      iter := rdlLexExt.GetUserDefProperties().iterate();
+      iter := parser.userDefProperties.iterate();
       p : TEXT;
+      q : RdlPropertyBody.T;
     BEGIN
-      WHILE iter.next(p) DO
+      WHILE iter.next(p, q) DO
         IO.Put(F("USER-DEF-PROPERTY %s\n", p))
       END
     END

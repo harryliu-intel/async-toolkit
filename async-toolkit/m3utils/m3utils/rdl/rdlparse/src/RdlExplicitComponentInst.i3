@@ -1,8 +1,9 @@
 INTERFACE RdlExplicitComponentInst;
 IMPORT RdlOrigin, RdlComponentInstElemList;
+IMPORT RdlRootElem;
 
 TYPE
-  T = OBJECT
+  T = RdlRootElem.T OBJECT
     haveOrigin : BOOLEAN;
     origin : RdlOrigin.T;
     alias : TEXT;

@@ -43,12 +43,14 @@ IMPORT RdlProperty;
 IMPORT RdlPropertyAssignList;
 IMPORT RdlPropertyAssignRhs;
 IMPORT RdlPropertyRvalueConstant;
+IMPORT RdlPropertyDef;
+IMPORT RdlRootElem;
+IMPORT RdlRootElemList;
 
 IMPORT TextPropertyBodyTbl;
 
 VAR doDebug := Debug.DebugThis("rdlParseExt");
 
-VAR userDefProperties := NEW(TextPropertyBodyTbl.Default).init();
 }
 
 %interface {
@@ -88,9 +90,18 @@ IMPORT RdlInstanceRef;
 IMPORT RdlInstanceRefElem;
 IMPORT RdlInstanceRefElemSeq;
 IMPORT RdlProperty;
-IMPORT RdlPropertyAssignList;
 IMPORT RdlPropertyAssignRhs;
 IMPORT RdlPropertyRvalueConstant;
+IMPORT RdlPropertyDef;
+IMPORT RdlRootElem;
+IMPORT RdlRootElemList;
+
+IMPORT TextPropertyBodyTbl;
+}
+
+%public {
+    val : RdlRootElemList.T;
+    userDefProperties : TextPropertyBodyTbl.T := NIL;
 }
 
 #include "predef_property.e.fragment"
@@ -100,6 +111,20 @@ IMPORT RdlPropertyRvalueConstant;
 #include "property_rvalue_keyword.e.fragment"
 #include "component_def_type.e.fragment"
 #include "origin.e.fragment"
+
+root:
+  list   { self.val := $1 }
+
+root_elem_list: { val : RdlRootElemList.T }
+  elem { $$ := RdlRootElemList.List1($1) }
+  list { $$ := RdlRootElemList.Cons($1, $2) }
+
+root_elem: { val : RdlRootElem.T }
+  component                { $$ := $1 }
+  enum                     { $$ := $1 }
+  explicit_component       { $$ := $1 }
+  property_assign          { $$ := $1 }
+  property_def             { $$ := $1 }
 
 property_rvalue_constant: { val : RdlPropertyRvalueConstant.T }
   num { $$ := NEW(RdlPropertyRvalueConstant.Num, num := $1) }
@@ -281,15 +306,22 @@ enum_property_assign: { val : RdlEnumPropertyAssign.T }
   name   { $$ := NEW(RdlEnumPropertyAssign.Name, str := $1) }
   desc   { $$ := NEW(RdlEnumPropertyAssign.Desc, str := $1) }
 
-property_definition:
+property_definition: { val : RdlPropertyDef.T }
   initial               {
     IF doDebug THEN
       Debug.Out("registering user defined property " & $1)
     END;
     rdlLexExt.RegisterUserdefProperty($1);
-    EVAL userDefProperties.put($1, $2);
+    IF self.userDefProperties = NIL THEN
+      self.userDefProperties := NEW(TextPropertyBodyTbl.Default).init();
+    END;
+    EVAL self.userDefProperties.put($1, $2);
+    $$ := NEW(RdlPropertyDef.T, id := $1, body := $2)
 }
-  redefinition { EVAL userDefProperties.put($1, $2) }
+  redefinition {
+               EVAL self.userDefProperties.put($1, $2);
+               $$ := NEW(RdlPropertyDef.T, id := $1, body := $2);
+}       
 
 component_def: { val: RdlComponentDef.T }
   id_anon  { $$ := NEW(RdlComponentDef.T, type := $1, id := $2, list := $3, anonInstElems := $4) }

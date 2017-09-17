@@ -2,7 +2,7 @@ INTERFACE RdlPropertyBody;
 IMPORT RdlPropertyType, RdlPropertyComponentDisjunction, RdlPropertyDefault;
 
 TYPE
-  T = OBJECT
+  T = BRANDED Brand OBJECT
     type  : RdlPropertyType.T;
     usage : RdlPropertyComponentDisjunction.T;
     def   : RdlPropertyDefault.T;
