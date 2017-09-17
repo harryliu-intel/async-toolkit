@@ -3,9 +3,8 @@
 MODULE BigInt;
 IMPORT CardSeq, Integer;
 IMPORT CharSeq;
-IMPORT TextWr;
-IMPORT Wr, Thread;
 IMPORT Word;
+IMPORT Wx;
 
 CONST Base = 1000; (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
 
@@ -409,14 +408,13 @@ PROCEDURE Neg(a : T) : T =
   BEGIN RETURN NEW(T, rep := a.rep, sign := -a.sign) END Neg;
 
 PROCEDURE Format(a : T; base : CARDINAL) : TEXT = 
-  <* FATAL Wr.Failure, Thread.Alerted *>
   CONST
     HexChars = ARRAY OF CHAR{'0','1','2','3','4','5','6','7','8','9',
                              'A','B','C','D','E','F'};
   VAR
     c := NEW(CharSeq.T).init();
     s := Sign(a);
-    wr := NEW(TextWr.T).init();
+    wx := Wx.New();
     MyBase := New(base);
   BEGIN
     <* ASSERT base <= 16 *>
@@ -431,13 +429,22 @@ PROCEDURE Format(a : T; base : CARDINAL) : TEXT =
         c.addlo(HexChars[d.rep.a[0]]);
       END
     END;
-    IF s = -1 THEN c.addlo('-') END;
 
+    IF c.size() = 0 THEN
+      CASE s OF
+        0, 1 => RETURN "0"
+      |
+        -1   => RETURN "-0"
+      END
+    END;
+      
+    IF s = -1 THEN c.addlo('-') END;
+    
     FOR i := 0 TO c.size() - 1 DO
-      Wr.PutChar(wr, c.get(i))
+      Wx.PutChar(wx, c.get(i))
     END;
 
-    RETURN TextWr.ToText(wr)
+    RETURN Wx.ToText(wx)
   END Format;
 
 PROCEDURE Hash(a : T) : Word.T = 

@@ -81,10 +81,14 @@ property_body:
   pb5                      property_default property_usage property_type
 
 property_type:
-  string                   T_TYPE T_EQ property_string_type ';'
-  number                   T_TYPE T_EQ property_number_type ';'
-  boolean                  T_TYPE T_EQ property_boolean_type ';'
-  ref                      T_TYPE T_EQ property_ref_type ';'
+  x                        T_TYPE T_EQ property_type_spec ';'
+
+property_type_spec:
+  string                   property_string_type 
+  number                   property_number_type 
+  boolean                  property_boolean_type
+  ref                      property_ref_type 
+
 
 property_usage:
   x                        T_COMPONENT T_EQ property_component_disjunction ';'

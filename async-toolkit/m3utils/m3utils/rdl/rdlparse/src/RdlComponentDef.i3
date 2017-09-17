@@ -6,5 +6,6 @@ IMPORT RdlRootElem;
 TYPE T <: RdlRootElem.T;
 
 CONST Brand = "RdlComponentDef";
+      Equal : PROCEDURE (a, b : T): BOOLEAN = NIL;
       
 END RdlComponentDef.

@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_util")
 import ("parserlib")
+import ("parseparams")
 
 Token("rdl")
 Lexer("rdl","rdl")
@@ -17,12 +18,54 @@ derived_interface ("RdlPropertyComponent", VISIBLE)
 derived_interface ("RdlPropertyRvalueKeyword", VISIBLE)
 derived_interface ("RdlComponentDefType", VISIBLE)
 derived_interface ("RdlOrigin",VISIBLE)
+derived_interface ("RdlPropertyRefType",VISIBLE)
 
 interface ("RdlRootElem")
 interface ("RdlComponentDef")
+list ("RdlComponentDef", "RdlComponentDef")
 interface ("RdlEnumDef")
 interface ("RdlComponentDefClass")
 interface ("RdlPropertyComponentDisjunction")
+interface ("RdlPropertyDefault")
+interface ("RdlPropertyType")
+interface ("RdlPropertyBody")
+
+interface ("RdlStr")
+Module    ("RdlNum")
+
+table ("TextPropertyBody", "Text", "RdlPropertyBody")
+
+interface ("RdlEnumPropertyAssign")
+list ("RdlEnumPropertyAssign", "RdlEnumPropertyAssign")
+
+interface ("RdlPropertyAssign")
+interface ("RdlPropertyAssignClass")
+list ("RdlPropertyAssign", "RdlPropertyAssign")
+interface ("RdlEnumEntry")
+list ("RdlEnumEntry","RdlEnumEntry")
+interface ("RdlEnumDef")
+interface ("RdlArray")
+interface ("RdlComponentInstElem")
+list ("RdlComponentInstElem", "RdlComponentInstElem")
+
+interface ("RdlComponentDefElem")
+list ("RdlComponentDefElem", "RdlComponentDefElem")
+interface ("RdlAnonComponentInstElems")
+
+interface ("RdlExplicitComponentInst")
+
+interface ("RdlExplicitPropertyAssign")
+interface ("RdlPostPropertyAssign")
+interface ("RdlInstanceRef")
+interface ("RdlPropertyAssignRhs")
+
+interface ("RdlInstanceRefElem")
+sequence ("RdlInstanceRefElem", "RdlInstanceRefElem")
+interface ("RdlPropertyRvalueConstant")
+interface ("RdlConcatElem")
+list ("RdlConcatElem","RdlConcatElem")
+
+interface ("RdlProperty")
 
 implementation ("Main")
 

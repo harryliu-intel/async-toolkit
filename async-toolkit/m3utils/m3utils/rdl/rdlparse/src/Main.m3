@@ -2,12 +2,52 @@ MODULE Main;
 IMPORT rdlLexExt;
 IMPORT rdlParseExt;
 IMPORT Stdio;
+IMPORT ParseParams;
+IMPORT Params;
+IMPORT Debug;
+IMPORT IO;
+FROM Fmt IMPORT F;
+
+CONST
+  Usage = "[--print-user-def-properties]";
+
+PROCEDURE DoUsage() : TEXT =
+  BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
 VAR
-  lexer := NEW(rdlLexExt.T);
+  lexer  := NEW(rdlLexExt.T);
   parser := NEW(rdlParseExt.T);
-  rd := Stdio.stdin;
+  rd     := Stdio.stdin;
+  printUserDefProperties : BOOLEAN;
 BEGIN
+  (* command-line args: *)
+  TRY
+    WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
+      printUserDefProperties :=
+          pp.keywordPresent("--print-user-def-properties");
+
+      pp.skipParsed();
+      pp.finish()
+    END
+  EXCEPT
+    ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
+  END;
+
   EVAL lexer.setRd(rd);
+  (* set lexer input *)
+  
   EVAL parser.setLex(lexer).parse();
+  (* set parser lexer and call the parse method *)
+
+  (* generate output: *)
+  IF printUserDefProperties THEN
+    VAR
+      iter := rdlLexExt.GetUserDefProperties().iterate();
+      p : TEXT;
+    BEGIN
+      WHILE iter.next(p) DO
+        IO.Put(F("USER-DEF-PROPERTY %s\n", p))
+      END
+    END
+  END
 END Main.

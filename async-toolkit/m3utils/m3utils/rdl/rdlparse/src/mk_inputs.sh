@@ -57,8 +57,6 @@ mk_e_fragment()
     efn=${DERIV}/${base}.e.fragment
     cat  > ${efn} <<EOF
 
-IMPORT ${nm};
-
 ${base}: { val: ${nm}.T }
 EOF
     cat ${fn} | awk "{printf(\"  %-25s { \$\$ := ${nm}.T.%s }\n\", \$1, \$1)}" >> ${efn}

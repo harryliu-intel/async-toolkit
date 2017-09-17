@@ -10,11 +10,45 @@ IMPORT RdlPropertyComponent;
 IMPORT RdlPropertyRvalueKeyword;
 IMPORT RdlComponentDefType;
 IMPORT RdlOrigin;
+IMPORT RdlPropertyRefType;
 
-IMPORT RdlComponentDef;
+IMPORT RdlComponentDef, RdlComponentDefClass;
 IMPORT RdlPropertyComponentDisjunction;
+IMPORT RdlNum;
+IMPORT RdlStr;
+IMPORT RdlPropertyDefault;
+IMPORT RdlPropertyType;
+IMPORT RdlPropertyBody;
+IMPORT RdlEnumPropertyAssign, RdlPropertyAssignClass;
+IMPORT RdlEnumPropertyAssignList;
+IMPORT RdlEnumEntry;
+IMPORT RdlEnumEntryList;
+IMPORT RdlEnumDef;
+IMPORT RdlArray;
+IMPORT RdlComponentInstElem;
+IMPORT RdlComponentInstElemList;
+IMPORT RdlAnonComponentInstElems;
+IMPORT RdlComponentDefElem;
+IMPORT RdlComponentDefElemList;
+IMPORT RdlExplicitComponentInst;
+IMPORT RdlConcatElem;
+IMPORT RdlConcatElemList;
+IMPORT RdlPropertyAssign;
+IMPORT RdlExplicitPropertyAssign;
+IMPORT RdlPostPropertyAssign;
+IMPORT RdlInstanceRef;
+IMPORT RdlInstanceRefElem;
+IMPORT RdlInstanceRefElemSeq;
+IMPORT RdlProperty;
+IMPORT RdlPropertyAssignList;
+IMPORT RdlPropertyAssignRhs;
+IMPORT RdlPropertyRvalueConstant;
+
+IMPORT TextPropertyBodyTbl;
 
 VAR doDebug := Debug.DebugThis("rdlParseExt");
+
+VAR userDefProperties := NEW(TextPropertyBodyTbl.Default).init();
 }
 
 %interface {
@@ -24,29 +58,280 @@ IMPORT RdlPropertyComponent;
 IMPORT RdlPropertyRvalueKeyword;
 IMPORT RdlComponentDefType;
 IMPORT RdlOrigin;
+IMPORT RdlPropertyRefType;
 
 IMPORT RdlComponentDef;
 IMPORT RdlPropertyComponentDisjunction;
+IMPORT RdlNum;
+IMPORT RdlStr;
+IMPORT RdlPropertyDefault;
+IMPORT RdlPropertyType;
+IMPORT RdlPropertyBody;
+IMPORT RdlEnumPropertyAssign;
+IMPORT RdlEnumPropertyAssignList;
+IMPORT RdlEnumEntry;
+IMPORT RdlEnumEntryList;
+IMPORT RdlEnumDef;
+IMPORT RdlArray;
+IMPORT RdlComponentInstElem;
+IMPORT RdlComponentInstElemList;
+IMPORT RdlAnonComponentInstElems;
+IMPORT RdlComponentDefElem;
+IMPORT RdlComponentDefElemList;
+IMPORT RdlExplicitComponentInst;
+IMPORT RdlConcatElem;
+IMPORT RdlConcatElemList;
+IMPORT RdlPropertyAssign;
+IMPORT RdlExplicitPropertyAssign;
+IMPORT RdlPostPropertyAssign;
+IMPORT RdlInstanceRef;
+IMPORT RdlInstanceRefElem;
+IMPORT RdlInstanceRefElemSeq;
+IMPORT RdlProperty;
+IMPORT RdlPropertyAssignList;
+IMPORT RdlPropertyAssignRhs;
+IMPORT RdlPropertyRvalueConstant;
 }
 
 #include "predef_property.e.fragment"
 #include "property_modifier.e.fragment"
+#include "property_ref_type.e.fragment"
 #include "property_component.e.fragment"
 #include "property_rvalue_keyword.e.fragment"
 #include "component_def_type.e.fragment"
 #include "origin.e.fragment"
 
+property_rvalue_constant: { val : RdlPropertyRvalueConstant.T }
+  num { $$ := NEW(RdlPropertyRvalueConstant.Num, num := $1) }
+  str { $$ := NEW(RdlPropertyRvalueConstant.Str, str := $1) }
+  keyword { $$ := NEW(RdlPropertyRvalueConstant.Keyword, kw := $1) }
+  
+property_assign_rhs: { val : RdlPropertyAssignRhs.T }
+  const { $$ := NEW(RdlPropertyAssignRhs.Const, const := $1) }
+  enum { $$ := NEW(RdlPropertyAssignRhs.Enum, enum := $1) }
+  iref { $$ := NEW(RdlPropertyAssignRhs.Iref, iref := $1) }
+  concat { $$ := NEW(RdlPropertyAssignRhs.Concat, concat := $1) }
+  
+concat: { val : RdlConcatElemList.T }
+  x { $$ := $1 }
+
+concat_elem_list: { val : RdlConcatElemList.T }
+  single { $$ := RdlConcatElemList.List1($1) }
+  list { $$ := RdlConcatElemList.Cons($1, $2) }
+
+concat_elem: { val: RdlConcatElem.T }
+  iref { $$ := NEW(RdlConcatElem.Iref, iref := $1) }
+  num { $$ := NEW(RdlConcatElem.Num, num := $1) }
+
+property_assign: { val : RdlPropertyAssign.T }
+  defaultP { $$ := NEW(RdlPropertyAssignClass.Explicit, x := $1) }
+  explicitP { $$ := NEW(RdlPropertyAssignClass.Explicit, x := $1) }
+  defTrueP { $$ := NEW(RdlPropertyAssignClass.Explicit,
+                           x := NEW(RdlExplicitPropertyAssign.T,
+                                    haveModifier := FALSE,
+                                    default := FALSE,
+                                    property := $1,
+                                    rhs := NEW(RdlPropertyAssignRhs.Const,
+                                        const := NEW(RdlPropertyRvalueConstant.Keyword,
+                                              kw := RdlPropertyRvalueKeyword.T.true)))) }
+  postP  { $$ := NEW(RdlPropertyAssignClass.Post, x := $1) }                                            
+default_property_assign: { val : RdlExplicitPropertyAssign.T }
+  x { $$:= $1; $$.val.default := TRUE; $$.val.haveModifier := FALSE }
+
+explicit_property_assign: { val : RdlExplicitPropertyAssign.T }
+  mod { $$ := NEW(RdlExplicitPropertyAssign.T, haveModifier := TRUE, modifier := $1, property := $2, rhs := NIL) }
+  eq  { $$ := NEW(RdlExplicitPropertyAssign.T, haveModifier := FALSE, property := $1, rhs := $2) }
+
+post_property_assign: { val : RdlPostPropertyAssign.T }
+  x { $$ := NEW(RdlPostPropertyAssign.T, instanceRef := $1, rhs := $2) }
+
+instance_ref: { val : RdlInstanceRef.T }
+  list { $$ := NEW(RdlInstanceRef.T, dotted := $1, property := NIL) }
+  listprop { $$ := NEW(RdlInstanceRef.T, dotted := $1, property := $2) }
+  
+dotted_instance_ref_list: { val : RdlInstanceRefElemSeq.T }
+  single { $$ := NEW(RdlInstanceRefElemSeq.T).init(); $$.val.addlo($1) }
+  list { $$ := $2; $2.val.addlo($1) }
+  
+instance_ref_elem: { val : RdlInstanceRefElem.T }
+  id { $$ := NEW(RdlInstanceRefElem.Id, id := $1) }
+  brack { $$ := NEW(RdlInstanceRefElem.Brack, id := $1, idx := $2) }
+
+property: { val : RdlProperty.T }
+  predefP { $$ := NEW(RdlProperty.Predef, x := $1) }
+  userdefP { $$ := NEW(RdlProperty.Userdef, nm := $1) }
+  
+alias_defn: { val : TEXT }
+  single { $$ := $1 }
+
+component_def_elem: { val : RdlComponentDefElem.T }
+  component_def { $$ := NEW(RdlComponentDefElem.ComponentDef, componentDef := $1) }
+  component_inst { $$ := NEW(RdlComponentDefElem.ComponentInst, componentInst := $1) }
+  property_assign { $$ := NEW(RdlComponentDefElem.PropertyAssign) }
+  enum_def { $$ := NEW(RdlComponentDefElem.EnumDef, enumDef := $1) }
+  
+component_def_lst: { val : RdlComponentDefElemList.T }
+  single { $$ := RdlComponentDefElemList.List1($1) }
+  lst    { $$ := RdlComponentDefElemList.Cons($1, $2) }
+  
+component_inst_elem_list: { val : RdlComponentInstElemList.T }
+  single { $$ := RdlComponentInstElemList.List1($1) }
+  list   { $$ := RdlComponentInstElemList.Cons($1, $2) }
+
+opt_anonymous_inst_elems: { val : RdlAnonComponentInstElems.T }
+  yes { $$ := $1 }
+  no  { $$ := NIL }
+  
+anonymous_component_inst_elems: { val : RdlAnonComponentInstElems.T; }
+  x { $$ := NEW(RdlAnonComponentInstElems.T, external := $1, list := $2) }
+  
+opt_eq_num: { val : RdlNum.T }
+  eq_num { $$ := $1 }
+  empty  { $$ := NIL }
+  
+opt_at_num: { val : RdlNum.T }
+  at_num { $$ := $1 }
+  empty  { $$ := NIL }
+  
+opt_inc_num: { val : RdlNum.T }
+  inc_num { $$ := $1 }
+  empty  { $$ := NIL }
+  
+opt_mod_num: { val : RdlNum.T }
+  mod_num { $$ := $1 }
+  empty  { $$ := NIL }
+
+explicit_component_inst: { val : RdlExplicitComponentInst.T }
+  none { $$ := NEW(RdlExplicitComponentInst.T,
+                   haveOrigin := FALSE,
+                   alias := NIL,
+                   id := $1,
+                   list := $2) }
+  origin { $$ := NEW(RdlExplicitComponentInst.T,
+                   haveOrigin := TRUE,
+                   origin := $1,
+                   alias := NIL,
+                   id := $2,
+                   list := $3) }
+  alias { $$ := NEW(RdlExplicitComponentInst.T,
+                   haveOrigin := FALSE,
+                   alias := $1,
+                   id := $2,
+                   list := $3) }
+  origin_alias { $$ := NEW(RdlExplicitComponentInst.T,
+                   haveOrigin := TRUE,
+                   origin := $1,
+                   alias := $2,
+                   id := $3,
+                   list := $4) }
+                   
+component_inst_list: { val : RdlComponentInstElemList.T }
+  single { $$ := RdlComponentInstElemList.List1($1) }
+  list   { $$ := RdlComponentInstElemList.Cons($1, $2) }
+
+component_inst_elem: { val : RdlComponentInstElem.T }
+  x { $$ := NEW(RdlComponentInstElem.T,
+                id := $1,
+                array := $2,
+                eq := $3,
+                at := $4,
+                inc := $5,
+                mod := $6) }
+                
+array: { val : RdlArray.T }
+  single { $$ := NEW(RdlArray.Single, n := $1) }
+  range  { $$ := NEW(RdlArray.Range,  frm := $1, to := $2) }
+
+opt_array: { val : RdlArray.T }
+  array { $$ := $1 }
+  empty { $$ := NIL }
+  
+opt_external: { val : BOOLEAN }
+  yes { $$ := TRUE }
+  no  { $$ := FALSE }
+  
+id: { val : TEXT }
+  id { $$ := $1 }
+
+enum_entry: { val : RdlEnumEntry.T }
+  x      { $$ := NEW(RdlEnumEntry.T,
+                     id := $1,
+                     num := $2,
+                     properties := $3) }
+
+enum_def: { val : RdlEnumDef.T }
+  x    { $$ := NEW(RdlEnumDef.T, id := $1, body := $2) }
+  
+enum_body: { val : RdlEnumEntryList.T }
+  x { $$ := $1 }
+
+enum_entry_seq: { val : RdlEnumEntryList.T }
+  empty { $$ := NIL }
+  list  { $$ := RdlEnumEntryList.Cons($1, $2) }
+
+opt_enum_property_assign_list: { val : RdlEnumPropertyAssignList.T }
+  empty  { $$ := NIL }
+  x      { $$ := $1 }
+
+enum_property_assign_list: { val : RdlEnumPropertyAssignList.T }
+  single { $$ := RdlEnumPropertyAssignList.List1($1) }
+  list   { $$ := RdlEnumPropertyAssignList.Cons($1, $2) }  
+
+enum_property_assign: { val : RdlEnumPropertyAssign.T }
+  name   { $$ := NEW(RdlEnumPropertyAssign.Name, str := $1) }
+  desc   { $$ := NEW(RdlEnumPropertyAssign.Desc, str := $1) }
 
 property_definition:
   initial               {
     IF doDebug THEN
       Debug.Out("registering user defined property " & $1)
     END;
-    rdlLexExt.RegisterUserdefProperty($1)
+    rdlLexExt.RegisterUserdefProperty($1);
+    EVAL userDefProperties.put($1, $2);
 }
+  redefinition { EVAL userDefProperties.put($1, $2) }
 
 component_def: { val: RdlComponentDef.T }
+  id_anon  { $$ := NEW(RdlComponentDef.T, type := $1, id := $2, list := $3, anonInstElems := $4) }
+  noid_anon  { $$ := NEW(RdlComponentDef.T, type := $1, id := NIL, list := $2, anonInstElems := $3) }
 
 property_component_disjunction: { val : RdlPropertyComponentDisjunction.T }
-  single { $$ := RdlPropertyComponentDisjunction.T { $1 } }
-  list   { $$ := RdlPropertyComponentDisjunction.T { $1 } + $2 }            
+  single  { $$ := RdlPropertyComponentDisjunction.T { $1 } }
+  list    { $$ := RdlPropertyComponentDisjunction.T { $1 } + $2 }
+
+property_usage: { val : RdlPropertyComponentDisjunction.T }
+  x       { $$ := $1 }
+
+num: { val : RdlNum.T }
+  x       { $$ := NEW(RdlNum.T).init($1) }
+
+property_default: { val : RdlPropertyDefault.T }
+  str     { $$ := NEW(RdlPropertyDefault.Str, str := $1) };
+  num     { $$ := NEW(RdlPropertyDefault.Num, num := $1) };
+  true    { $$ := NEW(RdlPropertyDefault.Boolean, val := TRUE) };
+  false   { $$ := NEW(RdlPropertyDefault.Boolean, val := FALSE) };
+
+opt_property_default: { val : RdlPropertyDefault.T }
+  x       { $$ := $1 }
+  empty   { $$ := NIL }
+
+str: { val : RdlStr.T }
+  x       { $$ := $1 }
+
+property_type_spec: { val : RdlPropertyType.T }
+  string  { $$ := NEW(RdlPropertyType.String) }
+  number  { $$ := NEW(RdlPropertyType.Number) }
+  boolean { $$ := NEW(RdlPropertyType.Boolean) }
+  ref     { $$ := NEW(RdlPropertyType.Ref, to := $1) }
+
+property_type: { val : RdlPropertyType.T }
+  x       { $$ := $1 } 
+
+property_body: { val : RdlPropertyBody.T }
+  pb0     { $$ := NEW(RdlPropertyBody.T, type := $1, usage := $2, def := $3) }
+  pb1     { $$ := NEW(RdlPropertyBody.T, type := $1, usage := $3, def := $2) }
+  pb2     { $$ := NEW(RdlPropertyBody.T, type := $2, usage := $1, def := $3) }
+  pb3     { $$ := NEW(RdlPropertyBody.T, type := $3, usage := $1, def := $2) }
+  pb4     { $$ := NEW(RdlPropertyBody.T, type := $2, usage := $3, def := $1) }
+  pb5     { $$ := NEW(RdlPropertyBody.T, type := $3, usage := $2, def := $1) }
+  
