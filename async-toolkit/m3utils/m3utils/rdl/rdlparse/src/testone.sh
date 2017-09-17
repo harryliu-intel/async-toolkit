@@ -16,12 +16,12 @@ file=${WD}/$1
 
 	echo ${file}
 
-	${SVPP} ${PATHSPEC} < ${file} > intermediate01.rdl
+	time ${SVPP} ${PATHSPEC} < ${file} > intermediate01.rdl
 
-	${PERLFE} < intermediate01.rdl > intermediate02.rdl
+	time ${PERLFE} < intermediate01.rdl > intermediate02.rdl
 
-	cat intermediate02.rdl | (cd ${WD} ; perl) > intermediate03.rdl
+	cat intermediate02.rdl | (cd ${WD} ; time perl) > intermediate03.rdl
 
-	../AMD64_LINUX/parserdl < intermediate03.rdl | exit
+	time ../AMD64_LINUX/parserdl < intermediate03.rdl | exit
 
 

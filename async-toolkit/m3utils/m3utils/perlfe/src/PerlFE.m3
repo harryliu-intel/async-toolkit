@@ -1,5 +1,5 @@
 MODULE PerlFE EXPORTS Main;
-IMPORT Rd, Wr, Stdio;
+IMPORT Rd, Wr, Stdio, UnsafeRd;
 
 TYPE
   PerlState = { Off, Copy, Var };
@@ -73,7 +73,7 @@ BEGIN
   SwitchState(PerlState.Copy, PerlState.Off);
   TRY
     LOOP
-      c := Rd.GetChar(rd);
+      c := UnsafeRd.FastGetChar(rd);
       doRecover := FALSE;
       keep := FALSE;
       newState := state;
