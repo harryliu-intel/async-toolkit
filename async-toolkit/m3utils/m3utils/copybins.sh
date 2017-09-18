@@ -5,12 +5,12 @@
 mkdir ${TGTDIR} || echo Proceeding...
 
 for p in ${PROGS}; do
-	cp $p ${TGTDIR}
+	cp $p ${TGTDIR} || true
 done
 
 mkdir ${SGTDIR} || echo Proceeding...
 
 for p in ${SCRIPTS}; do
-	cp $p ${SGTDIR}
+	cp $p ${SGTDIR} || true
 done
 
