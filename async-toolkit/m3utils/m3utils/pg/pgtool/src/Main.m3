@@ -40,6 +40,8 @@ IMPORT PgCRIF;
 
 <*FATAL Thread.Alerted*>
 
+CONST MaxBitsAllowed = BITSIZE(Address.T)-1;
+
 CONST TE = Text.Equal;
 
       Usage =
@@ -52,11 +54,11 @@ PROCEDURE DoUsage() : TEXT =
       Params.Get(0) & ": usage: " & Usage
   END DoUsage;
   
-VAR
-  rd : Rd.T;
+VAR rd : Rd.T;
 
-TYPE
-  Field = PgField.T;
+TYPE  Field = PgField.T;
+
+VAR doDebug := Debug.GetLevel() >= 10;
 
 PROCEDURE MapPGnameToNumber(str : TEXT) : CARDINAL =
   BEGIN
@@ -134,16 +136,16 @@ PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT; lenPerByte : CARDINAL) =
     rl : SortedRangeTbl.T;
     len : CARDINAL;
   BEGIN
-    IF Debug.GetLevel() >= 100 THEN
+    IF doDebug AND Debug.GetLevel() >= 100 THEN
       FOR f := FIRST(Field) TO LAST(Field) DO
-        Debug.Out(F("ProcessBuf : %s : %s", PgField.Names[f], b[f]))
+        IF doDebug THEN Debug.Out(F("ProcessBuf : %s : %s", PgField.Names[f], b[f])) END
       END
     END;
 
     FOR f := FIRST(Field) TO LAST(Field) DO
       WITH l = Text.Length(b[f]) DO
         IF l > widest[f] THEN
-          Debug.Out(F("widest %s <- %s", PgField.Names[f], b[f]));
+          IF doDebug THEN Debug.Out(F("widest %s <- %s", PgField.Names[f], b[f])) END;
           widest[f] := l
         END
       END
@@ -159,12 +161,20 @@ PROCEDURE ProcessBuf(b : ARRAY Field OF TEXT; lenPerByte : CARDINAL) =
 
       len := lenU DIV lenPerByte;
       
-      IF Debug.GetLevel() >= 100 THEN
+      IF doDebug AND Debug.GetLevel() >= 100 THEN
         Debug.Out(F("range start %s len %s pg %s",
                     Int16(base),
                     Int16(len),
                     grp))
       END;
+
+      IF base >= addrLim THEN
+        Debug.Error(F("Base address for register %s %s is out of range: limit is %s", Debug.UnNil(b[Field.Name]), Int16(base), Int16(addrLim)))
+      END;
+      IF base+len > addrLim THEN
+        Debug.Error(F("Base+len address for register %s %s is out of range: limit is %s", Debug.UnNil(b[Field.Name]), Int16(base+len), Int16(addrLim)))
+      END;
+
       EVAL MapPGnameToNumber(grp); (* ensure we can map group *)
       INC(totLen, len);
       IF NOT pgs.get(grp, rl) THEN
@@ -263,7 +273,7 @@ PROCEDURE MergeRanges(s : SortedRangeTbl.T) =
   (* modifies merged ranges in allRanges, not in per-PG tables *)
   PROCEDURE Push(ran : Range.T) =
     BEGIN
-      Debug.Out(F("MergeRanges pushing %s", Range.Format(ran)));
+      IF doDebug THEN Debug.Out(F("MergeRanges pushing %s", Range.Format(ran))) END;
       EVAL allRanges.put(ran, ran.group)
     END Push;
   
@@ -276,8 +286,8 @@ PROCEDURE MergeRanges(s : SortedRangeTbl.T) =
     WHILE iter.next(r,dummy) DO
       IF qv AND q.lo + q.len = r.lo THEN
         IF Debug.GetLevel() >= 100 THEN
-          Debug.Out(F("merging ranges : %s <-> %s",
-                      Range.Format(q), Range.Format(r)))
+          IF doDebug THEN Debug.Out(F("merging ranges : %s <-> %s",
+                                      Range.Format(q), Range.Format(r))) END
         END;
           
         q.len := q.len + r.len
@@ -325,18 +335,24 @@ PROCEDURE MergeGroups() =
     nm : TEXT;
     s : SortedRangeTbl.T;
   BEGIN
-    Debug.Out(">>>>>>>>>>>>>>>>>>>>  MERGE GROUPS  >>>>>>>>>>>>>>>>>>>>");
+    IF doDebug THEN
+      Debug.Out(">>>>>>>>>>>>>>>>>>>>  MERGE GROUPS  >>>>>>>>>>>>>>>>>>>>")
+    END;
 
     allRanges := NEW(SortedRangeTbl.Default).init();
     
     WHILE iter.next(nm, s) DO
-      Debug.Out("Merging ranges in group " & nm);
+      IF doDebug THEN
+        Debug.Out("Merging ranges in group " & nm)
+      END;
       MergeRanges(s)
     END;
 
     ScatterRanges();
 
-    Debug.Out("<<<<<<<<<<<<<<<<<<<<  MERGE GROUPS  <<<<<<<<<<<<<<<<<<<<");
+    IF doDebug THEN
+      Debug.Out("<<<<<<<<<<<<<<<<<<<<  MERGE GROUPS  <<<<<<<<<<<<<<<<<<<<")
+    END;
 
   END MergeGroups;
 
@@ -386,10 +402,14 @@ PROCEDURE CheckForOverlaps(checkMerges : BOOLEAN) : BOOLEAN =
     n : REFANY;
     success := TRUE;
   BEGIN
-    Debug.Out(">>>>>>>>>>>>>>>>>>>>  CHECKING FOR OVERLAPS  >>>>>>>>>>>>>>>>>>>>");
+    IF doDebug THEN
+      Debug.Out(">>>>>>>>>>>>>>>>>>>>  CHECKING FOR OVERLAPS  >>>>>>>>>>>>>>>>>>>>")
+    END;
     WHILE iter.next(r, n) DO CheckForOverlap(r) END;
 
-    Debug.Out("<<<<<<<<<<<<<<<<<<<<  CHECKING FOR OVERLAPS  <<<<<<<<<<<<<<<<<<<<");
+    IF doDebug THEN
+      Debug.Out("<<<<<<<<<<<<<<<<<<<<  CHECKING FOR OVERLAPS  <<<<<<<<<<<<<<<<<<<<")
+    END;
     RETURN success
 
   END CheckForOverlaps;
@@ -402,7 +422,9 @@ PROCEDURE AttemptElimOverlaps() =
     overlaps := NEW(SortedRangeTbl.Default).init();
     n : REFANY;
   BEGIN
-    Debug.Out(">>>>>>>>>>>>>>>>>>>>  ELIMINATING OVERLAPS  >>>>>>>>>>>>>>>>>>>>");
+    IF doDebug THEN
+      Debug.Out(">>>>>>>>>>>>>>>>>>>>  ELIMINATING OVERLAPS  >>>>>>>>>>>>>>>>>>>>")
+    END;
     (* invariant : q is beginning of current overlap *)
     WHILE iter.next(r, n) DO
       IF first THEN
@@ -441,16 +463,20 @@ PROCEDURE AttemptElimOverlaps() =
           END;
           p := p.tail
         END;
-        Debug.Out(F("Eliminating overlaps for %s @ %s, %s overlaps %s -> %s",
-                    nm, Int16(q.lo), Fmt.Int(RefList.Length(lst)), Int16(q.len), Int16(max-q.lo)));
+        IF doDebug THEN
+          Debug.Out(F("Eliminating overlaps for %s @ %s, %s overlaps %s -> %s",
+                      nm, Int16(q.lo), Fmt.Int(RefList.Length(lst)), Int16(q.len), Int16(max-q.lo)))
+        END;
         WITH hadIt = allRanges.delete(q,dum) DO <*ASSERT hadIt*> END;
         q.len := max - q.lo
       END
     END;
 
     ScatterRanges();
-    
-    Debug.Out("<<<<<<<<<<<<<<<<<<<<  ELIMINATING OVERLAPS  <<<<<<<<<<<<<<<<<<<<");
+
+    IF doDebug THEN
+      Debug.Out("<<<<<<<<<<<<<<<<<<<<  ELIMINATING OVERLAPS  <<<<<<<<<<<<<<<<<<<<")
+    END;
 
   END AttemptElimOverlaps;
 
@@ -502,12 +528,17 @@ PROCEDURE ExtendIntoGaps() : BOOLEAN =
       lo, lim : Address.T;
       z := new.size();
     BEGIN
-      Debug.Out(F("ExtendRange(%s)", Range.Format(r)));
+      IF doDebug THEN
+        Debug.Out(F("ExtendRange(%s)", Range.Format(r)))
+      END;
       
       haveP := Next(r, -1, p);
       haveN := Next(r, +1, n);
 
-      IF haveN AND haveP THEN
+      IF doDebug THEN
+        Debug.Out(F("ExtendRange haveN=%s haveP=%s", Fmt.Bool(haveN), Fmt.Bool(haveP)))
+      END;
+      IF doDebug AND haveN AND haveP THEN
         Debug.Out(F("ExtendRange(%s) : p = %s n = %s", Range.Format(r), Range.Format(p), Range.Format(n)))
       END;
       
@@ -520,7 +551,12 @@ PROCEDURE ExtendIntoGaps() : BOOLEAN =
       IF haveN THEN
         lim := BestSplit(r.lo + r.len - 1, n.lo)
       ELSE
-        lim := Word.LeftShift(1, bits)
+        lim := Word.LeftShift(1, bits);
+      END;
+
+      IF doDebug THEN
+        Debug.Out(F("ExtendRange: r.lo=%s lo=%s  r.lo+r.len=%s lim=%s",
+                    Int16(r.lo), Int16(lo), Int16(r.lo+r.len), Int16(lim)))
       END;
       <*ASSERT lo  <= r.lo *>
       <*ASSERT lim >= r.lo + r.len*>
@@ -528,7 +564,9 @@ PROCEDURE ExtendIntoGaps() : BOOLEAN =
       r.lo  := lo;
       r.len := lim - lo;
 
-      Debug.Out(F("Extending range into gap: %s", Range.Format(r)));
+      IF doDebug THEN
+        Debug.Out(F("Extending range into gap: %s", Range.Format(r)))
+      END;
 
       EVAL new.put(r, r.group);
       <*ASSERT new.size() = z+1*>
@@ -541,11 +579,15 @@ PROCEDURE ExtendIntoGaps() : BOOLEAN =
     n : REFANY;
     extended : BOOLEAN;
   BEGIN
-    Debug.Out(">>>>>>>>>>>>>>>>>>>>  EXTENDING RANGES  >>>>>>>>>>>>>>>>>>>>");
+    IF doDebug THEN
+      Debug.Out(">>>>>>>>>>>>>>>>>>>>  EXTENDING RANGES  >>>>>>>>>>>>>>>>>>>>")
+    END;
 
     WHILE iter.next(r, n) DO ExtendRange(r) END;
 
-    Debug.Out(F("allRanges %s new %s", Fmt.Int(allRanges.size()), Fmt.Int(new.size())));
+    IF doDebug THEN
+      Debug.Out(F("allRanges %s new %s", Fmt.Int(allRanges.size()), Fmt.Int(new.size())))
+    END;
     
     <*ASSERT allRanges.size() = new.size()*>
     
@@ -553,8 +595,10 @@ PROCEDURE ExtendIntoGaps() : BOOLEAN =
     reverse := Rehash(reverse); (* hashes might be screwed up *)
     
     ScatterRanges(); (* maintain invariant that allRanges is union of pgs *)
-    
-    Debug.Out("<<<<<<<<<<<<<<<<<<<<  EXTENDING RANGES  <<<<<<<<<<<<<<<<<<<<");
+
+    IF doDebug THEN
+      Debug.Out("<<<<<<<<<<<<<<<<<<<<  EXTENDING RANGES  <<<<<<<<<<<<<<<<<<<<")
+    END;
 
     RETURN extended
 
@@ -606,7 +650,9 @@ PROCEDURE AssertNoGaps() =
       ref : REFANY;
       qv := FALSE;
   BEGIN
-    Debug.Out(">>>>>>>>>>>>>>>>>>>>  CHECKING  >>>>>>>>>>>>>>>>>>>>");
+    IF doDebug THEN
+      Debug.Out(">>>>>>>>>>>>>>>>>>>>  CHECKING  >>>>>>>>>>>>>>>>>>>>")
+    END;
     WHILE iter.next(r, ref) DO
       IF qv THEN
         IF q.lo + q.len # r.lo THEN
@@ -619,7 +665,9 @@ PROCEDURE AssertNoGaps() =
       END;
       q := r; qv := TRUE
     END;
-    Debug.Out("<<<<<<<<<<<<<<<<<<<<  CHECKING  <<<<<<<<<<<<<<<<<<<<")
+    IF doDebug THEN
+      Debug.Out("<<<<<<<<<<<<<<<<<<<<  CHECKING  <<<<<<<<<<<<<<<<<<<<")
+    END
   END AssertNoGaps;
 
 (**********************************************************************)
@@ -1380,9 +1428,11 @@ PROCEDURE DebugDumpParser(p : XMLParse.T; level : CARDINAL := 0) =
 
 PROCEDURE GenerateOutput() =
   BEGIN
-    Debug.Out("allRanges : " & Fmt.Int(allRanges.size()));
+    IF doDebug THEN
+      Debug.Out("allRanges : " & Fmt.Int(allRanges.size()));
 
-    PrintStats();
+      PrintStats()
+    END;
 
     IF attemptElimOverlaps THEN
       AttemptElimOverlaps()
@@ -1394,7 +1444,9 @@ PROCEDURE GenerateOutput() =
     
     MergeGroups();
 
-    PrintStats();
+    IF doDebug THEN
+      PrintStats()
+    END;
 
     IF NOT CheckForOverlaps(TRUE) THEN
       Debug.Error("Internal program error---overlaps created")
@@ -1406,13 +1458,17 @@ PROCEDURE GenerateOutput() =
       END
     END;
 
-    PrintStats();
+    IF doDebug THEN
+      PrintStats()
+    END;
 
     IF NOT CheckForOverlaps(TRUE) THEN
       Debug.Error("Internal program error---overlaps created")
     END;
 
-    DebugDump();
+    IF doDebug THEN
+      DebugDump()
+    END;
     
     IF skipHoles THEN AssertNoGaps() END;
 
@@ -1485,8 +1541,10 @@ PROCEDURE CRIFVisit(<*UNUSED*>visitor : CRIFVisitor;
            addressOffsetT = node.getChild("addressOffset").getCharData(),
            sizeT          = node.getChild("size").getCharData(),
            pg             = node.getChild("Security_PolicyGroup").getCharData() DO
-        Debug.Out(F("reg %s off %s sz %s pg %s",
-                    name, addressOffsetT, sizeT, pg));
+        IF doDebug THEN
+          Debug.Out(F("reg %s off %s sz %s pg %s",
+                      name, addressOffsetT, sizeT, pg))
+        END;
 
         WITH buf = ARRAY Field OF TEXT { name, addressOffsetT, sizeT, pg } DO
           ProcessBuf(buf, 8)
@@ -1527,6 +1585,7 @@ VAR
   PolicyGroupArr : REF ARRAY OF TEXT;
   DefaultIdx : CARDINAL;
   bits := -1;
+  addrLim : Address.T;
   pgToSkip : [-1..LAST(CARDINAL)] := -1;
   copyRightPath : Pathname.T := NIL;
   allTerms : BOOLEAN;
@@ -1545,6 +1604,7 @@ VAR
   templateRd : Rd.T := NIL;
   baseStrapBits : TEXT := NIL;
   bindings := NEW(TextTextTbl.Default).init();
+
 BEGIN
   (* setup default PGs per HLP HAS *)
   PolicyGroupArr := NEW(REF ARRAY OF TEXT, NUMBER(DefPolicyGroupArr));
@@ -1567,6 +1627,7 @@ BEGIN
 
       IF pp.keywordPresent("-bits") THEN
         bits := pp.getNextInt();
+        addrLim := Word.LeftShift(1, bits);
         (* predefine ADDR_BITS *)
         EVAL bindings.put("ADDR_BITS", Fmt.Int(bits))
       END;
@@ -1660,7 +1721,8 @@ BEGIN
       
       pp.finish();
     END;
-    IF bits = -1 THEN Debug.Error("Must specify -bits") END
+    IF bits = -1 THEN Debug.Error("Must specify -bits") END;
+    IF bits > MaxBitsAllowed THEN Debug.Error("Max # of bits currently supported is " & Fmt.Int(MaxBitsAllowed)) END
   EXCEPT
     ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
   END;
