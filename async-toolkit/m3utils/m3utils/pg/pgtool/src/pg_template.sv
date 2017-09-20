@@ -20,10 +20,10 @@ module
   **BASESTRAP**
 
   // Management  connections
-  output logic [$clog(**NUM_PG**)-1:0]    o_pg
+  output logic [$clog2(**NUM_PG**)-1:0]    o_pg
 );                                                               
                                                                  
-  logic [$clog(**NUM_PG**)-1:0] pg;
+  logic [$clog2(**NUM_PG**)-1:0] pg;
 
   // lintra -50503 "Naming - use of double underscore"
 **DECLS**
