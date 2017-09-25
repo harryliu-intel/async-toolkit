@@ -113,7 +113,8 @@ fast: fastprep .todo .fastmake
 faster: fastprep .lesstodo .fastmake
 
 .bindir:
-	mkdir hack || true ; cd hack ; echo `./bindir.sh` > ../.bindir 
+	mkdir hack || true 
+	cd hack ; echo `./bindir.sh` > ../.bindir 
 .top:
 	echo TOP=\"$(PWD)\" > .top
 
