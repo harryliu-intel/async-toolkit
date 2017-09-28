@@ -18,13 +18,17 @@ uv1_cell_list =
   uv1_cell_list = (cons (sprintf nil "lib.util.ctree.CTREE3.%d" i) uv1_cell_list)
   )
 
-; PULSE_CTRL/PULSE_SEND_CTRL
+; PULSE_CTRL/PULSE_SEND_CTRL/MOUSETRAP_CTRL
 extra_cell_list = nil
-(for i 0 8
-  (foreach s (list "false" "true")
-    extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d_%s-R.0"  i s) extra_cell_list)
-    extra_cell_list = (cons (sprintf nil "lib.bd.standard.send.PULSE_SEND_CTRL-L%d_%s-R.0" i s) extra_cell_list)
+(for i 0 8 
+ (foreach s (list "false" "true")
+    extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.PULSE_CTRL-L%d_%s-R.0"  i s)
+                            extra_cell_list)
+    extra_cell_list = (cons (sprintf nil "lib.bd.standard.send.PULSE_SEND_CTRL-L%d_%s-R.0" i s)
+                            extra_cell_list)
     )
+  extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.MOUSETRAP_CTRL-L%d-R.0" i)
+                          extra_cell_list)
   )
 
 uv1_cell_list = (append uv1_cell_list extra_cell_list)
