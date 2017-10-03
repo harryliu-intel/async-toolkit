@@ -160,7 +160,6 @@ def handle_trans(bindings, source, gate, drain, substrate, type, width):
     if not substrates[type] == substrate:
         sys.stderr.write( "found substrate %s for %s-type transistor!\n" % \
                 (substrate, type));
-        return 1
     if not thegraph.has_node_named(source):
         Node(thegraph, source, NodeInfo())
     if not thegraph.has_node_named(drain):
