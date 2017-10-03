@@ -1994,31 +1994,40 @@ public final class CastQuery {
         private final CastFileParser cfp;
         private final boolean verilog;
         private final boolean skipWiring;
+        private final boolean includeInline;
+        private final UnaryPredicate<CellInterface> selectionPredicate;
         private final CDLNameInterface renamer;
         public InstanceList(final String cellName, final CastFileParser cfp,
                             final boolean verilog, final boolean skipWiring,
+                            final boolean includeInline,
+                            final UnaryPredicate<CellInterface> selectionPredicate,
                             final CDLNameInterface renamer) {
             this.cellName = cellName;
             this.cfp = cfp;
             this.verilog = verilog;
             this.skipWiring = skipWiring;
+            this.includeInline = includeInline;
+            this.selectionPredicate = selectionPredicate;
             this.renamer = renamer;
         }
         private void traverse(final CellInterface cell, final LinkedList path,
                               final Writer w, boolean noRecurse) 
             throws IOException {
-            for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
+            for (Iterator i = includeInline ? cell.getAllSubcellPairs() : cell.getSubcellPairs();
+                    i.hasNext(); ) {
                 final Pair p = (Pair) i.next();
                 final HierName instance = (HierName) p.getFirst();
                 final CellInterface subcell = (CellInterface) p.getSecond();
                 if (skipWiring && CellUtils.isWiring(subcell)) continue;
                 if (!subcell.isNode() && !subcell.isChannel()) {
                     path.addLast(instance);
-                    w.write(translateCell(subcell.getFullyQualifiedType(),
-                                          renamer));
-                    w.write(" ");
-                    writePath(path, w);
-                    w.write("\n");
+                    if (selectionPredicate.evaluate(subcell)) {
+                        w.write(translateCell(subcell.getFullyQualifiedType(),
+                                              renamer));
+                        w.write(" ");
+                        writePath(path, w);
+                        w.write("\n");
+                    }
                     if (!noRecurse) {
                         traverse(subcell, path, w, noRecurse);
                     }
@@ -3403,6 +3412,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
             final CastFileParser cfp,
             final String cellName,
             final UnaryPredicate<CellInterface> selectionPredicate,
+            final UnaryPredicate<CellInterface> flatSelectionPredicate,
             final UnaryPredicate<CellInterface> prunePredicate,
             final CDLNameInterface cellRenamer) {
         if (name.equals("subcell_tree")) {
@@ -3435,17 +3445,18 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
             return new InstanceCount(cellName, cfp);
         } else if (name.startsWith("instance_list")) {
             final int index = name.indexOf('=');
-            boolean verilog = false, skipWiring = false;
+            boolean verilog = false, skipWiring = false, includeInline = false;
             if (index > 0) {
                 final String[] rest =
                     StringUtil.split(name.substring(index + 1), ':');
                 for (int i = 0; i < rest.length; ++i) {
                     if (rest[i].equals("verilog")) verilog = true;
                     else if (rest[i].equals("skip-wiring")) skipWiring = true;
+                    else if (rest[i].equals("include-inline")) includeInline = true;
                 }
             }
-            return new InstanceList(cellName, cfp, verilog, skipWiring,
-                                    cellRenamer);
+            return new InstanceList(cellName, cfp, verilog, skipWiring, includeInline,
+                                    flatSelectionPredicate, cellRenamer);
         } else if (name.equals("prs")) {
             return new PrsCount(false);
         } else if (name.equals("prs=dnf")) {
@@ -3854,6 +3865,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
     public static void query( final CellInterface rootCell,
                               final CastFileParser castParser,
                               final UnaryPredicate selectionPredicate,
+                              final UnaryPredicate flatSelectionPredicate,
                               final UnaryPredicate prunePredicate,
                               final List listOfTasks,
                               final CDLNameInterface renamer,
@@ -3876,6 +3888,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                                   castParser,
                                   rootCell.getFullyQualifiedType(),
                                   selectionPredicate,
+                                  flatSelectionPredicate,
                                   prunePredicate,
                                   renamer );
             if (task == null) {
@@ -3971,6 +3984,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                               final String envName,
                               final String tasks,
                               final String filter,
+                              final String flatFilter,
                               final String prune,
                               final boolean noRecurse,
                               final String translatorName,
@@ -3994,6 +4008,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                routed ? ci.routedSubcells(true) : ci,
                tasks,
                filter,
+               flatFilter,
                prune,
                noRecurse,
                translatorName,
@@ -4039,6 +4054,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                               final CellInterface cell,
                               final String tasks,
                               final String filter,
+                              final String flatFilter,
                               final String prune,
                               final boolean noRecurse,
                               final String translatorName,
@@ -4053,6 +4069,8 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
         // the true predicate
         final UnaryPredicate selectionPredicate =
             getPredicate(castParser, cell, filter, true);
+        final UnaryPredicate flatSelectionPredicate =
+            getPredicate(castParser, cell, flatFilter, true);
         final UnaryPredicate prunePredicate =
             getPredicate(castParser, cell, prune, false);
 
@@ -4076,6 +4094,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
         query( cell,
                castParser,
                selectionPredicate,
+               flatSelectionPredicate,
                prunePredicate,
                tasksList, 
                renamer, 
@@ -4103,6 +4122,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
         final String castVersion = theArgs.getArgValue("cast-version", "2");
         final String cellEnvName = theArgs.getArgValue("cell", null);
         final String expr = theArgs.getArgValue("filter", "");
+        final String flatExpr = theArgs.getArgValue("flat-filter", "");
         final String prune = theArgs.getArgValue("prune", "");
         final String taskNames = theArgs.getArgValue("task", null);
         final boolean noRecurse = theArgs.argExists("no-recurse");
@@ -4181,6 +4201,7 @@ NextPair:   for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                    envName,
                    taskNames,
                    expr,
+                   flatExpr,
                    prune,
                    noRecurse,
                    translateScheme,

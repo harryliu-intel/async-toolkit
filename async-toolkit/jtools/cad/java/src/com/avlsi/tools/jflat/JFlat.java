@@ -641,6 +641,7 @@ public final class JFlat {
                                                              cell,
                                                              tasks,
                                                              filter,
+                                                             "",
                                                              prune,
                                                              noRecurse,
                                                              translatorName,
