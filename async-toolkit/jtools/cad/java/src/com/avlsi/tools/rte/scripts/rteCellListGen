@@ -1,4 +1,4 @@
-#!/usr/intel/bin/perl
+#!/usr/intel/pkgs/perl/5.20.1-threads/bin/perl
 # vim:et:sw=4:ts=4:tw=79:
 
 use strict;
