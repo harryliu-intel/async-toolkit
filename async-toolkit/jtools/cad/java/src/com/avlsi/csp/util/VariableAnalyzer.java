@@ -128,7 +128,7 @@ public class VariableAnalyzer {
         private Map<String,ParseRange> undeclaredWrites;
         private Map<String,Type> undeclaredTypes;
         private Map/*<ExpressionInterface,Type>*/ expressionTypes;
-        private Map/*<IdentifierExpression,String>*/ identUse;
+        private Map<IdentifierExpression,Type> identUse;
         private Set<String> identRef;
         private Set<Type> identRefTypes;
         private Set<Type> initializerTokens;
@@ -142,14 +142,14 @@ public class VariableAnalyzer {
             this(resolver, Collections.EMPTY_MAP);
         }
 
-        public Results(final RefinementResolver resolver, final Map identUse) {
+        public Results(final RefinementResolver resolver,
+                       final Map<IdentifierExpression,Type> identUse) {
             undeclaredReads = new HashMap<String,ParseRange>();
             undeclaredWrites = new HashMap<String,ParseRange>();
             undeclaredTypes = new HashMap<String,Type>();
             expressionTypes = new HashMap/*<ExpressionInterface,Type>*/();
             // XXX: We really want to used IdentityLinkedHashMap here
-            this.identUse =
-                new LinkedHashMap/*<IdentifierExpression,Type>*/(identUse);
+            this.identUse = new LinkedHashMap<>(identUse);
             this.identRef = new HashSet<String>();
             this.identRefTypes = new HashSet<Type>();
             this.initializerTokens = new HashSet<Type>();
@@ -322,22 +322,20 @@ public class VariableAnalyzer {
         // Reference equality (i.e., ==) is used, so care must be taken when
         // constructing or copying objects.
 
-        public Object getIdentToken(final IdentifierExpression id) {
+        public Type getIdentToken(final IdentifierExpression id) {
             assert identUse.containsKey(id);
-            Object result = identUse.get(id);
+            Type result = identUse.get(id);
             if (result == null) {
                 result = getUndeclaredTypes().get(id.getIdentifier());
             }
             return result;
         }
         
-        public Map/*<Object,String>*/ getTokenIdentMap() {
+        public Map<Type,String> getTokenIdentMap() {
             // XXX: We really want to used IdentityLinkedHashMap here
-            final LinkedHashMap/*<Object,String>*/ result =
-                new LinkedHashMap/*<Object,String>*/();
-            for (Iterator i = identUse.keySet().iterator(); i.hasNext(); ) {
-                final IdentifierExpression id = (IdentifierExpression) i.next();
-                final Object token = getIdentToken(id);
+            final LinkedHashMap<Type,String> result = new LinkedHashMap<>();
+            for (IdentifierExpression id : identUse.keySet()) {
+                final Type token = getIdentToken(id);
                 if (result.containsKey(token)) {
                     assert result.get(token).equals(id.getIdentifier());
                 } else {
@@ -468,7 +466,8 @@ public class VariableAnalyzer {
         Map<String,Type> funcParams = new HashMap<String,Type>();
 
         // XXX: We really want to used IdentityLinkedHashMap here
-        final LinkedHashMap identUse = new LinkedHashMap();
+        final LinkedHashMap<IdentifierExpression,Type> identUse =
+            new LinkedHashMap<>();
         for (Iterator i = f.getFormals().getDeclarations(); i.hasNext(); ) {
             final Declaration decl = (Declaration) i.next();
             funcParams.putAll (decl.getMap());
