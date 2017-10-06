@@ -42,19 +42,14 @@ abstract class CommonEmitter implements VisitorInterface {
         return width;
     }
 
+    protected boolean isRegisterSigned(final IntegerType t) {
+        return t.getDeclaredWidth() == null || t.isSigned();
+    }
+
     protected String getRegisterType(final IntegerType t)
         throws VisitorException {
-        final boolean signed;
+        final boolean signed = isRegisterSigned(t);
         final int width = getRegisterWidth(t);
-        if (t.getDeclaredWidth() == null) {
-            if (t instanceof TemporaryIntegerType && t.getInterval() != null) {
-                signed = true;
-            } else {
-                return registerType;
-            }
-        } else {
-            signed = t.isSigned();
-        }
         return "bit " + (signed ? "signed " : "") + "[" + (width - 1) + ":0]";
     }
 
