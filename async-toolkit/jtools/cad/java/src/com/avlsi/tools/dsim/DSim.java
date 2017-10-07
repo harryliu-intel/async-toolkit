@@ -3160,6 +3160,10 @@ public class DSim implements NodeWatcher {
             throw new UnsupportedOperationException();
         }
 
+        public void updateIsochronic(final CellInterface cell) {
+            throw new UnsupportedOperationException();
+        }
+
         public void updateMeasuredDelay(final HierName prefix,
                                         final CellInterface cell,
                                         final UnaryFunction canonizer,
@@ -3208,6 +3212,10 @@ public class DSim implements NodeWatcher {
 
         public float getDelayBias(final HierName instance) {
             return 1;
+        }
+
+        public boolean getIsochronic(final HierName instance) {
+            return false;
         }
     };
 
@@ -3539,6 +3547,7 @@ public class DSim implements NodeWatcher {
                 canonizer,
                 1, getMeasureDataSet());
             instData.updateDelayBias(cell, getAstaDelayBias());
+            instData.updateIsochronic(cell, false);
             if (!isEnv) {
                 for (Iterator i = cell.getSubcellPairs(); i.hasNext(); ) {
                     final Pair p = (Pair) i.next();
@@ -4548,6 +4557,7 @@ public class DSim implements NodeWatcher {
             final CellDelay cellDelay =
                 new CellDelay(cell, localNodes, prsSet.getProductionRules(),
                               instData.getDelayBias(null), true);
+            final boolean cellIsochronic = instData.getIsochronic(null);
 
             final Map<HierName,Integer> initOnReset = (Map<HierName,Integer>)
                 DirectiveUtils.canonizeKey(localNodes,
@@ -4581,11 +4591,13 @@ public class DSim implements NodeWatcher {
                 final float afterDelay =
                     cellDelay.getDelay(pr.getTarget(), updir, 100) + extraDelay;
 
+                final boolean isochronic = pr.isIsochronic() || cellIsochronic;
+
                 // an after 0 production rule overrides estimated or measured
                 // delays associated the rule if it is also annotated as
                 // "isochronic" and "unstab"
                 final boolean isAfterZero =
-                    pr.isIsochronic() && pr.isUnstable() && afterDelay == 0;
+                    isochronic && pr.isUnstable() && afterDelay == 0;
 
                 final float estimated =
                     useDelayMode(ESTIMATED_TAU) ?
@@ -4608,7 +4620,6 @@ public class DSim implements NodeWatcher {
 
                 final int delay = Math.round(fdelay);
                 final boolean timed = pr.isTimed();
-                final boolean isochronic = pr.isIsochronic();
                 final Node target = lookupNode(h);
 
                 Optional.ofNullable(initOnReset.get(canonTarget))

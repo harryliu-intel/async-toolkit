@@ -175,6 +175,7 @@ public interface DirectiveConstants {
     String POWER_NET = "power_net";
     String GROUND_NET = "ground_net";
     String INITIALIZE_ON_RESET = "initialize_on_reset";
+    String ISOCHRONIC = "isochronic";
 
     /** CSP timing directives */
     String SLACK = "slack";

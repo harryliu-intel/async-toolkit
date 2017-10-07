@@ -238,6 +238,18 @@ public class InstanceData {
             }
         }
 
+        public static class Or implements BinaryFunction {
+            private final Boolean def;
+            public Or(final Boolean def) {
+                this.def = def;
+            }
+            public Object execute(final Object a, final Object b) {
+                final Boolean b1 = a == null ? def : (Boolean) a;
+                final Boolean b2 = b == null ? def : (Boolean) b;
+                return new Boolean(b1 || b2);
+            }
+        }
+
         private final Object current;
         private final Map /*<HierName,Object>*/ directives;
         private final UnaryFunction /*<CellInterface,Map>*/ getter;
@@ -573,6 +585,17 @@ public class InstanceData {
         updateDelayBias(cell, 1.0);
     }
 
+    public void updateIsochronic(final CellInterface cell, final Boolean cur) {
+        put(DirectiveConstants.ISOCHRONIC, new MultiplicativeDirective(cur, cell,
+            new SubcellGetter(DirectiveConstants.ISOCHRONIC,
+                              DirectiveConstants.INSTANCE_TYPE),
+            new MultiplicativeDirective.Or(Boolean.FALSE)));
+    }
+
+    public void updateIsochronic(final CellInterface cell) {
+        updateIsochronic(cell, false);
+    }
+
     public class MeasuredProcessor implements MeasuredGetter.Processor {
         private final float delayScale;
         private final int dataSet;
@@ -862,6 +885,12 @@ public class InstanceData {
         final Number result =
             (Number) get(DirectiveConstants.DELAYBIAS).getAttribute(instance);
         return result.floatValue();
+    }
+
+    public boolean getIsochronic(final HierName instance) {
+        final Boolean result =
+            (Boolean) get(DirectiveConstants.ISOCHRONIC).getAttribute(instance);
+        return result;
     }
 
     public String toString() {

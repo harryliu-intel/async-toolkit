@@ -162,6 +162,7 @@ public class DirectiveTable {
         registerDirective(PRS, STATICIZER_TYPE, HALFOP_TYPE, INT_TYPE, new Integer(0));
         registerDirective(PRS, STRENGTH_GROUP, HALFOP_TYPE, INT_TYPE, null);
         registerDirective(PRS, INITIALIZE_ON_RESET, NODE_TYPE, INT_TYPE, new Integer(-1));
+        registerDirective(SUBCELL, ISOCHRONIC, INSTANCE_TYPE, BOOLEAN_TYPE, Boolean.FALSE);
 
         /*
          * Register PRS synthesis directives; used by jauto "p2n", and PrsToNet
