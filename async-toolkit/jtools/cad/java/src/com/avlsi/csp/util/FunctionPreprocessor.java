@@ -1140,25 +1140,64 @@ public class FunctionPreprocessor extends VisitorByCategory {
     }
 
     public void visitLoopExpression(LoopExpression e) throws VisitorException {
-        processRange(e.getRange());
-        final Range r = (Range) getResult();
+        final ExpressionInterface temp = gensym();
+        final Type ty = analysisResults.getType(e);
 
-        if (table != null) {
-            table.enterScope();
-            table.bind(e.getIndexVar(), null);
+        final char kind;
+        final int intInit;
+        switch (e.getSeparator()) {
+          case LoopExpression.AND:
+            intInit = -1;
+            kind = AssignmentStatement.AND;
+            break;
+          case LoopExpression.TIMES:
+            intInit = 1;
+            kind = AssignmentStatement.MULTIPLY;
+            break;
+          case LoopExpression.OR:
+            intInit = 0;
+            kind = AssignmentStatement.OR;
+            break;
+          case LoopExpression.PLUS:
+            intInit = 0;
+            kind = AssignmentStatement.ADD;
+            break;
+          case LoopExpression.XOR:
+            intInit = 0;
+            kind = AssignmentStatement.XOR;
+            break;
+          default:
+            throw new RuntimeException(
+                    "Unsupported separator: " + e.getSeparator());
         }
-        e.getExpression().accept(getVisitor());
-        if (table != null) table.leaveScope();
 
-        if (e.getRange() == r && e.getExpression() == getResult()) {
-            setResult(e);
+        final Type tempTy;
+        final ExpressionInterface initExpr;
+        if (ty instanceof StringType) {
+            tempTy = new StringType();
+            initExpr = new StringExpression("");
         } else {
-            setResult(new LoopExpression(e.getIndexVar(), r,
-                                         e.getSeparator(),
-                                         (ExpressionInterface) getResult())
-                      .epr(e));
-
+            tempTy = new IntegerType();
+            initExpr = new IntegerExpression(intInit);
         }
+
+        preamble.add(createVarStatement(temp, tempTy));
+        preamble.add(new AssignmentStatement(temp, initExpr));
+
+        final AssignmentStatement loop = (AssignmentStatement)
+            new AssignmentStatement(temp, e.getExpression(), kind)
+            .epr(e.getExpression());
+
+        pushPreamble();
+        final LoopStatement ls = (LoopStatement)
+            new LoopStatement(e.getIndexVar(), e.getRange(),
+                    LoopStatement.SEQUENTIAL, loop).epr(e);
+        ls.accept(getVisitor());
+        popPreamble();
+
+        preamble.add(getResult());
+
+        setResult(temp);
     }
 
     public void visitLoopStatement(LoopStatement s) throws VisitorException {
