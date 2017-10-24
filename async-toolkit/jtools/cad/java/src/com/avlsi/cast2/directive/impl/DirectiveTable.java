@@ -353,6 +353,7 @@ public class DirectiveTable {
         registerDirective(CSP, INTERNAL_SLACK, WIDE_CHANNEL_TYPE, INT_TYPE, null);
         registerDirective(CSP, SYNCHRONIZE_CHANNELS, arrayify(WIDE_CHANNEL_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CSP, SLACKER_TIME, CSP_LVALUE, FLOAT_TYPE, new Float(0));
+        registerDirective(SUBCELL, SLACKER_TIME, INSTANCE_TYPE, FLOAT_TYPE, new Float(0));
 
         // see bug 6085
         registerDirective(CSP, STRICT_VARS, BOOLEAN_TYPE, Boolean.FALSE);
