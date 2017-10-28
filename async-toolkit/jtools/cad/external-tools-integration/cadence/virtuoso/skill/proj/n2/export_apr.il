@@ -38,6 +38,13 @@ spar_cell_list =
     )
   )
 
+; 4GBD_CTRL
+(for i 1 8
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_false_false-R.0" i) spar_cell_list)
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_true_false-R.0" i) spar_cell_list)
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_false_true-R.0" i) spar_cell_list)
+  )
+
 ; add nominal threshold versions if they exist
 nom_cell_list = nil
 (foreach cellName spar_cell_list

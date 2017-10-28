@@ -6,6 +6,7 @@ uv1_cell_list =
      "lib.bd.convert.qdi.BD_TO_QDI_CTRL.0"
      "lib.bd.convert.qdi.QDI_TO_BD_CTRL.0"
      "lib.synchronous.6T.sram.SRAM_SAMPLER.0"
+     "lib.bd.standard.pipeline.4GBD_CTRL_CORE.0"
      "lib.bd.standard.pipeline.PULSE_CTRL_CORE-Lfalse-R.0"
      "lib.bd.standard.pipeline.PULSE_CTRL_CORE-Ltrue-R.0"
      "lib.bd.standard.send.PULSE_SEND_CTRL_CORE-Lfalse-R.0"
@@ -30,6 +31,16 @@ extra_cell_list = nil
   extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.MOUSETRAP_CTRL-L%d-R.0" i)
                           extra_cell_list)
   )
+
+; 4GBD_CTRL
+(for i 1 8 
+     extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_false_false-R.0" i)
+                             extra_cell_list)
+     extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_true_false-R.0" i)
+                             extra_cell_list)
+     extra_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_false_true-R.0" i)
+                             extra_cell_list)
+     )
 
 uv1_cell_list = (append uv1_cell_list extra_cell_list)
 
