@@ -59,7 +59,8 @@
   (RouteCell cellName topMetal ?timingDriven nil ?colorGrid nil ?nearby nearby)
   )
 
-(defun RouteProteus (baseName targetName abstractName @key (exportOnly nil) (importOnly nil))
+(defun RouteProteus (baseName targetName abstractName
+                              @key (topMetal TopMetal) (exportOnly nil) (importOnly nil))
   (let (SPEC_DIR TEMP WDIR client libName fpCV pgCV cgCV lCV specfile)
     SPEC_DIR = (ConfigFileGetValue TheCDSConfigTable "SPEC_DIR")
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -78,7 +79,8 @@
     specfile = (strcat SPEC_DIR "/" specfile ".cast")
     (shell (sprintf nil "p4 -c %s edit \"%s\"" client specfile))
     (cond (exportOnly
-           (RouteExport ?CV fpCV ?softMacro t ?targetCellName targetName ?abstractCellName abstractName)
+           (RouteExport ?CV fpCV ?softMacro t ?topMetal topMetal
+                        ?targetCellName targetName ?abstractCellName abstractName)
            )
           (importOnly
            lCV = (RouteImport ?libName (GetCastLibName targetName) ?cellName targetName
@@ -86,7 +88,8 @@
                               )
            )
           (t
-           lCV = (Route ?CV fpCV ?softMacro t ?targetCellName targetName ?abstractCellName abstractName
+           lCV = (Route ?CV fpCV ?softMacro t ?topMetal topMetal
+                        ?targetCellName targetName ?abstractCellName abstractName
                         ?ecoIter 2)
            (when lCV (cdsp4add ?CV lCV))
            )
