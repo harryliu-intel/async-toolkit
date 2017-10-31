@@ -16,7 +16,7 @@ while (my $file = shift @ARGV) {
         elsif ($line =~ /^(.*\"\d+)(\".*)$/ ) {
             $line = "${1}n${2}\n";
         }
-        elsif ($line =~ /^(.*\S+\.0)(\s+\S+.*)$/) {
+        elsif ($line =~ /^(.*\S+\.\d+)(\s+\S+.*)$/) {
             $line = "${1}n${2}\n";
         }
         print OUT $line;
