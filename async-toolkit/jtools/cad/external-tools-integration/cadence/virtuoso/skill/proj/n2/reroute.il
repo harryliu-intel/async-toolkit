@@ -100,7 +100,7 @@
     (when lCV  (cdsp4add ?CV lCV))
     (when pgCV (cdsp4add ?CV pgCV))
     (when cgCV (cdsp4add ?CV cgCV))
-    (shell (sprintf nil "p4 -c %s add %s" client specfile))
+    (shell (sprintf nil "p4 -c %s add \"%s\"" client specfile))
     t
     )
   )
