@@ -12,3 +12,4 @@ include ../../util/readline/readline.package.inc ../../util/readline
 include ../tsim/channellib.package ../tsim
 java com.avlsi.tools.cell.CellConstants
 $arch/bin/jdsim.sh              jdsim.sh 664
+$arch/bin/gen_dsim_jar          gen_dsim_jar.pl  775 p
