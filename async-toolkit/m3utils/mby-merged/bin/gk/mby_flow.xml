@@ -85,7 +85,7 @@
                 <Type>build</Type>
                 <gkMNM_checked>1</gkMNM_checked>
         </row>
-    <row>
+	<row>
                 <DUT>mby</DUT>
                 <Stage>jasper_tests</Stage>
                 <Stage_Exec>verif/mby/tests/lists/mby_jg.list</Stage_Exec>
