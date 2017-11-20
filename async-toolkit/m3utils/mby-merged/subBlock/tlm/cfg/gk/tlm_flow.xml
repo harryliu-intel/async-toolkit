@@ -1,0 +1,57 @@
+<data>
+	<!-- Compilation -->
+	<row>
+		<Cluster>tlm</Cluster>
+		<DUT>tlm</DUT>
+		<Stage>ace</Stage>
+		<Stage_Exec>simbuild</Stage_Exec>
+		<AdditionalArgs>-s all +s vcs_compile</AdditionalArgs>
+		<XdutStageDep></XdutStageDep>
+		<PassRate></PassRate>
+		<IsGating>1</IsGating>
+		<Turnin>1</Turnin>
+		<Release>1</Release>
+		<PostRelease>0</PostRelease>
+		<Conditional></Conditional>
+		<Rel_AdditionalArgs></Rel_AdditionalArgs>
+		<Active>1</Active>
+		<Singleton>0</Singleton>
+		<Type>build</Type>
+	</row>
+	<row>
+		<Cluster>tlm</Cluster>
+		<DUT>tlm</DUT>
+		<Stage>compile_verdi</Stage>
+		<Stage_Exec>simbuild</Stage_Exec>
+		<AdditionalArgs>-s all +s verdi_compile</AdditionalArgs>
+		<XdutStageDep>[tlm].[vcs_compile]</XdutStageDep>
+		<PassRate></PassRate>
+		<IsGating>1</IsGating>
+		<Turnin>1</Turnin>
+		<Release>1</Release>
+		<PostRelease>0</PostRelease>
+		<Conditional></Conditional>
+		<Rel_AdditionalArgs></Rel_AdditionalArgs>
+		<Active>1</Active>
+		<Singleton>0</Singleton>
+		<Type>build</Type>
+	</row>
+	<row>
+		<Cluster>tlm</Cluster>
+		<DUT>tlm</DUT>
+		<Stage>tlm_alive_test</Stage>
+		<Stage_Exec>verif/tests/lists/level0.list</Stage_Exec>
+		<AdditionalArgs>-disable_work_area_subdir</AdditionalArgs>
+		<XdutStageDep>[tlm].[compile_verdi]</XdutStageDep>
+		<PassRate>100</PassRate>
+		<IsGating>1</IsGating>
+		<Turnin>1</Turnin>
+		<Release>1</Release>
+		<PostRelease>0</PostRelease>
+		<Conditional></Conditional>
+		<Rel_AdditionalArgs></Rel_AdditionalArgs>
+		<Active>1</Active>
+		<Singleton>0</Singleton>
+		<Type>regress</Type>
+	</row>
+</data>

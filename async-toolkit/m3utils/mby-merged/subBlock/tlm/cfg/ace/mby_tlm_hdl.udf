@@ -1,0 +1,219 @@
+#---*-perl-*---
+
+# Will be used to import path and version to IP
+# use IP_Config qw();
+
+# Set up the project UDF
+use tlm_ip qw (%SIP_RELEASE);
+my $TLM1_SOC_COMMON_ROOT = $SIP_RELEASE{TLM1_SOC_COMMON_ROOT};
+
+%audf = (
+    Includes => [],
+    HDLSpec  => {
+        tlm => {
+
+            # Define all the libraries which could be compiled
+            libs => {
+                lpa => {
+                    -tag         => "nonsynth+nonlint",
+                    -preCompiled => {
+                        'vcs' =>
+                          "$ENV{VCS_HOME}/$ENV{VCS_TARGET_ARCH}/packages/lpa",
+                    },
+                },
+                upf => {
+                    -tag         => "nonsynth+nonlint",
+                    -preCompiled => {
+                        'vcs' =>
+                          "$ENV{VCS_HOME}/$ENV{VCS_TARGET_ARCH}/packages/upf",
+                    },
+                },
+                tlm_rtl_lib => {
+                    -hdl_spec => [ 'cfg/ace/HDL/rtl/tlm_rtl.hdl', ],
+
+                },
+                ovm_lib => {
+                    -vlog_files   => [ "$ENV{OVM_HOME}/src/ovm_pkg.sv", ],
+                    -vlog_incdirs => [ "$ENV{OVM_HOME}/src", ],
+                    -tag          => "nonsynth",
+                },
+                xvm_lib =>    {
+		     -vlog_files => [
+				     "$ENV{XVM_HOME}/src/xvm_pkg.sv",
+				    ],
+		     -vlog_incdirs => [
+				       "$ENV{XVM_HOME}/src", "$ENV{OVM_HOME}/src", "$ENV{UVM_HOME}/src",
+				      ],
+		    -tag => "nonsynth",
+		    },
+
+                uvm_lib =>    {
+		     -vlog_files => [
+				     "$ENV{UVM_HOME}/src/uvm_pkg.sv",
+				    ],
+		     -vlog_incdirs => [
+				       "$ENV{UVM_HOME}/src", "$ENV{UVM_HOME}/src",
+ 				      ],
+ 		    -tag => "nonsynth",
+ 		    },
+
+                sla_lib => {
+                    -vlog_files => [ "$ENV{SAOLA_HOME}/verilog/sla_pkg.sv", ],
+                    -vlog_incdirs => [
+                        "$ENV{UVM_HOME}/src", "$ENV{OVM_HOME}/src" , "$ENV{XVM_HOME}/src",
+		        "$ENV{SAOLA_HOME}/verilog", "$ENV{SAOLA_HOME}/verilog_uvm",
+                    ],
+                    -dependent_libs => ['ovm_lib'],
+                    -tag            => "nonsynth",
+                },
+
+                #2012WW46r121114 primary IOSF
+                sip_proxy_lib => {
+                    -tag      => "nonsynth",
+                    -hdl_spec => [
+"$SIP_RELEASE{TLM1_IOSF_PRI_VC_ROOT}/sip_vintf_manager/sip_vintf_manager.hdl"
+                    ],
+                    -dependent_libs => [ 'ovm_lib', ],
+                    -tag            => "nonsynth",
+                },
+
+
+                ccuVC_lib => {
+                    -hdl_spec => [
+                        'verif/ccu-vc/ccu_vc_pkg.hdl',
+                        'verif/lib/sip_vintf_manager/sip_vintf_manager.hdl',
+                    ],
+                    -vlog_incdirs => [
+                        "$ENV{UVM_HOME}/src","$ENV{OVM_HOME}/src","$ENV{SAOLA_HOME}/verilog",
+                    ],
+
+                    -dependent_libs => [
+                        "uvm_lib",
+                        "ovm_lib",
+                        "sla_lib",
+
+                        #"sip_proxy_lib",
+                        #"iosf_pri_lib",
+                        #"iosf_sb_lib",
+                    ],
+                    -tag => "nonsynth",
+                },
+
+
+                tlm_fusegen_lib =>
+                  {    #  SOC level wil add this to its sip_shared_lib
+                    -hdl_spec       => ['cfg/ace/HDL/verif/tlm_fusegen.hdl'],
+                    -dependent_libs => [ 'uvm_lib','ovm_lib', 'sla_lib' ],
+                    -tag            => "nonsynth",
+                    -vlog_incdirs => [
+                        "$ENV{UVM_HOME}/src","$ENV{OVM_HOME}/src","$ENV{SAOLA_HOME}/verilog",
+                    ],
+                  },
+                sip_shared_lib => {
+                    -sub_libs => [
+                        "uvm_lib",
+                        "ovm_lib",
+                        "xvm_lib",
+                        "sla_lib",
+                        "sip_proxy_lib",    #2012WW46r121114 primary IOSF
+
+                        "ccuVC_lib",
+
+                        "tlm_fusegen_lib",
+                    ],
+
+                },
+                tlm_env_lib => {
+                    -hdl_spec       => ['cfg/ace/HDL/verif/tlm_env.hdl'],
+                    -dependent_libs => [ 'sip_shared_lib', ],
+                    -tag            => "nonsynth",
+                },
+                tlm_ti_lib => {
+                    -hdl_spec       => ['cfg/ace/HDL/verif/tlm_ti.hdl'],
+                    -dependent_libs => [ 'sip_shared_lib', 'tlm_env_lib'],
+                    -tag            => "nonsynth",
+
+                    -vlog_incdirs => [
+                        "$ENV{UVM_HOME}/src","$ENV{OVM_HOME}/src","$ENV{SAOLA_HOME}/verilog",
+                    ],
+
+                },
+                tlm_tb_lib => {
+                    -hdl_spec => [ 'cfg/ace/HDL/verif/tlm_tb.hdl', ],
+                    -dependent_libs =>
+                      [ 'sip_shared_lib', 'tlm_ti_lib', 'upf', 'lpa' ],
+                    -tag => "nonsynth",
+                },
+
+            },
+            models => {
+                tlm => {
+                    top  => 'tlm_tb_lib.tlm_tb',
+                    libs => [
+                        qw(tlm_tb_lib tlm_rtl_lib tlm_ti_lib sip_shared_lib tlm_env_lib upf lpa )
+                    ],
+                    export =>
+                      { libs => [qw(tlm_rtl_lib tlm_ti_lib tlm_env_lib)], },
+
+                    # List of full path to PLI libraries to use
+                    pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+      # Specify a set of test case specific options (must be valid test options)
+                    testcase_globals => {
+                        -test_vlog_opts    => [ -sverilog ],
+                        -test_vlog_files   => [],
+                        -test_vlog_incdirs => [
+                            "verif/lib/tlm",
+                            "verif/lib/tlm/ral",
+                            "verif/lib/tlm/fal",
+                            "verif/lib/tlm/env",
+                            "$ENV{OVM_HOME}/src", "$ENV{UVM_HOME}/src",
+	                    "$ENV{SAOLA_HOME}/verilog", "$ENV{SAOLA_HOME}/verilog_uvm",
+                            "$SIP_RELEASE{TLM1_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                        ],
+                    },
+                    power_intent => {
+                        power_top => 'tlm_tb/tlm_top',
+                        upf_files => ['tools/upf/tlm_upf.upf'],
+                    },
+                },
+
+                tlm_lintra => {
+                    top  => "tlm_rtl_lib.tlm",
+                    libs => ["tlm_rtl_lib"],
+                },
+
+                dvt_tlm_verif => {
+                    top  => 'tlm_tb_lib.tlm_tb',
+                    libs => [
+                        qw(tlm_tb_lib tlm_rtl_lib tlm_ti_lib sip_shared_lib tlm_env_lib upf lpa )
+                    ],
+                    export =>
+                      { libs => [qw(tlm_rtl_lib tlm_ti_lib tlm_env_lib)], },
+
+                    # List of full path to PLI libraries to use
+                    pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+      # Specify a set of test case specific options (must be valid test options)
+                    testcase_globals => {
+                        -test_vlog_opts    => [ -sverilog ],
+                        -test_vlog_files   => [],
+                        -test_vlog_incdirs => [
+                            "verif/lib/tlm",
+                            "verif/lib/tlm/ral",
+                            "verif/lib/tlm/fal",
+                            "verif/lib/tlm/env",
+                            "$ENV{OVM_HOME}/src", "$ENV{UVM_HOME}/src",
+                            "$ENV{SAOLA_HOME}/verilog", "$ENV{SAOLA_HOME}/verilog_uvm",
+                            "$SIP_RELEASE{GMF_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                        ],
+                    },
+                    power_intent => {
+                        power_top => 'tlm_tb/tlm_top',
+                        upf_files => ['tools/upf/tlm_upf.upf'],
+                    },
+                },
+            },
+        },
+    },
+);

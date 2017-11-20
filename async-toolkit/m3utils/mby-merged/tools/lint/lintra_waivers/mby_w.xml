@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LINTRA_WAIVERS>
+  <waiver descr="dfx_accumulator - approved by Pappu" owner="ypolache" nd_date="8000-12-31" open_date="Tue Jul 29 2014" limit="-1" id="ypolache1406638072" rule="0396" file=".*/rtl/cmi_dfx_accumulator.sv" message="" key="\{zero_extend_val, data\[.*:.*\]\},17,16" hierarchy=".*cmi_top.*" />
+  <waiver descr="dfx_accumulator - approved by Pappu" owner="ypolache" nd_date="8000-12-31" open_date="Tue Jul 29 2014" limit="-1" id="ypolache1406621290" rule="50529" file=".*/rtl/cmi_dfx_accumulator.sv" message="" key="ASYNC_ flops should only be used to stage global reset: CMI_ACCUM_.*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407332211" rule="2063" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407332185" rule="50007" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407332126" rule="50537" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407332087" rule="52515" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407332059" rule="52516" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407331943" rule="60129" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="iosfsbc sub-ip - unconnected visa bus" owner="ypolache" nd_date="8000-12-31" open_date="Wed Aug 6 2014" limit="-1" id="ypolache1407331779" rule="70045" file=".*/iosfsbc/.*" message="" key=".*" hierarchy=".*cmi_top.*" />
+  <waiver descr="Only used when ULM is inside SB endpoint" owner="ypolache" nd_date="8000-12-31" open_date="Tue Nov 18 2014" limit="-1" id="ypolache1416306853" rule="70044" file=".*/iosfsbc/endpoint/sbe.*.sv" message="" key="avisa_.*_out.*" hierarchy=".*cmi_top.*" />
+  <waiver descr="DfxSecurePlugin" owner="yklein1" nd_date="8000-12-31" open_date="Wed Nov 26 2014" limit="-1" id="yklein11416994891" rule="50007" file=".*/rtl/dfxsecure_plugin/dfxsecure_plugin.sv" message="" hierarchy=".*cmi_top.*" />
+  <waiver descr="Unused bit" owner="efratv" nd_date="" open_date="Thu Feb 5 2015" limit="-1" id="efratv1423120300" rule="70045" file=".*/cmi/visa_rtl/cmi_data_router.sv" module="cmi_data_router" library="cmi_lib" message="" key="post_mux_rst_b_req_arr \(post_mux_rst_b_req_arr\[3\]\),cmi_data_router" hierarchy=".*cmi_top.*" />
+  <waiver descr="" owner="ypolache" nd_date="" open_date="Wed May 20 2015" limit="-1" id="IP_ypolache_1432145797" rule="70601" file=".*/cmi/visa_rtl/cmi_top.sv" module="visa_.*" library="cmi_lib" message="" key="lane_in,visa_.*" hierarchy=".*cmi_top.*" />
+</LINTRA_WAIVERS>

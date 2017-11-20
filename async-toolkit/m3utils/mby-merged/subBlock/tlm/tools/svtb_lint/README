@@ -1,0 +1,6 @@
+Directory: tools/svtb_lint
+
+Files for Lintra SVTB, used to run lint analysis on OVM/UVM & Saola classes
+
+See: https://securewiki.ith.intel.com/display/hdk/SystemVerilog+Testbench
+

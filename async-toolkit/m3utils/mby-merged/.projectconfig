@@ -1,0 +1,9 @@
+intel.project   mst
+intel.cluster   mby 
+intel.stepping  dev-x0
+setup.STEP dev-x0
+setup.CLUSTER mby
+
+setup.CASA_STEP dev-x0
+setup.CASA_PROJECT mst
+setup.CASA_CLUSTER mby

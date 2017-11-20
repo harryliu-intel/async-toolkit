@@ -1,0 +1,11 @@
+#-*- shell-script -*-              For EMACS -- lets formatting happen
+
+
+echo "SEQ lib"
+
+$NATURAL_DOCS/NaturalDocs -I $TLM1_ROOT/verif/tb/seqlib/ -p  $TLM1_ROOT/.natural_docs_proj -o html $TLM1_ROOT/verif/tb/seqlib/docs -r
+
+echo "DOC ENV"
+
+$NATURAL_DOCS/NaturalDocs -I $TLM1_ROOT/verif/ -p $TLM1_ROOT/.natural_docs_proj -o html $TLM1_ROOT/doc/NaturalDocs -r
+ 

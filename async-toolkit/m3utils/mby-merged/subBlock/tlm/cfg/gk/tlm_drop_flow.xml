@@ -1,0 +1,57 @@
+<data>
+	<!-- Compilation -->
+	<row>
+                <Cluster>tlm</Cluster>
+                <DUT>tlm</DUT>
+                <Stage>ace</Stage>
+		<Stage_Exec>simbuild</Stage_Exec>
+                <AdditionalArgs>-s all +s ace -ace_args -cc -results $MODEL_ROOT/target/tlm_ace_drop_$GK_TURNIN_UNIQUE_ID/aceroot -ace_args-</AdditionalArgs>
+                <XdutStageDep>[tlm].[ironchef]</XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>1</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>build</Type>
+        </row>
+        <row>
+                <Cluster>tlm</Cluster>
+                <DUT>tlm</DUT>
+                <Stage>tlm_alive_test</Stage>
+                <Stage_Exec>trex</Stage_Exec>
+                <AdditionalArgs>tlm_alive_test -m acerun -dut tlm  -ms -ace_args -x -seed=1 -model_compile_results_dir $MODEL_ROOT/target/tlm_ace_drop_$GK_TURNIN_UNIQUE_ID/aceroot -ace_args- -ms- -wp $MODEL_ROOT/target/tlm_ace_drop_$GK_TURNIN_UNIQUE_ID/</AdditionalArgs>
+		<XdutStageDep>[tlm].[ace]</XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>0</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>other</Type>
+        </row>
+	<row>
+                <Cluster>tlm</Cluster>
+                <DUT>tlm</DUT>
+                <Stage>rm_ace_results</Stage>
+                <Stage_Exec>rm</Stage_Exec>
+                <AdditionalArgs>-rf $MODEL_ROOT/target/tlm_ace_drop_$GK_TURNIN_UNIQUE_ID</AdditionalArgs>
+                <XdutStageDep>[tlm].[ace]</XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>1</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>other</Type>
+        </row>
+</data>

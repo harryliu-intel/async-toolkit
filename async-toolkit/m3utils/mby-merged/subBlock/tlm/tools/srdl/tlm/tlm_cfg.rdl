@@ -1,0 +1,51 @@
+addrmap tlm_cfg {
+ 
+   name = "TLM1_CFG";
+   desc = "";
+
+reg reg_DEVVENDID { 
+
+name = "Device/Vendor ID";
+desc = "Device/Vendor ID";
+shared;
+
+field {
+      name= "PCI device ID"; 
+      desc =  "";  
+       AccessType = "RW";	
+} DEVICEID[31:16] = 16'h0; 
+  
+field {
+      name= "PCI device ID"; 
+      desc =  "";  
+       AccessType = "RW";	
+} VENDORID[15:0]; 
+};
+  
+reg reg_BASE_ADDR_0{
+   		name = "BASE_ADDR_0";
+		shared;
+		field {
+			AccessType = "RO";
+		} MEMORY_IO_SPACE [0:0] = 1'h0;
+		field {
+			desc = "";
+			AccessType = "RO";
+		} MEMORY_TYPE [2:1] = 2'h0;
+		field {
+			AccessType = "RO";
+		} PREFETCHABLE_MEMORY [3:3] = 1'h0;
+		field {
+			AccessType = "RO";
+		} MEMORY_SIZE [16:4] = 13'h0;
+		field {
+			AccessType = "RW";
+		} BASE_ADDR [31:17] = 15'h0;
+	} ; 
+
+
+
+reg_DEVVENDID DEVVENDID @0x000000;
+reg_BASE_ADDR_0 BASE_ADDR_0 @0x000010;      	
+
+};

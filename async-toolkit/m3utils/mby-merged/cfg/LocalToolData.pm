@@ -1,0 +1,158 @@
+# DO NOT REMOVE!!!  Learn to code warning-free perl instead.
+#
+use warnings FATAL => 'all';
+use lib "$ENV{RTL_PROJ_TOOLS}/proj_utils/nhdk/latest/GetNB";
+use GetNB;
+
+
+package ToolData;
+$general_vars{aceroot_dpath} = "$MODEL_ROOT/target/&get_facet(dut)/aceroot";
+
+$ToolConfig_tools{ace_utils}{OTHER}{printcmd} = "0";
+$ToolConfig_tools{ace_utils}{OTHER}{cleanenvrc} = "0";
+
+
+# --- Added options to get GK  to work correctly .. requested by Guy/Tom 
+$ToolConfig_tools{'rtltools'}{SUB_TOOLS}{flowbee}{OTHER}{enable_gkmnm} = "1";
+$ToolConfig_tools{'rtltools'}{OTHER}{dont_stop_feeder} = "1";
+
+
+$ToolConfig_tools{'rtltools'}{OTHER}{resource_def} = "$ENV{MODEL_ROOT}/cfg/resource.xml";
+$ToolConfig_tools{'febe3'}{OTHER}{resource_def} = "$ENV{MODEL_ROOT}/cfg/resource.xml";
+
+$ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'} = "&get_tool_version(lintra)";
+$ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'} = "&get_tool_path(lintra)";
+
+$ToolConfig_tools{runtools}{ENV}{TREX_PACKAGES}= "&get_tool_path(casa/casa_utils)/trex/casa_TREX.pm";
+$ToolConfig_tools{runtools}{OTHER}{'task_additional_policy_module_paths_l'}= "&get_tool_path(casa/casa_utils)/trex/casa_per_regression.pm";
+
+$ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_PATH}  = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_PATH)";
+$ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_ARGS}  = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)"; 
+$ToolConfig_tools{runtools}{ENV}{JASPERGOLD_VER}  = "&get_tool_version(jaspergold)/";
+$ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}  = "&get_tool_version(jaspergold)";
+
+
+                                     
+$ToolConfig_tools{dc_shell} = {
+    VERSION    =>  "I-2013.12-SP5-6",
+    PATH       => "/p/hdk/cad/designcompiler/&get_tool_version()",
+    ENV_APPEND  => {
+        'PERLLIB'   => "&get_tool_path()/Trex_Modules",
+    },
+};
+
+my $nb_object = GetNB->new({key=>"build::all"});
+
+   $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'stages'}{SUB_TOOLS}{'default'}{OTHER}{netbatch_resource} = {
+   				      cores => "1C",
+   				      jobsPerDelegate => 1,
+   				      local => 0,
+   				      maxDelegates => 40,
+   				      mem => "4G",
+   				      os => "SLES11",
+   				      priority => 1,
+   				      qslot => $nb_object->{qslot},
+   				      queue => $nb_object->{pool},
+   				      submissionArgs => "",
+   				      tag => "dynamic",
+   				    };
+
+
+
+$ToolConfig_tools{flowbee}{OTHER}{default_dut} = "mby";
+
+$ToolConfig_tools{buildman}{OTHER}{UDFS} = ["&get_tool_path(buildman)/udf/buildman.udf",
+					    "&get_tool_path(bman_stages)/stages_attributes.udf"];
+
+# Jasper
+$ToolConfig_tools{jaspergold} = {   
+    #VERSION => '2017.03p002',
+    VERSION => '2017.06p002__XLM17.04',
+    PATH => "$RTL_CAD_ROOT/jasper/jaspergold/&get_tool_version()", 
+    EXEC => "&get_tool_path()/bin/jg -proj ${$}_jgproject",
+    ENV_PREPEND  => {        
+                    # For releases 2015.03p002 and earlier        
+        'TEMPUSD_LICENSE_FILE'   => '29040@jasper01p.elic.intel.com',       
+                   # For releases 2015.06 and later       
+        'CDS_LIC_FILE' => '5280@cadence24p.elic.intel.com',        
+        PATH => "&get_tool_path()/bin",   
+ 
+    },   
+    SUB_TOOLS => {        "intel_jasper_library" => "&get_tool(intel_jasper_library)",    },  
+    OTHER => {        'HDK_CATEGORY' => 'Formal Property Verification (FPV)',
+                      'HDK_PRODUCT' => 'JasperGold',
+                      'HDK_RELEASE_NOTES' => 'http://goto/jasper',  
+                      # [2015ww34] TSETUP options added based on advice from mmaidmen       
+                      'TSETUP_TOOLNAME' => 'jasper',  
+                      'TSETUP_VENDOR' => 'jasper',  
+                      'TSETUP_IP_VERSIONS' => {}    },
+         ENV_OVERRIDE      => {
+                'IJL_ROOT' => "/p/hdk/rtl/cad/x86-64_linux30/jasper/intel_jasper_library/3.1",
+                },
+
+}; 
+
+# Adding stage foo
+$ToolConfig_tools{"bman_stages"} = {
+    VERSION => "14.06.15",
+    PATH => "$ENV{RTL_PROJ_TOOLS}/bman_stages/nhdk/&get_tool_version()",
+};
+$ToolConfig_tools{"foo"} = {
+   VERSION => "&get_tool_version(bman_stages)",
+   PATH => "&get_tool_path(bman_stages)",
+   OTHER   => {
+               enable_stage_caching => 0,
+               enable_stage_digest => 0,
+               modules => "&get_tool_path(foo)/foo.pm",
+               stage_digest_rules => ["acebuild", "foo"],
+             },
+};
+push @{$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{'modules'}}, "&get_tool_var('foo','modules')";
+
+
+$ToolConfig_tools{stage_bman_sgcdc} = {
+  OTHER   => {
+               enable_stage_caching => 0,
+               enable_stage_digest => 0,
+               modules => "&get_tool_path(buildman)/stages/sgcdc.pm",
+               stage_digest_rules => ["acebuild", "sgcdc"],
+             },
+  PATH    => "&get_tool_path(buildman)",
+  VERSION => "&get_tool_version(buildman)",
+};
+
+$ToolConfig_tools{stage_bman_genrtl}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/genrtl.pm";
+$ToolConfig_tools{jasper_utils} = {
+  PATH    => "$ENV{RTL_PROJ_TOOLS}/jasper_utils/nhdk/&get_tool_version()",
+  VERSION => "14.06.20",
+};
+
+$ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
+
+$ToolConfig_tools{"mgm"} = {
+    VERSION => "1.8_try5",
+    PATH => "$ENV{RTL_PROJ_TOOLS}/mgm/nhdk/&get_tool_version()",
+    #PATH => "/nfs/sc/disks/nhdk_da.work.001/belfere/1.8_dev1",
+    MGM_ARGS => {
+        BLOCKS => {
+            mby => ["mby",],
+            
+        },
+        PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",
+        REPORT_DIR => "$ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/mgm_run/rtl",
+        #REPORT_DIR => "$ENV{MODEL_ROOT}/target/mgm/rtl",
+        PREFIX => "mby_prefix",
+    },
+    EXEC => "&get_tool_path()/bin/mgm",
+    ENV => {
+        MGM_ROOT => "&get_tool_path()",
+        MGM_VER  => "&get_tool_version()",
+        MGM_RTL  =>  "&get_tool_path()/rtl",
+    },
+    ENV_APPEND => {
+        PATH => "&get_tool_path()/bin:/p/com/eda/intel/puni/2.7", #TODO: fix later to HDK puni
+    },
+};
+
+
+

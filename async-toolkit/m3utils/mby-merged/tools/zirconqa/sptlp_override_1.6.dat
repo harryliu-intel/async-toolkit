@@ -1,0 +1,23 @@
+; Legacy file created by preZirconQA
+rtlverifdir          ./verif/tb verif/tb/saola/ 
+rtltopfile           source/mby/rtl/mby_top.v 
+rtlrptdir            ./tools/zirconqa/zircon_rpt/vcs 
+#collagebldscrfile    builder.scc_wrapper_top.tcl 
+#collagesumrptfile    scc_wrapper_top.build.summary 
+#collagewarnrptfile   scc_wrapper_top.build.warning 
+#topcorekit           scc_wrapper_top.coreKit 
+verdirptdir          ./tools/zirconqa/zircon_rpt/verdi/ 
+aceudfmodel          mby 
+aceverdilogfile      verdi_rpt.txt 
+acevcslogfile        vcs_rpt.txt 
+ovmtbdir             ./verif/tb 
+ovmenvdir            ./verif/tb 
+ovmenvext            mby_env\.sv 
+ovmtestsext          \.sv?$ 
+docvctype            1 
+docrelnotesname      mby_integrationGuide.docx 
+upfvalidpwrdomains   1 
+rdlfusefile          mby_fuse_map.rdl  
+rdlralfile           mby_ip\.rdl 
+rdlsearchpath        tools/srdl/mby  
+searchdirs           source/mby/rtl

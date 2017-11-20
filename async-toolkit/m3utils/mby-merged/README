@@ -1,0 +1,122 @@
+==================================================================================
+GMF Repo  
+==================================================================================
+Readme contents:
+- Environment Setup
+- Gatekeeper
+- Building Model : Simulation
+- Running Simulations
+    - Signal dumping
+- Post Simulation Debugging
+- Lintra RTL linting
+- Amiq DVT Environment
+
+==================================================================================
+Environment Setup
+==================================================================================
+To setup the environment, create this alias in your ~/.aliases file
+  alias setnhdk  'source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh \!:*'
+
+Then cd to the root of the area you want to be the top-level, and run:
+    setnhdk -w $cwd
+
+==================================================================================
+Gatekeeper
+==================================================================================
+To turn in your changes :
+    turnin -c mby -s dev-x0
+
+See wiki page for more details and options on turnin flow.
+
+==================================================================================
+Building Model : Simulation
+==================================================================================
+
+Compile VCS:
+  bman
+
+Compile VCS with coverage:
+  bman -dut mby -s all +s vcs
+
+
+
+==================================================================================
+Running Simulations
+==================================================================================
+
+Use trex to run simulations. The flow uses the test-in-model flow, which means the
+VCS elaboration is done during build time, and trex runs that
+
+Note: Ace switches in examples below can be combined!
+ - Ace args are passed through trex with the -ace_args ... -ace_args- pair. 
+ - Ace switches in example commands below can generally be used with each other
+
+Recommendation: Run tests in a "regression" or "results" directory in $MODEL_ROOT
+ - Keeps $MODEL_ROOT cleaner
+ - Git will ignore any directories named "regression" or "*results*".
+ - simregress will create and run under a "regression" subdirectory
+
+// Run a basic test:
+  trex mby_alive_test -seed 1 -dut mby
+
+// Run basic test with coverage enabled:
+  trex mby_alive_test -seed 1 -cc_on -dut mby
+
+// Interative debugging with Verdi
+    trex mby_alive_test -ace_args -sd verdi -ace_args- -seed 1 -dut mby
+
+// Interative debugging with DVE
+    trex mby_alive_test -ace_args -run_with_gui -ace_args- -seed 1 -dut mby
+
+// Adding runtime VCS plusargs:
+    trex mby_alive_test -ace_args -simv_args +MY_PLUSARG1=value -simv_args +MY_PLUSARG2=v2 -ace_args- -seed 1 -dut mby
+
+// Adding runtime VCS plusarg - OVM_VERBOSITY
+    trex mby_alive_test -ace_args -simv_args +OVM_VERBOSITY=OVM_FULL -ace_args- -seed 1 -dut mby
+
+---------------
+Signal dumping
+---------------
+
+// Enable signal dumping with FSDB output: use Ace "-fsdb" switch
+  trex mby_alive_test -ace_args -fsdb -ace_args- -seed 1 -dut mby
+
+// Enable signal dumping with VPD output: use "-vpd" switch - Points to a user "do" script in $MODEL_ROOT/tools/vcs.
+  trex mby_alive_test -ace_args -vpd mby_vpd.do -ace_args- -seed 1 -dut mst
+
+// Enable signal dumping with VCD-Plus: use "-vcdplus" switch
+  trex mby_alive_test -ace_args -vcdplus -ace_args- -seed 1 -dut mby
+
+// Enable signal dumping with VCD: use "-vcd" switch 
+//    - VCD is an uncompressed text format, and can be large in size. Avoid!
+  trex mby_alive_test -ace_args -vcd -ace_args- -seed 1 -dut mby
+
+==================================================================================
+Post Simulation Debugging
+==================================================================================
+
+//To run Synopsys Verdi debugger:
+//    - Verdi option to point to FSDB file: -ssf <path/to/fsdb/file>
+//    - Model switch (-m) only needed if multiple models were compiled with bman. 
+//      Use switch to specify which model was used for simulation.
+//    - DUT switch (-d) generally not needed, typically only one dut is defined.
+
+  run_verdi [-m <model>] [-d <dut>] <verdi_options>
+
+//Run Synopsys DVE debugger:
+//    - DVE option to point to VPD file: -vpd <path/to/vpd/file>
+
+  run_dve <dve_options>
+
+
+==================================================================================
+Lintra RTL linting
+==================================================================================
+bman -dut mby -s all +s lintra_rtl 
+
+==================================================================================
+Amiq DVT Environment
+==================================================================================
+
+$MODEL_ROOT/tools/dvt/dvt_runme.csh
+

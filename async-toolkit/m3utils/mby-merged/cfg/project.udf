@@ -1,0 +1,98 @@
+#---*-perl-*---------------------------------------------------------------------------------
+# INTEL CONFIDENTIAL
+#
+# Copyright (June 2005)2 (May 2008)3 Intel Corporation All Rights Reserved.
+# The source code contained or described herein and all documents related to the
+# source code ("Material") are owned by Intel Corporation or its suppliers or
+# licensors. Title to the Material remains with Intel Corporation or its
+# suppliers and licensors. The Material contains trade secrets and proprietary
+# and confidential information of Intel or its suppliers and licensors. The
+# Material is protected by worldwide copyright and trade secret laws and treaty
+# provisions. No part of the Material may be used, copied, reproduced, modified,
+# published, uploaded, posted, transmitted, distributed, or disclosed in any way
+# without Intels prior express written permission.
+#
+# No license under any patent, copyright, trade secret or other intellectual
+# property right is granted to or conferred upon you by disclosure or delivery
+# of the Materials, either expressly, by implication, inducement, estoppel or
+# otherwise. Any license under such intellectual property rights must be express
+# and approved by Intel in writing.
+#
+#--------------------------------------------------------------------------------
+# This file contain %audf    -- defines the base UDF data
+#--------------------------------------------------------------------------------------------
+package OneCfg::UDF::Reader;
+#--------------------------------------------------------------------------------------------
+# Validation subroutine returns HASH:
+# $return{error}  = 1 if fatal error;
+# $return{warning}   = 1 if warning (non-fatal);
+# $return{reason} = "string that will be printed in warn/error message."
+#--------------------------------------------------------------------------------------------
+# Standard alidation routines available:
+#	- OneCfg::UDF::InterfaceVars::test_dir_existence
+#--------------------------------------------------------------------------------------------
+use ToolConfig;
+%audf = (
+     
+    InterfaceVars => {
+        -sched => { default => 'nbfeeder', },
+        -stage => {
+          default => [qw(-module -emu -sglp_legacy -sglp -sgdft -lintra -lintra_rtl -lintra_svtb -lintra_ol -verdi -jg -FLG -qcdc -fishtail -quick_syn_plus -noble -osget -osgetsaved -osexporter -debug_dump)],
+ 
+        },
+        -use_dynamic_resources => {
+            default => 1,
+        },
+        -preserve_user_env => {
+            default => 1,
+        },
+        -target_prefix => {
+            default => "target",
+        },
+        -vcstarget => {
+            default => "vcs_lib/".&ToolConfig::get_tool_version('vcsmx')."_suse64",    
+        },
+	-dvt => {
+            action => "dvt",
+            type => "BOOLEAN",
+            default => 0,
+            help => {
+                group => "DVT",
+                desc => "To build or load DVT project",
+            },      
+        },
+        -dvtdemo => {
+            type => "BOOLEAN",
+            default => "0", 
+            help => {
+                group => "DVT",
+                desc => "To build DVT default.build only, not running",
+            },      
+        },
+        -dvtclean => {
+            type => "BOOLEAN",
+            default => 0,
+            help => {
+                group => "DVT",
+                desc => "To force clean existing project and build a new project",
+            },      
+        },      
+        -dvtrefresh => {
+            type => "BOOLEAN",
+            default => 0,
+            help => {
+                group => "DVT",
+                desc => "To recreate all .build and .xml files under .dvt directory",
+            },      
+        },
+
+                # JasperGold options
+
+        -jg_elab_opts            => {  default => ["-L work"] },
+        -jg_compile_opts            => { default => ["-mfcu"] },
+        -jg_post_ijlsetup_scripts          => {  default => ["$ENV{MODEL_ROOT}/tools/fpv/common/pre_analyze.tcl"] },
+
+
+    },
+);
+

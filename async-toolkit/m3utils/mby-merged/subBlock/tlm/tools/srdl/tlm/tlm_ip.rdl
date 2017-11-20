@@ -1,0 +1,29 @@
+`include "lib_udp.rdl"
+
+addrmap tlm_regs{
+	`include "tlm_cfg.rdl"
+	`include "tlm_mem.rdl"
+
+	bridge;
+
+	// CFG space rdl
+	tlm_cfg tlm_cfg;
+	// MEM space rdl
+	tlm_mem tlm_mem;
+	// CFG space through SB
+	tlm_cfg tlm_cfg_sb;
+	// MEM space through SB
+	tlm_mem tlm_mem_sb;
+	
+	//Space and Base seeting
+
+	tlm_cfg->Space="CFG";
+	tlm_cfg->BaseAddress="0/10/0"; //INTEG: Need to replace with the IP B.D.F
+	tlm_mem->Space="MEM";
+	tlm_mem->BaseAddress="BASE_ADDR_0";
+
+	tlm_cfg_sb->Space="MSG";
+	tlm_cfg_sb->BaseAddress="0xaa"; //INTEG: Need to replace with the IP SB port number
+	tlm_mem_sb->Space="MSG";
+	tlm_mem_sb->BaseAddress="0xaa"; //INTEG: Need to replace with the IP SB port number	
+};

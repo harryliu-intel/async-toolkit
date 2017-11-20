@@ -1,0 +1,63 @@
+//=============================================================================
+//  Copyright (c) 2009 Intel Corporation, all rights reserved.
+//  THIS PROGRAM IS AN UNPUBLISHED WORK FULLY PROTECTED BY
+//  COPYRIGHT LAWS AND IS CONSIDERED A TRADE SECRET BELONGING
+//  TO THE INTEL CORPORATION.
+//
+//  Intel Confidential
+//=============================================================================
+//  Unit Name                                           : Valleyview Fuse List
+//  Primary Unit Owner                                  : Sridhar Valluru
+//  Secondary Contact                                   : Becky Wilk
+//=============================================================================
+//
+// The following is the VLV Fuse List captured in SystemRDL
+//
+//=============================================================================
+
+`include "fuse_udp.rdl"
+
+`include "tlm_fuse.rdl"
+
+
+  //------------------------------------------------------------------------------
+  // TLM1  Fuse Address Map
+  //------------------------------------------------------------------------------
+  addrmap TLM1_Fuse_Map {
+  //--------------------------------------------------------------------------
+  // This is a default field type that contains all of the required UDPs and
+  // SystemRDL properties that must be defined per field.  Each field within
+  // a register instantiates this default field to the correct size and
+  // overrides the default values for the UDPs.
+  //--------------------------------------------------------------------------
+
+  field default_field {
+    //**** DO NOT MODIFY CODE BELOW ****
+    <% foreach $prop (keys %FieldProps) { %>
+      <%=$prop%> = <%=$FieldProps{$prop}%>;
+    <% } %>
+    //**** DO NOT MODIFY CODE ABOVE ****
+
+    // Description of this register field.
+    desc = "This is the default field any register that instantiates this field will inherit all of the properties that are assigned in this field.";
+  };
+
+
+   //**** DO NOT MODIFY CODE BELOW ****
+  <%
+  #  #include "Properties.pm"
+  #  use Properties;
+  #  %AddrMapProps = Properties::GetAddrMapProps();
+  #  %RegProps     = Properties::GetRegProps();
+  #  %FieldProps   = Properties::GetFieldProps();
+  %>
+   //**** DO NOT MODIFY CODE ABOVE ****
+
+    USE_FUSE_FLOW = true;
+    FuseNumBankCtrlRows = 4;
+    FuseNumBankDataRows = 36;
+    FuseNumBankCols = 32;
+    FuseAccessGranularity = 8;
+    
+    tlm_fuse tlm_fuse;
+  };

@@ -1,0 +1,47 @@
++dvt_init+vcs.vlogan
+-sverilog
+
+//Defines
++define+OVM+UVM+XVM+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR+SLA_FUSE_IS_UVM
+
++incdir+$ACE_HOME/lib/Verilog
+
+//UVM
++incdir+$UVM_HOME/src
+$UVM_HOME/src/uvm_pkg.sv
+$(UVM_HOME)/src/dpi/uvm_dpi.cc -CFLAGS -DVCS
+
+// OVM
++incdir+$OVM_HOME/src
+$OVM_HOME/src/ovm_pkg.sv
+
+//XVM
++incdir+$XVM_HOME/src
++incdir+$XVM_HOME/src/macros
+$XVM_HOME/src/xvm_pkg.sv
+
+//Saola
++incdir+$SAOLA_HOME/verilog+$SAOLA_HOME/verilog_uvm
+$SAOLA_HOME/verilog/sla_pkg.sv
+
+//Project Files
+//
+// RTL
++incdir+src/sva+src/mby/rtl+$SVA_LIB_ROOT
+src/sva/mby_intel_checkers.vm
+src/sva/mby_checker.sv
+src/sva/mby_bind.sv
+src/mby/rtl/mby_top.v
+
+// TESTBENCH
++incdir+verif/tb+verif/lib/mby+verif/lib/mby/seqlib
++incdir+verif/lib/mby/ral+verif/lib/mby/fal+verif/lib/mby/ti+verif/lib/mby/env
++incdir+verif/tests/mby_test_pack
+verif/lib/mby/fal/toplevel_fuse_env.svh
+verif/lib/mby/mby_env_pkg.sv
+verif/lib/mby/ti/mby_ti_high.sv
+verif/lib/mby/ti/mby_ti_low.sv
+verif/lib/mby/ti/mby_env_if.sv
+verif/tests/mby_test_pack/mby_test_pack.sv
+verif/tb/mby_tb.sv
+

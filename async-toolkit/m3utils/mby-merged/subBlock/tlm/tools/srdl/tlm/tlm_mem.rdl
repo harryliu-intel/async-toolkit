@@ -1,0 +1,29 @@
+addrmap tlm_mem {
+ 
+   name = "TLM1_MEM";
+   desc = "";
+
+reg reg_MEM { 
+
+name = "Mem dummy ";
+desc = "";
+shared;
+
+field {
+      name= "MEM1"; 
+      desc =  "";  
+       AccessType = "RW";	
+}MEM1[31:16] = 16'h0; 
+  
+field {
+      name= "MEM2"; 
+      desc =  "";  
+       AccessType = "RO";	
+}MEM2 [15:0]; 
+  
+ 
+};
+
+reg_MEM MEM @0x000000;	
+
+};

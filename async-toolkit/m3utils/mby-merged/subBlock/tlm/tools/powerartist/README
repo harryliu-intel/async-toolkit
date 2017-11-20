@@ -1,0 +1,8 @@
+Directory: tools/powerartist
+
+Area for RTL power analysis with Power Artist from ANSYS/Apache
+See: 
+https://securewiki.ith.intel.com/display/hdk/RTL+Power+Estimation
+https://securewiki.ith.intel.com/pages/viewpage.action?pageId=129925817
+
+If that last one changes, try: https://securewiki.ith.intel.com/display/P17X/Power+Estimation and drill down to Power Artist

@@ -1,0 +1,25 @@
+ignore 2.1.6.f 
+ignore 2.1.6.e 
+ignore 2.1.6.c 
+ignore 2.1.6.b 
+ignore 2.1.6.a.1 
+ignore 2.1.6.a.2 
+ignore 2.1.7.h TLM1 dont use LEC
+ignore 2.1.7.g TLM1 dont use LEC
+ignore 2.1.7.f TLM1 dont use LEC
+ignore 2.1.7.a.2 TLM1 dont use LEC
+ignore 2.1.7.c TLM1 dont use LEC
+ignore 2.1.7.a.1 TLM1 dont use LEC
+ignore 2.1.8.s TLM1 dont supprot this in RTL 0.8 realase.
+ignore 2.1.8.o TLM1 dont supprot this in RTL 0.8 realase.
+ignore 2.1.8.v TLM1 dont supprot this in RTL 0.8 realase.
+ignore 2.1.8.w TLM1 dont supprot this in RTL 0.8 realase.
+ignore 2.2.17 Please review TLM1 version file : script/scc_toolfile.dat
+ignore 2.2.18 Please review TLM1 version file : script/scc_toolfile.dat
+ignore 2.2.23 tlm_fuse_env extends TLM1_Fuse_Map_env which extends sla_fuse_env
+ignore 2.2.24 TLM1 don't have Straps.
+ignore 2.2.6 (TLM1 dont use this verif method)
+ignore 2.2.2.d (TLM1 dont use this verif method)
+ignore 2.2.21.b TLM1 dont have straps
+ignore 2.2.21.d TLM1 dont have tap
+ignore 2.3.3 it_pbj.txt not relevant to TLM1

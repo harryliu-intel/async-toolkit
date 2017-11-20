@@ -1,0 +1,33 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+$hdl_spec = {
+    # List of specific VERILOG source files
+    -vlog_files => [
+	 "verif/lib/mby/ti/mby_ti_high.sv",
+	 "verif/lib/mby/ti/mby_ti_low.sv",
+	 "verif/lib/mby/ti/mby_env_if.sv",
+     ],
+    
+    # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     ],
+
+    # List of verilog library source files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+         "verif/lib/mby/ti",
+         "verif/lib/mby",
+         "verif/tb/",
+     ],
+    
+    # Arbitrary VLOG options
+#    -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
+
+	
+};
+

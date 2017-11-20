@@ -1,0 +1,1188 @@
+Only in /tmp/DEMO/TLM1/verif/lib: ChassisPowerGatingVIP_2013WW30
+Only in /tmp/DEMO/TLM1/verif/lib: VccModeling_v130227
+Only in /tmp/DEMO/TLM1/verif/lib: iosf_primary_bfm
+Only in /tmp/DEMO/TLM1/verif/lib: iosf_sideband_vc
+Only in /tmp/DEMO/TLM1/verif/lib: ip-ccu-vc-2013WW21r130521
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_base_env.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_base_env.sv
+22c22
+< class tlm_base_env extends sla_tb_env;
+---
+> class tlm_base_env extends slu_tb_env;
+26,28c26,28
+<     `ovm_component_utils_begin(tlm_base_env)
+< 	  `ovm_field_object(cfg, OVM_ALL_ON)
+<     `ovm_component_utils_end
+---
+>     `uvm_component_utils_begin(tlm_base_env)
+> 	  `uvm_field_object(cfg, UVM_ALL_ON)
+>     `uvm_component_utils_end
+30c30
+<   function new (string name="tlm_base_env", ovm_component parent = null);
+---
+>   function new (string name="tlm_base_env", uvm_component parent = null);
+42c42
+<   // TLM1 ENV OVM phases functions / tasks
+---
+>   // TLM1 ENV UVM phases functions / tasks
+55c55
+<   virtual function void build();
+---
+>   virtual function void build_phase(uvm_phase phase);
+68,69c68,69
+<     // OVM timeout
+<     // set_global_timeout (2000us);
+---
+>     // UVM timeout
+>     // uvm_pkg::set_global_timeout (2000us);
+72c72
+<     super.build();
+---
+>     super.build_phase(phase);
+85c85
+<    function void connect();
+---
+>    function void connect_phase(uvm_phase phase);
+96,97c96,97
+<   virtual function void end_of_elaboration ();
+<   super.end_of_elaboration();
+---
+>   virtual function void end_of_elaboration_phase (uvm_phase phase);
+>   super.end_of_elaboration_phase(phase);
+100c100
+<      `sla_assert(fuse.randomize(),("Unable to randomize fuses"));
+---
+>      `slu_assert(fuse.randomize(),("Unable to randomize fuses"));
+110,111c110,111
+<   virtual function void start_of_simulation ();
+<     super.start_of_simulation();
+---
+>   virtual function void start_of_simulation_phase (uvm_phase phase);
+>     super.start_of_simulation_phase(phase);
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_config.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_config.sv
+35c35
+< class tlm_config extends sla_config_object;
+---
+> class tlm_config extends slu_config_object;
+56,60c56,60
+<   `ovm_object_utils_begin(tlm_config)
+<      `ovm_field_string(tlm_primary_access, OVM_ALL_ON)
+<      `ovm_field_string(tlm_sideband_access, OVM_ALL_ON)
+<      `ovm_field_string(tlm_chassis_rst_verbose_dbg, OVM_ALL_ON)
+<    `ovm_object_utils_end
+---
+>   `uvm_object_utils_begin(tlm_config)
+>      `uvm_field_string(tlm_primary_access, UVM_ALL_ON)
+>      `uvm_field_string(tlm_sideband_access, UVM_ALL_ON)
+>      `uvm_field_string(tlm_chassis_rst_verbose_dbg, UVM_ALL_ON)
+>    `uvm_object_utils_end
+88c88
+<     `ovm_info (get_name (), "INTEG - Currently setup IP to support FUSE PULL ", OVM_HIGH);
+---
+>     `uvm_info (get_name (), "INTEG - Currently setup IP to support FUSE PULL ", UVM_HIGH);
+90c90
+<     `ovm_info (get_name(),	"INTEG - Currently setup IP to support PME ", OVM_HIGH);
+---
+>     `uvm_info (get_name(),	"INTEG - Currently setup IP to support PME ", UVM_HIGH);
+96c96
+<     `ovm_info (get_name(),	$psprintf ("INTEG - Currently setup IP SB ID to 0x%x ", `TLM1_SB_PORT_ID), OVM_HIGH);
+---
+>     `uvm_info (get_name(),	$psprintf ("INTEG - Currently setup IP SB ID to 0x%x ", `TLM1_SB_PORT_ID), UVM_HIGH);
+129c129
+<       `ovm_error (get_name (), "TLM1IosfSbVcCfg Randomization failed"); 
+---
+>       `uvm_error (get_name (), "TLM1IosfSbVcCfg Randomization failed"); 
+192c192
+<       `ovm_error (get_name (), "TLM1IosfPriVcCfg randomize failed");
+---
+>       `uvm_error (get_name (), "TLM1IosfPriVcCfg randomize failed");
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_env.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_env.sv
+28,30c28,30
+<     `ovm_component_utils_begin(tlm_env)
+< //     `ovm_field_string(tlm_ti_low_path, OVM_ALL_ON)
+<     `ovm_component_utils_end
+---
+>     `uvm_component_utils_begin(tlm_env)
+> //     `uvm_field_string(tlm_ti_low_path, UVM_ALL_ON)
+>     `uvm_component_utils_end
+46c46
+<   ovm_event_pool    TLM1evPool;
+---
+>   uvm_event_pool    TLM1evPool;
+89c89
+<   function new (string name="tlm_env", ovm_component parent = null);
+---
+>   function new (string name="tlm_env", uvm_component parent = null);
+98c98
+<   // TLM1 ENV OVM phases functions / tasks
+---
+>   // TLM1 ENV UVM phases functions / tasks
+111c111
+<   virtual function void build();
+---
+>   virtual function void build_phase(uvm_phase phase);  
+113c113
+<     ovm_object tmp_rtl_cfg_obj;
+---
+>     uvm_object tmp_rtl_cfg_obj;
+115c115
+<     super.build();
+---
+>     super.build_phase(phase);
+117c117
+<     if(get_config_object("tlm_rtl_config",tmp_rtl_cfg_obj)) begin 
+---
+>     if(uvm_config_object::get(this, "","tlm_rtl_config",tmp_rtl_cfg_obj)) begin 
+125,126c125,126
+<     cfg.TLM1IosfPriVcCfg.iosfAgtCfg[1].isActive = ovm_active_passive_enum'( _level == SLA_TOP);
+<     cfg.TLM1IosfSbVcCfg.is_active = ovm_active_passive_enum'(_level == SLA_TOP);
+---
+>     cfg.TLM1IosfPriVcCfg.iosfAgtCfg[1].isActive = uvm_active_passive_enum'( _level == SLA_TOP);
+>     cfg.TLM1IosfSbVcCfg.is_active = uvm_active_passive_enum'(_level == SLA_TOP);
+129c129
+<     set_config_object ("TLM1IosfPriVc", "iosfFabCfg", cfg.TLM1IosfPriVcCfg, 0);
+---
+>     uvm_config_object::set(this, "TLM1IosfPriVc", "iosfFabCfg", cfg.TLM1IosfPriVcCfg);
+133c133
+<     set_config_object ("TLM1IosfSbVc", "fabric_cfg", cfg.TLM1IosfSbVcCfg , 0);
+---
+>     uvm_config_object::set(this, "TLM1IosfSbVc", "fabric_cfg", cfg.TLM1IosfSbVcCfg );
+163,165c163,165
+<    function void connect();
+<      ovm_object temp;
+<      super.connect();
+---
+>    function void connect_phase(uvm_phase phase);
+>      uvm_object temp;
+>      super.connect_phase(phase);
+167c167
+<      tlm_if = sla_resource_db#(virtual tlm_env_if)::get("tlm_if",`__FILE__,`__LINE__);
+---
+>      tlm_if = slu_resource_db#(virtual tlm_env_if)::get("tlm_if",`__FILE__,`__LINE__);
+212,213c212,213
+<   virtual function void end_of_elaboration ();
+<     super.end_of_elaboration();
+---
+>   virtual function void end_of_elaboration_phase (uvm_phase phase);
+>     super.end_of_elaboration_phase(phase);
+228,229c228,229
+<   virtual function void start_of_simulation ();
+<     super.start_of_simulation();
+---
+>   virtual function void start_of_simulation_phase (uvm_phase phase);
+>     super.start_of_simulation_phase(phase);
+238c238
+<   virtual task run();
+---
+>   virtual task run_phase (uvm_phase phase);
+240c240
+<     super.run();
+---
+>     super.run_phase(phase);
+254c254
+<   // TLM1 ENV VC"s & VC's  OVM phases functions / tasks
+---
+>   // TLM1 ENV VC"s & VC's  UVM phases functions / tasks
+273c273
+<   function build_ch_rst_env();
+---
+>   function build_ch_rst_env(); 
+280c280
+<         set_config_int("*tlm_chassis_rst_env", "is_active", 1);
+---
+>         uvm_config_int::set(this, "*tlm_chassis_rst_env", "is_active", 1);
+401c401
+<     ovm_event tlm_int_detect_e;
+---
+>     uvm_event tlm_int_detect_e;
+425c425
+<     sla_fuse_group tlm_fuse_group;
+---
+>     slu_fuse_group tlm_fuse_group;
+427c427
+<     sla_fuse_pull_data fuseAddrDataQ[$];
+---
+>     slu_fuse_pull_data fuseAddrDataQ[$];
+475c475
+< 			       input  sla_fuse_pull_data fd,
+---
+> 			       input  slu_fuse_pull_data fd,
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_env_monitor.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_env_monitor.sv
+15c15
+<  It detect and monitor events in the IP and trigger OVM events on them
+---
+>  It detect and monitor events in the IP and trigger UVM events on them
+30c30
+< class tlm_env_monitor extends ovm_component;
+---
+> class tlm_env_monitor extends uvm_component;
+38,40c38,40
+<     `ovm_component_utils_begin(tlm_env_monitor)
+<       `ovm_field_int(enable_monitor, OVM_ALL_ON)
+<     `ovm_component_utils_end
+---
+>     `uvm_component_utils_begin(tlm_env_monitor)
+>       `uvm_field_int(enable_monitor, UVM_ALL_ON)
+>     `uvm_component_utils_end
+50c50
+<   ovm_event_pool    TLM1evPool;
+---
+>   uvm_event_pool    TLM1evPool;
+54c54
+<    tlm_analysis_fifo #(iosfsbm_cm::xaction) sb_msg_fifo;
+---
+>    uvm_tlm_analysis_fifo #(iosfsbm_cm::xaction) sb_msg_fifo;
+62c62
+<   function new(string name="tlm_pri_scbd", ovm_component parent=null);
+---
+>   function new(string name="tlm_pri_scbd", uvm_component parent=null);
+69,70c69,70
+<   virtual function void build();
+<     super.build();
+---
+>   virtual function void build_phase(uvm_phase phase);
+>     super.build_phase(phase);
+83,84c83,84
+<   function void connect();
+<      super.connect();
+---
+>   function void connect_phase(uvm_phase phase);
+>      super.connect_phase(phase);
+95,96c95,96
+<   task run();
+<     super.run();
+---
+>   task run_phase (uvm_phase phase);
+>     super.run_phase(phase);
+116c116
+<    Monitor the DUT interrupts and trigger OVM event
+---
+>    Monitor the DUT interrupts and trigger UVM event
+123,124c123,124
+<     ovm_event tlm_int_assert_e;
+<     ovm_event tlm_int_deassert_e;
+---
+>     uvm_event tlm_int_assert_e;
+>     uvm_event tlm_int_deassert_e;
+131c131
+<       `sla_msg (OVM_HIGH, get_name(), ("TLM1_INT_ASSERT event detected"));
+---
+>       `slu_msg (UVM_HIGH, get_name(), ("TLM1_INT_ASSERT event detected"));
+134c134
+<       `sla_msg (OVM_HIGH, get_name(), ("TLM1_INT_DEASSERT event detected"));
+---
+>       `slu_msg (UVM_HIGH, get_name(), ("TLM1_INT_DEASSERT event detected"));
+142c142
+<    Monitor the DUT primary  reset and trigger OVM event
+---
+>    Monitor the DUT primary  reset and trigger UVM event
+149,150c149,150
+<     ovm_event tlm_primary_reset_assert_e;
+<     ovm_event tlm_primary_reset_deassert_e;
+---
+>     uvm_event tlm_primary_reset_assert_e;
+>     uvm_event tlm_primary_reset_deassert_e;
+157c157
+<       `sla_msg (OVM_HIGH, get_name(), ("TLM1_IOSF_PRIMARY_RESET_ASSERT event detected"));
+---
+>       `slu_msg (UVM_HIGH, get_name(), ("TLM1_IOSF_PRIMARY_RESET_ASSERT event detected"));
+160c160
+<       `sla_msg (OVM_HIGH, get_name(), ("TLM1_IOSF_PRIMARY_RESET_DEASSERT event detected"));
+---
+>       `slu_msg (UVM_HIGH, get_name(), ("TLM1_IOSF_PRIMARY_RESET_DEASSERT event detected"));
+167c167
+<    Monitor the DUT sideband  reset and trigger OVM event
+---
+>    Monitor the DUT sideband  reset and trigger UVM event
+174,175c174,175
+<     ovm_event tlm_sideband_reset_assert_e;
+<     ovm_event tlm_sideband_reset_deassert_e;
+---
+>     uvm_event tlm_sideband_reset_assert_e;
+>     uvm_event tlm_sideband_reset_deassert_e;
+182c182
+<       `sla_msg (OVM_HIGH, get_name(), ("TLM1_IOSF_SIDEBAND_RESET_ASSERT event detected"));
+---
+>       `slu_msg (UVM_HIGH, get_name(), ("TLM1_IOSF_SIDEBAND_RESET_ASSERT event detected"));
+185c185
+<       `sla_msg (OVM_HIGH, get_name(), ("TLM1_IOSF_SIDEBAND_RESET_DEASSERT event detected"));
+---
+>       `slu_msg (UVM_HIGH, get_name(), ("TLM1_IOSF_SIDEBAND_RESET_DEASSERT event detected"));
+193c193
+<     ovm_event tlm_fusepull_comp_e;
+---
+>     uvm_event tlm_fusepull_comp_e;
+203c203
+< 	`sla_msg (OVM_HIGH, get_name(), ("TLM1_DETECT_FUSEPULL_COMP_SB_MSG event detected"));
+---
+> 	`slu_msg (UVM_HIGH, get_name(), ("TLM1_DETECT_FUSEPULL_COMP_SB_MSG event detected"));
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_im_env.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_im_env.sv
+31c31
+< class tlm_im_env extends sla_im_env;
+---
+> class tlm_im_env extends slu_im_env;
+33c33
+<     `ovm_component_utils(tlm_im_env)
+---
+>     `uvm_component_utils(tlm_im_env)
+37c37
+<     function new(string name = "tlm_im_env", ovm_component parent);
+---
+>     function new(string name = "tlm_im_env", uvm_component parent);
+42c42
+<     function void connect();
+---
+>     function void connect_phase(uvm_phase phase);
+44c44
+<         super.connect();;
+---
+>         super.connect_phase(phase);;
+54,55c54,55
+<   virtual function void build();
+<     super.build();
+---
+>   virtual function void build_phase(uvm_phase phase);
+>     super.build_phase(phase);
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_pri_scbd.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_pri_scbd.sv
+28c28
+< class tlm_pri_scbd extends ovm_scoreboard;
+---
+> class tlm_pri_scbd extends uvm_scoreboard;
+34c34
+<     ovm_event_pool    TLM1evPool;
+---
+>     uvm_event_pool    TLM1evPool;
+41,44c41,44
+<   ovm_analysis_export #(IosfMonTxn) expected_transaction_port;
+<   ovm_analysis_export #(IosfMonTxn) actaul_transaction_port;
+<   tlm_analysis_fifo #(IosfMonTxn) expected_transaction;
+<   tlm_analysis_fifo #(IosfMonTxn) actaul_transaction;
+---
+>   uvm_analysis_export #(IosfMonTxn) expected_transaction_port;
+>   uvm_analysis_export #(IosfMonTxn) actaul_transaction_port;
+>   uvm_tlm_analysis_fifo #(IosfMonTxn) expected_transaction;
+>   uvm_tlm_analysis_fifo #(IosfMonTxn) actaul_transaction;
+65,69c65,69
+<   `ovm_component_utils_begin(tlm_pri_scbd)
+<     `ovm_field_int(scbd_in_order, OVM_ALL_ON)
+<     `ovm_field_int(enable_scbd, OVM_ALL_ON)
+<      `ovm_field_int(tlm_pri_scbd_timeout, OVM_ALL_ON)    
+<   `ovm_component_utils_end
+---
+>   `uvm_component_utils_begin(tlm_pri_scbd)
+>     `uvm_field_int(scbd_in_order, UVM_ALL_ON)
+>     `uvm_field_int(enable_scbd, UVM_ALL_ON)
+>      `uvm_field_int(tlm_pri_scbd_timeout, UVM_ALL_ON)    
+>   `uvm_component_utils_end
+76c76
+<   function new(string name="tlm_pri_scbd", ovm_component parent=null);
+---
+>   function new(string name="tlm_pri_scbd", uvm_component parent=null);
+78c78
+<     // Enable OVM STOP flow
+---
+>     // Enable UVM STOP flow
+88,89c88,89
+<   function void connect();
+<     super.connect();
+---
+>   function void connect_phase(uvm_phase phase);
+>     super.connect_phase(phase);
+101,102c101,102
+<   task run();
+<     super.run();
+---
+>   task run_phase (uvm_phase phase);
+>     super.run_phase(phase);
+130c130
+< 	`sla_msg(OVM_NONE, get_name(),("SCBD recieve expected trandaction %s, adding for Q",trans_to_string(expected_trans)));
+---
+> 	`slu_msg(UVM_NONE, get_name(),("SCBD recieve expected trandaction %s, adding for Q",trans_to_string(expected_trans)));
+158c158
+< 	`sla_msg(OVM_NONE, get_name(),("SCBD recieve actaul trandaction %s, passing it to process",trans_to_string(actual_trans)));
+---
+> 	`slu_msg(UVM_NONE, get_name(),("SCBD recieve actaul trandaction %s, passing it to process",trans_to_string(actual_trans)));
+190c190
+< 	  `sla_error (get_name(),("Out of order transaction - %s",trans_to_string(trans)));
+---
+> 	  `slu_error (get_name(),("Out of order transaction - %s",trans_to_string(trans)));
+201c201
+<       `sla_error (get_name(),("Unexpected transaction - %s",trans_to_string(trans)));
+---
+>       `slu_error (get_name(),("Unexpected transaction - %s",trans_to_string(trans)));
+216c216
+<     `sla_warning (get_name(), ("INTEG - Need to imp is_match function"));
+---
+>     `slu_warning (get_name(), ("INTEG - Need to imp is_match function"));
+234c234
+<     `sla_warning (get_name(), ("INTEG - Need to imp compare_trans function"));
+---
+>     `slu_warning (get_name(), ("INTEG - Need to imp compare_trans function"));
+251c251
+<     `sla_warning (get_name(), ("INTEG - Need to imp trans_to_string function"));
+---
+>     `slu_warning (get_name(), ("INTEG - Need to imp trans_to_string function"));
+268c268
+<     `sla_msg(OVM_NONE, get_name(),("%t Start STOP task",$time));
+---
+>     `slu_msg(UVM_NONE, get_name(),("%t Start STOP task",$time));
+270c270
+<       `sla_msg(OVM_NONE, get_name(),("%t SCBD expected_Q is not empty wait 10us",$time));
+---
+>       `slu_msg(UVM_NONE, get_name(),("%t SCBD expected_Q is not empty wait 10us",$time));
+275c275
+<     `sla_error(get_name(),("SCBD expected Q is not empty after %d us",tlm_pri_scbd_timeout));
+---
+>     `slu_error(get_name(),("SCBD expected Q is not empty after %d us",tlm_pri_scbd_timeout));
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_ral_env.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_ral_env.sv
+71c71
+<    sla_ral_access_path_t access_path - which  interface  to use (current support "premary" or "sideband"
+---
+>    slu_ral_access_path_t access_path - which  interface  to use (current support "premary" or "sideband"
+76c76
+<   function sla_ral_addr_t get_addr_val(sla_ral_access_path_t access_path, sla_ral_reg r);
+---
+>   function slu_ral_addr_t get_addr_val(slu_ral_access_path_t access_path, sla_ral_reg r);
+96c96
+< 	      sla_ral_data_t tmp_addr;
+---
+> 	      slu_ral_data_t tmp_addr;
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_rtl_config.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_rtl_config.sv
+19c19
+< class tlm_rtl_config extends ovm_object;
+---
+> class tlm_rtl_config extends uvm_object;
+24,27c24,27
+<   `ovm_object_utils_begin(tlm_rtl_config)
+<      `ovm_field_string(tlm_ti_low_path, OVM_ALL_ON)
+<      `ovm_field_int(tlm_has_reset_pkg, OVM_ALL_ON)
+<    `ovm_object_utils_end
+---
+>   `uvm_object_utils_begin(tlm_rtl_config)
+>      `uvm_field_string(tlm_ti_low_path, UVM_ALL_ON)
+>      `uvm_field_int(tlm_has_reset_pkg, UVM_ALL_ON)
+>    `uvm_object_utils_end
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/env/tlm_sm_env.sv /tmp/DDR2JlWsHQ/lib/tlm/env/tlm_sm_env.sv
+38c38
+< class tlm_sm_env extends sla_sm_env;
+---
+> class tlm_sm_env extends slu_sm_env;
+40c40
+<     `ovm_component_utils(tlm_sm_env)
+---
+>     `uvm_component_utils(tlm_sm_env)
+45c45
+<     function new(string name, ovm_component parent);
+---
+>     function new(string name, uvm_component parent);
+50,52c50,52
+<     function void connect();
+<         sla_tb_env env_pointer;
+<         super.connect();
+---
+>     function void connect_phase(uvm_phase phase);
+>         slu_tb_env env_pointer;
+>         super.connect_phase(phase);
+55c55
+<         env_pointer = sla_tb_env::get_top_tb_env();
+---
+>         env_pointer = slu_tb_env::get_top_tb_env();
+57c57
+<         else ovm_report_fatal (get_full_name(), "BAD TOP env");
+---
+>         else uvm_report_fatal (get_full_name(), "BAD TOP env");
+62,65c62,65
+<     function void end_of_elaboration();
+<         sla_sm_am_tagmap memmap;
+<         sla_sm_am_tagmap cfgmap;
+<         sla_sm_am_tagmap iomap;
+---
+>     function void end_of_elaboration_phase(uvm_phase phase);
+>         slu_sm_am_tagmap memmap;
+>         slu_sm_am_tagmap cfgmap;
+>         slu_sm_am_tagmap iomap;
+67c67
+<         super.end_of_elaboration();
+---
+>         super.end_of_elaboration_phase(phase);
+110c110
+<    input string map_name, input string allocated_name = "", input  ovm_object user_object=null);
+---
+>    input string map_name, input string allocated_name = "", input  uvm_object user_object=null);
+121c121
+< 	      ovm_report_error (get_name()," TLM1 ENV does not support yet read frontdoor to DDR");
+---
+> 	      uvm_report_error (get_name()," TLM1 ENV does not support yet read frontdoor to DDR");
+129c129
+< 	        ovm_report_error (get_name()," TLM1 ENV does not support yet read backdoor to MMIO");
+---
+> 	        uvm_report_error (get_name()," TLM1 ENV does not support yet read backdoor to MMIO");
+137c137
+<           default : ovm_report_error (get_full_name(), $psprintf("TLM1_SM Do_Read Unsupported memeory region = %s",region));
+---
+>           default : uvm_report_error (get_full_name(), $psprintf("TLM1_SM Do_Read Unsupported memeory region = %s",region));
+159c159
+<                          input string map_name, input string allocated_name = "", input  ovm_object user_object=null);
+---
+>                          input string map_name, input string allocated_name = "", input  uvm_object user_object=null);
+170c170
+< 		ovm_report_error (get_name()," TLM1 ENV does not support yet write frontdoor to DDR");
+---
+> 		uvm_report_error (get_name()," TLM1 ENV does not support yet write frontdoor to DDR");
+176c176
+< 	     ovm_report_error (get_name()," TLM1 ENV does not support yet write frontdoor to DDR");  
+---
+> 	     uvm_report_error (get_name()," TLM1 ENV does not support yet write frontdoor to DDR");  
+183c183
+<             default : ovm_report_error (get_full_name(), "TLM1_SM Do_Write Unsupported memeory region");
+---
+>             default : uvm_report_error (get_full_name(), "TLM1_SM Do_Write Unsupported memeory region");
+200,201c200,201
+<    input string map_name, input string allocated_name = "", input  ovm_object user_object=null ); 
+<       ovm_report_error (get_full_name(), "TLM1_SM do_load is not implemented");
+---
+>    input string map_name, input string allocated_name = "", input  uvm_object user_object=null ); 
+>       uvm_report_error (get_full_name(), "TLM1_SM do_load is not implemented");
+215c215
+<                         input string allocated_name = "", input  ovm_object user_object=null); 
+---
+>                         input string allocated_name = "", input  uvm_object user_object=null); 
+276c276
+<                         ovm_report_error (get_full_name(), "TLM1 ENV does not support byte enables when doing backdoor writes to memory");
+---
+>                         uvm_report_error (get_full_name(), "TLM1 ENV does not support byte enables when doing backdoor writes to memory");
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/fal/toplevel_fuse_env.svh /tmp/DDR2JlWsHQ/lib/tlm/fal/toplevel_fuse_env.svh
+38c38,46
+< import ovm_pkg::*;
+---
+> import uvm_pkg::*;
+> 
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+> 
+40,41c48,49
+< `include "ovm_macros.svh"
+< `include "sla_macros.svh"
+---
+> `include "uvm_macros.svh"
+> `include "slu_macros.svh"
+45,46c53,54
+< class toplevel_fuse_env extends sla_fuse_env;
+<    `ovm_component_utils(toplevel_fuse_env)
+---
+> class toplevel_fuse_env extends slu_fuse_env;
+>    `uvm_component_utils(toplevel_fuse_env)
+50c58
+< function new (string name="fuse_env", ovm_component parent = null);
+---
+> function new (string name="fuse_env", uvm_component parent = null);
+54,55c62,63
+< function void build();
+<    super.build();
+---
+> function void build_phase(uvm_phase phase = null);
+>    super.build_phase(phase);
+64,65c72,73
+< function void connect();
+<    super.connect();
+---
+> function void connect_phase(uvm_phase phase = null);
+>    super.connect_phase(phase);
+69c77
+<     sla_fuse f = get_fuse(fuse_name);
+---
+>     slu_fuse f = get_fuse(fuse_name);
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/fal/tlm_classes.svh /tmp/DDR2JlWsHQ/lib/tlm/fal/tlm_classes.svh
+33c33
+< class tlm_fuse_tlm_fuse_fuse_1_field extends sla_fuse;
+---
+> class tlm_fuse_tlm_fuse_fuse_1_field extends slu_fuse;
+40c40
+<    `ovm_object_utils(tlm_fuse_tlm_fuse_fuse_1_field)
+---
+>    `uvm_object_utils(tlm_fuse_tlm_fuse_fuse_1_field)
+42c42
+<    function void do_print (ovm_printer printer);
+---
+>    function void do_print (uvm_printer printer);
+48c48
+<    function void do_pack (ovm_packer packer);
+---
+>    function void do_pack (uvm_packer packer);
+149c149
+< class tlm_fuse_tlm_fuse_fuse_2_field extends sla_fuse;
+---
+> class tlm_fuse_tlm_fuse_fuse_2_field extends slu_fuse;
+156c156
+<    `ovm_object_utils(tlm_fuse_tlm_fuse_fuse_2_field)
+---
+>    `uvm_object_utils(tlm_fuse_tlm_fuse_fuse_2_field)
+158c158
+<    function void do_print (ovm_printer printer);
+---
+>    function void do_print (uvm_printer printer);
+164c164
+<    function void do_pack (ovm_packer packer);
+---
+>    function void do_pack (uvm_packer packer);
+265c265
+< class tlm_fuse_tlm_fuse_fuse_3_field extends sla_fuse;
+---
+> class tlm_fuse_tlm_fuse_fuse_3_field extends slu_fuse;
+272c272
+<    `ovm_object_utils(tlm_fuse_tlm_fuse_fuse_3_field)
+---
+>    `uvm_object_utils(tlm_fuse_tlm_fuse_fuse_3_field)
+274c274
+<    function void do_print (ovm_printer printer);
+---
+>    function void do_print (uvm_printer printer);
+280c280
+<    function void do_pack (ovm_packer packer);
+---
+>    function void do_pack (uvm_packer packer);
+381c381
+< class tlm_fuse_tlm_fuse_fuse_4_field extends sla_fuse;
+---
+> class tlm_fuse_tlm_fuse_fuse_4_field extends slu_fuse;
+388c388
+<    `ovm_object_utils(tlm_fuse_tlm_fuse_fuse_4_field)
+---
+>    `uvm_object_utils(tlm_fuse_tlm_fuse_fuse_4_field)
+390c390
+<    function void do_print (ovm_printer printer);
+---
+>    function void do_print (uvm_printer printer);
+396c396
+<    function void do_pack (ovm_packer packer);
+---
+>    function void do_pack (uvm_packer packer);
+497c497
+< class tlm_fuse_fusegroup extends sla_fuse_group;
+---
+> class tlm_fuse_fusegroup extends slu_fuse_group;
+503c503
+<     `ovm_object_utils(tlm_fuse_fusegroup)
+---
+>     `uvm_object_utils(tlm_fuse_fusegroup)
+505c505
+<     function void do_print (ovm_printer printer);
+---
+>     function void do_print (uvm_printer printer);
+513c513
+<     function void do_pack (ovm_packer packer);
+---
+>     function void do_pack (uvm_packer packer);
+524c524
+<         build();
+---
+>         this.build_phase();
+527c527
+<     function void build();
+---
+>     function void build_phase(uvm_phase phase = null);
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/fal/tlm_fuse_env.sv /tmp/DDR2JlWsHQ/lib/tlm/fal/tlm_fuse_env.sv
+24c24,32
+< import ovm_pkg::*;
+---
+> import uvm_pkg::*;
+> 
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+> 
+26,27c34,35
+< `include "ovm_macros.svh"
+< `include "sla_macros.svh"
+---
+> `include "uvm_macros.svh"
+> `include "slu_macros.svh"
+30c38
+<    `ovm_component_utils(tlm_fuse_env);
+---
+>    `uvm_component_utils(tlm_fuse_env);
+35c43
+<     function new( string n="tlm_fuse_env", ovm_component p = null);
+---
+>     function new( string n="tlm_fuse_env", uvm_component p = null);
+41,43c49,51
+<     //virtual function void build();
+<     //  super.build();
+<     //endfunction : build
+---
+>     //virtual function void build_phase(uvm_phase phase);
+>     //  super.build_phase(phase);
+>     //endfunction : build_phase
+50,51c58,59
+<    function void connect();
+<      super.connect();
+---
+>    function void connect_phase(uvm_phase phase);
+>      super.connect_phase(phase);
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/fal/tlm_fuse_regs.svh /tmp/DDR2JlWsHQ/lib/tlm/fal/tlm_fuse_regs.svh
+51c51
+<                 sla_ral_coverage_t cov_t = COVERAGE_OFF,
+---
+>                 slu_ral_coverage_t cov_t = COVERAGE_OFF,
+58c58
+<                 sla_ral_data_t reset_val=0,
+---
+>                 slu_ral_data_t reset_val=0,
+179c179
+<         `sla_error(get_name(), ("Could not add register tlm_fuse"));
+---
+>         `slu_error(get_name(), ("Could not add register tlm_fuse"));
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/ral/tlm_ral_rtl_monitor.svh /tmp/DDR2JlWsHQ/lib/tlm/ral/tlm_ral_rtl_monitor.svh
+35,37c35,42
+<      import ovm_pkg::*; 
+<      import sla_pkg::*; 
+<   `include "sla_macros.svh"  
+---
+>      import uvm_pkg::*; 
+>      
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+39c44,47
+<   `include "ovm_macros.svh"  
+---
+> import sla_pkg::*; 
+>   `include "slu_macros.svh"  
+> 
+>   `include "uvm_macros.svh"  
+47c55
+<    `sla_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL.")); 
+---
+>    `slu_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL.")); 
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/ral/tlm_regs_ral_rtl_monitor.svh /tmp/DDR2JlWsHQ/lib/tlm/ral/tlm_regs_ral_rtl_monitor.svh
+37,39c37,44
+<      import ovm_pkg::*; 
+<      import sla_pkg::*; 
+<   `include "sla_macros.svh"  
+---
+>      import uvm_pkg::*; 
+>      
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+41c46,49
+<   `include "ovm_macros.svh"  
+---
+> import sla_pkg::*; 
+>   `include "slu_macros.svh"  
+> 
+>   `include "uvm_macros.svh"  
+49c57
+<    `sla_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL.")); 
+---
+>    `slu_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL.")); 
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/ral/tlm_regs_regs.svh /tmp/DDR2JlWsHQ/lib/tlm/ral/tlm_regs_regs.svh
+49c49
+<                 sla_ral_coverage_t cov_t = COVERAGE_OFF,
+---
+>                 slu_ral_coverage_t cov_t = COVERAGE_OFF,
+56c56
+<                 sla_ral_data_t reset_val=0,
+---
+>                 slu_ral_data_t reset_val=0,
+138c138
+<                 sla_ral_coverage_t cov_t = COVERAGE_OFF,
+---
+>                 slu_ral_coverage_t cov_t = COVERAGE_OFF,
+145c145
+<                 sla_ral_data_t reset_val=0,
+---
+>                 slu_ral_data_t reset_val=0,
+248c248
+<                 sla_ral_coverage_t cov_t = COVERAGE_OFF,
+---
+>                 slu_ral_coverage_t cov_t = COVERAGE_OFF,
+255c255
+<                 sla_ral_data_t reset_val=0,
+---
+>                 slu_ral_data_t reset_val=0,
+351c351
+<       `sla_error(get_name(), ("Could not add register DEVVENDID"));
+---
+>       `slu_error(get_name(), ("Could not add register DEVVENDID"));
+365c365
+<       `sla_error(get_name(), ("Could not add register BASE_ADDR_0"));
+---
+>       `slu_error(get_name(), ("Could not add register BASE_ADDR_0"));
+379c379
+<       `sla_error(get_name(), ("Could not add register MEM"));
+---
+>       `slu_error(get_name(), ("Could not add register MEM"));
+Only in /tmp/DEMO/TLM1/verif/lib/tlm/seqlib: README.txt
+Only in /tmp/DEMO/TLM1/verif/lib/tlm/seqlib: docs
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/seqlib/tlm_config_seqlib.sv /tmp/DDR2JlWsHQ/lib/tlm/seqlib/tlm_config_seqlib.sv
+32,33c32,34
+< class tlm_config_base_seq extends sla_sequence_base;
+<   `ovm_sequence_utils(tlm_config_base_seq,sla_sequencer)
+---
+> class tlm_config_base_seq extends slu_sequence_base;
+>   `uvm_object_utils(tlm_config_base_seq) 
+>   `uvm_declare_p_sequencer(slu_sequencer)
+35,36c36,37
+<   sla_status_t status;
+<   sla_ral_data_t rd_val, wr_val;
+---
+>   slu_status_t status;
+>   slu_ral_data_t rd_val, wr_val;
+46c47
+<                ovm_sequencer_base sequencer=null, ovm_sequence parent_seq=null);
+---
+>                uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
+50,51c51,52
+<       `sla_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL."))
+<       `sla_assert($cast(tlm, ral.find_file("tlm_regs")), ("Unable to get handle to tlm"))
+---
+>       `slu_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL."))
+>       `slu_assert($cast(tlm, ral.find_file("tlm_regs")), ("Unable to get handle to tlm"))
+61c62,63
+<   `ovm_sequence_utils(tlm_pci_config_seq,sla_sequencer)
+---
+>   `uvm_object_utils(tlm_pci_config_seq) 
+>   `uvm_declare_p_sequencer(slu_sequencer)
+64c66
+<       ovm_report_warning (get_name(), "INTEG - TLM1 _config should be IMP ");
+---
+>       uvm_report_warning (get_name(), "INTEG - TLM1 _config should be IMP ");
+68c70
+< 	sla_sm_ag_result     tlm_mem_bar;
+---
+> 	slu_sm_ag_result     tlm_mem_bar;
+84c86,87
+<   `ovm_sequence_utils(tlm_isr_seq,sla_sequencer)
+---
+>   `uvm_object_utils(tlm_isr_seq) 
+>   `uvm_declare_p_sequencer(slu_sequencer)
+87c90
+<       ovm_report_warning (get_name(), "INTEG - tlm_isr_seq should be imp ");
+---
+>       uvm_report_warning (get_name(), "INTEG - tlm_isr_seq should be imp ");
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/seqlib/tlm_power_seqlib.sv /tmp/DDR2JlWsHQ/lib/tlm/seqlib/tlm_power_seqlib.sv
+29,30c29,31
+< class tlm_hard_reset_seq extends sla_sequence_base;
+<   `ovm_sequence_utils(tlm_hard_reset_seq,sla_sequencer)
+---
+> class tlm_hard_reset_seq extends slu_sequence_base;
+>   `uvm_object_utils(tlm_hard_reset_seq) 
+>   `uvm_declare_p_sequencer(slu_sequencer)
+37,38c38,39
+<       ovm_event tlm_fusepull_comp_e;
+<       ovm_event_pool    TLM1evPool;
+---
+>       uvm_event tlm_fusepull_comp_e;
+>       uvm_event_pool    TLM1evPool;
+43c44
+<       ovm_report_warning (get_name(), "INTEG - TLM1_hard_reset should be IMP ");
+---
+>       uvm_report_warning (get_name(), "INTEG - TLM1_hard_reset should be IMP ");
+45c46
+<       `sla_assert($cast(tlm_env_ptr, tlm_env::get_tlm_env()), ("Unable to get handle to tlm_env."))
+---
+>       `slu_assert($cast(tlm_env_ptr, tlm_env::get_tlm_env()), ("Unable to get handle to tlm_env."))
+87,88c88,90
+< class tlm_dummy_seq extends sla_sequence_base;
+<   `ovm_sequence_utils(tlm_dummy_seq,sla_sequencer)
+---
+> class tlm_dummy_seq extends slu_sequence_base;
+>   `uvm_object_utils(tlm_dummy_seq) 
+>   `uvm_declare_p_sequencer(slu_sequencer)
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/seqlib/tlm_sla_iosf_seq.sv /tmp/DDR2JlWsHQ/lib/tlm/seqlib/tlm_sla_iosf_seq.sv
+6c6
+<    file:    tlm_sla_iosf_seq.sv
+---
+>    file:    tlm_slu_iosf_seq.sv
+17c17
+<  1. <tlm_iosf_pri_basic_trans> - Basic IOSF seq that can be called using ovm_do_with. Use by SM and RAL Primary seq.
+---
+>  1. <tlm_iosf_pri_basic_trans> - Basic IOSF seq that can be called using uvm_do_with. Use by SM and RAL Primary seq.
+26c26
+<  Basic IOSF seq that can be called using ovm_do_with
+---
+>  Basic IOSF seq that can be called using uvm_do_with
+32c32
+< class tlm_iosf_pri_basic_trans extends sla_ral_sequence_base;
+---
+> class tlm_iosf_pri_basic_trans extends slu_ral_sequence_base;
+34,35c34,36
+<     //OVM UTIL
+<     `ovm_sequence_utils(tlm_iosf_pri_basic_trans, IosfAgtSeqr)
+---
+>     //UVM UTIL
+>     `uvm_object_utils(tlm_iosf_pri_basic_trans) 
+>     `uvm_declare_p_sequencer(IosfAgtSeqr)
+80c81
+<         `ovm_send (iosfTxn)
+---
+>         `uvm_send (iosfTxn)
+85c86
+<             ovm_pkg::ovm_sequence_item rsp;
+---
+>             uvm_pkg::uvm_sequence_item rsp;
+92c93
+<             ovm_report_info (CLASSNAME, msg);
+---
+>             uvm_report_info (CLASSNAME, msg);
+114c115
+<  This sequences extends sla_ral_sequence_base
+---
+>  This sequences extends slu_ral_sequence_base
+119c120
+< class tlm_ral_iosf_sb_access extends sla_ral_sequence_base;
+---
+> class tlm_ral_iosf_sb_access extends slu_ral_sequence_base;
+121c122,124
+<   `ovm_sequence_utils(tlm_ral_iosf_sb_access, iosfsbm_cm::iosfsbc_sequencer);
+---
+>   `uvm_object_utils(tlm_ral_iosf_sb_access) 
+>    
+>   `uvm_declare_p_sequencer(iosfsbm_cm::iosfsbc_sequencer);
+138c141
+<                ovm_sequencer_base sequencer=null, ovm_sequence parent_seq=null);
+---
+>                uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
+161c164
+<       ovm_report_error (get_name(), {"Trying to access register which does not have MSG address define - ", target.get_name()});
+---
+>       uvm_report_error (get_name(), {"Trying to access register which does not have MSG address define - ", target.get_name()});
+194c197
+<             ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+---
+>             uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+224c227
+<           ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+---
+>           uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+255c258
+<           `sla_msg( OVM_HIGH, get_name(), ("byte_en = %0x, ral_data = %0x, my_addr = %0x", byte_en, ral_data, my_addr));
+---
+>           `slu_msg( UVM_HIGH, get_name(), ("byte_en = %0x, ral_data = %0x, my_addr = %0x", byte_en, ral_data, my_addr));
+273c276
+<     `ovm_do_with(sb_seq, {xaction_class_i == m_xaction_class;
+---
+>     `uvm_do_with(sb_seq, {xaction_class_i == m_xaction_class;
+291c294
+<       `sla_msg( OVM_LOW, get_name(), (
+---
+>       `slu_msg( UVM_LOW, get_name(), (
+305c308
+< 	ovm_report_error (get_name(), $psprintf ("Received bad completion on SB NP request, Register %s , completion status %x",target.get_name(), sb_seq.rx_compl_xaction.rsp) );
+---
+> 	uvm_report_error (get_name(), $psprintf ("Received bad completion on SB NP request, Register %s , completion status %x",target.get_name(), sb_seq.rx_compl_xaction.rsp) );
+337c340
+<  This sequences extends sla_ral_sequence_base
+---
+>  This sequences extends slu_ral_sequence_base
+341c344
+< class tlm_ral_iosf_pri_access extends sla_ral_sequence_base;
+---
+> class tlm_ral_iosf_pri_access extends slu_ral_sequence_base;
+343,344c346,348
+<   //OVM UTIL
+<   `ovm_sequence_utils(tlm_ral_iosf_pri_access,IosfAgtSeqr)
+---
+>   //UVM UTIL
+>   `uvm_object_utils(tlm_ral_iosf_pri_access) 
+>   `uvm_declare_p_sequencer(IosfAgtSeqr)
+351c355
+<   sla_ral_data_t align_ral_data;
+---
+>   slu_ral_data_t align_ral_data;
+415c419
+<               ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+---
+>               uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+451c455
+<             ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+---
+>             uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+462c466
+<     `sla_msg( OVM_LOW, get_name(), (
+---
+>     `slu_msg( UVM_LOW, get_name(), (
+470c474
+<     `ovm_do_with(reg_seq, {m_cmd == cmd;
+---
+>     `uvm_do_with(reg_seq, {m_cmd == cmd;
+486c490
+< 	`sla_msg( OVM_LOW, get_name(), (
+---
+> 	`slu_msg( UVM_LOW, get_name(), (
+514c518
+<       ovm_report_error (get_name(), $psprintf ("Received request to write reister with size more than 2 DW, Register %s , size %d ",target.get_name(),address[1:0] + reg_size ) );
+---
+>       uvm_report_error (get_name(), $psprintf ("Received request to write reister with size more than 2 DW, Register %s , size %d ",target.get_name(),address[1:0] + reg_size ) );
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/seqlib/tlm_traffic_seqlib.sv /tmp/DDR2JlWsHQ/lib/tlm/seqlib/tlm_traffic_seqlib.sv
+31c31,33
+<   `ovm_sequence_utils(sc_tlm_simple_traffic,sla_sequencer)
+---
+>   `uvm_object_utils(sc_tlm_simple_traffic) 
+>   
+>   `uvm_declare_p_sequencer(slu_sequencer)
+34c36
+<       ovm_report_warning (get_name(), "INTEG - TLM1 training seq is not IMP ");
+---
+>       uvm_report_warning (get_name(), "INTEG - TLM1 training seq is not IMP ");
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/seqlib/tlm_training_seqlib.sv /tmp/DDR2JlWsHQ/lib/tlm/seqlib/tlm_training_seqlib.sv
+31c31
+< class tlm_training_phase_seq extends sla_sequence_base;
+---
+> class tlm_training_phase_seq extends slu_sequence_base;
+36c36,41
+<   `ovm_sequence_utils(tlm_training_phase_seq,sla_sequencer)
+---
+>   `uvm_object_utils(tlm_training_phase_seq) 
+>   
+> 
+>   
+>   
+>   `uvm_declare_p_sequencer(slu_sequencer)
+39c44
+<       ovm_report_warning (get_name(), "INTEG - TLM1 training seq is not IMP ");
+---
+>       uvm_report_warning (get_name(), "INTEG - TLM1 training seq is not IMP ");
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/ti/tlm_ti_high.sv /tmp/DDR2JlWsHQ/lib/tlm/ti/tlm_ti_high.sv
+53c53
+<   import ovm_pkg::*;
+---
+>   import uvm_pkg::*;
+57c57,65
+<   import sla_pkg::*;
+---
+>   
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+> 
+> import sla_pkg::*;
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/ti/tlm_ti_low.sv /tmp/DDR2JlWsHQ/lib/tlm/ti/tlm_ti_low.sv
+54c54
+<   import ovm_pkg::*;
+---
+>   import uvm_pkg::*;
+58c58,66
+<   import sla_pkg::*;
+---
+>   
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+> 
+> import sla_pkg::*;
+122c130
+<     sla_pkg::sla_resource_db#(virtual tlm_env_if)::add("tlm_if",tlm_if,`__FILE__,`__LINE__);
+---
+>     sla_pkg::slu_resource_db#(virtual tlm_env_if)::add("tlm_if",tlm_if,`__FILE__,`__LINE__);
+127c135
+<   initial begin 
+---
+>   initial begin  
+135c143
+<     set_config_object(IP_ENV,"tlm_rtl_config",rtl_config);
+---
+>     uvm_config_object::set(null, IP_ENV,"tlm_rtl_config",rtl_config);
+diff -r /tmp/DEMO/TLM1/verif/lib/tlm/tlm_env_pkg.sv /tmp/DDR2JlWsHQ/lib/tlm/tlm_env_pkg.sv
+5,6c5,14
+<  import sla_pkg::*;
+<  import ovm_pkg::*;
+---
+>  
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+> 
+> import sla_pkg::*;
+>  import uvm_pkg::*;
+19,20c27,28
+< `include "ovm_macros.svh"
+< `include "sla_macros.svh"
+---
+> `include "uvm_macros.svh"
+> `include "slu_macros.svh"
+Only in /tmp/DEMO/TLM1/verif: ovm2uvm_2276.patch
+diff -r /tmp/DEMO/TLM1/verif/tb/tlm_tb.sv /tmp/DDR2JlWsHQ/tb/tlm_tb.sv
+35c35
+<     import ovm_pkg::*;
+---
+>     import uvm_pkg::*;
+151c151
+< 			.CHASSIS_RESET_ENV_OVM_NAME("*tlm_chassis_rst_env")
+---
+> 			.CHASSIS_RESET_ENV_UVM_NAME("*tlm_chassis_rst_env")
+Only in /tmp/DEMO/TLM1/verif/tests: lists
+Only in /tmp/DEMO/TLM1/verif/tests/tlm_alive_test: ace_run_rtlListGen.cfg
+Only in /tmp/DEMO/TLM1/verif/tests/tlm_alive_test: tlm_alive_test.opt
+diff -r /tmp/DEMO/TLM1/verif/tests/tlm_alive_test/tlm_alive_test.sv /tmp/DDR2JlWsHQ/tests/tlm_alive_test/tlm_alive_test.sv
+4c4,12
+< import ovm_pkg::*;
+---
+> import uvm_pkg::*;
+> 
+> `ifdef XVM
+>    import ovm_pkg::*;
+>    import xvm_pkg::*;
+>    `include "ovm_macros.svh"
+>    `include "sla_macros.svh"
+> `endif
+> 
+8,9c16,17
+< `include "ovm_macros.svh"
+< `include "sla_macros.svh"
+---
+> `include "uvm_macros.svh"
+> `include "slu_macros.svh"
+11c19
+< class tlm_alive_test extends ovm_test;
+---
+> class tlm_alive_test extends uvm_test;
+13c21
+<   `ovm_component_utils(tlm_alive_test)
+---
+>   `uvm_component_utils(tlm_alive_test)
+17c25
+<   function new (string name="tlm_alive_test", ovm_component parent=null);
+---
+>   function new (string name="tlm_alive_test", uvm_component parent=null);
+21,22c29,30
+<    function void build();
+<     ovm_report_info(get_full_name(),"Build", OVM_LOG);
+---
+>    function void build_phase(uvm_phase phase);
+>     uvm_report_info(get_full_name(),"Build", UVM_LOG);
+27,28c35,36
+<    function void connect();
+<      super.connect();
+---
+>    function void connect_phase(uvm_phase phase);
+>      super.connect_phase(phase);
+43c51,54
+< initial begin
+---
+>   string testname;
+> 
+>   initial begin
+> 

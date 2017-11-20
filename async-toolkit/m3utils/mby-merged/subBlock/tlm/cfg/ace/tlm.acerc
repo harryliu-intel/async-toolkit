@@ -1,0 +1,53 @@
+#---*-cperl-*-------------------------------------------------------
+# .acerc
+#
+# Remember - the PWA is the first directory on search path.
+#            the SEARCH_PATHS below are simply adding other
+#            directoris to be searched for AFTER the PWA
+# The PWA is <-eng>/<-pwa>
+#
+#------------------------------------------------------------------
+# See template directory Readme for key
+#------------------------------------------------------------------
+#
+
+use tlm_ip qw (%SIP_RELEASE) ;
+my $TLM1_IOSF_PRI_VC_ROOT = $SIP_RELEASE{TLM1_IOSF_PRI_VC_ROOT};
+my $TLM1_IOSF_SB_VC_ROOT = $SIP_RELEASE{TLM1_IOSF_SB_VC_ROOT};
+my $TLM1_CHASSIS_PG_VC_ROOT = $SIP_RELEASE{TLM1_CHASSIS_PG_VC_ROOT}; 
+my $TLM1_CHASSIS_VCC_VC_ROOT = $SIP_RELEASE{TLM1_CHASSIS_VCC_VC_ROOT};
+my $TLM1_CHASSIS_RST_VC_ROOT = $SIP_RELEASE{TLM1_CHASSIS_RST_VC_ROOT};
+my $TLM1_CHASSIS_CCU_VC_ROOT = $SIP_RELEASE{TLM1_CHASSIS_CCU_VC_ROOT};
+my $SOC_COMMON_ROOT = $SIP_RELEASE{SOC_COMMON_ROOT};
+my  $TLM1_FUSE_ROOT = $SIP_RELEASE{TLM1_FUSE_ROOT};
+%acerc = (
+	UDF		=> [
+	                   "cfg/ace/tlm.udf",
+	                   "cfg/ace/dvt.udf",
+
+                           
+			   ],
+	LIBS            => [
+                           "cfg/ace/lib",
+                           "/p/cse/asic/dvt/spt",
+                           ],
+        SHARED_RESULTS_DIR => $ENV{ACE_SAVED_COMPILE_RESULTS},
+	SEARCH_PATHS	=> {
+			    tlm  => [ 
+				     "$ENV{TLM1_ROOT}",
+				     "$TLM1_IOSF_SB_VC_ROOT",
+				     "$TLM1_IOSF_PRI_VC_ROOT",
+                                     "$TLM1_CHASSIS_PG_VC_ROOT", 
+                                     "$TLM1_CHASSIS_VCC_VC_ROOT",
+                                     "$TLM1_CHASSIS_RST_VC_ROOT",
+                                     "$TLM1_CHASSIS_CCU_VC_ROOT",
+				    ],
+			    NON_SCOPED  => [
+					    "$ENV{TLM1_ROOT}",
+					   ],
+			   },
+
+	TEST_PATTERNS => ["verif/tests",
+			  "verif/tests/spyglass",
+                          "regress"],
+);

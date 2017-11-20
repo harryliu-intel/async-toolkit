@@ -1,0 +1,6 @@
+#---*-cperl-*---------------------------------------------------------------------------------
+
+%audf = ( Includes => [ 
+                        "mby:cfg/ace/mby_hdl.udf", 
+                        "mby_tlm:cfg/ace/mby_tlm_hdl.udf",
+                      ], );

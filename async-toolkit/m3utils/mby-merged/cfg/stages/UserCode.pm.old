@@ -1,0 +1,457 @@
+package FlowSpec;
+use strict;
+use warnings;
+
+use Exporter;
+use vars qw(@ISA @EXPORT);
+@ISA    = qw(Exporter);
+@EXPORT = qw(%FlowSpec);
+use FindBin;
+use lib "$FindBin::Bin";
+use File::Basename;
+use RTLUtils;
+use Utils;
+use lib "$ENV{RTL_PROJ_BIN}/perllib";
+use ToolConfig;
+use File::Temp qw/ tempfile tempdir /;
+no strict "subs";
+no warnings 'redefine';
+use vars qw(%FlowSpec);
+
+############################################################
+# FlowSpec Hash
+# Contains the flow specifications for all currently
+# supported flows
+############################################################
+$ENV{FLOW_DIGEST_VERBOSE} = 1;
+%FlowSpec = (
+
+    
+
+    ################################
+    # Simbuild flow
+    ###############################
+
+    simbuild => ordered_hash(
+
+        OPT_SPEC => {
+
+            "dut" => {
+                       TYPE    => "string",
+                       DEFAULT => "",
+                       HELP    => "design under test",
+            },
+
+        },
+
+        SETUP    => \&simbuild_setup,
+        PRE_FLOW => \&simbuild_pre_flow,
+
+        ace => {
+            stage => ace,
+	    default_active    => "off",
+            opts => { runlog => 1,},
+            deps  => [qw()],
+        },
+
+
+        vcs_compile => {
+            stage => ace_command,
+            default_active    => "on",
+            opts => {
+                    runlog => 1,
+                    command => "ace -cc"
+            },
+            deps => [qw()],
+          },
+
+        vcs_compile_coverage => {
+            stage => ace_command,
+            default_active    => "off",
+            opts => {
+                    runlog => 1,
+                    command => "ace -cc -cc_on"
+            },
+            deps => [qw()],
+          },
+
+	verdi_compile => {
+                 stage => ace_command,
+		 default_active    => "off",
+                 opts => { runlog => 0, command => "ace -cod"},
+                 deps  => [qw(vcs_compile)],
+        },
+	spyglass_compile => {
+                 stage => ace_command,
+		 default_active    => "off",
+                 opts => { runlog => 0, command => "ace -ccsg -mc=mby_spyglass -vlog_opts +define+SVA_OFF+define+OVL_SVA"},
+		 deps => [qw(vcs_compile)],
+        },
+	spyglass_test => {
+                 stage => ace_command,
+                 default_active    => "off",
+                 opts => { runlog => 0, command => "ace -sc -t iow_spyglass_test "},
+                 deps  => [qw(spyglass_compile)],
+        },
+
+	spyglasslp_test => {
+                 stage => ace_command,
+                 default_active    => "off",
+                 opts => { runlog => 0, command => "ace -sc -m mby_spyglass -t iow_spyglasslp_test "},
+                 deps  => [qw(spyglass_compile)],
+        },
+
+	lintra_compile => {
+	    stage => ace_command,
+            default_active    => "off",
+	    opts => { runlog => 0, command => "ace -ccolt -mc mby_lintra"},
+	    deps => [qw(vcs_compile)],
+	    retries => 0,
+	},
+                    
+	lintra_test => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(lintra_compile)],
+	    opts => { runlog => 0, command => "ace -sc -mc=mby_lintra -m mby_lintra -t mby_alive_test"}, 
+	    retries => 0,
+	},
+
+        dvt => {
+            stage => ace_command,
+            default_active    => "off",
+            opts => { runlog => 0, command => "ace -dvt -mc dvt_mby_verif"},
+            deps => [qw(vcs_compile)],
+            retries => 0,
+        },
+
+ 	cdc_compile => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(vcs_compile)],
+	    opts => { runlog => 0, command => "ace -coz -ASSIGN -mc=mby_cdc"},
+	    retries => 0,
+	},
+
+	cdc_test => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(vcs_compile)],
+	    opts => { runlog => 0, command => "ace -xz -t cdc_iow:cfmRUN"}, 
+	    retries => 0,
+	},
+
+        visa => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(vcs_compile)],
+	    opts => { runlog => 0, command => " ace -g -gidc -egc -en__mby_rtl_lib_VISA_INSERTION -c -mc=mby_visa_validate_tb_model -m mby_visa_validate_tb_model -x -vpd -vdm"}, 
+	    retries => 0,
+	},
+
+        emulation => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(vcs_compile)],
+	    ##opts => { runlog => 0, command => "ace -emul -vlog_opts +define+ASSERT_OFF+define+SVA_OFF"}, ##  Etgar: its a temp solution , we need -effm once merged with design repo
+	    opts => { runlog => 0, command => "ace -effm"}, 
+	    retries => 0,
+	},
+
+
+        lec => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(vcs_compile)],
+	    opts => { runlog => 0, command => "source tools/fev/cpk.run.lec.csh tools/fev/FEV_dofile.tcl"}, 
+	    
+	    retries => 0,
+	},
+
+
+
+        dc => {
+	    stage => ace_command,
+	    default_active    => "off",
+	    deps => [qw(vcs_compile)],
+	    opts => { runlog => 0, command => "cfg/dc.csh "}, ## Etgar: its a clean merged file 
+	    retries => 0,
+	},
+
+
+
+    )
+);
+
+###########################################################
+# Setup functions for  flows
+# These run when the flow is being constructed
+# before any of the stages run
+###########################################################
+
+##########################################################
+# Sub     : simbuild_setup
+# Caller  : build_flow (Flow.pm)
+# Desc    : This is called when the simbuild flow is being
+#         : constructed (prior to stage run) and does some
+#         : basic variable, etc setup that is required
+#         : by the flow and its stages
+# Inputs  : $flowptr : Pointer to flow
+#         : %opts : Flow manager opts hash
+# Output  : No output
+#         : the success of the setup function can be
+#         : checked using $flowptr->{setup_ok}
+#         : The setup function must set this to true
+#         : on succesful completion
+##########################################################
+sub simbuild_setup
+{
+    my $flowptr = shift;
+    my $opts    = $flowptr->{scoped_vars}->{opts};
+
+    $flowptr->add_scoped_vars(
+        qw($dut $DutConfig $aceroot
+          $rtlTarget
+          $ace_env_ptr
+          )
+    );
+
+    my $scoped_vars = $flowptr->{scoped_vars};
+
+    # DUT is a required argument for simbuild
+    # UNLESS the dut facet is set
+    my $dut_value = $flowptr->get_opt("dut");
+    if ($dut_value eq "") {
+        $dut_value = ToolConfig::get_facet("dut");
+        if( $dut_value eq "") {
+            print_fatal("Dut is a required option for simbuild. Either pass the option using -dut or set a default value for the dut facet in cfg/ToolData.pm");
+        }
+        else {
+            print_info("No dut option passed to simbuild. Using the current value of 'dut' facet , $dut_value, as the dut");
+        }
+    }
+    $scoped_vars->{dut} = $dut_value;
+
+# move the config and log files to dut specific file names - update the prefix
+# the move occurs once the flow is built and prior to any stages being run
+    my $prefix = $scoped_vars->{logPrefix};
+    $scoped_vars->{logPrefix} = $prefix . "$scoped_vars->{dut}.";
+    if (ToolConfig::get_general_var("logPrefix")){
+      $scoped_vars->{logPrefix} = $prefix . "$scoped_vars->{dut}.". ToolConfig::get_general_var("logPrefix").".";
+    }
+
+
+    ####################
+    # DutConfig Check
+    ####################
+
+    # Check if the dut.cfg exist in MODEL_ROOT/cfg/ directory    
+    if (RTL_dutCheck($scoped_vars->{dut})) {
+        print <<DC_ERROR;
+        
+-E- Unsupported DUT.  Config file $scoped_vars->{dut}.cfg was not found at $ENV{MODEL_ROOT}/cfg/
+To build $scoped_vars->{dut} using default.cfg, use "TopFlow.pl -dc ..."
+
+DC_ERROR
+            exit 1;
+    } ## end if (RTL_dutCheck($scoped_vars...
+
+
+    # Set up the DUT config
+    # This reads/updates the DutConfig and also sets rtlTarget
+    my %DutConfig = %{ &FlowSpec::simbuild_setup_dut($flowptr) };
+    $scoped_vars->{DutConfig} = \%DutConfig;
+
+    $scoped_vars->{dut_resources} =
+      $scoped_vars->{DutConfig}->{resources};
+
+    $scoped_vars->{aceroot} = ToolConfig::get_general_var("aceroot_dpath");
+    $scoped_vars->{stageLogDir} = &dirname(ToolConfig::get_general_var("aceroot_dpath")) . "/log";
+    $scoped_vars->{stageLogPrefix} =
+      $scoped_vars->{stageLogPrefix} . "$scoped_vars->{rtlTarget}.";
+    if (ToolConfig::get_general_var("logPrefix")){
+    $scoped_vars->{stageLogPrefix} =
+      $scoped_vars->{stageLogPrefix} . ToolConfig::get_general_var("logPrefix") . ".";    
+    }
+  
+
+    $scoped_vars->{ARCHNAME} = ToolConfig_get_general_var("ARCHNAME");
+
+
+    # Setup any scheduler specific info for this flow
+    my $workArea =
+        $ENV{MODEL_ROOT} . "/target";
+    print_debug(
+              "Updating the work area of the scheduler to $workArea");
+    $scoped_vars->{scheduler}->set_workArea($workArea);
+    my $date = `date "+%m_%d-%T"`;
+    $date = main::mychomp($date);
+    my $cloneName = &basename($ENV{MODEL_ROOT});
+    my $buildName = "build_";
+    $buildName .=
+      $scoped_vars->{opt_logPrefix} ?
+      "$scoped_vars->{opt_logPrefix}" :
+      "${cloneName}_" . $scoped_vars->{dut};
+    my $pid       = "_$$";
+    my $pidlength = length($pid);
+
+    if (length($buildName) + $pidlength > 100) {
+        my $oldbuildName = $buildName;
+        $buildName = $buildName . substr(0, 99 - $pidlength) . $pid;
+        print_warning(
+            "The buildName $oldbuildName$pid is too long. Will shorten it to 55 chars : $buildName"
+        );
+    } else {
+        $buildName .= $pid;
+    }
+
+    $scoped_vars->{scheduler}->set_top_task_name($buildName);
+
+
+    # read ace env and set %ace_env scoped var
+    my %ace_env = source_ace_env($scoped_vars);
+    $scoped_vars->{ace_env_ptr} = \%ace_env;
+    $flowptr->{setup_ok} = 1;
+} ## end sub simbuild_setup
+
+#######################################################
+# Sub     : simbuild_setup_dut
+# Caller  : simbuild_setup
+# Desc    : Reads the DutConfig file, updates
+#         : %DutConfig based on simbuild scope variables
+#         : and returns %DutConfig
+# Inputs  : %opts : Flow manager opts hash
+#         : $flowVars : Simbuild scope variables
+# Outputs : \%DutConfig
+########################################################
+sub simbuild_setup_dut
+{
+
+    # flow pointer
+    my $flowptr = shift;
+
+    # flow variables
+    my $scopedVars = $flowptr->{scoped_vars};
+
+    #####################
+    # Setup DutConfig
+    ####################
+
+    print_fatal(
+               "Please specify the Device Under Test with '-dut'\n\n")
+      if (!defined $scopedVars->{dut});
+
+
+    my $rtlTarget;
+
+    my @cfgDirs = @{ $scopedVars->{cfgDirs} };
+
+    my $dut = $scopedVars->{dut};
+    use vars '%DutConfig';
+
+    if (defined &RTL_find("$dut.cfg", @cfgDirs, 'one', 'one') or
+        defined &RTL_find("default.cfg", @cfgDirs, 'one', 'one')) {
+
+        my $found_opt_dut_cfg =
+          &RTL_find("$dut.cfg", @cfgDirs, 'one', 'one');
+        if (defined $found_opt_dut_cfg) {
+            (my $useCfg = $found_opt_dut_cfg) =~ s/$dut\.cfg\s*$//;
+
+            require "$useCfg/$dut.cfg";
+            DutConfig->import();
+
+        } else {
+            my $found_default_cfg =
+              &RTL_find("default.cfg", @cfgDirs, 'one', 'one');
+            (my $useCfg = $found_default_cfg) =~ s/default.cfg\s*$//;
+            require "$useCfg/default.cfg";
+            DutConfig->import();
+        } ## end else [ if (defined $found_opt_dut_cfg)
+
+        $rtlTarget =
+          defined $DutConfig{target} ? $DutConfig{target} :
+                                       $scopedVars->{dut};
+    } else {
+        print_info("No " . $scopedVars->{dut} .
+                   " configuration found -- running without configuration settings"
+            );
+        $rtlTarget = $scopedVars->{dut};
+    } ## end else [ if (defined &RTL_find(...
+
+
+    $scopedVars->{rtlTarget}  = $rtlTarget;
+    
+    $scopedVars->{targetRoot} =
+        $scopedVars->{targetRoot} . "/" . $scopedVars->{rtlTarget} ;
+    return \%DutConfig;
+
+} ## end sub simbuild_setup_dut
+
+# Uses ACE Utils to dump the ace environment and populate a hash for stages that need to be in the ACE env
+sub source_ace_env {
+    my ($scoped_vars) = @_;
+
+    my %ace_env = ();
+
+    my $targetRoot = $scoped_vars->{targetRoot};
+    my $dut           = $scoped_vars->{dut};
+
+    my $logDir = &dirname(ToolConfig::get_general_var("aceroot_dpath"));
+    &RTL_mkDir(["$logDir/log"]);
+    my $ace_env_log = "$scoped_vars->{dut}.ace_env.log";
+    #if (ToolConfig::get_general_var("logPrefix")){
+    $ace_env_log = "$scoped_vars->{stageLogPrefix}ace_env.log";
+    #}
+    my $ace = ACE_UTILS->new(ace_root_dir => ToolConfig::get_general_var("aceroot_dpath"), dut => $dut, ace_log_file => "$logDir/log/$ace_env_log");
+    $ace->setup();
+
+    my ($env_file_handle,$env_dump) = tempfile();;
+    my $command = "/usr/bin/printenv > $env_dump";
+    my $status = $ace->execute_cmd($command);
+
+    if($status != 0) {
+        die "Could not dump environment to $env_dump!\n";
+    }
+
+    open my $fh, "$env_dump" or die "Cannot read env dump file $env_dump -- $!\n";
+    while(my $line = <$fh>) {
+        chomp($line);
+
+        my ($env_var, $value) = split(/=/, $line, 2);
+        $ace_env{$env_var} = $value;
+    }
+    close $fh;
+
+    # clean up
+    unlink($env_dump);
+
+    return %ace_env;
+} ## end of sub source_ace_env
+
+
+#########################################################
+# Pre/Post flow code
+# Pre flow runs just before the first stage of the flow
+# Post flow runs after the last stage of the flow
+#########################################################
+
+sub simbuild_pre_flow
+{
+
+    my %args     = @_;
+    my $flowVars = $args{flowVars};
+
+    ###############
+    #pre flow setup
+    ################
+    my $targetRoot = $flowVars->{targetRoot};
+    &RTL_mkDir([ $targetRoot ]);
+    &RTL_mkDir(["$targetRoot/log"]);    
+    &RTL_cd($targetRoot);
+
+    return 0;
+
+} ## end sub simbuild_pre_flow
+
+
+1;

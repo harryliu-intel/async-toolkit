@@ -1,0 +1,8 @@
+#---*-perl-*---
+
+%audf = (
+    Includes => [
+        "cfg/ace/tlm_integ.udf", "cfg/ace/tlm_local_ivars.udf",
+        "cfg/ace/tlm_tag_overrides.udf",
+    ],
+);
