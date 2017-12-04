@@ -243,6 +243,7 @@ metaParam[StringBuffer sb]
     | LCURLY {sb.append('{');}
       metaParam[sb] ( COMMA {sb.append(',');} metaParam[sb] )*
       RCURLY {sb.append('}');}
+    | s:QuotedString {sb.append(s.getText());}
     ;
 // this could be tightened up since x[0][1] is not supported, only x[0,1]
 instance returns [String s]
@@ -303,3 +304,4 @@ COMMA  : ',';
 DOT    : '.';
 MINUS  : '-' ;
 PIPE   : '|' ;
+QuotedString: '\'' (~'\'')* '\'';
