@@ -27,29 +27,10 @@ EOF
 		-elab_models            => { default => 1 },
 
         # JasperGold options
-        -jg_proj_jasper_compile => {
-            type     => "BOOLEAN",
-            alias    => "-jg_pre_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_elab.tcl ".
-                        "-jg_post_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/post_elab.tcl ".
-                        "-jg_pre_analyze_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_analyze.tcl ".
-                        "-jg_bbox memory",
+        -jg_post_ijlsetup_scripts => {
+            default => [],
         },
 
-        -jg_proj_jasper_compile_cov_all => {
-            type     => "BOOLEAN",
-            alias    => "-jg_pre_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_cov_all_elab.tcl ".
-                        "-jg_post_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/post_elab.tcl ".
-                        "-jg_pre_analyze_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_analyze.tcl ".
-                        "-jg_bbox memory",
-        },
-
-        -jg_proj_jasper_compile_afl => {
-            type     => "BOOLEAN",
-            alias    => "-jg_pre_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_elab.tcl ".
-                        "-jg_post_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/post_afl_elab.tcl ".
-                        "-jg_pre_analyze_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_afl_analyze.tcl ".
-                        "-jg_bbox memory",
-        },
         -eclipse => {
             action   => "eclipse",
             shortcut => "e",
@@ -96,7 +77,7 @@ EOF
         mby => {
             __PROTOTYPES    => { import => [ "TEST", "LOWPOWER" ] },
             -test_vlog_opts => {
-                default => [ "", ],
+                default => [ "-Xkeyopt=ovm", ],
 
             },
             -enable_pwr_intent => { default => 1 },
@@ -130,6 +111,7 @@ EOF
                 shortcut => "gg",
                 alias    => '-test_elab_opts -debug_access+all -simv_args -debug_access+all',
             },
+
 
             # ACE doesn't come out of the box with a -vpd switch like it does for
             #   -vcd and -fsdb.
@@ -167,6 +149,7 @@ EOF
 
 		     "-lca", "-kdb", "-debug_access+all",
                     "-sverilog",      "-override_timescale=1ps/1ps",
+                    "./libsla.so",    "-Xkeyopt=ovm",
                     "-Xkeyopt=iComp", "-Xkeyopt=iRun",
                     "-liblist_work",  "-liblist_nocelldiff",
                 ],
@@ -183,24 +166,38 @@ EOF
         -static_check_cfg_file => {
             default => [
                 #"/p/com/flows/spyglass_methodology/1.0.10/ace_static_check.cfg",
-                "$ENV{MODEL_ROOT}/tools/lint/ace_static_check.lintra.cfg"
+                "$ENV{MODEL_ROOT}/tools/lint/ace_static_check.lintra.cfg",
             ],
         },
 
+			   -elab_opts =>
+			   {
+			    default =>
+			    [
+			     
+			     "-lca", "-kdb", "-debug_access+all",
+			     "-sverilog",      "-override_timescale=1ps/1ps",
+			     "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=ovm",
+			     "-Xkeyopt=iComp", "-Xkeyopt=iRun",
+			     "-liblist_work",  "-liblist_nocelldiff",
+			    ],
+			   },
+			   
         -vlog_opts => {
             default => [
+		"-kdb",
+		"-Xkeyopt=ovm",
                 "+libext+.v+.sv",
                 "-timescale=1ps/1ps",
                 "-sverilog",
-                "+define+OVM+UVM+XVM",
-                "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",
+                "+define+OVM",
                 "-lca",
                 "+define+MROOT_SPACE_SIGNAL_NAME=mrs",
                 "+define+IOSFTRKCHK_NO_DEPENDENCIES"
                 ,    #2012WW46r121114 primary IOSF compliance
                 "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
-                "-kdb",
+
             ],
         },
     },

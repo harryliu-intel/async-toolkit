@@ -53,10 +53,10 @@ class mby_ral_env extends mby_regs_ral_env;
     function void end_of_elaboration();
         super.end_of_elaboration();
 // START IOSF_NOT_PRESENT
-        set_frontdoor_seq_type("primary","read","mby_ral_iosf_pri_access");
-        set_frontdoor_seq_type("primary","write","mby_ral_iosf_pri_access");
-        set_frontdoor_seq_type("sideband","read","mby_ral_iosf_sb_access");
-        set_frontdoor_seq_type("sideband","write","mby_ral_iosf_sb_access");
+//        set_frontdoor_seq_type("primary","read","mby_ral_iosf_pri_access");
+//        set_frontdoor_seq_type("primary","write","mby_ral_iosf_pri_access");
+//        set_frontdoor_seq_type("sideband","read","mby_ral_iosf_sb_access");
+//        set_frontdoor_seq_type("sideband","write","mby_ral_iosf_sb_access");
 // END IOSF_NOT_PRESENT
     endfunction
 
@@ -68,12 +68,12 @@ class mby_ral_env extends mby_regs_ral_env;
    Function: get_addr_val
    
    Parameters:
-   sla_ral_access_path_t access_path - which  interface  to use (current support "premary" or "sideband"
+   slu_ral_access_path_t access_path - which  interface  to use (current support "premary" or "sideband"
    sla_ral_reg r  - which  regiser
    
    this function get access type and register and calculte the physical address of the register
    */
-  function sla_ral_addr_t get_addr_val(sla_ral_access_path_t access_path, sla_ral_reg r);
+  function slu_ral_addr_t get_addr_val(slu_ral_access_path_t access_path, sla_ral_reg r);
     if(access_path == "primary")
       begin
 	// Use space to define how to claculate the address
@@ -93,7 +93,7 @@ class mby_ral_env extends mby_regs_ral_env;
 	    if(r.base_addr_reg !== null) begin
 	      // IO BAR bit 0 is 1
 	      // We need to claer the LSB bit of the BAR
-	      sla_ral_data_t tmp_addr;
+	      slu_ral_data_t tmp_addr;
 	      tmp_addr = r.get_base_addr_val();
 	      tmp_addr[0:0] = 1'b0; // init with zero the RTE
 	      return (tmp_addr  + r.get_space_addr("IO"));

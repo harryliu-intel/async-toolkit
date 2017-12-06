@@ -46,14 +46,14 @@ class mby_regs_DEVVENDID_reg extends sla_ral_reg;
   function new(
                 string         name = "",
                 `ifdef SLA_RAL_COVERAGE
-                sla_ral_coverage_t cov_t = COVERAGE_OFF,
+                slu_ral_coverage_t cov_t = COVERAGE_OFF,
                 `endif
                 int            bus_num=0,
                 int            dev_num=0,
                 int            func_num=0,
                 int            offset=0,
                 int            size=0,
-                sla_ral_data_t reset_val=0,
+                slu_ral_data_t reset_val=0,
                 boolean_t      mon_enabled = SLA_FALSE
              );
       super.new();
@@ -135,14 +135,14 @@ class mby_regs_BASE_ADDR_0_reg extends sla_ral_reg;
   function new(
                 string         name = "",
                 `ifdef SLA_RAL_COVERAGE
-                sla_ral_coverage_t cov_t = COVERAGE_OFF,
+                slu_ral_coverage_t cov_t = COVERAGE_OFF,
                 `endif
                 int            bus_num=0,
                 int            dev_num=0,
                 int            func_num=0,
                 int            offset=0,
                 int            size=0,
-                sla_ral_data_t reset_val=0,
+                slu_ral_data_t reset_val=0,
                 boolean_t      mon_enabled = SLA_FALSE
              );
       super.new();
@@ -245,14 +245,14 @@ class mby_regs_MEM_reg extends sla_ral_reg;
   function new(
                 string         name = "",
                 `ifdef SLA_RAL_COVERAGE
-                sla_ral_coverage_t cov_t = COVERAGE_OFF,
+                slu_ral_coverage_t cov_t = COVERAGE_OFF,
                 `endif
                 int            bus_num=0,
                 int            dev_num=0,
                 int            func_num=0,
                 int            offset=0,
                 int            size=0,
-                sla_ral_data_t reset_val=0,
+                slu_ral_data_t reset_val=0,
                 boolean_t      mon_enabled = SLA_FALSE
              );
       super.new();
@@ -348,7 +348,7 @@ class mby_regs_file extends sla_ral_file;
     DEVVENDID.set_space("CFG");
     if ( $test$plusargs("DEVVENDID:dont_test") ) DEVVENDID.set_test_reg(1'b0);
     if (!add_reg( DEVVENDID )) begin
-      `sla_error(get_name(), ("Could not add register DEVVENDID"));
+      `slu_error(get_name(), ("Could not add register DEVVENDID"));
     end
 
     `ifdef SLA_RAL_COVERAGE
@@ -362,7 +362,7 @@ class mby_regs_file extends sla_ral_file;
     BASE_ADDR_0.set_space("CFG");
     if ( $test$plusargs("BASE_ADDR_0:dont_test") ) BASE_ADDR_0.set_test_reg(1'b0);
     if (!add_reg( BASE_ADDR_0 )) begin
-      `sla_error(get_name(), ("Could not add register BASE_ADDR_0"));
+      `slu_error(get_name(), ("Could not add register BASE_ADDR_0"));
     end
 
     `ifdef SLA_RAL_COVERAGE
@@ -376,7 +376,7 @@ class mby_regs_file extends sla_ral_file;
     MEM.set_space("MEM");
     if ( $test$plusargs("MEM:dont_test") ) MEM.set_test_reg(1'b0);
     if (!add_reg( MEM )) begin
-      `sla_error(get_name(), ("Could not add register MEM"));
+      `slu_error(get_name(), ("Could not add register MEM"));
     end
 
     MEM.set_base_addr_reg(BASE_ADDR_0);

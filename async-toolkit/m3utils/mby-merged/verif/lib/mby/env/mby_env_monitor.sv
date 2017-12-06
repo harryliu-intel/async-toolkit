@@ -12,7 +12,7 @@
 
  This is a monitor for MBY ENV
  
- It detect and monitor events in the IP and trigger OVM events on them
+ It detect and monitor events in the IP and trigger UVM events on them
  
  Supported events:
  
@@ -27,7 +27,7 @@
  
 
 */
-class mby_env_monitor extends ovm_component;
+class mby_env_monitor extends uvm_component;
 
   /* 
    Variable: enable_monitor
@@ -35,9 +35,9 @@ class mby_env_monitor extends ovm_component;
    */
   protected bit enable_monitor = 1;
 
-    `ovm_component_utils_begin(mby_env_monitor)
-      `ovm_field_int(enable_monitor, OVM_ALL_ON)
-    `ovm_component_utils_end
+    `uvm_component_utils_begin(mby_env_monitor)
+      `uvm_field_int(enable_monitor, UVM_ALL_ON)
+    `uvm_component_utils_end
 
  
 
@@ -47,11 +47,11 @@ class mby_env_monitor extends ovm_component;
 
   // Variable: MBYevPool
   // MBY event pool
-  ovm_event_pool    MBYevPool;
+  uvm_event_pool    MBYevPool;
   
   // Main fifo that will collect all SB trasnactions
 // START IOSF_NOT_PRESENT
-   tlm_analysis_fifo #(iosfsbm_cm::xaction) sb_msg_fifo;
+//   uvm_tlm_analysis_fifo #(iosfsbm_cm::xaction) sb_msg_fifo;
 // END IOSF_NOT_PRESENT
   /*
    Function: new
@@ -59,15 +59,15 @@ class mby_env_monitor extends ovm_component;
    constractor 
    
    */
-  function new(string name="mby_pri_scbd", ovm_component parent=null);
+  function new(string name="mby_pri_scbd", uvm_component parent=null);
     super.new(name,parent);
 // START IOSF_NOT_PRESENT
-    sb_msg_fifo  = new("sb_msg_fifo", this);
+//    sb_msg_fifo  = new("sb_msg_fifo", this);
 // END IOSF_NOT_PRESENT
   endfunction // new
 
-  virtual function void build();
-    super.build();
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
     // get global event pool
     MBYevPool = MBYevPool.get_global_pool();
   endfunction
@@ -80,8 +80,8 @@ class mby_env_monitor extends ovm_component;
    
    
    */
-  function void connect();
-     super.connect();
+  function void connect_phase(uvm_phase phase);
+     super.connect_phase(phase);
   endfunction // void
 
   /*
@@ -92,18 +92,18 @@ class mby_env_monitor extends ovm_component;
    invoke in parallel all monitor tasks
    
    */
-  task run();
-    super.run();
+  task run_phase (uvm_phase phase);
+    super.run_phase(phase);
 
     if (enable_monitor == 1) begin
       fork
 // START IOSF_NOT_PRESENT
-	mby_primary_reset_monitor();
-	mby_sideband_reset_monitor();
+//	mby_primary_reset_monitor();
+//	mby_sideband_reset_monitor();
 // END IOSF_NOT_PRESENT
 	mby_int_monitor();
 // START IOSF_NOT_PRESENT
-	mby_sideband_monitor();
+//	mby_sideband_monitor();
 // END IOSF_NOT_PRESENT
       join_none
     end
@@ -113,25 +113,25 @@ class mby_env_monitor extends ovm_component;
   /*
    Task: mby_int_monitor 
    
-   Monitor the DUT interrupts and trigger OVM event
+   Monitor the DUT interrupts and trigger UVM event
    
    MBY_INT_ASSERT & MBY_INT_DEASSERT
    
    
    */
   task mby_int_monitor();
-    ovm_event mby_int_assert_e;
-    ovm_event mby_int_deassert_e;
+    uvm_event mby_int_assert_e;
+    uvm_event mby_int_deassert_e;
     mby_int_assert_e = MBYevPool.get("MBY_INT_ASSERT");
     mby_int_deassert_e = MBYevPool.get("MBY_INT_DEASSERT");
 
     forever begin
       @(posedge mby_if.mby_int_wire);
       mby_int_assert_e.trigger();
-      `sla_msg (OVM_HIGH, get_name(), ("MBY_INT_ASSERT event detected"));
+      `slu_msg (UVM_HIGH, get_name(), ("MBY_INT_ASSERT event detected"));
       @(negedge mby_if.mby_int_wire);
       mby_int_deassert_e.trigger();
-      `sla_msg (OVM_HIGH, get_name(), ("MBY_INT_DEASSERT event detected"));
+      `slu_msg (UVM_HIGH, get_name(), ("MBY_INT_DEASSERT event detected"));
     end
   endtask // mby_int_monitor
 
@@ -139,74 +139,74 @@ class mby_env_monitor extends ovm_component;
   /*
    Task: mby_primary_reset_monitor 
    
-   Monitor the DUT primary  reset and trigger OVM event
+   Monitor the DUT primary  reset and trigger UVM event
    
    MBY_IOSF_PRIMARY_RESET_ASSERT & MBY_IOSF_PRIMARY_RESET_DEASSERT
    
    
    */
   task mby_primary_reset_monitor();
-    ovm_event mby_primary_reset_assert_e;
-    ovm_event mby_primary_reset_deassert_e;
+    uvm_event mby_primary_reset_assert_e;
+    uvm_event mby_primary_reset_deassert_e;
     mby_primary_reset_assert_e = MBYevPool.get("MBY_IOSF_PRIMARY_RESET_ASSERT");
     mby_primary_reset_deassert_e = MBYevPool.get("MBY_IOSF_PRIMARY_RESET_DEASSERT");
 
     forever begin
       @(posedge mby_if.primary_reset);
       mby_primary_reset_assert_e.trigger();
-      `sla_msg (OVM_HIGH, get_name(), ("MBY_IOSF_PRIMARY_RESET_ASSERT event detected"));
+      `slu_msg (UVM_HIGH, get_name(), ("MBY_IOSF_PRIMARY_RESET_ASSERT event detected"));
       @(negedge mby_if.primary_reset);
       mby_primary_reset_deassert_e.trigger();
-      `sla_msg (OVM_HIGH, get_name(), ("MBY_IOSF_PRIMARY_RESET_DEASSERT event detected"));
+      `slu_msg (UVM_HIGH, get_name(), ("MBY_IOSF_PRIMARY_RESET_DEASSERT event detected"));
     end
   endtask // mby_primary_reset_monitor
 
   /*
    Task: mby_sideband_reset_monitor 
    
-   Monitor the DUT sideband  reset and trigger OVM event
+   Monitor the DUT sideband  reset and trigger UVM event
    
    MBY_IOSF_SIDEBAND_RESET_ASSERT & MBY_IOSF_SIDEBAND_RESET_DEASSERT
    
    
    */
   task mby_sideband_reset_monitor();
-    ovm_event mby_sideband_reset_assert_e;
-    ovm_event mby_sideband_reset_deassert_e;
+    uvm_event mby_sideband_reset_assert_e;
+    uvm_event mby_sideband_reset_deassert_e;
     mby_sideband_reset_assert_e = MBYevPool.get("MBY_IOSF_SIDEBAND_RESET_ASSERT");
     mby_sideband_reset_deassert_e = MBYevPool.get("MBY_IOSF_SIDEBAND_RESET_DEASSERT");
 
     forever begin
       @(posedge mby_if.secondary_reset);
       mby_sideband_reset_assert_e.trigger();
-      `sla_msg (OVM_HIGH, get_name(), ("MBY_IOSF_SIDEBAND_RESET_ASSERT event detected"));
+      `slu_msg (UVM_HIGH, get_name(), ("MBY_IOSF_SIDEBAND_RESET_ASSERT event detected"));
       @(negedge mby_if.secondary_reset);
       mby_sideband_reset_deassert_e.trigger();
-      `sla_msg (OVM_HIGH, get_name(), ("MBY_IOSF_SIDEBAND_RESET_DEASSERT event detected"));
+      `slu_msg (UVM_HIGH, get_name(), ("MBY_IOSF_SIDEBAND_RESET_DEASSERT event detected"));
     end
   endtask // mby_sideband_reset_monitor
 
   task mby_sideband_monitor();
     //current msg
-// START IOSF_NOT_PRESENT
-    iosfsbm_cm::xaction cur_msg;
-    ovm_event mby_fusepull_comp_e;
-    mby_fusepull_comp_e = MBYevPool.get("MBY_DETECT_FUSEPULL_COMP_SB_MSG");
-    forever begin
-      //blocking gate from fifo
-      sb_msg_fifo.get(cur_msg);
-
-      // FUse pull completion
-      if (cur_msg.dest_pid == `MBY_SB_PORT_ID &&
-	  cur_msg.src_pid  == `MBY_FUSE_PULL_EP_ID &&
-	  cur_msg.opcode == iosfsbm_cm::OP_CMPD) begin
-	`sla_msg (OVM_HIGH, get_name(), ("MBY_DETECT_FUSEPULL_COMP_SB_MSG event detected"));
-	mby_fusepull_comp_e.trigger(cur_msg);
-      end
-
-      
-      
-    end
+//// START IOSF_NOT_PRESENT
+//    iosfsbm_cm::xaction cur_msg;
+//    uvm_event mby_fusepull_comp_e;
+//    mby_fusepull_comp_e = MBYevPool.get("MBY_DETECT_FUSEPULL_COMP_SB_MSG");
+//    forever begin
+//      //blocking gate from fifo
+//      sb_msg_fifo.get(cur_msg);
+//
+//      // FUse pull completion
+//      if (cur_msg.dest_pid == `MBY_SB_PORT_ID &&
+//	  cur_msg.src_pid  == `MBY_FUSE_PULL_EP_ID &&
+//	  cur_msg.opcode == iosfsbm_cm::OP_CMPD) begin
+//	`slu_msg (UVM_HIGH, get_name(), ("MBY_DETECT_FUSEPULL_COMP_SB_MSG event detected"));
+//	mby_fusepull_comp_e.trigger(cur_msg);
+//      end
+//
+//      
+//      
+//    end
 // END IOSF_NOT_PRESENT
   endtask
 

@@ -30,7 +30,7 @@
 `include "mby_base_seq.sv"
 `include "mby_extended_base_seq.sv"
 // START IOSF_NOT_PRESENT
-`include "mby_iosf_pri_basic_trans.sv"
+//`include "mby_iosf_pri_basic_trans.sv"
 // END IOSF_NOT_PRESENT
 `include "mby_hard_reset_seq.sv"
 `include "mby_pci_config_seq.sv"

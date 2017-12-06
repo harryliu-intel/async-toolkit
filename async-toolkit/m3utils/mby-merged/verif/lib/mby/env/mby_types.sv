@@ -37,12 +37,12 @@ class MBY_types;
    //something like that :) 
    typedef enum {Group0,Group1,Group2,Group3} reqType;
 // START IOSF_NOT_PRESENT
-   typedef enum iosfsbm_cm::opcode_t {
-        FUSE_GROUP0_REQ    = 8'hB8,
-        FUSE_GROUP1_REQ   = 8'hB9,
-        FUSE_GROUP2_REQ   = 8'hBA,
-        FUSE_GROUP3_REQ   = 8'hBB
-    } reqOpCode;
+//   typedef enum iosfsbm_cm::opcode_t {
+//        FUSE_GROUP0_REQ    = 8'hB8,
+//        FUSE_GROUP1_REQ   = 8'hB9,
+//        FUSE_GROUP2_REQ   = 8'hBA,
+//        FUSE_GROUP3_REQ   = 8'hBB
+//    } reqOpCode;
 // END IOSF_NOT_PRESENT
    
 /*

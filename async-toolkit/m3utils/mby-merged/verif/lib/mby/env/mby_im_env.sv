@@ -28,20 +28,20 @@
 
  */
 
-class mby_im_env extends sla_im_env;
+class mby_im_env extends slu_im_env;
 
-    `ovm_component_utils(mby_im_env)
+    `uvm_component_utils(mby_im_env)
 
     
    /** Constructor. */
-    function new(string name = "mby_im_env", ovm_component parent);
+    function new(string name = "mby_im_env", uvm_component parent);
         super.new(name, parent);
     endfunction // new
   
 
-    function void connect();
+    function void connect_phase(uvm_phase phase);
         
-        super.connect();;
+        super.connect_phase(phase);;
     endfunction // void
 
   /*
@@ -51,8 +51,8 @@ class mby_im_env extends sla_im_env;
    In this function the IP connect its interrupts seq to the IM
    */
    
-  virtual function void build();
-    super.build();
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
     add_intr_info("MBY_INT",//interupt name
                   1,//priority - high number == high priority
                   1,//enable=1, disable = 0

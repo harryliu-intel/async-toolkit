@@ -28,10 +28,12 @@
 
 class mby_simple_traffic_seq extends mby_extended_base_seq;
   
-  `ovm_sequence_utils(mby_simple_traffic_seq,sla_sequencer)
+  `uvm_object_utils(mby_simple_traffic_seq) 
+  
+  `uvm_declare_p_sequencer(slu_sequencer)
     
     task body();
-      ovm_report_warning (get_name(), "INTEG - MBY training seq is not IMP ");
+      uvm_report_warning (get_name(), "INTEG - MBY training seq is not IMP ");
       
     endtask
 

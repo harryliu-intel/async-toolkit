@@ -20,7 +20,8 @@
   
 
 class mby_extended_base_seq extends mby_base_seq;
-  `ovm_sequence_utils(mby_extended_base_seq,sla_sequencer)
+  `uvm_object_utils(mby_extended_base_seq) 
+  `uvm_declare_p_sequencer(slu_sequencer)
   
    /*
     Function: new
@@ -28,7 +29,7 @@ class mby_extended_base_seq extends mby_base_seq;
     Constractor, set up the MBY RAL pointer.
     */
   function new(input string name = "mby_extended_base_seq",
-               ovm_sequencer_base sequencer=null, ovm_sequence parent_seq=null);
+               uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
     super.new(name, sequencer, parent_seq);
     
   endfunction

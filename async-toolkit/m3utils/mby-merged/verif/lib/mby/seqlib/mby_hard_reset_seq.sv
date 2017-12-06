@@ -27,22 +27,23 @@
  */
 
 class mby_hard_reset_seq extends mby_extended_base_seq;
-  `ovm_sequence_utils(mby_hard_reset_seq,sla_sequencer)
+  `uvm_object_utils(mby_hard_reset_seq) 
+  `uvm_declare_p_sequencer(slu_sequencer)
 
 
 
     task body(); 
       virtual mby_env_if env_if;
       mby_env mby_env_ptr;
-      ovm_event mby_fusepull_comp_e;
-      ovm_event_pool    MBYevPool;
+      uvm_event mby_fusepull_comp_e;
+      uvm_event_pool    MBYevPool;
 
       ;
 
       
-      ovm_report_warning (get_name(), "INTEG - MBY_hard_reset should be IMP ");
+      uvm_report_warning (get_name(), "INTEG - MBY_hard_reset should be IMP ");
 
-      `sla_assert($cast(mby_env_ptr, mby_env::get_mby_env()), ("Unable to get handle to mby_env."))
+      `slu_assert($cast(mby_env_ptr, mby_env::get_mby_env()), ("Unable to get handle to mby_env."))
       
 	//Pointer to env IF
 	env_if = mby_env_ptr.mby_if;

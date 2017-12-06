@@ -18,10 +18,11 @@
  This sequence set up the MBY config space:
  */
 class mby_isr_seq extends mby_base_seq;
-  `ovm_sequence_utils(mby_isr_seq,sla_sequencer)
+  `uvm_object_utils(mby_isr_seq) 
+  `uvm_declare_p_sequencer(slu_sequencer)
 
     task body();
-      ovm_report_warning (get_name(), "INTEG - mby_isr_seq should be imp ");
+      uvm_report_warning (get_name(), "INTEG - mby_isr_seq should be imp ");
 
     endtask // body
 endclass // mby_isr_seq

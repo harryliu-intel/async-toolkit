@@ -35,24 +35,32 @@
 `endif
 
 package sla_fusegen_pkg;
-import ovm_pkg::*;
+import uvm_pkg::*;
+
+`ifdef XVM
+   import ovm_pkg::*;
+   import xvm_pkg::*;
+   `include "ovm_macros.svh"
+   `include "sla_macros.svh"
+`endif
+
 import sla_pkg::*;
-`include "ovm_macros.svh"
-`include "sla_macros.svh"
+`include "uvm_macros.svh"
+`include "slu_macros.svh"
 
 `include "mby_classes.svh"
 
-class toplevel_fuse_env extends sla_fuse_env;
-   `ovm_component_utils(toplevel_fuse_env)
+class toplevel_fuse_env extends slu_fuse_env;
+   `uvm_component_utils(toplevel_fuse_env)
 
  rand mby_fuse_fusegroup mby_fuse;
 
-function new (string name="fuse_env", ovm_component parent = null);
+function new (string name="fuse_env", uvm_component parent = null);
    super.new(name, parent);
 endfunction // new
 
-function void build();
-   super.build();
+function void build_phase(uvm_phase phase = null);
+   super.build_phase(phase);
    mby_fuse = mby_fuse_fusegroup::type_id::create("mby_fuse", this);
    mby_fuse.set_env(this);
    mby_fuse.set_fuse_id(8'haa);
@@ -61,12 +69,12 @@ function void build();
    add_group(mby_fuse);
 endfunction
 
-function void connect();
-   super.connect();
+function void connect_phase(uvm_phase phase = null);
+   super.connect_phase(phase);
 endfunction
 
  function void set_desired_val(string fuse_name, logic val[]);
-    sla_fuse f = get_fuse(fuse_name);
+    slu_fuse f = get_fuse(fuse_name);
     f.set_desired_val(val);
  endfunction
 

@@ -19,15 +19,15 @@
  
 
 */
-class mby_base_env extends sla_tb_env;
+class mby_base_env extends slu_tb_env;
 
 	 protected mby_config cfg;
 
-    `ovm_component_utils_begin(mby_base_env)
-	  `ovm_field_object(cfg, OVM_ALL_ON)
-    `ovm_component_utils_end
+    `uvm_component_utils_begin(mby_base_env)
+	  `uvm_field_object(cfg, UVM_ALL_ON)
+    `uvm_component_utils_end
       
-  function new (string name="mby_base_env", ovm_component parent = null);
+  function new (string name="mby_base_env", uvm_component parent = null);
     super.new(name, parent);
 
     // Set SLA CFG object type
@@ -39,7 +39,7 @@ class mby_base_env extends sla_tb_env;
   
 
   // ***************************************************************
-  // MBY ENV OVM phases functions / tasks
+  // MBY ENV UVM phases functions / tasks
   // ***************************************************************
 
   
@@ -52,7 +52,7 @@ class mby_base_env extends sla_tb_env;
    
    For each new VC's/Agnet it is recommand to add it an a specific function
    */
-  virtual function void build();
+  virtual function void build_phase(uvm_phase phase);
 
   if (_level == SLA_TOP) begin
     // In this section all the IP specific stuff that are
@@ -65,11 +65,11 @@ class mby_base_env extends sla_tb_env;
     fuse_type= "mby_fuse_env";
     // Saola timeouts
     // max_run_clocks    = 20000000;
-    // OVM timeout
-    // set_global_timeout (2000us);
+    // UVM timeout
+    // uvm_pkg::set_global_timeout (2000us);
   end // if (_level == SLA_TOP)
   
-    super.build();
+    super.build_phase(phase);
 
 	 assert ($cast(cfg, config_obj));
     
@@ -82,7 +82,7 @@ class mby_base_env extends sla_tb_env;
    connect phase of mby_base_env
    
    */
-   function void connect();
+   function void connect_phase(uvm_phase phase);
    endfunction // void
 
   /*
@@ -93,11 +93,11 @@ class mby_base_env extends sla_tb_env;
    In this pahse we randomize the fuse env
    
    */
-  virtual function void end_of_elaboration ();
-  super.end_of_elaboration();
+  virtual function void end_of_elaboration_phase (uvm_phase phase);
+  super.end_of_elaboration_phase(phase);
    if (_level == SLA_TOP) begin
      // Randomize the fuses
-     `sla_assert(fuse.randomize(),("Unable to randomize fuses"));
+     `slu_assert(fuse.randomize(),("Unable to randomize fuses"));
    end
   endfunction
 
@@ -107,8 +107,8 @@ class mby_base_env extends sla_tb_env;
    start_of_simulation  phase of mby_base_env
    
    */
-  virtual function void start_of_simulation ();
-    super.start_of_simulation();
+  virtual function void start_of_simulation_phase (uvm_phase phase);
+    super.start_of_simulation_phase(phase);
   endfunction
 
   

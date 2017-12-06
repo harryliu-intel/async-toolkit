@@ -25,37 +25,45 @@
 module mby_ti_low #(parameter string IP_ENV = "*.env*"
 
 // START CHASSIS_NOT_PRESENT
-               ,parameter bit MBY_HAS_RESET_PKG = 0,
+//               ,parameter bit MBY_HAS_RESET_PKG = 0,
 // END CHASSIS_NOT_PRESENT
 // START IOSF_NOT_PRESENT
-                parameter bit MBY_IOSF_IS_PASSIVE = 1, 
+//                parameter bit MBY_IOSF_IS_PASSIVE = 1, 
 // END IOSF_NOT_PRESENT
 // START CHASSIS_NOT_PRESENT
-	        parameter string RESET_PKG_IS_ACTIVE = 0
+//	        parameter string RESET_PKG_IS_ACTIVE = 0
 // END CHASSIS_NOT_PRESENT
              )
   (
 // START IOSF_NOT_PRESENT
-   // IOSF Primary interafce
-   iosf_primary_intf mby_iosf_pri_if,
-   // IOSF SB ineterface
-   iosf_sbc_intf mby_iosf_sb_if,
-   // MBY IP env interface
+//   // IOSF Primary interafce
+//   iosf_primary_intf mby_iosf_pri_if,
+//   // IOSF SB ineterface
+//   iosf_sbc_intf mby_iosf_sb_if,
+//   // MBY IP env interface
 // END IOSF_NOT_PRESENT
    mby_env_if mby_if
 // START CHASSIS_NOT_PRESENT
-   // Power Gating VC interface
-   ,PowerGatingIF 	pg_if,
-   // CCU_VC interface
-   ccu_intf		ccu_if
+//   // Power Gating VC interface
+//   ,PowerGatingIF 	pg_if,
+//   // CCU_VC interface
+//   ccu_intf		ccu_if
 // END CHASSIS_NOT_PRESENT
    );
 
-  import ovm_pkg::*;
+  import uvm_pkg::*;
 // START IOSF_NOT_PRESENT
-  import IosfPkg::*;
+//  import IosfPkg::*;
 // END IOSF_NOT_PRESENT
-  import sla_pkg::*;
+  
+`ifdef XVM
+   import ovm_pkg::*;
+   import xvm_pkg::*;
+   `include "ovm_macros.svh"
+   `include "sla_macros.svh"
+`endif
+
+import sla_pkg::*;
 
   import mby_env_pkg::*;
   
@@ -64,31 +72,31 @@ module mby_ti_low #(parameter string IP_ENV = "*.env*"
 `include "mby_defines.sv"
   
 // START IOSF_NOT_PRESENT
-   //---------------------------------------------------------------
-   // Instantiate the IOSF primary test island (required by PVC)
-   //----------------------------------------------------------------
-   iosf_primary_ti #(`MBY_IOSF_PRI_PARAMS,  // signal width parameters
-                     .IS_PASSIVE (MBY_IOSF_IS_PASSIVE),
-                     .IS_COMPMON (1),
-                     .IS_FABRIC  (1))
-   mby_iosf_primary_ti  (.iosf_primary_intf (mby_iosf_pri_if));
-
-`ifdef IOSF_SB_PH2
-   //---------------------------------------------------------------
-   // Instantiate the IOSF sideband test island (required by SVC phase 2)
-   //----------------------------------------------------------------
-   iosf_sb_ti #(`MBY_IOSF_SB_PARAMS)    // signal width parameters
-   mby_iosf_sb_ti  (.iosf_sbc_intf (mby_iosf_sb_if));
-`else
-   iosf_sb_ti #(`MBY_IOSF_SB_PARAMS,.INTF_NAME("mby_sb_intf"))    // signal width parameters
-   mby_iosf_sb_ti  (.iosf_sbc_intf (mby_iosf_sb_if));
-   //---------------------------------------------------------------
-   // Boundle IOSF sideband interface (required by SVC phase 1)
-   //----------------------------------------------------------------
-  
-  
-  
-`endif
+//   //---------------------------------------------------------------
+//   // Instantiate the IOSF primary test island (required by PVC)
+//   //----------------------------------------------------------------
+//   iosf_primary_ti #(`MBY_IOSF_PRI_PARAMS,  // signal width parameters
+//                     .IS_PASSIVE (MBY_IOSF_IS_PASSIVE),
+//                     .IS_COMPMON (1),
+//                     .IS_FABRIC  (1))
+//   mby_iosf_primary_ti  (.iosf_primary_intf (mby_iosf_pri_if));
+//
+//`ifdef IOSF_SB_PH2
+//   //---------------------------------------------------------------
+//   // Instantiate the IOSF sideband test island (required by SVC phase 2)
+//   //----------------------------------------------------------------
+//   iosf_sb_ti #(`MBY_IOSF_SB_PARAMS)    // signal width parameters
+//   mby_iosf_sb_ti  (.iosf_sbc_intf (mby_iosf_sb_if));
+//`else
+//   iosf_sb_ti #(`MBY_IOSF_SB_PARAMS,.INTF_NAME("mby_sb_intf"))    // signal width parameters
+//   mby_iosf_sb_ti  (.iosf_sbc_intf (mby_iosf_sb_if));
+//   //---------------------------------------------------------------
+//   // Boundle IOSF sideband interface (required by SVC phase 1)
+//   //----------------------------------------------------------------
+//  
+//  
+//  
+//`endif
 // END IOSF_NOT_PRESENT
    
    //---------------------------------------------------------------
@@ -119,39 +127,39 @@ module mby_ti_low #(parameter string IP_ENV = "*.env*"
   // Adding MBY if to Saola container
 
   initial begin
-    sla_pkg::sla_resource_db#(virtual mby_env_if)::add("mby_if",mby_if,`__FILE__,`__LINE__);
+    sla_pkg::slu_resource_db#(virtual mby_env_if)::add("mby_if",mby_if,`__FILE__,`__LINE__);
   end
 
-  mby_rtl_config rtl_config;
+  mby_ti_config ti_config;
 
-  initial begin 
-    rtl_config = new();
+  initial begin  
+    ti_config = new();
    //set ti path for env
-    rtl_config.mby_ti_low_path = $psprintf("%m");
+    ti_config.mby_ti_low_path = $psprintf("%m");
    
 // START CHASSIS_NOT_PRESENT
-    rtl_config.mby_has_reset_pkg = 1;
+//    ti_config.mby_has_reset_pkg = 1;
 // END CHASSIS_NOT_PRESENT
-    set_config_object(IP_ENV,"mby_rtl_config",rtl_config);
+    uvm_config_object::set(null, IP_ENV,"mby_ti_config",ti_config);
   end 
 
 // START CHASSIS_NOT_PRESENT
-  generate
-  if (MBY_HAS_RESET_PKG) begin : mby_rst_pkg_agent 
-    // CCU Test Island
-    // CCU Test Island
-    ccu_vc_ti #(.IS_ACTIVE(RESET_PKG_IS_ACTIVE), 
-              .IP_ENV_TO_AGT_PATH({IP_ENV, ".mby_chassis_rst_env.ccu_agent"}),
-		`MBY_CCU_VC_PARAMS
-		) chassis_ccu_ti (ccu_if);
-    
-  // PG Test Island
-    CCAgentTI #(.IS_ACTIVE(RESET_PKG_IS_ACTIVE), 
-		.IP_ENV_TO_CC_AGENT_PATH({IP_ENV, ".mby_chassis_rst_env.pg_agent"}),
-		`MBY_CHASSIS_PWRGATE_CCAGENT_PARAMS
-		) chassis_pg_ti (pg_if);
-  end // block: scc_pg_agent
-   endgenerate
+//  generate
+//  if (MBY_HAS_RESET_PKG) begin : mby_rst_pkg_agent 
+//    // CCU Test Island
+//    // CCU Test Island
+//    ccu_vc_ti #(.IS_ACTIVE(RESET_PKG_IS_ACTIVE), 
+//              .IP_ENV_TO_AGT_PATH({IP_ENV, ".mby_chassis_rst_env.ccu_agent"}),
+//		`MBY_CCU_VC_PARAMS
+//		) chassis_ccu_ti (ccu_if);
+//    
+//  // PG Test Island
+//    CCAgentTI #(.IS_ACTIVE(RESET_PKG_IS_ACTIVE), 
+//		.IP_ENV_TO_CC_AGENT_PATH({IP_ENV, ".mby_chassis_rst_env.pg_agent"}),
+//		`MBY_CHASSIS_PWRGATE_CCAGENT_PARAMS
+//		) chassis_pg_ti (pg_if);
+//  end // block: scc_pg_agent
+//   endgenerate
 // END CHASSIS_NOT_PRESENT
 
   

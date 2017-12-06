@@ -25,23 +25,23 @@
 
 
 
-class mby_pri_scbd extends ovm_scoreboard;
+class mby_pri_scbd extends uvm_scoreboard;
   
 
     // ***************************************************************
     // MBY event pool
     // ***************************************************************
-    ovm_event_pool    MBYevPool;
+    uvm_event_pool    MBYevPool;
 
   
     // ***************************************************************
     // Queues for transactions
     // ***************************************************************
   
-  ovm_analysis_export #(IosfMonTxn) expected_transaction_port;
-  ovm_analysis_export #(IosfMonTxn) actaul_transaction_port;
-  tlm_analysis_fifo #(IosfMonTxn) expected_transaction;
-  tlm_analysis_fifo #(IosfMonTxn) actaul_transaction;
+  uvm_analysis_export #(IosfMonTxn) expected_transaction_port;
+  uvm_analysis_export #(IosfMonTxn) actaul_transaction_port;
+  uvm_tlm_analysis_fifo #(IosfMonTxn) expected_transaction;
+  uvm_tlm_analysis_fifo #(IosfMonTxn) actaul_transaction;
   
   IosfMonTxn  expected_Q[$];
 
@@ -62,20 +62,20 @@ class mby_pri_scbd extends ovm_scoreboard;
    */
   int mby_pri_scbd_timeout = 100;
 
-  `ovm_component_utils_begin(mby_pri_scbd)
-    `ovm_field_int(scbd_in_order, OVM_ALL_ON)
-    `ovm_field_int(enable_scbd, OVM_ALL_ON)
-     `ovm_field_int(mby_pri_scbd_timeout, OVM_ALL_ON)    
-  `ovm_component_utils_end
+  `uvm_component_utils_begin(mby_pri_scbd)
+    `uvm_field_int(scbd_in_order, UVM_ALL_ON)
+    `uvm_field_int(enable_scbd, UVM_ALL_ON)
+     `uvm_field_int(mby_pri_scbd_timeout, UVM_ALL_ON)    
+  `uvm_component_utils_end
     /*
     Function: new
     
     constractor 
        
     */
-  function new(string name="mby_pri_scbd", ovm_component parent=null);
+  function new(string name="mby_pri_scbd", uvm_component parent=null);
     super.new(name,parent);
-    // Enable OVM STOP flow
+    // Enable UVM STOP flow
     enable_stop_interrupt = 1;
 
     expected_transaction_port = new ("expected_transaction_port",this);
@@ -85,8 +85,8 @@ class mby_pri_scbd extends ovm_scoreboard;
   endfunction // new
 
 
-  function void connect();
-    super.connect();
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
     expected_transaction_port.connect(expected_transaction.analysis_export);
     actaul_transaction_port.connect(actaul_transaction.analysis_export);
     
@@ -98,8 +98,8 @@ class mby_pri_scbd extends ovm_scoreboard;
    
    invoke scbd threads
    */
-  task run();
-    super.run();
+  task run_phase (uvm_phase phase);
+    super.run_phase(phase);
     // wait unit scbd is enabled
     wait (enable_scbd == 1);
     fork
@@ -127,7 +127,7 @@ class mby_pri_scbd extends ovm_scoreboard;
       // INTEG - here the user can add need to verfy that this transaction should enetr the scbd
       // and add its golden model
       if (expected_trans.eventType == Iosf::MCMD) begin
-	`sla_msg(OVM_NONE, get_name(),("SCBD recieve expected trandaction %s, adding for Q",trans_to_string(expected_trans)));
+	`slu_msg(UVM_NONE, get_name(),("SCBD recieve expected trandaction %s, adding for Q",trans_to_string(expected_trans)));
 	expected_Q.push_back(expected_trans);
       end
       
@@ -155,7 +155,7 @@ class mby_pri_scbd extends ovm_scoreboard;
       #1;
       // Sending the actaul transaciton to match and compare functions
       if (actual_trans.eventType == Iosf::MCMD) begin
-	`sla_msg(OVM_NONE, get_name(),("SCBD recieve actaul trandaction %s, passing it to process",trans_to_string(actual_trans)));
+	`slu_msg(UVM_NONE, get_name(),("SCBD recieve actaul trandaction %s, passing it to process",trans_to_string(actual_trans)));
 	process_actaul_tranX(actual_trans);
       end
       
@@ -187,7 +187,7 @@ class mby_pri_scbd extends ovm_scoreboard;
       // If scbd is "in order" check order here
       if (scbd_in_order) begin
 	if (match_index != 0 ) begin
-	  `sla_error (get_name(),("Out of order transaction - %s",trans_to_string(trans)));
+	  `slu_error (get_name(),("Out of order transaction - %s",trans_to_string(trans)));
 	end
       end
 
@@ -198,7 +198,7 @@ class mby_pri_scbd extends ovm_scoreboard;
       expected_Q.delete(match_index);
 	
     end else begin
-      `sla_error (get_name(),("Unexpected transaction - %s",trans_to_string(trans)));
+      `slu_error (get_name(),("Unexpected transaction - %s",trans_to_string(trans)));
     end // else: !if(found_match)
   endfunction
 
@@ -213,7 +213,7 @@ class mby_pri_scbd extends ovm_scoreboard;
   function bit is_match (IosfMonTxn exp_trans, IosfMonTxn act_trans);
     bit match = 1;
 
-    `sla_warning (get_name(), ("INTEG - Need to imp is_match function"));
+    `slu_warning (get_name(), ("INTEG - Need to imp is_match function"));
 
     /*
      User code
@@ -231,7 +231,7 @@ class mby_pri_scbd extends ovm_scoreboard;
   function  compare_trans (IosfMonTxn exp_trans, IosfMonTxn act_trans);
 
 
-    `sla_warning (get_name(), ("INTEG - Need to imp compare_trans function"));
+    `slu_warning (get_name(), ("INTEG - Need to imp compare_trans function"));
     /*
      User to implemeted
      */
@@ -248,7 +248,7 @@ class mby_pri_scbd extends ovm_scoreboard;
 
   function string trans_to_string (IosfMonTxn trans);
     string trans_string;
-    `sla_warning (get_name(), ("INTEG - Need to imp trans_to_string function"));
+    `slu_warning (get_name(), ("INTEG - Need to imp trans_to_string function"));
     /*
      User code
      */
@@ -265,14 +265,14 @@ class mby_pri_scbd extends ovm_scoreboard;
     */
   virtual task stop (string ph_name);
     int counter = 0;
-    `sla_msg(OVM_NONE, get_name(),("%t Start STOP task",$time));
+    `slu_msg(UVM_NONE, get_name(),("%t Start STOP task",$time));
     while (expected_Q.size() > 0 && counter < (mby_pri_scbd_timeout/10)) begin
-      `sla_msg(OVM_NONE, get_name(),("%t SCBD expected_Q is not empty wait 10us",$time));
+      `slu_msg(UVM_NONE, get_name(),("%t SCBD expected_Q is not empty wait 10us",$time));
       #10us;
       counter++;
     end
     if (expected_Q.size() > 0) begin
-    `sla_error(get_name(),("SCBD expected Q is not empty after %d us",mby_pri_scbd_timeout));
+    `slu_error(get_name(),("SCBD expected Q is not empty after %d us",mby_pri_scbd_timeout));
     end
   endtask // stop
 

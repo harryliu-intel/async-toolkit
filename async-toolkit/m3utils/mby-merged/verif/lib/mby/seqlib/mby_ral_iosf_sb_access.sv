@@ -6,14 +6,16 @@
  This sequence extract data from the RAL register and transalte the 
  to IOSF SB transaction
  
- This sequences extends sla_ral_sequence_base
+ This sequences extends slu_ral_sequence_base
 
 
  */
 
-class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
+class mby_ral_iosf_sb_access extends slu_ral_sequence_base;
    
-  `ovm_sequence_utils(mby_ral_iosf_sb_access, iosfsbm_cm::iosfsbc_sequencer);
+  `uvm_object_utils(mby_ral_iosf_sb_access) 
+   
+  `uvm_declare_p_sequencer(iosfsbm_cm::iosfsbc_sequencer);
 
   // IOSF SB to be used.
   iosfsbm_seq::iosf_sb_seq sb_seq;
@@ -30,7 +32,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
   bit m_exp_rsp;
   
   function new(input string name = "",
-               ovm_sequencer_base sequencer=null, ovm_sequence parent_seq=null);
+               uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
      int dummy;
     super.new(name);
 
@@ -53,7 +55,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
     my_addr = target.get_space_addr("MSG");
     
     assert (my_addr != undef) else
-      ovm_report_error (get_name(), {"Trying to access register which does not have MSG address define - ", target.get_name()});
+      uvm_report_error (get_name(), {"Trying to access register which does not have MSG address define - ", target.get_name()});
      
     // GET transaction class 
     m_xaction_class = (operation == "write" ? iosfsbm_cm::POSTED :  iosfsbm_cm::NON_POSTED);
@@ -86,7 +88,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
 	    m_opcode = iosfsbm_cm::OP_CRRD;
 	  end   
 	  default :begin
-            ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+            uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
 	  end
 	    
 	endcase // case (target.get_space())
@@ -116,7 +118,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
 	    m_opcode = iosfsbm_cm::OP_CRWR;
 	  end   
 	  default : begin
-          ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+          uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
 
 	  end // case: default
 	endcase // case (target.get_space())
@@ -147,7 +149,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
               ral_data = ral_data << 8;
               addr_align--;
             end
-          `sla_msg( OVM_HIGH, get_name(), ("byte_en = %0x, ral_data = %0x, my_addr = %0x", byte_en, ral_data, my_addr));
+          `slu_msg( UVM_HIGH, get_name(), ("byte_en = %0x, ral_data = %0x, my_addr = %0x", byte_en, ral_data, my_addr));
 	end // if (m_size < 4)
     end // if (!target_support_unalign_address(m_dest_pid))
     
@@ -165,7 +167,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
     // Default BAR
     bar = 3'h0;;
 ;     
-    `ovm_do_with(sb_seq, {xaction_class_i == m_xaction_class;
+    `uvm_do_with(sb_seq, {xaction_class_i == m_xaction_class;
 			  dest_pid_i == m_dest_pid;
 			  opcode_i == m_opcode;
 			  data_i.size() == m_data.size();
@@ -183,7 +185,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
 			  compare_completion_i == 0;
 			  })
       
-      `sla_msg( OVM_LOW, get_name(), (
+      `slu_msg( UVM_LOW, get_name(), (
                                       "source=%s, target=%s, operation=%s, byte_en=%h, wait_for_complete=%s",
                                       source, target.get_name(), operation, byte_en, (wait_for_complete ? "TRUE" : "FALSE")
                                       ));	
@@ -197,7 +199,7 @@ class mby_ral_iosf_sb_access extends sla_ral_sequence_base;
           align_data();
         end
       else begin
-	ovm_report_error (get_name(), $psprintf ("Received bad completion on SB NP request, Register %s , completion status %x",target.get_name(), sb_seq.rx_compl_xaction.rsp) );
+	uvm_report_error (get_name(), $psprintf ("Received bad completion on SB NP request, Register %s , completion status %x",target.get_name(), sb_seq.rx_compl_xaction.rsp) );
       end
     ral_status = SLA_OK;
     

@@ -19,11 +19,12 @@
 // to access MBY registers
   
 
-class mby_base_seq extends sla_sequence_base;
-  `ovm_sequence_utils(mby_base_seq,sla_sequencer)
+class mby_base_seq extends slu_sequence_base;
+  `uvm_object_utils(mby_base_seq) 
+  `uvm_declare_p_sequencer(slu_sequencer)
   
-  sla_status_t status;
-  sla_ral_data_t rd_val, wr_val;
+  slu_status_t status;
+  slu_ral_data_t rd_val, wr_val;
   mby_regs_file mby;
   sla_ral_env ral;
 
@@ -33,12 +34,12 @@ class mby_base_seq extends sla_sequence_base;
     Constractor, set up the MBY RAL pointer.
     */
   function new(input string name = "mby_base_seq",
-               ovm_sequencer_base sequencer=null, ovm_sequence parent_seq=null);
+               uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
     super.new(name, sequencer, parent_seq);
 
-	 `sla_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL."))
+	 `slu_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL."))
     
-      `sla_assert($cast(mby, ral.find_file("mby_regs")), ("Unable to get handle to mby"))
+      `slu_assert($cast(mby, ral.find_file("mby_regs")), ("Unable to get handle to mby"))
   endfunction
 
   virtual function void sm_config();

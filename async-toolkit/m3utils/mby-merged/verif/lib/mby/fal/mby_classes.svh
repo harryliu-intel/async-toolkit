@@ -30,22 +30,22 @@
 
 //Fuse code compatible with Saola versions: v20131113 and newer 
 
-class mby_fuse_mby_fuse_fuse_1_field extends sla_fuse;
+class mby_fuse_mby_fuse_fuse_1_field extends slu_fuse;
 
     rand bit [   7:   0] cfg_val;
     logic [   7:   0] desired_val;
     bit [   7:   0] configuration_values[int unsigned];
     bit [   7:   0] configuration_value;
 
-   `ovm_object_utils(mby_fuse_mby_fuse_fuse_1_field)
+   `uvm_object_utils(mby_fuse_mby_fuse_fuse_1_field)
 
-   function void do_print (ovm_printer printer);
+   function void do_print (uvm_printer printer);
       super.do_print(printer);
       printer.print_field("cfg_val", cfg_val, $bits(cfg_val));
       printer.print_field("desired_val", desired_val, $bits(desired_val));
    endfunction
 
-   function void do_pack (ovm_packer packer);
+   function void do_pack (uvm_packer packer);
       super.do_pack(packer);
       packer.pack_field_int(cfg_val, $bits(cfg_val));
    endfunction
@@ -146,22 +146,22 @@ class mby_fuse_mby_fuse_fuse_1_field extends sla_fuse;
 
 endclass
 
-class mby_fuse_mby_fuse_fuse_2_field extends sla_fuse;
+class mby_fuse_mby_fuse_fuse_2_field extends slu_fuse;
 
     rand bit [   5:   0] cfg_val;
     logic [   5:   0] desired_val;
     bit [   5:   0] configuration_values[int unsigned];
     bit [   5:   0] configuration_value;
 
-   `ovm_object_utils(mby_fuse_mby_fuse_fuse_2_field)
+   `uvm_object_utils(mby_fuse_mby_fuse_fuse_2_field)
 
-   function void do_print (ovm_printer printer);
+   function void do_print (uvm_printer printer);
       super.do_print(printer);
       printer.print_field("cfg_val", cfg_val, $bits(cfg_val));
       printer.print_field("desired_val", desired_val, $bits(desired_val));
    endfunction
 
-   function void do_pack (ovm_packer packer);
+   function void do_pack (uvm_packer packer);
       super.do_pack(packer);
       packer.pack_field_int(cfg_val, $bits(cfg_val));
    endfunction
@@ -262,22 +262,22 @@ class mby_fuse_mby_fuse_fuse_2_field extends sla_fuse;
 
 endclass
 
-class mby_fuse_mby_fuse_fuse_3_field extends sla_fuse;
+class mby_fuse_mby_fuse_fuse_3_field extends slu_fuse;
 
     rand bit [   1:   0] cfg_val;
     logic [   1:   0] desired_val;
     bit [   1:   0] configuration_values[int unsigned];
     bit [   1:   0] configuration_value;
 
-   `ovm_object_utils(mby_fuse_mby_fuse_fuse_3_field)
+   `uvm_object_utils(mby_fuse_mby_fuse_fuse_3_field)
 
-   function void do_print (ovm_printer printer);
+   function void do_print (uvm_printer printer);
       super.do_print(printer);
       printer.print_field("cfg_val", cfg_val, $bits(cfg_val));
       printer.print_field("desired_val", desired_val, $bits(desired_val));
    endfunction
 
-   function void do_pack (ovm_packer packer);
+   function void do_pack (uvm_packer packer);
       super.do_pack(packer);
       packer.pack_field_int(cfg_val, $bits(cfg_val));
    endfunction
@@ -378,22 +378,22 @@ class mby_fuse_mby_fuse_fuse_3_field extends sla_fuse;
 
 endclass
 
-class mby_fuse_mby_fuse_fuse_4_field extends sla_fuse;
+class mby_fuse_mby_fuse_fuse_4_field extends slu_fuse;
 
     rand bit [   7:   0] cfg_val;
     logic [   7:   0] desired_val;
     bit [   7:   0] configuration_values[int unsigned];
     bit [   7:   0] configuration_value;
 
-   `ovm_object_utils(mby_fuse_mby_fuse_fuse_4_field)
+   `uvm_object_utils(mby_fuse_mby_fuse_fuse_4_field)
 
-   function void do_print (ovm_printer printer);
+   function void do_print (uvm_printer printer);
       super.do_print(printer);
       printer.print_field("cfg_val", cfg_val, $bits(cfg_val));
       printer.print_field("desired_val", desired_val, $bits(desired_val));
    endfunction
 
-   function void do_pack (ovm_packer packer);
+   function void do_pack (uvm_packer packer);
       super.do_pack(packer);
       packer.pack_field_int(cfg_val, $bits(cfg_val));
    endfunction
@@ -494,15 +494,15 @@ class mby_fuse_mby_fuse_fuse_4_field extends sla_fuse;
 
 endclass
 
-class mby_fuse_fusegroup extends sla_fuse_group;
+class mby_fuse_fusegroup extends slu_fuse_group;
     rand mby_fuse_mby_fuse_fuse_1_field mby_fuse_mby_fuse_fuse_1;
     rand mby_fuse_mby_fuse_fuse_2_field mby_fuse_mby_fuse_fuse_2;
     rand mby_fuse_mby_fuse_fuse_3_field mby_fuse_mby_fuse_fuse_3;
     rand mby_fuse_mby_fuse_fuse_4_field mby_fuse_mby_fuse_fuse_4;
 
-    `ovm_object_utils(mby_fuse_fusegroup)
+    `uvm_object_utils(mby_fuse_fusegroup)
 
-    function void do_print (ovm_printer printer);
+    function void do_print (uvm_printer printer);
        super.do_print(printer);
         printer.print_object("mby_fuse_mby_fuse_fuse_1", mby_fuse_mby_fuse_fuse_1);
         printer.print_object("mby_fuse_mby_fuse_fuse_2", mby_fuse_mby_fuse_fuse_2);
@@ -510,7 +510,7 @@ class mby_fuse_fusegroup extends sla_fuse_group;
         printer.print_object("mby_fuse_mby_fuse_fuse_4", mby_fuse_mby_fuse_fuse_4);
     endfunction
 
-    function void do_pack (ovm_packer packer);
+    function void do_pack (uvm_packer packer);
        super.do_pack(packer);
        packer.pack_object(mby_fuse_mby_fuse_fuse_1);
        packer.pack_object(mby_fuse_mby_fuse_fuse_2);
@@ -521,10 +521,10 @@ class mby_fuse_fusegroup extends sla_fuse_group;
     function new (string name = "mby_fuse_fusegroup");
         super.new(name);
         set_default();
-        build();
+        this.build_phase();
     endfunction
 
-    function void build();
+    function void build_phase(uvm_phase phase = null);
         mby_fuse_mby_fuse_fuse_1 = mby_fuse_mby_fuse_fuse_1_field::type_id::create("mby_fuse_mby_fuse_fuse_1");
         mby_fuse_mby_fuse_fuse_1.set_group(this);
         mby_fuse_mby_fuse_fuse_2 = mby_fuse_mby_fuse_fuse_2_field::type_id::create("mby_fuse_mby_fuse_fuse_2");

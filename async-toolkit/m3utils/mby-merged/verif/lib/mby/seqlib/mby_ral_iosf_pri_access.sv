@@ -6,21 +6,22 @@
  This sequence extract data from the RAL register and transalte the 
  to IOSF Primary transaction
  
- This sequences extends sla_ral_sequence_base
+ This sequences extends slu_ral_sequence_base
 
 
  */
-class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
+class mby_ral_iosf_pri_access extends slu_ral_sequence_base;
   
-  //OVM UTIL
-  `ovm_sequence_utils(mby_ral_iosf_pri_access,IosfAgtSeqr)
+  //UVM UTIL
+  `uvm_object_utils(mby_ral_iosf_pri_access) 
+  `uvm_declare_p_sequencer(IosfAgtSeqr)
 
   IosfTxn iosfTxn;
     
   Iosf::iosf_cmd_t cmd;
   Iosf::address_t  address;
   Iosf::data_t  iosf_data[];
-  sla_ral_data_t align_ral_data;
+  slu_ral_data_t align_ral_data;
   
   
   bit cast_wait_for_complete;
@@ -86,7 +87,7 @@ class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
 	       align_address_data();
 	    end
 	    default : begin
-              ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+              uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
 	    end
 	  endcase
        end // case: "read"
@@ -122,7 +123,7 @@ class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
 	  end // case: "MEM"
 	  
 	  default : begin
-            ovm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
+            uvm_report_error(get_name(), $psprintf ("Unsupported target space. Tagert %s, Space %s",target.get_name(),target.get_space()));
 	  end
 	  
 	endcase
@@ -133,7 +134,7 @@ class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
      for (int i=0; i < (reg_size/4 + (reg_size% 4 > 0 )); i ++)
        $cast (iosf_data[i],align_ral_data[i*32+:32]);
      
-    `sla_msg( OVM_LOW, get_name(), (
+    `slu_msg( UVM_LOW, get_name(), (
                                     "source=%s, target=%s, operation=%s, data=%h, BE=%h, space=%s, wait_for_complete=%s",
                                     source, target.get_name(), operation,iosf_data[0],byte_en,target.get_space(), (wait_for_complete ? "TRUE" : "FALSE")
                                     ));
@@ -156,17 +157,17 @@ class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
         iosfTxn.expectRsp = cast_wait_for_complete; 
         iosfTxn.set_transaction_id (reqTrID); 
    
-        `ovm_send (iosfTxn)
+        `uvm_send (iosfTxn)
 
         if (cast_wait_for_complete) 
         begin
             IosfTgtTxn                rxRspTgtTxn;  // Rsp Transaction
-            ovm_pkg::ovm_sequence_item rsp;
+            uvm_pkg::uvm_sequence_item rsp;
             string msg;
             get_response (rsp, reqTrID);
             assert ($cast (rxRspTgtTxn, rsp));
             $sformat (msg, "RSP reqTrID = 0x%h , %s", reqTrID, rxRspTgtTxn.convert2string ());
-            `ovm_info (get_type_name(), msg, OVM_INFO);
+            `uvm_info (get_type_name(), msg, UVM_INFO);
             if (rxRspTgtTxn.data.size () > 0) 
             begin
                 cmplData = new [rxRspTgtTxn.data.size ()];
@@ -183,7 +184,7 @@ class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
 	align_data();
 	
 	
-	`sla_msg( OVM_LOW, get_name(), (
+	`slu_msg( UVM_LOW, get_name(), (
 					"source=%s, target=%s, operation=%s, wait_for_complete=%s, data=%h  cmpl done",
 					source, target.get_name(), operation, (wait_for_complete ? "TRUE" : "FALSE"),ral_data
 					));
@@ -211,7 +212,7 @@ class mby_ral_iosf_pri_access extends sla_ral_sequence_base;
     address[1:0] = 0 ;
     
     assert (address[1:0] + reg_size <= 8 ) else
-      ovm_report_error (get_name(), $psprintf ("Received request to write reister with size more than 2 DW, Register %s , size %d ",target.get_name(),address[1:0] + reg_size ) );
+      uvm_report_error (get_name(), $psprintf ("Received request to write reister with size more than 2 DW, Register %s , size %d ",target.get_name(),address[1:0] + reg_size ) );
     
     if ( address[1:0] + reg_size > 4)
       for (int i = 0 ;  i< ((address[1:0] + reg_size) % 4 == 0 ? 4 : (address[1:0] + reg_size) % 4) ; i++) begin

@@ -48,14 +48,14 @@ class mby_fuse_mby_fuse_reg extends sla_ral_reg;
   function new(
                 string         name = "",
                 `ifdef SLA_RAL_COVERAGE
-                sla_ral_coverage_t cov_t = COVERAGE_OFF,
+                slu_ral_coverage_t cov_t = COVERAGE_OFF,
                 `endif
                 int            bus_num=0,
                 int            dev_num=0,
                 int            func_num=0,
                 int            offset=0,
                 int            size=0,
-                sla_ral_data_t reset_val=0,
+                slu_ral_data_t reset_val=0,
                 boolean_t      mon_enabled = SLA_FALSE
              );
       super.new();
@@ -176,7 +176,7 @@ class mby_fuse_file extends sla_ral_file;
       mby_fuse.set_cfg(16'h0, 16'h0, 16'h0, 4'h0, 32, 32'b00000000000000000000000000000000);
       if ( $test$plusargs("mby_fuse:dont_test") ) mby_fuse.set_test_reg(1'b0);
       if (!add_reg( mby_fuse )) begin
-        `sla_error(get_name(), ("Could not add register mby_fuse"));
+        `slu_error(get_name(), ("Could not add register mby_fuse"));
       end
     end
 

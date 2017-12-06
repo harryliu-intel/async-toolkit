@@ -32,11 +32,19 @@
 
 
 module MBY_ral_rtl_monitor(input enable);  
-     import ovm_pkg::*; 
-     import sla_pkg::*; 
-  `include "sla_macros.svh"  
+     import uvm_pkg::*; 
+     
+`ifdef XVM
+   import ovm_pkg::*;
+   import xvm_pkg::*;
+   `include "ovm_macros.svh"
+   `include "sla_macros.svh"
+`endif
 
-  `include "ovm_macros.svh"  
+import sla_pkg::*; 
+  `include "slu_macros.svh"  
+
+  `include "uvm_macros.svh"  
 
    sla_ral_env ral; 
    sla_ral_reg    ral_reg_ptrs[string];   //List of pointers to all registers containing /V field AccessTypes
@@ -44,7 +52,7 @@ module MBY_ral_rtl_monitor(input enable);
 
   initial begin
     wait( enable ); 
-   `sla_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL.")); 
+   `slu_assert($cast(ral, sla_ral_env::get_ptr()), ("Unable to get handle to RAL.")); 
 
 
 `ifndef GLS 

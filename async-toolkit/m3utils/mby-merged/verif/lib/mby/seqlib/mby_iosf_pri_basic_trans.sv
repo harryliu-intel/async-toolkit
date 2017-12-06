@@ -3,7 +3,7 @@
 
 
    ----------------------------------------------------------------------
-   file:    mby_sla_iosf_seq.sv
+   file:    mby_slu_iosf_seq.sv
    Date Created  : 25/7/2016
    Author        : dbenita
    Project       : MBY IP
@@ -14,7 +14,7 @@
   This file include IOSF sequences that are used in MBY SM and RAL
  
  
- 1. <mby_iosf_pri_basic_trans> - Basic IOSF seq that can be called using ovm_do_with. Use by SM and RAL Primary seq.
+ 1. <mby_iosf_pri_basic_trans> - Basic IOSF seq that can be called using uvm_do_with. Use by SM and RAL Primary seq.
  2. <mby_ral_iosf_sb_access> - RAL IOSF SB interafce  main sequence.
  2. <mby_ral_iosf_pri_access> - RAL IOSF Primary main sequence.
 
@@ -23,7 +23,7 @@
 /*
  Class: mby_iosf_pri_basic_trans
 
- Basic IOSF seq that can be called using ovm_do_with
+ Basic IOSF seq that can be called using uvm_do_with
 
 
  */
@@ -31,8 +31,9 @@
 
 class mby_iosf_pri_basic_trans extends mby_extended_base_seq;
   
-    //OVM UTIL
-    `ovm_sequence_utils(mby_iosf_pri_basic_trans, IosfAgtSeqr)
+    //UVM UTIL
+    `uvm_object_utils(mby_iosf_pri_basic_trans) 
+    `uvm_declare_p_sequencer(IosfAgtSeqr)
   
     //------------------------------------------
     // Data Members 
@@ -76,19 +77,19 @@ class mby_iosf_pri_basic_trans extends mby_extended_base_seq;
         iosfTxn.expectRsp = waitForCompletion; //support for pvc 2012WW40r121005
         iosfTxn.set_transaction_id (reqTrID); 
 
-        `ovm_send (iosfTxn)
+        `uvm_send (iosfTxn)
 
         if (waitForCompletion) 
         begin
             IosfTgtTxn                rxRspTgtTxn;  // Rsp Transaction
-            ovm_pkg::ovm_sequence_item rsp;
+            uvm_pkg::uvm_sequence_item rsp;
             Iosf::data_t              cmplData[];   // Response data
             string msg;
             get_response (rsp, reqTrID);
             assert ($cast (rxRspTgtTxn, rsp));
             $sformat (msg, "RSP reqTrID = 0x%h , %s", 
             reqTrID, rxRspTgtTxn.convert2string ());
-            ovm_report_info (CLASSNAME, msg);
+            uvm_report_info (CLASSNAME, msg);
             if (rxRspTgtTxn.data.size () > 0) 
             begin
                 cmplData = new [rxRspTgtTxn.data.size ()];

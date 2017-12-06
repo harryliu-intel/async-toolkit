@@ -33,10 +33,15 @@ class mby_training_phase_seq extends mby_base_seq;
 
   
   
-  `ovm_sequence_utils(mby_training_phase_seq,sla_sequencer)
+  `uvm_object_utils(mby_training_phase_seq) 
+  
+
+  
+  
+  `uvm_declare_p_sequencer(slu_sequencer)
     
     task body();
-      ovm_report_warning (get_name(), "INTEG - MBY training seq is not IMP ");
+      uvm_report_warning (get_name(), "INTEG - MBY training seq is not IMP ");
             
     endtask
 endclass // mby_training_phase_seq
