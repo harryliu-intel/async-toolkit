@@ -62,7 +62,7 @@ EOF
         -enable_debussy       => { default => 1 },
 	-save_run_scripts        => { default => 1 },
         -set_test_plusarg_to_testname => {default => '1'},
-        -name_of_test_plusarg => {default => "OVM_TESTNAME"},
+        -name_of_test_plusarg => {default => "UVM_TESTNAME"},
 
         # This cleans old log files from the test results
         -pre_clean_test => { default => 1, },
@@ -96,7 +96,7 @@ EOF
         mby => {
             __PROTOTYPES    => { import => [ "TEST", "LOWPOWER" ] },
             -test_vlog_opts => {
-                default => [ "", ],
+                default => [ "-Xkeyopt=uvm", ],
 
             },
             -enable_pwr_intent => { default => 1 },
@@ -167,6 +167,7 @@ EOF
 
 		     "-lca", "-kdb", "-debug_access+all",
                     "-sverilog",      "-override_timescale=1ps/1ps",
+                    "./libsla.so",    "-Xkeyopt=uvm",
                     "-Xkeyopt=iComp", "-Xkeyopt=iRun",
                     "-liblist_work",  "-liblist_nocelldiff",
                 ],
@@ -183,12 +184,24 @@ EOF
         -static_check_cfg_file => {
             default => [
                 #"/p/com/flows/spyglass_methodology/1.0.10/ace_static_check.cfg",
-                "$ENV{MODEL_ROOT}/tools/lint/ace_static_check.lintra.cfg"
+                "$ENV{MODEL_ROOT}/tools/lint/ace_static_check.lintra.cfg",
+            ],
+        },
+
+        -elab_opts => {
+            default => [
+                "-lca", "-kdb", "-debug_access+all",
+                "-sverilog",      "-override_timescale=1ps/1ps",
+                "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
+                "-Xkeyopt=iComp", "-Xkeyopt=iRun",
+                "-liblist_work",  "-liblist_nocelldiff",
             ],
         },
 
         -vlog_opts => {
             default => [
+                "-kdb",
+                "-Xkeyopt=uvm",
                 "+libext+.v+.sv",
                 "-timescale=1ps/1ps",
                 "-sverilog",
@@ -200,7 +213,6 @@ EOF
                 ,    #2012WW46r121114 primary IOSF compliance
                 "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
-                "-kdb",
             ],
         },
     },

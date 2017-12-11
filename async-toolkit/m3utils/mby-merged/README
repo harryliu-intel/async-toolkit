@@ -82,7 +82,7 @@ Signal dumping
   trex mby_alive_test -ace_args -fsdb -ace_args- -seed 1 -dut mby
 
 // Enable signal dumping with VPD output: use "-vpd" switch - Points to a user "do" script in $MODEL_ROOT/tools/vcs.
-  trex mby_alive_test -ace_args -vpd mby_vpd.do -ace_args- -seed 1 -dut mst
+  trex mby_alive_test -ace_args -vpd mby_vpd.do -ace_args- -seed 1 -dut mby
 
 // Enable signal dumping with VCD-Plus: use "-vcdplus" switch
   trex mby_alive_test -ace_args -vcdplus -ace_args- -seed 1 -dut mby

@@ -58,11 +58,11 @@ class mby_base_env extends slu_tb_env;
     // In this section all the IP specific stuff that are
     // relevant only when the IP is stand alone should be set
     // IP SM env - will not be reuse in integration
-    sm_type = "mby_sm_env";
-    // IP IM env - will not be reuse in integration
-    im_type = "mby_im_env";
-    //Set Fuse env type
-    fuse_type= "mby_fuse_env";
+//    sm_type = "mby_sm_env";
+//    // IP IM env - will not be reuse in integration
+//    im_type = "mby_im_env";
+//    //Set Fuse env type
+//    fuse_type= "mby_fuse_env";
     // Saola timeouts
     // max_run_clocks    = 20000000;
     // UVM timeout
