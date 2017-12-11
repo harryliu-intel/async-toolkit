@@ -853,6 +853,39 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
         }
     }
 
+    protected CspInteger _fopen(CspString path, CspString mode) {
+        return CspInteger.valueOf(DSim.get().cspStdio.fopen(path.toString(), mode.toString()));
+    }
+
+    protected CspInteger _fread(CspArray ptr, CspInteger size, CspInteger nmemb, CspInteger stream) {
+        final int s = size.intValueExact();
+        final int n = nmemb.intValueExact();
+        final byte[] buf = new byte[s * n];
+        final int read = DSim.get().cspStdio.fread(buf, s, n, stream.intValueExact());
+        final int len = ptr.getMaxIndex() - ptr.getMinIndex() + 1;
+        for (int i = 0, idx = ptr.getMinIndex(); i < len && i < s * read; ++i, ++idx) {
+            CspValue val = ptr.get(idx);
+            val.setValue(new CspInteger(buf[i]));
+        }
+        return CspInteger.valueOf(read);
+    }
+
+    protected CspInteger _fwrite(CspArray ptr, CspInteger size, CspInteger nmemb, CspInteger stream) {
+        final int s = size.intValueExact();
+        final int n = nmemb.intValueExact();
+        final byte[] buf = new byte[s * n];
+        final int len = ptr.getMaxIndex() - ptr.getMinIndex() + 1;
+        for (int i = 0, idx = ptr.getMinIndex(); i < len && i < s * n; ++i, ++idx) {
+            buf[i] = (byte) ((CspInteger) ptr.get(idx)).intValue();
+        }
+        final int written = DSim.get().cspStdio.fwrite(buf, s, n, stream.intValueExact());
+        return CspInteger.valueOf(written);
+    }
+
+    protected CspInteger _fclose(CspInteger stream) {
+        return CspInteger.valueOf(DSim.get().cspStdio.fclose(stream.intValueExact()));
+    }
+
     protected CspInteger _walltime() {
         return new CspInteger(BigInteger.valueOf(System.nanoTime()));
     }

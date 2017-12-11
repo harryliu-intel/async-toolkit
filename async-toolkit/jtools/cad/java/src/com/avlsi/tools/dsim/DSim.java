@@ -71,6 +71,7 @@ import com.avlsi.cell.HierarchyInterface;
 import com.avlsi.cell.NoSuchEnvironmentException;
 
 import com.avlsi.csp.csp2java.runtime.CspRuntimeAbstractDevice;
+import com.avlsi.csp.csp2java.runtime.CspStdio;
 import com.avlsi.csp.util.VisitorExceptionWithLocation;
 
 import com.avlsi.fast.BlockInterface;
@@ -322,6 +323,8 @@ public class DSim implements NodeWatcher {
      **/
     private final Set warnedCells = new HashSet();
     
+    public CspStdio cspStdio = new CspStdio(32);
+
     /**
      * possibilities for randomOrder.
      * <p>
@@ -953,6 +956,7 @@ public class DSim implements NodeWatcher {
         savedCadenceInfo = null;
         savedOptCandidate = null;
         slintIgnores.clear();
+        cspStdio.clear();
         /** garbage collect here **/
         System.gc();
     }

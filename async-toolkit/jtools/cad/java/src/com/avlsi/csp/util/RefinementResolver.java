@@ -38,6 +38,10 @@ public class RefinementResolver extends VisitorByCategory {
         String ORD = "ord";
         String DUMPON = "dumpOn";
         String DUMPOFF = "dumpOff";
+        String FOPEN = "fopen";
+        String FCLOSE = "fclose";
+        String FREAD = "fread";
+        String FWRITE = "fwrite";
         String WALLTIME = "walltime";
         String GETARGVALUE = "getArgValue";
     }
@@ -186,6 +190,57 @@ public class RefinementResolver extends VisitorByCategory {
                 new FunctionDeclaration(BuiltIn.DUMPOFF,
                                         new DeclarationList(),
                                         new BooleanType(),
+                                        new SequentialStatement()),
+                BuiltIn.FOPEN,
+                new FunctionDeclaration(BuiltIn.FOPEN,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("path",
+                                                new StringType()),
+                                            getDeclaration("mode",
+                                                new StringType())
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FCLOSE,
+                new FunctionDeclaration(BuiltIn.FCLOSE,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("stream")
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FREAD,
+                new FunctionDeclaration(BuiltIn.FREAD,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration(
+                                                "ptr",
+                                                new ArrayType(
+                                                    new Range(
+                                                        new IntegerExpression(0),
+                                                        new IntegerExpression(0)),
+                                                    new IntegerType()),
+                                                Declarator.INOUT),
+                                            getDeclaration("size"),
+                                            getDeclaration("nmemb"),
+                                            getDeclaration("stream")
+                                        }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FWRITE,
+                new FunctionDeclaration(BuiltIn.FWRITE,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration(
+                                                "ptr",
+                                                new ArrayType(
+                                                    new Range(
+                                                        new IntegerExpression(0),
+                                                        new IntegerExpression(0)),
+                                                    new IntegerType()),
+                                                Declarator.IN),
+                                            getDeclaration("size"),
+                                            getDeclaration("nmemb"),
+                                            getDeclaration("stream")
+                                        }),
+                                        new IntegerType(),
                                         new SequentialStatement()),
                 BuiltIn.WALLTIME,
                 new FunctionDeclaration(BuiltIn.WALLTIME,
