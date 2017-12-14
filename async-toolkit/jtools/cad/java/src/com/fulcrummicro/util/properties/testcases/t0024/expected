@@ -1,0 +1,13 @@
+N=6
+models.qsub_mem=0
+platform=test
+port.1.opt=d
+port.2.opt=c
+port.3.opt=f
+port.4.opt=
+port.5.opt=
+port.6.opt=d
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.

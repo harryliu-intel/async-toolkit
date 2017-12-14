@@ -1,0 +1,364 @@
+<%doc>
+INTEL TOP SECRET
+Copyright 2014 Intel Corporation
+All Rights Reserved.
+</%doc>
+<%extends /com/fulcrummicro/util/jamon/timestamp>
+<%import>
+java.util.Collection;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsEnum;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsEnumValue;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.Register;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterBase;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterField;
+</%import>
+<%doc>
+
+
+/******************************************************************************/
+/** __decl
+ *
+ * \desc            Emits a TCL command or variable declaration with optional
+ *                  indentation.
+ *
+ * \param[in]       keyword is the optional TCL keyword preceding \a name.
+ *
+ * \param[in]       name is the command or variable name.
+ *
+ * \param[in]       suffix is the optional string following \a name.
+ *
+ * \param[in]       w is the minimum width of the string to emit in units of
+ *                  ASCII characters.
+ *
+ * \param[in]       i points to a ''java.lang.StringBuilder'' instance
+ *                  containing the amount of indentation that is to preceed the
+ *                  full declaration. Set to \c null to indicate that the full
+ *                  declaration is not to be indented.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __decl>
+<%args>
+String keyword = null;
+String name;
+String suffix = null;
+int w = __DECL_DEFAULT_WIDTH;
+StringBuilder i = __indent;
+</%args>
+<%java>
+StringBuilder decl = new StringBuilder();
+if (keyword != null) {
+    decl.append(keyword);
+    decl.append(" ");
+}
+decl.append(prefix.toUpperCase());
+decl.append(name);
+if (suffix != null) {
+    decl.append(suffix);
+}
+</%java>
+<%if i != null %><% i %></%if>\
+<% String.format(String.format("%%-%ds", w), decl.toString()) %>\
+</%def>
+<%doc>
+
+
+</%doc>
+<%def __enum>
+<%args>
+ConstantsEnum e;
+</%args>
+<%for ConstantsEnumValue c : e.values %>\
+<& __decl; keyword = "variable"; name = c.getVerilogName().toUpperCase(); w = __DECL_BASE_WIDTH &> \
+<& __xdisplay; i = c.getEncoding(); w = 1; bignum = true &>
+</%for>\
+</%def>
+<%doc>
+
+
+</%doc>
+<%def __regflds>
+<%args>
+Register r;
+StringBuilder i = __indent;
+</%args>
+<%java>
+Collection<RegisterField> fields = r.getSortedFields(false, true, false, false);
+</%java>
+<%if fields == null %>
+<%java>throw new Error(r.getName() + " contains overlapping fields");</%java>
+</%if>\
+<%for RegisterField f : fields %>\
+<%if f.len == 1 %>\
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_b_" + f.desc; i = i &> \
+<% f.pos %>
+<%else>\
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_l_" + f.desc; i = i &> \
+<% f.pos %>
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_h_" + f.desc; i = i &> \
+<% f.pos + (f.entries * f.len) - 1 %>
+<%if f.entries > 1 %>\
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_s_" + f.desc; i = i &> \
+<% f.len %>
+</%if>\
+</%if>\
+</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __setindent
+ *
+ * \desc            Initializes the supplied {@link StringBuilder} instance such
+ *                  that it represents a {@code w}-level indentation.
+ *
+ * \param[in]       i points to the {@link StringBuilder} instance to be
+ *                  initialized.
+ *
+ * \param[in]       w is the indentation level.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __setindent>
+<%args>
+StringBuilder i;
+int w;
+</%args>
+<%java>
+i.delete(0, i.length());
+for (int j = 0; j < w; j++) {
+    for (int k = 0; k < __TCL_INDENT; k++) {
+        i.append(" ");
+    }
+}
+</%java>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __strfaddr
+ *
+ * \desc            Converts the supplied register address or offset to its
+ *                  hexadecimal string representation. Emits the result.
+ *
+ * \param[in]       addr is the register address or offset.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __strfaddr>
+<%args>
+int addr;
+</%args>
+<& __xdisplay; i = addr; w = addrBits &>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __xdisplay
+ *
+ * \desc            Converts the supplied integer value to its hexadecimal
+ *                  string representation. Emits the result.
+ *
+ * \param[in]       i is the integer value to convert.
+ *
+ * \param[in]       w is the minimum number of bits to display.
+ *
+ * \param[in]       bignum is a boolean indicating whether the bignum
+ *                  representation of the supplied integer value should be
+ *                  emitted.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __xdisplay>
+<%args>
+Number i;
+int w;
+boolean bignum = false;
+</%args>
+<%java>
+int nibbles = (int) Math.ceil(w / 4.0);
+String number = String.format(String.format("0x%%0%dx", nibbles), i);
+</%java>
+<%if bignum %>[fromstr <% number %>]<%else>[expr {<% number %>}]</%if>\
+</%def>
+<%doc>
+
+/******************************************************************************
+ * Main Template
+/******************************************************************************
+
+</%doc>
+<%args>
+Collection<RegisterBase> bases;
+Collection<Register> regs;
+String pakkage;
+String prefix;
+int addrBits = 24;
+</%args>
+<%class>
+static final int ndims(Register r) {
+    return r.getNumDimensions() == 1 && r.getNumEntries() == 1 ?
+           0 :
+           r.getNumDimensions();
+}
+static final StringBuilder __indent = new StringBuilder();
+static final int __DECL_DEFAULT_WIDTH = 70;
+static final int __DECL_BASE_WIDTH = 60;
+static final int __TCL_INDENT = 4;
+</%class>
+# INTEL TOP SECRET
+# Copyright <& copyright_year; creationYear = 2014 &> Intel Corporation
+# All Rights Reserved.
+#
+# THIS FILE IS AUTOMATICALLY GENERATED - DO NOT MODIFY.
+# Last Updated <& timestamp; &>
+#
+
+package provide <% pakkage %> 1.0
+package require Tcl 8.4
+package require FM::BigInt
+
+namespace eval ::<% pakkage %> {
+<& __setindent; i = __indent; w = 1 &>\
+    namespace export get_bit
+    namespace export get_field
+    namespace export set_bit
+    namespace export set_field
+<%for Register r : regs %>\
+<& __decl; keyword = "namespace export"; name = r.getName(); w = 1; i = __indent &>
+</%for>\
+
+    namespace import ::FM::BigInt::*
+
+    ############################################################################
+    # Register Base Variables
+    ############################################################################
+
+<%for RegisterBase b : bases %>\
+<%java>RegisterBase parent = b.getParent();</%java>
+<& __decl; keyword = "variable"; name = b.getFullName(); w = __DECL_BASE_WIDTH; i = __indent &> \
+<& __strfaddr; addr = b.getIncrementalAddress() &>\
+<%if parent.getParent() != null %>+ ($<% prefix.concat(parent.getFullName()).toUpperCase() %>)</%if>
+
+<%for ConstantsEnum e : b.getEnums() %>\
+<& __enum; e = e &>
+</%for>\
+</%for>\
+
+    ############################################################################
+    # Register Variables & Commands
+    ############################################################################
+
+<%for Register r : regs %>\
+<%java>
+int nDims = ndims(r);
+boolean w = r.getEntryWidth() > 1;
+</%java>
+<%doc>Emit the register entry width parameter in units of bits.</%doc>
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_BITS"; i = __indent &> \
+<% r.getNumberFieldBits() %>
+<%doc>Emit the register default parameter.</%doc>
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_DEFAULT"; i = __indent &> \
+<& __xdisplay; i = r.getDefault(0); w = r.getNumberFieldBits(); bignum = true &>
+<%doc>Emit the register dimension.</%doc>
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_NDIMS"; i = __indent &> \
+<% nDims %>
+<%doc>Emit the register entry width parameter in units of 32-bit words.</%doc>
+<& __decl; keyword = "variable"; name = r.getName(); suffix = "_WIDTH"; i = __indent &> \
+<% r.getEntryWidth() %>
+<%doc>Emit the register address command.</%doc>
+<%if nDims == 0 %>\
+<& __decl; keyword = "proc"; name = r.getName(); suffix = w ? " {{word}}" : " {}"; i = __indent &> \
+{ <& __decl; keyword = "variable"; name = r.getBaseName(); w = 1; i = null &>; \
+return -code ok [expr {\
+<%elseif nDims == 1 %>\
+<& __decl; keyword = "proc"; name = r.getName(); suffix = w ? " {{index} {word}}" : " {{index}}"; i = __indent &> \
+{ <& __decl; keyword = "variable"; name = r.getBaseName(); w = 1; i = null &>; \
+return -code ok [expr {\
+(<& __strfaddr; addr = r.getEntrySpace() &>) * (($index) - <% r.getBaseEntry() %>) + \
+<%elseif nDims == 2 %>\
+<& __decl; keyword = "proc"; name = r.getName(); suffix = w ? " {{index1} {index0} {word}}" : " {{index1} {index0}}"; i = __indent &> \
+{ <& __decl; keyword = "variable"; name = r.getBaseName(); w = 1; i = null &>; \
+return -code ok [expr {\
+(<& __strfaddr; addr = r.getEntrySpace1() &>) * (($index1) - <% r.getBaseEntry1() %>) + \
+(<& __strfaddr; addr = r.getEntrySpace() &>) * (($index0) - <% r.getBaseEntry() %>) + \
+<%elseif nDims == 3 %>\
+<& __decl; keyword = "`define"; name = r.getName(); suffix = w ? " {{index2} {index1} {index0} {word}}" : " {{index2} {index1} {index0}}"; i = __indent &> \
+{ <& __decl; keyword = "variable"; name = r.getBaseName(); w = 1; i = null &>; \
+return -code ok [expr {\
+(<& __strfaddr; addr = r.getEntrySpace2() &>) * (($index2) - <% r.getBaseEntry2() %>) + \
+(<& __strfaddr; addr = r.getEntrySpace1() &>) * (($index1) - <% r.getBaseEntry1() %>) + \
+(<& __strfaddr; addr = r.getEntrySpace() &>) * (($index0) - <% r.getBaseEntry() %>) + \
+<%else>\
+<%java>throw new Error(nDims + "-dimensional registers not supported");</%java>\
+</%if>\
+<%if w %>($word) + </%if>\
+(<& __strfaddr; addr = r.getAddressOffset() &>) + \
+($<% prefix.toUpperCase() + r.getBaseName() %>)}] }
+
+</%for>\
+    ############################################################################
+    # Register Field Variables
+    ############################################################################
+
+<%for Register r : regs %>\
+<& __regflds; r = r &>
+</%for>\
+    ############################################################################
+    # Public Commands
+    ############################################################################
+
+    proc get_bit {{buffer} {csr} {field}} {
+        upvar #0 [format "::<% pakkage %>::%s_b_%s" $csr $field] U_b
+        if {[catch {set value [testbit $buffer $U_b]}] != 0} then {
+            error "bad single-bit field \"${csr}.${field}\""
+        }
+        return -code ok $value
+
+    };  # end get_bit
+
+    proc get_field {{buffer} {csr} {field}} {
+        upvar #0 [format "::<% pakkage %>::%s_h_%s" $csr $field] U_h
+        upvar #0 [format "::<% pakkage %>::%s_l_%s" $csr $field] U_l
+        if {[catch {set width [expr {1 + ($U_h - $U_l)}]}] != 0} then {
+            error "bad multi-bit field \"${csr}.${field}\""
+        }
+        set mask [sub [lshift 1 $width] 1]
+        return -code ok [bitand [rshift $buffer $U_l] $mask]
+
+    };  # end get_field
+
+    proc set_bit {{buffer} {csr} {field} {value}} {
+        upvar #0 [format "::<% pakkage %>::%s_b_%s" $csr $field] U_b
+        set buf $buffer
+        if { ( ( $value == 0 ) && ( [catch {clearbit buf $U_b}] != 0 ) ) ||
+             ( ( $value == 1 ) && ( [catch {setbit buf $U_b}] != 0 ) ) } then {
+            error "bad single-bit field \"${csr}.${field}\""
+        } elseif { ( $value != 0 ) && ( $value != 1 ) } then {
+            error [format "bad value \"%s\"" [tostr $value 16]]
+        }
+        return -code ok $buf
+
+    };  # end get_bit
+
+    proc set_field {{buffer} {csr} {field} {value}} {
+        upvar #0 [format "::<% pakkage %>::%s_BITS" $csr] U_bits
+        upvar #0 [format "::<% pakkage %>::%s_h_%s" $csr $field] U_h
+        upvar #0 [format "::<% pakkage %>::%s_l_%s" $csr $field] U_l
+        set buf $buffer
+        if {[catch {set width [expr {1 + ($U_h - $U_l)}]}] != 0} then {
+            error "bad multi-bit field \"${csr}.${field}\""
+        }
+        set mask [sub [lshift 1 $width] 1]
+        if { [lt $value 0] || [gt $value $mask] } then {
+            error [format "bad value \"%s\"" [tostr $value 16]]
+        }
+        set mask [bitnot [lshift $mask $U_l] $U_bits]
+        return -code ok [bitor [bitand $buffer $mask] [lshift $value $U_l]]
+
+    };  # end get_field
+
+};  # end namespace ::<% pakkage %>

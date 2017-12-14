@@ -1,0 +1,300 @@
+<%extends /com/fulcrummicro/util/jamon/timestamp>
+<%import>
+java.util.Collection;
+java.util.regex.Pattern;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.Register;
+</%import>
+<%def __diminfo>
+<%args>
+Register r;
+int d;
+boolean offset = false;
+boolean max = false;
+boolean stride = false;
+</%args>
+<%java>
+int[] o = new int[3];
+int[] m = new int[3];
+int[] s = new int[3];
+int nDims = ndims(r);
+switch (nDims) {
+    case 0:
+        break;
+    case 1:
+        o[0] = r.getBaseEntry();
+        m[0] = r.getNumEntries();
+        s[0] = r.getEntrySpace();
+        break;
+    case 2:
+        o[0] = r.getBaseEntry1();
+        o[1] = r.getBaseEntry();
+        m[0] = r.getNumEntries1();
+        m[1] = r.getNumEntries();
+        s[0] = r.getEntrySpace1();
+        s[1] = r.getEntrySpace();
+        break;
+    case 3:
+        o[0] = r.getBaseEntry2();
+        o[1] = r.getBaseEntry1();
+        o[2] = r.getBaseEntry();
+        m[0] = r.getNumEntries2();
+        m[1] = r.getNumEntries1();
+        m[2] = r.getNumEntries();
+        s[0] = r.getEntrySpace2();
+        s[1] = r.getEntrySpace1();
+        s[2] = r.getEntrySpace();
+        break;
+    default:
+        throw new Error(nDims + "-dimensional registers not supported");
+}
+</%java>
+<%doc>For each dimension convert the number of entries into the maximum entry.</%doc>
+<%java>
+for (int i = 0; i < m.length; i++) {
+    m[i] = Math.max(0, m[i] - 1);
+}
+</%java>
+<%if offset %>\
+<% String.format("%-7s", o[d] + ",") %>\
+<%elseif max %>\
+<% String.format("%-7s", m[d] + ",") %>\
+<%elseif stride %>\
+<& __strfaddr; addr = s[d] &>\
+</%if>\
+</%def>
+<%def __flags>
+<%args>
+Register r;
+</%args>
+<%java>
+int[] flags = new int[2];
+switch (ndims(r)) {
+    case 1:
+        if (r.getNumEntries() == numPorts) {
+            flags[0] = 1;
+        } else if (r.getNumEntries() == numEpls) {
+            flags[0] = 4;
+        }
+        break;
+    case 2:
+        if (r.getNumEntries1() == numPorts) {
+            flags[0] = 2;
+        } else if (r.getNumEntries1() == numEpls && r.getNumEntries() == numLanes) {
+            flags[0] = 8;
+        }
+        break;
+}
+flags[1] = Pattern.matches(".*STATS_.*", r.getName()) ? 1 : 0;
+String s = String.format("0x%1X%1X,", flags[1], flags[0]);
+</%java>
+<% String.format("%-6s", s) %>\
+</%def>
+<%def __group>
+<%args>
+Register r;
+</%args>
+<% String.format("%-6s", "0x0,") %>\
+</%def>
+<%def __method>
+<%args>
+Register r;
+</%args>
+<%java>
+String method;
+int nDims = ndims(r);
+boolean multi = r.getEntryWidth() > 1;
+switch (nDims) {
+    case 0:
+        method = multi ? "MULTIWRD" : "SCALAR";
+        break;
+    case 1:
+        method = multi ? "MWINDEX" : "INDEXED";
+        break;
+    case 2:
+        method = multi ? "DBLINDEX" : "MWDBLIDX";
+        break;
+    case 3:
+        method = multi ? "MWTPLIDX" : "TPLINDEX";
+        break;
+    default:
+        throw new Error(nDims + "-dimensional registers not supported");
+}
+String s = String.format("%s,", method);
+</%java>
+<% String.format("%-10s", s) %>\
+</%def>
+<%def __regname>
+<%args>
+Register r;
+</%args>
+<%java>
+String s = String.format("\"%s%s\",", prefix, r.getName());
+</%java>
+<% String.format("%-46s", s) %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __strfaddr
+ *
+ * \desc            Converts the supplied Intel ND register address or offset to
+ *                  its hexadecimal string representation. Emits the result.
+ *
+ * \param[in]       addr is the Intel ND register address or offset.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __strfaddr>
+<%args>
+int addr;
+</%args>
+<& __xdisplay; i = addr; w = 24 &>\
+</%def>
+<%doc>
+
+
+</%doc>
+<%def __width>
+<%args>
+Register r;
+</%args>
+<% String.format("%-6s", r.getEntryWidth() + ",") %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __xdisplay
+ *
+ * \desc            Converts the supplied integer value to its hexadecimal
+ *                  string representation. Emits the result.
+ *
+ * \param[in]       i is the integer value to convert.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __xdisplay>
+<%args>
+Integer i;
+int w;
+</%args>
+<%java>
+int nibbles = (int) Math.ceil(w / 4.0);
+</%java>
+<% String.format(String.format("0x%%0%dX", nibbles), i) %>\
+</%def>
+<%doc>
+
+/******************************************************************************
+ * Main Template
+/******************************************************************************
+
+</%doc>
+<%args>
+Collection<Register> regs;
+String prefix;
+int numPorts;
+int numEpls;
+int numLanes;
+</%args>
+<%class>
+static int ndims(Register r) {
+    return r.getNumDimensions() == 1 && r.getNumEntries() == 1 ?
+           0 :
+           r.getNumDimensions();
+}
+</%class>
+<%java>
+String lcPrefix = Utility.underscoreToCamelCase(prefix, false).toLowerCase();
+String ucPrefix = Utility.underscoreToCamelCase(prefix, false).toUpperCase();
+</%java>
+/* vim:ts=4:sw=4:expandtab
+ * (No tabs, indent level is 4 spaces)  */
+/*****************************************************************************
+ * File:            fm10000_debug_reg_table.c
+ * Creation Date:   April 27, 2013
+ * Last Updated:    <& timestamp; &>
+ * Description:     FM10000 debug register table.
+ *                  THIS FILE IS AUTOMATICALLY GENERATED - DO NOT MODIFY.
+ *
+ * INTEL CONFIDENTIAL
+ * Copyright <& copyright_year; creationYear = 2013 &> \
+Intel Corporation. All Rights Reserved.
+ *
+ * The source code contained or described herein and all documents related
+ * to the source code ("Material") are owned by Intel Corporation or its
+ * suppliers or licensors. Title to the Material remains with Intel
+ * Corporation or its suppliers and licensors. The Material contains trade
+ * secrets and proprietary and confidential information of Intel or its
+ * suppliers and licensors. The Material is protected by worldwide copyright
+ * and trade secret laws and treaty provisions. No part of the Material may
+ * be used, copied, reproduced, modified, published, uploaded, posted,
+ * transmitted, distributed, or disclosed in any way without Intel's prior
+ * express written permission.
+ *
+ * No license under any patent, copyright, trade secret or other intellectual
+ * property right is granted to or conferred upon you by disclosure or
+ * delivery of the Materials, either expressly, by implication, inducement,
+ * estoppel or otherwise. Any license under such intellectual property rights
+ * must be express and approved by Intel in writing.
+ *****************************************************************************/
+
+#include "fm_sdk_<% lcPrefix %>_int.h"
+
+#include "debug/<% lcPrefix %>/<% lcPrefix %>_debug_regs_int.h"
+
+
+/**********************************************************************
+ * <% ucPrefix %> Register Table
+ **********************************************************************/
+
+const <% lcPrefix %>DbgFulcrumRegister <% lcPrefix %>RegisterTable[] =
+{
+    /* RegName                                      method    address   flags group words min0   min1   min2   max0   max1   max2   step0     step1     step2 */
+<%for Register r : regs %>\
+    { <& __regname; r = r &>\
+<& __method; r = r &>\
+<& __strfaddr; addr = r.getAddress() &>, \
+<& __flags; r = r &>\
+<& __group; r = r &>\
+<& __width; r = r &>\
+<& __diminfo; r = r; d = 0; offset = true &>\
+<& __diminfo; r = r; d = 1; offset = true &>\
+<& __diminfo; r = r; d = 2; offset = true &>\
+<& __diminfo; r = r; d = 0; max = true &>\
+<& __diminfo; r = r; d = 1; max = true &>\
+<& __diminfo; r = r; d = 2; max = true &>\
+<& __diminfo; r = r; d = 0; stride = true &>, \
+<& __diminfo; r = r; d = 1; stride = true &>, \
+<& __diminfo; r = r; d = 2; stride = true &> },
+</%for>\
+
+    /* This entry marks the end of the hardware registers. */
+    { "END_OF_REGISTERS",                           SCALAR,   0x000000, 0x80,  0x0,  0,   0,     0,     0,     0,     0,     0,     0x1,      0x1,      0x1      },
+
+    /* Composite registers: trigger the dumping of multiple registers */
+    { "FM_ALL_REGS_FOR_PORT",                       ALL4PORT, 0x000000, 0x01,  0x0,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_RX_TYPE",                                 GROUPREG, 0x000000, 0x01,  0x1,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_RX_BIN",                                  GROUPREG, 0x000000, 0x01,  0x2,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_RX_OCTET",                                GROUPREG, 0x000000, 0x01,  0x3,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_RX_PKT_PRI",                              GROUPREG, 0x000000, 0x01,  0x4,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_RX_OCT_PRI",                              GROUPREG, 0x000000, 0x01,  0x5,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_RX_ACTION",                               GROUPREG, 0x000000, 0x01,  0x6,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_TX_TYPE",                                 GROUPREG, 0x000000, 0x01,  0x7,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_TX_BIN",                                  GROUPREG, 0x000000, 0x01,  0x8,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_TX_OCTET",                                GROUPREG, 0x000000, 0x01,  0x9,  0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_TX_INGRESS",                              GROUPREG, 0x000000, 0x01,  0x10, 0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_VLAN_PKT",                                GROUPREG, 0x000000, 0x00,  0x11, 0,   0,     0,     0,     63,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_EGRESS_ACL",                              GROUPREG, 0x000000, 0x01,  0x14, 0,   0,     0,     0,     47,    0,     0,     0x1,      0x1,      0x1      },
+    { "FM_ALL_CONFIG_REGS",                         ALLCONFG, 0x000000, 0x00,  0x0 , 0,   0,     0,     0,     0 ,    0,     0,     0x1,      0x1,      0x1      },
+
+    /* this entry must be the last entry in the table */
+    { NULL,                                         SCALAR,   0x000000, 0x00,  0x00, 0,   0,     0,     0,     0,     0,     0,     0x0,      0x0,      0x0      }
+
+};  /* end <% lcPrefix %>RegisterTable */
+
+#define <% prefix %>REGISTER_TABLE_SIZE  ((fm_int) (sizeof(<% lcPrefix %>RegisterTable) / sizeof(<% lcPrefix %>RegisterTable[0])))
+
+const fm_int <% lcPrefix %>RegisterTableSize = <% prefix %>REGISTER_TABLE_SIZE;

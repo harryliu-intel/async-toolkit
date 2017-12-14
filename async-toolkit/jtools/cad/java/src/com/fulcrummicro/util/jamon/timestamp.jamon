@@ -1,0 +1,76 @@
+<%doc>
+INTEL TOP SECRET
+Copyright 2013 Intel Corporation
+All Rights Reserved.
+</%doc>
+<%abstract>
+<%import>
+java.text.SimpleDateFormat;
+java.util.Calendar;
+java.util.Locale;
+java.util.TimeZone;
+</%import>
+<%class>
+static Calendar calendar;
+static SimpleDateFormat formatter;
+static TimeZone timezone;
+static String pattern = "MMMM dd, yyyy HH:mm:ss zzz";
+static String zone = "UTC";
+static {
+    timezone = TimeZone.getTimeZone(zone);
+    calendar = Calendar.getInstance(timezone, Locale.US);
+    formatter = new SimpleDateFormat(pattern, Locale.US);
+    formatter.setTimeZone(timezone);
+}
+</%class>
+<%doc>
+/******************************************************************************/
+/** copyright_year
+ *
+ * \desc            Constructs the year portion of the copyright notice using
+ *                  UTC as its point of reference and emits it.
+ *
+ * \param[in]       creationYear is the year in which the template was created.
+ *                  Set to <tt>null</tt> if the creation year should not be
+ *                  included in the year portion of the copyright notice.
+ *
+ ******************************************************************************/
+</%doc>
+<%method copyright_year>
+<%args>
+Integer creationYear = null;
+</%args>
+<%if creationYear != null %>\
+<% creationYear %>\
+<%if calendar.get(Calendar.YEAR) > creationYear %>\
+ - <% calendar.get(Calendar.YEAR) %>\
+</%if>\
+<%else>\
+<% calendar.get(Calendar.YEAR) %>\
+</%if>\
+</%method>
+<%doc>
+
+
+/******************************************************************************/
+/** timestamp
+ *
+ * \desc            Constructs a timestamp in the form of a custom RCS keyword
+ *                  using the U.S. locale with UTC as its points of reference
+ *                  and emits it.
+ *
+ ******************************************************************************/
+</%doc>
+<%method timestamp>
+$IA:Timestamp: <% formatter.format(calendar.getTime()) %> $\
+</%method>
+<%doc>
+
+
+/******************************************************************************
+ * Main Template
+ ******************************************************************************/
+
+// Insert the results of rendering the child template here.
+</%doc>
+<& *CHILD &>

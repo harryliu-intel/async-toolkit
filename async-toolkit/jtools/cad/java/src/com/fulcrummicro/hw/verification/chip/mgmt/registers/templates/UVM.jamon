@@ -1,0 +1,813 @@
+<%doc>
+INTEL TOP SECRET
+Copyright 2012 - 2013 Intel Corporation
+All Rights Reserved.
+</%doc>
+<%extends /com/fulcrummicro/util/jamon/timestamp>
+<%import>
+java.io.File;
+java.lang.Math;
+java.lang.StringBuilder;
+java.util.ArrayList;
+java.util.Collections;
+java.util.EnumMap;
+java.util.HashMap;
+java.util.Iterator;
+java.util.Map;
+java.util.List;
+java.util.Set;
+java.util.TreeSet;
+java.util.regex.Pattern;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.Register;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterBase;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterField;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterFieldComparator;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterType;
+com.fulcrummicro.hw.verification.lib.bitarray.LittleEndianBitArray;
+com.fulcrummicro.hw.verification.lib.testcase.ResetType.ResetDomain;
+com.fulcrummicro.util.misc.Utility;
+</%import>
+<%doc>
+
+/******************************************************************************
+ * Subtemplates
+ ******************************************************************************/
+
+/******************************************************************************/
+/** __cg_addr_map_bins
+ *
+ * \desc            Emits the set of valid UVM register addresses for the
+ *                  specified Intel ND register for use in address map cover
+ *                  points.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ * \param[in]       d points to a {@link DimInfo}-indexed map providing offset,
+ *                  size and stride information for {@code r}.
+ *
+ * \param[in,out]   i points to a {@link StringBuilder} instance where this
+ *                  function places the amount of indentation needed to
+ *                  correctly format the multi-bit cover point.
+ *
+ * \param[in]       w is the indentation level.
+ *
+ ******************************************************************************/
+ </%doc>
+<%def __cg_addr_map_bins>
+<%args>
+Register r;
+Map<DimInfo, int[]> d;
+StringBuilder i;
+int w;
+</%args>
+<%java>
+int[] o = d.get(DimInfo.OFFSET);
+int[] n = d.get(DimInfo.SIZE);
+int[] s = d.get(DimInfo.STRIDE);
+</%java>
+<& __setindent; i = i; w = w &>\
+<%doc>
+
+single entry, possibly multi-word register</%doc>
+<%if n.length == 0 %>\
+<% i %><& __xdisplay; i = r.getAddressOffset(); w = 32 &>
+<%doc>
+
+1-dimensional, possibly multi-word register</%doc>
+<%elseif n.length == 1 %>\
+<%for int j = 0, size = 1; j < n[0]; j++, size++ %>\
+<%if (size % 4) == 1 %><% i %></%if>\
+<& __xdisplay; i = r.getAddressOffset() + s[0] * (j - o[0]); w = 32 &>\
+<%if size < n[0] %>,</%if>\
+<%if (size % 4) == 0 || size == n[0] %>
+<%else> </%if></%for>\
+<%doc>
+
+2-dimensional, possibly multi-word register</%doc>
+<%elseif n.length == 2 %>\
+<%for int j = 0, size = 1; j < n[0]; j++ %>\
+<%for int k = 0; k < n[1]; k++, size++ %>\
+<%if (size % 4) == 1 %><% i %></%if>\
+<& __xdisplay; i = r.getAddressOffset() + s[0] * (j - o[0]) + s[1] * (k - o[1]); w = 32 &>\
+<%if size < (n[0] * n[1]) %>,</%if>\
+<%if (size % 4) == 0 || size == (n[0] * n[1]) %>
+<%else> </%if></%for></%for>\
+<%doc>
+
+3-dimensional, possibly multi-word register</%doc>
+<%elseif n.length == 3 %>\
+<%for int j = 0, size = 1; j < n[0]; j++ %>\
+<%for int k = 0; k < n[1]; k++ %>\
+<%for int l = 0; l < n[2]; l++, size++ %>\
+<%if (size % 4) == 1 %><% i %></%if>\
+<& __xdisplay; i = r.getAddressOffset() + s[0] * (j - o[0]) + s[1] * (k - o[1]) + s[2] * (l - o[2]); w = 32 &>\
+<%if size < (n[0] * n[1] * n[2]) %>,</%if>
+<%if (size % 4) == 0 || size == (n[0] * n[1] * n[2]) %>
+<%else> </%if></%for></%for></%for>\
+<%else>\
+<%java>
+throw new Error(n.length + "-dimensional registers not supported");
+</%java>
+</%if>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __package
+ *
+ * \desc            Constructs a SystemVerilog package name by stripping the
+ *                  directory and suffix from the specified filename and
+ *                  converting the result into lower camel case. Emits the
+ *                  constructed SystemVerilog package name.
+ *
+ * \param[in]       file is the filename to convert into a SystemVerilog package
+ *                  name.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __package>
+<%args>
+String file;
+</%args>
+<%java>
+String basename = new File(output).getName().split("\\.(?=[^\\.]+$)")[0];
+basename = basename.replaceAll("-", "_");
+</%java>
+<%doc>Ensure that the package name is prefixed with `fv' to prevent this UVM
+package from clashing with design packages.</%doc>
+<%java>
+basename = basename.startsWith("fv_") ? basename : "fv_".concat(basename);
+</%java>
+<% Utility.underscoreToCamelCase(basename, false) %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __rstdom
+ *
+ * \desc            Constructs the symbolic reset domain enumeration constant
+ *                  for the specified reset domain. Emits the result.
+ *
+ * \param[in]       domain is the reset domain.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __rstdom>
+<%args>
+String domain;
+</%args>
+FV_RESET_DOMAIN_<% domain %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __setindent
+ *
+ * \desc            Initializes the supplied {@link StringBuilder} instance such
+ *                  that it represents a {@code w}-level indentation.
+ *
+ * \param[in]       i points to the {@link StringBuilder} instance to be
+ *                  initialized.
+ *
+ * \param[in]       w is the indentation level.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __setindent>
+<%args>
+StringBuilder i;
+int w;
+</%args>
+<%java>
+i.delete(0, i.length());
+for (int j = 0; j < w; j++) {
+    for (int k = 0; k < FV_SV_INDENT; k++) {
+        i.append(" ");
+    }
+}
+</%java>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_block_type
+ *
+ * \desc            Constructs a UVM register block type name by converting the
+ *                  full name of an Intel ND register base into lower camel case
+ *                  and prefixing the result with <tt>fv_</tt>. Emits the
+ *                  constructed UVM register block type name.
+ *
+ * \param[in]       b is the Intel ND register base.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_block_type>
+<%args>
+RegisterBase b;
+</%args>
+fv_<% Utility.underscoreToCamelCase(b.getFullName(), false) %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_dimensions
+ *
+ * \desc            Constructs a SystemVerilog unpacked array specification for
+ *                  vectored or arrayed registers. Emits the constructed
+ *                  SystemVerilog unpacked array specification.
+ *
+ * \param[in]       n points to a 0 to 3 entry array containing the number of
+ *                  register entries for each dimension.
+ *
+ ******************************************************************************/
+ </%doc>
+<%def __uvm_reg_dimensions>
+<%args>
+int[] n;
+</%args>
+<%for int j = 0; j < n.length; j++ %>[<% n[j] %>]</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_field_access
+ *
+ * \desc            Converts an Intel ND register type into a UVM register field
+ *                  access policy. Emits the UVM register field access policy.
+ *
+ * \param[in]       t is the Intel ND register type.
+ *
+ * \see             uvm_reg_field::set_access() for a list of valid UVM register
+ *                  field access policies.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_field_access>
+<%args>
+RegisterType t;
+</%args>
+<%java>
+String mode;
+switch (t) {
+    case RW:  mode = "RW";  break;
+    case RO:  mode = "RO";  break;
+    case SRW: mode = "RW";  break;
+    case WO:  mode = "WO";  break;
+    case CW:  mode = "WC";  break;
+    case CW1: mode = "W1C"; break;
+    case SW1: mode = "W1C"; break;
+    case CR:  mode = "RC";  break;
+    case CA:  throw new Error("\"clear on access\" not supported");
+    case RV:  mode = "WO1"; break;
+    default:  throw new Error("\"" + t.toString() + "\" access policy not supported");
+}
+</%java>
+<% mode %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_field_volatility
+ *
+ * \desc            Constructs the volatility of a UVM register field based on
+ *                  its Intel ND register type. Emits the constructed UVM
+ *                  register field volatility.
+ *
+ * \param[in]       t is the Intel ND register type.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_field_volatility>
+<%args>
+RegisterType t;
+</%args>
+<%java>
+boolean isVolatile;
+switch (t) {
+    case RO: isVolatile = true;  break;
+    default: isVolatile = false; break;
+}
+</%java>
+<%if isVolatile %>1<%else>0</%if>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_loop_begin
+ *
+ * \desc            Emits the necessary for-loop constructs to initialize all
+ *                  entries of an Intel ND register.
+ *                  <p>
+ *                  This function SHOULD be followed by a
+ *                  {@link __uvm_reg_loop_end} function call.
+ *                  </p>
+ *
+ * \param[in]       n points to a 0 to 3 entry array containing the number of
+ *                  register entries for each dimension.
+ *
+ * \param[in,out]   i points to a {@link StringBuilder} instance where this
+ *                  function places the amount of indentation needed to
+ *                  correctly format the loop.
+ *
+ * \param[in]       w is the initial indentation level.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_loop_begin>
+<%args>
+int[] n;
+StringBuilder i;
+int w;
+</%args>
+<& __setindent; i = i; w = w &><%for int j = 0; j < n.length; j++ %>\
+<% indent %>for (int <% FV_SV_INDEX[j] %> = 0; <% FV_SV_INDEX[j] %> < <% n[j] %>; <% FV_SV_INDEX[j] %>++)
+<% indent %>begin
+<%java>for (int k = 0; k < FV_SV_INDENT; k++) indent.append(" ");</%java>
+</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_loop_end
+ *
+ * \desc            Emits the necessary for-loop closure constructs to finalize
+ *                  the set of for-loop constructs created using the
+ *                  {@link __uvm_reg_loop_begin} function.
+ *
+ * \param[in]       n points to a 0 to 3 entry array containing the number of
+ *                  register entries for each dimension.
+ *
+ * \param[in,out]   i points to a {@link StringBuilder} instance where this
+ *                  function places the amount of indentation needed to
+ *                  correctly format the loop.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_loop_end>
+<%args>
+int[] n;
+StringBuilder i;
+</%args>
+<%for int j = 0; j < n.length; j++ %>\
+<%java>for (int k = 0; k < FV_SV_INDENT; k++) i.deleteCharAt(0);</%java>\
+<% i %>end
+</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_name
+ *
+ * \desc            Constructs the UVM register name and emits it.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ * \param[in]       n points to a 0 to 3 entry array containing the number of
+ *                  register entries for each dimension.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_name>
+<%args>
+Register r;
+int[] n;
+</%args>
+<%if n.length > 0 %>\
+$sformatf("<% r.getName() %><%for int j = 0; j < n.length; j++ %>[%d]</%for>"\
+<%for int j = 0; j < n.length; j++ %>, <% FV_SV_INDEX[j] %></%for>)\
+<%else>"<% r.getName() %>"</%if>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_offset
+ *
+ * \desc            Constructs the UVM register address offset and emits it.
+ *
+ * \param[in]       b is the offset with respect to the register base.
+ *
+ * \param[in]       o points to a 0 to 3 entry array containing the index
+ *                  offsets for the base register entry.
+ *
+ * \param[in]       s points to a 0 to 3 entry array containing the register
+ *                  entry strides for each dimension.
+ *
+ ******************************************************************************/
+ </%doc>
+<%def __uvm_reg_offset>
+<%args>
+int b;
+int[] o;
+int[] s;
+</%args>
+<& __xdisplay; i = b; w = 32 &>\
+<%for int j = 0; j < Math.min(o.length, s.length); j++ %>\
+ + <& __xdisplay; i = s[j]; w = 32 &> * (<% FV_SV_INDEX[j] %> - <& __xdisplay; i = o[j]; w = 32 &>)\
+</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_type
+ *
+ * \desc            Constructs a UVM register type name by converting the name
+ *                  of an Intel ND register into lower camel case and prefixing
+ *                  the result with <tt>fv_</tt>. Emits the constructed UVM
+ *                  register type name.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_type>
+<%args>
+Register r;
+</%args>
+fv_<% Utility.underscoreToCamelCase(r.getName(), false) %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __uvm_reg_var
+ *
+ * \desc            Constructs a UVM register variable name and emits it.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ * \param[in]       n points to a 0 to 3 entry array containing the number of
+ *                  register entries for each dimension.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __uvm_reg_var>
+<%args>
+Register r;
+int[] n;
+</%args>
+<% r.getName() %>\
+<%for int j = 0; j < n.length; j++ %>[<% FV_SV_INDEX[j] %>]</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __xdisplay
+ *
+ * \desc            Converts an integer object to its hexadecimal equivalent
+ *                  using SystemVerilog format. Emits the result.
+ *
+ * \param[in]       i is the integer object to convert.
+ *
+ * \param[in]       w is the bit width of the integer value.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __xdisplay>
+<%args>
+Object i;
+int w;
+</%args>
+<%java>
+String value;
+int nibbles = (int) Math.ceil(w / 4.0);
+if (i instanceof Integer) {
+    value = String.format(String.format("%%0%dx", nibbles), (Integer) i);
+} else if (i instanceof LittleEndianBitArray) {
+    value = ((LittleEndianBitArray) i).toHexString("_", nibbles);
+} else {
+    throw new Error(i.getClass().getName() + ": invalid \"i\" data type");
+}
+</%java>
+<% w %>'h<% value %>\
+</%def>
+<%doc>
+
+/******************************************************************************
+ * Main Template
+ ******************************************************************************/
+
+</%doc>
+<%args>
+String output;
+List<RegisterBase> bases;
+boolean coverage;
+</%args>
+<%class>
+enum DimInfo { OFFSET, SIZE, STRIDE };
+static List<RegisterField> fields;
+static LittleEndianBitArray def;
+static Pattern FV_RESERVED = Pattern.compile("reserved\\d+",
+                                             Pattern.CASE_INSENSITIVE);
+static StringBuilder indent = new StringBuilder();
+static String[] FV_SV_INDEX = new String[]{"i", "j", "k"};
+static int FV_SV_INDENT = 4;
+</%class>
+// vim:et:sw=4:ts=4:tw=79:
+
+//-----------------------------------------------------------------------------
+// File:            <% new File(output).getName() %>
+// Creation Date:   November 29, 2012
+// Last Updated:    <& timestamp; &>
+// Description:     UVM (Standard Universal Verification Methodology) register
+//                  classes<%if coverage %> with coverage support</%if>
+//
+// INTEL TOP SECRET
+// Copyright <& copyright_year; creationYear = 2012 &> Intel Corporation
+// All Rights Reserved.
+//
+// THIS FILE IS AUTOMATICALLY GENERATED - DO NOT MODIFY.
+//-----------------------------------------------------------------------------
+
+package <& __package; file = output &>;
+
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+
+<%doc>Iterate over all registers and extract the set of valid reset domains.</%doc>
+<%java>
+Set<ResetDomain> domains = new TreeSet<ResetDomain>();
+for (RegisterBase b : bases) {
+    for (Register r : b.getRegisters()) {
+        domains.addAll(r.getResetType(0).getDomains());
+    }
+}
+Iterator<ResetDomain> domainIterator = domains.iterator();
+int domainWidth = 32 - Integer.numberOfLeadingZeros(2 + domains.size());
+</%java>
+typedef enum logic [<% domainWidth - 1 %>:0]
+{
+    <& __rstdom; domain = ResetDomain.CHIP.toString() &> = \
+<& __xdisplay; i = 0; w = domainWidth &>,
+
+<%for int i = 1; domainIterator.hasNext(); i++ %>\
+    <& __rstdom; domain = domainIterator.next().toString() &> = \
+<& __xdisplay; i = i; w = domainWidth &>,
+
+</%for>\
+    <& __rstdom; domain = "MAX" &> = \
+<& __xdisplay; i = 1 + domains.size(); w = domainWidth &>
+
+} fv_resetDomain;
+
+<%for RegisterBase b : bases %>\
+<%java>
+Iterator<Register> it;
+List<Register> regs = new ArrayList<Register>(b.getRegisters());
+Map<Register, Map<DimInfo, int[]>> dims;
+</%java>
+<%doc>Iterate over the set of registers and remove those registers that have
+zero width and/or contain no fields.</%doc>
+<%java>
+it = regs.iterator();
+while (it.hasNext()) {
+    Register r = it.next();
+    if (r.getBitWidth() == 0 || r.getNumFields() == 0) {
+        System.err.println("WARNING: " + r.getName() + " register has zero width and/or no fields; skipping");
+        it.remove();
+    }
+}
+</%java>
+<%doc>Iterate over the set of remaining registers and extract dimensional
+information from each register for later use.</%doc>
+<%java>
+dims = new HashMap<Register, Map<DimInfo, int[]>>();
+for (Register r : regs) {
+    int nDims = r.getNumDimensions() == 1 && r.getNumEntries() == 1 ?
+                0 :
+                r.getNumDimensions();
+    int[] n = new int[nDims];
+    int[] o = new int[nDims];
+    int[] s = new int[nDims];
+    switch (nDims) {
+        case 0:
+            break;
+        case 1:
+            n[0] = r.getNumEntries();
+            o[0] = r.getBaseEntry();
+            s[0] = r.getEntrySpace();
+            break;
+        case 2:
+            n[0] = r.getNumEntries1();
+            n[1] = r.getNumEntries();
+            o[0] = r.getBaseEntry1();
+            o[1] = r.getBaseEntry();
+            s[0] = r.getEntrySpace1();
+            s[1] = r.getEntrySpace();
+            break;
+        case 3:
+            n[0] = r.getNumEntries2();
+            n[1] = r.getNumEntries1();
+            n[2] = r.getNumEntries();
+            o[0] = r.getBaseEntry2();
+            o[1] = r.getBaseEntry1();
+            o[2] = r.getBaseEntry();
+            s[0] = r.getEntrySpace2();
+            s[1] = r.getEntrySpace1();
+            s[2] = r.getEntrySpace();
+            break;
+        default:
+            throw new Error(nDims + "-dimensional registers not supported");
+    }
+    dims.put(r, new EnumMap<DimInfo, int[]>(DimInfo.class));
+    dims.get(r).put(DimInfo.OFFSET, o);
+    dims.get(r).put(DimInfo.SIZE, n);
+    dims.get(r).put(DimInfo.STRIDE, s);
+}
+</%java>
+//-----------------------------------------------------------------------------
+// <% b.getFullName() %>
+//-----------------------------------------------------------------------------
+
+<%for Register r : regs %>\
+<%java>
+fields = r.getSortedFields();
+// Re-reverse the field order.
+Collections.sort(fields, new RegisterFieldComparator());
+def = new LittleEndianBitArray(r.getBitWidth() + 1);
+def.set(r.getDefault(0));
+</%java>
+class <& __uvm_reg_type; r = r &> extends uvm_reg;
+
+    `uvm_object_utils(<& __uvm_reg_type; r = r &>)
+
+<%for RegisterField f : fields %>\
+    rand uvm_reg_field <% f.desc %>;
+</%for>\
+
+<%if coverage %>\
+    covergroup cg_field_vals();
+        option.per_instance = 1;
+<%for RegisterField f : fields %>\
+<%doc>Do not generate any cover points for reserved fields.</%doc>
+<%if !FV_RESERVED.matcher(f.desc).matches() %>\
+        <% f.desc %> : coverpoint <% f.desc %>.value {
+<%if f.len > 1 %>\
+            bins min = { <& __xdisplay; i = new LittleEndianBitArray(f.len); w = f.len &> };
+            bins max = { <& __xdisplay; i = new LittleEndianBitArray(f.len).invert(); w = f.len &> };
+            bins others = { [<& __xdisplay; i = new LittleEndianBitArray(f.len).invert(0, 1); w = f.len &>:\
+<& __xdisplay; i = new LittleEndianBitArray(f.len).invert(1, f.len - 1); w = f.len &>] };
+</%if>\
+            option.weight = <%if f.len > 1 %>3<%else>2</%if>;
+        }
+</%if>\
+</%for>\
+    endgroup : cg_field_vals;
+
+</%if>\
+    function new(string name = "<% r.getName() %>");
+    begin
+<%if coverage %>\
+        super.new(name, <% r.getBitWidth() %>, build_coverage(UVM_CVR_FIELD_VALS));
+        if (has_coverage(UVM_CVR_FIELD_VALS))
+        begin
+            cg_field_vals = new();
+        end
+<%else>\
+        super.new(name, <% r.getBitWidth() %>, build_coverage(UVM_NO_COVERAGE));
+</%if>\
+    end
+    endfunction : new
+
+    virtual function build();
+    begin
+<%for RegisterField f : fields %>\
+        <% f.desc %> = uvm_reg_field::type_id::create("<% f.desc %>");
+        <% f.desc %>.configure(this, <% f.len %>, <% f.pos %>, \
+"<& __uvm_reg_field_access; t = f.type &>", \
+<& __uvm_reg_field_volatility; t = f.type &>, \
+<% f.len %>'h<% def.getSlice(f.pos, f.len).toHexString() %>, 1, 1, 0);
+</%for>\
+    end
+    endfunction : build
+
+<%if coverage %>\
+    virtual function void sample_values();
+    begin
+        if (get_coverage(UVM_CVR_FIELD_VALS) & (cg_field_vals != null))
+        begin
+            cg_field_vals.sample();
+        end
+    end
+    endfunction : sample_values
+
+</%if>\
+endclass : <& __uvm_reg_type; r = r &>
+
+</%for>\
+class <& __uvm_reg_block_type; b = b &> extends uvm_reg_block;
+
+    `uvm_object_utils(<& __uvm_reg_block_type; b = b &>)
+
+<%for Register r : regs %>\
+    rand <& __uvm_reg_type; r = r &> <% r.getName() %>\
+<& __uvm_reg_dimensions; n = dims.get(r).get(DimInfo.SIZE) &>;
+</%for>\
+<%if coverage %>\
+    local uvm_reg_addr_t m_offset;
+
+    covergroup cg_addr_map();
+        option.per_instance = 1;
+<%for Register r : regs %>\
+        <% r.getName().toLowerCase() %> : coverpoint m_offset {
+            bins accessed = {
+<& __cg_addr_map_bins; r = r; d = dims.get(r); i = indent; w = 4 &>\
+            };
+            option.weight = 1;
+        }
+</%for>\
+    endgroup : cg_addr_map
+</%if>\
+
+    function new(string name = "<% b.getFullName() %>");
+    begin
+<%if coverage %>\
+        super.new(name, build_coverage(UVM_CVR_ADDR_MAP));
+        if (has_coverage(UVM_CVR_ADDR_MAP))
+        begin
+            cg_addr_map = new();
+        end
+<%else>\
+        super.new(name, build_coverage(UVM_NO_COVERAGE));
+</%if>\
+    end
+    endfunction : new
+
+    virtual function build();
+    begin
+        default_map = create_map("<% b.getFullName() %>", \
+<& __xdisplay; i = b.getAbsoluteAddress(); w = 32 &>, 4, UVM_LITTLE_ENDIAN, 0);
+<%for Register r : regs %>\
+<& __uvm_reg_loop_begin; n = dims.get(r).get(DimInfo.SIZE); i = indent; w = 2 &>\
+<% indent %><& __uvm_reg_var; r = r; n = dims.get(r).get(DimInfo.SIZE) &> = \
+<& __uvm_reg_type; r = r &>::type_id::create(<& __uvm_reg_name; r = r; n = dims.get(r).get(DimInfo.SIZE) &>);
+<% indent %><& __uvm_reg_var; r = r; n = dims.get(r).get(DimInfo.SIZE) &>.build();
+<% indent %><& __uvm_reg_var; r = r; n = dims.get(r).get(DimInfo.SIZE) &>.configure(this, null);
+<% indent %>default_map.add_reg(<& __uvm_reg_var; r = r; n = dims.get(r).get(DimInfo.SIZE) &>, \
+<& __uvm_reg_offset; b = r.getAddressOffset(); o = dims.get(r).get(DimInfo.OFFSET); s = dims.get(r).get(DimInfo.STRIDE) &>, \
+"RW");
+<& __uvm_reg_loop_end; n = dims.get(r).get(DimInfo.SIZE); i = indent &>\
+</%for>\
+    end
+    endfunction : build
+
+<%if coverage %>\
+    virtual function void sample(uvm_reg_addr_t offset,
+                                 bit            is_read,
+                                 uvm_reg_map    map);
+    begin
+        if (get_coverage(UVM_CVR_ADDR_MAP) & (cg_addr_map != null))
+        begin
+            m_offset = offset;
+            cg_addr_map.sample();
+        end
+    end
+    endfunction : sample
+
+</%if>\
+endclass : <& __uvm_reg_block_type; b = b &>
+
+</%for>\
+class fv_regInfo extends uvm_reg_block;
+
+    `uvm_object_utils(fv_regInfo)
+
+<%for RegisterBase b : bases %>\
+    <& __uvm_reg_block_type; b = b &> <% b.getFullName() %>;
+</%for>\
+
+    function new(string name = "regInfo");
+    begin
+        super.new(name, UVM_NO_COVERAGE);
+    end
+    endfunction : new
+
+    virtual function build();
+    begin
+        default_map = create_map(get_name(), <& __xdisplay; i = 0; w = 32 &>, \
+4, UVM_LITTLE_ENDIAN);
+<%for RegisterBase b : bases %>\
+        <% b.getFullName() %> = <& __uvm_reg_block_type; b = b &>::type_id::create("<% b.getFullName() %>");
+        <% b.getFullName() %>.build();
+        <% b.getFullName() %>.configure(this);
+        default_map.add_submap(<% b.getFullName() %>.default_map, \
+<% b.getFullName() %>.default_map.get_base_addr());
+</%for>\
+    end
+    endfunction : build
+
+endclass : fv_regInfo
+
+endpackage : <& __package; file = output &>

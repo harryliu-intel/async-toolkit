@@ -1,0 +1,9 @@
+cosim.base=testbench.alta.unit.epl.port_ultb(1,3,1,9){verilog.rtl,csp,subcells,prs,java}:digital{verilog.rtl,csp,subcells,prs,java}
+cosim.exceptions=port[1].epl{java,subcells,csp,prs}
+cosim.spec=testbench.alta.unit.epl.port_ultb(1,3,1,9){verilog.rtl,csp,subcells,prs,java-port[1].epl{java,subcells,csp,prs}}:digital{verilog.rtl,csp,subcells,prs,java}
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.

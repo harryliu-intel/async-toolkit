@@ -1,0 +1,7 @@
+log.scope=TESTBENCH.inst1.x.xbar:-1,TESTBENCH.inst1._env:-1,TESTBENCH.inst1:2,TESTBENCH.inst1.x.fc:-1,TESTBENCH.inst1.x.getSome:-1
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=9
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.

@@ -1,0 +1,9 @@
+hw.models.partial_exclude=(^verilog\.|\.v[ms]?$|(??{ quotemeta 'registerInfo.xml' })$|registerInfo\.dtd$|(??{ quotemeta 'constant.xml' }))
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.
+xml.filename=registerInfo.xml
+xml_constant.filename=constant.xml

@@ -1,0 +1,7 @@
+<test>
+<!-- check loop range where both start and end are the same -->
+<config>
+<opt name="port.[1-10].opt" type="String" default=""></opt>
+port.1.opt=a
+</config>
+</test>

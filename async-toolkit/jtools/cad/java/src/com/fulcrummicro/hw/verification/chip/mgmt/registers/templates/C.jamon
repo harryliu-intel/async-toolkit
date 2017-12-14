@@ -1,0 +1,122 @@
+<%doc>
+INTEL CONFIDENTIAL
+Copyright 2013 Intel Corporation
+All Rights Reserved.
+</%doc>
+<%abstract>
+<%extends /com/fulcrummicro/util/jamon/timestamp>
+<%import>
+java.util.Set;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.Register;
+com.fulcrummicro.hw.verification.lib.testcase.ResetType.ResetDomain;
+</%import>
+<%doc>
+
+
+/******************************************************************************/
+/** rstdom
+ *
+ * \desc            Constructs the symbolic reset domain enumeration constant
+ *                  for the specified reset domain. Emits the result.
+ *
+ * \param[in]       domain is the reset domain.
+ *
+ * \param[in]       prefix is the chip specific prefix to prepend to the
+ *                  symbolic reset domain enumeration constant.
+ *
+ ******************************************************************************/
+</%doc>
+<%method rstdom>
+<%args>
+String domain;
+String prefix;
+</%args>
+<% prefix %>RESET_DOMAIN_<% domain %>\
+</%method>
+<%doc>
+
+
+/******************************************************************************/
+/** rstmask
+ *
+ * \desc            Constructs the reset domain mask for for the specified
+ *                  register. Emits the result.
+ *                                                                      \lb\lb
+ *                  The reset domain mask supports up to 32 separate reset
+ *                  domains. Each register is part of the CHIP reset domain and
+ *                  possibly part of one or more additional reset domains.
+ *
+ * \param[in]       r is the register object.
+ *
+ ******************************************************************************/
+</%doc>
+<%method rstmask>
+<%args>
+Register r;
+</%args>
+<%java>
+Set<ResetDomain> domains = r.getResetType(0).getDomains();
+if (domains.size() > 32) {
+    throw new Error("Reset domain mask supports up to 32 reset domains");
+}
+int mask = 1 << ResetDomain.CHIP.ordinal();
+for (ResetDomain domain : domains) {
+    mask |= 1 << domain.ordinal();
+}
+</%java>
+<& xdisplay; i = mask; w = 32 &>\
+</%method>
+<%doc>
+
+
+/******************************************************************************/
+/** strfaddr
+ *
+ * \desc            Converts the supplied register address or offset to its
+ *                  hexadecimal string representation. Emits the result.
+ *
+ * \param[in]       addr is the register address or offset.
+ *
+ ******************************************************************************/
+</%doc>
+<%method strfaddr>
+<%args>
+int addr;
+</%args>
+<& xdisplay; i = addr; w = 24 &>\
+</%method>
+<%doc>
+
+
+/******************************************************************************/
+/** xdisplay
+ *
+ * \desc            Converts the supplied integer value to its hexadecimal
+ *                  string representation. Emits the result.
+ *
+ * \param[in]       i is the integer value to convert.
+ *
+ * \param[in]       w is the minimum number of bits to display.
+ *
+ ******************************************************************************/
+</%doc>
+<%method xdisplay>
+<%args>
+Integer i;
+int w;
+</%args>
+<%java>
+int nibbles = (int) Math.ceil(w / 4.0);
+</%java>
+<% String.format(String.format("0x%%0%dX", nibbles), i) %>\
+</%method>
+<%doc>
+
+
+/******************************************************************************
+ * Main Template
+ ******************************************************************************/
+
+// Insert the results of rendering the child template here.
+</%doc>
+<& *CHILD &>

@@ -1,0 +1,62 @@
+<%import>
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.lib.constants.*;
+</%import>\
+<%args>
+Collection<ConstantsCell> cells;
+</%args>\
+// INTEL TOP SECRET
+// Copyright <% java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) %> Intel Corporation. All Rights Reserved.
+// $Id:  $
+// DO NOT EDIT! Automatically generated from constant xml.
+
+<%for ConstantsCell cell : cells %>\
+package <% cell.name.toLowerCase() %>_pkg;<% cell.getCastDescription() %>
+<%for ConstantsCell c : cell.getUsedCells() %>\
+  import <% c.name.toLowerCase() %>_pkg::*;
+</%for>\
+
+<%for ConstantsConstant c : cell.constants %>\
+  localparam <% String.format("%-21s", c.getName()) %> = <% String.format("%5s", c.getVerilogValue()) %>;<% c.getCastDescription() %>
+</%for>\
+
+<%for ConstantsEnum e : cell.enums %>\
+<%if e.getSize() == 1 %>\
+  typedef enum logic {
+<%else>\
+  typedef enum logic [<% e.getSize()-1 %>:0] {
+</%if>\
+<%for ConstantsEnumValue c : e.values %>\
+    <% String.format("%-20s", c.getFullName()) %> = <% String.format("%5d", c.getEncoding()) %>,<% c.getCastDescription() %>
+</%for>\
+    XPROP_<% e.getName() %> = <% e.getVerilogX() %>
+  } <% e.getStructName() %>;<% e.getCastDescription() %>
+
+</%for>\
+<%for ConstantsChannel channel : cell.channels %>\
+  typedef struct packed {
+<%for ConstantsChannelField f : channel.fields.descendingSet() %>\
+    <% f.getVerilogFullTypeString() %> \
+<% String.format("%-15s", f.getName().toLowerCase() + ";") %>\
+<% f.getCastDescription() %>
+</%for>\
+  } <% channel.getStructName() %>;<% channel.getCastDescription() %>
+  localparam <% String.format(" W_%-18s", channel.getName()) %> = <% String.format("%5d", channel.getWidth()) %>;
+  localparam <% String.format("WD_%-18s", channel.getName()) %> = <% String.format("%5d", (int)Math.ceil(channel.getWidth()/2.0)) %>;
+
+</%for>\
+endpackage
+
+
+</%for><%doc>cell</%doc>\
+
+//////////////////////////////////////////////////////////////////////////////
+// Legacy constants
+// DEPRECATED - do not use in new code
+
+<%for ConstantsCell cell : cells %>\
+<%if cell.hasPrefix() %>\
+<%for ConstantsConstant c : cell.constants %><% c.toVerilog() %></%for>\
+</%if>\
+</%for>\

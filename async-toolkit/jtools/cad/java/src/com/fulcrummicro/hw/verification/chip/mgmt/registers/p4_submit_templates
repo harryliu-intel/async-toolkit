@@ -1,0 +1,8 @@
+#!/bin/sh
+echo Submitting jamon generated templates
+p4 revert -k *.java
+p4 edit *.java
+p4 revert -a *.java
+p4 add *.java
+p4 opened *.java
+p4 opened ...

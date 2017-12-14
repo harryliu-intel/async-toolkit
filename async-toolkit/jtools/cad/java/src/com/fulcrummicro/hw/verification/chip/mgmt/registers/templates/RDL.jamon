@@ -1,0 +1,108 @@
+<%extends /com/fulcrummicro/util/jamon/timestamp>
+<%import>
+java.lang.Integer;
+java.util.Collection;
+com.fulcrummicro.hw.verification.lib.bitarray.LittleEndianBitArray;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsEnum;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsEnumValue;
+</%import>
+<%args>
+Collection<RegisterBase> bases;
+Collection<Register> regs;
+</%args>
+// INTEL TOP SECRET
+// Copyright <& copyright_year; &> Intel Corporation. All Rights Reserved.
+//
+`include "lib_udp.rdl"
+
+<%for RegisterBase base : bases %>\
+<%for ConstantsEnum e : base.getEnums() %>\
+<& enum; e=e; &>
+</%for>\
+\
+<%for Register reg : base.getRegisters() %>\
+<%for RegisterField field : reg.getSortedFields() %>\
+<%if (field.typedef != null) && !base.getEnums().contains(field.typedef) && (field.currentEntry == field.baseEntry) && !field.typedef.checkForDuplicateValues(null) %>\
+<& enum; e=field.typedef; &>\
+</%if>\
+</%for>\
+</%for>\
+</%for>\
+
+<%for Register reg : regs %>\
+<%java int regwidth = (int)Math.pow(2, Util.log2(reg.getEntryWidth() * 32)); %>
+reg <% reg.getName().toLowerCase() %>_r {
+<%if reg.briefDescription != null %>\
+  name = "<% Util.escapeRdlDesc(reg.briefDescription) %>";
+</%if>\
+  desc = "<% Util.escapeRdlDesc(reg.description) %>";
+  regwidth = <% regwidth %>;
+  accesswidth = <% reg.getAtomicWidth() * 32 %>;
+<%for RegisterField field : reg.getSortedFields(true, false, true, false) %>\
+  field {
+<%if field.typedef != null %>\
+    encode = <% field.typedef.getVerilogName() %>_enum;
+</%if>\
+    AccessType = "<% field.type.toSystemRdlType() %><%if field.isVolatile() %>/V</%if>";
+    desc = "<% Util.escapeRdlDesc(field.fullDescription) %>";
+<%if field.type != RegisterType.RO %>\
+    ValRandomize = true;
+</%if>\
+  } <% field.desc %>[<% field.pos + field.len - 1 %>:<% field.pos %>] = \
+<% field.len %>'h0\
+<% new LittleEndianBitArray(regwidth+1,reg.getDefault(0)).getSlice(field.pos, field.len) %>;
+</%for>\
+};
+<%if reg.getNumEntries1() > 1 %>\
+regfile <% reg.getName().toLowerCase() %>_rf {
+  <% reg.getName().toLowerCase() %>_r <% reg.getName() %>[<% reg.getNumEntries() %>] += <% reg.getEntrySpace() * 4 %>;
+};
+</%if>\
+
+</%for>\
+
+<%for RegisterBase base : bases %>\
+addrmap <% base.getName() %>_map {
+  name = "<% base.getName() %>";
+  desc = "";
+  addressing = fullalign;
+  Space = "MEM";
+  
+<%for Register reg : base.getRegisters() %>\
+<%if reg.getAlias() == null %>\
+<%if reg.getNumEntries1() > 1 %>\
+  <% reg.getName().toLowerCase() %>_rf <% reg.getName() %>[<% reg.getNumEntries1() %>]\
+ @0x<% String.format("%05X", reg.getAddressOffset()*4) %>\
+ += <% reg.getEntrySpace1() * 4 %>;\
+ // [<% reg.getNumEntries() %>]
+<%else>\
+  <% reg.getName().toLowerCase() %>_r <% reg.getName() %>\
+<%if reg.getNumEntries() > 1 %>\
+[<% reg.getNumEntries() %>]\
+</%if>\
+ @0x<% String.format("%05X", reg.getAddressOffset()*4) %>\
+<%if reg.getNumEntries() > 1 %>\
+ += <% reg.getEntrySpace() * 4 %>\
+</%if>;
+</%if>\
+</%if>\
+</%for>\
+};
+
+</%for>\
+\
+<%def enum>\
+<%args>ConstantsEnum e;</%args>\
+  // Enum: <% e.getName() %><% e.getCastDescription() %>
+enum <% e.getVerilogName() %>_enum {
+<%for ConstantsEnumValue c : e.values %>\
+<%java
+String name = c.getName();
+if(name.matches("^[0-9].*")) { name = "_" + name;}
+%>\
+  <% String.format("%-20s", name) %> = <% String.format("%5s", c.getVerilogEncoding()) %> { desc = "<% Util.escapeRdlDesc(c.getDescription()) %>"; };
+</%for>\
+};
+</%def>

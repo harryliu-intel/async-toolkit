@@ -1,0 +1,93 @@
+<?xml version="1.0"  encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="registerInfo.xsl"?>
+<!ENTITY % html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "w3c/xhtml1-strict.dtd">
+%html;
+<!ENTITY % htmlpassthru "a | abbr | acronym | address | applet | area | b | base | basefont | bdo | big | blockquote  | body | br | button | caption | center | cite | code | col | colgroup | dd | del | dfn | dir | div | dl | dt | em | fieldset | font | form | frame | frameset | h1 | h2 | h3 | h4 | h5 | h6 | head | hr | html | i | iframe | img | input | ins | isindex | kbd | label | legend | li | link | map | menu | meta | noframes | noscript | object | ol | optgroup | option | p | param | pre | q | s | samp | script | select | small | span | strike | strong | style | sub | sup | table | tbody | td | textarea | tfoot | th | thead | title | tr | tt | u | ul | var">
+<!ELEMENT registerInfo (registerSet|xi:include)+>
+  <!ELEMENT registerSet (name, specialFeature?, brief, description, addressBase, addressBits?, addressSize?, crossbarPort?, crossbarPortStride?, busStopNum?, busStopStride?, (registerSet+ | typedefs | registers | xi:include)+)>
+    <!-- name -->
+    <!-- brief -->
+    <!-- description -->
+    <!ELEMENT addressBase (#PCDATA)>
+    <!ELEMENT addressBits (#PCDATA)>
+    <!ELEMENT addressSize (#PCDATA)>
+    <!ELEMENT crossbarPort (#PCDATA)>
+    <!ELEMENT crossbarPortStride (#PCDATA)>
+    <!ELEMENT busStopNum (#PCDATA)>
+    <!ELEMENT busStopStride (#PCDATA)>
+    <!ELEMENT registers (register | xi:include)*>    
+      <!ELEMENT register (name, oldName?, specialFeature?, brief, description, notes?, (addressOffset|alias), id?, entries+, baseEntry*, width, bits?, stride*, implemented?, atomic?, fields, coverage?, resetDomains?, implementation*)>
+        <!-- name -->
+        <!ELEMENT id (#PCDATA)>
+        <!-- oldName -->
+        <!-- specialFeature -->
+        <!-- brief -->
+        <!-- description -->
+        <!-- notes -->
+        <!ELEMENT addressOffset (#PCDATA)>
+        <!ELEMENT alias (#PCDATA)>
+        <!ELEMENT entries (#PCDATA)>
+          <!ATTLIST entries dimension CDATA #IMPLIED>
+        <!ELEMENT baseEntry (#PCDATA)>
+          <!ATTLIST baseEntry dimension CDATA #IMPLIED>
+        <!ELEMENT bits (#PCDATA)>
+        <!ELEMENT stride (#PCDATA)>
+          <!ATTLIST stride dimension CDATA #IMPLIED>
+        <!ELEMENT implemented (#PCDATA)>
+        <!ELEMENT atomic (#PCDATA)>
+        <!ELEMENT fields (field*)>
+        <!ELEMENT coverage (test*)>
+        <!ELEMENT test (#PCDATA)>
+          <!ELEMENT field (name, oldName?, globalName?, specialFeature?, position, length, type, entries?, baseEntry?, description, default+, values?, notes?, coverage?)>
+            <!-- name -->
+            <!-- oldName -->
+            <!ELEMENT globalName (#PCDATA)>
+            <!-- specialFeature -->
+            <!ELEMENT position (#PCDATA)>
+            <!-- length -->
+            <!ELEMENT type (#PCDATA)>
+            <!-- description -->
+            <!ELEMENT default (#PCDATA)>
+              <!ATTLIST default entryStart CDATA #IMPLIED>
+              <!ATTLIST default entryEnd CDATA #IMPLIED>
+            <!ELEMENT values (value*)>
+              <!ELEMENT value (#PCDATA)>
+                <!ATTLIST value name CDATA #REQUIRED>
+                <!ATTLIST value encoding CDATA #REQUIRED>
+              <!ATTLIST values typedef CDATA #IMPLIED>
+            <!-- notes -->
+        <!ELEMENT resetDomains (resetDomain+)>
+          <!ELEMENT resetDomain (#PCDATA)>
+        <!ELEMENT implementation (implParm+)>
+            <!ELEMENT implParm (#PCDATA)>
+              <!ATTLIST implParm name CDATA #REQUIRED>
+        <!ATTLIST register suppressStructGeneration (true|false) "false">
+    <!ELEMENT typedefs (enum?,struct?)+ >
+        <!ELEMENT enum (name, oldName?, length, description, values, notes?)>
+        <!ELEMENT struct (name, oldName?, brief, description, notes?, width, fields)>
+
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT oldName (#PCDATA)>
+<!ELEMENT description (#PCDATA|hide|%htmlpassthru;)*>
+<!ELEMENT brief (#PCDATA|hide|%htmlpassthru;)*>
+<!ELEMENT specialFeature (#PCDATA)>
+<!ELEMENT hide (#PCDATA|%htmlpassthru;)*>
+<!ELEMENT notes (#PCDATA|hide|%htmlpassthru;)*>
+<!ELEMENT width (#PCDATA)>
+<!ELEMENT length (#PCDATA)>
+        
+<!ELEMENT xi:include (xi:fallback?) >
+<!ATTLIST xi:include
+    xmlns:xi   CDATA       #FIXED    "http://www.w3.org/2001/XInclude"
+    href       CDATA       #REQUIRED
+    parse      (xml|text)  "xml"
+    xpointer   CDATA       #IMPLIED
+    encoding   CDATA       #IMPLIED >
+
+<!ELEMENT xi:fallback ANY>
+<!ATTLIST xi:fallback
+    xmlns:xi   CDATA   #FIXED   "http://www.w3.org/2001/XInclude" >
+
+<!ATTLIST registerInfo xmlns:xi   CDATA   #FIXED   "http://www.w3.org/2001/XInclude" >
+<!ATTLIST registerSet xmlns:xi   CDATA   #FIXED   "http://www.w3.org/2001/XInclude" >
+<!ATTLIST registerSet xml:base CDATA #IMPLIED>

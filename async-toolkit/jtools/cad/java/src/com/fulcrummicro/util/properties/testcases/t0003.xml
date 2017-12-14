@@ -1,0 +1,3 @@
+<options>
+  <opt name="log.scope" type="String" default="" concat="true"></opt>
+</options>

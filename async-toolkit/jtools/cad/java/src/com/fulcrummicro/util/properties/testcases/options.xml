@@ -1,0 +1,1127 @@
+<?xml version="1.0"?>
+
+<!-- options.xml - definition of configurable properties for F16 simulation
+
+     Copyright 2002 Fulcrum Microsystems, Inc.  All rights reserved.
+
+     $Id: //depot/hw/arch/chip/x8/main/java/options.xml#29 $
+
+     See bug 1542 in Bugzilla for documentation of F16 option handling.
+
+     But basically, here's what the stuff in this file means:
+
+     name - dot-separated property name.  It can contain numeric ranges in
+            brackets, to define several properties at once.  For example,
+            "foo.[0-2].bar" defines "foo.0.bar", "foo.1.bar", and "foo.2.bar",
+            all with the same type, default, and description.
+     type - Can be one of "Boolean", "Integer", "String", "String",
+            or "ExistingFile".  See below (or see bug 1542) for more info
+            about these types.
+     default - this is the default value for this property
+     description - the stuff inside the opt element is a human-readable
+                   description, for help messages.
+
+     Here's information about the five types:
+
+     String - anything is legal, stays as a java.lang.String
+     Integer - parsed as a decimal (if no "0x") or hexadecimal (if it starts
+               with "0x") integer, stored as a java.lang.Long
+     Boolean - must be "true" or "false", case insensitive, stored as a
+               java.lang.Boolean
+     String - any occurance of $(property) in the string is
+               substituted with the value of the given property (but substitution
+               does not nest), and the result is stored as a java.lang.String
+     ExistingFile - like String, but the file must exist, and the
+               result is stored as a java.io.File
+                                                                              -->
+
+<options>
+
+<!-- Global options -->
+
+<opt name="topdir"                       type="String" default=".">
+Top of regression checkout. Used for substituting into other strings
+to make checkout-relative filenames.
+</opt>
+
+<opt name="verilog.top-level-scope"	 type="String" default="top">
+This top level scope should match the one used in the verilog files in a
+verilog environment, if verilog is being used with the Java.
+</opt>
+
+<opt name="tau"				 type="Integer" default="1800">
+tau is the number of dsim units in a nanosecond.  This will relate time
+in the asynchronous simulation and will decide how fast the asynchronous
+runs with respect to the synchronous blocks.  If you change this
+relation in the Java, be sure that you have regenerated any verilog that
+may also use this relation.
+</opt>
+
+<opt name="test.mode"					type="String" default="blm">
+The default mode (either prs or blm) that the design is being simulated
+in.
+</opt>
+
+<opt name="x8.use-spi4"                 type="Boolean" default="true">
+add spi4 modules
+</opt>
+
+<opt name="x8.num-spi4s"		 type="Integer" default="1">
+Sets the number of SPI4s on the chip.
+</opt>
+
+<opt name="x8.log-sst"                  type="Boolean" default="false">
+Logs send and receive events in the design into the
+specified SST database
+</opt>
+
+<opt name="x8.log-sst-file"             type="String" default="msim">
+Logs send and receive events in the design into the
+specified SST database
+</opt>
+
+<opt name="x8.log-sst-in-seconds"   type="Boolean" default="false">
+Logs all times into sigscan converted into picoseconds.
+</opt>
+
+<opt name="x8.log-scope"   type="String" default="top:5">
+Defines which scopes to log
+</opt>
+
+<opt name="x8.master-verbose"           type="Boolean" default="false">
+Enable debugging output.
+</opt>
+
+<opt name="x8.target-verbose"           type="Boolean" default="false">
+Enable debugging output.
+</opt>
+
+<opt name="x8.asoc-verbose"             type="Boolean" default="false">
+Enable debugging output.
+</opt>
+
+<opt name="x8.spi4-verbose"             type="Boolean" default="false">
+Enable debugging output.
+</opt>
+
+<opt name="x8.jtag-verbose"             type="Boolean" default="false">
+Enable debugging output.
+</opt>
+
+<opt name="accurate"			 type="Boolean" default="false">
+Make all arbiters behave deterministically.
+</opt>
+
+<opt name="inaccurate"               	 type="Boolean" default="false">
+Make all arbiters behave demoniacally.
+</opt>
+
+<opt name="x8.serial-verilog"         	 type="Boolean" default="false">
+Enables the use of Node Read/Write channels on the interface of the
+chip,
+for use with a verilog/dsim serial interface.
+</opt>
+
+<opt name="show-serial-routes"         	 type="Boolean" default="false">
+Display serial tree routes when each serial tree is instantiated.
+</opt>
+
+<opt name="show-csr-accesses"         	 type="Boolean" default="true">
+Display messages when CSRs are accessed.
+</opt>
+
+<opt name="timelimit"                	 type="Integer" default="720">
+max number of minutes to run (0=unlimited)
+</opt>
+
+<opt name="dsim-verbose"             type="Boolean" default="false">
+</opt>
+
+<opt name="vpi-print-warnings"           type="Boolean" default="false">
+</opt>
+
+<!-- XXX: delete: used in X8.java -->
+<opt name="x8.cfg-pin-jtag-serial"      type="Boolean" default="false">
+Represents an external pin that causes outbound serial tree message to
+be sent to the JTAG unit instead of the AsyncSerial interface.
+</opt>
+
+<!-- Testbench Options -->
+
+<opt name="testbench.dump-boundary-pins" type="Boolean" default="false">
+Set to true if you want the boundary pins logged to a file
+</opt>
+
+<opt name="testbench.timeout-scale" type="Integer" default="1">
+Scales all timeouts for the PacketChecker
+</opt>
+
+<opt name="testbench.configure-pll-via-csr" type="Boolean" default="false">
+Set to true if you want the testbench to configure the PLL to bypass mode
+via the CSR instead of the external pin.
+</opt>
+
+<opt name="testbench.gatelevel.enable-tau-measurement" type="Boolean" default="false">
+Set to true if you want the testbench to measure what tau is by looking at the output
+of the watchdog oscillator
+</opt>
+
+<opt name="testbench.gatelevel.reset-on-poweron" type="Boolean" default="true">
+Set to false if you don't want the gatelevel to reset on startup
+</opt>
+
+<opt name="testbench.serial-driver" type="String" default="EBI">
+Which serial driver to use.  Valid values are ASYNC, JTAG and RANDOM
+</opt>
+
+<opt name="testbench.percent-dummy" type="Integer" default="0">
+Used only by the EBI driver, specifies what percentage of traffic
+also send transactions to the dummy X8 on the other chip select of
+the EBI.
+</opt>
+
+<opt name="testbench.block-async-outputs" type="Boolean" default="false">
+If on, the ASIO will be blocked.
+</opt>
+
+<opt name="testbench.monitor-sst"              type="Boolean" default="false">
+Enables testbench, writes transactions from monitors/checkers to
+the specified SST database
+</opt>
+
+<opt name="testbench.monitor-sst-file"         type="String" default="msim">
+Enables testbench, writes transactions from monitors/checkers to
+the specified SST database
+</opt>
+
+<opt name="testbench.monitor"                  type="Boolean" default="false">
+Enables testbench, writes errors and warnings from
+monitors and checkers to screen
+</opt>
+
+<opt name="testbench.spi4.[0-5].rx.status-a2s-monitor-quit" type="Boolean" default="false">
+If set to true, terminate test for any a2s monitor error
+</opt>
+
+<opt name="testbench.spi4.[0-5].rx.status-a2s-monitor-delay" type="Integer" default="700">
+The maximum delay between the clock edge and when data is available for the A2S
+</opt>
+
+<opt name="testbench.spi4.[0-5].rx.status-a2s-monitor" type="Boolean" default="false">
+If enabled, the status fast a2s is checked to always have input tokens available 
+</opt>
+
+<opt name="testbench.spi4.tx.[0-5].report-reset" type="Boolean" default="false">
+Reports a message when the TX core is reset.
+</opt>
+
+<opt name="testbench.spi4.rx.[0-5].report-reset" type="Boolean" default="false">
+Reports a message when the RX core is reset.
+</opt>
+
+<!-- Options for the JTAG verilog testbench -->
+<opt name="testbench.jtag.tests.[0-13]"		   type="Boolean" default="false">
+Enables the running of the JTAG tests.  Can run multiple JTAG tests at
+one time.
+</opt>
+
+<opt name="testbench.jtag.scanmode"		       type="Boolean" default="false">
+Enables scanmode when running JTAG tests.
+</opt>
+
+<opt name="testbench.jtag.continuous"		   type="Boolean" default="false">
+Enables continuous mode when running JTAG tests.
+</opt>
+
+<opt name="testbench.syncscan.tests.[0-8]"		   type="Boolean" default="false">
+Enables the running of the JTAG syncscan tests.  Can run multiple JTAG
+syncscan tests at one time, but not with the other JTAG tests.
+</opt>
+
+<!-- Framer Configuration Within the Testbench -->
+
+<opt name="testbench.monitorInternals"		type="Boolean" default="false">
+Enables the internal asoc monitors of the testbench.
+</opt>
+
+<opt name="testbench.framer.enable"			  type="Boolean" default="true">Tells the testbench whether or not to instantiate Framers to stimulate
+the SPI-4.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.clock.enable"			  type="Boolean" default="true">
+Tells the testbench whether or not to start the framer clock
+the SPI-4.
+</opt>
+
+<opt name="testbench.framer.verbose"           type="Boolean" default="false">
+Enable debugging output within the framer.
+</opt>
+
+
+<!-- SPI4 options **for X8** -->
+
+<opt name="x8.spi4.[0-7].rx.enabled"	   type="Integer" default="-1">
+Controls whether the interface is ever brought out of reset (enabled).
+0=no, 1=yes, -1=yes iff calendar length &gt; 0. Used by RESET_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.enabled"	   type="Integer" default="-1">
+See rx.enabled.
+</opt>
+
+<opt name="testbench.use-watchdog"			  type="Boolean"
+default="false">
+Set to write to the watchdog CSR to enable the watchdog.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.numFifosBits"     type="Integer" default="4">
+Defines number of available RX FIFOs to be 2 to the given number's
+power. Legal values are 0..4. The FS value in RX.FS_CSR is 4 minus
+this value.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.numFifosBits"     type="Integer"
+default="4">
+See rx.numFifosBits.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.lowWatermark" type="Integer" default="128">
+Defines watermark in bytes of FIFO occupancy below which an RX FIFO
+declares STARVING. Used by RX_WATERMARK_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.highWatermark"   type="Integer" default="256">
+Defines watermark in bytes of FIFO occupancy below which an RX FIFO
+declares HUNGRY. Used by RX_WATERMARK_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.maxAsocBurst"     type="Integer" default="68">
+Defines maximum byte size of ASoC data bursts to remote ASoC target.
+Used by RX_BURSTSIZE_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.remoteTarget.[0-15]"   type="Integer" default="0xF">
+Defines 16-bit ASoC route to remote target of given RX FIFO. For the
+X8, this is just the target port number. These values are written to
+the PORT fields of RX_LINKCFG1_CSR[]. See tx.sourceRoute. 
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.remoteBaseAddr.[0-15]" type="Integer" default="0x0">
+Defines 16-bit base address of given RX FIFO at remote target;
+Different FIFOs cannot share same remoteBaseAddr and same
+remoteTarget. Used by RX_LINKCFG2_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.remoteCtrlAddr.[0-15]" type="Integer" default="0x0">
+Defines 16-bit remote target control address of the given RX FIFO.
+Different FIFOs cannot share same remoteCtrlAddr and same
+remoteTarget. Should be 8*(target fifo#). Used by RX_LINKCFG1_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.remoteFifoSizeMask.[0-15]" type="Integer" default="0x0">
+Defines the "mask" of the remote target's FIFO. The base address anded
+with the mask should be 0, and the final address should be base
+address + mask. The mask should be one less than a power of two. The
+only values you can reliably count on are 16K-1, 8K-1, 4K-1, 2K-1 and
+1K-1. Used by RX_LINKCFG2_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.maxFirstSegmentSize"  type="Integer" default="64">
+Defines maximum byte size of first segment of a packet for RX module;
+Must be multiple of 16 and in (0,4096]. Used by RX_SEGSIZE_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.maxSegmentSize"       type="Integer" default="64">
+Defines maximum byte size of all other segments of a packet for RX module;
+Must be multiple of 16 and in (0,4096]. Used by RX_SEGSIZE_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.calendarLength"       type="Integer" default="16">
+Defines calendar length for RX module. Used by RX_CAL_LM_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.calendarLength"       type="Integer" default="16">
+Defines calendar length for TX module. Used by TX_CAL_LM_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.calendar.[0-255]"     type="Integer" default="0">
+Defines calendar sequence for RX module in channels. Used by RX_CALS_CSR.
+</opt>
+<opt name="x8.spi4.[0-7].rx.calendar.1"     type="Integer" default="1"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.2"     type="Integer" default="2"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.3"     type="Integer" default="3"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.4"     type="Integer" default="4"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.5"     type="Integer" default="5"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.6"     type="Integer" default="6"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.7"     type="Integer" default="7"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.8"     type="Integer" default="8"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.9"     type="Integer" default="9"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.10"    type="Integer" default="10"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.11"    type="Integer" default="11"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.12"    type="Integer" default="12"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.13"    type="Integer" default="13"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.14"    type="Integer" default="14"></opt>
+<opt name="x8.spi4.[0-7].rx.calendar.15"    type="Integer" default="15"></opt>
+
+<opt name="x8.spi4.[0-7].tx.calendar.[0-255]"     type="Integer" default="0">
+Defines calendar sequence for TX module in channels. Used by TX_CALS_CSR.
+</opt>
+<opt name="x8.spi4.[0-7].tx.calendar.1"     type="Integer" default="1"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.2"     type="Integer" default="2"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.3"     type="Integer" default="3"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.4"     type="Integer" default="4"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.5"     type="Integer" default="5"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.6"     type="Integer" default="6"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.7"     type="Integer" default="7"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.8"     type="Integer" default="8"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.9"     type="Integer" default="9"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.10"    type="Integer" default="10"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.11"    type="Integer" default="11"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.12"    type="Integer" default="12"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.13"    type="Integer" default="13"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.14"    type="Integer" default="14"></opt>
+<opt name="x8.spi4.[0-7].tx.calendar.15"    type="Integer" default="15"></opt>
+
+<opt name="x8.spi4.[0-7].rx.calendarM"            type="Integer" default="4">
+Defines calendar multiplicity for RX module. Used by RX_CAL_LM_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.calendarM"            type="Integer" default="4">
+Defines calendar multiplicity for TX module. Used by RX_CAL_LM_CSR.
+</opt>
+
+<!-- XXX delete? -->
+<opt name="x8.spi4.[0-7].rx.calendarReadLatency"  type="Integer" default="1">
+Defines response time to calendar entry request from RX core in core/glue
+interface clock cycles.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.statusSignalingType"   type="String" default="TTL">
+Defines signaling type for FIFO status channel of external SPI4 interface
+for X module; Either "TTL" or "LVDS". 
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.interruptMask" type="Integer" default="0x0">
+Defines the value of the RX.IM_CSR register
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.interruptMask" type="Integer" default="0x0">
+Defines the value of the TX.IM_CSR register
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.statusSignalingType"   type="String" default="TTL">
+Defines signaling type for FIFO status channel of external SPI4 interface
+for TX module; Either "TTL" or "LVDS".
+</opt>
+
+<!-- XXX save -->
+<opt name="x8.spi4.[0-7].tx.extDataCycleTime"      type="Integer" default="5788">
+Define data clock cycle time of external SPI4 interface in tsim time units
+for TX module. Given default converts to 311.5MHz.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.clockPeriod"		   type="String" default="2.22">
+Defines the clock period for the SPI4 TX in nanoseconds.  The given
+default gives a interface speed of 311.5Mhz.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.pllType"		   	   type="String" default="NONE">
+Defines how the clock within the SPI4 TX is generated.  NONE will use a
+fake PLL or completely artificial source.  BYPASS will take its clock
+signal from the BYPASS pin on the external of the design.  PLL will
+actually use the real PLL, and will need a reference clock.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.pllRefClk"		   	   type="Integer" default="100">
+Reference clock for the PLL (in MHz), should be from 33-200, change only if needed
+</opt>
+
+<!-- XXX unused -->
+<opt name="x8.spi4.[0-7].rx.statusClockEdge"       type="Integer" default="1">
+Defines active edge for status clock of external SPI4 interface 
+for RX module; 0 for falling edge and 1 for rising edge; Effective for
+"TTL" statusSignalingType only.
+</opt>
+
+<!-- XXX unused -->
+<opt name="x8.spi4.[0-7].tx.statusClockEdge"       type="Integer" default="1">
+Defines active edge for status clock of external SPI4 interface 
+for TX module; 0 for falling edge and 1 for rising edge; Effective for 
+"TTL" statusSignalingType only.
+</opt>
+
+<!-- XXX save -->
+<opt name="x8.spi4.[0-7].rx.maxFifoT"       type="Integer" default="10240">
+Defines 26-bit status training pattern insertion period of external SPI4 
+interface in 4-status-clock-cycle units; Given default amounts to a period
+of 10240*4 status clock cycles; Valid for RX module and "LVDS" 
+statusSignalType only.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.maxDataT"       type="Integer" default="10240">
+Defines 32-bit data training pattern insertion period of external SPI4
+interface in data clock cycles; Valid for TX module only. Used by
+SYNC1_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.minGoodParity"         type="Integer" default="5">
+Defines 4-bit minimum number of consecutive good parities on data channel
+of external SPI4 interface to declare sync for RX module. Used by RX_SYNC_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.maxBadParity"          type="Integer" default="2">
+Defines 4-bit maximum number of consecutive bad parities on data channel
+of external SPI4 interface that can be received while remaining in sync.
+Any more than this will result in loss of sync being declared for the RX
+module.  Used by RX_SYNC_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.minGoodParity"         type="Integer" default="5">
+Defines 4-bit minimum number of consecutive good parities on status
+channel of external SPI4 interface to declare sync for TX module. Used
+by TX_SYNC0_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.maxBadParity"          type="Integer" default="2">
+Defines 4-bit maximum number of consecutive bad parities on status channel
+of external SPI4 interface that can be received while remaining in sync.
+Any more than this will result in loss of sync being declared for the TX
+module. Used by TX_SYNC0_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.enableManualDeskew"   type="Boolean" default="false">
+Defines if RX core should enable manual deskew. Used by RX_DESKEW1_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.manualDeskew.[0-16]"  type="Integer" default="0">
+Defines taps points for RX core manual deskew. Used by RX_DESKEW[1-3]_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.enableStaticDeskew"    type="Boolean" default="false">
+Defines if RX core should enable static deskew. Used by RX_DESKEW1_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.enableRealtimeTuning" type="Boolean" default="true">
+Defines if RX core should enable real-time deskew. Used by RX_DESKEW1_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.selectDataTrain"      type="Integer" default="0">
+Defines the lane for RX core data training. Used by RX_SELECT_DATA_TRAIN_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.average"              type="Integer" default="6">
+Defines 4-bit average response time to jitter for RX core. Used by RX_DESKEW1_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.opMode"  type="String" default="CHANNELIZED">
+Defines RX module operation mode; Possible modes are "CLEAR_CHANNEL", 
+"FULL_FRAME" and "CHANNELIZED". Used by RX_OP_MODE_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.opMode"  type="String" default="CHANNELIZED">
+Defines TX module operation mode; Possible modes are "CLEAR_CHANNEL", 
+"FULL_FRAME" and "CHANNELIZED". Used by TX_OP_MODE_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.[0-15]"     type="Integer" default="0">
+Defines FIFO to channel map for RX module; Effective in "CHANNELIZED"
+mode only; Different FIFOs may not map to same channel; Default valid only
+for 1-FIFO case. Used by RX_CHAN2FIFO_CSR, among others.
+</opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.1"     type="Integer" default="1"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.2"     type="Integer" default="2"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.3"     type="Integer" default="3"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.4"     type="Integer" default="4"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.5"     type="Integer" default="5"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.6"     type="Integer" default="6"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.7"     type="Integer" default="7"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.8"     type="Integer" default="8"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.9"     type="Integer" default="9"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.10"    type="Integer" default="10"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.11"    type="Integer" default="11"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.12"    type="Integer" default="12"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.13"    type="Integer" default="13"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.14"    type="Integer" default="14"></opt>
+<opt name="x8.spi4.[0-7].rx.fifoToChanMap.15"    type="Integer" default="15"></opt>
+
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.[0-15]"     type="Integer" default="0">
+Defines FIFO to channel map for TX module; Effective in "CHANNELIZED"
+mode only; Different FIFOs may not map to same channel; Default valid
+only for 1-FIFO case. Used by TX_FIFO2CHAN_CSR, among others.
+</opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.1"     type="Integer" default="1"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.2"     type="Integer" default="2"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.3"     type="Integer" default="3"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.4"     type="Integer" default="4"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.5"     type="Integer" default="5"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.6"     type="Integer" default="6"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.7"     type="Integer" default="7"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.8"     type="Integer" default="8"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.9"     type="Integer" default="9"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.10"    type="Integer" default="10"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.11"    type="Integer" default="11"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.12"    type="Integer" default="12"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.13"    type="Integer" default="13"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.14"    type="Integer" default="14"></opt>
+<opt name="x8.spi4.[0-7].tx.fifoToChanMap.15"    type="Integer" default="15"></opt>
+
+<opt name="x8.spi4.[0-7].tx.freeThreshold" type="Integer" default="1">
+A function of the period of byte thresholds which consumer FIFO write
+address must cross to trigger a status update is sent to source FIFO.
+More specifically, if freeThreshold is n, then an update will be sent
+every time the last n+6 bits of the address are 0. (equivalently,
+maximum change in address before update is sent) Must be between 0 and
+3 inclusive. Used by TX_FREE_THRESHOLD_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.serviceLimit.STARVING" type="Integer" default="8">
+Defines 8-bit TX STARVING FIFO service limit; Must be positive. Used
+by TX_SERVICE_LIMIT_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.serviceLimit.HUNGRY"   type="Integer" default="4">
+Defines 8-bit TX HUNGRY FIFO service limit. Used by
+TX_SERVICE_LIMIT_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.maxBurst1.[0-15]"      type="Integer" default="8">
+Defines 8-bit TX FIFO maxBurst1 for given FIFO; Must be positive. Used
+by TX_MAX_BURST_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.maxBurst2.[0-15]"      type="Integer" default="4">
+Defines 8-bit TX FIFO maxBurst2 for given FIFO; Must be positive and
+no more than its maxBurst1 counterpart. Used by TX_MAX_BURST_CSR.
+</opt>
+
+<!-- XXX delete: but used by Spi4ConfigWriter -->
+<opt name="x8.spi4.[0-7].tx.coreFifoWatermarkLow"    type="Integer" default="2">
+Defines TX core FIFO watermark below which to deassert stall.
+</opt>
+
+<!-- XXX delete: but used by Spi4ConfigWriter -->
+<opt name="x8.spi4.[0-7].tx.coreFifoWatermarkHigh"   type="Integer" default="5">
+Defines TX core FIFO watermark above which to assert stall.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.alpha"   type="Integer" default="2">
+Defines TX core data training pattern repetition number. Used by
+TX_SYNC0_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.sourceRoute.[0-15]" type="Integer" default="0xF">
+Defines ASoC source route of given FIFO for TX module. For the X8,
+this is just the source port number. The values are written to the
+PORT fields of the TX_LINKCFG_CSR[]. See rx.remoteTarget. Used by
+TX_LINKCFG_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.sourceCtrlAddr.[0-15]" type="Integer" default="0x0">
+Defines ASoC source control address of the given TX FIFO. Different
+valid FIFOs may not have the same sourceRoute and sourceCtrlAddr.
+Should be 0x80+8*(source fifo #). Used by TX_LINKCFG_CSR.
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.fifoValid.[0-15]" type="Integer" default="-1">
+Can be used to override the default valid status of the fifo (which is
+determined from the calendar; normally, the fifos appearing in the
+calendar are taken as the valid ones). A value of -1 defers to the
+default, a value of 0 specifies invalid, and a value of 1 specifies
+valid. Used by FIFO_VALID_CSR.
+</opt>
+
+<!--
+<opt name="x8.spi4.[0-7].rx.chanValid.[0-255]"   type="Integer" default="-1">
+Analogous to tx.fifoValid. Used by CHAN_VALID_CSR.
+</opt>
+-->
+
+<opt name="x8.spi4.[0-7].tx.statusPathDepth" type="Integer"
+default="8"> 
+Specifies the latency in the status line between the RX and the TX.
+Units are SPI4 credits. This parameter and tx.dataPathDepth are used
+to make sure that the RX watermark and TX max burst values are
+compatible in the SPI4 sanity check. 
+</opt>
+
+<opt name="x8.spi4.[0-7].tx.dataPathDepth" type="Integer"
+default="8"> 
+Specifies the latency in the data line between the TX and the RX.
+Units are SPI4 credits. See tx.statusPathDepth. 
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.statusPathDepth" type="Integer"
+default="8">
+See tx.statusPathDepth. 
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.dataPathDepth" type="Integer"
+default="4">
+See tx.dataPathDepth.
+</opt>
+
+<opt name="x8.spi4.[0-7].rx.dropAll" type="Boolean" default="false">
+Drop all incoming data. Used by RX_OP_MODE_CSR.
+</opt>
+
+<!-- JTAG options -->
+
+<opt name="x8.jtag.use-core"         type="Boolean" default="false">
+Connect the BLM to the Verilog model of the synchronous part of the
+JTAG/EJTAG interface.  If this is true, it takes precedence over
+x8.ct.jtag.java-probe and x8.ct.ejtag.java-probe.
+</opt>
+
+<opt name="x8.jtag.verilog-name-prefix" type="String" default="tb_jtag">
+Gives the top level(s) of hierarchy to be used when constructing the
+verilog names of buses.
+</opt>
+
+<opt name="x8.jtag.java-probe"       type="Boolean" default="false">
+Use the Java core/probe simulator for the JTAG device.
+</opt>
+
+<!-- SPI options -->
+
+<!-- X8 Bus IF options -->
+<opt name="x8.busif.use-core"          type="Boolean" default="false">
+Connect the BLM to the Verilog model of the generic processor interface.
+</opt>
+<opt name="x8.busif.verilog-name-prefix" type="String" default="tb_X8_busif">
+Gives the top level(s) of hierarchy to be used when constructing the
+verilog names of buses.
+</opt>
+
+<!-- Options for the Spi4Drivers -->
+<opt name="testbench.spi4.[0-7].disable"           type="Boolean" default="false">
+Assert the DISABLE_STRAP_N signal if true
+</opt>
+
+<opt name="testbench.driverLoopback"   type="Boolean" default="false">
+Defines whether we use the DUT or we loop the framers back onto themselves
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.calendarLength"       type="Integer" default="16">
+Defines calendar length for RX module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.calendarLength"       type="Integer" default="16">
+Defines calendar length for TX module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.calendar.[0-255]"     type="Integer" default="0">
+Defines calendar sequence for RX module in channels.
+</opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.1"     type="Integer" default="1"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.2"     type="Integer" default="2"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.3"     type="Integer" default="3"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.4"     type="Integer" default="4"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.5"     type="Integer" default="5"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.6"     type="Integer" default="6"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.7"     type="Integer" default="7"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.8"     type="Integer" default="8"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.9"     type="Integer" default="9"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.10"    type="Integer" default="10"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.11"    type="Integer" default="11"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.12"    type="Integer" default="12"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.13"    type="Integer" default="13"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.14"    type="Integer" default="14"></opt>
+<opt name="testbench.spi4.[0-7].rx.calendar.15"    type="Integer" default="15"></opt>
+
+<opt name="testbench.spi4.[0-7].tx.calendar.[0-255]"     type="Integer" default="0">
+Defines calendar sequence for TX module in channels. 
+</opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.1"     type="Integer" default="1"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.2"     type="Integer" default="2"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.3"     type="Integer" default="3"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.4"     type="Integer" default="4"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.5"     type="Integer" default="5"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.6"     type="Integer" default="6"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.7"     type="Integer" default="7"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.8"     type="Integer" default="8"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.9"     type="Integer" default="9"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.10"    type="Integer" default="10"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.11"    type="Integer" default="11"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.12"    type="Integer" default="12"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.13"    type="Integer" default="13"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.14"    type="Integer" default="14"></opt>
+<opt name="testbench.spi4.[0-7].tx.calendar.15"    type="Integer" default="15"></opt>
+
+<opt name="testbench.spi4.[0-7].rx.calendarM"            type="Integer" default="4">
+Defines calendar multiplicity for TX module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.calendarM"            type="Integer" default="4">
+Defines calendar multiplicity for TX module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.statusSignalingType"   type="String" default="TTL">
+Defines signaling type for FIFO status channel of external SPI4 interface
+for X module; Either "TTL" or "LVDS".
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.statusSignalingType"   type="String" default="TTL">
+Defines signaling type for FIFO status channel of external SPI4 interface
+for TX module; Either "TTL" or "LVDS".
+</opt>
+
+<!-- XXX save -->
+<opt name="testbench.spi4.[0-7].tx.clockPeriod"      type="String" default="2.22">
+Define data clock cycle time of external SPI4 interface in tsim time units
+for TX module. Given default converts to 311.5MHz.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.statusClockEdge"       type="Integer" default="1">
+Defines active edge for status clock of external SPI4 interface 
+for RX module; 0 for falling edge and 1 for rising edge; Effective for
+"TTL" statusSignalingType only.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.statusClockEdge"       type="Integer" default="1">
+Defines active edge for status clock of external SPI4 interface 
+for TX module; 0 for falling edge and 1 for rising edge; Effective for 
+"TTL" statusSignalingType only.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.maxFifoT"       type="Integer" default="10240">
+Defines 26-bit status training pattern insertion period of external SPI4 
+interface in 4-status-clock-cycle units; Given default amounts to a period
+of 10240*4 status clock cycles; Valid for RX module and "LVDS" 
+statusSignalType only.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.maxDataT"       type="Integer" default="10240">
+Defines 32-bit data training pattern insertion period of external SPI4 
+interface in data clock cycles; Valid for TX module only.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.minGoodParity"         type="Integer" default="2">
+Defines 4-bit minimum number of consecutive good parities on data channel
+of external SPI4 interface to declare sync for RX module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.maxBadParity"          type="Integer" default="0">
+Defines 4-bit maximum number of consecutive bad parities on data channel
+of external SPI4 interface that can be received while remaining in sync.
+Any more than this will result in loss of sync being declared for the RX
+module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.minGoodParity"         type="Integer" default="2">
+Defines 4-bit minimum number of consecutive good parities on status channel
+of external SPI4 interface to declare sync for TX module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.maxBadParity"          type="Integer" default="1">
+Defines 4-bit maximum number of consecutive bad parities on status channel
+of external SPI4 interface that can be received while remaining in sync.
+Any more than this will result in loss of sync being declared for the TX
+module.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.opMode"  type="String" default="CHANNELIZED">
+Defines RX module operation mode; Possible modes are "CLEAR_CHANNEL", 
+"FULL_FRAME" and "CHANNELIZED".
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.opMode"  type="String" default="CHANNELIZED">
+Defines TX module operation mode; Possible modes are "CLEAR_CHANNEL", 
+"FULL_FRAME" and "CHANNELIZED".
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.maxBurst1.[0-15]"      type="Integer" default="8">
+Defines 8-bit TX FIFO maxBurst1 for given FIFO; Must be positive.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.maxBurst2.[0-15]"      type="Integer" default="4">
+Defines 8-bit TX FIFO maxBurst2 for given FIFO; Must be positive and 
+no more than its maxBurst1 counterpart.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.alpha"   type="Integer" default="2">
+Defines TX core data training pattern repetition number.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.isEnsuringSeparation" type="Boolean" default="true">
+Tells the TX driver to insert idle cycles when 2 SOPs are not separated
+by at least 8 cycles.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.cycleRatio"   type="Integer" default="4">
+Defines RX status clock cycle ratio to data clock.
+</opt>
+
+<opt name="testbench.spi4.dataRateMonitor.enable" type="Boolean" default="false">
+Set to true to enable the use of data rate monitors on the input (into
+the design) SPI4 interface.  This option is overridden if the TX Framer
+on this interface uses a
+DATARATE scheduler type.  In that case, even if the enable is set to
+false, a DataRateMonitor will still be built on the interface.
+</opt>
+
+<opt name="testbench.spi4.dataRateMonitor.sampleSize" type="Integer" default="100000">
+Defines the number of clock cycles the DataRateMonitor holds information
+on the kind of data that was passed over that clock cycle.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.desiredDataRate.[0-255]" type="String" default="0">
+The number of bits per second (bps) that the framer is expected to run
+at for the given channel. In the TX, this is how fast the data will be
+sent for the given channel.  Use G or M to denote Giga- and Mega-.
+Examples are 10G (ten gigabit/sec), 2500M (two and half gigabit/sec),
+1000 (1 kilobit/sec)
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.desiredDataRate.[0-255]" type="String" default="0">
+The number of bits per second (bps) that the framer is expected to run
+at for the given channel. In the RX, this is how fast the data will be read
+for the channel given.  Use G or M to denote Giga- and Mega-.
+Examples are 10G (ten gigabit/sec), 2500M (two and half gigabit/sec),
+1000 (1 kilobit/sec)
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.schedulerType" type="String" default="RANDOM">
+The method at which the TxFramer schedules channels in channelized mode.
+Possible values of this are:  RANDOM, ROUND-ROBIN, DATARATE
+DATARATE uses the DataRateMonitor to attempt to keep every channel
+running at its desired rate.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.schedulerType" type="String" default="RANDOM">
+The method by which the RxFramer returns channelized status.
+Possible values of this are:  RANDOM, DATARATE
+DATARATE uses the DataRateMonitor to attempt to keep every channel
+running at its desired rate.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.burstsPerServicing" type="Integer" default="8">
+Service limit for the TX framer.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.burstinessFactor.[0-255]" type="Integer" default="15">
+Used to bias the data rates slightly away from DAR.
+Possible values of this are: integer between 0 to 100 (percentage)
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.burstinessFactor.[0-255]" type="Integer" default="15">
+Used to bias the data rates slightly away from DAR.
+Possible values of this are: integer between 0 to 100 (percentage)
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.sendSatisfiedRatio.[0-255]" type="Integer" default="10">
+Used to determine when one sends satisfied instead of hungry.
+Possible values of this are: integer ratio, between 0 and infinity
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.sendHungryRatio.[0-255]" type="Integer" default="10">
+Used to determine when one sends hungry instead of starving.
+Possible values of this are: integer ratio, between 0 and infinity
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.satisfiedStatusProbability" type="Integer" default="33">
+This and the next two probabilities set the distribution for status when using the RANDOM
+status scheduler. Possible values of this are: probability from 0 to 100
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.hungryStatusProbability" type="Integer" default="33">
+This and the next two probabilities set the distribution for status when using the RANDOM
+status scheduler. Possible values of this are: probability from 0 to 100
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.starvingStatusProbability" type="Integer" default="34">
+This and the next two probabilities set the distribution for status when using the RANDOM
+status scheduler. Possible values of this are: probability from 0 to 100
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.idleFillProbability" type="Integer" default="100">
+This and the next two probabilities set the fill word distribution.
+Possible values of this are: probability from 0 to 100
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.trainingFillProbability" type="Integer" default="0">
+This and the surrounding two probabilities set the fill word distribution.
+Possible values of this are: probability from 0 to 100
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.reservedFillProbability" type="Integer" default="0">
+This and the previous two probabilities set the fill word distribution.
+Possible values of this are: probability from 0 to 100
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.statusPathDepth" type="Integer"
+default="8">
+See corresponding design parameter.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.statusPathDepth" type="Integer"
+default="8">
+See corresponding design parameter.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.dataPathDepth" type="Integer"
+default="8">
+See corresponding design parameter.
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.dataPathDepth" type="Integer"
+default="4">
+See corresponding design parameter.
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.ignoreFramingPatternInCalendar" type="Boolean" default="false">
+If set to true, bad calendars will be accepted without error from the framer
+</opt>
+
+<opt name="testbench.spi4.[0-7].tx.ignoreDIP2ErrorInCalendar" type="Boolean" default="false">
+If set to true, calendars with bad DIP2s will be accepted without error from the framer
+</opt>
+
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectLossOfSync" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectCoreFatal" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectFifoOverflow" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectS2AFailure" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectMemoryParityError" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectParityError" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectNonProvChannel" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].rx.interrupt.expectWatchdog" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].tx.interrupt.expectParityError" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].tx.interrupt.expectCoreFatal" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].tx.interrupt.expectLossOfSync" type="Boolean" default="false"></opt>
+<opt name="testbench.spi4.[0-7].tx.interrupt.expectS2AFailure" type="Boolean" default="false"></opt>
+
+<opt name="testbench.ignore-interrupts" type="Boolean" default="false">
+If this is true, the testbench interrupt handlers will not watch for changes in
+the external interrupt output
+</opt>
+
+<opt name="testbench.optimize-csr-writes" type="Boolean" default="true">
+Optimize CSR writing in X8TestCase by keeping track of the current
+values and only writing the ones that have changed.
+</opt>
+
+<opt name="testbench.randomize-csr-write-order" type="Boolean" default="false">
+Randomize CSR write ordering in X8TestCase.
+</opt>
+
+<opt name="testbench.run-sanity-check" type="Boolean" default="true">
+Check configuration value validity in X8TestCase with
+X8Spi4ConfigSanityCheck.
+</opt>
+
+<opt name="testbench.tempt-inner-demons" type="Boolean" default="false">
+Set to true if you would like to set some of the config bits in the
+demonic arbiters in the design.  Note that the design needs to be in prs
+mode with demonic arbiters built into it.  You also must specify 
+testbench.demonic-arbiter-file.
+</opt>
+
+<opt name="testbench.demonic-arbiter-file" type="String" default="">
+A list of scopes that possess demonic arbiters, followed by a binary
+number representing the value to force its config register to.
+</opt>
+
+<opt name="testbench.ebi.force-csn-low" type="Boolean" default="false">
+Straps CS_N to ground if enabled in the ebi.
+</opt>
+
+<opt name="testbench.spi4.[0-5].rx.force-loss-of-sync" type="Boolean" default="false">
+Will force loss of sync to zero or one until 4 cycles on the data line
+are seen.
+</opt>
+
+<opt name="testbench.force-jtag-name" type="Boolean" default="false">
+</opt>
+
+<opt name="testbench.jtag-mem-file" type="String" default="mem.dat">
+</opt>
+
+<opt name="testbench.force-sle-cores" type="Boolean" default="false">
+Uses the kicker code translated from the verilog files from SLE.
+</opt>
+
+<!-- Delays added to test the setup/hold times on the sync/async
+boundaries -->
+<opt name="testbench.ebi.clock-skew" type="String" default="0">
+Skew on the EBI clock in picoseconds.
+</opt>
+
+<opt name="testbench.jtag.clock-skew" type="String" default="0">
+Skew on the jtag clock in picoseconds.
+</opt>
+
+<opt name="testbench.spi4.[0-5].tx.clock-skew" type="String" default="0">
+Skew on the TX clock in picoseconds.
+</opt>
+
+<opt name="testbench.spi4.[0-5].rx.clock-skew" type="String" default="0">
+Skew on the RX clock in picoseconds.
+</opt>
+
+<opt name="testbench.ebi.clock-jitter" type="String" default="0">
+Skew on the EBI clock in picoseconds.
+</opt>
+
+<opt name="testbench.jtag.clock-jitter" type="String" default="0">
+Skew on the jtag clock in picoseconds.
+</opt>
+
+<opt name="testbench.spi4.[0-5].tx.clock-jitter" type="String" default="0">
+Skew on the TX clock in picoseconds.
+</opt>
+
+<opt name="testbench.spi4.[0-5].rx.clock-jitter" type="String" default="0">
+Skew on the RX clock in picoseconds.
+</opt>
+
+<!-- Options for skewing the data lines in the TX Framer -->
+
+<opt name="testbench.spi4.[0-5].tx.minJitter" type="Integer" default="10">
+The minimum amount of jitter from the clock edge to place the data and control
+lines.  In units of hundreds of UI.  For example, a value of 10 will set the minimum time between the clock edge and the data/control transistioning is 10 percent of a half clock cycle.
+</opt>
+
+<opt name="testbench.spi4.[0-5].tx.maxJitter" type="Integer" default="15">
+The maximum amount of jitter from the clock edge to place the data and control
+lines.  In units of hundreds of UI.  For example, a value of 15 will set the minimum time between the clock edge and the data/control transistioning is 15 percent of a half clock cycle.
+</opt>
+
+<opt name="testbench.spi4.[0-5].tx.skewEarly" type="Integer" default="0">
+A 17 bit integer that tells the TX Framer to skew the data/control lines one clock cycle early.  The 0-15 indexed bits are for data, bit 16 is for control.  Note that setting skewEarly and skewLate for the same bit will cause an assertion failure.
+</opt>
+
+<opt name="testbench.spi4.[0-5].tx.skewLate" type="Integer" default="0">
+A 17 bit integer that tells the TX Framer to skew the data/control lines one clock cycle late.  The 0-15 indexed bits are for data, bit 16 is for control.  Note that setting skewEarly and skewLate for the same bit will cause an assertion failure.
+</opt>
+
+<!-- This section was automatically generated with 
+"java/src/com/fulcrummicro/hw/verification/chip/x8/gen_err_types.pl"
+
+Error masks for SPI4 configuration sanity check:
+ -->
+<opt name="x8.spi4.[0-7].rx.errorMask.LINKCFG_INCONSIST" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.LINKCFG_INCONSIST" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.RX_BAD_CHAN2FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.TX_BAD_FIFO2CHAN" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.RX_VALID_FIFO_TO_TX_INVALID_FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.TX_VALID_FIFO_TO_RX_INVALID_FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.RX_VALID_FIFO_TO_TX_DISABLED_PORT" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.TX_VALID_FIFO_TO_RX_DISABLED_PORT" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.ASOC_LOVE_TRIANGLE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.ASOC_LOVE_TRIANGLE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.CAL_HAS_INVALID_FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.CAL_HAS_INVALID_FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.CAL_MISSING_VALID_FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.CAL_MISSING_VALID_FIFO" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.SPI4_CALENDAR_MISMATCH" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.SPI4_CALENDAR_MISMATCH" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.SPI4_MAX_BURST_RX_WATERMARKS_UNSAFE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.SPI4_MAX_BURST_RX_WATERMARKS_UNSAFE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.RX_BAD_MAXSEGSIZE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.TX_BAD_MAXBURST" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.ILLEGAL_VALUE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.ILLEGAL_VALUE" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].rx.errorMask.VALID_FIFO_WITH_LARGE_ID" type="Boolean" default="false"></opt>
+<opt name="x8.spi4.[0-7].tx.errorMask.VALID_FIFO_WITH_LARGE_ID" type="Boolean" default="false"></opt>
+<!-- End automatically generated section -->
+
+</options>

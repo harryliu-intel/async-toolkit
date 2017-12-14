@@ -1,0 +1,33 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id: //mrl/sw/intel/cad/java/src/com/avlsi/tools/dsim/dsim.package#2 $
+# $DateTime: 2017/11/13 21:35:56 $
+# $Author: rliu68 $
+
+java com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterInfo
+java com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterChecker
+$arch/bin/registers scripts/registers 775 p
+share/registers/doc/XSD2Schtrn.xsl doc/XSD2Schtrn.xsl 664 p
+share/registers/doc/registerInfo.xsd doc/registerInfo.xsd 664 p
+share/registers/doc/registerInfo.dtd doc/registerInfo.dtd 664 p
+share/registers/doc/w3c/xhtml-lat1.ent doc/w3c/xhtml-lat1.ent 664 p
+share/registers/doc/w3c/xhtml-special.ent doc/w3c/xhtml-special.ent 664 p
+share/registers/doc/w3c/xhtml-symbol.ent doc/w3c/xhtml-symbol.ent 664 p
+share/registers/doc/w3c/xhtml.soc doc/w3c/xhtml.soc 664 p
+share/registers/doc/w3c/xhtml1-frameset.dtd doc/w3c/xhtml1-frameset.dtd 664 p
+share/registers/doc/w3c/xhtml1-strict.dtd doc/w3c/xhtml1-strict.dtd 664 p
+share/registers/doc/w3c/xhtml1-strict.xsd doc/w3c/xhtml1-strict.xsd 664 p
+share/registers/doc/w3c/xhtml1-transitional.dtd doc/w3c/xhtml1-transitional.dtd 664 p
+share/registers/doc/w3c/xhtml1.dcl doc/w3c/xhtml1.dcl 664 p
+share/registers/doc/w3c/xml.xsd doc/w3c/xml.xsd 664 p
+share/registers/scripts/xalan/readme.html scripts/xalan/readme.html 664 p
+share/registers/scripts/xalan/saxon9.jar scripts/xalan/saxon9.jar 664 p
+share/registers/scripts/xalan/serializer.README.txt scripts/xalan/serializer.README.txt 664 p
+share/registers/scripts/xalan/serializer.jar scripts/xalan/serializer.jar 664 p
+share/registers/scripts/xalan/xalan.README.txt scripts/xalan/xalan.README.txt 664 p
+share/registers/scripts/xalan/xalan.jar scripts/xalan/xalan.jar 664 p
+share/registers/scripts/xalan/xercesImpl.README.txt scripts/xalan/xercesImpl.README.txt 664 p
+share/registers/scripts/xalan/xercesImpl.jar scripts/xalan/xercesImpl.jar 664 p
+share/registers/scripts/xalan/xml-apis.README.txt scripts/xalan/xml-apis.README.txt 664 p
+share/registers/scripts/xalan/xml-apis.jar scripts/xalan/xml-apis.jar 664 p
+

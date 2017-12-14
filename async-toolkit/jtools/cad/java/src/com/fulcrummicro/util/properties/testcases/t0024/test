@@ -1,0 +1,29 @@
+<test>
+<!-- test of multi-level variants - check uses and same-name include -->
+<config>
+<opt name="N" type="Integer" default="6"></opt>
+<opt name="port.[1-$(N)].opt" type="String" default=""></opt>
+port.1.opt=a
+</config>
+
+<config name="d2">
+port.6.opt=d
+</config>
+
+<variant name="ccc">
+  port.[1-2].opt=c
+  <variant name="ddd" uses="d2">
+    port.1.opt=d
+    port.3.opt=d
+    <variant name="fff">
+      port.3.opt=f
+      <variant name="ggg">
+        port.3.opt=g
+      </variant>
+    </variant>
+  </variant>
+  <variant name="eee">
+    port.2.opt=e
+  </variant>
+</variant>
+</test>

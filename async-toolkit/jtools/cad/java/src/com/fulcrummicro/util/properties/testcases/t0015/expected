@@ -1,0 +1,8 @@
+ERROR: Config/Variant block does not exist: var
+ERROR: abc does not exist in the XML defaults
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.

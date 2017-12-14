@@ -1,0 +1,170 @@
+<%doc>
+Tcam Support Functions
+Checks each register base for tcams and generates necessary functions
+</%doc>
+<%import>
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+RegisterBase base;
+Collection<Register> registers;
+String baseNamePrefixCC;
+</%args>\
+<%doc>arguments are register and register struct</%doc>\
+<%for Register reg : registers %>\
+<%doc></%doc><%if reg.getName().matches(".*_CAM\\d*") || ((reg.getImplementation().get("type") != null) && reg.getImplementation().get("type").equals("TCAM")) %>\
+<%java String regName = reg.getName(); %>\
+<%java String structName = regName + "_KEYS"; %>\
+<%java RegisterStruct struct = base.getStruct(structName); %>\
+<%java
+//compute whether the TCAM is banked, by comparing key width vs tcam width
+RegisterField keyField = reg.getField("Key");
+int numDimensions = reg.getNumDimensions(); assert(numDimensions<4);
+if (keyField == null) System.err.println("tcam missing Key field: "+reg.getName());
+int tcamKeyWidth = keyField.len;
+boolean tcamHasBanks = false;
+String structNameCC = "";
+int tcamTotalBankWidth = tcamKeyWidth;
+int tcamNumBanks = 1;
+int tcamKeyStructWidth = -1;
+if (struct != null) {
+    structNameCC = Utility.underscoreToCamelCase(structName, true);
+	tcamKeyStructWidth = struct.getBitWidth();
+	tcamHasBanks = tcamKeyStructWidth > tcamKeyWidth;
+} else {
+	tcamHasBanks = numDimensions > 1;
+}
+if (tcamHasBanks) {
+	tcamNumBanks = reg.getNumEntries();
+}
+tcamTotalBankWidth = tcamKeyWidth * tcamNumBanks;
+//check bank width
+	if (struct!=null && tcamHasBanks) {
+		if (tcamTotalBankWidth < tcamKeyStructWidth)
+			System.err.println("ERROR: "+regName+" total bank width ("+tcamTotalBankWidth+") is less than key width ("+tcamKeyStructWidth+")");
+	}
+%>\
+<%doc><%java System.out.println("Generating structured TCAM lookup fn for "+regName); %>\</%doc>\
+    //TCAM lookup function <%if struct != null %>supporting struct <% struct.getName() %></%if>
+<%java String tcamNameCC = Utility.underscoreToCamelCase(regName, true); %>\
+<%java String baseNameCC = baseNamePrefixCC + "Registers"; %>\
+    function lookup<% tcamNameCC %> (
+<%if struct == null %>\
+      int                                      -input_key;  //key for lookup
+<%else>\
+      <% String.format("%-40s",structNameCC) %> -k;         //key struct for lookup
+</%if>\
+      <% String.format("%-40s",baseNameCC) %> -s;         //register state for tcam
+      int                                      -slice_num; //for lookup
+      int                                      +raw_hit;   //indices with hits
+      int                                      +hit_index; //highest hit
+      ) = (
+
+      //DEBUG: tcamKeyWidth=<% tcamKeyWidth %>
+      //DEBUG: tcamTotalBankWidth=<% tcamTotalBankWidth %>
+      //DEBUG: tcamNumBanks=<% tcamNumBanks %>
+      //DEBUG: tcamKeyStructWidth=<% tcamKeyStructWidth %>
+      int W_KEY    = <% regName %>_w_Key; //width of key in single bank of tcam
+      int(<% tcamKeyWidth %>) KEY_MASK = 2**W_KEY-1;
+<%java
+String[] entryNames = new String[3];
+String arraySelectStrings[] = new String[3];
+String dimensionIndexStrings[] = new String[3];
+for (int i=0; i<3; i++) {
+	entryNames[i] = "1";
+	arraySelectStrings[i] = "";
+	}
+dimensionIndexStrings[0]="[bank]";
+dimensionIndexStrings[1]="[index]";
+dimensionIndexStrings[2]="[slice_num]";
+int i=0;
+int e=0;
+//if only 1 dim, the constant is _ENTRIES
+if (tcamHasBanks) {
+	if (numDimensions==1 && e==0) {
+		entryNames[i] = regName +"_ENTRIES";
+	} else {
+		entryNames[i] = regName +"_ENTRIES_"+e;
+		}
+	arraySelectStrings[i] = dimensionIndexStrings[i];
+	e++;
+	}
+i++;
+for (; e<numDimensions; e++) {
+	if (numDimensions==1 && e==0) {
+		entryNames[i] = regName + "_ENTRIES";
+	} else {
+		entryNames[i] = regName +"_ENTRIES_"+e;
+	}
+	arraySelectStrings[i] = dimensionIndexStrings[i];
+	i++;
+	}
+%>\
+<%if numDimensions >= 4 %>\
+  // ERROR dimensions >= 4 not supported
+  assert(0,"could not generate code");
+<%else>\
+      int N_BANKS  = <% entryNames[0] %>;
+      int N_RULES  = <% entryNames[1] %>;
+      int N_SLICES = <% entryNames[2] %>;
+</%if><%doc>numDimensions</%doc>\
+
+<%if struct != null %>\
+      //pack input structure into int for lookup
+      int(<% tcamTotalBankWidth %>) input_key = pack(k);
+</%if>\
+
+      hit_index   = 0;
+      raw_hit     = 0;
+
+      //search each rule
+      int index = 0; //index into a rule of the tcam
+      *[ index < N_RULES ->
+        int(<% tcamTotalBankWidth %>) zero_vec = 0;
+        int(<% tcamTotalBankWidth %>) ones_vec = 0;
+        //if any bits have (~Key & ~KeyInvert) short circuit TCAM lookup
+        bool entry_invalid = false;
+        //aggregate individual TCAM banks into key invert
+        int bank = 0;
+        *[~entry_invalid & (bank < N_BANKS)->
+<%java
+String tcamCSPStructName = Utility.underscoreToCamelCase(regName, true);
+String tcamCSPStructFieldName = regName.toLowerCase();
+%>\
+          <% tcamCSPStructName %> tcam_entry = s::<% tcamCSPStructFieldName %>\
+<%for int a=2; a>=0; a-- %>\
+<% arraySelectStrings[a] %>\
+</%for>;
+          int(<% tcamKeyWidth %>) key          = tcam_entry::Key;
+          int(<% tcamKeyWidth %>) key_invert   = tcam_entry::KeyInvert;
+          //simulation speedup by checking that entry is active
+          entry_invalid = key{0}==0 & key_invert{0}==0;
+          //if entry is active then perform key matching
+          #[ ~entry_invalid ->
+            int(<% tcamKeyWidth %>) cleared_bits = ~key & ~key_invert & KEY_MASK;
+            entry_invalid = cleared_bits != 0;
+            zero_vec = zero_vec | ( key_invert << (<% tcamKeyWidth %> * bank));
+            ones_vec = ones_vec | ( key        << (<% tcamKeyWidth %> * bank));
+          ];
+          bank++;
+        ];
+
+        #[~entry_invalid -> // compute raw hit and hit index
+          int(<% tcamTotalBankWidth %>) WIDE_KEY_MASK = 2**(N_BANKS*<% tcamKeyWidth %>) -1;
+          int(<% tcamTotalBankWidth %>) unexp_one_mask  = ( input_key & ~ones_vec & WIDE_KEY_MASK);
+          int(<% tcamTotalBankWidth %>) unexp_zero_mask = (~input_key & ~zero_vec & WIDE_KEY_MASK);
+          bool hit = (unexp_one_mask==0) & (unexp_zero_mask==0);
+          #[ hit ->
+            raw_hit{index}=1;
+            hit_index=index;
+          ];
+        ];
+        index++
+      ]
+    );
+<%doc></%doc></%if>\
+</%for><%doc>reg</%doc>\
+
+

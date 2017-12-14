@@ -1,0 +1,12 @@
+<!-- vim:sw=2:syntax=xml:ts=2:tw=79:
+
+	Verifies the custom lc() and uc() JEP functions.
+
+  -->
+<test>
+	<config>
+		<opt name="family" type="String" default="Fm10000" />
+		<opt name="h_file" type="String" default='${lc("$(family)")}_api_regs_int.h' />
+		<opt name="h_prefix" type="String" default='${uc("$(family)")}_' />
+	</config>
+</test>

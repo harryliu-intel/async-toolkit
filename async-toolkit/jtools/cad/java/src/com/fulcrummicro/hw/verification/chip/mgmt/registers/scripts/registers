@@ -1,0 +1,334 @@
+#!/usr/bin/env perl
+# vim:et:sw=4:ts=4:tw=79:
+#
+# registers wrapper script
+use strict;
+use warnings;
+
+use File::Spec::Functions;
+use File::Temp;
+use FindBin qw($Bin);
+use IO::Handle;
+
+# verification toplevel
+my $root = catdir($ENV{'FULCRUM_PACKAGE_ROOT'}, 'share', 'registers');
+my $xsd2schematron = "$root/doc/XSD2Schtrn.xsl";
+my $java = "/usr/intel/bin/java";
+my $xalan_lib = "$root/scripts/xalan/";
+my $xmllint = "/usr/intel/bin/xmllint";
+#my $customCatalog = "/p/utils/srd/verification/xml/catalog.xml";
+#my $catalogs = "$customCatalog:/etc/xml/catalog";
+my $catalogs = "/etc/xml/catalog";
+
+my $regpath = catdir($root, 'doc');
+my $dtd = "--valid --dtdvalid $regpath/registerInfo.dtd"; #"--valid --postvalid";
+my $schema = "$regpath/registerInfo.xsd";
+
+my $jardir = catdir($ENV{'FULCRUM_PACKAGE_ROOT'}, 'share', 'java');
+my $main = "com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterInfo";
+
+if ($#ARGV == -1)
+{
+    print '
+Usage: fulcrum registers --filetype=filepath ...
+
+    Specify all the input and output files you want:
+    --split=         Split XML file with xi:include elements
+    --xml=           Base XML file (output from --split, input to others)
+    --dtd=           Specify the DTD for XML validation
+                         (overrides DTD in script, blank for none)
+    --xsl=           XML stylesheet (only needed to generate HTML)
+    --html=          HTML output              (requires --xml and --xsl)
+    --sramsHtml=     Simplified HTML output for dim > 32(requires --xml)
+    --verilog=       Verilog output                     (requires --xml)
+    --verilogStruct= Verilog structures output          (requires --xml)
+    --verilogRegMap= Verilog register map output        (requires --xml)
+    --cast=          CAST output                        (requires --xml)
+    --castStruct=    CAST structures output             (requires --xml)
+    --castMgmt=      CAST management output             (requires --xml)
+    --castMgmtSynth=   synthesizable version            (requires --xml)
+    --castMgmtShim=    Target shim version              (requires --xml)
+    --castRegMap=    CAST register map output           (requires --xml)
+    --castRegMapSynth= synthesizable version            (requires --xml)
+    --castRegMapShimRefinements= CAST for target shim   (requires --xml)
+    --h=             H header output                    (requires --xml)
+    --cDbgRegs       SDK debug register table           (requires --xml)
+    --cDbgFields=    SDK debug register fields table    (requires --xml)
+    --cTable=        SDK register defaults table        (requires --xml)
+    --py=            Python register functions output   (requires --xml)
+    --pm=            PM header output                   (requires --xml)
+    --pmNamespace=   PM module namespace                (requires --xml)
+    --pug=           Python output                      (requires --xml)
+    --pugModule=     Python output argument             (requires --xml)
+    --rdl=           RDL output                         (requires --xml)
+    --specman=       Specman output                     (requires --xml)
+    --specmanVirt=   Boolean specifying Specman virtual access support.
+    --uvm=           UVM output                         (requires --xml)
+    --vful=          Verilog for Unit Level output      (requires --xml)
+    --coverage=      Boolean specifying UVM register coverage support.
+    --xsd=           XML schema document for validation of XML
+                         (overrides schema in script, blank for none)
+    --max-heap-size=    JVM argument e.g. 512m
+    --java=          Path to java (default: ' . $java . ')
+    --xmllint=       Path to xmllint (default: ' . $xmllint . ')
+
+  Additional options for the java:
+    --verbose=true        Show additional warnings
+    --map=true            Show a map of bases
+    --registerMap=true    Show a map of bases and registers
+    --atomic=true         Show all registers that are not fully atomic
+    --excludeOldName=true Exclude oldName registers and fields
+    --chip=               Specify chip name (bali, tc4, ...)
+    --hPrefix=            Specify prefix for h constants (FM2000_, FM4000_)
+
+';
+    exit;
+}
+
+my $split = "";
+my $xml = "";
+my $html = "";
+my $xsl = "";
+my $max_heap_size = "512m";
+my $doJava = 1;
+foreach $_ (@ARGV) {
+    if(m/--xml=(.*)/i) {
+        $xml = $1;
+    } elsif(m/--split=(.*)/i) {
+        $split = $1;
+    } elsif(m/--xsd=(.*)/i) {
+        $schema = $1;
+    } elsif(m/--xsl=(.*)/i) {
+        $xsl = $1;
+    } elsif(m/--html=(.*)/i) {
+        $html = $1;
+    } elsif(m/--dtd=(.+)/i) {
+        $dtd = "--dtdvalid $1";
+    } elsif(m/--dtd=/i) {
+        $dtd = ""; #no dtd
+    } elsif(m/--no-java=/i) {
+        $doJava = 0;
+    } elsif(m/--cmd=(.*)/i) {
+        print "WARNING: The cmd output is an interim format and subject to change. It is suggested that a template is used instead.\n";
+    } elsif(m/--java=(.*)/i) {
+        $java = $1;
+    } elsif(m/--xmllint=(.*)/i) {
+        $xmllint = $1;
+    } elsif(m/--max-heap-size=(.*)/i) {
+        $max_heap_size = $1;
+    } elsif (m/(--c)=(.*)/i) {
+        # The --c=... option is a legacy option and has been replaced by
+        # --cDbgFields=...
+        $_ =~ s/$1/--cDbgFields/;
+    } elsif(# options:
+            (m/--verbose/i) or
+            (m/--map/i) or
+            (m/--registerMap/i) or
+            (m/--atomic/i) or
+            (m/--excludeOldName/i) or
+            (m/--chip/i) or
+            (m/--hPrefix/i) or
+            (m/--suppressTypedefEnums/i) or
+            (m/--testpoint/i) or
+            (m/--coverage/i) or
+
+            # files:
+            (m/--verilog=(.*)/i) or
+            (m/--cast=(.*)/i) or
+            (m/--verilogStruct=(.*)/i) or
+            (m/--verilogRegMap=(.*)/i) or
+            (m/--castStruct=(.*)/i) or
+            (m/--castMgmt=(.*)/i) or
+            (m/--castMgmtSynth=(.*)/i) or
+            (m/--castMgmtShim=(.*)/i) or
+            (m/--castRegMap=(.*)/i) or
+            (m/--castRegMapSynth=(.*)/i) or
+            (m/--castRegMapShimRefinements=(.*)/i) or
+            (m/--sramsHtml=(.*)/i) or
+            (m/--h=(.*)/i) or
+            (m/--cDbgRegs=(.*)/i) or
+            (m/--cDbgFields=(.*)/i) or
+            (m/--cTable=(.*)/i) or
+            (m/--pm=(.*)/i) or
+            (m/--pmNamespace=(.*)/i) or
+            (m/--py=(.*)/i) or
+            (m/--pug=(.*)/i) or
+            (m/--pugModule=(.*)/i) or
+            (m/--rdl=(.*)/i) or
+            (m/--specman=(.*)/i) or
+            (m/--specmanVirt=(.*)/i) or
+            (m/--uvm=(.*)/i) or
+            (m/--vful=(.*)/i) or
+            (m/--tcl=(.*)/i) or
+            (m/--tclPackage=(.*)/i)
+           ) {
+        # Do nothing. Passed to java.
+    } else {
+        print "Warning: Unknown arg $_\n";
+    }
+}
+
+$ENV{'HTTP_PROXY'} = "";
+$ENV{'SGML_CATALOG_FILES'} = $catalogs;
+$xmllint = "$xmllint --path $regpath --catalogs";
+my ($result, @stdin);
+
+# Slurp XML from standard input if necessary.
+if ($xml eq "-")
+{
+    @stdin = IO::Handle->new()->fdopen(fileno(STDIN), "r")->getlines();
+}
+
+if($schema and $split) {
+#    validate_schema($schema, $split);
+}
+
+#print("split: $split xml: $xml, dtd=$dtd\n");
+if($split)
+{
+    if($xml)
+    {
+        $result = system("$xmllint $dtd --xinclude $split -o $xml");
+        if ($result)
+        {
+            print "Error in compiling $split to $xml.\n";
+            exit(-1);
+        }
+    }
+    else
+    {
+        $result = system("$xmllint $dtd --xinclude $split > /dev/null");
+        if ($result)
+        {
+            print "Error in compiling $split.\n";
+            exit(-1);
+        }
+        else
+        {
+            print "File compiles successfully. Use --xml arg to generate compiled version.\n";
+            exit(0);
+        }
+    }
+}
+
+if ($schema and $xml)
+{
+    validate_schema($schema, $xml);
+}
+elsif ($xml)
+{
+    print "\nWARNING: Did not validate $xml against a schema. Specify a schema with --xsd=\n\n";
+}
+
+if ($html)
+{
+    if ($xml and $xsl)
+    {
+        my $xalan = xalan();
+        system("$xalan -IN $xml -XSL $xsl -OUT $html");
+    }
+    else
+    {
+        print "Error: --xml and --xsl are required to generate html.\n";
+        exit(-1);
+    }
+}
+
+if ($doJava)
+{
+    if (!$xml)
+    {
+        print "Error: --xml arg required to run java (to create cast,verilog, or ...)\n";
+        exit(-1);
+    }
+
+    my @classpath = ();
+    my @jars = qw(jamon-runtime-2.4.0.jar all.jar);
+    push(@classpath, map {catfile($jardir, $_)} @jars);
+    my $classpath = join(":", @classpath);
+
+    my $run_cmd = "$java -ea -esa -Xmx$max_heap_size -cp $classpath $main";
+
+    my $args = join(" ", @ARGV);
+    $run_cmd .= " $args";
+
+    print $run_cmd . "\n";
+
+    if ($xml eq "-")
+    {
+        my $pipe = IO::Handle->new();
+        open($pipe, "|-", $run_cmd) or die("Can't open $run_cmd: $!");
+        map {$pipe->print($_)} @stdin;
+        $pipe->close();
+    }
+    elsif (system($run_cmd) != 0)
+    {
+        print "Error in generating output from xml.\n";
+        exit(-1);
+    }
+}
+
+sub validate_schema
+{
+    my ($schema, $xml) = @_;
+
+    my $error = undef;
+    my $pipe = IO::Handle->new();
+    my $schematron = File::Temp->new() or die($!);
+
+    my $xalan = xalan("-Dorg.apache.xerces.xni.parser.XMLParserConfiguration=org.apache.xerces.parsers.XIncludeParserConfiguration");
+    my $schematron_cmd = "$xalan -IN $schema -XSL $xsd2schematron";
+    if (!defined(open($pipe, "-|", $schematron_cmd)))
+    {
+        $error = "Can't open $schematron_cmd: $!";
+        goto ABORT;
+    }
+    while (my $line = <$pipe>)
+    {
+        $schematron->print($line);
+    }
+    $pipe->close();
+    $schematron->flush();
+
+    print("Validating $xml using $schema ...\n");
+    my $validate_cmd = "$xmllint --noout --schema $schema --schematron $schematron $xml";
+    if ($xml eq "-")
+    {
+        if (!defined(open($pipe, "|-", $validate_cmd)))
+        {
+            $error = "Can't open $validate_cmd: $!";
+            goto ABORT;
+        }
+        map {$pipe->print($_)} @stdin;
+        $pipe->close();
+    }
+    elsif (system($validate_cmd) != 0)
+    {
+        $error = "Can't validate $xml: $!";
+        goto ABORT;
+    }
+
+ABORT:
+    $schematron->close();
+    if ($error)
+    {
+        print("$error\n");
+        exit(-1);
+    }
+
+    return;
+
+}   # end validate_schema
+
+
+sub xalan
+{
+    my (@extra) = @_;
+
+    my @jars = ("serializer.jar", "xercesImpl.jar", "xalan.jar", "xml-apis.jar");
+    my $classpath = join(":", map {"$xalan_lib/$_"} @jars);
+    my $xalan = "XALAN_LIB=$xalan_lib $java -classpath $classpath @extra " .
+                "org.apache.xalan.xslt.Process ";
+    return $xalan;
+
+}   # end xalan

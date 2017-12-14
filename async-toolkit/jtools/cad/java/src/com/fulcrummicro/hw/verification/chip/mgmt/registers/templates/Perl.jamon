@@ -1,0 +1,620 @@
+<%doc>
+INTEL TOP SECRET
+Copyright 2008 - 2013 Intel Corporation
+All Rights Reserved.
+</%doc>
+<%extends /com/fulcrummicro/util/jamon/timestamp>
+<%import>
+java.util.Collection;
+java.util.Collections;
+java.util.Comparator;
+java.util.Iterator;
+java.util.List;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsEnum;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsEnumValue;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.Register;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterBase;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterField;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterStruct;
+com.fulcrummicro.util.misc.Utility;
+</%import>
+<%doc>
+
+/******************************************************************************
+ * Subtemplates
+ ******************************************************************************/
+
+/******************************************************************************/
+/** __baseaddr
+ *
+ * \desc            Constructs the Perl variable name for the absolute base
+ *                  address of the register base containing the supplied
+ *                  Intel ND register. Emits the constructed Perl variable name.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __baseaddr>
+<%args>
+Register r;
+</%args>
+$<% prefix + r.getBaseName() %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __default
+ *
+ * \desc            Emits the default value for the supplied Intel ND register.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ * \param[in]       i is the inner-most index of the supplied Intel ND register
+ *                  if the supplied register supports per-entry defaults, zero
+ *                  otherwise.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __default>
+<%args>
+Register r;
+int i;
+</%args>
+<%if r.getEntryWidth() == 1 %>\
+    return <& __xdisplay; i = r.getDefault(i, 0); w = 32 &>;
+<%else>\
+<%for int j = 0; j < r.getEntryWidth(); j++ %>\
+    return <& __xdisplay; i = r.getDefault(i, j); w = 32 &> \
+if (<% FV_PERL_INDEX[3] %> == <% j %>);
+</%for>\
+    return undef;
+</%if>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __fields
+ *
+ * \desc            Emits for all fields contained by the supplied Intel ND
+ *                  register or register data structure a set of Perl global
+ *                  variables specifying the name and the bit size of each
+ *                  field.
+ *
+ * \param[in]       r is the Intel ND register or Intel ND register data
+ *                  structure.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __fields>
+<%args>
+RegisterStruct r;
+</%args>
+<%for RegisterField f : r.fields.values() %>\
+<%if f.len == 1 %>\
+our $<& __wstrfname; name = r.getName(); suffix = "_b_" + f.desc &> = \
+<% f.pos %>;
+<%else>\
+our $<& __wstrfname; name = r.getName(); suffix = "_l_" + f.desc &> = \
+<% f.pos %>;
+our $<& __wstrfname; name = r.getName(); suffix = "_h_" + f.desc &> = \
+<% f.pos + f.len - 1 %>;
+</%if>\
+</%for>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __preamble
+ *
+ * \desc            Emits the Perl subroutine preamble for subroutines that
+ *                  expect a set of Intel ND register index arguments.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ * \param[in]       nDims is the dimensionality of {@code r}.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __preamble>
+<%args>
+Register r;
+int nDims;
+</%args>
+<%java>
+String word = r.getEntryWidth() > 1 ? ", " + FV_PERL_INDEX[3] : "";
+int w = r.getEntryWidth() > 1 ? 1 : 0;
+</%java>
+<%if nDims <= 3 %>\
+    _validatePrototype(@_, <% 1 + nDims + w %><%if testpoint %>, -1</%if>);
+    my ($self\
+<%for int i = 0, j = 3 - nDims; i < nDims; i++, j++ %>\
+, <% FV_PERL_INDEX[j] %>\
+</%for>\
+<% word %>) = @_;
+<%else>\
+<%java>
+throw new Error(nDims + "-dimensional registers not supported");
+</%java>
+</%if>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __strfaddr
+ *
+ * \desc            Converts the supplied Intel ND register address or offset to
+ *                  its hexadecimal string representation. Emits the result.
+ *
+ * \param[in]       addr is the Intel ND register address or offset.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __strfaddr>
+<%args>
+int addr;
+</%args>
+<& __xdisplay; i = addr; w = 24 &>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __strfname
+ *
+ * \desc            Appends the supplied suffix, if any, to {@code name} and
+ *                  emits the result.
+ *
+ * \param[in]       name is the Perl variable or subroutine name.
+ *
+ * \param[in]       suffix is the suffix to append to {@code name}.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __strfname>
+<%args>
+String name;
+String suffix = "";
+</%args>
+<& __wstrfname; name = name; suffix = suffix; w = -1 &>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __stride
+ *
+ * \desc            Emits a set of Perl global variables specifying the stride
+ *                  for each dimension in units of 32-bit words for the supplied
+ *                  Intel ND register.
+ *
+ * \param[in]       r is the Intel ND register.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __stride>
+<%args>
+Register r;
+</%args>
+<%java>
+boolean md = r.getNumEntries1() > 1;
+</%java>
+<%if r.getNumEntries() > 1 %>\
+our $<& __wstrfname; name = r.getName(); suffix = "_STRIDE" + (md ? "_0" : "") &> = \
+<% r.getEntrySpace() %>;
+</%if>\
+<%if r.getNumEntries1() > 1 %>\
+our $<& __wstrfname; name = r.getName(); suffix = "_STRIDE_1" &> = \
+<% r.getEntrySpace1() %>;
+</%if>\
+<%if r.getNumEntries2() > 1 %>\
+our $<& __wstrfname; name = r.getName(); suffix = "_STRIDE_2" &> = \
+<% r.getEntrySpace2() %>;
+</%if>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __width
+ *
+ * \desc            Emits a set of Perl global variables specifying the width in
+ *                  units of 32-bit words and in units of bits for the supplied
+ *                  Intel ND register or register data structure.
+ *
+ * \param[in]       r is the Intel ND register or Intel ND register data
+ *                  structure.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __width>
+<%args>
+RegisterStruct r;
+</%args>
+our $<& __wstrfname; name = r.getName(); suffix = "_WIDTH" &> = \
+<% r.getEntryWidth() %>;
+our $<& __wstrfname; name = r.getName(); suffix = "_BITS" &> = \
+<% r.getNumberFieldBits() %>;
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __wstrfname
+ *
+ * \desc            Appends the supplied suffix, if any, to {@code name} and
+ *                  pads the result with white space character to a minimum
+ *                  width of {@code w} characters. Emits the padded result.
+ *
+ * \param[in]       name is the Perl variable or subroutine name.
+ *
+ * \param[in]       suffix is the suffix to append to {@code name}.
+ *
+ * \param[in]       w is the minimum width of the resulting string in units of
+ *                  characters. Set to -1 to suppress padding.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __wstrfname>
+<%args>
+String name;
+String suffix = "";
+int w = FV_PERL_WIDTH;
+</%args>
+<%java>
+String format = w >= 0 ? String.format("%%-%ds", w) : "%s";
+</%java>
+<% String.format(format, prefix + name + suffix) %>\
+</%def>
+<%doc>
+
+
+/******************************************************************************/
+/** __xdisplay
+ *
+ * \desc            Converts the supplied integer value to its hexadecimal
+ *                  string representation. Emits the result.
+ *
+ * \param[in]       i is the integer value to convert.
+ *
+ ******************************************************************************/
+</%doc>
+<%def __xdisplay>
+<%args>
+Integer i;
+int w;
+</%args>
+<%java>
+int nibbles = (int) Math.ceil(w / 4.0);
+</%java>
+<% String.format(String.format("0x%%0%dX", nibbles), i) %>\
+</%def>
+<%doc>
+
+/******************************************************************************
+ * Main Template
+/******************************************************************************
+
+/******************************************************************************
+ **
+ *
+ * \param[in]       bases is the set of register bases for which to emit code.
+ *
+ * \param[in]       prefix is the string with which to prefix all Perl global
+ *                  variables and public subroutines.
+ *
+ * \param[in]       basename is the output filename excluding its extension.
+ *
+ * \param[in]       namespace is the parent namespace.
+ *
+ * \param[in]       testpoint is a boolean indicating whether the output file is
+ *                  to be included in the TestPoint application.
+ *
+ ******************************************************************************/
+</%doc>
+<%args>
+Collection<RegisterBase> bases;
+String prefix;
+String basename;
+String namespace;
+boolean testpoint;
+</%args>
+<%class>
+static class ConstantsEnumValueComparator implements Comparator<ConstantsEnumValue> {
+
+    public int compare(ConstantsEnumValue o1, ConstantsEnumValue o2) {
+        return Integer.valueOf(o1.getEncoding()).compareTo(o2.getEncoding());
+    }
+
+}
+static int ndims(Register r) {
+    if (r.getNumDimensions() == 1 && r.getNumEntries() == 1) {
+        return 0;
+    }
+    return r.getNumDimensions();
+}
+static List<Register> regs = null;
+static String[] FV_PERL_INDEX = new String[]{"$index2", "$index1", "$index0", "$word"};
+static final int FV_PERL_WIDTH_DEFAULT = -1;
+static int FV_PERL_WIDTH = FV_PERL_WIDTH_DEFAULT;
+</%class>
+<%java>
+String module = namespace.length() > 0 ?
+                namespace.concat("::").concat(basename) :
+                basename;
+</%java>
+# vim:et:sw=4:ts=4:tw=79
+# (No tabs, indent level is 4, text width is 79)
+
+###############################################################################
+# File:             <% module.replaceAll("::", "/") %>.pm
+# Creation Date:    December 18, 2008
+# Last Updated:     <& timestamp; &>
+# Description:      Perl register utility variables and subroutines.
+#
+# INTEL CONFIDENTIAL
+# Copyright <& copyright_year; creationYear = 2008 &> Intel Corporation.
+# All Rights Reserved.
+#
+# The source code contained or described herein and all documents related
+# to the source code ("Material") are owned by Intel Corporation or its
+# suppliers or licensors. Title to the Material remains with Intel
+# Corporation or its suppliers and licensors. The Material contains trade
+# secrets and proprietary and confidential information of Intel or its
+# suppliers and licensors. The Material is protected by worldwide copyright
+# and trade secret laws and treaty provisions. No part of the Material may
+# be used, copied, reproduced, modified, published, uploaded, posted,
+# transmitted, distributed, or disclosed in any way without Intel's prior
+# express written permission.
+#
+# No license under any patent, copyright, trade secret or other intellectual
+# property right is granted to or conferred upon you by disclosure or
+# delivery of the Materials, either expressly, by implication, inducement,
+# estoppel or otherwise. Any license under such intellectual property rights
+# must be express and approved by Intel in writing.
+#
+# THIS FILE IS AUTOMATICALLY GENERATED - DO NOT MODIFY.
+###############################################################################
+
+package <% module %>;
+use strict;
+use warnings;
+
+use base qw(Exporter);
+
+<%if testpoint %>\
+our @EXPORT = qw(
+<%for RegisterBase b : bases %>\
+<%for Register r : b.getRegisters() %>\
+    <& __strfname; name = r.getName() &>
+</%for>\
+</%for>\
+);
+</%if>\
+our @EXPORT_FAIL = qw(_panic _validatePrototype);
+
+###############################################################################
+# Local Variables
+###############################################################################
+
+use constant INDENT => "  ";
+
+###############################################################################
+# Local Functions
+###############################################################################
+
+sub _panic($)
+{
+    my ($format, @arguments) = @_;
+
+    my ($level);
+
+    open(STDOUT, ">&STDERR");
+    for ($level = 1; ; $level++)
+    {
+        my ($package, $file, $line, $subroutine) = caller($level);
+        if (!defined($subroutine) || $subroutine eq "(eval)")
+        {
+            last;
+        }
+        $file =~ s,(perl|te2)/+,,;
+        printf("%s$subroutine at $file line $line:\n", INDENT x ($level - 1));
+    }
+    printf("%s$format\n", INDENT x ($level - 1), @arguments);
+    die();
+}
+
+sub _validatePrototype(\@$;$)
+{
+    my ($arguments, $m, $n) = @_;
+
+    $n = defined($n) ? $n : $m;
+
+    my ($package, $file, $line, $subroutine) = caller(1);
+    if (scalar(@{$arguments}) < $m)
+    {
+        _panic("Not enough arguments for $subroutine");
+    }
+    elsif ($n != -1 && scalar(@{$arguments}) > $n)
+    {
+        _panic("Too many arguments for $subroutine");
+    }
+    for (my $i = 0; $i < $n; $i++)
+    {
+        if (!defined($arguments->[$i]))
+        {
+            _panic("$subroutine: argument $i not defined");
+        }
+        elsif ($arguments->[$i] != int($arguments->[$i]))
+        {
+            _panic("$subroutine: argument $i not an integer");
+        }
+    }
+}
+
+<%for RegisterBase b : bases %>\
+<%java>
+regs = b.getRegisters();
+</%java>
+<%doc>Compute the maximum width in units of characters across all structures,
+enumerations and register fields in this register base.</%doc>
+<%java>
+FV_PERL_WIDTH = FV_PERL_WIDTH_DEFAULT;
+for (RegisterStruct s : b.getStructs()) {
+    Iterator<String> it = s.getFieldIter();
+    int l = s.getName().length();
+    while (it.hasNext()) {
+        RegisterField f = s.getField(it.next());
+        FV_PERL_WIDTH = Math.max(FV_PERL_WIDTH, l + f.desc.length());
+    }
+}
+for (ConstantsEnum e : b.getEnums()) {
+    int l = e.getName().length();
+    for (ConstantsEnumValue value : e.values) {
+        FV_PERL_WIDTH = Math.max(FV_PERL_WIDTH, l + value.getName().length());
+    }
+}
+for (Register r : b.getRegisters()) {
+    Iterator<String> it = r.getFieldIter();
+    int l = r.getName().length();
+    while (it.hasNext()) {
+        RegisterField f = r.getField(it.next());
+        FV_PERL_WIDTH = Math.max(FV_PERL_WIDTH, l + f.desc.length());
+    }
+}
+</%java>
+<%doc>Excluding the prefix, each enumeration adds 2 extra characters ("__") to
+the computed width, while each register field variable adds 3 extra characters
+("_b_", "_l_", and/or "_h_") to the computed width.</%doc>
+<%java>
+FV_PERL_WIDTH += prefix.length() + 3;
+</%java>
+###############################################################################
+# <% b.getFullName() %>
+###############################################################################
+
+our $<& __wstrfname; name = b.getFullName() &> = \
+<& __strfaddr; addr = b.getAbsoluteAddress() &>;
+our $<& __wstrfname; name = b.getName(); suffix = "_SIZE" &> = \
+<& __strfaddr; addr = b.getSize() &>;
+
+<%for RegisterStruct s : b.getStructs() %>\
+<& __width; r = s &>\
+<& __fields; r = s &>\
+
+</%for>\
+<%for ConstantsEnum e : b.getEnums() %>\
+<%doc>Sort the enumeration values according to their natural ordering to ensure
+that all enumerations are displayed in ascending order.</%doc>
+<%java>
+Collections.sort(e.values, new ConstantsEnumValueComparator());
+</%java>
+<%for ConstantsEnumValue value : e.values %>\
+<%java>
+String name = Utility.possibleUnderscoreToLowerCase(e.getName()).toUpperCase();
+</%java>
+<%doc>Note: An extra white space character is inserted prior to the backslash
+character to ensure that the left brace lines up with the equals sign used by
+the variable declarations.</%doc>
+sub <& __wstrfname; name = name; suffix = "__" + value.getName() &>  \
+{ return <% value.getEncoding() %>; }
+</%for>\
+
+</%for>\
+<%for Register r : regs %>\
+<& __width; r = r &>\
+<& __stride; r = r &>\
+<& __fields; r = r &>\
+
+</%for>\
+<%for Register r : regs %>\
+<%java>
+String woffset = r.getEntryWidth() > 1 ? " + " + FV_PERL_INDEX[3] : "";
+int nDims = ndims(r);
+boolean md = r.getNumEntries1() > 1;
+</%java>
+sub <& __strfname; name = r.getName() &>
+{
+<& __preamble; r = r; nDims = nDims &>\
+    return \
+<%if nDims == 0 %>\
+(<& __baseaddr; r = r &> + <& __strfaddr; addr = r.getAddressOffset() &>\
+<% woffset %>); \
+<%elseif nDims == 1 %>\
+(<& __baseaddr; r = r &> + <& __strfaddr; addr = r.getAddressOffset() &> \
++ <& __strfaddr; addr = r.getEntrySpace() &> * \
+(<% FV_PERL_INDEX[2] %> - <% r.getBaseEntry() %>)\
+<% woffset %>); \
+<%elseif nDims == 2 %>\
+(<& __baseaddr; r = r &> + <& __strfaddr; addr = r.getAddressOffset() &> \
++ <& __strfaddr; addr = r.getEntrySpace1() &> * \
+(<% FV_PERL_INDEX[1] %> - <% r.getBaseEntry1() %>) \
++ <& __strfaddr; addr = r.getEntrySpace() &> * \
+(<% FV_PERL_INDEX[2] %> - <% r.getBaseEntry() %>)\
+<% woffset %>); \
+<%elseif nDims == 3 %>\
+(<& __baseaddr; r = r &> + <& __strfaddr; addr = r.getAddressOffset() &> \
++ <& __strfaddr; addr = r.getEntrySpace2() &> * \
+(<% FV_PERL_INDEX[0] %> - <% r.getBaseEntry2() %>) \
++ <& __strfaddr; addr = r.getEntrySpace1() &> * \
+(<% FV_PERL_INDEX[1] %> - <% r.getBaseEntry1() %>) \
++ <& __strfaddr; addr = r.getEntrySpace() &> * \
+(<% FV_PERL_INDEX[2] %> - <% r.getBaseEntry() %>)\
+<% woffset %>); \
+<%else>\
+<%java>
+throw new Error(nDims + "-dimensional registers not supported");
+</%java>
+</%if>\
+# <& __strfaddr; addr = r.getAddress() &>
+}
+
+<%if r.getNumEntries() > 1 %>\
+sub <& __strfname; name = r.getName(); suffix = "_ENTRIES" + (md ? "_0" : "") &>
+{
+    _validatePrototype(@_, 1<%if testpoint %>, -1</%if>);
+    my ($self) = @_;
+    return <% r.getNumEntries() %>;
+}
+
+</%if>\
+<%if r.getNumEntries1() > 1 %>\
+sub <& __strfname; name = r.getName(); suffix = "_ENTRIES_1" &>
+{
+    _validatePrototype(@_, 1<%if testpoint %>, -1</%if>);
+    my ($self) = @_;
+    return <% r.getNumEntries1() %>;
+}
+
+</%if>\
+<%if r.getNumEntries2() > 1 %>\
+sub <& __strfname; name = r.getName(); suffix = "_ENTRIES_2" &> \
+{
+    _validatePrototype(@_, 1<%if testpoint %>, -1</%if>);
+    my ($self) = @_;
+    return <% r.getNumEntries2() %>;
+}
+
+</%if>\
+sub <& __strfname; name = r.getName(); suffix = "_DEFAULT" &>
+{
+<& __preamble; r = r; nDims = nDims &>\
+<%if r.getNumDefaults() == 1 %>\
+<& __default; r = r; i = 0 &>\
+<%else>\
+<%for int i = 0; i < r.getNumDefaults(); i++ %>\
+    if (<% FV_PERL_INDEX[2] %> == <% i %>)
+    {
+        <& __default; r = r; i = i &>
+    }
+</%for>\
+</%if>\
+}
+
+</%for>\
+</%for>\
+1;

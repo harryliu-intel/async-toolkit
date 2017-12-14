@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:sch="http://www.ascc.net/xml/schematron">
+  
+  <xs:import namespace="http://www.w3.org/1999/xhtml"
+	schemaLocation="w3c/xhtml1-strict.xsd"/>
+  
+  <xs:element name="registerInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="registerSet" maxOccurs="unbounded">
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="registerSet">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="brief"/>
+        <xs:element ref="description"/>
+        <xs:element ref="addressBase"/>
+        <xs:element ref="addressBits" minOccurs="0"/>
+        <xs:element ref="addressSize" minOccurs="0"/>
+        <xs:element ref="crossbarPort" minOccurs="0" />
+        <xs:element ref="crossbarPortStride" minOccurs="0" />
+        <xs:element ref="busStopNum" minOccurs="0"/>
+        <xs:element ref="busStopStride" minOccurs="0"/>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element ref="typedefs"/>
+          <xs:element ref="registers"/>
+          <xs:element ref="registerSet" maxOccurs="unbounded"/>
+        </xs:choice>
+      </xs:sequence>
+      <xs:anyAttribute/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="registers">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="register" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="register">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="oldName" minOccurs="0"/>
+        <xs:element ref="specialFeature" minOccurs="0"/>
+        <xs:element ref="brief"/>
+        <xs:element ref="description"/>
+        <xs:element ref="notes"/>
+        <xs:choice>
+          <xs:element ref="addressOffset"/>
+          <xs:element ref="alias"/>
+        </xs:choice>
+        <xs:element ref="id" minOccurs="0"/>
+        <xs:element ref="entries" maxOccurs="3"/>
+        <xs:element ref="baseEntry" minOccurs="0" maxOccurs="3"/>
+        <xs:element ref="width"/>
+        <xs:element ref="bits" minOccurs="0"/>
+        <xs:element ref="stride" minOccurs="0" maxOccurs="3"/>
+        <xs:element ref="implemented"/>
+        <xs:element ref="atomic" minOccurs="0"/>
+        <xs:element ref="fields"/>
+        <xs:element ref="coverage" minOccurs="0"/>
+        <xs:element ref="resetDomains"/>
+        <xs:element ref="implementation" minOccurs="0"  maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute ref="suppressStructGeneration"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="fields">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="field" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="coverage">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="test" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="field">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name" />
+        <xs:element ref="oldName" minOccurs="0"/>
+        <xs:element name="globalName" type="xs:string" minOccurs="0"/>
+        <xs:element ref="specialFeature" minOccurs="0"/>
+        <xs:element ref="position"/>
+        <xs:element ref="length"/>
+        <xs:element ref="type"/>
+        <xs:element ref="entries" minOccurs="0"/>
+        <xs:element ref="baseEntry" minOccurs="0"/>
+        <xs:element ref="description"/>
+        <xs:element ref="default" maxOccurs="unbounded"/>
+        <xs:element ref="values" minOccurs="0"/>
+        <xs:element ref="notes" minOccurs="0"/>
+        <xs:element ref="coverage" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="resetDomains">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="resetDomain" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="resetDomain" type="xs:string" />
+
+  <xs:element name="name" type="castName" />
+  <xs:element name="oldName" type="castName" />
+  <xs:element name="specialFeature" type="xs:string" />
+  <xs:element name="brief" type="xhtml" />
+  <xs:element name="description" type="xhtml" />
+  <xs:element name="notes" type="xhtml" />
+  <xs:element name="addressBase" type="hex"/>
+  <xs:element name="addressBits" type="xs:positiveInteger"/>
+  <xs:element name="addressSize" type="hex"/>
+  <xs:element name="addressOffset" type="hex"/>
+  <xs:element name="crossbarPort" type="xs:string" />
+  <xs:element name="crossbarPortStride" type="hex" />
+  <xs:element name="busStopNum" type="xs:string" />
+  <xs:element name="busStopStride" type="hex" />
+  <xs:element name="id" type="xs:nonNegativeInteger"/>
+  <xs:element name="alias" type="castName" />
+  <xs:element name="entries">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:positiveInteger">
+          <xs:attribute ref="dimension"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="baseEntry">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:nonNegativeInteger">
+          <xs:attribute ref="dimension"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="width" type="xs:positiveInteger"/>
+  <xs:element name="bits" type="xs:nonNegativeInteger"/>
+  <xs:element name="stride">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="hex">
+          <xs:attribute ref="dimension"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="implemented" type="xs:boolean"/>
+  <xs:element name="atomic" type="xs:string"/>
+  <xs:element name="position" type="xs:nonNegativeInteger"/>
+  <xs:element name="length" type="xs:positiveInteger"/>
+  <xs:element name="type">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value="RW"/>
+        <xs:enumeration value="SRW"/>
+        <xs:enumeration value="RO"/>
+        <xs:enumeration value="CW"/>
+        <xs:enumeration value="CW1"/>
+        <xs:enumeration value="CR"/>
+        <xs:enumeration value="CA"/>
+        <xs:enumeration value="PIN"/>
+        <xs:enumeration value="RV"/>
+        <xs:enumeration value="NA"/>
+        <xs:enumeration value="WO"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="default">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="hex">
+          <xs:attribute ref="entryStart"/>
+          <xs:attribute ref="entryEnd"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+    
+  <xs:element name="values">
+    <xs:annotation>
+      <xs:appinfo>
+        <sch:pattern name="values check.">
+          <sch:rule context="//values">
+            <sch:assert test="value or @typedef">Assert that one of value or @typedef are present</sch:assert>
+            <sch:assert test="not(value and @typedef)">Assert that only one of value or @typedef are present</sch:assert>
+          </sch:rule>
+        </sch:pattern>
+      </xs:appinfo>
+    </xs:annotation>
+    
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="value" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="typedef" type="castName"/>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="value">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml">
+          <xs:attribute ref="name"/>
+          <xs:attribute ref="encoding"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="typedefs">
+    <xs:complexType>
+      <xs:sequence>
+          <xs:choice maxOccurs="unbounded">
+            <xs:element ref="enum"/>
+            <xs:element ref="struct"/>
+          </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="enum">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name" />
+        <xs:element ref="oldName" minOccurs="0"/>
+        <xs:element ref="length"/>
+        <xs:element ref="description"/>
+        <xs:element ref="values"/>
+        <xs:element ref="notes" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="struct">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name" />
+        <xs:element ref="oldName" minOccurs="0"/>
+        <xs:element ref="brief"/>
+        <xs:element ref="description"/>
+        <xs:element ref="notes" minOccurs="0"/>
+        <xs:element ref="width"/>
+        <xs:element ref="fields"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="implementation">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="implParm" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="implParm">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml">
+          <xs:attribute ref="name"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:attribute name="dimension" type="xs:nonNegativeInteger"/>
+  <xs:attribute name="entryStart" type="xs:nonNegativeInteger"/>
+  <xs:attribute name="entryEnd" type="xs:nonNegativeInteger"/>
+  <xs:attribute name="suppressStructGeneration" type="xs:boolean"/>
+  <xs:attribute name="name" type="castName"/>
+  <xs:attribute name="encoding" type="xs:nonNegativeInteger"/>
+
+  <xs:simpleType name="castName">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(.*)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="xhtml" mixed="true">
+    <xs:sequence>
+      <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="hex">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="0x([0-9a-fA-F])+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

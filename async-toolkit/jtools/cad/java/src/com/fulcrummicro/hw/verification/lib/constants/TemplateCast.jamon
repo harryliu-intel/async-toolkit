@@ -1,0 +1,91 @@
+<%import>
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.lib.constants.*;
+com.fulcrummicro.hw.verification.lib.constants.ConstantsChannelField.ConstantsChannelFieldType;
+</%import>\
+<%args>
+Constants constants;
+</%args>\
+<%escape #n>\
+<%java Collection<ConstantsCell> cells = constants.cells.values(); %>\
+/* INTEL TOP SECRET
+ * Copyright <% java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) %> Intel Corporation. All Rights Reserved.
+ * $Id:  $
+ * DO NOT EDIT! Automatically generated from constant xml.  */
+module <% constants.getModule() %>;
+
+<%for Constants c : constants.getImports() %>\
+import <% c.getModule() %>.*;
+</%for>\
+
+<%for ConstantsCell cell : cells %>\
+define <% Utility.underscoreToCamelCase(cell.name,true) %>()() attributes {<% cell.getCastDescription() %>
+<%for ConstantsConstant c : cell.constants %>\
+  int <% String.format("%-21s", c.getName()) %> = <% String.format("%5d", c.getValue()) %>;<% c.getCastDescription() %>
+</%for>\
+
+<%for ConstantsEnum e : cell.enums %>\
+  // Enum <% e.getName() %>: <% e.getDescription() %>
+<%for ConstantsEnumValue c : e.values %>\
+  int <% String.format("%-20s", c.getFullName()) %> = <% String.format("%5d", c.getEncoding()) %>;<% c.getCastDescription() %>
+</%for>\
+\
+</%for>\
+<%for ConstantsChannel channel : cell.channels %>\
+  int <% String.format(" W_%-18s", channel.getName()) %> = <% String.format("%5d", channel.getWidth()) %>;
+  int <% String.format("WD_%-18s", channel.getName()) %> = <% String.format("%5d", (int)Math.ceil(channel.getWidth()/2.0)) %>;
+</%for>\
+<%if !cell.channels.isEmpty() %>\
+  csp {
+<%for ConstantsChannel channel : cell.channels %>\
+    structure <% Utility.underscoreToCamelCase(channel.getName(),true) %> = (
+<%for ConstantsChannelField f : channel.fields.descendingSet() %>\
+      <% f.getCastFullTypeString() %> \
+<% String.format("%-15s", f.getName().toLowerCase() + (f.getArray()>1 ?  String.format("[%d];", f.getArray()) : ";")) %>\
+<% f.getCastDescription() %>
+</%for>\
+    );<% channel.getCastDescription() %>
+
+</%for>\
+  }
+</%if>\
+}
+\
+</%for><%doc>cell</%doc>\
+
+<%for ConstantsCell cell : cells %><%for ConstantsChannel channel : cell.channels %>\
+<%if channel.getType() == null %>\
+defchan <% Utility.underscoreToCamelCase(channel.getName(),true) %>()(
+<%for ConstantsChannelField f : channel.fields.descendingSet() %>\
+  <% f.getCastDefchanTypeString() %> \
+<% String.format("%-15s", f.getDirection() + f.getName() + (f.getArray()>1 ?  String.format("[0..%d];", f.getArray()-1) : ";")) %>\
+<% f.getCastDescription() %>
+</%for>\
+) {}
+</%if>\
+</%for></%for><%doc>cell</%doc>\
+
+<%for ConstantsCell cell : cells %><%for ConstantsChannel channel : cell.channels %>\
+<%if (channel.getType() == null) && channel.isSingleDirection() %>\
+<& source_sink; channel=channel; name="rsource"; dir="+" &>\
+<& source_sink; channel=channel; name="bitbucket"; dir="-" &>\
+</%if>\
+</%for></%for><%doc>cell</%doc>\
+\
+<%def source_sink>\
+<%args>ConstantsChannel channel; String name; String dir;</%args>\
+define <% name %>_<% Utility.underscoreToCamelCase(channel.getName(),true) %>()(<% Utility.underscoreToCamelCase(channel.getName(),true) %> <% dir %>X) {
+  subcells {
+<%for ConstantsChannelField f : channel.fields.descendingSet() %>\
+<%if f.getType() != ConstantsChannelFieldType.NODE %>\
+    <%if f.getArray()>1 %><% "<i:" %><% f.getArray() %>: </%if>\
+<% name %>_<%if f.getCastDefchanNumChannels() >1 %>N_</%if><% f.getCastDefchanTypeString().replace('[','(').replace(']',')') %> _(X.<% f.getName() %>\
+<%if f.getArray()>1 %>[i<%if f.getCastDefchanNumChannels() >1 %>,0..<% f.getCastDefchanNumChannels()-1 %></%if>]</%if>\
+);\
+<%if f.getArray()>1 %><% ">" %></%if>
+</%if>\
+</%for>\
+  }
+}
+</%def>\

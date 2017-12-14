@@ -10,6 +10,7 @@ include ../java/src/com/avlsi/tools/rte/rte.package ../java/src/com/avlsi/tools/
 include ../java/src/com/avlsi/tools/prs2verilog/prs2verilog.package ../java/src/com/avlsi/tools/prs2verilog
 include ../java/src/com/avlsi/tools/presto/presto.package ../java/src/com/avlsi/tools/presto
 include ../java/src/com/avlsi/tools/dsim/dsim.package ../java/src/com/avlsi/tools/dsim
+include ../java/src/com/fulcrummicro/hw/verification/chip/mgmt/registers/registers.package ../java/src/com/fulcrummicro/hw/verification/chip/mgmt/registers
 include ../java/src/com/avlsi/tools/cast2verilog/cast2verilog.package ../java/src/com/avlsi/tools/cast2verilog
 include ../java/src/com/avlsi/csp/coverage/coverage.package.inc ../java/src/com/avlsi/csp/coverage
 include ../java/src/com/avlsi/csp/csp2xml/csp2xml.package.inc ../java/src/com/avlsi/csp/csp2xml
@@ -38,3 +39,6 @@ share/java/stringtemplate.jar ../java/jars/stringtemplate.jar 640 p
 share/java/xercesImpl.jar ../java/jars/xercesImpl.jar 640 p
 share/java/xml-apis.jar ../java/jars/xml-apis.jar 640 p
 share/java/ST-4.0.8.jar ../java/jars/ST-4.0.8.jar 640 p
+share/java/jep-2.4.1.jar ../java/jars/jep-2.4.1.jar 640 p
+share/java/jamon-runtime-2.4.0.jar ../java/jars/jamon-runtime-2.4.0.jar 640 p
+share/java/commons-digester-1.8.jar ../java/jars/commons-digester-1.8.jar 640 p

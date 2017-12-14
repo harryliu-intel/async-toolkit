@@ -1,0 +1,9 @@
+family=Fm10000
+h_file=fm10000_api_regs_int.h
+h_prefix=FM10000_
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.
