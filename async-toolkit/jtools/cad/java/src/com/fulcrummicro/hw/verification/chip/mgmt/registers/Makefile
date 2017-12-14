@@ -47,10 +47,10 @@ JAVA_IMPL_FILES = $(patsubst %.jamon,%Impl.java,$(JAMON_FILES))
 empty =
 space = $(empty) $(empty)
 
-SHAREDIR  = $(shell echo $(CURDIR) | sed -r -e "s,(/shared)/.*,\1,")
-SRCDIR    = $(SHAREDIR)/java/src
+SHAREDIR  = ../../../../../../../..
+SRCDIR    = $(SHAREDIR)/src
 TMPLDIR   = com/fulcrummicro/hw/verification/chip/mgmt/registers/templates
-JARDIR    = $(SHAREDIR)/jars
+JARDIR    = $(realpath $(SHAREDIR)/jars)
 CLASSPATH = $(patsubst :%,%,                                                  \
               $(subst $(space):,:,                                            \
                 $(addprefix :$(JARDIR)/,                                      \
