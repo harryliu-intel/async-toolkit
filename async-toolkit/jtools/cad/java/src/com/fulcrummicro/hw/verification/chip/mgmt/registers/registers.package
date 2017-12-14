@@ -7,6 +7,7 @@
 java com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterInfo
 java com.fulcrummicro.hw.verification.chip.mgmt.registers.RegisterChecker
 $arch/bin/registers scripts/registers 775 p
+$arch/bin/reg2xml scripts/reg2xml 775 p
 share/registers/doc/XSD2Schtrn.xsl doc/XSD2Schtrn.xsl 664 p
 share/registers/doc/registerInfo.xsd doc/registerInfo.xsd 664 p
 share/registers/doc/registerInfo.dtd doc/registerInfo.dtd 664 p

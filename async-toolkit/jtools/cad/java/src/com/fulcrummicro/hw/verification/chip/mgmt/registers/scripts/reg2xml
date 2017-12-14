@@ -1,0 +1,1439 @@
+#!/usr/bin/perl 
+#
+#Usage:
+#
+# reg2xml in-file [out-file]
+
+# define OS
+use strict;
+use Config;
+use FindBin qw($Bin);
+
+open INFILE,"<$ARGV[0]" or die "Can't open input file $ARGV[0]\n";
+if ( $ARGV[1] )
+{
+    open OUTFILE,">$ARGV[1]" or die "Can't open output file $ARGV[1]\n";
+}
+else
+{
+    my $f = $ARGV[0];
+    $f =~ s/\.[^\.]+$/\.xml/;
+    open OUTFILE,">$f" or die "Can't open output file $f\n";
+}
+
+
+my %option;
+my $lineNo=0;
+my $line;
+
+my $elementType;
+my $elementName;
+my $elementDescription;
+my $elementBrief;
+my $elementNote;
+my @elementImplementation;
+my $elementWidth;
+my @elementIndexes;
+
+my @fieldName;
+my @fieldWidth;
+my @fieldType;
+my @fieldDescription;
+my @fieldDefault;
+my @fieldValueCount;
+my @fieldValueValue;
+my @fieldValueName;
+my @fieldValueComment;
+my @fieldValueMarker;
+my @fieldNote;
+my @fieldCrossRef;
+my $fieldNo;
+
+my @description;
+my $descriptionLine;
+my $inPre;
+
+my @note;
+my $noteLine;
+my $inNote;
+my $inImplementation;
+my $implIndex;
+
+my $inField;
+my $setOpened;
+my $typedefsOpened;
+my $registersOpened;
+
+my @mapSize;
+my @mapOffset;
+my @mapName;
+my $mapCount;
+
+my $error;
+
+write_header();
+
+# Set some default options
+
+$option{"implemented"} = "false";
+$option{"set-implemented"} = "false";
+$option{"atomic"} = "32";
+$option{"indexes"} = "";
+$option{"stride"} = "";
+$option{"alias"} = "";
+$option{"id"} = 0;
+$option{"align"} = 0;
+$option{"busStopNum"} = "BSN_NULL";
+$option{"busStopStride"} = "";
+$option{"crossbarPort"} = "CBP_NULL";
+$option{"crossbarPortStride"} = "";
+
+$line = <INFILE>;
+$lineNo = 1;
+$setOpened = 0;
+$registersOpened = 0;
+$typedefsOpened = 0;
+$error = 0;
+
+while ($line) {
+    #Get rid of the return    
+    chomp $line;
+    # Parse line
+    if ( $line =~ m/^\s*#/ )
+    {
+        #Ignore comments
+    }
+    elsif ( $line =~ m/^\s*--/ )
+    {
+        # Write current element
+        write_element();
+        #Parse options
+        my $val="XXX";
+        my $opt="XXX";
+        if ( $line =~ m/^\s*--(\S*)\s*(\S*)/)
+        {
+            $val = $2;
+            $opt = $1;
+        }
+        elsif ( $line =~ m/^\s*--(\S*)\s*$/)
+        {
+            $val = "";
+            $opt = $1;
+        }
+        else
+        {
+            $error = 1;
+            printf ("Error at line #$lineNo: invalid option format <$line>\n");
+        }
+        if    ( $opt eq "addressBase" )   { $option{$opt} = $val; }
+        elsif ( $opt eq "addressBits" )   { $option{$opt} = $val; }
+        elsif ( $opt eq "size" )          { $option{$opt} = $val; }
+        elsif ( $opt eq "stride" )        { $option{$opt} = $val; }
+        elsif ( $opt eq "indexes" )       { $option{$opt} = $val; }
+        elsif ( $opt eq "implemented" )   { $option{$opt} = $val; }
+        elsif ( $opt eq "resetDomains" )  { $option{$opt} = $val; }
+        elsif ( $opt eq "crossbarPort" )  { $option{$opt} = $val; }
+        elsif ( $opt eq "crossbarPortStride" ) { $option{$opt} = $val; }
+        elsif ( $opt eq "busStopNum" )    { $option{$opt} = $val; }
+        elsif ( $opt eq "busStopStride" ) { $option{$opt} = $val; }
+        elsif ( $opt eq "id" )            { $option{$opt} = $val; }
+        elsif ( $opt eq "offset" )        
+        { 
+            if ( $val =~ m/^0x([0-9a-zA-Z]*)$/ )
+            {
+                $val = hex($1);
+            }
+            elsif ( $val =~ m/^(\d*)$/ )
+            {
+                $val = int($1);
+            }
+            else
+            {
+                $error = 1;
+                print ("Error at line #$lineNo: offset must be a number (hex or int)\n");
+                $val = -1;
+            }
+            $option{"offset"} = $val;
+        }
+        elsif ( $opt eq "align" )        
+        { 
+            if ( $val =~ m/^0x([0-9a-zA-Z]*)$/ )
+            {
+                $val = hex($1);
+            }
+            elsif ( $val =~ m/^(\d*)$/ )
+            {
+                $val = int($1);
+            }
+            else
+            {
+                $error = 1;
+                print ("Error at line $lineNo: offset must be a number (hex or int)\n");
+                $val = -1;
+            }
+            $option{"align"} = $val;
+        }
+        elsif ( $opt eq "atomic" )        { $option{$opt} = $val; }
+        elsif ( $opt eq "implemented" )   { $option{$opt} = $val; }
+        elsif ( $opt eq "alias" )         { $option{$opt} = $val; }
+        else
+        {
+            $error = 1;
+            printf ("Error line #$lineNo: unkown option <$opt>\n");
+        }
+    }
+    elsif ( $line =~ m/^\s*-set/i )
+    {
+        if ( $line =~ m/^\s*-set\s+(\S*)\s+(\S.*)$/i )
+        {
+            # Close current set
+            close_set();
+            # Create new set
+            $elementType = "set";
+            $elementName = $1;
+            $elementBrief = $2;
+        }
+        elsif ( $line =~ m/^\s*-set\s+(\S*)$/i )
+        {
+            # Close current set
+            close_set();
+            # Create new Set
+            $elementType = "set";
+            $elementName = $1;
+            $elementBrief = "";
+        }
+        else
+        {
+            printf ("Error at line #$lineNo: invalid set format <$line>\n");
+            $error = 1;
+        }
+        
+    }
+    elsif ( $line =~ m/^\s*-register/i )
+    {
+        if ( $line =~ m/^\s*-register\s+(\S*)\s+(\S.*)$/i )
+        {
+            # Dump old register
+            write_element();
+            # Now save this new register
+            $elementType = "register";
+            $elementName = $1;
+            $elementBrief = $2;
+            #if the register carries indexes, then use those
+            if ( $elementName =~ m/(.*)\[(.*)]/ )
+            {
+                $elementName = $1;
+                @elementIndexes = split(",",$2);
+            }
+            else
+            {
+                @elementIndexes = ();
+            }
+        }
+        elsif ( $line =~ m/^\s*-register\s+(\S*)\s*$/i )
+        {
+            # Dump old register
+            write_element();
+            # Now save this new register
+            $elementType = "register";
+            $elementName = $1;
+            $elementBrief = "";
+            #if the register carries indexes, then use those
+            if ( $elementName =~ m/(.*)\[(.*)]/ )
+            {
+                $elementName = $1;
+                @elementIndexes = split(",",$2);
+            }
+            else
+            {
+                @elementIndexes = ();
+            }
+        }
+        else
+        {
+            $error = 1;
+            printf ("Error at line #$lineNo: invalid register format <$line>\n");
+        }
+        
+    }
+    elsif ( $line =~ m/^\s*-struct/i )
+    {
+        if ( $line =~ m/^\s*-struct\s+(\S*)\s+(\S.*)$/i )
+        {
+            # Dump old register
+            write_element();
+            # Now save this new register
+            $elementType = "struct";
+            $elementName = $1;
+            $elementBrief = $2;
+        }
+        elsif ( $line =~ m/^\s*-struct\s+(\S*)\s*$/i )
+        {
+            # Dump old register
+            write_element();
+            # Now save this new register
+            $elementType = "struct";
+            $elementName = $1;
+            $elementBrief = "";
+        }
+        else
+        {
+            $error = 1;
+            printf ("Error at line #$lineNo: invalid struct format <$line>\n");
+        }
+        
+    }
+    elsif ( $line =~ m/^\s*-enum/i )
+    {
+        if ( $line =~ m/^\s*-enum\s+(\S*):(\d+)\s+(\S.*)$/i )
+        {
+            # Dump old register
+            write_element();
+            # Now save this new register
+            $elementType = "enum";
+            $elementName = $1;
+            $elementWidth = $2;
+            $elementBrief = $3;
+        }
+        elsif ( $line =~ m/^\s*-enum\s+(\S*):(\d+)\s*$/i )
+        {
+            # Dump old register
+            write_element();
+            # Now save this new register
+            $elementType = "enum";
+            $elementName = $1;
+            $elementWidth = $2;
+            $elementBrief = "";
+        }
+        else
+        {
+            $error = 1;
+            printf ("Error at line #$lineNo: invalid enum format, must be \"-enum NAME:WIDTH {optional-description}\"\n");
+        }
+        
+    }
+    elsif ( $line =~ m/^\s*\+/ )
+    {
+        if ( $line =~ m/^\s*\+(\S*):([^:]*):([^:]*):([^:\s]*)\s*.*$/ )
+        {
+            # Save running description
+            reformat_description();
+            # Save new field
+            $fieldName[$fieldNo] = $1;
+            $fieldWidth[$fieldNo] = $2;
+            $fieldType[$fieldNo] = $3;
+            my $val = $4;
+            if ( $val =~ m/^(0x[0-9a-zA-Z]*)$/ )
+            {
+                $val = $1;
+            }
+            elsif ( $val =~ m/^(\d*)$/ )
+            {
+                $val = int($1);
+            }
+            elsif ( $val =~ m/^def\((.*)\)$/i )
+            {
+                $val = '$val = ' . $1 . ';';
+                $val =~ s/i/\$k/g;
+                $val =~ s/&column;/:/g;
+            }
+            else
+            {
+                printf ("Error at line #$lineNo: invalid default printf <$val>\n");
+                $error = 1;
+            }
+            
+            $fieldDefault[$fieldNo] = $val;
+            $fieldType[$fieldNo] =~ tr/a-z/A-Z/;
+            $fieldDescription[$fieldNo] = "";
+            $fieldValueCount[$fieldNo] = 0;
+            $fieldNote[$fieldNo] = "";
+            $fieldNo++;
+            $inField = 1;
+            $descriptionLine = 0;
+        }
+        elsif ( $line =~ m/^\s*\+(\S*):([^:]*):([^:]*)\s*.*$/ )
+        {
+            # Save running description
+            reformat_description();
+            # Save new field
+            $fieldName[$fieldNo] = $1;
+            $fieldWidth[$fieldNo] = $2;
+            $fieldType[$fieldNo] = $3;
+            $fieldType[$fieldNo] =~ tr/a-z/A-Z/;
+            $fieldDefault[$fieldNo] = 0;
+            $fieldDescription[$fieldNo] = "";
+            $fieldValueCount[$fieldNo] = 0;
+            $fieldNote[$fieldNo] = "";
+            $fieldNo++;
+            $inField = 1;
+            $descriptionLine = 0;
+        }
+        elsif ( $line =~ m/^\s*\+(\S*):([^:]*)\s*.*$/ )
+        {
+            # Save running description
+            reformat_description();
+            # Save new field
+            $fieldName[$fieldNo] = $1;
+            $fieldWidth[$fieldNo] = $2;
+            $fieldType[$fieldNo] = "RW";
+            $fieldType[$fieldNo] =~ tr/a-z/A-Z/;
+            $fieldDefault[$fieldNo] = 0;
+            $fieldDescription[$fieldNo] = "";
+            $fieldValueCount[$fieldNo] = 0;
+            $fieldNote[$fieldNo] = "";
+            $fieldNo++;
+            $inField = 1;
+            $descriptionLine = 0;
+        }
+        else
+        {
+            $error = 1;
+            printf ("Error at line #$lineNo: invalid field format <$line>\n");
+        }
+    }
+    elsif ( $line =~ m/^\s*-/ )
+    {
+        if ( $line =~ m/^\s*-note/ )
+        {
+            reformat_description();
+            $inNote = 1;
+            $inImplementation = 0;
+            $inField = 0;
+        }
+        elsif ( $line =~ m/^\s*-description/ )
+        {
+            reformat_description();
+            $inNote = 0;
+            $inImplementation = 0;
+            $inField = 0;
+        }
+        elsif ( $line =~ m/^\s*-implementation/ )
+        {
+            reformat_description();
+            $inNote = 0;
+            $implIndex++;
+            $inImplementation = 1;
+            $inField = 0;
+        }
+        else
+        {
+            printf ("Error at line #$lineNo: invalid command <$line>\n");
+            $error = 1;
+        }
+    }
+    elsif ( $line =~ m/^\s*\*\s*(\S*)\((\S*\S*)\)\:\s*(.*)$/ )
+    {
+        # This is a value !
+        reformat_description();
+        if ( $inField )
+        {
+            my $i = $fieldNo-1;
+            $fieldValueName[$i][$fieldValueCount[$i]] = $1;
+            $fieldValueValue[$i][$fieldValueCount[$i]] = $2;
+            $fieldValueComment[$i][$fieldValueCount[$i]] = $3;
+            $fieldValueCount[$i]++;
+        }
+        elsif ( $elementType == "enum" )
+        {
+            $fieldValueName[0][$fieldValueCount[0]] = $1;
+            $fieldValueValue[0][$fieldValueCount[0]] = $2;
+            $fieldValueComment[0][$fieldValueCount[0]] = $3;
+            $fieldValueCount[0]++;
+        }
+        else
+        {
+            printf ("Error at line #$lineNo: value defined out of context\n");
+            $error = 1;
+        }
+    }
+    elsif ( $line =~ m/^\s*\*\s*(\S*)\((\S+)\)\s*$/ )
+    {
+        # This is a value !
+        reformat_description();
+        if ( $inField )
+        {
+            my $i = $fieldNo-1;
+            $fieldValueName[$i][$fieldValueCount[$i]] = $1;
+            $fieldValueValue[$i][$fieldValueCount[$i]] = $2;
+            $fieldValueComment[$i][$fieldValueCount[$i]] = "";
+            $fieldValueCount[$i]++;
+        }
+        elsif ( $elementType == "enum" )
+        {
+            $fieldValueName[0][$fieldValueCount[0]] = $1;
+            $fieldValueValue[0][$fieldValueCount[0]] = $2;
+            $fieldValueComment[0][$fieldValueCount[0]] = $3;
+            $fieldValueCount[0]++;
+        }
+        else
+        {
+            printf ("Error at line #$lineNo: value defined out of context\n");
+            $error = 1;
+        }
+    }
+    elsif ( $line =~ m/^\s*<pre>$/i )
+    {
+        $inPre = 1;
+        $description[$descriptionLine] = $line;
+        $descriptionLine++;            
+        if ( $line =~ m/^\s*<\/pre>$/i )
+        {
+            $inPre = 0;
+        }
+    }
+    elsif ( $inPre )
+    {
+        $description[$descriptionLine] = $line;
+        $descriptionLine++;            
+        if ( $line =~ m/^\s*<\/pre>$/i )
+        {
+            $inPre = 0;
+        }
+    }
+    else
+    {
+        $line =~ m/^\s*(.*)$/;
+        $description[$descriptionLine] = $1;
+        $descriptionLine++;            
+    }
+    $line = <INFILE>;
+    $lineNo++;
+}
+
+#Write current register
+write_element();
+# Close the set
+close_set();
+#Write final trailer
+write_trailer();
+close OUTFILE;
+exit $error;
+
+#################################################################
+
+sub write_element
+{
+    # Always reformat running description
+    
+    reformat_description();
+    
+    # Then save according to type
+    
+    if ( $elementType eq "set" )
+    {
+        write_set();
+    }
+
+    if ( $elementType eq "enum" )
+    {
+        write_enum();
+    }
+    
+    if ( $elementType eq "struct" )
+    {
+        write_struct();
+    }
+    
+    if ( $elementType eq "register" )
+    {
+        write_register();
+    }
+    
+    # Clears eveything
+    
+    $elementType = "";
+    $elementName = "";
+    $elementBrief = "";
+    $elementDescription = "";
+    $elementNote = "";
+    @elementImplementation = ();
+    $implIndex = -1;
+    $inField = 0;
+    $inPre = 0;
+    $inNote = 0;
+    $inImplementation = 0;
+    $descriptionLine = 0;
+    $noteLine = 0;
+    $fieldNo = 0;
+    $fieldValueCount[0] = 0;
+}    
+    
+    
+#################################################################
+
+sub write_register
+{
+    my @entries;
+    my @base;
+    my $tableWidthInBits;
+    my $tableHeight;
+    
+    # First of all, if we have a typedef count, then close <typedefs>
+    
+    if ( $typedefsOpened != 0 )
+    {
+        printf OUTFILE ("    </typedefs>\n");
+        $typedefsOpened = 0;
+    }
+    
+    
+    # Then, if this is first register of set, then open <registers> 
+    
+    if ( $registersOpened == 0 )
+    {
+        printf OUTFILE ("    <registers>\n");
+        $registersOpened = 1;
+    }
+    
+    
+    # Align offset if requested
+    
+    if ( $option{"align"} )
+    {
+        my $r = $option{"offset"} % $option{"align"};
+        if ( $r != 0 )
+        {
+            $option{"offset"} += ($option{"align"} - $r);
+        }
+    }
+        
+    # Compute the width in words of this field         
+    
+    my $width = 0;
+    my $mWidth = 0;
+    for (my$i=0;$i<$fieldNo;$i++)
+    {
+        # Get fields indexes if any
+        if ( $fieldName[$i] =~ m/^([^\[]+)\[([^\]]+)\]/ )
+        {
+            my $from = -1;
+            my $to = -1;
+            $2 =~ m/^(.*)\.+(.*)$/; 
+            $from = int($1);
+            $to = int($2);
+            $width += $fieldWidth[$i]*($to-$from+1);
+        }
+        elsif ( $fieldName[$i] =~ m/^__set__$/ )
+        {            
+            $width = $fieldWidth[$i];
+        }
+        else
+        {
+            $width += $fieldWidth[$i];
+        }
+        if ( $width >= $mWidth )
+        {
+            $mWidth = $width;
+        }
+    }
+    $width = $mWidth; 
+    
+    # Minimal width is 1 bit
+    if ( $width == 0 ) { $width = 1; }
+    
+    # Keep total register width in bits for later
+    $tableWidthInBits = $width; 
+    
+    # Compute number of words required for this register (take atomicity into account)
+    my $a = int($option{"atomic"});
+    my $x = int(($width+31)/32);
+    if ( ($x*32 % $a) != 0 )
+    {
+        print "***ALAIN*** $elementName width=$x\n";
+    }
+    $width = int(($width+$a-1)/$a)*($a/32); 
+    
+    # The XML requires stride, entries and base indexes. 
+    # This script create those by prepending
+    # the register indexes defined with the 
+    # register with the globally defined one. 
+    #
+    # The dimensions in XML are entered 0 through N-1
+    # while they are defined N=1 through 0. 
+   
+    
+    my @base=();
+    my @entries=();
+    my @stride=();
+    my $totalWidth=$width;
+    my $nDim=@elementIndexes;
+    my $i;
+    $tableHeight = 1;
+    
+    for ($i=0;$i<@elementIndexes;$i++)
+    {
+        $elementIndexes[$nDim-$i-1] =~ m/^(.*)\.+(.*)$/;
+        $base[$i] = int($1);
+        $entries[$i] = int($2) - int($1) + 1;
+        $stride[$i] = $totalWidth;
+        # Round up to next power of 2 boundary
+        my $t = 0;
+        while ( (1<<$t) < $stride[$i] ) { $t++; }
+        if ( (1<<$t) != $stride[$i] )
+        {
+            $stride[$i] = (1<<$t);
+        }
+        # Compute total width for offset update
+        $totalWidth = $entries[$i]*$stride[$i];
+        # Compute height
+        $t = 0;
+        while ( (1<<$t) < $tableHeight ) { $t++; }
+        $tableHeight = (1<<$t) * $entries[$i];
+        
+    }
+    
+    if ( $option{"stride"} )
+    {
+        my @extraStride = split(",",$option{"stride"});
+        my @extraIndexes = split(",",$option{"indexes"});
+        if ( int(@extraIndexes) != int(@extraStride) )
+        {
+            $error = 1;
+            print ("Error at line #$lineNo: dimensions don't match, stride=".
+                scalar @extraStride." indexes=".scalar @extraIndexes."\n");
+        }
+        for (my $j=@extraIndexes-1; $j>=0; $j-- )
+        {
+            $extraIndexes[$j] =~ m/^(.*)\.+(.*)$/;
+            $base[$i] = int($1);
+            $entries[$i] = int($2) - int($1) + 1;
+            if ( $extraStride[$j] =~ m/^0x([0-9a-zA-Z]*)$/ )
+            {
+                $stride[$i] = hex($1);
+            }
+            elsif ( $extraStride[$j] =~ m/^(\d*)$/ )
+            {
+                $stride[$i] = int($1);
+            }
+            else
+            {
+                $error = 1;
+                print ("Error at line #$lineNo: stride must be a number (hex or int)\n");
+            }
+            $i++;
+        }
+        
+    }
+    if ( @entries == 0 )
+    {
+        $entries[0] = 1;
+        $base[0] = 0;
+        $stride[0] = $width;
+    }
+    
+    # Always align to total width (exclude extra indexes and strides)
+    
+    my $align = 1;
+    if ( $option{"alias"} == "" )
+    {        
+        while ( $align < $totalWidth ) { $align <<= 1; }
+        my $r = $option{"offset"} % $align;
+        if ( $r != 0 )
+        {
+            $option{"offset"} += ($align - $r);
+        }
+    }
+    
+    # Now dump the register definition
+    
+    printf OUTFILE ("      <register>\n");
+    if ( $elementName =~ m/^(.+)\/(.+)$/ )
+    {
+        $elementName = $1;
+        printf OUTFILE ("        <name>%s</name>\n",$1);
+        printf OUTFILE ("        <oldName>%s</oldName>\n",$2);
+    }
+    elsif ( $elementName =~ m/\/(.+)$/ )
+    {
+        $elementName = $1;
+        printf OUTFILE ("        <name></name>\n");
+        printf OUTFILE ("        <oldName>%s</oldName>\n",$1);
+    }
+    else
+    {
+        printf OUTFILE ("        <name>%s</name>\n",$elementName);
+    }
+    
+    # Save offsets to check for overlaping addresses for the set
+    if ( !$option{"alias"} )
+    {        
+        $mapOffset[$mapCount] = $option{"offset"}; 
+        $mapSize[$mapCount] = $align;
+        $mapName[$mapCount] = $elementName;
+        $mapCount++;
+    }
+    
+    printf OUTFILE ("        <brief>%s</brief>\n",$elementBrief);
+    if ( $elementDescription )
+    {
+        printf OUTFILE ("        <description>\n");
+        printf OUTFILE ("%s",$elementDescription);
+        printf OUTFILE ("         </description>\n");
+    }
+    else
+    {
+        printf OUTFILE ("        <description></description>\n");
+    }
+    printf OUTFILE ("        <notes>%s</notes>\n",$elementNote);
+    if ( $option{"alias"} )
+    {
+        printf OUTFILE ("        <alias>%s</alias>\n",$option{"alias"});
+    }
+    else
+    {
+        printf OUTFILE ("        <addressOffset>0x%X</addressOffset>\n",$option{"offset"});
+    }
+    printf OUTFILE ("        <id>%s</id>\n",$option{"id"});
+    if ( @entries == 1 )
+    {
+        printf OUTFILE ("        <entries>%d</entries>\n",$entries[0]);
+        printf OUTFILE ("        <baseEntry>%d</baseEntry>\n",$base[0]);
+    }
+    else
+    {
+        for (my $i=0; $i<@entries; $i++)
+        {
+            printf OUTFILE ("        <entries dimension=\"$i\">%d</entries>\n",$entries[$i]);
+        }
+        for (my $i=0; $i<@base; $i++)
+        {
+            printf OUTFILE ("        <baseEntry dimension=\"$i\">%d</baseEntry>\n",$base[$i]);
+        }
+    }
+    printf OUTFILE ("        <width>%d</width>\n",$width);
+    if ( @stride == 1 )
+    {
+        printf OUTFILE ("        <stride>0x%x</stride>\n", $stride[0]);
+    }
+    else
+    {
+        #for (my $i=0; $i<@indexes; $i++)
+        for (my $i=0; $i<@stride; $i++)
+        {
+            printf OUTFILE ("        <stride dimension=\"$i\">0x%x</stride>\n",$stride[$i]);
+        }
+    }
+    printf OUTFILE ("        <implemented>%s</implemented>\n",$option{"implemented"});
+    printf OUTFILE ("        <atomic>%s</atomic>\n",$option{"atomic"});
+    
+    printf OUTFILE ("        <fields>\n");
+    my $pos = 0;
+    for (my$i=0;$i<$fieldNo;$i++)
+    {
+        my $from = -1;
+        my $to = -1;
+        my $name = $fieldName[$i];
+        my $oldname = "";
+        
+        # Extra indexes for name
+        if ( $name =~ m/^([^\[]+)\[([^\]]+)\]/ )
+        {
+            $name = $1;
+            $2 =~ m/^(.*)\.+(.*)$/; 
+            $from = int($1);
+            $to = int($2);
+            if ( $from < 0 || $to < $from )
+            {
+                print "Error at or before line #$lineNo: invalid indexes for field $name (from=$from,to=$to)\n";
+            }
+        }
+        
+        # Extract name and old name
+        if ( $name =~ m/^(.+)\/(.+)$/ )
+        {
+            $name = $1;
+            $oldname = $2;
+        }
+        elsif ( $name =~ m/\/(.+)$/ )
+        {
+            $name = "";
+            $oldname = $2;
+        }
+        
+        # Only export those fields without double underscores
+            
+        if ( $name !~ m/^__.*__$/ )
+        {
+            printf OUTFILE ("            <field>\n");
+            
+            # Write names and old name
+            if ( $name )
+            {
+                printf OUTFILE ("              <name>%s</name>\n",$name);
+            }
+            if ( $oldname )
+            {
+                printf OUTFILE ("              <oldName>%s</oldName>\n",$oldname);
+            }
+            printf OUTFILE ("              <position>$pos</position>\n");
+            
+            # Write length
+            printf OUTFILE ("              <length>$fieldWidth[$i]</length>\n");
+            
+            # Write type 
+            printf OUTFILE ("              <type>$fieldType[$i]</type>\n");
+            
+            # Write number of entries and base entry if needed
+            if ( $from >= 0 && $to >= $from )
+            {
+                printf OUTFILE ("              <entries>%d</entries>\n",$to-$from+1);
+                printf OUTFILE ("              <baseEntry>$from</baseEntry>\n");
+            }
+                
+            # Write description                
+            printf OUTFILE ("              <description>\n%s",$fieldDescription[$i]);
+            printf OUTFILE ("              </description>\n");
+            if ( $fieldDefault[$i] =~ m/val/ )
+            {
+                if( $nDim == 1 ) 
+                {
+                    my $val;
+                    for (my $j=0; $j<$entries[0]; $j++)
+                    {
+                        my $k;
+                        my $k0;
+                        $k0 = $j+$base[0];
+                        $k = $j+$base[0];
+                        eval $fieldDefault[$i]; warn $@ if $@;
+                        printf OUTFILE ("              <default entryStart=\"%d\" entryEnd=\"%d\">0x%x</default>\n",$k,$k,$val);
+                    }
+                }
+                else
+                {
+                    print "Error at field $fieldName[$i]: doesn't support multi-dimension defaults yet\n";
+                }
+            }
+            elsif ( $fieldDefault[$i] =~ m/0x/ ) 
+            {
+                printf OUTFILE ("              <default>%s</default>\n",$fieldDefault[$i]);
+            }
+            else
+            {
+                printf OUTFILE ("              <default>0x%x</default>\n",$fieldDefault[$i]);
+            }
+            if ( $fieldCrossRef[$i] )
+            {
+                printf OUTFILE ("              <values typedef=\"%s\"/>\n",$fieldCrossRef[$i]);
+            }
+            elsif ( $fieldValueCount[$i] )
+            {
+                printf OUTFILE ("              <values>\n");
+                for (my $j=0; $j<$fieldValueCount[$i]; $j++) 
+                {
+                    printf OUTFILE ("               <value name=\"%s\" encoding=\"%s\">%s</value>\n",$fieldValueName[$i][$j],$fieldValueValue[$i][$j],$fieldValueComment[$i][$j]);
+                }
+                printf OUTFILE ("              </values>\n");
+                printf OUTFILE ("              <notes>\n");
+                printf OUTFILE ("%s",$fieldNote[$i]);
+                printf OUTFILE ("              </notes>\n");
+            }
+            printf OUTFILE ("            </field>\n");
+        }
+        
+        # Advance pointer
+        if ( $name =~ m/^__set__$/ )
+        {            
+            $pos = $fieldWidth[$i];
+        }
+        elsif ( $from >= 0 && $to >= $from )
+        {
+            $pos += $fieldWidth[$i] * ($to-$from+1);
+        }
+        else
+        {
+            $pos += $fieldWidth[$i];
+        }
+                
+    }
+    printf OUTFILE ("          </fields>\n");
+    printf OUTFILE ("          <resetDomains>\n");
+    my @rstV = split(",",$option{"resetDomains"});
+    foreach my $rst (@rstV)
+    {
+        printf OUTFILE ("              <resetDomain>%s</resetDomain>\n",$rst);
+    }
+    printf OUTFILE ("          </resetDomains>\n");
+    
+    foreach my $impl (@elementImplementation)
+    {
+        printf OUTFILE ("          <implementation>\n");
+        my @tokens = split('\n',$impl);
+        my $foundWidthParm = 0;
+        my $foundCellParm = 0;
+        foreach my $token (@tokens)
+        {
+            if ( $token =~ m/^\s*(\S*)\s*=\s*(.*)\s*$/ )
+            {
+                printf OUTFILE ("            <implParm name=\"$1\">$2</implParm>\n");
+            }
+            if ( $1 =~ m/width/ ) { $foundWidthParm = 1; }
+            if ( $1 =~ m/cell/ ) { $foundCellParm = 1; }
+        }
+#        if ( !$foundWidthParm ) 
+#        {
+#            # Round up width to next boundary of 8
+#            $tableWidthInBits = int(($tableWidthInBits+7)/8) * 8; 
+#            printf OUTFILE ("            <implParm name=\"width\">$tableWidthInBits</implParm>\n");
+#        }
+#        if ( !$foundCellParm && $elementName !~ m/CAM/ ) 
+#        {
+#            # Round up height to next boundary of 16
+#            $tableHeight = int(($tableHeight+15)/16) * 16; 
+#            printf OUTFILE ("            <implParm name=\"cell\">SRAM$tableHeight"."_"."$tableWidthInBits</implParm>\n");
+#        }
+        
+        printf OUTFILE ("          </implementation>\n");
+    }
+    
+#    if ( @elementImplementation == 0 )
+#    {
+#        # Make a default implementation if appropriate
+#        if ( $tableHeight > 1 && $tableHeight < 1024 ) 
+#        {
+#            printf OUTFILE ("          <implementation>\n");
+#            # Round up width to next boundary of 8
+#            $tableWidthInBits = int(($tableWidthInBits+7)/8) * 8; 
+#            printf OUTFILE ("            <implParm name=\"width\">$tableWidthInBits</implParm>\n");
+#            if ( $elementName !~ m/CAM/ )
+#            {
+#                # Round up height to next boundary of 16
+#                $tableHeight = int(($tableHeight+15)/16) * 16; 
+#                printf OUTFILE ("            <implParm name=\"cell\">SRAM$tableHeight"."_"."$tableWidthInBits</implParm>\n");
+#            }
+#            printf OUTFILE ("          </implementation>\n");
+#            
+#        }
+#    }
+    
+    printf OUTFILE ("        </register>\n");
+    
+    if ( !$option{"alias"} )
+    {
+        # Aliases don't make offset moving... 
+        my $align = 1;
+        while ( $align < $totalWidth ) { $align <<= 1; }
+        $option{"offset"} += $align;
+        #$option{"offset"} += $totalWidth;
+    }
+    $option{"alias"} = "";
+    $option{"atomic"} = "32";
+    $option{"busStopNum"} = "BSN_NULL";
+    $option{"busStopStride"} = "";
+    $option{"crossbarPort"} = "CBP_NULL";
+    $option{"crossbarPortStride"} = "";
+    $option{"align"} = 0;
+    $option{"id"}++;
+    $option{"implemented"} = $option{"set-implemented"};
+    $option{"resetDomains"} = $option{"set-resetDomains"};
+}
+
+#################################################################
+
+sub write_header
+{
+    print OUTFILE <<EOF;
+<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml-stylesheet href="registerInfo.xsl" type="text/xsl"?>
+<!DOCTYPE registerInfo PUBLIC "-//Fulcrum Microsystems//DTD registerInfo/EN" "registerInfo.dtd">
+<registerInfo>
+EOF
+}
+
+#################################################################
+
+sub write_set
+{
+    $setOpened = 1;
+    $option{"set-implemented"} = $option{"implemented"};
+    $option{"set-resetDomains"} = $option{"resetDomains"};
+    print OUTFILE <<EOF;
+  <registerSet>
+    <name>$elementName</name>
+    <brief>$elementBrief</brief>
+    <description>
+$elementDescription
+    </description>
+    <addressBase>$option{"addressBase"}</addressBase>
+    <addressBits>$option{"addressBits"}</addressBits>
+    <crossbarPort>$option{"crossbarPort"}</crossbarPort>
+EOF
+    if ($option{"crossbarPortStride"} ne "") {
+        print OUTFILE <<EOF;
+    <crossbarPortStride>$option{"crossbarPortStride"}</crossbarPortStride>
+EOF
+    }
+    print OUTFILE <<EOF;
+    <busStopNum>$option{"busStopNum"}</busStopNum>
+EOF
+    if ($option{"busStopStride"} ne "") {
+        print OUTFILE <<EOF;
+    <busStopStride>$option{"busStopStride"}</busStopStride>
+EOF
+    }
+    
+}
+
+#################################################################
+
+sub write_enum {
+    
+    # First of all, if it is first typedef of set, then open <typedefs>
+    
+    if ( !$typedefsOpened )
+    {
+        printf OUTFILE ("    <typedefs>\n");
+        $typedefsOpened = 1;
+    }
+    
+    # Then write this enum 
+
+    printf OUTFILE ("    <enum>\n");
+    printf OUTFILE ("      <name>%s</name>\n",$elementName);
+    printf OUTFILE ("      <length>%s</length>\n",$elementWidth);
+    printf OUTFILE ("      <description>\n%s",$elementDescription);
+    printf OUTFILE ("      </description>\n");
+    printf OUTFILE ("      <values>\n");
+    for (my $j=0; $j<$fieldValueCount[0]; $j++) 
+    {
+        printf OUTFILE ("       <value name=\"%s\" encoding=\"%s\">%s</value>\n",$fieldValueName[0][$j],$fieldValueValue[0][$j],$fieldValueComment[0][$j]);
+    }
+    printf OUTFILE ("      </values>\n");
+    printf OUTFILE ("      <notes>\n%s",$elementNote);
+    printf OUTFILE ("      </notes>\n");
+    printf OUTFILE ("    </enum>\n");
+
+}
+
+#################################################################
+
+sub write_struct
+{
+    # First of all, if it is first typedef of set, then open <typedefs>
+    
+    if ( !$typedefsOpened )
+    {
+        printf OUTFILE ("    <typedefs>\n");
+        $typedefsOpened = 1;
+    }
+    
+    # Compute the width in words of this field         
+    
+    my $width = 0;
+    for (my$i=0;$i<$fieldNo;$i++)
+    {
+        $width += $fieldWidth[$i];
+    }
+    if ( $width == 0 ) { $width = 1; }
+    else { $width = int(($width+31)/32); }
+    
+    # Now dump the struct definition
+    
+    printf OUTFILE ("      <struct>\n");
+    printf OUTFILE ("        <name>%s</name>\n",$elementName);
+    printf OUTFILE ("        <brief>%s</brief>\n",$elementBrief);
+    if ( $elementDescription )
+    {
+        printf OUTFILE ("        <description>\n%s",$elementDescription);
+        printf OUTFILE ("         </description>\n");
+    }
+    else
+    {
+        printf OUTFILE ("        <description></description>\n");
+    }
+    printf OUTFILE ("        <notes>%s</notes>\n",$elementNote);
+    printf OUTFILE ("        <width>%d</width>\n",$width);
+    printf OUTFILE ("        <fields>\n");
+    my $pos = 0;
+    for (my$i=0;$i<$fieldNo;$i++)
+    {
+        if ( $fieldName[$i] !~ m/^__.*__$/ )
+        {
+            printf OUTFILE ("            <field>\n");
+            printf OUTFILE ("              <name>%s</name>\n",$fieldName[$i]);
+            printf OUTFILE ("              <position>%s</position>\n",$pos);
+            printf OUTFILE ("              <length>%s</length>\n",$fieldWidth[$i]);
+            printf OUTFILE ("              <type>%s</type>\n",$fieldType[$i]);
+            printf OUTFILE ("              <description>\n%s\n",$fieldDescription[$i]);
+            printf OUTFILE ("              </description>\n");
+            printf OUTFILE ("              <default>0x%x</default>\n",$fieldDefault[$i]);
+            
+            if ( $fieldValueCount[$i] )
+            {
+                printf OUTFILE ("              <values>\n");
+                for (my $j=0; $j<$fieldValueCount[$i]; $j++) 
+                {
+                    printf OUTFILE ("               <value name=\"%s\" encoding=\"%s\">%s</value>\n",$fieldValueName[$i][$j],$fieldValueValue[$i][$j],$fieldValueComment[$i][$j]);
+                }
+                printf OUTFILE ("              </values>\n");
+                printf OUTFILE ("              <notes>\n%s",$fieldNote[$i]);
+                printf OUTFILE ("              </notes>\n");
+            }
+            printf OUTFILE ("            </field>\n");
+            $pos += $fieldWidth[$i];
+        }
+        elsif ( $fieldName[$i] =~ m/^__set__$/ )
+        {
+            $pos = $fieldWidth[$i];
+        }
+        else
+        {
+            $pos += $fieldWidth[$i];
+        }
+    }
+    printf OUTFILE ("          </fields>\n");
+    printf OUTFILE ("        </struct>\n");
+    
+}
+
+#################################################################
+
+sub close_set
+{
+    if ($setOpened ) 
+    {
+        #Write current register
+        write_element();
+        if ( $typedefsOpened ) 
+        {
+            printf OUTFILE "        </typedefs>\n";
+            $typedefsOpened = 0;
+        }
+        if ( $registersOpened ) 
+        {
+            printf OUTFILE "        </registers>\n";
+            $registersOpened = 0;
+        }
+        printf OUTFILE "      </registerSet>\n";
+        $setOpened = 0;
+        
+        # Verify any address overlap
+        
+        my $i;
+        my $j;
+        for ($i=0;$i<$mapCount;$i++)
+        {
+            my $offset = $mapOffset[$i];
+            my $size = $mapSize[$i];
+            for ($j=0;$j<$mapCount;$j++)
+            {
+                if ( $i != $j )
+                {
+                    if ( $mapOffset[$j] >= $offset && $mapOffset[$j] < $offset+$size )
+                    {
+                        printf ("Error for register $mapName[$i], offset=0x%X, size=0x%X, address overlap with register $mapName[$j], offset=0x%X\n",$offset,$size, $mapOffset[$j]); 
+                        $error = 1;
+                    }
+                }
+            }
+        }
+        @mapOffset = ();
+        @mapSize = ();
+        @mapName = ();
+        $mapCount = 0;
+    }
+}
+
+#################################################################
+
+sub write_trailer
+{
+    close_set();
+    printf OUTFILE "  </registerInfo>\n";
+}
+
+#################################################################
+
+sub reformat_description
+{
+    my $d;
+    my $crossRef=0;
+    
+    # First, get rid of useless blank lines (beginning, end, repetitives)
+    # and also look for cross reference. 
+    my $k = 0;
+    my $blank = 1;
+    for (my $i=0; $i<$descriptionLine; $i++ )
+    {
+        if ( $description[$i] =~ s/\'\'\'(\S+)\'\'\'// )
+        {
+            $crossRef = $1;
+        }
+        if ( $description[$i] !~ /^\s*$/ ) 
+        {
+            $description[$k] = $description[$i];
+            $k++;
+            $blank = 0;
+        }
+        elsif (!$blank && ($i+1) < $descriptionLine && $description[$i+1] !~ /^\s*\*/)
+        {
+            $description[$k] = "";
+            $k++;
+            $blank = 1;
+        }
+    }
+    if ( $blank && $k > 0 )
+    {
+        $k--;
+    }
+    $descriptionLine = $k;
+    
+    # If there is no description, then nothing to do
+    
+    if ( $descriptionLine == 0 )
+    {
+        $d = "";
+    }
+    
+    # If first line starts with "<", then this is all HTML, just copy
+    
+    elsif ( $description[0] =~ m/^</ )
+    {
+        $d = "";
+        for (my $i=0; $i<$descriptionLine; $i++ )
+        {
+            $d = $d . "$description[$i]\n";
+        }
+    }
+    
+    # If not, check if there is any line starting with "*" or an empty line
+    # and if yes, then HTML codes.
+    
+    else
+    {
+        my $needHTML = 0;
+        for (my $i=0; $i<$descriptionLine; $i++ )
+        {
+            if ( $description[$i] =~ /^\s*\*/ ) 
+            {
+                $needHTML = 1;
+            }
+            elsif ( $description[$i] =~ /^\s*$/ ) 
+            {
+                $needHTML = 1;
+            }
+        }
+        
+        if ( $needHTML )
+        {
+            my $closeList = 0;
+            my $closeP = 0;
+            $d = "";
+            for (my $i=0; $i<$descriptionLine; $i++ )
+            {
+                if ( $description[$i] =~ /^\*(.*)$/ ) 
+                {
+                    my $tmp = $1;
+                    if ( $i == 0 )
+                    {
+                        $d = $d . "          <ul>\n";
+                    }
+                    elsif ( $i > 0 && $description[$i-1] !~ /^\*/ )
+                    {
+                        if ( $closeP ) 
+                        {
+                            $d = $d . "          </p>\n";
+                            $closeP = 0;
+                        }
+                        $d = $d . "          <ul>\n";
+                    }
+                    $d = $d . "            <li>" . $tmp . "</li>\n";
+                    $closeList = 1;
+                }
+                elsif ( $description[$i] eq "" ) 
+                {                   
+                    if ( $closeList )
+                    {
+                        $d = $d . "         </ul>\n";
+                        $closeList = 0;
+                    }
+                    if ( $closeP ) 
+                    {
+                        $d = $d . "          </p>\n";
+                        $closeP = 0;
+                    }
+                }
+                else
+                {
+                    if ( $closeList )
+                    {
+                        $d = $d . "         </ul>\n";
+                        $closeList = 0;
+                    }
+                    if ( $closeP == 0 ) 
+                    {
+                        if ( $d eq "" ) 
+                        {
+                            $d = "          <p style=\"margin-top:0\">\n";
+                        }
+                        else
+                        {
+                            $d = $d . "          <p>\n";
+                        }
+                        $closeP = 1;
+                    }
+                    $d = $d . "          " . $description[$i] . "\n";
+                }
+            }
+            if ( $closeList )
+            {
+                $d = $d . "         </ul>\n";
+            }
+            if ( $closeP ) 
+            {
+                $d = $d . "          </p>\n";
+            }
+            
+        }
+        else
+        {
+            $d = "";
+            for (my $i=0; $i<$descriptionLine; $i++ )
+            {
+                if ( $description[$i] !~ /^\s*$/ ) 
+                {
+                    $d = $d . "          $description[$i]\n";
+                }
+            }
+            
+        }
+        
+    }
+    
+    # Save according to where we are 
+    
+    if ( $inField )
+    {
+        if ( $fieldValueCount[$fieldNo-1] )
+        {
+            $fieldNote[$fieldNo-1] = $fieldNote[$fieldNo-1] . $d;
+        }
+        else
+        {
+            $fieldDescription[$fieldNo-1] = $d;
+        }
+        $fieldCrossRef[$fieldNo-1] = $crossRef;
+    }
+    else
+    {
+        if ( $inNote )
+        {
+            $elementNote = $elementNote . $d;
+        }
+        elsif ( $inImplementation )
+        {
+            $elementImplementation[$implIndex] = $elementImplementation[$implIndex] . $d;
+        }
+        else
+        {
+            $elementDescription = $elementDescription . $d;
+        }
+    }
+    
+    #Clear
+    
+    $descriptionLine = 0;
+}
+
+
+
