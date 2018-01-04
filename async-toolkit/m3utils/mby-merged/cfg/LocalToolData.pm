@@ -25,6 +25,7 @@ $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'} = "&get_tool_path(lint
 
 $ToolConfig_tools{runtools}{ENV}{TREX_PACKAGES}= "&get_tool_path(casa/casa_utils)/trex/casa_TREX.pm";
 $ToolConfig_tools{runtools}{OTHER}{'task_additional_policy_module_paths_l'}= "&get_tool_path(casa/casa_utils)/trex/casa_per_regression.pm";
+$ToolConfig_tools{runtools}->{OTHER}->{repo_trex_output} = "results/%DUT%/";
 
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_PATH}  = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_PATH)";
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_ARGS}  = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)"; 
