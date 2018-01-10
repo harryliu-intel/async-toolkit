@@ -24,7 +24,7 @@ Then cd to the root of the area you want to be the top-level, and run:
 Gatekeeper
 ==================================================================================
 To turn in your changes :
-    turnin -c mby -s dev-x0
+    turnin -c mby -s mby-x0
 
 See wiki page for more details and options on turnin flow.
 
