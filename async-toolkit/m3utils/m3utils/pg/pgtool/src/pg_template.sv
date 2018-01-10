@@ -11,11 +11,7 @@ module
   DEFAULT_PG = 0
   )
   (                                                              
-  input  logic                                   clk,
-  input  logic                                   rst_n,
-
   input  logic [**ADDR_BITS**-1:0]               i_addr,
-  input  logic                                   i_v,
 
   **BASESTRAP**
 
@@ -32,11 +28,7 @@ module
 
 **EPILOG**
 
-  always_ff @(posedge clk or negedge rst_n) begin                
-    if (~rst_n)
-      o_pg <= DEFAULT_PG;
-    else if (i_v)
-      o_pg <= pg;
-  end // always_ff begin
+  assign o_pg = pg;
+
   // lintra +50503 "Naming - use of double underscore"
 endmodule
