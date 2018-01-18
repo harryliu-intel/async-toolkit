@@ -1,5 +1,5 @@
 # this has to do with CTCI
-setenv RTL_PROJ_TOOLS /p/hdk/rtl/proj_tools/
+export RTL_PROJ_TOOLS=/p/hdk/rtl/proj_tools/
 echo "Hello, CTCI -- my environment is:"
 env
 make
