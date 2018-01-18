@@ -11,7 +11,7 @@
 #   CM3: use Critical Mass compiler (rather than Polytechnique de Montreal
 #        or SRC)
 #
-CM3_HOME := /p/mst/utils/cm3
+CM3_HOME := $(RTL_PROJ_TOOLS)/meta/nhdk/cm3
 ifdef CYGWIN
 
   M3BUILDPROGRAM=m3build
