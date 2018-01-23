@@ -96,9 +96,9 @@ clock domain and an event $E_1$ in another clock domain.  The required
 precision and accuracy are high: possibly better than one clock cycle
 in either clock domain, and in any case higher than that the error
 would be allowed to scale with the number of clock domains either in
-the system as a whole or on the data path from $E_0$ to $E_1$, in case
-they are causally related (but we also do not wish to require that they be
-so related).
+the system as a whole or on the data path from $E_0$ to $E_1$, in the
+case that the events are causally related (but we also do not wish to
+require that they be so related).
 
 \subsection{Definitions}
 
@@ -121,18 +121,22 @@ any sense assume that this timing is perfectly controlled).
 \subsubsection{Chronometer time}
 
 The {\em chronometer time\/} (or {\em time\/} for short) is defined in
-the usual way\footnote{It bears mentioning that this way of measuring time is only usual for intervals.  It is decidedly unusual to measure calendar time with a uniform time scale.  See the following.}, as a uniform and steady physical time scale.  Following
+the usual way\footnote{It bears mentioning that this way of measuring
+  time is only usual for intervals.  It is decidedly unusual, among
+  humans, to measure calendar time on a uniform time scale.  See the
+  following.}, as a uniform and steady physical time scale.  Following
 Newton, we consider only systems where the various components are in
 such a configuration (at rest, same gravity field, etc.) such that
 relativistic effects are zero or negligible, and we can treat the
 chronometer time as global and absolute.  (``Tempus absolutum verum \&
 Mathematicum'' as Newton called it.  \cite{newton}) The most familiar
 attempt to measure chronometer time is the International Atomic Time
-scale, or TAI ({\em Temps Atomique International\/}\cite{nbs}), which is a
-steady count of SI seconds that agreed with the more commonly used
-Universal Time on January~1, 1958.\footnote{TAI and UTC diverge
-  because of leap seconds that are inserted into the latter scale and make it non-uniform.  As of the time of writing, TAI is
-  precisely 37~s ahead of UTC.}
+scale, or TAI ({\em Temps Atomique International\/}\cite{nbs}), which
+is a steady count of SI seconds that agreed with the more commonly
+used Universal Time on January~1, 1958.\footnote{TAI and UTC diverge
+  because of leap seconds that are inserted into the latter scale and
+  make UTC and its derivatives (such as ``Unix time'') non-uniform.  As of the time of writing, TAI is precisely
+  37~s ahead of UTC.}
 
 \rotins_epsfig{4in}{chronometer}{A chronometer showing twelve past three o'clock and nineteen seconds.}{270}
 
@@ -213,10 +217,10 @@ time into the past; and (2)~as the time at the receiver of the event
 (not the sender).
 
 The delay time {\tt dt} is to be measured in some time unit $\tau$, which
-varies depending on the application.  (For example, the base unit
+may be allowed to vary depending on the application.  For example, the base unit
 could be picoseconds, $\tau=1$~ps.  The representation of a current event would
 have ${\tt dt}=0$, while one that is 2.3~ns old would have ${\tt
-  dt}=2300 \tau$.)
+  dt}=2300 \tau$.  However, in most actual applications $\tau$ is likely best chosen to have convenient properties with regard to divisibility of clocks and times that are of interest in that application.  For a practical example, see section~\ref{sec:examplesettings}.
 
 For example, let us assume that we wanted to represent an event that
 occurred at precisely 16:50:02~UTC on Sunday, January 21, 2018, or
@@ -232,6 +236,8 @@ the event was 123~ps old when it was detected was performed is not our
 concern here.  Not yet.)
 
 \ins_epsfig{3in}{exevent}{Hardware representation of an example event that occurred at 16:50:39 exactly.  The $dt$ timescale is here in picoseconds, i.e., $\tau=1$~ps.}
+
+\newpage
 
 \subsection{The Delay-Measuring Flip-Flop}
 A simple example of how to use the structure is to build a D-type
@@ -464,10 +470,11 @@ the 1588 protocol and its time is known to sufficient accuracy from
 those transactions.)
 
 Based on the previous paragraph, we can see that the problem at hand
-remains to determine $\Delta$, and we want it to be between 0 and $p_B$ as
-before.  It is easy to see that it does not matter which of the two
-clocks is inaccurate.  What matters is that their ratio is a bit off
-from $p_A/p_B$.  There are two cases:
+remains to determine $\Delta$, and we want it to be between 0 and
+$p_B$ as before.  It is easy to see that it does not matter for the
+purposes of our algorithm which of the two clocks is inaccurate.  What
+matters is that their ratio is a bit off from $p_A/p_B$.  There are
+two cases:
 
 \noindent 1. {\it Clock~$A$ is slightly slow or Clock~$B$ is slightly fast.}
 
@@ -720,6 +727,8 @@ clock domain, all inputs are synchronous to clock $A$.  ({\tt rst\_n}
 can, as usual, be asserted asynchronously, but it must be deasserted
 synchronously.)
 
+\newpage
+
 \subsection{Outline of the Design}
 
 As stated above, the purpose of the design is to take a mark pulse in
@@ -931,7 +940,7 @@ parameters.  The most important constant from a size and power point of view
 is probably the width of the timestamps.  The depth of the synchronizers
 (and thereby of the data FIFO) is also settable.
 
-\subsection{Example settings}
+\subsection{Example settings}\label{sec:examplesettings}
 
 One domain of use of the logic described here is in timestamping
 Ethernet packets~\cite{ethernet}.  The GCD of a variety of Ethernet
