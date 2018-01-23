@@ -53,7 +53,7 @@
 \title{Precise Time-Interval Measurement \\ Using Vernier Clocks}
 \author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\
 Jin Yan \\ {\tt jin2.yan@intel.com}}
-\date{January 18, 2018}
+\date{January 22, 2018}
 
 \begin{document}
 
@@ -565,7 +565,7 @@ Also since
 \begin{equation}
   {Q(k,l) \over \hat{q}}= k \pi_A + l \pi_B
 \end{equation}
-where $\pi_A \perp \pi_B$, by the Chinese Remainder Theorem\cite{hardy},
+where $\pi_A \perp \pi_B$, then Euclid shows that \cite{hardy}
 \begin{equation}
   \exists k_1,l_1 :k_1 \in {\bf Z}, l_1 \in {\bf Z}: k_1 \pi_A + l_1 \pi_B = 1\quad
 \end{equation}
@@ -595,7 +595,7 @@ the precision of the measurement is one full clock cycle.
 The solution to the problem is to introduce a third clock domain with a clock
 that beats against the two asynchronous clocks.  Ideally the third clock
 has a cycle time $p_M$ that is relatively prime to $p_E$, $p_M \perp p_E$ so that
-\[ GCD(p_M,p_E = 1 \quad . \]
+\[ GCD(p_M,p_E) = 1 \quad . \]
 If that is the case the time of the first event can be measured with a vernier
 device with a precision of 1~$\tau$ and the second event can be measured with
 another vernier device with a precision of 1~$\tau$, both in the third clock domain.  The total error introduced from the measurement quantization is only 2~$\tau$, maximum.
@@ -616,9 +616,9 @@ To draw a line of slope less than 1 on a raster, start at $x=0$ and for each
 step to the right, decide whether or not to move up from the previous step.
 By keeping a running tally of the sum
 \begin{equation}
-  \Sigma = p_A y - p_B x
+  \epsilon = p_A y - p_B x
 \end{equation}
-if $\Sigma<0$ we move up by one.
+if $\epsilon<0$ we move up by one.
 
 Bresenham's algorithm results in a line with characteristic stairsteps as in figure~\ref{fig:bresenham}.
 
@@ -647,7 +647,7 @@ From the point of view of maintaining precision, we would like the logic to
 have certain simple properties as follows.
 \begin{itemize}
 \item Ensure that paths whose delays are significant in the final
-  result are as close to always through the same transistors.
+  result are as close to always as possible through the same transistors.
   Examples of such paths are clock paths and inputs to synchronizers.
 
 \item Ensure that the design is not dependent on clock symmetry---that
@@ -765,13 +765,16 @@ each time the $A$ logic sees a rising edge, it removes one record from the
 data FIFO.  The data FIFO hence needs to be slightly deeper than the
 functional synchronizer.
 
-\subsection{B Clock Domain Preparation Logic}
+\subsection{Preparation Logic in B Clock Domain}
 
 The $B$ domain logic is responsible for dividing down the $B$ clock to
 the appropriate speed for synchronization into $A$ (see
 section~\ref{sec:reset}.  The $B$ clock can either be passed directly
-into the $A$ domain or it can be divided by an even divisor.  Odd divisors
-are not supported because they would require negedge logic.
+into the $A$ domain or it can be divided by an even divisor.  Odd
+divisors (other than 1) are not supported because they would require
+negedge logic to generate the falling edge of the divided clock (this
+is not a strong restriction---if negedge logic is permitted, odd
+divisors could be supported as well without loss of accuracy).
 
 Recall that the input signal to the block includes a delay as given by
 the environment.  This delay is the time of the signalled event with respect
@@ -809,7 +812,7 @@ from the FIFO on {\em every\/} rising edge that is received.  No pointers
 are traded across the clock boundary.  Therefore, binary pointers can be used
 in both the $A$ and $B$ domains.
 
-\subsection{A Clock Domain Calculation Logic}
+\subsection{Calculation Logic in A Clock Domain}
 
 Within the $A$ domain, the values are removed from the data FIFO, and then
 the age of the slow $B$ edge at the time it was synchronized into the $A$ domain is added.  This age is computed using equation~\ref{eq:final}.  Finally, the number of $A$ cycles that have elapsed since the synchronization (i.e., the depth of the synchronizer itself) are added to the delay, and one more cycle for
@@ -823,8 +826,8 @@ Let us examine equation~\ref{eq:final} in detail.  The equation is, again,
 \Delta^* = s - K \quad .
 \]
 Note that $\Delta^*$ varies only between zero and $p_B$.  It is thus not a ``big'' number.  However, $s$ is a running tally of the $A$ and $B$ clocks; this can
-increase or decrease without bound ({\em diverge\/}) if the clocks are drifting with respect
-to each other.
+increase or decrease without bound ({\em diverge\/}) if the clocks are drifting away from their nominal ratio.
+
 
 The potential of a drifting $s$ adds a worry in the logic for
 computing $\Delta^*$, namely the potential of wrapping/overflow of
@@ -905,8 +908,15 @@ cycle until the falling edge is desired, and then $e$ is held low.  In
 this way, the rising edge of the output is simply a delayed version of
 $B$'s rising edge, but the maintenance of the high value is
 accomplished through $e$ (which is driven by an FSM to effect the
-above behavior).
+above behavior).  A timing diagram of an undivided, a divided by two, and a divided by four slow clock pulse is shown in figure~\ref{fig:divtiming}.
 
+\ins_epsfig{6in}{divtiming}{Timing diagram of stable clock divider.
+  Shown are undivided clock (green), divided by two clock (black), and
+  divided by four clock (red).  Note that the rising edge of
+  $slockclkB$ is always driven from the rising edge of $q$, whereas
+  the timing-wise less important falling edge is driven either by $q$
+  (undivided case) or by $e$ (divided cases).}
+  
 Regardless of whether $B$ is passed through at full speed or it is
 divided down, the rising edges of $B$ (which are the definitional
 edges as far as events are concerned) are passed through precisely the
@@ -915,7 +925,8 @@ minimize unnecessary variations in the delays of $B$.
 
 \subsection{Parameterization}
 
-Most constants of interest in the design are exported to the integrator as
+Most constants of interest in the design are exported to the consumer of the
+design as
 parameters.  The most important constant from a size and power point of view
 is probably the width of the timestamps.  The depth of the synchronizers
 (and thereby of the data FIFO) is also settable.
@@ -924,7 +935,7 @@ is probably the width of the timestamps.  The depth of the synchronizers
 
 One domain of use of the logic described here is in timestamping
 Ethernet packets~\cite{ethernet}.  The GCD of a variety of Ethernet
-serial symbol times is 2/825~ns~($=2.4\overline{24}$~ps).  See
+serial symbol (baud) times is 2/825~ns~($=2.4\overline{24}$~ps).  See
 table~\ref{tab:ethspd} for speeds that we care about today.  Note that
 there are other speeds that are interesting, but these are multi-lane
 versions of the given speeds (for example 100G=$4\times 25$G,
@@ -966,7 +977,7 @@ as $A$ clock) integer number of vernier time units.
 
 The given design can only produce a mark on every other $A$ clock.  We
 can expect the $A$ clock to run 800--1200~MHz without special
-efforts.  This should be sufficient up to 200~Gbps Ethernet, which has
+efforts.  This should be sufficient up to 200-Gbps Ethernet, which has
 a frame rate, assuming 64-byte frames and 20 bytes of inter-frame gap,
 of $200/672=297.6$~MHz or more conservatively, assuming 64-byte frames
 and no IFG, of $200/512=390.625$~MHz.  The shortest PTP/IEEE1588
@@ -987,7 +998,7 @@ potentially be accomodated with queuing.
 \section{Software Simulation}
 
 We wrote a software simulation of the vernier system in the Modula-3
-programming language.  This simulator allows for much higher bandwidth
+programming language~\cite{spwm3}.  This simulator allows for much higher bandwidth
 statistical studies of imperfect (jittery, drifting, etc.) clocks.
 This simulator is intended to be used with Intel's Engineering
 Computing Netbatch batch-processing system for even higher simulation
@@ -1004,10 +1015,11 @@ T.B.W.
 \section{Contributions and Related Work}\label{sec:related}
 
 The idea of using vernier clocks to measure short time intervals did
-not originate with us.  We were inspired by the work of David Chu at
-Hewlett-Packard in the 1970s, which resulted in the HP~5370 (see
-figure~\ref{fig:hp5370a}) Universal Time Interval Counter, capable of
-resolving 20-ps intervals using only a 200-MHz (5-ns) clock.\cite{vernier,hppatent}
+not originate with us.  We were inspired by the work of David Chu and
+colleagues at Hewlett-Packard in the 1970s, which resulted in the
+HP~5370 (see figure~\ref{fig:hp5370a}) Universal Time Interval
+Counter, capable of resolving 20-ps intervals using only a 200-MHz
+(5-ns) clock.\cite{vernier,hppatent}
 
 The problem we are solving here is significantly different from the
 problem solved by the HP~5370.  Whereas the HP~5370 measures a one-shot
@@ -1100,12 +1112,25 @@ the Mount Steller silicon development.
 
 \begin{thebibliography}{99}
 
+\bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan variance'' with increased oscillator characterization ability.  {\it Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
+
+\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
+      Fundamentals.}  National Bureau of Standards Monograph 140.
+    Boulder, Colorado:\ United States Department of Commerce, National
+    Bureau of Standards, May 1974.}
+
+\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1, 1965.}
+
+\bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
+  Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
+
+\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval measurement using triggered phase-locked oscillators.  U.S.~Patent~4,164,648.  Published August 14, 1979.}
+      
 \bibitem{vernier} {D.~C.~Chu, M.~S.~Allen, and A.~S.~Foster.
   Universal Counter Resolves Picoseconds in Time Interval
   Measurements.  {\it Hewlett-Packard Journal}, August 1978.}
 
-\bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
-  Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
+\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
 
 \bibitem{horowitz+hill} {P.~Horowitz and W.~Hill.  {\it The Art of
     Electronics}, second edition, chapter~15.  Cambridge University
@@ -1115,25 +1140,16 @@ the Mount Steller silicon development.
   absolute refractive index measurements of synthetic fused silica.
   NASA Goddard Space Flight Center, 2008.}
 
-\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
-      Fundamentals.}  National Bureau of Standards Monograph 140.
-    Boulder, Colorado:\ United States Department of Commerce, National
-    Bureau of Standards, May 1974.}
-
-  \bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan variance'' with increased oscillator characterization ability.  {\it Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
-
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with
+    Modula-3.}  Prentice-Hall Series in Innovative Technology.
+  Prentice-Hall, 1991.}
+  
 \bibitem{newton}{I.~Newton.  {\it Philosophi\ae{} Naturalis Principia Mathematica,} Book 1.  London:\ S.~Pepys, Royal Society Press, 1686.}
-
-\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1, 1965.}
-
-\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
 
 \bibitem{ethernet}{IEEE Std 802.3-2015.  {\it IEEE Standard for Ethernet.}  Institute for Electrical and Electronics Engineers, 2015.}
 
 \bibitem{ieee1588}{IEEE Std 1588-2008.  {\it IEEE Standard for a Precision Clock Synchronization Protocol for Networked Measurement and Control Systems.}  Institute for Electrical and Electronics Engineers, 2008.}
 
-  \bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval measurement using triggered phase-locked oscillators.  U.S.~Patent~4,164,648.  Published August 14, 1979.}
-      
 \bibitem{sv}{ANSI/IEEE 1800-2017.  {\it IEEE Standard for
     SystemVerilog-Unified Hardware Design, Specification, and
     Verification Language.}  American National Standards Institute,
