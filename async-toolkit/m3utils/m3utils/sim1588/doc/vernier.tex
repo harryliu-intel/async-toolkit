@@ -213,8 +213,8 @@ typedef struct {
 } event_t;
 \end{verbatim}
 As mentioned above, the {\tt dt} field is to be interpreted (1)~as a
-time into the past; and (2)~as the time at the receiver of the event
-(not the sender).
+time into the past (the {\em age\/} of the event); and (2)~as the time
+at the receiver of the event (not the sender).
 
 The delay time {\tt dt} is to be measured in some time unit $\tau$, which
 may be allowed to vary depending on the application.  For example, the base unit
@@ -237,8 +237,7 @@ concern here.  Not yet.)
 
 \ins_epsfig{3in}{exevent}{Hardware representation of an example event that occurred at 16:50:39 exactly.  The $dt$ timescale is here in picoseconds, i.e., $\tau=1$~ps.}
 
-\newpage
-
+\newpage 
 \subsection{The Delay-Measuring Flip-Flop}
 A simple example of how to use the structure is to build a D-type
 flip-flop that receives a current event and passes it to another flip-flop.
@@ -371,7 +370,8 @@ $A$ clock domain.  This means that if we know the above parameters for
 $A$ ($t_{0A}$, $n_A$, and $p_A$) we can know precisely when the
 current clock cycle began.  Clearly we know $n_A$ (from counting) and
 $p_A$ (from our data sheet), and we can in fact {\em define\/}
-$t_{0A}$ as zero or any other desired epoch.
+$t_{0A}$ as zero or any other desired epoch (such as a time that was
+zero at TAI~0:00:00, January 1, 1970, to take a standard example).
 
 If we are also counting the $B$ ticks within our $A$ clock domain and
 also know the $B$-clock parameters ($t_{0B}$, $n_B$, and $p_B$), we
@@ -597,7 +597,7 @@ Let us briefly return to the problem that we are actually trying to solve.
 This is the problem of measuring the time interval between two events.  The case that is the most difficult is when the two events occur in asynchronous clock
 domains of clocks running at the same speed, let's call it $p_E$.  Since
 \[ GCD(p_E,p_E) = p_E \]
-the precision of the measurement is one full clock cycle.
+the precision of the measurement in this case is very poor: one full clock cycle.
 
 The solution to the problem is to introduce a third clock domain with a clock
 that beats against the two asynchronous clocks.  Ideally the third clock
@@ -610,7 +610,9 @@ another vernier device with a precision of 1~$\tau$, both in the third clock dom
 Precisely the scenario described here obtains in an Ethernet network where
 it is desired to measure the delay of a packet through a switch and the
 input and output ports are running the same speed and protocol asynchronously
-to each other (which is the normal situation, even in the case of so-called ``Synchronous Ethernet'').
+to each other (which is the normal situation, even in the case of so-called ``Synchronous Ethernet'').  The introduction of a third clock whose period has
+some factors not in common with the Ethernet clocks allows the measurement
+of timing in this common domain with good subcycle accuracy.
 
 \subsection{Relationship to Bresenham's Algorithm}
 
@@ -647,6 +649,10 @@ delays are not considered in this document is thus deliberate: they are
 intended to be measured and corrected for by higher-level protocols.
 
 \section{Implementation}
+
+In this section we describe an example implementation (to be used in
+Rockvale/Mount Steller) of the algorithms described previously.  Other
+implementations are possible.
 
 \subsection{A Few Precision Considerations}
 
@@ -685,6 +691,7 @@ domain is the clock edge on which the output of the module is
 captured, {\em not\/} the clock edge on which the module produces its
 output!  See section~\ref{sec:hw} for a detailed explanation of this.)
 
+\newpage
 The basic functional interface to the module is therefore as follows:
 \begin{verbatim}
 module meas_sync_ff (
@@ -726,8 +733,6 @@ Apart from the inputs {\tt clkB} and {\tt d}, which are in the $B$
 clock domain, all inputs are synchronous to clock $A$.  ({\tt rst\_n}
 can, as usual, be asserted asynchronously, but it must be deasserted
 synchronously.)
-
-\newpage
 
 \subsection{Outline of the Design}
 
