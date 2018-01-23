@@ -1,7 +1,7 @@
 #!/bin/sh -x
 
 #EXEC=/nfs/site/disks/wdisk.133/mnystroe/1588/sim/AMD64_LINUX/sim1588
-EXEC=../sim/AMD64_LINUX/sim1588
+EXEC=../AMD64_LINUX/sim1588
 
 samples=10000
 #cycles=50000
