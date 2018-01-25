@@ -53,7 +53,8 @@
 \title{Precise Time-Interval Measurement \\ Using Vernier Clocks}
 \author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\
 Jin Yan \\ {\tt jin2.yan@intel.com}}
-\date{January 22, 2018}
+%\date{January 22, 2018}
+\date{\today}
 
 \begin{document}
 
@@ -92,7 +93,11 @@ programs.
 Let it be given a digital system consisting of a multitude of
 independent clock domains, at differing or similar speeds.  It is
 desired to measure the time interval between an event $E_0$ in one
-clock domain and an event $E_1$ in another clock domain.  The required
+clock domain and an event $E_1$ in another clock domain.
+
+Horowitz and Hill has a good general introduction to the topics of
+counting and time-interval measurement~\cite{horowitz+hill}.
+However, in our application, the required
 precision and accuracy are high: possibly better than one clock cycle
 in either clock domain, and in any case higher than that the error
 would be allowed to scale with the number of clock domains either in
@@ -213,14 +218,20 @@ typedef struct {
 } event_t;
 \end{verbatim}
 As mentioned above, the {\tt dt} field is to be interpreted (1)~as a
-time into the past (the {\em age\/} of the event); and (2)~as the time
+time into the past, i.e., the {\em age\/} or {\em delay time\/} of the event; and (2)~as the age
 at the receiver of the event (not the sender).
 
-The delay time {\tt dt} is to be measured in some time unit $\tau$, which
-may be allowed to vary depending on the application.  For example, the base unit
-could be picoseconds, $\tau=1$~ps.  The representation of a current event would
-have ${\tt dt}=0$, while one that is 2.3~ns old would have ${\tt
-  dt}=2300 \tau$.  However, in most actual applications $\tau$ is likely best chosen to have convenient properties with regard to divisibility of clocks and times that are of interest in that application.  For a practical example, see section~\ref{sec:examplesettings}.
+The delay time {\tt dt} is to be measured in some time unit $\tau$,
+which may be allowed to vary depending on the application.  For
+example, the base unit could be picoseconds, $\tau=1$~ps.  The
+representation of a current event would have ${\tt dt}=0$, while one
+that is 2.3~ns old would have ${\tt dt}=2300 \tau$.  We choose
+$\tau=$1~ps for expositional clarity.  In most actual applications
+$\tau$ is likely best chosen to have convenient properties with regard
+to divisibility of clocks and times that are of interest in that
+application (and therefore not necessarily have a convenient
+representation in decimal or binary seconds).  For a practical
+example, see section~\ref{sec:examplesettings}.
 
 For example, let us assume that we wanted to represent an event that
 occurred at precisely 16:50:02~UTC on Sunday, January 21, 2018, or
@@ -307,6 +318,13 @@ It is clear that as the event ages (gets more and more into the past),
 the updating of the $dt$ field serves to represent precisely this
 process and the instant that is being represented remains the same,
 namely TAI~16:50:39.000000000000 exactly.
+
+More formally we say that the event time
+\begin{equation}
+  t_e = \hbox{\tt curtime} - dt
+\end{equation}
+is invariant.
+
 
 This concludes our discussion about events, instants, and their hardware
 representation.
@@ -572,7 +590,7 @@ Also since
 \begin{equation}
   {Q(k,l) \over \hat{q}}= k \pi_A + l \pi_B
 \end{equation}
-where $\pi_A \perp \pi_B$, then Euclid shows that \cite{hardy}
+where $\pi_A \perp \pi_B$, then Euclid shows that \cite{euclid,hardy}
 \begin{equation}
   \exists k_1,l_1 :k_1 \in {\bf Z}, l_1 \in {\bf Z}: k_1 \pi_A + l_1 \pi_B = 1\quad
 \end{equation}
@@ -638,15 +656,17 @@ determining the $y$-intercept of a Bresenham line {\em from the locations of the
 
 \subsection{Wire Delays}
 
-Nothing in this document has so far mentioned wiring delays.  Systems built
-using the modules described here are not assumed to have zero wiring
-delays, nor are wiring delays considered unimportant.  In fact, the
-main application for which the work was done is IEEE1588 Precision
+Nothing in this document has so far mentioned wiring delays.  Systems
+built using the modules described here are not assumed to have zero
+wiring delays, nor are wiring delays considered unimportant.  In fact,
+the main application for which the work was done is IEEE1588 Precision
 Time Protocol (PTP).  In the PTP protocol, digital hardware calculates
-and corrects for queuing delays, leaving wiring delays as a residual to
-be measured by capturing packet round-trip delays.  The fact that wiring
-delays are not considered in this document is thus deliberate: they are
-intended to be measured and corrected for by higher-level protocols.
+and corrects for queuing delays, leaving wiring delays as a residual
+to be measured by capturing packet round-trip delays.  The fact that
+wiring delays are not considered in this document is thus deliberate:
+they are intended to be measured and corrected for by higher-level
+protocols.  The rate of change of wiring delays~\cite{leviton} affects
+the rate at which synchronizations must be performed.
 
 \section{Implementation}
 
@@ -691,7 +711,6 @@ domain is the clock edge on which the output of the module is
 captured, {\em not\/} the clock edge on which the module produces its
 output!  See section~\ref{sec:hw} for a detailed explanation of this.)
 
-\newpage
 The basic functional interface to the module is therefore as follows:
 \begin{verbatim}
 module meas_sync_ff (
@@ -927,7 +946,7 @@ above behavior).  A timing diagram of an undivided, a divided by two, and a divi
 \ins_epsfig{6in}{divtiming}{Timing diagram of stable clock divider.
   Shown are undivided clock (green), divided by two clock (black), and
   divided by four clock (red).  Note that the rising edge of
-  $slockclkB$ is always driven from the rising edge of $q$, whereas
+  $slowclkB$ is always driven from the rising edge of $q$, whereas
   the timing-wise less important falling edge is driven either by $q$
   (undivided case) or by $e$ (divided cases).}
   
@@ -953,7 +972,7 @@ serial symbol (baud) times is 2/825~ns~($=2.4\overline{24}$~ps).  See
 table~\ref{tab:ethspd} for speeds that we care about today.  Note that
 there are other speeds that are interesting, but these are multi-lane
 versions of the given speeds (for example 100G=$4\times 25$G,
-200G=$4\times 50$G.  Other speeds (e.g., 1000BASE-TX PAM5) are not of
+200G=$4\times 50$G).  Other speeds (e.g., 1000BASE-TX PAM5) are not of
 interest and/or handled within the same scheme.
 
 Unfortunately, it is difficult
@@ -963,7 +982,7 @@ one second without using a time unit with further prime factors.
 
 An example time unit that would work is $\tau_E=2/825/17$~ns~($\approx
 142.6$~fs).  The problem with such a small time unit is obviously that
-it leads to rather wide logic (say, 48~bits) in the vernier logic.  If
+it leads to rather wide data paths (say, 48~bits) in the vernier logic.  If
 we do choose such a small vernier time unit, we can choose a $clkA$ of
 $17/20$~GHz$=850$~MHz (exactly); for this frequency, $p_A=8250 \tau_E$.  Timestamp accuracy is then around~70~ps
 with all the other desiderata met: beating against all Ethernet baud rates,
@@ -993,7 +1012,7 @@ The given design can only produce a mark on every other $A$ clock.  We
 can expect the $A$ clock to run 800--1200~MHz without special
 efforts.  This should be sufficient up to 200-Gbps Ethernet, which has
 a frame rate, assuming 64-byte frames and 20 bytes of inter-frame gap,
-of $200/672=297.6$~MHz or more conservatively, assuming 64-byte frames
+of $200/672 \approx 297.6$~MHz or more conservatively, assuming 64-byte frames
 and no IFG, of $200/512=390.625$~MHz.  The shortest PTP/IEEE1588
 payload is 44~bytes within Ethernet, which is two less than the
 minimum Ethernet payload.  Therefore, PTP frames can be minimum sized
@@ -1126,25 +1145,37 @@ the Mount Steller silicon development.
 
 \begin{thebibliography}{99}
 
-\bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan variance'' with increased oscillator characterization ability.  {\it Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
+\bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan
+  variance'' with increased oscillator characterization ability.  {\it
+    Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
 
 \bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
       Fundamentals.}  National Bureau of Standards Monograph 140.
     Boulder, Colorado:\ United States Department of Commerce, National
     Bureau of Standards, May 1974.}
 
-\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1, 1965.}
+\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control
+  of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1,
+  1965.}
 
 \bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
   Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
 
-\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval measurement using triggered phase-locked oscillators.  U.S.~Patent~4,164,648.  Published August 14, 1979.}
+\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval
+  measurement using triggered phase-locked oscillators.
+  U.S.~Patent~4,164,648.  Published August 14, 1979.}
       
 \bibitem{vernier} {D.~C.~Chu, M.~S.~Allen, and A.~S.~Foster.
   Universal Counter Resolves Picoseconds in Time Interval
   Measurements.  {\it Hewlett-Packard Journal}, August 1978.}
 
-\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
+\bibitem{euclid}{Euclid. {\it The Thirteen Books of the Elements,}
+  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
+  unabridged.  Dover Publications, 1956.  Reprint of edition by
+  Cambridge University Press, 1908.}
+  
+\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to
+    the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
 
 \bibitem{horowitz+hill} {P.~Horowitz and W.~Hill.  {\it The Art of
     Electronics}, second edition, chapter~15.  Cambridge University
@@ -1158,11 +1189,18 @@ the Mount Steller silicon development.
     Modula-3.}  Prentice-Hall Series in Innovative Technology.
   Prentice-Hall, 1991.}
   
-\bibitem{newton}{I.~Newton.  {\it Philosophi\ae{} Naturalis Principia Mathematica,} Book 1.  London:\ S.~Pepys, Royal Society Press, 1686.}
+\bibitem{newton}{I.~Newton.  {\it Philosophi\ae{} Naturalis Principia
+    Mathematica,} Book 1.  London:\ S.~Pepys, Royal Society Press,
+  1686.}
 
-\bibitem{ethernet}{IEEE Std 802.3-2015.  {\it IEEE Standard for Ethernet.}  Institute for Electrical and Electronics Engineers, 2015.}
+\bibitem{ethernet}{IEEE Std 802.3-2015.  {\it IEEE Standard for
+    Ethernet.}  Institute of Electrical and Electronics Engineers,
+  2015.}
 
-\bibitem{ieee1588}{IEEE Std 1588-2008.  {\it IEEE Standard for a Precision Clock Synchronization Protocol for Networked Measurement and Control Systems.}  Institute for Electrical and Electronics Engineers, 2008.}
+\bibitem{ieee1588}{IEEE Std 1588-2008.  {\it IEEE Standard for a
+    Precision Clock Synchronization Protocol for Networked Measurement
+    and Control Systems.}  Institute of Electrical and Electronics
+  Engineers, 2008.}
 
 \bibitem{sv}{ANSI/IEEE 1800-2017.  {\it IEEE Standard for
     SystemVerilog-Unified Hardware Design, Specification, and
