@@ -451,7 +451,7 @@ $\Delta$ is zero.  Which makes an approximate $\mathcal{C}$ easy to calculate:
   \end{equation}
 
   will vary (in some
-pattern---{\em it does not matter which\/}) between 0 and $p_B$.}
+pattern---{\em it does not matter which\/}) between 0 (inclusive) and $p_B$ (non-inclusive).}
 
 If we follow this approach, $\Delta^*$ according to Equation~\ref{eq:deltastar} will be a close approximation to the true value of $\Delta$.
 
@@ -497,11 +497,12 @@ two cases:
 \noindent 1. {\it Clock~$A$ is slightly slow or Clock~$B$ is slightly fast.}
 
 In this case, the $\Delta^*$ value as defined above will start running
-negative after $\mathcal{C}^*$ is set.  However, we need do nothing special for this
-case: simply keep monitoring $n_A p_A - n_B p_B$ and set $\mathcal{C}^*$ to the
-smallest value as before.  This will always maintain a $\Delta^*$ that is
-positive and between 0 and $p_B$.  If the ratio is off by a lot, $p_B$ may
-never be reached.  (But to put things in perspective, a ``large'' error
+negative after $\mathcal{C}^*$ is set.  However, we need do nothing
+special for this case: simply keep monitoring $n_A p_A - n_B p_B$ and
+set $\mathcal{C}^*$ to the smallest value as before.  This will always
+maintain a $\Delta^*$ that is positive and between 0 (inclusive) and
+$p_B$ (non-inclusive).  If the ratio is off by a lot, $p_B$ may never
+be reached.  (But to put things in perspective, a ``large'' error
 between the clocks is 200~ppm=1/5,000, and it is unlikely we have more
 than 256 steps between 0 and $p_B$.)
 
@@ -509,9 +510,9 @@ than 256 steps between 0 and $p_B$.)
 
 In this case, the $\Delta^*$ value as defined above will keep increasing.
 However, this is easy to manage.  Simply ensure by fiat that $\Delta^*$ does not
-exceed $p_B$.  That is,
+equal or exceed $p_B$.  That is,
 
-monitor $n_A p_A - n_B p_B$ and set $\mathcal{C}^*$ to the largest value observed, less $p_B$.
+monitor $n_A p_A - n_B p_B$ and set $\mathcal{C}^*$ to the largest value observed, plus one, less $p_B$.
 
 To summarize both rules:\par
 
@@ -523,7 +524,7 @@ To summarize both rules:\par
 \noalign{{\bf let} $s = n_A p_A - n_B p_B$}\cr
 \noalign{monitor $s$ on every clock cycle.}\cr
 {\bf if} $s < -\mathcal{C}^*$,      &{\bf then} perform the update $\mathcal{C}^* := -s$\cr
-{\bf if} $s > -\mathcal{C}^* + p_B$, &{\bf then} perform the update $\mathcal{C}^* := -(s - p_B)$\cr
+{\bf if} $s \ge -\mathcal{C}^* + p_B$, &{\bf then} perform the update $\mathcal{C}^* := -(s + 1 - p_B)$\cr
 }
 
 as output, produce on every cycle the value 
@@ -543,7 +544,7 @@ on every cycle,\par
 
 \halign{#\hfil&#\hfil\cr
 {\bf if} $s < K$,      &{\bf then} perform the update $K := s$\cr
-{\bf if} $s > K + p_B$, &{\bf then} perform the update $K := s - p_B$\cr
+{\bf if} $s \ge K + p_B$, &{\bf then} perform the update $K := s + 1 - p_B$\cr
 }
 
 as output, produce on every cycle the value
