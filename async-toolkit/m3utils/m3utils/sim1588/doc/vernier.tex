@@ -517,7 +517,6 @@ monitor $n_A p_A - n_B p_B$ and set $\mathcal{C}^*$ to the largest value observe
 To summarize both rules:\par
 
 \noindent $1 \lor 2$. {\it Clock $A$ is slightly fast or Clock $B$ is slightly slow; or Clock~$A$ is slightly slow or Clock~$B$ is slightly fast.}\par
-
 \fbox{
   \begin{minipage}{3in}
 \halign{#\hfil&#\hfil\cr
@@ -621,7 +620,7 @@ the precision of the measurement in this case is very poor: one full clock cycle
 The solution to the problem is to introduce a third clock domain with a clock
 that beats against the two asynchronous clocks.  Ideally the third clock
 has a cycle time $p_M$ that is relatively prime to $p_E$, $p_M \perp p_E$ so that
-\[ GCD(p_M,p_E) = 1 \quad . \]
+\begin{equation} GCD(p_M,p_E) = 1 \quad . \end{equation}
 If that is the case the time of the first event can be measured with a vernier
 device with a precision of 1~$\tau$ and the second event can be measured with
 another vernier device with a precision of 1~$\tau$, both in the third clock domain.  The total error introduced from the measurement quantization is only 2~$\tau$, maximum.
@@ -856,9 +855,9 @@ the output cycle into the external receiver.
 
 Let us examine equation~\ref{eq:final} in detail.  The equation is, again,
 
-\[
+\begin{equation}
 \Delta^* = s - K \quad .
-\]
+\end{equation}
 Note that $\Delta^*$ varies only between zero and $p_B$.  It is thus not a ``big'' number.  However, $s$ is a running tally of the $A$ and $B$ clocks; this can
 increase or decrease without bound ({\em diverge\/}) if the clocks are drifting away from their nominal ratio.
 
@@ -870,15 +869,16 @@ the $s$ and $K$ registers.
 We use the following simple method to ensure that
 wrapping/overflow cannot occur.
 
-Observe that the only value of interest to us is the difference
+We observe that the only value of interest to us is the difference
 between $s$ and $K$.  The values of $s$ and $K$ themselves are of no
 interest, and we have no particular need to maintain any physical
 meaning of these values.  In this case, it is easy to ensure that the
-$s$ and $K$ do not diverge.  We introduce logic that monitors $s$, and
-if $s$ gets too positive or too negative, it subtracts or adds an
-arbitrary number from/to $s$ and subtracts or adds the same number
-from/to $K$.  This algorithm maintains $s$ near zero and since it keeps the
-phase $\Delta^*$ unchanged, that remains accurate.
+$s$ and $K$ do not diverge.  We introduce logic that monitors the
+register holding $s$, and if $s$ gets too positive or too negative, it
+subtracts or adds an arbitrary number from/to $s$ and subtracts or
+adds the same number from/to the register holding $K$.  This algorithm
+maintains $s$ near zero and since it keeps the phase $\Delta^*$
+unchanged, that remains accurate.
 
 
 \subsection{Reset Logic and Sequence}\label{sec:reset}
@@ -993,16 +993,19 @@ as $A$ clock) integer number of vernier time units.
 {
   \begin{table}
     \centering
-    \begin{tabular}{l|l|>{\raggedleft\arraybackslash}p{1in}>{$=\,$}l|>{\raggedleft\arraybackslash}p{1in}}
-      \bf Name & \bf Baud rate $[/s]$ & \bf Symbol time $[/(2/825~ns)]$ & \bf Factors & \bf Symbol time\par $[/\tau_E]$\\
+    \begin{tabular}{|l|l|>{\raggedleft\arraybackslash}p{1in}>{$=\,$}l|>{\raggedleft\arraybackslash}p{1in}|}
       \hline
-      50G & $50 \cdot 66/64$ G & 8     &$2^3$    & 136\\
+      \bf Name \rule{0pt}{2.6ex}& \bf Baud rate $[/s]$ & \bf Symbol time $[/(2/825~ns)]$ & \bf Factors & \bf Symbol time\par $[/\tau_E]$ \rule[-1.2ex]{0pt}{0pt}\\
+      \hline
+      
+      50G \rule{0pt}{2.6ex}& $50 \cdot 66/64$ G & 8     &$2^3$    & 136\\
       25G & $25 \cdot 66/64$ G & 16    &$2^4$         & 272\\
       10G & $10 \cdot 66/64$ G & 40    &$2^3 \cdot 5$         & 680\\
       10G & $10 \cdot 10/8$ G & 33     &$3 \cdot 11$         & 561\\
       1G & $10 \cdot 10/8$ G & 330     &$2 \cdot 3 \cdot 5 \cdot 11$          & 5,610\\
       100M & $100 \cdot 10/8$ M & 3300 &$2^2 \cdot 3 \cdot 5^5 \cdot 11$         & 56,100\\
       10M & $10 \cdot 2$ M & 20,625    &$3 \cdot 5^4 \cdot 11$         & 350,625\\
+      \hline
     \end{tabular}
     \caption{Some Ethernet speeds of interest.}\label{tab:ethspd}
   \end{table}
@@ -1107,7 +1110,7 @@ to adopt our design and learn from our experiences.
 We have presented a method of using vernier clocks to measure time
 intervals precisely across different clock domains.  The method shows
 promise for measuring time intervals with precision of tens of
-picoseconds, entirely eliminating the error due to uncertainty from
+picoseconds, essentially eliminating the error due to uncertainty from
 inter-domain synchronization.  In other words, the measurements are
 made with such good precision that accuracy is dependent on the
 time-dependent variation in physical parameters in contemporary
