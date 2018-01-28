@@ -1,3 +1,9 @@
 csrc
 simv
 simv.daidir
+DVEfiles
+inter.vpd
+ucli.key
+.restartSimSession.tcl.old
+.synopsys_dve_rebuild.tcl
+.synopsys_dve_serverport.txt
