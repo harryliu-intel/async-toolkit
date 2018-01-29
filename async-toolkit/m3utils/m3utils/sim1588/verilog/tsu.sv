@@ -161,7 +161,8 @@ module tsu
     parameter RAT_PREC_BITS = 32,
     parameter FIFO_WIDTH    =  7,
     parameter SAMPLE_TIMES  =  2,
-    parameter O_PREC_BITS   = 64
+    parameter O_PREC_BITS   = 64,
+    parameter ZERO_PHASE    =  0   // auto-zero phase counter
    )
    (
     input  logic                        clk,             // 1588 clock
@@ -191,9 +192,7 @@ module tsu
   tsu_pkg::info i_marker_position;
 
   logic signed [RAT_PREC_BITS-1:0]    phase;
-
   logic signed [RAT_PREC_BITS-1:0]    phase_b;
-
 
   logic evt;
   logic evt1; // delayed -- marker_position delays calc by 1 cyc.
@@ -209,11 +208,11 @@ module tsu
            .rst_n                       ,
            .i_fclk                      ,
            .i_fclk_div                  ,
-           .i_fclk_rst_cycs             ,
+           .i_fclk_rst_cycs             , // 
            .i_num                       ,
            .i_denom                     ,
            .i_dec_phase                 (dec_phase),
-           .i_inc_phase                 (inc_phase),
+           .i_inc_phase                 (inc_phase), // 
            .i_phase_b                   ,
            .i_fclk_marker               ,
            .o_evt                       (evt),
@@ -238,14 +237,20 @@ module tsu
                     .o_marker_position (i_marker_position)     
                    );
 
-  assign dec_phase = '0; //(phase > 0);
-  assign inc_phase = '0; //(phase < 0);
+  assign dec_phase = ZERO_PHASE ? (phase > 1000) : '0;
+  assign inc_phase = ZERO_PHASE ? (phase < -1000) : '0;
 
-  logic signed [RAT_PREC_BITS-1:0]    p_corr;
+  logic signed [RAT_PREC_BITS-1:0]    p_corr_d, p_corr_q;
 
   // this is the in-range corrector
-  assign p_corr = (dec_phase ? -(i_num<<1) : (inc_phase ? (i_num<<1) : '0));
+  assign p_corr_d = (dec_phase ? -(i_num<<1) : (inc_phase ? (i_num<<1) : '0));
 
+  // inc_phase and dec_phase as they apply to phase are delayed a cycle
+  // therefore we need to delay them a cycle for min0_d as well
+
+  always_ff @(posedge clk)
+    p_corr_q <= rst_n ? p_corr_d : '0;
+  
   logic signed [RAT_PREC_BITS-1:0]    max0_q   , min0_d   , min0_q;
 
   always_ff @(posedge clk) begin
@@ -278,6 +283,8 @@ module tsu
       // here max0_d (which doesnt exist) should be equal to phase
     else if (min_dn)
       min0_d = phase;
+
+    min0_d += p_corr_q;
   end
 
   logic                     do_output;
