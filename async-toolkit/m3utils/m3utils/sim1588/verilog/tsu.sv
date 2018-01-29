@@ -41,8 +41,7 @@ module tsucnt
     input  logic [RAT_PREC_BITS-1:0]        i_num,           // 1588 period
     input  logic [RAT_PREC_BITS-1:0]        i_denom,         // fclk period
     
-    input  logic                            i_dec_phase,     // -2*i_num
-    input  logic                            i_inc_phase,     // +2*i_num
+    input  logic [RAT_PREC_BITS-1:0]        p_corr_d,        // phase corr., 1 cyc dlyd
     input  logic                            i_fclk_marker,   // input marker
     input  logic signed [RAT_PREC_BITS-1:0] i_phase_b,       // input phase
     
@@ -123,19 +122,7 @@ module tsucnt
   
   logic [RAT_PREC_BITS-1:0] pcnt_d, pcnt_q, p_incr;
 
-  always_ff @(posedge clk) begin
-    assert (rst_n !=='1 | ~i_inc_phase | ~i_dec_phase)
-      else $error("up/down not exclusive");
-  end
-
-  always_comb begin
-    p_incr = +i_num;
-
-    if      (i_dec_phase)
-      p_incr = -i_num;
-    else if (i_inc_phase)
-      p_incr = +i_num+(i_num<<1); // 3*i_num
-  end
+  assign p_incr = +i_num + p_corr_d;
 
   always_comb 
     if (~f_rst_n)
@@ -153,6 +140,19 @@ module tsucnt
 
 endmodule
 
+// idea behind the "phase adjustment":
+// if the clocks drift, the phase counter will eventually overflow (up or down)
+// to prevent this from happening, we can add or subtract an arbitrary offset
+// as long as we add or subtract the same offset everywhere, since the only
+// value we output is (phase - min)
+//
+// in the implementation of this mechanism, we add or subtract two times i_num.
+// we have this operation take effect on the cycle after the cycle we make the
+// decision to adjust.
+//
+// the mechanism can be turned off by setting ZERO_PHASE to 0, but do
+// this only for debugging.
+
 module tsu  
   #(parameter FCLK_DIV_BITS =  3,
     parameter FCLK_RST_BITS = 16,
@@ -162,7 +162,7 @@ module tsu
     parameter FIFO_WIDTH    =  7,
     parameter SAMPLE_TIMES  =  2,
     parameter O_PREC_BITS   = 64,
-    parameter ZERO_PHASE    =  0   // auto-zero phase counter
+    parameter ZERO_PHASE    =  1   // auto-zero phase counter
    )
    (
     input  logic                        clk,             // 1588 clock
@@ -191,13 +191,14 @@ module tsu
   
   tsu_pkg::info i_marker_position;
 
-  logic signed [RAT_PREC_BITS-1:0]    phase;
+  logic signed [RAT_PREC_BITS-1:0]    rawphase;
   logic signed [RAT_PREC_BITS-1:0]    phase_b;
 
   logic evt;
   logic evt1; // delayed -- marker_position delays calc by 1 cyc.
    
   logic [FCLK_DIV_BITS - 1:0] position;
+  logic signed [RAT_PREC_BITS-1:0]    p_corr;
 
   tsucnt #(.FCLK_DIV_BITS(FCLK_DIV_BITS),
            .FCLK_RST_BITS(FCLK_RST_BITS),
@@ -211,14 +212,13 @@ module tsu
            .i_fclk_rst_cycs             , // 
            .i_num                       ,
            .i_denom                     ,
-           .i_dec_phase                 (dec_phase),
-           .i_inc_phase                 (inc_phase), // 
+           .p_corr_d                    (p_corr),
            .i_phase_b                   ,
            .i_fclk_marker               ,
            .o_evt                       (evt),
-           .phase_b                     (phase_b),
-           .position                    (position),
-           .o_phase                     (phase)
+           .phase_b                     ,
+           .position                    ,
+           .o_phase                     (rawphase)
           );          
   marker_position # (.FIFO_DEPTH_BITS(FIFO_DEPTH_BITS),
                      .FIFO_WIDTH(FIFO_WIDTH),
@@ -237,25 +237,24 @@ module tsu
                     .o_marker_position (i_marker_position)     
                    );
 
-  assign dec_phase = ZERO_PHASE ? (phase > 1000) : '0;
-  assign inc_phase = ZERO_PHASE ? (phase < -1000) : '0;
+  // 1000 here is just for testing
+  logic signed [RAT_PREC_BITS-1:0]    phlimit;
 
-  logic signed [RAT_PREC_BITS-1:0]    p_corr_d, p_corr_q;
+  assign phlimit = i_denom * i_fclk_div << 1;
+  
+  assign dec_phase = ZERO_PHASE ? (rawphase > phlimit) : '0;
+  assign inc_phase = ZERO_PHASE ? (rawphase < -phlimit) : '0;
+
 
   // this is the in-range corrector
-  assign p_corr_d = (dec_phase ? -(i_num<<1) : (inc_phase ? (i_num<<1) : '0));
+  assign p_corr = (dec_phase ? -(i_num<<1) : (inc_phase ? (i_num<<1) : '0));
 
   // inc_phase and dec_phase as they apply to phase are delayed a cycle
-  // therefore we need to delay them a cycle for min0_d as well
 
-  always_ff @(posedge clk)
-    p_corr_q <= rst_n ? p_corr_d : '0;
-  
   logic signed [RAT_PREC_BITS-1:0]    max0_q   , min0_d   , min0_q;
 
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) 
     min0_q    <= rst_n ? min0_d    : '0;
-  end
 
   // invariant: max0 = min0 + i_denom*i_fclk_div - 1
   // meaning: min0 is smallest phase
@@ -263,8 +262,8 @@ module tsu
   assign max0_q = min0_q + i_denom*i_fclk_div-1;
 
   logic  max_up, min_dn;
-  assign max_up = phase >  max0_q;
-  assign min_dn = phase <  min0_q;
+  assign max_up = rawphase >  max0_q;
+  assign min_dn = rawphase <  min0_q;
 
   // update min0, max0:
   //
@@ -275,16 +274,14 @@ module tsu
   // the new min
 
   always_comb begin
-    min0_d = min0_q;
+    min0_d = min0_q + p_corr;
     if (vernier_start)
       min0_d = 0;
     else if (max_up)
-      min0_d = phase + 1 - i_denom*i_fclk_div;
+      min0_d = rawphase + 1 - i_denom*i_fclk_div + p_corr;
       // here max0_d (which doesnt exist) should be equal to phase
     else if (min_dn)
-      min0_d = phase;
-
-    min0_d += p_corr_q;
+      min0_d = rawphase + p_corr;
   end
 
   logic                     do_output;
@@ -292,7 +289,13 @@ module tsu
   assign do_output = i_marker_position.marker_v & evt1;
 
   logic signed [RAT_PREC_BITS-1:0] edge_age;
-  assign edge_age = phase - min0_d;
+
+  // this is a bit tricky.  In earlier implementations, we compared
+  // phase to min0_d as baseline, to avoid getting a negative edge_age.
+  // but here we will use min0_q as baseline.
+  // During operation, changes in min0/max0 are normally
+  // rare in any case, and usually by a small number of counts.
+  assign edge_age = rawphase - min0_q;
   
   always_ff @(posedge clk) begin
     o_phase_v <= do_output;
