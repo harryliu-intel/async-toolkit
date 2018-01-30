@@ -137,38 +137,40 @@ endmodule
 
 module tsu  
   #(parameter FCLK_DIV_BITS =  3,
-    parameter FCLK_RST_BITS = 16,
-    parameter FCLK_MIN_BITS = 16,
+    parameter FCLK_RST_BITS = 16, // XXX remove
     parameter RAT_PREC_BITS = 32,
-    parameter SAMPLE_TIMES  =  2,
-    parameter ZERO_PHASE    =  1   // auto-zero phase counter
+    parameter SAMPLE_TIMES  =  2
+
+    // debug parameters
+    ,parameter DEBUG_GCD_UNITY = 0 // do not use GCD to divide periods
    )
    (
-    input logic                             clk, // 1588 clock "A"
-    input logic                             rst_n, // 1588 reset
+    input logic                      clk, // 1588 clock "A"
+    input logic                      rst_n, // 1588 reset
 
     // "A" clock synchronized configuration inputs
-    input logic [FCLK_DIV_BITS-1:0]         i_fclk_div, // foreign clock div.
-    input logic [FCLK_RST_BITS-1:0]         i_fclk_rst_cycs, // reset cycles
-    input logic [FCLK_MIN_BITS-1:0]         i_fclk_min_cycs, // cycles for min.
+    // N.B. all these inputs should be REGISTERED INTERNALLY in the final
+    // implementation
+    input logic [FCLK_DIV_BITS-1:0]  i_fclk_div, // foreign clock div.
+    input logic [FCLK_RST_BITS-1:0]  i_fclk_rst_cycs, // reset cycles
     
-    input logic [RAT_PREC_BITS-1:0]         i_num, // 1588 period
-    input logic [RAT_PREC_BITS-1:0]         i_denom, // fclk period
-    input logic [RAT_PREC_BITS-1:0]         i_denom_err, // fclk period error
+    input logic [RAT_PREC_BITS-1:0]  i_num, // 1588 period
+    input logic [RAT_PREC_BITS-1:0]  i_denom, // fclk period
+    input logic [RAT_PREC_BITS-1:0]  i_denom_err, // fclk period error
 
     // "A" clock synchronized control handshake
-    input logic                             i_vernier_start,
-    output logic                            o_vernier_ready,
-    output logic                            o_vernier_error,
+    input logic                      i_vernier_start,
+    output logic                     o_vernier_ready,
+    output logic                     o_vernier_error,
 
     // "B" clock (i_fclk) synchronized inputs
-    input logic                             i_fclk, // foreign clock
-    input logic                             i_fclk_mark, 
-    input logic [RAT_PREC_BITS-1:0]         i_phase_b,//input for b time in TU 
+    input logic                      i_fclk, // foreign clock
+    input logic                      i_fclk_mark, 
+    input logic [RAT_PREC_BITS-1:0]  i_fclk_mark_phase,//input for b time in TU 
 
     // "A" clock (clk) synchronized outputs
-    output logic                            o_phase_v,
-    output logic [RAT_PREC_BITS-1:0]        o_phase
+    output logic                     o_mark,
+    output logic [RAT_PREC_BITS-1:0] o_mark_phase
    );
 
   localparam FIFO_DEPTH_BITS = $clog2(SAMPLE_TIMES)+1;
@@ -214,7 +216,7 @@ module tsu
                     .i_evt                  (evt),
                     .o_evt                  (evt1),
                     .position               ,
-                    .i_phase_b              ,
+                    .i_fclk_mark_phase              ,
                     .mark_position_d
                    );
 
@@ -281,15 +283,15 @@ module tsu
 
   assign result =         
         edge_age                  // age of B edge
-      + mark_phase_b // input age in B clock dom.
+      + mark_phase_b              // input age in B clock dom.
       + i_num*(SAMPLE_TIMES)      // synchronizer delay
       + i_num;                    // output delay (1 A cycle to receiver)
 
   always_ff @(posedge clk) begin
-    o_phase_v <= do_output;
+    o_mark <= do_output;
       
     if(~rst_n | do_output)
-      o_phase <= rst_n ? result : '0;
+      o_mark_phase <= rst_n ? result : '0;
   end
 endmodule
  
@@ -304,12 +306,12 @@ module mark_position
     // "B" foreign-clock inputs
     input logic                             i_fclk, 
     input logic                             i_fclk_mark, // input mark
-    input logic [RAT_PREC_BITS-1:0 ]        i_phase_b,   // input phase
+    input logic [RAT_PREC_BITS-1:0 ]        i_fclk_mark_phase,   // input phase
     
     // "A" 1588 clock inputs & outputs
-    input logic                             clk,       // 1588 clock
-    input logic                             rst_n,     // 1588 reset
-    input logic [FCLK_DIV_BITS-1:0]         i_fclk_div, // stable
+    input logic                             clk,         // 1588 clock
+    input logic                             rst_n,       // 1588 reset
+    input logic [FCLK_DIV_BITS-1:0]         i_fclk_div,  // stable
     input logic                             i_evt,
     output logic                            o_evt,
     input logic [FCLK_DIV_BITS-1:0]         position,
@@ -341,9 +343,9 @@ module mark_position
       if(!rst_n)
         fifo <= '0;
       else if(firstcycle)
-        fifo[wr_pointer] <= {i_fclk_mark, i_phase_b};
+        fifo[wr_pointer] <= {i_fclk_mark, i_fclk_mark_phase};
       else if(i_fclk_mark)
-        fifo[wr_pointer] <= {i_fclk_mark, i_phase_b};
+        fifo[wr_pointer] <= {i_fclk_mark, i_fclk_mark_phase};
     end
 
   //////////////////////////////////////////////////////////////////////

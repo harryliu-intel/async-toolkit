@@ -4,30 +4,27 @@
 module tsu_tb_mark #() () ;
 
   localparam FCLK_DIV_BITS= 3;
-  localparam FCLK_RST_BITS=16;
-  localparam FCLK_MIN_BITS=16;
   localparam RAT_PREC_BITS=24;
-  localparam O_PREC_BITS=64;
   localparam SAMPLE_TIMES  =  2;
-
+  parameter FCLK_RST_BITS = 16;
 
   logic                        clk;             // 1588 clock
   logic                        rst_n;           // 1588 reset
 
   logic                        i_fclk;          // foreign clock
   logic [FCLK_DIV_BITS-1:0]    i_fclk_div;      // foreign clock div.
-  logic [FCLK_RST_BITS-1:0]    i_fclk_rst_cycs; // reset cycles
-  logic [FCLK_MIN_BITS-1:0]    i_fclk_min_cycs; // cycles for min.
     
   logic [RAT_PREC_BITS-1:0]    i_num;           // 1588 cycle time
   logic [RAT_PREC_BITS-1:0]    i_denom;         // foreign cycle time
   logic [RAT_PREC_BITS-1:0]    i_denom_err; 
-    
-  logic [RAT_PREC_BITS-1:0]    o_phase;
-  logic                        o_phase_v;
+
+  logic [FCLK_RST_BITS-1:0]    i_fclk_rst_cycs; // reset cycles XXX remove
+
+  logic                        o_mark;
+  logic [RAT_PREC_BITS-1:0]    o_mark_phase;
   
   logic                        i_fclk_mark;
-  logic [RAT_PREC_BITS-1:0]    i_phase_b;
+  logic [RAT_PREC_BITS-1:0]    i_fclk_mark_phase;
   logic                        i_vernier_start;
   logic                        o_vernier_ready;
   logic                        o_vernier_error;
@@ -52,7 +49,6 @@ module tsu_tb_mark #() () ;
     
   tsu #(.FCLK_DIV_BITS (FCLK_DIV_BITS),
         .FCLK_RST_BITS (FCLK_RST_BITS),
-        .FCLK_MIN_BITS (FCLK_MIN_BITS),
         .RAT_PREC_BITS (RAT_PREC_BITS),
         .SAMPLE_TIMES  (SAMPLE_TIMES)
        )
@@ -177,7 +173,7 @@ module tsu_tb_mark #() () ;
       @(posedge clk);
       mynow = $realtime;
       @(negedge clk);
-      if (o_phase_v) begin
+      if (o_mark) begin
         last_a = mynow;
         last_delta = mynow - last_mark;
       end
@@ -189,19 +185,18 @@ module tsu_tb_mark #() () ;
   
   // config. inputs
   initial begin
-    i_fclk_div      =                        1;
-    i_fclk_rst_cycs =                      100;
-    i_fclk_min_cycs =                      257;
-    i_num           =  fden_1588*fnum_fclk/gcd;
-    i_denom         =  fnum_1588*fden_fclk/gcd;
-    i_denom_err     =                       '0;
-    i_phase_b       =                       '0;
+    i_fclk_div        =                        1;
+    i_fclk_rst_cycs   =                      100;
+    i_num             =  fden_1588*fnum_fclk/gcd;
+    i_denom           =  fnum_1588*fden_fclk/gcd;
+    i_denom_err       =                       '0;
+    i_fclk_mark_phase =                       '0;
   end
   
   real measurement,measurement_temp ;
   real t_error, t_error_temp;
   
-  assign measurement = o_phase*1.0 / i_num * fden_1588*1.0/fnum_1588; // ps
+  assign measurement = o_mark_phase*1.0 / i_num * fden_1588*1.0/fnum_1588; // ps
 
   assign t_error = measurement-last_delta;
 
@@ -214,7 +209,7 @@ module tsu_tb_mark #() () ;
       @(negedge clk);
       #1;
       
-      if (o_phase_v)
+      if (o_mark)
         t_error_reg = t_error;
     
   end
