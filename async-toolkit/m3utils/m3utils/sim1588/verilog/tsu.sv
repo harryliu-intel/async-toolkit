@@ -6,7 +6,12 @@
 // May, 2015
 //
 
-`include "tsu_pkg.vh"
+// careful here: 
+//
+// the reset strategy we have to be careful about.  we should probably
+// make the B side reset off i_vernier_start, NOT rst_n.  There is no
+// particular reason to reset on rst_n, except some sort of sanity.
+// The time reset of the B side is necessary is on i_vernier_start!
 
 module sync2xdff0_x2 (
   input  logic  ck, d, se, si,
@@ -20,58 +25,50 @@ module sync2xdff0_x2 (
     qq <= d;
     q  <= qq;
   end
-
 endmodule
-
 
 module tsucnt 
   #(parameter FCLK_DIV_BITS= 3,
     parameter FCLK_RST_BITS=16,
-    parameter CNT_PREC_BITS=64,
     parameter RAT_PREC_BITS=32
    )
    (
-    input  logic                            clk,             // 1588 clock
-    input  logic                            rst_n,           // 1588 reset
+    input logic                      clk, // 1588 clock
+    input logic                      rst_n, // 1588 reset
 
-    input  logic                            i_fclk,          // foreign clock
-    input  logic [FCLK_DIV_BITS-1:0]        i_fclk_div,      // fgn clock div.
-    input  logic [FCLK_RST_BITS-1:0]        i_fclk_rst_cycs, // reset cycles
+    // "B" synchronized inputs
+    input logic                      i_fclk, // foreign clock
+
+    // "A" synchronized control inputs
+    input logic [FCLK_DIV_BITS-1:0]  i_fclk_div, // fgn clock div.
+    input logic [FCLK_RST_BITS-1:0]  i_fclk_rst_cycs, // reset cycles
     
-    input  logic [RAT_PREC_BITS-1:0]        i_num,           // 1588 period
-    input  logic [RAT_PREC_BITS-1:0]        i_denom,         // fclk period
+    input logic [RAT_PREC_BITS-1:0]  i_num, // 1588 period
+    input logic [RAT_PREC_BITS-1:0]  i_denom, // fclk period
     
-    input  logic [RAT_PREC_BITS-1:0]        p_corr_d,        // phase corr., 1 cyc dlyd
-    input  logic                            i_fclk_marker,   // input marker
-    input  logic signed [RAT_PREC_BITS-1:0] i_phase_b,       // input phase
     
-    output logic                            o_evt,           // rising edge det
-    output logic signed [RAT_PREC_BITS-1:0] phase_b,
-    output logic [FCLK_DIV_BITS-1:0]        position,  
+    output logic                     o_evt, // rising edge det
+    output logic [FCLK_DIV_BITS-1:0] position, 
      
-    output logic signed [RAT_PREC_BITS-1:0] o_phase
+    output logic [RAT_PREC_BITS-1:0] o_phase
    );
 
 
-  localparam NUM_DIV_FLOPS=(1<<FCLK_DIV_BITS);
-  logic [NUM_DIV_FLOPS:0] marker_div;
   logic                   f_rst_n;
-  logic signed [FCLK_DIV_BITS :0]      i_fclk_div_smaller;
-  assign i_fclk_div_smaller = i_fclk_div -1;
+  logic [FCLK_DIV_BITS :0]      i_fclk_div_smaller;
+  // must assert/check i_fclk_div == 1 or is even and != 0
+  assign i_fclk_div_smaller = i_fclk_div - 1;
 
+  // "B" clock position counter
+  // XXX BUG : reset must be synchronized to B
   always_ff @(posedge i_fclk or negedge rst_n)
     begin
       if(!rst_n)
-      begin
-       position <= '1;
-      end
+       position <= '0;
       else if(position < (i_fclk_div_smaller))
-        begin
         position <= position + 1;
-        end
-      else begin
+      else
         position <= '0;
-        end 
     end
 
   logic div_clk;
@@ -79,8 +76,6 @@ module tsucnt
 
   logic sfclk;    
   assign sfclk = (i_fclk_div != 1) ? div_clk:i_fclk;
-
-  assign phase_b = -i_denom*position + i_phase_b;
 
   sync2xdff0_x2 u_sync2xdff0_x2_sampler (
     .q   ( samp   ),
@@ -92,7 +87,7 @@ module tsucnt
 
   logic psamp;
 
-  always_ff @(posedge clk)
+  always_ff @(posedge clk or negedge rst_n)
     psamp <= rst_n ? samp : '0;
 
   logic evt;
@@ -122,7 +117,7 @@ module tsucnt
   
   logic [RAT_PREC_BITS-1:0] pcnt_d, pcnt_q, p_incr;
 
-  assign p_incr = +i_num + p_corr_d;
+  assign p_incr = +i_num;
 
   always_comb 
     if (~f_rst_n)
@@ -140,65 +135,54 @@ module tsucnt
 
 endmodule
 
-// idea behind the "phase adjustment":
-// if the clocks drift, the phase counter will eventually overflow (up or down)
-// to prevent this from happening, we can add or subtract an arbitrary offset
-// as long as we add or subtract the same offset everywhere, since the only
-// value we output is (phase - min)
-//
-// in the implementation of this mechanism, we add or subtract two times i_num.
-// we have this operation take effect on the cycle after the cycle we make the
-// decision to adjust.
-//
-// the mechanism can be turned off by setting ZERO_PHASE to 0, but do
-// this only for debugging.
-
 module tsu  
   #(parameter FCLK_DIV_BITS =  3,
     parameter FCLK_RST_BITS = 16,
     parameter FCLK_MIN_BITS = 16,
-    parameter CNT_PREC_BITS = 64,
     parameter RAT_PREC_BITS = 32,
-    parameter FIFO_WIDTH    =  7,
     parameter SAMPLE_TIMES  =  2,
-    parameter O_PREC_BITS   = 64,
     parameter ZERO_PHASE    =  1   // auto-zero phase counter
    )
    (
-    input  logic                        clk,             // 1588 clock
-    input  logic                        rst_n,           // 1588 reset
+    input logic                             clk, // 1588 clock "A"
+    input logic                             rst_n, // 1588 reset
 
-    input  logic                        i_fclk,          // foreign clock
-    input  logic [FCLK_DIV_BITS-1:0]    i_fclk_div,      // foreign clock div.
-    input  logic [FCLK_RST_BITS-1:0]    i_fclk_rst_cycs, // reset cycles
-    input  logic [FCLK_MIN_BITS-1:0]    i_fclk_min_cycs, // cycles for min.
-    input  logic                        i_fclk_marker, 
+    // "A" clock synchronized configuration inputs
+    input logic [FCLK_DIV_BITS-1:0]         i_fclk_div, // foreign clock div.
+    input logic [FCLK_RST_BITS-1:0]         i_fclk_rst_cycs, // reset cycles
+    input logic [FCLK_MIN_BITS-1:0]         i_fclk_min_cycs, // cycles for min.
     
-    input  logic [RAT_PREC_BITS-1:0]    i_num,           // 1588 period
-    input  logic [RAT_PREC_BITS-1:0]    i_denom,         // fclk period
+    input logic [RAT_PREC_BITS-1:0]         i_num, // 1588 period
+    input logic [RAT_PREC_BITS-1:0]         i_denom, // fclk period
+    input logic [RAT_PREC_BITS-1:0]         i_denom_err, // fclk period error
 
-    input  logic [RAT_PREC_BITS-1:0]    i_phase_b,       //input for b time in TU         
-    input  logic                        vernier_start,
-    
-    output logic                        o_phase_v,
-    output logic signed [RAT_PREC_BITS-1:0]    o_phase
-    
+    // "A" clock synchronized control handshake
+    input logic                             i_vernier_start,
+    output logic                            o_vernier_ready,
+    output logic                            o_vernier_error,
+
+    // "B" clock (i_fclk) synchronized inputs
+    input logic                             i_fclk, // foreign clock
+    input logic                             i_fclk_mark, 
+    input logic [RAT_PREC_BITS-1:0]         i_phase_b,//input for b time in TU 
+
+    // "A" clock (clk) synchronized outputs
+    output logic                            o_phase_v,
+    output logic [RAT_PREC_BITS-1:0]        o_phase
    );
 
   localparam FIFO_DEPTH_BITS = $clog2(SAMPLE_TIMES)+1;
-  
-  import tsu_pkg::*; 
-  
-  tsu_pkg::info i_marker_position;
+  assign o_vernier_ready = '1; // XXX TODO
+  assign o_vernier_error = '0; // XXX TODO
 
-  logic signed [RAT_PREC_BITS-1:0]    rawphase;
-  logic signed [RAT_PREC_BITS-1:0]    phase_b;
+  logic [RAT_PREC_BITS+1-1:0]         mark_position_d;
+
+  logic [RAT_PREC_BITS-1:0]          rawphase;
 
   logic evt;
-  logic evt1; // delayed -- marker_position delays calc by 1 cyc.
+  logic evt1; // delayed -- mark_position delays calc by 1 cyc.
    
   logic [FCLK_DIV_BITS - 1:0] position;
-  logic signed [RAT_PREC_BITS-1:0]    p_corr;
 
   tsucnt #(.FCLK_DIV_BITS(FCLK_DIV_BITS),
            .FCLK_RST_BITS(FCLK_RST_BITS),
@@ -209,61 +193,53 @@ module tsu
            .rst_n                       ,
            .i_fclk                      ,
            .i_fclk_div                  ,
-           .i_fclk_rst_cycs             , // 
+           .i_fclk_rst_cycs             , // needs to go away
            .i_num                       ,
            .i_denom                     ,
-           .p_corr_d                    (p_corr),
-           .i_phase_b                   ,
-           .i_fclk_marker               ,
            .o_evt                       (evt),
-           .phase_b                     ,
            .position                    ,
            .o_phase                     (rawphase)
           );          
-  marker_position # (.FIFO_DEPTH_BITS(FIFO_DEPTH_BITS),
-                     .FIFO_WIDTH(FIFO_WIDTH),
-                     .SAMPLE_TIMES(SAMPLE_TIMES)
+  mark_position # (.FIFO_DEPTH_BITS(FIFO_DEPTH_BITS),
+                     .FIFO_WIDTH(RAT_PREC_BITS),
+                     .SAMPLE_TIMES(SAMPLE_TIMES),
+                     .RAT_PREC_BITS(RAT_PREC_BITS)
                     )
-  u_marker_position
+  u_mark_position
                    (.clk                    , 
                     .rst_n                  ,           
                     .i_fclk                 ,          
                     .i_fclk_div             ,
-                    .i_fclk_marker          ,   
-                    .i_evt              (evt),
-                    .o_evt             (evt1),
-                    .position          (position),
-                    .phase_b           (phase_b),
-                    .o_marker_position (i_marker_position)     
+                    .i_fclk_mark          ,   
+                    .i_evt                  (evt),
+                    .o_evt                  (evt1),
+                    .position               ,
+                    .i_phase_b              ,
+                    .mark_position_d
                    );
 
-  // 1000 here is just for testing
-  logic signed [RAT_PREC_BITS-1:0]    phlimit;
+  logic [RAT_PREC_BITS-1:0]    max0_q   , min0_d   , min0_q;
 
-  assign phlimit = i_denom * i_fclk_div << 1;
-  
-  assign dec_phase = ZERO_PHASE ? (rawphase > phlimit) : '0;
-  assign inc_phase = ZERO_PHASE ? (rawphase < -phlimit) : '0;
-
-
-  // this is the in-range corrector
-  assign p_corr = (dec_phase ? -(i_num<<1) : (inc_phase ? (i_num<<1) : '0));
-
-  // inc_phase and dec_phase as they apply to phase are delayed a cycle
-
-  logic signed [RAT_PREC_BITS-1:0]    max0_q   , min0_d   , min0_q;
-
-  always_ff @(posedge clk) 
+  always_ff @(posedge clk or negedge rst_n) 
     min0_q    <= rst_n ? min0_d    : '0;
 
   // invariant: max0 = min0 + i_denom*i_fclk_div - 1
   // meaning: min0 is smallest phase
-  //          max0 is largest phase 
+  //          max0 is largest phase
+  //
+  // note that the math here is mod 2^N
+  // max, min, and rawphase are all maintained mod 2^N
+  // therefore we cannot use < and >, instead we have to use operators
+  // "to the right of" and "to the left of" (less than one half time the
+  // way around the number circle)
+  //
   assign max0_q = min0_q + i_denom*i_fclk_div-1;
 
   logic  max_up, min_dn;
-  assign max_up = rawphase >  max0_q;
-  assign min_dn = rawphase <  min0_q;
+`define RIGHTOF(x,y) (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1))
+  
+  assign max_up = `RIGHTOF(rawphase,max0_q); // rawphase to right of max
+  assign min_dn = `RIGHTOF(min0_q,rawphase); // min to right of rawphase
 
   // update min0, max0:
   //
@@ -274,21 +250,27 @@ module tsu
   // the new min
 
   always_comb begin
-    min0_d = min0_q + p_corr;
-    if (vernier_start)
+    min0_d = min0_q;
+    if (i_vernier_start)
       min0_d = 0;
     else if (max_up)
-      min0_d = rawphase + 1 - i_denom*i_fclk_div + p_corr;
+      min0_d = rawphase + 1 - i_denom*i_fclk_div;
       // here max0_d (which doesnt exist) should be equal to phase
     else if (min_dn)
-      min0_d = rawphase + p_corr;
+      min0_d = rawphase;
   end
 
-  logic                     do_output;
+  logic                              mark_v;
+  logic [RAT_PREC_BITS-1:0]          mark_phase_b;
+  
+  // top bit of mark_position is valid bit
+  assign mark_v       = mark_position_d[$bits(mark_position_d)-1];
+  assign mark_phase_b = mark_position_d[$bits(mark_position_d)-2:0];
 
-  assign do_output = i_marker_position.marker_v & evt1;
+  logic                              do_output;
+  assign do_output = mark_v & evt1;
 
-  logic signed [RAT_PREC_BITS-1:0] edge_age;
+  logic [RAT_PREC_BITS-1:0]          edge_age, result;
 
   // this is a bit tricky.  In earlier implementations, we compared
   // phase to min0_d as baseline, to avoid getting a negative edge_age.
@@ -296,107 +278,88 @@ module tsu
   // During operation, changes in min0/max0 are normally
   // rare in any case, and usually by a small number of counts.
   assign edge_age = rawphase - min0_q;
-  
-  always_ff @(posedge clk) begin
-    o_phase_v <= do_output;
-    if(do_output)
-      o_phase <= 
+
+  assign result =         
         edge_age                  // age of B edge
-      + i_marker_position.phase_b // input age in B clock dom.
+      + mark_phase_b // input age in B clock dom.
       + i_num*(SAMPLE_TIMES)      // synchronizer delay
       + i_num;                    // output delay (1 A cycle to receiver)
+
+  always_ff @(posedge clk) begin
+    o_phase_v <= do_output;
+      
+    if(~rst_n | do_output)
+      o_phase <= rst_n ? result : '0;
   end
-
-  logic [RAT_PREC_BITS-1:0] debug_o_phase;
-  logic [RAT_PREC_BITS-1:0] debug_o_phase_2;
-
-  assign debug_o_phase = i_denom*position; 
-  assign debug_o_phase_2 = i_denom*(i_fclk_div-position);
-
 endmodule
  
-module marker_position
+module mark_position
    # (parameter FIFO_DEPTH_BITS =  2,
       parameter FIFO_WIDTH =  37,
       parameter RAT_PREC_BITS = 32,
       parameter FCLK_DIV_BITS = 3,
       parameter SAMPLE_TIMES = 2
    )
-(   input  logic                        clk,             // 1588 clock
-    input  logic                        rst_n,           // 1588 reset
+(   
+    // "B" foreign-clock inputs
+    input logic                             i_fclk, 
+    input logic                             i_fclk_mark, // input mark
+    input logic [RAT_PREC_BITS-1:0 ]        i_phase_b,   // input phase
+    
+    // "A" 1588 clock inputs & outputs
+    input logic                             clk,       // 1588 clock
+    input logic                             rst_n,     // 1588 reset
+    input logic [FCLK_DIV_BITS-1:0]         i_fclk_div, // stable
+    input logic                             i_evt,
+    output logic                            o_evt,
+    input logic [FCLK_DIV_BITS-1:0]         position,
 
-    input  logic                        i_fclk,          // foreign clock
-    input  logic [FCLK_DIV_BITS-1:0]    i_fclk_div,
-
-    input  logic                        i_fclk_marker,   // marker of foreign clock
-    input  logic signed [RAT_PREC_BITS-1:0 ]   phase_b,
-    input  logic                        i_evt,
-    output logic                        o_evt,
-    input  logic [FCLK_DIV_BITS-1:0]    position,
-
-    output tsu_pkg::info                o_marker_position
+    output logic [RAT_PREC_BITS+1-1:0]      mark_position_d
 );
 
   localparam FIFO_DEPTH=(1 << FIFO_DEPTH_BITS);
-  
-  import tsu_pkg::*; 
-  
-  tsu_pkg::info marker_info;   //packed information about marker
+  logic [FIFO_DEPTH-1:0][RAT_PREC_BITS+1-1:0] fifo;
 
-  tsu_pkg::info [FIFO_DEPTH-1:0] fifo ;
-  tsu_pkg::info debug_0;
-  tsu_pkg::info debug_1;
-  tsu_pkg::info debug_2;
-  tsu_pkg::info debug_3;
-
-  logic [$clog2(FIFO_DEPTH)-1:0] pointer ;
-
-
-  always_ff @(posedge i_fclk or negedge rst_n)
-    begin
-      if(!rst_n)
-      begin
-       pointer  <= 0;
-      end
-      else if(position >= i_fclk_div-1)
-      begin
-        pointer  <= pointer + 1;
-      end 
-    end  //end always_ff
+  //////////////////////////////////////////////////////////////////////
+  // "B" clock (i_fclk) input side of FIFO
+  logic [FIFO_DEPTH_BITS-1:0] wr_pointer;
+  // XXX BUG!
+  // need to synchronize rst_n into "B" domain here
+  always_ff @(posedge i_fclk or negedge rst_n)  begin
+    if(!rst_n) // NO.. this won't work.. rst_n is not on B clock
+      wr_pointer  <= 0;
+    else if(position == i_fclk_div-1) // ?
+      wr_pointer  <= wr_pointer + 1;
+  end 
    
   logic firstcycle;
-
   assign firstcycle= position == 0;
 
-  always_ff @(posedge i_fclk or negedge rst_n)    // Store position information + marker information into a FIFO
+  always_ff @(posedge i_fclk or negedge rst_n)    
+    // Store position information + mark information into a FIFO
     begin
       if(!rst_n)
-        fifo <= '{default:34'b0};
+        fifo <= '0;
       else if(firstcycle)
-        fifo[pointer] <= {i_fclk_marker, phase_b};
-      else if(i_fclk_marker)
-        fifo[pointer] <= {i_fclk_marker, phase_b};
+        fifo[wr_pointer] <= {i_fclk_mark, i_phase_b};
+      else if(i_fclk_mark)
+        fifo[wr_pointer] <= {i_fclk_mark, i_phase_b};
     end
-  assign debug_0 = fifo[0];
-  assign debug_1 = fifo[1];
-  assign debug_2 = fifo[2];
-  assign debug_3 = fifo[3];
 
-  logic [$clog2(FIFO_DEPTH)-1 :0] read_pointer;
+  //////////////////////////////////////////////////////////////////////
+  // "A" clock (clk) output side of FIFO
+  logic [FIFO_DEPTH_BITS-1:0] rd_pointer;
   
   always_ff @(posedge clk or negedge rst_n)   
-  // Retrieve position information from FIFO every sflck positive edge
+    // Retrieve position information from FIFO every sflck positive edge
     begin
-      if(!rst_n)
-      begin
-        read_pointer      <= '0;
-        o_marker_position <= '0;
+      if(!rst_n) begin
+        rd_pointer      <= '0;
+        mark_position_d <= '0;
         o_evt             <= '0;
-      end
-      else if(i_evt)
-      begin
-        read_pointer      <= read_pointer + 1;
-        o_marker_position <= fifo[read_pointer];
+      end else if(i_evt) begin
+        rd_pointer      <= rd_pointer + 1;
+        mark_position_d <= fifo[rd_pointer];
       end;
 
       o_evt <= i_evt;
