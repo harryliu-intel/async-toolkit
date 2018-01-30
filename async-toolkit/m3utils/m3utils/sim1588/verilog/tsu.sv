@@ -238,7 +238,7 @@ module tsu
   assign max0_q = min0_q + i_denom*i_fclk_div-1;
 
   logic  max_up, min_dn;
-`define RIGHTOF(x,y) (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1))
+`define RIGHTOF(x,y) (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1)) // use function?
   
   assign max_up = `RIGHTOF(rawphase,max0_q); // rawphase to right of max
   assign min_dn = `RIGHTOF(min0_q,rawphase); // min to right of rawphase
@@ -279,13 +279,29 @@ module tsu
   // but here we will use min0_q as baseline.
   // During operation, changes in min0/max0 are normally
   // rare in any case, and usually by a small number of counts.
-  assign edge_age = rawphase - min0_q;
+  //
+  // Now... we are using unsigned arithmetic, and edge_age can IN THEORY
+  // be negative (for very strange parameter settings).  We should
+  // guard against this...
+  //   
+  // Why can edge_age be negative?  The reason is that edge_age affects
+  // min0_d (so that rawphase - min0_d is never negative), but min0_q
+  // is a cycle later.  What we'll do is that if edge_age is negative,
+  // we'll truncate it to zero.
+
+  always_comb begin
+    edge_age = '0;                  // exceptional case
+    if (`RIGHTOF(min0_q,rawphase))
+      edge_age = rawphase - min0_q; // normal case
+  end
 
   assign result =         
         edge_age                  // age of B edge
       + mark_phase_b              // input age in B clock dom.
       + i_num*(SAMPLE_TIMES)      // synchronizer delay
       + i_num;                    // output delay (1 A cycle to receiver)
+  // actually the expression is not written quite right.  The synchronizer
+  // delay is one cycle less, but we are losing a cycle somewhere else.
 
   always_ff @(posedge clk) begin
     o_mark <= do_output;
