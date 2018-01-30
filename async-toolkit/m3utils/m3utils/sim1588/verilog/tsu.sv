@@ -174,6 +174,18 @@ module tsu
    );
 
   localparam FIFO_DEPTH_BITS = $clog2(SAMPLE_TIMES)+1;
+
+`define RIGHTOF(x,y) (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1)) // use function?
+
+  function logic right_of(input logic [RAT_PREC_BITS-1:0] x,y);
+    // returns true when x is to the right of y on the (wrapped) number line
+    // modulo 2^N
+    // that is, when it is closer to move to the right on the number line to
+    // get to y than when it is closer to move to the left.
+    right_of = (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1));
+    // WHY DOESNT THIS WORK?
+  endfunction 
+
   assign o_vernier_ready = '1; // XXX TODO
   assign o_vernier_error = '0; // XXX TODO
 
@@ -238,7 +250,6 @@ module tsu
   assign max0_q = min0_q + i_denom*i_fclk_div-1;
 
   logic  max_up, min_dn;
-`define RIGHTOF(x,y) (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1)) // use function?
   
   assign max_up = `RIGHTOF(rawphase,max0_q); // rawphase to right of max
   assign min_dn = `RIGHTOF(min0_q,rawphase); // min to right of rawphase
