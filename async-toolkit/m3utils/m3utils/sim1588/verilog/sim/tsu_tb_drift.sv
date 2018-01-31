@@ -38,11 +38,11 @@ module tsu_tb_mark #() () ;
 
   localparam gcd           = 1; // use picoseconds! (actual GCD is 20)
   
-  localparam frac_err  = 0.0001; //100ppm
-  localparam frac_drift= 0.01; //10000ppm
+//  localparam frac_err  = 0.0001; //100ppm
+//  localparam frac_drift= 0.01; //10000ppm
 
-//  localparam frac_err = 0;
-//  localparam frac_drift = 0;
+  localparam frac_err = 0;
+  localparam frac_drift = 0;
 
   
   localparam frac_err_average_cycles = 10000; // expect a state change in about this many cycles ???
@@ -185,7 +185,7 @@ module tsu_tb_mark #() () ;
   
   // config. inputs
   initial begin
-    i_fclk_div        =                        1;
+    i_fclk_div        =                        4;
     i_fclk_rst_cycs   =                      100;
     i_num             =  fden_1588*fnum_fclk/gcd;
     i_denom           =  fnum_1588*fden_fclk/gcd;

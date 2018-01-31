@@ -55,17 +55,18 @@ module tsucnt
 
 
   logic                   f_rst_n;
-  logic [FCLK_DIV_BITS :0]      i_fclk_div_smaller;
+  logic [FCLK_DIV_BITS :0]      i_fclk_div_m1;
   // must assert/check i_fclk_div == 1 or is even and != 0
-  assign i_fclk_div_smaller = i_fclk_div - 1;
+  assign i_fclk_div_m1 = i_fclk_div - 1;
 
   // "B" clock position counter
-  // XXX BUG : reset must be synchronized to B
+  // XXX BUG : reset must be synchronized to B, and it's not really
+  // a reset
   always_ff @(posedge i_fclk or negedge rst_n)
     begin
       if(!rst_n)
-       position <= '0;
-      else if(position < (i_fclk_div_smaller))
+        position <= i_fclk_div_m1; // start at end, first cyc is rising
+      else if(position < (i_fclk_div_m1))
         position <= position + 1;
       else
         position <= '0;
@@ -149,8 +150,6 @@ module tsu
     input logic                      rst_n, // 1588 reset
 
     // "A" clock synchronized configuration inputs
-    // N.B. all these inputs should be REGISTERED INTERNALLY in the final
-    // implementation
     input logic [FCLK_DIV_BITS-1:0]  i_fclk_div, // foreign clock div.
     input logic [FCLK_RST_BITS-1:0]  i_fclk_rst_cycs, // reset cycles
     
@@ -175,16 +174,13 @@ module tsu
 
   localparam FIFO_DEPTH_BITS = $clog2(SAMPLE_TIMES)+1;
 
-`define RIGHTOF(x,y) (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1)) // use function?
-
-  function logic right_of(input logic [RAT_PREC_BITS-1:0] x,y);
+  function automatic logic right_of(input logic [RAT_PREC_BITS-1:0] x,y);
     // returns true when x is to the right of y on the (wrapped) number line
     // modulo 2^N
     // that is, when it is closer to move to the right on the number line to
     // get to y than when it is closer to move to the left.
     right_of = (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1));
-    // WHY DOESNT THIS WORK?
-  endfunction 
+  endfunction
 
   assign o_vernier_ready = '1; // XXX TODO
   assign o_vernier_error = '0; // XXX TODO
@@ -215,20 +211,21 @@ module tsu
            .o_phase                     (rawphase)
           );          
   mark_position # (.FIFO_DEPTH_BITS(FIFO_DEPTH_BITS),
-                     .FIFO_WIDTH(RAT_PREC_BITS),
-                     .SAMPLE_TIMES(SAMPLE_TIMES),
-                     .RAT_PREC_BITS(RAT_PREC_BITS)
+                   .FIFO_WIDTH     (RAT_PREC_BITS),
+                   .SAMPLE_TIMES   (SAMPLE_TIMES),
+                   .RAT_PREC_BITS  (RAT_PREC_BITS)
                     )
   u_mark_position
                    (.clk                    , 
                     .rst_n                  ,           
                     .i_fclk                 ,          
                     .i_fclk_div             ,
-                    .i_fclk_mark          ,   
+                    .i_denom                ,
+                    .i_fclk_mark            ,   
                     .i_evt                  (evt),
                     .o_evt                  (evt1),
                     .position               ,
-                    .i_fclk_mark_phase              ,
+                    .i_fclk_mark_phase      ,
                     .mark_position_d
                    );
 
@@ -250,10 +247,12 @@ module tsu
   assign max0_q = min0_q + i_denom*i_fclk_div-1;
 
   logic  max_up, min_dn;
-  
-  assign max_up = `RIGHTOF(rawphase,max0_q); // rawphase to right of max
-  assign min_dn = `RIGHTOF(min0_q,rawphase); // min to right of rawphase
 
+  always_comb begin
+    max_up = right_of(rawphase,max0_q); // rawphase to right of max
+    min_dn = right_of(min0_q,rawphase); // min to right of rawphase
+  end
+  
   // update min0, max0:
   //
   // if max_up, we've overrun range upwards, update so that phase is the
@@ -299,10 +298,11 @@ module tsu
   // min0_d (so that rawphase - min0_d is never negative), but min0_q
   // is a cycle later.  What we'll do is that if edge_age is negative,
   // we'll truncate it to zero.
-
+  
   always_comb begin
-    edge_age = '0;                  // exceptional case
-    if (`RIGHTOF(min0_q,rawphase))
+    edge_age = '0;                  // exceptional case or zero
+
+    if (~min_dn)
       edge_age = rawphase - min0_q; // normal case
   end
 
@@ -339,6 +339,7 @@ module mark_position
     input logic                             clk,         // 1588 clock
     input logic                             rst_n,       // 1588 reset
     input logic [FCLK_DIV_BITS-1:0]         i_fclk_div,  // stable
+    input logic [RAT_PREC_BITS-1:0 ]        i_denom,
     input logic                             i_evt,
     output logic                            o_evt,
     input logic [FCLK_DIV_BITS-1:0]         position,
@@ -348,6 +349,7 @@ module mark_position
 
   localparam FIFO_DEPTH=(1 << FIFO_DEPTH_BITS);
   logic [FIFO_DEPTH-1:0][RAT_PREC_BITS+1-1:0] fifo;
+  logic [RAT_PREC_BITS-1:0]                   offset_d, offset_q;
 
   //////////////////////////////////////////////////////////////////////
   // "B" clock (i_fclk) input side of FIFO
@@ -370,10 +372,19 @@ module mark_position
       if(!rst_n)
         fifo <= '0;
       else if(firstcycle)
-        fifo[wr_pointer] <= {i_fclk_mark, i_fclk_mark_phase};
+        fifo[wr_pointer] <= {i_fclk_mark, i_fclk_mark_phase + offset_q};
       else if(i_fclk_mark)
-        fifo[wr_pointer] <= {i_fclk_mark, i_fclk_mark_phase};
+        fifo[wr_pointer] <= {i_fclk_mark, i_fclk_mark_phase + offset_q};
     end
+
+  always_comb
+    if (position == i_fclk_div-1)
+      offset_d = (i_fclk_div-1) * i_denom;
+    else
+      offset_d = offset_q - i_denom;
+                
+  always_ff @(posedge i_fclk or negedge rst_n)
+    offset_q <= rst_n ? offset_d : (i_fclk_div-1) * i_denom;
 
   //////////////////////////////////////////////////////////////////////
   // "A" clock (clk) output side of FIFO
