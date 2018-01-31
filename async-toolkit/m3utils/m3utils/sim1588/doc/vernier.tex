@@ -457,7 +457,7 @@ If we follow this approach, $\Delta^*$ according to Equation~\ref{eq:deltastar} 
 
 That was assuming ideal clocks.
 
-\subsubsection{Non-ideal clocks}
+\subsubsection{Non-ideal clocks}\label{sec:nonideal}
 
 If the clocks do not precisely maintain their specified speeds (the
 period of clock~$A$ is a bit less or more than $p_A$ and likewise for $B$),
@@ -798,7 +798,7 @@ each time the $A$ logic sees a rising edge, it removes one record from the
 data FIFO.  The data FIFO hence needs to be slightly deeper than the
 functional synchronizer.
 
-\subsection{Preparation Logic in B Clock Domain}
+\subsection{Preparation Logic in ``B'' Clock Domain}
 
 The $B$ domain logic is responsible for dividing down the $B$ clock to
 the appropriate speed for synchronization into $A$ (see
@@ -845,13 +845,15 @@ from the FIFO on {\em every\/} rising edge that is received.  No pointers
 are traded across the clock boundary.  Therefore, binary pointers can be used
 in both the $A$ and $B$ domains.
 
-\subsection{Calculation Logic in A Clock Domain}
+\subsection{Calculation Logic in ``A'' Clock Domain}
 
 Within the $A$ domain, the values are removed from the data FIFO, and then
 the age of the slow $B$ edge at the time it was synchronized into the $A$ domain is added.  This age is computed using equation~\ref{eq:final}.  Finally, the number of $A$ cycles that have elapsed since the synchronization (i.e., the depth of the synchronizer itself) are added to the delay, and one more cycle for
 the output cycle into the external receiver.
 
 \subsection{Avoiding Overflow}
+
+{\bf Method 1.}
 
 Let us examine equation~\ref{eq:final} in detail.  The equation is, again,
 
@@ -880,6 +882,26 @@ adds the same number from/to the register holding $K$.  This algorithm
 maintains $s$ near zero and since it keeps the phase $\Delta^*$
 unchanged, that remains accurate.
 
+\bigskip
+
+{\bf Method 2.}
+
+\def\mod{\mathrm{mod}}
+
+We may also observe that since all that matters is $\Delta^* = s - K$,
+we can do the arithmetic with $s$ and $K$ in the ring of integers
+$\mod\,2^N$.  The addition and subtraction operators are the same in
+this ring, but the operations $<$ and $>$ do not exist.  Instead of
+writing $<$ we write $\prec$, meaning that
+\begin{equation}
+x\prec y \Leftrightarrow y-x < x-y \qquad (\mod\,2^N)\quad ,
+\end{equation}
+or stated differently, that the path from $y$ to $x$ is closer through
+$y$'s predecessor than through its successor.
+
+Given this definition, we can implement the algorithms in
+section~\ref{sec:nonideal} using $\prec$ and $\succeq$ in place of $<$
+and $\ge$, and wrapping in the counters will be handled correctly.
 
 \subsection{Reset Logic and Sequence}\label{sec:reset}
 
