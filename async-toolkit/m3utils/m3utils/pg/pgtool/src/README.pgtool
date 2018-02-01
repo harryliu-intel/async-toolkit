@@ -1,0 +1,75 @@
+This is the README file for the pgtool program.
+
+In the Mount Steller program, as of 2/1/2018, we are running pgtool
+out of Makefiles.  A precondition for running pgtool is that the Agent
+CRIF is up to date.
+
+Example Makefile scripting 
+==========================
+
+GENPG_ARGS      := -copyrightpath ${MODEL_ROOT}/src/txt/intelcopyright.txt\
+    -bits 28 \
+    --policygroups 8 MST_PG0 MST_PG1 MST_PG2 MST_PG3 MST_PG4 MST_PG5 MST_PG6 MST_PG7
+
+GENPG_EXEC      := $(shell ToolConfig.pl get_tool_path meta)/bin/genpg
+GENPG           := $(GENPG_EXEC) $(GENPG_ARGS)
+GENPG_SV        := $(RESULTS_GENPG)/$(BLK)_imn_decoder.sv
+$(GENPG_SV): $(CRIF_FILE) $(GENPG_EXEC) $(GENPG_TEMPLATE)
+        $(GENPG) -crif $< -sv $@ -D MODULE_NAME $(basename $(notdir $@))
+genpg: $(GENPG_SV)
+
+(The example is from fxp-dev-x0/tools/srdl/Makefile )
+
+Example security.pm
+===================
+
+In the srdl root, it is also expected that a file called 
+
+security.pm
+
+resides.  This file will be provided by MST's architects.
+
+The security.pm file describes all the SAIs in the system (header of
+file) and all the Policy Group mappings (see Chassis Security HAS and/or
+LSM HAS and Integration Guide for details).
+
+Each Chassis Security Policy Group (Policy Group or PG for short) must
+be defined in security.pm approximately as follows (make necessary changes
+as demanded by architects):
+
+####################################################################
+# MST_PG0 policy groups
+####################################################################
+      'MST_PG0'               => '"MST_PG0"',
+      'MST_PG0_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING |
+ SAI_XGBE_GRP | SAI_EMP"',
+      'MST_PG0_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING |
+ SAI_XGBE_GRP | SAI_EMP"',
+      'MST_PG0_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING |
+ SAI_XGBE_GRP | SAI_EMP"',
+
+
+The connection between the different files
+==========================================
+
+security.pm is included in the RDL so that the RDL is passed through Perl
+before being passed to Nebulon:
+
+The RDL should include the following lines at the start:
+
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+Then the security groups used in the RDL should reference the security 
+groups defined in security.pm.  Finally, the security groups should
+be called out in the GENPG_ARGS.
+
+The order of the security groups as called out in GENPG_ARGS defines the
+mapping of the PGs to the individual RAC, WAC, and CP control registers.
+(See the Chassis Security HAS for more details.)
+
+
+
+
+
+
