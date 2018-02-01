@@ -1,0 +1,1260 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL TOP SECRET---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Precise Time-Interval Measurement \\ Using Vernier Clocks}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\
+Jin Yan \\ {\tt jin2.yan@intel.com}}
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\begin{abstract}
+  The development of a SystemVerilog module for the accurate
+  synchronization of an event from one clock domain into another,
+  using vernier clocks, is presented.  The theory of time measurement,
+  expressions for edge-to-edge delays in the vernier environment are
+  discussed.  The implementation of the concept for Intel's Rockvale
+  PHY is described in detail and some performance measurements are
+  discussed.  Time-measurement precision of better than 100~ps across
+  clock domains is achieved, and far better would be possible in
+  other applications.
+\end{abstract}
+
+\section{Introduction}
+
+This article discusses the measurement of the time between events in a
+multi-synchronous system.  A multi-synchronous system is a system where
+data and control is always updated relative to some clock, but where there is
+more than one clock and therefore more than one {\em clock domain.}
+
+Two main sections will be presented: a first section containing a
+theoretical discussion of time, instants in time, events, and possible
+concrete hardware representations of these abstract concepts; then a
+second section will contain details of the specific implementation
+proposed for the Rockvale PHY to be used by the Mount Steller NIC and other
+programs.
+
+\section{Theory}\label{sec:theory}
+
+Let it be given a digital system consisting of a multitude of
+independent clock domains, at differing or similar speeds.  It is
+desired to measure the time interval between an event $E_0$ in one
+clock domain and an event $E_1$ in another clock domain.
+
+Horowitz and Hill has a good general introduction to the topics of
+counting and time-interval measurement~\cite{horowitz+hill}.
+However, in our application, the required
+precision and accuracy are high: possibly better than one clock cycle
+in either clock domain, and in any case higher than that the error
+would be allowed to scale with the number of clock domains either in
+the system as a whole or on the data path from $E_0$ to $E_1$, in the
+case that the events are causally related (but we also do not wish to
+require that they be so related).
+
+\subsection{Definitions}
+
+We begin by defining our terms clearly, so we know what we are talking
+about.
+
+\subsubsection{Clock}
+
+A {\em clock\/} we define to be a pulsed signal, usually close to a
+square wave, used for sequencing actions in hardware, as in figure~\ref{fig:clock}.  (The everyday
+referent of the same word, which is used to tell the time of day, we
+will for clarity call a {\em chronometer}, as in figure~\ref{fig:chronometer}.)
+We will assume that
+clocks are relatively stable in the sense that the time between rising
+edges of a different clock is well controlled (although we do not in
+any sense assume that this timing is perfectly controlled).
+
+\ins_epsfig{5in}{clock}{A clock.}
+
+\subsubsection{Chronometer time}
+
+The {\em chronometer time\/} (or {\em time\/} for short) is defined in
+the usual way\footnote{It bears mentioning that this way of measuring
+  time is only usual for intervals.  It is decidedly unusual, among
+  humans, to measure calendar time on a uniform time scale.  See the
+  following.}, as a uniform and steady physical time scale.  Following
+Newton, we consider only systems where the various components are in
+such a configuration (at rest, same gravity field, etc.) such that
+relativistic effects are zero or negligible, and we can treat the
+chronometer time as global and absolute.  (``Tempus absolutum verum \&
+Mathematicum'' as Newton called it.  \cite{newton}) The most familiar
+attempt to measure chronometer time is the International Atomic Time
+scale, or TAI ({\em Temps Atomique International\/}\cite{nbs}), which
+is a steady count of SI seconds that agreed with the more commonly
+used Universal Time on January~1, 1958.\footnote{TAI and UTC diverge
+  because of leap seconds that are inserted into the latter scale and
+  make UTC and its derivatives (such as ``Unix time'') non-uniform.  As of the time of writing, TAI is precisely
+  37~s ahead of UTC.}
+
+\rotins_epsfig{4in}{chronometer}{A chronometer showing twelve past three o'clock and nineteen seconds.}{270}
+
+\subsubsection{Instant}\label{sec:instant}
+
+We define an {\em instant\/} to be an identifiable chronometer time
+and tie it to our definition of a clock as follows (it is easy to see
+that other, different definitions of equal power are possible).  {\it An
+instant is the chronometer time at a particular rising edge of a clock.}
+
+For example, as the author is writing this the TAI time is 16:50:39 on
+Sunday, January 21, 2018 (16:50:02~UTC).  A hypothetical 1~GHz clock
+is shown ticking in figure~\ref{fig:taiticks}, with the TAI times
+annotated alongside the rising edges of the clock.  This particular
+clock is ticking precisely 123~picoseconds after each nanosecond.
+Each rising edge defines an instant in time.\footnote{Precisely when on the
+rising edge the instant is defined to occur is not important as long
+as the implementer uses a consistent definition---we shall simply
+assume that it is possible to maintain such consistency.  Any inconsistency
+in the measuring of the rising edges of any one given clock will add to
+residual measurement errors.}
+
+\ins_epsfig{5in}{taiticks}{A clock defining instants in time.}
+
+\subsubsection{Event}
+
+We define an {\em event\/} as a pattern of digital data together
+with its reference clocks as follows.  Consider a predicate $P$ on
+digital variables of the system and consider further the values of $P$
+on every rising edge of the clock to which the terms of $P$ are
+defined (note that this means that a given predicate $P$ must be
+attached to a single clock domain, that is, that all its terms must be
+defined by the same clock).  On a rising edge at which $P$ evaluates
+to {\bf true}, we say that we have an event.  We define the
+chronometer time of the event to be the chronometer time of the
+rising edge of the clock defining the terms of $P$.
+
+Of course the simplest predicate $P(x)$ is just $x$. Specifically, this means
+that an event is defined as a single validity bit with associated clock.
+This is the event representation we will use for the rest of the paper.
+
+Our definition of an event is closely (and conveniently) related to
+the standard contemporary hardware implementation of a state-holding
+element, that is, the D-type flip-flop (DFF) as in
+figure~\ref{fig:simple_dff}.  In this interpretation, an event is
+simply the clocking in of a high logic signal into a DFF.  The time of
+the event is by our definition the time of the rising edge of the
+clock that triggers the latching of the bit into the circuit.
+
+\ins_epsfig{5in}{simple_dff}{A single D-type flip-flop defining an event.}
+
+
+\subsection{Hardware Representation of an Event}\label{sec:hw}
+
+As mentioned above, a {\em current event} is easily represented as a
+bit with associated clock.  Note that by our definition, the time of
+the event is defined at the {\em receiver\/} of the bit and
+clock---the event is defined to occur when a receiver detects that the
+validity bit is high on a rising clock edge.  Alternative nomenclature
+calls the validity bit the {\em mark\/} and the clock edge that represents
+the time of the event the {\em marked (rising) clock edge.}
+
+To represent a {\em past event\/} we add a numerical relative time
+value alongside the bit.  We are usually only interested in
+representing current (not yet detected) and past (already detected)
+events.  Therefore, we will choose the sign of the time so that more
+positive numbers mean that the event occurred further in the past.
+
+The representation of the event is then as follows:
+\begin{verbatim}
+typedef struct {
+  logic             v;
+  logic [PREC-1:0]  dt;
+} event_t;
+\end{verbatim}
+As mentioned above, the {\tt dt} field is to be interpreted (1)~as a
+time into the past, i.e., the {\em age\/} or {\em delay time\/} of the event; and (2)~as the age
+at the receiver of the event (not the sender).
+
+The delay time {\tt dt} is to be measured in some time unit $\tau$,
+which may be allowed to vary depending on the application.  For
+example, the base unit could be picoseconds, $\tau=1$~ps.  The
+representation of a current event would have ${\tt dt}=0$, while one
+that is 2.3~ns old would have ${\tt dt}=2300 \tau$.  We choose
+$\tau=$1~ps for expositional clarity.  In most actual applications
+$\tau$ is likely best chosen to have convenient properties with regard
+to divisibility of clocks and times that are of interest in that
+application (and therefore not necessarily have a convenient
+representation in decimal or binary seconds).  For a practical
+example, see section~\ref{sec:examplesettings}.
+
+For example, let us assume that we wanted to represent an event that
+occurred at precisely 16:50:02~UTC on Sunday, January 21, 2018, or
+16:50:39~TAI, as discussed in section~\ref{sec:instant}, and let us
+assume this event was detected in the clock domain of
+figure~\ref{fig:taiticks}; finally let us define our time unit $\tau$ as being
+picoseconds.  Then the representation of the event as detected by a DFF
+at a time of 16:50:39.000000000123 will be as in figure~\ref{fig:exevent}.
+That is, the event occurred at 16:50:39.000000000000, and the first clock
+that could have detected it will happen at 16:50:39.000000000123, so at
+that time, the event is already 123~ps old.  (How the measurement that
+the event was 123~ps old when it was detected was performed is not our
+concern here.  Not yet.)
+
+\ins_epsfig{3in}{exevent}{Hardware representation of an example event that occurred at 16:50:39 exactly.  The $dt$ timescale is here in picoseconds, i.e., $\tau=1$~ps.}
+
+\newpage 
+\subsection{The Delay-Measuring Flip-Flop}
+A simple example of how to use the structure is to build a D-type
+flip-flop that receives a current event and passes it to another flip-flop.
+In SystemVerilog~\cite{sv} we might code such a module as follows.
+
+\begin{verbatim}
+module measuring_dff (input  logic[PREC-1:0] cycle
+                      input  logic           d, 
+                      input  logic           clk, 
+                      output event_t         q);
+  always_ff @(posedge clk) begin
+    q.v  <= d;
+    q.dt <= cycle;
+  end
+endmodule;
+\end{verbatim}
+Here we see the sampling of the initial (current) event and its transmission as an {\tt event\_t} structure.  The {\tt dt} field is set to the cycle time, as
+the event will only be sampled by the following flip-flop one cycle later
+than when it was sampled by this flip-flop.
+
+We can make the obvious extension of the first DFF into one that uses
+the same {\tt event\_t} representation on the input and output and
+thereby buffers a past event by one cycle.
+\begin{verbatim}
+module buffering_dff (input  logic[PREC-1:0] cycle
+                      input  event_t         d, 
+                      input  logic           clk, 
+                      output event_t         q);
+  always_ff @(posedge clk) begin
+    q.v  <= d;
+    q.dt <= d.dt + cycle;
+  end
+endmodule;
+\end{verbatim}
+
+The implementation is no mystery and illustrated in figure~\ref{fig:buffering_dff}.
+\ins_epsfig{3in}{buffering_dff}{A DFF that maintains a time delay together with the event marker.}
+
+We can also live without the {\tt measuring\_dff} if we simply tie the {\tt dt} inputs to zero on a {\tt buffering\_dff}.
+
+To take a specific example, consider the case where the clock runs at
+1~GHz, that is, with 1~ns cycle time, and we decide to use a time unit
+of 1~ps.  Then the {\tt cycle} input to the DFF is set to 1,000.  An
+input event with delay 0 will after one DFF be marked with a delay of
+1,000, after two with a delay of 2,000, etc., as many times as needed,
+$1,000n$.  We are simply counting clock cycles.  A small such pipeline
+is shown in figure~\ref{fig:buffering_pipe}.
+
+\ins_epsfig{6in}{buffering_pipe}{A three-stage pipeline of buffering DFFs.}
+
+Let's follow the buffering pipeline in carrying a representation of the example
+event of figure~\ref{fig:exevent}.  On the first clock cycle, the situation
+is as shown in figure~\ref{fig:buffering_pipe1}.
+
+\ins_epsfig{6in}{buffering_pipe1}{The first clock cycle.}
+
+After a clock cycle, the age of the event has been updated to reflect the
+one-cycle delay and is as shown in figure~\ref{fig:buffering_pipe2}.
+
+\ins_epsfig{6in}{buffering_pipe2}{The second clock cycle.}
+
+And after yet another clock cycle, another update has occurred and we have
+figure~\ref{fig:buffering_pipe3}.
+\ins_epsfig{6in}{buffering_pipe3}{The third clock cycle.}
+
+It is clear that as the event ages (gets more and more into the past),
+the updating of the $dt$ field serves to represent precisely this
+process and the instant that is being represented remains the same,
+namely TAI~16:50:39.000000000000 exactly.
+
+More formally we say that the event time
+\begin{equation}
+  t_e = \hbox{\tt curtime} - dt
+\end{equation}
+is invariant.
+
+
+This concludes our discussion about events, instants, and their hardware
+representation.
+
+
+\subsection{Different Clock Domains}
+
+Simply counting the depth of a pipeline in clock cycles and
+multiplying that by a constant is not very illuminating.  It is easy
+to see that the time delay from one event to another in any system
+operated off a single clock is an integral number of clock cycles.
+
+The problem becomes interesting only when multiple clock domains are
+involved.
+
+For example, we may have two clocks that run at the same speed but
+with an unknown phase relationship.  How can we transfer a
+delay-marked event from one clock domain to the other?
+
+It is impossible, using only digital means within the given clock
+domains, to determine the phase of two clocks running at the same
+speed.  This is because the state of a system does not change during a
+clock cycle.  If we sample a system whose state is half a cycle old,
+we will see precisely the same state as if we sample a system whose
+state is a quarter cycle old.  It is impossible to distinguish the two
+cases.
+
+It is not, however, true in general that the phase relationship of two
+clocks cannot be determined except with a faster clock.  Two slow
+clocks can be used to measure short time delays.  The work by Chu in
+developing precision test instruments at Hewlett-Packard is a classic
+reference in the field (see section~\ref{sec:related})\cite{vernier}.
+
+\subsection{Two Clocks at Different Speeds}
+
+We will find the following problem statement interesting:
+
+Imagine that we have a clock $B$ running with period $p_B$, which
+started running at time $t_{0B}$.  Imagine we have seen $n_B$ ticks
+of this clock.  When did clock $B$ tick last?
+
+\subsubsection{Ideal clocks}
+
+First let's consider ideal clocks (running at a precisely known speed
+without drift, jitter, or wander of any kind).
+
+Under these conditions, the question is easy to answer:
+
+\begin{equation}
+t_B(n_B) = t_{0B} + n_B  p_B
+\end{equation}
+
+We introduce a second clock $A$, for which by the same token
+
+\begin{equation}
+t_A(n_A) = t_{0A} + n_A  p_A\ .
+\end{equation}
+
+Now imagine, further, that the calculations are being performed in the
+$A$ clock domain.  This means that if we know the above parameters for
+$A$ ($t_{0A}$, $n_A$, and $p_A$) we can know precisely when the
+current clock cycle began.  Clearly we know $n_A$ (from counting) and
+$p_A$ (from our data sheet), and we can in fact {\em define\/}
+$t_{0A}$ as zero or any other desired epoch (such as a time that was
+zero at TAI~0:00:00, January 1, 1970, to take a standard example).
+
+If we are also counting the $B$ ticks within our $A$ clock domain and
+also know the $B$-clock parameters ($t_{0B}$, $n_B$, and $p_B$), we
+can also answer very easily the following question: how long before
+the current clock cycle started ($A$'s last tick) did clock $B$ tick?
+We can use a synchronizer-counter combination to count the ticks of
+$B$ (that is, to calculate $n_B$).  If $B$ ticked before the current
+clock cycle of $A$ (for some definition of those words), we counted
+that tick.  Any ticks that happen after the current clock cycle, will
+not be counted.  (The issues of clock-domain crossing and
+metastability and latency of clock-domain crossing will turn out to be
+orthogonal to our discussion.)
+
+So here we are in clock domain $A$.  We are on cycle $n_A$.  Let's define
+{\bf now} to be the beginning of the current clock cycle.
+
+From the above formulas, the time is {\bf now} $t_{0A} + n_A   p_A$\ .  
+
+Also, before {\bf now}, there have been $n_B$ ticks of $B$.
+
+That means that the last tick of $B$ that was observed before {\bf now} was at time $t_{0B} + n_B   p_B$
+
+Which means that the time difference between the last tick of $B$ and the last (current) tick of $A$ is
+
+\begin{equation}
+\Delta =  (t_{0A}-t_{0B}) + n_A   p_A - n_B   p_B 
+\end{equation}
+
+Now in the real world we do not in fact know $t_{0B}$.  We can define
+$t_{0A}$ by fiat, but we cannot define $t_{0B}$ likewise---in fact we
+are trying to measure this constant.  Let us rewrite the equation
+to reflect that fact that we do not know it.  One convenient way
+to do this is to write
+
+\begin{equation}
+  \begin{array}{rl}
+    \Delta &= n_A   p_A - n_B   p_B + (t_{0A}-t_{0B}) \\
+           &= n_A   p_A - n_B   p_B + \mathcal{C}\quad .
+    \end{array}
+\end{equation}
+
+for some unknown constant $\mathcal{C}$ (an integration constant).
+
+If we now have $p_B$ and $p_A$ being ``different enough,'' we will see that
+the value of $\Delta$ changes periodically.  On some cycles it will be
+close to zero (very close to zero), and on other cycles it will be as
+much as almost $p_B$.
+
+We won't go far wrong if we assume that the minimum possible value of
+$\Delta$ is zero.  Which makes an approximate $\mathcal{C}$ easy to calculate:
+
+{\it monitor $n_A p_A - n_B p_B$ and set $\mathcal{C}^*$ to the negative of
+  the smallest value observed.  Then
+\begin{equation}
+    \label{eq:deltastar}
+  \begin{array}{rl}
+    \Delta^* &= n_A   p_A - n_B   p_B + \mathcal{C}^*\quad .
+    \end{array}
+  \end{equation}
+
+  will vary (in some
+pattern---{\em it does not matter which\/}) between 0 (inclusive) and $p_B$ (non-inclusive).}
+
+If we follow this approach, $\Delta^*$ according to Equation~\ref{eq:deltastar} will be a close approximation to the true value of $\Delta$.
+
+That was assuming ideal clocks.
+
+\subsubsection{Non-ideal clocks}\label{sec:nonideal}
+
+If the clocks do not precisely maintain their specified speeds (the
+period of clock~$A$ is a bit less or more than $p_A$ and likewise for $B$),
+things are a little different.
+
+Let us first be very specific about which problem we are trying to
+solve.  Let us solve the following problem: For the definition of
+{\bf now} meaning the beginning of the current clock cycle of $A$ (its last
+rising edge), how long before was the previous tick of clock $B$?  (This
+makes precise the interpretation of the sentence ``When did clock $B$ tick
+last?'')
+
+Note that we specifically do not intend to be extremely precise about
+the time of the tick in any absolute time scale---we intend only to
+find the {\em phase\/} of clock $B$'s last tick with respect to the present tick
+of $A$ (the {\bf now}-tick).  Another way of saying this is that we will
+define clock $A$ as being our central master clock.  If $A$ deviates from
+the true speed that we ultimately want it to be, we correct that
+centrally using a different mechanism.  The point of this is that if
+we can use a different mechanism to determine the times of the $A$-ticks
+on any desired scale, we can use the algorithm described here to
+determine the times of the $B$-ticks on the $A$-scale.  Our goal is to
+reduce the phase error to a fraction of an $A$-cycle, use this to
+determine the times of the $B$-ticks on the $A$-scale, and correct the
+$A$-scale by other means.  (In practice, we correct the $A$-scale using
+PTP/IEEE1588~\cite{ieee1588}.  The $A$-clock is then one of the clocks participating in
+the 1588 protocol and its time is known to sufficient accuracy from
+those transactions.)
+
+Based on the previous paragraph, we can see that the problem at hand
+remains to determine $\Delta$, and we want it to be between 0 and
+$p_B$ as before.  It is easy to see that it does not matter for the
+purposes of our algorithm which of the two clocks is inaccurate.  What
+matters is that their ratio is a bit off from $p_A/p_B$.  There are
+two cases:
+
+\noindent 1. {\it Clock~$A$ is slightly slow or Clock~$B$ is slightly fast.}
+
+In this case, the $\Delta^*$ value as defined above will start running
+negative after $\mathcal{C}^*$ is set.  However, we need do nothing
+special for this case: simply keep monitoring $n_A p_A - n_B p_B$ and
+set $\mathcal{C}^*$ to the smallest value as before.  This will always
+maintain a $\Delta^*$ that is positive and between 0 (inclusive) and
+$p_B$ (non-inclusive).  If the ratio is off by a lot, $p_B$ may never
+be reached.  (But to put things in perspective, a ``large'' error
+between the clocks is 200~ppm=1/5,000, and it is unlikely we have more
+than 256 steps between 0 and $p_B$.)
+
+\noindent 2. {\it Clock $A$ is slightly fast or Clock $B$ is slightly slow.}
+
+In this case, the $\Delta^*$ value as defined above will keep increasing.
+However, this is easy to manage.  Simply ensure by fiat that $\Delta^*$ does not
+equal or exceed $p_B$.  That is,
+
+monitor $n_A p_A - n_B p_B$ and set $\mathcal{C}^*$ to the largest value observed, plus one, less $p_B$.
+
+To summarize both rules:\par
+
+\noindent $1 \lor 2$. {\it Clock $A$ is slightly fast or Clock $B$ is slightly slow; or Clock~$A$ is slightly slow or Clock~$B$ is slightly fast.}\par
+\fbox{
+  \begin{minipage}{3in}
+\halign{#\hfil&#\hfil\cr
+\noalign{{\bf let} $s = n_A p_A - n_B p_B$}\cr
+\noalign{monitor $s$ on every clock cycle.}\cr
+{\bf if} $s < -\mathcal{C}^*$,      &{\bf then} perform the update $\mathcal{C}^* := -s$\cr
+{\bf if} $s \ge -\mathcal{C}^* + p_B$, &{\bf then} perform the update $\mathcal{C}^* := -(s + 1 - p_B)$\cr
+}
+
+as output, produce on every cycle the value 
+\begin{equation}
+  \Delta^* = s + \mathcal{C}^*
+\end{equation}
+  \end{minipage}
+}
+
+Or we may perform the following rewrite.
+
+Let $K = -\mathcal{C}^*$.  The algorithm becomes:
+
+\fbox{
+  \begin{minipage}{3in}
+on every cycle,\par
+
+\halign{#\hfil&#\hfil\cr
+{\bf if} $s < K$,      &{\bf then} perform the update $K := s$\cr
+{\bf if} $s \ge K + p_B$, &{\bf then} perform the update $K := s + 1 - p_B$\cr
+}
+
+as output, produce on every cycle the value
+\begin{equation}
+  \label{eq:final}
+  s - K
+\end{equation}
+  \end{minipage}
+  }
+
+an initial value of $K = 0$ works well, because the algorithm will quickly (see section~\ref{sec:convergence}) converge with the correct $K$.
+
+\subsection{Convergence Time and Precision}
+
+\subsubsection{Convergence}\label{sec:convergence}
+The algorithms of section~\ref{sec:theory} converge in the time it
+takes the pattern of clock phases to repeat.  In the ideal case, the
+pattern repeats exactly after
+\begin{equation}
+  \kappa = LCM(p_A,p_B)
+\end{equation}
+time units, where LCM is the Least Common Multiple.  Since
+$ LCM(p_A,p_B) = {p_A p_B / GCD(p_A,p_B)} $, where GCD is the Greatest Common Divisor, we can if we desire rewrite the
+convergence time in terms of cycles of the $A$ clock and then
+\begin{equation}
+  { \kappa \over p_A } = {p_B \over GCD(p_A,p_B)} \quad .
+\end{equation}
+
+\subsubsection{Precision}
+Closely related to the convergence time of the algorithm is its precision.
+Consider
+\begin{equation}
+  Q(k,l) = k p_A + l p_B
+\end{equation}
+it is clear that if a number $q$ divides both periods, i.e.,
+\begin{equation}
+  q | p_A \land q | p_B
+\end{equation}
+then $q | Q$.  The largest $q$ with this property is
+\begin{equation}
+  \hat{q} = GCD(p_A,p_B) \quad .
+\end{equation}
+Also since
+\begin{equation}
+  {Q(k,l) \over \hat{q}}= k \pi_A + l \pi_B
+\end{equation}
+where $\pi_A \perp \pi_B$, then Euclid shows that \cite{euclid,hardy}
+\begin{equation}
+  \exists k_1,l_1 :k_1 \in {\bf Z}, l_1 \in {\bf Z}: k_1 \pi_A + l_1 \pi_B = 1\quad
+\end{equation}
+and therefore
+\begin{equation}
+Q(k_1,l_1) = \hat{q}\ .
+\end{equation}
+In other words, $Q(k,l)$ takes on values $m\hat{q}$ for all integer $m$.
+
+A restatement of the above is that the precision of the algorithms is
+\[
+  \hat{q} = GCD(p_A,p_B) \quad .
+\]
+In terms of the fraction of the $A$ clock, the precision is
+\begin{equation}
+  {\hat{q} \over p_A} = {GCD(p_A,p_B) \over p_A} \quad .
+\end{equation}
+
+\subsection{Measuring the Time Interval Between Two Events}
+
+Let us briefly return to the problem that we are actually trying to solve.
+This is the problem of measuring the time interval between two events.  The case that is the most difficult is when the two events occur in asynchronous clock
+domains of clocks running at the same speed, let's call it $p_E$.  Since
+\[ GCD(p_E,p_E) = p_E \]
+the precision of the measurement in this case is very poor: one full clock cycle.
+
+The solution to the problem is to introduce a third clock domain with a clock
+that beats against the two asynchronous clocks.  Ideally the third clock
+has a cycle time $p_M$ that is relatively prime to $p_E$, $p_M \perp p_E$ so that
+\begin{equation} GCD(p_M,p_E) = 1 \quad . \end{equation}
+If that is the case the time of the first event can be measured with a vernier
+device with a precision of 1~$\tau$ and the second event can be measured with
+another vernier device with a precision of 1~$\tau$, both in the third clock domain.  The total error introduced from the measurement quantization is only 2~$\tau$, maximum.
+
+Precisely the scenario described here obtains in an Ethernet network where
+it is desired to measure the delay of a packet through a switch and the
+input and output ports are running the same speed and protocol asynchronously
+to each other (which is the normal situation, even in the case of so-called ``Synchronous Ethernet'').  The introduction of a third clock whose period has
+some factors not in common with the Ethernet clocks allows the measurement
+of timing in this common domain with good subcycle accuracy.
+
+\subsection{Relationship to Bresenham's Algorithm}
+
+Bresenham's line-drawing algorithm~\cite{bresenham} is used for rendering an
+approximation to a line with a given slope $m = p_B/p_A$ on a raster
+display.  A simplified description of a special case of Bresenham's algorithm
+is as follows.
+
+To draw a line of slope less than 1 on a raster, start at $x=0$ and for each
+step to the right, decide whether or not to move up from the previous step.
+By keeping a running tally of the sum
+\begin{equation}
+  \epsilon = p_A y - p_B x
+\end{equation}
+if $\epsilon<0$ we move up by one.
+
+Bresenham's algorithm results in a line with characteristic stairsteps as in figure~\ref{fig:bresenham}.
+
+\rotins_epsfig{3in}{bresenham}{Bresenham line.}{270}
+
+Our algorithm for determination of clock phase is the same problem as
+determining the $y$-intercept of a Bresenham line {\em from the locations of the stairsteps.}  Note that we can almost always assume (in electronic applications) that we know the frequency ratio of the two clocks (analogous to the slope of the Bresenham line).
+
+\subsection{Wire Delays}
+
+Nothing in this document has so far mentioned wiring delays.  Systems
+built using the modules described here are not assumed to have zero
+wiring delays, nor are wiring delays considered unimportant.  In fact,
+the main application for which the work was done is IEEE1588 Precision
+Time Protocol (PTP).  In the PTP protocol, digital hardware calculates
+and corrects for queuing delays, leaving wiring delays as a residual
+to be measured by capturing packet round-trip delays.  The fact that
+wiring delays are not considered in this document is thus deliberate:
+they are intended to be measured and corrected for by higher-level
+protocols.  The rate of change of wiring delays~\cite{leviton} affects
+the rate at which synchronizations must be performed.
+
+\section{Implementation}
+
+In this section we describe an example implementation (to be used in
+Rockvale/Mount Steller) of the algorithms described previously.  Other
+implementations are possible.
+
+\subsection{A Few Precision Considerations}
+
+From the point of view of maintaining precision, we would like the logic to
+have certain simple properties as follows.
+\begin{itemize}
+\item Ensure that paths whose delays are significant in the final
+  result are as close to always as possible through the same transistors.
+  Examples of such paths are clock paths and inputs to synchronizers.
+
+\item Ensure that the design is not dependent on clock symmetry---that
+  is, ensure that no significant delay paths are driven by falling
+  clock edges.
+
+\item Ensure that precision is not ``wasted'' by making unnecessary
+  digital restrictions on the delay calculations.
+\end{itemize}
+
+\subsection{Problem Statement}
+
+Let us restate the problem as follows.
+
+It is given to design a delay-calculating synchronizing flip-flop that
+takes a digital input called {\em the mark\/} in one clock domain
+(called $B$) with normal setup and hold-time constraints and
+eventually produces that mark in another clock domain (called $A$).
+We should have that eventually the count of marks in the $A$ domain
+equals the count of marks in the $B$ domain.  We also provide, when
+the mark is active, a delay input, a binary number, in the $B$ domain.
+The module produces a delay output in the same format in the $A$
+domain.  This delay output equals the input delay plus the time
+between the rising clock edge in the $B$ domain on which the input was
+captured to the rising clock edge in the $A$ domain that will capture
+the output of the module.  (Note that the rising clock edge in the $A$
+domain is the clock edge on which the output of the module is
+captured, {\em not\/} the clock edge on which the module produces its
+output!  See section~\ref{sec:hw} for a detailed explanation of this.)
+
+The basic functional interface to the module is therefore as follows:
+\begin{verbatim}
+module meas_sync_ff (
+   input  logic             clkB,
+   input  event_t              d, // synchronous to clkB
+   input  logic             clkA,
+   output event_t              q  // synchronous to clkA
+
+   // OTHER THINGS
+);
+\end{verbatim}
+
+We propose the symbol in figure~\ref{fig:meas_sync_ff} to represent this
+block.
+\ins_epsfig{3in}{meas_sync_ff}{Proposed symbol for the delay-calculating synchronizing flip-flop.}
+
+The rest of the interface is reset, necessary parameters, and an initialization
+handshake.
+\begin{verbatim}
+   input  logic                    rst_n, // active-low reset
+   input  logic [PREC-1:0]            pB, // B cycle time
+   input  logic [PREC-1:0]            eB, // B cycle time error
+   input  logic [PREC-1:0]            pA, // A cycle time
+   input  logic            start_vernier,
+   output logic            vernier_ready
+\end{verbatim}
+The reset signal {\tt rst\_n} is a standard active-low reset.  The
+cycle times and error are given in the underlying, chosen time unit of
+the system (the actual value of this in physical time units is not
+needed).  The maximum allowable error {\tt eB} is needed so that
+certain parts of the circuit that are dependent on the ratio of the
+$A$ and $B$ clocks to be within certain margins can be initialized
+correctly.  Finally, \hbox{\tt start\_vernier} and \hbox{\tt vernier\_ready}
+provide a handshake for initialization.
+
+The requirement on the environment is to start the $A$ and $B$ clocks, deassert {\tt rst\_n} synchronously, assert \hbox{\tt start\_vernier} await \hbox{\tt vernier\_ready}.
+
+Apart from the inputs {\tt clkB} and {\tt d}, which are in the $B$
+clock domain, all inputs are synchronous to clock $A$.  ({\tt rst\_n}
+can, as usual, be asserted asynchronously, but it must be deasserted
+synchronously.)
+
+\subsection{Outline of the Design}
+
+As stated above, the purpose of the design is to take a mark pulse in
+the $B$ clock domain, synchronize the pulse into the $A$ domain, and
+produce the pulse together with a delay estimate representing both the
+phase relationship of the two clocks and the various delays in the
+two clock domains.
+
+{\bf Block diagram}
+
+As a general outline, the design consists of a $B$-domain and an
+$A$-domain, together with various means of synchronization between the
+two domains.  A synchronizer is used to synchronize the mark between
+the clock domains; a FIFO is used to carry auxiliary information (in
+particular, the time offset of the mark relative to the $B$ clock),
+and synchronizers are used to synchronize the resetting of the system.
+
+The outline is shown in figure~\ref{fig:des_outline}.
+
+\ins_epsfig{4in}{des_outline}{General outline of design.}
+
+{\bf Principle of operation}
+
+The basic principle of operation is that a slow clock out of the $B$
+domain is inspected on every cycle of the $A$ clock through the
+functional synchronizer.  The $A$-domain logic monitors the rising and
+falling of the slow $B$ clock, and it takes action on each rising edge
+of $B$.  Since the $A$ domain needs to be able to observe the rising edges,
+the slow $B$ clock must run slower than half the speed of $A$ (including
+any errors in $A$ or $B$).  If the input $B$ clock runs faster than that,
+the slow $B$ clock must be a divided version of $B$.  If $B$ is slow enough,
+it can be $B$ itself.
+
+The $A$ and $B$ domains communicate via the data FIFO. The data FIFO contains
+information on whether and when there was a mark in the $B$ clock domain.
+If there was a mark, the $A$-domain logic adds the current phase of the $B$
+clock to the data on the mark (including the $B$ domain delay) and finally
+adds the $A$-domain delay, and then produces the mark on the $q$ channel.
+
+The protocol is that for every rising edge that the $B$ logic inserts into
+the functional synchronizer, it inserts one record into the data FIFO.  Then,
+each time the $A$ logic sees a rising edge, it removes one record from the
+data FIFO.  The data FIFO hence needs to be slightly deeper than the
+functional synchronizer.
+
+\subsection{Preparation Logic in ``B'' Clock Domain}
+
+The $B$ domain logic is responsible for dividing down the $B$ clock to
+the appropriate speed for synchronization into $A$ (see
+section~\ref{sec:reset}.  The $B$ clock can either be passed directly
+into the $A$ domain or it can be divided by an even divisor.  Odd
+divisors (other than 1) are not supported because they would require
+negedge logic to generate the falling edge of the divided clock (this
+is not a strong restriction---if negedge logic is permitted, odd
+divisors could be supported as well without loss of accuracy).
+
+Recall that the input signal to the block includes a delay as given by
+the environment.  This delay is the time of the signalled event with respect
+to the initial $B$ edge that receives the input.  The (potential) division
+of the $B$ clock for transmission into the $A$ domain means that the clock
+edge used to transmit the information into the synchronizing FIFO is
+not a constant offset from the initial $B$ edge.  For example, if the $B$
+clock is divided by two, the insertion into the FIFO happens either one cycle
+after the initial $B$ edge or two cycles after it.
+
+In order to correct for the insertion delay, the $B$-domain logic keeps a
+running tally of the delay at the time of synchronization.  This tally is
+added to the input delay value.  The sum of the two is the value that is
+inserted into the synchronizing FIFO, together with the mark bit.
+
+If no mark was received by the $B$ logic in the time it takes to generate
+a divided cycle for the synchronizer, something must still be inserted into
+the FIFO.  In this case, an arbitrary delay number is inserted together
+with a {\bf false} value to indicate that no mark was present.
+
+\subsection{Synchronizing FIFO}
+
+The synchronizing FIFO is a standard circular FIFO.  It is written in
+the $B$ clock domain and read in the $A$ clock domain.  The FIFO needs to be
+deep enough to cover the latency of synchronization plus the reaction time
+of the $A$ logic as well as the setup time in the $B$ domain.  The FIFO can
+be implemented via normal RTL, but timing constraints are a little bit
+unusual: in particular, since synchronization is handled through a synchronizer
+and the FIFO is ``deep enough,'' the FIFO is simply read and written on
+different, unsynchronized clocks without further synchronization.
+
+Note that no Gray code pointers are needed, because $B$ puts data into the
+FIFO on {\em every\/} rising edge that is transmitted and $A$ removes data
+from the FIFO on {\em every\/} rising edge that is received.  No pointers
+are traded across the clock boundary.  Therefore, binary pointers can be used
+in both the $A$ and $B$ domains.
+
+\subsection{Calculation Logic in ``A'' Clock Domain}
+
+Within the $A$ domain, the values are removed from the data FIFO, and then
+the age of the slow $B$ edge at the time it was synchronized into the $A$ domain is added.  This age is computed using equation~\ref{eq:final}.  Finally, the number of $A$ cycles that have elapsed since the synchronization (i.e., the depth of the synchronizer itself) are added to the delay, and one more cycle for
+the output cycle into the external receiver.
+
+\subsection{Avoiding Overflow}
+
+{\bf Method 1.}
+
+Let us examine equation~\ref{eq:final} in detail.  The equation is, again,
+
+\begin{equation}
+\Delta^* = s - K \quad .
+\end{equation}
+Note that $\Delta^*$ varies only between zero and $p_B$.  It is thus not a ``big'' number.  However, $s$ is a running tally of the $A$ and $B$ clocks; this can
+increase or decrease without bound ({\em diverge\/}) if the clocks are drifting away from their nominal ratio.
+
+
+The potential of a drifting $s$ adds a worry in the logic for
+computing $\Delta^*$, namely the potential of wrapping/overflow of
+the $s$ and $K$ registers.
+
+We use the following simple method to ensure that
+wrapping/overflow cannot occur.
+
+We observe that the only value of interest to us is the difference
+between $s$ and $K$.  The values of $s$ and $K$ themselves are of no
+interest, and we have no particular need to maintain any physical
+meaning of these values.  In this case, it is easy to ensure that the
+$s$ and $K$ do not diverge.  We introduce logic that monitors the
+register holding $s$, and if $s$ gets too positive or too negative, it
+subtracts or adds an arbitrary number from/to $s$ and subtracts or
+adds the same number from/to the register holding $K$.  This algorithm
+maintains $s$ near zero and since it keeps the phase $\Delta^*$
+unchanged, that remains accurate.
+
+\bigskip
+
+{\bf Method 2.}
+
+\def\mod{\mathrm{mod}}
+
+We may also observe that since all that matters is $\Delta^* = s - K$,
+we can do the arithmetic with $s$ and $K$ in the ring of integers
+$\mod\,2^N$.  The addition and subtraction operators are the same in
+this ring, but the operations $<$ and $>$ do not exist.  Instead of
+writing $<$ we write $\prec$, meaning that
+\begin{equation}
+x\prec y \Leftrightarrow y-x < x-y \qquad (\mod\,2^N)\quad ,
+\end{equation}
+or stated differently, that the path from $y$ to $x$ is closer through
+$y$'s predecessor than through its successor.
+
+Given this definition, we can implement the algorithms in
+section~\ref{sec:nonideal} using $\prec$ and $\succeq$ in place of $<$
+and $\ge$, and wrapping in the counters will be handled correctly.
+
+\subsection{Reset Logic and Sequence}\label{sec:reset}
+
+The reset sequence prior to starting vernier calculations is a
+standard logic reset (triggered by active-low assertion of {\tt
+  rst\_n} as for most digital logic).  However, a handshake with the
+$A$ domain controller is necessary: the client logic asserts {\tt
+  start\_vernier}, the parameters needed are calculated based on the
+$A$ and $B$ clock speeds and error provided by the user, necessary
+parameters are transferred into the (idle) $B$ clock domain, and
+finally the $B$ clock is commanded to start.  Once the $B$ clock has
+started, the $A$ domain waits for the convergence time (see
+section~\ref{sec:convergence}) and then signals the environment {\tt
+  vernier\_ready}.  At this time (and not before) the environment can
+commence a stream of marks in the $B$ domain.
+
+\subsection{Calculator}
+
+A simple seven-function calculator is included in the vernier block
+RTL.  The calculator can perform addition, subtraction, multiplication,
+division, GCD, LCM, and integer square root.  The actions are
+performed using nine registers with a single accumulator.  GCD and LCM
+are computed using Euclid's algorithm, and square root is computed
+using the standard bit-at-a-time approach.  This design obviates the
+need for combinational multipliers or for the user to perform
+complicated calculations involving $p_A$ and $p_B$.  The calculator is
+operated in the $A$ clock domain, and the data needed in the $B$ clock
+domain is transferred during the initialization phase while the system
+is idle (see section~\ref{sec:reset}).  The calculator is not needed
+during operation: it is only used in the initialization phase.
+
+The following expressions are computed with the calculator:
+\begin{itemize}
+\item The $B$ clock divisor
+
+\item The speed of the slow $B$ clock in time units (needed by the $B$ logic)
+
+\item The convergence time of the vernier algorithm
+\end{itemize}
+
+\subsection{Clock Divider with Stable Latency}
+
+It is desirable for ease of characterization that the $B$-to-$A$ clock path
+is always through the same logic.  A special circuit is used to ensure
+that this is the case.  It is shown in figure~\ref{fig:clkdiv}.  It uses a
+standard clock gating circuit together with an OR gate to accomplish a
+clock divider function with stable delays.
+
+\ins_epsfig{4in}{clkdiv}{Circuit to ensure that divided clock path is
+  always the same.}
+
+If it is not desired to divide down the $B$ clock, the $d$ input is held high
+and $e$ is held low.  In that case, the output is simply a delayed version
+of $B$.
+
+If it is desired to divide down the $B$ clock, the $d$ input is held
+high at the beginning of the cycle during which the rising edge of the
+slow clock is desired.  $e$ is held high during that cycle and every
+cycle until the falling edge is desired, and then $e$ is held low.  In
+this way, the rising edge of the output is simply a delayed version of
+$B$'s rising edge, but the maintenance of the high value is
+accomplished through $e$ (which is driven by an FSM to effect the
+above behavior).  A timing diagram of an undivided, a divided by two, and a divided by four slow clock pulse is shown in figure~\ref{fig:divtiming}.
+
+\ins_epsfig{6in}{divtiming}{Timing diagram of stable clock divider.
+  Shown are undivided clock (green), divided by two clock (black), and
+  divided by four clock (red).  Note that the rising edge of
+  $slowclkB$ is always driven from the rising edge of $q$, whereas
+  the timing-wise less important falling edge is driven either by $q$
+  (undivided case) or by $e$ (divided cases).}
+  
+Regardless of whether $B$ is passed through at full speed or it is
+divided down, the rising edges of $B$ (which are the definitional
+edges as far as events are concerned) are passed through precisely the
+same logic under the same conditions.  This handling serves to
+minimize unnecessary variations in the delays of $B$.
+
+\subsection{Parameterization}
+
+Most constants of interest in the design are exported to the consumer of the
+design as
+parameters.  The most important constant from a size and power point of view
+is probably the width of the timestamps.  The depth of the synchronizers
+(and thereby of the data FIFO) is also settable.
+
+\subsection{Example settings}\label{sec:examplesettings}
+
+One domain of use of the logic described here is in timestamping
+Ethernet packets~\cite{ethernet}.  The GCD of a variety of Ethernet
+serial symbol (baud) times is 2/825~ns~($=2.4\overline{24}$~ps).  See
+table~\ref{tab:ethspd} for speeds that we care about today.  Note that
+there are other speeds that are interesting, but these are multi-lane
+versions of the given speeds (for example 100G=$4\times 25$G,
+200G=$4\times 50$G).  Other speeds (e.g., 1000BASE-TX PAM5) are not of
+interest and/or handled within the same scheme.
+
+Unfortunately, it is difficult
+to build a clock that beats against the various Ethernet baud rates and
+has the additional desirable feature that it is a integral division of
+one second without using a time unit with further prime factors.
+
+An example time unit that would work is $\tau_E=2/825/17$~ns~($\approx
+142.6$~fs).  The problem with such a small time unit is obviously that
+it leads to rather wide data paths (say, 48~bits) in the vernier logic.  If
+we do choose such a small vernier time unit, we can choose a $clkA$ of
+$17/20$~GHz$=850$~MHz (exactly); for this frequency, $p_A=8250 \tau_E$.  Timestamp accuracy is then around~70~ps
+with all the other desiderata met: beating against all Ethernet baud rates,
+integer number of cycles in one second, all involved clocks (Ethernet as well
+as $A$ clock) integer number of vernier time units.
+
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|l|l|>{\raggedleft\arraybackslash}p{1in}>{$=\,$}l|>{\raggedleft\arraybackslash}p{1in}|}
+      \hline
+      \bf Name \rule{0pt}{2.6ex}& \bf Baud rate $[/s]$ & \bf Symbol time $[/(2/825~ns)]$ & \bf Factors & \bf Symbol time\par $[/\tau_E]$ \rule[-1.2ex]{0pt}{0pt}\\
+      \hline
+      
+      50G \rule{0pt}{2.6ex}& $50 \cdot 66/64$ G & 8     &$2^3$    & 136\\
+      25G & $25 \cdot 66/64$ G & 16    &$2^4$         & 272\\
+      10G & $10 \cdot 66/64$ G & 40    &$2^3 \cdot 5$         & 680\\
+      10G & $10 \cdot 10/8$ G & 33     &$3 \cdot 11$         & 561\\
+      1G & $10 \cdot 10/8$ G & 330     &$2 \cdot 3 \cdot 5 \cdot 11$          & 5,610\\
+      100M & $100 \cdot 10/8$ M & 3300 &$2^2 \cdot 3 \cdot 5^5 \cdot 11$         & 56,100\\
+      10M & $10 \cdot 2$ M & 20,625    &$3 \cdot 5^4 \cdot 11$         & 350,625\\
+      \hline
+    \end{tabular}
+    \caption{Some Ethernet speeds of interest.}\label{tab:ethspd}
+  \end{table}
+}
+\subsection{Extension for faster B clock}
+
+The given design can only produce a mark on every other $A$ clock.  We
+can expect the $A$ clock to run 800--1200~MHz without special
+efforts.  This should be sufficient up to 200-Gbps Ethernet, which has
+a frame rate, assuming 64-byte frames and 20 bytes of inter-frame gap,
+of $200/672 \approx 297.6$~MHz or more conservatively, assuming 64-byte frames
+and no IFG, of $200/512=390.625$~MHz.  The shortest PTP/IEEE1588
+payload is 44~bytes within Ethernet, which is two less than the
+minimum Ethernet payload.  Therefore, PTP frames can be minimum sized
+and {\em may\/} require a marking rate equal to the minimum-frame
+rate.  The minimum-frame rate may, however, depend on other aspects of
+system architecture.
+
+If higher rates of marking are needed than one per every two $A$
+cycles, the bandwidth can straightforwardly be doubled by widening the
+data FIFO to handle two events per divided clock edge; this would
+allow one mark per $A$ cycle.  Yet higher rates would require
+parallelism and could be implemented similarly.  Also, since the age
+of events is directly recorded in data, bursty systems could
+potentially be accomodated with queuing.
+
+\section{Software Simulation}
+
+We wrote a software simulation of the vernier system in the Modula-3
+programming language~\cite{spwm3}.  This simulator allows for much higher bandwidth
+statistical studies of imperfect (jittery, drifting, etc.) clocks.
+This simulator is intended to be used with Intel's Engineering
+Computing Netbatch batch-processing system for even higher simulation
+speeds.  Characterization of the circuit behavior for very large sets
+of parameters takes a few minutes of wallclock time.  Future
+extensions of this approach could include an interface for describing
+clock instability in terms of the Allan variance
+graph~\cite{nbs,mallan} rather than as a few scalar parameters.
+
+\section{Performance Measurements}
+
+T.B.W.
+
+\section{Contributions and Related Work}\label{sec:related}
+
+The idea of using vernier clocks to measure short time intervals did
+not originate with us.  We were inspired by the work of David Chu and
+colleagues at Hewlett-Packard in the 1970s, which resulted in the
+HP~5370 (see figure~\ref{fig:hp5370a}) Universal Time Interval
+Counter, capable of resolving 20-ps intervals using only a 200-MHz
+(5-ns) clock.\cite{vernier,hppatent}
+
+The problem we are solving here is significantly different from the
+problem solved by the HP~5370.  Whereas the HP~5370 measures a one-shot
+time interval and has complete control of the timing of its own clocks,
+we are trying to measure the relative time of a stream of pulses at very
+high bandwidth and have no control over our clocks.  In our favor, on the
+other hand, all the signals we deal with are synchronous to at least one of
+the clocks in our system, whereas the HP~5370 handled completely asynchronous
+signals.
+
+The HP~5370 solution uses an entirely different architecture for
+clock-domain crossing of the signals between the different clock
+domains of the START and STOP clocks.  We have been able to effect a
+big simplification of the design because the acquisition of the $B$
+clock phase in our design is in some sense self-correcting: if the $B$
+clock transition has been seen in the $A$ clock domain, it is counted,
+but if it has not been seen, it is not counted.  Therefore, if a $B$
+edge causes metastability and takes a long while to resolve, it will
+only cause a very small phase error, since the $A$ logic already takes
+into account that the edge is expected.  As stated above, we do not
+need to use Gray codes nor any of the other complicated machinery
+normally used to transmit data between two different clock domains: all
+we have is a synchronizer and a moderately deep FIFO. 
+
+\rotins_epsfig{5in}{hp5370a}{Rack mounted HP~5370A Universal Time
+  Interval Counter in the author's home office.  The HP~5370A has just
+  measured a time interval of 1.18805055797~seconds, or
+  1,188,050,557,970~ps.  The final significant figure~``7'' is given
+  with a precision of 2 (20~ps) and an RMS error of 3.5 (35~ps),
+  assuming a perfect clock.  In reality, accuracy is limited because
+  the 10~MHz master clock, last calibrated in 1988, is not known to be
+  accurate to better than 20~ppb or about 23~ns over an interval as
+  long as the one displayed.  The machine below the 5370A is a
+  HP~5359A Time Synthesizer, a high-precision pulse generator, using
+  the same vernier clocking scheme as the 5370A with a 100~MHz internal
+  clock, for the purpose of generating very accurate (within 40~ps) pulse
+  widths.}{270}
+
+The design presented here was used in a slightly different form in one
+earlier Intel project, namely the Rimmon PHY of the Network
+Acceleration Complex of the Snow Ridge and Icelake-D products.  The
+main contribution we are emphasizing for the present design, the
+Rockvale PHY to be used in the Mount Steller Smart NIC, is the much
+simplified interface with explicit calculation of time delays and a
+reduced need for integrators to understand the internals of our
+design.  We hope that this emphasis on usability will lead other teams
+to adopt our design and learn from our experiences.
+
+\section{Conclusion}
+
+We have presented a method of using vernier clocks to measure time
+intervals precisely across different clock domains.  The method shows
+promise for measuring time intervals with precision of tens of
+picoseconds, essentially eliminating the error due to uncertainty from
+inter-domain synchronization.  In other words, the measurements are
+made with such good precision that accuracy is dependent on the
+time-dependent variation in physical parameters in contemporary
+digital systems.
+
+Starting from basic theoretical concerns in time
+measurement, we presented a straightforward definition of events as
+marked clock edges and an equally straightforward hardware
+representation of a past event.  We showed how to use the beat
+patterns of unrelated clocks to determine their phase and thereby the
+dynamic synchronization delay of a clock-domain crossing, yielding a
+method for updating our representation of a past event.  We also
+evaluated the perforance of the scheme in terms of convergence time and
+precision.
+
+We then moved to practical matters and discussed
+block diagrams of a proposed implementation of the scheme as well as
+proposed parameter settings for deployment of the scheme in an
+Ethernet environment with the intended application being packet
+timestamping to support the IEEE1588 Precision Time Protocol; in this
+application, our proposed design can achieve higher performance than
+any prior solution in the market.
+Performance simulations on SystemVerilog RTL as well as on a software
+model of the system show that the predicted performance is achievable
+and that the design is robust to clock instabilities such as jitter
+and drift.  Finally, we contrasted our design with existing
+implementations of similar ideas.
+
+\section{Acknowledgements}
+
+Thanks are due to many others at Intel for supporting or encouraging
+this work: Dan Biederman for being interested and encouraging,
+Mark Bordogna for his expertise and insight, Edward Ho for supporting the
+work within the Mount Steller engineering effort, and Ilan Avital for leading
+the Mount Steller silicon development.
+
+\begin{thebibliography}{99}
+
+\bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan
+  variance'' with increased oscillator characterization ability.  {\it
+    Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
+
+\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
+      Fundamentals.}  National Bureau of Standards Monograph 140.
+    Boulder, Colorado:\ United States Department of Commerce, National
+    Bureau of Standards, May 1974.}
+
+\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control
+  of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1,
+  1965.}
+
+\bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
+  Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
+
+\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval
+  measurement using triggered phase-locked oscillators.
+  U.S.~Patent~4,164,648.  Published August 14, 1979.}
+      
+\bibitem{vernier} {D.~C.~Chu, M.~S.~Allen, and A.~S.~Foster.
+  Universal Counter Resolves Picoseconds in Time Interval
+  Measurements.  {\it Hewlett-Packard Journal}, August 1978.}
+
+\bibitem{euclid}{Euclid. {\it The Thirteen Books of the Elements,}
+  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
+  unabridged.  Dover Publications, 1956.  Reprint of edition by
+  Cambridge University Press, 1908.}
+  
+\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to
+    the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
+
+\bibitem{horowitz+hill} {P.~Horowitz and W.~Hill.  {\it The Art of
+    Electronics}, second edition, chapter~15.  Cambridge University
+  Press, 1989.}
+
+\bibitem{leviton}{D.~B.~Leviton and B.~J.~Frey.  Temperature-dependent
+  absolute refractive index measurements of synthetic fused silica.
+  NASA Goddard Space Flight Center, 2008.}
+
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with
+    Modula-3.}  Prentice-Hall Series in Innovative Technology.
+  Prentice-Hall, 1991.}
+  
+\bibitem{newton}{I.~Newton.  {\it Philosophi\ae{} Naturalis Principia
+    Mathematica,} Book 1.  London:\ S.~Pepys, Royal Society Press,
+  1686.}
+
+\bibitem{ethernet}{IEEE Std 802.3-2015.  {\it IEEE Standard for
+    Ethernet.}  Institute of Electrical and Electronics Engineers,
+  2015.}
+
+\bibitem{ieee1588}{IEEE Std 1588-2008.  {\it IEEE Standard for a
+    Precision Clock Synchronization Protocol for Networked Measurement
+    and Control Systems.}  Institute of Electrical and Electronics
+  Engineers, 2008.}
+
+\bibitem{sv}{ANSI/IEEE 1800-2017.  {\it IEEE Standard for
+    SystemVerilog-Unified Hardware Design, Specification, and
+    Verification Language.}  American National Standards Institute,
+  2017.}
+
+\end{thebibliography}
+
+\newpage
+
+\section{About the Authors}
+
+{\bf Mika Nystr\"om} is an engineering manager in Intel's Data Center
+Group, San Jose, California.  He was born in Stockholm, Sweden.  He
+participated in the 1989 International Physics Olympiad in Warsaw,
+Poland and earned a silver medal.  He proceeded to earn S.B.~degrees
+in physics and electrical engineering from the Massachusetts Institute
+of Technology (Cambridge, Mass.) in 1994 and M.S.~and Ph.D.~degrees in
+computer science from the California Institute of Technology
+(Pasadena, Calif.) in 1997 and 2001.  Dr.\ Nystr\"om is the author of
+numerous publications, mostly in the field of asynchronous circuit
+design, and holds eight patents.
+
+{\bf Jin Yan} is a component design engineer in Intel's Data Center
+Group, San Jose, California, which she joined from Oracle Corporation
+in 2017.  She earned a B.S. degree in electrical engineering from
+Heilongjiang University (Harbin, China) in 2012 and an M.S. degree in
+electrical engineering from the University of Southern California (Los
+Angeles, Calif.) in 2014.
+
+\end{document}

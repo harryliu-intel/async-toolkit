@@ -86,7 +86,7 @@ PROCEDURE Start(self : Simple; el : TEXT) : Disp =
   (* callback on XML el start *)
   BEGIN
     INC(self.depth);
-    Debug.Out(F("start %s dep %s", el, Int(self.depth)));
+    Debug.Out(F("PgCRIF start %s dep %s", el, Int(self.depth)));
     IF self.interesting # NIL AND NOT self.interesting.member(el) THEN
       Debug.Out("start ignoring!");
       RETURN Disp.Abort
@@ -112,7 +112,7 @@ PROCEDURE Start(self : Simple; el : TEXT) : Disp =
 PROCEDURE Attr(<*UNUSED*>self : Simple; tag, attr : TEXT) : Disp =
   (* callback on XML attr *)
   BEGIN
-    Debug.Out(F("attr %s %s", tag, attr));
+    Debug.Out(F("PgCRIF attr %s %s", tag, attr));
     RETURN Disp.Continue
   END Attr;
   
@@ -120,7 +120,7 @@ PROCEDURE End(self : Simple) =
   (* callback on XML el end *)
   BEGIN
     DEC(self.depth);
-    Debug.Out(F("end, dep <- %s", Int(self.depth)));
+    Debug.Out(F("PgCRIF end, dep <- %s", Int(self.depth)));
     IF self.parsingReg # NIL AND self.depth < self.parsingReg.depth THEN
       (* done parsing reg *)
       VAR
