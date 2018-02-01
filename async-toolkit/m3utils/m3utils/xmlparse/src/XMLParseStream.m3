@@ -12,7 +12,7 @@ IMPORT Pathname;
 IMPORT Text;
 
 TYPE
-  Result = OBJECT nxt : Result END;
+  Result = OBJECT depth : CARDINAL; nxt : Result END;
   
   Start = Result OBJECT el : const_char_star END;
 
@@ -55,11 +55,40 @@ VAR DoDebug := Debug.GetLevel() > 10;
    So instead we create a record of the callback from expat, using a 
    Result object, and force XML_Parse to return.  We then handle the 
    Result record in the Post method, when Modula-3 is operating normally.
+
+   2/1/18 the handling of ignoreUntil is extremely tricky!
+
+   The parser calls DoStart, ..., DoEnd synchronously.  If we are
+   ignoring, we ignore at this point.
+
+   None of these can set ignoreUntil, but end can clear ignoreUntil.
+
+   These are mapped to results and queued.
+
+   Then DoPost starts running.
+   The results are taken off the queue and passed to various callbacks.
+
+   The callbacks can set ignoreUntil (by returning Disp.Abort).
+
+   There is a race condition, where several tags can get through if
+   the parser returns more than one thing at a time to Post.
+
+   The difficult situation to handle is a Start and End tag together.
+
+   The Start and End tags are not ignored.
+
+   The callback from Start sets ignoreUntil.
+
+   It is now too late to release ignoreUntil from the C callback.
+
+   Instead a second check is inserted in DoPost to clear ignoreUntil in
+   this special case.
 *)
     
 PROCEDURE SetResult(c : xmlParserContext.T; state : State; to : Result) =
   (* stop XML parser and set result *)
   BEGIN
+    to.depth := state.depth;
     IF NOT state.stopped THEN
       WITH stopRes = xmlParser.xmlParseStopParser(c, 1) DO
         IF stopRes = xmlParser.XML_STATUS_ERROR THEN
@@ -113,6 +142,7 @@ PROCEDURE DoEnd(c : xmlParserContext.T; s : REFANY) =
     SetResult(c, state, NEW(End));
   END DoEnd;
 
+
 (* called from C, thread switching and GC turned off *)
 PROCEDURE DoCharData(c : xmlParserContext.T;
                      s : REFANY;
@@ -163,15 +193,30 @@ PROCEDURE DoPost(<*UNUSED*>c : xmlParserContext.T; s : REFANY) =
         BEGIN
           TYPECASE p OF
             Start(z) =>
+            (* really we should check ignoreUntil here, in case something
+               got through the first-level parser *)
+            IF DoDebug THEN Debug.Out("DoPost Start") END;
             disp := state.obj.start(M3toC.CopyStoT(z.el))
           |
             Attr(z) =>
+            (* really we should check ignoreUntil here, in case something
+               got through the first-level parser *)
+            IF DoDebug THEN Debug.Out("DoPost Attr") END;
             disp := state.obj.attr(M3toC.CopyStoT(z.tag), M3toC.CopyStoT(z.attr))
           |
             End =>
+            IF DoDebug THEN Debug.Out("DoPost End") END;
+            IF state.ignoreUntil = p.depth THEN
+              IF DoDebug THEN Debug.Out("End stop ignoring") END;
+              state.ignoreUntil := LAST(CARDINAL) (* done ignoring element *)
+            END;
+            (* really we should check ignoreUntil here, in case something
+               got through the first-level parser *)
             state.obj.end()
           |
             CharData(z) =>
+            (* really we should check ignoreUntil here, in case something
+               got through the first-level parser *)
             IF DoDebug THEN
               Debug.Out(F("DoPost, CharData len %s buff %s",
                           Int(z.len), Buff2Text(z.len, z.data)))
@@ -204,16 +249,23 @@ PROCEDURE DoPost(<*UNUSED*>c : xmlParserContext.T; s : REFANY) =
           ELSE
               <*ASSERT FALSE*>
           END;
+          IF DoDebug THEN Debug.Out("DoPost disp = " & DispNames[disp]) END;
           CASE disp OF
             Disp.Continue => (* skip *)
           |
             Disp.Abort    =>
-            IF DoDebug THEN Debug.Out("DoPost start ignoring") END;
-            state.ignoreUntil := state.depth-1
+            state.ignoreUntil := p.depth-1;
+
+            (* there's a race condition here.
+               if we set ignoreUntil and there are things still in the queue
+               we have to ignore them actively somehow... *)
+            
+            IF DoDebug THEN Debug.Out("DoPost start ignoring until " & Fmt.Int(state.ignoreUntil) & " state.depth = " & Fmt.Int(state.depth) & " result.depth = " & Fmt.Int(p.depth)) END;
+
           |
             Disp.Pop      =>
             IF DoDebug THEN Debug.Out("DoPost start POP ignoring") END;
-            state.ignoreUntil := state.depth-2
+            state.ignoreUntil := p.depth-2
           END
         END;
         p := p.nxt

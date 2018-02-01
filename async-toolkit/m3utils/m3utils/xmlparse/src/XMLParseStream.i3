@@ -1,5 +1,3 @@
-(* this interface would be nice -- one day *)
-
 INTERFACE XMLParseStream;
 IMPORT Pathname;
 
@@ -21,9 +19,20 @@ TYPE
            Pop        (* stop parsing my parent *)
   };
 
+  (* current implementation quirk:
+
+     returning Abort or Pop on parsing an item does not necessarily
+     take effect immediately.  May need to handle following items that
+     were unexpected.
+
+     See long-winded comments in source code for more information. 
+  *)
+
   FileStream <: T OBJECT METHODS
     init(pn : Pathname.T) : FileStream;
   END;
+
+CONST DispNames = ARRAY Disp OF TEXT { "Continue", "Abort", "Pop" };
   
 CONST Brand = "XMLParseStream";
 
