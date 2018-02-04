@@ -70,14 +70,22 @@ Jin Yan \\ {\tt jin2.yan@intel.com}}
   discussed.  The implementation of the concept for Intel's Rockvale
   PHY is described in detail and some performance measurements are
   discussed.  Time-measurement precision of better than 100~ps across
-  clock domains is achieved, and far better would be possible in
-  other applications.
+  clock domains is achieved, and far better would be possible in other
+  applications.  The main contributions of the paper are: first, a
+  theoretical and practical framework for the representation of
+  precise event times in hardware; secondly, a proposal for a
+  straightforward interface for a module that measures time delays
+  across clock-domain crossings; thirdly, a derivation of very simple
+  logic for a vernier time-measuring device for clock-domain
+  crossings; fourthly, a description of the implementation details of
+  the vernier time-measuring device; and lastly, a presentation and analysis
+  of simulated performance of the vernier time-measuring device.
 \end{abstract}
 
 \section{Introduction}
 
 This article discusses the measurement of the time between events in a
-multi-synchronous system.  A multi-synchronous system is a system where
+multi-synchronous system.  A multi-synchronous system is a system in which
 data and control is always updated relative to some clock, but where there is
 more than one clock and therefore more than one {\em clock domain.}
 
@@ -902,6 +910,13 @@ $y$'s predecessor than through its successor.
 Given this definition, we can implement the algorithms in
 section~\ref{sec:nonideal} using $\prec$ and $\succeq$ in place of $<$
 and $\ge$, and wrapping in the counters will be handled correctly.
+
+One RTL for $\prec$ is as follows, where {\tt RAT\_PREC\_BITS} is $N$ and the arithmetic is $\mod 2^N$:
+\begin{verbatim}
+  function automatic logic right_of(input logic [RAT_PREC_BITS-1:0] x,y);
+    right_of = (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1));
+  endfunction
+\end{verbatim}
 
 \subsection{Reset Logic and Sequence}\label{sec:reset}
 
