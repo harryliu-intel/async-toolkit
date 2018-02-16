@@ -69,6 +69,8 @@
 
 \section{Revision History}
 
+Initial distributed revision 0.49.
+
 \section{Contact}
 
 Contact Mika Nystr\"om, {\tt mika.nystroem@intel.com} or 
@@ -100,7 +102,167 @@ files are not provided by the RTL team as of the writing of this document.
 
 \section{Theory of Operation}
 
-See the report~\cite{too}.
+See the report~\cite{too}.  The TSU is called ``delay-calculating synchronizing flip-flop'' in the report.
+
+\section{Basic Interface}
+
+Suggested symbology for the TSU is shown in figure~\ref{fig:meas_sync_ff}.
+
+\ins_epsfig{3in}{meas_sync_ff}{Proposed symbol for the TSU.}
+
+The functional interfaces are intentionally kept as simple as possible.
+
+The TSU has two clocks, an input-side clock called $B$ and an
+output-side clock called $A$.
+
+The TSU receives {\em mark\/} signals in the $B$ domain with
+associated delay-deltas representing an ancestor event in the past.
+
+The TSU produces mark signals in the $A$ domain with associated
+delay-deltas appropriately updated for the delay in proceeding through
+the internal synchronization of the TSU.  The updating of the delay
+takes into account pipeline delay within the TSU as well as the phase
+relationship of $A$ and $B$.  The main function of the TSU is to
+calculate this latter delay, thus removing the timing uncertainty that
+would obtain when using a normal synchronizer for a clock-domain
+crossing.
+
+Configuration inputs of the TSU indicate the periods of the $A$ and $B$ clocks;
+resets and handshake control inputs sequence the internal operations
+of the TSU.
+
+All delay measurements (input mark delay, output mark delay, and clock periods)
+are given in some arbitrary but consistent time unit.  (This is a constraint
+on the usage of the TSU.)
+
+Finally, the TSU has limited bandwidth: it is able to produce a mark on the
+$A$ output at most once in two $A$ cycles.
+
+While the TSU is enabled to operate ({\tt i\_vernier\_en} is asserted), errors will be signalled on {\tt o\_vernier\_error}.  Error conditions detected include the following:
+\begin{itemize}
+\item assertion of $B$ clock reset during operation
+\item overflow of mark buffer (attempts to send marks at a higher rate
+  than one per two $A$ cycles)
+\end{itemize}
+
+\section{Parameters}
+
+The parameters listed in table~\ref{tab:params} are specified in instantiating the TSU soft
+macro.
+
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|>{\tt}l|>{\tt}l|c|>{\raggedright\arraybackslash}p{3in}|}
+      \hline
+      \bf Name \rule{0pt}{2.6ex}& \bf type & \bf sugg. range & \bf Description \\
+      \hline
+          FCLK\_DIV\_BITS & int & 3--8 & $log_2$ of maximum $B$-clock divisor \\
+      \hline
+          RAT\_PREC\_BITS & int & 16--64 & number of bits used to represent delays and timestamps \\
+      \hline
+          SAMPLE\_TIMES & int & 2--4 & depth of library synchronizer used in the $B$ to $A$ clock sampling path \\
+      \hline
+    \end{tabular}
+    \caption{Elaboration-time parameters for TSU RTL.}\label{tab:params}
+  \end{table}
+}
+
+\section{I/O Pins}
+The I/O pinout of the TSU macro is given in table~\ref{tab:pinout}.
+
+The parameter {\tt i\_denom\_error} deserves special mention.  It is
+used to calculate the minimum allowable clock divider for the $B$
+clock internally to the TSU.  There is a constraint that the divided
+$B$ clock (not part of the interface) must be slower than half the
+speed of the $A$ clock on {\em every\/} cycle.  So that the TSU can
+calculate the required divider, the allowable error in the $B$ clock
+from its specification must be given as an input.  It is important to
+note that this error must be the sum of all possible
+rising-edge--to--rising-edge errors of $B$ relative to $A$.  That is,
+if $A$ also has rising-edge--to--rising-edge error, this must be
+included.  For example, consider a case where $A$ and $B$ are both
+Ethernet clocks (100~p.p.m.\ error spec) with 0.2\% jitter budget.  In
+this case, the worst-case error is 0.42\% (0.2\% from jitter in $B$,
+0.2\% from jitter in $A$, and 100~p.p.m.~from each of $A$ and $B$) and
+must be given as the clock period of $B$ times 0.0042, rounded up to
+the nearest TU.  System performance depends only weakly on this parameter,
+so it is OK to set it to 1\% of $B$'s period, or even more.
+
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|>{\tt}l|>{\tt}l|c|>{\it}c|>{\raggedright\arraybackslash}p{2in}|}
+      \hline
+      \bf Name \rule{0pt}{2.6ex}& \bf Type & \bf Dir & \bf Dom & {\bf Description} \\
+      \hline
+      \multicolumn{5}{|l|}{\bf CLOCKS AND RESETS}\\
+      \hline
+      clk & logic & C & -- & $A$ clock \\
+      rst\_n & logic & I & A & $A$ domain power-on reset \\
+      i\_fclk & logic & C & -- & $B$ clock \\
+      i\_fclk\_rst\_n & logic & I & B & $B$ domain power-on reset \\
+      \hline
+      \multicolumn{5}{|l|}{\bf CONTROL HANDSHAKE} \\
+      \hline
+      i\_vernier\_en & logic & I & A & master enable signal \\
+      o\_vernier\_ready & logic & O & A & TSU is ready and outputs are accurate \\
+      o\_vernier\_error & logic & O & A & TSU has detected an error and outputs are idle until the next initalization cycle \\
+      \hline
+      \multicolumn{5}{|l|}{\bf CONFIGURATION INPUTS} \\
+      \hline
+      i\_num & logic[RAT\_PREC\_BITS-1:0] & I & A & period of $A$ clock in TUs.  Must remain stable while {\tt i\_vernier\_en} is asserted \\
+      i\_denom & logic[RAT\_PREC\_BITS-1:0] & I & A & period of $B$ clock in TUs.  Must remain stable while {\tt i\_vernier\_en} is asserted \\
+      i\_denom\_err & logic[RAT\_PREC\_BITS-1:0] & I & A & maximum error in period of $B$ clock (relative to $A$ clock) in TUs.  Must remain stable while {\tt i\_vernier\_en} is asserted \\
+      \hline
+      \multicolumn{5}{|l|}{\bf FUNCTIONAL INTERFACES} \\
+      \hline
+      i\_fclk\_mark & logic & I & B & indicated input mark \\
+      i\_fclk\_mark\_phase & logic[RAT\_PREC\_BITS-1:0] & I & B & indicated input event age in TUs \\
+      o\_mark & logic & O & A & indicated output mark \\
+      o\_mark\_phase & logic[RAT\_PREC\_BITS-1:0] & O & A & indicated output event age in TUs \\
+      \hline
+    \end{tabular}
+    \caption{Pinout of TSU RTL.}\label{tab:pinout}
+  \end{table}
+}
+
+\section{Operational State Machine}
+
+At power-on, it is expected that the $A$ and $B$ clock domain resets are asserted as normal.
+
+In order to start a vernier unit, configuration parameters ({\tt
+  i\_num}, {\tt i\_denom}, etc.) are presented on the interface, the
+environment must ensure that clocks (both $A$ and $B$) are stable and
+operating, and {\tt i\_vernier\_en} is then asserted by the
+environment.
+
+After a number of cycles (which can be large, in the thousands
+possibly), a normally functioning vernier unit responds by raising
+{\tt o\_vernier\_ready}.  At this time, the environment is invited to
+commence sending a stream of marks and mark delays in the $B$ clock
+domain, which the vernier unit will convert into a stream of marks and
+delays in the $A$ clock domain.  It is an error for the environment
+to send marks on $B$ until {\tt o\_vernier\_ready} has been asserted by TSU.
+
+In case of any error's being detected, the TSU will raise {\tt
+  o\_vernier\_error} and stop producing outputs.  If this happens, the
+environment must go through a handshake with {\tt i\_vernier\_en} by
+deasserting and reasserting that signal before performing more delay
+conversions.  (It is not guaranteed that the TSU will catch every attempt
+to provide it with erroneous input.)
+
+If the TSU is to be reconfigured by the environment, for example,
+because of a change in the speed of $B$, the procedure is to lower
+{\tt i\_vernier\_en}, which will cause {\tt o\_vernier\_ready} and
+{\tt o\_vernier\_error} to drop immediately.  The environment can then
+change the configuration inputs {\tt i\_num}, {\tt i\_denom}, etc., then
+re-raise {\tt i\_vernier\_en} and await {\tt o\_vernier\_ready} as usual.
+This procedure should also be followed if the environment needs to assert
+the $B$ domain reset---if not, the TSU will go into its error state and
+need to be re-initialized later (although it is important to note that
+even a $B$ domain reset out of sequence with controls should {\em not\/}
+require that the $A$ domain be reset for recovery).
 
 \begin{thebibliography}{9}
 
