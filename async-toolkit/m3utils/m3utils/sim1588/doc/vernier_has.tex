@@ -264,6 +264,38 @@ need to be re-initialized later (although it is important to note that
 even a $B$ domain reset out of sequence with controls should {\em not\/}
 require that the $A$ domain be reset for recovery).
 
+\section{Performance}
+
+All aspects of the performance of the TSU is related to the clock periods $p_A={\tt i\_num}$ and $p_B={\tt i\_denom}$.
+
+\section{Initialization time}
+The initialization time is the time from {\tt i\_vernier\_en} asserted
+to {\tt o\_vernier\_ready} asserted.  It is composed of time for the
+circuit to compute various internal constants plus settling time of
+the vernier algorithm.
+
+The initialization time is specified to be
+\begin{equation}
+  t_{init} \le LCM(p_A,p_B) / p_A + 10 {\tt RAT\_PREC\_BITS}\quad .
+\end{equation}
+
+\section{Precision}
+The measurement precision of the TSU is
+\begin{equation}
+  \delta = GCD(p_A,p_B)
+\end{equation}
+in TUs.
+
+\section{Accuracy}
+The measurement accuracy of the TSU is
+\begin{equation}
+  \epsilon = \delta + e_{drift,A}\xi + e_{drift,B}\xi + \iota_A + \iota_B
+\end{equation}
+where $\delta$ is the precision and $e_{drift}$ is the relative
+maximum drift error (e.g., 100~p.p.m.~for a standard Ethernet clock), and $\xi$ is the vernier settling component of the
+initialization time equal to $LCM(p_A,p_B)$ TUs, and $\iota$ is the clock jitter.
+(When performing the summation, ensure all terms have the same units!)
+
 \begin{thebibliography}{9}
 
 \bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
