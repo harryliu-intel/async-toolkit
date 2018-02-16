@@ -31,8 +31,13 @@ $(DOC).dvi: $(GENFIGURES)
 
 .fig.eps:
 	fig2dev -L eps $*.fig $*.eps
+	fig2dev -L png $*.fig $*.png
+
+.fig.png:
+	fig2dev -L png $*.fig $*.png
 
 clean::
-	rm -f $(DOC).ps $(DOC).pdf $(TARGETS) *.eps *.log *.aux *~ *.dvi *.toc $(GENFIGURES) 
+	rm -f $(DOC).ps $(DOC).pdf $(TARGETS) *.eps *.log *.aux *~ *.dvi *.toc $(GENFIGURES)
+	echo *.fig | xargs -n1 | sed 's/fig$$/png/' | xargs rm -f 
 
 

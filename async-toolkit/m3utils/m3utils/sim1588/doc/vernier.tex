@@ -62,6 +62,8 @@ Jin Yan \\ {\tt jin2.yan@intel.com}}
 \parindent=0pt
 \parskip=1.5ex
 
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
 \begin{abstract}
   The development of a SystemVerilog module for the accurate
   synchronization of an event from one clock domain into another,
@@ -571,16 +573,16 @@ The algorithms of section~\ref{sec:theory} converge in the time it
 takes the pattern of clock phases to repeat.  In the ideal case, the
 pattern repeats exactly after
 \begin{equation}
-  \kappa = LCM(p_A,p_B)
+  \xi = LCM(p_A,p_B) 
 \end{equation}
 time units, where LCM is the Least Common Multiple.  Since
 $ LCM(p_A,p_B) = {p_A p_B / GCD(p_A,p_B)} $, where GCD is the Greatest Common Divisor, we can if we desire rewrite the
 convergence time in terms of cycles of the $A$ clock and then
 \begin{equation}
-  { \kappa \over p_A } = {p_B \over GCD(p_A,p_B)} \quad .
+  { \xi \over p_A } = {p_B \over GCD(p_A,p_B)} \quad .
 \end{equation}
 
-\subsubsection{Precision}
+\subsubsection{Precision}\label{sec:precision}
 Closely related to the convergence time of the algorithm is its precision.
 Consider
 \begin{equation}
@@ -616,6 +618,67 @@ In terms of the fraction of the $A$ clock, the precision is
 \begin{equation}
   {\hat{q} \over p_A} = {GCD(p_A,p_B) \over p_A} \quad .
 \end{equation}
+
+\subsubsection{Total Measurement Error}
+
+Measurement errors can come from a number of sources.  The
+quantization that comes out of the limited precision mentioned in
+section~\ref{sec:precision} is one source.  We can write this error
+as
+\begin{equation}
+  \epsilon_q = GCD(p_A,p_B) ,
+\end{equation}
+where the unit of measurement is the vernier time unit (TU).
+
+{\bf Clock imperfections}\par
+Elsewhere, we have
+discussed how wire delays are not considered errors {\em per se\/} in
+our view, as they are to be measured by higher-level protocols.
+Another source of error of practical importance is clock
+imperfections.  The design uses only rising clock edges, so it is not
+sensitive to clock asymmetry.  However, clock jitter and drift or
+wander can affect the measurements.  For a comprehensive discussion
+of clock errors and their classification, see the literature~\cite{mallan, nbs}.
+
+{\bf Clock jitter}\par
+Cycle-to-cycle clock jitter adds directly into the measurement error.
+Thht is,
+\begin{equation}
+  \epsilon_j = \iota \qquad 
+\end{equation}
+where $\iota$ is the clock jitter in TUs.
+
+{\bf Clock drift}\par We can model clock drift as an offset in the
+clock frequency from the selected clock frequency.  For example,
+standard Ethernet clocks are specified to be within 100~p.p.m.\ of the
+standard value, and in Synchronous Ethernet systems, the spec tightens
+to 4.6~p.p.m.
+
+The measurement error resulting from clock drift in the vernier circuit
+can be calculated by considering how much error can accumulate over the
+convergence time.  That is
+\begin{equation}\label{eq:drifterr}
+  \epsilon_d = e \, \xi = e \, LCM(p_A,p_B)
+\end{equation}
+where $e$ is the relative clock error and the result is in TUs.
+
+{\bf Total error}\par
+We then have that the total error from measurement sources is
+\begin{equation}
+  \begin{array}{rl}
+    \epsilon &= \epsilon_q + \epsilon_j + \epsilon_d \\
+             &= GCD(p_A,p_B) + \iota + e \, LCM(p_A,p_B) \\
+             &= GCD(p_A,p_B) + \iota + e \,{p_A p_B / GCD(p_A,p_B)}\quad .
+    \end{array}
+\end{equation}
+For a given relative error in the clock speed $e$, it is clear that
+this equation sets up an optimization problem where we can regard
+$GCD(p_A,p_B)$ as the free variable and $\epsilon$ (the total error)
+as the optimized variable.  The optimal value for the $GCD$ can be used
+to inform the choice of $p_A$ (since $p_B$ is usually given).
+
+For examples, see section~\ref{sec:measurements}.
+
 
 \subsection{Measuring the Time Interval Between Two Events}
 
@@ -1082,9 +1145,69 @@ extensions of this approach could include an interface for describing
 clock instability in terms of the Allan variance
 graph~\cite{nbs,mallan} rather than as a few scalar parameters.
 
-\section{Performance Measurements}
+\section{Performance Measurements}\label{sec:measurements}
 
-T.B.W.
+{\bf a single example --- more T.B.W.}
+
+As an example, we consider a system where
+\begin{equation}
+  \begin{array}{rl}
+    f_B &= 390 {5 \over 8}\hbox{~MHz} \\
+    f_A &= 850\hbox{~MHz} = 17/20\hbox{~GHz} \quad ;
+  \end{array}
+\end{equation}
+then we have that 
+\begin{equation}
+  \begin{array}{rl}
+    p_B &= {256 \over 100}\hbox{~ns}\\
+    p_A &= {20 \over 17}\hbox{~ns} \quad .
+  \end{array}
+\end{equation}
+It is convenient to choose $\tau = 1/(100 \times 17 )$~ns$\approx 588.235$~fs,
+which yields
+\begin{equation}
+  \begin{array}{rl}
+    p_B &= 17 \times 256 \tau \\
+    p_A &= 20 \times 100 \tau
+  \end{array}
+\end{equation}
+and since $GCD(p_A,p_B)=16$, we have that
+\begin{equation}
+  \epsilon_q = 16~\tau = 4/425\hbox{~ns} \approx 9.412\hbox{~ps}
+\end{equation}
+and the convergence period is
+\begin{equation}
+  \xi = LCM(p_A,p_B) = 272 p_A = 125 p_B = 320\hbox{~ns (exactly)}\quad .
+\end{equation}
+  
+{\bf Frequency drift and simulation}\par
+
+Now let us consider the effect of a one-sided 100~p.p.m.~error.  According
+to equation~\ref{eq:drifterr},
+
+\begin{equation}
+  \epsilon_d = e \, \xi = 100 \cdot 10^{-6} \cdot 320\hbox{~ns} = 32\hbox{~ps}
+\end{equation}
+
+
+and the error from both drift and quantization is then
+\begin{equation}
+  \epsilon = \epsilon_d + \epsilon_q \approx 32\hbox{~ps} + 9.412\hbox{~ps} = 41.412\hbox{~ps}\quad .
+\end{equation}
+
+We simulated this system using the RTL implementation of the design
+using the VCS simulator with a 1~fs timestep.  Measured results were,
+for the no error case,
+\begin{equation}
+  \epsilon_{meas} \le 9.432\hbox{~ps}
+\end{equation}
+and for the 100-p.p.m.~case,
+\begin{equation}
+  \epsilon_{meas} \le 36.1\hbox{~ps}\quad ,
+\end{equation}
+very much in line with the theoretical predictions.
+
+
 
 \section{Contributions and Related Work}\label{sec:related}
 
@@ -1124,7 +1247,7 @@ we have is a synchronizer and a moderately deep FIFO.
   1,188,050,557,970~ps.  The final significant figure~``7'' is given
   with a precision of 2 (20~ps) and an RMS error of 3.5 (35~ps),
   assuming a perfect clock.  In reality, accuracy is limited because
-  the 10~MHz master clock, last calibrated in 1988, is not known to be
+  the 10-MHz master clock, last calibrated in 1988, is not known to be
   accurate to better than 20~ppb or about 23~ns over an interval as
   long as the one displayed.  The machine below the 5370A is a
   HP~5359A Time Synthesizer, a high-precision pulse generator, using
