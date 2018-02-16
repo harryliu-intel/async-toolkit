@@ -1,0 +1,116 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily Vernier Timestamping Unit HAS 0.49}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Vernier Timestamping Unit \\ High-Level Architecture Specification (HAS) 0.49}
+
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\newpage
+
+\section{Revision History}
+
+\section{Contact}
+
+Contact Mika Nystr\"om, {\tt mika.nystroem@intel.com} or 
+Jin Yan,  {\tt jin2.yan@intel.com} for more information.
+
+\section{Overview}
+
+The Vernier Timestamping Unit (TSU) is a module that is used to
+forward time measurements relative to a clock edge in one clock domain
+$B$ to a time measurement relative to a clock edge in another clock
+domain $A$.  The accuracy and precision of the TSU can be much better
+than one clock cycle, given appropriate frequency (period) relationships
+between the clock speeds.
+
+The TSU is a soft macro and parameterizable.  It contains no memory or
+register-file hard macros.  It relies on having synchronizer elements
+available in the cell library, but otherwise is delivered as normal
+SystemVerilog to be compiled with Design Compiler or similar.
+
+\section{DFx Support}
+
+Since the TSU is entirely a soft macro (apart from a number of
+synchronizers), no support for DFx is provided.
+
+\section{Timing Constraints}
+
+Numerous clock-domain crossings are present in the TSU RTL.  Timing constraint
+files are not provided by the RTL team as of the writing of this document.
+
+\section{Theory of Operation}
+
+See the report~\cite{too}.
+
+\begin{thebibliography}{9}
+
+\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
+      Fundamentals.}  National Bureau of Standards Monograph 140.
+    Boulder, Colorado:\ United States Department of Commerce, National
+    Bureau of Standards, May 1974.}
+
+\bibitem{too}{M.~Nystr\"om and J.~Yan.  Precise time-interval measurement using vernier clocks.  DCG DSD Mount Steller team, 2018.  Available from the authors.}
+  
+\end{thebibliography}
+
+\end{document}
