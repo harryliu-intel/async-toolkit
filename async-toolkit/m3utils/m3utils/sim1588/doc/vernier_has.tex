@@ -71,10 +71,10 @@
 
 Initial distributed revision 0.49.
 
-\section{Contact}
+\section{Contacts}
 
-Contact Mika Nystr\"om, {\tt mika.nystroem@intel.com} or 
-Jin Yan,  {\tt jin2.yan@intel.com} for more information.
+Contact Mika Nystr\"om, {\tt mika.nystroem@intel.com}, or 
+Jin Yan,  {\tt jin2.yan@intel.com}, for more information.
 
 \section{Overview}
 
@@ -97,12 +97,15 @@ synchronizers), no support for DFx is provided.
 
 \section{Timing Constraints}
 
-Numerous clock-domain crossings are present in the TSU RTL.  Timing constraint
-files are not provided by the RTL team as of the writing of this document.
+Numerous clock-domain crossings are present in the TSU RTL.  Timing
+constraint files are not provided by the RTL team as of the writing of
+this document.  Numerous signals cross between clock domains in the
+TSU, so this is an important shortcoming.
 
 \section{Theory of Operation}
 
-See the report~\cite{too}.  The TSU is called ``delay-calculating synchronizing flip-flop'' in the report.
+See the report~\cite{too}.  The TSU is called ``delay-calculating
+synchronizing flip-flop'' in the report.
 
 \section{Basic Interface}
 
@@ -140,7 +143,9 @@ on the $A$ output at best once in two $A$ cycles.  For some
 combinations of clock speeds, the constraint can deteriorate to a
 maximum of one mark per four $A$ cycles.  
 
-While the TSU is enabled to operate ({\tt i\_vernier\_en} is asserted), errors will be signalled on {\tt o\_vernier\_error}.  Error conditions detected include the following:
+While the TSU is enabled to operate ({\tt i\_vernier\_en} is
+asserted), errors will be signalled on {\tt o\_vernier\_error}.  Error
+conditions detected include the following:
 \begin{itemize}
 \item assertion of $B$ clock reset during operation
 \item overflow of mark buffer (attempts to send marks at a higher rate
@@ -149,8 +154,8 @@ While the TSU is enabled to operate ({\tt i\_vernier\_en} is asserted), errors w
 
 \section{Parameters}
 
-The parameters listed in table~\ref{tab:params} are specified in instantiating the TSU soft
-macro.
+The parameters listed in table~\ref{tab:params} are specified in
+instantiating the TSU soft macro.
 
 {
   \begin{table}
@@ -251,8 +256,8 @@ In case of any error's being detected, the TSU will raise {\tt
   o\_vernier\_error} and stop producing outputs.  If this happens, the
 environment must go through a handshake with {\tt i\_vernier\_en} by
 deasserting and reasserting that signal before performing more delay
-conversions.  (It is not guaranteed that the TSU will catch every attempt
-to provide it with erroneous input.)
+conversions.  {\it It is not guaranteed that the TSU will catch every attempt
+to provide it with erroneous input.}
 
 If the TSU is to be reconfigured by the environment, for example,
 because of a change in the speed of $B$, the procedure is to lower
@@ -268,7 +273,8 @@ require that the $A$ domain be reset for recovery).
 
 \section{Performance}
 
-All aspects of the performance of the TSU is related to the clock periods $p_A={\tt i\_num}$ and $p_B={\tt i\_denom}$.
+All aspects of the performance of the TSU is related to the clock
+periods $p_A={\tt i\_num}$ and $p_B={\tt i\_denom}$.
 
 \section{Initialization time}
 The initialization time is the time from {\tt i\_vernier\_en} asserted
@@ -278,12 +284,17 @@ The initialization time is specified to be
 \begin{equation}
   t_{init} \le LCM(p_A,p_B) + (2^{\tt FCLK\_DIV\_BITS}+10)\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2p_B + 2p_A)\quad .
 \end{equation}
-This expression arises from the following sources:
+This expression for an upper bound on the initialization time arises
+from the following sources:
 \begin{itemize}
 \item Settling time of the vernier algorithm
-\item Search for $B$ clock divisor
+\item Search for $B$ clock divisor (note that this only takes as long
+  as required so if a smaller divisor is sufficient, this term shrinks
+  accordingly)
 \item Computation of various constants (using a bit-at-a-time divider)
-\item Synchronization time for initialization handshake between $A$ and $B$ clock domains (estimated at two complete handshakes between the clock domains)
+\item Synchronization time for initialization handshake between $A$
+  and $B$ clock domains (estimated at two complete handshakes between
+  the clock domains)
 \end{itemize}
 
 \section{Precision}
@@ -299,9 +310,10 @@ The measurement accuracy of the TSU is
   \epsilon = \delta + e_{drift,A}\xi + e_{drift,B}\xi + \iota_A + \iota_B
 \end{equation}
 where $\delta$ is the precision and $e_{drift}$ is the relative
-maximum drift error (e.g., 100~p.p.m.~for a standard Ethernet clock), and $\xi$ is the vernier settling component of the
-initialization time equal to $LCM(p_A,p_B)$ TUs, and $\iota$ is the clock jitter.
-(When performing the summation, ensure all terms have the same units!)
+maximum drift error (e.g., 100~p.p.m.~for a standard Ethernet clock),
+and $\xi$ is the vernier settling component of the initialization time
+equal to $LCM(p_A,p_B)$ TUs, and $\iota$ is the clock jitter.  (When
+performing the summation, ensure all terms have the same units!)
 
 \section{Mark Throughput}
 The throughput of marks is strictly limited.  The $B$ clock is divided down
@@ -313,10 +325,13 @@ Choose $N$ as divisor such that out of the set
 \begin{equation}
 {\mathcal S} = \{ 1, 2, 4, \ldots , 2^{FCLK\_DIV\_BITS}-2\}
 \end{equation}
-such that it is the smallest member  $N \in {\mathcal S}$ that satisfies
-\begin{equation}
+it is the smallest member  $N \in {\mathcal S}$ that satisfies
+\begin{equation}\label{eq:divconstraint}
   2 \, {\tt i\_num} < ( {\tt i\_denom} - {\tt i\_denom\_error} ) N
 \end{equation}
+If there is no smallest member $N \in {\mathcal S}$ that satisfies
+equation~\ref{eq:divconstraint}, the TSU does not initialize and
+instead raises {\tt o\_vernier\_error}.
 
 Once the divided $B$ clock is transferred into the $A$ clock domain, at most
 one mark per divided $B$ clock can be accepted.
@@ -332,7 +347,9 @@ marks at one per $B$ cycle.
     Boulder, Colorado:\ United States Department of Commerce, National
     Bureau of Standards, May 1974.}
 
-\bibitem{too}{M.~Nystr\"om and J.~Yan.  Precise time-interval measurement using vernier clocks.  DCG DSD Mount Steller team, 2018.  Available from the authors.}
+\bibitem{too}{M.~Nystr\"om and J.~Yan.  Precise time-interval
+  measurement using vernier clocks.  DCG DSD Mount Steller team, 2018.
+  Available from the authors.}
   
 \end{thebibliography}
 
