@@ -135,8 +135,10 @@ All delay measurements (input mark delay, output mark delay, and clock periods)
 are given in some arbitrary but consistent time unit.  (This is a constraint
 on the usage of the TSU.)
 
-Finally, the TSU has limited bandwidth: it is able to produce a mark on the
-$A$ output at most once in two $A$ cycles.
+Finally, the TSU has limited bandwidth: it is able to produce a mark
+on the $A$ output at best once in two $A$ cycles.  For some
+combinations of clock speeds, the constraint can deteriorate to a
+maximum of one mark per four $A$ cycles.  
 
 While the TSU is enabled to operate ({\tt i\_vernier\_en} is asserted), errors will be signalled on {\tt o\_vernier\_error}.  Error conditions detected include the following:
 \begin{itemize}
@@ -270,14 +272,19 @@ All aspects of the performance of the TSU is related to the clock periods $p_A={
 
 \section{Initialization time}
 The initialization time is the time from {\tt i\_vernier\_en} asserted
-to {\tt o\_vernier\_ready} asserted.  It is composed of time for the
-circuit to compute various internal constants plus settling time of
-the vernier algorithm.
+to {\tt o\_vernier\_ready} asserted.  
 
 The initialization time is specified to be
 \begin{equation}
-  t_{init} \le LCM(p_A,p_B) / p_A + 10 {\tt RAT\_PREC\_BITS}\quad .
+  t_{init} \le LCM(p_A,p_B) + (2^{\tt FCLK\_DIV\_BITS}+10)\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2p_B + 2p_A)\quad .
 \end{equation}
+This expression arises from the following sources:
+\begin{itemize}
+\item Settling time of the vernier algorithm
+\item Search for $B$ clock divisor
+\item Computation of various constants (using a bit-at-a-time divider)
+\item Synchronization time for initialization handshake between $A$ and $B$ clock domains (estimated at two complete handshakes between the clock domains)
+\end{itemize}
 
 \section{Precision}
 The measurement precision of the TSU is
@@ -295,6 +302,28 @@ where $\delta$ is the precision and $e_{drift}$ is the relative
 maximum drift error (e.g., 100~p.p.m.~for a standard Ethernet clock), and $\xi$ is the vernier settling component of the
 initialization time equal to $LCM(p_A,p_B)$ TUs, and $\iota$ is the clock jitter.
 (When performing the summation, ensure all terms have the same units!)
+
+\section{Mark Throughput}
+The throughput of marks is strictly limited.  The $B$ clock is divided down
+such that it is slower than twice the period of the $A$ clock.  The
+algorithm for computing the divisor is as follows:
+
+Choose $N$ as divisor such that out of the set
+
+\begin{equation}
+{\mathcal S} = \{ 1, 2, 4, \ldots , 2^{FCLK\_DIV\_BITS}-2\}
+\end{equation}
+such that it is the smallest member  $N \in {\mathcal S}$ that satisfies
+\begin{equation}
+  2 \, {\tt i\_num} < ( {\tt i\_denom} - {\tt i\_denom\_error} ) N
+\end{equation}
+
+Once the divided $B$ clock is transferred into the $A$ clock domain, at most
+one mark per divided $B$ clock can be accepted.
+
+For a high-enough $A$ clock speed, e.g., $A$ at 850~MHz and $B$ at
+390~5/8~MHz, the $B$ divisor is~1, and the TSU is capable of servicing $B$
+marks at one per $B$ cycle.
 
 \begin{thebibliography}{9}
 
