@@ -63,7 +63,7 @@
 \parindent=0pt
 \parskip=1.5ex
 
-\arraycolsep=1.4pt\def\arraystretch{1.5}
+\arraycolsep=0.4pt\def\arraystretch{1.1}
 
 \newpage
 
@@ -144,15 +144,32 @@ combinations of clock speeds, the constraint can deteriorate to a
 maximum of one mark per four $A$ cycles.  
 
 While the TSU is enabled to operate ({\tt i\_vernier\_en} is
-asserted), errors will be signalled on {\tt o\_vernier\_error}.  Error
-conditions detected include the following:
-\begin{itemize}
-\item assertion of $B$ clock reset during operation
-\item overflow of mark buffer (attempts to send marks at a higher rate
-  than one per two $A$ cycles)
-\end{itemize}
+asserted), errors will be signalled on {\tt o\_vernier\_error} as a nonzero value.  Error
+conditions are enumerated in table~\ref{tab:errs}.
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|>{\tt}l|>{\tt}c|>{\raggedright\arraybackslash}p{3in}|}
+      \hline
+      \bf Name & \bf Value & \bf Description \\
+      \hline
+ERR\_VERNIER\_OK & 3'h0 & no error \\
+      \hline
+ERR\_UNEXPECTED\_RESET & 3'h1 & assertion of $B$ clock reset during operation\\
+      \hline
+ERR\_MARK\_OVERFLOW & 3'h2 & overflow of mark buffer (attempts to send marks at a higher rate than one per divided $B$ cycle) \\
+      \hline
+ERR\_BAD\_DIVISOR & 3'h3 & attempt to command a bad $B$ clock divisor \\
+      \hline
+\bf ---reserved--- & 3'h4--3'h7 & reserved \\
+      \hline
+    \end{tabular}
+    \caption{Possible TSU error conditions.}\label{tab:errs}
+    \end{table}
+}
 
 \section{Parameters}
+
 
 The parameters listed in table~\ref{tab:params} are specified in
 instantiating the TSU soft macro.
@@ -178,12 +195,12 @@ instantiating the TSU soft macro.
 \section{I/O Pins}
 The I/O pinout of the TSU macro is given in table~\ref{tab:pinout}.
 
-The parameter {\tt i\_denom\_error} deserves special mention.  It is
+The parameter {\tt i\_denom\_tol} deserves special mention.  It is
 used to calculate the minimum allowable clock divider for the $B$
 clock internally to the TSU.  There is a constraint that the divided
 $B$ clock (not part of the interface) must be slower than half the
 speed of the $A$ clock on {\em every\/} cycle.  So that the TSU can
-calculate the required divider, the allowable error in the $B$ clock
+calculate the required divider, the tolerance or allowable error in the $B$ clock
 from its specification must be given as an input.  It is important to
 note that this error must be the sum of all possible
 rising-edge--to--rising-edge errors of $B$ relative to $A$.  That is,
@@ -199,9 +216,9 @@ so it is OK to set it to 1\% of $B$'s period, or even more.
 {
   \begin{table}
     \centering
-    \begin{tabular}{|>{\tt}l|>{\tt}l|c|>{\it}c|>{\raggedright\arraybackslash}p{2in}|}
+    \begin{tabular}{|>{\tt}l|>{\tt}l|c|>{\it}c|>{\raggedright\arraybackslash}p{2.4in}|}
       \hline
-      \bf Name \rule{0pt}{2.6ex}& \bf Type & \bf Dir & \bf Dom & {\bf Description} \\
+      \bf Name \rule{0pt}{2.6ex}& \bf Width & \bf Dir & \bf Dom & {\bf Description} \\
       \hline
       \multicolumn{5}{|l|}{\bf CLOCKS AND RESETS}\\
       \hline
@@ -214,23 +231,26 @@ so it is OK to set it to 1\% of $B$'s period, or even more.
       \hline
       i\_vernier\_en & logic & I & A & master enable signal \\
       o\_vernier\_ready & logic & O & A & TSU is ready and outputs are accurate \\
-      o\_vernier\_error & logic & O & A & TSU has detected an error and outputs are idle until the next initalization cycle \\
+      o\_vernier\_error & 3-1:0 & O & A & If nonzero, TSU has detected an error and outputs are idle until the next initalization cycle \\
       \hline
-      \multicolumn{5}{|l|}{\bf CONFIGURATION INPUTS} \\
+      \multicolumn{5}{|l|}{\bf CONFIGURATION I/Os} \\
       \hline
-      i\_num & logic[RAT\_PREC\_BITS-1:0] & I & A & period of $A$ clock in TUs.  Must remain stable while {\tt i\_vernier\_en} is asserted \\
-      i\_denom & logic[RAT\_PREC\_BITS-1:0] & I & A & period of $B$ clock in TUs.  Must remain stable while {\tt i\_vernier\_en} is asserted \\
-      i\_denom\_err & logic[RAT\_PREC\_BITS-1:0] & I & A & maximum error in period of $B$ clock (relative to $A$ clock) in TUs.  Must remain stable while {\tt i\_vernier\_en} is asserted \\
+      i\_num & RAT\_PREC\_BITS-1:0 & I & A & period of $A$ clock in TUs.  MRS while {\tt i\_vernier\_en} is asserted \\
+      i\_denom & RAT\_PREC\_BITS-1:0 & I & A & period of $B$ clock in TUs.  MRS while {\tt i\_vernier\_en} is asserted \\
+      i\_denom\_tol & RAT\_PREC\_BITS-1:0 & I & A & tolerance in period of $B$ clock (relative to $A$ clock) in TUs.  MRS while {\tt i\_vernier\_en} is asserted \\
+      i\_fclk\_div & FCLK\_DIV\_BITS-1:0 & I & A & $B$ clock divisor.  Set to 0 for automatic selection.  MRS while {\tt i\_vernier\_en} is asserted \\
+      o\_fclk\_div & FCLK\_DIV\_BITS-1:0 & O & A & $B$ clock divisor as computed.  WRS while {\tt o\_vernier\_ready} is asserted.\\
+      o\_prec & RAT\_PREC\_BITS-1:0 & O & A & Measurement precision in TUs. WRS while {\tt o\_vernier\_ready} is asserted.\\
       \hline
       \multicolumn{5}{|l|}{\bf FUNCTIONAL INTERFACES} \\
       \hline
       i\_fclk\_mark & logic & I & B & indicated input mark \\
-      i\_fclk\_mark\_phase & logic[RAT\_PREC\_BITS-1:0] & I & B & indicated input event age in TUs \\
+      i\_fclk\_mark\_phase & RAT\_PREC\_BITS-1:0 & I & B & indicated input event age in TUs \\
       o\_mark & logic & O & A & indicated output mark \\
-      o\_mark\_phase & logic[RAT\_PREC\_BITS-1:0] & O & A & indicated output event age in TUs \\
+      o\_mark\_phase & RAT\_PREC\_BITS-1:0 & O & A & indicated output event age in TUs \\
       \hline
     \end{tabular}
-    \caption{Pinout of TSU RTL.}\label{tab:pinout}
+    \caption{Pinout of TSU RTL. MRS/WRS means ``must/will remain stable''}\label{tab:pinout}
   \end{table}
 }
 
@@ -274,15 +294,39 @@ require that the $A$ domain be reset for recovery).
 \section{Performance}
 
 All aspects of the performance of the TSU is related to the clock
-periods $p_A={\tt i\_num}$ and $p_B={\tt i\_denom}$.
+periods $p_A={\tt i\_num}$ and $p_B={\tt i\_denom}$ as well as the $B$-clock divisor $d={\tt o\_fclk\_div}.$
 
-\section{Initialization time}
+\subsection{$B$-clock divisor}
+
+The $B$ clock is divided down
+such that it is slower than twice the period of the $A$ clock.  We call
+the divisor $d$.
+
+The divisor can either be specified by the user as {\tt i\_fclk\_div} or computed automatically.  Specifying a divisor that is too small or odd (other than 1) causes the TSU to stop in an error state.
+
+The automatic
+algorithm for computing the divisor is as follows:
+
+Choose $d$ as divisor such that out of the set
+
+\begin{equation}
+{\mathcal S} = \{ 1, 2, 4, \ldots , 2^{FCLK\_DIV\_BITS}-2\}
+\end{equation}
+it is the smallest member  $d \in {\mathcal S}$ that satisfies
+\begin{equation}\label{eq:divconstraint}
+  2 \, {\tt i\_num} < ( {\tt i\_denom} - {\tt i\_denom\_tol} ) d
+\end{equation}
+If there is no smallest member $d \in {\mathcal S}$ that satisfies
+equation~\ref{eq:divconstraint}, the TSU does not initialize and
+instead signals the condition on {\tt o\_vernier\_error}.
+
+\subsection{Initialization time}
 The initialization time is the time from {\tt i\_vernier\_en} asserted
 to {\tt o\_vernier\_ready} asserted.  
 
 The initialization time is specified to be
 \begin{equation}
-  t_{init} \le LCM(p_A,p_B) + (2^{\tt FCLK\_DIV\_BITS}+10)\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2p_B + 2p_A)\quad .
+  t_{init} \le LCM(p_A,d\,p_B) + (2^{\tt FCLK\_DIV\_BITS}+10)\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2d\,p_B + 2p_A)\quad .
 \end{equation}
 This expression for an upper bound on the initialization time arises
 from the following sources:
@@ -300,11 +344,18 @@ from the following sources:
 \section{Precision}
 The measurement precision of the TSU is
 \begin{equation}
-  \delta = GCD(p_A,p_B)
+  \delta = GCD(p_A,d\,p_B)
 \end{equation}
-in TUs.
+in TUs.  This quantity is output by the TSU as {\tt o\_prec}.
 
-\section{Accuracy}
+It is clear from the above that the precision $\delta$ may be
+dependent on the choice of $d$.  If $d$ and $p_A$ have factors in
+common, the precision will be degraded.  There are two general methods
+of avoiding this issue: if $A$ is fast enough (more than twice as fast as $B$), we will have $d=1$, and
+otherwise, in performance-critical applications, the user can specify
+a suitably prime $d$ on the input {\tt i\_fclk\_div}.
+
+\subsection{Accuracy}
 The measurement accuracy of the TSU is
 \begin{equation}
   \epsilon = \delta + e_{drift,A}\xi + e_{drift,B}\xi + \iota_A + \iota_B
@@ -315,23 +366,8 @@ and $\xi$ is the vernier settling component of the initialization time
 equal to $LCM(p_A,p_B)$ TUs, and $\iota$ is the clock jitter.  (When
 performing the summation, ensure all terms have the same units!)
 
-\section{Mark Throughput}
-The throughput of marks is strictly limited.  The $B$ clock is divided down
-such that it is slower than twice the period of the $A$ clock.  The
-algorithm for computing the divisor is as follows:
-
-Choose $N$ as divisor such that out of the set
-
-\begin{equation}
-{\mathcal S} = \{ 1, 2, 4, \ldots , 2^{FCLK\_DIV\_BITS}-2\}
-\end{equation}
-it is the smallest member  $N \in {\mathcal S}$ that satisfies
-\begin{equation}\label{eq:divconstraint}
-  2 \, {\tt i\_num} < ( {\tt i\_denom} - {\tt i\_denom\_error} ) N
-\end{equation}
-If there is no smallest member $N \in {\mathcal S}$ that satisfies
-equation~\ref{eq:divconstraint}, the TSU does not initialize and
-instead raises {\tt o\_vernier\_error}.
+\subsection{Mark Throughput}\label{sec:divchoice}
+The throughput of marks is strictly limited.  
 
 Once the divided $B$ clock is transferred into the $A$ clock domain, at most
 one mark per divided $B$ clock can be accepted.
