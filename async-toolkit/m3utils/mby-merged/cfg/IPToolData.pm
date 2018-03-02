@@ -139,6 +139,8 @@ $ToolConfig_ips{sva_lib_ip} = {
     },
 };
 
+$ToolConfig_tools{nebulon}{VERSION} = 'd18ww08.3';
+
 
 $ToolConfig_tools{buildman}{ENV}{OVM_HOME} = "&get_tool_path(ovm)";
 $ToolConfig_tools{buildman}{ENV}{XVM_HOME} = "&get_tool_path(xvm)";
