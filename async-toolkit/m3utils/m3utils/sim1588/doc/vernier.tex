@@ -163,13 +163,29 @@ such a configuration (at rest, same gravity field, etc.) such that
 relativistic effects are zero or negligible, and we can treat the
 chronometer time as global and absolute.  (``Tempus absolutum verum \&
 Mathematicum'' as Newton called it.  \cite{newton}) The most familiar
-attempt to measure chronometer time is the International Atomic Time
+attempt to define a scale of chronometer time is the International Atomic Time
 scale, or TAI ({\em Temps Atomique International\/}\cite{nbs}), which
 is a steady count of SI seconds that agreed with the more commonly
-used Universal Time on January~1, 1958.\footnote{TAI and UTC diverge
+used, but non-uniform, Universal Time on January~1, 1958.\footnote{TAI and UTC diverge
   because of leap seconds that are inserted into the latter scale and
   make UTC and its derivatives (such as ``Unix time'') non-uniform.  As of the time of writing, TAI is precisely
   37~s ahead of UTC.}
+
+While we do not discuss the matter much in this paper, a typical
+application of the algorithms we investigate is the accurate
+synchronizing via network protocols of chronometers to some global,
+trusted measure of TAI.  For further details, consult the definition
+of IEEE Standard~1588\cite{ieee1588}.  Furthermore, another reason we
+mention TAI here is that while it is generally not necessary for all
+the parties to have direct access to an accurate chronometer reading
+TAI in order to contribute to these algorithms, our exposition will be
+easier to follow if we can assume that events are measured on a global
+timescale, thereby dispelling any confusion about the nature of the
+timestamps that are processed by the system: they can be taken to be
+measured on a global and uniform timescale such as TAI.  Many issues
+relating to the intricacies of maintaining normal human calendar time
+(the Gregorian calendar, leap seconds, etc.) are therefore entirely
+outside of the scope of our discussion.
 
 \rotins_epsfig_listcaption{4in}{chronometer}{A chronometer showing twelve past three o'clock and nineteen seconds.}{270}{A chronometer.}
 
