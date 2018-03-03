@@ -63,9 +63,13 @@
 \parindent=0pt
 \parskip=1.5ex
 
-\arraycolsep=0.4pt\def\arraystretch{1.1}
+\arraycolsep=0.4pt\def\arraystretch{1.4}
 
 \newpage
+
+\tableofcontents
+\listoffigures
+\listoftables
 
 \section{Revision History}
 
@@ -109,15 +113,18 @@ synchronizing flip-flop'' in the report.
 
 \section{Basic Interface}
 
+\subsection{Symbology}
 Suggested symbology for the TSU is shown in figure~\ref{fig:meas_sync_ff}.
 
 \ins_epsfig{3in}{meas_sync_ff}{Proposed symbol for the TSU.}
 
 The functional interfaces are intentionally kept as simple as possible.
 
+\subsection{Clocks}
 The TSU has two clocks, an input-side clock called $B$ and an
 output-side clock called $A$.
 
+\subsection{Functional interfaces}
 The TSU receives {\em mark\/} signals in the $B$ domain with
 associated delay-deltas representing an ancestor event in the past.
 
@@ -130,6 +137,7 @@ calculate this latter delay, thus removing the timing uncertainty that
 would obtain when using a normal synchronizer for a clock-domain
 crossing.
 
+\subsection{Configuration interfaces}
 Configuration inputs of the TSU indicate the periods of the $A$ and $B$ clocks;
 resets and handshake control inputs sequence the internal operations
 of the TSU.
@@ -138,13 +146,18 @@ All delay measurements (input mark delay, output mark delay, and clock periods)
 are given in some arbitrary but consistent time unit.  (This is a constraint
 on the usage of the TSU.)
 
+\subsection{Performance limitation}
 Finally, the TSU has limited bandwidth: it is able to produce a mark
 on the $A$ output at best once in two $A$ cycles.  For some
 combinations of clock speeds, the constraint can deteriorate to a
 maximum of one mark per four $A$ cycles.  
 
+\subsection{Control handshake}
 While the TSU is enabled to operate ({\tt i\_vernier\_en} is
-asserted), errors will be signalled on {\tt o\_vernier\_error} as a nonzero value.  Error
+asserted), errors will be signalled on {\tt o\_vernier\_error} as a nonzero value.  
+
+\subsection{Error conditions}
+Error
 conditions are enumerated in table~\ref{tab:errs}.
 {
   \begin{table}
@@ -161,7 +174,7 @@ ERR\_MARK\_OVERFLOW & 3'h2 & overflow of mark buffer (attempts to send marks at 
       \hline
 ERR\_BAD\_DIVISOR & 3'h3 & attempt to command a bad $B$ clock divisor \\
       \hline
-\bf ---reserved--- & 3'h4--3'h7 & reserved \\
+\bf ---reserved--- & 3'h4{\rm --}3'h7 & reserved \\
       \hline
     \end{tabular}
     \caption{Possible TSU error conditions.}\label{tab:errs}
@@ -181,7 +194,7 @@ instantiating the TSU soft macro.
       \hline
       \bf Name \rule{0pt}{2.6ex}& \bf type & \bf sugg. range & \bf Description \\
       \hline
-          FCLK\_DIV\_BITS & int & 3--8 & $log_2$ of maximum $B$-clock divisor \\
+          FCLK\_DIV\_BITS & int & 3--8 & $\log_2$ of maximum $B$-clock divisor \\
       \hline
           RAT\_PREC\_BITS & int & 16--64 & number of bits used to represent delays and timestamps \\
       \hline
@@ -195,6 +208,7 @@ instantiating the TSU soft macro.
 \section{I/O Pins}
 The I/O pinout of the TSU macro is given in table~\ref{tab:pinout}.
 
+\subsection{Tolerance input}
 The parameter {\tt i\_denom\_tol} deserves special mention.  It is
 used to calculate the minimum allowable clock divider for the $B$
 clock internally to the TSU.  There is a constraint that the divided
@@ -250,14 +264,16 @@ so it is OK to set it to 1\% of $B$'s period, or even more.
       o\_mark\_phase & RAT\_PREC\_BITS-1:0 & O & A & indicated output event age in TUs \\
       \hline
     \end{tabular}
-    \caption{Pinout of TSU RTL. MRS/WRS means ``must/will remain stable''}\label{tab:pinout}
+    \caption[Pinout of TSU RTL.]{Pinout of TSU RTL. MRS/WRS means ``must/will remain stable''}\label{tab:pinout}
   \end{table}
 }
 
 \section{Operational State Machine}
 
+\subsection{Power-on reset}
 At power-on, it is expected that the $A$ and $B$ clock domain resets are asserted as normal.
 
+\subsection{Start handshake}
 In order to start a vernier unit, configuration parameters ({\tt
   i\_num}, {\tt i\_denom}, etc.) are presented on the interface, the
 environment must ensure that clocks (both $A$ and $B$) are stable and
@@ -272,6 +288,7 @@ domain, which the vernier unit will convert into a stream of marks and
 delays in the $A$ clock domain.  It is an error for the environment
 to send marks on $B$ until {\tt o\_vernier\_ready} has been asserted by TSU.
 
+\subsection{Error termination}
 In case of any error's being detected, the TSU will raise {\tt
   o\_vernier\_error} and stop producing outputs.  If this happens, the
 environment must go through a handshake with {\tt i\_vernier\_en} by
@@ -279,6 +296,7 @@ deasserting and reasserting that signal before performing more delay
 conversions.  {\it It is not guaranteed that the TSU will catch every attempt
 to provide it with erroneous input.}
 
+\subsection{Orderly reconfiguration}
 If the TSU is to be reconfigured by the environment, for example,
 because of a change in the speed of $B$, the procedure is to lower
 {\tt i\_vernier\_en}, which will cause {\tt o\_vernier\_ready} and
@@ -302,8 +320,10 @@ The $B$ clock is divided down
 such that it is slower than twice the period of the $A$ clock.  We call
 the divisor $d$.
 
+\subsubsection{Explicit specification of divisor}
 The divisor can either be specified by the user as {\tt i\_fclk\_div} or computed automatically.  Specifying a divisor that is too small or odd (other than 1) causes the TSU to stop in an error state.
 
+\subsubsection{Automatic algorithm for divisor}
 The automatic
 algorithm for computing the divisor is as follows:
 
@@ -326,7 +346,7 @@ to {\tt o\_vernier\_ready} asserted.
 
 The initialization time is specified to be
 \begin{equation}
-  t_{init} \le LCM(p_A,d\,p_B) + (2^{\tt FCLK\_DIV\_BITS}+10)\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2d\,p_B + 2p_A)\quad .
+  t_{init} \le LCM(p_A,d\,p_B) + 2^{\tt FCLK\_DIV\_BITS}+10\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2d\,p_B + 2p_A)\quad .
 \end{equation}
 This expression for an upper bound on the initialization time arises
 from the following sources:
@@ -334,7 +354,7 @@ from the following sources:
 \item Settling time of the vernier algorithm
 \item Search for $B$ clock divisor (note that this only takes as long
   as required so if a smaller divisor is sufficient, this term shrinks
-  accordingly)
+  accordingly).  Also skipped if {\tt i\_fclk\_div}$\,\neq 0$.
 \item Computation of various constants (using a bit-at-a-time divider)
 \item Synchronization time for initialization handshake between $A$
   and $B$ clock domains (estimated at two complete handshakes between

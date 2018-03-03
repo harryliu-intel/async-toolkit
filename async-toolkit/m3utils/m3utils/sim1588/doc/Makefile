@@ -5,7 +5,7 @@ DOC2=vernier_has
 MAXGRAPHICS=500000
 DVIPS=dvips
 
-GENFIGURES=buffering_dff.eps buffering_pipe.eps buffering_pipe1.eps buffering_pipe2.eps buffering_pipe3.eps clkdiv.eps clock.eps des_outline.eps exevent.eps meas_sync_ff.eps measuring_dff.eps simple_dff.eps taiticks.eps bresenham.eps chronometer.eps hp5370a.eps divtiming.eps
+GENFIGURES=buffering_dff.eps buffering_pipe.eps buffering_pipe1.eps buffering_pipe2.eps buffering_pipe3.eps clkdiv.eps clock.eps des_outline.eps exevent.eps meas_sync_ff.eps measuring_dff.eps simple_dff.eps taiticks.eps bresenham.eps chronometer.eps hp5370a.eps divtiming.eps beat.eps timedelta.eps
 
 all: $(DOC).ps $(DOC).pdf $(DOC2).ps $(DOC2).pdf 
 

@@ -14,6 +14,17 @@
 \captionsetup{margin=2pc,font=small,labelfont=bf}
 
 %%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
 \def\ins_epsfig#1#2#3{
   \begin{figure}[!tbph!]
   \bigskip
@@ -25,13 +36,13 @@
   \end{figure}
 }
 
-\def\rotins_epsfig#1#2#3#4{
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
   \begin{figure}[!tbph!]
   \bigskip
   \begin{center}
   \includegraphics[angle=#4,width=#1]{#2}
   \end{center}
-  \caption{#3}\label{fig:#2}
+  \caption[#5]{#3}\label{fig:#2}
   \bigskip
   \end{figure}
 }
@@ -83,6 +94,10 @@ Jin Yan \\ {\tt jin2.yan@intel.com}}
   the vernier time-measuring device; and lastly, a presentation and analysis
   of simulated performance of the vernier time-measuring device.
 \end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
 
 \section{Introduction}
 
@@ -153,7 +168,7 @@ used Universal Time on January~1, 1958.\footnote{TAI and UTC diverge
   make UTC and its derivatives (such as ``Unix time'') non-uniform.  As of the time of writing, TAI is precisely
   37~s ahead of UTC.}
 
-\rotins_epsfig{4in}{chronometer}{A chronometer showing twelve past three o'clock and nineteen seconds.}{270}
+\rotins_epsfig_listcaption{4in}{chronometer}{A chronometer showing twelve past three o'clock and nineteen seconds.}{270}{A chronometer.}
 
 \subsubsection{Instant}\label{sec:instant}
 
@@ -256,7 +271,7 @@ that time, the event is already 123~ps old.  (How the measurement that
 the event was 123~ps old when it was detected was performed is not our
 concern here.  Not yet.)
 
-\ins_epsfig{3in}{exevent}{Hardware representation of an example event that occurred at 16:50:39 exactly.  The $dt$ timescale is here in picoseconds, i.e., $\tau=1$~ps.}
+\listcaption_ins_epsfig{3in}{exevent}{Hardware representation of an example event that occurred at 16:50:39 exactly.  The $dt$ timescale is here in picoseconds, i.e., $\tau=1$~ps.}{Hardware representation of an example event that occurred at 16:50:39 exactly.}
 
 \newpage 
 \subsection{The Delay-Measuring Flip-Flop}
@@ -566,7 +581,7 @@ as output, produce on every cycle the value
 
 an initial value of $K = 0$ works well, because the algorithm will quickly (see section~\ref{sec:convergence}) converge with the correct $K$.
 
-\subsection{Convergence Time and Precision}
+\subsection{Convergence Time and Precision}\label{sec:conv_and_prec}
 
 \subsubsection{Convergence}\label{sec:convergence}
 The algorithms of section~\ref{sec:theory} converge in the time it
@@ -618,6 +633,12 @@ In terms of the fraction of the $A$ clock, the precision is
 \begin{equation}
   {\hat{q} \over p_A} = {GCD(p_A,p_B) \over p_A} \quad .
 \end{equation}
+
+The principle is illustrated in figure~\ref{fig:beat}, where one clock is running at a period of 4 time units and the other at 5 time units.  Since $GCD(4,5)=1$ the precision is~1 and the convergence time is~20.
+
+\ins_epsfig{6in}{beat}{Two beating clocks.}
+
+The important observation is that for suitably chosen $p_A$, $p_B$, $GCD(p_A) \ll p_A, p_B$.  The technique is normally credited to Pierre Vernier, who published it in 1631\cite{vernier-orig}.
 
 \subsubsection{Total Measurement Error}
 
@@ -683,7 +704,12 @@ For examples, see section~\ref{sec:measurements}.
 \subsection{Measuring the Time Interval Between Two Events}
 
 Let us briefly return to the problem that we are actually trying to solve.
-This is the problem of measuring the time interval between two events.  The case that is the most difficult is when the two events occur in asynchronous clock
+This is the problem of measuring the time interval between two events.  The
+basic problem is illustrated in figure~\ref{fig:timedelta}.
+
+\ins_epsfig{5in}{timedelta}{Two events in the same system.}
+
+The case that is the most difficult is when the two events occur in asynchronous clock
 domains of clocks running at the same speed, let's call it $p_E$.  Since
 \[ GCD(p_E,p_E) = p_E \]
 the precision of the measurement in this case is very poor: one full clock cycle.
@@ -720,7 +746,7 @@ if $\epsilon<0$ we move up by one.
 
 Bresenham's algorithm results in a line with characteristic stairsteps as in figure~\ref{fig:bresenham}.
 
-\rotins_epsfig{3in}{bresenham}{Bresenham line.}{270}
+\rotins_epsfig_listcaption{3in}{bresenham}{Bresenham line.}{270}{Bresenham line.}
 
 Our algorithm for determination of clock phase is the same problem as
 determining the $y$-intercept of a Bresenham line {\em from the locations of the stairsteps.}  Note that we can almost always assume (in electronic applications) that we know the frequency ratio of the two clocks (analogous to the slope of the Bresenham line).
@@ -899,7 +925,61 @@ a divided cycle for the synchronizer, something must still be inserted into
 the FIFO.  In this case, an arbitrary delay number is inserted together
 with a {\bf false} value to indicate that no mark was present.
 
+\subsubsection{Choosing a clock divisor}
+
+The choice of clock divisor is not entirely straightforward.  The formulas
+in section~\ref{sec:conv_and_prec} apply with $p_B$ as the {\em divided\/} clock
+period.  If we want to consider $p_B$ as the input, undivided clock period we
+instead must use the transformation
+\begin{equation}
+  p_B \longrightarrow d \, p_B
+\end{equation}
+throughout section~\ref{sec:conv_and_prec}, where $d$ is the divider.
+
+To keep things simple, we wish only to divide by an even divisor, so that
+we do not need to make changes on negative edges of $B$.  The divisors are
+thus the set
+\begin{equation}
+{\mathcal S} = \{ 1, 2, 4, \ldots , 2^{N}-2\}
+\end{equation}
+where $N$ is the number of bits used to represent our divisor.
+($2^N-1$ cannot be used since it is odd.)
+
+We can for example use the algorithm that we choose $d$ so that $d$ is the smallest value that satisfies 
+\begin{equation}\label{eq:min_d}
+d \in S  \land  2 p_A < p_B \, d 
+\end{equation}
+with the additional proviso that $p_B$ here must include any allowance for
+jitter, asymmetry, and speed offset.  (It must not be possible for
+the $A$ clock to miss any single transition of $B$.)  Among these values of $d$
+we can choose the smallest.
+
+However, this algorithm can still introduce precision problems.  The
+precision of the divided vernier block is
+\begin{equation}
+  \epsilon_q = LCM(p_A,d \, p_B)  \quad .
+\end{equation}
+and its convergence time is
+\begin{equation}
+  \xi = LCM(p_A,d \, p_B)  \quad .
+\end{equation}
+We note that all we can really say about the GCD and LCM here is that
+\begin{equation}
+GCD(p_A, p_B)   \le GCD(p_A,d \, p_B)  \le d \, GCD(p_A, p_B) \quad .
+\end{equation}
+Two special cases are
+\begin{equation}
+  d \perp p_A \, \Rightarrow \, GCD(p_A,d \, p_B)  = GCD(p_A, p_B)
+\end{equation}
+and
+\begin{equation}
+  d | p_A \land GCD(p_A,p_B) = 1 \, \Rightarrow \, GCD(p_A,d \, p_B)  = d  \, GCD(p_A, p_B) \quad .
+\end{equation}
+In the former case, the absolute time precision is maintained but the convergence time increases by a factor of $d$; in the latter case, the absolute time precision deteriorates by a factor of $d$ but the convergence time is maintained.  The former case can be achieved by increasing $d$ from its minimum value according to equation~\ref{eq:min_d} to a larger number that is coprime to $p_A$. 
+
+
 \subsection{Synchronizing FIFO}
+
 
 The synchronizing FIFO is a standard circular FIFO.  It is written in
 the $B$ clock domain and read in the $A$ clock domain.  The FIFO needs to be
@@ -1044,12 +1124,12 @@ $B$'s rising edge, but the maintenance of the high value is
 accomplished through $e$ (which is driven by an FSM to effect the
 above behavior).  A timing diagram of an undivided, a divided by two, and a divided by four slow clock pulse is shown in figure~\ref{fig:divtiming}.
 
-\ins_epsfig{6in}{divtiming}{Timing diagram of stable clock divider.
+\listcaption_ins_epsfig{6in}{divtiming}{Timing diagram of stable clock divider.
   Shown are undivided clock (green), divided by two clock (black), and
   divided by four clock (red).  Note that the rising edge of
   $slowclkB$ is always driven from the rising edge of $q$, whereas
   the timing-wise less important falling edge is driven either by $q$
-  (undivided case) or by $e$ (divided cases).}
+  (undivided case) or by $e$ (divided cases).}{Timing diagram of stable clock divider.}
   
 Regardless of whether $B$ is passed through at full speed or it is
 divided down, the rising edges of $B$ (which are the definitional
@@ -1110,7 +1190,7 @@ as $A$ clock) integer number of vernier time units.
     \caption{Some Ethernet speeds of interest.}\label{tab:ethspd}
   \end{table}
 }
-\subsection{Extension for faster B clock}
+\subsection{Extension for faster $B$ clock}
 
 The given design can only produce a mark on every other $A$ clock.  We
 can expect the $A$ clock to run 800--1200~MHz without special
@@ -1241,7 +1321,7 @@ need to use Gray codes nor any of the other complicated machinery
 normally used to transmit data between two different clock domains: all
 we have is a synchronizer and a moderately deep FIFO. 
 
-\rotins_epsfig{5in}{hp5370a}{Rack mounted HP~5370A Universal Time
+\rotins_epsfig_listcaption{5in}{hp5370a}{Rack mounted HP~5370A Universal Time
   Interval Counter in the author's home office.  The HP~5370A has just
   measured a time interval of 1.18805055797~seconds, or
   1,188,050,557,970~ps.  The final significant figure~``7'' is given
@@ -1253,7 +1333,7 @@ we have is a synchronizer and a moderately deep FIFO.
   HP~5359A Time Synthesizer, a high-precision pulse generator, using
   the same vernier clocking scheme as the 5370A with a 100~MHz internal
   clock, for the purpose of generating very accurate (within 40~ps) pulse
-  widths.}{270}
+  widths.}{270}{Photo of rack-mounted HP~5370A Universal Time Interval Counter.}
 
 The design presented here was used in a slightly different form in one
 earlier Intel project, namely the Rimmon PHY of the Network
@@ -1356,6 +1436,8 @@ the Mount Steller silicon development.
 \bibitem{newton}{I.~Newton.  {\it Philosophi\ae{} Naturalis Principia
     Mathematica,} Book 1.  London:\ S.~Pepys, Royal Society Press,
   1686.}
+
+\bibitem{vernier-orig}{P.~Vernier.  {\it La construction, l'usage, et les propri\'et\'es du quadrant nouveau de math\'ematique.}  Brussels 1631.}
 
 \bibitem{ethernet}{IEEE Std 802.3-2015.  {\it IEEE Standard for
     Ethernet.}  Institute of Electrical and Electronics Engineers,
