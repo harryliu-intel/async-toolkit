@@ -52,6 +52,19 @@ $ToolConfig_tools{onesource} = {
    VERSION => '17.48.5p3',
 };
 
+$ToolConfig_tools{bluespec} = {
+   PATH => "/p/hdk/rtl/cad/x86-64_linux30/bluespec/bluespec/&get_tool_version()",
+   VERSION => '2017.07.A',
+   ENV_APPEND => {
+      LM_LICENSE_FILE => '4464@bluespec01p.elic.intel.com',
+      PATH => "&get_tool_path()/bin",
+   },
+   ENV => {
+      BLUESPEC_HOME => "&get_tool_path()",
+      BLUESPECDIR => "&get_tool_path()/lib",
+   }
+};
+
 
 my $nb_object = GetNB->new({key=>"build::all"});
 
