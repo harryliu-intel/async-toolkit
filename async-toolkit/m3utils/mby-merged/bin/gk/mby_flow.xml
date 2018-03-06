@@ -1,17 +1,28 @@
 <data>
+       <row>
+                <DUT>mby</DUT>
+                <Stage>genrtl</Stage>
+                <Stage_Exec>bman</Stage_Exec>
+                <AdditionalArgs>-s all +s genrtl -nodelete_flow_data</AdditionalArgs>
+                <IsGating>1</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>build</Type>
+        </row>
 	<row>
 		<DUT>mby</DUT>
 		<Stage>vcs</Stage>
 		<Stage_Exec>bman</Stage_Exec>
 		<AdditionalArgs>-s all +s vcs -nodelete_flow_data</AdditionalArgs>
-		<XdutStageDep></XdutStageDep>
-		<PassRate></PassRate>
+                <XdutStageDep>[mby].[genrtl]</XdutStageDep>
 		<IsGating>1</IsGating>
 		<Turnin>1</Turnin>
 		<Release>1</Release>
 		<PostRelease>0</PostRelease>
 		<Conditional></Conditional>
-		<Rel_AdditionalArgs></Rel_AdditionalArgs>
 		<Active>1</Active>
 		<Singleton>0</Singleton>
 		<Type>build</Type>
@@ -28,7 +39,6 @@
 		<Release>1</Release>
 		<PostRelease>0</PostRelease>
 		<Conditional></Conditional>
-		<Rel_AdditionalArgs></Rel_AdditionalArgs>
 		<Active>1</Active>
 		<Singleton>0</Singleton>
 		<Type>regress</Type>
