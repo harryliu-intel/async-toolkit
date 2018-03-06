@@ -19,31 +19,31 @@ class Graph:
     def udjikstra(self, distancekey, startnames, stops):
         """Undirected Djikstra's algorithm for computing shortest distances.
            Modified to stop at selected nodes."""
-        if debug: print distancekey
+        if debug: print(distancekey)
         dist = 0
         grayname = startnames
         while len(grayname) > 0:
             newgray = []
             for nodename in grayname:
                 node = self.nodes[nodename]
-                if debug: print node.label,
-                if node.distance.has_key(distancekey): continue # should not be necessary.
+                if debug: print(node.label,)
+                if distancekey in node.distance: continue # should not be necessary.
                 node.distance[distancekey] = dist
                 if node in stops: continue
                 for p in node.parents:
                     pn = p.parent
-                    if (not pn.distance.has_key(distancekey)) and (not pn.label in newgray):
+                    if (distancekey not in pn.distance) and (not pn.label in newgray):
                         newgray.append(pn.label)
                 for c in node.children:
                     cn = c.child
-                    if (not cn.distance.has_key(distancekey)) and (not cn.label in newgray):
+                    if (distancekey not in cn.distance) and (not cn.label in newgray):
                         newgray.append(cn.label)
             grayname = newgray
             dist = dist + 1
             if debug: print
 
     def has_node_named(self, label):
-        return self.nodes.has_key(label)
+        return label in self.nodes
 
 class Node:
     def __init__(self, graph, label, info):
@@ -114,7 +114,7 @@ class BindFile:
         bindFile = open( bindFileName, "r")
         currCell = None
         for i in bindFile.readlines():
-            splitline = string.split( i.rstrip(), ' ')
+            splitline = i.rstrip().split(' ')
             if ( len( splitline ) > 0 ):
                 if ( splitline[0] == "C" ):
                     currCell=CellBindings( splitline[2], splitline[1] )
@@ -141,8 +141,8 @@ def canonize_node_name(bindings,name):
         boundName = bindings.getSchematicNetForLayoutNet( name )
         if boundName:
             name = boundName
-    if string.lower(name) == string.lower(Vdd): name = Vdd
-    if string.upper(name) == GND: name = GND
+    if name.lower() == Vdd.lower(): name = Vdd
+    if name.upper() == GND: name = GND
     return name
 
 def new_graph():
@@ -152,7 +152,7 @@ def new_graph():
     return graph
 
 def handle_trans(bindings, source, gate, drain, substrate, type, width):
-    type = string.upper(type[0])
+    type = type[0].upper()
     substrate = canonize_node_name(bindings, substrate)
     source = canonize_node_name(bindings, source)
     drain = canonize_node_name(bindings, drain)
@@ -170,7 +170,7 @@ def handle_line(bindFile,line):
     global name
     global thegraph
     global bindings
-    splitline = string.split(line, ' ')
+    splitline = line.split(' ')
     if ( len( line ) > 0 ):
         if (".SUBCKT" == splitline[0]):
             if name != "":
@@ -186,7 +186,7 @@ def handle_line(bindFile,line):
         elif (".ENDS" == splitline[0]):
             0 # nothing yet
         elif ("M" == line[0]):
-            splitwidth = string.split(splitline[6], '=')
+            splitwidth = splitline[6].split('=')
             return handle_trans(bindings, splitline[1], splitline[2], splitline[3], splitline[4], splitline[5], splitwidth[1])
 
     return 0
@@ -214,7 +214,7 @@ def calc_order():
     gnode = thegraph.nodes[GND]
     thegraph.udjikstra(vnode, [Vdd], targets)
     thegraph.udjikstra(gnode, [GND], targets)
-    thegraph.udjikstra(targetsdistkey, (map (get_label, targets)), [vnode, gnode])
+    thegraph.udjikstra(targetsdistkey, list(map (get_label, targets)), [vnode, gnode])
 
 # Nicest presentation not fully recoverable:
 #
@@ -358,8 +358,8 @@ def parse_options():
     bindFileName = None
     (opts, args) = getopt.getopt(sys.argv[1:], "o:t:h:v:g:", ['help', 'usage'])
     if debug:
-        print opts
-        print args
+        print(opts)
+        print(args)
 
     if len(args) > 1: usage(1)
     for (o, a) in opts:
@@ -390,30 +390,30 @@ def usage(error):
     oldout = sys.stdout
     if error:
         sys.stdout = sys.stderr
-    print "cdl2dot [-o nametemplate] [filename]"
-    print "cdl2dot -h | --help | --usage"
-    print
-    print "Helps visualize transistor netgraphs by converting (a subset of)"
-    print "cdl (spice) files to a form usable by dot and writing to standard"
-    print "output, or the files specified by nametemplate."
-    print
-    print " -o nametemplate :"
-    print "    Instead of dumping everything in one file, print each   "
-    print "    connected region of the transistor network to a seperate"
-    print "    dot file, with %i in the nametemplate replaced with 0,  "
-    print "    1, 2, etc.  The nametemplate must have exactly one '%i'."
-    print
-    print " filename :"
-    print "    Read from this instead of stdin."
-    print
-    print " -h | --help | --usage :"
-    print "    Print this message."
+    print('''cdl2dot [-o nametemplate] [filename]
+cdl2dot -h | --help | --usage
+
+Helps visualize transistor netgraphs by converting (a subset of)
+cdl (spice) files to a form usable by dot and writing to standard
+output, or the files specified by nametemplate.
+
+ -o nametemplate :
+    Instead of dumping everything in one file, print each   
+    connected region of the transistor network to a seperate
+    dot file, with %i in the nametemplate replaced with 0,  
+    1, 2, etc.  The nametemplate must have exactly one '%i'.
+
+ filename :
+    Read from this instead of stdin.
+
+ -h | --help | --usage :
+    Print this message.''')
 
     sys.stdout=oldout
     sys.exit(1)
 
 def is_string(object):
-    return type(object) == types.StringType
+    return isinstance(object, str if sys.version_info[0] >= 3 else basestring)
 
 def split_graph():
     for i in targets:
@@ -423,7 +423,7 @@ def split_graph():
     targetlistlist = []
     for i in targets:
         if get_label(i) not in added:
-            reachable = filter(is_string, i.distance.keys())
+            reachable = list(filter(is_string, i.distance.keys()))
             assert get_label(i) in reachable
             added.extend(reachable)
             targetlistlist.append(reachable)
@@ -433,7 +433,7 @@ def split_graph():
         rep = i[0]
         nodelist = []
         for j in thegraph.nodes.values():
-            if j.distance.has_key(rep):
+            if rep in j.distance:
                 nodelist.append(j)
         nodelistlist.append(nodelist)
 
