@@ -1,0 +1,8 @@
+//
+// Memory shell controller address maps
+//
+
+`include "mst_shell_ctl.rdl"
+
+// Auto-generated addrmaps begin
+// Auto-generated addrmaps end

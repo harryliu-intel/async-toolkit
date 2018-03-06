@@ -1,0 +1,7 @@
+`include "lib_udp.rdl"
+`include "mby_ip.rdl"
+
+addrmap mby_top_map{
+  // Madison Bay is an SOC, not an IP, this will require refinement
+  mby_regs regs;
+};

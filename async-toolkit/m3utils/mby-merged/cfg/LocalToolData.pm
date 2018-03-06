@@ -42,6 +42,17 @@ $ToolConfig_tools{dc_shell} = {
     },
 };
 
+$ToolConfig_tools{meta} = {
+    PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
+    VERSION => "18.01.09",
+};
+
+$ToolConfig_tools{onesource} = {
+   PATH => "/p/hdk/rtl/cad/x86-64_linux30/dt/OneSourceBundle/&get_tool_version()",
+   VERSION => '17.48.5p3',
+};
+
+
 my $nb_object = GetNB->new({key=>"build::all"});
 
    $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'stages'}{SUB_TOOLS}{'default'}{OTHER}{netbatch_resource} = {

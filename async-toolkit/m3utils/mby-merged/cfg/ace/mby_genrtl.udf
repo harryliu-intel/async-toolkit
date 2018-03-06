@@ -26,6 +26,15 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                     group => "GENERATE",
                 },
         },           #en__mby_mgm_lib
+        -en__gen_mby_regflow_lib => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_mby_regflow_lib' enable",
+                group => "GENERATE",
+            },
+        },
+
     }, #end InterfaceVars
  GenRTL => {
         mby => {
@@ -38,6 +47,16 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                          "mgm $blocks -cnfg $config_file -includes $includes -apr_struct $apr_struct -csv $ph_params -unique $prefix -clk $clock_file -rprt_dir  $report_dir",
                      ],
 		 },      #mby_mgm_lib
+                 gen_mby_regflow_lib => {
+                    enable_config => '<-en__gen_mby_regflow_lib>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Running nebulon'",
+                       "make -C $ENV{MODEL_ROOT}/tools/srdl/mby",
+                    ],
+                    # dependent_configs => [ 'mby::gen_mby_mgm_lib', ],
+                },
+
 
 	    },          # -config
 	},          # $PROJECT
