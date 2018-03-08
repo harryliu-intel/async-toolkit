@@ -110,7 +110,7 @@ SV_FILE         := $(RESULTS_NBSV)/rtlgen_pkg_$(BLK)_top_map.vh
 GENPG_SV        := $(RESULTS_GENPG)/$(BLK)_imn_decoder.sv
 RAL_ENV         := $(RESULTS_OVM)/$(TOP_MAP)_ral_env.svh
 
-NEW_HTM_TABLE   := $(TARGET_DIR)/$(BLK)_reg_doc.html
+HTM_TABLE   := $(TARGET_DIR)/$(BLK)_reg_doc.html
 RDL_MGM_MAPS    := $(TARGET_DIR)/$(BLK)_mgm_maps.rdl
 OSXML_TARG      := $(TARGET_DIR)/$(BLK)_osxml/.done
 RDL_TARG        := $(TARGET_DIR)/$(TOP_RDL)
@@ -165,10 +165,10 @@ mst_shell_ctl.rdl: $(MODEL_ROOT)/tools/srdl/mst_shell_ctl.rdl
 # wants security.pm to be in the 'local' directory to the run
 # Hopefully, this can be fixed
 
-$(NEW_HTM_TABLE): $(RESULTSXMLFILE) $(XML_TO_HTML)
+$(HTM_TABLE): $(RESULTSXMLFILE) $(XML_TO_HTML)
 	xsltproc -o $@ $(XML_TO_HTML) $<
 
-html: $(NEW_HTM_TABLE)
+html: $(HTM_TABLE)
 
 rtl: $$(SV_RTLS)
 
