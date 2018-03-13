@@ -1,11 +1,20 @@
 #-*- shell-script -*-              For EMACS -- lets formatting happen
 
+setenv REPO_ROOT $MODEL_ROOT
 
-echo "SEQ lib"
+setenv NATURAL_DOCS $REPO_ROOT/verif/lib/doc/natural_docs
 
-$NATURAL_DOCS/NaturalDocs -I $MBY_ROOT/verif/tb/seqlib/ -p  $MBY_ROOT/.natural_docs_proj -o html $MBY_ROOT/verif/tb/seqlib/docs -r
 
-echo "DOC ENV"
 
-$NATURAL_DOCS/NaturalDocs -I $MBY_ROOT/verif/ -p $MBY_ROOT/.natural_docs_proj -o html $MBY_ROOT/doc/NaturalDocs -r
+echo "MBY"
+
+$NATURAL_DOCS/NaturalDocs --input $REPO_ROOT/verif/mby/ --exclude-input $REPO_ROOT/verif/mby/doc --project $REPO_ROOT/verif/mby/doc --output HTML $REPO_ROOT/verif/mby/doc/html --style Big -r
+
+echo "LIB"
+
+$NATURAL_DOCS/NaturalDocs --input $REPO_ROOT/verif/lib/ --exclude-input $REPO_ROOT/verif/lib/doc --project $REPO_ROOT/verif/lib/doc --output HTML $REPO_ROOT/verif/lib/doc/html --style Big -r
+
+
+
+
  

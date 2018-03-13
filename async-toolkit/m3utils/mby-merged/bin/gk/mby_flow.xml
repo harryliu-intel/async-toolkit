@@ -30,7 +30,7 @@
 	<row>
 		<DUT>mby</DUT>
 		<Stage>mby_alive_test</Stage>
-		<Stage_Exec>verif/tests/lists/level0.list</Stage_Exec>
+		<Stage_Exec>verif/mby/reglist/level0.list</Stage_Exec>
 		<AdditionalArgs>-disable_work_area_subdir</AdditionalArgs>
 		<XdutStageDep>[mby].[vcs]</XdutStageDep>
 		<PassRate>100</PassRate>

@@ -17,7 +17,8 @@ chomp($cwd);
 my $repo_root;
 
 my $SAOLA_HOME = "/p/hdk/rtl/cad/x86-64_linux30/intel/saola/v20150417p4";
-my $NATURAL_DOCS = $SAOLA_HOME . "/tools/natural_docs";
+my $REPO_ROOT = `pwd`;
+my $NATURAL_DOCS = "$REPO_ROOT/verif/lib/doc/natural_docs";
 
 #############################################################################
 # Env vars
@@ -162,7 +163,7 @@ sub replace_string_dir {
         system("mv $ch_dir $new_dir");
     }
     # dbenita: ugly hack
-    system("mv verif/tests/${to_str}_test_pack/${from_str}_alive_test verif/tests/${to_str}_test_pack/${to_str}_alive_test/");
+    system("mv verif/${to_str}/tests/${from_str}_alive_test verif/${to_str}/tests/${to_str}_alive_test/");
  
     my @changed_files_name = `find ./ -type f -name "*mby*"`;
 
@@ -234,10 +235,10 @@ sub process_tb {
    &special_file_processing("./cfg/LocalToolData.pm","UVM_NOT_PRESENT",$uvm_present);
 
    if ( $uvm_present ) {
-     #&special_file_processing("./verif/tests/mby_alive_test/mby_alive_test.sv.uvm","UVM_NOT_PRESENT",$uvm_present);
-     system("mv ./verif/tests/mby_alive_test/mby_alive_test.sv.uvm ./verif/tests/mby_alive_test/mby_alive_test.sv");
-     system("mv ./verif/lib/mby/ti/mby_ti_low.sv.uvm ./verif/lib/mby/ti/mby_ti_low.sv");
-     system("mv ./verif/lib/mby/env/mby_env.sv.uvm ./verif/lib/mby/env/mby_env.sv");
+     #&special_file_processing("./verif/mby/tests/mby_alive_test/mby_alive_test.sv.uvm","UVM_NOT_PRESENT",$uvm_present);
+     system("mv ./verif/mby/tests/mby_alive_test/mby_alive_test.sv.uvm ./verif/mby/tests/mby_alive_test/mby_alive_test.sv");
+     system("mv ./verif/mby/ti/mby_ti_low.sv.uvm ./verif/mby/ti/mby_ti_low.sv");
+     system("mv ./verif/mby/env/mby_env.sv.uvm ./verif/mby/env/mby_env.sv");
    }
    if ( $uvm_present ) {
      my $cmd = "cd verif; $repo_root/cfg/bin/intel_ovm_to_uvm.pl --write";
@@ -249,42 +250,47 @@ sub process_tb {
 #############################################################################
 
 sub remove_chassis {
-    &special_file_processing( "./verif/lib/mby/env/mby_env.sv", "CHASSIS_NOT_PRESENT",0);
-    &special_file_processing( "./verif/lib/mby/mby_env_pkg.sv", "CHASSIS_NOT_PRESENT",0);
+    &special_file_processing( "./verif/mby/env/mby_env.sv", "CHASSIS_NOT_PRESENT",0);
+    &special_file_processing( "./verif/mby/env/mby_env_pkg.sv", "CHASSIS_NOT_PRESENT",0);
     &special_file_processing( "./cfg/ace/mby_hdl.udf", "CHASSIS_NOT_PRESENT",0);
-    &special_file_processing( "./verif/lib/mby/ti/mby_ti_high.sv", "CHASSIS_NOT_PRESENT",0);
-    &special_file_processing( "./verif/lib/mby/ti/mby_ti_low.sv", "CHASSIS_NOT_PRESENT",0);
-    &special_file_processing( "./verif/lib/mby/env/mby_base_env.sv", "CHASSIS_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_config.sv", "CHASSIS_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/tb/mby_tb.sv", "CHASSIS_NOT_PRESENT",0);
+    &special_file_processing( "./verif/mby/ti/mby_ti_high.sv", "CHASSIS_NOT_PRESENT",0);
+    &special_file_processing( "./verif/mby/ti/mby_ti_low.sv", "CHASSIS_NOT_PRESENT",0);
+    &special_file_processing( "./verif/mby/env/mby_base_env.sv", "CHASSIS_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_config.sv", "CHASSIS_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/tb/mby_tb.sv", "CHASSIS_NOT_PRESENT",0);
 }
 
 #############################################################################
 sub remove_iosf {
     &special_file_processing( "./cfg/ace/mby_hdl.udf",     "IOSF_NOT_PRESENT",0 );
     &special_file_processing( "./src/mby/rtl/dummy_dut.v", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_env.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_base_env.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_config.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_env_monitor.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_types.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_ral_env.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/env/mby_sm_env.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/ti/mby_ti_high.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/ti/mby_ti_low.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/seqlib/mby_seqlib.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/lib/mby/mby_env_pkg.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/tb/mby_tb.sv", "IOSF_NOT_PRESENT",0 );
-    &special_file_processing( "./verif/tests/mby_test_pack/mby_alive_test/mby_alive_test.svh", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_env.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_base_env.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_config.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_env_monitor.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_types.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_ral_env.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_sm_env.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/ti/mby_ti_high.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/ti/mby_ti_low.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/seq/mby_seqlib.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/env/mby_env_pkg.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/tb/mby_tb.sv", "IOSF_NOT_PRESENT",0 );
+    &special_file_processing( "./verif/mby/tests/mby_alive_test/mby_alive_test.svh", "IOSF_NOT_PRESENT",0 );
 }
 
 #############################################################################
 
 sub run_NaturalDocs {
   print "Running NaturalDocs\n";
-  my $cmd = "$NATURAL_DOCS/NaturalDocs -I verif/ -p .natural_docs_proj -o html doc/NaturalDocs -r";
+  my $cmd = "$NATURAL_DOCS/NaturalDocs --input verif/mby/ --exclude-input $REPO_ROOT/verif/mby/doc --project $REPO_ROOT/verif/mby/doc --output HTML $REPO_ROOT/verif/mby/doc/html --style Big -r";
   print "Command: $cmd\n";
   system ($cmd);
+
+  my $cmd = "$NATURAL_DOCS/NaturalDocs --input verif/lib/ --exclude-input $REPO_ROOT/verif/lib/doc --project $REPO_ROOT/verif/lib/doc --output HTML $REPO_ROOT/verif/lib/doc/html --style Big -r";
+  print "Command: $cmd\n";
+  system ($cmd);
+
 }
 
 #############################################################################

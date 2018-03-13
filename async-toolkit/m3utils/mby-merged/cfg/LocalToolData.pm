@@ -69,18 +69,18 @@ $ToolConfig_tools{bluespec} = {
 my $nb_object = GetNB->new({key=>"build::all"});
 
    $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'stages'}{SUB_TOOLS}{'default'}{OTHER}{netbatch_resource} = {
-   				      cores => "1C",
-   				      jobsPerDelegate => 1,
-   				      local => 0,
-   				      maxDelegates => 40,
-   				      mem => "4G",
-   				      os => "SLES11",
-   				      priority => 1,
-   				      qslot => $nb_object->{qslot},
-   				      queue => $nb_object->{pool},
-   				      submissionArgs => "",
-   				      tag => "dynamic",
-   				    };
+         cores => "1C",
+         jobsPerDelegate => 1,
+         local => 0,
+         maxDelegates => 40,
+         mem => "4G",
+         os => "SLES11SP4",
+         priority => 1,
+         qslot           => "/fdo/slx/normal",
+         queue => $nb_object->{pool},
+         submissionArgs => "",
+         tag => "dynamic",
+       };
 
 
 

@@ -6,9 +6,9 @@
 $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
-	 "verif/lib/mby/ti/mby_ti_high.sv",
-	 "verif/lib/mby/ti/mby_ti_low.sv",
-	 "verif/lib/mby/ti/mby_env_if.sv",
+	 "verif/mby/ti/mby_ti_high.sv",
+	 "verif/mby/ti/mby_ti_low.sv",
+	 "verif/mby/ti/mby_env_if.sv",
      ],
     
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
@@ -24,9 +24,9 @@ $hdl_spec = {
          "$ENV{OVM_HOME}/src",
          "$ENV{SAOLA_HOME}/verilog",
          "$ENV{SAOLA_HOME}/verilog_uvm",
-         "verif/lib/mby/ti",
-         "verif/lib/mby",
-         "verif/tb/",
+         "verif/mby/ti",
+         "verif/mby",
+         "verif/mby/tb/",
      ],
     
     # Arbitrary VLOG options

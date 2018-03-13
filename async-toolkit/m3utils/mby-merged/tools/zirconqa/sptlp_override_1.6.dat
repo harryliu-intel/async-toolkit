@@ -1,5 +1,5 @@
 ; Legacy file created by preZirconQA
-rtlverifdir          ./verif/tb verif/tb/saola/ 
+rtlverifdir          ./verif/mby/tb verif/mby/tb/saola/ 
 rtltopfile           source/mby/rtl/mby_top.v 
 rtlrptdir            ./tools/zirconqa/zircon_rpt/vcs 
 #collagebldscrfile    builder.scc_wrapper_top.tcl 
@@ -10,8 +10,8 @@ verdirptdir          ./tools/zirconqa/zircon_rpt/verdi/
 aceudfmodel          mby 
 aceverdilogfile      verdi_rpt.txt 
 acevcslogfile        vcs_rpt.txt 
-ovmtbdir             ./verif/tb 
-ovmenvdir            ./verif/tb 
+ovmtbdir             ./verif/mby/tb 
+ovmenvdir            ./verif/mby/tb 
 ovmenvext            mby_env\.sv 
 ovmtestsext          \.sv?$ 
 docvctype            1 

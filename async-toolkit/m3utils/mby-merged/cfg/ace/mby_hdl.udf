@@ -158,17 +158,17 @@ EOF
                # List of full path to PLI libraries to use
                pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
 
-               lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/tests/lintra/mby_lintra.list" ],
+               lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
 
                # Specify a set of test case specific options (must be valid test options)
                testcase_globals => {
                   -test_vlog_opts    => [ -sverilog ],
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
-                     "verif/lib/mby",
-                     "verif/lib/mby/fal",
-                     "verif/lib/mby/ral",
-                     "verif/lib/mby/env",
+                     "verif/mby",
+                     "verif/mby/fal",
+                     "verif/mby/ral",
+                     "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -217,10 +217,10 @@ EOF
                   -test_vlog_opts    => [ -sverilog ],
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
-                     "verif/lib/mby",
-                     "verif/lib/mby/ral",
-                     "verif/lib/mby/fal",
-                     "verif/lib/mby/env",
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
                      "$ENV{SAOLA_HOME}/verilog",

@@ -49,7 +49,7 @@ $ToolConfig_ips{mby} = {
 				    #"&get_tool_var(ipconfig/mby_tlm, SUB_SCOPES)",
                                 ],
         TEST_PATTERNS => [
-           "verif/mby/jasper/tests/"
+           "verif/mby/formal/tests/"
         ],
     },
 
