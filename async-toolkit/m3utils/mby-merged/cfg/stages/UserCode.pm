@@ -1,7 +1,7 @@
 package UserCode;
 use strict;
 
-sub UserCode::ndocs() {
+sub ndocs() {
    my $status = 0;
    my $self = (caller(0))[3] . "()";
 

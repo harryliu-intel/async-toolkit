@@ -181,5 +181,4 @@ $ToolConfig_tools{"mgm"} = {
 
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
-$ToolConfig_tools{stage_bman_vcs}{OTHER}{pre_flow} = "UserCode::ndocs";
 
