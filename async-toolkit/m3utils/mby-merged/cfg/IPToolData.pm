@@ -1,3 +1,4 @@
+# vim: noai : ts=3 : sw=3 : expandtab : ft=perl
 
 package ToolData;
 use strict;
@@ -62,7 +63,7 @@ $ToolConfig_ips{mby}{OTHER}{LIBS} = [
 push (@{$ToolConfig_ips{mby}{OTHER}{SUB_SCOPES}}, (
              "vcc_modeling",
              "iosf_sideband_vc",
-             "iosf_primary_bfm", 
+             "iosf_primary_bfm",
              "chassis_pg_vc",
              "ip_ccu_vc",
              "chassis_reset",
@@ -138,29 +139,5 @@ $ToolConfig_ips{sva_lib_ip} = {
         SEARCH_PATHS   => [ "&get_tool_path()", ],
     },
 };
-
-$ToolConfig_tools{nebulon}{VERSION} = 'd18ww08.3';
-
-
-$ToolConfig_tools{buildman}{ENV}{OVM_HOME} = "&get_tool_path(ovm)";
-$ToolConfig_tools{buildman}{ENV}{XVM_HOME} = "&get_tool_path(xvm)";
-$ToolConfig_tools{buildman}{ENV}{UVM_HOME} = "&get_tool_path(uvm)";
-$ToolConfig_tools{buildman}{ENV}{SAOLA_HOME} = "&get_tool_path(saola)";
-$ToolConfig_tools{buildman}{ENV}{INTC_LIB_HOME} = "&get_tool_path(INTC_LIB_SCOREBOARD)";
-$ToolConfig_tools{buildman}{ENV}{CTECH_LIB_NAME} = "CTECH_v_rtl_lib";
-#$ToolConfig_tools{buildman}{ENV}{CTECH_LIB_PATH} = "/p/hdk/cad/ctech/v15ww50e";
-$ToolConfig_tools{buildman}{ENV}{NEBULON_DIR} = "&get_tool_path(nebulon)";
-$ToolConfig_tools{buildman}{ENV}{ACE_HOME} = "&get_tool_path(ace)";
-$ToolConfig_tools{buildman}{ENV}{VCS_TARGET_ARCH} = "suse64";
-$ToolConfig_tools{buildman}{ENV}{VCS_HOME} = "&get_tool_path(vcsmx)";
-$ToolConfig_tools{buildman}{ENV}{MBY_ROOT} = $ENV{MODEL_ROOT};
-$ToolConfig_tools{buildman}{ENV}{SNPSLMD_LICENSE_FILE} = "&get_tool_getLf(synopsys)"; 
-$ToolConfig_tools{buildman}{ENV_APPEND}{PATH} = ":&get_tool_path(ace)/bin:"; ## solve saola issue ( unknown os)
-
-
-$ToolConfig_tools{buildman}{ENV}{JASPERGOLD_VER}  = "&get_tool_version(jaspergold)/";
-$ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_PATH}  = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_PATH)";
-$ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}  = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)";
-
 
 1;

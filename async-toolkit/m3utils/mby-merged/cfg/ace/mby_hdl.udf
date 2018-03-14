@@ -1,4 +1,5 @@
 #---*-perl-*---
+# vim: noai : ts=3 : sw=3 : expandtab : ft=perl
 
 # Will be used to import path and version to IP
 # use IP_Config qw();
@@ -7,6 +8,14 @@
 my $vcsVer = &ToolConfig::get_tool_version('vcsmx');
 my $MBY_IOSF_PRI_VC_ROOT = &ToolConfig::get_tool_path('ipconfig/iosf_primary_bfm') . "/ph4";
 my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc');
+
+my $default_enable_congruency_elab  = 1;
+my $default_enable_xprop_elab       = 1;
+my $default_enable_partcomp_elab    = 1;
+
+my $mby_enable_congruency_elab      = $default_enable_congruency_elab;
+my $mby_enable_xprop_elab           = $default_enable_xprop_elab;
+my $mby_enable_partcomp_elab        = $default_enable_partcomp_elab;
 
 %audf = (
    Includes => [],
@@ -127,6 +136,10 @@ EOF
             mby => {
                top         => 'mby_tb_lib.mby_tb',
                jg_elab_top => 'mby_jasper_lib.mby_top',
+
+               enable_congruency_elab  =>  $mby_enable_congruency_elab,
+               enable_xprop_elab       =>  $mby_enable_xprop_elab,
+               enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
 
                libs => [
                   "mby_tb_lib",
