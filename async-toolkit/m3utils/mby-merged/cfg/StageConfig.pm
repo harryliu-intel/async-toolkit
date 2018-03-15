@@ -1,6 +1,6 @@
-%StageParamMap = ( 
+%StageParamMap = (
    # Run the Natural Docs flow only when this library is being created
-  'bman.mby.vcs.vcs_createlib_mby_rtl_lib' => { 
+  'bman.mby.vcs.vcs_createlib_mby_rtl_lib' => {
       stage_sub => {                         # keyword - user-code hooks go here
          ndocs => {                          # eg. 'fix-jem-hdl'; name is arbitrary, just needs to be unique
             function => "UserCode::ndocs",   # point to the exact perl package and subroutine to be executed

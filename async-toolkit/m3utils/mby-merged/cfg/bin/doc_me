@@ -7,18 +7,18 @@ setenv NATURAL_DOCS $REPO_ROOT/verif/lib/doc/natural_docs
 # process all 'doc' directories found under $REPO_ROOT/verif
 set DocDirs = (`find ${REPO_ROOT}/verif/ -type d -name doc`)
 foreach DocDir ($DocDirs)
-   set PathToDoc  = `dirname $DocDir`                                  # ./verif/hby/doc -> ./verif/hby 
-   set DirDoc     = "`basename $PathToDoc | tr '[a-z]' '[A-Z]'`/DOC"   # ./verif/hby     -> HBY/DOC 
-   
+   set PathToDoc  = `dirname $DocDir`                                  # ./verif/mby/doc -> ./verif/mby
+   set DirDoc     = "`basename $PathToDoc | tr '[a-z]' '[A-Z]'`/DOC"   # ./verif/mby     -> MBY/DOC
+
    echo "Processing $DirDoc ..."
 
    $NATURAL_DOCS/NaturalDocs --input ${PathToDoc} --exclude-input ${PathToDoc}/doc --project ${PathToDoc}/doc --output HTML ${PathToDoc}/doc/html --style Big -r
 
 end
 
-#echo "HBY"
+#echo "MBY"
 
-#$NATURAL_DOCS/NaturalDocs --input $REPO_ROOT/verif/hby/ --exclude-input $REPO_ROOT/verif/hby/doc --project $REPO_ROOT/verif/hby/doc --output HTML $REPO_ROOT/verif/hby/doc/html --style Big -r
+#$NATURAL_DOCS/NaturalDocs --input $REPO_ROOT/verif/mby/ --exclude-input $REPO_ROOT/verif/mby/doc --project $REPO_ROOT/verif/mby/doc --output HTML $REPO_ROOT/verif/mby/doc/html --style Big -r
 
 #echo "LIB"
 
