@@ -72,6 +72,8 @@ $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_VER}                             = "
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_PATH}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_PATH)";
 $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)";
 
+# Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
+$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
 
 $ToolConfig_tools{dc_shell} = {
     VERSION    =>  "I-2013.12-SP5-6",
@@ -207,7 +209,4 @@ $ToolConfig_tools{"mgm"} = {
         PATH => "&get_tool_path()/bin:/p/com/eda/intel/puni/2.7", #TODO: fix later to HDK puni
     },
 };
-
-# Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
-$ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
 
