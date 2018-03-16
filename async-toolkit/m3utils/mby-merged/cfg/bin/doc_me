@@ -4,18 +4,19 @@ setenv REPO_ROOT $MODEL_ROOT
 
 setenv NATURAL_DOCS $REPO_ROOT/verif/lib/doc/natural_docs
 
-# make NaturalDocs directory if it doesn't already exist
-mkdir -p ${REPO_ROOT}/target/NaturalDocs > /dev/null
-
 # process all 'doc' directories found under $REPO_ROOT/verif
 set DocDirs = (`find ${REPO_ROOT}/verif/ -type d -name doc`)
 foreach DocDir ($DocDirs)
-   set PathToDoc  = `dirname $DocDir`                                  # ./verif/mby/doc -> ./verif/mby
-   set DirDoc     = "`basename $PathToDoc | tr '[a-z]' '[A-Z]'`/DOC"   # ./verif/mby     -> MBY/DOC
+   set PathToDoc  = `dirname $DocDir`                           # ./verif/<proj>/doc -> ./verif/<proj>
+   set Proj       = `basename $PathToDoc`                       # ./verif/<proj>     -> <proj>  
+   set DirDoc     = "`echo ${Proj}/DOC | tr '[a-z]' '[A-Z]'`"   # .<proj>/DOC        -> <PROJ>/DOC
 
    echo "Processing $DirDoc ..."
 
-   $NATURAL_DOCS/NaturalDocs --input ${PathToDoc} --exclude-input ${PathToDoc}/doc --project ${PathToDoc}/doc --output HTML ${REPO_ROOT}/target/NaturalDocs --style Big -r
+   # make NaturalDocs directory if it doesn't already exist
+   mkdir -p ${REPO_ROOT}/target/NaturalDocs/${Proj} > /dev/null
+
+   $NATURAL_DOCS/NaturalDocs --input ${PathToDoc} --exclude-input ${PathToDoc}/doc --project ${PathToDoc}/doc --output HTML ${REPO_ROOT}/target/NaturalDocs/${Proj} --style Big -r
 
 end
 
