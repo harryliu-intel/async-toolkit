@@ -42,8 +42,9 @@ $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "
 $ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww08.3';
 
 #####################################################
-#    Configure Environment variables for VCS        #
+#    Configure Environment variables for VCS/VERDI  #
 #####################################################
+$ToolConfig_tools{verdi3}{VERSION}                                          = "N-2017.12-1";
 $ToolConfig_tools{vcs}{VERSION}                                             = "N-2017.12-1";
 $ToolConfig_tools{vcsmx}{VERSION}                                           = "N-2017.12-1";
 $ToolConfig_tools{vcs}{ENV}{VCS_HOME}                                       = '&get_tool_path()';
