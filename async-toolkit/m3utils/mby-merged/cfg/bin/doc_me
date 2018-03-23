@@ -2,22 +2,22 @@
 
 setenv REPO_ROOT $MODEL_ROOT
 
-setenv NATURAL_DOCS $REPO_ROOT/verif/lib/doc/natural_docs
+setenv NATURAL_DOCS $REPO_ROOT/verif/doc/natural_docs
 
-# process all 'doc' directories found under $REPO_ROOT/verif
-set DocDirs = (`find ${REPO_ROOT}/verif/ -type d -name doc`)
-foreach DocDir ($DocDirs)
-   set PathToDoc  = `dirname $DocDir`                           # ./verif/<proj>/doc -> ./verif/<proj>
-   set Proj       = `basename $PathToDoc`                       # ./verif/<proj>     -> <proj>  
-   set DirDoc     = "`echo ${Proj}/DOC | tr '[a-z]' '[A-Z]'`"   # .<proj>/DOC        -> <PROJ>/DOC
+set InputDir = "${REPO_ROOT}/verif"
+set DocDir   = "${InputDir}/doc"
 
-   echo "Processing $DirDoc ..."
+# make NaturalDocs directory if it doesn't already exist
+mkdir -p ${REPO_ROOT}/target/NaturalDocs > /dev/null
 
-   # make NaturalDocs directory if it doesn't already exist
-   mkdir -p ${REPO_ROOT}/target/NaturalDocs/${Proj} > /dev/null
+# create exclude list
+set exclude_list = ${DocDir}                            # default if no list
+if ( -e ${DocDir}/ndoc_excludes ) then
+   set exclude_list = ( `cat $DocDir/ndoc_excludes` )   # get list of excludes
+   set exclude_list = ( `eval echo $exclude_list` )     # expand $REPO_ROOT/dir -> <path>/dir 
+endif
 
-   $NATURAL_DOCS/NaturalDocs --input ${PathToDoc} --exclude-input ${PathToDoc}/doc --project ${PathToDoc}/doc --output HTML ${REPO_ROOT}/target/NaturalDocs/${Proj} --style Big -r
-
-end
+echo "Running: $NATURAL_DOCS/NaturalDocs --input ${InputDir} ${exclude_list} --project ${DocDir} --output HTML ${REPO_ROOT}/target/NaturalDocs --style Big -r "
+$NATURAL_DOCS/NaturalDocs --input ${InputDir} ${exclude_list} --project ${DocDir} --output HTML ${REPO_ROOT}/target/NaturalDocs --style Big -r
 
  

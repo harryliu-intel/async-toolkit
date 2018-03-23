@@ -48,66 +48,66 @@ Format: 1.52
 
 Group: Env  {
 
-   File: mby_base_env.sv  (env/mby_base_env.sv)
-   File: mby_config.sv  (env/mby_config.sv)
-   File: mby_env.sv  (env/mby_env.sv)
-   File: mby_env_monitor.sv  (env/mby_env_monitor.sv)
-   File: mby_im_env.sv  (env/mby_im_env.sv)
-   File: mby_pri_scbd.sv  (env/mby_pri_scbd.sv)
-   File: mby_ral_env.sv  (env/mby_ral_env.sv)
-   File: MBY_ral_env.svh  (env/mby_ral_env.svh)
-   File: mby_regs_ral_env.svh  (env/mby_regs_ral_env.svh)
-   File: mby_sm_env.sv  (env/mby_sm_env.sv)
-   File: mby_ti_config.sv  (env/mby_ti_config.sv)
-   File: mby_types.sv  (env/mby_types.sv)
+   File: mby_base_env.sv  (mby/env/mby_base_env.sv)
+   File: mby_config.sv  (mby/env/mby_config.sv)
+   File: mby_env.sv  (mby/env/mby_env.sv)
+   File: mby_env_monitor.sv  (mby/env/mby_env_monitor.sv)
+   File: mby_im_env.sv  (mby/env/mby_im_env.sv)
+   File: mby_pri_scbd.sv  (mby/env/mby_pri_scbd.sv)
+   File: mby_ral_env.sv  (mby/env/mby_ral_env.sv)
+   File: MBY_ral_env.svh  (mby/env/mby_ral_env.svh)
+   File: mby_regs_ral_env.svh  (mby/env/mby_regs_ral_env.svh)
+   File: mby_sm_env.sv  (mby/env/mby_sm_env.sv)
+   File: mby_ti_config.sv  (mby/env/mby_ti_config.sv)
+   File: mby_types.sv  (mby/env/mby_types.sv)
    }  # Group: Env
 
 Group: Fal  {
 
-   File: MBY_classes.svh  (fal/mby_classes.svh)
-   File: mby_fuse_env.sv  (fal/mby_fuse_env.sv)
-   File: mby_fuse_regs.svh  (fal/mby_fuse_regs.svh)
-   File: toplevel_fuse_env.svh  (fal/toplevel_fuse_env.svh)
+   File: MBY_classes.svh  (mby/fal/mby_classes.svh)
+   File: mby_fuse_env.sv  (mby/fal/mby_fuse_env.sv)
+   File: mby_fuse_regs.svh  (mby/fal/mby_fuse_regs.svh)
+   File: toplevel_fuse_env.svh  (mby/fal/toplevel_fuse_env.svh)
    }  # Group: Fal
 
-File: mby_defines.sv  (tb/mby_defines.sv)
-File: mby_tb.sv  (tb/mby_tb.sv)
+File: mby_defines.sv  (mby/tb/mby_defines.sv)
+File: mby_tb.sv  (mby/tb/mby_tb.sv)
 
 Group: Ral  {
 
-   File: MBY_ral_rtl_monitor.svh  (ral/mby_ral_rtl_monitor.svh)
-   File: mby_regs_ral_rtl_monitor.svh  (ral/mby_regs_ral_rtl_monitor.svh)
-   File: mby_regs_regs.svh  (ral/mby_regs_regs.svh)
+   File: MBY_ral_rtl_monitor.svh  (mby/ral/mby_ral_rtl_monitor.svh)
+   File: mby_regs_ral_rtl_monitor.svh  (mby/ral/mby_regs_ral_rtl_monitor.svh)
+   File: mby_regs_regs.svh  (mby/ral/mby_regs_regs.svh)
    }  # Group: Ral
 
 Group: Seq  {
 
-   File: mby_base_seq.sv  (seq/mby_base_seq.sv)
-   File: mby_extended_base_seq.sv  (seq/mby_extended_base_seq.sv)
-   File: mby_isr_seq.sv  (seq/mby_isr_seq.sv)
-   File: mby_pci_config_seq.sv  (seq/mby_pci_config_seq.sv)
-   File: mby_power_seqlib.sv  (seq/mby_hard_reset_seq.sv)
-   File: mby_ral_iosf_pri_access  (seq/mby_ral_iosf_pri_access.sv)
-   File: mby_ral_iosf_sb_access  (seq/mby_ral_iosf_sb_access.sv)
-   File: mby_seqlib.sv  (seq/mby_seqlib.sv)
-   File: mby_slu_iosf_seq.sv  (seq/mby_iosf_pri_basic_trans.sv)
-   File: mby_traffic_seqlib.sv  (seq/mby_simple_traffic_seq.sv)
-   File: mby_training_seqlib.sv  (seq/mby_training_phase_seq.sv)
+   File: mby_base_seq.sv  (mby/seq/mby_base_seq.sv)
+   File: mby_extended_base_seq.sv  (mby/seq/mby_extended_base_seq.sv)
+   File: mby_isr_seq.sv  (mby/seq/mby_isr_seq.sv)
+   File: mby_pci_config_seq.sv  (mby/seq/mby_pci_config_seq.sv)
+   File: mby_power_seqlib.sv  (mby/seq/mby_hard_reset_seq.sv)
+   File: mby_ral_iosf_pri_access  (mby/seq/mby_ral_iosf_pri_access.sv)
+   File: mby_ral_iosf_sb_access  (mby/seq/mby_ral_iosf_sb_access.sv)
+   File: mby_seqlib.sv  (mby/seq/mby_seqlib.sv)
+   File: mby_slu_iosf_seq.sv  (mby/seq/mby_iosf_pri_basic_trans.sv)
+   File: mby_traffic_seqlib.sv  (mby/seq/mby_simple_traffic_seq.sv)
+   File: mby_training_seqlib.sv  (mby/seq/mby_training_phase_seq.sv)
    }  # Group: Seq
 
 Group: Tests  {
 
-   File: mby_alive_test.svh  (tests/mby_alive_test/mby_alive_test.svh)
-   File: mby_base_test.svh  (tests/mby_base_test.svh)
-   File: mby_test_pack.sv  (tests/mby_test_pack.sv)
+   File: mby_alive_test.svh  (mby/tests/mby_alive_test/mby_alive_test.svh)
+   File: mby_base_test.svh  (mby/tests/mby_base_test.svh)
+   File: mby_test_pack.sv  (mby/tests/mby_test_pack.sv)
    }  # Group: Tests
 
 Group: Ti  {
 
-   File: mby_env_if.sv  (ti/mby_env_if.sv)
-   File: mby_params.sv  (ti/mby_params.sv)
-   File: mby_ti_high.sv  (ti/mby_ti_high.sv)
-   File: mby_ti_low.sv  (ti/mby_ti_low.sv)
+   File: mby_env_if.sv  (mby/ti/mby_env_if.sv)
+   File: mby_params.sv  (mby/ti/mby_params.sv)
+   File: mby_ti_high.sv  (mby/ti/mby_ti_high.sv)
+   File: mby_ti_low.sv  (mby/ti/mby_ti_low.sv)
    }  # Group: Ti
 
 Group: Index  {

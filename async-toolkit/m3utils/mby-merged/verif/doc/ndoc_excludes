@@ -1,0 +1,3 @@
+# List any directories that need to be EXCLUDED from the NaturalDocs execution
+
+--exclude-input $REPO_ROOT/verif/doc

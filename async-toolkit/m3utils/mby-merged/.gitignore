@@ -2,15 +2,8 @@
 /GATEKEEPER
 /MockTurnin
 
-# Never add Natural_Docs output - html or Data
-/verif/*/doc/Data
-
-/verif/*/doc/html/files
-/verif/*/doc/html/index
-/verif/*/doc/html/index.html
-/verif/*/doc/html/javascript
-/verif/*/doc/html/search
-/verif/*/doc/html/styles
+# Never add Natural_Docs output -  directory Data
+/verif/doc/Data
 
 
 # DVT Eclipse
