@@ -211,3 +211,9 @@ $ToolConfig_tools{"mgm"} = {
     },
 };
 
+$ToolConfig_tools{"NaturalDocs"} = {
+    VERSION => "atmhdk/1.51.bcs1",
+    PATH => "$ENV{RTL_PROJ_TOOLS}/natural_docs/&get_tool_version()",
+    EXEC => "&get_tool_path()/NaturalDocs",
+};
+
