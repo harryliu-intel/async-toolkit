@@ -18,7 +18,7 @@ if ( -e ${DocDir}/ndoc_excludes ) then
    set exclude_list = ( `eval echo $exclude_list` )     # expand $REPO_ROOT/dir -> <path>/dir 
 endif
 
-set cmd = "$NATURAL_DOCS_EXEC --input ${InputDir} ${exclude_list} --project ${DocDir} --output HTML ${REPO_ROOT}/target/NaturalDocs --style Big -r"
+set cmd = "$NATURAL_DOCS_EXEC --input ${InputDir} ${exclude_list} --project ${DocDir} --output HTML ${REPO_ROOT}/target/NaturalDocs --style Small -r"
 echo "Running: $cmd"
 $cmd
 
