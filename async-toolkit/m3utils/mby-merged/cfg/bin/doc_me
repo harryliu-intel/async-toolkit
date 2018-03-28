@@ -1,4 +1,4 @@
-#/usr/bin/csh -ef
+#!/usr/bin/csh -ef
 #-*- shell-script -*-              For EMACS -- lets formatting happen
 
 setenv REPO_ROOT $MODEL_ROOT
