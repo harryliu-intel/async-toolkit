@@ -212,9 +212,10 @@ $ToolConfig_tools{"mgm"} = {
 };
 
 $ToolConfig_tools{"NaturalDocs"} = {
-    VERSION => "atmhdk/1.51.bcs1",
+    VERSION => "1.52",
     # PATH => "$ENV{RTL_PROJ_TOOLS}/natural_docs/&get_tool_version()",
-    PATH => "/nfs/sc/disks/mst_104/mwrighto/NaturalDocs/1.52",
-    EXEC => "&get_tool_path()/NaturalDocs",
+    PATH => "$ENV{RTL_CAD_ROOT}/natural_docs/NaturalDocs/&get_tool_version()",
+    # NaturalDocs really more of a Windows program, doesn't have 'execute' permission set of perl flag
+    EXEC => "perl &get_tool_path()/NaturalDocs",
 };
 
