@@ -1,4 +1,4 @@
-##USE GenRTL.udf to define all ace based code generation##
+#USE GenRTL.udf to define all ace based code generation##
 use lib "$ENV{RTL_PROJ_BIN}/perllib";
 use ToolConfig;
 my $blocks = join "", map { "-c $_ " } @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{"BLOCKS"}->{&ToolConfig::get_facet("dut")}};
@@ -34,6 +34,14 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                 group => "GENERATE",
             },
         },
+        -en__gen_mby_wm => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_mby_wm' enable",
+                group => "GENERATE",
+            },
+        },
 
     }, #end InterfaceVars
  GenRTL => {
@@ -56,8 +64,16 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                     ],
                     # dependent_configs => [ 'mby::gen_mby_mgm_lib', ],
                 },
-
-
+                gen_mby_wm => {
+                    enable_config => '<-en__gen_mby_wm>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Generating white model through sbt'",
+                       "cd $ENV{MODEL_ROOT}/wm",
+                       &ToolConfig::get_tool_exec('sbt') . " compile doc",
+                    ],
+                    # dependent_configs => [ 'mby::gen_mby_mgm_lib', ],
+                },
 	    },          # -config
 	},          # $PROJECT
     },              # GenRTL

@@ -84,6 +84,11 @@ EOF
                     -gen_config => "mby::gen_mby_regflow_lib",
                     -tools => ["-vcs_createlib"],
             },
+            gen_mby_wm => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_mby_wm",
+            },
+
 
             mby_regflow_lib => {
                     -generated => 1,
@@ -150,6 +155,7 @@ EOF
                   "mby_env_lib",
                   "mby_jasper_lib",
                   "gen_mby_regflow_lib",
+                  "gen_mby_wm",
                ],
 
                elab_opts => [

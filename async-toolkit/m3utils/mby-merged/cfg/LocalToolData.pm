@@ -219,3 +219,24 @@ $ToolConfig_tools{"NaturalDocs"} = {
     EXEC => "perl &get_tool_path()/NaturalDocs",
 };
 
+$ToolConfig_tools{"sbt"} = {
+    VERSION => "1.0",
+    # PATH => "$ENV{RTL_PROJ_TOOLS}/natural_docs/&get_tool_version()",
+    PATH => "/nfs/sc/disks/slx_1086/mwrighto/sbt",
+    # NaturalDocs really more of a Windows program, doesn't have 'execute' permission set of perl flag
+    EXEC => "&get_tool_path()/bin/sbt -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt",
+    ENV_APPEND => {
+      PATH => "&get_tool_path()/bin",
+      https_proxy => "http://proxy-us.intel.com:912",
+    }
+};
+
+$ToolConfig_tools{"java"} = {
+    VERSION => "1.8.0.151",
+    PATH => "/usr/intel/pkgs/java/&get_tool_version()",
+    # NaturalDocs really more of a Windows program, doesn't have 'execute' permission set of perl flag
+    ENV_APPEND => {
+      JAVA_HOME => "&get_tool_path()",
+    }
+};
+
