@@ -21,6 +21,6 @@ for file in ${WD}/*.rdl; do
 
 	cat intermediate02.rdl | (cd ${WD} ; perl) > intermediate03.rdl
 
-	../AMD64_LINUX/parserdl < intermediate03.rdl | exit
+	../program/AMD64_LINUX/parserdl < intermediate03.rdl | exit
 
 done
