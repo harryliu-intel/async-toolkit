@@ -10,3 +10,4 @@ lazy val root = (project in file(".")).
     name := "wm",
     libraryDependencies += scalaTest % Test
   )
+parallelExecution in Test := false
