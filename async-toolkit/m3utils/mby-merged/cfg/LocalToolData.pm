@@ -211,11 +211,17 @@ $ToolConfig_tools{"mgm"} = {
     },
 };
 
-$ToolConfig_tools{"NaturalDocs"} = {
-    VERSION => "1.52",
-    # PATH => "$ENV{RTL_PROJ_TOOLS}/natural_docs/&get_tool_version()",
-    PATH => "$ENV{RTL_CAD_ROOT}/natural_docs/NaturalDocs/&get_tool_version()",
-    # NaturalDocs really more of a Windows program, doesn't have 'execute' permission set of perl flag
-    EXEC => "perl &get_tool_path()/NaturalDocs",
+$ToolConfig_tools{"mono"} = {
+    VERSION => "5.2.0.224",
+    PATH => "/usr/intel/pkgs/mono/&get_tool_version()",
 };
 
+$ToolConfig_tools{"NaturalDocs"} = {
+    #VERSION => "1.52",
+    VERSION => "2.1.0.dev",
+    PATH => "$ENV{RTL_CAD_ROOT}/natural_docs/NaturalDocs/&get_tool_version()",
+    # Version 1.52 runs in perl
+    #EXEC => "perl &get_tool_path()/NaturalDocs",
+    # Version 2.xx runs with mono
+    EXEC => "&get_tool_path(mono)/bin/mono &get_tool_path()/NaturalDocs.exe",
+};
