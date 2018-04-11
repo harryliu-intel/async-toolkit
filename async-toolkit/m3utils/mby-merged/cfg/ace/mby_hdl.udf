@@ -87,6 +87,7 @@ EOF
             gen_mby_wm => {
                     -generated => 1,
                     -gen_config => "mby::gen_mby_wm",
+                    -tools => ["-vcs_createlib"],
             },
 
 

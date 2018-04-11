@@ -211,12 +211,20 @@ $ToolConfig_tools{"mgm"} = {
     },
 };
 
+$ToolConfig_tools{"mono"} = {
+    VERSION => "5.2.0.224",
+    PATH => "/usr/intel/pkgs/mono/&get_tool_version()",
+    EXEC => "&get_tool_path()/bin/mono",
+};
+
 $ToolConfig_tools{"NaturalDocs"} = {
-    VERSION => "1.52",
-    # PATH => "$ENV{RTL_PROJ_TOOLS}/natural_docs/&get_tool_version()",
+    #VERSION => "1.52",
+    VERSION => "2.1.0.dev",
     PATH => "$ENV{RTL_CAD_ROOT}/natural_docs/NaturalDocs/&get_tool_version()",
-    # NaturalDocs really more of a Windows program, doesn't have 'execute' permission set of perl flag
-    EXEC => "perl &get_tool_path()/NaturalDocs",
+    # Version 1.52 runs in perl
+    #EXEC => "perl &get_tool_path()/NaturalDocs",
+    # Version 2.xx runs with mono
+    EXEC => "&get_tool_exec(mono) &get_tool_path()/NaturalDocs.exe",
 };
 
 $ToolConfig_tools{"sbt"} = {
@@ -232,7 +240,6 @@ $ToolConfig_tools{"sbt"} = {
 $ToolConfig_tools{"java"} = {
     VERSION => "1.8.0.151",
     PATH => "/usr/intel/pkgs/java/&get_tool_version()",
-    # NaturalDocs really more of a Windows program, doesn't have 'execute' permission set of perl flag
     ENV_APPEND => {
       JAVA_HOME => "&get_tool_path()",
     }
