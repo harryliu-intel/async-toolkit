@@ -230,10 +230,13 @@ $ToolConfig_tools{"NaturalDocs"} = {
 $ToolConfig_tools{"sbt"} = {
     VERSION => "1.1.2",
     PATH => "/usr/intel/pkgs/sbt/&get_tool_version()",
-    EXEC => "&get_tool_path()/bin/sbt -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
+    EXEC => "&get_tool_path()/bin/sbt -Dhttp.proxyHost=proxy-us.intel.com -Dhttp.proxyPort=912 -Dhttps.proxyHost=proxy-us.intel.com -Dhttps.proxyPort=912 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
     ENV_APPEND => {
       PATH => "&get_tool_path()/bin",
-      https_proxy => "http://proxy-us.intel.com:912",
+    },
+    ENV => {
+      JAVA_OPTS => "-Dhttp.proxyHost=proxy-us.intel.com -Dhttp.proxyPort=912 -Dhttps.proxyHost=proxy-us.intel.com -Dhttps.proxyPort=912",
+      SBT_OPTS => "-java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot"
     }
 };
 
