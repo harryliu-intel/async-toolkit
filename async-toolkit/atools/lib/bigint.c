@@ -567,7 +567,7 @@ BIGINT *shr_bigint(BIGINT *b1, BIGINT *b2)
   i2=int_from_bigint(b2);
   while (i2>=32)
     {
-    b1 = b1->next;
+    if (b1) b1 = b1->next;
     i2 -= 32;
     }
 
