@@ -1,7 +1,7 @@
 package security;
 %agent_encoding = (
 #################
-# SAI Label                   		6bINDEX   6bINDEX (hex)	# MST usage
+# SAI Label                   		6bINDEX   6bINDEX (hex)	# MBY usage
 "SAI_HOSTIA_POSTBOOT"      		=> 0b000000,	#  0	# BaseIA cores and P2SB
 "SAI_HOSTIA_UCODE"         		=> 0b000001,	#  1	# BaseIA cores and P2SB
 "SAI_HOSTIA_SMM"           		=> 0b000010,	#  2	# BaseIA cores and P2SB
@@ -10,7 +10,7 @@ package security;
 #"SAI_RESERVED_1"          		=> 0b000101,	#  5	# 
 #"SAI_RESERVED_2"          		=> 0b000110,	#  6	# 
 #"SAI_RESERVED_3"          		=> 0b000111,	#  7	# 
-"SAI_GT"                   		=> 0b001000,	#  8	# n/a to MST. Documented for Chassis 2.1 compatibility
+"SAI_GT"                   		=> 0b001000,	#  8	# n/a to MBY. Documented for Chassis 2.1 compatibility
 "SAI_PM_PCS"               		=> 0b001001,	#  9	# BaseIA PUNIT
 "SAI_HW_CPU"               		=> 0b001010,	#  A	# BaseIA SA (completions from A/B/C/T Units) and DDRIO (completions)
 "SAI_MEM_CPL"              		=> 0b001011,	#  B	# DUNIT (completions) and DUNIT (RAS messages) <- per DNV memory controller; revisit for 10nm MC
@@ -19,17 +19,17 @@ package security;
 #"NORTH_Reserved"          		=> 0b001110,	#  E	#
 "SAI_HOSTCP_PMA"           		=> 0b001111,	#  F	# BaseIA PMA
 "SAI_CSE_INTEL"            		=> 0b010000,	# 10	# EMP when performing CSME tasks
-"SAI_CSE_OEM"              		=> 0b010001,	# 11	# n/a to MST. Documented for Chassis 2.1 compatibility
+"SAI_CSE_OEM"              		=> 0b010001,	# 11	# n/a to MBY. Documented for Chassis 2.1 compatibility
 "SAI_Fuse_Controller"      		=> 0b010010,	# 12	# Fuse Controller
 "SAI_Fuse_Puller"          		=> 0b010011,	# 13	# Fuse Puller
 #"Reserved"                		=> 0b010100,	# 14	#
 "SAI_PM_IOSS"              		=> 0b010101,	# 15	# EMP when performing PMC tasks
-"SAI_BIA_DRNG"             		=> 0b010110,	# 16	# BaseIA DRNG. Note: Chassis 2.1 = SAI_CSE_DNX (which is n/a to MST), 
+"SAI_BIA_DRNG"             		=> 0b010110,	# 16	# BaseIA DRNG. Note: Chassis 2.1 = SAI_CSE_DNX (which is n/a to MBY), 
 								# but Chassis 2.0 = North DRNG (affects BaseIA SA security policies). 
-								# MST follows Chassis 2.0 here
+								# MBY follows Chassis 2.0 here
 "SAI_DFX_AGGR"             		=> 0b010111,	# 17	# DFx Security Aggregator. Note: Chassis 2.1 = Reserved, 
 								# but Chassis 2.0 = DFx Aggregator (affects BaseIA SA security policies). 
-								# MST follows Chassis 2.0 here
+								# MBY follows Chassis 2.0 here
 "SAI_DFX_INTEL_MANUFACTURING"   	=> 0b011000,	# 18	# TAP2SB
 "SAI_DFX_UNTRUSTED"        		=> 0b011001,	# 19	# TAP2SB
 "SAI_ICM"                  		=> 0b011010,	# 1A	# iCM. Note: consistent with nCPM assignment in both DNV and CDF
@@ -42,19 +42,19 @@ package security;
 "SAI_SPI"                  		=> 0b100000,	# 20	# SPI Controller
 #"Reserved"                		=> 0b100001,	# 21	#
 #"Reserved"                		=> 0b100010,	# 22	#
-"SAI_GT_PMA"               		=> 0b100011,	# 23	# n/a to MST. Documented for Chassis 2.1 compatibility
+"SAI_GT_PMA"               		=> 0b100011,	# 23	# n/a to MBY. Documented for Chassis 2.1 compatibility
 #"Reserved"                		=> 0b100100,	# 24	#
 #"Reserved"                		=> 0b100101,	# 25	#
 #"Reserved"                		=> 0b100110,	# 26	#
 #"Reserved"                		=> 0b100111,	# 27	#
 #"NORTH_Reserved"          		=> 0b101000,	# 28	#
-"SAI_RC_MORPHED"           		=> 0b101001,	# 29	# n/a to MST. Documented for Chassis 2.1 compatibility
+"SAI_RC_MORPHED"           		=> 0b101001,	# 29	# n/a to MBY. Documented for Chassis 2.1 compatibility
 "SAI_DFX_INTEL_PRODUCTION"      	=> 0b101010,	# 2A	# TAP2SB
 "SAI_DFX_THIRDPARTY"       		=> 0b101011,	# 2B	# TAP2SB
-"SAI_DISPLAY"              		=> 0b101100,	# 2C	# n/a to MST. Documented for Chassis 2.1 compatibility
+"SAI_DISPLAY"              		=> 0b101100,	# 2C	# n/a to MBY. Documented for Chassis 2.1 compatibility
 #"Reserved"             		=> 0b101101,	# 2D	#
 #"Reserved"                  		=> 0b101110,	# 2E	#
-"SAI_DISPLAY_KVM"          		=> 0b101111,	# 2F	# n/a to MST. Documented for Chassis 2.1 compatibility
+"SAI_DISPLAY_KVM"          		=> 0b101111,	# 2F	# n/a to MBY. Documented for Chassis 2.1 compatibility
 #"NORTH_Reserved"          		=> 0b110000, 	# 30	#
 "SAI_HIF"          			=> 0b110001, 	# 31	# HIF Trusted tasks
 #"NORTH_Reserved"          		=> 0b110010, 	# 32	#
@@ -62,10 +62,10 @@ package security;
 "SAI_CORE_EVENT_PROXY"     		=> 0b110100, 	# 34	# BaseIA TUNIT
 "SAI_CCK"          			=> 0b110101, 	# 35	# BaseIA CCK. Note: Chassis 2.1 = NORTH_Reserved, 
 								# but Chassis 2.0 = Clock (affects BaseIA SA security policies). 
-								# MST follows Chassis 2.0 here
-"SAI_RCIOMMU_BYPASS"            	=> 0b110110, 	# 36	# n/a to MST. Documented for Chassis 2.1 compatibility
+								# MBY follows Chassis 2.0 here
+"SAI_RCIOMMU_BYPASS"            	=> 0b110110, 	# 36	# n/a to MBY. Documented for Chassis 2.1 compatibility
 #"CrossDie_Reserved"            	=> 0b110111, 	# 37	#
-"SAI_EC_ESPI"              		=> 0b111000, 	# 38	# SPI Controller. Note: based on MST configuration of SPI controller 
+"SAI_EC_ESPI"              		=> 0b111000, 	# 38	# SPI Controller. Note: based on MBY configuration of SPI controller 
 								# this SAI value is probably unused
 "SAI_EMP"               		=> 0b111001, 	# 39	# EMP when performing EMP tasks
 #"Reserved"                  		=> 0b111010, 	# 3A	#
@@ -73,7 +73,7 @@ package security;
 #"Reserved"                  		=> 0b111100, 	# 3C	#
 "SAI_OOB_MSM"              		=> 0b111101, 	# 3D	# AR: Christine/Erik - what is expectation of this SAI for SPR-D?
 #"Reserved"                 		=> 0b111110, 	# 3E	#
-"SAI_DEVICE_UNTRUSTED"     		=> 0b111111, 	# 3F	# not explicitly assigned to any MST IP - results from 8bSAI-to-6bINDEX formula if 8bSAI is missing or 8'h00
+"SAI_DEVICE_UNTRUSTED"     		=> 0b111111, 	# 3F	# not explicitly assigned to any MBY IP - results from 8bSAI-to-6bINDEX formula if 8bSAI is missing or 8'h00
 
 #################
 # Note: to account for IP's which follow prior SAI naming conventions, add aliases per
@@ -177,68 +177,68 @@ sub GetSecurityInfo() {
 
 
 ####################################################################
-# MST_PG0 policy groups
+# MBY_PG0 policy groups
 ####################################################################
-      'MST_PG0'               => '"MST_PG0"',
-      'MST_PG0_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG0_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG0_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG0'               => '"MBY_PG0"',
+      'MBY_PG0_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG0_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG0_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG1 policy groups
+# MBY_PG1 policy groups
 ####################################################################
-      'MST_PG1'               => '"MST_PG1"',
-      'MST_PG1_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG1_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG1_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG1'               => '"MBY_PG1"',
+      'MBY_PG1_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG1_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG1_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG2 policy groups
+# MBY_PG2 policy groups
 ####################################################################
-      'MST_PG2'               => '"MST_PG2"',
-      'MST_PG2_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG2_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG2_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG2'               => '"MBY_PG2"',
+      'MBY_PG2_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG2_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG2_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG3 policy groups
+# MBY_PG3 policy groups
 ####################################################################
-      'MST_PG3'               => '"MST_PG3"',
-      'MST_PG3_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG3_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG3_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG3'               => '"MBY_PG3"',
+      'MBY_PG3_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG3_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG3_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG4 policy groups
+# MBY_PG4 policy groups
 ####################################################################
-      'MST_PG4'               => '"MST_PG4"',
-      'MST_PG4_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG4_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG4_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG4'               => '"MBY_PG4"',
+      'MBY_PG4_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG4_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG4_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG5 policy groups
+# MBY_PG5 policy groups
 ####################################################################
-      'MST_PG5'               => '"MST_PG5"',
-      'MST_PG5_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG5_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG5_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG5'               => '"MBY_PG5"',
+      'MBY_PG5_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG5_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG5_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG6 policy groups
+# MBY_PG6 policy groups
 ####################################################################
-      'MST_PG6'               => '"MST_PG6"',
-      'MST_PG6_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG6_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG6_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG6'               => '"MBY_PG6"',
+      'MBY_PG6_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG6_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG6_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
 
 ####################################################################
-# MST_PG7 policy groups
+# MBY_PG7 policy groups
 ####################################################################
-      'MST_PG7'               => '"MST_PG7"',
-      'MST_PG7_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG7_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
-      'MST_PG7_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG7'               => '"MBY_PG7"',
+      'MBY_PG7_CP_AGENTS'     => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG7_WAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
+      'MBY_PG7_RAC_AGENTS'    => '"SAI_CSE_INTEL | SAI_DFX_INTEL_MANUFACTURING | SAI_XGBE_GRP | SAI_EMP"',
    );
    return (%security);
 }

@@ -1,0 +1,402 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+reg nexthop_route_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores pointer to nexthop entry information";
+  desc = "Stores a pointer to the nexthop entry information and age counters for flowlet mode";
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RW";
+    desc = "
+           A pointer into NEXTHOP_ENTRY_TABLE.
+           ";
+    ValRandomize = true;
+  } AGE_CNTR[22:15] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           A pointer into NEXTHOP_ENTRY_TABLE.
+           ";
+    ValRandomize = true;
+  } INDEX[14:0] = 15'h0;
+};
+
+reg nexthop_entry_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores next-hop information for IP routing.";
+  desc = "Stores next-hop entry and related fields for IP routing.";
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicate to update L2 domain value.
+           ";
+    ValRandomize = true;
+  } UPDATE_L3_DOMAIN[113:113] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicate to update L2 domain value.
+           ";
+    ValRandomize = true;
+  } UPDATE_L2_DOMAIN[112:112] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           L3 domain value.
+           ";
+    ValRandomize = true;
+  } L3_DOMAIN[111:106] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           L2 domain value.
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[105:97] = 9'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           Modify index MOD_IDX.
+           ";
+    ValRandomize = true;
+  } MOD_IDX[96:79] = 18'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            MTU index which indexes a table the produces the MTU size to check against.
+           ";
+    ValRandomize = true;
+  } MTU_INDEX[78:76] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Egress VLAN ID used for MAC entry. 
+           ";
+    ValRandomize = true;
+  } EVID[75:64] = 12'h00;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bits. Read/write should always be zero.
+           ";
+    ValRandomize = true;
+  } RESERVED[63:50] = 15'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           IPv6Entry indicates whether to derive DMAC from the v6 DIP when stateless autoconfig is enabled on the network (applies only to MAC entry type).
+           ";
+    ValRandomize = true;
+  } IPV6_ENTRY[49:49] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           ARP table entry can be used as MAC entry (EntryType=1) or Glort entry (EntryType=0).
+           ";
+    ValRandomize = true;
+  } ENTRY_TYPE[48:48] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+            Destination MAC address for MAC entry type.
+
+            For GLORT entry type, its 48-bit structure is composed of: dglort in bits 15:0, mark_routed in bit 16,
+            reserved bits in 47:17
+           ";
+    ValRandomize = true;
+  } DST_MAC[47:0] = 48'h00;
+};
+
+reg flood_glort_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Flood Glort Table";
+  desc = "Glorts for flooding, broadcast and multicast indexed by egress L2 domain.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the glort used for broadcast. 
+           ";
+    ValRandomize = true;
+  } BROADCAST_GLORT[47:32] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the glort to use when flooding multicast frames if the FFU 
+            does not already provide a flood glort. For DLF flood control, set 
+            to a glort with a zero destination mask.
+           ";
+    ValRandomize = true;
+  } FLOOD_MULTICAST_GLORT[31:16] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the glort to use when flooding unicast frames if the FFU 
+            does not already provide a flood glort. For DLF flood control, set 
+            to a glort with a zero destination mask.
+           ";
+    ValRandomize = true;
+  } FLOOD_UNICAST_GLORT[15:0] = 16'h00;
+};
+
+reg nexthop_used_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Tracks if hardware has used each ARP entry.";
+  desc = "
+          Each time NEXTHOP_TABLE[index] entry is used to forward a frame, the 
+          chip sets the NEXTHOP_USED[index{13:6}]{index{5:0}} bit to 1. When 
+          software writes a word to this table, any bits that are 1 in the 
+          word will clear the corresponding bit in NEXTHOP_USED to 0. The software 
+          should read a word into x, record which entries have been used since 
+          the last sample, and then write x back to NEXTHOP_USED to clear the bits.
+          This avoids any race between the hardware and software. The concept 
+          is similar to an interrupt register.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            64 consecutive bits marking usage of corresponding NEXTHOP_TABLE 
+            entries.
+           ";
+    ValRandomize = true;
+  } USED[63:0] = 64'h00;
+};
+
+reg ingress_vid_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Ingress VLAN table";
+  desc = "Contains VLAN membership states, IGMP trap enable and reflection state for the
+          ingress VLAN lookup.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates if the IGMP frames on this VLAN shall be trapped or 
+            switched normally. The IGMP frames are trapped to the CPU glort.
+           ";
+    ValRandomize = true;
+  } TRAP_IGMP[25:25] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            If this bit is set and PORT_CFG_2 destination mask include itself, 
+            then layer 2 packets associated with this VLAN are allowed to go 
+            back on the port they come from (subject to LOOPBACK_SUPPRESS 
+            registers).
+
+            If this bit is not set, then layer 2 packets associated with this 
+            VLAN are not allowed to go back on the port they come from.
+          
+            Routed packets are always allowed to go back where they come from 
+            and this bit is not used in this case.
+           ";
+    ValRandomize = true;
+  } REFLECT[24:24] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines port membership for this VLAN. A '1' in each bit position 
+            includes that port in the VLAN membership.
+           ";
+    ValRandomize = true;
+  } MEMBERSHIP[23:0] = 24'h00;
+};
+
+reg egress_vid_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress VLAN table";
+  desc = "Contains VLAN membership state and downstream associated trigger ID for the egress VLAN lookup.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            VLAN trigger match condition identifier.
+           ";
+    ValRandomize = true;
+  } TRIG_ID[29:24] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines if this port is member of this VLAN or not.
+           ";
+    ValRandomize = true;
+  } MEMBERSHIP[23:0] = 24'h00;
+};
+
+reg fwd_hashing_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Configures hashing of L2/L3/L4 headers for LAG";
+  desc = "This register selects which fields are enabled for inclusion in the calculation of the 
+          hash value used for link aggregation and GLORT lookup.  See the hashing chapter for more
+          details.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include 1 byte of Metadata (Metadata[23]) in the L2/L3/L4 hash, when Metadata[0] (type) is 0001011x and Metadata[22][2] (validity flag) is 1.
+           ";
+    ValRandomize = true;
+  } USE_METADATA[13:13] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of two 12—bit hash rotations for use in ECMP
+            binning. 
+           ";
+    ValRandomize = true;
+  } ECMP_ROTATION[12:12] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of four 12—bit H234 rotations for use as Rotation B.
+           ";
+    ValRandomize = true;
+  } ROTATION_B[11:10] = 2'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of four 12—bit H234 rotations for use as Rotation A.
+           ";
+    ValRandomize = true;
+  } ROTATION_A[9:8] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include VLAN ID field in the L2/L3/L4 hash.
+           ";
+    ValRandomize = true;
+  } USE_VID[7:7] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include User (VLAN) Priority field in the L2/L3/L4 hash.
+           ";
+    ValRandomize = true;
+  } USE_VPRI[6:6] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include EtherType field in the L2/L3/L4 hash. If EtherType is less 
+            than 0x600, a value of 0 is used for these two bytes.
+           ";
+    ValRandomize = true;
+  } USE_TYPE[5:5] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include SMAC in the L2/L3/L4 hash.
+           ";
+    ValRandomize = true;
+  } USE_SMAC[4:4] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include DMAC in the L2/L3/L4 hash.
+           ";
+    ValRandomize = true;
+  } USE_DMAC[3:3] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            When set, SMAC/DMAC fields are symmetrized prior to hashing.
+           ";
+    ValRandomize = true;
+  } SYMMETRIC[2:2] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include the L34 hash value (a.k.a. ECMP_HASH) in the L234 hash function.
+           ";
+    ValRandomize = true;
+  } USE_L34[1:1] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Include the Layer 2 header in the hash function if an IPv4/IPv6 
+            packet.
+           ";
+    ValRandomize = true;
+  } USE_L2_IF_IP[0:0] = 1'h01;
+};
+
+reg mtu_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MA Table frame watermark";
+  desc = "
+          Defines the list of MTUs supported by the switch.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            MTU size in bytes.
+           ";
+    ValRandomize = true;
+  } MTU[13:0] = 14'h00;
+};
+
+addrmap mby_ppe_nexthop_map {
+  name = "Nexthop table, flowlets, and VLANs";
+  desc = "Address Resolution Protocol Registers and VLAN lookup";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  
+  nexthop_entry_table_r   NEXTHOP_ENTRY_TABLE[32768]        ;
+  nexthop_route_table_r   NEXTHOP_ROUTE_TABLE[32768]        ;
+  ingress_vid_table_r     INGRESS_VID_TABLE[4096] ;
+  egress_vid_table_r      EGRESS_VID_TABLE[4096]  ;
+  flood_glort_table_r     FLOOD_GLORT_TABLE[512]  ;
+  nexthop_used_r          NEXTHOP_USED[512]           ;
+  mtu_table_r             MTU_TABLE[8]            ;
+  fwd_hashing_cfg_r       FWD_HASHING_CFG         ;
+};
+

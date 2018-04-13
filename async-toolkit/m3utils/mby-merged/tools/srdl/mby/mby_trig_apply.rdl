@@ -1,0 +1,1095 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+  // Enum: AMASK
+enum amask_enum {
+  SPECIAL              =  6'd0 { desc = "Specially handled frame. No learning."; };
+  DROP_PARSE_ERR       =  6'd1 { desc = "Drop due to header parse error or discard eligible. No learning."; };
+  DROP_PERR            =  6'd2 { desc = "Uncorrectle ECC or parity error detected while doing lookup. No learning."; };
+  TRAP_RESERVED_MAC    =  6'd3 { desc = "Trap IEEE reserved MAC address frame."; };
+  TRAP_RESERVED_MAC_REMAP =  6'd4 { desc = "Trap IEEE reserved MAC address frame at remapped priority."; };
+  DROP_CONTROL         = 6'd10 { desc = "Drop IEEE MAC CONTROL Ethertype (includes PAUSE frames). No learning."; };
+  DROP_RESERVED_MAC    = 6'd11 { desc = "Drop IEEE reserved MAC address frame. No learning."; };
+  DROP_TAG             = 6'd12 { desc = "Drop due to tagging rules violation. No learning."; };
+  DROP_SMAC            = 6'd13 { desc = "Drop due to invalid SMAC. No learning."; };
+  DROP_SV_MOVED        = 6'd14 { desc = "Drop due to MAC security violation (moved address). No learning."; };
+  TRAP_CPU_ADDR        = 6'd15 { desc = "Trap CPU MAC address."; };
+  DROP_IV              = 6'd16 { desc = "Drop due to VLAN ingress membership violation. No learning."; };
+  DROP_INGRESS_STP_NON_LEARN = 6'd17 { desc = "Drop due to ingress STP check (non-learning state). No learning."; };
+  DROP_INGRESS_STP_LEARN = 6'd18 { desc = "Drop due to ingress STP check (learning state)."; };
+  DROP_FFU             = 6'd19 { desc = "Drop due to FFU action. No learning."; };
+  TRAP_FFU             = 6'd20 { desc = "Trap due to FFU action."; };
+  TRAP_ICMP_TTL        = 6'd21 { desc = "Trap due to TTL &lt;= 1 for ICMP frames."; };
+  TRAP_IP_OPTION       = 6'd22 { desc = "Trap IP frames with options."; };
+  TRAP_MTU_VIO         = 6'd23 { desc = "Trap due to MTU violation."; };
+  TRAP_IGMP            = 6'd24 { desc = "Trap due to IGMP."; };
+  TRAP_TTL             = 6'd25 { desc = "Trap due to TTL &lt;= 1 for non-ICMP frames."; };
+  DROP_TTL             = 6'd26 { desc = "Drop due to TTL &lt;= 1."; };
+  DROP_DLF             = 6'd27 { desc = "Drop due to flood control of DLF frames (null flood glortdest). No learning."; };
+  DROP_CAM_MISS        = 6'd28 { desc = "Drop due to GLORT_CAM miss. No learning."; };
+  DROP_NULL_GLORTDEST  = 6'd29 { desc = "Drop due to a null destination mask."; };
+  DROP_EV              = 6'd30 { desc = "Drop due to VLAN egress violation."; };
+  DROP_POLICER         = 6'd31 { desc = "Drop due to policer."; };
+  DROP_EGRESS_STP      = 6'd32 { desc = "Drop due to egress STP check."; };
+  DROP_LOOPBACK        = 6'd33 { desc = "Drop due to port or VLAN reflection disabled."; };
+  GLORT                = 6'd34 { desc = "FFU/ARP DGLORT forwarded."; };
+  FLOOD                = 6'd35 { desc = "Flood due to destination MAC miss in MA_TABLE."; };
+  SWITCH_RESERVED_MAC  = 6'd36 { desc = "Switch IEEE reserved MAC address frame."; };
+  FORWARD_NORMAL       = 6'd37 { desc = "Forward normally."; };
+  LOG_INGRESS_FFU      = 6'd38 { desc = "Frame copied to the CPU as a result of FFU action."; };
+  LOG_RESERVED_MAC     = 6'd39 { desc = "Log IEEE reserved MAC address frame."; };
+  LOG_ARP_REDIRECT     = 6'd40 { desc = "Log ARP redirect."; };
+  LOG_IP_ICMP          = 6'd41 { desc = "Multicast ICMP frame was copied to the CPU because it's TTL was &lt;= 1."; };
+  LOG_IP_TTL           = 6'd42 { desc = "Multicast frame was copied to the CPU because it's TTL was &lt;= 1."; };
+  HDR_TIMEOUT          = 6'd43 { desc = "Header was too long to be completely parsed"; };
+  MIRROR_INGRESS_FFU   = 6'd44 { desc = "Frame was mirrored as a result of FFU action"; };
+};
+
+  // Enum: TriggerConditionCfg_MatchTx
+enum trigger_condition_cfg_match_tx_enum {
+  MASK_Z               =  2'd0 { desc = "match if (DMASK &amp; TRIGGER_CONDITION_TX[x].DestPortMask) == 0"; };
+  MASK_NZ              =  2'd1 { desc = "match if (DMASK &amp; TRIGGER_CONDITION_TX[x].DestPortMask) != 0"; };
+  EXACT_EQ             =  2'd2 { desc = "match if DMASK == TRIGGER_CONDITION_TX[x].DestPortMask"; };
+  EXACT_NE             =  2'd3 { desc = "match if DMASK != TRIGGER_CONDITION_TX[x].DestPortMask"; };
+};
+
+reg trigger_condition_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "General per-trigger match condition configuration.";
+  desc = "
+          Each 2-bit condition field specifies one of three defined match
+          cases:
+          
+             0x0 - Associated frame property must not equal the corresponding 
+                   trigger parameter in order to match.
+
+             0x1 - Associated frame property must equal the corresponding 
+                   trigger parameter in order to match.
+
+             0x2 - Match unconditionally.
+                   
+          A configuration value of 0x3 is reserved and will cause undefined
+          behavior if selected. 
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    encode = trigger_condition_cfg_match_tx_enum;
+    AccessType = "RW";
+    desc = "
+            Compare destination mask for this frame to the destination mask 
+            defined in TRIGGER_CONDITION_TX. 
+           ";
+    ValRandomize = true;
+  } MATCH_TX[35:34] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Exponent used to calculate the threshold for rate-constrained
+            matching. Threshold equals 2^MatchRandomThreshold.
+           ";
+    ValRandomize = true;
+  } MATCH_RANDOM_THRESHOLD[33:29] = 5'h018;
+  field {
+    AccessType = "RW";
+    desc = "
+            When set to 1, matches if 'random is less than or equal to 
+            2^MatchRandomThreshold'; otherwise, matches if 'random is greater 
+            than or equal to 2^MatchRandomThreshold'.
+           ";
+    ValRandomize = true;
+  } MATCH_RANDOM_IF_LESS[28:28] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of two random number generators to compare against.
+           ";
+    ValRandomize = true;
+  } MATCH_RANDOM_NUMBER[27:27] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            If 0, begins a new precedence-evaluated trigger set, evaluated in
+            parallel with all other precedence-evaluated sets.
+           ";
+    ValRandomize = true;
+  } MATCH_BY_PRECEDENCE[26:26] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match if the byte in metadata associated with the frame matches
+            MetadataValue1 parameter in TRIGGER_CONDITION_METADATA register
+            after applying MetadataMask1 parameter in TRIGGER_CONDITION_METADATA
+            register. The byte is specified by MetaDataSel1 parameter in 
+            TRIGGER_CONDITION_METADATA register.
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_METADATA1[25:24] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match if the byte in metadata associated with the frame matches
+            MetadataValue0 parameter in TRIGGER_CONDITION_METADATA register
+            after applying MetadataMask0 parameter in TRIGGER_CONDITION_METADATA
+            register. The byte is specified by MetaDataSel0 parameter in 
+            TRIGGER_CONDITION_METADATA register.
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_METADATA0[23:22] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match if the egress domain associated with the frame matches
+            EgressDomain parameter in TRIGGER_CONDITION_PARAM register.
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_EGRESS_DOMAIN[21:20] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match if the destination glort associated with the frame matches
+            DestGlort when both are ANDed with GlortMask (See 
+            TRIGGER_CONDITION_GLORT register).
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_DEST_GLORT[19:18] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match if the frame's first non-VLAN EtherType matches the
+            EtherType parameter in TRIGGER_CONDITION_TYPE when both are ANDed 
+            with EtherTypeMask.
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_ETHER_TYPE[17:16] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match if the frame's TC matches TC from
+            TRIGGER_CONDITION_PARAM.
+                
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_TC[15:14] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match depending on whether the TrigID from the FFU's SET_TRIG action
+            matches FFU_ID, when both are ANDed with FFU_Mask (See
+            TRIGGER_CONDITION_FFU register).
+              
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_FFU[13:12] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match depending on whether the TrigID from the VID_TABLE lookup 
+            matches VID_ID from TRIGGER_CONDITION_PARAM.
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_VLAN[11:10] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match depending on whether the source or destination MAC address was
+            found in the table (or both).
+                
+             0 : match if SMAC or DMAC is a miss (or both)
+
+             1 : match if SMAC or DMAC is a hit (or both)
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_HIT_SADA[9:8] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match depending on whether the destination MAC address was found 
+            in the table.
+          
+             0 : match if miss
+
+             1 : match if hit
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_HIT_DA[7:6] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match depending on whether a source MAC address lookup was 
+            performed and was found to exist in the table.
+          
+             0 : match if miss
+
+             1 : match if hit
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_HIT_SA[5:4] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match frame's destination MAC address against the DA_ID field in
+            TRIGGER_CONDITION_PARAM.
+                
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_DA[3:2] = 2'h02;
+  field {
+    AccessType = "RW";
+    desc = "
+            Match frame's source MAC address against the SA_ID field in
+            TRIGGER_CONDITION_PARAM.
+          
+             0 : match if not equal
+
+             1 : match if equal
+
+             2 : ignore this field
+
+             3 : undefined         
+           ";
+    ValRandomize = true;
+  } MATCH_SA[1:0] = 2'h02;
+};
+
+reg trigger_condition_param_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Miscellaneous match condition parameters.";
+  desc = "Match values for trigger conditions as configured in TRIGGER_CONDITION_CFG.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mask (AND) the egress domain value associated with the packet before comparison.
+           ";
+    ValRandomize = true;
+  } EGRESS_DOMAIN_MASK[59:45] = 15'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Value to match against the egress domain value {egress_l3_domain (6b), egress_l2_domain (9b)}
+            associated with the packet after applying mask.
+            EgressDomainValue == EgressDomainMask & {egress_l3_domain, egress_l2_domain}
+           ";
+    ValRandomize = true;
+  } EGRESS_DOMAIN_VALUE[44:30] = 15'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            FtypeMask[i]==1 implies Trigger will match frames with FTYPE==i.
+            Obsolete, not effective in MBY.
+           ";
+    ValRandomize = true;
+  } FTYPE_MASK[29:26] = 4'h03;
+  field {
+    AccessType = "RW";
+    desc = "
+            If bit 0 is set, trigger will match on switched frames. If bit 1 is
+            set, trigger will match on routed frames.
+           ";
+    ValRandomize = true;
+  } ROUTED_MASK[25:24] = 2'h03;
+  field {
+    AccessType = "RW";
+    desc = "
+            If bit 0 is set, the trigger will match against unicast frames. If 
+            bit 1 is set, the trigger will match against broadcast frames. If 
+            bit 2 is set, the trigger will match against multicast frames.
+           ";
+    ValRandomize = true;
+  } FRAME_CLASS_MASK[23:21] = 3'h07;
+  field {
+    AccessType = "RW";
+    desc = "
+            Trigger parameter to compare against the frame's associated TC.
+           ";
+    ValRandomize = true;
+  } TC[20:18] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            VLAN ID, compared against TrigID from the VID_TABLE lookup.
+           ";
+    ValRandomize = true;
+  } VID_ID[17:12] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination MAC address ID, compared against TrigID from the 
+            destination address' entry in MA_TABLE. A value of 0x3F may be 
+            used to match on a destination lookup miss.
+           ";
+    ValRandomize = true;
+  } DA_ID[11:6] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Source MAC address ID, compared against trigID from the source 
+            address' entry in MA_TABLE. A value of 0x0 may be used to match on 
+            no source address lookup (learning was disabled on the ingress 
+            port) and a value of 0x3F may be used to match on a source lookup 
+            miss.
+           ";
+    ValRandomize = true;
+  } SA_ID[5:0] = 6'h00;
+};
+
+reg trigger_condition_ffu_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "FFU match parameters.";
+  desc = "Match value for the FFU related fields enabled by TRIGGER_CONDITION_CFG";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mask to be ANDed with both FFU_ID and the TrigID specified by an FFU
+            SET_TRIG action prior to comparison.
+           ";
+    ValRandomize = true;
+  } FFU_MASK[15:8] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            ID to compare against the TrigID specified by an FFU SET_TRIG 
+            action. Note that 0 is a reserved value (it is the default value 
+            assigned by the FFU to the FFU_ID) and should not be used for 
+            normal use.
+           ";
+    ValRandomize = true;
+  } FFU_ID[7:0] = 8'h00;
+};
+
+reg trigger_condition_type_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "EtherType match parameters.";
+  desc = "Match values for the ether type fields enabled by TRIGGER_CONDITION_CFG";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mask to be ANDed with both the EtherType trigger parameter and the
+            frame's first non-VLAN EtherType prior to comparison.
+           ";
+    ValRandomize = true;
+  } ETHER_TYPE_MASK[31:16] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Type value to compare against the frame's first non-VLAN
+            EtherType.
+           ";
+    ValRandomize = true;
+  } ETHER_TYPE[15:0] = 16'h00;
+};
+
+reg trigger_condition_glort_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination glort match parameters.";
+  desc = "Match values for the GLORT related fields enabled by TRIGGER_CONDITION_CFG";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mask to be ANDed with both the DestGlort trigger parameter and the
+            frame's destination glort prior to comparison.
+           ";
+    ValRandomize = true;
+  } GLORT_MASK[31:16] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Glort value to compare against the frame's destination glort.
+           ";
+    ValRandomize = true;
+  } DEST_GLORT[15:0] = 16'h00;
+};
+
+reg trigger_condition_rx_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Source port mask.";
+  desc = "
+          The source port mask is unconditionally ANDed with this mask. The 
+          result must be nonzero in order for this condition to match.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Source port mask. The bit corresponding to the frame's source port 
+            must be set in order for the trigger to match. Setting to 
+            '1 will cause the trigger to match regardless of 
+            where the frame is coming from. Setting to '0 will cause the 
+            trigger to never match regardless of where the frame is coming 
+            from.
+           ";
+    ValRandomize = true;
+  } SRC_PORT_MASK[23:0] = 24'h00;
+};
+
+reg trigger_condition_tx_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination port mask.";
+  desc = "Destination port mask match when MatchTx is enabled in TRIGGER_CONDITION_CFG.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Trigger's destination port mask used to compare against actual 
+            destination mask of the frame. See TRIGGER_CONDITION_CFG[i].MatchTx
+            for details of comparison options. 
+           ";
+    ValRandomize = true;
+  } DEST_PORT_MASK[23:0] = 24'h00;
+};
+
+reg trigger_condition_amask_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Frame Handler action mask match condition (actions 0 through 31).";
+  desc = "Indicates which action mask bits to match on when the action mask match is
+          enabled in TRIGGER_CONDITION_CFG.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    //encode = amask_enum;
+    AccessType = "RW";
+    desc = "
+            Defines which actions enables this triggers (first 32b). Exact 
+            bits defined in the destination mask generation chapter of the HAS.
+           ";
+    ValRandomize = true;
+  } HANDLER_ACTION_MASK[31:0] = 32'h00;
+};
+
+reg trigger_condition_amask_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Frame Handler action mask match condition (actions 32 through 44).";
+  desc = "Indicates which action mask bits to match on when the action mask match is
+          enabled in TRIGGER_CONDITION_CFG.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    //encode = amask_enum;
+    AccessType = "RW";
+    desc = "
+            Defines which actions enables this triggers (next 13b, action bits 
+            32 to 44). Exact bits defined in the destination mask generation chapter of the HAS.
+           ";
+    ValRandomize = true;
+  } HANDLER_ACTION_MASK[12:0] = 13'h00;
+};
+
+reg trigger_condition_metadata_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Metadata match parameters.";
+  desc = "Metadata byte values to match on when the metadata match is enabled in TRIGGER_CONDITION_CFG.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects between either the pre-IPP metadata (0) or the metadatas as input to the triggers (1).
+           ";
+    ValRandomize = true;
+  } METADATA_SOURCE1[43:43] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mask (AND) the selected byte from 32-byte metadata before comparision.
+           ";
+    ValRandomize = true;
+  } METADATA_MASK1[42:35] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            The byte to match against the byte selected from 32-byte metadata after applying mask.
+            MetadataValue1 == metadata[MetadataSel1] & MetadataMask1
+           ";
+    ValRandomize = true;
+  } METADATA_VALUE1[34:27] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selector to specify the byte from 32-byte metadata.
+           ";
+    ValRandomize = true;
+  } METADATA_SEL1[26:22] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects between either the pre-IPP metadata (0) or the metadatas as input to the triggers (1).
+           ";
+    ValRandomize = true;
+  } METADATA_SOURCE0[21:21] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mask (AND) the selected byte from 32-byte metadata before comparision.
+           ";
+    ValRandomize = true;
+  } METADATA_MASK0[20:13] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            The byte to match against the byte selected from 32-byte metadata after applying mask.
+            MetadataValue0 == metadata[MetadataSel0] & MetadataMask0
+           ";
+    ValRandomize = true;
+  } METADATA_VALUE0[12:5] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selector to specify the byte from 32-byte metadata.
+           ";
+    ValRandomize = true;
+  } METADATA_SEL0[4:0] = 5'h00;
+};
+
+reg trigger_action_cfg_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "General per-trigger action configuration.";
+  desc = "Configuration associated with trigger actions.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicate no modifications allowed on this packet.  Subject to restrictions (see the modify chapter).
+           ";
+    ValRandomize = true;
+  } NO_MODIFY_ACTION[20:20] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Policer action:
+                  
+             0: None,
+ 
+             1: Don't police.
+           ";
+    ValRandomize = true;
+  } POLICER_ACTION[19:19] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Egress L3 domain action:
+                  
+             0: Always update,
+ 
+             1: Skip.
+           ";
+    ValRandomize = true;
+  } EGRESS_L3_DOMAIN_ACTION[18:18] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Egress L2 domain action:
+                  
+             0: Always update,
+ 
+             1: Skip.
+           ";
+    ValRandomize = true;
+  } EGRESS_L2_DOMAIN_ACTION[17:17] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            The slot that metadata action is applied.
+           ";
+    ValRandomize = true;
+
+  } METADATA_ACTION_SLOT[16:15] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Metadata action:
+                  
+             0: None,
+ 
+             1: Masked 16b set,
+
+             2: Masked 16b copy,
+
+             3: Reserved.
+           ";
+    ValRandomize = true;
+  } METADATA_ACTION[14:13] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Rate limiter action:
+                  
+             0: Leave as-is,
+ 
+             1: Apply rate limit.
+           ";
+    ValRandomize = true;
+  } RATE_LIMIT_ACTION[12:12] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Learning action:
+                  
+             0: Leave as-is, no change in learning, 
+
+             1: Do not learn the source L2 address in to MA table,
+
+             2: Always learn,
+
+             3: Reserved.         
+           ";
+    ValRandomize = true;
+  } LEARNING_ACTION[11:10] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Egress VLAN modification action:
+                  
+             0: Leave as-is, 
+
+             1: Reassign.         
+           ";
+    ValRandomize = true;
+  } VLAN_ACTION[9:9] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            TC modification action:
+                  
+             0: Leave as-is, 
+
+             1: Reassign.         
+           ";
+    ValRandomize = true;
+  } TC_ACTION[8:8] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirroring action for mirror 1:
+                  
+             0: Leave as-is, 
+
+             1: Mirror,
+
+             2: Do not mirror.         
+           ";
+    ValRandomize = true;
+  } MIRRORING_ACTION1[7:6] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirroring action for mirror 0:
+                  
+             0: Leave as-is, 
+
+             1: Mirror,
+
+             2: Do not mirror.         
+           ";
+    ValRandomize = true;
+  } MIRRORING_ACTION0[5:4] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Trap action:
+          
+             0: Leave as-is,
+ 
+             1: Trap, 
+
+             2: Log, 
+
+             3: Do not Trap or Log         
+           ";
+    ValRandomize = true;
+  } TRAP_ACTION[3:2] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Forwarding action:
+                  
+             0: Leave as-is, 
+
+             1: Forward, 
+
+             2: Redirect, 
+
+             3: Drop.         
+           ";
+    ValRandomize = true;
+  } FORWARDING_ACTION[1:0] = 2'h00;
+};
+
+reg trigger_action_cfg_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "General per-trigger action configuration.";
+  desc = "Configuration associated with trigger actions.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects one of two write masks to apply to the output metadata from triggers.  These masks are defined in TRIGGER_ACTION_METADATA_MASK[0..1].
+            When a bit in this mask is 1, the metadata output of the triggers contains the value of the bit as input to IPP.
+           ";
+    ValRandomize = true;
+  } METADATA_MASK_SEL[22:22] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Trap log CPU code for trap or log action
+           ";
+    ValRandomize = true;
+  } TRAP_CODE[21:19] = 2'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Rate limiter number (applicable when RateLimitAction is 1.)
+           ";
+    ValRandomize = true;
+  } RATE_LIMIT_NUM[18:15] = 4'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            New egress VLAN ID (applicable when VlanAction is 1.)
+           ";
+    ValRandomize = true;
+  } NEW_EVID[14:3] = 12'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            New TC (applicable when TCAction is 1.)
+           ";
+    ValRandomize = true;
+  } NEW_TC[2:0] = 3'h00;
+};
+
+reg trigger_action_glort_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Forwarding action glort assignment.";
+  desc = "Action parameters used when the trigger action sets the forwarding mode to forward or redirect. ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Only bits that are set to 1 will be overwritten by NewDestGlort.
+           ";
+    ValRandomize = true;
+  } NEW_DEST_GLORT_MASK[31:16] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            New destination glort when ForwardingAction is 1 or 2.
+           ";
+    ValRandomize = true;
+  } NEW_DEST_GLORT[15:0] = 16'h00;
+};
+
+reg trigger_action_dmask_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Forwarding action destination mask assignment.";
+  desc = "Action parameters used when the trigger action sets the forwarding mode to redirect.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask will be LAG-filtered when set to 1 when
+            ForwardingAction is 2.
+           ";
+    ValRandomize = true;
+  } FILTER_DEST_MASK[24:24] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            New port destination mask when ForwardingAction is 2.
+           ";
+    ValRandomize = true;
+  } NEW_DEST_MASK[23:0] = 24'h00;
+};
+
+reg trigger_action_mirror_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirroring action port and glort assignment.";
+  desc = "Mirror related action parameters when the trigger action specifies a mirror.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror profile index value to set for the profile selected.
+           ";
+    ValRandomize = true;
+  } MIRROR_PROFILE_INDEX1[11:6] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror profile index value to set for the profile selected.
+           ";
+    ValRandomize = true;
+  } MIRROR_PROFILE_INDEX0[5:0] = 6'h00;
+};
+
+reg trigger_action_drop_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Drop action port mask.";
+  desc = "
+          The drop mask is applied to the frame's destination mask when
+          ForwardingAction in TRIGGER_ACTION_CFG_1 is set to 3 (drop).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bits set to 1 will be cleared in the frame's destination mask.
+           ";
+    ValRandomize = true;
+  } DROP_MASK[23:0] = 24'h00;
+};
+
+reg trigger_action_metadata_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Metadata action parameter";
+  desc = "The parameters are used for the metadata action of the slots from metadata";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           16b mask used for setting and copying metadata.
+           ";
+    ValRandomize = true;
+  } MASK[41:26] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           16b value used to set metadata.
+           ";
+    ValRandomize = true;
+  } VALUE[25:10] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           The offset of source location for copy action relative to metadata byte 0.
+           ";
+    ValRandomize = true;
+  } SOURCE[9:5] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            The offset of targeted location relative to metadata byte 0.
+           ";
+    ValRandomize = true;
+  } OFFSET[4:0] = 5'h00;
+};
+  
+
+reg trigger_stats_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Statistics on trigger actions";
+  desc = "Statistics register tracking the number of times a trigger fired.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Number of times that this trigger was applied to a frame. Does not 
+            include triggers that fire but are overrriden by higher-precedence 
+            triggers. Applies even if the frame is tail dropped due to an error.
+           ";
+    ValRandomize = true;
+  } COUNT[63:0] = 64'h00;
+};
+
+addrmap mby_ppe_trig_apply_map {
+  name = "trig_apply";
+  desc = "Trigger Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  
+  trigger_condition_cfg_r             TRIGGER_CONDITION_CFG             @0x00000;
+  trigger_condition_param_r           TRIGGER_CONDITION_PARAM           @0x00008;
+  trigger_condition_ffu_r             TRIGGER_CONDITION_FFU             @0x00010;
+  trigger_condition_type_r            TRIGGER_CONDITION_TYPE            @0x00018;
+  trigger_condition_glort_r           TRIGGER_CONDITION_GLORT           @0x00020;
+  trigger_condition_rx_r              TRIGGER_CONDITION_RX              @0x00028;
+  trigger_condition_tx_r              TRIGGER_CONDITION_TX              @0x00030;
+  trigger_condition_amask_1_r         TRIGGER_CONDITION_AMASK_1         @0x00038;
+  trigger_condition_amask_2_r         TRIGGER_CONDITION_AMASK_2         @0x00040;
+  trigger_condition_metadata_r        TRIGGER_CONDITION_METADATA        @0x00048;
+  trigger_action_cfg_1_r              TRIGGER_ACTION_CFG_1              @0x00050;
+  trigger_action_cfg_2_r              TRIGGER_ACTION_CFG_2              @0x00058;
+  trigger_action_glort_r              TRIGGER_ACTION_GLORT              @0x00060;
+  trigger_action_dmask_r              TRIGGER_ACTION_DMASK              @0x00068;
+  trigger_action_mirror_r             TRIGGER_ACTION_MIRROR             @0x00070;
+  trigger_action_drop_r               TRIGGER_ACTION_DROP               @0x00078;
+  trigger_stats_r                     TRIGGER_STATS                     @0x00080;
+  trigger_action_metadata_r           TRIGGER_ACTION_METADATA           @0x00088;
+};
+
