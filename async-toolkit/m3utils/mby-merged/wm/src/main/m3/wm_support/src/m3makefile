@@ -1,0 +1,27 @@
+import ("libm3")
+import ("cit_util")
+
+Interface ("Word128")
+Interface ("Word256")
+Interface ("Word512")
+Interface ("Word1024")
+
+Module ("CompAddr")
+Module ("CompRange")
+Sequence ("CompRange", "CompRange")
+Sequence ("CompAddr", "CompAddr")
+Module ("CompPath")
+Module ("CompMemory")
+
+Module ("CompMemoryListener")
+List ("CompMemoryListener","CompMemoryListener")
+
+Table("CompMemoryListenerRef", "CompMemoryListener", "Refany")
+MkSet("CompMemoryListener","CompMemoryListener")
+MkSetDef("CompMemoryListener","CompMemoryListener")
+
+Interface("CsrAccessStatus")
+Module("CsrOp")
+pqueue("CompAddr","CompAddr")
+
+library ("wm_support")

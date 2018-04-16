@@ -1,0 +1,36 @@
+import ("libm3")
+import ("rdlparse")
+import ("wm_support")
+
+module ("RegField")
+interface ("RegReg")
+interface ("RegRegfile")
+interface ("RegAddrmap")
+interface ("RegContainer")
+
+sequence("RegField", "RegField")
+sequence("RegReg", "RegReg")
+sequence("RegRegfile", "RegRegfile")
+
+table("TextReg", "Text", "RegReg")
+
+module("RegModula3")
+interface("RegModula3GenState")
+module("RegModula3Naming")
+interface("RegModula3Generators")
+module("IdStyles")
+
+interface ("RegChild")
+interface ("RegComponent")
+
+sequence ("RegChild", "RegChild")
+
+interface ("RegGenState")
+
+module ("RegProperty")
+
+array_sort("RegField", "RegField")
+
+implementation ("Main")
+
+program ("genviews")

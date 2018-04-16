@@ -1,0 +1,9 @@
+% $Id: m3overrides,v 1.1 2009/04/24 07:09:13 mika Exp $
+
+TOP="/nfs/sc/disks/mst_109/mnystroe/mby-mby-x0/wm/src/main/m3"
+override("wm_support",TOP)
+
+%include("../../../../m3overrides")
+include("/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git/m3overrides")
+
+
