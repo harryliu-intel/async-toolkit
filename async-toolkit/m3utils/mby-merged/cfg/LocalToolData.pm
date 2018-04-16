@@ -218,13 +218,13 @@ $ToolConfig_tools{"mono"} = {
 };
 
 $ToolConfig_tools{"NaturalDocs"} = {
-    #VERSION => "1.52",
-    VERSION => "2.1.0.dev",
+    VERSION => "1.52",
+    #VERSION => "2.1.0.dev",     # This version in missing inline Image support, reverted back to older version until next rev available
     PATH => "$ENV{RTL_CAD_ROOT}/natural_docs/NaturalDocs/&get_tool_version()",
     # Version 1.52 runs in perl
-    #EXEC => "perl &get_tool_path()/NaturalDocs",
+    EXEC => "perl &get_tool_path()/NaturalDocs",
     # Version 2.xx runs with mono
-    EXEC => "&get_tool_exec(mono) &get_tool_path()/NaturalDocs.exe",
+    #EXEC => "&get_tool_exec(mono) &get_tool_path()/NaturalDocs.exe",
 };
 
 $ToolConfig_tools{"sbt"} = {
