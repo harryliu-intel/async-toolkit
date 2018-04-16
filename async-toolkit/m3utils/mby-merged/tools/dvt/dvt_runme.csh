@@ -11,6 +11,11 @@ setenv LM_PROJECT TRAINING1
 #setenv DVTLMD_LICENSE_FILE 20020@dvt01p.elic.intel.com
 #setenv LM_PROJECT MBY
 
+if ($?LD_LIBRARY_PATH) then                            ## if Previous Path defined, append to it.
+   setenv LD_LIBRARY_PATH /usr/intel/pkgs/gtk+/2.24.20/lib64:$LD_LIBRARY_PATH
+else                                                   ## Else just set it
+   setenv LD_LIBRARY_PATH /usr/intel/pkgs/gtk+/2.24.20/lib64
+endif
 
 ###################################################
 # Edit these to select the tool versions you want #
@@ -172,15 +177,15 @@ endif
 
 # Setup ACE
 setenv ACE_HOME `ToolConfig.pl get_tool_path ace`
-  
+
 # Setup OVM
 setenv OVM_HOME `ToolConfig.pl get_tool_path ovm`
-  
+
 # Setup UVM
-setenv UVM_HOME  `ToolConfig.pl get_tool_path uvm` 
+setenv UVM_HOME  `ToolConfig.pl get_tool_path uvm`
 
 # Setup XVM
-#setenv XVM_HOME `ToolConfig.pl get_tool_path xvm`  
+#setenv XVM_HOME `ToolConfig.pl get_tool_path xvm`
 setenv XVM_HOME  ${RTL_CAD_ROOT}/intel/xvm/${XVM_VERSION}
 
 # Setup SAOLA
@@ -238,6 +243,8 @@ setenv DVT_LICENSE_FILE FLEXLM
 ###########################
 echo "\n TOOL VERSIONS:"
 echo " OVM_HOME    -> ${OVM_HOME}"
+echo " UVM_HOME    -> ${UVM_HOME}"
+echo " XVM_HOME    -> ${XVM_HOME}"
 echo " SAOLA_HOME  -> ${SAOLA_HOME}"
 echo " VCS_HOME    -> ${VCS_HOME}"
 echo " VERDI_HOME  -> ${VERDI_HOME}"
