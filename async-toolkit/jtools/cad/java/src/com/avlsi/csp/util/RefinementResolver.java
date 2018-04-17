@@ -44,6 +44,10 @@ public class RefinementResolver extends VisitorByCategory {
         String FWRITE = "fwrite";
         String WALLTIME = "walltime";
         String GETARGVALUE = "getArgValue";
+        String FP_MUL32 = "fp_mul32";
+        String FP_ADD32 = "fp_add32";
+        String FP_MUL64 = "fp_mul64";
+        String FP_ADD64 = "fp_add64";
     }
 
     // Define built-in functions
@@ -255,6 +259,34 @@ public class RefinementResolver extends VisitorByCategory {
                                             getDeclaration("def",
                                                 new StringType()) }),
                                         new StringType(),
+                                        new SequentialStatement()),
+                BuiltIn.FP_MUL32,
+                new FunctionDeclaration(BuiltIn.FP_MUL32,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("a"),
+                                            getDeclaration("b") }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FP_ADD32,
+                new FunctionDeclaration(BuiltIn.FP_ADD32,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("a"),
+                                            getDeclaration("b") }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FP_MUL64,
+                new FunctionDeclaration(BuiltIn.FP_MUL64,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("a"),
+                                            getDeclaration("b") }),
+                                        new IntegerType(),
+                                        new SequentialStatement()),
+                BuiltIn.FP_ADD64,
+                new FunctionDeclaration(BuiltIn.FP_ADD64,
+                                        getDeclarations(new Declaration[] {
+                                            getDeclaration("a"),
+                                            getDeclaration("b") }),
+                                        new IntegerType(),
                                         new SequentialStatement())
             });
 
