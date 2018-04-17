@@ -8,6 +8,7 @@
 
 
 # DVT Eclipse
+.dvt
 .project
 .settings
 src/.project
