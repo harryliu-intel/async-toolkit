@@ -360,6 +360,40 @@ public abstract class CspRuntimeAbstractDevice extends AbstractDevice {
     }
 
     /**
+     * Support IEEE 754 floating point operators to check CSP
+     * floating-point.  Unfortunately, Java only supports
+     * round-nearest-even rounding mode.
+     **/
+
+    protected CspInteger _fp_mul32(CspInteger a, CspInteger b) {
+        float x = Float.intBitsToFloat(a.intValue());
+        float y = Float.intBitsToFloat(b.intValue());
+        float z = x*y;
+        return CspInteger.valueOf(Float.floatToRawIntBits(z));
+    }
+
+    protected CspInteger _fp_add32(CspInteger a, CspInteger b) {
+        float x = Float.intBitsToFloat(a.intValue());
+        float y = Float.intBitsToFloat(b.intValue());
+        float z = x+y;
+        return CspInteger.valueOf(Float.floatToRawIntBits(z));
+    }
+
+    protected CspInteger _fp_mul64(CspInteger a, CspInteger b) {
+        double x = Double.longBitsToDouble(a.longValue());
+        double y = Double.longBitsToDouble(b.longValue());
+        double z = x*y;
+        return CspInteger.valueOf(Double.doubleToRawLongBits(z));
+    }
+
+    protected CspInteger _fp_add64(CspInteger a, CspInteger b) {
+        double x = Double.longBitsToDouble(a.longValue());
+        double y = Double.longBitsToDouble(b.longValue());
+        double z = x+y;
+        return CspInteger.valueOf(Double.doubleToRawLongBits(z));
+    }
+
+    /**
      * Returns true if all receives can complete on all channels in the
      * array <code>in</code>.  
      **/
