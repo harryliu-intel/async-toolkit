@@ -89,6 +89,12 @@ $ToolConfig_tools{meta} = {
     VERSION => "18.01.09",
 };
 
+$ToolConfig_tools{cm3} = {
+    PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/cm3",
+    EXEC => "&get_tool_path()/bin/cm3"
+};
+
+
 $ToolConfig_tools{onesource} = {
    PATH => "/p/hdk/rtl/cad/x86-64_linux30/dt/OneSourceBundle/&get_tool_version()",
    VERSION => '17.48.5p3',
