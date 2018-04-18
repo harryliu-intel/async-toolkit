@@ -1,5 +1,5 @@
 ==================================================================================
-Madison Bay Repo  
+MBY Repo
 ==================================================================================
 Readme contents:
 - Environment Setup
@@ -7,33 +7,95 @@ Readme contents:
 - Building Model : Simulation
 - Running Simulations
     - Signal dumping
+- Sim Plusargs
+- Simregress
 - Post Simulation Debugging
+- Sim Profile
+- XPROP
+- Congruency
+- Natural Docs
 - Lintra RTL linting
 - Amiq DVT Environment
+
+
 
 ==================================================================================
 Environment Setup
 ==================================================================================
 To setup the environment, create this alias in your ~/.aliases file
+
   alias setnhdk  'source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh \!:*'
 
 Then cd to the root of the area you want to be the top-level, and run:
+
     setnhdk -w $cwd
 
+Optional: Setup VCS environment stuff:  Run:
+
+    osetup vcsmx
+
+
 ==================================================================================
-Gatekeeper
+Clone a Repo
+==================================================================================
+
+git clone /p/hdk/rtl/git_repos/nhdk/mby-mby-x0
+
+
+
+
+==================================================================================
+Gatekeeper  Turnin info
 ==================================================================================
 To turn in your changes :
-    turnin -c mby -s mby-x0
+
+    turnin -c mby -s mby-x0 -comments " BLAH "
+
+=================================================================================
+Other turnin options:
+=================================================================================
+  -cancel <ID_turnin>             ## Cancel a Turin that is in-flight
+  -rm <ID_turnin>                 ## Kill a Turin that is in-flight
+  -mock                           ## Execute a mock Turin
+  -submit                         ## Used with -mock.  If the mock passes (basically a filter stage),
+                                     it then enters the pending stage and proceeds to integrate.
+  -no_clone (use with -mock)      ## Do not clone and merge with master repo (just run with current
+                                     clone / don't need files committed)
+
+
 
 See wiki page for more details and options on turnin flow.
+
+
+=================================================================================
+To get tuirnin info:
+
+  turnininfo -s mby-x0 -c mby <option>
+
+  -h               ## show help screen
+  -u <user>        ## display status only for turnins submitted by <user>
+  -d <n>           ## display status for turnins submitted during the past <n> days
+
 
 ==================================================================================
 Building Model : Simulation
 ==================================================================================
 
-Compile VCS:
-  bman
+  bman -dut mby -mc <model> <options>
+
+------------------------------------------------------------------------------------------------------------
+Examples of Build Manager commands for DUTs:
+------------------------------------------------------------------------------------------------------------
+Models                    Commands                                 Description
+------------------------------------------------------------------------------------------------------------
+MBY                    -  bman -mc mby                           # Madison Bay Configuration
+
+
+Compile ALL:
+  bman -dut mby -mc mby
+
+Compile VCS only:
+  bman -dut mby -mc mby -s all +s vcs
 
 Compile VCS with coverage:
   bman -dut mby -s all +s vcs
@@ -48,7 +110,7 @@ Use trex to run simulations. The flow uses the test-in-model flow, which means t
 VCS elaboration is done during build time, and trex runs that
 
 Note: Ace switches in examples below can be combined!
- - Ace args are passed through trex with the -ace_args ... -ace_args- pair. 
+ - Ace args are passed through trex with the -ace_args ... -ace_args- pair.
  - Ace switches in example commands below can generally be used with each other
 
 Recommendation: Run tests in a "regression" or "results" directory in $MODEL_ROOT
@@ -56,40 +118,94 @@ Recommendation: Run tests in a "regression" or "results" directory in $MODEL_ROO
  - Git will ignore any directories named "regression" or "*results*".
  - simregress will create and run under a "regression" subdirectory
 
+
+=====================================================================================================================================================================
+- Trex     Test running information - Commands/Options/syntax
+=====================================================================================================================================================================
+
+trex <test_name> -dut <dut_name> -model <model>  <trex_options> <ace_args>      ## execute single <test_name> on single <dut_name> with <trex_options> and <ace_args>
+
+
+
+=======================================================================================================================
+Trex options:
+=======================================================================================================================
+    -seed <hex_number>                                     ## executes with user specified seed
+    -no_compress                                           ## don't compress logs and coverage data - needed for verdi
+    -usecwd                                                ## To re-run test and have results end up in same directory.
+                                                              Must first cd in desired directory before re-execute or trex
+    -dirtag <ext>                                          ## generate a specific results directory with an extension (ex. <test_name>_<ext>)
+    -ace_args <insert them here. See below> -ace_args-     ## Add ace_args options
+
+
+====================================================================================
+Trex Examples:
+====================================================================================
 // Run a basic test:
-  trex mby_alive_test -seed 1 -dut mby
+  trex mby_alive_test -seed 1 -dut mby -model mby
 
 // Run basic test with coverage enabled:
-  trex mby_alive_test -seed 1 -cc_on -dut mby
+  trex mby_alive_test -seed 1 -cc_on -dut mby -model mby
 
 // Interative debugging with Verdi
-    trex mby_alive_test -ace_args -sd verdi -ace_args- -seed 1 -dut mby
+    trex mby_alive_test -ace_args -sd verdi -ace_args- -seed 1 -dut mby -model mby
 
 // Interative debugging with DVE
-    trex mby_alive_test -ace_args -run_with_gui -ace_args- -seed 1 -dut mby
+    trex mby_alive_test -ace_args -run_with_gui -ace_args- -seed 1 -dut mby -model mby
 
 // Adding runtime VCS plusargs:
-    trex mby_alive_test -ace_args -simv_args +MY_PLUSARG1=value -simv_args +MY_PLUSARG2=v2 -ace_args- -seed 1 -dut mby
+    trex mby_alive_test -ace_args -simv_args +MY_PLUSARG1=value -simv_args +MY_PLUSARG2=v2 -ace_args- -seed 1 -dut mby -model mby
 
 // Adding runtime VCS plusarg - OVM_VERBOSITY
-    trex mby_alive_test -ace_args -simv_args +OVM_VERBOSITY=OVM_FULL -ace_args- -seed 1 -dut mby
+    trex mby_alive_test -ace_args -simv_args +OVM_VERBOSITY=OVM_FULL -ace_args- -seed 1 -dut mby -model mby
 
 ---------------
 Signal dumping
 ---------------
 
-// Enable signal dumping with FSDB output: use Ace "-fsdb" switch
-  trex mby_alive_test -ace_args -fsdb -ace_args- -seed 1 -dut mby
+// Enable signal dumping with FSDB output: use Plusarg "+fsdb" switch
+  trex mby_alive_test -ace_args -simv_args '"' +fsdb '"' -ace_args- -seed 1 -dut mby -model mby
 
-// Enable signal dumping with VPD output: use "-vpd" switch - Points to a user "do" script in $MODEL_ROOT/tools/vcs.
-  trex mby_alive_test -ace_args -vpd mby_vpd.do -ace_args- -seed 1 -dut mby
+// Enable signal dumping with VPD output: use Plusarg "+vpd" switch
+  trex mby_alive_test -ace_args -simv_args '"' +vpd '"' -ace_args- -seed 1 -dut mby -model mby
 
-// Enable signal dumping with VCD-Plus: use "-vcdplus" switch
-  trex mby_alive_test -ace_args -vcdplus -ace_args- -seed 1 -dut mby
 
-// Enable signal dumping with VCD: use "-vcd" switch 
-//    - VCD is an uncompressed text format, and can be large in size. Avoid!
-  trex mby_alive_test -ace_args -vcd -ace_args- -seed 1 -dut mby
+
+=======================================================================================================================
+Simv_args / Plusargs
+=======================================================================================================================
+    +UVM_VERBOSITY=UVM_NONE
+    +UVM_VERBOSITY=UVM_LOW
+    +UVM_VERBOSITY=UVM_MEDIUM
+    +UVM_VERBOSITY=UVM_HIGH
+    +UVM_VERBOSITY=UVM_FULL
+    +UVM_VERBOSITY=UVM_DEBUG
+
+
+
+
+============================================================================================================
+- Simregress     Test running information - Commands/Options/syntax
+============================================================================================================
+
+simregress -dut <DUT> -model <model> <options>
+
+
+=======================================================================================================================
+Simregress options:
+=======================================================================================================================
+    -l <testlist>                              ## Name of the testlist to execute
+    -net                                       ## Execute on NetBatch
+
+
+============================================================================================================
+Simregress Examples:
+============================================================================================================
+
+simregress -dut mby -model mby        -net -l verif/mby/reglist/level0.list
+
+
+
 
 ==================================================================================
 Post Simulation Debugging
@@ -97,7 +213,7 @@ Post Simulation Debugging
 
 //To run Synopsys Verdi debugger:
 //    - Verdi option to point to FSDB file: -ssf <path/to/fsdb/file>
-//    - Model switch (-m) only needed if multiple models were compiled with bman. 
+//    - Model switch (-m) only needed if multiple models were compiled with bman.
 //      Use switch to specify which model was used for simulation.
 //    - DUT switch (-d) generally not needed, typically only one dut is defined.
 
@@ -109,14 +225,110 @@ Post Simulation Debugging
   run_dve <dve_options>
 
 
+
+
+=============================================================================
+Simulation Profiling     -  This info was Cut-n-Pasted CRK Gen 2.Step 1 still
+                            needs to be modified for MBY
+=============================================================================
+1. Uncomment '-lca -simprofile' in cfg/mby_local_ivars.udf
+2. Elaborate desired model using bman.
+3. Run test with sim profile enabled
+    -ace_args -simv_args '"'-simprofile time'"' -ace_args-
+    -ace_args -simv_args '"'-simprofile mem'"' -ace_args-
+4. cd results/<dut>/<model>/<testname>
+5. unzip generated report content
+    gunzip -r profileReport*
+6. view generated report (profileReport.html||txt)
+    firefox --new-window profileReport.html &
+
+
+
+=============================================================================
+- XPROP   Info
+=============================================================================
+Xprop is on by default.
+
+The //tools/xprop/<dut>.xprop file, which is what designates the top level
+of the tree to turn on xprop. It also has any IP's/shared blocks that need
+to be turned off from running XPROP.
+
+2 ways to disable XPROP.
+
+First - easiest and disables all DUTs with 1 switch.
+        In cfg/ace/mby_hdl.udf.  Find "$default_enable_xprop_elab", and set to = 0.
+
+Second - Control for each DUT.
+         In tools/xprop/<dut>.xprop file, comment out or clear the
+         xpropON/xpropOFF declarations for specific DUT to test.
+
+
+
+
+=============================================================================
+- CONGRUENCY   Info
+=============================================================================
+Congruency is on by default.
+
+The //tools/congruency/<dut>.congruency file, designates the modules/instances to
+turn off from congruency.
+
+ex. -moduletree svt_ethernet_bfm                   // Removes Synopsys Ethhernet BFM
+
+
+To completely disable CONGRUENCY.
+        In cfg/ace/mby_hdl.udf.  Find "$default_enable_congruency_elab", and set to = 0.
+
+
+
+
+=============================================================================
+- NATURAL DOCS   Info
+=============================================================================
+The script to generate NaturalDocs is in cfg/bin/doc_me.  This script is executed
+during bman for VCS.  It occurs in the PRE-FLOW stage, prior to compiling vcs.  Output
+is dumped into the target/NaturalDocs/<html>. Thus no output HTML should ever be
+turned into GATEKEEPER
+
+In the verif/doc directory there are the Menu.txt, Languages.txt and Topics.txt, which
+are project/dut specific files, used in the generation of the html.
+These files are checked into Gatekeeper.
+
+Also in the verif/doc directory there is a ndocs_excludes file.  This file contains
+any/all directories that are to be excluded from the generation of NaturalDocs.
+Examples would be things such as any IP directory from the LIB or any other directory
+that is NOT Natural Docs compliant.
+
+
+
+
 ==================================================================================
 Lintra RTL linting
 ==================================================================================
-bman -dut mby -s all +s lintra_rtl 
+bman -dut mby -s all +s lintra_rtl
+
+
+
 
 ==================================================================================
 Amiq DVT Environment
 ==================================================================================
 
-$MODEL_ROOT/tools/dvt/dvt_runme.csh
+Execute the following:
+----------------------
+launch_dvt mby <model>
+
+
+Current Model List :
+---------------------
+mby                           # Madison Bay Configuration
+
+
+
+OLD:   Needs .dvt/<model>.build files to be updated manually.    $MODEL_ROOT/tools/dvt/dvt_runme.csh
+
+
+
+
+
 
