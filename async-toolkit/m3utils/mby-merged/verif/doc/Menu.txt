@@ -71,7 +71,7 @@ Group: Fal  {
    }  # Group: Fal
 
 File: mby_defines.sv  (mby/tb/mby_defines.sv)
-File: mby_tb.sv  (mby/tb/mby_tb.sv)
+File: mby_tb  (mby/tb/mby_tb.sv)
 
 Group: Ral  {
 
