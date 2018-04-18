@@ -25,9 +25,11 @@ TYPE
 
     hi : CompAddr.T; (* computed from the above *)
     
-    fv, lv :   [0..Base-1];
+    fv :   [0..Base-1];
+    lv :   [-1..Base-1];
     (* in first word: first valid data 
-       in last word: last valid data
+       in last word: last valid data 
+       lv=-1 is for the empty case fv=0,lv=-1
     *)
 
     (* do we need/want a full bitmask? probably not? *)
@@ -49,7 +51,7 @@ PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T;
 PROCEDURE Hi(t : T) : CompAddr.T;
   (* return index of first bit not written *)
 
-PROCEDURE DoField(VAR op : T; d : Word.T; a : CompRange.T) : Word.T;
+PROCEDURE DoField(VAR op : T; d : Word.T; READONLY a : CompRange.T) : Word.T;
   (* given a field residing at a, containing d, execute op against
      the field and return the post-write contents of the field *)
 

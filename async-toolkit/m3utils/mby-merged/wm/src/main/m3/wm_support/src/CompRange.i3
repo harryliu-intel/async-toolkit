@@ -77,5 +77,7 @@ TYPE
   END;
 
 PROCEDURE From2(lo, lim : CompAddr.T) : T;
+
+PROCEDURE Bits(READONLY t : T) : CARDINAL;
   
 END CompRange.

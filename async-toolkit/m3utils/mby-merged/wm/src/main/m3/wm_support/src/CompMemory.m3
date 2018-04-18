@@ -6,6 +6,7 @@ IMPORT Word;
 IMPORT Debug;
 IMPORT Fmt;
 IMPORT CompMemoryListener, CompMemoryListenerList;
+IMPORT CompMemoryListenerSetDef;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -71,8 +72,9 @@ PROCEDURE DoCsrOp(t : T; op : CsrOp.T) : CsrAccessStatus.T =
           t.mem[op.at-t.aBase.word] := op.single;
           RETURN CsrAccessStatus.T.OK
         ELSE
-          WITH loMask = Word.LeftShift(1,op.fv)-1,   (* lo to ignore *)
-               hiMask = Word.LeftShift(1,op.lv+1)-1, (* hi to ignore *)
+          WITH loMask = Word.LeftShift(1,op.fv)-1,             (* lo ignore *)
+               hiMask = Word.Not(Word.Shift(1,op.lv+1)-1), (* hi ignore *)
+
                fullMask = Word.Or(loMask,hiMask),    (* mask valid for old *)
                notMask  = Word.Not(fullMask),        (* mask valid for new *)
                waddr = op.at-t.aBase.word
@@ -93,7 +95,58 @@ PROCEDURE DoCsrOp(t : T; op : CsrOp.T) : CsrAccessStatus.T =
           END
         END
       ELSE
-        <*ASSERT FALSE*>
+        (* write multiple words *)
+          WITH waddr  = op.at-t.aBase.word,
+               lwaddr = MIN(waddr + NUMBER(op.data^) - 1, LAST(t.mem^))
+           DO
+            (* special case, single word *)
+            IF waddr = lwaddr THEN
+              op.single := op.data[0];
+              op.data := NIL;
+              RETURN DoCsrOp(t,op)
+            END;
+            
+            (* first word *)
+            WITH loMask = Word.LeftShift(1,op.fv)-1   (* lo to ignore *),
+                 notMask = Word.Not(loMask)           (* hi to write *)   DO
+              
+              t.mem[waddr] :=
+                  Word.Or(
+                      Word.And(loMask, t.mem[waddr]),
+                      Word.And(notMask, op.data[0]))
+            END;
+
+            FOR i := 1 TO NUMBER(op.data^)-2 DO
+              t.mem[i+waddr] := op.data[i]
+            END;
+
+            WITH hiMask = Word.Not(Word.LeftShift(1,op.lv+1)-1), (* hi ignore *)
+                 notMask = Word.Not(hiMask) DO
+
+            (* last word *)
+              t.mem[lwaddr] :=
+                  Word.Or(
+                      Word.And(hiMask,t.mem[lwaddr]),
+                      Word.And(notMask, op.data[LAST(op.data^)]))
+            END;
+
+            WITH s = NEW(CompMemoryListenerSetDef.T).init() DO
+              FOR i := waddr TO lwaddr DO
+                VAR p := t.listeners[i]; BEGIN
+                  WHILE p # NIL DO EVAL s.insert(p.head); p := p.tail END
+                END
+              END;
+              
+              VAR
+                iter := s.iterate();
+                l : CompMemoryListener.T;
+              BEGIN
+                WHILE iter.next(l) DO l.callback(op) END
+              END
+            END;
+            
+            RETURN CsrAccessStatus.T.OK
+          END
       END
     |
       CsrOp.RW.R =>

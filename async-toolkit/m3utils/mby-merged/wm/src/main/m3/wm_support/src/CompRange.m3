@@ -146,4 +146,9 @@ PROCEDURE From2(lo, lim : CompAddr.T) : T =
     RETURN T { lo, CompAddr.Minus(lim,lo) }
   END From2;
 
+PROCEDURE Bits(READONLY t : T) : CARDINAL =
+  BEGIN
+    RETURN t.wid.word * CompAddr.Base + t.wid.bit
+  END Bits;
+  
 BEGIN END CompRange.

@@ -6,5 +6,6 @@ files=${WD}/hlp_top_map.rdl
 
 top_map=hlp_top_map
 
-whichtest=speedtest
+whichtest=scribble
+#whichtest=speedtest
 #whichtest=structassign
