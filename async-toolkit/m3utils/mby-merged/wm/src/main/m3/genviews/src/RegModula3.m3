@@ -59,7 +59,8 @@ CONST DeclFmt = ARRAY ProcType OF TEXT {
   "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T)",
   "PROCEDURE %s(READONLY a : %s) : CompRange.T"
   };
-      
+(* we could extend this pattern to other procedure definitions ... *)
+  
 PROCEDURE DefProc(gs     : GenState;
                   c      : RegComponent.T;
                   ofType : ProcType;
@@ -1172,6 +1173,27 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
 
     gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
     IF skipArc THEN
+
+      (* this is "the array special case" --
+
+         in this case, the current node of the type tree is not a RECORD,
+         but an ARRAY.
+
+         therefore, we CANNOT store auxiliary information in it.
+         
+         therefore, we have to do a bit more work at runtime: 
+         
+         we evaluate the base of elements 0 and 1 in the array
+
+         use that to compute the stride (in bytes)
+
+         use the byte offset of the location we want to read or write into
+         the array, DIV to find the array element of the base of the write.
+
+         then continue reading/writing by scanning array elements in
+         turn until we are past the operated-on region
+      *)
+
       IF BigInt.ToInteger(e.array.n.x) > MaxFullIter THEN
         gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
         WITH rnm = ComponentRangeName(e.comp,gs) DO
