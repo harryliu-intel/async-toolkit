@@ -2,8 +2,6 @@
 
 . builddefs.sh
 
-WD=/p/hlp/mnystroe/git/hlp-hw/src/srdl
-
 METAROOT=/p/hlp/mnystroe/git/meta-git/
 
 SVPP=${METAROOT}/rdl/svpp/AMD64_LINUX/svpp 

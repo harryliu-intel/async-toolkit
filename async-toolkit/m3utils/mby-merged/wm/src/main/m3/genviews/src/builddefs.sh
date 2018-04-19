@@ -1,3 +1,5 @@
+WD=/p/hlp/mnystroe/git/hlp-hw/src/srdl
+
 files=${WD}/hlp_top_map.rdl
 
 files=${WD}/hlp_top_map.rdl
