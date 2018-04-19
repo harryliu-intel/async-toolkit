@@ -51,7 +51,7 @@ PROCEDURE PlaceReg(at          : CompAddr.T;          (* first free place *)
      CompAddr.Plus(res.pos,res.wid)
   *)
 
-PROCEDURE Hi(x : T) : CompAddr.T;
+PROCEDURE Lim(x : T) : CompAddr.T;
   (* the next free bit *)
 
 PROCEDURE MakeField(at : CompAddr.T; width : CARDINAL) : T;
@@ -79,5 +79,7 @@ TYPE
 PROCEDURE From2(lo, lim : CompAddr.T) : T;
 
 PROCEDURE Bits(READONLY t : T) : CARDINAL;
+
+PROCEDURE Overlap(READONLY a, b : T) : BOOLEAN;
   
 END CompRange.

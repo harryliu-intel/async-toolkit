@@ -38,7 +38,7 @@ PROCEDURE Init(t : T; range : CompRange.T) : T =
   VAR
     base := range.pos;
     aBase := CompAddr.T { base.word, 0 };
-    top := CompRange.Hi(range);
+    top := CompRange.Lim(range);
     nwords : CARDINAL;
   BEGIN
     IF top.bit = 0 THEN
@@ -159,7 +159,7 @@ PROCEDURE RegisterListener(t        : T;
                            listener : CompMemoryListener.T) =
   BEGIN
     FOR w := range.pos.word TO
-             CompAddr.Minus(CompRange.Hi(range),CompAddr.FromBits(1)).word
+             CompAddr.Minus(CompRange.Lim(range),CompAddr.FromBits(1)).word
      DO
       t.listeners[w] := CompMemoryListenerList.Cons(listener, t.listeners[w])
     END
