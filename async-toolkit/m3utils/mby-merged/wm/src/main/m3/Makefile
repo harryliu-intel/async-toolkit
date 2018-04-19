@@ -30,3 +30,4 @@ clean:
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
+	find . -name AMD64_LINUX | xargs rm -rf 
