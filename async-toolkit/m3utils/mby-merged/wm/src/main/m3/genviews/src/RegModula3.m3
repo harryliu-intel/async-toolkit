@@ -434,16 +434,19 @@ PROCEDURE GenChildInit(e          : RegChild.T;
           END
         ELSE
           (* fullalign given, stride not given, mod not given, at not given *)
-          gs.put(Section.MDecl,F("      VAR first, second : CompAddr.T; BEGIN\n"));
+          (* make a throwaway "first" and "second", measure distance between,
+             then align at to that and proceed *)
+          gs.put(Section.MDecl,F("      VAR first, second : CompRange.T; BEGIN\n"));
           
           gs.put(Section.MDecl,F("        first := %s(x%s[0], CompAddr.Zero, NIL);\n",
                                  ComponentInitName(e.comp,gs),
                                  childArc));
-          gs.put(Section.MDecl,F("        second := %s(x%s[1], first, NIL);\n",
+          gs.put(Section.MDecl,F("        second := %s(x%s[1], CompRange.Hi(first), NIL);\n",
                                  ComponentInitName(e.comp,gs),
                                  childArc));
-          gs.put(Section.MDecl,F("        WITH len = CompAddr.DeltaBytes(second,first) DO\n"));
-          gs.put(Section.MDecl,F("          at := mono.increase(at,CompAddr.ModAlign(at, CompAddr.NextPower(len)));\n"));
+          gs.put(Section.MDecl,F("        <*ASSERT first # second*>\n"));
+          gs.put(Section.MDecl,F("        WITH len = CompAddr.DeltaBytes(CompRange.Hi(second),CompRange.Hi(first)) DO\n"));
+          gs.put(Section.MDecl,F("          at := CompAddr.ModAlign(at, CompAddr.NextPower(len));\n"));
           gs.put(Section.MDecl,F("          q := at\n"));
           gs.put(Section.MDecl,F("        END\n"));
           gs.put(Section.MDecl,F("      END;\n"))
@@ -959,7 +962,6 @@ PROCEDURE GenRegCsr(r  : RegReg.T;
     pnm := ComponentCsrName(r, gs);
     ttn := ComponentTypeNameInHier(r, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(r, gs, TypeHier.Addr);
-    func : TEXT;
   BEGIN
     IF gs.dumpSyms.insert(pnm) THEN RETURN END;
     gs.put(Section.MDecl,F(
