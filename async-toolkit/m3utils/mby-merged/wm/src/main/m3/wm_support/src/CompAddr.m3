@@ -24,11 +24,15 @@ PROCEDURE Minus(m, s : T) : T =
     <*ASSERT Compare(m,s) >= 0 *>
     IF s.bit > m.bit THEN
       (* borrow *)
-      DEC(h);
+      res.word := h - 1;
       res.bit := m.bit - s.bit + Base
     ELSE
       res.word := h;
       res.bit := m.bit - s.bit
+    END;
+    IF Plus(res,s) # m THEN
+      Debug.Error(F("CompAddr.Minus : internal consistency check: Plus(%s,%s) # %s",
+                  Format(res), Format(s), Format(m)))
     END;
     <*ASSERT Plus(res,s) = m*>
     RETURN res
@@ -48,6 +52,7 @@ PROCEDURE PlusBits(augend : T; bits : CARDINAL) : T =
 
 PROCEDURE ModAlign(at : T; byteMod : CARDINAL) : T =
   BEGIN
+    <*ASSERT byteMod # 0*>
     (* find next byte *)
     WHILE at.bit MOD 8 # 0 DO
       at := Plus(at, T { 0, 1 })
@@ -60,10 +65,13 @@ PROCEDURE ModAlign(at : T; byteMod : CARDINAL) : T =
 
 PROCEDURE BitMod(a : T; mod : CARDINAL) : CARDINAL =
   VAR
+    woM, baM, biM : CARDINAL;
+  BEGIN
+    <*ASSERT mod # 0*>
     woM := a.word MOD mod;
     baM := Base MOD mod;
     biM := a.bit MOD mod;
-  BEGIN
+
     (*  ( word * BITSIZE(Word.T) + bit ) MOD mod 
       =
         (  word MOD mod * BITSIZE(Word.T) MOD mod + bit MOD mod ) MOD mod
