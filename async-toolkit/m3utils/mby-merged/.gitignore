@@ -6,7 +6,6 @@
 /verif/doc/Data
 /verif/doc/Working Data
 
-
 # DVT Eclipse
 .dvt
 .project
@@ -16,12 +15,36 @@ src/.dvt
 verif/.dvt
 verif/.project
 build/
-target/
-task_area/
-results/
-regression/
+
+# BMAN generated files
+target
+results
+task_area
+regression
+*simv
+*simv.daidir/*
+*simv.vdb/*
+.acetestinfo.log
+
+# Dump related files
+vdCovLog/
+verdiLog/
+nWaveLog/
+verdilogs*
+novas.rc
+novas.conf
+signals.rc
+debussyLog
+*.fsdb
+*.fsdb*
+*.fsdb.gz
+*.vpd
+*.log
+*.log.gz
+*.log/
 LOGS/
 logs/
+*.tar.gz
 
 RELEASE_NOTES
 RELEASE_NOTES_POST
@@ -41,17 +64,13 @@ Release_logs
 *.bak/
 *.chf.macros
 *.diff
-*.fsdb
-*.fsdb*
-*.fsdb.gz
-*.tar.gz
 *.good
 *.junk
-*.junk/
+*junk
 *.local
-*.log
-*.log.gz
-*.log/
+*.db
+*.ldb
+*.pdb
 *.me
 *.new
 *.old
@@ -64,6 +83,7 @@ Release_logs
 *.saved
 *.sw?
 *.swp
+.*.swp
 *.temp
 *.tmp
 *.out
@@ -78,13 +98,41 @@ Release_logs
 *\#*
 *~
 
-vdCovLog/
-verdiLog/
-nWaveLog/
 tags
 TAGS
-verdilogs*
-novas.rc
-novas.conf
-signals.rc
+
+CVS/
+CVS/*
+SCCS/
+SCCS/*
+BitKeeper/
+BitKeeper/*
+.SYNC/
+.SYNC/*
+.svn/
+.svn/*
+*.plib
+*.gds
+*.volcano/
+*.volcano/*
+*.def
+*.lef
+*.spef
+*.spf
+*.tluplus
+*.tf
+*.nxtgrd
+*.itf
+*.ddc
+*CEL/
+*CEL/*
+*ROUTE/
+*ROUTE/*
+*FRAM
+*FRAM/*
+*LM/
+*LM/*
+*SMASH
+*SMASH/*
+
 .idea/
