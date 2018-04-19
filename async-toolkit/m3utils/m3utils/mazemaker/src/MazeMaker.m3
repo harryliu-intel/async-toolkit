@@ -9,9 +9,13 @@ PROCEDURE U(t : TEXT) =
 
 PROCEDURE CR() = BEGIN IO.Put("\n") END CR;
 
+TYPE
+  Mode = { Maze, Empty };
+  
 VAR
   rs := Scan.Int(Params.Get(1));
   cs := Scan.Int(Params.Get(2));
+  mode := Mode.Empty;
 BEGIN
   IO.Put(Fmt.Int(rs)); CR();
   IO.Put(Fmt.Int(cs)); CR();
@@ -26,9 +30,9 @@ BEGIN
           (r MOD 4 = 2 AND c = 0) OR
           (r MOD 4 = 3 AND c = 0) ) THEN
         U("g")
-      ELSIF r MOD 4 = 1 AND c # cs-1 THEN
+      ELSIF mode = Mode.Maze AND r MOD 4 = 1 AND c # cs-1 THEN
         U("x")
-      ELSIF r MOD 4 = 3 AND c # 0 THEN
+      ELSIF mode = Mode.Maze AND r MOD 4 = 3 AND c # 0 THEN
         U("x")
       ELSE 
         U("_")
