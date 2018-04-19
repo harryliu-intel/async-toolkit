@@ -4,6 +4,7 @@
 //
 // Author : Mika Nystrom <mika.nystroem@intel.com>
 // May, 2015
+// Mika Nystrom and Jin Yan <jin2.yan@intel.com> 2018
 //
 
 // careful here: 
@@ -13,6 +14,40 @@
 // particular reason to reset on rst_n, except some sort of sanity.
 // The time reset of the B side is necessary is on i_vernier_start!
 
+module tsuioA 
+  #(
+   )
+  // I/O state machine in A clock domain
+   (
+   );
+
+  casez (curstate_q)
+    AST_RESET: begin
+    end
+
+    
+  endcase
+
+endmodule
+
+module tsuioB
+  #(
+   )
+  // I/O state machine in B clock domain
+   (
+   );
+
+  casez (curstate_q)
+    BST_RESET: begin
+    end
+
+    
+  endcase
+
+endmodule
+  
+    
+  
 module sync2xdff0_x2 (
   input  logic  ck, d, se, si,
   output logic  q );

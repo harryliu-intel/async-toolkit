@@ -1,3 +1,4 @@
 crif.xml
 epl_imn_decoder.sv
 full.sv
+*.log

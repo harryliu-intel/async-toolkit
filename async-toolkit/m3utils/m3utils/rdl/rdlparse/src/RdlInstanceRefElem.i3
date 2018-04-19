@@ -1,15 +1,20 @@
 INTERFACE RdlInstanceRefElem;
 IMPORT RdlNum;
+IMPORT Word;
 
 TYPE
-  T = ROOT BRANDED OBJECT END;
+  T = ROOT BRANDED Brand OBJECT END;
 
-  Id = T BRANDED OBJECT id : TEXT END;
+  Id = T BRANDED Brand & " Id" OBJECT id : TEXT END;
 
-  Brack = T BRANDED OBJECT id : TEXT; idx : RdlNum.T END;
+  Brack = T BRANDED Brand & " Brack" OBJECT id : TEXT; idx : RdlNum.T END;
 
 CONST Brand = "RdlInstanceRefElem";
 
-      Equal : PROCEDURE (a, b : T) : BOOLEAN = NIL;
+PROCEDURE Equal(a, b : T) : BOOLEAN;
+
+PROCEDURE Hash(a : T) : Word.T;
+
+PROCEDURE Format(a : T) : TEXT;
 
 END RdlInstanceRefElem.

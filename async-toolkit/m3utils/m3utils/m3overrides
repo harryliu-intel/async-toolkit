@@ -169,5 +169,6 @@ override("ohailog", TOP & "/ohai")
 
 override ("spicelib", TOP & "/spice")
 override ("spicebuilderlib", TOP & "/tcam")
-override ("varlib", TOP & "/tcam")
 override ("hbddops", TOP & "/btc")
+override ("rdlparse", TOP & "/rdl")
+override ("varlib", TOP & "/tcam")

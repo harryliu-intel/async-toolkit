@@ -22,6 +22,7 @@ CONST
   
 VAR
   wr := Stdio.stdout;
+  doDebug := Debug.DebugThis("svpp");
 
 CONST
   incTgt = "`include";
@@ -107,7 +108,9 @@ PROCEDURE OpenFile(pn : Pathname.T) : Rd.T RAISES { OSError.E } =
     WHILE p # NIL DO
       TRY
         WITH fn = Pathname.Join(p.head, pn) DO
-          Debug.Out(F("Attempting to open path \"%s\"",fn));
+          IF doDebug THEN
+            Debug.Out(F("Attempting to open path \"%s\"",fn))
+          END;
           RETURN FileRd.Open(fn)
         END
       EXCEPT

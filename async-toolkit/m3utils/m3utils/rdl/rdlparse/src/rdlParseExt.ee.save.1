@@ -4,8 +4,6 @@
 %module {
 IMPORT rdlLexExt;
 IMPORT Debug;
-IMPORT Fmt;
-
 IMPORT RdlPredefProperty;
 IMPORT RdlPropertyModifier;
 IMPORT RdlPropertyComponent;
@@ -17,6 +15,7 @@ IMPORT RdlPropertyRefType;
 IMPORT RdlComponentDef, RdlComponentDefClass;
 IMPORT RdlPropertyComponentDisjunction;
 IMPORT RdlNum;
+IMPORT RdlStr;
 IMPORT RdlPropertyDefault;
 IMPORT RdlPropertyType;
 IMPORT RdlPropertyBody;
@@ -36,15 +35,18 @@ IMPORT RdlExplicitComponentInst;
 IMPORT RdlPropertySymtab;
 IMPORT RdlConcatElem;
 IMPORT RdlConcatElemList;
+IMPORT RdlPropertyAssign;
 IMPORT RdlExplicitPropertyAssign;
 IMPORT RdlPostPropertyAssign;
 IMPORT RdlInstanceRef;
 IMPORT RdlInstanceRefElem;
 IMPORT RdlInstanceRefElemSeq;
 IMPORT RdlProperty;
+IMPORT RdlPropertyAssignList;
 IMPORT RdlPropertyAssignRhs;
 IMPORT RdlPropertyRvalueConstant;
 IMPORT RdlPropertyDef;
+IMPORT RdlRootElem;
 IMPORT RdlRootElemList;
 IMPORT RdlRootElemLstRecord;
 
@@ -128,13 +130,26 @@ root:
          }
 
 root_elem_list: { val : RdlRootElemLstRecord.T }
-  empty { WITH newTab = NEW(RdlPropertySymtab.T,
-                            up := NIL,
-                            arc := NIL).init(),
+  elem { WITH newTab = NEW(RdlPropertySymtab.T, up := NIL).init(),
               newDefTab = NEW(RdlComponentDefSymtab.T, up := NIL).init(overwriteOK := TRUE) DO
-          $$ := RdlRootElemLstRecord.T { NIL,
+          TYPECASE $1 OF RdlPropertyAssignClass.Explicit(ex) =>
+            newTab.define(ex.x.property,ex.x)
+          ELSE (* skip *)
+          END;
+          TYPECASE $1 OF RdlComponentDef.T(cd) =>
+            IF cd.id # NIL THEN
+              newDefTab.define(cd.id, cd)
+            END
+          ELSE (*skip*)
+          END;
+          $$ := RdlRootElemLstRecord.T { RdlRootElemList.List1($1),
                                          newTab,
                                          newDefTab };
+          TYPECASE $1 OF RdlComponentDef.T(cd) =>
+            cd.list.propTab.up := newTab;
+            cd.list.defTab.up := newDefTab
+          ELSE (* skip *)
+          END
          END(*WITH*)
        }
   list {  TYPECASE $1 OF
@@ -142,37 +157,21 @@ root_elem_list: { val : RdlRootElemLstRecord.T }
             $2.val.propTab.define(ex.x.property,ex.x)
           ELSE (* skip *)
           END;
-          
-          VAR
-            newLst := RdlRootElemList.Cons($1, $2.val.lst);
-          BEGIN
-            TYPECASE $1 OF RdlComponentDef.T(cd) =>
-              $2.val.defTab.define(cd.id, cd);
-              cd.list.propTab.up := $2.val.propTab;
-              cd.list.defTab.up := $2.val.defTab;
-              cd.list.defTab.arc := cd.id;
-              IF cd.anonInstElems # NIL AND cd.anonInstElems.list # NIL THEN
-                VAR
-                  n : RdlExplicitComponentInst.T; 
-                BEGIN
-                  (* handle direct instances *)
-                  n := NEW(RdlExplicitComponentInst.T,
-                     haveOrigin := FALSE,
-                     alias := NIL,
-                     id := cd.id,
-                     list := cd.anonInstElems.list);
-                  newLst := RdlRootElemList.Cons(n, newLst);
-                END
-              ELSE (* skip *)
-              END
-            ELSE
-            END;
-            $$ := RdlRootElemLstRecord.T {
-                 newLst,
-                 $2.val.propTab,
-                 $2.val.defTab
-               };
-
+          TYPECASE $1 OF RdlComponentDef.T(cd) =>
+            IF cd.id # NIL THEN
+              $2.val.defTab.define(cd.id, cd)
+            END
+          ELSE (*skip*)
+          END;
+          $$ := RdlRootElemLstRecord.T {
+                  RdlRootElemList.Cons($1, $2.val.lst),
+                  $2.val.propTab,
+                  $2.val.defTab
+                };
+          TYPECASE $1 OF RdlComponentDef.T(cd) =>
+            cd.list.propTab.up := $2.val.propTab;
+            cd.list.defTab.up := $2.val.defTab
+          ELSE (* skip *)
           END
       }
 
@@ -247,12 +246,9 @@ alias_defn: { val : TEXT }
   single { $$ := $1 }
 
 component_def_elem: { val : RdlComponentDefElem.T }
-  component_def { $$ := NEW(RdlComponentDefElem.ComponentDef,
-                            componentDef := $1) }
-  component_inst { $$ := NEW(RdlComponentDefElem.ComponentInst,
-                             componentInst := $1) }
-  property_assign { $$ := NEW(RdlComponentDefElem.PropertyAssign,
-                              propertyAssign := $1) }
+  component_def { $$ := NEW(RdlComponentDefElem.ComponentDef, componentDef := $1) }
+  component_inst { $$ := NEW(RdlComponentDefElem.ComponentInst, componentInst := $1) }
+  property_assign { $$ := NEW(RdlComponentDefElem.PropertyAssign, propertyAssign := $1) }
   enum_def { $$ := NEW(RdlComponentDefElem.EnumDef, enumDef := $1) }
   
 component_def_lst: { val : RdlComponentDefLstRecord.T }
@@ -260,70 +256,29 @@ component_def_lst: { val : RdlComponentDefLstRecord.T }
               newDefTab = NEW(RdlComponentDefSymtab.T).init(overwriteOK := TRUE) DO
              $$ := RdlComponentDefLstRecord.T {
                       NIL,
-                      newTab, newDefTab,
-                      0 };
+                      newTab, newDefTab };
           END
          }
   lst    { TYPECASE $1 OF RdlComponentDefElem.PropertyAssign(pa) =>
                TYPECASE pa.propertyAssign OF RdlPropertyAssignClass.Explicit(ex) =>
                  $2.val.propTab.define(ex.x.property,ex.x)
-               ELSE (*skip*)
+               ELSE
+                 (*skip*)
                END
-           ELSE (* skip *)
-           END;
-            
-           VAR
-             newLst := RdlComponentDefElemList.Cons($1, $2.val.lst);
-           BEGIN
-             TYPECASE $1 OF RdlComponentDefElem.ComponentDef(cd) =>
-                WITH def = cd.componentDef DO
-                  IF def.id = NIL THEN
-                    def.id := "ANONYMOUS___" & Fmt.Int($2.val.anonCnt);
-                    INC($2.val.anonCnt);
-                  END;
-                  $2.val.defTab.define(def.id,def);
-                  def.list.propTab.up := $2.val.propTab;
-                  def.list.defTab.up := $2.val.defTab;
-                  def.list.defTab.arc := def.id;
-                  <*ASSERT def.list.defTab.arc # NIL*>
-                  IF def.anonInstElems# NIL AND def.anonInstElems.list # NIL THEN
-                    VAR
-                      n : RdlExplicitComponentInst.T; 
-                    BEGIN
-                      (* handle direct instances *)
-                      n := NEW(RdlExplicitComponentInst.T,
-                         haveOrigin := FALSE,
-                         alias := NIL,
-                         id := def.id,
-                         list := def.anonInstElems.list);
-
-                      (* we have given the anonymous instances explicit
-                         names, so we can now delete them,
-
-                         except if its a FIELD!
-
-                         ugly...
-                       *)
-                      IF def.type # RdlComponentDefType.T.field THEN
-                        def.anonInstElems := NIL
-                      END;
-                      newLst := RdlComponentDefElemList.Cons(
-                                  NEW(RdlComponentDefElem.ComponentInst,
-                                      componentInst := n),
-                                newLst);
-                    END
-                  ELSE (* skip *)
-                  END
-                END(*WITH*)
-              ELSE (* skip *)
-              END(*TYPECASE*);
-              $$ := RdlComponentDefLstRecord.T {
-                       newLst, 
+            ELSE (* skip *)
+            END;
+            $$ := RdlComponentDefLstRecord.T {
+                       RdlComponentDefElemList.Cons($1, $2.val.lst),
                        $2.val.propTab,
-                       $2.val.defTab,
-                       $2.val.anonCnt }
+                       $2.val.defTab};
+            TYPECASE $1 OF RdlComponentDefElem.ComponentDef(cd) =>
+               WITH def = cd.componentDef DO
+                 IF def.id # NIL THEN $2.val.defTab.define(def.id,def) END;
+                 def.list.propTab.up := $2.val.propTab;
+                 def.list.defTab.up := $2.val.defTab
+               END
+            ELSE (* skip *)
             END
-
           }
   
 component_inst_elem_list: { val : RdlComponentInstElemList.T }
@@ -444,12 +399,11 @@ property_definition: { val : RdlPropertyDef.T }
     END;
     EVAL self.userDefProperties.put($1, $2);
     $$ := NEW(RdlPropertyDef.T, id := $1, body := $2)
-  }
-
+}
   redefinition {
                EVAL self.userDefProperties.put($1, $2);
                $$ := NEW(RdlPropertyDef.T, id := $1, body := $2);
-  }       
+}       
 
 component_def: { val: RdlComponentDef.T }
   id_anon  { $$ := NEW(RdlComponentDef.T, type := $1, id := $2, list := $3, anonInstElems := $4) }

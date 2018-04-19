@@ -5,7 +5,7 @@ root:
 
 root_elem_list:
   list                     root_elem root_elem_list
-  elem                     root_elem
+  empty
 
 root_elem:
   component                component_def
@@ -23,7 +23,7 @@ opt_anonymous_inst_elems:
   no
 
 component_def_lst:
-  single                   component_def_elem
+  empty
   lst                      component_def_elem component_def_lst
 
 component_def_elem:

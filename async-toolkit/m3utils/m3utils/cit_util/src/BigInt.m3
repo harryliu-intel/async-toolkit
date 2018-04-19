@@ -154,18 +154,33 @@ PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 
 PROCEDURE New(x : INTEGER) : T =
   VAR
-    c := ABS(x);
+    c : CARDINAL;
     s := NEW(NSeq).init(1);
-  BEGIN 
+    corr : [-1..0] := 0;
+    res : T;
+  BEGIN
+    IF x = FIRST(INTEGER) THEN
+      (* very special case! can't represent ABS(FIRST(INTEGER)) as a CARDINAL *)
+      corr := -1; (* remember correction for later *)
+      x := x + 1; (* bring it in range *)
+    END;
+    
+    c := ABS(x);
     s.a[0] := c;
     s.siz := 1;
 
     Renormalize(s);
 
     IF x >= 0 THEN
-      RETURN NEW(T, sign := 1, rep := s)
+      res := NEW(T, sign := 1, rep := s)
     ELSE
-      RETURN NEW(T, sign := -1, rep := s)
+      res := NEW(T, sign := -1, rep := s)
+    END;
+
+    IF corr = -1 THEN (* fix up special case of FIRST(INTEGER) *)
+      RETURN Sub(res, One)
+    ELSE
+      RETURN res
     END
   END New;
 
@@ -477,7 +492,29 @@ PROCEDURE ToLongReal(a : T) : LONGREAL =
     END;
   END ToLongReal;
 
+PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange } =
+  BEGIN
+    IF Compare(a, FirstInt) = -1 OR
+      Compare(a, LastInt) = +1 THEN
+      RAISE OutOfRange
+    END;
+    IF a.rep.siz = 0 THEN RETURN 0; END;
+    VAR
+      res := a.rep.a[a.rep.siz-1];
+    BEGIN
+      FOR i := a.rep.siz - 2 TO 0 BY -1 DO
+        res := res * Base;
+        res := res + a.rep.a[i]
+      END;
+      RETURN res;
+    END;
+  END ToInteger;
+
+VAR
+  FirstInt, LastInt : T;
 BEGIN 
   Zero := New(0);
   One := New(1);
+  FirstInt := New(FIRST(INTEGER));
+  LastInt := New(LAST(INTEGER));
 END BigInt.
