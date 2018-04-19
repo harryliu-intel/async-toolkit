@@ -657,9 +657,16 @@ The principle is illustrated in figure~\ref{fig:beat}, where one clock is runnin
 
 \ins_epsfig{6in}{beat}{Two beating clocks.}
 
-The important observation is that for suitably chosen $p_A$, $p_B$, it is the case that $GCD(p_A) \ll p_A, p_B$.  The technique is normally credited to Pierre Vernier, who published it in 1631\cite{vernier-orig}, and it is commonly used
-in the construction of calipers with $p_A=1000\mu$m and $p_B=900\mu$m so that the precision is $GCD(p_A,p_B)=100\mu$m, yet the instrument can easily be read by the unaided eye.
-\rotins_epsfig_listcaption{4in}{Principle_vernier}{Illustration of operation of vernier calipers.  Source: Wikipedia.}{270}{Vernier calipers.}
+The important observation is that for suitably chosen $p_A$, $p_B$, it
+is the case that $GCD(p_A) \ll p_A, p_B$.  The technique is normally
+credited to Pierre Vernier, who published it in
+1631\cite{vernier-orig}, and it is commonly used in the construction
+of calipers, most commonly with $p_A=1000\mu$m and $p_B=900\mu$m so
+that the precision is $GCD(p_A,p_B)=100\mu$m, but existing with precisions down to $20\mu$m, yet the instrument can
+easily be read by the unaided eye.  See figure~\ref{fig:Principle_vernier}.
+\rotins_epsfig_listcaption{3.9in}{Principle_vernier}{Illustration of
+  operation of vernier calipers.  Source: Wikipedia.}{0}{Vernier
+  calipers.}
 
 
 \subsubsection{Total Measurement Error}
@@ -1076,7 +1083,7 @@ Given this definition, we can implement the algorithms in
 section~\ref{sec:nonideal} using $\prec$ and $\succeq$ in place of $<$
 and $\ge$, and wrapping in the counters will be handled correctly.
 
-One RTL for $\prec$ is as follows, where {\tt RAT\_PREC\_BITS} is $N$ and the arithmetic is $\mod 2^N$:
+One RTL for $\prec$ is as follows, where {\tt RAT\_PREC\_BITS} is $N$ and the arithmetic is $\mod\,2^N$:
 \begin{verbatim}
   function automatic logic right_of(input logic [RAT_PREC_BITS-1:0] x,y);
     right_of = (~(((x-y)>>(RAT_PREC_BITS-1))&1'b1));
@@ -1212,7 +1219,7 @@ as $A$ clock) integer number of vernier time units.
     \caption{Some Ethernet speeds of interest.}\label{tab:ethspd}
   \end{table}
 }
-\subsection{Extension for faster $B$ clock}
+\subsection{Extension for faster ``B'' clock}
 
 The given design can only produce a mark on every other $A$ clock.  We
 can expect the $A$ clock to run 800--1200~MHz without special
@@ -1349,7 +1356,7 @@ we have is a synchronizer and a moderately deep FIFO.
   1,188,050,557,970~ps.  The final significant figure~``7'' is given
   with a precision of 2 (20~ps) and an RMS error of 3.5 (35~ps),
   assuming a perfect clock.  In reality, accuracy is limited because
-  the 10-MHz master clock, last calibrated in 1988, is not known to be
+  the 10-MHz master clock (OCXO), last calibrated in 1988, is not known to be
   accurate to better than 20~ppb or about 23~ns over an interval as
   long as the one displayed.  The machine below the 5370A is a
   HP~5359A Time Synthesizer, a high-precision pulse generator, using
@@ -1363,7 +1370,7 @@ Acceleration Complex of the Snow Ridge and Icelake-D products.  The
 main contribution we are emphasizing for the present design, the
 Rockvale PHY to be used in the Mount Steller Smart NIC, is the much
 simplified interface with explicit calculation of time delays and a
-reduced need for integrators to understand the internals of our
+reduced need for integration teams to understand the internals of our
 design.  We hope that this emphasis on usability will lead other teams
 to adopt our design and learn from our experiences.
 
