@@ -26,6 +26,7 @@ IMPORT Text;
 IMPORT RegComponent;
 IMPORT OSError, Wr, AL;
 IMPORT Thread;
+IMPORT Pathname;
 
 <*FATAL Thread.Alerted*>
 
@@ -311,12 +312,16 @@ VAR
   rd     := Stdio.stdin;
   tgtmap : RegAddrmap.T := NIL;
   tgtmapNm : TEXT;
+  outDir : Pathname.T := "build/src";
 BEGIN
   (* command-line args: *)
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
       IF pp.keywordPresent("-top") THEN
         tgtmapNm := pp.getNext()
+      END;
+      IF pp.keywordPresent("-o") THEN
+        outDir := pp.getNext()
       END;
       
       pp.skipParsed();
@@ -347,7 +352,7 @@ BEGIN
   BEGIN
     FOR i := FIRST(Tgt.Phase) TO LAST(Tgt.Phase) DO
       TRY
-        rm3.write("build/src", i)
+        rm3.write(outDir, i)
       EXCEPT
         OSError.E(x) =>
         Debug.Error("Error in " &
