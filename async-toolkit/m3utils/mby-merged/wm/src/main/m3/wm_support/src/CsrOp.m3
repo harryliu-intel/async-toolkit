@@ -302,5 +302,8 @@ PROCEDURE DoWideField(VAR op : T; VAR d : ARRAY OF [0..1]; a : CompRange.T) =
       END
     END
   END DoWideField;
- 
+
+PROCEDURE LowAddr(t : T) : CompAddr.T =
+  BEGIN RETURN CompAddr.T { t.at, t.fv } END LowAddr;
+  
 BEGIN END CsrOp.
