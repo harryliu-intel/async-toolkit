@@ -25,4 +25,6 @@ TYPE
 
 CONST Brand = "RdlPropertyAssignRhs";
 
+PROCEDURE Format(t : T) : TEXT;
+  
 END RdlPropertyAssignRhs.

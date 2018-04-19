@@ -20,6 +20,7 @@ PROCEDURE New(x : INTEGER) : T;
 PROCEDURE Div(a, b : T) : T;
 PROCEDURE Mul(a, b : T) : T;
 PROCEDURE Add(a, b : T) : T;
+PROCEDURE Sub(a, b : T) : T;
 PROCEDURE Abs(a : T) : T;
 PROCEDURE Mod(a, b : T) : T;
 PROCEDURE Sign(a : T) : CompRet;
@@ -30,7 +31,10 @@ VAR (* CONST *) Zero, One : T;
 
 PROCEDURE Hash(a : T) : Word.T;
 
+EXCEPTION OutOfRange;
+  
 PROCEDURE ToLongReal(a : T) : LONGREAL;
+PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange };
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
 PROCEDURE Divide(a, b : T; VAR q, r : T);

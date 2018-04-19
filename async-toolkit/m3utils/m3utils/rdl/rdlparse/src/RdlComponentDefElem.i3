@@ -2,6 +2,7 @@ INTERFACE RdlComponentDefElem;
 IMPORT RdlComponentDef;
 IMPORT RdlEnumDef;
 IMPORT RdlExplicitComponentInst;
+IMPORT RdlPropertyAssign;
 
 TYPE
   T = ROOT BRANDED OBJECT END;
@@ -15,6 +16,7 @@ TYPE
   END;
 
   PropertyAssign = T BRANDED OBJECT
+    propertyAssign : RdlPropertyAssign.T;
   END;
 
   EnumDef = T BRANDED OBJECT

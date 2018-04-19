@@ -20,6 +20,9 @@ derived_interface ("RdlComponentDefType", VISIBLE)
 derived_interface ("RdlOrigin",VISIBLE)
 derived_interface ("RdlPropertyRefType",VISIBLE)
 
+template("symtab")
+Generic_module("Symtab")
+
 Interface ("RdlRootElem")
 Interface ("RdlComponentDef")
 List ("RdlComponentDef", "RdlComponentDef")
@@ -54,23 +57,37 @@ Interface ("RdlAnonComponentInstElems")
 
 Interface ("RdlExplicitComponentInst")
 
-Interface ("RdlExplicitPropertyAssign")
+Module    ("RdlExplicitPropertyAssign")
 Interface ("RdlPostPropertyAssign")
-Interface ("RdlInstanceRef")
-Interface ("RdlPropertyAssignRhs")
+Module    ("RdlInstanceRef")
+Module    ("RdlPropertyAssignRhs")
 
-Interface ("RdlInstanceRefElem")
+Module ("RdlInstanceRefElem")
 Sequence ("RdlInstanceRefElem", "RdlInstanceRefElem")
 Interface ("RdlPropertyRvalueConstant")
 Interface ("RdlConcatElem")
 List ("RdlConcatElem","RdlConcatElem")
 
-Interface ("RdlProperty")
+Module ("RdlProperty")
 Interface ("RdlPropertyDef")
 Interface ("RdlRootElem")
 List ("RdlRootElem", "RdlRootElem")
+Interface ("RdlRootElemLstRecord")
+
+Table("RdlExplicitPropertyAssign", "RdlProperty", "RdlExplicitPropertyAssign")
+Table("RdlPostPropertyAssign", "RdlInstanceRef", "RdlPostPropertyAssign")
+
+%Module ("RdlPropertySymtab")
+Symtab("RdlProperty", "RdlProperty", "RdlExplicitPropertyAssign", "RdlExplicitPropertyAssignTbl")
+
+Table("TextRdlComponentDef", "Text", "RdlComponentDef")
+Module("TextFormat")
+Symtab("RdlComponentDef", "TextFormat", "RdlComponentDef", "TextRdlComponentDefTbl")
+
+Module ("RdlComponentDefLstRecord")
 
 %implementation ("Main")
+
 library("rdlparse")
 
 %program ("parserdl")
