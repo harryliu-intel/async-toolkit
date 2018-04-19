@@ -27,6 +27,7 @@ IMPORT RegComponent;
 IMPORT OSError, Wr, AL;
 IMPORT Thread;
 IMPORT Pathname;
+IMPORT FS;
 
 <*FATAL Thread.Alerted*>
 
@@ -352,6 +353,13 @@ BEGIN
   BEGIN
     FOR i := FIRST(Tgt.Phase) TO LAST(Tgt.Phase) DO
       TRY
+
+        TRY
+          <*UNUSED*>VAR dummy := FS.Iterate(outDir); BEGIN END
+        EXCEPT
+          OSError.E(x) => Debug.Error(F("Problem opening directory \"%s\" : OSError.E : %s", outDir, AL.Format(x)))
+        END;
+        
         rm3.write(outDir, i)
       EXCEPT
         OSError.E(x) =>
