@@ -1,4 +1,4 @@
-MODULE Main;
+MODULE Scribble EXPORTS Main;
 IMPORT mby_top_map AS Map;
 IMPORT mby_top_map_addr AS MapAddr;
 IMPORT IO;
@@ -39,4 +39,4 @@ BEGIN
 
   Debug.Out(Fmt.F("%s narrow writes per second", Fmt.LongReal(FLOAT(NumWrites,LONGREAL)/(time1-time0), prec := 6)));
 
-END Main.
+END Scribble.

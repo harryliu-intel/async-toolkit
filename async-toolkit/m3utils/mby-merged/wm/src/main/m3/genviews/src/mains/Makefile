@@ -1,0 +1,18 @@
+# TESTS := scribble speedtest structassign
+CM3=$(shell ToolConfig.pl get_tool_exec cm3)
+
+SCRIBBLE = scribble/AMD64_LINUX/scribble
+SPEEDTEST = speedtest/AMD64_LINUX/speedtest
+STRUCTASSIGN = structassign/AMD64_LINUX/structassign
+
+all: $(SCRIBBLE) $(SPEEDTEST) $(STRUCTASSIGN)
+
+$(SCRIBBLE):
+	cd scribble && $(CM3) -x
+$(SPEEDTEST):
+	cd speedtest && $(CM3) -x
+$(STRUCTASSIGN):
+	cd structassign && $(CM3) -x
+
+clean:
+	find . -name AMD64_LINUX | xargs rm -rf 

@@ -9,10 +9,12 @@ GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/.done
 
-TEST_TARG=$(GENVIEWS_ROOT)/src/build/AMD64_LINUX/testme
+# TEST_TARG=$(GENVIEWS_ROOT)/src/build/AMD64_LINUX/testme
 
-test: $(TEST_TARG)
-	$(TEST_TARG)
+# test: $(TEST_TARG)
+# 	$(TEST_TARG)
+mby_mains: $(GENVIEWS)
+	$(MAKE) -C $(GENVIEWS_ROOT)/src/mains
 
 $(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*)
 	pushd $(WM_SUPPORT_ROOT)/src && $(CM3) -x

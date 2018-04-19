@@ -1,4 +1,4 @@
-MODULE Main;
+MODULE Speedtest EXPORTS Main;
 IMPORT mby_top_map AS Map;
 IMPORT mby_top_map_addr AS MapAddr;
 IMPORT IO;
@@ -83,4 +83,4 @@ BEGIN
 
   END;
   Thread.Pause(0.0d0);
-END Main.
+END Speedtest.
