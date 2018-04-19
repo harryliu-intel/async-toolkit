@@ -1170,8 +1170,10 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
       childArc := "." & M3Camel(e.nm,debug := FALSE);
     END;
 
+    gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
     IF skipArc THEN
       IF BigInt.ToInteger(e.array.n.x) > MaxFullIter THEN
+        gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
         WITH rnm = ComponentRangeName(e.comp,gs) DO
           gs.mdecl("    VAR\n");
           gs.mdecl("      r0 := %s(a[0]).pos;\n",rnm);
@@ -1184,7 +1186,7 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
           gs.mdecl("      IF CompAddr.Compare(opLo,r0)<1 THEN\n");
           gs.mdecl("        start := 0\n");
           gs.mdecl("      ELSE\n");
-          gs.mdecl("        offB := CompAddr.DeltaBytes(opLo,r0);\n");
+          gs.mdecl("        offB := CompAddr.DeltaBytes(opLo,r0,truncOK := TRUE);\n");
           gs.mdecl("        start := offB DIV stride\n");
           gs.mdecl("      END;\n");
           gs.mdecl("      FOR i := start TO %s-1 DO\n", BigInt.Format(e.array.n.x));
@@ -1200,12 +1202,14 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
           gs.mdecl("    END\n")
         END
       ELSE
+        gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
         gs.mdecl("    %s\n",FmtArrFor(e.array));
         gs.mdecl("      %s(t[i],a[i],op)\n", ComponentCsrName(e.comp,gs));
         gs.mdecl("    END\n")
       END;
     ELSE
-      IF e.array = NIL THEN
+     gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
+     IF e.array = NIL THEN
         gs.mdecl(
                "      | %s => %s(t%s,a%s,op);\n",
                  Fmt.Int(ccnt),

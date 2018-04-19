@@ -85,7 +85,7 @@ PROCEDURE FromBytes(bytes : CARDINAL) : T =
 PROCEDURE FromBits(bits : CARDINAL) : T =
   BEGIN RETURN PlusBits(Zero, bits) END FromBits;
 
-PROCEDURE DeltaBytes(a, b : T) : CARDINAL =
+PROCEDURE DeltaBytes(a, b : T; truncOK : BOOLEAN) : CARDINAL =
   VAR
     dw := a.word - b.word;
     db := a.bit  - b.bit;
@@ -94,7 +94,7 @@ PROCEDURE DeltaBytes(a, b : T) : CARDINAL =
     IF    delta < 0 THEN
       Debug.Error(F("Negative address delta %s - %s", Format(a), Format(b)));
       <*ASSERT FALSE*>
-    ELSIF delta MOD 8 # 0 THEN
+    ELSIF NOT truncOK AND delta MOD 8 # 0 THEN
       Debug.Error(F("Bits remainder in address delta %s - %s", Format(a), Format(b)));
       <*ASSERT FALSE*>
     ELSE
