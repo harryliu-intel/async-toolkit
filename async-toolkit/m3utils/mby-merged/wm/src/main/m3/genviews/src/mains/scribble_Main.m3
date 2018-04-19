@@ -1,6 +1,6 @@
 MODULE Main;
-IMPORT hlp_top_map AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
+IMPORT mby_top_map AS Map;
+IMPORT mby_top_map_addr AS MapAddr;
 IMPORT IO;
 IMPORT CompAddr;
 IMPORT Fmt;
