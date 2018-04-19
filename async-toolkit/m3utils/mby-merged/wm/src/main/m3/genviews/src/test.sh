@@ -6,7 +6,7 @@ WD=${MODEL_ROOT}/tools/srdl/mby
 export PERL5LIB=$MODEL_ROOT/tools/srdl
 . builddefs.sh
 
-METAROOT=/p/hlp/mnystroe/git/meta-git/
+METAROOT=`ToolConfig.pl get_tool_path meta`
 
 SVPP=${METAROOT}/rdl/svpp/AMD64_LINUX/svpp 
 PERLFE=${METAROOT}/perlfe/AMD64_LINUX/perlfe
