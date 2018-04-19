@@ -4,6 +4,6 @@ files=${WD}/mby_top_map.rdl
 
 top_map=mby_top_map
 
-whichtest=scribble
-#whichtest=speedtest
+#whichtest=scribble
+whichtest=speedtest
 #whichtest=structassign
