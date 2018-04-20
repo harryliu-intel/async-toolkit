@@ -45,8 +45,8 @@ PROCEDURE PlaceReg(at          : CompAddr.T;
     RETURN T { lo, CompAddr.PlusBits(lo, regwidth) }
   END PlaceReg;
 
-PROCEDURE Hi(x : T) : CompAddr.T =
-  BEGIN RETURN CompAddr.Plus(x.pos, x.wid) END Hi;
+PROCEDURE Lim(x : T) : CompAddr.T =
+  BEGIN RETURN CompAddr.Plus(x.pos, x.wid) END Lim;
 
 PROCEDURE MakeField(at : CompAddr.T; width : CARDINAL) : T =
   BEGIN
@@ -58,7 +58,7 @@ PROCEDURE Format(READONLY a : T) : TEXT =
     RETURN F("{ %s + %s -> %s }",
              CompAddr.Format(a.pos, bytes := FALSE),
              CompAddr.Format(a.wid, bytes := FALSE),
-             CompAddr.Format(Hi(a), bytes := FALSE))
+             CompAddr.Format(Lim(a), bytes := FALSE))
   END Format;
 
 REVEAL
@@ -87,10 +87,10 @@ PROCEDURE IncreaseM(m : Monotonic; from : CompAddr.T; to : T) : CompAddr.T =
     IF m.first THEN
       m.first := FALSE;
       m.min := to.pos;
-      m.max := Hi(to)
+      m.max := Lim(to)
     ELSE
       m.min := CompAddr.Min(m.min,to.pos);
-      m.max := CompAddr.Max(m.max,Hi(to))
+      m.max := CompAddr.Max(m.max,Lim(to))
     END;
     
     m.seq.addhi(to.pos);
@@ -103,7 +103,7 @@ PROCEDURE IncreaseM(m : Monotonic; from : CompAddr.T; to : T) : CompAddr.T =
       m.ok := FALSE
     END;
     m.prev := to;
-    RETURN Hi(to)
+    RETURN Lim(to)
   END IncreaseM;
 
 PROCEDURE IsokM(m : Monotonic) : BOOLEAN =
@@ -146,4 +146,21 @@ PROCEDURE From2(lo, lim : CompAddr.T) : T =
     RETURN T { lo, CompAddr.Minus(lim,lo) }
   END From2;
 
+PROCEDURE Bits(READONLY t : T) : CARDINAL =
+  BEGIN
+    RETURN t.wid.word * CompAddr.Base + t.wid.bit
+  END Bits;
+
+PROCEDURE Overlap(READONLY a, b : T) : BOOLEAN =
+  BEGIN
+    WITH     aLow = a.pos,
+             aLim = Lim(a),
+             bLow = b.pos,
+             bLim = Lim(b) DO
+      (* aLow < bLim AND aLim > bLow *)
+      RETURN CompAddr.Compare(aLow,bLim) = -1 AND
+             CompAddr.Compare(bLow,aLim) = -1
+    END
+  END Overlap;
+  
 BEGIN END CompRange.

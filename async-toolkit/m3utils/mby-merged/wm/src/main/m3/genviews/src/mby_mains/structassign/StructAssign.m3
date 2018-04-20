@@ -1,6 +1,6 @@
-MODULE Main;
-IMPORT hlp_top_map AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
+MODULE StructAssign EXPORTS Main;
+IMPORT mby_top_map AS Map;
+IMPORT mby_top_map_addr AS MapAddr;
 IMPORT IO;
 IMPORT CompAddr;
 IMPORT Fmt;
@@ -35,4 +35,4 @@ BEGIN
        where x is something other than u.  For example "updater" or "uobj".
     *)
   END
-END Main.
+END StructAssign.

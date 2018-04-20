@@ -1,0 +1,5 @@
+import ("libm3")
+import ("wm_support")
+include ("m3makefile.maps")
+library ("THELIB")
+

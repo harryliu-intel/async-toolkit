@@ -38,7 +38,8 @@ PROCEDURE FromBytes(bytes : CARDINAL) : T;
 
 PROCEDURE FromBits(bits : CARDINAL) : T;
 
-PROCEDURE DeltaBytes(a, b : T) : CARDINAL;
+PROCEDURE DeltaBytes(a, b : T; truncOK := FALSE) : CARDINAL;
+  (* if truncOK then OK to throw away bits offset *)
 
 PROCEDURE NextPower(q : CARDINAL) : CARDINAL;
   (* round up to next power of 2 *)
