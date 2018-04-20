@@ -51,6 +51,8 @@ PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T;
 PROCEDURE Hi(t : T) : CompAddr.T;
   (* return index of first bit not written *)
 
+PROCEDURE LowAddr(t : T) : CompAddr.T;
+
 PROCEDURE DoField(VAR op : T; d : Word.T; READONLY a : CompRange.T) : Word.T;
   (* given a field residing at a, containing d, execute op against
      the field and return the post-write contents of the field *)
