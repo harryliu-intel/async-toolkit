@@ -354,6 +354,11 @@ public class DirectiveTable {
         registerDirective(CSP, SYNCHRONIZE_CHANNELS, arrayify(WIDE_CHANNEL_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CSP, SLACKER_TIME, CSP_LVALUE, FLOAT_TYPE, new Float(0));
         registerDirective(SUBCELL, SLACKER_TIME, INSTANCE_TYPE, FLOAT_TYPE, new Float(0));
+        registerDirective(CSP, SLACKER_TIME_INPUTS, FLOAT_TYPE, new Float(0));
+        registerDirective(CSP, SLACKER_TIME_OUTPUTS, FLOAT_TYPE, new Float(0));
+        registerDirective(CSP, LATENCY_PER_SLACK, FLOAT_TYPE, new Float(1.0));
+        registerDirective(CSP, LATENCY_PER_SLACK, WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(1));
+        registerDirective(CSP, CYCLE_TIME, FLOAT_TYPE, new Float(10));
 
         // see bug 6085
         registerDirective(CSP, STRICT_VARS, BOOLEAN_TYPE, Boolean.FALSE);
@@ -377,6 +382,7 @@ public class DirectiveTable {
         registerDirective(CELL, SLACKER_NTPC, FLOAT_TYPE, null);
         registerDirective(CELL, SLACKER_IS_SLACK, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, SLACKER_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
+        registerDirective(CELL, CONDITION_ORDER, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(CELL, CONDITION_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(CELL, CONDITION_GROUP, POSSIBLY_WIDE_CHANNEL_TYPE, INT_TYPE, new Integer(0));
         registerDirective(CELL, SLACKER_FREE_SLACK, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));

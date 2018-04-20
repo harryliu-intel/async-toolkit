@@ -3051,6 +3051,7 @@ public class DSim implements NodeWatcher {
             public int getEnableDataLatency() { return 200; }
             public int getCycleTimeIn() { return 1800; }
             public int getCycleTimeOut() { return 1800; }
+            public int getLatencyPerSlack() { return 200; }
         };
 
     private void handleDftChannel(final String base, final boolean in,

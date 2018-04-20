@@ -822,7 +822,7 @@ public final class DirectiveUtils {
         final Integer dynslack = (Integer) getWideDir.apply(DirectiveConstants.DYNAMIC_SLACK);
 
         // find cycle_time
-        final Float defaultct = (Float) getBlockDirective(cell, block, DirectiveConstants.DEFAULT_CYCLE_TIME);
+        final Float defaultct = (Float) getBlockDirective(cell, block, DirectiveConstants.CYCLE_TIME);
         final Float ct = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME);
         final float cycleTime =
             ct == null ? defaultct.floatValue() : ct.floatValue();
@@ -834,6 +834,12 @@ public final class DirectiveUtils {
         // find cycle_time_out
         final Float cto = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME_OUT);
         final float cycleTimeOut = cto == null ? cycleTime : cto.floatValue();
+
+        // find latency_per_slack 
+        final Float defaultlps = (Float) getBlockDirective(cell, block, DirectiveConstants.LATENCY_PER_SLACK);
+        final Float lps_t = (Float) getWideDir.apply(DirectiveConstants.LATENCY_PER_SLACK);
+        final float latencyPerSlack =
+            lps_t == null ? defaultlps.floatValue() : lps_t.floatValue();
 
         // find slack
         final int slack;
@@ -949,6 +955,9 @@ public final class DirectiveUtils {
             }
             public int getCycleTimeOut() {
                 return Math.round(cycleTimeOut * timeUnit);
+            }
+            public int getLatencyPerSlack() {
+                return Math.round(latencyPerSlack * timeUnit);
             }
         };
     }

@@ -226,6 +226,7 @@ public abstract class CoSimInfo {
                 public int getEnableDataLatency() { return 0; }
                 public int getCycleTimeIn() { return cycle_time; }
                 public int getCycleTimeOut() { return cycle_time; }
+                public int getLatencyPerSlack() { return 0; }
             }, N, M, isArrayed);
     }
 

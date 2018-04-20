@@ -45,4 +45,9 @@ public interface ChannelTimingInfo {
      * Return cycle out time, in DSim units.
      **/
     int getCycleTimeOut();
+
+    /**
+     * Return latency per slack, in DSim units.
+     **/
+    int getLatencyPerSlack();
 }

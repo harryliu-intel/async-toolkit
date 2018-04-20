@@ -178,10 +178,13 @@ public interface DirectiveConstants {
     String ISOCHRONIC = "isochronic";
 
     /** CSP timing directives */
+    String FORWARD_LATENCY = "forward_latency";
+    String CONTROLLER_LATENCY = "controller_latency";
     String SLACK = "slack";
     String STAGES = "stages";
     String LATENCY = "latency";
     String LATENCY_PER_STAGE = "latency_per_stage";
+    String LATENCY_PER_SLACK = "latency_per_slack";
     String SLACK_PER_STAGE = "slack_per_stage";
     String DEFAULT_CYCLE_TIME = "default_cycle_time";
     String FB = "fb";
@@ -216,6 +219,8 @@ public interface DirectiveConstants {
     String SLACKER_PRIMITIVE = "slacker_primitive";
     String SLACKER_IS_SLACK = "slacker_is_slack";
     String SLACKER_TIME = "slacker_time";
+    String SLACKER_TIME_INPUTS = "slacker_time_inputs";
+    String SLACKER_TIME_OUTPUTS = "slacker_time_outputs";
     String SLACKER_FREE_SLACK = "slacker_free_slack";
     String SLACKER_ELASTICITY = "slacker_elasticity";
     String SLACKER_HANDSHAKES = "slacker_handshakes";
@@ -229,6 +234,7 @@ public interface DirectiveConstants {
     String SLACKER_USE_EXTRA_DELAY = "slacker_use_extra_delay";
     String SLACKER_CHANNEL = "slacker_channel";
     String CONDITION_TIME = "condition_time";
+    String CONDITION_ORDER = "condition_order";
     String CONDITION_GROUP = "condition_group";
 
     /** ASTA directives */
