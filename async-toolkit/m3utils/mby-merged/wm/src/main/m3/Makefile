@@ -18,14 +18,22 @@ GENVIEWS=$(GENVIEWS_TARGDIR)/.done
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
-MBYLIB=$(MBY_BUILD_ROOT)/AMD64_LINUX/libmbylib.a
+MBYLIB=$(MBY_BUILD_ROOT)/AMD64_LINUX/libmby.a
+
+HLP_TOP_RDL=/p/hlp/hlp_release/drops/hlp-DROP_1P2-17ww50d/src/srdl/hlp_top_map.rdl
+HLP_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/hlp
+HLPLIB=$(HLP_BUILD_ROOT)/AMD64_LINUX/libhlp.a
 
 # TEST_TARG=$(GENVIEWS_ROOT)/src/build/AMD64_LINUX/testme
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
+mains: mby_mains hlp_mains
+
 mby_mains: $(GENVIEWS) $(MBYLIB)
-	$(MAKE) -C $(GENVIEWS_ROOT)/src/mains
+	$(MAKE) -C $(GENVIEWS_ROOT)/src/mby_mains
+
+hlp_mains: $(HLPLIB)
 
 $(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*)
 	pushd $(WM_SUPPORT_ROOT)/src && $(CM3) -x
@@ -45,6 +53,15 @@ $(MBYLIB): $(MBY_TOP_RDL) $(GENVIEWS)
 	sed 's/THELIB/mby/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(MBY_BUILD_ROOT)/src/m3makefile
 	cd $(MBY_BUILD_ROOT)/src && $(CM3) -x
 
+$(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
+	${SVPP} --path $(NEBULON)/include:$(dir $<) < $< > work_i1.rdl
+	${PERLFE} < work_i1.rdl > work_i2.rdl
+	export PERL5LIB=$(dir $<) && cat work_i2.rdl | perl > work_i3.rdl
+	mkdir -p $(HLP_BUILD_ROOT)/src
+	$(GENVIEWS_TARGDIR)/genviews -top hlp_top_map -o $(HLP_BUILD_ROOT)/src < work_i3.rdl
+	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(HLP_BUILD_ROOT)/src
+	sed 's/THELIB/hlp/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(HLP_BUILD_ROOT)/src/m3makefile
+	cd $(HLP_BUILD_ROOT)/src && $(CM3) -x
 
 
 $(TEST_TARG): $(GENVIEWS)
