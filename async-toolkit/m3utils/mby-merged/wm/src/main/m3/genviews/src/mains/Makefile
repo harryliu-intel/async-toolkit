@@ -5,7 +5,11 @@ SCRIBBLE = scribble/AMD64_LINUX/scribble
 SPEEDTEST = speedtest/AMD64_LINUX/speedtest
 STRUCTASSIGN = structassign/AMD64_LINUX/structassign
 
-all: $(SCRIBBLE) $(SPEEDTEST) $(STRUCTASSIGN)
+# structassign not done yet
+all: $(SCRIBBLE) $(SPEEDTEST) speedtest
+
+speedtest: $(SPEEDTEST)
+	$(SPEEDTEST)
 
 $(SCRIBBLE):
 	cd scribble && $(CM3) -x
