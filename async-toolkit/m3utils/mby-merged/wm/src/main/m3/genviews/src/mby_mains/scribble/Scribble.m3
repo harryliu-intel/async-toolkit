@@ -21,6 +21,12 @@ CONST
 
 BEGIN
   IO.Put(Fmt.Int(CompAddr.initCount) & " fields have been address initialized.\n");
+  Debug.Out("Resetting");
+  time0 := Time.Now();
+  MapAddr.Reset(map.read, map.update);
+  time1 := Time.Now();
+  Debug.Out(Fmt.F("Reset took %s seconds", Fmt.LongReal(time1-time0, prec := 6)));
+
   Debug.Out("Scribbling");
 
   time0 := Time.Now();
