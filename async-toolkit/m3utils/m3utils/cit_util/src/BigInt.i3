@@ -27,7 +27,7 @@ PROCEDURE Sign(a : T) : CompRet;
 
 PROCEDURE Format(a : T; base : CARDINAL := 10) : TEXT;
 
-VAR (* CONST *) Zero, One : T;
+VAR (* CONST *) Zero, One, Two : T;
 
 PROCEDURE Hash(a : T) : Word.T;
 

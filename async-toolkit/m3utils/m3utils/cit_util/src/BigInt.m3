@@ -515,6 +515,7 @@ VAR
 BEGIN 
   Zero := New(0);
   One := New(1);
+  Two := New(2);
   FirstInt := New(FIRST(INTEGER));
   LastInt := New(LAST(INTEGER));
 END BigInt.
