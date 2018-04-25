@@ -23,6 +23,7 @@ IMPORT RegModula3GenState;
 IMPORT TextSet;
 IMPORT RegContainer;
 IMPORT CardSet, CardSetDef;
+IMPORT RdlNum;
 
 (* this stuff really shouldnt be in this module but in Main... *)
 IMPORT RdlProperty, RdlExplicitPropertyAssign;
@@ -55,9 +56,12 @@ TYPE
     put  := PutGS;
   END;
 
+TYPE ProcType = { Csr, Range, Reset };
+
 CONST DeclFmt = ARRAY ProcType OF TEXT {
   "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T)",
-  "PROCEDURE %s(READONLY a : %s) : CompRange.T"
+  "PROCEDURE %s(READONLY a : %s) : CompRange.T",
+  "PROCEDURE %s(READONLY t : %s; READONLY u : %s)"
   };
 (* we could extend this pattern to other procedure definitions ... *)
   
@@ -69,27 +73,40 @@ PROCEDURE DefProc(gs     : GenState;
   VAR
     ttn := ComponentTypeNameInHier(c, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(c, gs, TypeHier.Addr);
+    utn := ComponentTypeNameInHier(c, gs, TypeHier.Update);
   BEGIN
     pnm := ComponentName[ofType](c, gs);
-    IF gs.dumpSyms.insert(pnm) THEN RETURN FALSE END;
+    WITH hadIt = gs.dumpSyms.insert(pnm) DO
+
+      IF FALSE THEN
+        Debug.Out(F("hadIt(%s) = %s", pnm, Fmt.Bool(hadIt)))
+      END;
+      IF hadIt THEN RETURN FALSE END
+    END;
 
     CASE ofType OF
       ProcType.Csr =>
-      gs.mdecl(DeclFmt[ofType] & "= \n", pnm, ttn, atn);
+      gs.mdecl(DeclFmt[ofType] & " = \n", pnm, ttn, atn);
       IF intf THEN gs
         .imain(DeclFmt[ofType] & ";\n", pnm, ttn, atn);
       END
     |
       ProcType.Range =>
-      gs.mdecl(DeclFmt[ofType] & "= \n", pnm, atn);
+      gs.mdecl(DeclFmt[ofType] & " = \n", pnm, atn);
       IF intf THEN gs
         .imain(DeclFmt[ofType] & ";\n", pnm, atn);
+      END
+    |
+      ProcType.Reset =>
+      gs.mdecl(DeclFmt[ofType] & " = \n", pnm, ttn, utn);
+      IF intf THEN gs
+        .imain(DeclFmt[ofType] & ";\n", pnm, ttn, utn);
       END
     END;
     RETURN TRUE
   END DefProc;
 
-PROCEDURE GsP(gs : GenState;
+PROCEDURE GsP(gs  : GenState;
               sec : Section;
               fmt : TEXT;
               t1, t2, t3, t4, t5 : TEXT) =
@@ -626,7 +643,8 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
       GenAddrmapGlobal    (map, gs);
       GenAddrmapUpdateInit(map, gs);
       GenAddrmapCsr       (map, gs);
-      GenAddrmapRanger    (map, gs)
+      GenAddrmapRanger    (map, gs);
+      GenAddrmapReset     (map, gs)
     END
   END GenAddrmap;
 
@@ -986,8 +1004,6 @@ PROCEDURE DoIndirectBinarySearch(gs : GenState) =
     gs.mdecl("      END\n");
   END DoIndirectBinarySearch;
 
-TYPE ProcType = { Csr, Range };
-     
 PROCEDURE GenCompProc(c     : RegComponent.T;
                       gs    : GenState;
                       whch  : ProcType) =
@@ -1015,11 +1031,158 @@ PROCEDURE GenCompProc(c     : RegComponent.T;
       ELSE
         <*ASSERT FALSE*>
       END
+    |   ProcType.Reset =>
+      TYPECASE c OF
+        RegAddrmap.T => (* skip, generated in its own file *)
+      |
+        RegRegfile.T => GenRegfileReset(c, gs)
+      |
+        RegReg.T     => GenRegReset    (c, gs)
+      ELSE
+        <*ASSERT FALSE*>
+      END
     END
   END GenCompProc;
 
   (**********************************************************************)
 
+PROCEDURE GenAddrmapReset(map : RegAddrmap.T; gs : GenState) =
+  VAR
+    qmtn := Naming.MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
+  BEGIN
+    gs.imain("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.imain("PROCEDURE Reset(READONLY t : %s; READONLY u : U);\n", qmtn);
+
+    gs.mdecl("PROCEDURE Reset(READONLY t : %s; READONLY u : U) =\n", qmtn);
+    gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.mdecl("  BEGIN\n");
+    FOR i := 0 TO map.children.size()-1 DO
+      GenChildReset(map.children.get(i), gs, FALSE)
+    END;
+    gs.mdecl("  END Reset;\n");
+    gs.mdecl("\n");
+
+    FOR i := 0 TO map.children.size()-1 DO
+      IF FALSE THEN
+        Debug.Out("Trying " & ComponentResetName(map.children.get(i).comp, gs))
+      END;
+      GenCompProc(map.children.get(i).comp, gs, ProcType.Reset)
+    END
+  END GenAddrmapReset;
+
+PROCEDURE GenRegfileReset(rf : RegRegfile.T; gs : GenState) =
+  VAR
+    pnm : TEXT;
+  BEGIN
+    IF NOT gs.defProc(rf, ProcType.Reset, pnm) THEN RETURN END;
+    
+    gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.mdecl("  BEGIN\n");
+
+    (* chew through the children and reset each in turn *)
+    
+    FOR i := 0 TO rf.children.size()-1 DO
+      GenChildReset(rf.children.get(i), gs, rf.children.size()=1)
+    END;
+    gs.mdecl("  END %s;\n",pnm);
+    gs.mdecl("\n");
+    FOR i := 0 TO rf.children.size()-1 DO
+      GenCompProc(rf.children.get(i).comp, gs, ProcType.Reset)
+    END;
+  END GenRegfileReset;
+
+PROCEDURE GenChildReset(e          : RegChild.T;
+                        gs         : GenState;
+                        skipArc := FALSE) =
+ VAR
+    childArc : TEXT;
+  BEGIN
+    (* special case for array with only one child is that it is NOT
+       a record *)
+    IF skipArc THEN
+      childArc := "";
+    ELSE
+      childArc := "." & M3Camel(e.nm,debug := FALSE);
+    END;
+    WITH rnm = ComponentResetName(e.comp,gs) DO
+      IF e.array = NIL THEN
+        gs.mdecl("    %s(t%s, u%s);\n", rnm, childArc, childArc)
+      ELSE
+        gs.mdecl("    %s\n",FmtArrFor(e.array));
+        gs.mdecl("      %s(t%s[i],u%s[i])\n", rnm, childArc, childArc);
+        gs.mdecl("    END;\n")
+      END
+    END
+  END GenChildReset;
+  
+PROCEDURE FmtLittleEndian(x : BigInt.T; w : CARDINAL) : TEXT =
+  VAR
+    wx := Wx.New();
+    r : BigInt.T;
+  BEGIN
+    Wx.PutText(wx, F("ARRAY [0..%s-1] OF [0..1] {", Fmt.Int(w)));
+    IF BigInt.Equal(x,BigInt.Zero) THEN
+      FOR i := 0 TO w-1 DO
+        Wx.PutText(wx, "0");
+        IF i # w-1 THEN
+          Wx.PutText(wx, ", ")
+        END
+      END
+    ELSE
+      FOR i := 0 TO w-1 DO
+        BigInt.Divide(x, BigInt.Two, x, r);
+        Wx.PutText(wx, F("16_%s", BigInt.Format(r,base:=16)));
+        IF i # w-1 THEN
+          Wx.PutText(wx, ", ")
+        END
+      END
+    END;
+    Wx.PutText(wx," }");
+    RETURN Wx.ToText(wx)
+  END FmtLittleEndian;
+
+PROCEDURE DefVal(canBeNil : RdlNum.T) : BigInt.T =
+  BEGIN
+    IF canBeNil # NIL THEN RETURN canBeNil.x ELSE RETURN BigInt.Zero END
+  END DefVal;
+  
+PROCEDURE GenRegReset(r : RegReg.T; gs : GenState) =
+  VAR
+    pnm : TEXT;
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("GenRegReset: " & ComponentName[ProcType.Reset](r,gs));
+    END;
+    IF NOT gs.defProc(r, ProcType.Reset, pnm) THEN RETURN END;
+
+    gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.mdecl("  BEGIN\n");
+    FOR i := 0 TO r.fields.size()-1 DO
+      WITH f  = r.fields.get(i),
+           nm = f.name(debug := FALSE),
+           dv = DefVal(f.defVal) DO
+        IF f.width <= BITSIZE(Word.T) THEN
+          WITH vs = "16_" & BigInt.Format(dv,base:=16) DO
+            gs.mdecl("    IF t.%s # %s THEN\n",nm,vs);
+            gs.mdecl("      u.%s.u(%s)\n",nm,vs);
+            gs.mdecl("    END;\n")
+          END
+        ELSE
+          gs.mdecl("    WITH rv = %s DO\n",
+                   FmtLittleEndian(dv,f.width));
+          gs.mdecl("      IF t.%s # rv THEN\n",nm);
+          gs.mdecl("        u.%s.u(rv)\n",nm);
+          gs.mdecl("      END\n");
+          gs.mdecl("    END;\n")
+        END
+      END
+    END;
+    gs.mdecl("  END %s;\n",pnm);
+    gs.mdecl("\n");
+  END GenRegReset;
+
+  (**********************************************************************)
+  
 PROCEDURE GenRegfileRanger(rf : RegRegfile.T; gs : GenState) =
   VAR
     pnm : TEXT;
@@ -1043,7 +1206,7 @@ PROCEDURE GenRegfileRanger(rf : RegRegfile.T; gs : GenState) =
         END;
         gs.mdecl("  END %s;\n",pnm)
       END
-    ELSE
+   ELSE
       MainBodyRange(gs,pnm);
    END;
    gs.mdecl("\n");
@@ -1054,7 +1217,7 @@ PROCEDURE GenRegfileRanger(rf : RegRegfile.T; gs : GenState) =
 
 PROCEDURE GenRegRanger(r : RegReg.T; gs : GenState) =
   VAR
-    pnm := ComponentRangeName(r, gs);
+    pnm : TEXT;
   BEGIN
     IF NOT gs.defProc(r, ProcType.Range, pnm) THEN RETURN END;
 
@@ -1583,7 +1746,25 @@ PROCEDURE ComponentRangeName(c : RegComponent.T; gs : GenState) : TEXT =
     END
   END ComponentRangeName;
 
-CONST ComponentName = ARRAY ProcType OF PROCEDURE(c : RegComponent.T; gs : GenState) : TEXT { ComponentCsrName, ComponentRangeName };
+PROCEDURE ComponentResetName(c : RegComponent.T; gs : GenState) : TEXT =
+  VAR
+    gsC := NEW(GenState, init := InitGS).init(gs);
+  BEGIN
+    gsC.th := TypeHier.Read;
+    TYPECASE c OF
+      RegAddrmap.T(a) =>
+      RETURN a.intfName(gs) & ".Reset" 
+    ELSE
+      RETURN "Reset__" & c.typeName(gsC)
+    END
+  END ComponentResetName;
+
+CONST
+  ComponentName = ARRAY ProcType OF PROCEDURE(c : RegComponent.T;
+                                              gs : GenState) : TEXT
+  { ComponentCsrName,
+    ComponentRangeName,
+    ComponentResetName };
 
   (**********************************************************************)
   

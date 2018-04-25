@@ -42,6 +42,14 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                 group => "GENERATE",
             },
         },
+        -en__gen_mby_wm_m3 => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_mby_wm_m3' enable",
+                group => "GENERATE",
+            },
+        },
 
     }, #end InterfaceVars
  GenRTL => {
@@ -62,7 +70,6 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                        "echo 'Running nebulon'",
                        "make -C $ENV{MODEL_ROOT}/tools/srdl/mby",
                     ],
-                    # dependent_configs => [ 'mby::gen_mby_mgm_lib', ],
                 },
                 gen_mby_wm => {
                     enable_config => '<-en__gen_mby_wm>',
@@ -72,8 +79,16 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                        "cd $ENV{MODEL_ROOT}/wm",
                        &ToolConfig::get_tool_exec('sbt') . " compile doc",
                     ],
-                    # dependent_configs => [ 'mby::gen_mby_mgm_lib', ],
                 },
+                gen_mby_wm_m3 => {
+                    enable_config => '<-en__gen_mby_wm_m3>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Generating white model through m3'",
+                       "make -C $ENV{MODEL_ROOT}/wm/src/main/m3",
+                    ],
+                },
+
 	    },          # -config
 	},          # $PROJECT
     },              # GenRTL

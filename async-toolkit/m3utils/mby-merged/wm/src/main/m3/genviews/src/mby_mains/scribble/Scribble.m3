@@ -11,16 +11,30 @@ IMPORT Word;
 IMPORT CsrOp;
 IMPORT Time;
 
+PROCEDURE DoReset() =
+  VAR
+    t0, t1 : Time.T;
+  BEGIN
+    Debug.Out("Resetting...");
+    t0 := Time.Now();
+    MapAddr.Reset(map.read, map.update);
+    t1 := Time.Now();
+    Debug.Out(Fmt.F("Reset took %s seconds",
+                    Fmt.LongReal(t1-t0, prec := 6)));
+  END DoReset;
+
 VAR
   map  := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
   rand := NEW(Random.Default).init();
 
   time0, time1 : Time.T;
 CONST
-  NumWrites = 1000 * 1000;
+  NumWrites = 10 * 1000 * 1000;
 
 BEGIN
   IO.Put(Fmt.Int(CompAddr.initCount) & " fields have been address initialized.\n");
+  DoReset();
+  DoReset();
   Debug.Out("Scribbling");
 
   time0 := Time.Now();
@@ -38,5 +52,7 @@ BEGIN
   time1 := Time.Now();
 
   Debug.Out(Fmt.F("%s narrow writes per second", Fmt.LongReal(FLOAT(NumWrites,LONGREAL)/(time1-time0), prec := 6)));
+  DoReset();
+  DoReset();
 
 END Scribble.
