@@ -24,22 +24,31 @@ HLP_TOP_RDL=/p/hlp/hlp_release/drops/hlp-DROP_1P2-17ww50d/src/srdl/hlp_top_map.r
 HLP_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/hlp
 HLPLIB=$(HLP_BUILD_ROOT)/AMD64_LINUX/libhlp.a
 
+TOP=.top
+TOP_TEMPLATE=top_template
+
 # TEST_TARG=$(GENVIEWS_ROOT)/src/build/AMD64_LINUX/testme
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
 mains: mby_mains hlp_mains
 
+top: $(TOP)
+
+$(TOP): $(TOP_TEMPLATE)
+	sed "s#MODEL_ROOT#$(MODEL_ROOT)#" $< > $@
+	sed -i "s#META_HOME#$(METAROOT)#" $@
+
 mby_mains: $(GENVIEWS) $(MBYLIB)
 	$(MAKE) -C $(GENVIEWS_ROOT)/src/mby_mains
 
 hlp_mains: $(HLPLIB)
 
-$(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*)
+$(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*) $(TOP)
 	pushd $(WM_SUPPORT_ROOT)/src && $(CM3) -x
 	touch $@
 
-$(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT)
+$(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
 
 $(MBYLIB): $(MBY_TOP_RDL) $(GENVIEWS)
@@ -74,4 +83,4 @@ clean:
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
 	find . -name AMD64_LINUX | xargs rm -rf 
-
+	rm $(TOP)
