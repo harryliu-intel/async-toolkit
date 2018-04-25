@@ -254,3 +254,9 @@ $ToolConfig_tools{"java"} = {
     }
 };
 
+
+$ToolConfig_tools{"protobuf"} = {
+    VERSION => "3.5.1",
+    PATH => "/p/hdk/rtl/cad/x86-64_linux30/google/protobuf/&get_tool_version()",
+};
+
