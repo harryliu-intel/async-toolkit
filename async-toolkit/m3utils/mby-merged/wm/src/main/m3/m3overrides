@@ -2,4 +2,5 @@
 include(".top")
 override("wm_support",TOP)
 override("mby",MBY_REGS)
+override("hlp",MBY_REGS)
 include(META_INC)
