@@ -13,6 +13,7 @@ SchemeStubs("FileWr")
 SchemeStubs("Wr")
 SchemeStubs("Debug")
 SchemeStubs("IdStyles")
+SchemeStubs("FS")
 
 ExportSchemeStubs("structgen") % export OUR scheme stubs
 

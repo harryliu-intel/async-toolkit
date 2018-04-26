@@ -84,7 +84,7 @@
                ((get-request 1)
                 (get-response)
                 (set)
-                (set_ack))
+                (set-ack))
                )
 
     (enum fm-model-mgmt-type
@@ -180,7 +180,10 @@
       res))
 
   (define (rename-file-if-different fn1 fn2)
-    (if (not (cmp-files-safely fn1 fn2)) (fs-rename fn1 fn2)))
+    (if (not (cmp-files-safely fn1 fn2))
+        (fs-rename fn1 fn2) ;; copy the scratch over the target
+        (FS.DeleteFile fn1) ;; else delete the scratch
+        ))
 
   (let ((i-wr      (car wrs))
         (m-wr      (cadr wrs))
@@ -213,22 +216,29 @@
 
 (define e '()) ;; debugging slush bucket
 
-(define (put-m3-read-proc i3-wr m3-wr)
-  (map 
-   (lambda(wr)
-     (dis "PROCEDURE Read(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }" wr))
-   (list i3-wr m3-wr))
-  (dis ";" dnl i3-wr)
-  (dis " =" dnl m3-wr))
+(define read-proc-name "Read")
+(define read-proto "(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }")
 
-(define (put-m3-write-proc i3-wr m3-wr)
-  (map 
-   (lambda(wr)
-     (dis "PROCEDURE Write(wr : Wr.T; t : T) RAISES { Wr.Failure, Thread.Alerted }" wr))
-   (list i3-wr m3-wr))
-  (dis ";" dnl i3-wr)
-  (dis " ="dnl m3-wr))
+(define write-proc-name "Write")
+(define write-proto "(wr : Wr.T; t : T) RAISES { Wr.Failure, Thread.Alerted }")
 
+(define format-proc-name "Format")
+(define format-proto "(t : T) : TEXT")
+
+(define (put-m3-proc whch .
+                     wrs ;; i3 m3 ...
+                     )
+  (map (lambda(wr)
+         (dis
+          "PROCEDURE "
+          (eval (symbol-append whch '-proc-name))
+          (eval (symbol-append whch '-proto))
+          wr))
+       wrs)
+  (dis ";" dnl (car wrs)) ;; i3
+  (dis " =" dnl (cadr wrs)) ;; m3
+)
+  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; CONSTANTS
@@ -293,12 +303,12 @@
     (dis "CONST Length = " (get-m3-type-size wire-type) ";" dnl
          dnl i3-wr)
 
-    (put-m3-read-proc i3-wr m3-wr)
+    (put-m3-proc 'read i3-wr m3-wr)
     (dis
      "  BEGIN RETURN V2T(RdNet.Get"m3-wire-type"(rd)) END Read;" dnl
      dnl m3-wr)
 
-    (put-m3-write-proc i3-wr m3-wr)
+    (put-m3-proc 'write i3-wr m3-wr)
     (dis
     "  BEGIN WrNet.Put"m3-wire-type"(wr, Vals[t]) END Write;" dnl
          dnl m3-wr)
@@ -480,6 +490,38 @@
           (filter (lambda(x) (not (member? x '(u8 u16 u32))))
                   (map get-elem-type types)))
          )
+
+    (define (emit-m3-t)
+      (dis dnl
+           "TYPE" dnl
+           "  T = RECORD" dnl
+           i3-wr)
+      (map (lambda(f)(emit-struct-field-type f i3-wr)) fields)
+      (dis "  END;" dnl
+           dnl i3-wr)
+      )
+
+    (define (emit-length)
+      (dis "CONST Length = 0" i3-wr)
+      (map
+       (lambda(f)(dis
+                  (string-append " + " (get-m3-type-size (cadr f)))
+                  i3-wr))
+       fields)
+      (dis ";" dnl i3-wr)
+      
+      (dis dnl m3-wr)
+      )
+
+    (define (emit-proc whch emitter decls return)
+      (put-m3-proc whch i3-wr m3-wr)
+      (dis "  VAR " decls dnl m3-wr)
+      (dis "  BEGIN" dnl m3-wr)
+      (map (lambda(f)(emitter f m3-wr)) fields)
+      (dis "    RETURN " return m3-wr)
+      (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
+           dnl m3-wr))
+      
     ;;(dis "m3-name " m3-name dnl)
     (add-m3-type! nm m3-name)
     (set! e import-intfs)
@@ -493,37 +535,13 @@
                 import-intfs))
          (list i3-wr m3-wr))
 
-    (dis dnl
-         "TYPE" dnl
-         "  T = RECORD" dnl
-         i3-wr)
-    (map (lambda(f)(emit-struct-field-type f i3-wr)) fields)
-    (dis "  END;" dnl
-         dnl i3-wr)
+    (emit-m3-t)
 
-    (dis "CONST Length = 0" i3-wr)
-    (map
-     (lambda(f)(dis
-                (string-append " + " (get-m3-type-size (cadr f)))
-                i3-wr))
-     fields)
-    (dis ";" dnl i3-wr)
+    (emit-length)
 
-    (dis dnl m3-wr)
-    (put-m3-read-proc i3-wr m3-wr)
-    (dis "  VAR t : T;" dnl m3-wr)
-    (dis "  BEGIN" dnl m3-wr)
-    (map (lambda(f)(emit-struct-field-read f m3-wr)) fields)
-    (dis "    RETURN t" dnl m3-wr)
-    (dis "  END Read;" dnl
-         dnl m3-wr)
-
-    (put-m3-write-proc i3-wr m3-wr)
-    (dis "  BEGIN" dnl m3-wr)
-    (map (lambda(f)(emit-struct-field-write f m3-wr)) fields)
-    (dis "  END Write;" dnl
-         dnl m3-wr)
-
+    (emit-proc 'read  emit-struct-field-read "t : T;" "t")
+    (emit-proc 'write emit-struct-field-write "" "")
+    
     (dis dnl m3-wr)
     (close-m3 m3-wrs)
     )
@@ -551,7 +569,9 @@
 ;;; RUN OUR CODE ON THE DEFINITIONS AT THE TOP
 
 (compile structs)
-(exit)
+;;(exit)
+
+
 
         
     
