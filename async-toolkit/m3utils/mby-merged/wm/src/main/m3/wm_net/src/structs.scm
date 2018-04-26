@@ -141,8 +141,8 @@
        wr))
 
 (define (open-m3 nm)
-  (let ((i-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".i3"))))
-        (m-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".m3")))))
+  (let ((i-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".i3.tmp"))))
+        (m-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".m3.tmp")))))
     (let ((m3m-wr (FileWr.OpenAppend (string-append deriv-dir "derived.m3m"))))
       (dis "derived_interface(\""nm"\",VISIBLE)" dnl
            "derived_implementation(\""nm"\")" dnl
@@ -156,12 +156,23 @@
     (dis "MODULE " nm ";" dnl m-wr)
     (put-m3-imports m-wr)
     
-    (list i-wr m-wr nm)))
+    (list i-wr m-wr nm deriv-dir)))
 
 (define (close-m3 wrs)
-  (let ((i-wr (car wrs))
-        (m-wr (cadr wrs))
-        (nm   (caddr wrs)))
+
+  (define (cmp-files-safely fn1 fn2)
+    (let ((res #f))
+      (unwind-protect
+       (set! res (cmp-files fn1 fn2)) #f #f)
+      res))
+
+  (define (rename-file-if-different fn1 fn2)
+    (if (not (cmp-files-safely fn1 fn2)) (fs-rename fn1 fn2)))
+
+  (let ((i-wr      (car wrs))
+        (m-wr      (cadr wrs))
+        (nm        (caddr wrs))
+        (deriv-dir (cadddr wrs)))
 
     (dis dnl
          "CONST Brand = \"" nm "\";" dnl i-wr)
@@ -171,6 +182,10 @@
          "BEGIN END " nm "." dnl m-wr)
     (wr-close i-wr)
     (wr-close m-wr)
+    (rename-file-if-different (string-append deriv-dir nm ".i3.tmp")
+                              (string-append deriv-dir nm ".i3"))
+    (rename-file-if-different (string-append deriv-dir nm ".m3.tmp")
+                              (string-append deriv-dir nm ".m3"))
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
