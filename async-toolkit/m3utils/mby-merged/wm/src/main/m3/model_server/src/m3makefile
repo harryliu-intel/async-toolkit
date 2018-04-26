@@ -1,0 +1,11 @@
+import ("libm3")
+import ("parseparams")
+import ("wm_support")
+import ("wm_net")
+import ("hlp")
+
+module ("ModelServer")
+
+implementation ("Main")
+
+program ("modelserver")

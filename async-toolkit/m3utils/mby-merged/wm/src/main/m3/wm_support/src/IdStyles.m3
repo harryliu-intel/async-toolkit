@@ -33,6 +33,8 @@ PROCEDURE Parse(id : TEXT; case : Case; sep : Sep) : TextSeq.T =
           Push(d)
         ELSIF sep = Sep.Underscore AND c = '_' THEN
           Pop()
+        ELSIF sep = Sep.Hyphen AND c = '-' THEN
+          Pop()
         ELSE
           Push(d)
         END
@@ -49,6 +51,8 @@ PROCEDURE Format(seq : TextSeq.T; case : Case; sep : Sep) : TEXT =
     FOR i := 0 TO seq.size()-1 DO
       IF i # 0 AND sep = Sep.Underscore THEN
         s.addhi('_')
+      ELSIF i # 0 AND sep = Sep.Hyphen THEN
+        s.addhi('-')
       END;
       WITH w = seq.get(i) DO
         FOR j := 0 TO Text.Length(w)-1 DO

@@ -1,0 +1,23 @@
+/* $Id: m3makefile,v 1.17 2011/02/19 20:49:28 mika Exp $ */
+import ("cit_util")
+import ("mscheme")
+import ("modula3scheme")
+import ("libm3")
+import ("netobj")
+import ("m3readline")
+import ("schemereadline")
+import ("sstubgen")
+import ("wm_support")
+
+SchemeStubs("FileWr")
+SchemeStubs("Wr")
+SchemeStubs("Debug")
+SchemeStubs("IdStyles")
+
+ExportSchemeStubs("structgen") % export OUR scheme stubs
+
+importSchemeStubs()              % import ALL scheme stubs
+
+implementation("Main")
+
+program ("structgen")

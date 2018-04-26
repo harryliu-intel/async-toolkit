@@ -3,7 +3,7 @@ IMPORT TextSeq;
 
 TYPE
   Case = { Lower, Upper, Camel };
-  Sep = { None, Underscore };
+  Sep = { None, Underscore, Hyphen };
 
 PROCEDURE Parse(id : TEXT; case : Case; sep : Sep) : TextSeq.T;
   (* parse into canonical sequence of sequence of lower case words *)

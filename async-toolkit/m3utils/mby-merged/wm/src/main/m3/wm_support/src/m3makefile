@@ -21,6 +21,7 @@ MkSet("CompMemoryListener","CompMemoryListener")
 MkSetDef("CompMemoryListener","CompMemoryListener")
 
 Interface("CsrAccessStatus")
+Module("IdStyles")
 Module("CsrOp")
 pqueue("CompAddr","CompAddr")
 

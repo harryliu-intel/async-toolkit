@@ -18,7 +18,7 @@ module("RegModula3")
 interface("RegModula3GenState")
 module("RegModula3Naming")
 interface("RegModula3Generators")
-module("IdStyles")
+%module("IdStyles")
 
 interface ("RegChild")
 interface ("RegComponent")

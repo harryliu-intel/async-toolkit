@@ -1334,7 +1334,6 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
       childArc := "." & M3Camel(e.nm,debug := FALSE);
     END;
 
-    gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
     IF skipArc THEN
 
       (* this is "the array special case" --
@@ -1387,13 +1386,13 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
           gs.mdecl("    END\n")
         END
       ELSE
-        gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
+        gs.mdecl("      (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
         gs.mdecl("    %s\n",FmtArrFor(e.array));
         gs.mdecl("      %s(t[i],a[i],op)\n", ComponentCsrName(e.comp,gs));
         gs.mdecl("    END\n")
       END;
     ELSE
-     gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
+     gs.mdecl("      (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
      IF e.array = NIL THEN
         gs.mdecl(
                "      | %s => %s(t%s,a%s,op);\n",

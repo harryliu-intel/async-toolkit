@@ -1,6 +1,7 @@
 % $Id: m3overrides,v 1.1 2009/04/24 07:09:13 mika Exp $
 include(".top")
 override("wm_support",TOP)
+override("wm_net",TOP)
 override("mby",MBY_REGS)
 override("hlp",MBY_REGS)
 include(META_INC)

@@ -1,0 +1,18 @@
+import ("libm3")
+import ("wm_support")
+import ("hlp")
+
+_exec(["../../structgen/AMD64_LINUX/structgen","../src/structs.scm"])
+
+include ("../AMD64_LINUX/derived.m3m")
+
+Interface ("NetTypes")
+
+Module ("RdNet")
+Module ("WrNet")
+
+%Module ("FmModelMessageHdr")
+
+Interface ("NetError")
+
+library ("wm_net")
