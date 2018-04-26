@@ -97,11 +97,11 @@ public class CspStdio {
                     ret++;
                 }
             } catch (IOException e) {}
-        }
-        if (ret > 0) {
-            try {
-                os.flush();
-            } catch (IOException e) {}
+            if (ret > 0) {
+                try {
+                    os.flush();
+                } catch (IOException e) {}
+            }
         }
         return ret;
     }
