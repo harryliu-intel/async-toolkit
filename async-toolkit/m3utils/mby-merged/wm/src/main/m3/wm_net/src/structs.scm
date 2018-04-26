@@ -1,7 +1,16 @@
 (require-modules "basic-defs" "m3" "display" "hashtable" "struct" "set")
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; SET DESTINATION
+
 (define deriv-dir "../AMD64_LINUX/")
 ;;(define deriv-dir "./out/")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; USER DEFINITIONS
 
 (define structs
   `((constants iosf-op       
@@ -95,12 +104,19 @@
     )
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;  CODE BELOW HERE SHOULD GO IN A LIBRARY  ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; HELPER FUNCS
+
 (define (scheme->m3 sym)
   (IdStyles.Convert (symbol->string sym)
                     'Lower 'Camel
                     'Hyphen 'None))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (symbol-append . x) ;; permissive form
   (string->symbol
@@ -112,6 +128,10 @@
                        (else (error (string-append
                                      "not a string or symbol : " s)))))
                x)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; GLOBALS
 
 (define constants '())
 (define enum '())
@@ -129,16 +149,9 @@
          (cons nm m3-name)
          m3typemap)))
 
-(define (compile structs)
-  (wr-close (filewr-open (string-append deriv-dir "derived.m3m")))
-  (map compile-one structs)
-  )
-
-(define (put-m3-imports wr)
-  (dis "<*NOWARN*>FROM NetTypes IMPORT U8, U16, U32;" dnl
-       "<*NOWARN*>IMPORT WrNet, RdNet, NetError;" dnl
-       dnl
-       wr))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; OUTPUT FILE HANDLING
 
 (define (open-m3 nm)
   (let ((i-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".i3.tmp"))))
@@ -188,15 +201,37 @@
                               (string-append deriv-dir nm ".m3"))
     ))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (put-m3-imports wr)
+  (dis "<*NOWARN*>FROM NetTypes IMPORT U8, U16, U32;" dnl
+       "<*NOWARN*>IMPORT WrNet, RdNet, NetError;" dnl
+       dnl
+       wr))
 
-(define (compile-one x)
-  (let ((category (car x))
-        (nm       (cadr x)))
-    (eval `(set! ,category (cons (cdr x) ,category)))
-    (eval `(,(symbol-append 'compile- category) nm (cddr x)))
-    #t
-    ))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; PROTOTYPES FOR Read AND Write
+
+(define e '()) ;; debugging slush bucket
+
+(define (put-m3-read-proc i3-wr m3-wr)
+  (map 
+   (lambda(wr)
+     (dis "PROCEDURE Read(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }" wr))
+   (list i3-wr m3-wr))
+  (dis ";" dnl i3-wr)
+  (dis " =" dnl m3-wr))
+
+(define (put-m3-write-proc i3-wr m3-wr)
+  (map 
+   (lambda(wr)
+     (dis "PROCEDURE Write(wr : Wr.T; t : T) RAISES { Wr.Failure, Thread.Alerted }" wr))
+   (list i3-wr m3-wr))
+  (dis ";" dnl i3-wr)
+  (dis " ="dnl m3-wr))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; CONSTANTS
 
 (define (compile-m3-const-value v wr)
   (dis "CONST " (scheme->m3 (car v)) " = " (cadr v) ";" dnl wr)
@@ -229,29 +264,6 @@
   )
 
 (define compile-constants compile-constants-m3)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define e '())
-
-(define (put-m3-read-proc i3-wr m3-wr)
-  (map 
-   (lambda(wr)
-     (dis "PROCEDURE Read(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }" wr))
-   (list i3-wr m3-wr))
-  (dis ";" dnl i3-wr)
-  (dis " =" dnl m3-wr))
-
-(define (put-m3-write-proc i3-wr m3-wr)
-  (map 
-   (lambda(wr)
-     (dis "PROCEDURE Write(wr : Wr.T; t : T) RAISES { Wr.Failure, Thread.Alerted }" wr))
-   (list i3-wr m3-wr))
-  (dis ";" dnl i3-wr)
-  (dis " ="dnl m3-wr))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define (compile-enum nm x)
   (dis "compiling enum      :  " nm dnl)
   (let* ((wire-type    (car x))
@@ -344,6 +356,10 @@
     (close-m3 m3-wrs)
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; STRUCT FIELD TYPES
 
 (define (array-type? type) (and (list? type) (eq? 'array (car type))))
 
@@ -447,6 +463,8 @@
        ";" dnl m-wr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; MAIN STRUCT COMPILER
 
 (define (compile-struct nm x)
   (dis "compiling struct    :  " nm dnl)
@@ -510,6 +528,27 @@
     (close-m3 m3-wrs)
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; MAIN FUNCTIONS : COMPILE THE DATA STRUCTURES
+
+(define (compile-one x)
+  (let ((category (car x))
+        (nm       (cadr x)))
+    (eval `(set! ,category (cons (cdr x) ,category)))
+    (eval `(,(symbol-append 'compile- category) nm (cddr x)))
+    #t
+    ))
+
+(define (compile structs)
+  (wr-close (filewr-open (string-append deriv-dir "derived.m3m")))
+  (map compile-one structs)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; RUN OUR CODE ON THE DEFINITIONS AT THE TOP
 
 (compile structs)
 (exit)
