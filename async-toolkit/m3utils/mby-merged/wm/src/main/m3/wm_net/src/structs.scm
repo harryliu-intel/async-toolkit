@@ -198,7 +198,7 @@
          (i3-wr        (car m3-wrs))
          (m3-wr        (cadr m3-wrs))
          )
-    (dis "m3-name " m3-name dnl)
+    ;;(dis "m3-name " m3-name dnl)
     (add-m3-type! nm m3-name)
     
     (dis "TYPE W = " m3-wire-type ";" dnl
@@ -249,7 +249,7 @@
          (m3-wr        (cadr m3-wrs))
          )
 
-    (dis "m3-name " m3-name dnl)
+    ;;(dis "m3-name " m3-name dnl)
     (add-m3-type! nm m3-name)
 
     ;; final IMPORTs
@@ -399,7 +399,7 @@
        ";" dnl m-wr))
 
 (define (get-m3-write-type type rhs lev ind)
-  (dis "RHS " rhs dnl)
+  ;;(dis "RHS " rhs dnl)
   (cond ((member? type '(u8 u16 u32))
          (string-append ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
         ((array-type? type)
@@ -447,7 +447,7 @@
           (filter (lambda(x) (not (member? x '(u8 u16 u32))))
                   (map get-elem-type types)))
          )
-    (dis "m3-name " m3-name dnl)
+    ;;(dis "m3-name " m3-name dnl)
     (add-m3-type! nm m3-name)
     (set! e import-intfs)
 
