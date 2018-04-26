@@ -207,6 +207,7 @@
 (define (put-m3-imports wr)
   (dis "<*NOWARN*>FROM NetTypes IMPORT U8, U16, U32;" dnl
        "<*NOWARN*>IMPORT WrNet, RdNet, NetError;" dnl
+       "<*NOWARN*>IMPORT Wx, NetTypes;" dnl
        dnl
        wr))
 
@@ -315,10 +316,14 @@
          
     (dis "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange };" dnl
          dnl i3-wr)
+
+    (put-m3-proc 'format i3-wr m3-wr)
+    (dis "BEGIN RETURN Names[t] END Format;" dnl m3-wr)
     
     (let loop ((i   0)
                (x   values)
                (t   "TYPE T = { ")
+               (names "CONST Names = ARRAY T OF TEXT { ")
                (t2v "CONST Vals = ARRAY T OF W { ")
                (v2t (string-append
                      "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange } =" dnl
@@ -330,6 +335,9 @@
 
           (begin
             (dis t "};" dnl
+                 dnl
+                 i3-wr)
+            (dis names "};" dnl
                  dnl
                  i3-wr)
             (dis t2v "};" dnl
@@ -357,6 +365,7 @@
             (loop (+ val 1)
                   (cdr x)
                   (string-append t sym comma)
+                  (string-append names "\"" sym "\"" comma)
                   (string-append t2v val comma)
                   (string-append v2t "    | " val " => RETURN T." sym dnl)))
           ) ;; fi
@@ -439,6 +448,48 @@
                          "    ")
        ";" dnl m-wr))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-m3-format-type type rhs lev ind)
+  ;;(dis "RHS " rhs dnl)
+  (cond ((member? type '(u8 u16 u32))
+         (string-append
+          ind
+          "Wx.PutText(wx,NetTypes.Format"(scheme->m3 type)"("rhs"))"
+          ))
+          
+        ((array-type? type)
+         (string-append
+          ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
+
+          (get-m3-format-type
+           (cadr type)
+           (string-append "  " rhs "[i"lev"]")
+           (+ lev 1)
+           (string-append ind "  ")
+           )
+          dnl
+
+          ind "END"
+          ))
+        (else
+           (let ((rec (assoc type m3typemap)))
+             (if (not rec)
+                 (error (string-append "Unknown type " (stringify type)))
+                 (string-append ind
+                                "Wx.PutText(wx,"(cdr rec) ".Format("rhs"))"))))))
+
+(define (emit-struct-field-format f m-wr)
+  (dis 
+       (get-m3-format-type (cadr f)
+                          (string-append "t."(car f))
+                          0
+                          "    ")
+
+       ";" dnl m-wr))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (get-m3-write-type type rhs lev ind)
   ;;(dis "RHS " rhs dnl)
   (cond ((member? type '(u8 u16 u32))
@@ -513,14 +564,15 @@
       (dis dnl m3-wr)
       )
 
-    (define (emit-proc whch emitter decls return)
-      (put-m3-proc whch i3-wr m3-wr)
-      (dis "  VAR " decls dnl m3-wr)
-      (dis "  BEGIN" dnl m3-wr)
-      (map (lambda(f)(emitter f m3-wr)) fields)
-      (dis "    RETURN " return m3-wr)
-      (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
-           dnl m3-wr))
+    (define (emit-proc whch decls return)
+      (let ((emitter (eval (symbol-append 'emit-struct-field- whch))))
+        (put-m3-proc whch i3-wr m3-wr)
+        (dis "  VAR " decls dnl m3-wr)
+        (dis "  BEGIN" dnl m3-wr)
+        (map (lambda(f)(emitter f m3-wr)) fields)
+        (dis "    RETURN " return dnl m3-wr)
+        (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
+             dnl m3-wr)))
       
     ;;(dis "m3-name " m3-name dnl)
     (add-m3-type! nm m3-name)
@@ -539,9 +591,9 @@
 
     (emit-length)
 
-    (emit-proc 'read  emit-struct-field-read "t : T;" "t")
-    (emit-proc 'write emit-struct-field-write "" "")
-    
+    (emit-proc 'read   "t : T;" "t")
+    (emit-proc 'write  "" "")
+    (emit-proc 'format "wx := Wx.New();" "Wx.ToText(wx)")
     (dis dnl m3-wr)
     (close-m3 m3-wrs)
     )
@@ -569,7 +621,7 @@
 ;;; RUN OUR CODE ON THE DEFINITIONS AT THE TOP
 
 (compile structs)
-;;(exit)
+(exit)
 
 
 

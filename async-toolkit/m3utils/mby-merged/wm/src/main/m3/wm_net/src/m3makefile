@@ -6,7 +6,7 @@ _exec(["../../structgen/AMD64_LINUX/structgen","../src/structs.scm"])
 
 include ("../AMD64_LINUX/derived.m3m")
 
-Interface ("NetTypes")
+Module ("NetTypes")
 
 Module ("RdNet")
 Module ("WrNet")
