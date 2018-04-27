@@ -1,13 +1,13 @@
 # Makefile for CM3 white model build
+OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 METAROOT=$(shell ToolConfig.pl get_tool_path meta)
-SVPP=${METAROOT}/rdl/svpp/AMD64_LINUX/svpp 
-PERLFE=${METAROOT}/perlfe/AMD64_LINUX/perlfe
+SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp 
+PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
 
 NEBULON=$(shell ToolConfig.pl get_tool_path nebulon)
 
-OS_TARG=AMD64_LINUX
 WM_SUPPORT_ROOT=wm_support
 WM_SUPPORT_TARGDIR=$(WM_SUPPORT_ROOT)/$(OS_TARG)
 WM_SUPPORT=$(WM_SUPPORT_ROOT)/$(OS_TARG)/.done
@@ -16,13 +16,18 @@ GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
 
+STRUCTGEN_ROOT=structgen
+STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
+STRUCTGEN=$(STRUCTGEN_TARGDIR)/structgen
+M3_STRUCTS=$(STRUCTGEN_TARGDIR)/derived.m3m
+
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
-MBYLIB=$(MBY_BUILD_ROOT)/AMD64_LINUX/libmby.a
+MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
 
 HLP_TOP_RDL=/p/hlp/hlp_release/drops/hlp-DROP_1P2-17ww50d/src/srdl/hlp_top_map.rdl
 HLP_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/hlp
-HLPLIB=$(HLP_BUILD_ROOT)/AMD64_LINUX/libhlp.a
+HLPLIB=$(HLP_BUILD_ROOT)/$(OS_TARG)/libhlp.a
 
 TOP=.top
 TOP_TEMPLATE=top_template
@@ -50,6 +55,14 @@ $(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*) $(TOP)
 
 $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
+
+$(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
+	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
+
+$(M3_STRUCTS): $(STRUCTGEN)
+	pushd $(STRUCTGEN_ROOT)/src && $(realpath $<) do.scm
+
+rpc_structs: $(M3_STRUCTS)
 
 $(MBYLIB): $(MBY_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
@@ -82,5 +95,5 @@ clean:
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
-	find . -name AMD64_LINUX | xargs rm -rf 
+	find . -name $(OS_TARG) | xargs rm -rf 
 	rm $(TOP)
