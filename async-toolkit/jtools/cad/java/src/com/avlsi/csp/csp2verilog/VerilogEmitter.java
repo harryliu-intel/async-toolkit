@@ -1802,6 +1802,28 @@ public class VerilogEmitter extends CommonEmitter {
         }
     }
 
+    private void readHexInts(ArrayType ty) throws VisitorException {
+        out.print("ReadHexInts#(");
+        ty.getRange().getMinExpression().accept(this);
+        out.print(",");
+        ty.getRange().getMaxExpression().accept(this);
+        out.print(",");
+        out.print(getRegisterWidth((IntegerType) ty.getElementType()));
+        out.print(",");
+        out.print(registerBitWidth);
+        out.print(")");
+    }
+    
+    private void commaSeperated(final ExpressionInterface... es)
+        throws VisitorException {
+        boolean first = true;
+        for (ExpressionInterface e : es) {
+            if (first) first = false;
+            else out.print(",");
+            e.accept(this);
+        }
+    }
+
     private void processFunctionCall(final FunctionCallExpression e,
                                      final ExpressionInterface lhs)
         throws VisitorException {
@@ -1827,7 +1849,7 @@ public class VerilogEmitter extends CommonEmitter {
                            name.equals("string") || name.equals("log2") ||
                            name.equals("log4") || name.equals("time") ||
                            name.equals("ord") || name.equals("chr") ||
-                           name.equals("getArgValue")) { 
+                           name.equals("getArgValue")) {
                     lhs.accept(this);
                     out.print(" = ");
                     visitFunctionCallExpression(e); // process builtin funcs 
@@ -1858,30 +1880,57 @@ public class VerilogEmitter extends CommonEmitter {
                     final ArrayType ty =
                         (ArrayType) analysisResults.getType(array);
 
-                    out.print("ReadHexInts#(");
-                    ty.getRange().getMinExpression().accept(this);
-                    out.print(",");
-                    ty.getRange().getMaxExpression().accept(this);
-                    out.print(",");
-                    out.print(
-                        getRegisterWidth((IntegerType) ty.getElementType()));
-                    out.print(",");
-                    out.print(registerBitWidth);
-                    out.print(")::readHexInts(");
+                    readHexInts(ty);
+                    out.print("::readHexInts(");
                     out.print("__csp_to_sv_string(");
                     file.accept(this);
                     out.print("),");
-                    array.accept(this);
-                    out.print(",");
-                    count.accept(this);
-                    out.print(",");
-                    lhs.accept(this);
+                    commaSeperated(array, count, lhs);
                     out.println(");");
                 } else if (name.equals("dumpOn")) {
                     out.println("`CAST2VERILOG_DUMP_ON");
                 } else if (name.equals("dumpOff")) {
                     out.println("`CAST2VERILOG_DUMP_OFF");
                 } else if (name.equals("cover")) {
+                } else if (name.equals(RefinementResolver.BuiltIn.FOPEN)) {
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    final ExpressionInterface file = i.next();
+                    final ExpressionInterface mode = i.next();
+                    lhs.accept(this);
+                    out.print(" = $fopen(");
+                    out.print("__csp_to_sv_string(");
+                    file.accept(this);
+                    out.print("), __csp_to_sv_string(");
+                    mode.accept(this);
+                    out.println("));");
+                } else if (name.equals(RefinementResolver.BuiltIn.FCLOSE)) { 
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    final ExpressionInterface stream = i.next();
+                    out.print("$fclose(integer'(");
+                    stream.accept(this);
+                    out.println("));");
+                    lhs.accept(this);
+                    out.println(" = 1'b0;");
+                } else if (name.equals(RefinementResolver.BuiltIn.FREAD)) {
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    final ExpressionInterface ptr = i.next();
+                    final ExpressionInterface size = i.next();
+                    final ExpressionInterface nmemb = i.next();
+                    final ExpressionInterface stream = i.next();
+                    readHexInts((ArrayType) analysisResults.getType(ptr));
+                    out.print("::fread(");
+                    commaSeperated(ptr, size, nmemb, stream, lhs);
+                    out.println(");");
+                } else if (name.equals(RefinementResolver.BuiltIn.FWRITE)) {
+                    final Iterator<ExpressionInterface> i = e.getActuals();
+                    final ExpressionInterface ptr = i.next();
+                    final ExpressionInterface size = i.next();
+                    final ExpressionInterface nmemb = i.next();
+                    final ExpressionInterface stream = i.next();
+                    readHexInts((ArrayType) analysisResults.getType(ptr));
+                    out.print("::fwrite(");
+                    commaSeperated(ptr, size, nmemb, stream, lhs);
+                    out.println(");");
                 } else {
                     // not supported: eventQueueIsEmpty, stable, enableDSimErrors
                     throw new VisitorException(
