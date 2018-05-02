@@ -14,5 +14,8 @@ Module ("WrNet")
 %Module ("FmModelMessageHdr")
 
 Interface ("NetError")
+Interface ("NetContext")
+
+Module("ServerPacket")
 
 library ("wm_net")

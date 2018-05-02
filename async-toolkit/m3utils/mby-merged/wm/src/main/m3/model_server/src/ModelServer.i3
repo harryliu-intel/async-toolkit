@@ -1,12 +1,13 @@
 INTERFACE ModelServer;
 IMPORT Thread;
+IMPORT Pathname;
 
 TYPE
   T <: Public;
 
   Public = OBJECT
   METHODS
-    init() : T;
+    init(infoPath : Pathname.T := ".") : T;
 
     resetChip();
 
@@ -18,5 +19,7 @@ TYPE
   PubListener = Thread.Closure OBJECT END;
 
 CONST Brand = "ModelServer";
+
+CONST InfoFileName = "models.packetServer";
 
 END ModelServer.

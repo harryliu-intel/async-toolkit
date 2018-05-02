@@ -1,13 +1,17 @@
 MODULE Main;
 IMPORT ModelServer;
 IMPORT Thread;
+IMPORT Pathname, Env;
 
 VAR
   modelServer : ModelServer.T;
-
+  infoPath : Pathname.T;
 BEGIN
 
-  modelServer := NEW(ModelServer.T).init();
+  infoPath := Env.Get("WMODEL_INFO_PATH");
+  IF infoPath = NIL THEN infoPath := "." END;
+
+  modelServer := NEW(ModelServer.T).init(infoPath := infoPath);
 
   modelServer.resetChip();
 

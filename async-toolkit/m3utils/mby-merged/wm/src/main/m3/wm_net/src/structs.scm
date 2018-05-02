@@ -8,9 +8,21 @@
 (define deriv-dir "../AMD64_LINUX/")
 ;;(define deriv-dir "./out/")
 
+;; a small helper
+
+(define (fromhex x) (Scan.Int (stringify x) 16))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; USER DEFINITIONS
+;;;
+;;; refer to fm_model_message.h for more information:
+;;;
+;;;  White Model Packet Queue Interface Message Types
+;;;
+;;; The set of possible message type values for ''fm_modelMessage''
+;;; when sending a message to the white model packet queue interface.
+;;;
 
 (define structs
   `((constants iosf-op       
@@ -27,6 +39,12 @@
                      (fuse-req           16_45)
                      (ip-ready           16_d0)))
 
+    (constants fm-hlp-api-regs-int
+               u32
+               ((m3 FmHlpApiRegsInt))
+               ((hlp-reg-version 16_1109)   ;; hacky for now
+                (hlp-reg-tag     16_12614)))
+
     (enum fm-socket-type
                u8 ;; wire type
                ((c fm_socketType FM_SOCKET_TYPE)
@@ -37,13 +55,6 @@
                 (pipe)
                 (max))
                )
-
-    (struct fm-model-sideband-data
-                 ((c fm_modelSidebandData)
-                  (m3 FmModelSideBandData))
-                 ((idTag          u32)
-                  (tc              u8)
-                  (pktMeta (array  u8 32))))
 
     (enum fm-model-msg-type
                u16
@@ -66,17 +77,6 @@
                 (nvm-read))
                )
     
-    (struct fm-model-message-hdr
-                 ((c fm_modelMessageHdr)
-                  (m3 FmModelMessageHdr))
-                 ((msgLength       u32)
-                  (version         u16)
-                  (type            fm-model-msg-type)
-                  (sw              u16)
-                  (port            u16)
-                  ;; payload is left out here
-                  ))
-
     (enum fm-model-attr-type
                u8
                ((c fm_modelAttrType FM_MODEL_ATTR)
@@ -101,6 +101,101 @@
                 (write64-ack))
                )
 
+    (enum fm-model-info-type
+          u8
+          ((m3 FmModelInfoType))
+          ((request 1)
+           (response)
+           ))
+
+    (enum fm-model-data-type
+          u8
+          ((m3 FmModelDataType))
+          ((data-packet ,(fromhex 'a0))
+           (data-sb-id)
+           (data-sb-tc)
+           (data-packet-meta)))
+
+    (enum fm-model-ctrl-type
+          u8
+          ((m3 FmModelCtrlType))
+          ((chip-reset-req 1) ;; request
+           (chip-reset-rep)   ;; response
+           ))
+    
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; general note:
+    ;;
+    ;; types that end in -hdr are header types.  This means that where
+    ;; they are present in the input stream, they are generally
+    ;; followed by some variable-length payload.
+    ;;
+    
+    (struct fm-model-sideband-data
+                 ((c fm_modelSidebandData)
+                  (m3 FmModelSideBandData))
+                 ((idTag          u32)
+                  (tc              u8)
+                  (pktMeta (array  u8 32))  ;; whats up here? is this real?
+                  ))
+
+    (struct fm-model-message-hdr
+                 ((c fm_modelMessageHdr)
+                  (m3 FmModelMessageHdr))
+                 ((msgLength       u32)
+                  (version         u16)
+                  (type            fm-model-msg-type)
+                  (sw              u16)
+                  (port            u16)
+                  ;; payload is left out here
+                  ))
+
+    ;; types below here added by mika
+    
+    (struct fm-model-msg-error-hdr
+            ((m3 FmModelMsgErrorHdr))
+            ((type                 u8)))
+
+    (struct fm-model-msg-set-egress-info-hdr
+            ((m3 FmModelMsgSetEgressInfoHdr))
+            ((port                 u16)
+             ;; payload is left out here
+             ))
+
+    (struct fm-model-msg-mgmt-32  
+            ((m3 FmModelMsgMgmt32))
+            ((mgmtType   fm-model-mgmt-type)
+             (address    u32)
+             (value      u32)))
+              
+    (struct fm-model-msg-mgmt-64 
+            ((m3 FmModelMsgMgmt32))
+            ((type       fm-model-mgmt-type)
+             (address    u32)
+             (value      u64)))
+
+    (struct fm-model-msg-attr 
+            ((m3 FmModelMsgAttr))
+            ((type         fm-model-attr-type)
+             (keyLength    u16)
+             (key          (array u8 256))
+             (value        (array u8 256))))
+
+    (struct fm-model-msg-get-info
+            ((m3 FmModelMsgGetInfo))
+            ((type                 fm-model-info-type)
+             (nPortsSupported      u16)
+             (padding              (array u8 51))))
+
+    (struct fm-model-msg-packet-eot
+            ((m3 FmModelMsgPacketEot))
+            ((transmissionSize     u16)))
+
+    (struct fm-model-msg-version-hdr
+            ((m3 FmModelMsgVersionHdr))
+            ((versionNum    u16)))
+            
     )
   )
 
@@ -134,20 +229,26 @@
 ;;; GLOBALS
 
 (define constants '())
-(define enum '())
-(define struct '())
+(define enum      '())
+(define struct    '())
 (define m3typemap '())
 
-(set! constants '())
-(set! enum '())
-(set! struct '())
-(set! m3typemap '())
+(set! constants   '())
+(set! enum        '())
+(set! struct      '())
+(set! m3typemap   '())
 
 (define (add-m3-type! nm m3-name)
   (set! m3typemap
         (cons
          (cons nm m3-name)
          m3typemap)))
+
+(define (get-m3-typemapping type)
+  (let ((rec (assoc type m3typemap)))
+    (if (not rec)
+        (error (string-append "No M3 type mapping for " (stringify type)))
+        (cdr rec))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -205,9 +306,9 @@
     ))
 
 (define (put-m3-imports wr)
-  (dis "<*NOWARN*>FROM NetTypes IMPORT U8, U16, U32;" dnl
-       "<*NOWARN*>IMPORT WrNet, RdNet, NetError;" dnl
-       "<*NOWARN*>IMPORT Wx, NetTypes;" dnl
+  (dis "<*NOWARN*>FROM NetTypes IMPORT U8, U16, U32, U64;" dnl
+       "<*NOWARN*>IMPORT WrNet, RdNet, NetError, ServerPacket AS Pkt;" dnl
+       "<*NOWARN*>IMPORT Wx, NetTypes, Fmt, NetContext;" dnl
        dnl
        wr))
 
@@ -221,10 +322,22 @@
 (define read-proto "(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }")
 
 (define write-proc-name "Write")
-(define write-proto "(wr : Wr.T; t : T) RAISES { Wr.Failure, Thread.Alerted }")
+(define write-proto "(wr : Wr.T; READONLY t : T) RAISES { Wr.Failure, Thread.Alerted }")
+
+(define readc-proc-name "ReadC")
+(define readc-proto "(rd : Rd.T; VAR cx : NetContext.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted, NetContext.Short }")
+
+(define writec-proc-name "WriteC")
+(define writec-proto "(wr : Wr.T; READONLY t : T; VAR cx : NetContext.T) RAISES { Wr.Failure, Thread.Alerted }")
+
+(define writes-proc-name "WriteS")
+(define writes-proto "(s : Pkt.T; at : CARDINAL; READONLY t : T)")
+
+(define writee-proc-name "WriteE")
+(define writee-proto "(s : Pkt.T; e : Pkt.End; READONLY t : T)")
 
 (define format-proc-name "Format")
-(define format-proto "(t : T) : TEXT")
+(define format-proto "(READONLY t : T) : TEXT")
 
 (define (put-m3-proc whch .
                      wrs ;; i3 m3 ...
@@ -248,13 +361,19 @@
   (dis "CONST " (scheme->m3 (car v)) " = " (cadr v) ";" dnl wr)
   )
 
-(define (compile-constants-m3 nm x)
+(define (get-m3-name nm lst)
+  (let ((pair (assoc 'm3 lst)))
+    (if (null? pair)
+        (error (string-append "No M3 name for " nm))
+        (cadr pair))))
+
+(define (compile-constants-m3! nm x)
   (dis "compiling constants :  " nm dnl)
   (let* ((wire-type    (car x))
          (m3-wire-type (scheme->m3 wire-type))
          (names        (cadr x))
          (values       (caddr x))
-         (m3-name      (cadr (assoc 'm3 names)))
+         (m3-name      (get-m3-name nm names))
          (m3-wrs       (open-m3 m3-name))
          (i3-wr        (car m3-wrs))
          (m3-wr        (cadr m3-wrs))
@@ -266,22 +385,27 @@
          dnl
          i3-wr)
     (dis "CONST Write = WrNet.Put" m3-wire-type ";" dnl i3-wr)
-    (dis "CONST Read  = RdNet.Get" m3-wire-type ";" dnl
+    (dis "CONST WriteC = WrNet.Put" m3-wire-type "C;" dnl i3-wr)
+    (dis "CONST WriteS = WrNet.Put" m3-wire-type "S;" dnl i3-wr)
+    (dis "CONST WriteE = WrNet.Put" m3-wire-type "G;" dnl i3-wr)
+    (dis "CONST Read  = RdNet.Get" m3-wire-type ";" dnl i3-wr)
+    (dis "CONST ReadC  = RdNet.Get" m3-wire-type "C;" dnl
          dnl i3-wr)
     (map (lambda(x)(compile-m3-const-value x i3-wr)) values)
 
     (close-m3 m3-wrs)
-    )
+    ) ;; *tel
   )
 
-(define compile-constants compile-constants-m3)
-(define (compile-enum nm x)
+(define compile-constants! compile-constants-m3!)
+
+(define (compile-enum! nm x)
   (dis "compiling enum      :  " nm dnl)
   (let* ((wire-type    (car x))
          (m3-wire-type (scheme->m3 wire-type))
          (names        (cadr x))
          (values       (caddr x))
-         (m3-name      (cadr (assoc 'm3 names)))
+         (m3-name      (get-m3-name nm names))
          (m3-wrs       (open-m3 m3-name))
          (i3-wr        (car m3-wrs))
          (m3-wr        (cadr m3-wrs))
@@ -309,11 +433,31 @@
      "  BEGIN RETURN V2T(RdNet.Get"m3-wire-type"(rd)) END Read;" dnl
      dnl m3-wr)
 
+    (put-m3-proc 'readc i3-wr m3-wr)
+    (dis
+     "  BEGIN RETURN V2T(RdNet.Get"m3-wire-type"C(rd,cx)) END ReadC;" dnl
+     dnl m3-wr)
+
     (put-m3-proc 'write i3-wr m3-wr)
     (dis
     "  BEGIN WrNet.Put"m3-wire-type"(wr, Vals[t]) END Write;" dnl
          dnl m3-wr)
-         
+
+    (put-m3-proc 'writec i3-wr m3-wr)
+    (dis
+    "  BEGIN WrNet.Put"m3-wire-type"C(wr, Vals[t], cx) END WriteC;" dnl
+         dnl m3-wr)
+
+    (put-m3-proc 'writes i3-wr m3-wr)
+    (dis
+    "  BEGIN WrNet.Put"m3-wire-type"S(s, at, Vals[t]) END WriteS;" dnl
+         dnl m3-wr)
+
+    (put-m3-proc 'writee i3-wr m3-wr)
+    (dis
+    "  BEGIN WrNet.Put"m3-wire-type"G(s, e, Vals[t]) END WriteE;" dnl
+         dnl m3-wr)
+
     (dis "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange };" dnl
          dnl i3-wr)
 
@@ -349,7 +493,7 @@
                  "  END V2T;" dnl
                  dnl
                  m3-wr)
-            )
+            ) ;; nigeb
 
           ;; else
           
@@ -390,69 +534,79 @@
         ))
 
 (define (get-m3-type type)
-  (cond ((member? type '(u8 u16 u32)) (scheme->m3 type))
+  (cond ((member? type '(u8 u16 u32 u64)) (scheme->m3 type))
         ((array-type? type)
          (string-append "ARRAY [0.." (caddr type) "-1] OF "
                         (get-m3-type (cadr type))))
         (else
-         (let ((rec (assoc type m3typemap)))
-           (if (not rec)
-               (error (string-append "Unknown type " (stringify type)))
-               (symbol->string (symbol-append (cdr rec) ".T")))))))
+         (symbol->string (symbol-append (get-m3-typemapping type) ".T")))))
 
 (define (get-m3-type-size type)  ;; PACKED size! -- wire protos are packed!
   (cond ((eq? type 'u8) "1")
         ((eq? type 'u16) "2")
         ((eq? type 'u32) "4")
+        ((eq? type 'u64) "4")
         ((array-type? type) (string-append (caddr type)
                                            "*("
                                            (get-m3-type-size (cadr type))
                                            ")"))
         (else
-           (let ((rec (assoc type m3typemap)))
-             (if (not rec)
-                 (error (string-append "Unknown type " (stringify type)))
-                 (symbol->string (symbol-append (cdr rec) ".Length")))))))
+         (symbol->string (symbol-append (get-m3-typemapping type) ".Length")))))
 
 (define (emit-struct-field-type f i-wr)
   (dis "    " (car f) " : " (get-m3-type (cadr f)) ";" dnl i-wr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-read-type type lhs lev ind)
-  (cond ((member? type '(u8 u16 u32))
-         (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"(rd)"))
+(define (get-m3-read-type whch type lhs lev ind)
+  (cond ((member? type '(u8 u16 u32 u64))
+         (case whch
+           ((read)
+            (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"(rd)"))
+           ((readc)
+            (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"C(rd,cx)"))
+           (else (error whch))))
+           
         ((array-type? type)
          (string-append
           ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
 
           (get-m3-read-type
+           whch
            (cadr type)
-           (string-append "  " lhs "[i"lev"]")
+           (string-append lhs "[i"lev"]")
            (+ lev 1)
            (string-append ind "  ")
-           )
-
+           ) dnl
           ind "END"
           ))
         (else
-           (let ((rec (assoc type m3typemap)))
-             (if (not rec)
-                 (error (string-append "Unknown type " (stringify type)))
-                 (string-append ind lhs " := " (cdr rec) ".Read(rd)"))))))
+         (case whch
+           ((read)
+            (string-append ind lhs " := " (get-m3-typemapping type) ".Read(rd)"))
+           ((readc)
+            (string-append ind lhs " := " (get-m3-typemapping type) ".ReadC(rd,cx)"))
+           (else (error whch))))))
          
-(define (emit-struct-field-read f m-wr)
-  (dis (get-m3-read-type (cadr f)
+(define (emit-struct-field-readx whch f m-wr updn)
+  (dis (get-m3-read-type whch
+                         (cadr f)
                          (string-append "t." (car f))
                          0
                          "    ")
        ";" dnl m-wr))
 
+(define (emit-struct-field-readc . x)
+  (apply emit-struct-field-readx (cons 'readc x)))
+
+(define (emit-struct-field-read . x)
+  (apply emit-struct-field-readx (cons 'read x)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (get-m3-format-type type rhs lev ind)
   ;;(dis "RHS " rhs dnl)
-  (cond ((member? type '(u8 u16 u32))
+  (cond ((member? type '(u8 u16 u32 u64))
          (string-append
           ind
           "Wx.PutText(wx,NetTypes.Format"(scheme->m3 type)"("rhs"))"
@@ -461,7 +615,7 @@
         ((array-type? type)
          (string-append
           ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
-
+              
           (get-m3-format-type
            (cadr type)
            (string-append "  " rhs "[i"lev"]")
@@ -473,61 +627,135 @@
           ind "END"
           ))
         (else
-           (let ((rec (assoc type m3typemap)))
-             (if (not rec)
-                 (error (string-append "Unknown type " (stringify type)))
-                 (string-append ind
-                                "Wx.PutText(wx,"(cdr rec) ".Format("rhs"))"))))))
+         (string-append
+          ind
+          "Wx.PutText(wx," (get-m3-typemapping type) ".Format("rhs"))"))))
 
-(define (emit-struct-field-format f m-wr)
-  (dis 
-       (get-m3-format-type (cadr f)
-                          (string-append "t."(car f))
-                          0
-                          "    ")
-
-       ";" dnl m-wr))
-
+(define (emit-struct-field-format f m-wr updn)
+  (let ((field-name (car f))
+        (field-type (cadr f)))
+    
+    (dis
+     "    Wx.PutText(wx,\""field-name"=\");" dnl
+     (get-m3-format-type field-type
+                         (string-append "t."field-name)
+                         0
+                         "    "
+                         ) 
+     ";" dnl
+     "    Wx.PutText(wx,\" \");" dnl
+     m-wr)
+    ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-write-type type rhs lev ind)
+(define (get-m3-write-type whch type rhs lev ind updn)
   ;;(dis "RHS " rhs dnl)
-  (cond ((member? type '(u8 u16 u32))
-         (string-append ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
+  ;;(dis whch " " type dnl)
+
+  (string-append
+
+   ;;
+   ;; in case of the generic write 'writee , the fields are
+   ;; processed twice: once in ascending, then once in descending
+   ;; order.
+   ;;
+   ;; we need to ensure that only one copy is actually emitted!
+   ;;
+
+   (if (eq? whch 'writee)
+       (string-append ind
+                      (case updn
+                        ((up) "IF e=Pkt.End.Back THEN ")
+                        ((dn) "IF e=Pkt.End.Front THEN ")
+                        ) ;; esac
+         )
+       ""
+       )
+
+   ;; and now for your regularly scheduled presentation...
+  (cond ((member? type '(u8 u16 u32 u64))
+         (case whch
+           ((write)
+            (string-append ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
+           ((writec)
+            (string-append ind "WrNet.Put"(scheme->m3 type)"C(wr,"rhs",cx)"))
+           ((writes)
+            (string-append ind "WrNet.Put"(scheme->m3 type)"S(s,at,"rhs")"))
+           ((writee)
+            (string-append ind "WrNet.Put"(scheme->m3 type)"G(s,e,"rhs")"))
+           (else (error whch))))
+         
         ((array-type? type)
          (string-append
-          ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
+          ind
+          (case updn
+            ((up)
+             (string-append "FOR i"lev" := 0 TO " (caddr type) "-1 DO"))
+
+            ((dn)
+             (string-append "FOR i"lev" := " (caddr type) "-1 TO 0 BY -1 DO"))
+            )
+          dnl
 
           (get-m3-write-type
+           whch
            (cadr type)
            (string-append "  " rhs "[i"lev"]")
            (+ lev 1)
            (string-append ind "  ")
+           updn
            )
           dnl
 
           ind "END"
           ))
+
         (else
-           (let ((rec (assoc type m3typemap)))
-             (if (not rec)
-                 (error (string-append "Unknown type " (stringify type)))
-                 (string-append ind (cdr rec) ".Write(wr,"rhs")"))))))
+         (case whch
+           ((write)
+            (string-append ind (get-m3-typemapping type) ".Write(wr,"rhs")"))
+           ((writec)
+            (string-append ind (get-m3-typemapping type) ".WriteC(wr,"rhs",cx)"))
+           ((writes)
+            (string-append ind (get-m3-typemapping type) ".WriteS(s,at,"rhs")"))
+           ((writee)
+            (string-append ind (get-m3-typemapping type) ".WriteE(s,e,"rhs")"))
+           (else (error whch)))))
+  ;; dnoc
+  
+  (if (eq? whch 'writee) " END" "")
+  
+  ) ;; string-append
+  )
 
-(define (emit-struct-field-write f m-wr)
+(define (emit-struct-field-writex whch f m-wr updn)
   (dis 
-       (get-m3-write-type (cadr f)
-                          (string-append "t."(car f))
-                          0
-                          "    ")
+   (get-m3-write-type whch
+                      (cadr f)
+                      (string-append "t."(car f))
+                      0
+                      "    "
+                      updn)
+   
+   ";" dnl m-wr))
 
-       ";" dnl m-wr))
+(define (emit-struct-field-writee . x)
+  (apply emit-struct-field-writex (cons 'writee x)))
+
+(define (emit-struct-field-writes . x)
+  (apply emit-struct-field-writex (cons 'writes x)))
+
+(define (emit-struct-field-writec . x)
+  (apply emit-struct-field-writex (cons 'writec x)))
+
+(define (emit-struct-field-write . x)
+  (apply emit-struct-field-writex (cons 'write x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; MAIN STRUCT COMPILER
 
-(define (compile-struct nm x)
+(define (compile-struct! nm x)
   (dis "compiling struct    :  " nm dnl)
   (let* ((names (car x))
          (m3-name      (cadr (assoc 'm3 names)))
@@ -538,7 +766,7 @@
          (types        (uniq eq? (map cadr fields)))
 
          (import-intfs
-          (filter (lambda(x) (not (member? x '(u8 u16 u32))))
+          (filter (lambda(x) (not (member? x '(u8 u16 u32 u64))))
                   (map get-elem-type types)))
          )
 
@@ -565,11 +793,18 @@
       )
 
     (define (emit-proc whch decls return)
+      ;; emit a procedure to do "something" (in parameter whch)
+      ;; return value provided in parameter return
       (let ((emitter (eval (symbol-append 'emit-struct-field- whch))))
         (put-m3-proc whch i3-wr m3-wr)
         (dis "  VAR " decls dnl m3-wr)
         (dis "  BEGIN" dnl m3-wr)
-        (map (lambda(f)(emitter f m3-wr)) fields)
+        (map (lambda(f)(emitter f m3-wr 'up)) fields)
+
+        ;; special case for the generic write, can do backwards too
+        (if (eq? whch 'writee)
+            (map (lambda(f)(emitter f m3-wr 'dn)) (reverse fields)))
+        
         (dis "    RETURN " return dnl m3-wr)
         (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
              dnl m3-wr)))
@@ -578,22 +813,38 @@
     (add-m3-type! nm m3-name)
     (set! e import-intfs)
 
+    ;; the obvious imports (should these really be here?) 
     (map (lambda(wr)
            (dis "IMPORT Rd, Wr, Thread;" dnl dnl wr)) (list i3-wr m3-wr))
 
+    ;; emit the imports for the interfaces needed
     (map (lambda (wr)
            (map (lambda(intf)
-                  (dis "IMPORT " (cdr (assoc intf m3typemap)) ";" dnl wr))
+                  (dis "IMPORT " (get-m3-typemapping intf) ";" dnl wr))
                 import-intfs))
          (list i3-wr m3-wr))
 
+    ;; the matching Modula-3 declaration
     (emit-m3-t)
 
+    ;; a symbol called Length, denoting the wire size of the record
     (emit-length)
 
-    (emit-proc 'read   "t : T;" "t")
-    (emit-proc 'write  "" "")
-    (emit-proc 'format "wx := Wx.New();" "Wx.ToText(wx)")
+    ;; procedures for reading the record off the wire
+    (emit-proc 'read   "t : T;" "t")   ;; raw read
+    (emit-proc 'readc   "t : T;" "t")  ;; read with context
+
+    ;; various ways of writing the record to the wire
+    (emit-proc 'write  "" "")          ;; raw write
+    (emit-proc 'writec  "" "")         ;; write with context
+    (emit-proc 'writes  "" "")         ;; write to ServerPacket at i
+    (emit-proc 'writee  "" "")         ;; write to ServerPacket at frt/bck
+
+    ;; procedures for human-readable formatting of packet
+    (emit-proc 'format
+               "wx := Wx.New();"
+               (string-append "Fmt.F(\"<"m3-name">{ %s }\", Wx.ToText(wx))"))
+    
     (dis dnl m3-wr)
     (close-m3 m3-wrs)
     )
@@ -603,24 +854,24 @@
 ;;;
 ;;; MAIN FUNCTIONS : COMPILE THE DATA STRUCTURES
 
-(define (compile-one x)
+(define (compile-one! x)
   (let ((category (car x))
         (nm       (cadr x)))
     (eval `(set! ,category (cons (cdr x) ,category)))
-    (eval `(,(symbol-append 'compile- category) nm (cddr x)))
+    (eval `(,(symbol-append 'compile- category `!) nm (cddr x)))
     #t
     ))
 
-(define (compile structs)
+(define (compile! structs)
   (wr-close (filewr-open (string-append deriv-dir "derived.m3m")))
-  (map compile-one structs)
+  (map compile-one! structs)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; RUN OUR CODE ON THE DEFINITIONS AT THE TOP
 
-(compile structs)
+(compile! structs)
 (exit)
 
 

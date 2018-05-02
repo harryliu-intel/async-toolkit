@@ -21,4 +21,7 @@ PROCEDURE FormatU16(u : U16) : TEXT =
 PROCEDURE FormatU32(u : U32) : TEXT =
   BEGIN RETURN Format(u, 8) END FormatU32;
 
+PROCEDURE FormatU64(u : U64) : TEXT =
+  BEGIN RETURN Format(u, 16) END FormatU64;
+
 BEGIN END NetTypes.
