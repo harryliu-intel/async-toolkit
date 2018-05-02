@@ -1,7 +1,8 @@
 INTERFACE ServerPacket;
-IMPORT CharSeq; (* should really by ByteSeq ! *)
+IMPORT ByteSeq;
 IMPORT Wr, Thread, Rd;
 IMPORT NetContext;
+IMPORT Byte;
 
 (* it makes sense to build packets backwards, adding headers to the head
    of packet as we pop out.
@@ -10,7 +11,7 @@ IMPORT NetContext;
    ordering, especially when maintaining the same representation for
    received packets, which are generally parsed head to tail.
 
-   this auxiliary interface adds a special capability to a "CharSeq.T":
+   this auxiliary interface adds a special capability to a "ByteSeq.T":
    the ability efficiently to "make space" at the head of the sequence.
 
    The thus-prepared sequence can then be passed to a packet builder, which
@@ -27,18 +28,18 @@ IMPORT NetContext;
 TYPE
   T <: Public;
 
-  Public = CharSeq.T OBJECT METHODS
+  Public = ByteSeq.T OBJECT METHODS
     prepPfx(pfxSz : CARDINAL); (* set up for a prefix to be added *)
   END;
 
 
 TYPE End = { Front, Back };
 
-PROCEDURE PutE(t : T; e : End; c : CHAR);
+PROCEDURE PutE(t : T; e : End; c : Byte.T);
 
-PROCEDURE Put(t : T; i : CARDINAL; c : CHAR);
+PROCEDURE Put(t : T; i : CARDINAL; c : Byte.T);
 
-PROCEDURE Get(t : T; i : CARDINAL) : CHAR;
+PROCEDURE Get(t : T; i : CARDINAL) : Byte.T;
 
 PROCEDURE Transmit(t : T; wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted };
 

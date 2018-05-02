@@ -392,7 +392,7 @@ PROCEDURE HandleMsgIosf(m            : MsgHandler;
 
           CASE opcode OF
             IosfOp.RegBlkRead =>
-            Pkt.Put(inst.sp, OpcodeOff, VAL(IosfOp.CompNoData,CHAR));
+            Pkt.Put(inst.sp, OpcodeOff, (IosfOp.CompNoData));
             ndw := ORD(inbound.get(dataOff + NdwOff));
             ndwOff := dataOff + 8;
 
@@ -444,16 +444,16 @@ PROCEDURE PutStringS(sp : Pkt.T; end : Pkt.End; str : TEXT) =
   BEGIN
     CASE end OF
       Pkt.End.Front =>
-      sp.addlo(VAL(0,CHAR));
+      sp.addlo(0);
       FOR i := Text.Length(str)-1 TO 0 BY -1 DO
-        sp.addlo(Text.GetChar(str,i))
+        sp.addlo(ORD(Text.GetChar(str,i)))
       END
     |
       Pkt.End.Back =>
       FOR i := 0 TO Text.Length(str)-1 DO
-        sp.addhi(Text.GetChar(str,i))
+        sp.addhi(ORD(Text.GetChar(str,i)))
       END;
-      sp.addhi(VAL(0,CHAR))
+      sp.addhi(0)
     END
   END PutStringS;
   

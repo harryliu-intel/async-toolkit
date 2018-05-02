@@ -301,7 +301,7 @@ PROCEDURE PutByteS(s               : Pkt.T;
                    READONLY w      : Word.T;
                    b               : [0..BITSIZE(Word.T)-8]) =
   BEGIN
-    Pkt.Put(s, i, VAL(Word.Extract(w, b, 8),CHAR))
+    Pkt.Put(s, i, (Word.Extract(w, b, 8)))
   END PutByteS;
 
 PROCEDURE PutByteE(s               : Pkt.T;
@@ -309,7 +309,7 @@ PROCEDURE PutByteE(s               : Pkt.T;
                    READONLY w      : Word.T;
                    b               : [0..BITSIZE(Word.T)-8]) =
   BEGIN
-    Pkt.PutE(s, e, VAL(Word.Extract(w, b, 8),CHAR))
+    Pkt.PutE(s, e, (Word.Extract(w, b, 8)))
   END PutByteE;
 
 BEGIN END WrNet.

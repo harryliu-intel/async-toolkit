@@ -131,8 +131,10 @@
     ;; they are present in the input stream, they are generally
     ;; followed by some variable-length payload.
     ;;
+    ;; headers are BIG ENDIAN
+    ;;
     
-    (struct fm-model-sideband-data
+    (header fm-model-sideband-data
                  ((c fm_modelSidebandData)
                   (m3 FmModelSideBandData))
                  ((idTag          u32)
@@ -140,7 +142,7 @@
                   (pktMeta (array  u8 32))  ;; whats up here? is this real?
                   ))
 
-    (struct fm-model-message-hdr
+    (header fm-model-message-hdr
                  ((c fm_modelMessageHdr)
                   (m3 FmModelMessageHdr))
                  ((msgLength       u32)
@@ -153,49 +155,121 @@
 
     ;; types below here added by mika
     
-    (struct fm-model-msg-error-hdr
+    (header fm-model-msg-error-hdr
             ((m3 FmModelMsgErrorHdr))
             ((type                 u8)))
 
-    (struct fm-model-msg-set-egress-info-hdr
+    (header fm-model-msg-set-egress-info-hdr
             ((m3 FmModelMsgSetEgressInfoHdr))
             ((port                 u16)
              ;; payload is left out here
              ))
 
-    (struct fm-model-msg-mgmt-32  
+    (header fm-model-msg-mgmt-32  
             ((m3 FmModelMsgMgmt32))
             ((mgmtType   fm-model-mgmt-type)
              (address    u32)
              (value      u32)))
               
-    (struct fm-model-msg-mgmt-64 
+    (header fm-model-msg-mgmt-64 
             ((m3 FmModelMsgMgmt32))
             ((type       fm-model-mgmt-type)
              (address    u32)
              (value      u64)))
 
-    (struct fm-model-msg-attr 
+    (header fm-model-msg-attr 
             ((m3 FmModelMsgAttr))
             ((type         fm-model-attr-type)
              (keyLength    u16)
              (key          (array u8 256))
              (value        (array u8 256))))
 
-    (struct fm-model-msg-get-info
+    (header fm-model-msg-get-info
             ((m3 FmModelMsgGetInfo))
             ((type                 fm-model-info-type)
              (nPortsSupported      u16)
              (padding              (array u8 51))))
 
-    (struct fm-model-msg-packet-eot
+    (header fm-model-msg-packet-eot
             ((m3 FmModelMsgPacketEot))
             ((transmissionSize     u16)))
 
-    (struct fm-model-msg-version-hdr
+    (header fm-model-msg-version-hdr
             ((m3 FmModelMsgVersionHdr))
             ((versionNum    u16)))
-            
+
+
+    ;; sideband formats (all LITTLE ENDIAN)
+
+    (struct iosf-reg-blk-addr
+            ((m3 IosfRegBlkAddr))
+            ((ndw       4 (constraint (and (= 0 (mod ndw 2)) (<= ndw 14))))
+             (addr     28))
+            )
+    
+    (struct iosf-reg-blk-write-req-hdr
+            ((m3 IosfRegBlkWriteReqHdr))
+            (
+             ;; DW 0
+             (dest     8)
+             (source   8)
+             (opcode   8 (constant 16_11))
+             (tag      3)
+             (bar      3)
+             (al       1 (constant 16_1))
+             (eh       1 (constant 16_1))
+
+             ;; DW 1
+             (exphdr   7 (constant 16_0))
+             (eh       1 (constant 16_0))
+             (sai     16)
+             (rs       3 (constant 16_0))
+             (rsvd0    5)
+
+             ;;DW 2
+             (ndw      8 (constraint (and (= 0 (mod ndw 2)) (<= ndw 124))))
+             
+             (fid      8 (constant 16_0))
+             (addr0   16)
+
+             ;; DW3
+             (addr1   11)
+             (addr2   21 (constant 16_0))
+             )
+            );;struct iosf-reg-blk-write-req-hdr
+    
+    (struct iosf-reg-blk-read-req-hdr
+            ((m3 IosfRegBlkWriteReqHdr))
+            (
+             ;; DW 0
+             (dest     8)
+             (source   8)
+             (opcode   8 (constant 16_10))
+             (tag      3)
+             (bar      3)
+             (al       1 (constant 16_1))
+             (eh       1 (constant 16_1))
+
+             ;; DW 1
+             (exphdr   7 (constant 16_0))
+             (eh       1 (constant 16_0))
+             (sai     16)
+             (rs       3 (constant 16_0))
+             (rsvd0    5)
+
+             ;;DW 2
+             (ndw      8 (constraint (and (= 0 (mod ndw 2)) (<= ndw 126))))
+             
+             (fid      8 (constant 16_0))
+             (addr0   16)
+
+             ;; DW3
+             (addr1   11)
+             (addr2   21 (constant 16_0))
+             )
+            );;struct iosf-reg-blk-read-req-hdr
+
+
     )
   )
 
@@ -230,12 +304,13 @@
 
 (define constants '())
 (define enum      '())
-(define struct    '())
+(define header    '())
 (define m3typemap '())
+(define struct    '())
 
 (set! constants   '())
 (set! enum        '())
-(set! struct      '())
+(set! header      '())
 (set! m3typemap   '())
 
 (define (add-m3-type! nm m3-name)
@@ -514,7 +589,6 @@
                   (string-append v2t "    | " val " => RETURN T." sym dnl)))
           ) ;; fi
       ) ;; pool
-          
 
     (close-m3 m3-wrs)
     )
@@ -522,7 +596,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; STRUCT FIELD TYPES
+;;; HEADER FIELD TYPES
 
 (define (array-type? type) (and (list? type) (eq? 'array (car type))))
 
@@ -553,7 +627,7 @@
         (else
          (symbol->string (symbol-append (get-m3-typemapping type) ".Length")))))
 
-(define (emit-struct-field-type f i-wr)
+(define (emit-header-field-type f i-wr)
   (dis "    " (car f) " : " (get-m3-type (cadr f)) ";" dnl i-wr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -588,7 +662,7 @@
             (string-append ind lhs " := " (get-m3-typemapping type) ".ReadC(rd,cx)"))
            (else (error whch))))))
          
-(define (emit-struct-field-readx whch f m-wr updn)
+(define (emit-header-field-readx whch f m-wr updn)
   (dis (get-m3-read-type whch
                          (cadr f)
                          (string-append "t." (car f))
@@ -596,11 +670,11 @@
                          "    ")
        ";" dnl m-wr))
 
-(define (emit-struct-field-readc . x)
-  (apply emit-struct-field-readx (cons 'readc x)))
+(define (emit-header-field-readc . x)
+  (apply emit-header-field-readx (cons 'readc x)))
 
-(define (emit-struct-field-read . x)
-  (apply emit-struct-field-readx (cons 'read x)))
+(define (emit-header-field-read . x)
+  (apply emit-header-field-readx (cons 'read x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -631,7 +705,7 @@
           ind
           "Wx.PutText(wx," (get-m3-typemapping type) ".Format("rhs"))"))))
 
-(define (emit-struct-field-format f m-wr updn)
+(define (emit-header-field-format f m-wr updn)
   (let ((field-name (car f))
         (field-type (cadr f)))
     
@@ -728,7 +802,7 @@
   ) ;; string-append
   )
 
-(define (emit-struct-field-writex whch f m-wr updn)
+(define (emit-header-field-writex whch f m-wr updn)
   (dis 
    (get-m3-write-type whch
                       (cadr f)
@@ -739,24 +813,26 @@
    
    ";" dnl m-wr))
 
-(define (emit-struct-field-writee . x)
-  (apply emit-struct-field-writex (cons 'writee x)))
+(define (emit-header-field-writee . x)
+  (apply emit-header-field-writex (cons 'writee x)))
 
-(define (emit-struct-field-writes . x)
-  (apply emit-struct-field-writex (cons 'writes x)))
+(define (emit-header-field-writes . x)
+  (apply emit-header-field-writex (cons 'writes x)))
 
-(define (emit-struct-field-writec . x)
-  (apply emit-struct-field-writex (cons 'writec x)))
+(define (emit-header-field-writec . x)
+  (apply emit-header-field-writex (cons 'writec x)))
 
-(define (emit-struct-field-write . x)
-  (apply emit-struct-field-writex (cons 'write x)))
+(define (emit-header-field-write . x)
+  (apply emit-header-field-writex (cons 'write x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; MAIN STRUCT COMPILER
+;;; MAIN HEADER COMPILER
 
-(define (compile-struct! nm x)
-  (dis "compiling struct    :  " nm dnl)
+(define (compile-struct! nm x) #t) ;; nothing here right now
+
+(define (compile-header! nm x)
+  (dis "compiling header    :  " nm dnl)
   (let* ((names (car x))
          (m3-name      (cadr (assoc 'm3 names)))
          (m3-wrs       (open-m3 m3-name))
@@ -775,7 +851,7 @@
            "TYPE" dnl
            "  T = RECORD" dnl
            i3-wr)
-      (map (lambda(f)(emit-struct-field-type f i3-wr)) fields)
+      (map (lambda(f)(emit-header-field-type f i3-wr)) fields)
       (dis "  END;" dnl
            dnl i3-wr)
       )
@@ -795,7 +871,7 @@
     (define (emit-proc whch decls return)
       ;; emit a procedure to do "something" (in parameter whch)
       ;; return value provided in parameter return
-      (let ((emitter (eval (symbol-append 'emit-struct-field- whch))))
+      (let ((emitter (eval (symbol-append 'emit-header-field- whch))))
         (put-m3-proc whch i3-wr m3-wr)
         (dis "  VAR " decls dnl m3-wr)
         (dis "  BEGIN" dnl m3-wr)

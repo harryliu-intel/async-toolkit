@@ -1,11 +1,12 @@
 MODULE ServerPacket;
-IMPORT CharSeqRep AS Rep;
-IMPORT CharSeq;
+IMPORT ByteSeqRep AS Rep;
+IMPORT ByteSeq;
 IMPORT Wr, Thread, Rd;
 IMPORT NetContext;
+IMPORT Byte;
 
 TYPE
-  Super = CharSeq.T;
+  Super = ByteSeq.T;
   
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -39,14 +40,14 @@ PROCEDURE Expand(s: T) = (* c-n-p from Sequence.mg :-( *)
     s.elem := new
   END Expand;
 
-PROCEDURE Put(t : T; i : CARDINAL; c : CHAR) =
+PROCEDURE Put(t : T; i : CARDINAL; c : Byte.T) =
   BEGIN
-    WHILE i >= t.size() DO t.addhi(VAL(0,CHAR)) END; (* ugly *)
-    CharSeq.T.put(t,i,c)
+    WHILE i >= t.size() DO t.addhi(VAL(0,Byte.T)) END; (* ugly *)
+    ByteSeq.T.put(t,i,c)
   END Put;
 
-PROCEDURE Get(t : T; i : CARDINAL) : CHAR =
-  BEGIN RETURN CharSeq.T.get(t,i) END Get;
+PROCEDURE Get(t : T; i : CARDINAL) : Byte.T =
+  BEGIN RETURN ByteSeq.T.get(t,i) END Get;
 
 PROCEDURE Transmit(t :T; wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted } =
   VAR
@@ -60,7 +61,7 @@ PROCEDURE Transmit(t :T; wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted } =
           j := i
         END
       END;
-      Wr.PutChar(wr, t.elem[j]) (* could use UnsafeWr here *)
+      Wr.PutChar(wr, VAL(t.elem[j],CHAR)) (* could use UnsafeWr here *)
     END
   END Transmit;
 
@@ -69,18 +70,18 @@ PROCEDURE Init(s: T; sizeHint: CARDINAL): Super =
     IF s.elem = NIL OR NUMBER(s.elem^) = 0 THEN
       s.elem := NEW(Rep.RefArray, MAX(sizeHint, 1))
     ELSE
-      (* no need to clear the previous entries to help the GC for CHAR *)
+      (* no need to clear the previous entries to help the GC for Byte.T *)
     END (* IF *);
     s.sz := 0; s.st := 0;
     RETURN s
   END Init;
 
-PROCEDURE PutE(t : T; e : End; c : CHAR) =
+PROCEDURE PutE(t : T; e : End; c : Byte.T) =
   BEGIN
     CASE e OF
-      End.Front => CharSeq.T.addlo(t,c)
+      End.Front => ByteSeq.T.addlo(t,c)
     |
-      End.Back  => CharSeq.T.addhi(t,c)
+      End.Back  => ByteSeq.T.addhi(t,c)
     END
   END PutE;
 
@@ -88,7 +89,7 @@ PROCEDURE FromRd(t : T; rd : Rd.T; VAR cx : NetContext.T) : T
   RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted } =
   BEGIN
     FOR i := 0 TO cx.rem-1 DO
-      t.addhi(Rd.GetChar(rd))
+      t.addhi(ORD(Rd.GetChar(rd)))
     END;
     cx.rem := 0;
     RETURN t
