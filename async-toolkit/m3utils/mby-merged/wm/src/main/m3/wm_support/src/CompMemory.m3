@@ -63,27 +63,35 @@ PROCEDURE Init(t : T; range : CompRange.T) : T =
 
 PROCEDURE DoCsrOp(t : T; op : CsrOp.T) : CsrAccessStatus.T =
   BEGIN
-    CASE op.rw OF
-      CsrOp.RW.W =>
-      IF op.data = NIL THEN
-        (* single write *)
-        IF op.fv = 0 AND op.lv = BITSIZE(Word.T)-1 THEN
-          (* fast path, full word *)
-          t.mem[op.at-t.aBase.word] := op.single;
-          RETURN CsrAccessStatus.T.OK
-        ELSE
-          WITH loMask = Word.LeftShift(1,op.fv)-1,             (* lo ignore *)
-               hiMask = Word.Not(Word.Shift(1,op.lv+1)-1), (* hi ignore *)
+    WITH waddr = op.at-t.aBase.word DO
+      IF op.data = NIL AND op.fv = 0 AND op.lv = BITSIZE(Word.T)-1 THEN
+        (* fast path, full word *)
 
-               fullMask = Word.Or(loMask,hiMask),    (* mask valid for old *)
-               notMask  = Word.Not(fullMask),        (* mask valid for new *)
-               waddr = op.at-t.aBase.word
-           DO    
-            t.mem[waddr] :=
-                Word.Or(
-                    Word.And(fullMask,t.mem[waddr]),
-                    Word.And(notMask, op.single));
-
+        CASE op.rw OF
+          CsrOp.RW.W =>
+          t.mem[waddr] := op.single;
+          VAR p := t.listeners[waddr]; BEGIN
+            WHILE p # NIL DO
+              p.head.callback(op);
+              p := p.tail
+            END
+          END
+        |
+          CsrOp.RW.R =>
+          op.single := t.mem[waddr]
+        END;
+        RETURN CsrAccessStatus.T.OK
+        
+      ELSIF op.data = NIL THEN
+        WITH loMask   = Word.LeftShift(1,op.fv)-1,         (* lo ignore *)
+             hiMask   = Word.Not(Word.Shift(1,op.lv+1)-1), (* hi ignore *)
+             
+             fullMask = Word.Or(loMask,hiMask)    (* mask valid for old *)
+         DO    
+          CASE op.rw OF
+            CsrOp.RW.W =>
+            CopyWithMask(t.mem[waddr], op.single, fullMask);
+            
             VAR p := t.listeners[waddr]; BEGIN
               WHILE p # NIL DO
                 p.head.callback(op);
@@ -92,68 +100,105 @@ PROCEDURE DoCsrOp(t : T; op : CsrOp.T) : CsrAccessStatus.T =
             END;
             
             RETURN CsrAccessStatus.T.OK
-          END
-        END
-      ELSE
-        (* write multiple words *)
-          WITH waddr  = op.at-t.aBase.word,
-               lwaddr = MIN(waddr + NUMBER(op.data^) - 1, LAST(t.mem^))
-           DO
-            (* special case, single word *)
-            IF waddr = lwaddr THEN
-              op.single := op.data[0];
-              op.data := NIL;
-              RETURN DoCsrOp(t,op)
-            END;
-            
-            (* first word *)
-            WITH loMask = Word.LeftShift(1,op.fv)-1   (* lo to ignore *),
-                 notMask = Word.Not(loMask)           (* hi to write *)   DO
-              
-              t.mem[waddr] :=
-                  Word.Or(
-                      Word.And(loMask, t.mem[waddr]),
-                      Word.And(notMask, op.data[0]))
-            END;
-
-            FOR i := 1 TO NUMBER(op.data^)-2 DO
-              t.mem[i+waddr] := op.data[i]
-            END;
-
-            WITH hiMask = Word.Not(Word.LeftShift(1,op.lv+1)-1), (* hi ignore *)
-                 notMask = Word.Not(hiMask) DO
-
-            (* last word *)
-              t.mem[lwaddr] :=
-                  Word.Or(
-                      Word.And(hiMask,t.mem[lwaddr]),
-                      Word.And(notMask, op.data[LAST(op.data^)]))
-            END;
-
-            WITH s = NEW(CompMemoryListenerSetDef.T).init() DO
-              FOR i := waddr TO lwaddr DO
-                VAR p := t.listeners[i]; BEGIN
-                  WHILE p # NIL DO EVAL s.insert(p.head); p := p.tail END
-                END
-              END;
-              
-              VAR
-                iter := s.iterate();
-                l : CompMemoryListener.T;
-              BEGIN
-                WHILE iter.next(l) DO l.callback(op) END
-              END
-            END;
-            
+          |
+            CsrOp.RW.R =>
+            CopyWithMask(op.single, t.mem[waddr], fullMask);
             RETURN CsrAccessStatus.T.OK
           END
+        END(*WITH*)
+      ELSE
+        CASE op.rw OF
+          CsrOp.RW.W =>
+          RETURN DoCsrWriteMulti(t, op)
+        |
+          CsrOp.RW.R =>
+          RETURN DoCsrReadMulti(t, op)
+        END
       END
-    |
-      CsrOp.RW.R =>
-      <*ASSERT FALSE*>
-    END
+    END(*WITH*)
   END DoCsrOp;
 
+PROCEDURE CopyWithMask(VAR      lhs      : Word.T; (* dest *)
+                       READONLY rhs      : Word.T; (* src  *)
+                       READONLY fullMask : Word.T  (* bits NOT to modify *)
+  ) =
+  BEGIN
+    WITH notMask = Word.Not(fullMask) DO
+      lhs := Word.Or(Word.And(fullMask, lhs), Word.And(notMask, rhs))
+    END
+  END CopyWithMask;
+
+PROCEDURE DoCsrWriteMulti(t : T; op : CsrOp.T) : CsrAccessStatus.T =
+  BEGIN
+    WITH waddr  = op.at-t.aBase.word,
+         lwaddr = MIN(waddr + NUMBER(op.data^) - 1, LAST(t.mem^)),
+         loMask = Word.LeftShift(1,op.fv)-1,
+         hiMask = Word.Not(Word.LeftShift(1,op.lv+1)-1)
+     DO
+      (* special case, single word *)
+      IF waddr = lwaddr THEN
+        WITH fullMask = Word.Or(loMask, hiMask) DO
+          CopyWithMask(t.mem[waddr], op.data[0], fullMask)
+        END
+      ELSE
+        (* first word *)
+        CopyWithMask(t.mem[waddr],op.data[0],loMask);
+
+        FOR i := 1 TO NUMBER(op.data^)-2 DO
+          t.mem[i+waddr] := op.data[i]
+        END;
+
+        (* last word *)
+        CopyWithMask(t.mem[lwaddr], op.data[LAST(op.data^)], hiMask)
+      END;
+
+      WITH s = NEW(CompMemoryListenerSetDef.T).init() DO
+        FOR i := waddr TO lwaddr DO
+          VAR p := t.listeners[i]; BEGIN
+            WHILE p # NIL DO EVAL s.insert(p.head); p := p.tail END
+          END
+        END;
+        
+        VAR
+          iter := s.iterate();
+          l : CompMemoryListener.T;
+        BEGIN
+          WHILE iter.next(l) DO l.callback(op) END
+        END
+      END;
+      
+      RETURN CsrAccessStatus.T.OK
+    END
+  END DoCsrWriteMulti;
+    
+PROCEDURE DoCsrReadMulti(t : T; op : CsrOp.T) : CsrAccessStatus.T =
+  BEGIN
+    WITH waddr  = op.at-t.aBase.word,
+         lwaddr = MIN(waddr + NUMBER(op.data^) - 1, LAST(t.mem^)),
+         loMask = Word.LeftShift(1,op.fv)-1,
+         hiMask = Word.Not(Word.LeftShift(1,op.lv+1)-1)
+     DO
+      (* special case, single word *)
+      IF waddr = lwaddr THEN
+        WITH fullMask = Word.Or(loMask, hiMask) DO
+          CopyWithMask(op.data[0], t.mem[waddr], fullMask)
+        END
+      ELSE
+        (* first word *)
+        CopyWithMask(op.data[0],t.mem[waddr],loMask);
+
+        FOR i := 1 TO NUMBER(op.data^)-2 DO
+          op.data[i] := t.mem[i+waddr]
+        END;
+
+        (* last word *)
+        CopyWithMask(op.data[LAST(op.data^)], t.mem[lwaddr], hiMask)
+      END;
+
+      RETURN CsrAccessStatus.T.OK
+    END
+  END DoCsrReadMulti;
+    
 PROCEDURE RegisterListener(t        : T;
                            range    : CompRange.T;
                            listener : CompMemoryListener.T) =
