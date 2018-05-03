@@ -201,45 +201,89 @@
 
     ;; sideband formats (all LITTLE ENDIAN)
 
-    (struct iosf-reg-blk-addr
+    ;; single formats
+
+    (bitstruct iosf-reg-read-req
+            ((m3 IosfRegReadReq))
+            (
+             ;; DW 0
+             (dest        8)
+             (source      8)
+             (opcode      8 (constant 16_0))
+             (tag         3)
+             (bar         3)
+             (al          1 (constant 16_1))
+             (eh0         1 (constant 16_1))
+
+             ;; DW 1
+             (exphdr      7 (constant 16_0))
+             (eh1         1 (constant 16_0))
+             (sai        16)
+             (rs          3 (constant 16_0))
+             (rsvd0       5)
+
+             ;;DW 2
+             (fbe         4 (constant 16_f))
+             (sbe         4 (constraint (or (= 16_f sbe) (= 16_0 sbe))))
+             
+             (fid         8 (constant 16_0))
+             (addr0      16)
+
+             ;; DW3
+             (addr1      12)
+             (addr2      20 (constant 16_0))
+             )
+            );;bitstruct 
+    
+    (bitstruct iosf-reg-write-req
+            ((m3 IosfRegWriteReq))
+            (
+             ;; DW 0
+             (dest        8)
+             (source      8)
+             (opcode      8 (constant 16_1))
+             (tag         3)
+             (bar         3)
+             (al          1 (constant 16_1))
+             (eh0         1 (constant 16_1))
+
+             ;; DW 1
+             (exphdr      7 (constant 16_0))
+             (eh1         1 (constant 16_0))
+             (sai        16)
+             (rs          3 (constant 16_0))
+             (rsvd0       5)
+
+             ;;DW 2
+             (fbe         4 (constant 16_f))
+             (sbe         4 (constraint (or (= 16_f sbe) (= 16_0 sbe))))
+             
+             (fid         8 (constant 16_0))
+             (addr0      16)
+
+             ;; DW3
+             (addr1      12)
+             (addr2      20 (constant 16_0))
+
+             ;; DW 4
+             (data0      32)
+
+             ;; DW 5
+             (data1      32)
+             )
+            );;bitstruct 
+    
+
+    ;; block formats
+    
+    (bitstruct iosf-reg-blk-addr
             ((m3 IosfRegBlkAddr))
             ((ndw       4 (constraint (and (= 0 (mod ndw 2)) (<= ndw 14))))
              (addr     28))
             )
     
-    (struct iosf-reg-blk-write-req-hdr
-            ((m3 IosfRegBlkWriteReqHdr))
-            (
-             ;; DW 0
-             (dest     8)
-             (source   8)
-             (opcode   8 (constant 16_11))
-             (tag      3)
-             (bar      3)
-             (al       1 (constant 16_1))
-             (eh       1 (constant 16_1))
-
-             ;; DW 1
-             (exphdr   7 (constant 16_0))
-             (eh       1 (constant 16_0))
-             (sai     16)
-             (rs       3 (constant 16_0))
-             (rsvd0    5)
-
-             ;;DW 2
-             (ndw      8 (constraint (and (= 0 (mod ndw 2)) (<= ndw 124))))
-             
-             (fid      8 (constant 16_0))
-             (addr0   16)
-
-             ;; DW3
-             (addr1   11)
-             (addr2   21 (constant 16_0))
-             )
-            );;struct iosf-reg-blk-write-req-hdr
-    
-    (struct iosf-reg-blk-read-req-hdr
-            ((m3 IosfRegBlkWriteReqHdr))
+    (bitstruct iosf-reg-blk-read-req-hdr
+            ((m3 IosfRegBlkReadReqHdr))
             (
              ;; DW 0
              (dest     8)
@@ -248,11 +292,12 @@
              (tag      3)
              (bar      3)
              (al       1 (constant 16_1))
-             (eh       1 (constant 16_1))
+             (eh0      1 ;; (constant 16_1) ;; comment for now
+                       )
 
              ;; DW 1
              (exphdr   7 (constant 16_0))
-             (eh       1 (constant 16_0))
+             (eh1      1 (constant 16_0))
              (sai     16)
              (rs       3 (constant 16_0))
              (rsvd0    5)
@@ -264,12 +309,87 @@
              (addr0   16)
 
              ;; DW3
-             (addr1   11)
-             (addr2   21 (constant 16_0))
+             (addr1   12)
+             (addr2   20 (constant 16_0))
              )
-            );;struct iosf-reg-blk-read-req-hdr
+            );;bitstruct iosf-reg-blk-read-req-hdr
 
+    (bitstruct iosf-reg-blk-write-req-hdr
+            ((m3 IosfRegBlkWriteReqHdr))
+            (
+             ;; DW 0
+             (dest     8)
+             (source   8)
+             (opcode   8 (constant 16_11))
+             (tag      3)
+             (bar      3)
+             (al       1 (constant 16_1))
+             (eh0      1 ;; (constant 16_1) ;; comment for now
+                       )
 
+             ;; DW 1
+             (exphdr   7 (constant 16_0))
+             (eh1      1 (constant 16_0))
+             (sai     16)
+             (rs       3 (constant 16_0))
+             (rsvd0    5)
+
+             ;;DW 2
+             (ndw      8 (constraint (and (= 0 (mod ndw 2)) (<= ndw 124))))
+             
+             (fid      8 (constant 16_0))
+             (addr0   16)
+
+             ;; DW3
+             (addr1   12)
+             (addr2   20 (constant 16_0))
+             )
+            );;bitstruct iosf-reg-blk-write-req-hdr
+
+    ;; completions
+    
+    (bitstruct iosf-reg-comp-no-data
+               ((m3 IosfRegCompNoData))
+               (
+                ;; DW 0
+                (dest     8)
+                (source   8)
+                (opcode   8 (constant 16_20))
+                (tag      3)
+                (rsp      2)
+                (rsvd0    2)
+                (eh0      1 (constant 16_1))
+
+                ;; DW 1
+                (exphdr   7 (constant 16_0))
+                (eh1      1 (constant 16_0))
+                (sai     16)
+                (rs       8 (constant 16_0))
+                )
+               );; bitstruct iosf-reg-comp-no-data
+
+    (bitstruct iosf-reg-comp-data-hdr
+               ((m3 IosfRegCompData))
+               (
+                ;; DW 0
+                (dest     8)
+                (source   8)
+                (opcode   8 (constant 16_21))
+                (tag      3)
+                (rsp      2)
+                (rsvd0    2)
+                (eh0      1 (constant 16_1))
+
+                ;; DW 1
+                (exphdr   7 (constant 16_0))
+                (eh1      1 (constant 16_0))
+                (sai     16)
+                (rs       8 (constant 16_0))
+
+                ;; followed by DWs of DATA
+                )
+               );; bitstruct iosf-reg-comp-data-hdr
+               
     )
   )
 
@@ -306,7 +426,7 @@
 (define enum      '())
 (define header    '())
 (define m3typemap '())
-(define struct    '())
+(define bitstruct    '())
 
 (set! constants   '())
 (set! enum        '())
@@ -388,10 +508,12 @@
        wr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; PROTOTYPES FOR Read AND Write
 
 (define e '()) ;; debugging slush bucket
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; PROTOTYPES FOR Read AND Write AND OTHER FUNCTIONS EXPORTED
 
 (define read-proc-name "Read")
 (define read-proto "(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }")
@@ -408,11 +530,19 @@
 (define writes-proc-name "WriteS")
 (define writes-proto "(s : Pkt.T; at : CARDINAL; READONLY t : T)")
 
+(define readsb-proc-name "ReadSB")
+(define readsb-proto "(s : Pkt.T; at : CARDINAL; VAR res : T) : BOOLEAN")
+
 (define writee-proc-name "WriteE")
 (define writee-proto "(s : Pkt.T; e : Pkt.End; READONLY t : T)")
 
 (define format-proc-name "Format")
 (define format-proto "(READONLY t : T) : TEXT")
+
+(define check-proc-name "Check")
+(define check-proto "(READONLY t : T) : BOOLEAN")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (put-m3-proc whch .
                      wrs ;; i3 m3 ...
@@ -826,10 +956,242 @@
   (apply emit-header-field-writex (cons 'write x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; MAIN HEADER COMPILER
+;; BITSTRUCTS
 
-(define (compile-struct! nm x) #t) ;; nothing here right now
+(define (get-m3-bitstype n)
+  (M3Support.Modula3Type n))
+
+(define (emit-bitstruct-field-type f i-wr)
+  (let* ((field-name (car f))
+         (field-type (cadr f))
+         (tail       (cddr f))
+         (defval     (if (or (null? tail)
+                             (not (eq? (caar tail) 'constant)))
+                         ""
+                         (string-append " := " (symbol->m3integer (cadar tail)))))
+          
+        )
+    (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
+
+(define (emit-bitstruct-field-format f wr dummy)
+  (let ((field-name (car f))
+        (field-type (cadr f))
+        )
+    (dis
+     "    Wx.PutText(wx,\""field-name"=\");" dnl
+     "    Wx.PutText(wx,StructField.Format(t."field-name",wid:="field-type"));" dnl
+     "    Wx.PutChar(wx, ' ');" dnl
+     wr
+     )
+    )
+  )
+
+(define (symbol->m3integer x)
+  (M3Support.ReformatNumber (symbol->string x))
+  )
+   
+(define (get-bitstruct-constraint-check nm t constraint)
+  ;;(dis "CONSTRAINT: " (stringify constraint) dnl)
+  (case (car constraint)
+    ((constant)
+     (string-append "    IF t."nm" # " (symbol->m3integer (cadr constraint))
+                    " THEN RETURN FALSE END;" dnl))
+    
+    ((constraint)
+     (string-append "    IF NOT "
+                    (format-m3-expr (lambda(nm)(string-append "t." nm)) (cadr constraint))
+                    " THEN RETURN FALSE END;" dnl)
+      )
+
+    (else (error (string-append "Unknown constraint " (stringify constraint))))
+
+    ) ;; esac
+  )
+
+(define (digit? c)
+  (and
+   (>= (char->integer c) (char->integer #\0))
+   (<= (char->integer c) (char->integer #\9))
+   ))
+       
+(define (mynumber? expr)
+  (or (number? expr)
+      (and (symbol? expr)
+           (let ((lst (string->list (symbol->string expr))))
+             (and (not (null? lst))
+                  (digit? (car lst)))))))
+
+(define (mynumber->m3integer x)
+  (cond ((symbol? x) (symbol->m3integer x))
+        ((number? x) (number->string x))
+        (else (error "unknown number " (stringify x)))))
+
+(define (intersperse lst sep)
+  ;; this routine MUST BE tail-recursive, or we shall definitely
+  ;; run out of stack space!
+  (define (helper lst so-far)
+    (cond ((null? lst) so-far)
+          ((null? (cdr lst)) (cons (car lst) so-far))
+
+          (else 
+           (helper (cdr lst) 
+                   (cons sep  (cons (car lst) so-far))))))
+  (reverse (helper lst '()))
+  )
+
+(define (infixize string-list sep)
+  (if (null? string-list) ""
+      (apply string-append 
+             (intersperse string-list sep))))
+
+(define (unary-op? op)
+  (member? op '(- not)))
+
+(define (binary-op? op)
+  (member? op '(+ - * / mod > >= < <= = and or)))
+
+(define (op->m3op op)
+  (case op
+    ((not)   " NOT ")
+    ((/)     " DIV ")
+    ((mod)   " MOD ")
+    ((and)   " AND ")
+    ((or)    " OR ")
+    (else (symbol->string op))))
+
+(define (format-m3-expr sym-formatter expr)
+  (cond ((mynumber? expr) ;; a number
+         (mynumber->m3integer expr)) 
+
+        ((symbol? expr) ;; the name of a field (same or other)
+         (sym-formatter (symbol->string expr)))
+
+        ((list? expr) ;; an expression
+         (let ((me     (lambda(x)(format-m3-expr sym-formatter x)))
+               (op     (car expr))
+               (args   (cdr expr)))
+           (cond
+
+            ((and (= (length args) 1) (unary-op? op))
+             (string-append (op->m3op op) (me (car args))))
+            
+            ((and (> (length args) 1) (binary-op? op))
+             (string-append "(" (infixize (map me args) (op->m3op op)) ")"))
+
+            (else
+             (string-append (op->m3op op) "(" (infixize (map me args) ",") ")"))
+            
+            );;dnoc
+           );;tel
+         )
+        
+        (else
+         (error (string-append "cant format expression " (stringify expr))))
+        );;dnoc
+  )
+
+(define (emit-bitstruct-field-check f wr dummy)
+  (let ((field-name (car f))
+        (field-type (cadr f))
+        (tail       (cddr f)))
+    (if (null? tail)
+        (dis "    (*no constraint "field-name" *)" dnl wr)
+        (dis "    (*have constraint "field-name" " (stringify (car tail)) " *)" dnl
+             (get-bitstruct-constraint-check field-name field-type (car tail))
+             dnl wr))))
+
+(define (emit-bitstruct-field-readsb f wr start-bit)
+  (let ((field-name (car f))
+        (field-type (cadr f)))
+    (dis "    (* "field-name" @ "start-bit":+"field-type" *)" dnl
+         wr)
+    (dis "    IF NOT Pkt.ExtractBits(s, at, "start-bit", "field-type", w) THEN RETURN FALSE END;" dnl wr)
+    (dis "    t."field-name" := w;" dnl wr)
+    (+ start-bit field-type)))
+
+(define (emit-bitstruct-field-writee f wr start-bit)
+  (let ((field-name (car f))
+        (field-type (cadr f)))
+    (dis "    (* "field-name" @ "start-bit":+"field-type" *)" dnl
+         wr)
+    (dis "    Pkt.ArrPut(a, "start-bit", t."field-name", "field-type");" dnl wr)
+    (+ start-bit field-type)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; MAIN COMPILER
+
+(define (compile-bitstruct! nm x)
+  (dis "compiling bitstruct :  " nm dnl)
+
+  (let* ((names (car x))
+         (m3-name      (cadr (assoc 'm3 names)))
+         (m3-wrs       (open-m3 m3-name))
+         (i3-wr        (car m3-wrs))
+         (m3-wr        (cadr m3-wrs))
+         (fields       (cadr x))
+         )
+
+    (set! e fields)
+
+    (define (emit-m3-t)
+      (dis dnl
+           "TYPE" dnl
+           "  T = RECORD" dnl
+           i3-wr)
+      (map (lambda(f)(emit-bitstruct-field-type f i3-wr)) fields)
+      (dis "  END;" dnl
+           dnl i3-wr)
+      )
+
+    (define (emit-proc whch decls return q)
+      ;; emit a procedure to do "something" (in parameter whch)
+      ;; return value provided in parameter return
+      (let ((emitter (eval (symbol-append 'emit-bitstruct-field- whch))))
+        (put-m3-proc whch i3-wr m3-wr)
+        (dis "  VAR " decls dnl m3-wr)
+        (dis "  BEGIN" dnl m3-wr)
+        (map (lambda(f)(set! q (emitter f m3-wr q))) fields)
+
+        (dis "    RETURN " return dnl m3-wr)
+        (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
+             dnl m3-wr)))
+
+    (add-m3-type! nm m3-name)
+     
+    ;; the obvious imports (should these really be here?) 
+    (map (lambda(wr)
+           (dis "<*NOWARN*>IMPORT Byte, Word, StructField, Rd, Wr, Thread;" dnl dnl wr)) (list i3-wr m3-wr))
+
+    ;; the matching Modula-3 declaration
+    (emit-m3-t)
+    (emit-proc 'format
+               "wx := Wx.New();<*UNUSED*>VAR ok := Assert(Check(t)); "
+               (string-append "Fmt.F(\"<"m3-name">{ %s}\", Wx.ToText(wx))")
+               #f)
+
+    (emit-proc 'check
+               ""
+               "TRUE"
+               #f)
+
+    (dis "PROCEDURE Check2(READONLY t : T; VAR u : T) : BOOLEAN = "dnl"  BEGIN" dnl"    WITH check = Check(t) DO IF check THEN u := t END; RETURN check END" dnl"  END Check2;" dnl dnl m3-wr)
+    
+    (emit-proc 'readsb "w : Word.T; t : T;" "Check2(t,res)" 0) ;; read from ServerPacket at i
+
+    (dis "PROCEDURE Assert(q : BOOLEAN) : BOOLEAN = BEGIN <*ASSERT q*>RETURN q END Assert;" dnl dnl m3-wr)
+
+    (emit-proc 'writee
+               "a : ARRAY [0..(LengthBits-1) DIV 8 + 1-1] OF Byte.T;<*UNUSED*>VAR ok := Assert(Check(t)); "
+               ""
+               0)
+    
+    (dis dnl "CONST LengthBits = " (accumulate + 0 (map cadr fields)) ";" dnl
+         dnl i3-wr)
+
+    (close-m3 m3-wrs)
+
+    ))
 
 (define (compile-header! nm x)
   (dis "compiling header    :  " nm dnl)

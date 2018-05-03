@@ -3,6 +3,7 @@ IMPORT ByteSeq;
 IMPORT Wr, Thread, Rd;
 IMPORT NetContext;
 IMPORT Byte;
+IMPORT Word;
 
 (* it makes sense to build packets backwards, adding headers to the head
    of packet as we pop out.
@@ -47,6 +48,25 @@ PROCEDURE FromRd(t : T; rd : Rd.T; VAR cx : NetContext.T) : T
   RAISES { Rd.Failure, Rd.EndOfFile, Thread.Alerted };
   (* read from rd for as many bytes as allowed by cx and add to end of t *)
   (* returns itself *)
+
+PROCEDURE ExtractBits(t                      : T;
+                      byteOffset, startBit   : CARDINAL;
+                      numBits                : [0..BITSIZE(Word.T)];
+                      VAR w                  : Word.T) : BOOLEAN;
+  (* starting from t[byteOffset],
+     get bits from startBit and numBits consecutive.
+
+     in case of overrun, return value is false
+
+     little-endian extraction.
+  *)
+
+PROCEDURE ArrPut(VAR a     : ARRAY OF Byte.T;
+                 startBit  : CARDINAL;
+                 w         : Word.T;
+                 numBits   : CARDINAL);
+
+PROCEDURE PutA(t : T; e : End; READONLY a : ARRAY OF Byte.T);
   
 CONST Brand = "ServerPacket";
 

@@ -5,7 +5,10 @@ IMPORT Debug;
 IMPORT Fmt;
 FROM Fmt IMPORT F;
 
-PROCEDURE MakeWrite(at : CompAddr.T; bits : CARDINAL; val : Word.T) : T =
+PROCEDURE MakeWrite(at                  : CompAddr.T;
+                    bits                : [0..BITSIZE(Word.T)];
+                    val                 : Word.T;
+                    origin              : Origin) : T =
   VAR
     res : T;
   BEGIN
@@ -30,12 +33,14 @@ PROCEDURE MakeWrite(at : CompAddr.T; bits : CARDINAL; val : Word.T) : T =
       END;
       res.lv := at.bit + bits - 1 - Base
     END;
-    res.origin := Origin.Hardware;
+    res.origin := origin;
     res.hi := Hi(res);
     RETURN res
   END MakeWrite;
 
-PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T =
+PROCEDURE MakeWideWrite(at           : CompAddr.T;
+                        READONLY val : ARRAY OF [0..1];
+                        origin       : Origin) : T =
   VAR
     bits := NUMBER(val);
     res : T;
@@ -58,8 +63,23 @@ PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T =
     END;
     res.lv := (at.bit + bits - 1) MOD Base;
     res.hi := Hi(res);
+    res.origin := origin;
     RETURN res
   END MakeWideWrite;
+
+  (**********************************************************************)
+
+PROCEDURE MakeRead(at                  : CompAddr.T;
+                   bits                : [0..BITSIZE(Word.T)];
+                   origin              : Origin) : T =
+  VAR
+    res := MakeWrite(at, bits, 0, origin);
+  BEGIN
+    res.rw := RW.R;
+    RETURN res
+  END MakeRead;
+
+  (**********************************************************************)
 
 PROCEDURE Hi(t : T) : CompAddr.T =
   BEGIN

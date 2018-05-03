@@ -4,6 +4,7 @@ IMPORT ByteSeq;
 IMPORT Wr, Thread, Rd;
 IMPORT NetContext;
 IMPORT Byte;
+IMPORT Word;
 
 TYPE
   Super = ByteSeq.T;
@@ -94,5 +95,63 @@ PROCEDURE FromRd(t : T; rd : Rd.T; VAR cx : NetContext.T) : T
     cx.rem := 0;
     RETURN t
   END FromRd;
+
+PROCEDURE ExtractBits(t                      : T;
+                      byteOffset, startBit   : CARDINAL;
+                      numBits                : [0..BITSIZE(Word.T)];
+                      VAR w                  : Word.T) : BOOLEAN =
+  VAR
+    loByte := byteOffset +  startBit DIV 8;
+    loBit  :=               startBit MOD 8;
+    hiByte := byteOffset + (startBit + numBits - 1) DIV 8;
+    (* byte holding last bit *)
+    
+    b := 0;
+  BEGIN
+    IF hiByte > t.size()-1 THEN RETURN FALSE END;
+    w := 0;
+    FOR i := loByte TO hiByte DO
+      w := Word.Insert(w, Word.RightShift(t.get(i), loBit), b, 8-loBit);
+      INC(b, 8-loBit);
+      loBit := 0;
+    END;
+    w := Word.Insert(w, 0, numBits, BITSIZE(Word.T)-numBits);
+    RETURN TRUE
+  END ExtractBits;
+
+PROCEDURE ArrPut(VAR a    : ARRAY OF Byte.T;
+                 startBit : CARDINAL;
+                 w        : Word.T;
+                 numBits  : CARDINAL) =
+  VAR
+    loByte := startBit DIV 8;
+    loBit  := startBit MOD 8;
+    hiByte := (startBit + numBits - 1) DIV 8;
+    (* byte holding last bit *)
+    
+    b := 0;
+  BEGIN
+    w := 0;
+    FOR i := loByte TO hiByte DO
+      a[i] := Word.Insert(a[i], Word.RightShift(w, b), loBit, 8-loBit);
+      INC(b, 8-loBit);
+      loBit := 0;
+    END
+  END ArrPut;
+
+PROCEDURE PutA(t : T; e : End; READONLY a : ARRAY OF Byte.T) =
+  BEGIN
+     CASE e OF
+       End.Front =>
+       FOR i := LAST(a) TO FIRST(a) BY -1 DO
+         ByteSeq.T.addlo(t,a[i])
+       END
+    |
+      End.Back  =>
+      FOR i := FIRST(a) TO LAST(a) BY 1 DO
+        ByteSeq.T.addhi(t,a[i])
+      END
+    END
+  END PutA;
 
 BEGIN END ServerPacket.

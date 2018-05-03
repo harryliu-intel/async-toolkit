@@ -6,6 +6,12 @@ IMPORT FloatMode, Lex;
 IMPORT TextUtils;
 IMPORT Debug;
 
+PROCEDURE ReformatNumber(txt : TEXT) : TEXT
+  RAISES { Lex.Error, FloatMode.Trap } =
+  BEGIN
+    RETURN "16_" & Fmt.Unsigned(ParseUnsigned(txt), base := 16)
+  END ReformatNumber;
+  
 PROCEDURE ParseUnsigned(q : TEXT) : Word.T
   RAISES { Lex.Error, FloatMode.Trap } =
   VAR
@@ -14,7 +20,7 @@ PROCEDURE ParseUnsigned(q : TEXT) : Word.T
     n := Text.Length(str);
   BEGIN
     IF n > 2 AND Text.Equal(Text.Sub(str, 0, 2), "0x") THEN
-      RETURN Scan.Int(Text.Sub(str, 2))
+      RETURN Scan.Unsigned(Text.Sub(str, 2), defaultBase := 16)
     ELSIF usp = -1 THEN
       RETURN Scan.Unsigned(str, defaultBase := 10)
     ELSE
@@ -29,7 +35,7 @@ PROCEDURE Modula3Type(ofBits : [1..BITSIZE(Word.T)]) : TEXT =
   BEGIN
     CASE ofBits OF
       1..BITSIZE(Word.T)-1 =>
-      RETURN Fmt.F("[0..16_",Fmt.Unsigned(Word.Shift(1,ofBits)-1,base:=16))
+      RETURN Fmt.F("[0..16_%s]",Fmt.Unsigned(Word.Shift(1,ofBits)-1,base:=16))
     |
       BITSIZE(Word.T) =>
       RETURN "Word.T"

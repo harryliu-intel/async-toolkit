@@ -44,9 +44,18 @@ CONST Base = BITSIZE(D);
 
 CONST Brand = "CsrOp";
 
-PROCEDURE MakeWrite(at : CompAddr.T; bits : CARDINAL; val : Word.T) : T;
+PROCEDURE MakeRead     (at           : CompAddr.T;
+                        bits         : [0..BITSIZE(Word.T)];
+                        origin       := Origin.Hardware) : T;
 
-PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T;
+PROCEDURE MakeWrite    (at           : CompAddr.T;
+                        bits         : [0..BITSIZE(Word.T)];
+                        val          : Word.T;
+                        origin       := Origin.Hardware) : T;
+
+PROCEDURE MakeWideWrite(at           : CompAddr.T;
+                        READONLY val : ARRAY OF [0..1];
+                        origin       := Origin.Hardware) : T;
 
 PROCEDURE Hi(t : T) : CompAddr.T;
   (* return index of first bit not written *)

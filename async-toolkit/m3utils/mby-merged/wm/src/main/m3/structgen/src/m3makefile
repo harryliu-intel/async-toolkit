@@ -16,6 +16,7 @@ SchemeStubs("Wr")
 SchemeStubs("Debug")
 SchemeStubs("IdStyles")
 SchemeStubs("FS")
+SchemeStubs("Fmt")
 SchemeStubs("Scan")
 SchemeStubs("M3Support")
 
