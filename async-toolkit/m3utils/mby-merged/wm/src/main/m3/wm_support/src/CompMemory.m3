@@ -61,7 +61,7 @@ PROCEDURE Init(t : T; range : CompRange.T) : T =
     RETURN t
   END Init;
 
-PROCEDURE DoCsrOp(t : T; op : CsrOp.T) : CsrAccessStatus.T =
+PROCEDURE DoCsrOp(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
   BEGIN
     WITH waddr = op.at-t.aBase.word DO
       IF op.data = NIL AND op.fv = 0 AND op.lv = BITSIZE(Word.T)-1 THEN
@@ -106,7 +106,7 @@ PROCEDURE DoCsrOp(t : T; op : CsrOp.T) : CsrAccessStatus.T =
             RETURN CsrAccessStatus.T.OK
           END
         END(*WITH*)
-      ELSE
+      ELSE (* op.data # NIL *)
         CASE op.rw OF
           CsrOp.RW.W =>
           RETURN DoCsrWriteMulti(t, op)
@@ -128,7 +128,7 @@ PROCEDURE CopyWithMask(VAR      lhs      : Word.T; (* dest *)
     END
   END CopyWithMask;
 
-PROCEDURE DoCsrWriteMulti(t : T; op : CsrOp.T) : CsrAccessStatus.T =
+PROCEDURE DoCsrWriteMulti(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
   BEGIN
     WITH waddr  = op.at-t.aBase.word,
          lwaddr = MIN(waddr + NUMBER(op.data^) - 1, LAST(t.mem^)),
@@ -171,7 +171,7 @@ PROCEDURE DoCsrWriteMulti(t : T; op : CsrOp.T) : CsrAccessStatus.T =
     END
   END DoCsrWriteMulti;
     
-PROCEDURE DoCsrReadMulti(t : T; op : CsrOp.T) : CsrAccessStatus.T =
+PROCEDURE DoCsrReadMulti(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
   BEGIN
     WITH waddr  = op.at-t.aBase.word,
          lwaddr = MIN(waddr + NUMBER(op.data^) - 1, LAST(t.mem^)),

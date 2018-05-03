@@ -343,7 +343,9 @@ PROCEDURE HandleMsgIosf(m            : MsgHandler;
             ca := CompAddr.FromBytes(a);
             Debug.Out("ca=" & CompAddr.Format(ca,FALSE));
 
-            WITH csrOp = CsrOp.MakeRead(ca, 32, CsrOp.Origin.Software) DO
+            VAR
+              csrOp := CsrOp.MakeRead(ca, 32, CsrOp.Origin.Software);
+            BEGIN
               EVAL inst.t.h.csrOp(csrOp)
             END
             
