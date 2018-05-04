@@ -21,5 +21,6 @@ Interface ("NetError")
 Interface ("NetContext")
 
 Module("ServerPacket")
+implementation("ServerPacketDbg")
 
 library ("wm_net")
