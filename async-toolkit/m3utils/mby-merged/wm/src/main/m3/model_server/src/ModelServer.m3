@@ -1,6 +1,4 @@
 MODULE ModelServer;
-IMPORT hlp_top_map AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT CompAddr;
 IMPORT Debug;
 IMPORT Thread;
@@ -40,14 +38,12 @@ IMPORT CsrOp;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
-    h        : MapAddr.H;
     port     : IP.Port;
     conn     : TCP.Connector; (* listen here *)
     listener : Listener := NIL;
     infoPath : Pathname.T;
   OVERRIDES
     init       := Init;
-    resetChip  := ResetChip;
     listenFork := ListenFork;
   END;
 
@@ -64,9 +60,9 @@ PROCEDURE ListenFork(t : T) : Listener =
 
 REVEAL
   Listener = PubListener BRANDED Brand & " Listener" OBJECT
-    t : T;
+    t        : T;
     handlers : RefSeq.T;
-    conn : TCP.Connector;
+    conn     : TCP.Connector;
   OVERRIDES
     apply := LCApply;
   END;
@@ -151,13 +147,8 @@ PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
       Debug.Out("PORT " & Int(t.port));
       t.conn := conn
     END;
-    Debug.Out(F("Creating %s ...",Map.Brand));
-    t.h := NEW(MapAddr.H).init(CompAddr.Zero);
     RETURN t
   END Init;
-
-PROCEDURE ResetChip(t : T) =
-  BEGIN MapAddr.Reset(t.h.read, t.h.update) END ResetChip;
 
 PROCEDURE HApply(cl : Instance) : REFANY =
   BEGIN
@@ -365,7 +356,7 @@ PROCEDURE HandleMsgIosf(m            : MsgHandler;
               w : Word.T;
             BEGIN
               (* perform read on model *)
-              EVAL inst.t.h.csrOp(csrOp);
+              EVAL inst.t.csrOp(csrOp);
 
               (* extract result from csrOp *)
               w := CsrOp.GetReadResult(csrOp);

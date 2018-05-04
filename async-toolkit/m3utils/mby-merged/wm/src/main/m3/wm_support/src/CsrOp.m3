@@ -79,12 +79,21 @@ PROCEDURE MakeRead(at                  : CompAddr.T;
     RETURN res
   END MakeRead;
 
+PROCEDURE MakeMask(wid : [0..BITSIZE(Word.T)]) : Word.T =
+  BEGIN
+    IF wid = BITSIZE(Word.T) THEN
+      RETURN Word.Not(0)
+    ELSE
+      RETURN Word.Minus(Word.LeftShift(1, wid),1)
+    END
+  END MakeMask;
+  
 PROCEDURE GetReadResult(op : T) : Word.T =
   BEGIN
     <*ASSERT op.rw = RW.R*>
     <*ASSERT op.data = NIL OR NUMBER(op.data^) = 2*>
     WITH wid  = op.lv - op.fv + 1,
-         mask = Word.Minus(Word.LeftShift(1, wid),1) DO
+         mask = MakeMask(wid) DO
       
       IF op.data = NIL THEN
         RETURN Word.And(Word.RightShift(op.single,op.fv),mask)
@@ -344,5 +353,45 @@ PROCEDURE DoWideField(VAR op : T; VAR d : ARRAY OF [0..1]; a : CompRange.T) =
 
 PROCEDURE LowAddr(t : T) : CompAddr.T =
   BEGIN RETURN CompAddr.T { t.at, t.fv } END LowAddr;
-  
+
+PROCEDURE Format(READONLY t : T) : TEXT =
+
+  PROCEDURE FmtCnt() : TEXT =
+    BEGIN
+      IF t.data = NIL THEN RETURN "1" ELSE RETURN Fmt.Int(NUMBER(t.data^)) END
+    END FmtCnt;
+
+  PROCEDURE FmtDt() : TEXT =
+    BEGIN
+      IF t.data = NIL THEN
+        RETURN "16_" & Fmt.Unsigned(t.single) & " "
+      ELSE
+        VAR
+          str := "16_";
+        BEGIN
+          FOR i := LAST(t.data^) TO FIRST(t.data^) BY -1 DO
+            IF i = LAST(t.data^) THEN
+              str := str & Fmt.Unsigned(t.data[i])
+            ELSE
+              str := str & Fmt.Pad(Fmt.Unsigned(t.data[i]),
+                                   length := BITSIZE(Word.T) DIV 4,
+                                   padChar := '0')
+            END
+          END;
+          RETURN str & " "
+        END
+      END
+    END FmtDt;
+    
+  BEGIN
+    RETURN F("<CsrOp>{ %s @wa=16_%s cnt=%s ",
+             RWnames[t.rw],
+             Fmt.Unsigned(t.at),
+             FmtCnt()) &
+           F("(fv=%s,lv=%s) nil=%s %s}",
+             Fmt.Int(t.fv),Fmt.Int(t.lv),
+             Fmt.Bool(t.data=NIL),
+             FmtDt())
+  END Format;
+             
 BEGIN END CsrOp.

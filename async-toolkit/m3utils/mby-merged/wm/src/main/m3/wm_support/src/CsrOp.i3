@@ -39,6 +39,12 @@ TYPE
   END;
 
   Origin = { Hardware, Software };
+
+CONST RWnames = ARRAY RW OF TEXT { "R", "W" };
+
+CONST OriginNames = ARRAY Origin OF TEXT { "Hardware", "Software" };
+
+PROCEDURE Format(READONLY t : T) : TEXT;
   
 CONST Base = BITSIZE(D);
 

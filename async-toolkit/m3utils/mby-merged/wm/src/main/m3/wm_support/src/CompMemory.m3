@@ -63,6 +63,10 @@ PROCEDURE Init(t : T; range : CompRange.T) : T =
 
 PROCEDURE DoCsrOp(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
   BEGIN
+    IF csrDebug THEN
+      Debug.Out("CompMemory.DoCsrOp : " & CsrOp.Format(op))
+    END;
+
     WITH waddr = op.at-t.aBase.word DO
       IF op.data = NIL AND op.fv = 0 AND op.lv = BITSIZE(Word.T)-1 THEN
         (* fast path, full word *)

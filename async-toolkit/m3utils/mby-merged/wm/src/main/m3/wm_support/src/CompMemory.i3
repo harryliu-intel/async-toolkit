@@ -15,4 +15,6 @@ TYPE
 
 CONST Brand = "CompMemory";
 
+VAR csrDebug := FALSE; (* set this to TRUE to turn on very verbose dbg *)
+  
 END CompMemory.
