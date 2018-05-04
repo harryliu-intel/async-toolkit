@@ -39,14 +39,35 @@ TYPE
   END;
 
   Origin = { Hardware, Software };
+
+CONST RWnames = ARRAY RW OF TEXT { "R", "W" };
+
+CONST OriginNames = ARRAY Origin OF TEXT { "Hardware", "Software" };
+
+PROCEDURE Format(READONLY t : T) : TEXT;
   
 CONST Base = BITSIZE(D);
 
 CONST Brand = "CsrOp";
 
-PROCEDURE MakeWrite(at : CompAddr.T; bits : CARDINAL; val : Word.T) : T;
+PROCEDURE MakeRead     (at           : CompAddr.T;
+                        bits         : [0..BITSIZE(Word.T)];
+                        origin       := Origin.Hardware) : T;
+  (* make a read at a given CompAddr with a given width in bits *)
 
-PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T;
+PROCEDURE GetReadResult(op : T) : Word.T;
+  (* get the result of executing a read as above,
+     result will be right-shifted in the Word *)
+  
+
+PROCEDURE MakeWrite    (at           : CompAddr.T;
+                        bits         : [0..BITSIZE(Word.T)];
+                        val          : Word.T;
+                        origin       := Origin.Hardware) : T;
+
+PROCEDURE MakeWideWrite(at           : CompAddr.T;
+                        READONLY val : ARRAY OF [0..1];
+                        origin       := Origin.Hardware) : T;
 
 PROCEDURE Hi(t : T) : CompAddr.T;
   (* return index of first bit not written *)

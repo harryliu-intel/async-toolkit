@@ -1,6 +1,7 @@
 INTERFACE ModelServer;
 IMPORT Thread;
 IMPORT Pathname;
+IMPORT CsrOp, CsrAccessStatus;
 
 TYPE
   T <: Public;
@@ -9,9 +10,12 @@ TYPE
   METHODS
     init(infoPath : Pathname.T := ".") : T;
 
+    listenFork() : Listener;
+
+    (* abstract methods, implement in child type: *)
     resetChip();
 
-    listenFork() : Listener;
+    csrOp(VAR op : CsrOp.T) : CsrAccessStatus.T;
   END;
 
   Listener <: PubListener;

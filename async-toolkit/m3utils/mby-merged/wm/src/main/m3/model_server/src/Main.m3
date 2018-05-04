@@ -1,17 +1,30 @@
 MODULE Main;
-IMPORT ModelServer;
+IMPORT HlpModelServer;
 IMPORT Thread;
 IMPORT Pathname, Env;
+IMPORT hlp_top_map      AS Map;
+IMPORT hlp_top_map_addr AS MapAddr;
+IMPORT Debug, Fmt;
+
+PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
+                   READONLY read : Map.T;
+                   READONLY update : MapAddr.Update) =
+  BEGIN
+    Debug.Out("SetupHlp");
+    update.Imn.BsmScratch3[509].Data.u(16_1109); (* match fpps_mgmt.c:546 *)
+    update.Imn.FuseData[3].Data.u(16_6); (* match fpps_switch.c:481 *)
+  END SetupHlp;
 
 VAR
-  modelServer : ModelServer.T;
+  modelServer : HlpModelServer.T;
   infoPath : Pathname.T;
 BEGIN
-
   infoPath := Env.Get("WMODEL_INFO_PATH");
   IF infoPath = NIL THEN infoPath := "." END;
 
-  modelServer := NEW(ModelServer.T).init(infoPath := infoPath);
+  modelServer := NEW(HlpModelServer.T,
+                     setupChip := SetupHlp)
+                .init(infoPath := infoPath);
 
   modelServer.resetChip();
 

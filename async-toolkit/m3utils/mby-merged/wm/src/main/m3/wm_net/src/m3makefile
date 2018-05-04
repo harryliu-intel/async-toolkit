@@ -13,6 +13,7 @@ Module ("NetTypes")
 
 Module ("RdNet")
 Module ("WrNet")
+Module ("StructField")
 
 %Module ("FmModelMessageHdr")
 
