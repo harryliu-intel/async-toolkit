@@ -79,6 +79,25 @@ PROCEDURE MakeRead(at                  : CompAddr.T;
     RETURN res
   END MakeRead;
 
+PROCEDURE GetReadResult(op : T) : Word.T =
+  BEGIN
+    <*ASSERT op.rw = RW.R*>
+    <*ASSERT op.data = NIL OR NUMBER(op.data^) = 2*>
+    WITH wid  = op.lv - op.fv + 1,
+         mask = Word.Minus(Word.LeftShift(1, wid),1) DO
+      
+      IF op.data = NIL THEN
+        RETURN Word.And(Word.RightShift(op.single,op.fv),mask)
+      ELSE
+        WITH word0 = Word.RightShift(op.data[0],op.fv),
+             word1 = Word.LeftShift (op.data[1],BITSIZE(Word.T)-op.fv),
+             word  = Word.Or(word1, word0) DO
+          RETURN Word.And(word,mask)
+        END
+      END
+    END
+  END GetReadResult;
+
   (**********************************************************************)
 
 PROCEDURE Hi(t : T) : CompAddr.T =
@@ -104,7 +123,7 @@ PROCEDURE DoField(VAR op      : T;          (* the read/write op *)
   PROCEDURE Check(q : Word.T) =
     BEGIN
       WITH n = CompRange.Bits(a),
-           m = Word.Shift(1,n)-1, (* field mask *)
+           m = Word.Minus(Word.Shift(1,n),1), (* field mask *)
            i = Word.Not(m),       (* inverse of field mask *)
            r = Word.And(i,q)      (* there should be no overlap *)
        DO

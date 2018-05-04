@@ -5,6 +5,8 @@ IMPORT Wr, Thread, Rd;
 IMPORT NetContext;
 IMPORT Byte;
 IMPORT Word;
+IMPORT Debug;
+IMPORT Fmt; FROM Fmt IMPORT F;
 
 TYPE
   Super = ByteSeq.T;
@@ -51,19 +53,22 @@ PROCEDURE Get(t : T; i : CARDINAL) : Byte.T =
   BEGIN RETURN ByteSeq.T.get(t,i) END Get;
 
 PROCEDURE Transmit(t :T; wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted } =
-  VAR
-    j : CARDINAL;
   BEGIN
     WITH n = NUMBER(t.elem^) DO
       FOR i := t.st TO t.st+t.sz-1 DO
-        IF i >= n THEN
-          j := i-n
-        ELSE
-          j := i
+        VAR
+          j : CARDINAL;
+        BEGIN
+          IF i >= n THEN
+            j := i-n
+          ELSE
+            j := i
+          END;
+          Wr.PutChar(wr, VAL(t.elem[j],CHAR)) (* could use UnsafeWr here *)
         END
-      END;
-      Wr.PutChar(wr, VAL(t.elem[j],CHAR)) (* could use UnsafeWr here *)
-    END
+      END
+    END;
+    Wr.Flush(wr)
   END Transmit;
 
 PROCEDURE Init(s: T; sizeHint: CARDINAL): Super = 
@@ -131,9 +136,20 @@ PROCEDURE ArrPut(VAR a    : ARRAY OF Byte.T;
     
     b := 0;
   BEGIN
-    w := 0;
+    (* clear top bits of w *)
+    WITH blankbits = BITSIZE(Word.T)-numBits DO
+      w := Word.RightShift(Word.LeftShift(w, blankbits), blankbits)
+    END;
     FOR i := loByte TO hiByte DO
       a[i] := Word.Insert(a[i], Word.RightShift(w, b), loBit, 8-loBit);
+      IF FALSE THEN
+        Debug.Out(F("w=16_%s bits=%s:+%s a[%s]=16_%s",
+                    Fmt.Unsigned(w),
+                    Fmt.Int(startBit),
+                    Fmt.Int(numBits),
+                    Fmt.Int(i),
+                    Fmt.Unsigned(a[i])))
+      END;
       INC(b, 8-loBit);
       loBit := 0;
     END
@@ -154,4 +170,14 @@ PROCEDURE PutA(t : T; e : End; READONLY a : ARRAY OF Byte.T) =
     END
   END PutA;
 
+PROCEDURE PutWLE(t : T; e : End; w : Word.T; bytes : [0..BYTESIZE(Word.T)]) =
+  VAR
+    arr : ARRAY [0..BYTESIZE(Word.T)-1] OF Byte.T;
+  BEGIN
+    FOR i := 0 TO BYTESIZE(Word.T)-1 DO
+      arr[i] := Word.Extract(w, 8*i,8)
+    END;
+    PutA(t, e, SUBARRAY(arr, 0, bytes))
+  END PutWLE;
+  
 BEGIN END ServerPacket.

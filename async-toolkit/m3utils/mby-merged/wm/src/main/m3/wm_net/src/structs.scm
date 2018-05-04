@@ -369,7 +369,7 @@
                );; bitstruct iosf-reg-comp-no-data
 
     (bitstruct iosf-reg-comp-data-hdr
-               ((m3 IosfRegCompData))
+               ((m3 IosfRegCompDataHdr))
                (
                 ;; DW 0
                 (dest     8)
@@ -1144,7 +1144,7 @@
            dnl i3-wr)
       )
 
-    (define (emit-proc whch decls return q)
+    (define (emit-proc whch decls pre-return return q)
       ;; emit a procedure to do "something" (in parameter whch)
       ;; return value provided in parameter return
       (let ((emitter (eval (symbol-append 'emit-bitstruct-field- whch))))
@@ -1153,6 +1153,7 @@
         (dis "  BEGIN" dnl m3-wr)
         (map (lambda(f)(set! q (emitter f m3-wr q))) fields)
 
+        (dis "    " pre-return dnl m3-wr)
         (dis "    RETURN " return dnl m3-wr)
         (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
              dnl m3-wr)))
@@ -1166,23 +1167,30 @@
     ;; the matching Modula-3 declaration
     (emit-m3-t)
     (emit-proc 'format
-               "wx := Wx.New();<*UNUSED*>VAR ok := Assert(Check(t)); "
+               "wx := Wx.New(); <*UNUSED*>VAR ok := Assert(Check(t));" ;; decls
+               ""
                (string-append "Fmt.F(\"<"m3-name">{ %s}\", Wx.ToText(wx))")
                #f)
 
     (emit-proc 'check
-               ""
-               "TRUE"
+               ""        ;; decls
+               ""        ;; pre-return
+               "TRUE"    ;; return
                #f)
 
     (dis "PROCEDURE Check2(READONLY t : T; VAR u : T) : BOOLEAN = "dnl"  BEGIN" dnl"    WITH check = Check(t) DO IF check THEN u := t END; RETURN check END" dnl"  END Check2;" dnl dnl m3-wr)
     
-    (emit-proc 'readsb "w : Word.T; t : T;" "Check2(t,res)" 0) ;; read from ServerPacket at i
+    (emit-proc 'readsb
+               "w : Word.T; t : T;"
+               ""
+               "Check2(t,res)"
+               0) ;; read from ServerPacket at i
 
     (dis "PROCEDURE Assert(q : BOOLEAN) : BOOLEAN = BEGIN <*ASSERT q*>RETURN q END Assert;" dnl dnl m3-wr)
 
     (emit-proc 'writee
                "a : ARRAY [0..(LengthBits-1) DIV 8 + 1-1] OF Byte.T;<*UNUSED*>VAR ok := Assert(Check(t)); "
+               "Pkt.PutA(s,e,a);"
                ""
                0)
     

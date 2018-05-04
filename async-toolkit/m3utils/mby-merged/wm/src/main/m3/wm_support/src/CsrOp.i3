@@ -47,6 +47,12 @@ CONST Brand = "CsrOp";
 PROCEDURE MakeRead     (at           : CompAddr.T;
                         bits         : [0..BITSIZE(Word.T)];
                         origin       := Origin.Hardware) : T;
+  (* make a read at a given CompAddr with a given width in bits *)
+
+PROCEDURE GetReadResult(op : T) : Word.T;
+  (* get the result of executing a read as above,
+     result will be right-shifted in the Word *)
+  
 
 PROCEDURE MakeWrite    (at           : CompAddr.T;
                         bits         : [0..BITSIZE(Word.T)];

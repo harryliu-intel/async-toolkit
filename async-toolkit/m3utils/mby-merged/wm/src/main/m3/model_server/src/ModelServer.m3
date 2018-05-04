@@ -27,6 +27,7 @@ IMPORT Word;
 FROM NetTypes IMPORT U8, U16, U32, U64, ByteOrder;
 IMPORT IosfRegBlkWriteReqHdr;
 IMPORT IosfRegBlkReadReqHdr;
+IMPORT IosfRegCompDataHdr;
 IMPORT CsrOp;
 
 (* may keep : *)
@@ -76,6 +77,7 @@ TYPE
     wr : Wr.T;
     sp : Pkt.T;
     t  : T;
+    lastHdr : FmModelMessageHdr.T;
   METHODS
     init(t : T; rd : Rd.T; wr : Wr.T) : Instance := InitI;
     
@@ -91,6 +93,15 @@ TYPE
 PROCEDURE SendResponse(i : Instance) RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     Debug.Out(F("SendResponse: %s bytes", Int(i.sp.size())));
+    (* add outer header *)
+    VAR
+      hdr := i.lastHdr;
+    BEGIN
+      hdr.msgLength := i.sp.size() + FmModelMessageHdr.Length;
+      FmModelMessageHdr.WriteE(i.sp, Pkt.End.Front, hdr)
+    END;
+
+    DebugByteSeq(i.sp);
     Pkt.Transmit(i.sp,i.wr);
     EVAL i.sp.init() (* clear buffer *)
   END SendResponse;
@@ -234,6 +245,7 @@ PROCEDURE ReceiveMessage(cl : Instance) RAISES { NetError.OutOfRange } =
   BEGIN
     hdr := FmModelMessageHdr.Read(cl.rd);
     Debug.Out("Received " & FmModelMessageHdr.Format(hdr));
+    cl.lastHdr := hdr;
     cx.rem := hdr.msgLength - FmModelMessageHdr.Length;
     WITH h = handler[hdr.type] DO
       IF h = NIL THEN
@@ -329,15 +341,20 @@ PROCEDURE HandleMsgIosf(m            : MsgHandler;
       BEGIN
         Debug.Out("match = " & Bool(match))
       END;
+      
       VAR req      : IosfRegBlkReadReqHdr.T;
           match    := IosfRegBlkReadReqHdr.ReadSB(inbound, 0, req);
           addr     := Word.Insert(req.addr0,req.addr1,16,12);
           ca       : CompAddr.T;
+          respHdr  := MakeBlkReadRespHdr(req);
       BEGIN
         Debug.Out("match = " & Bool(match));
 
         IF match THEN
-          Debug.Out(IosfRegBlkReadReqHdr.Format(req));
+          Debug.Out("req    ="&IosfRegBlkReadReqHdr.Format(req));
+
+          Debug.Out("respHdr="&IosfRegCompDataHdr.Format(respHdr));
+          IosfRegCompDataHdr.WriteE(inst.sp, Pkt.End.Back, respHdr);
 
           FOR a := addr TO addr + (req.ndw-1)*4 BY 4 DO
             ca := CompAddr.FromBytes(a);
@@ -345,11 +362,21 @@ PROCEDURE HandleMsgIosf(m            : MsgHandler;
 
             VAR
               csrOp := CsrOp.MakeRead(ca, 32, CsrOp.Origin.Software);
+              w : Word.T;
             BEGIN
-              EVAL inst.t.h.csrOp(csrOp)
+              (* perform read on model *)
+              EVAL inst.t.h.csrOp(csrOp);
+
+              (* extract result from csrOp *)
+              w := CsrOp.GetReadResult(csrOp);
+              
+              Debug.Out("CsrOp read result = " & Fmt.Unsigned(w));
+
+              (* put result at end of packet *)
+              Pkt.PutWLE(inst.sp, Pkt.End.Back, w, 4)
             END
-            
-          END
+          END;(*FOR*)
+          inst.sendResponse() (* send response on socket *)
         END
 
       END
@@ -357,6 +384,18 @@ PROCEDURE HandleMsgIosf(m            : MsgHandler;
     END
     
   END HandleMsgIosf;
+
+PROCEDURE MakeBlkReadRespHdr(READONLY req : IosfRegBlkReadReqHdr.T) :
+  IosfRegCompDataHdr.T =
+  VAR
+    res : IosfRegCompDataHdr.T;
+  BEGIN
+    res.dest := req.source;
+    res.source := req.dest;
+    res.tag := req.tag;
+    (* res.sai ? *)
+    RETURN res
+  END MakeBlkReadRespHdr;
 
 PROCEDURE GetStringC(rd      : Rd.T;
                      bufflen : CARDINAL;
