@@ -69,6 +69,8 @@ PROCEDURE ArrPut(VAR a     : ARRAY OF Byte.T;
 PROCEDURE PutA(t : T; e : End; READONLY a : ARRAY OF Byte.T);
 
 PROCEDURE PutWLE(t : T; e : End; w : Word.T; bytes : [0..BYTESIZE(Word.T)]);
+
+PROCEDURE Truncate(t : T; e : End; by : CARDINAL);
   
 CONST Brand = "ServerPacket";
 

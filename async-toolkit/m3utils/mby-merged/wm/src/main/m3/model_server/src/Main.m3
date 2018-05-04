@@ -12,8 +12,7 @@ PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
   BEGIN
     Debug.Out("SetupHlp");
     update.Imn.BsmScratch3[509].Data.u(16_1109); (* match fpps_mgmt.c:546 *)
-
-    Debug.Out("NVM reg=16_" & Fmt.Unsigned(read.Imn.BsmScratch3[509].Data))
+    update.Imn.FuseData[3].Data.u(16_6); (* match fpps_switch.c:481 *)
   END SetupHlp;
 
 VAR

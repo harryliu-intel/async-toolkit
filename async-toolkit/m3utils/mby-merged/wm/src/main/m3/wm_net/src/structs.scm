@@ -277,10 +277,15 @@
     ;; block formats
     
     (bitstruct iosf-reg-blk-addr
-            ((m3 IosfRegBlkAddr))
-            ((ndw       4 (constraint (and (= 0 (mod ndw 2)) (<= ndw 14))))
-             (addr     28))
-            )
+               ((m3 IosfRegBlkAddr))
+               ((ndw       4 (constraint (and (= 0 (mod ndw 2)) (<= ndw 14))))
+                (addr     28))
+               )
+
+    (bitstruct iosf-reg-blk-data
+               ((m3 IosfRegBlkData))
+               ((data      32))
+               )
     
     (bitstruct iosf-reg-blk-read-req-hdr
             ((m3 IosfRegBlkReadReqHdr))
@@ -532,6 +537,9 @@
 
 (define readsb-proc-name "ReadSB")
 (define readsb-proto "(s : Pkt.T; at : CARDINAL; VAR res : T) : BOOLEAN")
+
+(define readeb-proc-name "ReadEB")
+(define readeb-proto "(s : Pkt.T; e : Pkt.End; VAR res : T) : BOOLEAN")
 
 (define writee-proc-name "WriteE")
 (define writee-proto "(s : Pkt.T; e : Pkt.End; READONLY t : T)")
@@ -1179,12 +1187,36 @@
                #f)
 
     (dis "PROCEDURE Check2(READONLY t : T; VAR u : T) : BOOLEAN = "dnl"  BEGIN" dnl"    WITH check = Check(t) DO IF check THEN u := t END; RETURN check END" dnl"  END Check2;" dnl dnl m3-wr)
-    
+
+    (dis "PROCEDURE Start(sz : CARDINAL; e : Pkt.End) : CARDINAL ="dnl
+         "  BEGIN" dnl
+         "    CASE e OF" dnl
+         "      Pkt.End.Front => RETURN 0" dnl
+         "    | " dnl
+         "      Pkt.End.Back =>" dnl
+         "      <*ASSERT LengthBits MOD 8 = 0*>" dnl
+         "      RETURN sz - LengthBits DIV 8" dnl
+         "    END" dnl
+         "  END Start;" dnl
+         dnl
+         m3-wr)
+
     (emit-proc 'readsb
                "w : Word.T; t : T;"
                ""
                "Check2(t,res)"
                0) ;; read from ServerPacket at i
+
+    (put-m3-proc 'readeb i3-wr m3-wr)
+    (dis
+     "  BEGIN" dnl
+     "    WITH ok = ReadSB(s, Start(s.size(),e), res) DO" dnl
+     "      IF ok THEN Pkt.Truncate(s, e, LengthBits DIV 8) END;" dnl
+     "      RETURN ok" dnl
+     "    END" dnl
+     "  END " readeb-proc-name ";" dnl
+     dnl
+     m3-wr)
 
     (dis "PROCEDURE Assert(q : BOOLEAN) : BOOLEAN = BEGIN <*ASSERT q*>RETURN q END Assert;" dnl dnl m3-wr)
 

@@ -179,5 +179,19 @@ PROCEDURE PutWLE(t : T; e : End; w : Word.T; bytes : [0..BYTESIZE(Word.T)]) =
     END;
     PutA(t, e, SUBARRAY(arr, 0, bytes))
   END PutWLE;
+
+PROCEDURE Truncate(t : T; e : End; by : CARDINAL) =
+  BEGIN
+    <*ASSERT by <= t.sz*>
+    DEC(t.sz,by);
+    CASE e OF
+      End.Front =>
+      INC(t.st, by);
+      IF t.st > NUMBER(t.elem^) THEN DEC(t.st,NUMBER(t.elem^)) END
+    |
+      End.Back => (* skip *)
+    END
+  END Truncate;
+
   
 BEGIN END ServerPacket.
