@@ -519,6 +519,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; PROTOTYPES FOR Read AND Write AND OTHER FUNCTIONS EXPORTED
+;;;
+;;; legend for optional versions
+;;;   C   : with Context
+;;;   S   : against ServerPacket
+;;;   E   : against ServerPacket, and at a ServerPacket.End
+;;;   ..B : with BOOLEAN result for the match
+;;;
+
 
 (define read-proc-name "Read")
 (define read-proto "(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }")
