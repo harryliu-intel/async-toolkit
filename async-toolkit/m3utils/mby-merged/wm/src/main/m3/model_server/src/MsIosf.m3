@@ -27,6 +27,8 @@ IMPORT IosfRegBlkData;
 EXCEPTION ParseError;
 
 TYPE Instance = ModelServerClass.Instance;
+
+VAR doDebug := Debug.DebugThis(Brand);
           
 PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerClass.MsgHandler;
                     READONLY hdr : FmModelMessageHdr.T;
@@ -36,13 +38,13 @@ PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerClass.MsgHandler;
            Wr.Failure } =
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.Iosf*>
-    Debug.Out(F("cx.rem=%s", Int(cx.rem)));
+    IF doDebug THEN Debug.Out(F("cx.rem=%s", Int(cx.rem))) END;
 
     TRY
       WITH inbound    = Pkt.FromRd(NEW(Pkt.T).init(), inst.rd, cx) DO
         (* packet data is loaded into inbound *)
         
-        Pkt.DebugOut(inbound);
+        IF doDebug THEN Pkt.DebugOut(inbound) END;
         VAR
           rreq  : IosfRegReadReq.T;
           wreq  : IosfRegWriteReq.T;
@@ -86,9 +88,11 @@ PROCEDURE HandleIosfWriteReq(inst     : Instance;
     ndw      := 2;
     doUpper  := ParseSbe(req.sbe) = 2;
   BEGIN
-    Debug.Out(">>> HandleIosfWriteReq >>>");
-    Debug.Out("req    ="&IosfRegWriteReq.Format(req));
-    Debug.Out("respHdr="&IosfRegCompNoData.Format(respHdr));
+    IF doDebug THEN
+      Debug.Out(">>> HandleIosfWriteReq >>>");
+      Debug.Out("req    ="&IosfRegWriteReq.Format(req));
+      Debug.Out("respHdr="&IosfRegCompNoData.Format(respHdr))
+    END;
     IosfRegCompNoData.WriteE(inst.sp, Pkt.End.Back, respHdr);
     DoWrBlock(inst, inbound, addr, ndw, doLast := doUpper);
     inst.sendResponse()
@@ -103,9 +107,11 @@ PROCEDURE HandleIosfReadReq(inst     : Instance;
     ndw      := 2;
     doUpper  := ParseSbe(req.sbe) = 2;
   BEGIN
-    Debug.Out(">>> HandleIosfReadReq >>>");
-    Debug.Out("req    ="&IosfRegReadReq.Format(req));
-    Debug.Out("respHdr="&IosfRegCompDataHdr.Format(respHdr));
+    IF doDebug THEN
+      Debug.Out(">>> HandleIosfReadReq >>>");
+      Debug.Out("req    ="&IosfRegReadReq.Format(req));
+      Debug.Out("respHdr="&IosfRegCompDataHdr.Format(respHdr))
+    END;
     IosfRegCompDataHdr.WriteE(inst.sp, Pkt.End.Back, respHdr);
     DoRdBlock(inst, addr, ndw, doLast := doUpper);
     inst.sendResponse();
@@ -123,7 +129,7 @@ PROCEDURE DoRdBlock(inst : Instance;
   BEGIN
     FOR a := addr TO top BY 4 DO
       ca := CompAddr.FromBytes(a);
-      Debug.Out("ca=" & CompAddr.Format(ca,FALSE));
+      IF doDebug THEN Debug.Out("ca=" & CompAddr.Format(ca,FALSE)) END;
       
       VAR
         csrOp := CsrOp.MakeRead(ca, 32, CsrOp.Origin.Software);
@@ -131,14 +137,14 @@ PROCEDURE DoRdBlock(inst : Instance;
       BEGIN
         IF a = top AND NOT doLast THEN
           w := 0;
-          Debug.Out("Padding top of result")
+          IF doDebug THEN Debug.Out("Padding top of result") END
         ELSE
           (* perform read on model *)
           EVAL inst.t.csrOp(csrOp);
         
           (* extract result from csrOp *)
           w := CsrOp.GetReadResult(csrOp);
-          Debug.Out("CsrOp read result = " & Fmt.Unsigned(w))
+          IF doDebug THEN Debug.Out("CsrOp read result = " & Fmt.Unsigned(w)) END
         END;
         
         (* put result at end of packet *)
@@ -158,10 +164,11 @@ PROCEDURE HandleIosfBlkReadReq(inst     : Instance;
     ndw      := req.ndw;
     blkAddr  : IosfRegBlkAddr.T;
   BEGIN
-    Debug.Out(">>> HandleIosfBlkReadReq >>>");
-    Debug.Out("req    ="&IosfRegBlkReadReqHdr.Format(req));
-    
-    Debug.Out("respHdr="&IosfRegCompDataHdr.Format(respHdr));
+    IF doDebug THEN
+      Debug.Out(">>> HandleIosfBlkReadReq >>>");
+      Debug.Out("req    ="&IosfRegBlkReadReqHdr.Format(req));
+      Debug.Out("respHdr="&IosfRegCompDataHdr.Format(respHdr))
+    END;
     IosfRegCompDataHdr.WriteE(inst.sp, Pkt.End.Back, respHdr);
 
     DoRdBlock(inst, addr, ndw);
@@ -188,7 +195,7 @@ PROCEDURE DoWrBlock(inst : Instance;
   BEGIN
     FOR a := addr TO top BY 4 DO
       ca := CompAddr.FromBytes(a);
-      Debug.Out("ca=" & CompAddr.Format(ca,FALSE));
+      IF doDebug THEN Debug.Out("ca=" & CompAddr.Format(ca,FALSE)) END;
       
       VAR
         blkData : IosfRegBlkData.T;
@@ -212,9 +219,11 @@ PROCEDURE HandleIosfBlkWriteReq(inst     : Instance;
     ndw      := req.ndw;
     blkAddr  : IosfRegBlkAddr.T;
   BEGIN
-    Debug.Out(">>> HandleIosfBlkWriteReq >>>");
-    Debug.Out("req    ="&IosfRegBlkWriteReqHdr.Format(req));
-    Debug.Out("respHdr="&IosfRegCompNoData.Format(respHdr));
+    IF doDebug THEN
+      Debug.Out(">>> HandleIosfBlkWriteReq >>>");
+      Debug.Out("req    ="&IosfRegBlkWriteReqHdr.Format(req));
+      Debug.Out("respHdr="&IosfRegCompNoData.Format(respHdr))
+    END;
     IosfRegCompNoData.WriteE(inst.sp, Pkt.End.Back, respHdr);
 
     DoWrBlock(inst, inbound, addr, ndw);

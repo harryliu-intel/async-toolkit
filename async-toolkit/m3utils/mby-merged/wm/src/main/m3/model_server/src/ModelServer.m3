@@ -22,14 +22,18 @@ IMPORT ServerPacket AS Pkt;
 IMPORT AL;
 IMPORT MsIosf;
 
+IMPORT Compiler;
+
 (* may keep : *)
 <*FATAL Thread.Alerted*>
 
 (* should not keep : for now also: *)
-<*FATAL OSError.E, Wr.Failure, IP.Error*>
+<*FATAL OSError.E, IP.Error*>
 <*FATAL NetContext.Short*>
 <*FATAL NetError.OutOfRange*>
 
+VAR doDebug := Debug.DebugThis(Brand);
+  
 REVEAL
   T = Public BRANDED Brand OBJECT
     port     : IP.Port;
@@ -71,7 +75,8 @@ REVEAL
     init(t : T; rd : Rd.T; wr : Wr.T) : Instance := InitI;
     
     receiveMessage()
-      RAISES { NetError.OutOfRange, Rd.EndOfFile, Rd.Failure, ParseError }
+      RAISES { NetError.OutOfRange, Rd.EndOfFile, Rd.Failure, ParseError,
+               Wr.Failure}
       := ReceiveMessage;
   OVERRIDES
     sendResponse := SendResponse;
@@ -80,7 +85,7 @@ REVEAL
 
 PROCEDURE SendResponse(i : Instance) RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
-    Debug.Out(F("SendResponse: %s bytes", Int(i.sp.size())));
+    IF doDebug THEN Debug.Out(F("SendResponse: %s bytes",Int(i.sp.size()))) END;
     (* add outer header *)
     VAR
       hdr := i.lastHdr;
@@ -89,7 +94,7 @@ PROCEDURE SendResponse(i : Instance) RAISES { Wr.Failure, Thread.Alerted } =
       FmModelMessageHdr.WriteE(i.sp, Pkt.End.Front, hdr)
     END;
 
-    Pkt.DebugOut(i.sp);
+    IF doDebug THEN Pkt.DebugOut(i.sp) END;
     Pkt.Transmit(i.sp,i.wr);
     EVAL i.sp.init() (* clear buffer *)
   END SendResponse;
@@ -105,7 +110,13 @@ PROCEDURE InitI(i : Instance; t : T; rd : Rd.T; wr : Wr.T) : Instance =
 
 PROCEDURE LCApply(cl : Listener) : REFANY =
   BEGIN
-    WriteInfo(cl.t.infoPath, cl.t.port);
+    TRY
+      WriteInfo(cl.t.infoPath, cl.t.port);
+    EXCEPT
+      Wr.Failure(x) =>
+      Debug.Error(F("Caught Wr.Failure attempting to write to \"%s\" : %s",
+                    cl.t.infoPath, AL.Format(x)))
+    END;
 
     LOOP
       WITH tcp = TCP.Accept(cl.conn),
@@ -158,19 +169,24 @@ PROCEDURE HApply(cl : Instance) : REFANY =
       END
     EXCEPT
       ParseError(txt) =>
-      Debug.Out("Caught ParseError : " & txt);
+      Debug.Warning("Caught ParseError : " & txt);
       DropClient()
     |
       NetError.OutOfRange(w) =>
-      Debug.Out("Caught NetError.OutOfRange : " & Unsigned(w));
+      Debug.Warning("Caught NetError.OutOfRange : " & Unsigned(w));
       DropClient()
     |
       Rd.EndOfFile =>
-      Debug.Out("Client disconnected");
+      Debug.Warning("Client disconnected");
       DropClient()
     |
       Rd.Failure(x) =>
-      Debug.Out("Error communicating with client disconnected : Rd.Failure : "&
+      Debug.Warning("Error communicating with client disconnected : Rd.Failure : "&
+        AL.Format(x));
+      DropClient()
+    |
+      Wr.Failure(x) =>
+      Debug.Warning("Error communicating with client disconnected : Wr.Failure : "&
         AL.Format(x));
       DropClient()
     END;
@@ -182,30 +198,37 @@ PROCEDURE HApply(cl : Instance) : REFANY =
 PROCEDURE ReceiveMessage(cl : Instance) RAISES { NetError.OutOfRange,
                                                  Rd.EndOfFile,
                                                  Rd.Failure,
-                                                 ParseError } =
+                                                 ParseError,
+                                                 Wr.Failure } =
   VAR
     hdr : FmModelMessageHdr.T;
     cx  : NetContext.T;
   BEGIN
     hdr := FmModelMessageHdr.Read(cl.rd);
-    Debug.Out("Received " & FmModelMessageHdr.Format(hdr));
+    IF doDebug THEN Debug.Out("Received " & FmModelMessageHdr.Format(hdr)) END;
     cl.lastHdr := hdr;
     cx.rem := hdr.msgLength - FmModelMessageHdr.Length;
     WITH h = handler[hdr.type] DO
       IF h = NIL THEN
-        Debug.Out(F("handler for message type %s is NIL",
+        Debug.Warning(F("handler for message type %s is NIL",
                     FmModelMsgType.Names[hdr.type]))
       ELSE
         h.handle(hdr, cx, cl)
       END;
 
-      Debug.Out(F("Child code left %s bytes unparsed", Int(cx.rem)));
+      IF cx.rem # 0 THEN
+        Debug.Warning(F("%s:%s: child <%s> code left %s bytes unparsed",
+                        Compiler.ThisFile(),
+                        Int(Compiler.ThisLine()),
+                        FmModelMsgType.Names[hdr.type],
+                        Int(cx.rem)))
+      END;
       VAR seq := NEW(ByteSeq.T).init();
       BEGIN
         FOR i := 0 TO cx.rem-1 DO
           seq.addhi(RdNet.GetU8C(cl.rd, cx));
         END;
-        Pkt.DebugOut(seq)
+        IF doDebug THEN Pkt.DebugOut(seq) END
       END;
       <*ASSERT cx.rem=0*>
     END
@@ -236,18 +259,21 @@ PROCEDURE HandleMsgVersionInfo(<*UNUSED*>m  : MsgHandler;
                                READONLY hdr : FmModelMessageHdr.T;
                                VAR cx       : NetContext.T;
                                inst         : Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure }=
+  RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure }=
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.VersionInfo*>
     WITH versionHdr = FmModelMsgVersionHdr.ReadC(inst.rd, cx),
          remBytes   = cx.rem,
          versionTag = GetStringC(inst.rd,remBytes, cx) DO
+
+      IF doDebug THEN
+        Debug.Out("Received FmModelMsgVersionHdr " &
+          FmModelMsgVersionHdr.Format(versionHdr));
+        Debug.Out(F("versionNum=%s remBytes=%s",
+                    Int(versionHdr.versionNum), Int(remBytes)));
+        Debug.Out(F("versionTag=%s", GetStringC(inst.rd,remBytes, cx)));
+      END;
       
-      Debug.Out("Received FmModelMsgVersionHdr " &
-        FmModelMsgVersionHdr.Format(versionHdr));
-      Debug.Out(F("versionNum=%s remBytes=%s",
-                  Int(versionHdr.versionNum), Int(remBytes)));
-      Debug.Out(F("versionTag=%s", GetStringC(inst.rd,remBytes, cx)));
       (* format and send return message *)
       WrNet.PutU16G(inst.sp, Pkt.End.Back, versionHdr.versionNum);
       PutStringS(inst.sp, Pkt.End.Back, versionTag);
