@@ -59,7 +59,7 @@ $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
 
-$(M3_STRUCTS): $(STRUCTGEN)
+$(M3_STRUCTS): $(STRUCTGEN) wm_net/src/structs.scm
 	pushd $(STRUCTGEN_ROOT)/src && $(realpath $<) do.scm
 
 rpc_structs: $(M3_STRUCTS)
