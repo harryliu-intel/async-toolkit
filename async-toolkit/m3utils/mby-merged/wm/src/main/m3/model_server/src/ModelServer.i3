@@ -26,4 +26,6 @@ CONST Brand = "ModelServer";
 
 CONST InfoFileName = "models.packetServer";
 
+EXCEPTION ParseError(TEXT);
+          
 END ModelServer.

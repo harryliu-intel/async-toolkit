@@ -5,6 +5,9 @@ import ("wm_net")
 import ("hlp")
 
 module ("ModelServer")
+interface ("ModelServerClass")
+module("MsIosf")
+%interface ("MsIosf")
 module ("HlpModelServer")
 
 implementation ("Main")

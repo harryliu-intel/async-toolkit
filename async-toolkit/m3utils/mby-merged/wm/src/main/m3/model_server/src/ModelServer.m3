@@ -1,5 +1,6 @@
 MODULE ModelServer;
-IMPORT CompAddr;
+IMPORT ModelServerClass;
+
 IMPORT Debug;
 IMPORT Thread;
 FROM Fmt IMPORT F, Int, Unsigned;
@@ -16,18 +17,10 @@ IMPORT RdNet, WrNet;
 IMPORT Text;
 IMPORT NetContext;
 IMPORT FmModelMsgVersionHdr;
-IMPORT Wx;
 IMPORT ByteSeq;
 IMPORT ServerPacket AS Pkt;
-IMPORT Word;
-IMPORT IosfRegBlkWriteReqHdr;
-IMPORT IosfRegBlkReadReqHdr;
-IMPORT IosfRegCompDataHdr;
-IMPORT IosfRegCompNoData;
-IMPORT CsrOp;
 IMPORT AL;
-IMPORT IosfRegBlkAddr;
-IMPORT IosfRegBlkData;
+IMPORT MsIosf;
 
 (* may keep : *)
 <*FATAL Thread.Alerted*>
@@ -69,23 +62,19 @@ REVEAL
   END;
 
 TYPE
-  Instance = Thread.Closure OBJECT
-    rd : Rd.T;
-    wr : Wr.T;
-    sp : Pkt.T;
-    t  : T;
-    lastHdr : FmModelMessageHdr.T;
-  METHODS
+  Instance = ModelServerClass.Instance;
+
+REVEAL
+  ModelServerClass.Instance = ModelServerClass.PubInstance
+     BRANDED ModelServerClass.Brand & " Instance"
+  OBJECT METHODS
     init(t : T; rd : Rd.T; wr : Wr.T) : Instance := InitI;
     
     receiveMessage()
-      RAISES { NetError.OutOfRange, Rd.EndOfFile, Rd.Failure, IosfParseError }
+      RAISES { NetError.OutOfRange, Rd.EndOfFile, Rd.Failure, ParseError }
       := ReceiveMessage;
-
-    sendResponse() RAISES { Wr.Failure, Thread.Alerted } := SendResponse;
-    (* send a response packet from sp, formatted WITHOUT the outer header
-       of type FmModelMessageHdr.T *)
   OVERRIDES
+    sendResponse := SendResponse;
     apply := HApply;
   END;
 
@@ -100,7 +89,7 @@ PROCEDURE SendResponse(i : Instance) RAISES { Wr.Failure, Thread.Alerted } =
       FmModelMessageHdr.WriteE(i.sp, Pkt.End.Front, hdr)
     END;
 
-    DebugByteSeq(i.sp);
+    Pkt.DebugOut(i.sp);
     Pkt.Transmit(i.sp,i.wr);
     EVAL i.sp.init() (* clear buffer *)
   END SendResponse;
@@ -168,8 +157,8 @@ PROCEDURE HApply(cl : Instance) : REFANY =
         cl.receiveMessage()
       END
     EXCEPT
-      IosfParseError =>
-      Debug.Out("Caught IosfParseError");
+      ParseError(txt) =>
+      Debug.Out("Caught ParseError : " & txt);
       DropClient()
     |
       NetError.OutOfRange(w) =>
@@ -190,71 +179,10 @@ PROCEDURE HApply(cl : Instance) : REFANY =
 
   (**********************************************************************)
 
-PROCEDURE DisplayChar(c : CHAR) : CHAR =
-  BEGIN
-    IF ORD(c) >= 16_20 AND ORD(c) <= 16_7e THEN
-      RETURN c
-    ELSE
-      RETURN '.'
-    END
-  END DisplayChar;
-  
-PROCEDURE DebugByteSeq(seq : ByteSeq.T) =
-
-  PROCEDURE Push() =
-    BEGIN
-      IF n = 0 THEN RETURN END;
-      WHILE n < CharsPerBlock * BlocksPerLine DO
-        Put(' ', TRUE)
-      END;
-      Debug.Out(F("%s | %s", Wx.ToText(l), Wx.ToText(r)));
-      l := Wx.New(); r := Wx.New();
-      n := 0
-    END Push;
-
-  PROCEDURE Put(c : CHAR; silent := FALSE) =
-    BEGIN
-      IF n # 0 AND n MOD CharsPerBlock = 0 THEN
-        Wx.PutChar(r, ' ');
-        Wx.PutChar(l, ' ');
-      END;
-      Wx.PutChar(l, DisplayChar(c));
-      IF silent THEN
-        Wx.PutText(r, "   ")
-      ELSE
-        Wx.PutText(r, " " & Fmt.Pad(Int(ORD(c),base := 16),
-                                    length:=2,
-                                    padChar:= '0'))
-      END;
-      INC(n)
-    END Put;
-    
-  CONST
-    CharsPerBlock = 4;
-    BlocksPerLine = 2;
-  VAR
-    n := 0;
-    l, r := Wx.New();
-  BEGIN
-    FOR i := 0 TO seq.size()-1 DO
-      IF i = 0 THEN
-        (* skip *)
-      ELSIF i MOD (CharsPerBlock*BlocksPerLine) = 0 THEN
-        Push()
-      END;
-      WITH c = seq.get(i) DO
-        Put(VAL(c,CHAR))
-      END
-    END;
-    Push()
-  END DebugByteSeq;
-
-  (**********************************************************************)
-  
 PROCEDURE ReceiveMessage(cl : Instance) RAISES { NetError.OutOfRange,
                                                  Rd.EndOfFile,
                                                  Rd.Failure,
-                                                 IosfParseError } =
+                                                 ParseError } =
   VAR
     hdr : FmModelMessageHdr.T;
     cx  : NetContext.T;
@@ -277,20 +205,14 @@ PROCEDURE ReceiveMessage(cl : Instance) RAISES { NetError.OutOfRange,
         FOR i := 0 TO cx.rem-1 DO
           seq.addhi(RdNet.GetU8C(cl.rd, cx));
         END;
-        DebugByteSeq(seq)
+        Pkt.DebugOut(seq)
       END;
       <*ASSERT cx.rem=0*>
     END
   END ReceiveMessage;
 
-TYPE
-  MsgHandler = OBJECT METHODS
-    handle(READONLY hdr : FmModelMessageHdr.T;
-           VAR cx       : NetContext.T;
-           inst         : Instance) 
-    RAISES { NetError.OutOfRange, Rd.EndOfFile, Rd.Failure, IosfParseError }
-  END;
-
+TYPE MsgHandler = ModelServerClass.MsgHandler;
+     
 VAR
   handler :=  ARRAY FmModelMsgType.T OF MsgHandler {
   NIL,
@@ -304,7 +226,7 @@ VAR
   NIL,
   NIL,
   NIL,
-  NEW(MsgHandler, handle := HandleMsgIosf),
+  NEW(MsgHandler, handle := MsIosf.HandleMsg),
   NIL,
   NEW(MsgHandler, handle := HandleMsgVersionInfo),
   NIL
@@ -332,163 +254,6 @@ PROCEDURE HandleMsgVersionInfo(<*UNUSED*>m  : MsgHandler;
       inst.sendResponse()
     END
   END HandleMsgVersionInfo;
-
-EXCEPTION IosfParseError;
-          
-PROCEDURE HandleMsgIosf(<*UNUSED*>m  : MsgHandler;
-                        READONLY hdr : FmModelMessageHdr.T;
-                        VAR cx       : NetContext.T;
-                        inst         : Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure, IosfParseError } =
-  BEGIN
-    <*ASSERT hdr.type = FmModelMsgType.T.Iosf*>
-
-    Debug.Out(F("cx.rem=%s", Int(cx.rem)));
-
-    WITH port       = hdr.port,
-         inbound    = Pkt.FromRd(NEW(Pkt.T).init(), inst.rd, cx) DO
-      (* packet data is loaded into inbound *)
-
-      DebugByteSeq(inbound);
-      VAR
-        brreq : IosfRegBlkReadReqHdr.T;
-        bwreq : IosfRegBlkWriteReqHdr.T;
-      BEGIN
-        IF    IosfRegBlkWriteReqHdr.ReadEB(inbound, Pkt.End.Front, bwreq) THEN
-          HandleIosfBlkWriteReq(inst, inbound, bwreq)
-        ELSIF IosfRegBlkReadReqHdr.ReadEB(inbound, Pkt.End.Front, brreq) THEN
-          HandleIosfBlkReadReq(inst, inbound, brreq)
-        END
-      END
-      
-    END
-    
-  END HandleMsgIosf;
-
-PROCEDURE HandleIosfBlkWriteReq(inst     : Instance;
-                                inbound  : Pkt.T;
-                                req      : IosfRegBlkWriteReqHdr.T)
-  RAISES { IosfParseError } =
-
-  PROCEDURE DoBlock(addr : Word.T; ndw : CARDINAL) RAISES { IosfParseError } =
-    VAR
-      ca       : CompAddr.T;
-    BEGIN
-      FOR a := addr TO addr + (ndw-1)*4 BY 4 DO
-        ca := CompAddr.FromBytes(a);
-        Debug.Out("ca=" & CompAddr.Format(ca,FALSE));
-        
-        VAR
-          blkData : IosfRegBlkData.T;
-          ok    := IosfRegBlkData.ReadEB(inbound,Pkt.End.Front,blkData);
-          csrOp := CsrOp.MakeWrite(ca, 32, blkData.data, CsrOp.Origin.Software);
-        BEGIN
-          IF NOT ok THEN RAISE IosfParseError END;
-          EVAL inst.t.csrOp(csrOp);
-        END
-      END(*FOR*)
-    END DoBlock;
-
-  VAR 
-    addr     := Word.Insert(req.addr0,req.addr1,16,12);
-    respHdr  := MakeBlkWriteRespHdr(req);
-    ndw      := req.ndw;
-    blkAddr  : IosfRegBlkAddr.T;
-  BEGIN
-    Debug.Out(">>> HandleIosfBlkWriteReq >>>");
-    Debug.Out("req    ="&IosfRegBlkWriteReqHdr.Format(req));
-    
-    Debug.Out("respHdr="&IosfRegCompNoData.Format(respHdr));
-    IosfRegCompNoData.WriteE(inst.sp, Pkt.End.Back, respHdr);
-
-    DoBlock(addr, ndw);
-
-    WHILE inbound.size() # 0 DO
-      WITH match = IosfRegBlkAddr.ReadEB(inbound,Pkt.End.Front,blkAddr) DO
-        IF NOT match THEN RAISE IosfParseError END;
-        DoBlock(blkAddr.addr,blkAddr.ndw)
-      END
-    END;
-    inst.sendResponse() (* send response on socket *)
-  END HandleIosfBlkWriteReq;
-  
-PROCEDURE HandleIosfBlkReadReq(inst     : Instance;
-                               inbound  : Pkt.T;
-                               req      : IosfRegBlkReadReqHdr.T)
-  RAISES { IosfParseError } =
-
-  PROCEDURE DoBlock(addr : Word.T; ndw : CARDINAL) =
-    VAR
-      ca       : CompAddr.T;
-    BEGIN
-      FOR a := addr TO addr + (ndw-1)*4 BY 4 DO
-        ca := CompAddr.FromBytes(a);
-        Debug.Out("ca=" & CompAddr.Format(ca,FALSE));
-        
-        VAR
-          csrOp := CsrOp.MakeRead(ca, 32, CsrOp.Origin.Software);
-          w : Word.T;
-        BEGIN
-          (* perform read on model *)
-          EVAL inst.t.csrOp(csrOp);
-          
-          (* extract result from csrOp *)
-          w := CsrOp.GetReadResult(csrOp);
-          
-          Debug.Out("CsrOp read result = " & Fmt.Unsigned(w));
-          
-          (* put result at end of packet *)
-          Pkt.PutWLE(inst.sp, Pkt.End.Back, w, 4)
-        END
-      END(*FOR*)
-    END DoBlock;
-    
-  VAR 
-    addr     := Word.Insert(req.addr0,req.addr1,16,12);
-    respHdr  := MakeBlkReadRespHdr(req);
-    ndw      := req.ndw;
-    blkAddr  : IosfRegBlkAddr.T;
-  BEGIN
-    Debug.Out(">>> HandleIosfBlkReadReq >>>");
-    Debug.Out("req    ="&IosfRegBlkReadReqHdr.Format(req));
-    
-    Debug.Out("respHdr="&IosfRegCompDataHdr.Format(respHdr));
-    IosfRegCompDataHdr.WriteE(inst.sp, Pkt.End.Back, respHdr);
-
-    DoBlock(addr, ndw);
-
-    WHILE inbound.size() # 0 DO
-      WITH match = IosfRegBlkAddr.ReadEB(inbound,Pkt.End.Front,blkAddr) DO
-        IF NOT match THEN RAISE IosfParseError END;
-        DoBlock(blkAddr.addr,blkAddr.ndw)
-      END
-    END;
-    inst.sendResponse() (* send response on socket *)
-  END HandleIosfBlkReadReq;
-  
-PROCEDURE MakeBlkReadRespHdr(READONLY req : IosfRegBlkReadReqHdr.T) :
-  IosfRegCompDataHdr.T =
-  VAR
-    res : IosfRegCompDataHdr.T;
-  BEGIN
-    res.dest := req.source;
-    res.source := req.dest;
-    res.tag := req.tag;
-    (* res.sai ? *)
-    RETURN res
-  END MakeBlkReadRespHdr;
-
-PROCEDURE MakeBlkWriteRespHdr(READONLY req : IosfRegBlkWriteReqHdr.T) :
-  IosfRegCompNoData.T =
-  VAR
-    res : IosfRegCompNoData.T;
-  BEGIN
-    res.dest := req.source;
-    res.source := req.dest;
-    res.tag := req.tag;
-    (* res.sai ? *)
-    RETURN res
-  END MakeBlkWriteRespHdr;
 
 PROCEDURE GetStringC(rd      : Rd.T;
                      bufflen : CARDINAL;
