@@ -286,7 +286,9 @@
                ((m3 IosfRegBlkData))
                ((data      32))
                )
-    
+
+    ;; discussed with Andrea 5/3-5/4/18 about whether eh0 should be 0 or 1
+    ;; depends on whether we simulate CPK or HLP ...
     (bitstruct iosf-reg-blk-read-req-hdr
             ((m3 IosfRegBlkReadReqHdr))
             (
