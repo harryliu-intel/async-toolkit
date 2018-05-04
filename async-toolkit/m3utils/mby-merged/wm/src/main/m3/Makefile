@@ -91,9 +91,9 @@ $(TEST_TARG): $(GENVIEWS)
 	pushd $(GENVIEWS_ROOT)/src && ./test.sh
 
 clean:
-	rm -rf $(WM_SUPPORT_TARGDIR)
-	rm -rf $(GENVIEWS_TARGDIR)
-	rm -rf $(GENVIEWS_ROOT)/src/build
-	rm -rf $(GENVIEWS_ROOT)/src/work
-	find . -name $(OS_TARG) | xargs rm -rf 
-	rm $(TOP)
+	-rm -rf $(WM_SUPPORT_TARGDIR)
+	-rm -rf $(GENVIEWS_TARGDIR)
+	-rm -rf $(GENVIEWS_ROOT)/src/build
+	-rm -rf $(GENVIEWS_ROOT)/src/work
+	-find . -name $(OS_TARG) | xargs rm -rf 
+	-rm -f $(TOP)
