@@ -41,6 +41,7 @@ PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerClass.MsgHandler;
     IF doDebug THEN Debug.Out(F("cx.rem=%s", Int(cx.rem))) END;
 
     TRY
+      (* this is inefficient, should recycle! *)
       WITH inbound    = Pkt.FromRd(NEW(Pkt.T).init(), inst.rd, cx) DO
         (* packet data is loaded into inbound *)
         
