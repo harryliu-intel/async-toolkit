@@ -14,7 +14,7 @@ IMPORT OSError, FileWr;
 IMPORT NetError;
 IMPORT FmModelMsgType;
 IMPORT RdNet, WrNet;
-FROM NetTypes IMPORT U8;
+FROM NetTypes IMPORT U8, U32;
 IMPORT Text;
 IMPORT NetContext;
 IMPORT FmModelMsgVersionHdr;
@@ -27,6 +27,8 @@ IMPORT FmModelConstants;
 IMPORT FmModelPortLinkState;
 IMPORT DataPusher, IntDataPusherTbl;
 IMPORT Byte;
+IMPORT FmModelDataType;
+IMPORT FmModelSideBandData;
 
 IMPORT Compiler;
 
@@ -281,19 +283,81 @@ PROCEDURE HandlePacket(<*UNUSED*>m  : MsgHandler;
                        VAR cx       : NetContext.T;
                        inst         : Instance)
   RAISES { Rd.EndOfFile, Rd.Failure, ParseError } =
+  VAR
+    sbData : FmModelSideBandData.T;
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.Packet*>
-    VAR
-      seq := NEW(Pkt.T).init();
-    BEGIN
-      FOR i := 0 TO cx.rem-1 DO
-        seq.addhi(RdNet.GetU8C(inst.rd, cx));
-      END;
-      Pkt.DebugOut(seq)
+    FOR i := 0 TO cx.rem-1 DO
+      inst.sp.addhi(RdNet.GetU8C(inst.rd, cx));
+    END;
+    Pkt.DebugOut(inst.sp);
+    WITH ok = DecodeTlvPacket(inst.sp, sbData) DO
+      Debug.Out(F("DecodeTlvPacket success=%s", Fmt.Bool(ok)));
+      IF ok THEN
+        Debug.Out(F("DecodeTlvPacket returned sbData=%s pkt follows",
+                    FmModelSideBandData.Format(sbData)));
+        Pkt.DebugOut(inst.sp)
+      END
     END;
     <*ASSERT cx.rem=0*>
   END HandlePacket;
 
+PROCEDURE DecodeTlvPacket((*INOUT*)pkt  : Pkt.T;
+                          VAR sbDataP   : FmModelSideBandData.T) : BOOLEAN =
+  VAR
+    p                : CARDINAL := 0;
+    type             : FmModelDataType.T;
+    len              : U32;
+    pktStart, pktLen            := LAST(CARDINAL);
+    sbData           :=
+        FmModelSideBandData.T { 0, 0 , ARRAY [0..32-1] OF U8 { 0, .. } };
+  BEGIN
+    WHILE p < pkt.size() DO
+      WITH ok = FmModelDataType.ReadS(pkt, p, type) AND
+                RdNet.GetU32S        (pkt, p, len)
+       DO
+        Debug.Out(F("DecodeTlvPacket p=%s ok=%s", Int(p), Fmt.Bool(ok)));
+        IF NOT ok THEN RETURN FALSE END;
+
+        Debug.Out(F("DecodeTlvPacket p=%s type=%s len=%s",
+                    Int(p),
+                    FmModelDataType.Format(type),
+                    Int(len)));
+        
+        CASE type OF
+          FmModelDataType.T.Packet =>
+          pktStart := p;
+          pktLen   := len;
+          INC(p,len)
+        |
+          FmModelDataType.T.SbId =>
+          <*ASSERT len=4*>
+          IF NOT RdNet.GetU32S(pkt, p, sbData.idTag) THEN RETURN FALSE END
+        |
+          FmModelDataType.T.SbTc =>
+          <*ASSERT len=1*>
+          IF NOT RdNet.GetU8S(pkt, p, sbData.tc) THEN RETURN FALSE END
+        |
+          FmModelDataType.T.PacketMeta =>
+          FOR i := 0 TO len-1 DO
+            IF NOT RdNet.GetU8S(pkt, p, sbData.pktMeta[i]) THEN RETURN FALSE END
+          END
+        END
+      END
+    END;
+
+    (* --------- ok --------- *)
+
+    (* leave only the payload of the serverpacket *)
+    FOR i := 0 TO pktStart-1  DO EVAL pkt.remlo() END;
+    WHILE pkt.size() # pktLen DO EVAL pkt.remhi() END;
+
+    (* and copy out the correct sbData *)
+    sbDataP := sbData;
+    
+    RETURN TRUE
+  END DecodeTlvPacket;
+  
 PROCEDURE HandlePortLinkState(<*UNUSED*>m  : MsgHandler;
                               READONLY hdr : FmModelMessageHdr.T;
                               VAR cx       : NetContext.T;

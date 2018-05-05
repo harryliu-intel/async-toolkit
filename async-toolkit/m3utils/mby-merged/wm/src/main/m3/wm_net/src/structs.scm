@@ -69,21 +69,21 @@
                u16
                ((c fm_modelMsgType FM_MODEL_MSG)
                 (m3 FmModelMsgType))
-               ((packet 0)
-                (link-state)
-                (switch-state)
-                (set-egress-info)
-                (enable-alternative-data-path)
-                (packet-loopback)
-                (packet-eot)
-                (mgmt)
-                (attr)
-                (get-info)
-                (error)
-                (iosf)
-                (ctrl)
-                (version-info)
-                (nvm-read))
+               ((packet                       0)
+                (link-state                    )
+                (switch-state                  )
+                (set-egress-info               )
+                (enable-alternative-data-path  )
+                (packet-loopback               )
+                (packet-eot                    )
+                (mgmt                          )
+                (attr                          )
+                (get-info                      )
+                (error                         )
+                (iosf                          )
+                (ctrl                          )
+                (version-info                  )
+                (nvm-read                      ))
                )
     
     (enum fm-model-attr-type
@@ -120,10 +120,10 @@
     (enum fm-model-data-type
           u8
           ((m3 FmModelDataType))
-          ((data-packet ,(fromhex 'a0))
-           (data-sb-id)
-           (data-sb-tc)
-           (data-packet-meta)))
+          ((packet ,(fromhex 'a0))
+           (sb-id)
+           (sb-tc)
+           (packet-meta)))
 
     (enum fm-model-ctrl-type
           u8
@@ -556,6 +556,9 @@
 (define readc-proc-name "ReadC")
 (define readc-proto "(rd : Rd.T; VAR cx : NetContext.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted, NetContext.Short }")
 
+(define reads-proc-name "ReadS")
+(define reads-proto "(s : Pkt.T; VAR at : CARDINAL; VAR t : T) : BOOLEAN")
+
 (define writec-proc-name "WriteC")
 (define writec-proto "(wr : Wr.T; READONLY t : T; VAR cx : NetContext.T) RAISES { Wr.Failure, Thread.Alerted }")
 
@@ -629,6 +632,7 @@
     (dis "CONST WriteS = WrNet.Put" m3-wire-type "S;" dnl i3-wr)
     (dis "CONST WriteE = WrNet.Put" m3-wire-type "G;" dnl i3-wr)
     (dis "CONST Read  = RdNet.Get" m3-wire-type ";" dnl i3-wr)
+    (dis "CONST ReadS  = RdNet.Get" m3-wire-type "S;" dnl i3-wr)
     (dis "CONST ReadC  = RdNet.Get" m3-wire-type "C;" dnl
          dnl i3-wr)
     (map (lambda(x)(compile-m3-const-value x i3-wr)) values)
@@ -678,6 +682,17 @@
      "  BEGIN RETURN V2T(RdNet.Get"m3-wire-type"C(rd,cx)) END ReadC;" dnl
      dnl m3-wr)
 
+    (put-m3-proc 'reads i3-wr m3-wr)
+    (dis
+     "  VAR p := at; w : W;" dnl
+     "  BEGIN" dnl
+     "    WITH success = RdNet.Get"m3-wire-type"S(s,p,w) AND V2TB(w,t) DO" dnl
+     "      IF success THEN at := p END;" dnl
+     "      RETURN success" dnl
+     "    END" dnl
+     "   END ReadS;" dnl
+     dnl m3-wr)
+
     (put-m3-proc 'write i3-wr m3-wr)
     (dis
     "  BEGIN WrNet.Put"m3-wire-type"(wr, Vals[t]) END Write;" dnl
@@ -702,7 +717,15 @@
          dnl i3-wr)
 
     (put-m3-proc 'format i3-wr m3-wr)
-    (dis "BEGIN RETURN Names[t] END Format;" dnl m3-wr)
+    (dis "BEGIN RETURN Names[t] END Format;" dnl
+         dnl m3-wr)
+
+    (dis "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange } =" dnl
+         "  VAR res : T; BEGIN" dnl
+         "    IF NOT V2TB(w,res) THEN RAISE NetError.OutOfRange(w) END;" dnl
+         "    RETURN res" dnl
+         "  END V2T;" dnl
+         dnl m3-wr)
     
     (let loop ((i   0)
                (x   values)
@@ -710,7 +733,7 @@
                (names "CONST Names = ARRAY T OF TEXT { ")
                (t2v "CONST Vals = ARRAY T OF W { ")
                (v2t (string-append
-                     "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange } =" dnl
+                     "PROCEDURE V2TB(w : W; VAR t : T) : BOOLEAN =" dnl
                      "  BEGIN" dnl
                      "    CASE w OF" dnl
                      )))
@@ -728,9 +751,9 @@
                  dnl
                  i3-wr)
             (dis v2t
-                 "    ELSE RAISE NetError.OutOfRange(w)" dnl
+                 "    ELSE RETURN FALSE" dnl
                  "    END" dnl
-                 "  END V2T;" dnl
+                 "  END V2TB;" dnl
                  dnl
                  m3-wr)
             ) ;; nigeb
@@ -751,7 +774,7 @@
                   (string-append t sym comma)
                   (string-append names "\"" sym "\"" comma)
                   (string-append t2v val comma)
-                  (string-append v2t "    | " val " => RETURN T." sym dnl)))
+                  (string-append v2t "    | " val " => t := T." sym "; RETURN TRUE" dnl)))
           ) ;; fi
       ) ;; pool
 
@@ -804,6 +827,8 @@
             (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"(rd)"))
            ((readc)
             (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"C(rd,cx)"))
+           ((reads)
+            (string-append ind "IF NOT RdNet.Get"(scheme->m3 type)"S(s,p,"lhs") THEN RETURN FALSE END"))
            (else (error whch))))
            
         ((array-type? type)
@@ -825,6 +850,9 @@
             (string-append ind lhs " := " (get-m3-typemapping type) ".Read(rd)"))
            ((readc)
             (string-append ind lhs " := " (get-m3-typemapping type) ".ReadC(rd,cx)"))
+           ((reads)
+            (string-append ind "IF NOT " (get-m3-typemapping type) ".ReadS(s,p,"lhs") THEN RETURN FALSE END"))
+            
            (else (error whch))))))
          
 (define (emit-header-field-readx whch f m-wr updn)
@@ -837,6 +865,9 @@
 
 (define (emit-header-field-readc . x)
   (apply emit-header-field-readx (cons 'readc x)))
+
+(define (emit-header-field-reads . x)
+  (apply emit-header-field-readx (cons 'reads x)))
 
 (define (emit-header-field-read . x)
   (apply emit-header-field-readx (cons 'read x)))
@@ -853,7 +884,9 @@
           
         ((array-type? type)
          (string-append
+          ind "Wx.PutChar(wx,'{');" dnl
           ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
+          ind "  Wx.PutChar(wx,' ');" dnl
               
           (get-m3-format-type
            (cadr type)
@@ -863,7 +896,8 @@
            )
           dnl
 
-          ind "END"
+          ind "END;" dnl
+          ind "Wx.PutText(wx,\" }\")" 
           ))
         (else
          (string-append
@@ -1297,7 +1331,7 @@
       (dis dnl m3-wr)
       )
 
-    (define (emit-proc whch decls return)
+    (define (emit-proc whch decls return . opt-pre-ret)
       ;; emit a procedure to do "something" (in parameter whch)
       ;; return value provided in parameter return
       (let ((emitter (eval (symbol-append 'emit-header-field- whch))))
@@ -1309,7 +1343,8 @@
         ;; special case for the generic write, can do backwards too
         (if (eq? whch 'writee)
             (map (lambda(f)(emitter f m3-wr 'dn)) (reverse fields)))
-        
+        (if (not (null? opt-pre-ret))
+            (dis "    " (car opt-pre-ret) dnl m3-wr))
         (dis "    RETURN " return dnl m3-wr)
         (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
              dnl m3-wr)))
@@ -1336,8 +1371,9 @@
     (emit-length)
 
     ;; procedures for reading the record off the wire
-    (emit-proc 'read   "t : T;" "t")   ;; raw read
-    (emit-proc 'readc   "t : T;" "t")  ;; read with context
+    (emit-proc 'read   "t : T;"        "t"   )  ;; raw read
+    (emit-proc 'readc  "t : T;"        "t"   )  ;; read with context
+    (emit-proc 'reads  "p := at;"      "TRUE" "at := p;")  ;; read from Pkt.T
 
     ;; various ways of writing the record to the wire
     (emit-proc 'write  "" "")          ;; raw write
