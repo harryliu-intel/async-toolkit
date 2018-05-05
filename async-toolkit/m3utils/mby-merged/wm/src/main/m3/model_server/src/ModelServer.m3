@@ -21,6 +21,9 @@ IMPORT ByteSeq;
 IMPORT ServerPacket AS Pkt;
 IMPORT AL;
 IMPORT MsIosf;
+IMPORT FmModelSetEgressInfoHdr;
+IMPORT FmModelConstants;
+IMPORT DataPusher, IntDataPusherTbl;
 
 IMPORT Compiler;
 
@@ -36,10 +39,12 @@ VAR doDebug := Debug.DebugThis(Brand);
   
 REVEAL
   T = Public BRANDED Brand OBJECT
-    port     : IP.Port;
-    conn     : TCP.Connector; (* listen here *)
-    listener : Listener := NIL;
-    infoPath : Pathname.T;
+    port        : IP.Port;
+    conn        : TCP.Connector; (* listen here *)
+    listener    : Listener := NIL;
+    infoPath    : Pathname.T;
+    egressPorts : IntDataPusherTbl.T;
+    mu          : MUTEX; (* protects egressPorts *)
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
@@ -143,6 +148,8 @@ PROCEDURE WriteInfo(dirPath : Pathname.T; port : IP.Port)
   
 PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
   BEGIN
+    t.mu := NEW(MUTEX);
+    t.egressPorts := NEW(IntDataPusherTbl.Default).init();
     t.infoPath := infoPath;
     WITH ep   = IP.Endpoint { IP.NullAddress, IP.NullPort },
          conn = TCP.NewConnector(ep) DO
@@ -238,22 +245,82 @@ TYPE MsgHandler = ModelServerClass.MsgHandler;
      
 VAR
   handler :=  ARRAY FmModelMsgType.T OF MsgHandler {
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NIL,
-  NEW(MsgHandler, handle := MsIosf.HandleMsg),
-  NIL,
-  NEW(MsgHandler, handle := HandleMsgVersionInfo),
-  NIL
+  (* Packet                    *) NIL,
+  (* LinkState                 *) NIL,
+  (* SwitchState               *) NIL,
+  (* SetEgressInfo             *) NEW(MsgHandler, 
+                                      handle := HandleSetEgressInfo),
+  (* EnableAlternativeDataPath *) NIL,
+  (* PacketLoopback            *) NIL,
+  (* PacketEot                 *) NIL,
+  (* Mgmt                      *) NIL,
+  (* Attr                      *) NIL,
+  (* GetInfo                   *) NIL,
+  (* Error                     *) NIL,
+  (* Iosf                      *) NEW(MsgHandler, 
+                                      handle := MsIosf.HandleMsg),
+  (* Ctrl                      *) NIL,
+  (* VersionInfo               *) NEW(MsgHandler, 
+                                      handle := HandleMsgVersionInfo),
+  (* NvmRead                   *) NIL
   };
+
+PROCEDURE HandleSetEgressInfo(<*UNUSED*>m  : MsgHandler;
+                              READONLY hdr : FmModelMessageHdr.T;
+                              VAR cx       : NetContext.T;
+                              inst         : Instance)
+  RAISES { Rd.EndOfFile, Rd.Failure }=
+  VAR
+    dp : DataPusher.T;
+  BEGIN
+    <*ASSERT hdr.type = FmModelMsgType.T.SetEgressInfo*>
+    WITH  eiHdr    = FmModelSetEgressInfoHdr.ReadC(inst.rd, cx),
+          remBytes = cx.rem,
+          hostname = GetStringC(inst.rd, remBytes, cx),
+          disable = eiHdr.tcpPort = FmModelConstants.SocketPortDisable DO
+      Debug.Out(F("Received %s, hostname=%s, forPort=%s",
+                  FmModelSetEgressInfoHdr.Format(eiHdr),
+                  hostname,
+                  Int(hdr.port)));
+      LOCK inst.t.mu DO
+        IF inst.t.egressPorts.delete(hdr.port,dp) THEN
+          Debug.Out("Shutting down egress port " & Int(hdr.port));
+          dp.forceExit();
+        END;
+        IF NOT disable THEN
+          Debug.Out(F("Opening link for %s to %s:%s",
+                      Int(hdr.port),
+                      hostname,
+                      Int(eiHdr.tcpPort)));
+          WITH newPusher = NEW(MyDataPusher,
+                               t := inst.t,
+                               port := hdr.port).init(hostname,
+                                                      eiHdr.tcpPort) DO
+            EVAL inst.t.egressPorts.put(hdr.port, newPusher)
+          END
+        END
+      END
+    END
+  END HandleSetEgressInfo;
+
+TYPE
+  MyDataPusher = DataPusher.T OBJECT
+    t    : T;
+    port : CARDINAL;
+  OVERRIDES
+    exitCallback:= DPEC;
+  END;
+
+PROCEDURE DPEC(dp : MyDataPusher) =
+  VAR x : DataPusher.T; BEGIN
+    LOCK dp.t.mu DO
+      IF dp.t.egressPorts.delete(dp.port,x) THEN
+        <*ASSERT x=dp*>
+      END
+    END
+  END DPEC;
+
+  (**********************************************************************)
 
 PROCEDURE HandleMsgVersionInfo(<*UNUSED*>m  : MsgHandler;
                                READONLY hdr : FmModelMessageHdr.T;

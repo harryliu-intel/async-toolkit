@@ -10,6 +10,9 @@ module("MsIosf")
 %interface ("MsIosf")
 module ("HlpModelServer")
 
+module ("DataPusher")
+table ("IntDataPusher", "Integer", "DataPusher")
+
 implementation ("Main")
 
 program ("modelserver")

@@ -43,7 +43,13 @@
                u32
                ((m3 FmHlpApiRegsInt))
                ((hlp-reg-version 16_1109)   ;; hacky for now
-                (hlp-reg-tag     16_12614)))
+                (hlp-reg-tag     16_12614)
+                ))
+
+    (constants fm-model-constants
+               u32
+               ((m3 FmModelConstants))
+               ((socket-port-disable 16_ffff)))
 
     (enum fm-socket-type
                u8 ;; wire type
@@ -197,6 +203,10 @@
     (header fm-model-msg-version-hdr
             ((m3 FmModelMsgVersionHdr))
             ((versionNum    u16)))
+
+    (header fm-model-set-egress-info-hdr
+            ((m3 FmModelSetEgressInfoHdr))
+            ((tcpPort       u16)))
 
 
     ;; sideband formats (all LITTLE ENDIAN)
