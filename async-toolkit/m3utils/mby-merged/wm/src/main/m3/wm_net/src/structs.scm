@@ -1,6 +1,5 @@
 (require-modules "basic-defs" "m3" "display" "hashtable" "struct" "set")
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; SET DESTINATION
@@ -11,6 +10,43 @@
 ;; a small helper
 
 (define (fromhex x) (Scan.Int (stringify x) 16))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Data structures for HLP/MBY White Model
+;;; mainly relating to ModelServer.m3 here
+;;;
+;;; Author: Mika Nystrom <mika.nystroem@intel.com>
+;;; April, 2018
+;;;
+;;; legend: a "wire type" is a big-endian type defined for network
+;;;         interchange.  Base types of wire types are u8, u16, u32, u64.
+;;;         (a.k.a. big-endian integers of size 8, 16, 32, and 64 bits)
+;;;
+;;;         a "constant" is a wire type consisting of a list of named
+;;;         integer constants.  These are CONST in Modula-3.
+;;;
+;;;         a "enum" is a wire type consisting of an enumeration with
+;;;         an optional mapping to integers.  These are enumerations
+;;;         in Modula-3.
+;;;
+;;;         a struct is a wire type consisting of enumerations, integers
+;;;         and structs.  These are RECORDs in Modula-3.
+;;;
+;;;         a bitstruct is a packed type for layout in local memory or
+;;;         interchange between machines running the same program.  It
+;;;         is LITTLE-ENDIAN and fields are of widths 1..64 bits.
+;;;         Fields can be constrained to be constant or to adhere to
+;;;         arbitrary functional specs, and bitstructs can be
+;;;         pattern-matched.
+;;;
+;;;         None of this stuff is at present guaranteed to work on a
+;;;         32-bit machine.  (But it can all be made to work.)
+;;;
+
+
+;;; this file really should be split into (at least) two pieces:
+;;; structure compiler library and MBY/HLP-related struct defn's
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -215,8 +251,10 @@
             ((m3 FmModelPortLinkState))
             ((state       u8)))
 
-
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
     ;; sideband formats (all LITTLE ENDIAN)
+    ;;
 
     ;; single formats
 
@@ -304,8 +342,6 @@
                ((data      32))
                )
 
-    ;; discussed with Andrea 5/3-5/4/18 about whether eh0 should be 0 or 1
-    ;; depends on whether we simulate CPK or HLP ...
     (bitstruct iosf-reg-blk-read-req-hdr
             ((m3 IosfRegBlkReadReqHdr))
             (
@@ -316,6 +352,8 @@
              (tag      3)
              (bar      3)
              (al       1 (constant 16_1))
+    ;; discussed with Andrea 5/3-5/4/18 about whether eh0 should be 0 or 1
+    ;; depends on whether we simulate CPK or HLP ...
              (eh0      1 ;; (constant 16_1) ;; comment for now
                        )
 
@@ -417,10 +455,51 @@
     )
   )
 
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;  CODE BELOW HERE SHOULD GO IN A LIBRARY  ;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;
+;; This is the Modula-3 (and possibly other languages) data structure
+;; compiler.
+;;
+;; Basic conventions for generated interfaces:
+;;
+;; Format: human-readable output (debugging)
+;; Read  : read structure from a binary format
+;; Write : write structure to a binary format
+;; Check : pattern-match whether a bit pattern matches a bitstruct spec
+;;
+;; standard type exported by an interface is T
+;; wire type, if given, is W
+;;
+;; Length, if given, is in BYTES (enum, const, header)
+;; LengthBits, if given, is in BITS (only for bitstruct)
+;;
+;; header types are BIG-ENDIAN (IBM/Internet convention)
+;; bitstruct types are LITTLE-ENDIAN (Intel convention)
+;;
+;; header and bitstruct types offer slightly different interfaces
+;;
+;; legend for optional versions
+;;   C   : with Context (see NetContext.i3)
+;;   S   : against ServerPacket (see ServerPacket.i3)
+;;   E   : against ServerPacket, and at a ServerPacket.End
+;;   ..B : with BOOLEAN result for the match
+;; if nothing is stated, the default is to read/write the packet type
+;; "hot" (zero-copy off/on the wire) 
+;;
+;; The compiler itself currently depends on the following Modula-3 code:
+;;   FileWr.OpenAppend
+;;   M3Support.Modula3Type
+;;   M3Support.ReformatNumber
+;;   IdStyles.Convert
+;; the m3makefile of the compiler hence has to contain (or somehow import)
+;; SchemeStubs for these interfaces.
+;;
+;; Author : Mika Nystrom <mika.nystroem@intel.com>
+;; April, 2018
+;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -431,7 +510,7 @@
                     'Lower 'Camel
                     'Hyphen 'None))
 
-(define (symbol-append . x) ;; permissive form
+(define (symbol-append . x) ;; permissive form, allow both symbol and string
   (string->symbol
    (eval
     (cons 'string-append
@@ -442,20 +521,23 @@
                                      "not a string or symbol : " s)))))
                x)))))
 
+(define sa string-append)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; GLOBALS
 
-(define constants '())
-(define enum      '())
-(define header    '())
-(define m3typemap '())
+(define constants    '())
+(define enum         '())
+(define header       '())
+(define m3typemap    '())
 (define bitstruct    '())
 
-(set! constants   '())
-(set! enum        '())
-(set! header      '())
-(set! m3typemap   '())
+(set! constants      '())
+(set! enum           '())
+(set! header         '())
+(set! m3typemap      '())
+(set! bitstruct      '())
 
 (define (add-m3-type! nm m3-name)
   (set! m3typemap
@@ -466,7 +548,7 @@
 (define (get-m3-typemapping type)
   (let ((rec (assoc type m3typemap)))
     (if (not rec)
-        (error (string-append "No M3 type mapping for " (stringify type)))
+        (error (sa "No M3 type mapping for " (stringify type)))
         (cdr rec))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -476,7 +558,7 @@
 (define (open-m3 nm)
   (let ((i-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".i3.tmp"))))
         (m-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".m3.tmp")))))
-    (let ((m3m-wr (FileWr.OpenAppend (string-append deriv-dir "derived.m3m"))))
+    (let ((m3m-wr (FileWr.OpenAppend (sa deriv-dir "derived.m3m"))))
       (dis "derived_interface(\""nm"\",VISIBLE)" dnl
            "derived_implementation(\""nm"\")" dnl
            m3m-wr)
@@ -518,10 +600,10 @@
          "BEGIN END " nm "." dnl m-wr)
     (wr-close i-wr)
     (wr-close m-wr)
-    (rename-file-if-different (string-append deriv-dir nm ".i3.tmp")
-                              (string-append deriv-dir nm ".i3"))
-    (rename-file-if-different (string-append deriv-dir nm ".m3.tmp")
-                              (string-append deriv-dir nm ".m3"))
+    (rename-file-if-different (sa deriv-dir nm ".i3.tmp")
+                              (sa deriv-dir nm ".i3"))
+    (rename-file-if-different (sa deriv-dir nm ".m3.tmp")
+                              (sa deriv-dir nm ".m3"))
     ))
 
 (define (put-m3-imports wr)
@@ -538,12 +620,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; PROTOTYPES FOR Read AND Write AND OTHER FUNCTIONS EXPORTED
-;;;
-;;; legend for optional versions
-;;;   C   : with Context
-;;;   S   : against ServerPacket
-;;;   E   : against ServerPacket, and at a ServerPacket.End
-;;;   ..B : with BOOLEAN result for the match
 ;;;
 
 
@@ -607,7 +683,7 @@
 (define (get-m3-name nm lst)
   (let ((pair (assoc 'm3 lst)))
     (if (null? pair)
-        (error (string-append "No M3 name for " nm))
+        (error (sa "No M3 name for " nm))
         (cadr pair))))
 
 (define (compile-constants-m3! nm x)
@@ -627,11 +703,11 @@
     (dis "TYPE W = " m3-wire-type ";" dnl
          dnl
          i3-wr)
-    (dis "CONST Write = WrNet.Put" m3-wire-type ";" dnl i3-wr)
+    (dis "CONST Write  = WrNet.Put" m3-wire-type ";"  dnl i3-wr)
     (dis "CONST WriteC = WrNet.Put" m3-wire-type "C;" dnl i3-wr)
     (dis "CONST WriteS = WrNet.Put" m3-wire-type "S;" dnl i3-wr)
     (dis "CONST WriteE = WrNet.Put" m3-wire-type "G;" dnl i3-wr)
-    (dis "CONST Read  = RdNet.Get" m3-wire-type ";" dnl i3-wr)
+    (dis "CONST Read   = RdNet.Get" m3-wire-type ";"  dnl i3-wr)
     (dis "CONST ReadS  = RdNet.Get" m3-wire-type "S;" dnl i3-wr)
     (dis "CONST ReadC  = RdNet.Get" m3-wire-type "C;" dnl
          dnl i3-wr)
@@ -732,7 +808,7 @@
                (t   "TYPE T = { ")
                (names "CONST Names = ARRAY T OF TEXT { ")
                (t2v "CONST Vals = ARRAY T OF W { ")
-               (v2t (string-append
+               (v2t (sa
                      "PROCEDURE V2TB(w : W; VAR t : T) : BOOLEAN =" dnl
                      "  BEGIN" dnl
                      "    CASE w OF" dnl
@@ -765,16 +841,16 @@
                  (valspec (cdar x))
                  (val (cond ((null? valspec) i)
                             ((< (car valspec) i)
-                             (error (string-append
+                             (error (sa
                                      "bad value for enum "
                                      (stringify (car valspec)))))
                             (else (car valspec)))))
             (loop (+ val 1)
                   (cdr x)
-                  (string-append t sym comma)
-                  (string-append names "\"" sym "\"" comma)
-                  (string-append t2v val comma)
-                  (string-append v2t "    | " val " => t := T." sym "; RETURN TRUE" dnl)))
+                  (sa t sym comma)
+                  (sa names "\"" sym "\"" comma)
+                  (sa t2v val comma)
+                  (sa v2t "    | " val " => t := T." sym "; RETURN TRUE" dnl)))
           ) ;; fi
       ) ;; pool
 
@@ -792,13 +868,13 @@
   (cond ((symbol? type)                                    type)
         ((array-type? type)                          (cadr type))
         (else
-         (error (string-append "Illegal type descriptor " (stringify type))))
+         (error (sa "Illegal type descriptor " (stringify type))))
         ))
 
 (define (get-m3-type type)
   (cond ((member? type '(u8 u16 u32 u64)) (scheme->m3 type))
         ((array-type? type)
-         (string-append "ARRAY [0.." (caddr type) "-1] OF "
+         (sa "ARRAY [0.." (caddr type) "-1] OF "
                         (get-m3-type (cadr type))))
         (else
          (symbol->string (symbol-append (get-m3-typemapping type) ".T")))))
@@ -808,7 +884,7 @@
         ((eq? type 'u16) "2")
         ((eq? type 'u32) "4")
         ((eq? type 'u64) "4")
-        ((array-type? type) (string-append (caddr type)
+        ((array-type? type) (sa (caddr type)
                                            "*("
                                            (get-m3-type-size (cadr type))
                                            ")"))
@@ -824,41 +900,41 @@
   (cond ((member? type '(u8 u16 u32 u64))
          (case whch
            ((read)
-            (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"(rd)"))
+            (sa ind lhs " := RdNet.Get"(scheme->m3 type)"(rd)"))
            ((readc)
-            (string-append ind lhs " := RdNet.Get"(scheme->m3 type)"C(rd,cx)"))
+            (sa ind lhs " := RdNet.Get"(scheme->m3 type)"C(rd,cx)"))
            ((reads)
-            (string-append ind "IF NOT RdNet.Get"(scheme->m3 type)"S(s,p,"lhs") THEN RETURN FALSE END"))
+            (sa ind "IF NOT RdNet.Get"(scheme->m3 type)"S(s,p,"lhs") THEN RETURN FALSE END"))
            (else (error whch))))
            
         ((array-type? type)
-         (string-append
+         (sa
           ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
 
           (get-m3-read-type
            whch
            (cadr type)
-           (string-append lhs "[i"lev"]")
+           (sa lhs "[i"lev"]")
            (+ lev 1)
-           (string-append ind "  ")
+           (sa ind "  ")
            ) dnl
           ind "END"
           ))
         (else
          (case whch
            ((read)
-            (string-append ind lhs " := " (get-m3-typemapping type) ".Read(rd)"))
+            (sa ind lhs " := " (get-m3-typemapping type) ".Read(rd)"))
            ((readc)
-            (string-append ind lhs " := " (get-m3-typemapping type) ".ReadC(rd,cx)"))
+            (sa ind lhs " := " (get-m3-typemapping type) ".ReadC(rd,cx)"))
            ((reads)
-            (string-append ind "IF NOT " (get-m3-typemapping type) ".ReadS(s,p,"lhs") THEN RETURN FALSE END"))
+            (sa ind "IF NOT " (get-m3-typemapping type) ".ReadS(s,p,"lhs") THEN RETURN FALSE END"))
             
            (else (error whch))))))
          
 (define (emit-header-field-readx whch f m-wr updn)
   (dis (get-m3-read-type whch
                          (cadr f)
-                         (string-append "t." (car f))
+                         (sa "t." (car f))
                          0
                          "    ")
        ";" dnl m-wr))
@@ -877,22 +953,22 @@
 (define (get-m3-format-type type rhs lev ind)
   ;;(dis "RHS " rhs dnl)
   (cond ((member? type '(u8 u16 u32 u64))
-         (string-append
+         (sa
           ind
           "Wx.PutText(wx,NetTypes.Format"(scheme->m3 type)"("rhs"))"
           ))
           
         ((array-type? type)
-         (string-append
+         (sa
           ind "Wx.PutChar(wx,'{');" dnl
           ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
           ind "  Wx.PutChar(wx,' ');" dnl
               
           (get-m3-format-type
            (cadr type)
-           (string-append "  " rhs "[i"lev"]")
+           (sa "  " rhs "[i"lev"]")
            (+ lev 1)
-           (string-append ind "  ")
+           (sa ind "  ")
            )
           dnl
 
@@ -900,7 +976,7 @@
           ind "Wx.PutText(wx,\" }\")" 
           ))
         (else
-         (string-append
+         (sa
           ind
           "Wx.PutText(wx," (get-m3-typemapping type) ".Format("rhs"))"))))
 
@@ -911,7 +987,7 @@
     (dis
      "    Wx.PutText(wx,\""field-name"=\");" dnl
      (get-m3-format-type field-type
-                         (string-append "t."field-name)
+                         (sa "t."field-name)
                          0
                          "    "
                          ) 
@@ -925,7 +1001,7 @@
   ;;(dis "RHS " rhs dnl)
   ;;(dis whch " " type dnl)
 
-  (string-append
+  (sa
 
    ;;
    ;; in case of the generic write 'writee , the fields are
@@ -936,7 +1012,7 @@
    ;;
 
    (if (eq? whch 'writee)
-       (string-append ind
+       (sa ind
                       (case updn
                         ((up) "IF e=Pkt.End.Back THEN ")
                         ((dn) "IF e=Pkt.End.Front THEN ")
@@ -949,33 +1025,33 @@
   (cond ((member? type '(u8 u16 u32 u64))
          (case whch
            ((write)
-            (string-append ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
+            (sa ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
            ((writec)
-            (string-append ind "WrNet.Put"(scheme->m3 type)"C(wr,"rhs",cx)"))
+            (sa ind "WrNet.Put"(scheme->m3 type)"C(wr,"rhs",cx)"))
            ((writes)
-            (string-append ind "WrNet.Put"(scheme->m3 type)"S(s,at,"rhs")"))
+            (sa ind "WrNet.Put"(scheme->m3 type)"S(s,at,"rhs")"))
            ((writee)
-            (string-append ind "WrNet.Put"(scheme->m3 type)"G(s,e,"rhs")"))
+            (sa ind "WrNet.Put"(scheme->m3 type)"G(s,e,"rhs")"))
            (else (error whch))))
          
         ((array-type? type)
-         (string-append
+         (sa
           ind
           (case updn
             ((up)
-             (string-append "FOR i"lev" := 0 TO " (caddr type) "-1 DO"))
+             (sa "FOR i"lev" := 0 TO " (caddr type) "-1 DO"))
 
             ((dn)
-             (string-append "FOR i"lev" := " (caddr type) "-1 TO 0 BY -1 DO"))
+             (sa "FOR i"lev" := " (caddr type) "-1 TO 0 BY -1 DO"))
             )
           dnl
 
           (get-m3-write-type
            whch
            (cadr type)
-           (string-append "  " rhs "[i"lev"]")
+           (sa "  " rhs "[i"lev"]")
            (+ lev 1)
-           (string-append ind "  ")
+           (sa ind "  ")
            updn
            )
           dnl
@@ -986,26 +1062,26 @@
         (else
          (case whch
            ((write)
-            (string-append ind (get-m3-typemapping type) ".Write(wr,"rhs")"))
+            (sa ind (get-m3-typemapping type) ".Write(wr,"rhs")"))
            ((writec)
-            (string-append ind (get-m3-typemapping type) ".WriteC(wr,"rhs",cx)"))
+            (sa ind (get-m3-typemapping type) ".WriteC(wr,"rhs",cx)"))
            ((writes)
-            (string-append ind (get-m3-typemapping type) ".WriteS(s,at,"rhs")"))
+            (sa ind (get-m3-typemapping type) ".WriteS(s,at,"rhs")"))
            ((writee)
-            (string-append ind (get-m3-typemapping type) ".WriteE(s,e,"rhs")"))
+            (sa ind (get-m3-typemapping type) ".WriteE(s,e,"rhs")"))
            (else (error whch)))))
   ;; dnoc
   
   (if (eq? whch 'writee) " END" "")
   
-  ) ;; string-append
+  ) ;; sa
   )
 
 (define (emit-header-field-writex whch f m-wr updn)
   (dis 
    (get-m3-write-type whch
                       (cadr f)
-                      (string-append "t."(car f))
+                      (sa "t."(car f))
                       0
                       "    "
                       updn)
@@ -1037,7 +1113,7 @@
          (defval     (if (or (null? tail)
                              (not (eq? (caar tail) 'constant)))
                          ""
-                         (string-append " := " (symbol->m3integer (cadar tail)))))
+                         (sa " := " (symbol->m3integer (cadar tail)))))
           
         )
     (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
@@ -1063,16 +1139,16 @@
   ;;(dis "CONSTRAINT: " (stringify constraint) dnl)
   (case (car constraint)
     ((constant)
-     (string-append "    IF t."nm" # " (symbol->m3integer (cadr constraint))
+     (sa "    IF t."nm" # " (symbol->m3integer (cadr constraint))
                     " THEN RETURN FALSE END;" dnl))
     
     ((constraint)
-     (string-append "    IF NOT "
-                    (format-m3-expr (lambda(nm)(string-append "t." nm)) (cadr constraint))
+     (sa "    IF NOT "
+                    (format-m3-expr (lambda(nm)(sa "t." nm)) (cadr constraint))
                     " THEN RETURN FALSE END;" dnl)
       )
 
-    (else (error (string-append "Unknown constraint " (stringify constraint))))
+    (else (error (sa "Unknown constraint " (stringify constraint))))
 
     ) ;; esac
   )
@@ -1110,7 +1186,7 @@
 
 (define (infixize string-list sep)
   (if (null? string-list) ""
-      (apply string-append 
+      (apply sa 
              (intersperse string-list sep))))
 
 (define (unary-op? op)
@@ -1142,20 +1218,20 @@
            (cond
 
             ((and (= (length args) 1) (unary-op? op))
-             (string-append (op->m3op op) (me (car args))))
+             (sa (op->m3op op) (me (car args))))
             
             ((and (> (length args) 1) (binary-op? op))
-             (string-append "(" (infixize (map me args) (op->m3op op)) ")"))
+             (sa "(" (infixize (map me args) (op->m3op op)) ")"))
 
             (else
-             (string-append (op->m3op op) "(" (infixize (map me args) ",") ")"))
+             (sa (op->m3op op) "(" (infixize (map me args) ",") ")"))
             
             );;dnoc
            );;tel
          )
         
         (else
-         (error (string-append "cant format expression " (stringify expr))))
+         (error (sa "cant format expression " (stringify expr))))
         );;dnoc
   )
 
@@ -1238,7 +1314,7 @@
     (emit-proc 'format
                "wx := Wx.New(); <*UNUSED*>VAR ok := Assert(Check(t));" ;; decls
                ""
-               (string-append "Fmt.F(\"<"m3-name">{ %s}\", Wx.ToText(wx))")
+               (sa "Fmt.F(\"<"m3-name">{ %s}\", Wx.ToText(wx))")
                #f)
 
     (emit-proc 'check
@@ -1323,7 +1399,7 @@
       (dis "CONST Length = 0" i3-wr)
       (map
        (lambda(f)(dis
-                  (string-append " + " (get-m3-type-size (cadr f)))
+                  (sa " + " (get-m3-type-size (cadr f)))
                   i3-wr))
        fields)
       (dis ";" dnl i3-wr)
@@ -1384,7 +1460,7 @@
     ;; procedures for human-readable formatting of packet
     (emit-proc 'format
                "wx := Wx.New();"
-               (string-append "Fmt.F(\"<"m3-name">{ %s }\", Wx.ToText(wx))"))
+               (sa "Fmt.F(\"<"m3-name">{ %s }\", Wx.ToText(wx))"))
     
     (dis dnl m3-wr)
     (close-m3 m3-wrs)
@@ -1404,7 +1480,7 @@
     ))
 
 (define (compile! structs)
-  (wr-close (filewr-open (string-append deriv-dir "derived.m3m")))
+  (wr-close (filewr-open (sa deriv-dir "derived.m3m")))
   (map compile-one! structs)
   )
 

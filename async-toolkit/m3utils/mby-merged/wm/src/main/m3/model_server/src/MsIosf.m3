@@ -47,6 +47,7 @@ PROCEDURE HandleMsg(<*UNUSED*>m  : ModelServerClass.MsgHandler;
         
         IF doDebug THEN Pkt.DebugOut(inbound) END;
         VAR
+          (* message types that we recognize *)
           rreq  : IosfRegReadReq.T;
           wreq  : IosfRegWriteReq.T;
           brreq : IosfRegBlkReadReqHdr.T;

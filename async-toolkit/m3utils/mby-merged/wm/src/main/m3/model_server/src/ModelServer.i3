@@ -3,6 +3,16 @@ IMPORT Thread;
 IMPORT Pathname;
 IMPORT CsrOp, CsrAccessStatus;
 
+(* 
+   White Model Model Server 
+
+   Main module, largely follows model_server.c from IES system in terms
+   of interface.
+
+   Author : Mika Nystrom <mika.nystroem@intel.com>
+   April, 2018
+*)
+
 TYPE
   T <: Public;
 
