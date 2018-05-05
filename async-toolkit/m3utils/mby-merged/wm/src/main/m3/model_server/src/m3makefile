@@ -12,6 +12,7 @@ module ("HlpModelServer")
 
 module ("DataPusher")
 table ("IntDataPusher", "Integer", "DataPusher")
+table ("CardByte", "Cardinal", "Byte")
 
 implementation ("Main")
 

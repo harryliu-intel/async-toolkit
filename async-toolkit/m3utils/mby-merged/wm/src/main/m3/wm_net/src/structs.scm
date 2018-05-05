@@ -49,7 +49,10 @@
     (constants fm-model-constants
                u32
                ((m3 FmModelConstants))
-               ((socket-port-disable 16_ffff)))
+               ((port-link-up              1)
+                (port-link-down            0)
+                (n-phys-ports             32)
+                (socket-port-disable 16_ffff)))
 
     (enum fm-socket-type
                u8 ;; wire type
@@ -207,6 +210,10 @@
     (header fm-model-set-egress-info-hdr
             ((m3 FmModelSetEgressInfoHdr))
             ((tcpPort       u16)))
+
+    (header fm-model-msg-port-link-state
+            ((m3 FmModelPortLinkState))
+            ((state       u8)))
 
 
     ;; sideband formats (all LITTLE ENDIAN)

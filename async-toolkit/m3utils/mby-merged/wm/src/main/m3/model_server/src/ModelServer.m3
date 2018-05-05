@@ -14,6 +14,7 @@ IMPORT OSError, FileWr;
 IMPORT NetError;
 IMPORT FmModelMsgType;
 IMPORT RdNet, WrNet;
+FROM NetTypes IMPORT U8;
 IMPORT Text;
 IMPORT NetContext;
 IMPORT FmModelMsgVersionHdr;
@@ -23,7 +24,9 @@ IMPORT AL;
 IMPORT MsIosf;
 IMPORT FmModelSetEgressInfoHdr;
 IMPORT FmModelConstants;
+IMPORT FmModelPortLinkState;
 IMPORT DataPusher, IntDataPusherTbl;
+IMPORT Byte;
 
 IMPORT Compiler;
 
@@ -39,12 +42,13 @@ VAR doDebug := Debug.DebugThis(Brand);
   
 REVEAL
   T = Public BRANDED Brand OBJECT
-    port        : IP.Port;
-    conn        : TCP.Connector; (* listen here *)
-    listener    : Listener := NIL;
-    infoPath    : Pathname.T;
-    egressPorts : IntDataPusherTbl.T;
-    mu          : MUTEX; (* protects egressPorts *)
+    port           : IP.Port;
+    conn           : TCP.Connector; (* listen here *)
+    listener       : Listener := NIL;
+    infoPath       : Pathname.T;
+    egressPorts    : IntDataPusherTbl.T;
+    portLinkState  : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
+    mu             : MUTEX; (* protects egressPorts, portLinkState *)
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
@@ -150,6 +154,9 @@ PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
   BEGIN
     t.mu := NEW(MUTEX);
     t.egressPorts := NEW(IntDataPusherTbl.Default).init();
+    t.portLinkState :=
+        ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T {
+                                   FmModelConstants.PortLinkUp , .. };
     t.infoPath := infoPath;
     WITH ep   = IP.Endpoint { IP.NullAddress, IP.NullPort },
          conn = TCP.NewConnector(ep) DO
@@ -245,8 +252,10 @@ TYPE MsgHandler = ModelServerClass.MsgHandler;
      
 VAR
   handler :=  ARRAY FmModelMsgType.T OF MsgHandler {
-  (* Packet                    *) NIL,
-  (* LinkState                 *) NIL,
+  (* Packet                    *) NEW(MsgHandler,
+                                      handle := HandlePacket),
+  (* LinkState                 *) NEW(MsgHandler,
+                                      handle := HandlePortLinkState),
   (* SwitchState               *) NIL,
   (* SetEgressInfo             *) NEW(MsgHandler, 
                                       handle := HandleSetEgressInfo),
@@ -265,6 +274,50 @@ VAR
   (* NvmRead                   *) NIL
   };
 
+  (**********************************************************************)
+
+PROCEDURE HandlePacket(<*UNUSED*>m  : MsgHandler;
+                       READONLY hdr : FmModelMessageHdr.T;
+                       VAR cx       : NetContext.T;
+                       inst         : Instance)
+  RAISES { Rd.EndOfFile, Rd.Failure, ParseError } =
+  BEGIN
+    <*ASSERT hdr.type = FmModelMsgType.T.Packet*>
+    VAR
+      seq := NEW(Pkt.T).init();
+    BEGIN
+      FOR i := 0 TO cx.rem-1 DO
+        seq.addhi(RdNet.GetU8C(inst.rd, cx));
+      END;
+      Pkt.DebugOut(seq)
+    END;
+    <*ASSERT cx.rem=0*>
+  END HandlePacket;
+
+PROCEDURE HandlePortLinkState(<*UNUSED*>m  : MsgHandler;
+                              READONLY hdr : FmModelMessageHdr.T;
+                              VAR cx       : NetContext.T;
+                              inst         : Instance)
+  RAISES { Rd.EndOfFile, Rd.Failure, ParseError } =
+  VAR
+    oldState : U8 := 0;
+  BEGIN
+    <*ASSERT hdr.type = FmModelMsgType.T.LinkState*>
+    WITH ls = FmModelPortLinkState.ReadC(inst.rd, cx) DO
+      LOCK inst.t.mu DO
+        IF hdr.port > LAST(inst.t.portLinkState) THEN
+          RAISE ParseError("PortOutOfRange:"&Int(hdr.port))
+        END;
+        oldState := inst.t.portLinkState[hdr.port];
+        IF oldState # ls.state THEN
+          Debug.Out(F("PhysPort %s linkState %s oldState %s",
+                      Int(hdr.port), Int(ls.state), Int(oldState)));
+          inst.t.portLinkState[hdr.port] := ls.state
+        END
+      END
+    END
+  END HandlePortLinkState;
+  
 PROCEDURE HandleSetEgressInfo(<*UNUSED*>m  : MsgHandler;
                               READONLY hdr : FmModelMessageHdr.T;
                               VAR cx       : NetContext.T;
