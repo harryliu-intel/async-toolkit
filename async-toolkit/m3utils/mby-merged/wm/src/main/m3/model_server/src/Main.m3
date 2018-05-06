@@ -1,10 +1,19 @@
 MODULE Main;
 IMPORT HlpModelServer;
-IMPORT Thread;
 IMPORT Pathname, Env;
 IMPORT hlp_top_map      AS Map;
 IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT Debug;
+IMPORT Scheme, SchemeStubs, SchemeNavigatorEnvironment;
+IMPORT IP, ReadLineError;
+IMPORT Params;
+IMPORT OSError;
+IMPORT NetObj;
+IMPORT AL;
+IMPORT SchemeM3;
+FROM SchemeReadLine IMPORT MainLoop;
+IMPORT ReadLine;
+IMPORT Atom;
 
 PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
                    <*UNUSED*>READONLY read : Map.T;
@@ -35,6 +44,32 @@ BEGIN
 
   EVAL modelServer.listenFork();
 
-  LOOP Thread.Pause(1.0d0) END
-  
+  SchemeStubs.RegisterStubs();
+
+  WITH arr = NEW(REF ARRAY OF Pathname.T, Params.Count) DO
+    arr[0] := "require";
+    FOR i := 1 TO Params.Count-1 DO arr[i] := Params.Get(i) END;
+    TRY
+      WITH scm = NEW(SchemeM3.T).init(arr^, 
+                                      globalEnv := 
+                                          NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
+        scm.defineInGlobalEnv(Atom.FromText("the-server"),
+                              modelServer);
+        MainLoop(NEW(ReadLine.Default).init(), scm)
+      END
+    EXCEPT
+      Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
+    |
+      IP.Error(err) => Debug.Error("Caught IP.Error : " & AL.Format(err))
+    |
+      OSError.E(err) => 
+        Debug.Error("Caught NetObj.Error : " & AL.Format(err))
+    |
+      ReadLineError.E(err) => 
+        Debug.Error("Caught ReadLineError.E : " & AL.Format(err))
+    |
+      NetObj.Error(err) => Debug.Error("Caught NetObj.Error : " & 
+                                        AL.Format(err))
+    END
+  END
 END Main.

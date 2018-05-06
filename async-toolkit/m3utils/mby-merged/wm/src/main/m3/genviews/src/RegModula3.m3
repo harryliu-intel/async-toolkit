@@ -283,7 +283,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; rw : RW)
            mPath);
 
     WITH m3mWr = FileWr.OpenAppend(dirPath & "/m3makefile.maps") DO
-      Wr.PutText(m3mWr, F("module(\"%s\")\n",intfNm));
+      Wr.PutText(m3mWr, F("Module(\"%s\")\n",intfNm));
       Wr.Close(m3mWr)
     END
   END Write;
