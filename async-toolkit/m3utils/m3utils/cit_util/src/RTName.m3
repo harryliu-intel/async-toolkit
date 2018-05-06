@@ -37,14 +37,18 @@ PROCEDURE GetByTipe(t: RTTipe.T): TEXT =
   END GetByTipe; 
 
 PROCEDURE GetByDefn(defn : RT0.TypeDefn) : TEXT = 
-  VAR
-    b := defn.name;
-    s := LOOPHOLE(b, Ctypes.char_star);
   BEGIN
-    IF LOOPHOLE(s,INTEGER) = 0 THEN
-      RETURN GetByTipe(RTTipe.Get(defn.typecode, RTPacking.Local()));
-    END;
-    RETURN M3toC.StoT(s)
+    IF defn = NIL THEN RETURN "**NULL**" END;
+
+    VAR
+      b := defn.name;
+      s := LOOPHOLE(b, Ctypes.char_star);
+    BEGIN
+      IF LOOPHOLE(s,INTEGER) = 0 THEN
+        RETURN GetByTipe(RTTipe.Get(defn.typecode, RTPacking.Local()));
+      END;
+      RETURN M3toC.StoT(s)
+    END
   END GetByDefn; 
 
 PROCEDURE GetByTC(c : RT0.Typecode) : TEXT = 
