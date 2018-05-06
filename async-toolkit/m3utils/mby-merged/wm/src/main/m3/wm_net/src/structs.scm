@@ -4,6 +4,7 @@
 ;;;
 ;;; SET DESTINATION
 
+;;; whither do we want the output to go
 (define deriv-dir "../AMD64_LINUX/")
 ;;(define deriv-dir "./out/")
 
@@ -40,13 +41,14 @@
 ;;;         arbitrary functional specs, and bitstructs can be
 ;;;         pattern-matched.
 ;;;
-;;;         None of this stuff is at present guaranteed to work on a
-;;;         32-bit machine.  (But it can all be made to work.)
+;;;  None of this stuff is at present guaranteed to work on a 32-bit
+;;;  machine.  (But it can all be made to work, and it is not that hard.)
 ;;;
 
-
+;;;
 ;;; this file really should be split into (at least) two pieces:
 ;;; structure compiler library and MBY/HLP-related struct defn's
+;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -490,17 +492,22 @@
 ;; "hot" (zero-copy off/on the wire) 
 ;;
 ;; The compiler itself currently depends on the following Modula-3 code:
+;;
 ;;   FileWr.OpenAppend
 ;;   M3Support.Modula3Type
 ;;   M3Support.ReformatNumber
 ;;   IdStyles.Convert
-;; the m3makefile of the compiler hence has to contain (or somehow import)
-;; SchemeStubs for these interfaces.
+;;   Scan.Int
+;;
+;; the m3makefile of the compiler hence has to contain (or somehow
+;; import) SchemeStubs for these interfaces.
 ;;
 ;; Author : Mika Nystrom <mika.nystroem@intel.com>
 ;; April, 2018
 ;;
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; HELPER FUNCS
@@ -1101,35 +1108,29 @@
   (apply emit-header-field-writex (cons 'write x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; BITSTRUCTS
-
-(define (get-m3-bitstype n)
-  (M3Support.Modula3Type n))
-
-(define (emit-bitstruct-field-type f i-wr)
-  (let* ((field-name (car f))
-         (field-type (cadr f))
-         (tail       (cddr f))
-         (defval     (if (or (null? tail)
-                             (not (eq? (caar tail) 'constant)))
-                         ""
-                         (sa " := " (symbol->m3integer (cadar tail)))))
-          
-        )
-    (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
-
-(define (emit-bitstruct-field-format f wr dummy)
-  (let ((field-name (car f))
-        (field-type (cadr f))
-        )
-    (dis
-     "    Wx.PutText(wx,\""field-name"=\");" dnl
-     "    Wx.PutText(wx,StructField.Format(t."field-name",wid:="field-type"));" dnl
-     "    Wx.PutChar(wx, ' ');" dnl
-     wr
-     )
-    )
-  )
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; THE CONSTRAINT COMPILER
+;;
+;; This compiles from s-expressions to Modula-3 code testing the
+;; given expressions.
+;;
+;; e.g. given:
+;;       (and (> (- x y) (+ a b)) (= 0 z))
+;; result s.b.
+;;       IF NOT (t.x - t.y) > (t.a + t.b) AND (z = 0) THEN RETURN FALSE END
+;;
+;; also constants:
+;;       (f ... (constant 16_abcd))
+;; result s.b.
+;;       IF t.f # 16_abcd THEN RETURN FALSE END
+;;
+;; A constraint can refer to any field in the RECORD (not just the
+;; field currently being parsed).  The current record is called "t".
+;;
 
 (define (symbol->m3integer x)
   (M3Support.ReformatNumber (symbol->string x))
@@ -1190,12 +1191,19 @@
              (intersperse string-list sep))))
 
 (define (unary-op? op)
+  ;; recognize unary operators
   (member? op '(- not)))
 
 (define (binary-op? op)
+  ;; recognize binary (or higher) operators, assumed left-associative
   (member? op '(+ - * / mod > >= < <= = and or)))
 
-(define (op->m3op op)
+;;
+;; anything not a binary or unary operator is assumed to use functional
+;; notation and invocation!
+;;
+
+(define (op->m3op op) ;; operators we recognize
   (case op
     ((not)   " NOT ")
     ((/)     " DIV ")
@@ -1208,22 +1216,24 @@
   (cond ((mynumber? expr) ;; a number
          (mynumber->m3integer expr)) 
 
-        ((symbol? expr) ;; the name of a field (same or other)
+        ((symbol? expr)   ;; the name of a field (same or other)
          (sym-formatter (symbol->string expr)))
 
-        ((list? expr) ;; an expression
+        ((list? expr)     ;; an expression
          (let ((me     (lambda(x)(format-m3-expr sym-formatter x)))
                (op     (car expr))
                (args   (cdr expr)))
            (cond
 
+            ;; check for unary ops, binary ops, or default to function call
+            
             ((and (= (length args) 1) (unary-op? op))
              (sa (op->m3op op) (me (car args))))
             
             ((and (> (length args) 1) (binary-op? op))
              (sa "(" (infixize (map me args) (op->m3op op)) ")"))
 
-            (else
+            (else  ;; function call
              (sa (op->m3op op) "(" (infixize (map me args) ",") ")"))
             
             );;dnoc
@@ -1233,6 +1243,39 @@
         (else
          (error (sa "cant format expression " (stringify expr))))
         );;dnoc
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; exported routines for bitstructs
+;;
+
+(define (get-m3-bitstype n)
+  (M3Support.Modula3Type n))
+
+(define (emit-bitstruct-field-type f i-wr)
+  (let* ((field-name (car f))
+         (field-type (cadr f))
+         (tail       (cddr f))
+         (defval     (if (or (null? tail)
+                             (not (eq? (caar tail) 'constant)))
+                         ""
+                         (sa " := " (symbol->m3integer (cadar tail)))))
+          
+        )
+    (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
+
+(define (emit-bitstruct-field-format f wr dummy)
+  (let ((field-name (car f))
+        (field-type (cadr f))
+        )
+    (dis
+     "    Wx.PutText(wx,\""field-name"=\");" dnl
+     "    Wx.PutText(wx,StructField.Format(t."field-name",wid:="field-type"));" dnl
+     "    Wx.PutChar(wx, ' ');" dnl
+     wr
+     )
+    )
   )
 
 (define (emit-bitstruct-field-check f wr dummy)
