@@ -60,7 +60,7 @@ $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
 
 $(M3_STRUCTS): $(STRUCTGEN)
-	pushd $(STRUCTGEN_ROOT)/src && $(realpath $<) do.scm
+	pushd $(STRUCTGEN_ROOT)/src && $(realpath $<) do.scm exit
 
 rpc_structs: $(M3_STRUCTS)
 
