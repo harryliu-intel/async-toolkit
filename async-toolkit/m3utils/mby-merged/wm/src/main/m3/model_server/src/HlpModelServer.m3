@@ -1,5 +1,6 @@
 MODULE HlpModelServer;
 IMPORT ModelServer;
+IMPORT HlpModel AS TheModel;
 IMPORT hlp_top_map AS Map;
 IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT CsrOp, CsrAccessStatus;
@@ -7,6 +8,8 @@ IMPORT Pathname;
 IMPORT Debug;
 IMPORT CompAddr;
 FROM Fmt IMPORT F; IMPORT Fmt;
+IMPORT ServerPacket AS Pkt;
+IMPORT FmModelMessageHdr;
 
 VAR doDebug := Debug.DebugThis(ModelServer.Brand);
     
@@ -14,9 +17,10 @@ REVEAL
   T = Public BRANDED Brand OBJECT
     h        : MapAddr.H;
   OVERRIDES
-    resetChip := ResetChip;
-    init      := Init;
-    csrOp     := DoCsrOp;
+    resetChip    := ResetChip;
+    init         := Init;
+    csrOp        := DoCsrOp;
+    handlePacket := HandlePacket;
   END;
 
 PROCEDURE ResetChip(t : T) =
@@ -42,5 +46,10 @@ PROCEDURE DoCsrOp(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
       RETURN res
     END
   END DoCsrOp;
+
+PROCEDURE HandlePacket(t : T; READONLY hdr : FmModelMessageHdr.T; pkt : Pkt.T) =
+  BEGIN
+    TheModel.HandlePacket(t.h.read, t.h.update, hdr, pkt)
+  END HandlePacket;
 
 BEGIN END HlpModelServer.

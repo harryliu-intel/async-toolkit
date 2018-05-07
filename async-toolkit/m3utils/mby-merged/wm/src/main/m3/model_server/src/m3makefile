@@ -29,6 +29,8 @@ module ("DataPusher")
 table ("IntDataPusher", "Integer", "DataPusher")
 table ("CardByte", "Cardinal", "Byte")
 
+module ("HlpModel")
+
 SchemeStubs ("ModelServer")
 
 ExportSchemeStubs("model_server")

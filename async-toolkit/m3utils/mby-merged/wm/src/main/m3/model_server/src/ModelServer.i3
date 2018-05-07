@@ -2,6 +2,8 @@ INTERFACE ModelServer;
 IMPORT Thread;
 IMPORT Pathname;
 IMPORT CsrOp, CsrAccessStatus;
+IMPORT ServerPacket AS Pkt;
+IMPORT FmModelMessageHdr;
 
 (********************************************************************** 
 
@@ -34,6 +36,9 @@ TYPE
     csrOp(VAR op : CsrOp.T) : CsrAccessStatus.T;
     (* perform a CSR operation as requested.
        if a read, the read results are returned in the op itself. *)
+
+    handlePacket(READONLY hdr : FmModelMessageHdr.T; pkt : Pkt.T);
+    (* should return a handle? *)
     
   END;
 

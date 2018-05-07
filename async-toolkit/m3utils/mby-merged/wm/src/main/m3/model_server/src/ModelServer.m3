@@ -296,7 +296,8 @@ PROCEDURE HandlePacket(<*UNUSED*>m  : MsgHandler;
       IF ok THEN
         Debug.Out(F("DecodeTlvPacket returned sbData=%s pkt follows",
                     FmModelSideBandData.Format(sbData)));
-        Pkt.DebugOut(inst.sp)
+        Pkt.DebugOut(inst.sp);
+        inst.t.handlePacket(hdr, inst.sp) (* do we need to duplicate here? *)
       END
     END;
     <*ASSERT cx.rem=0*>

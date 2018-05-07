@@ -81,17 +81,19 @@
 ;;;
 ;;; GLOBALS
 
-(define constants    '())
-(define enum         '())
-(define header       '())
-(define m3typemap    '())
-(define bitstruct    '())
+(define constants    'JUNK)
+(define enum         'JUNK)
+(define header       'JUNK)
+(define m3typemap    'JUNK)
+(define bitstruct    'JUNK)
 
-(set! constants      '())
-(set! enum           '())
-(set! header         '())
-(set! m3typemap      '())
-(set! bitstruct      '())
+(define (clear-globals!)
+  (set! constants      '())
+  (set! enum           '())
+  (set! header         '())
+  (set! m3typemap      '())
+  (set! bitstruct      '())
+  )
 
 (define (add-m3-type! nm m3-name)
   (set! m3typemap
@@ -437,7 +439,7 @@
   (cond ((eq? type 'u8) "1")
         ((eq? type 'u16) "2")
         ((eq? type 'u32) "4")
-        ((eq? type 'u64) "4")
+        ((eq? type 'u64) "8")
         ((array-type? type) (sa (caddr type)
                                            "*("
                                            (get-m3-type-size (cadr type))
@@ -1073,6 +1075,7 @@
     ))
 
 (define (compile! structs)
+  (clear-globals!)
   (wr-close (filewr-open (sa deriv-dir "derived.m3m")))
   (map compile-one! structs)
   )
