@@ -33,7 +33,6 @@
   (set! constants      '())
   (set! enum           '())
   (set! header         '())
-  (set! m3typemap      '())
   (set! bitstruct      '())
   )
 

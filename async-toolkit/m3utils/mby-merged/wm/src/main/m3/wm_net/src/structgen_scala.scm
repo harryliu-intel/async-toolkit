@@ -5,40 +5,21 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;                                                ;;;;;;;;;;;
-;;;;;;;;;;;        MODULA-3 STRUCT COMPILER FOR MBY        ;;;;;;;;;;;
+;;;;;;;;;;;         SCALA STRUCT COMPILER FOR MBY          ;;;;;;;;;;;
 ;;;;;;;;;;;                                                ;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; This is the Modula-3 (and possibly other languages) data structure
+;; This is the data structure
 ;; compiler.
-;;
-;; Basic conventions for generated interfaces:
-;;
-;; Format: human-readable output (debugging)
-;; Read  : read structure from a binary format
-;; Write : write structure to a binary format
-;; Check : pattern-match whether a bit pattern matches a bitstruct spec
-;;
-;; standard type exported by an interface is T
-;; wire type, if given, is W
-;;
-;; Length, if given, is in BYTES (enum, const, header)
-;; LengthBits, if given, is in BITS (only for bitstruct)
 ;;
 ;; header types are BIG-ENDIAN (IBM/Internet convention)
 ;; bitstruct types are LITTLE-ENDIAN (Intel convention)
 ;;
 ;; header and bitstruct types offer slightly different interfaces
 ;;
-;; legend for optional versions
-;;   C   : with Context (see NetContext.i3)
-;;   S   : against ServerPacket (see ServerPacket.i3)
-;;   E   : against ServerPacket, and at a ServerPacket.End
-;;   ..B : with BOOLEAN result for the match
-;; if nothing is stated, the default is to read/write the packet type
-;; "hot" (zero-copy off/on the wire) 
 ;;
-;; The compiler itself currently depends on the following Modula-3 code:
+;; The compiler itself currently depends (maybe) on the following
+;; Modula-3 code:
 ;;
 ;;   FileWr.OpenAppend
 ;;   M3Support.Modula3Type
@@ -48,9 +29,6 @@
 ;;
 ;; the m3makefile of the compiler hence has to contain (or somehow
 ;; import) SchemeStubs for these interfaces.
-;;
-;; Author : Mika Nystrom <mika.nystroem@intel.com>
-;; April, 2018
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -63,31 +41,6 @@
   (IdStyles.Convert (symbol->string sym)
                     'Lower 'Camel
                     'Hyphen 'None))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; GLOBAL HANDLING
-
-(define typemap    'JUNK)
-
-(set! clear-globals!              ;; override clear-globals!
-      (lambda()
-        (clear-shared-globals!)
-        (set! typemap      '())
-        ))
-
-
-(define (add-tgt-type! nm m3-name)
-  (set! typemap
-        (cons
-         (cons nm m3-name)
-         typemap)))
-
-(define (get-tgt-typemapping type)
-  (let ((rec (assoc type typemap)))
-    (if (not rec)
-        (error (sa "No M3 type mapping for " (stringify type)))
-        (cdr rec))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
