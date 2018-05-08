@@ -51,49 +51,29 @@
 ;; April, 2018
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; HELPER FUNCS
-
-(define (fromhex x) (Scan.Int (stringify x) 16))
 
 (define (scheme->m3 sym)
   (IdStyles.Convert (symbol->string sym)
                     'Lower 'Camel
                     'Hyphen 'None))
 
-(define (symbol-append . x) ;; permissive form, allow both symbol and string
-  (string->symbol
-   (eval
-    (cons 'string-append
-          (map (lambda (s)
-                 (cond ((symbol? s) (symbol->string s))
-                       ((string? s) s)
-                       (else (error (string-append
-                                     "not a string or symbol : " s)))))
-               x)))))
-
-(define sa string-append)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; GLOBALS
+;;; GLOBAL HANDLING
 
-(define constants    'JUNK)
-(define enum         'JUNK)
-(define header       'JUNK)
 (define m3typemap    'JUNK)
-(define bitstruct    'JUNK)
 
-(define (clear-globals!)
-  (set! constants      '())
-  (set! enum           '())
-  (set! header         '())
-  (set! m3typemap      '())
-  (set! bitstruct      '())
-  )
+(set! clear-globals!              ;; override clear-globals!
+      (lambda()
+        (clear-shared-globals!)
+        (set! m3typemap      '())
+        ))
+
 
 (define (add-m3-type! nm m3-name)
   (set! m3typemap
@@ -130,19 +110,6 @@
     (list i-wr m-wr nm deriv-dir)))
 
 (define (close-m3 wrs)
-
-  (define (cmp-files-safely fn1 fn2)
-    (let ((res #f))
-      (unwind-protect
-       (set! res (cmp-files fn1 fn2)) #f #f)
-      res))
-
-  (define (rename-file-if-different fn1 fn2)
-    (if (not (cmp-files-safely fn1 fn2))
-        (fs-rename fn1 fn2) ;; copy the scratch over the target
-        (FS.DeleteFile fn1) ;; else delete the scratch
-        ))
-
   (let ((i-wr      (car wrs))
         (m-wr      (cadr wrs))
         (nm        (caddr wrs))
@@ -418,15 +385,6 @@
 ;;;
 ;;; HEADER FIELD TYPES
 
-(define (array-type? type) (and (list? type) (eq? 'array (car type))))
-
-(define (get-elem-type type)
-  (cond ((symbol? type)                                    type)
-        ((array-type? type)                          (cadr type))
-        (else
-         (error (sa "Illegal type descriptor " (stringify type))))
-        ))
-
 (define (get-m3-type type)
   (cond ((member? type '(u8 u16 u32 u64)) (scheme->m3 type))
         ((array-type? type)
@@ -436,7 +394,7 @@
          (symbol->string (symbol-append (get-m3-typemapping type) ".T")))))
 
 (define (get-m3-type-size type)  ;; PACKED size! -- wire protos are packed!
-  (cond ((eq? type 'u8) "1")
+  (cond ((eq? type 'u8)  "1")
         ((eq? type 'u16) "2")
         ((eq? type 'u32) "4")
         ((eq? type 'u64) "8")
@@ -703,49 +661,12 @@
     ) ;; esac
   )
 
-(define (digit? c)
-  (and
-   (>= (char->integer c) (char->integer #\0))
-   (<= (char->integer c) (char->integer #\9))
-   ))
-       
-(define (mynumber? expr)
-  (or (number? expr)
-      (and (symbol? expr)
-           (let ((lst (string->list (symbol->string expr))))
-             (and (not (null? lst))
-                  (digit? (car lst)))))))
 
 (define (mynumber->m3integer x)
   (cond ((symbol? x) (symbol->m3integer x))
         ((number? x) (number->string x))
         (else (error "unknown number " (stringify x)))))
 
-(define (intersperse lst sep)
-  ;; this routine MUST BE tail-recursive, or we shall definitely
-  ;; run out of stack space!
-  (define (helper lst so-far)
-    (cond ((null? lst) so-far)
-          ((null? (cdr lst)) (cons (car lst) so-far))
-
-          (else 
-           (helper (cdr lst) 
-                   (cons sep  (cons (car lst) so-far))))))
-  (reverse (helper lst '()))
-  )
-
-(define (infixize string-list sep)
-  (if (null? string-list) ""
-      (apply sa 
-             (intersperse string-list sep))))
-
-(define (unary-op? op)
-  ;; recognize unary operators
-  (member? op '(- not)))
-
-(define (binary-op? op)
-  ;; recognize binary (or higher) operators, assumed left-associative
-  (member? op '(+ - * / mod > >= < <= = and or)))
 
 ;;
 ;; anything not a binary or unary operator is assumed to use functional
@@ -1065,14 +986,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; MAIN FUNCTIONS : COMPILE THE DATA STRUCTURES
-
-(define (compile-one! x)
-  (let ((category (car x))
-        (nm       (cadr x)))
-    (eval `(set! ,category (cons (cdr x) ,category)))
-    (eval `(,(symbol-append 'compile- category `!) nm (cddr x)))
-    #t
-    ))
 
 (define (compile! structs)
   (clear-globals!)
