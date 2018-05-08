@@ -31,8 +31,6 @@
 ;;;  machine.  (But it can all be made to work, and it is not that hard.)
 ;;;
 
-(load "../src/structgen.scm") ;; load the compiler itself
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; SET DESTINATION
