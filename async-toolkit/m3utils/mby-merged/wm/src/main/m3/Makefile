@@ -12,6 +12,10 @@ WM_SUPPORT_ROOT=wm_support
 WM_SUPPORT_TARGDIR=$(WM_SUPPORT_ROOT)/$(OS_TARG)
 WM_SUPPORT=$(WM_SUPPORT_ROOT)/$(OS_TARG)/.done
 
+WM_NET_ROOT=$(realpath wm_net)
+WM_NET_TARGDIR=$(WM_NET_ROOT)/$(OS_TARG)
+WM_NET_LIB=$(WM_NET_TARGDIR)/libwm_net.a
+
 GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
@@ -19,11 +23,22 @@ GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
 STRUCTGEN_ROOT=structgen
 STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
 STRUCTGEN=$(STRUCTGEN_TARGDIR)/structgen
-M3_STRUCTS=$(STRUCTGEN_TARGDIR)/derived.m3m
+
+STRUCTGEN_SHARED=$(WM_NET_ROOT)/src/structgen_shared.scm
+STRUCTGEN_M3=$(WM_NET_ROOT)/src/structgen_m3.scm
+STRUCTGEN_SCALA=$(WM_NET_ROOT)/src/structgen_scala.scm
+STRUCTGEN_TOP=$(WM_NET_ROOT)/src/structs.scm
+
+M3_STRUCTS=$(WM_NET_TARGDIR)/derived.m3m
+SCALA_STRUCTS=$(WM_NET_TARGDIR)/.scala_structs.done
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
 MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
+
+MODEL_SERVER_ROOT=model_server
+MODEL_SERVER_TARGDIR=$(MODEL_SERVER_ROOT)/$(OS_TARG)
+MODEL_SERVER=$(MODEL_SERVER_TARGDIR)/modelserver
 
 HLP_TOP_RDL=/p/hlp/hlp_release/drops/hlp-DROP_1P2-17ww50d/src/srdl/hlp_top_map.rdl
 HLP_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/hlp
@@ -59,8 +74,13 @@ $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(STRUCTGEN_ROOT)/src && $(CM3) -x
 
-$(M3_STRUCTS): $(STRUCTGEN)
-	pushd $(STRUCTGEN_ROOT)/src && $(realpath $<) do.scm exit
+$(M3_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTGEN_TOP)
+	mkdir -p $(dir $@)
+	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTGEN_TOP)
+
+$(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTGEN_TOP)
+	mkdir -p $(dir $@)
+	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTGEN_TOP)
 
 rpc_structs: $(M3_STRUCTS)
 
@@ -86,6 +106,14 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	sed 's/THELIB/hlp/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(HLP_BUILD_ROOT)/src/m3makefile
 	cd $(HLP_BUILD_ROOT)/src && $(CM3) -x
 
+$(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
+	cd wm_net && $(CM3) -x
+
+$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB)
+	cd model_server && $(CM3) -x 
+
+model_server_hlp: $(MODEL_SERVER)
+
 
 $(TEST_TARG): $(GENVIEWS)
 	pushd $(GENVIEWS_ROOT)/src && ./test.sh
@@ -96,4 +124,4 @@ clean:
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
 	find . -name $(OS_TARG) | xargs rm -rf 
-	rm $(TOP)
+	rm -f $(TOP)
