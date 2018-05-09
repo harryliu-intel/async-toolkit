@@ -40,6 +40,33 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
+;;; EXTENDED GLOBAL HANDLING
+
+(define typemap    'JUNK)
+
+(set! clear-globals!              ;; override clear-globals!
+      (lambda()
+        (clear-shared-globals!)
+        (set! typemap      '())
+        ))
+
+
+(define (add-tgt-type! nm m3-name)
+  (set! typemap
+        (cons
+         (cons nm m3-name)
+         typemap)))
+
+(define (get-tgt-typemapping type)
+  (let ((rec (assoc type typemap)))
+    (if (not rec)
+        (error (sa "No M3 type mapping for " (stringify type)))
+        (cdr rec))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
 ;;; FILE HANDLING
 
 (define (cmp-files-safely fn1 fn2)
@@ -54,6 +81,28 @@
       (FS.DeleteFile fn1) ;; else delete the scratch
       ))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; TARGET LANGUAGE TYPE HANDLING
+
+(define (get-type-size type make-dotted-reference)
+  ;; PACKED size! -- wire protos are packed!
+  ;; note that "lang" here refers not to the language in which the type
+  ;; size is desired, but the language in which the type size is to be
+  ;; PRINTED..
+  (cond ((eq? type 'u8)  "1")
+        ((eq? type 'u16) "2")
+        ((eq? type 'u32) "4")
+        ((eq? type 'u64) "8")
+        ((array-type? type) (sa (caddr type)
+                                           "*("
+                                           (get-type-size (cadr type)
+                                                          make-dotted-reference)
+                                           ")"))
+        (else
+         (make-dotted-reference (get-tgt-typemapping type)
+                                "Length"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

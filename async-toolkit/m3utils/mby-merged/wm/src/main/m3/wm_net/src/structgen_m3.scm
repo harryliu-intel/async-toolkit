@@ -66,31 +66,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; GLOBAL HANDLING
-
-(define typemap    'JUNK)
-
-(set! clear-globals!              ;; override clear-globals!
-      (lambda()
-        (clear-shared-globals!)
-        (set! typemap      '())
-        ))
-
-
-(define (add-tgt-type! nm m3-name)
-  (set! typemap
-        (cons
-         (cons nm m3-name)
-         typemap)))
-
-(define (get-tgt-typemapping type)
-  (let ((rec (assoc type typemap)))
-    (if (not rec)
-        (error (sa "No M3 type mapping for " (stringify type)))
-        (cdr rec))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; OUTPUT FILE HANDLING
 
 (define (open-m3 nm)
@@ -395,17 +370,11 @@
         (else
          (symbol->string (symbol-append (get-tgt-typemapping type) ".T")))))
 
-(define (get-m3-type-size type)  ;; PACKED size! -- wire protos are packed!
-  (cond ((eq? type 'u8)  "1")
-        ((eq? type 'u16) "2")
-        ((eq? type 'u32) "4")
-        ((eq? type 'u64) "8")
-        ((array-type? type) (sa (caddr type)
-                                           "*("
-                                           (get-m3-type-size (cadr type))
-                                           ")"))
-        (else
-         (symbol->string (symbol-append (get-tgt-typemapping type) ".Length")))))
+(define (make-dotted-m3-reference intf member)
+  (symbol->string (symbol-append intf (symbol-append "." member))))
+
+(define (get-m3-type-size type)
+  (get-type-size type make-dotted-m3-reference))
 
 (define (emit-header-field-type f i-wr)
   (dis "    " (car f) " : " (get-m3-type (cadr f)) ";" dnl i-wr))

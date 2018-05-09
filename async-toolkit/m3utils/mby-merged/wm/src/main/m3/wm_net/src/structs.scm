@@ -31,13 +31,6 @@
 ;;;  machine.  (But it can all be made to work, and it is not that hard.)
 ;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; SET DESTINATION
-
-;;; whither do we want the output to go
-(define deriv-dir "../AMD64_LINUX/")
-;;(define deriv-dir "./out/")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -83,8 +76,9 @@
 
     (enum fm-socket-type
                u8 ;; wire type
-               ((c fm_socketType FM_SOCKET_TYPE)
-                (m3 FmSocketType))
+               ((c      fm_socketType FM_SOCKET_TYPE)
+                (m3     FmSocketType)
+                (scala  FmSocketType))
                ((closed)
                 (tcp)
                 (udp)
@@ -94,8 +88,9 @@
 
     (enum fm-model-msg-type
                u16
-               ((c fm_modelMsgType FM_MODEL_MSG)
-                (m3 FmModelMsgType))
+               ((c      fm_modelMsgType FM_MODEL_MSG)
+                (m3     FmModelMsgType)
+                (scala  FmModelMsgType))
                ((packet                       0)
                 (link-state                    )
                 (switch-state                  )
@@ -115,8 +110,9 @@
     
     (enum fm-model-attr-type
                u8
-               ((c fm_modelAttrType FM_MODEL_ATTR)
-                (m3 FmModelAttrType))
+               ((c      fm_modelAttrType FM_MODEL_ATTR)
+                (m3     FmModelAttrType)
+                (scala  FmModelAttrType))
                ((get-request 1)
                 (get-response)
                 (set)
@@ -125,8 +121,9 @@
 
     (enum fm-model-mgmt-type
                u8
-               ((c fm_modelMgmtType FM_MODEL_MGMT)
-                (m3 FmModelMgmtType))
+               ((c      fm_modelMgmtType FM_MODEL_MGMT)
+                (m3     FmModelMgmtType)
+                (scala  FmModelMgmtType))
                ((read-request 1)
                 (read-response)
                 (write)
@@ -139,14 +136,16 @@
 
     (enum fm-model-info-type
           u8
-          ((m3 FmModelInfoType))
+          ((m3     FmModelInfoType)
+           (scala  FmModelInfoType))
           ((request 1)
            (response)
            ))
 
     (enum fm-model-data-type
           u8
-          ((m3 FmModelDataType))
+          ((m3     FmModelDataType)
+           (scala  FmModelDataType))
           ((packet ,(fromhex 'a0))
            (sb-id)
            (sb-tc)
@@ -154,7 +153,8 @@
 
     (enum fm-model-ctrl-type
           u8
-          ((m3 FmModelCtrlType))
+          ((m3     FmModelCtrlType)
+           (scala  FmModelCtrlType))
           ((chip-reset-req 1) ;; request
            (chip-reset-rep)   ;; response
            ))

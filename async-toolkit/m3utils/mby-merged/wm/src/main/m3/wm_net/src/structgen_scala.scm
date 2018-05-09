@@ -37,7 +37,7 @@
 ;;;
 ;;; HELPER FUNCS
 
-(define (scheme->m3 sym)
+(define (scheme->scala sym)  ;; same as Modula-3 for now
   (IdStyles.Convert (symbol->string sym)
                     'Lower 'Camel
                     'Hyphen 'None))
@@ -46,50 +46,32 @@
 ;;;
 ;;; OUTPUT FILE HANDLING
 
-(define (open-m3 nm)
-  (let ((i-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".i3.tmp"))))
-        (m-wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".m3.tmp")))))
-    (let ((m3m-wr (FileWr.OpenAppend (sa deriv-dir "derived.m3m"))))
-      (dis "derived_interface(\""nm"\",VISIBLE)" dnl
-           "derived_implementation(\""nm"\")" dnl
-           m3m-wr)
-      (wr-close m3m-wr))
+(define (open-scala nm scala-super)
+  (let ((wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".scala.tmp")))))
+
+    (let ((mf-wr (FileWr.OpenAppend (sa deriv-dir "derived_scala.filelist"))))
+      (dis nm dnl mf-wr)
+      (wr-close mf-wr))
           
                   
-    (dis "INTERFACE " nm ";" dnl i-wr)
-    (put-m3-imports i-wr)
-    
-    (dis "MODULE " nm ";" dnl m-wr)
-    (put-m3-imports m-wr)
-    
-    (list i-wr m-wr nm deriv-dir)))
+    (dis "object " nm " extends " scala-super " {" dnl wr)
 
-(define (close-m3 wrs)
-  (let ((i-wr      (car wrs))
-        (m-wr      (cadr wrs))
-        (nm        (caddr wrs))
-        (deriv-dir (cadddr wrs)))
+    ;; imports ?
 
-    (dis dnl
-         "CONST Brand = \"" nm "\";" dnl i-wr)
-    (dis dnl
-         "END " nm "." dnl i-wr)
-    (dis dnl
-         "BEGIN END " nm "." dnl m-wr)
-    (wr-close i-wr)
-    (wr-close m-wr)
-    (rename-file-if-different (sa deriv-dir nm ".i3.tmp")
-                              (sa deriv-dir nm ".i3"))
-    (rename-file-if-different (sa deriv-dir nm ".m3.tmp")
-                              (sa deriv-dir nm ".m3"))
+    ;; return a list of useful info
+    (list wr nm deriv-dir)
+    )
+  )
+
+(define (close-scala wrs)
+  (let ((wr        (car wrs))
+        (nm        (cadr wrs))
+        (deriv-dir (caddr wrs)))
+
+    (wr-close wr)
+    (rename-file-if-different (sa deriv-dir nm ".scala.tmp")
+                              (sa deriv-dir nm ".scala"))
     ))
-
-(define (put-m3-imports wr)
-  (dis "<*NOWARN*>FROM NetTypes IMPORT U8, U16, U32, U64;" dnl
-       "<*NOWARN*>IMPORT WrNet, RdNet, NetError, ServerPacket AS Pkt;" dnl
-       "<*NOWARN*>IMPORT Wx, NetTypes, Fmt, NetContext;" dnl
-       dnl
-       wr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -158,10 +140,10 @@
   (dis "CONST " (scheme->m3 (car v)) " = " (cadr v) ";" dnl wr)
   )
 
-(define (get-m3-name nm lst)
-  (let ((pair (assoc 'm3 lst)))
+(define (get-scala-name nm lst)
+  (let ((pair (assoc 'scala lst)))
     (if (null? pair)
-        (error (sa "No M3 name for " nm))
+        (error (sa "No Scala name for " nm))
         (cadr pair))))
 
 (define (compile-constants-m3! nm x)
@@ -199,122 +181,42 @@
 
 (define (compile-enum! nm x)
   (dis "compiling enum      :  " nm dnl)
-  (let* ((wire-type    (car x))
-         (m3-wire-type (scheme->m3 wire-type))
-         (names        (cadr x))
-         (values       (caddr x))
-         (m3-name      (get-m3-name nm names))
-         (m3-wrs       (open-m3 m3-name))
-         (i3-wr        (car m3-wrs))
-         (m3-wr        (cadr m3-wrs))
+  (let* ((wire-type        (car x))
+         (scala-wire-type  (scheme->scala wire-type))
+         (names            (cadr x))
+         (values           (caddr x))
+         (scala-name       (get-scala-name nm names))
+         (scala-wrs        (open-scala scala-name "Enumeration"))
+         (wr               (car scala-wrs))
          )
 
     ;;(dis "m3-name " m3-name dnl)
-    (add-tgt-type! nm m3-name)
+    (add-tgt-type! nm scala-name)
 
     ;; final IMPORTs
     
-    (map (lambda(wr)
-           (dis "IMPORT Rd, Wr, Thread;" dnl dnl wr)) (list i3-wr m3-wr))
 
-    ;; declare wire type 
-
-    (dis "TYPE W = " m3-wire-type ";" dnl
-         dnl
-         i3-wr)
-
-    (dis "CONST Length = " (get-m3-type-size wire-type) ";" dnl
-         dnl i3-wr)
-
-    (put-m3-proc 'read i3-wr m3-wr)
-    (dis
-     "  BEGIN RETURN V2T(RdNet.Get"m3-wire-type"(rd)) END Read;" dnl
-     dnl m3-wr)
-
-    (put-m3-proc 'readc i3-wr m3-wr)
-    (dis
-     "  BEGIN RETURN V2T(RdNet.Get"m3-wire-type"C(rd,cx)) END ReadC;" dnl
-     dnl m3-wr)
-
-    (put-m3-proc 'reads i3-wr m3-wr)
-    (dis
-     "  VAR p := at; w : W;" dnl
-     "  BEGIN" dnl
-     "    WITH success = RdNet.Get"m3-wire-type"S(s,p,w) AND V2TB(w,t) DO" dnl
-     "      IF success THEN at := p END;" dnl
-     "      RETURN success" dnl
-     "    END" dnl
-     "   END ReadS;" dnl
-     dnl m3-wr)
-
-    (put-m3-proc 'write i3-wr m3-wr)
-    (dis
-    "  BEGIN WrNet.Put"m3-wire-type"(wr, Vals[t]) END Write;" dnl
-         dnl m3-wr)
-
-    (put-m3-proc 'writec i3-wr m3-wr)
-    (dis
-    "  BEGIN WrNet.Put"m3-wire-type"C(wr, Vals[t], cx) END WriteC;" dnl
-         dnl m3-wr)
-
-    (put-m3-proc 'writes i3-wr m3-wr)
-    (dis
-    "  BEGIN WrNet.Put"m3-wire-type"S(s, at, Vals[t]) END WriteS;" dnl
-         dnl m3-wr)
-
-    (put-m3-proc 'writee i3-wr m3-wr)
-    (dis
-    "  BEGIN WrNet.Put"m3-wire-type"G(s, e, Vals[t]) END WriteE;" dnl
-         dnl m3-wr)
-
-    (dis "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange };" dnl
-         dnl i3-wr)
-
-    (put-m3-proc 'format i3-wr m3-wr)
-    (dis "BEGIN RETURN Names[t] END Format;" dnl
-         dnl m3-wr)
-
-    (dis "PROCEDURE V2T(w : W) : T RAISES { NetError.OutOfRange } =" dnl
-         "  VAR res : T; BEGIN" dnl
-         "    IF NOT V2TB(w,res) THEN RAISE NetError.OutOfRange(w) END;" dnl
-         "    RETURN res" dnl
-         "  END V2T;" dnl
-         dnl m3-wr)
+    (dis "const Length = " (get-scala-type-size wire-type) ";" dnl
+         dnl wr)
     
-    (let loop ((i   0)
-               (x   values)
-               (t     "TYPE T = { ")
-               (names "CONST Names = ARRAY T OF TEXT { ")
-               (t2v   "CONST Vals = ARRAY T OF W { ")
-               (v2t (sa
-                      "PROCEDURE V2TB(w : W; VAR t : T) : BOOLEAN =" dnl
-                      "  BEGIN" dnl
-                      "    CASE w OF" dnl
-                     )))
+    (let loop ((i      0)
+               (x      values)
+               (v2t    ""))
 
       (if (null? x) ;; base case of iteration (done case)
 
           (begin
-            (dis t "};" dnl
-                 dnl
-                 i3-wr)
-            (dis names "};" dnl
-                 dnl
-                 i3-wr)
-            (dis t2v "};" dnl
-                 dnl
-                 i3-wr)
             (dis v2t
-                 "    ELSE RETURN FALSE" dnl
-                 "    END" dnl
-                 "  END V2TB;" dnl
+                 "  def apply(is : InputStream) : Value = {" dnl
+                 "    " nm "(is.read" scala-wire-type "BE())" dnl
+                 "  }" dnl
                  dnl
-                 m3-wr)
+                 wr)
             ) ;; nigeb
 
           ;; else -- iterate further
           
-          (let* ((sym     (scheme->m3 (caar x)))
+          (let* ((sym     (scheme->scala (caar x)))
                  (comma   (if (null? (cdr x)) "" ", "))
                  (valspec (cdar x))
                  (val     (cond ((null? valspec) i)
@@ -325,14 +227,12 @@
                                 (else (car valspec)))))
             (loop (+ val 1)
                   (cdr x)
-                  (sa t sym comma)
-                  (sa names "\"" sym "\"" comma)
-                  (sa t2v val comma)
-                  (sa v2t "    | " val " => t := T." sym "; RETURN TRUE" dnl)))
+                  (sa v2t "    val "sym" = Value(" val ", \"" sym "\")" dnl
+                      dnl)))
           ) ;; fi
       ) ;; pool
 
-    (close-m3 m3-wrs)
+    (close-scala scala-wrs)
     )
   )
 
@@ -348,17 +248,11 @@
         (else
          (symbol->string (symbol-append (get-tgt-typemapping type) ".T")))))
 
-(define (get-m3-type-size type)  ;; PACKED size! -- wire protos are packed!
-  (cond ((eq? type 'u8)  "1")
-        ((eq? type 'u16) "2")
-        ((eq? type 'u32) "4")
-        ((eq? type 'u64) "8")
-        ((array-type? type) (sa (caddr type)
-                                           "*("
-                                           (get-m3-type-size (cadr type))
-                                           ")"))
-        (else
-         (symbol->string (symbol-append (get-tgt-typemapping type) ".Length")))))
+(define (make-dotted-reference intf member)
+  (symbol->string (symbol-append intf (symbol-append "." member))))
+
+(define (get-scala-type-size type)
+  (get-type-size type make-dotted-reference))
 
 (define (emit-header-field-type f i-wr)
   (dis "    " (car f) " : " (get-m3-type (cadr f)) ";" dnl i-wr))
@@ -867,7 +761,7 @@
       (dis "CONST Length = 0" i3-wr)
       (map
        (lambda(f)(dis
-                  (sa " + " (get-m3-type-size (cadr f)))
+                  (sa " + " (get-scala-type-size (cadr f)))
                   i3-wr))
        fields)
       (dis ";" dnl i3-wr)
@@ -947,3 +841,12 @@
   (wr-close (filewr-open (sa deriv-dir "derived.m3m")))
   (map compile-one! structs)
   )
+
+;; for now -- override with NOP
+;;(set! compile-enum!       (lambda(nm x) #t))
+(set! compile-constants!  (lambda(nm x) #t))
+(set! compile-header!     (lambda(nm x) #t))
+(set! compile-bitstruct!  (lambda(nm x) #t))
+
+
+                             
