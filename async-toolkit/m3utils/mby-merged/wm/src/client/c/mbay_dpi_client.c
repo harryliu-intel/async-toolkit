@@ -41,18 +41,19 @@
 #include "mbay_dpi_client.h"
 #include "client_types.h"
 
-/* Log functions placeholders
- * TODO replace with improved macros
- */
+/* TODO replace log functions placeholders with improved macros */
 #define LOG_ERROR   printf
 #define LOG_WARNING printf
 #define LOG_INFO    printf
 #define LOG_DEBUG   printf
 #define LOG_DUMP    printf
 
+/* FD of the socket used to talk with model_server */
 static int wm_sock_fd;
 
 /* Static functions defined at the end of the file */
+static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
+							 uint8_t *rx_msg, uint32_t *rx_len);
 static int wm_send(uint8_t *msg, uint32_t len, uint16_t type);
 static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
@@ -124,7 +125,7 @@ int wm_connect()
 		return ERR_NETWORK;
 	}
 
-	LOG_DEBUG("Connected to server at %s:%d\n",
+	LOG_DEBUG("Connected to model_server at %s:%d\n",
 		  server_addr, port);
 	setsockopt(wm_sock_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on,
 		   sizeof(on));
@@ -142,9 +143,6 @@ int wm_disconnect()
 	return close(wm_sock_fd);
 }
 
-
-
-
 /**
  * reg_read() - Send register read request to model_server.
  *
@@ -157,34 +155,24 @@ int reg_read(const uint32_t addr, uint64_t *val)
     uint32_t iosf_msg[512];
     uint32_t iosf_len;
     unsigned char be;
-    uint16_t type;
 	int err;
 
+	if (!val)
+		return ERR_INVALID_ARG;
+
+	/* See SB-IOSF specs for details on the message format */
     be = addr & 0x7 ? 0xf: 0xff;
     iosf_msg[0] = 0x40000001;
     iosf_msg[1] = 0x00000000;
     iosf_msg[2] = ((addr & 0xffff) << 16 ) | be;
     iosf_msg[3] = addr >> 16;
-
 	iosf_len = 16;
-	type = MODEL_MSG_IOSF;
-	err = wm_send((uint8_t *) iosf_msg, iosf_len, type);
-	if (err) {
-		LOG_ERROR("Could no send data to WM\n");
-		return err;
-	}
 
-	wm_receive((uint8_t *)iosf_msg, &iosf_len, &type);
+	err = iosf_send_receive((uint8_t *) iosf_msg, iosf_len,
+				     		(uint8_t *) iosf_msg, &iosf_len);
 	if (err) {
-		LOG_ERROR("Could no receive data to WM\n");
+		LOG_ERROR("Error with iosf message tx/rx: %d", err);
 		return err;
-	}
-
-	/* TODO there might be problems if this library is used in
-	 * multi-thread applications */
-	if (type != MODEL_MSG_IOSF) {
-		LOG_ERROR("Unexpected response message type\n");
-		return ERR_INVALID_RESPONSE;
 	}
 
     *val = iosf_msg[3];
@@ -204,11 +192,10 @@ int reg_write(const uint32_t addr, const uint64_t val)
 {
     uint32_t iosf_msg[512];
     uint32_t iosf_len;
-	unsigned char rsp;
     unsigned char be;
-    uint16_t type;
 	int err;
 
+	/* See SB-IOSF specs for details on the message format */
 	be = addr & 0x7 ? 0xf: 0xff;
 	iosf_msg[0] = 0x40010001;
 	iosf_msg[1] = 0x00000000;
@@ -216,35 +203,15 @@ int reg_write(const uint32_t addr, const uint64_t val)
 	iosf_msg[3] = addr >> 16;
 	iosf_msg[4] = val & 0xffffffff;
 	iosf_msg[5] = val >> 32;
-
 	iosf_len = 24;
-	type = MODEL_MSG_IOSF;
 
-	err = wm_send((uint8_t *) iosf_msg, iosf_len, type);
-	if (err) {
-		LOG_ERROR("Could no send data to WM\n");
-		return err;
-	}
+	err = iosf_send_receive((uint8_t *) iosf_msg, iosf_len,
+					  		(uint8_t *) iosf_msg, &iosf_len);
 
-	wm_receive((uint8_t *)iosf_msg, &iosf_len, &type);
-	if (err) {
-		LOG_ERROR("Could no receive data to WM\n");
-		return err;
-	}
+	if (err)
+		LOG_ERROR("Error with iosf message tx/rx: %d", err);
 
-	if (type != MODEL_MSG_IOSF) {
-		LOG_ERROR("Unexpected response message type\n");
-		return ERR_INVALID_RESPONSE;
-	}
-
-	rsp = (((uint8_t *)iosf_msg)[3] >> 3) & 0x3;
-	if (rsp) {
-		LOG_ERROR("Register write operation failed - rsp=%d - addr=0x%04x - val=0x%08lx\n",
-				rsp, addr, val);
-		return ERR_INVALID_RESPONSE;
-	}
-
-	return OK;
+	return err;
 }
 
 /*****************************************************************************
@@ -259,10 +226,55 @@ int reg_write(const uint32_t addr, const uint64_t val)
 #define POSTED_PORT				1
 
 /**
+ * iosf_send_receive() - Send IOSF message and wait for response.
+ *
+ * @param_in	tx_msg caller-allocated buffer with the message to send
+ * @param_in	tx_len length of the message to send.
+ * @param_out	rx_msg caller-allocated buffer where the response will be stored
+ * @param_out	rx_len caller-allocated used to store the length of the reposnse
+ * @retval		OK if successful
+ */
+static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
+							 uint8_t *rx_msg, uint32_t *rx_len)
+{
+	unsigned char rsp;
+    uint16_t type;
+	int err;
+
+	err = wm_send(tx_msg, tx_len, MODEL_MSG_IOSF);
+	if (err) {
+		LOG_ERROR("Could no send data to WM: %d\n", err);
+		return err;
+	}
+
+	err = wm_receive(rx_msg, rx_len, &type);
+	if (err) {
+		LOG_ERROR("Could no receive data from WM: %d\n", err);
+		return err;
+	}
+
+	/* TODO there might be problems if this library is used in
+	 * multi-thread applications */
+	if (type != MODEL_MSG_IOSF) {
+		LOG_ERROR("Unexpected response message type: %d\n", type);
+		return ERR_INVALID_RESPONSE;
+	}
+
+	/* Check the rsp field to validate the content of the response */
+	rsp = (((uint8_t *)rx_msg)[3] >> 3) & 0x3;
+	if (rsp) {
+		LOG_ERROR("Register write operation failed - rsp=%d", rsp);
+		return ERR_INVALID_RESPONSE;
+	}
+
+	return OK;
+}
+
+/**
  * wm_receive() - Receive message from model_server socket interface.
  *
- * @param_out	msg caller-allocated buffer where the message will be stored
- * @param_out	len caller-allocated used to store the lenght of the message.
+ * @param_out	msg caller-allocated buffer where the message will be stored.
+ * @param_out	len caller-allocated used to store the length of the message.
  * @param_out	type caller-allocated used to store the type of the message.
  * @retval		OK if successful
  */
@@ -318,7 +330,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
  * wm_send() - Send generic message to model_server socket interface.
  *
  * @param_int	msg pointer to the content of the message.
- * @param_int	len the lenght of the message.
+ * @param_int	len the length of the message.
  * @param_int	type the type of the message (e.g. SB-IOSF).
  * @retval		OK if successful
  */
@@ -505,7 +517,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 	}
 
 	n = read(socket, data, data_len);
-	if (n != data_len) {
+	if ((uint32_t) n != data_len) {
 		LOG_ERROR("Expect %d bytes but got %d", data_len, n);
 		return ERR_INVALID_RESPONSE;
 	}
