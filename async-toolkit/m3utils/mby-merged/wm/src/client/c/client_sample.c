@@ -38,29 +38,38 @@ int main()
 		return 1;
 	}
 
-	/* BSM_SCRATCH_0 of HLP */
+	/* In HLP this is BSM_SCRATCH_0[0] */
 	addr = 0x0010000;
 	val = 0x1234;
+	printf("Write: addr=0x%x val=0x%lx ...", addr, val);
 	err = reg_write(addr, val);
 	if (err) {
-		printf("Error writing register\n");
-		return 1;
+		printf("Error writing register: %d\n", err);
+		goto CLEANUP;
 	}
 
+	printf("OK\n");
+	printf("Read: addr=0x%x ...", addr);
 	err = reg_read(addr, &val);
 	if (err) {
-		printf("Error writing register\n");
-		return 1;
+		printf("Error reading register: %d\n", err);
+		goto CLEANUP;
 	}
 
 	if (val != 0x1234) {
-		printf("Read unexpected value: %ld\n", val);
-		return 1;
+		printf("Unexpected value: %ld\n", val);
+	}
+	else {
+		printf("OK\n");
 	}
 
+CLEANUP:
 	err = wm_disconnect();
 	if (err)
-		printf("Error while disconnecting to the WM\n");
+		printf("Error while disconnecting to the WM: %d\n", err);
+	else
+		printf("Disconnected from model_server\n");
+
 
 	return err;
 }
