@@ -196,7 +196,7 @@
     ;; final IMPORTs
     
 
-    (dis "const Length = " (get-scala-type-size wire-type) ";" dnl
+    (dis "  const Length = " (get-scala-type-size wire-type) ";" dnl
          dnl wr)
     
     (let loop ((i      0)
@@ -208,7 +208,7 @@
           (begin
             (dis v2t
                  "  def apply(is : InputStream) : Value = {" dnl
-                 "    " nm "(is.read" scala-wire-type "BE())" dnl
+                 "    " scala-name "(is.read" scala-wire-type "BE())" dnl
                  "  }" dnl
                  dnl
                  wr)
@@ -227,11 +227,13 @@
                                 (else (car valspec)))))
             (loop (+ val 1)
                   (cdr x)
-                  (sa v2t "    val "sym" = Value(" val ", \"" sym "\")" dnl
+                  (sa v2t "  val " sym " = Value(" val ", \"" sym "\")" dnl
                       dnl)))
           ) ;; fi
       ) ;; pool
 
+    (dis "}" dnl wr)
+    
     (close-scala scala-wrs)
     )
   )
