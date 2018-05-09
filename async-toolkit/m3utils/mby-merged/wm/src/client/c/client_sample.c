@@ -42,7 +42,7 @@ int main()
 	addr = 0x0010000;
 	val = 0x1234;
 	printf("Write: addr=0x%x val=0x%lx ...", addr, val);
-	err = reg_write(addr, val);
+	err = wm_reg_write(addr, val);
 	if (err) {
 		printf("Error writing register: %d\n", err);
 		goto CLEANUP;
@@ -50,7 +50,7 @@ int main()
 
 	printf("OK\n");
 	printf("Read: addr=0x%x ...", addr);
-	err = reg_read(addr, &val);
+	err = wm_reg_read(addr, &val);
 	if (err) {
 		printf("Error reading register: %d\n", err);
 		goto CLEANUP;

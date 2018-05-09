@@ -150,7 +150,7 @@ int wm_disconnect()
  * @param_out	val pointer to caller-allocated memory to store the result.
  * @retval		OK if successful
  */
-int reg_read(const uint32_t addr, uint64_t *val)
+int wm_reg_read(const uint32_t addr, uint64_t *val)
 {
     uint32_t iosf_msg[512];
     uint32_t iosf_len;
@@ -188,7 +188,7 @@ int reg_read(const uint32_t addr, uint64_t *val)
  * @param_in	val is the value to be written.
  * @retval		OK if successful
  */
-int reg_write(const uint32_t addr, const uint64_t val)
+int wm_reg_write(const uint32_t addr, const uint64_t val)
 {
     uint32_t iosf_msg[512];
     uint32_t iosf_len;

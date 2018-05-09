@@ -36,6 +36,6 @@
 int wm_connect();
 int wm_disconnect();
 
-int reg_write(const uint32_t addr, const uint64_t val);
-int reg_read(const uint32_t addr, uint64_t *val);
+int wm_reg_write(const uint32_t addr, const uint64_t val);
+int wm_reg_read(const uint32_t addr, uint64_t *val);
 
