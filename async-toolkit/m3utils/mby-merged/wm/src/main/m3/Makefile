@@ -1,3 +1,6 @@
+.SUFFIXES:
+.NOTPARALLEL:
+
 # Makefile for CM3 white model build
 OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
@@ -26,11 +29,13 @@ STRUCTGEN=$(STRUCTGEN_TARGDIR)/structgen
 
 STRUCTGEN_SHARED=$(WM_NET_ROOT)/src/structgen_shared.scm
 STRUCTGEN_M3=$(WM_NET_ROOT)/src/structgen_m3.scm
+STRUCTS_M3=$(WM_NET_ROOT)/src/structs_m3.scm
 STRUCTGEN_SCALA=$(WM_NET_ROOT)/src/structgen_scala.scm
+STRUCTS_SCALA=$(WM_NET_ROOT)/src/structs_scala.scm
 STRUCTGEN_TOP=$(WM_NET_ROOT)/src/structs.scm
 
 M3_STRUCTS=$(WM_NET_TARGDIR)/derived.m3m
-SCALA_STRUCTS=$(WM_NET_TARGDIR)/.scala_structs.done
+SCALA_STRUCTS=$(WM_NET)/scala_generated/derived_scala.filelist
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
@@ -76,13 +81,13 @@ $(STRUCTGEN): $(wildcard $(STRUCTGEN_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 
 $(M3_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTGEN_TOP)
 	mkdir -p $(dir $@)
-	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTGEN_TOP)
+	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTS_M3) $(STRUCTGEN_TOP)
 
-$(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTGEN_TOP)
+$(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 	mkdir -p $(dir $@)
-	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTGEN_TOP)
+	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 
-rpc_structs: $(M3_STRUCTS)
+rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 
 $(MBYLIB): $(MBY_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
@@ -123,5 +128,6 @@ clean:
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
+	rm -rf $(WM_NET)/scala_generated
 	find . -name $(OS_TARG) | xargs rm -rf 
 	rm -f $(TOP)
