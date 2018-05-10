@@ -259,7 +259,10 @@
              (tag         3)
              (bar         3)
              (al          1 (constant 16_1))
-             (eh0         1 (constant 16_1))
+    ;; discussed with Andrea 5/3-5/4/18 about whether eh0 should be 0 or 1
+    ;; depends on whether we simulate CPK or HLP ...
+             (eh0      1 ;; (constant 16_1) ;; comment for now
+                       )
 
              ;; DW 1
              (exphdr      7 (constant 16_0))
@@ -291,7 +294,8 @@
              (tag         3)
              (bar         3)
              (al          1 (constant 16_1))
-             (eh0         1 (constant 16_1))
+             (eh0      1 ;; (constant 16_1) ;; comment for now
+                       )
 
              ;; DW 1
              (exphdr      7 (constant 16_0))
@@ -343,8 +347,6 @@
              (tag      3)
              (bar      3)
              (al       1 (constant 16_1))
-    ;; discussed with Andrea 5/3-5/4/18 about whether eh0 should be 0 or 1
-    ;; depends on whether we simulate CPK or HLP ...
              (eh0      1 ;; (constant 16_1) ;; comment for now
                        )
 
