@@ -1,5 +1,6 @@
 .SUFFIXES:
 .NOTPARALLEL:
+.DELETE_ON_ERROR:
 
 # Makefile for CM3 white model build
 OS_TARG=AMD64_LINUX
@@ -35,7 +36,7 @@ STRUCTS_SCALA=$(WM_NET_ROOT)/src/structs_scala.scm
 STRUCTGEN_TOP=$(WM_NET_ROOT)/src/structs.scm
 
 M3_STRUCTS=$(WM_NET_TARGDIR)/derived.m3m
-SCALA_STRUCTS=$(WM_NET)/scala_generated/derived_scala.filelist
+SCALA_STRUCTS=$(WM_NET_ROOT)/scala_generated/derived_scala.filelist
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
