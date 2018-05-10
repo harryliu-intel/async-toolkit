@@ -518,9 +518,10 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 
 	n = read(socket, data, data_len);
 	if ((uint32_t) n != data_len) {
-		LOG_ERROR("Expect %d bytes but got %d", data_len, n);
+		LOG_ERROR("Expected %d bytes but got %d\n", data_len, n);
 		return ERR_INVALID_RESPONSE;
 	}
 
 	return OK;
 }
+
