@@ -192,14 +192,14 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 {
     uint32_t iosf_msg[512];
     uint32_t iosf_len;
-    unsigned char be;
 	int err;
 
-	/* See SB-IOSF specs for details on the message format */
-	be = addr & 0x7 ? 0xf: 0xff;
-	iosf_msg[0] = 0x40010001;
+	/* See SB-IOSF specs for details on the message format
+	 * FIXME that we are using bulk write here since the m3 model_server
+	 * has some issue with single register operations */
+	iosf_msg[0] = 0x40110001;
 	iosf_msg[1] = 0x00000000;
-	iosf_msg[2] = ((addr & 0xffff) << 16 ) | be;
+	iosf_msg[2] = ((addr & 0xffff) << 16 ) | 2;
 	iosf_msg[3] = addr >> 16;
 	iosf_msg[4] = val & 0xffffffff;
 	iosf_msg[5] = val >> 32;
@@ -209,7 +209,7 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 					  		(uint8_t *) iosf_msg, &iosf_len);
 
 	if (err)
-		LOG_ERROR("Error with iosf message tx/rx: %d", err);
+		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 
 	return err;
 }
