@@ -172,6 +172,7 @@
     
     (header fm-model-sideband-data
                  ((c fm_modelSidebandData)
+                  (scala FmModelSideBandData)
                   (m3 FmModelSideBandData))
                  ((idTag          u32)
                   (tc              u8)
@@ -180,6 +181,7 @@
 
     (header fm-model-message-hdr
                  ((c fm_modelMessageHdr)
+                  (scala FmModelMessageHdr)
                   (m3 FmModelMessageHdr))
                  ((msgLength       u32)
                   (version         u16)
@@ -192,54 +194,64 @@
     ;; types below here added by mika
     
     (header fm-model-msg-error-hdr
-            ((m3 FmModelMsgErrorHdr))
+            ((m3 FmModelMsgErrorHdr)
+             (scala FmModelMsgErrorHdr))
             ((type                 u8)))
 
     (header fm-model-msg-set-egress-info-hdr
-            ((m3 FmModelMsgSetEgressInfoHdr))
+            ((m3 FmModelMsgSetEgressInfoHdr)
+             (scala FmModelMsgSetEgressInfoHdr))
             ((port                 u16)
              ;; payload is left out here
              ))
 
     (header fm-model-msg-mgmt-32  
-            ((m3 FmModelMsgMgmt32))
+            ((m3 FmModelMsgMgmt32)
+             (scala FmModelMsgMgmt32))
             ((mgmtType   fm-model-mgmt-type)
              (address    u32)
              (value      u32)))
               
     (header fm-model-msg-mgmt-64 
-            ((m3 FmModelMsgMgmt32))
+            ((m3 FmModelMsgMgmt32)
+            (scala FmModelMsgMgmt32))
             ((type       fm-model-mgmt-type)
              (address    u32)
              (value      u64)))
 
     (header fm-model-msg-attr 
-            ((m3 FmModelMsgAttr))
+            ((m3 FmModelMsgAttr)
+            (scala FmModelMsgAttr))
             ((type         fm-model-attr-type)
              (keyLength    u16)
              (key          (array u8 256))
              (value        (array u8 256))))
 
     (header fm-model-msg-get-info
-            ((m3 FmModelMsgGetInfo))
+            ((m3 FmModelMsgGetInfo)
+            (scala FmModelMsgGetInfo))
             ((type                 fm-model-info-type)
              (nPortsSupported      u16)
              (padding              (array u8 51))))
 
     (header fm-model-msg-packet-eot
-            ((m3 FmModelMsgPacketEot))
+            ((m3 FmModelMsgPacketEot)
+            (scala FmModelMsgPacketEot))
             ((transmissionSize     u16)))
 
     (header fm-model-msg-version-hdr
-            ((m3 FmModelMsgVersionHdr))
+            ((m3 FmModelMsgVersionHdr)
+            (scala FmModelMsgVersionHdr))
             ((versionNum    u16)))
 
     (header fm-model-set-egress-info-hdr
-            ((m3 FmModelSetEgressInfoHdr))
+            ((m3 FmModelSetEgressInfoHdr)
+            (scala FmModelSetEgressInfoHdr))
             ((tcpPort       u16)))
 
     (header fm-model-msg-port-link-state
-            ((m3 FmModelPortLinkState))
+            ((m3 FmModelPortLinkState)
+            (scala FmModelPortLinkState))
             ((state       u8)))
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -250,7 +262,8 @@
     ;; single formats
 
     (bitstruct iosf-reg-read-req
-            ((m3 IosfRegReadReq))
+            ((m3 IosfRegReadReq)
+             (scala IosfRegReadReq))
             (
              ;; DW 0
              (dest        8)
@@ -282,7 +295,8 @@
             );;bitstruct 
     
     (bitstruct iosf-reg-write-req
-            ((m3 IosfRegWriteReq))
+            ((m3 IosfRegWriteReq)
+             (scala IosfRegWriteReq))
             (
              ;; DW 0
              (dest        8)
@@ -323,18 +337,21 @@
     ;; block formats
     
     (bitstruct iosf-reg-blk-addr
-               ((m3 IosfRegBlkAddr))
+               ((m3 IosfRegBlkAddr)
+                (scala IosfRegBlkAddr))
                ((ndw       4 (constraint (and (= 0 (mod ndw 2)) (<= ndw 14))))
                 (addr     28))
                )
 
     (bitstruct iosf-reg-blk-data
-               ((m3 IosfRegBlkData))
+               ((m3 IosfRegBlkData)
+                (scala IosfRegBlkData))
                ((data      32))
                )
 
     (bitstruct iosf-reg-blk-read-req-hdr
-            ((m3 IosfRegBlkReadReqHdr))
+            ((m3 IosfRegBlkReadReqHdr)
+             (scala IosfRegBlkReadReqHdr))
             (
              ;; DW 0
              (dest     8)
@@ -368,7 +385,8 @@
             );;bitstruct iosf-reg-blk-read-req-hdr
 
     (bitstruct iosf-reg-blk-write-req-hdr
-            ((m3 IosfRegBlkWriteReqHdr))
+            ((m3 IosfRegBlkWriteReqHdr)
+             (scala IosfRegBlkWriteReqHdr))
             (
              ;; DW 0
              (dest     8)
@@ -402,7 +420,8 @@
     ;; completions
     
     (bitstruct iosf-reg-comp-no-data
-               ((m3 IosfRegCompNoData))
+               ((m3 IosfRegCompNoData)
+                (scala IosfRegCompNoData))
                (
                 ;; DW 0
                 (dest     8)
@@ -422,7 +441,8 @@
                );; bitstruct iosf-reg-comp-no-data
 
     (bitstruct iosf-reg-comp-data-hdr
-               ((m3 IosfRegCompDataHdr))
+               ((m3 IosfRegCompDataHdr)
+                (scala IosfRegCompDataHdr))
                (
                 ;; DW 0
                 (dest     8)
@@ -455,10 +475,3 @@
 
 ;; and exit .. removing this line dumps us into the Scheme REPL
 (exit)
-
-
-
-        
-    
-                                     
-    
