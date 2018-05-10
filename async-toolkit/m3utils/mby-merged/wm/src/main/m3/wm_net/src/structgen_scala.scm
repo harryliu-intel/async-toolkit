@@ -63,6 +63,39 @@
     )
   )
 
+(define (open-scala-case-class nm)
+  (let ((wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".scala.tmp")))))
+
+    (let ((mf-wr (FileWr.OpenAppend (sa deriv-dir "derived_scala.filelist"))))
+      (dis nm dnl mf-wr)
+      (wr-close mf-wr))
+
+
+    (dis "case class " nm " {" dnl wr)
+
+    ;; imports ?
+
+    ;; return a list of useful info
+    (list wr nm deriv-dir)
+    )
+  )
+
+(define (open-empty nm)
+  (let ((wr (filewr-open (symbol->string (symbol-append deriv-dir nm ".scala.tmp")))))
+
+    (let ((mf-wr (FileWr.OpenAppend (sa deriv-dir "derived_scala.filelist"))))
+      (dis nm dnl mf-wr)
+      (wr-close mf-wr))
+
+    ;; imports ?
+
+    ;; return a list of useful info
+    (list wr nm deriv-dir)
+    )
+  )
+
+
+
 (define (close-scala wrs)
   (let ((wr        (car wrs))
         (nm        (cadr wrs))
@@ -136,9 +169,34 @@
 ;;;
 ;;; CONSTANTS
 
-(define (compile-m3-const-value v wr)
-  (dis "CONST " (scheme->m3 (car v)) " = " (cadr v) ";" dnl wr)
+(define (compile-scala-const-value v wr)
+  (dis "val " (scheme->scala (car v)) " : W = " (cadr v) dnl wr)
   )
+
+
+(define (compile-constants-scala! nm x)
+  (dis "compiling constants :  " nm dnl)
+  (let* ((wire-type    (car x))
+         (scala-wire-type (scheme->scala wire-type))
+         (names        (cadr x))
+         (values       (caddr x))
+         (scala-name      ( nm names))
+         (scala-wrs       (open-scala scala-name "AnyObj"))
+         (wr              (car scala-wrs))
+         )
+    (dis "scala-name " scala-name dnl)
+    (add-tgt-type! nm scala-name)
+    (dis "{" dnl wr)
+
+    (dis "type W = " scala-wire-type dnl
+         dnl
+         wr)
+    (map (lambda(x)(compile-scala-const-value x wr)) values)
+
+    (close-scala scala-wrs)
+    ) ;; *tel
+  )
+
 
 (define (get-scala-name nm lst)
   (let ((pair (assoc 'scala lst)))
@@ -146,38 +204,7 @@
         (error (sa "No Scala name for " nm))
         (cadr pair))))
 
-(define (compile-constants-m3! nm x)
-  (dis "compiling constants :  " nm dnl)
-  (let* ((wire-type    (car x))
-         (m3-wire-type (scheme->m3 wire-type))
-         (names        (cadr x))
-         (values       (caddr x))
-         (m3-name      (get-m3-name nm names))
-         (m3-wrs       (open-m3 m3-name))
-         (i3-wr        (car m3-wrs))
-         (m3-wr        (cadr m3-wrs))
-         )
-    ;;(dis "m3-name " m3-name dnl)
-    (add-tgt-type! nm m3-name)
-    
-    (dis "TYPE W = " m3-wire-type ";" dnl
-         dnl
-         i3-wr)
-    (dis "CONST Write  = WrNet.Put" m3-wire-type ";"  dnl i3-wr)
-    (dis "CONST WriteC = WrNet.Put" m3-wire-type "C;" dnl i3-wr)
-    (dis "CONST WriteS = WrNet.Put" m3-wire-type "S;" dnl i3-wr)
-    (dis "CONST WriteE = WrNet.Put" m3-wire-type "G;" dnl i3-wr)
-    (dis "CONST Read   = RdNet.Get" m3-wire-type ";"  dnl i3-wr)
-    (dis "CONST ReadS  = RdNet.Get" m3-wire-type "S;" dnl i3-wr)
-    (dis "CONST ReadC  = RdNet.Get" m3-wire-type "C;" dnl
-         dnl i3-wr)
-    (map (lambda(x)(compile-m3-const-value x i3-wr)) values)
-
-    (close-m3 m3-wrs)
-    ) ;; *tel
-  )
-
-(define compile-constants! compile-constants-m3!)
+(define compile-constants! compile-constants-scala!)
 
 (define (compile-enum! nm x)
   (dis "compiling enum      :  " nm dnl)
@@ -207,16 +234,16 @@
 
           (begin
             (dis v2t
-                 "  def apply(is : InputStream) : Value = {" dnl
-                 "    " scala-name "(is.read" scala-wire-type "BE())" dnl
-                 "  }" dnl
+                 "//  def apply(is : InputStream) : Value = {" dnl
+                 "//    " scala-name "(is.read" scala-wire-type "BE())" dnl
+                 "//  }" dnl
                  dnl
                  wr)
             ) ;; nigeb
 
           ;; else -- iterate further
           
-          (let* ((sym     (scheme->scala (caar x)))
+          (let* ((sym (scheme->scala (caar x)))
                  (comma   (if (null? (cdr x)) "" ", "))
                  (valspec (cdar x))
                  (val     (cond ((null? valspec) i)
@@ -227,28 +254,49 @@
                                 (else (car valspec)))))
             (loop (+ val 1)
                   (cdr x)
-                  (sa v2t "  val " sym " = Value(" val ", \"" sym "\")" dnl
-                      dnl)))
+                  (sa v2t "  val " sym " = Value(" val ", \"" sym "\")" dnl)))
           ) ;; fi
       ) ;; pool
-
+    (dis dnl wr)
     (dis "}" dnl wr)
-    
+    (dis dnl wr)
+	
+	(let* ((scala-name-is (string-append scala-name "InputStream"))
+	       (scala-name-os (string-append scala-name "OutputStream")))
+	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { writeByte(x.id) }" dnl wr)
+	
+      (dis "}" dnl wr)
+	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name " = " scala-name "(readByte())" dnl wr)
+	
+	  (dis "}" dnl wr)
+      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
+	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	)
     (close-scala scala-wrs)
     )
   )
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; HEADER FIELD TYPES
 
 (define (get-m3-type type)
-  (cond ((member? type '(u8 u16 u32 u64)) (scheme->m3 type))
+  (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
         ((array-type? type)
          (sa "ARRAY [0.." (caddr type) "-1] OF "
                         (get-m3-type (cadr type))))
         (else
          (symbol->string (symbol-append (get-tgt-typemapping type) ".T")))))
+
+(define (get-scala-type type)
+  (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "ARRAY [0.." (caddr type) "-1] OF "
+                        (get-scala-type (cadr type))))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type) ".Value")))))
+
 
 (define (make-dotted-reference intf member)
   (symbol->string (symbol-append intf (symbol-append "." member))))
@@ -257,7 +305,8 @@
   (get-type-size type make-dotted-reference))
 
 (define (emit-header-field-type f i-wr)
-  (dis "    " (car f) " : " (get-m3-type (cadr f)) ";" dnl i-wr))
+  (dis "    " (car f) " : " (get-scala-type (cadr f)) dnl i-wr))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -265,11 +314,11 @@
   (cond ((member? type '(u8 u16 u32 u64))
          (case whch
            ((read)
-            (sa ind lhs " := RdNet.Get"(scheme->m3 type)"(rd)"))
+            (sa ind lhs " := RdNet.Get"(scheme->scala type)"(rd)"))
            ((readc)
-            (sa ind lhs " := RdNet.Get"(scheme->m3 type)"C(rd,cx)"))
+            (sa ind lhs " := RdNet.Get"(scheme->scala type)"C(rd,cx)"))
            ((reads)
-            (sa ind "IF NOT RdNet.Get"(scheme->m3 type)"S(s,p,"lhs") THEN RETURN FALSE END"))
+            (sa ind "IF NOT RdNet.Get"(scheme->scala type)"S(s,p,"lhs") THEN RETURN FALSE END"))
            (else (error whch))))
            
         ((array-type? type)
@@ -320,7 +369,7 @@
   (cond ((member? type '(u8 u16 u32 u64))
          (sa
           ind
-          "Wx.PutText(wx,NetTypes.Format"(scheme->m3 type)"("rhs"))"
+          "Wx.PutText(wx,NetTypes.Format"(scheme->scala type)"("rhs"))"
           ))
           
         ((array-type? type)
@@ -633,11 +682,11 @@
 (define (compile-bitstruct! nm x)
   (dis "compiling bitstruct :  " nm dnl)
 
-  (let* ((names (car x))
-         (m3-name      (cadr (assoc 'm3 names)))
-         (m3-wrs       (open-m3 m3-name))
-         (i3-wr        (car m3-wrs))
-         (m3-wr        (cadr m3-wrs))
+  (let* (
+         (names (car x))
+         (scala-name      (cadr (assoc 'scala names)))
+         (wrs       (open-scala scala-name "Bitstruct"))
+         (wr        (car wrs))
          (fields       (cadr x))
          )
 
@@ -647,192 +696,73 @@
       (dis dnl
            "TYPE" dnl
            "  T = RECORD" dnl
-           i3-wr)
-      (map (lambda(f)(emit-bitstruct-field-type f i3-wr)) fields)
+           wr)
+      (map (lambda(f)(emit-bitstruct-field-type f wr)) fields)
       (dis "  END;" dnl
-           dnl i3-wr)
+           dnl wr)
       )
 
-    (define (emit-proc whch decls pre-return return q)
-      ;; emit a procedure to do "something" (in parameter whch)
-      ;; return value provided in parameter return
-      (let ((emitter (eval (symbol-append 'emit-bitstruct-field- whch))))
-        (put-m3-proc whch i3-wr m3-wr)
-        (dis "  VAR " decls dnl m3-wr)
-        (dis "  BEGIN" dnl m3-wr)
-        (map (lambda(f)(set! q (emitter f m3-wr q))) fields)
-
-        (dis "    " pre-return dnl m3-wr)
-        (dis "    RETURN " return dnl m3-wr)
-        (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
-             dnl m3-wr)))
-
-    (add-tgt-type! nm m3-name)
-     
-    ;; the obvious imports (should these really be here?) 
-    (map (lambda(wr)
-           (dis "<*NOWARN*>IMPORT Byte, Word, StructField, Rd, Wr, Thread;" dnl dnl wr)) (list i3-wr m3-wr))
-
+    (add-tgt-type! nm scala-name)
     ;; the matching Modula-3 declaration
     (emit-m3-t)
-    (emit-proc 'format
-               "wx := Wx.New(); <*UNUSED*>VAR ok := Assert(Check(t));" ;; decls
-               ""
-               (sa "Fmt.F(\"<"m3-name">{ %s}\", Wx.ToText(wx))")
-               #f)
-
-    (emit-proc 'check
-               ""        ;; decls
-               ""        ;; pre-return
-               "TRUE"    ;; return
-               #f)
-
-    (dis "PROCEDURE Check2(READONLY t : T; VAR u : T) : BOOLEAN = "dnl"  BEGIN" dnl"    WITH check = Check(t) DO IF check THEN u := t END; RETURN check END" dnl"  END Check2;" dnl dnl m3-wr)
-
-    (dis "PROCEDURE Start(sz : CARDINAL; e : Pkt.End) : CARDINAL ="dnl
-         "  BEGIN" dnl
-         "    CASE e OF" dnl
-         "      Pkt.End.Front => RETURN 0" dnl
-         "    | " dnl
-         "      Pkt.End.Back =>" dnl
-         "      <*ASSERT LengthBits MOD 8 = 0*>" dnl
-         "      RETURN sz - LengthBits DIV 8" dnl
-         "    END" dnl
-         "  END Start;" dnl
-         dnl
-         m3-wr)
-
-    (emit-proc 'readsb
-               "w : Word.T; t : T;"
-               ""
-               "Check2(t,res)"
-               0) ;; read from ServerPacket at i
-
-    (put-m3-proc 'readeb i3-wr m3-wr)
-    (dis
-     "  BEGIN" dnl
-     "    WITH ok = ReadSB(s, Start(s.size(),e), res) DO" dnl
-     "      IF ok THEN Pkt.Truncate(s, e, LengthBits DIV 8) END;" dnl
-     "      RETURN ok" dnl
-     "    END" dnl
-     "  END " readeb-proc-name ";" dnl
-     dnl
-     m3-wr)
-
-    (dis "PROCEDURE Assert(q : BOOLEAN) : BOOLEAN = BEGIN <*ASSERT q*>RETURN q END Assert;" dnl dnl m3-wr)
-
-    (emit-proc 'writee
-               "a : ARRAY [0..(LengthBits-1) DIV 8 + 1-1] OF Byte.T;<*UNUSED*>VAR ok := Assert(Check(t)); "
-               "Pkt.PutA(s,e,a);"
-               ""
-               0)
     
-    (dis dnl "CONST LengthBits = " (accumulate + 0 (map cadr fields)) ";" dnl
-         dnl i3-wr)
-
-    (close-m3 m3-wrs)
-
-    ))
+    (dis dnl "CONST LengthBits = " (accumulate + 0 (map cadr fields)) ";" dnl wr)
+    (close-scala wrs)
+)
+)
 
 (define (compile-header! nm x)
-  (dis "compiling header    :  " nm dnl)
   (let* ((names (car x))
-         (m3-name      (cadr (assoc 'm3 names)))
-         (m3-wrs       (open-m3 m3-name))
-         (i3-wr        (car m3-wrs))
-         (m3-wr        (cadr m3-wrs))
+         (scala-name      (cadr (assoc 'scala names)))
+         (scala-wrs       (open-empty scala-name))
+         (wr        (car scala-wrs))
          (fields       (cadr x))
          (types        (uniq eq? (map cadr fields)))
+    )
+    (dis "compiling scala header    :  " nm dnl)
+    (define (emit-scala-t)
+      (dis dnl "(" dnl wr)
+      ;; need comma, after every except last entry
+      (map (lambda(f)(emit-header-field-type f wr)) fields)
+      (dis ") //" dnl dnl wr))
+     (define (emit-reader)
+      (dis dnl "class " scala-name "Writer extends DataOutputStream" dnl wr)
+      ;; need comma, after every except last entry
+      (map (lambda(f)(emit-header-field-type f wr)) fields)
+      (dis ") //" dnl dnl wr))
+     (define (emit-writer)
+      (dis dnl "(" dnl wr)
+      ;; need comma, after every except last entry
+      (map (lambda(f)(emit-header-field-type f wr)) fields)
+      (dis ") //" dnl dnl wr))
 
-         (import-intfs
-          (filter (lambda(x) (not (member? x '(u8 u16 u32 u64))))
-                  (map get-elem-type types)))
-         )
-
-    (define (emit-m3-t)
-      (dis dnl
-           "TYPE" dnl
-           "  T = RECORD" dnl
-           i3-wr)
-      (map (lambda(f)(emit-header-field-type f i3-wr)) fields)
-      (dis "  END;" dnl
-           dnl i3-wr)
-      )
 
     (define (emit-length)
-      (dis "CONST Length = 0" i3-wr)
+      (dis "val length = 0" wr)
       (map
        (lambda(f)(dis
-                  (sa " + " (get-scala-type-size (cadr f)))
-                  i3-wr))
-       fields)
-      (dis ";" dnl i3-wr)
-      
-      (dis dnl m3-wr)
+                  (string-append " + " (get-scala-type-size (cadr f)))
+                  wr))
+      (dis dnl wr)
       )
-
-    (define (emit-proc whch decls return . opt-pre-ret)
-      ;; emit a procedure to do "something" (in parameter whch)
-      ;; return value provided in parameter return
-      ;; pre-return is optional and allows a final fixup before
-      ;; returning.
-      (let ((emitter (eval (symbol-append 'emit-header-field- whch))))
-        (put-m3-proc whch i3-wr m3-wr)
-        (dis "  VAR " decls dnl m3-wr)
-        (dis "  BEGIN" dnl m3-wr)
-        (map (lambda(f)(emitter f m3-wr 'up)) fields)
-
-        ;; special case for the generic write, can do backwards too
-        (if (eq? whch 'writee)
-            (map (lambda(f)(emitter f m3-wr 'dn)) (reverse fields)))
-        (if (not (null? opt-pre-ret))
-            (dis "    " (car opt-pre-ret) dnl m3-wr))
-        (dis "    RETURN " return dnl m3-wr)
-        (dis "  END " (eval (symbol-append whch '-proc-name)) ";" dnl
-             dnl m3-wr)))
-      
-    ;;(dis "m3-name " m3-name dnl)
-    (add-tgt-type! nm m3-name)
-    (set! e import-intfs)
-
-    ;; the obvious imports (should these really be here?) 
-    (map (lambda(wr)
-           (dis "IMPORT Rd, Wr, Thread;" dnl dnl wr)) (list i3-wr m3-wr))
-
-    ;; emit the imports for the interfaces needed
-    (map (lambda (wr)
-           (map (lambda(intf)
-                  (dis "IMPORT " (get-tgt-typemapping intf) ";" dnl wr))
-                import-intfs))
-         (list i3-wr m3-wr))
-
-    ;; the matching Modula-3 declaration
-    (emit-m3-t)
-
-    ;; a symbol called Length, denoting the wire size of the record
-    (emit-length)
-
-    ;; procedures for reading the record off the wire
-    ;;          whch    decls     return  opt-pre-ret
-    (emit-proc 'read   "t : T;"   "t"              ) ;; raw read
-    (emit-proc 'readc  "t : T;"   "t"              ) ;; read with context
-    (emit-proc 'reads  "p := at;" "TRUE" "at := p;") ;; read from Pkt.T
-
-    ;; various ways of writing the record to the wire
-    (emit-proc 'write   "" "")         ;; raw write
-    (emit-proc 'writec  "" "")         ;; write with context
-    (emit-proc 'writes  "" "")         ;; write to ServerPacket at i
-    (emit-proc 'writee  "" "")         ;; write to ServerPacket at frt/bck
-
-    ;; procedures for human-readable formatting of packet
-    (emit-proc 'format
-               "wx := Wx.New();"
-               (sa "Fmt.F(\"<"m3-name">{ %s }\", Wx.ToText(wx))"))
-    
-    (dis dnl m3-wr)
-    (close-m3 m3-wrs)
     )
-  )
+    (add-tgt-type! nm scala-name)
+    ;; (set! e import-intfs)
+    ;; the matching Modula-3 declaration
+    (dis "case class " scala-name dnl wr)
+    (emit-scala-t)
+    (dis "{" dnl wr)
+    ;; a symbol called Length, denoting the wire size of the record
+    ;; (emit-length)
+    (dis "}" dnl wr)
+    (dis dnl wr)
+    ;; now, emit reader and writer classes/translations
+    (emit-reader)
+    (emit-writer)
+    (close-scala scala-wrs)
+    )
+)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -848,7 +778,4 @@
 ;;(set! compile-enum!       (lambda(nm x) #t))
 (set! compile-constants!  (lambda(nm x) #t))
 (set! compile-header!     (lambda(nm x) #t))
-(set! compile-bitstruct!  (lambda(nm x) #t))
-
-
-                             
+;;(set! compile-bitstruct!  (lambda(nm x) #t))
