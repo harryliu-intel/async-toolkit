@@ -80,24 +80,24 @@ int wm_connect()
 
 	filename = getenv("SBIOSF_SERVER");
 	if (!filename) {
-		LOG_ERROR("SBIOSF_SERVER environment is not set");
+		LOG_ERROR("SBIOSF_SERVER environment is not set\n");
 		return ERR_INVALID_ARG;
 	}
 
 	fd = fopen(filename, "r");
 	if (!fd) {
-		LOG_ERROR("Unable to open file %s", filename);
+		LOG_ERROR("Unable to open file %s\n", filename);
 		return ERR_INVALID_ARG;
 	}
 
 	if (read_host_info(fd, server_addr, sizeof(server_addr), &port)) {
-		LOG_ERROR("Unable to get server connection info");
+		LOG_ERROR("Unable to get server connection info\n");
 		return ERR_INVALID_ARG;
 	}
 
 	wm_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (wm_sock_fd < 0) {
-		LOG_ERROR("Error creating socket fd");
+		LOG_ERROR("Error creating socket fd\n");
 		return ERR_INVALID_ARG;
 	}
 
@@ -110,7 +110,7 @@ int wm_connect()
 		serv_addr.sin_addr.s_addr = inet_addr(server_addr);
 
 	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-		LOG_ERROR("ERROR: Parsing server IP address: %s",
+		LOG_ERROR("ERROR: Parsing server IP address: %s\n",
 			  server_addr);
 		return ERR_INVALID_ARG;
 	}
@@ -120,7 +120,7 @@ int wm_connect()
 
 	if (connect(wm_sock_fd, (struct sockaddr *)&serv_addr,
 		    sizeof(serv_addr)) < 0) {
-		LOG_ERROR("Error unable to connect to server at %s:%d",
+		LOG_ERROR("Error unable to connect to server at %s:%d\n",
 			  server_addr, port);
 		return ERR_NETWORK;
 	}
@@ -150,7 +150,7 @@ int wm_disconnect()
  * @param_out	val pointer to caller-allocated memory to store the result.
  * @retval		OK if successful
  */
-int reg_read(const uint32_t addr, uint64_t *val)
+int wm_reg_read(const uint32_t addr, uint64_t *val)
 {
     uint32_t iosf_msg[512];
     uint32_t iosf_len;
@@ -171,7 +171,7 @@ int reg_read(const uint32_t addr, uint64_t *val)
 	err = iosf_send_receive((uint8_t *) iosf_msg, iosf_len,
 				     		(uint8_t *) iosf_msg, &iosf_len);
 	if (err) {
-		LOG_ERROR("Error with iosf message tx/rx: %d", err);
+		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 		return err;
 	}
 
@@ -188,18 +188,18 @@ int reg_read(const uint32_t addr, uint64_t *val)
  * @param_in	val is the value to be written.
  * @retval		OK if successful
  */
-int reg_write(const uint32_t addr, const uint64_t val)
+int wm_reg_write(const uint32_t addr, const uint64_t val)
 {
     uint32_t iosf_msg[512];
     uint32_t iosf_len;
-    unsigned char be;
 	int err;
 
-	/* See SB-IOSF specs for details on the message format */
-	be = addr & 0x7 ? 0xf: 0xff;
-	iosf_msg[0] = 0x40010001;
+	/* See SB-IOSF specs for details on the message format
+	 * FIXME that we are using bulk write here since the m3 model_server
+	 * has some issue with single register operations */
+	iosf_msg[0] = 0x40110001;
 	iosf_msg[1] = 0x00000000;
-	iosf_msg[2] = ((addr & 0xffff) << 16 ) | be;
+	iosf_msg[2] = ((addr & 0xffff) << 16 ) | 2;
 	iosf_msg[3] = addr >> 16;
 	iosf_msg[4] = val & 0xffffffff;
 	iosf_msg[5] = val >> 32;
@@ -209,7 +209,7 @@ int reg_write(const uint32_t addr, const uint64_t val)
 					  		(uint8_t *) iosf_msg, &iosf_len);
 
 	if (err)
-		LOG_ERROR("Error with iosf message tx/rx: %d", err);
+		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 
 	return err;
 }
@@ -243,13 +243,13 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 
 	err = wm_send(tx_msg, tx_len, MODEL_MSG_IOSF);
 	if (err) {
-		LOG_ERROR("Could no send data to WM: %d\n", err);
+		LOG_ERROR("Could not send data to WM: %d\n", err);
 		return err;
 	}
 
 	err = wm_receive(rx_msg, rx_len, &type);
 	if (err) {
-		LOG_ERROR("Could no receive data from WM: %d\n", err);
+		LOG_ERROR("Did not receive data from WM: %d\n", err);
 		return err;
 	}
 
@@ -518,9 +518,10 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 
 	n = read(socket, data, data_len);
 	if ((uint32_t) n != data_len) {
-		LOG_ERROR("Expect %d bytes but got %d", data_len, n);
+		LOG_ERROR("Expected %d bytes but got %d\n", data_len, n);
 		return ERR_INVALID_RESPONSE;
 	}
 
 	return OK;
 }
+
