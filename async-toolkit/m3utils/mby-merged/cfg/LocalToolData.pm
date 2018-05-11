@@ -121,7 +121,7 @@ $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'stages'}{SUB_TOOLS}{'default'}{OTHER}{
       mem => "4G",
       os => "SLES11SP4",
       priority => 1,
-      qslot           => "/fdo/slx/normal",
+      qslot => "/DCG/MadisonBay/RTL",
       queue => $nb_object->{pool},
       submissionArgs => "",
       tag => "dynamic",
