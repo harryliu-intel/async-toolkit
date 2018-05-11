@@ -53,7 +53,7 @@
       (dis nm dnl mf-wr)
       (wr-close mf-wr))
           
-                  
+    (dis "package switch_wm" dnl wr)
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
     ;; imports ?
@@ -633,7 +633,7 @@
                          (sa " := " (symbol->m3integer (cadar tail)))))
           
         )
-    (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
+    (dis "    " field-name " : Int" dnl i-wr)))
 
 (define (emit-bitstruct-field-format f wr dummy)
   (let ((field-name (car f))
@@ -680,12 +680,17 @@
 ;;; MAIN COMPILER
 
 (define (compile-bitstruct! nm x)
+  ;; concept here
+  ;; generate a case class with typed 'machine-sized' fields
+  ;; generate a matching object class with an apply method to create the case
+  ;;  class from an array of bytes
+  ;; generate input/outputstream classes to match the above
   (dis "compiling bitstruct :  " nm dnl)
 
   (let* (
          (names (car x))
          (scala-name      (cadr (assoc 'scala names)))
-         (wrs       (open-scala scala-name "Bitstruct"))
+         (wrs       (open-empty scala-name))
          (wr        (car wrs))
          (fields       (cadr x))
          )
@@ -694,19 +699,52 @@
 
     (define (emit-m3-t)
       (dis dnl
-           "TYPE" dnl
-           "  T = RECORD" dnl
+           "case class " scala-name " extends Bitstruct" dnl
+           "  (" dnl
            wr)
       (map (lambda(f)(emit-bitstruct-field-type f wr)) fields)
-      (dis "  END;" dnl
-           dnl wr)
+      (dis " )" wr)
       )
 
     (add-tgt-type! nm scala-name)
+	(dis "package switch_wm" dnl wr)
+
     ;; the matching Modula-3 declaration
     (emit-m3-t)
-    
-    (dis dnl "CONST LengthBits = " (accumulate + 0 (map cadr fields)) ";" dnl wr)
+    (dis " = { " wr)
+    (dis dnl "val LengthBits = " (accumulate + 0 (map cadr fields)) dnl wr)
+    (dis dnl "def toByteArray : Array[Byte] = { " dnl 
+	   " val a = Array[Byte].ofDim(LenthBits / 8)" dnl
+       " // modify A for each field, with insert operations" dnl	
+	   " a " dnl	
+	   
+	   " }" dnl wr)
+
+    (dis "} " wr)
+
+	(dis dnl "object " scala-name " = { " dnl wr)
+	(dis dnl " def apply(a : Array[Byte]) : " scala-name " = {" wr)
+	(dis dnl "  require(a.size == LengthBits / 8)" wr)
+    (dis dnl "  // return a new object from applying the array provided" dnl wr)
+	(dis dnl " }" wr)
+
+	(dis dnl "}" dnl wr)
+	(let* ((scala-name-is (string-append scala-name "InputStream"))
+	       (scala-name-os (string-append scala-name "OutputStream")))
+	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { write(x.toByteArray,0,x.LengthsBits/8 }" dnl wr)
+	
+      (dis "}" dnl wr)
+	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name " = {" dnl "  val a = Array[Byte].ofDim(a.size / 8)" dnl "  readFully(a) " dnl "  " scala-name "(a)" dnl wr)
+	
+	  (dis " }" dnl wr)
+	  (dis "}" dnl wr)
+
+      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
+	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	)
+
     (close-scala wrs)
 )
 )
@@ -725,16 +763,6 @@
       ;; need comma, after every except last entry
       (map (lambda(f)(emit-header-field-type f wr)) fields)
       (dis ") //" dnl dnl wr))
-     (define (emit-reader)
-      (dis dnl "class " scala-name "Writer extends DataOutputStream" dnl wr)
-      ;; need comma, after every except last entry
-      (map (lambda(f)(emit-header-field-type f wr)) fields)
-      (dis ") //" dnl dnl wr))
-     (define (emit-writer)
-      (dis dnl "(" dnl wr)
-      ;; need comma, after every except last entry
-      (map (lambda(f)(emit-header-field-type f wr)) fields)
-      (dis ") //" dnl dnl wr))
 
 
     (define (emit-length)
@@ -749,6 +777,8 @@
     (add-tgt-type! nm scala-name)
     ;; (set! e import-intfs)
     ;; the matching Modula-3 declaration
+    (dis "package switch_wm" dnl wr)
+
     (dis "case class " scala-name dnl wr)
     (emit-scala-t)
     (dis "{" dnl wr)
@@ -756,9 +786,25 @@
     ;; (emit-length)
     (dis "}" dnl wr)
     (dis dnl wr)
-    ;; now, emit reader and writer classes/translations
-    (emit-reader)
-    (emit-writer)
+	
+	(let* ((scala-name-is (string-append scala-name "InputStream"))
+	       (scala-name-os (string-append scala-name "OutputStream")))
+	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { " dnl
+	     " // write out the case class, using appropriate portable writeShort, writeInt, etc. operations" dnl 
+		 " }" dnl wr)
+	
+      (dis "}" dnl wr)
+	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name " = {" dnl 
+	       "  // read in, using portable readShort, readInt, etc., operations" dnl
+		   " }" dnl wr)
+	
+	  (dis "}" dnl wr)
+      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
+	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	)
+
     (close-scala scala-wrs)
     )
 )
@@ -777,5 +823,5 @@
 ;; for now -- override with NOP
 ;;(set! compile-enum!       (lambda(nm x) #t))
 (set! compile-constants!  (lambda(nm x) #t))
-(set! compile-header!     (lambda(nm x) #t))
+;;(set! compile-header!     (lambda(nm x) #t))
 ;;(set! compile-bitstruct!  (lambda(nm x) #t))
