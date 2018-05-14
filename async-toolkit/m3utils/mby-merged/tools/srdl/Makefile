@@ -46,7 +46,7 @@ OS_SETUP        := source $(ONESOURCE_PATH)/setup/OneSourceBundle.setup
 RDL_TO_OSXML    := $(OS_SETUP) && $(NEBULON_SETUP) && $$RDL_IMPORTER/Run
 OSXML_TO_RDL    := $(OS_SETUP) && $(NEBULON_SETUP) && $$RDL_EXPORTER/run 
 
-XML_TO_HTML     := $(MODEL_ROOT)/tools/srdl/scripts/regs.xsl
+XML_TO_HTML     := $(shell ToolConfig.pl get_tool_path regs2html)/regs.xsl
 GENPG_ARGS      := -copyrightpath ${MODEL_ROOT}/src/txt/intelcopyright.txt -bits 28 \
                    --policygroups 8 MST_PG0 MST_PG1 MST_PG2 MST_PG3 MST_PG4 MST_PG5 MST_PG6 MST_PG7
 GENPG_EXEC      := $(shell ToolConfig.pl get_tool_path meta)/bin/genpg

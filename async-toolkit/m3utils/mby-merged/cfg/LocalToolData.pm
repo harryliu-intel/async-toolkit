@@ -260,3 +260,7 @@ $ToolConfig_tools{"protobuf"} = {
     PATH => "/p/hdk/rtl/cad/x86-64_linux30/google/protobuf/&get_tool_version()",
 };
 
+$ToolConfig_tools{"regs2html"} = {
+    VERSION => "18.05.14",
+    PATH => "$ENV{RTL_PROJ_TOOLS}/regs2html/nhdk/&get_tool_version()",
+};
