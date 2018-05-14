@@ -1,4 +1,9 @@
 # TESTS := scribble speedtest structassign
+# Need HDK for ToolConfig call to work
+ifndef MODEL_ROOT
+ $(error "No MODEL_ROOT defined, did you run setnhdk?")
+endif
+
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 SCRIBBLE = scribble/AMD64_LINUX/scribble
