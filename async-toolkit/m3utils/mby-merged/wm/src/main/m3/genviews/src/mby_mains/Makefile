@@ -1,5 +1,9 @@
 # TESTS := scribble speedtest structassign
-CM3=$(shell ToolConfig.pl get_tool_exec cm3)
+
+# we shouldnt need this -- it is already defined in the environment
+# when this Makefile runs.
+# but we do need it if this is run independently
+CM3?=$(shell ToolConfig.pl get_tool_exec cm3)
 
 SCRIBBLE = scribble/AMD64_LINUX/scribble
 SPEEDTEST = speedtest/AMD64_LINUX/speedtest

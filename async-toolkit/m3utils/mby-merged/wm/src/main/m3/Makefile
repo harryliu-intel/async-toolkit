@@ -7,6 +7,11 @@ OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 METAROOT=$(shell ToolConfig.pl get_tool_path meta)
+
+# override here if you want to test a new toolchain
+#CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
+#METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git-2
+
 SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp 
 PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
 
@@ -66,7 +71,7 @@ $(TOP): $(TOP_TEMPLATE)
 	sed -i "s#META_HOME#$(METAROOT)#" $@
 
 mby_mains: $(GENVIEWS) $(MBYLIB)
-	$(MAKE) -C $(GENVIEWS_ROOT)/src/mby_mains
+	$(MAKE) CM3=$(CM3) -C $(GENVIEWS_ROOT)/src/mby_mains
 
 hlp_mains: $(HLPLIB)
 
