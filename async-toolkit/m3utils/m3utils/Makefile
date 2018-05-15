@@ -80,7 +80,7 @@ REVCOMMONS=`./dirsexist.sh -r $(COMMONDIRS)`
 
 PARSERLIBS=parserlib/ktoklib parserlib/kyacclib parserlib/klexlib parserlib/ktok parserlib/klex parserlib/kyacc parserlib/kext parserlib/parserlib
 
-SHIPDIRS=commandrw cit_common m3tmplhack m3texthack rdwrreset cit_util m3browserhack stabletable term $(PARSERLIBS) tasks trie vlsi/angbrmacro defmacro matrix vlsi/magic vlsi/magicextras bdd cptr bool vlsi/sop mst vlsi/boxes vlsi/simplegrid rpc vlsi/router cit_parse paneman drawcontext drawcontext/dcpane vlsi/m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree vlsi/operators vlsi/celldb vlsi/matcher vlsi/sysiphus/sysiphus_parse vlsi/sysiphus/sysiphus_lib verif/tuple voronoi voronoi2 ld/ld_parse ld cs2/cs2 rdwr labeltest m3curses gnuplot xmlparse tz mscheme/schemesig mscheme/scheme-lib mscheme mscheme/modula3scheme calarm/sx calarm/m3readline mscheme/schemereadline calarm/gw lockf newuoa
+SHIPDIRS=commandrw cit_common m3tmplhack m3texthack rdwrreset cit_util m3browserhack stabletable term $(PARSERLIBS) tasks trie vlsi/angbrmacro defmacro matrix vlsi/magic vlsi/magicextras bdd cptr bool vlsi/sop mst vlsi/boxes vlsi/simplegrid rpc vlsi/router cit_parse paneman drawcontext drawcontext/dcpane vlsi/m3-3 minimize convex integrate splines softmax pattern gatematrix colc tree optree vlsi/operators vlsi/celldb vlsi/matcher vlsi/sysiphus/sysiphus_parse vlsi/sysiphus/sysiphus_lib verif/tuple voronoi voronoi2 ld/ld_parse ld cs2/cs2 rdwr labeltest m3curses gnuplot xmlparse tz mscheme/schemesig mscheme/scheme-lib mscheme mscheme/modula3scheme calarm/sx calarm/m3readline mscheme/schemereadline calarm/gw calarm/csv lockf newuoa
 
 SHIPS=`./dirsexist.sh -f $(SHIPDIRS)`
 REVSHIPS=`./dirsexist.sh -r $(SHIPDIRS)`
