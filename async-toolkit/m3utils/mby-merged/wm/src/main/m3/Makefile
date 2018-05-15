@@ -134,6 +134,6 @@ clean:
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
-	rm -rf $(WM_NET)/scala_generated
+	rm -rf $(WM_NET_ROOT)/scala_generated
 	find . -name $(OS_TARG) | xargs rm -rf 
 	rm -f $(TOP)
