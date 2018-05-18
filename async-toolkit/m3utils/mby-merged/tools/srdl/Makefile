@@ -174,14 +174,14 @@ rtl: $$(SV_RTLS)
 
 scm: $$(SV_SCMS)
 
-$(RESULTSXMLFILE): $(ALL_RDL) $(PREREQS)
-	mkdir -p $(RESULTSDOCDIR)
-	$(NEBULON) -crif -xml -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTSDOCDIR)
+#$(RESULTSXMLFILE): $(ALL_RDL) $(PREREQS)
+#	mkdir -p $(RESULTSDOCDIR)
+#	$(NEBULON) -crif -xml -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTSDOCDIR)
 
 nebulon_mby: $(ALL_RDL) $(PREREQS)
 	$(NEBULON) -input $(TOP_RDL) -out_dir $(RESULTS_NEB)
 
-$(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
+$(RESULTSXMLFILE) $(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
 	$(info INCLUDE_ARG="$(INCLUDE_ARG)")
 	$(info SRDL_DIR1="$(SRDL_DIR1)")
 	$(info SRDL_DIR2="$(SRDL_DIR2)")
