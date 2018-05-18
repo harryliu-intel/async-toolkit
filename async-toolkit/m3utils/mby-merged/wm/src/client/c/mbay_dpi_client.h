@@ -33,7 +33,7 @@
 #define	ERR_NO_RESOURCE 	 4
 #define	ERR_INVALID_RESPONSE 5
 
-int wm_connect();
+int wm_connect(const char *server_file);
 int wm_disconnect();
 
 int wm_reg_write(const uint32_t addr, const uint64_t val);

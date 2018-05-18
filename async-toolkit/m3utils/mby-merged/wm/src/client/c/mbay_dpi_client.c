@@ -64,24 +64,29 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 /**
  * wm_connect() - Connect to WM server.
  *
- * The functions expect the env variable "SBIOSF_SERVER" to be set with the
- * path of the file created when the model_server started.
+ * @param_in	server_file path of the file created when the model_server is
+ * 				started. If NULL, the env variable "SBIOSF_SERVER" is used.
  *
  * @retval	OK if successful.
  */
-int wm_connect()
+int wm_connect(const char *server_file)
 {
 	struct sockaddr_in serv_addr;
 	char server_addr[128];
-	char *filename;
+	const char *filename;
 	int port = 0;
 	int on = 1;
 	FILE *fd;
 
-	filename = getenv("SBIOSF_SERVER");
-	if (!filename) {
-		LOG_ERROR("SBIOSF_SERVER environment is not set\n");
-		return ERR_INVALID_ARG;
+	if (server_file) {
+		filename = server_file;
+	}
+	else {
+		filename = getenv("SBIOSF_SERVER");
+		if (!filename) {
+			LOG_ERROR("SBIOSF_SERVER environment is not set\n");
+			return ERR_INVALID_ARG;
+		}
 	}
 
 	fd = fopen(filename, "r");

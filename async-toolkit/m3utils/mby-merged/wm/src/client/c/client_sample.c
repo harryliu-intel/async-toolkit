@@ -26,13 +26,15 @@
 #include <stdio.h>
 #include <mbay_dpi_client.h>
 
+#define SERVER_PATH "../../main/m3/models.packetServer"
+
 int main()
 {
 	uint32_t addr;
 	uint64_t val;
 	int err;
 
-	err = wm_connect();
+	err = wm_connect(SERVER_PATH);
 	if (err) {
 		printf("Error while connecting to the WM\n");
 		return 1;
