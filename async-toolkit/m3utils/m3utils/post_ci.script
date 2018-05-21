@@ -1,5 +1,6 @@
 # this has to do with CTCI
 export RTL_PROJ_TOOLS=/p/hdk/rtl/proj_tools/
+export RTL_CAD_ROOT=/p/hdk/rtl/cad/x86-64_linux30
 echo "Hello, CTCI -- my environment is:"
 env
 make
