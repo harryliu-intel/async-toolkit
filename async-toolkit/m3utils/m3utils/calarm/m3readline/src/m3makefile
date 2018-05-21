@@ -27,7 +27,7 @@ implementation("SXProxys")
 SxProxy("Int", "Integer", "SXInt")
 SxProxy("Text", "Text", "SXText")
 SxProxy("Bool", "Boolean", "SXBool")
-SxProxy("LongReal", "LongrealType", "SXLongReal")
+SxProxy("LongReal", "LongReal", "SXLongReal")
 
 interface("SXConversion")
 

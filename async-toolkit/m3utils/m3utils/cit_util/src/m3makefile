@@ -23,9 +23,9 @@ Module("TextUtils")
 Module("WordUtils")
 implementation("TextUtilsFmt")
 Module("PrefixDB")
-Table("TextLongReal", "Text", "LongrealType")
-List("Longreal", "LongrealType")
-Pqueue("Longreal","LongrealType")
+Table("TextLongReal", "Text", "LongReal")
+List("Longreal", "LongReal")
+Pqueue("Longreal","LongReal")
 module("ScanList")
 
 Generic_module("OpenArrayTable")
@@ -97,7 +97,7 @@ Table("CardCard", "Cardinal", "Cardinal")
 List("CardPair", "CardPair")
 
 KeyPair ("Text", "Text", "Text")
-KeyPair ("LongReal", "LongrealType", "LongrealType")
+KeyPair ("LongReal", "LongReal", "LongReal")
 
 List("TextPair", "TextPair")
 
@@ -107,9 +107,9 @@ MkSetDef("Card", "Cardinal")
 MkSetArray("Card", "Cardinal", "CardSet")
 Table("CardRef", "Cardinal", "Refany")
 
-MkSet("Longreal", "LongrealType")
-MkSetDef("Longreal", "LongrealType")
-%Table("LongRealRef", "LongrealType", "Refany")
+MkSet("Longreal", "LongReal")
+MkSetDef("Longreal", "LongReal")
+%Table("LongRealRef", "LongReal", "Refany")
 
 gmodule("Ref")
 gmodule("ArrayRef")
@@ -129,8 +129,8 @@ template("to_refany")
 ord_to_refany("Int", "Integer")
 ord_to_refany("Bool", "Boolean")
 ord_to_refany("Char", "Char")
-ord_to_refany("Real", "RealType")
-%ord_to_refany("Longreal", "LongrealType")
+ord_to_refany("Real", "Real")
+%ord_to_refany("Longreal", "LongReal")
 
 /* new stuff */
 MkSet("IntPair", "IntPair")
@@ -162,9 +162,9 @@ Module("LRVector")
 Interface("LRPoint")
 Module("LRPt")
 gmodule("Interval")
-Interval("LR", "LongrealType")
+Interval("LR", "LongReal")
 gmodule("SettableRef")
-SettableRef_named("LongRealRef", "LongrealType")
+SettableRef_named("LongRealRef", "LongReal")
 List("LongRealRef", "LongRealRef")
 Table("TextLongRealRef", "Text", "LongRealRef")
 
@@ -269,13 +269,13 @@ Fifo("Text", "Text")
 Fifo("Ref", "Refany")
 Fifo("Char", "Char")
 Fifo("Int", "Integer")
-Fifo("LongReal", "LongrealType")
+Fifo("LongReal", "LongReal")
 
-Array_sort("Longreal", "LongrealType")
+Array_sort("Longreal", "LongReal")
 Array_sort("Refany", "Refany")
 Array_sort("Card", "Cardinal")
 
-Sequence("LongReal", "LongrealType") 
+Sequence("LongReal", "LongReal") 
 
 Module("LongrealSort")
 
@@ -284,7 +284,7 @@ Module("Chmod")
 template("sharedseq")
 generic_module("SharedSequence")
 
-SharedSequence("LongReal", "LongrealType", "LongRealSeq")
+SharedSequence("LongReal", "LongReal", "LongRealSeq")
 
 Module("LRArrayOps")
 
@@ -369,8 +369,8 @@ Module("AscTimeParse")
 % sloppy TZ stuff
 
 Table("TZRef", "TZ", "Refany")
-Table("LongrealRef", "LongrealType", "Refany")
-Sorted_table("LongrealRef", "LongrealType", "Refany")
+Table("LongrealRef", "LongReal", "Refany")
+Sorted_table("LongrealRef", "LongReal", "Refany")
 
 Module("SloppyTimeConverter")
 

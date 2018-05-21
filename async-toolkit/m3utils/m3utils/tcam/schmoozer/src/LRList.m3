@@ -1,6 +1,6 @@
 MODULE LRList;
 IMPORT Word;
-IMPORT LongrealType;
+IMPORT LongReal AS LongrealType;
 
 PROCEDURE Hash(a : T) : Word.T =
   VAR
