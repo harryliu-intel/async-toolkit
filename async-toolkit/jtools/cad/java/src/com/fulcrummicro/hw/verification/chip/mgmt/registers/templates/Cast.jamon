@@ -19,7 +19,6 @@ define AddressSpace ()() attributes {
  int <% String.format("%-40s", base.getFullName()) %> = 0x<% String.format("%05X", base.getIncrementalAddress()) %>;\
  // 0x<% String.format("%05X", base.getAbsoluteAddress()) %> <% base.getParent().getFullName() %>
  int <% String.format("%-40s", base.getName() + "_SIZE") %> = 0x<% String.format("%05X", base.getSize()) %>;
- int <% String.format("%-40s", base.getName() + "_BUS_STOP_NR") %> = <% base.getBusStopId() %>;
 </%for>\
 
 <%doc>************************************************************</%doc>\
@@ -120,7 +119,7 @@ define <% camelCaseBaseName %>RegisterFields ()() attributes {
 
 <%def structure>\
 <%args>RegisterStruct rs;</%args>\
-    structure <% Utility.underscoreToCamelCase(rs.getName(), true) %> = (
+    structure Reg<% Utility.underscoreToCamelCase(rs.getName(), true) %> = (
 <%if rs.getSortedFields() != null %>\
 <%if (rs instanceof Register) && ( ((Register)rs).getImplementationWidth() > ((Register)rs).getNumberFieldBits() ) %>\
       int(<% ((Register)rs).getImplementationWidth() - ((Register)rs).getNumberFieldBits() %>) RESERVED_IMPLEMENTATION_BITS;
@@ -169,49 +168,8 @@ define <% camelCaseBaseName %>Management() attributes
 <%doc>************************************************************</%doc>\
 <%doc>check if register hit</%doc>\
 <%for Register reg : registers %><%if reg.getAlias() == null %>\
-    function is<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : boolean = (
-      is<% Utility.underscoreToCamelCase(reg.getName(), true) %> = <& registerAddressGuardExpr; reg=reg; &>
-    );
-</%if></%for>\
-
-<%doc>************************************************************</%doc>\
-<%doc>atomic word address decode</%doc>\
-<%for Register reg : registers %><%if reg.getAlias() == null %>\
-    function getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(8) = (
-<%if reg.getAtomicWidth() >= reg.getEntryWidth() %>\
-      getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %> = 0
-<%else>\
-      int(4) atomicWordBits = log2(<% reg.getName() %>_ATOMIC_WIDTH);
-      int(4) widthBits = log2(<% reg.getName() %>_WIDTH);
-      getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %> = chip_addr{widthBits-1:atomicWordBits}
-</%if>\
-    );
-</%if></%for>\
-
-<%doc>************************************************************</%doc>\
-<%doc>entry address decode</%doc>\
-<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries() > 1) %>\
-    function getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(16) = (
-      int(8) entryBits = log2(<% reg.getName() %>_ENTRIES<%if reg.getNumEntries1()>1 %>_0</%if>);
-      getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE<%if reg.getNumEntries1()>1 %>_0</%if>)) & ((1<<entryBits) - 1)
-    );
-</%if></%for>\
-
-<%doc>************************************************************</%doc>\
-<%doc>entry 1 address decode</%doc>\
-<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries1() > 1) %>\
-    function getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(16) = (
-      int(8) entry1Bits = log2(<% reg.getName() %>_ENTRIES_1);
-      getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE_1)) & ((1<<entry1Bits) - 1)
-    );
-</%if></%for>\
-
-<%doc>************************************************************</%doc>\
-<%doc>entry 2 address decode</%doc>\
-<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries2() > 1) %>\
-    function getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(16) = (
-      int(8) entry2Bits = log2(<% reg.getName() %>_ENTRIES_2);
-      getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE_2)) & ((1<<entry2Bits) - 1)
+    function addressIs<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : boolean = (
+      addressIs<% Utility.underscoreToCamelCase(reg.getName(), true) %> = <& registerAddressGuardExpr; reg=reg; &>
     );
 </%if></%for>\
 
