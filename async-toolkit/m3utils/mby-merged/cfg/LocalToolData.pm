@@ -86,12 +86,13 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.05.08",
+    VERSION => "18.05.21-newcm3",
 };
 
 $ToolConfig_tools{cm3} = {
-    PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/cm3",
-    EXEC => "&get_tool_path()/bin/cm3"
+    VERSION => "d5.10.0",
+    PATH => "$ENV{RTL_CAD_ROOT}/opensource/cm3/&get_tool_version()",
+    EXEC => "&get_tool_path()/bin/cm3",
 };
 
 
