@@ -1,6 +1,6 @@
 (* $Id: LongrealSort.i3,v 1.1 2006/01/03 18:21:50 mika Exp $ *)
 INTERFACE LongrealSort;
-IMPORT LongrealType;
+IMPORT LongReal AS LongrealType;
 
 (* a longreal sort that works with NaNs *)
 

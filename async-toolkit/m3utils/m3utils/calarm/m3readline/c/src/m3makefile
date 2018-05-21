@@ -2,6 +2,7 @@
 
 % we should do this all through cm3cfg
 
+import_sys_lib("READLINE")
 
 if equal(TARGET, "LINUXLIBC6")
         import_lib ("readline","/usr/lib")

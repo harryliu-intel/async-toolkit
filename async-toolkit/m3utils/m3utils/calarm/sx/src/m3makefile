@@ -23,7 +23,7 @@ Generic_module("SXType")              /* base type */
    Example:
 
       This is OK on its own:
-	SxType("LongReal", "LongrealType")  
+	SxType("LongReal", "LongReal")  
         
       But to instantiate:
 	SxRealOps("LR", "SXLongReal")
@@ -44,8 +44,8 @@ Generic_module("SXConvertOps")        /* FLOAT(), need to add ROUND, etc. */
 Generic_module("SXFuncOps")           /* general function operations */
 Generic_module("SXGenOps")            /* very generic stuff */
 
-SxType("LongReal", "LongrealType")
-SxType("Real", "RealType")
+SxType("LongReal", "LongReal")
+SxType("Real", "Real")
 SxType("Int", "Integer")              /* required */
 SxType("Bool", "Boolean")             /* required */
 SxType("Ref", "Refany")

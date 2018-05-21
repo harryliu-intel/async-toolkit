@@ -1,5 +1,5 @@
 INTERFACE MyLongrealType;
-IMPORT LongrealType AS Super;
+IMPORT LongReal AS Super;
 
 TYPE T = Super.T;
 
