@@ -8,7 +8,7 @@ use GetNB;
 
 package ToolData;
 
-my $nb_object                                                                = GetNB->new({key=>"build::all"});
+my $nb_object                                                                = GetNB->new({key=>"build::mby"});
 
 $general_vars{aceroot_dpath}                                                 = "$MODEL_ROOT/target/&get_facet(dut)/aceroot";
 
@@ -122,7 +122,7 @@ $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'stages'}{SUB_TOOLS}{'default'}{OTHER}{
       mem => "4G",
       os => "SLES11SP4",
       priority => 1,
-      qslot => "/DCG/MadisonBay/RTL/normal",
+      qslot => $nb_object->{qslot},
       queue => $nb_object->{pool},
       submissionArgs => "",
       tag => "dynamic",
