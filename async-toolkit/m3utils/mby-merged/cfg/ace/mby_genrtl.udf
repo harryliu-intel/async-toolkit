@@ -76,6 +76,11 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                     filter        => 'Synthesis',
                     gen_commands => [
                        "echo 'Generating white model through sbt'",
+                       # ugly hack to deal with https://github.com/sbt/sbt/issues/3598
+                       # this works whether or not a '~/.sbt' area already exists (it produces an extraneous link
+                       # inside this directory if it already exists)
+                       "mkdir -p /tmp/$ENV{USER}/home_dotsbt",
+                       "ln -fs /tmp/$ENV{USER}/home_dotsbt $ENV{HOME}/.sbt",
                        "cd $ENV{MODEL_ROOT}/wm",
                        &ToolConfig::get_tool_exec('sbt') . " compile doc",
                     ],

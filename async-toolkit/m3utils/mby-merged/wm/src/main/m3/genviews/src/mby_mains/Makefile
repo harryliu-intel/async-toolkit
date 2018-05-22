@@ -1,9 +1,10 @@
 # TESTS := scribble speedtest structassign
+# Need HDK for ToolConfig call to work
+ifndef MODEL_ROOT
+ $(error "No MODEL_ROOT defined, did you run setnhdk?")
+endif
 
-# we shouldnt need this -- it is already defined in the environment
-# when this Makefile runs.
-# but we do need it if this is run independently
-CM3?=$(shell ToolConfig.pl get_tool_exec cm3)
+CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 SCRIBBLE = scribble/AMD64_LINUX/scribble
 SPEEDTEST = speedtest/AMD64_LINUX/speedtest
