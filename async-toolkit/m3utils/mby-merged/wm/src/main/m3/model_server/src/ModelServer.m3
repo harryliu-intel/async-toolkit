@@ -29,6 +29,7 @@ IMPORT DataPusher, IntDataPusherTbl;
 IMPORT Byte;
 IMPORT FmModelDataType;
 IMPORT FmModelSideBandData;
+IMPORT Process;
 
 IMPORT Compiler;
 
@@ -273,7 +274,9 @@ VAR
   (* Ctrl                      *) NIL,
   (* VersionInfo               *) NEW(MsgHandler, 
                                       handle := HandleMsgVersionInfo),
-  (* NvmRead                   *) NIL
+  (* NvmRead                   *) NIL,
+  (* CommandQuit               *) NEW(MsgHandler,
+                                      handle := HandleMsgCommandQuit)
   };
 
   (**********************************************************************)
@@ -438,6 +441,20 @@ PROCEDURE DPEC(dp : MyDataPusher) =
     END
   END DPEC;
 
+  (**********************************************************************)
+
+PROCEDURE HandleMsgCommandQuit(<*UNUSED*>m  : MsgHandler;
+                               READONLY hdr : FmModelMessageHdr.T;
+                               VAR cx       : NetContext.T;
+                               inst         : Instance)
+  RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure }=
+  BEGIN
+    <*ASSERT hdr.type = FmModelMsgType.T.CommandQuit*>
+    (* not elegant *)
+    Debug.Out("Received CommandQuit from socket stream, going down.");
+    Process.Exit(0)
+  END HandleMsgCommandQuit;
+  
   (**********************************************************************)
 
 PROCEDURE HandleMsgVersionInfo(<*UNUSED*>m  : MsgHandler;

@@ -105,7 +105,8 @@
                 (iosf                          )
                 (ctrl                          )
                 (version-info                  )
-                (nvm-read                      ))
+                (nvm-read                      )
+                (command-quit                  ))
                )
     
     (enum fm-model-attr-type
