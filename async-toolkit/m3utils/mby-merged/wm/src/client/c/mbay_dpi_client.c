@@ -149,7 +149,7 @@ int wm_disconnect()
 }
 
 /**
- * reg_read() - Send register read request to model_server.
+ * wm_reg_read() - Send register read request to model_server.
  *
  * @param_in	addr address of the register.
  * @param_out	val pointer to caller-allocated memory to store the result.
@@ -187,7 +187,7 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 
 
 /**
- * reg_write() - Send register write request to model_server.
+ * wm_reg_write() - Send register write request to model_server.
  *
  * @param_in	addr address of the register.
  * @param_in	val is the value to be written.
@@ -216,6 +216,26 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	if (err)
 		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 
+	return err;
+}
+
+/**
+ * wm_server_stop() - Send shutdown request to model_server.
+ *
+ * It also disconnect from the server by closing the socket.
+ *
+ * @retval		OK if successful
+ */
+int wm_server_stop()
+{
+	unsigned char empty_msg = 0;
+	int err;
+
+	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT);
+	if (err)
+		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
+
+	err = wm_disconnect();
 	return err;
 }
 

@@ -23,6 +23,9 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
+#ifndef __MBAY_DPI_CLIENT_H_
+#define __MBAY_DPI_CLIENT_H_
+
 #include <stdint.h>
 
 /* Error codes */
@@ -39,3 +42,6 @@ int wm_disconnect();
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
+int wm_server_stop();
+
+#endif /* __MBAY_DPI_CLIENT_H_ */
