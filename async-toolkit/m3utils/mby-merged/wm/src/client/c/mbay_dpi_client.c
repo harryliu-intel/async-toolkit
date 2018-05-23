@@ -187,7 +187,7 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 
 
 /**
- * wm_reg_write() - Send register write request to model_server.
+ * wm_reg_write() - Send register write request to model server.
  *
  * @param_in	addr address of the register.
  * @param_in	val is the value to be written.
@@ -217,6 +217,59 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 
 	return err;
+}
+
+/**
+ * wm_server_start() - Send shutdown request to model server.
+ *
+ * It also wait until the server comes up and connect to it.
+ *
+ * @param_in	cmd the executable file of the model server
+ * @param_in	infopath the folder where models.packetServer will be created
+ *
+ * @retval		OK if successful
+ */
+int wm_server_start(char *cmd, char *infopath)
+{
+	char *const exec_args[] = {cmd, "-ip", infopath, NULL};
+	const int max_retries = 30;
+	const int delay = 1;
+	char fname[512];
+	pid_t pid;
+	int i = 0;
+	int err;
+
+	if (!cmd || !infopath) {
+		LOG_ERROR("Command cannot be NULL\n");
+		return ERR_INVALID_ARG;
+	}
+
+	pid = fork();
+	if (pid == 0) {
+		/* Child process: start model_server */
+		err = execvp(exec_args[0], exec_args);
+		LOG_ERROR("Could not execute command: %s\n", cmd);
+	}
+	else if (pid > 0) {
+		/* Parent process: wait 10sec then try to connect */
+		sprintf(fname, "%s/models.packetServer", infopath);
+		sleep(10);
+		do {
+			sleep(delay);
+			err = wm_connect(fname);
+			++i;
+		} while(err && i < max_retries);
+		if (err) {
+			LOG_ERROR("Could not connect to the model_server\n");
+			return ERR_TIMEOUT;
+		}
+	}
+	else {
+		LOG_ERROR("Could not start model_server: fork() failed\n");
+		return ERR_RUNTIME;
+	}
+
+	return OK;
 }
 
 /**
