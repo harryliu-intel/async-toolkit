@@ -5,7 +5,10 @@ IMPORT Debug;
 IMPORT Fmt;
 FROM Fmt IMPORT F;
 
-PROCEDURE MakeWrite(at : CompAddr.T; bits : CARDINAL; val : Word.T) : T =
+PROCEDURE MakeWrite(at                  : CompAddr.T;
+                    bits                : [0..BITSIZE(Word.T)];
+                    val                 : Word.T;
+                    origin              : Origin) : T =
   VAR
     res : T;
   BEGIN
@@ -30,12 +33,14 @@ PROCEDURE MakeWrite(at : CompAddr.T; bits : CARDINAL; val : Word.T) : T =
       END;
       res.lv := at.bit + bits - 1 - Base
     END;
-    res.origin := Origin.Hardware;
+    res.origin := origin;
     res.hi := Hi(res);
     RETURN res
   END MakeWrite;
 
-PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T =
+PROCEDURE MakeWideWrite(at           : CompAddr.T;
+                        READONLY val : ARRAY OF [0..1];
+                        origin       : Origin) : T =
   VAR
     bits := NUMBER(val);
     res : T;
@@ -58,8 +63,51 @@ PROCEDURE MakeWideWrite(at : CompAddr.T; READONLY val : ARRAY OF [0..1]) : T =
     END;
     res.lv := (at.bit + bits - 1) MOD Base;
     res.hi := Hi(res);
+    res.origin := origin;
     RETURN res
   END MakeWideWrite;
+
+  (**********************************************************************)
+
+PROCEDURE MakeRead(at                  : CompAddr.T;
+                   bits                : [0..BITSIZE(Word.T)];
+                   origin              : Origin) : T =
+  VAR
+    res := MakeWrite(at, bits, 0, origin);
+  BEGIN
+    res.rw := RW.R;
+    RETURN res
+  END MakeRead;
+
+PROCEDURE MakeMask(wid : [0..BITSIZE(Word.T)]) : Word.T =
+  BEGIN
+    IF wid = BITSIZE(Word.T) THEN
+      RETURN Word.Not(0)
+    ELSE
+      RETURN Word.Minus(Word.LeftShift(1, wid),1)
+    END
+  END MakeMask;
+  
+PROCEDURE GetReadResult(op : T) : Word.T =
+  BEGIN
+    <*ASSERT op.rw = RW.R*>
+    <*ASSERT op.data = NIL OR NUMBER(op.data^) = 2*>
+    WITH wid  = op.lv - op.fv + 1,
+         mask = MakeMask(wid) DO
+      
+      IF op.data = NIL THEN
+        RETURN Word.And(Word.RightShift(op.single,op.fv),mask)
+      ELSE
+        WITH word0 = Word.RightShift(op.data[0],op.fv),
+             word1 = Word.LeftShift (op.data[1],BITSIZE(Word.T)-op.fv),
+             word  = Word.Or(word1, word0) DO
+          RETURN Word.And(word,mask)
+        END
+      END
+    END
+  END GetReadResult;
+
+  (**********************************************************************)
 
 PROCEDURE Hi(t : T) : CompAddr.T =
   BEGIN
@@ -84,7 +132,7 @@ PROCEDURE DoField(VAR op      : T;          (* the read/write op *)
   PROCEDURE Check(q : Word.T) =
     BEGIN
       WITH n = CompRange.Bits(a),
-           m = Word.Shift(1,n)-1, (* field mask *)
+           m = Word.Minus(Word.Shift(1,n),1), (* field mask *)
            i = Word.Not(m),       (* inverse of field mask *)
            r = Word.And(i,q)      (* there should be no overlap *)
        DO
@@ -305,5 +353,45 @@ PROCEDURE DoWideField(VAR op : T; VAR d : ARRAY OF [0..1]; a : CompRange.T) =
 
 PROCEDURE LowAddr(t : T) : CompAddr.T =
   BEGIN RETURN CompAddr.T { t.at, t.fv } END LowAddr;
-  
+
+PROCEDURE Format(READONLY t : T) : TEXT =
+
+  PROCEDURE FmtCnt() : TEXT =
+    BEGIN
+      IF t.data = NIL THEN RETURN "1" ELSE RETURN Fmt.Int(NUMBER(t.data^)) END
+    END FmtCnt;
+
+  PROCEDURE FmtDt() : TEXT =
+    BEGIN
+      IF t.data = NIL THEN
+        RETURN "16_" & Fmt.Unsigned(t.single) & " "
+      ELSE
+        VAR
+          str := "16_";
+        BEGIN
+          FOR i := LAST(t.data^) TO FIRST(t.data^) BY -1 DO
+            IF i = LAST(t.data^) THEN
+              str := str & Fmt.Unsigned(t.data[i])
+            ELSE
+              str := str & Fmt.Pad(Fmt.Unsigned(t.data[i]),
+                                   length := BITSIZE(Word.T) DIV 4,
+                                   padChar := '0')
+            END
+          END;
+          RETURN str & " "
+        END
+      END
+    END FmtDt;
+    
+  BEGIN
+    RETURN F("<CsrOp>{ %s @wa=16_%s cnt=%s ",
+             RWnames[t.rw],
+             Fmt.Unsigned(t.at),
+             FmtCnt()) &
+           F("(fv=%s,lv=%s) nil=%s %s}",
+             Fmt.Int(t.fv),Fmt.Int(t.lv),
+             Fmt.Bool(t.data=NIL),
+             FmtDt())
+  END Format;
+             
 BEGIN END CsrOp.

@@ -9,11 +9,16 @@ import ("schemereadline")
 import ("sstubgen")
 import ("wm_support")
 
+Module ("M3Support")
+
 SchemeStubs("FileWr")
 SchemeStubs("Wr")
 SchemeStubs("Debug")
 SchemeStubs("IdStyles")
 SchemeStubs("FS")
+SchemeStubs("Fmt")
+SchemeStubs("Scan")
+SchemeStubs("M3Support")
 
 ExportSchemeStubs("structgen") % export OUR scheme stubs
 

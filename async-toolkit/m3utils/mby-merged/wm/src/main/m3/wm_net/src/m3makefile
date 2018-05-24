@@ -6,13 +6,20 @@ _exec(["../../structgen/AMD64_LINUX/structgen","../src/structs.scm"])
 
 include ("../AMD64_LINUX/derived.m3m")
 
-Interface ("NetTypes")
+Interface("Byte")
+Sequence("Byte","Byte")
+
+Module ("NetTypes")
 
 Module ("RdNet")
 Module ("WrNet")
+Module ("StructField")
 
 %Module ("FmModelMessageHdr")
 
 Interface ("NetError")
+Interface ("NetContext")
+
+Module("ServerPacket")
 
 library ("wm_net")

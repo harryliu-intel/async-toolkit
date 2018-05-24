@@ -1,7 +1,7 @@
 MODULE CompRange;
 IMPORT CompAddr;
 FROM Fmt IMPORT F;
-IMPORT Debug;
+<*NOWARN*>IMPORT Debug;
 IMPORT CompAddrSeq;
 IMPORT CompAddrPQ;
 
