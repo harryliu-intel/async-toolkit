@@ -231,7 +231,7 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  */
 int wm_server_start(char *cmd, char *infopath)
 {
-	char *const exec_args[] = {cmd, "-ip", infopath, NULL};
+	char *const exec_args[] = {cmd, "-norepl", "-ip", infopath, NULL};
 	const int max_retries = 30;
 	const int delay = 1;
 	char fname[512];
