@@ -36,6 +36,7 @@ VAR
   files : REF ARRAY OF TEXT;
   quitOnLast : BOOLEAN;
   model := Models.Hlp;
+  doRepl : BOOLEAN;
 BEGIN
   (* command-line args: *)
   TRY
@@ -48,6 +49,8 @@ BEGIN
 
       quitOnLast := pp.keywordPresent("-ql") OR pp.keywordPresent("-quitlast");
 
+      doRepl := NOT (pp.keywordPresent("-norepl") OR pp.keywordPresent("-n"));
+      
       IF pp.keywordPresent("-model") OR pp.keywordPresent("-m") THEN
         VAR
           modelStr := pp.getNext();
@@ -110,7 +113,12 @@ BEGIN
                                           NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
         scm.defineInGlobalEnv(Atom.FromText("the-server"),
                               modelServer);
-        MainLoop(NEW(ReadLine.Default).init(), scm)
+        IF doRepl THEN
+          MainLoop(NEW(ReadLine.Default).init(), scm)
+        ELSE
+          Debug.Out("Server sleeping forever.");
+          WHILE TRUE DO Thread.Pause(1.0d0) END
+        END
       END
     EXCEPT
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
