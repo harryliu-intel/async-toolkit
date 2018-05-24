@@ -64,24 +64,29 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 /**
  * wm_connect() - Connect to WM server.
  *
- * The functions expect the env variable "SBIOSF_SERVER" to be set with the
- * path of the file created when the model_server started.
+ * @param_in	server_file path of the file created when the model_server is
+ * 				started. If NULL, the env variable "SBIOSF_SERVER" is used.
  *
  * @retval	OK if successful.
  */
-int wm_connect()
+int wm_connect(const char *server_file)
 {
 	struct sockaddr_in serv_addr;
 	char server_addr[128];
-	char *filename;
+	const char *filename;
 	int port = 0;
 	int on = 1;
 	FILE *fd;
 
-	filename = getenv("SBIOSF_SERVER");
-	if (!filename) {
-		LOG_ERROR("SBIOSF_SERVER environment is not set\n");
-		return ERR_INVALID_ARG;
+	if (server_file) {
+		filename = server_file;
+	}
+	else {
+		filename = getenv("SBIOSF_SERVER");
+		if (!filename) {
+			LOG_ERROR("SBIOSF_SERVER environment is not set\n");
+			return ERR_INVALID_ARG;
+		}
 	}
 
 	fd = fopen(filename, "r");
@@ -144,7 +149,7 @@ int wm_disconnect()
 }
 
 /**
- * reg_read() - Send register read request to model_server.
+ * wm_reg_read() - Send register read request to model_server.
  *
  * @param_in	addr address of the register.
  * @param_out	val pointer to caller-allocated memory to store the result.
@@ -182,7 +187,7 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 
 
 /**
- * reg_write() - Send register write request to model_server.
+ * wm_reg_write() - Send register write request to model server.
  *
  * @param_in	addr address of the register.
  * @param_in	val is the value to be written.
@@ -211,6 +216,79 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	if (err)
 		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 
+	return err;
+}
+
+/**
+ * wm_server_start() - Send shutdown request to model server.
+ *
+ * It also wait until the server comes up and connect to it.
+ *
+ * @param_in	cmd the executable file of the model server
+ * @param_in	infopath the folder where models.packetServer will be created
+ *
+ * @retval		OK if successful
+ */
+int wm_server_start(char *cmd, char *infopath)
+{
+	char *const exec_args[] = {cmd, "-ip", infopath, NULL};
+	const int max_retries = 30;
+	const int delay = 1;
+	char fname[512];
+	pid_t pid;
+	int i = 0;
+	int err;
+
+	if (!cmd || !infopath) {
+		LOG_ERROR("Command cannot be NULL\n");
+		return ERR_INVALID_ARG;
+	}
+
+	pid = fork();
+	if (pid == 0) {
+		/* Child process: start model_server */
+		err = execvp(exec_args[0], exec_args);
+		LOG_ERROR("Could not execute command: %s\n", cmd);
+	}
+	else if (pid > 0) {
+		/* Parent process: wait 10sec then try to connect */
+		sprintf(fname, "%s/models.packetServer", infopath);
+		sleep(10);
+		do {
+			sleep(delay);
+			err = wm_connect(fname);
+			++i;
+		} while(err && i < max_retries);
+		if (err) {
+			LOG_ERROR("Could not connect to the model_server\n");
+			return ERR_TIMEOUT;
+		}
+	}
+	else {
+		LOG_ERROR("Could not start model_server: fork() failed\n");
+		return ERR_RUNTIME;
+	}
+
+	return OK;
+}
+
+/**
+ * wm_server_stop() - Send shutdown request to model_server.
+ *
+ * It also disconnect from the server by closing the socket.
+ *
+ * @retval		OK if successful
+ */
+int wm_server_stop()
+{
+	unsigned char empty_msg = 0;
+	int err;
+
+	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT);
+	if (err)
+		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
+
+	err = wm_disconnect();
 	return err;
 }
 

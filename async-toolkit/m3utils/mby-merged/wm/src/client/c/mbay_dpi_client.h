@@ -23,6 +23,9 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
+#ifndef __MBAY_DPI_CLIENT_H_
+#define __MBAY_DPI_CLIENT_H_
+
 #include <stdint.h>
 
 /* Error codes */
@@ -32,10 +35,15 @@
 #define	ERR_TIMEOUT 		 3
 #define	ERR_NO_RESOURCE 	 4
 #define	ERR_INVALID_RESPONSE 5
+#define	ERR_RUNTIME			 6
 
-int wm_connect();
+int wm_connect(const char *server_file);
 int wm_disconnect();
 
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
+int wm_server_start(char *cmd, char *infopath);
+int wm_server_stop();
+
+#endif /* __MBAY_DPI_CLIENT_H_ */
