@@ -194,11 +194,12 @@ PROCEDURE GetU64CLE(rd : Rd.T; VAR cx : NetContext.T) : U64
   
   (**********************************************************************)
 
-PROCEDURE GetU8S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U8 =
+PROCEDURE GetU8S(s : Pkt.T; VAR at : CARDINAL; VAR res : U8; bo : ByteOrder) : BOOLEAN =
   VAR
-    res : U8 := 0;
     k := 0;
   BEGIN
+    IF s.size() < 1 THEN RETURN FALSE END;
+    res := 0;
     CASE bo OF
       ByteOrder.BE =>
       FOR i :=   8-8 TO 0 BY  -8 DO
@@ -210,14 +211,16 @@ PROCEDURE GetU8S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U8 =
         res := GetByteS(s, at+k, res, i); INC(k)
       END
     END;
-    RETURN res
+    INC(at,1);
+    RETURN TRUE
   END GetU8S;
 
-PROCEDURE GetU16S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U16 =
+PROCEDURE GetU16S(s : Pkt.T; VAR at : CARDINAL; VAR res : U16; bo : ByteOrder) : BOOLEAN =
   VAR
-    res : U16 := 0;
     k := 0;
   BEGIN
+    IF s.size() < 2 THEN RETURN FALSE END;
+    res := 0;
     CASE bo OF
       ByteOrder.BE =>
       FOR i :=   16-8 TO 0 BY  -8 DO
@@ -229,14 +232,16 @@ PROCEDURE GetU16S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U16 =
         res := GetByteS(s, at+k, res, i); INC(k)
       END
     END;
-    RETURN res
+    INC(at,2);
+    RETURN TRUE
   END GetU16S;
 
-PROCEDURE GetU32S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U32 =
+PROCEDURE GetU32S(s : Pkt.T; VAR at : CARDINAL; VAR res : U32; bo : ByteOrder) : BOOLEAN =
   VAR
-    res : U32 := 0;
     k := 0;
   BEGIN
+    IF s.size() < 4 THEN RETURN FALSE END;
+    res := 0;
     CASE bo OF
       ByteOrder.BE =>
       FOR i :=   32-8 TO 0 BY  -8 DO
@@ -248,14 +253,16 @@ PROCEDURE GetU32S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U32 =
         res := GetByteS(s, at+k, res, i); INC(k)
       END
     END;
-    RETURN res
+    INC(at,4);
+    RETURN TRUE
   END GetU32S;
 
-PROCEDURE GetU64S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U64 =
+PROCEDURE GetU64S(s : Pkt.T; VAR at : CARDINAL; VAR res : U64; bo : ByteOrder) : BOOLEAN =
   VAR
-    res : U64 := 0;
     k := 0;
   BEGIN
+    IF s.size() < 8 THEN RETURN FALSE END;
+    res := 0;
     CASE bo OF
       ByteOrder.BE =>
       FOR i :=   64-8 TO 0 BY  -8 DO
@@ -267,7 +274,8 @@ PROCEDURE GetU64S(s : Pkt.T; at : CARDINAL; bo : ByteOrder) : U64 =
         res := GetByteS(s, at+k, res, i); INC(k)
       END
     END;
-    RETURN res
+    INC(at,8);
+    RETURN TRUE
   END GetU64S;
 
   (**********************************************************************)

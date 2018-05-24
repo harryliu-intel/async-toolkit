@@ -46,7 +46,7 @@ OS_SETUP        := source $(ONESOURCE_PATH)/setup/OneSourceBundle.setup
 RDL_TO_OSXML    := $(OS_SETUP) && $(NEBULON_SETUP) && $$RDL_IMPORTER/Run
 OSXML_TO_RDL    := $(OS_SETUP) && $(NEBULON_SETUP) && $$RDL_EXPORTER/run 
 
-XML_TO_HTML     := $(MODEL_ROOT)/tools/srdl/scripts/regs.xsl
+XML_TO_HTML     := $(shell ToolConfig.pl get_tool_path regs2html)/regs.xsl
 GENPG_ARGS      := -copyrightpath ${MODEL_ROOT}/src/txt/intelcopyright.txt -bits 28 \
                    --policygroups 8 MST_PG0 MST_PG1 MST_PG2 MST_PG3 MST_PG4 MST_PG5 MST_PG6 MST_PG7
 GENPG_EXEC      := $(shell ToolConfig.pl get_tool_path meta)/bin/genpg
@@ -174,14 +174,14 @@ rtl: $$(SV_RTLS)
 
 scm: $$(SV_SCMS)
 
-$(RESULTSXMLFILE): $(ALL_RDL) $(PREREQS)
-	mkdir -p $(RESULTSDOCDIR)
-	$(NEBULON) -crif -xml -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTSDOCDIR)
+#$(RESULTSXMLFILE): $(ALL_RDL) $(PREREQS)
+#	mkdir -p $(RESULTSDOCDIR)
+#	$(NEBULON) -crif -xml -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTSDOCDIR)
 
 nebulon_mby: $(ALL_RDL) $(PREREQS)
 	$(NEBULON) -input $(TOP_RDL) -out_dir $(RESULTS_NEB)
 
-$(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
+$(RESULTSXMLFILE) $(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
 	$(info INCLUDE_ARG="$(INCLUDE_ARG)")
 	$(info SRDL_DIR1="$(SRDL_DIR1)")
 	$(info SRDL_DIR2="$(SRDL_DIR2)")

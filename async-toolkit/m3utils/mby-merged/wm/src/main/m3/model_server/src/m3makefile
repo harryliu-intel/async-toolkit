@@ -3,9 +3,38 @@ import ("parseparams")
 import ("wm_support")
 import ("wm_net")
 import ("hlp")
+import ("mscheme")
+import ("modula3scheme")
+import ("netobj")
+import ("sstubgen")
 
 module ("ModelServer")
+
+%module ("HlpModelServer")
+% NO -- CANT PULL THIS IN HERE!  The reason is that this will pull in
+% the entire register def of HLP into the Scheme name mangling, which
+% is too big for us to handle (at least with any speed).
+%
+% Instead, if we want to get at the HLP regs from Scheme,
+% we have to do so in some roundabout way.  (not as yet defined)
+% ... more to come ...
+%
+
+interface ("ModelServerClass")
+module("MsIosf")
+%interface ("MsIosf")
 module ("HlpModelServer")
+
+module ("DataPusher")
+table ("IntDataPusher", "Integer", "DataPusher")
+table ("CardByte", "Cardinal", "Byte")
+
+module ("HlpModel")
+
+SchemeStubs ("ModelServer")
+
+ExportSchemeStubs("model_server")
+importSchemeStubs()              % import ALL scheme stubs
 
 implementation ("Main")
 

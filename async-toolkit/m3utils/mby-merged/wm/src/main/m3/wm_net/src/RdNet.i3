@@ -9,13 +9,25 @@ IMPORT ServerPacket AS Pkt;
   (*                       GENERIC VERSIONS                             *)
   (**********************************************************************)
 
-PROCEDURE GetU8S(s : Pkt.T; at : CARDINAL; bo := ByteOrder.BE) : U8;
+PROCEDURE GetU8S(s       : Pkt.T;
+                 VAR at  : CARDINAL;
+                 VAR res : U8;
+                 bo      := ByteOrder.BE) : BOOLEAN;
 
-PROCEDURE GetU16S(s : Pkt.T; at : CARDINAL; bo := ByteOrder.BE) : U16;
+PROCEDURE GetU16S(s       : Pkt.T;
+                  VAR at  : CARDINAL;
+                  VAR res : U16;
+                  bo      := ByteOrder.BE) : BOOLEAN;
 
-PROCEDURE GetU32S(s : Pkt.T; at : CARDINAL; bo := ByteOrder.BE) : U32;
+PROCEDURE GetU32S(s       : Pkt.T;
+                  VAR at  : CARDINAL;
+                  VAR res : U32;
+                  bo      := ByteOrder.BE) : BOOLEAN;
 
-PROCEDURE GetU64S(s : Pkt.T; at : CARDINAL; bo := ByteOrder.BE) : U64;
+PROCEDURE GetU64S(s       : Pkt.T;
+                  VAR at  : CARDINAL;
+                  VAR res : U64;
+                  bo      := ByteOrder.BE) : BOOLEAN;
   
   (**********************************************************************)
   (*                      BIG-ENDIAN VERSIONS                           *)

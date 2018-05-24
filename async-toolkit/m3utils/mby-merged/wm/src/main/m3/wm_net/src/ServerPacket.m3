@@ -193,5 +193,4 @@ PROCEDURE Truncate(t : T; e : End; by : CARDINAL) =
     END
   END Truncate;
 
-  
 BEGIN END ServerPacket.

@@ -8,7 +8,7 @@ use GetNB;
 
 package ToolData;
 
-my $nb_object                                                                = GetNB->new({key=>"build::all"});
+my $nb_object                                                                = GetNB->new({key=>"build::mby"});
 
 $general_vars{aceroot_dpath}                                                 = "$MODEL_ROOT/target/&get_facet(dut)/aceroot";
 
@@ -86,12 +86,13 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.04.24",
+    VERSION => "18.05.21-newcm3",
 };
 
 $ToolConfig_tools{cm3} = {
-    PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/cm3",
-    EXEC => "&get_tool_path()/bin/cm3"
+    VERSION => "d5.10.0",
+    PATH => "$ENV{RTL_CAD_ROOT}/opensource/cm3/&get_tool_version()",
+    EXEC => "&get_tool_path()/bin/cm3",
 };
 
 
@@ -121,7 +122,7 @@ $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'stages'}{SUB_TOOLS}{'default'}{OTHER}{
       mem => "4G",
       os => "SLES11SP4",
       priority => 1,
-      qslot           => "/fdo/slx/normal",
+      qslot => $nb_object->{qslot},
       queue => $nb_object->{pool},
       submissionArgs => "",
       tag => "dynamic",
@@ -260,3 +261,7 @@ $ToolConfig_tools{"protobuf"} = {
     PATH => "/p/hdk/rtl/cad/x86-64_linux30/google/protobuf/&get_tool_version()",
 };
 
+$ToolConfig_tools{"regs2html"} = {
+    VERSION => "18.05.14",
+    PATH => "$ENV{RTL_PROJ_TOOLS}/regs2html/nhdk/&get_tool_version()",
+};

@@ -28,6 +28,7 @@ VAR
   rand := NEW(Random.Default).init();
 
   time0, time1 : Time.T;
+  op : CsrOp.T;
 CONST
   NumWrites = 10 * 1000 * 1000;
 
@@ -42,10 +43,10 @@ BEGIN
     WITH startW = rand.integer(map.a.min.word, map.a.max.word),
          startB = rand.integer(0, BITSIZE(Word.T)-1),
          wid    = rand.integer(0, BITSIZE(Word.T)-1),
-         val    = rand.integer(FIRST(Word.T), LAST(Word.T)),
-         op     = CsrOp.MakeWrite(CompAddr.T { startW, startB },
+         val    = rand.integer(FIRST(Word.T), LAST(Word.T)) DO
+      op     := CsrOp.MakeWrite(CompAddr.T { startW, startB },
                                   wid,
-                                  val) DO
+                                  val);
       EVAL map.csrOp(op)
     END
   END;
