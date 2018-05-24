@@ -43,7 +43,7 @@ int wm_disconnect();
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
-int wm_server_start(char *cmd, char *infopath);
+int wm_server_start(char *cmd);
 int wm_server_stop();
 
 #endif /* __MBAY_DPI_CLIENT_H_ */
