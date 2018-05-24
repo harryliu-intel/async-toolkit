@@ -2,6 +2,10 @@
 .NOTPARALLEL:
 .DELETE_ON_ERROR:
 
+ifndef MODEL_ROOT
+   $(error MODEL_ROOT undefined, did you do a setnhdk?)
+endif
+
 # Makefile for CM3 white model build
 OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
@@ -78,6 +82,8 @@ hlp_mains: $(HLPLIB)
 $(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*) $(TOP)
 	pushd $(WM_SUPPORT_ROOT)/src && $(CM3) -x
 	touch $@
+
+wm_support: $(WM_SUPPORT)
 
 $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
