@@ -236,7 +236,7 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  */
 int wm_server_start(char *cmd)
 {
-	char *exec_args[] = {cmd, "-n", "-ip", NULL, "-infofile", NULL, NULL};
+	char *exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
 	const int max_retries = 30;
 	char server_if[L_tmpnam];
 	char server_ip[L_tmpnam];
@@ -261,8 +261,8 @@ int wm_server_start(char *cmd)
 		/* Child process: start model_server */
 		strcpy(server_if, server_tmpfile);
 		strcpy(server_ip, server_tmpfile);
-		exec_args[3] = dirname(server_ip);
-		exec_args[5] = basename(server_if);
+		exec_args[5] = dirname(server_ip);
+		exec_args[7] = basename(server_if);
 		err = execvp(exec_args[0], exec_args);
 		LOG_ERROR("Could not execute command: %s\n", cmd);
 	}
