@@ -20,7 +20,7 @@ IMPORT Thread;
 
 <*FATAL Thread.Alerted*>
 
-CONST Usage = "[-ql|-quitlast] [-n[orepl]] [-m[odel] hlp|mby] [-ip|-infopath <info path>] [<scheme src> ...]";
+CONST Usage = "[-ql|-quitlast] [-n[orepl]] [-m[odel] hlp|mby] [-ip|-infopath <info path>] [-if|-infofile <info filename>] [<scheme src> ...]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN
@@ -33,6 +33,7 @@ CONST  ModelNames = ARRAY Models OF TEXT { "hlp", "mby" };
 VAR
   modelServer : ModelServer.T;
   infoPath : Pathname.T := NIL;
+  infoFile := ModelServer.DefInfoFileName;
   files : REF ARRAY OF TEXT;
   quitOnLast : BOOLEAN;
   model := Models.Hlp;
@@ -45,6 +46,10 @@ BEGIN
         infoPath := pp.getNext()
       ELSE
         infoPath := Env.Get("WMODEL_INFO_PATH");
+      END;
+
+      IF pp.keywordPresent("-if") OR pp.keywordPresent("-infofile") THEN
+        infoFile := pp.getNext()
       END;
 
       quitOnLast := pp.keywordPresent("-ql") OR pp.keywordPresent("-quitlast");
@@ -89,12 +94,14 @@ BEGIN
     modelServer := NEW(HlpModelServer.T,
                        setupChip := HlpModel.SetupHlp)
     .init(infoPath := infoPath,
+          infoFileName := infoFile,
           quitOnLastClientExit := quitOnLast)
   |
     Models.Mby =>
     modelServer := NEW(MbyModelServer.T,
                        setupChip := MbyModel.SetupMby)
     .init(infoPath := infoPath,
+          infoFileName := infoFile,
           quitOnLastClientExit := quitOnLast)
   END;    
     

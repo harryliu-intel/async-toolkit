@@ -53,6 +53,7 @@ REVEAL
     portLinkState        : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
     mu                   : MUTEX; (* protects egressPorts, portLinkState *)
     quitOnLastClientExit : BOOLEAN;
+    infoFile             : Pathname.T;
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
@@ -124,7 +125,7 @@ PROCEDURE InitI(i : Instance; t : T; rd : Rd.T; wr : Wr.T) : Instance =
 PROCEDURE LCApply(cl : Listener) : REFANY =
   BEGIN
     TRY
-      WriteInfo(cl.t.infoPath, cl.t.port);
+      WriteInfo(cl.t.infoPath, cl.t.infoFile, cl.t.port);
     EXCEPT
       Wr.Failure(x) =>
       Debug.Error(F("Caught Wr.Failure attempting to write to \"%s\" : %s",
@@ -145,10 +146,10 @@ PROCEDURE LCApply(cl : Listener) : REFANY =
     END
   END LCApply;
 
-PROCEDURE WriteInfo(dirPath : Pathname.T; port : IP.Port)
+PROCEDURE WriteInfo(dirPath, fileName : Pathname.T; port : IP.Port)
   RAISES { OSError.E, Wr.Failure } =
   VAR
-    infoPath := dirPath & "/" & InfoFileName;
+    infoPath := dirPath & "/" & fileName;
   BEGIN
     Debug.Out("Writing info to " & infoPath);
     WITH wr = FileWr.Open(infoPath) DO
@@ -159,9 +160,11 @@ PROCEDURE WriteInfo(dirPath : Pathname.T; port : IP.Port)
   
 PROCEDURE Init(t : T;
                infoPath : Pathname.T;
-               quitOnLastClientExit : BOOLEAN) : T =
+               quitOnLastClientExit : BOOLEAN;
+               infoFile : Pathname.T) : T =
   BEGIN
     t.mu := NEW(MUTEX);
+    t.infoFile := infoFile;
     t.quitOnLastClientExit := quitOnLastClientExit;
     t.egressPorts := NEW(IntDataPusherTbl.Default).init();
     t.portLinkState :=
