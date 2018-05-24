@@ -188,6 +188,13 @@ PROCEDURE HApply(cl : Instance) : REFANY =
     BEGIN
       TRY Rd.Close(cl.rd) EXCEPT ELSE END;
       TRY Wr.Close(cl.wr) EXCEPT ELSE END;
+      LOCK clientCountMu DO
+        DEC(clientCount);
+        IF cl.t.quitOnLastClientExit AND clientCount = 0 THEN
+          Debug.Out("Quitting on last client disconnect");
+          Process.Exit(0)
+        END
+      END
     END DropClient;
   
   BEGIN
@@ -212,14 +219,7 @@ PROCEDURE HApply(cl : Instance) : REFANY =
       Rd.Failure(x) =>
       Debug.Warning("Error communicating with client disconnected : Rd.Failure : "&
         AL.Format(x));
-      DropClient();
-      LOCK clientCountMu DO
-        DEC(clientCount);
-        IF cl.t.quitOnLastClientExit AND clientCount = 0 THEN
-          Debug.Out("Quitting on last client disconnect");
-          Process.Exit(0)
-        END
-      END
+      DropClient()
     |
       Wr.Failure(x) =>
       Debug.Warning("Error communicating with client disconnected : Wr.Failure : "&

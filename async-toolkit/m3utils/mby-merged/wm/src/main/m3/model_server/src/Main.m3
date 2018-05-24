@@ -1,12 +1,11 @@
 MODULE Main;
-IMPORT HlpModelServer;
+IMPORT ModelServer;
+IMPORT HlpModelServer, HlpModel;
+IMPORT MbyModelServer, MbyModel;
 IMPORT Pathname, Env;
-IMPORT hlp_top_map      AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT Debug;
 IMPORT Scheme, SchemeStubs, SchemeNavigatorEnvironment;
 IMPORT IP, ReadLineError;
-IMPORT OSError;
 IMPORT NetObj;
 IMPORT AL;
 IMPORT SchemeM3;
@@ -16,6 +15,10 @@ IMPORT Atom;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Params;
+IMPORT Text;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
 
 CONST Usage = "[-ql|-quitlast] [-ip|-infopath <info path>] [<scheme src> ...]";
 
@@ -24,25 +27,15 @@ PROCEDURE DoUsage() : TEXT =
     RETURN Params.Get(0) & ": usage: " & Usage
   END DoUsage;
 
-PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
-                   <*UNUSED*>READONLY read : Map.T;
-                   READONLY update : MapAddr.Update) =
-  BEGIN
-    Debug.Out("SetupHlp");
-    
-    update.Imn.BsmScratch3[509].Data.u(16_1109);
-    (* match fpps_mgmt.c:546 *)
-    
-    update.Imn.FuseData[3].Data.u(16_6);
-    (* match fpps_switch.c:481 *)
-    
-  END SetupHlp;
-
+TYPE   Models     =                      {  Hlp,   Mby  };
+CONST  ModelNames = ARRAY Models OF TEXT { "hlp", "mby" };
+       
 VAR
-  modelServer : HlpModelServer.T;
+  modelServer : ModelServer.T;
   infoPath : Pathname.T := NIL;
   files : REF ARRAY OF TEXT;
   quitOnLast : BOOLEAN;
+  model := Models.Hlp;
 BEGIN
   (* command-line args: *)
   TRY
@@ -54,6 +47,23 @@ BEGIN
       END;
 
       quitOnLast := pp.keywordPresent("-ql") OR pp.keywordPresent("-quitlast");
+
+      IF pp.keywordPresent("-model") OR pp.keywordPresent("-m") THEN
+        VAR
+          modelStr := pp.getNext();
+          success := FALSE;
+        BEGIN
+          FOR i := FIRST(Models) TO LAST(Models) DO
+            IF Text.Equal(modelStr, ModelNames[i]) THEN
+              model := i;
+              success := TRUE
+            END
+          END;
+          IF NOT success THEN
+            Debug.Error("Unknown model \"" & modelStr & "\"")
+          END
+        END
+      END;
       
       pp.skipParsed();
       WITH nFiles = NUMBER(pp.arg^) - pp.next DO
@@ -71,11 +81,20 @@ BEGIN
 
   IF infoPath = NIL THEN infoPath := "." END;
 
-  modelServer := NEW(HlpModelServer.T,
-                     setupChip := SetupHlp)
+  CASE model OF
+    Models.Hlp =>
+    modelServer := NEW(HlpModelServer.T,
+                       setupChip := HlpModel.SetupHlp)
     .init(infoPath := infoPath,
-          quitOnLastClientExit := quitOnLast);
-
+          quitOnLastClientExit := quitOnLast)
+  |
+    Models.Mby =>
+    modelServer := NEW(MbyModelServer.T,
+                       setupChip := MbyModel.SetupMby)
+    .init(infoPath := infoPath,
+          quitOnLastClientExit := quitOnLast)
+  END;    
+    
   modelServer.resetChip();
 
   EVAL modelServer.listenFork();
@@ -97,9 +116,6 @@ BEGIN
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
     |
       IP.Error(err) => Debug.Error("Caught IP.Error : " & AL.Format(err))
-    |
-      OSError.E(err) => 
-        Debug.Error("Caught NetObj.Error : " & AL.Format(err))
     |
       ReadLineError.E(err) => 
         Debug.Error("Caught ReadLineError.E : " & AL.Format(err))

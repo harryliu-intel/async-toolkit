@@ -5,6 +5,8 @@ IMPORT mby_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
+IMPORT MbyModelServer;
+IMPORT Debug;
 
 PROCEDURE HandlePacket(READONLY read   : Map.T;
                        READONLY update : MapAddr.Update;
@@ -35,5 +37,14 @@ PROCEDURE FloodPktHandler(READONLY hdr : FmModelMessageHdr.T;
       END
     END
   END FloodPktHandler;
+
+PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
+                   <*UNUSED*>READONLY read : Map.T;
+                   READONLY update : MapAddr.Update) =
+  BEGIN
+    Debug.Out("SetupMby");
+    
+    (* fill this in *)
+  END SetupMby;
 
 BEGIN END MbyModel.
