@@ -120,10 +120,10 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 $(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
 	cd wm_net && $(CM3) -x
 
-$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB)
+$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB)
 	cd model_server && $(CM3) -x 
 
-model_server_hlp: $(MODEL_SERVER)
+model_server: $(MODEL_SERVER)
 
 
 $(TEST_TARG): $(GENVIEWS)
