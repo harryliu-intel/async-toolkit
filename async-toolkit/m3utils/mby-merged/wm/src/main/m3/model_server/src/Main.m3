@@ -20,7 +20,7 @@ IMPORT Thread;
 
 <*FATAL Thread.Alerted*>
 
-CONST Usage = "[-ql|-quitlast] [-ip|-infopath <info path>] [<scheme src> ...]";
+CONST Usage = "[-ql|-quitlast] [-n[orepl]] [-m[odel] hlp|mby] [-ip|-infopath <info path>] [<scheme src> ...]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN
