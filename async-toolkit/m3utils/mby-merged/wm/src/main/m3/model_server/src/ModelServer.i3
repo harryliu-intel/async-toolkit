@@ -17,12 +17,17 @@ IMPORT FmModelMessageHdr;
 
  **********************************************************************)
 
+
+CONST DefInfoFileName = "models.packetServer";
+
 TYPE
   T <: Public;
 
   Public = OBJECT
   METHODS
-    init(infoPath : Pathname.T := "."; quitOnLastClientExit := FALSE) : T;
+    init(infoPath : Pathname.T := ".";
+         quitOnLastClientExit := FALSE;
+         infoFileName : Pathname.T := DefInfoFileName) : T;
     (* initialize object.  infoPath is a directory path where
        the host:port file is created with the filename given below
        by InfoFileName *)
@@ -47,8 +52,6 @@ TYPE
   PubListener = Thread.Closure OBJECT END;
 
 CONST Brand = "ModelServer";
-
-CONST InfoFileName = "models.packetServer";
 
 EXCEPTION ParseError(TEXT);
           
