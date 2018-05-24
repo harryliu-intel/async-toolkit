@@ -22,7 +22,7 @@ TYPE
 
   Public = OBJECT
   METHODS
-    init(infoPath : Pathname.T := ".") : T;
+    init(infoPath : Pathname.T := "."; quitOnLastClientExit := FALSE) : T;
     (* initialize object.  infoPath is a directory path where
        the host:port file is created with the filename given below
        by InfoFileName *)
