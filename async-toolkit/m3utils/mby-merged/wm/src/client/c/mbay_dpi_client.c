@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 
 #include "mbay_dpi_client.h"
 #include "client_types.h"
@@ -50,6 +51,9 @@
 
 /* FD of the socket used to talk with model_server */
 static int wm_sock_fd;
+
+/* Temporary file used for models.packetServer */
+static char server_tmpfile[L_tmpnam] = "";
 
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
@@ -84,7 +88,7 @@ int wm_connect(const char *server_file)
 	else {
 		filename = getenv("SBIOSF_SERVER");
 		if (!filename) {
-			LOG_ERROR("SBIOSF_SERVER environment is not set\n");
+			LOG_ERROR("server_file is NULL and SBIOSF_SERVER env var is not set\n");
 			return ERR_INVALID_ARG;
 		}
 	}
@@ -115,7 +119,7 @@ int wm_connect(const char *server_file)
 		serv_addr.sin_addr.s_addr = inet_addr(server_addr);
 
 	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-		LOG_ERROR("ERROR: Parsing server IP address: %s\n",
+		LOG_ERROR("Cannot parse server IP address: %s\n",
 			  server_addr);
 		return ERR_INVALID_ARG;
 	}
@@ -125,7 +129,7 @@ int wm_connect(const char *server_file)
 
 	if (connect(wm_sock_fd, (struct sockaddr *)&serv_addr,
 		    sizeof(serv_addr)) < 0) {
-		LOG_ERROR("Error unable to connect to server at %s:%d\n",
+		LOG_ERROR("Unable to connect to server at %s:%d\n",
 			  server_addr, port);
 		return ERR_NETWORK;
 	}
@@ -220,43 +224,55 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 }
 
 /**
- * wm_server_start() - Send shutdown request to model server.
+ * wm_server_start() - Start the model server.
  *
- * It also wait until the server comes up and connect to it.
+ * Fork a new process and run the model server. The infopath and infofile
+ * arguments are set to a temporary file.
+ * It then waits until the server comes up and connects to it.
  *
  * @param_in	cmd the executable file of the model server
- * @param_in	infopath the folder where models.packetServer will be created
  *
  * @retval		OK if successful
  */
-int wm_server_start(char *cmd, char *infopath)
+int wm_server_start(char *cmd)
 {
-	char *const exec_args[] = {cmd, "-ip", infopath, NULL};
+	char *exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
 	const int max_retries = 30;
+	char server_if[L_tmpnam];
+	char server_ip[L_tmpnam];
 	const int delay = 1;
-	char fname[512];
 	pid_t pid;
 	int i = 0;
 	int err;
 
-	if (!cmd || !infopath) {
-		LOG_ERROR("Command cannot be NULL\n");
+	if (!cmd) {
+		LOG_ERROR("Server path string cannot be NULL\n");
 		return ERR_INVALID_ARG;
 	}
+
+	/* Generate a temporary file name and extract directory name (infopath)
+	 * and file name (infoname). Note that the functions are destructive so
+	 * we need to make copies of the strings */
+	tmpnam(server_tmpfile);
+	LOG_INFO("Using temp models.packetServer: %s\n", server_tmpfile);
 
 	pid = fork();
 	if (pid == 0) {
 		/* Child process: start model_server */
+		strcpy(server_if, server_tmpfile);
+		strcpy(server_ip, server_tmpfile);
+		exec_args[5] = dirname(server_ip);
+		exec_args[7] = basename(server_if);
 		err = execvp(exec_args[0], exec_args);
 		LOG_ERROR("Could not execute command: %s\n", cmd);
 	}
 	else if (pid > 0) {
 		/* Parent process: wait 10sec then try to connect */
-		sprintf(fname, "%s/models.packetServer", infopath);
+		// sprintf(fname, "%s/models.packetServer", infopath);
 		sleep(10);
 		do {
 			sleep(delay);
-			err = wm_connect(fname);
+			err = wm_connect(server_tmpfile);
 			++i;
 		} while(err && i < max_retries);
 		if (err) {
@@ -275,7 +291,9 @@ int wm_server_start(char *cmd, char *infopath)
 /**
  * wm_server_stop() - Send shutdown request to model_server.
  *
- * It also disconnect from the server by closing the socket.
+ * Send a message to request the shutdown of the server. If a temp file
+ * has been created to store the infopath, the file is deleted.
+ * It also disconnects from the server by closing the socket.
  *
  * @retval		OK if successful
  */
@@ -287,6 +305,12 @@ int wm_server_stop()
 	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT);
 	if (err)
 		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
+
+	if (strcmp(server_tmpfile, "")) {
+		err = remove(server_tmpfile);
+		if (err)
+			LOG_ERROR("Could not delete temp file %s\n", server_tmpfile);
+	}
 
 	err = wm_disconnect();
 	return err;

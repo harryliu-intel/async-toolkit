@@ -32,9 +32,12 @@ PROCEDURE ResetChip(t : T) =
     t.setupChip(t.h.read, t.h.update);
   END ResetChip;
 
-PROCEDURE Init(t : T; infoPath : Pathname.T; quitLast : BOOLEAN) : Super =
+PROCEDURE Init(t : T;
+               infoPath : Pathname.T;
+               quitLast : BOOLEAN;
+               infoFile : Pathname.T) : Super =
   BEGIN
-    EVAL Super.init(t, infoPath, quitLast);
+    EVAL Super.init(t, infoPath, quitLast, infoFile);
     Debug.Out(F("Creating %s ...",Map.Brand));
     t.h := NEW(MapAddr.H).init(CompAddr.Zero);
     RETURN t
