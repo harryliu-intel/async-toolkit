@@ -45,13 +45,14 @@ VAR doDebug := Debug.DebugThis(Brand);
   
 REVEAL
   T = Public BRANDED Brand OBJECT
-    port           : IP.Port;
-    conn           : TCP.Connector; (* listen here *)
-    listener       : Listener := NIL;
-    infoPath       : Pathname.T;
-    egressPorts    : IntDataPusherTbl.T;
-    portLinkState  : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
-    mu             : MUTEX; (* protects egressPorts, portLinkState *)
+    port                 : IP.Port;
+    conn                 : TCP.Connector; (* listen here *)
+    listener             : Listener := NIL;
+    infoPath             : Pathname.T;
+    egressPorts          : IntDataPusherTbl.T;
+    portLinkState        : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
+    mu                   : MUTEX; (* protects egressPorts, portLinkState *)
+    quitOnLastClientExit : BOOLEAN;
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
@@ -135,6 +136,9 @@ PROCEDURE LCApply(cl : Listener) : REFANY =
            wr = ConnRW.NewWr(tcp),
            rd = ConnRW.NewRd(tcp),
            h  = NEW(Instance).init(cl.t, rd, wr) DO
+        LOCK clientCountMu DO
+          INC(clientCount)
+        END;
         cl.handlers.addhi(h);
         EVAL Thread.Fork(h)
       END
@@ -153,9 +157,12 @@ PROCEDURE WriteInfo(dirPath : Pathname.T; port : IP.Port)
     END
   END WriteInfo;
   
-PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
+PROCEDURE Init(t : T;
+               infoPath : Pathname.T;
+               quitOnLastClientExit : BOOLEAN) : T =
   BEGIN
     t.mu := NEW(MUTEX);
+    t.quitOnLastClientExit := quitOnLastClientExit;
     t.egressPorts := NEW(IntDataPusherTbl.Default).init();
     t.portLinkState :=
         ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T {
@@ -170,6 +177,11 @@ PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
     RETURN t
   END Init;
 
+VAR
+  clientCountMu := NEW(MUTEX);
+  clientCount   := 0; (* global count of all clients connected to 
+                         this process *)
+  
 PROCEDURE HApply(cl : Instance) : REFANY =
 
   PROCEDURE DropClient() =
@@ -200,7 +212,14 @@ PROCEDURE HApply(cl : Instance) : REFANY =
       Rd.Failure(x) =>
       Debug.Warning("Error communicating with client disconnected : Rd.Failure : "&
         AL.Format(x));
-      DropClient()
+      DropClient();
+      LOCK clientCountMu DO
+        DEC(clientCount);
+        IF cl.t.quitOnLastClientExit AND clientCount = 0 THEN
+          Debug.Out("Quitting on last client disconnect");
+          Process.Exit(0)
+        END
+      END
     |
       Wr.Failure(x) =>
       Debug.Warning("Error communicating with client disconnected : Wr.Failure : "&

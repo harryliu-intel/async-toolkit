@@ -17,7 +17,7 @@ IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Params;
 
-CONST Usage = "[-ip|-infopath <info path>] [<scheme src> ...]";
+CONST Usage = "[-ql|-quitlast] [-ip|-infopath <info path>] [<scheme src> ...]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN
@@ -42,6 +42,7 @@ VAR
   modelServer : HlpModelServer.T;
   infoPath : Pathname.T := NIL;
   files : REF ARRAY OF TEXT;
+  quitOnLast : BOOLEAN;
 BEGIN
   (* command-line args: *)
   TRY
@@ -51,6 +52,8 @@ BEGIN
       ELSE
         infoPath := Env.Get("WMODEL_INFO_PATH");
       END;
+
+      quitOnLast := pp.keywordPresent("-ql") OR pp.keywordPresent("-quitlast");
       
       pp.skipParsed();
       WITH nFiles = NUMBER(pp.arg^) - pp.next DO
@@ -70,7 +73,8 @@ BEGIN
 
   modelServer := NEW(HlpModelServer.T,
                      setupChip := SetupHlp)
-                .init(infoPath := infoPath);
+    .init(infoPath := infoPath,
+          quitOnLastClientExit := quitOnLast);
 
   modelServer.resetChip();
 
