@@ -692,7 +692,7 @@ reg map_domain_action0_r {
      00: MAP_VPRI_TC
      01: MAP_EXP_TC
      10: MAP_DSCP_TC
-     11: TC specified in sideband data from CPU
+     11: TC specified in metadata from CPU
      [/code]
 
            ";
@@ -2077,11 +2077,11 @@ reg map_profile_action_r {
     AccessType = "RW";
     desc = "
     Mask to select which parser flags will generate TRAP_IP_OPTIONS.
-    The formula is as follows, where :
-      // otr_opt_flags[6] = IPv4 case
-      // otr_opt_flags[5:0] from parser.
-      // inr_opt_flags[6] = IPv4 case
-      // inr_opt_flags[5:0] from parser.
+    The formula is as follows, where:[br]
+      otr_opt_flags[6] = IPv4 case[br]
+      otr_opt_flags[5:0] from parser[br]
+      inr_opt_flags[6] = IPv4 case[br]
+      inr_opt_flags[5:0] from parser
       [list]
       [*] otr_opt_flags = {otr_l3_v && !otr_v6 && otr_l3_len > 20, parser_flags[37:32]}                      
       [*] inr_opt_flags = {inr_l3_v && !inr_v6 && inr_l3_len > 20, parser_flags[43:38]}                    
