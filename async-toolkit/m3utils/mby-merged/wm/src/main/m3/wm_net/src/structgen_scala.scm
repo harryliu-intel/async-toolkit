@@ -42,6 +42,8 @@
                     'Lower 'Camel
                     'Hyphen 'None))
 
+					
+(define legalize-field scheme->scala)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; OUTPUT FILE HANDLING
@@ -53,7 +55,9 @@
       (dis nm dnl mf-wr)
       (wr-close mf-wr))
           
-    (dis "package switch_wm" dnl wr)
+    (dis "package switch_wm" dnl dnl wr)
+	(dis "import java.io._" dnl dnl wr)
+	
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
     ;; imports ?
@@ -223,7 +227,7 @@
     ;; final IMPORTs
     
 
-    (dis "  const Length = " (get-scala-type-size wire-type) ";" dnl
+    (dis "  val Length = " (get-scala-type-size wire-type) ";" dnl
          dnl wr)
     
     (let loop ((i      0)
@@ -263,16 +267,22 @@
 	
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
-	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ") = { writeByte(x.id) }" dnl wr)
+	  (dis "class " scala-name-os "(os: OutputStream) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ".Value) = { writeByte(x.id) }" dnl wr)
 	
       (dis "}" dnl wr)
-	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name " = " scala-name "(readByte())" dnl wr)
+	  (dis "class " scala-name-is "(is: InputStream) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name ".Value = " scala-name "(readByte())" dnl wr)
 	
 	  (dis "}" dnl wr)
-      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
-	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	  (dis "object " scala-name-is "{" dnl wr)
+      (dis " implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)
+	  (dis "}" dnl wr)
+      
+	  (dis "object " scala-name-os "{" dnl wr)
+	  (dis " implicit def osTo" scala-name-os "(os: OutputStream) : " scala-name-os " = new " scala-name-os "(os)" dnl wr)
+	  (dis "}" dnl wr)
+      
 	)
     (close-scala scala-wrs)
     )
@@ -292,8 +302,8 @@
 (define (get-scala-type type)
   (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
         ((array-type? type)
-         (string-append "ARRAY [0.." (caddr type) "-1] OF "
-                        (get-scala-type (cadr type))))
+         (string-append "Array[" (get-scala-type (cadr type)) "]"
+                         " /* " (caddr type) " */" ))
         (else
          (symbol->string (symbol-append (get-tgt-typemapping type) ".Value")))))
 
@@ -304,8 +314,6 @@
 (define (get-scala-type-size type)
   (get-type-size type make-dotted-reference))
 
-(define (emit-header-field-type f i-wr)
-  (dis "    " (car f) " : " (get-scala-type (cadr f)) dnl i-wr))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -633,7 +641,7 @@
                          (sa " := " (symbol->m3integer (cadar tail)))))
           
         )
-    (dis "    " field-name " : Int" dnl i-wr)))
+    (dis "    " field-name " : Int," dnl i-wr)))
 
 (define (emit-bitstruct-field-format f wr dummy)
   (let ((field-name (car f))
@@ -699,22 +707,22 @@
 
     (define (emit-m3-t)
       (dis dnl
-           "case class " scala-name " extends Bitstruct" dnl
-           "  (" dnl
+           "case class " scala-name " (" dnl
            wr)
       (map (lambda(f)(emit-bitstruct-field-type f wr)) fields)
       (dis " )" wr)
+	  (dis " extends BitStruct" dnl wr)
       )
 
     (add-tgt-type! nm scala-name)
-	(dis "package switch_wm" dnl wr)
+	(dis "package switch_wm" dnl dnl wr)
+	(dis "import java.io._" dnl wr)
 
     ;; the matching Modula-3 declaration
     (emit-m3-t)
-    (dis " = { " wr)
-    (dis dnl "val LengthBits = " (accumulate + 0 (map cadr fields)) dnl wr)
+    (dis " { " wr)
     (dis dnl "def toByteArray : Array[Byte] = { " dnl 
-	   " val a = Array[Byte].ofDim(LenthBits / 8)" dnl
+	   " val a = Array.ofDim[Byte](" scala-name ".LengthBits / 8)" dnl
        " // modify A for each field, with insert operations" dnl	
 	   " a " dnl	
 	   
@@ -722,7 +730,9 @@
 
     (dis "} " wr)
 
-	(dis dnl "object " scala-name " = { " dnl wr)
+	(dis dnl "object " scala-name " { " dnl wr)
+	(dis dnl "val LengthBits = " (accumulate + 0 (map cadr fields)) dnl wr)
+
 	(dis dnl " def apply(a : Array[Byte]) : " scala-name " = {" wr)
 	(dis dnl "  require(a.size == LengthBits / 8)" wr)
     (dis dnl "  // return a new object from applying the array provided" dnl wr)
@@ -731,23 +741,31 @@
 	(dis dnl "}" dnl wr)
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
-	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ") = { write(x.toByteArray,0,x.LengthsBits/8 }" dnl wr)
+	  (dis "class " scala-name-os "(os : OutputStream) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { write(x.toByteArray,0," scala-name ".LengthBits/8) }" dnl wr)
 	
       (dis "}" dnl wr)
-	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name " = {" dnl "  val a = Array[Byte].ofDim(a.size / 8)" dnl "  readFully(a) " dnl "  " scala-name "(a)" dnl wr)
+	  (dis "class " scala-name-is "(is : InputStream) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name " = {" dnl "  val a = Array.ofDim[Byte](" scala-name ".LengthBits / 8)" dnl "  readFully(a) " dnl "  " scala-name "(a)" dnl wr)
 	
 	  (dis " }" dnl wr)
 	  (dis "}" dnl wr)
 
-      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
-	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+      (dis "object " scala-name-is " {" dnl wr) 
+	  (dis "  implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)
+	  (dis "}" dnl wr) 
+
+	  (dis "object " scala-name-os " {" dnl wr) 
+	  (dis " implicit def osTo" scala-name-os "(os: OutputStream) : " scala-name-os " = new " scala-name-os "(os)" dnl wr)
+	  (dis "}" dnl wr) 
+
 	)
 
     (close-scala wrs)
 )
 )
+
+(define get-scala-field get-scala-type)
 
 (define (compile-header! nm x)
   (let* ((names (car x))
@@ -758,10 +776,13 @@
          (types        (uniq eq? (map cadr fields)))
     )
     (dis "compiling scala header    :  " nm dnl)
+	
     (define (emit-scala-t)
-      (dis dnl "(" dnl wr)
+      (define (emit-header-field-type f)
+         (dis "    " (legalize-field (car f)) " : " (get-scala-type (cadr f)) "," dnl wr))
+      (dis " (" dnl wr)
       ;; need comma, after every except last entry
-      (map (lambda(f)(emit-header-field-type f wr)) fields)
+      (for-each (lambda(f)(emit-header-field-type f)) fields)
       (dis ") //" dnl dnl wr))
 
 
@@ -777,32 +798,39 @@
     (add-tgt-type! nm scala-name)
     ;; (set! e import-intfs)
     ;; the matching Modula-3 declaration
-    (dis "package switch_wm" dnl wr)
+    (dis "package switch_wm" dnl dnl wr)
+    (dis "import java.io._" dnl wr)
+    (dis "import PrimitiveTypes._" dnl dnl wr)
 
     (dis "case class " scala-name dnl wr)
     (emit-scala-t)
-    (dis "{" dnl wr)
+    ;;(dis "{" dnl wr)
     ;; a symbol called Length, denoting the wire size of the record
     ;; (emit-length)
-    (dis "}" dnl wr)
+    ;;(dis "}" dnl wr)
     (dis dnl wr)
 	
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
-	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
+	  (dis "class " scala-name-os "(os: OutputStream) extends DataOutputStream(os) {" dnl wr)
 	  (dis " def write" scala-name "( x  :"  scala-name ") = { " dnl
 	     " // write out the case class, using appropriate portable writeShort, writeInt, etc. operations" dnl 
 		 " }" dnl wr)
 	
       (dis "}" dnl wr)
-	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
+	  (dis "class " scala-name-is "(is : InputStream) extends DataInputStream(is) {" dnl wr)
 	  (dis " def read" scala-name "() : " scala-name " = {" dnl 
 	       "  // read in, using portable readShort, readInt, etc., operations" dnl
 		   " }" dnl wr)
 	
 	  (dis "}" dnl wr)
-      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
-	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	  (dis "object " scala-name-is "{" dnl wr)
+      (dis "implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)
+	  (dis "}" dnl wr)
+
+	  (dis "object " scala-name-os "{" dnl wr)
+	  (dis " implicit def osTo" scala-name-os "(os: OutputStream) : " scala-name-os " = new " scala-name-os "(os)" dnl wr)
+	  (dis "}" dnl wr)
 	)
 
     (close-scala scala-wrs)

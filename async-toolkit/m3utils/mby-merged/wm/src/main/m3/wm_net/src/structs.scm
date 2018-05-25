@@ -105,7 +105,8 @@
                 (iosf                          )
                 (ctrl                          )
                 (version-info                  )
-                (nvm-read                      ))
+                (nvm-read                      )
+                (command-quit                  ))
                )
     
     (enum fm-model-attr-type
@@ -474,6 +475,5 @@
 ;;; RUN THE STRUCTURE COMPILER ON THE DEFINITIONS ABOVE
 
 (compile! structs)
-
 ;; and exit .. removing this line dumps us into the Scheme REPL
 (exit)

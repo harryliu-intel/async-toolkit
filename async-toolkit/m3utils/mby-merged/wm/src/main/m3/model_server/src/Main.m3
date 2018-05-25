@@ -1,69 +1,136 @@
 MODULE Main;
-IMPORT HlpModelServer;
+IMPORT ModelServer;
+IMPORT HlpModelServer, HlpModel;
+IMPORT MbyModelServer, MbyModel;
 IMPORT Pathname, Env;
-IMPORT hlp_top_map      AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
 IMPORT Debug;
 IMPORT Scheme, SchemeStubs, SchemeNavigatorEnvironment;
 IMPORT IP, ReadLineError;
-IMPORT Params;
-IMPORT OSError;
 IMPORT NetObj;
 IMPORT AL;
 IMPORT SchemeM3;
 FROM SchemeReadLine IMPORT MainLoop;
 IMPORT ReadLine;
 IMPORT Atom;
+IMPORT ParseParams;
+IMPORT Stdio;
+IMPORT Params;
+IMPORT Text;
+IMPORT Thread;
 
-PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
-                   <*UNUSED*>READONLY read : Map.T;
-                   READONLY update : MapAddr.Update) =
+<*FATAL Thread.Alerted*>
+
+CONST Usage = "[-ql|-quitlast] [-n[orepl]] [-m[odel] hlp|mby] [-ip|-infopath <info path>] [-if|-infofile <info filename>] [<scheme src> ...]";
+
+PROCEDURE DoUsage() : TEXT =
   BEGIN
-    Debug.Out("SetupHlp");
-    
-    update.Imn.BsmScratch3[509].Data.u(16_1109);
-    (* match fpps_mgmt.c:546 *)
-    
-    update.Imn.FuseData[3].Data.u(16_6);
-    (* match fpps_switch.c:481 *)
-    
-  END SetupHlp;
+    RETURN Params.Get(0) & ": usage: " & Usage
+  END DoUsage;
 
+TYPE   Models     =                      {  Hlp,   Mby  };
+CONST  ModelNames = ARRAY Models OF TEXT { "hlp", "mby" };
+       
 VAR
-  modelServer : HlpModelServer.T;
-  infoPath : Pathname.T;
+  modelServer : ModelServer.T;
+  infoPath : Pathname.T := NIL;
+  infoFile := ModelServer.DefInfoFileName;
+  files : REF ARRAY OF TEXT;
+  quitOnLast : BOOLEAN;
+  model := Models.Hlp;
+  doRepl : BOOLEAN;
 BEGIN
-  infoPath := Env.Get("WMODEL_INFO_PATH");
+  (* command-line args: *)
+  TRY
+    WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
+      IF pp.keywordPresent("-ip") OR pp.keywordPresent("-infopath") THEN
+        infoPath := pp.getNext()
+      ELSE
+        infoPath := Env.Get("WMODEL_INFO_PATH");
+      END;
+
+      IF pp.keywordPresent("-if") OR pp.keywordPresent("-infofile") THEN
+        infoFile := pp.getNext()
+      END;
+
+      quitOnLast := pp.keywordPresent("-ql") OR pp.keywordPresent("-quitlast");
+
+      doRepl := NOT (pp.keywordPresent("-norepl") OR pp.keywordPresent("-n"));
+      
+      IF pp.keywordPresent("-model") OR pp.keywordPresent("-m") THEN
+        VAR
+          modelStr := pp.getNext();
+          success := FALSE;
+        BEGIN
+          FOR i := FIRST(Models) TO LAST(Models) DO
+            IF Text.Equal(modelStr, ModelNames[i]) THEN
+              model := i;
+              success := TRUE
+            END
+          END;
+          IF NOT success THEN
+            Debug.Error("Unknown model \"" & modelStr & "\"")
+          END
+        END
+      END;
+      
+      pp.skipParsed();
+      WITH nFiles = NUMBER(pp.arg^) - pp.next DO
+        files := NEW(REF ARRAY OF TEXT, nFiles);
+        FOR i := 0 TO nFiles-1 DO
+          files[i] := pp.getNext()
+        END
+      END;
+
+      pp.finish()
+    END;
+  EXCEPT
+    ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
+  END;
+
   IF infoPath = NIL THEN infoPath := "." END;
 
-  modelServer := NEW(HlpModelServer.T,
-                     setupChip := SetupHlp)
-                .init(infoPath := infoPath);
-
+  CASE model OF
+    Models.Hlp =>
+    modelServer := NEW(HlpModelServer.T,
+                       setupChip := HlpModel.SetupHlp)
+    .init(infoPath := infoPath,
+          infoFileName := infoFile,
+          quitOnLastClientExit := quitOnLast)
+  |
+    Models.Mby =>
+    modelServer := NEW(MbyModelServer.T,
+                       setupChip := MbyModel.SetupMby)
+    .init(infoPath := infoPath,
+          infoFileName := infoFile,
+          quitOnLastClientExit := quitOnLast)
+  END;    
+    
   modelServer.resetChip();
 
   EVAL modelServer.listenFork();
 
   SchemeStubs.RegisterStubs();
 
-  WITH arr = NEW(REF ARRAY OF Pathname.T, Params.Count) DO
+  WITH arr = NEW(REF ARRAY OF Pathname.T, NUMBER(files^)+1) DO
     arr[0] := "require";
-    FOR i := 1 TO Params.Count-1 DO arr[i] := Params.Get(i) END;
+    FOR i := 1 TO LAST(arr^) DO arr[i] := files[i-1] END;
     TRY
       WITH scm = NEW(SchemeM3.T).init(arr^, 
                                       globalEnv := 
                                           NEW(SchemeNavigatorEnvironment.T).initEmpty()) DO
         scm.defineInGlobalEnv(Atom.FromText("the-server"),
                               modelServer);
-        MainLoop(NEW(ReadLine.Default).init(), scm)
+        IF doRepl THEN
+          MainLoop(NEW(ReadLine.Default).init(), scm)
+        ELSE
+          Debug.Out("Server sleeping forever.");
+          WHILE TRUE DO Thread.Pause(1.0d0) END
+        END
       END
     EXCEPT
       Scheme.E(err) => Debug.Error("Caught Scheme.E : " & err)
     |
       IP.Error(err) => Debug.Error("Caught IP.Error : " & AL.Format(err))
-    |
-      OSError.E(err) => 
-        Debug.Error("Caught NetObj.Error : " & AL.Format(err))
     |
       ReadLineError.E(err) => 
         Debug.Error("Caught ReadLineError.E : " & AL.Format(err))
