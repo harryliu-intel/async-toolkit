@@ -38,7 +38,7 @@ int main()
 	int err;
 
 	if (start_server)
-		err = wm_server_start(SERVER_EXEC, SERVER_PATH);
+		err = wm_server_start(SERVER_EXEC);
 	else
 		err = wm_connect(SERVER_FILE);
 	if (err) {
