@@ -1,11 +1,11 @@
-MODULE HlpModel;
+MODULE MbyModel;
 
-IMPORT hlp_top_map AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
+IMPORT mby_top_map AS Map;
+IMPORT mby_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
-IMPORT HlpModelServer;
+IMPORT MbyModelServer;
 IMPORT Debug;
 
 PROCEDURE HandlePacket(READONLY read   : Map.T;
@@ -38,18 +38,13 @@ PROCEDURE FloodPktHandler(READONLY hdr : FmModelMessageHdr.T;
     END
   END FloodPktHandler;
 
-PROCEDURE SetupHlp(<*UNUSED*>server : HlpModelServer.T;
+PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN
-    Debug.Out("SetupHlp");
+    Debug.Out("SetupMby");
     
-    update.Imn.BsmScratch3[509].Data.u(16_1109);
-    (* match fpps_mgmt.c:546 *)
-    
-    update.Imn.FuseData[3].Data.u(16_6);
-    (* match fpps_switch.c:481 *)
-    
-  END SetupHlp;
+    (* fill this in *)
+  END SetupMby;
 
-BEGIN END HlpModel.
+BEGIN END MbyModel.

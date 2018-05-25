@@ -2,11 +2,20 @@
 .NOTPARALLEL:
 .DELETE_ON_ERROR:
 
+ifndef MODEL_ROOT
+   $(error MODEL_ROOT undefined, did you do a setnhdk?)
+endif
+
 # Makefile for CM3 white model build
 OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 METAROOT=$(shell ToolConfig.pl get_tool_path meta)
+
+# override here if you want to test a new toolchain
+#CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
+#METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git-2
+
 SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp 
 PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
 
@@ -66,13 +75,15 @@ $(TOP): $(TOP_TEMPLATE)
 	sed -i "s#META_HOME#$(METAROOT)#" $@
 
 mby_mains: $(GENVIEWS) $(MBYLIB)
-	$(MAKE) -C $(GENVIEWS_ROOT)/src/mby_mains
+	$(MAKE) CM3=$(CM3) -C $(GENVIEWS_ROOT)/src/mby_mains
 
 hlp_mains: $(HLPLIB)
 
 $(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*) $(TOP)
 	pushd $(WM_SUPPORT_ROOT)/src && $(CM3) -x
 	touch $@
+
+wm_support: $(WM_SUPPORT)
 
 $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
@@ -115,10 +126,10 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 $(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
 	cd wm_net && $(CM3) -x
 
-$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB)
+$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB)
 	cd model_server && $(CM3) -x 
 
-model_server_hlp: $(MODEL_SERVER)
+model_server: $(MODEL_SERVER)
 
 
 $(TEST_TARG): $(GENVIEWS)
@@ -129,6 +140,6 @@ clean:
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
-	rm -rf $(WM_NET)/scala_generated
+	rm -rf $(WM_NET_ROOT)/scala_generated
 	find . -name $(OS_TARG) | xargs rm -rf 
 	rm -f $(TOP)

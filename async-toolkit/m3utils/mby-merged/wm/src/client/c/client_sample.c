@@ -26,13 +26,21 @@
 #include <stdio.h>
 #include <mbay_dpi_client.h>
 
+#define SERVER_PATH "../../main/m3"
+#define SERVER_EXEC SERVER_PATH "/model_server/AMD64_LINUX/modelserver"
+#define SERVER_FILE SERVER_PATH "/models.packetServer"
+
 int main()
 {
+	int start_server = 1;
 	uint32_t addr;
 	uint64_t val;
 	int err;
 
-	err = wm_connect();
+	if (start_server)
+		err = wm_server_start(SERVER_EXEC);
+	else
+		err = wm_connect(SERVER_FILE);
 	if (err) {
 		printf("Error while connecting to the WM\n");
 		return 1;
@@ -64,12 +72,11 @@ int main()
 	}
 
 CLEANUP:
-	err = wm_disconnect();
+	err = start_server ? wm_server_stop() : wm_disconnect();
 	if (err)
 		printf("Error while disconnecting to the WM: %d\n", err);
 	else
 		printf("Disconnected from model_server\n");
-
 
 	return err;
 }

@@ -29,6 +29,7 @@ IMPORT DataPusher, IntDataPusherTbl;
 IMPORT Byte;
 IMPORT FmModelDataType;
 IMPORT FmModelSideBandData;
+IMPORT Process;
 
 IMPORT Compiler;
 
@@ -44,13 +45,15 @@ VAR doDebug := Debug.DebugThis(Brand);
   
 REVEAL
   T = Public BRANDED Brand OBJECT
-    port           : IP.Port;
-    conn           : TCP.Connector; (* listen here *)
-    listener       : Listener := NIL;
-    infoPath       : Pathname.T;
-    egressPorts    : IntDataPusherTbl.T;
-    portLinkState  : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
-    mu             : MUTEX; (* protects egressPorts, portLinkState *)
+    port                 : IP.Port;
+    conn                 : TCP.Connector; (* listen here *)
+    listener             : Listener := NIL;
+    infoPath             : Pathname.T;
+    egressPorts          : IntDataPusherTbl.T;
+    portLinkState        : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
+    mu                   : MUTEX; (* protects egressPorts, portLinkState *)
+    quitOnLastClientExit : BOOLEAN;
+    infoFile             : Pathname.T;
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
@@ -122,7 +125,7 @@ PROCEDURE InitI(i : Instance; t : T; rd : Rd.T; wr : Wr.T) : Instance =
 PROCEDURE LCApply(cl : Listener) : REFANY =
   BEGIN
     TRY
-      WriteInfo(cl.t.infoPath, cl.t.port);
+      WriteInfo(cl.t.infoPath, cl.t.infoFile, cl.t.port);
     EXCEPT
       Wr.Failure(x) =>
       Debug.Error(F("Caught Wr.Failure attempting to write to \"%s\" : %s",
@@ -134,16 +137,19 @@ PROCEDURE LCApply(cl : Listener) : REFANY =
            wr = ConnRW.NewWr(tcp),
            rd = ConnRW.NewRd(tcp),
            h  = NEW(Instance).init(cl.t, rd, wr) DO
+        LOCK clientCountMu DO
+          INC(clientCount)
+        END;
         cl.handlers.addhi(h);
         EVAL Thread.Fork(h)
       END
     END
   END LCApply;
 
-PROCEDURE WriteInfo(dirPath : Pathname.T; port : IP.Port)
+PROCEDURE WriteInfo(dirPath, fileName : Pathname.T; port : IP.Port)
   RAISES { OSError.E, Wr.Failure } =
   VAR
-    infoPath := dirPath & "/" & InfoFileName;
+    infoPath := dirPath & "/" & fileName;
   BEGIN
     Debug.Out("Writing info to " & infoPath);
     WITH wr = FileWr.Open(infoPath) DO
@@ -152,9 +158,14 @@ PROCEDURE WriteInfo(dirPath : Pathname.T; port : IP.Port)
     END
   END WriteInfo;
   
-PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
+PROCEDURE Init(t : T;
+               infoPath : Pathname.T;
+               quitOnLastClientExit : BOOLEAN;
+               infoFile : Pathname.T) : T =
   BEGIN
     t.mu := NEW(MUTEX);
+    t.infoFile := infoFile;
+    t.quitOnLastClientExit := quitOnLastClientExit;
     t.egressPorts := NEW(IntDataPusherTbl.Default).init();
     t.portLinkState :=
         ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T {
@@ -169,12 +180,24 @@ PROCEDURE Init(t : T; infoPath : Pathname.T) : T =
     RETURN t
   END Init;
 
+VAR
+  clientCountMu := NEW(MUTEX);
+  clientCount   := 0; (* global count of all clients connected to 
+                         this process *)
+  
 PROCEDURE HApply(cl : Instance) : REFANY =
 
   PROCEDURE DropClient() =
     BEGIN
       TRY Rd.Close(cl.rd) EXCEPT ELSE END;
       TRY Wr.Close(cl.wr) EXCEPT ELSE END;
+      LOCK clientCountMu DO
+        DEC(clientCount);
+        IF cl.t.quitOnLastClientExit AND clientCount = 0 THEN
+          Debug.Out("Quitting on last client disconnect");
+          Process.Exit(0)
+        END
+      END
     END DropClient;
   
   BEGIN
@@ -273,7 +296,9 @@ VAR
   (* Ctrl                      *) NIL,
   (* VersionInfo               *) NEW(MsgHandler, 
                                       handle := HandleMsgVersionInfo),
-  (* NvmRead                   *) NIL
+  (* NvmRead                   *) NIL,
+  (* CommandQuit               *) NEW(MsgHandler,
+                                      handle := HandleMsgCommandQuit)
   };
 
   (**********************************************************************)
@@ -438,6 +463,20 @@ PROCEDURE DPEC(dp : MyDataPusher) =
     END
   END DPEC;
 
+  (**********************************************************************)
+
+PROCEDURE HandleMsgCommandQuit(<*UNUSED*>m  : MsgHandler;
+                               READONLY hdr : FmModelMessageHdr.T;
+                               VAR cx       : NetContext.T;
+                               inst         : Instance)
+  RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure }=
+  BEGIN
+    <*ASSERT hdr.type = FmModelMsgType.T.CommandQuit*>
+    (* not elegant *)
+    Debug.Out("Received CommandQuit from socket stream, going down.");
+    Process.Exit(0)
+  END HandleMsgCommandQuit;
+  
   (**********************************************************************)
 
 PROCEDURE HandleMsgVersionInfo(<*UNUSED*>m  : MsgHandler;

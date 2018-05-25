@@ -3,6 +3,7 @@ import ("parseparams")
 import ("wm_support")
 import ("wm_net")
 import ("hlp")
+import ("mby")
 import ("mscheme")
 import ("modula3scheme")
 import ("netobj")
@@ -30,6 +31,10 @@ table ("IntDataPusher", "Integer", "DataPusher")
 table ("CardByte", "Cardinal", "Byte")
 
 module ("HlpModel")
+module ("MbyModel")
+
+Generic_module("BaseModelServer")
+module("MbyModelServer")
 
 SchemeStubs ("ModelServer")
 
