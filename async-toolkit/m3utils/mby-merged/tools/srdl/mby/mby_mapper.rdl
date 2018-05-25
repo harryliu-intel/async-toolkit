@@ -225,7 +225,7 @@ reg map_port_cfg_r {
 
            ";
     ValRandomize = true;
-  } PORT_PROFILE[7:0] = 7'h0;
+  } PORT_PROFILE[7:0] = 8'h0;
 };
 
 
@@ -255,37 +255,11 @@ reg map_port_default_r {
   field {
     AccessType = "RW";
     desc = "
-    If use_parse_ptr is set, then the value to use for
-    MAP_PORT_DEFAULT[port][i] is parse_result.ptr[i*2 : i*2+1].
-    ptr[i] is MSB and ptr[i+1] is LSB. The parser provides ptrs[7:1], set ptrs[0]=0.
-    [br][br]
-    This field is only used when the second index is 0..3.
-
-           ";
-    ValRandomize = true;
-  } USE_PARSE_PTR[32:32] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    The immediate value to use if !use_parse_ptr && (use_key == 255).
+    The immediate value to use.
 
            ";
     ValRandomize = true;
   } VALUE[31:16] = 16'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    If use_key[i] is <255, then replace value[i] with keys[use_key[i]].
-    [br][br]
-    This is needed to enable the Classifier to provide key bits directly into
-    mod_meta or other actions. It also removes the need for a
-    reverse-remap feature in Classifier.
-    [br][br]
-    This field is only used when the second index is 0..1.
-
-           ";
-    ValRandomize = true;
-  } USE_KEY[15:8] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -360,17 +334,17 @@ reg map_dglort_action_r {
   desc = "
   The (MAP_DGLORT_*) registers describe how to convert the
   21-bit key:[br]
-  [sp][sp]{lan_dest_port, dsi_dest_port, onpi_type}[br]
+  {lan_dest_port, dsi_dest_port, onpi_type}[br]
   into a 16-bit default DGLORT.
   [br][br]
   MAP_DGLORT_ACTION[i] is used when MAP_DGLORT_KEY[i] is the highest-numbered hit.
   The DGLORT used is[br]
-  [sp][sp]base | rotate(key, rot) & mask_gen(start, len)[br]
+  base | rotate(key, rot) & mask_gen(start, len)[br]
   Wherein
-  [list]
-  [*] rotate(key, rot) == (key << rot) | (key >> (32-rot))
-  [*] mask_gen(start, len)[j] is set if j>=start and j < start+len
-  [/list]
+  [code]
+  rotate(key, rot) == (key << rot) | (key >> (32-rot))
+  mask_gen(start, len)[j] is set if j>=start and j < start+len
+  [/code]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -420,33 +394,6 @@ reg map_dglort_action_r {
            ";
     ValRandomize = true;
   } BASE[15:0] = 16'h0;
-};
-
-
-
-// MAP_CPM_FN
-
-reg map_cpm_fn_r {
-  shared;
-  HandCoded = true;
-  name = "Enable CPM Ingress ONPI function per port.";
-  desc = "
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-    Bit i is set if the CPM Ingress ONPI function is enabled on port i.
-    When this function is enabled, and the ESP_VALID parser flag is set,
-    the IP and ESP header header offsets are written into ONPI metadata.
-
-           ";
-    ValRandomize = true;
-  } PORT_MASK[23:0] = 24'h0;
 };
 
 
@@ -561,15 +508,16 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[127:98] = 30'h0;
+  } _RSVD1_[127:123] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
-      Inverted ingress port number
+      Inverted ingress port mask. With port_key set to all zeros, set a 1 bit in this
+      field only for ports to be excluded from matching.
 
            ";
     ValRandomize = true;
-  } PORT_KEY_INVERT[97:90] = 8'hff;
+  } PORT_KEY_INVERT[122:90] = 33'h1ffffffff;
   field {
     AccessType = "RW";
     desc = "
@@ -609,15 +557,15 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[63:34] = 30'h0;
+  } _RSVD0_[63:59] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
-      Ingress port number
+      Ingress port mask. Set to all zeros and control matching with port_key_invert.
 
            ";
     ValRandomize = true;
-  } PORT_KEY[33:26] = 8'hff;
+  } PORT_KEY[58:26] = 33'h1ffffffff;
   field {
     AccessType = "RW";
     desc = "
@@ -674,7 +622,7 @@ reg map_domain_action0_r {
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[38:30] = 9'h0;
+  } L2_DOMAIN[37:30] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -694,8 +642,10 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-    When set, use the domains, priority_profile, and operator_id from the action,
-    and write the domain and operator_id fields into the packet's ONPI metadata.
+    Used only for packets sent to the CPP. When set, use the domains, 
+    priority_profile, and operator_id from the action,
+    and write the domain and operator_id fields into the metadata that will be
+    sent to the CPP.
 
     If update_domains=0, then use the l2_domain, l3_domain, and operator_id fields
     received in the packet's ONPI metadata. Do not overwrite those fields. And use
@@ -707,7 +657,7 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-     Learning enable/disable.
+     Learning notification enable/disable.
      This is used as the default value for the Classifier 'LEARN' action.
 
            ";
@@ -716,7 +666,7 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-     Select shared(0) or independent(1) VLAN learning.
+     Select shared(0) or independent(1) VLAN learning notification.
 
            ";
     ValRandomize = true;
@@ -737,6 +687,13 @@ reg map_domain_action0_r {
      [*] pri_source[7:6] = highest precedence TC source ID
      [*] pri_source[1:0] = lowest precedence TC source  ID
      [/list]
+     where each 2b field is uniquely one of:
+     [code]
+     00: MAP_VPRI_TC
+     01: MAP_EXP_TC
+     10: MAP_DSCP_TC
+     11: TC specified in sideband data from CPU
+     [/code]
 
            ";
     ValRandomize = true;
@@ -1037,9 +994,9 @@ reg map_ip_cfg_r {
     AccessType = "RW";
     desc = "
         Indicates the number of most-significant bits of the IP address to match on.  For
-        IPv6 addresses, the the match for entry i is against { MAP_IP_HI[i], MAP_IP_LO[i] }.
+        IPv6 addresses, the match for entry i is against MAP_IP_HI[i], MAP_IP_LO[i],
         and MATCH_LENGTH is in the range 0..128.  For IPv4 addresses, the match for entry i
-        is against MAP_IP_HI[i][63:32] and MATCH_LENGTH is in the range 0..32.
+        is against MAP_IP_HI[i][63:32], and MATCH_LENGTH is in the range 0..32.
 
            ";
     ValRandomize = true;
@@ -1859,7 +1816,7 @@ reg map_profile_key1_r {
   HandCoded = true;
   name = "Packet profile CAM key value 1";
   desc = "
-  Packet profile KEY1 is metadata/mapping.
+  Packet profile KEY1 is mapping.
   This register provides the key values to compare against. The same format is used for key and key invert. 
 
   The semantic is identical to that used in the FFU_TCAM register.
@@ -1874,32 +1831,12 @@ reg map_profile_key1_r {
   field {
     AccessType = "RW";
     desc = "
-     . pkt_meta.c.typ
-
-           ";
-    ValRandomize = true;
-  } METADATA_TYPE[59:52] = 8'hff;
-  field {
-    AccessType = "RW";
-    desc = "
-     [list]
-     [*] pkt_meta.dsi_rx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_RX)
-     [*] pkt_meta.dsi_tx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_TX)
-     [*] 0 (otherwise)
-     [/list]
-
-           ";
-    ValRandomize = true;
-  } METADATA_FLAGS[51:41] = 11'h7ff;
-  field {
-    AccessType = "RW";
-    desc = "
      . pkt_meta.c.l2_domain
      May have been changed by MAP_DOMAIN_ACTION0.
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[40:32] = 9'h1ff;
+  } L2_DOMAIN[39:32] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
@@ -1973,7 +1910,7 @@ reg map_profile_key_invert1_r {
   HandCoded = true;
   name = "Packet profile CAM key invert 1";
   desc = "
-  Packet profile KEY1 is metadata/mapping.
+  Packet profile KEY1 is mapping.
   This register selects which key bits to compare. The same format is used for key and key invert. 
 
   The semantic is identical to that used in the FFU_TCAM register.
@@ -1988,32 +1925,12 @@ reg map_profile_key_invert1_r {
   field {
     AccessType = "RW";
     desc = "
-     . pkt_meta.c.typ
-
-           ";
-    ValRandomize = true;
-  } METADATA_TYPE[59:52] = 8'hff;
-  field {
-    AccessType = "RW";
-    desc = "
-     [list]
-     [*] pkt_meta.dsi_rx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_RX)
-     [*] pkt_meta.dsi_tx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_TX)
-     [*] 0 (otherwise)
-     [/list]
-
-           ";
-    ValRandomize = true;
-  } METADATA_FLAGS[51:41] = 11'h7ff;
-  field {
-    AccessType = "RW";
-    desc = "
      . pkt_meta.c.l2_domain
      May have been changed by MAP_DOMAIN_ACTION0.
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[40:32] = 9'h1ff;
+  } L2_DOMAIN[39:32] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
@@ -2311,7 +2228,6 @@ addrmap mby_ppe_mapper_map {
   map_extract2_r             MAP_EXTRACT2[16]              @0xD00 += 8;
   map_dglort_tcam_r          MAP_DGLORT_TCAM[8]            @0x1000 += 8;
   map_dglort_action_r        MAP_DGLORT_ACTION[8]          @0x1040 += 8;
-  map_cpm_fn_r               MAP_CPM_FN                    @0x1080;
   map_len_limit_r            MAP_LEN_LIMIT[33]             @0x1100 += 8;
   map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
   map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
