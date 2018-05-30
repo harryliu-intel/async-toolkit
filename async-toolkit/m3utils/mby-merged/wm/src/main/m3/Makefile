@@ -66,7 +66,7 @@ TOP_TEMPLATE=top_template
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
-mains: mby_mains hlp_mains
+mains: mby_mains hlp_mains model_server
 
 top: $(TOP)
 
