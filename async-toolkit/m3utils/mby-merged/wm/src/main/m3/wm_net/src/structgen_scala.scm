@@ -307,6 +307,13 @@
         (else
          (symbol->string (symbol-append (get-tgt-typemapping type) ".Value")))))
 
+(define (get-scala-type-2 type)
+  (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "Array[" (get-scala-type (cadr type)) "]"
+                         " /* " (caddr type) " */" ))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type))))))
 
 (define (make-dotted-reference intf member)
   (symbol->string (symbol-append intf (symbol-append "." member))))
@@ -781,10 +788,32 @@
       (define (emit-header-field-type f)
          (dis "    " (legalize-field (car f)) " : " (get-scala-type (cadr f)) "," dnl wr))
       (dis " (" dnl wr)
-      ;; need comma, after every except last entry
       (for-each (lambda(f)(emit-header-field-type f)) fields)
       (dis ") //" dnl dnl wr))
+	  
+	  
+	  (define (get-scala-type-2 type)
+        (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "Array" (get-scala-type (cadr type)) "(" (caddr type) ")"))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type))))))
+	  (define (get-scala-type-3 type)
+        (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "Array" (get-scala-type (cadr type))))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type))))))
 
+		 
+	(define (emit-scala-read)
+      (define (emit-field-read f)
+         (dis "    " (legalize-field (car f)) " = this.read" (get-scala-type-2 (cadr f)) "," dnl wr))
+      (for-each (lambda(f)(emit-field-read f)) fields))
+	(define (emit-scala-write)
+      (define (emit-field-write f)
+		 (dis "    this.write" (get-scala-type-3 (cadr f)) "(x." (legalize-field (car f)) ")" dnl wr))
+      (for-each (lambda(f)(emit-field-write f)) fields))
 
     (define (emit-length)
       (dis "val length = 0" wr)
@@ -801,6 +830,7 @@
     (dis "package switch_wm" dnl dnl wr)
     (dis "import java.io._" dnl wr)
     (dis "import PrimitiveTypes._" dnl dnl wr)
+    (dis "import Implicits._" dnl dnl wr)
 
     (dis "case class " scala-name dnl wr)
     (emit-scala-t)
@@ -813,16 +843,18 @@
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
 	  (dis "class " scala-name-os "(os: OutputStream) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ") = { " dnl
-	     " // write out the case class, using appropriate portable writeShort, writeInt, etc. operations" dnl 
-		 " }" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { " dnl wr)
+		 (emit-scala-write)
+	  (dis " }" dnl wr)
 	
       (dis "}" dnl wr)
 	  (dis "class " scala-name-is "(is : InputStream) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name " = {" dnl 
-	       "  // read in, using portable readShort, readInt, etc., operations" dnl
-		   " }" dnl wr)
-	
+	  (dis " def read" scala-name "() : " scala-name " = {" dnl wr)
+	       (dis "   " scala-name "(" dnl wr)
+		   (emit-scala-read)
+		   (dis "  ) " dnl wr)
+		   (dis " }" dnl wr)
+
 	  (dis "}" dnl wr)
 	  (dis "object " scala-name-is "{" dnl wr)
       (dis "implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)

@@ -39,9 +39,47 @@ object BitStruct {
   }
 }
 
+
 object PrimitiveTypes {
  type U8 = Byte
  type U16 = Short
  type U32 = Int
  type U64 = Long
+
+ implicit def isToPrimitiveTypeInputStream(is : java.io.InputStream) : PrimitiveTypeInputStream = new PrimitiveTypeInputStream(is)
+ implicit def osToPrimitiveTypeOutputStream(os : java.io.OutputStream) : PrimitiveTypeOutputStream = new PrimitiveTypeOutputStream(os)
+
 }
+
+import java.io._
+class PrimitiveTypeInputStream(is : InputStream) extends DataInputStream(is) {
+   import PrimitiveTypes._
+    def readU8() : U8 = readByte()
+    def readU16() : U16 = readShort()
+    def readU32() : U32 = readInt()
+    def readU64() : U64 = readLong()
+
+    def readArrayU8(size : Int) : Array[U8] = {
+       val array = Array.ofDim[U8](size)
+       readFully(array)
+       array
+    }
+}
+
+class PrimitiveTypeOutputStream(os : OutputStream) extends DataOutputStream(os) {
+   import PrimitiveTypes._
+    def writeU8(x : U8) : Unit = writeByte(x)
+    def writeU16(x : U16) : Unit = writeShort(x)
+    def writeU32(x : U32) : Unit = writeInt(x)
+    def writeU64(x : U64) : Unit = writeLong(x)
+
+    def writeArrayU8(a : Array[U8] ) : Unit = {
+       write(a,0,a.size)
+    }
+}
+
+
+// object PrimitiveTypeInputStream {
+//     implicit def isToPrimitiveTypeInputStream(is : InputStream) : PrimitiveTypeInputStream = new PrimitiveTypeInputStream(is)
+// }
+
