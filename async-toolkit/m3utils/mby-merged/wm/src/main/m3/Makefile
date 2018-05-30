@@ -46,6 +46,7 @@ STRUCTGEN_TOP=$(WM_NET_ROOT)/src/structs.scm
 
 M3_STRUCTS=$(WM_NET_TARGDIR)/derived.m3m
 SCALA_STRUCTS=$(WM_NET_ROOT)/scala_generated/derived_scala.filelist
+SCALA_IMPLICITS=$(WM_NET_ROOT)/scala_generated/Implicits.scala
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
@@ -98,6 +99,13 @@ $(M3_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTGEN_TOP)
 $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 	mkdir -p $(dir $@)
 	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
+	rm -rf $(SCALA_IMPLICITS)
+	echo "package switch_wm" > $(SCALA_IMPLICITS)
+	echo "import java.io._" >> $(SCALA_IMPLICITS)
+	echo "object Implicits {" >> $(SCALA_IMPLICITS)
+	grep -h implicit $(WM_NET_ROOT)/scala_generated/* >> $(SCALA_IMPLICITS)
+	echo "}" >> $(SCALA_IMPLICITS)
+
 
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 

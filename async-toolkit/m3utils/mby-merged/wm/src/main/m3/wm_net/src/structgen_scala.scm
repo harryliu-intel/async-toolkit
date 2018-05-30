@@ -884,4 +884,4 @@
 ;;(set! compile-enum!       (lambda(nm x) #t))
 (set! compile-constants!  (lambda(nm x) #t))
 ;;(set! compile-header!     (lambda(nm x) #t))
-;;(set! compile-bitstruct!  (lambda(nm x) #t))
+(set! compile-bitstruct!  (lambda(nm x) #t))
