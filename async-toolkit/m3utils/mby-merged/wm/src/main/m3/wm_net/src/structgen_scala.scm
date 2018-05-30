@@ -18,18 +18,6 @@
 ;; header and bitstruct types offer slightly different interfaces
 ;;
 ;;
-;; The compiler itself currently depends (maybe) on the following
-;; Modula-3 code:
-;;
-;;   FileWr.OpenAppend
-;;   M3Support.Modula3Type
-;;   M3Support.ReformatNumber
-;;   IdStyles.Convert
-;;   Scan.Int
-;;
-;; the m3makefile of the compiler hence has to contain (or somehow
-;; import) SchemeStubs for these interfaces.
-;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -120,54 +108,9 @@
 ;;;
 
 
-(define read-proc-name "Read")
-(define read-proto "(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }")
-
-(define write-proc-name "Write")
-(define write-proto "(wr : Wr.T; READONLY t : T) RAISES { Wr.Failure, Thread.Alerted }")
-
-(define readc-proc-name "ReadC")
-(define readc-proto "(rd : Rd.T; VAR cx : NetContext.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted, NetContext.Short }")
-
-(define reads-proc-name "ReadS")
-(define reads-proto "(s : Pkt.T; VAR at : CARDINAL; VAR t : T) : BOOLEAN")
-
-(define writec-proc-name "WriteC")
-(define writec-proto "(wr : Wr.T; READONLY t : T; VAR cx : NetContext.T) RAISES { Wr.Failure, Thread.Alerted }")
-
-(define writes-proc-name "WriteS")
-(define writes-proto "(s : Pkt.T; at : CARDINAL; READONLY t : T)")
-
-(define readsb-proc-name "ReadSB")
-(define readsb-proto "(s : Pkt.T; at : CARDINAL; VAR res : T) : BOOLEAN")
-
-(define readeb-proc-name "ReadEB")
-(define readeb-proto "(s : Pkt.T; e : Pkt.End; VAR res : T) : BOOLEAN")
-
-(define writee-proc-name "WriteE")
-(define writee-proto "(s : Pkt.T; e : Pkt.End; READONLY t : T)")
-
-(define format-proc-name "Format")
-(define format-proto "(READONLY t : T) : TEXT")
-
-(define check-proc-name "Check")
-(define check-proto "(READONLY t : T) : BOOLEAN")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (put-m3-proc whch .
-                     wrs ;; i3 m3 ...
-                     )
-  (map (lambda(wr)
-         (dis
-          "PROCEDURE "
-          (eval (symbol-append whch '-proc-name))
-          (eval (symbol-append whch '-proto))
-          wr))
-       wrs)
-  (dis ";" dnl (car wrs)) ;; i3
-  (dis " =" dnl (cadr wrs)) ;; m3
-)
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -291,14 +234,6 @@
 ;;;
 ;;; HEADER FIELD TYPES
 
-(define (get-m3-type type)
-  (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
-        ((array-type? type)
-         (sa "ARRAY [0.." (caddr type) "-1] OF "
-                        (get-m3-type (cadr type))))
-        (else
-         (symbol->string (symbol-append (get-tgt-typemapping type) ".T")))))
-
 (define (get-scala-type type)
   (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
         ((array-type? type)
@@ -325,40 +260,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-read-type whch type lhs lev ind)
-  (cond ((member? type '(u8 u16 u32 u64))
-         (case whch
-           ((read)
-            (sa ind lhs " := RdNet.Get"(scheme->scala type)"(rd)"))
-           ((readc)
-            (sa ind lhs " := RdNet.Get"(scheme->scala type)"C(rd,cx)"))
-           ((reads)
-            (sa ind "IF NOT RdNet.Get"(scheme->scala type)"S(s,p,"lhs") THEN RETURN FALSE END"))
-           (else (error whch))))
-           
-        ((array-type? type)
-         (sa
-          ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
-
-          (get-m3-read-type
-           whch
-           (cadr type)
-           (sa lhs "[i"lev"]")
-           (+ lev 1)
-           (sa ind "  ")
-           ) dnl
-          ind "END"
-          ))
-        (else
-         (case whch
-           ((read)
-            (sa ind lhs " := " (get-tgt-typemapping type) ".Read(rd)"))
-           ((readc)
-            (sa ind lhs " := " (get-tgt-typemapping type) ".ReadC(rd,cx)"))
-           ((reads)
-            (sa ind "IF NOT " (get-tgt-typemapping type) ".ReadS(s,p,"lhs") THEN RETURN FALSE END"))
-            
-           (else (error whch))))))
          
 (define (emit-header-field-readx whch f m-wr updn)
   (dis (get-m3-read-type whch
@@ -379,143 +280,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-format-type type rhs lev ind)
-  ;;(dis "RHS " rhs dnl)
-  (cond ((member? type '(u8 u16 u32 u64))
-         (sa
-          ind
-          "Wx.PutText(wx,NetTypes.Format"(scheme->scala type)"("rhs"))"
-          ))
-          
-        ((array-type? type)
-         (sa
-          ind "Wx.PutChar(wx,'{');" dnl
-          ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
-          ind "  Wx.PutChar(wx,' ');" dnl
-              
-          (get-m3-format-type
-           (cadr type)
-           (sa "  " rhs "[i"lev"]")
-           (+ lev 1)
-           (sa ind "  ")
-           )
-          dnl
-
-          ind "END;" dnl
-          ind "Wx.PutText(wx,\" }\")" 
-          ))
-        (else
-         (sa
-          ind
-          "Wx.PutText(wx," (get-tgt-typemapping type) ".Format("rhs"))"))))
-
-(define (emit-header-field-format f m-wr updn)
-  (let ((field-name (car f))
-        (field-type (cadr f)))
-    
-    (dis
-     "    Wx.PutText(wx,\""field-name"=\");" dnl
-     (get-m3-format-type field-type
-                         (sa "t."field-name)
-                         0
-                         "    "
-                         ) 
-     ";" dnl
-     "    Wx.PutText(wx,\" \");" dnl
-     m-wr)
-    ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-write-type whch type rhs lev ind updn)
-  ;;(dis "RHS " rhs dnl)
-  ;;(dis whch " " type dnl)
-
-  (sa
-
-   ;;
-   ;; in case of the generic write 'writee , the fields are
-   ;; processed twice: once in ascending, then once in descending
-   ;; order.
-   ;;
-   ;; we need to ensure that only one copy is actually emitted!
-   ;;
-
-   (if (eq? whch 'writee)
-       (sa ind                   ;; matches *** >>>
-                      (case updn
-                        ((up) "IF e=Pkt.End.Back THEN ")
-                        ((dn) "IF e=Pkt.End.Front THEN ")
-                        ) ;; esac
-         )
-       ""
-       )
-
-   ;; and now for your regularly scheduled presentation...
-  (cond ((member? type '(u8 u16 u32 u64))
-         (case whch
-           ((write)
-            (sa ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
-           ((writec)
-            (sa ind "WrNet.Put"(scheme->m3 type)"C(wr,"rhs",cx)"))
-           ((writes)
-            (sa ind "WrNet.Put"(scheme->m3 type)"S(s,at,"rhs")"))
-           ((writee)
-            (sa ind "WrNet.Put"(scheme->m3 type)"G(s,e,"rhs")"))
-           (else (error whch))))
-         
-        ((array-type? type)
-         (sa
-          ind
-          (case updn
-            ((up)
-             (sa "FOR i"lev" := 0 TO " (caddr type) "-1 DO"))
-
-            ((dn)
-             (sa "FOR i"lev" := " (caddr type) "-1 TO 0 BY -1 DO"))
-            )
-          dnl
-
-          (get-m3-write-type
-           whch
-           (cadr type)
-           (sa "  " rhs "[i"lev"]")
-           (+ lev 1)  ;; increase nesting depth
-           (sa ind "  ")
-           updn
-           )
-          dnl
-
-          ind "END"
-          ))
-
-        (else
-         (case whch
-           ((write)
-            (sa ind (get-tgt-typemapping type) ".Write(wr,"rhs")"))
-           ((writec)
-            (sa ind (get-tgt-typemapping type) ".WriteC(wr,"rhs",cx)"))
-           ((writes)
-            (sa ind (get-tgt-typemapping type) ".WriteS(s,at,"rhs")"))
-           ((writee)
-            (sa ind (get-tgt-typemapping type) ".WriteE(s,e,"rhs")"))
-           (else (error whch)))))
-  ;; dnoc
-  
-  (if (eq? whch 'writee) " END" "")  ;; matches *** <<<
-  
-  ) ;; sa
-  )
-
-(define (emit-header-field-writex whch f m-wr updn)
-  (dis 
-   (get-m3-write-type whch
-                      (cadr f)
-                      (sa "t."(car f))
-                      0
-                      "    "
-                      updn)
-   
-   ";" dnl m-wr))
 
 (define (emit-header-field-writee . x)
   (apply emit-header-field-writex (cons 'writee x)))
@@ -554,9 +320,6 @@
 ;; field currently being parsed).  The current record is called "t".
 ;;
 
-(define (symbol->m3integer x)
-  (M3Support.ReformatNumber (symbol->string x))
-  )
    
 (define (get-bitstruct-constraint-check nm t constraint)
   ;;(dis "CONSTRAINT: " (stringify constraint) dnl)
@@ -575,12 +338,6 @@
 
     ) ;; esac
   )
-
-
-(define (mynumber->m3integer x)
-  (cond ((symbol? x) (symbol->m3integer x))
-        ((number? x) (number->string x))
-        (else (error "unknown number " (stringify x)))))
 
 
 ;;
