@@ -6,6 +6,8 @@ IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 
 (********************************************************************** 
+ *
+ *
 
    White Model Model Server 
 
@@ -14,7 +16,8 @@ IMPORT FmModelMessageHdr;
 
    Author : Mika Nystrom <mika.nystroem@intel.com>
    April, 2018
-
+                                                                      *
+                                                                      *
  **********************************************************************)
 
 
@@ -35,8 +38,10 @@ TYPE
     listenFork() : Listener;
     (* fork a listener on an arbitrarily chosen port *)
 
-    (* abstract methods, implement in child type: *)
+    (****** abstract methods, implement in child type: ******)
+    
     resetChip();
+    (* bring the DUT to the desired reset state *)
 
     csrOp(VAR op : CsrOp.T) : CsrAccessStatus.T;
     (* perform a CSR operation as requested.
