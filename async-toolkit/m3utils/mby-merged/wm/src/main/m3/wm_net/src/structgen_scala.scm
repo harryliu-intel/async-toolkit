@@ -18,18 +18,6 @@
 ;; header and bitstruct types offer slightly different interfaces
 ;;
 ;;
-;; The compiler itself currently depends (maybe) on the following
-;; Modula-3 code:
-;;
-;;   FileWr.OpenAppend
-;;   M3Support.Modula3Type
-;;   M3Support.ReformatNumber
-;;   IdStyles.Convert
-;;   Scan.Int
-;;
-;; the m3makefile of the compiler hence has to contain (or somehow
-;; import) SchemeStubs for these interfaces.
-;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -42,6 +30,8 @@
                     'Lower 'Camel
                     'Hyphen 'None))
 
+					
+(define legalize-field scheme->scala)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; OUTPUT FILE HANDLING
@@ -53,7 +43,10 @@
       (dis nm dnl mf-wr)
       (wr-close mf-wr))
           
-    (dis "package switch_wm" dnl wr)
+    (dis "package switch_wm" dnl dnl wr)
+	(dis "import java.io._" dnl dnl wr)
+	(dis "import PrimitiveTypes._" dnl dnl wr)
+	
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
     ;; imports ?
@@ -116,54 +109,9 @@
 ;;;
 
 
-(define read-proc-name "Read")
-(define read-proto "(rd : Rd.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted }")
-
-(define write-proc-name "Write")
-(define write-proto "(wr : Wr.T; READONLY t : T) RAISES { Wr.Failure, Thread.Alerted }")
-
-(define readc-proc-name "ReadC")
-(define readc-proto "(rd : Rd.T; VAR cx : NetContext.T) : T RAISES { Rd.Failure, NetError.OutOfRange, Rd.EndOfFile, Thread.Alerted, NetContext.Short }")
-
-(define reads-proc-name "ReadS")
-(define reads-proto "(s : Pkt.T; VAR at : CARDINAL; VAR t : T) : BOOLEAN")
-
-(define writec-proc-name "WriteC")
-(define writec-proto "(wr : Wr.T; READONLY t : T; VAR cx : NetContext.T) RAISES { Wr.Failure, Thread.Alerted }")
-
-(define writes-proc-name "WriteS")
-(define writes-proto "(s : Pkt.T; at : CARDINAL; READONLY t : T)")
-
-(define readsb-proc-name "ReadSB")
-(define readsb-proto "(s : Pkt.T; at : CARDINAL; VAR res : T) : BOOLEAN")
-
-(define readeb-proc-name "ReadEB")
-(define readeb-proto "(s : Pkt.T; e : Pkt.End; VAR res : T) : BOOLEAN")
-
-(define writee-proc-name "WriteE")
-(define writee-proto "(s : Pkt.T; e : Pkt.End; READONLY t : T)")
-
-(define format-proc-name "Format")
-(define format-proto "(READONLY t : T) : TEXT")
-
-(define check-proc-name "Check")
-(define check-proto "(READONLY t : T) : BOOLEAN")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (put-m3-proc whch .
-                     wrs ;; i3 m3 ...
-                     )
-  (map (lambda(wr)
-         (dis
-          "PROCEDURE "
-          (eval (symbol-append whch '-proc-name))
-          (eval (symbol-append whch '-proto))
-          wr))
-       wrs)
-  (dis ";" dnl (car wrs)) ;; i3
-  (dis " =" dnl (cadr wrs)) ;; m3
-)
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -180,19 +128,18 @@
          (scala-wire-type (scheme->scala wire-type))
          (names        (cadr x))
          (values       (caddr x))
-         (scala-name      ( nm names))
+         (scala-name      (get-scala-name nm names))
          (scala-wrs       (open-scala scala-name "AnyObj"))
          (wr              (car scala-wrs))
          )
-    (dis "scala-name " scala-name dnl)
     (add-tgt-type! nm scala-name)
-    (dis "{" dnl wr)
-
+    (dis "scala-name " scala-name dnl)
+    
     (dis "type W = " scala-wire-type dnl
          dnl
          wr)
-    (map (lambda(x)(compile-scala-const-value x wr)) values)
-
+    (map (lambda(x)(compile-scala-const-value x wr)) values)   
+    (dis "}" dnl wr)
     (close-scala scala-wrs)
     ) ;; *tel
   )
@@ -223,7 +170,7 @@
     ;; final IMPORTs
     
 
-    (dis "  const Length = " (get-scala-type-size wire-type) ";" dnl
+    (dis "  val Length = " (get-scala-type-size wire-type) ";" dnl
          dnl wr)
     
     (let loop ((i      0)
@@ -263,16 +210,22 @@
 	
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
-	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ") = { writeByte(x.id) }" dnl wr)
+	  (dis "class " scala-name-os "(os: OutputStream) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ".Value) = { writeByte(x.id) }" dnl wr)
 	
       (dis "}" dnl wr)
-	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name " = " scala-name "(readByte())" dnl wr)
+	  (dis "class " scala-name-is "(is: InputStream) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name ".Value = " scala-name "(readByte())" dnl wr)
 	
 	  (dis "}" dnl wr)
-      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
-	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	  (dis "object " scala-name-is "{" dnl wr)
+      (dis " implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)
+	  (dis "}" dnl wr)
+      
+	  (dis "object " scala-name-os "{" dnl wr)
+	  (dis " implicit def osTo" scala-name-os "(os: OutputStream) : " scala-name-os " = new " scala-name-os "(os)" dnl wr)
+	  (dis "}" dnl wr)
+      
 	)
     (close-scala scala-wrs)
     )
@@ -281,22 +234,21 @@
 ;;;
 ;;; HEADER FIELD TYPES
 
-(define (get-m3-type type)
-  (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
-        ((array-type? type)
-         (sa "ARRAY [0.." (caddr type) "-1] OF "
-                        (get-m3-type (cadr type))))
-        (else
-         (symbol->string (symbol-append (get-tgt-typemapping type) ".T")))))
-
 (define (get-scala-type type)
   (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
         ((array-type? type)
-         (string-append "ARRAY [0.." (caddr type) "-1] OF "
-                        (get-scala-type (cadr type))))
+         (string-append "Array[" (get-scala-type (cadr type)) "]"
+                         " /* " (caddr type) " */" ))
         (else
          (symbol->string (symbol-append (get-tgt-typemapping type) ".Value")))))
 
+(define (get-scala-type-2 type)
+  (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "Array[" (get-scala-type (cadr type)) "]"
+                         " /* " (caddr type) " */" ))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type))))))
 
 (define (make-dotted-reference intf member)
   (symbol->string (symbol-append intf (symbol-append "." member))))
@@ -304,46 +256,10 @@
 (define (get-scala-type-size type)
   (get-type-size type make-dotted-reference))
 
-(define (emit-header-field-type f i-wr)
-  (dis "    " (car f) " : " (get-scala-type (cadr f)) dnl i-wr))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-read-type whch type lhs lev ind)
-  (cond ((member? type '(u8 u16 u32 u64))
-         (case whch
-           ((read)
-            (sa ind lhs " := RdNet.Get"(scheme->scala type)"(rd)"))
-           ((readc)
-            (sa ind lhs " := RdNet.Get"(scheme->scala type)"C(rd,cx)"))
-           ((reads)
-            (sa ind "IF NOT RdNet.Get"(scheme->scala type)"S(s,p,"lhs") THEN RETURN FALSE END"))
-           (else (error whch))))
-           
-        ((array-type? type)
-         (sa
-          ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
-
-          (get-m3-read-type
-           whch
-           (cadr type)
-           (sa lhs "[i"lev"]")
-           (+ lev 1)
-           (sa ind "  ")
-           ) dnl
-          ind "END"
-          ))
-        (else
-         (case whch
-           ((read)
-            (sa ind lhs " := " (get-tgt-typemapping type) ".Read(rd)"))
-           ((readc)
-            (sa ind lhs " := " (get-tgt-typemapping type) ".ReadC(rd,cx)"))
-           ((reads)
-            (sa ind "IF NOT " (get-tgt-typemapping type) ".ReadS(s,p,"lhs") THEN RETURN FALSE END"))
-            
-           (else (error whch))))))
          
 (define (emit-header-field-readx whch f m-wr updn)
   (dis (get-m3-read-type whch
@@ -364,143 +280,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-format-type type rhs lev ind)
-  ;;(dis "RHS " rhs dnl)
-  (cond ((member? type '(u8 u16 u32 u64))
-         (sa
-          ind
-          "Wx.PutText(wx,NetTypes.Format"(scheme->scala type)"("rhs"))"
-          ))
-          
-        ((array-type? type)
-         (sa
-          ind "Wx.PutChar(wx,'{');" dnl
-          ind "FOR i"lev" := 0 TO " (caddr type) "-1 DO" dnl
-          ind "  Wx.PutChar(wx,' ');" dnl
-              
-          (get-m3-format-type
-           (cadr type)
-           (sa "  " rhs "[i"lev"]")
-           (+ lev 1)
-           (sa ind "  ")
-           )
-          dnl
-
-          ind "END;" dnl
-          ind "Wx.PutText(wx,\" }\")" 
-          ))
-        (else
-         (sa
-          ind
-          "Wx.PutText(wx," (get-tgt-typemapping type) ".Format("rhs"))"))))
-
-(define (emit-header-field-format f m-wr updn)
-  (let ((field-name (car f))
-        (field-type (cadr f)))
-    
-    (dis
-     "    Wx.PutText(wx,\""field-name"=\");" dnl
-     (get-m3-format-type field-type
-                         (sa "t."field-name)
-                         0
-                         "    "
-                         ) 
-     ";" dnl
-     "    Wx.PutText(wx,\" \");" dnl
-     m-wr)
-    ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-m3-write-type whch type rhs lev ind updn)
-  ;;(dis "RHS " rhs dnl)
-  ;;(dis whch " " type dnl)
-
-  (sa
-
-   ;;
-   ;; in case of the generic write 'writee , the fields are
-   ;; processed twice: once in ascending, then once in descending
-   ;; order.
-   ;;
-   ;; we need to ensure that only one copy is actually emitted!
-   ;;
-
-   (if (eq? whch 'writee)
-       (sa ind                   ;; matches *** >>>
-                      (case updn
-                        ((up) "IF e=Pkt.End.Back THEN ")
-                        ((dn) "IF e=Pkt.End.Front THEN ")
-                        ) ;; esac
-         )
-       ""
-       )
-
-   ;; and now for your regularly scheduled presentation...
-  (cond ((member? type '(u8 u16 u32 u64))
-         (case whch
-           ((write)
-            (sa ind "WrNet.Put"(scheme->m3 type)"(wr,"rhs")"))
-           ((writec)
-            (sa ind "WrNet.Put"(scheme->m3 type)"C(wr,"rhs",cx)"))
-           ((writes)
-            (sa ind "WrNet.Put"(scheme->m3 type)"S(s,at,"rhs")"))
-           ((writee)
-            (sa ind "WrNet.Put"(scheme->m3 type)"G(s,e,"rhs")"))
-           (else (error whch))))
-         
-        ((array-type? type)
-         (sa
-          ind
-          (case updn
-            ((up)
-             (sa "FOR i"lev" := 0 TO " (caddr type) "-1 DO"))
-
-            ((dn)
-             (sa "FOR i"lev" := " (caddr type) "-1 TO 0 BY -1 DO"))
-            )
-          dnl
-
-          (get-m3-write-type
-           whch
-           (cadr type)
-           (sa "  " rhs "[i"lev"]")
-           (+ lev 1)  ;; increase nesting depth
-           (sa ind "  ")
-           updn
-           )
-          dnl
-
-          ind "END"
-          ))
-
-        (else
-         (case whch
-           ((write)
-            (sa ind (get-tgt-typemapping type) ".Write(wr,"rhs")"))
-           ((writec)
-            (sa ind (get-tgt-typemapping type) ".WriteC(wr,"rhs",cx)"))
-           ((writes)
-            (sa ind (get-tgt-typemapping type) ".WriteS(s,at,"rhs")"))
-           ((writee)
-            (sa ind (get-tgt-typemapping type) ".WriteE(s,e,"rhs")"))
-           (else (error whch)))))
-  ;; dnoc
-  
-  (if (eq? whch 'writee) " END" "")  ;; matches *** <<<
-  
-  ) ;; sa
-  )
-
-(define (emit-header-field-writex whch f m-wr updn)
-  (dis 
-   (get-m3-write-type whch
-                      (cadr f)
-                      (sa "t."(car f))
-                      0
-                      "    "
-                      updn)
-   
-   ";" dnl m-wr))
 
 (define (emit-header-field-writee . x)
   (apply emit-header-field-writex (cons 'writee x)))
@@ -539,9 +320,6 @@
 ;; field currently being parsed).  The current record is called "t".
 ;;
 
-(define (symbol->m3integer x)
-  (M3Support.ReformatNumber (symbol->string x))
-  )
    
 (define (get-bitstruct-constraint-check nm t constraint)
   ;;(dis "CONSTRAINT: " (stringify constraint) dnl)
@@ -560,12 +338,6 @@
 
     ) ;; esac
   )
-
-
-(define (mynumber->m3integer x)
-  (cond ((symbol? x) (symbol->m3integer x))
-        ((number? x) (number->string x))
-        (else (error "unknown number " (stringify x)))))
 
 
 ;;
@@ -633,7 +405,7 @@
                          (sa " := " (symbol->m3integer (cadar tail)))))
           
         )
-    (dis "    " field-name " : Int" dnl i-wr)))
+    (dis "    " field-name " : Int," dnl i-wr)))
 
 (define (emit-bitstruct-field-format f wr dummy)
   (let ((field-name (car f))
@@ -699,22 +471,22 @@
 
     (define (emit-m3-t)
       (dis dnl
-           "case class " scala-name " extends Bitstruct" dnl
-           "  (" dnl
+           "case class " scala-name " (" dnl
            wr)
       (map (lambda(f)(emit-bitstruct-field-type f wr)) fields)
       (dis " )" wr)
+	  (dis " extends BitStruct" dnl wr)
       )
 
     (add-tgt-type! nm scala-name)
-	(dis "package switch_wm" dnl wr)
+	(dis "package switch_wm" dnl dnl wr)
+	(dis "import java.io._" dnl wr)
 
     ;; the matching Modula-3 declaration
     (emit-m3-t)
-    (dis " = { " wr)
-    (dis dnl "val LengthBits = " (accumulate + 0 (map cadr fields)) dnl wr)
+    (dis " { " wr)
     (dis dnl "def toByteArray : Array[Byte] = { " dnl 
-	   " val a = Array[Byte].ofDim(LenthBits / 8)" dnl
+	   " val a = Array.ofDim[Byte](" scala-name ".LengthBits / 8)" dnl
        " // modify A for each field, with insert operations" dnl	
 	   " a " dnl	
 	   
@@ -722,7 +494,9 @@
 
     (dis "} " wr)
 
-	(dis dnl "object " scala-name " = { " dnl wr)
+	(dis dnl "object " scala-name " { " dnl wr)
+	(dis dnl "val LengthBits = " (accumulate + 0 (map cadr fields)) dnl wr)
+
 	(dis dnl " def apply(a : Array[Byte]) : " scala-name " = {" wr)
 	(dis dnl "  require(a.size == LengthBits / 8)" wr)
     (dis dnl "  // return a new object from applying the array provided" dnl wr)
@@ -731,23 +505,31 @@
 	(dis dnl "}" dnl wr)
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
-	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ") = { write(x.toByteArray,0,x.LengthsBits/8 }" dnl wr)
+	  (dis "class " scala-name-os "(os : OutputStream) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { write(x.toByteArray,0," scala-name ".LengthBits/8) }" dnl wr)
 	
       (dis "}" dnl wr)
-	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name " = {" dnl "  val a = Array[Byte].ofDim(a.size / 8)" dnl "  readFully(a) " dnl "  " scala-name "(a)" dnl wr)
+	  (dis "class " scala-name-is "(is : InputStream) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name " = {" dnl "  val a = Array.ofDim[Byte](" scala-name ".LengthBits / 8)" dnl "  readFully(a) " dnl "  " scala-name "(a)" dnl wr)
 	
 	  (dis " }" dnl wr)
 	  (dis "}" dnl wr)
 
-      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
-	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+      (dis "object " scala-name-is " {" dnl wr) 
+	  (dis "  implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)
+	  (dis "}" dnl wr) 
+
+	  (dis "object " scala-name-os " {" dnl wr) 
+	  (dis " implicit def osTo" scala-name-os "(os: OutputStream) : " scala-name-os " = new " scala-name-os "(os)" dnl wr)
+	  (dis "}" dnl wr) 
+
 	)
 
     (close-scala wrs)
 )
 )
+
+(define get-scala-field get-scala-type)
 
 (define (compile-header! nm x)
   (let* ((names (car x))
@@ -758,12 +540,37 @@
          (types        (uniq eq? (map cadr fields)))
     )
     (dis "compiling scala header    :  " nm dnl)
+	
     (define (emit-scala-t)
-      (dis dnl "(" dnl wr)
-      ;; need comma, after every except last entry
-      (map (lambda(f)(emit-header-field-type f wr)) fields)
+      (define (emit-header-field-type f)
+         (dis "    " (legalize-field (car f)) " : " (get-scala-type (cadr f)) "," dnl wr))
+      (dis " (" dnl wr)
+      (for-each (lambda(f)(emit-header-field-type f)) fields)
       (dis ") //" dnl dnl wr))
+	  
+	  
+	  (define (get-scala-type-2 type)
+        (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "Array" (get-scala-type (cadr type)) "(" (caddr type) ")"))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type))))))
+	  (define (get-scala-type-3 type)
+        (cond ((member? type '(u8 u16 u32 u64)) (scheme->scala type))
+        ((array-type? type)
+         (string-append "Array" (get-scala-type (cadr type))))
+        (else
+         (symbol->string (symbol-append (get-tgt-typemapping type))))))
 
+		 
+	(define (emit-scala-read)
+      (define (emit-field-read f)
+         (dis "    " (legalize-field (car f)) " = this.read" (get-scala-type-2 (cadr f)) "," dnl wr))
+      (for-each (lambda(f)(emit-field-read f)) fields))
+	(define (emit-scala-write)
+      (define (emit-field-write f)
+		 (dis "    this.write" (get-scala-type-3 (cadr f)) "(x." (legalize-field (car f)) ")" dnl wr))
+      (for-each (lambda(f)(emit-field-write f)) fields))
 
     (define (emit-length)
       (dis "val length = 0" wr)
@@ -777,32 +584,42 @@
     (add-tgt-type! nm scala-name)
     ;; (set! e import-intfs)
     ;; the matching Modula-3 declaration
-    (dis "package switch_wm" dnl wr)
+    (dis "package switch_wm" dnl dnl wr)
+    (dis "import java.io._" dnl wr)
+    (dis "import PrimitiveTypes._" dnl dnl wr)
+    (dis "import Implicits._" dnl dnl wr)
 
     (dis "case class " scala-name dnl wr)
     (emit-scala-t)
-    (dis "{" dnl wr)
+    ;;(dis "{" dnl wr)
     ;; a symbol called Length, denoting the wire size of the record
     ;; (emit-length)
-    (dis "}" dnl wr)
+    ;;(dis "}" dnl wr)
     (dis dnl wr)
 	
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
-	  (dis "class " scala-name-os "(OutputStream os) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ") = { " dnl
-	     " // write out the case class, using appropriate portable writeShort, writeInt, etc. operations" dnl 
-		 " }" dnl wr)
+	  (dis "class " scala-name-os "(os: OutputStream) extends DataOutputStream(os) {" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ") = { " dnl wr)
+		 (emit-scala-write)
+	  (dis " }" dnl wr)
 	
       (dis "}" dnl wr)
-	  (dis "class " scala-name-is "(InputStream os) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name " = {" dnl 
-	       "  // read in, using portable readShort, readInt, etc., operations" dnl
-		   " }" dnl wr)
-	
+	  (dis "class " scala-name-is "(is : InputStream) extends DataInputStream(is) {" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name " = {" dnl wr)
+	       (dis "   " scala-name "(" dnl wr)
+		   (emit-scala-read)
+		   (dis "  ) " dnl wr)
+		   (dis " }" dnl wr)
+
 	  (dis "}" dnl wr)
-      (dis "implicit isTo" scala-name-is "(InputStream is) : " scala-name-is " = " scala-name-is "(is)" dnl wr)
-	  (dis "implicit osTo" scala-name-os "(OutputStream os) : " scala-name-os "= " scala-name-is "(os)" dnl wr)
+	  (dis "object " scala-name-is "{" dnl wr)
+      (dis "implicit def isTo" scala-name-is "(is: InputStream) : " scala-name-is " = new " scala-name-is "(is)" dnl wr)
+	  (dis "}" dnl wr)
+
+	  (dis "object " scala-name-os "{" dnl wr)
+	  (dis " implicit def osTo" scala-name-os "(os: OutputStream) : " scala-name-os " = new " scala-name-os "(os)" dnl wr)
+	  (dis "}" dnl wr)
 	)
 
     (close-scala scala-wrs)
@@ -822,6 +639,6 @@
 
 ;; for now -- override with NOP
 ;;(set! compile-enum!       (lambda(nm x) #t))
-(set! compile-constants!  (lambda(nm x) #t))
+;;(set! compile-constants!  (lambda(nm x) #t))
 ;;(set! compile-header!     (lambda(nm x) #t))
-;;(set! compile-bitstruct!  (lambda(nm x) #t))
+(set! compile-bitstruct!  (lambda(nm x) #t))

@@ -2,6 +2,10 @@
 .NOTPARALLEL:
 .DELETE_ON_ERROR:
 
+ifndef MODEL_ROOT
+   $(error MODEL_ROOT undefined, did you do a setnhdk?)
+endif
+
 # Makefile for CM3 white model build
 OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
@@ -42,6 +46,7 @@ STRUCTGEN_TOP=$(WM_NET_ROOT)/src/structs.scm
 
 M3_STRUCTS=$(WM_NET_TARGDIR)/derived.m3m
 SCALA_STRUCTS=$(WM_NET_ROOT)/scala_generated/derived_scala.filelist
+SCALA_IMPLICITS=$(WM_NET_ROOT)/scala_generated/Implicits.scala
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
@@ -62,7 +67,7 @@ TOP_TEMPLATE=top_template
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
-mains: mby_mains hlp_mains
+mains: mby_mains hlp_mains model_server
 
 top: $(TOP)
 
@@ -79,6 +84,8 @@ $(WM_SUPPORT): $(wildcard $(WM_SUPPORT_ROOT)/src/*) $(TOP)
 	pushd $(WM_SUPPORT_ROOT)/src && $(CM3) -x
 	touch $@
 
+wm_support: $(WM_SUPPORT)
+
 $(GENVIEWS): $(wildcard $(GENVIEWS_ROOT)/src/*) $(WM_SUPPORT) $(TOP)
 	pushd $(GENVIEWS_ROOT)/src && $(CM3) -x
 
@@ -92,6 +99,13 @@ $(M3_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_M3) $(STRUCTGEN_TOP)
 $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 	mkdir -p $(dir $@)
 	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
+	rm -rf $(SCALA_IMPLICITS)
+	echo "package switch_wm" > $(SCALA_IMPLICITS)
+	echo "import java.io._" >> $(SCALA_IMPLICITS)
+	echo "object Implicits {" >> $(SCALA_IMPLICITS)
+	grep -h implicit $(WM_NET_ROOT)/scala_generated/* >> $(SCALA_IMPLICITS)
+	echo "}" >> $(SCALA_IMPLICITS)
+
 
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 
@@ -120,10 +134,10 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 $(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
 	cd wm_net && $(CM3) -x
 
-$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB)
+$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB)
 	cd model_server && $(CM3) -x 
 
-model_server_hlp: $(MODEL_SERVER)
+model_server: $(MODEL_SERVER)
 
 
 $(TEST_TARG): $(GENVIEWS)
