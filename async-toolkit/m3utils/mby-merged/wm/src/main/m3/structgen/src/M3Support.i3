@@ -10,6 +10,10 @@ PROCEDURE ReformatNumber(txt : TEXT) : TEXT
   RAISES { Lex.Error, FloatMode.Trap } ;
   (* parse a number as above and produce a good constant for inclusion in M3 *)
   
+PROCEDURE ReformatNumberScala(txt : TEXT) : TEXT
+  RAISES { Lex.Error, FloatMode.Trap } ;
+  (* parse a number as above and produce a good constant for inclusion in Scala *)
+  
 
 PROCEDURE Modula3Type(ofBits : [1..BITSIZE(Word.T)]) : TEXT;
   (* print out a Modula-3 type spec for a given width integer *)
