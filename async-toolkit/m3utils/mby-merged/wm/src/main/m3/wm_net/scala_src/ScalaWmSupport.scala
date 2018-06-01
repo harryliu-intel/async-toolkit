@@ -1,5 +1,7 @@
 package switch_wm
 
+class WhiteModelConstants
+
 class BitStruct
 
 object BitStruct {
@@ -11,6 +13,10 @@ object BitStruct {
         r << 1 | bit
       }
     (bitOffset until bitOffset + fieldSize).foldLeft(0l)((r, c) => shiftAndAdd(r,c))
+  }
+  def extractIntField(ba : Array[Byte], bitOffset : Int, fieldSize : Int) : Int = {
+    require(fieldSize <= 32)
+    extractField(ba, bitOffset, fieldSize).toInt
   }
   def extractShortField(ba : Array[Byte], bitOffset : Int, fieldSize : Int) : Short = {
     require(fieldSize <= 16)
@@ -48,6 +54,15 @@ object PrimitiveTypes {
 
  implicit def isToPrimitiveTypeInputStream(is : java.io.InputStream) : PrimitiveTypeInputStream = new PrimitiveTypeInputStream(is)
  implicit def osToPrimitiveTypeOutputStream(os : java.io.OutputStream) : PrimitiveTypeOutputStream = new PrimitiveTypeOutputStream(os)
+
+ implicit def intToU8(i : Int) : U8 = { 
+    require (i <= 255)
+    i.toByte
+ }
+ implicit def intToU16(i : Int) : U16 = {
+    require (i <= (1 << 16) - 1)
+    i.toByte
+ }
 
 }
 

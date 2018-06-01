@@ -30,6 +30,10 @@
                     'Lower 'Camel
                     'Hyphen 'None))
 
+(define (symbol->scalainteger x)
+  (M3Support.ReformatNumberScala (symbol->string x))
+ )
+
 					
 (define legalize-field scheme->scala)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,7 +122,7 @@
 ;;; CONSTANTS
 
 (define (compile-scala-const-value v wr)
-  (dis "val " (scheme->scala (car v)) " : W = " (cadr v) dnl wr)
+  (dis "val " (scheme->scala (car v)) " : W = " (symbol->scalainteger (cadr v)) dnl wr)
   )
 
 
@@ -129,7 +133,7 @@
          (names        (cadr x))
          (values       (caddr x))
          (scala-name      (get-scala-name nm names))
-         (scala-wrs       (open-scala scala-name "AnyObj"))
+         (scala-wrs       (open-scala scala-name "WhiteModelConstants"))
          (wr              (car scala-wrs))
          )
     (add-tgt-type! nm scala-name)
@@ -211,11 +215,11 @@
 	(let* ((scala-name-is (string-append scala-name "InputStream"))
 	       (scala-name-os (string-append scala-name "OutputStream")))
 	  (dis "class " scala-name-os "(os: OutputStream) extends DataOutputStream(os) {" dnl wr)
-	  (dis " def write" scala-name "( x  :"  scala-name ".Value) = { writeByte(x.id) }" dnl wr)
+	  (dis " def write" scala-name "( x  :"  scala-name ".Value) = { this.write" scala-wire-type "(x.id) }" dnl wr)
 	
       (dis "}" dnl wr)
 	  (dis "class " scala-name-is "(is: InputStream) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name ".Value = " scala-name "(readByte())" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name ".Value = " scala-name "(this.read" scala-wire-type "())" dnl wr)
 	
 	  (dis "}" dnl wr)
 	  (dis "object " scala-name-is "{" dnl wr)
@@ -395,6 +399,7 @@
 (define (get-m3-bitstype n)
   (M3Support.Modula3Type n))
 
+
 (define (emit-bitstruct-field-type f i-wr)
   (let* ((field-name (car f))
          (field-type (cadr f))
@@ -402,10 +407,10 @@
          (defval     (if (or (null? tail)
                              (not (eq? (caar tail) 'constant)))
                          ""
-                         (sa " := " (symbol->m3integer (cadar tail)))))
+                         (sa " = " (symbol->scalainteger (cadar tail)))))
           
         )
-    (dis "    " field-name " : Int," dnl i-wr)))
+    (dis "    " field-name " : Long "  defval "," dnl i-wr)))
 
 (define (emit-bitstruct-field-format f wr dummy)
   (let ((field-name (car f))
@@ -470,9 +475,7 @@
     (set! e fields)
 
     (define (emit-m3-t)
-      (dis dnl
-           "case class " scala-name " (" dnl
-           wr)
+      (dis dnl "case class " scala-name " (" dnl wr)
       (map (lambda(f)(emit-bitstruct-field-type f wr)) fields)
       (dis " )" wr)
 	  (dis " extends BitStruct" dnl wr)
@@ -485,20 +488,48 @@
     ;; the matching Modula-3 declaration
     (emit-m3-t)
     (dis " { " wr)
-    (dis dnl "def toByteArray : Array[Byte] = { " dnl 
-	   " val a = Array.ofDim[Byte](" scala-name ".LengthBits / 8)" dnl
-       " // modify A for each field, with insert operations" dnl	
-	   " a " dnl	
-	   
-	   " }" dnl wr)
+	(define (emit-array-builder)
+	;; if setField(a : Array[Byte], bitPos : Int, length : Int, value : Long) = {
+	(define (emit-array-element f)
+      (let* ((field-name (car f))
+         (field-type (cadr f))
+         (tail       (cddr f)))
+         (dis "  BitStruct.setField(a, bitPos, " field-type  ", " field-name ")" dnl wr)  
+         (dis "  bitPos += " field-type dnl wr)          
+        ))
+      (map (lambda(f)(emit-array-element f)) fields)
+     )
+    (dis dnl "def toByteArray : Array[Byte] = { " dnl wr)
+	(dis " val a = Array.ofDim[Byte](" scala-name ".LengthBits / 8)" dnl wr)
+	(dis " var bitPos = 0" dnl wr)
+    (dis  " // modify A for each field, with insert operations" dnl wr)
+	(emit-array-builder)
+	(dis   " a " dnl wr)  
+	(dis  " }" dnl wr)
 
     (dis "} " wr)
 
 	(dis dnl "object " scala-name " { " dnl wr)
 	(dis dnl "val LengthBits = " (accumulate + 0 (map cadr fields)) dnl wr)
+    (define (emit-array-extractor)
+	  
+	;; if setField(a : Array[Byte], bitPos : Int, length : Int, value : Long) = {
+	(define (emit-array-element f)
+      (let* ((field-name (car f))
+         (field-type (cadr f))
+         (tail       (cddr f)))
+         (dis "    " field-name " =  BitStruct.extractField(a, autoInc(" field-type "), " field-type  ")," dnl wr)
+        ))
+	  (dis "  var bitPos = 0" dnl wr)
+	  (dis "  def autoInc(amt : Int) = { val tmp = bitPos ; bitPos += amt ; tmp }" dnl wr)
+	  (dis "  new " scala-name "( " wr)
+      (map (lambda(f)(emit-array-element f)) fields)
+	  (dis "  )" wr)
 
+     )
 	(dis dnl " def apply(a : Array[Byte]) : " scala-name " = {" wr)
-	(dis dnl "  require(a.size == LengthBits / 8)" wr)
+	(dis dnl "  require(a.size == LengthBits / 8)" dnl wr)
+	(emit-array-extractor)
     (dis dnl "  // return a new object from applying the array provided" dnl wr)
 	(dis dnl " }" wr)
 
@@ -641,4 +672,4 @@
 ;;(set! compile-enum!       (lambda(nm x) #t))
 ;;(set! compile-constants!  (lambda(nm x) #t))
 ;;(set! compile-header!     (lambda(nm x) #t))
-(set! compile-bitstruct!  (lambda(nm x) #t))
+;;(set! compile-bitstruct!  (lambda(nm x) #t))
