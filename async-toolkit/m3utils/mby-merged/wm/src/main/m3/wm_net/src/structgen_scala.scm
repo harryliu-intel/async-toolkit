@@ -45,6 +45,7 @@
           
     (dis "package switch_wm" dnl dnl wr)
 	(dis "import java.io._" dnl dnl wr)
+	(dis "import PrimitiveTypes._" dnl dnl wr)
 	
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
@@ -127,19 +128,18 @@
          (scala-wire-type (scheme->scala wire-type))
          (names        (cadr x))
          (values       (caddr x))
-         (scala-name      ( nm names))
+         (scala-name      (get-scala-name nm names))
          (scala-wrs       (open-scala scala-name "AnyObj"))
          (wr              (car scala-wrs))
          )
-    (dis "scala-name " scala-name dnl)
     (add-tgt-type! nm scala-name)
-    (dis "{" dnl wr)
-
+    (dis "scala-name " scala-name dnl)
+    
     (dis "type W = " scala-wire-type dnl
          dnl
          wr)
-    (map (lambda(x)(compile-scala-const-value x wr)) values)
-
+    (map (lambda(x)(compile-scala-const-value x wr)) values)   
+    (dis "}" dnl wr)
     (close-scala scala-wrs)
     ) ;; *tel
   )
@@ -639,6 +639,6 @@
 
 ;; for now -- override with NOP
 ;;(set! compile-enum!       (lambda(nm x) #t))
-(set! compile-constants!  (lambda(nm x) #t))
+;;(set! compile-constants!  (lambda(nm x) #t))
 ;;(set! compile-header!     (lambda(nm x) #t))
 (set! compile-bitstruct!  (lambda(nm x) #t))
