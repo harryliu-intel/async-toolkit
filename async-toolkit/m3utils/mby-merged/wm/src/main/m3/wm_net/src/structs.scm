@@ -74,9 +74,9 @@
                ((m3 FmModelConstants)
 			    (c FM_MODEL_CONSTANTS)
 			    (scala FmModelConstants))
-               ((port-link-up              1)
-                (port-link-down            0)
-                (n-phys-ports             32)
+               ((port-link-up              10_1)
+                (port-link-down            10_0)
+                (n-phys-ports             10_32)
                 (socket-port-disable 16_ffff)))
 
     (enum fm-socket-type
