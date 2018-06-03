@@ -6,13 +6,16 @@ class BitStruct
 
 object BitStruct {
   def extractField(ba : Array[Byte], bitOffset : Int, fieldSize : Int) : Long = {
+    // println("Extracting bitOffset " + bitOffset + " with size " + fieldSize)
     def shiftAndAdd (r : Long, bitPos : Int): Long = {
         // get the relevant byte, shift to the relevant bit in position 0
         // and mask it alone
         val bit = (ba(bitPos / 8) >> (bitPos % 8)) & 0x1
-        r << 1 | bit
+        val result = r << 1 | bit
+        // println(" result now " + result.toHexString)
+      result
       }
-    (bitOffset until bitOffset + fieldSize).foldLeft(0l)((r, c) => shiftAndAdd(r,c))
+    (bitOffset until bitOffset + fieldSize).foldRight(0l)((r, c) => shiftAndAdd(c,r))
   }
   def extractIntField(ba : Array[Byte], bitOffset : Int, fieldSize : Int) : Int = {
     require(fieldSize <= 32)
