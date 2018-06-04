@@ -73,7 +73,8 @@ object WhiteModelServer {
     val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
     os.writeFmModelMessageHdr(hdr)
     os.writeIosfRegCompNoData(response)
-
+    os.flush()
+    println("Wrote the response to write back")
   }
 
   type respondable = { def opcode: Long; def dest : Long;  def source : Long; def tag : Long }
@@ -106,7 +107,7 @@ object WhiteModelServer {
     val addr = iosf.addr1 << 16 | iosf.addr0
     val data = is.readIosfRegBlkData()
     val response = makeResponse(iosf)
-    val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
+    val hdr = FmModelMessageHdr(3 * 4 + 2*4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
     os.writeFmModelMessageHdr(hdr)
     os.writeIosfRegCompNoData(response)
     os.flush()
@@ -114,14 +115,21 @@ object WhiteModelServer {
 
   def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = getAddress(iosf)
+    println("Processing read of 0x" + addr.toHexString)
     val data = csrSpace.getOrElse(addr.toInt, 0xdeadbeef.toByte)
     //val array = Array.ofDim[Byte](2 * 4)
     //array(0) = data
     val theArray = Array.ofDim[Byte](8)
-    (0 to 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
-    os.writeFmModelMessageHdr( FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
-    os.writeIosfRegCompDataHdr(makeReadResponse(iosf))
-    os.write(theArray)
+    (0 until 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
+    os.writeFmModelMessageHdr( FmModelMessageHdr(3 * 4 + 2 * 4 + 2 * 4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
+    val response = makeReadResponse(iosf)
+    val respSize = response.toByteArray.size
+    println("respSize == " + respSize)
+    os.writeIosfRegCompDataHdr(response)
+    (0 until 8).map(x => os.writeByte(theArray(x)))
+
+    os.flush()
+    println("Wrote the response back " + theArray.toIndexedSeq)
   }
 
   def processIosf(implicit is : DataInputStream, os : DataOutputStream, toGo  : Int) = {
@@ -181,19 +189,25 @@ object WhiteModelServer {
     psFile.write("\n")
     psFile.close()
 
-    val s = server.accept()
-    println("Accepted connection:" + s)
-    implicit val is = new DataInputStream(s.getInputStream)
-    implicit val os = new DataOutputStream(s.getOutputStream)
-    try {
-      while (true) processMessage
-    } catch {
-      case eof : EOFException => { println("Unexpected termination of IO from client" + s.getInetAddress().getHostName() ) }
+    var done = false
+    while (!done) {
+      val s = server.accept()
+      println("Accepted new connection:" + s)
+      implicit val is = new DataInputStream(new BufferedInputStream(s.getInputStream))
+      implicit val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
+
+      try {
+        while (true) processMessage
+      } catch {
+        case eof: EOFException => {
+          println("Unexpected termination of IO from client" + s.getInetAddress().getHostName())
+        }
+      }
+      is.close()
+      os.flush()
+      os.close()
+      s.close()
     }
-    is.close()
-    os.flush()
-    os.close()
-    s.close()
     server.close()
   }
 }
