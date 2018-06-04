@@ -76,9 +76,11 @@ object WhiteModelServer {
 
   }
 
-  type respondable = { def dest : Long;  def source : Long; def tag : Long }
+  type respondable = { def opcode: Long; def dest : Long;  def source : Long; def tag : Long }
 
-  def makeResponse[T <: respondable] (req: T) : IosfRegCompNoData =
+  def makeResponse[T <: respondable] (req: T) : IosfRegCompNoData = {
+    require (req.opcode != IOSF.RegRead && req.opcode != IOSF.RegBlkRead)
+
     new IosfRegCompNoData(
       sai = 1,
       dest = req.source,
@@ -86,8 +88,10 @@ object WhiteModelServer {
       tag = req.tag,
       rsp = 0,
       rsvd0 = 0)
+  }
 
-  def makeReadResponse[T <: respondable] (req: T, data: Byte) : IosfRegCompDataHdr =
+  def makeReadResponse[T <: respondable] (req: T) : IosfRegCompDataHdr = {
+    require (req.opcode == IOSF.RegRead || req.opcode == IOSF.RegBlkRead)
     new IosfRegCompDataHdr(
       sai = 1,
       dest = req.source,
@@ -95,6 +99,7 @@ object WhiteModelServer {
       tag = req.tag,
       rsp = 0,
       rsvd0 = 0)
+  }
 
 
   def processWriteReg(iosf : IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
@@ -104,15 +109,19 @@ object WhiteModelServer {
     val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
     os.writeFmModelMessageHdr(hdr)
     os.writeIosfRegCompNoData(response)
+    os.flush()
   }
 
   def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = getAddress(iosf)
     val data = csrSpace.getOrElse(addr.toInt, 0xdeadbeef.toByte)
-    val array = Array.ofDim[Byte](2 * 4)
-    array(0) = data
-
-
+    //val array = Array.ofDim[Byte](2 * 4)
+    //array(0) = data
+    val theArray = Array.ofDim[Byte](8)
+    (0 to 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
+    os.writeFmModelMessageHdr( FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
+    os.writeIosfRegCompDataHdr(makeReadResponse(iosf))
+    os.write(theArray)
   }
 
   def processIosf(implicit is : DataInputStream, os : DataOutputStream, toGo  : Int) = {
@@ -124,9 +133,12 @@ object WhiteModelServer {
       case IosfReadExtractor(readReg) => processReadReg(readReg)
       case _ => {
         // todo -- pull in the other 64 bits
-        val bigger_array = array
-        bigger_array match {
+        val extra = Array.ofDim[Byte](64 / 8)
+        is.readFully(extra)
+        val expandedArray = array ++ extra
+        expandedArray match {
           case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg)
+          case _ => assert(false, "Failed to parse IOSF packet, after trying 192-bit sized regwrite")
         }
       }
     }
@@ -137,6 +149,7 @@ object WhiteModelServer {
   }
 
   def processMessage(implicit is : DataInputStream, os : DataOutputStream) = {
+
     val hdr : FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
@@ -154,12 +167,14 @@ object WhiteModelServer {
   import java.net._
   def main(args : Array[String]) : Unit = {
     println("hello world")
-    val server = new ServerSocket(15000)
+    val server = new ServerSocket(0) // 0 means pick any available port
 
 
     val port = server.getLocalPort()
-    val myaddress = server.getInetAddress
-    val descText = "0:localhost:" + port
+    val myaddress = server.getInetAddress.getHostName
+    val hostname = InetAddress.getLocalHost().getHostAddress()
+    val descText = "0:" + hostname + ":" + port
+    println("Scala White Model Server for Madison Bay Switch Chip")
     println("Socket port open at:" +  descText)
     val psFile = new FileWriter("models.packetServer")
     psFile.write(descText)
@@ -170,9 +185,15 @@ object WhiteModelServer {
     println("Accepted connection:" + s)
     implicit val is = new DataInputStream(s.getInputStream)
     implicit val os = new DataOutputStream(s.getOutputStream)
-    while (true) processMessage
-    os.flush
-    os.close
-
+    try {
+      while (true) processMessage
+    } catch {
+      case eof : EOFException => { println("Unexpected termination of IO from client" + s.getInetAddress().getHostName() ) }
+    }
+    is.close()
+    os.flush()
+    os.close()
+    s.close()
+    server.close()
   }
 }

@@ -389,7 +389,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	/* Read the first 4 bytes to see the length of the message */
 	err = wm_read_data(wm_sock_fd, wm_msg, 4, READ_TIMEOUT);
 	if (err) {
-		LOG_ERROR("Could not receive message from WM\n");
+		LOG_ERROR("Could not receive message preamble from WM\n");
 		return err;
 	}
 
@@ -402,7 +402,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	/* Receive the remaining bytes */
 	err = wm_read_data(wm_sock_fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
 	if (err) {
-		LOG_ERROR("Could not receive message from WM\n");
+		LOG_ERROR("Could not receive message contents from WM\n");
 		return err;
 	}
 
