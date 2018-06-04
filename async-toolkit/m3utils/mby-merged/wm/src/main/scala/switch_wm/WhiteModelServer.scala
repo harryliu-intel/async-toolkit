@@ -24,11 +24,18 @@ object WhiteModelServer {
 
   // better to generate these automatically from scheme
   // and put them in a companion object, etc.
+  object IosfReadExtractor {
+    def unapply(a : Array[Byte]) : Option[IosfRegReadReq] = {
+      val candidate = IosfRegReadReq(a)
+      if (candidate.opcode != IOSF.RegRead) None
+      else Some(candidate)
+    }
+  }
   object IosfBlkWriteExtractor {
     def unapply(a : Array[Byte]) : Option[IosfRegBlkWriteReqHdr] = {
       if (a.size != 16) return None
       val candidate = IosfRegBlkWriteReqHdr(a)
-      if (candidate.opcode != IOSF.RegWrite) None
+      if (candidate.opcode != IOSF.RegBlkWrite) None
       else Some(candidate)
     }
   }
@@ -50,12 +57,38 @@ object WhiteModelServer {
     }
   }
 
-  def processWriteBlk(iosf : IosfRegBlkWriteReqHdr): Unit = {
+  val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
+
+
+  def processWriteBlk(iosf : IosfRegBlkWriteReqHdr)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+    val addr = getAddress(iosf)
+    println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
+    val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
+    is.readFully(array)
+    println("Data is: " + array.toList)
+    for(i <- addr until addr + 4 * iosf.ndw) {
+        csrSpace.put(i.toInt, array((i - addr).toInt))
+    }
+    val response = makeResponse(iosf)
+    val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
+    os.writeFmModelMessageHdr(hdr)
+    os.writeIosfRegCompNoData(response)
 
   }
 
-  def makeResponse(req: IosfRegWriteReq) : IosfRegCompNoData =
+  type respondable = { def dest : Long;  def source : Long; def tag : Long }
+
+  def makeResponse[T <: respondable] (req: T) : IosfRegCompNoData =
     new IosfRegCompNoData(
+      sai = 1,
+      dest = req.source,
+      source = req.dest,
+      tag = req.tag,
+      rsp = 0,
+      rsvd0 = 0)
+
+  def makeReadResponse[T <: respondable] (req: T, data: Byte) : IosfRegCompDataHdr =
+    new IosfRegCompDataHdr(
       sai = 1,
       dest = req.source,
       source = req.dest,
@@ -71,17 +104,31 @@ object WhiteModelServer {
     val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
     os.writeFmModelMessageHdr(hdr)
     os.writeIosfRegCompNoData(response)
+  }
+
+  def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+    val addr = getAddress(iosf)
+    val data = csrSpace.getOrElse(addr.toInt, 0xdeadbeef.toByte)
+    val array = Array.ofDim[Byte](2 * 4)
+    array(0) = data
+
 
   }
 
   def processIosf(implicit is : DataInputStream, os : DataOutputStream, toGo  : Int) = {
-    val array = Array.ofDim[Byte](toGo)
+    val array = Array.ofDim[Byte](128 / 8)
 
     is.readFully(array)
     array match {
       case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg)
-      case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg)
-
+      case IosfReadExtractor(readReg) => processReadReg(readReg)
+      case _ => {
+        // todo -- pull in the other 64 bits
+        val bigger_array = array
+        bigger_array match {
+          case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg)
+        }
+      }
     }
   }
 
