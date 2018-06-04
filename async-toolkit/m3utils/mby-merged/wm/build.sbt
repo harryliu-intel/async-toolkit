@@ -31,6 +31,8 @@ lazy val root = (project in file(".")).
   )
 
 sourceGenerators in Compile += Def.task { makeWmServerCode }.taskValue
+mainClass in Compile := Some("switch_wm.WhiteModelServer")
+
 
 PB.targets in Compile := Seq(
   scalapb.gen() -> (sourceManaged in Compile).value
