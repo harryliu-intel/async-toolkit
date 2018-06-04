@@ -65,7 +65,7 @@ object WhiteModelServer {
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
     is.readFully(array)
-    println("Data is: " + array.toList)
+    println(" Data is: " + array.toList.map(f => f"$f%x"))
     for(i <- addr until addr + 4 * iosf.ndw) {
         csrSpace.put(i.toInt, array((i - addr).toInt))
     }
@@ -74,7 +74,7 @@ object WhiteModelServer {
     os.writeFmModelMessageHdr(hdr)
     os.writeIosfRegCompNoData(response)
     os.flush()
-    println("Wrote the response to write back")
+    println(" Wrote the response, ok")
   }
 
   type respondable = { def opcode: Long; def dest : Long;  def source : Long; def tag : Long }
@@ -123,13 +123,11 @@ object WhiteModelServer {
     (0 until 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
     os.writeFmModelMessageHdr( FmModelMessageHdr(3 * 4 + 2 * 4 + 2 * 4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
     val response = makeReadResponse(iosf)
-    val respSize = response.toByteArray.size
-    println("respSize == " + respSize)
     os.writeIosfRegCompDataHdr(response)
     (0 until 8).map(x => os.writeByte(theArray(x)))
 
     os.flush()
-    println("Wrote the response back " + theArray.toIndexedSeq)
+    println("Wrote the response back " + theArray.toIndexedSeq.map(f => f"$f%x"))
   }
 
   def processIosf(implicit is : DataInputStream, os : DataOutputStream, toGo  : Int) = {
@@ -191,7 +189,8 @@ object WhiteModelServer {
 
     var done = false
     while (!done) {
-      val s = server.accept()
+      val s : Socket = server.accept()
+      s.setTcpNoDelay(true)
       println("Accepted new connection:" + s)
       implicit val is = new DataInputStream(new BufferedInputStream(s.getInputStream))
       implicit val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
@@ -200,13 +199,15 @@ object WhiteModelServer {
         while (true) processMessage
       } catch {
         case eof: EOFException => {
-          println("Unexpected termination of IO from client" + s.getInetAddress().getHostName())
+          println("Termination of IO from client without shutdown command" + s.getInetAddress().getHostName())
         }
       }
+      println("Disconnected.")
       is.close()
       os.flush()
       os.close()
       s.close()
+
     }
     server.close()
   }
