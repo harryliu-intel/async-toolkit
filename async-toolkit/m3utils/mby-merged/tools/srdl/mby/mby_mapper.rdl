@@ -1469,6 +1469,14 @@ reg map_profile_key_invert1_r {
   regwidth = 64;
   accesswidth = 64;
   field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:40] = 24'h0;
+  field {
     AccessType = "RW";
     desc = "
      . pkt_meta.c.l2_domain
@@ -1487,18 +1495,13 @@ reg map_profile_key_invert1_r {
     ValRandomize = true;
   } L3_DOMAIN[31:26] = 6'h3f;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     [list]
-     [*] ip[1:0] = MAP(outer SIP).profile
-     [*] ip[3:2] = MAP(outer DIP).profile
-     [*] ip[5:4] = MAP(inner SIP).profile
-     [*] ip[7:6] = MAP(inner DIP).profile
-     [/list]
+      Reserved
 
            ";
     ValRandomize = true;
-  } IP_PROFILE[25:18] = 8'hff;
+  } _RSVD0_[25:18] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
