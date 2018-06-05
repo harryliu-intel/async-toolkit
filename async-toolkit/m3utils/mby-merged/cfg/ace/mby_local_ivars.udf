@@ -21,7 +21,7 @@ EOF
 	      -models_to_compile =>
 			{
 				merging => "ASSIGN",
-				default => ["mby"]
+				default => ["mby",]
 			},
 		-test_in_model          => { default => 1 },
 		-elab_models            => { default => 1 },
@@ -153,7 +153,6 @@ EOF
             },
 
             -test_required         => { default => 1, },
-		-model                 => { default => "mby", },
             -implicit_runmode_libs => { default => ["mby::RunModes"], },
             -code_coverage_mode    => { default => "cov_mode_a", },
             -skip_test_elab        => { default => ['perl'], },
@@ -213,6 +212,76 @@ EOF
                 ,    #2012WW46r121114 primary IOSF compliance
                 "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
+            ],
+        },
+        # ---------------------------------------------
+        # DVT Eclipse Options That Everyone Should Use
+        # ---------------------------------------------
+        ### Here you enter models you want DVT to process
+        ### Leave it empty to enable DVT on all models
+        -dvt_models => {
+            default => [
+            ],
+        },
+
+        ### Specify a heap size appropriate for your project (default is 8G)
+        -dvt_heapsize => { default => "4G", },
+
+        ### Global DVT build file options
+        ### To see all build file options, Ctrl+Space inside a <model>.build file
+        -dvt_pre_buildinclude => {
+            default => [
+                ### These you always want
+                "+dvt_build_log_to_file+false", # Don't create the build log
+                "+dvt_file_compile_timeout+90", # 90sec timeout
+
+                ### Uncomment these only for large SOC sized projects
+                #"+dvt_disable_checks+UNDECLARED_IDENTIFIER",
+                #"+dvt_full_compile_checks+OFF",
+
+                ### Special options for improving incremental compile performance for large files and large projects
+                #"+dvt_incremental_compile_checks+FILE",
+                #"+dvt_incremental_compile_checks+LIB", ### restricts the incremental to current library
+                #"+dvt_incremental_compile_checks+PKG", ### restricts the incremental to current package
+                #"+dvt_incremental_compile_max_lines+0",
+            ],
+        },
+
+        ### Exclude all directories matching these names - to improve DVT bring up and build performance
+        -dvt_exclude_names => {
+            default => [
+                "MockTurnin*", ### Note the '*' to wildcard anything with MockTurnin as a the name prefix
+                "GATEKEEPER",
+                "results",
+                "regression",
+                "target", ### Don't exclude this if you want to see your log files or other content
+                "aceroot", ### Exclude this to avoid circular links
+            ],
+        },
+
+        ### Exclude only these directory hierarchies relative to $MODEL_ROOT - to improve DVT bring up and build performance
+        -dvt_exclude_prjrelpaths => {
+            default => [
+                "subIP/*/tools/dvt", ### This is required so that other launch buttons aren't pulled in
+                #"subIP", ### Uncomment this if you want to exclude ALL subIPs for faster build performance
+            ],
+        },
+
+        ### Command line options necessary for launching DVT Eclipse
+        -dvt_cmdopts => {
+            default => [
+                "-lang vlog",
+                #"-lang vhdl", ### Uncomment ONLY if you must have VHDL support. Will use a dvt_vhdl license if you uncomment.
+                "-perspective VLOG", ### Startup perspective. Default perspective is 'DVT' which has fewer toolbar buttons.
+            ],
+        },
+
+        ### Regex filters to remove libraries from DVT build files. Easiest way to get verif only .build file.
+        ### The <model>.build file will be filtered and a <model>_full.build file is available with all library content
+        -dvt_lib_regex => {
+            default => [
+                #'.*rtl_lib$', # Removes all libraries that end with 'rtl_lib'
+                #'.*_rtl_.*', # Removes all libraries that contain '_rtl_'
             ],
         },
     },

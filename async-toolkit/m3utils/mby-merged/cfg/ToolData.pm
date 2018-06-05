@@ -97,7 +97,7 @@ $ToolConfig_tools{iptooldataextras} = {
 #
 ######################################################################
 $ToolConfig_tools{baseline} = {
-    VERSION => '1.4.7',
+    VERSION => '1.5.2',
     PATH => "$RTL_PROJ_TOOLS/baseline_tools/master/&get_tool_version(baseline)",
 };
 
