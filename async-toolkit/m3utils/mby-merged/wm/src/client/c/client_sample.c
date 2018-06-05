@@ -24,23 +24,59 @@
  *****************************************************************************/
 
 #include <stdio.h>
+#include <unistd.h>
 #include <mbay_dpi_client.h>
 
-#define SERVER_PATH "../../main/m3"
-#define SERVER_EXEC SERVER_PATH "/model_server/AMD64_LINUX/modelserver"
-#define SERVER_FILE SERVER_PATH "/models.packetServer"
+#define SERVER_PATH "../../main/m3/"
+#define SERVER_EXEC SERVER_PATH "model_server/AMD64_LINUX/modelserver"
+#define SERVER_FILE SERVER_PATH "models.packetServer"
 
-int main()
+void print_help() {
+	printf("sample_client - C-DPI sample client application\n\n");
+	printf("Start or connect to the model server and perform a register\n");
+	printf("write followed by a read to verify the value.\n\n");
+	printf("Options:\n");
+	printf(" -s         Start the server instead of only connecting to it\n");
+	printf(" -e <path>  Path of the executable file of the model server\n");
+	printf(" -m <path>  Path of the models.packetServer including file name\n");
+	printf(" -h         Print this help message and exit\n");
+}
+
+int main(int argc, char **argv)
 {
-	int start_server = 1;
+	char *model_server_file = SERVER_FILE;
+	char *model_server_exec = SERVER_EXEC;
+	int start_server = 0;
 	uint32_t addr;
 	uint64_t val;
 	int err;
+	int c;
+
+	while ((c = getopt (argc, argv, "se:m:h")) != -1)
+		switch (c)
+		{
+			case 's':
+				start_server = 1;
+				break;
+			case 'e':
+				model_server_exec = optarg;
+				break;
+			case 'm':
+				model_server_file = optarg;
+				break;
+			case 'h':
+				print_help();
+				return 0;
+			default:
+				printf("Invalid command line argument: %c\n\n", c);
+				print_help();
+				return 1;
+		}
 
 	if (start_server)
-		err = wm_server_start(SERVER_EXEC);
+		err = wm_server_start(model_server_exec);
 	else
-		err = wm_connect(SERVER_FILE);
+		err = wm_connect(model_server_file);
 	if (err) {
 		printf("Error while connecting to the WM\n");
 		return 1;

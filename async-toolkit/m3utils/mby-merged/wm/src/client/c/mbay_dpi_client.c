@@ -321,7 +321,7 @@ int wm_server_stop()
  ****************************************************************************/
 
 /* Timeout for socket read operations in ms */
-#define READ_TIMEOUT 500
+#define READ_TIMEOUT 5000
 
 /* TODO what is this? */
 #define NONPOSTED_PORT			0
@@ -389,7 +389,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	/* Read the first 4 bytes to see the length of the message */
 	err = wm_read_data(wm_sock_fd, wm_msg, 4, READ_TIMEOUT);
 	if (err) {
-		LOG_ERROR("Could not receive message from WM\n");
+		LOG_ERROR("Could not receive message preamble from WM\n");
 		return err;
 	}
 
@@ -402,7 +402,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	/* Receive the remaining bytes */
 	err = wm_read_data(wm_sock_fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
 	if (err) {
-		LOG_ERROR("Could not receive message from WM\n");
+		LOG_ERROR("Could not receive message contents from WM\n");
 		return err;
 	}
 
@@ -588,6 +588,9 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec)
 {
 	struct pollfd fds[1] = { {0} };
+	int remaining_len = data_len;
+	const int delay_ms = 100;
+	int num_retries = 10;
 	int fds_timeout;
 	int err_result;
 	int n;
@@ -618,9 +621,24 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 		}
 	}
 
-	n = read(socket, data, data_len);
-	if ((uint32_t) n != data_len) {
-		LOG_ERROR("Expected %d bytes but got %d\n", data_len, n);
+	while (num_retries) {
+		n = read(socket, data, data_len);
+		if (n == -1) {
+			LOG_ERROR("Error while reading data from socket %s\n",
+					strerror(errno));
+			return ERR_INVALID_RESPONSE;
+		}
+		remaining_len -= n;
+		if (remaining_len <= 0)
+			break;
+		usleep(1000 * delay_ms);
+		data += n;
+		--num_retries;
+	}
+
+	if (remaining_len > 0) {
+		LOG_ERROR("Expected %d bytes but got %d\n", data_len,
+				data_len - remaining_len);
 		return ERR_INVALID_RESPONSE;
 	}
 

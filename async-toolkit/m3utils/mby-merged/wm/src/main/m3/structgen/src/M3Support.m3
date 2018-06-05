@@ -12,6 +12,12 @@ PROCEDURE ReformatNumber(txt : TEXT) : TEXT
     RETURN "16_" & Fmt.Unsigned(ParseUnsigned(txt), base := 16)
   END ReformatNumber;
   
+PROCEDURE ReformatNumberScala(txt : TEXT) : TEXT
+  RAISES { Lex.Error, FloatMode.Trap } =
+  BEGIN
+    RETURN "0x" & Fmt.Unsigned(ParseUnsigned(txt), base := 16)
+  END ReformatNumberScala;
+  
 PROCEDURE ParseUnsigned(q : TEXT) : Word.T
   RAISES { Lex.Error, FloatMode.Trap } =
   VAR

@@ -185,7 +185,7 @@ $(RESULTSXMLFILE) $(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
 	$(info INCLUDE_ARG="$(INCLUDE_ARG)")
 	$(info SRDL_DIR1="$(SRDL_DIR1)")
 	$(info SRDL_DIR2="$(SRDL_DIR2)")
-	$(NEBULON) -sv_no_sai_checks -sverilog -xml -chdr -crif -ovm -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTS_NEB) -rtlgencomp
+	$(NEBULON) -sv_no_sai_checks -sverilog -xml -chdr -crif -ovm -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTS_NEB) -rtlgencomp -log_file $(RESULTS_NEB)/nebulon_sv_output.log
 
 # Need dependency on only one output file, since command for nebulon_all generates everything
 nebulon_all: $(RAL_ENV)
@@ -199,7 +199,7 @@ xml: $(RESULTSXMLFILE)
 
 $(RESULTSQC): $(ALL_RDL)
 	mkdir -p $(RESULTSDOCDIR)
-	$(NEBULON) -timeout 60000 -input $(TOP_RDL) -out_dir $(RESULTSDOCDIR) -qualitychecker
+	$(NEBULON) -timeout 60000 -input $(TOP_RDL) -out_dir $(RESULTSDOCDIR) -qualitychecker -log_file $(RESULTS_NEB)/nebulon_qc_output.log
 
 nqc: $(RESULTSQC)
 
