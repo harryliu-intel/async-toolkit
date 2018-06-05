@@ -37,7 +37,31 @@ use ToolConfig;
     InterfaceVars => {
         -sched => { default => 'nbfeeder', },
         -stage => {
-          default => [qw(-module -emu -sglp_legacy -sglp -sgdft -lintra -lintra_rtl -lintra_svtb -lintra_ol -verdi -jg -FLG -qcdc -fishtail -quick_syn_plus -noble -osget -osgetsaved -osexporter -debug_dump)],
+          default => [qw(
+            -module
+            -emu
+            -sglp_legacy
+            -sglp
+            -sgdft
+            -lintra
+            -lintra_rtl
+            -lintra_svtb
+            -lintra_ol
+            -verdi
+            -jg
+            -FLG
+            -qcdc
+            -fishtail
+            -quick_syn_plus
+            -noble
+            -osget
+            -osgetsaved
+            -osexporter
+            -debug_dump
+            -vclp
+            -sgcdc
+            -dvt
+          )],
  
         },
         -use_dynamic_resources => {
@@ -52,41 +76,8 @@ use ToolConfig;
         -vcstarget => {
             default => "vcs_lib/".&ToolConfig::get_tool_version('vcsmx')."_suse64",    
         },
-	-dvt => {
-            action => "dvt",
-            type => "BOOLEAN",
-            default => 0,
-            help => {
-                group => "DVT",
-                desc => "To build or load DVT project",
-            },      
-        },
-        -dvtdemo => {
-            type => "BOOLEAN",
-            default => "0", 
-            help => {
-                group => "DVT",
-                desc => "To build DVT default.build only, not running",
-            },      
-        },
-        -dvtclean => {
-            type => "BOOLEAN",
-            default => 0,
-            help => {
-                group => "DVT",
-                desc => "To force clean existing project and build a new project",
-            },      
-        },      
-        -dvtrefresh => {
-            type => "BOOLEAN",
-            default => 0,
-            help => {
-                group => "DVT",
-                desc => "To recreate all .build and .xml files under .dvt directory",
-            },      
-        },
 
-                # JasperGold options
+        # JasperGold options
 
         -jg_elab_opts            => {  default => ["-L work"] },
         -jg_compile_opts            => { default => ["-mfcu"] },
