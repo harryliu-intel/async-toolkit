@@ -78,7 +78,7 @@ Jin Yan \\ {\tt jin2.yan@intel.com}}
 \begin{abstract}
   The development of a SystemVerilog module for the accurate
   synchronization of an event from one clock domain into another,
-  using vernier clocks, is presented.  The theory of time measurement,
+  using vernier clocks, is presented.  The theory of time measurement, including
   expressions for edge-to-edge delays in the vernier environment are
   discussed.  The implementation of the concept for Intel's Rockvale
   PHY is described in detail and some performance measurements are
@@ -103,7 +103,7 @@ Jin Yan \\ {\tt jin2.yan@intel.com}}
 
 This article discusses the measurement of the time between events in a
 multi-synchronous system.  A multi-synchronous system is a system in which
-data and control is always updated relative to some clock, but where there is
+data and control are always updated relative to some clock, but where there is
 more than one clock and therefore more than one {\em clock domain.}
 
 Two main sections will be presented: a first section containing a
@@ -159,7 +159,7 @@ the usual way\footnote{It bears mentioning that this way of measuring
   humans, to measure calendar time on a uniform time scale.  See the
   following.}, as a uniform and steady physical time scale.  Following
 Newton, we consider only systems where the various components are in
-such a configuration (at rest, same gravity field, etc.) such that
+such a configuration (at rest, same gravity field, etc.) that
 relativistic effects are zero or negligible, and we can treat the
 chronometer time as global and absolute.  (``Tempus absolutum verum \&
 Mathematicum'' as Newton called it.  \cite{newton}) The most familiar
@@ -183,7 +183,7 @@ easier to follow if we can assume that events are measured on a global
 timescale, thereby dispelling any confusion about the nature of the
 timestamps that are processed by the system: they can be taken to be
 measured on a global and uniform timescale such as TAI.  Many issues
-relating to the intricacies of maintaining normal human calendar time
+relating to the intricacies of maintaining ``normal'' human calendar time
 (the Gregorian calendar, leap seconds, etc.) are therefore entirely
 outside of the scope of our discussion.
 
@@ -225,7 +225,7 @@ rising edge of the clock defining the terms of $P$.
 
 Of course the simplest predicate $P(x)$ is just $x$. Specifically, this means
 that an event is defined as a single validity bit with associated clock.
-This is the event representation we will use for the rest of the paper.
+This is the event representation shall use for the rest of the paper.
 
 Our definition of an event is closely (and conveniently) related to
 the standard contemporary hardware implementation of a state-holding
@@ -254,7 +254,7 @@ representing current (not yet detected) and past (already detected)
 events.  Therefore, we will choose the sign of the time so that more
 positive numbers mean that the event occurred further in the past.
 
-The representation of the event is then as follows:
+The representation of the event can then be given as a Verilog record as follows:
 \begin{verbatim}
 typedef struct {
   logic             v;
@@ -1272,7 +1272,7 @@ then we have that
     p_A &= {20 \over 17}\hbox{~ns} \quad .
   \end{array}
 \end{equation}
-It is convenient to choose $\tau = 1/(100 \times 17 )$~ns$\approx 588.235$~fs,
+It is convenient to choose $\tau = 1/(100 \times 17 )$~ns$\,\approx 588.235$~fs,
 which yields
 \begin{equation}
   \begin{array}{rl}
