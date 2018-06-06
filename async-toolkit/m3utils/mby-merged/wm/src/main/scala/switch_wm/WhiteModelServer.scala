@@ -3,6 +3,8 @@ import Implicits._
 import java.io._
 object WhiteModelServer {
 
+  // use "duck-typing" to specify which classes are have certain IOSF characteristics
+  // (we do not not provide subclasses or trait definitions in the scheme-based generator)
   type dataSig = { def data0 : Long ; def data1 : Long }
   type addrSig = { def addr0 : Long ; def addr1 : Long; def addr2 : Long  }
   type iosfSig = dataSig with addrSig
@@ -22,21 +24,27 @@ object WhiteModelServer {
   implicit def toIosfGeneric[T <: iosfSig](t:T) : IosfGeneric[T] = new IosfGeneric(t)
 
 
+
   // better to generate these automatically from scheme
   // and put them in a companion object, etc.
   object IosfReadExtractor {
     def unapply(a : Array[Byte]) : Option[IosfRegReadReq] = {
-      val candidate = IosfRegReadReq(a)
-      if (candidate.opcode != IOSF.RegRead) None
-      else Some(candidate)
+      if (a.size != IosfRegReadReq.LengthBits / 8) None
+      else {
+        val candidate = IosfRegReadReq(a)
+        if (candidate.opcode != IOSF.RegRead) None
+        else Some(candidate)
+      }
     }
   }
   object IosfBlkWriteExtractor {
     def unapply(a : Array[Byte]) : Option[IosfRegBlkWriteReqHdr] = {
-      if (a.size != 16) return None
-      val candidate = IosfRegBlkWriteReqHdr(a)
-      if (candidate.opcode != IOSF.RegBlkWrite) None
-      else Some(candidate)
+      if (a.size != IosfRegBlkWriteReqHdr.LengthBits / 8) return None
+      else {
+        val candidate = IosfRegBlkWriteReqHdr(a)
+        if (candidate.opcode != IOSF.RegBlkWrite) None
+        else Some(candidate)
+      }
     }
   }
   object IosfRegWriteExtractor {
@@ -44,19 +52,18 @@ object WhiteModelServer {
       if (a.size != 24) return None
       val candidate = IosfRegWriteReq(a)
       if (candidate.opcode != IOSF.RegWrite) {
-        println("Rejecting, opcode is " + candidate.opcode)
-        println("Rejecting, byte array is " + a.toList )
-        println("Rejecting data is " + candidate.data.toHexString)
-        println("Rejecting address is " + candidate.address.toHexString)
-
-        println("Rejecting, operation is: " + candidate)
-
+        // println("Rejecting, opcode is " + candidate.opcode)
+        // println("Rejecting, byte array is " + a.toList )
+        // println("Rejecting data is " + candidate.data.toHexString)
+        // println("Rejecting address is " + candidate.address.toHexString)
+        // println("Rejecting, operation is: " + candidate)
         None
       }
       else Some(candidate)
     }
   }
 
+  // prototype example! -- obviously this ought to be the 'real' CSR state/white model
   val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
 
 
@@ -81,7 +88,6 @@ object WhiteModelServer {
 
   def makeResponse[T <: respondable] (req: T) : IosfRegCompNoData = {
     require (req.opcode != IOSF.RegRead && req.opcode != IOSF.RegBlkRead)
-
     new IosfRegCompNoData(
       sai = 1,
       dest = req.source,
@@ -104,7 +110,7 @@ object WhiteModelServer {
 
 
   def processWriteReg(iosf : IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = iosf.addr1 << 16 | iosf.addr0
+    val addr = iosf.address
     val data = is.readIosfRegBlkData()
     val response = makeResponse(iosf)
     val hdr = FmModelMessageHdr(3 * 4 + 2*4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
@@ -116,12 +122,10 @@ object WhiteModelServer {
   def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = getAddress(iosf)
     println("Processing read of 0x" + addr.toHexString)
-    val data = csrSpace.getOrElse(addr.toInt, 0xdeadbeef.toByte)
-    //val array = Array.ofDim[Byte](2 * 4)
-    //array(0) = data
     val theArray = Array.ofDim[Byte](8)
     (0 until 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
-    os.writeFmModelMessageHdr( FmModelMessageHdr(3 * 4 + 2 * 4 + 2 * 4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
+    val msgLength = 3*4 + IosfRegCompDataHdr.LengthBits / 8 + 8 // 12 bytes of ModelMsgHdr, 8 bytes of IOSF header, 8 bytes of data
+    os.writeFmModelMessageHdr( FmModelMessageHdr(msgLength, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
     val response = makeReadResponse(iosf)
     os.writeIosfRegCompDataHdr(response)
     (0 until 8).map(x => os.writeByte(theArray(x)))
@@ -131,14 +135,13 @@ object WhiteModelServer {
   }
 
   def processIosf(implicit is : DataInputStream, os : DataOutputStream, toGo  : Int) = {
-    val array = Array.ofDim[Byte](128 / 8)
+    val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)
     array match {
       case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg)
       case IosfReadExtractor(readReg) => processReadReg(readReg)
       case _ => {
-        // todo -- pull in the other 64 bits
         val extra = Array.ofDim[Byte](64 / 8)
         is.readFully(extra)
         val expandedArray = array ++ extra
@@ -192,6 +195,8 @@ object WhiteModelServer {
       val s : Socket = server.accept()
       s.setTcpNoDelay(true)
       println("Accepted new connection:" + s)
+      // for some reason, doesn't appear to work if Buffered* is removed from the stack
+      // this is suspicious
       implicit val is = new DataInputStream(new BufferedInputStream(s.getInputStream))
       implicit val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
 
@@ -207,7 +212,6 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
-
     }
     server.close()
   }
