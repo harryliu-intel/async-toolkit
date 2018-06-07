@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -fPIC -Wall -Wextra -O2 -g
+CFLAGS = -fPIC -Wall -Wextra -O2 -g -Wno-unused-function
 LDFLAGS = -shared
 RM = rm -f
 TARGET_DIR = target

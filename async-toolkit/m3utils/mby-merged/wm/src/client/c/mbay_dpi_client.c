@@ -53,7 +53,9 @@
 static int wm_sock_fd;
 
 /* Temporary file used for models.packetServer */
-static char server_tmpfile[L_tmpnam] = "";
+#define TMP_FILE_TEMPLATE   "/tmp/models.packetServer.XXXXXX"
+#define TMP_FILE_LEN 		100
+static char server_tmpfile[TMP_FILE_LEN] = "";
 
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
@@ -238,11 +240,12 @@ int wm_server_start(char *cmd)
 {
 	char *exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
 	const int max_retries = 30;
-	char server_if[L_tmpnam];
-	char server_ip[L_tmpnam];
+	char server_if[TMP_FILE_LEN];
+	char server_ip[TMP_FILE_LEN];
 	const int delay = 1;
 	pid_t pid;
 	int i = 0;
+	int file;
 	int err;
 
 	if (!cmd) {
@@ -253,8 +256,10 @@ int wm_server_start(char *cmd)
 	/* Generate a temporary file name and extract directory name (infopath)
 	 * and file name (infoname). Note that the functions are destructive so
 	 * we need to make copies of the strings */
-	tmpnam(server_tmpfile);
-	LOG_INFO("Using temp models.packetServer: %s\n", server_tmpfile);
+	strcpy(server_tmpfile, TMP_FILE_TEMPLATE);
+	file = mkstemp(server_tmpfile);
+	close(file);
+	LOG_INFO("Using temporary file: %s\n", server_tmpfile);
 
 	pid = fork();
 	if (pid == 0) {
