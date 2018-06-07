@@ -414,10 +414,12 @@ reg glort_ram_r {
     AccessType = "RW";
     desc = "
             Determines whether the destination index is chosen explicitly or via hashing.
-            * Hashed(0)
-            * Reserved (1)
-            * Targeted Deterministic (2)
-            * Deterministic (3)
+            [list]
+            [*] Hashed(0)
+            [*] Reserved (1)
+            [*] Targeted Deterministic (2)
+            [*] Deterministic (3)
+            [/list]
            ";
     ValRandomize = true;
   } STRICT[1:0] = 2'h00;
