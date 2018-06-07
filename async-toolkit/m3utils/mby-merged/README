@@ -316,13 +316,12 @@ Amiq DVT Environment
 
 Execute the following:
 ----------------------
-launch_dvt mby <model>
+  tools/dvt/launch_dvt.csh -dut mby -model <model> -bman -clean
 
 
 Current Model List :
 ---------------------
 mby                           # Madison Bay Configuration
-
 
 
 OLD:   Needs .dvt/<model>.build files to be updated manually.    $MODEL_ROOT/tools/dvt/dvt_runme.csh

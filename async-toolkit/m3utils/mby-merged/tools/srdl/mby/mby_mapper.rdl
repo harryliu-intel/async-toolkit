@@ -3,193 +3,7 @@
 
 
 
-// MAP_EXTRACT0[0..15]
-
-reg map_extract0_r {
-  shared;
-  HandCoded = true;
-  name = "Mapper field extraction";
-  desc = "
-    The parser packet header extraction results are placed into a field vector.
-    This register tells the mapper where in the field vector it will find
-    particular packet header fields.
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_DIP[55:48] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_SIP[47:40] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_TC[39:32] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_VLAN2[31:24] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_VLAN1[23:16] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_SMAC[15:8] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_DMAC[7:0] = 8'h0;
-};
-
-
-
-// MAP_EXTRACT1[0..15]
-
-reg map_extract1_r {
-  shared;
-  HandCoded = true;
-  name = "Mapper field extraction";
-  desc = "
-    The parser packet header extraction results are placed into a field vector.
-    This register tells the mapper where in the field vector it will find
-    particular packet header fields.
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_DIP[55:48] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_SIP[47:40] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_TC[39:32] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_VLAN2[31:24] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_VLAN1[23:16] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_SMAC[15:8] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_DMAC[7:0] = 8'h0;
-};
-
-
-
-// MAP_EXTRACT2[0..15]
-
-reg map_extract2_r {
-  shared;
-  HandCoded = true;
-  name = "Mapper field extraction";
-  desc = "
-    The parser packet header extraction results are placed into a field vector.
-    This register tells the mapper where in the field vector it will find
-    particular packet header fields.
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } TOP_MPLS_EXP[55:48] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_L4DST[47:40] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_L4SRC[39:32] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } INNER_PROTO[31:24] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_L4DST[23:16] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_L4SRC[15:8] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ";
-    ValRandomize = true;
-  } OUTER_PROTO[7:0] = 8'h0;
-};
-
-
-
-// MAP_PORT_CFG[0..32]
+// MAP_PORT_CFG[0..16]
 
 reg map_port_cfg_r {
   shared;
@@ -225,12 +39,12 @@ reg map_port_cfg_r {
 
            ";
     ValRandomize = true;
-  } PORT_PROFILE[7:0] = 7'h0;
+  } PORT_PROFILE[7:0] = 8'h0;
 };
 
 
 
-// MAP_PORT_DEFAULT[0..33,0..5]
+// MAP_PORT_DEFAULT[0..16,0..5]
 
 reg map_port_default_r {
   shared;
@@ -255,37 +69,11 @@ reg map_port_default_r {
   field {
     AccessType = "RW";
     desc = "
-    If use_parse_ptr is set, then the value to use for
-    MAP_PORT_DEFAULT[port][i] is parse_result.ptr[i*2 : i*2+1].
-    ptr[i] is MSB and ptr[i+1] is LSB. The parser provides ptrs[7:1], set ptrs[0]=0.
-    [br][br]
-    This field is only used when the second index is 0..3.
-
-           ";
-    ValRandomize = true;
-  } USE_PARSE_PTR[32:32] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    The immediate value to use if !use_parse_ptr && (use_key == 255).
+    The immediate value to use.
 
            ";
     ValRandomize = true;
   } VALUE[31:16] = 16'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    If use_key[i] is <255, then replace value[i] with keys[use_key[i]].
-    [br][br]
-    This is needed to enable the Classifier to provide key bits directly into
-    mod_meta or other actions. It also removes the need for a
-    reverse-remap feature in Classifier.
-    [br][br]
-    This field is only used when the second index is 0..1.
-
-           ";
-    ValRandomize = true;
-  } USE_KEY[15:8] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -314,144 +102,7 @@ regfile map_port_default_rf {
 
 
 
-// MAP_DGLORT_TCAM[0..7]
-
-reg map_dglort_tcam_r {
-  shared;
-  HandCoded = true;
-  name = "Default DGLORT Assignment";
-  desc = "
-  The (MAP_DGLORT_*) registers describe how to convert the
-  21-bit key:
-  .  {lan_dest_port, dsi_dest_port, onpi_type}
-  into a 16-bit default DGLORT.  The match semantics are identical to that of the FFU_TCAM.
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-      select which bits to compare
-
-           ";
-    ValRandomize = true;
-  } KEY_INVERT[41:21] = 21'h1ffff;
-  field {
-    AccessType = "RW";
-    desc = "
-      bits to be compared against the key from packet metadata
-
-           ";
-    ValRandomize = true;
-  } KEY[20:0] = 21'h1ffff;
-};
-
-
-
-// MAP_DGLORT_ACTION[0..7]
-
-reg map_dglort_action_r {
-  shared;
-  HandCoded = true;
-  name = "Default DGLORT Assignment";
-  desc = "
-  The (MAP_DGLORT_*) registers describe how to convert the
-  21-bit key:[br]
-  [sp][sp]{lan_dest_port, dsi_dest_port, onpi_type}[br]
-  into a 16-bit default DGLORT.
-  [br][br]
-  MAP_DGLORT_ACTION[i] is used when MAP_DGLORT_KEY[i] is the highest-numbered hit.
-  The DGLORT used is[br]
-  [sp][sp]base | rotate(key, rot) & mask_gen(start, len)[br]
-  Wherein
-  [list]
-  [*] rotate(key, rot) == (key << rot) | (key >> (32-rot))
-  [*] mask_gen(start, len)[j] is set if j>=start and j < start+len
-  [/list]
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-      Enable default dglort.
-      The default dglort will overwrite the DGLORT parser key
-      (after the IP rearrange step creates space,
-       and after PORT_DEFAULT has potentially assigned a default value).
-
-           ";
-    ValRandomize = true;
-  } ENABLE[30:30] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      the key is padded to 32 bits and then rotated left by rot, and then the 16 lsbs are used.
-
-           ";
-    ValRandomize = true;
-  } ROT[29:25] = 5'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      first bit to insert into dglort
-
-           ";
-    ValRandomize = true;
-  } START[24:21] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      number of bits to insert into dglort
-
-           ";
-    ValRandomize = true;
-  } LENGTH[20:16] = 5'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      constant to be ORed in with selected, rotated key bits
-
-           ";
-    ValRandomize = true;
-  } BASE[15:0] = 16'h0;
-};
-
-
-
-// MAP_CPM_FN
-
-reg map_cpm_fn_r {
-  shared;
-  HandCoded = true;
-  name = "Enable CPM Ingress ONPI function per port.";
-  desc = "
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-    Bit i is set if the CPM Ingress ONPI function is enabled on port i.
-    When this function is enabled, and the ESP_VALID parser flag is set,
-    the IP and ESP header header offsets are written into ONPI metadata.
-
-           ";
-    ValRandomize = true;
-  } PORT_MASK[23:0] = 24'h0;
-};
-
-
-
-// MAP_LEN_LIMIT[0..23]
+// MAP_LEN_LIMIT[0..16]
 
 reg map_len_limit_r {
   shared;
@@ -544,10 +195,9 @@ reg map_domain_tcam_r {
     The highest index has precedence in case there is more than one match.
     [br][br]
     Note, when performing the match function, in addition to the main fields and their corresponding 
-    invert ones, _RSVD0_ and _RSVD1_ fields are partially used in hit generation. To make the hit independent of them,
-    those RSVD bits should be programmed to zero (always match) so they do not affect the hit. Those bits are 
-    bits 39..34 (6 bits in _RSVD0_) and bits 103..98 (6 bits in _RSVD1_) which should all be programmed to zero. 
-    This assures the match is not dependent on _RSVD0_ and _RSVD1_ fields. 
+    invert ones, _RSVD0_ and _RSVD1_ fields are partially used in hit generation. To make the hit 
+    independent of those fields, they should be programmed to zero (always match) so they do not 
+    affect the hit.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -561,15 +211,16 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[127:98] = 30'h0;
+  } _RSVD1_[127:107] = 21'h0;
   field {
     AccessType = "RW";
     desc = "
-      Inverted ingress port number
+      Inverted ingress port mask. With port_key set to all zeros, set a 1 bit in this
+      field only for ports to be excluded from matching.
 
            ";
     ValRandomize = true;
-  } PORT_KEY_INVERT[97:90] = 8'hff;
+  } PORT_KEY_INVERT[106:90] = 17'h1ffff;
   field {
     AccessType = "RW";
     desc = "
@@ -609,15 +260,15 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[63:34] = 30'h0;
+  } _RSVD0_[63:43] = 21'h0;
   field {
     AccessType = "RW";
     desc = "
-      Ingress port number
+      Ingress port mask. Set to all zeros and control matching with port_key_invert.
 
            ";
     ValRandomize = true;
-  } PORT_KEY[33:26] = 8'hff;
+  } PORT_KEY[42:26] = 17'h1ffff;
   field {
     AccessType = "RW";
     desc = "
@@ -674,7 +325,7 @@ reg map_domain_action0_r {
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[38:30] = 9'h0;
+  } L2_DOMAIN[37:30] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -694,8 +345,10 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-    When set, use the domains, priority_profile, and operator_id from the action,
-    and write the domain and operator_id fields into the packet's ONPI metadata.
+    Used only for packets sent to the CPP. When set, use the domains, 
+    priority_profile, and operator_id from the action,
+    and write the domain and operator_id fields into the metadata that will be
+    sent to the CPP.
 
     If update_domains=0, then use the l2_domain, l3_domain, and operator_id fields
     received in the packet's ONPI metadata. Do not overwrite those fields. And use
@@ -707,7 +360,7 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-     Learning enable/disable.
+     Learning notification enable/disable.
      This is used as the default value for the Classifier 'LEARN' action.
 
            ";
@@ -716,7 +369,7 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-     Select shared(0) or independent(1) VLAN learning.
+     Select shared(0) or independent(1) VLAN learning notification.
 
            ";
     ValRandomize = true;
@@ -737,6 +390,13 @@ reg map_domain_action0_r {
      [*] pri_source[7:6] = highest precedence TC source ID
      [*] pri_source[1:0] = lowest precedence TC source  ID
      [/list]
+     where each 2b field is uniquely one of:
+     [code]
+     00: MAP_VPRI_TC
+     01: MAP_EXP_TC
+     10: MAP_DSCP_TC
+     11: TC specified in metadata from CPU
+     [/code]
 
            ";
     ValRandomize = true;
@@ -841,7 +501,7 @@ reg map_domain_profile_r {
 
 
 
-// MAP_PORT[0..32]
+// MAP_PORT[0..16]
 
 reg map_port_r {
   shared;
@@ -924,166 +584,6 @@ reg map_mac_r {
            ";
     ValRandomize = true;
   } MAC[47:0] = 48'h0;
-};
-
-
-
-// MAP_TYPE[0..15]
-
-reg map_type_r {
-  shared;
-  HandCoded = true;
-  name = "Configures 16-bit to 4-bit EtherType mapping";
-  desc = "
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-        bit 0 = valid for outer L2 header
-        bit 1 = valid for inner L2 header
-
-           ";
-    ValRandomize = true;
-  } VALID[21:20] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        4-bit mapped EtherType
-
-           ";
-    ValRandomize = true;
-  } MAP_TYPE[19:16] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        EtherType Key
-
-           ";
-    ValRandomize = true;
-  } TYPE_XXX[15:0] = 16'h0;
-};
-
-
-
-// MAP_IP_LO[0..15]
-
-reg map_ip_lo_r {
-  shared;
-  HandCoded = true;
-  name = "Configures low 64-bit key of 128-bit to 4-bit IP address mapping";
-  desc = "
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-        Low 64 bits of IP address prefix key.  Ignored bits must be set to 0.
-
-           ";
-    ValRandomize = true;
-  } IP_LO[63:0] = 64'h0;
-};
-
-
-
-// MAP_IP_HI[0..15]
-
-reg map_ip_hi_r {
-  shared;
-  HandCoded = true;
-  name = "Configures high 64-bit key of 128-bit to 4-bit IP address mapping";
-  desc = "
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-        High 64 bits of IP address prefix key.  Ignored bits must be set to 0.
-
-           ";
-    ValRandomize = true;
-  } IP_HI[63:0] = 64'h0;
-};
-
-
-
-// MAP_IP_CFG[0..15]
-
-reg map_ip_cfg_r {
-  shared;
-  HandCoded = true;
-  name = "Configures 128-bit to 4-bit IP address mapping";
-  desc = "
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-        Indicates the number of most-significant bits of the IP address to match on.  For
-        IPv6 addresses, the the match for entry i is against { MAP_IP_HI[i], MAP_IP_LO[i] }.
-        and MATCH_LENGTH is in the range 0..128.  For IPv4 addresses, the match for entry i
-        is against MAP_IP_HI[i][63:32] and MATCH_LENGTH is in the range 0..32.
-
-           ";
-    ValRandomize = true;
-  } MATCH_LENGTH[18:11] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        [list]
-        [*] bit 0 = entry valid for outer DIP
-        [*] bit 1 = entry valid for outer SIP
-        [*] bit 2 = entry valid for inner DIP
-        [*] bit 3 = entry valid for inner SIP
-        [/list]
-
-           ";
-    ValRandomize = true;
-  } VALID[10:7] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        4-bit mapped IP address
-
-           ";
-    ValRandomize = true;
-  } MAP_IP[6:3] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        2-bit value to feed into packet profile CAM
-
-           ";
-    ValRandomize = true;
-  } IP_PROFILE[2:1] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        [list]
-        [*] If set, header must be ipv6 to match.
-        [*] If clear, header must be ipv4 to match.
-        [/list]
-
-           ";
-    ValRandomize = true;
-  } IS_IPV6[0:0] = 1'h0;
 };
 
 
@@ -1859,7 +1359,7 @@ reg map_profile_key1_r {
   HandCoded = true;
   name = "Packet profile CAM key value 1";
   desc = "
-  Packet profile KEY1 is metadata/mapping.
+  Packet profile KEY1 is mapping.
   This register provides the key values to compare against. The same format is used for key and key invert. 
 
   The semantic is identical to that used in the FFU_TCAM register.
@@ -1872,25 +1372,13 @@ reg map_profile_key1_r {
   regwidth = 64;
   accesswidth = 64;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     . pkt_meta.c.typ
+      Reserved
 
            ";
     ValRandomize = true;
-  } METADATA_TYPE[59:52] = 8'hff;
-  field {
-    AccessType = "RW";
-    desc = "
-     [list]
-     [*] pkt_meta.dsi_rx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_RX)
-     [*] pkt_meta.dsi_tx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_TX)
-     [*] 0 (otherwise)
-     [/list]
-
-           ";
-    ValRandomize = true;
-  } METADATA_FLAGS[51:41] = 11'h7ff;
+  } _RSVD1_[63:40] = 24'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1899,7 +1387,7 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[40:32] = 9'h1ff;
+  } L2_DOMAIN[39:32] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
@@ -1910,18 +1398,13 @@ reg map_profile_key1_r {
     ValRandomize = true;
   } L3_DOMAIN[31:26] = 6'h3f;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     [list]
-     [*] ip[1:0] = MAP(outer SIP).profile
-     [*] ip[3:2] = MAP(outer DIP).profile
-     [*] ip[5:4] = MAP(inner SIP).profile
-     [*] ip[7:6] = MAP(inner DIP).profile
-     [/list]
+      Reserved
 
            ";
     ValRandomize = true;
-  } IP_PROFILE[25:18] = 8'hff;
+  } _RSVD0_[25:18] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1973,7 +1456,7 @@ reg map_profile_key_invert1_r {
   HandCoded = true;
   name = "Packet profile CAM key invert 1";
   desc = "
-  Packet profile KEY1 is metadata/mapping.
+  Packet profile KEY1 is mapping.
   This register selects which key bits to compare. The same format is used for key and key invert. 
 
   The semantic is identical to that used in the FFU_TCAM register.
@@ -1986,25 +1469,13 @@ reg map_profile_key_invert1_r {
   regwidth = 64;
   accesswidth = 64;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     . pkt_meta.c.typ
+      Reserved
 
            ";
     ValRandomize = true;
-  } METADATA_TYPE[59:52] = 8'hff;
-  field {
-    AccessType = "RW";
-    desc = "
-     [list]
-     [*] pkt_meta.dsi_rx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_RX)
-     [*] pkt_meta.dsi_tx_hlp_cpm.flags (if pkt_meta.c.typ == DSI_TX)
-     [*] 0 (otherwise)
-     [/list]
-
-           ";
-    ValRandomize = true;
-  } METADATA_FLAGS[51:41] = 11'h7ff;
+  } _RSVD1_[63:40] = 24'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -2013,7 +1484,7 @@ reg map_profile_key_invert1_r {
 
            ";
     ValRandomize = true;
-  } L2_DOMAIN[40:32] = 9'h1ff;
+  } L2_DOMAIN[39:32] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
@@ -2024,18 +1495,13 @@ reg map_profile_key_invert1_r {
     ValRandomize = true;
   } L3_DOMAIN[31:26] = 6'h3f;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     [list]
-     [*] ip[1:0] = MAP(outer SIP).profile
-     [*] ip[3:2] = MAP(outer DIP).profile
-     [*] ip[5:4] = MAP(inner SIP).profile
-     [*] ip[7:6] = MAP(inner DIP).profile
-     [/list]
+      Reserved
 
            ";
     ValRandomize = true;
-  } IP_PROFILE[25:18] = 8'hff;
+  } _RSVD0_[25:18] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -2160,11 +1626,11 @@ reg map_profile_action_r {
     AccessType = "RW";
     desc = "
     Mask to select which parser flags will generate TRAP_IP_OPTIONS.
-    The formula is as follows, where :
-      // otr_opt_flags[6] = IPv4 case
-      // otr_opt_flags[5:0] from parser.
-      // inr_opt_flags[6] = IPv4 case
-      // inr_opt_flags[5:0] from parser.
+    The formula is as follows, where:[br]
+      otr_opt_flags[6] = IPv4 case[br]
+      otr_opt_flags[5:0] from parser[br]
+      inr_opt_flags[6] = IPv4 case[br]
+      inr_opt_flags[5:0] from parser
       [list]
       [*] otr_opt_flags = {otr_l3_v && !otr_v6 && otr_l3_len > 20, parser_flags[37:32]}                      
       [*] inr_opt_flags = {inr_l3_v && !inr_v6 && inr_l3_len > 20, parser_flags[43:38]}                    
@@ -2304,25 +1770,15 @@ addrmap mby_ppe_mapper_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  map_port_cfg_r             MAP_PORT_CFG[33]              @0x0 += 8;
-  map_port_default_rf        MAP_PORT_DEFAULT[33]          @0x200 += 64;
-  map_extract0_r             MAP_EXTRACT0[16]              @0xC00 += 8;
-  map_extract1_r             MAP_EXTRACT1[16]              @0xC80 += 8;
-  map_extract2_r             MAP_EXTRACT2[16]              @0xD00 += 8;
-  map_dglort_tcam_r          MAP_DGLORT_TCAM[8]            @0x1000 += 8;
-  map_dglort_action_r        MAP_DGLORT_ACTION[8]          @0x1040 += 8;
-  map_cpm_fn_r               MAP_CPM_FN                    @0x1080;
-  map_len_limit_r            MAP_LEN_LIMIT[33]             @0x1100 += 8;
+  map_port_cfg_r             MAP_PORT_CFG[17]              @0x0 += 8;
+  map_port_default_rf        MAP_PORT_DEFAULT[17]          @0x200 += 64;
+  map_len_limit_r            MAP_LEN_LIMIT[17]             @0x1100 += 8;
   map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
   map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
   map_domain_action1_r       MAP_DOMAIN_ACTION1[4096]      @0x28000 += 8;
   map_domain_profile_r       MAP_DOMAIN_PROFILE[512]       @0x30000 += 8;
-  map_port_r                 MAP_PORT[33]                  @0x31000 += 8;
+  map_port_r                 MAP_PORT[17]                  @0x31000 += 8;
   map_mac_r                  MAP_MAC[96]                   @0x31800 += 16;
-  map_type_r                 MAP_TYPE[16]                  @0x32000 += 8;
-  map_ip_lo_r                MAP_IP_LO[16]                 @0x32080 += 8;
-  map_ip_hi_r                MAP_IP_HI[16]                 @0x32100 += 8;
-  map_ip_cfg_r               MAP_IP_CFG[16]                @0x32180 += 8;
   map_prot_r                 MAP_PROT[8]                   @0x32200 += 8;
   map_l4_src_r               MAP_L4_SRC[64]                @0x32400 += 8;
   map_l4_dst_r               MAP_L4_DST[64]                @0x32600 += 8;

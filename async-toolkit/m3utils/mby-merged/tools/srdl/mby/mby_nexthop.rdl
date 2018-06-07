@@ -208,7 +208,7 @@ reg ingress_vid_table_r {
             switched normally. The IGMP frames are trapped to the CPU glort.
            ";
     ValRandomize = true;
-  } TRAP_IGMP[25:25] = 1'h00;
+  } TRAP_IGMP[18:18] = 1'h00;
   field {
     AccessType = "RW";
     desc = "
@@ -224,7 +224,7 @@ reg ingress_vid_table_r {
             and this bit is not used in this case.
            ";
     ValRandomize = true;
-  } REFLECT[24:24] = 1'h00;
+  } REFLECT[17:17] = 1'h00;
   field {
     AccessType = "RW";
     desc = "
@@ -232,7 +232,7 @@ reg ingress_vid_table_r {
             includes that port in the VLAN membership.
            ";
     ValRandomize = true;
-  } MEMBERSHIP[23:0] = 24'h00;
+  } MEMBERSHIP[16:0] = 17'h00;
 };
 
 reg egress_vid_table_r {
@@ -273,16 +273,17 @@ reg fwd_hashing_cfg_r {
   regwidth = 64;
   accesswidth = 64;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-            Include 1 byte of Metadata (Metadata[23]) in the L2/L3/L4 hash, when Metadata[0] (type) is 0001011x and Metadata[22][2] (validity flag) is 1.
+      Reserved
+
            ";
     ValRandomize = true;
-  } USE_METADATA[13:13] = 1'h01;
+  } _RSVD1_[63:13] = 51'h0;
   field {
     AccessType = "RW";
     desc = "
-            Specifies one of two 12—bit hash rotations for use in ECMP
+            Specifies one of two 12-bit hash rotations for use in ECMP
             binning. 
            ";
     ValRandomize = true;
@@ -290,75 +291,25 @@ reg fwd_hashing_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-            Specifies one of four 12—bit H234 rotations for use as Rotation B.
+            Specifies one of four 12-bit rotations for use as Rotation B.
            ";
     ValRandomize = true;
   } ROTATION_B[11:10] = 2'h01;
   field {
     AccessType = "RW";
     desc = "
-            Specifies one of four 12—bit H234 rotations for use as Rotation A.
+            Specifies one of four 12-bit rotations for use as Rotation A.
            ";
     ValRandomize = true;
   } ROTATION_A[9:8] = 2'h00;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-            Include VLAN ID field in the L2/L3/L4 hash.
+      Reserved
+
            ";
     ValRandomize = true;
-  } USE_VID[7:7] = 1'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            Include User (VLAN) Priority field in the L2/L3/L4 hash.
-           ";
-    ValRandomize = true;
-  } USE_VPRI[6:6] = 1'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            Include EtherType field in the L2/L3/L4 hash. If EtherType is less 
-            than 0x600, a value of 0 is used for these two bytes.
-           ";
-    ValRandomize = true;
-  } USE_TYPE[5:5] = 1'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            Include SMAC in the L2/L3/L4 hash.
-           ";
-    ValRandomize = true;
-  } USE_SMAC[4:4] = 1'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            Include DMAC in the L2/L3/L4 hash.
-           ";
-    ValRandomize = true;
-  } USE_DMAC[3:3] = 1'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            When set, SMAC/DMAC fields are symmetrized prior to hashing.
-           ";
-    ValRandomize = true;
-  } SYMMETRIC[2:2] = 1'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-            Include the L34 hash value (a.k.a. ECMP_HASH) in the L234 hash function.
-           ";
-    ValRandomize = true;
-  } USE_L34[1:1] = 1'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            Include the Layer 2 header in the hash function if an IPv4/IPv6 
-            packet.
-           ";
-    ValRandomize = true;
-  } USE_L2_IF_IP[0:0] = 1'h01;
+  } _RSVD0_[7:0] = 8'h0;
 };
 
 reg mtu_table_r {
