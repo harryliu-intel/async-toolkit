@@ -1,0 +1,42 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+
+// LOCAL_STORE[0..49151][0..3]
+
+reg local_store_r {
+  shared;
+  HandCoded = true;
+  name = "PPE Local Storage";
+  desc = "
+    Stores RX PPE output while waiting for scheduling for TX.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packet context data.  See the HAS for encodings.
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+regfile local_store_rf {
+  local_store_r LOCAL_STORE[4] += 8;
+};
+
+
+addrmap mby_local_store_map {
+  name = "mby_lstore";
+  desc = "PPE Local Storage Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  local_store_rf    LOCAL_STORE[49152];
+}; 
