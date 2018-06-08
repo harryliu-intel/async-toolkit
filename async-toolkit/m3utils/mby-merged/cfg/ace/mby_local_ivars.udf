@@ -105,7 +105,7 @@ EOF
 		-test_required                => { default => 1 },
 			
             -test_dependent_libs =>
-              { default => [ "sip_shared_lib", "mby_env_lib", ], },
+              { default => [ "shdv_shared_lib", "mby_env_lib", ], },
             -run_regression => {
                 switch => {
                     doa =>
