@@ -1,4 +1,19 @@
 import Dependencies._
+//
+
+
+def makeWmServerCode : Seq[File] = {
+  import sys.process._
+  import sbt.io._
+  println("Generating WM server from Scheme")
+  val m3dir = new File("src/main/m3")
+  val result : Int = "make -C src/main/m3 rpc_structs".!
+  require(result == 0, "Scheme-based generation step failed")
+  val pf = (m3dir / "wm_net") ** "*.scala"
+  pf.get.map(x => new File(x.getCanonicalPath))
+}
+
+
 
 lazy val root = (project in file(".")).
   settings(
@@ -17,8 +32,17 @@ lazy val root = (project in file(".")).
     )
   )
 
+sourceGenerators in Compile += Def.task { makeWmServerCode }.taskValue
+mainClass in Compile := Some("switch_wm.WhiteModelServer")
+
+
 PB.targets in Compile := Seq(
   scalapb.gen() -> (sourceManaged in Compile).value
 )
+
+// below, to enable IDEA to automatically context-complete with content from these the scheme-based generator
+managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated")
+managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_src")
+
 
 parallelExecution in Test := false

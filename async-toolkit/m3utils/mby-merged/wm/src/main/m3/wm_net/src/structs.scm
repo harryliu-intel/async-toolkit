@@ -48,6 +48,7 @@
   `((constants iosf-op       
                     u8                         ;; type
                     ((c IOSF)                  ;; names
+					 (scala IOSF)
                      (m3 IosfOp))              
                     ((reg-read           16_0) ;; values
                      (reg-write          16_1)
@@ -61,17 +62,21 @@
 
     (constants fm-hlp-api-regs-int
                u32
-               ((m3 FmHlpApiRegsInt))
+               ((m3 FmHlpApiRegsInt)
+			    (c FM_HLP_API_REGS_INT)
+			    (scala FmHlpApiRegsInt))
                ((hlp-reg-version 16_1109)   ;; hacky for now
                 (hlp-reg-tag     16_12614)
                 ))
 
     (constants fm-model-constants
                u32
-               ((m3 FmModelConstants))
-               ((port-link-up              1)
-                (port-link-down            0)
-                (n-phys-ports             32)
+               ((m3 FmModelConstants)
+			    (c FM_MODEL_CONSTANTS)
+			    (scala FmModelConstants))
+               ((port-link-up              10_1)
+                (port-link-down            10_0)
+                (n-phys-ports             10_32)
                 (socket-port-disable 16_ffff)))
 
     (enum fm-socket-type

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -fPIC -Wall -Wextra -O2 -g
+CFLAGS = -fPIC -Wall -Wextra -O2 -g -Wno-unused-function
 LDFLAGS = -shared
 RM = rm -f
 TARGET_DIR = target
@@ -22,7 +22,7 @@ $(SRCS:.c=.d):%.d:%.c
 include $(SRCS:.c=.d)
 
 .PHONY: sample
-$(SAMPLE_EXE): ${TARGET_LIB}
+$(SAMPLE_EXE): ${TARGET_LIB} client_sample.c
 	$(CC) $(CFLAGS) -I. -L $(TARGET_DIR) -lmbay_dpi_client $(notdir ${SAMPLE_EXE}.c) -o ${SAMPLE_EXE}
 
 .PHONY: clean
