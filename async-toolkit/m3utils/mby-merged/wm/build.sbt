@@ -1,4 +1,6 @@
 import Dependencies._
+//
+
 
 def makeWmServerCode : Seq[File] = {
   import sys.process._
@@ -37,5 +39,10 @@ mainClass in Compile := Some("switch_wm.WhiteModelServer")
 PB.targets in Compile := Seq(
   scalapb.gen() -> (sourceManaged in Compile).value
 )
+
+// below, to enable IDEA to automatically context-complete with content from these the scheme-based generator
+managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated")
+managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_src")
+
 
 parallelExecution in Test := false

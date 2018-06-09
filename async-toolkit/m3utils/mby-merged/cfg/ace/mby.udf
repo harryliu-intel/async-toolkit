@@ -1,9 +1,11 @@
 #---*-perl-*---
 
 %audf = (
-    Includes => [
-        "cfg/ace/mby_integ.udf", "cfg/ace/mby_local_ivars.udf",
-        "cfg/ace/mby_tag_overrides.udf",
-	"cfg/ace/mby_genrtl.udf",
-    ],
+   Includes => [
+      "cfg/ace/mby_local_hdl.udf",
+      "cfg/ace/mby_integ.udf",
+      "cfg/ace/mby_local_ivars.udf",
+      "cfg/ace/mby_tag_overrides.udf",
+	  "cfg/ace/mby_genrtl.udf",
+   ],
 );
