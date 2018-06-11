@@ -26,7 +26,7 @@ reg entropy_hash_cfg0_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key8s to participate in hashing and matching. 
+     Selects Classifier KEY8s to participate in hashing and matching. 
      key_mask8[i] selects key8[i].
 
            ";
@@ -48,9 +48,10 @@ reg entropy_hash_cfg1_r {
   desc = "
   Configure how each of the 4 hash values (hash0/1) should be calculated.
   The value in this register has the same format as FFU_HASH_CFG1.
-
-  * hash0 configuration is ENTROPY_HASH_CFG0[0][HASH_PROF[0]].
-  * hash1 configuration is ENTROPY_HASH_CFG0[1][HASH_PROF[1]].
+  [list]
+  [*] hash0 configuration is ENTROPY_HASH_CFG0[0][HASH_PROF[0]].
+  [*] hash1 configuration is ENTROPY_HASH_CFG0[1][HASH_PROF[1]].
+  [/list]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -68,10 +69,12 @@ reg entropy_hash_cfg1_r {
   field {
     AccessType = "RW";
     desc = "
-     * if key_submode0=0, apply key_submask0 bitmask to key16 24..25 (MPLS 0)
-     * if key_submode0=1, apply key_submask0 bitmask to key16 26..27 (MPLS 1)
-     * if key_submode0=2, apply key_submask0 nybblemask to key16 24..31 (MPLS 0-3)
-     * if key_submode0=3, apply key_submask0 nybblemask to key32 0..3 (outer SIP/DIP IPv4, or outer SIPv6)    
+    [list]
+    [*] if key_submode0=0, apply key_submask0 bitmask to key16 24..25 (MPLS 0)
+    [*] if key_submode0=1, apply key_submask0 bitmask to key16 26..27 (MPLS 1)
+    [*] if key_submode0=2, apply key_submask0 nybblemask to key16 24..31 (MPLS 0-3)
+    [*] if key_submode0=3, apply key_submask0 nybblemask to key32 0..3 (outer SIP/DIP IPv4, or outer SIPv6)    
+    [/list]
 
            ";
     ValRandomize = true;
@@ -79,7 +82,7 @@ reg entropy_hash_cfg1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key32s to participate in hashing and matching. 
+     Selects Classifier KEY32s to participate in hashing and matching. 
      key_mask32[i] selects key32[i].
 
            ";
@@ -88,7 +91,7 @@ reg entropy_hash_cfg1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key16s to participate in hashing and matching. 
+     Selects Classifier KEY16s to participate in hashing and matching. 
      key_mask16[i] selects key16[i].
 
            ";
@@ -110,9 +113,10 @@ reg entropy_hash_cfg2_r {
   desc = "
   Configure how each of the 4 hash values (hash0/1) should be calculated.
   The value in this register has the same format as FFU_HASH_CFG2. 
-
-  * hash0 configuration is ENTROPY_HASH_CFG2[0][HASH_PROF[0]].
-  * hash1 configuration is ENTROPY_HASH_CFG2[1][HASH_PROF[1]]. 
+  [list]
+  [*] hash0 configuration is ENTROPY_HASH_CFG2[0][HASH_PROF[0]].
+  [*] hash1 configuration is ENTROPY_HASH_CFG2[1][HASH_PROF[1]]. 
+  [/list]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -165,10 +169,12 @@ reg entropy_meta_cfg_r {
      Controls default setting for each metadata byte.
      Byte_Defaults[b*2 +: 2] controls byte b.
      The values are interpreted as follows:
-       * 0: default byte value is FFU_META[0]
-       * 1: default byte value is FFU_META[1]
-       * 2: default byte value is FFU_META[2]
-       * 3: default byte value is 0.
+     [list]
+     [*] 0: default byte value is FFU_META[0]
+     [*] 1: default byte value is FFU_META[1]
+     [*] 2: default byte value is FFU_META[2]
+     [*] 3: default byte value is 0.
+     [/list]
 
            ";
     ValRandomize = true;

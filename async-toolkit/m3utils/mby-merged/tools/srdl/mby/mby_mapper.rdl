@@ -58,7 +58,7 @@ reg map_port_default_r {
   [list]
   [*] For target field less than 96, set key_valid for keys modified by the value field.
   [*] Copy dscp/vpri/vid to actions, overriding the default values inserted above for keys_valid
-  [*] Insert the rest of default targets in 96..191.
+  [*] Insert the rest of default targets in 96..223.
   [/list]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -1404,15 +1404,15 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[25:18] = 8'h0;
+  } _RSVD0_[25:22] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
-     4 bits from MAP_PORT_CFG
+     8 bits from MAP_PORT_CFG
 
            ";
     ValRandomize = true;
-  } PORT_PROFILE[17:14] = 4'hf;
+  } PORT_PROFILE[21:14] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
@@ -1501,15 +1501,15 @@ reg map_profile_key_invert1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[25:18] = 8'h0;
+  } _RSVD0_[25:22] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
-     4 bits from MAP_PORT_CFG
+     8 bits from MAP_PORT_CFG
 
            ";
     ValRandomize = true;
-  } PORT_PROFILE[17:14] = 4'hf;
+  } PORT_PROFILE[21:14] = 8'hff;
   field {
     AccessType = "RW";
     desc = "

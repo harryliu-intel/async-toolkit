@@ -585,8 +585,8 @@ reg cm_apply_loopback_suppress_r {
           At the edge of the system, we must avoid retransmitting a frame over 
           the same LAG it arrived on, even if the LAG is distributed across 
           multiple edge chips. This is done by comparing the GloRTs for the 
-          source and destination LAG/port? if the GloRTs match, not counting the
-          port—specific bits, then the LAGs are the same. Note that the
+          source and destination LAG/port. if the GloRTs match, not counting the
+          port-specific bits, then the LAGs are the same. Note that the
           destination port's GloRT is not necessarily the same as the 
           destination GloRT (which might be multicast), so this comparison 
           needs to be done for all external destination ports in parallel. The 

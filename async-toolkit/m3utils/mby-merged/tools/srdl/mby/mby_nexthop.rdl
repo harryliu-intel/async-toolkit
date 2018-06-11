@@ -5,120 +5,106 @@
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
 
-reg nexthop_route_table_r {
-  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  shared;
-  HandCoded = true;
-  name = "Stores pointer to nexthop entry information";
-  desc = "Stores a pointer to the nexthop entry information and age counters for flowlet mode";
-  regwidth = 128;
-  accesswidth = 128;
-  field {
-    AccessType = "RW";
-    desc = "
-           A pointer into NEXTHOP_ENTRY_TABLE.
-           ";
-    ValRandomize = true;
-  } AGE_CNTR[22:15] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           A pointer into NEXTHOP_ENTRY_TABLE.
-           ";
-    ValRandomize = true;
-  } INDEX[14:0] = 15'h0;
-};
-
 reg nexthop_entry_table_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   shared;
   HandCoded = true;
-  name = "Stores next-hop information for IP routing.";
-  desc = "Stores next-hop entry and related fields for IP routing.";
+  name = "Stores next-hop information for IP routing and GLORT forwarding.";
+  desc = "Stores next-hop entry and related fields for IP routing and GLORT forwarding.";
   regwidth = 128;
   accesswidth = 128;
   field {
     AccessType = "RW";
     desc = "
-           Indicate to update L2 domain value.
+           0: Entry is used for GLORT forwarding. DST_MAC, EVID and IPV6_ENTRY are ignored.
+           [br][br]
+           1: Entry is used for IP routing. DST_MAC provides the next hop router's DMAC
+                  and DGLORT indicates the egress port to which the next hop router is connected.
            ";
     ValRandomize = true;
-  } UPDATE_L3_DOMAIN[113:113] = 1'h0;
+  } ENTRY_TYPE[121:121] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
-           Indicate to update L2 domain value.
+           Indicates whether to derive the DMAC from the IPv6 DIP when 
+           doing IP routing and stateless autoconfig is enabled on the network.[br]
+           Ignored if ENTRY_TYPE=0.
            ";
     ValRandomize = true;
-  } UPDATE_L2_DOMAIN[112:112] = 1'h0;
+  } IPV6_ENTRY[120:120] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
-           L3 domain value.
+           Marks the packet as routed when doing GLORT forwarding so that Modify will update 
+           the appropriate header fields.[br]
+           Ignored if ENTRY_TYPE=1.
            ";
     ValRandomize = true;
-  } L3_DOMAIN[111:106] = 5'h00;
+  } MARK_ROUTED[119:119] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
-           L2 domain value.
+           Indicates to update the L3 domain value.
            ";
     ValRandomize = true;
-  } L2_DOMAIN[105:97] = 9'h00;
+  } UPDATE_L3_DOMAIN[118:118] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicates to update the L2 domain value.
+           ";
+    ValRandomize = true;
+  } UPDATE_L2_DOMAIN[117:117] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           New L3 domain value to use if UPDATE_L3_DOMAIN=1
+           ";
+    ValRandomize = true;
+  } L3_DOMAIN[116:111] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           New L2 domain value to use if UPDATE_L2_DOMAIN=1
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[110:103] = 8'h00;
   field {
     AccessType = "RW";
     desc = "
            Modify index MOD_IDX.
            ";
     ValRandomize = true;
-  } MOD_IDX[96:79] = 18'h00;
+  } MOD_IDX[102:79] = 24'h00;
   field {
     AccessType = "RW";
     desc = "
-            MTU index which indexes a table the produces the MTU size to check against.
+            Index into the MTU size check table.
            ";
     ValRandomize = true;
   } MTU_INDEX[78:76] = 3'h00;
   field {
     AccessType = "RW";
     desc = "
-            Egress VLAN ID used for MAC entry. 
+            Egress VLAN ID used for IP routing. [br]
+            Ignored if ENTRY_TYPE=0.
            ";
     ValRandomize = true;
   } EVID[75:64] = 12'h00;
   field {
-    AccessType = "RSV";
+    AccessType = "RW";
     desc = "
-            Reserved bits. Read/write should always be zero.
+           Indicates the destination GLORT for both GLORT forrwarding and IP routing.
            ";
     ValRandomize = true;
-  } RESERVED[63:50] = 15'h00;
+  } DGLORT[63:48] = 16'h00;
   field {
     AccessType = "RW";
     desc = "
-           IPv6Entry indicates whether to derive DMAC from the v6 DIP when stateless autoconfig is enabled on the network (applies only to MAC entry type).
-           ";
-    ValRandomize = true;
-  } IPV6_ENTRY[49:49] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           ARP table entry can be used as MAC entry (EntryType=1) or Glort entry (EntryType=0).
-           ";
-    ValRandomize = true;
-  } ENTRY_TYPE[48:48] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-
-            Destination MAC address for MAC entry type.
-
-            For GLORT entry type, its 48-bit structure is composed of: dglort in bits 15:0, mark_routed in bit 16,
-            reserved bits in 47:17
+            Destination MAC address for IP routing.[br]
+            Ignored if ENTRY_TYPE=0.
            ";
     ValRandomize = true;
   } DST_MAC[47:0] = 48'h00;
@@ -341,12 +327,11 @@ addrmap mby_ppe_nexthop_map {
   Opcode = "MEM-SB";
   No_IOSF_Primary=true;
   
-  nexthop_entry_table_r   NEXTHOP_ENTRY_TABLE[32768]        ;
-  nexthop_route_table_r   NEXTHOP_ROUTE_TABLE[32768]        ;
+  nexthop_entry_table_r   NEXTHOP_TABLE[16384]    ;
   ingress_vid_table_r     INGRESS_VID_TABLE[4096] ;
   egress_vid_table_r      EGRESS_VID_TABLE[4096]  ;
-  flood_glort_table_r     FLOOD_GLORT_TABLE[512]  ;
-  nexthop_used_r          NEXTHOP_USED[512]           ;
+  flood_glort_table_r     FLOOD_GLORT_TABLE[256]  ;
+  nexthop_used_r          NEXTHOP_USED[256]       ;
   mtu_table_r             MTU_TABLE[8]            ;
   fwd_hashing_cfg_r       FWD_HASHING_CFG         ;
 };
