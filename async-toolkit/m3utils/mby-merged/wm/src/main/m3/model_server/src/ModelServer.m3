@@ -57,8 +57,36 @@ REVEAL
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
+    pushPacket := PushPacket;
   END;
 
+PROCEDURE PushPacket(t : T; READONLY hdrP : FmModelMessageHdr.T; pkt : Pkt.T) =
+  VAR
+    pusher : DataPusher.T;
+    hdr := hdrP;
+  BEGIN
+    (* the reverse of DecodeTlvPacket here *)
+
+    hdr.msgLength := pkt.size(); (* this is a little screwy, it really
+                                    should be further down (and
+                                    include the inner header), but the
+                                    layering doesn't seem right in the
+                                    client *)
+
+    WrNet.PutU32G(pkt, Pkt.End.Front, pkt.size());
+    FmModelDataType.WriteE(pkt, Pkt.End.Front, FmModelDataType.T.Packet);
+
+    FmModelMessageHdr.WriteE(pkt, Pkt.End.Front, hdr);
+    WITH hadIt = t.egressPorts.get(hdr.port, pusher) DO
+      IF hadIt THEN
+        Debug.Out("PushPacket : pushing packet: ");
+        Debug.Out("header = " & FmModelMessageHdr.Format(hdr));
+        Pkt.DebugOut(pkt);
+        pusher.push(pkt)
+      END
+    END
+  END PushPacket;
+  
 PROCEDURE ListenFork(t : T) : Listener =
   BEGIN
     WITH listener = NEW(Listener,
@@ -307,10 +335,11 @@ PROCEDURE HandlePacket(<*UNUSED*>m  : MsgHandler;
                        READONLY hdr : FmModelMessageHdr.T;
                        VAR cx       : NetContext.T;
                        inst         : Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure, ParseError } =
+  RAISES { Rd.EndOfFile, Rd.Failure } =
   VAR
     sbData : FmModelSideBandData.T;
   BEGIN
+    Debug.Out("HandlePacket hdr=" & FmModelMessageHdr.Format(hdr));
     <*ASSERT hdr.type = FmModelMsgType.T.Packet*>
     FOR i := 0 TO cx.rem-1 DO
       inst.sp.addhi(RdNet.GetU8C(inst.rd, cx));
@@ -420,7 +449,7 @@ PROCEDURE HandleSetEgressInfo(<*UNUSED*>m  : MsgHandler;
     WITH  eiHdr    = FmModelSetEgressInfoHdr.ReadC(inst.rd, cx),
           remBytes = cx.rem,
           hostname = GetStringC(inst.rd, remBytes, cx),
-          disable = eiHdr.tcpPort = FmModelConstants.SocketPortDisable DO
+          disable  = eiHdr.tcpPort = FmModelConstants.SocketPortDisable DO
       Debug.Out(F("Received %s, hostname=%s, forPort=%s",
                   FmModelSetEgressInfoHdr.Format(eiHdr),
                   hostname,
@@ -436,7 +465,7 @@ PROCEDURE HandleSetEgressInfo(<*UNUSED*>m  : MsgHandler;
                       hostname,
                       Int(eiHdr.tcpPort)));
           WITH newPusher = NEW(MyDataPusher,
-                               t := inst.t,
+                               t    := inst.t,
                                port := hdr.port).init(hostname,
                                                       eiHdr.tcpPort) DO
             EVAL inst.t.egressPorts.put(hdr.port, newPusher)
@@ -465,11 +494,11 @@ PROCEDURE DPEC(dp : MyDataPusher) =
 
   (**********************************************************************)
 
-PROCEDURE HandleMsgCommandQuit(<*UNUSED*>m  : MsgHandler;
-                               READONLY hdr : FmModelMessageHdr.T;
-                               VAR cx       : NetContext.T;
-                               inst         : Instance)
-  RAISES { Rd.EndOfFile, Rd.Failure, Wr.Failure }=
+PROCEDURE HandleMsgCommandQuit(<*UNUSED*>m      : MsgHandler;
+                               READONLY hdr     : FmModelMessageHdr.T;
+                               <*UNUSED*>VAR cx : NetContext.T;
+                               <*UNUSED*>inst   : Instance)
+  RAISES { }=
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.CommandQuit*>
     (* not elegant *)
