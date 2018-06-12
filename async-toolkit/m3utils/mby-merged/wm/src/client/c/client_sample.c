@@ -31,7 +31,8 @@
 #define SERVER_EXEC SERVER_PATH "model_server/AMD64_LINUX/modelserver"
 #define SERVER_FILE SERVER_PATH "models.packetServer"
 
-void print_help() {
+void print_help(void)
+{
 	printf("sample_client - C-DPI sample client application\n\n");
 	printf("Start or connect to the model server and perform a register\n");
 	printf("write followed by a read to verify the value.\n\n");
@@ -52,25 +53,24 @@ int main(int argc, char **argv)
 	int err;
 	int c;
 
-	while ((c = getopt (argc, argv, "se:m:h")) != -1)
-		switch (c)
-		{
-			case 's':
-				start_server = 1;
-				break;
-			case 'e':
-				model_server_exec = optarg;
-				break;
-			case 'm':
-				model_server_file = optarg;
-				break;
-			case 'h':
-				print_help();
-				return 0;
-			default:
-				printf("Invalid command line argument: %c\n\n", c);
-				print_help();
-				return 1;
+	while ((c = getopt(argc, argv, "se:m:h")) != -1)
+		switch (c) {
+		case 's':
+			start_server = 1;
+			break;
+		case 'e':
+			model_server_exec = optarg;
+			break;
+		case 'm':
+			model_server_file = optarg;
+			break;
+		case 'h':
+			print_help();
+			return 0;
+		default:
+			printf("Invalid command line argument: %c\n\n", c);
+			print_help();
+			return 1;
 		}
 
 	if (start_server)
@@ -100,12 +100,10 @@ int main(int argc, char **argv)
 		goto CLEANUP;
 	}
 
-	if (val != 0x1234567890abcdef) {
+	if (val != 0x1234567890abcdef)
 		printf("Unexpected value: 0x%lx\n", val);
-	}
-	else {
+	else
 		printf("OK\n");
-	}
 
 CLEANUP:
 	err = start_server ? wm_server_stop() : wm_disconnect();

@@ -54,7 +54,7 @@ static int wm_sock_fd;
 
 /* Temporary file used for models.packetServer */
 #define TMP_FILE_TEMPLATE   "/tmp/models.packetServer.XXXXXX"
-#define TMP_FILE_LEN 		100
+#define TMP_FILE_LEN		100
 static char server_tmpfile[TMP_FILE_LEN] = "";
 
 /* Static functions defined at the end of the file */
@@ -66,6 +66,100 @@ static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
 static int read_host_info(FILE *fd, char *host, int host_size, int *port);
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec);
+
+/**
+ * wm_server_start() - Start the model server.
+ *
+ * Fork a new process and run the model server. The infopath and infofile
+ * arguments are set to a temporary file.
+ * It then waits until the server comes up and connects to it.
+ *
+ * @param_in	cmd the executable file of the model server
+ *
+ * @retval		OK if successful
+ */
+int wm_server_start(char *cmd)
+{
+	char *exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
+	const int max_retries = 30;
+	char server_if[TMP_FILE_LEN];
+	char server_ip[TMP_FILE_LEN];
+	const int delay = 1;
+	pid_t pid;
+	int i = 0;
+	int file;
+	int err;
+
+	if (!cmd) {
+		LOG_ERROR("Server path string cannot be NULL\n");
+		return ERR_INVALID_ARG;
+	}
+
+	/* Generate a temporary file name and extract directory name (infopath)
+	 * and file name (infoname). Note that the functions are destructive so
+	 * we need to make copies of the strings */
+	strcpy(server_tmpfile, TMP_FILE_TEMPLATE);
+	file = mkstemp(server_tmpfile);
+	close(file);
+	LOG_INFO("Using temporary file: %s\n", server_tmpfile);
+
+	pid = fork();
+	if (pid == 0) {
+		/* Child process: start model_server */
+		strcpy(server_if, server_tmpfile);
+		strcpy(server_ip, server_tmpfile);
+		exec_args[5] = dirname(server_ip);
+		exec_args[7] = basename(server_if);
+		err = execvp(exec_args[0], exec_args);
+		LOG_ERROR("Could not execute command: %s\n", cmd);
+	} else if (pid > 0) {
+		/* Parent process: wait 10sec then try to connect */
+		/* sprintf(fname, "%s/models.packetServer", infopath); */
+		sleep(10);
+		do {
+			sleep(delay);
+			err = wm_connect(server_tmpfile);
+			++i;
+		} while (err && i < max_retries);
+		if (err) {
+			LOG_ERROR("Could not connect to the model_server\n");
+			return ERR_TIMEOUT;
+		}
+	} else {
+		LOG_ERROR("Could not start model_server: fork() failed\n");
+		return ERR_RUNTIME;
+	}
+
+	return OK;
+}
+
+/**
+ * wm_server_stop() - Send shutdown request to model_server.
+ *
+ * Send a message to request the shutdown of the server. If a temp file
+ * has been created to store the infopath, the file is deleted.
+ * It also disconnects from the server by closing the socket.
+ *
+ * @retval		OK if successful
+ */
+int wm_server_stop(void)
+{
+	unsigned char empty_msg = 0;
+	int err;
+
+	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT);
+	if (err)
+		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
+
+	if (strcmp(server_tmpfile, "")) {
+		err = remove(server_tmpfile);
+		if (err)
+			LOG_ERROR("Could not delete temp file %s\n", server_tmpfile);
+	}
+
+	err = wm_disconnect();
+	return err;
+}
 
 /**
  * wm_connect() - Connect to WM server.
@@ -86,8 +180,7 @@ int wm_connect(const char *server_file)
 
 	if (server_file) {
 		filename = server_file;
-	}
-	else {
+	} else {
 		filename = getenv("SBIOSF_SERVER");
 		if (!filename) {
 			LOG_ERROR("server_file is NULL and SBIOSF_SERVER env var is not set\n");
@@ -149,7 +242,7 @@ int wm_connect(const char *server_file)
  *
  * @retval	OK if successful.
  */
-int wm_disconnect()
+int wm_disconnect(void)
 {
 	return close(wm_sock_fd);
 }
@@ -163,31 +256,31 @@ int wm_disconnect()
  */
 int wm_reg_read(const uint32_t addr, uint64_t *val)
 {
-    uint32_t iosf_msg[512];
-    uint32_t iosf_len;
-    unsigned char be;
+	uint32_t iosf_msg[512];
+	uint32_t iosf_len;
+	unsigned char be;
 	int err;
 
 	if (!val)
 		return ERR_INVALID_ARG;
 
 	/* See SB-IOSF specs for details on the message format */
-    be = addr & 0x7 ? 0xf: 0xff;
-    iosf_msg[0] = 0x40000001;
-    iosf_msg[1] = 0x00000000;
-    iosf_msg[2] = ((addr & 0xffff) << 16 ) | be;
-    iosf_msg[3] = addr >> 16;
+	be = addr & 0x7 ? 0xf : 0xff;
+	iosf_msg[0] = 0x40000001;
+	iosf_msg[1] = 0x00000000;
+	iosf_msg[2] = ((addr & 0xffff) << 16) | be;
+	iosf_msg[3] = addr >> 16;
 	iosf_len = 16;
 
-	err = iosf_send_receive((uint8_t *) iosf_msg, iosf_len,
-				     		(uint8_t *) iosf_msg, &iosf_len);
+	err = iosf_send_receive((uint8_t *)iosf_msg, iosf_len,
+							(uint8_t *)iosf_msg, &iosf_len);
 	if (err) {
 		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
 		return err;
 	}
 
     *val = iosf_msg[3];
-    *val = (*val << 32 ) | iosf_msg[2];
+	*val = (*val << 32) | iosf_msg[2];
     return OK;
 }
 
@@ -201,8 +294,8 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
  */
 int wm_reg_write(const uint32_t addr, const uint64_t val)
 {
-    uint32_t iosf_msg[512];
-    uint32_t iosf_len;
+	uint32_t iosf_msg[512];
+	uint32_t iosf_len;
 	int err;
 
 	/* See SB-IOSF specs for details on the message format
@@ -210,14 +303,14 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	 * has some issue with single register operations */
 	iosf_msg[0] = 0x40110001;
 	iosf_msg[1] = 0x00000000;
-	iosf_msg[2] = ((addr & 0xffff) << 16 ) | 2;
+	iosf_msg[2] = ((addr & 0xffff) << 16) | 2;
 	iosf_msg[3] = addr >> 16;
 	iosf_msg[4] = val & 0xffffffff;
 	iosf_msg[5] = val >> 32;
 	iosf_len = 24;
 
-	err = iosf_send_receive((uint8_t *) iosf_msg, iosf_len,
-					  		(uint8_t *) iosf_msg, &iosf_len);
+	err = iosf_send_receive((uint8_t *)iosf_msg, iosf_len,
+							(uint8_t *)iosf_msg, &iosf_len);
 
 	if (err)
 		LOG_ERROR("Error with iosf message tx/rx: %d\n", err);
@@ -225,100 +318,12 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	return err;
 }
 
-/**
- * wm_server_start() - Start the model server.
- *
- * Fork a new process and run the model server. The infopath and infofile
- * arguments are set to a temporary file.
- * It then waits until the server comes up and connects to it.
- *
- * @param_in	cmd the executable file of the model server
- *
- * @retval		OK if successful
- */
-int wm_server_start(char *cmd)
+int wm_pkt_push(int port, char *data, unsigned int len)
 {
-	char *exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
-	const int max_retries = 30;
-	char server_if[TMP_FILE_LEN];
-	char server_ip[TMP_FILE_LEN];
-	const int delay = 1;
-	pid_t pid;
-	int i = 0;
-	int file;
-	int err;
-
-	if (!cmd) {
-		LOG_ERROR("Server path string cannot be NULL\n");
-		return ERR_INVALID_ARG;
-	}
-
-	/* Generate a temporary file name and extract directory name (infopath)
-	 * and file name (infoname). Note that the functions are destructive so
-	 * we need to make copies of the strings */
-	strcpy(server_tmpfile, TMP_FILE_TEMPLATE);
-	file = mkstemp(server_tmpfile);
-	close(file);
-	LOG_INFO("Using temporary file: %s\n", server_tmpfile);
-
-	pid = fork();
-	if (pid == 0) {
-		/* Child process: start model_server */
-		strcpy(server_if, server_tmpfile);
-		strcpy(server_ip, server_tmpfile);
-		exec_args[5] = dirname(server_ip);
-		exec_args[7] = basename(server_if);
-		err = execvp(exec_args[0], exec_args);
-		LOG_ERROR("Could not execute command: %s\n", cmd);
-	}
-	else if (pid > 0) {
-		/* Parent process: wait 10sec then try to connect */
-		// sprintf(fname, "%s/models.packetServer", infopath);
-		sleep(10);
-		do {
-			sleep(delay);
-			err = wm_connect(server_tmpfile);
-			++i;
-		} while(err && i < max_retries);
-		if (err) {
-			LOG_ERROR("Could not connect to the model_server\n");
-			return ERR_TIMEOUT;
-		}
-	}
-	else {
-		LOG_ERROR("Could not start model_server: fork() failed\n");
-		return ERR_RUNTIME;
-	}
-
-	return OK;
 }
 
-/**
- * wm_server_stop() - Send shutdown request to model_server.
- *
- * Send a message to request the shutdown of the server. If a temp file
- * has been created to store the infopath, the file is deleted.
- * It also disconnects from the server by closing the socket.
- *
- * @retval		OK if successful
- */
-int wm_server_stop()
+int wm_pkt_get(int *port, char *data, unsigned int *len)
 {
-	unsigned char empty_msg = 0;
-	int err;
-
-	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT);
-	if (err)
-		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
-
-	if (strcmp(server_tmpfile, "")) {
-		err = remove(server_tmpfile);
-		if (err)
-			LOG_ERROR("Could not delete temp file %s\n", server_tmpfile);
-	}
-
-	err = wm_disconnect();
-	return err;
 }
 
 /*****************************************************************************
@@ -361,7 +366,8 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 	}
 
 	/* TODO there might be problems if this library is used in
-	 * multi-thread applications */
+	 * multi-thread applications
+	 */
 	if (type != MODEL_MSG_IOSF) {
 		LOG_ERROR("Unexpected response message type: %d\n", type);
 		return ERR_INVALID_RESPONSE;
@@ -420,7 +426,6 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	case MODEL_MSG_ERROR:
 		LOG_ERROR("%s: %s", __func__, wm_msg + 12);
 		return ERR_INVALID_RESPONSE;
-		break;
 	case MODEL_MSG_IOSF:
 		break;
 	default:
@@ -618,8 +623,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 		if (timeout_msec) {
 			LOG_ERROR("Connection timeout while receiving data\n");
 			return ERR_TIMEOUT;
-		}
-		else {
+		} else {
 
 			LOG_ERROR("Lost connection to WM\n");
 			return ERR_NO_RESOURCE;
