@@ -1,5 +1,5 @@
 // INTEL TOP SECRET
-// Copyright 2014 Intel Corporation. All Rights Reserved.
+// Copyright 2014-2018 Intel Corporation. All Rights Reserved.
 //
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -102,6 +102,327 @@ regfile trigger_action_metadata_mask_rf {
   trigger_action_metadata_mask_r TRIGGER_ACTION_METADATA_MASK[4] += 8;
 };
 
+
+reg ma_tcn_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MAC Table Change Notification Interrupt Pending";
+  desc = "Writing '1' into any bit clears the corresponding bit, writing 0 has no effect.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Set whenever MA_TCN_PTR_TAIL is advanced and (512 + Tail(new) - Head) % 512 
+            is greater than 0 (FIFO not empty)
+           ";
+    ValRandomize = true;
+  } PENDING_EVENTS[1:1] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Set whenever a new notification could not be enqueued to the MA_TCN_FIFO
+            (FIFO full).
+           ";
+    ValRandomize = true;
+  } TCN_OVERFLOW[0:0] = 1'h0;
+};
+
+reg ma_tcn_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MAC Table Change Notification Interrupt Mask";
+  desc = "
+          The interrupt mask register controls if the corresponding interrupt 
+          source in MA_TCN_IP is presented to the interrupt hierarchy (bit is set to 0) or 
+          masked out (bit is set to 1).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           ";
+    ValRandomize = true;
+  } PENDING_EVENTS[1:1] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           ";
+    ValRandomize = true;
+  } TCN_OVERFLOW[0:0] = 1'h1;
+};
+
+
+reg ma_tcn_fifo_0_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MAC Address Table Change Notification FIFO";
+  desc = "
+         The MAC Address Table is a use case of the Exact Match unit in CGRP_B (EM_B).
+         If the following conditions are met:
+         [list]
+         [*] The packet does not match any EM_B entry
+         [*] EM_B is programmed with a default miss action of LEARN_NOTIFY
+         [*] The domain mapper indicates learning is enabled for the packet's associated 
+         L2 Domain
+         [*] Learning is configured as enabled on the ingress port in FWD_PORT_CFG_1
+         [/list]
+         then an entry will be made in the TCN FIFO so that software can optoinally add an
+         MA table entry in EM_B.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Ingress port
+           ";
+    ValRandomize = true;
+  } PORT[52:48] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Source MAC address that was not found in the MA Table
+           ";
+    ValRandomize = true;
+  } MAC_ADDRESS[47:0] = 48'h00;
+};
+
+
+
+reg ma_tcn_fifo_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MAC Address Table Change Notification FIFO";
+  desc = "
+         See MA_TCN_FIFO_0
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           L2 Domain
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[19:12] = 8'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Ingress VLAN ID
+           ";
+    ValRandomize = true;
+  } VID[11:0] = 12'h00;
+};
+
+
+
+reg ma_tcn_dequeue_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Command register to initiate a TCN FIFO dequeue operation";
+  desc = "
+         Software writes a 1 to the READY bit to initiate the dequeue operation.
+         If there is a TCN FIFO entry, it will be copied to MA_TCN_DATA_{0,1} and
+         MA_TCN_DATA_0.VALID set to 1. When the operation completes, the hardware
+         clears the READY bit, indicating that MA_TCN_DATA_{0,1} may be read.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+           When software writes a 1, a TCN FIFO dequeue operation is initiated.
+           Hardware will clear to 0 when the dequeue operation is complete.
+           Behavior is undefined if software writes a 0.
+           ";
+    ValRandomize = true;
+  } READY[0:0] = 1'h0;
+};
+
+
+
+reg ma_tcn_data_0_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TCN FIFO dequeued entry data";
+  desc = "
+         When a TCN FIFO dequeue command operation is completed (MA_TCN_DEQUEUE.READY=0), this register
+         will hold a copy of the TCN FIFO entry, if there was one to dequeue. The contents of
+         this register and MA_TCN_DATA_1 are not valid while MA_TCN_DEQUEUE.READY=1.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Indicates that there was a TCN FIFO entry and it was copied to
+           this register and to MA_TCN_DATA_1.
+           ";
+    ValRandomize = true;
+  } VALID[53:53] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Ingress port
+           ";
+    ValRandomize = true;
+  } PORT[52:48] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Source MAC address that was not found in the MA Table
+           ";
+    ValRandomize = true;
+  } MAC_ADDRESS[47:0] = 48'h00;
+};
+
+
+
+reg ma_tcn_data_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TCN FIFO dequeued entry data";
+  desc = "
+         See MA_TCN_DATA_0.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           L2 Domain
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[19:12] = 8'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Ingress VLAN ID
+           ";
+    ValRandomize = true;
+  } VID[11:0] = 12'h00;
+};
+
+
+
+reg ma_tcn_ptr_head_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TCN FIFO head pointer";
+  desc = "
+         Points to the next entry in the TCN FIFO to be read by software. Software
+         advances the pointer by setting MA_TCN_DEQUEUE.READY to 1.
+         [br][br]
+         This register is RW for debugging purposes.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+           Offset into the TCN FIFO where the next entry will be read from.
+           ";
+    ValRandomize = true;
+  } HEAD[8:0] = 9'h000;
+};
+
+
+
+reg ma_tcn_ptr_tail_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TCN FIFO tail pointer";
+  desc = "
+         Points to the next entry in the TCN FIFO where hardware will write a 
+         new entry. Hardware will advance the pointer after writing the new 
+         entry.
+         [br][br]
+         This register is RW for debugging purposes.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+           Offset into the TCN FIFO where the next entry will be written.
+           ";
+    ValRandomize = true;
+  } TAIL[8:0] = 9'h000;
+};
+
+
+
+reg ma_tcn_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Per-port TCN FIFO usage limit";
+  desc = "
+          Indicates the maximum number of TCN FIFO entries that may be consumed by
+          each port.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           ";
+    ValRandomize = true;
+  } WM[8:0] = 9'h1e;
+};
+
+
+
+
+reg ma_tcn_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Per-port TCN FIFO usage";
+  desc = "
+          Indicates the actual number of TCN FIFO entries in use by each port.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           ";
+    ValRandomize = true;
+  } USAGE[8:0] = 9'h000;
+};
+
+
+
 addrmap mby_ppe_trig_apply_misc_map {
   name = "trig_apply_misc";
   desc = "Trigger Registers";
@@ -114,6 +435,17 @@ addrmap mby_ppe_trig_apply_misc_map {
   trigger_action_metadata_mask_rf     TRIGGER_ACTION_METADATA_MASK[2]       @0x80 += 32;
   trigger_ip_r                        TRIGGER_IP[2]                         @0xC0 += 8;
   trigger_im_r                        TRIGGER_IM[2]                         @0xD0 += 8;
-  trigger_rate_lim_empty_r            TRIGGER_RATE_LIM_EMPTY                @0xE0;
+  trigger_rate_lim_empty_r            TRIGGER_RATE_LIM_EMPTY                @0xE0 += 8;
+  ma_tcn_fifo_0_r                     MA_TCN_FIFO_0[512]                    @0x100 += 8;
+  ma_tcn_fifo_1_r                     MA_TCN_FIFO_1[512]                    @0x1100 += 8;
+  ma_tcn_dequeue_r                    MA_TCN_DEQUEUE                        @0x2110 += 8;
+  ma_tcn_data_0_r                     MA_TCN_DATA_0                         @0x2100 += 8;
+  ma_tcn_data_1_r                     MA_TCN_DATA_1                         @0x2108 += 8;
+  ma_tcn_ptr_head_r                   MA_TCN_PTR_HEAD                       @0x2118 += 8;
+  ma_tcn_ptr_tail_r                   MA_TCN_PTR_TAIL                       @0x2120 += 8;
+  ma_tcn_ip_r                         MA_TCN_IP                             @0x2128 += 8;
+  ma_tcn_im_r                         MA_TCN_IM                             @0x2130 += 8;
+  ma_tcn_wm_r                         MA_TCN_WM[17]                         @0x2140 += 8;
+  ma_tcn_usage_r                      MA_TCN_USAGE[17]                      @0x21D0 += 8;
 };
 

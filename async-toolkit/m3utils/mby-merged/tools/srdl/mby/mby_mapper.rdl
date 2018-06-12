@@ -1157,6 +1157,14 @@ reg map_profile_key0_r {
   regwidth = 64;
   accesswidth = 64;
   field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:60] = 4'h0;
+  field {
     AccessType = "RW";
     desc = "
    An error occured in pointer calculation for parser_info, indicating a header length is too small. 
@@ -1187,29 +1195,13 @@ reg map_profile_key0_r {
     ValRandomize = true;
   } CSUM[55:54] = 2'h3;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-       [list]
-	   [*] ip_is_v6[0] = is_v6(outer_ip)
-       [*] ip_is_v6[1] = is_v6(inner_ip)
-       [/list]
+      Reserved
 
            ";
     ValRandomize = true;
-  } IP_IS_V6[53:52] = 2'h3;
-  field {
-    AccessType = "RW";
-    desc = "
-      These bits indicate whether modifications are possible beyond the outer or inner IP header.
-      Also, if the L4 header is UDP or TCP, then ip_fits must be set to allow a NAT operation.
-       [list]
-       [*] ip_fits[0] = otr_l4_v && otr_l3_v && (otr_l4_ptr - otr_l3_ptr <= 56)
-       [*] ip_fits[1] = inr_l4_v && inr_l3_v && (inr_l4_ptr - inr_l3_ptr <= 56)
-       [/list]
-
-           ";
-    ValRandomize = true;
-  } IP_FITS[51:50] = 2'h3;
+  } _RSVD0_[53:50] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1267,6 +1259,14 @@ reg map_profile_key_invert0_r {
   regwidth = 64;
   accesswidth = 64;
   field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:60] = 4'h0;
+  field {
     AccessType = "RW";
     desc = "
    An error occured in pointer calculation for parser_info, indicating a header length too small 
@@ -1292,29 +1292,13 @@ reg map_profile_key_invert0_r {
     ValRandomize = true;
   } CSUM[55:54] = 2'h3;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-        [list]
-	    [*] ip_is_v6[0] = is_v6(outer_ip)
-        [*] ip_is_v6[1] = is_v6(inner_ip)
-        [/list]
+      Reserved
 
            ";
     ValRandomize = true;
-  } IP_IS_V6[53:52] = 2'h3;
-  field {
-    AccessType = "RW";
-    desc = "
-      These bits indicate whether modifications are possible beyond the outer or inner IP header.
-      Also, if the L4 header is UDP or TCP, then ip_fits must be set to allow a NAT operation.
-       [list]
-       [*] ip_fits[0] = otr_l3_v && (otr_l4_ptr - otr_l3_ptr <= 56)
-       [*] ip_fits[1] = inr_l3_v && (inr_l4_ptr - inr_l3_ptr <= 56)
-       [/list]
-
-           ";
-    ValRandomize = true;
-  } IP_FITS[51:50] = 2'h3;
+  } _RSVD0_[53:50] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -1378,22 +1362,26 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[63:40] = 24'h0;
+  } _RSVD1_[63:48] = 16'h0;
   field {
     AccessType = "RW";
     desc = "
-     . pkt_meta.c.l2_domain
-     May have been changed by MAP_DOMAIN_ACTION0.
-
+     From parser, representing a digest of the parser flags
+           ";
+    ValRandomize = true;
+  } PTYPE[47:40] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+     Provided by MAP_DOMAIN_ACTION0 or specified by the CPU
+     in packet metadata.
            ";
     ValRandomize = true;
   } L2_DOMAIN[39:32] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
-     . pkt_meta.c.l3_domain
-     May have been changed by MAP_DOMAIN_ACTION0.
-
+     Provided by MAP_DOMAIN_ACTION0.
            ";
     ValRandomize = true;
   } L3_DOMAIN[31:26] = 6'h3f;
@@ -1475,22 +1463,26 @@ reg map_profile_key_invert1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[63:40] = 24'h0;
+  } _RSVD1_[63:48] = 16'h0;
   field {
     AccessType = "RW";
     desc = "
-     . pkt_meta.c.l2_domain
-     May have been changed by MAP_DOMAIN_ACTION0.
-
+     From parser, representing a digest of the parser flags
+           ";
+    ValRandomize = true;
+  } PTYPE[47:40] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+     Provided by MAP_DOMAIN_ACTION0 or specified by the CPU
+     in packet metadata.
            ";
     ValRandomize = true;
   } L2_DOMAIN[39:32] = 8'hff;
   field {
     AccessType = "RW";
     desc = "
-     . pkt_meta.c.l3_domain
-     May have been changed by MAP_DOMAIN_ACTION0.
-
+     Provided by MAP_DOMAIN_ACTION0.
            ";
     ValRandomize = true;
   } L3_DOMAIN[31:26] = 6'h3f;

@@ -19,7 +19,7 @@ reg fwd_lag_cfg_r {
   shared;
   HandCoded = true;
   name = "LAG Configuration";
-  desc = "Configures LAG related configuration including port membership and LAG attributes";
+  desc = "Provides per-port LAG related configuration, including membership and LAG attributes";
   regwidth = 64;
   accesswidth = 64;
   field {
@@ -126,7 +126,7 @@ reg fwd_sys_cfg_1_r {
   field {
     AccessType = "RW";
     desc = "
-            Indicate whether the 4b action code is stored in hte packet metadata. 
+            Indicate whether the 4b action code is stored in the packet metadata. 
             When set to 1, the 4b action code is stored inside bits 195:156 of metadata, 
             which is the upper 4b of the flags field. in addition, a 1b presence flag 
             is stored in bit 155. When set to 0, no change in metadata occurs.
@@ -145,7 +145,8 @@ reg fwd_sys_cfg_1_r {
     AccessType = "RW";
     desc = "
             Drop any frame with an invalid SMAC of all zeros (00:00:00:00:00:00), 
-            all ones (FF:FF:FF:FF:FF:FF) or multicast (bit 40 is a 1) and do not cause MAC learning.
+            all ones (FF:FF:FF:FF:FF:FF) or multicast (bit 40 is a 1) and do not cause a 
+            MAC learning notification.
            ";
     ValRandomize = true;
   } DROP_INVALID_SMAC[2:2] = 1'h01;
@@ -163,7 +164,7 @@ reg fwd_sys_cfg_1_r {
             Defines disposition for frames that exceed MTU size allowed on the
             egress VLAN (only applicable for routed frames). If this bit is 
             set, then the frames that exceed the MTU size are trapped to the 
-            CPU. If this bit is reset, then the frames are forwarded normally.
+            CPU. If this bit is cleared, then the frames are forwarded normally.
            ";
     ValRandomize = true;
   } TRAP_MTU_VIOLATIONS[0:0] = 1'h01;
@@ -210,14 +211,14 @@ reg fwd_sys_cfg_router_r {
     desc = "
             Defines disposition of routed frames with TTL 1 or 0. The options 
             are:
-          
+            [br][br]      
               0 : drop silently
-
-              1 : trap(unicast) or log(multicast) if protocol is ICMP and drop 
+            [br][br]      
+              1 : trap (unicast) or log (multicast) if protocol is ICMP and drop 
                   otherwise
-
-              2 : trap(unicast) or log(multicast) all frames
-                  
+            [br][br]      
+              2 : trap (unicast) or log (multicast) all frames
+            [br][br]      
             Note that this field only applies to frames that are routed. If a 
             unicast or multicast frame is not routed, then this frame is 
             switched normally regardless of its TTL value. For multicast 
@@ -922,6 +923,13 @@ reg fwd_ip_r {
   regwidth = 64;
   accesswidth = 64;
   field {
+    AccessType = "RO/V";
+    desc = "
+            Interrupt pending bit, for TCN FIFO interrupts recorded in MA_TCN_IP register.
+           ";
+    ValRandomize = true;
+  } MA_TCN[5:5] = 1'h00;
+  field {
     AccessType = "RW/1C/V";
     desc = "
             Interrupt pending bits, for parity error in writeback fifo of L2 lookup.
@@ -967,6 +975,13 @@ reg fwd_im_r {
   desc = "Mask bits for generated interrupts.";
   regwidth = 64;
   accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Interrupt mask bit, for TCN FIFO interrupts recorded in MA_TCN_IP register.
+           ";
+    ValRandomize = true;
+  } MA_TCN[5:5] = 1'h00;
   field {
     AccessType = "RW";
     desc = "
@@ -1052,9 +1067,9 @@ addrmap mby_ppe_fwd_misc_map {
   Opcode = "MEM-SB";
   No_IOSF_Primary=true;
 
-  fwd_port_cfg_2_r             FWD_PORT_CFG_2[512]            @0x00000 += 8;
-  fwd_lag_cfg_r                FWD_LAG_CFG[8]                @0x01000 += 8;
-  fwd_port_cfg_1_r             FWD_PORT_CFG_1[8]             @0x01100 += 8;
+  fwd_port_cfg_2_r             FWD_PORT_CFG_2[256]           @0x00000 += 8;
+  fwd_lag_cfg_r                FWD_LAG_CFG[17]               @0x01000 += 8;
+  fwd_port_cfg_1_r             FWD_PORT_CFG_1[17]            @0x01100 += 8;
   fwd_sys_cfg_1_r              FWD_SYS_CFG_1                  @0x01200;
   fwd_cpu_mac_r                FWD_CPU_MAC                    @0x01208;
   fwd_sys_cfg_router_r         FWD_SYS_CFG_ROUTER             @0x01210;
