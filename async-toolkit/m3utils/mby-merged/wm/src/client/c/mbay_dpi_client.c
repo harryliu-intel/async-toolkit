@@ -75,9 +75,10 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t port);
 static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
-static int create_client_socket();
+static int create_client_socket(int *fd, int *port);
 static int connect_main(const char *addr_str, int port);
-static int connect_egress(int phys_port);
+static int connect_egress(int phys_port, int client_fd, int client_port,
+						  int *egress_fd);
 static int read_host_info(FILE *fd, char *host, int host_size, int *port);
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec);
@@ -224,82 +225,16 @@ int wm_connect(const char *server_file)
 	if (err)
 		return err;
 
-	err = create_client_socket();
+	err = create_client_socket(&wm_client_fd, &wm_client_port);
 	if (err)
 		return err;
 
 	for (i = 0; i < 32; ++i) {
-		err = connect_egress(i);
+		err = connect_egress(i, wm_client_fd, wm_client_port, wm_egress_fd + i);
 		if (err)
 			return err;
 	}
 
-	return OK;
-}
-
-static int connect_egress(int phys_port)
-{
-    unsigned char buffer[256];
-    unsigned int len;
-    char hostname[] = "localhost";
-
-    bzero(buffer, 256);
-
-    /* Message format is: 2B tcp client port, 510B hostname */
-    *((uint16_t *)buffer) = htons(wm_client_port);
-    strcpy(buffer + 2, hostname);
-    len = 2 + strlen(hostname);
-
-	wm_send(buffer, len, MODEL_MSG_SET_EGRESS_INFO, phys_port);
-
-    /* Wait for client connection after sending request */
-    wm_egress_fd[phys_port] = accept(wm_client_fd, NULL, NULL);
-    if(wm_egress_fd[phys_port] < 0) {
-        LOG_ERROR("Error accepting connection for egress port %d: %s\n",
-				phys_port, strerror(errno));
-		return ERR_NETWORK;
-	}
-
-	return OK;
-}
-
-static int create_client_socket()
-{
-	struct sockaddr_in addr;
-	socklen_t addrLen = sizeof(addr);
-	int err;
-
-	wm_client_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (wm_client_fd < 0) {
-		printf("Error creating client socket: %s\n", strerror(errno));
-		return ERR_NETWORK;
-	}
-
-	bzero(&addr, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_port = htons(0);
-
-	err = bind(wm_client_fd, (struct sockaddr *)&addr, sizeof(addr));
-	if(err == -1) {
-		printf("Error binding to port socket server: %s\n", strerror(errno));
-		return ERR_NETWORK;
-	}
-
-	err = listen(wm_client_fd, NUM_PORTS);
-	if(err == -1) {
-		printf("Error listening on port socket server: %s\n", strerror(errno));
-		return ERR_NETWORK;
-	}
-
-	err = getsockname(wm_client_fd, (struct sockaddr *)&addr, &addrLen);
-	if(err == -1) {
-		printf("Error getting port socket server name: %s\n", strerror(errno));
-		return ERR_NETWORK;
-	}
-
-	wm_client_port = ntohs(addr.sin_port);
-	LOG_DEBUG("Client socket created - listen on port %d\n", wm_client_port);
 	return OK;
 }
 
@@ -689,6 +624,91 @@ static int connect_main(const char *addr_str, int port)
 
 	return OK;
 }
+
+/* connect_egress() - Establish connection to receive egress frames
+ *
+ * @param_in	phys_port the switch physical port number
+ */
+static int connect_egress(int phys_port, int client_fd, int client_port,
+						  int *egress_fd)
+{
+    char hostname[] = "localhost";
+    char buffer[256];
+    uint32_t len;
+
+    bzero(buffer, 256);
+
+    /* Message format is: 2B tcp client port, 510B hostname */
+    *((uint16_t *)buffer) = htons(client_port);
+    strcpy(buffer + 2, hostname);
+    len = 2 + strlen(hostname);
+
+	wm_send((uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO, phys_port);
+
+    /* Wait for client connection after sending request */
+    *egress_fd = accept(client_fd, NULL, NULL);
+    if(wm_egress_fd[phys_port] < 0) {
+        LOG_ERROR("Error accepting connection for egress port %d: %s\n",
+				phys_port, strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	return OK;
+}
+
+/* create_client_socket() - Create a socket to accept connection from WM
+ *
+ * This socket is mainly used to setup the egress ports
+ *
+ * @param_out	fd is a pointer to caller-allocated storage in which the fd
+ * 				of the socket will be placed.
+ * @param_out	port is a pointer to caller-allocated storage in which the port
+ * 				number will be placed.
+ */
+static int create_client_socket(int *fd, int *port)
+{
+	struct sockaddr_in addr;
+	socklen_t addr_len;
+	int err;
+
+	if (!fd || !port)
+		return ERR_INVALID_ARG;
+
+	*fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (*fd < 0) {
+		printf("Error creating client socket: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(0);
+
+	err = bind(*fd, (struct sockaddr *)&addr, sizeof(addr));
+	if(err == -1) {
+		printf("Error binding to port socket server: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	err = listen(*fd, NUM_PORTS);
+	if(err == -1) {
+		printf("Error listening on port socket server: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	addr_len = sizeof(addr);
+	err = getsockname(*fd, (struct sockaddr *)&addr, &addr_len);
+	if(err == -1) {
+		printf("Error getting port socket server name: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	*port = ntohs(addr.sin_port);
+	LOG_DEBUG("Client socket created - listen on port %d\n", *port);
+	return OK;
+}
+
 
 /**
  * read_host_info() - Read host info from model_server file
