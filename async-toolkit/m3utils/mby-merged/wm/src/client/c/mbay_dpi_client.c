@@ -47,7 +47,7 @@
 #define LOG_ERROR   printf
 #define LOG_WARNING printf
 #define LOG_INFO    printf
-#define LOG_DEBUG   printf
+#define LOG_DEBUG(x, ...)
 #define LOG_DUMP    printf
 
 /* FD of the socket used to send commands to the model_server.
@@ -384,13 +384,13 @@ int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 		if (err)
 			return err;
 
-		if (*len == 0)
+		if (*len == 0) {
+			*port = -1;
 			LOG_DEBUG("Nothing received on port %d\n", i);
-
+		}
 		if (*len > 0) {
 			*port = i;
 			LOG_DEBUG("Received %d bytes on port %d\n", *len, *port);
-			hex_dump(data, *len, 0);
 			return OK;
 		}
 	}
@@ -446,8 +446,10 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
 		return ERR_RUNTIME;
     }
 
-	if (port != 0)
-		LOG_ERROR("Port should be zero instead of %d\n", port);
+	if (port != phys_port) {
+		LOG_ERROR("Port should be %d instead of %d\n", phys_port, port);
+		return ERR_RUNTIME;
+	}
 
     /* FIXME This needs to support PACKET_META */
     if (msg[0] != WM_DATA_TYPE_PACKET) {
@@ -617,7 +619,7 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 	wm_len = len + MODEL_MSG_HEADER_SIZE;
 	wm_msg.msg_length = htonl(wm_len);
 
-	hex_dump((uint8_t *)&wm_msg, wm_len, 0);
+	// hex_dump((uint8_t *)&wm_msg, wm_len, 0);
 
 	wr_len = write(fd, &wm_msg, wm_len);
 	if (wm_len != wr_len) {

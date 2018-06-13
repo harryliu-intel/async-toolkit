@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <mbay_dpi_client.h>
 
 #define SERVER_PATH "../../main/m3/"
@@ -166,13 +167,21 @@ int test_pkts(void)
 	}
 
 	err = wm_pkt_get(&port, pkt, &pkt_len);
-	if (err == ERR_NO_MORE) {
-		printf("Did not receive any frame\n");
-	} else if (err) {
+	if (err) {
 		printf("Error receiving traffic: %d\n", err);
 		return err;
+	}
+
+	printf("Received %d bytes on port %d\n", pkt_len, port);
+	if (memcmp(pkt, test_pkt, pkt_len)) {
+		printf("Unexpected difference between sent and received pkt\n");
+	}
+
+	err = wm_pkt_get(&port, pkt, &pkt_len);
+	if (err == ERR_NO_MORE) {
+		printf("Did not receive any frame as expected\n");
 	} else {
-		printf("Received %d bytes on port %d\n", pkt_len, port);
+		printf("Unexpected error code %d\n", err);
 	}
 
 	return OK;
