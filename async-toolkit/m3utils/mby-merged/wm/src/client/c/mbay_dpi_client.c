@@ -50,8 +50,19 @@
 #define LOG_DEBUG   printf
 #define LOG_DUMP    printf
 
-/* FD of the socket used to talk with model_server */
-static int wm_sock_fd;
+/* FD of the socket used to send commands to the model_server.
+ * For example, it is used to send IOSF messages or inject traffic.
+ */
+static int wm_server_fd;
+
+/* FD of the socket used to recevive connections from model_server.
+ * For example, it is used to accept connections for egress ports.
+ */
+static int wm_client_fd;
+static int wm_client_port;
+
+/* FDs used to get egress traffic from WM ports */
+static int wm_egress_fd[NUM_PORTS];
 
 /* Temporary file used for models.packetServer */
 #define TMP_FILE_TEMPLATE   "/tmp/models.packetServer.XXXXXX"
@@ -64,6 +75,9 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t port);
 static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
+static int create_client_socket();
+static int connect_main(const char *addr_str, int port);
+static int connect_egress(int phys_port);
 static int read_host_info(FILE *fd, char *host, int host_size, int *port);
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec);
@@ -172,13 +186,13 @@ int wm_server_stop(void)
  */
 int wm_connect(const char *server_file)
 {
-	struct sockaddr_in serv_addr;
-	char serv_addr_str[128];
+	char serv_addr_str[256];
 	const char *filename;
 	struct stat sb;
 	int port = 0;
-	int on = 1;
 	FILE *fd;
+	int err;
+	int i;
 
 	if (server_file) {
 		filename = server_file;
@@ -206,38 +220,86 @@ int wm_connect(const char *server_file)
 		return ERR_INVALID_ARG;
 	}
 
-	wm_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (wm_sock_fd < 0) {
-		LOG_ERROR("Error creating socket fd\n");
-		return ERR_INVALID_ARG;
+	err = connect_main(serv_addr_str, port);
+	if (err)
+		return err;
+
+	err = create_client_socket();
+	if (err)
+		return err;
+
+	for (i = 0; i < 32; ++i) {
+		err = connect_egress(i);
+		if (err)
+			return err;
 	}
 
-	bzero((char *)&serv_addr, sizeof(serv_addr));
+	return OK;
+}
 
-	/* Use ip address instead of hosthame due to klocwork */
-	if (!strcmp("localhost", serv_addr_str))
-		serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	else
-		serv_addr.sin_addr.s_addr = inet_addr(serv_addr_str);
+static int connect_egress(int phys_port)
+{
+    unsigned char buffer[256];
+    unsigned int len;
+    char hostname[] = "localhost";
 
-	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-		LOG_ERROR("Cannot parse server IP address: %s\n", serv_addr_str);
-		return ERR_INVALID_ARG;
-	}
+    bzero(buffer, 256);
 
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(port);
+    /* Message format is: 2B tcp client port, 510B hostname */
+    *((uint16_t *)buffer) = htons(wm_client_port);
+    strcpy(buffer + 2, hostname);
+    len = 2 + strlen(hostname);
 
-	if (connect(wm_sock_fd, (struct sockaddr *)&serv_addr,
-		    sizeof(serv_addr)) < 0) {
-		LOG_ERROR("Unable to connect to server at %s:%d\n",
-			  serv_addr_str, port);
+	wm_send(buffer, len, MODEL_MSG_SET_EGRESS_INFO, phys_port);
+
+    /* Wait for client connection after sending request */
+    wm_egress_fd[phys_port] = accept(wm_client_fd, NULL, NULL);
+    if(wm_egress_fd[phys_port] < 0) {
+        LOG_ERROR("Error accepting connection for egress port %d: %s\n",
+				phys_port, strerror(errno));
 		return ERR_NETWORK;
 	}
 
-	LOG_DEBUG("Connected to model_server at %s:%d\n", serv_addr_str, port);
-	setsockopt(wm_sock_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
+	return OK;
+}
 
+static int create_client_socket()
+{
+	struct sockaddr_in addr;
+	socklen_t addrLen = sizeof(addr);
+	int err;
+
+	wm_client_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (wm_client_fd < 0) {
+		printf("Error creating client socket: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(0);
+
+	err = bind(wm_client_fd, (struct sockaddr *)&addr, sizeof(addr));
+	if(err == -1) {
+		printf("Error binding to port socket server: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	err = listen(wm_client_fd, NUM_PORTS);
+	if(err == -1) {
+		printf("Error listening on port socket server: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	err = getsockname(wm_client_fd, (struct sockaddr *)&addr, &addrLen);
+	if(err == -1) {
+		printf("Error getting port socket server name: %s\n", strerror(errno));
+		return ERR_NETWORK;
+	}
+
+	wm_client_port = ntohs(addr.sin_port);
+	LOG_DEBUG("Client socket created - listen on port %d\n", wm_client_port);
 	return OK;
 }
 
@@ -248,7 +310,7 @@ int wm_connect(const char *server_file)
  */
 int wm_disconnect(void)
 {
-	return close(wm_sock_fd);
+	return close(wm_server_fd);
 }
 
 /**
@@ -448,7 +510,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	int err;
 
 	/* Read the first 4 bytes to see the length of the message */
-	err = wm_read_data(wm_sock_fd, wm_msg, 4, READ_TIMEOUT);
+	err = wm_read_data(wm_server_fd, wm_msg, 4, READ_TIMEOUT);
 	if (err) {
 		LOG_ERROR("Could not receive message preamble from WM\n");
 		return err;
@@ -461,7 +523,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	}
 
 	/* Receive the remaining bytes */
-	err = wm_read_data(wm_sock_fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
+	err = wm_read_data(wm_server_fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
 	if (err) {
 		LOG_ERROR("Could not receive message contents from WM\n");
 		return err;
@@ -520,9 +582,9 @@ static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t por
 	wm_len = len + MODEL_MSG_HEADER_SIZE;
 	wm_msg.msg_length = htonl(wm_len);
 
-	hex_dump((uint8_t *)&wm_msg, wm_len, 0);
+	// hex_dump((uint8_t *)&wm_msg, wm_len, 0);
 
-	wr_len = write(wm_sock_fd, &wm_msg, wm_len);
+	wr_len = write(wm_server_fd, &wm_msg, wm_len);
 	if (wm_len != wr_len) {
 		LOG_ERROR("ERROR: write %d to socket. Only %d written",
 				wm_len, wr_len);
@@ -577,6 +639,55 @@ static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii)
 		nbytes -= linebytes;
 
 	} while (nbytes > 0);
+}
+
+/**
+ * connect_main() - Connect to the main WM socket
+ *
+ * The fd of the socket is saved in a global variable and it will
+ * be reused later on to send all the messages.
+ *
+ * @param_in	addr_str is the string with the server address.
+ * @param_in	port is the port where the server is listening.
+ */
+static int connect_main(const char *addr_str, int port)
+{
+	struct sockaddr_in serv_addr;
+	int on = 1;
+
+	wm_server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (wm_server_fd < 0) {
+		LOG_ERROR("Error creating socket fd\n");
+		return ERR_INVALID_ARG;
+	}
+
+	bzero((char *)&serv_addr, sizeof(serv_addr));
+
+	/* Use ip address instead of hosthame due to klocwork */
+	if (!strcmp("localhost", addr_str))
+		serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	else
+		serv_addr.sin_addr.s_addr = inet_addr(addr_str);
+
+	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
+		LOG_ERROR("Cannot parse server IP address: %s\n", addr_str);
+		return ERR_INVALID_ARG;
+	}
+
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(port);
+
+	if (connect(wm_server_fd, (struct sockaddr *)&serv_addr,
+		    sizeof(serv_addr)) < 0) {
+		LOG_ERROR("Unable to connect to server at %s:%d\n",
+			  addr_str, port);
+		return ERR_NETWORK;
+	}
+
+	LOG_DEBUG("Connected to model_server at %s:%d\n", addr_str, port);
+	setsockopt(wm_server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
+
+	return OK;
 }
 
 /**

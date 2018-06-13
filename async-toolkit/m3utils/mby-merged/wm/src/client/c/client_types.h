@@ -77,3 +77,6 @@ typedef enum {
 /* TODO this constants will be removed since metadata will change */
 #define RIMMON_META_SIZE   8
 #define CPK_META_SIZE      32
+
+/* Number of external ports available to inject/receive traffic */
+#define NUM_PORTS 32
