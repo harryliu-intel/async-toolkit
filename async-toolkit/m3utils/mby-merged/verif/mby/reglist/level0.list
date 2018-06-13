@@ -1,1 +1,3 @@
 mby_alive_test  -seed 160c66a2
+mby_wm_reg_rw_test -ace_args -simv_args '"' +WHITE_MODEL_EN '"' -ace_args- -seed 1
+
