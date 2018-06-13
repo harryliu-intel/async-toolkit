@@ -60,7 +60,7 @@ static char server_tmpfile[TMP_FILE_LEN] = "";
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 							 uint8_t *rx_msg, uint32_t *rx_len);
-static int wm_send(uint8_t *msg, uint32_t len, uint16_t type);
+static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t port);
 static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
 static int read_host_info(FILE *fd, char *host, int host_size, int *port);
@@ -147,7 +147,7 @@ int wm_server_stop(void)
 	unsigned char empty_msg = 0;
 	int err;
 
-	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT);
+	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT, 0);
 	if (err)
 		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
 
@@ -318,12 +318,58 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	return err;
 }
 
-int wm_pkt_push(int port, char *data, unsigned int len)
+int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 {
+	uint8_t pkt_msg[MAX_MSG_LEN];
+	int pkt_len;
+	int off = 0;
+	int err;
+
+	if (!data) {
+		LOG_ERROR("Input buffer data is NULL\n");
+		return ERR_INVALID_ARG;
+	}
+
+	if (len > MAX_MSG_LEN) {
+		LOG_ERROR("Input length %d exceeds maximum: %d\n", len, MAX_MSG_LEN);
+		return ERR_INVALID_ARG;
+	}
+
+	/* First TLV is the meta-data. For now I will assume this is a frame
+	 * entering HLP from RMN. This will need to be removed/updated
+	 */
+	pkt_msg[off] = WM_DATA_TYPE_META;
+	off += WM_DATA_TYPE_SIZE;
+	*((uint32_t *)&pkt_msg[off]) = htonl(RIMMON_META_SIZE);
+	off += WM_DATA_LENGTH_SIZE;
+	pkt_msg[off++] = 0x18;
+	pkt_msg[off++] = 0xa1;
+	pkt_msg[off++] = 0xb2;
+	pkt_msg[off++] = 0xc3;
+	pkt_msg[off++] = 0xd4;
+	pkt_msg[off++] = 0xe5;
+	pkt_msg[off++] = 0xf6;
+	pkt_msg[off++] = 0x07;
+
+	/* Second TLV is the actual packet payload */
+	pkt_msg[off] = WM_DATA_TYPE_PACKET;
+	off += WM_DATA_TYPE_SIZE;
+	*((uint32_t *)&pkt_msg[off]) = htonl(len);
+	off += WM_DATA_LENGTH_SIZE;
+	memcpy(pkt_msg + off, data, len);
+	pkt_len = off + len;
+
+	err = wm_send(pkt_msg, pkt_len, MODEL_MSG_PACKET, port);
+	if (err) {
+		LOG_ERROR("Could not send data to WM: %d\n", err);
+	}
+
+	return err;
 }
 
-int wm_pkt_get(int *port, char *data, unsigned int *len)
+int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 {
+	return OK;
 }
 
 /*****************************************************************************
@@ -353,7 +399,7 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
     uint16_t type;
 	int err;
 
-	err = wm_send(tx_msg, tx_len, MODEL_MSG_IOSF);
+	err = wm_send(tx_msg, tx_len, MODEL_MSG_IOSF, NONPOSTED_PORT);
 	if (err) {
 		LOG_ERROR("Could not send data to WM: %d\n", err);
 		return err;
@@ -441,20 +487,22 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 /**
  * wm_send() - Send generic message to model_server socket interface.
  *
- * @param_int	msg pointer to the content of the message.
- * @param_int	len the length of the message.
- * @param_int	type the type of the message (e.g. SB-IOSF).
+ * @param_in	msg pointer to the content of the message.
+ * @param_in	len the length of the message.
+ * @param_in	type the type of the message (e.g. SB-IOSF).
+ * @param_in	port the ingress port used when sending traffic to model.
  * @retval		OK if successful
  */
-static int wm_send(uint8_t *msg, uint32_t len, uint16_t type)
+static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t port)
 {
-	struct wm_cq_msg wm_msg;
+	struct wm_msg wm_msg;
 	uint32_t wm_len;
 	uint32_t wr_len;
 
 	wm_msg.version = htons(MODEL_VERSION);
 	wm_msg.type = htons(type);
 	wm_msg.sw = htons(0);
+	wm_msg.port = htons(port);
 
 	//memcpy_s(msg.data, sizeof(msg.data), pmsg, msg_len);
 	memcpy(wm_msg.data, msg, len);
@@ -467,9 +515,8 @@ static int wm_send(uint8_t *msg, uint32_t len, uint16_t type)
 
 	wm_len = len + MODEL_MSG_HEADER_SIZE;
 	wm_msg.msg_length = htonl(wm_len);
-	wm_msg.port = NONPOSTED_PORT;
 
-	// hex_dump((uint8_t *)&wm_msg, wm_len, 0);
+	hex_dump((uint8_t *)&wm_msg, wm_len, 0);
 
 	wr_len = write(wm_sock_fd, &wm_msg, wm_len);
 	if (wm_len != wr_len) {

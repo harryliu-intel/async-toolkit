@@ -46,7 +46,7 @@ int wm_disconnect(void);
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
-int wm_pkt_push(int port, char *data, unsigned int len);
-int wm_pkt_get(int *port, char *data, unsigned int *len);
+int wm_pkt_push(int port, const uint8_t *data, uint32_t len);
+int wm_pkt_get(int *port, uint8_t *data, uint32_t *len);
 
 #endif /* __MBAY_DPI_CLIENT_H_ */

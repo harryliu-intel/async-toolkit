@@ -53,6 +53,7 @@ int main(int argc, char **argv)
 	int err;
 	int c;
 
+	/********** Process command line arguments ***********/
 	while ((c = getopt(argc, argv, "se:m:h")) != -1)
 		switch (c) {
 		case 's':
@@ -73,6 +74,7 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
+	/********** Start or connect to the server ***********/
 	if (start_server)
 		err = wm_server_start(model_server_exec);
 	else
@@ -82,6 +84,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	/********** Test write/read register operations ***********/
 	/* In HLP this is BSM_SCRATCH_0[0] */
 	addr = 0x0010000;
 	val = 0x1234567890abcdef;
@@ -104,6 +107,14 @@ int main(int argc, char **argv)
 		printf("Unexpected value: 0x%lx\n", val);
 	else
 		printf("OK\n");
+
+
+	/********** Test send/receive traffic ***********/
+	err = wm_pkt_push(1, (uint8_t *)"12345678", 8);
+	if (err) {
+		printf("Error sending traffic: %d\n", err);
+		goto CLEANUP;
+	}
 
 CLEANUP:
 	err = start_server ? wm_server_stop() : wm_disconnect();
