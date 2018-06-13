@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -172,8 +173,9 @@ int wm_server_stop(void)
 int wm_connect(const char *server_file)
 {
 	struct sockaddr_in serv_addr;
-	char server_addr[128];
+	char serv_addr_str[128];
 	const char *filename;
+	struct stat sb;
 	int port = 0;
 	int on = 1;
 	FILE *fd;
@@ -188,13 +190,18 @@ int wm_connect(const char *server_file)
 		}
 	}
 
+	if ((stat(filename, &sb) == 0) && !S_ISREG(sb.st_mode)) {
+		LOG_ERROR("Server path is not a valid file %s\n", filename);
+		return ERR_INVALID_ARG;
+	}
+
 	fd = fopen(filename, "r");
 	if (!fd) {
 		LOG_ERROR("Unable to open file %s\n", filename);
 		return ERR_INVALID_ARG;
 	}
 
-	if (read_host_info(fd, server_addr, sizeof(server_addr), &port)) {
+	if (read_host_info(fd, serv_addr_str, sizeof(serv_addr_str), &port)) {
 		LOG_ERROR("Unable to get server connection info\n");
 		return ERR_INVALID_ARG;
 	}
@@ -208,14 +215,13 @@ int wm_connect(const char *server_file)
 	bzero((char *)&serv_addr, sizeof(serv_addr));
 
 	/* Use ip address instead of hosthame due to klocwork */
-	if (!strcmp("localhost", server_addr))
+	if (!strcmp("localhost", serv_addr_str))
 		serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	else
-		serv_addr.sin_addr.s_addr = inet_addr(server_addr);
+		serv_addr.sin_addr.s_addr = inet_addr(serv_addr_str);
 
 	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-		LOG_ERROR("Cannot parse server IP address: %s\n",
-			  server_addr);
+		LOG_ERROR("Cannot parse server IP address: %s\n", serv_addr_str);
 		return ERR_INVALID_ARG;
 	}
 
@@ -225,14 +231,12 @@ int wm_connect(const char *server_file)
 	if (connect(wm_sock_fd, (struct sockaddr *)&serv_addr,
 		    sizeof(serv_addr)) < 0) {
 		LOG_ERROR("Unable to connect to server at %s:%d\n",
-			  server_addr, port);
+			  serv_addr_str, port);
 		return ERR_NETWORK;
 	}
 
-	LOG_DEBUG("Connected to model_server at %s:%d\n",
-		  server_addr, port);
-	setsockopt(wm_sock_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on,
-		   sizeof(on));
+	LOG_DEBUG("Connected to model_server at %s:%d\n", serv_addr_str, port);
+	setsockopt(wm_sock_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
 
 	return OK;
 }
