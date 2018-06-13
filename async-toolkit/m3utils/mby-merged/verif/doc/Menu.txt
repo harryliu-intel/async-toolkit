@@ -98,8 +98,7 @@ Group: Seq  {
 Group: Tests  {
 
    File: mby_alive_test.svh  (mby/tests/mby_alive_test/mby_alive_test.svh)
-   File: mby_base_test.svh  (mby/tests/mby_base_test.svh)
-   File: mby_test_pack.sv  (mby/tests/mby_test_pack.sv)
+   File: mby_base_test.svh  (mby/tests/common/mby_base_test.svh)
    }  # Group: Tests
 
 Group: Ti  {

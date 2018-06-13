@@ -212,6 +212,7 @@ EOF
                 ,    #2012WW46r121114 primary IOSF compliance
                 "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
+                "+define+MODEL_ROOT=$ENV{MODEL_ROOT}", 
             ],
         },
         # ---------------------------------------------
