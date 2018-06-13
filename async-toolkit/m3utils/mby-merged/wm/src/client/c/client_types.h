@@ -45,6 +45,9 @@ struct wm_msg {
 	 * For SBIOSF messages:
 	 * - Buffer with SAI header from server point of view
 	 * - From API perpective, buffer does not include SAI header
+	 *
+	 * For PACKET messages:
+	 * - A sequence of TLV (see types defs below)
 	 */
 	uint8_t data[MAX_MSG_LEN];
 };

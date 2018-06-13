@@ -72,8 +72,10 @@ static char server_tmpfile[TMP_FILE_LEN] = "";
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 							 uint8_t *rx_msg, uint32_t *rx_len);
-static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t port);
-static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type);
+static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
+				   uint16_t port);
+static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
+					  uint16_t *port);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
 static int create_client_socket(int *fd, int *port);
 static int connect_main(const char *addr_str, int port);
@@ -165,7 +167,7 @@ int wm_server_stop(void)
 	unsigned char empty_msg = 0;
 	int err;
 
-	err = wm_send(&empty_msg, 0, MODEL_MSG_COMMAND_QUIT, 0);
+	err = wm_send(wm_server_fd, &empty_msg, 0, MODEL_MSG_COMMAND_QUIT, 0);
 	if (err)
 		LOG_ERROR("Error while sending shutdown request to server: %d\n", err);
 
@@ -362,7 +364,7 @@ int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 	memcpy(pkt_msg + off, data, len);
 	pkt_len = off + len;
 
-	err = wm_send(pkt_msg, pkt_len, MODEL_MSG_PACKET, port);
+	err = wm_send(wm_server_fd, pkt_msg, pkt_len, MODEL_MSG_PACKET, port);
 	if (err) {
 		LOG_ERROR("Could not send data to WM: %d\n", err);
 	}
@@ -377,9 +379,13 @@ int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 
 	for (i = 0; i < NUM_PORTS; ++i) {
 
+		LOG_DEBUG("Checking rx frames on port %d\n", i);
 		err = receive_pkt(i, 10, data, len);
 		if (err)
 			return err;
+
+		if (*len == 0)
+			LOG_DEBUG("Nothing received on port %d\n", i);
 
 		if (*len > 0) {
 			*port = i;
@@ -399,6 +405,7 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
     struct pollfd pfd;
     uint32_t msg_len;
 	uint16_t type;
+	uint16_t port;
     int err;
 
     if (wm_egress_fd[phys_port] == -1) {
@@ -424,14 +431,23 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
         return OK;
     }
 
-	err = wm_receive(msg, &msg_len, &type);
+	err = wm_receive(pfd.fd, msg, &msg_len, &type, &port);
 	if (err)
 		return err;
+
+	if (type == MODEL_MSG_PACKET_EOT) {
+		LOG_DEBUG("Received EOT packet on, but I'll pretend I didn't see it\n");
+		*len = 0;
+		return OK;
+	}
 
     if (type != MODEL_MSG_PACKET) {
         LOG_ERROR("Received unexpected message types %d\n", type);
 		return ERR_RUNTIME;
     }
+
+	if (port != 0)
+		LOG_ERROR("Port should be zero instead of %d\n", port);
 
     /* FIXME This needs to support PACKET_META */
     if (msg[0] != WM_DATA_TYPE_PACKET) {
@@ -473,15 +489,16 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 {
 	unsigned char rsp;
     uint16_t type;
+    uint16_t port;
 	int err;
 
-	err = wm_send(tx_msg, tx_len, MODEL_MSG_IOSF, NONPOSTED_PORT);
+	err = wm_send(wm_server_fd, tx_msg, tx_len, MODEL_MSG_IOSF, NONPOSTED_PORT);
 	if (err) {
 		LOG_ERROR("Could not send data to WM: %d\n", err);
 		return err;
 	}
 
-	err = wm_receive(rx_msg, rx_len, &type);
+	err = wm_receive(wm_server_fd, rx_msg, rx_len, &type, &port);
 	if (err) {
 		LOG_ERROR("Did not receive data from WM: %d\n", err);
 		return err;
@@ -508,19 +525,22 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 /**
  * wm_receive() - Receive message from model_server socket interface.
  *
- * @param_out	msg caller-allocated buffer where the message will be stored.
- * @param_out	len caller-allocated used to store the length of the message.
- * @param_out	type caller-allocated used to store the type of the message.
+ * @param_in	fd of the socket used to receive the data
+ * @param_out	msg caller-allocated buffer where the message will be placed.
+ * @param_out	len caller-allocated storage where the length will be placed.
+ * @param_out	type caller-allocated storage where the type will be placed.
+ * @param_out	port caller-allocated storage where teh port will be placed.
  * @retval		OK if successful
  */
-static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
+static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
+					  uint16_t *port)
 {
     uint8_t wm_msg[512];
 	uint32_t wm_len;
 	int err;
 
 	/* Read the first 4 bytes to see the length of the message */
-	err = wm_read_data(wm_server_fd, wm_msg, 4, READ_TIMEOUT);
+	err = wm_read_data(fd, wm_msg, 4, READ_TIMEOUT);
 	if (err) {
 		LOG_ERROR("Could not receive message preamble from WM\n");
 		return err;
@@ -533,7 +553,7 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	}
 
 	/* Receive the remaining bytes */
-	err = wm_read_data(wm_server_fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
+	err = wm_read_data(fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
 	if (err) {
 		LOG_ERROR("Could not receive message contents from WM\n");
 		return err;
@@ -543,15 +563,18 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 	// 		(wm_msg[2] << 8) | wm_msg[3];
 	*len = wm_len - MODEL_MSG_ERROR;
 	*type = (wm_msg[6] << 8) | wm_msg[7];
+	*port = (wm_msg[10] << 8) | wm_msg[11];
 
 	switch (*type) {
 	case MODEL_MSG_ERROR:
 		LOG_ERROR("%s: %s", __func__, wm_msg + 12);
 		return ERR_INVALID_RESPONSE;
 	case MODEL_MSG_IOSF:
+	case MODEL_MSG_PACKET:
+	case MODEL_MSG_PACKET_EOT:
 		break;
 	default:
-		LOG_ERROR("Unexpected msg_type -0x%x", *type);
+		LOG_ERROR("Unexpected msg_type 0x%x\n", *type);
 		return ERR_INVALID_RESPONSE;
 	}
 
@@ -563,13 +586,15 @@ static int wm_receive(uint8_t *msg, uint32_t *len, uint16_t *type)
 /**
  * wm_send() - Send generic message to model_server socket interface.
  *
+ * @param_in	fd of the socket used to send the data
  * @param_in	msg pointer to the content of the message.
  * @param_in	len the length of the message.
  * @param_in	type the type of the message (e.g. SB-IOSF).
  * @param_in	port the ingress port used when sending traffic to model.
  * @retval		OK if successful
  */
-static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t port)
+static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
+				   uint16_t port)
 {
 	struct wm_msg wm_msg;
 	uint32_t wm_len;
@@ -592,9 +617,9 @@ static int wm_send(const uint8_t *msg, uint32_t len, uint16_t type, uint16_t por
 	wm_len = len + MODEL_MSG_HEADER_SIZE;
 	wm_msg.msg_length = htonl(wm_len);
 
-	// hex_dump((uint8_t *)&wm_msg, wm_len, 0);
+	hex_dump((uint8_t *)&wm_msg, wm_len, 0);
 
-	wr_len = write(wm_server_fd, &wm_msg, wm_len);
+	wr_len = write(fd, &wm_msg, wm_len);
 	if (wm_len != wr_len) {
 		LOG_ERROR("ERROR: write %d to socket. Only %d written",
 				wm_len, wr_len);
@@ -718,7 +743,8 @@ static int connect_egress(int phys_port, int client_fd, int client_port,
     strcpy(buffer + 2, hostname);
     len = 2 + strlen(hostname);
 
-	wm_send((uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO, phys_port);
+	wm_send(wm_server_fd, (uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO,
+			phys_port);
 
     /* Wait for client connection after sending request */
     *egress_fd = accept(client_fd, NULL, NULL);
