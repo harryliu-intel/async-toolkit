@@ -240,16 +240,15 @@ object WhiteModelServer {
   }
 
   def main(args : Array[String]) : Unit = {
-    println("hello world")
     val server = new ServerSocket(0) // 0 means pick any available port
 
 
     val port = server.getLocalPort()
     val myaddress = server.getInetAddress.getHostName
-    val hostname = InetAddress.getLocalHost().getHostAddress()
+    val hostname = InetAddress.getLocalHost().getCanonicalHostName()
     val descText = "0:" + hostname + ":" + port
     println("Scala White Model Server for Madison Bay Switch Chip")
-    println("Socket port open at:" +  descText)
+    println("Socket port open at " +  descText)
     val psFile = new FileWriter("models.packetServer")
     psFile.write(descText)
     psFile.write("\n")
