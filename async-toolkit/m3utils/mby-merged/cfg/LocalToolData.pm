@@ -39,7 +39,7 @@ $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww08.3';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww22.1';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
@@ -87,6 +87,10 @@ $ToolConfig_tools{dc_shell} = {
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
     VERSION => "18.05.30",
+    ENV_APPEND  => {
+        'PATH'  => "&get_tool_path()/bin",
+    },
+
 };
 
 $ToolConfig_tools{cm3} = {
@@ -245,6 +249,12 @@ $ToolConfig_tools{"sbt"} = {
       JAVA_OPTS => "-Dhttp.proxyHost=proxy-us.intel.com -Dhttp.proxyPort=912 -Dhttps.proxyHost=proxy-us.intel.com -Dhttps.proxyPort=912",
       SBT_OPTS => "-java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot"
     }
+};
+
+$ToolConfig_tools{"idea"} = {
+    VERSION => "2018.1.4",
+    PATH => "/usr/intel/pkgs/intellij/&get_tool_version()",
+    EXEC => "&get_tool_path()/bin/idea.sh",
 };
 
 $ToolConfig_tools{"java"} = {
