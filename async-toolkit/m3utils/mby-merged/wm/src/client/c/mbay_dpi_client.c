@@ -550,7 +550,7 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 
 	wm_len = ntohl(*((unsigned int *)&wm_msg[0]));
 	if (wm_len > (sizeof(wm_msg) - MODEL_MSG_HEADER_SIZE)) {
-		LOG_ERROR("Length %d is out of bound", wm_len);
+		LOG_ERROR("Length %d is out of bound\n", wm_len);
 		return ERR_INVALID_RESPONSE;
 	}
 

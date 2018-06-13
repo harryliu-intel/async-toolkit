@@ -144,7 +144,7 @@ int test_regs(void)
 int test_pkts(void)
 {
 	/* Hardcoded test frame with Crc */
-	uint8_t test_pkt[] = {
+	uint8_t tx_pkt[] = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
 		0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 		0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
@@ -153,31 +153,36 @@ int test_pkts(void)
 		0xee, 0x7f, 0xec, 0xb0
 	};
 	/* TODO pkt should be big enough to contain the data */
-	uint8_t pkt[1000];
+	uint8_t rx_pkt[1000];
 	uint32_t pkt_len;
+	unsigned int i;
 	int port;
 	int err;
 
 	port = 1;
 	pkt_len = 8;
-	err = wm_pkt_push(port, test_pkt, sizeof(test_pkt));
+	err = wm_pkt_push(port, tx_pkt, sizeof(tx_pkt));
 	if (err) {
 		printf("Error sending traffic: %d\n", err);
 		return err;
 	}
 
-	err = wm_pkt_get(&port, pkt, &pkt_len);
+	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
 	if (err) {
 		printf("Error receiving traffic: %d\n", err);
 		return err;
 	}
 
 	printf("Received %d bytes on port %d\n", pkt_len, port);
-	if (memcmp(pkt, test_pkt, pkt_len)) {
+	if (memcmp(tx_pkt, rx_pkt, pkt_len)) {
 		printf("Unexpected difference between sent and received pkt\n");
+		for (i = 0; i < pkt_len; ++i)
+			if (tx_pkt[i] != rx_pkt[i])
+				printf("tx_pkt[%d] = 0x%x - rx_pkt[%d] = 0x%x\n", i, tx_pkt[i],
+						i, rx_pkt[i]);
 	}
 
-	err = wm_pkt_get(&port, pkt, &pkt_len);
+	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
 	if (err == ERR_NO_MORE) {
 		printf("Did not receive any frame as expected\n");
 	} else {
