@@ -31,25 +31,15 @@
 #define SERVER_EXEC SERVER_PATH "model_server/AMD64_LINUX/modelserver"
 #define SERVER_FILE SERVER_PATH "models.packetServer"
 
-void print_help(void)
-{
-	printf("sample_client - C-DPI sample client application\n\n");
-	printf("Start or connect to the model server and perform a register\n");
-	printf("write followed by a read to verify the value.\n\n");
-	printf("Options:\n");
-	printf(" -s         Start the server instead of only connecting to it\n");
-	printf(" -e <path>  Path of the executable file of the model server\n");
-	printf(" -m <path>  Path of the models.packetServer including file name\n");
-	printf(" -h         Print this help message and exit\n");
-}
+void print_help(void);
+int test_regs(void);
+int test_pkts(void);
 
 int main(int argc, char **argv)
 {
 	char *model_server_file = SERVER_FILE;
 	char *model_server_exec = SERVER_EXEC;
 	int start_server = 0;
-	uint32_t addr;
-	uint64_t val;
 	int err;
 	int c;
 
@@ -85,38 +75,18 @@ int main(int argc, char **argv)
 	}
 
 	/********** Test write/read register operations ***********/
-	/* In HLP this is BSM_SCRATCH_0[0] */
-	addr = 0x0010000;
-	val = 0x1234567890abcdef;
-	printf("Write: addr=0x%x val=0x%lx\n", addr, val);
-	err = wm_reg_write(addr, val);
-	if (err) {
-		printf("Error writing register: %d\n", err);
+	err = test_regs();
+	if (err)
 		goto CLEANUP;
-	}
-
-	printf("OK\n");
-	printf("Read: addr=0x%x\n", addr);
-	err = wm_reg_read(addr, &val);
-	if (err) {
-		printf("Error reading register: %d\n", err);
-		goto CLEANUP;
-	}
-
-	if (val != 0x1234567890abcdef)
-		printf("Unexpected value: 0x%lx\n", val);
-	else
-		printf("OK\n");
 
 
 	/********** Test send/receive traffic ***********/
-	err = wm_pkt_push(1, (uint8_t *)"12345678", 8);
-	if (err) {
-		printf("Error sending traffic: %d\n", err);
+	err = test_pkts();
+	if (err)
 		goto CLEANUP;
-	}
 
 CLEANUP:
+	/********** Disconnect (or stop) from the server ***********/
 	err = start_server ? wm_server_stop() : wm_disconnect();
 	if (err)
 		printf("Error while disconnecting to the WM: %d\n", err);
@@ -124,5 +94,74 @@ CLEANUP:
 		printf("Disconnected from model_server\n");
 
 	return err;
+}
+
+void print_help(void)
+{
+	printf("sample_client - C-DPI sample client application\n\n");
+	printf("Start or connect to the model server and perform a register\n");
+	printf("write followed by a read to verify the value.\n\n");
+	printf("Options:\n");
+	printf(" -s         Start the server instead of only connecting to it\n");
+	printf(" -e <path>  Path of the executable file of the model server\n");
+	printf(" -m <path>  Path of the models.packetServer including file name\n");
+	printf(" -h         Print this help message and exit\n");
+}
+
+int test_regs(void)
+{
+	uint32_t addr;
+	uint64_t val;
+	int err;
+
+	/* In HLP this is BSM_SCRATCH_0[0] */
+	addr = 0x0010000;
+	val = 0x1234567890abcdef;
+	printf("Write: addr=0x%x val=0x%lx\n", addr, val);
+	err = wm_reg_write(addr, val);
+	if (err) {
+		printf("Error writing register: %d\n", err);
+		return ERR_RUNTIME;
+	}
+
+	printf("OK\n");
+	printf("Read: addr=0x%x\n", addr);
+	err = wm_reg_read(addr, &val);
+	if (err) {
+		printf("Error reading register: %d\n", err);
+		return ERR_RUNTIME;
+	}
+
+	if (val != 0x1234567890abcdef)
+		printf("Unexpected value: 0x%lx\n", val);
+	else
+		printf("OK\n");
+
+	return OK;
+}
+
+int test_pkts(void)
+{
+	/* TODO pkt should be big enough to contain the data */
+	uint8_t pkt[1000];
+	uint32_t pkt_len;
+	int port;
+	int err;
+
+	port = 1;
+	pkt_len = 8;
+	err = wm_pkt_push(port, (uint8_t *)"12345678", pkt_len);
+	if (err) {
+		printf("Error sending traffic: %d\n", err);
+		return err;
+	}
+
+	err = wm_pkt_get(&port, pkt, &pkt_len);
+	if (err) {
+		printf("Error receiving traffic: %d\n", err);
+		return err;
+	}
+
+	return OK;
 }
 

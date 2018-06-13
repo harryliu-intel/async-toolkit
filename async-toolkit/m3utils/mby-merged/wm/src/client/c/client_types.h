@@ -54,7 +54,7 @@ struct wm_msg {
  */
 #define WM_DATA_TYPE_SIZE	1
 #define WM_DATA_LENGTH_SIZE	4
-#define WM_DATA_TLV_SIZE	(FM_MODEL_DATA_TYPE_SIZE + FM_MODEL_DATA_LENGTH_SIZE)
+#define WM_DATA_TLV_SIZE	(WM_DATA_TYPE_SIZE + WM_DATA_LENGTH_SIZE)
 
 /* Type of the data sent with a message MODEL_MSG_PACKET
  * Use the same values that were defined in HLP.
