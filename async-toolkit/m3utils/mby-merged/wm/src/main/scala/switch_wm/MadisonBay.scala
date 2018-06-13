@@ -1,5 +1,5 @@
 package switch_wm
-
+/*
 import java.util.logging.Logger
 
 import io.grpc.{Server, ServerBuilder}
@@ -60,3 +60,4 @@ class MadisonBay (executionContext: ExecutionContext) { self =>
     }
   }
 }
+*/
