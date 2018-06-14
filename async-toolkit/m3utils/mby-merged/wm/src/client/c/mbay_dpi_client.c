@@ -48,6 +48,7 @@
 #define LOG_WARNING printf
 #define LOG_INFO    printf
 #define LOG_DEBUG(x, ...)
+// #define LOG_DEBUG   printf
 #define LOG_DUMP    printf
 
 /* FD of the socket used to send commands to the model_server.
@@ -78,12 +79,12 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 					  uint16_t *port);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
 static int create_client_socket(int *fd, int *port);
-static int connect_server(const char *addr_str, int port, int *server_fd);
+static int connect_server(const char *addr_str, const char *port, int *server_fd);
 static int connect_egress(int phys_port, int server_fd, int client_fd,
 						  int client_port, int *egress_fd);
 static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
 					   uint32_t *len);
-static int read_host_info(FILE *fd, char *host, int host_size, int *port);
+static int read_host_info(FILE *fd, char *host, char *port);
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec);
 
@@ -191,10 +192,10 @@ int wm_server_stop(void)
  */
 int wm_connect(const char *server_file)
 {
-	char serv_addr_str[256];
 	const char *filename;
+	char serv_addr[256];
+	char serv_port[256];
 	struct stat sb;
-	int port = 0;
 	FILE *fd;
 	int err;
 	int i;
@@ -220,12 +221,14 @@ int wm_connect(const char *server_file)
 		return ERR_INVALID_ARG;
 	}
 
-	if (read_host_info(fd, serv_addr_str, sizeof(serv_addr_str), &port)) {
+	bzero(serv_addr, sizeof(serv_addr));
+	bzero(serv_port, sizeof(serv_port));
+	if (read_host_info(fd, serv_addr, serv_port)) {
 		LOG_ERROR("Unable to get server connection info\n");
 		return ERR_INVALID_ARG;
 	}
 
-	err = connect_server(serv_addr_str, port, &wm_server_fd);
+	err = connect_server(serv_addr, serv_port, &wm_server_fd);
 	if (err)
 		return err;
 
@@ -638,45 +641,46 @@ static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii)
  * be reused later on to send all the messages.
  *
  * @param_in	addr_str is the string with the server address.
- * @param_in	port is the port where the server is listening.
+ * @param_in	port_str is the port where the server is listening.
  * @param_out	server_fd is the caller-alloc storage where the server fd will
  * 				be placed
  */
-static int connect_server(const char *addr_str, int port, int *server_fd)
+static int connect_server(const char *addr_str, const char *port_str, int *server_fd)
 {
-	struct sockaddr_in serv_addr;
+	struct addrinfo *result, *rp;
+	struct addrinfo hints;
 	int on = 1;
+	int err;
 
-	*server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (*server_fd < 0) {
-		LOG_ERROR("Error creating socket fd\n");
-		return ERR_INVALID_ARG;
-	}
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = 0;
+	hints.ai_protocol = 0;          /* Any protocol */
 
-	bzero((char *)&serv_addr, sizeof(serv_addr));
-
-	/* Use ip address instead of hosthame due to klocwork */
-	if (!strcmp("localhost", addr_str))
-		serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	else
-		serv_addr.sin_addr.s_addr = inet_addr(addr_str);
-
-	if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-		LOG_ERROR("Cannot parse server IP address: %s\n", addr_str);
-		return ERR_INVALID_ARG;
-	}
-
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(port);
-
-	if (connect(*server_fd, (struct sockaddr *)&serv_addr,
-		    sizeof(serv_addr)) < 0) {
-		LOG_ERROR("Unable to connect to server at %s:%d\n",
-			  addr_str, port);
+	LOG_DEBUG("Connecting to model_server at %s:%s\n", addr_str, port_str);
+	err = getaddrinfo(addr_str, port_str, &hints, &result);
+	if (err != 0) {
+		LOG_ERROR("Error in getaddrinfo: %s\n", gai_strerror(err));
 		return ERR_NETWORK;
 	}
 
-	LOG_DEBUG("Connected to model_server at %s:%d\n", addr_str, port);
+	for (rp = result; rp != NULL; rp = rp->ai_next) {
+		*server_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (*server_fd == -1) {
+			LOG_ERROR("Error creating socket fd: %s\n", strerror(errno));
+			return ERR_NETWORK;
+		}
+
+		if (connect(*server_fd, rp->ai_addr, rp->ai_addrlen) != -1)
+			break; /* Success */
+
+		LOG_ERROR("Unable to connect to server at %s:%s: %s\n", addr_str,
+				port_str, strerror(errno));
+		close(*server_fd);
+	}
+
+	LOG_DEBUG("Connected to model_server at %s:%s\n", addr_str, port_str);
 	setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
 
 	return OK;
@@ -821,7 +825,7 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
 		return err;
 
 	if (type == MODEL_MSG_PACKET_EOT) {
-		LOG_DEBUG("Received EOT packet on, but I'll pretend I didn't see it\n");
+		LOG_DEBUG("Received EOT packet, but I'll pretend I didn't see it\n");
 		*len = 0;
 		return OK;
 	}
@@ -858,17 +862,15 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
  *
  * @param_in	fd is the file pointer to read from.
  * @param_out	host is buffer to store host name.
- * @param_in	host_size is the size of host buffer.
  * @param_out	port is buffer to store host port number.
  * @retval	IES_OK if successful.
  */
-static int read_host_info(FILE *fd, char *host, int host_size, int *port)
+static int read_host_info(FILE *fd, char *host, char *port)
 {
 	unsigned int start, cnt;
 	char buffer[256];
-	char tmp[256];
 
-	if (!fd || !host || host_size <= 0)
+	if (!fd || !host || !port)
 		return ERR_INVALID_ARG;
 
 	if (fgets(buffer, sizeof(buffer), fd)) {
@@ -876,9 +878,6 @@ static int read_host_info(FILE *fd, char *host, int host_size, int *port)
 		cnt = 0;
 		while ((cnt < strlen(buffer)) && buffer[start + cnt] != ':')
 			cnt++;
-
-		bzero(&tmp, sizeof(tmp));
-		memcpy(&tmp, buffer, cnt);
 
 		start = start + cnt + 1;
 		cnt = 0;
@@ -888,7 +887,6 @@ static int read_host_info(FILE *fd, char *host, int host_size, int *port)
 		if (start + cnt >= sizeof(buffer))
 			return ERR_INVALID_ARG;
 
-		bzero(host, host_size);
 		memcpy(host, &buffer[start], cnt);
 
 		start = start + cnt + 1;
@@ -899,10 +897,11 @@ static int read_host_info(FILE *fd, char *host, int host_size, int *port)
 		if (start + cnt >= sizeof(buffer))
 			return ERR_INVALID_ARG;
 
-		bzero(&tmp, sizeof(tmp));
-		//memcpy_s(&tmp, sizeof(tmp), &buffer[start], cnt);
-		memcpy(&tmp, &buffer[start], cnt);
-		*port = atoi(tmp);
+		/* Make sure to not copy the \n */
+		if (buffer[start + cnt - 1] == '\n')
+			cnt--;
+
+		memcpy(port, &buffer[start], cnt);
 		fclose(fd);
 	}
 	return OK;
