@@ -78,9 +78,9 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 					  uint16_t *port);
 static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
 static int create_client_socket(int *fd, int *port);
-static int connect_main(const char *addr_str, int port);
-static int connect_egress(int phys_port, int client_fd, int client_port,
-						  int *egress_fd);
+static int connect_server(const char *addr_str, int port, int *server_fd);
+static int connect_egress(int phys_port, int server_fd, int client_fd,
+						  int client_port, int *egress_fd);
 static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
 					   uint32_t *len);
 static int read_host_info(FILE *fd, char *host, int host_size, int *port);
@@ -225,7 +225,7 @@ int wm_connect(const char *server_file)
 		return ERR_INVALID_ARG;
 	}
 
-	err = connect_main(serv_addr_str, port);
+	err = connect_server(serv_addr_str, port, &wm_server_fd);
 	if (err)
 		return err;
 
@@ -234,7 +234,8 @@ int wm_connect(const char *server_file)
 		return err;
 
 	for (i = 0; i < 32; ++i) {
-		err = connect_egress(i, wm_client_fd, wm_client_port, wm_egress_fd + i);
+		err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
+							 wm_egress_fd + i);
 		if (err)
 			return err;
 	}
@@ -323,6 +324,17 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	return err;
 }
 
+/* wm_pkt_push() - Send a frame to the WM
+ *
+ * The frame will be sent as it is without any processing.
+ * Default metadata will be included for compatibility with HLP WM.
+ * TODO check if this is the desired behavior.
+ *
+ * @param_in	port is the phys port where the frame will be injected
+ * @param_in	data pointer to the frame data
+ * @param_in	len is the lenght of the frame
+ * @retval		OK if successful
+ */
 int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 {
 	uint8_t pkt_msg[MAX_MSG_LEN];
@@ -341,7 +353,7 @@ int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 	}
 
 	/* First TLV is the meta-data. For now I will assume this is a frame
-	 * entering HLP from RMN. This will need to be removed/updated
+	 * entering HLP from RMN. TODO this will need to be removed/updated
 	 */
 	pkt_msg[off] = WM_DATA_TYPE_META;
 	off += WM_DATA_TYPE_SIZE;
@@ -372,6 +384,14 @@ int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 	return err;
 }
 
+/* wm_pkt_get() - Receive a frame to the WM
+ *
+ * @param_out	port is the phys port where the frame egressed
+ * @param_out	data pointer to the frame data
+ * @param_out	len is the lenght of the frame
+ * @retval		ERR_NO_DATA if there is no egress frames on any of the ports.
+ * @retval		OK if successful
+ */
 int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 {
 	int err;
@@ -395,74 +415,7 @@ int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 		}
 	}
 
-	return ERR_NO_MORE;
-}
-
-static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
-					   uint32_t *len)
-{
-    uint8_t msg[MAX_MSG_LEN];
-    struct pollfd pfd;
-    uint32_t msg_len;
-	uint16_t type;
-	uint16_t port;
-    int err;
-
-    if (wm_egress_fd[phys_port] == -1) {
-        LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
-            phys_port);
-		return ERR_RUNTIME;
-    }
-
-    bzero(&pfd, sizeof(struct pollfd));
-    pfd.fd = wm_egress_fd[phys_port];
-    pfd.events = POLLIN;
-
-    err = poll(&pfd, 1, timeout);
-	if (err == -1) {
-		LOG_ERROR("Failed to poll on egress fd of phys port %d: %s\n",
-				  phys_port, strerror(errno));
-		return ERR_NETWORK;
-	}
-
-    if(!(pfd.revents & POLLIN)) {
-		LOG_DEBUG("No events on fd associated to phys port %d\n", phys_port);
-		*len = 0;
-        return OK;
-    }
-
-	err = wm_receive(pfd.fd, msg, &msg_len, &type, &port);
-	if (err)
-		return err;
-
-	if (type == MODEL_MSG_PACKET_EOT) {
-		LOG_DEBUG("Received EOT packet on, but I'll pretend I didn't see it\n");
-		*len = 0;
-		return OK;
-	}
-
-    if (type != MODEL_MSG_PACKET) {
-        LOG_ERROR("Received unexpected message types %d\n", type);
-		return ERR_RUNTIME;
-    }
-
-	if (port != phys_port) {
-		LOG_ERROR("Port should be %d instead of %d\n", phys_port, port);
-		return ERR_RUNTIME;
-	}
-
-    /* FIXME This needs to support PACKET_META */
-    if (msg[0] != WM_DATA_TYPE_PACKET) {
-        LOG_ERROR("Unsupported data type %d\n", msg[0]);
-		return ERR_RUNTIME;
-    }
-
-    *len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
-	memcpy(packet, msg + WM_DATA_TLV_SIZE, *len);
-
-	/* TODO in theory there could be other TLVs in the message */
-
-	return OK;
+	return ERR_NO_DATA;
 }
 
 
@@ -679,21 +632,23 @@ static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii)
 }
 
 /**
- * connect_main() - Connect to the main WM socket
+ * connect_main() - Connect to the WM server socket
  *
  * The fd of the socket is saved in a global variable and it will
  * be reused later on to send all the messages.
  *
  * @param_in	addr_str is the string with the server address.
  * @param_in	port is the port where the server is listening.
+ * @param_out	server_fd is the caller-alloc storage where the server fd will
+ * 				be placed
  */
-static int connect_main(const char *addr_str, int port)
+static int connect_server(const char *addr_str, int port, int *server_fd)
 {
 	struct sockaddr_in serv_addr;
 	int on = 1;
 
-	wm_server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (wm_server_fd < 0) {
+	*server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (*server_fd < 0) {
 		LOG_ERROR("Error creating socket fd\n");
 		return ERR_INVALID_ARG;
 	}
@@ -714,7 +669,7 @@ static int connect_main(const char *addr_str, int port)
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(port);
 
-	if (connect(wm_server_fd, (struct sockaddr *)&serv_addr,
+	if (connect(*server_fd, (struct sockaddr *)&serv_addr,
 		    sizeof(serv_addr)) < 0) {
 		LOG_ERROR("Unable to connect to server at %s:%d\n",
 			  addr_str, port);
@@ -722,7 +677,7 @@ static int connect_main(const char *addr_str, int port)
 	}
 
 	LOG_DEBUG("Connected to model_server at %s:%d\n", addr_str, port);
-	setsockopt(wm_server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
+	setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
 
 	return OK;
 }
@@ -730,9 +685,14 @@ static int connect_main(const char *addr_str, int port)
 /* connect_egress() - Establish connection to receive egress frames
  *
  * @param_in	phys_port the switch physical port number
+ * @param_in	server_fd is the server socket fd where the request will be sent
+ * @param_in	client_fd is the client socket fd that will get the connection
+ * @param_in	client_port is the port number of where the client is listening
+ * @param_out	egress_fd is the caller-alloc storage where the egress socket fd
+ * 				will be placed
  */
-static int connect_egress(int phys_port, int client_fd, int client_port,
-						  int *egress_fd)
+static int connect_egress(int phys_port, int server_fd, int client_fd,
+						  int client_port, int *egress_fd)
 {
     char hostname[] = "localhost";
     char buffer[256];
@@ -745,7 +705,7 @@ static int connect_egress(int phys_port, int client_fd, int client_port,
     strcpy(buffer + 2, hostname);
     len = 2 + strlen(hostname);
 
-	wm_send(wm_server_fd, (uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO,
+	wm_send(server_fd, (uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO,
 			phys_port);
 
     /* Wait for client connection after sending request */
@@ -809,6 +769,84 @@ static int create_client_socket(int *fd, int *port)
 
 	*port = ntohs(addr.sin_port);
 	LOG_DEBUG("Client socket created - listen on port %d\n", *port);
+	return OK;
+}
+
+/* receive_pkt() - Try to receive a pkt from a specific port
+ *
+ * If no packet has egressed the port during the time specified, the length
+ * returned will be 0.
+ *
+ * @param_in	phys_port is the port where the pkt egress
+ * @param_in	timeout	is the wait time in ms spent waiting on the port
+ * @param_in	packet is caller-alloc buffer where the buffer will be placed
+ * @param_in	packet is caller-alloc buffer where the length will be placed
+ * @retval		OK if successful
+ */
+static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
+					   uint32_t *len)
+{
+    uint8_t msg[MAX_MSG_LEN];
+    struct pollfd pfd;
+    uint32_t msg_len;
+	uint16_t type;
+	uint16_t port;
+    int err;
+
+    if (wm_egress_fd[phys_port] == -1) {
+        LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
+            phys_port);
+		return ERR_RUNTIME;
+    }
+
+    bzero(&pfd, sizeof(struct pollfd));
+    pfd.fd = wm_egress_fd[phys_port];
+    pfd.events = POLLIN;
+
+    err = poll(&pfd, 1, timeout);
+	if (err == -1) {
+		LOG_ERROR("Failed to poll on egress fd of phys port %d: %s\n",
+				  phys_port, strerror(errno));
+		return ERR_NETWORK;
+	}
+
+    if(!(pfd.revents & POLLIN)) {
+		LOG_DEBUG("No events on fd associated to phys port %d\n", phys_port);
+		*len = 0;
+        return OK;
+    }
+
+	err = wm_receive(pfd.fd, msg, &msg_len, &type, &port);
+	if (err)
+		return err;
+
+	if (type == MODEL_MSG_PACKET_EOT) {
+		LOG_DEBUG("Received EOT packet on, but I'll pretend I didn't see it\n");
+		*len = 0;
+		return OK;
+	}
+
+    if (type != MODEL_MSG_PACKET) {
+        LOG_ERROR("Received unexpected message types %d\n", type);
+		return ERR_RUNTIME;
+    }
+
+	if (port != phys_port) {
+		LOG_ERROR("Port should be %d instead of %d\n", phys_port, port);
+		return ERR_RUNTIME;
+	}
+
+    /* FIXME This needs to support PACKET_META */
+    if (msg[0] != WM_DATA_TYPE_PACKET) {
+        LOG_ERROR("Unsupported data type %d\n", msg[0]);
+		return ERR_RUNTIME;
+    }
+
+    *len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+	memcpy(packet, msg + WM_DATA_TLV_SIZE, *len);
+
+	/* TODO in theory there could be other TLVs in the message */
+
 	return OK;
 }
 

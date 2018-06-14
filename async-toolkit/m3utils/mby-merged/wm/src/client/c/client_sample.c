@@ -183,7 +183,7 @@ int test_pkts(void)
 	}
 
 	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
-	if (err == ERR_NO_MORE) {
+	if (err == ERR_NO_DATA) {
 		printf("Did not receive any frame as expected\n");
 	} else {
 		printf("Unexpected error code %d\n", err);

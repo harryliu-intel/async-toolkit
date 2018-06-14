@@ -36,7 +36,7 @@
 #define	ERR_NO_RESOURCE 		4
 #define	ERR_INVALID_RESPONSE	5
 #define	ERR_RUNTIME				6
-#define	ERR_NO_MORE				7
+#define	ERR_NO_DATA				7
 
 int wm_server_start(char *cmd);
 int wm_server_stop(void);
