@@ -48,8 +48,8 @@
 #define LOG_ERROR   printf
 #define LOG_WARNING printf
 #define LOG_INFO    printf
-//#define LOG_DEBUG(x, ...)
-#define LOG_DEBUG   printf
+#define LOG_DEBUG(x, ...)
+// #define LOG_DEBUG   printf
 #define LOG_DUMP    printf
 
 /* FD of the socket used to send commands to the model_server.
@@ -113,6 +113,7 @@ int wm_server_start(char *type)
 	pid_t pid;
 	int i = 0;
 	int file;
+	FILE *fd;
 	int err;
 
 	/* Mandatory env variable set by NHDK */
@@ -127,8 +128,8 @@ int wm_server_start(char *type)
 		return ERR_INVALID_ARG;
 	}
 
+	/* TODO remove support for m3 code to cleanup this messy code */
 	if (!strcmp(type, "scala")) {
-		FILE *fd;
 		fd = popen("ToolConfig.pl get_tool_exec java", "r");
 		if (!fd) {
 			LOG_ERROR("Cannot get path of Java binaries\n");
@@ -184,10 +185,10 @@ int wm_server_start(char *type)
 			sleep(1);
 			err = wm_connect(server_tmpfile);
 			++i;
-		} while (err && i < max_retries);
+		} while (err == ERR_TIMEOUT && i < max_retries);
 		if (err) {
 			LOG_ERROR("Could not connect to the model_server\n");
-			return ERR_TIMEOUT;
+			return err;
 		}
 	} else {
 		LOG_ERROR("Could not start model_server: fork() failed\n");
@@ -266,9 +267,10 @@ int wm_connect(const char *server_file)
 
 	bzero(serv_addr, sizeof(serv_addr));
 	bzero(serv_port, sizeof(serv_port));
-	if (read_host_info(fd, serv_addr, serv_port)) {
+	err = read_host_info(fd, serv_addr, serv_port);
+	if (err) {
 		LOG_ERROR("Unable to get server connection info\n");
-		return ERR_INVALID_ARG;
+		return err;
 	}
 
 	err = connect_server(serv_addr, serv_port, &wm_server_fd);
@@ -916,37 +918,41 @@ static int read_host_info(FILE *fd, char *host, char *port)
 	if (!fd || !host || !port)
 		return ERR_INVALID_ARG;
 
-	if (fgets(buffer, sizeof(buffer), fd)) {
-		start = 0;
-		cnt = 0;
-		while ((cnt < strlen(buffer)) && buffer[start + cnt] != ':')
-			cnt++;
-
-		start = start + cnt + 1;
-		cnt = 0;
-		while ((start + cnt < strlen(buffer)) &&
-		       buffer[start + cnt] != ':')
-			cnt++;
-		if (start + cnt >= sizeof(buffer))
-			return ERR_INVALID_ARG;
-
-		memcpy(host, &buffer[start], cnt);
-
-		start = start + cnt + 1;
-		cnt = 0;
-		while ((start + cnt < strlen(buffer)) &&
-		       buffer[start + cnt] != ':')
-			cnt++;
-		if (start + cnt >= sizeof(buffer))
-			return ERR_INVALID_ARG;
-
-		/* Make sure to not copy the \n */
-		if (buffer[start + cnt - 1] == '\n')
-			cnt--;
-
-		memcpy(port, &buffer[start], cnt);
-		fclose(fd);
+	if (!fgets(buffer, sizeof(buffer), fd)) {
+		LOG_ERROR("Could not read host info from file\n");
+		return ERR_RUNTIME;
 	}
+
+	start = 0;
+	cnt = 0;
+	while ((cnt < strlen(buffer)) && buffer[start + cnt] != ':')
+		cnt++;
+
+	start = start + cnt + 1;
+	cnt = 0;
+	while ((start + cnt < strlen(buffer)) &&
+			buffer[start + cnt] != ':')
+		cnt++;
+	if (start + cnt >= sizeof(buffer) || cnt == 0)
+		return ERR_RUNTIME;
+
+	memcpy(host, &buffer[start], cnt);
+	printf("cnt = %d - host = %s\n", cnt, host);
+
+	start = start + cnt + 1;
+	cnt = 0;
+	while ((start + cnt < strlen(buffer)) &&
+			buffer[start + cnt] != ':')
+		cnt++;
+	if (start + cnt >= sizeof(buffer) || cnt == 0)
+		return ERR_RUNTIME;
+
+	/* Make sure to not copy the \n */
+	if (buffer[start + cnt - 1] == '\n')
+		cnt--;
+
+	memcpy(port, &buffer[start], cnt);
+	fclose(fd);
 	return OK;
 }
 
