@@ -260,6 +260,7 @@ $ToolConfig_tools{"idea"} = {
 $ToolConfig_tools{"java"} = {
     VERSION => "1.8.0.151",
     PATH => "/usr/intel/pkgs/java/&get_tool_version()",
+    EXEC => "&get_tool_path()/bin/java",
     ENV_APPEND => {
       JAVA_HOME => "&get_tool_path()",
     }
