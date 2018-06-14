@@ -384,12 +384,12 @@ int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 	return err;
 }
 
-/* wm_pkt_get() - Receive a frame to the WM
+/* wm_pkt_get() - Receive a frame from the WM
  *
  * @param_out	port is the phys port where the frame egressed
  * @param_out	data pointer to the frame data
  * @param_out	len is the lenght of the frame
- * @retval		ERR_NO_DATA if there is no egress frames on any of the ports.
+ * @retval		ERR_NO_DATA if there are no egress frames on any of the ports.
  * @retval		OK if successful
  */
 int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
