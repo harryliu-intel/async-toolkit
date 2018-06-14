@@ -29,7 +29,6 @@
 #include <mbay_dpi_client.h>
 
 #define SERVER_PATH "../../main/m3/"
-#define SERVER_EXEC SERVER_PATH "model_server/AMD64_LINUX/modelserver"
 #define SERVER_FILE SERVER_PATH "models.packetServer"
 
 void print_help(void);
@@ -39,19 +38,15 @@ int test_pkts(void);
 int main(int argc, char **argv)
 {
 	char *model_server_file = SERVER_FILE;
-	char *model_server_exec = SERVER_EXEC;
-	int start_server = 0;
+	char *server_type = NULL;
 	int err;
 	int c;
 
 	/********** Process command line arguments ***********/
-	while ((c = getopt(argc, argv, "se:m:h")) != -1)
+	while ((c = getopt(argc, argv, "s:m:h")) != -1)
 		switch (c) {
 		case 's':
-			start_server = 1;
-			break;
-		case 'e':
-			model_server_exec = optarg;
+			server_type = optarg;
 			break;
 		case 'm':
 			model_server_file = optarg;
@@ -66,12 +61,13 @@ int main(int argc, char **argv)
 		}
 
 	/********** Start or connect to the server ***********/
-	if (start_server)
-		err = wm_server_start(model_server_exec);
+	if (server_type)
+		err = wm_server_start(server_type);
 	else
 		err = wm_connect(model_server_file);
+
 	if (err) {
-		printf("Error while connecting to the WM\n");
+		printf("Error while connecting or starting to the WM\n");
 		return 1;
 	}
 
@@ -88,7 +84,7 @@ int main(int argc, char **argv)
 
 CLEANUP:
 	/********** Disconnect (or stop) from the server ***********/
-	err = start_server ? wm_server_stop() : wm_disconnect();
+	err = server_type ? wm_server_stop() : wm_disconnect();
 	if (err)
 		printf("Error while disconnecting to the WM: %d\n", err);
 	else
@@ -100,13 +96,12 @@ CLEANUP:
 void print_help(void)
 {
 	printf("sample_client - C-DPI sample client application\n\n");
-	printf("Start or connect to the model server and perform a register\n");
-	printf("write followed by a read to verify the value.\n\n");
+	printf("Start or connect to the model server and perform some basic\n");
+	printf("tests: reg access, pkt injection.\n\n");
 	printf("Options:\n");
-	printf(" -s         Start the server instead of only connecting to it\n");
-	printf(" -e <path>  Path of the executable file of the model server\n");
-	printf(" -m <path>  Path of the models.packetServer including file name\n");
-	printf(" -h         Print this help message and exit\n");
+	printf(" -s [scala/m3] 	Start the specified server. By default only connect to running process\n");
+	printf(" -m <path>  	Path and name of existing models.packetServer used when connecting\n");
+	printf(" -h         	Print this help message and exit\n");
 }
 
 int test_regs(void)

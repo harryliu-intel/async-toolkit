@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -47,8 +48,8 @@
 #define LOG_ERROR   printf
 #define LOG_WARNING printf
 #define LOG_INFO    printf
-#define LOG_DEBUG(x, ...)
-// #define LOG_DEBUG   printf
+//#define LOG_DEBUG(x, ...)
+#define LOG_DEBUG   printf
 #define LOG_DUMP    printf
 
 /* FD of the socket used to send commands to the model_server.
@@ -95,24 +96,55 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
  * arguments are set to a temporary file.
  * It then waits until the server comes up and connects to it.
  *
- * @param_in	cmd the executable file of the model server
+ * @param_in	type is a string with the type of server: "scala" or "m3"
  *
  * @retval		OK if successful
  */
-int wm_server_start(char *cmd)
+int wm_server_start(char *type)
 {
-	char *exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
+	char cmd[500], jar_path[500];
+	char *m3_exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
+	char *scala_exec_args[] = {cmd, "-jar", jar_path, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
 	const int max_retries = 30;
 	char server_if[TMP_FILE_LEN];
 	char server_ip[TMP_FILE_LEN];
-	const int delay = 1;
+	char *model_root;
+	int use_m3 = 0;
 	pid_t pid;
 	int i = 0;
 	int file;
 	int err;
 
-	if (!cmd) {
+	/* Mandatory env variable set by NHDK */
+	model_root = getenv("MODEL_ROOT");
+	if (!model_root) {
+		LOG_ERROR("Env variable MODEL_ROOT is not set\n");
+		return ERR_INVALID_ARG;
+	}
+
+	if (!type) {
 		LOG_ERROR("Server path string cannot be NULL\n");
+		return ERR_INVALID_ARG;
+	}
+
+	if (!strcmp(type, "scala")) {
+		FILE *fd;
+		fd = popen("ToolConfig.pl get_tool_exec java", "r");
+		if (!fd) {
+			LOG_ERROR("Cannot get path of Java binaries\n");
+			return ERR_RUNTIME;
+		}
+		if (!fgets(cmd, sizeof(cmd), fd)) {
+			LOG_INFO("Workaround: try default java /usr/intel/pkgs/java/1.8.0.151/bin/java\n");
+			strcpy(cmd, "/usr/intel/pkgs/java/1.8.0.151/bin/java");
+		}
+		pclose(fd);
+		sprintf(jar_path, "%s/target/GenRTL/wm/mbay_wm.jar", model_root);
+	} else if (!strcmp(type, "m3")) {
+		sprintf(cmd, "%s/wm/src/main/m3/model_server/AMD64_LINUX/modelserver", model_root);
+		use_m3 = 1;
+	} else {
+		LOG_ERROR("Invalid type of server: %s\n", type);
 		return ERR_INVALID_ARG;
 	}
 
@@ -129,16 +161,27 @@ int wm_server_start(char *cmd)
 		/* Child process: start model_server */
 		strcpy(server_if, server_tmpfile);
 		strcpy(server_ip, server_tmpfile);
-		exec_args[5] = dirname(server_ip);
-		exec_args[7] = basename(server_if);
-		err = execvp(exec_args[0], exec_args);
-		LOG_ERROR("Could not execute command: %s\n", cmd);
+		if (use_m3) {
+			m3_exec_args[5] = dirname(server_ip);
+			m3_exec_args[7] = basename(server_if);
+			execvp(m3_exec_args[0], m3_exec_args);
+		} else {
+			scala_exec_args[7] = dirname(server_ip);
+			scala_exec_args[9] = basename(server_if);
+			execvp(scala_exec_args[0], scala_exec_args);
+		}
+		LOG_ERROR("Could not execute %s - error: %s\n", cmd, strerror(errno));
+		exit(1);
 	} else if (pid > 0) {
 		/* Parent process: wait 10sec then try to connect */
-		/* sprintf(fname, "%s/models.packetServer", infopath); */
 		sleep(10);
+		waitpid(pid, &err, WNOHANG);
+		if (WIFEXITED(err)) {
+			LOG_ERROR("Server failed to start: pid %d has exited\n", pid);
+			return ERR_RUNTIME;
+		}
 		do {
-			sleep(delay);
+			sleep(1);
 			err = wm_connect(server_tmpfile);
 			++i;
 		} while (err && i < max_retries);
