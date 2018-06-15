@@ -9,9 +9,10 @@ def makeWmServerCode : Seq[File] = {
   val m3dir = new File("src/main/m3")
   val result : Int = "make -C src/main/m3 rpc_structs".!
   require(result == 0, "Scheme-based generation step failed")
-  val pf = (m3dir / "wm_net") ** "*.scala"
+  val pf = (m3dir / "wm_net" / "scala_generated") ** "*.scala"
   pf.get.map(x => new File(x.getCanonicalPath))
 }
+
 
 
 
