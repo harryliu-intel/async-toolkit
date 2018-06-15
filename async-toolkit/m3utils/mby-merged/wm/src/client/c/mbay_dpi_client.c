@@ -71,6 +71,13 @@ static int wm_egress_fd[NUM_PORTS];
 #define TMP_FILE_LEN		100
 static char server_tmpfile[TMP_FILE_LEN] = "";
 
+/* Default Java used when ToolConfig.pl fails */
+#define DEFAULT_JAVA "/usr/intel/pkgs/java/1.8.0.151/bin/java"
+
+/* Path of the m3/scala server relative to $MODEL_ROOT */
+#define M3_SERVER_PATH "target/GenRTL/wm/mbay_wm.jar"
+#define SCALA_SERVER_PATH "/wm/src/main/m3/model_server/AMD64_LINUX/modelserver"
+
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 							 uint8_t *rx_msg, uint32_t *rx_len);
@@ -103,8 +110,14 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 int wm_server_start(char *type)
 {
 	char cmd[500], jar_path[500];
-	char *m3_exec_args[] = {cmd, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
-	char *scala_exec_args[] = {cmd, "-jar", jar_path, "-n", "-m", "mby", "-ip", NULL, "-if", NULL, NULL};
+	char *m3_exec_args[] = {cmd, "-n", "-m", "mby", /* Select the MBY model */
+							"-ip", NULL, /* Path of models.packetServer */
+							"-if", NULL, /* Actual name of the file */
+							NULL};
+	char *scala_exec_args[] = {cmd, "-jar", jar_path,
+								"--ip", NULL, /* Path of models.packetServer */
+								"--if", NULL, /* Actual name of the file */
+								NULL};
 	const int max_retries = 30;
 	char server_if[TMP_FILE_LEN];
 	char server_ip[TMP_FILE_LEN];
@@ -130,20 +143,21 @@ int wm_server_start(char *type)
 
 	/* TODO remove support for m3 code to cleanup this messy code */
 	if (!strcmp(type, "scala")) {
+		/* For scala I need to retrieve the java exec path */
 		fd = popen("ToolConfig.pl get_tool_exec java", "r");
 		if (!fd) {
 			LOG_ERROR("Cannot get path of Java binaries\n");
 			return ERR_RUNTIME;
 		}
 		if (!fgets(cmd, sizeof(cmd), fd)) {
-			LOG_INFO("Workaround: try default java /usr/intel/pkgs/java/1.8.0.151/bin/java\n");
-			strcpy(cmd, "/usr/intel/pkgs/java/1.8.0.151/bin/java");
+			LOG_INFO("Workaround: try default java %s\n", DEFAULT_JAVA);
+			strcpy(cmd, DEFAULT_JAVA);
 		}
 		pclose(fd);
-		sprintf(jar_path, "%s/target/GenRTL/wm/mbay_wm.jar", model_root);
+		sprintf(jar_path, "%s/%s", model_root, SCALA_SERVER_PATH);
 	} else if (!strcmp(type, "m3")) {
-		sprintf(cmd, "%s/wm/src/main/m3/model_server/AMD64_LINUX/modelserver", model_root);
 		use_m3 = 1;
+		sprintf(cmd, "%s/%s", model_root, M3_SERVER_PATH);
 	} else {
 		LOG_ERROR("Invalid type of server: %s\n", type);
 		return ERR_INVALID_ARG;
@@ -159,7 +173,7 @@ int wm_server_start(char *type)
 
 	pid = fork();
 	if (pid == 0) {
-		/* Child process: start model_server */
+		/* Child process: start m3/scala model_server */
 		strcpy(server_if, server_tmpfile);
 		strcpy(server_ip, server_tmpfile);
 		if (use_m3) {
@@ -167,14 +181,14 @@ int wm_server_start(char *type)
 			m3_exec_args[7] = basename(server_if);
 			execvp(m3_exec_args[0], m3_exec_args);
 		} else {
-			scala_exec_args[7] = dirname(server_ip);
-			scala_exec_args[9] = basename(server_if);
+			scala_exec_args[4] = dirname(server_ip);
+			scala_exec_args[6] = basename(server_if);
 			execvp(scala_exec_args[0], scala_exec_args);
 		}
 		LOG_ERROR("Could not execute %s - error: %s\n", cmd, strerror(errno));
 		exit(1);
 	} else if (pid > 0) {
-		/* Parent process: wait 10sec then try to connect */
+		/* Parent process: wait 10sec then if child is alive try to connect */
 		sleep(10);
 		waitpid(pid, &err, WNOHANG);
 		if (WIFEXITED(err)) {
