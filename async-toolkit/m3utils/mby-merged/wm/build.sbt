@@ -43,7 +43,7 @@ mainClass in Compile := Some("switch_wm.WhiteModelServer")
 
 // below, to enable IDEA to automatically context-complete with content from these the scheme-based generator
 managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated")
-unmanagedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_src")
+unmanagedSourceDirectories in Compile += file(file("src/main/m3/wm_net/scala_src").absolutePath)
 
 
 parallelExecution in Test := false
