@@ -26,6 +26,7 @@ lazy val root = (project in file(".")).
     libraryDependencies += scalaTest % Test,
     libraryDependencies += scalaXml % Compile,
     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
+    libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
     //libraryDependencies ++= Seq(
     //  "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
     //  "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
@@ -42,7 +43,7 @@ mainClass in Compile := Some("switch_wm.WhiteModelServer")
 
 // below, to enable IDEA to automatically context-complete with content from these the scheme-based generator
 managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated")
-sourceDirectories in Compile += file("src/main/m3/wm_net/scala_src")
+unmanagedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_src")
 
 
 parallelExecution in Test := false
