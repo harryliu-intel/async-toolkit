@@ -75,8 +75,8 @@ static char server_tmpfile[TMP_FILE_LEN] = "";
 #define DEFAULT_JAVA "/usr/intel/pkgs/java/1.8.0.151/bin/java"
 
 /* Path of the m3/scala server relative to $MODEL_ROOT */
-#define M3_SERVER_PATH "target/GenRTL/wm/mbay_wm.jar"
-#define SCALA_SERVER_PATH "/wm/src/main/m3/model_server/AMD64_LINUX/modelserver"
+#define M3_SERVER_PATH "wm/src/main/m3/model_server/AMD64_LINUX/modelserver"
+#define SCALA_SERVER_PATH "target/GenRTL/wm/mbay_wm.jar"
 
 /* Static functions defined at the end of the file */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
