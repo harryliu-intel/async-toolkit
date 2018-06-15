@@ -1,6 +1,7 @@
 package switch_wm
 import Implicits._
 import java.io._
+
 object WhiteModelServer {
 
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
@@ -173,7 +174,6 @@ object WhiteModelServer {
 
   def pushPacket(port: Short, contents : Array[Byte]): Unit = {
     val resultHdr = new FmModelMessageHdr(Msglength = contents.length, Version = 2.shortValue(), Type = FmModelMsgType.Packet, Sw = 0.shortValue(), Port = port)
-    //val resultHdr = new FmModelMessageHdr(Msglength = contents.length, Version = hdr.Version, Type = hdr.Type, Sw = hdr.Sw, Port = hdr.Port)
     val os = portToOs(port)
 
     os.writeFmModelMessageHdr(resultHdr)
@@ -239,9 +239,8 @@ object WhiteModelServer {
     }
   }
 
-  def main(args : Array[String]) : Unit = {
+  def runModelServer(fileName : String) = {
     val server = new ServerSocket(0) // 0 means pick any available port
-
 
     val port = server.getLocalPort()
     val myaddress = server.getInetAddress.getHostName
@@ -249,7 +248,8 @@ object WhiteModelServer {
     val descText = "0:" + hostname + ":" + port
     println("Scala White Model Server for Madison Bay Switch Chip")
     println("Socket port open at " +  descText)
-    val psFile = new FileWriter("models.packetServer")
+    println("Write server description file to " + fileName)
+    val psFile = new FileWriter(fileName)
     psFile.write(descText)
     psFile.write("\n")
     psFile.close()
@@ -276,7 +276,28 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
+
     }
     server.close()
+  }
+
+  def main(args : Array[String]) : Unit = {
+    import scopt._
+    import scopt.OptionParser
+    case class Config(serverDir : File = new File("."), serverName : File = new File("models.packetServer"))
+    val parser = new scopt.OptionParser[Config]("whitemodel") {
+      head("whitemodel", "0.1")
+      opt[File]("ip").valueName("<file>").action { (x, c) =>
+        c.copy(serverDir = x) } text("the directory of the generated network port file")
+      opt[File]("if").valueName("<file>").action { (x, c) =>
+        c.copy(serverName = x) } text("the name of the generated network port file")
+    }
+    parser.parse(args, Config()) match {
+      case Some(config) => {
+        val fullyQualifiedFile = config.serverDir + "/" + config.serverName
+        runModelServer( fullyQualifiedFile )
+      }
+      case None =>  // arguments are bad, error message will have been displayed
+    }
   }
 }
