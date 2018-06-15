@@ -10,22 +10,17 @@ object WhiteModelServer {
   type addrSig = { def addr0 : Long ; def addr1 : Long; def addr2 : Long  }
   type iosfSig = dataSig with addrSig
 
-
-  def getData[T <: dataSig ] (t: T): Long = {
-    t.data0 | (t.data1 << 32)
+  // Rich-Wrappers pattern automatically enables 'addr' and 'data' shorthands when appropriate
+  implicit class IosfHasData(i: dataSig) {
+    def data : Long = {
+      i.data0 | (i.data1 << 32)
+    }
   }
-  def getAddress[T <: addrSig] (t: T): Long = {
-    t.addr0 | (t.addr1 << 16) | (t.addr2 << (16 + 12))
+  implicit class IosfHasAddress(i: addrSig) {
+    def addr : Long = {
+      i.addr0 | (i.addr1 << 16) | (i.addr2 << (16 + 12))
+    }
   }
-
-  class IosfGeneric[T <: iosfSig] (t : T) {
-    def address = getAddress(t)
-    def data = getData(t)
-  }
-  implicit def toIosfGeneric[T <: iosfSig](t:T) : IosfGeneric[T] = new IosfGeneric(t)
-
-
-
   // better to generate these automatically from scheme
   // and put them in a companion object, etc.
   object IosfReadExtractor {
@@ -69,7 +64,7 @@ object WhiteModelServer {
 
 
   def processWriteBlk(iosf : IosfRegBlkWriteReqHdr)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = getAddress(iosf)
+    val addr = iosf.addr
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
     is.readFully(array)
@@ -111,7 +106,7 @@ object WhiteModelServer {
 
 
   def processWriteReg(iosf : IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = iosf.address
+    val addr = iosf.addr
     val data = is.readIosfRegBlkData()
     val response = makeResponse(iosf)
     val hdr = FmModelMessageHdr(3 * 4 + 2*4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
@@ -121,7 +116,7 @@ object WhiteModelServer {
   }
 
   def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = getAddress(iosf)
+    val addr = iosf.addr
     println("Processing read of 0x" + addr.toHexString)
     val theArray = Array.ofDim[Byte](8)
     (0 until 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
@@ -282,8 +277,6 @@ object WhiteModelServer {
   }
 
   def main(args : Array[String]) : Unit = {
-    import scopt._
-    import scopt.OptionParser
     case class Config(serverDir : File = new File("."), serverName : File = new File("models.packetServer"))
     val parser = new scopt.OptionParser[Config]("whitemodel") {
       head("whitemodel", "0.1")
