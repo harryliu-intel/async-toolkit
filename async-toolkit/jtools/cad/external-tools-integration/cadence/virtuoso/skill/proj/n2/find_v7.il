@@ -18,8 +18,9 @@
     pout = (outfile file)
     (foreach pin (setof x CV->shapes
                         x->objType=="rect" && x->pin &&
-                        x->lpp==(list "m8" "pin") &&
-                        (member x->net->name PowerGroundNets)!=nil)
+                        x->lpp==(list "m8" "pin")); &&
+                        ;(member x->net->name PowerGroundNets)!=nil)
+ (printf "%s\n" x->net->name)
              (foreach overlap (dbGetOverlaps tempCV pin->bBox (list "v7" "drawing"))
                       bbox = overlap->bBox
                       x1 = (car (car bbox))
