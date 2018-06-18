@@ -25,62 +25,90 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <mbay_dpi_client.h>
 
 #define SERVER_PATH "../../main/m3/"
-#define SERVER_EXEC SERVER_PATH "model_server/AMD64_LINUX/modelserver"
 #define SERVER_FILE SERVER_PATH "models.packetServer"
 
-void print_help() {
-	printf("sample_client - C-DPI sample client application\n\n");
-	printf("Start or connect to the model server and perform a register\n");
-	printf("write followed by a read to verify the value.\n\n");
-	printf("Options:\n");
-	printf(" -s         Start the server instead of only connecting to it\n");
-	printf(" -e <path>  Path of the executable file of the model server\n");
-	printf(" -m <path>  Path of the models.packetServer including file name\n");
-	printf(" -h         Print this help message and exit\n");
-}
+void print_help(void);
+int test_regs(void);
+int test_pkts(void);
 
 int main(int argc, char **argv)
 {
 	char *model_server_file = SERVER_FILE;
-	char *model_server_exec = SERVER_EXEC;
-	int start_server = 0;
-	uint32_t addr;
-	uint64_t val;
+	char *server_type = NULL;
 	int err;
 	int c;
 
-	while ((c = getopt (argc, argv, "se:m:h")) != -1)
-		switch (c)
-		{
-			case 's':
-				start_server = 1;
-				break;
-			case 'e':
-				model_server_exec = optarg;
-				break;
-			case 'm':
-				model_server_file = optarg;
-				break;
-			case 'h':
-				print_help();
-				return 0;
-			default:
-				printf("Invalid command line argument: %c\n\n", c);
-				print_help();
-				return 1;
+	/********** Process command line arguments ***********/
+	while ((c = getopt(argc, argv, "s:m:h")) != -1)
+		switch (c) {
+		case 's':
+			server_type = optarg;
+			break;
+		case 'm':
+			model_server_file = optarg;
+			break;
+		case 'h':
+			print_help();
+			return 0;
+		default:
+			printf("Invalid command line argument: %c\n\n", c);
+			print_help();
+			return 1;
 		}
 
-	if (start_server)
-		err = wm_server_start(model_server_exec);
+	/********** Start or connect to the server ***********/
+	if (server_type)
+		err = wm_server_start(server_type);
 	else
 		err = wm_connect(model_server_file);
+
 	if (err) {
-		printf("Error while connecting to the WM\n");
+		printf("Error while connecting or starting to the WM\n");
 		return 1;
 	}
+
+	/********** Test write/read register operations ***********/
+	err = test_regs();
+	if (err)
+		goto CLEANUP;
+
+
+	/********** Test send/receive traffic ***********/
+	err = test_pkts();
+	if (err)
+		goto CLEANUP;
+
+CLEANUP:
+	/********** Disconnect (or stop) from the server ***********/
+	err = server_type ? wm_server_stop() : wm_disconnect();
+	if (err)
+		printf("Error while disconnecting to the WM: %d\n", err);
+	else
+		printf("Disconnected from model_server\n");
+
+	return err;
+}
+
+void print_help(void)
+{
+	printf("sample_client - C-DPI sample client application\n\n");
+	printf("Start or connect to the model server and perform some basic\n");
+	printf("tests: reg access, pkt injection.\n\n");
+	printf("Options:\n");
+	printf(" -s [scala/m3] 	Start the specified server. By default only connect to running process\n");
+	printf(" -m <path>  	Path and name of existing models.packetServer used when connecting\n");
+	printf(" -h         	Print this help message and exit\n");
+}
+
+int test_regs(void)
+{
+	uint32_t addr;
+	uint64_t val;
+	int err;
 
 	/* In HLP this is BSM_SCRATCH_0[0] */
 	addr = 0x0010000;
@@ -89,7 +117,7 @@ int main(int argc, char **argv)
 	err = wm_reg_write(addr, val);
 	if (err) {
 		printf("Error writing register: %d\n", err);
-		goto CLEANUP;
+		return ERR_RUNTIME;
 	}
 
 	printf("OK\n");
@@ -97,23 +125,65 @@ int main(int argc, char **argv)
 	err = wm_reg_read(addr, &val);
 	if (err) {
 		printf("Error reading register: %d\n", err);
-		goto CLEANUP;
+		return ERR_RUNTIME;
 	}
 
-	if (val != 0x1234567890abcdef) {
+	if (val != 0x1234567890abcdef)
 		printf("Unexpected value: 0x%lx\n", val);
-	}
-	else {
-		printf("OK\n");
-	}
-
-CLEANUP:
-	err = start_server ? wm_server_stop() : wm_disconnect();
-	if (err)
-		printf("Error while disconnecting to the WM: %d\n", err);
 	else
-		printf("Disconnected from model_server\n");
+		printf("OK\n");
 
-	return err;
+	return OK;
+}
+
+int test_pkts(void)
+{
+	/* Hardcoded test frame with Crc */
+	uint8_t tx_pkt[] = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+		0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+		0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
+		0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
+		0xee, 0x7f, 0xec, 0xb0
+	};
+	/* TODO pkt should be big enough to contain the data */
+	uint8_t rx_pkt[1000];
+	uint32_t pkt_len;
+	unsigned int i;
+	int port;
+	int err;
+
+	port = 1;
+	pkt_len = 8;
+	err = wm_pkt_push(port, tx_pkt, sizeof(tx_pkt));
+	if (err) {
+		printf("Error sending traffic: %d\n", err);
+		return err;
+	}
+
+	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
+	if (err) {
+		printf("Error receiving traffic: %d\n", err);
+		return err;
+	}
+
+	printf("Received %d bytes on port %d\n", pkt_len, port);
+	if (memcmp(tx_pkt, rx_pkt, pkt_len)) {
+		printf("Unexpected difference between sent and received pkt\n");
+		for (i = 0; i < pkt_len; ++i)
+			if (tx_pkt[i] != rx_pkt[i])
+				printf("tx_pkt[%d] = 0x%x - rx_pkt[%d] = 0x%x\n", i, tx_pkt[i],
+						i, rx_pkt[i]);
+	}
+
+	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
+	if (err == ERR_NO_DATA) {
+		printf("Did not receive any frame as expected\n");
+	} else {
+		printf("Unexpected error code %d\n", err);
+	}
+
+	return OK;
 }
 
