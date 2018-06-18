@@ -426,7 +426,6 @@ reg glort_ram_r {
 };
 
 
-
 addrmap mby_ppe_mst_glort_map {
   name = "MST and GLORT";
   desc = "Forward and Global Resource Tag Registers";

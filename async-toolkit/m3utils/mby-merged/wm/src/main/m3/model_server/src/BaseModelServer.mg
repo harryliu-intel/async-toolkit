@@ -54,7 +54,7 @@ PROCEDURE DoCsrOp(t : T; VAR op : CsrOp.T) : CsrAccessStatus.T =
 
 PROCEDURE HandlePacket(t : T; READONLY hdr : FmModelMessageHdr.T; pkt : Pkt.T) =
   BEGIN
-    TheModel.HandlePacket(t.h.read, t.h.update, hdr, pkt)
+    TheModel.HandlePacket(t, t.h.read, t.h.update, hdr, pkt)
   END HandlePacket;
 
 BEGIN END BaseModelServer.

@@ -48,13 +48,13 @@ module mby_tb ();
 
 
 `ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
+    import ovm_pkg::*;
+    import xvm_pkg::*;
    `include "ovm_macros.svh"
    `include "slu_macros.svh"
 `endif
 
-import uvm_pkg::*;
+    import uvm_pkg::*;
 // START IOSF_NOT_PRESENT
 //    import IosfPkg::*;
 // END IOSF_NOT_PRESENT
@@ -65,42 +65,30 @@ import uvm_pkg::*;
 // END CHASSIS_NOT_PRESENT
 
 //   import UPF::*;
-
-   import mby_test_pack::*;
-
-   logic primary_clock;
-   logic gated_primary_clock;
-   logic secondary_clock;
-   logic gated_secondary_clock;
+  
+  
+    logic primary_clock;
+    logic gated_primary_clock;
+    logic secondary_clock;
+    logic gated_secondary_clock;
 
 // ===============================================
 // =                FSDB variable                =
 // ===============================================
-   string       fsdb_file = "dump";
-   int          fsdb_config_file;
-   longint      fsdb_on,fsdb_off;
-   int          fsdb_file_size = 1800;
-   string       str;
-   logic        vccRail;
+    string       fsdb_file = "dump";
+    int          fsdb_config_file;
+    longint      fsdb_on,fsdb_off;
+    int          fsdb_file_size = 1800;
+    string       str;
+    logic        vccRail;
 
-   // UVM Start test
-   string testname;
-
-   initial begin
-      if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-`ifndef XVM
-         $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
-      end
-      uvm_pkg::run_test(testname);
-`else
-         $display ("MBY_tb Started Running %s in XVM mode!\n",testname);
-      end
-      xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-`endif
-   end
-
-
-
+  
+// ===============================================
+// Verification Test Library
+// ===============================================
+    mby_test_lib test();
+    
+    
 // ===============================================
 // DUT RTL instance
 // ===============================================
@@ -151,35 +139,35 @@ import uvm_pkg::*;
 // Clock block instance
 // ===============================================
 
-   int idle_conter;
-   initial begin
-      primary_clock = 1'b0;
-      gated_primary_clock = 1'b0;
-      secondary_clock = 1'b0;
-      idle_conter = 0;
-   end
+int idle_conter;
+initial begin
+    primary_clock = 1'b0;
+    gated_primary_clock = 1'b0;
+    secondary_clock = 1'b0;
+    idle_conter = 0;
+end
 
 //INTEG : remove since real RTL should drive this :
-   initial begin
-      force `MBY_TOP_PATH.prim_pok = 0;
+initial begin
+    force `MBY_TOP_PATH.prim_pok = 0;
 // START IOSF_NOT_PRESENT
 //    @(posedge iosf_pri_if.powergood_rst_b) ;
 // END IOSF_NOT_PRESENT
-      @(posedge primary_clock);
-      release `MBY_TOP_PATH.prim_pok;
-      force `MBY_TOP_PATH.prim_pok = 1;
-   end
+    @(posedge primary_clock);
+    release `MBY_TOP_PATH.prim_pok;
+    force `MBY_TOP_PATH.prim_pok = 1;
+end
 
-   initial begin
-      force `MBY_TOP_PATH.sb_pok = 0;
-      @(posedge mby_if.secondary_reset) ;
-     // @(posedge secondary_clock);
-      release `MBY_TOP_PATH.sb_pok;
-      force `MBY_TOP_PATH.sb_pok = 1;
-   end
+initial begin
+    force `MBY_TOP_PATH.sb_pok = 0;
+    @(posedge mby_if.secondary_reset) ;
+    // @(posedge secondary_clock);
+    release `MBY_TOP_PATH.sb_pok;
+    force `MBY_TOP_PATH.sb_pok = 1;
+end
 
-   always #5000 primary_clock = (mby_if.enable_primary_clock ? ~primary_clock : 0);
-   always #5000 secondary_clock = (mby_if.enable_secondary_clock ?~secondary_clock : 0);
+always #5000 primary_clock = (mby_if.enable_primary_clock ? ~primary_clock : 0);
+always #5000 secondary_clock = (mby_if.enable_secondary_clock ?~secondary_clock : 0);
 
 // START IOSF_NOT_PRESENT
 //  //Primary clock gating
@@ -193,13 +181,13 @@ import uvm_pkg::*;
 //  end
 // END IOSF_NOT_PRESENT
 
-   always @(primary_clock) begin
-      if (idle_conter > 8) begin
-         gated_primary_clock  <= 0;
-      end else begin
-         gated_primary_clock <=  primary_clock;
-      end
-   end
+always @(primary_clock) begin
+    if (idle_conter > 8) begin
+        gated_primary_clock  <= 0;
+    end else begin
+        gated_primary_clock <=  primary_clock;
+    end
+end
 
 // ===============================================
 // Reset block instance
@@ -214,8 +202,8 @@ import uvm_pkg::*;
 // Connecting clocks to RTL
 // ===============================================
 
-   assign mby_primary_clock = gated_primary_clock;
-   assign mby_secondary_clock = gated_secondary_clock;
+assign mby_primary_clock = gated_primary_clock;
+assign mby_secondary_clock = gated_secondary_clock;
 
 // Primary IOSF connection to MBY
 // ===============================================
@@ -312,18 +300,18 @@ import uvm_pkg::*;
 // END IOSF_NOT_PRESENT
 
 //INTEG : remove while real signals are connected :
-   assign   `MBY_TOP_PATH.mby_psf_mtag  = 0;
-   assign   `MBY_TOP_PATH.mby_psf_mep = 0;
-   assign   `MBY_TOP_PATH.mby_psf_mat = 0;
-   assign   `MBY_TOP_PATH.mby_psf_msai = 0;
-   assign   `MBY_TOP_PATH.mby_psf_mdest_id = 0;
-   assign   `MBY_TOP_PATH.mby_psf_msrc_id = 0 ;
+assign   `MBY_TOP_PATH.mby_psf_mtag  = 0;
+assign   `MBY_TOP_PATH.mby_psf_mep = 0;
+assign   `MBY_TOP_PATH.mby_psf_mat = 0;
+assign   `MBY_TOP_PATH.mby_psf_msai = 0;
+assign   `MBY_TOP_PATH.mby_psf_mdest_id = 0;
+assign   `MBY_TOP_PATH.mby_psf_msrc_id = 0 ;
 // START IOSF_NOT_PRESENT
 //  assign   iosf_pri_if.req_id        =0;
 // END IOSF_NOT_PRESENT
-   assign   `MBY_TOP_PATH.mby_psf_req_dest_id = 0;
-  //signals for 2012WW46r121114 primary IOSF compliance
-  //INTEG : remove if real signals are connected
+assign   `MBY_TOP_PATH.mby_psf_req_dest_id = 0;
+//signals for 2012WW46r121114 primary IOSF compliance
+//INTEG : remove if real signals are connected
 // START IOSF_NOT_PRESENT
 //  assign   iosf_pri_if.mdbe           = 0;//Mas Data Byte Enables
 //  assign   iosf_pri_if.mbewd          = 0;//Mas Byte En with Data
@@ -374,19 +362,19 @@ import uvm_pkg::*;
 // Instance MBY ENV interface
 // This is done in the TB if the IP need to drive also signals.
 // ===============================================
-   mby_env_if mby_if();
-   assign mby_power_good_reset = mby_if.power_good_reset;
-   assign mby_secondary_reset = mby_if.secondary_reset;
-   assign mby_primary_reset = mby_if.primary_reset;
-   assign mby_if.primary_clock = primary_clock;
-   assign mby_if.secondary_clock = secondary_clock;
-   assign mby_if.mby_int_wire = `MBY_TOP.mby_int;
+mby_env_if mby_if();
+assign mby_power_good_reset = mby_if.power_good_reset;
+assign mby_secondary_reset = mby_if.secondary_reset;
+assign mby_primary_reset = mby_if.primary_reset;
+assign mby_if.primary_clock = primary_clock;
+assign mby_if.secondary_clock = secondary_clock;
+assign mby_if.mby_int_wire = `MBY_TOP.mby_int;
 
 
 // ===============================================
 // Test Island instance
 // ===============================================
-   mby_ti_high #(
+mby_ti_high #(
 
 // START CHASSIS_NOT_PRESENT
 //             .MBY_HAS_RESET_PKG(1),
@@ -397,22 +385,22 @@ import uvm_pkg::*;
 // START CHASSIS_NOT_PRESENT
 //      .RESET_PKG_IS_ACTIVE(1)
 // END CHASSIS_NOT_PRESENT
-            )
-            u_mby_ti_high (
+)
+u_mby_ti_high (
 // START IOSF_NOT_PRESENT
 //                     .mby_iosf_pri_if     (iosf_pri_if),
 //                     .mby_iosf_sb_if      (iosf_sb_if),
 // END IOSF_NOT_PRESENT
-                          .mby_if          (mby_if)
+    .mby_if          (mby_if)
 // START CHASSIS_NOT_PRESENT
 //                     ,.pg_if (pg_if),
 //                     .ccu_if(ccu_if)
 // END CHASSIS_NOT_PRESENT
-                          );
+);
 
 
 
-   dummy_dut dummy_dut_();
+dummy_dut dummy_dut_();
 
 // START IOSF_NOT_PRESENT
 //initial begin
@@ -427,44 +415,44 @@ import uvm_pkg::*;
 //INTEG : this is is only example , please replace with your power domains
 /* -----\/----- EXCLUDED -----\/-----
 
-initial begin
-  vccRail = 1'bx;
-  #100ps;
-  vccRail  = 1'b1;
-end
+ initial begin
+ vccRail = 1'bx;
+ #100ps;
+ vccRail  = 1'b1;
+ end
 
-  initial
-begin: startCorruption
-    $display("%m: Initial all the supply rails @ %0t", $time);
-    if (UPF_SIMULATIONS)
-      begin
+ initial
+ begin: startCorruption
+ $display("%m: Initial all the supply rails @ %0t", $time);
+ if (UPF_SIMULATIONS)
+ begin
  if (vccRail === 1'bx) //INTEG : replace with vccIF
-   supply_off("vcccorevid_1p03");
-      end
-end:startCorruption
+ supply_off("vcccorevid_1p03");
+ end
+ end:startCorruption
 
  // PRIMARY Supply Rail
-always @(vccRail)
-begin: connectRail
-    $display("%m: SCC Rail Triggered @ %0t", $time);
-    // Only enable the connections for UPF simulations.
-    // This code will not work for non-UPF based simulations
-    if (UPF_SIMULATIONS)
-    begin
-      if (vccRail == 1'b1)
+ always @(vccRail)
+ begin: connectRail
+ $display("%m: SCC Rail Triggered @ %0t", $time);
+ // Only enable the connections for UPF simulations.
+ // This code will not work for non-UPF based simulations
+ if (UPF_SIMULATIONS)
  begin
-          supply_on("vcccorevid_1p03", 1.0); //INTEG : replace with your voltage
- end
-      else if (vccRail == 1'b0)
+ if (vccRail == 1'b1)
  begin
-          supply_off("vcccorevid_1p03");
+ supply_on("vcccorevid_1p03", 1.0); //INTEG : replace with your voltage
  end
-      else if (vccRail === 1'bx)
+ else if (vccRail == 1'b0)
  begin
-          supply_off("vcccorevid_1p03");
+ supply_off("vcccorevid_1p03");
  end
-    end
-end: connectRail
+ else if (vccRail === 1'bx)
+ begin
+ supply_off("vcccorevid_1p03");
+ end
+ end
+ end: connectRail
 
  -----/\----- EXCLUDED -----/\----- */
 
@@ -475,71 +463,71 @@ end: connectRail
 
 `include  "std_ace_util.vic"
 
-    initial begin
-        dump_hier();
-    end // initial begin
+initial begin
+    dump_hier();
+end // initial begin
 
-    initial begin
-        dump_vcd();
+initial begin
+    dump_vcd();
+end
+
+initial begin
+    dump_fsdb();
+end
+
+initial begin
+    if ($test$plusargs("vpd")) begin                                      // Plusarg to Enable VPD dump of all signals in the design
+        $vcdpluson();
     end
 
-    initial begin
-        dump_fsdb();
-    end
-
-   initial begin
-      if ($test$plusargs("vpd")) begin                                      // Plusarg to Enable VPD dump of all signals in the design
-         $vcdpluson();
-      end
-
-      if($test$plusargs("fsdb")) begin                                      // Plusarg to enable FSDB dump
-         if ($value$plusargs("FSDB_ON=%s",str)) begin                       // Plusarg to enable a start sample time after a delay
+    if($test$plusargs("fsdb")) begin                                      // Plusarg to enable FSDB dump
+        if ($value$plusargs("FSDB_ON=%s",str)) begin                       // Plusarg to enable a start sample time after a delay
             fsdb_on = convert_time(str);                                    // Time to start (Converted time via plusarg)
             $display("FSDB DUMP:  Waiting %s before starting fsdb dump", str);
             #fsdb_on;                                                       // Wait - time before start
-         end else begin
+        end else begin
             fsdb_on = 0;                                                    // Time to start (no specified Time, so start at 0)
-         end
+        end
 
-         if ($value$plusargs("FSDB_SIZE=%d",fsdb_file_size)) begin               // Plusarg to specify a FSDB dump file size Limit
+        if ($value$plusargs("FSDB_SIZE=%d",fsdb_file_size)) begin               // Plusarg to specify a FSDB dump file size Limit
             if (fsdb_file_size<32) begin                                         // Must be at least 32
-               fsdb_file_size = 32;
+                fsdb_file_size = 32;
             end
-         end
+        end
 
-         $value$plusargs("FSDB_FILE=%s",fsdb_file);                         // Plusarg to specify user defined FSDB dump file name
+        $value$plusargs("FSDB_FILE=%s",fsdb_file);                         // Plusarg to specify user defined FSDB dump file name
 
-         $fsdbAutoSwitchDumpfile(fsdb_file_size,fsdb_file,0,{fsdb_file,"_vf.log"}); // Enablement of Auto file switching
+        $fsdbAutoSwitchDumpfile(fsdb_file_size,fsdb_file,0,{fsdb_file,"_vf.log"}); // Enablement of Auto file switching
 
-         if ($test$plusargs("fsdb_config")) begin                           // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
+        if ($test$plusargs("fsdb_config")) begin                           // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
             $fsdbDumpvarsToFile ("fsdb.dump.config");
-         end else begin
+        end else begin
             $fsdbDumpvars(0,mby_tb,"+all");                                 // Default - FSDB dump of all signals in the design
-         end
+        end
 
-         if ($value$plusargs("FSDB_OFF=%s",str)) begin                      // Plusarg to Enable a stop time of sampling
+        if ($value$plusargs("FSDB_OFF=%s",str)) begin                      // Plusarg to Enable a stop time of sampling
             fsdb_off = convert_time(str) - fsdb_on;                         // Overall Time to stop, not a length of time. (Converted time via plusarg, subtract Start time)
             $display("FSDB DUMP:  Stopping FSDB dump in %s", str);
             if (fsdb_off>0) begin                                           // calculated difference must be greater than 0, else stop imediately
-               #fsdb_off;                                                   // Wait - time before stop
+                #fsdb_off;                                                   // Wait - time before stop
             end
             $fsdbDumpoff();                                                 // Turn off FSDB dumping
             $display("FSDB DUMP :  Stopped FSDB dump");
             fsdb_on = -1; //fsdb is off
-         end
-      end // FSDB dump
-   end
+        end
+    end // FSDB dump
+end
 
-   function automatic longint convert_time(string in);
-      longint out = in.atoi();
+function automatic longint convert_time(string in);
+    longint out = in.atoi();
 
-      case (in.substr(in.len()-2, in.len()-1))
-         "ms": out *= 1000000000; // ONE BILLION ps steps in a ms unit
-         "us": out *= 1000000;    // ONE MILLION ps steps in a us unit
-         "ns": out *= 1000;       // ONE THOUSAND ps steps in a ns unit
-      endcase //case suffix
+    case (in.substr(in.len()-2, in.len()-1))
+        "ms": out *= 1000000000; // ONE BILLION ps steps in a ms unit
+        "us": out *= 1000000;    // ONE MILLION ps steps in a us unit
+        "ns": out *= 1000;       // ONE THOUSAND ps steps in a ns unit
+    endcase //case suffix
 
-      return out;
-   endfunction //convert_time()
+    return out;
+endfunction //convert_time()
 
 endmodule // mby_tb

@@ -92,7 +92,7 @@ EOF
 
             mby_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib',],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib'],
                -tag            => "nonsynth",
             },
 
@@ -104,10 +104,25 @@ EOF
 
             mby_tb_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_tb.hdl', ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_env_lib', 'mby_ti_lib' ],
+#              -dependent_libs => [ 'sip_shared_lib', 'mby_env_lib', 'mby_ti_lib', 'upf', 'lpa' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_env_lib', 'mby_ti_lib', 'mby_test_lib' ],
                -tag            => "nonsynth",
             },
 
+	    mby_test_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_env_lib', 'mby_wm_dpi_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_wm_dpi_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_wm_dpi.hdl', ],
+               -tag            => "nonsynth",
+               -elab_opts => [
+                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mbay_dpi_client.c ",
+               ],
+            },
+ 
             mby_jasper_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/rtl/mby_jasper.hdl", "cfg/ace/HDL/rtl/mby_rtl.hdl", ],
                -tag            => "nonsynth+nonlint",
@@ -134,6 +149,8 @@ EOF
                   "gen_mby_regflow_lib",
                   "gen_mby_wm",
                   "gen_mby_wm_m3",
+                  "mby_test_lib",
+                  "mby_wm_dpi_lib",
                ],
 
                elab_opts => [
@@ -194,6 +211,8 @@ EOF
                   "mby_ti_lib",
                   "shdv_shared_lib",
                   "mby_env_lib",
+		  "mby_test_lib",
+                  "mby_wm_dpi_lib",
                   "upf",
                   "lpa"
                ],

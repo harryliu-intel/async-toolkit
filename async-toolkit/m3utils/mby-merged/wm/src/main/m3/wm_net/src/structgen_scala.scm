@@ -219,7 +219,7 @@
 	
       (dis "}" dnl wr)
 	  (dis "class " scala-name-is "(is: InputStream) extends DataInputStream(is) {" dnl wr)
-	  (dis " def read" scala-name "() : " scala-name ".Value = " scala-name "(this.read" scala-wire-type "())" dnl wr)
+	  (dis " def read" scala-name "() : " scala-name ".Value = " scala-name "(unsigned" scala-wire-type "toInt(this.read" scala-wire-type "()))" dnl wr)
 	
 	  (dis "}" dnl wr)
 	  (dis "object " scala-name-is "{" dnl wr)

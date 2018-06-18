@@ -153,38 +153,102 @@ object WhiteModelServer {
     }
   }
 
-  def processCommandQuit() = {
+  import java.net._
+  val portToOs = new collection.mutable.HashMap[Int, DataOutputStream]
+
+  def processEgressInfo(implicit is : DataInputStream, os : DataOutputStream, toGo : Int, hdr : FmModelMessageHdr ) : Unit = {
+    //val eih = is.readFmModelMsgSetEgressInfoHdr()
+    val switchPort = hdr.Port
+    val ei = is.readFmModelSetEgressInfoHdr()
+    val tcpPort = ei.Tcpport.toInt & 0xffff
+    val stringSize = toGo - 2
+    val hostnameArray = Array.ofDim[Byte](stringSize)
+    is.readFully(hostnameArray)
+    val hostname =  hostnameArray.map(_.toChar).mkString
+    println("Configuring port " + tcpPort + " of  " + " as egress to switch port "  + switchPort)
+    val socket = new Socket(hostname, tcpPort)
+
+    portToOs(switchPort) = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()))
+  }
+
+  def pushPacket(port: Short, contents : Array[Byte]): Unit = {
+    val resultHdr = new FmModelMessageHdr(Msglength = contents.length, Version = 2.shortValue(), Type = FmModelMsgType.Packet, Sw = 0.shortValue(), Port = port)
+    //val resultHdr = new FmModelMessageHdr(Msglength = contents.length, Version = hdr.Version, Type = hdr.Type, Sw = hdr.Sw, Port = hdr.Port)
+    val os = portToOs(port)
+
+    os.writeFmModelMessageHdr(resultHdr)
+    os.writeFmModelDataType(FmModelDataType.Packet)
+    os.writeInt(contents.length)
+    os.write(contents)
+    os.flush()
+
+  }
+
+  def processPacket(implicit is : DataInputStream, toGo : Int, hdr : FmModelMessageHdr ) : Unit = {
+    def extractFragment() : (FmModelDataType.Value, Array[Byte]) = {
+       val t = is.readFmModelDataType()
+      val len = is.readInt()
+      val contents = Array.ofDim[Byte](len)
+      is.readFully(contents)
+      t match {
+        case FmModelDataType.PacketMeta => { }
+        case FmModelDataType.SbId => { assert(false, "SbID not supported")}
+        case FmModelDataType.SbTc => { assert(false, " SbTc not supported")}
+        case FmModelDataType.Packet => {}
+      }
+      (t, contents)
+    }
+    var toParse = hdr.Msglength - 12
+    while(toParse > 0) {
+      val thisFrag = extractFragment()
+        toParse -= (thisFrag._2.length + 4 + FmModelDataType.Length)
+      println("Got fragment: "  + thisFrag + " togo in this frame " + toParse)
+
+      thisFrag match {
+        case (FmModelDataType.Packet, contents) => {
+          println("Reflecting back packet of size: " + contents.length)
+          pushPacket(hdr.Port, contents)
+        }
+        case (FmModelDataType.PacketMeta, contents) => {
+          println("Ignoring " + contents.length + " bytes of meta data")
+        }
+        case _ => { assert(false)}
+      }
+    }
+
+  }
+
+    def processCommandQuit() = {
     println("Received quit operation!")
   }
 
   def processMessage(implicit is : DataInputStream, os : DataOutputStream) = {
 
-    val hdr : FmModelMessageHdr = is.readFmModelMessageHdr()
+    implicit val hdr : FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
     implicit val toGo = hdr.Msglength - 12
 
     hdr.Type match  {
-      case FmModelMsgType.Packet => Unit
+      case FmModelMsgType.Packet => processPacket
       case FmModelMsgType.Mgmt => Unit
       case FmModelMsgType.Iosf => processIosf
+      case FmModelMsgType.SetEgressInfo => processEgressInfo
       case FmModelMsgType.CommandQuit => assert(false)
       case _ =>
     }
   }
 
-  import java.net._
   def main(args : Array[String]) : Unit = {
-    println("hello world")
     val server = new ServerSocket(0) // 0 means pick any available port
 
 
     val port = server.getLocalPort()
     val myaddress = server.getInetAddress.getHostName
-    val hostname = InetAddress.getLocalHost().getHostAddress()
+    val hostname = InetAddress.getLocalHost().getCanonicalHostName()
     val descText = "0:" + hostname + ":" + port
     println("Scala White Model Server for Madison Bay Switch Chip")
-    println("Socket port open at:" +  descText)
+    println("Socket port open at " +  descText)
     val psFile = new FileWriter("models.packetServer")
     psFile.write(descText)
     psFile.write("\n")

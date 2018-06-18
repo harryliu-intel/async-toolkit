@@ -11,7 +11,11 @@ package mby_env_pkg;
 `endif
 
 import sla_pkg::*;
- import uvm_pkg::*;
+import uvm_pkg::*;
+
+import shdv_base_pkg::*;
+import mby_wm_dpi_pkg::*;    
+    
 // START IOSF_NOT_PRESENT
 // import svlib_pkg::*;
 // import IosfPkg::*;    

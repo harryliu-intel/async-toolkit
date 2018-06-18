@@ -34,7 +34,7 @@
 		<AdditionalArgs>-disable_work_area_subdir</AdditionalArgs>
 		<XdutStageDep>[mby].[vcs]</XdutStageDep>
 		<PassRate>100</PassRate>
-		<IsGating>0</IsGating>
+		<IsGating>1</IsGating>
 		<Turnin>1</Turnin>
 		<Release>1</Release>
 		<PostRelease>0</PostRelease>
