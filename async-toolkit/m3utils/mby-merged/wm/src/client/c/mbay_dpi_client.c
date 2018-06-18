@@ -142,7 +142,7 @@ int wm_server_start(char *type)
 	}
 
 	/* TODO remove support for m3 code to cleanup this messy code */
-	if (!strcmp(type, "scala")) {
+	if (!strcasecmp(type, "scala")) {
 		/* For scala I need to retrieve the java exec path */
 		fd = popen("ToolConfig.pl get_tool_exec java", "r");
 		if (!fd) {
@@ -155,7 +155,7 @@ int wm_server_start(char *type)
 		}
 		pclose(fd);
 		sprintf(jar_path, "%s/%s", model_root, SCALA_SERVER_PATH);
-	} else if (!strcmp(type, "m3")) {
+	} else if (!strcasecmp(type, "m3")) {
 		use_m3 = 1;
 		sprintf(cmd, "%s/%s", model_root, M3_SERVER_PATH);
 	} else {
