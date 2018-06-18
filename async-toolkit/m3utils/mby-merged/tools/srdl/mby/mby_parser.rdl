@@ -25,10 +25,9 @@ reg parser_port_cfg_r {
   HandCoded = true;
   name = "Sets initial analyzer state";
   desc = "
-  indexed by logical port number. Sets the initial ptr/state/op,
-  and indicates byte offsets of w0/w1/w2 in the packet.
-  Note that INITIAL_W0/W1/W2_OFFSET and INITIAL_PTR should be even.
-  Hardware will ignore the lsb of these fields.
+  indexed by interface and logical port number. Sets the initial ptr/state/op,
+  and indicates byte offsets of w0/w1/w2 in the packet.  The configuration for
+  interface j and port i is found at index (j*8)+i.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -93,7 +92,7 @@ reg parser_port_cfg_r {
 reg parser_csum_cfg_r {
   shared;
   HandCoded = true;
-  name = "Per-port config for which csum calculations and length validation checks are enabled.";
+  name = "Per-interface and per-port config for which csum calculations and length validation checks are enabled.  The configuration for interface j and port i is found at index (j*8)+i.";
   desc = "
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -511,6 +510,9 @@ reg parser_ptype_tcam_r {
     ValRandomize = true;
   } KEY[31:0] = 32'h0;
 };
+regfile parser_ptype_tcam_rf {
+  parser_ptype_tcam_r PARSER_PTYPE_TCAM[64] += 8;
+};
 
 reg parser_ptype_ram_r {
   shared;
@@ -536,6 +538,9 @@ reg parser_ptype_ram_r {
     ValRandomize = true;
   } PTYPE[5:0] = 6'h0;
 };
+regfile parser_ptype_ram_rf {
+  parser_ptype_ram_r PARSER_PTYPE_RAM[64] += 8;
+};
 
 reg parser_extract_cfg_r {
   shared;
@@ -543,8 +548,8 @@ reg parser_extract_cfg_r {
   name = "Extracts the field vector";
   desc = "
     Indicates the 16b words to extract into the field vector.  This register is indexed
-    such that the extraction for the i'th 16b word in extraction profile p is stored in
-    PARSER_EXTRACT_CFG[p][i/4].{OFFSET,PROTOCOL_ID}_{i % 4}.
+    such that the extraction for the i'th 16b word in extraction profile p for interface j
+    is stored in PARSER_EXTRACT_CFG[p][((j*16)+i)/4].{OFFSET,PROTOCOL_ID}_{i % 4}.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -606,8 +611,8 @@ addrmap mby_ppe_parser_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  parser_port_cfg_r          PARSER_PORT_CFG[8];
-  parser_csum_cfg_r          PARSER_CSUM_CFG[8];
+  parser_port_cfg_r          PARSER_PORT_CFG[16];
+  parser_csum_cfg_r          PARSER_CSUM_CFG[16];
   parser_ip_r                PARSER_IP;
   parser_im_r                PARSER_IM;
   parser_key_w_rf            PARSER_KEY_W[32];
@@ -616,7 +621,7 @@ addrmap mby_ppe_parser_map {
   parser_ana_s_rf            PARSER_ANA_S[32];
   parser_exc_rf              PARSER_EXC[32];
   parser_ext_rf              PARSER_EXT[32];
-  parser_ptype_tcam_r        PARSER_PTYPE_TCAM[64];
-  parser_ptype_ram_r         PARSER_PTYPE_RAM[64];
-  parser_extract_cfg_r       PARSER_EXTRACT_CFG[16];
+  parser_ptype_tcam_rf       PARSER_PTYPE_TCAM[2];
+  parser_ptype_ram_rf        PARSER_PTYPE_RAM[2];
+  parser_extract_cfg_r       PARSER_EXTRACT_CFG[32];
 }; 
