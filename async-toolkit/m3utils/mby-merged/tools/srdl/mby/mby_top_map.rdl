@@ -3,9 +3,8 @@
 
 `include "mby_parser.rdl"
 `include "mby_mapper.rdl"
-`include "mby_wcm_group.rdl"
-`include "mby_wcm_misc.rdl"
-`include "mby_em.rdl"
+`include "mby_cgrp_a.rdl"
+`include "mby_cgrp_b.rdl"
 `include "mby_nexthop.rdl"
 `include "mby_policers.rdl"
 `include "mby_entropy.rdl"
@@ -18,13 +17,14 @@
 `include "mby_trig_usage.rdl"
 `include "mby_rx_stats.rdl"
 `include "mby_modify.rdl"
+`include "mby_local_store.rdl"
+`include "mby_shm.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
   mby_ppe_mapper_map            mapper;
-  mby_ppe_wcm_group_map         wcm_group;
-  mby_ppe_wcm_misc_map          wcm_misc;
-  mby_ppe_em_map                em[2];
+  mby_ppe_cgrp_a_map            cgrp_a;
+  mby_ppe_cgrp_b_map            cgrp_b;
   mby_ppe_entropy_map           entropy;
   mby_ppe_nexthop_map           nexthop;
   mby_ppe_fwd_misc_map          fwd_misc;
@@ -42,19 +42,16 @@ addrmap mby_ppe_tx_top_map {
   mby_ppe_modify_map            modify;
 };
 
-//addrmap mby_mpt_shared_top_map {
-//};
-
-addrmap mby_mpt_top_map{
-  mby_ppe_rx_top_map rx_ppe[2];
-  mby_ppe_tx_top_map tx_ppe[4];
-
-  //mby_mpt_shared_top_map mpt_shared;
+// 1.6T hiearchy
+addrmap mby_mpt_top_map {
+  mby_ppe_rx_top_map            rx_ppe;
+  mby_ppe_tx_top_map            tx_ppe;
+  mby_local_store_map           ppe_store;
 };
 
-addrmap mby_top_map{
-  mby_regs mby_core;
-  // Madison Bay is an SOC, not an IP, this will require refinement
-  // mby_regs regs;
-  mby_mpt_top_map mpt[1];
+// 3.2T hiearchy
+addrmap mby_top_map {
+  mby_mpt_top_map mpt[2];
+  mby_shm_map     shm;    
 };
+

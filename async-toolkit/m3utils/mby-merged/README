@@ -327,7 +327,14 @@ mby                           # Madison Bay Configuration
 OLD:   Needs .dvt/<model>.build files to be updated manually.    $MODEL_ROOT/tools/dvt/dvt_runme.csh
 
 
+==================================================================================
+White Model usage
+==================================================================================
+To enable connection of White model server to the testbench, use the plus arg "WHITE_MODEL_EN"
+with -simv_args in trex command.
 
+Example:
+trex mby_wm_reg_rw_test -ace_args -simv_args '"'+UVM_VERBOSITY=UVM_HIGH +WHITE_MODEL_EN'"' -ace_args- -seed 1 -dut mby -model mby
 
 
 

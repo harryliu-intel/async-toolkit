@@ -1,6 +1,7 @@
 package switch_wm
 import Implicits._
 import java.io._
+
 object WhiteModelServer {
 
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
@@ -9,22 +10,17 @@ object WhiteModelServer {
   type addrSig = { def addr0 : Long ; def addr1 : Long; def addr2 : Long  }
   type iosfSig = dataSig with addrSig
 
-
-  def getData[T <: dataSig ] (t: T): Long = {
-    t.data0 | (t.data1 << 32)
+  // Rich-Wrappers pattern automatically enables 'addr' and 'data' shorthands when appropriate
+  implicit class IosfHasData(i: dataSig) {
+    def data : Long = {
+      i.data0 | (i.data1 << 32)
+    }
   }
-  def getAddress[T <: addrSig] (t: T): Long = {
-    t.addr0 | (t.addr1 << 16) | (t.addr2 << (16 + 12))
+  implicit class IosfHasAddress(i: addrSig) {
+    def addr : Long = {
+      i.addr0 | (i.addr1 << 16) | (i.addr2 << (16 + 12))
+    }
   }
-
-  class IosfGeneric[T <: iosfSig] (t : T) {
-    def address = getAddress(t)
-    def data = getData(t)
-  }
-  implicit def toIosfGeneric[T <: iosfSig](t:T) : IosfGeneric[T] = new IosfGeneric(t)
-
-
-
   // better to generate these automatically from scheme
   // and put them in a companion object, etc.
   object IosfReadExtractor {
@@ -68,7 +64,7 @@ object WhiteModelServer {
 
 
   def processWriteBlk(iosf : IosfRegBlkWriteReqHdr)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = getAddress(iosf)
+    val addr = iosf.addr
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
     is.readFully(array)
@@ -110,7 +106,7 @@ object WhiteModelServer {
 
 
   def processWriteReg(iosf : IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = iosf.address
+    val addr = iosf.addr
     val data = is.readIosfRegBlkData()
     val response = makeResponse(iosf)
     val hdr = FmModelMessageHdr(3 * 4 + 2*4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
@@ -120,7 +116,7 @@ object WhiteModelServer {
   }
 
   def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = getAddress(iosf)
+    val addr = iosf.addr
     println("Processing read of 0x" + addr.toHexString)
     val theArray = Array.ofDim[Byte](8)
     (0 until 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
@@ -153,39 +149,102 @@ object WhiteModelServer {
     }
   }
 
-  def processCommandQuit() = {
+  import java.net._
+  val portToOs = new collection.mutable.HashMap[Int, DataOutputStream]
+
+  def processEgressInfo(implicit is : DataInputStream, os : DataOutputStream, toGo : Int, hdr : FmModelMessageHdr ) : Unit = {
+    //val eih = is.readFmModelMsgSetEgressInfoHdr()
+    val switchPort = hdr.Port
+    val ei = is.readFmModelSetEgressInfoHdr()
+    val tcpPort = ei.Tcpport.toInt & 0xffff
+    val stringSize = toGo - 2
+    val hostnameArray = Array.ofDim[Byte](stringSize)
+    is.readFully(hostnameArray)
+    val hostname =  hostnameArray.map(_.toChar).mkString
+    println("Configuring port " + tcpPort + " of  " + " as egress to switch port "  + switchPort)
+    val socket = new Socket(hostname, tcpPort)
+
+    portToOs(switchPort) = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()))
+  }
+
+  def pushPacket(port: Short, contents : Array[Byte]): Unit = {
+    val resultHdr = new FmModelMessageHdr(Msglength = contents.length, Version = 2.shortValue(), Type = FmModelMsgType.Packet, Sw = 0.shortValue(), Port = port)
+    val os = portToOs(port)
+
+    os.writeFmModelMessageHdr(resultHdr)
+    os.writeFmModelDataType(FmModelDataType.Packet)
+    os.writeInt(contents.length)
+    os.write(contents)
+    os.flush()
+
+  }
+
+  def processPacket(implicit is : DataInputStream, toGo : Int, hdr : FmModelMessageHdr ) : Unit = {
+    def extractFragment() : (FmModelDataType.Value, Array[Byte]) = {
+       val t = is.readFmModelDataType()
+      val len = is.readInt()
+      val contents = Array.ofDim[Byte](len)
+      is.readFully(contents)
+      t match {
+        case FmModelDataType.PacketMeta => { }
+        case FmModelDataType.SbId => { assert(false, "SbID not supported")}
+        case FmModelDataType.SbTc => { assert(false, " SbTc not supported")}
+        case FmModelDataType.Packet => {}
+      }
+      (t, contents)
+    }
+    var toParse = hdr.Msglength - 12
+    while(toParse > 0) {
+      val thisFrag = extractFragment()
+        toParse -= (thisFrag._2.length + 4 + FmModelDataType.Length)
+      println("Got fragment: "  + thisFrag + " togo in this frame " + toParse)
+
+      thisFrag match {
+        case (FmModelDataType.Packet, contents) => {
+          println("Reflecting back packet of size: " + contents.length)
+          pushPacket(hdr.Port, contents)
+        }
+        case (FmModelDataType.PacketMeta, contents) => {
+          println("Ignoring " + contents.length + " bytes of meta data")
+        }
+        case _ => { assert(false)}
+      }
+    }
+
+  }
+
+    def processCommandQuit() = {
     println("Received quit operation!")
   }
 
   def processMessage(implicit is : DataInputStream, os : DataOutputStream) = {
 
-    val hdr : FmModelMessageHdr = is.readFmModelMessageHdr()
+    implicit val hdr : FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
     implicit val toGo = hdr.Msglength - 12
 
     hdr.Type match  {
-      case FmModelMsgType.Packet => Unit
+      case FmModelMsgType.Packet => processPacket
       case FmModelMsgType.Mgmt => Unit
       case FmModelMsgType.Iosf => processIosf
+      case FmModelMsgType.SetEgressInfo => processEgressInfo
       case FmModelMsgType.CommandQuit => assert(false)
       case _ =>
     }
   }
 
-  import java.net._
-  def main(args : Array[String]) : Unit = {
-    println("hello world")
+  def runModelServer(fileName : String) = {
     val server = new ServerSocket(0) // 0 means pick any available port
-
 
     val port = server.getLocalPort()
     val myaddress = server.getInetAddress.getHostName
-    val hostname = InetAddress.getLocalHost().getHostAddress()
+    val hostname = InetAddress.getLocalHost().getCanonicalHostName()
     val descText = "0:" + hostname + ":" + port
     println("Scala White Model Server for Madison Bay Switch Chip")
-    println("Socket port open at:" +  descText)
-    val psFile = new FileWriter("models.packetServer")
+    println("Socket port open at " +  descText)
+    println("Write server description file to " + fileName)
+    val psFile = new FileWriter(fileName)
     psFile.write(descText)
     psFile.write("\n")
     psFile.close()
@@ -212,7 +271,26 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
+
     }
     server.close()
+  }
+
+  def main(args : Array[String]) : Unit = {
+    case class Config(serverDir : File = new File("."), serverName : File = new File("models.packetServer"))
+    val parser = new scopt.OptionParser[Config]("whitemodel") {
+      head("whitemodel", "0.1")
+      opt[File]("ip").valueName("<file>").action { (x, c) =>
+        c.copy(serverDir = x) } text("the directory of the generated network port file")
+      opt[File]("if").valueName("<file>").action { (x, c) =>
+        c.copy(serverName = x) } text("the name of the generated network port file")
+    }
+    parser.parse(args, Config()) match {
+      case Some(config) => {
+        val fullyQualifiedFile = config.serverDir + "/" + config.serverName
+        runModelServer( fullyQualifiedFile )
+      }
+      case None =>  // arguments are bad, error message will have been displayed
+    }
   }
 }

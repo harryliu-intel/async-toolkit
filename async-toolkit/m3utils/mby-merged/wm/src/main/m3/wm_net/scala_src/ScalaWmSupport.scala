@@ -66,6 +66,9 @@ object PrimitiveTypes {
     require (i <= (1 << 16) - 1)
     i.toByte
  }
+  def unsignedU8toInt(x : U8) : Int = x.toInt& 0xff
+  def unsignedU16toInt(x : U16) : Int = x.toInt & 0xffff
+
 
 }
 

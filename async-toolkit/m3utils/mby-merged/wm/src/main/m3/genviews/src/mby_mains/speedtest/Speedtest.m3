@@ -13,7 +13,7 @@ VAR
   x : Map.T;
   y : MapAddr.A;
 CONST
-  n = NUMBER(x.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13]);
+  n = NUMBER(x.Mpt[0].RxPpe.CgrpB.WcmTcam[13]);
 
 PROCEDURE P(READONLY z : Map.T; READONLY a : MapAddr.A) =
   BEGIN
@@ -34,22 +34,22 @@ BEGIN
     IO.Put(Fmt.Int(CompAddr.initCount) & " fields have been address initialized.\n");
     <*ASSERT map # NIL*>
    
-    <*ASSERT map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][979].Key # NIL*>
+    <*ASSERT map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13][979].Key # NIL*>
   
 
-    Debug.Out("writing @ " & CompRange.Format(map.a.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][979].Key));
+    Debug.Out("writing @ " & CompRange.Format(map.a.Mpt[0].RxPpe.CgrpB.WcmTcam[13][979].Key));
 
-    map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][979].Key.u(0);
-    <*ASSERT map.read.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][979].Key = 0*>
-    map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][979].Key.u(16_c0ed);
-    <*ASSERT map.read.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][979].Key = 16_c0ed*>
+    map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13][979].Key.u(0);
+    <*ASSERT map.read.Mpt[0].RxPpe.CgrpB.WcmTcam[13][979].Key = 0*>
+    map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13][979].Key.u(16_c0ed);
+    <*ASSERT map.read.Mpt[0].RxPpe.CgrpB.WcmTcam[13][979].Key = 16_c0ed*>
 
     Debug.Out("Start test");
     start1 := Time.Now();
     FOR i := 1 TO Writes DO 
-       WITH ii = i MOD NUMBER(map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13]) DO
-         map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][ii].Key.u(i MOD 257);
-        <*ASSERT map.read.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][ii].Key=i MOD 257*>
+       WITH ii = i MOD NUMBER(map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13]) DO
+         map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13][ii].Key.u(i MOD 257);
+        <*ASSERT map.read.Mpt[0].RxPpe.CgrpB.WcmTcam[13][ii].Key=i MOD 257*>
        END
     END;
     stop1 := Time.Now();
@@ -59,8 +59,8 @@ BEGIN
     Debug.Out("Start test");
     start2 := Time.Now();
     FOR i := 1 TO 10*Writes DO 
-       WITH ii = i MOD NUMBER(map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13]) DO
-         qq := map.read.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][ii].Key + n - 1 + ii + qq
+       WITH ii = i MOD NUMBER(map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13]) DO
+         qq := map.read.Mpt[0].RxPpe.CgrpB.WcmTcam[13][ii].Key + n - 1 + ii + qq
        END
     END;
     stop2 := Time.Now();
@@ -71,8 +71,8 @@ BEGIN
     Debug.Out("Start test");
     start3 := Time.Now();
     FOR i := 1 TO 10*Writes DO 
-       WITH ii = i MOD NUMBER(map.update.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13]) DO
-         qq := map.read.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][ii].Key +  map.read.Mpt[0].RxPpe[1].WcmGroup.WcmTcam[13][n-ii-1].Key + qq
+       WITH ii = i MOD NUMBER(map.update.Mpt[0].RxPpe.CgrpB.WcmTcam[13]) DO
+         qq := map.read.Mpt[0].RxPpe.CgrpB.WcmTcam[13][ii].Key +  map.read.Mpt[0].RxPpe.CgrpB.WcmTcam[13][n-ii-1].Key + qq
        END
     END;
     stop3 := Time.Now();

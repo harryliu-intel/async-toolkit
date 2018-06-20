@@ -82,7 +82,7 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                        "mkdir -p /tmp/$ENV{USER}/home_dotsbt",
                        "ln -fs /tmp/$ENV{USER}/home_dotsbt $ENV{HOME}/.sbt",
                        "cd $ENV{MODEL_ROOT}/wm",
-                       &ToolConfig::get_tool_exec('sbt') . " compile doc",
+                       &ToolConfig::get_tool_exec('sbt') . " compile doc assembly",
                     ],
                 },
                 gen_mby_wm_m3 => {

@@ -30,20 +30,24 @@
 
 /* Error codes */
 #define OK		0
-#define ERR_INVALID_ARG 	 1
-#define	ERR_NETWORK 		 2
-#define	ERR_TIMEOUT 		 3
-#define	ERR_NO_RESOURCE 	 4
-#define	ERR_INVALID_RESPONSE 5
-#define	ERR_RUNTIME			 6
+#define ERR_INVALID_ARG 		1
+#define	ERR_NETWORK 			2
+#define	ERR_TIMEOUT 			3
+#define	ERR_NO_RESOURCE 		4
+#define	ERR_INVALID_RESPONSE	5
+#define	ERR_RUNTIME				6
+#define	ERR_NO_DATA				7
+
+int wm_server_start(char *cmd);
+int wm_server_stop(void);
 
 int wm_connect(const char *server_file);
-int wm_disconnect();
+int wm_disconnect(void);
 
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
-int wm_server_start(char *cmd);
-int wm_server_stop();
+int wm_pkt_push(int port, const uint8_t *data, uint32_t len);
+int wm_pkt_get(int *port, uint8_t *data, uint32_t *len);
 
 #endif /* __MBAY_DPI_CLIENT_H_ */

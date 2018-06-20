@@ -7,15 +7,20 @@ IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
 IMPORT MbyModelServer;
 IMPORT Debug;
+IMPORT ModelServer;
 
-PROCEDURE HandlePacket(READONLY read   : Map.T;
+PROCEDURE HandlePacket(server          : ModelServer.T;
+                       READONLY read   : Map.T;
                        READONLY update : MapAddr.Update;
                        READONLY hdr    : FmModelMessageHdr.T;
                        pkt             : Pkt.T) =
   VAR
     sender : Sender := NIL;
   BEGIN
-    FloodPktHandler(hdr, pkt, sender);
+    (*FloodPktHandler(hdr, pkt, sender);*)
+
+    (* simplest thing ever : just reflect the packet *)
+    server.pushPacket(hdr, pkt)
   END HandlePacket;
 
 TYPE Sender = PROCEDURE(READONLY hHdr : FmModelMessageHdr.T;

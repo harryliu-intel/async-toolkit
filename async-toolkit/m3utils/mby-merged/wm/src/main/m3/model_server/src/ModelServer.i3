@@ -38,6 +38,9 @@ TYPE
     listenFork() : Listener;
     (* fork a listener on an arbitrarily chosen port *)
 
+    pushPacket(READONLY hdr : FmModelMessageHdr.T; pkt : Pkt.T);
+    (* for the WM to push out a packet on the wire *)
+
     (****** abstract methods, implement in child type: ******)
     
     resetChip();
