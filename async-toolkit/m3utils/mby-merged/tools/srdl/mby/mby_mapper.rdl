@@ -1362,14 +1362,14 @@ reg map_profile_key1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[63:48] = 16'h0;
+  } _RSVD1_[63:50] = 14'h0000;
   field {
     AccessType = "RW";
     desc = "
      From parser, representing a digest of the parser flags
            ";
     ValRandomize = true;
-  } PTYPE[47:40] = 8'h00;
+  } PTYPE[49:40] = 10'h000;
   field {
     AccessType = "RW";
     desc = "

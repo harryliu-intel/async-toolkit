@@ -72,7 +72,7 @@ static int wm_egress_fd[NUM_PORTS];
 static char server_tmpfile[TMP_FILE_LEN] = "";
 
 /* Default Java used when ToolConfig.pl fails */
-#define DEFAULT_JAVA "/usr/intel/pkgs/java/1.8.0.151/bin/java"
+#define DEFAULT_JAVA "/usr/intel/pkgs/java/1.8.0.151/bin/java\n"
 
 /* Path of the m3/scala server relative to $MODEL_ROOT */
 #define M3_SERVER_PATH "wm/src/main/m3/model_server/AMD64_LINUX/modelserver"
@@ -142,7 +142,7 @@ int wm_server_start(char *type)
 	}
 
 	/* TODO remove support for m3 code to cleanup this messy code */
-	if (!strcmp(type, "scala")) {
+	if (!strcasecmp(type, "scala")) {
 		/* For scala I need to retrieve the java exec path */
 		fd = popen("ToolConfig.pl get_tool_exec java", "r");
 		if (!fd) {
@@ -154,8 +154,9 @@ int wm_server_start(char *type)
 			strcpy(cmd, DEFAULT_JAVA);
 		}
 		pclose(fd);
+		cmd[strlen(cmd) - 1] = '\0';
 		sprintf(jar_path, "%s/%s", model_root, SCALA_SERVER_PATH);
-	} else if (!strcmp(type, "m3")) {
+	} else if (!strcasecmp(type, "m3")) {
 		use_m3 = 1;
 		sprintf(cmd, "%s/%s", model_root, M3_SERVER_PATH);
 	} else {
@@ -185,7 +186,8 @@ int wm_server_start(char *type)
 			scala_exec_args[6] = basename(server_if);
 			execvp(scala_exec_args[0], scala_exec_args);
 		}
-		LOG_ERROR("Could not execute %s - error: %s\n", cmd, strerror(errno));
+		LOG_ERROR("Could not start %s server: %s - error: %s\n",
+				use_m3 ? "m3" : "Scala", cmd, strerror(errno));
 		exit(1);
 	} else if (pid > 0) {
 		/* Parent process: wait 10sec then if child is alive try to connect */
