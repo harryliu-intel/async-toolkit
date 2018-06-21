@@ -1,7 +1,6 @@
 #---*-cperl-*---------------------------------------------------------------------------------
 
-%audf = ( Includes => [ 
-                        "cfg/ace/mby_hdl.udf",
-                        #FIXME: do we need this sub-block?
-                        #"mby_tlm:cfg/ace/mby_tlm_hdl.udf",
-                      ], );
+%audf = (
+   Includes => ["cfg/ace/mby_hdl.udf",
+   ],
+);
