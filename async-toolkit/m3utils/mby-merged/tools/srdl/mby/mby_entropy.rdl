@@ -61,6 +61,22 @@ reg entropy_hash_cfg1_r {
   field {
     AccessType = "RW";
     desc = "
+     Enable symmetrization according to profile indicated by sym_profile
+
+           ";
+    ValRandomize = true;
+  } SYMMETRIC[54:54] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects key symmetrization profile to use if symmetric is set
+
+           ";
+    ValRandomize = true;
+  } SYM_PROFILE[53:52] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
      Controls KeySubmask1.
 
            ";
@@ -199,6 +215,403 @@ reg entropy_meta_cfg_r {
 };
 
 
+// ENTROPY_HASH_SYM8[0..2][0..3]
+
+reg entropy_hash_sym8_r {
+  shared;
+  HandCoded = true;
+  name = "Specify pairs of KEY8s to symmetricize.";
+  desc = "
+  Indexed first by entropy hash numnber (hash0, hash1 or hash2), then
+  by symmetrization profile number. The profile to be used is indicated
+  per hash profile in ENTROPY_HASH_CFG1.
+  [br][br]
+  Up to 6 pairs of KEY8s may be symmetricized.  A 0,0 pair will be 
+  considered an unused entry and will be ignored.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR5_KEY1[59:55] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR5_KEY0[54:50] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR4_KEY1[49:45] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR4_KEY0[44:40] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR3_KEY1[39:35] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR3_KEY0[34:30] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR2_KEY1[29:25] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR2_KEY0[24:20] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR1_KEY1[19:15] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR1_KEY0[14:10] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR0_KEY1[9:5] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR0_KEY0[4:0] = 5'h0;
+};
+regfile entropy_hash_sym8_rf {
+  entropy_hash_sym8_r ENTROPY_HASH_SYM8[4] += 8;
+};
+
+
+
+// ENTROPY_HASH_SYM16[0..2][0..3]
+
+reg entropy_hash_sym16_r {
+  shared;
+  HandCoded = true;
+  name = "Specify pairs of KEY16s to symmetricize.";
+  desc = "
+  Indexed first by entropy hash numnber (hash0, hash1 or hash2), then
+  by symmetrization profile number. The profile to be used is indicated
+  per hash profile in ENTROPY_HASH_CFG1.
+  [br][br]
+  Up to 6 pairs of KEY16s may be symmetricized.  A 0,0 pair will be 
+  considered an unused entry and will be ignored.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR5_KEY1[59:55] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR5_KEY0[54:50] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR4_KEY1[49:45] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR4_KEY0[44:40] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR3_KEY1[39:35] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR3_KEY0[34:30] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR2_KEY1[29:25] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR2_KEY0[24:20] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR1_KEY1[19:15] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR1_KEY0[14:10] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR0_KEY1[9:5] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR0_KEY0[4:0] = 5'h0;
+};
+regfile entropy_hash_sym16_rf {
+  entropy_hash_sym16_r ENTROPY_HASH_SYM16[4] += 8;
+};
+
+
+
+// ENTROPY_HASH_SYM32[0..2][0..3]
+
+reg entropy_hash_sym32_r {
+  shared;
+  HandCoded = true;
+  name = "Specify pairs of KEY32s to symmetricize.";
+  desc = "
+  Indexed first by entropy hash numnber (hash0, hash1 or hash2), then
+  by symmetrization profile number. The profile to be used is indicated
+  per hash profile in ENTROPY_HASH_CFG1.
+  [br][br]
+  Up to 8 pairs of KEY32s may be symmetricized.  A 0,0 pair will be 
+  considered an unused entry and will be ignored.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR7_KEY1[63:60] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR7_KEY0[59:56] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR6_KEY1[55:52] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR6_KEY0[51:48] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR5_KEY1[47:44] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR5_KEY0[43:40] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR4_KEY1[39:36] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR4_KEY0[35:32] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR3_KEY1[31:28] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR3_KEY0[27:24] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR2_KEY1[23:20] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR2_KEY0[19:16] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR1_KEY1[15:12] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR1_KEY0[11:8] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR0_KEY1[7:4] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Specify index of one key for this pair.
+
+           ";
+    ValRandomize = true;
+  } PAIR0_KEY0[3:0] = 4'h0;
+};
+regfile entropy_hash_sym32_rf {
+  entropy_hash_sym32_r ENTROPY_HASH_SYM32[4] += 8;
+};
+
+
 
 // Begin reg2rdl addrmap section
 
@@ -214,4 +627,7 @@ addrmap mby_ppe_entropy_map {
   entropy_hash_cfg1_rf       ENTROPY_HASH_CFG1[3]          ;
   entropy_hash_cfg2_rf       ENTROPY_HASH_CFG2[3]          ;
   entropy_meta_cfg_r         ENTROPY_META_CFG[64]          ;
+  entropy_hash_sym8_rf       ENTROPY_HASH_SYM8[3]          ;
+  entropy_hash_sym16_rf      ENTROPY_HASH_SYM16[3]         ;
+  entropy_hash_sym32_rf      ENTROPY_HASH_SYM32[3]         ;
 }; // final size: 0xe00 <= 0x1000 = 8<<9
