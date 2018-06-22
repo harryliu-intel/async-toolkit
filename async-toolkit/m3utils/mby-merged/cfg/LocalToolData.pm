@@ -39,7 +39,7 @@ $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww22.1';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww24.4';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
@@ -86,7 +86,7 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.05.30",
+    VERSION => "18.06.21",
     ENV_APPEND  => {
         'PATH'  => "&get_tool_path()/bin",
     },
@@ -94,7 +94,7 @@ $ToolConfig_tools{meta} = {
 };
 
 $ToolConfig_tools{cm3} = {
-    VERSION => "d5.10.0-20180530",
+    VERSION => "d5.10.0-20180621b",
     PATH => "$ENV{RTL_CAD_ROOT}/opensource/cm3/&get_tool_version()",
     EXEC => "&get_tool_path()/bin/cm3",
 };
