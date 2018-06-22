@@ -1,6 +1,9 @@
 package switch_wm
 import Implicits._
+import SwitchModelImplicits._
 import java.io._
+
+
 
 object WhiteModelServer {
 
@@ -68,7 +71,8 @@ object WhiteModelServer {
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
     is.readFully(array)
-    println(" Data is: " + array.toList.map(f => f"$f%x"))
+   array.hexdump
+//    + array.toList.map(f => f"$f%x"))
     for(i <- addr until addr + 4 * iosf.ndw) {
         csrSpace.put(i.toInt, array((i - addr).toInt))
     }
@@ -197,7 +201,8 @@ object WhiteModelServer {
     while(toParse > 0) {
       val thisFrag = extractFragment()
         toParse -= (thisFrag._2.length + 4 + FmModelDataType.Length)
-      println("Got fragment: "  + thisFrag + " togo in this frame " + toParse)
+      println("Got fragment. To go in this frame " + toParse)
+      thisFrag._2.hexdump
 
       thisFrag match {
         case (FmModelDataType.Packet, contents) => {
@@ -263,7 +268,7 @@ object WhiteModelServer {
         while (true) processMessage
       } catch {
         case eof: EOFException => {
-          println("Termination of IO from client without shutdown command" + s.getInetAddress().getHostName())
+          println("Termination of IO from client without shutdown command " + s.getInetAddress().getHostName())
         }
       }
       println("Disconnected.")
@@ -271,7 +276,6 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
-
     }
     server.close()
   }
