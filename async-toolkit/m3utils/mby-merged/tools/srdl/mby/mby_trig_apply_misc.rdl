@@ -438,9 +438,9 @@ addrmap mby_ppe_trig_apply_misc_map {
   trigger_rate_lim_empty_r            TRIGGER_RATE_LIM_EMPTY                @0xE0 += 8;
   ma_tcn_fifo_0_r                     MA_TCN_FIFO_0[512]                    @0x100 += 8;
   ma_tcn_fifo_1_r                     MA_TCN_FIFO_1[512]                    @0x1100 += 8;
-  ma_tcn_dequeue_r                    MA_TCN_DEQUEUE                        @0x2110 += 8;
-  ma_tcn_data_0_r                     MA_TCN_DATA_0                         @0x2100 += 8;
-  ma_tcn_data_1_r                     MA_TCN_DATA_1                         @0x2108 += 8;
+  ma_tcn_dequeue_r                    MA_TCN_DEQUEUE                        @0x2100 += 8;
+  ma_tcn_data_0_r                     MA_TCN_DATA_0                         @0x2108 += 8;
+  ma_tcn_data_1_r                     MA_TCN_DATA_1                         @0x2110 += 8;
   ma_tcn_ptr_head_r                   MA_TCN_PTR_HEAD                       @0x2118 += 8;
   ma_tcn_ptr_tail_r                   MA_TCN_PTR_TAIL                       @0x2120 += 8;
   ma_tcn_ip_r                         MA_TCN_IP                             @0x2128 += 8;
