@@ -12,6 +12,7 @@ IMPORT Word;
 VAR
   x : Map.T;
   y : MapAddr.A;
+  u : MapAddr.X;
 CONST
   n = NUMBER(x.Mpt[0].RxPpe.CgrpB.WcmTcam[13]);
 
