@@ -11,17 +11,17 @@ TYPE
   END;
 
 TYPE
-  TypeHier = { Read, Addr, Update };
+  TypeHier = { Read, Addr, Unsafe, Update };
 
 CONST
-  MainTypeName = ARRAY TypeHier OF TEXT { "T", "A", "Update" };
+  MainTypeName = ARRAY TypeHier OF TEXT { "T", "A", "X", "Update" };
 
-  CompTypeSuffix = ARRAY TypeHier OF TEXT { "", "__addr", "__update" };
+  CompTypeSuffix = ARRAY TypeHier OF TEXT { "", "__addr", "__unsafe", "__update" };
 
-  TypePhase = ARRAY TypeHier OF Phase { RW.R, RW.W, RW.W };
+  TypePhase = ARRAY TypeHier OF Phase { RW.R, RW.W, RW.W, RW.W };
   (* which output file does it go to? *)
 
-  InitProcName = ARRAY TypeHier OF TEXT { "Init", "Init", "UpdateInit" };
+  InitProcName = ARRAY TypeHier OF TEXT { "Init", "Init", "InitX", "UpdateInit" };
 
 TYPE
   RW = { R, W };

@@ -23,7 +23,11 @@ TYPE
     single : D;
     (* this is valid if data is NIL, otherwise not used *)
 
-    hi : CompAddr.T; (* computed from the above *)
+    hi : CompAddr.T;
+    (* computed from the above *)
+
+    doStruct : BOOLEAN;
+    (* descend into main struct or not *)
     
     fv :   [0..Base-1];
     lv :   [-1..Base-1];
@@ -63,10 +67,12 @@ PROCEDURE GetReadResult(op : T) : Word.T;
 PROCEDURE MakeWrite    (at           : CompAddr.T;
                         bits         : [0..BITSIZE(Word.T)];
                         val          : Word.T;
+                        doStruct     := TRUE;
                         origin       := Origin.Hardware) : T;
 
 PROCEDURE MakeWideWrite(at           : CompAddr.T;
                         READONLY val : ARRAY OF [0..1];
+                        doStruct     := TRUE;
                         origin       := Origin.Hardware) : T;
 
 PROCEDURE Hi(t : T) : CompAddr.T;

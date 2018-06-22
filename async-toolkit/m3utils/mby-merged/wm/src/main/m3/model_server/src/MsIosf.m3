@@ -202,7 +202,7 @@ PROCEDURE DoWrBlock(inst : Instance;
       VAR
         blkData : IosfRegBlkData.T;
         ok    := IosfRegBlkData.ReadEB(inbound,Pkt.End.Front,blkData);
-        csrOp := CsrOp.MakeWrite(ca, 32, blkData.data, CsrOp.Origin.Software);
+        csrOp := CsrOp.MakeWrite(ca, 32, blkData.data, origin := CsrOp.Origin.Software);
       BEGIN
         IF NOT ok THEN RAISE ParseError END;
         IF NOT (a = top AND NOT doLast) THEN EVAL inst.t.csrOp(csrOp) END;

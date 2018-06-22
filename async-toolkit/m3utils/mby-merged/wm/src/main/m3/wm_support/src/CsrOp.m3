@@ -8,6 +8,7 @@ FROM Fmt IMPORT F;
 PROCEDURE MakeWrite(at                  : CompAddr.T;
                     bits                : [0..BITSIZE(Word.T)];
                     val                 : Word.T;
+                    doStruct            : BOOLEAN;
                     origin              : Origin) : T =
   VAR
     res : T;
@@ -15,6 +16,7 @@ PROCEDURE MakeWrite(at                  : CompAddr.T;
     res.rw := RW.W;
     res.at := at.word;
     res.fv := at.bit;
+    res.doStruct := doStruct;
 
     IF at.bit + bits <= Base THEN
       (* single-word case *)
@@ -40,6 +42,7 @@ PROCEDURE MakeWrite(at                  : CompAddr.T;
 
 PROCEDURE MakeWideWrite(at           : CompAddr.T;
                         READONLY val : ARRAY OF [0..1];
+                        doStruct     : BOOLEAN;
                         origin       : Origin) : T =
   VAR
     bits := NUMBER(val);
@@ -50,6 +53,7 @@ PROCEDURE MakeWideWrite(at           : CompAddr.T;
     res.rw := RW.W;
     res.at := at.word;
     res.fv := at.bit;
+    res.doStruct := doStruct;
 
     FOR i := FIRST(d^) TO LAST(d^) DO
       d[i] := 0
@@ -73,7 +77,7 @@ PROCEDURE MakeRead(at                  : CompAddr.T;
                    bits                : [0..BITSIZE(Word.T)];
                    origin              : Origin) : T =
   VAR
-    res := MakeWrite(at, bits, 0, origin);
+    res := MakeWrite(at, bits, 0, TRUE, origin);
   BEGIN
     res.rw := RW.R;
     RETURN res

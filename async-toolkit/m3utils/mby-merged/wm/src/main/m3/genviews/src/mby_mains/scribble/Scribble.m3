@@ -45,8 +45,9 @@ BEGIN
          wid    = rand.integer(0, BITSIZE(Word.T)-1),
          val    = rand.integer(FIRST(Word.T), LAST(Word.T)) DO
       op     := CsrOp.MakeWrite(CompAddr.T { startW, startB },
-                                  wid,
-                                  val);
+                                wid,
+                                val,
+                                TRUE);
       EVAL map.csrOp(op)
     END
   END;
