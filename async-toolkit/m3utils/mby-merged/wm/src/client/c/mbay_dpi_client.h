@@ -27,6 +27,9 @@
 #define __MBAY_DPI_CLIENT_H_
 
 #include <stdint.h>
+#ifndef NO_SV
+#include "svdpi.h"
+#endif
 
 /* Error codes */
 #define OK		0
@@ -49,5 +52,10 @@ int wm_reg_read(const uint32_t addr, uint64_t *val);
 
 int wm_pkt_push(int port, const uint8_t *data, uint32_t len);
 int wm_pkt_get(int *port, uint8_t *data, uint32_t *len);
+
+#ifndef NO_SV
+int wm_svpkt_push(int port, const svOpenArrayHandle sv_data, uint32_t len);
+int wm_svpkt_get(int *port, svOpenArrayHandle sv_data, uint32_t *len);
+#endif
 
 #endif /* __MBAY_DPI_CLIENT_H_ */
