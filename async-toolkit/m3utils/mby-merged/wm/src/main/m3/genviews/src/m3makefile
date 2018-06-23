@@ -31,6 +31,12 @@ module ("RegProperty")
 
 array_sort("RegField", "RegField")
 
+interface ("GenViews")
+generic_module("GenViews")
+module ("GenViewsM3")
+
+module ("DecoratedComponentDef")
+
 implementation ("Main")
 
 program ("genviews")
