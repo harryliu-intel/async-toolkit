@@ -1,4 +1,4 @@
-GENERIC MODULE GenViews(Tgt, TgtNaming, TgtGenerators);
+GENERIC MODULE GenViews(Tgt, TgtNaming, TgtGenerators, TgtConstants);
 
 IMPORT GenViews AS Super;
 IMPORT Debug; 
@@ -105,7 +105,7 @@ PROCEDURE AllocAddrmap(c         : RdlComponentDef.T) : RegAddrmap.T =
             END;
             IF NOT ISTYPE(def, DecoratedComponentDef.T) THEN
               def := Decorate(NIL, def, defs.getPath(ci.componentInst.id,
-                                                     TgtNaming.PathSep));
+                                                     TgtConstants.PathSep));
               defs.update(ci.componentInst.id, def)
             END;
 
@@ -197,7 +197,7 @@ PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
             END;
             IF NOT ISTYPE(def, DecoratedComponentDef.T) THEN
               def := Decorate(NIL, def, defs.getPath(ci.componentInst.id,
-                                                TgtNaming.PathSep));
+                                                TgtConstants.PathSep));
               defs.update(ci.componentInst.id, def)
             END;
             z := NARROW(def,DecoratedComponentDef.T).comp;
@@ -268,29 +268,28 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
   END AllocReg;
 
 PROCEDURE DoIt(<*UNUSED*>t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
-    VAR
-      rm3 := NEW(Tgt.T).init(tgtmap);
-    BEGIN
-      FOR i := FIRST(Tgt.Phase) TO LAST(Tgt.Phase) DO
+  VAR
+    r : Compiler := NEW(Tgt.T).init(tgtmap);
+  BEGIN
+    FOR i := FIRST(Tgt.Phase) TO LAST(Tgt.Phase) DO
+      TRY
         TRY
-
-          TRY
-            <*UNUSED*>VAR dummy := FS.Iterate(outDir); BEGIN END
-                    EXCEPT
-                      OSError.E(x) => Debug.Error(F("Problem opening directory \"%s\" : OSError.E : %s", outDir, AL.Format(x)))
-                    END;
-          
-          rm3.write(outDir, i)
+          EVAL FS.Iterate(outDir)
         EXCEPT
-          OSError.E(x) =>
-          Debug.Error("Error in " &
-            Tgt.PhaseNames[i] & " code generation : OSError.E : " & AL.Format(x))
-        |
-          Wr.Failure(x) =>
-          Debug.Error("Error in " &
-            Tgt.PhaseNames[i] & " code generation : Wr.Failure : " & AL.Format(x))
-        END
+          OSError.E(x) => Debug.Error(F("Problem opening directory \"%s\" : OSError.E : %s", outDir, AL.Format(x)))
+        END;
+        
+        r.write(outDir, i)
+      EXCEPT
+        OSError.E(x) =>
+        Debug.Error("Error in " &
+          Tgt.PhaseNames[i] & " code generation : OSError.E : " & AL.Format(x))
+      |
+        Wr.Failure(x) =>
+        Debug.Error("Error in " &
+          Tgt.PhaseNames[i] & " code generation : Wr.Failure : " & AL.Format(x))
       END
+    END
   END DoIt;
   
 BEGIN END GenViews.

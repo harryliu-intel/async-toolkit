@@ -1,1 +1,1 @@
-INTERFACE GenViewsScala = GenViews() END GenViewsScala.
+INTERFACE GenViewsScala = GenViews(RegScala) END GenViewsScala.

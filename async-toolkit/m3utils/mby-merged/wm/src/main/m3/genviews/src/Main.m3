@@ -5,39 +5,22 @@ IMPORT Stdio;
 IMPORT ParseParams;
 IMPORT Params;
 IMPORT Debug; 
-FROM Fmt IMPORT F;
 IMPORT TextSetDef;
-IMPORT RTName;
-IMPORT RdlComponentDef, RdlComponentDefClass;
-IMPORT RdlComponentDefType, RdlComponentDefElem;
-IMPORT RdlArray, BigInt;
-IMPORT RdlComponentInstElemList;
-IMPORT RegField, RegFieldSeq;
 IMPORT RegAddrmap;
-IMPORT RegReg;
-IMPORT RdlComponentDefElemList;
-IMPORT RegRegfile;
-IMPORT Fmt;
-IMPORT RegModula3 AS Tgt; 
-IMPORT RegModula3Naming AS TgtNaming;
-IMPORT RegModula3Generators AS TgtGenerators;
-IMPORT RegChild, RegChildSeq;
-IMPORT Text;
-IMPORT RegComponent;
-IMPORT OSError, Wr, AL;
-IMPORT Thread;
 IMPORT Pathname;
-IMPORT FS;
-IMPORT GenViewsM3;
+IMPORT GenViews, GenViewsM3, GenViewsScala;
+IMPORT Text;
 
-<*FATAL Thread.Alerted*>
+CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name>";
+CONST Usage = "-top <top map name> [-L|-language m3|scala]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
+TYPE Lang = { M3, Scala };
 
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -46,7 +29,8 @@ VAR
   tgtmap : RegAddrmap.T := NIL;
   tgtmapNm : TEXT;
   outDir : Pathname.T := "build/src";
-  gv := NEW(GenViewsM3.T);
+  gv : GenViews.T;
+  lang := Lang.M3;
   
 BEGIN
   (* command-line args: *)
@@ -58,6 +42,21 @@ BEGIN
       IF pp.keywordPresent("-o") THEN
         outDir := pp.getNext()
       END;
+      IF pp.keywordPresent("-L") OR pp.keywordPresent("-language") THEN
+        VAR langT := pp.getNext();
+            success := FALSE;
+        BEGIN
+          FOR i := FIRST(Lang) TO LAST(Lang) DO
+            IF TE(langT, LangNames[i]) THEN
+              lang := i;
+              success := TRUE
+            END
+          END;
+          IF NOT success THEN
+            Debug.Error("Unsupported target language : " & langT & "\n" & DoUsage())
+          END;
+        END
+      END;
       
       pp.skipParsed();
       pp.finish()
@@ -66,6 +65,12 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
   END;
+
+  CASE lang OF
+    Lang.M3    => gv := NEW(GenViewsM3.T)
+  |
+    Lang.Scala => gv := NEW(GenViewsScala.T)
+  END;  
 
   EVAL lexer.setRd(rd);
   (* set lexer input *)

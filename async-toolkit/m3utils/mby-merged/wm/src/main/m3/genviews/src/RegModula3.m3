@@ -10,7 +10,7 @@ IMPORT Wx;
 IMPORT RdlArray;
 IMPORT TextSetDef;
 IMPORT RegComponent;
-FROM RegModula3Naming IMPORT IdiomName;
+FROM RegModula3Constants IMPORT IdiomName;
 IMPORT RegGenState;
 IMPORT RegChild;
 IMPORT CompAddr, CompRange;
@@ -24,6 +24,8 @@ IMPORT RegContainer;
 IMPORT CardSet, CardSetDef;
 IMPORT RdlNum;
 FROM RegModula3IntfNaming IMPORT MapIntfNameRW;
+IMPORT RegCompiler;
+IMPORT GenViewsM3;
 
 (* this stuff really shouldnt be in this module but in Main... *)
 IMPORT RdlProperty, RdlExplicitPropertyAssign;
@@ -188,7 +190,7 @@ VAR mapsDone := NEW(TextSetDef.T).init();
 VAR doDebug := Debug.DebugThis("RegModula3");
     
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = GenViewsM3.Compiler BRANDED Brand OBJECT
     map  : RegAddrmap.T;
     addr : BigInt.T;
   OVERRIDES
@@ -196,7 +198,7 @@ REVEAL
     write := Write;
   END;
 
-PROCEDURE Init(t : T; map : RegAddrmap.T) : T =
+PROCEDURE Init(t : T; map : RegAddrmap.T) : RegCompiler.T =
   BEGIN
     t.map := map;
     t.addr := BigInt.Zero;
@@ -576,7 +578,8 @@ PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
             CASE gs.rw OF RW.W =>  EVAL gs.m3imports.insert(iNm) ELSE END
           END;
          
-          WITH sub = NEW(T).init(map) DO
+          VAR sub : T := NEW(T).init(map);
+          BEGIN
             sub.write(gs.dirPath, gs.rw)
           END
         ELSE
@@ -1676,7 +1679,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
    
   (**********************************************************************)
 
-PROCEDURE GenReg(r : RegReg.T;genState : RegGenState.T) =
+PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
   (* dump a reg type defn *)
   VAR
     gs : GenState := genState;

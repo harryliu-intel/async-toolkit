@@ -1,3 +1,1 @@
-INTERFACE RegScalaGenerators;
-
-END RegScalaGenerators.
+INTERFACE RegScalaGenerators = RegGenerators() END RegScalaGenerators.

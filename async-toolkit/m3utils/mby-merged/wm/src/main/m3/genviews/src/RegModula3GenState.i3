@@ -1,6 +1,6 @@
 INTERFACE RegModula3GenState;
 IMPORT RegGenState;
-IMPORT Wx, TextSet, Pathname;
+IMPORT Wx, TextSet;
 FROM RegModula3 IMPORT RW, TypeHier;
 
 TYPE
@@ -12,9 +12,7 @@ TYPE
 TYPE
   T = RegGenState.T OBJECT
     wx       : Wxs;
-    dumpSyms : TextSet.T;
     rw       : RW;          (* which pass/file are we working on *)
-    dirPath  : Pathname.T;
     th       : TypeHier;    (* which type hierarchy are we working on *)
 
     i3imports : TextSet.T;

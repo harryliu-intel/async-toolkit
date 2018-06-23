@@ -1,3 +1,1 @@
-INTERFACE RegScalaNaming;
-
-END RegScalaNaming.
+INTERFACE RegScalaNaming = RegNaming(RegScalaConstants) END RegScalaNaming.

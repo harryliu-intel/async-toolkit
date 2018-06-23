@@ -1,1 +1,1 @@
-INTERFACE GenViewsM3 = GenViews() END GenViewsM3.
+INTERFACE GenViewsM3 = GenViews(RegModula3) END GenViewsM3.
