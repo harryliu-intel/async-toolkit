@@ -19,11 +19,7 @@ PROCEDURE FieldName(f : RegField.T; debug : BOOLEAN) : TEXT;
 
   (**********************************************************************)
 
-PROCEDURE MapIntfNameRW(a : RegAddrmap.T; rw : RW) : TEXT;
-
-  (**********************************************************************)
-
-  PROCEDURE M3Camel(txt : TEXT; debug := TRUE) : TEXT;
+PROCEDURE IdiomName(txt : TEXT; debug := TRUE) : TEXT;
 
 CONST PathSep = "_p_";
 

@@ -1,14 +1,8 @@
 GENERIC MODULE GenViews(Tgt, TgtNaming, TgtGenerators);
 
 IMPORT GenViews AS Super;
-IMPORT rdlLexExt;
-IMPORT rdlParseExt;
-IMPORT Stdio;
-IMPORT ParseParams;
-IMPORT Params;
 IMPORT Debug; 
 FROM Fmt IMPORT F;
-IMPORT TextSetDef;
 IMPORT RTName;
 IMPORT RdlComponentDef, RdlComponentDefClass;
 IMPORT RdlComponentDefType, RdlComponentDefElem;
@@ -21,15 +15,12 @@ IMPORT RdlComponentDefElemList;
 IMPORT RegRegfile;
 IMPORT Fmt;
 IMPORT RegChild, RegChildSeq;
-IMPORT Text;
 IMPORT RegComponent;
 IMPORT OSError, Wr, AL;
 IMPORT Thread;
 IMPORT Pathname;
 IMPORT FS;
 IMPORT DecoratedComponentDef;
-
-<*FATAL Thread.Alerted*>
 
 CONST Brand = "GenViews(" & Tgt.Brand & ")";
       
@@ -40,11 +31,8 @@ REVEAL
     gen      := DoIt;
   END;
 
-CONST Usage = "-top <top map name>";
-
-PROCEDURE DoUsage() : TEXT =
-  BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
-
+<*FATAL Thread.Alerted*>
+      
 PROCEDURE AllocFields(c : RdlComponentDef.T) : RegFieldSeq.T =
   VAR
     seq := NEW(RegFieldSeq.T).init();
@@ -178,18 +166,6 @@ PROCEDURE Decorate(<*UNUSED*>t : T;
     RETURN NEW(DecoratedComponentDef.T).init(def, comp)
   END Decorate;
 
-PROCEDURE InitDCD(dcd : DecoratedComponentDef.T; old : RdlComponentDef.T; comp : RegComponent.T) : DecoratedComponentDef.T =
-  BEGIN
-    dcd.type := old.type;
-    dcd.id   := old.id;
-    dcd.list := old.list;
-    dcd.anonInstElems := old.anonInstElems;
-
-    dcd.comp := comp;
-
-    RETURN dcd
-  END InitDCD;
-  
 PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
   VAR
     props := c.list.propTab;

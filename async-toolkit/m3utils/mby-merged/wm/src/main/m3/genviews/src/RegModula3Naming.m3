@@ -4,7 +4,7 @@ IMPORT IdStyles;
 FROM Fmt IMPORT F;
 IMPORT RegModula3;
 IMPORT RegGenState, RegModula3GenState;
-FROM RegModula3 IMPORT RW;
+FROM RegModula3IntfNaming IMPORT MapIntfNameRW;
 
 PROCEDURE RegTypename(r : RegReg.T; gsP : RegGenState.T) : TEXT =
   VAR
@@ -27,20 +27,15 @@ PROCEDURE MapIntfName(a : RegAddrmap.T; gsP : RegGenState.T) : TEXT =
     RETURN MapIntfNameRW(a, gs.rw)
   END MapIntfName;
 
-PROCEDURE MapIntfNameRW(a : RegAddrmap.T; rw : RW) : TEXT =
-  BEGIN
-    RETURN a.nm & RegModula3.RWsuffixes[rw]
-  END MapIntfNameRW;
-
 PROCEDURE MapTypename(a : RegAddrmap.T; state : RegGenState.T) : TEXT =
   BEGIN
     RETURN MapIntfName(a, state) & ".T"
   END MapTypename;
 
 PROCEDURE FieldName(f : RegField.T; debug : BOOLEAN) : TEXT =
-  BEGIN RETURN M3Camel(f.nm,debug) END FieldName;
+  BEGIN RETURN IdiomName(f.nm,debug) END FieldName;
   
-PROCEDURE M3Camel(txt : TEXT; debug : BOOLEAN) : TEXT =
+PROCEDURE IdiomName(txt : TEXT; debug : BOOLEAN) : TEXT =
   VAR
     res : TEXT;
   BEGIN
@@ -52,6 +47,6 @@ PROCEDURE M3Camel(txt : TEXT; debug : BOOLEAN) : TEXT =
 
     IF debug THEN res := res & F("(*%s*)",txt) END;
     RETURN res
-  END M3Camel;
+  END IdiomName;
     
 BEGIN END RegModula3Naming.

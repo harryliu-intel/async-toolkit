@@ -14,11 +14,18 @@ sequence("RegRegfile", "RegRegfile")
 
 table("TextReg", "Text", "RegReg")
 
-module("RegModula3")
 interface("RegModula3GenState")
-module("RegModula3Naming")
+
+module("RegModula3IntfNaming")
+
+module   ("RegModula3")
+module   ("RegModula3Naming")
 interface("RegModula3Generators")
-%module("IdStyles")
+
+module   ("RegScala")
+module   ("RegScalaNaming")
+interface("RegScalaGenerators")
+
 
 interface ("RegChild")
 interface ("RegComponent")
@@ -34,6 +41,7 @@ array_sort("RegField", "RegField")
 interface ("GenViews")
 generic_module("GenViews")
 module ("GenViewsM3")
+%module ("GenViewsScala")  %% fill this in
 
 module ("DecoratedComponentDef")
 
