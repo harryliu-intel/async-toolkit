@@ -1,0 +1,3 @@
+INTERFACE RegScalaNaming;
+
+END RegScalaNaming.
