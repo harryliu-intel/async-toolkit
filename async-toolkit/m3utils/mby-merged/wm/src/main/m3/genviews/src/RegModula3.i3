@@ -1,14 +1,8 @@
 INTERFACE RegModula3;
-IMPORT Wr, Thread, RegAddrmap, OSError, Pathname;
+IMPORT RegCompiler;
 
-TYPE
-  T <: Public;
-
-  Public = OBJECT METHODS
-    init(map : RegAddrmap.T) : T;
-    write(dirPath : Pathname.T; rw : RW)
-      RAISES { OSError.E, Wr.Failure, Thread.Alerted };
-  END;
+TYPE Public = RegCompiler.T;
+     T      <: Public;
 
 TYPE
   TypeHier = { Read, Addr, Unsafe, Update };
