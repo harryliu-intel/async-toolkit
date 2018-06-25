@@ -10,8 +10,7 @@ IMPORT Wx;
 IMPORT RdlArray;
 IMPORT TextSetDef;
 IMPORT RegComponent;
-IMPORT RegModula3Naming AS Naming;
-FROM RegModula3Naming IMPORT M3Camel;
+FROM RegModula3Constants IMPORT IdiomName;
 IMPORT RegGenState;
 IMPORT RegChild;
 IMPORT CompAddr, CompRange;
@@ -24,6 +23,9 @@ IMPORT TextSet;
 IMPORT RegContainer;
 IMPORT CardSet, CardSetDef;
 IMPORT RdlNum;
+FROM RegModula3IntfNaming IMPORT MapIntfNameRW;
+IMPORT RegCompiler;
+IMPORT GenViewsM3;
 
 (* this stuff really shouldnt be in this module but in Main... *)
 IMPORT RdlProperty, RdlExplicitPropertyAssign;
@@ -188,7 +190,7 @@ VAR mapsDone := NEW(TextSetDef.T).init();
 VAR doDebug := Debug.DebugThis("RegModula3");
     
 REVEAL
-  T = Public BRANDED Brand OBJECT
+  T = GenViewsM3.Compiler BRANDED Brand OBJECT
     map  : RegAddrmap.T;
     addr : BigInt.T;
   OVERRIDES
@@ -196,7 +198,7 @@ REVEAL
     write := Write;
   END;
 
-PROCEDURE Init(t : T; map : RegAddrmap.T) : T =
+PROCEDURE Init(t : T; map : RegAddrmap.T) : RegCompiler.T =
   BEGIN
     t.map := map;
     t.addr := BigInt.Zero;
@@ -232,7 +234,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; rw : RW)
 
     CASE rw OF
       RW.W  =>
-      EVAL gs.i3imports.insert(Naming.MapIntfNameRW(t.map, RW.R));
+      EVAL gs.i3imports.insert(MapIntfNameRW(t.map, RW.R));
       EVAL gs.i3imports.insert("CompRange");
       EVAL gs.i3imports.insert("CompPath");
       EVAL gs.i3imports.insert("CsrOp");
@@ -241,7 +243,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; rw : RW)
       EVAL gs.m3imports.insert("Word");
       EVAL gs.m3imports.insert("CsrOp");
       EVAL gs.m3imports.insert("CompAddr");
-      EVAL gs.m3imports.insert(Naming.MapIntfNameRW(t.map, RW.R));
+      EVAL gs.m3imports.insert(MapIntfNameRW(t.map, RW.R));
       EVAL gs.m3imports.insert("CompRange");
       EVAL gs.m3imports.insert("CompPath");
       EVAL gs.m3imports.insert("CompMemory");
@@ -441,7 +443,7 @@ PROCEDURE GenChildInit(e          : RegChild.T;
     IF skipArc THEN
       childArc := "";
     ELSE
-      childArc := "." & M3Camel(e.nm,debug := FALSE);
+      childArc := "." & IdiomName(e.nm,debug := FALSE);
     END;
 
     IF doDebug THEN
@@ -576,14 +578,15 @@ PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
             CASE gs.rw OF RW.W =>  EVAL gs.m3imports.insert(iNm) ELSE END
           END;
          
-          WITH sub = NEW(T).init(map) DO
+          VAR sub : T := NEW(T).init(map);
+          BEGIN
             sub.write(gs.dirPath, gs.rw)
           END
         ELSE
           e.comp.generate(gs)
         END;
         gs.put(Section.IMaintype, F("    %s : %s%s;\n",
-                                    M3Camel(e.nm),
+                                    IdiomName(e.nm),
                                     FmtArr(e.array),
                                     ComponentTypeName(e.comp,
                                                       gs)));
@@ -701,7 +704,7 @@ PROCEDURE GenAddrmapInit(map : RegAddrmap.T; gs : GenState) =
 
 PROCEDURE GenAddrmapXInit(map : RegAddrmap.T; gs : GenState) =
   VAR
-    qmtn := Naming.MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
+    qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
   BEGIN
     gs.put(Section.IMaintype,
            F("PROCEDURE InitX(READONLY t : %s; VAR x : X; root : REFANY);\n", qmtn));
@@ -732,7 +735,7 @@ PROCEDURE GenChildXInit(e          : RegChild.T;
     IF skipArc THEN
       childArc := "";
     ELSE
-      childArc := "." & M3Camel(e.nm,debug := FALSE);
+      childArc := "." & IdiomName(e.nm,debug := FALSE);
     END;
 
     IF doDebug THEN
@@ -852,7 +855,7 @@ PROCEDURE GenChildUpdateInit(e          : RegChild.T;
     IF skipArc THEN
       childArc := "";
     ELSE
-      childArc := "." & M3Camel(e.nm,debug := FALSE);
+      childArc := "." & IdiomName(e.nm,debug := FALSE);
     END;
 
     IF e.array = NIL THEN
@@ -934,7 +937,7 @@ PROCEDURE GenRegUpdateInit(r : RegReg.T; gs : GenState) =
   
 PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
   VAR
-    qmtn := Naming.MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
+    qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
   BEGIN
     EVAL gs.i3imports.insert("CompMemory");
     gs.put(Section.IMaintype,
@@ -1021,7 +1024,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
 PROCEDURE GenAddrmapCsr(map : RegAddrmap.T; gs : GenState) =
   (* generate interface for CSR write by address *)
   VAR
-    qmtn := Naming.MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
+    qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
     ccnt : CARDINAL := 0;
   BEGIN
     gs.put(Section.IMaintype,
@@ -1145,7 +1148,7 @@ PROCEDURE GenCompProc(c     : RegComponent.T;
 
 PROCEDURE GenAddrmapReset(map : RegAddrmap.T; gs : GenState) =
   VAR
-    qmtn := Naming.MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
+    qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
   BEGIN
     gs.imain("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.imain("PROCEDURE Reset(READONLY t : %s; READONLY u : U);\n", qmtn);
@@ -1199,7 +1202,7 @@ PROCEDURE GenChildReset(e          : RegChild.T;
     IF skipArc THEN
       childArc := "";
     ELSE
-      childArc := "." & M3Camel(e.nm,debug := FALSE);
+      childArc := "." & IdiomName(e.nm,debug := FALSE);
     END;
     WITH rnm = ComponentResetName(e.comp,gs) DO
       IF e.array = NIL THEN
@@ -1290,7 +1293,7 @@ PROCEDURE GenRegfileRanger(rf : RegRegfile.T; gs : GenState) =
     IF rf.children.size() = 1 THEN
       (* just one member *)
       WITH chld = rf.children.get(0),
-           nm   = M3Camel(chld.nm,debug := FALSE),
+           nm   = IdiomName(chld.nm,debug := FALSE),
            rnm  = ComponentRangeName(chld.comp,gs) DO
         gs.mdecl("  BEGIN\n");
         IF chld.array = NIL THEN
@@ -1429,7 +1432,7 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
     IF skipArc THEN
       childArc := "";
     ELSE
-      childArc := "." & M3Camel(e.nm,debug := FALSE);
+      childArc := "." & IdiomName(e.nm,debug := FALSE);
     END;
 
     IF skipArc THEN
@@ -1534,7 +1537,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
       FOR i := 0 TO rf.children.size()-1 DO
         WITH r = rf.children.get(i) DO
           gs.put(Section.IComponents, F("    %s : %s%s;\n",
-                                        M3Camel(r.nm),
+                                        IdiomName(r.nm),
                                         FmtArr(r.array),
                                         ComponentTypeName(r.comp, gs)));
           INC(ccnt,ArrayCnt(r.array));
@@ -1676,7 +1679,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
    
   (**********************************************************************)
 
-PROCEDURE GenReg(r : RegReg.T;genState : RegGenState.T) =
+PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
   (* dump a reg type defn *)
   VAR
     gs : GenState := genState;
@@ -1849,7 +1852,7 @@ PROCEDURE ComponentTypeNameInHier(c : RegComponent.T;
     gsC.th := th;
     IF gs.rw # TypePhase[th] THEN
       (* requesting a type from another module, need to qualify it *)
-      prefix := Naming.MapIntfNameRW(gs.map, TypePhase[th]) & "."
+      prefix := MapIntfNameRW(gs.map, TypePhase[th]) & "."
     ELSE
       prefix := ""
     END;

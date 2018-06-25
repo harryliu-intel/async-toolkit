@@ -32,6 +32,7 @@ WM_NET_LIB=$(WM_NET_TARGDIR)/libwm_net.a
 GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
+SCALA_GEN=foo
 
 STRUCTGEN_ROOT=structgen
 STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
@@ -109,16 +110,27 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 
-$(MBYLIB): $(MBY_TOP_RDL) $(GENVIEWS)
+MBY_POSTPROC = work/mby_postproc.rdl
+$(MBY_POSTPROC): $(MBY_TOP_RDL)
 	mkdir -p work
 	${SVPP} --path $(NEBULON)/include:$(dir $<) < $< > work/i1.rdl
 	${PERLFE} < work/i1.rdl > work/i2.rdl
-	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > work/i3.rdl
+	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
+
+
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS)
 	mkdir -p $(MBY_BUILD_ROOT)/src
-	$(GENVIEWS_TARGDIR)/genviews -top mby_top_map -o $(MBY_BUILD_ROOT)/src < work/i3.rdl
+	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
 	sed 's/THELIB/mby/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(MBY_BUILD_ROOT)/src/m3makefile
 	cd $(MBY_BUILD_ROOT)/src && $(CM3) -x
+
+$(SCALA_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+	mkdir -p $(MBY_BUILD_ROOT)/src
+	$(GENVIEWS_TARGDIR)/genviews -L scala -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
+
+scalagen: $(SCALA_GEN)
+
 
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
@@ -126,7 +138,7 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	${PERLFE} < work/i1.rdl > work/i2.rdl
 	export PERL5LIB=$(dir $<) && cat work/i2.rdl | perl > work/i3.rdl
 	mkdir -p $(HLP_BUILD_ROOT)/src
-	$(GENVIEWS_TARGDIR)/genviews -top hlp_top_map -o $(HLP_BUILD_ROOT)/src < work/i3.rdl
+	$(GENVIEWS_TARGDIR)/genviews -L m3 -top hlp_top_map -o $(HLP_BUILD_ROOT)/src < work/i3.rdl
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(HLP_BUILD_ROOT)/src
 	sed 's/THELIB/hlp/' $(GENVIEWS_ROOT)/src/boilerplate/m3makefile > $(HLP_BUILD_ROOT)/src/m3makefile
 	cd $(HLP_BUILD_ROOT)/src && $(CM3) -x
