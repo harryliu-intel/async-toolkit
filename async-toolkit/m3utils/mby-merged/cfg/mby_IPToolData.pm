@@ -55,8 +55,7 @@ IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 
 
 $ToolConfig_ips{epl} = {
-   #PATH    => "$ENV{IP_MODELS}/eth_port/&get_tool_version()",
-   PATH    => "/nfs/sc/disks/slx_1500/jromeror/mby/work_root/eth_port-dev-x0",
+   PATH    => "$ENV{IP_MODELS}/eth_port/&get_tool_version()",
    VERSION => "eth_port-dev-x0-18ww26a",
    OTHER   => {
       SEARCH_PATHS => ["&get_tool_path()",],
