@@ -25,7 +25,7 @@ my $dirname = dirname(dirname(__FILE__));
 $dirname = `/usr/intel/bin/realpath $dirname`;
 chomp($dirname);
 
-                        
+
 $ToolConfig_ips{mby} = {
    PATH    => "$dirname",
    VERSION => &get_version_from_path($dirname),
@@ -55,7 +55,9 @@ IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 
 
 $ToolConfig_ips{epl} = {
-   PATH    => "$ENV{IP_MODELS}/eth_port/&get_tool_version()",
+   #FIXME: (cannot get tool version)
+   #PATH    => "$ENV{IP_MODELS}/eth_port/&get_tool_version()",
+   PATH    => "$ENV{IP_MODELS}/eth_port/eth_port-dev-x0-18ww26a",
    VERSION => "eth_port-dev-x0-18ww26a",
    OTHER   => {
       SEARCH_PATHS => ["&get_tool_path()",],
