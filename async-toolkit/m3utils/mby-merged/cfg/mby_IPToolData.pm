@@ -31,20 +31,41 @@ $ToolConfig_ips{mby} = {
    VERSION => &get_version_from_path($dirname),
    OTHER   => {
       LIBS                => ["&get_tool_path()/cfg/ace/lib",
+                              "&get_tool_var(ipconfig/eth_port, LIBS)",
       ],
-      IMPORT              => [
-      ],
+      IMPORT              => [],
       SEARCH_PATHS        => ["&get_tool_path()",
                               "&get_tool_path()/cfg",
                               "&get_tool_path()/cfg/ace",
+                              "&get_tool_var(ipconfig/eth_port, SEARCH_PATHS)",
       ],
       lintra_waiver_dirs  => [],
-      SUB_SCOPES          => [
+      SUB_SCOPES          => ["eth_port",
+                              "&get_tool_var(ipconfig/eth_port, SUB_SCOPES)",
       ],
       TEST_PATTERNS       => ["verif/mby/formal/tests",],
     },
     ENV => {
     },
 };
+######################################################################
+# Executes the import statement above
+######################################################################
+IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
+
+
+$ToolConfig_ips{epl} = {
+   #PATH    => "$ENV{IP_MODELS}/eth_port/&get_tool_version()",
+   PATH    => "/nfs/sc/disks/slx_1500/jromeror/mby/work_root/eth_port-dev-x0",
+   VERSION => "eth_port-dev-x0-18ww26a",
+   OTHER   => {
+      SEARCH_PATHS => ["&get_tool_path()",],
+      IMPORT       => ["cfg/eth_port_IPToolData.pm",],
+   },
+};
+######################################################################
+# Executes the import statement above
+######################################################################
+IPToolDataExtras::import_files("epl", \%ToolConfig_ips);
 
 1;

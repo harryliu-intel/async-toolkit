@@ -1,6 +1,8 @@
 #---*-cperl-*---------------------------------------------------------------------------------
 
 %audf = (
-   Includes => ["cfg/ace/mby_hdl.udf",
+   Includes => [
+      "eth_port:cfg/ace/eth_port_integ.udf",
+      "cfg/ace/mby_hdl.udf",
    ],
 );
