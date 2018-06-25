@@ -40,17 +40,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
+#ifndef NO_SV
+#include "svdpi_src.h"
+#endif
 
 #include "mbay_dpi_client.h"
 #include "client_types.h"
 
 /* TODO replace log functions placeholders with improved macros */
-#define LOG_ERROR   printf
-#define LOG_WARNING printf
-#define LOG_INFO    printf
+#define LOG_ERROR    printf
+#define LOG_WARNING  printf
+#define LOG_INFO     printf
 #define LOG_DEBUG(x, ...)
-// #define LOG_DEBUG   printf
-#define LOG_DUMP    printf
+//#define LOG_DEBUG    printf
+#define LOG_HEX_DUMP(a,b,c)
+//#define LOG_HEX_DUMP hex_dump
 
 /* FD of the socket used to send commands to the model_server.
  * For example, it is used to send IOSF messages or inject traffic.
@@ -71,7 +75,7 @@ static int wm_egress_fd[NUM_PORTS];
 #define TMP_FILE_LEN		100
 static char server_tmpfile[TMP_FILE_LEN] = "";
 
-/* Default Java used when ToolConfig.pl fails */
+/* Default Java path only used when ToolConfig.pl fails */
 #define DEFAULT_JAVA "/usr/intel/pkgs/java/1.8.0.151/bin/java\n"
 
 /* Path of the m3/scala server relative to $MODEL_ROOT */
@@ -85,7 +89,7 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 				   uint16_t port);
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 					  uint16_t *port);
-static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii);
+static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii);
 static int create_client_socket(int *fd, int *port);
 static int connect_server(const char *addr_str, const char *port, int *server_fd);
 static int connect_egress(int phys_port, int server_fd, int client_fd,
@@ -416,6 +420,8 @@ int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 		return ERR_INVALID_ARG;
 	}
 
+	LOG_DEBUG("Pushing packet len=%d\n", len);
+	LOG_HEX_DUMP(data, len, 0);
 	/* First TLV is the meta-data. For now I will assume this is a frame
 	 * entering HLP from RMN. TODO this will need to be removed/updated
 	 */
@@ -475,6 +481,7 @@ int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 		if (*len > 0) {
 			*port = i;
 			LOG_DEBUG("Received %d bytes on port %d\n", *len, *port);
+			LOG_HEX_DUMP(data, *len, 0);
 			return OK;
 		}
 	}
@@ -482,6 +489,42 @@ int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 	return ERR_NO_DATA;
 }
 
+#ifndef NO_SV
+
+/* wm_svpkt_push() - SV wrapper for wm_pkt_push()
+ *
+ * Required to convert the memory buffer from SV to C format.
+ */
+int wm_svpkt_push(int port, const svOpenArrayHandle sv_data, uint32_t len)
+{
+	uint8_t *data;
+
+    data = (uint8_t*) svGetArrayPtr(sv_data);
+	if (!data) {
+		LOG_ERROR("Cannot convert data buffer from SV to C\n");
+		return ERR_INVALID_ARG;
+	}
+
+	return wm_pkt_push(port, data, len);
+}
+
+/* wm_svpkt_get() - SV wrapper for wm_pkt_get()
+ *
+ * Required to convert the memory buffer from SV to C format.
+ */
+int wm_svpkt_get(int *port, svOpenArrayHandle sv_data, uint32_t *len)
+{
+	uint8_t *data;
+
+    data = (uint8_t*) svGetArrayPtr(sv_data);
+	if (!data) {
+		LOG_ERROR("Cannot convert data buffer from SV to C\n");
+		return ERR_INVALID_ARG;
+	}
+
+	return wm_pkt_get(port, data, len);
+}
+#endif /* #ifndef NO_SV */
 
 /*****************************************************************************
  *************************** Auxiliary functions *****************************
@@ -597,7 +640,7 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 		return ERR_INVALID_RESPONSE;
 	}
 
-	// hex_dump((uint8_t *)&wm_msg, wm_len, 0);
+	// LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
 	memcpy(msg, wm_msg + MODEL_MSG_HEADER_SIZE, *len);
 	return OK;
 }
@@ -636,7 +679,7 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 	wm_len = len + MODEL_MSG_HEADER_SIZE;
 	wm_msg.msg_length = htonl(wm_len);
 
-	// hex_dump((uint8_t *)&wm_msg, wm_len, 0);
+	// LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
 
 	wr_len = write(fd, &wm_msg, wm_len);
 	if (wm_len != wr_len) {
@@ -655,7 +698,7 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
  * @param_in	nbytes is the size of the buffer.
  * @param_in	show_ascii whether to append ascii format.
  */
-static void hex_dump(uint8_t *bytes, int nbytes, char show_ascii)
+static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
 {
 	char line[128];
 	int linebytes;
