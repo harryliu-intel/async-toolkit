@@ -6,6 +6,14 @@ TARGET_DIR = target
 TARGET_LIB = $(TARGET_DIR)/libmbay_dpi_client.so
 SAMPLE_EXE = $(TARGET_DIR)/client_sample
 
+# NO_SV disable code for SV specific code
+ifeq ($(NO_SV),)
+	VCS_INCLUDES = $(shell ToolConfig.pl get_tool_path vcsmx)/include
+	CFLAGS += -iquote $(VCS_INCLUDES)
+else
+	CFLAGS += -DNO_SV
+endif
+
 SRCS = mbay_dpi_client.c
 OBJS = $(SRCS:.c=.o)
 
