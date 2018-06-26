@@ -5,184 +5,184 @@
 
 
 
-// POL_CNTR_STATE[0..9,0..2047]
+// POL_DIRECT_MAP_CTRL 
 
-reg pol_cntr_state_r {
+reg pol_direct_map_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   shared;
   HandCoded = true;
-  name = "Counter State";
+  name = "Policer Direct Mapping Access Control Register";
   desc = "
-  .Policer and counter actions share the same physical policer memory banks.
-  .Indexed by (bank, action index).
-  .Any bank can be used as a counter.
-  .Banks 0..1 can be combined and used as a policer.
-  .Banks 5..6 can also be combined and used as another, independent policer.
-  . 
-  The POL_CNTR_STATE register is to be used when management is accessing counter data.  Management accesses to counters are 128b atomic operations.
-  . 
-  The POL_STATE register is to be used when management is accessing policer data.  Management accesses to policer data are 256b atomic operations.
+    Control Register for proxy access to the POL_STATE memory banks
            ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    hwclr;
+    AccessType = "RW/V";
+    desc = "
+	    Go command and completion status.
+        [list]
+        [*] Set to 1 by software to initiate operation
+        [*] Set to 0 by hardware when the operation is complete
+        [/list]
+           ";
+    ValRandomize = true;
+  } GO_COMPL[63:63] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+	    Completion Status. Set by hardware upon completion of operation.[br]
+	    0: Successful completion[br]
+	    1: Address Out-of-Range error
+           ";
+    ValRandomize = true;
+  } STATUS[62:62] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Operation Type:[br]
+            0: Read[br]
+            1: Write
+           ";
+    ValRandomize = true;
+  } OP_TYPE[61:61] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+	    Reserved
+           ";
+    ValRandomize = true;
+  } _RSVD0_[60:48] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File ID.[br]
+	    0 - POL_CNTR_STATE  [br]
+	    1 - POL_STATE       [br]
+	    2-255 Reserved
+           ";
+    ValRandomize = true;
+  } REG_ID[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File Sub Index.
+        [list]
+        [*] For REG_ID=0 (POL_CNTR_STATE), this field indicates the memory bank. 
+            Valid values are 0 - 9, and data is written via POL_DIRECT_MAP_DATA_CTRn.
+        [*] For REG_ID=1 (POL_STATE), this field indicates the policer metering function.
+            Valid values are 0 (corresponding to memory banks 0, 1) and 1 (corresponding
+            to memory banks 5, 6), and data is written via POL_DIRECT_MAP_DATA_POLn.
+        [/list]
+           ";
+    ValRandomize = true;
+  } REG_SUB_ID[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register Entry Index. Indicates the memory bank (counter or policer) index.
+        Valid values are 0 - 2047.
+           ";
+    ValRandomize = true;
+  } REG_INDX[31:0] = 32'h0;
+};
+
+
+
+// POL_DIRECT_MAP_DATA_CTR0
+
+reg pol_direct_map_data_ctr0_r {
+  shared;
+  HandCoded = true;
+  name = "Counter Direct Mapping Access Data Register 0";
+  desc = "
+    Data register 0 for proxy access to the POL_CNTR_STATE counter state memory banks.
+    Proxy accesses to counters are 128b atomic operations.
+         ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 128;
-  accesswidth = 128;
+  regwidth = 64;
+  accesswidth = 64;
   field {
     AccessType = "RW/V";
     desc = "
-     packet count
+      Lower order part of 36 bit packet count.
 
            ";
     ValRandomize = true;
-  } DATA_CNTP[79:44] = 36'h0;
+  } DATA_CNTP_LWR[63:44] = 20'h0;
   field {
     AccessType = "RW/V";
     desc = "
-     byte count
+      Byte count
 
            ";
     ValRandomize = true;
   } DATA_CNTB[43:0] = 44'h0;
 };
-regfile pol_cntr_state_rf {
-  pol_cntr_state_r POL_CNTR_STATE[2048] += 16;
+
+
+
+// POL_DIRECT_MAP_DATA_CTR1
+
+reg pol_direct_map_data_ctr1_r {
+  shared;
+  HandCoded = true;
+  name = "Counter Direct Mapping Access Data Register 1";
+  desc = "
+    Data register 1 for proxy access to the POL_CNTR_STATE counter state memory banks.
+    Proxy accesses to counters are 128b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+      Higher order part of 36 bit packet count.
+
+           ";
+    ValRandomize = true;
+  } DATA_CNTP_UPR[15:0] = 16'h0;
 };
 
 
 
-// POL_STATE[0..1,0..2047]
+// POL_DIRECT_MAP_DATA_POL0
 
-reg pol_state_r {
+reg pol_direct_map_data_pol0_r {
   shared;
   HandCoded = true;
-  name = "Policer State";
+  name = "Policer Direct Mapping Access Data Register 0";
   desc = "
-  This register provides management with 256b atomic access to policer data stored in combined policer memory banks as described in the POL_CNTR_STATE register.
-  .Indexed by (policer, action index).
-  .policer=0 corresponds to the policer located in combined memory banks 0..1.
-  .policer=1 corresponds to the policer located in combined memory banks 5..6.
-           ";
+    Data register 0 for proxy access to the POL_STATE policer state.
+    Proxy accesses to policers are 256b atomic operations.
+         ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 256;
-  accesswidth = 256;
-  field {
-    AccessType = "RO/V";
-    desc = "
-     Value of lower 24b of POL_TIME when this policer state was last written.  When last written includes both management writing new configuration and token levels to the register and normal policer activity writing back updated token levels.
-
-           ";
-    ValRandomize = true;
-  } TIME_STORED[207:184] = 24'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     ultimate commited rate = cir * 10^cir_unit.  Result in 100kbps.
-
-           ";
-    ValRandomize = true;
-  } CIR[183:173] = 11'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     .IR_100K (0)
-     .IR_1M   (1)
-     .IR_10M  (2)
-     .IR_100M (3)
-     .IR_1G   (4)
-     only value 0 ~ 4 are valid, setting the field with invalid value is considered as programming error 
-
-           ";
-    ValRandomize = true;
-  } CIR_UNIT[172:170] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     configures committed burst size to cbs * 10^cbs_unit.  Result in bytes.
-
-           ";
-    ValRandomize = true;
-  } CBS[169:157] = 13'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     .BS_1    (0)
-     .BS_10   (1)
-     .BS_100  (2)
-     .BS_1000 (3)
-
-           ";
-    ValRandomize = true;
-  } CBS_UNIT[156:155] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     ultimate excess rate = eir * 10^eir_unit.  Result in 100kbps.
-
-           ";
-    ValRandomize = true;
-  } EIR[154:144] = 11'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     .IR_100K (0)
-     .IR_1M   (1)
-     .IR_10M  (2)
-     .IR_100M (3)
-     .IR_1G   (4)
-     only value 0 ~ 4 are valid, setting the field with invalid value is considered as programming error 
-
-           ";
-    ValRandomize = true;
-  } EIR_UNIT[143:141] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     configures committed burst size to ebs * 10^ebs_unit.  Result in bytes.
-
-           ";
-    ValRandomize = true;
-  } EBS[140:128] = 13'h0;
-  field {
-    AccessType = "RO";
-    desc = "
-     read returns zeros
-
-           ";
-    ValRandomize = true;
-  } _RSVD_[127:80] = 48'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     .BS_1    (0)
-     .BS_10   (1)
-     .BS_100  (2)
-     .BS_1000 (3)
-
-           ";
-    ValRandomize = true;
-  } EBS_UNIT[79:78] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     selects POL_CFG[cfg].  Configures entry enable C/E coupling (cf), payload type, and per-packet adjust.
-
-           ";
-    ValRandomize = true;
-  } CFG[77:74] = 4'h0;
+  regwidth = 64;
+  accesswidth = 64;
   field {
     AccessType = "RW/V";
     desc = "
-     bytes available in the committed bucket at time_stored
+     Lower order part of the bytes available in the committed bucket at time_stored
 
            ";
     ValRandomize = true;
-  } CTOK_HI[73:50] = 24'h0;
+  } CTOK_HI_LWR[63:50] = 14'h0;
   field {
     AccessType = "RW/V";
     desc = "
-     tokens (fractional bytes) available in the committed bucket at time_stored.    1 bit = 1024 tokens.   1 byte = 8192 tokens.
+     Tokens (fractional bytes) available in the committed bucket at time_stored.    [br]
+     1 bit = 1024 tokens.   [br]
+     1 byte = 8192 tokens.
 
            ";
     ValRandomize = true;
@@ -190,7 +190,7 @@ reg pol_state_r {
   field {
     AccessType = "RW/V";
     desc = "
-     bytes available in the excess bucket at time_stored
+     Bytes available in the excess bucket at time_stored
 
            ";
     ValRandomize = true;
@@ -198,14 +198,190 @@ reg pol_state_r {
   field {
     AccessType = "RW/V";
     desc = "
-     tokens (fractional bytes) available in the excess bucket at time_stored.    1 bit = 1024 tokens.   1 byte = 8192 tokens.
+     Tokens (fractional bytes) available in the excess bucket at time_stored.   [br]
+     1 bit = 1024 tokens.   [br]
+     1 byte = 8192 tokens.
 
            ";
     ValRandomize = true;
   } ETOK_LO[12:0] = 13'h0;
 };
-regfile pol_state_rf {
-  pol_state_r POL_STATE[2048] += 32;
+
+
+
+// POL_DIRECT_MAP_DATA_POL1
+
+reg pol_direct_map_data_pol1_r {
+  shared;
+  HandCoded = true;
+  name = "Policer Direct Mapping Access Data Register 1";
+  desc = "
+    Data register 1 for proxy access to the POL_STATE policer state.
+    Proxy accesses to policers are 256b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: BS_1        [br]
+     1: BS_10       [br]
+     2: BS_100      [br]
+     3: BS_1000
+
+           ";
+    ValRandomize = true;
+  } EBS_UNIT[15:14] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects POL_CFG[cfg]. Configures entry enable C/E coupling (cf), payload type, and per-packet adjust.
+
+           ";
+    ValRandomize = true;
+  } CFG[13:10] = 4'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+     Higher order part of the bytes available in the committed bucket at time_stored
+
+           ";
+    ValRandomize = true;
+  } CTOK_HI_UPR[9:0] = 10'h0;
+};
+
+
+
+// POL_DIRECT_MAP_DATA_POL2
+
+reg pol_direct_map_data_pol2_r {
+  shared;
+  HandCoded = true;
+  name = "Policer Direct Mapping Access Data Register 2";
+  desc = "
+    Data register 2 for proxy access to the POL_STATE policer state.
+    Proxy accesses to policers are 256b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+     Lower order part of value of lower 24b of POL_TIME when this policer state was last written.  
+     When last written includes both management writing new configuration and 
+     token levels to the register and normal policer activity writing back 
+     updated token levels.
+
+           ";
+    ValRandomize = true;
+  } TIME_STORED_LWR[63:56] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Ultimate commited rate = cir * 10^cir_unit.  Result in 100kbps.
+
+           ";
+    ValRandomize = true;
+  } CIR[55:45] = 11'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: IR_100K     [br]
+     1: IR_1M       [br]
+     2: IR_10M      [br]
+     3: IR_100M     [br]
+     4: IR_1G       [br]
+     Only value 0 - 4 are valid, setting the field with an invalid value is 
+     considered a programming error.
+
+           ";
+    ValRandomize = true;
+  } CIR_UNIT[44:42] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Configures committed burst size to cbs * 10^cbs_unit.  Result in bytes.
+
+           ";
+    ValRandomize = true;
+  } CBS[41:29] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: BS_1    [br]
+     1: BS_10   [br]
+     2: BS_100  [br]
+     3: BS_1000 [br]
+
+           ";
+    ValRandomize = true;
+  } CBS_UNIT[28:27] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Ultimate excess rate = eir * 10^eir_unit.  Result in 100kbps.
+
+           ";
+    ValRandomize = true;
+  } EIR[26:16] = 11'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: IR_100K     [br]
+     1: IR_1M       [br]
+     2: IR_10M      [br]
+     3: IR_100M     [br]
+     4: IR_1G       [br]
+     Only values 0 - 4 are valid, setting the field with an invalid value 
+     is considered a programming error.
+
+           ";
+    ValRandomize = true;
+  } EIR_UNIT[15:13] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Configures committed burst size to ebs * 10^ebs_unit.  Result in bytes.
+
+           ";
+    ValRandomize = true;
+  } EBS[12:0] = 13'h0;
+};
+
+
+
+// POL_DIRECT_MAP_DATA_POL3
+
+reg pol_direct_map_data_pol3_r {
+  shared;
+  HandCoded = true;
+  name = "Policer Direct Mapping Access Data Register 3";
+  desc = "
+    Data register 3 for proxy access to the POL_STATE policer state.
+    Proxy accesses to policers are 256b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+     Higher order part of value of lower 24b of POL_TIME when this policer state was last written.  
+     When last written includes both management writing new configuration and 
+     token levels to the register and normal policer activity writing back 
+     updated token levels.
+
+           ";
+    ValRandomize = true;
+  } TIME_STORED_UPR[15:0] = 16'h0;
 };
 
 
@@ -226,6 +402,14 @@ reg pol_cfg_r {
   regwidth = 64;
   accesswidth = 64;
   field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:23] = 41'h0;
+  field {
     AccessType = "RW";
     desc = "
      If set, CM drop causes policing to be disabled.
@@ -236,7 +420,7 @@ reg pol_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     If set, Mapper/FFU/MST/dmask drop causes policing to be disabled. (Always on, turn off for debug.)
+     If set, Mapper/CGRP/MST/dmask drop causes policing to be disabled. (Always on, turn off for debug.)
 
            ";
     ValRandomize = true;
@@ -261,28 +445,13 @@ reg pol_cfg_r {
     ValRandomize = true;
   } CREDIT_L3_LEN_ERR[19:19] = 1'h0;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     If set, policer marking will be applied to metadata with 2-bit color
-     value at the position indicated by md_position bit.  The 2-bit egress color encoding is:
-.    00:  No Policing Action
-.    01:  green
-.    10:  yellow
-.    11:  red
-     Expected use case is to have only one policer enabled when the egress color is to be written to the packet meta data.  If both policers are enabled, the packet meta data is modified ONLY IF both policers have mark_md set and both policers are configured with the same md_position setting.
+      Reserved
 
            ";
     ValRandomize = true;
-  } MARK_MD[18:18] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-.     0:  Metadata DW7, bit 12:11
-.     1:  Metadata DW4, bit 14:13
-
-           ";
-    ValRandomize = true;
-  } MD_POSITION[17:17] = 1'h0;
+  } _RSVD0_[18:17] = 2'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -295,7 +464,7 @@ reg pol_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Coupling Flag. (1) Enables C->E overflow per MEF 10.2.
+     Coupling Flag. Setting to 1 enables C->E overflow per MEF 10.2.
 
            ";
     ValRandomize = true;
@@ -304,8 +473,10 @@ reg pol_cfg_r {
     AccessType = "RW";
     desc = "
      Select source of ingress color, and target of egress color.
-     * 0: Use VPRI as source and target of recoloring
-     * 1: Use DSCP as source and target of recoloring
+     [list]
+     [*] 0: Use VPRI as source and target of recoloring
+     [*] 1: Use DSCP as source and target of recoloring
+     [/list]
 
            ";
     ValRandomize = true;
@@ -314,15 +485,17 @@ reg pol_cfg_r {
     AccessType = "RW";
     desc = "
      Select whether the corresponding policer bank has precedence.
-     * 0:  the selected policer bank has precedence 0
-     * 1:  the selected policer bank has precedence 1
-
+     [br][br]
+      0:  the selected policer bank has precedence 0
+     [br][br]
+      1:  the selected policer bank has precedence 1
+     [br][br]
      Precedence 1 represents the higher priority.
-
+     [br][br]
      The precedence only takes place when the policer of precedence 1 results
      in egress color of red.  This condition prevents the precedence 0 policer
      from performing token bucket deduction and policer-linked counter accumulation.
-
+     [br][br]
      The typical usage is to configure a layer 2 policer (using VPRI) 
      with precedence 1 and a layer 3 policer (using DSCP) with precedence 0 for
      the same packet flow. In this usage case, the color-blind mode of the
@@ -334,7 +507,8 @@ reg pol_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Select segment debit mode (0) or packet debit mode(1).
+     0: Select segment debit mode   [br]
+     1: Select packet debit mode
 
            ";
     ValRandomize = true;
@@ -342,13 +516,9 @@ reg pol_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Select which l3_len to use for charging the bucket in packet debit mode:
-
-     If L3_LEN_MODE is 0:
-     * (otr_l3_len + parse_ptrs[OTR_L3_PTR])
-
-     If L3_LEN_MODE is 1:
-     * (inr_l3_len + parse_ptrs[INR_L3_PTR])
+     Select which l3_len to use for charging the bucket in packet debit mode:   [br]
+     0: (otr_l3_len + parse_ptrs[OTR_L3_PTR])   [br]
+     1: (inr_l3_len + parse_ptrs[INR_L3_PTR])
 
            ";
     ValRandomize = true;
@@ -356,9 +526,9 @@ reg pol_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Adjust the packet length.
-     * pkt_len = base_len - parse_ptrs[start_hdr] + sign_extend(adjust_len)
-
+     Adjust the packet length:  [br]
+     pkt_len = base_len - parse_ptrs[start_hdr] + sign_extend(adjust_len)
+     [br][br]
      Here parse_ptrs[0]=0 for this calculation.  The adjustment is applied only on the 
      first segment of the packet (if deducting) or on the total packet length 
      (if crediting due to frame error).
@@ -677,14 +847,19 @@ addrmap mby_ppe_policers_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  pol_cntr_state_rf          POL_CNTR_STATE[10]            @0x0 += 32768;
-  pol_state_rf               POL_STATE[2]                  @0x80000 += 65536;
-  pol_cfg_rf                 POL_CFG[2]                    @0xa0000 += 128;
-  pol_dscp_rf                POL_DSCP[16]                  @0xa2000 += 512;
-  pol_vpri_rf                POL_VPRI[16]                  @0xa4000 += 128;
-  pol_time_unit_r            POL_TIME_UNIT                 @0xa4800;
-  pol_time_r                 POL_TIME                      @0xa4808;
-  pol_sweep_r                POL_SWEEP                     @0xa4810;
-  pol_sweep_last_r           POL_SWEEP_LAST                @0xa4818;
-  pol_sweep_period_max_r     POL_SWEEP_PERIOD_MAX          @0xa4820;
-}; // final size: 0xa4828 <= 0x100000 = 8<<17
+  pol_direct_map_ctrl_r      POL_DIRECT_MAP_CTRL           @0x0;
+  pol_direct_map_data_ctr0_r POL_DIRECT_MAP_DATA_CTR0      @0x8;
+  pol_direct_map_data_ctr1_r POL_DIRECT_MAP_DATA_CTR1      @0x10;
+  pol_direct_map_data_pol0_r POL_DIRECT_MAP_DATA_POL0      @0x18;
+  pol_direct_map_data_pol1_r POL_DIRECT_MAP_DATA_POL1      @0x20;
+  pol_direct_map_data_pol2_r POL_DIRECT_MAP_DATA_POL2      @0x28;
+  pol_direct_map_data_pol3_r POL_DIRECT_MAP_DATA_POL3      @0x30;
+  pol_cfg_rf                 POL_CFG[2]                    @0x0040 += 128;
+  pol_dscp_rf                POL_DSCP[16]                  @0x2040 += 512;
+  pol_vpri_rf                POL_VPRI[16]                  @0x4040 += 128;
+  pol_time_unit_r            POL_TIME_UNIT                 @0x4840;
+  pol_time_r                 POL_TIME                      @0x4848;
+  pol_sweep_r                POL_SWEEP                     @0x4850;
+  pol_sweep_last_r           POL_SWEEP_LAST                @0x4858;
+  pol_sweep_period_max_r     POL_SWEEP_PERIOD_MAX          @0x4860;
+};
