@@ -37,6 +37,9 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
       gs.wx[i] := Wx.New()
     END;
 
+    gs.main("package switch_wm\n");
+    gs.main("import PrimitiveTypes._\n");
+
     t.map.generate(gs);
 
     (* do the actual output *)
@@ -92,23 +95,23 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
   BEGIN
     IF gs.dumpSyms.insert(myTn) THEN RETURN END;
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : Option[RdlRegister]) extends RdlRegister(parent) {\n", myTn);
+    gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
            nm = f.name(debug := TRUE),
            dv = DefVal(f.defVal) DO
         gs.main("  def %s = new %s {\n", nm, StdFieldAttrs);
-        gs.main("    val r = %s to %s-1\n", Int(f.lsb), Int(f.lsb+f.width));
-        gs.main("    val resetValue = 0x%s\n", BigInt.Format(dv,base:=16));
+        gs.main("    val r = %s until %s\n", Int(f.lsb), Int(f.lsb+f.width));
+        gs.main("    val resetValue = 0x%sl\n", BigInt.Format(dv,base:=16));
         gs.main("  }\n");
       END
     END;
     gs.main("  def fields = List("); PutFields(); gs.main(")\n");
-    gs.main("  def resetableFields = List[HardwareResetable] = List("); PutFields(); gs.main(")\n");
-    gs.main("  protected var underlyingState : Underlying = 0xDEADBEEF\n");
+    gs.main("  def resetableFields : List[HardwareResetable] = List("); PutFields(); gs.main(")\n");
+    gs.main("  protected var underlyingState = 0xDEADBEEFl\n");
     gs.main("}\n\n");
     
-    PutObject(myTn, gs);
+    PutRegObject(myTn, gs);
   END GenReg;
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
@@ -123,11 +126,11 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     IF gs.dumpSyms.insert(myTn) THEN RETURN END;
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : Option[RdlRegisterFile]) extends RdlRegisterFile(parent) {\n", myTn);
+    gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) {\n", myTn);
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
-        gs.main("  val %s = Array.fill[%s](%s)(%s(this));\n",
+        gs.main("  val %s = Array.fill[%s](%s)(%s(this))\n",
                 IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn)
       END
     END;
@@ -149,11 +152,11 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
   BEGIN
     IF gs.dumpSyms.insert(myTn) THEN RETURN END;
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : Option[RdlAddressMap]) extends RdlAddressMap(parent) {\n", myTn);
+    gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlAddressMap(parent) {\n", myTn);
     FOR i := 0 TO map.children.size()-1 DO
       WITH c  = map.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
-        gs.main("  val %s = Array.fill[%s](%s)(%s(this));\n",
+        gs.main("  val %s = Array.fill[%s](%s)(%s(this))\n",
                 IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn)
       END
     END;
@@ -172,15 +175,26 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
 PROCEDURE PutObject(tn : TEXT; gs : GenState) =
   BEGIN
     gs.main("object %s {\n", tn);
-    gs.main("  def apply() : %s = {\n", tn);
-    gs.main("    new %s(None)\n", tn);
-    gs.main("  }\n");
-    gs.main("  def apply(parent : RdlHierarchy) : %s = {\n", tn);
-    gs.main("    new %s(Some(parent))\n", tn);
+    gs.main("  def apply(parent : RdlHierarchy) : %s = apply(Some(parent))\n", tn);
+    gs.main("  def apply() : %s = apply(None)\n", tn);
+    gs.main("  def apply(parent : Option[RdlHierarchy]) : %s = {\n", tn);
+    gs.main("    new %s(parent)\n", tn);
     gs.main("  }\n");
     (* what's that implicit def stuff in Michael's email? *)
     gs.main("}\n");
   END PutObject;
+
+  PROCEDURE PutRegObject(tn : TEXT; gs : GenState) =
+    BEGIN
+      gs.main("object %s {\n", tn);
+      gs.main("  def apply(parent : RdlHierarchy) : %s = {\n", tn);
+      gs.main("    new %s(parent)\n", tn);
+      gs.main("  }\n");
+      gs.main("  type Underlying = U64\n");
+
+      (* what's that implicit def stuff in Michael's email? *)
+      gs.main("}\n");
+    END PutRegObject;
 
   (**********************************************************************)
   

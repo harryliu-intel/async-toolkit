@@ -249,6 +249,7 @@ object WhiteModelServer {
     val myaddress = server.getInetAddress.getHostName
     val hostname = InetAddress.getLocalHost().getCanonicalHostName()
     val descText = "0:" + hostname + ":" + port
+    checkoutCsr
     println("Scala White Model Server for Madison Bay Switch Chip")
     println("Socket port open at " +  descText)
     println("Write server description file to " + fileName)
@@ -273,7 +274,7 @@ object WhiteModelServer {
         case eof: EOFException => {
           println("Termination of IO from client without shutdown command " + s.getInetAddress().getHostName())
         }
-      }x
+      }
       println("Disconnected.")
       is.close()
       os.flush()
@@ -281,6 +282,16 @@ object WhiteModelServer {
       s.close()
     }
     server.close()
+  }
+
+  def checkoutCsr : Unit = {
+    val startCreationTime = System.currentTimeMillis()
+    val theCsr = mby_top_map()
+    val doneCreationTime = System.currentTimeMillis()
+    val elapsedTime = doneCreationTime - startCreationTime
+    val x = theCsr.shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
+    val y = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(0).CREDIT_FRAME_ERR
+    println("Created " + RegisterCounter.count + " registers in "+ elapsedTime + "ms")
   }
 
   def main(args : Array[String]) : Unit = {
