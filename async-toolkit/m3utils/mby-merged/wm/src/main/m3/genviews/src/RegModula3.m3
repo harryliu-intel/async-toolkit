@@ -1,4 +1,4 @@
-MODULE RegModula3 EXPORTS RegModula3, RegModula3Generators;
+MODULE RegModula3 EXPORTS RegModula3, RegModula3Generators, RegModula3Utils;
 IMPORT Wr, Thread, RegAddrmap;
 IMPORT BigInt;
 FROM Fmt IMPORT F;
@@ -24,7 +24,6 @@ IMPORT RegContainer;
 IMPORT CardSet, CardSetDef;
 IMPORT RdlNum;
 FROM RegModula3IntfNaming IMPORT MapIntfNameRW;
-IMPORT RegCompiler;
 IMPORT GenViewsM3;
 
 (* this stuff really shouldnt be in this module but in Main... *)
@@ -191,19 +190,9 @@ VAR doDebug := Debug.DebugThis("RegModula3");
     
 REVEAL
   T = GenViewsM3.Compiler BRANDED Brand OBJECT
-    map  : RegAddrmap.T;
-    addr : BigInt.T;
   OVERRIDES
-    init  := Init;
     write := Write;
   END;
-
-PROCEDURE Init(t : T; map : RegAddrmap.T) : RegCompiler.T =
-  BEGIN
-    t.map := map;
-    t.addr := BigInt.Zero;
-    RETURN t
-  END Init;
 
 PROCEDURE Write(t : T; dirPath : Pathname.T; rw : RW) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =

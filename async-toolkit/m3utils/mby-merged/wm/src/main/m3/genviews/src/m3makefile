@@ -16,7 +16,7 @@ table("TextReg", "Text", "RegReg")
 
 generic_interface("RegGenerators")
 generic_interface("RegNaming")
-interface("RegCompiler")
+module("RegCompiler")
 interface ("RegGenState")
 
 
@@ -36,6 +36,8 @@ module ("GenViewsM3")
 module ("GenViewsScala")  %% fill this in
 
 module ("DecoratedComponentDef")
+
+interface ("RegModula3Utils")
 
 %%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%%
 
