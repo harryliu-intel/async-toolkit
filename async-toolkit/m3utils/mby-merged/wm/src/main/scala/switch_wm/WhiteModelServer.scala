@@ -172,7 +172,10 @@ object WhiteModelServer {
   }
 
   def pushPacket(port: Short, contents : Array[Byte]): Unit = {
-    val resultHdr = new FmModelMessageHdr(Msglength = contents.length, Version = 2.shortValue(), Type = FmModelMsgType.Packet, Sw = 0.shortValue(), Port = port)
+    val resultHdr = new FmModelMessageHdr(
+      // outer header + inner header (type + integer) + size of contents
+      Msglength = 12 + (FmModelDataType.Length + 4) + contents.length,
+      Version = 2.shortValue(), Type = FmModelMsgType.Packet, Sw = 0.shortValue(), Port = port)
     val os = portToOs(port)
 
     os.writeFmModelMessageHdr(resultHdr)
@@ -270,7 +273,7 @@ object WhiteModelServer {
         case eof: EOFException => {
           println("Termination of IO from client without shutdown command " + s.getInetAddress().getHostName())
         }
-      }
+      }x
       println("Disconnected.")
       is.close()
       os.flush()
