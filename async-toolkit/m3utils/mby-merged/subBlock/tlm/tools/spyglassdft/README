@@ -1,5 +1,0 @@
-Directory: tools/spyglassdft
-
-Files for Spyglass DFT lint tool, run on RTL to identify DFT-related coding errors/issues.
-
-See: https://securewiki.ith.intel.com/display/hdk/DFT+Lint+and+ATPG+Flow
