@@ -1,8 +1,13 @@
 INTERFACE RegCompiler;
-IMPORT RegAddrmap;
+IMPORT RegAddrmap, BigInt;
 
 TYPE
-  T = OBJECT METHODS
+  T <: Public;
+
+  Public = OBJECT
+    map  : RegAddrmap.T;
+    addr : BigInt.T;
+  METHODS
     init(map : RegAddrmap.T) : T;
   END;
 

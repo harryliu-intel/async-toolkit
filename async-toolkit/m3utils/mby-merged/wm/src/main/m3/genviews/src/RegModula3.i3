@@ -1,5 +1,6 @@
 INTERFACE RegModula3;
 IMPORT RegCompiler;
+IMPORT Wx, Pathname;
 
 TYPE Public = RegCompiler.T;
      T      <: Public;

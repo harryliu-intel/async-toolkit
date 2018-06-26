@@ -5,6 +5,6 @@ CONST PathSep = "__";
 
 CONST Brand = "Scala";
 
-CONST IdiomName = RegModula3Constants.IdiomName;
+PROCEDURE IdiomName(txt : TEXT; debug : BOOLEAN := TRUE) : TEXT;
       
 END RegScalaConstants.

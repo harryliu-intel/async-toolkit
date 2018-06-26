@@ -27,7 +27,7 @@ PROCEDURE MapIntfName(a : RegAddrmap.T; gsP : RegGenState.T) : TEXT =
 
 PROCEDURE MapTypename(a : RegAddrmap.T; state : RegGenState.T) : TEXT =
   BEGIN
-    RETURN MapIntfName(a, state) & ".T"
+    RETURN MapIntfName(a, state) 
   END MapTypename;
 
 PROCEDURE FieldName(f : RegField.T; debug : BOOLEAN) : TEXT =
