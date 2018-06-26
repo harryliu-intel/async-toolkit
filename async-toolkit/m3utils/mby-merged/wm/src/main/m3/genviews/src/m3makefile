@@ -51,7 +51,7 @@ module("RegModula3IntfNaming")
 
 %%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%
 
-interface ("RegScalaConstants")
+module   ("RegScalaConstants")
 module   ("RegScala")
 module   ("RegScalaNaming")
 interface("RegScalaGenerators")
