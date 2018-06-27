@@ -1,5 +1,7 @@
 package switch_wm
 
+import switch_wm.PrimitiveTypes.U64
+
 object RegisterCounter {
     var count = 0
 }
@@ -36,6 +38,14 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
 
   protected var underlyingState : Long
   def fields : List[RdlField]
+
+  def foreachResetableField(f : RdlRegister[U64]#HardwareResetable => Unit) = {
+    fields foreach  {
+      _ match {
+        case r : RdlRegister[U64]#HardwareResetable => f(r)
+      }
+    }
+  }
   //  abstract val resetableFields : List[HardwareResetable] = for (x <- fields) if (x.isInstanceOf[HardwareResetable]) yield x
 
   protected def extract(r : Range) : Long = (underlyingState >> r.start) & (-1 << (r.start - r.end))

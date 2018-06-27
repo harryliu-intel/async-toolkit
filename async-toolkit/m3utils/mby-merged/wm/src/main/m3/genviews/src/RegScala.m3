@@ -169,12 +169,22 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     gs.main("package switch_wm\n");
     gs.main("import PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) {\n", myTn);
+    gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) ", myTn);
+    IF (rf.children.size() = 1) THEN
+      WITH c = rf.children.get(0),
+           tn = ComponentTypeName(c.comp,gs) DO
+           gs.main("with DegenerateHierarchy[IndexedSeq[%s]]", tn);
+      END
+    END;
+    gs.main("{\n");
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
-        gs.main("  val %s = Array.fill[%s](%s)(%s(this))\n",
-                IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn)
+        gs.main("  val %s = IndexedSeq.fill[%s](%s)(%s(this))\n",
+                IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn);
+        IF rf.children.size() = 1 THEN
+          gs.main("  def next : IndexedSeq[%s] = %s\n", tn, IdiomName(c.nm));
+        END
       END
     END;
     gs.main("  def children =");
@@ -209,8 +219,13 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     FOR i := 0 TO map.children.size()-1 DO
       WITH c  = map.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
-        gs.main("  val %s = Array.fill[%s](%s)(%s(this))\n",
-                IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn)
+        IF (c.array = NIL) THEN
+          gs.main("  val %s = DegenerateIndexedSeq[%s](%s(this))\n",
+                  IdiomName(c.nm), tn, tn)
+        ELSE
+          gs.main("  val %s = IndexedSeq.fill[%s](%s)(%s(this))\n",
+                  IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn)
+        END
       END
     END;
     gs.main("  def children =");
