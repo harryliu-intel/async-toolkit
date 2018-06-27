@@ -12,7 +12,7 @@ FROM Fmt IMPORT Int, F;
 IMPORT RegComponent;
 FROM RegScalaConstants IMPORT IdiomName;
 IMPORT Debug;
-IMPORT TextSetDef;
+IMPORT AtomList, Atom;
 
 (* stuff inherited from m3 *)
 FROM RegModula3Utils IMPORT CopyWx, DefVal;
@@ -26,13 +26,12 @@ REVEAL
 PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
-    gs := NEW(GenState,
-              dumpSyms   := NEW(TextSetDef.T).init(),
-              dirPath    := dirPath,
-              map        := t.map);
+    gs : GenState := RegGenState.T.init(NEW(GenState, map := t.map), dirPath);
     intfNm := t.map.intfName(gs);
-    path := dirPath & "/" & intfNm & ".scala";
+    fn := intfNm & ".scala";
+    path := dirPath & "/" & fn;
   BEGIN
+    gs.defFn := fn;
     FOR i := FIRST(gs.wx) TO LAST(gs.wx) DO
       gs.wx[i] := Wx.New()
     END;
@@ -43,6 +42,11 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
     t.map.generate(gs);
 
     (* do the actual output *)
+    IF IndividualTypeFiles THEN
+      (* the last object started *)
+      path := gs.dirPath & "/" & gs.curSym & ".scala"
+    END;
+    
     Debug.Out("Copying output to " & path);
     CopyWx(gs.wx, path)
   END Write;
@@ -52,12 +56,46 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
 TYPE
   GenState = RegScalaGenState.T OBJECT
     map : RegAddrmap.T; (* do we really need this? could refer to T instead *)
+    curSym : TEXT := NIL;
+    defFn : Pathname.T := NIL;
   METHODS
     p(sec : Section; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsP;
     main(fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsMain;
   OVERRIDES
     put := PutGS;
+    newSymbol := NewSymbol;
   END;
+
+CONST IndividualTypeFiles = TRUE;
+      
+PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  VAR
+    res : BOOLEAN;
+    path : Pathname.T;
+  BEGIN
+    res := RegGenState.T.newSymbol(gs, nm);
+
+    IF IndividualTypeFiles AND res THEN
+      IF gs.curSym = NIL THEN
+        path := gs.dirPath & "/" & gs.defFn
+      ELSE
+        path := gs.dirPath & "/" & nm & ".scala"
+      END;
+      TRY
+        Debug.Out("Copying output to " & path);
+        CopyWx(gs.wx, path)
+      EXCEPT
+        OSError.E(x) => x := AtomList.Append(x,
+                                             AtomList.List1(
+                                                 Atom.FromText(": " & path)));
+        RAISE OSError.E(x)
+      END;
+
+      gs.curSym := nm
+    END;
+    RETURN res
+  END NewSymbol;
   
 PROCEDURE PutGS(gs : GenState; sec : Section; txt : TEXT) =
   BEGIN
@@ -77,7 +115,8 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
 CONST StdFieldAttrs = "RdlField with HardwareReadable with HardwareWritable with HardwareResetable";
 
-PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
+PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     gs : GenState := genState;
     myTn := r.typeName(gs);
@@ -93,7 +132,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
     END PutFields;
     
   BEGIN
-    IF gs.dumpSyms.insert(myTn) THEN RETURN END;
+    IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
     FOR i := 0 TO r.fields.size()-1 DO
@@ -124,7 +163,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     gs : GenState := genState;
     myTn := rf.typeName(gs);
   BEGIN
-    IF gs.dumpSyms.insert(myTn) THEN RETURN END;
+    IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) {\n", myTn);
     FOR i := 0 TO rf.children.size()-1 DO
@@ -150,7 +189,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     gs : GenState := gsF;
     myTn := map.typeName(gs);  
   BEGIN
-    IF gs.dumpSyms.insert(myTn) THEN RETURN END;
+    IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlAddressMap(parent) {\n", myTn);
     FOR i := 0 TO map.children.size()-1 DO

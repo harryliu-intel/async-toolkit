@@ -75,9 +75,10 @@ PROCEDURE DefProc(gs     : GenState;
     ttn := ComponentTypeNameInHier(c, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(c, gs, TypeHier.Addr);
     utn := ComponentTypeNameInHier(c, gs, TypeHier.Update);
+  <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
     pnm := ComponentName[ofType](c, gs);
-    WITH hadIt = gs.dumpSyms.insert(pnm) DO
+    WITH hadIt = NOT gs.newSymbol(pnm) DO
 
       IF FALSE THEN
         Debug.Out(F("hadIt(%s) = %s", pnm, Fmt.Bool(hadIt)))
@@ -122,11 +123,10 @@ PROCEDURE GsImain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
 PROCEDURE InitGS(n, o : GenState) : GenState =
   BEGIN
+    n := RegGenState.T.initF(n, o);
     n.map := o.map;
     n.wx := o.wx;
-    n.dumpSyms := o.dumpSyms;
     n.rw := o.rw;
-    n.dirPath := o.dirPath;
     n.th := o.th;
     RETURN n
   END InitGS;
@@ -198,7 +198,6 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; rw : RW)
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
     gs := NEW(GenState,
-              dumpSyms    := NIL, (* ? *)
               rw          := rw,
               dirPath     := dirPath,
               map         := t.map,
@@ -546,7 +545,7 @@ PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
     ccnt : CARDINAL := 0;
     file := ThisFile(); line := Fmt.Int(ThisLine());
   BEGIN
-    IF gs.dumpSyms.insert(map.typeName(gs)) THEN RETURN END;
+    IF NOT gs.newSymbol(map.typeName(gs)) THEN RETURN END;
     gs.put(Section.IMaintype, "\n");
     gs.put(Section.IMaintype, "TYPE\n");
     gs.put(Section.IMaintype,
@@ -623,7 +622,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
   BEGIN
     gs.put(Section.IMaintype, F("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine())));
     
-    gs.dumpSyms := NEW(TextSetDef.T).init();
+    gs := RegGenState.T.init(gs, gs.dirPath);
     (* clear symbols dumped, so we can re-generate the entire hier *)
     
     GenAddrmapRecord(map, gs);
@@ -1324,8 +1323,9 @@ PROCEDURE GenRegfileCsr(rf : RegRegfile.T; gs : GenState) =
     ttn := ComponentTypeNameInHier(rf, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(rf, gs, TypeHier.Addr);
     ccnt : CARDINAL := 0;
+  <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
-    IF gs.dumpSyms.insert(pnm) THEN RETURN END;
+    IF NOT gs.newSymbol(pnm) THEN RETURN END;
     gs.mdecl( "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T) =\n",
                pnm,
                ttn,
@@ -1360,8 +1360,9 @@ PROCEDURE GenRegCsr(r  : RegReg.T;
     pnm := ComponentCsrName(r, gs);
     ttn := ComponentTypeNameInHier(r, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(r, gs, TypeHier.Addr);
+  <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
-    IF gs.dumpSyms.insert(pnm) THEN RETURN END;
+    IF NOT gs.newSymbol(pnm) THEN RETURN END;
     gs.mdecl(
            "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T) =\n",
            pnm, ttn, atn);
@@ -1516,7 +1517,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     ccnt : CARDINAL := 0;
     gs : GenState := genState;
   BEGIN
-    IF gs.dumpSyms.insert(rf.typeName(gs)) THEN RETURN END;
+    IF NOT gs.newSymbol(rf.typeName(gs)) THEN RETURN END;
     gs.put(Section.IComponents, F("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine())));
     gs.put(Section.IComponents, "TYPE\n");
     gs.put(Section.IComponents, F("  %s = ", rf.typeName(gs)));
@@ -1673,9 +1674,10 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
   VAR
     gs : GenState := genState;
     ccnt := 0;
+  <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
     (* check if already dumped *)
-    IF gs.dumpSyms.insert(r.typeName(gs)) THEN RETURN END;
+    IF NOT gs.newSymbol(r.typeName(gs)) THEN RETURN END;
     
     gs.put(Section.IComponents, F("TYPE\n"));
     gs.put(Section.IComponents, F("  %s = RECORD (* %s:%s *)\n", r.typeName(gs),ThisFile(),Fmt.Int(ThisLine())));
