@@ -408,7 +408,7 @@ reg pol_cfg_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[63:23] = 41'h0;
+  } _RSVD2_[63:23] = 41'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -451,7 +451,7 @@ reg pol_cfg_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[18:17] = 2'h0;
+  } _RSVD1_[18:17] = 2'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -503,7 +503,7 @@ reg pol_cfg_r {
 
            ";
     ValRandomize = true;
-  } PRECEDENCEE[13:13] = 1'h0;
+  } PRECEDENCE[13:13] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -524,26 +524,13 @@ reg pol_cfg_r {
     ValRandomize = true;
   } L3_LEN_MODE[11:11] = 1'h0;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     Adjust the packet length:  [br]
-     pkt_len = base_len - parse_ptrs[start_hdr] + sign_extend(adjust_len)
-     [br][br]
-     Here parse_ptrs[0]=0 for this calculation.  The adjustment is applied only on the 
-     first segment of the packet (if deducting) or on the total packet length 
-     (if crediting due to frame error).
+      Reserved
 
            ";
     ValRandomize = true;
-  } START_HDR[10:8] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     See description of start_hdr.
-
-           ";
-    ValRandomize = true;
-  } ADJUST_LEN[7:0] = 8'h0;
+  } _RSVD0_[10:0] = 11'h0;
 };
 regfile pol_cfg_rf {
   pol_cfg_r POL_CFG[16] += 8;

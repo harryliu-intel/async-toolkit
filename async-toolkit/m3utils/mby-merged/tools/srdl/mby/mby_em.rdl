@@ -208,7 +208,7 @@ reg em_key_mask0_r {
 
            ";
     ValRandomize = true;
-  } KEY8_MASK[63:0] = 64'h0;
+  } KEY8_MASK[31:0] = 32'h0;
 };
 regfile em_key_mask0_rf {
   em_key_mask0_r EM_KEY_MASK0[64] += 8;
