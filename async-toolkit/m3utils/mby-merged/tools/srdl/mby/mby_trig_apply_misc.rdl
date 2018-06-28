@@ -396,7 +396,7 @@ reg ma_tcn_wm_r {
     desc = "
            ";
     ValRandomize = true;
-  } WM[8:0] = 9'h1e;
+  } WM[8:0] = 9'h01e;
 };
 
 
