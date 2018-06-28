@@ -560,7 +560,7 @@ reg entropy_hash_key_mask_r {
   HandCoded = true;
   name = "Hash key bit mask";
   desc = "
-  Provides a 64 byte hask key mask for each of 16 hash key profiles.
+  Provides a 64 byte hash key mask for each of 16 hash key profiles.
   Indexed first by hash number, then by:
   [code]
   (KEY_MASK_PROFILE * 8) + DW
