@@ -49,7 +49,7 @@ module mby_wm_top();
         if ($test$plusargs("WHITE_MODEL_EN")) begin
             string model_server = "scala";
 
-            //Plus arg to choose between "scala" or "m3" WM server.
+            //Plus arg to choose between "scala" or "M3" WM server.
             //Connects to Scala WM server by default
             if ($value$plusargs("WHITE_MODEL_SERVER=%s", model_server)) begin
                 `uvm_info(get_full_name(), $sformatf("Using %s WM Server",model_server),UVM_FULL)
