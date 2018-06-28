@@ -167,7 +167,7 @@ object WhiteModelServer {
     val hostnameArray = Array.ofDim[Byte](stringSize)
     is.readFully(hostnameArray)
     val hostname =  hostnameArray.map(_.toChar).mkString
-    println("Configuring port " + tcpPort + " of  " + " as egress to switch port "  + switchPort)
+    println(s"Configuring = $hostname:$tcpPort as egress to switch port $switchPort")
     val socket = new Socket(hostname, tcpPort)
 
     portToOs(switchPort) = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()))
@@ -325,7 +325,10 @@ object WhiteModelServer {
     // or
     val group2 = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
     //
-    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT
+    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
+    val memoryMap = theCsr.addressRegisterMap(0)
+    //outputshift assign 1
+
 
 
     println("Created " + RegisterCounter.count + " registers in "+ elapsedTime + "ms")
