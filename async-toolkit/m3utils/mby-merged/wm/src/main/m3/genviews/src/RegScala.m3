@@ -35,9 +35,6 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
       gs.wx[i] := Wx.New()
     END;
 
-    gs.main("package switch_wm\n");
-    gs.main("import PrimitiveTypes._\n");
-
     t.map.generate(gs);
 
     (* do the actual output *)

@@ -9,6 +9,6 @@ class DegenerateIndexedSeqImpl[+A](val underlying : A) extends DegenerateIndexed
 
 }
 object DegenerateIndexedSeq {
-  def apply[A](elem: A) = new DegenerateIndexedSeqImpl[A](elem)
+  def apply[A](elem: A) : DegenerateIndexedSeq[A] = new DegenerateIndexedSeqImpl[A](elem)
   implicit def toScalar[A](x : DegenerateIndexedSeq[A]) : A = x(0)
 }
