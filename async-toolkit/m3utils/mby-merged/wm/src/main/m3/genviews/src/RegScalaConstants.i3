@@ -1,5 +1,4 @@
 INTERFACE RegScalaConstants;
-IMPORT RegModula3Constants;
 
 CONST PathSep = "__";
 

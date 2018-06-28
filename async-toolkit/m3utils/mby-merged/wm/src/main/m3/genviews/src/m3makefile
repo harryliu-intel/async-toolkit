@@ -16,8 +16,8 @@ table("TextReg", "Text", "RegReg")
 
 generic_interface("RegGenerators")
 generic_interface("RegNaming")
-module("RegCompiler")
-interface ("RegGenState")
+module    ("RegCompiler")
+module    ("RegGenState")
 
 
 interface ("RegChild")

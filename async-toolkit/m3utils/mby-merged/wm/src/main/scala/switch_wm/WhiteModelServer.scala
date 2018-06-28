@@ -3,6 +3,8 @@ import Implicits._
 import SwitchModelImplicits._
 import java.io._
 
+import switch_wm.PrimitiveTypes.U64
+
 
 
 object WhiteModelServer {
@@ -290,8 +292,52 @@ object WhiteModelServer {
     val doneCreationTime = System.currentTimeMillis()
     val elapsedTime = doneCreationTime - startCreationTime
     val x = theCsr.shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
-    val y = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(0).CREDIT_FRAME_ERR
+
+
+    // a, b, c are the same field:
+    val a = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
+    /// rx_ppe is not an array, so it can be referenced through transparently
+    val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
+    /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
+    val c = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
+
+
+    //
+    implicit class csum_convenience (val x : mby_ppe_modify_map) {
+       def ipv4_hdr = List(x.MOD_CSUM_CFG1.IPV4_0, x.MOD_CSUM_CFG1.IPV4_1, x.MOD_CSUM_CFG1.IPV4_2)
+       def ipv6_hdr = List(x.MOD_CSUM_CFG1.IPV6_1, x.MOD_CSUM_CFG1.IPV6_2, x.MOD_CSUM_CFG1.IPV6_2)
+    }
+    implicit class profile_group_abstraction(val x : mod_profile_group_r) {
+      def get_group(i : Int) : mod_profile_group_r#HardwareWritable = {
+        i match {
+          case 1 => x.GROUP_1
+          case 2 => x.GROUP_2
+          case 3 => x.GROUP_3
+          case 4 => x.GROUP_4
+          case 5 => x.GROUP_5
+          case 6 => x.GROUP_6
+          case 7 => x.GROUP_7
+        }
+      }
+    }
+    // now, can reference these guys more abstractly
+    val ipv4_h = theCsr.mpt(0).tx_ppe.modify(0).ipv4_hdr
+    // or
+    val group2 = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
+    //
+    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT
+
+
     println("Created " + RegisterCounter.count + " registers in "+ elapsedTime + "ms")
+    println("Reseting fields that are resetable")
+    val resetStartTime = System.currentTimeMillis()
+    var resetCount = 0
+    def countFieldsReset(r : RdlRegister[U64]#HardwareResetable) = { r.reset() ; resetCount += 1}
+    theCsr.foreachResetableField(countFieldsReset(_) )
+    val resetDoneTime = System.currentTimeMillis()
+    val resetElapsedTime = resetDoneTime - resetStartTime
+    println(" Reset took " + resetElapsedTime + "ms and hit " + resetCount + " fields!")
+
   }
 
   def main(args : Array[String]) : Unit = {

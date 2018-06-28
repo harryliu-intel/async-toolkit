@@ -99,8 +99,9 @@ class PrimitiveTypeOutputStream(os : OutputStream) extends DataOutputStream(os) 
     }
 }
 
-
-// object PrimitiveTypeInputStream {
-//     implicit def isToPrimitiveTypeInputStream(is : InputStream) : PrimitiveTypeInputStream = new PrimitiveTypeInputStream(is)
-// }
-
+trait DegenerateHierarchy[T <: IndexedSeq[_ <: RdlElement]] extends RdlHierarchy {
+  protected def next : T
+}
+object DegenerateHierarchy {
+  implicit def toNextLevel[T <: IndexedSeq[_ <: RdlElement]](x: DegenerateHierarchy[T]) : T = x.next
+}

@@ -5,21 +5,21 @@ IMPORT RegScalaGenState;
 FROM RegScalaConstants IMPORT IdiomName;
 
 PROCEDURE RegTypename(r : RegReg.T; gsP : RegGenState.T) : TEXT =
-  VAR
+  <*UNUSED*>VAR
     gs : RegScalaGenState.T := gsP;
   BEGIN
     RETURN r.path & r.nm 
   END RegTypename;
 
 PROCEDURE RegfileTypename(r : RegRegfile.T; gsP : RegGenState.T) : TEXT =
-  VAR
+  <*UNUSED*>VAR
     gs : RegScalaGenState.T := gsP;
   BEGIN
     RETURN r.path & r.nm 
   END RegfileTypename;
 
 PROCEDURE MapIntfName(a : RegAddrmap.T; gsP : RegGenState.T) : TEXT =
-  VAR
+  <*UNUSED*>VAR
     gs : RegScalaGenState.T := gsP;
   BEGIN
     RETURN a.nm

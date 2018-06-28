@@ -1,13 +1,21 @@
 package switch_wm
 
+import switch_wm.PrimitiveTypes.U64
+
 
 abstract class RdlElement {
   import scala.collection._
   val changes : mutable.Set[RdlElement => Unit] = new mutable.HashSet[RdlElement => Unit]
   def addressRegisterMap(baseAddress : Int) : Map[Int, RdlElement]
+  def foreachResetableField(f : RdlRegister[U64]#HardwareResetable => Unit)
 }
 
-abstract class RdlHierarchy(val parent : Option[RdlHierarchy]) extends RdlElement
+abstract class RdlHierarchy(val parent : Option[RdlHierarchy]) extends RdlElement {
+  def children : List[IndexedSeq[_ <: RdlElement]]
+  def foreachResetableField(f : RdlRegister[U64]#HardwareResetable => Unit) = {
+    children foreach (_.foreach(_.foreachResetableField(f)))
+  }
+}
 trait RdlDegenerateHierarchy extends RdlHierarchy {
   def apply : RdlElement
 }
