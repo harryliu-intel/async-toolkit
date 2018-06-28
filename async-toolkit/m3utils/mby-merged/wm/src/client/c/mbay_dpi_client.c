@@ -41,6 +41,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <libgen.h>
+#include <sys/param.h>
 #ifndef NO_SV
 #include "svdpi_src.h"
 #endif
@@ -812,11 +813,14 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 static int connect_egress(int phys_port, int server_fd, int client_fd,
 						  int client_port, int *egress_fd)
 {
-    char hostname[] = "localhost";
-    char buffer[256];
+    char hostname[MAXHOSTNAMELEN];
+    char buffer[MAXHOSTNAMELEN + 2];
     uint32_t len;
 
-    bzero(buffer, 256);
+    int ghnResult = gethostname(hostname, MAXHOSTNAMELEN);
+    if (ghnResult != 0) LOG_ERROR("Problem getting hostname!");
+
+    bzero(buffer, MAXHOSTNAMELEN + 2);
 
     /* Message format is: 2B tcp client port, 510B hostname */
     *((uint16_t *)buffer) = htons(client_port);
