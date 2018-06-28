@@ -16,8 +16,8 @@ table("TextReg", "Text", "RegReg")
 
 generic_interface("RegGenerators")
 generic_interface("RegNaming")
-interface("RegCompiler")
-interface ("RegGenState")
+module    ("RegCompiler")
+module    ("RegGenState")
 
 
 interface ("RegChild")
@@ -37,6 +37,8 @@ module ("GenViewsScala")  %% fill this in
 
 module ("DecoratedComponentDef")
 
+interface ("RegModula3Utils")
+
 %%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%%
 
 module   ("RegModula3Constants")
@@ -49,7 +51,7 @@ module("RegModula3IntfNaming")
 
 %%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%
 
-interface ("RegScalaConstants")
+module   ("RegScalaConstants")
 module   ("RegScala")
 module   ("RegScalaNaming")
 interface("RegScalaGenerators")

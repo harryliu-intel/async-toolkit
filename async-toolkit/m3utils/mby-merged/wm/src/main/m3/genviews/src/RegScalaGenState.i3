@@ -1,7 +1,6 @@
 INTERFACE RegScalaGenState;
 IMPORT RegGenState;
-IMPORT Wx, TextSet, Pathname;
-FROM RegScala IMPORT Phase;
+IMPORT Wx;
 
 TYPE
   Section = { Import, Components, Maintype, Trailer };
