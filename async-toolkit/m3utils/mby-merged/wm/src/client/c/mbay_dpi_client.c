@@ -902,37 +902,38 @@ static int create_client_socket(int *fd, int *port)
  * @retval		OK if successful
  */
 static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
-					   uint32_t *len)
+		uint32_t *len)
 {
-    uint8_t msg[MAX_MSG_LEN];
-    struct pollfd pfd;
-    uint32_t msg_len;
+	uint8_t msg[MAX_MSG_LEN];
+	struct pollfd pfd;
+	uint32_t msg_len;
+	uint32_t pkt_len;
 	uint16_t type;
 	uint16_t port;
-    int err;
+	int err;
 
-    if (wm_egress_fd[phys_port] == -1) {
-        LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
-            phys_port);
+	if (wm_egress_fd[phys_port] == -1) {
+		LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
+				phys_port);
 		return ERR_RUNTIME;
-    }
+	}
 
-    bzero(&pfd, sizeof(struct pollfd));
-    pfd.fd = wm_egress_fd[phys_port];
-    pfd.events = POLLIN;
+	bzero(&pfd, sizeof(struct pollfd));
+	pfd.fd = wm_egress_fd[phys_port];
+	pfd.events = POLLIN;
 
-    err = poll(&pfd, 1, timeout);
+	err = poll(&pfd, 1, timeout);
 	if (err == -1) {
 		LOG_ERROR("Failed to poll on egress fd of phys port %d: %s\n",
-				  phys_port, strerror(errno));
+				phys_port, strerror(errno));
 		return ERR_NETWORK;
 	}
 
-    if(!(pfd.revents & POLLIN)) {
+	if(!(pfd.revents & POLLIN)) {
 		LOG_DEBUG("No events on fd associated to phys port %d\n", phys_port);
 		*len = 0;
-        return OK;
-    }
+		return OK;
+	}
 
 	err = wm_receive(pfd.fd, msg, &msg_len, &type, &port);
 	if (err)
@@ -944,23 +945,31 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
 		return OK;
 	}
 
-    if (type != MODEL_MSG_PACKET) {
-        LOG_ERROR("Received unexpected message types %d\n", type);
+	if (type != MODEL_MSG_PACKET) {
+		LOG_ERROR("Received unexpected message types %d\n", type);
 		return ERR_RUNTIME;
-    }
+	}
 
 	if (port != phys_port) {
 		LOG_ERROR("Port should be %d instead of %d\n", phys_port, port);
 		return ERR_RUNTIME;
 	}
 
-    /* FIXME This needs to support PACKET_META */
-    if (msg[0] != WM_DATA_TYPE_PACKET) {
-        LOG_ERROR("Unsupported data type %d\n", msg[0]);
+	/* FIXME This needs to support PACKET_META */
+	if (msg[0] != WM_DATA_TYPE_PACKET) {
+		LOG_ERROR("Unsupported data type %d\n", msg[0]);
 		return ERR_RUNTIME;
-    }
+	}
 
-    *len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+	pkt_len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+
+	if (pkt_len > msg_len - WM_DATA_TLV_SIZE) {
+		LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
+				pkt_len, msg_len - WM_DATA_TLV_SIZE);
+		*len = 0;
+		return ERR_RUNTIME;
+	}
+	*len = pkt_len;
 	memcpy(packet, msg + WM_DATA_TLV_SIZE, *len);
 
 	/* TODO in theory there could be other TLVs in the message */
