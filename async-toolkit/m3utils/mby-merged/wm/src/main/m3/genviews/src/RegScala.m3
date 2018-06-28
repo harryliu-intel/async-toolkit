@@ -31,7 +31,6 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
     fn := intfNm & ".scala";
     path := dirPath & "/" & fn;
   BEGIN
-    gs.defFn := fn;
     FOR i := FIRST(gs.wx) TO LAST(gs.wx) DO
       gs.wx[i] := Wx.New()
     END;
@@ -43,21 +42,42 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; phase : Phase)
 
     (* do the actual output *)
     IF IndividualTypeFiles THEN
-      (* the last object started *)
-      path := gs.dirPath & "/" & gs.curSym & ".scala"
-    END;
-    
-    Debug.Out("Copying output to " & path);
-    CopyWx(gs.wx, path)
+      (* this is the last pending symbol .. *)
+      PushPendingOutput(gs)
+    ELSE
+      Debug.Out("Copying output to " & path);
+      CopyWx(gs.wx, path)
+    END
   END Write;
 
+PROCEDURE PushPendingOutput(gs : GenState)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  (* this routine is used to push out the pending output in case of
+     "IndividualTypeFiles" *)
+  VAR
+    path : Pathname.T;
+  BEGIN
+    (* is it the first symbol, in that case there is no output yet *)
+    IF gs.curSym = NIL THEN RETURN END;
+      
+    path := gs.dirPath & "/" & gs.curSym & ".scala";
+    TRY
+      Debug.Out("Copying output to " & path);
+      CopyWx(gs.wx, path)
+    EXCEPT
+      OSError.E(x) => x := AtomList.Append(x,
+                                           AtomList.List1(
+                                               Atom.FromText(": " & path)));
+      RAISE OSError.E(x)
+    END
+  END PushPendingOutput;
+  
   (**********************************************************************)
   
 TYPE
   GenState = RegScalaGenState.T OBJECT
     map : RegAddrmap.T; (* do we really need this? could refer to T instead *)
     curSym : TEXT := NIL;
-    defFn : Pathname.T := NIL;
   METHODS
     p(sec : Section; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsP;
     main(fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsMain;
@@ -72,25 +92,29 @@ PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     res : BOOLEAN;
-    path : Pathname.T;
   BEGIN
+    (* is it OK to generate this symbol?  
+       if we had it before -> NOT OK
+       if we did not have it before -> OK
+     *)
     res := RegGenState.T.newSymbol(gs, nm);
 
+    (* if we are using "IndividualTypeFiles" we push out the output
+       from the previous work before starting the next type, and do so
+       into its own file. 
+
+       if we are NOT using "IndividualTypeFiles" we instead accumulate
+       all the output of ALL the types in a single big output stream
+       and dump it at the end in Write().
+
+       This slightly screwy design allows us to share more code with
+       the Modula-3 generator, which generates each addrmap into its
+       own file, but not every single individual type.
+    *)
+    
     IF IndividualTypeFiles AND res THEN
-      IF gs.curSym = NIL THEN
-        path := gs.dirPath & "/" & gs.defFn
-      ELSE
-        path := gs.dirPath & "/" & nm & ".scala"
-      END;
-      TRY
-        Debug.Out("Copying output to " & path);
-        CopyWx(gs.wx, path)
-      EXCEPT
-        OSError.E(x) => x := AtomList.Append(x,
-                                             AtomList.List1(
-                                                 Atom.FromText(": " & path)));
-        RAISE OSError.E(x)
-      END;
+
+      PushPendingOutput(gs);
 
       gs.curSym := nm
     END;
@@ -170,7 +194,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     gs.main("import PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) ", myTn);
-    IF (rf.children.size() = 1) THEN
+    IF rf.children.size() = 1 THEN
       WITH c = rf.children.get(0),
            tn = ComponentTypeName(c.comp,gs) DO
            gs.main("with DegenerateHierarchy[IndexedSeq[%s]]", tn);
@@ -189,10 +213,9 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     END;
     gs.main("  def children =");
         FOR i := 0 TO rf.children.size()-1 DO
-              WITH c  = rf.children.get(i),
-                   tn = ComponentTypeName(c.comp,gs) DO
-                gs.main(" %s ::", IdiomName(c.nm))
-              END
+          WITH c  = rf.children.get(i) DO
+            gs.main(" %s ::", IdiomName(c.nm))
+          END
         END;
             gs.main("Nil\n");
     gs.main("}\n");
@@ -230,10 +253,9 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     END;
     gs.main("  def children =");
     FOR i := 0 TO map.children.size()-1 DO
-          WITH c  = map.children.get(i),
-               tn = ComponentTypeName(c.comp,gs) DO
-            gs.main(" %s ::", IdiomName(c.nm))
-          END
+      WITH c  = map.children.get(i) DO
+        gs.main(" %s ::", IdiomName(c.nm))
+      END
     END;
     gs.main("Nil\n");
     gs.main("}\n");
