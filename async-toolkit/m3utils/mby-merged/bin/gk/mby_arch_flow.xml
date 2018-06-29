@@ -1,0 +1,19 @@
+<data>
+	<row>
+		<DUT>mby</DUT>
+		<Stage>doesnothing</Stage>
+		<Stage_Exec>echo</Stage_Exec>
+		<AdditionalArgs>hi this stage does nothing</AdditionalArgs>
+		<XdutStageDep></XdutStageDep>
+		<PassRate></PassRate>
+		<IsGating>0</IsGating>
+		<Turnin>1</Turnin>
+		<Release>1</Release>
+		<PostRelease>0</PostRelease>
+		<Conditional></Conditional>
+		<Rel_AdditionalArgs></Rel_AdditionalArgs>
+		<Active>1</Active>
+		<Singleton>0</Singleton>
+		<Type>other</Type>
+	</row>
+</data>
