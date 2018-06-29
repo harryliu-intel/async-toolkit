@@ -398,7 +398,7 @@ u_mby_ti_high (
 // END CHASSIS_NOT_PRESENT
 );
 
-
+mby_wm_top mby_wm();
 
 dummy_dut dummy_dut_();
 

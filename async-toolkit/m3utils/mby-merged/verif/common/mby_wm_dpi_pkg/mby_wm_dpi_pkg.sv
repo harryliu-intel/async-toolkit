@@ -32,6 +32,10 @@ package mby_wm_dpi_pkg;
     import "DPI-C" function wm_server_stop();
     import "DPI-C" function wm_reg_write(int addr, longint val);
     import "DPI-C" function wm_reg_read(input int addr,  output longint val);
+    import "DPI-C" function wm_svpkt_push(input int port,  inout byte data[], input int len);
+    import "DPI-C" function wm_svpkt_get(output int port, output byte data[], output int len);
+    //This function is used for debug purpose only-- To connect directly to Idea IDE and debug Scala code.
+    import "DPI-C" function wm_connect(string server_path);
 
 endpackage
 
