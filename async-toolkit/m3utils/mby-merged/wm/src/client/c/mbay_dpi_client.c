@@ -794,7 +794,7 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 				port_str, strerror(errno));
 		close(*server_fd);
 	}
-
+        freeaddrinfo(result);
 	LOG_DEBUG("Connected to model_server at %s:%s\n", addr_str, port_str);
 	setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
 
