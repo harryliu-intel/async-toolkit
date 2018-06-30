@@ -14,22 +14,50 @@ sequence("RegRegfile", "RegRegfile")
 
 table("TextReg", "Text", "RegReg")
 
-module("RegModula3")
-interface("RegModula3GenState")
-module("RegModula3Naming")
-interface("RegModula3Generators")
-%module("IdStyles")
+generic_interface("RegGenerators")
+generic_interface("RegNaming")
+module    ("RegCompiler")
+module    ("RegGenState")
+
 
 interface ("RegChild")
 interface ("RegComponent")
 
 sequence ("RegChild", "RegChild")
 
-interface ("RegGenState")
 
 module ("RegProperty")
 
 array_sort("RegField", "RegField")
+
+interface ("GenViews")
+generic_module("GenViews")
+module ("GenViewsM3")
+module ("GenViewsScala")  %% fill this in
+
+module ("DecoratedComponentDef")
+
+interface ("RegModula3Utils")
+
+%%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%%
+
+module   ("RegModula3Constants")
+module   ("RegModula3")
+module   ("RegModula3Naming")
+interface("RegModula3Generators")
+interface("RegModula3GenState")
+
+module("RegModula3IntfNaming")
+
+%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%
+
+module   ("RegScalaConstants")
+module   ("RegScala")
+module   ("RegScalaNaming")
+interface("RegScalaGenerators")
+interface("RegScalaGenState")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 implementation ("Main")
 

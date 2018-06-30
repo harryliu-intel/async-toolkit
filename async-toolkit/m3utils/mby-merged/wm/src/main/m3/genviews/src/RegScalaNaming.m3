@@ -1,37 +1,36 @@
-MODULE RegModula3Naming;
+MODULE RegScalaNaming;
 IMPORT RegReg, RegRegfile, RegAddrmap, RegField;
-IMPORT RegModula3;
-IMPORT RegGenState, RegModula3GenState;
-FROM RegModula3IntfNaming IMPORT MapIntfNameRW;
-FROM RegModula3Constants IMPORT IdiomName;
+IMPORT RegGenState;
+IMPORT RegScalaGenState;
+FROM RegScalaConstants IMPORT IdiomName;
 
 PROCEDURE RegTypename(r : RegReg.T; gsP : RegGenState.T) : TEXT =
-  VAR
-    gs : RegModula3GenState.T := gsP;
+  <*UNUSED*>VAR
+    gs : RegScalaGenState.T := gsP;
   BEGIN
-    RETURN r.path & r.nm & RegModula3.CompTypeSuffix[gs.th]
+    RETURN r.path & r.nm 
   END RegTypename;
 
 PROCEDURE RegfileTypename(r : RegRegfile.T; gsP : RegGenState.T) : TEXT =
-  VAR
-    gs : RegModula3GenState.T := gsP;
+  <*UNUSED*>VAR
+    gs : RegScalaGenState.T := gsP;
   BEGIN
-    RETURN r.path & r.nm & RegModula3.CompTypeSuffix[gs.th]
+    RETURN r.path & r.nm 
   END RegfileTypename;
 
 PROCEDURE MapIntfName(a : RegAddrmap.T; gsP : RegGenState.T) : TEXT =
-  VAR
-    gs : RegModula3GenState.T := gsP;
+  <*UNUSED*>VAR
+    gs : RegScalaGenState.T := gsP;
   BEGIN
-    RETURN MapIntfNameRW(a, gs.rw)
+    RETURN a.nm
   END MapIntfName;
 
 PROCEDURE MapTypename(a : RegAddrmap.T; state : RegGenState.T) : TEXT =
   BEGIN
-    RETURN MapIntfName(a, state) & ".T"
+    RETURN MapIntfName(a, state) 
   END MapTypename;
 
 PROCEDURE FieldName(f : RegField.T; debug : BOOLEAN) : TEXT =
   BEGIN RETURN IdiomName(f.nm,debug) END FieldName;
-  
-BEGIN END RegModula3Naming.
+
+BEGIN END RegScalaNaming.
