@@ -12,6 +12,57 @@ enum ingress_mst_table_stpstate_enum {
   FORWARD              =  2'd3 { desc = ""; };
 };
 
+
+reg egress_vid_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress VLAN table";
+  desc = "
+         Contains egress port membership state for the egress VLAN lookup.
+         Indexed first by VLAN ID and then by chunk, where each chunk is
+         64 ports worth of the membership port mask.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            For 64 ports of the total 257 bit mask, defines if this port is member of this VLAN or not.
+           ";
+    ValRandomize = true;
+  } MEMBERSHIP[63:0] = 64'h00;
+};
+
+regfile egress_vid_table_rf {
+  egress_vid_table_r EGRESS_VID_TABLE[5] += 8;
+};
+
+
+
+reg egress_vid_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress VLAN configuration";
+  desc = "Contains a trigger ID per egress VLAN.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            VLAN trigger match condition identifier.
+           ";
+    ValRandomize = true;
+  } TRIG_ID[5:0] = 6'h00;
+};
+
+
+
 reg ingress_mst_table_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -227,6 +278,9 @@ reg ingress_mst_table_r {
   } STP_STATE_0[1:0] = 2'h00;
 };
 
+
+
+
 reg egress_mst_table_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -235,19 +289,28 @@ reg egress_mst_table_r {
   HandCoded = true;
   name = "Egress spanning-tree forwarding state table";
   desc = "
-          EGRESS_MST_TABLE holds the egress spanning-tree state for all ports. 
-          Each port has one bits of spanning tree forwarding state associated with it.
-          ";
+         Contains egress spanning-tree state for each port in the VLAN.
+         Each port has one bits of spanning tree forwarding state associated with it.
+         Indexed first by VLAN ID and then by chunk, where each chunk is
+         64 ports worth of the spanning-tree state.
+         ";
   regwidth = 64;
   accesswidth = 64;
   field {
     AccessType = "RW";
     desc = "
-            Defines forwarding state per port for all ports.
+            Defines forwarding state for 64 of 257 ports.
            ";
     ValRandomize = true;
-  } FORWARDING[23:0] = 24'h00;
+  } FORWARDING[63:0] = 64'h00;
 };
+
+regfile egress_mst_table_rf {
+  egress_mst_table_r EGRESS_MST_TABLE[5] += 8;
+};
+
+
+
 
   // Enum: GlortRam_Strict
 enum glort_ram_strict_enum {
@@ -303,7 +366,7 @@ reg glort_cam_r {
           Configures an entry in the GLORT CAM. The CAM entries are readable but
           the value returned will be masked out according to the mask originally
           written along with the value.
-
+          [br][br]
           A match occurs when the data searched is equal to the key and the 
           entry is valid. The table below shows the encoded data value stored 
           (Content) based on the state of the data (Key) and mask (KeyInvert) 
@@ -434,10 +497,12 @@ addrmap mby_ppe_mst_glort_map {
   Opcode = "MEM-SB";
   No_IOSF_Primary=true;
   
-  ingress_mst_table_r     INGRESS_MST_TABLE[4096] @0x000000 += 8;     
-  egress_mst_table_r      EGRESS_MST_TABLE[4096]  @0x008000 += 8;
-  glort_dest_table_r      GLORT_DEST_TABLE[4096]  @0x010000 += 8;
-  glort_ram_r             GLORT_RAM[64]           @0x018000 += 8;
-  glort_cam_r             GLORT_CAM[64]           @0x018400 += 8;
+  egress_vid_table_rf     EGRESS_VID_TABLE[4096]  ;
+  egress_vid_cfg_r        EGRESS_VID_CFG[4096]    ;
+  ingress_mst_table_r     INGRESS_MST_TABLE[4096] ;     
+  egress_mst_table_rf     EGRESS_MST_TABLE[4096]  ;
+  glort_dest_table_r      GLORT_DEST_TABLE[4096]  ;
+  glort_ram_r             GLORT_RAM[64]           ;
+  glort_cam_r             GLORT_CAM[64]           ;
 };
 
