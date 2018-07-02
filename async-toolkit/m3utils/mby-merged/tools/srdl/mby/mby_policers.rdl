@@ -863,7 +863,7 @@ addrmap mby_ppe_policers_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  pol_direct_map_ctrl_r      POL_DIRECT_MAP_CTRL           @0x0;
+  pol_direct_map_ctrl_r      POL_DIRECT_MAP_CTRL      @0x0;
   pol_direct_map_ctr0_r      POL_DIRECT_MAP_CTR0      @0x8;
   pol_direct_map_ctr1_r      POL_DIRECT_MAP_CTR1      @0x10;
   pol_direct_map_pol0_r      POL_DIRECT_MAP_POL0      @0x18;

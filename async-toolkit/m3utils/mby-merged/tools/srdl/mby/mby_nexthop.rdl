@@ -221,32 +221,6 @@ reg ingress_vid_table_r {
   } MEMBERSHIP[16:0] = 17'h00;
 };
 
-reg egress_vid_table_r {
-  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  shared;
-  HandCoded = true;
-  name = "Egress VLAN table";
-  desc = "Contains VLAN membership state and downstream associated trigger ID for the egress VLAN lookup.";
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-            VLAN trigger match condition identifier.
-           ";
-    ValRandomize = true;
-  } TRIG_ID[29:24] = 6'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-            Defines if this port is member of this VLAN or not.
-           ";
-    ValRandomize = true;
-  } MEMBERSHIP[23:0] = 24'h00;
-};
-
 reg fwd_hashing_cfg_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -329,7 +303,6 @@ addrmap mby_ppe_nexthop_map {
   
   nexthop_entry_table_r   NEXTHOP_TABLE[16384]    ;
   ingress_vid_table_r     INGRESS_VID_TABLE[4096] ;
-  egress_vid_table_r      EGRESS_VID_TABLE[4096]  ;
   flood_glort_table_r     FLOOD_GLORT_TABLE[256]  ;
   nexthop_used_r          NEXTHOP_USED[256]       ;
   mtu_table_r             MTU_TABLE[8]            ;
