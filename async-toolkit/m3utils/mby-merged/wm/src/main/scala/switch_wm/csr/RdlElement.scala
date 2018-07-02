@@ -1,4 +1,4 @@
-package switch_wm
+package switch_wm.csr
 
 import switch_wm.PrimitiveTypes.U64
 

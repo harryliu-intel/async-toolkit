@@ -154,8 +154,8 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package switch_wm\n");
-    gs.main("import PrimitiveTypes._\n");
+    gs.main("package switch_wm.csr\n");
+    gs.main("import switch_wm.PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
     FOR i := 0 TO r.fields.size()-1 DO
@@ -187,8 +187,8 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     myTn := rf.typeName(gs);
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package switch_wm\n");
-    gs.main("import PrimitiveTypes._\n");
+    gs.main("package switch_wm.csr\n");
+    gs.main("import switch_wm.PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) ", myTn);
     IF rf.children.size() = 1 THEN
@@ -232,8 +232,10 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     myTn := map.typeName(gs);  
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package switch_wm\n");
-    gs.main("import PrimitiveTypes._\n");
+    gs.main("package switch_wm.csr\n");
+    gs.main("import switch_wm.PrimitiveTypes._\n");
+    gs.main("import switch_wm.DegenerateIndexedSeq\n");
+
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlAddressMap(parent) {\n", myTn);
     FOR i := 0 TO map.children.size()-1 DO

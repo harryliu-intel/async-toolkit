@@ -1,8 +1,9 @@
 package switch_wm
-import Implicits._
+import switch_wm.model_server.Implicits._
 import SwitchModelImplicits._
 import java.io._
-
+import switch_wm.csr._
+import switch_wm.model_server._
 import switch_wm.PrimitiveTypes.U64
 
 
