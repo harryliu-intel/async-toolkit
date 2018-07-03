@@ -307,11 +307,6 @@ object WhiteModelServer {
     val test1 = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1)
     println("theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1) path is " + test1.path)
 
-    // now show printing all registers in the design
-    val registerSet = collection.mutable.HashSet()
-    theCsr.foreachResetableField(x => registerSet.add(x.
-
-
     //
     implicit class csum_convenience (val x : mby_ppe_modify_map) {
        def ipv4_hdr = List(x.MOD_CSUM_CFG1.IPV4_0, x.MOD_CSUM_CFG1.IPV4_1, x.MOD_CSUM_CFG1.IPV4_2)
