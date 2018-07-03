@@ -302,6 +302,15 @@ object WhiteModelServer {
     /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
     val c = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
 
+    val test = theCsr.mpt(0).rx_ppe.policers
+    println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
+    val test1 = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1)
+    println("theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1) path is " + test1.path)
+
+    // now show printing all registers in the design
+    val registerSet = collection.mutable.HashSet()
+    theCsr.foreachResetableField(x => registerSet.add(x.
+
 
     //
     implicit class csum_convenience (val x : mby_ppe_modify_map) {
