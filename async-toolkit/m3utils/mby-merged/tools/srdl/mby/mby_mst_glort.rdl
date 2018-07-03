@@ -489,6 +489,41 @@ reg glort_ram_r {
 };
 
 
+// CGRP_USED_TABLE[0..64]
+
+reg cgrp_used_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "EM_B hit table";
+  desc = "
+         Used for aging out MAC address table entries. Provides one bit
+         for each EM_B hash or CAM entry that might be used for SMAC
+         matching. When an EM_B hash or CAM entry hits on a packet
+         and employs a USED action, the corresponding bit in this table
+         will be set by hardware. Software clears individual bits by
+         writing a 1 to them.
+         [br][br]
+         Indexes 0..63 correspond to the EM_B hash table entries and
+         index 64 corresponds to the EM_B CAM table. Note that the
+         CAM has only 32 entries, corresponding to the low-order 32
+         bits of CGRP_USED_TABLE[64].
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+           Used bits corresponding to 64 EM_B table entries.
+           ";
+    ValRandomize = true;
+  } USED[63:0] = 64'h00;
+};
+
+
+
 addrmap mby_ppe_mst_glort_map {
   name = "MST and GLORT";
   desc = "Forward and Global Resource Tag Registers";
@@ -504,5 +539,6 @@ addrmap mby_ppe_mst_glort_map {
   glort_dest_table_r      GLORT_DEST_TABLE[4096]  ;
   glort_ram_r             GLORT_RAM[64]           ;
   glort_cam_r             GLORT_CAM[64]           ;
+  cgrp_used_table_r       CGRP_USED_TABLE[65]     ;
 };
 
