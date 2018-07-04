@@ -271,21 +271,214 @@ enum glort_ram_strict_enum {
   DETERMINISTIC   =  2'd3 { desc = "deterministic mode"; };
 };
 
-reg glort_dest_table_r {
+
+// GLORT_DIRECT_MAP_CTRL 
+
+reg glort_direct_map_ctrl_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   shared;
   HandCoded = true;
-  name = "Defines the destination ports for a given glort";
+  name = "GLORT Direct Mapping Access Control Register";
   desc = "
-          Defines the destination ports for a given glort. The DestMask is a 
-          bit vector indicating which ports will receive normal (not logged or 
-          mirrored) copies of the frame. If an IP_MulticastIndex is specified 
-          (with value different than 0), then RXQ_MCAST_DEST_TABLE will be 
-          used to retrieve lists of VLANs for each port to use during IP 
-          multicast replication.
+    Control Register for proxy access to the GLORT_DEST_TABLE.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    hwclr;
+    AccessType = "RW/V";
+    desc = "
+	    Go command and completion status.
+        [list]
+        [*] Set to 1 by software to initiate operation
+        [*] Set to 0 by hardware when the operation is complete
+        [/list]
+           ";
+    ValRandomize = true;
+  } GO_COMPL[63:63] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+	    Completion Status. Set by hardware upon completion of operation.[br]
+	    0: Successful completion[br]
+	    1: Address Out-of-Range error
+           ";
+    ValRandomize = true;
+  } STATUS[62:62] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Operation Type:[br]
+            0: Read[br]
+            1: Write
+           ";
+    ValRandomize = true;
+  } OP_TYPE[61:61] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+	    Reserved
+           ";
+    ValRandomize = true;
+  } _RSVD0_[60:48] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File ID.[br]
+	    0 - GLORT_DEST_TABLE  [br]
+	    1-255 Reserved
+           ";
+    ValRandomize = true;
+  } REG_ID[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File Sub Index. Not used. Set to zero.
+           ";
+    ValRandomize = true;
+  } REG_SUB_ID[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register Entry Index. Indicates the GLORT_DEST_TABLE index.
+        Valid values are 0 - 4095.
+           ";
+    ValRandomize = true;
+  } REG_INDX[31:0] = 32'h0;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST0
+
+reg glort_direct_map_dst0_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 0";
+  desc = "
+          Data register 0 for proxy access to the GLORT_DEST_TABLE.
+          [br][br]
+          GLORT_DEST_TABLE defines the destination ports for a given GLORT. 
+          The DestMask is a bit vector indicating which ports will receive 
+          normal (not logged or mirrored) copies of the frame. If an 
+          IP_MulticastIndex is specified (with value different than 0), then 
+          RXQ_MCAST_DEST_TABLE will be used to retrieve lists of VLANs for 
+          each port to use during IP multicast replication.
+          [br][br]
+          Proxy accesses to GLORT_DEST_TABLE are 320b atomic operations.
          ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 0..63 of the 257-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST1
+
+reg glort_direct_map_dst1_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 1";
+  desc = "
+          Data register 1 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 64..127 of the 257-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+// GLORT_DIRECT_MAP_DST2
+
+reg glort_direct_map_dst2_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 2";
+  desc = "
+          Data register 2 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 128..191 of the 257-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST3
+
+reg glort_direct_map_dst3_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 3";
+  desc = "
+          Data register 3 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 192..255 of the 257-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST4
+
+reg glort_direct_map_dst4_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 4";
+  desc = "
+          Data register 4 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
   field {
@@ -295,16 +488,18 @@ reg glort_dest_table_r {
             RXQ_MCAST_DEST_TABLE.
            ";
     ValRandomize = true;
-  } IP_MULTICAST_INDEX[35:24] = 12'h00;
+  } IP_MULTICAST_INDEX[13:2] = 12'h00;
   field {
     AccessType = "RW";
     desc = "
-            Contains the destination port mask (for normal copies, not 
-            including logged or mirrored copies).
+            Contains bits 256..257 of the 257-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
-  } DEST_MASK[23:0] = 24'h00;
+  } DEST_MASK[1:0] = 2'h00;
 };
+
+
 
 reg glort_cam_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -418,7 +613,7 @@ reg glort_ram_r {
   field {
     AccessType = "RW";
     desc = "
-            Defines the base index of the first entry into the GLORT_DEST table
+            Defines the base index of the first entry into the GLORT_DEST_TABLE
             which contains the destination.
            ";
     ValRandomize = true;
@@ -487,7 +682,12 @@ addrmap mby_ppe_mst_glort_map {
   egress_vid_cfg_r        EGRESS_VID_CFG[4096]    ;
   ingress_mst_table_r     INGRESS_MST_TABLE[4096] ;     
   egress_mst_table_rf     EGRESS_MST_TABLE[4096]  ;
-  glort_dest_table_r      GLORT_DEST_TABLE[4096]  ;
+  glort_direct_map_ctrl_r GLORT_DIRECT_MAP_CTRL   ;
+  glort_direct_map_dst0_r GLORT_DIRECT_MAP_DST0   ;
+  glort_direct_map_dst1_r GLORT_DIRECT_MAP_DST1   ;
+  glort_direct_map_dst2_r GLORT_DIRECT_MAP_DST2   ;
+  glort_direct_map_dst3_r GLORT_DIRECT_MAP_DST3   ;
+  glort_direct_map_dst4_r GLORT_DIRECT_MAP_DST4   ;
   glort_ram_r             GLORT_RAM[64]           ;
   glort_cam_r             GLORT_CAM[64]           ;
   cgrp_used_table_r       CGRP_USED_TABLE[65]     ;
