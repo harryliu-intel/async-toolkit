@@ -69,8 +69,8 @@ static int wm_server_fd;
 static int wm_client_fd;
 static int wm_client_port;
 
-/* FDs used to get egress traffic from WM ports */
-static int wm_egress_fd[NUM_PORTS];
+/* FD used to get egress traffic from WM ports */
+static int wm_egress_fd;
 
 /* Temporary file used for models.packetServer */
 #define TMP_FILE_TEMPLATE   "/tmp/models.packetServer.XXXXXX"
@@ -96,8 +96,6 @@ static int create_client_socket(int *fd, int *port);
 static int connect_server(const char *addr_str, const char *port, int *server_fd);
 static int connect_egress(int phys_port, int server_fd, int client_fd,
 						  int client_port, int *egress_fd);
-static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
-					   uint32_t *len);
 static int read_host_info(FILE *fd, char *host, char *port);
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec);
@@ -303,9 +301,11 @@ int wm_connect(const char *server_file)
 	if (err)
 		return err;
 
-	for (i = 0; i < 32; ++i) {
+	wm_egress_fd = -1;
+
+	for (i = 0; i < NUM_PORTS; ++i) {
 		err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
-							 wm_egress_fd + i);
+							 &wm_egress_fd);
 		if (err)
 			return err;
 	}
@@ -405,7 +405,7 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  * @param_in	len is the lenght of the frame
  * @retval		OK if successful
  */
-int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
+int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len)
 {
 	uint8_t pkt_msg[MAX_MSG_LEN];
 	int pkt_len;
@@ -459,36 +459,67 @@ int wm_pkt_push(int port, const uint8_t *data, uint32_t len)
 /* wm_pkt_get() - Receive a frame from the WM
  *
  * @param_out	port is the phys port where the frame egressed
- * @param_out	data pointer to the frame data
+ * @param_out	data pointer to caller-allocated storage where the frame will be
+ * 				saved. It must be at least MAX_MSG_LEN bytes.
  * @param_out	len is the lenght of the frame
  * @retval		ERR_NO_DATA if there are no egress frames on any of the ports.
  * @retval		OK if successful
  */
-int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
+int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 {
+	uint8_t msg[MAX_MSG_LEN];
+	/*struct pollfd pfd;*/
+	uint32_t msg_len;
+	uint32_t pkt_len;
+	uint16_t type;
 	int err;
-	int i;
 
-	for (i = 0; i < NUM_PORTS; ++i) {
-
-		LOG_DEBUG("Checking rx frames on port %d\n", i);
-		err = receive_pkt(i, 100, data, len);
-		if (err)
-			return err;
-
-		if (*len == 0) {
-			*port = -1;
-			LOG_DEBUG("Nothing received on port %d\n", i);
-		}
-		if (*len > 0) {
-			*port = i;
-			LOG_DEBUG("Received %d bytes on port %d\n", *len, *port);
-			LOG_HEX_DUMP(data, *len, 0);
-			return OK;
-		}
+	if (wm_egress_fd == -1) {
+		LOG_ERROR("Socket not initialized, call wm_connect()\n");
+		return ERR_RUNTIME;
 	}
 
-	return ERR_NO_DATA;
+	if (!data || !port || !len) {
+		LOG_ERROR("Input pointer to data/port/len is NULL\n");
+		return ERR_INVALID_ARG;
+	}
+
+	err = wm_receive(wm_egress_fd, msg, &msg_len, &type, port);
+	if (err)
+		return err;
+
+	if (type == MODEL_MSG_PACKET_EOT) {
+		LOG_DEBUG("Received EOT packet\n");
+		*len = 0;
+		*port = -1;
+		return OK;
+	}
+
+	if (type != MODEL_MSG_PACKET) {
+		LOG_ERROR("Received unexpected message types %d\n", type);
+		return ERR_RUNTIME;
+	}
+
+	/* TODO do we need to support PACKET_META? */
+	if (msg[0] != WM_DATA_TYPE_PACKET) {
+		LOG_ERROR("Unsupported data type %d\n", msg[0]);
+		return ERR_RUNTIME;
+	}
+
+	pkt_len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+
+	if (pkt_len > msg_len - WM_DATA_TLV_SIZE) {
+		LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
+				pkt_len, msg_len - WM_DATA_TLV_SIZE);
+		*len = 0;
+		return ERR_RUNTIME;
+	}
+	*len = pkt_len;
+	memcpy(data, msg + WM_DATA_TLV_SIZE, *len);
+
+	/* TODO what to do with other TLVs in the message */
+
+	return OK;
 }
 
 #ifndef NO_SV
@@ -816,9 +847,11 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
     char hostname[MAXHOSTNAMELEN];
     char buffer[MAXHOSTNAMELEN + 2];
     uint32_t len;
+	int err;
 
-    int ghnResult = gethostname(hostname, MAXHOSTNAMELEN);
-    if (ghnResult != 0) LOG_ERROR("Problem getting hostname!");
+    err = gethostname(hostname, MAXHOSTNAMELEN);
+    if (err)
+		LOG_ERROR("Problem getting hostname: %s", strerror(errno));
 
     bzero(buffer, MAXHOSTNAMELEN + 2);
 
@@ -830,14 +863,15 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
 	wm_send(server_fd, (uint8_t *)buffer, len, MODEL_MSG_SET_EGRESS_INFO,
 			phys_port);
 
-    /* Wait for client connection after sending request */
-    *egress_fd = accept(client_fd, NULL, NULL);
-    if(wm_egress_fd[phys_port] < 0) {
-        LOG_ERROR("Error accepting connection for egress port %d: %s\n",
+	/* If socket hasn't been init before, wait for connection from server */
+	if (*egress_fd == -1)
+		*egress_fd = accept(client_fd, NULL, NULL);
+
+	if(*egress_fd  < 0) {
+		LOG_ERROR("Error accepting connection for egress port %d: %s\n",
 				phys_port, strerror(errno));
 		return ERR_NETWORK;
 	}
-
 	return OK;
 }
 
@@ -893,94 +927,6 @@ static int create_client_socket(int *fd, int *port)
 	LOG_DEBUG("Client socket created - listen on port %d\n", *port);
 	return OK;
 }
-
-/* receive_pkt() - Try to receive a pkt from a specific port
- *
- * If no packet has egressed the port during the time specified, the length
- * returned will be 0.
- *
- * @param_in	phys_port is the port where the pkt egress
- * @param_in	timeout	is the wait time in ms spent waiting on the port
- * @param_in	packet is caller-alloc buffer where the buffer will be placed
- * @param_in	packet is caller-alloc buffer where the length will be placed
- * @retval		OK if successful
- */
-static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
-		uint32_t *len)
-{
-	uint8_t msg[MAX_MSG_LEN];
-	struct pollfd pfd;
-	uint32_t msg_len;
-	uint32_t pkt_len;
-	uint16_t type;
-	uint16_t port;
-	int err;
-
-	if (wm_egress_fd[phys_port] == -1) {
-		LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
-				phys_port);
-		return ERR_RUNTIME;
-	}
-
-	bzero(&pfd, sizeof(struct pollfd));
-	pfd.fd = wm_egress_fd[phys_port];
-	pfd.events = POLLIN;
-
-	err = poll(&pfd, 1, timeout);
-	if (err == -1) {
-		LOG_ERROR("Failed to poll on egress fd of phys port %d: %s\n",
-				phys_port, strerror(errno));
-		return ERR_NETWORK;
-	}
-
-	if(!(pfd.revents & POLLIN)) {
-		LOG_DEBUG("No events on fd associated to phys port %d\n", phys_port);
-		*len = 0;
-		return OK;
-	}
-
-	err = wm_receive(pfd.fd, msg, &msg_len, &type, &port);
-	if (err)
-		return err;
-
-	if (type == MODEL_MSG_PACKET_EOT) {
-		LOG_DEBUG("Received EOT packet, but I'll pretend I didn't see it\n");
-		*len = 0;
-		return OK;
-	}
-
-	if (type != MODEL_MSG_PACKET) {
-		LOG_ERROR("Received unexpected message types %d\n", type);
-		return ERR_RUNTIME;
-	}
-
-	if (port != phys_port) {
-		LOG_ERROR("Port should be %d instead of %d\n", phys_port, port);
-		return ERR_RUNTIME;
-	}
-
-	/* FIXME This needs to support PACKET_META */
-	if (msg[0] != WM_DATA_TYPE_PACKET) {
-		LOG_ERROR("Unsupported data type %d\n", msg[0]);
-		return ERR_RUNTIME;
-	}
-
-	pkt_len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
-
-	if (pkt_len > msg_len - WM_DATA_TLV_SIZE) {
-		LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
-				pkt_len, msg_len - WM_DATA_TLV_SIZE);
-		*len = 0;
-		return ERR_RUNTIME;
-	}
-	*len = pkt_len;
-	memcpy(packet, msg + WM_DATA_TLV_SIZE, *len);
-
-	/* TODO in theory there could be other TLVs in the message */
-
-	return OK;
-}
-
 
 /**
  * read_host_info() - Read host info from model_server file
