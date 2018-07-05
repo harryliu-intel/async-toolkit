@@ -151,7 +151,7 @@ int test_pkts(void)
 	uint8_t rx_pkt[1000];
 	uint32_t pkt_len;
 	unsigned int i;
-	int port;
+	uint16_t port;
 	int err;
 
 	port = 1;
